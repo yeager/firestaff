@@ -575,9 +575,10 @@
   sina muterbara recordpooler; använd den som admissionsunderlag, aldrig som
   en ersättning för den saknade dispatchen.
   `DM2__INIT_GAME` äger nu privat den första `DM2_1031_0541(5)`-passagen
-  med de autentiska `dm2data.cpp`-tabellerna. Återstår gör dess GDAT-laddade
-  action-/rektangeltabeller samt den följande `LOAD_NEWMAP`- och
-  `RESET_CAII`/`FILL_CAII_CUR_MAP`-committen i samma sessiontransaktion.
+  med de autentiska `dm2data.cpp`-tabellerna, inklusive `v1d338c` och
+  `v1d39bc` som originalet laddar före STARTEND. Återstår gör den följande
+  `LOAD_NEWMAP`- och `RESET_CAII`/`FILL_CAII_CUR_MAP`-committen i samma
+  sessiontransaktion.
   New Games privata `c_party` räknar nu vikt från samma källägda DB5–DB10-
   poster och GDAT som itembonusarna, inklusive laddningar samt DB9-
   containrars verkliga innehålls- och moneyboxkedjor. Det räcker inte för

@@ -1,5 +1,6 @@
 #include "dm2_v1_init_game_ui_owner.h"
 #include "dm2_v1_hud_tables.h"
+#include "dm2_v1_data_tables_pc34_compat.h"
 
 #include <string.h>
 
@@ -51,6 +52,20 @@ int dm2_v1_init_game_ui_owner_init(DM2_V1_InitGameUiOwner *out,
         candidate.leaves[i].w4 = (uint16_t)dm2_v1_hud_button_desc[i].click_target;
         candidate.leaves[i].b6 = (uint8_t)dm2_v1_hud_button_desc[i].action_type;
     }
+    /* c_dm2data::init: v1d39bc.dat (0x1e4 bytes), then v1d338c.dat
+     * (264 s_www entries).  Firestaff's data tables are byte-for-byte
+     * source transcriptions; retaining mutable copies avoids a later input
+     * session rebinding action indices to host defaults. */
+    for (i = 0u; i < 264u; ++i) {
+        candidate.expanded_actions[i].w0 = dm2_v1_table_1d338c[i].a;
+        candidate.expanded_actions[i].w2 = dm2_v1_table_1d338c[i].b;
+        candidate.expanded_actions[i].w4 = dm2_v1_table_1d338c[i].c;
+    }
+    for (i = 0u; i < 121u; ++i) {
+        candidate.input_actions[i].w0 = (uint16_t)dm2_v1_table_1d39bc[i].w_00;
+        candidate.input_actions[i].w2 = (uint16_t)dm2_v1_table_1d39bc[i].w_02;
+        candidate.input_actions[i].w4 = 0u;
+    }
     /* c_clickrectnode table1d32d8 is BSS and starts cleared in DM2_INIT. */
     if (!dm2_v1_skproject_1031_0541_select_tree(&candidate.runtime,
             &candidate.predicates, 5u, candidate.roots, 10u,
@@ -64,6 +79,10 @@ int dm2_v1_init_game_ui_owner_init(DM2_V1_InitGameUiOwner *out,
         candidate.nodes, sizeof(candidate.nodes));
     candidate.source_table_hash ^= dm2_v1_init_game_ui_hash(
         candidate.child_bytes, sizeof(candidate.child_bytes));
+    candidate.source_table_hash ^= dm2_v1_init_game_ui_hash(
+        candidate.expanded_actions, sizeof(candidate.expanded_actions));
+    candidate.source_table_hash ^= dm2_v1_init_game_ui_hash(
+        candidate.input_actions, sizeof(candidate.input_actions));
     if (candidate.source_table_hash == 0u) return 0;
     candidate.valid = 1;
     *out = candidate;

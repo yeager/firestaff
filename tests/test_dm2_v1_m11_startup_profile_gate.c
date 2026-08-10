@@ -5143,6 +5143,10 @@ int main(void) {
                     profile_runtime_candidate->init_game_ui.runtime.active_tree == 5u &&
                     profile_runtime_candidate->init_game_ui.initial_tree.valid &&
                     profile_runtime_candidate->init_game_ui.initial_tree.selected_tree == 5 &&
+                    profile_runtime_candidate->init_game_ui.expanded_actions[0].w0 == 0x80d7u &&
+                    profile_runtime_candidate->init_game_ui.expanded_actions[0].w2 == 0x0197u &&
+                    profile_runtime_candidate->init_game_ui.input_actions[0].w0 == 0x80d7u &&
+                    profile_runtime_candidate->init_game_ui.input_actions[0].w2 == 0x001cu &&
                     profile_runtime_candidate->init_game_ui.source_table_hash != 0u &&
                     !profile->source_game_load_session_ready &&
                     view.world.party.championCount == 0,

@@ -25,6 +25,8 @@
 - ✅ Tabellen är en muterbar RAM-kopia knuten till den verkliga valda
   championen och c_eventqueue. Realdatatestet bevisar träd 5 utan att
   publicera party, HUD, input eller session till M11.
+- ✅ De programladdade `v1d338c`- och `v1d39bc`-actiontabellerna är också
+  kopierade från källans exakta data innan INIT_GAME-trädet väljs.
 
 # Theron: corrected cold-start VDC/VCE media admission (2026-08-10)
 

@@ -25,6 +25,10 @@ typedef struct {
     uint8_t child_bytes[83];                   /* table1d3cd0 */
     DM2_V1_SkprojectUiLeafMeta leaves[62];     /* table1d3d23 */
     DM2_V1_SkprojectUiClickRectNode clickrects[18]; /* table1d32d8 */
+    /* c_dm2data::init reads these original executable-data tables before
+     * STARTEND. They back c_1031/c_input action and click-rect routing. */
+    DM2_V1_SkprojectUiAction expanded_actions[264]; /* v1d338c */
+    DM2_V1_SkprojectUiAction input_actions[121];    /* v1d39bc */
     DM2_V1_SkprojectUiSelectTreeReceipt initial_tree;
     uint32_t source_table_hash;
 } DM2_V1_InitGameUiOwner;
