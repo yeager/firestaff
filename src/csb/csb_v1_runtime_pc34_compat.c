@@ -213,18 +213,21 @@ static int csb_v1_runtime_try_load_original_atari_save_file(
     return result;
 }
 
-/* CSBWin SaveGame.cpp rotates only the original media slot names before it
- * creates a replacement: CSBGAME[1..4].DAT becomes CSBGAME[1..4].BAK.
- * Keep Firestaff-native destinations out of this rule, rather than applying
- * an invented backup convention to arbitrary user paths. */
+/* ReDMCSB FILENAME.C F0745 replaces the multilingual Amiga '~' filename
+ * marker with nothing, F or G before LOADSAVE.C F0433/F0435 rotates the
+ * selected source slot. CSBGAMEF/G.DAT are therefore original save names,
+ * alongside CSBWin's numbered slots. Keep Firestaff-native destinations out
+ * of this rule rather than applying an invented backup convention to arbitrary
+ * user paths. */
 static int csb_v1_runtime_original_atari_backup_path(const char *path,
                                                      char *out,
                                                      size_t out_size)
 {
     const char *name;
     static const char *const names[] = {
-        "CSBGAME.DAT", "CSBGAME1.DAT", "CSBGAME2.DAT",
-        "CSBGAME3.DAT", "CSBGAME4.DAT", NULL
+        "CSBGAME.DAT", "CSBGAMEF.DAT", "CSBGAMEG.DAT",
+        "CSBGAME1.DAT", "CSBGAME2.DAT", "CSBGAME3.DAT",
+        "CSBGAME4.DAT", NULL
     };
     size_t index;
 

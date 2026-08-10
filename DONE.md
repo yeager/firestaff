@@ -12430,3 +12430,12 @@ rendering remain blocked.
   kvar som separat transportbevis.
 - ⚠️ Ljud-/ADPCM-/effektkonsumenten är fortfarande ett öppet gap; ingen
   syntetisk ljudbindning har lagts till.
+
+## CSB: flerspråkig Amiga-backup återupptas (2026-08-10)
+
+- ✅ Den native F0435-rutten känner nu igen ReDMCSB F0745:s franska och tyska
+  Amiga-slotnamn `CSBGAMEF.DAT/.BAK` och `CSBGAMEG.DAT/.BAK`, utöver de
+  etablerade CSBWin-slotarna.
+- ✅ En saknad `CSBGAMEF.DAT` återställs från den validerade original-
+  `CSBGAMEF.BAK` innan runtime muteras. Regressionen använder endast lokal,
+  autentisk GAMEBLOCK-media och bekräftar byteidentisk återställning.

@@ -3450,6 +3450,14 @@ that its exact runtime path is not already source-locked and tested.
     memory or invent a value.
 
 24. **CSB-ORIGINAL-SAVE-CORPUS:** Admit real CSB/CSBWin save corpus, complete
+    2026-08-10: the native Atari/Amiga F0435 recovery gate now also recognises
+    multilingual Amiga `CSBGAMEF.DAT/.BAK` and `CSBGAMEG.DAT/.BAK` slots.
+    ReDMCSB `FILENAME.C` F0745 expands the original `CSBGAME~.DAT` template
+    before `LOADSAVE.C` rotates or restores its selected slot. A real
+    GAMEBLOCK corpus regression proves a missing French canonical slot is
+    restored atomically from its validated `.BAK`; no Amiga bytes are
+    fabricated. A captured Amiga user save is still required for full
+    platform write-back evidence.
     2026-08-09: the authenticated CSBWin source-tree `csbgame2.dat` is now a
     skip-safe real-corpus regression. Its original big-endian GAMEBLOCK1/body
     proves the untagged 10-byte TIMER form (2 champions, 436 timers, 60

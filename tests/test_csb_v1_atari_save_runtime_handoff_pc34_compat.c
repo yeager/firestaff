@@ -73,6 +73,8 @@ int main(void)
     if (corpus_path && corpus_path[0]) {
         const char *written_path = "/tmp/CSBGAME2.DAT";
         const char *backup_path = "/tmp/CSBGAME2.BAK";
+        const char *amiga_multilingual_path = "/tmp/CSBGAMEF.DAT";
+        const char *amiga_multilingual_backup_path = "/tmp/CSBGAMEF.BAK";
         const char *foreign_source_path = "/tmp/CSB-FOREIGN-MINI.DAT";
         const char *blocked_dir = "/tmp/CSBGAME3.DAT";
         const char *blocked_backup = "/tmp/CSBGAME3.BAK";
@@ -215,6 +217,35 @@ int main(void)
             csb_v1_runtime_cleanup(&runtime);
             return 1;
         }
+        /* ReDMCSB FILENAME.C F0745 maps its Amiga '~' template to F/G for
+         * French/German before LOADSAVE.C F0435 tries the matching .BAK.
+         * Reuse only authentic Atari GAMEBLOCK bytes here: this checks the
+         * selected-slot filename and recovery transaction, not a fabricated
+         * save layout. */
+        free(written);
+        written = NULL;
+        written_size = 0u;
+        remove(amiga_multilingual_path);
+        remove(amiga_multilingual_backup_path);
+        if (!write_file(amiga_multilingual_backup_path, backup, backup_size) ||
+            !csb_v1_runtime_can_load_resume_path(amiga_multilingual_path) ||
+            csb_v1_runtime_load_game_from_path(&runtime,
+                                               amiga_multilingual_path) !=
+                CSB_V1_LOAD_OK ||
+            strcmp(csb_v1_runtime_original_atari_save_source_path(&runtime),
+                   amiga_multilingual_path) != 0 ||
+            !csb_v1_runtime_original_atari_save_source_current(&runtime) ||
+            !read_file(amiga_multilingual_path, &written, &written_size) ||
+            written_size != backup_size ||
+            memcmp(written, backup, backup_size) != 0) {
+            free(written);
+            free(backup);
+            free(bytes);
+            csb_v1_runtime_cleanup(&runtime);
+            return 1;
+        }
+        remove(amiga_multilingual_path);
+        remove(amiga_multilingual_backup_path);
         /* F0435 only treats the backup as resumed after it has been renamed
          * back to the selected canonical slot.  A valid source backup must
          * not yield LOAD_OK if that replacement is impossible.  The MINI.DAT
