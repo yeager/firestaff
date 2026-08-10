@@ -92,6 +92,101 @@ static uint16_t dm2_test_read_le16(const uint8_t *bytes)
     return (uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8);
 }
 
+/* Independent oracle for the source-visible part of LOAD_LOCALLEVEL_DYN's
+ * marked-square loop.  SKProject SKULLWIN/c_loadlevel.cpp:538-626 writes
+ * its three 0xfa-byte scratch arrays and appends DB3/0x7e selectors while
+ * scanning the authenticated map chains in order.  Keep the test separate
+ * from the owner implementation so a self-consistent traversal cannot hide
+ * a wrong Text::w2 or Actuator::w2 bit extraction. */
+static int dm2_test_local_dyn_record_effects_match_source(
+    const DM2_V1_GameLoadRuntimeSessionCandidate *candidate)
+{
+    const DM2_V1_GameLoadLocalDynMapScan *scan;
+    const DM2_V1_GameLoadLocalDynRecordEffects *effects;
+    uint8_t creature[DM2_V1_LOADLEVEL_CREATURE_TABLE_SIZE] = {0};
+    uint8_t wall_text[DM2_V1_LOADLEVEL_CREATURE_TABLE_SIZE] = {0};
+    uint8_t floor_text[DM2_V1_LOADLEVEL_CREATURE_TABLE_SIZE] = {0};
+    uint16_t expected_queue_count;
+    uint16_t text_records = 0u;
+    uint16_t text_marks = 0u;
+    uint16_t creature_marks = 0u;
+    uint16_t mirror_selectors = 0u;
+    uint16_t cross_map = 0u;
+
+    if (!candidate || !candidate->local_dyn_prelude.valid ||
+        !candidate->local_dyn_map_scan.valid ||
+        !candidate->local_dyn_record_effects.valid) return 0;
+    scan = &candidate->local_dyn_map_scan;
+    effects = &candidate->local_dyn_record_effects;
+    if (effects->map != candidate->current_map ||
+        scan->map != candidate->current_map ||
+        candidate->local_dyn_prelude.queue.count < 0 ||
+        candidate->local_dyn_prelude.queue.count > DM2_V1_LOADLEVEL_MAX_DYN_ENTRIES) {
+        return 0;
+    }
+    expected_queue_count = (uint16_t)candidate->local_dyn_prelude.queue.count;
+    for (uint16_t i = 0u; i < scan->record_count; ++i) {
+        const DM2_V1_GameLoadLocalDynRecordVisit *visit = &scan->records[i];
+        const int raw = dm2_v1_dungeon_get_tile_raw(&candidate->dungeon,
+            candidate->current_map, visit->x, visit->y);
+        const uint8_t tile_class = (uint8_t)((unsigned int)raw >> 5);
+
+        if (raw < 0 || (raw & 0x10) == 0) return 0;
+        if (visit->type == 2u && (visit->word2 & 0x0006u) == 0x0002u) {
+            const uint8_t text_class = (uint8_t)((visit->word2 >> 11) & 0x1fu);
+            const uint8_t text_index = (uint8_t)((visit->word2 >> 3) & 0xffu);
+            uint8_t *target = NULL;
+            ++text_records;
+            switch (text_class) {
+            case 0: case 2:
+            case 4: case 5: case 6: case 7: case 8:
+            case 10: case 13:
+            case 15: case 16: case 17:
+                target = tile_class != 0u ? floor_text : wall_text;
+                if (target[text_index] == 0u) ++text_marks;
+                target[text_index] = 1u;
+                break;
+            case 19: case 21: case 22:
+                if (creature[text_index] == 0u) ++creature_marks;
+                creature[text_index] = 1u;
+                break;
+            default:
+                break;
+            }
+        } else if (visit->type == 3u) {
+            const uint8_t subtype = (uint8_t)(visit->word2 & 0x007fu);
+            const uint8_t selector = (uint8_t)((visit->word2 >> 7) & 0xffu);
+
+            if (subtype == 0x27u && tile_class == 5u) {
+                ++cross_map;
+            } else if (subtype == 0x2eu && tile_class == 0u) {
+                if (creature[selector] == 0u) ++creature_marks;
+                creature[selector] = 1u;
+            } else if (subtype == 0x7eu) {
+                const DM2_V1_DynLoadEntry *entry;
+                if (expected_queue_count >= DM2_V1_LOADLEVEL_MAX_DYN_ENTRIES)
+                    return 0;
+                entry = &effects->selector_queue.entries[expected_queue_count++];
+                if (entry->flags != 0 || entry->cat != 0x16u ||
+                    entry->type != selector || entry->sub1 != 0xffu ||
+                    entry->sub2 != 0xffu) return 0;
+                ++mirror_selectors;
+            }
+        }
+    }
+    return cross_map == 0u &&
+        effects->text_record_count == text_records &&
+        effects->text_temp_mark_count == text_marks &&
+        effects->creature_mark_count == creature_marks &&
+        effects->mirror_selector_count == mirror_selectors &&
+        effects->cross_map_actuator_count == cross_map &&
+        effects->selector_queue.count == (int16_t)expected_queue_count &&
+        memcmp(effects->creature_marks, creature, sizeof(creature)) == 0 &&
+        memcmp(effects->wall_text_marks, wall_text, sizeof(wall_text)) == 0 &&
+        memcmp(effects->floor_text_marks, floor_text, sizeof(floor_text)) == 0 &&
+        effects->source_effect_hash != 0u;
+}
+
 /* c_hero.cpp::calc_player_weight must consume the same authenticated item
  * graph as New Game, including the recursive DB9 branch in c_item.cpp. The
  * selected DOS party provides the direct roots; a real DB9 possession chain
@@ -5254,7 +5349,7 @@ int main(void) {
                 trace_ok = visit->type < DM2_V1_RECORD_POOL_COUNT &&
                     visit->x >= 0 && visit->x < (int16_t)scan->width &&
                     visit->y >= 0 && visit->y < (int16_t)scan->height &&
-                    record != NULL && visit->record_size >= 2u &&
+                    record != NULL && visit->record_size >= 4u &&
                     visit->word2 == ((uint16_t)record[2] |
                         ((uint16_t)record[3] << 8)) &&
                     dm2_v1_record_pool_next_link(
@@ -5265,6 +5360,9 @@ int main(void) {
             expect_true(trace_ok && trace_type_total == scan->record_count,
                 "DM2 LOAD_LOCALLEVEL_DYN map scan retains every ordered mutable record-pool visit");
         }
+        expect_true(dm2_test_local_dyn_record_effects_match_source(
+                        profile_runtime_candidate),
+            "DM2 LOAD_LOCALLEVEL_DYN retains source DB2 scratch marks and DB3 mirror selectors");
     }
     memset(&runtime_session_candidate, 0, sizeof(runtime_session_candidate));
     runtime_candidate_source_hash_before = profile_new_game_owner &&

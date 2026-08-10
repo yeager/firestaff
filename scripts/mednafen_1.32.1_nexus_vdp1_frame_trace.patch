@@ -1,12 +1,14 @@
 --- src/ss/vdp1.h
 +++ src/ss/vdp1.h
-@@ -50,1 +50,2 @@
- void FirestaffCaptureRaw(void *file);
+@@ -52,1 +52,2 @@
+-void FirestaffCaptureRaw(void *file);
++void FirestaffCaptureRaw(void *file);
 +void FirestaffTraceVramWriteFrame(unsigned frame);
- //
 --- src/ss/vdp1.cpp
 +++ src/ss/vdp1.cpp
-@@ -1255,1 +1255,15 @@
+@@ -1255,2 +1255,16 @@
+-static void FirestaffTraceVramWriterCode(uint32 address)
+-{
 +void FirestaffTraceVramWriteFrame(unsigned frame)
 +{
 + const char *path = getenv("FIRESTAFF_NEXUS_TRACE_VDP1_WRITES");
@@ -21,7 +23,8 @@
 + fflush(FirestaffVramWriteTraceFile);
 +}
 +
- static void FirestaffTraceVramWriterCode(uint32 address)
++static void FirestaffTraceVramWriterCode(uint32 address)
++{
 @@ -1321,10 +1321,10 @@
   FirestaffTraceVramWriterCode(address);
   FirestaffTraceVdp1Snapshot(address);
