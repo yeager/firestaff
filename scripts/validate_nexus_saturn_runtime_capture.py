@@ -15,8 +15,10 @@ from pathlib import Path
 
 
 RUNTIME_MAGIC = b"FIRESTAFF_NEXUS_SATURN_RUNTIME_CAPTURE_V1\n"
+MDFN_RUNTIME_MAGIC = b"MDFN_SS_SATURN_RUNTIME_CAPTURE_V1\n"
 VDP1_MAGIC = b"FIRESTAFF_NEXUS_SATURN_VDP1_RAW_V1\n"
 VDP1_MAGIC_V2 = b"FIRESTAFF_NEXUS_SATURN_VDP1_RAW_V2\n"
+VDP1_MAGIC_MDFN = b"VDP1_RAW\n"
 VDP2_MAGIC = b"VDP2_RAW\n"
 # VDP1::FirestaffCaptureRaw() writes VRAM and both framebuffers.  The
 # framebuffer selector is already represented by the V2 state line; the
@@ -31,10 +33,15 @@ VDP1_STATE_RE = re.compile(
 
 
 def validate(blob: bytes, required_frames: int) -> tuple[int, list[int]]:
-    if not blob.startswith(RUNTIME_MAGIC):
+    runtime_magic = next(
+        (magic for magic in (RUNTIME_MAGIC, MDFN_RUNTIME_MAGIC)
+         if blob.startswith(magic)),
+        None,
+    )
+    if runtime_magic is None:
         raise ValueError("missing runtime capture magic")
 
-    offset = len(RUNTIME_MAGIC)
+    offset = len(runtime_magic)
     frames: list[int] = []
     while offset < len(blob):
         marker = f"frame={len(frames)}\n".encode("ascii")
@@ -42,7 +49,9 @@ def validate(blob: bytes, required_frames: int) -> tuple[int, list[int]]:
             raise ValueError(f"invalid frame marker at offset {offset}")
         frames.append(offset)
         offset += len(marker)
-        if not (blob.startswith(VDP1_MAGIC, offset) or blob.startswith(VDP1_MAGIC_V2, offset)):
+        if not (blob.startswith(VDP1_MAGIC, offset) or
+                blob.startswith(VDP1_MAGIC_V2, offset) or
+                blob.startswith(VDP1_MAGIC_MDFN, offset)):
             raise ValueError(f"missing VDP1 marker for frame {len(frames) - 1}")
         if blob.startswith(VDP1_MAGIC_V2, offset):
             offset += len(VDP1_MAGIC_V2)
@@ -50,8 +59,10 @@ def validate(blob: bytes, required_frames: int) -> tuple[int, list[int]]:
             if state_end < 0 or not blob.startswith(b"state=", offset):
                 raise ValueError(f"missing VDP1 state line for frame {len(frames) - 1}")
             offset = state_end + 1
-        else:
+        elif blob.startswith(VDP1_MAGIC, offset):
             offset += len(VDP1_MAGIC)
+        else:
+            offset += len(VDP1_MAGIC_MDFN)
         offset += VDP1_PAYLOAD_BYTES
         # Early V2 captures appended the draw-buffer selector after the fixed
         # VDP1 payload. It is redundant metadata, not part of the VDP1 image.

@@ -412,6 +412,16 @@ payload. V1 witnesses remain readable. The state line is an observation of
 the emulator's VDP1 model, not by itself proof that a particular MENU.BPK,
 DGN, HUD or viewport record owns the command stream.
 
+### Generic Mednafen capture handoff
+
+The upstream review candidate on the external disk uses the neutral markers
+`MDFN_SS_SATURN_RUNTIME_CAPTURE_V1` and `VDP1_RAW`. Firestaff's transport
+reader accepts those markers as well as the historical Firestaff markers. The
+payload order is unchanged: VDP1 VRAM, both VDP1 framebuffers, the optional
+draw-buffer byte, then VDP2 registers, VRAM and CRAM. This is intentionally a
+transport compatibility boundary only; generic Mednafen output still has no
+Nexus asset owner and therefore cannot pass semantic admission on its own.
+
 `scripts/analyze_nexus_vdp1_command_window.py` can then inspect the bounded
 record window ending at the captured `COPR`. It reports raw command words and
 requires an observed END record when requested. Its output is still a state

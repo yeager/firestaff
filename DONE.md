@@ -13222,3 +13222,18 @@ not invent names or unlock T900 equipment semantics.
 Bound category-4 live-creature materialization to the four health words owned
 by the real Track 02 monster record. Verified against the US/JP dungeon loader
 and production source-combat tests.
+
+# Nexus: bind generic Mednafen Saturn capture (2026-08-10)
+
+- ✅ Skapade `/Volumes/Extern-disk/mednafen-nexus-upstream-pr-v1` med en
+  Firestaff-/Nexus-oberoende VDP1/VDP2-capturekandidat och dokumenterade
+  layouten i `Documentation/ss_capture.txt`.
+- ✅ Patchen appliceras rent mot en ren Mednafen-källa; `vdp1.o` och `vdp2.o`
+  kompilerar med ordinarie varningsflaggor.
+- ✅ Nexus transportläsare och Python-validator accepterar både historiska
+  Firestaff-markörer och `MDFN_SS_SATURN_RUNTIME_CAPTURE_V1`/`VDP1_RAW`.
+  Semantisk admission förblir blockerad utan retail asset-/consumer-proveniens.
+- ✅ Verifierat: `test_nexus_v1_saturn_runtime_capture`,
+  `test_nexus_v1_vdp2_runtime_tilemap`,
+  `test_nexus_v1_vdp1_capture_compositor` och
+  `test_nexus_v1_vdp1_dgn_material_resolver` passerar.

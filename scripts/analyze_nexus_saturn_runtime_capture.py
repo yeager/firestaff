@@ -13,14 +13,23 @@ import hashlib
 from pathlib import Path
 
 from validate_nexus_saturn_runtime_capture import (
+    MDFN_RUNTIME_MAGIC,
     RUNTIME_MAGIC,
     VDP1_MAGIC,
     VDP1_MAGIC_V2,
+    VDP1_MAGIC_MDFN,
     VDP1_PAYLOAD_BYTES,
     VDP2_MAGIC,
     VDP2_PAYLOAD_BYTES,
     validate,
 )
+
+
+def runtime_magic_for(blob: bytes) -> bytes:
+    for magic in (RUNTIME_MAGIC, MDFN_RUNTIME_MAGIC):
+        if blob.startswith(magic):
+            return magic
+    raise ValueError("missing runtime capture magic")
 
 
 VDP1_REGIONS = (
@@ -39,7 +48,7 @@ VDP2_REGIONS = (
 def frame_regions(blob: bytes, required_frames: int) -> tuple[list[dict[str, bytes]], list[str]]:
     """Extract named raw regions after the shared validator has checked layout."""
     validate(blob, required_frames)
-    offset = len(RUNTIME_MAGIC)
+    offset = len(runtime_magic_for(blob))
     frames: list[dict[str, bytes]] = []
     states: list[str] = []
     for frame_index in range(required_frames):
@@ -47,7 +56,9 @@ def frame_regions(blob: bytes, required_frames: int) -> tuple[list[dict[str, byt
         if not blob.startswith(marker, offset):
             raise ValueError(f"invalid frame marker at offset {offset}")
         offset += len(marker)
-        if not (blob.startswith(VDP1_MAGIC, offset) or blob.startswith(VDP1_MAGIC_V2, offset)):
+        if not (blob.startswith(VDP1_MAGIC, offset) or
+                blob.startswith(VDP1_MAGIC_V2, offset) or
+                blob.startswith(VDP1_MAGIC_MDFN, offset)):
             raise ValueError(f"missing VDP1 marker for frame {frame_index}")
         if blob.startswith(VDP1_MAGIC_V2, offset):
             offset += len(VDP1_MAGIC_V2)
@@ -56,8 +67,10 @@ def frame_regions(blob: bytes, required_frames: int) -> tuple[list[dict[str, byt
                 raise ValueError(f"missing VDP1 state line for frame {frame_index}")
             states.append(blob[offset:state_end].decode("ascii"))
             offset = state_end + 1
-        else:
+        elif blob.startswith(VDP1_MAGIC, offset):
             offset += len(VDP1_MAGIC)
+        else:
+            offset += len(VDP1_MAGIC_MDFN)
             states.append("state=legacy-v1-unavailable")
         vdp1 = blob[offset : offset + VDP1_PAYLOAD_BYTES]
         offset += VDP1_PAYLOAD_BYTES
@@ -94,9 +107,7 @@ def frame_regions_vdp1(blob: bytes, required_frames: int) -> tuple[list[dict[str
     command/material ownership, but must not assume VDP2 registers, VRAM or
     CRAM exist in a V1 witness.
     """
-    if not blob.startswith(RUNTIME_MAGIC):
-        raise ValueError("missing runtime capture magic")
-    offset = len(RUNTIME_MAGIC)
+    offset = len(runtime_magic_for(blob))
     frames: list[dict[str, bytes]] = []
     states: list[str] = []
     for frame_index in range(required_frames):
@@ -114,6 +125,9 @@ def frame_regions_vdp1(blob: bytes, required_frames: int) -> tuple[list[dict[str
         elif blob.startswith(VDP1_MAGIC, offset):
             offset += len(VDP1_MAGIC)
             states.append("state=legacy-v1-unavailable")
+        elif blob.startswith(VDP1_MAGIC_MDFN, offset):
+            offset += len(VDP1_MAGIC_MDFN)
+            states.append("state=mednafen-raw-unavailable")
         else:
             raise ValueError(f"missing VDP1 marker for frame {frame_index}")
         vdp1 = blob[offset:offset + VDP1_PAYLOAD_BYTES]

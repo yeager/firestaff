@@ -125,6 +125,44 @@ int main(void)
     }
     free(blob);
 
+    {
+        const size_t generic_size =
+            (sizeof(NEXUS_V1_SATURN_MDFN_RUNTIME_CAPTURE_MAGIC) - 1U) +
+            strlen("frame=0\n") +
+            (sizeof(NEXUS_V1_SATURN_VDP1_RAW_MAGIC_MDFN) - 1U) +
+            NEXUS_V1_SATURN_VDP1_PAYLOAD_BYTES +
+            (sizeof(NEXUS_V1_SATURN_VDP2_RAW_MAGIC) - 1U) +
+            NEXUS_V1_SATURN_VDP2_PAYLOAD_BYTES;
+        uint8_t *generic = (uint8_t *)calloc(1U, generic_size);
+        size_t generic_offset = 0U;
+        if (!generic) return 1;
+        generic_offset = append_bytes(
+            generic, generic_offset,
+            NEXUS_V1_SATURN_MDFN_RUNTIME_CAPTURE_MAGIC,
+            sizeof(NEXUS_V1_SATURN_MDFN_RUNTIME_CAPTURE_MAGIC) - 1U);
+        generic_offset = append_bytes(generic, generic_offset,
+                                      "frame=0\n", strlen("frame=0\n"));
+        generic_offset = append_bytes(
+            generic, generic_offset, NEXUS_V1_SATURN_VDP1_RAW_MAGIC_MDFN,
+            sizeof(NEXUS_V1_SATURN_VDP1_RAW_MAGIC_MDFN) - 1U);
+        generic[generic_offset] = 0x5aU;
+        generic_offset += NEXUS_V1_SATURN_VDP1_PAYLOAD_BYTES;
+        generic_offset = append_bytes(
+            generic, generic_offset, NEXUS_V1_SATURN_VDP2_RAW_MAGIC,
+            sizeof(NEXUS_V1_SATURN_VDP2_RAW_MAGIC) - 1U);
+        generic_offset += NEXUS_V1_SATURN_VDP2_PAYLOAD_BYTES;
+        if (generic_offset != generic_size ||
+            !nexus_v1_saturn_runtime_capture_frame(
+                generic, generic_size, 0U, &receipt) || !receipt.valid ||
+            receipt.vdp1_state_present || !receipt.vdp1_vram ||
+            receipt.vdp1_draw_which || !receipt.semantic_admission_blocked) {
+            free(generic);
+            fprintf(stderr, "FAIL: generic Mednafen raw frame parser\n");
+            return 1;
+        }
+        free(generic);
+    }
+
     if (external) {
         uint8_t *external_data = NULL;
         size_t external_size = 0U;

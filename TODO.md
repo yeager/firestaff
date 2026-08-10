@@ -4902,6 +4902,12 @@ authenticated BPK). The remaining work is a Saturn executable or capture
   generator och kör den med instrumenterad build; en state som redan har
   laddat allt utan CD-event räcker inte för semantic handoff.
 - BIOS och spelmedia ska stanna lokalt/extern disk och får inte läggas i git.
+
+# Nexus: upstreama generisk Saturn-capture
+
+- ⏳ Mednafen-reviewkandidaten på extern disk fångar nu VDP1/VDP2-råstate med
+  neutrala markörer. Nästa steg är maintainer-granskning av inställnings-
+  gränssnittet; Firestaffs asset-/consumer-gates ska förbli separata.
 # Theron: bound category-4 source group materialization
 
 The static source-monster bridge now uses the authenticated four-health-word

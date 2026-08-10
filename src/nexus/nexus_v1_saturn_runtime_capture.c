@@ -111,24 +111,36 @@ int nexus_v1_saturn_runtime_capture_frame(
     Nexus_V1_SaturnRuntimeCaptureFrameReceipt receipt;
     const size_t runtime_magic =
         sizeof(NEXUS_V1_SATURN_RUNTIME_CAPTURE_MAGIC) - 1U;
+    const size_t mednafen_runtime_magic =
+        sizeof(NEXUS_V1_SATURN_MDFN_RUNTIME_CAPTURE_MAGIC) - 1U;
     const size_t vdp1_magic_v1 =
         sizeof(NEXUS_V1_SATURN_VDP1_RAW_MAGIC_V1) - 1U;
     const size_t vdp1_magic_v2 =
         sizeof(NEXUS_V1_SATURN_VDP1_RAW_MAGIC_V2) - 1U;
+    const size_t vdp1_magic_mednafen =
+        sizeof(NEXUS_V1_SATURN_VDP1_RAW_MAGIC_MDFN) - 1U;
     const size_t vdp2_magic = sizeof(NEXUS_V1_SATURN_VDP2_RAW_MAGIC) - 1U;
     size_t offset;
     unsigned int current_frame = 0U;
+    int firestaff_magic;
+    int mednafen_magic_present;
 
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
     receipt.semantic_admission_blocked = 1;
-    if (!capture_bytes || capture_byte_count < runtime_magic ||
+    firestaff_magic = capture_bytes && capture_byte_count >= runtime_magic &&
         memcmp(capture_bytes, NEXUS_V1_SATURN_RUNTIME_CAPTURE_MAGIC,
-               runtime_magic) != 0) {
+               runtime_magic) == 0;
+    mednafen_magic_present = capture_bytes &&
+        capture_byte_count >= mednafen_runtime_magic &&
+        memcmp(capture_bytes, NEXUS_V1_SATURN_MDFN_RUNTIME_CAPTURE_MAGIC,
+               mednafen_runtime_magic) == 0;
+    if (!capture_bytes || (!firestaff_magic && !mednafen_magic_present)) {
         *out_receipt = receipt;
         return 0;
     }
-    offset = runtime_magic;
+    offset = mednafen_magic_present
+        ? mednafen_runtime_magic : runtime_magic;
     while (offset < capture_byte_count) {
         char frame_marker[32];
         size_t marker_size;
@@ -173,6 +185,12 @@ int nexus_v1_saturn_runtime_capture_frame(
                           NEXUS_V1_SATURN_VDP1_RAW_MAGIC_V1,
                           vdp1_magic_v1) == 0) {
             offset += vdp1_magic_v1;
+        } else if (has_bytes(capture_bytes, capture_byte_count, offset,
+                             vdp1_magic_mednafen) &&
+                   memcmp(capture_bytes + offset,
+                          NEXUS_V1_SATURN_VDP1_RAW_MAGIC_MDFN,
+                          vdp1_magic_mednafen) == 0) {
+            offset += vdp1_magic_mednafen;
         } else {
             *out_receipt = receipt;
             return 0;
