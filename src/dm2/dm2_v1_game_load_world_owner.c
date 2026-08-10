@@ -581,7 +581,8 @@ int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
     if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
         !owner->caii_static_animation.valid || !owner->caii_slots.valid ||
         !owner->caii_rng_initialized || !owner->caii_map_candidates ||
-        !owner->timer_entries || !owner->timer_indices) return 0;
+        !owner->timer_entries || !owner->timer_indices ||
+        owner->caii_dynamic.valid) return 0;
 
     receipt.valid = 1;
 
@@ -776,6 +777,7 @@ int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
         hash, receipt.noise_queue_count);
     if (receipt.source_hash == 0u) goto rollback;
     receipt.valid = 1;
+    owner->caii_dynamic = receipt;
     if (out_receipt) *out_receipt = receipt;
     free(indices_snapshot);
     free(timers_snapshot);
@@ -1682,17 +1684,17 @@ int dm2_v1_game_load_runtime_session_candidate_init(
         source->timer_queue.entries != source->timer_entries ||
         source->timer_queue.indices != source->timer_indices ||
         source->timer_queue.max_timers != (int16_t)source->timer_capacity ||
-        !source->caii_static_animation.valid ||
+        !source->caii_static_animation.valid || !source->caii_dynamic.valid ||
+        source->caii_dynamic.dynamic_candidate_count !=
+            source->caii_map_receipt.dynamic_candidate_count ||
+        source->caii_dynamic.allocated_slot_count !=
+            source->caii_dynamic.dynamic_candidate_count ||
+        source->caii_dynamic.think_timer_count !=
+            source->caii_dynamic.dynamic_candidate_count ||
+        source->caii_dynamic.source_hash == 0u ||
         !source->caii_slots.valid || source->caii_slots.capacity <= 0 ||
         !source->caii_slots.slots || !source->caii_rng_initialized ||
         !source->sound_owner.valid || !source->sound_owner.runtime_queue_initialized) {
-        return 0;
-    }
-    /* c_1c9a.cpp::DM2_ALLOC_CAII_TO_CREATURE reaches 0a48 for every
-     * authentic dynamic candidate. The current owner intentionally rejects
-     * that branch before mutation; a static-only reset receipt is therefore
-     * not a GAME_LOAD session and cannot be cloned as one. */
-    if (source->caii_map_receipt.dynamic_candidate_count != 0u) {
         return 0;
     }
     if (dm2_v1_dungeon_load(&candidate.dungeon, source->dungeon.raw_data,

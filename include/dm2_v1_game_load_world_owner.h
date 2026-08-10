@@ -392,6 +392,9 @@ typedef struct {
     DM2_V1_DropRng caii_rng;
     int caii_rng_initialized;
     DM2_V1_GameLoadCaiiStaticReceipt caii_static_animation;
+    /* Published only after every dynamic DB4 candidate has completed the
+     * shared slot/timer/0a48/SOUND9 transaction. */
+    DM2_V1_GameLoadCaiiDynamicReceipt caii_dynamic;
     /* Read-only local-creature contexts for each real dynamic candidate.
      * They are the source data predecessor of 0a48, not an active s350 or a
      * permission to allocate CAII slots. */

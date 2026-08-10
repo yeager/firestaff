@@ -18,6 +18,10 @@
   källans map-gated no-op; ingen reservsignal, PCM-konvertering eller
   värdljudkö skapas. Varje oägd animation-, sample- eller occlusionväg
   återställer hela transaktionen och publicerar inte M11-sessionen.
+- ✅ Den privata `GameLoadRuntimeSessionCandidate` kan nu enbart byggas efter
+  denna kompletta dynamiska transaktion och klonar då aktuella DB-pooler,
+  CAII-slottar, timerheap och SOUND9-data på separata RAM-adresser. Den är
+  fortfarande inte en publicerad spel- eller M11-session.
 
 # Theron: produktionsljud hålls explicit fail-closed (2026-08-10)
 - ✅ Produktionskontraktet dokumenterar nu att ett giltigt ljud-ID inte är en
