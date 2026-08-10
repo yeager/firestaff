@@ -3171,7 +3171,8 @@ static int m11_csb_fmtowns_viewport_graphic_provider(
         F31_M633_FIRST_DOOR_SET = 246,
         F31_M615_FIRST_WALL_ORNAMENT = 259,
         F31_M616_FIRST_FLOOR_ORNAMENT = 385,
-        F31_M649_DOOR_MASK_DESTROYED = 439
+        F31_M649_DOOR_MASK_DESTROYED = 439,
+        F31_M634_FIRST_DOOR_BUTTON = 453
     };
     M11_GameViewState *state = (M11_GameViewState *)user_data;
     const CSB_V1_BootProfile *profile;
@@ -3220,6 +3221,15 @@ static int m11_csb_fmtowns_viewport_graphic_provider(
         source_graphic = (unsigned int)graphic_index;
     } else if (graphic_index >= F31_M616_FIRST_FLOOR_ORNAMENT &&
                graphic_index < F31_M649_DOOR_MASK_DESTROYED) {
+        source_graphic = (unsigned int)graphic_index;
+    } else if (graphic_index >= F31_M649_DOOR_MASK_DESTROYED &&
+               graphic_index <= F31_M634_FIRST_DOOR_BUTTON) {
+        /* ReDMCSB DEFS.H MEDIA720_F31E_F31J: M649=439 (destroyed and
+         * thieves-eye masks), M617=441 (twelve door ornaments), and
+         * M634=453 (door button).  F0111/F0110 consume these native records
+         * after F0128 reaches a door; rejecting them made an F31 dungeon
+         * frame fail closed despite the authenticated IMG2 source being
+         * available. */
         source_graphic = (unsigned int)graphic_index;
     } else {
         return 0;

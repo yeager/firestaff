@@ -1049,6 +1049,44 @@ int main(void)
     {
         const CSB_V1_BootProfile *live_profile =
             (const CSB_V1_BootProfile *)view.csbBootProfile;
+        uint8_t *graphics = NULL;
+        uint8_t *expected = NULL;
+        size_t graphics_size = 0u;
+        unsigned int graphic;
+
+        /* F31E/F31J MEDIA720 M649..M634 is the native F0111/F0110 door
+         * family: destroyed/thieves-eye masks, twelve ornaments and the
+         * button.  It must remain IMG2-owned rather than falling back to a
+         * PC graphic table when a live F0128 frame encounters a door. */
+        if (live_profile) {
+            graphics = load_file(live_profile->graphics_path, &graphics_size);
+            expected = (uint8_t *)malloc(640u * 400u);
+        }
+        for (graphic = 439u; graphics && expected && graphic <= 453u;
+             ++graphic) {
+            const M11_AssetSlot *asset =
+                M11_AssetLoader_Load(&view.assetLoader, graphic);
+            CSB_V1_FmtownsItemDecodeReceipt receipt;
+
+            memset(&receipt, 0, sizeof(receipt));
+            CHECK(asset && asset->loaded && asset->pixels &&
+                      csb_v1_fmtowns_graphics_decode_item(
+                          graphics, graphics_size, graphic, expected,
+                          640u * 400u, &receipt) && receipt.valid &&
+                      receipt.is_image && asset->width == receipt.width &&
+                      asset->height == receipt.height &&
+                      memcmp(asset->pixels, expected,
+                             receipt.pixel_count) == 0,
+                  "F31 door material is byte-identical to genuine GRAPHICS.DAT IMG2");
+        }
+        CHECK(graphics && expected,
+              "F31 real GRAPHICS.DAT opens for native door-material verification");
+        free(expected);
+        free(graphics);
+    }
+    {
+        const CSB_V1_BootProfile *live_profile =
+            (const CSB_V1_BootProfile *)view.csbBootProfile;
         int prior_direction = live_profile ? live_profile->runtime.party_dir : -1;
 
         /* CHTWE/CHTWJ has now returned through STARTUP1.C into the ordinary
