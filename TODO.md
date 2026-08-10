@@ -107,9 +107,10 @@
   källbunden konsument i samma körning innan RNG/spawn får påverka Theron.
 
 - ⏳ Nexus completion accounting is now split into implementation coverage and
-  gated production admission. The corrected table arithmetic is 39,2 %
-  overall (`235/600`) and 30,5 % for the prioritized startup→menu→HUD/viewport
-  chain (`50×0,30 + 35×0,35 + 15×0,35`);
+  gated production admission. The current six-area gate table is 40,8 % on
+  average (`21/48` named gates; the arithmetic mean is the authoritative
+  overall figure) and 33,1 % for the prioritized startup→menu→HUD/viewport
+  chain (`50,0×0,30 + 37,5×0,35 + 14,3×0,35`);
   production admission remains 0 % until a matching-region Saturn witness
   binds the real consumers. See `docs/NEXUS_COMPLETION.md`.
 
