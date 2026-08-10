@@ -253,10 +253,15 @@ int theron_v1_drop_loot(Theron_V1_World *world,
 
 /* ── Sound / audio trigger interface ────────────────────────────── */
 /*
- * Sound backend is platform-specific.  Each platform provides:
- *   int firestaff_tqr_play_sound(Theron_SoundID id);
- * If not provided, the production source bridge returns -1/0 and never
- * claims that an unproven gameplay sound was played.
+ * Sound backend is platform-specific.  The production bridge returns 0
+ * only after a source-owned ADPCM/event consumer has been authenticated;
+ * it returns -1 for every ID until that route is proven.  A valid enum
+ * value is therefore not evidence that the corresponding original sample
+ * exists or that a gameplay event owns it.
+ *
+ * Source lock: THQUEST.ASM sound dispatch remains capture-gated; the
+ * authenticated ADPCM FIFO->RAM trace proves transport only, not event
+ * selection, sample lookup, or playback ownership.
  */
 int theron_v1_play_sound(Theron_SoundID id);
 int theron_v1_sound_is_valid(Theron_SoundID id);

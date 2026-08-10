@@ -1,3 +1,10 @@
+# Theron: produktionsljud hålls explicit fail-closed (2026-08-10)
+- ✅ Produktionskontraktet dokumenterar nu att ett giltigt ljud-ID inte är en
+  autentiserad sample- eller händelsebindning. Alla 26 enumvärden verifieras i
+  produktionsregressionen som ogiltiga och blockerade tills originalets
+  ADPCM/event-consumer har fångats byte- och runtimebundet. Fixture-implementa-
+  tionen är fortsatt isolerad från `firestaff_theron`.
+
 # Theron: US-rosterkodoner avkodas till textconsumer (2026-08-10)
 - ✅ US Track 02:s autentiserade 5-bitars/little-endian kodonstream avkodas nu
   faktiskt till rostersträngar innan startup-receiptet publicerar dem. Den

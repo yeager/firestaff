@@ -175,10 +175,17 @@ int main(void) {
           "a killed static source group stays retired without captured respawn semantics");
     CHECK(theron_v1_drop_loot(&world, 1, 1, 1) == -1,
           "production drop publication stays blocked");
-    CHECK(theron_v1_sound_is_valid(THERON_SOUND_SWORD_SWING) == 0,
-          "unbound sound record stays invalid");
-    CHECK(theron_v1_play_sound(THERON_SOUND_SWORD_SWING) == -1,
-          "unbound sound trigger reports blocked instead of false success");
+    {
+        int sound_id;
+        for (sound_id = THERON_SOUND_NONE;
+             sound_id < THERON_SOUND_COUNT;
+             ++sound_id) {
+            CHECK(theron_v1_sound_is_valid((Theron_SoundID)sound_id) == 0,
+                  "every unbound production sound ID stays invalid");
+            CHECK(theron_v1_play_sound((Theron_SoundID)sound_id) == -1,
+                  "every unbound production sound trigger stays blocked");
+        }
+    }
     CHECK(strstr(theron_v1_combat_source_evidence(), "regular") != NULL &&
               strstr(theron_v1_combat_source_evidence(), "blocked") != NULL,
           "production evidence names the narrow blocked regular-spawn boundary");
