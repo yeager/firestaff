@@ -173,7 +173,7 @@ def main() -> int:
     loop_start, loop_end, loop = enclosing_range(
         texts["src/engine/main_loop_m11.c"],
         "else if (result == M11_GAME_INPUT_REDRAW) {",
-        "if (gameView.world.gameTick != tickBeforeInput) {",
+        "if (gameView.world.gameTick != tickBeforeInput ||",
         "Firestaff main loop input redraw block",
     )
     require_order(loop, [

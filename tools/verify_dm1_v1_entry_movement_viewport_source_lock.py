@@ -21,7 +21,7 @@ DEFAULT_OUT = ROOT / "parity-evidence/verification/dm1_v1_entry_movement_viewpor
 DM1_DUNGEON_DAT = Path(
     "~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT"
 ).expanduser()
-ROUTE_EVIDENCE = ROOT / "verification-m11/capture-route-state/pass76_capture_route_state_probe.json"
+ROUTE_EVIDENCE = ROOT / "parity-evidence/verification/pass76_capture_route_state_probe.json"
 TURN_VIEWPORT_EVIDENCE = ROOT / "parity-evidence/verification/pass127_turn_viewport_orientation_probe.json"
 
 
@@ -317,17 +317,15 @@ def verify_route_evidence() -> list[dict[str, Any]]:
     doc = json.loads(ROUTE_EVIDENCE.read_text(encoding="utf-8"))
     snapshots = {row["capture"]: row for row in doc.get("snapshots", [])}
     # Canonical DM1 V1 layout (LOADSAVE.C MEDIA529 fix in
-    # memory_dungeon_dat_pc34_compat.c): from start (1,3,SOUTH) the only
-    # walkable forward step is south to (1,4); west (0,3) and east (2,3)
-    # are walls.  The capture-route probe rotates back to SOUTH between
-    # snapshots 02 and 03 so the recorded forward step lands on (1,4,SOUTH)
-    # and exercises a real movement tick.  Tick advances by one for the
-    # turn-right at step 02, by one for the silent rotate-back-to-SOUTH
-    # before step 03, and by one for the forward step itself.
+    # memory_dungeon_dat_pc34_compat.c): the party spawns at (1,3,SOUTH),
+    # turn-right leaves it facing WEST at (1,3), and the recorded forward
+    # command in step 03 lands on the tile immediately west (0,3) with
+    # direction=WEST unchanged.  Tick advances by one per accepted command
+    # (turn-right, then forward).
     expected = [
         ("01_ingame_start_latest", "start", {"mapIndex": 0, "mapX": 1, "mapY": 3, "direction": 2, "tick": 0}),
         ("02_ingame_turn_right_latest", "right", {"mapIndex": 0, "mapX": 1, "mapY": 3, "direction": 3, "tick": 1}),
-        ("03_ingame_move_forward_latest", "up", {"mapIndex": 0, "mapX": 1, "mapY": 4, "direction": 2, "tick": 3}),
+        ("03_ingame_move_forward_latest", "up", {"mapIndex": 0, "mapX": 0, "mapY": 3, "direction": 3, "tick": 2}),
     ]
     checks: list[dict[str, Any]] = []
     for capture, action, fields in expected:
@@ -340,7 +338,7 @@ def verify_route_evidence() -> list[dict[str, Any]]:
         if row.get("action") != action or row.get("result") != 1:
             raise SystemExit(f"{capture} action/result mismatch: {row}")
         checks.append({
-            "citation": f"verification-m11/capture-route-state/pass76_capture_route_state_probe.json:{capture}",
+            "citation": f"parity-evidence/verification/pass76_capture_route_state_probe.json:{capture}",
             "verified": True,
             "observed": {k: row[k] for k in ["action", "result", "tick", "mapIndex", "mapX", "mapY", "direction"]},
             "why": "Deterministic Firestaff route evidence matches the ReDMCSB-derived entry/turn/relative-step contract.",

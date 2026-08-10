@@ -653,12 +653,12 @@
       "citation": "parity-evidence/verification/pass76_capture_route_state_probe.json:03_ingame_move_forward_latest",
       "observed": {
         "action": "up",
-        "direction": 2,
+        "direction": 3,
         "mapIndex": 0,
-        "mapX": 1,
-        "mapY": 4,
+        "mapX": 0,
+        "mapY": 3,
         "result": 1,
-        "tick": 3
+        "tick": 2
       },
       "verified": true,
       "why": "Deterministic Firestaff route evidence matches the ReDMCSB-derived entry/turn/relative-step contract."
