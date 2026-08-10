@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import re
 from pathlib import Path
 
 from analyze_nexus_saturn_runtime_capture import frame_regions
@@ -54,12 +55,51 @@ def find_span(haystack: bytes, source: bytes) -> tuple[int, int]:
     return exact, swapped
 
 
+def replay_write_trace(path: Path) -> tuple[bytes, bytes, int]:
+    """Reconstruct the bounded VDP2 VRAM/CRAM write images.
+
+    The instrumented producer records Saturn bus addresses, so the trace is
+    kept separate from the raw end-of-frame image.  The reconstruction is a
+    byte observation only; it does not infer DMA ownership or write timing.
+    """
+    vram = bytearray(0x40000)
+    cram = bytearray(0x1000)
+    writes = 0
+    pattern = re.compile(
+        r"^area=(?P<area>\w+) addr=0x(?P<addr>[0-9a-fA-F]+) "
+        r"size=(?P<size>[0-9]+) value=0x(?P<value>[0-9a-fA-F]+)"
+    )
+    for line in path.read_text(encoding="ascii").splitlines():
+        match = pattern.match(line)
+        if not match or match.group("size") != "2":
+            continue
+        area = match.group("area")
+        address = int(match.group("addr"), 16)
+        value = int(match.group("value"), 16)
+        if area == "vram":
+            target, base = vram, 0x50000
+        elif area == "cram":
+            target, base = cram, 0x100000
+        else:
+            continue
+        offset = address - base
+        if offset < 0 or offset + 2 > len(target):
+            continue
+        target[offset:offset + 2] = value.to_bytes(2, "big")
+        writes += 1
+    return bytes(vram), bytes(cram), writes
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path)
     parser.add_argument("--data-dir", type=Path, required=True)
     parser.add_argument("--frame", type=int, default=0)
     parser.add_argument("--capture-frames", type=int, default=None)
+    parser.add_argument(
+        "--vdp2-write-trace", type=Path,
+        help="optional same-run VDP2 bus-write trace to replay alongside the frame",
+    )
     args = parser.parse_args()
     if args.frame < 0:
         print("NEXUS_VDP2_CHAR_SOURCE_INVALID: negative frame")
@@ -90,6 +130,17 @@ def main() -> int:
     print(f"frame={args.frame} register_byte_order={byte_order} "
           f"bgon=0x{bgon:04x} chctla=0x{chctla:04x} pncn1=0x{pncn1:04x}")
 
+    trace_vram = trace_cram = None
+    if args.vdp2_write_trace:
+        try:
+            trace_vram, trace_cram, write_count = replay_write_trace(
+                args.vdp2_write_trace)
+        except (OSError, ValueError) as error:
+            print(f"NEXUS_VDP2_CHAR_SOURCE_INVALID: write trace: {error}")
+            return 1
+        print(f"vdp2_write_trace_writes={write_count} "
+              "vdp2_write_trace_session=unbound")
+
     vram_matches = 0
     cram_matches = 0
     for name, source in regions.items():
@@ -98,12 +149,20 @@ def main() -> int:
             vram_matches += 1
         print(f"vram_{name}_exact=0x{exact:x} vram_{name}_word_swap=0x{swapped:x} "
               f"bytes={len(source)}")
+        if trace_vram is not None:
+            exact, swapped = find_span(trace_vram, source)
+            print(f"trace_vram_{name}_exact=0x{exact:x} "
+                  f"trace_vram_{name}_word_swap=0x{swapped:x}")
         if name == "palette":
             exact, swapped = find_span(cram, source)
             if exact >= 0 or swapped >= 0:
                 cram_matches += 1
             print(f"cram_palette_exact=0x{exact:x} "
                   f"cram_palette_word_swap=0x{swapped:x} bytes={len(source)}")
+            if trace_cram is not None:
+                exact, swapped = find_span(trace_cram, source)
+                print(f"trace_cram_palette_exact=0x{exact:x} "
+                      f"trace_cram_palette_word_swap=0x{swapped:x}")
 
     print(f"font256_vram_span_matches={vram_matches}/4")
     print(f"font256_cram_palette_matches={cram_matches}/1")

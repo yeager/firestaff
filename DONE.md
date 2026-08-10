@@ -2,11 +2,14 @@
 
 - ✅ `scripts/analyze_nexus_vdp2_char_source_join.py` läser den hashverifierade
   FONT256.S2D Page/Character Generator/Palette/Attributes-korpusen och söker
-  exakta eller ordväxlade spaner i autentiserad VDP2-VRAM/CRAM.
+  exakta eller ordväxlade spaner i autentiserad VDP2-VRAM/CRAM. Verktyget kan
+  dessutom rekonstruera VDP2-VRAM/CRAM från den separata busstracen.
 - ✅ Körning mot `run-codex-j-menu-text-20260810`, frame 300/600, är reproducerbar:
-  endast Attributes-spannet matchar (`0x5584`); Page, Character Generator och
-  Palette saknar match. Därför förblir textkonsument och semantisk rendering
-  spärrade. Ingen syntetisk glyph- eller menybindning infördes.
+  104 271 VRAM/CRAM-skrivningar rekonstrueras och endast Attributes-spannet
+  matchar (`0x5584` i slutbilden, `0x2be3` i write-tracen); Page, Character
+  Generator och Palette saknar match. Trace-sessionen är inte märkt, så
+  textkonsument och semantisk rendering förblir spärrade. Ingen syntetisk
+  glyph- eller menybindning infördes.
 
 # Nexus/launcher: fullständiga namn i skanningsstatus och same-session-ljudkorridor (2026-08-10)
 
