@@ -28,6 +28,16 @@
   portrait-fältet förblir uttryckligen `UNAVAILABLE`; inga syntetiska
   porträtt, utrustningsregler eller T900-semantik har öppnats.
 
+# Theron: US-rostertext från autentisk codonström (2026-08-10)
+
+- ✅ Verifierad US/JP BIN går nu genom den hashbundna rosterkatalogen före
+  forcefield-party-init. Hostens valfria rostertext kan inte ersätta den
+  autentiska codontexten när real Track 02 används; saknad eller felaktig
+  katalog stoppar handoffen utan party-publicering.
+- ✅ Namnen når den befintliga party/HUD-textvägen utan syntetiska strängar.
+  Originalets fullständiga HuC6280-textkonsument, titlar och font-/pixelägare
+  är fortsatt separat capture-gated.
+
 # DM2: väderticks kräver GAME_LOAD-klocka (2026-08-10)
 
 - ✅ Vädertimerregressionen följer nu den faktiska runtimegränsen: utan

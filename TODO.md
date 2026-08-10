@@ -5,6 +5,11 @@
   det riktiga text-/UI-consumet är fortfarande inte bevisade; nästa media-
   capture måste binda en JP portrait-read till VDC/VCE och samma party-slot.
 
+- 🔒 US-roster-namnen binds nu från den verifierade codonströmmen före
+  forcefield-party-init. Detta bevisar Firestaffs source-textväg, inte ännu
+  originalets HuC6280-textkonsument; titlar, fontbytes och UI-placering kräver
+  samma-session text-read/consumer-capture.
+
 - 🔒 Source-bound inventoryslotbyte är nu atomiskt och flyttar både compact-ID
   och hela råa Track 02-proveniensen, men originalets equip/use/consume/stack-
   konsument är fortfarande inte fångad. Nästa T900-capture måste visa samma

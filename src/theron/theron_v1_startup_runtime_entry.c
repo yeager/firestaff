@@ -1633,6 +1633,10 @@ int theron_v1_startup_runtime_enter_from_forcefield(
     size_t receipt_cap) {
 
     Theron_V1StartupRuntimeLevelLoadContext level_load_context;
+    Theron_Track02StartupRosterNameCatalog source_roster_catalog;
+    const char *source_roster_names[THERON_STARTUP_MEDIA_ROSTER_CAPACITY];
+    const char *const *effective_roster_names = NULL;
+    int effective_roster_name_count = 0;
     Theron_StartupResult result;
     int verified_track02_request = 0;
     Theron_StartupMediaStateReceipt media_receipt;
@@ -1650,11 +1654,45 @@ int theron_v1_startup_runtime_enter_from_forcefield(
         return 0;
     }
 
+    verified_track02_request =
+        theron_v1_startup_runtime_has_verified_track02_request(
+            request->hucard_rom, request->hucard_rom_size, request->md5_hex);
+    if (verified_track02_request &&
+        (theron_v1_track02_variant_for_md5(request->md5_hex) ==
+             THERON_TRACK02_VARIANT_US_BIN ||
+         theron_v1_track02_variant_for_md5(request->md5_hex) ==
+             THERON_TRACK02_VARIANT_JP_BIN)) {
+        memset(&source_roster_catalog, 0, sizeof(source_roster_catalog));
+        if (theron_v1_track02_catalog_startup_roster_names(
+                request->hucard_rom, request->hucard_rom_size,
+                request->md5_hex, &source_roster_catalog) !=
+                THERON_TRACK02_SIGNAL_OK ||
+            source_roster_catalog.name_count == 0u ||
+            source_roster_catalog.name_count >
+                THERON_STARTUP_MEDIA_ROSTER_CAPACITY) {
+            if (out_result) out_result->result = THERON_STARTUP_ERR_NOT_READY;
+            if (receipt && receipt_cap > 0u) {
+                snprintf(receipt, receipt_cap,
+                         "Track 02 roster text admission failed; party left unchanged");
+            }
+            return 0;
+        }
+        memset(source_roster_names, 0, sizeof(source_roster_names));
+        for (size_t i = 0u; i < source_roster_catalog.name_count; ++i) {
+            source_roster_names[i] = source_roster_catalog.names[i].name;
+        }
+        effective_roster_names = source_roster_names;
+        effective_roster_name_count = (int)source_roster_catalog.name_count;
+    } else {
+        effective_roster_names = request->roster_names;
+        effective_roster_name_count = request->roster_name_count;
+    }
+
     result = theron_v1_startup_enter_forcefield_with_roster(
         flow,
         &world->party,
-        request->roster_names,
-        request->roster_name_count);
+        effective_roster_names,
+        effective_roster_name_count);
     if (result != THERON_STARTUP_OK) {
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt,
@@ -1688,11 +1726,6 @@ int theron_v1_startup_runtime_enter_from_forcefield(
     level_load_context.hucard_rom = request->hucard_rom;
     level_load_context.hucard_rom_size = request->hucard_rom_size;
     level_load_context.md5_hex = request->md5_hex;
-    verified_track02_request =
-        theron_v1_startup_runtime_has_verified_track02_request(
-            request->hucard_rom,
-            request->hucard_rom_size,
-            request->md5_hex);
     /* `enter_forcefield_with_roster()` has already replaced the fixture
      * party with source-bound roster records.  Do not clear that party here:
      * the old cleanup erased the real HP/skills/equipment immediately before
