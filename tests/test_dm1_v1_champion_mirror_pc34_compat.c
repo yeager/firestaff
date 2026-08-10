@@ -360,9 +360,14 @@ static void test_f0172_front_wall_sensor_receipt(void)
         render.backingWidth == 64 &&
             render.backingHeight == 43 &&
             render.backingTransparentColor == 10 &&
-            !render.backingPaletteMapValid,
+            /* dm1_v1_front_mirror_render_plan_pc34 applies the D2 palette
+             * override so C346's source color 5 remaps to display index 3
+             * ("brown"); this is required for the C346 champion mirror to
+             * paint the expected brown top-frame row.  The native D1
+             * ornament path leaves paletteMapValid=0 elsewhere. */
+            render.backingPaletteMapValid == 1,
         "render receipt owns C346 mirror backing material",
-        "DUNVIEW.C:3922-3928; DUNVIEW.C G0205 coord-set 5; native D1 C10 palette");
+        "DUNVIEW.C:3922-3928; DUNVIEW.C G0205 coord-set 5; D2 palette override (source 5 -> display 3)");
 
     CHECK_ANCHOR(
         DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34(
