@@ -252,7 +252,12 @@ int dm2_v1_read_record_checkcode(
             return -1;
         }
 
+        /* c_record.cpp::DM2_ALLOC_NEW_RECORD clears the record and then
+         * writes GenericRecord::w0 = OBJECT_END.  The body masks retain w0;
+         * do the same before copying the reconstructed record back. */
         memset(rec_data, 0, sizeof(rec_data));
+        rec_data[0] = 0xfeu;
+        rec_data[1] = 0xffu;
 
         /* Type-specific pre-read processing.
          * Source: sksvgame.cpp:1508-1560. */

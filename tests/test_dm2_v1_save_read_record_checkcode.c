@@ -405,6 +405,8 @@ static void test_round_trip_type5(void)
     assert(pool.count == 1);
     assert(root == mock_make_link(0, 5));
     assert(pool.records[0].type == 5);
+    assert(pool.records[0].data[0] == 0xfeu &&
+           pool.records[0].data[1] == 0xffu);
 
     const uint8_t *rec_mask = dm2_v1_save_record_mask_for_type(5);
     const uint8_t *sizes = dm2_v1_save_record_sizes();

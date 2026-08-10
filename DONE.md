@@ -8,6 +8,17 @@
   passerar med alla sju dungeonledgers. Equip/use/consume/stack-reglerna är
   uttryckligen fortsatt stängda tills originalets T900-konsument fångas.
 
+# DM2: SKSAVE behåller allokerade recordlänkar (2026-08-10)
+
+- ✅ `READ_RECORD_CHECKCODE` startar nu varje rekonstruerad recordkropp med
+  originalets `OBJECT_END` i `GenericRecord::w0`, precis som
+  `c_record.cpp::DM2_ALLOC_NEW_RECORD`. SUPPRESS-maskerna lämnar detta
+  fält orört; den tidigare nollade temporära kroppen kunde annars göra
+  importerade kedjor till länkar mot ObjectID 0 vid återkopiering.
+- ✅ Round-trip-regressionen och den autentiska PC-DOS SKSAVE-korpusen
+  passerar. Två filer når fortsatt den riktiga DB2-recyclergränsen och är
+  spärrade från Resume; ingen syntetisk recycler eller session publiceras.
+
 # DM2: väderticks kräver GAME_LOAD-klocka (2026-08-10)
 
 - ✅ Vädertimerregressionen följer nu den faktiska runtimegränsen: utan

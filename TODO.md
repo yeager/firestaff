@@ -629,7 +629,7 @@
   Nästa steg är originalets specialtimer-, kart-, possessions- och
   `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD`-ägare i samma beständiga transaktion;
   Resume ska fortsätta vara spärrad tills hela kedjan kan publiceras atomärt.
-  Realdatakorpusen visar nu explicit när DB0 når originalets recycler-gräns;
+  Realdatakorpusen visar nu explicit när DB2 når originalets recycler-gräns;
   portera bara recyclern tillsammans med dess fullständiga c_map-, record-
   och partyägare, aldrig genom en syntetisk reservpost.
   Den privata importägaren behåller nu den autentiserade sparade kartan,
@@ -719,7 +719,10 @@
   fixed-sektionerna, c_hero, c_tim med heap/fri-lista, c_map och c_record
   först efter att hela den befintliga återställningskedjan lyckats. Den
   verkliga DOS-korpusen når nu den första DB2-recyclerbegäran i ett
-  primär-/backuppar, men ingen fil har den kompletta kart-/recycler-kedjan.
+  primär-/backuppar. `READ_RECORD_CHECKCODE` bevarar dessutom
+  `ALLOC_NEW_RECORD`-postens `OBJECT_END`-länk före maskad body-dekodning;
+  ingen recordkedja får skrivas tillbaka med en nollad länk. Ingen fil har
+  ännu den kompletta kart-/recycler-kedjan.
   Resume är fortsatt spärrad för samtliga åtta filer. Nästa steg är
   `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` med dess fullständiga c_map-,
   creature-/missile-delete-, record-move-, CAII- och timerägare, följt av
