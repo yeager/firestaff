@@ -293,6 +293,28 @@ static int dm2_v1_sksave_owner_decode_fixed(
         reader.bits_remaining == owner->state.record_link_bitstream_bits_remaining;
 }
 
+static int dm2_v1_sksave_owner_retain_creature_ai_flags(
+    DM2_V1_SksaveGameLoadOwner *owner,
+    DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags, void *ctx)
+{
+    const DM2_V1_RecordPool *pool;
+    if (!owner || !owner->record_pools.valid || !query_creature_ai_flags)
+        return 0;
+    pool = &owner->record_pools.pools[4];
+    if (!pool->bytes || pool->record_size < 5 || pool->record_count < 0)
+        return 0;
+    for (size_t i = 0; i < (size_t)pool->record_count; ++i) {
+        const uint8_t *record = pool->bytes + i * pool->record_size;
+        const uint16_t link = (uint16_t)(0x1000u | (uint16_t)i);
+        uint16_t flags = 0;
+        if (record[0] == 0xffu && record[1] == 0xffu) continue;
+        if (!query_creature_ai_flags(ctx, link, record[4], &flags)) return 0;
+        owner->retained_creature_ai_flags[record[4]] = flags;
+        owner->retained_creature_ai_valid[record[4]] = 1u;
+    }
+    return 1;
+}
+
 int dm2_v1_sksave_game_load_owner_init(
     DM2_V1_SksaveGameLoadOwner *owner,
     const uint8_t *raw_body, size_t raw_body_size, uint16_t savegamew7,
@@ -316,6 +338,8 @@ int dm2_v1_sksave_game_load_owner_init(
             &candidate, raw_body, raw_body_size, savegamew7, asset_loader,
             query_creature_ai_flags, query_creature_ai_flags_ctx,
             &candidate.receipt) ||
+        !dm2_v1_sksave_owner_retain_creature_ai_flags(&candidate,
+            query_creature_ai_flags, query_creature_ai_flags_ctx) ||
         !dm2_v1_sksave_game_load_owner_apply_post_load_global_effects(
             &candidate) ||
         !dm2_v1_sksave_owner_rebuild_timer_backlinks(&candidate) ||

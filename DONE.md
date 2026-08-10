@@ -49,6 +49,14 @@
 - ✅ Regressionstestet bevisar att DB2-/DB4-diagnostik inte kan ändra den
   behållna SKSAVE-ägarens cursor medan Resume fortfarande är spärrad.
 
+# DM2: SKSAVE behåller DB4:s källbundna AI-flaggor (2026-08-10)
+
+- ✅ Vid lyckad privat import kopieras `CREATURES[type] -> v1d296c`-flaggorna
+  för varje faktisk DB4-post från samma autentiserade callback som används av
+  `READ_RECORD_CHECKCODE`. Ingen senare recyclerfas behöver läsa global GDAT.
+- ✅ DOS-korpusen bevisar att minst en verklig AI-rad behålls per komplett
+  ägare. Resume är fortsatt spärrad.
+
 # Nexus: VDP2-skrivning förenad med SH-2-källpekare (2026-08-10)
 
 - ✅ `scripts/analyze_nexus_vdp2_register_writer.py` verifierar att samma

@@ -40,6 +40,12 @@ typedef struct DM2_V1_SksaveGameLoadOwner {
     DM2_V1_GlobalEffectReceipt global_effect_receipt;
     int global_effects_complete;
     int weight_recompute_blocked;
+    /* Retained CREATURES[type] -> v1d296c flags for actual DB4 records in
+     * this SKSAVE transaction.  These are copied during admission through
+     * the same authenticated callback used by READ_RECORD_CHECKCODE; later
+     * recycler work must not consult ambient/global GDAT state. */
+    uint16_t retained_creature_ai_flags[256];
+    uint8_t retained_creature_ai_valid[256];
     /* The narrow, private context that immediately precedes
      * c_record.cpp::DM2_RECYCLE_A_RECORD_FROM_THE_WORLD.  It owns no
      * recycler operation: DB0 returns a selected source record to

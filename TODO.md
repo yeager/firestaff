@@ -693,6 +693,9 @@
   Den äldre läsande diagnosscannen rapporterar nu endast nästa source-cursor;
   den får inte skriva den till den behållna ägaren förrän en komplett
   recyclertransaktion kan committas.
+  Ägaren behåller nu också de autentiserade AI-flaggorna för sina faktiska
+  DB4-poster; nästa steg är att använda dem i tvåpass-kandidatens statiska
+  possessiontraversering.
 
 - 🔧 DM2:s levande viewport-inmatning saknar ännu den monterade
   `c_tmouse`/`c_input`-tabellen med aktiva GDAT-rektanglar. M11 avvisar

@@ -1018,12 +1018,15 @@ static void test_real_raw_save(const char *path, const char *root,
             if (owner_ok) ++direct_roots->game_load_owner_materialized;
             else ++direct_roots->game_load_owner_blocked;
         }
+        size_t retained_ai_count = 0u;
+        for (size_t ai_type = 0; ai_type < 256u; ++ai_type)
+            retained_ai_count += game_load_owner.retained_creature_ai_valid[ai_type] != 0u;
         CHECK(owner_ok == special_ok &&
               (!owner_ok || (game_load_owner.valid &&
                   !game_load_owner.source_game_load_session_ready &&
                   game_load_owner.map_owner.valid &&
                   game_load_owner.record_pools.valid &&
-                  game_load_owner.receipt.valid)),
+                  game_load_owner.receipt.valid && retained_ai_count > 0u)),
               "SKSave private GAME_LOAD owner transfers only a complete source transaction");
         CHECK(!owner_ok ||
               (game_load_owner.recycler_context.valid &&
