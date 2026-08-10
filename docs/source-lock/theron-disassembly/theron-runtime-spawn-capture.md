@@ -464,3 +464,9 @@ semantic evidence, not permission to substitute host-side formulas. RNG,
 creature, AI, attack, damage, loot, generator, T700 and T900 remain
 fail-closed. The raw receipt remains outside GitHub at
 `/Users/bosse/.firestaff/cache/theron/manual-capture/out/theron.transition`.
+
+The corresponding bounded main-RAM sidecar is approximately 8.7 MiB. The
+Firestaff intake ceiling is now 16 MiB, which permits this authenticated
+65,536-sample receipt to reach the existing byte/PC code-window verifier. This
+is an intake correction only: `target_2600_bytes_present=0` and
+`semantic_publication_allowed=0` remain mandatory.

@@ -14,7 +14,12 @@
 #define THERON_V1_CONSUMER_LSTAT lstat
 #endif
 
-#define THERON_V1_CONSUMER_TRACE_MAX_BYTES (4u * 1024u * 1024u)
+/* A bounded 65,536-sample authenticated capture is approximately 8.7 MiB
+ * with the per-read provenance fields.  Keep a hard ceiling, but do not
+ * reject that real bounded receipt before its code-window provenance can be
+ * checked.  This remains an intake limit only; the parser never publishes
+ * the bytes as level, object, tile, palette or HUD data. */
+#define THERON_V1_CONSUMER_TRACE_MAX_BYTES (16u * 1024u * 1024u)
 
 static int read_line(FILE *file, char *line, size_t capacity) {
     size_t length;

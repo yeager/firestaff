@@ -368,6 +368,11 @@ spelägd nivå-, objekt-, tile-, creature-, RNG-, T700- eller T900-konsument.
 host-side-formler. Kvittofilen är inte speldata och ligger kvar utanför repot:
 `/Users/bosse/.firestaff/cache/theron/manual-capture/out/theron.transition`.
 
+Den bounded main-RAM-sidecaren är cirka 8,7 MiB. Firestaffs parser tillåter
+nu upp till 16 MiB för denna uttryckligen begränsade capture, så den riktiga
+65 536-samplesfilen kan verifieras byte-/PC-mässigt. Detta ändrar inte att
+`target_2600_bytes_present=0` och `semantic_publication_allowed=0`.
+
 ### Förlängt spawn-registerfönster
 
 Capture-scriptet skickar som standard
