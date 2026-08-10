@@ -13,15 +13,17 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 +static unsigned TheronIrq2TraceRngEntrySP;
 +static unsigned TheronIrq2TraceRngReturnPC;
 +static FILE *TheronIrq2TraceRngCode;
-+static bool TheronIrq2TraceRngCodeSeen[2];
++static bool TheronIrq2TraceRngCodeSeen[3];
  static void FlushTheronIrq2Trace(void)
-@@ -200,3 +204,104 @@
+@@ -200,3 +204,107 @@
   const RegGroupType *trace_regs = (*CurGame->Debugger->RegGroups)[0];
   const uint32 logical_pc = trace_regs->GetRegister(trace_regs->Regs[0].id, NULL, 0) & 0xffff;
-+ const bool rng_entry = logical_pc == 0x5d64 || logical_pc == 0x5d6a;
++ const bool rng_entry = logical_pc == 0x5d64 || logical_pc == 0x5d6a ||
++  logical_pc == 0x45e3;
 + if(rng_entry)
 + {
-+  const unsigned code_slot = logical_pc == 0x5d64 ? 0u : 1u;
++  const unsigned code_slot = logical_pc == 0x5d64 ? 0u :
++   (logical_pc == 0x5d6a ? 1u : 2u);
 +  const uint32 code_mpr = trace_regs->GetRegister(
 +   trace_regs->Regs[6 + (logical_pc >> 13)].id, NULL, 0) & 0xff;
 +  if(!TheronIrq2TraceRngCode)
@@ -39,7 +41,8 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 +  {
 +   fprintf(TheronIrq2TraceRngCode,
 +           "rng_code_window entry=%s logical_pc=%04x physical_pc=%08x bytes=256 hex=",
-+           code_slot == 0u ? "5d64" : "5d6a", logical_pc,
++           code_slot == 0u ? "5d64" :
++           (code_slot == 1u ? "5d6a" : "45e3"), logical_pc,
 +           (code_mpr << 13) | (logical_pc & 0x1fff));
 +   for(unsigned code_offset = 0; code_offset < 256; ++code_offset)
 +    fprintf(TheronIrq2TraceRngCode, "%02x",

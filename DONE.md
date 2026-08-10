@@ -1,3 +1,13 @@
+# Theron: runtime-authenticated HuC6280 RNG core (2026-08-11)
+
+- ✅ A fresh instrumented Mednafen build captured the real `$45E3` and `$5D64`
+  overlay windows from US Track 02 with exact physical-PC provenance.
+- ✅ `theron_v1_rng_source.c` mirrors the observed `$4667` carry-sensitive
+  update, `$4650` seed setup, and adjacent `$4644`/`$464A` bit consumers.
+- ✅ Golden-vector test and production `firestaff_theron` build pass.
+- 🔒 The category-0..3 spawn caller, generator timing, AI, combat, T700 and
+  T900 owners still require a same-session level/object consumer witness.
+
 # DM2: source-correct event queue flush (2026-08-11)
 
 - ✅ `c_eventqueue::event_1031_098e` compacts retained 0x04/0x40/0x60

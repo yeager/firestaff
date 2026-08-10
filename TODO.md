@@ -1,5 +1,14 @@
 # Firestaff TODO - Open Work
 
+## Theron: RNG core bound; gameplay consumers remain open (2026-08-11)
+
+- ✅ The authenticated runtime overlay now proves the `$4667` state update and
+  the `$4644`/`$464A` bit consumers; the source-bound implementation has a
+  golden-vector test.
+- 🔒 Do not seed this state from `dungeon_seed` or use it for spawning until
+  the original `$28B7` owner and a same-session category/object consumer are
+  proven. Spawn formulas, AI, T700 and T900 remain gated.
+
 ## Theron: desktop pointer controls landed (2026-08-11)
 
 - ✅ Startup/menu mouse clicks now follow source-space hit-testing; dungeon

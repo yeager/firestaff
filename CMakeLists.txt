@@ -50651,6 +50651,24 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_creature_spa
         SKIP_RETURN_CODE 77)
 endif()
 
+# Theron runtime-authenticated HuC6280 RNG consumer ($4667/$4644/$464a)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_rng_source.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_rng_source.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_rng_source.h")
+    add_executable(test_theron_v1_rng_source
+        tests/test_theron_v1_rng_source.c
+        src/theron/theron_v1_rng_source.c)
+    target_include_directories(test_theron_v1_rng_source PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_rng_source PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_rng_source
+        COMMAND test_theron_v1_rng_source
+    )
+endif()
+
 # Theron Track 02 action params (action/spell parameter table from UD)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_action_params.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_action_params.c"

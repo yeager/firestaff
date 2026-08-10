@@ -6,10 +6,20 @@
 ; HuC6280 entry: $4667
 ; FNV-1a: $b9075b31
 ;
-; This entry is source evidence, not a host-side RNG implementation.  It
-; consumes $B3, dispatches the special $B3&7 == 4 path through $5D6A and
-; $5D64, and returns.  The $5D6A/$5D64 bodies are RAM-loaded/overlay-owned
-; consumers and their runtime state still require a dynamic capture.
+; The dynamic overlay is now authenticated separately: a real Cocoa-input
+; Mednafen run captured the $45E3 code window at physical PC $000d05e3,
+; 256 bytes, FNV-1a $cd08af95, and the $5D64 window at physical PC $000d1d64,
+; 256 bytes, FNV-1a $38ef5dd1.  The exact $4667 state transition is:
+;   L4667: LDA $28B9 / ASL / LDA $28B9 / ROL / ADC #$4E / EOR #$3A
+;          STA $28B9 / EOR $28BA / ADC #$C3 / STA $28BA / RTS
+; HuC6280 carry is preserved across LDA/EOR, so the two ADC carry inputs are
+; part of the authenticated consumer contract.  The adjacent $4644 and $464A
+; consumers return $4667&1 and $4667&3 respectively.  Firestaff mirrors these
+; byte-level operations in theron_v1_rng_source.c.
+;
+; The $5D6A/$5D64 callers still have separate gameplay ownership questions;
+; decoding this RNG transition does not by itself authorize spawn, AI, loot,
+; T700 or T900 publication.
 ;
 ; Adjacent preconsumer L4644 is locked separately at raw file offset $9c4c4,
 ; 27 bytes, FNV-1a $a3c3f7eb. It prepares the arguments and calls the
