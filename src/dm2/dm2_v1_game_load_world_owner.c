@@ -1656,6 +1656,68 @@ void dm2_v1_game_load_runtime_session_candidate_free(
     memset(candidate, 0, sizeof(*candidate));
 }
 
+/* c_map.cpp::DM2_CHANGE_CURRENT_MAP_TO has no party movement side effect.
+ * Keep that narrow source operation private over the already-cloned world:
+ * mapdat.map/v1e03c0/v1e03f4 become raw offsets in map_context, while
+ * v1e0280/v1e027e/v1e0282/v1e0264 remain the separately retained display
+ * pose.  A caller can therefore prepare a later moverec/light transaction
+ * without mutating the File_header source owner or manufacturing gameplay. */
+static int dm2_v1_game_load_runtime_candidate_change_current_map(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate, int new_map,
+    int force_reload)
+{
+    DM2_V1_SkprojectChangeCurrentMapReceipt context;
+    int previous_map;
+    int use_alternate;
+
+    if (!candidate || !candidate->dungeon.raw_data ||
+        !candidate->record_pools.valid || new_map < 0 ||
+        new_map >= candidate->dungeon.level_count) {
+        return 0;
+    }
+    if (!force_reload && new_map == candidate->current_map) return 1;
+    previous_map = force_reload ? -1 : candidate->current_map;
+    memset(&context, 0, sizeof(context));
+    if (!dm2_v1_skproject_change_current_map_to(
+            &candidate->dungeon, previous_map, new_map,
+            candidate->source_party_x, candidate->source_party_y,
+            candidate->source_party_map, candidate->source_party_direction,
+            &context) || !context.valid || context.unchanged ||
+        context.map_descriptor_offset < 0 || context.raw_tile_map_offset < 0 ||
+        context.column_index_offset < 0 || context.first_thing_base_offset < 0) {
+        return 0;
+    }
+    use_alternate = candidate->source_staircase_flag != 0 &&
+                    candidate->source_teleporter_map == new_map;
+    /* c_map's alternate display pose is meaningful only for the preceding
+     * DM2_move_2fcf_0b8b staircase/teleporter context.  Do not turn a
+     * malformed private candidate into a normal-pose fallback. */
+    if (use_alternate && !candidate->source_display_pose_valid) return 0;
+    candidate->map_context = context;
+    candidate->current_map = new_map;
+    candidate->source_runtime_display_uses_alternate = use_alternate;
+    if (use_alternate) {
+        candidate->source_display_map = candidate->source_teleporter_map;
+        candidate->source_runtime_display_x = candidate->source_display_x;
+        candidate->source_runtime_display_y = candidate->source_display_y;
+        candidate->source_runtime_display_direction = candidate->source_party_absdir;
+    } else {
+        candidate->source_display_map = candidate->source_party_map;
+        candidate->source_runtime_display_x = candidate->source_party_x;
+        candidate->source_runtime_display_y = candidate->source_party_y;
+        candidate->source_runtime_display_direction = candidate->source_party_direction;
+    }
+    return 1;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_change_current_map_to(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate, int new_map)
+{
+    if (!candidate || !candidate->valid) return 0;
+    return dm2_v1_game_load_runtime_candidate_change_current_map(candidate,
+                                                                   new_map, 0);
+}
+
 /* This is deliberately a clone, not RESET_CAII/FILL_CAII replay.  A future
  * source-complete owner must have established the exact private state before
  * this point. Replaying either against the source owner would rewrite DB4
@@ -1741,7 +1803,6 @@ int dm2_v1_game_load_runtime_session_candidate_init(
     candidate.source_event_hero_index = source->source_event_hero_index;
     candidate.caii_rng = source->caii_rng;
     candidate.caii_rng_initialized = 1;
-    candidate.current_map = source->current_map;
     candidate.source_party_map = source->source_party_map;
     candidate.source_party_x = source->source_party_x;
     candidate.source_party_y = source->source_party_y;
@@ -1760,6 +1821,12 @@ int dm2_v1_game_load_runtime_session_candidate_init(
     candidate.source_display_pose_valid = source->source_display_pose_valid;
     candidate.source_last_moved_record = source->source_last_moved_record;
     candidate.source_transaction_hash = source->source_transaction_hash;
+    /* DM2_move_2fcf_0b8b has explicitly set v1d3248=-1 before its final
+     * CHANGE_CURRENT_MAP_TO. Recreate that forced initial selection over the
+     * clone; a same-map shortcut would leave c_map's descriptor pointers
+     * unmaterialized. */
+    if (!dm2_v1_game_load_runtime_candidate_change_current_map(
+            &candidate, source->current_map, 1)) goto fail;
     hash = dm2_v1_game_load_owner_hash_step(hash, candidate.source_transaction_hash);
     hash = dm2_v1_game_load_owner_hash_step(hash,
         (uint32_t)source->dungeon.raw_size);

@@ -1474,6 +1474,11 @@ static __attribute__((unused)) int find_loadable_dm2_object_icon_handle(DM2_V1_B
 }
 
 static int make_temp_dm2_root(char root[512], char dm2_dir[512]) {
+    int dm2_written;
+
+    if (!root || !dm2_dir) return 0;
+    root[0] = '\0';
+    dm2_dir[0] = '\0';
 #ifdef _WIN32
     snprintf(root, 512, ".\\firestaff_dm2_m11_profile_gate_%lu",
              (unsigned long)rand());
@@ -1481,14 +1486,31 @@ static int make_temp_dm2_root(char root[512], char dm2_dir[512]) {
         return 0;
     }
 #else
-    char tmpl[] = "/tmp/firestaff_dm2_m11_profile_gate_XXXXXX";
-    char* made = mkdtemp(tmpl);
+    const char *tmpdir = getenv("TMPDIR");
+    char tmpl[512];
+    char* made;
+    int written;
+
+    if (!tmpdir || !tmpdir[0]) tmpdir = "/tmp";
+    written = snprintf(tmpl, sizeof(tmpl),
+                       "%s/firestaff_dm2_m11_profile_gate_XXXXXX", tmpdir);
+    if (written < 0 || (size_t)written >= sizeof(tmpl)) {
+        return 0;
+    }
+    made = mkdtemp(tmpl);
     if (!made) {
         return 0;
     }
     snprintf(root, 512, "%s", made);
 #endif
-    snprintf(dm2_dir, 512, "%s%s%s", root, TEST_PATH_SEP, "dm2");
+    dm2_written = snprintf(dm2_dir, 512, "%s%s%s", root, TEST_PATH_SEP,
+                           "dm2");
+    if (dm2_written < 0 || dm2_written >= 512) {
+        (void)TEST_RMDIR(root);
+        root[0] = '\0';
+        dm2_dir[0] = '\0';
+        return 0;
+    }
     if (TEST_MKDIR(dm2_dir) != 0) {
         (void)TEST_RMDIR(root);
         return 0;
@@ -1510,13 +1532,25 @@ static void remove_temp_dm2_root(const char* root, const char* dm2_dir) {
 }
 
 static int make_temp_save_root(char root[512]) {
+    if (!root) return 0;
+    root[0] = '\0';
 #ifdef _WIN32
     snprintf(root, 512, ".\\firestaff_dm2_m11_resume_%lu",
              (unsigned long)rand());
     return TEST_MKDIR(root) == 0;
 #else
-    char tmpl[] = "/tmp/firestaff_dm2_m11_resume_XXXXXX";
-    char* made = mkdtemp(tmpl);
+    const char *tmpdir = getenv("TMPDIR");
+    char tmpl[512];
+    char* made;
+    int written;
+
+    if (!tmpdir || !tmpdir[0]) tmpdir = "/tmp";
+    written = snprintf(tmpl, sizeof(tmpl),
+                       "%s/firestaff_dm2_m11_resume_XXXXXX", tmpdir);
+    if (written < 0 || (size_t)written >= sizeof(tmpl)) {
+        return 0;
+    }
+    made = mkdtemp(tmpl);
     if (!made) {
         return 0;
     }
@@ -2183,6 +2217,7 @@ static void check_incomplete_required_files_block_m11(const char* label,
 
     expect_true(make_temp_dm2_root(root, dm2_dir),
                 "created isolated DM2 incomplete-data root");
+    if (!root[0] || !dm2_dir[0]) return;
     if (seed_graphics) {
         snprintf(path, sizeof(path), "%s%sGRAPHICS.DAT", dm2_dir, TEST_PATH_SEP);
         expect_true(write_tiny_file(path, "not-real-dm2-graphics"),
@@ -2446,6 +2481,7 @@ int main(void) {
     DM2_V1_GameLoadWorldOwner tampered_new_game_world_owner;
     DM2_V1_GameLoadWorldOwner timer_process_world_owner;
     DM2_V1_GameLoadRuntimeSessionCandidate runtime_session_candidate;
+    DM2_V1_SkprojectChangeCurrentMapReceipt runtime_candidate_map_context_before;
     const DM2_V1_GameLoadWorldOwner *profile_new_game_owner;
     const DM2_V1_GameLoadRuntimeSessionCandidate *profile_runtime_candidate;
     DM2_V1_GameLoadWorldOwner *profile_preselection_turn_owner;
@@ -2459,6 +2495,16 @@ int main(void) {
     uint8_t runtime_candidate_db4_byte_before = 0u;
     uint8_t runtime_candidate_db4_byte_mutated = 0u;
     int runtime_candidate_db4_mutated = 0;
+    int runtime_candidate_other_map = -1;
+    int runtime_candidate_column_prefix = 0;
+    int runtime_candidate_expected_alternate = 0;
+    uint32_t runtime_candidate_clone_hash_before = 0u;
+    uint32_t runtime_candidate_db4_hash_before = 0u;
+    int16_t runtime_candidate_display_map_before = -1;
+    int16_t runtime_candidate_display_x_before = -1;
+    int16_t runtime_candidate_display_y_before = -1;
+    uint8_t runtime_candidate_display_direction_before = 0u;
+    int runtime_candidate_display_alternate_before = 0;
     int new_game_generators_result;
     int new_game_owner_initialized;
     int new_game_noop_map = -1;
@@ -4943,6 +4989,17 @@ int main(void) {
                     runtime_session_candidate.record_pools.pools[4].bytes != NULL &&
                     runtime_session_candidate.timer_entries != NULL &&
                     runtime_session_candidate.sound_owner.queue_entries != NULL &&
+                    runtime_session_candidate.map_context.valid &&
+                    runtime_session_candidate.map_context.current_map ==
+                        profile_new_game_owner->current_map &&
+                    runtime_session_candidate.map_context.width ==
+                        runtime_session_candidate.dungeon.level_widths[
+                            runtime_session_candidate.current_map] &&
+                    runtime_session_candidate.map_context.height ==
+                        runtime_session_candidate.dungeon.level_heights[
+                            runtime_session_candidate.current_map] &&
+                    runtime_session_candidate.map_context.first_thing_base_offset ==
+                        runtime_session_candidate.dungeon.square_first_thing_base &&
                     runtime_session_candidate.event_queue.entries == 0 &&
                     runtime_session_candidate.event_queue.idx == 0 &&
                     runtime_session_candidate.event_queue.out_idx == 0 &&
@@ -4964,6 +5021,154 @@ int main(void) {
                     !profile->source_game_load_session_ready &&
                     view.world.party.championCount == 0,
                 "DM2 clones the fully materialized private GAME_LOAD state after dynamic CAII admission");
+    if (runtime_session_candidate.valid) {
+        runtime_candidate_other_map = runtime_session_candidate.current_map == 0 ?
+            1 : 0;
+        runtime_candidate_map_context_before = runtime_session_candidate.map_context;
+        runtime_candidate_display_map_before =
+            runtime_session_candidate.source_display_map;
+        runtime_candidate_display_x_before =
+            runtime_session_candidate.source_runtime_display_x;
+        runtime_candidate_display_y_before =
+            runtime_session_candidate.source_runtime_display_y;
+        runtime_candidate_display_direction_before =
+            runtime_session_candidate.source_runtime_display_direction;
+        runtime_candidate_display_alternate_before =
+            runtime_session_candidate.source_runtime_display_uses_alternate;
+        runtime_candidate_clone_hash_before = dm2_test_fnv1a(
+            runtime_session_candidate.dungeon.raw_data,
+            (size_t)runtime_session_candidate.dungeon.raw_size);
+        runtime_candidate_db4_hash_before = dm2_test_fnv1a(
+            runtime_session_candidate.record_pools.pools[4].bytes,
+            (size_t)(runtime_session_candidate.record_pools.pools[4].record_count *
+                     runtime_session_candidate.record_pools.pools[4].record_size));
+        expect_true(dm2_v1_game_load_runtime_session_candidate_change_current_map_to(
+                        &runtime_session_candidate,
+                        runtime_session_candidate.current_map) &&
+                    memcmp(&runtime_candidate_map_context_before,
+                           &runtime_session_candidate.map_context,
+                           sizeof(runtime_candidate_map_context_before)) == 0 &&
+                    runtime_candidate_display_map_before ==
+                        runtime_session_candidate.source_display_map &&
+                    runtime_candidate_display_x_before ==
+                        runtime_session_candidate.source_runtime_display_x &&
+                    runtime_candidate_display_y_before ==
+                        runtime_session_candidate.source_runtime_display_y &&
+                    runtime_candidate_display_direction_before ==
+                        runtime_session_candidate.source_runtime_display_direction &&
+                    runtime_candidate_display_alternate_before ==
+                        runtime_session_candidate.source_runtime_display_uses_alternate &&
+                    runtime_candidate_clone_hash_before == dm2_test_fnv1a(
+                        runtime_session_candidate.dungeon.raw_data,
+                        (size_t)runtime_session_candidate.dungeon.raw_size) &&
+                    runtime_candidate_db4_hash_before == dm2_test_fnv1a(
+                        runtime_session_candidate.record_pools.pools[4].bytes,
+                        (size_t)(runtime_session_candidate.record_pools.pools[4].record_count *
+                                 runtime_session_candidate.record_pools.pools[4].record_size)),
+                "DM2 keeps a same-map private c_map transition byte-identical");
+        for (int map = 0; map < runtime_candidate_other_map; ++map) {
+            runtime_candidate_column_prefix +=
+                runtime_session_candidate.dungeon.level_widths[map];
+        }
+        runtime_candidate_expected_alternate =
+            runtime_session_candidate.source_staircase_flag != 0 &&
+            runtime_session_candidate.source_display_pose_valid &&
+            runtime_session_candidate.source_teleporter_map ==
+                runtime_candidate_other_map;
+        expect_true(profile_new_game_owner != NULL &&
+                    runtime_session_candidate.dungeon.raw_data !=
+                        profile_new_game_owner->dungeon.raw_data &&
+                    memcmp(runtime_session_candidate.dungeon.raw_data,
+                           profile_new_game_owner->dungeon.raw_data,
+                           (size_t)runtime_session_candidate.dungeon.raw_size) == 0 &&
+                    dm2_v1_game_load_runtime_session_candidate_change_current_map_to(
+                        &runtime_session_candidate, runtime_candidate_other_map) &&
+                    runtime_session_candidate.current_map == runtime_candidate_other_map &&
+                    runtime_session_candidate.map_context.current_map ==
+                        runtime_candidate_other_map &&
+                    runtime_session_candidate.map_context.map_descriptor_offset ==
+                        44 + runtime_candidate_other_map * 16 &&
+                    dm2_test_read_le16(runtime_session_candidate.dungeon.raw_data +
+                        runtime_session_candidate.map_context.map_descriptor_offset + 8) != 0u &&
+                    runtime_session_candidate.map_context.width ==
+                        (int)((dm2_test_read_le16(runtime_session_candidate.dungeon.raw_data +
+                            runtime_session_candidate.map_context.map_descriptor_offset + 8) >>
+                               6) & 0x1fu) + 1 &&
+                    runtime_session_candidate.map_context.height ==
+                        (int)((dm2_test_read_le16(runtime_session_candidate.dungeon.raw_data +
+                            runtime_session_candidate.map_context.map_descriptor_offset + 8) >>
+                               11) & 0x1fu) + 1 &&
+                    runtime_session_candidate.map_context.raw_tile_map_offset >= 0 &&
+                    runtime_session_candidate.map_context.raw_tile_map_offset ==
+                        runtime_session_candidate.dungeon.raw_map_data_base +
+                            (int)dm2_test_read_le16(
+                                runtime_session_candidate.dungeon.raw_data +
+                                runtime_session_candidate.map_context.map_descriptor_offset) &&
+                    runtime_session_candidate.map_context.raw_tile_map_offset +
+                        runtime_session_candidate.map_context.width *
+                        runtime_session_candidate.map_context.height <=
+                            runtime_session_candidate.dungeon.raw_size &&
+                    runtime_session_candidate.map_context.column_index_offset ==
+                        runtime_session_candidate.dungeon.column_index_base +
+                            runtime_candidate_column_prefix * 2 &&
+                    runtime_session_candidate.map_context.first_thing_base_offset ==
+                        runtime_session_candidate.dungeon.square_first_thing_base &&
+                    runtime_session_candidate.map_context.first_thing_base_offset +
+                        runtime_session_candidate.dungeon.square_first_thing_count * 2 <=
+                            runtime_session_candidate.dungeon.raw_size &&
+                    runtime_session_candidate.source_runtime_display_uses_alternate ==
+                        runtime_candidate_expected_alternate &&
+                    (runtime_candidate_expected_alternate ?
+                        runtime_session_candidate.source_display_map ==
+                            runtime_session_candidate.source_teleporter_map &&
+                        runtime_session_candidate.source_runtime_display_x ==
+                            runtime_session_candidate.source_display_x &&
+                        runtime_session_candidate.source_runtime_display_y ==
+                            runtime_session_candidate.source_display_y &&
+                        runtime_session_candidate.source_runtime_display_direction ==
+                            runtime_session_candidate.source_party_absdir :
+                        runtime_session_candidate.source_display_map ==
+                            runtime_session_candidate.source_party_map &&
+                        runtime_session_candidate.source_runtime_display_x ==
+                            runtime_session_candidate.source_party_x &&
+                        runtime_session_candidate.source_runtime_display_y ==
+                            runtime_session_candidate.source_party_y &&
+                        runtime_session_candidate.source_runtime_display_direction ==
+                            runtime_session_candidate.source_party_direction) &&
+                    !profile->source_game_load_session_ready &&
+                    view.world.party.championCount == 0,
+                "DM2 derives the private c_map view directly from cloned File_header bytes");
+        runtime_candidate_map_context_before = runtime_session_candidate.map_context;
+        runtime_candidate_display_map_before =
+            runtime_session_candidate.source_display_map;
+        runtime_candidate_display_x_before =
+            runtime_session_candidate.source_runtime_display_x;
+        runtime_candidate_display_y_before =
+            runtime_session_candidate.source_runtime_display_y;
+        runtime_candidate_display_direction_before =
+            runtime_session_candidate.source_runtime_display_direction;
+        runtime_candidate_display_alternate_before =
+            runtime_session_candidate.source_runtime_display_uses_alternate;
+        expect_true(!dm2_v1_game_load_runtime_session_candidate_change_current_map_to(
+                        &runtime_session_candidate, -1) &&
+                    runtime_session_candidate.current_map == runtime_candidate_other_map &&
+                    memcmp(&runtime_candidate_map_context_before,
+                           &runtime_session_candidate.map_context,
+                           sizeof(runtime_candidate_map_context_before)) == 0 &&
+                    runtime_candidate_display_map_before ==
+                        runtime_session_candidate.source_display_map &&
+                    runtime_candidate_display_x_before ==
+                        runtime_session_candidate.source_runtime_display_x &&
+                    runtime_candidate_display_y_before ==
+                        runtime_session_candidate.source_runtime_display_y &&
+                    runtime_candidate_display_direction_before ==
+                        runtime_session_candidate.source_runtime_display_direction &&
+                    runtime_candidate_display_alternate_before ==
+                        runtime_session_candidate.source_runtime_display_uses_alternate &&
+                    !profile->source_game_load_session_ready &&
+                    view.world.party.championCount == 0,
+                "DM2 rejects an invalid private c_map transition atomically");
+    }
     if (runtime_candidate_db4_mutated && profile_new_game_owner) {
         ((DM2_V1_GameLoadWorldOwner *)profile_new_game_owner)->record_pools
             .pools[4].bytes[4] = runtime_candidate_db4_byte_before;
@@ -5592,8 +5797,10 @@ int main(void) {
 #endif
     }
 
-    expect_true(make_temp_save_root(save_root),
-                "created isolated DM2 resume save root");
+    if (!make_temp_save_root(save_root)) {
+        expect_true(0, "created isolated DM2 resume save root");
+        return 1;
+    }
 #if 0
     memset(&resume_session, 0, sizeof(resume_session));
     dm2_v1_test_session_fixture_new(&resume_session);

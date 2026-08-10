@@ -250,10 +250,15 @@
   0A48/CCM/noise/timergrenen, den muterade recordpoolen och den källformade
   `c_eventqueue` efter första championvalet. Den är fortfarande inte en
   spelbar session: nästa samlade arbete är en rollbackbar
-  c_map/moverec/`FIND_WALK_PATH`-/occlusion- och timerdispatch-ägare. Den får
-  inte publicera M11-party, HUD eller input förrän alla dessa grenar ägs av
-  samma transaktion. Recordpoolerna ska fortsatt klonas från den muterade
-  ägaren, inte från den ursprungliga filbilden.
+  c_map/moverec/`FIND_WALK_PATH`-/occlusion- och timerdispatch-ägare. Den
+  privata kandidatens `CHANGE_CURRENT_MAP_TO` äger nu den verkliga
+  mapdescriptor-, tile- och kolumnvyn samt den globala first-thing-tabellen
+  och alternativ
+  teleporter-display i RAM. Nästa steg är fortfarande moverec- och
+  dispatchgrenarna; kartbyte får inte publicera M11-party, HUD eller input
+  förrän alla dessa grenar ägs av samma transaktion. Recordpoolerna ska
+  fortsatt klonas från den muterade ägaren, inte från den ursprungliga
+  filbilden.
 
 - ⏳ DM2:s DOS-, FM Towns- och Amiga-startmedia väcks nu var 16 ms i M11, med
   källornas egna ackumulatorer för bildtid. Återstår gör den riktiga Amiga

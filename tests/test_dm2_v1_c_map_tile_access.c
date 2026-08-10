@@ -298,6 +298,15 @@ int main(void)
               change_map_receipt.unchanged &&
               change_map_receipt.current_map == 0,
           "CHANGE_CURRENT_MAP_TO keeps same-map requests unchanged");
+    CHECK(dm2_v1_skproject_change_current_map_to(
+              &dungeon, -1, 0, 4, 5, 0, 2, &change_map_receipt) &&
+              change_map_receipt.valid && !change_map_receipt.unchanged &&
+              change_map_receipt.map_descriptor_offset >= 0 &&
+              change_map_receipt.raw_tile_map_offset >= 0 &&
+              change_map_receipt.column_index_offset >= 0 &&
+              change_map_receipt.first_thing_base_offset ==
+                  dungeon.square_first_thing_base,
+          "CHANGE_CURRENT_MAP_TO retains the File_header map and first-thing views");
     test_skproject_3d93b_text_scan();
     CHECK(dm2_v1_skproject_change_current_map_to(
               &dungeon, 0, -1, 4, 5, 0, 2, &change_map_receipt) == 0 &&

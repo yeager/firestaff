@@ -1296,8 +1296,16 @@ typedef struct {
     int current_map;
     int width;
     int height;
+    /* c_map.cpp keeps these pointers as its active map view.  They
+     * are raw offsets into the authenticated File_header image here so a
+     * private RAM owner never retains a pointer into the source profile. */
+    int map_descriptor_offset;
     int raw_tile_map_offset;
     int column_index_offset;
+    /* dm2_v1e038c / dunGroundStacks is global record-root storage, not a
+     * per-map c_map pointer.  Keep its source offset alongside the selected
+     * map view for later record access. */
+    int first_thing_base_offset;
     int player_x;
     int player_y;
     int player_map;

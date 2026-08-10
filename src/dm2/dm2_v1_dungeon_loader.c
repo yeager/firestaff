@@ -1623,7 +1623,7 @@ int dm2_v1_skproject_change_current_map_to(
     receipt.player_map = player_map;
     receipt.player_dir = player_dir;
     receipt.source_symbol = "CHANGE_CURRENT_MAP_TO";
-    receipt.source_line = 2774;
+    receipt.source_line = 328;
 
     if (!d || !d->raw_data) {
         *out = receipt;
@@ -1651,17 +1651,38 @@ int dm2_v1_skproject_change_current_map_to(
     receipt.current_map = new_map;
     receipt.width = d->level_widths[new_map];
     receipt.height = d->level_heights[new_map];
+    receipt.map_descriptor_offset = DM2_DUNGEON_HEADER_SIZE +
+                                    new_map * DM2_MAP_DESC_SIZE;
     receipt.raw_tile_map_offset =
         d->raw_map_data_base + d->level_offsets[new_map];
     receipt.column_index_offset =
         d->column_index_base >= 0 ? d->column_index_base + column_index * 2 : -1;
     if (receipt.width <= 0 || receipt.height <= 0 ||
+        receipt.map_descriptor_offset < 0 ||
+        receipt.map_descriptor_offset + DM2_MAP_DESC_SIZE > d->raw_size ||
         receipt.raw_tile_map_offset < 0 ||
-        receipt.raw_tile_map_offset >= d->raw_size ||
+        receipt.width > d->raw_size / receipt.height ||
+        receipt.raw_tile_map_offset >
+            d->raw_size - receipt.width * receipt.height ||
         receipt.column_index_offset < 0 ||
         receipt.column_index_offset + 1 >= d->raw_size) {
         *out = receipt;
         return 0;
+    }
+    /* v1e03f4 is the per-map column-index base above.  The distinct
+     * dm2_v1e038c first-thing array is global and is addressed through that
+     * column table, not by counting tile bit 0x10 markers.  READ_DUNGEON_
+     * STRUCTURE constructs v1e03e4 as cumulative map widths, then c_map
+     * selects v1e03d8 + 2*v1e03e4[map].  Retain the latter as
+     * column_index_offset and this former raw array base independently.
+     * Source: SKProject SKULLWIN/c_savegame.cpp:312-365,
+     * c_map.cpp::DM2_CHANGE_CURRENT_MAP_TO:328-380. */
+    receipt.first_thing_base_offset = -1;
+    if (d->square_bytes == 1 && d->square_first_thing_base >= 0 &&
+        d->square_first_thing_count >= 0 &&
+        d->square_first_thing_base + d->square_first_thing_count * 2 <=
+            d->raw_size) {
+        receipt.first_thing_base_offset = d->square_first_thing_base;
     }
     receipt.valid = 1;
     *out = receipt;

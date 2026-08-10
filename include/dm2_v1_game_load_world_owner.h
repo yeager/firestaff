@@ -576,6 +576,17 @@ typedef struct {
     DM2_V1_DropRng caii_rng;
     int caii_rng_initialized;
     DM2_V1_GameLoadSoundOwner sound_owner;
+    /* The candidate owns c_map's selected descriptor/tile/column view plus
+     * the global first-thing record-root table, separately from party
+     * coordinates.  It is initialized through the
+     * forced v1d3248=-1 path in DM2_move_2fcf_0b8b and may be changed only by
+     * the private CHANGE_CURRENT_MAP_TO adapter below. */
+    DM2_V1_SkprojectChangeCurrentMapReceipt map_context;
+    int16_t source_display_map;
+    int16_t source_runtime_display_x;
+    int16_t source_runtime_display_y;
+    uint8_t source_runtime_display_direction;
+    int source_runtime_display_uses_alternate;
     int current_map;
     int source_party_map;
     uint8_t source_party_x;
@@ -602,6 +613,14 @@ int dm2_v1_game_load_runtime_session_candidate_init(
     const DM2_V1_GameLoadWorldOwner *source);
 void dm2_v1_game_load_runtime_session_candidate_free(
     DM2_V1_GameLoadRuntimeSessionCandidate *candidate);
+
+/* Private c_map.cpp::DM2_CHANGE_CURRENT_MAP_TO transition over the cloned
+ * File_header world.  This only retargets the candidate's map descriptor,
+ * tile/column view and global first-thing table reference plus source display
+ * pose; it never moves a party,
+ * dispatches timers or exposes M11 state. */
+int dm2_v1_game_load_runtime_session_candidate_change_current_map_to(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate, int new_map);
 
 /* Build the source-owned GAME_LOAD predecessor without selecting a champion.
  * It clones only the authenticated File_header, DB pools, DYN4 and timer

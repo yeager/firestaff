@@ -311,6 +311,17 @@
   kandidaten får samma byte på en egen adress och återställer sedan källan.
   Källdungeonen, M11 och den publika sessionen förblir orörda.
 
+# DM2: privat c_map-karta i GAME_LOAD-kandidaten (2026-08-10)
+
+- ✅ `GameLoadRuntimeSessionCandidate` äger nu en faktisk,
+  File_header-bunden `CHANGE_CURRENT_MAP_TO`-vy i RAM: aktuell
+  mapdescriptor, rå tilebas, kolumnindex och den gemensamma first-thing-
+  tabellen. Första valet återskapar `move_2fcf_0b8b`-vägens
+  `v1d3248=-1` utan att använda en same-map-genväg.
+- ✅ Kartbyte uppdaterar enbart kandidatens privata c_map- och
+  teleporter-displayfält. Ett ogiltigt kartindex lämnar alla fält orörda;
+  inget party, HUD, input eller timerdispatch publiceras.
+
 # DM2: runtime skapar inte en syntetisk SOUND9-kö (2026-08-10)
 
 - ✅ Den generiska runtimen binder inte längre en fast värdkö som ersättning
