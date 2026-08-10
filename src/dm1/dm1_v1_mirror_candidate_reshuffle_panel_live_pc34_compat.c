@@ -434,9 +434,18 @@ static void assert_deterministic_noise(ReshuffleState *state)
     unsigned int second = next_u32(&state->rng);
     unsigned int third = next_u32(&state->rng);
 
-    expect_int_eq((int)(first & 3u), 0);
+    /* next_u32 is the DM1 PC 3.4 LCG from ReDMCSB BASE.C F0027 --
+     * G0349 = G0349 * 0xBB40E62D + 11 -- adopted for this fixture by
+     * commit 2da4d973a which fixed three DM1 modules that had been using
+     * the glibc constants (1103515245, 12345).  From kSeed=0x713 the low
+     * two bits of the first three draws are 2, 1, 0 -- not 0, 1, 2 as
+     * the earlier glibc stream produced.  The three expectations stay in
+     * place to prove the noise is still deterministic and distinct
+     * (the expect_true(first != second) / expect_true(second != third)
+     * checks below), just realigned to what the corrected RNG emits. */
+    expect_int_eq((int)(first & 3u), 2);
     expect_int_eq((int)(second & 3u), 1);
-    expect_int_eq((int)(third & 3u), 2);
+    expect_int_eq((int)(third & 3u), 0);
     expect_true(first != second);
     expect_true(second != third);
     expect_int_eq((int)state->rng, (int)third);
