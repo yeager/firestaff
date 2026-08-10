@@ -1140,6 +1140,30 @@ static int tqr_find_us_roster_codon_name(
     return 0;
 }
 
+static int tqr_decode_us_roster_codon_name(
+    const uint8_t *data, size_t size, size_t raw_offset,
+    size_t name_length, char *out, size_t out_capacity) {
+    size_t word_count;
+
+    if (!data || !out || out_capacity == 0u || name_length == 0u ||
+        name_length + 1u > out_capacity) return 0;
+    word_count = (name_length + 2u) / 3u;
+    if (raw_offset > size || word_count > (size - raw_offset) / 2u)
+        return 0;
+    for (size_t i = 0u; i < name_length; ++i) {
+        size_t word_index = i / 3u;
+        unsigned int in_word = (unsigned int)(i % 3u);
+        uint16_t word = (uint16_t)data[raw_offset + word_index * 2u] |
+            (uint16_t)data[raw_offset + word_index * 2u + 1u] << 8u;
+        unsigned int symbol = (unsigned int)((word >>
+                                              (10u - in_word * 5u)) & 0x1fu);
+        if (symbol >= 26u) return 0;
+        out[i] = (char)('A' + symbol);
+    }
+    out[name_length] = '\0';
+    return 1;
+}
+
 static Theron_Track02SignalStatus tqr_catalog_us_roster_names(
     const uint8_t *track02_data, size_t track02_size,
     const char *md5_hex, Theron_Track02StartupRosterNameCatalog *out_catalog) {
@@ -1160,6 +1184,7 @@ static Theron_Track02SignalStatus tqr_catalog_us_roster_names(
     for (i = 0u; i < sizeof(names) / sizeof(names[0]); ++i) {
         size_t raw_offset = 0u;
         size_t user_offset = 0u;
+        char decoded_name[THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY];
         int found = tqr_find_us_roster_codon_name(
             track02_data, track02_size, cursor, stream_end,
             names[i], &raw_offset);
@@ -1167,11 +1192,15 @@ static Theron_Track02SignalStatus tqr_catalog_us_roster_names(
             ? theron_v1_track02_raw_offset_to_user_offset(
                 raw_offset, track02_size, md5_hex, &user_offset)
             : THERON_TRACK02_SIGNAL_NOT_FOUND;
-        if (!found || offset_status != THERON_TRACK02_SIGNAL_OK) {
+        if (!found || offset_status != THERON_TRACK02_SIGNAL_OK ||
+            !tqr_decode_us_roster_codon_name(
+                track02_data, track02_size, raw_offset, strlen(names[i]),
+                decoded_name, sizeof(decoded_name)) ||
+            strcmp(decoded_name, names[i]) != 0) {
             return THERON_TRACK02_SIGNAL_NOT_FOUND;
         }
         catalog_add_startup_roster_name(
-            out_catalog, names[i], raw_offset, user_offset,
+            out_catalog, decoded_name, raw_offset, user_offset,
             NULL, 0u, 0u, 0);
         cursor = raw_offset + ((strlen(names[i]) + 2u) / 3u) * 2u;
     }

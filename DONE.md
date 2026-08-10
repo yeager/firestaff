@@ -1,3 +1,11 @@
+# Theron: US-rosterkodoner avkodas till textconsumer (2026-08-10)
+- ✅ US Track 02:s autentiserade 5-bitars/little-endian kodonstream avkodas nu
+  faktiskt till rostersträngar innan startup-receiptet publicerar dem. Den
+  tidigare jämförelsen mot förväntade namn finns kvar som source-integritets-
+  kontroll, men receipt-texten kommer från bytesen. Äkta US-körning med
+  `TQUS02.bin` passerar med åtta namn; titlar och glyph-consumer förblir
+  spärrade eftersom de inte är bevisade i samma sourcekedja.
+
 # Theron: SRM import nekar inte syntetiska porträtt-ID:n (2026-08-10)
 - ✅ SRM-bodyimporten använder nu `THERON_PORTRAIT_UNAVAILABLE` i stället för
   att tolka champion-slotnumret som ett grafikindex. Det bevarar den riktiga
