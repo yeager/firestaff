@@ -587,7 +587,7 @@ static void check_default_data_dir_scans_asynchronously(void) {
                  defaultPhysical) == 0);
 }
 
-static void check_start_menu_promotes_saved_game_leaf_to_parent(void) {
+static void check_start_menu_keeps_saved_game_leaf_scoped(void) {
     M12_StartupMenuState state;
     char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char nexusLeaf[M12_ASSET_DATA_DIR_CAPACITY];
@@ -606,11 +606,16 @@ static void check_start_menu_promotes_saved_game_leaf_to_parent(void) {
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(graphicsMd5, dungeonMd5);
     M12_StartupMenu_InitWithDataDir(&state, nexusLeaf, NULL);
 
-    CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), dataRoot) == 0);
-    CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 1);
+    /* An explicit saved game leaf is a scoped launch selection.  The
+     * startup menu must not promote it to the parent and scan unrelated
+     * editions before opening the selected game. */
+    CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), nexusLeaf) == 0);
+    /* The parent contains DM1 fixtures, but a selected Nexus leaf must not
+     * expose sibling-game availability through the scoped scan. */
+    CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 0);
     CHECK(M12_AssetStatus_GetRuntimeDataDir(&state.assetStatus, "dm1")[0] != '\0');
     CHECK(strcmp(M12_AssetStatus_GetRuntimeDataDir(&state.assetStatus, "dm1"),
-                 nexusLeaf) != 0);
+                 nexusLeaf) == 0);
 
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
 }
@@ -790,7 +795,7 @@ int main(void) {
     check_dot_dialog_result_preserves_data_directory();
     check_parent_dialog_result_is_not_a_placeholder();
     check_default_data_dir_scans_asynchronously();
-    check_start_menu_promotes_saved_game_leaf_to_parent();
+    check_start_menu_keeps_saved_game_leaf_scoped();
     check_dot_config_migrates_to_default_data_directory();
     check_dot_environment_never_persists_as_data_directory();
     check_fresh_config_repairs_dot_in_memory();
