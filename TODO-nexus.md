@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-10: Den fungerande J-BIOS/English-disc-profilen har nu en
+registerbunden VDP2-witness på extern disk. PC `0x06011924` skriver PND-/map-
+transport till `0x25E50000` (VDP2 VRAM `0x50000`) med `R2=0x06000220` och
+`R3=0x06011920`; detta är en verifierad transport/clear-kedja, inte text.
+En separat writer `0x060713F4` skriver till `0x25E56EFF` och använder
+`R3=0x6A/0x6B`, men dess runtimekod/källregion har ingen byteexakt
+TEXT4/TABL/FONT012-identitet. Dessa två observationer stärker
+capture-infrastrukturen men öppnar inte meny-, HUD- eller produktionsrendering.
+
 2026-08-10: En separat EU-BIOS/English-Merged coldstart på extern disk
 (`run-codex-menu-text-capture-20260810/`) passerar rå-envelope-valideringen
 för 240 frames och visar förändrad VDP1-VRAM, VDP1-framebuffer och VDP2-VRAM
