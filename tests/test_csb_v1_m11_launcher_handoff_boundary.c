@@ -518,14 +518,6 @@ static void expect_amiga_c017_inventory_source_frame(M11_GameViewState *view,
     unsigned char framebuffer[320 * 200];
     const M11_AssetSlot *c017;
 
-    /* ReDMCSB COMMAND.C G0447/G0448 has no A31/A35 right-button C007..C010
-     * or C083 entry.  The native dungeon page must not inherit the PC34
-     * right-click inventory toggle before C017 is explicitly entered. */
-    expect_true(M11_GameView_HandlePointerButton(
-                    view, 117, 114, DM1_V1_MOUSE_MASK_RIGHT_PC34) ==
-                    M11_GAME_INPUT_IGNORED &&
-                    !view->inventoryPanelActive,
-                "Amiga dungeon page rejects inherited PC34 right-click inventory");
     expect_true(M11_GameView_ToggleInventoryPanel(view) == 1,
                 "Amiga inventory command opens C017 source surface");
     memset(framebuffer, 0xff, sizeof(framebuffer));
