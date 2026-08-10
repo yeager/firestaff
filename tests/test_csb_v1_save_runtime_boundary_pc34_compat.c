@@ -104,6 +104,41 @@ static void test_header_only_compatibility_and_bounded_prefix_load(void)
     remove(path);
 }
 
+/* F0433/F0435 campaign continuity regression: the public launcher must admit
+ * a complete Firestaff CSB runtime image that the live save owner wrote, but
+ * must continue to reject the short header-only fixture above. */
+static void test_complete_runtime_save_is_resumable(void)
+{
+    const char *path = test_save_path();
+    CSB_V1_RuntimeProfile runtime;
+
+    remove(path);
+    csb_v1_runtime_init(&runtime, NULL);
+    runtime.variant_id = CSB_V1_VARIANT_PC34_EN;
+    runtime.dungeon_game_id = 0x1234u;
+    runtime.party_x = 12;
+    runtime.party_y = 7;
+    runtime.party_dir = CSB_V1_DIR_EAST;
+    runtime.current_level = 4;
+    runtime.game_time = 42u;
+    runtime.tick_count = 42u;
+    runtime.total_play_ms = 42u * (uint64_t)CSB_V1_TICK_MS_NOMINAL;
+    runtime.timeline_queue.gameTick = runtime.game_time;
+    runtime.party_state.PartyMapX = runtime.party_x;
+    runtime.party_state.PartyMapY = runtime.party_y;
+    runtime.party_state.PartyDirection = (uint8_t)runtime.party_dir;
+    runtime.party_state.ChampionCount = 1;
+    runtime.party_state_valid = 1;
+    runtime.champion_count = 1;
+
+    CHECK_EQ(csb_v1_runtime_save_game_to_path(&runtime, path),
+             CSB_V1_SAVE_OK, "complete runtime save write");
+    CHECK(csb_v1_runtime_can_load_resume_path(path),
+          "complete PC34 runtime save enables launcher Resume");
+    csb_v1_runtime_cleanup(&runtime);
+    remove(path);
+}
+
 static void test_truncated_load_and_backup_restore_are_transactional(void)
 {
     const char *path = test_save_path();
@@ -240,6 +275,7 @@ int main(void)
     CHECK(strcmp(CSB_V1_SAVE_MSG_DAMAGED, "SAVED GAME DAMAGED!") == 0,
           "damaged-save message matches Atari ST source text");
     test_header_only_compatibility_and_bounded_prefix_load();
+    test_complete_runtime_save_is_resumable();
     test_truncated_load_and_backup_restore_are_transactional();
     test_damaged_native_backup_does_not_replace_active_save();
 

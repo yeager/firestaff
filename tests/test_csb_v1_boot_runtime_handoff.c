@@ -1049,17 +1049,18 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
           "boot-profile save adapter writes CSB runtime save and reports game time");
     {
         CSB_V1_RuntimeStartupHandoffReceipt_PC34 private_resume_receipt;
-        CHECK(!csb_v1_boot_apply_startup_handoff_pc34(
+        CHECK(csb_v1_boot_apply_startup_handoff_pc34(
                   &p,
                   save_path,
                   NULL,
                   &private_resume_receipt) &&
                   private_resume_receipt.kind ==
                       CSB_V1_RUNTIME_STARTUP_HANDOFF_RESUME_PC34 &&
+                  private_resume_receipt.direct_resume_loaded &&
                   private_resume_receipt.status &&
                   strcmp(private_resume_receipt.status,
-                         "CSB ORIGINAL SAVE REQUIRED") == 0,
-              "boot startup handoff rejects the private runtime save");
+                         "CSB RESUMED") == 0,
+              "boot startup handoff resumes its complete PC34 runtime save");
     }
     p.runtime.party_x = 3;
     p.runtime.party_y = 4;

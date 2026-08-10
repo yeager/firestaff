@@ -2142,13 +2142,44 @@ int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
 
 int csb_v1_runtime_can_load_resume_path(const char *path)
 {
+    CSB_V1_RuntimeSaveImageV1 image;
+    CSB_V1_SaveHeader header;
+
     if (!path || path[0] == '\0') {
         return 0;
     }
-    /* The public M11 resume affordance is intentionally narrower than the
-     * decoder test APIs.  A Firestaff snapshot and a shape-valid CSBWin
-     * fixture have no authenticated user-save corpus here, so neither may
-     * claim that F0435 can resume a campaign. */
+    /* A Firestaff CSB save is a complete, checksummed runtime image, not the
+     * old header-only test fixture.  The latter must remain outside Resume,
+     * but rejecting the former left the PC34 default route unable to resume
+     * a save that its own F0433 save command had just written: M12 could
+     * advertise Quick Resume while BOOT rejected its path before F0435.
+     *
+     * ReDMCSB LOADSAVE.C F0433/F0435 treats save and restore as one paired
+     * campaign boundary.  Admit only the current full image here; its header
+     * checksum is verified by csb_v1_load_game(), and the remaining runtime
+     * invariants are rechecked transactionally by apply_save_image() before
+     * any live profile is changed.  Do not broaden this to CSBWin bodies or
+     * compact CSBGAME rosters: their complete original-world handoffs remain
+     * separately gated by their authenticated corpus readers. */
+    memset(&image, 0, sizeof(image));
+    memset(&header, 0, sizeof(header));
+    if (csb_v1_load_game(path, &image, (int)sizeof(image), &header) ==
+            CSB_V1_LOAD_OK &&
+        image.magic == CSB_V1_RUNTIME_SAVE_MAGIC &&
+        image.version == CSB_V1_RUNTIME_SAVE_VERSION &&
+        image.byte_size == sizeof(image) &&
+        header.Magic == CSB_V1_SAVE_MAGIC_CSB &&
+        header.GameID == image.dungeon_game_id &&
+        (((uint32_t)header.GameTimeLow |
+          ((uint32_t)header.GameTimeHigh << 16)) == image.game_time) &&
+        image.timeline_queue.gameTick == image.game_time &&
+        image.champion_count >= 0 &&
+        image.champion_count <= CSB_V1_MAX_CHAMPIONS &&
+        image.party_state.ChampionCount >= 0 &&
+        image.party_state.ChampionCount <= CSB_V1_MAX_CHAMPIONS &&
+        image.party_dir >= 0 && image.party_dir <= 3) {
+        return 1;
+    }
     if (csb_v1_runtime_is_original_atari_save_file(path)) {
         return 1;
     }
