@@ -118,6 +118,29 @@ int main(void)
               profile.csbwin_timeline_event_queue_slot[1] == 1u,
           "CSBWin restore projects only active queue slots, not free TIMER slots");
 
+    /* TIMER::operator< (CSBWin Timer.cpp TAG00fd9e) gives the saved
+     * TT_ParameterMessage (101) precedence over every other timer at the
+     * same tick.  Its byte-5 sequence is ascending, unlike ordinary timer
+     * functions.  This is a valid source heap that the old numeric-function
+     * approximation rejected before the runtime could publish it. */
+    profile.csbwin_timers[0].function = 101u; /* TT_ParameterMessage */
+    profile.csbwin_timers[0].ubyte5 = 9u;
+    profile.csbwin_timers[1].function = DM1_EVENT_WALL;
+    profile.csbwin_timers[1].ubyte5 = 1u;
+    profile.csbwin_timer_queue[0] = 0u;
+    profile.csbwin_timer_queue[1] = 1u;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 2 &&
+              profile.timeline_queue.eventCount == 2 &&
+              profile.csbwin_timeline_event_queue_slot[0] == 0u &&
+              profile.csbwin_timeline_event_queue_slot[1] == 1u,
+          "CSBWin restore admits same-tick parameter-message heap precedence");
+
+    profile.csbwin_timers[0].function = DM1_EVENT_WALL;
+    profile.csbwin_timers[0].ubyte5 = 0u;
+    profile.csbwin_timers[1] = profile.csbwin_timers[0];
+    profile.csbwin_timers[1].source_index = 1u;
+    profile.csbwin_timers[1].ubyte9 = 2u;
+
     profile.csbwin_timer_queue[1] = 2u;
     check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) < 0 &&
               profile.timeline_queue.eventCount == 2 &&

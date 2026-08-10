@@ -21544,8 +21544,12 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
         if (timer_index >= profile->csbwin_timer_summary_count) {
             return -1;
         }
-        /* CSBWin Timer.cpp CheckTimers uses a min-heap ordered by time,
-         * then timerFunction, then ubyte5, then source_index. */
+        /* CSBWin Timer.cpp TIMER::operator< (TAG00fd9e, lines 728-772)
+         * defines the heap relation.  In particular, TT_ParameterMessage
+         * precedes every other same-time timer and orders its byte 5 in the
+         * opposite direction from ordinary timer functions.  Do not replace
+         * this with the old numeric-function approximation: a real saved
+         * heap is already source-ordered when SaveGame.cpp restores it. */
         if (queue_index > 0u) {
             uint16_t parent_qi = (queue_index - 1u) / 2u;
             uint16_t parent_index = profile->csbwin_timer_queue[parent_qi];
@@ -21554,22 +21558,9 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
                     &profile->csbwin_timers[timer_index];
                 const CSB_V1_CSBWin512TimerSummary *parent =
                     &profile->csbwin_timers[parent_index];
-                if (child->time < parent->time) {
+                if (csb_v1_runtime_csbwin_timer_is_before(
+                        child, timer_index, parent, parent_index)) {
                     return -1;
-                }
-                if (child->time == parent->time) {
-                    if (child->function < parent->function) {
-                        return -1;
-                    }
-                    if (child->function == parent->function) {
-                        if (child->ubyte5 < parent->ubyte5) {
-                            return -1;
-                        }
-                        if (child->ubyte5 == parent->ubyte5 &&
-                            child->source_index < parent->source_index) {
-                            return -1;
-                        }
-                    }
                 }
             }
         }
