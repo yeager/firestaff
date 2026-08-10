@@ -6278,24 +6278,40 @@ int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
     const M12_GameVersionSpec* spec;
     int gameIndex;
     size_t i;
-    static const int autoPriority[] = {
-        /* AUTO keeps the established PC-first launch contract. FM Towns is
-         * still available through an explicit platform choice; selecting it
-         * implicitly breaks DM1's PC34 HoC route when both authentic media
-         * sets are present in one data root. */
+    static const int pcFirstAutoPriority[] = {
+        /* DM1 and DM2 have a verified PC primary route. */
         M12_ARCH_PC, M12_ARCH_AMIGA, M12_ARCH_ATARI_ST, M12_ARCH_FM_TOWNS,
         M12_ARCH_X68000, M12_ARCH_PC98,
         M12_ARCH_PCE, M12_ARCH_SATURN, M12_ARCH_APPLE_IIGS
     };
+    static const int csbAutoPriority[] = {
+        /* CSB's authentic primary route is Amiga.  Do not promote the
+         * PC34-shaped shared GRAPHICS.DAT compatibility catalogue entry to
+         * AUTO: it is not an independently verified CSB PC release path.
+         * ReDMCSB COMPILE.H:199-298 identifies the native A31/A35, ST and
+         * F31 program families. */
+        M12_ARCH_AMIGA, M12_ARCH_ATARI_ST, M12_ARCH_FM_TOWNS,
+        M12_ARCH_PC, M12_ARCH_X68000, M12_ARCH_PC98,
+        M12_ARCH_PCE, M12_ARCH_SATURN, M12_ARCH_APPLE_IIGS
+    };
+    const int *autoPriority = pcFirstAutoPriority;
+    size_t autoPriorityCount = sizeof(pcFirstAutoPriority) /
+                               sizeof(pcFirstAutoPriority[0]);
 
     if (!status || !gameId) return -1;
     spec = m12_find_game_spec(gameId);
     gameIndex = m12_game_index_from_id(gameId);
     if (!spec || gameIndex < 0) return -1;
 
+    if (strcmp(gameId, "csb") == 0) {
+        autoPriority = csbAutoPriority;
+        autoPriorityCount = sizeof(csbAutoPriority) /
+                            sizeof(csbAutoPriority[0]);
+    }
+
     if (architecture == M12_ARCH_AUTO) {
         size_t p;
-        for (p = 0U; p < sizeof(autoPriority) / sizeof(autoPriority[0]); ++p) {
+        for (p = 0U; p < autoPriorityCount; ++p) {
             for (i = 0U; i < spec->versionCount; ++i) {
                 if (spec->versions[i].architecture == autoPriority[p] &&
                     i < M12_ASSET_MAX_VERSIONS_PER_GAME &&
