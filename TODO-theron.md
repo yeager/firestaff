@@ -2,6 +2,17 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 — save-state replay reaches only a rejected `$B0E5` overlay
+
+- ✅ En autentisk Mednafen-save-state kördes mot den kompletta råa
+  MODE1/2352-US-CUE:n på extern disk. Capturen verifierade Track 02-hashen
+  `f23601102138f87c33025877767ebf76` och observerade 30 träffar på `$B0E5`.
+- 🔒 Samtliga träffar hade A=`$2C` eller A=`$85`, inte disassemblyns giltiga
+  regular-spawn-kategorier 0–3. Parsern avvisar därför korrekt träffarna som
+  samma-adress-overlay; ingen RNG-return, spawnrecord, AI, loot, T700 eller
+  T900-semantik öppnas. Den tidigare 2048-byte CUE-körningen avvisades också
+  eftersom den saknade authenticated CD→RAM-origin.
+
 ## 2026-08-10 — complete US CUE capture remains transport-only
 
 - ✅ Kompletta `TQUS.cue` med 19 spår kördes från extern disk. Track 02
@@ -1637,3 +1648,8 @@ required before semantic promotion.
   generator, T700 and T900 admission closed. The next required witness is one
   same-session state or live replay that joins `$4667` → `$5D6A/$5D64` → return
   value to the authenticated Track 02 payload and consumer.
+# 2026-08-10 — source roster/stat handoff is fixed
+
+- Completed: optional US roster text no longer blocks the source-owned
+  champion stats/skills handoff at forcefield entry.
+- Remaining: authenticate the US text consumer and T900 equipment semantics.

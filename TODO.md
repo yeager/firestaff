@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+# Theron: save-state `$B0E5` overlay remains rejected (2026-08-10)
+
+- ✅ Rå MODE1/2352-US-CUE + autentisk Mednafen-save-state verifierade Track 02
+  och nådde `$B0E5` 30 gånger.
+- 🔒 Alla träffar hade A=`$2C`/`$85`, inte giltig kategori 0–3. Ingen RNG-,
+  spawn-, AI-, loot-, T700- eller T900-semantik får därför publiceras.
+
 # Theron: complete US CUE capture remains transport-only (2026-08-10)
 
 - ✅ Kompletta användarlevererade `TQUS.cue` med 19 spår laddas nu på extern

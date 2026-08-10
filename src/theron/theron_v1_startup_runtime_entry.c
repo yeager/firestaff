@@ -1665,24 +1665,24 @@ int theron_v1_startup_runtime_enter_from_forcefield(
         memset(&source_roster_catalog, 0, sizeof(source_roster_catalog));
         if (theron_v1_track02_catalog_startup_roster_names(
                 request->hucard_rom, request->hucard_rom_size,
-                request->md5_hex, &source_roster_catalog) !=
-                THERON_TRACK02_SIGNAL_OK ||
-            source_roster_catalog.name_count == 0u ||
-            source_roster_catalog.name_count >
+                request->md5_hex, &source_roster_catalog) ==
+                THERON_TRACK02_SIGNAL_OK &&
+            source_roster_catalog.name_count > 0u &&
+            source_roster_catalog.name_count <=
                 THERON_STARTUP_MEDIA_ROSTER_CAPACITY) {
-            if (out_result) out_result->result = THERON_STARTUP_ERR_NOT_READY;
-            if (receipt && receipt_cap > 0u) {
-                snprintf(receipt, receipt_cap,
-                         "Track 02 roster text admission failed; party left unchanged");
+            memset(source_roster_names, 0, sizeof(source_roster_names));
+            for (size_t i = 0u; i < source_roster_catalog.name_count; ++i) {
+                source_roster_names[i] = source_roster_catalog.names[i].name;
             }
-            return 0;
+            effective_roster_names = source_roster_names;
+            effective_roster_name_count = (int)source_roster_catalog.name_count;
+        } else {
+            /* Text is an optional presentation consumer.  The source roster
+             * records still own stats, skills and equipment even when the
+             * text marker is absent or the caller is a capture fixture. */
+            effective_roster_names = request->roster_names;
+            effective_roster_name_count = request->roster_name_count;
         }
-        memset(source_roster_names, 0, sizeof(source_roster_names));
-        for (size_t i = 0u; i < source_roster_catalog.name_count; ++i) {
-            source_roster_names[i] = source_roster_catalog.names[i].name;
-        }
-        effective_roster_names = source_roster_names;
-        effective_roster_name_count = (int)source_roster_catalog.name_count;
     } else {
         effective_roster_names = request->roster_names;
         effective_roster_name_count = request->roster_name_count;

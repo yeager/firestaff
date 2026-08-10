@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 — save-state replay rejected as non-semantic `$B0E5` overlay
+
+- ✅ Den autentiska råa US-CUE/save-state-körningen verifierade Track 02 och
+  nådde `$B0E5`, men alla 30 adressträffar bar A=`$2C`/`$85`. Den befintliga
+  source-lock-parsern avvisar dem eftersom regular-spawn-entryn endast får
+  publiceras för kategori 0–3.
+- ✅ Ingen syntetisk RNG-, creature-, AI-, loot-, T700- eller T900-regel
+  aktiverades. Den felaktiga cooked-2048-byte-körningen hölls separat och
+  användes inte som bevis.
+
 ## 2026-08-10 — complete US CUE transport witness
 
 - ✅ Den riktiga 19-track-US-layouten verifierades på extern disk med CUE,
@@ -3710,3 +3720,10 @@ metadata and locally staged CD-DA tracks.
 - ✅ 2026-07-22 Theron boot runtime input/idle facade
 - ✅ 2026-07-23 Theron boot startup host-receipt apply facade
 - ✅ 2026-07-23 Theron boot startup action/state-receipt apply facade
+# 2026-08-10 — source roster stats survive missing US text consumer
+
+- Fixed the authenticated startup handoff so missing/invalid optional US
+  roster text no longer aborts or clears the real Track 02 champion records.
+- Source-bound stats and skills remain available; display names remain absent
+  until the text consumer is proven. T900 equipment semantics remain gated.
+- Verified with `test_theron_v1_combat_runtime_source`.

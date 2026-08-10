@@ -1,5 +1,21 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-10 — raw CUE/save-state replay reaches rejected `$B0E5` overlay
+
+The external-disk replay used the complete raw MODE1/2352 US CUE together with
+the authentic Mednafen save-state. The transition receipt verified Track 02
+MD5 `f23601102138f87c33025877767ebf76` and counted 30 executions at `$B0E5`.
+Every observed entry carried A=`$2C` or A=`$85`; none carried the
+disassembly-defined regular-spawn categories `0..3`. The parser therefore
+classifies these as same-address overlays and reports zero semantic spawn
+entries. This is a useful negative runtime witness, not permission to derive
+an RNG result, creature record, AI action, loot event, generator transition,
+T700 stat update or T900 object rule.
+
+The same experiment was also attempted against the archive's cooked
+MODE1/2048-byte Track 02 projection. That run produced no authenticated
+CD-to-RAM origin receipt and is explicitly excluded from source evidence.
+
 ## 2026-08-10 — authenticated VCE-register TIA witness
 
 The real US Mednafen Main-RAM loader sidecar now exposes the first source-owned

@@ -1,5 +1,13 @@
 # Theron: complete US CUE transport capture (2026-08-10)
 
+# Theron: reject non-semantic save-state spawn overlay (2026-08-10)
+
+- ✅ Den råa US-CUE/save-state-capturen verifierade Track 02 och nådde `$B0E5`,
+  men alla 30 träffar bar A=`$2C`/`$85`; parsern avvisar korrekt dessa
+  same-address overlays som icke-semantiska.
+- ✅ Cooked MODE1/2048-byte-försöket saknade authenticated CD→RAM-origin och
+  användes inte som runtime-bevis.
+
 - ✅ Verifierade den kompletta användarlevererade 19-track-US-layouten på
   extern disk: riktig CUE, CDDA-spår och Track 02 enligt arkivets egen
   `Decode.bat`. Mednafen rapporterade Track 02 vid LBA 3234.
@@ -13115,3 +13123,8 @@ rendering remain blocked.
 - ✅ Produktionsgrinden verifierar nu att båda caller-formade mutationseam
   fortsätter vara exkluderade tills en full privat GAME_LOAD-session äger
   karta, recordpooler, timers, CAII, party och återställning atomärt.
+# Theron: preserve source roster stats when optional text is unavailable
+
+The forcefield startup handoff now keeps authenticated Track 02 champion
+stats/skills when the optional US roster-text consumer is unavailable. It does
+not invent names or unlock T900 equipment semantics.
