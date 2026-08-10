@@ -6,6 +6,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(__APPLE__)
+#  include <CommonCrypto/CommonDigest.h>
+#  define DM2_V1_DOS_HAVE_COMMONCRYPTO 1
+#endif
+
 /* Small, local FIPS 180-4 SHA-256 reader.  Startup admission needs the
  * manifest's SHA-256 identity, but must not pull another platform's media
  * scanner and its unrelated archive policy into DM2's DOS boot route. */
@@ -108,6 +113,47 @@ static void dm2_v1_dos_sha256_final(DM2_V1_DosSha256 *ctx, uint8_t digest[32])
     }
 }
 
+/* Prefer macOS CommonCrypto (hardware-accelerated on Apple Silicon and modern
+ * Intel).  The software path above stays for platforms without a system
+ * SHA-256, and remains authoritative for identity comparison — both hashes
+ * are FIPS 180-4 and must produce the same digest. */
+typedef struct {
+#if defined(DM2_V1_DOS_HAVE_COMMONCRYPTO)
+    CC_SHA256_CTX cc;
+#else
+    DM2_V1_DosSha256 sw;
+#endif
+} DM2_V1_DosSha256Fast;
+
+static void dm2_v1_dos_sha256_fast_init(DM2_V1_DosSha256Fast *ctx)
+{
+#if defined(DM2_V1_DOS_HAVE_COMMONCRYPTO)
+    CC_SHA256_Init(&ctx->cc);
+#else
+    dm2_v1_dos_sha256_init(&ctx->sw);
+#endif
+}
+
+static void dm2_v1_dos_sha256_fast_update(DM2_V1_DosSha256Fast *ctx,
+                                          const uint8_t *data, size_t size)
+{
+#if defined(DM2_V1_DOS_HAVE_COMMONCRYPTO)
+    CC_SHA256_Update(&ctx->cc, data, (CC_LONG)size);
+#else
+    dm2_v1_dos_sha256_update(&ctx->sw, data, size);
+#endif
+}
+
+static void dm2_v1_dos_sha256_fast_final(DM2_V1_DosSha256Fast *ctx,
+                                         uint8_t digest[32])
+{
+#if defined(DM2_V1_DOS_HAVE_COMMONCRYPTO)
+    CC_SHA256_Final(digest, &ctx->cc);
+#else
+    dm2_v1_dos_sha256_final(&ctx->sw, digest);
+#endif
+}
+
 static uint32_t dm2_v1_dos_startup_hash_step(uint32_t hash, uint32_t value)
 {
     hash ^= value;
@@ -139,62 +185,40 @@ static int dm2_v1_dos_startup_read_verified(const char *root,
     }
     stream = fopen(path, "rb");
     if (!stream) return 0;
-    while (!ferror(stream)) {
-        size_t got = fread(buffer, 1u, sizeof(buffer), stream);
-        if (got == 0u) break;
-        if (total > SIZE_MAX - got) {
-            fclose(stream);
-            return 0;
-        }
-        if (prefix_used < prefix_capacity) {
-            size_t copy = got;
-            if (copy > prefix_capacity - prefix_used) {
-                copy = prefix_capacity - prefix_used;
-            }
-            memcpy(prefix + prefix_used, buffer, copy);
-            prefix_used += copy;
-        }
-        total += got;
-    }
     {
-        /* Close before judging: a read error short-circuited past fclose()
-         * and leaked the handle. */
-        int io_failed = ferror(stream) != 0;
-        if (fclose(stream) != 0) io_failed = 1;
-        if (io_failed || total != expected->size_bytes) {
-            return 0;
-        }
-    }
-    /* Re-read only for the digest, never materialise a decoded movie. */
-    stream = fopen(path, "rb");
-    if (!stream) return 0;
-    /* The helper accepts a contiguous source range.  The largest authentic
-     * movie is 4.7 MiB, so retain a bounded in-memory buffer only while
-     * hashing it.  This is deliberately not a decoder or disk cache. */
-    {
-        uint8_t *all = (uint8_t *)malloc(total ? total : 1u);
-        size_t read_total = 0u;
-        if (!all) {
-            fclose(stream);
-            return 0;
-        }
-        while (read_total < total) {
-            size_t got = fread(all + read_total, 1u, total - read_total, stream);
+        /* Single pass: fill the prefix buffer AND drive SHA-256 as we go, so
+         * the multi-megabyte movies (intro/end) are opened, read, and hashed
+         * only once instead of the earlier open-twice / rehash pattern that
+         * cost seconds on external volumes. */
+        DM2_V1_DosSha256Fast sha;
+        dm2_v1_dos_sha256_fast_init(&sha);
+        while (!ferror(stream)) {
+            size_t got = fread(buffer, 1u, sizeof(buffer), stream);
             if (got == 0u) break;
-            read_total += got;
+            if (total > SIZE_MAX - got) {
+                fclose(stream);
+                return 0;
+            }
+            if (prefix_used < prefix_capacity) {
+                size_t copy = got;
+                if (copy > prefix_capacity - prefix_used) {
+                    copy = prefix_capacity - prefix_used;
+                }
+                memcpy(prefix + prefix_used, buffer, copy);
+                prefix_used += copy;
+            }
+            dm2_v1_dos_sha256_fast_update(&sha, buffer, got);
+            total += got;
         }
-        if (!ferror(stream) && read_total == total) {
-            DM2_V1_DosSha256 sha;
-            dm2_v1_dos_sha256_init(&sha);
-            dm2_v1_dos_sha256_update(&sha, all, total);
-            dm2_v1_dos_sha256_final(&sha, digest);
-        } else {
-            memset(digest, 0, sizeof(digest));
+        {
+            int io_failed = ferror(stream) != 0;
+            if (fclose(stream) != 0) io_failed = 1;
+            if (io_failed || total != expected->size_bytes) {
+                return 0;
+            }
         }
-        memset(all, 0, total);
-        free(all);
+        dm2_v1_dos_sha256_fast_final(&sha, digest);
     }
-    fclose(stream);
     if (!dm2_v1_dos_file_fp_matches_pc34(name, total, digest)) return 0;
     if (out_size) *out_size = total;
     return 1;
@@ -324,7 +348,7 @@ static int dm2_v1_dos_startup_load_verified_member(
     size_t *out_byte_count)
 {
     const dm2_v1_dos_file_fp_t *expected;
-    DM2_V1_DosSha256 sha;
+    DM2_V1_DosSha256Fast sha;
     uint8_t digest[32];
     uint8_t *bytes = NULL;
     char path[1024];
@@ -360,9 +384,9 @@ static int dm2_v1_dos_startup_load_verified_member(
         goto reject;
     }
     stream = NULL;
-    dm2_v1_dos_sha256_init(&sha);
-    dm2_v1_dos_sha256_update(&sha, bytes, expected->size_bytes);
-    dm2_v1_dos_sha256_final(&sha, digest);
+    dm2_v1_dos_sha256_fast_init(&sha);
+    dm2_v1_dos_sha256_fast_update(&sha, bytes, expected->size_bytes);
+    dm2_v1_dos_sha256_fast_final(&sha, digest);
     if (!dm2_v1_dos_file_fp_matches_pc34(name, expected->size_bytes,
                                            digest)) {
         goto reject;

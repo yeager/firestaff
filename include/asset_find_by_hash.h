@@ -95,4 +95,17 @@ int asset_scan_missing_extractor_count(void);
 const char *asset_scan_missing_extractor_path(int index);
 const char *asset_scan_missing_extractor_tools(int index);
 
+/*
+ * Scoped scan-cache batching.
+ *
+ * asset_find_by_md5*() open and persist the on-disk scan cache around every
+ * call. When a caller makes several searches in a row over related roots
+ * (e.g. probing `<base>/dm2`, `<base>/data`, `<base>` for the same asset),
+ * wrap the whole run in asset_scan_cache_batch_begin()/end() so the cache is
+ * opened once, kept warm, and saved once. Nested begin() calls are safe;
+ * only the outermost begin/end pair drives the persistence.
+ */
+void asset_scan_cache_batch_begin(void);
+void asset_scan_cache_batch_end(void);
+
 #endif /* ASSET_FIND_BY_HASH_H */

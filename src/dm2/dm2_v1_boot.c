@@ -2401,8 +2401,14 @@ static int dm2_scan_known_hash_assets(const char *base,
     char subroot[512];
     const char *subdirs[] = {"dm2", "data", NULL};
     int i;
+    int found = 0;
 
     if (!base || !base[0]) return 0;
+    /* Keep the on-disk scan cache open across every subroot attempt.  Without
+     * this batch, each dm2_try_hash_scan_root call opens+persists the same
+     * cache file, which on external volumes (DM2 install commonly lives on a
+     * secondary drive) added hundreds of ms per boot. */
+    asset_scan_cache_batch_begin();
     for (i = 0; subdirs[i]; ++i) {
         if (snprintf(subroot, sizeof(subroot), "%s%c%s",
                      base, DM2_PATH_SEP, subdirs[i]) >= (int)sizeof(subroot)) {
@@ -2411,12 +2417,16 @@ static int dm2_scan_known_hash_assets(const char *base,
         if (dm2_try_hash_scan_root(subroot,
                                    graphics_path, graphics_size, graphics_md5,
                                    dungeon_path, dungeon_size, dungeon_md5)) {
-            return 1;
+            found = 1;
+            goto done;
         }
     }
-    return dm2_try_hash_scan_root(base,
-                                  graphics_path, graphics_size, graphics_md5,
-                                  dungeon_path, dungeon_size, dungeon_md5);
+    found = dm2_try_hash_scan_root(base,
+                                   graphics_path, graphics_size, graphics_md5,
+                                   dungeon_path, dungeon_size, dungeon_md5);
+done:
+    asset_scan_cache_batch_end();
+    return found;
 }
 
 static void copy_parent_dir(char dst[512], const char *path) {

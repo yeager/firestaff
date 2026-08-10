@@ -5449,6 +5449,7 @@ static int scan_dir(const char *dir, const char *expectedMd5,
 
 static ScanCache_I s_scan_cache_storage;
 static int s_scan_cache_active;
+static int s_scan_cache_batch_depth;
 
 static void scan_cache_begin(void) {
     if (s_scan_cache_active) return;
@@ -5459,10 +5460,34 @@ static void scan_cache_begin(void) {
 }
 
 static void scan_cache_end(void) {
+    /* Inside an outer batch, keep the cache open and defer the save until
+     * the batch ends — otherwise every asset_find_by_md5*() call re-saves
+     * the same cache to disk. */
+    if (s_scan_cache_batch_depth > 0) return;
     if (!s_scan_cache_active) return;
     scache_save(&s_scan_cache_storage);
     s_scan_cache = NULL;
     s_scan_cache_active = 0;
+}
+
+void asset_scan_cache_batch_begin(void) {
+    if (s_scan_cache_batch_depth == 0) {
+        scan_cache_begin();
+    }
+    ++s_scan_cache_batch_depth;
+}
+
+void asset_scan_cache_batch_end(void) {
+    if (s_scan_cache_batch_depth == 0) return;
+    --s_scan_cache_batch_depth;
+    if (s_scan_cache_batch_depth == 0) {
+        /* Flush and close, matching non-batched semantics. */
+        if (s_scan_cache_active) {
+            scache_save(&s_scan_cache_storage);
+            s_scan_cache = NULL;
+            s_scan_cache_active = 0;
+        }
+    }
 }
 
 /* ── Public API ───────────────────────────────────────────────── */
