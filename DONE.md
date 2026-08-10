@@ -66,6 +66,15 @@
   specialgrenar och noll RNG-returkontrakt. Den öppnar därför inte någon
   syntetisk RNG-, creature-, AI-, loot-, T700- eller T900-semantik.
 
+# Theron: original file-select capture (2026-08-10)
+
+- ✅ PID-bunden Run/Button I-input passerar introsekvensen och når den
+  autentiska `WHICH FILE DO YOU PLAY?`-skärmen i en US Track 02-session.
+- ✅ Receipten verifierar 176 råsektorer, 32 `$E009`-dispatchar, fyra
+  CD→RAM-originreceipts och 2 048 matchande ADPCM FIFO/RAM-transfer.
+- ✅ Ingen dungeon-/spawnsemantik publiceras: samma session har noll `$B0E5`,
+  RNG-fönster, spawn-consumer eller giltig creature-kategori.
+
 # Theron: ADPCM-transportreceipt från extern capture (2026-08-10)
 
 - ✅ CD-state-parsern räknar och kontrollerar nu ADPCM FIFO-läsningar mot

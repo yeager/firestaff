@@ -519,3 +519,17 @@ spawn-consumer reads and zero RNG return contracts. The `$4667` calls therefore
 prove only that the authenticated runtime reaches the static helper edge;
 they do not authorize a host RNG, creature record, AI, loot, generator,
 T700 or T900 implementation. The raw capture remains outside GitHub.
+
+## 2026-08-10 — file-select route capture
+
+An additional authenticated cold-start run used PID-bound Button I/Run input
+through the intro and reached the original `WHICH FILE DO YOU PLAY?` screen.
+Its receipt contained 176 raw-sector spans, 32 game `$E009` dispatches, four
+byte-exact CD-to-RAM origin receipts, and 2,048 matching ADPCM FIFO reads and
+ADPCM-RAM writes.
+
+The same session contained zero `$B0E5` spawn entries, zero `$C96B/$CC4C`
+RNG windows, zero spawn-consumer reads, and zero valid creature-category
+observations. This is positive input/media/startup-to-file-select evidence,
+not dungeon, RNG, creature, AI, T700 or T900 evidence. The raw capture remains
+outside GitHub.

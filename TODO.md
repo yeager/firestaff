@@ -9,6 +9,12 @@
   64 `$4667`-edges, men ingen giltig `$B0E5`-kategori, specialgren eller
   RNG-retur. Nästa capture måste följa en faktisk dungeon/spawnhändelse.
 
+- 🔒 Den längre PID-bundna inputcapturen når originalets `WHICH FILE DO YOU
+  PLAY?` efter intro och verifierar 176 råsektorer, 32 `$E009`, fyra
+  originreceipts samt 2 048 ADPCM FIFO→RAM-par. Den innehåller fortfarande
+  noll `$B0E5`, spawn- eller RNG-fönster. Nästa steg är att välja fil och
+  bekräfta party-/dungeonrouten med Button I i samma autentiserade session.
+
 - 🔒 JP-Track 02:s autentiska rosterrecord når nu startup-party-state:n med
   namn, vitalvärden, attribut och skills. Porträttens bitmap-/paletteägare och
   det riktiga text-/UI-consumet är fortfarande inte bevisade; nästa media-
