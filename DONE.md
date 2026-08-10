@@ -1,3 +1,18 @@
+# Nexus: TM.BIN → SH-2 r5 → VDP2 samma-session-join (2026-08-10)
+
+- ✅ Riktad J-BIOS/engelsk-disc-capture med writer-PC `0x06017702` visar
+  1 548 register- och write-observationer i samma session. VDP2-register-
+  och CRAM-adresser kan nu filtreras utan att råcapture påverkas.
+- ✅ `r4=0x25f8…` klassas korrekt som cachad VDP2-registeradress. Den
+  incrementerande assetpekaren är `r5`; vid `r5=0x0602a0c0` fångas 16 bytes
+  som matchar `TM.BIN+0x1a0c0` byte-exakt. Samma bytes återfinns också i
+  den autentiska ISO:n; identiteten redovisas därför som verifierad med
+  explicit fil/offset.
+- ✅ Den riktade verifieraren rapporterar 64 verifierade destinationstransport-
+  skrivningar, source-byte-SHA-256 och `asset_identity=verified`. Semantisk
+  meny/FONT256/CLUT/HUD/viewport-admission förblir spärrad tills konsumentens
+  tile-/palette-/skärmkomposition är joinad mot samma capture.
+
 # Nexus: samma-session VDP2-write/register-join (2026-08-10)
 
 - ✅ Extern Saturn-capture `run-vdp2-owner-regs-20260810` körde 300 validerade

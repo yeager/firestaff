@@ -1,0 +1,22 @@
+--- src/ss/vdp2.cpp
++++ src/ss/vdp2.cpp
+@@ -144,14 +144,19 @@
+  static FILE *file;
+  static unsigned count;
+  static unsigned limit = 200000;
++ static uint32 requested_pc;
+  static bool configured;
+  const char *limit_text;
++ const char *pc_text;
+  unsigned i;
+  if(!path || !*path || !pc) return;
+  if(!configured)
+  {
+   limit_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REG_LIMIT");
+   if(limit_text && *limit_text) limit = strtoul(limit_text, NULL, 10);
++  pc_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REG_PC");
++  if(pc_text && *pc_text) requested_pc = strtoul(pc_text, NULL, 0);
+   configured = true;
+  }
++ if(requested_pc && requested_pc != pc) return;
+  if(count >= limit) return;
