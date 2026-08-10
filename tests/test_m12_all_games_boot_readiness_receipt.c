@@ -404,11 +404,10 @@ int main(void) {
                     "launch intent should use the auto-selected matched version")) return 1;
     }
 
-    /* AUTO must be resolved again at the final launch boundary.  Simulate a
-     * persisted, still-matched FM Towns row after a PC corpus appeared in a
-     * later scan: the stale row must not defeat the common PC-first policy.
-     * This exercises the same M12 handoff used by DM1/CSB/DM2, without
-     * constructing any game media. */
+    /* AUTO must be resolved again at the final launch boundary.  DM1/DM2
+     * recover their PC route from a stale FM Towns row; CSB has no DOS
+     * release and must instead retain FM Towns over a stale compatibility
+     * row.  This exercises the same M12 handoff without constructing media. */
     {
         static const char *const game_ids[] = {"dm1", "csb", "dm2"};
         static const char *const pc_ids[] = {"pc34-en", "pc34-en", "pc-en"};
@@ -425,12 +424,13 @@ int main(void) {
                         "PC and FM Towns catalogue rows should exist")) return 1;
             state.activatedIndex = (int)game;
             state.gameOptions[game].architectureIndex = M12_ARCH_AUTO;
-            state.gameOptions[game].versionIndex = fmtowns;
+            state.gameOptions[game].versionIndex = game == 1u ? pc : fmtowns;
             state.assetStatus.versions[game][pc].matched = 1;
             state.assetStatus.versions[game][fmtowns].matched = 1;
             intent = M12_StartupMenu_GetLaunchIntent(&state);
-            if (!expect(intent.valid == 1 && intent.options.versionIndex == pc,
-                        "AUTO launch intent must prefer PC over a stale matched FM Towns row")) return 1;
+            if (!expect(intent.valid == 1 && intent.options.versionIndex ==
+                        (game == 1u ? fmtowns : pc),
+                        "AUTO launch intent must choose the original platform route")) return 1;
         }
     }
 

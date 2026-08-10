@@ -493,10 +493,19 @@ static void run_real_data_handoff_if_available(void) {
                              receipt.dm1HoCMapHeight > 0),
                         "DM1 HoC proof records real loaded map dimensions");
         } else if (strcmp(kCases[i].gameId, "csb") == 0) {
-            expect_true(receipt.startupTitleFrameMax >= 0 &&
-                            (receipt.startupTitleReady == 0 ||
-                             receipt.startupTitleReady == 1),
-                        "CSB receipt exposes source title ready boundary");
+            if (autoArchitecture == M12_ARCH_PC) {
+                expect_true(receipt.startupTitleFrameMax >= 0 &&
+                                (receipt.startupTitleReady == 0 ||
+                                 receipt.startupTitleReady == 1),
+                            "CSB PC-compat receipt exposes source title ready boundary");
+            } else {
+                /* CSB has no DOS release.  FM Towns, Amiga and Atari retain
+                 * their own startup owners and do not promise the PC34
+                 * TITLE.C counter layout. */
+                expect_true(receipt.startupAnimation[0] != '\0' &&
+                                receipt.startupPhase[0] != '\0',
+                            "CSB native receipt exposes its startup owner");
+            }
         } else if (strcmp(kCases[i].gameId, "nexus") == 0) {
             expect_true(receipt.startupAnimationActive == 1 &&
                             receipt.startupTitleFrame == 0 &&
@@ -519,6 +528,16 @@ static void run_real_data_handoff_if_available(void) {
 
         if (strcmp(kCases[i].gameId, "dm1") == 0) {
             expect_skip("DM1 selected-entry HoC proof passed; PhaseA DM1 real-data boot-probe is tracked separately after local timeout");
+            continue;
+        }
+        if (strcmp(kCases[i].gameId, "csb") == 0 &&
+            autoArchitecture != M12_ARCH_PC) {
+            /* The detailed script below is ReDMCSB's PC-compat Prison
+             * route.  Native CSB media is already proven by the selected
+             * M12-to-M11 handoff above and by its platform-specific suites;
+             * do not pretend the DOS command script describes FM Towns,
+             * Amiga or Atari startup. */
+            expect_skip("CSB native AUTO handoff proved; PC-compat Prison script is not its source route");
             continue;
         }
 

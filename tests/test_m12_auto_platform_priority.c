@@ -1,7 +1,7 @@
 /* AUTO platform selection must be a media policy, not catalogue order.
- * The catalogue intentionally lists FM Towns before PC for all three games;
- * the launcher must nevertheless recover to the verified PC route whenever
- * an AUTO version needs to be selected again. */
+ * DM1/DM2 prefer their original PC routes.  CSB never had a DOS release:
+ * it must prefer its original FM Towns route over Amiga, Atari and any
+ * internal PC34-compatibility catalogue row. */
 #include "asset_status_m12.h"
 #include "menu_startup_m12.h"
 
@@ -10,42 +10,56 @@
 
 int main(void)
 {
-    static const char *const games[] = {"dm1", "csb", "dm2"};
-    static const char *const pc_versions[] = {"pc34-en", "pc34-en", "pc-en"};
-    static const char *const fmtowns_versions[] = {
-        "fmtowns-en", "fmtowns-en", "fmtowns-ja"
-    };
+    static const char *const pc_games[] = {"dm1", "dm2"};
+    static const char *const pc_versions[] = {"pc34-en", "pc-en"};
+    static const char *const fmtowns_versions[] = {"fmtowns-en", "fmtowns-ja"};
     M12_AssetStatus status;
     size_t i;
 
     memset(&status, 0, sizeof(status));
-    for (i = 0u; i < sizeof(games) / sizeof(games[0]); ++i) {
-        int pc = M12_AssetStatus_FindVersionIndex(games[i], pc_versions[i]);
-        int fmtowns = M12_AssetStatus_FindVersionIndex(games[i],
+    for (i = 0u; i < sizeof(pc_games) / sizeof(pc_games[0]); ++i) {
+        const int game_index = strcmp(pc_games[i], "dm1") == 0 ? 0 : 2;
+        int pc = M12_AssetStatus_FindVersionIndex(pc_games[i], pc_versions[i]);
+        int fmtowns = M12_AssetStatus_FindVersionIndex(pc_games[i],
                                                         fmtowns_versions[i]);
         int selected;
         if (pc < 0 || fmtowns < 0) {
-            fprintf(stderr, "FAIL: missing catalogue identities for %s\n", games[i]);
+            fprintf(stderr, "FAIL: missing catalogue identities for %s\n", pc_games[i]);
             return 1;
         }
-        status.versions[i][pc].matched = 1;
-        status.versions[i][fmtowns].matched = 1;
-        if (strcmp(games[i], "csb") == 0) {
-            int amiga = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
-            if (amiga < 0) {
-                fprintf(stderr, "FAIL: missing CSB Amiga catalogue identity\n");
-                return 1;
-            }
-            status.versions[i][amiga].matched = 1;
-        }
+        status.versions[game_index][pc].matched = 1;
+        status.versions[game_index][fmtowns].matched = 1;
         selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
-            &status, games[i], M12_ARCH_AUTO);
+            &status, pc_games[i], M12_ARCH_AUTO);
         if (selected != pc) {
-            fprintf(stderr, "FAIL: AUTO selected the wrong native route for %s\n", games[i]);
+            fprintf(stderr, "FAIL: AUTO selected the wrong PC route for %s\n", pc_games[i]);
             return 1;
         }
     }
-    puts("PASS: AUTO keeps PC-first DM1/CSB/DM2 selection");
+    puts("PASS: AUTO keeps PC-first DM1/DM2 selection");
+    {
+        int fmtowns = M12_AssetStatus_FindVersionIndex("csb", "fmtowns-en");
+        int amiga = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
+        int atari = M12_AssetStatus_FindVersionIndex("csb", "st20-21-en");
+        int pc_compat = M12_AssetStatus_FindVersionIndex("csb", "pc34-en");
+        int selected;
+        memset(&status, 0, sizeof(status));
+        if (fmtowns < 0 || amiga < 0 || atari < 0 || pc_compat < 0) {
+            fprintf(stderr, "FAIL: missing CSB platform catalogue identities\n");
+            return 1;
+        }
+        status.versions[1][fmtowns].matched = 1;
+        status.versions[1][amiga].matched = 1;
+        status.versions[1][atari].matched = 1;
+        status.versions[1][pc_compat].matched = 1;
+        selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+            &status, "csb", M12_ARCH_AUTO);
+        if (selected != fmtowns) {
+            fprintf(stderr, "FAIL: AUTO did not keep CSB on FM Towns\n");
+            return 1;
+        }
+    }
+    puts("PASS: AUTO keeps CSB on original FM Towns media");
     {
         int a31e = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
         int a31m = M12_AssetStatus_FindVersionIndex("csb", "amiga31-multi");

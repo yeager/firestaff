@@ -1,12 +1,14 @@
-# Launcher: AUTO väljer PC även vid sista launch-handoff (2026-08-10)
+# Launcher: AUTO använder rätt originalplattform (2026-08-10)
 
-- ✅ AUTO återupplöses nu precis innan `M12_LaunchIntent` lämnar startmenyn.
+- ✅ AUTO återupplöses precis innan `M12_LaunchIntent` lämnar startmenyn.
   En gammal men fortfarande matchad FM Towns-rad kan därmed inte vinna över
-  en nyupptäckt, hashverifierad PC-utgåva. Samma PC-först-policy gäller DM1,
-  CSB och DM2; uttryckligt plattformsval ändras inte.
-- ✅ Regressionen provar den slutliga handoffen för samtliga tre spel med
-  både PC- och FM Towns-rader matchade. Den verifierar dessutom den normala
-  AUTO-prioriteten. Inga speldata skapas, kopieras eller packas upp.
+  en nyupptäckt, hashverifierad PC-utgåva för Dungeon Master eller Dungeon
+  Master II.
+- ✅ Chaos Strikes Back hade ingen DOS-utgåva. AUTO väljer därför dess
+  originala FM Towns-väg först och därefter Amiga/Atari ST, aldrig den
+  interna PC34-kompatibilitetsraden. Uttryckligt plattformsval ändras inte.
+- ✅ Regressionerna provar både den normala AUTO-prioriteten och den sista
+  M12-handoffpunkten. Inga speldata skapas, kopieras eller packas upp.
 
 # DM2: beständig privat GAME_LOAD-kandidat (2026-08-10)
 

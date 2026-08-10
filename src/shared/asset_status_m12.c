@@ -6284,6 +6284,15 @@ int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
         M12_ARCH_X68000, M12_ARCH_PC98,
         M12_ARCH_PCE, M12_ARCH_SATURN, M12_ARCH_APPLE_IIGS
     };
+    static const int csbAutoPriority[] = {
+        /* Chaos Strikes Back was never released for DOS.  Its original
+         * routes are FM Towns, Amiga, Atari ST, X68000 and PC-98; never let
+         * an internal PC34-compatibility row become an AUTO launch target.
+         * DMWeb's platform matrix and the original media catalogue are the
+         * authority here, not the shared GRAPHICS.DAT hash. */
+        M12_ARCH_FM_TOWNS, M12_ARCH_AMIGA, M12_ARCH_ATARI_ST,
+        M12_ARCH_X68000, M12_ARCH_PC98
+    };
     const int *autoPriority = pcFirstAutoPriority;
     size_t autoPriorityCount = sizeof(pcFirstAutoPriority) /
                                sizeof(pcFirstAutoPriority[0]);
@@ -6295,6 +6304,11 @@ int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
 
     if (architecture == M12_ARCH_AUTO) {
         size_t p;
+        if (strcmp(gameId, "csb") == 0) {
+            autoPriority = csbAutoPriority;
+            autoPriorityCount = sizeof(csbAutoPriority) /
+                                sizeof(csbAutoPriority[0]);
+        }
         for (p = 0U; p < autoPriorityCount; ++p) {
             for (i = 0U; i < spec->versionCount; ++i) {
                 if (spec->versions[i].architecture == autoPriority[p] &&

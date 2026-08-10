@@ -1037,6 +1037,10 @@
   materialized and hash-checked before this boundary. Its native TITL.DAT and
   DUNGEON.DAT evidence is separately real-media gated; preserve those exact
   package identities throughout the native handoff.
+  Chaos Strikes Back saknar dessutom en original DOS-utgåva: håll dess
+  interna PC34-kompatibilitetskod utanför AUTO och all användarvänd
+  originalmedieinventering. AUTO ska välja FM Towns först, sedan Amiga och
+  Atari ST.
 
 - **NEXUS-VDP2-WRITER-CANDIDATE-OWNERSHIP:** The authentic 64-window VDP2
   code receipt now has a bounded partial-match analyzer. The primary writer
