@@ -611,10 +611,18 @@ static int dm2_decode_map_dimensions_from_w8_be(const uint8_t *map_desc,
     return 1;
 }
 
-/* Mac 68k and Amiga DUNGEON.DAT: big-endian u16 fields throughout,
- * except offset 4-5 (header_size) which is LE, and map descriptor byte
- * fields at desc+6,desc+7 which are individual bytes unaffected by endian.
- * Magic 0x313b at offset 2-3 (reads as 0x3b31 via LE RD16). */
+/* Mac 68k and Amiga DUNGEON.DAT have the same 44-byte envelope but not the
+ * PC File_header offsets: offset 4 is the little-endian header size, nMaps
+ * is the big-endian word at 6, w8 remains at 8, cwListSize at 10, cwTextData
+ * at 12, and nRecords begins at 14.  This is verified against the original
+ * 39,411-byte Amiga installer member (00 00 31 3b 2c 00 00 1c 01 01 ...).
+ * Map descriptor byte fields at desc+6,desc+7 are individual bytes and are
+ * therefore unaffected by endian. Magic 0x313b at offset 2-3 reads as
+ * 0x3b31 through LE RD16. */
+#define DM2_BE_HDR_MAP_COUNT_OFFSET         6
+#define DM2_BE_HDR_TEXT_WORD_COUNT_OFFSET   12
+#define DM2_BE_HDR_GROUND_STACK_COUNT_OFFSET 10
+#define DM2_BE_HDR_RECORD_COUNTS_OFFSET     14
 static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
                                           const uint8_t *dat,
                                           int size) {
@@ -637,7 +645,7 @@ static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
     if (RD16(dat + 4) != DM2_DUNGEON_HEADER_SIZE)
         return 0;
 
-    map_count = (int)dat[DM2_HDR_MAP_COUNT_OFFSET];
+    map_count = (int)rd16be(dat + DM2_BE_HDR_MAP_COUNT_OFFSET);
     if (map_count < 1 || map_count > DM2_V1_MAX_LEVELS) return 0;
     if (size < DM2_DUNGEON_HEADER_SIZE + map_count * DM2_MAP_DESC_SIZE)
         return 0;
@@ -652,13 +660,13 @@ static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
     out->g1_extension_base = -1;
     out->g1_extension_size = 0;
     out->square_first_thing_count =
-        (int)rd16be(dat + DM2_HDR_GROUND_STACK_COUNT_OFFSET);
+        (int)rd16be(dat + DM2_BE_HDR_GROUND_STACK_COUNT_OFFSET);
     out->text_word_count =
-        (int)rd16be(dat + DM2_HDR_TEXT_WORD_COUNT_OFFSET);
+        (int)rd16be(dat + DM2_BE_HDR_TEXT_WORD_COUNT_OFFSET);
     for (int i = 0; i < DM2_THING_TYPE_COUNT; ++i) {
         out->thing_data_bases[i] = -1;
         out->thing_type_counts[i] =
-            (int)rd16be(dat + DM2_HDR_RECORD_COUNTS_OFFSET + i * 2);
+            (int)rd16be(dat + DM2_BE_HDR_RECORD_COUNTS_OFFSET + i * 2);
     }
 
     for (int i = 0; i < map_count; ++i) {

@@ -47,6 +47,14 @@
   bevaras. Regressionsprovet genomför detta mot den riktiga Amiga-installern
   utan att packa upp speldata på disk.
 
+# DM2: Amiga File_header laddas från originalmedia (2026-08-10)
+
+- ✅ 68k-rutten använder nu Amigas verifierade headerlayout: 44-byte
+  headerstorlek vid byte 4, 28 kartor vid byte 6, text vid byte 12 och
+  recordpooler från byte 14. Den riktiga LZX-installern passerar därmed
+  `dm2_v1_boot_enter_game()` med sina RAM-ägda `GRAPHICS.DAT`- och
+  `DUNGEON.DAT`-medlemmar. Ingen data packas upp på disk.
+
 # Nexus: source-gated SMAP and startup/audio contracts (2026-08-10)
 - ✅ Retail SMAP-dekodning behåller autentiserade pixlar men förblir explicit
   no-draw tills VDP2-placement är verifierad. En blockerad LEV00-start lämnar

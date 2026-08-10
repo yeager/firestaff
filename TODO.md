@@ -3237,7 +3237,10 @@
   source-owned; no generic party mirror is published. **Rescan ownership:** a
   rescan now atomically drops the former parsed world and every RAM-backed
   DOS, FM Towns or Amiga medium before selecting replacement data; the save
-  namespace is the sole preserved host setting.
+  namespace is the sole preserved host setting. **Amiga File_header:** the
+  68k-specific header offsets now admit the original 28-map installer member
+  through the normal RAM-only boot path; full Amiga GAME_LOAD/runtime remains
+  a separate source-owner task.
 
 - **DM2-ACTUATOR-SHOOTER-OWNER-HANDOFF:** Port the actual shooter actuator's
   **2026-08-13 real-data census:** the canonical PC-English G1 corpus contains
