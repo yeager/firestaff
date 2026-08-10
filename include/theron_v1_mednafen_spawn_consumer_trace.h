@@ -58,6 +58,11 @@ typedef struct {
      * ($B3 & $07) == $04. Seeing the helper entry alone is not evidence
      * that this branch ran or that a returned random value was consumed. */
     int helper_4667_special_branch_seen;
+    /* The sidecar flag identifies a PC address hit. Keep it separate from
+     * the valid regular-spawn category domain (A=0..3); same-address
+     * overlays are negative evidence, not semantic spawn records. */
+    uint32_t spawn_entry_b0e5_address_hits;
+    uint32_t spawn_entry_b0e5_invalid_category_samples;
     int semantic_publication_allowed;
     uint32_t sample_count;
     uint32_t first_pc;

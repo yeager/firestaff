@@ -160,20 +160,38 @@ static int parse_spawn_register_trace_file(
         unsigned int sequence, pc, physical_pc;
         unsigned int a, x, y, sp, p, mpr0, mpr_pc;
         unsigned int b3, b4, b5, b6, b8, ba, bb;
+        unsigned int return_pc, caller_pc;
         unsigned int c96b, cc4c, preconsumer, helper, spawn_entry;
         int consumed = 0;
-        int expected_c96b, expected_cc4c, expected_spawn_entry;
+        int parsed_fields;
+        int has_return_context = strstr(line, " return_pc=") != NULL;
+        int expected_c96b, expected_cc4c, expected_spawn_address;
+        int expected_spawn_entry;
         int expected_preconsumer, expected_helper;
 
-        if (sscanf(line,
-                   "spawn_consumer_registers sequence=%u pc=%x physical_pc=%x a=%x x=%x y=%x sp=%x p=%x mpr0=%x mpr_pc=%x b3=%x b4=%x b5=%x b6=%x b8=%x ba=%x bb=%x c96b_window=%u cc4c_window=%u preconsumer_4644=%u helper_4667=%u spawn_entry_b0e5=%u%n",
-                   &sequence, &pc, &physical_pc, &a, &x, &y, &sp, &p,
-                   &mpr0, &mpr_pc, &b3, &b4, &b5, &b6, &b8, &ba, &bb, &c96b,
-                   &cc4c, &preconsumer, &helper, &spawn_entry, &consumed) != 22 ||
+        if (has_return_context) {
+            parsed_fields = sscanf(
+                line,
+                "spawn_consumer_registers sequence=%u pc=%x physical_pc=%x a=%x x=%x y=%x sp=%x p=%x mpr0=%x mpr_pc=%x b3=%x b4=%x b5=%x b6=%x b8=%x ba=%x bb=%x return_pc=%x caller_pc=%x c96b_window=%u cc4c_window=%u preconsumer_4644=%u helper_4667=%u spawn_entry_b0e5=%u%n",
+                &sequence, &pc, &physical_pc, &a, &x, &y, &sp, &p,
+                &mpr0, &mpr_pc, &b3, &b4, &b5, &b6, &b8, &ba, &bb,
+                &return_pc, &caller_pc, &c96b, &cc4c, &preconsumer, &helper,
+                &spawn_entry, &consumed);
+        } else {
+            parsed_fields = sscanf(
+                line,
+                "spawn_consumer_registers sequence=%u pc=%x physical_pc=%x a=%x x=%x y=%x sp=%x p=%x mpr0=%x mpr_pc=%x b3=%x b4=%x b5=%x b6=%x b8=%x ba=%x bb=%x c96b_window=%u cc4c_window=%u preconsumer_4644=%u helper_4667=%u spawn_entry_b0e5=%u%n",
+                &sequence, &pc, &physical_pc, &a, &x, &y, &sp, &p,
+                &mpr0, &mpr_pc, &b3, &b4, &b5, &b6, &b8, &ba, &bb, &c96b,
+                &cc4c, &preconsumer, &helper, &spawn_entry, &consumed);
+        }
+        if (parsed_fields != (has_return_context ? 24 : 22) ||
             line[consumed] != '\0' || pc > 0xffffu ||
             physical_pc > 0x1fffffu || a > 0xffu || x > 0xffu ||
             y > 0xffu || sp > 0xffu || p > 0xffu || mpr0 > 0xffu ||
             mpr_pc > 0xffu ||
+            (has_return_context &&
+             (return_pc > 0xffffu || caller_pc > 0xffffu)) ||
             b3 > 0xffu || b4 > 0xffu || b5 > 0xffu || b6 > 0xffu ||
             b8 > 0xffu || ba > 0xffu || bb > 0xffu) {
             out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
@@ -182,11 +200,11 @@ static int parse_spawn_register_trace_file(
         }
         expected_c96b = c96b_window(pc);
         expected_cc4c = cc4c_window(pc);
-        /* THQUEST.ASM: regular spawn entry LB0E5 at PCE $B0E5.  The
-         * disassembly dispatches only categories 0..3 here; an address hit
-         * with another A value is a same-address overlay/caller observation,
-         * not an authenticated regular-spawn invocation. */
-        expected_spawn_entry = pc == 0xb0e5u && a <= 3u;
+        /* THQUEST.ASM: regular spawn entry LB0E5 at PCE $B0E5. The
+         * sidecar flag is an address hit; the disassembly dispatches only
+         * categories 0..3 here. Keep those facts separate. */
+        expected_spawn_address = pc == 0xb0e5u;
+        expected_spawn_entry = expected_spawn_address && a <= 3u;
         expected_preconsumer = pc == 0x4644u;
         expected_helper = pc == 0x4667u;
         if (sequence != expected_sequence ||
@@ -196,9 +214,9 @@ static int parse_spawn_register_trace_file(
             cc4c != (unsigned int)expected_cc4c ||
             preconsumer != (unsigned int)expected_preconsumer ||
             helper != (unsigned int)expected_helper ||
-            spawn_entry != (unsigned int)expected_spawn_entry ||
+            spawn_entry != (unsigned int)expected_spawn_address ||
             !(expected_c96b || expected_cc4c || expected_preconsumer ||
-              expected_helper || expected_spawn_entry)) {
+              expected_helper || expected_spawn_address)) {
             out->sequence_verified = sequence == expected_sequence;
             out->bank_coordinates_verified =
                 huc6280_physical_address(physical_pc);
@@ -207,7 +225,7 @@ static int parse_spawn_register_trace_file(
                 cc4c == (unsigned int)expected_cc4c &&
                 preconsumer == (unsigned int)expected_preconsumer &&
                 helper == (unsigned int)expected_helper &&
-                spawn_entry == (unsigned int)expected_spawn_entry;
+                spawn_entry == (unsigned int)expected_spawn_address;
             out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
             fclose(file);
             return 0;
@@ -240,6 +258,11 @@ static int parse_spawn_register_trace_file(
         out->helper_4667_seen |= expected_helper;
         if (expected_helper && ((b3 & 0x07u) == 0x04u))
             out->helper_4667_special_branch_seen = 1;
+        if (expected_spawn_address) {
+            out->spawn_entry_b0e5_address_hits++;
+            if (!expected_spawn_entry)
+                out->spawn_entry_b0e5_invalid_category_samples++;
+        }
         out->spawn_entry_b0e5_seen |= expected_spawn_entry;
         expected_sequence++;
     }

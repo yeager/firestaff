@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — spawn capture parser preserves overlay evidence
+
+- ✅ Current external register sidecars with `return_pc`/`caller_pc` context
+  are parsed while preserving the authenticated HuC6280 bank coordinate.
+- ✅ `$B0E5` address hits are counted separately from valid regular-spawn
+  categories; the real A=`$2C`/`$85` overlays remain negative evidence.
+- 🔒 Strict spawn admission, RNG return ownership, AI, loot, generators,
+  T700 and T900 remain closed because no valid category/consumer witness exists.
+
 ## 2026-08-10 — autoload replay remains pre-gameplay
 
 - Replayed an authentic external-disk US Track 02 savestate with the

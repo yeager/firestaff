@@ -1,5 +1,18 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-11 — register parser separates `$B0E5` address hits from spawn categories
+
+The register-sidecar parser now accepts the current external capture shape,
+which appends `return_pc`/`caller_pc` context while retaining the v3 header and
+`mpr_pc` bank coordinate. It validates that context as capture provenance and
+keeps the original physical-PC check. The sidecar's `spawn_entry_b0e5=1` is
+counted separately as an address hit; only A=`0..3` sets
+`spawn_entry_b0e5_seen`. A=`$2C`/`$85` overlay therefore remains explicit
+negative evidence instead of making the whole execution-window trace
+unparseable. The strict runtime-spawn parser still rejects a run without a
+valid category, preconsumer and helper edges, and no gameplay semantics are
+published by this change.
+
 ## 2026-08-10 — corrected cold-start VDC/VCE pair admitted as source media
 
 The corrected cold-start replay produced an exact raw VDC snapshot (64 KiB,

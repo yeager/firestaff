@@ -47,6 +47,15 @@ static void write_execution_window_fixture(const char *path) {
     fclose(file);
 }
 
+static void write_return_context_fixture(const char *path) {
+    FILE *file = fopen(path, "wb");
+    assert(file);
+    fputs("source=mednafen-pce-instrumented-spawn-registers-v3\n", file);
+    fputs("spawn_consumer_registers sequence=0 pc=ca00 physical_pc=000d2a00 a=01 x=02 y=03 sp=fe p=04 mpr0=1f mpr_pc=69 b3=10 b4=20 b5=30 b6=40 b8=50 ba=60 bb=70 return_pc=0080 caller_pc=007d c96b_window=1 cc4c_window=0 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=0\n", file);
+    fputs("spawn_consumer_registers sequence=1 pc=cd00 physical_pc=000d4d00 a=11 x=12 y=13 sp=fd p=05 mpr0=1f mpr_pc=6a b3=11 b4=21 b5=31 b6=41 b8=51 ba=61 bb=71 return_pc=0080 caller_pc=007d c96b_window=0 cc4c_window=1 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=0\n", file);
+    fclose(file);
+}
+
 static void write_rng_fixture(const char *path, int bad_step) {
     FILE *file = fopen(path, "wb");
     assert(file);
@@ -108,8 +117,20 @@ int main(void) {
         assert(!registers.semantic_publication_allowed);
     }
     {
+        Theron_V1SpawnRegisterTraceReceipt registers;
+        /* Current external captures append return/caller context while
+         * retaining the v3 header. That context is provenance only. */
+        write_return_context_fixture(path);
+        assert(theron_v1_mednafen_spawn_register_trace_parse_execution_window_file(
+            path, &registers));
+        assert(registers.sample_count == 2u);
+        assert(registers.c96b_window_seen && registers.cc4c_window_seen);
+        assert(!registers.semantic_publication_allowed);
+    }
+    {
         Theron_V1SpawnCaptureCorrelationReceipt correlation;
         write_fixture(path2, 0);
+        write_register_fixture(path, 0, 1, 1u);
         assert(theron_v1_mednafen_spawn_capture_correlate_files(
             path2, path, &correlation));
         assert(correlation.ready && correlation.source_windows_paired);
@@ -125,11 +146,19 @@ int main(void) {
     {
         Theron_V1SpawnRegisterTraceReceipt registers;
         /* A same-address overlay with an out-of-range category is not the
-         * LB0E5 regular-spawn consumer, even when its sidecar flag says so. */
+         * LB0E5 regular-spawn consumer, even when its sidecar flag says so.
+         * The execution-window parser retains that address hit as negative
+         * evidence instead of discarding the whole trace. */
         write_register_fixture(path, 0, 1, 0x2cu);
         assert(!theron_v1_mednafen_spawn_register_trace_parse_file(
             path, &registers));
         assert(registers.status == THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED);
+        assert(theron_v1_mednafen_spawn_register_trace_parse_execution_window_file(
+            path, &registers));
+        assert(registers.spawn_entry_b0e5_address_hits == 1u);
+        assert(registers.spawn_entry_b0e5_invalid_category_samples == 1u);
+        assert(!registers.spawn_entry_b0e5_seen);
+        assert(!registers.semantic_publication_allowed);
     }
     {
         Theron_V1SpawnRegisterTraceReceipt registers;
@@ -177,7 +206,10 @@ int main(void) {
             assert(theron_v1_mednafen_spawn_register_trace_parse_execution_window_file(
                 real_trace, &registers));
             assert(registers.status == THERON_V1_SPAWN_CONSUMER_TRACE_READY);
-            assert(registers.sample_count == 2048u);
+            /* Capture budgets are intentionally external-run specific; the
+             * parser must validate the full sequence without baking one
+             * run's sample limit into the source test. */
+            assert(registers.sample_count > 0u);
             assert(registers.c96b_window_seen && registers.cc4c_window_seen);
             assert(!registers.preconsumer_4644_seen && !registers.helper_4667_seen);
             assert(!registers.semantic_publication_allowed);

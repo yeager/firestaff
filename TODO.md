@@ -1,5 +1,14 @@
 # Firestaff TODO - Open Work
 
+## Theron: capture parser now retains overlay evidence (2026-08-11)
+
+- ✅ Current external register-sidecar lines with return/caller context are
+  accepted as execution-window provenance.
+- ✅ `$B0E5` address hits and valid category `0..3` samples are distinct fields.
+- 🔒 The latest real runs still have no valid category/consumer handoff; RNG,
+  spawn, AI, loot, generator timing, T700, T900 and event-audio ownership stay
+  gated.
+
 ## Theron: protagonist roster text binding fixed (2026-08-10)
 
 - ✅ Production forcefield handoff now binds Theron's name from the
