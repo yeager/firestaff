@@ -54,11 +54,11 @@ void dm2_v1_mark_dyn_load_with_flag(
         state->entries[state->count - 1].flags = (int16_t)0x8001;
     }
 
-    /* Mark the sub-entry with the flag byte */
+    /* c_loadlevel.cpp::DM2_2676_008f clears only RG2Blo, then ORs the
+     * caller's flag into that least-significant resource byte.  It does not
+     * replace sub1 (the byte at bits 8..15). */
     uint8_t flag_byte = (uint8_t)(flag & 0xFF);
-    int32_t sub_id = (resource_id & 0xFFFF0000) |
-                     ((uint32_t)flag_byte << 8) |
-                     (resource_id & 0xFF);
+    int32_t sub_id = (resource_id & (int32_t)0xFFFFFF00u) | flag_byte;
     dm2_v1_mark_dyn_load(state, sub_id);
 }
 

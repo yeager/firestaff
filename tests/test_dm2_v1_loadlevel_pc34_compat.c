@@ -58,6 +58,16 @@ static void test_mark_dyn_load_with_flag(void)
     dm2_v1_mark_dyn_load_with_flag(&state, 0x16000508, 0x0B);
     assert(state.count == 2);
     assert(state.entries[0].flags == (int16_t)0x8001);
+    assert(state.entries[0].cat == 0x16);
+    assert(state.entries[0].type == 0x00);
+    assert(state.entries[0].sub1 == 0x05);
+    assert(state.entries[0].sub2 == 0x08);
+    /* SKProject c_loadlevel.cpp::DM2_2676_008f (54-70): RG2Blo is cleared
+     * and the supplied flag is ORed into the resource's low byte. */
+    assert(state.entries[1].cat == 0x16);
+    assert(state.entries[1].type == 0x00);
+    assert(state.entries[1].sub1 == 0x05);
+    assert(state.entries[1].sub2 == 0x0B);
 
     printf("  PASS: mark_dyn_load_with_flag\n");
 }

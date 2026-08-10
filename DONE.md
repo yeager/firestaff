@@ -38,6 +38,13 @@
 - ✅ De programladdade `v1d338c`- och `v1d39bc`-actiontabellerna är också
   kopierade från källans exakta data innan INIT_GAME-trädet väljs.
 
+# DM2: korrekt LOAD_LOCALLEVEL-flaggresurs (2026-08-11)
+
+- ✅ `DM2_2676_008f` behåller nu resursens `sub1` och OR:ar sin källflagga i
+  lägsta byte, enligt SKProject `c_loadlevel.cpp:54-70`. Det hindrar att
+  senare `LOAD_LOCALLEVEL_DYN`-arbete väljer en annan GDAT-resurs än
+  originalet. Det fokuserade testet kontrollerar hela båda resurs-id:n.
+
 # Theron: corrected cold-start VDC/VCE media admission (2026-08-10)
 
 - ✅ Den autentiserade externa cold-start-capturen med VRAM-FNV `4a2186a2`

@@ -581,6 +581,9 @@
   sessiontransaktion. Dess eventflush använder nu originalets `out_idx`-
   baserade ringkomprimering; den kompletta tangentbordsdräneringen och
   UI-eventdispatchen måste fortfarande ägas av samma privata session.
+  `DM2_2676_008f` har nu rätt resursbyte i den testexklusiva
+  LOAD_LOCALLEVEL-hjälparen; den större ägaren måste fortfarande köa hela
+  tile-/record- och actuatorprefixet innan DYN4 får anropas.
   New Games privata `c_party` räknar nu vikt från samma källägda DB5–DB10-
   poster och GDAT som itembonusarna, inklusive laddningar samt DB9-
   containrars verkliga innehålls- och moneyboxkedjor. Det räcker inte för
