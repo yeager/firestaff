@@ -17,6 +17,24 @@
   `--game dm1 --platform auto` når PC34:s `dm1-runtime`-gräns. Fristående
   PC34-CSB når sin källaägda titel och PC-DM2 når sin startmeny.
 
+# Theron: autentiserad startup→dungeon-screenshot-gate (2026-08-10)
+- ✅ Screenshot-readiness kör nu den befintliga riktiga Theron-startupvägen:
+  titel, stage, Soul Room, spegelval och forcefield, med autentiserad extern
+  VRAM/VCE-capture som enda visuella källa.
+- ✅ M11-proben rapporterar Therons source-owned `level_loaded`, party-position,
+  companions och runtime-status i stället för den generiska DM1-skalans nollor.
+- ✅ Lokal verifiering: screenshot-readiness, promotion-gate/checklist,
+  Theron Track 02-loader/creature/object/runtime-regressioner och real-capture
+  Vram-trace är gröna. Promotion-checklistan förblir osignerad avsiktligt;
+  ingen ny bild eller speldata har lagts i repot.
+
+# Theron: README-källbild märkt med riktig capture-proveniens (2026-08-10)
+- ✅ README visar den hashverifierade original-media/Mednafen-bilden
+  `theron-quest-us-dungeon-mednafen.png` och skiljer uttryckligen den från en
+  Firestaff-rendering. Bildens SHA-256 och Track 02-handoff finns länkade i
+  source-lock-dokumentationen; inga nya mediafiler eller speldata har lagts
+  till.
+
 # Theron: samma-session dungeon-replay verifierad utan semantisk öppning (2026-08-10)
 - ✅ En autentiserad US-körning från operatorns Mednafen-state replayade sju
   scripted input-händelser i samma process och bevarade 2 048 disassemblybundna

@@ -165,10 +165,19 @@ def run_case(firestaff: Path, case: dict[str, Any]) -> dict[str, Any]:
             str(firestaff),
             "--game",
             "theron",
+            "--width",
+            "320",
+            "--height",
+            "200",
             "--data-dir",
             str(data_dir),
+            "--boot-probe",
+            "--boot-probe-frames",
+            "0",
+            "--script",
+            "enter,enter,down,down,down,down,down,down,enter,down,enter",
             "--duration",
-            "1500",
+            "0",
         ]
         proc = run(cmd, env=env, replacements=replacements)
         row["command"] = proc

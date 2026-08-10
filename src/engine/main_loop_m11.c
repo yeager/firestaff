@@ -3704,7 +3704,37 @@ static void m11_write_autotest_runtime_probe(const char* path,
     if (!f) {
         return;
     }
-    fprintf(f,
+    /* Theron keeps its source-owned party/runtime state in theronState;
+     * M11_GameViewState.world is the shared DM1-compatible shell and remains
+     * zeroed for this game.  Reporting the shell here made an authenticated
+     * Track 02 dungeon handoff look like a parked startup in readiness
+     * receipts. */
+    {
+        int mapIndex = gameView ? gameView->world.party.mapIndex : -1;
+        int mapX = gameView ? gameView->world.party.mapX : -1;
+        int mapY = gameView ? gameView->world.party.mapY : -1;
+        int direction = gameView ? gameView->world.party.direction : -1;
+        int championCount = gameView ? gameView->world.party.championCount : -1;
+        unsigned int gameTick = gameView ? (unsigned int)gameView->world.gameTick : 0U;
+        const char *lastOutcome = gameView ? gameView->lastOutcome : "";
+        if (gameView && gameView->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+            mapIndex = gameView->theronState.selected_dungeon - 1;
+            mapX = gameView->theronState.party_x;
+            mapY = gameView->theronState.party_y;
+            direction = gameView->theronState.party_dir;
+            championCount = gameView->theronState.companion_count +
+                (gameView->theronState.level_loaded ? 1 : 0);
+            gameTick = (unsigned int)gameView->theronState.tick_count;
+            if (gameView->theronState.startup_phase ==
+                    THERON_STARTUP_PHASE_IN_DUNGEON &&
+                gameView->theronState.level_loaded) {
+                /* This label is derived from the source-owned state receipt;
+                 * it is not a claim that the missing creature/AI semantics
+                 * have been reconstructed. */
+                lastOutcome = "THERON RUNTIME (TRACK 02 DUNGEON)";
+            }
+        }
+        fprintf(f,
             "{\n"
             "  \"schema\": \"firestaff_m11_autotest_runtime_probe.v1\",\n"
             "  \"launchedEver\": %d,\n"
@@ -3727,13 +3757,13 @@ static void m11_write_autotest_runtime_probe(const char* path,
             gameView ? gameView->presentationWidth : 0,
             gameView ? gameView->presentationHeight : 0,
             gameView ? gameView->lastAction : "",
-            gameView ? gameView->lastOutcome : "",
-            gameView ? (unsigned int)gameView->world.gameTick : 0U,
-            gameView ? gameView->world.party.mapIndex : -1,
-            gameView ? gameView->world.party.mapX : -1,
-            gameView ? gameView->world.party.mapY : -1,
-            gameView ? gameView->world.party.direction : -1,
-            gameView ? gameView->world.party.championCount : -1,
+            lastOutcome,
+            gameTick,
+            mapIndex,
+            mapX,
+            mapY,
+            direction,
+            championCount,
             gameView ? gameView->lastDm1V1MovementPipelineResult.core.queue.dequeued : 0,
             gameView ? gameView->lastDm1V1MovementPipelineResult.core.queue.command : 0,
             gameView ? gameView->lastDm1V1MovementPipelineResult.core.turnApplied : 0,
@@ -3745,7 +3775,8 @@ static void m11_write_autotest_runtime_probe(const char* path,
             inputRedrawDrawCount,
             inputRedrawAfterViewportDirtyCount,
             lastInputRedrawAfterViewportDirty);
-    fclose(f);
+        fclose(f);
+    }
 }
 
 static void m11_write_autotest_screenshot(const char* outputDir) {

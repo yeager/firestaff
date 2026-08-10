@@ -36,9 +36,11 @@ available at [yeager.github.io/firestaff](https://yeager.github.io/firestaff/).
 
 ### Theron's Quest real-media capture
 
-This is a real Theron's Quest dungeon capture from the PC Engine route. It is
-included as a bring-up reference; it does not claim complete creature,
-combat, save or later-level parity.
+This is a real original-media Mednafen capture from the Theron's Quest PC
+Engine route, published as a source-reference screenshot. It is not a
+Firestaff-rendered frame and does not claim complete creature, combat, save or
+later-level parity. The capture provenance and hash are recorded in
+[`docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md`](docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md).
 
 ![Theron's Quest real dungeon capture](verification-screens/theron-quest-us-dungeon-mednafen.png)
 

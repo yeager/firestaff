@@ -51,7 +51,7 @@
     "presented BMP is a valid 320x200 24-bit BMP with >200 non-black pixels",
     "operator-local reviewer sign-off reports reviewed=true with non-empty reviewer and review_date"
   ],
-  "generated_at": "2026-08-09T09:01:59.941726+00:00",
+  "generated_at": "2026-08-10T10:21:45.634979+00:00",
   "nonClaims": [
     "No Theron screenshot is promoted into README, verification-screens/, or docs/compare/ by this checklist.",
     "No generated, illustrated, or mock Theron image is created or copied.",
@@ -89,13 +89,13 @@
         {
           "key": "semantic_track02_evidence",
           "label": "runtime probe shows semantic Track 02 loader evidence (gameTick>0, party.mapIndex!=0, or lastOutcome beyond 'THERON READY')",
-          "note": "gameTick=0, party.mapIndex=0, lastOutcome='THERON STARTUP'",
+          "note": "gameTick=0, party.mapIndex=0, lastOutcome='THERON RUNTIME (TRACK 02 DUNGEON)'",
           "verdict": "PASS"
         },
         {
           "key": "unique_source_bmp",
           "label": "source BMP sha256 is unique across all rows (duplicate sha256s indicate a shared placeholder fixture)",
-          "note": "source sha256 a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f unique",
+          "note": "source sha256 94ac0999e56d4f5a33b8e929d11bf31b62c368c518837339f072cd37726acb40 unique",
           "verdict": "PASS"
         },
         {
@@ -114,17 +114,17 @@
       "classification": "REVIEW_CHECKLIST_INELIGIBLE",
       "label": "Theron canonical PC Engine root",
       "machine_eligible": false,
-      "presented_sha256": "1b7e1a150a13c487e872f7b9bc991b212f719315dc916d5016c665e9db442501",
+      "presented_sha256": "11d2e5f157adf2f36101075f6588efad797bfe4626e60132f3cf02bdf4684abc",
       "probe_summary": {
         "gameTick": 0,
-        "lastOutcome": "THERON STARTUP",
+        "lastOutcome": "THERON RUNTIME (TRACK 02 DUNGEON)",
         "launchedEver": 1,
         "party.mapIndex": 0,
         "sourceId": "theron"
       },
       "reviewer_signed_off": false,
       "reviewer_signoff_record": null,
-      "source_sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f"
+      "source_sha256": "94ac0999e56d4f5a33b8e929d11bf31b62c368c518837339f072cd37726acb40"
     },
     {
       "case_id": "jp_extras_track02_bin",
