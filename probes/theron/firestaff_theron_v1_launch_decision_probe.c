@@ -36,8 +36,8 @@ int main(void) {
         q.capture_plan_prepared &&
         q.runtime_blocked &&
         q.bitmap_route_ready &&
-        q.level_route_ready &&
-        q.object_route_ready &&
+        !q.level_route_ready &&
+        !q.object_route_ready &&
         !q.session_allocated &&
         !q.callback_invoked ? 0 : 1;
 }

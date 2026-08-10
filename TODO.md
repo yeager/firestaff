@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+## Theron: launch receipt boundary corrected (2026-08-10)
+
+- ✅ A media-ready launch now advertises only the authenticated bitmap/capture
+  route.
+- 🔒 `level_route_ready` and `object_route_ready` remain closed until an
+  original Track 02 level/object consumer is proven in an authenticated
+  runtime trace.
+
 # Theron: authenticated savestate replay still has no semantic consumer (2026-08-10)
 
 - ✅ Ny isolerad replay från autentisk US Track 02-savestate nådde `$B0E5` två

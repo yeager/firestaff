@@ -2,6 +2,17 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 — launch receipt no longer overclaims level/object readiness
+
+- ✅ Corrected `theron_v1_launch_decision()` so a media-ready launch only
+  advertises the authenticated bitmap/capture route.
+- ✅ `level_route_ready` and `object_route_ready` now remain `0` until the
+  original Track 02 level/object consumer is proven, matching
+  `theron_v1_track02_provenance_runtime_consumer.c` and the current negative
+  Mednafen runtime witness.
+- ✅ Updated `firestaff_theron_v1_launch_decision_probe` and rebuilt the
+  focused Theron targets.
+
 ## 2026-08-10 — authenticated savestate replay remains non-semantic
 
 - ✅ En ny isolerad US Track 02-replay från en autentisk Mednafen-savestate
