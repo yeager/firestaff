@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-10: En separat EU-BIOS/English-Merged coldstart på extern disk
+(`run-codex-menu-text-capture-20260810/`) passerar rå-envelope-valideringen
+för 240 frames och visar förändrad VDP1-VRAM, VDP1-framebuffer och VDP2-VRAM
+efter den kontrollerade input-window. VDP2-registerna förblir
+`NBG0/RBG0`/`CHCTLA=0x0012`, VDP2-CRAM är oförändrad och ingen byteexakt
+FONT012/TEXT4/TABL-join hittas i witnessen. Detta är ett giltigt negativt
+text-/menybevis: det identifierar inte MENU.BPK, FONT256 eller en
+textkonsument, och får inte öppna host-rendering eller produktionsroute.
+
 2026-08-10: Mednafen now selects the capture frame at `SMPC_StartFrame` and
 applies the active-high pad byte after `IODevice::UpdateInput` has refreshed
 the host port. A 600-frame authentic J-BIOS/English-disc rerun changes the
