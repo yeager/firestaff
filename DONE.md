@@ -70,6 +70,18 @@
   bevisar alla besök och länkar mot den verkliga DOS-ingångskartan utan
   session-, DYN4-, ljus- eller renderpublicering.
 
+# DM2: privata LOAD_LOCALLEVEL-DYN recordeffekter (2026-08-11)
+
+- ✅ GAME_LOAD-kandidaten behåller nu originalets tre nollinitierade
+  250-bytes temporärytor från den aktuella DB2-/Text::w2-traverseringen,
+  samt DB3 subtype `0x2e`-markeringar och subtype `0x7e`-spegelselektorer
+  i exakt kart-/recordordning. Selektorerna läggs efter den autentiska
+  34-postersprefixkön, utan att DYN4 eller någon värd-session startas.
+- ✅ DB3 subtype `0x27` på en teleporterplatta är uttryckligen spärrad: den
+  kräver originalets `mapdat.tmpmap`-cross-map-lista, som ännu inte ägs av
+  kandidaten. Realdatatestet räknar källans DB2/DB3-grenar oberoende och
+  jämför samtliga scratchbyte och `0x16 <hero> ff ff`-selektorer.
+
 # DM2: korrekt LOAD_LOCALLEVEL-flaggresurs (2026-08-11)
 
 - ✅ `DM2_2676_008f` behåller nu resursens `sub1` och OR:ar sin källflagga i

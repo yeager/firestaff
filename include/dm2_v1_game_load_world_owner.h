@@ -652,6 +652,28 @@ typedef struct {
     uint32_t source_trace_hash;
 } DM2_V1_GameLoadLocalDynMapScan;
 
+/* The record-specific, RAM-only part of LOAD_LOCALLEVEL_DYN's map walk.
+ * RG51p, xp_0c and xp_10 are the three source-cleared 0xfa-byte buffers.
+ * `selector_queue` starts with the retained fixed prefix and receives only
+ * the source-proven DB3 subtype 0x7e selectors in scan order.  DB3 subtype
+ * 0x27 on a teleporter square needs mapdat.tmpmap's cross-map byte list;
+ * keeping it as an explicit blocker is intentional until that owner exists.
+ * Source: SKULLWIN/c_loadlevel.cpp::DM2_LOAD_LOCALLEVEL_DYN (518-626). */
+typedef struct {
+    int valid;
+    int16_t map;
+    uint8_t creature_marks[DM2_V1_LOADLEVEL_CREATURE_TABLE_SIZE]; /* RG51p */
+    uint8_t wall_text_marks[DM2_V1_LOADLEVEL_CREATURE_TABLE_SIZE]; /* xp_0c */
+    uint8_t floor_text_marks[DM2_V1_LOADLEVEL_CREATURE_TABLE_SIZE]; /* xp_10 */
+    uint16_t text_record_count;
+    uint16_t text_temp_mark_count;
+    uint16_t creature_mark_count;
+    uint16_t mirror_selector_count;
+    uint16_t cross_map_actuator_count;
+    DM2_V1_DynLoadState selector_queue;
+    uint32_t source_effect_hash;
+} DM2_V1_GameLoadLocalDynRecordEffects;
+
 /* A private, all-RAM candidate for a complete mutable DM2_GAME_LOAD state.
  * It is a transaction staging area, not a live game: no field is installed
  * in M11, the process-global runtime, audio backend or input dispatcher.
@@ -697,6 +719,7 @@ typedef struct {
     DM2_V1_GameLoadLocalLevelGraphicsReceipt local_level_graphics;
     DM2_V1_GameLoadLocalDynPrelude local_dyn_prelude;
     DM2_V1_GameLoadLocalDynMapScan local_dyn_map_scan;
+    DM2_V1_GameLoadLocalDynRecordEffects local_dyn_record_effects;
     DM2_V1_TimerEntry *timer_entries;
     int16_t *timer_indices;
     DM2_V1_TimerQueue timer_queue;
