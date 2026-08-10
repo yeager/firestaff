@@ -289,18 +289,26 @@ int main(void)
         }
         remove(amiga_multilingual_path);
         remove(amiga_multilingual_backup_path);
-        /* F0435 only treats the backup as resumed after it has been renamed
-         * back to the selected canonical slot.  A valid source backup must
-         * not yield LOAD_OK if that replacement is impossible.  The MINI.DAT
-         * bytes are authentic Atari CSB data; only the deliberately blocked
-         * destination exercises the host filesystem failure boundary. */
+        /* ReDMCSB LOADSAVE.C F0435 loads the complete dungeon/party handoff
+         * before its final M570_RenameFile call.  A host replacement failure
+         * therefore cannot undo a validated backup resume; it merely leaves
+         * the old .BAK in place and prevents Firestaff from claiming a
+         * current canonical write-back source.  The MINI.DAT bytes remain
+         * authentic Atari/Amiga GAMEBLOCK data; only the deliberately blocked
+         * destination exercises this filesystem boundary. */
         remove(blocked_backup);
         remove(blocked_dir);
         if (make_directory(blocked_dir) != 0 ||
             !write_file("/tmp/CSBGAME3.DAT/keep", (const uint8_t *)"x", 1u) ||
             !write_file(blocked_backup, backup, backup_size) ||
-            csb_v1_runtime_load_game_from_path(&runtime, blocked_dir) ==
+            csb_v1_runtime_load_game_from_path(&runtime, blocked_dir) !=
                 CSB_V1_LOAD_OK ||
+            runtime.dungeon_handle == NULL ||
+            runtime.current_level != info.party_map_index ||
+            runtime.party_x != info.party_x || runtime.party_y != info.party_y ||
+            runtime.party_dir != info.party_direction ||
+            runtime.game_time != info.game_time ||
+            csb_v1_runtime_original_atari_save_source_current(&runtime) ||
             !read_file(blocked_backup, &written, &written_size) ||
             written_size != backup_size ||
             memcmp(written, backup, backup_size) != 0) {

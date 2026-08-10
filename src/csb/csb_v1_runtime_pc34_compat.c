@@ -2205,35 +2205,42 @@ int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
             csb_v1_runtime_prepare_original_atari_save_file(
                 backup_path, &backup_candidate, &backup_fnv1a) ==
                 CSB_V1_LOAD_OK) {
-            /* ReDMCSB LOADSAVE.C F0435:2901-2907 validates and loads the
-             * selected backup first, then M570_RenameFile restores its slot.
-             * Prepared data owns no live state, so a failed rename leaves
-             * both the running campaign and .BAK untouched. */
-            /* ReDMCSB LOADSAVE.C F0435:2906-2907 calls M570_RenameFile
-             * directly.  A save slot that is absent is therefore just as
-             * recoverable as a corrupt one: the validated backup becomes
-             * its canonical .DAT name.  The earlier remove()-then-rename()
-             * translation incorrectly rejected ENOENT and stranded a real
-             * CSBGAMEx.BAK whenever the selected file had disappeared. */
-#if defined(_WIN32)
-            /* C rename() cannot replace an existing target on Windows.
-             * Preserve the source transition there while still accepting a
-             * missing canonical slot. */
-            if ((remove(path) != 0 && errno != ENOENT) ||
-                rename(backup_path, path) != 0) {
-#else
-            if (rename(backup_path, path) != 0) {
-#endif
-                csb_v1_atari_save_discard_runtime_handoff_candidate_pc34_compat(
-                    &backup_candidate);
-                return result;
-            }
+            /* ReDMCSB LOADSAVE.C F0435 reaches its F0434 dungeon load and
+             * restores the complete party/timeline state before line
+             * 2906 calls M570_RenameFile.  The old host translation renamed
+             * CSBGAMEx.BAK before committing the prepared world, so an
+             * otherwise valid Amiga recovery could alter its sole original
+             * copy before F0435 had actually entered the dungeon. */
             if (csb_v1_atari_save_commit_runtime_handoff_pc34_compat(
                     profile, &backup_candidate, NULL) == CSB_V1_ATARI_RUNTIME_OK) {
+                /* The committed backup is a different authoritative world
+                 * from any earlier resume.  Do not retain an older source
+                 * binding while the final native rename is pending or has
+                 * failed: F0433 must never write this recovered party into
+                 * the prior slot. */
+                profile->original_atari_save_source_path[0] = '\0';
+                profile->original_atari_save_source_fnv1a = 0u;
+                /* F0435 does not use rename success as a load admission
+                 * condition: after the complete handoff it asks the native
+                 * filesystem to restore the canonical slot.  Keep that
+                 * ordering, including a missing .DAT target.  If the host
+                 * replacement cannot complete, the fully restored runtime
+                 * remains playable but cannot claim that its source path is
+                 * current for a later F0433 write-back. */
+#if defined(_WIN32)
+                /* C rename() cannot replace an existing target on Windows.
+                 * Preserve the source transition there while still accepting
+                 * a missing canonical slot. */
+                if ((remove(path) == 0 || errno == ENOENT) &&
+                    rename(backup_path, path) == 0) {
+#else
+                if (rename(backup_path, path) == 0) {
+#endif
                 snprintf(profile->original_atari_save_source_path,
                          sizeof(profile->original_atari_save_source_path),
                          "%s", path);
                 profile->original_atari_save_source_fnv1a = backup_fnv1a;
+                }
                 return CSB_V1_LOAD_OK;
             }
             csb_v1_atari_save_discard_runtime_handoff_candidate_pc34_compat(
