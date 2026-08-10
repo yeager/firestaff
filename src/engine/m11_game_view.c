@@ -53122,6 +53122,43 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
         return M11_GAME_INPUT_IGNORED;
     }
 
+    /* COMMAND.C C145 replaces the normal input list with G0450/G0460;
+     * C146 is then the sole ordinary wake command.  A live CSB boot session
+     * is intentionally kept out of the generic DM1 input tail below, so
+     * this transition must be owned here as well.  Otherwise the real C145
+     * inventory click closed its panel and was silently discarded at the
+     * CSB boot gate.  ReDMCSB COMMAND.C:308-310, 2177-2183; PANEL.C F0349. */
+    if (state->resting) {
+        if (input == M12_MENU_INPUT_ACCEPT) {
+            m11_wake_party_from_rest(state);
+            m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: WOKE UP",
+                          (unsigned int)state->world.gameTick);
+            m11_set_status(state, "REST", "PARTY AWAKE");
+            snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+                     "AWAKE");
+            snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                     "REST ENDED. RESUME EXPLORING.");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    if (input == M12_MENU_INPUT_REST_TOGGLE) {
+        state->mapOverlayActive = 0;
+        state->inventoryPanelActive = 0;
+        state->spellPanelOpen = 0;
+        state->resting = 1;
+        state->world.partyIsResting = 1;
+        state->world.lifecycle.rest.isResting = 1;
+        m11_log_event(state, M11_COLOR_LIGHT_BLUE, "T%u: RESTING",
+                      (unsigned int)state->world.gameTick);
+        m11_set_status(state, "REST", "PARTY IS RESTING");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle), "RESTING");
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "HP AND STAMINA RECOVER SLOWLY. PRESS ENTER TO WAKE.");
+        return M11_GAME_INPUT_REDRAW;
+    }
+
     /* BACK is Firestaff's launcher-return request, not a COMMAND.C gameplay
      * scancode.  Let the common quit guard below evaluate G0313 and choose
      * the F0433 save-and-quit transaction; feeding it to the CSB command

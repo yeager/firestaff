@@ -256,7 +256,30 @@ int main(void)
                      M11_GAME_INPUT_REDRAW);
     ok &= expect_int("CSB resting cleared", view.resting, 0);
 
+    /* A real launched CSB profile intentionally stops before M11's generic
+     * DM1 input switch.  Lock C145/C146 here so the live boot gate cannot
+     * discard the source rest transaction after the inventory click has
+     * closed its panel.  ReDMCSB COMMAND.C:308-310,2177-2183; PANEL.C F0349. */
+    csb_v1_boot_profile_init(&boot);
+    seed_csb_view(&view);
+    view.sourceKind = M11_GAME_SOURCE_CSB_BOOT;
+    view.csbBootProfile = &boot;
+    ok &= expect_int("C145 rests through live CSB boot gate",
+                     M11_GameView_HandleInput(&view,
+                                              M12_MENU_INPUT_REST_TOGGLE),
+                     M11_GAME_INPUT_REDRAW);
+    ok &= expect_int("C145 sets CSB rest mirror", view.resting, 1);
+    ok &= expect_int("C145 sets party rest mirror", view.world.partyIsResting,
+                     1);
+    ok &= expect_int("C146 wakes through live CSB boot gate",
+                     M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT),
+                     M11_GAME_INPUT_REDRAW);
+    ok &= expect_int("C146 clears CSB rest mirror", view.resting, 0);
+    ok &= expect_int("C146 clears party rest mirror", view.world.partyIsResting,
+                     0);
+
     make_csb_wall_click_dungeon(&dungeon, raw, sizeof(raw));
+    csb_v1_boot_cleanup(&boot);
     csb_v1_boot_profile_init(&boot);
     boot.runtime.chaos_magic.magic_initialized = 1;
     boot.runtime.dungeon_handle = &dungeon;
