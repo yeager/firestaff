@@ -6016,6 +6016,11 @@ static void test_skwin_core_symbol_batch_cycle13(void)
               &pos, &qc5x5) &&
               qc5x5.blocked_missing_ai_spec,
           "DM2_QUERY_CREATURE_5x5_POS fails closed without AI spec");
+    CHECK(!dm2_v1_skproject_query_creature_5x5_pos(
+              creature_rec, 0u, &ai_spec, 0u, NULL, gdat_blob, sizeof(gdat_blob),
+              &pos, &qc5x5) && qc5x5.blocked_missing_timer_word &&
+              pos == 0x0cu,
+          "DM2_QUERY_CREATURE_5x5_POS rejects a missing DB4/CAII timer owner");
     gdat_blob[4] = 0x08u; /* base 8, direction 1 rotates to 6 */
     creature_timer_word = 0x9021u; /* query_4E26 clears source bit 0x1000 */
     CHECK(dm2_v1_skproject_query_creature_5x5_pos(
