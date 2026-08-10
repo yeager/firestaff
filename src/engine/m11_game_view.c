@@ -242,6 +242,8 @@ static int m11_csb_original_save_runtime_receipt_current(
     const M11_GameViewState *state);
 static int m11_csb_activate_fmtowns_ending(M11_GameViewState *state);
 static int m11_csb_is_fmtowns_profile(const CSB_V1_BootProfile *profile);
+static const char *m11_nexus_startup_render_blocker_message(
+    const M11_GameViewState *state);
 
 /* Extract only the assets referenced by CSB's reviewed V2.2 route table.
  * The archive stays user-owned and immutable; its MD5 becomes the cache key.
@@ -13639,6 +13641,21 @@ static void m11_set_status(M11_GameViewState* state,
                                        state->chromeRerouteLastStatus,
                                        sizeof(state->chromeRerouteLastStatus));
     }
+}
+
+static const char *m11_nexus_startup_render_blocker_message(
+    const M11_GameViewState *state)
+{
+    Nexus_V1_MenuBpkRendererHandoffReceipt handoff;
+
+    if (state && state->nexusEngine &&
+        nexus_v1_menu_bpk_renderer_handoff_receipt(
+            state->nexusEngine, &handoff) == 0 &&
+        handoff.prs3_prerequisite_status ==
+            NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_SATURN_PRESENTATION) {
+        return "NEXUS SATURN PRESENTATION REQUIRED";
+    }
+    return "MENU.BPK PRS3 TRACE REQUIRED";
 }
 
 static void m11_set_inspect_readout(M11_GameViewState* state,
@@ -29528,7 +29545,8 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 if (!state->nexusState.startup_prs3_blocker_consumed) {
                     state->nexusState.champion_select_active = 0;
                 }
-                m11_set_status(state, "ASSETS", "MENU.BPK PRS3 TRACE REQUIRED");
+                m11_set_status(state, "ASSETS",
+                               m11_nexus_startup_render_blocker_message(state));
                 return M11_GAME_INPUT_RETURN_TO_MENU;
             }
             return result;
@@ -30355,7 +30373,8 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
             result = m11_nexus_apply_startup_action_receipt(state, &receipt);
             if (state->nexusState.startup_dgn_render_blocked ||
                 state->nexusState.startup_dgn_viewport_host_blocks_runtime) {
-                m11_set_status(state, "ASSETS", "MENU.BPK PRS3 TRACE REQUIRED");
+                m11_set_status(state, "ASSETS",
+                               m11_nexus_startup_render_blocker_message(state));
                 return M11_GAME_INPUT_RETURN_TO_MENU;
             }
             return result;
@@ -30380,7 +30399,8 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
         if (execution.kind == NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON &&
             (state->nexusState.startup_dgn_render_blocked ||
              state->nexusState.startup_dgn_viewport_host_blocks_runtime)) {
-            m11_set_status(state, "ASSETS", "MENU.BPK PRS3 TRACE REQUIRED");
+            m11_set_status(state, "ASSETS",
+                           m11_nexus_startup_render_blocker_message(state));
             return M11_GAME_INPUT_RETURN_TO_MENU;
         }
         if (!host_caller_valid) {
