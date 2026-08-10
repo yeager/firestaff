@@ -139,6 +139,13 @@ def main() -> int:
     main_mailbox = [row for row in main_trace if row["addr"] == args.mailbox and row["value"]]
     values = collections.Counter(row["value"] for row in mailbox)
     pcs = collections.Counter(row["pc"] for row in mailbox)
+    command_handler_hits = sum(
+        count for pc, count in pcs.items() if pc == 0x3224
+    )
+    driver_pcs = sum(
+        count for pc, count in pcs.items()
+        if 0x1000 <= pc < 0x1000 + files["SDDRVS.TSK"].stat().st_size
+    )
     main_values = collections.Counter(row["value"] for row in main_mailbox)
     print("source_hashes_verified=1")
     print("slev_files_verified=16")
@@ -157,6 +164,10 @@ def main() -> int:
     print(f"scsp_records={len(scsp)} mailbox_nonzero_records={len(mailbox)}")
     print("scsp_mailbox_values=" + ",".join(f"0x{value:02x}:{count}" for value, count in values.most_common()))
     print("scsp_mailbox_pcs=" + ",".join(f"0x{pc:04x}:{count}" for pc, count in pcs.most_common()))
+    print(f"scsp_mailbox_driver_pc_records={driver_pcs}")
+    print(f"scsp_mailbox_command_handler_pc_3224_records={command_handler_hits}")
+    print("trace_hits_source_command_handler=" +
+          ("1" if command_handler_hits else "0"))
     print("scsp_mailbox_sequence=" + ",".join(
         f"0x{row['addr']:06x}/0x{row['value']:x}/0x{row['pc']:04x}"
         for row in scsp if row["addr"] in (args.mailbox, args.mailbox + 1,

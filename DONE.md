@@ -23,6 +23,17 @@
   `launcher-v2-1200`-capturen ger `capture_session_bound=1`; eventselector,
   SAL-codec och host-playback är fortsatt spärrade.
 
+# Nexus: SLEV/SAL-trace skiljer codec-brus från kommandodispatch (2026-08-10)
+
+- ✅ Korridoranalysen rapporterar nu separat träffar i SDDRVS:s verifierade
+  kommandohandler (`0x3224`) och alla mailbox-PC:n inom driverbilden. Den
+  autentiska `launcher-v2-1200`-tracen har fyra driver-PC-träffar men noll
+  träffar på `0x3224`; observerade PC:n är `0x34a6`, `0x34aa`, `0x1062` och
+  `0x108e`.
+- ✅ Detta bekräftar att capturefönstret inte visar en source-bunden
+  SLEV-eventdispatch. `event_selector_semantics`, SAL-codec och playback
+  förblir spärrade; ingen MAP-rad eller SAL-sample väljs på antagande.
+
 # DM2: privat rörelseklassificering över GAME_LOAD-kandidaten (2026-08-10)
 
 - ✅ `GameLoadRuntimeSessionCandidate` kan nu köra
