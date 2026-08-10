@@ -19,6 +19,7 @@ int main(void)
         NEXUS_V1_SATURN_VDP1_PAYLOAD_BYTES + vdp2_marker +
         NEXUS_V1_SATURN_VDP2_PAYLOAD_BYTES;
     uint8_t *blob = (uint8_t *)calloc(1U, blob_size);
+    uint8_t *legacy_blob = NULL;
     uint8_t source_name[4] = {0, 0, 0, 0};
     uint8_t source_character[64];
     uint8_t source_cram[NEXUS_V1_SATURN_VDP2_CRAM_BYTES];
@@ -26,6 +27,7 @@ int main(void)
     Nexus_V1_Vdp2TilemapCaptureReceipt receipt;
     Nexus_Framebuffer framebuffer;
     size_t offset = 0U;
+    size_t vdp2_marker_offset;
     uint8_t *vdp2_payload;
     uint8_t *vdp2_vram;
     uint8_t *vdp2_regs;
@@ -38,6 +40,7 @@ int main(void)
     offset += sizeof("frame=0\n") - 1U;
     memcpy(blob + offset, NEXUS_V1_SATURN_VDP1_RAW_MAGIC_V1, vdp1_marker);
     offset += vdp1_marker + NEXUS_V1_SATURN_VDP1_PAYLOAD_BYTES;
+    vdp2_marker_offset = offset;
     memcpy(blob + offset, NEXUS_V1_SATURN_VDP2_RAW_MAGIC, vdp2_marker);
     offset += vdp2_marker;
     vdp2_payload = blob + offset;
@@ -101,6 +104,31 @@ int main(void)
         free(blob);
         return 1;
     }
+    /* Early V2 captures carried one redundant draw-buffer byte before the
+     * VDP2 marker. The transport reader must retain it without shifting VDP1
+     * or VDP2 regions. */
+    legacy_blob = (uint8_t *)calloc(1U, blob_size + 1U);
+    if (!legacy_blob) {
+        free(blob);
+        return 1;
+    }
+    memcpy(legacy_blob, blob, vdp2_marker_offset);
+    legacy_blob[vdp2_marker_offset] = 1U;
+    memcpy(legacy_blob + vdp2_marker_offset + 1U,
+           blob + vdp2_marker_offset, blob_size - vdp2_marker_offset);
+    {
+        Nexus_V1_SaturnRuntimeCaptureFrameReceipt frame_receipt;
+        if (!nexus_v1_saturn_runtime_capture_frame(
+                legacy_blob, blob_size + 1U, 0U, &frame_receipt) ||
+            !frame_receipt.valid || !frame_receipt.vdp1_draw_which ||
+            *frame_receipt.vdp1_draw_which != 1U) {
+            fprintf(stderr, "FAIL: legacy draw-buffer transport\n");
+            free(legacy_blob);
+            free(blob);
+            return 1;
+        }
+    }
+    free(legacy_blob);
     free(blob);
     puts("test_nexus_v1_vdp2_runtime_tilemap: PASS");
     return 0;

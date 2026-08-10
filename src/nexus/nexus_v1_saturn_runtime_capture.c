@@ -135,6 +135,7 @@ int nexus_v1_saturn_runtime_capture_frame(
         size_t line_end;
         int state_present = 0;
         const uint8_t *vdp1_payload;
+        const uint8_t *vdp1_draw_which = NULL;
         const uint8_t *vdp2_payload;
 
         snprintf(frame_marker, sizeof(frame_marker), "frame=%u\n",
@@ -183,6 +184,21 @@ int nexus_v1_saturn_runtime_capture_frame(
         }
         vdp1_payload = capture_bytes + offset;
         offset += NEXUS_V1_SATURN_VDP1_PAYLOAD_BYTES;
+        /* An early VDP1 V2 producer appended the draw-buffer selector even
+         * though the state line already carried the same fact. Accept that
+         * transport variant without including the byte in the VDP1 regions. */
+        if (!has_bytes(capture_bytes, capture_byte_count, offset,
+                       vdp2_magic) ||
+            memcmp(capture_bytes + offset, NEXUS_V1_SATURN_VDP2_RAW_MAGIC,
+                   vdp2_magic) != 0) {
+            if (has_bytes(capture_bytes, capture_byte_count, offset + 1U,
+                          vdp2_magic) &&
+                memcmp(capture_bytes + offset + 1U,
+                       NEXUS_V1_SATURN_VDP2_RAW_MAGIC, vdp2_magic) == 0) {
+                vdp1_draw_which = capture_bytes + offset;
+                ++offset;
+            }
+        }
         if (!has_bytes(capture_bytes, capture_byte_count, offset,
                        vdp2_magic) ||
             memcmp(capture_bytes + offset, NEXUS_V1_SATURN_VDP2_RAW_MAGIC,
@@ -205,7 +221,7 @@ int nexus_v1_saturn_runtime_capture_frame(
                 vdp1_payload + NEXUS_V1_SATURN_VDP1_VRAM_BYTES;
             receipt.vdp1_framebuffer_1 = receipt.vdp1_framebuffer_0 +
                 NEXUS_V1_SATURN_VDP1_FRAMEBUFFER_BYTES;
-            receipt.vdp1_draw_which = NULL;
+            receipt.vdp1_draw_which = vdp1_draw_which;
             /* Producer order is RawRegs, VRAM, CRAM. Keep these pointers
              * aligned with scripts/mednafen_1.32.1_nexus_saturn_capture.patch
              * and validate them through the external frame witness. */
