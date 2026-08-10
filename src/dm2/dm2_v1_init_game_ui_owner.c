@@ -20,7 +20,7 @@ int dm2_v1_init_game_ui_owner_init(DM2_V1_InitGameUiOwner *out,
     DM2_V1_InitGameUiOwner candidate;
     unsigned i;
 
-    if (!out || !party || !event_queue || party->heros_in_party <= 0 ||
+    if (!out || !party || !event_queue || party->heros_in_party < 0 ||
         party->heros_in_party > 4 || event_queue->event_heroidx != 0)
         return 0;
     memset(&candidate, 0, sizeof(candidate));

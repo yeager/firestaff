@@ -468,6 +468,12 @@ typedef struct {
     uint8_t source_teleporter_destination_direction;
     int source_display_pose_valid;
     DM2_V1_GameLoadMoverecState source_moverec;
+    /* DM2__INIT_GAME calls c_1031_0541(5) while LOAD_NEW_DUNGEON's party is
+     * still empty, before INIT_CHAMPIONS/DM2_2f3f_0789.  This is the mutable
+     * source UI-table state for that precise point, not an M11 menu or a
+     * post-selection reconstruction. */
+    DM2_V1_InitGameUiOwner preselection_init_game_ui;
+    int preselection_init_game_ui_materialized;
     DM2_V1_GameLoadLocalLevelGraphicsReceipt preselection_local_graphics;
     /* c_light inputs for the real entrance map. This receipt owns the
      * source initialisation inputs only; it is not a fabricated light level
@@ -646,10 +652,9 @@ typedef struct {
      * session owner exists. */
     DM2_V1_EventQueue event_queue;
     int16_t source_event_hero_index;
-    /* Private result of startend.cpp::DM2__INIT_GAME_38c8_03ad's first
-     * DM2_1031_0541(5) call.  It owns copies of the mutable UI tables and
-     * remains unpublished until the following LOAD_NEWMAP/CAII transaction
-     * is source-complete. */
+    /* Deep copy of the source's pre-champion DM2_1031_0541(5) state. It
+     * owns copies of the mutable UI tables and remains unpublished until the
+     * following LOAD_NEWMAP/CAII transaction is source-complete. */
     DM2_V1_InitGameUiOwner init_game_ui;
     /* c_loadlevel.cpp::DM2_LOAD_LOCALLEVEL_GRAPHICS_TABLE receives these
      * direct File_header lists immediately after selecting the current map.
@@ -1111,6 +1116,12 @@ int dm2_v1_game_load_world_owner_process_actuator_tick_generators(
  * derives map, position and direction from authenticated DUNGEON.DAT header
  * fields.  It does not publish a party, viewport or M11 map. */
 int dm2_v1_game_load_world_owner_materialize_source_map_context(
+    DM2_V1_GameLoadWorldOwner *owner);
+
+/* Materialize DM2__INIT_GAME's first c_1031_0541(5) call at its original
+ * temporal point: after c_eventqueue::init but before the first automatic
+ * mirror champion. The resulting mutable source tables stay private. */
+int dm2_v1_game_load_world_owner_materialize_preselection_init_game_ui(
     DM2_V1_GameLoadWorldOwner *owner);
 
 /* Materialize the click-ordered c_hero and possession result that was

@@ -2481,6 +2481,8 @@ int dm2_v1_game_load_runtime_session_candidate_init(
         !source->caii_slots.slots || !source->caii_rng_initialized ||
         !source->caii_source.valid || !source->asset_loader ||
         !source->asset_loader->loaded ||
+        !source->preselection_init_game_ui_materialized ||
+        !source->preselection_init_game_ui.valid ||
         !source->preselection_local_graphics.valid ||
         source->preselection_local_graphics.map != source->current_map ||
         !source->sound_owner.valid || !source->sound_owner.runtime_queue_initialized) {
@@ -2537,14 +2539,11 @@ int dm2_v1_game_load_runtime_session_candidate_init(
     candidate.moverec = source->source_moverec;
     candidate.event_queue = source->source_event_queue;
     candidate.source_event_hero_index = source->source_event_hero_index;
-    /* startend.cpp::DM2__INIT_GAME_38c8_03ad clears its local UI globals
-     * and enters DM2_1031_0541(5) before LOAD_NEWMAP.  The owner below is a
-     * mutable copy of the real dm2data tables, not an M11 menu surrogate. */
-    if (!dm2_v1_init_game_ui_owner_init(&candidate.init_game_ui,
-                                        &candidate.party,
-                                        &candidate.event_queue)) {
-        goto fail;
-    }
+    /* DM2__INIT_GAME enters DM2_1031_0541(5) before DM2_2f3f_0789 selects
+     * the first champion. Clone that already-materialised empty-party state;
+     * rebuilding it from candidate.party here would change predicate inputs
+     * and silently reorder INIT_GAME. */
+    candidate.init_game_ui = source->preselection_init_game_ui;
     candidate.caii_rng = source->caii_rng;
     candidate.caii_rng_initialized = 1;
     candidate.source_party_map = source->source_party_map;
@@ -2727,6 +2726,8 @@ int dm2_v1_game_load_world_owner_init_new_game(
     if (!selections || selection_count <= 0 ||
         selection_count > DM2_MAX_HEROES ||
         !dm2_v1_game_load_world_owner_prepare_new_game(&candidate, profile) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_init_game_ui(
+            &candidate) ||
         !dm2_v1_boot_new_game_transaction_receipt(
             profile, selections, selection_count, &candidate.transaction) ||
         !candidate.transaction.valid ||
@@ -2983,6 +2984,51 @@ int dm2_v1_game_load_world_owner_materialize_source_map_context(
     owner->source_party_direction = (uint8_t)owner->dungeon.initial_party_dir;
     if (!dm2_v1_game_load_owner_materialize_move_2fcf_0b8b(owner)) return 0;
     owner->source_map_context_materialized = 1;
+    return 1;
+}
+
+int dm2_v1_game_load_world_owner_materialize_preselection_init_game_ui(
+    DM2_V1_GameLoadWorldOwner *owner)
+{
+    DM2_V1_Party empty_party;
+    DM2_V1_EventQueue initial_event_queue;
+    DM2_V1_InitGameUiOwner candidate;
+
+    if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->fresh_game_mode || !owner->source_preselection_ready ||
+        owner->committed ||
+        owner->champion_selection_materialized ||
+        owner->preselection_init_game_ui_materialized ||
+        !owner->load_new_dungeon_reset.valid ||
+        owner->load_new_dungeon_reset.party_count != 0 ||
+        owner->load_new_dungeon_reset.leader_hand_record !=
+            DM2_V1_RECORD_HANDLE_NULL ||
+        owner->selected_mirror_count != 0u) {
+        return 0;
+    }
+    /* c_party/c_eventqueue initialisers precede STARTEND.  Do not derive
+     * this from selected_party: that state belongs to a later mirror click.
+     * Source: dm2data.cpp::c_dm2data; c_eventqueue.cpp::init (10-31);
+     * startend.cpp::DM2__INIT_GAME_38c8_03ad (1171-1194). */
+    dm2_v1_party_state_init(&empty_party);
+    dm2_v1_eventqueue_init(&initial_event_queue);
+    if (empty_party.heros_in_party != 0 || empty_party.curacthero != 0 ||
+        empty_party.curactevhero != DM2_HERO_NONE ||
+        initial_event_queue.event_heroidx != 0) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    if (!dm2_v1_init_game_ui_owner_init(&candidate, &empty_party,
+                                        &initial_event_queue) ||
+        !candidate.valid || candidate.runtime.active_tree != 5u ||
+        !candidate.initial_tree.valid ||
+        candidate.initial_tree.selected_tree != 5 ||
+        candidate.predicates.champion_inventory != 0u ||
+        candidate.predicates.champion_hp[0] != 0u) {
+        return 0;
+    }
+    owner->preselection_init_game_ui = candidate;
+    owner->preselection_init_game_ui_materialized = 1;
     return 1;
 }
 

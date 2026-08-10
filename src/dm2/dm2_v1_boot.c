@@ -13683,6 +13683,8 @@ int dm2_v1_boot_prepare_new_game_world(DM2_V1_BootProfile *profile)
     candidate = (DM2_V1_GameLoadWorldOwner *)calloc(1, sizeof(*candidate));
     if (!candidate || !dm2_v1_game_load_world_owner_prepare_new_game(
             candidate, profile) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_init_game_ui(
+            candidate) ||
         !dm2_v1_game_load_world_owner_process_actuator_tick_generators(
             candidate, NULL) ||
         !dm2_v1_game_load_world_owner_materialize_source_map_context(candidate) ||

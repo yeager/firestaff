@@ -34,8 +34,11 @@ typedef struct {
 } DM2_V1_InitGameUiOwner;
 
 /* startend.cpp::DM2__INIT_GAME_38c8_03ad calls DM2_1031_0541(5) before
- * LOAD_NEWMAP.  Construct that exact private table state from the selected
- * source party and c_eventqueue state.  No host input or rendering is used. */
+ * LOAD_NEWMAP and before DM2_2f3f_0789 selects the first champion.  A
+ * fresh-game party is therefore valid here with zero heroes; c_eventqueue
+ * has nevertheless already been initialised with E_HERO0. Construct that
+ * exact private table state from the source party and queue. No host input
+ * or rendering is used. */
 int dm2_v1_init_game_ui_owner_init(DM2_V1_InitGameUiOwner *out,
                                    const DM2_V1_Party *party,
                                    const DM2_V1_EventQueue *event_queue);

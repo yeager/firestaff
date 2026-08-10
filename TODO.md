@@ -587,8 +587,9 @@
   sina muterbara recordpooler; använd den som admissionsunderlag, aldrig som
   en ersättning för den saknade dispatchen.
   `DM2__INIT_GAME` äger nu privat den första `DM2_1031_0541(5)`-passagen
-  med de autentiska `dm2data.cpp`-tabellerna, inklusive `v1d338c` och
-  `v1d39bc` som originalet laddar före STARTEND. Återstår gör den följande
+  med den tomma källpartyn före `DM2_2f3f_0789` och de autentiska
+  `dm2data.cpp`-tabellerna, inklusive `v1d338c` och `v1d39bc` som originalet
+  laddar före STARTEND. Återstår gör den följande
   `LOAD_NEWMAP`- och `RESET_CAII`/`FILL_CAII_CUR_MAP`-committen i samma
   sessiontransaktion. Dess eventflush använder nu originalets `out_idx`-
   baserade ringkomprimering; den kompletta tangentbordsdräneringen och

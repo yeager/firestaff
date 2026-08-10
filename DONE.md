@@ -51,8 +51,10 @@
 - ✅ `DM2__INIT_GAME` materialiserar nu sin första privata
   `DM2_1031_0541(5)`-passage med källans `table1d3ed5`, `table1d3ba0`,
   `table1d3d23` och `table1d3cd0` från SKProject `dm2data.cpp`.
-- ✅ Tabellen är en muterbar RAM-kopia knuten till den verkliga valda
-  championen och c_eventqueue. Realdatatestet bevisar träd 5 utan att
+- ✅ Tabellen skapas med den källinitierade tomma partyn och
+  `c_eventqueue::init` före `DM2_2f3f_0789`; runtimekandidaten klonar sedan
+  exakt denna pre-champion-tabell i stället för att rekonstruera den från
+  Thoram. Realdatatestet bevisar träd 5 och noll championpredikat utan att
   publicera party, HUD, input eller session till M11.
 - ✅ De programladdade `v1d338c`- och `v1d39bc`-actiontabellerna är också
   kopierade från källans exakta data innan INIT_GAME-trädet väljs.

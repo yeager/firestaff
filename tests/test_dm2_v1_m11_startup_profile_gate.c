@@ -5111,6 +5111,13 @@ int main(void) {
                     profile_new_game_owner->champion_selection_materialized &&
                     profile_new_game_owner->selected_party.heros_in_party == 1 &&
                     profile_new_game_owner->source_startend_first_champion_released &&
+                    profile_new_game_owner->preselection_init_game_ui_materialized &&
+                    profile_new_game_owner->preselection_init_game_ui.valid &&
+                    profile_new_game_owner->preselection_init_game_ui.runtime.active_tree == 5u &&
+                    profile_new_game_owner->preselection_init_game_ui.initial_tree.valid &&
+                    profile_new_game_owner->preselection_init_game_ui.initial_tree.selected_tree == 5 &&
+                    profile_new_game_owner->preselection_init_game_ui.predicates.champion_inventory == 0u &&
+                    profile_new_game_owner->preselection_init_game_ui.predicates.champion_hp[0] == 0u &&
                     profile_runtime_candidate->valid &&
                     profile_runtime_candidate->source_transaction_hash ==
                         profile_new_game_owner->source_transaction_hash &&
@@ -5144,6 +5151,11 @@ int main(void) {
                     profile_runtime_candidate->init_game_ui.runtime.active_tree == 5u &&
                     profile_runtime_candidate->init_game_ui.initial_tree.valid &&
                     profile_runtime_candidate->init_game_ui.initial_tree.selected_tree == 5 &&
+                    profile_runtime_candidate->init_game_ui.predicates.champion_inventory == 0u &&
+                    profile_runtime_candidate->init_game_ui.predicates.champion_hp[0] == 0u &&
+                    memcmp(&profile_runtime_candidate->init_game_ui,
+                           &profile_new_game_owner->preselection_init_game_ui,
+                           sizeof(profile_runtime_candidate->init_game_ui)) == 0 &&
                     profile_runtime_candidate->init_game_ui.expanded_actions[0].w0 == 0x80d7u &&
                     profile_runtime_candidate->init_game_ui.expanded_actions[0].w2 == 0x0197u &&
                     profile_runtime_candidate->init_game_ui.input_actions[0].w0 == 0x80d7u &&
