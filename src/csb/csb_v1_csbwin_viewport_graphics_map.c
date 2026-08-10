@@ -149,7 +149,13 @@ int csb_v1_csbwin_viewport_layout_022e_decode(
         CSB_V1_CSBWIN_LAYOUT_022E_STAIR_FACING_UP_RECTANGLE_OFFSET +
             sizeof(out_layout->stair_facing_up_rectangles) > decoded_size ||
         CSB_V1_CSBWIN_LAYOUT_022E_TELEPORTER_RECTANGLE_OFFSET +
-            sizeof(out_layout->teleporter_rectangles) > decoded_size) return 0;
+            sizeof(out_layout->teleporter_rectangles) > decoded_size ||
+        CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_DECORATION_OFFSET +
+            sizeof(out_layout->floor_decoration_descriptors) > decoded_size ||
+        CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_DECORATION_TYPE_OFFSET +
+            sizeof(out_layout->floor_decoration_type) > decoded_size ||
+        CSB_V1_CSBWIN_LAYOUT_022E_RELATIVE_CELL_INCREMENT_OFFSET +
+            sizeof(out_layout->relative_cell_graphic_increment) > decoded_size) return 0;
     memcpy(out_layout->door_rectangles,
            decoded_graphic + CSB_V1_CSBWIN_LAYOUT_022E_DOOR_RECTANGLE_OFFSET,
            sizeof(out_layout->door_rectangles));
@@ -180,6 +186,15 @@ int csb_v1_csbwin_viewport_layout_022e_decode(
     memcpy(out_layout->teleporter_rectangles,
            decoded_graphic + CSB_V1_CSBWIN_LAYOUT_022E_TELEPORTER_RECTANGLE_OFFSET,
            sizeof(out_layout->teleporter_rectangles));
+    memcpy(out_layout->floor_decoration_descriptors,
+           decoded_graphic + CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_DECORATION_OFFSET,
+           sizeof(out_layout->floor_decoration_descriptors));
+    memcpy(out_layout->floor_decoration_type,
+           decoded_graphic + CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_DECORATION_TYPE_OFFSET,
+           sizeof(out_layout->floor_decoration_type));
+    memcpy(out_layout->relative_cell_graphic_increment,
+           decoded_graphic + CSB_V1_CSBWIN_LAYOUT_022E_RELATIVE_CELL_INCREMENT_OFFSET,
+           sizeof(out_layout->relative_cell_graphic_increment));
     /* CSBCode.cpp TAG004c5e uses Byte4124[0] as its switch family, then
      * indexes Byte5094 + 24 * family + 6 * lane. The expanded item-0x22e
      * representation stores that lane sequence forward from Byte5094 even
@@ -309,6 +324,55 @@ int csb_v1_csbwin_viewport_door_switch_projection(
         return 0;
     }
     *out_projection = &layout->door_switch_rectangles[lane];
+    return 1;
+}
+
+int csb_v1_csbwin_viewport_floor_decoration_draw(
+    const CSB_V1_CSBWinViewportLayout022e *layout,
+    const CSB_V1_DungeonData *dungeon, int level, uint16_t graphic_ordinal,
+    uint8_t relative_cell, CSB_V1_CSBWinFloorDecorationDraw *out_draw)
+{
+    uint8_t toc_index;
+    uint8_t descriptor_family;
+    const CSB_V1_CSBWinFloorDecorationDescriptor *descriptor;
+
+    if (!out_draw) return 0;
+    memset(out_draw, 0, sizeof(*out_draw));
+    /* CSBCode.cpp TAG004a1a: ordinary decoration ordinal zero is a no-op;
+     * 0x8000 carries the separate footprints overlay and 0x4000 selects an
+     * external CSBgraphics decoration. Neither can be converted into one of
+     * C22E's native basic graphic commands. */
+    if (!layout || !layout->valid || !dungeon || dungeon->square_bytes != 1 ||
+        level < 0 || level >= dungeon->level_count || graphic_ordinal == 0u ||
+        (graphic_ordinal & UINT16_C(0xc000)) != 0u || relative_cell >=
+            CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_DECORATION_RELATIVE_CELL_COUNT ||
+        graphic_ordinal > (uint16_t)dungeon->map_floor_ornament_count[level]) {
+        return 0;
+    }
+    toc_index = dungeon->map_floor_ornament_indices[level][graphic_ordinal - 1u];
+    if (toc_index >= CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_DECORATION_TYPE_COUNT) {
+        return 0;
+    }
+    descriptor_family = layout->floor_decoration_type[toc_index];
+    if (descriptor_family >= CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_DECORATION_FAMILY_COUNT) {
+        return 0;
+    }
+    descriptor = &layout->floor_decoration_descriptors[descriptor_family][relative_cell];
+    if (descriptor->x1 > descriptor->x2 || descriptor->y1 > descriptor->y2 ||
+        descriptor->y2 >= 200u || descriptor->source_stride == 0u ||
+        descriptor->source_height == 0u ||
+        (unsigned int)(descriptor->x2 - descriptor->x1 + 1u) >
+            (unsigned int)descriptor->source_stride * 2u ||
+        (unsigned int)(descriptor->y2 - descriptor->y1 + 1u) >
+            descriptor->source_height) return 0;
+    /* Code390e.cpp ReadGraphicsForLevel: basic graphic 247 + 6 * TOC,
+     * then Byte4034's relative-cell increment. */
+    out_draw->graphic_index = (uint16_t)(247u + 6u * (unsigned int)toc_index +
+        layout->relative_cell_graphic_increment[relative_cell]);
+    out_draw->mirrored = relative_cell == 2u || relative_cell == 5u ||
+        relative_cell == 8u;
+    out_draw->projection = *descriptor;
+    out_draw->valid = 1;
     return 1;
 }
 

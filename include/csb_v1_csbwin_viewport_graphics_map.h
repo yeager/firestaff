@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "csb_v1_dungeon_loader_pc34_compat.h"
+
 /* CSBWin CSBCode.cpp:2933-2940: Atari/CSBWin uses 13 records per wall set,
  * starting at 77. Entries 0..6 are door bitmaps, 7..12 wall bitmaps. */
 enum {
@@ -80,6 +82,18 @@ typedef enum {
  * the supplied ST GRAPHICS.DAT item and retain that order. */
 #define CSB_V1_CSBWIN_LAYOUT_022E_DOOR_SWITCH_RECTANGLE_BASE_OFFSET 2152u
 #define CSB_V1_CSBWIN_LAYOUT_022E_DOOR_SWITCH_RECTANGLE_COUNT 4u
+/* CSBWin Data.h names item 0x22e's floor-decoration descriptor table
+ * Byte4998.  The item is expanded at Byte7246, hence 7246-4998.  It is
+ * three screen-projection families of nine six-byte descriptors.  Byte4110
+ * selects a family for each dungeon FloorDecorationTOC entry; Byte4034 maps
+ * an interpreter relative cell to one of those nine projections. */
+#define CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_DECORATION_OFFSET 2248u
+#define CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_DECORATION_FAMILY_COUNT 3u
+#define CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_DECORATION_RELATIVE_CELL_COUNT 9u
+#define CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_DECORATION_TYPE_OFFSET 3136u
+#define CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_DECORATION_TYPE_COUNT 10u
+#define CSB_V1_CSBWIN_LAYOUT_022E_RELATIVE_CELL_INCREMENT_OFFSET 3212u
+#define CSB_V1_CSBWIN_LAYOUT_022E_RELATIVE_CELL_INCREMENT_COUNT 10u
 
 typedef struct {
     uint8_t x1;
@@ -91,6 +105,16 @@ typedef struct {
     uint8_t source_x;
     uint8_t source_y;
 } CSB_V1_CSBWinViewportProjectionRectangle;
+
+typedef struct {
+    uint8_t x1;
+    uint8_t x2;
+    uint8_t y1;
+    uint8_t y2;
+    /* CSBWin DECORATION_DESC: packed bitmap row width in bytes, then rows. */
+    uint8_t source_stride;
+    uint8_t source_height;
+} CSB_V1_CSBWinFloorDecorationDescriptor;
 
 typedef struct {
     int valid;
@@ -135,7 +159,25 @@ typedef struct {
      * TAG0088b2 recipes, not PC34 door-button boxes. */
     CSB_V1_CSBWinViewportProjectionRectangle door_switch_rectangles[
         CSB_V1_CSBWIN_LAYOUT_022E_DOOR_SWITCH_RECTANGLE_COUNT];
+    CSB_V1_CSBWinFloorDecorationDescriptor floor_decoration_descriptors[
+        CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_DECORATION_FAMILY_COUNT][
+        CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_DECORATION_RELATIVE_CELL_COUNT];
+    uint8_t floor_decoration_type[
+        CSB_V1_CSBWIN_LAYOUT_022E_FLOOR_DECORATION_TYPE_COUNT];
+    uint8_t relative_cell_graphic_increment[
+        CSB_V1_CSBWIN_LAYOUT_022E_RELATIVE_CELL_INCREMENT_COUNT];
 } CSB_V1_CSBWinViewportLayout022e;
+
+/* One fully source-resolved DrawFloorDecorations command.  The ordinal is
+ * one-based within the current map's FloorDecorationTOC exactly as
+ * CSBWin TAG004a1a receives it; no PC graphic index or inferred rectangle
+ * is permitted. */
+typedef struct {
+    int valid;
+    uint16_t graphic_index;
+    int mirrored;
+    CSB_V1_CSBWinFloorDecorationDescriptor projection;
+} CSB_V1_CSBWinFloorDecorationDraw;
 
 /* One source-owned TAG0088b2 wall command after Viewport.cpp has selected
  * both its pWallBitmaps source and its wallRectangles destination. F0 is
@@ -302,6 +344,16 @@ int csb_v1_csbwin_viewport_door_switch_projection(
     const CSB_V1_CSBWinViewportLayout022e *layout,
     uint8_t lane,
     const CSB_V1_CSBWinViewportProjectionRectangle **out_projection);
+
+/* Resolve CSBWin CSBCode.cpp TAG004a1a using a real decoded dungeon's map
+ * FloorDecorationTOC. `relative_cell` is Viewport.cpp's already translated
+ * floorDrawingLocations value (0..8), not a host view distance. The optional
+ * footprint bit (0x8000) and extended decorations intentionally remain out
+ * of this native static-graphics path. */
+int csb_v1_csbwin_viewport_floor_decoration_draw(
+    const CSB_V1_CSBWinViewportLayout022e *layout,
+    const CSB_V1_DungeonData *dungeon, int level, uint16_t graphic_ordinal,
+    uint8_t relative_cell, CSB_V1_CSBWinFloorDecorationDraw *out_draw);
 
 /* Viewport.cpp:2281-2289, 2378-2404. Builds the static track/frame commands
  * that surround a door panel at its native lane. F3L1/F3R1 only carry their

@@ -121,6 +121,42 @@ static void check_real_layout(const char *path)
         CSB_V1_CSBWIN_LAYOUT_0232_DEFAULT_GRAPHIC_COUNT - 1u] != 0u);
 }
 
+static void check_real_floor_decorations(const char *graphics_path,
+                                         const char *dungeon_path)
+{
+    CSB_V1_CSBWinViewportLayout022e layout;
+    CSB_V1_DungeonData dungeon;
+    int level;
+
+    if (!graphics_path || !graphics_path[0] || !dungeon_path || !dungeon_path[0])
+        return;
+    memset(&dungeon, 0, sizeof(dungeon));
+    CHECK(csb_v1_csbwin_viewport_layout_022e_read_graphics_dat(
+        graphics_path, &layout));
+    CHECK(csb_v1_dungeon_load_from_file(&dungeon, dungeon_path) == 0);
+    if (!layout.valid || dungeon.square_bytes != 1) {
+        csb_v1_dungeon_free(&dungeon);
+        return;
+    }
+    for (level = 0; level < dungeon.level_count; ++level) {
+        int ordinal;
+        for (ordinal = 1; ordinal <= dungeon.map_floor_ornament_count[level];
+             ++ordinal) {
+            uint8_t relative_cell;
+            CSB_V1_CSBWinFloorDecorationDraw draw;
+            for (relative_cell = 0u; relative_cell < 9u; ++relative_cell) {
+                CHECK(csb_v1_csbwin_viewport_floor_decoration_draw(
+                    &layout, &dungeon, level, (uint16_t)ordinal,
+                    relative_cell, &draw));
+                CHECK(draw.valid && draw.graphic_index >= 247u &&
+                      draw.projection.source_stride != 0u &&
+                      draw.projection.source_height != 0u);
+            }
+        }
+    }
+    csb_v1_dungeon_free(&dungeon);
+}
+
 static int resolve_test_hud_source(void *user_data, uint16_t graphic_index,
                                    const uint8_t **out_pixels,
                                    int *out_width, int *out_height)
@@ -737,6 +773,7 @@ int main(void)
     char path[512];
     const char *tmpdir;
     const char *real_graphics_dat;
+    const char *real_dungeon_dat;
     int index;
 
     {
@@ -972,6 +1009,7 @@ int main(void)
      * this at a legally supplied Atari/CSBWin GRAPHICS.DAT to prove that the
      * fixed offsets survive real source bytes. */
     real_graphics_dat = getenv("FIRESTAFF_CSBWIN_GRAPHICS_DAT");
+    real_dungeon_dat = getenv("FIRESTAFF_CSBWIN_DUNGEON_DAT");
     if (real_graphics_dat && real_graphics_dat[0] &&
         !is_csbwin_graphics_dat(real_graphics_dat)) {
         fprintf(stderr,
@@ -986,6 +1024,7 @@ int main(void)
     check_real_viewport_wall_plan(real_graphics_dat);
     check_real_viewport_planar_roundtrip(real_graphics_dat);
     check_real_teleporter_composition(real_graphics_dat);
+    check_real_floor_decorations(real_graphics_dat, real_dungeon_dat);
     }
 
     if (failures) return 1;
