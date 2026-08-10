@@ -1,5 +1,15 @@
 # Launcher: AUTO använder rätt originalplattform (2026-08-10)
 
+# Theron: bytevaliderad source-bound inventory-drop (2026-08-10)
+
+- ✅ DROP kontrollerar nu åter den exakta autentiska Track 02-itemposten mot
+  den parallella inventory-proveniensen innan objektet materialiseras igen.
+  Weapon-, clothing-, scroll- och potionfält måste matcha dekodade källbytes;
+  manipulerade eller skadade poster stoppas fail-closed.
+- ✅ Regressionen täcker både äkta US Track 02-loaderdata och ett negativt
+  tamper-fall. Detta är provenance/integritet, inte ett påstående om att
+  originalets fulla equip/use/T900-semantik är bevisad.
+
 - ✅ AUTO återupplöses precis innan `M12_LaunchIntent` lämnar startmenyn.
   En gammal men fortfarande matchad FM Towns-rad kan därmed inte vinna över
   en nyupptäckt, hashverifierad PC-utgåva för Dungeon Master eller Dungeon

@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- 🔒 Source-bound inventory roundtrip är nu bytevaliderad även vid DROP: en
+  autentisk Track 02-itempost måste fortfarande matcha de råa bytesen efter
+  pickup/save/load. Equip, use, konsumtion, loot och T900:s ursprungliga
+  regler är fortsatt spärrade tills originalets object-/inventorykonsument
+  fångas i samma autentiserade runtime.
+
 - 🔒 Ny EU cold-start-capture från frame 0 validerar 60 autentiserade råa
   Saturn-ramar och ändrade VDP1/VDP2-regioner, men ingen retail-asset- eller
   konsumentidentitet. Den får därför inte öppna startup-, meny-, HUD- eller

@@ -859,6 +859,54 @@ const Theron_V1_InventorySourceRecord *theron_v1_inventory_source_at(
     return &world->inventory_source[champion_slot][inventory_slot];
 }
 
+/* Re-validate the exact source payload before materialising a carried item
+ * back into the object table.  Pickup performs the same check in the command
+ * router, but save/load and other state transitions can touch the parallel
+ * provenance record.  ReDMCSB THQUEST T900 owns this object transition; a
+ * source-verified level must never accept a host-mutated compact item ID or
+ * raw record as an authentic object.
+ *
+ * Source layout: DMBUILDER6/src/dms.h:69-176, decoded by
+ * theron_v1_track02_item_record_decode(). */
+static int theron_v1_inventory_source_record_matches(
+    const Theron_V1_InventorySourceRecord *carried) {
+    Theron_Track02ItemRecord record;
+
+    if (!carried || !carried->valid || carried->source_ref == 0u ||
+        carried->source_raw_size == 0u ||
+        !theron_v1_track02_item_record_decode(
+            carried->category, carried->source_raw,
+            carried->source_raw_size, &record) ||
+        record.next_ref != carried->source_next_ref) {
+        return 0;
+    }
+    switch (carried->category) {
+    case THERON_CAT_WEAPON:
+        return record.value.weapon.type == carried->item_type &&
+               record.value.weapon.keep == carried->keep &&
+               record.value.weapon.cursed == carried->cursed &&
+               record.value.weapon.poisoned == carried->poisoned &&
+               record.value.weapon.charges == carried->charges &&
+               record.value.weapon.broken == carried->broken;
+    case THERON_CAT_CLOTHING:
+        return record.value.clothing.type == carried->item_type &&
+               record.value.clothing.keep == carried->keep &&
+               record.value.clothing.cursed == carried->cursed &&
+               record.value.clothing.dump == carried->dump &&
+               record.value.clothing.broken == carried->broken;
+    case THERON_CAT_SCROLL:
+        return record.value.scroll.type == carried->item_type &&
+               record.value.scroll.closed == carried->closed &&
+               record.value.scroll.reftxt == carried->text_ref;
+    case THERON_CAT_POTION:
+        return record.value.potion.type == carried->item_type &&
+               record.value.potion.power == carried->power &&
+               record.value.potion.keep == carried->keep;
+    default:
+        return 0;
+    }
+}
+
 int theron_v1_drop_inventory_source_item(
     Theron_V1_World *world,
     int champion_slot,
@@ -878,10 +926,7 @@ int theron_v1_drop_inventory_source_item(
         return -1;
     if (theron_v1_world_source_level_verified(world) &&
         (!carried->property_valid ||
-         (carried->category != THERON_CAT_WEAPON &&
-          carried->category != THERON_CAT_CLOTHING &&
-          carried->category != THERON_CAT_SCROLL &&
-          carried->category != THERON_CAT_POTION) ||
+         !theron_v1_inventory_source_record_matches(carried) ||
          carried->item_type !=
              world->party.champions[champion_slot].inventory[inventory_slot])) {
         /* Mirror the source pickup gate: a real T900 drop cannot recreate
