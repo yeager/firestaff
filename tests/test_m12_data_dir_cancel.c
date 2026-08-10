@@ -746,6 +746,7 @@ static void check_active_scan_renders_progress_bar(void) {
 }
 
 static void check_scan_progress_uses_display_names(void) {
+    int languageIndex;
     const char* dm1 = M12_StartupMenu_GameDisplayTitleForLocale(0, "dm1");
     const char* csb = M12_StartupMenu_GameDisplayTitleForLocale(0, "csb");
     const char* dm2 = M12_StartupMenu_GameDisplayTitleForLocale(0, "dm2");
@@ -766,6 +767,18 @@ static void check_scan_progress_uses_display_names(void) {
     CHECK(strcmp(dm2, "dm2") != 0);
     CHECK(strcmp(nexus, "nexus") != 0);
     CHECK(strcmp(theron, "theron") != 0);
+
+    /* Scan names are retail names, never localized or reduced to ids. */
+    for (languageIndex = 0; languageIndex < 19; ++languageIndex) {
+        const char* localizedNexus =
+            M12_StartupMenu_GameDisplayTitleForLocale(languageIndex, "nexus");
+        const char* localizedTheron =
+            M12_StartupMenu_GameDisplayTitleForLocale(languageIndex, "theron");
+        CHECK(localizedNexus &&
+              strcmp(localizedNexus, "Dungeon Master Nexus") == 0);
+        CHECK(localizedTheron &&
+              strcmp(localizedTheron, "Theron's Quest") == 0);
+    }
 }
 
 int main(void) {

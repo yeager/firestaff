@@ -1,3 +1,11 @@
+# Startmeny: fasta fullnamn på skanningsraden (2026-08-10)
+
+- ✅ Skanningspresentationen använder nu fasta engelska retailnamn och visar
+  `Dungeon Master Nexus` och `Theron's Quest` i stället för interna id:n eller
+  kortnamn. Spelnamn skickas inte genom lokalisering; övriga menyetiketter
+  ändras inte.
+- ✅ Regressionstestet täcker Nexus/Theron över alla 19 startmenyspråk.
+
 # Nexus: VDP2-skrivning förenad med SH-2-källpekare (2026-08-10)
 
 - ✅ `scripts/analyze_nexus_vdp2_register_writer.py` verifierar att samma

@@ -1726,6 +1726,9 @@ static const char* m12_game_display_title(const M12_StartupMenuState* state,
     return m12_game_display_title_for_locale(m12_locale_index(state), gameId);
 }
 
+static const char* m12_scan_game_display_title_for_locale(int localeIndex,
+                                                            const char* gameId);
+
 static const char* m12_game_display_title_for_locale(int localeIndex,
                                                       const char* gameId) {
     int locale = m12_clamp_index(localeIndex, M12_UI_LANGUAGE_COUNT);
@@ -1746,7 +1749,7 @@ static const char* m12_game_display_title_for_locale(int localeIndex,
 
 const char* M12_StartupMenu_GameDisplayTitleForLocale(int languageIndex,
                                                        const char* gameId) {
-    return m12_game_display_title_for_locale(languageIndex, gameId);
+    return m12_scan_game_display_title_for_locale(languageIndex, gameId);
 }
 
 const char* M12_StartupMenu_TranslateForLocale(int languageIndex,
@@ -1781,6 +1784,33 @@ static const char* m12_scan_task_for_locale(int localeIndex,
     if (strcmp(task, "refreshing media metadata") == 0)
         return m12_translate_for_locale(locale, "REFRESHING MEDIA METADATA");
     return task;
+}
+
+/* The scan status line is the one launcher surface that must identify the
+ * full retail title. Keep this normalization local to scanning: card/menu
+ * labels may retain their established catalogue wording. */
+static const char* m12_scan_game_display_title_for_locale(int localeIndex,
+                                                            const char* gameId) {
+    (void)localeIndex;
+    if (!gameId) {
+        return "GAME";
+    }
+    if (strcmp(gameId, "dm1") == 0) {
+        return "Dungeon Master";
+    }
+    if (strcmp(gameId, "csb") == 0) {
+        return "Chaos Strikes Back";
+    }
+    if (strcmp(gameId, "dm2") == 0) {
+        return "Dungeon Master II: The Legend of Skullkeep";
+    }
+    if (strcmp(gameId, "nexus") == 0) {
+        return "Dungeon Master Nexus";
+    }
+    if (strcmp(gameId, "theron") == 0) {
+        return "Theron's Quest";
+    }
+    return "GAME";
 }
 
 static void m12_append_text(char* out, size_t outSize, const char* text) {
@@ -2044,7 +2074,8 @@ static void m12_format_data_scan_progress_line(
     }
     if (progress && progress->currentGameId[0] != '\0') {
         snprintf(out, outSize, "%s  %zu%%",
-                 m12_game_display_title(state, progress->currentGameId), pct);
+                 m12_scan_game_display_title_for_locale(
+                     m12_locale_index(state), progress->currentGameId), pct);
     } else {
         snprintf(out, outSize, "%zu%%", pct);
     }
@@ -12022,8 +12053,8 @@ void M12_StartupMenu_DrawScanProgressLocalized(
              pct);
     if (progress && progress->currentGameId[0] != '\0') {
         snprintf(line2, sizeof(line2), "%s  %s",
-                 m12_game_display_title_for_locale(languageIndex,
-                                                   progress->currentGameId),
+                 m12_scan_game_display_title_for_locale(
+                     languageIndex, progress->currentGameId),
                  m12_scan_task_for_locale(languageIndex,
                                           progress->currentTask));
     } else if (progress && progress->currentTask[0] != '\0') {
