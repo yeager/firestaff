@@ -62,6 +62,7 @@
  *   hand overlays are redrawn.
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_portrait_seed.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
@@ -358,6 +359,11 @@ int main(int argc, char** argv) {
     }
 
     seed_party(&game);
+    if (!firestaff_dm1_probe_seed_original_portraits(&game, PROBE_CHAMPION_COUNT)) {
+        fprintf(stderr, "SKIP could not load DM1 champion portrait atlas from %s\n", dataDir);
+        M11_GameView_Shutdown(&game);
+        return 0;
+    }
     M11_GameView_NotifyChampionDamage(&game, PROBE_SLOT, PROBE_DAMAGE_AMOUNT);
     ok &= expect_true("notify sets champion damage timer",
                       game.championDamageTimer[PROBE_SLOT] > 0);
