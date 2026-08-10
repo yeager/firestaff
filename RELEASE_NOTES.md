@@ -1,35 +1,52 @@
 # Firestaff v3.0.308
 
-## Firestaff
+## DM2
 
-### Performance
+### Changed
 
-- `dm2_v1_dos_startup_media`: Hash intro (1.7 MB) and end (4.6 MB) in a single
-  file read instead of re-opening each file to rehash. Cuts DM2 boot on
-  external volumes from multi-second to sub-second.
-- `dm2_v1_dos_startup_media`: Prefer CommonCrypto SHA-256 on macOS (hardware
-  accelerated on Apple Silicon); keep the FIPS 180-4 software path as
-  fallback for other platforms.
-- `asset_find_by_hash`: Add `asset_scan_cache_batch_begin/end` so callers can
-  share one on-disk scan cache load and save across a run of related lookups.
-- `dm2_v1_boot`: Wrap `dm2_scan_known_hash_assets` in a scan-cache batch so
-  probing `<base>/dm2`, `<base>/data`, and `<base>` opens and persists the
-  cache once instead of per attempt.
+- `dm2_v1_dos_startup_read_verified`: Use a single file pass that fills the
+  prefix buffer and drives SHA-256 as bytes are read, replacing the earlier
+  open-twice pattern that rehashed intro and end from a freshly allocated
+  full-size buffer.
+- `dm2_v1_dos_startup_media`: Use `CC_SHA256` on macOS through a
+  CommonCrypto shim; the software FIPS 180-4 path stays as fallback.
+- `dm2_scan_known_hash_assets`: Bind the on-disk scan cache once around the
+  probes of `<base>/dm2`, `<base>/data`, and `<base>` instead of opening and
+  saving it per subroot attempt.
 
 ### Fixed
 
-- `csb_v1_boot_startup_terminal_hud_matches_profile_pc34`: Accept
-  `CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34` and skip C040 dimension
-  checks when the resurrect surface is absent, so the CSBWin/Atari HUD
-  handoff is no longer blocked by the DM1-only resurrect panel.
-- `dm2_v1_mve_video`: Cast to `int` before negating in opcode 3 so the copy
-  offset is well-defined instead of relying on unsigned-to-signed conversion.
-- `dm2_v1_mve_stream`: Harmonize the opcode 0x08 minimum size to `>= 6` so
-  the stream parser matches the timeline and PCM validators.
-- `dm2_v1_game_load_world_owner`: Store the party target coordinate as
-  `uint8_t` instead of `int8_t` to avoid implementation-defined signed
-  truncation on the mutation path.
-- `theron_v1_world_hash`: NULL-check the world argument.
+- `dm2_v1_mve_video`: Fix opcode 3 to cast the copy delta to `int` before
+  negating so unsigned wraparound cannot produce an out-of-range offset.
+- `dm2_v1_mve_stream`: Correct the opcode 0x08 minimum size check to require
+  at least six bytes so the stream parser matches the PCM and timeline
+  validators.
+- `dm2_v1_game_load_world_owner`: Fix the party target coordinate write to
+  use `uint8_t` so signed truncation cannot corrupt the pose.
+
+## CSB
+
+### Fixed
+
+- `csb_v1_boot_startup_terminal_hud_matches_profile_pc34`: Bind the CSBWin
+  handoff to accept `CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34` and
+  block the C040 dimension check when the resurrect surface is absent so
+  the CSBWin route is no longer blocked by the DM1-only resurrect panel.
+
+## Theron
+
+### Fixed
+
+- `theron_v1_world_hash`: Reject a NULL world argument instead of
+  dereferencing it.
+
+## Firestaff
+
+### Added
+
+- `asset_find_by_hash`: Add `asset_scan_cache_batch_begin` and
+  `asset_scan_cache_batch_end` so callers can bind one on-disk scan cache
+  load and save across a run of related lookups.
 
 # Firestaff v3.0.307
 
