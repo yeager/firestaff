@@ -30,6 +30,28 @@ static const uint16_t dm2_v1_sound_bearing_table[24] = {
     0xad00u, 0xbc00u, 0xcb00u, 0xda00u, 0xe900u, 0xf800u
 };
 
+static DM2_V1_SoundSsoundEntry *dm2_v1_sound_queue_entries(
+    DM2_V1_SoundQueueState *state)
+{
+    return state && state->ssound_entries ? state->ssound_entries :
+        (state ? state->ssound : NULL);
+}
+
+static const DM2_V1_SoundSsoundEntry *dm2_v1_sound_queue_entries_const(
+    const DM2_V1_SoundQueueState *state)
+{
+    return state && state->ssound_entries ? state->ssound_entries :
+        (state ? state->ssound : NULL);
+}
+
+static uint16_t dm2_v1_sound_queue_entry_capacity(
+    const DM2_V1_SoundQueueState *state)
+{
+    if (!state) return 0u;
+    return state->ssound_entries ? state->ssound_entries_capacity :
+        DM2_V1_SOUND_SSOUND_QUEUE_CAP;
+}
+
 static void dm2_v1_sound_queue_clear_receipt(DM2_V1_SoundQueueReceipt *r)
 {
     if (r) memset(r, 0, sizeof(*r));
@@ -51,12 +73,36 @@ void dm2_v1_sound_queue_state_init(DM2_V1_SoundQueueState *state,
     if (ssound_capacity > DM2_V1_SOUND_SSOUND_QUEUE_CAP)
         ssound_capacity = DM2_V1_SOUND_SSOUND_QUEUE_CAP;
     state->ssound_capacity = ssound_capacity;
+    state->ssound_entries = state->ssound;
+    state->ssound_entries_capacity = DM2_V1_SOUND_SSOUND_QUEUE_CAP;
     state->sound_enabled = 1;   /* c_sound::init v1d14be = true */
     state->master_sfx_volume = 7; /* c_sound::init v1dff88 = 7 */
     for (uint16_t i = 0; i < DM2_V1_SOUND_SSOUND_QUEUE_CAP; ++i)
-        state->ssound[i].w_05 = -1;
+        state->ssound_entries[i].w_05 = -1;
     for (uint16_t i = 0; i < DM2_V1_SOUND_SAMPLE_SLOT_COUNT; ++i)
         state->sample_slots[i] = -1; /* c_sound::init v1dfda4[i] = -1 */
+}
+
+int dm2_v1_sound_queue_bind_entries(DM2_V1_SoundQueueState *state,
+                                    DM2_V1_SoundSsoundEntry *entries,
+                                    uint16_t entry_count,
+                                    uint16_t entry_capacity)
+{
+    if (!state) return 0;
+    if (!entries) {
+        if (entry_count != 0u || entry_capacity != 0u) return 0;
+        state->ssound_entries = state->ssound;
+        state->ssound_entries_capacity = DM2_V1_SOUND_SSOUND_QUEUE_CAP;
+        state->ssound_count = 0u;
+        state->ssound_capacity = DM2_V1_SOUND_SSOUND_QUEUE_CAP;
+        return 1;
+    }
+    if (entry_capacity == 0u || entry_count > entry_capacity) return 0;
+    state->ssound_entries = entries;
+    state->ssound_entries_capacity = entry_capacity;
+    state->ssound_count = entry_count;
+    state->ssound_capacity = entry_capacity;
+    return 1;
 }
 
 uint16_t dm2_v1_sound_queue_query_entry_index(
@@ -66,7 +112,8 @@ uint16_t dm2_v1_sound_queue_query_entry_index(
     /* DM2_QUERY_SND_ENTRY_INDEX, c_sound.cpp:664-673. */
     if (!state) return 0;
     for (uint16_t i = 0; i < state->ssound_count; ++i) {
-        const DM2_V1_SoundSsoundEntry *e = &state->ssound[i];
+        const DM2_V1_SoundSsoundEntry *e =
+            &dm2_v1_sound_queue_entries_const(state)[i];
         if (cls1 == e->b_02 && cls2 == e->b_03 && cls3 == e->b_04)
             return (uint16_t)(i + 1u);
     }
@@ -84,18 +131,18 @@ int dm2_v1_sound_queue_sound9(DM2_V1_SoundQueueState *state,
     if (dm2_v1_sound_queue_query_entry_index(state, cls1, cls2, cls3) != 0u)
         return 0;
     if (state->ssound_count >= state->ssound_capacity ||
-        state->ssound_count >= DM2_V1_SOUND_SSOUND_QUEUE_CAP)
+        state->ssound_count >= dm2_v1_sound_queue_entry_capacity(state))
         return 0;
     /* c_sound.cpp:656-661 assigns only the class triple and w_05 = -1.
      * The old Firestaff compatibility path copied sample_id into w_00 here,
      * fabricating c_gdatfile.cpp::DM2_482b_0684's later ownership of both a
      * GDAT raw index and a sndptr4 slot. */
     (void)sample_id;
-    state->ssound[state->ssound_count].w_00 = -1;
-    state->ssound[state->ssound_count].b_02 = cls1;
-    state->ssound[state->ssound_count].b_03 = cls2;
-    state->ssound[state->ssound_count].b_04 = cls3;
-    state->ssound[state->ssound_count].w_05 = -1;
+    dm2_v1_sound_queue_entries(state)[state->ssound_count].w_00 = -1;
+    dm2_v1_sound_queue_entries(state)[state->ssound_count].b_02 = cls1;
+    dm2_v1_sound_queue_entries(state)[state->ssound_count].b_03 = cls2;
+    dm2_v1_sound_queue_entries(state)[state->ssound_count].b_04 = cls3;
+    dm2_v1_sound_queue_entries(state)[state->ssound_count].w_05 = -1;
     state->ssound_count++;
     if (out_index) *out_index = state->ssound_count;
     return 1;
@@ -288,7 +335,7 @@ int dm2_v1_sound_queue_noise_gen1(DM2_V1_SoundQueueState *state,
         if (out_receipt) *out_receipt = receipt;
         return 0;
     }
-    sample_id = state->ssound[query_index - 1u].w_00;
+    sample_id = dm2_v1_sound_queue_entries(state)[query_index - 1u].w_00;
     if (sample_id < 0) {
         /* sndptr4 + (w_00 << 4) cannot be proven without the source GDAT
          * sample binding; queueing an unresolved sample is rejected. */

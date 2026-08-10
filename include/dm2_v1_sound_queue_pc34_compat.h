@@ -80,6 +80,13 @@ typedef struct {
 
 typedef struct {
     DM2_V1_SoundSsoundEntry ssound[DM2_V1_SOUND_SSOUND_QUEUE_CAP];
+    /* Optional owner-supplied xsndptr2 backing.  GAME_LOAD allocates this
+     * table through c_dballoc and the retail DOS corpus exceeds the legacy
+     * compatibility array.  The fixed array remains the storage used by
+     * standalone callers/tests; a session may bind an authenticated dynamic
+     * span instead. */
+    DM2_V1_SoundSsoundEntry *ssound_entries;
+    uint16_t ssound_entries_capacity;
     uint16_t ssound_count;     /* v1d2698 */
     uint16_t ssound_capacity;  /* dm2_dballochandler.v1e0ad6 */
     uint16_t sample_binding_count; /* v1d269a, set by DM2_482b_0684 */
@@ -92,6 +99,14 @@ typedef struct {
     int sound_enabled;         /* v1d14be */
     int master_sfx_volume;     /* v1dff88, 0..7 */
 } DM2_V1_SoundQueueState;
+
+/* Bind an already-owned c_dballoc xsndptr2 span.  This never allocates or
+ * appends a SOUND9 row; the caller must supply the exact materialised count.
+ * Passing NULL restores the state-owned compatibility array. */
+int dm2_v1_sound_queue_bind_entries(DM2_V1_SoundQueueState *state,
+                                    DM2_V1_SoundSsoundEntry *entries,
+                                    uint16_t entry_count,
+                                    uint16_t entry_capacity);
 
 /* Explicit replacements for the ddat globals DM2_QUEUE_NOISE_GEN1 reads.
  * occlusion_probe is the R_1FB7D stand-in (c_sfx.cpp:88-135): it must return

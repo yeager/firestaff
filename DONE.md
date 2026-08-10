@@ -53,6 +53,16 @@
   lägga till en GDAT-rad, använda en global kö eller returnera en trasig
   rå-/samplebindning.
 
+# DM2: GAME_LOAD behåller dynamisk SOUND9-kapacitet (2026-08-10)
+
+- ✅ Ljudkärnan kan nu bindas till en redan källägd `xsndptr2`-span i stället
+  för att begränsas av den äldre 64-posters kompatibilitetsbufferten.
+  Regressionen når en 1-baserad SOUND9-post efter plats 64. Bindningen
+  allokerar inga poster och återställer aldrig GDAT-data.
+- ✅ Detta öppnar inte ännu positionsljud eller CAII-ljud: den privata
+  GAME_LOAD-ägaren saknar fortsatt det verkliga `FIND_WALK_PATH`-/occlusion-
+  resultat som `QUEUE_NOISE_GEN1` behöver.
+
 # DM2: direktstart behåller verifierad bootprofil (2026-08-10)
 
 - ✅ Den äldre CLI-spelvägen kan inte längre läsa om DM2:s G1- och

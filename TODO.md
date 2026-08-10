@@ -210,7 +210,9 @@
   rollbackbar c_map/moverec/CAII/0A48-transaktion; först därefter får en
   RAM-klon av File_header, recordpooler, party, c_tim, RNG och SND skapas.
   Recordpoolerna ska fortsatt klonas från den muterade ägaren, inte från den
-  ursprungliga filbilden.
+  ursprungliga filbilden. SOUND9-kärnan kan nu använda den verkliga
+  c_dballoc-dimensionerade `xsndptr2`-spanen; återstående arbete är fortfarande
+  `FIND_WALK_PATH`/occlusion och den samlade 0A48/CCM-/timertransaktionen.
 
 - ⏳ DM2:s DOS-, FM Towns- och Amiga-startmedia väcks nu var 16 ms i M11, med
   källornas egna ackumulatorer för bildtid. Återstår gör den riktiga Amiga

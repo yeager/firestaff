@@ -354,6 +354,25 @@ int main(void)
     assert(dm2_v1_sound_queue_sound8_flush(&st, 1, &pr) == 0);
     assert(!pr.valid);
 
+    /* GAME_LOAD's c_dballoc-backed xsndptr2 is not limited to the old
+     * compatibility array.  Bind a source-shaped external span and prove
+     * the 1-based SOUND9 lookup reaches an entry beyond slot 63. */
+    {
+        DM2_V1_SoundSsoundEntry external[65];
+        memset(external, 0, sizeof(external));
+        for (int i = 0; i < 65; ++i) external[i].w_05 = -1;
+        dm2_v1_sound_queue_state_init(&st, 1);
+        assert(dm2_v1_sound_queue_bind_entries(&st, external, 64u, 65u));
+        external[64].b_02 = 7;
+        external[64].b_03 = 8;
+        external[64].b_04 = 9;
+        external[64].w_00 = 11;
+        external[64].w_05 = 0x1234;
+        st.ssound_count = 65u;
+        assert(dm2_v1_sound_queue_query_entry_index(&st, 7, 8, 9) == 65u);
+        assert(dm2_v1_sound_queue_bind_entries(&st, NULL, 0u, 0u));
+    }
+
     assert(dm2_v1_sound_queue_source_evidence() != 0);
 
     return 0;
