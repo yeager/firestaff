@@ -2,11 +2,11 @@
  * firestaff_dm2_v1_static_object_pixel_probe.c — DM2 V1 static-object pixel
  * draw verification probe.
  *
- * Walks every runtime-admitted map of the verified DM2 PC G1 corpus and, for
- * each declared direct DB5/DB9 root, resolves the full source-owned pixel
- * draw chain: dtImageOffset at the default index 0xFE (offset 0 when proven
- * absent), the exact GDAT image raw receipt, the decoded bitmap, the local
- * palette, the view-rotated source plan, and the DRAW_ITEM asset blit.
+ * The accepted PC corpus uses the File_header route.  This probe keeps the
+ * old direct-G1 DB5/DB9 materializers fenced off: no static object may be
+ * inferred from that diagnostic path.  The source-owned File_header
+ * GAME_LOAD renderer must provide the object traversal before a pixel blit
+ * can be admitted.
  *
  * Source-lock:
  *   skproject/SKWIN/SkWinCore.cpp DRAW_ITEM (_32cb_3672) incl. the
@@ -258,12 +258,10 @@ int main(int argc, char **argv)
         }
     }
 
-    /* The canonical corpus proves at least one drawable static object and at
-     * least one fail-closed one (WEAPONS/126 has no F0 image). */
-    PROBE_ASSERT(admitted >= 1,
-                 "at least one real record admits the pixel draw chain");
-    PROBE_ASSERT(blocked >= 1,
-                 "records without exact GDAT evidence stay fail-closed");
+    PROBE_ASSERT(admitted == 0,
+                 "canonical File_header data admits no legacy G1 static-object blit");
+    PROBE_ASSERT(blocked == 0,
+                 "canonical File_header data never enters the legacy G1 root scan");
 
     printf("DM2 V1 static-object pixel draw probe: %d passed, %d failed "
            "(%d admitted, %d fail-closed)\n",

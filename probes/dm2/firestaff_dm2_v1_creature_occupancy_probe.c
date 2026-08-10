@@ -157,12 +157,16 @@ int main(int argc, char **argv)
         }
     }
 
-    PROBE_ASSERT(records >= 10,
-                 "canonical corpus yields direct DB4 roots (%d)", records);
-    PROBE_ASSERT(fail_closed == records,
-                 "every record stays fail-closed on the canonical corpus "
-                 "(8bpp global-palette or palette-less V5 images, no local "
-                 "palette evidence)");
+    /* The accepted PC DUNGEON.DAT takes the File_header route.  It must not
+     * fall back to the old direct-G1 creature-root materializer: doing so
+     * would make this probe infer a live creature world from a diagnostic
+     * layout path.  Real File_header DB4/CAII ownership is tested by the
+     * source GAME_LOAD gates instead. */
+    PROBE_ASSERT(records == 0,
+                 "canonical File_header corpus never enters legacy direct-DB4 "
+                 "materialization (%d roots)", records);
+    PROBE_ASSERT(fail_closed == 0,
+                 "no legacy creature root is fail-closed after File_header admission");
     PROBE_ASSERT(admitted == 0,
                  "no record leaves the map-chip route without complete GDAT "
                  "evidence");

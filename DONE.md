@@ -60,6 +60,10 @@
 - ✅ Riktade CTest-prober samt produktionsgrinden verifierade ändringen. De
   äldre CAII/G1-fixturerna som kräver en påhittad 512-byte-dungeon är fortsatt
   fail-closed och öppnar ingen produktionsväg.
+- ✅ De fyra äldre CAII-/THINK_CREATURE-testerna provar nu samma gräns utan
+  handskriven dungeon, GDAT eller DB4-record. Canonical File_header-data
+  passerar inte heller de gamla direkta G1-skannrarna för creature- eller
+  static-object-pixlar.
 
 - ✅ GAME_LOAD-kandidaten behåller nu den källinitierade
   `v1e0390`/`v1e1020..102e`-gruppen och `v1d3248` som c_maps aktuella
