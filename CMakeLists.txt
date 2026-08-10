@@ -11484,6 +11484,7 @@ endif()
 # reintroduce duplicate or outdated targets.
 foreach(_triage_hoc_probe_src IN ITEMS
         "probes/m11/firestaff_dm1_v1_champion_mirror_leylla_ordinal14_unreachable_probe.c"
+        "probes/m11/firestaff_dm1_v1_dump_mirror_catalog_probe.c"
         "probes/m11/firestaff_dm1_v1_champion_mirror_east_walkpath_ordinal_11_portrait_rect_position_pc34_compat.c"
         "probes/m11/firestaff_dm1_v1_hall_scan_full_runtime_probe.c"
         "probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_16_redraw_after_candidate_portrait_rect_position_probe.c"
