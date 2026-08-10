@@ -811,6 +811,21 @@ int csb_v1_csbwin_512_verify_save_body(
     uint16_t timer_record_size,
     CSB_V1_CSBWin512BodyReport *out);
 
+/* Verify a pre-Extended-Features CSBWin save body using the three TIMER
+ * layouts that SaveGame.cpp can select: original (10 bytes), sequenced
+ * (12 bytes), and extended (16 bytes).  This is not a heuristic: a width is
+ * admitted only when GAMEBLOCK1 authenticates every following body section.
+ *
+ * CSBWin/SaveGame.cpp:1840-1855 derives the width before passing the timer
+ * stream to UnscrambleStream.  In particular, the bundled legacy
+ * Game/CSB/csbgame2.dat corpus uses the original 10-byte layout.  The helper
+ * leaves `out` zeroed on failure and records the authenticated width on
+ * success. */
+int csb_v1_csbwin_512_verify_save_body_legacy_layouts(
+    const uint8_t *bytes,
+    size_t size,
+    CSB_V1_CSBWin512BodyReport *out);
+
 /* Locate a CSBWin DB11/Expool-style record inside a preserved appended
  * save tail. This mirrors CSBWin data.cpp EXPOOL::Locate and the dungeon
  * loader's DB11 adapter: hash = key * 0xbb40e62d, bucket table at word 32,

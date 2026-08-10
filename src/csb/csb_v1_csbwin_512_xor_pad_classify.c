@@ -2013,6 +2013,35 @@ int csb_v1_csbwin_512_verify_save_body(
     return CSB_V1_CSBWIN_512_OK;
 }
 
+int csb_v1_csbwin_512_verify_save_body_legacy_layouts(
+    const uint8_t *bytes,
+    size_t size,
+    CSB_V1_CSBWin512BodyReport *out)
+{
+    /* CSBWin SaveGame.cpp:1840-1848.  Do not infer a record width from
+     * unverified GAMEBLOCK2 bytes: each candidate must instead authenticate
+     * the complete section stream through UnscrambleStream's checksum. */
+    static const uint16_t k_timer_record_sizes[] = { 10u, 12u, 16u };
+    size_t i;
+    int rc = CSB_V1_CSBWIN_512_ERR_BAD_CHECKSUM;
+
+    if (!bytes || !out) {
+        return CSB_V1_CSBWIN_512_ERR_ARGUMENT;
+    }
+    memset(out, 0, sizeof(*out));
+    for (i = 0u; i < sizeof(k_timer_record_sizes) /
+                      sizeof(k_timer_record_sizes[0]);
+         ++i) {
+        rc = csb_v1_csbwin_512_verify_save_body(
+            bytes, size, k_timer_record_sizes[i], out);
+        if (rc == CSB_V1_CSBWIN_512_OK) {
+            return rc;
+        }
+    }
+    memset(out, 0, sizeof(*out));
+    return rc;
+}
+
 int csb_v1_csbwin_512_appended_expool_locate_record(
     const CSB_V1_CSBWin512BodyReport *report,
     uint32_t record_id,

@@ -21945,24 +21945,12 @@ int csb_v1_runtime_apply_csbwin_resume_file(
     }
     memset(&report, 0, sizeof(report));
     if (!features.valid) {
-        /* Pre-Extended-Features CSBWin saves do not serialize a TIMER
-         * record-width tag.  Admit one only after its complete authenticated
-         * body validates at a source-defined legacy width.  This preserves
-         * both the 10-byte original CSBGAME2.DAT corpus and existing 16-byte
-         * CSBWin saves, without guessing from an unverified body field. */
-        static const uint16_t legacy_timer_sizes[] = { 10u, 12u, 16u };
-        size_t timer_index;
-
-        rc = CSB_V1_CSBWIN_512_ERR_BAD_CHECKSUM;
-        for (timer_index = 0u;
-             timer_index < sizeof(legacy_timer_sizes) / sizeof(legacy_timer_sizes[0]);
-             ++timer_index) {
-            memset(&report, 0, sizeof(report));
-            rc = csb_v1_csbwin_512_verify_save_body(
-                bytes + core_offset, file_size - core_offset,
-                legacy_timer_sizes[timer_index], &report);
-            if (rc == CSB_V1_CSBWIN_512_OK) break;
-        }
+        /* Keep discovery and runtime on one CSBWin SaveGame.cpp
+         * TIMER-layout admission policy.  A checksum-verified old body is
+         * still subject to the later world-handoff gate; this only avoids
+         * falsely rejecting the authentic CSBGAME2 10-byte representation. */
+        rc = csb_v1_csbwin_512_verify_save_body_legacy_layouts(
+            bytes + core_offset, file_size - core_offset, &report);
     } else {
         rc = csb_v1_csbwin_512_verify_save_body(
             bytes + core_offset, file_size - core_offset,

@@ -484,8 +484,13 @@ int csb_v1_csbwin_save_loader_boundary_classify(
         out->xor512_valid =
             (xor_shape != CSB_V1_CSBWIN_SHAPE_COUNT) ? 1 : 0;
         if (out->xor512_valid &&
-            csb_v1_csbwin_512_verify_save_body(
-                bytes, size, 0u, &out->xor512_body_report) ==
+            /* CSBWin SaveGame.cpp:1840-1848 selects a 10-, 12-, or
+             * 16-byte TIMER stream before the body is read.  The runtime
+             * already verifies those source-owned layouts; discovery must
+             * use the same complete-checksum gate so a real CSBGAME2.DAT
+             * cannot be hidden merely because it predates 16-byte timers. */
+            csb_v1_csbwin_512_verify_save_body_legacy_layouts(
+                bytes, size, &out->xor512_body_report) ==
                     CSB_V1_CSBWIN_512_OK) {
             out->xor512_body_valid = 1;
         }

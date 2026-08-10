@@ -1,6 +1,7 @@
 /* CSBWin SaveGame.cpp original-save provenance and DB11 admission test. */
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_csbwin_dungeon_tail.h"
+#include "csb_v1_csbwin_save_loader_boundary_pc34_compat.h"
 #include "csbwin_resume_fixture.h"
 
 #include <stdio.h>
@@ -64,6 +65,7 @@ static void test_staged_real_csbwin_save(void)
     CSB_V1_CSBWin512BodyReport body;
     CSB_V1_CSBWinDungeonTailPrefix tail_prefix;
     CSB_V1_CSBWinDungeonTailDatabaseLayout tail_databases;
+    CSB_V1_CSBWinSaveDiscoveryResult discovery;
     CSB_V1_RuntimeProfile runtime;
 
     if (!path || path[0] == '\0') {
@@ -98,6 +100,14 @@ static void test_staged_real_csbwin_save(void)
           body.num_character == 2u && body.max_timers == 436u &&
           body.timer_record_size == 10u && body.appended_size == 32655u,
           "legacy CSBGAME2 body authenticates with original 10-byte timers");
+    memset(&discovery, 0, sizeof(discovery));
+    (void)csb_v1_csbwin_save_loader_boundary_classify(path, bytes, size,
+                                                       &discovery);
+    CHECK(discovery.xor512_valid && discovery.xor512_body_valid &&
+          discovery.xor512_body_report.timer_record_size == 10u &&
+          strcmp(discovery.decision_label,
+                 "accept_csbwin_512_runtime_handoff_ready") == 0,
+          "discovery admits authentic legacy CSBGAME2 body at its 10-byte timer width");
 
     /* ReDMCSB has no CSBWin GAMEBLOCK1 wrapper, but CSBWin's write/read
      * symmetry is explicit: SaveGame.cpp:1239-1335 writes this exact raw
