@@ -32,6 +32,12 @@ struct CSB_V1_CSBWinLegacyResumeCommitPlan {
     int expected_current_raw_size;
     uint64_t expected_current_raw_signature;
     uint64_t expected_current_shape_signature;
+    /* DSA offsets are separately allocated by the source dungeon loader, so
+     * they are not covered by the raw-data fingerprint.  A legacy candidate
+     * cannot carry an Extended-Features DSA bank; consequently a future
+     * commit must fail closed if the live owner has one, rather than silently
+     * replacing a second owner allocation it did not snapshot. */
+    const uint16_t *expected_current_dsa_offsets;
 };
 
 /* FNV-1a is solely a stable, compact diagnostic identity.  Admission always
@@ -111,7 +117,14 @@ static uint64_t current_owner_shape_signature(const CSB_V1_DungeonData *d)
         CSBWIN_OWNER_SHAPE_MIX(d->map_floor_ornament_count[i]);
         CSBWIN_OWNER_SHAPE_MIX(d->map_random_floor_ornament_count[i]);
         CSBWIN_OWNER_SHAPE_MIX(d->map_creature_type_count[i]);
+        {
+            size_t ornament;
+            for (ornament = 0u; ornament < 16u; ++ornament) {
+                CSBWIN_OWNER_SHAPE_MIX(d->map_floor_ornament_indices[i][ornament]);
+            }
+        }
     }
+    CSBWIN_OWNER_SHAPE_MIX(d->ornament_random_seed);
     for (i = 0u; i < CSB_V1_CSBWIN_DATABASE_COUNT; ++i) {
         CSBWIN_OWNER_SHAPE_MIX(d->thing_data_bases[i]);
         CSBWIN_OWNER_SHAPE_MIX(d->thing_type_counts[i]);
@@ -1044,6 +1057,8 @@ int csb_v1_csbwin_dungeon_tail_begin_legacy_resume_commit_plan_file(
                 ? (size_t)plan->expected_current_raw_size : 0u);
         plan->expected_current_shape_signature =
             current_owner_shape_signature(plan->expected_current_owner);
+        plan->expected_current_dsa_offsets =
+            plan->expected_current_owner->dsa_offsets;
     }
     *out_plan = plan;
     return CSB_V1_CSBWIN_DUNGEON_TAIL_OK;
@@ -1094,10 +1109,15 @@ int csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
     if (!current) return 1;
     if (current->raw_data != plan->expected_current_raw_data ||
         current->raw_size != plan->expected_current_raw_size ||
+        current->dsa_offsets != plan->expected_current_dsa_offsets ||
         current_owner_shape_signature(current) !=
             plan->expected_current_shape_signature) {
         return 0;
     }
+    /* Legacy CSBWin candidates intentionally reject Extended Features.  Do
+     * not let an optimistic owner check bless a live DSA allocation whose
+     * lifetime the candidate transaction cannot adopt. */
+    if (current->dsa_count != 0 || current->dsa_offsets != NULL) return 0;
     return source_tail_signature(current->raw_data,
                                  current->raw_size > 0
                                      ? (size_t)current->raw_size : 0u) ==
@@ -1116,6 +1136,7 @@ void csb_v1_csbwin_dungeon_tail_discard_legacy_resume_commit_plan(
     plan->expected_current_raw_size = 0;
     plan->expected_current_raw_signature = 0u;
     plan->expected_current_shape_signature = 0u;
+    plan->expected_current_dsa_offsets = NULL;
     free(plan);
 }
 

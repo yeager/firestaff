@@ -204,12 +204,38 @@ static void check_staged_real_save(void)
                 csb_v1_dungeon_get_current_mutable()->raw_data[0] ^= 1u;
                 CHECK(csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
                     commit_plan));
+                /* These are loader-derived fields rather than raw bytes.
+                 * A future atomic replacement must not mistake a changed
+                 * floor-ornament selection for an unchanged live owner. */
+                csb_v1_dungeon_get_current_mutable()->map_floor_ornament_indices[0][0] =
+                    7u;
+                CHECK(!csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
+                    commit_plan));
+                csb_v1_dungeon_get_current_mutable()->map_floor_ornament_indices[0][0] =
+                    0u;
+                CHECK(csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
+                    commit_plan));
                 csb_v1_dungeon_get_current_mutable()->map_wall_set[0] = 3;
                 CHECK(!csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
                     commit_plan));
                 csb_v1_csbwin_dungeon_tail_discard_legacy_resume_commit_plan(
                     commit_plan);
                 commit_plan = NULL;
+                csb_v1_dungeon_get_current_mutable()->map_wall_set[0] = 0;
+                csb_v1_dungeon_get_current_mutable()->dsa_offsets =
+                    (uint16_t *)calloc(1u, sizeof(uint16_t));
+                CHECK(csb_v1_dungeon_get_current_mutable()->dsa_offsets != NULL);
+                if (csb_v1_dungeon_get_current_mutable()->dsa_offsets) {
+                    csb_v1_dungeon_get_current_mutable()->dsa_count = 1;
+                    CHECK(csb_v1_csbwin_dungeon_tail_begin_legacy_resume_commit_plan_file(
+                              path, 0u, &commit_plan) ==
+                          CSB_V1_CSBWIN_DUNGEON_TAIL_OK &&
+                          !csb_v1_csbwin_dungeon_tail_legacy_resume_commit_plan_owner_unchanged(
+                              commit_plan));
+                    csb_v1_csbwin_dungeon_tail_discard_legacy_resume_commit_plan(
+                        commit_plan);
+                    commit_plan = NULL;
+                }
                 csb_v1_dungeon_unload();
             } else {
                 free(owner_probe);
