@@ -39057,6 +39057,20 @@ static int m11_dm1_nearest_blocking_center_door_depth(
     return -1;
 }
 
+/* ReDMCSB DEFS.H MEDIA720_A31E_A31M_A33M_A35E_A35M gives the Amiga
+ * M634 door button its own record (453); PC media's C315 is not a portable
+ * alias. DUNVIEW.C F0110 applies this one native button bitmap to every
+ * derived depth frame, so selection belongs at material load time. */
+static unsigned int m11_door_button_graphic_index_for_state(
+    const M11_GameViewState *state)
+{
+    enum { M11_CSB_AMIGA_M634_FIRST_DOOR_BUTTON = 453 };
+
+    return state && state->assetLoader.csbAmiga
+        ? M11_CSB_AMIGA_M634_FIRST_DOOR_BUTTON
+        : M11_GFX_DOOR_BUTTON_BASE;
+}
+
 static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
                                              unsigned char* framebuffer,
                                              int fbW,
@@ -39090,7 +39104,7 @@ static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
             continue;
         }
         slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                    M11_GFX_DOOR_BUTTON_BASE);
+                                    m11_door_button_graphic_index_for_state(state));
         if (!slot || !slot->loaded || !slot->pixels ||
             slot->width <= 0 || slot->height <= 0) {
             return;
@@ -39148,7 +39162,7 @@ static void m11_draw_dm1_d3r_door_button(const M11_GameViewState* state,
         }
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                M11_GFX_DOOR_BUTTON_BASE);
+                                m11_door_button_graphic_index_for_state(state));
     if (!slot || !slot->loaded || !slot->pixels ||
         slot->width <= 0 || slot->height <= 0) {
         return;

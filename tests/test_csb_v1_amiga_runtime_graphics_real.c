@@ -176,6 +176,16 @@ int main(void)
             return 1;
         }
     }
+    /* DUNVIEW.C F0111/F0110 consumes the two M649 masks, the twelve M617
+     * door ornaments, then the lone M634 door button. MEDIA720 defines the
+     * contiguous native 439..453 range; in particular M634=453 is not the
+     * PC media C315 record. */
+    for (graphic = 439u; graphic <= 453u; ++graphic) {
+        if (!decode_source_viewport_field_surface(path, graphic,
+                                                  "M649/M617/M634 door family")) {
+            return 1;
+        }
+    }
     puts("PASS: real CSB Amiga HUD, pit, and F0113/F0127 graphics decode");
     return 0;
 }
