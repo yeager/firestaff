@@ -5177,3 +5177,13 @@ inte ännu `TM.BIN` till MENU.BPK/PRS3, FONT256, CLUT eller en färdig
 produktionsrenderare. Verifiering: `scripts/analyze_nexus_sh2_source_trace.py`
 med `--require-member TM.BIN --require-destination-range
 0x06027000:0x0602b000 --require-pc 0x00205f18`.
+# ✅ 2026-08-10 Nexus VDP1 source-to-VRAM copy direction
+
+Samma-sessionens registervittne och råa VDP1/VDP2-capture bevisar nu
+kopieringsriktningen för den autentiska direct-colour-bufferten: vid
+`R0=0x06027874`, `R5=0x800`, VDP1-målet `0x10a00` och writer-PC
+`0x060135f4` är alla `0x800` byte identiska efter den dokumenterade
+16-bitars Saturn-byteordningen. Verifieringsverktyget
+`scripts/analyze_nexus_vdp1_source_to_vram.py` passerar mot frame 350 i
+den externa 400-frame-capturen. Detta bevisar transport och byteordning,
+inte pixelkodning, CLUT/palett, kommando-typ eller produktionsrendering.

@@ -518,3 +518,9 @@ remaining production gate is narrower and explicit: identify the exact
 corresponding MENU.BPK/PRS3 and FONT256 paths where they are actually used.
 Do not promote the host renderer or substitute MENU.BPK merely from this
 source join.
+2026-08-10: VDP1 source-to-VRAM direction is now byte-exactly verified for
+the TM.BIN-backed startup/menu lane (`R0=0x06027874`, `R5=0x800`, target
+`0x10a00`, writer `0x060135f4`). Remaining work is the semantic decode of
+the copied bytes and the source-owned command/CLUT/palette consumer. Do not
+promote direct-colour or MENU.BPK/FONT256 rendering from this transport
+receipt alone.
