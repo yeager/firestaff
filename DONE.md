@@ -1,3 +1,14 @@
+# Firestaff: diskformatering lämnas till originalspel och emulator (2026-08-10)
+
+- ✅ M11:s DM1- och CSB-sparrutor erbjuder nu bara sparning, laddning,
+  avslut och avbryt. De raderar inte längre en värdfil och kallar det
+  diskformatering.
+- ✅ Originalspelets F0432-formatväg är fortsatt dokumenterad som
+  källgräns, men den utförs utanför Firestaff på den skrivbara emulerade
+  disketten. Firestaff skriver i stället till den konfigurerade sparvägen.
+- ✅ `test_csb_v1_keyboard_commands_pc34_compat` verifierar att CSB-menyn
+  inte exponerar något formateringsval.
+
 # Theron: complete US CUE transport capture (2026-08-10)
 
 # Theron: reject non-semantic save-state spawn overlay (2026-08-10)

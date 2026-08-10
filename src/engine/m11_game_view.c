@@ -29039,28 +29039,26 @@ static int m11_graphics_popup_handle_input(M11_GameViewState* state,
 
 enum {
     M11_DM1_SAVE_DISK_MENU_NONE = 0,
-    M11_DM1_SAVE_DISK_MENU_MAIN = 1,
-    M11_DM1_SAVE_DISK_MENU_FORMAT_CONFIRM = 2
+    M11_DM1_SAVE_DISK_MENU_MAIN = 1
 };
 
 enum {
     M11_CSB_SAVE_DISK_MENU_NONE = 0,
-    M11_CSB_SAVE_DISK_MENU_MAIN = 1,
-    M11_CSB_SAVE_DISK_MENU_FORMAT_CONFIRM = 2
+    M11_CSB_SAVE_DISK_MENU_MAIN = 1
 };
 
 static void m11_dm1_show_save_disk_menu(M11_GameViewState* state) {
     if (!state) return;
-    /* ReDMCSB LOADSAVE.C F0433:773-785.  The original physical save disk
-     * is represented by Firestaff's per-DM1 local save namespace; the
-     * choices and their order remain the original PC34 dialog contract. */
+    /* ReDMCSB LOADSAVE.C F0433:773-785 owns saving. Formatting is physical
+     * media administration and remains an original-game/emulator operation;
+     * Firestaff writes only its configured save path. */
     M11_GameView_ShowDialogOverlayChoices(
         state,
         _("PUT THE GAME SAVE DISK IN ~"),
         _("SAVE GAME"),
         _("QUIT GAME"),
-        _("FORMAT FLOPPY"),
-        _("CANCEL"));
+        _("CANCEL"),
+        NULL);
     state->dm1SaveDiskMenuStage = M11_DM1_SAVE_DISK_MENU_MAIN;
     m11_set_status(state, "SAVE DISK", "READY");
 }
@@ -29112,63 +29110,30 @@ static M11_GameInputResult m11_dm1_handle_save_disk_choice(
             return m11_dm1_write_save_disk(state, 0);
         case 2:
             return m11_dm1_write_save_disk(state, 1);
-        case 3:
-            /* ReDMCSB F0432:423-440: a writable game-save disk first
-             * requires an explicit format confirmation. */
-            M11_GameView_ShowDialogOverlayChoices(
-                state,
-                _("THAT'S A GAME SAVE DISK!\nFORMAT DISK ANYWAY?"),
-                _("OK"), _("CANCEL"), NULL, NULL);
-            state->dm1SaveDiskMenuStage = M11_DM1_SAVE_DISK_MENU_FORMAT_CONFIRM;
-            return M11_GAME_INPUT_REDRAW;
-        case 4:
         default:
             M11_GameView_DismissDialogOverlay(state);
             m11_set_status(state, "SAVE DISK", "CANCELLED");
             return M11_GAME_INPUT_REDRAW;
         }
     }
-    if (stage == M11_DM1_SAVE_DISK_MENU_FORMAT_CONFIRM) {
-        if (choice == 1) {
-            char savePath[M11_GAME_VIEW_PATH_CAPACITY];
-            if (!M11_GameView_GetQuickSavePath(state, savePath,
-                                               sizeof(savePath)) ||
-                !dm1_v1_save_prepare_parent_directory_pc34(savePath)) {
-                m11_set_status(state, "SAVE", "SAVE DIRECTORY UNAVAILABLE");
-                return M11_GAME_INPUT_REDRAW;
-            }
-            /* The local namespace is the virtual save disk. Formatting it
-             * clears the active save exactly like the source's F0432 path;
-             * game data is never touched. */
-            (void)remove(savePath);
-            M11_GameView_DismissDialogOverlay(state);
-            m11_set_status(state, "SAVE DISK", "FORMATTED");
-            return M11_GAME_INPUT_REDRAW;
-        }
-        M11_GameView_DismissDialogOverlay(state);
-        m11_set_status(state, "SAVE DISK", "CANCELLED");
-        return M11_GAME_INPUT_REDRAW;
-    }
     return M11_GAME_INPUT_IGNORED;
 }
 
-/* C140 enters the CSB save-disk dialog.  The Atari ST v2.1 source strings
- * at data offsets $50e..$54c give the four original choices and their order.
- * Firestaff's per-profile path is only the host transport for that physical
- * disk; it does not change the source menu contract. */
+/* C140 enters the CSB save dialog. Firestaff exposes the source-owned
+ * load/save operations but never pretends to format physical save media. */
 static void m11_csb_show_save_disk_menu(M11_GameViewState* state) {
     if (!state) return;
     M11_GameView_ShowDialogOverlayChoices(state,
         _("PUT THE GAME SAVE DISK IN ~"),
         _("LOAD SAVED GAME"), _("SAVE AND PLAY"),
-        _("SAVE AND QUIT"), _("FORMAT FLOPPY"));
+        _("SAVE AND QUIT"), NULL);
     state->csbDiskMenuActive = 1;
     state->csbDiskMenuSelectedChoice = 1;
     state->csbDiskMenuStage = M11_CSB_SAVE_DISK_MENU_MAIN;
     m11_set_status(state, "CSB", "DISK MENU");
     snprintf(state->inspectTitle, sizeof(state->inspectTitle), "CSB DISK MENU");
     snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-             "LOAD, SAVE, QUIT OR FORMAT");
+             "LOAD, SAVE OR QUIT");
 }
 
 static M11_GameInputResult m11_csb_handle_save_disk_choice(
@@ -29195,16 +29160,10 @@ static M11_GameInputResult m11_csb_handle_save_disk_choice(
                 return M11_GAME_INPUT_RETURN_TO_MENU;
             }
             break;
-        case 4:
-            M11_GameView_ShowDialogOverlayChoices(
-                state,
-                _("THAT'S A GAME SAVE DISK!\nFORMAT DISK ANYWAY?"),
-                _("OK"), _("CANCEL"), NULL, NULL);
-            state->csbDiskMenuStage = M11_CSB_SAVE_DISK_MENU_FORMAT_CONFIRM;
-            state->csbDiskMenuSelectedChoice = 1;
-            return M11_GAME_INPUT_REDRAW;
         default:
-            return M11_GAME_INPUT_IGNORED;
+            M11_GameView_DismissDialogOverlay(state);
+            m11_set_status(state, "SAVE DISK", "CANCELLED");
+            return M11_GAME_INPUT_REDRAW;
         }
         if (ok) {
             state->dialogSelectedChoice = choice;
@@ -29212,30 +29171,6 @@ static M11_GameInputResult m11_csb_handle_save_disk_choice(
             return M11_GAME_INPUT_REDRAW;
         }
         return M11_GAME_INPUT_REDRAW;
-    }
-    if (stage == M11_CSB_SAVE_DISK_MENU_FORMAT_CONFIRM) {
-        if (choice == 1) {
-            char save_path[M11_GAME_VIEW_PATH_CAPACITY];
-            if (!M11_GameView_GetQuickSavePath(state, save_path,
-                                               sizeof(save_path)) ||
-                !dm1_v1_save_prepare_parent_directory_pc34(save_path)) {
-                m11_set_status(state, "SAVE", "SAVE DIRECTORY UNAVAILABLE");
-                return M11_GAME_INPUT_REDRAW;
-            }
-            /* F0432 formats the selected game-save medium. The host save
-             * namespace is that medium; game data and unrelated saves stay
-             * untouched. */
-            (void)remove(save_path);
-            M11_GameView_DismissDialogOverlay(state);
-            m11_set_status(state, "SAVE DISK", "FORMATTED");
-            return M11_GAME_INPUT_REDRAW;
-        }
-        if (choice == 2) {
-            M11_GameView_DismissDialogOverlay(state);
-            m11_set_status(state, "SAVE DISK", "CANCELLED");
-            return M11_GAME_INPUT_REDRAW;
-        }
-        return M11_GAME_INPUT_IGNORED;
     }
     return M11_GAME_INPUT_IGNORED;
 }
@@ -29369,10 +29304,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         }
         if (state->dm1SaveDiskMenuStage != M11_DM1_SAVE_DISK_MENU_NONE) {
             if (input == M12_MENU_INPUT_BACK) {
-                return m11_dm1_handle_save_disk_choice(
-                    state,
-                    state->dm1SaveDiskMenuStage ==
-                        M11_DM1_SAVE_DISK_MENU_FORMAT_CONFIRM ? 2 : 4);
+                return m11_dm1_handle_save_disk_choice(state, 3);
             }
             if (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION) {
                 return m11_dm1_handle_save_disk_choice(state, 1);
