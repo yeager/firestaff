@@ -4733,6 +4733,7 @@ static int m11_csb_amiga_viewport_graphic_provider(void *user_data,
         CSB_AMIGA_M647_WALL_SET_GRAPHIC_COUNT = 40,
         CSB_AMIGA_WALL_SURFACE_OFFSET = 7,
         CSB_AMIGA_M633_FIRST_DOOR_SET = 246,
+        CSB_AMIGA_M615_FIRST_WALL_ORNAMENT = 259,
         CSB_AMIGA_M616_FIRST_FLOOR_ORNAMENT = 385
     };
     M11_GameViewState *state = (M11_GameViewState *)user_data;
@@ -4782,6 +4783,18 @@ static int m11_csb_amiga_viewport_graphic_provider(void *user_data,
          * fluxcage from the native GRAPHICS.DAT table. The old Amiga
          * provider admitted wall/floor material but rejected these source
          * families, so a real session could not draw pits or fields. */
+        source_graphic = (unsigned int)graphic_index;
+    } else if (graphic_index >= CSB_AMIGA_M615_FIRST_WALL_ORNAMENT &&
+               graphic_index < CSB_AMIGA_M616_FIRST_FLOOR_ORNAMENT) {
+        /* ReDMCSB DEFS.H MEDIA720_A31E_A31M_A33M_A35E_A35M:
+         * M615=259 and M616=385.  F0107 selects the pre-scaled native
+         * wall-ornament pair directly from the M615 family; it is neither
+         * a PC34-derived bitmap nor a floor-ornament record.  Previously
+         * the Amiga provider rejected 259..384 even though F0107's render
+         * plan already carries those native item IDs, silently removing
+         * torches, alcoves, mirrors and inscriptions from live A31/A35
+         * walls.  Keep the source range exact and let IMG1 decode fail
+         * closed per record rather than borrowing any PC34 material. */
         source_graphic = (unsigned int)graphic_index;
     } else if (graphic_index >= CSB_AMIGA_M616_FIRST_FLOOR_ORNAMENT) {
         source_graphic = (unsigned int)graphic_index;

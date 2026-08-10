@@ -141,6 +141,18 @@ int main(void)
             return 1;
         }
     }
+    /* ReDMCSB DEFS.H MEDIA720_A31E_A31M_A33M_A35E_A35M declares
+     * M615=259 and M616=385.  DUNVIEW.C F0107 consumes the complete
+     * M615..M616-1 wall-ornament family before it reaches F0115's thing
+     * pass.  Prove the production Amiga decoder can admit every original
+     * pre-scaled wall record, rather than allowing the runtime to replace
+     * a missing torch/alcove/mirror with PC34-derived pixels. */
+    for (graphic = 259u; graphic < 385u; ++graphic) {
+        if (!decode_source_viewport_field_surface(path, graphic,
+                                                  "M615 wall-ornament family")) {
+            return 1;
+        }
+    }
     puts("PASS: real CSB Amiga HUD, pit, and F0113/F0127 graphics decode");
     return 0;
 }
