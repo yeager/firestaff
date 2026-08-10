@@ -1,3 +1,11 @@
+# Theron: byte-exakt objectrecordkontroll vid pickup (2026-08-10)
+- ✅ Source-bound pickup validerar nu den kvarhållna råa Track 02-recorden mot
+  weapon-, clothing-, scroll- och potionfälten som faktiskt exponeras till
+  inventory. Felaktig next-ref, typ, flagga, charge, textref eller potionkraft
+  nekas innan compact inventory state skapas. Detta är provenance-/integritets-
+  bindning; originalets ännu okända equip-, use-, stack- och T900-regler
+  aktiveras inte.
+
 # Theron: enhetlig source-record→live-creature-admission (2026-08-10)
 - ✅ Nivåstartens materialisering använder nu samma autentiserade
   kategori-4-admission som explicit source-spawn. Riktiga monstergrupper

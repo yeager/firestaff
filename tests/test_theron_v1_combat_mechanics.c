@@ -814,6 +814,11 @@ static void test_source_item_pickup_provenance(void) {
     object.source_keep = 1u;
     object.source_cursed = 1u;
     object.source_poisoned = 1u;
+    object.source_raw_size = 4u;
+    object.source_raw[0] = 0x45u;
+    object.source_raw[1] = 0x23u;
+    object.source_raw[2] = 0x86u;
+    object.source_raw[3] = 0x0fu;
     object.source_property_valid = 1u;
     object.source_property[0] = 0x09u;
     object.source_property[1] = 0x2fu;
@@ -830,6 +835,11 @@ static void test_source_item_pickup_provenance(void) {
     CHECK_INT("inventory source charges", carried->charges, 3);
     CHECK_INT("inventory source curse", carried->cursed, 1);
     CHECK_INT("inventory source property", carried->property[1], 0x2f);
+
+    carried = theron_v1_inventory_source_at(&w, 0, 0);
+    CHECK(carried && carried->source_raw_size == 4u &&
+              carried->source_raw[2] == 0x86u,
+          "inventory keeps exact source item bytes");
     CHECK(theron_v1_drop_inventory_source_item(&w, 0, 0, 3, 4) > 0,
           "source item drop succeeds");
     CHECK_INT("dropped source item id", w.objects[w.object_count - 1].item_index,

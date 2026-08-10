@@ -98,6 +98,53 @@ static int theron_v1_source_item_category_is_carryable(uint8_t category) {
            category == THERON_CAT_POTION;
 }
 
+/* Validate the semantic fields that the loader exposes against the exact
+ * source bytes retained on the object.  This is deliberately narrower than
+ * an equip/use implementation: it proves that a real T900 item occurrence
+ * has not been replaced by a host-side record before pickup.
+ *
+ * Source: DMBUILDER6/src/dms.h:69-176 and
+ * theron_v1_track02_item_record_decode(). */
+static int theron_v1_source_item_record_matches_object(
+    const Theron_V1_Object *object) {
+    Theron_Track02ItemRecord record;
+
+    if (!object || !theron_v1_source_item_category_is_carryable(
+                       object->source_category) ||
+        object->source_raw_size == 0u ||
+        !theron_v1_track02_item_record_decode(
+            object->source_category, object->source_raw,
+            object->source_raw_size, &record) ||
+        record.next_ref != object->source_next_ref) {
+        return 0;
+    }
+    switch (object->source_category) {
+    case THERON_CAT_WEAPON:
+        return record.value.weapon.type == object->source_item_type &&
+               record.value.weapon.keep == object->source_keep &&
+               record.value.weapon.cursed == object->source_cursed &&
+               record.value.weapon.poisoned == object->source_poisoned &&
+               record.value.weapon.charges == (uint8_t)object->quantity &&
+               record.value.weapon.broken == object->source_broken;
+    case THERON_CAT_CLOTHING:
+        return record.value.clothing.type == object->source_item_type &&
+               record.value.clothing.keep == object->source_keep &&
+               record.value.clothing.cursed == object->source_cursed &&
+               record.value.clothing.dump == object->source_dump &&
+               record.value.clothing.broken == object->source_broken;
+    case THERON_CAT_SCROLL:
+        return record.value.scroll.type == object->source_item_type &&
+               record.value.scroll.closed == object->source_closed &&
+               record.value.scroll.reftxt == object->source_text_ref;
+    case THERON_CAT_POTION:
+        return record.value.potion.type == object->source_item_type &&
+               record.value.potion.power == object->source_power &&
+               record.value.potion.keep == object->source_keep;
+    default:
+        return 0;
+    }
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Command / click routing
  * ══════════════════════════════════════════════════════════════════════ */
@@ -152,7 +199,8 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
              !theron_v1_source_item_category_is_carryable(
                  o->source_category) ||
              !o->source_property_valid ||
-             o->source_item_type != (uint8_t)item_id)) {
+             o->source_item_type != (uint8_t)item_id ||
+             !theron_v1_source_item_record_matches_object(o))) {
             /* ReDMCSB THQUEST T900 owns the object/category transition. A
              * real Track 02 level must never turn an unbound host object into
              * a carried item merely because its compact ID looks usable. The
