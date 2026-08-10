@@ -7,6 +7,10 @@ Page-, Palette- och Attribute-orden (4096/256/242). Detta är fortfarande en
 source-retention-grind: Saturns glyph-code→tile-mapping, VDP2 page/PND-
 placering och textkonsument kräver fortsatt capture-witness.
 
+2026-08-10: Engine-API:t kan nu läsa en vald, hashbunden MENU.BPK-PRS3-yta
+som exakta indexpixlar. Detta är source-pixelåtkomst, inte PALT-färgdekodning,
+VDP1-upload eller menyplacering; Saturn-konsumentgrinden är fortsatt öppen.
+
 2026-08-09: VDP1-VRAM/CMDLINK till atomisk capture-replay-adapter är nu
 implementerad och CTest-verifierad. Den kräver fortfarande en explicit
 source/CLUT-resolver per draw; komplett DGN-sceneägarskap, transform, culling

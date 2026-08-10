@@ -10935,6 +10935,38 @@ int nexus_v1_menu_bpk_decode_receipt(
     return 0;
 }
 
+int nexus_v1_menu_bpk_decode_source_surface(
+    Nexus_V1_Engine *engine, uint32_t entry_index,
+    uint8_t *pixels, size_t pixel_capacity,
+    Nexus_V1_BpkSurfaceEntry *out_surface, size_t *out_written)
+{
+    uint8_t *data;
+    int size = 0;
+    int status;
+
+    if (out_written) *out_written = 0U;
+    if (out_surface) memset(out_surface, 0, sizeof(*out_surface));
+    if (!engine || !pixels || pixel_capacity == 0U || !out_written ||
+        !engine->menu_bpk_source.canonical_hash_verified ||
+        !engine->menu_bpk_decode_receipt_valid ||
+        engine->menu_bpk_decode_receipt.route !=
+            NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED) {
+        return NEXUS_V1_BPK_DECODE_ERR_ARCHIVE;
+    }
+    data = nexus_v1_read_file(engine, "MENU.BPK", &size);
+    if (!data || size <= 0 ||
+        nexus_v1_dgn_bytes_fnv1a64(data, size) !=
+            engine->menu_bpk_package_fnv1a64) {
+        free(data);
+        return NEXUS_V1_BPK_DECODE_ERR_ARCHIVE;
+    }
+    status = nexus_v1_bpk_archive_decode_surface(
+        data, (size_t)size, entry_index, pixels, pixel_capacity,
+        out_surface, out_written);
+    free(data);
+    return status;
+}
+
 int nexus_v1_menu_bpk_upload_plan_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_BpkRuntimeUploadReceipt *out_receipt) {

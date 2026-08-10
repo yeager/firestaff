@@ -17,6 +17,17 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   CTest 4/4 passed with the user-owned Nexus data root. `git diff --check`
   passed.
 
+## 2026-08-10 - Nexus MENU.BPK source-pixel API
+
+- Added `nexus_v1_menu_bpk_decode_source_surface()`. It revalidates the
+  canonical MENU.BPK source and package hash, then exposes one DMWeb PRS3
+  surface as exact indexed bytes through the production engine boundary.
+  PALT remains raw/opaque and the API does not permit VDP1 upload, palette
+  interpretation, or menu presentation.
+- The real renamed-MENU.BPK boot test decodes entry 1 (16×15, 240 indexed
+  pixels) through this engine API while retaining the Saturn presentation
+  blocker. External-disk build and focused CTest: PASS.
+
 ## 2026-07-11 - Nexus FACE.BIN readiness gate
 
 - `FACE.BIN` now has a byte-evidenced descriptor: a 56-byte `FACE` header,

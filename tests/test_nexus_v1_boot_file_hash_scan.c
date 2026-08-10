@@ -439,6 +439,23 @@ int main(void) {
                           receipt.prs3_decoded_pixels_emitted == 0U &&
                           receipt.prs3_decoded_pixels_fnv1a64 != 0U,
                       "Nexus MENU.BPK receipt records source-bound PRS3 pixel bytes");
+            {
+                uint8_t source_pixels[16U * 15U];
+                Nexus_V1_BpkSurfaceEntry source_surface;
+                size_t source_written = 0U;
+                memset(source_pixels, 0, sizeof(source_pixels));
+                memset(&source_surface, 0, sizeof(source_surface));
+                check_int(nexus_v1_menu_bpk_decode_source_surface(
+                              &engine, 1U, source_pixels, sizeof(source_pixels),
+                              &source_surface, &source_written) ==
+                              NEXUS_V1_BPK_DECODE_OK &&
+                              source_written == sizeof(source_pixels) &&
+                              source_surface.entry_index == 1U &&
+                              source_surface.width == 16U &&
+                              source_surface.height == 15U &&
+                              source_surface.layout.bpp == 1U,
+                          "Nexus engine exposes one hash-bound decoded PRS3 source surface");
+            }
             memset(&upload_receipt, 0, sizeof(upload_receipt));
             memset(upload_rows, 0, sizeof(upload_rows));
             check_int(nexus_v1_menu_bpk_upload_plan_receipt(

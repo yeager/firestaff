@@ -3268,6 +3268,13 @@ int nexus_v1_menu_bpk_prs3_execution_evidence_receipt(
 int nexus_v1_menu_bpk_decode_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_BpkRuntimeDecodeReceipt *out_receipt);
+/* Decode one hash-authenticated MENU.BPK surface into its exact source
+ * pixels. PRS3 output is indexed bytes per DMWeb; PALT remains raw/opaque,
+ * and this API never authorizes Saturn VDP1 upload or menu presentation. */
+int nexus_v1_menu_bpk_decode_source_surface(
+    Nexus_V1_Engine *engine, uint32_t entry_index,
+    uint8_t *pixels, size_t pixel_capacity,
+    Nexus_V1_BpkSurfaceEntry *out_surface, size_t *out_written);
 int nexus_v1_menu_bpk_upload_plan_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_BpkRuntimeUploadReceipt *out_receipt);
