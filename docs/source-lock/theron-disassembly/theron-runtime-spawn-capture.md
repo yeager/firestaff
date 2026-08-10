@@ -338,6 +338,22 @@ are execution-window evidence only and cannot authorize RNG, spawn, creature
 AI, attack, damage, loot, generator, T700 or T900 semantics. The capture is not
 joined with another run and no BIOS, BIN/CUE member or state file is tracked.
 
+## 2026-08-10 — JP raw-BIN startup attempt
+
+An external-disk JP-only CUE was built around the hash-verified raw
+`TQJP02.bin` (`b7afb338ad31be1025b53f9aff12d73a`) and run with the authenticated
+System Card (`ff1a674273fe3540ccef576376407d1d`). Mednafen read 256 authentic
+Track 02 sectors and emitted the normal 64 KiB VDC-VRAM and 1 KiB VCE snapshots.
+The receipt nevertheless contained zero byte-exact FIFO/RAM origin records and
+zero authenticated CD→RAM handoffs; the minimal data-only CUE does not prove
+the complete JP CD boot route. It also produced no source-owned portrait
+consumer or VDC destination binding.
+
+The JP roster/object bytes remain valid source data, but the snapshot is not
+joined with the US capture and does not authorize JP portraits, portrait IDs,
+or a JP text/bitmap consumer. A complete authenticated JP CUE with its real
+audio tracks and a same-run CD→RAM origin receipt is still required.
+
 ## 2026-08-09 extended `.mc0` RNG window
 
 The external-disk replay was repeated with the same hash-verified US Track 02,

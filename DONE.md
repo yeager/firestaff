@@ -7,6 +7,13 @@
   T700, T900 eller ljudhändelser. Råartefakterna ligger kvar endast på extern
   disk och inga speldata eller BIOS-filer har ändrats i repot.
 
+# Theron: JP raw-BIN-capture avgränsad utan portrait-consumer (2026-08-10)
+- ✅ Den hashverifierade JP Track 02-BIN:en lästes i en separat extern
+  Mednafen-körning och gav 256 riktiga sektorer samt VCE/VRAM-snapshots, men
+  0 autentiserade FIFO→RAM-originreceipts och 0 source-owned portrait-
+  consumerbindningar. JP roster/object-data förblir användbar provenance;
+  inga syntetiska portrait-ID:n eller pixlar har publicerats.
+
 # DM2: privat dynamisk CAII GAME_LOAD-transaktion (2026-08-10)
 
 - ✅ Den autentiska DOS-korpusens 80 dynamiska DB4-kandidater materialiseras
