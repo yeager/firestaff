@@ -770,6 +770,14 @@ rendering remain blocked.
   och alternativa karta samt MapOffsetX/Y. Den köar, mixar eller spelar inte
   ljud; partyposition, riktning, synlighet och timerkonsumtion är fortsatt
   separata källkrav.
+
+# DM2: korrekt spärr för varelse-dödljud (2026-08-10)
+
+- ✅ Varelsevägen använder inte längre CREATURES lokala dödsselector `0x11`
+  som ett globalt GDAT-råindex. Ljudet förblir spärrat tills CAII/GDAT:s
+  riktiga klass-trippel når GAME_LOAD-ägd SOUND9, så en orelaterad råpost
+  aldrig kan spelas av misstag.
+
 # Nexus: capture-only VDP1 mode-1-kompositör (2026-08-09)
 
 - ✅ `nexus_v1_vdp1_capture_compositor` kan nu lägga en autentiserad Saturn

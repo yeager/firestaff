@@ -397,9 +397,11 @@ int dm2_v1_creature_at(int world_x, int world_y, int map_index);
  * Source: SKULLWIN/c_creature.cpp: CREATURE_TAKE_DAMAGE */
 int dm2_v1_creature_deal_damage(int instance_id, int damage);
 
-/* dm2_v1_creature_death_check — check if creature died, trigger drop+sound.
+/* dm2_v1_creature_death_check — check if creature died and trigger a drop.
  * Called after HP drops to 0 or below. Rolls drop from 11-slot GDAT table.
- * Plays death sound (SOUND_CREATURE_DEATH=0x11) at creature position.
+ * Death audio remains unavailable until the source CAII/GDAT class triple
+ * reaches the GAME_LOAD-owned SOUND9 queue; the local selector 0x11 is not
+ * a GDAT raw sample index.
  * Source: SKULLWIN/c_creature.cpp, SKULLWIN/c_sound.cpp */
 void dm2_v1_creature_death_check(int instance_id);
 
@@ -460,8 +462,9 @@ void dm2_v1_creature_test_set_drop_slots(int creature_type,
 #endif /* FIRESTAFF_DM2_CREATURE_TESTING */
 
 /* ── Death/drop observer (Phase 5 followup, 2026-06-22) ────────────────
- * The death_check() flow plays a sound, marks the instance dead, and rolls
- * a drop entry from the 11-slot GDAT table.  Without a deterministic
+ * The death_check() flow marks the instance dead and rolls a drop entry from
+ * the 11-slot GDAT table. Death audio stays source-gated until CAII/GDAT/SND
+ * ownership is complete. Without a deterministic
  * observer the drop result is discarded, which makes "creature dies → loot
  * state" impossible to gate.  These accessors expose the most recent death
  * event so the CTest gate can assert the loot-state contract:

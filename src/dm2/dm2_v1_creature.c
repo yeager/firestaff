@@ -8,14 +8,13 @@
  *   - CCM command-dispatch via b_1a state register
  *   - AI_ATTACK_FLAGS for spell/attack type routing
  *   - 13 new creature types vs DM1 (companions, Dragoth, Vexirk, etc.)
- *   - Instance lifecycle: spawn / tick / death → drop + sound
+ *   - Instance lifecycle: spawn / tick / death → drop
  */
 
 #include "dm2_v1_creature.h"
 #include "dm2_v1_data_tables_pc34_compat.h"
 #include "dm2_v1_ccm.h"
 #include "dm2_v1_drops.h"
-#include "dm2_v1_sound.h"
 #include <string.h>
 
 #define DM2_CREATURE_DOOR_ATTR_CREATURES_CAN_SEE_THROUGH 0x0001u
@@ -828,8 +827,13 @@ void dm2_v1_creature_test_set_drop_slots(int creature_type,
 }
 #endif /* FIRESTAFF_DM2_CREATURE_TESTING */
 
-/* dm2_v1_creature_death_check — death → drop + spatial sound.
- * Source: SKULLWIN/c_creature.cpp, SKULLWIN/c_sound.cpp, SKWin.GDAT2.InternalCodes.txt */
+/* dm2_v1_creature_death_check — death → source-owned drop receipt.
+ * Source: SKULLWIN/c_creature.cpp, SKWin.GDAT2.InternalCodes.txt.
+ *
+ * c_sound.cpp does not accept a CREATURES-local selector as a raw GDAT
+ * sample index.  Death audio must therefore wait for the source CAII/GDAT
+ * class triple and its GAME_LOAD SOUND9 owner; do not turn selector 0x11
+ * into an accidental global sample request. */
 void dm2_v1_creature_death_check(int instance_id) {
     if (instance_id < 0 || instance_id >= DM2_MAX_CREATURE_INSTANCES) return;
     DM2_V1_CreatureInstance *c = &g_creature_pool[instance_id];
@@ -843,12 +847,6 @@ void dm2_v1_creature_death_check(int instance_id) {
 
     c->alive = 0;
     ++c->render_revision;
-
-    /* SOUND_CREATURE_DEATH (constant) positional at creature position.
-     * Source: SKULLWIN/c_sound.cpp death_sfx dispatch */
-    (void)dm2_v1_sound_play_positional(DM2_SOUND_CREATURE_DEATH,
-                                        c->world_x, c->world_y,
-                                        c->world_x, c->world_y);
 
     /* DM2-006: when the GDAT CREATURES drop words were imported for this
      * creature type, resolve them in source order

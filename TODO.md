@@ -347,7 +347,9 @@
   `DM2_ALLOC_CAII_TO_CREATURE`, recycler, komplett lokal-creature-state,
   `0a48`/CCM och rollback. Ingen del får publiceras eller ersättas med en fast kö. GAME_LOAD:s dynamiska
   SND-kö har full SOUND9-kapacitet; `QUEUE_NOISE_GEN1` saknar ännu komplett
-  karta-, party- och timerägarskap. Källordningen är viktig:
+  karta-, party- och timerägarskap. Varelse-död får därför inte använda
+  CREATURES lokala selector `0x11` som ett GDAT-råindex; den riktiga
+  CAII/GDAT/SOUND9-routen måste äga klass-trippeln först. Källordningen är viktig:
   `DM2_move_2fcf_0b8b` kan genom `LOAD_LOCALLEVEL_DYN` köra
   `FILL_CAII_CUR_MAP` och `CHECK_RECOMPUTE_LIGHT` före den avslutande
   `v1e0390 = 3`-skrivningen i `DM2_GAME_LOAD`. Den privata implementeringen
