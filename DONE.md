@@ -17,6 +17,15 @@
   cross-platform-matriser från att blockera den aktuella `main`-revisionens
   verifiering.
 
+# DM2: privat INIT_GAME-UI-tabellägare (2026-08-11)
+
+- ✅ `DM2__INIT_GAME` materialiserar nu sin första privata
+  `DM2_1031_0541(5)`-passage med källans `table1d3ed5`, `table1d3ba0`,
+  `table1d3d23` och `table1d3cd0` från SKProject `dm2data.cpp`.
+- ✅ Tabellen är en muterbar RAM-kopia knuten till den verkliga valda
+  championen och c_eventqueue. Realdatatestet bevisar träd 5 utan att
+  publicera party, HUD, input eller session till M11.
+
 # Theron: corrected cold-start VDC/VCE media admission (2026-08-10)
 
 - ✅ Den autentiserade externa cold-start-capturen med VRAM-FNV `4a2186a2`

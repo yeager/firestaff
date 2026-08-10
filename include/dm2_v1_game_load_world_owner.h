@@ -18,6 +18,7 @@
 #include "dm2_v1_caii_alloc_pc34_compat.h"
 #include "dm2_v1_caii_source_owner.h"
 #include "dm2_v1_eventqueue_pc34_compat.h"
+#include "dm2_v1_init_game_ui_owner.h"
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
@@ -622,6 +623,11 @@ typedef struct {
      * session owner exists. */
     DM2_V1_EventQueue event_queue;
     int16_t source_event_hero_index;
+    /* Private result of startend.cpp::DM2__INIT_GAME_38c8_03ad's first
+     * DM2_1031_0541(5) call.  It owns copies of the mutable UI tables and
+     * remains unpublished until the following LOAD_NEWMAP/CAII transaction
+     * is source-complete. */
+    DM2_V1_InitGameUiOwner init_game_ui;
     DM2_V1_TimerEntry *timer_entries;
     int16_t *timer_indices;
     DM2_V1_TimerQueue timer_queue;

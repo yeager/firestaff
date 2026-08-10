@@ -2399,6 +2399,14 @@ int dm2_v1_game_load_runtime_session_candidate_init(
     candidate.moverec = source->source_moverec;
     candidate.event_queue = source->source_event_queue;
     candidate.source_event_hero_index = source->source_event_hero_index;
+    /* startend.cpp::DM2__INIT_GAME_38c8_03ad clears its local UI globals
+     * and enters DM2_1031_0541(5) before LOAD_NEWMAP.  The owner below is a
+     * mutable copy of the real dm2data tables, not an M11 menu surrogate. */
+    if (!dm2_v1_init_game_ui_owner_init(&candidate.init_game_ui,
+                                        &candidate.party,
+                                        &candidate.event_queue)) {
+        goto fail;
+    }
     candidate.caii_rng = source->caii_rng;
     candidate.caii_rng_initialized = 1;
     candidate.source_party_map = source->source_party_map;

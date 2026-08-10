@@ -5139,6 +5139,11 @@ int main(void) {
                     profile_runtime_candidate->moverec.v1d3248_before_final_change == -1 &&
                     profile_runtime_candidate->moverec.v1d3248 ==
                         profile_runtime_candidate->current_map &&
+                    profile_runtime_candidate->init_game_ui.valid &&
+                    profile_runtime_candidate->init_game_ui.runtime.active_tree == 5u &&
+                    profile_runtime_candidate->init_game_ui.initial_tree.valid &&
+                    profile_runtime_candidate->init_game_ui.initial_tree.selected_tree == 5 &&
+                    profile_runtime_candidate->init_game_ui.source_table_hash != 0u &&
                     !profile->source_game_load_session_ready &&
                     view.world.party.championCount == 0,
                 "DM2 retains source-initialized c_move state privately without publishing a session");
