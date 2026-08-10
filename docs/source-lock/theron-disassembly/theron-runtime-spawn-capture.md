@@ -408,3 +408,59 @@ observation. The run did not produce a verified
 consumer, monster record, object consumer or `$2600` consumer. Therefore RNG,
 creature, AI, attack, damage, loot, generator, T700 and T900 publication
 remain fail-closed.
+
+## 2026-08-10 — operator-controlled transition receipt
+
+The long-running external Mednafen session was allowed to complete one
+operator-controlled startup-to-dungeon transition against the same authentic
+US Track 02, System Card and instrumented binary. Its single-session receipt
+records:
+
+```text
+mednafen_binary_md5=92ee06fdc623703dacfb133d28e8a004
+track02_md5=f23601102138f87c33025877767ebf76
+system_card_md5=ff1a674273fe3540ccef576376407d1d
+input_transactions=131072
+host_key_events=23
+cd_irq_callbacks=25
+raw_sector_spans=134
+scsi_read_commands=38
+scsi_read_sector_bindings=134
+byte_exact_fifo_ram_destinations=0
+adpcm_fifo_reads=2048
+adpcm_ram_writes=2048
+byte_exact_origin_ram_receipts=256
+authenticated_cd_ram_receipts=256
+game_main_ram_e009_dispatches=31
+main_ram_loader_tii_transfers=11
+main_ram_loader_rts=24
+main_ram_loader_call_entries=5
+main_ram_loader_entry_successor_next=4
+main_ram_e009_enters=6
+main_ram_e009_register_writes=117
+main_ram_consumer_reads=65536
+main_ram_target_reads=0
+main_ram_target_writes=0
+spawn_consumer_reads=0
+spawn_register_samples=136
+spawn_preconsumer_4644_samples=33
+spawn_helper_4667_samples=96
+spawn_helper_4667_special_branch_samples=0
+spawn_entry_b0e5_samples=0
+rng_consumer_samples=0
+rng_code_windows=0
+vdc_vram_snapshot_bytes=65536
+vce_palette_snapshot_bytes=1024
+transition=observed
+```
+
+This is the strongest current same-session transport receipt: authentic
+Track 02 sectors reached authenticated RAM-origin records, the game entered
+its `$E009` loader path, and the bounded main-RAM consumer was observed. It
+does not identify a level/object/tile owner; there is no byte-exact FIFO
+destination, target read, `$B0E5` regular-spawn entry, dynamic RNG return, or
+source-owned T700/T900 consumer. The zero values are therefore negative
+semantic evidence, not permission to substitute host-side formulas. RNG,
+creature, AI, attack, damage, loot, generator, T700 and T900 remain
+fail-closed. The raw receipt remains outside GitHub at
+`/Users/bosse/.firestaff/cache/theron/manual-capture/out/theron.transition`.

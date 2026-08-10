@@ -327,6 +327,47 @@ Tracebasen ligger utanför repot på extern-disken:
 Den äldre körningen utan autentiserade CD→RAM-receipts ska inte blandas med
 denna körning; capture-sessioner hålls separata.
 
+### Senaste operatorstyrda övergångskvitto
+
+Den externa, instrumenterade Mednafen-processen nådde därefter en observerad
+startup→dungeon-övergång i en enda session med samma autentiserade US Track 02
+och System Card. Kvittofilen ligger lokalt på extern-disk och innehåller:
+
+```text
+track02_md5=f23601102138f87c33025877767ebf76
+system_card_md5=ff1a674273fe3540ccef576376407d1d
+input_transactions=131072
+host_key_events=23
+cd_irq_callbacks=25
+raw_sector_spans=134
+scsi_read_commands=38
+scsi_read_sector_bindings=134
+byte_exact_fifo_ram_destinations=0
+byte_exact_origin_ram_receipts=256
+authenticated_cd_ram_receipts=256
+game_main_ram_e009_dispatches=31
+main_ram_consumer_reads=65536
+main_ram_target_reads=0
+main_ram_target_writes=0
+spawn_consumer_reads=0
+spawn_register_samples=136
+spawn_preconsumer_4644_samples=33
+spawn_helper_4667_samples=96
+spawn_entry_b0e5_samples=0
+rng_consumer_samples=0
+rng_code_windows=0
+vdc_vram_snapshot_bytes=65536
+vce_palette_snapshot_bytes=1024
+transition=observed
+```
+
+Detta bevisar en autentiserad CD→RAM- och main-RAM-loaderkedja, men inte en
+spelägd nivå-, objekt-, tile-, creature-, RNG-, T700- eller T900-konsument.
+`spawn_consumer_reads=0`, `main_ram_target_reads=0` och frånvaron av `$B0E5`
+är negativa bevis; de får inte ersättas med syntetiska records eller
+host-side-formler. Kvittofilen är inte speldata och ligger kvar utanför repot:
+`/Users/bosse/.firestaff/cache/theron/manual-capture/out/theron.transition`.
+
 ### Förlängt spawn-registerfönster
 
 Capture-scriptet skickar som standard
