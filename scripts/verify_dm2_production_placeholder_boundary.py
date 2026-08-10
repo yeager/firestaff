@@ -289,6 +289,21 @@ def verify(repo: Path) -> list[str]:
             "bounded DM2 DELETE_CREATURE_RECORD study is no longer excluded "
             "from the production archive")
 
+    # These two compatibility studies accept caller-owned timer/map/pool
+    # state.  SKProject c_moverec.cpp and c_tim_proc.cpp only reach those
+    # mutations through one live GAME_LOAD transaction, which Firestaff does
+    # not publish yet.  Their focused tests compile them explicitly; the
+    # broad DM2 archive must not export an alternate execution route.
+    for legacy_mutator in (
+            'dm2_v1_move_record_to_pc34_compat.c',
+            'dm2_v1_actuator_event_pc34_compat.c'):
+        source_entry = ('"${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/' +
+                        legacy_mutator + '"')
+        if source_entry not in cmake[dm2_remove_start:dm2_remove_end]:
+            errors.append(
+                "caller-owned DM2 mutation study is no longer excluded "
+                f"from the production archive: {legacy_mutator}")
+
     caii_alloc_path = repo / "src/dm2/dm2_v1_caii_alloc_pc34_compat.c"
     if not caii_alloc_path.exists():
         errors.append(f"missing {caii_alloc_path}")

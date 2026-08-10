@@ -734,6 +734,11 @@
   vägar. Återöppna aldrig den generiska klickheuristiken; ersätt den endast
   med den fullständigt ägda DM2-tabellen och dess record-/dialogue-konsument.
 
+- 🔧 DM2:s breda `DM2_MOVE_RECORD_TO`- och wall/floor-actuator-studier är nu
+  uttryckligen test-only. Återanslut dem endast genom en komplett
+  `GAME_LOAD`-sessionsägare som förenar c_map, c_tim, CAII, party, ljud och
+  rollback; inga caller-formade pooler eller fasta testköer får bli runtime.
+
 - 🔧 DM2 New Game GAME_LOAD: den isolerade File_header-/DB-poolägaren har nu
   originalets privata `DM2_LOAD_NEW_DUNGEON`-förstadium: partyantalet är
   noll, ledarhandtaget är `0xffff` och sparströmmen har ännu inte lästs.

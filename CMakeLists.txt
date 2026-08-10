@@ -6470,6 +6470,13 @@ file(GLOB DM2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v1_*.c")
 # creature handles and door fields.  It has no product caller and must remain
 # isolated until the private GAME_LOAD transaction owns the full c_map/
 # moverec/c_hero/c_tim path.
+# DM2_MOVE_RECORD_TO and the broad wall/floor actuator dispatcher are the
+# same kind of receipt study.  Their APIs take a caller-authored fixed timer
+# queue and pool/map pointers; SKProject's c_moverec.cpp / c_tim_proc.cpp
+# instead execute them only through the shared c_map, c_tim, CAII and party
+# transaction.  The retained File_header owner has dedicated, private atoms
+# for its admitted 0x01/0x04 cases.  Keep the broad helpers test-only until a
+# full GAME_LOAD session can own every mutation and rollback together.
 list(REMOVE_ITEM DM2_SOURCES
     # c_gfx_decode is physically included by dm2_v1_asset_loader.c because
     # the loader also belongs to firestaff_m10.  A separate DM2 archive
@@ -6530,6 +6537,8 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_timer_dispatch_wiring_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_delete_creature_full_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_perform_move_exec_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_move_record_to_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_actuator_event_pc34_compat.c"
     # QUERY_*_BAR_COLOR is also implemented by the source-owned champion-HUD
     # helper below, with a different receipt/signature.  This older predicate
     # study has no DM2 runtime caller; keep its focused executable isolated so

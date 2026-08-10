@@ -13000,3 +13000,12 @@ rendering remain blocked.
   till asset-cache och att start spärras utan en komplett PC-medieägare.
 - ✅ Arkivsvitens fem berörda CTest-fall passerar på extern arbetsdisk;
   macOS `/tmp` och `/private/tmp` jämförs fysiskt, inte som skilda sökvägar.
+# DM2: oägda rörelse- och aktuatormoduler spärrade i produkten (2026-08-10)
+
+- ✅ `DM2_MOVE_RECORD_TO` och den breda wall/floor-aktuatorstudien kompileras
+  inte längre in i produktens DM2-arkiv. Ingen M11-, runtime- eller
+  GAME_LOAD-väg använder dem; deras fokustester behåller den källrefererade
+  forskningen separat.
+- ✅ Produktionsgrinden verifierar nu att båda caller-formade mutationseam
+  fortsätter vara exkluderade tills en full privat GAME_LOAD-session äger
+  karta, recordpooler, timers, CAII, party och återställning atomärt.
