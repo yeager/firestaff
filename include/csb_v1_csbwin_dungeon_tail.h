@@ -102,6 +102,20 @@ typedef struct {
 typedef struct CSB_V1_CSBWinLegacyDungeonCandidate
     CSB_V1_CSBWinLegacyDungeonCandidate;
 
+/* The last non-publishing ownership boundary before a CSBWin legacy resume.
+ * It owns the private dungeon candidate and its scalar GAMEBLOCK2/timer
+ * prepare receipt together.  There is deliberately no take, publish or
+ * mutable accessor: construction and destruction are the only ownership
+ * operations exposed here.  A future live transaction must add the complete
+ * RuntimeProfile/champion/ITEM16/timer adoption step before it can relax the
+ * resume gate.
+ *
+ * Source: CSBWin SaveGame.cpp ReadGame():1707-1906 completes GAMEBLOCK2,
+ * champions, ITEM16 and timers before ReadDatabases():2512-2896 finishes
+ * the dungeon. */
+typedef struct CSB_V1_CSBWinLegacyResumeTransaction
+    CSB_V1_CSBWinLegacyResumeTransaction;
+
 /* Identity of the exact read-only tail a private candidate owns.  This is
  * deliberately provenance only: it cannot publish or transfer the decoded
  * dungeon.  `source_tail_signature` is a compact diagnostic fingerprint;
@@ -323,6 +337,29 @@ int csb_v1_csbwin_dungeon_tail_prepare_legacy_resume_file(
     CSB_V1_CSBWinLegacyResumePrepare *out_receipt);
 void csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(
     CSB_V1_CSBWinLegacyDungeonCandidate *candidate);
+
+/* Build one private, owning legacy-resume transaction from an authentic
+ * artifact.  This is a wrapper over the read-only file prepare path, but it
+ * removes the split ownership between candidate and receipt from callers.
+ * On failure `*out_transaction` is unchanged.  Success does not inspect or
+ * mutate the global dungeon context or any RuntimeProfile. */
+int csb_v1_csbwin_dungeon_tail_begin_legacy_resume_transaction_file(
+    const char *path, size_t max_size,
+    CSB_V1_CSBWinLegacyResumeTransaction **out_transaction);
+
+/* Read-only views of an owning transaction.  The returned views are valid
+ * only until discard; they cannot transfer the candidate or publish it. */
+const CSB_V1_CSBWinLegacyResumePrepare
+    *csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_prepare(
+        const CSB_V1_CSBWinLegacyResumeTransaction *transaction);
+const CSB_V1_DungeonData
+    *csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_dungeon(
+        const CSB_V1_CSBWinLegacyResumeTransaction *transaction);
+int csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_identity(
+    const CSB_V1_CSBWinLegacyResumeTransaction *transaction,
+    CSB_V1_CSBWinLegacyDungeonCandidateIdentity *out);
+void csb_v1_csbwin_dungeon_tail_discard_legacy_resume_transaction(
+    CSB_V1_CSBWinLegacyResumeTransaction *transaction);
 
 const char *csb_v1_csbwin_dungeon_tail_source_evidence(void);
 

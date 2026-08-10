@@ -13,6 +13,11 @@ struct CSB_V1_CSBWinLegacyDungeonCandidate {
     uint64_t source_tail_signature;
 };
 
+struct CSB_V1_CSBWinLegacyResumeTransaction {
+    CSB_V1_CSBWinLegacyDungeonCandidate *candidate;
+    CSB_V1_CSBWinLegacyResumePrepare prepare;
+};
+
 /* FNV-1a is solely a stable, compact diagnostic identity.  Admission always
  * uses the retained source bytes and memcmp(), so this is not used as a
  * security or ownership decision. */
@@ -834,6 +839,94 @@ void csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(
     csb_v1_dungeon_free(&candidate->dungeon);
     free(candidate->source_tail);
     free(candidate);
+}
+
+int csb_v1_csbwin_dungeon_tail_begin_legacy_resume_transaction_file(
+    const char *path, size_t max_size,
+    CSB_V1_CSBWinLegacyResumeTransaction **out_transaction)
+{
+    CSB_V1_CSBWinLegacyResumeTransaction *transaction;
+    CSB_V1_CSBWinLegacyDungeonCandidate *candidate = NULL;
+    CSB_V1_CSBWinLegacyResumePrepare prepare;
+    int rc;
+
+    if (!out_transaction) return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_ARGUMENT;
+    /* Keep the caller's slot untouched until both independently prepared
+     * source-owned halves have become one private owner. */
+    memset(&prepare, 0, sizeof(prepare));
+    rc = csb_v1_csbwin_dungeon_tail_prepare_legacy_resume_file(
+        path, max_size, &candidate, &prepare);
+    if (rc != CSB_V1_CSBWIN_DUNGEON_TAIL_OK) return rc;
+    if (!candidate || !prepare.valid || !prepare.candidate_identity.valid) {
+        csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(candidate);
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+    }
+    transaction = (CSB_V1_CSBWinLegacyResumeTransaction *)calloc(
+        1u, sizeof(*transaction));
+    if (!transaction) {
+        csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(candidate);
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_OVERFLOW;
+    }
+    /* Do not trust the copied scalar receipt alone.  Bind it again to the
+     * retained candidate before this object owns either half. */
+    if (!csb_v1_csbwin_dungeon_tail_candidate_identity(
+            candidate, &transaction->prepare.candidate_identity) ||
+        memcmp(&transaction->prepare.candidate_identity,
+               &prepare.candidate_identity,
+               sizeof(prepare.candidate_identity)) != 0) {
+        csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(candidate);
+        free(transaction);
+        return CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LAYOUT;
+    }
+    transaction->candidate = candidate;
+    transaction->prepare = prepare;
+    *out_transaction = transaction;
+    return CSB_V1_CSBWIN_DUNGEON_TAIL_OK;
+}
+
+const CSB_V1_CSBWinLegacyResumePrepare
+    *csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_prepare(
+        const CSB_V1_CSBWinLegacyResumeTransaction *transaction)
+{
+    return transaction && transaction->candidate && transaction->prepare.valid
+        ? &transaction->prepare : NULL;
+}
+
+const CSB_V1_DungeonData
+    *csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_dungeon(
+        const CSB_V1_CSBWinLegacyResumeTransaction *transaction)
+{
+    return transaction
+        ? csb_v1_csbwin_dungeon_tail_candidate_dungeon(transaction->candidate)
+        : NULL;
+}
+
+int csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_identity(
+    const CSB_V1_CSBWinLegacyResumeTransaction *transaction,
+    CSB_V1_CSBWinLegacyDungeonCandidateIdentity *out)
+{
+    CSB_V1_CSBWinLegacyDungeonCandidateIdentity identity;
+
+    if (!transaction || !out || !transaction->candidate ||
+        !transaction->prepare.valid ||
+        !csb_v1_csbwin_dungeon_tail_candidate_identity(
+            transaction->candidate, &identity) ||
+        memcmp(&identity, &transaction->prepare.candidate_identity,
+               sizeof(identity)) != 0) {
+        return 0;
+    }
+    *out = identity;
+    return 1;
+}
+
+void csb_v1_csbwin_dungeon_tail_discard_legacy_resume_transaction(
+    CSB_V1_CSBWinLegacyResumeTransaction *transaction)
+{
+    if (!transaction) return;
+    csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(
+        transaction->candidate);
+    memset(&transaction->prepare, 0, sizeof(transaction->prepare));
+    free(transaction);
 }
 
 const char *csb_v1_csbwin_dungeon_tail_source_evidence(void)

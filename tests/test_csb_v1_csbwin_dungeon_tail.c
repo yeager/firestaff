@@ -92,6 +92,7 @@ static void check_staged_real_save(void)
     CSB_V1_DungeonData rejected;
     CSB_V1_CSBWinLegacyDungeonCandidate *candidate = NULL;
     CSB_V1_CSBWinLegacyDungeonCandidate *file_candidate = NULL;
+    CSB_V1_CSBWinLegacyResumeTransaction *transaction = NULL;
     CSB_V1_CSBWinLegacyDungeonCandidateIdentity identity;
     CSB_V1_CSBWinLegacyResumePrepare resume;
     CSB_V1_CSBWinLegacyResumePrepare file_resume;
@@ -135,6 +136,23 @@ static void check_staged_real_save(void)
           csb_v1_dungeon_get_current_mutable() == current_before);
     csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(file_candidate);
     file_candidate = NULL;
+    CHECK(csb_v1_csbwin_dungeon_tail_begin_legacy_resume_transaction_file(
+              path, 0u, &transaction) == CSB_V1_CSBWIN_DUNGEON_TAIL_OK &&
+          transaction != NULL &&
+          csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_prepare(
+              transaction) != NULL &&
+          csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_prepare(
+              transaction)->valid &&
+          csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_dungeon(
+              transaction) != NULL &&
+          csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_dungeon(
+              transaction)->level_count == 11 &&
+          csb_v1_csbwin_dungeon_tail_legacy_resume_transaction_identity(
+              transaction, &identity) && identity.valid &&
+          csb_v1_dungeon_get_current() == current_before &&
+          csb_v1_dungeon_get_current_mutable() == current_before);
+    csb_v1_csbwin_dungeon_tail_discard_legacy_resume_transaction(transaction);
+    transaction = NULL;
     memset(&body, 0, sizeof(body));
     CHECK(csb_v1_csbwin_512_verify_save_body(bytes, (size_t)length, 10u, &body) ==
           CSB_V1_CSBWIN_512_OK);
@@ -279,6 +297,7 @@ static void check_staged_real_save(void)
     csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(candidate);
     free(item16_indices);
     free(bytes);
+    csb_v1_csbwin_dungeon_tail_discard_legacy_resume_transaction(transaction);
 }
 
 int main(void)
@@ -294,6 +313,8 @@ int main(void)
         (CSB_V1_CSBWinLegacyDungeonCandidate *)(uintptr_t)1u;
     CSB_V1_CSBWinLegacyDungeonCandidate *file_candidate =
         (CSB_V1_CSBWinLegacyDungeonCandidate *)(uintptr_t)1u;
+    CSB_V1_CSBWinLegacyResumeTransaction *transaction =
+        (CSB_V1_CSBWinLegacyResumeTransaction *)(uintptr_t)1u;
     CSB_V1_CSBWinLegacyDungeonCandidateIdentity identity;
     CSB_V1_CSBWinLegacyDungeonCandidateIdentity identity_before;
     CSB_V1_CSBWinLegacyResumePrepare file_receipt;
@@ -314,6 +335,11 @@ int main(void)
               (CSB_V1_CSBWinLegacyDungeonCandidate *)(uintptr_t)1u &&
           memcmp(&file_receipt, &file_receipt_before,
                  sizeof(file_receipt)) == 0);
+    CHECK(csb_v1_csbwin_dungeon_tail_begin_legacy_resume_transaction_file(
+              "missing-csbgame2.dat", 0u, &transaction) ==
+              CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_IO &&
+          transaction ==
+              (CSB_V1_CSBWinLegacyResumeTransaction *)(uintptr_t)1u);
 
     memset(tail, 0, sizeof(tail));
     put_be16(tail + 0u, 13u);
