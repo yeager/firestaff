@@ -10,6 +10,13 @@
 
 # Firestaff: diskformatering lämnas till originalspel och emulator (2026-08-10)
 
+# CI: senaste main-revisionen får företräde i verifieringskön (2026-08-11)
+
+- ✅ Verifieringsarbetsflödet använder nu en ref-bunden concurrency-grupp med
+  avbrott av ersatta körningar. Det hindrar äldre, redan integrerade
+  cross-platform-matriser från att blockera den aktuella `main`-revisionens
+  verifiering.
+
 # Theron: corrected cold-start VDC/VCE media admission (2026-08-10)
 
 - ✅ Den autentiserade externa cold-start-capturen med VRAM-FNV `4a2186a2`

@@ -7,10 +7,13 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Every verified main push needs its own cross-platform receipt. GitHub's
-# concurrency groups retain at most one queued run, even when
-# cancel-in-progress is false, so a burst of integrations could otherwise
-# prevent every pending verification matrix from ever starting.
+# Only the latest commit on a ref needs a hosted cross-platform receipt.
+# Cancelling superseded matrices prevents a burst of already-integrated main
+# pushes from exhausting the hosted runner queue before the current revision
+# can start. Pull requests remain independent by head ref.
+concurrency:
+  group: verify-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   SDL3_TAG: release-3.2.14
