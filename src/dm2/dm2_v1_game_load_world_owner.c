@@ -1718,6 +1718,7 @@ void dm2_v1_game_load_runtime_session_candidate_free(
     dm2_v1_caii_source_owner_free(&candidate->caii_source);
     free(candidate->timer_indices);
     free(candidate->timer_entries);
+    free(candidate->local_dyn_map_scan.records);
     dm2_v1_record_pool_set_free(&candidate->record_pools);
     dm2_v1_dungeon_free(&candidate->dungeon);
     memset(candidate, 0, sizeof(*candidate));
@@ -2352,6 +2353,129 @@ static uint32_t dm2_v1_game_load_local_dyn_hash(const DM2_V1_DynLoadState *queue
     return hash;
 }
 
+/* c_loadlevel.cpp::DM2_LOAD_LOCALLEVEL_DYN (518-626) first walks the
+ * current map x-major/y-minor and follows every marked-square chain. Keep a
+ * lossless trace over the candidate's *mutable* RecordPoolSet so the later
+ * text/actuator/hero selector branches cannot accidentally be rebuilt from
+ * pristine DUNGEON.DAT. This is only the common traversal predecessor: it
+ * deliberately does not apply the record-specific branches or call DYN4. */
+static int dm2_v1_game_load_local_dyn_map_scan_init(
+    DM2_V1_GameLoadLocalDynMapScan *out,
+    const DM2_V1_GameLoadRuntimeSessionCandidate *candidate)
+{
+    DM2_V1_FileHeaderRuntimeMapReceipt map_receipt;
+    DM2_V1_GameLoadLocalDynMapScan scan;
+    uint32_t hash = 0x4c44534eu; /* "LDSN" */
+    int x;
+    int y;
+
+    if (!out || !candidate || !candidate->dungeon.raw_data ||
+        !candidate->record_pools.valid || candidate->current_map < 0 ||
+        candidate->current_map >= candidate->dungeon.level_count) {
+        return 0;
+    }
+    memset(out, 0, sizeof(*out));
+    memset(&map_receipt, 0, sizeof(map_receipt));
+    if (!dm2_v1_dungeon_validate_file_header_runtime_map(
+            &candidate->dungeon, candidate->current_map, &map_receipt) ||
+        !map_receipt.committed || map_receipt.width <= 0 ||
+        map_receipt.height <= 0 || map_receipt.record_count <= 0 ||
+        map_receipt.record_count > UINT16_MAX) {
+        return 0;
+    }
+    memset(&scan, 0, sizeof(scan));
+    scan.map = (int16_t)candidate->current_map;
+    scan.width = (uint16_t)map_receipt.width;
+    scan.height = (uint16_t)map_receipt.height;
+    scan.record_capacity = (uint16_t)map_receipt.record_count;
+    scan.records = calloc(scan.record_capacity, sizeof(*scan.records));
+    if (!scan.records) goto fail;
+    hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)scan.map);
+    hash = dm2_v1_game_load_owner_hash_step(hash, scan.width);
+    hash = dm2_v1_game_load_owner_hash_step(hash, scan.height);
+    for (x = 0; x < map_receipt.width; ++x) {
+        for (y = 0; y < map_receipt.height; ++y) {
+            int raw = dm2_v1_dungeon_get_tile_raw(&candidate->dungeon,
+                                                   candidate->current_map,
+                                                   x, y);
+            int16_t link;
+
+            if (raw < 0) goto fail;
+            hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)x);
+            hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)y);
+            hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)raw);
+            if ((raw & 0x10) == 0) continue;
+            ++scan.marked_tile_count;
+            link = (int16_t)dm2_v1_dungeon_get_first_thing(
+                &candidate->dungeon, candidate->current_map, x, y);
+            if (link == DM2_V1_RECORD_HANDLE_NULL) goto fail;
+            hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)link);
+            if (link == DM2_V1_RECORD_HANDLE_END) continue;
+            ++scan.root_count;
+            while (link != DM2_V1_RECORD_HANDLE_END) {
+                DM2_V1_GameLoadLocalDynRecordVisit *visit;
+                const DM2_V1_RecordPool *pool;
+                const uint8_t *record;
+                int16_t next;
+                int type;
+                int byte;
+                uint32_t record_hash = 0x52454344u; /* "RECD" */
+
+                if (link == DM2_V1_RECORD_HANDLE_NULL ||
+                    scan.record_count >= scan.record_capacity ||
+                    (type = dm2_v1_record_handle_pool(link)) < 0 ||
+                    type >= DM2_V1_RECORD_POOL_COUNT ||
+                    !(record = dm2_v1_record_pool_address(
+                        &candidate->record_pools, link))) {
+                    goto fail;
+                }
+                pool = &candidate->record_pools.pools[type];
+                if (pool->record_size < 2 || pool->record_size > UINT8_MAX ||
+                    !dm2_v1_record_pool_next_link(&candidate->record_pools,
+                                                   link, &next)) {
+                    goto fail;
+                }
+                visit = &scan.records[scan.record_count++];
+                visit->x = (int16_t)x;
+                visit->y = (int16_t)y;
+                visit->object_id = (uint16_t)link;
+                visit->next_object_id = (uint16_t)next;
+                visit->word2 = (uint16_t)record[2] |
+                               ((uint16_t)record[3] << 8);
+                visit->type = (uint8_t)type;
+                visit->record_size = (uint8_t)pool->record_size;
+                for (byte = 0; byte < pool->record_size; ++byte) {
+                    record_hash = dm2_v1_game_load_owner_hash_step(
+                        record_hash, record[byte]);
+                }
+                visit->record_hash = record_hash;
+                ++scan.type_count[type];
+                hash = dm2_v1_game_load_owner_hash_step(hash,
+                                                         visit->object_id);
+                hash = dm2_v1_game_load_owner_hash_step(hash,
+                                                         visit->next_object_id);
+                hash = dm2_v1_game_load_owner_hash_step(hash,
+                                                         visit->word2);
+                hash = dm2_v1_game_load_owner_hash_step(hash,
+                                                         visit->type);
+                hash = dm2_v1_game_load_owner_hash_step(hash, record_hash);
+                link = next;
+            }
+        }
+    }
+    if (scan.record_count != (uint16_t)map_receipt.record_count ||
+        scan.root_count == 0u || scan.marked_tile_count == 0u || hash == 0u) {
+        goto fail;
+    }
+    scan.source_trace_hash = hash;
+    scan.valid = 1;
+    *out = scan;
+    return 1;
+fail:
+    free(scan.records);
+    return 0;
+}
+
 static int dm2_v1_game_load_local_dyn_prelude_init(
     DM2_V1_GameLoadLocalDynPrelude *out,
     const DM2_V1_GameLoadRuntimeSessionCandidate *candidate)
@@ -2574,6 +2698,8 @@ int dm2_v1_game_load_runtime_session_candidate_init(
      * regenerating a graphics set from host defaults. */
     candidate.local_level_graphics = source->preselection_local_graphics;
     if (!dm2_v1_game_load_local_dyn_prelude_init(&candidate.local_dyn_prelude,
+                                                  &candidate) ||
+        !dm2_v1_game_load_local_dyn_map_scan_init(&candidate.local_dyn_map_scan,
                                                   &candidate)) goto fail;
     hash = dm2_v1_game_load_owner_hash_step(hash, candidate.source_transaction_hash);
     hash = dm2_v1_game_load_owner_hash_step(hash,

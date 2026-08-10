@@ -5216,9 +5216,55 @@ int main(void) {
                     profile_runtime_candidate->local_dyn_prelude.queue.entries[33].sub1 == 0x02u &&
                     profile_runtime_candidate->local_dyn_prelude.queue.entries[33].sub2 == 0xffu &&
                     profile_runtime_candidate->local_dyn_prelude.source_resource_hash != 0u &&
+                    profile_runtime_candidate->local_dyn_map_scan.valid &&
+                    profile_runtime_candidate->local_dyn_map_scan.map ==
+                        profile_runtime_candidate->current_map &&
+                    profile_runtime_candidate->local_dyn_map_scan.width ==
+                        (uint16_t)profile_new_game_owner->preselection_entrance_map.width &&
+                    profile_runtime_candidate->local_dyn_map_scan.height ==
+                        (uint16_t)profile_new_game_owner->preselection_entrance_map.height &&
+                    profile_runtime_candidate->local_dyn_map_scan.record_count ==
+                        (uint16_t)profile_new_game_owner->preselection_entrance_map.record_count &&
+                    profile_runtime_candidate->local_dyn_map_scan.record_capacity ==
+                        profile_runtime_candidate->local_dyn_map_scan.record_count &&
+                    profile_runtime_candidate->local_dyn_map_scan.marked_tile_count > 0u &&
+                    profile_runtime_candidate->local_dyn_map_scan.root_count > 0u &&
+                    profile_runtime_candidate->local_dyn_map_scan.records != NULL &&
+                    profile_runtime_candidate->local_dyn_map_scan.source_trace_hash != 0u &&
                     !profile->source_game_load_session_ready &&
                     view.world.party.championCount == 0,
                 "DM2 retains source-initialized c_move state privately without publishing a session");
+        if (profile_runtime_candidate->local_dyn_map_scan.valid) {
+            const DM2_V1_GameLoadLocalDynMapScan *scan =
+                &profile_runtime_candidate->local_dyn_map_scan;
+            uint32_t trace_type_total = 0u;
+            int trace_ok = 1;
+
+            for (uint16_t type = 0u; type < DM2_V1_RECORD_POOL_COUNT; ++type)
+                trace_type_total += scan->type_count[type];
+            for (uint16_t visit_index = 0u;
+                 visit_index < scan->record_count && trace_ok; ++visit_index) {
+                const DM2_V1_GameLoadLocalDynRecordVisit *visit =
+                    &scan->records[visit_index];
+                const uint8_t *record = dm2_v1_record_pool_address(
+                    &profile_runtime_candidate->record_pools,
+                    (int16_t)visit->object_id);
+                int16_t next = DM2_V1_RECORD_HANDLE_NULL;
+
+                trace_ok = visit->type < DM2_V1_RECORD_POOL_COUNT &&
+                    visit->x >= 0 && visit->x < (int16_t)scan->width &&
+                    visit->y >= 0 && visit->y < (int16_t)scan->height &&
+                    record != NULL && visit->record_size >= 2u &&
+                    visit->word2 == ((uint16_t)record[2] |
+                        ((uint16_t)record[3] << 8)) &&
+                    dm2_v1_record_pool_next_link(
+                        &profile_runtime_candidate->record_pools,
+                        (int16_t)visit->object_id, &next) &&
+                    visit->next_object_id == (uint16_t)next;
+            }
+            expect_true(trace_ok && trace_type_total == scan->record_count,
+                "DM2 LOAD_LOCALLEVEL_DYN map scan retains every ordered mutable record-pool visit");
+        }
     }
     memset(&runtime_session_candidate, 0, sizeof(runtime_session_candidate));
     runtime_candidate_source_hash_before = profile_new_game_owner &&

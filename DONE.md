@@ -59,6 +59,17 @@
 - ✅ De programladdade `v1d338c`- och `v1d39bc`-actiontabellerna är också
   kopierade från källans exakta data innan INIT_GAME-trädet väljs.
 
+# DM2: privat LOAD_LOCALLEVEL-DYN-kartscan (2026-08-11)
+
+- ✅ GAME_LOAD-kandidaten behåller nu hela den aktuella kartans x/y-ordnade
+  marked-square- och GenericRecord-traversering från `DM2_LOAD_LOCALLEVEL_DYN`.
+  Varje besök pekar på samma muterbara `RecordPoolSet`-ObjectID som
+  kandidatens fortsatta GAME_LOAD-transaction använder.
+- ✅ Spåret använder aldrig en nytolkning av rå `DUNGEON.DAT`: recordord,
+  `w2`, nästa länk och recordbytes kommer från den klonade poolen. Realdatatestet
+  bevisar alla besök och länkar mot den verkliga DOS-ingångskartan utan
+  session-, DYN4-, ljus- eller renderpublicering.
+
 # DM2: korrekt LOAD_LOCALLEVEL-flaggresurs (2026-08-11)
 
 - ✅ `DM2_2676_008f` behåller nu resursens `sub1` och OR:ar sin källflagga i

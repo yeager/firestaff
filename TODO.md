@@ -598,10 +598,11 @@
   LOAD_LOCALLEVEL-hjälparen; den större ägaren måste fortfarande köa hela
   tile-/record- och actuatorprefixet innan DYN4 får anropas.
   Den privata GAME_LOAD-kandidaten behåller nu också den verkliga fasta
-  34-posters-prefixkön från `DM2_LOAD_LOCALLEVEL_DYN`, med källans aktuella
-  kartselector och musiktyp. Den stannar medvetet före den första tile-/
-  recordtraverseringen; den markerar varken DYN4, väder, ljus eller en
-  spelbar lokalnivå som färdig.
+  34-posters-prefixkön och den kompletta x/y-ordnade tile-/recordtraverseringen
+  från `DM2_LOAD_LOCALLEVEL_DYN`, med källans aktuella kartselector och
+  musiktyp. Nästa steg är de recordspecifika tempytorna/selektorerna och
+  därefter DYN4; den markerar ännu inte DYN4, väder, ljus eller en spelbar
+  lokalnivå som färdig.
   Kandidaten äger dessutom `LOAD_LOCALLEVEL_GRAPHICS_TABLE`: vägg-, golv-
   och dörrornamentlistorna kommer från samma File_header-map som dess
   c_map-kvitto. De får inte användas för att rita eller ersätta den saknade

@@ -618,6 +618,40 @@ typedef struct {
     uint32_t source_resource_hash;
 } DM2_V1_GameLoadLocalDynPrelude;
 
+/* One ordered GenericRecord visit made by LOAD_LOCALLEVEL_DYN's map scan.
+ * `object_id` remains an ObjectID into the candidate's mutable RecordPoolSet;
+ * no record is copied, normalised or reallocated. Source: c_loadlevel.cpp
+ * (518-626), c_map.cpp::GET_TILE_RECORD_LINK, c_record.cpp::
+ * DM2_GET_NEXT_RECORD_LINK. */
+typedef struct {
+    int16_t x;
+    int16_t y;
+    uint16_t object_id;
+    uint16_t next_object_id;
+    uint16_t word2;
+    uint8_t type;
+    uint8_t record_size;
+    uint32_t record_hash;
+} DM2_V1_GameLoadLocalDynRecordVisit;
+
+/* Complete source-order map input after LOAD_LOCALLEVEL_DYN's fixed prefix
+ * and before its record-specific selector/temporary-array branches. This
+ * owns only facts already present in the candidate File_header/RecordPoolSet:
+ * DYN4, GDAT, weather, light and any gameplay state remain pending. */
+typedef struct {
+    int valid;
+    int16_t map;
+    uint16_t width;
+    uint16_t height;
+    uint16_t marked_tile_count;
+    uint16_t root_count;
+    uint16_t record_count;
+    uint16_t record_capacity;
+    uint16_t type_count[DM2_V1_RECORD_POOL_COUNT];
+    DM2_V1_GameLoadLocalDynRecordVisit *records;
+    uint32_t source_trace_hash;
+} DM2_V1_GameLoadLocalDynMapScan;
+
 /* A private, all-RAM candidate for a complete mutable DM2_GAME_LOAD state.
  * It is a transaction staging area, not a live game: no field is installed
  * in M11, the process-global runtime, audio backend or input dispatcher.
@@ -662,6 +696,7 @@ typedef struct {
      * owns DYN4 and the post-load consumers. */
     DM2_V1_GameLoadLocalLevelGraphicsReceipt local_level_graphics;
     DM2_V1_GameLoadLocalDynPrelude local_dyn_prelude;
+    DM2_V1_GameLoadLocalDynMapScan local_dyn_map_scan;
     DM2_V1_TimerEntry *timer_entries;
     int16_t *timer_indices;
     DM2_V1_TimerQueue timer_queue;
