@@ -2,6 +2,12 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-10: VDP2 NBG1 tilemap capture har korrigerad registerordning för
+legacy big-endian `TVMD=0x0080` och native little-endian witness. Detta stänger
+en decoder-lucka, men öppnar inte meny/HUD/viewport-produktion: source-map,
+FONT256-ägare, textkodmappning och layer-komposition kräver fortsatt
+byteexakt Saturn-bevis.
+
 ## SLEV/SAL/SDDRVS runtime corridor (2026-08-10)
 
 2026-08-10: En ny samma-session-capture på extern disk

@@ -18,7 +18,11 @@ static uint16_t read_register16(const uint8_t *registers, size_t offset)
     uint16_t little = read_le16(registers);
 
     /* Real captures use Saturn's TVMD display-enable bit 0x8000. Keep the
-     * older 0x0080 fixture witness as a compatibility serialization. */
+     * older 0x0080 fixture witness as a compatibility serialization. A
+     * big-endian 0x0080 TVMD must stay big-endian; otherwise the little-endian
+     * probe below reverses every subsequent VDP2 register. */
+    if (big == 0x0080U)
+        return read_be16(registers + offset);
     if ((little & 0x8000U) != 0U && (big & 0x8000U) == 0U)
         return read_le16(registers + offset);
     if (big != 0x0080U && little == 0x0080U)

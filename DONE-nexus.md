@@ -2,6 +2,17 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 - Nexus VDP2 tilemap register-order correction
+
+- VDP2 NBG1-tilemap capture now preserves big-endian `TVMD=0x0080` register
+  envelopes instead of routing them through the little-endian probe.
+- Regression coverage now exercises both legacy big-endian and native
+  little-endian register serializations. The change affects only authenticated
+  capture decoding; it does not open an unverified menu or production route.
+- Verification: `test_nexus_v1_vdp2_tilemap_capture_compositor`,
+  `test_nexus_v1_vdp2_runtime_tilemap`, `test_nexus_v1_vdp2_capture_compositor`,
+  and `test_nexus_v1_vdp12_capture_composition` PASS.
+
 ## 2026-08-10 - Nexus same-session VDP1/VDP2 + SCSP capture pipeline
 
 - Mednafen-byggscriptet applicerar nu SCSP main-/sound-CPU-spårningen och
