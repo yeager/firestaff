@@ -37,6 +37,17 @@
   `test_dm2_v1_m11_startup_profile_gate`; ingen rörelse, timerdispatch,
   HUD eller session publiceras av ändringen.
 
+# DM2: source-owned New Game item weight (2026-08-10)
+
+- ✅ New Game räknar nu `DM2_QUERY_ITEM_WEIGHT` direkt från autentiska
+  c_record-pooler och hashadmitterad GDAT. DB5–DB10:s laddningar samt
+  DB9-containrarnas riktiga w2-kedjor, moneyboxregler och avrundning följer
+  `c_item.cpp`; inget separat itemträd eller ersättningsdata skapas.
+- ✅ Den verkliga DOS-startpartyn och en separat verifierad DB9-kedja provas
+  i `test_dm2_v1_m11_startup_profile_gate`. `test_dm2_v1_item_ops` och
+  produktionsgrinden passerar också. Viktfrågan är fortfarande privat och
+  öppnar inte inventory, rörelse, HUD eller en spelbar GAME_LOAD-session.
+
 # Theron: held keyboard input follows Theron cadence (2026-08-10)
 
 - ✅ Hållna WASD- och piltangenter använder Therons egen spel-tick i stället

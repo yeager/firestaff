@@ -282,6 +282,212 @@ static uint16_t dm2_v1_sksave_item_bonus_query_dbspec(
     return value;
 }
 
+/* c_item.cpp::DM2_QUERY_ITEM_VALUE follows DB9::w2 directly through the
+ * source record graph.  Keep that traversal beside the existing source
+ * classifier: a separate host item tree would lose the ownership link to
+ * c_record/GDAT and could silently invent container contents. */
+#define DM2_V1_SOURCE_ITEM_WEIGHT_MAX_DEPTH 32u
+
+static uint8_t *dm2_v1_source_item_weight_record_address(
+    void *ctx, uint16_t record_word)
+{
+    DM2_V1_SksaveItemBonusContext *context =
+        (DM2_V1_SksaveItemBonusContext *)ctx;
+
+    return context && context->pools
+        ? (uint8_t *)dm2_v1_record_pool_address(context->pools,
+                                                 (int16_t)record_word)
+        : NULL;
+}
+
+static int dm2_v1_source_item_weight_add_charge(
+    DM2_V1_SksaveItemBonusContext *context, uint16_t record_word,
+    uint16_t *out_charge)
+{
+    DM2_V1_ChargeCallbacks callbacks;
+    int16_t charge;
+
+    if (!context || !out_charge) return 0;
+    memset(&callbacks, 0, sizeof(callbacks));
+    callbacks.get_record_address = dm2_v1_source_item_weight_record_address;
+    charge = dm2_v1_add_item_charge(record_word, 0, &callbacks, context);
+    if (charge < 0 || context->invalid) return 0;
+    *out_charge = (uint16_t)charge;
+    return 1;
+}
+
+static int dm2_v1_source_item_weight_value(
+    DM2_V1_SksaveItemBonusContext *context, uint16_t record_word,
+    unsigned depth, DM2_V1_SourceItemWeightReceipt *receipt,
+    int32_t *out_weight)
+{
+    const uint8_t *record;
+    uint8_t cls1 = 0xffu;
+    uint8_t cls2 = 0xffu;
+    uint16_t base_weight;
+    uint16_t charge_multiplier;
+    int32_t value;
+    int db_type;
+
+    if (!context || !receipt || !out_weight ||
+        record_word == OBJECT_NULL_WORD || record_word == OBJECT_END_WORD) {
+        return 0;
+    }
+    if (depth >= DM2_V1_SOURCE_ITEM_WEIGHT_MAX_DEPTH) {
+        receipt->blocked_recursion_limit = 1;
+        return 0;
+    }
+    if (!dm2_v1_sksave_item_bonus_classify(context, record_word,
+                                            &cls1, &cls2) ||
+        !(record = dm2_v1_record_pool_address(context->pools,
+                                               (int16_t)record_word))) {
+        receipt->blocked_record_owner = 1;
+        return 0;
+    }
+    db_type = dm2_v1_record_handle_pool((int16_t)record_word);
+    if (db_type < 5 || db_type > 10) {
+        receipt->blocked_record_owner = 1;
+        return 0;
+    }
+    base_weight = dm2_v1_sksave_item_bonus_query_dbspec(
+        context, record_word, 1);
+    value = (int32_t)base_weight;
+    receipt->source_hash = dm2_v1_sksave_item_bonus_hash_word(
+        receipt->source_hash, record_word);
+    receipt->source_hash = dm2_v1_sksave_item_bonus_hash_word(
+        receipt->source_hash, (uint16_t)(record[0] | ((uint16_t)record[1] << 8)));
+    receipt->source_hash = dm2_v1_sksave_item_bonus_hash_word(
+        receipt->source_hash, (uint16_t)(record[2] | ((uint16_t)record[3] << 8)));
+    receipt->source_hash = dm2_v1_sksave_item_bonus_hash_word(
+        receipt->source_hash, base_weight);
+    ++receipt->visited_object_count;
+
+    /* c_item.cpp:373-383: only a nonzero dtWordValue(0x34) makes the
+     * current source charge part of an item's weight. */
+    charge_multiplier = dm2_v1_sksave_item_bonus_query_dbspec(
+        context, record_word, 0x34);
+    if (charge_multiplier != 0u) {
+        uint16_t charge;
+        if (!dm2_v1_source_item_weight_add_charge(context, record_word,
+                                                   &charge)) {
+            receipt->blocked_record_owner = 1;
+            return 0;
+        }
+        value += (int32_t)charge * (int32_t)charge_multiplier;
+        receipt->source_hash = dm2_v1_sksave_item_bonus_hash_word(
+            receipt->source_hash, charge_multiplier);
+        receipt->source_hash = dm2_v1_sksave_item_bonus_hash_word(
+            receipt->source_hash, charge);
+    }
+
+    if (db_type == 9 && (record[4] & 0x06u) == 0u) {
+        uint16_t child = (uint16_t)(record[2] | ((uint16_t)record[3] << 8));
+        uint16_t moneybox_marker = 0xffffu;
+        int is_moneybox = dm2_v1_query_gdat_entry_data_index(
+            context->loader, 0x14, cls2, 5, 0x40, &moneybox_marker) &&
+            moneybox_marker != 0xffffu;
+        int32_t moneybox_weight = 0;
+        unsigned chain_guard = 0u;
+
+        while (child != OBJECT_END_WORD) {
+            int child_type;
+            int16_t next;
+
+            if (child == OBJECT_NULL_WORD || ++chain_guard >
+                DM2_V1_SOURCE_ITEM_WEIGHT_MAX_DEPTH ||
+                !dm2_v1_record_pool_address(context->pools, (int16_t)child) ||
+                !dm2_v1_record_pool_next_link(context->pools,
+                                              (int16_t)child, &next)) {
+                receipt->blocked_chain = 1;
+                return 0;
+            }
+            child_type = dm2_v1_record_handle_pool((int16_t)child);
+            ++receipt->contained_object_count;
+            if (is_moneybox && child_type == 10) {
+                uint16_t child_weight;
+                uint16_t child_charge;
+
+                if (!dm2_v1_sksave_item_bonus_classify(
+                        context, child, NULL, NULL)) {
+                    receipt->blocked_record_owner = 1;
+                    return 0;
+                }
+                child_weight = dm2_v1_sksave_item_bonus_query_dbspec(
+                    context, child, 1);
+                if (!dm2_v1_source_item_weight_add_charge(
+                        context, child, &child_charge)) {
+                    receipt->blocked_record_owner = 1;
+                    return 0;
+                }
+                moneybox_weight += (int32_t)child_weight *
+                                   (int32_t)(child_charge + 1u);
+                receipt->source_hash = dm2_v1_sksave_item_bonus_hash_word(
+                    receipt->source_hash, child);
+                receipt->source_hash = dm2_v1_sksave_item_bonus_hash_word(
+                    receipt->source_hash, child_weight);
+                receipt->source_hash = dm2_v1_sksave_item_bonus_hash_word(
+                    receipt->source_hash, child_charge);
+                ++receipt->visited_object_count;
+                ++receipt->moneybox_currency_count;
+            } else {
+                int32_t child_value;
+
+                if (!dm2_v1_source_item_weight_value(
+                        context, child, depth + 1u, receipt, &child_value)) {
+                    return 0;
+                }
+                value += child_value;
+            }
+            child = (uint16_t)next;
+        }
+        if (is_moneybox) value += (moneybox_weight + 4) / 5;
+    }
+    if (context->invalid) {
+        receipt->blocked_record_owner = 1;
+        return 0;
+    }
+    *out_weight = value;
+    return 1;
+}
+
+int dm2_v1_query_source_item_weight(
+    uint16_t record_word, const DM2_V1_RecordPoolSet *pools,
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_SourceItemWeightReceipt *out_receipt)
+{
+    DM2_V1_SourceItemWeightReceipt receipt;
+    DM2_V1_SksaveItemBonusContext context;
+    int32_t weight;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&context, 0, sizeof(context));
+    receipt.root_object_id = record_word;
+    receipt.source_hash = 2166136261u;
+    if (!out_receipt || !pools || !pools->valid || !loader || !loader->loaded) {
+        receipt.blocked = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (record_word == OBJECT_NULL_WORD) {
+        receipt.valid = 1;
+        *out_receipt = receipt;
+        return 1;
+    }
+    context.pools = pools;
+    context.loader = loader;
+    if (!dm2_v1_source_item_weight_value(&context, record_word, 0u,
+                                         &receipt, &weight)) {
+        receipt.blocked = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.final_weight = weight;
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
 static int32_t dm2_v1_sksave_item_bonus_fit(void *ctx,
                                              uint16_t record_word,
                                              int16_t slot)
@@ -421,6 +627,7 @@ int dm2_v1_new_game_apply_source_item_bonuses(
             DM2_V1_ProcessItemBonusCallbacks callbacks;
             DM2_V1_ProcessItemBonusInput input;
             DM2_V1_ProcessItemBonusReceipt bonus;
+            DM2_V1_SourceItemWeightReceipt weight_receipt;
             const uint16_t item = (uint16_t)hero->item[slot];
             receipt.source_hash = dm2_v1_sksave_item_bonus_hash_word(
                 receipt.source_hash, item);
@@ -456,8 +663,17 @@ int dm2_v1_new_game_apply_source_item_bonuses(
                 return 0;
             }
             dm2_v1_new_game_apply_item_bonus_receipt(hero, &bonus);
-            total_weight += (int16_t)dm2_v1_sksave_item_bonus_query_dbspec(
-                &context, item, 1);
+            if (!dm2_v1_query_source_item_weight(item, pools, loader,
+                                                 &weight_receipt) ||
+                !weight_receipt.valid || weight_receipt.blocked) {
+                receipt.blocked = 1;
+                receipt.failed_hero_index = (int16_t)hero_index;
+                receipt.failed_item_slot = (int16_t)slot;
+                receipt.failed_record_word = item;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            total_weight += weight_receipt.final_weight;
             ++receipt.processed_item_roots;
         }
         hero->weight = (int16_t)total_weight;

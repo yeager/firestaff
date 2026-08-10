@@ -96,6 +96,31 @@ int16_t dm2_v1_query_item_weight(
     uint16_t record_word,
     const DM2_V1_ItemValueCallbacks *cb, void *ctx);
 
+/* Source-owned DM2_QUERY_ITEM_WEIGHT over authenticated c_record pools and
+ * GDAT. Unlike the callback shim above, this follows a DB9 container's real
+ * w2 possession chain and applies the original charge/moneybox rules. It
+ * owns no alternate item model and never manufactures a missing record or
+ * GDAT value. Source: SKULLWIN/c_item.cpp::DM2_QUERY_ITEM_VALUE (360-498),
+ * c_querydb.cpp::DM2_IS_CONTAINER_MONEYBOX (820-845). */
+typedef struct {
+    int valid;
+    int blocked;
+    int blocked_record_owner;
+    int blocked_chain;
+    int blocked_recursion_limit;
+    uint16_t root_object_id;
+    uint16_t visited_object_count;
+    uint16_t contained_object_count;
+    uint16_t moneybox_currency_count;
+    int32_t final_weight;
+    uint32_t source_hash;
+} DM2_V1_SourceItemWeightReceipt;
+
+int dm2_v1_query_source_item_weight(
+    uint16_t record_word, const DM2_V1_RecordPoolSet *pools,
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_SourceItemWeightReceipt *out_receipt);
+
 /* ---- DM2_GET_ITEM_NAME (c_item.cpp:502) ----
  * Get the name of an item by querying cls1/cls2 and GDAT. */
 typedef struct {

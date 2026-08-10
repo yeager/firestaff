@@ -21,6 +21,7 @@
 #include "dm2_v1_creature_something_pc34_compat.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_game_load_world_owner.h"
+#include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_session_fixture.h"
@@ -88,6 +89,77 @@ static uint32_t dm2_test_fnv1a(const uint8_t *bytes, size_t byte_count) {
 static uint16_t dm2_test_read_le16(const uint8_t *bytes)
 {
     return (uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8);
+}
+
+/* c_hero.cpp::calc_player_weight must consume the same authenticated item
+ * graph as New Game, including the recursive DB9 branch in c_item.cpp. The
+ * selected DOS party provides the direct roots; a real DB9 possession chain
+ * from the retained File_header pool covers the non-flat branch without a
+ * fabricated item fixture. */
+static int dm2_test_source_item_weights_match_party(
+    const DM2_V1_GameLoadWorldOwner *owner)
+{
+    int hero_index;
+    int saw_root = 0;
+    int saw_real_container_chain = 0;
+
+    if (!owner || !owner->record_pools.valid || !owner->asset_loader ||
+        !owner->asset_loader->loaded ||
+        owner->selected_party.heros_in_party <= 0) {
+        return 0;
+    }
+    for (hero_index = 0;
+         hero_index < owner->selected_party.heros_in_party;
+         ++hero_index) {
+        int16_t total_weight = 0;
+        int slot;
+
+        for (slot = 0; slot < DM2_NUM_ITEMS; ++slot) {
+            uint16_t item = (uint16_t)owner->selected_party.hero[hero_index]
+                .item[slot];
+            DM2_V1_SourceItemWeightReceipt receipt;
+
+            if (item == 0xffffu) continue;
+            if (!dm2_v1_query_source_item_weight(item, &owner->record_pools,
+                                                 owner->asset_loader, &receipt) ||
+                !receipt.valid || receipt.blocked ||
+                receipt.root_object_id != item ||
+                receipt.visited_object_count == 0u ||
+                receipt.source_hash == 0u) {
+                return 0;
+            }
+            total_weight = (int16_t)(total_weight +
+                                     (int16_t)receipt.final_weight);
+            saw_root = 1;
+        }
+        if (total_weight != owner->selected_party.hero[hero_index].weight ||
+            (owner->selected_party.hero[hero_index].heroflag & 0x1000) == 0) {
+            return 0;
+        }
+    }
+    for (int index = 0;
+         index < owner->record_pools.pools[9].record_count;
+         ++index) {
+        const uint16_t object_id = (uint16_t)(0x2400u | (uint16_t)index);
+        const uint8_t *record = dm2_v1_record_pool_address(
+            &owner->record_pools, (int16_t)object_id);
+        DM2_V1_SourceItemWeightReceipt receipt;
+
+        if (!record || (record[4] & 0x06u) != 0u ||
+            dm2_test_read_le16(record + 2) == 0xfffeu) {
+            continue;
+        }
+        if (!dm2_v1_query_source_item_weight(object_id, &owner->record_pools,
+                                             owner->asset_loader, &receipt) ||
+            !receipt.valid || receipt.blocked ||
+            receipt.contained_object_count == 0u ||
+            receipt.visited_object_count < 2u || receipt.source_hash == 0u) {
+            return 0;
+        }
+        saw_real_container_chain = 1;
+        break;
+    }
+    return saw_root && saw_real_container_chain;
 }
 
 /* The supported DOS member is hash-admitted before this test reaches M11.
@@ -3536,6 +3608,8 @@ int main(void) {
                     !profile->source_game_load_session_ready &&
                     dm2_v1_runtime_get_tick_count() == 0,
                 "M11 retains the source mirror-click order, leader, hero count and possessions without publishing a session");
+    expect_true(dm2_test_source_item_weights_match_party(&new_game_world_owner),
+                "DM2 New Game derives party and container weight only from retained source records and GDAT");
     expect_true(profile &&
                     !dm2_v1_game_load_world_owner_materialize_champion_selection(
                         &new_game_world_owner),

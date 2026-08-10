@@ -473,6 +473,12 @@
   Den privata kandidaten har nu en exakt läsande `c_moverec`-census över
   sina muterbara recordpooler; använd den som admissionsunderlag, aldrig som
   en ersättning för den saknade dispatchen.
+  New Games privata `c_party` räknar nu vikt från samma källägda DB5–DB10-
+  poster och GDAT som itembonusarna, inklusive laddningar samt DB9-
+  containrars verkliga innehålls- och moneyboxkedjor. Det räcker inte för
+  inventoryinteraktion eller rörelse: handcontainer, `curactmode`,
+  `DM2_CALC_PLAYER_WALK_DELAY` och hela moverec-/timertransaktionen måste
+  fortfarande publiceras tillsammans.
 
 - 🔧 Theron source-bound spawn table: US Track 02 pointer-/regular-spawnrecords
   dekodas nu från den autentiserade råa MODE1/2352-BINen efter exakt MD5- och
