@@ -1,3 +1,15 @@
+# Nexus/launcher: fullständiga namn i skanningsstatus och same-session-ljudkorridor (2026-08-10)
+
+- ✅ Startmenyns skanningsstatus använder nu den lokaliserade fullnamnsvägen
+  för Dungeon Master, Chaos Strikes Back, Dungeon Master II, Dungeon Master
+  Nexus och Theron's Quest. Regressionen avvisar interna ID:n som `dm1`,
+  `csb`, `dm2`, `nexus` och `theron`.
+- ✅ `analyze_nexus_slev_sal_runtime_corridor.py` accepterar nu den nya
+  `session=...`-metadata som Mednafen-produceraren skriver och kräver att
+  main-SH-2- och SCSP-tracen har identisk session. Den autentiska
+  `launcher-v2-1200`-capturen ger `capture_session_bound=1`; eventselector,
+  SAL-codec och host-playback är fortsatt spärrade.
+
 # DM2: privat rörelseklassificering över GAME_LOAD-kandidaten (2026-08-10)
 
 - ✅ `GameLoadRuntimeSessionCandidate` kan nu köra
