@@ -1,3 +1,9 @@
+# Theron: SRM import nekar inte syntetiska porträtt-ID:n (2026-08-10)
+- ✅ SRM-bodyimporten använder nu `THERON_PORTRAIT_UNAVAILABLE` i stället för
+  att tolka champion-slotnumret som ett grafikindex. Det bevarar den riktiga
+  gränsen tills JP-porträttens bitmapbytes och originalets portrait-consumer
+  är source-bound. SRM-regressionen passerar 112/112.
+
 # Theron: autentiserad VCE-palett behåller ägarskap (2026-08-10)
 - ✅ När en verifierad VRAM/VCE-capture är monterad kan ingen senare
   generisk eller fixture-baserad palette setter skriva över de 512 riktiga

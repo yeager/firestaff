@@ -692,7 +692,12 @@ static int import_body_record(Theron_V1_Champion *champion,
         return 0;
     }
 
-    champion->portrait_index = (uint8_t)slot;
+    /* The SRM body record identifies a champion slot, not a portrait
+     * graphic. Do not turn that slot number into a synthetic portrait ID;
+     * portrait pixels and their consumer still require a source-bound
+     * bitmap capture. */
+    (void)slot;
+    champion->portrait_index = THERON_PORTRAIT_UNAVAILABLE;
     champion->primary_class = cls;
     champion->alive = record[17];
 

@@ -623,6 +623,11 @@ static void test_progression_party_payload_import(void) {
     expect_true(party.champions[0].inventory[0] == THERON_ITEM_NONE &&
                 party.champions[1].slots[0] == -1,
                 "party import leaves inventory/equipment empty");
+    expect_true(party.champions[0].portrait_index ==
+                    THERON_PORTRAIT_UNAVAILABLE &&
+                party.champions[1].portrait_index ==
+                    THERON_PORTRAIT_UNAVAILABLE,
+                "party import does not synthesize portrait IDs from slots");
     {
         int ml = ((int)party.champions[0].strength * 625 + 12500) / 1000;
         expect_true(party.champions[0].max_load ==
