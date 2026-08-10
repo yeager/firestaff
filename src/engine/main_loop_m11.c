@@ -91,6 +91,17 @@ enum {
 
 uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* gameView,
                                          int speedMultiplier) {
+    if (gameView && gameView->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+        gameView->dm2State.startup_menu_active) {
+        /* DM2's IBMIOP MVE, FM Towns TWANIM and Amiga VBlank streams are
+         * startup media, not the 200-ms gameplay loop.  M11 wakes at the
+         * same 16-ms scheduler quantum used for the Towns Timer-A path; the
+         * DM2 owner itself accumulates the exact 16,632-us Towns and
+         * 20,000-us Amiga source periods, while the MVE presenter keeps its
+         * own 83,328-us frame clock.  Game-speed settings must not alter any
+         * of those original media clocks. */
+        return 16u;
+    }
     if (gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         (gameView->csbState.startup_title_active ||
          gameView->csbState.startup_entrance_active)) {
@@ -122,7 +133,12 @@ uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* gameView,
 
 int M11_GameView_DropsIdleCatchupForStartup(const M11_GameViewState* gameView)
 {
-    return gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+    if (!gameView) return 0;
+    if (gameView->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+        gameView->dm2State.startup_menu_active) {
+        return 1;
+    }
+    return gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         (gameView->csbState.startup_title_active ||
          gameView->csbState.startup_entrance_active);
 }

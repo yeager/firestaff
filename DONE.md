@@ -6,6 +6,15 @@
   bytejämförelsen ger noll MENU/TITLE/FONT256/STABG/DGN-joins. Detta är
   reproducerbart negativt capture-bevis och öppnar ingen presentation.
 
+# DM2: källtrogen startupkadens i M11 (2026-08-10)
+
+- ✅ DM2:s startupmedia använder nu en 16 ms schedulerkvantum i M11 i stället
+  för den generiska 200 ms-spelloopen. Den exakta Towns Timer-A-perioden,
+  Amigas 20 ms VBlank och DOS-MVE:ns egen bildklocka fortsätter att ägas av
+  respektive källa.
+- ✅ Startupen ignorerar spelhastighet och spärrar catch-up, så fördröjda
+  hostväckningar inte kan hoppa över titelframes eller köa MVE-ljud i klump.
+
 # DM2: runtimekandidat behåller muterade recordpooler (2026-08-10)
 
 - ✅ `GameLoadRuntimeSessionCandidate` klonar nu den aktuella,

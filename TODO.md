@@ -211,6 +211,10 @@
   varje senare muterande branch. Recordpoolerna klonas från den muterade
   ägaren, inte från den ursprungliga filbilden.
 
+- ⏳ DM2:s DOS-, FM Towns- och Amiga-startmedia väcks nu var 16 ms i M11, med
+  källornas egna ackumulatorer för bildtid. Återstår gör den riktiga Amiga
+  SD/SO-ljudtransporten samt IBMIOP:s fullständiga avbrotts- och avbrottsväg.
+
 - 🔧 Theron source-group admission is now atomic and source-identity aware:
   a real Track 02 category-4 group is either fully materialized or not at all,
   and an inactive static group cannot be reintroduced as an invented respawn.

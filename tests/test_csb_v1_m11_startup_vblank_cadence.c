@@ -39,6 +39,24 @@ int main(void) {
     expect_interval(M11_GameView_IdleTickIntervalMs(&view, 200), 100u,
                     "ordinary gameplay still follows speed multiplier");
 
+    view.sourceKind = M11_GAME_SOURCE_DM2_BOOT;
+    view.dm2State.startup_menu_active = 1;
+    if (!M11_GameView_DropsIdleCatchupForStartup(&view)) {
+        fprintf(stderr, "FAIL: DM2 startup must not batch source media ticks\n");
+        ++failures;
+    }
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 16u,
+                    "DM2 startup wakes for original media clocks");
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 400), 16u,
+                    "DM2 startup ignores gameplay speed multiplier");
+    view.dm2State.startup_menu_active = 0;
+    if (M11_GameView_DropsIdleCatchupForStartup(&view)) {
+        fprintf(stderr, "FAIL: inactive DM2 startup must retain normal catch-up\n");
+        ++failures;
+    }
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 200u,
+                    "DM2 runtime returns to ordinary gameplay cadence");
+
     view.sourceKind = M11_GAME_SOURCE_CSB_BOOT;
     view.csbState.startup_title_active = 1;
     view.csbState.startup_title_source_step = 1;
