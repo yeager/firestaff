@@ -64,6 +64,15 @@ typedef struct DM2_V1_RecordPoolSet {
     int record_graph_complete;  /* mirrors the loader's graph state */
 } DM2_V1_RecordPoolSet;
 
+/* Clone a mutable pool owner exactly as it stands now.  This copies every
+ * declared pool span and G1 continuation, including mutations made after the
+ * original File_header bytes were admitted.  It must not be replaced with
+ * dm2_v1_record_pool_set_init_from_dungeon() when cloning a live GAME_LOAD
+ * transaction: that constructor deliberately recreates the on-disk state.
+ * On failure `out` is zeroed and `source` is unchanged. */
+int dm2_v1_record_pool_set_clone(DM2_V1_RecordPoolSet *out,
+                                 const DM2_V1_RecordPoolSet *source);
+
 /* Source-owned mutable view of c_map::dm2_v1e038c during
  * READ_SKSAVE_DUNGEON.  The raw SKSAVE body remains immutable; only its
  * ground-stack link span is copied because SKProject removes DB4..DB15 links

@@ -1425,8 +1425,8 @@ int dm2_v1_game_load_runtime_session_candidate_init(
     if (dm2_v1_dungeon_load(&candidate.dungeon, source->dungeon.raw_data,
                             source->dungeon.raw_size) != 0 ||
         !candidate.dungeon.record_graph_complete ||
-        !dm2_v1_record_pool_set_init_from_dungeon(&candidate.record_pools,
-                                                   &candidate.dungeon) ||
+        !dm2_v1_record_pool_set_clone(&candidate.record_pools,
+                                      &source->record_pools) ||
         !candidate.record_pools.valid ||
         !candidate.record_pools.record_graph_complete) goto fail;
     candidate.timer_entries = calloc(source->timer_capacity,

@@ -2455,6 +2455,9 @@ int main(void) {
     DM2_V1_GameLoadTimerProcessReceipt new_game_timer_process;
     DM2_V1_TimerEntry new_game_door_step_timer;
     uint32_t runtime_candidate_source_hash_before;
+    uint8_t runtime_candidate_db4_byte_before = 0u;
+    uint8_t runtime_candidate_db4_byte_mutated = 0u;
+    int runtime_candidate_db4_mutated = 0;
     int new_game_generators_result;
     int new_game_owner_initialized;
     int new_game_noop_map = -1;
@@ -4855,6 +4858,23 @@ int main(void) {
         profile_new_game_owner->dungeon.raw_data ? dm2_test_fnv1a(
             profile_new_game_owner->dungeon.raw_data,
             (size_t)profile_new_game_owner->dungeon.raw_size) : 0u;
+    if (profile_new_game_owner &&
+        profile_new_game_owner->record_pools.pools[4].bytes != NULL &&
+        profile_new_game_owner->record_pools.pools[4].record_count > 0 &&
+        profile_new_game_owner->record_pools.pools[4].record_size > 4) {
+        DM2_V1_RecordPool *db4 =
+            &((DM2_V1_GameLoadWorldOwner *)profile_new_game_owner)->record_pools.pools[4];
+
+        /* Record pools are mutable RAM detached from DUNGEON.DAT.  Make one
+         * harmless, reversible DB4-byte change so this test proves that a
+         * runtime candidate clones the current owner rather than rebuilding
+         * pristine pools from the immutable source member. */
+        runtime_candidate_db4_byte_before = db4->bytes[4];
+        runtime_candidate_db4_byte_mutated =
+            (uint8_t)(runtime_candidate_db4_byte_before ^ 0x80u);
+        db4->bytes[4] = runtime_candidate_db4_byte_mutated;
+        runtime_candidate_db4_mutated = 1;
+    }
     expect_true(profile_new_game_owner && runtime_candidate_source_hash_before != 0u &&
                     dm2_v1_game_load_runtime_session_candidate_init(
                         &runtime_session_candidate, profile_new_game_owner) &&
@@ -4871,6 +4891,9 @@ int main(void) {
                         profile_new_game_owner->caii_slots.slots &&
                     runtime_session_candidate.sound_owner.queue_entries !=
                         profile_new_game_owner->sound_owner.queue_entries &&
+                    (!runtime_candidate_db4_mutated ||
+                     runtime_session_candidate.record_pools.pools[4].bytes[4] ==
+                         runtime_candidate_db4_byte_mutated) &&
                     runtime_session_candidate.party.heros_in_party == 1 &&
                     runtime_session_candidate.event_queue.event_heroidx ==
                         profile_new_game_owner->source_event_hero_index &&
@@ -4882,6 +4905,10 @@ int main(void) {
                     !profile->source_game_load_session_ready &&
                     view.world.party.championCount == 0,
                 "DM2 clones the complete source-owned GAME_LOAD RAM candidate without publishing M11 state");
+    if (runtime_candidate_db4_mutated && profile_new_game_owner) {
+        ((DM2_V1_GameLoadWorldOwner *)profile_new_game_owner)->record_pools
+            .pools[4].bytes[4] = runtime_candidate_db4_byte_before;
+    }
     dm2_v1_game_load_runtime_session_candidate_free(&runtime_session_candidate);
     memset(&runtime_session_candidate, 0xA5, sizeof(runtime_session_candidate));
     expect_true(!dm2_v1_game_load_runtime_session_candidate_init(

@@ -208,7 +208,8 @@
   eventqueue, CAII, RNG och SND-kö efter källägd championval. Den publiceras
   inte till M11 och är inte spelbar: nästa arbete är att importera hela
   c_map/moverec/CAII/0A48-transaktionen ovanpå kandidaten, med rollback för
-  varje senare muterande branch.
+  varje senare muterande branch. Recordpoolerna klonas från den muterade
+  ägaren, inte från den ursprungliga filbilden.
 
 - 🔧 Theron source-group admission is now atomic and source-identity aware:
   a real Track 02 category-4 group is either fully materialized or not at all,

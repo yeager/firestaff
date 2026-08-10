@@ -1952,6 +1952,65 @@ void dm2_v1_record_pool_set_free(DM2_V1_RecordPoolSet *set)
     set->record_graph_complete = 0;
 }
 
+int dm2_v1_record_pool_set_clone(DM2_V1_RecordPoolSet *out,
+                                 const DM2_V1_RecordPoolSet *source)
+{
+    DM2_V1_RecordPoolSet candidate;
+    int db;
+
+    if (out == NULL || source == NULL || !source->valid ||
+        !source->record_graph_complete) {
+        return 0;
+    }
+    memset(out, 0, sizeof(*out));
+    memset(&candidate, 0, sizeof(candidate));
+    for (db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        const DM2_V1_RecordPool *in = &source->pools[db];
+        DM2_V1_RecordPool *copy = &candidate.pools[db];
+        size_t main_size;
+        size_t extension_size;
+
+        if (in->record_count < 0 || in->extension_count < 0 ||
+            in->record_size < 0 ||
+            (in->record_size == 0 &&
+             (in->record_count != 0 || in->extension_count != 0)) ||
+            (in->record_size > 0 &&
+             ((size_t)in->record_count > SIZE_MAX / (size_t)in->record_size ||
+              (size_t)in->extension_count > SIZE_MAX / (size_t)in->record_size))) {
+            goto fail;
+        }
+        main_size = (size_t)in->record_count * (size_t)in->record_size;
+        extension_size = (size_t)in->extension_count * (size_t)in->record_size;
+        if ((main_size != 0u && in->bytes == NULL) ||
+            (extension_size != 0u && in->extension_bytes == NULL)) {
+            goto fail;
+        }
+        copy->record_count = in->record_count;
+        copy->record_size = in->record_size;
+        copy->source_base = in->source_base;
+        copy->extension_count = in->extension_count;
+        copy->extension_base = in->extension_base;
+        if (main_size != 0u) {
+            copy->bytes = (uint8_t *)malloc(main_size);
+            if (copy->bytes == NULL) goto fail;
+            memcpy(copy->bytes, in->bytes, main_size);
+        }
+        if (extension_size != 0u) {
+            copy->extension_bytes = (uint8_t *)malloc(extension_size);
+            if (copy->extension_bytes == NULL) goto fail;
+            memcpy(copy->extension_bytes, in->extension_bytes, extension_size);
+        }
+    }
+    candidate.valid = 1;
+    candidate.record_graph_complete = 1;
+    *out = candidate;
+    return 1;
+
+fail:
+    dm2_v1_record_pool_set_free(&candidate);
+    return 0;
+}
+
 const char *dm2_v1_record_pool_source_evidence(void)
 {
     return

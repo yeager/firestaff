@@ -6,6 +6,16 @@
   bytejämförelsen ger noll MENU/TITLE/FONT256/STABG/DGN-joins. Detta är
   reproducerbart negativt capture-bevis och öppnar ingen presentation.
 
+# DM2: runtimekandidat behåller muterade recordpooler (2026-08-10)
+
+- ✅ `GameLoadRuntimeSessionCandidate` klonar nu den aktuella,
+  RAM-ägda `RecordPoolSet` med alla DB0–DB15-spann och G1-extensioner.
+  Kandidaten återskapar alltså inte poolerna från oförändrade
+  `DUNGEON.DAT`-bytes efter detach-, clear- eller CAII-mutationer.
+- ✅ Realtidstestet ändrar en DB4-byte i den privata källpoolen, bevisar att
+  kandidaten får samma byte på en egen adress och återställer sedan källan.
+  Källdungeonen, M11 och den publika sessionen förblir orörda.
+
 # Nexus: source-gated SMAP and startup/audio contracts (2026-08-10)
 - ✅ Retail SMAP-dekodning behåller autentiserade pixlar men förblir explicit
   no-draw tills VDP2-placement är verifierad. En blockerad LEV00-start lämnar
