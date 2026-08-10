@@ -10,6 +10,7 @@
     "FIRESTAFF_NEXUS_SCSP_WRITE_TRACE_V1"
 #define NEXUS_V1_MAIN_SCSP_WRITE_TRACE_MAGIC \
     "FIRESTAFF_NEXUS_MAIN_SCSP_WRITE_TRACE_V1"
+#define NEXUS_V1_SCSP_CAPTURE_SESSION_MAX 64U
 
 /* Bounded receipt for the supported Mednafen sound-CPU write trace. It
  * records exactly what the trace contains; it never assigns a gameplay event
@@ -17,6 +18,8 @@
 typedef struct {
     int valid;
     int header_valid;
+    int capture_session_present;
+    char capture_session[NEXUS_V1_SCSP_CAPTURE_SESSION_MAX];
     int parse_complete;
     int sound_cpu_trace;
     size_t raw_trace_byte_count;
@@ -45,6 +48,8 @@ typedef struct {
 typedef struct {
     int valid;
     int header_valid;
+    int capture_session_present;
+    char capture_session[NEXUS_V1_SCSP_CAPTURE_SESSION_MAX];
     int parse_complete;
     size_t raw_trace_byte_count;
     uint64_t raw_trace_fnv1a64;
@@ -66,6 +71,7 @@ typedef struct {
 typedef struct {
     int valid;
     int source_identities_bound;
+    int capture_session_bound;
     int producer_command_observed;
     int sound_cpu_command_observed;
     int driver_command_handler_observed;

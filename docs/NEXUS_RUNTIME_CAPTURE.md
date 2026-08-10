@@ -329,6 +329,13 @@ driver SHA-256 (`68890ee4…`). This is an authentic runtime handoff corridor,
 but it does not identify the SLEV event selector, MAP row, SAL sample, or
 SCSP voice ABI, so semantic admission and host playback remain blocked.
 
+The two trace files are bindable only when the producer writes the same
+non-empty `session=` token into both headers. Set
+`FIRESTAFF_NEXUS_TRACE_SESSION` to a capture-local token before starting
+Mednafen. Older traces without this field remain valid structural receipts,
+but are deliberately rejected as a cross-trace runtime join because they do
+not prove that the producer and sound-CPU observations came from one session.
+
 The observed 68K PC `0x3224` is now checked by
 `scripts/analyze_nexus_scsp_driver_owner.py` against the authenticated driver
 window at `SDDRVS.TSK+0x2220`. The source bytes read a command byte, limit it

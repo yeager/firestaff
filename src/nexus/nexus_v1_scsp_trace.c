@@ -40,6 +40,18 @@ static int parse_main_record(const char *line,
                   address, size, value, pc0, pc1, &tail) == 5;
 }
 
+static int parse_capture_session(const char *line, char *out_session)
+{
+    size_t length;
+
+    if (strncmp(line, "session=", 8U) != 0 || !line[8]) return 0;
+    length = strlen(line + 8U);
+    if (length >= NEXUS_V1_SCSP_CAPTURE_SESSION_MAX) return 0;
+    if (strchr(line + 8U, ' ') || strchr(line + 8U, '\t')) return 0;
+    memcpy(out_session, line + 8U, length + 1U);
+    return 1;
+}
+
 int nexus_v1_scsp_write_trace_parse(
     const uint8_t *raw_trace,
     size_t raw_trace_size,
@@ -89,6 +101,11 @@ int nexus_v1_scsp_write_trace_parse(
         next = strchr(line, '\n');
         if (next) *next++ = '\0';
         if (*line == '\0') continue;
+        if (!receipt.capture_session_present &&
+            parse_capture_session(line, receipt.capture_session)) {
+            receipt.capture_session_present = 1;
+            continue;
+        }
         if (!parse_record(line, &address, &size, &value, &pc) ||
             address > UINT32_MAX || size > UINT32_MAX ||
             value > UINT32_MAX || pc > UINT32_MAX || size == 0U) {
@@ -188,6 +205,11 @@ int nexus_v1_main_scsp_write_trace_parse(
         next = strchr(line, '\n');
         if (next) *next++ = '\0';
         if (*line == '\0') continue;
+        if (!receipt.capture_session_present &&
+            parse_capture_session(line, receipt.capture_session)) {
+            receipt.capture_session_present = 1;
+            continue;
+        }
         if (!parse_main_record(line, &address, &size, &value, &pc0, &pc1) ||
             address > UINT32_MAX || size > UINT32_MAX ||
             value > UINT32_MAX || pc0 > UINT32_MAX || pc1 > UINT32_MAX ||
@@ -240,6 +262,12 @@ int nexus_v1_scsp_runtime_join(
     receipt.source_identities_bound =
         slev_source_verified && sal_source_verified &&
         map_source_verified && driver_source_verified;
+    receipt.capture_session_bound =
+        sound_cpu_trace && main_cpu_trace &&
+        sound_cpu_trace->capture_session_present &&
+        main_cpu_trace->capture_session_present &&
+        strcmp(sound_cpu_trace->capture_session,
+               main_cpu_trace->capture_session) == 0;
     receipt.producer_command_observed =
         main_cpu_trace && main_cpu_trace->valid &&
         main_cpu_trace->producer_command_observed;
@@ -255,6 +283,7 @@ int nexus_v1_scsp_runtime_join(
         sound_cpu_trace && sound_cpu_trace->scsp_voice_register_write_count > 0U;
     receipt.runtime_corridor_proven =
         receipt.source_identities_bound &&
+        receipt.capture_session_bound &&
         receipt.producer_command_observed &&
         receipt.sound_cpu_command_observed &&
         receipt.driver_command_handler_observed &&

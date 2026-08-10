@@ -98,12 +98,17 @@ int main(void)
     complete_trace_fixture = scsp_receipt;
     complete_trace_fixture.scsp_voice_register_write_count = 1U;
     complete_trace_fixture.intra_trace_observation_order_proven = 1;
+    complete_trace_fixture.capture_session_present = 1;
+    strcpy(complete_trace_fixture.capture_session, "unit-capture");
+    main_receipt.capture_session_present = 1;
+    strcpy(main_receipt.capture_session, "unit-capture");
     memset(&complete_join_receipt, 0, sizeof(complete_join_receipt));
     if (!nexus_v1_scsp_runtime_join(
             &complete_trace_fixture, &main_receipt, &driver_receipt,
             1, 1, 1, 1, &complete_join_receipt) ||
         !complete_join_receipt.valid ||
         !complete_join_receipt.source_identities_bound ||
+        !complete_join_receipt.capture_session_bound ||
         !complete_join_receipt.runtime_corridor_proven ||
         !complete_join_receipt.producer_command_observed ||
         !complete_join_receipt.sound_cpu_command_observed ||
