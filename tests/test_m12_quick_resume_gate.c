@@ -1075,24 +1075,6 @@ int main(void) {
     force_csb_available(&state);
     if (!expect(state.quickResumeAvailable == 0,
                 "CSBWin body discovery must not advertise Resume before full world handoff")) return 1;
-    if (state.quickResumeAvailable) {
-    if (!expect(strcmp(state.quickResumeGameId, "csb") == 0,
-                "CSBWin quick Resume should identify csb")) return 1;
-    if (!expect(strcmp(state.quickResumeSavePath, csbSavePath) == 0,
-                "CSBWin quick Resume should retain save path")) return 1;
-    state.selectedIndex = -1;
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    if (!expect(state.launchRequested == 1,
-                "CSBWin quick Resume accept should request launch")) return 1;
-    intent = M12_StartupMenu_GetLaunchIntent(&state);
-    if (!expect(intent.valid == 1 &&
-                intent.gameId &&
-                strcmp(intent.gameId, "csb") == 0,
-                "CSBWin quick Resume launch intent should identify CSB")) return 1;
-    if (!expect(intent.savePath && strcmp(intent.savePath, csbSavePath) == 0,
-                "CSBWin quick Resume launch intent must carry exact save path")) return 1;
-
-    }
 
     snprintf(importedCsbWinQuickResumePath,
              sizeof(importedCsbWinQuickResumePath),
@@ -1105,20 +1087,6 @@ int main(void) {
     force_csb_available(&state);
     if (!expect(state.quickResumeAvailable == 0,
                 "CSBWin body under an unknown filename must not advertise Resume")) return 1;
-    if (state.quickResumeAvailable) {
-    if (!expect(strcmp(state.quickResumeGameId, "csb") == 0,
-                "unknown firestaff save name should classify CSB by content")) return 1;
-    state.selectedIndex = -1;
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    intent = M12_StartupMenu_GetLaunchIntent(&state);
-    if (!expect(intent.valid == 1 &&
-                intent.gameId &&
-                strcmp(intent.gameId, "csb") == 0 &&
-                intent.savePath &&
-                strcmp(intent.savePath, importedCsbWinQuickResumePath) == 0,
-                "unknown firestaff CSB quick Resume should carry exact path")) return 1;
-
-    }
 
     snprintf(wrongKnownGameQuickResumePath,
              sizeof(wrongKnownGameQuickResumePath),
@@ -1201,29 +1169,9 @@ int main(void) {
                 "save browser should list CSBWin verified-body CSB save")) return 1;
     if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 0,
                 "save browser must not mark CSBWin selectable before full world handoff")) return 1;
-    if (state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid) {
-    if (!expect(strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
-                       "csb") == 0,
-                "save browser should classify CSBWin save as csb")) return 1;
-    if (!expect(strstr(state.saveBrowser.entries[state.saveBrowser.selectedIndex].champions,
-                       "TIGGY") != NULL &&
-                strstr(state.saveBrowser.entries[state.saveBrowser.selectedIndex].champions,
-                       "BORIS") != NULL,
-                "save browser should expose CSBWin champion names")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    if (!expect(state.launchRequested == 1,
-                "save browser accept should request CSBWin CSB launch")) return 1;
-    if (!expect(state.quickResumeLaunchRequested == 1,
-                "save browser accept should route selected CSBWin save as savePath")) return 1;
-    intent = M12_StartupMenu_GetLaunchIntent(&state);
-    if (!expect(intent.valid == 1 &&
-                intent.gameId &&
-                strcmp(intent.gameId, "csb") == 0,
-                "save browser CSBWin launch intent should identify CSB")) return 1;
-    if (!expect(intent.savePath && strcmp(intent.savePath, csbWinBrowserSavePath) == 0,
-                "save browser CSBWin launch intent should carry selected save path")) return 1;
-
-    }
+    if (!expect(state.launchRequested == 0,
+                "save browser must not launch CSBWin before full world handoff")) return 1;
 
     snprintf(importedCsbWinBrowserSavePath, sizeof(importedCsbWinBrowserSavePath),
              "%s/firestaff-imported-csbwin-browser.sav", tmpTemplate);
@@ -1238,29 +1186,9 @@ int main(void) {
                 "save browser should list imported CSBWin save")) return 1;
     if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 0,
                 "save browser must keep imported CSBWin non-selectable before full world handoff")) return 1;
-    if (state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid) {
-    if (!expect(strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
-                       "csb") == 0,
-                "save browser should classify imported CSBWin save as csb by content")) return 1;
-    if (!expect(strstr(state.saveBrowser.entries[state.saveBrowser.selectedIndex].champions,
-                       "TIGGY") != NULL &&
-                strstr(state.saveBrowser.entries[state.saveBrowser.selectedIndex].champions,
-                       "BORIS") != NULL,
-                "save browser should expose imported CSBWin champion names")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    intent = M12_StartupMenu_GetLaunchIntent(&state);
-    if (!expect(state.launchRequested == 1 &&
-                state.quickResumeLaunchRequested == 1,
-                "save browser imported CSBWin accept should request save-path launch")) return 1;
-    if (!expect(intent.valid == 1 &&
-                intent.gameId &&
-                strcmp(intent.gameId, "csb") == 0,
-                "save browser imported CSBWin launch intent should identify CSB")) return 1;
-    if (!expect(intent.savePath &&
-                strcmp(intent.savePath, importedCsbWinBrowserSavePath) == 0,
-                "save browser imported CSBWin launch intent should carry exact path")) return 1;
-
-    }
+    if (!expect(state.launchRequested == 0,
+                "save browser must not launch imported CSBWin before world handoff")) return 1;
 
     snprintf(originalCsbGameBrowserSavePath,
              sizeof(originalCsbGameBrowserSavePath),
@@ -1297,26 +1225,9 @@ int main(void) {
                 "save browser should list DMSAVE.DAT")) return 1;
     if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 0,
                 "save browser must keep CSBWin DMSAVE.DAT non-selectable before full world handoff")) return 1;
-    if (state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid) {
-    if (!expect(strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
-                       "csb") == 0,
-                "save browser should classify DMSAVE.DAT as csb")) return 1;
-    if (!expect(strstr(state.saveBrowser.entries[state.saveBrowser.selectedIndex].champions,
-                       "TIGGY") != NULL &&
-                strstr(state.saveBrowser.entries[state.saveBrowser.selectedIndex].champions,
-                       "BORIS") != NULL,
-                "save browser should expose DMSAVE.DAT champion names")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    intent = M12_StartupMenu_GetLaunchIntent(&state);
-    if (!expect(intent.valid == 1 &&
-                intent.gameId &&
-                strcmp(intent.gameId, "csb") == 0,
-                "save browser DMSAVE.DAT launch intent should identify CSB")) return 1;
-    if (!expect(intent.savePath &&
-                strcmp(intent.savePath, originalDmSaveBrowserSavePath) == 0,
-                "save browser DMSAVE.DAT launch intent should carry exact path")) return 1;
-
-    }
+    if (!expect(state.launchRequested == 0,
+                "save browser must not launch CSBWin DMSAVE before world handoff")) return 1;
 
     /* DM2 fixture sessions are no longer permitted to create SKSave files.
      * The save browser remains covered by separately supplied original
