@@ -524,3 +524,9 @@ the TM.BIN-backed startup/menu lane (`R0=0x06027874`, `R5=0x800`, target
 the copied bytes and the source-owned command/CLUT/palette consumer. Do not
 promote direct-colour or MENU.BPK/FONT256 rendering from this transport
 receipt alone.
+2026-08-10: Den autentiska frame-350-kedjan är nu verifierad som fyra
+type-2 direct-colour-poster (`0x05280..0x052e0`) följda av END vid `0x05300`.
+Alla konsumerar VDP1-texture `0x10a00`; `analyze_nexus_vdp1_command_source_join.py`
+är reproducerbar mot raw-capturen. Nästa krav är att fastställa hur
+`TM.BIN` producerar posterna och om `colr`-orden används som direct-colour
+metadata eller bara följer kommandoramen; ingen CLUT/palett får antas.

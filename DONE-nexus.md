@@ -5187,3 +5187,13 @@ kopieringsriktningen för den autentiska direct-colour-bufferten: vid
 `scripts/analyze_nexus_vdp1_source_to_vram.py` passerar mot frame 350 i
 den externa 400-frame-capturen. Detta bevisar transport och byteordning,
 inte pixelkodning, CLUT/palett, kommando-typ eller produktionsrendering.
+# ✅ 2026-08-10 Nexus VDP1 command-to-texture span
+
+Frame 350:s autentiska COPR-kedja `0x05280..0x05300` består av fyra
+type-2 distorted-sprite-poster och en END-post. Alla fyra draw-poster har
+`colour_mode=5`, `srca=0x2140` (texture-offset `0x10a00`) och `256x4`
+direct-colour-payload på 2048 byte. Det nya verktyget
+`scripts/analyze_nexus_vdp1_command_source_join.py` verifierar kedjan mot
+samma 400-frame-capture. Detta stänger endast command→texture-framing;
+palette/CLUT-ägare, TM.BIN-transformens semantik och produktionsrendering är
+fortsatt separata gates.
