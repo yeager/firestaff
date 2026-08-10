@@ -301,15 +301,33 @@ static void check_real_viewport_projection_layout(const char *path)
     CHECK(layout.rectangles[9].x1 == 0u && layout.rectangles[9].x2 == 223u &&
           layout.rectangles[9].source_stride == 0u &&
           layout.rectangles[9].source_height == 0u);
-    /* CSBCode.cpp TAG004c5e DrawDoorSwitch(1, 0) takes its F2 placement
-     * directly from Byte5094. These values are from the supplied Atari ST
-     * GRAPHICS.DAT item 0x22e, not an inferred PC button rectangle. */
+    /* CSBCode.cpp TAG004c5e takes the four switch placements directly from
+     * Byte5094: F3R1=lane 0, F3=1, F2=2 and F1=3. These values are from the
+     * supplied Atari ST GRAPHICS.DAT item 0x22e, never PC button geometry. */
     CHECK(layout.door_switch_rectangles[0].x1 == 199u &&
           layout.door_switch_rectangles[0].x2 == 204u &&
           layout.door_switch_rectangles[0].y1 == 41u &&
           layout.door_switch_rectangles[0].y2 == 44u &&
           layout.door_switch_rectangles[0].source_stride == 8u &&
           layout.door_switch_rectangles[0].source_height == 4u);
+    CHECK(layout.door_switch_rectangles[1].x1 == 136u &&
+          layout.door_switch_rectangles[1].x2 == 141u &&
+          layout.door_switch_rectangles[1].y1 == 41u &&
+          layout.door_switch_rectangles[1].y2 == 44u &&
+          layout.door_switch_rectangles[1].source_stride == 8u &&
+          layout.door_switch_rectangles[1].source_height == 4u);
+    CHECK(layout.door_switch_rectangles[2].x1 == 144u &&
+          layout.door_switch_rectangles[2].x2 == 155u &&
+          layout.door_switch_rectangles[2].y1 == 42u &&
+          layout.door_switch_rectangles[2].y2 == 47u &&
+          layout.door_switch_rectangles[2].source_stride == 8u &&
+          layout.door_switch_rectangles[2].source_height == 6u);
+    CHECK(layout.door_switch_rectangles[3].x1 == 160u &&
+          layout.door_switch_rectangles[3].x2 == 175u &&
+          layout.door_switch_rectangles[3].y1 == 44u &&
+          layout.door_switch_rectangles[3].y2 == 52u &&
+          layout.door_switch_rectangles[3].source_stride == 8u &&
+          layout.door_switch_rectangles[3].source_height == 9u);
     /* CSBWin Data.h puts DoorRectsF1R1..DoorRectsF3L1, then track/frame
      * RectPos records directly before wallRectangles.  Reading them from the
      * original 0x22e record prevents later render work from inventing door

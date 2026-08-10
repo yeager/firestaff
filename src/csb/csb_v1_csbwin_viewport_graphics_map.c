@@ -181,10 +181,11 @@ int csb_v1_csbwin_viewport_layout_022e_decode(
            decoded_graphic + CSB_V1_CSBWIN_LAYOUT_022E_TELEPORTER_RECTANGLE_OFFSET,
            sizeof(out_layout->teleporter_rectangles));
     /* CSBCode.cpp TAG004c5e uses Byte4124[0] as its switch family, then
-     * indexes Byte5094 + 24 * family + 6 * lane.  Those addresses descend
-     * inside the expanded item-0x22e image (Data.h's Byte names are native
-     * 68k addresses), so decode them explicitly rather than treating the
-     * six-byte records as ordinary forward arrays. */
+     * indexes Byte5094 + 24 * family + 6 * lane. The expanded item-0x22e
+     * representation stores that lane sequence forward from Byte5094 even
+     * though the surrounding native Byte labels descend, so preserve the
+     * original lane order rather than treating the records as a reverse
+     * array. */
     if (3122u >= decoded_size) {
         memset(out_layout, 0, sizeof(*out_layout));
         return 0;
@@ -200,7 +201,7 @@ int csb_v1_csbwin_viewport_layout_022e_decode(
          index < CSB_V1_CSBWIN_LAYOUT_022E_DOOR_SWITCH_RECTANGLE_COUNT;
          ++index) {
         size_t offset = CSB_V1_CSBWIN_LAYOUT_022E_DOOR_SWITCH_RECTANGLE_BASE_OFFSET -
-            (size_t)switch_family * 24u - index * 6u;
+            (size_t)switch_family * 24u + index * 6u;
         CSB_V1_CSBWinViewportProjectionRectangle *rectangle =
             &out_layout->door_switch_rectangles[index];
         rectangle->x1 = decoded_graphic[offset + 0u];
@@ -297,15 +298,17 @@ int csb_v1_csbwin_viewport_layout_022e_decode(
 
 int csb_v1_csbwin_viewport_door_switch_projection(
     const CSB_V1_CSBWinViewportLayout022e *layout,
+    uint8_t lane,
     const CSB_V1_CSBWinViewportProjectionRectangle **out_projection)
 {
     if (out_projection) *out_projection = NULL;
     if (!layout || !layout->valid || !out_projection ||
+        lane >= CSB_V1_CSBWIN_LAYOUT_022E_DOOR_SWITCH_RECTANGLE_COUNT ||
         !csb_v1_csbwin_viewport_projection_rectangle_is_valid(
-            &layout->door_switch_rectangles[0])) {
+            &layout->door_switch_rectangles[lane])) {
         return 0;
     }
-    *out_projection = &layout->door_switch_rectangles[0];
+    *out_projection = &layout->door_switch_rectangles[lane];
     return 1;
 }
 

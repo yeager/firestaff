@@ -75,10 +75,11 @@ typedef enum {
  * selected switch family and near/far lane.  Item 0x22e is unpacked in the
  * opposite address direction, hence the 7246-5094 base and descending
  * offsets.  Each six-byte record is RectPos plus source byte-stride/height.
- * The standard CSB game uses ordinal one. The F2 record is the only lane
- * whose complete original descriptor is presently proven by the ST media. */
+ * The standard CSB game uses ordinal one. Viewport.cpp passes lane 0 for
+ * F3R1, 1 for F3, 2 for F2 and 3 for F1; all four records are present in
+ * the supplied ST GRAPHICS.DAT item and retain that order. */
 #define CSB_V1_CSBWIN_LAYOUT_022E_DOOR_SWITCH_RECTANGLE_BASE_OFFSET 2152u
-#define CSB_V1_CSBWIN_LAYOUT_022E_DOOR_SWITCH_RECTANGLE_COUNT 1u
+#define CSB_V1_CSBWIN_LAYOUT_022E_DOOR_SWITCH_RECTANGLE_COUNT 4u
 
 typedef struct {
     uint8_t x1;
@@ -130,8 +131,8 @@ typedef struct {
      * wall projection. */
     uint8_t teleporter_rectangles[
         CSB_V1_CSBWIN_LAYOUT_022E_TELEPORTER_RECTANGLE_COUNT][8];
-    /* DrawDoorSwitch(1, 0), the native F2 destination. This is a direct
-     * TAG0088b2 recipe, not a PC34 door-button box. */
+    /* DrawDoorSwitch(1, lane), lanes F3R1/F3/F2/F1. These are direct
+     * TAG0088b2 recipes, not PC34 door-button boxes. */
     CSB_V1_CSBWinViewportProjectionRectangle door_switch_rectangles[
         CSB_V1_CSBWIN_LAYOUT_022E_DOOR_SWITCH_RECTANGLE_COUNT];
 } CSB_V1_CSBWinViewportLayout022e;
@@ -295,10 +296,11 @@ int csb_v1_csbwin_viewport_door_panel_projections(
     int db0_mode, const CSB_V1_CSBWinViewportProjectionRectangle **out_first,
     const CSB_V1_CSBWinViewportProjectionRectangle **out_second);
 
-/* CSBWin CSBCode.cpp TAG004c5e. Resolves ordinal-one F2 door-switch
- * placement. */
+/* CSBWin CSBCode.cpp TAG004c5e. Resolves an ordinal-one door-switch lane:
+ * F3R1=0, F3=1, F2=2, F1=3. */
 int csb_v1_csbwin_viewport_door_switch_projection(
     const CSB_V1_CSBWinViewportLayout022e *layout,
+    uint8_t lane,
     const CSB_V1_CSBWinViewportProjectionRectangle **out_projection);
 
 /* Viewport.cpp:2281-2289, 2378-2404. Builds the static track/frame commands

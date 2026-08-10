@@ -3902,15 +3902,22 @@ static int m11_csb_present_atari_st_runtime_viewport(
             if (panel_second && !m11_csb_blit_atari_st_viewport_graphic(
                     state, panel_graphic, 0, panel_second, viewport,
                     VIEWPORT_WIDTH, VIEWPORT_HEIGHT)) return 0;
-            /* Viewport.cpp's F2 facing-door script calls
-             * DrawDoorSwitch(1, 0) after DrawDoor.  Its static switch
-             * bitmap is GRAPHICS.DAT item 315 and its exact destination
-             * comes from the real item-0x22e recipe.  Other depths wait
-             * for their separately verified original descriptors. */
-            if (has_switch && draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F2) {
+            /* CSBWin Viewport.cpp's facing-door scripts issue
+             * DrawDoorSwitch(1, lane) for F3R1/F3/F2/F1 with lanes 0/1/2/3.
+             * Item 315 and every destination recipe come from the loaded ST
+             * GRAPHICS.DAT. F3L1/F2L1/F1L1/F1R1 do not issue that opcode. */
+            if (has_switch &&
+                (draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F3R1 ||
+                 draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F3 ||
+                 draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F2 ||
+                 draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F1)) {
                 const CSB_V1_CSBWinViewportProjectionRectangle *switch_projection;
+                uint8_t switch_lane = draw->wall ==
+                    CSB_V1_CSBWIN_VIEWPORT_WALL_F3R1 ? 0u :
+                    draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F3 ? 1u :
+                    draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F2 ? 2u : 3u;
                 if (!csb_v1_csbwin_viewport_door_switch_projection(
-                        &layout, &switch_projection) ||
+                        &layout, switch_lane, &switch_projection) ||
                     !m11_csb_blit_atari_st_viewport_graphic(
                         state, 315u, 0, switch_projection, viewport,
                         VIEWPORT_WIDTH, VIEWPORT_HEIGHT)) return 0;
