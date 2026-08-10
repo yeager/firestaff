@@ -619,3 +619,18 @@ Alla par kräver fortfarande exakta 64 KiB VRAM- och 1 KiB VCE-filer. De ger
 endast source-bound BAT/tile/palett-replay och M11-presentering av den fångade
 skärmen. Ingen post i allow-listan bevisar square-to-tile-mappning,
 perspektiv, HUD-/objektägare, monster, RNG eller T700/T900-semantik.
+# 2026-08-10 — complete US CUE/19-track runtime capture
+
+The external-disk capture was repeated with the complete user-supplied US
+layout from the archive: `TQUS.cue`, decoded audio tracks 01/03/04–18, and
+`TQUS02.iso` reconstructed exactly as the archive's `Decode.bat` specifies
+(`TQUS19.iso` followed by `TQUS02End.iso`). No BIOS, disc image, audio track or
+raw trace is stored in the repository.
+
+Mednafen reported the real 19-track TOC and consumed Track 02 at LBA 3234.
+The same session produced 159 raw CD-sector reads, 88 spawn-register samples,
+17 `$4644` entries and 64 `$4667` entries, but zero valid `$B0E5` entries,
+zero `$C96B/$CC4C` RNG windows, zero spawn-consumer reads and zero target
+writes. The complete CUE therefore strengthens media/runtime transport
+coverage but does not bind a gameplay consumer. RNG, dynamic spawn, creature
+AI, combat, loot, generator timing, T700 and T900 remain fail-closed.

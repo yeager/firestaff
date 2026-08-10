@@ -1,3 +1,14 @@
+# Theron: complete US CUE transport capture (2026-08-10)
+
+- ✅ Verifierade den kompletta användarlevererade 19-track-US-layouten på
+  extern disk: riktig CUE, CDDA-spår och Track 02 enligt arkivets egen
+  `Decode.bat`. Mednafen rapporterade Track 02 vid LBA 3234.
+- ✅ Samma session gav 159 råsektorer, 88 spawn-registersamples, 17 `$4644`
+  och 64 `$4667`.
+- 🔒 Noll giltiga `$B0E5`-entries, RNG-windows, spawn-consumer reads eller
+  target writes: detta är transportbevis, inte tillstånd att hitta på RNG,
+  AI, loot, T700 eller T900.
+
 # Theron: retain every decoded Track 02 object occurrence (2026-08-10)
 
 - ✅ `theron_v1_track02_dungeon_loader` binder nu varje autentiskt dekoderat

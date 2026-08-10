@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 — complete US CUE transport witness
+
+- ✅ Den riktiga 19-track-US-layouten verifierades på extern disk med CUE,
+  CDDA-spår och Track 02 enligt arkivets `Decode.bat`.
+- ✅ Mednafen rapporterade Track 02 vid LBA 3234; sessionen gav 159 råsektorer,
+  88 spawn-registersamples, 17 `$4644` och 64 `$4667`.
+- 🔒 Inget giltigt `$B0E5`/RNG-/spawn-/object-consumerkvitto fångades, så inga
+  syntetiska RNG-, AI-, loot-, T700- eller T900-regler publicerades.
+
 ## 2026-08-10 — lossless Track 02 world source ledger
 
 - ✅ Loadern binder nu varje autentiskt dekoderat ground-reference-record till

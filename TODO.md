@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+# Theron: complete US CUE capture remains transport-only (2026-08-10)
+
+- ✅ Kompletta användarlevererade `TQUS.cue` med 19 spår laddas nu på extern
+  disk; Track 02 byggs endast enligt arkivets riktiga `Decode.bat`.
+- 🔒 Körningen gav fortfarande noll giltiga `$B0E5`-spawnentries, RNG-window,
+  spawn-consumer reads och target writes. RNG, AI, T700/T900, loot och
+  source-bound ljud är därför inte aktiverade.
+
 # Theron: complete Track 02 source-occurrence retention (2026-08-10)
 
 - ✅ Alla 2 266 autentiska Track 02 ground-reference-occurrences i den riktiga

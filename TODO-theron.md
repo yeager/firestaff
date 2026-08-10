@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-10 — complete US CUE capture remains transport-only
+
+- ✅ Kompletta `TQUS.cue` med 19 spår kördes från extern disk. Track 02
+  rekonstruerades med arkivets verkliga `TQUS19.iso + TQUS02End.iso`.
+- 🔒 Sessionen gav 159 råsektorer, 88 spawn-registersamples, 17 `$4644` och
+  64 `$4667`, men noll giltiga `$B0E5`, RNG-windows, spawn-consumer reads eller
+  target writes. Semantiska konsumenter är fortsatt stängda.
+
 ## 2026-08-10 — all decoded Track 02 occurrences retained; consumers gated
 
 - ✅ Den riktiga US-kampanjen behåller nu alla 2 266 autentiska ground-reference-
