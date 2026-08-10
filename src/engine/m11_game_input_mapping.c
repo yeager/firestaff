@@ -81,15 +81,19 @@ M12_MenuInput M11_TheronNavigationInputFromScancode(int scancode)
     switch ((SDL_Scancode)scancode) {
         case SDL_SCANCODE_UP:
         case SDL_SCANCODE_W:
+        case SDL_SCANCODE_KP_8:
             return M12_MENU_INPUT_UP;
         case SDL_SCANCODE_DOWN:
         case SDL_SCANCODE_S:
+        case SDL_SCANCODE_KP_2:
             return M12_MENU_INPUT_DOWN;
         case SDL_SCANCODE_LEFT:
         case SDL_SCANCODE_A:
+        case SDL_SCANCODE_KP_4:
             return M12_MENU_INPUT_LEFT;
         case SDL_SCANCODE_RIGHT:
         case SDL_SCANCODE_D:
+        case SDL_SCANCODE_KP_6:
             return M12_MENU_INPUT_RIGHT;
         default:
             return M12_MENU_INPUT_NONE;

@@ -96,6 +96,14 @@ int main(void) {
           M12_MENU_INPUT_LEFT);
     CHECK(M11_TheronNavigationInputFromScancode(SDL_SCANCODE_D) ==
           M12_MENU_INPUT_RIGHT);
+    CHECK(M11_TheronNavigationInputFromScancode(SDL_SCANCODE_KP_8) ==
+          M12_MENU_INPUT_UP);
+    CHECK(M11_TheronNavigationInputFromScancode(SDL_SCANCODE_KP_2) ==
+          M12_MENU_INPUT_DOWN);
+    CHECK(M11_TheronNavigationInputFromScancode(SDL_SCANCODE_KP_4) ==
+          M12_MENU_INPUT_LEFT);
+    CHECK(M11_TheronNavigationInputFromScancode(SDL_SCANCODE_KP_6) ==
+          M12_MENU_INPUT_RIGHT);
     CHECK(M11_TheronNavigationInputFromKeycode(SDLK_W) ==
           M12_MENU_INPUT_UP);
     CHECK(M11_TheronNavigationInputFromKeycode(SDLK_S) ==
