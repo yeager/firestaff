@@ -2,6 +2,20 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — real seven-dungeon creature/object admission verified
+
+- ✅ `test_theron_v1_track02_dungeon_loader` passerar mot riktiga `TQUS02.bin`
+  och `TQJP02.bin` för alla sju dungeons.
+- ✅ US/JP category-4 monsterrecords materialiseras som levande creatures med
+  source-ref, source-index, typ, gruppmedlemmar, HP, cell, direction/flags och
+  `chested` bundna byte-för-byte till recordet.
+- ✅ Carried weapon/clothing/scroll/potion-records behåller rå payload och
+  autentiserad property-row genom TAKE/DROP. Detta är fortfarande inte bevis
+  för originalets attack-, AI-, RNG-, T700- eller T900-konsument.
+- 🔒 En ny extern combat-replay med 18 PCE-händelser gav snapshots men ingen
+  spelägd CD→RAM-handoff eller giltigt `$B0E5`/RNG-witness; råtrace ligger
+  utanför GitHub.
+
 ## 2026-08-11 — production Theron viewport uses the authenticated native screen route
 
 - ✅ `theron_vp_render_dungeon()` delegerar ett explicit laddat, hashverifierat

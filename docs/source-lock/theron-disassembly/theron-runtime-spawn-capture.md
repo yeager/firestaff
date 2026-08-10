@@ -644,6 +644,31 @@ samma autentiserade session och binda returvärde, källrecord och konsument.
 
 Råtrace, BIOS, System Card, BIN/CUE och savestate ligger kvar utanför GitHub.
 
+## 2026-08-11 — bounded combat replay remains transport-negative
+
+En ny extern-disk replay använde den autentiserade US-CUE:n och samma
+Mednafen-savestate med 18 frame-bundna PCE-händelser: rörelse, svängningar och
+Button I. Körningen avslutades normalt efter den bounded timeouten och gav
+VDC/VCE-snapshots, men ingen spelägd CD→RAM-originreceipt:
+
+```text
+track02_md5=f23601102138f87c33025877767ebf76
+system_card_md5=ff1a674273fe3540ccef576376407d1d
+scripted_pce_input_events=18
+authenticated_cd_ram_receipts=0
+spawn_consumer_reads=0
+spawn_entry_b0e5_address_hits=50
+spawn_entry_b0e5_samples=0
+rng_consumer_samples=0
+transition=missing
+```
+
+De 50 råa `$B0E5`-adresspassagerna bar samma ogiltiga A-värden `$2C`/`$85`
+som tidigare och är därför inte regular-spawn-calls. Denna körning öppnar
+inte RNG, monsterstats, AI, attack/skada, loot, generator, T700 eller T900.
+Mednafen, savestate, System Card och alla råtracefiler ligger kvar på
+extern-disken och är inte committade.
+
 ## 2026-08-11 — stack/caller witness for the rejected `$B0E5` overlay
 
 The external instrumented Mednafen binary was rebuilt to retain the HuC6280
