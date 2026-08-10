@@ -289,13 +289,14 @@ static void test_private_db0_recycler_candidate(void)
     dm2_v1_record_pool_set_free(&set);
 }
 
-/* A failed replacement must release an already completed private owner before
- * it clears the output.  This uses only the test-local synthetic pool owner;
- * no game data or recycler selection is fabricated. */
-static void test_sksave_owner_replacement_releases_owned_pools(void)
+/* A rejected replacement must retain the preceding complete private owner.
+ * This uses only a test-local pool owner; no game data or recycler selection
+ * is fabricated. */
+static void test_sksave_owner_replacement_is_atomic(void)
 {
     DM2_V1_SksaveGameLoadOwner owner;
     DM2_V1_RecordPoolSet owned_pools;
+    uint8_t *pool_bytes;
 
     memset(&owner, 0, sizeof(owner));
     build_synthetic(&owned_pools);
@@ -303,13 +304,15 @@ static void test_sksave_owner_replacement_releases_owned_pools(void)
     owner.valid = 1;
     owner.record_pools = owned_pools;
     memset(&owned_pools, 0, sizeof(owned_pools));
+    pool_bytes = owner.record_pools.pools[0].bytes;
 
     CHECK(!dm2_v1_sksave_game_load_owner_init(&owner, NULL, 0u, 0u,
                                                NULL, NULL, NULL) &&
-              owner.lifecycle_tag == 0u && !owner.valid &&
-              !owner.record_pools.valid &&
-              owner.record_pools.pools[0].bytes == NULL,
-          "SKSave owner replacement releases prior RAM pools on failure");
+              owner.lifecycle_tag == DM2_V1_SKSAVE_GAME_LOAD_OWNER_LIFECYCLE_TAG &&
+              owner.valid && owner.record_pools.valid &&
+              owner.record_pools.pools[0].bytes == pool_bytes,
+          "SKSave owner replacement preserves prior RAM pools on failure");
+    dm2_v1_sksave_game_load_owner_free(&owner);
 }
 
 int main(void)
@@ -457,7 +460,7 @@ int main(void)
 
     test_recycle_scan_traversal();
     test_private_db0_recycler_candidate();
-    test_sksave_owner_replacement_releases_owned_pools();
+    test_sksave_owner_replacement_is_atomic();
 
     CHECK(strstr(dm2_v1_record_pool_source_evidence(), "c_record.cpp") != NULL,
           "source evidence cites c_record.cpp");

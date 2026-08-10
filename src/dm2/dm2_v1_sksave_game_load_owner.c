@@ -341,9 +341,7 @@ int dm2_v1_sksave_game_load_owner_init(
         dm2_v1_sksave_game_load_owner_is_initialized(owner);
 
     if (!owner) return 0;
-    if (owner_was_initialized)
-        dm2_v1_sksave_game_load_owner_free(owner);
-    else
+    if (!owner_was_initialized)
         memset(owner, 0, sizeof(*owner));
     memset(&candidate, 0, sizeof(candidate));
     candidate.lifecycle_tag = DM2_V1_SKSAVE_GAME_LOAD_OWNER_LIFECYCLE_TAG;
@@ -365,11 +363,14 @@ int dm2_v1_sksave_game_load_owner_init(
         !dm2_v1_sksave_owner_rebuild_timer_backlinks(&candidate) ||
         !dm2_v1_sksave_owner_init_recycler_context(&candidate)) {
         dm2_v1_sksave_game_load_owner_free(&candidate);
+        if (!owner_was_initialized) memset(owner, 0, sizeof(*owner));
         return 0;
     }
     candidate.savegamew7 = savegamew7;
     candidate.valid = 1;
     candidate.source_game_load_session_ready = 0;
+    if (owner_was_initialized)
+        dm2_v1_sksave_game_load_owner_free(owner);
     *owner = candidate;
     return 1;
 }

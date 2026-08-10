@@ -819,9 +819,9 @@
 - 🔧 DM2 SKSAVE GAME_LOAD: en privat RAM-ägare behåller nu de källordnade
   fixed-sektionerna, c_hero, c_tim med heap/fri-lista, c_map och c_record
   först efter att hela den befintliga återställningskedjan lyckats. Den
-  ersätter nu också tidigare RAM-ägande atomärt vid ny import och frigör
-  gamla kart-/poolkopior vid ett misslyckat ersättningsförsök; detta öppnar
-  inte Resume eller ändrar den källbundna recyclergrinden.
+  ersätter nu också tidigare RAM-ägande atomärt vid ny import och behåller
+  gamla kart-/poolkopior om ett nytt försök avvisas; detta öppnar inte Resume
+  eller ändrar den källbundna recyclergrinden.
   verkliga DOS-korpusen når den autentiska recyclergränsen; DB2/Text är
   uttryckligen spärrad som kedjegräns och får inte maskera DB0/DB4/DB14.
   `READ_RECORD_CHECKCODE` bevarar dessutom

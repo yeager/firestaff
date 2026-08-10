@@ -120,11 +120,12 @@
 # DM2: SKSAVE-ägare ersätts utan RAM-läckage (2026-08-10)
 
 - ✅ Den privata SKSAVE GAME_LOAD-ägaren har nu ett explicit livscykelmärke.
-  En ny import frigör atomärt tidigare ägda c_map-/recordpoolkopior innan
-  den ersätter resultatet, även när den nya importen avvisas.
+  En ny import ersätter tidigare ägda c_map-/recordpoolkopior först när hela
+  den nya transaktionen lyckats; ett avvisat försök lämnar föregående ägare
+  orörd.
 - ✅ Regressionen bygger enbart en testlokal poolägare och verifierar att ett
-  misslyckat init lämnar utdata helt nollställd. Den autentiska DOS-korpusen
-  passerar fortsatt 259 kontroller utan att Resume öppnas.
+  misslyckat init behåller den föregående ägda poolen. Den autentiska
+  DOS-korpusen passerar fortsatt 259 kontroller utan att Resume öppnas.
 
 # DM2: SKSAVE:s DB0-recycler väljer nu privat och läsande (2026-08-10)
 

@@ -122,8 +122,9 @@ typedef struct {
 
 /* Materialize one fully source-walked private transaction.  `raw_body` is
  * the original SKSAVE payload after its 42-byte header; it is never modified
- * or retained.  A completed owner is atomically replaced; on failure it is
- * cleared and no partial owner survives. */
+ * or retained.  A completed owner is atomically replaced only after the new
+ * transaction succeeds; an unsuccessful replacement leaves that owner
+ * unchanged.  Uninitialized output is cleared on failure. */
 int dm2_v1_sksave_game_load_owner_init(
     DM2_V1_SksaveGameLoadOwner *owner,
     const uint8_t *raw_body, size_t raw_body_size, uint16_t savegamew7,
