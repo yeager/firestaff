@@ -1,6 +1,7 @@
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -12,10 +13,13 @@ int main(int argc, char** argv) {
     M12_StartupMenuState menu;
     M11_GameViewState game;
     char name[64], title[64];
+    char narrowed[1024];
+    const char* dataDir;
     int i;
     const struct DungeonThings_Compat* things;
     if (argc < 2) return 2;
-    M12_StartupMenu_InitWithDataDir(&menu, argv[1], NULL);
+    dataDir = firestaff_dm1_probe_narrow_data_dir(argv[1], narrowed, sizeof(narrowed));
+    M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
     M11_GameView_Init(&game);
     if (!M11_GameView_OpenSelectedMenuEntry(&game, &menu)) { fprintf(stderr,"open failed\n"); return 1; }
     for (i = 0; i < 32; ++i) {
