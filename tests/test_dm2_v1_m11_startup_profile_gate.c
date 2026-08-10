@@ -2505,6 +2505,14 @@ int main(void) {
     int16_t runtime_candidate_display_y_before = -1;
     uint8_t runtime_candidate_display_direction_before = 0u;
     int runtime_candidate_display_alternate_before = 0;
+    DM2_V1_GameLoadSpatialQueryReceipt runtime_candidate_spatial_query;
+    int runtime_candidate_spatial_candidate_index = -1;
+    int16_t runtime_candidate_spatial_x = -1;
+    int16_t runtime_candidate_spatial_y = -1;
+    uint32_t runtime_candidate_spatial_handle = 0xffffu;
+    uint8_t runtime_candidate_source_creature_before[16];
+    uint8_t runtime_candidate_source_slot_before[DM2_V1_CAII_SLOT_SIZE];
+    int runtime_candidate_source_slot_index = -1;
     int new_game_generators_result;
     int new_game_owner_initialized;
     int new_game_noop_map = -1;
@@ -5015,12 +5023,89 @@ int main(void) {
                         profile_new_game_owner->timer_entries &&
                     runtime_session_candidate.caii_slots.slots !=
                         profile_new_game_owner->caii_slots.slots &&
+                    runtime_session_candidate.caii_source.valid &&
+                    runtime_session_candidate.caii_source.db4_indices !=
+                        profile_new_game_owner->caii_source.db4_indices &&
+                    runtime_session_candidate.caii_source.db4_creature_types !=
+                        profile_new_game_owner->caii_source.db4_creature_types &&
+                    runtime_session_candidate.asset_loader ==
+                        profile_new_game_owner->asset_loader &&
                     dm2_test_fnv1a(profile_new_game_owner->dungeon.raw_data,
                         (size_t)profile_new_game_owner->dungeon.raw_size) ==
                         runtime_candidate_source_hash_before &&
                     !profile->source_game_load_session_ready &&
                     view.world.party.championCount == 0,
                 "DM2 clones the fully materialized private GAME_LOAD state after dynamic CAII admission");
+    /* Restore the deliberately altered provenance byte before exercising a
+     * real c_querydb path.  The preceding assertion has already proved the
+     * clone copied that mutable byte; this query must instead see the source
+     * creature type that selects its genuine AIDefinition/GDAT row. */
+    if (runtime_candidate_db4_mutated && profile_new_game_owner &&
+        runtime_session_candidate.valid) {
+        ((DM2_V1_GameLoadWorldOwner *)profile_new_game_owner)->record_pools
+            .pools[4].bytes[4] = runtime_candidate_db4_byte_before;
+        runtime_session_candidate.record_pools.pools[4].bytes[4] =
+            runtime_candidate_db4_byte_before;
+    }
+    if (runtime_session_candidate.valid && profile_new_game_owner) {
+        for (int index = 0;
+             index < profile_new_game_owner->caii_map_receipt.candidate_count;
+             ++index) {
+            const DM2_V1_GameLoadCaiiMapCandidate *probe =
+                &profile_new_game_owner->caii_map_candidates[index];
+            const uint8_t *source_record;
+
+            if (probe->static_ai || probe->map < 0 || probe->x < 0 ||
+                probe->y < 0) continue;
+            source_record = dm2_v1_record_pool_address(
+                &profile_new_game_owner->record_pools, probe->record_handle);
+            if (!source_record || source_record[5] == 0xffu ||
+                source_record[5] >= profile_new_game_owner->caii_slots.capacity)
+                continue;
+            runtime_candidate_spatial_candidate_index = index;
+            runtime_candidate_spatial_x = probe->x;
+            runtime_candidate_spatial_y = probe->y;
+            runtime_candidate_source_slot_index = source_record[5];
+            memcpy(runtime_candidate_source_creature_before, source_record,
+                   sizeof(runtime_candidate_source_creature_before));
+            memcpy(runtime_candidate_source_slot_before,
+                   profile_new_game_owner->caii_slots.slots +
+                       (size_t)runtime_candidate_source_slot_index *
+                           DM2_V1_CAII_SLOT_SIZE,
+                   sizeof(runtime_candidate_source_slot_before));
+            break;
+        }
+        memset(&runtime_candidate_spatial_query, 0,
+               sizeof(runtime_candidate_spatial_query));
+        expect_true(runtime_candidate_spatial_candidate_index >= 0 &&
+                        dm2_v1_game_load_runtime_session_candidate_change_current_map_to(
+                            &runtime_session_candidate,
+                            profile_new_game_owner->caii_map_candidates[
+                                runtime_candidate_spatial_candidate_index].map) &&
+                        dm2_v1_game_load_runtime_session_candidate_query_nearest_creature(
+                            &runtime_session_candidate,
+                            &runtime_candidate_spatial_x,
+                            &runtime_candidate_spatial_y, 0xffu,
+                            &runtime_candidate_spatial_handle,
+                            &runtime_candidate_spatial_query) &&
+                        runtime_candidate_spatial_query.valid &&
+                        runtime_candidate_spatial_query.source.valid &&
+                        runtime_candidate_spatial_query.source.steps > 0u &&
+                        memcmp(runtime_candidate_source_creature_before,
+                               dm2_v1_record_pool_address(
+                                   &profile_new_game_owner->record_pools,
+                                   profile_new_game_owner->caii_map_candidates[
+                                       runtime_candidate_spatial_candidate_index].record_handle),
+                               sizeof(runtime_candidate_source_creature_before)) == 0 &&
+                        memcmp(runtime_candidate_source_slot_before,
+                               profile_new_game_owner->caii_slots.slots +
+                                   (size_t)runtime_candidate_source_slot_index *
+                                       DM2_V1_CAII_SLOT_SIZE,
+                               sizeof(runtime_candidate_source_slot_before)) == 0 &&
+                        !profile->source_game_load_session_ready &&
+                        view.world.party.championCount == 0,
+                    "DM2 runs c_querydb over the cloned CAII/GDAT owner without mutating source state");
+    }
     if (runtime_session_candidate.valid) {
         runtime_candidate_other_map = runtime_session_candidate.current_map == 0 ?
             1 : 0;

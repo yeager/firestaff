@@ -22,6 +22,7 @@
 #include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_sound.h"
+#include "dm2_v1_skproject_core.h"
 #include "dm2_v1_timer_queue_pc34_compat.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_world_model.h"
@@ -573,8 +574,16 @@ typedef struct {
     DM2_V1_TimerQueue timer_queue;
     uint16_t timer_capacity;
     DM2_V1_CaiiArray caii_slots;
+    /* Deep clone of the exact AI-definition table that admitted this
+     * candidate.  It is deliberately separate from the mutable DB4 pool:
+     * the pool is cloned from the post-RESET/FILL owner while these rows are
+     * immutable GDAT/executable source data. */
+    DM2_V1_CaiiSourceOwner caii_source;
     DM2_V1_DropRng caii_rng;
     int caii_rng_initialized;
+    /* Borrowed immutable, hash-admitted GDAT. The candidate never writes it;
+     * it is required by c_querydb's real dtRaw7/0xfd creature-position path. */
+    const DM2_V1_AssetLoader *asset_loader;
     DM2_V1_GameLoadSoundOwner sound_owner;
     /* The candidate owns c_map's selected descriptor/tile/column view plus
      * the global first-thing record-root table, separately from party
@@ -604,6 +613,24 @@ typedef struct {
     int16_t source_last_moved_record;
 } DM2_V1_GameLoadRuntimeSessionCandidate;
 
+/* Private, source-complete c_querydb spatial scan over a cloned GAME_LOAD
+ * candidate. It resolves map-chain DB4 records, the cloned CAII position
+ * cursor and hash-admitted GDAT dtRaw7/0xfd. Any cursor mutation remains in
+ * the candidate; the prepared source world, M11 and live runtime are never
+ * touched. Source: SKULLWIN/c_querydb.cpp::DM2_query_1c9a_03cf (3769-3844),
+ * ::DM2_QUERY_CREATURE_5x5_POS (3012-3034). */
+typedef struct {
+    int valid;
+    int blocked_invalid_candidate;
+    int blocked_out_of_bounds;
+    int blocked_missing_owner;
+    int16_t input_x;
+    int16_t input_y;
+    uint16_t direction;
+    uint32_t result_handle;
+    DM2_V1_SkprojectQuery1c9a03cfReceipt source;
+} DM2_V1_GameLoadSpatialQueryReceipt;
+
 /* Clone every already-owned mutable GAME_LOAD predecessor atomically, but
  * only after the complete CAII transaction has been materialized.  On
  * failure `out` remains zeroed and the source owner and source media are
@@ -621,6 +648,11 @@ void dm2_v1_game_load_runtime_session_candidate_free(
  * dispatches timers or exposes M11 state. */
 int dm2_v1_game_load_runtime_session_candidate_change_current_map_to(
     DM2_V1_GameLoadRuntimeSessionCandidate *candidate, int new_map);
+
+int dm2_v1_game_load_runtime_session_candidate_query_nearest_creature(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    int16_t *io_x, int16_t *io_y, uint16_t direction,
+    uint32_t *out_handle, DM2_V1_GameLoadSpatialQueryReceipt *out_receipt);
 
 /* Build the source-owned GAME_LOAD predecessor without selecting a champion.
  * It clones only the authenticated File_header, DB pools, DYN4 and timer

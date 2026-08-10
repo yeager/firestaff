@@ -1649,11 +1649,229 @@ void dm2_v1_game_load_runtime_session_candidate_free(
     if (!candidate) return;
     dm2_v1_game_load_runtime_candidate_sound_free(&candidate->sound_owner);
     dm2_v1_caii_array_free(&candidate->caii_slots);
+    dm2_v1_caii_source_owner_free(&candidate->caii_source);
     free(candidate->timer_indices);
     free(candidate->timer_entries);
     dm2_v1_record_pool_set_free(&candidate->record_pools);
     dm2_v1_dungeon_free(&candidate->dungeon);
     memset(candidate, 0, sizeof(*candidate));
+}
+
+typedef struct {
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate;
+    DM2_V1_SkprojectCreatureAISpec ai_spec;
+    int owner_failed;
+} DM2_V1_GameLoadSpatialQueryContext;
+
+static int32_t dm2_v1_game_load_spatial_creature_at(int16_t x, int16_t y,
+                                                     void *user)
+{
+    DM2_V1_GameLoadSpatialQueryContext *context = user;
+    int16_t handle;
+
+    if (!context || !context->candidate || x < 0 || y < 0 ||
+        x >= context->candidate->map_context.width ||
+        y >= context->candidate->map_context.height) {
+        return -1;
+    }
+    handle = dm2_v1_get_creature_at(&context->candidate->record_pools,
+                                    &context->candidate->dungeon,
+                                    context->candidate->current_map, x, y);
+    return handle == DM2_V1_RECORD_HANDLE_NULL ? -1 : (int32_t)handle;
+}
+
+static const uint8_t *dm2_v1_game_load_spatial_record(uint16_t handle,
+                                                       uint16_t *out_size,
+                                                       void *user)
+{
+    DM2_V1_GameLoadSpatialQueryContext *context = user;
+    const DM2_V1_RecordPool *pool;
+    const uint8_t *record;
+    int db;
+
+    if (out_size) *out_size = 0u;
+    if (!context || !context->candidate ||
+        dm2_v1_record_handle_pool((int16_t)handle) != 4) {
+        return NULL;
+    }
+    db = dm2_v1_record_handle_pool((int16_t)handle);
+    pool = &context->candidate->record_pools.pools[db];
+    if (!pool->bytes || pool->record_size < 16) return NULL;
+    record = dm2_v1_record_pool_address(&context->candidate->record_pools,
+                                        (int16_t)handle);
+    if (!record) return NULL;
+    if (out_size) *out_size = (uint16_t)pool->record_size;
+    return record;
+}
+
+static const DM2_V1_SkprojectCreatureAISpec *
+dm2_v1_game_load_spatial_ai_spec(uint8_t creature_type, void *user)
+{
+    DM2_V1_GameLoadSpatialQueryContext *context = user;
+    const DM2_AIDefinition *source = NULL;
+
+    if (!context || !context->candidate ||
+        !dm2_v1_caii_source_owner_ai_spec_def(&context->candidate->caii_source,
+                                               creature_type, &source) ||
+        !source) {
+        if (context) context->owner_failed = 1;
+        return NULL;
+    }
+    context->ai_spec.word30 = source->w30;
+    context->ai_spec.word32 = source->w32;
+    context->ai_spec.word34 = (uint16_t)source->b34 |
+                               ((uint16_t)source->b35 << 8);
+    return &context->ai_spec;
+}
+
+static uint16_t dm2_v1_game_load_spatial_pos5x5(const uint8_t *record,
+                                                 uint16_t record_size,
+                                                 uint8_t rotation_param,
+                                                 void *user)
+{
+    DM2_V1_GameLoadSpatialQueryContext *context = user;
+    const DM2_AIDefinition *ai = NULL;
+    const uint8_t *gdat;
+    uint8_t *cursor;
+    size_t gdat_size = 0u;
+    uint16_t addend;
+    uint16_t timer_word;
+    uint8_t pos = 0x0cu;
+
+    if (!context || !context->candidate || !record || record_size < 16u ||
+        !context->candidate->asset_loader ||
+        !context->candidate->asset_loader->loaded ||
+        !dm2_v1_caii_source_owner_ai_spec_def(&context->candidate->caii_source,
+                                               record[4], &ai) || !ai) {
+        if (context) context->owner_failed = 1;
+        return 0x0cu;
+    }
+    if ((ai->w0AIFlags & 1u) != 0u) {
+        cursor = (uint8_t *)record + 8u;
+    } else {
+        uint8_t slot_index = record[5];
+        uint8_t *slot;
+        uint16_t record_index;
+
+        if (slot_index == 0xffu || !context->candidate->caii_slots.valid ||
+            (int)slot_index >= context->candidate->caii_slots.capacity) {
+            context->owner_failed = 1;
+            return 0x0cu;
+        }
+        slot = context->candidate->caii_slots.slots +
+            (size_t)slot_index * DM2_V1_CAII_SLOT_SIZE;
+        record_index = dm2_v1_game_load_owner_read_u16le(slot);
+        if (record_index != ((uint16_t)(record -
+                context->candidate->record_pools.pools[4].bytes) /
+                (uint16_t)context->candidate->record_pools.pools[4].record_size &
+                DM2_V1_RECORD_INDEX_MASK)) {
+            context->owner_failed = 1;
+            return 0x0cu;
+        }
+        cursor = slot + 8u;
+    }
+    gdat = dm2_v1_asset_load_typed_sized(
+        context->candidate->asset_loader, DM2_GDAT_CATEGORY_CREATURES,
+        record[4], DM2_GDAT_ENTRY_TYPE_RAW7,
+        DM2_GDAT_CREATURE_ANIM_FRAME_SEQUENCE, &gdat_size);
+    /* QUERY_CREATURE_5x5_POS returns the source's centre position 0x0c when
+     * an otherwise admitted GDAT row is absent. Missing media ownership is
+     * different and was rejected above. */
+    if (!gdat) return 0x0cu;
+    addend = dm2_v1_game_load_owner_read_u16le(cursor);
+    timer_word = dm2_v1_game_load_owner_read_u16le(cursor + 2u);
+    if (!dm2_v1_skproject_query_creature_5x5_pos(
+            record, rotation_param,
+            &(DM2_V1_SkprojectCreatureAISpec){
+                ai->w30, ai->w32,
+                (uint16_t)ai->b34 | ((uint16_t)ai->b35 << 8)},
+            addend, &timer_word, gdat,
+            (uint32_t)gdat_size, &pos, NULL)) {
+        context->owner_failed = 1;
+        return 0x0cu;
+    }
+    dm2_v1_game_load_owner_write_u16le(cursor + 2u, timer_word);
+    return pos;
+}
+
+static int dm2_v1_game_load_spatial_query_098d(int16_t x, int16_t y,
+                                                int16_t value, int16_t *out_x,
+                                                int16_t *out_y, void *user)
+{
+    (void)user;
+    return dm2_v1_skproject_098d_000f(x, y, value, out_x, out_y, NULL);
+}
+
+int dm2_v1_game_load_runtime_session_candidate_query_nearest_creature(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate, int16_t *io_x,
+    int16_t *io_y, uint16_t direction, uint32_t *out_handle,
+    DM2_V1_GameLoadSpatialQueryReceipt *out_receipt)
+{
+    DM2_V1_GameLoadSpatialQueryReceipt receipt;
+    DM2_V1_GameLoadSpatialQueryContext context;
+    int result;
+
+    if (out_handle) *out_handle = 0xffffu;
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&context, 0, sizeof(context));
+    if (!candidate || !candidate->valid || !io_x || !io_y || !out_handle) {
+        receipt.blocked_invalid_candidate = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.input_x = *io_x;
+    receipt.input_y = *io_y;
+    receipt.direction = direction;
+    if (!candidate->asset_loader || !candidate->asset_loader->loaded ||
+        !candidate->caii_source.valid || !candidate->caii_slots.valid ||
+        !candidate->record_pools.valid || !candidate->map_context.valid) {
+        receipt.blocked_missing_owner = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (*io_x < 0 || *io_y < 0 || *io_x >= candidate->map_context.width ||
+        *io_y >= candidate->map_context.height ||
+        (direction != 0xffu && direction >= 4u)) {
+        receipt.blocked_out_of_bounds = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    context.candidate = candidate;
+    result = dm2_v1_skproject_query_1c9a_03cf(
+        io_x, io_y, direction, dm2_v1_game_load_spatial_creature_at,
+        dm2_v1_game_load_spatial_record, dm2_v1_game_load_spatial_ai_spec,
+        dm2_v1_game_load_spatial_pos5x5, dm2_v1_game_load_spatial_query_098d,
+        &context, dm2_v1_table_1d2752,
+        (uint16_t)(sizeof(dm2_v1_table_1d2752) /
+                   sizeof(dm2_v1_table_1d2752[0])),
+        dm2_v1_table_1d62b0,
+        (uint16_t)(sizeof(dm2_v1_table_1d62b0) /
+                   sizeof(dm2_v1_table_1d62b0[0])),
+        dm2_v1_table_1d62d0,
+        (uint16_t)(sizeof(dm2_v1_table_1d62d0) /
+                   sizeof(dm2_v1_table_1d62d0[0])),
+        dm2_v1_table_1d62e0,
+        (uint16_t)(sizeof(dm2_v1_table_1d62e0) /
+                   sizeof(dm2_v1_table_1d62e0[0])),
+        dm2_v1_table_1d62e8,
+        (uint16_t)(sizeof(dm2_v1_table_1d62e8) /
+                   sizeof(dm2_v1_table_1d62e8[0])), out_handle,
+        &receipt.source);
+    if (context.owner_failed) {
+        *out_handle = 0xffffu;
+        receipt.blocked_missing_owner = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.result_handle = *out_handle;
+    receipt.valid = receipt.source.valid;
+    if (out_receipt) *out_receipt = receipt;
+    /* The source returns OBJECT_END_MARKER when its five-cell scan has no
+     * qualifying creature. That is a valid completed query, not an owner
+     * failure. The caller distinguishes it through result_handle. */
+    (void)result;
+    return 1;
 }
 
 /* c_map.cpp::DM2_CHANGE_CURRENT_MAP_TO has no party movement side effect.
@@ -1757,6 +1975,8 @@ int dm2_v1_game_load_runtime_session_candidate_init(
         source->caii_dynamic.source_hash == 0u ||
         !source->caii_slots.valid || source->caii_slots.capacity <= 0 ||
         !source->caii_slots.slots || !source->caii_rng_initialized ||
+        !source->caii_source.valid || !source->asset_loader ||
+        !source->asset_loader->loaded ||
         !source->sound_owner.valid || !source->sound_owner.runtime_queue_initialized) {
         return 0;
     }
@@ -1795,6 +2015,9 @@ int dm2_v1_game_load_runtime_session_candidate_init(
     memcpy(candidate.caii_slots.slots, source->caii_slots.slots,
            (size_t)source->caii_slots.capacity * DM2_V1_CAII_SLOT_SIZE);
     candidate.caii_slots.alloc_count = source->caii_slots.alloc_count;
+    if (!dm2_v1_caii_source_owner_clone(&candidate.caii_source,
+                                        &source->caii_source)) goto fail;
+    candidate.asset_loader = source->asset_loader;
     if (!dm2_v1_game_load_runtime_candidate_sound_clone(&candidate.sound_owner,
                                                          &source->sound_owner)) goto fail;
     candidate.party = source->selected_party;

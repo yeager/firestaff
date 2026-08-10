@@ -1,3 +1,18 @@
+# DM2: privat c_querydb över GAME_LOAD-kandidaten (2026-08-10)
+
+- ✅ `GameLoadRuntimeSessionCandidate` klonar nu den autentiserade
+  AIDefinition-/DB4-provenansen tillsammans med den muterade recordpoolen
+  och lånar enbart hashadmitterad, oföränderlig GDAT. Därmed kan
+  `DM2_query_1c9a_03cf` använda originalets femrutescan,
+  `DM2_QUERY_CREATURE_5x5_POS` och den riktiga `dtRaw7/0xfd`-raden utan en
+  värdskapad spatialdatabas.
+- ✅ DB4- och CAII-kursorns `DM2_query_4DA3`-mutation stannar i kandidatens
+  separata RAM. Realdatatestet väljer en faktisk dynamisk DOS-varelse och
+  bevisar att källägarens DB4-record och 34-byte CAII-slot är byteidentiska
+  efter frågan. Ingen party, HUD, M11-input eller live-session publiceras.
+- ✅ Källkontroll: SKProject `SKULLWIN/c_querydb.cpp:2961-3034,3769-3844`
+  samt den hashverifierade PC-DOS `GRAPHICS.DAT`/`DUNGEON.DAT`-profilen.
+
 # DM2: querydb behåller CAII-timerordet (2026-08-10)
 
 - ✅ `DM2_QUERY_CREATURE_5x5_POS` tar nu den riktiga DB4/CAII-kursorns

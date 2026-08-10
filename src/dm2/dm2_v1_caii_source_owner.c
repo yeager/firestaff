@@ -153,6 +153,38 @@ fail:
     return 0;
 }
 
+int dm2_v1_caii_source_owner_clone(DM2_V1_CaiiSourceOwner *out,
+                                   const DM2_V1_CaiiSourceOwner *source)
+{
+    DM2_V1_CaiiSourceOwner candidate;
+    size_t count;
+
+    if (!out || !source || !source->valid || source->db4_record_count == 0u ||
+        !source->db4_indices || !source->db4_creature_types ||
+        source->source_hash == 0u) {
+        return 0;
+    }
+    memset(out, 0, sizeof(*out));
+    memset(&candidate, 0, sizeof(candidate));
+    candidate = *source;
+    candidate.db4_indices = NULL;
+    candidate.db4_creature_types = NULL;
+    count = (size_t)source->db4_record_count;
+    candidate.db4_indices = malloc(count * sizeof(*candidate.db4_indices));
+    candidate.db4_creature_types = malloc(
+        count * sizeof(*candidate.db4_creature_types));
+    if (!candidate.db4_indices || !candidate.db4_creature_types) {
+        dm2_v1_caii_source_owner_free(&candidate);
+        return 0;
+    }
+    memcpy(candidate.db4_indices, source->db4_indices,
+           count * sizeof(*candidate.db4_indices));
+    memcpy(candidate.db4_creature_types, source->db4_creature_types,
+           count * sizeof(*candidate.db4_creature_types));
+    *out = candidate;
+    return 1;
+}
+
 void dm2_v1_caii_source_owner_free(DM2_V1_CaiiSourceOwner *owner)
 {
     if (!owner) return;

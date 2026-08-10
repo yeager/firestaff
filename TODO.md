@@ -258,7 +258,10 @@
   dispatchgrenarna; kartbyte får inte publicera M11-party, HUD eller input
   förrän alla dessa grenar ägs av samma transaktion. Recordpoolerna ska
   fortsatt klonas från den muterade ägaren, inte från den ursprungliga
-  filbilden.
+  filbilden. Kandidaten kan nu dessutom köra originalets läsande
+  `DM2_query_1c9a_03cf` över sin egen DB4-/CAII-/GDAT-ägare; nästa steg är
+  att binda samma ägare till `12b4_0881` och `moverec_3CE7D`, inte att
+  ersätta deras dispatch med en tom-ruteheuristik.
 
 - ⏳ DM2:s DOS-, FM Towns- och Amiga-startmedia väcks nu var 16 ms i M11, med
   källornas egna ackumulatorer för bildtid. Återstår gör den riktiga Amiga

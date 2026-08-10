@@ -52,6 +52,12 @@ typedef struct {
 int dm2_v1_caii_source_owner_init(DM2_V1_CaiiSourceOwner *owner,
                                   const DM2_V1_AssetLoader *loader,
                                   const DM2_V1_DungeonData *dungeon);
+/* Clone the retained, source-derived AI table and DB4 identity arrays.  This
+ * is for a private GAME_LOAD candidate: its mutable DB4 pool may no longer
+ * be reconstructed from DUNGEON.DAT after RESET_CAII/FILL_CAII have run.
+ * On failure `out` is zeroed and `source` is untouched. */
+int dm2_v1_caii_source_owner_clone(DM2_V1_CaiiSourceOwner *out,
+                                   const DM2_V1_CaiiSourceOwner *source);
 void dm2_v1_caii_source_owner_free(DM2_V1_CaiiSourceOwner *owner);
 
 /* Source equivalent of CREATURES[type].word@5 -> AIDefinition. The row is
