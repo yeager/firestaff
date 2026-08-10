@@ -32,6 +32,11 @@
 
 ### Fixed
 
+- `M12 asset selection`: Restore the authenticated PC-first default when a
+  data root contains both PC and FM Towns media. FM Towns remains an explicit
+  platform choice; AUTO no longer routes the PC34 HoC transaction through the
+  native FM Towns runtime.
+
 - `M11 DM1 F0275 wall sensors`: Fix C012/C013/C016 object-generator,
   storage, and exchanger transactions to mutate the authenticated Thing chain
   and leader hand atomically, with rollback when a link or allocation fails.
@@ -106,6 +111,10 @@
   nested broad-data and per-game roots before starting the launcher scan. The
   real-data no-creature-AI guard now passes from the same broad data directory
   used by the application.
+- `DM1 start-menu data scope`: Fix explicit `data/dm1` roots being promoted
+  into a cross-game archive scan before HoC startup. A selected game leaf now
+  uses the authenticated selected-game scan path, while a parent data root
+  keeps cross-game discovery.
 - `DM1 creature AI ownership`: Correct the M11 documentation so the
   source-ordered M10 F0209 timeline is explicitly the live DM1 owner; the M11
   creature routine is diagnostic-only when no source timeline is admitted.

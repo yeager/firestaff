@@ -3584,6 +3584,37 @@ static int m12_startup_data_dir_is_game_leaf(const char* dataDir) {
            strcmp(leaf, "theron") == 0;
 }
 
+static const char* m12_startup_game_id_for_data_dir(const char* dataDir) {
+    const char* slash;
+    const char* backslash;
+    const char* leaf;
+    if (!dataDir || dataDir[0] == '\0') {
+        return NULL;
+    }
+    slash = strrchr(dataDir, '/');
+    backslash = strrchr(dataDir, '\\');
+    leaf = slash && backslash
+        ? (slash > backslash ? slash + 1 : backslash + 1)
+        : (slash ? slash + 1 : (backslash ? backslash + 1 : dataDir));
+    if (strcmp(leaf, "dm1") == 0 ||
+        strcmp(leaf, "dm1-multilingual") == 0) {
+        return "dm1";
+    }
+    if (strcmp(leaf, "csb") == 0) {
+        return "csb";
+    }
+    if (strcmp(leaf, "dm2") == 0) {
+        return "dm2";
+    }
+    if (strcmp(leaf, "nexus") == 0) {
+        return "nexus";
+    }
+    if (strcmp(leaf, "theron") == 0) {
+        return "theron";
+    }
+    return NULL;
+}
+
 static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
                                           M12_Config* config,
                                           int hasExplicitDataDirOverride,
@@ -3611,16 +3642,20 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
         }
         if ((!gameId || gameId[0] == '\0') &&
             m12_startup_data_dir_is_game_leaf(config->dataDir)) {
-            if (progressFn) {
-                M12_AssetStatusScanOptions scanOptions;
-                memset(&scanOptions, 0, sizeof(scanOptions));
-                scanOptions.progressFn = progressFn;
-                scanOptions.progressUserData = progressUserData;
-                (void)M12_AssetStatus_ScanWithOptions(&state->assetStatus,
-                                                      config->dataDir,
-                                                      &scanOptions);
-            } else {
-                M12_AssetStatus_Scan(&state->assetStatus, config->dataDir);
+            const char* leafGameId =
+                m12_startup_game_id_for_data_dir(config->dataDir);
+            if (leafGameId) {
+                /* An explicit game leaf is already a scoped selection.  The
+                 * full scanner would promote it to the parent and inspect
+                 * every archive beside the selected game, which can make a
+                 * real DM1 HoC launch spend minutes inflating unrelated
+                 * FM Towns/other-edition media before M11 opens the dungeon.
+                 * Use the same selected-game production route as --game;
+                 * global roots retain the full cross-game scan below. */
+                M12_AssetStatus_ScanGameWithOptions(&state->assetStatus,
+                                                    config->dataDir,
+                                                    leafGameId,
+                                                    gameScan);
             }
         } else {
             M12_AssetStatusScanOptions scanOptions;

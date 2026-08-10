@@ -97,6 +97,11 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   requirements, notably original HoC/Mac pixel capture and an authenticated
   C13-bearing PC34 save.
 
+- 2026-08-10 AUTO platform regression corrected: commit `fbc4a9130` had made
+  FM Towns win over PC whenever both authentic DM1 media sets were present.
+  AUTO is PC-first again, so the default launch reaches the PC34 HoC route;
+  FM Towns remains available through an explicit platform selection.
+
 - 2026-08-09 startup save-census correction is complete: classifier discovery
   no longer emits false roundtrip failures without an original `DUNGEON.DAT`
   owner. Keep the backed PC34 roundtrip and remaining C13/original-capture
@@ -4522,6 +4527,13 @@ and real community-save corpus round-trip evidence.
     forward-click plus keypad fallback. This closes the capture harness's
     entrance-menu stall; it does not prove C13, and its save remains excluded
     from the C13 corpus until the decoded file contains a C13 event.
+
+  - 2026-08-10 startup-scan regression correction: an explicit per-game
+    `data/dm1` root no longer promotes into the broad cross-game archive scan
+    before HoC startup. The selected-game production scan now reaches M11
+    without inflating unrelated FM Towns media; parent data roots retain their
+    full cross-game discovery behavior. This fixes the launcher-startup hang,
+    not the still-open original HoC pixel-capture comparison.
 
 ## DM1 C13 F0435 stale-fence follow-up
 

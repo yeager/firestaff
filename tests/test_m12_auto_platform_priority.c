@@ -29,12 +29,12 @@ int main(void)
         status.versions[i][fmtowns].matched = 1;
         selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
             &status, games[i], M12_ARCH_AUTO);
-        if (selected != fmtowns) {
-            fprintf(stderr, "FAIL: AUTO did not select FM Towns for %s\n", games[i]);
+        if (selected != pc) {
+            fprintf(stderr, "FAIL: AUTO did not retain PC-first selection for %s\n", games[i]);
             return 1;
         }
     }
-    puts("PASS: AUTO selects a verified FM Towns corpus for DM1, CSB and DM2");
+    puts("PASS: AUTO retains verified PC-first selection for DM1, CSB and DM2");
     {
         int a31e = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
         int a31m = M12_AssetStatus_FindVersionIndex("csb", "amiga31-multi");
