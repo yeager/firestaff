@@ -5009,6 +5009,34 @@ static int m12_game_version_count(const M12_StartupMenuState* state, int gameInd
     }
 }
 
+/* Choosing a concrete release is also a concrete source-platform choice.
+ * Keep AUTO for scans/defaults only: the later M12 launch handoff uses it to
+ * recover from stale persisted rows.  Without this binding, selecting A35
+ * from CSB's version row left AUTO active and re-opened the first A31 cache.
+ * ReDMCSB COMPILE.H:199-298 gives the A31/A35 program packages distinct
+ * APPB/KAOS handoffs. */
+static void m12_select_game_version(M12_StartupMenuState* state,
+                                    int gameIndex, int versionIndex) {
+    static const char* const gameIds[M12_CONFIG_GAME_COUNT] = {
+        "dm1", "csb", "dm2", "nexus", "theron"
+    };
+    const M12_AssetVersionStatus* version;
+    if (!state || gameIndex < 0 || gameIndex >= M12_CONFIG_GAME_COUNT) {
+        return;
+    }
+    versionIndex = m12_clamp_index(versionIndex,
+                                   m12_game_version_count(state, gameIndex));
+    state->gameOptions[gameIndex].versionIndex = versionIndex;
+    version = M12_AssetStatus_GetVersion(&state->assetStatus,
+                                         gameIds[gameIndex],
+                                         (size_t)versionIndex);
+    if (version) {
+        state->gameOptions[gameIndex].architectureIndex =
+            M12_AssetStatus_GetVersionArchitecture(gameIds[gameIndex],
+                                                    (size_t)versionIndex);
+    }
+}
+
 static void m12_normalize_game_version_index(M12_StartupMenuState* state, int gameIndex) {
     int count;
     if (!state || gameIndex < 0 || gameIndex >= M12_CONFIG_GAME_COUNT) {
@@ -5912,9 +5940,9 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             case M12_MENU_INPUT_LEFT:
                 if (state->gameOptSelectedRow < M12_GAME_OPT_ROW_COUNT) {
                     if (state->gameOptSelectedRow == M12_GAME_OPT_ROW_VERSION) {
-                        state->gameOptions[gi].versionIndex = m12_cycle_index(state->gameOptions[gi].versionIndex,
-                                                                              -1,
-                                                                              versionCount);
+                        m12_select_game_version(state, gi,
+                                                m12_cycle_index(state->gameOptions[gi].versionIndex,
+                                                                -1, versionCount));
                     } else if (state->gameOptSelectedRow == M12_GAME_OPT_ROW_ARCHITECTURE) {
                         state->gameOptions[gi].architectureIndex = m12_cycle_index(state->gameOptions[gi].architectureIndex,
                                                                                    -1,
@@ -5935,9 +5963,9 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             case M12_MENU_INPUT_RIGHT:
                 if (state->gameOptSelectedRow < M12_GAME_OPT_ROW_COUNT) {
                     if (state->gameOptSelectedRow == M12_GAME_OPT_ROW_VERSION) {
-                        state->gameOptions[gi].versionIndex = m12_cycle_index(state->gameOptions[gi].versionIndex,
-                                                                              1,
-                                                                              versionCount);
+                        m12_select_game_version(state, gi,
+                                                m12_cycle_index(state->gameOptions[gi].versionIndex,
+                                                                1, versionCount));
                     } else if (state->gameOptSelectedRow == M12_GAME_OPT_ROW_ARCHITECTURE) {
                         state->gameOptions[gi].architectureIndex = m12_cycle_index(state->gameOptions[gi].architectureIndex,
                                                                                    1,
@@ -6081,9 +6109,9 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     }
                 } else {
                     if (state->gameOptSelectedRow == M12_GAME_OPT_ROW_VERSION) {
-                        state->gameOptions[gi].versionIndex = m12_cycle_index(state->gameOptions[gi].versionIndex,
-                                                                              1,
-                                                                              versionCount);
+                        m12_select_game_version(state, gi,
+                                                m12_cycle_index(state->gameOptions[gi].versionIndex,
+                                                                1, versionCount));
                     } else if (state->gameOptSelectedRow == M12_GAME_OPT_ROW_ARCHITECTURE) {
                         state->gameOptions[gi].architectureIndex = m12_cycle_index(state->gameOptions[gi].architectureIndex,
                                                                                    1,
@@ -12687,9 +12715,9 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
      * scan/configuration may legitimately leave a matched FM Towns row in
      * versionIndex; once a PC corpus is also present, allowing that stale
      * match through here would bypass the PC-first decision made by the
-     * scanner and launch gate.  Resolve AUTO again at the final handoff so
-     * DM1, CSB and DM2 always use the same verified-media priority.
-     * Explicit architecture choices retain their selected matched version. */
+     * scanner and launch gate.  The version-row handler promotes an explicit
+     * release choice to its source architecture, so this branch applies only
+     * to a true AUTO selection. */
     if (state->gameOptions[gi].architectureIndex == M12_ARCH_AUTO) {
         int autoVersion = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
             &state->assetStatus, intent.gameId, M12_ARCH_AUTO);

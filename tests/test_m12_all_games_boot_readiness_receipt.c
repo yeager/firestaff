@@ -406,8 +406,8 @@ int main(void) {
 
     /* AUTO must be resolved again at the final launch boundary.  DM1/DM2
      * recover their PC route from a stale FM Towns row; CSB has no DOS
-     * release and must instead retain FM Towns over a stale compatibility
-     * row.  This exercises the same M12 handoff without constructing media. */
+     * release and retains its native Amiga route over a stale FM Towns row.
+     * This exercises the same M12 handoff without constructing media. */
     {
         static const char *const game_ids[] = {"dm1", "csb", "dm2"};
         static const char *const pc_ids[] = {"pc34-en", "", "pc-en"};
@@ -430,8 +430,7 @@ int main(void) {
             state.assetStatus.versions[game][pc].matched = 1;
             state.assetStatus.versions[game][fmtowns].matched = 1;
             intent = M12_StartupMenu_GetLaunchIntent(&state);
-            if (!expect(intent.valid == 1 && intent.options.versionIndex ==
-                        (game == 1u ? fmtowns : pc),
+            if (!expect(intent.valid == 1 && intent.options.versionIndex == pc,
                         "AUTO launch intent must choose the original platform route")) return 1;
         }
     }

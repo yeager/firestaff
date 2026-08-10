@@ -2831,6 +2831,7 @@ static void run_real_amiga35_selected_package_handoff_if_available(void) {
     const M12_AssetVersionStatus *amiga_version;
     const CSB_V1_BootProfile *profile;
     M11_BootProbeReceipt probe;
+    M12_LaunchIntent intent;
     int version_index;
 
     if (!data_dir || !data_dir[0]) {
@@ -2854,7 +2855,16 @@ static void run_real_amiga35_selected_package_handoff_if_available(void) {
     menu.selectedIndex = 1;
     menu.activatedIndex = 1;
     menu.launchRequested = 1;
+    /* The version-row handler binds a concrete edition to its source
+     * architecture.  Model that forced A35 selection here so M12 -> M11
+     * cannot silently reopen the earlier A31 cache. */
+    menu.gameOptions[1].architectureIndex = M12_ARCH_AMIGA;
     menu.gameOptions[1].versionIndex = version_index;
+    intent = M12_StartupMenu_GetLaunchIntent(&menu);
+    expect_true(intent.valid && intent.versionId != NULL &&
+                    strcmp(intent.versionId, "amiga35-multi") == 0 &&
+                    intent.options.versionIndex == version_index,
+                "forced A35M version choice survives handoff without A31 fallback");
     M11_GameView_Init(&view);
     expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
                 "M11 opens Amiga 3.5 multilingual through native APPB");
@@ -2947,6 +2957,7 @@ static void run_real_amiga35_english_direct_handoff_if_available(void) {
     char runtime_dir[M12_ASSET_DATA_DIR_CAPACITY];
     char path[M12_ASSET_DATA_DIR_CAPACITY];
     char md5[33];
+    M12_LaunchIntent intent;
     int version_index;
 
     if (!data_dir || !data_dir[0]) {
@@ -2981,7 +2992,15 @@ static void run_real_amiga35_english_direct_handoff_if_available(void) {
     menu.selectedIndex = 1;
     menu.activatedIndex = 1;
     menu.launchRequested = 1;
+    /* A35E is likewise a concrete title/program package.  Keep the forced
+     * source architecture and check against the actual original ADF corpus. */
+    menu.gameOptions[1].architectureIndex = M12_ARCH_AMIGA;
     menu.gameOptions[1].versionIndex = version_index;
+    intent = M12_StartupMenu_GetLaunchIntent(&menu);
+    expect_true(intent.valid && intent.versionId != NULL &&
+                    strcmp(intent.versionId, "amiga35-en") == 0 &&
+                    intent.options.versionIndex == version_index,
+                "forced A35E version choice survives handoff without A31 fallback");
     M11_GameView_Init(&view);
     expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
                 "M11 opens Amiga 3.5 English through direct APPB C03");
