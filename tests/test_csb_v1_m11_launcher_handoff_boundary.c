@@ -867,6 +867,21 @@ static void expect_native_live_mirror_and_command_handoff(
         profile->variant_id == CSB_V1_VARIANT_AMIGA31_MULTI ||
         profile->variant_id == CSB_V1_VARIANT_AMIGA35_EN ||
         profile->variant_id == CSB_V1_VARIANT_AMIGA35_MULTI) {
+        /* The A31/A35-specific G0448 is zone-resolved and publishes C083
+         * for a right click anywhere in C002_SCREEN. Once the native leader
+         * is live, C013 opens C017; with C017 live, G0449's right C011
+         * closes it again. ReDMCSB COMMAND.C G0448 lines 396-404 and G0449
+         * lines 407-411. */
+        expect_true(M11_GameView_HandlePointerButton(
+                        view, 117, 114, DM1_V1_MOUSE_MASK_RIGHT_PC34) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        view->inventoryPanelActive,
+                    "Amiga C013 right-click dispatch opens C017 for the native leader");
+        expect_true(M11_GameView_HandlePointerButton(
+                        view, 117, 114, DM1_V1_MOUSE_MASK_RIGHT_PC34) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        !view->inventoryPanelActive,
+                    "Amiga C017 right-click dispatch retains G0449 C011 close");
         expect_true(M11_GameView_HandlePointerButton(
                         view, 10, 10, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
                         M11_GAME_INPUT_IGNORED &&
