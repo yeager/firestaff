@@ -54,7 +54,16 @@ def main() -> int:
 
     assert "F0128 lines 8446-8542 draws D3/D2/D1 side" in viewport
     assert "champion portraits are owned by the D1C front-mirror route" in m11
-    assert "ornGlobalIdx == 0 && spec.viewWallIndex == 12" in m11
+    # The ornament-zero branch used to test `ornGlobalIdx == 0` directly.
+    # It has been refactored to name the semantic via an `isInscription`
+    # flag (still derived from `ornGlobalIdx == 0`), and the D1C special
+    # case is the second predicate `spec.viewWallIndex == 12`. Accept
+    # either the historical or the refactored spelling so the gate stays
+    # locked without pinning a specific naming choice for the flag.
+    assert (
+        "ornGlobalIdx == 0 && spec.viewWallIndex == 12" in m11
+        or "isInscription && spec.viewWallIndex == 12" in m11
+    ), "missing D1C ornament-zero inscription guard"
     print("ok: DM1 F0128/F0107 D2/D3 side wall material bypasses content-only occlusion")
     return 0
 
