@@ -468,6 +468,39 @@ draw-buffer byte, then VDP2 registers, VRAM and CRAM. This is intentionally a
 transport compatibility boundary only; generic Mednafen output still has no
 Nexus asset owner and therefore cannot pass semantic admission on its own.
 
+To reproduce the generic dump, build the review candidate on the external
+disk with Saturn enabled and provide user-owned BIOS/media paths at runtime:
+
+```sh
+cd /Volumes/Extern-disk/mednafen-nexus-upstream-pr-v1
+./configure --enable-ss
+make -j2
+
+HOME=/Volumes/Extern-disk/mednafen-nexus-upstream-pr-v1/runtime-home \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+./src/mednafen -sound 0 \
+  -ss.bios_jp "/path/to/Sega Saturn BIOS (J) (1.01).bin" \
+  -ss.capture.path "/Volumes/Extern-disk/mednafen-nexus-upstream-pr-v1/nexus-test.capture" \
+  -ss.capture.frames 1 "/path/to/Dungeon Master Nexus.cue"
+```
+
+The command is allowed to stop after the requested frame has been emitted;
+the resulting file stays outside the repository. Validate its neutral stream
+layout first, then run the Firestaff transport gate:
+
+```sh
+python3 scripts/validate_mednafen_saturn_capture.py \
+  /Volumes/Extern-disk/mednafen-nexus-upstream-pr-v1/nexus-test.capture
+FIRESTAFF_NEXUS_RUNTIME_CAPTURE=\
+/Volumes/Extern-disk/mednafen-nexus-upstream-pr-v1/nexus-test.capture \
+FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME=0 \
+./build/test_nexus_v1_saturn_runtime_capture
+```
+
+Both checks prove only that the VDP1/VDP2 byte stream is readable. A frame
+with `TVMD=0` or `BGON=0` is a reset/idle observation and must not be counted
+as startup, menu, HUD or viewport evidence.
+
 On 2026-08-10 a bounded J-BIOS/English-media source-trace attempt reached
 500,000 SH-2 RAM-source rows but timed out before producing a complete frame
 capture. After rejecting zero-filled RAM and unmapped ISO padding, the trace
