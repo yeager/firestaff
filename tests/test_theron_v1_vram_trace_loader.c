@@ -37,6 +37,17 @@ static void test_load_raw(void) {
     unsigned r = (rgba >> 16) & 0xFF;
     assert(r == 252);
 
+    /* A verified VCE snapshot owns the palette.  A later generic setter must
+     * not overwrite source-bound colors with an unbound palette. */
+    {
+        TQR_PaletteState replacement;
+        memset(&replacement, 0, sizeof(replacement));
+        replacement.entries[1].bgr333 = 0x01ffu;
+        replacement.entries[1].rgba = 0xffffffffu;
+        theron_vp_set_palette(&vp, &replacement);
+        assert(vp.palette.entries[1].rgba == rgba);
+    }
+
     theron_v1_vram_trace_unload(&vp);
     assert(vp.vram_trace_loaded == 0);
     assert(vp.vram_trace_data == NULL);

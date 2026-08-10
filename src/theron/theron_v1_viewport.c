@@ -383,6 +383,10 @@ void theron_vp_free(Theron_V1_Viewport *vp) {
 
 void theron_vp_set_palette(Theron_V1_Viewport *vp, const TQR_PaletteState *palette) {
     if (!vp || !palette) return;
+    /* An authenticated VCE/VRAM snapshot owns its palette until unload.
+     * Prevent a later generic or fixture palette from replacing source
+     * colors in the diagnostic renderer. */
+    if (vp->vram_trace_loaded) return;
     vp->palette = *palette; /* copy */
 }
 

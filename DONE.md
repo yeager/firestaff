@@ -1,3 +1,10 @@
+# Theron: autentiserad VCE-palett behåller ägarskap (2026-08-10)
+- ✅ När en verifierad VRAM/VCE-capture är monterad kan ingen senare
+  generisk eller fixture-baserad palette setter skriva över de 512 riktiga
+  BGR333-posterna. Både diagnostic-renderern och production-noop-vägen följer
+  samma source-ownership-gate. Real capture-testet passerar med 512 palette-
+  entries, 1 057 BAT/tile-bindningar och endast source-owned pixels.
+
 # Theron: byte-exakt objectrecordkontroll vid pickup (2026-08-10)
 - ✅ Source-bound pickup validerar nu den kvarhållna råa Track 02-recorden mot
   weapon-, clothing-, scroll- och potionfälten som faktiskt exponeras till

@@ -69,6 +69,10 @@ void theron_vp_free(Theron_V1_Viewport *vp) {
 void theron_vp_set_palette(Theron_V1_Viewport *vp,
                            const TQR_PaletteState *palette) {
     if (!vp || !palette) return;
+    /* Once an authenticated VCE snapshot owns the viewport, a later generic
+     * palette setter must not replace source colors with an unbound/default
+     * palette.  The capture loader is the sole owner until unload. */
+    if (vp->vram_trace_loaded) return;
     vp->palette = *palette;
 }
 
