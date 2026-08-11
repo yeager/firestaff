@@ -163,13 +163,16 @@ static int parse_spawn_register_trace_file(
         unsigned int return_pc, caller_pc;
         unsigned int c96b, cc4c, preconsumer, helper, spawn_entry;
         unsigned int caller_b07d = 0u;
+        unsigned int record_c3a0 = 0u;
         int consumed = 0;
         int caller_suffix_consumed = 0;
+        int record_suffix_consumed = 0;
         int parsed_fields;
         int has_return_context = strstr(line, " return_pc=") != NULL;
         int has_caller_window = strstr(line, " caller_b07d_window=") != NULL;
+        int has_record_c3a0 = strstr(line, " record_c3a0_window=") != NULL;
         int expected_c96b, expected_cc4c, expected_spawn_address;
-        int expected_spawn_entry, expected_caller_window;
+        int expected_spawn_entry, expected_caller_window, expected_record_c3a0;
         int expected_preconsumer, expected_helper;
 
         if (has_return_context) {
@@ -191,9 +194,15 @@ static int parse_spawn_register_trace_file(
         if (parsed_fields != (has_return_context ? 24 : 22) ||
             (has_caller_window &&
              (sscanf(line + consumed, " caller_b07d_window=%u%n",
-                     &caller_b07d, &caller_suffix_consumed) != 1 ||
-              line[consumed + caller_suffix_consumed] != '\0')) ||
-            (!has_caller_window && line[consumed] != '\0') ||
+                     &caller_b07d, &caller_suffix_consumed) != 1)) ||
+            (has_caller_window && has_record_c3a0 &&
+             (sscanf(line + consumed + caller_suffix_consumed,
+                     " record_c3a0_window=%u%n", &record_c3a0,
+                     &record_suffix_consumed) != 1)) ||
+            (!has_caller_window && has_record_c3a0 &&
+             (sscanf(line + consumed, " record_c3a0_window=%u%n",
+                     &record_c3a0, &record_suffix_consumed) != 1)) ||
+            line[consumed + caller_suffix_consumed + record_suffix_consumed] != '\0' ||
             pc > 0xffffu ||
             physical_pc > 0x1fffffu || a > 0xffu || x > 0xffu ||
             y > 0xffu || sp > 0xffu || p > 0xffu || mpr0 > 0xffu ||
@@ -214,6 +223,7 @@ static int parse_spawn_register_trace_file(
         expected_spawn_address = pc == 0xb0e5u;
         expected_spawn_entry = expected_spawn_address && a <= 3u;
         expected_caller_window = pc >= 0xb07du && pc <= 0xb0e4u;
+        expected_record_c3a0 = pc >= 0xc3a0u && pc <= 0xc429u;
         expected_preconsumer = pc == 0x4644u;
         expected_helper = pc == 0x4667u;
         if (sequence != expected_sequence ||
@@ -226,9 +236,12 @@ static int parse_spawn_register_trace_file(
             spawn_entry != (unsigned int)expected_spawn_address ||
             (has_caller_window &&
              caller_b07d != (unsigned int)expected_caller_window) ||
+            (has_record_c3a0 &&
+             record_c3a0 != (unsigned int)expected_record_c3a0) ||
             !(expected_c96b || expected_cc4c || expected_preconsumer ||
               expected_helper || expected_spawn_address ||
-              (has_caller_window && expected_caller_window))) {
+              (has_caller_window && expected_caller_window) ||
+              (has_record_c3a0 && expected_record_c3a0))) {
             out->sequence_verified = sequence == expected_sequence;
             out->bank_coordinates_verified =
                 huc6280_physical_address(physical_pc);
@@ -239,7 +252,9 @@ static int parse_spawn_register_trace_file(
                 helper == (unsigned int)expected_helper &&
                 spawn_entry == (unsigned int)expected_spawn_address &&
                 (!has_caller_window ||
-                 caller_b07d == (unsigned int)expected_caller_window);
+                 caller_b07d == (unsigned int)expected_caller_window) &&
+                (!has_record_c3a0 ||
+                 record_c3a0 == (unsigned int)expected_record_c3a0);
             out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
             fclose(file);
             return 0;
@@ -273,6 +288,10 @@ static int parse_spawn_register_trace_file(
         if (expected_caller_window) {
             out->caller_b07d_window_seen = 1;
             out->caller_b07d_window_samples++;
+        }
+        if (has_record_c3a0 && expected_record_c3a0) {
+            out->record_c3a0_window_seen = 1;
+            out->record_c3a0_window_samples++;
         }
         if (expected_helper && ((b3 & 0x07u) == 0x04u))
             out->helper_4667_special_branch_seen = 1;

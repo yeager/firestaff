@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+## Theron: capture `$C3A0` caller-window runtime join (2026-08-11)
+
+- ✅ The Mednafen register sidecar can now emit and parse
+  `record_c3a0_window=1` alongside the existing `$C96B/$CC4C` windows.
+- 🔒 Run a real dungeon capture and join this marker to target RAM writes;
+  the marker alone must not be interpreted as AI, creature, object, generator,
+  T700 or T900 semantics.
+
 ## Theron: bind the newly source-locked `$C3A0` caller to runtime ownership (2026-08-11)
 
 - ✅ Exact US Track 02 bytes at raw `$9c450` / HuC6280 `$c3a0` are now

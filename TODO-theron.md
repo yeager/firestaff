@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — registertrace kan nu binda `$C3A0`-callerfönstret
+
+- ✅ Mednafen-instrumenteringen skriver nu optional `record_c3a0_window=1`
+  i samma registertrace som `$C96B/$CC4C`; parsern räknar fönstret utan att
+  bryta äldre v3-traces.
+- 🔒 Flaggan är captureproveniens, inte semantik. `$C3A0` måste fortfarande
+  fångas i samma körning som dess `$C96B/$CC4C`-anrop och målskrivningar innan
+  creature-, objekt-, generator-, T700- eller T900-regler öppnas.
+
 ## 2026-08-11 — ny autentiserad `$C3A0`-caller är source-lockad
 
 - ✅ Ett nytt 150-byte US Track 02-fragment från raw-offset `$9C450` / HuC6280

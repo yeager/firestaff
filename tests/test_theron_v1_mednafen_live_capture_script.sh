@@ -427,6 +427,12 @@ if ! grep -Fq 'source=authentic-mednafen-transition-receipt' "$script" ||
     printf 'FAIL: capture script must publish an observed-or-missing transition receipt\n' >&2
     exit 1
 fi
+if ! grep -Fq 'record_c3a0_window=%u' "$irq2_patch" ||
+   ! grep -Fq 'logical_pc >= 0xc3a0 && logical_pc <= 0xc429' "$irq2_patch" ||
+   ! grep -Fq 'record_c3a0_window_seen' "$repo/src/theron/theron_v1_mednafen_spawn_consumer_trace.c"; then
+    printf 'FAIL: live capture must preserve the source-locked C3A0 caller window\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'stage2_system_card_receipt="${trace}.stage2-system-card"' "$script" ||
    ! grep -Fq 'verify_theron_stage2_system_card_call_trace.sh' "$script" ||
    ! grep -Fq 'Absence is expected for captures that do not reach this exact stage.' "$script"; then

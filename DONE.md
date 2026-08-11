@@ -1,5 +1,14 @@
 # Nexus: bounded SAL PCM materialization (2026-08-11)
 
+# Theron: capture instrumentation marks the `$C3A0` caller (2026-08-11)
+
+- ✅ The instrumented register sidecar now emits an optional
+  `record_c3a0_window=1` marker for the authenticated `$c3a0-$c429` caller.
+- ✅ The parser remains compatible with existing v3 traces and records the
+  caller-window sample count without enabling gameplay semantics.
+- 🔒 Runtime ownership still requires the same-session `$C3A0` → `$C96B/$CC4C`
+  → RAM join.
+
 # Theron: authenticate the US `$C3A0` caller window (2026-08-11)
 
 - ✅ Added the real 150-byte `TQUS02.bin` caller window at raw `$9c450` /
