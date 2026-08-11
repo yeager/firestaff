@@ -359,6 +359,11 @@ typedef struct {
     uint16_t flags_word;
     uint16_t unknown_word;
     uint16_t health[4];
+    /* DMBUILDER6 category-4 records are exactly 16 bytes. Preserve the raw
+     * authenticated payload beside the decoded fields so later consumers
+     * never need to reconstruct or guess source bits. */
+    uint8_t raw_size;
+    uint8_t raw[16];
 } Theron_V1_SourceMonsterRecord;
 
 /* Track 02 actuator type 6 is the source's floor monster-generator record.
@@ -831,7 +836,7 @@ uint8_t theron_v1_collect_quest_item(Theron_V1_World *world, uint8_t item_bit);
 
 /* ── Binary serialization ─────────────────────────────────────────── */
 #define THERON_WORLD_SAVE_MAGIC   0x574E5254U  /* 'TRNW' */
-#define THERON_WORLD_SAVE_VERSION 9
+#define THERON_WORLD_SAVE_VERSION 10
 
 size_t theron_v1_world_serialize_size(const Theron_V1_World *world);
 size_t theron_v1_world_serialize(const Theron_V1_World *world,

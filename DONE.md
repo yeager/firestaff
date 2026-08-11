@@ -1,3 +1,13 @@
+# Theron: preserve raw monster records through live creatures (2026-08-11)
+
+- ✅ Category-4 monster records from the authenticated Track 02 dungeon
+  loader now retain their complete 16-byte source payload alongside decoded
+  fields. Live creature admission copies the same payload without synthesis.
+- ✅ World save version 10 preserves and restores that payload byte-for-byte;
+  real-data loader and creature-runtime tests verify the source/live match.
+- 🔒 This closes record provenance only. Original RNG, AI, attacks, damage,
+  loot, generator timing and T700/T900 consumers remain source-capture gated.
+
 # Theron: rebuilt C3A0 follow-up capture audited (2026-08-11)
 
 - ✅ Rebuilt the external instrumented Mednafen binary after admitting the

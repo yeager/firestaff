@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+# Theron: raw monster-record consumer still unresolved (2026-08-11)
+
+- ✅ Authentic category-4 records now retain their exact 16-byte source
+  payload through source ledger → live creature → save/load version 10.
+- 🔒 The payload is still provenance, not a discovered AI/stat/loot consumer.
+  The authenticated runtime capture has not joined it to the original
+  `$B0E5`/RNG/creature event path.
+
 # Theron: C3A0 capture still lacks the gameplay consumer edge (2026-08-11)
 
 - ✅ Rebuilt the external instrumented Mednafen binary from the current trace

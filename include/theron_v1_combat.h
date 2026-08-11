@@ -171,6 +171,8 @@ typedef struct {
      * descriptor.  0xff means the source has no regular-spawn descriptor
      * (currently scripted THIEF/DEMON); it is not a gameplay default. */
     uint8_t    source_spawn_category;
+    uint8_t    source_raw_size;
+    uint8_t    source_raw[16];
 } Theron_V1_Creature;
 
 /* ── Combat result ──────────────────────────────────────────────── */

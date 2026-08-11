@@ -533,6 +533,23 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                     free(td);
                     return -1;
                 }
+                /* The decoded fields above are not a substitute for the
+                 * source record. Attach the exact 16-byte category-4 row
+                 * only after the authenticated decoder and ledger bind have
+                 * succeeded. */
+                if (cat == THERON_CAT_MONSTER &&
+                    world->source_monster_count != 0u) {
+                    Theron_V1_SourceMonsterRecord *bound =
+                        &world->source_monsters[
+                            world->source_monster_count - 1u];
+                    if (bound->source_ref != ref || bound->source_index != id) {
+                        free(pos_table);
+                        free(td);
+                        return -1;
+                    }
+                    bound->raw_size = (uint8_t)theron_item_bytes[cat];
+                    memcpy(bound->raw, raw, sizeof(bound->raw));
+                }
                 int property_bound = 0;
                 if (cat != THERON_CAT_MONSTER &&
                     materialize_source_item(&obj, cat, pos, ref, id, raw,

@@ -412,6 +412,7 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
             assert(creature->flags & THERON_CF_ACTIVE);
             assert(creature->source_ref != 0u);
             assert(source != NULL);
+            assert(source->raw_size == 16u);
             assert(creature->type == (uint8_t)(source->type + 1u));
             assert(creature->source_chested == source->chested);
             assert(creature->type >= THERON_CREATURE_AKUTUBA &&
@@ -423,6 +424,9 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
             assert(creature->source_group_count ==
                    (uint8_t)(source->number + 1u));
             assert(creature->hp == (int)source->health[creature->source_slot]);
+            assert(creature->source_raw_size == source->raw_size);
+            assert(memcmp(creature->source_raw, source->raw,
+                          source->raw_size) == 0);
             assert(creature->max_hp == creature->hp);
             assert(creature->attack == 0);
             assert(creature->defense == 0);

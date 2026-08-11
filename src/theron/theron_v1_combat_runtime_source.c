@@ -121,6 +121,9 @@ static int theron_v1_publish_source_group(
         creature->source_unknown_word = record->unknown_word;
         creature->source_spawn_category =
             theron_v1_world_track02_spawn_category(world, record->type);
+        creature->source_raw_size = record->raw_size;
+        memcpy(creature->source_raw, record->raw,
+               sizeof(creature->source_raw));
     }
     return world->creature_count > 0 ?
         world->creatures[world->creature_count - 1].id : -1;

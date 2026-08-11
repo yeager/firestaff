@@ -99,6 +99,7 @@ static void ww64(uint8_t *p, uint64_t value) {
 #define THERON_CREATURE_WIRE_BYTES_V7 87u
 #define THERON_CREATURE_WIRE_BYTES_V8 88u
 #define THERON_CREATURE_WIRE_BYTES_V9 90u
+#define THERON_CREATURE_WIRE_BYTES_V10 107u
 #define THERON_GENERATOR_WIRE_BYTES 32u
 #define THERON_GENERATOR_WIRE_BYTES_V6 36u
 
@@ -107,7 +108,8 @@ static size_t theron_generator_wire_size(void) {
 }
 
 static size_t theron_creature_wire_size_for_version(uint16_t version) {
-    return version >= 9u ? THERON_CREATURE_WIRE_BYTES_V9
+    return version >= 10u ? THERON_CREATURE_WIRE_BYTES_V10
+           : version >= 9u ? THERON_CREATURE_WIRE_BYTES_V9
                          : version >= 8u ? THERON_CREATURE_WIRE_BYTES_V8
                          : THERON_CREATURE_WIRE_BYTES_V7;
 }
@@ -316,6 +318,9 @@ static uint8_t *theron_creature_write(uint8_t *out,
     ww16(out, creature->source_flags_word); out += 2;
     ww16(out, creature->source_unknown_word); out += 2;
     *out++ = creature->source_spawn_category;
+    *out++ = creature->source_raw_size;
+    memcpy(out, creature->source_raw, sizeof(creature->source_raw));
+    out += sizeof(creature->source_raw);
     return out;
 }
 
@@ -355,6 +360,11 @@ static const uint8_t *theron_creature_read(
     creature->source_flags_word = rw16(in); in += 2;
     creature->source_unknown_word = rw16(in); in += 2;
     creature->source_spawn_category = version >= 8u ? *in++ : 0xffu;
+    if (version >= 10u) {
+        creature->source_raw_size = *in++;
+        memcpy(creature->source_raw, in, sizeof(creature->source_raw));
+        in += sizeof(creature->source_raw);
+    }
     return in;
 }
 
@@ -1520,6 +1530,9 @@ static int theron_v1_world_admit_source_monster_member(
     creature->source_spawn_category =
         theron_v1_world_track02_spawn_category(
             world, (unsigned int)record->type);
+    creature->source_raw_size = record->raw_size;
+    memcpy(creature->source_raw, record->raw,
+           sizeof(creature->source_raw));
     ++world->creature_count;
     return creature->id;
 }

@@ -138,6 +138,10 @@ static void seed_world(Theron_V1_World *world) {
     world->creatures[0].source_flags_word = 0x4567;
     world->creatures[0].source_unknown_word = 0x89ab;
     world->creatures[0].source_spawn_category = 3;
+    world->creatures[0].source_raw_size = 16;
+    for (int raw_index = 0; raw_index < 16; ++raw_index)
+        world->creatures[0].source_raw[raw_index] =
+            (uint8_t)(0x80u + (unsigned int)raw_index);
     world->source_generator_count = 1;
     world->source_generators[0].dungeon_id = THERON_DUNGEON_3_FORMIC;
     world->source_generators[0].level = 2;
@@ -271,7 +275,10 @@ static void test_round_trip_keeps_purchase_state(void) {
                 restored.creatures[0].source_slot == 1 &&
                 restored.creatures[0].source_flags_word == 0x4567 &&
                 restored.creatures[0].source_unknown_word == 0x89ab &&
-                restored.creatures[0].source_spawn_category == 3,
+                restored.creatures[0].source_spawn_category == 3 &&
+                restored.creatures[0].source_raw_size == 16 &&
+                restored.creatures[0].source_raw[0] == 0x80 &&
+                restored.creatures[0].source_raw[15] == 0x8f,
                 "live creature record and source identity survive round-trip");
     expect_true(restored.source_generator_count == 1 &&
                 restored.source_generators[0].dungeon_id == THERON_DUNGEON_3_FORMIC &&
