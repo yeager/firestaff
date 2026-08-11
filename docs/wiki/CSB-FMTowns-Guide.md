@@ -148,13 +148,13 @@ portrait medium: `~/.firestaff/portraits` on macOS/Linux or
 `INSTALLDIR\\portraits` on Windows. The scanned CD catalogue stays read-only;
 F7001's whole-game branch is still deliberately unavailable.
 
-It does not authorize the rest of Utility. File-picker rendering and input
-(`CEDT008`/`CEDT013`) and the full `F7004_LoadChampions` command remain
-closed; a scanned portrait or a helper accepting an already-selected entry is
-not permission to substitute the selector. Make New Adventure and name/title
-entry are also closed. F31J remains closed until the native Shift-JIS glyph
-consumer is recovered. Keep all of those routes modal until their specific
-owners are evidenced.
+It does not authorize the rest of Utility. `F7004_LoadChampions` now presents
+its native `GAME` / `PORTRAIT` / `CANCEL` choice before `PORTRAIT` opens the
+source-owned `CEDT008`/`CEDT013` picker. The whole-game branch remains closed:
+it belongs to the separately unbound `F7051_LoadGame` transaction. Make New
+Adventure and name/title entry are also closed. F31J remains closed until the
+native Shift-JIS glyph consumer is recovered. Keep all of those routes modal
+until their specific owners are evidenced.
 
 ## Files to know
 
