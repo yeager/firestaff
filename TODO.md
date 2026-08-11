@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+## Nexus: consume VDP1 V2 frame-scoped source-write traces (2026-08-11)
+
+- ✅ Source-join analysis now accepts the authenticated V2 trace header,
+  preserves empty frame markers, and selects records for the requested capture
+  frame without the previous V1-only rejection.
+- 🔒 This repairs evidence tooling only; the VDP1 asset owner, CLUT,
+  placement, menu/HUD/viewport consumer and production renderer remain gated.
+
 ## Theron: capture `$C3A0` caller-window runtime join (2026-08-11)
 
 - ✅ The Mednafen register sidecar can now emit and parse

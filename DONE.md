@@ -13499,6 +13499,14 @@ and production source-combat tests.
   500 000-raders menyförsök ger korrekt `retail_runtime_source_join=missing`
   i stället för ett falskt retail-ägarskap.
 
+# Nexus: accept VDP1 V2 frame-scoped source-write evidence (2026-08-11)
+
+- ✅ `scripts/analyze_nexus_vdp1_source_write_join.py` now accepts both V1 and
+  V2 VDP1 write traces and binds V2 records to the marker that precedes them.
+- ✅ Synthetic parser self-test and the authenticated 300-frame startup trace
+  were checked; semantic admission remains explicitly blocked because the
+  source owner is still unproven.
+
 # Nexus: expose authenticated VDP1 direct-color replay in viewport (2026-08-11)
 
 - ✅ Viewporten har nu en separat RGBA capture-yta för autentiserad VDP1

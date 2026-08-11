@@ -680,6 +680,20 @@ bounded `SRCa`-derived VRAM byte span and SHA-256. That span is the join key
 for a future source-owned capture; it is not permission to reinterpret the
 bytes as PRS3, TITLE.CG, MENU.BPK, STABG, FACE, or DGN material.
 
+The VDP1 writer join also accepts the frame-scoped V2 trace emitted by the
+current capture producer. Use the same frame number for both artifacts; for
+example, the startup-source witness can be checked at frame 106 with:
+
+```sh
+python3 scripts/analyze_nexus_vdp1_source_write_join.py \
+  /Volumes/Extern-disk/nexus-saturn-capture/run-authentic-merged-startup-source-20260811b/runtime-vdp12.raw \
+  /Volumes/Extern-disk/nexus-saturn-capture/run-authentic-merged-startup-source-20260811b/vdp1-writes.trace \
+  --capture-frames 300 --frame 106
+```
+
+This removes the former V1-only parser failure. It still reports
+`semantic_admission=blocked` when no exact source owner is found.
+
 ## Artifact families
 
 The capture consumer now also has a bounded VDP2 NBG1 tilemap lane. It admits

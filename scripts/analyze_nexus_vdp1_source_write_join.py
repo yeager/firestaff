@@ -19,7 +19,10 @@ from analyze_nexus_saturn_runtime_capture import frame_regions
 from analyze_nexus_vdp1_command_window import command_window
 
 
-HEADER = "FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V1"
+HEADERS = {
+    "FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V1",
+    "FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V2",
+}
 LINE = re.compile(
     r"addr=0x(?P<addr>[0-9a-fA-F]+) size=(?P<size>[0-9]+) "
     r"value=0x(?P<value>[0-9a-fA-F]+) pc0=0x(?P<pc0>[0-9a-fA-F]+) "
@@ -27,21 +30,52 @@ LINE = re.compile(
 )
 
 
-def load_trace(path: Path) -> list[tuple[int, int, int, int]]:
+def load_trace(path: Path, selected_frame: int = -1) -> list[tuple[int, int, int, int]]:
     lines = path.read_text(encoding="ascii").splitlines()
-    if not lines or lines[0] != HEADER:
+    if not lines or lines[0] not in HEADERS:
         raise ValueError("invalid VDP1 write-trace header")
+    version = lines[0]
     rows: list[tuple[int, int, int, int]] = []
+    frame_rows: dict[int, list[tuple[int, int, int, int]]] = {}
+    active_frame = -1
     for line_number, line in enumerate(lines[1:], 2):
+        if line.startswith("frame="):
+            if version != "FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V2":
+                raise ValueError(f"frame marker in V1 line {line_number}")
+            try:
+                frame = int(line[6:], 10)
+            except ValueError as error:
+                raise ValueError(f"malformed frame marker line {line_number}") from error
+            if frame in frame_rows:
+                raise ValueError(f"duplicate frame {frame}")
+            frame_rows[frame] = []
+            active_frame = frame
+            continue
         match = LINE.fullmatch(line)
         if not match:
             raise ValueError(f"malformed VDP1 write-trace line {line_number}")
-        rows.append((
+        row = (
             int(match["addr"], 16),
             int(match["size"], 10),
             int(match["pc0"], 16),
             int(match["pc1"], 16),
-        ))
+        )
+        if version == "FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V2":
+            if active_frame < 0:
+                raise ValueError(f"record before frame marker line {line_number}")
+            frame_rows[active_frame].append(row)
+        else:
+            rows.append(row)
+    if version == "FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V2":
+        # The producer emits a frame marker, then the writes observed for
+        # that frame. Empty frames are represented by an empty list.
+        if selected_frame >= 0:
+            if selected_frame not in frame_rows:
+                raise ValueError(f"missing frame {selected_frame}")
+            return frame_rows[selected_frame]
+        return [row for frame in sorted(frame_rows) for row in frame_rows[frame]]
+    if selected_frame >= 0:
+        raise ValueError("--frame requires a V2 write trace")
     return rows
 
 
@@ -91,7 +125,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         frames, states = frame_regions(args.capture.read_bytes(), args.capture_frames)
-        writes = load_trace(args.write_trace)
+        writes = load_trace(args.write_trace, args.frame)
     except (OSError, UnicodeError, ValueError) as error:
         print(f"NEXUS_VDP1_SOURCE_WRITE_JOIN_INVALID: {error}")
         return 1
