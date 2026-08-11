@@ -287,7 +287,8 @@ populated dungeon states.
   previous/next movement, and delegates the selected row to this same import
   transaction. The real English catalogue covers catalog binding, movement,
   and import in `csb_v1_fmtowns_m11_game_handoff`. **2026-08-11 modal loop
-  closed:** M11's C06 utility owner enters F7083 on `LOAD CHAMPIONS`, renders
+  closed:** M11 first reproduces F7004's source `GAME` / `PORTRAIT` /
+  `CANCEL` dialog, then enters F7083 only after its `PORTRAIT` choice, renders
   the admitted source raster, sends source-coordinate left-clicks to F7084,
   preserves scroll/cancel commands, and hands an accepted row to F7002. The
   real F31E handoff test proves open, raster, selection and import. No host

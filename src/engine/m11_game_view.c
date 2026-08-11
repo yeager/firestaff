@@ -8729,6 +8729,7 @@ static int m11_csb_enter_fmtowns_utility(
     state->csbFmtownsUtilityUndoAvailable = 0;
     state->csbFmtownsUtilityFilePickerActive = 0;
     state->csbFmtownsUtilitySaveDialogActive = 0;
+    state->csbFmtownsUtilityLoadDialogActive = 0;
     memset(&rendered, 0, sizeof(rendered));
     if (!csb_v1_fmtowns_utility_handoff_open(
             profile, language, &state->csbFmtownsUtilityHandoffReceipt) ||
@@ -8792,6 +8793,18 @@ static int m11_csb_redraw_fmtowns_utility(M11_GameViewState *state)
     }
     if (state->csbFmtownsUtilitySaveDialogActive) {
         return csb_v1_fmtowns_utility_render_save_dialog(
+            &state->csbFmtownsUtilityHandoffReceipt,
+            &state->csbFmtownsUtilityMenuReceipt,
+            &state->csbFmtownsUtilityFontReceipt,
+            &state->csbFmtownsUtilityParty,
+            &state->csbFmtownsUtilityPortraitReceipt,
+            state->csbFmtownsUtilitySelectedChampion,
+            state->csbFmtownsUtilitySelectedColor,
+            state->csbFmtownsUtilityPixels,
+            sizeof(state->csbFmtownsUtilityPixels), &rendered);
+    }
+    if (state->csbFmtownsUtilityLoadDialogActive) {
+        return csb_v1_fmtowns_utility_render_load_dialog(
             &state->csbFmtownsUtilityHandoffReceipt,
             &state->csbFmtownsUtilityMenuReceipt,
             &state->csbFmtownsUtilityFontReceipt,
@@ -9131,6 +9144,7 @@ static int m11_csb_bind_fmtowns_switch(M11_GameViewState *state,
     state->csbFmtownsUtilityUndoModified = 0;
     state->csbFmtownsUtilityUndoAvailable = 0;
     state->csbFmtownsUtilitySaveDialogActive = 0;
+    state->csbFmtownsUtilityLoadDialogActive = 0;
     m11_csb_release_fmtowns_switch(state);
     if (snprintf(path, sizeof(path), "%s/SWITCHTW.EXP", profile->asset_root) < 0 ||
         strlen(path) >= sizeof(path)) return 0;
@@ -9340,6 +9354,30 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
         return m11_csb_redraw_fmtowns_utility(state)
             ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
     }
+    if (state->csbFmtownsUtilityLoadDialogActive) {
+        if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0)
+            return M11_GAME_INPUT_REDRAW;
+        if (x >= 80 && x <= 148 && y >= 108 && y <= 116) {
+            /* F7004 choice 1 delegates to F7051_LoadGame.  The distinct
+             * C05 disk selection and whole-state handoff remain unbound. */
+            state->csbFmtownsUtilityLoadDialogActive = 0;
+            m11_set_status(state, "CSB FM TOWNS", "GAME LOAD UNAVAILABLE");
+        } else if (x >= 165 && x <= 237 && y >= 108 && y <= 116) {
+            state->csbFmtownsUtilityLoadDialogActive = 0;
+            if (!state->csbFmtownsUtilityPortraitCatalog.valid ||
+                !csb_v1_fmtowns_utility_file_picker_open(
+                    &state->csbFmtownsUtilityPortraitCatalog, 0u,
+                    &state->csbFmtownsUtilityFilePicker)) {
+                m11_set_status(state, "CSB FM TOWNS", "CMP CATALOG UNAVAILABLE");
+                return M11_GAME_INPUT_IGNORED;
+            }
+            state->csbFmtownsUtilityFilePickerActive = 1;
+        } else if (x >= 123 && x <= 196 && y >= 128 && y <= 136) {
+            state->csbFmtownsUtilityLoadDialogActive = 0;
+        } else return M11_GAME_INPUT_REDRAW;
+        return m11_csb_redraw_fmtowns_utility(state)
+            ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+    }
     if (state->csbFmtownsUtilityFilePickerActive) {
         if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0)
             return M11_GAME_INPUT_REDRAW;
@@ -9468,16 +9506,10 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
             return M11_GAME_INPUT_IGNORED;
         }
     } else if (hit.action == CSB_V1_FMTOWNS_UTILITY_ACTION_LOAD_CHAMPIONS) {
-        if (!state->csbFmtownsUtilityPortraitCatalog.valid ||
-            !csb_v1_fmtowns_utility_file_picker_open(
-                &state->csbFmtownsUtilityPortraitCatalog, 0u,
-                &state->csbFmtownsUtilityFilePicker)) {
-            m11_set_status(state, "CSB FM TOWNS", "CMP CATALOG UNAVAILABLE");
-            return M11_GAME_INPUT_IGNORED;
-        }
-        state->csbFmtownsUtilityFilePickerActive = 1;
+        /* F7004 presents G7068/G7064 before choosing F7051 or F7003. */
+        state->csbFmtownsUtilityLoadDialogActive = 1;
         if (!m11_csb_redraw_fmtowns_utility(state)) {
-            state->csbFmtownsUtilityFilePickerActive = 0;
+            state->csbFmtownsUtilityLoadDialogActive = 0;
             return M11_GAME_INPUT_IGNORED;
         }
     }

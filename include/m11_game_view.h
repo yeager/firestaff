@@ -1618,6 +1618,8 @@ typedef struct {
     int csbFmtownsUtilityFilePickerActive;
     /* CEDT001.C F7001's GAME / PORTRAIT / CANCEL dialog. */
     int csbFmtownsUtilitySaveDialogActive;
+    /* CEDT001.C F7004's distinct GAME / PORTRAIT / CANCEL dialog. */
+    int csbFmtownsUtilityLoadDialogActive;
     int csbFmtownsUtilityBound;
     /* The selected SWITCHTW Game exit is a separate F31 C03_GAME program.
      * Retain its verified identity alongside the launch gate so M11 can open

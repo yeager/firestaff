@@ -469,3 +469,44 @@ int csb_v1_fmtowns_utility_render_save_dialog(
     if (out_receipt) *out_receipt = receipt;
     return 1;
 }
+
+int csb_v1_fmtowns_utility_render_load_dialog(
+    const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
+    const CSB_V1_FmtownsUtilityMenuReceipt *menu,
+    const CSB_V1_FmtownsUtilityFontReceipt *font,
+    const CSB_V1_PartyState *party,
+    const CSB_V1_FmtownsStartupPortraitReceipt *portraits,
+    uint16_t selected_champion_index, uint8_t selected_color_index,
+    uint8_t *pixels, size_t pixel_capacity,
+    CSB_V1_FmtownsUtilityRenderReceipt *out_receipt)
+{
+    static const uint8_t line1[] = "YOU MAY LOAD EITHER";
+    static const uint8_t line2[] = "A SAVED GAME OR";
+    static const uint8_t line3[] = "A CHAMPION PORTRAIT";
+    static const uint8_t game[] = "GAME";
+    static const uint8_t portrait[] = "PORTRAIT";
+    static const uint8_t cancel[] = "CANCEL";
+    CSB_V1_FmtownsUtilityRenderReceipt receipt;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!csb_v1_fmtowns_utility_render_editor(
+            handoff, menu, font, party, portraits, selected_champion_index,
+            selected_color_index, pixels, pixel_capacity, &receipt)) return 0;
+    /* CEDT001.C F7004 calls F7072 with G2254/G2261.  Its only difference
+     * from F7001 is G7068's three original F31E text lines. */
+    filled_box((C06_Box){62, 255, 48, 149}, 2, C01_DARK_GRAY, C00_BLACK,
+               pixels);
+    text(font, 76, 63, C15_WHITE, C01_DARK_GRAY, line1, sizeof(line1), pixels);
+    text(font, 79, 71, C15_WHITE, C01_DARK_GRAY, line2, sizeof(line2), pixels);
+    text(font, 76, 79, C15_WHITE, C01_DARK_GRAY, line3, sizeof(line3), pixels);
+    button((C06_Box){80, 148, 108, 116}, game, sizeof(game), font, pixels);
+    button((C06_Box){165, 237, 108, 116}, portrait, sizeof(portrait), font,
+           pixels);
+    button((C06_Box){123, 196, 128, 136}, cancel, sizeof(cancel), font,
+           pixels);
+    receipt.pixel_fnv1a = fnv1a(pixels, CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS);
+    receipt.source_evidence =
+        "ReDMCSB CEDT001.C F7004_LoadChampions; CEDTDATA.C G2261/G7068/G7064";
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}

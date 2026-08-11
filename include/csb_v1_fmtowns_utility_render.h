@@ -108,6 +108,18 @@ int csb_v1_fmtowns_utility_render_save_dialog(
     uint8_t *indexed_pixels, size_t pixel_capacity,
     CSB_V1_FmtownsUtilityRenderReceipt *out_receipt);
 
+/* CEDT001.C F7004's native three-choice load dialog.  It reuses G2261's
+ * GAME/PORTRAIT/CANCEL hit rectangles, but carries G7068's distinct text. */
+int csb_v1_fmtowns_utility_render_load_dialog(
+    const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
+    const CSB_V1_FmtownsUtilityMenuReceipt *menu,
+    const CSB_V1_FmtownsUtilityFontReceipt *font,
+    const CSB_V1_PartyState *party,
+    const CSB_V1_FmtownsStartupPortraitReceipt *portraits,
+    uint16_t selected_champion_index, uint8_t selected_color_index,
+    uint8_t *indexed_pixels, size_t pixel_capacity,
+    CSB_V1_FmtownsUtilityRenderReceipt *out_receipt);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1181,8 +1181,15 @@ int main(void)
         result = M11_GameView_HandlePointerButton(
             &view, 50, 190, DM1_V1_MOUSE_MASK_LEFT_PC34);
         CHECK(result == M11_GAME_INPUT_REDRAW &&
+                  view.csbFmtownsUtilityLoadDialogActive &&
+                  !view.csbFmtownsUtilityFilePickerActive,
+              "F31E C06 LOAD CHAMPIONS opens its source GAME/PORTRAIT/CANCEL dialog");
+        result = M11_GameView_HandlePointerButton(
+            &view, 200, 112, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(result == M11_GAME_INPUT_REDRAW &&
+                  !view.csbFmtownsUtilityLoadDialogActive &&
                   view.csbFmtownsUtilityFilePickerActive,
-              "F31E C06 LOAD CHAMPIONS enters the source-owned file picker");
+              "F31E C06 F7004 PORTRAIT enters the source-owned file picker");
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, 320, 200);
         CHECK(framebuffer[63u * 320u + 77u] == 13u,
