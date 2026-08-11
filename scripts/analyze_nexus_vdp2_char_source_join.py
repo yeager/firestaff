@@ -62,7 +62,10 @@ def replay_write_trace(path: Path) -> tuple[bytes, bytes, int]:
     kept separate from the raw end-of-frame image.  The reconstruction is a
     byte observation only; it does not infer DMA ownership or write timing.
     """
-    vram = bytearray(0x40000)
+    # VDP2 stores 0x40000 words, i.e. 0x80000 bytes.  The diagnostic trace
+    # records the VDP2 bus address (0..0xfffff), not the old host-side
+    # 0x50000-relative offset used by an earlier capture writer.
+    vram = bytearray(0x80000)
     cram = bytearray(0x1000)
     writes = 0
     pattern = re.compile(
@@ -77,12 +80,11 @@ def replay_write_trace(path: Path) -> tuple[bytes, bytes, int]:
         address = int(match.group("addr"), 16)
         value = int(match.group("value"), 16)
         if area == "vram":
-            target, base = vram, 0x50000
+            target, offset = vram, address & 0x7ffff
         elif area == "cram":
-            target, base = cram, 0x100000
+            target, offset = cram, address & 0xfff
         else:
             continue
-        offset = address - base
         if offset < 0 or offset + 2 > len(target):
             continue
         target[offset:offset + 2] = value.to_bytes(2, "big")
