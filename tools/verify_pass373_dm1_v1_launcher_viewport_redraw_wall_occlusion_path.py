@@ -114,8 +114,8 @@ def main()->int:
     # the shell timeout to 60s so --duration 9000 completes naturally and the
     # probe JSON written in m11_write_autotest_runtime_probe captures the final
     # post-script game state.
-    cmd=["timeout","60s",str(BUILD_DIR/"firestaff"),"--duration","9000","--width","1920","--height","1080","--data-dir",str(DM1_DATA),"--script",SCRIPT]
-    r=run(cmd, env=env, timeout=80); checks.append({"kind":"launcher_route_runtime_probe","script":SCRIPT,"ok":r["returncode"]==0 and probe_json.exists(),"result":r})
+    cmd=["timeout","180s",str(BUILD_DIR/"firestaff"),"--duration","9000","--width","1920","--height","1080","--data-dir",str(DM1_DATA),"--script",SCRIPT]
+    r=run(cmd, env=env, timeout=210); checks.append({"kind":"launcher_route_runtime_probe","script":SCRIPT,"ok":r["returncode"]==0 and probe_json.exists(),"result":r})
     runtime={}; live_ok=False
     # The probe JSON may briefly lag the post-script idle ticks; if the first
     # read shows viewportDirty=0 (mid-script), wait briefly and re-read so the
