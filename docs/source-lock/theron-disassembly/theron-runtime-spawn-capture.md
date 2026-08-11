@@ -11,6 +11,16 @@ T700, T900 or RNG return contract. The runtime therefore remains fail-closed
 for those semantics until one capture joins the caller, bank mapping,
 register state and return boundary.
 
+## 2026-08-11 — `$B07D` caller context narrows the next witness
+
+The adjacent US caller window is now retained in
+`theron-us-spawn-caller-window.asm` with raw offset and FNV-1a identity. It
+shows four `$4644` calls before the `$B0E5` dispatch and the register fields
+that cross that boundary. The observed writes to `$2980/$2990/$29A0` and
+`$2A20/$2A28` remain unclassified RAM tables; no creature, T700 or T900
+meaning is inferred from their addresses. A future capture must join this
+caller, a valid category, the RNG return and the target write in one session.
+
 ## 2026-08-11 — register parser separates `$B0E5` address hits from spawn categories
 
 The register-sidecar parser now accepts the current external capture shape,

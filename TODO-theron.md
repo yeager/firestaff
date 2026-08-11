@@ -28,6 +28,16 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   samtidigt visa giltig caller, kategoriargument, RNG-retur och konsumentens
   målskrivning i samma autentiserade session.
 
+## 2026-08-11 — `$B07D` caller window is source-locked
+
+- ✅ Den statiska US-disassemblyn har nu en separat, hashverifierad caller-
+  window för `$B07D-$B1EB`. Den visar fyra `$4644`-anrop före `$B0E5` och
+  vilka register-/RAM-fält som förs in i dispatchen.
+- 🔒 Window:n bevisar ännu inte att `$2980/$2990/$29A0` eller `$2A20/$2A28`
+  är creature-statistik. Nästa positiva capture ska binda samma caller,
+  giltig kategori 0–3, RNG-retur och efterföljande writes till ett riktigt
+  Track 02-record innan någon gameplaysemantik aktiveras.
+
 ## 2026-08-10 — README capture is reference-only
 
 - 🔒 The published screenshot documents the original US presentation only.
