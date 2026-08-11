@@ -1,13 +1,16 @@
-# Theron: authenticated follow-up capture audited (2026-08-11)
+# Theron: rebuilt C3A0 follow-up capture audited (2026-08-11)
 
-- ✅ Ran the external Mednafen capture with the real US Track 02 media,
-  authentic System Card and operator-provided save-state; the raw trace stayed
-  on the external disk and no BIOS, BIN, ISO or trace was added to GitHub.
-- ✅ The capture produced 14 authenticated scripted input events, 13 `$CC4C`
-  execution-window observations and source-bound VDC/VCE snapshots.
-- ✅ The trace was checked for `$B0E5`, `$C3A0`/target-RAM and transition
-  evidence; none formed a valid gameplay handoff. The runtime remains
-  fail-closed for unresolved RNG/AI/combat/loot/generator/T700/T900 rules.
+- ✅ Rebuilt the external instrumented Mednafen binary after admitting the
+  current `$C3A0` trace hook, then ran the authentic US Track 02 BIN, System
+  Card and operator save-state. The raw capture stayed on the external disk;
+  no BIOS, BIN, ISO or trace was added to GitHub, and Mednafen was terminated
+  by capture cleanup.
+- ✅ The run recorded 689 `$C3A0` execution samples, 4,096 authenticated
+  main-RAM consumer reads and source-bound VDC/VCE snapshots.
+- 🔒 The run still lacked `$C96B`, `$B0E5` category-0..3 and a complete
+  target-RAM handoff. The parser rejected semantic publication, so RNG,
+  dynamic spawn, AI/combat/loot, generator timing and T700/T900 rules remain
+  correctly fail-closed.
 
 # Theron: admit authenticated US screen-space VDC/VCE capture (2026-08-11)
 

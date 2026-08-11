@@ -1,16 +1,16 @@
 # Firestaff TODO - Open Work
 
-# Theron: follow-up autoload capture still stops before gameplay consumer (2026-08-11)
+# Theron: C3A0 capture still lacks the gameplay consumer edge (2026-08-11)
 
-- ✅ The external authenticated Mednafen run accepted the real Track 02 BIN,
-  System Card and operator save-state, and produced source-bound VDC/VCE plus
-  input, main-RAM and `$CC4C` execution traces. Mednafen was terminated by the
-  capture cleanup path; no process was left running.
-- 🔒 The run ended without a valid `$B0E5` category-0..3 sample, without a
-  same-session `$C3A0` → `$C96B/$CC4C` → target-RAM join, and without a valid
-  transition receipt. The observation is transport/execution evidence only;
-  it does not authorize RNG, dynamic spawn, AI, attacks, damage, loot,
-  generator timing, T700 or T900 semantics.
+- ✅ Rebuilt the external instrumented Mednafen binary from the current trace
+  source and reran it with the real Track 02 BIN, authentic System Card and
+  operator save-state. The capture admitted 689 `$C3A0` execution samples,
+  4,096 authenticated main-RAM consumer reads and source-bound VDC/VCE.
+- 🔒 This run still had no `$C96B` execution edge, no `$B0E5` category-0..3
+  sample, and no complete `$C3A0` → gameplay-consumer → target-RAM join. The
+  source parser therefore rejects it as a semantic handoff. Keep RNG,
+  dynamic spawn, AI, attacks, damage, loot, generator timing, T700 and T900
+  fail-closed until that authenticated edge is captured.
 
 # Theron: source-bound square/material consumer and README capture (2026-08-11)
 
