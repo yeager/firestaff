@@ -1,3 +1,15 @@
+# Theron: ordinary mouse Button I/II input path (2026-08-11)
+
+- ✅ Theron now keeps normal pointer motion position-only, so moving the
+  cursor over dungeon objects never selects or hops between them.
+- ✅ Left/right desktop clicks now enter Theron's Button I/II runtime facade
+  in the live dungeon; startup left clicks retain source-space menu hit tests
+  and right clicks retain the source action route.
+- ✅ Theron mouse release is prevented from falling through to DM1 inventory
+  drag/release handling.
+- ✅ `firestaff` target build, Theron input facade tests, and pointer mapping
+  tests pass. No BIOS or game data was added.
+
 # Nexus: propagate VDP2 producer order into capture composition (2026-08-11)
 
 - ✅ Added the producer byte order to `Nexus_V1_Vdp2CaptureCompositeInput`.

@@ -30788,6 +30788,14 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
         (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
         return M11_GAME_INPUT_IGNORED;
     }
+    /* Theron Button I is an instantaneous controller event.  There is no
+     * DM1-style held-object drag/release route in this source boundary, so a
+     * desktop mouse release must not fall through to DM1 inventory handling. */
+    if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+        (void)x;
+        (void)y;
+        return M11_GAME_INPUT_IGNORED;
+    }
     state->pointerPositionKnown = 1;
     state->pointerX = x;
     state->pointerY = y;
@@ -31130,6 +31138,38 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
     state->pointerY = y;
     if (m11_dm1_v1_blocks_host_map_overlay(state)) {
         state->mapOverlayActive = 0;
+    }
+
+    /* Theron uses a normal desktop pointer as the host device, but its
+     * physical mouse buttons are controller buttons, not DM1's pointer-zone
+     * table.  Keep pointer motion as position-only state (HandlePointerMove)
+     * so moving over an object never selects or hops between objects.  During
+     * startup Button I still needs the source-space menu hit test; Button II
+     * is the source action command.  Once the dungeon is live both buttons
+     * enter the authenticated Theron input facade directly.
+     *
+     * Source lock: THQUEST.ASM T400/T520/T560/T600/T700 owns the startup,
+     * movement and action boundaries.  Do not route these events through the
+     * ReDMCSB/DM1 C007..C116 pointer table. */
+    if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+        if (state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON ||
+            !state->theronState.level_loaded) {
+            if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0) {
+                return m11_theron_handle_startup_pointer(state, x, y);
+            }
+            if ((buttonMask & DM1_V1_MOUSE_MASK_RIGHT_PC34) != 0) {
+                return M11_GameView_HandleInput(
+                    state, M12_MENU_INPUT_ACTION);
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
+        if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0) {
+            return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+        }
+        if ((buttonMask & DM1_V1_MOUSE_MASK_RIGHT_PC34) != 0) {
+            return M11_GameView_HandleInput(state, M12_MENU_INPUT_ACTION);
+        }
+        return M11_GAME_INPUT_IGNORED;
     }
 
     if (state->graphicsPopupActive) {

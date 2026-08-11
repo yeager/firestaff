@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+## Theron: authenticate source-owned dungeon pointer/object consumers (2026-08-11)
+
+- ✅ Host mouse motion and Button I/II ingress are now separated from the
+  DM1 pointer-zone table.
+- 🔒 Source-owned Theron object selection, hand interaction and viewport
+  click consumers still require an authenticated Track 02 runtime capture;
+  no object semantics are inferred from pointer coordinates.
+
 ## Nexus: carry VDP2 producer order into composition (2026-08-11)
 
 - ✅ Source-bound NBG1 composition now uses the raw receipt's explicit
