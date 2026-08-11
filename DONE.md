@@ -13809,3 +13809,10 @@ and production source-combat tests.
   perspective, HUD and object consumers.
 - 🔒 No README screenshot was promoted; the existing human-review promotion
   gate remains authoritative.
+# Theron: bind ADPCM FIFO transport byte-for-byte (2026-08-11)
+
+- ✅ The real CD-state parser now verifies ADPCM FIFO→RAM pairs by LBA,
+  source offset, FIFO sequence, ADPCM address and byte value.
+- ✅ A complete external receipt passes; an incomplete capture is rejected.
+- 🔒 This remains transport evidence only. No sound ID, decoded sample,
+  channel start or gameplay event owner is inferred.

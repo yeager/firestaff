@@ -1,5 +1,16 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-11 — ADPCM FIFO/RAM pairs are now byte- and sequence-bound
+
+The CD-state intake now requires every authenticated
+`pce_cd_fifo_read transport=adpcm` row to be followed by a matching
+`pce_cd_adpcm_ram_write` row with the same source LBA, source offset, FIFO
+sequence, ADPCM address and byte value. An incomplete capture is rejected;
+the accepted receipt exposes `adpcm_transport_pair_verified`. This proves
+transport integrity only. It does not identify a decoded sample, channel
+start, sound ID or gameplay event owner, so `theron_v1_play_sound()` remains
+fail-closed.
+
 ## 2026-08-11 — authenticated witness-to-creature bridge remains capture-gated
 
 `theron_v1_creature_apply_spawn_consumer_witness()` now connects a complete

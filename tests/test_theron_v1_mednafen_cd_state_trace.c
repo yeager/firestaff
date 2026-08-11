@@ -20,7 +20,9 @@ int main(void) {
         receipt.semantic_publication_allowed ||
         receipt.scsi_command_count == 0u || receipt.raw_sector_count == 0u ||
         receipt.raw_sector_count != receipt.requested_sector_count ||
-        receipt.raw_sector_count != receipt.sector_binding_count) {
+        receipt.raw_sector_count != receipt.sector_binding_count ||
+        (receipt.adpcm_fifo_read_count != 0u &&
+         !receipt.adpcm_transport_pair_verified)) {
         fprintf(stderr, "FAIL: real Mednafen CD state trace was not accepted\n");
         return 1;
     }

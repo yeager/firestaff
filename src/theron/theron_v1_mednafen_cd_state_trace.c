@@ -32,6 +32,15 @@ typedef struct {
     uint32_t sector_count;
 } Theron_V1CdRange;
 
+typedef struct {
+    int active;
+    uint32_t source_lba;
+    uint32_t source_offset;
+    unsigned long long fifo_sequence;
+    uint32_t adpcm_address;
+    uint32_t data;
+} Theron_V1PendingAdpcmByte;
+
 static int source_lba_in_range(const Theron_V1CdRange *ranges,
                                size_t range_count,
                                uint32_t source_lba) {
@@ -84,6 +93,7 @@ int theron_v1_mednafen_cd_state_trace_parse_file(
 {
     Theron_V1MednafenCdStateTraceReceipt receipt = {0};
     Theron_V1PendingCdRead pending = {0};
+    Theron_V1PendingAdpcmByte pending_adpcm = {0};
     Theron_V1CdRange ranges[64] = {{0}};
     size_t range_count = 0;
     struct stat info;
@@ -130,6 +140,8 @@ int theron_v1_mednafen_cd_state_trace_parse_file(
         uint32_t origin_writer_physical_pc, origin_destination;
         uint32_t origin_physical, origin_read_value, origin_stored_value;
         unsigned long long origin_fifo_sequence;
+        uint32_t adpcm_lba, adpcm_offset, adpcm_address, adpcm_data;
+        unsigned long long adpcm_sequence;
         char cdb[32];
 
         if (first_line) {
@@ -159,14 +171,45 @@ int theron_v1_mednafen_cd_state_trace_parse_file(
             continue;
         }
         if (known_observation_row(line, "pce_cd_fifo_read ")) {
-            if (!strstr(line, " transport=adpcm ")) {
+            if (sscanf(line,
+                       "pce_cd_fifo_read transport=adpcm source_lba=%u "
+                       "source_offset=%u fifo_sequence=%llu "
+                       "adpcm_address=%x data=%x%n",
+                       &adpcm_lba, &adpcm_offset, &adpcm_sequence,
+                       &adpcm_address, &adpcm_data, &consumed) != 5 ||
+                line[consumed] != '\0' || pending_adpcm.active ||
+                adpcm_offset >= THERON_V1_RAW_MODE1_2352_BYTES ||
+                !source_lba_in_range(ranges, range_count, adpcm_lba) ||
+                adpcm_address > 0xffffu || adpcm_data > 0xffu) {
                 fclose(file);
                 return reject(&receipt);
             }
+            pending_adpcm.active = 1;
+            pending_adpcm.source_lba = adpcm_lba;
+            pending_adpcm.source_offset = adpcm_offset;
+            pending_adpcm.fifo_sequence = adpcm_sequence;
+            pending_adpcm.adpcm_address = adpcm_address;
+            pending_adpcm.data = adpcm_data;
             receipt.adpcm_fifo_read_count++;
             continue;
         }
         if (known_observation_row(line, "pce_cd_adpcm_ram_write ")) {
+            if (sscanf(line,
+                       "pce_cd_adpcm_ram_write source_lba=%u "
+                       "source_offset=%u fifo_sequence=%llu "
+                       "adpcm_address=%x data=%x%n",
+                       &adpcm_lba, &adpcm_offset, &adpcm_sequence,
+                       &adpcm_address, &adpcm_data, &consumed) != 5 ||
+                line[consumed] != '\0' || !pending_adpcm.active ||
+                adpcm_lba != pending_adpcm.source_lba ||
+                adpcm_offset != pending_adpcm.source_offset ||
+                adpcm_sequence != pending_adpcm.fifo_sequence ||
+                adpcm_address != pending_adpcm.adpcm_address ||
+                adpcm_data != pending_adpcm.data) {
+                fclose(file);
+                return reject(&receipt);
+            }
+            pending_adpcm.active = 0;
             receipt.adpcm_ram_write_count++;
             continue;
         }
@@ -282,17 +325,21 @@ int theron_v1_mednafen_cd_state_trace_parse_file(
     }
     fclose(file);
 
-    if (first_line || pending.active || !receipt.source_header_verified ||
+    if (first_line || pending.active || pending_adpcm.active ||
+        !receipt.source_header_verified ||
         (receipt.source_marker_rows != 5u && receipt.source_marker_rows != 6u) ||
         !receipt.scsi_command_count ||
         receipt.requested_sector_count != receipt.raw_sector_count ||
         receipt.raw_sector_count != receipt.sector_binding_count ||
-        receipt.raw_sector_count == 0u || !m12_file_md5_hex(path, md5))
+        receipt.raw_sector_count == 0u || !m12_file_md5_hex(path, md5)) {
         return reject(&receipt);
+    }
 
     receipt.status = THERON_V1_MEDNAFEN_CD_STATE_TRACE_READY;
     receipt.source_trace_md5_verified = 1;
     receipt.command_sector_binding_verified = 1;
+    receipt.adpcm_transport_pair_verified =
+        receipt.adpcm_fifo_read_count == receipt.adpcm_ram_write_count;
     receipt.semantic_publication_allowed = 0;
     snprintf(receipt.source_trace_path, sizeof(receipt.source_trace_path), "%s", path);
     snprintf(receipt.source_trace_md5, sizeof(receipt.source_trace_md5), "%s", md5);

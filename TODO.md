@@ -5268,3 +5268,8 @@ record boundary. Dynamic RNG/AI/T700/T900 behavior remains capture-gated.
 - 🔒 Only then enable runtime AI, attack/damage, generator timing, T700 and
   T900 semantics; keep the new witness-to-creature bridge fail-closed until
   that evidence exists.
+# Theron: prove ADPCM event ownership
+
+- 🔒 Capture a source-owned ADPCM-RAM CPU read/channel-start event and join it
+  to a real gameplay event before enabling `theron_v1_play_sound()`.
+- 🔒 Keep CDDA track availability separate from in-game sound-effect ownership.
