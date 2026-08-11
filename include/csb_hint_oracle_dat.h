@@ -64,6 +64,13 @@ int csb_hint_oracle_dat_img2_decode(const uint8_t *segment,
                                     size_t out_capacity,
                                     size_t *out_bytes_consumed);
 
+/* Decode the 32-byte C3_HINT_GRAPHIC_PALETTE segment.  `out_rgb4` receives
+ * 16 RGB triples in 0..15 range, using HINT001.C:150-156's 3-bit→4-bit
+ * integer scaling. */
+int csb_hint_oracle_dat_palette_decode(const uint8_t *segment,
+                                       size_t segment_size,
+                                       uint8_t out_rgb4[48]);
+
 const char *csb_hint_oracle_dat_result_name(int result);
 
 #ifdef __cplusplus

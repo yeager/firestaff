@@ -28,6 +28,10 @@ int main(void)
     const uint8_t solid_img[] = {0, 2, 0, 1, 0x05, 0x06};
     const uint8_t literal_img[] = {0, 2, 0, 1, 0x90, 1, 0xab};
     uint8_t pixels[4];
+    const uint8_t palette[] = {0, 0, 7, 0x77, 0, 0, 0, 7, 7, 0, 0, 0,
+                               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                               0, 0, 0, 0, 0, 0, 0, 0};
+    uint8_t rgb4[48];
     uint16_t width = 0u, height = 0u;
 
     check(csb_hint_oracle_dat_parse(valid, sizeof(valid), &archive) ==
@@ -69,6 +73,10 @@ int main(void)
     check(!csb_hint_oracle_dat_img2_decode(literal_img, 6u,
               &width, &height, pixels, sizeof(pixels), NULL),
           "truncated IMG2 literal is rejected");
+    check(csb_hint_oracle_dat_palette_decode(palette, sizeof(palette), rgb4) &&
+              rgb4[0] == 0u && rgb4[3] == 15u && rgb4[4] == 15u &&
+              rgb4[5] == 15u,
+          "Atari 3-bit palette maps to source-equivalent RGB4");
 
     return failures ? 1 : 0;
 }

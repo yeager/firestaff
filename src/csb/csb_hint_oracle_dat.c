@@ -121,3 +121,19 @@ int csb_hint_oracle_dat_img2_decode(const uint8_t *s, size_t n,
     if (pos != total) return 0;
     *ow = w; *oh = h; if (used) *used = src; return 1;
 }
+
+int csb_hint_oracle_dat_palette_decode(const uint8_t *segment,
+                                       size_t segment_size,
+                                       uint8_t out_rgb4[48])
+{
+    size_t i;
+    if (!segment || !out_rgb4 || segment_size != 32u) return 0;
+    for (i = 0u; i < 16u; ++i) {
+        uint16_t color = read_be16(segment + (i * 2u));
+        out_rgb4[i * 3u] = (uint8_t)((((color & 0x0700u) >> 8u) * 15u) / 7u);
+        out_rgb4[i * 3u + 1u] = (uint8_t)((((color & 0x0070u) >> 4u) * 15u) / 7u);
+        out_rgb4[i * 3u + 2u] = (uint8_t)(((color & 0x0007u) * 15u) / 7u);
+    }
+    out_rgb4[0] = out_rgb4[1] = out_rgb4[2] = 0u;
+    return 1;
+}

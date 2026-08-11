@@ -29,6 +29,7 @@ int main(int argc, char **argv)
     const uint8_t *oracle_segment;
     size_t oracle_size;
     uint8_t *pixels;
+    uint8_t rgb4[48];
     uint16_t width, height;
     size_t i;
     int rc;
@@ -62,6 +63,13 @@ int main(int argc, char **argv)
             free(pixels); free(bytes); return 1;
         }
         free(pixels);
+    }
+    if (archive.segment_count <= 3u ||
+        csb_hint_oracle_dat_get_segment(&archive, 3u, &oracle_segment,
+                                        &oracle_size) != CSB_HINT_ORACLE_DAT_OK ||
+        !csb_hint_oracle_dat_palette_decode(oracle_segment, oracle_size, rgb4)) {
+        fprintf(stderr, "FAIL: Hint Oracle palette decode\n");
+        free(bytes); return 1;
     }
     free(bytes);
     return 0;
