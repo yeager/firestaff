@@ -500,9 +500,11 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
   admitted Mac profile now takes precedence over PC aliases for the English
   retail/demo gameplay route, and movement, champion inventory, leader
   inventory, freeze, wake, save and quit reach the existing M11 boundaries.
-  Held-button timing, balloon help, and the three Mac wall-button actions
-  still need their original runtime owners; wall actions remain explicit and
-  fail closed instead of becoming a synthetic attack.
+  Held keyboard/gamepad motion now uses the source input boundary and the Mac
+  A/D/W/S/X/Z/C and keypad meanings; SDL autorepeat is ignored for those
+  actions. Balloon help and the three Mac wall-button actions still need their
+  original runtime owners; wall actions remain explicit and fail closed
+  instead of becoming a synthetic attack.
 - [ ] Acquire an authentic Mac save corpus for both language families and
   verify native load/save round trips. A DOSBox `SKSAVE` or a generated save
   cannot close this gate.

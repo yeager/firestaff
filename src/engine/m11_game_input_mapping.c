@@ -166,7 +166,7 @@ int M11_InputSourceSupportsHeldMotion(const char* sourceId, int active)
      * stick or key depend on SDL axis motion or OS key-repeat after its first
      * command. */
     return strcmp(sourceId, "dm1") == 0 || strcmp(sourceId, "csb") == 0 ||
-           strcmp(sourceId, "theron") == 0;
+           strcmp(sourceId, "dm2") == 0 || strcmp(sourceId, "theron") == 0;
 }
 
 int M11_MapPresentedGamePointToSourceForPresentation(int presentationMode,

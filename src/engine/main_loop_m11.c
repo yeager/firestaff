@@ -4112,6 +4112,14 @@ static int m11_game_view_is_dm1(const M11_GameViewState* gameView) {
                                                 gameView->sourceId);
 }
 
+static int m11_game_view_is_dm2_mac(const M11_GameViewState* gameView) {
+    return gameView && gameView->active &&
+           gameView->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+           gameView->dm2BootProfile &&
+           ((const DM2_V1_BootProfile *)gameView->dm2BootProfile)->platform ==
+               DM2_PLATFORM_MAC_EN;
+}
+
 static int m11_game_view_is_theron(const M11_GameViewState* gameView) {
     return gameView && gameView->active &&
            gameView->sourceKind == M11_GAME_SOURCE_THERON_TRACK02;
@@ -4282,6 +4290,14 @@ static int m11_dm2_mac_sdl_key_to_menu_input(
         case DM2_V1_MAC_ACTION_WAKE: *outInput = M12_MENU_INPUT_ACCEPT; return 1;
         default: return 0;
     }
+}
+
+static int m11_dm2_mac_key_event_is_held_motion(
+    const M11_GameViewState *gameView, const SDL_KeyboardEvent *keyEvent) {
+    M12_MenuInput input = M12_MENU_INPUT_NONE;
+    return m11_game_view_is_dm2_mac(gameView) && keyEvent && keyEvent->repeat &&
+           m11_dm2_mac_sdl_key_to_menu_input(gameView, keyEvent, &input) &&
+           DM1_V1_InputMenuTokenUsesHeldRepeatPc34Compat((int)input);
 }
 
 static int m11_push_script_event_token(const char* token, size_t len) {
@@ -4727,7 +4743,10 @@ static M12_MenuInput m11_held_motion_input_from_keyboard(const M11_GameViewState
         SDL_SCANCODE_KP_1,
         SDL_SCANCODE_KP_3,
         SDL_SCANCODE_KP_4,
-        SDL_SCANCODE_KP_6
+        SDL_SCANCODE_KP_6,
+        SDL_SCANCODE_X,
+        SDL_SCANCODE_Z,
+        SDL_SCANCODE_C
     };
 
     if (!keys || count <= 0) {
@@ -4736,6 +4755,38 @@ static M12_MenuInput m11_held_motion_input_from_keyboard(const M11_GameViewState
     for (i = 0; i < (int)(sizeof(preferred) / sizeof(preferred[0])); i++) {
         int sc = (int)preferred[i];
         if (sc >= 0 && sc < count && keys[sc]) {
+            if (m11_game_view_is_dm2_mac(gameView)) {
+                M12_MenuInput macInput = M12_MENU_INPUT_NONE;
+                switch (preferred[i]) {
+                case SDL_SCANCODE_UP:
+                case SDL_SCANCODE_W:
+                case SDL_SCANCODE_S:
+                case SDL_SCANCODE_KP_5:
+                    macInput = M12_MENU_INPUT_UP; break;
+                case SDL_SCANCODE_DOWN:
+                case SDL_SCANCODE_X:
+                case SDL_SCANCODE_KP_2:
+                    macInput = M12_MENU_INPUT_DOWN; break;
+                case SDL_SCANCODE_LEFT:
+                case SDL_SCANCODE_A:
+                case SDL_SCANCODE_KP_4:
+                    macInput = M12_MENU_INPUT_TURN_LEFT; break;
+                case SDL_SCANCODE_RIGHT:
+                case SDL_SCANCODE_D:
+                case SDL_SCANCODE_KP_6:
+                    macInput = M12_MENU_INPUT_TURN_RIGHT; break;
+                case SDL_SCANCODE_KP_1:
+                case SDL_SCANCODE_Z:
+                    macInput = M12_MENU_INPUT_STRAFE_LEFT; break;
+                case SDL_SCANCODE_KP_3:
+                case SDL_SCANCODE_C:
+                    macInput = M12_MENU_INPUT_STRAFE_RIGHT; break;
+                default:
+                    break;
+                }
+                if (macInput != M12_MENU_INPUT_NONE) return macInput;
+                continue;
+            }
             M12_MenuInput input =
                 m11_game_view_is_theron(gameView)
                     ? M11_TheronNavigationInputFromScancode((int)preferred[i])
@@ -5304,6 +5355,9 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                                   &csbInput)) {
                     return csbInput;
                 }
+            }
+            if (m11_dm2_mac_key_event_is_held_motion(gameView, &ev.key)) {
+                return M12_MENU_INPUT_NONE;
             }
             if (gameView && gameView->active) {
                 M12_MenuInput macInput = M12_MENU_INPUT_NONE;

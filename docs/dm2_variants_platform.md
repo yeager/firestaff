@@ -61,7 +61,10 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   versions: inventory keys, movement aliases, freeze/wake, Command-O/S/Q,
   entrance/credits Return, and the three wall-button columns. Only actions
   represented by the existing command queue are enqueued; Mac-only actions
-  remain explicit until their native dispatcher is implemented.
+  remain explicit until their native dispatcher is implemented. Held
+  keyboard/gamepad movement uses the same source boundary, with Mac-specific
+  A/D/W/S/X/Z/C and keypad meanings; host autorepeat is not used as the game
+  clock.
 - In the M11/SDL route, an admitted `DM2_PLATFORM_MAC_EN` profile takes
   precedence over generic PC key aliases. Movement, champion/leader inventory,
   freeze, wake, save and quit are dispatched through the existing runtime
