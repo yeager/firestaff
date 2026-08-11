@@ -54,9 +54,10 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
 - The Mac dungeon reader keeps the ZIP/HFS source bytes intact and carries the
   68k word order through the authenticated column, ground-stack and record-link
   accessors. Both English ZIPs now pass the source record-graph and start-pose
-  gates. Retail map-wide GAME_LOAD remains fail-closed where map 5 contains
-  unproven record roots; the demo has no champion-DYN4 roster and remains a
-  title/demo route.
+  gates. Retail map-wide GAME_LOAD passes the source-verified maps 0-5,
+  including the DB3/DB4 continuation. Later maps remain fail-closed where
+  authentic DB10/DB14 roots require a separately proven pool layout; the demo
+  has no champion-DYN4 roster and remains a title/demo route.
 - The English Macintosh input table is source-locked and tested for both
   versions: inventory keys, movement aliases, freeze/wake, Command-O/S/Q,
   entrance/credits Return, and the three wall-button columns. Only actions

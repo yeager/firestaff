@@ -163,6 +163,7 @@ static uint16_t rd16be(const uint8_t *p) {
 #define DM2_PC_G1_DB3_EXTENDED_COUNT        1024
 #define DM2_PC_G1_DB4_EXTENDED_COUNT        300
 #define DM2_PC_G1_EXTENSION_UNTYPED_TAIL_BYTES 9
+#define DM2_MAC_G1_UNTYPED_EXTENSION_BYTES 396
 
 static const uint8_t s_dm2_db_record_size[DM2_THING_TYPE_COUNT] = {
     0x04, 0x06, 0x04, 0x08,
@@ -195,7 +196,10 @@ static void dm2_v1_configure_pc_g1_extension_records(
     db4_bytes = (DM2_PC_G1_DB4_EXTENDED_COUNT -
                  d->thing_type_counts[4]) * s_dm2_db_record_size[4];
     if (d->g1_extension_size != db3_bytes + db4_bytes +
-                                DM2_PC_G1_EXTENSION_UNTYPED_TAIL_BYTES) {
+                                DM2_PC_G1_EXTENSION_UNTYPED_TAIL_BYTES &&
+        d->g1_extension_size != db3_bytes + db4_bytes +
+            DM2_MAC_G1_UNTYPED_EXTENSION_BYTES +
+            DM2_PC_G1_EXTENSION_UNTYPED_TAIL_BYTES) {
         return;
     }
     d->g1_extension_record_bases[3] = d->g1_extension_base;
@@ -755,6 +759,10 @@ static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
     out->g1_extension_base = thing_cursor;
     out->g1_extension_size = (size - raw_map_bytes) - thing_cursor;
     if (out->g1_extension_size <= 0) return 0;
+    /* The authenticated Mac retail member uses the same source-owned DB3/DB4
+     * continuation as the byte-square G1 corpus. Its record words are BE,
+     * but the pool counts and extension bounds are unchanged. */
+    dm2_v1_configure_pc_g1_extension_records(out);
     out->raw_map_data_base = size - raw_map_bytes;
     out->column_index_base = column_index_base;
     out->square_first_thing_base = sft_base;
@@ -2987,7 +2995,7 @@ int dm2_v1_dungeon_collect_g1_record_pool_evidence(
         int offset = d->square_first_thing_base + i * 2;
         uint16_t link;
         if (offset < 0 || offset + 1 >= d->raw_size) return 0;
-        link = RD16(d->raw_data + offset);
+        link = dm2_v1_dungeon_rd16(d, d->raw_data + offset);
         ++out->root_count;
         if (link == DM2_THING_END_MARKER)
             ++out->root_end_markers;
@@ -3005,7 +3013,8 @@ int dm2_v1_dungeon_collect_g1_record_pool_evidence(
         int record_size = (int)s_dm2_db_record_size[type];
         if (base < 0 || record_size < 2) continue;
         for (int index = 0; index < count; ++index) {
-            uint16_t link = RD16(d->raw_data + base + index * record_size);
+            uint16_t link = dm2_v1_dungeon_rd16(
+                d, d->raw_data + base + index * record_size);
             ++out->candidate_record_count;
             if (link == DM2_THING_END_MARKER)
                 ++out->candidate_first_link_end_markers;
@@ -3066,8 +3075,9 @@ int dm2_v1_dungeon_materialize_g1_partial_map_boot(
      * never read its GenericRecord::w0. */
     for (int level = 0; level < d->level_count; ++level) {
         for (int x = 0; x < d->level_widths[level]; ++x) {
-            int stack = (int)RD16(d->raw_data + d->column_index_base +
-                                  (column_index + x) * 2);
+            int stack = (int)dm2_v1_dungeon_rd16(
+                d, d->raw_data + d->column_index_base +
+                   (column_index + x) * 2);
             for (int y = 0; y < d->level_heights[level]; ++y) {
                 int raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
                 uint16_t root;
@@ -3078,8 +3088,8 @@ int dm2_v1_dungeon_materialize_g1_partial_map_boot(
                 if ((raw & 0x10) == 0) continue;
                 if (stack < 0 || stack >= d->square_first_thing_count)
                     return 0;
-                root = RD16(d->raw_data + d->square_first_thing_base +
-                            stack * 2);
+                root = dm2_v1_dungeon_rd16(
+                    d, d->raw_data + d->square_first_thing_base + stack * 2);
                 ++candidate.map_root_count;
                 type = (root >> 10) & 0x0f;
                 index = root & 0x03ff;
@@ -3172,8 +3182,9 @@ int dm2_v1_dungeon_validate_g1_runtime_map(
     }
 
     for (int x = 0; x < candidate.width; ++x) {
-        int stack = (int)RD16(d->raw_data + d->column_index_base +
-                              (column_index + x) * 2);
+        int stack = (int)dm2_v1_dungeon_rd16(
+            d, d->raw_data + d->column_index_base +
+               (column_index + x) * 2);
         for (int y = 0; y < candidate.height; ++y) {
             int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
             uint16_t root;
@@ -3182,7 +3193,8 @@ int dm2_v1_dungeon_validate_g1_runtime_map(
             if (raw < 0) return 0;
             if ((raw & 0x10) == 0) continue;
             if (stack < 0 || stack >= d->square_first_thing_count) return 0;
-            root = RD16(d->raw_data + d->square_first_thing_base + stack * 2);
+            root = dm2_v1_dungeon_rd16(
+                d, d->raw_data + d->square_first_thing_base + stack * 2);
             type = (root >> 10) & 0x0f;
             ++candidate.root_count;
             if (dm2_v1_g1_link_has_declared_shape(d, root)) {

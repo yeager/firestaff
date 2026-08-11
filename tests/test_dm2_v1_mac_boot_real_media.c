@@ -47,6 +47,24 @@ int main(void) {
         dm2_v1_boot_cleanup(&profile);
         return 1;
     }
+    if (!demo) {
+        /* Maps 0-5 cover the source-verified DB0..DB4/DB3 continuation.
+         * Later Mac-only DB10/DB14 roots remain deliberately fail-closed
+         * until their original pool layout is proven. */
+        for (int map = 0; map <= 5 && map < dungeon->level_count; ++map) {
+            DM2_V1_FileHeaderRuntimeMapReceipt receipt;
+            memset(&receipt, 0, sizeof(receipt));
+            if (!dm2_v1_dungeon_validate_file_header_runtime_map(
+                    dungeon, map, &receipt) || !receipt.committed ||
+                receipt.root_count <= 0 || receipt.record_count < receipt.root_count) {
+                fprintf(stderr,
+                        "DM2 Mac retail map %d File_header gate failed: roots=%d records=%d\n",
+                        map, receipt.root_count, receipt.record_count);
+                dm2_v1_boot_cleanup(&profile);
+                return 1;
+            }
+        }
+    }
     dm2_v1_boot_cleanup(&profile);
     puts(demo ? "PASS: DM2 Macintosh demo boots from the original ZIP in RAM"
               : "PASS: DM2 Macintosh retail boots from the original ZIP in RAM");
