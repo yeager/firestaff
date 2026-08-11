@@ -38,10 +38,11 @@ available at [yeager.github.io/firestaff](https://yeager.github.io/firestaff/).
 | DM Nexus | Saturn real-data bring-up in progress. |
 | Theron's Quest | PC Engine real-media bring-up in progress. |
 
-Theron's Quest uses ordinary desktop controls in Firestaff: the arrow keys
-and W/A/S/D move continuously while held, left and right mouse buttons are
-Button I and Button II, and mouse motion only moves the pointer. Moving the
-mouse never changes the selected object or jumps between controls. On touch
+Theron's Quest uses ordinary desktop controls in Firestaff: Up/W moves
+forward, Down/S moves backward, and Left/A and Right/D turn while held.
+Keypad 8/2/4/6 provides the same four directions. Left and right mouse
+buttons are Button I and Button II; mouse motion only moves the normal pointer
+and never changes the selected object or jumps between controls. On touch
 screens, a short touch is Button I and a long touch is Button II.
 
 ### Authentic Theron's Quest reference capture
