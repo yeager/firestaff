@@ -5148,3 +5148,11 @@ record boundary. Dynamic RNG/AI/T700/T900 behavior remains capture-gated.
 - 🔒 The next positive witness must be captured from a user-created state at a
   visible monster/object interaction; until then the source occurrence bank
   remains provenance-only and gameplay stays fail-closed.
+
+## Theron: B0E5 physical-bank disambiguation remains open (2026-08-11)
+
+- 🔒 En längre autentisk savestate-replay gav 36 logiska `$B0E5`-träffar på
+  fysisk `$0E10E5`, men A=`$2C`/`$85` och därmed ingen giltig kategori `0..3`.
+  De ska inte främjas till RNG/spawn-statistik; nästa capture måste visa den
+  source-bound regular-spawn-koden, `$4644`/`$4667`-retur och efterföljande
+  monsterrecord i samma session.

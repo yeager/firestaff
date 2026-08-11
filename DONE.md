@@ -13626,3 +13626,13 @@ and production source-combat tests.
   external trace was accepted with 65,536 ordered reads.
 - 🔒 C3A0 target bytes remain provenance-only until a valid `$B0E5` category
   and complete return contract identify their gameplay semantics.
+
+# Theron: reject longer-replay B0E5 overlay alias (2026-08-11)
+
+- ✅ En längre autentisk savestate-replay gav 36 logiska `$B0E5`-träffar och
+  bevarade deras fysiska adress `$0E10E5` samt A-registervärden `$2C`/`$85`.
+- ✅ Verifieringen håller dem som ogiltiga adress-/overlayträffar; giltig
+  regular-spawn kräver A=`0..3` och komplett returkontrakt.
+- 🔒 Capturen hade `spawn_entry_b0e5_samples=0`, ingen `$4644`/`$4667`-
+  sample och `semantic_publication_allowed=0`. RNG, AI, combat, loot,
+  generatorer, T700 och T900 förblir därför stängda.

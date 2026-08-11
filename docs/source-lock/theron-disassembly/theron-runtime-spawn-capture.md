@@ -840,3 +840,20 @@ capture does not identify those bytes as creature, object, generator, T700 or
 T900 data, and it has no valid regular `$B0E5` category plus complete return
 contract. RNG, AI, combat, loot, generator timing and T700/T900 publication
 therefore remain blocked.
+
+## 2026-08-11 — longer savestate replay rejects a B0E5 address alias
+
+The same authenticated US Track 02/System Card pair was replayed from the
+operator's real Mednafen savestate with a longer bounded movement plan. The
+session recorded 36 logical `$B0E5` address hits, but every sampled entry had
+`A=$2C` or `A=$85`; neither value is a valid regular-spawn category (`0..3`).
+The hits mapped to physical `$0E10E5`, while the trace contained no valid
+`$B0E5` execution sample, no `$4644` preconsumer sample, and no `$4667` helper
+sample. The transition receipt therefore records
+`spawn_entry_b0e5_address_hits=36`, `spawn_entry_b0e5_samples=0`, and
+`semantic_publication_allowed=0`.
+
+This is explicit negative evidence for a same-address bank/overlay alias, not
+an RNG or spawn witness. The invalid entries must not be promoted to monster
+stats, AI, generators, T700 or T900 semantics. The raw capture remains outside
+the repository; only the bounded receipt facts are documented here.
