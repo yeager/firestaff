@@ -116,6 +116,23 @@ static int dm2_v1_fmtowns_candidate_has_dungeon_context(
     return 0;
 }
 
+static Dm2TouchClickViewPc34Compat
+dm2_v1_fmtowns_pc_context(DM2_V1_FmtownsUiContext context)
+{
+    switch (context) {
+        case DM2_V1_FMTOWNS_UI_DUNGEON:
+            return DM2_TOUCH_CLICK_VIEW_DUNGEON_PC34_COMPAT;
+        case DM2_V1_FMTOWNS_UI_INVENTORY:
+            return DM2_TOUCH_CLICK_VIEW_INVENTORY_PC34_COMPAT;
+        case DM2_V1_FMTOWNS_UI_STATUS:
+            return DM2_TOUCH_CLICK_VIEW_CHAMPION_PC34_COMPAT;
+        case DM2_V1_FMTOWNS_UI_DIALOGUE:
+            return DM2_TOUCH_CLICK_VIEW_DIALOG_PC34_COMPAT;
+        default:
+            return 0;
+    }
+}
+
 static uint32_t dm2_v1_dungeon_input_table_hash(void)
 {
     uint32_t hash = 2166136261u;
@@ -265,6 +282,64 @@ int dm2_v1_dungeon_input_owner_fmtowns_candidate_native_rect(
         return 0;
     return dm2_v1_boot_query_expanded_rect_receipt(
         owner->boot_profile, candidate.rect_id, out_rect);
+}
+
+int dm2_v1_dungeon_input_owner_fmtowns_route_context(
+    const DM2_V1_DungeonInputOwner *owner,
+    DM2_V1_FmtownsUiContext context,
+    int16_t screen_x, int16_t screen_y, unsigned int button_mask,
+    DM2_V1_FmtownsUiRouteReceipt *out_receipt)
+{
+    Dm2TouchClickViewPc34Compat source_view;
+    unsigned int ordinal;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    source_view = dm2_v1_fmtowns_pc_context(context);
+    if (!owner || !owner->active || !owner->fmtowns || !source_view ||
+        button_mask == 0u ||
+        !dm2_v1_fmtowns_skull_mouse_table_admitted(owner->boot_profile))
+        return 0;
+
+    for (ordinal = 0u;
+         ordinal < dm2_v1_dungeon_input_owner_fmtowns_candidate_count(owner);
+         ++ordinal) {
+        DM2_V1_FmtownsMouseInputCandidate candidate;
+        DM2_V1_BootExpandedRectReceipt native_rect;
+        unsigned int context_count;
+        unsigned int context_ordinal;
+
+        if (!dm2_v1_dungeon_input_owner_fmtowns_candidate(
+                owner, ordinal, &candidate) ||
+            (candidate.button_mask & button_mask) == 0u)
+            continue;
+        context_count = dm2_v1_dungeon_input_owner_fmtowns_candidate_context_count(
+            owner, ordinal);
+        for (context_ordinal = 0u; context_ordinal < context_count;
+             ++context_ordinal) {
+            Dm2TouchClickZonePc34Compat source_context;
+            memset(&source_context, 0, sizeof(source_context));
+            if (!dm2_v1_dungeon_input_owner_fmtowns_candidate_context_at(
+                    owner, ordinal, context_ordinal, &source_context) ||
+                source_context.view != source_view)
+                continue;
+            memset(&native_rect, 0, sizeof(native_rect));
+            if (!dm2_v1_boot_query_expanded_rect_receipt(
+                    owner->boot_profile, candidate.rect_id, &native_rect) ||
+                !native_rect.valid || !dm2_v1_rect_contains(
+                    &native_rect.rect, (int16_t)(screen_x * 2),
+                    (int16_t)(screen_y * 2)))
+                continue;
+            out_receipt->accepted = 1;
+            out_receipt->context = context;
+            out_receipt->candidate = candidate;
+            out_receipt->source_context = source_context;
+            out_receipt->native_rect = native_rect;
+            out_receipt->source_table_hash = owner->source_table_hash;
+            return 1;
+        }
+    }
+    return 0;
 }
 
 int dm2_v1_dungeon_input_owner_route(

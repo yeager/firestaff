@@ -194,10 +194,16 @@ int main(void)
         {
             unsigned int inventory_context_count = 0u;
             unsigned int inventory_native_gap_count = 0u;
+            int exercised_inventory_route = 0;
             for (candidate_index = 0u; candidate_index < candidate_count;
                  ++candidate_index) {
+                DM2_V1_FmtownsMouseInputCandidate candidate;
                 Dm2TouchClickZonePc34Compat context;
                 DM2_V1_BootExpandedRectReceipt native_rect;
+                memset(&candidate, 0, sizeof(candidate));
+                check(dm2_v1_dungeon_input_owner_fmtowns_candidate(
+                          &input_owner, candidate_index, &candidate),
+                      "FM Towns reads inventory candidate before routing it");
                 unsigned int context_count =
                     dm2_v1_dungeon_input_owner_fmtowns_candidate_context_count(
                         &input_owner, candidate_index);
@@ -231,6 +237,34 @@ int main(void)
                         ++inventory_native_gap_count;
                     } else {
                         ++inventory_context_count;
+                        if (!exercised_inventory_route) {
+                            DM2_V1_FmtownsUiRouteReceipt route;
+                            unsigned int source_button =
+                                candidate.button_mask & 0x0003u;
+                            int16_t source_x = (int16_t)(
+                                native_rect.rect.x + native_rect.rect.w / 2);
+                            int16_t source_y = (int16_t)(
+                                native_rect.rect.y + native_rect.rect.h / 2);
+                            int16_t screen_x = (int16_t)(source_x / 2);
+                            int16_t screen_y = (int16_t)(source_y / 2);
+                            memset(&route, 0, sizeof(route));
+                            check(source_button != 0u &&
+                                      dm2_v1_dungeon_input_owner_fmtowns_route_context(
+                                          &input_owner,
+                                          DM2_V1_FMTOWNS_UI_INVENTORY,
+                                          screen_x, screen_y, source_button,
+                                          &route) &&
+                                      route.accepted &&
+                                      route.context ==
+                                          DM2_V1_FMTOWNS_UI_INVENTORY &&
+                                      route.source_context.view ==
+                                          DM2_TOUCH_CLICK_VIEW_INVENTORY_PC34_COMPAT &&
+                                      route.native_rect.valid &&
+                                      route.candidate.source_record_index ==
+                                          candidate.source_record_index,
+                                  "FM Towns inventory route uses authenticated native geometry and source context");
+                            exercised_inventory_route = 1;
+                        }
                     }
                 }
             }
@@ -238,6 +272,8 @@ int main(void)
                   "FM Towns retains 129 source inventory contexts with native RAW4 geometry");
             check(inventory_native_gap_count == 37u,
                   "FM Towns keeps 37 inventory controls fail-closed without Towns RAW4 geometry");
+            check(exercised_inventory_route,
+                  "FM Towns exercises an authenticated inventory route against real RAW4 data");
         }
         {
             DM2_V1_BootProfile tampered_profile =

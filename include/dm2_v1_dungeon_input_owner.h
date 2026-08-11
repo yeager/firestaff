@@ -60,6 +60,25 @@ typedef struct {
     uint16_t button_mask;
 } DM2_V1_FmtownsMouseInputCandidate;
 
+/* A native MOUSE_INPUT record is shared by several source UI branches.
+ * Callers must name the branch whose live owner is active; a raw rectangle
+ * is never promoted to a global hitbox. */
+typedef enum {
+    DM2_V1_FMTOWNS_UI_DUNGEON = 1,
+    DM2_V1_FMTOWNS_UI_INVENTORY,
+    DM2_V1_FMTOWNS_UI_STATUS,
+    DM2_V1_FMTOWNS_UI_DIALOGUE
+} DM2_V1_FmtownsUiContext;
+
+typedef struct {
+    int accepted;
+    DM2_V1_FmtownsUiContext context;
+    DM2_V1_FmtownsMouseInputCandidate candidate;
+    Dm2TouchClickZonePc34Compat source_context;
+    DM2_V1_BootExpandedRectReceipt native_rect;
+    uint32_t source_table_hash;
+} DM2_V1_FmtownsUiRouteReceipt;
+
 unsigned int dm2_v1_dungeon_input_owner_fmtowns_candidate_count(
     const DM2_V1_DungeonInputOwner *owner);
 
@@ -87,6 +106,15 @@ int dm2_v1_dungeon_input_owner_fmtowns_candidate_native_rect(
     const DM2_V1_DungeonInputOwner *owner,
     unsigned int ordinal,
     DM2_V1_BootExpandedRectReceipt *out_rect);
+
+/* Resolve one authenticated Towns pointer through an explicitly selected
+ * source UI branch.  The returned source_context is semantic provenance
+ * only; native_rect is the sole geometry used for the Towns hit-test. */
+int dm2_v1_dungeon_input_owner_fmtowns_route_context(
+    const DM2_V1_DungeonInputOwner *owner,
+    DM2_V1_FmtownsUiContext context,
+    int16_t screen_x, int16_t screen_y, unsigned int button_mask,
+    DM2_V1_FmtownsUiRouteReceipt *out_receipt);
 
 typedef void (*DM2_V1_DungeonInputEventSink)(void *ctx,
                                               int16_t event_index,
