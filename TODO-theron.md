@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — ljudkonsument förblir capture-gated
+
+- 🔒 Den statiska System Card-katalogen klassificerar riktiga CD/ADPCM-vektor-
+  anrop, och den autentiserade capture-vägen binder CD/FIFO→ADPCM-RAM.
+- 🔒 Ingen samma-session CPU-läsning, sample-start eller spelhändelseägare är
+  verifierad ännu. `theron_v1_play_sound()` ska därför fortsätta returnera
+  fail-closed; inga creature-, actuator- eller menyhändelser får trigga
+  syntetiska ljud. Paritetsmatrisens tidigare `PROVEN`-rad är korrigerad till
+  `PARTIAL`.
+
 ## 2026-08-11 — registertrace kan nu binda `$C3A0`-callerfönstret
 
 - ✅ Mednafen-instrumenteringen skriver nu optional `record_c3a0_window=1`

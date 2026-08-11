@@ -2,6 +2,13 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — ljudstatus korrigerad till faktisk bevisnivå
+
+- ✅ Paritetsmatrisen skiljer nu statisk System Card-call-site-katalog från en
+  verifierad spelhändelse-till-sample-konsument.
+- ✅ Produktionens ljudspärr är fortsatt aktiv: ADPCM-transportbevis får inte
+  ensamt skapa en SFX-mappning.
+
 ## 2026-08-11 — inventory property payload is revalidated byte-for-byte
 
 - ✅ TAKE/DROP and source-slot operations now compare all six carried

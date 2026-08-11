@@ -113,7 +113,7 @@ No reference source code exists. Parity is established through:
 | Track 01 CDDA handoff | PROVEN | `theron_v1_track01_cdda_handoff_from_verified_media` |
 | CD audio availability check | PROVEN | 19-track layout verified, OGG fallback |
 | ADPCM bank anchors (3) | PROVEN | US/JP offset pairs in Track 02 BIN |
-| Audio trigger mapping | PROVEN | System card catalog: 279 JSR sites to 17 BIOS vectors; 6 CD_PLAY, 1 AD_PLAY, 7 AD_CPLAY, 4 CD_FADE; track $0E loaded before CD_PLAY |
+| Audio trigger mapping | PARTIAL | Static System Card catalog: 279 JSR sites to 17 BIOS vectors; 6 CD_PLAY, 1 AD_PLAY, 7 AD_CPLAY, 4 CD_FADE; track $0E loaded before CD_PLAY. This proves call-site classification only, not a runtime event-to-sample owner. |
 | CD_PLAY track map | PROVEN | 2 code-region CD_PLAY sites (sectors 1224, 3095), both load track $0E via LDA #$0E → STA $FF; 4 data false positives filtered |
 | Track-to-dungeon mapping | OPEN | Both CD_PLAY sites use track $0E; full track-to-dungeon map requires Mednafen runtime trace |
 
