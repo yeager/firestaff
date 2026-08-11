@@ -405,6 +405,22 @@ Firestaffs transporttest `test_nexus_v1_saturn_runtime_capture` accepterar
 även det generiska `MDFN_SS_SATURN_RUNTIME_CAPTURE_V1`-formatet och verifierar
 big-endian VDP1/VDP2-ord samt att semantic admission förblir spärrad.
 
+### SH-2-producent för VDP2-tilemap, 2026-08-11
+
+En separat J-BIOS/engelsk-disc-körning med riktad WorkRAM-läsning fångade
+28 616 läsningar i `0x06013000..0x06014fff` och 200 001 VDP2-skrivningar.
+Vid PC `0x0601184c` skrivs VDP2-VRAM från en runtimepekare i `r5`, med första
+observerade pekare `0x06013c58` och efterföljande pekare i samma WorkRAM-
+område. Detta är den tidigare källhookens verkliga producentväg; `r4` är
+VDP2-destinationen och ska inte beskrivas som assetkälla.
+
+De verifierade 16-bytefönstren från WorkRAM matchar ingen unik fil i den
+hashverifierade Nexus-korpusen. Resultatet är därför
+`vdp2_destination_transport=verified`, `asset_identity=unbound` och
+`semantic_admission=blocked`: producenten är identifierad, men den ännu
+saknade CD-/dekomprimeringsbindningen hindrar menytext, FONT256 och
+produktionskomposition.
+
 Verifiera sedan samma session, inte en annan frame eller en annan disc:
 
 ```sh
