@@ -2,6 +2,17 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — disassembly-visible spawn arithmetic is receipt-only
+
+- ✅ `theron_v1_track02_apply_spawn_consumer_witness()` now reproduces the
+  instruction-visible arithmetic in `$B0E5-$B1EB` from a same-session witness:
+  category branches, `$B8` scaling, `$B4/$B5` divide, bounded `$4667` values,
+  HP cap `#$0384` and the `$2980/$2990` caps.
+- 🔒 This API does not generate RNG values, does not publish `Theron_SpawnStats`
+  and is not wired into creatures. `$5A76`, `$5B8F`, `$D23A`, `$4667`, the
+  `$2A10/$D0FE` writes and the later stat/AI/combat owners still need one
+  authenticated runtime execution window before gameplay semantics can open.
+
 ## 2026-08-11 — M11 handoff regression test is headless-safe
 
 - ✅ The boundary test uses SDL dummy audio by default, preventing a local

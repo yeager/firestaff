@@ -77,3 +77,85 @@ int theron_v1_track02_compute_spawn_stats(
     }
     return 0;
 }
+
+static uint16_t add_u16(uint16_t left, uint16_t right) {
+    return (uint16_t)(left + right);
+}
+
+static uint16_t cap_u16(uint16_t value, uint16_t cap) {
+    return value > cap ? cap : value;
+}
+
+int theron_v1_track02_apply_spawn_consumer_witness(
+    const Theron_SpawnConsumerWitness *witness,
+    Theron_SpawnConsumerReceipt *out)
+{
+    uint16_t hp;
+    uint16_t attack;
+    uint16_t defense;
+    uint16_t b8;
+    uint16_t b4b5;
+    uint8_t rng;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!witness || !out || !witness->authenticated_execution ||
+        witness->category >= THERON_CREATURE_SPAWN_CATEGORY_COUNT ||
+        witness->b6 == 0u) {
+        return 0;
+    }
+
+    hp = witness->hp_accumulator;
+    attack = witness->attack_accumulator;
+    defense = witness->defense_accumulator;
+    b8 = witness->b8_before_branch;
+    b4b5 = witness->b4b5;
+
+    /* Reproduce only the visible instructions in LB0E5.  $5A76 is represented
+     * by the captured helper_b8 return; using a host multiplication here
+     * would turn the receipt into synthetic game data. */
+    switch (witness->category) {
+    case 1u:
+        b8 = (uint16_t)((uint8_t)(witness->helper_b8 << 1)); /* ASL $B8 */
+        out->object_write_1 = witness->lb0fe_return_1;
+        out->object_write_2 = witness->lb0fe_return_2;
+        break;
+    case 2u:
+        hp = add_u16(hp, witness->helper_b8);
+        b8 = (uint16_t)((uint8_t)(witness->helper_b8 +
+                                  ((witness->helper_b8 + 1u) >> 1)));
+        out->object_write_1 = witness->lb0fe_return_1;
+        break;
+    case 3u:
+        /* LB0DD shifts the B4/B5 pair.  B8 is a separate captured register
+         * consumed by the following 1.5x sequence. */
+        b4b5 = (uint16_t)(b4b5 >> 5);
+        b8 = (uint16_t)(uint8_t)(b8 + (b8 >> 1));
+        hp = cap_u16(add_u16(hp, b8), THERON_CREATURE_HP_CAP);
+        out->object_write_1 = witness->lb0fe_return_1;
+        break;
+    default:
+        /* Category zero falls through directly to the common tail. */
+        break;
+    }
+
+    /* LB161: L4667 & 3, add to HP, clamp at $0384. */
+    if (witness->category == 2u || witness->category == 3u) {
+        rng = (uint8_t)(witness->rng_common_1 & 0x03u);
+        if (rng >= witness->b6) rng = (uint8_t)(witness->b6 - 1u);
+        hp = cap_u16(add_u16(hp, rng), THERON_CREATURE_HP_CAP);
+    }
+
+    /* LB19D: LD23A($B8)+$2980 and LD23A($B4)+$2990, with the caps visible in
+     * the source span.  The helper outputs are captured values, not guesses. */
+    attack = cap_u16(add_u16(attack, witness->ld23a_b8), 0x03e7u);
+    defense = cap_u16(add_u16(defense, witness->ld23a_b4), 0x270fu);
+
+    out->valid = 1;
+    out->hp_accumulator = hp;
+    out->attack_accumulator = attack;
+    out->defense_accumulator = defense;
+    out->helper_input_b8 = (uint8_t)b8;
+    out->helper_input_b4 = (uint8_t)b4b5;
+    out->helper_input_b5 = (uint8_t)(b4b5 >> 8);
+    return 1;
+}

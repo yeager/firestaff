@@ -69,6 +69,56 @@ typedef struct {
     int16_t defense;
 } Theron_SpawnStats;
 
+/* Register/return-value witness for the visible part of UD $B0E5.  Every
+ * value in this structure must come from the same authenticated HuC6280
+ * execution window; this is deliberately not a seed and does not call an
+ * RNG.  The helper routines at $5A76/$5B8F/$D23A and $4667 remain external
+ * inputs until their live contracts are captured.
+ *
+ * ReDMCSB has no Theron's Quest source tree.  The byte-backed source lock is
+ * docs/source-lock/theron-disassembly/theron-us-spawn-consumer.asm.
+ */
+typedef struct {
+    int authenticated_execution;
+    uint8_t category;
+    uint8_t b0;
+    uint8_t b1;
+    uint8_t b6;
+    uint16_t b4b5;
+    uint16_t b8_before_branch;
+    uint16_t helper_b8;
+    uint8_t lb0fe_return_1;
+    uint8_t lb0fe_return_2;
+    uint8_t rng_common_1;
+    uint8_t rng_common_2;
+    uint8_t ld23a_b8;
+    uint8_t ld23a_b4;
+    uint16_t hp_accumulator;
+    uint16_t attack_accumulator;
+    uint16_t defense_accumulator;
+} Theron_SpawnConsumerWitness;
+
+typedef struct {
+    int valid;
+    uint16_t hp_accumulator;
+    uint16_t attack_accumulator;
+    uint16_t defense_accumulator;
+    uint8_t object_write_1;
+    uint8_t object_write_2;
+    uint8_t helper_input_b8;
+    uint8_t helper_input_b4;
+    uint8_t helper_input_b5;
+} Theron_SpawnConsumerReceipt;
+
+/* Executes only the instruction-visible arithmetic in $B0E5-$B1EB against
+ * captured register/helper values.  It is a forensic receipt, not a gameplay
+ * admission path: callers must still prove the dynamic RNG owner and the
+ * later creature/stat consumers before publishing these values to runtime.
+ */
+int theron_v1_track02_apply_spawn_consumer_witness(
+    const Theron_SpawnConsumerWitness *witness,
+    Theron_SpawnConsumerReceipt *out);
+
 /* Returns 1 only after the original RNG consumer has been source-bound.
  * Current implementation returns 0 for every input. */
 int theron_v1_track02_compute_spawn_stats(

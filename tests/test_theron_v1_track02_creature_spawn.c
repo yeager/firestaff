@@ -169,6 +169,37 @@ int main(void) {
         assert(s.hp == 0 && s.attack == 0 && s.defense == 0);
     }
 
+    /* Instruction-level receipt vectors.  These are not gameplay fixtures:
+     * all helper/RNG values are explicit witness inputs and no RNG is called.
+     * The expected values are the visible $B0E5-$B1EB arithmetic only. */
+    {
+        Theron_SpawnConsumerWitness w;
+        Theron_SpawnConsumerReceipt r;
+        memset(&w, 0, sizeof(w));
+        w.authenticated_execution = 1;
+        w.category = 2;
+        w.b6 = 4;
+        w.b4b5 = 0x2000;
+        w.helper_b8 = 100;
+        w.rng_common_1 = 3;
+        w.hp_accumulator = 200;
+        w.attack_accumulator = 950;
+        w.defense_accumulator = 9900;
+        w.ld23a_b8 = 100;
+        w.ld23a_b4 = 200;
+        assert(theron_v1_track02_apply_spawn_consumer_witness(&w, &r) == 1);
+        assert(r.valid == 1);
+        assert(r.hp_accumulator == 303); /* 200+100+(100&3) */
+        assert(r.attack_accumulator == 999);
+        assert(r.defense_accumulator == 9999);
+        assert(r.helper_input_b8 == 150); /* 100 + (101 >> 1) */
+        assert(r.helper_input_b4 == 0x00 && r.helper_input_b5 == 0x20);
+
+        w.authenticated_execution = 0;
+        assert(theron_v1_track02_apply_spawn_consumer_witness(&w, &r) == 0);
+        assert(r.valid == 0);
+    }
+
     /* The production table must also be recoverable from the authentic raw
      * BIN.  These paths are user-supplied data and are intentionally
      * skip-safe for CI machines without the copyrighted game files. */

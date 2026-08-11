@@ -1,3 +1,12 @@
+# Theron: disassembly-visible spawn arithmetic receipt (2026-08-11)
+
+- ✅ Added a fail-closed witness API for the visible `$B0E5-$B1EB` arithmetic.
+- ✅ Tests cover category-2 scaling, bounded HP accumulation, attack/defense
+  caps, the category-3 `$B4/$B5` shift and rejection without an authenticated
+  execution witness.
+- 🔒 No host seed, synthetic monster record or unproven runtime consumer was
+  added; the existing production spawn-stat API remains fail-closed.
+
 # Theron: M11 handoff test is headless-safe (2026-08-11)
 
 - ✅ The Theron launcher-handoff test now defaults to SDL dummy audio when
