@@ -4,6 +4,19 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## Chaos Strikes Back (CSB)
 
+- ✅ 2026-08-11 CSB FM Towns native CLI launch regression: added the opt-in
+  `csb_v1_fmtowns_native_cli_boot` CTest. With explicitly supplied licensed
+  F31 media (`FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR`), it proves the direct
+  `--game csb --platform fm-towns` route first reaches the original
+  `TITLE.ANM` owner and then completes the real AUTOEXEC/SWITCHTW/MINI.DAT
+  path to the source start pose `(9,0,2)`. It supplies neither fixture bytes,
+  synthetic save data nor a host input shortcut, and skips safely where no
+  licensed media has been configured. Local verification: `cmake --build
+  build --target firestaff -j2`, then `ctest --test-dir build -R
+  '^csb_v1_fmtowns_native_cli_boot$' --output-on-failure` with the explicit
+  external-data variable, passed 1/1. This guards the CLI path only; it does
+  not claim full-game or pixel parity.
+
 - ✅ 2026-07-30 CSB V1/V2.x window-scale ownership: an explicit
   `--scale-mode` survives startup-menu configuration application, while game
   presentation dimensions remain off-screen surface dimensions rather than

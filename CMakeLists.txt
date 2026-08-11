@@ -16830,6 +16830,14 @@ endif()
         LABELS "tier2;csb;amiga;startup;cli;real_data;skip_safe"
     )
     add_test(
+        NAME csb_v1_fmtowns_native_cli_boot
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_native_cli_boot.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(csb_v1_fmtowns_native_cli_boot PROPERTIES
+        LABELS "tier2;csb;fmtowns;startup;cli;real_data;skip_safe"
+    )
+    add_test(
         NAME csb_v20_m11_prison_runtime_hud_pc34
         COMMAND test_csb_v1_m11_prison_runtime_hud_pc34
     )
