@@ -55,8 +55,12 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   68k word order through the authenticated column, ground-stack and record-link
   accessors. Both English ZIPs now pass the source record-graph and start-pose
   gates. Retail map-wide GAME_LOAD passes all 44 authentic maps using the
-  canonical File_header pool layout; the demo has no champion-DYN4 roster and
-  remains a title/demo route.
+  canonical File_header pool layout. The demo's authentic 16-entry champion
+  roster uses per-mirror DYN4 selectors, but its File_header contains no
+  tick-generator-family actuators; Firestaff records that as a valid
+  zero-generator source projection. Its STARTEND path uses the real mirror at
+  map 0,0,0 while retaining the source party pose at map 0,1,8. Both versions
+  now pass separate real-media New Game gates without extracting the ZIP data.
 - The English Macintosh input table is source-locked and tested for both
   versions: inventory keys, movement aliases, freeze/wake, Command-O/S/Q,
   entrance/credits Return, and the three wall-button columns. Only actions

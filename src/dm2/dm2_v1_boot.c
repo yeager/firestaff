@@ -2206,8 +2206,11 @@ int dm2_v1_boot_file_header_actuator_generator_receipt(
                 candidate.candidate_hash, actuator->target_word);
         }
     }
+    /* The authentic Macintosh First Chapter image contains ordinary
+     * actuators but no members of the tick-generator type family.  A
+     * zero-generator receipt is still a valid source projection: the
+     * original loop simply has no generator work to perform. */
     if (candidate.actuator_count <= 0 ||
-        candidate.tick_generator_candidate_count <= 0 ||
         candidate.control_bit2_set_count + candidate.control_bit2_clear_count !=
             candidate.tick_generator_candidate_count ||
         candidate.candidate_hash == 0u) {
@@ -14284,7 +14287,27 @@ int dm2_v1_boot_materialize_startend_first_champion(
     first_x = 0;
     first_y = 0;
     source_first_mirror_object = 0u;
-    if (profile->platform == DM2_PLATFORM_MAC_EN) {
+    if (profile->platform == DM2_PLATFORM_MAC_EN &&
+        strcmp(profile->version_id, "mac-en-demo") == 0) {
+        /* The authentic First Chapter image retains the original
+         * STARTEND mirror at map 0,0,0 while its File_header party pose is
+         * map 0,1,8.  This is different from the large retail Macintosh
+         * image, whose first mirror is at the party entrance.  Resolve the
+         * demo's actual roster entry instead of moving either source pose. */
+        first_map = 0;
+        first_x = 0;
+        first_y = 0;
+        for (i = 0; i < owner->preselection_mirror_roster.candidate_count; ++i) {
+            const DM2_V1_BootChampionSelectionCandidate *candidate =
+                &owner->preselection_mirror_roster.candidates[i];
+            if (candidate->valid && candidate->mirror.map == first_map &&
+                candidate->mirror.x == first_x && candidate->mirror.y == first_y) {
+                source_first_mirror_object = candidate->mirror.object_id;
+                break;
+            }
+        }
+        if (source_first_mirror_object == 0u) return 0;
+    } else if (profile->platform == DM2_PLATFORM_MAC_EN) {
         /* The authenticated Macintosh File_header places the first
          * STARTEND mirror at the party entrance square, not at (0,0).
          * Retain the roster's source traversal order and do not invent a
