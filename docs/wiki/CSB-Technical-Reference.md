@@ -42,6 +42,22 @@ The M10 F0267 route owns live loaded Thing chains, including cross-level pit
 and teleporter movement. It preserves source-tail ordering and restores the
 prior current-level context after a transfer.
 
+### Archive and ADF launch ownership
+
+CSB archive and ADF media are scanned as virtual members, but they are never
+used as a flat mixed-platform data directory at launch. When a player selects
+a verified CSB edition, M12 materializes only that edition's required members
+into its version-private local runtime cache and passes that cache to M11.
+The cache is hash-verified and invalidated when its source member changes.
+
+This matters for shared game libraries: an Amiga 3.1 title program and its
+`GRAPHICS.DAT`/`DUNGEON.DAT` must not be combined with PC, Atari ST, or FM
+Towns files found beside the archive. The source archive remains untouched;
+the cache is local derived data and is not game media to commit or distribute.
+The real-media M12/M11 boundary test can be enabled with
+`FIRESTAFF_CSB_AMIGA31_DATA_DIR` pointing at a directory containing the
+verified Amiga 3.1 ADF or archive.
+
 ## CSB graphics formats
 
 Amiga CSB graphics use direct **IMG1** nibble-RLE records. Atari ST uses a

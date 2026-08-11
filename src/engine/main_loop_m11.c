@@ -216,7 +216,10 @@ static int M12_StartupMenu_PrepareSelectedGameLaunch(
     const M12_AssetVersionStatus* version;
     char runtimeDir[M12_ASSET_DATA_DIR_CAPACITY];
     int versionIndex;
-    if (!menuState || menuState->activatedIndex < 0) return 0;
+    if (!menuState || menuState->activatedIndex < 0 ||
+        menuState->activatedIndex >= M12_ASSET_GAME_COUNT) {
+        return 0;
+    }
     entry = M12_StartupMenu_GetEntry(menuState, menuState->activatedIndex);
     if (!entry || !entry->gameId || strcmp(entry->gameId, "csb") != 0) {
         return 1;
