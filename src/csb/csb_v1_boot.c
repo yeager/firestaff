@@ -2768,6 +2768,19 @@ int csb_v1_boot_startup_launch_alloc_with_variant_pc34(
         out_launch->failure_host_receipt = failure_receipt;
         return 0;
     }
+    /* M12's explicit Japanese switch is needed to distinguish F31J from a
+     * shared broad root, but a selected English F31 package has no separate
+     * boolean in the launch spec.  Once the scanner has hash-identified its
+     * GRAPHICS.DAT/DUNGEON.DAT as F31, retain that native identity rather
+     * than treating the flattened selected cache as a generic PC package.
+     * This is essential for both direct CLI launch and the start menu: the
+     * subsequent reselect binds CHTWE/CHTWJ, TITLE.ANM and MINI.DAT from the
+     * same selected source package. */
+    if (effective_variant == CSB_V1_VARIANT_UNKNOWN &&
+        (out_launch->profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
+         out_launch->profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA)) {
+        effective_variant = out_launch->profile->variant_id;
+    }
     if (effective_variant == CSB_V1_VARIANT_FMTOWNS_EN ||
         effective_variant == CSB_V1_VARIANT_FMTOWNS_JA) {
         if (!csb_v1_boot_reselect_fmtowns_variant_pc34(

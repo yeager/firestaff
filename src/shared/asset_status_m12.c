@@ -6572,7 +6572,21 @@ int M12_AssetStatus_PrepareCSBRuntimeVersion(
      * directory preserves all original startup siblings and lets direct CLI
      * launches work even when the user-data cache is unavailable.  Archives
      * and ADFs have no usable parent directory, so they still require the
-     * hash-verified, edition-private cache. */
+     * hash-verified, edition-private cache.
+     *
+     * F31 is the exception: its matched GRAPHICS.DAT lives below CDATA or
+     * CJDATA, whereas AUTOEXEC/TITLE.ANM/SWITCHTW and the language program
+     * are owned by the disc root.  Resolving a loose match to its parent
+     * therefore hands M11 only CDATA/CJDATA and makes an otherwise verified
+     * direct CLI/menu launch fail before TITLE.ANM.  Use the same selected,
+     * hash-checked F31 cache as the archive route; it preserves the complete
+     * source package without letting English and Japanese siblings bleed
+     * into one another. */
+    if (strcmp(versionId, "fmtowns-en") == 0 ||
+        strcmp(versionId, "fmtowns-ja") == 0) {
+        return M12_AssetStatus_MaterializeCSBRuntimeVersion(
+            status, versionId, outPath, outPathSize);
+    }
     if (!m12_path_is_virtual_asset(version->matchedPath)) {
         return M12_AssetStatus_ResolveRuntimeDataDirForVersion(
             status, "csb", versionId, outPath, outPathSize);

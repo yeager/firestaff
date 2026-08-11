@@ -53,14 +53,16 @@ materializes the complete ISO inventory and the original `FMTOWNS.IMG` /
 pair for the original TD/TR CD-DA commands; a derived track table or generated
 PCM is not an equivalent source. A manually extracted original tree is also
 admitted only when both language packages, their two P3 programs and all six
-registered hashes agree. Production retains the original disc root and M11
-applies the selected F31 language before startup. The development/test
-materializer creates a language-private cache with the selected flat
+registered hashes agree. Production applies the selected F31 language before
+startup. The runtime materializer creates a language-private cache with the selected flat
 `GRAPHICS.DAT`/`DUNGEON.DAT`, the original nested `CDATA/MINI.DAT` or
 `CJDATA/MINI.DAT`, root programs and original portraits, and removes stale
 archive CUE/IMG files so loose media cannot borrow CDDA from a different
-source. The scanner reports each admitted CSB edition, rather than using the
-selected cache pair as evidence for another platform.
+source. This is required even for a loose extraction: the hash-matched
+`GRAPHICS.DAT` parent is only `CDATA` or `CJDATA`, whereas `TITLE.ANM`,
+`SWITCHTW.EXP` and `CHTWE.EXP`/`CHTWJ.EXP` are owned by the disc root. The
+scanner reports each admitted CSB edition, rather than using the selected
+cache pair as evidence for another platform.
 
 The opt-in real-media CTest rows retain that separation: with
 `FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR` set, the English and Japanese pairs

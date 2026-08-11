@@ -3145,9 +3145,13 @@
   both F31 English and Japanese profiles rather than hiding them unless that
   child is selected directly. 2026-08-11: a manually extracted original CD
   tree is now admitted only as the complete hash-verified CDATA/CJDATA pair.
-  Production retains its original disc root and applies the selected EN/JP
-  handoff in M11; its development/test cache cannot inherit a stale archive
-  CUE/IMG audio owner. That cache copies and verifies the language-owned
+  2026-08-11: direct CLI and start-menu launches now materialize the selected
+  F31 package even for a loose extracted CD. `GRAPHICS.DAT` is nested under
+  `CDATA`/`CJDATA`, while `TITLE.ANM`, `SWITCHTW` and `CHTWE`/`CHTWJ` belong
+  to the disc root; passing only the matched data subdirectory would falsely
+  block an otherwise authenticated edition before its title. The private
+  cache cannot inherit a stale archive CUE/IMG audio owner and copies and
+  verifies the language-owned
   `CDATA/MINI.DAT` or `CJDATA/MINI.DAT` body alongside flat `GRAPHICS.DAT`
   and `DUNGEON.DAT`; it cannot borrow a prior cache's bootstrap save. The F31E
   C06 file-picker, first/repeated native GAME save, GAME load and `.BAK`

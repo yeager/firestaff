@@ -13945,3 +13945,16 @@ and production source-combat tests.
   nivå 4, elva nivåer, en icke-tom källägd runtimekö och att städning släpper
   den adopterade världen. Ingen
   delvis body/timer-import får publiceras om preflighten misslyckas.
+
+# CSB FM Towns: verklig CLI- och startmenystart från extraherad F31-skiva (2026-08-11)
+
+- ✅ Rättade editionsmaterialiseringen för en lös, hash-verifierad F31-skiva.
+  Enbart `CDATA`/`CJDATA` kan inte starta CSB eftersom `TITLE.ANM`,
+  `SWITCHTW.EXP` och `CHTWE.EXP`/`CHTWJ.EXP` ägs av skivroten. Den valda
+  engelska eller japanska utgåvan bygger därför en privat cache med exakt
+  originalmaterial och behåller sin F31-identitet genom M11-booten.
+- ✅ Verifierat mot den licensierade externa skivan med
+  `csb_v1_fmtowns_{en,ja}_native_cli_real_media`: direkt CLI-title,
+  `MINI.DAT`-runtime och `--menu` → Enter passerar för båda språk. Sex
+  närliggande verkliga F31-handoff-, spar- och arkivregressioner passerar
+  också. Ingen speldata checkades in.
