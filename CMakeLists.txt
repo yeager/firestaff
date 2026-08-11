@@ -53507,6 +53507,18 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_switch_dat.c")
     set_tests_properties(csb_v1_atari_switch_dat PROPERTIES LABELS "csb;atari;synthetic_fixture")
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_x68k_hdm.c")
+    add_executable(test_csb_v1_x68k_hdm
+        tests/test_csb_v1_x68k_hdm.c
+        src/csb/csb_v1_x68k_hdm.c)
+    target_include_directories(test_csb_v1_x68k_hdm PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_x68k_hdm PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_x68k_hdm COMMAND test_csb_v1_x68k_hdm)
+    set_tests_properties(csb_v1_x68k_hdm PROPERTIES LABELS "csb;x68k;synthetic_fixture")
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_m11_game_handoff.c")
     add_executable(test_csb_v1_fmtowns_m11_game_handoff
         tests/test_csb_v1_fmtowns_m11_game_handoff.c)
