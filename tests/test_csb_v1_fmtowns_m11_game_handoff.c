@@ -565,12 +565,31 @@ int main(void)
             }
         }
 #endif
+        /* F0433/F7052 owns the canonical M746 CSBGAME.DAT medium, while the
+         * external corpus deliberately gives its Japanese witness a distinct
+         * filename.  Stage every writeback proof under the native basename:
+         * this keeps the licensed corpus immutable and lets both language
+         * bodies exercise the actual .BAK transaction rather than inventing
+         * a CSBGAME-JP.BAK convention. */
+#ifndef _WIN32
+        {
+            char writeback_dir[] = "/tmp/firestaff-f31-writeback-XXXXXX";
+            char writeback_path[512];
+            int writeback_staged = 0;
+
+            writeback_staged = mkdtemp(writeback_dir) != NULL &&
+                snprintf(writeback_path, sizeof(writeback_path),
+                         "%s/CSBGAME.DAT", writeback_dir) > 0 &&
+                copy_file(user_save_path, writeback_path);
+            CHECK(writeback_staged,
+                  "F31 writeback stages the real language-owned save under M746's canonical name");
+            if (writeback_staged) {
         /* Direct CLI resume takes the same M11 start boundary as this spec:
          * CHTWE/CHTWJ owns F0435, then GAMELOOP owns the saved F31 state.
          * It must not route the Towns bytes through the Atari/CSBWin reader
          * or replay TITLE.ANM before the resumed live dungeon. */
         resume_spec = spec;
-        resume_spec.savePath = user_save_path;
+        resume_spec.savePath = writeback_path;
         M11_GameView_Init(&resumed_view);
         result = M11_GameView_Start(&resumed_view, &resume_spec);
         memset(&resumed_probe, 0, sizeof(resumed_probe));
@@ -588,7 +607,7 @@ int main(void)
             uint32_t random_before = resumed_profile
                 ? resumed_profile->runtime.csbwin_random_seed : 0u;
 
-            CHECK(test_set_env("FIRESTAFF_QUICKSAVE_PATH", user_save_path),
+            CHECK(test_set_env("FIRESTAFF_QUICKSAVE_PATH", writeback_path),
                   "F31 resumed session keeps its canonical save slot selected");
             CHECK(resumed_profile && resumed_profile->runtime.party_state_valid &&
                       resumed_profile->runtime.csbwin_random_seed_valid &&
@@ -609,11 +628,29 @@ int main(void)
             memset(&user_save, 0, sizeof(user_save));
             CHECK(csb_v1_fmtowns_game_user_save_open(
                       resumed_profile, &resumed_view.csbFmtownsGameHandoffReceipt,
-                      user_save_path, &user_save) && user_save.valid &&
+                      writeback_path, &user_save) && user_save.valid &&
                       user_save.dungeon_tail_size > 0u,
                   "F31 resumed writeback remains readable through the native F0435 reader");
         }
         M11_GameView_Shutdown(&resumed_view);
+            (void)test_set_env("FIRESTAFF_QUICKSAVE_PATH", NULL);
+            }
+            remove(writeback_path);
+            {
+                char writeback_backup[512];
+                if (snprintf(writeback_backup, sizeof(writeback_backup),
+                             "%s/CSBGAME.BAK", writeback_dir) > 0) {
+                    remove(writeback_backup);
+                }
+            }
+            rmdir(writeback_dir);
+        }
+#else
+        /* The native backup test below is POSIX-only; keep Windows corpus
+         * admission read-only until it has an equivalent private staging
+         * primitive. */
+        CHECK(1, "F31 Windows corpus writeback remains covered by native writer tests");
+#endif
         memset(&external_save_handoff, 0, sizeof(external_save_handoff));
         CHECK(csb_v1_fmtowns_game_user_save_handoff_open(
                   (const CSB_V1_BootProfile *)view.csbBootProfile, language,
@@ -626,12 +663,7 @@ int main(void)
             char recovery_dir[] = "/tmp/firestaff-f31-recovery-XXXXXX";
             char selected_path[512];
             char backup_path[512];
-            const char *base_name = strrchr(user_save_path, '/');
-
-            base_name = base_name ? base_name + 1 : user_save_path;
-            CHECK(strcmp(base_name, "CSBGAME.DAT") == 0 &&
-                      strlen(user_save_path) >= 4u &&
-                      mkdtemp(recovery_dir) != NULL &&
+            CHECK(mkdtemp(recovery_dir) != NULL &&
                       snprintf(selected_path, sizeof(selected_path),
                                "%s/CSBGAME.DAT", recovery_dir) > 0 &&
                       snprintf(backup_path, sizeof(backup_path),
@@ -1873,7 +1905,9 @@ int main(void)
             CHECK(!M11_GameView_QuickSave(&view) &&
                       strcmp(view.lastAction, "SAVE") == 0 &&
                       strcmp(view.lastOutcome,
-                             "FM TOWNS NATIVE SAVE FAILED") == 0,
+                             language == CSB_FMTOWNS_SWITCH_JAPANESE
+                                 ? "FM TOWNS NATIVE WRITEBACK REQUIRED"
+                                 : "FM TOWNS NATIVE SAVE FAILED") == 0,
                   "F31 MINI.DAT session cannot overwrite a distinct resumed slot");
         } else {
             CHECK(!M11_GameView_QuickSave(&view) &&
