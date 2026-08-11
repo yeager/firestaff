@@ -20051,6 +20051,19 @@ endif()
         ENVIRONMENT "FIRESTAFF_CSB_AMIGA31_ONLY=1"
         TIMEOUT 120
     )
+    # The Atari ST title is a separate ANIMATE.SCR/DAT owner.  Keep its
+    # original-media M12 selection, 50 Hz VBlank handoff, and first native
+    # runtime frame independently runnable when FIRESTAFF_CSB_ATARI_ST_ROOT
+    # is supplied; CI without that corpus remains explicitly skip-safe.
+    add_test(
+        NAME csb_v1_atari_st_m12_m11_real_media_handoff
+        COMMAND test_csb_v1_m11_launcher_handoff_boundary
+    )
+    set_tests_properties(csb_v1_atari_st_m12_m11_real_media_handoff PROPERTIES
+        LABELS "tier2;csb;atari-st;m12;m11;launcher;startup;real_data;skip_safe"
+        ENVIRONMENT "FIRESTAFF_CSB_ATARI_ST_ONLY=1"
+        TIMEOUT 180
+    )
 
     add_executable(test_csb_v1_m11_startup_vblank_cadence
         tests/test_csb_v1_m11_startup_vblank_cadence.c

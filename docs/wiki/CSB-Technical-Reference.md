@@ -67,6 +67,14 @@ mouse-release after `TITL.DAT`; a boot-probe `click:x:y` now emits both the
 normal press and release, exactly as the SDL route does. The probe fixes its
 presentation to 320x200 so the source coordinates remain deterministic.
 
+The corresponding Atari ST row,
+`csb_v1_atari_st_m12_m11_real_media_handoff`, is enabled by
+`FIRESTAFF_CSB_ATARI_ST_ROOT`. It separately verifies selection and
+materialization of the original Atari package, the ANIMATE.SCR/DAT 50 Hz VBlank
+sequence, and the first native FTLCODE runtime frame. The existing
+`csb_v1_atari_mini_runtime_archive` test covers the original `MINI.DAT`
+resume path from the archive without adding a synthetic save.
+
 FM Towns is treated the same way even though its retail archive contains a
 large CD image: temporary expansion happens inside the selected edition's
 Firestaff cache. On success it is atomically promoted to `FMTOWNS.IMG`; on
