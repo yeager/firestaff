@@ -350,6 +350,10 @@ export FIRESTAFF_NEXUS_TRACE_VDP2_SOURCE_READ_MAX=0x80000
 export FIRESTAFF_NEXUS_TRACE_VDP2_SOURCE_READ_PC_MIN=0x06002fc4
 export FIRESTAFF_NEXUS_TRACE_VDP2_SOURCE_READ_PC_MAX=0x06002fc6
 export FIRESTAFF_NEXUS_TRACE_VDP2_SOURCE_READ_LIMIT=200000
+export FIRESTAFF_NEXUS_TRACE_SCU_DMA_WRITES=/Volumes/Extern-disk/run/scu-dma-writes.trace
+export FIRESTAFF_NEXUS_TRACE_SCU_DMA_DESTINATION_MIN=0x05e00000
+export FIRESTAFF_NEXUS_TRACE_SCU_DMA_DESTINATION_MAX=0x05f00000
+export FIRESTAFF_NEXUS_TRACE_SCU_DMA_LIMIT=200000
 export FIRESTAFF_NEXUS_TRACE_VDP2_WRITES="$run/vdp2-writes.trace"
 export FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT="$run/post.snapshot"
 export FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT_LIMIT=80
@@ -373,6 +377,27 @@ probes/nexus/firestaff_nexus_v1_saturn_raw_capture_launcher.sh \
   --manifest "$run/manifest.txt" \
   --trace-session nexus-vdp2-post-render
 ```
+
+### SCU-DMA-resultat från autentisk startup/menu-körning
+
+Den 11 augusti 2026 kördes samma hashverifierade BIOS- och merged-disc-
+session med SCU-DMA-hooken först filtrerad mot `0x05e00000..0x05efffff` och
+sedan utan adressfilter. Den filtrerade körningen gav noll träffar. Den
+ofilterade 600-frame-körningen gav 984 130 DMA-skrivningar i den fångade
+begränsningen; de observerade destinationerna låg i `0x05c0xxxx..0x05c7xxxx`,
+alltså VDP1/registerkedjan, inte i VDP2:s `0x05e...`-fönster.
+
+Detta är ett verifierat negativt resultat: SCU-DMA-hooken fungerar och fångar
+faktiska Saturn-skrivningar, men den binder ännu inte menytext, FONT256 eller
+VDP2-tilemap till en DMA-källa. VDP2-källan måste därför fortsatt sökas i den
+CPU-/SH-2-skrivkedja eller annan bussväg som faktiskt används av Nexus. Ingen
+semantic admission eller produktionsrendering får öppnas på grundval av denna
+DMA-capture ensam.
+
+Körningarna finns endast på extern disk:
+
+`run-codex-scu-dma-source12-20260811/` (filtrerad, tom trace) och
+`run-codex-scu-dma-all-source14-20260811/` (ofilterad trace).
 
 Verifiera sedan samma session, inte en annan frame eller en annan disc:
 
