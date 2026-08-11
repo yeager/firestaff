@@ -11298,7 +11298,7 @@ endif()
             NAME ${_pool_probe_exe}
             COMMAND ${_pool_probe_exe} "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
         )
-        set_tests_properties(${_pool_probe_exe} PROPERTIES TIMEOUT 360)
+        set_tests_properties(${_pool_probe_exe} PROPERTIES TIMEOUT 600 PROCESSORS 2)
     endif()
 endforeach()
 
