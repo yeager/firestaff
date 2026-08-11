@@ -1246,6 +1246,11 @@ int dm2_v1_runtime_activate_action_hand(int hero_index, int hand);
 /* Read the source party.curacthero owner as a zero-based champion index.
  * Returns -1 until an authenticated GAME_LOAD party is live. */
 int dm2_v1_runtime_get_active_champion_index(void);
+/* Source c_events.cpp:1846 (DM2_CLICK_INVENTORY_EYE).  The eye selects
+ * v1e0976 for the authenticated eventqueue.event_heroidx without changing
+ * party.curacthero. No host champion index is accepted. */
+int dm2_v1_runtime_click_inventory_eye(void);
+int dm2_v1_runtime_get_inventory_eye_champion_index(void);
 /* DM2_LOAD_NEW_DUNGEON clears the old party before it admits the new G1
  * structure. This clears only Firestaff's cached representation of that
  * source-owned party/hand state; it does not construct a replacement party. */

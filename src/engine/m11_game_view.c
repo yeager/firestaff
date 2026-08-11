@@ -20738,6 +20738,7 @@ void M11_GameView_Init(M11_GameViewState* state) {
     }
     state->candidateMirrorOrdinal = -1;
     state->candidateMirrorPartyIndex = -1;
+    state->dm2State.inventoryEyeChampionIndex = -1;
     state->leaderHandObjectPresent = 0;
     state->leaderHandThing = THING_NONE;
     state->leaderHandIconIndex = -1;
@@ -32065,6 +32066,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         DM2_V1_FmtownsUiRouteReceipt route;
         const DM2_V1_BootProfile *profile =
             (const DM2_V1_BootProfile *)state->dm2BootProfile;
+        int route_bound = 0;
         memset(&route, 0, sizeof(route));
         if (dm2_v1_dungeon_input_owner_init_fmtowns(
                 &input_owner, profile) &&
@@ -32072,9 +32074,41 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                 &input_owner, DM2_V1_FMTOWNS_UI_INVENTORY,
                 (int16_t)x, (int16_t)y, (unsigned int)buttonMask, &route) &&
             route.accepted) {
+            route_bound = 1;
+        } else if (dm2_v1_dungeon_input_owner_init_fmtowns(
+                       &input_owner, profile) &&
+                   dm2_v1_dungeon_input_owner_fmtowns_route_context(
+                       &input_owner, DM2_V1_FMTOWNS_UI_STATUS,
+                       (int16_t)x, (int16_t)y, (unsigned int)buttonMask,
+                       &route) && route.accepted) {
+            /* SKWIN keeps the eye/mouth records in the champion/status
+             * context even while CHANGE_VIEWPORT_TO_INVENTORY owns the
+             * visible page.  Do not relabel that source context as an
+             * inventory rectangle. */
+            route_bound = 1;
+        }
+        if (route_bound) {
             int source_slot = -1;
             if (route.candidate.event_index == 11u) {
                 state->inventoryPanelActive = 0;
+                return M11_GAME_INPUT_REDRAW;
+            }
+            /* c_events.cpp:1846 DM2_CLICK_INVENTORY_EYE.  The native
+             * Towns record is shared with the source inventory table, so
+             * dispatch by the authenticated source context rather than by
+             * a rectangle or a host coordinate.  v1e0976 is kept separate
+             * from party.curacthero exactly as in the source runtime. */
+            if (route.source_context.groupName &&
+                strcmp(route.source_context.groupName,
+                       "inventory.eye") == 0) {
+                int eye_champion;
+                if (!dm2_v1_runtime_click_inventory_eye() ||
+                    (eye_champion =
+                         dm2_v1_runtime_get_inventory_eye_champion_index()) < 0 ||
+                    eye_champion >= CHAMPION_MAX_PARTY) {
+                    return M11_GAME_INPUT_IGNORED;
+                }
+                state->dm2State.inventoryEyeChampionIndex = eye_champion;
                 return M11_GAME_INPUT_REDRAW;
             }
             if (dm2_v1_fmtowns_inventory_slot_for_context(

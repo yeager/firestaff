@@ -90,6 +90,12 @@ typedef struct {
      * leader or fabricate a hand icon. */
     int16_t source_curacthero;
     int16_t source_curactmode;
+    int16_t source_event_hero_index;
+    /* c_events.cpp:1846 v1e0976: the champion whose right panel is
+     * selected by the source eye event.  This is distinct from
+     * party.curacthero; the source does not silently change the active hand
+     * champion when the eye is clicked. */
+    int16_t source_v1e0976;
     int source_sleeping;
     uint8_t source_attack_counter;
     DM2_MinionTable minions;
@@ -1921,6 +1927,8 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.session_snapshot_valid = 0;
     g_dm2_runtime.source_curacthero = 0;
     g_dm2_runtime.source_curactmode = 0;
+    g_dm2_runtime.source_event_hero_index = 0;
+    g_dm2_runtime.source_v1e0976 = 0;
     g_dm2_runtime.source_sleeping = 0;
     memset(&g_dm2_runtime.minions, 0, sizeof(g_dm2_runtime.minions));
     g_dm2_runtime.last_npc_level = -1;
@@ -2314,6 +2322,8 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
     rt->session_snapshot.original_champion_records_valid = 1u;
     rt->source_curacthero = candidate->party.curacthero;
     rt->source_curactmode = candidate->party.curactmode;
+    rt->source_event_hero_index = candidate->source_event_hero_index;
+    rt->source_v1e0976 = 0;
     rt->session_snapshot_valid = 1;
     rt->leader_hand_object = (uint32_t)(uint16_t)
         candidate->leader_hand_record;
@@ -8492,6 +8502,40 @@ int dm2_v1_runtime_get_active_champion_index(void) {
     return rt->source_party.curacthero - 1;
 }
 
+int dm2_v1_runtime_click_inventory_eye(void) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    int hero;
+
+    if (!rt->source_party_valid || !rt->session_snapshot_valid ||
+        rt->source_party.heros_in_party <= 0 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES ||
+        rt->source_event_hero_index < 0 ||
+        rt->source_event_hero_index >= rt->source_party.heros_in_party) {
+        return 0;
+    }
+    /* The authenticated GAME_LOAD candidate carries the source event
+     * queue's event_heroidx; use that exact owner just as c_events.cpp does. */
+    hero = rt->source_event_hero_index;
+    if (hero < 0 || hero >= rt->source_party.heros_in_party ||
+        rt->source_party.hero[hero].curHP <= 0 ||
+        rt->source_party.hero[hero].heroflag == 0) {
+        return 0;
+    }
+    rt->source_v1e0976 = (int16_t)(hero + 1);
+    return 1;
+}
+
+int dm2_v1_runtime_get_inventory_eye_champion_index(void) {
+    const DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    if (!rt->source_party_valid || !rt->session_snapshot_valid ||
+        rt->source_v1e0976 <= 0 ||
+        rt->source_v1e0976 > rt->source_party.heros_in_party ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES) {
+        return -1;
+    }
+    return rt->source_v1e0976 - 1;
+}
+
 void dm2_v1_runtime_clear_new_game_party_state(void) {
     /* SKWINSPX/src/v5/sksvgame.cpp::DM2_LOAD_NEW_DUNGEON clears
      * party.heros_in_party and ddat.savegamewpc.w_00 before
@@ -8506,6 +8550,8 @@ void dm2_v1_runtime_clear_new_game_party_state(void) {
     g_dm2_runtime.session_snapshot_valid = 0;
     g_dm2_runtime.source_curacthero = 0;
     g_dm2_runtime.source_curactmode = 0;
+    g_dm2_runtime.source_event_hero_index = 0;
+    g_dm2_runtime.source_v1e0976 = 0;
     g_dm2_runtime.source_sleeping = 0;
     memset(&g_dm2_runtime.source_party, 0,
            sizeof(g_dm2_runtime.source_party));

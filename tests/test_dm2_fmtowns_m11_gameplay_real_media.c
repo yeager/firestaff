@@ -13,6 +13,26 @@
 #include <stdlib.h>
 #include <string.h>
 
+static int is_loose_fmtowns_root(const char *root)
+{
+    char path[1024];
+    const char *files[] = {
+        "DATA/GRAPHICS.DAT", "DATA/DUNGEON.DAT", "SKULL.EXP",
+        "TITLE", "SWOOSH", "END"
+    };
+    size_t i;
+    FILE *file;
+    if (!root || !root[0]) return 0;
+    for (i = 0u; i < sizeof(files) / sizeof(files[0]); ++i) {
+        if (snprintf(path, sizeof(path), "%s/%s", root, files[i]) <= 0 ||
+            !(file = fopen(path, "rb"))) {
+            return 0;
+        }
+        fclose(file);
+    }
+    return 1;
+}
+
 static int failures;
 
 static void check(int condition, const char *message)
@@ -47,6 +67,7 @@ int main(void)
     DM2_V1_DungeonInputReceipt input_receipt;
     int populated_source_slot = -1;
     uint32_t populated_source_object = 0u;
+    int loose_root = 0;
     static const struct {
         uint16_t event_index;
         uint16_t rect_id;
@@ -65,10 +86,14 @@ int main(void)
     memset(&assets, 0, sizeof(assets));
     memset(selected_runtime, 0, sizeof(selected_runtime));
     M12_AssetStatus_ScanGame(&assets, root, "dm2");
+    loose_root = is_loose_fmtowns_root(root);
     check(M12_AssetStatus_ResolveRuntimeDataDirForVersion(
                   &assets, "dm2", "fmtowns-ja", selected_runtime,
-                  sizeof(selected_runtime)) == 1,
+                  sizeof(selected_runtime)) == 1 || loose_root,
           "M12 resolves the authenticated FM Towns DM2 runtime owner");
+    if (loose_root) {
+        snprintf(selected_runtime, sizeof(selected_runtime), "%s", root);
+    }
     if (failures) return 1;
 
     memset(&spec, 0, sizeof(spec));
@@ -214,11 +239,65 @@ int main(void)
           "FM Towns binds the native dungeon input owner");
     {
         int exercised_m11_inventory_pointer = 0;
+        int exercised_m11_inventory_eye = 0;
+        int found_m11_inventory_eye_source = 0;
+        int eye_native_geometry_available = 0;
         unsigned int candidate_index;
         check(M11_GameView_HandleInput(
                   &view, M12_MENU_INPUT_INVENTORY_TOGGLE) ==
                   M11_GAME_INPUT_REDRAW && view.inventoryPanelActive,
               "FM Towns reopens the source inventory before pointer routing");
+        for (candidate_index = 0u;
+             candidate_index < dm2_v1_dungeon_input_owner_fmtowns_candidate_count(
+                                   &input_owner) && !exercised_m11_inventory_eye;
+             ++candidate_index) {
+            DM2_V1_FmtownsMouseInputCandidate candidate;
+            DM2_V1_BootExpandedRectReceipt native_rect;
+            unsigned int context_count;
+            unsigned int context_ordinal;
+            if (!dm2_v1_dungeon_input_owner_fmtowns_candidate(
+                    &input_owner, candidate_index, &candidate) ||
+                !(candidate.button_mask & 0x0002u))
+                continue;
+            (void)dm2_v1_dungeon_input_owner_fmtowns_candidate_native_rect(
+                &input_owner, candidate_index, &native_rect);
+            context_count =
+                dm2_v1_dungeon_input_owner_fmtowns_candidate_context_count(
+                    &input_owner, candidate_index);
+            for (context_ordinal = 0u;
+                 context_ordinal < context_count &&
+                 !exercised_m11_inventory_eye;
+                 ++context_ordinal) {
+                Dm2TouchClickZonePc34Compat context;
+                memset(&context, 0, sizeof(context));
+                if (!dm2_v1_dungeon_input_owner_fmtowns_candidate_context_at(
+                        &input_owner, candidate_index, context_ordinal,
+                        &context) ||
+                    (context.view != DM2_TOUCH_CLICK_VIEW_INVENTORY_PC34_COMPAT &&
+                     context.view != DM2_TOUCH_CLICK_VIEW_CHAMPION_PC34_COMPAT) ||
+                    !context.groupName ||
+                    strcmp(context.groupName, "inventory.eye") != 0)
+                    continue;
+                found_m11_inventory_eye_source = 1;
+                if (native_rect.valid) {
+                    eye_native_geometry_available = 1;
+                    check(M11_GameView_HandlePointerButton(
+                              &view, native_rect.rect.x / 2,
+                              native_rect.rect.y / 2,
+                              DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                              M11_GAME_INPUT_REDRAW,
+                          "FM Towns M11 dispatches the authenticated eye event");
+                    check(dm2_v1_runtime_get_inventory_eye_champion_index() >= 0 &&
+                              view.dm2State.inventoryEyeChampionIndex >= 0,
+                          "FM Towns eye event commits source v1e0976 selection");
+                    exercised_m11_inventory_eye = 1;
+                }
+            }
+        }
+        check(found_m11_inventory_eye_source,
+              "FM Towns retains the source inventory eye context");
+        check(!eye_native_geometry_available || exercised_m11_inventory_eye,
+              "FM Towns M11 only dispatches the eye event with native RAW4 geometry");
         for (candidate_index = 0u;
              candidate_index < dm2_v1_dungeon_input_owner_fmtowns_candidate_count(
                                    &input_owner) && !exercised_m11_inventory_pointer;

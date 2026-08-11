@@ -1840,6 +1840,9 @@ typedef struct {
         int startup_resume_available;
         unsigned int startup_slot_mask;
         char startup_save_root[512];
+        /* Source c_events.cpp:1846 v1e0976 selection.  -1 means that no
+         * authenticated Towns eye event has selected a champion. */
+        int inventoryEyeChampionIndex;
         uint32_t leader_hand_object;
         uint32_t champion_inventory_objects[4][30];
     } dm2State;

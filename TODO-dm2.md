@@ -241,6 +241,15 @@ clipping is still unproven. Remaining weather work is to bind real original
     and slot selection. Item movement/equip commits, source text, and the
     remaining non-equipment owners are still separate fail-closed work.
 
+  - 2026-08-11 follow-up: the authenticated Towns `MOUSE_INPUT` event 71
+    (`rect 0x8222`, source group `inventory.eye`) is now identified and
+    routed through the source champion/status context. The current loose
+    Towns corpus does not expose an authenticated RAW4 rectangle for this
+    record, so M11 remains fail-closed and does not claim a clickable eye
+    until that native geometry is recovered. Mouth/consume, status, moneybox,
+    save, sleep/wake, and the remaining inventory owners remain unavailable
+    until their live source state and native geometry are bound.
+
   - 2026-08-06 follow-up: command dispatch now propagates a rejected
     source-GDAT image callback, so a failed title/menu blit aborts the
     presentation transaction instead of being reported as successfully drawn.

@@ -184,7 +184,11 @@ Every module below is source-locked with a real-data round-trip test:
   RAW4 source crop. Authenticated Towns inventory contexts route pointer
   input to M11 for panel and slot selection; the seven source-explicit
   equipment slots now commit clicks through the same authenticated exchange.
-  This is not a claim of complete inventory parity: source text, the
+  The native `inventory.eye` record (event 71, rect `0x8222`) is identified
+  in the source champion/status context, but the current loose Towns corpus
+  has no authenticated RAW4 rectangle for it; M11 therefore keeps the click
+  fail-closed until that geometry is recovered. This is not a claim of
+  complete inventory parity: source text, the
   unproven non-equipment owners, and rune/moneybox/status mutations remain
   unavailable and fail closed.
   The native viewport event 0x50/rect 0x0007 reaches the DM2 c_rwbb target
