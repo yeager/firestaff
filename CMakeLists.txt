@@ -11446,6 +11446,22 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_movie_decoder_real.
         COMMAND test_dm2_v1_mac_movie_decoder_real)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_m11_movie_runtime_real.c")
+    add_executable(test_dm2_v1_mac_m11_movie_runtime_real
+        tests/test_dm2_v1_mac_m11_movie_runtime_real.c)
+    target_include_directories(test_dm2_v1_mac_m11_movie_runtime_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_mac_m11_movie_runtime_real PRIVATE
+        firestaff_m11 firestaff_m12 firestaff_v2 firestaff_m10 SDL3::SDL3 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_mac_m11_movie_runtime_real PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm2_v1_mac_m11_movie_runtime_real
+        COMMAND test_dm2_v1_mac_m11_movie_runtime_real)
+    set_tests_properties(dm2_v1_mac_m11_movie_runtime_real PROPERTIES
+        ENVIRONMENT "SDL_AUDIODRIVER=dummy")
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_sound_real.c")
     add_executable(test_dm2_v1_mac_sound_real
         tests/test_dm2_v1_mac_sound_real.c

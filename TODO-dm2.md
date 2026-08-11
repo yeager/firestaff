@@ -449,7 +449,9 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
   resource forks, and `moov` resource payloads); `Story.MooV` is absent
   from this original image and is not invented. The complete source-owned
   HFS fork pair is now available to the boot profile without writing a
-  flattened movie.
+  flattened movie. `dm2_v1_mac_movie_decoder_real` and
+  `dm2_v1_mac_m11_movie_runtime_real` now prove authentic Cinepak/PCM decode
+  and M11 startup binding from the retail ZIP.
   A bounded in-memory QuickTime view now joins each exact `moov` atom to its
   matching exact `mdat` atom in the boot profile; the retail gate passes for
   the four present movies (`0x19`, with `Story.MooV` absent). Presentation
@@ -489,9 +491,11 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
 - [ ] Acquire an authentic Mac save corpus for both language families and
   verify native load/save round trips. A DOSBox `SKSAVE` or a generated save
   cannot close this gate.
-- [ ] Add end-to-end Mac startup, viewport, inventory-cursor, movie, audio,
+- [~] Add end-to-end Mac startup, viewport, inventory-cursor, movie, audio,
   input, save/load, and pixel/audio regression gates before claiming Mac
-  gameplay support.
+  gameplay support. Retail startup/movie/audio and both-version boot gates
+  pass; viewport/inventory-cursor, native Mac held input, save/load, and
+  source-pixel/audio parity gates remain open.
 
 Required evidence: hash-identified Mac CD/content media, resource-fork
 receipts, original Mac or emulator traces for menu/input/audio/movie timing,
