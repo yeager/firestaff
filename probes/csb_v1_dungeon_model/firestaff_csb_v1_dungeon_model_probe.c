@@ -48,7 +48,7 @@
 
 /* ── Compile-time assertions ── */
 _Static_assert(CSB_V1_MAX_LEVELS == 12,      "CSB MAX_LEVELS must be 12");
-_Static_assert(CSB_MAX_LEVELS   == 16,        "CSB_MAX_LEVELS must be 16");
+_Static_assert(CSB_MAX_LEVELS   == 24,        "CSB_MAX_LEVELS must be 24");
 _Static_assert(CSB_THING_TYPE_GROUP == 4,     "GROUP thing type must be 4");
 _Static_assert(CSB_THING_TYPE_SENSOR == 3,    "SENSOR thing type must be 3");
 _Static_assert(CSB_THING_ENDOFLIST == 0xFFFEu,"ENDOFLIST must be 0xFFFE");

@@ -838,7 +838,7 @@ int main(int argc, char** argv) {
         snprintf(msg, sizeof(msg),
                  "after dropped toggle: D1C portrait stays suppressed "
                  "(<= 20%% match, got %d%%) - panel chrome untouched",
-                 TARGET_ORDINAL, matchAfterInvOff);
+                 matchAfterInvOff);
         CHECK(matchAfterInvOff <= 20, msg);
     }
     {

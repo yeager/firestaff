@@ -113,16 +113,6 @@ typedef struct PortraitRectMatch {
     int percent;
 } PortraitRectMatch;
 
-static int file_exists(const char* path) {
-    FILE* f = fopen(path, "rb");
-    if (!f) {
-        return 0;
-    }
-    fclose(f);
-    return 1;
-}
-
-
 static PanelMatch match_panel(const M11_AssetSlot* panel,
                               const unsigned char* fb,
                               int fbW,

@@ -130,6 +130,11 @@ enum {
     ORDINAL_11_ROW = 11 >> 3,        /* = 1 */
     ORDINAL_11_SRC_X = ORDINAL_11_COL << 5,   /* = 96 */
     ORDINAL_11_SRC_Y = ORDINAL_11_ROW * 29,   /* = 29 */
+    /* Retained for the older ordinal-5 atlas sub-gate below. */
+    ORDINAL_5_COL = 5 & 7,
+    ORDINAL_5_ROW = 5 >> 3,
+    ORDINAL_5_SRC_X = ORDINAL_5_COL << 5,
+    ORDINAL_5_SRC_Y = ORDINAL_5_ROW * 29,
     /* Side wall sample zones - the no-floating proof checks that
      * the portrait sprite pixels do not bleed into the left/right
      * side walls of the D1C cell band. */

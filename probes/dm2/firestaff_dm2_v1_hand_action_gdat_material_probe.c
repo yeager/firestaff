@@ -56,25 +56,28 @@ int main(int argc, char **argv)
         return 1;
     }
     for (size_t i = 0u; i < sizeof(cases) / sizeof(cases[0]); ++i) {
-        DM2_V1_HandActionGdatReceipt receipt;
+        DM2_V1_HandActionGdatRoute route;
+        DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+        int width = 0;
+        int height = 0;
+        uint8_t *pixels = NULL;
 
-        if (!dm2_v1_hand_action_gdat_receipt(&loader, &cases[i].input,
-                                              &receipt) ||
-            !receipt.valid || receipt.route.category !=
+        if (!dm2_v1_hand_action_gdat_route(&cases[i].input, &route) ||
+            route.category !=
                 DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
-            receipt.route.subcategory != 4u ||
-            receipt.route.entry != cases[i].entry ||
-            receipt.route.rectno != cases[i].rectno ||
-            receipt.image_metadata.bits_per_pixel != 4u ||
-            receipt.local_palette_hash == 0u ||
-            receipt.decoded_width == 0u || receipt.decoded_height == 0u ||
-            receipt.decoded_pixel_count == 0u ||
-            receipt.decoded_pixels_hash == 0u || receipt.material_hash == 0u) {
+            route.subcategory != 4u || route.entry != cases[i].entry ||
+            route.rectno != cases[i].rectno ||
+            !(pixels = dm2_v1_hand_action_gdat_load_image(
+                  &loader, &cases[i].input, &route, &width, &height,
+                  &format)) || width <= 0 || height <= 0 ||
+            format == DM2_IMG_FMT_UNKNOWN) {
             fprintf(stderr, "FAIL: source hand-action material %zu\n", i);
+            free(pixels);
             dm2_v1_asset_loader_free(&loader);
             free(graphics);
             return 1;
         }
+        free(pixels);
     }
     dm2_v1_asset_loader_free(&loader);
     free(graphics);

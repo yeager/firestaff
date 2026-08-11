@@ -41,16 +41,14 @@ static int expect_bool(const char *label, bool got, bool want)
     return expect_int(label, got ? 1 : 0, want ? 1 : 0);
 }
 
-static int expect_ptr(const char *label, const void *got, const void *want)
-{
-    if (got != want) {
-        fprintf(stderr, "FAIL %s ptr=%p want=%p\n", label, got, want);
-        return 0;
-    }
-    return 0; /* null check only - use expect_int for non-null */
-}
-
 /* ─── Test 1: Draw order integrity ─────────────────────────────────────────── */
+
+typedef struct {
+    DM1_ViewSquareIndex square;
+    int expected_depth;
+    int expected_lateral;
+    const char *expected_fn;
+} ExpectedDrawStep;
 
 static int verify_draw_order_integrity(void)
 {
@@ -58,12 +56,7 @@ static int verify_draw_order_integrity(void)
     printf("\n=== Draw Order Integrity ===\n");
 
     /* Expected draw order from DUNVIEW.C:8445-8542 */
-    static const struct {
-        DM1_ViewSquareIndex square;
-        int expected_depth;
-        int expected_lateral;
-        const char *expected_fn;
-    } expected_steps[] = {
+    static const ExpectedDrawStep expected_steps[] = {
         { DM1_VIEW_SQUARE_D4L,   4, -1, "F0115:D4L objects" },
         { DM1_VIEW_SQUARE_D4R,   4,  1, "F0115:D4R objects" },
         { DM1_VIEW_SQUARE_D4C,   4,  0, "F0115:D4C objects" },
@@ -91,12 +84,7 @@ static int verify_draw_order_integrity(void)
 
     for (size_t i = 0; i < step_count && i < sizeof(expected_steps) / sizeof(expected_steps[0]); ++i) {
         const DM1_ViewportDrawStep *step = dm1_viewport_3d_get_draw_order_step(i);
-        const struct {
-            DM1_ViewSquareIndex square;
-            int expected_depth;
-            int expected_lateral;
-            const char *expected_fn;
-        } *want = &expected_steps[i];
+        const ExpectedDrawStep *want = &expected_steps[i];
 
         ok &= expect_int("step idx square", (int)step->square, (int)want->square);
         ok &= expect_int("step idx rel_depth", step->rel_depth, want->expected_depth);
