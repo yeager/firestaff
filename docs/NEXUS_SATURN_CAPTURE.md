@@ -182,6 +182,14 @@ input-/transportwitness från samma retail-disc, men utan exakt VDP1/VDP2-
 source join är `asset_consumer_identity=unbound` och
 `host_composition_admission=blocked` fortfarande det korrekta resultatet.
 
+Frame 50 har därefter jämförts mot hela den hashverifierade Nexus-korpusen.
+VDP1 mode-5-källan (`source_offset=0x10a00`, 2048 bytes) har ingen exakt
+MENU.BPK-, MNS-, DGN- eller retail-filträff. VDP2 character-lane har 0/4
+exakta FONT256 Page/Character Generator/Palette-spaner och 0/1 exakt
+palette-CRAM-match; en attributspan matchar, men det räcker inte för att
+identifiera textkonsumenten. Resultatet är därför fortsatt
+`source_join=unbound` och `text_consumer_identity=unbound`.
+
 Minimal extern körning:
 
 ```sh
