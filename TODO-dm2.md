@@ -450,7 +450,10 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
   from this original image and is not invented. The complete source-owned
   HFS fork pair is now available to the boot profile without writing a
   flattened movie.
-  Presentation through the original QuickTime/MooV owner remains open. Do not
+  A bounded in-memory QuickTime view now joins each exact `moov` atom to its
+  matching exact `mdat` atom in the boot profile; the retail gate passes for
+  the four present movies (`0x19`, with `Story.MooV` absent). Presentation
+  through the original QuickTime/MooV owner remains open. Do not
   replace these with converted MP4 files in the source runtime; converted
   files may be verification derivatives only.
 - [ ] Bind the US English Mac MIDI/SoundMusicSys resources and the Japanese

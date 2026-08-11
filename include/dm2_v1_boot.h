@@ -13,6 +13,7 @@
 #include "dm2_v1_dos_startup_media.h"
 #include "dm2_v1_dos_intro_mve_owner.h"
 #include "dm2_v1_mac_media.h"
+#include "dm2_v1_mac_movie.h"
 #include "dm2_v1_party.h"
 #include <stddef.h>
 
@@ -459,6 +460,8 @@ typedef struct {
     uint32_t mac_movie_present_mask;
     uint32_t mac_movie_resource_present_mask;
     uint32_t mac_movie_moov_present_mask;
+    DM2_V1_MacMovieView mac_movie_view[DM2_V1_MAC_MOVIE_COUNT];
+    uint32_t mac_movie_view_present_mask;
 
     /* ── Save namespace ───────────────────────────────────── */
     char    save_root[1024];   /* saves/dm2/ */

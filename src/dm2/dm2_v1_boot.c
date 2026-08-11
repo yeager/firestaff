@@ -109,6 +109,20 @@ static int dm2_v1_boot_load_mac_zip(DM2_V1_BootProfile *profile,
         profile->mac_movie_present_mask = media.movie_present_mask;
         profile->mac_movie_resource_present_mask = media.movie_resource_present_mask;
         profile->mac_movie_moov_present_mask = media.movie_moov_present_mask;
+        for (size_t movie_index = 0u;
+             movie_index < DM2_V1_MAC_MOVIE_COUNT; ++movie_index) {
+            if ((profile->mac_movie_present_mask & (1u << movie_index)) == 0u ||
+                (profile->mac_movie_moov_present_mask & (1u << movie_index)) == 0u ||
+                dm2_v1_mac_movie_view_build(
+                    profile->mac_movie_data[movie_index],
+                    profile->mac_movie_data_size[movie_index],
+                    profile->mac_movie_moov[movie_index],
+                    profile->mac_movie_moov_size[movie_index],
+                    &profile->mac_movie_view[movie_index]) != 0) {
+                continue;
+            }
+            profile->mac_movie_view_present_mask |= 1u << movie_index;
+        }
         if (media.music_map && media.music_map_size <= sizeof(profile->music_map_data)) {
             memcpy(profile->music_map_data, media.music_map, media.music_map_size);
             profile->music_map_size = media.music_map_size;
@@ -14567,6 +14581,7 @@ void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {
     profile->dungeon_mem_size = 0u;
     for (size_t movie_index = 0u;
          movie_index < DM2_V1_MAC_MOVIE_COUNT; ++movie_index) {
+        dm2_v1_mac_movie_view_free(&profile->mac_movie_view[movie_index]);
         free(profile->mac_movie_data[movie_index]);
         free(profile->mac_movie_resource[movie_index]);
         free(profile->mac_movie_moov[movie_index]);
@@ -14580,6 +14595,7 @@ void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {
     profile->mac_movie_present_mask = 0u;
     profile->mac_movie_resource_present_mask = 0u;
     profile->mac_movie_moov_present_mask = 0u;
+    profile->mac_movie_view_present_mask = 0u;
     dm2_v1_amiga_lzx_free(profile->amiga_swsh_bytes);
     dm2_v1_amiga_lzx_free(profile->amiga_titl_bytes);
     dm2_v1_amiga_lzx_free(profile->amiga_enda_bytes);

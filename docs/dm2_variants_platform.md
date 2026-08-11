@@ -68,7 +68,10 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   `Title.MooV` (2,403,013 bytes), `Swoosh.MooV` (463,528), `Credits.MooV`
   (5,601,948), and `Ending.MooV` (6,138,318). `Story.MooV` is absent from
   this image. Firestaff does not synthesize, flatten, or convert these files;
-  QuickTime playback is still a separate runtime owner.
+  Firestaff also builds a bounded in-memory QuickTime view (`moov` followed by
+  `mdat`) for each present movie without changing either fork. This view is
+  validated against the authentic retail boot profile; decoder, timing, audio,
+  and presentation ownership remain separate.
 
 X68000 is not part of the DM2 support matrix.
 
