@@ -32,10 +32,12 @@ int main(void) {
         return 1;
     }
     if (!demo) {
-        printf("retail movie mask=0x%08x sizes=%zu,%zu,%zu,%zu,%zu\n",
+        printf("retail movie mask=0x%08x sizes=%zu,%zu,%zu,%zu,%zu head=%02x%02x%02x%02x%02x%02x%02x%02x\n",
                media.movie_present_mask, media.movie_size[0],
                media.movie_size[1], media.movie_size[2], media.movie_size[3],
-               media.movie_size[4]);
+               media.movie_size[4], media.movie[0][0], media.movie[0][1],
+               media.movie[0][2], media.movie[0][3], media.movie[0][4],
+               media.movie[0][5], media.movie[0][6], media.movie[0][7]);
     }
     dm2_v1_mac_media_free(&media);
     puts(demo ? "PASS: authentic DM2 Macintosh demo installer read in RAM"
