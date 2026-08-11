@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-12 — parity-matrisens överclaim korrigerad
+
+- ✅ Combat- och champion-systemets status skiljer nu autentiserade numeric
+  records/fixture-compat från originalets ännu saknade T500/T600/T900- och
+  porträttkonsumenter.
+- ✅ JP-porträttindex lämnas fail-closed tills riktiga pixels och deras
+  HuC6280/VDC-ägare kan bindas i samma runtime-capture.
+
 ## 2026-08-11 — ljudstatus korrigerad till faktisk bevisnivå
 
 - ✅ Paritetsmatrisen skiljer nu statisk System Card-call-site-katalog från en

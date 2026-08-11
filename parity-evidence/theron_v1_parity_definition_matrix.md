@@ -131,8 +131,8 @@ No reference source code exists. Parity is established through:
 | Gate | Status | Evidence |
 |------|--------|----------|
 | Dungeon progression determinism | PROVEN | `theron_v1_dungeon_progression` |
-| Combat mechanics | PROVEN | `theron_v1_combat_mechanics` |
-| Champion system | PROVEN | `theron_v1_champion` |
+| Combat mechanics | PARTIAL | Fixture/compatibility mechanics and fail-closed production gates; original T500/T600 attack, damage, AI, loot and sound consumers are not authenticated |
+| Champion system | PARTIAL | Authenticated numeric roster records and party-state plumbing; portrait consumer, full T900 equipment/inventory semantics and runtime persistence ownership remain open |
 | Shop price table | PROVEN | `theron_v1_shop_price_table` |
 | World serialize purchase state | PROVEN | `theron_v1_world_serialize_purchase_state` |
 | Object table route | PROVEN | Track 02 object table route receipt |

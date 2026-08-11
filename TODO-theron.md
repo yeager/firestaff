@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-12 — JP-porträtt och originalmekanik är fortfarande öppna
+
+- 🔒 JP Track 02-rosterposterna är autentiserade, men ingen source-bound
+  porträttpixelkonsument eller porträtt-ID-bindning är fångad. `portrait_index`
+  ska därför fortsätta vara `THERON_PORTRAIT_UNAVAILABLE`.
+- 🔒 Paritetsmatrisen räknar nu fixture-/numeric-record-bevis som `PARTIAL` för
+  combat och champion-systemet; T500/T600/T900-konsumenterna måste fortfarande
+  bindas mot samma-session runtime-data innan produktionen öppnas.
+
 ## 2026-08-11 — ljudkonsument förblir capture-gated
 
 - 🔒 Den statiska System Card-katalogen klassificerar riktiga CD/ADPCM-vektor-
