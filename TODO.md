@@ -2672,6 +2672,9 @@
   New Adventure:s F7086/F7090/F7020-transaktion; den stannar fail-closed
   tills en verifierad källa-/destinationsdungeon och
   objektmodifierarägarna finns.
+  Dialogrubriken, alla tre val och den fullständiga game-save-prompten läses
+  nu var för sig ur hashverifierade `UTILE.EXP` P3-spann; inga engelska
+  värdsträngar används som ersättning.
 
 - **THERON-FORCEFIELD-REAL-DUNGEON:** Enter now reliably dispatches from the
   Soul Room forcefield focus, including the first attempt without prompt text.

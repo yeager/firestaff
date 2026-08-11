@@ -31,6 +31,9 @@ extern "C" {
 #define CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT 16u
 #define CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_RECORD_BYTES 68u
 #define CSB_V1_FMTOWNS_UTILITY_INTERFACE_FONT_BYTES 420u
+#define CSB_V1_FMTOWNS_UTILITY_GAME_SOURCE_TITLE_BYTES 23u
+#define CSB_V1_FMTOWNS_UTILITY_GAME_SOURCE_CHOICES_BYTES 40u
+#define CSB_V1_FMTOWNS_UTILITY_GAME_SAVE_PROMPT_BYTES 42u
 #define CSB_V1_FMTOWNS_UTILITY_MIRROR_BITMAP_BYTES 247u
 #define CSB_V1_FMTOWNS_UTILITY_FILE_PICKER_ARROWS_BYTES 324u
 /* F0689 reaches the end of C06's 31x75 IMG2 command stream after 290 bytes.
@@ -314,6 +317,23 @@ typedef struct CSB_V1_FmtownsUtilityMenuReceipt {
     const char *source_evidence;
 } CSB_V1_FmtownsUtilityMenuReceipt;
 
+/* C06's pre-editor source chooser is a separate UTILE string group.  Keep
+ * it apart from the six bottom-row action labels: the strings carry both the
+ * initial C0_GAME_SOURCE choice and the later A: medium prompt. */
+typedef struct CSB_V1_FmtownsUtilityGameSourceReceipt {
+    int valid;
+    CSB_V1_FmtownsSwitchLanguage language;
+    CSB_V1_VariantId variant_id;
+    uint32_t title_file_offset;
+    uint32_t choices_file_offset;
+    uint32_t save_prompt_file_offset;
+    uint32_t source_fnv1a;
+    uint8_t title[CSB_V1_FMTOWNS_UTILITY_GAME_SOURCE_TITLE_BYTES];
+    uint8_t choices[CSB_V1_FMTOWNS_UTILITY_GAME_SOURCE_CHOICES_BYTES];
+    uint8_t save_prompt[CSB_V1_FMTOWNS_UTILITY_GAME_SAVE_PROMPT_BYTES];
+    const char *source_evidence;
+} CSB_V1_FmtownsUtilityGameSourceReceipt;
+
 /* The C06 interface/scroll font is retained only after it has been read from
  * the exact hash-verified UTILE/UTILJ program selected by SWITCHTW.  The
  * bytes are not a host-font substitute: ReDMCSB CEDT019.C:18 and
@@ -525,6 +545,11 @@ int csb_v1_fmtowns_utility_menu_open(
     const CSB_V1_BootProfile *profile,
     CSB_V1_FmtownsSwitchLanguage language,
     CSB_V1_FmtownsUtilityMenuReceipt *out_receipt);
+
+int csb_v1_fmtowns_utility_game_source_open(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_FmtownsSwitchLanguage language,
+    CSB_V1_FmtownsUtilityGameSourceReceipt *out_receipt);
 
 /* Read the native C06 interface font from the verified F31 executable.
  * The call deliberately fails on an unrecognized executable or source span;

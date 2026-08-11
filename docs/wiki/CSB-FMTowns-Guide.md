@@ -165,7 +165,9 @@ verified. For F31E this authorizes a deliberately small editor surface: the
 verified C06 frame, champion selection, palette selection, planar 32×29
 pixel drawing, connected-area fill, Revert and Undo. C06 first shows the
 source-owned `LOAD WHICH SAVED GAME?` choice (`DUNGEON MASTER`, `CHAOS
-STRIKES BACK`, `CANCEL`). The CSB branch then waits for the separately
+STRIKES BACK`, `CANCEL`). Those labels and the full `PLEASE PUT THE GAME
+SAVE / DISK IN %DEVICE%` prompt are read from individually hash-verified
+`UTILE.EXP` P3 spans, not copied host strings. The CSB branch then waits for the separately
 selected A: game-save medium; a CD `MINI.DAT` is explicitly not accepted as
 that medium. Only an F0435-valid native `CSBGAME.DAT` (or its native `.BAK`
 recovery) opens the editor. The current CSB installation keeps the Dungeon

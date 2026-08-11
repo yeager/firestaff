@@ -2489,6 +2489,69 @@ int csb_v1_fmtowns_utility_menu_open(
     return 1;
 }
 
+int csb_v1_fmtowns_utility_game_source_open(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_FmtownsSwitchLanguage language,
+    CSB_V1_FmtownsUtilityGameSourceReceipt *out_receipt)
+{
+    enum {
+        C06_GAME_SOURCE_TITLE_VIRTUAL_OFFSET = 0x118a0u,
+        C06_GAME_SOURCE_CHOICES_VIRTUAL_OFFSET = 0x1194cu,
+        C06_GAME_SAVE_PROMPT_VIRTUAL_OFFSET = 0x11bb8u,
+        C06_GAME_SOURCE_TITLE_FNV1A = 0x7a56b380u,
+        C06_GAME_SOURCE_CHOICES_FNV1A = 0x289297b9u,
+        C06_GAME_SAVE_PROMPT_FNV1A = 0xe89d74ecu
+    };
+    CSB_V1_FmtownsUtilityHandoffReceipt handoff;
+    uint32_t hash;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    /* The Japanese branch calls TBIOS for Shift-JIS glyphs. Its bytes remain
+     * preserved in UTILJ but must not be re-labelled with English host text. */
+    if (language != CSB_FMTOWNS_SWITCH_ENGLISH ||
+        !csb_v1_fmtowns_utility_handoff_open(profile, language, &handoff) ||
+        !csb_v1_fmtowns_utility_read_span(
+            &handoff, handoff.p3_load_image_offset +
+            C06_GAME_SOURCE_TITLE_VIRTUAL_OFFSET, out_receipt->title,
+            sizeof(out_receipt->title)) ||
+        !csb_v1_fmtowns_utility_read_span(
+            &handoff, handoff.p3_load_image_offset +
+            C06_GAME_SOURCE_CHOICES_VIRTUAL_OFFSET, out_receipt->choices,
+            sizeof(out_receipt->choices)) ||
+        !csb_v1_fmtowns_utility_read_span(
+            &handoff, handoff.p3_load_image_offset +
+            C06_GAME_SAVE_PROMPT_VIRTUAL_OFFSET, out_receipt->save_prompt,
+            sizeof(out_receipt->save_prompt))) return 0;
+    hash = csb_v1_fmtowns_game_bytes_fnv1a(out_receipt->title,
+                                            sizeof(out_receipt->title));
+    if (hash != C06_GAME_SOURCE_TITLE_FNV1A ||
+        csb_v1_fmtowns_game_bytes_fnv1a(out_receipt->choices,
+                                        sizeof(out_receipt->choices)) !=
+            C06_GAME_SOURCE_CHOICES_FNV1A ||
+        csb_v1_fmtowns_game_bytes_fnv1a(out_receipt->save_prompt,
+                                        sizeof(out_receipt->save_prompt)) !=
+            C06_GAME_SAVE_PROMPT_FNV1A) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    out_receipt->valid = 1;
+    out_receipt->language = language;
+    out_receipt->variant_id = handoff.variant_id;
+    out_receipt->title_file_offset = handoff.p3_load_image_offset +
+        C06_GAME_SOURCE_TITLE_VIRTUAL_OFFSET;
+    out_receipt->choices_file_offset = handoff.p3_load_image_offset +
+        C06_GAME_SOURCE_CHOICES_VIRTUAL_OFFSET;
+    out_receipt->save_prompt_file_offset = handoff.p3_load_image_offset +
+        C06_GAME_SAVE_PROMPT_VIRTUAL_OFFSET;
+    out_receipt->source_fnv1a = hash ^ C06_GAME_SOURCE_CHOICES_FNV1A ^
+        C06_GAME_SAVE_PROMPT_FNV1A;
+    out_receipt->source_evidence =
+        "UTILE.EXP P3 C06 strings at 0x118a0/0x1194c/0x11bb8; "
+        "ReDMCSB CEDTDATA.C G7085/G7065 and diskneeded message table";
+    return 1;
+}
+
 int csb_v1_fmtowns_utility_font_open(
     const CSB_V1_BootProfile *profile,
     CSB_V1_FmtownsSwitchLanguage language,

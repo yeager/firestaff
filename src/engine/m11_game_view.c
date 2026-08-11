@@ -8833,6 +8833,8 @@ static int m11_csb_enter_fmtowns_utility(
            sizeof(state->csbFmtownsUtilitySaveMappingReceipt));
     memset(&state->csbFmtownsUtilityMenuReceipt, 0,
            sizeof(state->csbFmtownsUtilityMenuReceipt));
+    memset(&state->csbFmtownsUtilityGameSourceReceipt, 0,
+           sizeof(state->csbFmtownsUtilityGameSourceReceipt));
     memset(&state->csbFmtownsUtilityFontReceipt, 0,
            sizeof(state->csbFmtownsUtilityFontReceipt));
     memset(&state->csbFmtownsUtilityPortraitReceipt, 0,
@@ -8867,6 +8869,8 @@ static int m11_csb_enter_fmtowns_utility(
             profile, language, &state->csbFmtownsUtilitySaveMappingReceipt) ||
         !csb_v1_fmtowns_utility_menu_open(
             profile, language, &state->csbFmtownsUtilityMenuReceipt) ||
+        !csb_v1_fmtowns_utility_game_source_open(
+            profile, language, &state->csbFmtownsUtilityGameSourceReceipt) ||
         !csb_v1_fmtowns_utility_font_open(
             profile, language, &state->csbFmtownsUtilityFontReceipt) ||
         !csb_v1_fmtowns_utility_icon_palette_rgb6(
@@ -8874,6 +8878,7 @@ static int m11_csb_enter_fmtowns_utility(
             state->csbFmtownsUtilityPaletteRgb6) ||
         !csb_v1_fmtowns_utility_render_game_source_dialog(
             &state->csbFmtownsUtilityHandoffReceipt,
+            &state->csbFmtownsUtilityGameSourceReceipt,
             &state->csbFmtownsUtilityFontReceipt,
             state->csbFmtownsUtilityPixels,
             sizeof(state->csbFmtownsUtilityPixels), &rendered)) {
@@ -8897,6 +8902,7 @@ static int m11_csb_redraw_fmtowns_utility(M11_GameViewState *state)
     if (state->csbFmtownsUtilityGameSourceDialogActive) {
         return csb_v1_fmtowns_utility_render_game_source_dialog(
             &state->csbFmtownsUtilityHandoffReceipt,
+            &state->csbFmtownsUtilityGameSourceReceipt,
             &state->csbFmtownsUtilityFontReceipt,
             state->csbFmtownsUtilityPixels,
             sizeof(state->csbFmtownsUtilityPixels), &rendered);
@@ -8904,6 +8910,7 @@ static int m11_csb_redraw_fmtowns_utility(M11_GameViewState *state)
     if (state->csbFmtownsUtilityGameSaveMediumDialogActive) {
         return csb_v1_fmtowns_utility_render_game_save_medium_dialog(
             &state->csbFmtownsUtilityHandoffReceipt,
+            &state->csbFmtownsUtilityGameSourceReceipt,
             &state->csbFmtownsUtilityFontReceipt,
             state->csbFmtownsUtilityPixels,
             sizeof(state->csbFmtownsUtilityPixels), &rendered);

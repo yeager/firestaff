@@ -1615,6 +1615,7 @@ typedef struct {
     CSB_V1_FmtownsUtilityHandoffReceipt csbFmtownsUtilityHandoffReceipt;
     CSB_V1_FmtownsUtilitySaveMappingReceipt csbFmtownsUtilitySaveMappingReceipt;
     CSB_V1_FmtownsUtilityMenuReceipt csbFmtownsUtilityMenuReceipt;
+    CSB_V1_FmtownsUtilityGameSourceReceipt csbFmtownsUtilityGameSourceReceipt;
     CSB_V1_FmtownsUtilityFontReceipt csbFmtownsUtilityFontReceipt;
     CSB_V1_PartyState csbFmtownsUtilityParty;
     CSB_V1_FmtownsStartupPortraitReceipt csbFmtownsUtilityPortraitReceipt;

@@ -102,6 +102,7 @@ int csb_v1_fmtowns_utility_render_initial(
  * reproduced rather than replaced with host text. */
 int csb_v1_fmtowns_utility_render_game_source_dialog(
     const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
+    const CSB_V1_FmtownsUtilityGameSourceReceipt *game_source,
     const CSB_V1_FmtownsUtilityFontReceipt *font,
     uint8_t *indexed_pixels, size_t pixel_capacity,
     CSB_V1_FmtownsUtilityRenderReceipt *out_receipt);
@@ -111,6 +112,7 @@ int csb_v1_fmtowns_utility_render_game_source_dialog(
  * through to the retail CD's MINI.DAT bootstrap as though it were a save. */
 int csb_v1_fmtowns_utility_render_game_save_medium_dialog(
     const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
+    const CSB_V1_FmtownsUtilityGameSourceReceipt *game_source,
     const CSB_V1_FmtownsUtilityFontReceipt *font,
     uint8_t *indexed_pixels, size_t pixel_capacity,
     CSB_V1_FmtownsUtilityRenderReceipt *out_receipt);

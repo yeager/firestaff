@@ -134,28 +134,30 @@ static int c06_dialog_base(const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
 
 int csb_v1_fmtowns_utility_render_game_source_dialog(
     const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
+    const CSB_V1_FmtownsUtilityGameSourceReceipt *game_source,
     const CSB_V1_FmtownsUtilityFontReceipt *font,
     uint8_t *pixels, size_t pixel_capacity,
     CSB_V1_FmtownsUtilityRenderReceipt *out_receipt)
 {
-    static const uint8_t title[] = "LOAD WHICH SAVED GAME?";
-    static const uint8_t dungeon_master[] = "DUNGEON MASTER";
-    static const uint8_t chaos_strikes_back[] = "CHAOS STRIKES BACK";
-    static const uint8_t cancel[] = "CANCEL";
     CSB_V1_FmtownsUtilityRenderReceipt receipt;
 
     memset(&receipt, 0, sizeof(receipt));
-    if (!c06_dialog_base(handoff, font, pixels, pixel_capacity, &receipt))
+    if (!c06_dialog_base(handoff, font, pixels, pixel_capacity, &receipt) ||
+        !game_source || !game_source->valid ||
+        game_source->language != CSB_FMTOWNS_SWITCH_ENGLISH ||
+        game_source->variant_id != handoff->variant_id)
         return 0;
-    text(font, 95, 70, C15_WHITE, C01_DARK_GRAY, title, sizeof(title), pixels);
-    button((C06_Box){80, 237, 88, 96}, dungeon_master,
-           sizeof(dungeon_master), font, pixels);
-    button((C06_Box){80, 237, 108, 116}, chaos_strikes_back,
-           sizeof(chaos_strikes_back), font, pixels);
-    button((C06_Box){80, 237, 128, 136}, cancel, sizeof(cancel), font, pixels);
+    text(font, 95, 70, C15_WHITE, C01_DARK_GRAY, game_source->title,
+         sizeof(game_source->title), pixels);
+    button((C06_Box){80, 237, 88, 96}, game_source->choices, 14u, font, pixels);
+    button((C06_Box){80, 237, 108, 116}, game_source->choices + 15u, 18u,
+           font, pixels);
+    button((C06_Box){80, 237, 128, 136}, game_source->choices + 34u, 6u,
+           font, pixels);
     receipt.valid = 1;
     receipt.language = CSB_FMTOWNS_SWITCH_ENGLISH;
-    receipt.source_fnv1a = handoff->executable_fnv1a ^ font->source_fnv1a;
+    receipt.source_fnv1a = handoff->executable_fnv1a ^ font->source_fnv1a ^
+                            game_source->source_fnv1a;
     receipt.pixel_fnv1a = fnv1a(pixels, CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS);
     receipt.source_evidence =
         "Tsugaru F31J/TBIOS capture; ReDMCSB CEDTDATA.C G7085/G7065; "
@@ -166,26 +168,35 @@ int csb_v1_fmtowns_utility_render_game_source_dialog(
 
 int csb_v1_fmtowns_utility_render_game_save_medium_dialog(
     const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
+    const CSB_V1_FmtownsUtilityGameSourceReceipt *game_source,
     const CSB_V1_FmtownsUtilityFontReceipt *font,
     uint8_t *pixels, size_t pixel_capacity,
     CSB_V1_FmtownsUtilityRenderReceipt *out_receipt)
 {
-    static const uint8_t line1[] = "GAME SAVE DISK";
-    static const uint8_t line2[] = "DRIVE A:";
     static const uint8_t ok[] = "OK";
     static const uint8_t cancel[] = "CANCEL";
     CSB_V1_FmtownsUtilityRenderReceipt receipt;
 
     memset(&receipt, 0, sizeof(receipt));
-    if (!c06_dialog_base(handoff, font, pixels, pixel_capacity, &receipt))
+    if (!c06_dialog_base(handoff, font, pixels, pixel_capacity, &receipt) ||
+        !game_source || !game_source->valid ||
+        game_source->language != CSB_FMTOWNS_SWITCH_ENGLISH ||
+        game_source->variant_id != handoff->variant_id)
         return 0;
-    text(font, 121, 76, C15_WHITE, C01_DARK_GRAY, line1, sizeof(line1), pixels);
-    text(font, 139, 86, C15_WHITE, C01_DARK_GRAY, line2, sizeof(line2), pixels);
+    /* %DEVICE% is filled by C06's selected F31 drive name. This route is
+     * fixed to its source A: medium, not a host path or generated label. */
+    text(font, 85, 76, C15_WHITE, C01_DARK_GRAY, game_source->save_prompt,
+         24u, pixels);
+    text(font, 106, 86, C15_WHITE, C01_DARK_GRAY,
+         game_source->save_prompt + 25u, 8u, pixels);
+    text(font, 160, 86, C15_WHITE, C01_DARK_GRAY,
+         (const uint8_t *)"A:", 2u, pixels);
     button((C06_Box){80, 148, 128, 136}, ok, sizeof(ok), font, pixels);
     button((C06_Box){165, 237, 128, 136}, cancel, sizeof(cancel), font, pixels);
     receipt.valid = 1;
     receipt.language = CSB_FMTOWNS_SWITCH_ENGLISH;
-    receipt.source_fnv1a = handoff->executable_fnv1a ^ font->source_fnv1a;
+    receipt.source_fnv1a = handoff->executable_fnv1a ^ font->source_fnv1a ^
+                            game_source->source_fnv1a;
     receipt.pixel_fnv1a = fnv1a(pixels, CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS);
     receipt.source_evidence =
         "Tsugaru F31J/TBIOS capture; F31E UTILE.EXP string table: "
