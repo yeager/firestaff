@@ -33485,6 +33485,7 @@ endif()
             NAME pass374_dm1_v1_completion_viewport_wall_credit
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass374_dm1_v1_completion_viewport_wall_credit.py
         )
+        set_tests_properties(pass374_dm1_v1_completion_viewport_wall_credit PROPERTIES DEPENDS "pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path")
         add_test(
             NAME pass508_dm1_v1_movement_remaining_gap_after_pass374
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass508_dm1_v1_movement_remaining_gap_after_pass374.py
