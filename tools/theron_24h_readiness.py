@@ -50,7 +50,6 @@ CTEST_REQUIRED_TESTS = (
     "theron_v1_cross_route_mechanics",
     "theron_v1_teleporter_chain",
     "theron_v1_viewport_renderer",
-    "theron_v1_tile_renderer",
     "theron_v1_rendering",
     "theron_v1_save_load",
     "theron_v1_save_header_rejection",

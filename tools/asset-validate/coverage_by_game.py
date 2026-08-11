@@ -116,8 +116,11 @@ VARIANTS: tuple[Variant, ...] = (
     Variant("nexus", "Saturn", "JP (138-file release)", ("DM.BIN",)),  # 137 satellites in registry
 
     # ── Theron ──
-    Variant("theron", "PC Engine", "JP Track 02",     ("TQJP02End.iso",)),
-    Variant("theron", "PC Engine", "US Track 02",     ("TQUS02End.iso",)),
+    # The runtime and source-lock use the complete raw MODE1/2352 Track 02
+    # images.  *End.iso is only a tail extract and must not be counted as the
+    # canonical Track 02 media when the real BIN is present.
+    Variant("theron", "PC Engine", "JP Track 02",     ("TQJP02.bin",)),
+    Variant("theron", "PC Engine", "US Track 02",     ("TQUS02.bin",)),
 )
 
 

@@ -35,6 +35,8 @@ SHA256 checksums for known-good original game data files.
 | dm2-fmtowns-ja | GRAPHICS.DAT | `634e70044d7ee8e845221b444c04061f0d9ff7c1493feb0f0426303f23733624` | 2,783,791 |
 | dm2-fmtowns-ja | DUNGEON.DAT | `d1d608a1d59aaba683a381f52613fa42af5a4be61d287f56fa3a4cdd4d8234b4` | 37,954 |
 | nexus | DM.BIN | `3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124` | 555,144 |
+| theron | TQJP02.bin | `d076b2dd64476256803e84985f10c1b4460364dd064ba351c2b7bc89d70d09fb` | 8,102,640 |
+| theron | TQUS02.bin | `f0474eae8f7c660b94dba7053b2a8e32b7c41330d7e7d3f255b113489731f565` | 8,104,992 |
 
 ### Nexus MENU.BPK retail revisions
 
