@@ -349,6 +349,13 @@ or voice-parameter read. The paired write trace reaches the same authenticated
 mailbox corridor, while event-selector semantics, SAL codec and playback stay
 blocked. This is a negative runtime result, not a decoder admission.
 
+A matching deterministic 300-frame menu witness with the focused sound-RAM
+window `0x40000..0x4ffff` recorded zero sound-CPU reads and zero writes in
+that window. Its raw SHA-256 is the same
+`13a7cd31ad1fe1eaa1368e7b8c4403fe43d8f03a6541f25ac86bc0c44a96b9b3`.
+This rules out menu initialization as evidence for a sample-RAM consumer; a
+gameplay witness is still required.
+
 The producer also records 64 unique VDP2 writer code windows. The primary
 window at `PC=0x06011924` contains the runtime words
 `25fe 0000 25fe 007c ...`, while the initial register setup at

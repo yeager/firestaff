@@ -23,6 +23,8 @@
   witness and a session-bound 200,000-row SCSP-read trace.
 - 🔒 The reads cover only `0x100420`/`0x100408`; no SAL window or voice
   parameter was observed, so SLEV/SAL playback remains blocked.
+- ✅ A deterministic menu witness with the focused `0x40000..0x4ffff`
+  sound-RAM filter recorded no reads or writes in that window.
 
 # Nexus: SCSP-read capture handoff (2026-08-11)
 

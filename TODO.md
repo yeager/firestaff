@@ -5,6 +5,8 @@
 - 🔒 The session-bound 300-frame read capture saw only SCSP mailbox/status
   reads. Extend the authenticated gameplay window or filter the sound-CPU
   reader corridor until a SAL window and voice-parameter consumer are observed.
+- 🔒 A matching menu capture saw no `0x40000..0x4ffff` sound-RAM reads or
+  writes; it does not satisfy the gameplay-consumer requirement.
 
 ## Nexus: authenticate SCSP reads against SAL/SDDRVS (2026-08-11)
 
