@@ -84,7 +84,9 @@ also be present. The classifier reports these directory-slot offsets and the
 It deliberately leaves the original-versus-cracked and protection fields
 unknown for this route. `CSBGAME`'s documented protection offset is relative
 to the executable payload, not to its root-directory entry; adding it to a
-directory offset would fabricate a result. FAT-chain extraction, file hashes,
+directory offset would fabricate a result. On this corpus the offset is beyond
+the compressed `CSBGAME` file length, so correct classification also needs
+bounded FAT-chain extraction and LZEXE expansion. Those steps, file hashes,
 the PC-98 three-light-level presentation, native input, and a runtime launch
 remain separate proof gates. The receipt test accepts a supplied HDM path or
 standard input, so an archive member can be checked without leaving extracted

@@ -97,9 +97,10 @@ extern "C" {
 #define FIRESTAFF_PC98_DM1_FIRES_CRACK_OFFSET_2 0x263A3u
 #define FIRESTAFF_PC98_DM1_FIRES_CRACK_OFFSET_3 0x263BDu
 
-/* CSB PC-9801 protection markers, used for the CSBGAME.EXE
- * utility-disk boundary (kept out of the DM1 v2.0a/2.0b
- * classifier, but exposed for symmetry). */
+/* CSB PC-9801 protection marker in the LZEXE-expanded CSBGAME program.
+ * It must never be applied to a FAT directory entry or compressed file
+ * byte offset; those extraction stages are deliberately outside this
+ * bounded classifier. */
 #define FIRESTAFF_PC98_CSB_CSBGAME_PROTECT_OFFSET 0x21989u
 
 typedef enum {
