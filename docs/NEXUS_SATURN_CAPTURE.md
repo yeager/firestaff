@@ -401,6 +401,10 @@ Körningarna finns endast på extern disk:
 `run-codex-scu-dma-source12-20260811/` (filtrerad, tom trace) och
 `run-codex-scu-dma-all-source14-20260811/` (ofilterad trace).
 
+Firestaffs transporttest `test_nexus_v1_saturn_runtime_capture` accepterar
+även det generiska `MDFN_SS_SATURN_RUNTIME_CAPTURE_V1`-formatet och verifierar
+big-endian VDP1/VDP2-ord samt att semantic admission förblir spärrad.
+
 Verifiera sedan samma session, inte en annan frame eller en annan disc:
 
 ```sh
