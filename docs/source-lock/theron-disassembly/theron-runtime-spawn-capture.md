@@ -1,5 +1,22 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-11 — corrected capture replay isolates a bank-overlay `$B0E5` hit
+
+The external-disk replay `theron-capture-20260812-state-replay-fixed` used the
+corrected non-invasive Mednafen binary (`1ec797bb7d1aea4d756521686d7b0c36`),
+the authenticated US Track 02 MODE1/2048 payload
+(`ceb02343868f80cec899e9b239aff2da`), the authenticated System Card and the
+existing user-owned SRAM. The video path remained clean and the raw trace was
+kept outside GitHub.
+
+The replay emitted 36 address hits at logical `$B0E5`, but every retained hit
+was the bank overlay with `A=$2C` or `A=$85`; there were zero valid category
+`A=0..3` entries, zero `$4644` preconsumer edges, zero `$4667` helper edges and
+zero target/creature joins. The replay also stopped after 12 of its 15 scripted
+input events, so its transport receipt is incomplete. This is explicit
+negative evidence, not a spawn or RNG result; no AI, combat, loot, generator,
+T700 or T900 semantics are promoted.
+
 ## 2026-08-11 — non-invasive capture build preserves correct video and transport
 
 The external-disk replay `theron-capture-20260811-fixed-hooks` used the
