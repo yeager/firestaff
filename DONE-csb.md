@@ -4,6 +4,16 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## Chaos Strikes Back (CSB)
 
+- ✅ 2026-08-11 CSB FM Towns real user-save corpus boundary: added the opt-in
+  `csb_v1_fmtowns_user_save_corpus` CTest. With separately supplied licensed
+  F31 media and external candidate files, it proves the English `CSBGAME.DAT`
+  remains fail-closed when its authenticated two-map F7063 dungeon tail cannot
+  contain its saved map-4 `(22,18)` pose. The language-private Japanese
+  `CSBGAME-JP.DAT` instead opens through the native F0435 reader and
+  materializes its verified map-0 `(13,13)` state. Both checks retain the
+  source file's original FNV-1a hash and size. The test contributes no game
+  data to the repository and does not permit cross-language fallback.
+
 - ✅ 2026-08-11 CSB FM Towns native CLI launch regression: added the opt-in
   `csb_v1_fmtowns_native_cli_boot` CTest. With explicitly supplied licensed
   F31 media (`FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR`), it proves the direct

@@ -258,12 +258,18 @@ populated dungeon states.
 - **FM-TOWNS-SAVE-001 — arbitrary user-save compatibility remains open.** The
   external `fmtowns-save-corpus/CSBGAME.DAT` and `CSBGAME-JP.DAT` files are
   retained as unclassified candidates. Both pass the C5 header and five
-  F7057-part checks and their appended tails parse as two-map Prison dungeon
-  streams, but the saved global pose is not consistent with those tails: the
-  English candidate declares map 4 at (22,18), outside its two maps, while the
-  Japanese candidate uses a different party envelope and is not interchangeable
-  with the English handoff. The reader therefore rejects them before a
-  complete native F0435 state receipt is produced. The direct M11 F0433 path
+  F7057-part checks, and F0434 consumes their appended F7063 streams from the
+  same save-file handle (not from CDATA/CJDATA). Those tails parse as two-map
+  Prison dungeons, but the saved global pose is not consistent with the
+  authenticated tail: the English candidate declares map 4 at (22,18),
+  outside its two maps. It remains fail-closed before a complete native F0435
+  state receipt is produced. CSBGAME-JP.DAT is instead a valid F31J save: its
+  language-private header, party envelope and 6,540-byte F7063 tail produce
+  map 0 at (13,13) and are not interchangeable with F31E. The opt-in
+  csb_v1_fmtowns_user_save_corpus regression supplies the licensed media plus
+  those external candidate files, proves that F31E stays rejected, F31J
+  materializes its authenticated state, and neither source file changes. The
+  direct M11 F0433 path
   can update an already-admitted canonical `CSBGAME.DAT` slot and can make a
   new canonical slot from the selected, hash-verified `MINI.DAT` bootstrap
   through the recovered F7052 key/header sequence. The first-save transaction

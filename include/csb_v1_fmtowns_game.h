@@ -185,8 +185,10 @@ typedef struct CSB_V1_FmtownsStartupState {
 
 /* A user-created FM Towns CSBGAME.DAT is deliberately distinct from the
  * CD's MINI.DAT bootstrap image.  F0435 reads the five obfuscated parts and
- * four portrait rasters from the save disk, then opens CDATA/CJDATA's
- * DUNGEON.DAT; it never treats a user save as a self-contained dungeon. */
+ * four portrait rasters from the save disk, then F0434 continues on that
+ * same save-file handle with the F7063 checksummed dungeon stream.  It is
+ * therefore a self-contained original dungeon state, not a CDATA/CJDATA
+ * DUNGEON.DAT substitute. */
 typedef struct CSB_V1_FmtownsUserSaveReceipt {
     int valid;
     CSB_V1_FmtownsSwitchLanguage language;
