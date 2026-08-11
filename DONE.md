@@ -13378,6 +13378,16 @@ and production source-combat tests.
 - ✅ En ny 200-frames capture med autentiserad J-BIOS, merged English-disc och
   bounded `START+A`-fönster valideras på extern disk; 156 frames har aktiv
   VDP1-state.
+
+# Nexus: consume Mednafen VDP1 state and bus order (2026-08-11)
+
+- ✅ Mednafen-kandidatens generiska capture utökad med VDP1 state-rad och
+  Firestaffs transportreceipt med explicit big-endian VDP1-ordning.
+- ✅ VDP1 replay normaliserar endast en temporär kopia; rå capture förblir
+  byteexakt. Python-validatorn accepterar den nya raden och 120-frame-
+  capturen med 76 aktiva observationer passerar.
+- 🔒 Command-sequence och VDP2 tilemap är återspelningsbara capture-lanes,
+  men asset-/textägare och produktionskomposition är fortfarande spärrade.
 - ✅ Samma körning har separata main-SH-2- och SCSP-traces med sessionen
   `startup-menu-20260811d`; SLEV/SAL/SDDRVS-runtimejoin-testet passerar.
 - 🔒 Källbindningen är negativ: VDP1 mode-5-spannet matchar inget verifierat

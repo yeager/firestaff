@@ -692,6 +692,23 @@ is carried into the sequence compositor and every command must match it.
 This proves command-list framing and display-origin state only; mesh camera
 transform, face selection and culling remain blocked.
 
+## Mednafen generic VDP1 state and bus-order handoff
+
+The generic Mednafen candidate now emits an optional `state=` line after
+`VDP1_RAW`. It records TVMR/FBCR/PTMR/EDSR, LOPR/COPR, return address,
+framebuffer selector and system-clip bounds. The VDP1 payload remains
+big-endian Saturn bus words. Firestaff records that order in the transport
+receipt and swaps only a temporary replay copy before feeding the existing
+little-endian VDP1 command parser; the raw artifact is never rewritten.
+
+The external candidate run
+`/Volumes/Extern-disk/nexus-saturn-capture/run-mednafen-generic-state-20260811i/runtime-vdp12.raw`
+contains 120 frames and 76 non-idle VDP1 observations. The transport
+validator, VDP1 command-sequence probe and VDP2 tilemap capture-only probe
+pass against it. This proves a replayable VDP1 command-state corridor, not
+yet a MENU.BPK/FONT256, HUD or DGN scene owner; semantic admission remains
+blocked.
+
 | Route | Magic | Evidence still required |
 |---|---|---|
 | PRS3/menu replay | `NXSPRS3M` | source stream, SH-2 execution trace, PALT/VDP1 consumer and frame identity |

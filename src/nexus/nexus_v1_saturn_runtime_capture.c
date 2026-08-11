@@ -191,6 +191,21 @@ int nexus_v1_saturn_runtime_capture_frame(
                           NEXUS_V1_SATURN_VDP1_RAW_MAGIC_MDFN,
                           vdp1_magic_mednafen) == 0) {
             offset += vdp1_magic_mednafen;
+            /* The generic Mednafen producer may include the VDP1 execution
+             * registers after its marker. Older candidate captures omitted
+             * this line, so keep it optional for transport compatibility. */
+            if (find_newline(capture_bytes, capture_byte_count, offset,
+                             &line_end) &&
+                line_end > offset &&
+                memcmp(capture_bytes + offset, "state=", 6U) == 0) {
+                state_present = parse_state(capture_bytes + offset,
+                                            line_end - offset, &receipt);
+                if (!state_present) {
+                    *out_receipt = receipt;
+                    return 0;
+                }
+                offset = line_end + 1U;
+            }
         } else {
             *out_receipt = receipt;
             return 0;
@@ -256,6 +271,9 @@ int nexus_v1_saturn_runtime_capture_frame(
             receipt.vdp2_register_size = NEXUS_V1_SATURN_VDP2_REG_BYTES;
             receipt.vdp1_payload_nonzero = payload_nonzero(
                 vdp1_payload, NEXUS_V1_SATURN_VDP1_PAYLOAD_BYTES);
+            receipt.vdp1_word_order = mednafen_magic_present
+                ? NEXUS_V1_SATURN_VDP1_WORD_ORDER_BIG
+                : NEXUS_V1_SATURN_VDP1_WORD_ORDER_LITTLE;
             receipt.vdp1_execution_active = state_present &&
                 receipt.ptmr != 0U && receipt.edsr != 0U &&
                 receipt.vdp1_payload_nonzero;

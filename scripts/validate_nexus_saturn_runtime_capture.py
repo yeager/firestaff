@@ -67,6 +67,14 @@ def validate(blob: bytes, required_frames: int) -> tuple[int, list[int]]:
             offset += len(VDP1_MAGIC)
         else:
             offset += len(VDP1_MAGIC_MDFN)
+            if blob.startswith(b"state=", offset):
+                state_end = blob.find(b"\n", offset)
+                if state_end < 0 or not VDP1_STATE_RE.fullmatch(
+                        blob[offset:state_end]):
+                    raise ValueError(
+                        f"malformed Mednafen VDP1 state line for frame "
+                        f"{len(frames) - 1}")
+                offset = state_end + 1
         offset += VDP1_PAYLOAD_BYTES
         # Early V2 captures appended the draw-buffer selector after the fixed
         # VDP1 payload. It is redundant metadata, not part of the VDP1 image.
@@ -95,9 +103,12 @@ def validate_vdp1_activity(blob: bytes, frame_offsets: list[int]) -> int:
     active_frames = 0
     for frame_index, frame_offset in enumerate(frame_offsets):
         offset = frame_offset + len(f"frame={frame_index}\n".encode("ascii"))
-        if not blob.startswith(VDP1_MAGIC_V2, offset):
-            raise ValueError("VDP1 activity requires the V2 state marker")
-        offset += len(VDP1_MAGIC_V2)
+        if blob.startswith(VDP1_MAGIC_V2, offset):
+            offset += len(VDP1_MAGIC_V2)
+        elif blob.startswith(VDP1_MAGIC_MDFN, offset):
+            offset += len(VDP1_MAGIC_MDFN)
+        else:
+            raise ValueError("VDP1 activity requires a state-bearing marker")
         state_end = blob.find(b"\n", offset)
         if state_end < 0:
             raise ValueError("missing VDP1 V2 state line")

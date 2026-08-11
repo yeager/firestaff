@@ -8,6 +8,37 @@ static uint16_t read_le16(const uint8_t *p)
     return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
 }
 
+/* Mednafen's generic Saturn capture deliberately preserves the Saturn bus
+ * representation (big-endian uint16 values).  Firestaff's VDP1 command
+ * parser operates on its historical little-endian VRAM image.  Normalize
+ * only the temporary replay view; the attested raw capture and its receipt
+ * remain byte-for-byte untouched. */
+static uint8_t *vdp1_replay_words(
+    const Nexus_V1_SaturnRuntimeCaptureFrameReceipt *frame,
+    int *out_owned)
+{
+    uint8_t *copy;
+    size_t i;
+
+    if (out_owned) *out_owned = 0;
+    if (!frame || !frame->vdp1_vram ||
+        frame->vdp1_vram_size != NEXUS_V1_SATURN_VDP1_VRAM_BYTES) {
+        return NULL;
+    }
+    if (frame->vdp1_word_order !=
+            NEXUS_V1_SATURN_VDP1_WORD_ORDER_BIG) {
+        return (uint8_t *)(uintptr_t)frame->vdp1_vram;
+    }
+    copy = (uint8_t *)malloc(frame->vdp1_vram_size);
+    if (!copy) return NULL;
+    for (i = 0U; i < frame->vdp1_vram_size; i += 2U) {
+        copy[i] = frame->vdp1_vram[i + 1U];
+        copy[i + 1U] = frame->vdp1_vram[i];
+    }
+    if (out_owned) *out_owned = 1;
+    return copy;
+}
+
 static int bytes_all_zero(const uint8_t *bytes, int size)
 {
     int i;
@@ -728,6 +759,8 @@ int nexus_v1_vdp1_capture_replay_runtime_frame(
     Nexus_V1_SaturnRuntimeCaptureFrameReceipt frame;
     Nexus_V1_Vdp1CaptureVramSequenceReceipt replay;
     Nexus_V1_Vdp1CaptureVramSequenceInput input;
+    uint8_t *replay_vram;
+    int replay_vram_owned;
 
     memset(&frame, 0, sizeof(frame));
     memset(&replay, 0, sizeof(replay));
@@ -740,8 +773,13 @@ int nexus_v1_vdp1_capture_replay_runtime_frame(
         if (out_frame_receipt) *out_frame_receipt = frame;
         return 0;
     }
+    replay_vram = vdp1_replay_words(&frame, &replay_vram_owned);
+    if (!replay_vram) {
+        if (out_frame_receipt) *out_frame_receipt = frame;
+        return 0;
+    }
     memset(&input, 0, sizeof(input));
-    input.vdp1_vram = frame.vdp1_vram;
+    input.vdp1_vram = replay_vram;
     input.vdp1_vram_size = (int)frame.vdp1_vram_size;
     input.copr_word = frame.copr_word;
     input.system_clip_state_present = frame.vdp1_system_clip_state_present;
@@ -754,8 +792,10 @@ int nexus_v1_vdp1_capture_replay_runtime_frame(
             framebuffer, &input, &replay)) {
         if (out_frame_receipt) *out_frame_receipt = frame;
         if (out_replay_receipt) *out_replay_receipt = replay;
+        if (replay_vram_owned) free(replay_vram);
         return 0;
     }
+    if (replay_vram_owned) free(replay_vram);
     if (out_frame_receipt) *out_frame_receipt = frame;
     if (out_replay_receipt) *out_replay_receipt = replay;
     return 1;
@@ -773,6 +813,8 @@ int nexus_v1_vdp1_capture_replay_runtime_frame_mode1_sequence(
     Nexus_V1_SaturnRuntimeCaptureFrameReceipt frame;
     Nexus_V1_Vdp1CaptureVramSequenceReceipt replay;
     Nexus_V1_Vdp1CaptureVramSequenceInput input;
+    uint8_t *replay_vram;
+    int replay_vram_owned;
 
     memset(&frame, 0, sizeof(frame));
     memset(&replay, 0, sizeof(replay));
@@ -786,8 +828,13 @@ int nexus_v1_vdp1_capture_replay_runtime_frame_mode1_sequence(
         if (out_frame_receipt) *out_frame_receipt = frame;
         return 0;
     }
+    replay_vram = vdp1_replay_words(&frame, &replay_vram_owned);
+    if (!replay_vram) {
+        if (out_frame_receipt) *out_frame_receipt = frame;
+        return 0;
+    }
     memset(&input, 0, sizeof(input));
-    input.vdp1_vram = frame.vdp1_vram;
+    input.vdp1_vram = replay_vram;
     input.vdp1_vram_size = (int)frame.vdp1_vram_size;
     input.copr_word = frame.copr_word;
     input.system_clip_state_present = frame.vdp1_system_clip_state_present;
@@ -801,8 +848,10 @@ int nexus_v1_vdp1_capture_replay_runtime_frame_mode1_sequence(
             framebuffer, &input, &replay)) {
         if (out_frame_receipt) *out_frame_receipt = frame;
         if (out_replay_receipt) *out_replay_receipt = replay;
+        if (replay_vram_owned) free(replay_vram);
         return 0;
     }
+    if (replay_vram_owned) free(replay_vram);
     if (out_frame_receipt) *out_frame_receipt = frame;
     if (out_replay_receipt) *out_replay_receipt = replay;
     return 1;
@@ -821,6 +870,8 @@ int nexus_v1_vdp1_capture_decode_direct_color_runtime_frame(
     Nexus_V1_Vdp1DirectColorCaptureReceipt direct;
     Nexus_V1_Vdp1CommandSequenceInput sequence_input;
     Nexus_V1_Vdp1CaptureCompositeInput input;
+    uint8_t *replay_vram;
+    int replay_vram_owned;
     int i;
 
     memset(&frame, 0, sizeof(frame));
@@ -839,8 +890,13 @@ int nexus_v1_vdp1_capture_decode_direct_color_runtime_frame(
         if (out_frame_receipt) *out_frame_receipt = frame;
         return 0;
     }
+    replay_vram = vdp1_replay_words(&frame, &replay_vram_owned);
+    if (!replay_vram) {
+        if (out_frame_receipt) *out_frame_receipt = frame;
+        return 0;
+    }
     memset(&sequence_input, 0, sizeof(sequence_input));
-    sequence_input.vdp1_vram = frame.vdp1_vram;
+    sequence_input.vdp1_vram = replay_vram;
     sequence_input.vdp1_vram_size = (int)frame.vdp1_vram_size;
     sequence_input.copr_word = frame.copr_word;
     sequence_input.system_clip_state_present =
@@ -852,6 +908,7 @@ int nexus_v1_vdp1_capture_decode_direct_color_runtime_frame(
         !sequence.display_origin_verified || sequence.draw_count <= 0) {
         if (out_frame_receipt) *out_frame_receipt = frame;
         if (out_sequence_receipt) *out_sequence_receipt = sequence;
+        if (replay_vram_owned) free(replay_vram);
         return 0;
     }
     for (i = 0; i < sequence.command_count; ++i) {
@@ -859,13 +916,13 @@ int nexus_v1_vdp1_capture_decode_direct_color_runtime_frame(
         uint32_t offset = sequence.command_byte_offsets[i];
 
         if (nexus_v1_vdp1_texture_command_parse(
-                frame.vdp1_vram + offset,
+                replay_vram + offset,
                 NEXUS_V1_VDP1_COMMAND_BYTES, &command) != 0 ||
             !command.texture_command || command.colour_mode != 5U) continue;
         memset(&input, 0, sizeof(input));
-        input.command = frame.vdp1_vram + offset;
+        input.command = replay_vram + offset;
         input.command_size = NEXUS_V1_VDP1_COMMAND_BYTES;
-        input.texture_span = frame.vdp1_vram +
+        input.texture_span = replay_vram +
             command.texture_source_byte_offset;
         input.texture_span_size = (int)command.texture_byte_count;
         input.original_saturn_capture_verified = 1;
@@ -881,6 +938,7 @@ int nexus_v1_vdp1_capture_decode_direct_color_runtime_frame(
             if (out_frame_receipt) *out_frame_receipt = frame;
             if (out_sequence_receipt) *out_sequence_receipt = sequence;
             if (out_direct_receipt) *out_direct_receipt = direct;
+            if (replay_vram_owned) free(replay_vram);
             return 1;
         }
         break;
@@ -888,6 +946,7 @@ int nexus_v1_vdp1_capture_decode_direct_color_runtime_frame(
     if (out_frame_receipt) *out_frame_receipt = frame;
     if (out_sequence_receipt) *out_sequence_receipt = sequence;
     if (out_direct_receipt) *out_direct_receipt = direct;
+    if (replay_vram_owned) free(replay_vram);
     return 0;
 }
 
@@ -906,6 +965,8 @@ int nexus_v1_vdp1_capture_replay_runtime_frame_mode1_material(
     Nexus_V1_Vdp1CommandSequenceReceipt sequence;
     Nexus_V1_Vdp1CaptureCompositeReceipt composite;
     Nexus_V1_Vdp1CommandSequenceInput sequence_input;
+    uint8_t *replay_vram;
+    int replay_vram_owned;
     int i;
 
     memset(&frame, 0, sizeof(frame));
@@ -923,8 +984,13 @@ int nexus_v1_vdp1_capture_replay_runtime_frame_mode1_material(
         if (out_frame_receipt) *out_frame_receipt = frame;
         return 0;
     }
+    replay_vram = vdp1_replay_words(&frame, &replay_vram_owned);
+    if (!replay_vram) {
+        if (out_frame_receipt) *out_frame_receipt = frame;
+        return 0;
+    }
     memset(&sequence_input, 0, sizeof(sequence_input));
-    sequence_input.vdp1_vram = frame.vdp1_vram;
+    sequence_input.vdp1_vram = replay_vram;
     sequence_input.vdp1_vram_size = (int)frame.vdp1_vram_size;
     sequence_input.copr_word = frame.copr_word;
     sequence_input.system_clip_state_present =
@@ -936,6 +1002,7 @@ int nexus_v1_vdp1_capture_replay_runtime_frame_mode1_material(
         !sequence.display_origin_verified || sequence.draw_count <= 0) {
         if (out_frame_receipt) *out_frame_receipt = frame;
         if (out_sequence_receipt) *out_sequence_receipt = sequence;
+        if (replay_vram_owned) free(replay_vram);
         return 0;
     }
     for (i = 0; i < sequence.command_count; ++i) {
@@ -943,7 +1010,7 @@ int nexus_v1_vdp1_capture_replay_runtime_frame_mode1_material(
         Nexus_V1_Vdp1CaptureCompositeInput input;
         uint32_t offset = sequence.command_byte_offsets[i];
         uint32_t palette_offset;
-        const uint8_t *command = frame.vdp1_vram + offset;
+        const uint8_t *command = replay_vram + offset;
 
         if (nexus_v1_vdp1_texture_command_parse(
                 command, NEXUS_V1_VDP1_COMMAND_BYTES, &parsed) != 0 ||
@@ -953,15 +1020,15 @@ int nexus_v1_vdp1_capture_replay_runtime_frame_mode1_material(
         palette_offset = (((uint32_t)parsed.colour_control & ~UINT32_C(3)) << 3U);
         if (palette_offset > NEXUS_V1_VDP1_VRAM_BYTES - 32U) continue;
         memset(&input, 0, sizeof(input));
-        if (!resolve_material(frame.vdp1_vram, (int)frame.vdp1_vram_size,
+        if (!resolve_material(replay_vram, (int)frame.vdp1_vram_size,
                               command, NEXUS_V1_VDP1_COMMAND_BYTES, &parsed,
                               offset, &input, resolver_context)) continue;
         input.command = command;
         input.command_size = NEXUS_V1_VDP1_COMMAND_BYTES;
-        input.texture_span = frame.vdp1_vram +
+        input.texture_span = replay_vram +
             parsed.texture_source_byte_offset;
         input.texture_span_size = (int)parsed.texture_byte_count;
-        input.palette_state = frame.vdp1_vram + palette_offset;
+        input.palette_state = replay_vram + palette_offset;
         input.palette_state_size = 32;
         input.original_saturn_capture_verified = 1;
         input.screen_origin_x = sequence.display_origin_x;
@@ -976,10 +1043,12 @@ int nexus_v1_vdp1_capture_replay_runtime_frame_mode1_material(
         if (out_sequence_receipt) *out_sequence_receipt = sequence;
         if (out_composite_receipt) *out_composite_receipt = composite;
         if (out_command_byte_offset) *out_command_byte_offset = offset;
+        if (replay_vram_owned) free(replay_vram);
         return 1;
     }
     if (out_frame_receipt) *out_frame_receipt = frame;
     if (out_sequence_receipt) *out_sequence_receipt = sequence;
     if (out_composite_receipt) *out_composite_receipt = composite;
+    if (replay_vram_owned) free(replay_vram);
     return 0;
 }

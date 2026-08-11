@@ -26,7 +26,9 @@ Each frame record should contain:
 - the visible-frame number and draw-buffer selector.
 
 The current candidate uses explicit big-endian 16-bit serialization to retain
-the Saturn bus representation. Capture is disabled by default and must not
+the Saturn bus representation. Each VDP1 record also carries an optional
+execution-state line with the active registers, command/return addresses,
+framebuffer selector and system-clip bounds. Capture is disabled by default and must not
 alter emulation output, timing, input, save states, or normal logging. The
 format remains a review candidate until Mednafen maintainers choose whether
 the final public interface should be a setting or a debugger command.

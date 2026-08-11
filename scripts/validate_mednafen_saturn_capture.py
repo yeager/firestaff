@@ -41,6 +41,11 @@ def validate(data: bytes, required_frames: int) -> tuple[int, list[tuple[int, in
         if not data.startswith(VDP1, offset):
             raise ValueError(f"missing VDP1 marker for frame {len(frames)}")
         offset += len(VDP1)
+        if data.startswith(b"state=", offset):
+            state_end = data.find(b"\n", offset)
+            if state_end < 0:
+                raise ValueError(f"missing VDP1 state line for frame {len(frames)}")
+            offset = state_end + 1
         if offset + VDP1_BYTES + 1 > len(data):
             raise ValueError(f"truncated VDP1 payload for frame {len(frames)}")
         offset += VDP1_BYTES

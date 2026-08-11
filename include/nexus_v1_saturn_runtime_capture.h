@@ -30,6 +30,12 @@
      NEXUS_V1_SATURN_VDP2_VRAM_BYTES + \
      NEXUS_V1_SATURN_VDP2_REG_BYTES)
 
+typedef enum {
+    NEXUS_V1_SATURN_VDP1_WORD_ORDER_UNKNOWN = 0,
+    NEXUS_V1_SATURN_VDP1_WORD_ORDER_LITTLE = 1,
+    NEXUS_V1_SATURN_VDP1_WORD_ORDER_BIG = 2
+} Nexus_V1_SaturnVdp1WordOrder;
+
 typedef struct {
     int valid;
     int frame_index;
@@ -62,6 +68,7 @@ typedef struct {
     size_t vdp2_cram_size;
     size_t vdp2_vram_size;
     size_t vdp2_register_size;
+    Nexus_V1_SaturnVdp1WordOrder vdp1_word_order;
     int semantic_admission_blocked;
 } Nexus_V1_SaturnRuntimeCaptureFrameReceipt;
 

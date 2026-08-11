@@ -126,10 +126,14 @@ int main(void)
     free(blob);
 
     {
+        const char *generic_state =
+            "state=tvmr:0,fbcr:2,ptmr:2,edsr:3,lopr:dd0,copr:dd4,"
+            "ret:ffffffff,fb:1,sysclipx:13f,sysclipy:df\n";
         const size_t generic_size =
             (sizeof(NEXUS_V1_SATURN_MDFN_RUNTIME_CAPTURE_MAGIC) - 1U) +
             strlen("frame=0\n") +
             (sizeof(NEXUS_V1_SATURN_VDP1_RAW_MAGIC_MDFN) - 1U) +
+            strlen(generic_state) +
             NEXUS_V1_SATURN_VDP1_PAYLOAD_BYTES +
             (sizeof(NEXUS_V1_SATURN_VDP2_RAW_MAGIC) - 1U) +
             NEXUS_V1_SATURN_VDP2_PAYLOAD_BYTES;
@@ -145,6 +149,8 @@ int main(void)
         generic_offset = append_bytes(
             generic, generic_offset, NEXUS_V1_SATURN_VDP1_RAW_MAGIC_MDFN,
             sizeof(NEXUS_V1_SATURN_VDP1_RAW_MAGIC_MDFN) - 1U);
+        generic_offset = append_bytes(generic, generic_offset,
+                                      generic_state, strlen(generic_state));
         generic[generic_offset] = 0x5aU;
         generic_offset += NEXUS_V1_SATURN_VDP1_PAYLOAD_BYTES;
         generic_offset = append_bytes(
@@ -154,7 +160,10 @@ int main(void)
         if (generic_offset != generic_size ||
             !nexus_v1_saturn_runtime_capture_frame(
                 generic, generic_size, 0U, &receipt) || !receipt.valid ||
-            receipt.vdp1_state_present || !receipt.vdp1_vram ||
+            !receipt.vdp1_state_present || !receipt.vdp1_state_valid ||
+            receipt.copr_word != 0xdd4U ||
+            receipt.vdp1_word_order !=
+                NEXUS_V1_SATURN_VDP1_WORD_ORDER_BIG || !receipt.vdp1_vram ||
             receipt.vdp1_draw_which || !receipt.semantic_admission_blocked) {
             free(generic);
             fprintf(stderr, "FAIL: generic Mednafen raw frame parser\n");

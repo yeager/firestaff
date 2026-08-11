@@ -71,7 +71,14 @@ def frame_regions(blob: bytes, required_frames: int) -> tuple[list[dict[str, byt
             offset += len(VDP1_MAGIC)
         else:
             offset += len(VDP1_MAGIC_MDFN)
-            states.append("state=legacy-v1-unavailable")
+            if blob.startswith(b"state=", offset):
+                state_end = blob.find(b"\n", offset)
+                if state_end < 0:
+                    raise ValueError(f"missing VDP1 state line for frame {frame_index}")
+                states.append(blob[offset:state_end].decode("ascii"))
+                offset = state_end + 1
+            else:
+                states.append("state=legacy-v1-unavailable")
         vdp1 = blob[offset : offset + VDP1_PAYLOAD_BYTES]
         offset += VDP1_PAYLOAD_BYTES
         # Early V2 captures appended the draw-buffer selector once after the
