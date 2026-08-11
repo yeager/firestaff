@@ -1,5 +1,14 @@
 # Firestaff TODO - Open Work
 
+# Nexus: bind verified SH-2 transform to an authenticated Saturn consumer (2026-08-11)
+
+- ✅ The captured `0x060135f8`/`0x060136c4` 8×48 transform is now isolated in
+  `nexus_v1_saturn_tile_transform.c` with strict bounds and a deterministic
+  test.
+- 🔒 It is not yet bound to the captured PRS3 source, CLUT owner, VDP1 command
+  list, VDP2 tilemap, startup menu, HUD or viewport. Do not present it as a
+  complete Nexus renderer or Mednafen PR.
+
 # Theron: authenticated SDL2 SRAM replay reaches transport, not spawn semantics (2026-08-11)
 
 - ✅ An external-disk replay with a directly linked SDL2 2.30.9 runtime,

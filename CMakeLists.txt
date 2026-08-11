@@ -31,6 +31,20 @@ target_include_directories(test_nexus_v1_champion_plrd PRIVATE
 target_link_libraries(test_nexus_v1_champion_plrd PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_champion_plrd COMMAND test_nexus_v1_champion_plrd)
 
+add_executable(test_nexus_v1_saturn_tile_transform
+    tests/test_nexus_v1_saturn_tile_transform.c
+    src/nexus/nexus_v1_saturn_tile_transform.c)
+target_include_directories(test_nexus_v1_saturn_tile_transform PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(test_nexus_v1_saturn_tile_transform PRIVATE
+        -Wall -Wextra -Werror -pedantic)
+endif()
+add_test(NAME nexus_v1_saturn_tile_transform
+         COMMAND test_nexus_v1_saturn_tile_transform)
+set_tests_properties(nexus_v1_saturn_tile_transform PROPERTIES
+    LABELS "nexus;saturn;transform;capture-aligned")
+
 add_executable(test_nexus_v1_sound_gameplay
     tests/test_nexus_v1_sound_gameplay.c)
 target_include_directories(test_nexus_v1_sound_gameplay PRIVATE

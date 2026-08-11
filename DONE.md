@@ -13840,3 +13840,13 @@ and production source-combat tests.
 - ✅ A complete external receipt passes; an incomplete capture is rejected.
 - 🔒 This remains transport evidence only. No sound ID, decoded sample,
   channel start or gameplay event owner is inferred.
+# Nexus: source-aligned SH-2 tile transform (2026-08-11)
+
+- ✅ Added `nexus_v1_saturn_expand_tile_8x48`, mirroring the externally
+  captured SH-2 source addressing, selector/table lookup, nibble mask and
+  coefficient MACL shift.
+- ✅ Added a strict warning-clean CMake target and deterministic bounds/mask
+  regression test. `firestaff_nexus` and `ctest -R
+  nexus_v1_saturn_tile_transform` pass.
+- 🔒 This is transform provenance only; no CLUT, VDP1/VDP2, menu, HUD or
+  viewport ownership was inferred.

@@ -420,5 +420,22 @@ Först efter punkt 6 får en VDP2-konsument använda capture-slicen. Saknas någ
 punkt förblir `semantic_admission=blocked`; då är resultatet ett provenance-
 bevis, inte en autentisk meny-, HUD- eller viewport-rendering.
 
+## Verifierad SH-2-transform i Firestaff
+
+Den observerade innerloopen är nu reproducerad som den fristående funktionen
+`nexus_v1_saturn_expand_tile_8x48`. Den följer den externa Mednafen-capturen:
+
+- `0x060132e0` använder indata-steg `0x80` och utdata-steg `0x1c0`.
+- `0x060135f8` väljer åtta rader och startar koefficienterna från runtime-
+  literalpoolen vid `0x0601364c`/`0x06013650`.
+- `0x060136c4` väljer tabellparet från byte 4, läser nibble/pixel-data från
+  `+16 + pixel*4 + (row>>1)`, maskerar med `0xf000` och matar MACL-resultatet
+  genom `>>8` och `exts.w`.
+
+Implementeringen finns i `src/nexus/nexus_v1_saturn_tile_transform.c` och
+testas av `nexus_v1_saturn_tile_transform`. Den är medvetet inte kopplad till
+en meny, HUD, viewport, CLUT eller VDP1-command-lista. Därför är detta ett
+verifierat transformsteg och inte ännu ett färdigt Mednafen-PR för Nexus.
+
 BIOS, disc-images, råcaptures och temporära Mednafen-buildträd ska ligga på
 extern disk och får inte commitas.
