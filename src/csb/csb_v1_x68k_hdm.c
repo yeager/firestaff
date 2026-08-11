@@ -145,3 +145,36 @@ int csb_v1_x68k_hdm_extract_root_file(const uint8_t *hdm, size_t hdm_size,
     *out_size = file_size;
     return csb_v1_x68k_hdm_probe(hdm, hdm_size, out_receipt);
 }
+
+int csb_v1_x68k_hdm_root_entry(const uint8_t *hdm, size_t hdm_size,
+                               uint16_t entry_index,
+                               CSB_V1_X68kHdmRootEntry *out_entry) {
+    size_t fat_offset, root_offset, data_offset, i;
+    uint16_t found = 0u;
+    if (!out_entry || !layout(hdm, hdm_size, &fat_offset, &root_offset,
+                              &data_offset)) return 0;
+    (void)fat_offset; (void)data_offset;
+    memset(out_entry, 0, sizeof(*out_entry));
+    for (i = 0u; i < X68K_ROOT_ENTRIES; ++i) {
+        const uint8_t *entry = hdm + root_offset + i * 32u;
+        size_t base = 8u, ext = 3u;
+        if (entry[0] == 0x00u) break;
+        if (entry[0] == 0xe5u || (entry[11] & 0x18u) != 0u) continue;
+        if (found++ != entry_index) continue;
+        while (base && entry[base - 1u] == ' ') --base;
+        while (ext && entry[8u + ext - 1u] == ' ') --ext;
+        if (!base) return 0;
+        memcpy(out_entry->name, entry, base);
+        if (ext) {
+            out_entry->name[base++] = '.';
+            memcpy(out_entry->name + base, entry + 8u, ext);
+            base += ext;
+        }
+        out_entry->name[base] = '\0';
+        out_entry->attributes = entry[11];
+        out_entry->first_cluster = le16(entry + 26u);
+        out_entry->byte_count = le32(entry + 28u);
+        return 1;
+    }
+    return 0;
+}

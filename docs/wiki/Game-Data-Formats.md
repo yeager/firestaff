@@ -37,7 +37,10 @@ while source-faithful F0433 writing remains closed. Legacy CSBWin
 csbgame*.dat files are fully authenticated into private candidates, but their
 dungeon state is not yet atomically published into a live session.
 
-The X68000 reader establishes a structural media boundary only. It neither
+The X68000 reader establishes a structural media boundary only. Its FAT12 root
+enumerator preserves the original non-directory order and has verified the
+27-file CSB v3.1 JP startup set, including `CHAOS_ST.X`, `TITL.DAT`,
+`ANIM.DAT`, `ANIM.FTL`, `MINI.DAT` and `ENTER.SNG`. It neither
 classifies the cracked HDM as canonical nor enables an X68000 boot profile;
 see [preservation status](../PRESERVATION_STATUS_2026-08-11.md).
 

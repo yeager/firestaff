@@ -25,6 +25,13 @@ typedef struct {
     uint32_t data_offset;
 } CSB_V1_X68kHdmReceipt;
 
+typedef struct {
+    char name[13];
+    uint8_t attributes;
+    uint16_t first_cluster;
+    uint32_t byte_count;
+} CSB_V1_X68kHdmRootEntry;
+
 /* Validate the fixed 2DHD Human68k layout without allocating or mutating
  * input. A successful result only establishes a structurally readable HDM;
  * it is not an authenticity claim. */
@@ -39,5 +46,12 @@ int csb_v1_x68k_hdm_extract_root_file(const uint8_t *hdm, size_t hdm_size,
                                       const char *name, uint8_t *out_bytes,
                                       size_t out_capacity, size_t *out_size,
                                       CSB_V1_X68kHdmReceipt *out_receipt);
+
+/* Return the zero-based non-directory root entry. The directory order is
+ * preserved because Human68k startup scripts name files directly from this
+ * root. Metadata is copied only; game bytes remain in the caller's HDM. */
+int csb_v1_x68k_hdm_root_entry(const uint8_t *hdm, size_t hdm_size,
+                               uint16_t entry_index,
+                               CSB_V1_X68kHdmRootEntry *out_entry);
 
 #endif /* FIRESTAFF_CSB_V1_X68K_HDM_H */

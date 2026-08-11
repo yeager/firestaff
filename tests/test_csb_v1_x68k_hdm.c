@@ -30,6 +30,7 @@ int main(int argc, char **argv) {
     unsigned char *image = calloc(1u, bytes), out[3] = {0};
     size_t size = 0u;
     CSB_V1_X68kHdmReceipt receipt;
+    CSB_V1_X68kHdmRootEntry entry;
     if (!image) return 1;
     image[0] = 0x60; image[1] = 0x1c;
     memcpy(image + 2, "Hudson soft 2.00", 16u);
@@ -41,6 +42,9 @@ int main(int argc, char **argv) {
                                             sizeof(out), &size, &receipt) ||
         size != 3u || memcmp(out, "OK!", 3u) != 0 || receipt.root_file_count != 1u ||
         receipt.data_offset != data ||
+        !csb_v1_x68k_hdm_root_entry(image, bytes, 0u, &entry) ||
+        strcmp(entry.name, "SAMPLE.DAT") != 0 || entry.byte_count != 3u ||
+        csb_v1_x68k_hdm_root_entry(image, bytes, 1u, &entry) ||
         csb_v1_x68k_hdm_extract_root_file(image, bytes, "missing.dat", out,
                                            sizeof(out), &size, NULL)) {
         free(image); return 1;
@@ -61,6 +65,8 @@ int main(int argc, char **argv) {
         if (!read_file(argv[1], &real, &real_size) ||
             !csb_v1_x68k_hdm_probe(real, real_size, &receipt) ||
             receipt.root_file_count < 20u ||
+            !csb_v1_x68k_hdm_root_entry(real, real_size, 4u, &entry) ||
+            strcmp(entry.name, "CHAOS_ST.X") != 0 || entry.byte_count != 12284u ||
             !csb_v1_x68k_hdm_extract_root_file(real, real_size, "GRAPHICS.DAT", NULL,
                                                 0u, &graphics_size, NULL) ||
             graphics_size != 0x5b34fu || !(graphics = malloc(graphics_size)) ||

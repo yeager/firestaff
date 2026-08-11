@@ -38,6 +38,13 @@ Kvittot behåller X68000-identiteten även när grafikformatet delas med Amiga,
 och spärrar fortfarande native start. Detta är en verifierad
 media-till-källindata-handoff, inte en start- eller emuleringsrutt.
 
+Rootkatalogen är nu också läsbar i originalordning. Den verifierade avbilden
+har 27 vanliga rootfiler, där `CHAOS_ST.X`, `TITL.DAT`, `ANIM.DAT`,
+`ANIM.FTL`, `MINI.DAT` och `ENTER.SNG` finns tillsammans med grafik och
+dungeon. Det ger den faktiska filuppsättning som den kommande
+X68000-startvägen måste konsumera, men ersätter inte disassembly av
+`CHAOS_ST.X` eller dess plattformsspecifika startordning.
+
 Fördjupning: [bevarandeprinciper](wiki/Preservation.md),
 [formatkatalog](GAME_DATA_FORMATS.md), [CSB-referens](REDMCSB_REFERENCE.md)
 och [gapplista](FIRESTAFF_GAP_LIST.md).
