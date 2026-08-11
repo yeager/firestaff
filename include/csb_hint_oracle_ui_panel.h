@@ -183,6 +183,17 @@ int csb_hint_oracle_ui_panel_load(CSB_HintOracleUIPanel *panel,
                                   const char *cache_dir,
                                   int max_depth);
 
+/* Load one explicit source-cited Hint Oracle variant.  See
+ * csb_hint_oracle_htc_real_scan_and_load_md5() for the MD5 admission rule.
+ * The ordinary load() remains deterministic legacy behaviour (the first
+ * available known variant); new UI callers should pass the variant MD5 that
+ * belongs to their selected Utility Disk. */
+int csb_hint_oracle_ui_panel_load_md5(CSB_HintOracleUIPanel *panel,
+                                      const char *data_dir,
+                                      const char *cache_dir,
+                                      int max_depth,
+                                      const char *expected_md5);
+
 /* Return the current status. */
 CSB_HintOracleUIPanel_Status
 csb_hint_oracle_ui_panel_status(const CSB_HintOracleUIPanel *panel);

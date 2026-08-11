@@ -350,6 +350,39 @@ int main(int argc, char **argv)
         csb_hint_oracle_htc_real_cache_free(&cache3);
     }
 
+    /* Variant receipts: a multi-edition library may contain several valid
+     * Utility Disks. Each registered MD5 must select only that exact source
+     * artifact; absent variants are an expected SKIP on smaller corpora. */
+    {
+        size_t loaded_variants = 0u;
+        for (i = 0u; i < known_count; ++i) {
+            CSB_HintOracleHTC_RealCache variant_cache;
+            csb_hint_oracle_htc_real_cache_init(&variant_cache);
+            rc2 = csb_hint_oracle_htc_real_scan_and_load_md5(
+                dir, NULL, 6, known[i].md5, &variant_cache);
+            if (rc2 == CSB_HINT_ORACLE_HTC_REAL_ERR_NOT_FOUND) {
+                printf("SKIP: selected variant %s is absent\n", known[i].label);
+            } else {
+                CHECK(rc2 == CSB_HINT_ORACLE_HTC_REAL_OK,
+                      "selected known HTC variant loads or cleanly skips");
+                if (rc2 == CSB_HINT_ORACLE_HTC_REAL_OK) {
+                    ++loaded_variants;
+                    CHECK(strcmp(variant_cache.matched_md5, known[i].md5) == 0,
+                          "selected variant never falls back to another HTC");
+                    CHECK(variant_cache.file_size == known[i].size_bytes,
+                          "selected variant preserves its registered size");
+                    printf("variant[%zu]=%s md5=%s hints=%zu pages=%zu\n",
+                           i, known[i].label, variant_cache.matched_md5,
+                           variant_cache.htc.hint_count,
+                           variant_cache.htc.page_count);
+                }
+            }
+            csb_hint_oracle_htc_real_cache_free(&variant_cache);
+        }
+        CHECK(loaded_variants >= 1u,
+              "at least one explicitly selected real HTC variant loads");
+    }
+
     csb_hint_oracle_htc_real_cache_free(&cache);
 
     (void)scratch_buf;

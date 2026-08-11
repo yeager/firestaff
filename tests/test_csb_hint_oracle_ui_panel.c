@@ -591,6 +591,28 @@ static int test_free_then_init_round_trip(void)
     return 1;
 }
 
+/* Explicit variant selection must reject an unregistered digest before it
+ * attempts filesystem discovery. This keeps a future M12 selector
+ * hash-admitted even when its selected Utility Disk is not installed. */
+static int test_explicit_variant_rejects_unknown_md5(void)
+{
+    CSB_HintOracleUIPanel panel;
+
+    csb_hint_oracle_ui_panel_init(&panel);
+    ASSERT_TRUE(csb_hint_oracle_ui_panel_load_md5(
+                    &panel,
+                    "/tmp/firestaff-csb-hint-panel-empty-99887",
+                    NULL, 6,
+                    "00112233445566778899aabbccddeeff") ==
+                CSB_HINT_ORACLE_UI_PANEL_ERR_NOT_LOADED);
+    ASSERT_TRUE(csb_hint_oracle_ui_panel_status(&panel) ==
+                CSB_HINT_ORACLE_UI_PANEL_STATUS_ARGUMENT_ERROR);
+    ASSERT_TRUE(panel.last_load_rc == CSB_HINT_ORACLE_HTC_REAL_ERR_ARGUMENT);
+    ASSERT_TRUE(panel.cache.loaded == 0);
+    csb_hint_oracle_ui_panel_free(&panel);
+    return 1;
+}
+
 /* ── Tests driver ───────────────────────────────────────────────── */
 
 int main(void)
@@ -615,6 +637,7 @@ int main(void)
     RUN_TEST(test_sideloaded_panel_accessors);
     RUN_TEST(test_sideloaded_panel_diagnostic);
     RUN_TEST(test_free_then_init_round_trip);
+    RUN_TEST(test_explicit_variant_rejects_unknown_md5);
 
 #undef RUN_TEST
 

@@ -186,6 +186,36 @@ int main(int argc, char **argv)
     }
     saw_real_load = 1;
 
+    /* A launcher that knows which Utility Disk the player selected must not
+     * silently show hints from the first archive found. Exercise the panel
+     * wrapper for every locally present, hash-admitted variant. */
+    {
+        size_t selected_count = 0u;
+        for (i = 0u; i < known_count; ++i) {
+            CSB_HintOracleUIPanel selected;
+            csb_hint_oracle_ui_panel_init(&selected);
+            rc = csb_hint_oracle_ui_panel_load_md5(
+                &selected, dir, NULL, 6, known[i].md5);
+            if (rc == CSB_HINT_ORACLE_UI_PANEL_ERR_NOT_LOADED &&
+                csb_hint_oracle_ui_panel_status(&selected) ==
+                    CSB_HINT_ORACLE_UI_PANEL_STATUS_NOT_FOUND) {
+                printf("SKIP: panel selected variant %s is absent\n",
+                       known[i].label);
+            } else {
+                CHECK(rc == CSB_HINT_ORACLE_UI_PANEL_OK,
+                      "selected panel variant loads or cleanly skips");
+                if (rc == CSB_HINT_ORACLE_UI_PANEL_OK) {
+                    ++selected_count;
+                    CHECK(strcmp(selected.cache.matched_md5, known[i].md5) == 0,
+                          "selected panel variant never falls back");
+                }
+            }
+            csb_hint_oracle_ui_panel_free(&selected);
+        }
+        CHECK(selected_count >= 1u,
+              "at least one explicitly selected panel variant loads");
+    }
+
     /* ── Counts ────────────────────────────────────────────────── */
     hint_count = csb_hint_oracle_ui_panel_hint_count(&panel);
     location_count = csb_hint_oracle_ui_panel_location_count(&panel);

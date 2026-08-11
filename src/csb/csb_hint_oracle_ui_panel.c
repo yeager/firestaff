@@ -120,10 +120,11 @@ void csb_hint_oracle_ui_panel_free(CSB_HintOracleUIPanel *panel)
 
 /* ── Load (lazy scan + cache) ────────────────────────────────────── */
 
-int csb_hint_oracle_ui_panel_load(CSB_HintOracleUIPanel *panel,
-                                  const char *data_dir,
-                                  const char *cache_dir,
-                                  int max_depth)
+static int csb_hint_oracle_ui_panel_load_internal(CSB_HintOracleUIPanel *panel,
+                                                   const char *data_dir,
+                                                   const char *cache_dir,
+                                                   int max_depth,
+                                                   const char *expected_md5)
 {
     char resolved_data_dir[CSB_HINT_ORACLE_UI_PANEL_PATH_CAP];
     const char *search_dir;
@@ -171,8 +172,12 @@ int csb_hint_oracle_ui_panel_load(CSB_HintOracleUIPanel *panel,
 
     cache_max_depth = max_depth > 0 ? max_depth : 6;
 
-    rc = csb_hint_oracle_htc_real_scan_and_load(
-        search_dir, cache_dir, cache_max_depth, &panel->cache);
+    rc = expected_md5 && expected_md5[0] != '\0'
+        ? csb_hint_oracle_htc_real_scan_and_load_md5(
+              search_dir, cache_dir, cache_max_depth, expected_md5,
+              &panel->cache)
+        : csb_hint_oracle_htc_real_scan_and_load(
+              search_dir, cache_dir, cache_max_depth, &panel->cache);
     panel->last_load_rc = rc;
     panel->status = translate_load_status(rc);
 
@@ -192,6 +197,25 @@ int csb_hint_oracle_ui_panel_load(CSB_HintOracleUIPanel *panel,
     /* Any other negative rc leaves the panel empty and the
      * UI can read panel->status to render an explanation. */
     return CSB_HINT_ORACLE_UI_PANEL_ERR_NOT_LOADED;
+}
+
+int csb_hint_oracle_ui_panel_load(CSB_HintOracleUIPanel *panel,
+                                  const char *data_dir,
+                                  const char *cache_dir,
+                                  int max_depth)
+{
+    return csb_hint_oracle_ui_panel_load_internal(panel, data_dir, cache_dir,
+                                                   max_depth, NULL);
+}
+
+int csb_hint_oracle_ui_panel_load_md5(CSB_HintOracleUIPanel *panel,
+                                      const char *data_dir,
+                                      const char *cache_dir,
+                                      int max_depth,
+                                      const char *expected_md5)
+{
+    return csb_hint_oracle_ui_panel_load_internal(panel, data_dir, cache_dir,
+                                                   max_depth, expected_md5);
 }
 
 /* ── Status + source label ───────────────────────────────────────── */

@@ -177,6 +177,19 @@ int csb_hint_oracle_htc_real_scan_and_load(
     int max_depth,
     CSB_HintOracleHTC_RealCache *cache);
 
+/* As above, but load the source-cited HTC blob with exactly
+ * `expected_md5`.  This lets a caller keep the Hint Oracle tied to the
+ * selected Utility Disk language/release when several verified variants
+ * reside in one library.  The digest must be one of
+ * csb_hint_oracle_htc_real_known_hashes(); arbitrary hashes are rejected
+ * before the filesystem is searched. */
+int csb_hint_oracle_htc_real_scan_and_load_md5(
+    const char *data_dir,
+    const char *cache_dir,
+    int max_depth,
+    const char *expected_md5,
+    CSB_HintOracleHTC_RealCache *cache);
+
 /* Free the owned file buffer and reset the cache in place. */
 void csb_hint_oracle_htc_real_cache_free(CSB_HintOracleHTC_RealCache *cache);
 

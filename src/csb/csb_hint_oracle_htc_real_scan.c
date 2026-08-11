@@ -241,10 +241,11 @@ static int materialize_virtual(const char *virtual_path,
 
 /* ── Public scan + load ──────────────────────────────────────────── */
 
-int csb_hint_oracle_htc_real_scan_and_load(
+static int csb_hint_oracle_htc_real_scan_and_load_internal(
     const char *data_dir,
     const char *cache_dir,
     int max_depth,
+    const char *expected_md5,
     CSB_HintOracleHTC_RealCache *cache)
 {
     char resolved_data_dir[ASSET_PATH_MAX];
@@ -267,16 +268,34 @@ int csb_hint_oracle_htc_real_scan_and_load(
         return CSB_HINT_ORACLE_HTC_REAL_ERR_ARGUMENT;
     }
 
-    /* Build the md5 list (NULL-terminated) for the scanner. */
+    /* Resolve an optional caller-selected variant before touching the
+     * filesystem.  Selection is hash-only and never trusts a filename. */
     known = csb_hint_oracle_htc_real_known_hashes(&known_count);
-    if (known_count == 0u ||
-        known_count + 1u > sizeof(md5_list) / sizeof(md5_list[0])) {
+    if (known_count == 0u) {
         return CSB_HINT_ORACLE_HTC_REAL_ERR_ARGUMENT;
     }
-    for (i = 0u; i < known_count; ++i) {
-        md5_list[i] = known[i].md5;
+    if (expected_md5 && expected_md5[0] != '\0') {
+        for (i = 0u; i < known_count; ++i) {
+            if (strcmp(expected_md5, known[i].md5) == 0) {
+                match_index = (int)i;
+                break;
+            }
+        }
+        if (match_index < 0) {
+            return CSB_HINT_ORACLE_HTC_REAL_ERR_ARGUMENT;
+        }
+        md5_list[0] = known[match_index].md5;
+        md5_list[1] = NULL;
+    } else {
+        /* Preserve the historic, catalog-ordered fallback policy. */
+        if (known_count + 1u > sizeof(md5_list) / sizeof(md5_list[0])) {
+            return CSB_HINT_ORACLE_HTC_REAL_ERR_ARGUMENT;
+        }
+        for (i = 0u; i < known_count; ++i) {
+            md5_list[i] = known[i].md5;
+        }
+        md5_list[known_count] = NULL;
     }
-    md5_list[known_count] = NULL;
 
     /* Resolve data_dir. */
     if (data_dir && data_dir[0] != '\0') {
@@ -306,7 +325,9 @@ int csb_hint_oracle_htc_real_scan_and_load(
     /* Hash-based recursive discovery. */
     if (!asset_find_by_md5_list(search_root, md5_list,
                                 match_path, sizeof(match_path),
-                                &match_index, max_depth)) {
+                                expected_md5 && expected_md5[0] != '\0'
+                                    ? NULL : &match_index,
+                                max_depth)) {
         return CSB_HINT_ORACLE_HTC_REAL_ERR_NOT_FOUND;
     }
 
@@ -360,6 +381,27 @@ int csb_hint_oracle_htc_real_scan_and_load(
     cache->file_size = buf_size;
     cache->loaded = 1;
     return CSB_HINT_ORACLE_HTC_REAL_OK;
+}
+
+int csb_hint_oracle_htc_real_scan_and_load(
+    const char *data_dir,
+    const char *cache_dir,
+    int max_depth,
+    CSB_HintOracleHTC_RealCache *cache)
+{
+    return csb_hint_oracle_htc_real_scan_and_load_internal(
+        data_dir, cache_dir, max_depth, NULL, cache);
+}
+
+int csb_hint_oracle_htc_real_scan_and_load_md5(
+    const char *data_dir,
+    const char *cache_dir,
+    int max_depth,
+    const char *expected_md5,
+    CSB_HintOracleHTC_RealCache *cache)
+{
+    return csb_hint_oracle_htc_real_scan_and_load_internal(
+        data_dir, cache_dir, max_depth, expected_md5, cache);
 }
 
 /* ── Lookup helpers ──────────────────────────────────────────────── */
