@@ -446,10 +446,11 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
   dungeon reader now preserves the source bytes, carries explicit 68k word
   endianness through column/ground-stack/record links, and proves the
   record-graph and start-pose gate for both authentic English ZIPs. Retail
-  map-wide GAME_LOAD now passes the source-verified maps 0-5, including the
-  Mac DB3/DB4 continuation. Later retail maps remain closed where authentic
-  DB10/DB14 roots require a separately proven pool layout; the demo has no
-  champion-DYN4 roster and therefore remains a title/demo route.
+  map-wide GAME_LOAD now passes all 44 authentic maps. The Mac retail
+  File_header uses the canonical 44-map byte-square layout and its complete
+  DB0..DB10 pools; empty object-bearing squares are accepted only when the
+  source null marker is present. The demo has no champion-DYN4 roster and
+  therefore remains a title/demo route.
 - [~] Read the authentic retail Mac QuickTime `MooV` data and resource forks in
   RAM. The verified retail image contains `Title.MooV`, `Swoosh.MooV`,
   `Credits.MooV` and `Ending.MooV` (CTest records their presence, sizes, HFS

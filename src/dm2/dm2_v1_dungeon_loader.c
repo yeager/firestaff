@@ -625,18 +625,12 @@ static int dm2_decode_map_dimensions_from_w8_be(const uint8_t *map_desc,
     return 1;
 }
 
-/* Mac 68k and Amiga DUNGEON.DAT have the same 44-byte envelope but not the
- * PC File_header offsets: offset 4 is the little-endian header size, nMaps
- * is the big-endian word at 6, w8 remains at 8, cwListSize at 10, cwTextData
- * at 12, and nRecords begins at 14.  This is verified against the original
- * 39,411-byte Amiga installer member (00 00 31 3b 2c 00 00 1c 01 01 ...).
- * Map descriptor byte fields at desc+6,desc+7 are individual bytes and are
- * therefore unaffected by endian. Magic 0x313b at offset 2-3 reads as
- * 0x3b31 through LE RD16. */
-#define DM2_BE_HDR_MAP_COUNT_OFFSET         6
-#define DM2_BE_HDR_TEXT_WORD_COUNT_OFFSET   12
+/* Mac 68k and Amiga DUNGEON.DAT use the same File_header field offsets as the
+ * PC byte-square family; only the multi-byte fields change byte order. */
+#define DM2_BE_HDR_MAP_COUNT_OFFSET         4
+#define DM2_BE_HDR_TEXT_WORD_COUNT_OFFSET   6
 #define DM2_BE_HDR_GROUND_STACK_COUNT_OFFSET 10
-#define DM2_BE_HDR_RECORD_COUNTS_OFFSET     14
+#define DM2_BE_HDR_RECORD_COUNTS_OFFSET     12
 static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
                                           const uint8_t *dat,
                                           int size) {
@@ -651,15 +645,14 @@ static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
 
     if (!out || !dat || size < DM2_DUNGEON_HEADER_SIZE) return 0;
     {
-        uint16_t be_magic = RD16(dat + 2);
-        if (be_magic != DM2_DUNGEON_MAGIC_BE_LE &&
-            be_magic != DM2_DUNGEON_MAGIC_MEGACD_BE_LE)
+        uint16_t be_map_data_size = rd16be(dat + 2);
+        if (be_map_data_size != 0x313bu &&
+            be_map_data_size != 0x3093u &&
+            be_map_data_size != 0x3094u)
             return 0;
     }
-    if (RD16(dat + 4) != DM2_DUNGEON_HEADER_SIZE)
-        return 0;
 
-    map_count = (int)rd16be(dat + DM2_BE_HDR_MAP_COUNT_OFFSET);
+    map_count = (int)dat[DM2_BE_HDR_MAP_COUNT_OFFSET];
     if (map_count < 1 || map_count > DM2_V1_MAX_LEVELS) return 0;
     if (size < DM2_DUNGEON_HEADER_SIZE + map_count * DM2_MAP_DESC_SIZE)
         return 0;
@@ -724,8 +717,7 @@ static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
     }
 
     column_index_base = DM2_DUNGEON_HEADER_SIZE +
-                        map_count * DM2_MAP_DESC_SIZE +
-                        DM2_PC_G1_MAP_EXTENSION_BYTES;
+                        map_count * DM2_MAP_DESC_SIZE;
     sft_base = column_index_base + total_columns * 2;
     text_base = sft_base + out->square_first_thing_count * 2;
     thing_cursor = text_base + out->text_word_count * 2;
@@ -904,19 +896,19 @@ int dm2_v1_dungeon_load(DM2_V1_DungeonData *out,
         return -1;
     memset(out, 0, sizeof(*out));
 
-    skproject_layout = dm2_v1_try_load_skproject_layout(out, dat, size);
-    if (skproject_layout != 0)
-        return (skproject_layout > 0) ? 0 : -1;
-
-    skproject_layout = dm2_v1_try_load_pc_g1_byte_layout(out, dat, size);
-    if (skproject_layout != 0)
-        return (skproject_layout > 0) ? 0 : -1;
-
     skproject_layout = dm2_v1_try_load_be_byte_layout(out, dat, size);
     if (skproject_layout != 0)
         return (skproject_layout > 0) ? 0 : -1;
 
     skproject_layout = dm2_v1_try_load_be_demo_layout(out, dat, size);
+    if (skproject_layout != 0)
+        return (skproject_layout > 0) ? 0 : -1;
+
+    skproject_layout = dm2_v1_try_load_skproject_layout(out, dat, size);
+    if (skproject_layout != 0)
+        return (skproject_layout > 0) ? 0 : -1;
+
+    skproject_layout = dm2_v1_try_load_pc_g1_byte_layout(out, dat, size);
     if (skproject_layout != 0)
         return (skproject_layout > 0) ? 0 : -1;
 
@@ -3266,7 +3258,10 @@ int dm2_v1_dungeon_validate_file_header_runtime_map(
             if (raw < 0) return 0;
             if ((raw & 0x10) == 0) continue;
             thing = dm2_v1_dungeon_get_first_thing(d, map, x, y);
-            if (thing < 0 || thing == (int)DM2_THING_NULL_MARKER) return 0;
+            if (thing < 0) return 0;
+            /* File_header maps use the null marker for an object-bearing
+             * square whose list is empty; it is not malformed data. */
+            if (thing == (int)DM2_THING_NULL_MARKER) continue;
             if (thing == (int)DM2_THING_END_MARKER) continue;
             ++candidate.root_count;
             while (thing != (int)DM2_THING_END_MARKER) {
@@ -3282,7 +3277,9 @@ int dm2_v1_dungeon_validate_file_header_runtime_map(
             }
         }
     }
-    if (candidate.root_count <= 0 || candidate.record_count < candidate.root_count)
+    /* An authentic map may legitimately contain no object-bearing squares;
+     * its committed receipt is still useful for map-wide geometry parity. */
+    if (candidate.record_count < candidate.root_count)
         return 0;
     candidate.committed = 1;
     *out = candidate;
