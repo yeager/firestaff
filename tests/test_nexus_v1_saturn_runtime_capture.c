@@ -99,6 +99,20 @@ int main(void)
                           sizeof(NEXUS_V1_SATURN_RUNTIME_CAPTURE_MAGIC) - 1U);
     offset = append_frame(blob, offset, 0U, 0);
     offset = append_frame(blob, offset, 1U, 1);
+    {
+        const size_t vdp2_register_offset =
+            (sizeof(NEXUS_V1_SATURN_RUNTIME_CAPTURE_MAGIC) - 1U) +
+            frame0_size + strlen("frame=1\n") +
+            (sizeof(NEXUS_V1_SATURN_VDP1_RAW_MAGIC_V2) - 1U) +
+            sizeof(test_state) - 1U + NEXUS_V1_SATURN_VDP1_PAYLOAD_BYTES +
+            (sizeof(NEXUS_V1_SATURN_VDP2_RAW_MAGIC) - 1U);
+        /* Firestaff V2 stores the VDP2 register words in host/little-endian
+         * order. Make the producer order observable instead of testing zeros. */
+        blob[vdp2_register_offset + 0x00U] = 0x00U;
+        blob[vdp2_register_offset + 0x01U] = 0x80U;
+        blob[vdp2_register_offset + 0x20U] = 0x02U;
+        blob[vdp2_register_offset + 0x21U] = 0x00U;
+    }
     if (offset != blob_size ||
         !nexus_v1_saturn_runtime_capture_frame(blob, blob_size, 1U,
                                                &receipt) ||
@@ -116,6 +130,7 @@ int main(void)
             &receipt, &register_receipt) || !register_receipt.valid ||
         register_receipt.byte_order !=
             NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_LITTLE ||
+        register_receipt.tvmd != 0x8000U || register_receipt.bgon != 0x0002U ||
         register_receipt.semantic_admission_blocked != 1 ||
         nexus_v1_saturn_runtime_capture_frame(blob, blob_size, 2U,
                                                &receipt)) {
@@ -156,6 +171,11 @@ int main(void)
         generic_offset = append_bytes(
             generic, generic_offset, NEXUS_V1_SATURN_VDP2_RAW_MAGIC,
             sizeof(NEXUS_V1_SATURN_VDP2_RAW_MAGIC) - 1U);
+        /* Mednafen's candidate PR emits explicit big-endian Saturn words. */
+        generic[generic_offset + 0x00U] = 0x80U;
+        generic[generic_offset + 0x01U] = 0x00U;
+        generic[generic_offset + 0x20U] = 0x00U;
+        generic[generic_offset + 0x21U] = 0x02U;
         generic_offset += NEXUS_V1_SATURN_VDP2_PAYLOAD_BYTES;
         if (generic_offset != generic_size ||
             !nexus_v1_saturn_runtime_capture_frame(
@@ -164,7 +184,14 @@ int main(void)
             receipt.copr_word != 0xdd4U ||
             receipt.vdp1_word_order !=
                 NEXUS_V1_SATURN_VDP1_WORD_ORDER_BIG || !receipt.vdp1_vram ||
-            receipt.vdp1_draw_which || !receipt.semantic_admission_blocked) {
+            receipt.vdp1_draw_which || !receipt.semantic_admission_blocked ||
+            receipt.vdp2_word_order !=
+                NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG ||
+            !nexus_v1_saturn_runtime_capture_vdp2_register_receipt(
+                &receipt, &register_receipt) || !register_receipt.valid ||
+            register_receipt.byte_order !=
+                NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG ||
+            register_receipt.tvmd != 0x8000U || register_receipt.bgon != 0x0002U) {
             free(generic);
             fprintf(stderr, "FAIL: generic Mednafen raw frame parser\n");
             return 1;

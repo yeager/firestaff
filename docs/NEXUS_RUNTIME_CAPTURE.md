@@ -539,6 +539,11 @@ payload order is unchanged: VDP1 VRAM, both VDP1 framebuffers, the optional
 draw-buffer byte, then VDP2 registers, VRAM and CRAM. This is intentionally a
 transport compatibility boundary only; generic Mednafen output still has no
 Nexus asset owner and therefore cannot pass semantic admission on its own.
+The historical Firestaff container stores VDP2 words in host/little-endian
+order on the supported little-endian hosts. The generic Mednafen container
+serializes Saturn words explicitly big-endian. The C reader now selects this
+order from the container magic instead of guessing from register values; its
+regression test uses nonzero `TVMD` and `BGON` words in both forms.
 
 To reproduce the generic dump, build the review candidate on the external
 disk with Saturn enabled and provide user-owned BIOS/media paths at runtime:

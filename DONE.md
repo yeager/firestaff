@@ -1,3 +1,14 @@
+# Nexus: producer-defined VDP2 byte order (2026-08-11)
+
+- ✅ Moved the VDP2 byte-order enum into the frame receipt contract and record
+  the producer-defined order from the Firestaff or Mednafen magic header.
+- ✅ Kept the legacy value-scoring fallback for older in-memory callers.
+- ✅ Built and ran `test_nexus_v1_saturn_runtime_capture`; synthetic Firestaff
+  and Mednafen cases now verify nonzero `TVMD`/`BGON` decoding, and the
+  authenticated external frame 106 parses successfully.
+- 🔒 This remains transport evidence. It does not admit Nexus startup, menu,
+  HUD, viewport, tilemap or CLUT semantics.
+
 # Nexus: bounded SAL PCM materialization (2026-08-11)
 
 # Theron: capture instrumentation marks the `$C3A0` caller (2026-08-11)

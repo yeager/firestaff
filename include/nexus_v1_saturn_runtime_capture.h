@@ -36,6 +36,12 @@ typedef enum {
     NEXUS_V1_SATURN_VDP1_WORD_ORDER_BIG = 2
 } Nexus_V1_SaturnVdp1WordOrder;
 
+typedef enum {
+    NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_UNKNOWN = 0,
+    NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG = 1,
+    NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_LITTLE = 2
+} Nexus_V1_SaturnVdp2RegisterByteOrder;
+
 typedef struct {
     int valid;
     int frame_index;
@@ -69,14 +75,11 @@ typedef struct {
     size_t vdp2_vram_size;
     size_t vdp2_register_size;
     Nexus_V1_SaturnVdp1WordOrder vdp1_word_order;
+    /* Firestaff captures predate the Mednafen PR and store host-order words;
+     * the Mednafen producer serializes Saturn words as big-endian. */
+    Nexus_V1_SaturnVdp2RegisterByteOrder vdp2_word_order;
     int semantic_admission_blocked;
 } Nexus_V1_SaturnRuntimeCaptureFrameReceipt;
-
-typedef enum {
-    NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_UNKNOWN = 0,
-    NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG = 1,
-    NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_LITTLE = 2
-} Nexus_V1_SaturnVdp2RegisterByteOrder;
 
 /* Hardware-state receipt for one already parsed frame. These are raw VDP2
  * register observations only; BGON/NBG1 bits do not identify a menu, asset,

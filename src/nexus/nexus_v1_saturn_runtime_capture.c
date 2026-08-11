@@ -274,6 +274,9 @@ int nexus_v1_saturn_runtime_capture_frame(
             receipt.vdp1_word_order = mednafen_magic_present
                 ? NEXUS_V1_SATURN_VDP1_WORD_ORDER_BIG
                 : NEXUS_V1_SATURN_VDP1_WORD_ORDER_LITTLE;
+            receipt.vdp2_word_order = mednafen_magic_present
+                ? NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG
+                : NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_LITTLE;
             receipt.vdp1_execution_active = state_present &&
                 receipt.ptmr != 0U && receipt.edsr != 0U &&
                 receipt.vdp1_payload_nonzero;
@@ -303,11 +306,16 @@ int nexus_v1_saturn_runtime_capture_vdp2_register_receipt(
         *out_receipt = receipt;
         return 0;
     }
-    big_score = vdp2_score(frame->vdp2_registers, 0);
-    little_score = vdp2_score(frame->vdp2_registers, 1);
-    receipt.byte_order = little_score >= big_score
-        ? NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_LITTLE
-        : NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG;
+    if (frame->vdp2_word_order != NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_UNKNOWN) {
+        receipt.byte_order = frame->vdp2_word_order;
+    } else {
+        /* Compatibility for receipts built by older callers. */
+        big_score = vdp2_score(frame->vdp2_registers, 0);
+        little_score = vdp2_score(frame->vdp2_registers, 1);
+        receipt.byte_order = little_score >= big_score
+            ? NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_LITTLE
+            : NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG;
+    }
     receipt.tvmd = vdp2_read16(frame->vdp2_registers, 0x00U,
                                receipt.byte_order);
     receipt.bgon = vdp2_read16(frame->vdp2_registers, 0x20U,
