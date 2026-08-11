@@ -857,3 +857,17 @@ This is explicit negative evidence for a same-address bank/overlay alias, not
 an RNG or spawn witness. The invalid entries must not be promoted to monster
 stats, AI, generators, T700 or T900 semantics. The raw capture remains outside
 the repository; only the bounded receipt facts are documented here.
+## 2026-08-11 — authenticated screen-space VDC/VCE replay admission
+
+The bounded US Track 02/System Card replay produced a complete raw VDC VRAM
+snapshot (65,536 bytes, FNV-1a `42a483ac`) and VCE snapshot (1,024 bytes,
+FNV-1a `6fb303b5`). The pair was captured from the real external Track 02
+session, not generated or checked into the repository. The production VRAM
+loader now admits this exact pair alongside the earlier authenticated
+captures, so the real VDC tile bytes and VCE palette words can be decoded and
+presented as a native screen-space frame.
+
+This receipt does not prove the missing Track 02 square-to-tile/material
+consumer, level/object records, HUD ownership, creature semantics, or source
+bitmap decompressor. Those routes remain fail-closed; no world or object
+meaning is inferred from the BAT alone.

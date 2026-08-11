@@ -165,7 +165,12 @@ int theron_v1_vram_trace_load_known_capture_files(
          * Track 02/System Card session.  Its VCE snapshot is the same
          * source-owned palette bank, while the VRAM image is a later
          * screen-state snapshot. */
-        {0x5d20ebc7u, 0xea83f117u}
+        {0x5d20ebc7u, 0xea83f117u},
+        /* 2026-08-11 bounded replay from the authenticated US Track 02
+         * medium/System Card pair.  This is a new screen-space VDC image
+         * with the previously admitted source VCE bank; it authorizes only
+         * bitmap/tile/palette replay, never square or object semantics. */
+        {0x42a483acu, 0x6fb303b5u}
     };
 
     if (!vp || !vram_path || !vce_path) return -1;

@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+# Theron: source-bound square/material consumer and README capture (2026-08-11)
+
+- ✅ A new authenticated VDC/VCE screen-space pair is admitted and renders
+  real tile bytes and palette words.
+- 🔒 The missing Track 02 BAT-to-square/material owner, complete HUD draw
+  route, and a clean publishable in-game capture remain open. Do not infer
+  level geometry or object meaning from the BAT snapshot.
+
 ## Theron: authenticate source-owned dungeon pointer/object consumers (2026-08-11)
 
 - ✅ Host mouse motion and Button I/II ingress are now separated from the

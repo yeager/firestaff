@@ -1,3 +1,14 @@
+# Theron: admit authenticated US screen-space VDC/VCE capture (2026-08-11)
+
+- ✅ Added the real external replay pair VRAM FNV-1a `42a483ac` (65,536
+  bytes) + VCE FNV-1a `6fb303b5` (1,024 bytes) to the closed capture list.
+- ✅ The production loader decoded 1,057 BAT bindings and 512 VCE palette
+  entries and presented a non-empty 256×224 source frame.
+- ✅ Generated verification BMP remained on the external disk; no BIOS,
+  BIN, ISO, capture, or synthetic asset was added to Git.
+- 🔒 The pair proves only screen-space bitmap/tile/palette replay. It does
+  not promote square/material, HUD, object, creature, or level semantics.
+
 # Theron: ordinary mouse Button I/II input path (2026-08-11)
 
 - ✅ Theron now keeps normal pointer motion position-only, so moving the
