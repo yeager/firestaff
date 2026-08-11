@@ -76,6 +76,19 @@ används av den externa launchern:
 ```sh
 FIRESTAFF_NEXUS_TRACE_VDP1_SNAPSHOT=/extern/nexus-capture/run/vdp1-snapshot.raw
 FIRESTAFF_NEXUS_TRACE_VDP1_SNAPSHOT_AT=0x10a00
+# Valfria proveniensbevis från samma session:
+FIRESTAFF_NEXUS_TRACE_VDP1_REGS=/extern/nexus-capture/run/vdp1-regs.trace
+FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_DUMP=/extern/nexus-capture/run/source.dump
+FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_DUMP_AT=0x63e00
+FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_DUMP_SIZE=0x8200
+
+# Riktad SH-2-läslogg för att följa transformen före VDP1-skrivningen:
+FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_READS=/extern/nexus-capture/run/vdp1-source-reads.trace
+FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_READ_MIN=0x06000000
+FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_READ_MAX=0x08000000
+FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_READ_PC_MIN=0x06012f00
+FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_READ_PC_MAX=0x06013100
+FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_READ_LIMIT=100000
 ```
 
 Snapshotten valideras med:
@@ -97,6 +110,11 @@ python3 scripts/analyze_nexus_vdp1_command_window.py \
 `--command-offset` är endast till för en adress som observerats i samma
 runtime-session. Verktyget beskriver VDP1-kommandon och källbytes-hashar, men
 godkänner inte startup, meny, HUD, viewport, CLUT eller asset-ägarskap.
+
+`VDP1_REGS` och `VDP1_SOURCE_DUMP` vidarebefordras nu av launchern och får
+manifest-hash i samma session. De är avsedda för den separata
+source-to-VRAM-kontrollen; en source-dump utan motsvarande register-, frame-
+och retail-bytesreceipt öppnar inte någon konsument-gate.
 
 Den validerade körningen på extern disk gav VDP1-state `ptmr=0x02`,
 `edsr=0x03`, en 1 048 577-byte VDP1-payload och writer-code vid `0x10a00` i

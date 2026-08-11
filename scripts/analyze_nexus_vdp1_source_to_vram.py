@@ -27,7 +27,9 @@ SOURCE_HEAD = re.compile(
 )
 
 
-def read_register_witness(path: Path, target: int, required_pc: int | None) -> tuple[int, int, int]:
+def read_register_witness(
+    path: Path, target: int, required_pc: int | None
+) -> tuple[int, dict[int, int]]:
     for line in path.read_text(encoding="ascii").splitlines():
         match = REG_LINE.fullmatch(line)
         if not match or int(match["addr"], 16) != target:
@@ -37,9 +39,9 @@ def read_register_witness(path: Path, target: int, required_pc: int | None) -> t
             continue
         values = {int(item["index"]): int(item["value"], 16)
                   for item in REG_VALUE.finditer(match["regs"])}
-        if 0 not in values or 5 not in values:
-            raise ValueError("target register witness lacks R0/R5")
-        return pc, values[0], values[5]
+        if 5 not in values:
+            raise ValueError("target register witness lacks R5")
+        return pc, values
     raise ValueError("required target register witness not found")
 
 
@@ -79,15 +81,30 @@ def main() -> int:
     parser.add_argument("--capture-frames", type=int, required=True)
     parser.add_argument("--target", type=lambda value: int(value, 0), required=True)
     parser.add_argument("--require-pc", type=lambda value: int(value, 0))
+    parser.add_argument(
+        "--source-register", type=int, choices=range(16), default=0,
+        help="SH-2 register holding the source buffer (default: R0)",
+    )
     args = parser.parse_args()
     try:
-        pc, source_address, source_size = read_register_witness(
+        pc, registers = read_register_witness(
             args.registers, args.target, args.require_pc)
         dump_address, source_words = read_source_dump(args.source_dump)
+        if args.source_register not in registers:
+            raise ValueError("target register witness lacks requested source register")
+        source_address = registers[args.source_register]
+        source_size = len(source_words)
         if dump_address != source_address:
-            raise ValueError("source dump address does not match R0")
-        if len(source_words) != source_size:
-            raise ValueError("source dump size does not match R5")
+            raise ValueError(
+                f"source dump address does not match R{args.source_register}"
+            )
+        if 5 in registers and registers[5] not in (0, source_size):
+            # R5 is the original copy-loop size for the legacy R0/R5 witness.
+            # Some Saturn writer loops keep their source stride/limit in R5;
+            # do not reject a larger, explicitly requested source dump when
+            # the register is not the dump-size contract.
+            if args.source_register == 0:
+                raise ValueError("source dump size does not match R5")
         if args.frame >= args.capture_frames:
             raise ValueError("requested frame is outside capture")
         frames, _ = frame_regions(args.capture.read_bytes(), args.capture_frames)
