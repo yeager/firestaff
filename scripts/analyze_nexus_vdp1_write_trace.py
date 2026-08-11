@@ -49,8 +49,8 @@ def main() -> int:
     addresses: collections.Counter[int] = collections.Counter()
     values: collections.Counter[int] = collections.Counter()
     rows: list[tuple[int, int, int, int, int]] = []
-    pending: list[tuple[int, int, int, int, int]] = []
     frame_rows: dict[int, list[tuple[int, int, int, int, int]]] = {}
+    active_frame: int | None = None
     records = 0
     for line_number, line in enumerate(lines[1:], 2):
         frame_match = FRAME.fullmatch(line)
@@ -62,8 +62,13 @@ def main() -> int:
             if frame_number in frame_rows:
                 print(f"NEXUS_VDP1_WRITE_TRACE_INVALID: duplicate frame {frame_number}")
                 return 1
-            frame_rows[frame_number] = pending
-            pending = []
+            # Mednafen emits the boundary before the writes belonging to the
+            # frame: VDP2::FirestaffCapture() calls
+            # VDP1::FirestaffTraceVramWriteFrame(frame), then captures the
+            # VDP1 image.  Keep the following records on this marker rather
+            # than assigning them to the next marker.
+            frame_rows[frame_number] = []
+            active_frame = frame_number
             continue
         match = LINE.fullmatch(line)
         if not match:
@@ -73,7 +78,14 @@ def main() -> int:
         value = int(match["value"], 16)
         pc0 = int(match["pc0"], 16)
         pc1 = int(match["pc1"], 16)
-        pending.append((address, int(match["size"], 10), value, pc0, pc1))
+        row = (address, int(match["size"], 10), value, pc0, pc1)
+        if version == "FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V2":
+            if active_frame is None:
+                print("NEXUS_VDP1_WRITE_TRACE_INVALID: record before frame marker")
+                return 1
+            frame_rows[active_frame].append(row)
+        else:
+            rows.append(row)
 
     if args.frame is not None:
         if version != "FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V2":
@@ -85,8 +97,6 @@ def main() -> int:
         rows = frame_rows[args.frame]
     elif version == "FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V2":
         rows = [row for frame in sorted(frame_rows) for row in frame_rows[frame]]
-    else:
-        rows = pending
 
     records = len(rows)
     for address, size, value, pc0, pc1 in rows:

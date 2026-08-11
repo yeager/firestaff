@@ -98,6 +98,10 @@
 - ✅ Source-join analysis now accepts the authenticated V2 trace header,
   preserves empty frame markers, and selects records for the requested capture
   frame without the previous V1-only rejection.
+- ✅ The summary analyzer now follows Mednafen's actual producer order:
+  `frame=N` precedes that frame's writes. The external startup witness at
+  frame 106 now reports 16 640 writes from `PC=0x0601307c` into `0x63e00`;
+  the regression is CTest-covered.
 - 🔒 This repairs evidence tooling only; the VDP1 asset owner, CLUT,
   placement, menu/HUD/viewport consumer and production renderer remain gated.
 

@@ -1,3 +1,16 @@
+# Nexus: correct VDP1 frame-boundary attribution (2026-08-11)
+
+- ✅ Fixed `scripts/analyze_nexus_vdp1_write_trace.py` to attach writes after
+  Mednafen's `frame=N` marker to that same frame. The previous implementation
+  shifted every non-empty frame to the following marker and made authenticated
+  startup writes appear missing.
+- ✅ The external J-BIOS/English startup witness now reports frame 106 with
+  16 640 writes, `PC=0x0601307c` and VDP1 target `0x63e00`; a synthetic
+  three-frame contract test is registered as
+  `nexus_v1_vdp1_write_trace_frame_contract`.
+- 🔒 This strengthens source/capture evidence only. It does not infer MENU,
+  HUD, viewport, PRS3 ownership or production renderer permission.
+
 # Theron: retain authentic raw text glyph values (2026-08-11)
 
 - ✅ The Track 02 text decoder now retains every packed 5-bit value, including

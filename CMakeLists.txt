@@ -30337,6 +30337,10 @@ endif()
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_nexus_v1_runtime_screenshot_readiness.py --build-dir ${CMAKE_BINARY_DIR}
     )
     add_test(
+        NAME nexus_v1_vdp1_write_trace_frame_contract
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/test_nexus_vdp1_write_trace_frame.py
+    )
+    add_test(
         NAME theron_v1_runtime_screenshot_promotion_gate
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_theron_v1_runtime_screenshot_promotion_gate.py
     )
