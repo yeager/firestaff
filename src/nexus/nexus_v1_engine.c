@@ -5084,6 +5084,7 @@ int nexus_v1_engine_build_structure2_descriptor_capture_target(
     int structure2_byte_offset;
     int descriptor_byte_offset;
     int opaque_payload_byte_offset;
+    int anchor_visit_ok;
 
     if (!out_target) return -1;
     memset(out_target, 0, sizeof(*out_target));
@@ -5124,9 +5125,10 @@ int nexus_v1_engine_build_structure2_descriptor_capture_target(
         level->structure2_textures[descriptor_index].image_relative_offset;
     anchor_search.palette_offset =
         level->structure2_textures[descriptor_index].palette_relative_offset;
-    if (nexus_v1_current_level_visit_structure2_payload_anchors(
+    anchor_visit_ok = nexus_v1_current_level_visit_structure2_payload_anchors(
             engine, nexus_v1_find_descriptor_capture_anchor, &anchor_search,
-            &anchor_scene) != 1 || !anchor_scene.valid ||
+            &anchor_scene);
+    if (anchor_visit_ok != 1 || !anchor_scene.valid ||
         anchor_scene.level_index != engine->game.current_level ||
         anchor_scene.source_byte_count != size ||
         anchor_scene.source_bytes_fnv1a64 != source_receipt.source_bytes_fnv1a64 ||
@@ -5137,7 +5139,24 @@ int nexus_v1_engine_build_structure2_descriptor_capture_target(
         (anchor_search.palette_offset != 0U &&
          structure2_byte_offset + (int)anchor_search.palette.payload_anchor_offset >
              size - (int)anchor_search.palette.candidate_byte_count)) {
-        return 0;
+        /* Some retail LEV faces name a real Structure2 selector whose
+         * payload-anchor table is not recoverable from the extracted DGN.
+         * Keep the descriptor and its bounded post-FFFF bytes as opaque
+         * capture evidence; never reinterpret them as pixels or authorize a
+         * draw. */
+        int fallback_offset = level->structure2_payload.opaque_payload_offset;
+        int fallback_size = level->structure2_payload.opaque_payload_size;
+        if (fallback_offset < 0 || fallback_size <= 0 ||
+            fallback_offset > size - fallback_size) {
+            return 0;
+        }
+        memset(&anchor_search.image, 0, sizeof(anchor_search.image));
+        anchor_search.image.payload_anchor_offset = (uint32_t)fallback_offset;
+        anchor_search.image.next_anchor_offset =
+            (uint32_t)(fallback_offset + fallback_size);
+        anchor_search.image.candidate_byte_count = (uint32_t)fallback_size;
+        anchor_search.image_found = 1;
+        anchor_search.palette_offset = 0U;
     }
     out_target->valid = 1;
     out_target->level_index = engine->game.current_level;
@@ -6061,6 +6080,10 @@ int nexus_v1_current_level_structure3_package_geometry_packet(
     Nexus_V1_DgnStructure3Vector *normals = NULL;
     Nexus_V1_DgnStructure3Face *faces = NULL;
     const Nexus_V1_DgnStructure3Face *face;
+    uint32_t entry_offset = 0U;
+    uint32_t face_relative_offset = 0U;
+    int face_byte_offset = -1;
+    int material_bound = 1;
     int slot_count;
     int result = 0;
 
@@ -6069,11 +6092,15 @@ int nexus_v1_current_level_structure3_package_geometry_packet(
     out_packet->level_index = -1;
     out_packet->no_draw_only = 0;
     out_packet->blocks_real_dgn_mesh_render = 0;
-    if (!engine || nexus_v1_engine_build_structure3_static_material_capture_target(
-                       engine, structure3_entry_index, face_ordinal,
-                       &material_target) != 1 ||
-        !material_target.valid) {
+    memset(&material_target, 0, sizeof(material_target));
+    if (!engine || !engine->current_level_dgn_data ||
+        engine->current_level_dgn_size <= 0) {
         return 0;
+    }
+    if (nexus_v1_engine_build_structure3_static_material_capture_target(
+            engine, structure3_entry_index, face_ordinal,
+            &material_target) != 1 || !material_target.valid) {
+        material_bound = 0;
     }
 
     memset(&mesh_receipt, 0, sizeof(mesh_receipt));
@@ -6101,6 +6128,34 @@ int nexus_v1_current_level_structure3_package_geometry_packet(
         goto cleanup;
     }
     face = &faces[face_ordinal];
+    if (!material_bound) {
+        const Nexus_V1_Level *level = &engine->current_level;
+        const uint8_t *data = engine->current_level_dgn_data;
+        uint32_t payload_offset = (uint32_t)level->structure3_payload.byte_offset;
+        uint32_t payload_size = (uint32_t)level->structure3_payload.byte_size;
+        if (level->structure3_payload.byte_offset < 0 ||
+            level->structure3_payload.byte_size < 8 ||
+            payload_offset > (uint32_t)engine->current_level_dgn_size ||
+            payload_size > (uint32_t)engine->current_level_dgn_size - payload_offset ||
+            structure3_entry_index >= (uint32_t)level->structure3_directory.entry_count ||
+            structure3_entry_index > (payload_size - 8U) / 4U) {
+            goto cleanup;
+        }
+        entry_offset = nexus_v1_dgn_read_be32(
+            data + payload_offset + 4U + structure3_entry_index * 4U);
+        if (entry_offset > payload_size || payload_size - entry_offset < 40U) {
+            goto cleanup;
+        }
+        face_relative_offset = nexus_v1_dgn_read_be32(
+            data + payload_offset + entry_offset + 16U);
+        if (face_relative_offset > payload_size ||
+            payload_size - face_relative_offset < 12U ||
+            face_ordinal > (payload_size - face_relative_offset - 12U) / 12U) {
+            goto cleanup;
+        }
+        face_byte_offset = (int)(payload_offset + face_relative_offset +
+                                 face_ordinal * 12U);
+    }
     slot_count = face->triangle ? 3 : 4;
     if (slot_count < 3 || slot_count > 4 ||
         face->vertex_indexes[0] >= (uint16_t)mesh_receipt.vertex_count ||
@@ -6108,34 +6163,38 @@ int nexus_v1_current_level_structure3_package_geometry_packet(
         face->vertex_indexes[2] >= (uint16_t)mesh_receipt.vertex_count ||
         (slot_count == 4 &&
          face->vertex_indexes[3] >= (uint16_t)mesh_receipt.vertex_count) ||
-        face->vertex_indexes[0] != material_target.face.vertex_indexes[0] ||
-        face->vertex_indexes[1] != material_target.face.vertex_indexes[1] ||
-        face->vertex_indexes[2] != material_target.face.vertex_indexes[2] ||
-        face->vertex_indexes[3] != material_target.face.vertex_indexes[3] ||
-        face->flags != material_target.face.flags ||
-        face->raw_byte_9 != material_target.face.raw_byte_9 ||
-        face->fill_selector != material_target.face.fill_selector ||
-        face->triangle != material_target.face.triangle) {
+        (material_bound && face->vertex_indexes[0] != material_target.face.vertex_indexes[0]) ||
+        (material_bound && face->vertex_indexes[1] != material_target.face.vertex_indexes[1]) ||
+        (material_bound && face->vertex_indexes[2] != material_target.face.vertex_indexes[2]) ||
+        (material_bound && face->vertex_indexes[3] != material_target.face.vertex_indexes[3]) ||
+        (material_bound && face->flags != material_target.face.flags) ||
+        (material_bound && face->raw_byte_9 != material_target.face.raw_byte_9) ||
+        (material_bound && face->fill_selector != material_target.face.fill_selector) ||
+        (material_bound && face->triangle != material_target.face.triangle)) {
         goto cleanup;
     }
 
     out_packet->valid = 1;
     out_packet->source_geometry_bound = 1;
-    out_packet->material_descriptor_bound = 1;
-    out_packet->level_index = material_target.level_index;
-    out_packet->source_byte_count = material_target.source_byte_count;
-    out_packet->source_bytes_fnv1a64 = material_target.source_bytes_fnv1a64;
+    out_packet->material_descriptor_bound = material_bound;
+    out_packet->level_index = engine->game.current_level;
+    out_packet->source_byte_count = engine->current_level_dgn_size;
+    out_packet->source_bytes_fnv1a64 = nexus_v1_dgn_bytes_fnv1a64(
+        engine->current_level_dgn_data, engine->current_level_dgn_size);
     out_packet->structure3_entry_index = structure3_entry_index;
     out_packet->face_ordinal = face_ordinal;
-    out_packet->face_offset = (uint32_t)material_target.face_byte_offset;
+    out_packet->face_offset = material_bound ?
+        (uint32_t)material_target.face_byte_offset : (uint32_t)face_byte_offset;
     out_packet->face_length = 12U;
-    out_packet->face_fnv1a64 = material_target.face_bytes_fnv1a64;
-    out_packet->package_fnv1a64 = material_target.source_bytes_fnv1a64;
-    out_packet->descriptor_fnv1a64 = material_target.descriptor_target.descriptor_bytes_fnv1a64;
-    out_packet->image_offset = material_target.image_payload_byte_offset;
-    out_packet->image_length = material_target.image_payload_candidate_byte_count;
-    out_packet->palette_offset = material_target.palette_payload_byte_offset;
-    out_packet->palette_length = material_target.palette_payload_candidate_byte_count;
+    out_packet->face_fnv1a64 = nexus_v1_dgn_bytes_fnv1a64(
+        engine->current_level_dgn_data + out_packet->face_offset, 12);
+    out_packet->package_fnv1a64 = out_packet->source_bytes_fnv1a64;
+    out_packet->descriptor_fnv1a64 = material_bound ?
+        material_target.descriptor_target.descriptor_bytes_fnv1a64 : 0U;
+    out_packet->image_offset = material_bound ? material_target.image_payload_byte_offset : 0U;
+    out_packet->image_length = material_bound ? material_target.image_payload_candidate_byte_count : 0U;
+    out_packet->palette_offset = material_bound ? material_target.palette_payload_byte_offset : 0U;
+    out_packet->palette_length = material_bound ? material_target.palette_payload_candidate_byte_count : 0U;
     out_packet->face = *face;
     out_packet->vertex_slot_count = slot_count;
     out_packet->vertices[0] = vertices[face->vertex_indexes[0]];
@@ -11255,17 +11314,23 @@ static int nexus_v1_engine_build_m11_structure2_face_descriptor_intake(
     Nexus_V1_DgnM11Structure2FaceDescriptorIntakeReceipt *out_receipt)
 {
     Nexus_V1_DgnM11Structure2FaceDescriptorIntakeReceipt receipt;
-    Nexus_V1_DgnStructure3StaticMaterialCaptureTarget material_target;
-    const Nexus_V1_DgnStructure3StaticMaterialCaptureTarget *material;
     const Nexus_V1_DgnStructure2DescriptorCaptureTarget *descriptor;
+    const Nexus_V1_Level *level;
+    const uint8_t *data;
+    uint32_t entry_offset;
+    uint32_t face_relative_offset;
+    uint16_t face_count;
+    int descriptor_index;
+    int face_byte_offset;
     uint64_t descriptor_end;
     uint64_t face_end;
+    Nexus_V1_DgnStructure2DescriptorCaptureTarget descriptor_target;
+    Nexus_V1_DgnStructure3PackageGeometryPacket geometry_packet;
 
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
     receipt.no_draw_only = 1;
     receipt.blocks_real_dgn_mesh_render = 1;
-    memset(&material_target, 0, sizeof(material_target));
     if (!engine || !route_epoch || level_index < 0 || !package_fnv1a64 ||
         !structure1f || !structure1f->valid ||
         structure1f->level_index != (uint32_t)level_index ||
@@ -11276,37 +11341,125 @@ static int nexus_v1_engine_build_m11_structure2_face_descriptor_intake(
         !structure1f->no_draw_only ||
         structure1f->fallback_visuals_permitted ||
         !structure1f->blocks_real_dgn_mesh_render ||
-        nexus_v1_engine_build_structure3_static_material_capture_target(
-            engine, structure1f->structure3_model_index,
-            structure1f->face_ordinal, &material_target) != 1 ||
-        !material_target.valid ||
-        !material_target.capture_producer_required ||
-        !material_target.original_saturn_capture_required ||
-        !material_target.no_draw_only ||
-        material_target.fallback_visuals_permitted ||
-        material_target.level_index != level_index ||
-        material_target.source_bytes_fnv1a64 != package_fnv1a64 ||
-        material_target.structure3_entry_index !=
-            (uint32_t)structure1f->structure3_model_index ||
-        material_target.face_ordinal != (uint32_t)structure1f->face_ordinal) {
+        !engine->current_level_dgn_data || engine->current_level_dgn_size <= 0 ||
+        structure1f->structure3_model_index < 0 ||
+        structure1f->structure3_model_index >=
+            engine->current_level.structure3_directory.entry_count ||
+        engine->current_level.structure3_payload.byte_offset < 0 ||
+        engine->current_level.structure3_payload.byte_size < 4) {
         *out_receipt = receipt;
         return 0;
     }
-    material = &material_target;
-    descriptor = &material->descriptor_target;
-    if (!material->valid || !material->static_selector_descriptor_bound ||
-        !material->image_payload_anchor_bound ||
-        !material->image_payload_interval_bound ||
-        !material->capture_producer_required ||
-        !material->original_saturn_capture_required || !material->no_draw_only ||
-        material->fallback_visuals_permitted ||
-        material->level_index != level_index ||
-        material->source_bytes_fnv1a64 != package_fnv1a64 ||
-        material->structure3_entry_index !=
-            (uint32_t)structure1f->structure3_model_index ||
-        material->face_ordinal != (uint32_t)structure1f->face_ordinal ||
-        material->face_byte_offset < 0 || !material->face_bytes_fnv1a64 ||
-        !descriptor->valid || descriptor->level_index != level_index ||
+    level = &engine->current_level;
+    data = engine->current_level_dgn_data;
+    if ((uint32_t)level->structure3_payload.byte_offset >
+            (uint32_t)engine->current_level_dgn_size ||
+        (uint32_t)level->structure3_payload.byte_size >
+            (uint32_t)engine->current_level_dgn_size -
+            (uint32_t)level->structure3_payload.byte_offset ||
+        (uint32_t)level->structure3_payload.byte_size < 8U ||
+        (uint32_t)structure1f->structure3_model_index >
+            ((uint32_t)level->structure3_payload.byte_size - 8U) / 4U) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    entry_offset = nexus_v1_dgn_read_be32(
+        data + level->structure3_payload.byte_offset + 4U +
+        (uint32_t)structure1f->structure3_model_index * 4U);
+    if (entry_offset > (uint32_t)level->structure3_payload.byte_size ||
+        (uint32_t)level->structure3_payload.byte_size - entry_offset < 40U) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    face_count = nexus_v1_dgn_read_be16(
+        data + level->structure3_payload.byte_offset + entry_offset + 6U);
+    face_relative_offset = nexus_v1_dgn_read_be32(
+        data + level->structure3_payload.byte_offset + entry_offset + 16U);
+    if (structure1f->face_ordinal >= (uint32_t)face_count ||
+        face_relative_offset > (uint32_t)level->structure3_payload.byte_size ||
+        (uint32_t)level->structure3_payload.byte_size - face_relative_offset < 12U ||
+        structure1f->face_ordinal >
+            ((uint32_t)level->structure3_payload.byte_size -
+             face_relative_offset - 12U) / 12U) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    face_byte_offset = level->structure3_payload.byte_offset +
+        (int)face_relative_offset + (int)structure1f->face_ordinal * 12;
+    memset(&geometry_packet, 0, sizeof(geometry_packet));
+    if (nexus_v1_current_level_structure3_package_geometry_packet(
+            engine, (uint32_t)structure1f->structure3_model_index,
+            structure1f->face_ordinal, &geometry_packet) != 1 ||
+        !geometry_packet.valid || geometry_packet.face_offset < 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    face_byte_offset = (int)geometry_packet.face_offset;
+    descriptor_index = (int)(geometry_packet.face.fill_selector & 0x00ffU);
+    if (descriptor_index < 0 || descriptor_index >= level->structure2_texture_count) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (descriptor_index < 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (nexus_v1_engine_build_structure2_descriptor_capture_target(
+            engine, descriptor_index, &descriptor_target) != 1) {
+        int structure2_byte_offset;
+        int opaque_offset;
+        int opaque_size = level->structure2_payload.opaque_payload_size;
+        if (level->structure2_payload.opaque_payload_offset < 0 ||
+            opaque_size <= 0 || engine->current_level_dgn_size < 0 ||
+            engine->current_level_dgn_size < 0x16 ||
+            (data[0x14] == 0U && data[0x15] == 0U)) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        structure2_byte_offset =
+            (int)(((unsigned int)data[0x14] << 8) | data[0x15]) *
+            NEXUS_DGN_BLOCK_SIZE;
+        opaque_offset = structure2_byte_offset +
+            level->structure2_payload.opaque_payload_offset;
+        if (structure2_byte_offset < 0 ||
+            descriptor_index > (engine->current_level_dgn_size -
+                structure2_byte_offset - NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES) /
+                NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES ||
+            opaque_offset < structure2_byte_offset ||
+            opaque_offset > engine->current_level_dgn_size - opaque_size) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        memset(&descriptor_target, 0, sizeof(descriptor_target));
+        descriptor_target.valid = 1;
+        descriptor_target.level_index = level_index;
+        descriptor_target.source_byte_count = engine->current_level_dgn_size;
+        descriptor_target.source_bytes_fnv1a64 = package_fnv1a64;
+        descriptor_target.descriptor_index = descriptor_index;
+        descriptor_target.descriptor_byte_offset = structure2_byte_offset +
+            descriptor_index * NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES;
+        descriptor_target.descriptor = level->structure2_textures[descriptor_index];
+        descriptor_target.descriptor_bytes_fnv1a64 = nexus_v1_dgn_bytes_fnv1a64(
+            data + descriptor_target.descriptor_byte_offset,
+            NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES);
+        descriptor_target.opaque_payload_byte_offset = opaque_offset;
+        descriptor_target.opaque_payload_byte_count = opaque_size;
+        descriptor_target.opaque_payload_fnv1a64 = nexus_v1_dgn_bytes_fnv1a64(
+            data + opaque_offset, opaque_size);
+        descriptor_target.image_payload_anchor_offset =
+            (uint32_t)(opaque_offset - structure2_byte_offset);
+        descriptor_target.image_payload_next_anchor_offset =
+            descriptor_target.image_payload_anchor_offset + (uint32_t)opaque_size;
+        descriptor_target.image_payload_candidate_byte_count = (uint32_t)opaque_size;
+        descriptor_target.image_payload_candidate_fnv1a64 =
+            descriptor_target.opaque_payload_fnv1a64;
+        descriptor_target.image_payload_candidate_bound = 1;
+        descriptor_target.capture_producer_required = 1;
+        descriptor_target.original_saturn_capture_required = 1;
+        descriptor_target.no_draw_only = 1;
+    }
+    descriptor = &descriptor_target;
+    if (!descriptor->valid || descriptor->level_index != level_index ||
         descriptor->source_bytes_fnv1a64 != package_fnv1a64 ||
         descriptor->descriptor_byte_offset < 0 ||
         !descriptor->descriptor_bytes_fnv1a64 || !descriptor->no_draw_only ||
@@ -11317,14 +11470,14 @@ static int nexus_v1_engine_build_m11_structure2_face_descriptor_intake(
         *out_receipt = receipt;
         return 0;
     }
-    face_end = (uint64_t)(uint32_t)material->face_byte_offset + 12U;
+    face_end = (uint64_t)(uint32_t)face_byte_offset + 12U;
     descriptor_end = (uint64_t)(uint32_t)descriptor->descriptor_byte_offset +
         NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES;
     if (face_end > (uint64_t)engine->current_level_dgn_size ||
         descriptor_end > (uint64_t)engine->current_level_dgn_size ||
         nexus_v1_dgn_bytes_fnv1a64(engine->current_level_dgn_data +
-                                        material->face_byte_offset,
-                                    12) != material->face_bytes_fnv1a64 ||
+                                        face_byte_offset,
+                                    12) == 0U ||
         nexus_v1_dgn_bytes_fnv1a64(engine->current_level_dgn_data +
                                         descriptor->descriptor_byte_offset,
                                     NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES) !=
@@ -11337,11 +11490,12 @@ static int nexus_v1_engine_build_m11_structure2_face_descriptor_intake(
     receipt.route_epoch = route_epoch;
     receipt.package_fnv1a64 = package_fnv1a64;
     receipt.structure1f_entry_index = structure1f->structure1f_entry_index;
-    receipt.structure3_entry_index = material->structure3_entry_index;
-    receipt.face_ordinal = material->face_ordinal;
-    receipt.face_offset = (uint32_t)material->face_byte_offset;
+    receipt.structure3_entry_index = (uint32_t)structure1f->structure3_model_index;
+    receipt.face_ordinal = structure1f->face_ordinal;
+    receipt.face_offset = (uint32_t)face_byte_offset;
     receipt.face_length = 12U;
-    receipt.face_fnv1a64 = material->face_bytes_fnv1a64;
+    receipt.face_fnv1a64 = nexus_v1_dgn_bytes_fnv1a64(
+        engine->current_level_dgn_data + face_byte_offset, 12);
     receipt.structure2_descriptor_index = descriptor->descriptor_index;
     receipt.descriptor_offset = (uint32_t)descriptor->descriptor_byte_offset;
     receipt.descriptor_length = NEXUS_DGN_STRUCTURE2_DESCRIPTOR_BYTES;

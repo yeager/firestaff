@@ -409,14 +409,31 @@ int dm2_v1_gdat_wall_m11_command_plan_build_for_movement(
         command->pixels = dm2_v1_asset_load_image_field(
             loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, field,
             &width, &height, NULL);
-        if (!raw || !raw_size || raw_size > UINT32_MAX || !command->pixels ||
-            width <= 0 || height <= 0 ||
-            !load_graphicsset_wall_local_palette(
+        {
+            int palette_ok = load_graphicsset_wall_local_palette(
                 loader, graphicsset, field, command->palette16,
-                &command->palette_hash) || !command->palette_hash ||
-            !dm2_v1_asset_load_image_metadata(
+                &command->palette_hash);
+            int metadata_ok = dm2_v1_asset_load_image_metadata(
                 loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, field,
-                &metadata)) goto fail;
+                &metadata);
+            if (!metadata_ok && loader->gdat_version == 4u && raw &&
+                raw_size > 0u && width > 0 && height > 0) {
+                /* FM Towns IMG2 wall records have no PC IMG3 offset header.
+                 * Their authenticated decoded dimensions are the complete
+                 * source geometry; absent Towns image-offset records mean
+                 * the source query offset is zero. */
+                memset(&metadata, 0, sizeof(metadata));
+                metadata.width = (uint16_t)width;
+                metadata.height = (uint16_t)height;
+                metadata.bits_per_pixel = 4u;
+                metadata.metadata_hash = hash_bytes(
+                    2166136261u, raw, raw_size);
+                metadata_ok = metadata.metadata_hash != 0u;
+            }
+            if (!raw || !raw_size || raw_size > UINT32_MAX ||
+                !command->pixels || width <= 0 || height <= 0 ||
+                !palette_ok || !command->palette_hash || !metadata_ok) goto fail;
+        }
         if (!wall_source_raw_index(loader, raw, raw_size, &raw_index) ||
             !dm2_v1_gdat_allocate_gfx256_raw_material_receipt(
                 loader, raw_index, &material) || material.source_bytes != raw ||

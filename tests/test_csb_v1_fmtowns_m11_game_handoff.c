@@ -192,6 +192,8 @@ int main(void)
     uint8_t portrait_roundtrip[CSB_FMTOWNS_PORTRAIT_DATA_SIZE];
     unsigned char fmtowns_actions[3];
     uint8_t utility_portrait_before[CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES];
+    uint8_t *encoded_dungeon_tail = NULL;
+    uint8_t *original_dungeon_tail = NULL;
     int utility_fill_x = -1;
     int utility_fill_y = -1;
 
@@ -257,6 +259,8 @@ int main(void)
     spec.sourceId = "csb";
     spec.title = "CHAOS STRIKES BACK";
     spec.dataDir = data_dir;
+    spec.csbFmtownsJapanese =
+        language == CSB_FMTOWNS_SWITCH_JAPANESE;
     spec.rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
     spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     spec.presentationWidth = 320;
@@ -645,6 +649,26 @@ int main(void)
               mini_state.active_group_count == 8u &&
               mini_state.active_group_resolved_count == 8u,
           "F31 MINI.DAT preserves its actual event heap and active-group bytes");
+    if (mini_state.valid && mini_state.dungeon.raw_data &&
+        direct_handoff.startup_mini_dungeon_tail_size > 0u) {
+        const size_t tail_size = direct_handoff.startup_mini_dungeon_tail_size;
+        const size_t serialized_size = tail_size + 2u;
+        encoded_dungeon_tail = (uint8_t *)malloc(serialized_size);
+        original_dungeon_tail = (uint8_t *)malloc(tail_size);
+        CHECK(encoded_dungeon_tail && original_dungeon_tail &&
+                  csb_v1_fmtowns_game_encode_dungeon_tail(
+                      &mini_state.dungeon, encoded_dungeon_tail,
+                      serialized_size) &&
+                  csb_v1_fmtowns_game_copy_verified_dungeon_tail(
+                      &direct_handoff, original_dungeon_tail, tail_size) &&
+                  memcmp(encoded_dungeon_tail, original_dungeon_tail,
+                         tail_size) == 0,
+              "F31 source dungeon tail serializes byte-identically before mutation");
+        free(encoded_dungeon_tail);
+        free(original_dungeon_tail);
+        encoded_dungeon_tail = NULL;
+        original_dungeon_tail = NULL;
+    }
     for (mini_active_index = 0u; mini_active_index < 8u;
          ++mini_active_index) {
         CHECK(mini_state.active_group_owners[mini_active_index].valid &&
@@ -711,6 +735,109 @@ int main(void)
               strcmp(utility_portrait_catalog.entries[0].filename, "ALEX.CMP") == 0 &&
               utility_portrait_catalog.entries[0].portrait.valid,
           "F31 C06 FILE_PICKER catalogues only real admitted PORTRAIT CMP files");
+#ifndef _WIN32
+    if (language == CSB_FMTOWNS_SWITCH_ENGLISH &&
+        utility_portrait_catalog.valid && utility_portrait_catalog.entry_count > 0u) {
+        char temporary_dir[] = "/tmp/firestaff-csb-cmp-save-XXXXXX";
+        CSB_V1_FmtownsUtilityPortraitCatalog copied_catalog =
+            utility_portrait_catalog;
+        CSB_V1_PartyState copied_party = mini_party;
+        CSB_V1_FmtownsStartupPortraitReceipt copied_portraits = mini_portraits;
+        unsigned int entry_index;
+        int temporary_ok = mkdtemp(temporary_dir) != NULL;
+        if (temporary_ok) {
+            for (entry_index = 0u;
+                 entry_index < copied_catalog.entry_count; ++entry_index) {
+                char destination[sizeof(copied_catalog.entries[entry_index].source_path)];
+                int written = snprintf(destination, sizeof(destination), "%s/%s",
+                                        temporary_dir,
+                                        copied_catalog.entries[entry_index].filename);
+                if (written < 0 || (size_t)written >= sizeof(destination) ||
+                    !copy_file(copied_catalog.entries[entry_index].source_path,
+                               destination)) {
+                    temporary_ok = 0;
+                    break;
+                }
+                snprintf(copied_catalog.entries[entry_index].source_path,
+                         sizeof(copied_catalog.entries[entry_index].source_path),
+                         "%s", destination);
+            }
+        }
+        /* The live MINI.DAT party name is the source key for F7001. If this
+         * corpus has a one-champion seed, exercise precisely that admitted
+         * name and payload; never create a test-only CMP record. */
+        if (temporary_ok && copied_party.ChampionCount > 0) {
+            int matched = 0;
+            for (entry_index = 0u;
+                 entry_index < copied_catalog.entry_count; ++entry_index) {
+                if (strncmp(copied_party.Champions[0].Name,
+                            copied_catalog.entries[entry_index].portrait.name,
+                            CSB_V1_MAX_NAME_LEN) == 0) {
+                    matched = 1;
+                    break;
+                }
+            }
+            CHECK(matched, "F31 MINI.DAT party name matches an admitted CMP record");
+            if (matched) {
+                /* F7002_ReadCMP is exercised against a different real
+                 * catalogue entry.  This is an in-memory import only: the
+                 * source CMP remains untouched and no test portrait is
+                 * created. */
+                if (copied_catalog.entry_count > 1u) {
+                    CSB_V1_PartyState loaded_party = mini_party;
+                    CSB_V1_FmtownsStartupPortraitReceipt loaded_portraits =
+                        mini_portraits;
+                    unsigned int load_index =
+                        entry_index == 0u ? 1u : 0u;
+                    uint8_t load_file[CSB_FMTOWNS_PORTRAIT_FILE_SIZE];
+                    FILE *load_handle = fopen(
+                        copied_catalog.entries[load_index].source_path, "rb");
+                    int load_read = load_handle &&
+                        fread(load_file, 1u, sizeof(load_file), load_handle) ==
+                            sizeof(load_file);
+                    if (load_handle) fclose(load_handle);
+                    CHECK(load_read &&
+                              csb_v1_fmtowns_utility_load_portrait(
+                                  &copied_catalog, (uint16_t)load_index,
+                                  &loaded_party, 0u, &loaded_portraits) &&
+                              strcmp(loaded_party.Champions[0].Name,
+                                     copied_catalog.entries[load_index].portrait.name) == 0 &&
+                              strcmp(loaded_party.Champions[0].Title,
+                                     copied_catalog.entries[load_index].portrait.title) == 0 &&
+                              memcmp(loaded_portraits.source_bytes[0],
+                                     load_file + CSB_FMTOWNS_PORTRAIT_HEADER_SIZE,
+                                     CSB_FMTOWNS_PORTRAIT_DATA_SIZE) == 0,
+                          "F7002 imports only the selected authentic CMP record");
+                }
+                uint8_t before[CSB_FMTOWNS_PORTRAIT_FILE_SIZE];
+                uint8_t after[CSB_FMTOWNS_PORTRAIT_FILE_SIZE];
+                unsigned int target = entry_index;
+                FILE *file = fopen(copied_catalog.entries[target].source_path, "rb");
+                size_t payload_offset = CSB_FMTOWNS_PORTRAIT_HEADER_SIZE;
+                int read_ok = file && fread(before, 1u, sizeof(before), file) == sizeof(before);
+                if (file) fclose(file);
+                if (read_ok) {
+                    copied_portraits.source_bytes[0][0] ^= 0x01u;
+                    CHECK(csb_v1_fmtowns_utility_save_portraits(
+                              &copied_catalog, &copied_party, &copied_portraits),
+                          "F7001 saves an admitted existing CMP atomically");
+                    file = fopen(copied_catalog.entries[target].source_path, "rb");
+                    read_ok = file && fread(after, 1u, sizeof(after), file) == sizeof(after);
+                    if (file) fclose(file);
+                    CHECK(read_ok && memcmp(before, after, payload_offset) == 0 &&
+                              memcmp(after + payload_offset,
+                                     copied_portraits.source_bytes[0],
+                                     CSB_FMTOWNS_PORTRAIT_DATA_SIZE) == 0,
+                          "F7001 preserves the authentic CMP header and replaces only planar payload");
+                }
+            }
+        }
+        for (entry_index = 0u;
+             entry_index < copied_catalog.entry_count; ++entry_index)
+            remove(copied_catalog.entries[entry_index].source_path);
+        rmdir(temporary_dir);
+    }
+#endif
     CHECK(csb_v1_fmtowns_utility_menu_action_at(
               &utility_menu,
               language == CSB_FMTOWNS_SWITCH_ENGLISH ? 102 : 98,
@@ -1219,20 +1346,30 @@ int main(void)
                        CSB_V1_F0070_ATTRIBUTE_ICON_DIRTY_PC34) != 0u,
                   "F31 F0070 releases the real champion into its selected source icon cell");
         }
-        /* F0433 stays closed: Firestaff must never write a private envelope
-         * over a native F31 slot.  F0435, however, may resume the selected
-         * authentic save after verifying its C5 header, five save parts and
-         * dungeon tail.  MINI.DAT is a real source-native F31 candidate here,
-         * not generated test data. */
+        /* F0433 writes only an already-admitted native F31 slot.  It must
+         * still reject MINI.DAT and every non-canonical target, while a real
+         * CSBGAME.DAT must survive a native write followed by F0435 readback.
+         * Both branches use source bytes; no private envelope is accepted. */
         CHECK(test_set_env("FIRESTAFF_QUICKSAVE_PATH",
                            user_save_path && user_save_path[0]
                                ? user_save_path : direct_handoff.startup_mini_path),
               "F31 resume test selects the authentic native save candidate");
-        CHECK(!M11_GameView_QuickSave(&view) &&
-                  strcmp(view.lastAction, "SAVE") == 0 &&
-                  strcmp(view.lastOutcome,
-                         "FM TOWNS NATIVE WRITEBACK REQUIRED") == 0,
-              "F31 live session blocks unproven write-back before foreign save checks");
+        if (user_save_path && user_save_path[0]) {
+            CHECK(M11_GameView_QuickSave(&view),
+                  "F31 live session writes the authenticated native CSBGAME.DAT slot");
+            memset(&user_save, 0, sizeof(user_save));
+            CHECK(csb_v1_fmtowns_game_user_save_open(
+                      (const CSB_V1_BootProfile *)view.csbBootProfile,
+                      &direct_handoff, user_save_path, &user_save) &&
+                      user_save.valid && user_save.dungeon_tail_size > 0u,
+                  "F31 writeback remains readable through the native F0435 reader");
+        } else {
+            CHECK(!M11_GameView_QuickSave(&view) &&
+                      strcmp(view.lastAction, "SAVE") == 0 &&
+                      strcmp(view.lastOutcome,
+                             "FM TOWNS NATIVE WRITEBACK REQUIRED") == 0,
+                  "F31 live session rejects MINI.DAT as a user save target");
+        }
         memset(&external_save_handoff, 0, sizeof(external_save_handoff));
         CHECK(csb_v1_fmtowns_game_user_save_handoff_open(
                   (const CSB_V1_BootProfile *)view.csbBootProfile, language,

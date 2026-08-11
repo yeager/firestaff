@@ -20,7 +20,11 @@ extern "C" {
 #endif
 
 #define DM2_V1_SOURCE_TIMER_SIZE 12U
-#define DM2_V1_SOURCE_TIMER_MAX 32U
+/* DM2 FM Towns HME-242 publishes 70 live GAME_LOAD timer slots in the
+ * authentic entrance world.  Keep the runtime queue bounded, but large
+ * enough for the source-owned timer array rather than truncating it at the
+ * older PC34 probe capacity. */
+#define DM2_V1_SOURCE_TIMER_MAX 128U
 #define DM2_V1_SOURCE_TIMER_TICK_MASK UINT32_C(0x00ffffff)
 
 typedef struct {

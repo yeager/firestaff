@@ -74,6 +74,20 @@ typedef struct Dm2TouchClickZonePc34Compat {
 unsigned int DM2_TOUCHCLICK_Compat_GetZoneCount(void);
 int DM2_TOUCHCLICK_Compat_GetZone(unsigned int ordinal,
                                   Dm2TouchClickZonePc34Compat* outZone);
+/* Look up the source route ordinal used by _4976_0d9e.  This returns source
+ * context metadata only; its PC geometry remains reference data and must not
+ * be used by the FM Towns pointer owner. */
+int DM2_TOUCHCLICK_Compat_GetZoneByIndex(
+    unsigned int zoneIndex, Dm2TouchClickZonePc34Compat* outZone);
+int DM2_TOUCHCLICK_Compat_GetZoneBySourceRecord(
+    unsigned int eventIndex, unsigned int rectId, unsigned int buttonMask,
+    unsigned int occurrence,
+    Dm2TouchClickZonePc34Compat* outZone);
+unsigned int DM2_TOUCHCLICK_Compat_GetSourceRecordContextCount(
+    unsigned int eventIndex, unsigned int rectId, unsigned int buttonMask);
+int DM2_TOUCHCLICK_Compat_GetSourceRecordContextAt(
+    unsigned int eventIndex, unsigned int rectId, unsigned int buttonMask,
+    unsigned int occurrence, Dm2TouchClickZonePc34Compat* outZone);
 unsigned int DM2_TOUCHCLICK_Compat_GetViewZoneCount(
     Dm2TouchClickViewPc34Compat view);
 int DM2_TOUCHCLICK_Compat_GetViewZone(Dm2TouchClickViewPc34Compat view,

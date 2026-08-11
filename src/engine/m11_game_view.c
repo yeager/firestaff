@@ -66,6 +66,7 @@
 #include "dm2_v1_startup_presentation.h"
 #include "dm2_v1_tech_magic.h"
 #include "dm2_v1_viewport_renderer.h"
+#include "dm2_v1_dungeon_input_owner.h"
 #include "theron/theron_v1_asset_loader.h"
 
 #include "asset_status_m12.h"
@@ -1190,6 +1191,8 @@ static M11_GameInputResult m11_dm2_startup_apply_host_receipt(
 static int m11_dm2_startup_apply_session_callback(
     void *userdata,
     const DM2_V1_SessionState *session);
+static int m11_dm2_is_fmtowns_profile(
+    const DM2_V1_BootProfile *profile);
 
 static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
                                          DM2_V1_BootStartupLaunch *launch,
@@ -1439,10 +1442,28 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
                 dm2_v1_boot_prepare_new_game_world(profile) &&
                 dm2_v1_boot_prepared_new_game_world_readonly(profile) != NULL &&
                 m11_dm2_clear_new_game_party_state(state)) {
-                /* Both the boot cache and M11's presentation cache are now
-                 * empty, but the real File_header world, tick generators and
-                 * map context have one private owner. Keep the menu active
-                 * until the source mirror-selection UI can deliver clicks. */
+                /* FM Towns STARTEND performs the first authenticated
+                 * DM2_SELECT_CHAMPION transition while GAME_LOAD is still
+                 * completing.  Its retained candidate already owns the real
+                 * hero, record pools, CAII, timers and sound queue; publish
+                 * that source transaction now so CHTW reaches the live M11
+                 * command loop.  DOS keeps the stricter preselection gate
+                 * until its source mirror input owner is bound.
+                 * Source: SKProject startend.cpp::DM2_2f3f_0789 and
+                 * sksvgame.cpp::DM2_GAME_LOAD. */
+                if (m11_dm2_is_fmtowns_profile(profile)) {
+                    DM2_V1_BootRuntimeReceipt runtime_receipt;
+                    memset(&runtime_receipt, 0, sizeof(runtime_receipt));
+                    if (dm2_v1_boot_commit_new_game_session(profile) &&
+                        dm2_v1_boot_runtime_capture(profile,
+                                                    &runtime_receipt) &&
+                        runtime_receipt.runtime_ready) {
+                        state->dm2State.startup_menu_active = 0;
+                        state->dm2State.level_loaded = 1;
+                        m11_sync_dm2_state_from_runtime(state);
+                        return M11_GAME_INPUT_REDRAW;
+                    }
+                }
             }
             state->dm2State.startup_menu_active = 1;
             if (route->status) {
@@ -1666,6 +1687,8 @@ static int m11_dm2_fmtowns_skull_menu_ready(const M11_GameViewState *state)
 {
     const DM2_V1_BootProfile *profile;
     DM2_V1_BootStartupMenuHudGdatReceipt receipt;
+    uint32_t menu_raw_hash = 0u;
+    uint32_t menu_raw_byte_count = 0u;
     if (!state || !(profile = (DM2_V1_BootProfile *)state->dm2BootProfile) ||
         !m11_dm2_is_fmtowns_profile(profile) ||
         !profile->fmtowns_skull_p3.valid ||
@@ -1676,9 +1699,24 @@ static int m11_dm2_fmtowns_skull_menu_ready(const M11_GameViewState *state)
         return 0;
     }
     memset(&receipt, 0, sizeof(receipt));
-    return dm2_v1_boot_startup_menu_hud_gdat_receipt(
-               (DM2_V1_BootProfile *)profile, &receipt) &&
-           receipt.valid;
+    /* The HUD command plan belongs to GAME_LOAD and cannot be complete while
+     * the source menu still has no party.  SKULL's preselection handoff only
+     * needs the authenticated TITLE/menu images, pointer table and palette;
+     * requiring the later party-owned HUD here deadlocks NEW GAME before its
+     * source event can create the runtime session. */
+    (void)dm2_v1_boot_startup_menu_hud_gdat_receipt(
+        (DM2_V1_BootProfile *)profile, &receipt);
+    /* The generic image receipt rejects this FM Towns 4-bpp field even
+     * though the source-specific presenter decodes it.  Use that same raw
+     * proof here, plus the decoded pointer and palette receipts. */
+    return receipt.graphics_dat_ready && receipt.pointer_layout_ready &&
+           receipt.new_game_click_ready &&
+           receipt.resume_click_surface_ready &&
+           receipt.interface_palette_ready &&
+           dm2_v1_boot_gdat_raw_asset_proof(
+               (DM2_V1_BootProfile *)profile, DM2_GDAT_CATEGORY_TITLE, 0, 4,
+               0x46544d4du, &menu_raw_hash, &menu_raw_byte_count) &&
+           menu_raw_hash != 0u && menu_raw_byte_count != 0u;
 }
 
 /* The HME-242 menu is an IMG2 surface with its own 16×4 IRGB record, rather
@@ -1937,14 +1975,35 @@ static int m11_dm2_bind_fmtowns_title(M11_GameViewState *state)
             &profile->fmtowns_title_stream, &frame_count)) return 0;
     m11_dm2_release_fmtowns_title(state);
     memset(&disc, 0, sizeof(disc));
-    if (!profile->fmtowns_disc_image ||
-        dm2_v1_fmtowns_disc_probe(profile->fmtowns_disc_image,
-                                  profile->fmtowns_disc_image_size, &disc) != 0 ||
-        dm2_v1_fmtowns_disc_extract_alloc(profile->fmtowns_disc_image,
-                                          profile->fmtowns_disc_image_size,
-                                          &disc.title,
-                                          &state->dm2FmtownsTitleBytes,
-                                          &state->dm2FmtownsTitleByteCount) != 0 ||
+    if (profile->fmtowns_disc_image) {
+        if (dm2_v1_fmtowns_disc_probe(profile->fmtowns_disc_image,
+                                      profile->fmtowns_disc_image_size,
+                                      &disc) != 0 ||
+            dm2_v1_fmtowns_disc_extract_alloc(
+                profile->fmtowns_disc_image, profile->fmtowns_disc_image_size,
+                &disc.title, &state->dm2FmtownsTitleBytes,
+                &state->dm2FmtownsTitleByteCount) != 0) {
+            m11_dm2_release_fmtowns_title(state);
+            state->dm2FmtownsTitleRejected = 1;
+            return 0;
+        }
+    } else if (profile->fmtowns_title_bytes &&
+               profile->fmtowns_title_byte_count > 0u) {
+        state->dm2FmtownsTitleBytes = (uint8_t *)malloc(
+            profile->fmtowns_title_byte_count);
+        if (!state->dm2FmtownsTitleBytes) {
+            state->dm2FmtownsTitleRejected = 1;
+            return 0;
+        }
+        memcpy(state->dm2FmtownsTitleBytes, profile->fmtowns_title_bytes,
+               profile->fmtowns_title_byte_count);
+        state->dm2FmtownsTitleByteCount = profile->fmtowns_title_byte_count;
+    } else {
+        m11_dm2_release_fmtowns_title(state);
+        state->dm2FmtownsTitleRejected = 1;
+        return 0;
+    }
+    if (
         !state->dm2FmtownsTitleBytes ||
         !dm2_v1_fmtowns_anim_stream_decode_palette(
             state->dm2FmtownsTitleBytes, state->dm2FmtownsTitleByteCount,
@@ -2008,14 +2067,35 @@ static int m11_dm2_bind_fmtowns_swoosh(M11_GameViewState *state)
             &profile->fmtowns_swoosh_stream, &frame_count)) return 0;
     m11_dm2_release_fmtowns_title(state);
     memset(&disc, 0, sizeof(disc));
-    if (!profile->fmtowns_disc_image ||
-        dm2_v1_fmtowns_disc_probe(profile->fmtowns_disc_image,
-                                  profile->fmtowns_disc_image_size, &disc) != 0 ||
-        dm2_v1_fmtowns_disc_extract_alloc(profile->fmtowns_disc_image,
-                                          profile->fmtowns_disc_image_size,
-                                          &disc.swoosh,
-                                          &state->dm2FmtownsTitleBytes,
-                                          &state->dm2FmtownsTitleByteCount) != 0 ||
+    if (profile->fmtowns_disc_image) {
+        if (dm2_v1_fmtowns_disc_probe(profile->fmtowns_disc_image,
+                                      profile->fmtowns_disc_image_size,
+                                      &disc) != 0 ||
+            dm2_v1_fmtowns_disc_extract_alloc(
+                profile->fmtowns_disc_image, profile->fmtowns_disc_image_size,
+                &disc.swoosh, &state->dm2FmtownsTitleBytes,
+                &state->dm2FmtownsTitleByteCount) != 0) {
+            m11_dm2_release_fmtowns_title(state);
+            state->dm2FmtownsTitleRejected = 1;
+            return 0;
+        }
+    } else if (profile->fmtowns_swoosh_bytes &&
+               profile->fmtowns_swoosh_byte_count > 0u) {
+        state->dm2FmtownsTitleBytes = (uint8_t *)malloc(
+            profile->fmtowns_swoosh_byte_count);
+        if (!state->dm2FmtownsTitleBytes) {
+            state->dm2FmtownsTitleRejected = 1;
+            return 0;
+        }
+        memcpy(state->dm2FmtownsTitleBytes, profile->fmtowns_swoosh_bytes,
+               profile->fmtowns_swoosh_byte_count);
+        state->dm2FmtownsTitleByteCount = profile->fmtowns_swoosh_byte_count;
+    } else {
+        m11_dm2_release_fmtowns_title(state);
+        state->dm2FmtownsTitleRejected = 1;
+        return 0;
+    }
+    if (
         !state->dm2FmtownsTitleBytes ||
         !dm2_v1_fmtowns_anim_stream_decode_palette(
             state->dm2FmtownsTitleBytes, state->dm2FmtownsTitleByteCount,
@@ -2059,14 +2139,35 @@ static int m11_dm2_bind_fmtowns_end(M11_GameViewState *state)
     }
     m11_dm2_release_fmtowns_title(state);
     memset(&disc, 0, sizeof(disc));
-    if (!profile->fmtowns_disc_image ||
-        dm2_v1_fmtowns_disc_probe(profile->fmtowns_disc_image,
-                                  profile->fmtowns_disc_image_size, &disc) != 0 ||
-        dm2_v1_fmtowns_disc_extract_alloc(profile->fmtowns_disc_image,
-                                          profile->fmtowns_disc_image_size,
-                                          &disc.end,
-                                          &state->dm2FmtownsTitleBytes,
-                                          &state->dm2FmtownsTitleByteCount) != 0 ||
+    if (profile->fmtowns_disc_image) {
+        if (dm2_v1_fmtowns_disc_probe(profile->fmtowns_disc_image,
+                                      profile->fmtowns_disc_image_size,
+                                      &disc) != 0 ||
+            dm2_v1_fmtowns_disc_extract_alloc(
+                profile->fmtowns_disc_image, profile->fmtowns_disc_image_size,
+                &disc.end, &state->dm2FmtownsTitleBytes,
+                &state->dm2FmtownsTitleByteCount) != 0) {
+            m11_dm2_release_fmtowns_title(state);
+            state->dm2FmtownsTitleRejected = 1;
+            return 0;
+        }
+    } else if (profile->fmtowns_end_bytes &&
+               profile->fmtowns_end_byte_count > 0u) {
+        state->dm2FmtownsTitleBytes = (uint8_t *)malloc(
+            profile->fmtowns_end_byte_count);
+        if (!state->dm2FmtownsTitleBytes) {
+            state->dm2FmtownsTitleRejected = 1;
+            return 0;
+        }
+        memcpy(state->dm2FmtownsTitleBytes, profile->fmtowns_end_bytes,
+               profile->fmtowns_end_byte_count);
+        state->dm2FmtownsTitleByteCount = profile->fmtowns_end_byte_count;
+    } else {
+        m11_dm2_release_fmtowns_title(state);
+        state->dm2FmtownsTitleRejected = 1;
+        return 0;
+    }
+    if (
         !state->dm2FmtownsTitleBytes ||
         !m11_dm2_fmtowns_end_frame_count(
             state->dm2FmtownsTitleBytes, state->dm2FmtownsTitleByteCount,
@@ -8406,6 +8507,9 @@ static void m11_csb_dispatch_fmtowns_cdda_track(M11_GameViewState *state,
         snprintf(cue_path, sizeof(cue_path), "%s/FMTOWNS.CUE",
                  profile->asset_root) < 0 ||
         strlen(cue_path) >= sizeof(cue_path) ||
+        /* M12's CSB materializer retains the original mixed-mode image as
+         * FMTOWNS.IMG. The CUE sheet owns its track layout; do not require a
+         * renamed/generated BIN sibling. */
         snprintf(image_path, sizeof(image_path), "%s/FMTOWNS.IMG",
                  profile->asset_root) < 0 ||
         strlen(image_path) >= sizeof(image_path)) return;
@@ -8605,6 +8709,8 @@ static int m11_csb_enter_fmtowns_utility(
     memset(&game, 0, sizeof(game));
     memset(&state->csbFmtownsUtilityPortraitReceipt, 0,
            sizeof(state->csbFmtownsUtilityPortraitReceipt));
+    memset(&state->csbFmtownsUtilityPortraitCatalog, 0,
+           sizeof(state->csbFmtownsUtilityPortraitCatalog));
     memset(&state->csbFmtownsUtilityParty, 0,
            sizeof(state->csbFmtownsUtilityParty));
     memset(state->csbFmtownsUtilityOriginalPortraits, 0,
@@ -8644,6 +8750,12 @@ static int m11_csb_enter_fmtowns_utility(
                sizeof(state->csbFmtownsUtilityPaletteRgb6));
         return 0;
     }
+    /* The editor can operate on the authenticated MINI.DAT portraits even
+     * when the optional PORTRAIT directory is absent. F7001 remains
+     * unavailable without a real C06 catalog; opening C06 itself must not
+     * be made dependent on that optional file-picker corpus. */
+    (void)csb_v1_fmtowns_utility_portrait_catalog_open(
+        profile, language, &state->csbFmtownsUtilityPortraitCatalog);
     state->csbFmtownsUtilitySelectedChampion = 0u;
     state->csbFmtownsUtilitySelectedColor = 0u;
     memcpy(state->csbFmtownsUtilityOriginalPortraits,
@@ -8978,6 +9090,8 @@ static int m11_csb_bind_fmtowns_switch(M11_GameViewState *state,
            sizeof(state->csbFmtownsUtilityParty));
     memset(&state->csbFmtownsUtilityPortraitReceipt, 0,
            sizeof(state->csbFmtownsUtilityPortraitReceipt));
+    memset(&state->csbFmtownsUtilityPortraitCatalog, 0,
+           sizeof(state->csbFmtownsUtilityPortraitCatalog));
     memset(state->csbFmtownsUtilityOriginalPortraits, 0,
            sizeof(state->csbFmtownsUtilityOriginalPortraits));
     memset(state->csbFmtownsUtilityUndoPortrait, 0,
@@ -9217,6 +9331,25 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
     } else if (hit.action == CSB_V1_FMTOWNS_UTILITY_ACTION_UNDO) {
         if (!m11_csb_fmtowns_utility_undo_portrait(state))
             return M11_GAME_INPUT_IGNORED;
+    } else if (hit.action == CSB_V1_FMTOWNS_UTILITY_ACTION_SAVE_CHAMPIONS) {
+        /* F7001 writes only source-name-matched existing CMP records. The
+         * utility catalog was admitted from the same PORTRAIT directory when
+         * C06 opened, so this cannot silently redirect a save to a host or
+         * generated path. */
+        if (!csb_v1_fmtowns_utility_save_portraits(
+                &state->csbFmtownsUtilityPortraitCatalog,
+                &state->csbFmtownsUtilityParty,
+                &state->csbFmtownsUtilityPortraitReceipt)) {
+            m11_set_status(state, "CSB FM TOWNS", "CMP SAVE REJECTED");
+            return M11_GAME_INPUT_IGNORED;
+        }
+        memcpy(state->csbFmtownsUtilityOriginalPortraits,
+               state->csbFmtownsUtilityPortraitReceipt.source_bytes,
+               sizeof(state->csbFmtownsUtilityOriginalPortraits));
+        memset(state->csbFmtownsUtilityPortraitModified, 0,
+               sizeof(state->csbFmtownsUtilityPortraitModified));
+        state->csbFmtownsUtilityUndoAvailable = 0;
+        m11_set_status(state, "CSB FM TOWNS", "CMP SAVED");
     }
     /* Load/save/new/revert/undo require CEDT006's authentic file/edit
      * transactions. They remain modal and fail closed until that owner is
@@ -9234,32 +9367,49 @@ static int m11_csb_bind_fmtowns_title(M11_GameViewState *state,
     long file_size;
     size_t bytes_read;
     int step_result;
+    int packed_title;
 
     if (!state || !state->csbBootProfile || !animation_name) return 0;
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
-    if (!m11_csb_is_fmtowns_profile(profile) || !profile->asset_root[0])
+    packed_title = strcmp(animation_name, "TITLE.ANM") == 0 &&
+        profile->fmtowns_title_bytes && profile->fmtowns_title_size != 0u;
+    if (!m11_csb_is_fmtowns_profile(profile) ||
+        (!profile->asset_root[0] && !packed_title))
         return 0;
     m11_csb_release_fmtowns_title(state);
     m11_csb_release_fmtowns_switch(state);
     m11_dm2_release_fmtowns_title(state);
-    if (snprintf(path, sizeof(path), "%s/%s", profile->asset_root,
-                 animation_name) < 0 ||
-        strlen(path) >= sizeof(path)) return 0;
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0 ||
-        (file_size = ftell(file)) <= 0 || file_size > 4 * 1024 * 1024 ||
-        fseek(file, 0, SEEK_SET) != 0) {
+    if (packed_title) {
+        file = NULL;
+        file_size = (long)profile->fmtowns_title_size;
+        state->csbFmtownsTitleBytes = (uint8_t *)malloc(
+            profile->fmtowns_title_size);
+    } else {
+        if (snprintf(path, sizeof(path), "%s/%s", profile->asset_root,
+                     animation_name) < 0 ||
+            strlen(path) >= sizeof(path)) return 0;
+        file = fopen(path, "rb");
+        if (!file || fseek(file, 0, SEEK_END) != 0 ||
+            (file_size = ftell(file)) <= 0 || file_size > 4 * 1024 * 1024 ||
+            fseek(file, 0, SEEK_SET) != 0) {
+            if (file) fclose(file);
+            return 0;
+        }
+        state->csbFmtownsTitleBytes = (uint8_t *)malloc((size_t)file_size);
+    }
+    if (!state->csbFmtownsTitleBytes) {
         if (file) fclose(file);
         return 0;
     }
-    state->csbFmtownsTitleBytes = (uint8_t *)malloc((size_t)file_size);
-    if (!state->csbFmtownsTitleBytes) {
+    if (packed_title) {
+        memcpy(state->csbFmtownsTitleBytes, profile->fmtowns_title_bytes,
+               profile->fmtowns_title_size);
+        bytes_read = profile->fmtowns_title_size;
+    } else {
+        bytes_read = fread(state->csbFmtownsTitleBytes, 1u, (size_t)file_size,
+                           file);
         fclose(file);
-        return 0;
     }
-    bytes_read = fread(state->csbFmtownsTitleBytes, 1u, (size_t)file_size,
-                       file);
-    fclose(file);
     if (bytes_read != (size_t)file_size ||
         csb_v1_fmtowns_anm_playback_init(state->csbFmtownsTitleBytes,
                                           (size_t)file_size,
@@ -12794,6 +12944,14 @@ static int m11_materialize_dm1_virtual_asset(const char *virtual_path,
         }
         return 1;
     }
+#if !defined(FIRESTAFF_ASSET_STATUS_TESTING) && \
+    !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
+    /* Packed DM1 media must be consumed by a native RAM reader.  Production
+     * M11 is forbidden from creating an asset-cache game-file copy. */
+    (void)role;
+    out_path[0] = '\0';
+    return 0;
+#endif
     if (!FSP_GetUserDataDir(user_data, sizeof(user_data)) ||
         !FSP_JoinPath(cache_root, sizeof(cache_root), user_data,
                       "asset-cache") ||
@@ -14259,6 +14417,8 @@ static void m11_writeback_champion_luck_from_snapshot(
 static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                                                        int x,
                                                        int y);
+static M11_GameInputResult m11_process_dm2_v1_c080_click(
+    M11_GameViewState* state, int x, int y);
 static M12_MenuInput m11_pointer_viewport_input(const M11_GameViewState* state,
                                                 int x,
                                                 int y);
@@ -21388,12 +21548,15 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         M11_GameView_Init(state);
         state->showDebugHUD = savedDebugHUD;
         m11_apply_launcher_options_handoff(state, spec);
-        if (!csb_v1_boot_startup_launch_alloc_pc34(
+        if (!csb_v1_boot_startup_launch_alloc_with_variant_pc34(
                 dd,
                 spec->csbUtilitySearchDir,
                 spec->savePath,
                 spec->csbImportDm1SavePath,
                 spec->entranceResumeSavePath,
+                spec->csbFmtownsJapanese
+                    ? CSB_V1_VARIANT_FMTOWNS_JA
+                    : CSB_V1_VARIANT_UNKNOWN,
                 &launch)) {
             (void)m11_csb_startup_apply_host_receipt(
                 state,
@@ -21865,6 +22028,10 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                         return 0;
                     }
                     spec.dataDir = selectedCsbRuntimeDataDir;
+                }
+                if (version->versionId &&
+                    strcmp(version->versionId, "fmtowns-ja") == 0) {
+                    spec.csbFmtownsJapanese = 1;
                 }
             }
             /* DM2's PC, FM Towns and Amiga editions can all be present below
@@ -22516,7 +22683,8 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         return 1;
     }
 
-    if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+    if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02 &&
+        !state->graphicsPopupActive) {
         Theron_V1_BootStartupFullStartReceipt full_start;
         out->levelLoaded = state->theronState.level_loaded;
         out->partyX = state->theronState.party_x;
@@ -25155,14 +25323,35 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         state->csbBootProfile && m11_csb_is_fmtowns_profile(
             (const CSB_V1_BootProfile *)state->csbBootProfile)) {
-        /* ReDMCSB LOADSAVE.C F0433 owns the F31 header, five obfuscated
-         * parts, portraits, backup and rename transaction.  Do this check
-         * before resolving a host save path or testing PC/Atari provenance:
-         * an F31 session must neither create a Firestaff save directory nor
-         * report a stale foreign receipt when native write-back is the real
-         * outstanding requirement. */
-        m11_set_status(state, "SAVE", "FM TOWNS NATIVE WRITEBACK REQUIRED");
-        return 0;
+        /* ReDMCSB LOADSAVE.C F0433 owns the F31 header, five keyed parts and
+         * slot replacement.  Start from the authenticated existing slot;
+         * the writer preserves opaque portraits and dungeon bytes and does
+         * not invent a Firestaff envelope or create a synthetic slot. */
+        if (!state->csbBootProfile ||
+            !M11_GameView_GetQuickSavePath(state, path, sizeof(path))) {
+            m11_set_status(state, "SAVE", "FM TOWNS NATIVE SAVE FAILED");
+            return 0;
+        }
+        {
+            const char *name = strrchr(path, '/');
+            name = name ? name + 1 : path;
+            if (strcmp(name, "CSBGAME.DAT") != 0) {
+                m11_set_status(state, "SAVE", "FM TOWNS NATIVE WRITEBACK REQUIRED");
+                return 0;
+            }
+        }
+        if (!csb_v1_fmtowns_game_write_user_save(
+                (CSB_V1_BootProfile *)state->csbBootProfile,
+                &state->csbFmtownsGameHandoffReceipt, path)) {
+            m11_set_status(state, "SAVE", "FM TOWNS NATIVE SAVE FAILED");
+            return 0;
+        }
+        M12_Config_SetLastSavePath(path);
+        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+        state->lastSaveTick =
+            ((CSB_V1_BootProfile *)state->csbBootProfile)->runtime.game_time;
+        m11_set_status(state, "SAVE", "CSB FM TOWNS SAVED");
+        return 1;
     }
     if (!M11_GameView_GetQuickSavePath(state, path, sizeof(path))) {
         m11_set_status(state, "SAVE", "SAVE PATH TOO LONG");
@@ -29723,6 +29912,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             }
             return M11_GAME_INPUT_IGNORED;
         }
+        if (input == M12_MENU_INPUT_CYCLE_CHAMPION) {
+            if (dm2_v1_runtime_cycle_action_champion()) {
+                m11_sync_dm2_state_from_runtime(state);
+                m11_set_status(state, NULL, NULL);
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
         if (input == M12_MENU_INPUT_BACK) {
             if (state->inventoryPanelActive) {
                 state->inventoryPanelActive = 0;
@@ -29753,6 +29950,16 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 return M11_GAME_INPUT_REDRAW;
             }
             return M11_GAME_INPUT_REDRAW;
+        }
+        if (input == M12_MENU_INPUT_REST_TOGGLE) {
+            dm2_v1_runtime_set_sleeping(!dm2_v1_runtime_is_sleeping());
+            m11_set_status(state, NULL, NULL);
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (dm2_v1_runtime_is_sleeping()) {
+            /* SKProject's sleeping input list admits wake/menu controls but
+             * does not dispatch movement or front-cell actions. */
+            return M11_GAME_INPUT_IGNORED;
         }
         if (state->inventoryPanelActive) {
             return input == M12_MENU_INPUT_NONE
@@ -30561,7 +30768,9 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
      * secondary press must not be reinterpreted as NEW or RESUME here.
      * Source: SKProject c_tmouse.cpp::command_interpreter and
      * SkWinCore.cpp::SHOW_MENU_SCREEN/HANDLE_UI_EVENT. */
-    if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
+    if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0 &&
+        !(state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+          (buttonMask & DM1_V1_MOUSE_MASK_RIGHT_PC34))) {
         return M11_GAME_INPUT_IGNORED;
     }
     if (!m11_dm2_boot_runtime_startup_pointer(
@@ -31151,7 +31360,8 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
      * Source lock: THQUEST.ASM T400/T520/T560/T600/T700 owns the startup,
      * movement and action boundaries.  Do not route these events through the
      * ReDMCSB/DM1 C007..C116 pointer table. */
-    if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+    if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02 &&
+        !state->graphicsPopupActive) {
         if (state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON ||
             !state->theronState.level_loaded) {
             if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0) {
@@ -32002,25 +32212,90 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         }
     }
 
-    if (m11_point_in_rect(x, y,
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT ||
+        m11_point_in_rect(x, y,
                           M11_VIEWPORT_X,
                           M11_VIEWPORT_Y,
                           M11_VIEWPORT_W,
                           M11_VIEWPORT_H)) {
         if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
-            /* SKProject routes a live DM2 viewport click through c_tmouse /
-             * c_input's active GDAT click table, then c_gui_draw/c_dialog
-             * or the map-record owner.  M11's m11_pointer_viewport_input()
-             * is DM1 geometry: it turns the left/right viewport thirds into
-             * host movement tokens.  The DM2 table has not been mounted with
-             * the runtime session yet, so letting that fallback through
-             * would make a real mouse, touch tap, or Steam Deck touchpad
-             * synthesize movement that no original DM2 event selected.
-             *
-             * Keep source-owned startup rectangles above this branch live;
-             * a future c_tmouse table owner must replace this rejection,
-             * rather than re-enable the DM1 viewport heuristic. */
-            return M11_GAME_INPUT_IGNORED;
+            DM2_V1_BootProfile *profile =
+                (DM2_V1_BootProfile *)state->dm2BootProfile;
+            DM2_V1_DungeonInputOwner input_owner;
+            DM2_V1_DungeonInputReceipt input_receipt;
+            M12_MenuInput routed_input = M12_MENU_INPUT_NONE;
+
+            /* SKProject routes a live DM2 click through c_tmouse/c_input's
+             * active GDAT table.  PC-English uses its recovered PC matrix;
+             * FM Towns uses only its authenticated RAW4 rectangle subset. */
+            if (!profile ||
+                ((strcmp(profile->graphics_md5,
+                         "027ff3b8ddc2c4c4cdda7ada0b0bc46c") == 0) ?
+                     !dm2_v1_dungeon_input_owner_init_fmtowns(
+                         &input_owner, profile) :
+                     !dm2_v1_dungeon_input_owner_init(
+                         &input_owner, profile->graphics_md5)) ||
+                !dm2_v1_dungeon_input_owner_route(
+                    &input_owner, (int16_t)x, (int16_t)y, buttonMask,
+                    NULL, NULL, &input_receipt) ||
+                !input_receipt.accepted) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+            switch (input_receipt.event_index) {
+            case 1: routed_input = M12_MENU_INPUT_TURN_LEFT; break;
+            case 2: routed_input = M12_MENU_INPUT_TURN_RIGHT; break;
+            case 3: routed_input = M12_MENU_INPUT_UP; break;
+            case 4: routed_input = M12_MENU_INPUT_STRAFE_RIGHT; break;
+            case 5: routed_input = M12_MENU_INPUT_DOWN; break;
+            case 6: routed_input = M12_MENU_INPUT_STRAFE_LEFT; break;
+            case 80:
+                return m11_process_dm2_v1_c080_click(state, x, y);
+            case 116: case 117: case 118: case 119:
+            case 120: case 121: case 122: case 123:
+                if (dm2_v1_runtime_activate_action_hand(
+                        (input_receipt.event_index - 116u) / 2u,
+                        (input_receipt.event_index - 116u) % 2u))
+                    return M11_GAME_INPUT_REDRAW;
+                return M11_GAME_INPUT_IGNORED;
+            case 112:
+                /* COMMAND.C event 0x70 closes the source hand/action panel
+                 * without committing an action. */
+                M11_GameView_ClearActingChampion(state);
+                return M11_GAME_INPUT_REDRAW;
+            case 11:
+                /* c_input.cpp panel event 11 is the source inventory-panel
+                 * close lane.  Keep it distinct from the DM1 C011 table:
+                 * this branch is admitted only after the authenticated DM2
+                 * Towns route has resolved the native rectangle. */
+                if (state->inventoryPanelActive) {
+                    state->inventoryPanelActive = 0;
+                    return M11_GAME_INPUT_REDRAW;
+                }
+                return M11_GAME_INPUT_IGNORED;
+            case 142:
+                /* Source sleep/wake table: 142 enters sleep and 143 wakes.
+                 * The runtime owns the bit; no host timer is created here. */
+                dm2_v1_runtime_set_sleeping(1);
+                return M11_GAME_INPUT_REDRAW;
+            case 143:
+                dm2_v1_runtime_set_sleeping(0);
+                return M11_GAME_INPUT_REDRAW;
+            case 113: case 114: case 115: {
+                DM2_V1_EngageCommandReceipt command_receipt;
+                if (dm2_v1_runtime_proceed_hand_command(
+                        input_receipt.event_index - 113u,
+                        &command_receipt))
+                    return M11_GAME_INPUT_REDRAW;
+                return M11_GAME_INPUT_IGNORED;
+            }
+            default: break;
+            }
+            if (routed_input == M12_MENU_INPUT_NONE) {
+                /* Viewport and other source zones need their c_input owner;
+                 * do not turn them into a generic movement shortcut. */
+                return M11_GAME_INPUT_IGNORED;
+            }
+            return M11_GameView_HandleInput(state, routed_input);
         }
         if ((m11_v1_chrome_mode_enabled(state) ||
              state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) &&
@@ -35370,6 +35645,29 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
         }
     }
 
+    return M11_GAME_INPUT_IGNORED;
+}
+
+static M11_GameInputResult m11_process_dm2_v1_c080_click(
+    M11_GameViewState* state, int x, int y) {
+    DM2_V1_RuntimeViewportClickReceipt receipt;
+
+    if (!state || !state->active ||
+        state->sourceKind != M11_GAME_SOURCE_DM2_BOOT) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    /* DM2's C080 path is c_events.cpp::CLICK_VWPT.  Its hit list is
+     * produced by the source viewport renderer (c_rwbb), not by DM1's
+     * front-cell/door/mirror handler.  Until the corresponding DM2
+     * object-action owners are bound, fail closed after resolving only a
+     * renderer-owned target; this prevents a DM1 action from mutating a DM2
+     * session. */
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm2_v1_runtime_route_viewport_click(x, y, &receipt) ||
+        !receipt.accepted) {
+        return M11_GAME_INPUT_IGNORED;
+    }
     return M11_GAME_INPUT_IGNORED;
 }
 

@@ -309,6 +309,11 @@ int main(void)
             source.gdat_subcategory = 4u;
             source.gdat_entry = 5u;
             source.rectno = 0x48u;
+            source.hand_cooldown = 1u;
+            source.gray_overlay_required = 1u;
+            source.item_charge_valid = 1u;
+            source.item_charge = 3u;
+            source.item_charge_required = 1u;
             source.map_load_token = 42u;
             source.scene_control_hash = 0x48414e44u;
             source.palette_hash = interface_palette.hash;
@@ -319,6 +324,12 @@ int main(void)
             source.destination_rect = source_placement.destination;
             dm2_v1_viewport_set_hud_hand_action_source(&viewport, &source);
             dm2_v1_render_ui_chrome(&viewport);
+            if (framebuffer[source.destination_rect.y * DM2_VP_WIDTH +
+                            source.destination_rect.x] != interface_palette.palette16[0]) {
+                fputs("FAIL: source cooldown did not apply the authentic checker overlay\n",
+                      stderr);
+                ++failures;
+            }
             if (!dm2_v1_viewport_last_hud_hand_action_presentation_command(
                     &viewport, &hand_command) || !hand_command.valid ||
                 hand_command.material.gdat_index != hand_gdat_index ||

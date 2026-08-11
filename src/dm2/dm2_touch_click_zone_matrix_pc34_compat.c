@@ -1,5 +1,6 @@
 #include "dm2_touch_click_zone_matrix_pc34_compat.h"
 
+#include <stdio.h>
 #include <string.h>
 
 /* Source-locked DM2 per-view click/touch zone inventory — the
@@ -1716,6 +1717,74 @@ int DM2_TOUCHCLICK_Compat_GetZone(unsigned int ordinal,
     if (!outZone || ordinal >= DM2_ZONE_COUNT) return 0;
     *outZone = kDm2TouchClickZones[ordinal];
     return 1;
+}
+
+int DM2_TOUCHCLICK_Compat_GetZoneByIndex(
+    unsigned int zoneIndex, Dm2TouchClickZonePc34Compat* outZone) {
+    unsigned int i;
+    if (!outZone) return 0;
+    for (i = 0; i < DM2_ZONE_COUNT; ++i) {
+        if (kDm2TouchClickZones[i].zoneIndex != zoneIndex) continue;
+        *outZone = kDm2TouchClickZones[i];
+        return 1;
+    }
+    return 0;
+}
+
+int DM2_TOUCHCLICK_Compat_GetZoneBySourceRecord(
+    unsigned int eventIndex, unsigned int rectId, unsigned int buttonMask,
+    unsigned int occurrence,
+    Dm2TouchClickZonePc34Compat* outZone) {
+    return DM2_TOUCHCLICK_Compat_GetSourceRecordContextAt(
+        eventIndex, rectId, buttonMask, occurrence, outZone);
+}
+
+unsigned int DM2_TOUCHCLICK_Compat_GetSourceRecordContextCount(
+    unsigned int eventIndex, unsigned int rectId, unsigned int buttonMask) {
+    unsigned int i;
+    unsigned int count = 0u;
+    for (i = 0; i < DM2_ZONE_COUNT; ++i) {
+        const char *evidence = kDm2TouchClickZones[i].sourceEvidence;
+        const char *source = evidence ? strstr(evidence, "event 0x") : NULL;
+        unsigned int sourceEvent;
+        unsigned int sourceRect;
+        unsigned int sourceMask;
+        if (!source || sscanf(source, "event 0x%x rectid 0x%x w4 0x%x",
+                              &sourceEvent, &sourceRect, &sourceMask) != 3)
+            continue;
+        if (sourceEvent != eventIndex || sourceRect != rectId ||
+            sourceMask != buttonMask)
+            continue;
+        ++count;
+    }
+    return count;
+}
+
+int DM2_TOUCHCLICK_Compat_GetSourceRecordContextAt(
+    unsigned int eventIndex, unsigned int rectId, unsigned int buttonMask,
+    unsigned int occurrence, Dm2TouchClickZonePc34Compat* outZone) {
+    unsigned int i;
+    if (!outZone) return 0;
+    for (i = 0; i < DM2_ZONE_COUNT; ++i) {
+        const char *evidence = kDm2TouchClickZones[i].sourceEvidence;
+        const char *source = evidence ? strstr(evidence, "event 0x") : NULL;
+        unsigned int sourceEvent;
+        unsigned int sourceRect;
+        unsigned int sourceMask;
+        if (!source || sscanf(source, "event 0x%x rectid 0x%x w4 0x%x",
+                              &sourceEvent, &sourceRect, &sourceMask) != 3)
+            continue;
+        if (sourceEvent != eventIndex || sourceRect != rectId ||
+            sourceMask != buttonMask)
+            continue;
+        if (occurrence != 0u) {
+            --occurrence;
+            continue;
+        }
+        *outZone = kDm2TouchClickZones[i];
+        return 1;
+    }
+    return 0;
 }
 
 unsigned int DM2_TOUCHCLICK_Compat_GetViewZoneCount(

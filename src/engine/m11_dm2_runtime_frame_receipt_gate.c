@@ -23,6 +23,17 @@ static int dm2_m11_wall_material_plan_matches(
             runtime_receipt->wall_material_plan_command_count == 0;
     }
 
+    /* A valid source wall plan remains bound for an indoor frame even when
+     * the current pose has no visible wall cell.  The viewport receipt then
+     * has no wall blit to repeat, but M11 must still compare the plan that
+     * admitted the map rather than reject an otherwise complete floor frame. */
+    if (runtime_receipt->wall_material_plan_hash == 0u &&
+        runtime_receipt->wall_material_plan_command_count == 0 &&
+        boot_receipt->runtime_m11_frame_wall_material_plan_hash != 0u &&
+        boot_receipt->runtime_m11_frame_wall_material_plan_command_count > 0) {
+        return 1;
+    }
+
     return boot_receipt->runtime_m11_frame_wall_material_plan_hash != 0u &&
         boot_receipt->runtime_m11_frame_wall_material_plan_command_count > 0 &&
         runtime_receipt->wall_material_plan_hash ==
@@ -89,8 +100,10 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
          (boot_receipt->runtime_m11_frame_door_map_chip_material_plan_hash == 0u ||
           !boot_receipt->runtime_m11_frame_door_map_chip_material_plan_consumed)) ||
         boot_receipt->runtime_m11_frame_palette_hash == 0u ||
-        boot_receipt->runtime_m11_frame_interface_action_palette_hash == 0u ||
-        !boot_receipt->runtime_m11_frame_interface_action_palette_consumed ||
+        (boot_receipt->runtime_m11_frame_interface_action_palette_hash == 0u &&
+         boot_receipt->runtime_m11_frame_hud_material_plan_required) ||
+        (!boot_receipt->runtime_m11_frame_interface_action_palette_consumed &&
+         boot_receipt->runtime_m11_frame_hud_material_plan_required) ||
         (boot_receipt->runtime_m11_frame_interface_rect14_required &&
          (!boot_receipt->runtime_m11_frame_interface_rect14_consumed ||
           boot_receipt->runtime_m11_frame_interface_rect14_table_hash == 0u)) ||

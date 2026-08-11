@@ -15,6 +15,12 @@
 #include "dm2_v1_party.h"
 #include <stddef.h>
 
+#define DM2_V1_FMTOWNS_MOUSE_INPUT_RECORD_COUNT 264u
+#define DM2_V1_FMTOWNS_MOUSE_INPUT_RECORD_BYTES 6u
+#define DM2_V1_FMTOWNS_MOUSE_INPUT_TABLE_BYTES \
+    (DM2_V1_FMTOWNS_MOUSE_INPUT_RECORD_COUNT * \
+     DM2_V1_FMTOWNS_MOUSE_INPUT_RECORD_BYTES)
+
 #define DM2_V1_GRAPHICSSET_SCENE_COLORKEY_PRESENT_MASK (1u << 0)
 #define DM2_V1_GRAPHICSSET_SCENE_FLAGS_PRESENT_MASK    (1u << 1)
 #define DM2_V1_GRAPHICSSET_SCENE_ADMISSION_PRESENT_MASK \
@@ -471,6 +477,19 @@ typedef struct {
     char    fmtowns_zip_path[512];
     uint8_t *fmtowns_disc_image;
     size_t   fmtowns_disc_image_size;
+    /* Loose extracted HME-242 files are still original media. Keep their
+     * bounded bytes when no raw CD image is available, so native startup
+     * does not require an archive-side substitute. */
+    uint8_t *fmtowns_twanim_bytes;
+    size_t   fmtowns_twanim_byte_count;
+    uint8_t *fmtowns_skull_bytes;
+    size_t   fmtowns_skull_byte_count;
+    uint8_t *fmtowns_swoosh_bytes;
+    size_t   fmtowns_swoosh_byte_count;
+    uint8_t *fmtowns_title_bytes;
+    size_t   fmtowns_title_byte_count;
+    uint8_t *fmtowns_end_bytes;
+    size_t   fmtowns_end_byte_count;
     uint32_t fmtowns_cdda_track_starts[9]; /* track_starts[2..8] */
     int      fmtowns_cdda_track_count;
     /* Phar Lap P3 executable receipts for the selected native programs.
@@ -482,6 +501,13 @@ typedef struct {
      * alone are not admission: a name-compatible executable is rejected. */
     char     fmtowns_twanim_md5[33];
     char     fmtowns_skull_md5[33];
+    int      fmtowns_skull_mouse_input_anchor_verified;
+    uint32_t fmtowns_skull_mouse_input_table_hash;
+    /* Copy of the authenticated SKULL.EXP MOUSE_INPUT span.  The bytes are
+     * retained as a source receipt after the executable buffer is released;
+     * consumers must still require the identity/hash gates above. */
+    uint8_t  fmtowns_skull_mouse_input_table[
+        DM2_V1_FMTOWNS_MOUSE_INPUT_TABLE_BYTES];
     /* HMP-to-CDDA selection read from the native SKULL.EXP member in the
      * selected disc buffer.  The receipt owns only copied table bytes. */
     DM2_V1_FmtownsCddaMusicReceipt fmtowns_cdda_music;
@@ -597,6 +623,12 @@ int dm2_v1_boot_select_new_game_champion(DM2_V1_BootProfile *profile,
  */
 int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
     DM2_V1_BootProfile *profile, uint16_t mirror_object_id);
+
+/* Publish the retained source GAME_LOAD candidate as the live runtime.  This
+ * is deliberately explicit: preparing or selecting a private candidate does
+ * not activate gameplay, and this call fails unless every transferred owner
+ * passes the runtime handoff gate. */
+int dm2_v1_boot_commit_new_game_session(DM2_V1_BootProfile *profile);
 
 /* Read-only access for a later atomic runtime handoff. */
 const void *dm2_v1_boot_new_game_world_readonly(const DM2_V1_BootProfile *profile);

@@ -1,27 +1,32 @@
 #include "dm2_v1_fmtowns_graphics_dat_ext_walker.h"
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* Build a synthetic ext_v4 blob with `n` records; record[i] declares
- * stored_size = sizes[i], aux = auxes[i]. Payload is `sizes[i]`
- * bytes of value `(uint8_t)i`. */
+/* Build a small raw-table blob with the same layout as the real ext_v4/v5
+ * files. `auxes` is retained only to keep the test call sites explicit that
+ * the old four-byte stride had no second real field. */
 static uint8_t *make_blob(uint16_t sig, uint16_t n,
                           const uint16_t *sizes, const uint16_t *auxes,
                           size_t *out_len) {
+    (void)auxes;
     size_t payload = 0;
     for (uint16_t i = 0; i < n; ++i) payload += sizes[i];
-    size_t total = 4u + 4u * (size_t)n + payload;
+    size_t total = 6u + 2u * (size_t)n + payload;
     uint8_t *b = (uint8_t *)calloc(1, total);
     b[0] = (uint8_t)sig; b[1] = (uint8_t)(sig >> 8);
     b[2] = (uint8_t)n;   b[3] = (uint8_t)(n >> 8);
-    for (uint16_t i = 0; i < n; ++i) {
-        size_t rp = 4u + (size_t)i * 4u;
+    b[4] = (uint8_t)sizes[0]; b[5] = (uint8_t)(sizes[0] >> 8);
+    b[6] = (uint8_t)(sizes[0] >> 16); b[7] = (uint8_t)(sizes[0] >> 24);
+    for (uint16_t i = 1; i < n; ++i) {
+        size_t rp = 8u + (size_t)(i - 1u) * 2u;
         b[rp+0] = (uint8_t)sizes[i]; b[rp+1] = (uint8_t)(sizes[i] >> 8);
-        b[rp+2] = (uint8_t)auxes[i]; b[rp+3] = (uint8_t)(auxes[i] >> 8);
     }
-    size_t cursor = 4u + 4u * (size_t)n;
+    size_t cursor = 6u + 2u * (size_t)n;
     for (uint16_t i = 0; i < n; ++i) {
         memset(b + cursor, (int)(uint8_t)i, sizes[i]);
         cursor += sizes[i];
@@ -40,8 +45,8 @@ static void test_header(void) {
            == DM2_V1_FMTOWNS_GRAPHICS_DAT_EXT_OK);
     assert(h.signature == 0x8004u);
     assert(h.asset_count == 3u);
-    assert(h.header_size == 16u);
-    assert(h.payload_offset == 16u);
+    assert(h.header_size == 12u);
+    assert(h.payload_offset == 12u);
     assert(h.payload_size == 60u);
     free(b);
 }
@@ -73,13 +78,13 @@ static void test_get_record(void) {
     dm2_v1_fmtowns_graphics_dat_ext_record_t r;
     assert(dm2_v1_fmtowns_graphics_dat_ext_get_record_pc34(b, len, 0, &r)
            == DM2_V1_FMTOWNS_GRAPHICS_DAT_EXT_OK);
-    assert(r.index == 0 && r.stored_size == 8 && r.aux == 8);
-    assert(r.payload_offset == 4u + 16u);   /* header (4+16) */
-    assert(r.is_directory == 0);            /* small size, not directory */
+    assert(r.index == 0 && r.stored_size == 8 && r.aux == 0);
+    assert(r.payload_offset == 14u);        /* raw table header */
+    assert(r.is_directory == 1);            /* raw 0 is the ENT1 directory */
     assert(dm2_v1_fmtowns_graphics_dat_ext_get_record_pc34(b, len, 2, &r)
            == DM2_V1_FMTOWNS_GRAPHICS_DAT_EXT_OK);
-    assert(r.stored_size == 4 && r.aux == 4);
-    assert(r.payload_offset == 20u + 8u + 16u);
+    assert(r.stored_size == 4 && r.aux == 0);
+    assert(r.payload_offset == 14u + 8u + 16u);
     /* Out of range. */
     assert(dm2_v1_fmtowns_graphics_dat_ext_get_record_pc34(b, len, 4, &r)
            == DM2_V1_FMTOWNS_GRAPHICS_DAT_EXT_BAD_ARGS);

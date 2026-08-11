@@ -239,6 +239,49 @@ populated dungeon states.
 
 ## Chaos Strikes Back (CSB)
 
+### FM Towns native save boundary
+
+- **FM-TOWNS-BOOT-002 — language-private loose-tree handoff is closed.** A
+  direct extraction containing both `CDATA` and `CJDATA` now carries the
+  selected FM Towns language into the CSB boot owner. English binds
+  `CHTWE.EXP`/`CDATA`; Japanese binds `CHTWJ.EXP`/`CJDATA`, with both required
+  files admitted by their authentic hashes. The real-data M11 handoff test
+  passes for both languages.
+
+- **FM-TOWNS-RESUME-001 — retail MINI.DAT resume is closed.** The real
+  English and Japanese `CDATA/CJDATA/MINI.DAT` bootstrap saves now pass the
+  production M11 `savePath` boundary, restore the authenticated map-4 pose,
+  champion/event state and dungeon tail, and enter GAMELOOP without replaying
+  TITLE.ANM. This does not close arbitrary user `CSBGAME.DAT` compatibility or
+  native writeback.
+
+- **FM-TOWNS-SAVE-001 — arbitrary user-save compatibility remains open.** The
+  external `fmtowns-save-corpus/CSBGAME.DAT` and `CSBGAME-JP.DAT` files are
+  retained as unclassified candidates; the current F7061/F7057 reader rejects
+  them before a complete native F0435 state receipt is produced. The writer
+  therefore remains unavailable for those files. `MINI.DAT` resume is the only
+  positive save path currently covered, and no synthetic save is used.
+
+- **FM-TOWNS-C06-SAVE-001 — C06 `SAVE CHAMPIONS` now has a source-owned
+  `.CMP` write path.** The utility opens the authenticated `PORTRAIT`
+  catalogue, resolves each live party name to an existing admitted `.CMP`,
+  preserves its 44-byte native header, and atomically replaces only the
+  receipt-bound 464-byte planar portrait payload. Unknown names, missing
+  catalogues, invalid records, and generated filenames remain rejected. The
+  real F31 portrait corpus covers the transaction in
+  `csb_v1_fmtowns_m11_game_handoff`; C06 `LOAD CHAMPIONS`, name/title editing,
+  and the native file-picker selection loop remain open.
+
+- **FM-TOWNS-C06-LOAD-001 — `F7002_ReadCMP` is now an authenticated import
+  transaction.** Given an index returned by the admitted `PORTRAIT` catalogue,
+  Firestaff rechecks the exact 508-byte file and its catalogue hash, then
+  copies only that record's native 464-byte planar payload and 8/20-byte
+  name/title into the selected party slot. It never accepts a host path,
+  creates a row, or chooses a fallback. The real 24-file English catalogue
+  covers the import in `csb_v1_fmtowns_m11_game_handoff`; the C06 selector and
+  its modal keyboard/mouse loop still need source-level recovery before this
+  transaction can be exposed through gameplay input.
+
 ### CSB V1
 
 - 🔧 Phase 2 - Dungeon data model: synthetic CSB dungeon loader/model probe exists, loader/free-cycle safety is covered, and the PC real-asset launch gate proves canonical CSB assets enter the runtime-owned dungeon singleton. Core PC runtime/input/movement slices are now CTest-registered for command chains, input-queue binding, one-step movement, rotation between steps, runtime tick accumulation, queue overflow, reincarnation penalty, projectile speed, Grey Lord combat, DECOMPDU, version-checker sensors, monster generator state, chaos cast cooldown/targeting, one DSA trigger step, save import path, save runtime boundary, Neophyte mode, and Zokathra spell handling. Remaining work is deeper end-to-end gameplay parity, real save compatibility artifacts, viewport/UI runtime evidence, and playability without DM1-only assumptions.
@@ -267,4 +310,3 @@ populated dungeon states.
 - 🔧 Phase 2 - Enhanced asset pipeline: presentation-mode selection API is wired (csb_v2_presentation_mode_set_m12, m12PresentationMode 0..3 → CSB_V2_PM_V1_FAITHFUL/V20_FILTERED/V21_UPSCALED/V22_MODERN). **2026-06-19 CSB V2.2 modern-asset module landed:** new `csb_v22_modern_assets_pc34.c/.h` (include + src) mirrors dm1_v2_modern_assets_pc34 with CSB-specific paths (`~/.firestaff/assets/csb/modern/`) and CSB source-locks (ReDMCSB LIGHT.C F0212 / DUNVIEW.C F0128 / PANEL.C F0354 / COMMAND.C:108-113,254-291 + CSBWin/Viewport.cpp:7290 + CSBWin/Chaos.cpp:60-69). Ctest `test_csb_v22_modern_assets_pc34` 33/33 (path resolution from dataDir, manifest validation missing/empty/partial, installed flag round-trip, epx warm flag round-trip, full fallback chain V1→V2.0→V2.1 cold/warm→V2.2 missing/installed, shape source name strings, missing placeholder 16x16 magenta, source evidence citation). **2026-06-19 CSB V2.2 first-cut asset pack landed:** `.openclaw/tmp/csb_v22_asset_author.py` procedural generator (5 PNGs: wall_dungeon/floor_prison/creature_chaos_fiend/panel_lord_order/champion_warrior_csb + modern_asset_manifest.json v1.0.0). CSB-specific palette accents: CHAOS_PURPLE (chaos magic), IRON_GREY (prison), LORD_GOLD (Lord Order). Smoke: `csb_v22_set_manifest_path(dataDir)` resolves correctly, `csb_v22_modern_assets_available()=1` end-to-end against real CSB data dir. **2026-06-21 CSB in-place render gate:** `csb_v22_shape_cache_update` now respects `csb_v2_presentation_mode_is_v22()`, `csb_v22_inplace_draw_init()` loads from `~/.firestaff/assets/csb/modern/`, and `csb_v22_inplace_render_pass()` uses the cache's 0..2 depth coordinates. New CTest `csb_v22_inplace_render_probe` PASS verifies a synthetic cache, V1 inactive cache, V22 bitmap lookup, 9 painted CSB cells, 4-direction sweep (36 cells), and source evidence. **2026-07-31 product binding correction:** the handcrafted V2.2 shape/material book is now probe-only; Firestaff links `csb_v22_shapes_runtime_gate.c`, which returns no material and therefore leaves V1/V2.1 pixels intact. The launcher-installed bit is also no longer an admission override: mode selection rechecks the finished-art/provenance gate. Remaining work: decode and review a real CSB material/pixel binding from PC 3.4 GRAPHICS.DAT before re-admitting any V2.2 art route; do not author PBR or procedural replacement art.
 
 - 🔧 Phase 3 - Enhanced UI overlays: scaffolded (HUD compass/depth/gold/champion bars/action strip/chaos indicator, csb_v2_hud_overlay_pc34.h/.c, build+probe pass). Mode selection gate added in this pass (csb_v2_presentation_mode_is_v22() / is_v21() / is_v20() / is_v1()) so the HUD overlay can branch on the active mode.
-

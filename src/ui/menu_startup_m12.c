@@ -61,6 +61,7 @@
 
 void m12_update_game_availability(const FS_GameAvailability *avail);
 static int m12_data_directory_dialog_token_is_placeholder(const char* path);
+static const char* m12_translate_for_locale(int localeIndex, const char* english);
 
 typedef struct M12_DataDirScanJob {
     SDL_Thread* thread;
@@ -414,15 +415,17 @@ static const char* g_patchModes[] = {_("ORIGINAL"), _("PATCHED")};
 static const char* g_languages[] = {
     _("EN"), _("SV"), _("FR"), _("DE"), _("JA"), _("ZH"),
     _("CS"), _("DA"), _("ES"), _("FI"), _("HU"), _("IT"),
-    _("KO"), _("NL"), _("NO"), _("PL"), _("PT"), _("RU"), _("TR"), _("ID")
+    _("KO"), _("NL"), _("NO"), _("PL"), _("PT"), _("RU"), _("TR"), _("ID"),
+    _("AUTO")
 };
 static const char* g_languageNames[] = {
-    _("ENGLISH"), _("SVENSKA"), "FRANÇAIS", _("DEUTSCH"), "日本語", "简体中文",
-    "ČEŠTINA", "DANSK", "ESPAÑOL", "SUOMI", "MAGYAR", "ITALIANO",
-    "한국어", "NEDERLANDS", "NORSK BOKMÅL", "POLSKI", "PORTUGUÊS",
-    "РУССКИЙ", "TÜRKÇE", "BAHASA INDONESIA"
+    _("ENGLISH"), _("SVENSKA"), _("FRANÇAIS"), _("DEUTSCH"), _("日本語"), _("简体中文"),
+    _("ČEŠTINA"), _("DANSK"), _("ESPAÑOL"), _("SUOMI"), _("MAGYAR"), _("ITALIANO"),
+    _("한국어"), _("NEDERLANDS"), _("NORSK BOKMÅL"), _("POLSKI"), _("PORTUGUÊS"),
+    _("РУССКИЙ"), _("TÜRKÇE"), _("BAHASA INDONESIA"), _("AUTO")
 };
 enum { M12_UI_LANGUAGE_COUNT = (int)(sizeof(g_languages) / sizeof(g_languages[0])) };
+enum { M12_UI_LANGUAGE_AUTO_INDEX = M12_UI_LANGUAGE_COUNT - 1 };
 static const char* g_cheatsToggle[] = {_("OFF"), _("ON")};
 static const char* g_speedLabels[] = {_("SLOWER"), _("NORMAL"), _("FASTER")};
 static const char* g_scaleModes[] = {"1X", "2X", "3X", "4X", _("FIT"), _("STRETCH")};
@@ -524,6 +527,8 @@ static FS_Language m12_fs_language_from_menu_index(int index) {
         case 17: return FS_LANG_RU;
         case 18: return FS_LANG_TR;
         case 19: return FS_LANG_ID;
+        case M12_UI_LANGUAGE_AUTO_INDEX:
+            return fs_l10n_detect_system_language();
         case 0:
         default: return FS_LANG_EN;
     }
@@ -539,8 +544,31 @@ static int m12_menu_index_from_fs_language(FS_Language language) {
     return 0;
 }
 
+static int m12_resolved_locale_index(int index) {
+    if (index == M12_UI_LANGUAGE_AUTO_INDEX) {
+        return m12_menu_index_from_fs_language(
+            fs_l10n_detect_system_language());
+    }
+    return m12_clamp_index(index, M12_UI_LANGUAGE_COUNT);
+}
+
+static int m12_language_popup_index(const M12_StartupMenuState* state) {
+    if (state && !state->languageExplicit) {
+        return M12_UI_LANGUAGE_AUTO_INDEX;
+    }
+    return state ? m12_clamp_index(state->settings.languageIndex,
+                                   M12_UI_LANGUAGE_COUNT) : 0;
+}
+
 static void m12_sync_l10n_language(const M12_StartupMenuState* state) {
     int index = state ? state->settings.languageIndex : 0;
+    /* AUTO is a policy, not the last concrete language previously stored in
+     * the settings struct.  Resolve it from the operating-system locale each
+     * time the menu state is synchronised; otherwise switching back to AUTO
+     * can leave the renderer in the previously selected language. */
+    if (state && !state->languageExplicit) {
+        index = M12_UI_LANGUAGE_AUTO_INDEX;
+    }
     fs_l10n_set_language(m12_fs_language_from_menu_index(index));
 }
 
@@ -1051,7 +1079,7 @@ static int m12_entry_index_for_game_id(const M12_StartupMenuState* state,
 
 /* Language cycle accessors.  g_languages[] / g_languageNames[] are
  * file-local to this module; these getters expose just the count
- * and the per-index strings so probes can drive the 20-language
+ * and the per-index strings so probes can drive the 20-locale picker
  * cycle from the production source of truth without hardcoding 19
  * (or the locale codes) inline. */
 int M12_StartupMenu_GetLanguageCount(void) {
@@ -1069,7 +1097,12 @@ const char* M12_StartupMenu_GetLanguageName(int index) {
     if (index < 0 || index >= M12_UI_LANGUAGE_COUNT) {
         return NULL;
     }
-    return g_languageNames[index];
+    /* Keep callers such as the accessibility manifest on the same catalog
+     * path as the renderer.  The raw table is the msgid; the returned
+     * pointer may refer to the loaded locale catalog. */
+    return m12_translate_for_locale(
+        m12_menu_index_from_fs_language(fs_l10n_get_language()),
+        g_languageNames[index]);
 }
 
 static int m12_cycle_index(int value, int delta, int count) {
@@ -1434,6 +1467,7 @@ static int m12_resolve_catalog_path(int localeIndex, char* out, size_t outSize) 
     char path[FSP_PATH_MAX];
     const char* localeDir;
     const char* basePath;
+    localeIndex = m12_resolved_locale_index(localeIndex);
     if (!out || outSize == 0U || localeIndex < 0 || localeIndex >= M12_UI_LANGUAGE_COUNT) {
         return 0;
     }
@@ -1492,6 +1526,7 @@ static void m12_load_runtime_catalog(int localeIndex) {
     char msgstr[M12_RUNTIME_CATALOG_MSGSTR_CAPACITY] = "";
     int inMsgid = 0;
     int inMsgstr = 0;
+    localeIndex = m12_resolved_locale_index(localeIndex);
     if (localeIndex < 0 || localeIndex >= M12_UI_LANGUAGE_COUNT) {
         return;
     }
@@ -1556,6 +1591,7 @@ static const char* m12_translate_for_locale(int localeIndex, const char* english
     if (!english || english[0] == '\0') {
         return "";
     }
+    localeIndex = m12_resolved_locale_index(localeIndex);
     if (localeIndex <= 0 || localeIndex >= M12_UI_LANGUAGE_COUNT) {
         return english;
     }
@@ -1573,7 +1609,14 @@ static const char* m12_translate_for_locale(int localeIndex, const char* english
 }
 
 static int m12_locale_index(const M12_StartupMenuState* state) {
-    return state ? m12_clamp_index(state->settings.languageIndex, M12_UI_LANGUAGE_COUNT) : 0;
+    if (!state) {
+        return 0;
+    }
+    if (!state->languageExplicit) {
+        return m12_menu_index_from_fs_language(
+            fs_l10n_detect_system_language());
+    }
+    return m12_resolved_locale_index(state->settings.languageIndex);
 }
 
 static const char* m12_text(const M12_StartupMenuState* state, M12_TextId id) {
@@ -3834,10 +3877,13 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
             config.gameLanguageIndex[gi] = systemLanguageIndex;
         }
     }
+    state->languageExplicit = config.languageExplicit ? 1 : 0;
     state->settings.languageIndex = m12_clamp_index(config.languageIndex,
                                                     M12_UI_LANGUAGE_COUNT);
+    /* Install the policy before synchronising the catalog.  Otherwise an
+     * explicitly saved language is treated as AUTO while state is still
+     * zero-initialised. */
     m12_sync_l10n_language(state);
-    state->languageExplicit = config.languageExplicit ? 1 : 0;
     state->settings.graphicsIndex = m12_clamp_index(config.graphicsIndex,
                                                     (int)(sizeof(g_presentationModes) /
                                                           sizeof(g_presentationModes[0])));
@@ -4231,7 +4277,7 @@ void M12_StartupMenu_InitWithOptions(M12_StartupMenuState* state,
     }
     state->settingsSelectedIndex = 0;
     state->languagePopupOpen = 0;
-    state->languagePopupSelectedIndex = state->settings.languageIndex;
+    state->languagePopupSelectedIndex = m12_language_popup_index(state);
     state->textEditActive = 0;
     state->textEditRow = -1;
     state->textEditBuffer[0] = '\0';
@@ -5371,10 +5417,16 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
     switch (state->settingsSelectedIndex) {
         case M12_SETTINGS_ROW_LANGUAGE:
             state->languagePopupSelectedIndex = m12_cycle_index(
-                state->settings.languageIndex, delta, M12_UI_LANGUAGE_COUNT);
-            state->settings.languageIndex = state->languagePopupSelectedIndex;
+                m12_language_popup_index(state), delta,
+                M12_UI_LANGUAGE_COUNT);
+            state->settings.languageIndex = m12_resolved_locale_index(
+                state->languagePopupSelectedIndex);
+            state->languageExplicit = state->languagePopupSelectedIndex ==
+                                      M12_UI_LANGUAGE_AUTO_INDEX ? 0 : 1;
+            /* Set the policy before resolving the catalog.  AUTO and an
+             * explicit locale have different meanings even though AUTO
+             * stores the currently detected concrete index. */
             m12_sync_l10n_language(state);
-            state->languageExplicit = 1;
             {
                 int gi;
                 for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
@@ -6427,9 +6479,14 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                      * selection crash the macOS frontend. */
                     state->languagePopupSelectedIndex = m12_clamp_index(
                         state->languagePopupSelectedIndex, M12_UI_LANGUAGE_COUNT);
-                    state->settings.languageIndex = state->languagePopupSelectedIndex;
+                    state->settings.languageIndex = m12_resolved_locale_index(
+                        state->languagePopupSelectedIndex);
+                    state->languageExplicit = state->languagePopupSelectedIndex ==
+                                              M12_UI_LANGUAGE_AUTO_INDEX ? 0 : 1;
+                    /* The flag must be installed before syncing l10n;
+                     * otherwise selecting SV from AUTO is immediately
+                     * resolved back to the system locale. */
                     m12_sync_l10n_language(state);
-                    state->languageExplicit = 1;
                     {
                         int gi;
                         for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
@@ -6488,7 +6545,8 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             case M12_MENU_INPUT_VALUE_LEFT:
                 if (state->settingsSelectedIndex == M12_SETTINGS_ROW_LANGUAGE) {
                     state->languagePopupOpen = 1;
-                    state->languagePopupSelectedIndex = state->settings.languageIndex;
+                    state->languagePopupSelectedIndex =
+                        m12_language_popup_index(state);
                     break;
                 }
                 m12_cycle_setting(state, -1);
@@ -6496,7 +6554,8 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             case M12_MENU_INPUT_VALUE_RIGHT:
                 if (state->settingsSelectedIndex == M12_SETTINGS_ROW_LANGUAGE) {
                     state->languagePopupOpen = 1;
-                    state->languagePopupSelectedIndex = state->settings.languageIndex;
+                    state->languagePopupSelectedIndex =
+                        m12_language_popup_index(state);
                     break;
                 }
                 m12_cycle_setting(state, 1);
@@ -6504,7 +6563,8 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
             case M12_MENU_INPUT_ACCEPT:
                 if (state->settingsSelectedIndex == M12_SETTINGS_ROW_LANGUAGE) {
                     state->languagePopupOpen = 1;
-                    state->languagePopupSelectedIndex = state->settings.languageIndex;
+                    state->languagePopupSelectedIndex =
+                        m12_language_popup_index(state);
                     break;
                 }
                 /* Enter on other selected rows cycles their value. */
@@ -9288,8 +9348,7 @@ static void m12_draw_sparse_main_view(const M12_StartupMenuState* state,
     int titleY = 88;
     int menuX = centerX - 44;
     int menuY = 108;
-    const char* languageCode = g_languages[m12_clamp_index(state ? state->settings.languageIndex : 0,
-                                                           M12_UI_LANGUAGE_COUNT)];
+    const char* languageCode = m12_settings_value_language(state);
 
     m12_put_pixel(framebuffer, framebufferWidth, framebufferHeight, 0, 0, M12_COLOR_DARK_GRAY);
     m12_fill_rect(framebuffer,
@@ -9404,8 +9463,10 @@ static void m12_draw_sparse_settings_view(const M12_StartupMenuState* state,
                                           int framebufferHeight) {
     char line2[64];
     char line3[64];
-    snprintf(line2, sizeof(line2), "LANGUAGE  %s", m12_settings_value_language(state));
-    snprintf(line3, sizeof(line3), "%s  %s", m12_tr(state, "GRAPHICS"), m12_settings_value_graphics(state));
+    snprintf(line2, sizeof(line2), "%s  %s", m12_tr(state, "LANGUAGE"),
+             m12_settings_value_language(state));
+    snprintf(line3, sizeof(line3), "%s  %s", m12_tr(state, "GRAPHICS"),
+             m12_settings_value_graphics(state));
     m12_draw_sparse_center_box(framebuffer,
                                framebufferWidth,
                                framebufferHeight,

@@ -83,6 +83,24 @@ typedef struct CSB_V1_BootProfile {
     char graphics_md5[33];
     char dungeon_md5[33];
 
+    /* FM Towns packed media is owned by the original CD image.  These
+     * buffers are bounded runtime views of CDATA/CJDATA members; they are
+     * never written to asset-cache or back into the source archive. */
+    uint8_t *fmtowns_graphics_bytes;
+    size_t fmtowns_graphics_size;
+    uint8_t *fmtowns_dungeon_bytes;
+    size_t fmtowns_dungeon_size;
+    /* The C03 executable and its authentic MINI.DAT seed are retained in
+     * bounded RAM when the selected source is a packed CD image.  Keeping
+     * these alongside GRAPHICS/DUNGEON lets the game handoff consume the
+     * original members without manufacturing a loose runtime tree. */
+    uint8_t *fmtowns_executable_bytes;
+    size_t fmtowns_executable_size;
+    uint8_t *fmtowns_mini_bytes;
+    size_t fmtowns_mini_size;
+    uint8_t *fmtowns_title_bytes;
+    size_t fmtowns_title_size;
+
     /* Optional raw PC34 SWSHSND.C G0746 payload.  It is accepted only from
      * the selected CSB asset root, at the original byte count; callers must
      * not substitute a DM1 sound bank or host-generated cue. */
@@ -1872,6 +1890,14 @@ int csb_v1_boot_startup_launch_alloc_pc34(
     const char *save_path,
     const char *import_dm1_save_path,
     const char *resume_save_path,
+    CSB_V1_BootStartupLaunch_PC34 *out_launch);
+int csb_v1_boot_startup_launch_alloc_with_variant_pc34(
+    const char *data_dir,
+    const char *utility_search_dir,
+    const char *save_path,
+    const char *import_dm1_save_path,
+    const char *resume_save_path,
+    int requested_variant,
     CSB_V1_BootStartupLaunch_PC34 *out_launch);
 int csb_v1_boot_startup_launch_detach_runtime_pc34(
     CSB_V1_BootStartupLaunch_PC34 *launch,

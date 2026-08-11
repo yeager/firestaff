@@ -1176,6 +1176,62 @@ static uint8_t *zip_load_entry_bytes(const char *zipPath, const char *entryName,
     return NULL;
 }
 
+int asset_read_path_alloc(const char *path, uint8_t **outBytes,
+                          size_t *outSize) {
+    const char *separator;
+    char container[ASSET_PATH_MAX];
+    size_t length;
+    FILE *file;
+    long fileSize;
+    uint8_t *bytes;
+
+    if (!path || !outBytes || !outSize) return 0;
+    *outBytes = NULL;
+    *outSize = 0U;
+    separator = strstr(path, "::");
+    if (separator) {
+        length = (size_t)(separator - path);
+        if (length == 0U || length >= sizeof(container) ||
+            separator[2] == '\0') return 0;
+        memcpy(container, path, length);
+        container[length] = '\0';
+        /* Nested disk images have format-specific readers (FM Towns,
+         * Amiga, Atari).  They must be admitted by those readers rather
+         * than silently passed through a host extractor. */
+        if (strstr(separator + 2, "::") != NULL) return 0;
+        bytes = zip_load_entry_bytes(container, separator + 2, outSize);
+        if (!bytes) return 0;
+        *outBytes = bytes;
+        return 1;
+    }
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0L, SEEK_END) != 0 ||
+        (fileSize = ftell(file)) < 0L ||
+        (unsigned long)fileSize > (unsigned long)ASSET_ZIP_MAX_ENTRY_BYTES ||
+        fseek(file, 0L, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return 0;
+    }
+    if (fileSize == 0L) {
+        fclose(file);
+        return 0;
+    }
+    bytes = (uint8_t *)malloc((size_t)fileSize);
+    if (!bytes || fread(bytes, 1U, (size_t)fileSize, file) !=
+                     (size_t)fileSize) {
+        free(bytes);
+        fclose(file);
+        return 0;
+    }
+    if (fclose(file) != 0) {
+        free(bytes);
+        return 0;
+    }
+    *outBytes = bytes;
+    *outSize = (size_t)fileSize;
+    return 1;
+}
+
 static int zip_extract_entry_to_path(const char *zipPath, const char *entryName,
                                      const char *outFilePath) {
     FILE *fp;

@@ -6,10 +6,36 @@ Use this to find prior art before writing a new module — several
 patterns are already implemented for one game and directly reusable
 for another.
 
-Last refreshed 2026-08-07 with 93+ session commits. For the
+Last refreshed 2026-08-11 with 93+ session commits. For the
 authoritative byte-verified cross-game coverage matrix, see
 [`CROSS_GAME_COVERAGE.md`](CROSS_GAME_COVERAGE.md). This file
 provides a per-module inventory grouped by game.
+
+## Save-media audit (2026-08-10)
+
+The local FM Towns corpus was checked without modifying any source image:
+
+- CSB FM Towns archives expose the original CD image only; no additional
+  `CSBGAME.DAT`/`CSBGAME.BAK` member was found. The available
+  `CSBGAME.DAT` and `CSBGAME-JP.DAT` are retained as external, unclassified
+  candidates. The current F7061/F7057 reader rejects both before a valid
+  native save-tail receipt is produced; neither is positive Towns save
+  evidence.
+- DM2 FM Towns archives expose the original Victor CD image only; no
+  `SKSAVE*` member or Towns save disk was found. The `SKSAVE0..3` files in the
+  DOS archive are a different platform and are not used as substitutes.
+- An external DOSBox capture is available under the user's `Downloads/dm2`
+  directory: four primary and four backup `sksave0..3` files, each with the
+  authentic 42-byte DOS SKSAVE envelope. The read-only corpus test admits all
+  eight files for DOS raw-prefix/state inspection (`269` checks pass), but
+  this evidence does not close the FM Towns save/resume gate. Its companion
+  `graphics.dat` is the PC-English asset (`25247ede4dabb6a71e5dabdfbcd5907d`),
+  not the FM Towns `GRAPHICS.DAT` (`027ff3b8ddc2c4c4cdda7ada0b0bc46c`).
+- `Downloads/DMSAVE.DAT` is not a CSB or DM2 FM Towns save candidate and was
+  not admitted into either corpus.
+
+These absences keep native save/resume gates fail-closed; they are not
+permission to generate replacement saves.
 
 ## DM1 (19 headers, most complete)
 
@@ -66,7 +92,7 @@ Runtime/startup:
 | `csb_v1_fmtowns_graphics_dat` | GRAPHICS.DAT classifier + item decoder |
 | `csb_v1_fmtowns_anm` | ANM animation format parser |
 | `csb_v1_fmtowns_portrait` | Champion portrait .CMP decoder |
-| `csb_v1_fmtowns_game` | ReDMCSB DEFS.H command ordinals for CEDT006.C's C06 loop |
+| `csb_v1_fmtowns_game` | C06 CEDT006.C loop, authenticated CMP catalogue, source-owned portrait load, and portrait save |
 | `csb_v1_fmtowns_switch` | SWITCHTW.EXP switch-menu resource identity |
 
 ## Shared (3 headers)

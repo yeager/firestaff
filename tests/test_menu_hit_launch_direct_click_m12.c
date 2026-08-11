@@ -91,6 +91,7 @@ int main(void) {
     /* Graphics publishes twelve rows. Smooth Turn Pan is the final row in
      * the second six-row column. */
     const int settingsSmoothTurnPanCenterY = 260 + 36 + 5 * 70 + 25;
+    const int settingsLanguageCenterY = 260 + 36 + 25;
     const int settingsDataDirCenterY = 260 + 36 + 1 * 70 + 25;
     const int settingsExportCenterY = 260 + 36 + 3 * 70 + 25;
     const int settingsImportCenterY = 260 + 36 + 4 * 70 + 25;
@@ -187,6 +188,21 @@ int main(void) {
         changed = M12_ModernMenu_HandlePointer(&state, settingsCenterX, settingsCenterY, 1, NULL);
         if (!expect(changed == 1 && state.view == M12_MENU_VIEW_SETTINGS, "Firestaff click should open settings view")) return 1;
     }
+
+    /* AUTO stores the resolved system locale internally.  Opening the
+     * language popup must still highlight the AUTO policy entry so a mouse
+     * click does not accidentally convert it into an explicit locale. */
+    state.settingsTabIndex = M12_SETTINGS_TAB_GAME;
+    state.settingsSelectedIndex = M12_STARTUP_SETTINGS_ROW_LANGUAGE;
+    state.languageExplicit = 0;
+    changed = M12_ModernMenu_HandlePointer(&state, settingsLeftColumnCycleX,
+                                           settingsLanguageCenterY, 1, NULL);
+    if (!expect(changed == 1 && state.languagePopupOpen == 1,
+                "Language settings click should open the popup")) return 1;
+    if (!expect(state.languagePopupSelectedIndex ==
+                    M12_StartupMenu_GetLanguageCount() - 1,
+                "AUTO language popup should highlight AUTO")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
 
     state.settings.dm1V2SmoothTurnPanEnabled = 0;
     state.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;

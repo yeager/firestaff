@@ -333,6 +333,7 @@ int main(void) {
         init_probe_menu_state(&s);
         s.settings.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
         s.settings.languageIndex = 0;
+        s.languageExplicit = 1;
         memset(a, 0, rgbaBytes);
         M12_ModernMenu_Render(&s, a, W, H);
         unsigned long sigEN = checksum(a, rgbaBytes);

@@ -52,28 +52,20 @@ static uint32_t csb_v1_startup_surface_pixel_hash_pc34(
 /* ReDMCSB MEMORY.C F0490 selects a F31E/F31J GRAPHICS.DAT record and then
  * IMAGE2.C F0689 expands it.  Keep this route separate from PC IMG3: the
  * container marker and item count are authenticated before IMG2 sees bytes. */
-static int csb_v1_boot_decode_fmtowns_graphics_dat_asset_pc34(
-    const char *path, unsigned int graphic_index,
+static int csb_v1_boot_decode_fmtowns_graphics_dat_bytes_pc34(
+    const unsigned char *data, size_t file_size, unsigned int graphic_index,
     unsigned char **out_pixels, int *out_width, int *out_height,
     CSB_V1_StartupGraphicDecodeReceipt_PC34 *out_decode_receipt)
 {
-    FILE *file = NULL;
-    long file_size;
-    unsigned char *data = NULL;
     unsigned char *pixels = NULL;
     CSB_V1_FmtownsItemDecodeReceipt item_receipt;
     int ok = 0;
 
-    if (!path || !path[0] || !out_pixels || !out_width || !out_height ||
-        graphic_index > UINT16_MAX) return 0;
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0L, SEEK_END) != 0 ||
-        (file_size = ftell(file)) <= 0 || fseek(file, 0L, SEEK_SET) != 0 ||
-        (size_t)file_size > CSB_FMTOWNS_GRAPHICS_MAX_SIZE) goto done;
-    data = (unsigned char *)malloc((size_t)file_size);
+    if (!data || file_size == 0u || file_size > CSB_FMTOWNS_GRAPHICS_MAX_SIZE ||
+        !out_pixels || !out_width || !out_height || graphic_index > UINT16_MAX)
+        return 0;
     pixels = (unsigned char *)malloc(CSB_V1_STARTUP_SURFACE_MAX_PIXELS_PC34);
     if (!data || !pixels ||
-        fread(data, 1u, (size_t)file_size, file) != (size_t)file_size ||
         !csb_v1_fmtowns_graphics_probe(data, (size_t)file_size) ||
         !csb_v1_fmtowns_graphics_decode_item(
             data, (size_t)file_size, (uint16_t)graphic_index, pixels,
@@ -110,8 +102,33 @@ static int csb_v1_boot_decode_fmtowns_graphics_dat_asset_pc34(
     pixels = NULL;
     ok = 1;
 done:
-    if (file) fclose(file);
     free(pixels);
+    return ok;
+}
+
+static int csb_v1_boot_decode_fmtowns_graphics_dat_asset_pc34(
+    const char *path, unsigned int graphic_index,
+    unsigned char **out_pixels, int *out_width, int *out_height,
+    CSB_V1_StartupGraphicDecodeReceipt_PC34 *out_decode_receipt)
+{
+    FILE *file = NULL;
+    long file_size;
+    unsigned char *data = NULL;
+    int ok;
+
+    if (!path || !path[0] || !(file = fopen(path, "rb")) ||
+        fseek(file, 0L, SEEK_END) != 0 || (file_size = ftell(file)) <= 0 ||
+        fseek(file, 0L, SEEK_SET) != 0 ||
+        (size_t)file_size > CSB_FMTOWNS_GRAPHICS_MAX_SIZE ||
+        !(data = (unsigned char *)malloc((size_t)file_size))) {
+        if (file) fclose(file);
+        return 0;
+    }
+    ok = fread(data, 1u, (size_t)file_size, file) == (size_t)file_size &&
+        csb_v1_boot_decode_fmtowns_graphics_dat_bytes_pc34(
+            data, (size_t)file_size, graphic_index, out_pixels, out_width,
+            out_height, out_decode_receipt);
+    fclose(file);
     free(data);
     return ok;
 }
@@ -566,7 +583,17 @@ static int csb_v1_startup_session_load_surface_pc34(
     if (binding->source != CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34) {
         return 0;
     }
-    if (((profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+    if ((profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
+         profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA) &&
+        profile->fmtowns_graphics_bytes &&
+        profile->fmtowns_graphics_size != 0u) {
+        if (!csb_v1_boot_decode_fmtowns_graphics_dat_bytes_pc34(
+                profile->fmtowns_graphics_bytes,
+                profile->fmtowns_graphics_size, binding->graphic_index,
+                &pixels, &width, &height, &surface->decode_receipt)) {
+            return 0;
+        }
+    } else if (((profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
           profile->variant_id == CSB_V1_VARIANT_ST21_EN)
              ? !csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
                    binding->path, binding->graphic_index, &pixels, &width,

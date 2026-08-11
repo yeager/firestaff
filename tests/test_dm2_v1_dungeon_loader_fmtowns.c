@@ -11,6 +11,9 @@
 
 #include "dm2_v1_dungeon_loader.h"
 
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,6 +61,25 @@ static void test_fmtowns_load(const char *path) {
     result = dm2_v1_dungeon_load(&dungeon, data, (int)data_size);
     assert(result == 0);
     printf("  PASS: FM Towns DUNGEON.DAT loaded successfully\n");
+    {
+        int mirrors = 0;
+        DM2_V1_G1ChampionMirrorReceipt receipt;
+        for (int i = 0; i < dungeon.thing_type_counts[3]; ++i) {
+            int type = -1;
+            int size = 0;
+            const uint8_t *record = dm2_v1_dungeon_get_thing_record(
+                &dungeon, (uint16_t)((3u << 10) | (unsigned)i),
+                &type, NULL, &size);
+            if (record && type == 3 && size >= 8 &&
+                ((record[2] | ((uint16_t)record[3] << 8)) & 0x7fu) == 0x7eu) {
+                ++mirrors;
+            }
+        }
+        assert(mirrors == 16);
+        assert(dm2_v1_dungeon_collect_g1_champion_mirrors(&dungeon, &receipt));
+        assert(receipt.committed && receipt.mirror_count == 16);
+        printf("  PASS: 16 FM Towns champion mirror records\n");
+    }
 
     /* File_header.nMaps is the byte at offset 4 (SKWIN/DME.h:93-101,
      * mirrored by docs/dm2_save_format.md's section order). Both the PC and

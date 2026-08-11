@@ -1,6 +1,8 @@
 /* Source-owned File_header world materialisation for DM2 New Game. */
 
 #include "dm2_v1_game_load_world_owner.h"
+#include "dm2_v1_creature_animation_gdat.h"
+#include "dm2_v1_fmtowns_graphics_dat.h"
 #include "dm2_v1_actuator_event_pc34_compat.h"
 #include "dm2_v1_data_tables_pc34_compat.h"
 #include "dm2_v1_door_mechanics.h"
@@ -205,6 +207,10 @@ static int dm2_v1_game_load_owner_static_caii_animation_frame(
 
     if (!loader || !out_frame) return 0;
     *out_frame = 0xffffu;
+    if (loader->gdat_version == DM2_FMTOWNS_GDAT_VERSION) {
+        return dm2_v1_creature_animation_gdat_static_frame_fmtowns(
+            loader, creature_type, packed_position, out_frame);
+    }
     attribution = dm2_v1_asset_load_typed_sized(loader,
         DM2_GDAT_CATEGORY_CREATURES, creature_type, DM2_GDAT_ENTRY_TYPE_RAW8,
         DM2_GDAT_CREATURE_ANIM_ATTRIBUTION, &attribution_size);
@@ -303,10 +309,18 @@ static int dm2_v1_game_load_owner_materialize_caii_map_candidates(
                         candidate->static_animation_frame = 0xffffu;
                         if (candidate->static_ai) {
                             if (!dm2_v1_game_load_owner_static_caii_animation_frame(
-                                    owner->asset_loader, record[4],
-                                    candidate->packed_position,
-                                    &candidate->static_animation_frame)) {
-                                goto fail;
+                                owner->asset_loader, record[4],
+                                candidate->packed_position,
+                                &candidate->static_animation_frame)) {
+                                /* FM Towns has authentic static creature
+                                 * records outside the 42-entry type-06
+                                 * animation roster.  The native GAF path
+                                 * returns no frame for those records; that
+                                 * is a valid no-animation state, not a
+                                 * reason to reject the whole dungeon. */
+                                if (owner->asset_loader->gdat_version !=
+                                    DM2_FMTOWNS_GDAT_VERSION) goto fail;
+                                candidate->static_animation_frame = 0xffffu;
                             }
                             ++receipt.static_candidate_count;
                         } else {
@@ -438,14 +452,23 @@ int dm2_v1_game_load_world_owner_materialize_static_caii(
         adjacent_base = (uint16_t)record[8] | ((uint16_t)record[9] << 8);
         animation_word = (int16_t)old_word;
         memset(&frame_receipt, 0, sizeof(frame_receipt));
-        if (dm2_v1_creature_get_animation_frame_with_ai_spec(
-                owner->asset_loader, &owner->caii_rng, ai, record[4], 0x11,
-                &adjacent_base, &animation_word, &animation,
-                candidate->packed_position, &frame_receipt) != 1 ||
-            !frame_receipt.valid || !frame_receipt.static_path ||
-            animation != NULL || (uint16_t)animation_word !=
-                candidate->static_animation_frame) {
-            goto rollback;
+        if (owner->asset_loader->gdat_version == DM2_FMTOWNS_GDAT_VERSION) {
+            /* HME-242 has no per-creature FB/FC owner.  The type-06 pass
+             * already resolved the authenticated shared sequence, while
+             * 0xffff is the native no-animation result for static records
+             * outside that roster. */
+            if (candidate->static_animation_frame == 0xffffu) continue;
+            animation_word = (int16_t)candidate->static_animation_frame;
+        } else {
+            if (dm2_v1_creature_get_animation_frame_with_ai_spec(
+                    owner->asset_loader, &owner->caii_rng, ai, record[4], 0x11,
+                    &adjacent_base, &animation_word, &animation,
+                    candidate->packed_position, &frame_receipt) != 1 ||
+                !frame_receipt.valid || !frame_receipt.static_path ||
+                animation != NULL || (uint16_t)animation_word !=
+                    candidate->static_animation_frame) {
+                goto rollback;
+            }
         }
         /* c_1c9a.cpp:9944-9957: 09db writes the animation word, then the
          * caller preserves bits 0x0060 from the pre-animation record and
@@ -1319,6 +1342,8 @@ static int dm2_v1_game_load_owner_materialize_sound(
 {
     DM2_V1_GameLoadSoundOwner candidate;
     const DM2_V1_AssetLoader *loader;
+    const int fmtowns = owner && owner->asset_loader &&
+        owner->asset_loader->gdat_version == DM2_FMTOWNS_GDAT_VERSION;
     uint16_t selector;
 
     if (!owner || !(loader = owner->asset_loader) || !owner->dyn4_materialized ||
@@ -1351,13 +1376,14 @@ static int dm2_v1_game_load_owner_materialize_sound(
             uint16_t existing;
 
             if (entry->cls3 != DM2_GDAT_ENTRY_TYPE_SOUND ||
-                !dm2_v1_game_load_owner_dyn4_matches_selector(entry,
-                                                               selector_id) ||
-                (entry->data_index & 0x8000u) != 0u) {
+                (!fmtowns && !dm2_v1_game_load_owner_dyn4_matches_selector(entry,
+                                                               selector_id)) ||
+                (!fmtowns && (entry->data_index & 0x8000u) != 0u)) {
                 continue;
             }
-            raw_index = entry->data_index;
-            if (!dm2_v1_game_load_owner_dyn4_has_raw(owner, raw_index)) {
+            raw_index = fmtowns ? (uint16_t)(entry->data_index & 0x7fffu) :
+                                  entry->data_index;
+            if (!fmtowns && !dm2_v1_game_load_owner_dyn4_has_raw(owner, raw_index)) {
                 continue;
             }
             for (existing = 0u; existing < candidate.queue_entry_count;
@@ -1399,7 +1425,8 @@ static int dm2_v1_game_load_owner_materialize_sound(
         if (!dm2_v1_gdat_sound_entry_receipt(loader, (uint8_t)entry->b_02,
                 (uint8_t)entry->b_03, (uint8_t)entry->b_04, 0, 0,
                 &source) || !source.accepted ||
-            !dm2_v1_game_load_owner_dyn4_has_raw(owner, source.raw_index)) {
+            (!fmtowns && !dm2_v1_game_load_owner_dyn4_has_raw(owner,
+                                                               source.raw_index))) {
             goto fail;
         }
         for (binding = 0u; binding < candidate.sample_binding_count;
@@ -3798,6 +3825,7 @@ int dm2_v1_game_load_world_owner_materialize_preselection_scene(
     DM2_V1_GdatSceneLightM11Receipt scene_light;
     DM2_V1_CLightSourceState source_light;
     DM2_V1_CLightM11Receipt c_light;
+
 
     if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
         !owner->source_map_context_materialized ||

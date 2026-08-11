@@ -24,7 +24,7 @@
  * path is used.  This allows the build to succeed even without
  * SDL3_ttf installed (Linux CI runners without TTF deps).
  *
- * Source-locked to the 19-language l10n set in
+ * Source-locked to the 20 concrete-language l10n set in
  * include/firestaff_l10n.h.
  */
 

@@ -1,6 +1,14 @@
 #include "dm2_v1_fmtowns_disc.h"
 #include "dm2_v1_fmtowns_graphics_dat.h"
 #include "dm2_v1_fmtowns_cd_dat.h"
+
+/* This test deliberately keeps assert() enabled.  Several checks call the
+ * probe/extraction API inside the assertion; compiling those calls away
+ * under the project's release-wide NDEBUG flag would turn a real-media
+ * verification test into a false pass with uninitialised receipts. */
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>

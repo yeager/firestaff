@@ -1,6 +1,7 @@
 #include "firestaff_l10n.h"
 
 #include <stdio.h>
+#include <string.h>
 
 static int failures;
 
@@ -40,9 +41,23 @@ int main(void) {
 
     fs_l10n_set_language(FS_LANG_SV);
     if (fs_l10n_get_language() != FS_LANG_SV ||
-        fs_l10n_get(FS_STR_SETTINGS) == NULL) {
+        fs_l10n_get(FS_STR_SETTINGS) == NULL ||
+        fs_l10n_get(FS_STR_AUTO) == NULL ||
+        strcmp(fs_l10n_get(FS_STR_AUTO), "Auto") != 0) {
         ++failures;
         printf("FAIL Swedish language table\n");
+    }
+
+    /* Every language row must keep the same field order as FS_StringId.
+     * This catches missing entries that otherwise shift AUTO/ON/OFF. */
+    for (i = 0; i < FS_LANG_COUNT; ++i) {
+        fs_l10n_set_language((FS_Language)i);
+        if (fs_l10n_get(FS_STR_AUTO)[0] == '\0' ||
+            fs_l10n_get(FS_STR_ON)[0] == '\0' ||
+            fs_l10n_get(FS_STR_OFF)[0] == '\0') {
+            ++failures;
+            printf("FAIL language table %d has empty AUTO/ON/OFF\n", (int)i);
+        }
     }
     printf("# l10n %s\n", failures == 0 ? "PASS" : "FAIL");
     return failures == 0 ? 0 : 1;

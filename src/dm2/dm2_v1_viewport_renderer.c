@@ -1248,6 +1248,43 @@ static void dm2_v1_fill_rect(uint8_t *fb,
     }
 }
 
+/* SKWIN/SkWinCore.cpp::_44c8_1aca + DRAW_GRAY_OVERLAY.  The source writes a
+ * 4bpp checker pattern with nibble 0 as the overlay colour and nibble 0xf as
+ * transparent, alternating the row phase.  The indexed Towns framebuffer
+ * uses the mounted interface palette, so the equivalent source colour is
+ * palette entry COLOR_BLACK; this is not a host opacity or flat fill. */
+static void dm2_v1_apply_source_gray_overlay(
+    DM2_V1_ViewportState *s, const DM2_V1_ViewportRect *rect)
+{
+    uint8_t black;
+    int x0;
+    int y0;
+    int x1;
+    int y1;
+
+    if (!s || !s->framebuffer || !rect || !s->gdat_interface_palette_ready ||
+        rect->w <= 0 || rect->h <= 0) {
+        return;
+    }
+    black = s->gdat_interface_palette16[0];
+    x0 = rect->x < 0 ? 0 : rect->x;
+    y0 = rect->y < 0 ? 0 : rect->y;
+    x1 = rect->x + rect->w;
+    y1 = rect->y + rect->h;
+    if (x1 > DM2_VP_WIDTH) x1 = DM2_VP_WIDTH;
+    if (y1 > DM2_VP_HEIGHT) y1 = DM2_VP_HEIGHT;
+    for (int y = y0; y < y1; ++y) {
+        for (int x = x0; x < x1; ++x) {
+            /* _44c8_1aca starts with 0xf on one row and 0x0f on the
+             * next; with a 320-byte screen stride this is (x+y)&1. */
+            if (((x - rect->x) + (y - rect->y)) % 2 == 0) {
+                s->framebuffer[y * s->fb_stride + x] = black;
+            }
+        }
+    }
+    ++s->gdat_interface_palette_consumed_count;
+}
+
 /* ── Initialization ───────────────────────────────────────────────── */
 
 static void dm2_v1_viewport_reset_source_click_targets(
@@ -7912,7 +7949,7 @@ static const DM2_V1_GdatHudM11Command *dm2_v1_hud_plan_command(
 
     if (!s || !rect || !(plan = s->gdat_hud_material_plan) ||
         !plan->valid ||
-        plan->command_count < DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT ||
+        plan->command_count < DM2_V1_GDAT_HUD_M11_STATIC_OUTDOOR_COMMAND_COUNT ||
         plan->command_count > DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
         plan->command_hash == 0u ||
         plan->command_hash !=
@@ -8182,6 +8219,51 @@ static int dm2_v1_render_hud_hand_action_asset(DM2_V1_ViewportState *s)
         pixels + source->source_rect.y * stride + source->source_rect.x,
         source->source_rect.w, source->source_rect.h, stride,
         DM2_COLOR_TRANSPARENT, &s->gdat_interface_palette_consumed_count);
+    if (source->item_present && source->item_gdat_index != 0) {
+        const uint8_t *item_pixels = NULL;
+        int item_width = 0;
+        int item_height = 0;
+        int item_stride = 0;
+
+        /* DRAW_ITEM_ON_WOOD_PANEL uses the item's own SUMMARY_IMAGE palette;
+         * use the local-material route rather than INTERFACE_GENERAL. */
+        if (dm2_v1_fetch_viewport_local_material(
+                s, source->item_gdat_index, &item_pixels, &item_width,
+                &item_height, &item_stride) == 0 && item_pixels &&
+            item_width > 0 && item_height > 0 && item_stride >= item_width) {
+            int item_dst_w = item_width;
+            int item_dst_h = item_height;
+            int max_w = source->destination_rect.w - 2;
+            int max_h = source->destination_rect.h - 2;
+            int item_x;
+            int item_y;
+
+            if (max_w <= 0 || max_h <= 0) return 0;
+            if (item_dst_w > max_w) {
+                item_dst_h = (item_dst_h * max_w) / item_dst_w;
+                item_dst_w = max_w;
+            }
+            if (item_dst_h > max_h) {
+                item_dst_w = (item_dst_w * max_h) / item_dst_h;
+                item_dst_h = max_h;
+            }
+            if (item_dst_w <= 0 || item_dst_h <= 0) return 0;
+            item_x = source->destination_rect.x +
+                (source->destination_rect.w - item_dst_w) / 2;
+            item_y = source->destination_rect.y +
+                (source->destination_rect.h - item_dst_h) / 2;
+            dm2_v1_blit_scaled_material_bitmap(
+                s, s->framebuffer, s->fb_stride, item_x, item_y,
+                item_dst_w, item_dst_h, item_pixels, item_width, item_height,
+                item_stride, DM2_COLOR_TRANSPARENT,
+                &s->gdat_sprite_palette_consumed_count);
+            dm2_v1_viewport_note_item_material(
+                s, 3, source->item_gdat_index);
+        }
+    }
+    if (source->gray_overlay_required) {
+        dm2_v1_apply_source_gray_overlay(s, &source->destination_rect);
+    }
     memset(&request, 0, sizeof(request));
     request.valid = 1;
     request.gdat_index = gdat_index;

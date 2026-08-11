@@ -1,6 +1,9 @@
 #ifndef ASSET_FIND_BY_HASH_H
 #define ASSET_FIND_BY_HASH_H
 
+#include <stddef.h>
+#include <stdint.h>
+
 /*
  * Hash-based asset file discovery.
  *
@@ -76,6 +79,14 @@ int asset_find_all_files_by_md5_list(const char *searchDir,
  * missing entries, or write failures.
  */
 int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath);
+
+/* Read a verified loose file or a supported ZIP member directly into bounded
+ * memory.  This is the production reader primitive: it never creates a
+ * game-data file and never changes the container.  The caller owns *outBytes
+ * and releases it with free(). */
+int asset_read_path_alloc(const char *path,
+                          uint8_t **outBytes,
+                          size_t *outSize);
 
 /*
  * Missing-extractor diagnostics.

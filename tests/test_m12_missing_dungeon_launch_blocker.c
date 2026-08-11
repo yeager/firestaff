@@ -156,6 +156,7 @@ static void check_swedish_missing_media_uses_full_title(void) {
     /* sv is index 1 in the production language cycle. The catalog must
      * localize the scan/popup surface while preserving the official title. */
     state.settings.languageIndex = 1;
+    state.languageExplicit = 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
 
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);

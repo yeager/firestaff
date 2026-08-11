@@ -519,6 +519,9 @@ static void test_fmtowns_game_program_handoff(void)
     CSB_V1_FmtownsUtilityHandoffReceipt utility;
     CSB_V1_FmtownsUtilityMenuReceipt utility_menu;
     CSB_V1_FmtownsUtilityMenuHitBox utility_hit;
+    CSB_V1_DungeonData mini_dungeon;
+    uint8_t *encoded_tail = NULL;
+    uint8_t *source_tail = NULL;
     uint8_t music_track;
 
     if (!data_dir || data_dir[0] == '\0') {
@@ -571,6 +574,33 @@ static void test_fmtowns_game_program_handoff(void)
                       CSB_V1_FMTOWNS_GAME_MUSIC_TABLE_BYTES &&
                   receipt.music_table_fnv1a == 0x3faffb70u,
               "SWITCHTW English Game exit binds retail CHTWE.EXP and CDATA/MINI.DAT");
+        memset(&mini_dungeon, 0, sizeof(mini_dungeon));
+        if (receipt.valid && receipt.startup_mini_dungeon_tail_size > 0u &&
+            csb_v1_fmtowns_game_load_startup_dungeon(
+                &receipt, &mini_dungeon)) {
+            const size_t tail_size = receipt.startup_mini_dungeon_tail_size;
+            const size_t serialized_size = tail_size + 2u;
+            encoded_tail = (uint8_t *)malloc(tail_size);
+            source_tail = (uint8_t *)malloc(serialized_size);
+            CHECK(encoded_tail && source_tail &&
+                      csb_v1_fmtowns_game_encode_dungeon_tail(
+                          &mini_dungeon, source_tail, serialized_size) &&
+                      csb_v1_fmtowns_game_copy_verified_dungeon_tail(
+                          &receipt, encoded_tail, tail_size) &&
+                      memcmp(encoded_tail, source_tail, tail_size) == 0 &&
+                      source_tail[tail_size] ==
+                          (uint8_t)receipt.startup_mini_dungeon_tail_checksum &&
+                      source_tail[tail_size + 1u] ==
+                          (uint8_t)(receipt.startup_mini_dungeon_tail_checksum >> 8),
+                  "FM Towns F31 MINI.DAT dungeon tail roundtrips byte-identically");
+            free(encoded_tail);
+            free(source_tail);
+            encoded_tail = NULL;
+            source_tail = NULL;
+        } else {
+            CHECK(0, "FM Towns F31 MINI.DAT dungeon tail is loadable for writeback");
+        }
+        csb_v1_dungeon_free(&mini_dungeon);
         CHECK(csb_v1_fmtowns_utility_handoff_open(
                   &profile, CSB_FMTOWNS_SWITCH_ENGLISH, &utility) &&
                   utility.valid && utility.executable_verified &&

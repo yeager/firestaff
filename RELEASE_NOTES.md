@@ -1,4 +1,4 @@
-# Firestaff v3.0.309
+# Firestaff v3.0.310
 
 ## DM1
 
@@ -34,6 +34,9 @@
 - `CSB FM Towns`: Fix graphics dispatch to use the native IMG2 viewport stream and dispatch the
   authenticated ANM PCM events. Dynamic overlays and mixer fades remain
   unavailable until their platform-owned tables and mixer state are present.
+- `CSB FM Towns packed media`: Fix packed M11 launch to read directly from the authentic ZIP. The
+  original IMG, `GRAPHICS.DAT`, `DUNGEON.DAT`, C03 executable, `MINI.DAT` and
+  `TITLE.ANM` are read into bounded memory; no loose runtime tree is created.
 
 ## DM2
 
@@ -42,6 +45,9 @@
 - `DM2 save and movement ownership`: Retain and validate source-owned
   SKSAVE, movement, timer and query state through private candidate paths;
   incomplete or synthetic legacy inputs remain rejected.
+- `DM2 FM Towns packed media`: Keep the authenticated title, NEW GAME and M12
+  paths bound to the original FM Towns ZIP and the verified English companion
+  data, without rewriting the disc image.
 
 ## Nexus
 

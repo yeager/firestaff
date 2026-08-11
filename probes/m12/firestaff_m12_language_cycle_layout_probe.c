@@ -2,7 +2,7 @@
  * firestaff_m12_language_cycle_layout_probe.c
  *
  * Focused M12 localization/layout gate: render the modern message popup
- * using the 19-language startup-menu cycle's validator-message strings and
+ * using the startup-menu cycle's validator-message strings and
  * prove the translated text remains inside the popup panel bounds.
  */
 
@@ -36,7 +36,7 @@ enum {
     PANEL_H = 320
 };
 
-/* Layout fixtures for the M12 launcher 19-language UI cycle.
+/* Layout fixtures for the M12 launcher UI cycle.
  *
  * The cycle count and locale codes are now derived from the
  * production source of truth via M12_StartupMenu_GetLanguageCount()
@@ -50,11 +50,11 @@ enum {
  * launcher surfaces for those indices in production.
  *
  * MAX_FIXTURES is a compile-time upper bound sized to the current
- * 20-language cycle.  If a future cycle grows past this bound the
+ * 21-entry cycle, including AUTO.  If a future cycle grows past this bound the
  * fixture initializer must grow with it; the runtime loop only
  * walks up to M12_StartupMenu_GetLanguageCount() so the cycle
  * itself stays source-of-truth-driven. */
-#define MAX_FIXTURES 20
+#define MAX_FIXTURES 21
 
 static const LayoutCase g_cases[MAX_FIXTURES] = {
     /* EN baseline (matches po/startup-menu.en.po msgid) */
@@ -85,7 +85,10 @@ static const LayoutCase g_cases[MAX_FIXTURES] = {
     {"pt", "VALIDATOR SCAFFOLD ONLY", "ADD VERIFIED RETAIL HASHES", "ESC RETURNS TO MENU"},
     {"ru", "VALIDATOR SCAFFOLD ONLY", "ADD VERIFIED RETAIL HASHES", "ESC RETURNS TO MENU"},
     {"tr", "VALIDATOR SCAFFOLD ONLY", "ADD VERIFIED RETAIL HASHES", "ESC RETURNS TO MENU"},
-    {"id", "VALIDATOR SCAFFOLD ONLY", "ADD VERIFIED RETAIL HASHES", "ESC RETURNS TO MENU"}
+    {"id", "VALIDATOR SCAFFOLD ONLY", "ADD VERIFIED RETAIL HASHES", "ESC RETURNS TO MENU"},
+    /* AUTO resolves to the system locale at runtime; this fixture uses the
+     * English fallback because the message text is supplied directly. */
+    {"auto", "VALIDATOR SCAFFOLD ONLY", "ADD VERIFIED RETAIL HASHES", "ESC RETURNS TO MENU"}
 };
 
 static const int g_fixtureCount =

@@ -648,7 +648,9 @@ static void blend_rect(M12_ModernCanvas* c, int x, int y, int w, int h,
 /* -------------------------------------------------------------------------- */
 
 static const char* language_short(const M12_StartupMenuState* state) {
-    int li = state ? state->settings.languageIndex : 0;
+    int li = state && !state->languageExplicit
+        ? M12_StartupMenu_GetLanguageCount() - 1
+        : (state ? state->settings.languageIndex : 0);
     const char* code = M12_StartupMenu_GetLanguageCode(li);
     return code ? code : "EN";
 }
@@ -760,7 +762,9 @@ static void draw_language_flag(M12_ModernCanvas* c, int x, int y, int w, int h,
 static void draw_language_button(M12_ModernCanvas* c, int x, int y, int w,
                                  const M12_StartupMenuState* state,
                                  int selected) {
-    int li = state ? state->settings.languageIndex : 0;
+    int li = state && !state->languageExplicit
+        ? M12_StartupMenu_GetLanguageCount() - 1
+        : (state ? state->settings.languageIndex : 0);
     const char* code = M12_StartupMenu_GetLanguageCode(li);
     const char* name = M12_StartupMenu_GetLanguageName(li);
     char value[96];
@@ -792,7 +796,9 @@ static void draw_language_popup(M12_ModernCanvas* c, const M12_StartupMenuState*
         int iy = y + pad + row * (itemH + itemGap);
         int active = state && i == (state->languagePopupOpen
                                         ? state->languagePopupSelectedIndex
-                                        : state->settings.languageIndex);
+                                        : (!state->languageExplicit
+                                            ? count - 1
+                                            : state->settings.languageIndex));
         const char* code = M12_StartupMenu_GetLanguageCode(i);
         const char* name = M12_StartupMenu_GetLanguageName(i);
         char label[96];
@@ -2326,7 +2332,16 @@ static void draw_sparse_view_modern(M12_ModernCanvas* c, const M12_StartupMenuSt
         case M12_MENU_VIEW_SETTINGS: {
             char line2[96];
             char line3[96];
-            snprintf(line2, sizeof(line2), "LANGUAGE  %s", state->settings.languageIndex == 1 ? "SV" : state->settings.languageIndex == 2 ? "FR" : state->settings.languageIndex == 3 ? "DE" : "EN");
+            const char* language = state && !state->languageExplicit
+                ? M12_StartupMenu_GetLanguageCode(
+                    M12_StartupMenu_GetLanguageCount() - 1)
+                : M12_StartupMenu_GetLanguageCode(
+                    state ? state->settings.languageIndex : 0);
+            snprintf(line2, sizeof(line2), "%s  %s",
+                     M12_StartupMenu_TranslateForLocale(
+                         state ? state->settings.languageIndex : 0,
+                         "LANGUAGE"),
+                     language ? language : "EN");
             snprintf(line3, sizeof(line3), "GRAPHICS  V1 ORIGINAL");
             draw_sparse_center_box_modern(c, 420, 110, "SETTINGS", line2, line3, rgb(240, 240, 240));
             break;

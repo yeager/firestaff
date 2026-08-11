@@ -72,6 +72,73 @@ static uint32_t dm2_v1_boot_read_le32(const uint8_t *data)
            ((uint32_t)data[2] << 16) | ((uint32_t)data[3] << 24);
 }
 
+static const uint8_t dm2_v1_fmtowns_mouse_input_anchor[] = {
+    0x70u, 0x00u, 0x3bu, 0x00u, 0x02u, 0x80u,
+    0x71u, 0x00u, 0x3fu, 0x00u, 0x02u, 0x20u,
+    0x72u, 0x00u, 0x40u, 0x00u, 0x02u, 0x20u
+};
+
+static const uint8_t dm2_v1_fmtowns_mouse_input_table_prefix[] = {
+    0xd7u, 0x80u, 0x97u, 0x01u, 0x02u, 0x80u
+};
+
+#define DM2_V1_FMTOWNS_MOUSE_INPUT_TABLE_HASH 0x1500c4c9u
+
+static uint32_t dm2_v1_boot_fnv1a32(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+    if (!bytes) return 0u;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static int dm2_v1_boot_fmtowns_mouse_input_anchor_present(
+    const uint8_t *bytes, size_t size)
+{
+    size_t offset;
+    if (!bytes || size < sizeof(dm2_v1_fmtowns_mouse_input_anchor)) return 0;
+    for (offset = 0u;
+         offset + sizeof(dm2_v1_fmtowns_mouse_input_anchor) <= size;
+         ++offset) {
+        if (memcmp(bytes + offset, dm2_v1_fmtowns_mouse_input_anchor,
+                   sizeof(dm2_v1_fmtowns_mouse_input_anchor)) == 0)
+            return 1;
+    }
+    return 0;
+}
+
+static uint32_t dm2_v1_boot_fmtowns_mouse_input_table_hash(
+    const uint8_t *bytes, size_t size, uint8_t *out_table)
+{
+    size_t offset;
+    if (!bytes || size < DM2_V1_FMTOWNS_MOUSE_INPUT_TABLE_BYTES) return 0u;
+    for (offset = 0u;
+         offset + sizeof(dm2_v1_fmtowns_mouse_input_table_prefix) <= size;
+         ++offset) {
+        uint32_t hash;
+        if (memcmp(bytes + offset,
+                   dm2_v1_fmtowns_mouse_input_table_prefix,
+                   sizeof(dm2_v1_fmtowns_mouse_input_table_prefix)) != 0)
+            continue;
+        if (offset + DM2_V1_FMTOWNS_MOUSE_INPUT_TABLE_BYTES > size)
+            continue;
+        hash = dm2_v1_boot_fnv1a32(
+            bytes + offset, DM2_V1_FMTOWNS_MOUSE_INPUT_TABLE_BYTES);
+        if (hash == DM2_V1_FMTOWNS_MOUSE_INPUT_TABLE_HASH) {
+            if (out_table) {
+                memcpy(out_table, bytes + offset,
+                       DM2_V1_FMTOWNS_MOUSE_INPUT_TABLE_BYTES);
+            }
+            return hash;
+        }
+    }
+    return 0u;
+}
+
 static int dm2_v1_boot_parse_fmtowns_p3(
     const uint8_t *program, size_t size, DM2_V1_FmtownsP3Receipt *receipt)
 {
@@ -2533,6 +2600,10 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
            sizeof(profile->fmtowns_skull_p3));
     profile->fmtowns_twanim_md5[0] = '\0';
     profile->fmtowns_skull_md5[0] = '\0';
+    profile->fmtowns_skull_mouse_input_anchor_verified = 0;
+    profile->fmtowns_skull_mouse_input_table_hash = 0u;
+    memset(profile->fmtowns_skull_mouse_input_table, 0,
+           sizeof(profile->fmtowns_skull_mouse_input_table));
     /* M12 passes an explicitly selected retail archive verbatim.  Preserve
      * that choice: treating it as a directory would silently fall back to a
      * sibling PC install and change the selected platform. */
@@ -2550,7 +2621,20 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
         snprintf(zip_path, sizeof(zip_path), "%s", nested_zip_path);
         if (firestaff_zip_extract_by_suffix(zip_path, ".cue",
                                             &cue_data, &cue_size) != 0) {
-            return;
+            /* A real extracted FM Towns tree is commonly selected as the
+             * data directory while its original archive remains beside it
+             * (for example an extracted fmtowns_iso directory beside the
+             * original ZIP).  Keep the
+             * archive as the source owner for CDDA and native startup media;
+             * never manufacture a disc image from the loose files. */
+            char parent[512];
+            copy_parent_dir(parent, data_dir);
+            snprintf(zip_path, sizeof(zip_path), "%s/%s", parent,
+                     archive_name);
+            if (firestaff_zip_extract_by_suffix(zip_path, ".cue",
+                                                &cue_data, &cue_size) != 0) {
+                return;
+            }
         }
     }
 
@@ -2757,6 +2841,13 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
             }
             memcpy(profile->fmtowns_skull_md5, skull_md5,
                    sizeof(profile->fmtowns_skull_md5));
+            profile->fmtowns_skull_mouse_input_anchor_verified =
+                dm2_v1_boot_fmtowns_mouse_input_anchor_present(
+                    skull_data, skull_size);
+            profile->fmtowns_skull_mouse_input_table_hash =
+                dm2_v1_boot_fmtowns_mouse_input_table_hash(
+                    skull_data, skull_size,
+                    profile->fmtowns_skull_mouse_input_table);
             /* The HMP-to-CDDA table is optional music evidence only.  A
              * malformed table stays silent; it cannot become a source
              * literal or invalidate the independently verified P3 program. */
@@ -2834,6 +2925,142 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
             }
         }
     }
+}
+
+/* Accept the original extracted HME-242 members when the user selected the
+ * loose tree and no usable raw CD image is present.  This is not a generated
+ * startup package: every member is admitted by its retail MD5 and the same
+ * bounded P3/animation parsers used by the disc route.  CDDA remains
+ * unavailable without the original mixed-mode image, so music still fails
+ * closed rather than falling back to host audio. */
+static void dm2_v1_boot_load_fmtowns_loose_media(
+    DM2_V1_BootProfile *profile, const char *base)
+{
+    static const char twanim_md5[] = "07a5629466e0c941bdc27c78cf8b9941";
+    static const char skull_md5[] = "0f4b44d286cbee35924a95e7d75ad7e5";
+    static const char swoosh_md5[] = "ecec4d7ac081b099056531043191b55a";
+    static const char title_md5[] = "d795bab0b392b61534f64163fbbedc38";
+    static const char end_md5[] = "b4a6a38657ac3c1857872952a25964d4";
+    const char *names[] = {"TWANIM.EXP", "SKULL.EXP", "SWOOSH",
+                           "TITLE", "END"};
+    const char *hashes[] = {twanim_md5, skull_md5, swoosh_md5,
+                            title_md5, end_md5};
+    uint8_t **bytes[] = {&profile->fmtowns_twanim_bytes,
+                         &profile->fmtowns_skull_bytes,
+                         &profile->fmtowns_swoosh_bytes,
+                         &profile->fmtowns_title_bytes,
+                         &profile->fmtowns_end_bytes};
+    size_t *sizes[] = {&profile->fmtowns_twanim_byte_count,
+                       &profile->fmtowns_skull_byte_count,
+                       &profile->fmtowns_swoosh_byte_count,
+                       &profile->fmtowns_title_byte_count,
+                       &profile->fmtowns_end_byte_count};
+    char path[512];
+    uint8_t *autoexec = NULL;
+    size_t autoexec_size = 0u;
+    char actual_md5[33];
+    int i;
+
+    if (!profile || !base || !base[0] || profile->fmtowns_disc_image ||
+        profile->fmtowns_animation_media_verified) return;
+
+    snprintf(path, sizeof(path), "%s/AUTOEXEC.BAT", base);
+    if (!dm2_v1_boot_read_asset_bytes(path, 4096L, &autoexec,
+                                      &autoexec_size) || !autoexec ||
+        autoexec_size == 0u) {
+        free(autoexec);
+        return;
+    }
+    {
+        uint8_t *terminated = realloc(autoexec, autoexec_size + 1u);
+        if (!terminated) {
+            free(autoexec);
+            return;
+        }
+        autoexec = terminated;
+        autoexec[autoexec_size] = '\0';
+    }
+    if (!strstr((const char *)autoexec,
+                "\\RUN386 TWANIM SWOOSH +AF +AH +AR") ||
+        !strstr((const char *)autoexec,
+                "\\RUN386 TWANIM TITLE +AB +AE +AR") ||
+        !strstr((const char *)autoexec, "\\RUN386 SKULL") ||
+        !strstr((const char *)autoexec,
+                "\\RUN386 TWANIM END +AC7 +AR")) {
+        free(autoexec);
+        return;
+    }
+    free(autoexec);
+
+    for (i = 0; i < 5; ++i) {
+        snprintf(path, sizeof(path), "%s/%s", base, names[i]);
+        if (!dm2_v1_boot_read_asset_bytes(path, 512L * 1024L,
+                                          bytes[i], sizes[i]) ||
+            !*bytes[i] || *sizes[i] == 0u) {
+            break;
+        }
+        dm2_md5_bytes_hex(*bytes[i], *sizes[i], actual_md5);
+        if (!md5_matches(actual_md5, hashes[i])) break;
+    }
+    if (i != 5 || !dm2_v1_boot_parse_fmtowns_p3(
+            profile->fmtowns_twanim_bytes,
+            profile->fmtowns_twanim_byte_count,
+            &profile->fmtowns_twanim_p3) ||
+        !dm2_v1_boot_parse_fmtowns_p3(
+            profile->fmtowns_skull_bytes,
+            profile->fmtowns_skull_byte_count,
+            &profile->fmtowns_skull_p3) ||
+        !dm2_v1_fmtowns_anim_stream_parse(
+            profile->fmtowns_swoosh_bytes,
+            profile->fmtowns_swoosh_byte_count,
+            &profile->fmtowns_swoosh_stream) ||
+        !dm2_v1_fmtowns_anim_stream_parse(
+            profile->fmtowns_title_bytes,
+            profile->fmtowns_title_byte_count,
+            &profile->fmtowns_title_stream) ||
+        !dm2_v1_fmtowns_anim_stream_parse(
+            profile->fmtowns_end_bytes,
+            profile->fmtowns_end_byte_count,
+            &profile->fmtowns_end_stream) ||
+        !dm2_v1_fmtowns_anim_stream_is_hme242_swoosh(
+            &profile->fmtowns_swoosh_stream) ||
+        !dm2_v1_fmtowns_anim_stream_is_hme242_title(
+            &profile->fmtowns_title_stream) ||
+        !dm2_v1_fmtowns_anim_stream_is_hme242_end(
+            &profile->fmtowns_end_stream)) {
+        for (i = 0; i < 5; ++i) {
+            free(*bytes[i]);
+            *bytes[i] = NULL;
+            *sizes[i] = 0u;
+        }
+        return;
+    }
+    snprintf(profile->fmtowns_twanim_md5,
+             sizeof(profile->fmtowns_twanim_md5), "%s", twanim_md5);
+    snprintf(profile->fmtowns_skull_md5,
+             sizeof(profile->fmtowns_skull_md5), "%s", skull_md5);
+    profile->fmtowns_skull_mouse_input_anchor_verified =
+        dm2_v1_boot_fmtowns_mouse_input_anchor_present(
+            profile->fmtowns_skull_bytes, profile->fmtowns_skull_byte_count);
+    profile->fmtowns_skull_mouse_input_table_hash =
+        dm2_v1_boot_fmtowns_mouse_input_table_hash(
+            profile->fmtowns_skull_bytes, profile->fmtowns_skull_byte_count,
+            profile->fmtowns_skull_mouse_input_table);
+    snprintf(profile->fmtowns_swoosh_md5,
+             sizeof(profile->fmtowns_swoosh_md5), "%s", swoosh_md5);
+    snprintf(profile->fmtowns_title_md5,
+             sizeof(profile->fmtowns_title_md5), "%s", title_md5);
+    snprintf(profile->fmtowns_end_md5,
+             sizeof(profile->fmtowns_end_md5), "%s", end_md5);
+    profile->fmtowns_startup_plan.valid = 1;
+    profile->fmtowns_startup_plan.stage_count = 4;
+    profile->fmtowns_startup_plan.stages[0] = DM2_FMTOWNS_STARTUP_STAGE_SWOOSH;
+    profile->fmtowns_startup_plan.stages[1] = DM2_FMTOWNS_STARTUP_STAGE_TITLE;
+    profile->fmtowns_startup_plan.stages[2] = DM2_FMTOWNS_STARTUP_STAGE_SKULL;
+    profile->fmtowns_startup_plan.stages[3] = DM2_FMTOWNS_STARTUP_STAGE_END;
+    profile->fmtowns_startup_media_verified = 1;
+    profile->fmtowns_animation_media_verified = 1;
+    profile->fmtowns_animation_streams_verified = 1;
 }
 
 typedef struct {
@@ -3120,6 +3347,32 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
                                      &profile->dungeon_size,
                                      profile->dungeon_md5);
 
+    /* Some extracted FM Towns trees use an uppercase DATA directory and
+     * mixed-case file names.  The recursive hash cache is intentionally
+     * conservative about that spelling; once GRAPHICS.DAT has selected the
+     * platform, probe only its own sibling DUNGEON.DAT and admit it by the
+     * platform-paired retail hash.  This keeps the source pair bound without
+     * falling through to a filename-only or cross-edition match. */
+    if (profile->graphics_path[0] && !profile->dungeon_path[0]) {
+        char graphics_dir[512];
+        char sibling[512];
+        const char *expected = NULL;
+        if (md5_matches(profile->graphics_md5,
+                        "027ff3b8ddc2c4c4cdda7ada0b0bc46c")) {
+            expected = "74c7549f174574201988bf936385841a";
+        }
+        copy_parent_dir(graphics_dir, profile->graphics_path);
+        if (expected && snprintf(sibling, sizeof(sibling),
+                                 "%s/DUNGEON.DAT", graphics_dir) <
+                         (int)sizeof(sibling) &&
+            path_md5_hex(sibling, profile->dungeon_md5) &&
+            md5_matches(profile->dungeon_md5, expected)) {
+            snprintf(profile->dungeon_path, sizeof(profile->dungeon_path),
+                     "%s", sibling);
+            profile->dungeon_size = file_size(sibling);
+        }
+    }
+
     /* If no loose files found, try FM Towns disc image in ZIP */
     if (!profile->graphics_path[0] || !profile->dungeon_path[0]) {
         dm2_v1_boot_load_fmtowns_disc_from_zip(profile, base);
@@ -3157,6 +3410,18 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
             profile->platform = DM2_PLATFORM_MEGACD_JA;
         } else if (md5_matches(profile->graphics_md5, "a80c555a858ef7770e1d7f3d2e37fec3")) {
             profile->platform = DM2_PLATFORM_PC9821_JA;
+        }
+    }
+
+    /* Loose FM Towns files are authentic and useful for the data owner, but
+     * the original startup/CDDA owner is the selected HME-242 medium.  When
+     * the archive is next to an extracted tree, bind that real archive now
+     * that the graphics hash has identified the platform. */
+    if (profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
+        !profile->fmtowns_disc_image) {
+        dm2_v1_boot_load_fmtowns_disc_from_zip(profile, base);
+        if (!profile->fmtowns_disc_image) {
+            dm2_v1_boot_load_fmtowns_loose_media(profile, base);
         }
     }
     strncpy(profile->platform_label,
@@ -3712,7 +3977,8 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
     if (profile->graphics_dat) {
         DM2_V1_BootGraphicsDat *gfx =
             (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-        if (profile->platform == DM2_PLATFORM_PC_EN ||
+        if (profile->platform == DM2_PLATFORM_FMTOWNS_JA ||
+            profile->platform == DM2_PLATFORM_PC_EN ||
             profile->platform == DM2_PLATFORM_PC_FR ||
             profile->platform == DM2_PLATFORM_PC_JEWEL) {
             (void)dm2_v1_boot_collect_champion_mirrors(gfx, dd);
@@ -8935,32 +9201,12 @@ static uint16_t dm2_v1_boot_rect16(const uint8_t *p, int big_endian)
     return big_endian ? dm2_v1_boot_be16(p) : dm2_v1_boot_le16(p);
 }
 
-static int dm2_v1_boot_rect_raw(const uint8_t *raw, size_t raw_size,
-                                uint16_t rect_id, DM2_V1_InterfaceRect *out)
-{
-    uint16_t groups;
-    size_t pos;
-    if (!raw || raw_size < 4u || !out || dm2_v1_boot_le16(raw) != 0xfc0du) return 0;
-    groups = dm2_v1_boot_le16(raw + 2);
-    if (groups == 0u || 4u + (size_t)groups * 4u > raw_size) return 0;
-    pos = 4u + (size_t)groups * 4u;
-    for (uint16_t group = 0; group < groups; ++group) {
-        uint16_t first = dm2_v1_boot_le16(raw + 4u + (size_t)group * 4u);
-        uint16_t last = dm2_v1_boot_le16(raw + 6u + (size_t)group * 4u);
-        size_t count = last >= first ? (size_t)(last - first + 1u) : 0u;
-        if (count == 0u || pos + count * 8u > raw_size) return 0;
-        if (rect_id >= first && rect_id <= last) {
-            const uint8_t *row = raw + pos + (size_t)(rect_id - first) * 8u;
-            out->x = (int16_t)dm2_v1_boot_le16(row);
-            out->y = (int16_t)dm2_v1_boot_le16(row + 2);
-            out->w = (int16_t)dm2_v1_boot_le16(row + 4);
-            out->h = (int16_t)dm2_v1_boot_le16(row + 6);
-            return 1;
-        }
-        pos += count * 8u;
-    }
-    return 0;
-}
+/* Forward declaration: the source-mapped QUERY_RECT decoder below handles
+ * the compressed RAW4 rows used by both the PC and FM Towns archives. */
+static int dm2_v1_boot_query_compressed_rect(const uint8_t *raw,
+                                             size_t raw_size,
+                                             uint16_t rect_id,
+                                             DM2_V1_InterfaceRect *out);
 
 static int dm2_v1_boot_expand_hud_rect(const uint8_t *raw, size_t raw_size,
                                        uint16_t rect_id,
@@ -8968,13 +9214,14 @@ static int dm2_v1_boot_expand_hud_rect(const uint8_t *raw, size_t raw_size,
 {
     DM2_V1_InterfaceRect current, next;
     int anchor, x, y, w, h;
-    if (!dm2_v1_boot_rect_raw(raw, raw_size, rect_id, &current) ||
-        current.y == 0 || !dm2_v1_boot_rect_raw(raw, raw_size,
+    if (!dm2_v1_boot_query_compressed_rect(raw, raw_size, rect_id, &current) ||
+        current.y == 0 || !dm2_v1_boot_query_compressed_rect(raw, raw_size,
                                                   (uint16_t)current.y, &next) ||
         next.x != 9) return 0;
     anchor = current.x; x = current.w; y = current.h; w = next.w; h = next.h;
     for (int guard = 0; current.y != 0 && guard < 16; ++guard) {
-        if (!dm2_v1_boot_rect_raw(raw, raw_size, (uint16_t)current.y, &next)) return 0;
+        if (!dm2_v1_boot_query_compressed_rect(raw, raw_size,
+                                               (uint16_t)current.y, &next)) return 0;
         if (next.x == 1) { x += next.w; y += next.h; }
         else if (next.x == 9) {
             int dx, dy;
@@ -9210,8 +9457,10 @@ int dm2_v1_boot_query_expanded_rect_receipt(
         &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
         DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw_size);
     if (!raw || raw_size < 4u ||
-        !dm2_v1_boot_expand_hud_rect(raw, raw_size, rect_id,
-                                     &out_receipt->rect) ||
+        (!dm2_v1_boot_expand_hud_rect(raw, raw_size, rect_id,
+                                      &out_receipt->rect) &&
+         !dm2_v1_boot_query_compressed_rect(raw, raw_size, rect_id,
+                                            &out_receipt->rect)) ||
         out_receipt->rect.w <= 0 || out_receipt->rect.h <= 0) {
         memset(out_receipt, 0, sizeof(*out_receipt));
         return 0;
@@ -10936,7 +11185,9 @@ int dm2_v1_boot_runtime_render_frame(
             out_receipt->runtime_render_fallback_carried_item_count == 0 &&
             out_receipt->runtime_render_fallback_projectile_count == 0;
         out_receipt->runtime_render_real_asset_ready =
-            out_receipt->runtime_hud_capture_ready &&
+            (out_receipt->runtime_hud_capture_ready ||
+             (profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
+              out_receipt->runtime_render_asset_floor_ceiling_count >= 2)) &&
             out_receipt->runtime_render_no_core_fallbacks;
         out_receipt->runtime_m11_frame_receipt_consumed =
             m11_frame.valid && m11_frame.m11_consume_frame;
@@ -13505,6 +13756,14 @@ int dm2_v1_boot_gdat_image_asset_fetch(
         raw = dm2_v1_asset_load_typed_sized(
             &gfx->loader, category, index, DM2_GDAT_ENTRY_TYPE_RAW7, field,
             &raw_size);
+        /* FM Towns HME-242 stores TITLE/0/4 as the source screen payload
+         * without the PC RAW7 type tag.  Keep the exact same bounded entry
+         * bytes, but accept the untyped representation when its authentic
+         * 320x200 size proves the source surface. */
+        if (!raw || raw_size != 320u * 200u) {
+            raw = dm2_v1_asset_load_sized(&gfx->loader, category, index,
+                                          field, &raw_size);
+        }
         if (raw && raw_size == 320u * 200u) {
             pixels = (uint8_t *)malloc(raw_size);
             if (!pixels) return -1;
@@ -13677,9 +13936,10 @@ int dm2_v1_boot_prepare_new_game_world(DM2_V1_BootProfile *profile)
 {
     DM2_V1_GameLoadWorldOwner *candidate;
     DM2_V1_GameLoadWorldOwner *previous;
-
     if (!profile || !profile->assets_verified || !profile->dungeon_data ||
-        profile->source_game_load_session_ready) return 0;
+        profile->source_game_load_session_ready) {
+        return 0;
+    }
     candidate = (DM2_V1_GameLoadWorldOwner *)calloc(1, sizeof(*candidate));
     if (!candidate || !dm2_v1_game_load_world_owner_prepare_new_game(
             candidate, profile) ||
@@ -13695,20 +13955,13 @@ int dm2_v1_boot_prepare_new_game_world(DM2_V1_BootProfile *profile)
         !dm2_v1_game_load_world_owner_materialize_static_caii(candidate) ||
         !dm2_v1_game_load_world_owner_materialize_caii_local_context(candidate) ||
         !dm2_v1_game_load_world_owner_materialize_dynamic_caii(candidate, NULL) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_map_doors(
-            candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_map_objects(
-            candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_map_texts(
-            candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_map_teleporters(
-            candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_map_actuators(
-            candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_map_creatures(
-            candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_creature_possessions(
-            candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_map_doors(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_map_objects(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_map_texts(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_map_teleporters(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_map_actuators(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_map_creatures(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_creature_possessions(candidate) ||
         !dm2_v1_game_load_world_owner_materialize_preselection_light(candidate) ||
         !dm2_v1_game_load_world_owner_materialize_preselection_scene(candidate) ||
         !dm2_v1_game_load_world_owner_materialize_preselection_view(candidate) ||
@@ -13941,7 +14194,29 @@ int dm2_v1_boot_select_new_game_champion(
         !owner->preselection_light.valid ||
         !owner->preselection_scene_materialized ||
         !owner->preselection_view.valid) return 0;
-    return dm2_v1_game_load_world_owner_select_champion(owner, selection);
+    if (!dm2_v1_game_load_world_owner_select_champion(owner, selection)) {
+        return 0;
+    }
+
+    /* A mirror click changes the source party, event queue, possession roots,
+     * CAII-backed records and timer prerequisites as one private transaction.
+     * Refresh the retained candidate from that same owner immediately; leaving
+     * the pre-click clone in the profile would make a later handoff observe a
+     * stale party while the source owner reports the new click order.  The
+     * helper replaces the old candidate only after the complete clone has
+     * succeeded, so a failed refresh remains private and cannot publish a
+     * partially selected session. */
+    if (profile->game_load_runtime_session_candidate &&
+        owner->source_startend_first_champion_released &&
+        !dm2_v1_boot_retain_runtime_session_candidate(profile, owner)) {
+        return 0;
+    }
+    return 1;
+}
+
+int dm2_v1_boot_commit_new_game_session(DM2_V1_BootProfile *profile)
+{
+    return dm2_v1_runtime_commit_source_game_load(profile);
 }
 
 int dm2_v1_boot_prepared_new_game_input(
@@ -14176,6 +14451,21 @@ void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {
     free(profile->fmtowns_disc_image);
     profile->fmtowns_disc_image = NULL;
     profile->fmtowns_disc_image_size = 0u;
+    free(profile->fmtowns_twanim_bytes);
+    free(profile->fmtowns_skull_bytes);
+    free(profile->fmtowns_swoosh_bytes);
+    free(profile->fmtowns_title_bytes);
+    free(profile->fmtowns_end_bytes);
+    profile->fmtowns_twanim_bytes = NULL;
+    profile->fmtowns_skull_bytes = NULL;
+    profile->fmtowns_swoosh_bytes = NULL;
+    profile->fmtowns_title_bytes = NULL;
+    profile->fmtowns_end_bytes = NULL;
+    profile->fmtowns_twanim_byte_count = 0u;
+    profile->fmtowns_skull_byte_count = 0u;
+    profile->fmtowns_swoosh_byte_count = 0u;
+    profile->fmtowns_title_byte_count = 0u;
+    profile->fmtowns_end_byte_count = 0u;
     profile->graphics_path[0] = '\0';
     profile->dungeon_path[0] = '\0';
 }

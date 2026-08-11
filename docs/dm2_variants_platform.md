@@ -35,6 +35,18 @@ Source: [DMWeb's Amiga edition notes](http://dmweb.free.fr/games/dungeon-master-
 [Greatstone's DM2 version index](http://greatstone.free.fr/dm/g_dm2.html),
 and the local archived copy in `docs/DMWEB_REFERENCE.md`.
 
+## Macintosh Version
+
+- Macintosh is a separate 68k release family with its own big-endian data,
+  resource-fork/container and menu/audio conventions. It is not a DOS or FM
+  Towns data alias.
+- Firestaff admits the authentic Mac archives for inspection and keeps Mac
+  support on its own platform path. A playable Mac runtime still requires the
+  source-owned resource-fork, movie, menu/input, audio and save/load gates in
+  `TODO-dm2.md`.
+
+X68000 is not part of the DM2 support matrix.
+
 ## PlayStation?
 - DM2 was never released on PlayStation
 
@@ -44,8 +56,8 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
 - No separate source for Windows version - same codebase
 
 ## Conclusion
-DOS, FM Towns and Amiga are separate original DM2 media/runtime families.
-Firestaff currently admits verified DOS installs and the verified FM Towns CD
-in memory. The Amiga installer corpus now reaches the same hash-verified
-in-memory boot-profile boundary; full Amiga gameplay runtime remains separate
-work. No PlayStation release is documented.
+Amiga, DOS, FM Towns and Macintosh are separate original DM2 media/runtime
+families in Firestaff's support matrix. The current runtime gates are
+edition-specific: verified DOS and FM Towns paths are furthest along, while
+Amiga and Macintosh require their remaining native runtime owners. X68000 and
+PlayStation are outside the supported matrix.

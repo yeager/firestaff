@@ -9,6 +9,8 @@
 #include "asset_status_m12.h"
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_creature_animation_gdat.h"
+#include "dm2_v1_game_load_world_owner.h"
 #include "dm2_v1_fmtowns_cdda_music.h"
 #include "dm2_v1_fmtowns_disc.h"
 #include "dm2_v1_runtime.h"
@@ -183,7 +185,77 @@ int main(void)
                        DM2_FMTOWNS_STARTUP_STAGE_SKULL &&
                    launch.profile->fmtowns_startup_plan.stages[3] ==
                        DM2_FMTOWNS_STARTUP_STAGE_END,
-               "FM Towns follows its original AUTOEXEC animation and startup order");
+                   "FM Towns follows its original AUTOEXEC animation and startup order");
+        if (launch.profile) {
+            DM2_V1_G1ChampionMirrorReceipt mirrors;
+            DM2_V1_BootChampionSelectionCensus census;
+            DM2_V1_BootChampionDyn4RosterReceipt roster;
+            int entered = dm2_v1_boot_enter_game(launch.profile);
+            int prepared = dm2_v1_boot_prepare_new_game_world(launch.profile);
+            int mirror_ok = dm2_v1_boot_champion_mirror_receipt(launch.profile, &mirrors);
+            int census_ok = dm2_v1_boot_champion_selection_census(launch.profile, &census);
+            int roster_ok = dm2_v1_boot_champion_dyn4_roster_receipt(launch.profile, &roster);
+            expect(entered == 0,
+                   "FM Towns GAME_LOAD admits the real dungeon/GDAT pair");
+            expect(prepared == 1,
+                   "FM Towns materializes the retained GAME_LOAD candidate");
+            expect(mirror_ok && mirrors.mirror_count == 16,
+                   "FM Towns GAME_LOAD retains all 16 authentic mirror roots");
+            expect(census_ok && census.candidate_count == 16,
+                   "FM Towns GAME_LOAD resolves all 16 champion candidates");
+            expect(roster_ok && roster.selector_count == 16,
+                   "FM Towns GAME_LOAD resolves all 16 DYN4 selectors");
+            if (prepared && census_ok) {
+                int selected = 0;
+                for (int candidate = 0; candidate < census.candidate_count;
+                     ++candidate) {
+                    DM2_V1_BootNewGamePartySelection selection;
+                    memset(&selection, 0, sizeof(selection));
+                    selection.map = census.candidates[candidate].mirror.map;
+                    selection.x = census.candidates[candidate].mirror.x;
+                    selection.y = census.candidates[candidate].mirror.y;
+                    selection.direction = census.candidates[candidate].mirror.direction;
+                    selection.mirror_object_id =
+                        census.candidates[candidate].mirror.object_id;
+                    if (dm2_v1_boot_select_new_game_champion(
+                            launch.profile, &selection)) {
+                        selected = 1;
+                        break;
+                    }
+                }
+                expect(selected,
+                       "FM Towns selects an authentic mirror into GAME_LOAD");
+                int committed = selected && dm2_v1_boot_commit_new_game_session(
+                    launch.profile);
+                expect(committed,
+                       "FM Towns publishes the selected GAME_LOAD session");
+                if (committed) {
+                    DM2_V1_BootRuntimeReceipt runtime_receipt;
+                    memset(&runtime_receipt, 0, sizeof(runtime_receipt));
+                    expect(launch.profile->source_game_load_session_ready &&
+                               dm2_v1_boot_runtime_capture(
+                                   launch.profile, &runtime_receipt) &&
+                               runtime_receipt.runtime_ready,
+                           "FM Towns exposes the committed session to runtime");
+                    expect(dm2_v1_boot_runtime_move(
+                               launch.profile,
+                               (int)runtime_receipt.party_dir,
+                               &runtime_receipt),
+                           "FM Towns accepts a movement command in the committed session");
+                }
+            }
+            {
+                uint16_t frame = 0xffffu;
+                expect(dm2_v1_creature_animation_gdat_static_frame_fmtowns(
+                           dm2_v1_boot_asset_loader(launch.profile), 41u, 1u,
+                           &frame) && (frame & 0x3fffu) != 0u,
+                       "FM Towns type-06 animation table resolves creature 41");
+                expect(dm2_v1_creature_animation_gdat_static_frame_fmtowns(
+                           dm2_v1_boot_asset_loader(launch.profile), 45u, 1u,
+                           &frame),
+                       "FM Towns type-06 table resolves the shared creature class");
+            }
+        }
         {
             DM2_V1_StartupLaunchReceipt startup;
             memset(&startup, 0, sizeof(startup));

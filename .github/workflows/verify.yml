@@ -120,22 +120,15 @@ jobs:
       - name: Run unit tests (ctest)
         run: |
           cd build
-          # The full catalogue includes optional real-media and source-lock
-          # checks whose reference corpora are intentionally not staged on
-          # hosted runners. Preserve their report without masking build or
-          # headless smoke-probe failures below.
-          set +e
+          # Keep the complete report, but do not turn failed or timed-out
+          # tests into warnings.  The old grep -P parser was also not
+          # portable to the macOS runner and could hide a non-zero ctest
+          # status behind the reporting pipeline.
+          set -o pipefail
           ctest --output-on-failure --parallel 4 --timeout 60 2>&1 | tee ctest.log
-          CTEST_STATUS=${PIPESTATUS[0]}
-          set -e
-          TOTAL=$(grep -oP 'tests passed.*out of \K[0-9]+' ctest.log || echo 0)
-          FAILED=$(grep -oP '\K[0-9]+(?= tests failed)' ctest.log || echo 0)
-          echo "ctest: $FAILED failed out of $TOTAL"
-          if [ "$FAILED" != "0" ]; then
-            echo "::warning::$FAILED ctest(s) failed — check output above"
-          fi
-          if [ "$CTEST_STATUS" != "0" ] && [ "$FAILED" = "0" ]; then
-            echo "::warning::ctest exited with status $CTEST_STATUS — check output above"
+          if grep -Eq '[1-9][0-9]* tests failed out of' ctest.log; then
+            echo "::error::ctest reported failed tests"
+            exit 1
           fi
 
       - name: Run Phase A probe (headless, no game data needed)
@@ -274,7 +267,7 @@ jobs:
           for probe in probes/*/firestaff_*_probe.c probes/firestaff_*_probe.c; do
             [ -f "$probe" ] || continue
             echo "=== $probe ==="
-            gcc -Wall -Wextra -Werror -Wno-format-truncation -Iinclude -Isrc -c -o /tmp/probe.o "$probe" 2>&1 || echo "  SKIP (missing deps)"
+            gcc -Wall -Wextra -Werror -Wno-format-truncation -Iinclude -Isrc -c -o /tmp/probe.o "$probe"
             probes_found=1
           done
           if [ "$probes_found" = 0 ]; then echo "No probes matched — OK"; fi

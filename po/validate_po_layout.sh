@@ -27,7 +27,7 @@ DOMAINS=(startup-menu dm1 csb dm2 firestaff nexus theron)
 # reported per locale so a translator can see which gaps remain.
 #
 # English (.en.po) is required for every domain.
-KNOWN_LOCALES=(en sv fr de ja zh cs da es fi hu it ko nl no pl pt ru tr)
+KNOWN_LOCALES=(en sv fr de ja zh cs da es fi hu it ko nl no pl pt ru tr id)
 
 ERRORS=0
 WARNINGS=0

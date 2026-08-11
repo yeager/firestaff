@@ -94,4 +94,15 @@ int dm2_v1_creature_animation_gdat_select_dynamic_v5(
     int direction,
     DM2_V1_CreatureAnimationGdatReceipt *out_receipt);
 
+/* FM Towns HME-242 stores the static creature sequences in one authentic
+ * category-01 type-06 block.  Its trailer contains 42 little-endian byte
+ * offsets for the shared animation classes selected by the creature entry.
+ * Resolve the sequence length from that table; never substitute the PC-DOS
+ * FB/FC pair. */
+int dm2_v1_creature_animation_gdat_static_frame_fmtowns(
+    const DM2_V1_AssetLoader *loader,
+    uint8_t creature_type,
+    uint16_t packed_position,
+    uint16_t *out_frame);
+
 #endif /* FIRESTAFF_DM2_V1_CREATURE_ANIMATION_GDAT_H */

@@ -745,6 +745,18 @@ typedef struct {
     uint8_t gdat_subcategory;
     uint8_t gdat_entry;
     uint8_t rectno;
+    uint8_t hand_cooldown;
+    uint8_t gray_overlay_required;
+    /* Optional source-owned item image. It is present only when the original
+     * hand record resolves to an authenticated GDAT image; no replacement
+     * icon is implied by absence. */
+    int item_gdat_index;
+    uint8_t item_present;
+    /* Source c_record item charge state used by CnNC. These fields are a
+     * receipt only; rendering never mutates the mounted record pool. */
+    uint8_t item_charge_valid;
+    uint8_t item_charge;
+    uint8_t item_charge_required;
     uint32_t map_load_token;
     uint32_t scene_control_hash;
     uint32_t palette_hash;

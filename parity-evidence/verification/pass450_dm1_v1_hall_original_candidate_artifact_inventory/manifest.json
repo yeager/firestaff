@@ -1,10 +1,10 @@
 {
   "schema": "pass450_dm1_v1_hall_original_candidate_artifact_inventory.v1",
-  "timestampUtc": "2026-08-11T06:49:42.533888+00:00",
+  "timestampUtc": "2026-08-09T13:31:00.993086+00:00",
   "status": "PASS_PASS450_CORRECTED_TERMINAL_ORIGINAL_FRAMES_INVENTORIED",
-  "repo": "/Volumes/Extern-disk/firestaff-claude",
+  "repo": "/Volumes/Extern-disk/Documents/Firestaff/yeager-firestaff",
   "branch": "main",
-  "head": "69530d9527f27f558fa4c71e443b64cbb41570e5",
+  "head": "7a012851039b329da45f3c93c6d522d423c4317a",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "dataHashLock": [
     {
@@ -3708,7 +3708,7 @@
     "localHostCaptureReady": true,
     "platform": "Darwin",
     "machine": "arm64",
-    "path": "/Users/bosse/bin:/Users/bosse/.local/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Library/Apple/usr/bin:/opt/homebrew/bin:/Users/bosse/.cargo/bin:/Users/bosse/.bun/bin:/Users/bosse/Library/pnpm:/Users/bosse/.claude/plugins/cache/claude-plugins-official/claude-code-setup/1.0.0/bin:/Users/bosse/.claude/plugins/cache/claude-plugins-official/playground/unknown/bin:/Users/bosse/.claude/plugins/cache/claude-plugins-official/pyright-lsp/1.0.0/bin:/Users/bosse/.claude/plugins/cache/claude-plugins-official/typescript-lsp/1.0.0/bin:/Users/bosse/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/f3575477-b803-4f63-8d1e-2a125b91c020/aa9bf537-6055-4cc3-a10d-a999a5e22e6f/bin:/Users/bosse/.claude/plugins/cache/claude-plugins-official/pyright-lsp/1.0.0/bin:/Users/bosse/.claude/plugins/cache/claude-plugins-official/typescript-lsp/1.0.0/bin",
+    "path": "/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Library/Apple/usr/bin:/opt/homebrew/bin:/Users/bosse/.codex/tmp/arg0/codex-arg07iaTF8:/Users/bosse/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/bosse/bin:/Users/bosse/.local/bin:/Users/bosse/.cargo/bin:/Users/bosse/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/Applications/ChatGPT.app/Contents/Resources",
     "display": null,
     "dosboxCandidates": [
       {

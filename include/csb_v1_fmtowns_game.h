@@ -87,6 +87,10 @@ typedef struct CSB_V1_FmtownsGameHandoffReceipt {
     uint32_t executable_fnv1a;
     char executable_name[16];
     char executable_path[512];
+    /* Non-owning bounded view of the original CD member.  It is populated
+     * for packed FM Towns media and keeps all C03 reads in RAM. */
+    const uint8_t *executable_bytes;
+    size_t executable_bytes_size;
     char graphics_md5[33];
     char dungeon_md5[33];
     /* The CD's MINI.DAT is an authenticated F31 bootstrap resource.  It is
@@ -96,6 +100,13 @@ typedef struct CSB_V1_FmtownsGameHandoffReceipt {
     uint32_t startup_mini_size;
     uint32_t startup_mini_fnv1a;
     char startup_mini_path[512];
+    const uint8_t *startup_mini_bytes;
+    size_t startup_mini_bytes_size;
+    /* F0435 reopens the selected CD DUNGEON.DAT; it is not stored in the
+     * user-created CSBGAME.DAT. */
+    const uint8_t *startup_dungeon_bytes;
+    size_t startup_dungeon_bytes_size;
+    char startup_dungeon_path[512];
     /* F0435 reads and authenticates the F31 512-byte header with the CSB
      * key at word 29.  This proves the selected seed is a native C5-format
      * FM Towns save header. The following receipt fields describe the
@@ -182,6 +193,8 @@ typedef struct CSB_V1_FmtownsUserSaveReceipt {
     uint32_t source_fnv1a;
     char source_path[512];
     char dungeon_path[512];
+    const uint8_t *dungeon_bytes;
+    size_t dungeon_bytes_size;
     uint16_t header_key;
     uint16_t platform;
     uint16_t dungeon_id;
@@ -340,6 +353,13 @@ int csb_v1_fmtowns_game_copy_verified_dungeon_tail(
     const CSB_V1_FmtownsGameHandoffReceipt *receipt,
     uint8_t *out_bytes, size_t out_size);
 
+/* Serialize the live F31 source-layout dungeon plus its native two-byte
+ * little-endian checksum trailer. `out_size` must equal raw_size + 2; the
+ * source loader re-admits the raw dungeon bytes before the trailer is added.
+ * No host or synthetic dungeon format is accepted. */
+int csb_v1_fmtowns_game_encode_dungeon_tail(
+    const CSB_V1_DungeonData *dungeon, uint8_t *out_bytes, size_t out_size);
+
 /* Decode the authenticated F31 MINI.DAT champion/party save part into the
  * live CSB representation.  This is intentionally limited to the original
  * 4*319-byte CHAMPION array and the source-owned global party pose; callers
@@ -403,6 +423,17 @@ int csb_v1_fmtowns_game_load_user_save_state(
     const CSB_V1_FmtownsUserSaveReceipt *receipt,
     CSB_V1_FmtownsStartupState *out_state);
 
+/* F0433/F0435 native F31 write path. The writer starts from the authenticated
+ * existing slot, patches only fields owned by the live F31 runtime, rebuilds
+ * all five keyed parts and the F7062 header, and replaces the slot atomically.
+ * If the authenticated save owns a save-specific dungeon-tail shape distinct
+ * from the full CD dungeon, that tail is retained byte-for-byte; the live tail
+ * is rebuilt only when its native source layout matches the admitted slot. */
+int csb_v1_fmtowns_game_write_user_save(
+    CSB_V1_BootProfile *profile,
+    const CSB_V1_FmtownsGameHandoffReceipt *game_receipt,
+    const char *save_path);
+
 int csb_v1_fmtowns_utility_handoff_open(
     const CSB_V1_BootProfile *profile,
     CSB_V1_FmtownsSwitchLanguage language,
@@ -428,6 +459,26 @@ int csb_v1_fmtowns_utility_portrait_catalog_open(
     const CSB_V1_BootProfile *profile,
     CSB_V1_FmtownsSwitchLanguage language,
     CSB_V1_FmtownsUtilityPortraitCatalog *out_catalog);
+
+/* F7001_SaveChampions / CEDT001.C: write only already-admitted .CMP
+ * records. Every party champion must match an existing catalog entry by its
+ * source name; the function never invents a filename or creates a portrait
+ * record. The 44-byte header is preserved byte-for-byte and only the
+ * receipt-bound 464-byte planar payload is replaced. */
+int csb_v1_fmtowns_utility_save_portraits(
+    const CSB_V1_FmtownsUtilityPortraitCatalog *catalog,
+    const CSB_V1_PartyState *party,
+    const CSB_V1_FmtownsStartupPortraitReceipt *portraits);
+
+/* F7002_ReadCMP / CEDT001.C: import one already-selected, authenticated
+ * .CMP record into the currently selected party slot.  The selector itself
+ * remains owned by C06; this transaction accepts only an index returned by
+ * the source-owned catalogue and never opens a host path or invents a row. */
+int csb_v1_fmtowns_utility_load_portrait(
+    const CSB_V1_FmtownsUtilityPortraitCatalog *catalog,
+    uint16_t catalog_index, CSB_V1_PartyState *party,
+    uint16_t selected_champion,
+    CSB_V1_FmtownsStartupPortraitReceipt *portraits);
 
 /* Decode the original C06 mouse target in its 320x200 source coordinate
  * space. ReDMCSB CEDTDATA.C lines 128-165 defines these F31E/F31J boxes,

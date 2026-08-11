@@ -2,6 +2,7 @@
 
 #include "dm2_v1_creature.h"
 #include "dm2_v1_skproject_core.h"
+#include "dm2_v1_fmtowns_graphics_dat.h"
 
 #include <string.h>
 
@@ -283,5 +284,55 @@ int dm2_v1_creature_animation_gdat_select_dynamic_v5(
     candidate.valid = candidate.table_hash != 0u;
     if (!candidate.valid) return 0;
     *out_receipt = candidate;
+    return 1;
+}
+
+int dm2_v1_creature_animation_gdat_static_frame_fmtowns(
+    const DM2_V1_AssetLoader *loader,
+    uint8_t creature_type,
+    uint16_t packed_position,
+    uint16_t *out_frame)
+{
+    const uint8_t *table;
+    size_t table_size = 0u;
+    size_t trailer;
+    size_t start;
+    size_t rows = 0u;
+    unsigned offset;
+    uint16_t animation_index;
+
+    if (out_frame) *out_frame = 0xffffu;
+    if (!loader || loader->gdat_version != DM2_FMTOWNS_GDAT_VERSION ||
+        !out_frame) return 0;
+    table = dm2_v1_asset_load_typed_sized(
+        loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0, DM2_GDAT_ENTRY_TYPE_RAW6,
+        0, &table_size);
+    /* HME-242's type-06 item ends with 0x54, followed by 42 u16 offsets.
+     * The final two bytes are the last offset; the bounds are checked from
+     * the actual item length so another authenticated FM Towns build cannot
+     * make this walk escape the item. */
+    if (!table || table_size < 0x58u) return 0;
+    trailer = table_size - 0x58u;
+    if (dm2_v1_read_le16(table + trailer) != 0x0054u)
+        return 0;
+    if (!dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_CREATURES,
+                                      creature_type, 0x00,
+                                      &animation_index) &&
+        !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_CREATURES,
+                                      creature_type, 0x05,
+                                      &animation_index)) return 0;
+    if (animation_index >= 42u) return 0;
+    offset = dm2_v1_read_le16(table + trailer + 2u +
+                              (size_t)animation_index * 2u);
+    start = (size_t)offset;
+    if (start + 4u > trailer) return 0;
+    while (start + (rows + 1u) * 4u <= trailer && rows < 0x3fffu) {
+        const uint8_t high = table[start + rows * 4u + 1u] & 0xf0u;
+        ++rows; /* The source counts the terminating row as a frame. */
+        if (high == 0u) break;
+    }
+    if (rows == 0u || start + rows * 4u > trailer) return 0;
+    *out_frame = (uint16_t)(rows | (packed_position == 0u ? 0x9000u :
+        (((uint32_t)packed_position & 0x3fu) << 6) | 0x8000u));
     return 1;
 }

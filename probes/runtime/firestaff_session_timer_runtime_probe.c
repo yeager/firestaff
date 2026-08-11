@@ -87,6 +87,16 @@ int main(void) {
     M12_CampaignSessionTimer campaign;
     M12_CampaignSlot slot;
     char buf[SESSION_TIMER_RUNTIME_TEXT_CAPACITY];
+    M12_StartupMenuInitOptions init_options;
+
+    /* This probe tests timer arithmetic only.  A normal launcher init scans
+     * its data directory recursively; using /tmp here made CI traverse the
+     * shared external-disk mount and appear hung before the first invariant.
+     * Keep the production init path, but explicitly disable discovery for
+     * this data-free probe. */
+    memset(&init_options, 0, sizeof(init_options));
+    init_options.skipAssetScan = 1;
+    init_options.skipScreenshotGalleryScan = 1;
 
     /* Seed campaign slot the same way as test_campaign_m12_session_timer. */
     memset(&slot, 0, sizeof(slot));
@@ -94,7 +104,7 @@ int main(void) {
     slot.playTimeSeconds = 0;
 
     /* ── Probe 1: launcher Off-mode is honored end-to-end. ──────────── */
-    M12_StartupMenu_InitWithDataDir(&menu, "/tmp", NULL);
+    M12_StartupMenu_InitWithOptions(&menu, NULL, NULL, &init_options);
     menu.settings.sessionTimerIndex =
         M12_SessionTimer_IndexForMinutes(0);
     SessionTimerRuntime_Init(

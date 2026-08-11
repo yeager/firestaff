@@ -17,6 +17,7 @@
 #include <stdint.h>
 
 #include "dm2_touch_click_zone_matrix_pc34_compat.h"
+#include "dm2_v1_boot.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,8 +28,10 @@ extern "C" {
 
 typedef struct {
     int active;
+    int fmtowns;
     char graphics_md5[33];
     uint32_t source_table_hash;
+    const DM2_V1_BootProfile *boot_profile;
 } DM2_V1_DungeonInputOwner;
 
 typedef struct {
@@ -44,6 +47,47 @@ typedef struct {
     uint32_t source_table_hash;
 } DM2_V1_DungeonInputReceipt;
 
+/* One raw record from the authenticated FM Towns SKULL.EXP MOUSE_INPUT
+ * span.  event_index removes the source high-bit flag from the event word;
+ * event_flags preserves it so callers cannot silently lose source state.
+ * This is a candidate inventory, not a context-free hit-test: the same
+ * rectangle can occur in more than one source UI branch. */
+typedef struct {
+    uint16_t source_record_index;
+    uint16_t event_index;
+    uint16_t event_flags;
+    uint16_t rect_id;
+    uint16_t button_mask;
+} DM2_V1_FmtownsMouseInputCandidate;
+
+unsigned int dm2_v1_dungeon_input_owner_fmtowns_candidate_count(
+    const DM2_V1_DungeonInputOwner *owner);
+
+int dm2_v1_dungeon_input_owner_fmtowns_candidate(
+    const DM2_V1_DungeonInputOwner *owner,
+    unsigned int ordinal,
+    DM2_V1_FmtownsMouseInputCandidate *out_candidate);
+
+/* Bind a raw Towns record to the source route's UI context.  The returned
+ * geometry is PC reference metadata only; FM Towns callers must resolve the
+ * candidate's rect_id through the authenticated native RAW4 table. */
+int dm2_v1_dungeon_input_owner_fmtowns_candidate_context(
+    const DM2_V1_DungeonInputOwner *owner,
+    unsigned int ordinal,
+    Dm2TouchClickZonePc34Compat *out_context);
+unsigned int dm2_v1_dungeon_input_owner_fmtowns_candidate_context_count(
+    const DM2_V1_DungeonInputOwner *owner, unsigned int ordinal);
+int dm2_v1_dungeon_input_owner_fmtowns_candidate_context_at(
+    const DM2_V1_DungeonInputOwner *owner, unsigned int ordinal,
+    unsigned int context_ordinal, Dm2TouchClickZonePc34Compat *out_context);
+
+/* Resolve a candidate's rectangle from the authenticated FM Towns RAW4
+ * table. No PC coordinates are returned or used. */
+int dm2_v1_dungeon_input_owner_fmtowns_candidate_native_rect(
+    const DM2_V1_DungeonInputOwner *owner,
+    unsigned int ordinal,
+    DM2_V1_BootExpandedRectReceipt *out_rect);
+
 typedef void (*DM2_V1_DungeonInputEventSink)(void *ctx,
                                               int16_t event_index,
                                               int16_t x,
@@ -54,6 +98,14 @@ typedef void (*DM2_V1_DungeonInputEventSink)(void *ctx,
  * game data. */
 int dm2_v1_dungeon_input_owner_init(DM2_V1_DungeonInputOwner *owner,
                                     const char *graphics_md5);
+
+/* Activates only the source event/rect subset recovered for the authentic
+ * FM-Towns GRAPHICS.DAT: movement, action-panel command slots and hand
+ * selection. Rectangles are queried from the boot profile's authenticated
+ * INTERFACE_GENERAL RAW4 table; no PC geometry is reused. */
+int dm2_v1_dungeon_input_owner_init_fmtowns(
+    DM2_V1_DungeonInputOwner *owner,
+    const DM2_V1_BootProfile *profile);
 
 /* Routes one physical mouse/touch button through the source dungeon view.
  * On a hit, exactly the source event number and source-space pointer

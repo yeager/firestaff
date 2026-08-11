@@ -97,6 +97,13 @@ static uint32_t dm2_v1_gdat_hud_command_hash(
     return hash ? hash : 1u;
 }
 
+static int dm2_v1_gdat_hud_fmtowns_core_address(
+    const DM2_V1_AssetLoader *loader,
+    int logical_field,
+    int *out_category,
+    int *out_index,
+    int *out_field);
+
 uint32_t dm2_v1_gdat_hud_m11_command_plan_hash(
     const DM2_V1_GdatHudM11CommandPlan *plan)
 {
@@ -351,7 +358,11 @@ static int dm2_v1_gdat_hud_add_command(
         command->gdat_category = DM2_GDAT_CATEGORY_CHAMPIONS;
         command->gdat_index = viewport_gdat_index;
         command->gdat_field = DM2_V1_VIEWPORT_GFX_HUD_PORTRAIT_FIELD;
-    } else if (!dm2_v1_boot_hud_core_asset_address(
+    } else if (!dm2_v1_gdat_hud_fmtowns_core_address(
+                   loader, logical_field,
+                   &command->gdat_category, &command->gdat_index,
+                   &command->gdat_field) &&
+               !dm2_v1_boot_hud_core_asset_address(
                    logical_field,
                    &command->gdat_category, &command->gdat_index,
                    &command->gdat_field)) {
@@ -410,6 +421,39 @@ static int dm2_v1_gdat_hud_add_command(
     }
     ++plan->command_count;
     return 1;
+}
+
+/* FM Towns GRAPHICS.DAT is not a PC v5 table with a different container
+ * word.  The native v4 image family uses the same INTERFACE_GENERAL
+ * category, but its chrome is split across the Towns subcategories below.
+ * These addresses are taken from the authenticated Towns table itself:
+ * index 6 is the 136x17 status strip, index 5/11 the 92x25 command strip,
+ * index 2/0 the gold/status panel, and index 4/1 the 97x62 champion panel.
+ * Keep this translation here, at the source-material boundary, so the
+ * renderer's private negative gdat indices remain stable for input and
+ * destination geometry.  No PC companion bitmap is involved. */
+static int dm2_v1_gdat_hud_fmtowns_core_address(
+    const DM2_V1_AssetLoader *loader,
+    int logical_field,
+    int *out_category,
+    int *out_index,
+    int *out_field)
+{
+    if (!loader || loader->gdat_version != 4u ||
+        !out_category || !out_index || !out_field) return 0;
+    *out_category = DM2_GDAT_CATEGORY_INTERFACE_GENERAL;
+    switch (logical_field) {
+        case DM2_V1_VIEWPORT_GFX_HUD_CORE_TOP_BAR:
+            *out_index = 6; *out_field = 0; return 1;
+        case DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_STRIP:
+            *out_index = 5; *out_field = 11; return 1;
+        case DM2_V1_VIEWPORT_GFX_HUD_CORE_GOLD_BOX:
+            *out_index = 2; *out_field = 0; return 1;
+        case DM2_V1_VIEWPORT_GFX_HUD_CORE_PORTRAIT_PANEL:
+            *out_index = 4; *out_field = 1; return 1;
+        default:
+            return 0;
+    }
 }
 
 int dm2_v1_gdat_hud_m11_command_plan_build(

@@ -519,7 +519,12 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
             }
             if (hit.index == M12_STARTUP_SETTINGS_ROW_LANGUAGE) {
                 state->languagePopupOpen = !state->languagePopupOpen;
-                state->languagePopupSelectedIndex = state->settings.languageIndex;
+                /* The stored index is the resolved system locale while AUTO
+                 * is active.  Reopening the popup must highlight AUTO, not
+                 * silently turn the policy into an explicit language. */
+                state->languagePopupSelectedIndex = state->languageExplicit
+                    ? state->settings.languageIndex
+                    : M12_StartupMenu_GetLanguageCount() - 1;
                 return 1;
             }
             state->languagePopupOpen = 0;

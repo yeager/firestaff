@@ -1,7 +1,36 @@
 # FM Towns cross-game recovery coverage
 
-Session 2026-08-07 comprehensive tally of Firestaff's byte-verified
+Session 2026-08-11 comprehensive tally of Firestaff's byte-verified
 FM Towns real-data recovery across DM1, CSB, and DM2.
+
+Latest verification (2026-08-11): the complete checkout builds successfully;
+the authentic CSB FM Towns handoff suite passes 6/6 executed tests (one
+explicitly skipped switch-only gate), and the authentic DM2 FM Towns M12,
+title, and NEW GAME/gameplay suite passes 3/3. These are opt-in tests and read
+the user-owned archives in place.
+
+The CSB direct loose-tree handoff now carries the selected language through
+M11: `FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=en` binds `CDATA/CHTWE.EXP`, while
+`ja` binds `CJDATA/CHTWJ.EXP`. A shared extraction can no longer silently boot
+the first directory found by the filesystem scan; each selected graphics and
+dungeon pair must match its authentic FM Towns hashes.
+
+Packed-media runtime coverage is now closed for CSB as well as DM2. CSB can
+start M11 directly from the authentic ZIP: the original IMG member and the
+selected `GRAPHICS.DAT`, `DUNGEON.DAT`, `CHTWE/CHTWJ.EXP`, `MINI.DAT`, and
+`TITLE.ANM` members stay in bounded RAM. Firestaff creates no loose runtime
+tree and does not rewrite the source archive. The real-data gates
+`csb_v1_fmtowns_archive_launch_real` and `csb_v1_fmtowns_packed_m11_real`
+cover this path.
+
+The CSB M11 handoff follows the CSB materializer's original `FMTOWNS.IMG`
+name for F0743 CUE-track dispatch; DM1's separate materializer continues to
+use its own `FMTOWNS.BIN` name.
+
+The CSB switch-only gate was also run directly against the materialized
+`SWITCHTW.EXP` on 2026-08-10: 18/18 assertions passed. The skip above is only
+the default CTest invocation without the optional switch-path environment
+variable; it does not indicate a parser failure.
 
 ## Discs used
 
@@ -45,8 +74,8 @@ Data specific to each game that other games do NOT share:
 - **CSB CHTWJ.EXP, SWITCHTW.EXP, ANIMTW.EXP, UTILE.EXP** — CSB-specific binaries with independent code but no SYM1 stripped from release.
 - **DM2 SKULL.EXP** — DM2 game code, no SYM1, no shared menu-render
   data (different action-label set).
-- **DM2 GRAPHICS.DAT format** (extended v4 with 4-byte records) — DM2's
-  own container variant.
+- **DM2 GRAPHICS.DAT format** (extended v4 raw-size table with an ENT1
+  directory in raw item 0) — DM2's own container variant.
 
 ## Shipping Firestaff modules
 
@@ -86,6 +115,8 @@ Every module below is source-locked with a real-data round-trip test:
 - `fmtowns_geometry_all_games` (per-game CHAR/ICON vaddrs)
 - `fmtowns_shared_tables_all_games` (SPELL/PLAYER/ICON per-game vaddrs)
 - `fmtowns_font_raster_all_games` (per-game font raster locations)
+- `dm2_v1_fmtowns_graphics_dat_ext_walker` (source-verified ext-v4/v5 raw
+  table and ENT1 directory traversal)
 
 ### Documentation + evidence
 
@@ -101,20 +132,57 @@ Every module below is source-locked with a real-data round-trip test:
 - **DM1 FM Towns**: 100% of extractable byte-verified real data
   now shipped. Every runtime table, symbol, and I/O surface a
   hosted-BIOS integration would need is source-locked.
-- **CSB FM Towns**: All cross-shared payloads (font, OICON,
-  DYNA_BUTTONS, spell tables, ICON_PAL, PLAYER_COLOR) via alias
-  modules. Independent CSB-only menu-render pipeline still open
-  (CSB has its own region table; no SYM1 in game binary).
-- **DM2 FM Towns**: Font raster + spell tables + geometry constants
-  shared via cross-game modules. DM2's own menu-render pipeline
-  and OICON/DYNA_BUTTONS require independent recovery (DM2 has
-  different item/action set from DM1/CSB).
+- **CSB FM Towns**: The authenticated CHTWE/CHTWJ, SWITCHTW, MINI.DAT,
+  portrait, dungeon-tail, utility, and source HUD routes are wired. The
+  real English and Japanese `MINI.DAT` files resume through M11 into the
+  saved map-4 state without replaying the title. C06 `SAVE CHAMPIONS` now
+  writes only existing, authenticated `.CMP` records from the real
+  `PORTRAIT` catalogue: the native header is preserved and only the
+  receipt-bound planar payload changes. `F7002_ReadCMP` also imports a
+  revalidated selected catalogue entry into the selected party slot, copying
+  only its source name/title and planar payload. C06 `LOAD CHAMPIONS`, its native
+  file-picker selection loop, and arbitrary `CSBGAME.DAT` load/write/resume
+  remain fail-closed until their exact source transactions are proven. The
+  external `fmtowns-save-corpus/CSBGAME.DAT` and `CSBGAME-JP.DAT` files are
+  retained as candidates, not used as synthetic substitutes.
+- **DM2 FM Towns**: The authentic HME-242 CD path, TWANIM/TITLE/SWOOSH/END,
+  M12 handoff, English companion overlay, title input, NEW GAME, active
+  gameplay movement, viewport frame, native HUD plan, all 16 authentic
+  CHAMPIONS portrait types, and the eight source action-hand selection events
+  (116..123) are verified by the real-media M11/M12 regressions. The click
+  owner reads the authentic 640x400 FM-Towns RAW4 rectangles and converts
+  pointer input to Firestaff's 320x200 presentation surface. The three source
+  action-panel command events now reach the CMDSTR-backed runtime owner;
+  unsupported or unavailable item/action records still fail closed. The boot
+  receipt also retains the complete authenticated 264-record `SKULL.EXP`
+  MOUSE_INPUT span (1584 bytes, FNV-1a `0x1500c4c9`) and exposes raw
+  event/flag/rect/mask candidates by source ordinal. This is evidence for
+  context-specific UI owners, not a global hit-test: Towns reuses rectangle
+  IDs across branches.
+  The first context-bound consumer now identifies route ordinal 117 as the
+  source `hand_panel.action_1` branch, while event 0x70/112 closes that panel
+  through M11. Other candidate branches remain unavailable until their live
+  UI state owners are bound.
+  The native inventory census resolves 129/166 source contexts; ordinals
+  47-49, 52-83, 99, and 110 have no matching Towns RAW4 geometry and remain
+  fail-closed.
+  The native viewport event 0x50/rect 0x0007 reaches the DM2 c_rwbb target
+  resolver and cannot fall through to DM1's C080 handler. Inventory/dialogue
+  pointer ownership and map-dependent viewport mutations remain fail-closed
+  gates until their source owners are bound.
+  Direct launch also accepts the authenticated
+  loose `fmtowns_iso` tree. Native startup works from the exact loose
+  TWANIM/SKULL/TITLE/SWOOSH/END members even without a ZIP; when the original
+  HME-242 ZIP is beside that tree, it remains the CDDA owner. The corpus
+  contains no FM Towns SKSAVE artifact, so save/resume remains fail-closed;
+  DOS SKSAVE files are not used as a Towns substitute.
 
 ## What is intentionally NOT shipped
 
-- **Extended-format GRAPHICS.DAT decoder** for CSB (0x8001) and DM2
-  (0x8004). Format classifier identifies these but per-record
-  decoding requires more RE work per game.
+- **Full extended-format GRAPHICS.DAT coverage** for CSB (0x8001) and DM2
+  (0x8004). The DM2 raw table, ENT1 directory, and authenticated FM Towns
+  IMG2/U4 hand-action decode are shipped; broader per-record presentation
+  coverage remains game-specific work.
 - **TownsOS BIOS runtime execution**. Requires Tsugaru integration
   or hosted TBIOS shim (see integration doc).
 - **JDM Shift-JIS glyph bitmaps**. Byte-verified 2026-08-07: the

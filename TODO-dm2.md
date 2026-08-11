@@ -83,12 +83,15 @@ file and DONE.md after every completed job.
   focused Firestaff regression before any `UNCERTAIN` row becomes
   `IMPLEMENTED`.
 
-- SKPROJECT-GAP-008 — **Title/menu GAME_LOAD remains a source boundary, not a
-  session constructor.** Candidate names found by the inventory do not prove
-  `SHOW_MENU_SCREEN` input routing or `GAME_LOAD` data admission. Risk:
-  reintroducing a synthetic party or dungeon after NEW GAME. Required:
-  skproject input event trace plus a hash-verified original DUNGEON.DAT load
-  receipt consumed by M11 before runtime activation.
+- SKPROJECT-GAP-008 — **Title/menu GAME_LOAD is now split by route.** The
+  authenticated FM Towns CD path has a verified `SHOW_MENU_SCREEN` pointer
+  route and a source-owned NEW GAME transaction: the real DUNGEON.DAT/GDAT
+  pair is admitted, an authentic mirror is selected, and M11 receives the
+  committed session before the first active frame. This is covered by the
+  opt-in `dm2_fmtowns_m11_gameplay_real_media` regression. Resume remains a
+  separate source boundary: the FM Towns corpus contains no SKSAVE, so no
+  save-derived party or dungeon may be invented or imported from the DOS
+  edition.
 
 - SKPROJECT-GAP-009 — **Two skproject source files are presently unreadable
   locally.** `SKULLWIN/c_music_wav.cpp` and `SKULLWIN/c_rect.cpp` are retained
@@ -190,11 +193,37 @@ clipping is still unproven. Remaining weather work is to bind real original
     keys and host coordinates could not represent that source route.
 
   - 2026-08-06 follow-up: the production GDAT fetch and RAW4 crop route for
-    those four hand backdrops is now source-bound and fails closed. It remains
-    deliberately unwired from normal gameplay until the live original
-    champion formation, possession and hand-selection state is recovered;
-    M11 must not infer that tuple from party order, pointer position or a
-    Firestaff default.
+    those four hand backdrops became source-bound and fail-closed. At that
+    point it remained unwired from normal gameplay because the live original
+    champion formation, possession and hand-selection state had not yet been
+    recovered; M11 could not infer that tuple from party order, pointer
+    position or a Firestaff default.
+
+  - 2026-08-11 update: GAME_LOAD now retains the source-owned
+    `party.curacthero` and `party.curactmode` fields and the Towns renderer
+    binds the selected champion's authentic action image when that state is a
+    valid source selection. The source `handcooldown[hand]` byte now drives
+    the original checker-pattern overlay, and the selected hand's real record
+    link resolves through the authenticated pools to its real item image when
+    command text resolves. Positive `CnNC` requirements now read the source
+    record `w2` with exact `ADD_ITEM_CHARGE(object, 0)` semantics, including
+    the special 16/17/18 cases; the probe never mutates the mounted pool. The
+    source sleep/wake input now owns the one-bit overlay state; the full sleep
+    tick cadence and charge-consuming action mutation remain. DB9
+    `ContainerType()==0` hand items now follow the source's separate
+    `IS_CONTAINER_MONEYBOX`/`IS_CONTAINER_CHEST` admission branch, including
+    the authentic `CONTAINERS/cls2/dtText/0x40` lookup; no command-entry or
+    charge requirement is invented for those containers. No hand selection is
+    fabricated when the source fields are clear.
+
+  - 2026-08-11 follow-up: the source `ACTIVATE_ACTION_HAND` state transition
+    is now exposed through `dm2_v1_runtime_activate_action_hand`. It accepts
+    only a live hero retained by the authenticated GAME_LOAD candidate and
+    updates `party.curacthero/curactmode` together. The real FM-Towns M11
+    gameplay regression exercises both hand selections. The native Towns
+    rectangle/event owner is still required before pointer clicks can invoke
+    this transition, and command-specific action execution remains fail-closed
+    when the selected hand has no authenticated action entry.
 
   - 2026-08-06 follow-up: command dispatch now propagates a rejected
     source-GDAT image callback, so a failed title/menu blit aborts the
@@ -229,6 +258,82 @@ clipping is still unproven. Remaining weather work is to bind real original
     the only available menu action remains New Game, which itself stays
     behind the original-data initialization gate.
 
+  - **FM Towns save boundary:** the mounted FM Towns corpus contains the
+    authenticated CD/runtime media but no FM Towns `SKSAVE` artifact. The
+    external `Downloads/dm2` corpus now supplies eight authentic DOSBox
+    `sksave0..3.dat/.bak` files. The real-data loader verifies all eight DOS
+    files and 269 source-boundary checks pass, but they are still a different
+    platform and are not evidence for a Towns save writer. `DM2_GAME_SAVE`
+    and full `GAME_LOAD` ownership therefore remain fail-closed for FM Towns
+    until an authentic Towns save is available and the platform-specific
+    stream passes a copied load/write/load regression. Do not use the DOS
+    files or a generated fixture to close this gate.
+
+  - **2026-08-11 FM Towns HUD receipt:** the native v4 `CHAMPIONS` portrait
+    route is covered for every authentic type 0..15 by
+    `test_dm2_v1_fmtowns_hud_portraits_real_data`. This closes portrait
+    material binding only; source champion selection, full inventory/dialogue
+    semantics, and FM Towns SKSAVE ownership remain separate gaps.
+
+  - **2026-08-11 FM Towns pointer subset:** the authenticated Towns
+    `INTERFACE_GENERAL` RAW4 table now owns source movement events 1..6 and
+    champion action-hand selection events 116..123. The M11 route converts
+    the native 640x400 rectangles to the 320x200 presentation surface and is
+    covered by `test_dm2_fmtowns_m11_gameplay_real_media`. This does not claim
+    inventory/dialogue pointer ownership, or a complete viewport interaction
+    map; those remain fail-closed until their source event/rectangle mappings
+    are recovered. The three action-panel pointer events now reach the
+    existing CMDSTR-backed command owner, but a command still fails closed
+    when its authenticated item/action record is not admissible. The native
+    viewport event 0x50/rect 0x0007 reaches the DM2 c_rwbb target resolver
+    and no longer falls through to DM1's C080 front-cell/door/mirror handler.
+    Sensor/object mutation remains fail-closed until the corresponding DM2
+    c_events owners are bound to runtime state.
+
+  - **2026-08-11 FM Towns input identity hardening:** the pointer owner now
+    requires both the authenticated Towns `GRAPHICS.DAT` and the native
+    `SKULL.EXP` MD5 (`0f4b44d286cbee35924a95e7d75ad7e5`). It also verifies the
+    disassembled `SKULL.EXP` MOUSE_INPUT anchor for events `0x70..0x72`
+    (`0x003b/0x003f/0x0040`) and the complete 264-record table span
+    (FNV-1a `0x1500c4c9`) before enabling the existing pointer subset.
+    The full source table is context-sensitive: the same rect IDs are reused
+    by inventory, status, and action-panel branches. Those branches still
+    require a source UI-context owner and are not promoted by geometry alone.
+
+  - **2026-08-11 FM Towns MOUSE_INPUT receipt:** after authenticating the
+    `SKULL.EXP` identity, the boot profile now retains the complete 264-record
+    (1584-byte) source span in memory. The input owner exposes each raw
+    event/flag/rect/mask candidate with its original record ordinal and
+    re-hashes the retained bytes before returning them. This is an evidence
+    API for the next context-bound UI owners; it does not make the candidates
+    globally clickable, because Towns reuses rectangle IDs across branches.
+    Route ordinal `117` is now bound back to the source `hand_panel.action_1`
+    context, and source event `0x70`/112 (rune-quit) closes the active action
+    panel through the M11 owner. The remaining context-specific candidates
+    are still inventory/status/dialogue work, not generic hitboxes.
+
+  - **2026-08-11 FM Towns inventory layout census:** the native RAW4 bridge
+    now resolves 129 of the 166 source inventory route contexts. Ordinals
+    47-49, 52-83, 99, and 110 have no matching rectangle in the authenticated
+    Towns RAW4 set. They remain fail-closed; no PC rectangle or replacement
+    control is substituted.
+
+  - **2026-08-11 FM Towns M11 event bridge:** the authenticated Towns
+    MOUSE_INPUT route now reaches the source panel-close event 11 after the
+    full SKULL.EXP table receipt and native rectangle admission. The generic
+    c_input sleep/wake callbacks remain available, but event 142/143 are not
+    present in the authenticated 264-record pointer span and are therefore
+    not claimed as pointer routes. Item-slot, rune, moneybox, and status
+    mutations remain fail-closed until the original record-chain owner is
+    recovered.
+
+  - **2026-08-11 source-session inventory links:** source-complete GAME_LOAD
+    sessions now expose and update `c_hero::item[30]` through the runtime
+    inventory API. Each non-empty write is checked against the admitted DB
+    record pool; the old 32-bit host cache remains unavailable before a real
+    source session. Raw DOSBox SKSave files still stop at the authenticated
+    pre-link GAME_LOAD boundary and cannot be promoted to a playable resume.
+
 - 🔧 Phase 5 - Creature/combat parity: creature AI table (64 entries with names + AI flags, 352-line implementation in `dm2_v1_creature.c` with spawn/tick/death_check) + combat resolver (now Phase 5-locked above) are source-locked. **2026-06-17 projectile routing + death sound landed:** new `dm2_v1_projectile_pc34_compat.c/h` provides the DM2→DM1 projectile bridge — maps DM2 creature `AttacksSpells` flags (12 bits: SHOOT/FIREBALL/LIGHTNING/DISPELL/POISON_CLOUD/POISON_BOLT/POISON_BLOB/PUSH_BACK) to DM1 `PROJECTILE_CATEGORY_*` + `PROJECTILE_SUBTYPE_*` via `dm2_v1_projectile_pick_category()`, then dispatches via F0810_PROJECTILE_Create_Compat. Three dispatch entry points: `dm2_v1_projectile_dispatch()` (auto-pick from creature AI flags), `dm2_v1_projectile_dispatch_spell()` (CCM 0x15 CAST_SPELL explicit subtype), `dm2_v1_projectile_dispatch_bomb()` (DM2 new area-effect). Plus magic-number fix in `dm2_v1_creature.c`: creature death sound now uses `DM2_SOUND_CREATURE_DEATH` constant instead of hardcoded `0x11`. New accessor `dm2_v1_creature_get_instance()` exposes creature pool read-only to the projectile module. Source-locked against SKULL.ASM:10620-10710 (SKULL_COMBAT_ResolveRanged), 11100-11200 (projectile routing), ReDMCSB PROJEXPL.C:76-92 (F0212), GROUP.C:1695-1770 (F0207 creature attack), skproject/SKWIN/SkWinCore.cpp:10479-10561 (AI_W30_TURNS_MISSILE). CTEST `test_dm2_v1_projectile_pc34_compat` 23/23 (all 7 attack-flag → category mappings, dispatch invalid/dead/melee-only rejection, archer guard + amplifier dispatch, spell + bomb dispatch, 3 observability counters, reset, source evidence, magic-number constant check). **2026-06-22 projectile-vs-creature collision gate landed:** new `dm2_v1_projectile_creature_collision_pc34_compat.c/h` resolves the DM2-specific missile-redirect dispatch when a live projectile reaches a square with a creature instance. 5-branch priority order: NONMATERIAL > ABSORBS_MISSILE > REFLECTOR > TURNS_MISSILE > HIT. Deterministic damage formula `max(1, impact_attack - armor_class/2)`; HIT/ABSORBED/REFLECTED despawn the projectile, and tests/probe cover each branch plus invalid slot/source evidence. **2026-06-28 projectile step/drain gate landed:** the runtime now advances the Firestaff DM2 projectile cache once per tick, consumes per-slot kinetic energy with the one-step grace boundary, despawns drained slots through the same observable path, and rebuilds the M11 drain view from post-step survivors. Remaining work: advanced CCM (`DM2_PROCEED_CCM`) full implementation, full cell-content digest/map-change/teleporter effects, and broader real-route runtime evidence.
 
 ### DM2 V2.0 / V2.1 / V2.2
@@ -256,3 +361,44 @@ clipping is still unproven. Remaining weather work is to bind real original
   accidentally produced 16 champion mirrors and a DYN4 selection; it is not
   valid evidence and must not be restored. Champion selection remains gated
   until the real DB3/DB4 ownership and marker route are independently proven.
+
+## DM2 Macintosh support
+
+DM2 Macintosh is a separate 68k platform family, not a DOS or FM Towns
+asset variant. The local corpus contains authentic English and Japanese Mac
+archives, a French StuffIt image, and Mac-specific `GRAPHICS.DAT` fingerprints.
+Existing bounded Mac coverage includes big-endian dungeon loading, French
+asset loading, and Mac music-file classification; this does not constitute a
+playable Macintosh runtime.
+
+- [ ] Admit each authentic Mac edition independently: US English 1.0,
+  Japanese 1.0, and the US English demo. Keep demo media and retail media
+  separate; do not reuse the DOS or FM Towns boot profile.
+- [ ] Add a source-owned Mac container/resource-fork reader for the verified
+  CD/content archives, including StuffIt/HQX/resource-fork provenance. The
+  reader must preserve the original file/resource identity and fail closed on
+  flattened or ambiguous input.
+- [ ] Bind the Mac big-endian `DUNGEON.DAT` and `GRAPHICS.DAT` pair to one
+  platform-specific boot receipt. Japanese 16-colour and US English
+  256-colour graphics must remain separate layouts and hashes.
+- [ ] Extract and present the authentic Macintosh QuickTime `MooV` movies
+  (`TITLE`, `STORY`, `SWOOSH`, `CREDITS`, and `ENDING`) from data/resource
+  forks. Do not replace them with converted MP4 files in the source runtime;
+  converted files may be verification derivatives only.
+- [ ] Bind the US English Mac MIDI/SoundMusicSys resources and the Japanese
+  CD-audio route separately. DOS HMP, FM Towns CD.DAT, and Amiga MOD paths are
+  not fallbacks.
+- [ ] Implement and test the Mac menu/file actions (New/Open/Save), balloon
+  help, Command-key input, and the Mac-specific wall/button hotkeys against
+  an original executable or emulator trace. Unsupported actions must remain
+  unavailable.
+- [ ] Acquire an authentic Mac save corpus for both language families and
+  verify native load/save round trips. A DOSBox `SKSAVE` or a generated save
+  cannot close this gate.
+- [ ] Add end-to-end Mac startup, viewport, inventory-cursor, movie, audio,
+  input, save/load, and pixel/audio regression gates before claiming Mac
+  gameplay support.
+
+Required evidence: hash-identified Mac CD/content media, resource-fork
+receipts, original Mac or emulator traces for menu/input/audio/movie timing,
+and at least one authentic save per claimed edition.

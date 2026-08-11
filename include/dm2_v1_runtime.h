@@ -203,6 +203,12 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile);
  * a rejected or closed FM Towns session cannot leave a dangling GDAT owner. */
 void dm2_v1_runtime_unbind_boot_profile(DM2_V1_BootProfile *boot_profile);
 int  dm2_v1_runtime_bind_boot_profile(DM2_V1_BootProfile *boot_profile);
+/* Atomically publish the already materialised source GAME_LOAD candidate.
+ * This consumes the candidate's authenticated record/CAII/sound owners and
+ * exact c_hero bytes; it never constructs a party from defaults.  Callers
+ * must first complete the source mirror/input transition. */
+int  dm2_v1_runtime_commit_source_game_load(
+    DM2_V1_BootProfile *boot_profile);
 /* Returns the map-0 bounded receipt when a canonical G1 partial world was
  * consumed. Only source-defined direct DB1 teleporter fields are available;
  * no generic object or link traversal is exposed through this API. */
@@ -301,6 +307,24 @@ int dm2_v1_runtime_last_frame_ownership(
     DM2_V1_RuntimeFrameOwnershipReceipt *out_receipt);
 int dm2_v1_runtime_last_m11_frame_receipt(
     DM2_V1_ViewportM11FrameReceipt *out_receipt);
+
+/* Resolve a dungeon viewport click through the renderer-owned c_rwbb list.
+ * This is the DM2 CLICK_VWPT boundary from c_events.cpp:1404.  It never
+ * treats the host viewport rectangle as a hit target; a click is accepted
+ * only when the last source-owned frame published a matching target. */
+typedef struct DM2_V1_RuntimeViewportClickReceipt {
+    int valid;
+    int accepted;
+    int target_index;
+    int target_kind;
+    int object_id;
+    int view_slot;
+    DM2_V1_ViewportRect rect;
+} DM2_V1_RuntimeViewportClickReceipt;
+
+int dm2_v1_runtime_route_viewport_click(
+    int screen_x, int screen_y,
+    DM2_V1_RuntimeViewportClickReceipt *out_receipt);
 uint32_t dm2_v1_runtime_frame_presentation_state_hash(
     uint32_t scene_light_hash, uint16_t ambient_light,
     uint32_t c_light_receipt_hash, uint32_t c_light_source_state_hash,
@@ -1207,6 +1231,18 @@ int dm2_v1_runtime_import_original_sksave_state_entry(
  * original LeaderPossession/record-checkcode ownership is imported. */
 uint32_t dm2_v1_runtime_get_leader_hand_object(void);
 void dm2_v1_runtime_set_leader_hand_object(uint32_t object);
+/* Source UI event 142/143 (SLEEP/WAKE). This state is owned by the DM2
+ * runtime input boundary and is consumed only by source HUD overlay logic. */
+int dm2_v1_runtime_is_sleeping(void);
+void dm2_v1_runtime_set_sleeping(int sleeping);
+/* Source-bound champion-panel selection bridge. Cycle only through occupied
+ * heroes retained by GAME_LOAD; an incomplete or empty source formation is a
+ * no-op rather than a host-created champion selection. */
+int dm2_v1_runtime_cycle_action_champion(void);
+/* Source UI event 116..123 selects a live champion's action hand.  The
+ * caller supplies the already-resolved source hero index and hand; no
+ * champion or item is created when the source session is incomplete. */
+int dm2_v1_runtime_activate_action_hand(int hero_index, int hand);
 /* DM2_LOAD_NEW_DUNGEON clears the old party before it admits the new G1
  * structure. This clears only Firestaff's cached representation of that
  * source-owned party/hand state; it does not construct a replacement party. */
@@ -1494,6 +1530,15 @@ int dm2_v1_runtime_get_projectile_actuator_count(void);
 int dm2_v1_runtime_engage_command(
     const DM2_V1_EngageCommandRequest *request,
     DM2_V1_EngageCommandReceipt *receipt);
+
+/* Execute one source command-menu slot for the currently selected hand.
+ * The command is resolved from the mounted item's authentic CMDSTR entry;
+ * the only currently admitted mutation is ATTACK (action id 2), which queues
+ * the original type-0x47 timer in the GAME_LOAD-owned source queue. Other
+ * authenticated command types remain fail-closed until their source owners
+ * are wired. `slot_index` is the original 0..2 command-menu index. */
+int dm2_v1_runtime_proceed_hand_command(
+    int slot_index, DM2_V1_EngageCommandReceipt *receipt);
 
 /* ── Special squares ──────────────────────────────────────────────── */
 

@@ -4098,7 +4098,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.309 LANGUAGES C)
+project(Firestaff VERSION 3.0.310 LANGUAGES C)
 
 set(FIRESTAFF_DUNGEON_STUDIO_VERSION "0.1")
 set(FIRESTAFF_SAVEGAME_EDITOR_VERSION "0.1")
@@ -16426,6 +16426,27 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_fmtowns_m12_real_media
         COMMAND test_dm2_fmtowns_m12_real_media
+    )
+
+    add_executable(test_dm2_fmtowns_m11_gameplay_real_media
+        tests/test_dm2_fmtowns_m11_gameplay_real_media.c
+    )
+    target_include_directories(test_dm2_fmtowns_m11_gameplay_real_media PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_fmtowns_m11_gameplay_real_media PRIVATE
+        firestaff_m11
+        firestaff_m12
+        firestaff_m10
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_fmtowns_m11_gameplay_real_media PRIVATE
+            -Wall -Wextra -Werror -O2
+        )
+    endif()
+    add_test(
+        NAME dm2_fmtowns_m11_gameplay_real_media
+        COMMAND test_dm2_fmtowns_m11_gameplay_real_media
     )
 
     add_executable(test_dm2_fmtowns_m11_title_real_media
@@ -36481,10 +36502,12 @@ firestaff_add_dm1_v1_viewport_contract_test(
     src/dm1/dm1_v1_viewport_f0098_floor_ceiling_fallback_pc34_compat.c
     dm1_v1_viewport_f0098_floor_ceiling_fallback_pc34_compat
 )
-target_include_directories(
-    test_dm1_v1_viewport_f0098_floor_ceiling_fallback_pc34_compat PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/dm1
-)
+if(TARGET test_dm1_v1_viewport_f0098_floor_ceiling_fallback_pc34_compat)
+    target_include_directories(
+        test_dm1_v1_viewport_f0098_floor_ceiling_fallback_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/dm1
+    )
+endif()
 firestaff_add_dm1_v1_viewport_contract_test(
     test_dm1_v1_viewport_d3l2_d3r2_f0108_floor_ornament_occlusion_pc34_compat
     tests/test_dm1_v1_viewport_d3l2_d3r2_f0108_floor_ornament_occlusion_pc34_compat.c
@@ -43025,7 +43048,9 @@ endif()
 # pass372/pass377: WILL_FAIL removed 2026-06-21 after the Firestaff route side
 # became source-locked; pass377 remains an expected BLOCKED audit only on the
 # semantic-clean original route, so the verifier exits 0 for that narrowed state.
-set_tests_properties(pass462_dm1_v1_title_end_original_capture_parity PROPERTIES WILL_FAIL TRUE)
+if(TEST pass462_dm1_v1_title_end_original_capture_parity)
+    set_tests_properties(pass462_dm1_v1_title_end_original_capture_parity PROPERTIES WILL_FAIL TRUE)
+endif()
 
 add_executable(test_dm1_v1_release_capture_manifest_pc34_compat
     tests/test_dm1_v1_release_capture_manifest_pc34_compat.c
@@ -43049,10 +43074,16 @@ target_compile_options(test_dm1_v1_hoc_presented_frame_consumer_pc34_compat PRIV
 add_test(NAME dm1_v1_hoc_presented_frame_consumer_pc34_compat
     COMMAND test_dm1_v1_hoc_presented_frame_consumer_pc34_compat)
 
-set_tests_properties(pass558_dm1_v1_pass514_io_blocker_classifier PROPERTIES WILL_FAIL TRUE)
+if(TEST pass558_dm1_v1_pass514_io_blocker_classifier)
+    set_tests_properties(pass558_dm1_v1_pass514_io_blocker_classifier PROPERTIES WILL_FAIL TRUE)
+endif()
 
-set_tests_properties(pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate PROPERTIES WILL_FAIL TRUE)
-set_tests_properties(pass563_dm1_v1_pc34_original_c254_boundary PROPERTIES WILL_FAIL TRUE)
+if(TEST pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate)
+    set_tests_properties(pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate PROPERTIES WILL_FAIL TRUE)
+endif()
+if(TEST pass563_dm1_v1_pc34_original_c254_boundary)
+    set_tests_properties(pass563_dm1_v1_pc34_original_c254_boundary PROPERTIES WILL_FAIL TRUE)
+endif()
 
 
 # csb_v1_m11_runtime_capture_boundary: WILL_FAIL removed 2026-06-21 - positive CSB launch handoff + PC real-asset boot/tick evidence now PASSES (csb_v1_pc_real_asset_launch_probe covers it). Marker kept as no-op.
@@ -50525,7 +50556,11 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_spawn_consu
     target_include_directories(test_theron_v1_mednafen_spawn_consumer_trace PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
     if(NOT MSVC)
-        target_compile_options(test_theron_v1_mednafen_spawn_consumer_trace PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_theron_v1_mednafen_spawn_consumer_trace PRIVATE
+            -Wall -Wextra -O2 -UNDEBUG)
+    else()
+        target_compile_options(test_theron_v1_mednafen_spawn_consumer_trace PRIVATE
+            /UNDEBUG)
     endif()
     add_test(NAME theron_v1_mednafen_spawn_consumer_trace
         COMMAND test_theron_v1_mednafen_spawn_consumer_trace)
@@ -52097,6 +52132,21 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_inventory_gdat_real_dat
         COMMAND test_dm2_v1_inventory_gdat_real_data)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_fmtowns_hud_portraits_real_data.c")
+    add_executable(test_dm2_v1_fmtowns_hud_portraits_real_data
+        tests/test_dm2_v1_fmtowns_hud_portraits_real_data.c)
+    target_include_directories(test_dm2_v1_fmtowns_hud_portraits_real_data PRIVATE
+        ${CMAKE_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_fmtowns_hud_portraits_real_data PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_fmtowns_hud_portraits_real_data PRIVATE
+            -Wall -Wextra -Werror)
+    endif()
+    add_test(NAME dm2_v1_fmtowns_hud_portraits_real_data
+        COMMAND test_dm2_v1_fmtowns_hud_portraits_real_data)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_memory_mement_helpers.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_memory_mement_helpers.c")
     add_executable(test_dm2_v1_memory_mement_helpers
@@ -53540,6 +53590,51 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_m11_game_handof
         LABELS "csb;fmtowns;real_data;m11")
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_mini_resume_real.c")
+    add_executable(test_csb_v1_fmtowns_mini_resume_real
+        tests/test_csb_v1_fmtowns_mini_resume_real.c)
+    target_include_directories(test_csb_v1_fmtowns_mini_resume_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_fmtowns_mini_resume_real PRIVATE
+        firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_fmtowns_mini_resume_real PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME csb_v1_fmtowns_mini_resume_real
+             COMMAND test_csb_v1_fmtowns_mini_resume_real)
+    set_tests_properties(csb_v1_fmtowns_mini_resume_real PROPERTIES
+        LABELS "csb;fmtowns;real_data;m11;resume")
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_archive_launch_real.c")
+    add_executable(test_csb_v1_fmtowns_archive_launch_real
+        tests/test_csb_v1_fmtowns_archive_launch_real.c)
+    target_include_directories(test_csb_v1_fmtowns_archive_launch_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_fmtowns_archive_launch_real PRIVATE
+        firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_fmtowns_archive_launch_real PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME csb_v1_fmtowns_archive_launch_real
+             COMMAND test_csb_v1_fmtowns_archive_launch_real)
+    set_tests_properties(csb_v1_fmtowns_archive_launch_real PROPERTIES
+        LABELS "csb;fmtowns;real_data;packed;ram")
+
+    add_executable(test_csb_v1_fmtowns_packed_m11_real
+        tests/test_csb_v1_fmtowns_packed_m11_real.c)
+    target_include_directories(test_csb_v1_fmtowns_packed_m11_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_fmtowns_packed_m11_real PRIVATE
+        firestaff_m11 firestaff_m12 firestaff_m10)
+    add_test(NAME csb_v1_fmtowns_packed_m11_real
+        COMMAND test_csb_v1_fmtowns_packed_m11_real)
+    set_tests_properties(csb_v1_fmtowns_packed_m11_real PROPERTIES
+        LABELS "csb;fmtowns;real_data;packed;ram;m11")
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_game_data_fingerprint.c")
     add_executable(test_firestaff_game_data_fingerprint
         tests/test_firestaff_game_data_fingerprint.c
@@ -54592,6 +54687,12 @@ target_link_libraries(test_m11_runtime_graphics_popup PRIVATE
 target_include_directories(test_m11_runtime_graphics_popup PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_options(test_m11_runtime_graphics_popup PRIVATE -Wall -Wextra -O2)
+if(NOT MSVC)
+  # This regression test uses assert() for its executable control flow.
+  # Release-style project flags define NDEBUG globally, which would remove
+  # the checks and let the test continue with unvalidated state.
+  target_compile_options(test_m11_runtime_graphics_popup PRIVATE -UNDEBUG)
+endif()
 add_test(NAME m11_runtime_graphics_popup COMMAND test_m11_runtime_graphics_popup)
 set_tests_properties(m11_runtime_graphics_popup PROPERTIES
   LABELS "tier1;csb;v2;runtime;settings")

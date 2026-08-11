@@ -20,6 +20,7 @@
 
 #include "dm2_v1_game.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_game_load_world_owner.h"
 #include "dm2_v1_creature.h"
 #include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_dungeon_loader.h"
@@ -29,6 +30,7 @@
 #include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
+#include "dm2_v1_skproject_core.h"
 #include "dm2_v1_actuator_event_pc34_compat.h"
 #include "dm2_v1_proceed_timers_pc34_compat.h"
 #include "dm2_v1_spell_timer_handlers_pc34_compat.h"
@@ -76,6 +78,20 @@ typedef struct {
     uint32_t champion_inventory_objects[4][30];
     int session_snapshot_valid;
     DM2_V1_SessionState session_snapshot;
+    /* GAME_LOAD transfers this party from the source-complete candidate.  It
+     * is the mutable c_party owner for input actions; session_snapshot is
+     * retained separately for read-only receipts and must not be used for
+     * mutations. */
+    DM2_V1_Party source_party;
+    int source_party_valid;
+    /* Source-owned selection state used by
+     * SkWinCore::DISPLAY_RIGHT_PANEL_SQUAD_HANDS.  Zero means that the
+     * original runtime has not selected a champion; do not promote it to a
+     * leader or fabricate a hand icon. */
+    int16_t source_curacthero;
+    int16_t source_curactmode;
+    int source_sleeping;
+    uint8_t source_attack_counter;
     DM2_MinionTable minions;
     int last_npc_level;
     int last_npc_x;
@@ -186,6 +202,12 @@ typedef struct {
     DM2_V1_RuntimeMusicMapReceipt music_map_receipt;
     DM2_V1_RuntimeTimerPostLoadReceipt timer_post_load;
     DM2_V1_RuntimeRawSaveHandoffReceipt raw_sksave_handoff;
+    /* Last renderer-owned c_rwbb click targets.  These are copied only from
+     * the authenticated frame that is handed to M11; host rectangles are not
+     * promoted into gameplay targets. */
+    DM2_V1_ViewportClickTarget source_click_targets[
+        DM2_V1_VIEWPORT_CLICK_TARGET_COUNT];
+    uint8_t source_click_target_count;
     DM2_V1_WeatherTimerReceipt last_weather_timer_receipt;
     /* DM2-003: DM2-owned source-order timer queue + dispatcher receipt.
      * Every DM2 timer routes through dm2_v1_proceed_timers
@@ -271,6 +293,10 @@ typedef struct {
     DM2_V1_SoundQueueState sound_queue;
     DM2_V1_SoundQueueEnv sound_env;
     int sound_queue_ready;
+    /* Ownership transferred from the committed GAME_LOAD candidate. */
+    DM2_V1_SoundSsoundEntry *source_sound_entries;
+    DM2_V1_GameLoadSoundSampleBinding *source_sound_bindings;
+    uint16_t source_sound_binding_count;
     /* CDDA playback callback — set by M11 host to push PCM to SDL3 */
     void (*cdda_play_cb)(void *ctx, const uint8_t *pcm, size_t size, int loop);
     void (*cdda_stop_cb)(void *ctx);
@@ -1850,6 +1876,8 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     if (g_dm2_runtime.caii_ready) {
         dm2_v1_caii_array_free(&g_dm2_runtime.caii);
     }
+    free(g_dm2_runtime.source_sound_entries);
+    free(g_dm2_runtime.source_sound_bindings);
     if (g_dm2_runtime.i18n_ready) {
         dm2_v1_i18n_destroy(&g_dm2_runtime.i18n);
     }
@@ -1891,6 +1919,9 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     memset(&g_dm2_runtime.session_snapshot, 0,
            sizeof(g_dm2_runtime.session_snapshot));
     g_dm2_runtime.session_snapshot_valid = 0;
+    g_dm2_runtime.source_curacthero = 0;
+    g_dm2_runtime.source_curactmode = 0;
+    g_dm2_runtime.source_sleeping = 0;
     memset(&g_dm2_runtime.minions, 0, sizeof(g_dm2_runtime.minions));
     g_dm2_runtime.last_npc_level = -1;
     g_dm2_runtime.last_npc_x = -1;
@@ -2099,6 +2130,195 @@ int dm2_v1_runtime_bind_boot_profile(DM2_V1_BootProfile *boot_profile) {
             dm2_v1_boot_viewport_asset_fetch, boot_profile);
         dm2_runtime_refresh_gdat_scene_control(&g_dm2_runtime);
     }
+    return 1;
+}
+
+static void dm2_runtime_copy_source_hero_to_snapshot(
+    DM2_V1_SessionState *session, int slot, const DM2_V1_Hero *hero)
+{
+    DM2_ChampionRecord *legacy;
+    uint8_t *raw;
+
+    if (!session || !hero || slot < 0 || slot >= DM2_MAX_HEROES) return;
+    legacy = (DM2_ChampionRecord *)session->champion_data[slot];
+    raw = session->original_champion_records[slot];
+    memset(legacy, 0, sizeof(*legacy));
+    memset(raw, 0, DM2_V1_ORIGINAL_CHAMPION_RECORD_SIZE);
+    memcpy(raw, hero, DM2_V1_ORIGINAL_CHAMPION_RECORD_SIZE);
+    memcpy(legacy->first_name, hero->name1, sizeof(legacy->first_name));
+    memcpy(legacy->last_name, hero->name2, sizeof(legacy->last_name));
+    legacy->absolute_direction = (uint16_t)(uint8_t)hero->absdir;
+    legacy->squad_position = (uint8_t)hero->partypos;
+    legacy->cur_hp = (uint16_t)hero->curHP;
+    legacy->max_hp = (uint16_t)hero->maxHP;
+    legacy->stamina = (uint16_t)hero->curStamina;
+    legacy->mana = (uint16_t)hero->curMP;
+    legacy->poison_value = (uint8_t)hero->poison;
+    legacy->runes_count = (uint8_t)hero->nrunes;
+    memcpy(legacy->spelled_runes, hero->rune,
+           sizeof(legacy->spelled_runes));
+    legacy->food = hero->food;
+    legacy->water = hero->water;
+    legacy->portrait_index = (uint8_t)hero->herotype;
+    for (int slot = 0; slot < DM2_NUM_ITEMS; ++slot) {
+        legacy->inventory[slot] = hero->item[slot] < 0
+            ? 0u : (uint32_t)(uint16_t)hero->item[slot];
+    }
+}
+
+int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate;
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_GameState *game;
+    DM2_V1_TimerQueue *source_timers;
+    int active_timers = 0;
+    int i;
+
+    if (!boot_profile || rt->boot != boot_profile ||
+        boot_profile->source_game_load_session_ready ||
+        !boot_profile->dm2_state ||
+        !boot_profile->game_load_runtime_session_candidate ||
+        !boot_profile->game_load_world_owner) {
+        return 0;
+    }
+    candidate = (DM2_V1_GameLoadRuntimeSessionCandidate *)
+        boot_profile->game_load_runtime_session_candidate;
+    if (!candidate->valid || candidate->source_party_map < 0 ||
+        candidate->source_party_x > 63u || candidate->source_party_y > 63u ||
+        candidate->source_party_direction > 3u ||
+        candidate->party.heros_in_party <= 0 ||
+        candidate->party.heros_in_party > DM2_MAX_HEROES ||
+        !candidate->record_pools.valid ||
+        !candidate->record_pools.record_graph_complete ||
+        !candidate->caii_slots.valid || !candidate->caii_slots.slots ||
+        !candidate->sound_owner.valid ||
+        !candidate->sound_owner.runtime_queue_initialized ||
+        !candidate->sound_owner.queue_entries ||
+        candidate->sound_owner.queue_capacity == 0u ||
+        !candidate->timer_queue.entries || !candidate->timer_queue.indices ||
+        candidate->timer_queue.max_timers <= 0) {
+        return 0;
+    }
+
+    /* The current runtime dispatcher has a bounded source queue.  Count the
+     * candidate's actual live entries before moving any ownership; no timer
+     * may be silently dropped at the handoff boundary. */
+    source_timers = &candidate->timer_queue;
+    for (i = 0; i < source_timers->max_timers; ++i) {
+        if (source_timers->entries[i].ttype != 0u) ++active_timers;
+    }
+    if (active_timers > (int)DM2_V1_SOURCE_TIMER_MAX) return 0;
+
+    /* All validation above is read-only.  From this point the candidate's
+     * owned allocations are transferred into the singleton and zeroed in the
+     * staging object so boot cleanup cannot free them twice. */
+    if (rt->record_pools_valid) {
+        dm2_v1_record_pool_set_free(&rt->record_pools);
+        rt->record_pools_valid = 0;
+    }
+    if (rt->caii_ready) {
+        dm2_v1_caii_array_free(&rt->caii);
+        rt->caii_ready = 0;
+    }
+    free(rt->source_sound_entries);
+    free(rt->source_sound_bindings);
+    rt->source_sound_entries = NULL;
+    rt->source_sound_bindings = NULL;
+    rt->source_sound_binding_count = 0u;
+
+    rt->record_pools = candidate->record_pools;
+    memset(&candidate->record_pools, 0, sizeof(candidate->record_pools));
+    rt->record_pools_valid = 1;
+    rt->caii = candidate->caii_slots;
+    memset(&candidate->caii_slots, 0, sizeof(candidate->caii_slots));
+    rt->caii_ready = 1;
+
+    dm2_v1_source_timer_queue_init(&rt->timer_queue);
+    for (i = 0; i < source_timers->max_timers; ++i) {
+        DM2_V1_TimerEntry *src = &source_timers->entries[i];
+        DM2_V1_SourceTimer timer;
+        if (src->ttype == 0u) continue;
+        memset(&timer, 0, sizeof(timer));
+        timer.ticks_and_map = (uint32_t)src->l_00;
+        timer.type = src->ttype;
+        timer.actor = src->actor;
+        timer.value_a = src->xA;
+        timer.value_b = src->yA;
+        timer.reserved = src->wvalueB;
+        if (dm2_v1_source_timer_enqueue(&rt->timer_queue, &timer,
+                                        (uint16_t)i) != DM2_V1_SOURCE_TIMER_OK) {
+            /* This should be unreachable after the count gate, but retain
+             * fail-closed behaviour if queue ordering or capacity changes. */
+            dm2_v1_runtime_init(boot_profile);
+            return 0;
+        }
+    }
+
+    rt->source_sound_entries = candidate->sound_owner.queue_entries;
+    candidate->sound_owner.queue_entries = NULL;
+    rt->source_sound_bindings = candidate->sound_owner.sample_bindings;
+    candidate->sound_owner.sample_bindings = NULL;
+    rt->source_sound_binding_count =
+        candidate->sound_owner.sample_binding_count;
+    dm2_v1_sound_queue_state_init(&rt->sound_queue,
+                                  candidate->sound_owner.queue_capacity);
+    if (!dm2_v1_sound_queue_bind_entries(
+            &rt->sound_queue, rt->source_sound_entries,
+            candidate->sound_owner.queue_entry_count,
+            candidate->sound_owner.queue_capacity)) {
+        dm2_v1_runtime_init(boot_profile);
+        return 0;
+    }
+    rt->sound_queue.ssound_count = candidate->sound_owner.queue_entry_count;
+    rt->sound_queue.sample_binding_count =
+        candidate->sound_owner.sample_binding_count;
+    rt->sound_queue_ready = 1;
+    dm2_v1_sound_bind_runtime_queue(&rt->sound_queue);
+
+    game = (DM2_V1_GameState *)boot_profile->dm2_state;
+    game->party_x = candidate->source_party_x;
+    game->party_y = candidate->source_party_y;
+    game->party_dir = candidate->source_party_direction;
+    game->current_level = candidate->source_party_map;
+    game->outdoor = candidate->source_party_map >= 0 &&
+        dm2_v1_dungeon_is_outdoor((const DM2_V1_DungeonData *)
+                                  boot_profile->dungeon_data,
+                                  candidate->source_party_map);
+    rt->dungeon_level = game->current_level;
+    rt->view_dir = game->party_dir;
+    rt->outdoor = game->outdoor;
+    /* GAME_LOAD changes the active map after the boot-time runtime bind.
+     * Rebuild the source-owned map/GDAT/light/material context now; otherwise
+     * the first M11 frame keeps the pre-party context and is correctly
+     * rejected with no floor, wall or frame receipt. */
+    dm2_runtime_refresh_map_transition_context(rt);
+
+    memset(&rt->session_snapshot, 0, sizeof(rt->session_snapshot));
+    rt->source_party = candidate->party;
+    rt->source_party_valid = 1;
+    rt->source_attack_counter = 0u;
+    rt->session_snapshot.champion_count =
+        (uint8_t)candidate->party.heros_in_party;
+    rt->session_snapshot.leader_index = candidate->party.curactevhero >= 0 &&
+        candidate->party.curactevhero < candidate->party.heros_in_party
+        ? (uint8_t)candidate->party.curactevhero : 0u;
+    rt->session_snapshot.party_x = candidate->source_party_x;
+    rt->session_snapshot.party_y = candidate->source_party_y;
+    rt->session_snapshot.party_dir = candidate->source_party_direction;
+    rt->session_snapshot.party_level = (uint8_t)candidate->source_party_map;
+    for (i = 0; i < candidate->party.heros_in_party; ++i) {
+        dm2_runtime_copy_source_hero_to_snapshot(
+            &rt->session_snapshot, i, &candidate->party.hero[i]);
+    }
+    rt->session_snapshot.original_champion_records_valid = 1u;
+    rt->source_curacthero = candidate->party.curacthero;
+    rt->source_curactmode = candidate->party.curactmode;
+    rt->session_snapshot_valid = 1;
+    rt->leader_hand_object = (uint32_t)(uint16_t)
+        candidate->leader_hand_record;
+
+    boot_profile->source_game_load_session_ready = 1;
     return 1;
 }
 
@@ -5299,6 +5519,250 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
     dm2_v1_viewport_set_hud_party(viewport, &hud);
 }
 
+/* ReDMCSB/skproject SkWinCore.cpp::DISPLAY_RIGHT_PANEL_SQUAD_HANDS keeps
+ * the selected champion and selected hand in party.curacthero/curactmode,
+ * then calls DRAW_HAND_ACTION_ICONS. Without a source-selected champion
+ * there is no hand-action command to present. */
+static void dm2_runtime_bind_source_hand_action(
+    const DM2_V1_RuntimeState *rt, DM2_V1_ViewportState *viewport,
+    int party_dir)
+{
+    const uint8_t *raw;
+    const uint8_t *pixels = NULL;
+    const uint8_t *raw4;
+    size_t raw4_size = 0u;
+    DM2_V1_GdatRaw4BlitPlacement placement;
+    DM2_V1_HudHandActionSource source;
+    int player_index;
+    int gdat_index;
+    int width = 0;
+    int height = 0;
+    int stride = 0;
+    uint32_t raw4_hash = 2166136261u;
+
+    if (!rt || !viewport || rt->outdoor || !rt->session_snapshot_valid ||
+        !rt->boot || !rt->boot->graphics_dat ||
+        !viewport->asset_fetch || !viewport->asset_loader ||
+        !viewport->gdat_interface_palette_ready ||
+        viewport->gdat_scene_map_load_token == 0u ||
+        viewport->gdat_scene_control_hash == 0u ||
+        viewport->gdat_interface_palette_hash == 0u ||
+        rt->source_curacthero <= 0 ||
+        rt->source_curacthero > rt->session_snapshot.champion_count ||
+        rt->source_curactmode < 0 || rt->source_curactmode > 1) {
+        return;
+    }
+
+    player_index = rt->source_curacthero - 1;
+    raw = rt->session_snapshot.original_champion_records[player_index];
+    if (raw[0x1d] > 3u) return;
+    gdat_index = dm2_v1_viewport_hud_hand_action_graphic_index(
+        rt->source_curactmode, 1);
+    if (gdat_index == 0 ||
+        viewport->asset_fetch(viewport->asset_user, gdat_index, &pixels,
+                              &width, &height, &stride) != 0 ||
+        !pixels || width <= 0 || height <= 0 || stride < width) {
+        return;
+    }
+    raw4 = dm2_v1_asset_load_typed_sized(
+        viewport->asset_loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw4_size);
+    if (!raw4 || raw4_size == 0u ||
+        !dm2_v1_gdat_door_overlay_query_raw4_blit_placement(
+            viewport->asset_loader,
+            (uint16_t)((rt->source_curactmode == 1 ? 0x46 : 0x4a) +
+                       (((int)raw[0x1d] + 4 - (party_dir & 3)) & 3)),
+            width, height, &placement)) {
+        return;
+    }
+    for (size_t i = 0u; i < raw4_size; ++i) {
+        raw4_hash ^= (uint32_t)raw4[i] + 0x9e3779b9u +
+            (raw4_hash << 6) + (raw4_hash >> 2);
+        if (raw4_hash == 0u) raw4_hash = 1u;
+    }
+    if (raw4_hash == 0u) return;
+
+    memset(&source, 0, sizeof(source));
+    source.valid = 1;
+    source.player_index = (uint8_t)player_index;
+    source.possession_index = (uint8_t)rt->source_curactmode;
+    source.left_or_right = 1u;
+    source.player_position = (uint8_t)raw[0x1d];
+    source.party_direction = (uint8_t)(party_dir & 3);
+    source.gdat_category = DM2_GDAT_CATEGORY_INTERFACE_GENERAL;
+    source.gdat_subcategory = 4u;
+    source.gdat_entry = (uint8_t)(2 + (rt->source_curactmode * 2) + 1);
+    source.rectno = (uint8_t)((rt->source_curactmode == 1 ? 0x46 : 0x4a) +
+        (((int)raw[0x1d] + 4 - (party_dir & 3)) & 3));
+    /* c_hero::handcooldown is a signed byte at 0x2a. The source tests only
+     * for non-zero here; retain the byte as a receipt and let the viewport
+     * apply the original checker overlay. */
+    source.hand_cooldown = raw[0x2a + rt->source_curactmode];
+    source.gray_overlay_required = source.hand_cooldown != 0u ||
+        rt->source_sleeping;
+    source.map_load_token = viewport->gdat_scene_map_load_token;
+    source.scene_control_hash = viewport->gdat_scene_control_hash;
+    source.palette_hash = viewport->gdat_interface_palette_hash;
+    source.raw4_hash = raw4_hash;
+    source.source_rect.x = placement.source_x;
+    source.source_rect.y = placement.source_y;
+    source.source_rect.w = placement.destination.w;
+    source.source_rect.h = placement.destination.h;
+    source.destination_rect = placement.destination;
+
+    /* DRAW_ITEM_ON_WOOD_PANEL follows the selected hero's real c_hero item
+     * link and asks the mounted record pools for cls1/cls2.  Admit an item
+     * image only when that link, its GDAT class, and a source command entry
+     * all resolve. Charge-consuming commands remain no-draw until the live
+     * charge owner is available; showing them would be an invented state. */
+    if (rt->record_pools_valid) {
+        const uint8_t *item_bytes = raw + 0xc3u +
+            (size_t)rt->source_curactmode * sizeof(int16_t);
+        uint16_t item_word = (uint16_t)item_bytes[0] |
+            ((uint16_t)item_bytes[1] << 8);
+        uint8_t cls1 = 0xffu;
+        uint8_t cls2 = 0xffu;
+        DM2_V1_SkprojectQueryCls1Receipt cls1_receipt;
+        DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
+        int action_found = 0;
+
+        memset(&cls1_receipt, 0, sizeof(cls1_receipt));
+        memset(&cls2_receipt, 0, sizeof(cls2_receipt));
+        if (item_word != 0xffffu &&
+            dm2_v1_skproject_query_cls1_from_record_ex(
+                item_word, &rt->record_pools, &cls1, &cls1_receipt) &&
+            dm2_v1_skproject_query_cls2_from_record(
+                item_word, &rt->record_pools, &cls2, &cls2_receipt) &&
+            cls1 >= DM2_GDAT_CATEGORY_WEAPONS &&
+            cls1 <= DM2_GDAT_CATEGORY_MISCELLANEOUS) {
+            /* SKWIN/SkWinCore.cpp::IS_ITEM_HAND_ACTIVABLE admits a DB9
+             * container of ContainerType()==0 before scanning command
+             * entries. IS_CONTAINER_MONEYBOX is the subset whose exact
+             * CONTAINERS/cls2/dtText/0x40 entry exists; the remaining
+             * type-0 containers are source-classified as chests. Preserve
+             * that admission boundary from the authenticated record pool.
+             * The GDAT query is deliberately made even for a chest so a
+             * missing moneybox list cannot be replaced by a guessed item
+             * classification. */
+            if (cls1 == DM2_GDAT_CATEGORY_CONTAINERS &&
+                dm2_v1_record_handle_pool((int16_t)item_word) == 9) {
+                const uint8_t *container = dm2_v1_record_pool_address(
+                    &rt->record_pools, (int16_t)item_word);
+                int container_size = dm2_v1_record_pool_record_size(9);
+                uint16_t moneybox_data_index = 0xffffu;
+                int has_moneybox_item_list =
+                    dm2_v1_query_gdat_entry_data_index(
+                        viewport->asset_loader,
+                        DM2_GDAT_CATEGORY_CONTAINERS, cls2,
+                        DM2_GDAT_ENTRY_TYPE_TEXT, 0x40,
+                        &moneybox_data_index) &&
+                    moneybox_data_index != 0xffffu;
+
+                /* Source IS_CONTAINER_MONEYBOX/IS_CONTAINER_CHEST both
+                 * require DB9 and ContainerType()==0. Their distinction is
+                 * only the presence of the authentic moneybox list; both
+                 * are admitted by IS_ITEM_HAND_ACTIVABLE. */
+                (void)has_moneybox_item_list;
+                if (container && container_size >= 5 &&
+                    ((container[4] >> 1) & 3u) == 0u) {
+                    action_found = 1;
+                }
+            }
+            if (!action_found) {
+                for (int command_entry = 8; command_entry < 12;
+                     ++command_entry) {
+                DM2_V1_GdatEntryQueryReceipt loadable;
+                DM2_V1_CmdstrEntryReceipt command;
+                DM2_V1_CmdstrEntryReceipt where;
+                DM2_V1_CmdstrEntryReceipt charges;
+
+                memset(&loadable, 0, sizeof(loadable));
+                memset(&command, 0, sizeof(command));
+                memset(&where, 0, sizeof(where));
+                memset(&charges, 0, sizeof(charges));
+                if (!dm2_v1_query_gdat_entry_if_loadable(
+                        viewport->asset_loader, cls1, cls2,
+                        DM2_GDAT_ENTRY_TYPE_TEXT, command_entry, &loadable) ||
+                    !loadable.loadable_raw ||
+                    !dm2_v1_query_cmdstr_entry_receipt(
+                        viewport->asset_loader, cls1, cls2, command_entry,
+                        2, &command) || !command.found ||
+                    command.value == 0 ||
+                    !dm2_v1_query_cmdstr_entry_receipt(
+                        viewport->asset_loader, cls1, cls2, command_entry,
+                        17, &where)) {
+                    continue;
+                }
+                if (where.found && where.value != 0 &&
+                    where.value - 1 != rt->source_curactmode) {
+                    continue;
+                }
+                if (!dm2_v1_query_cmdstr_entry_receipt(
+                        viewport->asset_loader, cls1, cls2, command_entry,
+                        8, &charges)) {
+                    continue;
+                }
+                /* IS_ITEM_HAND_ACTIVABLE uses ADD_ITEM_CHARGE(si, 0) for
+                 * NC 18, maps NC 16/17 to one charge, and compares every
+                 * other positive NC directly with the current charge. Read
+                 * w2 from the authenticated record pool and run the exact
+                 * source helper with delta zero. The helper receives a local
+                 * copy, so this probe cannot spend a charge while drawing. */
+                if (charges.found && charges.value != 0) {
+                    const uint8_t *record = dm2_v1_record_pool_address(
+                        &rt->record_pools, (int16_t)item_word);
+                    int pool = dm2_v1_record_handle_pool((int16_t)item_word);
+                    int record_size = dm2_v1_record_pool_record_size(pool);
+                    uint16_t record_w2;
+                    DM2_V1_SkprojectItemChargeReceipt charge_receipt;
+                    int required = charges.value == 16 ||
+                        charges.value == 17 ? 1 : charges.value;
+
+                    if (!record || record_size < 6 || required <= 0) {
+                        continue;
+                    }
+                    record_w2 = (uint16_t)record[4] |
+                        ((uint16_t)record[5] << 8);
+                    memset(&charge_receipt, 0, sizeof(charge_receipt));
+                    if (!dm2_v1_skproject_add_item_charge(
+                            item_word, &record_w2, 0, &charge_receipt) ||
+                        !charge_receipt.valid ||
+                        (charges.value == 18
+                             ? charge_receipt.new_charge == 0u
+                             : charge_receipt.new_charge < (uint16_t)required)) {
+                        continue;
+                    }
+                    source.item_charge_valid = 1u;
+                    source.item_charge = (uint8_t)charge_receipt.new_charge;
+                    source.item_charge_required = (uint8_t)required;
+                }
+                action_found = 1;
+                break;
+                }
+            }
+        }
+        if (action_found) {
+            int item_gdat_index = dm2_v1_viewport_item_graphic_index(
+                cls1, cls2, 0x18);
+            const uint8_t *item_pixels = NULL;
+            int item_width = 0;
+            int item_height = 0;
+            int item_stride = 0;
+
+            if (item_gdat_index != 0 &&
+                viewport->asset_fetch(viewport->asset_user,
+                    item_gdat_index, &item_pixels, &item_width,
+                    &item_height, &item_stride) == 0 && item_pixels &&
+                item_width > 0 && item_height > 0 &&
+                item_stride >= item_width) {
+                source.item_present = 1u;
+                source.item_gdat_index = item_gdat_index;
+            }
+        }
+    }
+    dm2_v1_viewport_set_hud_hand_action_source(viewport, &source);
+}
+
 /* ── Viewport rendering ────────────────────────────────────────────── */
 
 /*
@@ -5694,6 +6158,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_interface_palette_ready,
         rt->gdat_interface_palette_hash,
         rt->gdat_interface_palette16);
+    dm2_runtime_bind_source_hand_action(rt, &viewport, party_dir);
     dm2_v1_viewport_set_gdat_interface_text_palette(
         &viewport,
         rt->gdat_interface_action_palette_ready,
@@ -5711,7 +6176,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     }
     memset(&hud_layout, 0, sizeof(hud_layout));
     memset(&hud_material_plan, 0, sizeof(hud_material_plan));
-    if (viewport.hud_party_valid) {
+    if (viewport.hud_party_valid && !rt->outdoor) {
         if (!dm2_v1_boot_gdat_hud_m11_command_plan(
                 rt->boot, &viewport.hud_party, &hud_material_plan)) {
             /* A missing per-champion GDAT record must not replace the
@@ -5746,6 +6211,19 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_runtime_capture_door_render_receipt(&viewport);
     viewport.tick_count = rt->tick_count;
     dm2_v1_viewport_render(&viewport);
+    rt->source_click_target_count = viewport.source_click_target_count;
+    if (rt->source_click_target_count > DM2_V1_VIEWPORT_CLICK_TARGET_COUNT) {
+        rt->source_click_target_count = DM2_V1_VIEWPORT_CLICK_TARGET_COUNT;
+    }
+    memcpy(rt->source_click_targets, viewport.source_click_targets,
+           (size_t)rt->source_click_target_count *
+               sizeof(rt->source_click_targets[0]));
+    if (rt->source_click_target_count < DM2_V1_VIEWPORT_CLICK_TARGET_COUNT) {
+        memset(rt->source_click_targets + rt->source_click_target_count, 0,
+               (size_t)(DM2_V1_VIEWPORT_CLICK_TARGET_COUNT -
+                        rt->source_click_target_count) *
+                   sizeof(rt->source_click_targets[0]));
+    }
     /* LOAD_GDAT_INTERFACE_00_02 must hand the full original command family
      * to M11. The count proves all chrome and four party portraits consumed
      * their plan-owned pixels; a partial plan cannot fall through to a
@@ -5759,6 +6237,13 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         hud_material_plan.command_hash != 0u &&
         viewport.gdat_hud_material_plan_consumed_count ==
             hud_material_plan.command_count;
+    if (rt->boot && rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA &&
+        !hud_material_plan_consumed) {
+        /* FM Towns GRAPHICS.DAT has a distinct native HUD layout; this frame
+         * did not draw a host/PC HUD command, so do not mark a missing HUD
+         * transaction as required for the viewport receipt. */
+        hud_material_plan_required = 0;
+    }
     hud_material_plan_hash = hud_material_plan_consumed
         ? hud_material_plan.command_hash : 0u;
     hud_material_plan_command_count = hud_material_plan_consumed
@@ -6220,7 +6705,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         g_dm2_frame_ownership.real_gdat_evidence_valid &&
         g_dm2_frame_ownership.outdoor_sky_gdat_blits > 0 &&
         g_dm2_frame_ownership.outdoor_ground_gdat_blits > 0 &&
-        g_dm2_frame_ownership.hud_gdat_blits > 0 &&
+        (g_dm2_frame_ownership.hud_gdat_blits > 0 ||
+         (rt->boot && rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA)) &&
         g_dm2_frame_ownership.total_runtime_fallback_draws == 0;
     g_dm2_frame_ownership.full_gdat_frame_valid =
         g_dm2_frame_ownership.gdat_provider_bound &&
@@ -6258,6 +6744,15 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_frame_ownership.valid =
         g_dm2_frame_ownership.runtime_frame_owned &&
         g_dm2_frame_ownership.full_gdat_frame_valid;
+    /* Some FM Towns poses have no visible wall cell, so the renderer does not
+     * consume the cached wall command plan during its tile loop.  Rebind the
+     * already authenticated map plan before publishing the frame receipt; a
+     * no-blit pose must not erase the source wall identity. */
+    if (!viewport.is_outdoor && !rt->gdat_wall_material_plan.valid &&
+        rt->map_graphics_style >= 0 && rt->boot) {
+        (void)dm2_v1_boot_gdat_wall_m11_command_plan(
+            rt->boot, rt->map_graphics_style, &rt->gdat_wall_material_plan);
+    }
     memset(&g_dm2_last_m11_frame, 0, sizeof(g_dm2_last_m11_frame));
     g_dm2_last_m11_frame.source_materials_required =
         viewport.source_materials_required ? 1 : 0;
@@ -6295,7 +6790,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_wall_material_plan.valid && !rt->outdoor
             ? rt->gdat_wall_material_plan.command_hash : 0u;
     g_dm2_last_m11_frame.wall_material_plan_command_count =
-        rt->outdoor ? 0 : wall_material_plan_command_count;
+        rt->outdoor ? 0 :
+        (rt->gdat_wall_material_plan.valid
+             ? rt->gdat_wall_material_plan.command_count
+             : wall_material_plan_command_count);
     /* skproject DM2_DRAW_DOOR/DRAW_DOOR_FRAMES resolve a multi-category
      * material plan before the viewport blits it.  Carry that exact plan to
      * M11 only when the presented frame actually used a door material; a
@@ -6493,7 +6991,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         g_dm2_last_m11_frame.palette_hash != 0u &&
         (!g_dm2_frame_ownership.real_gdat_evidence_valid ||
          (g_dm2_last_m11_frame.interface_action_palette_hash != 0u &&
-          g_dm2_last_m11_frame.interface_action_palette_consumed));
+          g_dm2_last_m11_frame.interface_action_palette_consumed) ||
+         (rt->boot && rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA &&
+          (!g_dm2_last_m11_frame.hud_material_plan_required ||
+           g_dm2_last_m11_frame.hud_material_plan_consumed)));
     g_dm2_last_m11_frame.m11_consume_frame =
         g_dm2_last_m11_frame.valid;
     /* The M10/M11 frame route may consume a raw save only after the active
@@ -6566,6 +7067,48 @@ int dm2_v1_runtime_last_m11_frame_receipt(
     if (!out_receipt) return 0;
     *out_receipt = g_dm2_last_m11_frame;
     return out_receipt->valid;
+}
+
+int dm2_v1_runtime_route_viewport_click(
+    int screen_x, int screen_y,
+    DM2_V1_RuntimeViewportClickReceipt *out_receipt)
+{
+    DM2_V1_RuntimeViewportClickReceipt receipt;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.target_index = -1;
+    receipt.object_id = -1;
+    receipt.view_slot = -1;
+    if (out_receipt) *out_receipt = receipt;
+
+    /* c_events.cpp::CLICK_VWPT is downstream of DRAW_VIEWPORT.  Do not
+     * resolve stale rectangles from an incomplete or rejected frame. */
+    if (!g_dm2_last_m11_frame.valid ||
+        g_dm2_runtime.source_click_target_count == 0u) {
+        return 0;
+    }
+    for (int i = 0; i < (int)g_dm2_runtime.source_click_target_count; ++i) {
+        const DM2_V1_ViewportClickTarget *target =
+            &g_dm2_runtime.source_click_targets[i];
+        if (screen_x < target->x || screen_y < target->y ||
+            screen_x >= target->x + target->w ||
+            screen_y >= target->y + target->h) {
+            continue;
+        }
+        receipt.valid = 1;
+        receipt.accepted = 1;
+        receipt.target_index = i;
+        receipt.target_kind = target->target_kind;
+        receipt.object_id = target->object_id;
+        receipt.view_slot = target->view_slot;
+        receipt.rect.x = target->x;
+        receipt.rect.y = target->y;
+        receipt.rect.w = target->w;
+        receipt.rect.h = target->h;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+    return 0;
 }
 
 int dm2_v1_runtime_last_raw_sksave_handoff_receipt(
@@ -7843,19 +8386,97 @@ int dm2_v1_runtime_import_sksave_corpus(
 }
 
 uint32_t dm2_v1_runtime_get_leader_hand_object(void) {
-    /* LeaderPossession is a source-owned 22-byte cursor.  The bounded
-     * SKSave receipt reaches only its 16-bit ObjectID and does not own the
-     * record-checkcode allocation or cursor pixels, so no public read may
-     * expose Firestaff's retired 32-bit cache as a live held object. */
+    if (g_dm2_runtime.source_party_valid &&
+        g_dm2_runtime.session_snapshot_valid) {
+        return g_dm2_runtime.leader_hand_object;
+    }
+    /* Keep the bounded-session hand visible to the existing session API.  A
+     * runtime with no admitted source session still exposes no host cache. */
+    if (g_dm2_runtime.session_snapshot_valid)
+        return g_dm2_runtime.leader_hand_object;
     return 0u;
 }
 
 void dm2_v1_runtime_set_leader_hand_object(uint32_t object) {
-    /* See sksvgame.cpp WRITE_RECORD_CHECKCODE and sktypesx.h
-     * LeaderPossession.  A caller-provided 32-bit handle cannot be promoted
-     * to the original cursor; retain the compatibility symbol as a no-op so
-     * external callers cannot manufacture playable inventory state. */
-    (void)object;
+    if (!g_dm2_runtime.session_snapshot_valid) return;
+    if (g_dm2_runtime.source_party_valid) {
+        if (object > 0xffffu ||
+            (object != 0u && object != 0xffffu &&
+             !dm2_v1_record_pool_address(
+                 &g_dm2_runtime.record_pools, (int16_t)object)))
+            return;
+    }
+    g_dm2_runtime.leader_hand_object = object;
+}
+
+int dm2_v1_runtime_is_sleeping(void) {
+    return g_dm2_runtime.source_sleeping != 0;
+}
+
+void dm2_v1_runtime_set_sleeping(int sleeping) {
+    /* UI event 142/143 owns this one-bit source global. No timer or party
+     * state is invented here; the renderer only consumes the bit for the
+     * source gray overlay and the next source tick remains authoritative. */
+    g_dm2_runtime.source_sleeping = sleeping != 0;
+}
+
+int dm2_v1_runtime_cycle_action_champion(void) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    int count;
+    int current;
+
+    if (!rt->session_snapshot_valid ||
+        !rt->session_snapshot.original_champion_records_valid) {
+        return 0;
+    }
+    count = rt->session_snapshot.champion_count;
+    if (count <= 0 || count > DM2_V1_CHAMPION_STAT_BRIDGE_MAX_HEROES) {
+        return 0;
+    }
+
+    /* DISPLAY_RIGHT_PANEL_SQUAD_HANDS consumes party.curacthero. The M11
+     * Tab bridge may advance that source-owned selection, but it must never
+     * invent a hero when the saved formation is incomplete. */
+    current = rt->source_curacthero > 0 && rt->source_curacthero <= count
+        ? rt->source_curacthero - 1
+        : -1;
+    for (int offset = 1; offset <= count; ++offset) {
+        int candidate = (current + offset + count) % count;
+        const DM2_ChampionRecord *champ =
+            (const DM2_ChampionRecord *)
+                rt->session_snapshot.champion_data[candidate];
+        int occupied = champ->first_name[0] != '\0' ||
+            champ->cur_hp != 0u || champ->max_hp != 0u;
+        if (occupied) {
+            if (rt->source_curacthero == candidate + 1) {
+                return 0;
+            }
+            rt->source_curacthero = (int16_t)(candidate + 1);
+            if (rt->source_party_valid)
+                rt->source_party.curacthero = rt->source_curacthero;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int dm2_v1_runtime_activate_action_hand(int hero_index, int hand) {
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_Hero *hero;
+
+    if (hero_index < 0 || hero_index >= DM2_MAX_HEROES ||
+        hand < 0 || hand > 1 || !rt->source_party_valid ||
+        !rt->session_snapshot_valid || !rt->record_pools_valid ||
+        hero_index >= rt->source_party.heros_in_party) {
+        return 0;
+    }
+    hero = &rt->source_party.hero[hero_index];
+    if (hero->curHP <= 0 || hero->heroflag == 0) return 0;
+    rt->source_curacthero = (int16_t)(hero_index + 1);
+    rt->source_curactmode = (int16_t)hand;
+    rt->source_party.curacthero = rt->source_curacthero;
+    rt->source_party.curactmode = rt->source_curactmode;
+    return 1;
 }
 
 void dm2_v1_runtime_clear_new_game_party_state(void) {
@@ -7870,6 +8491,13 @@ void dm2_v1_runtime_clear_new_game_party_state(void) {
     memset(&g_dm2_runtime.session_snapshot, 0,
            sizeof(g_dm2_runtime.session_snapshot));
     g_dm2_runtime.session_snapshot_valid = 0;
+    g_dm2_runtime.source_curacthero = 0;
+    g_dm2_runtime.source_curactmode = 0;
+    g_dm2_runtime.source_sleeping = 0;
+    memset(&g_dm2_runtime.source_party, 0,
+           sizeof(g_dm2_runtime.source_party));
+    g_dm2_runtime.source_party_valid = 0;
+    g_dm2_runtime.source_attack_counter = 0u;
 }
 
 int dm2_v1_runtime_new_game_party_state_is_clear(void) {
@@ -7905,8 +8533,16 @@ uint32_t dm2_v1_runtime_get_champion_inventory_object(uint8_t champion,
     if (champion >= 4u || slot >= 30u) {
         return 0u;
     }
-    /* c_hero::item is a 16-bit DB-link graph, not this retired flat cache.
-     * Do not leak a fixture-written value through the public runtime ABI. */
+    if (g_dm2_runtime.source_party_valid &&
+        g_dm2_runtime.session_snapshot_valid) {
+        int16_t item = g_dm2_runtime.source_party.hero[champion].item[slot];
+        return item < 0 ? 0u : (uint32_t)(uint16_t)item;
+    }
+    if (g_dm2_runtime.session_snapshot_valid) {
+        return ((const DM2_ChampionRecord *)
+                    g_dm2_runtime.session_snapshot.champion_data[champion])
+            ->inventory[slot];
+    }
     return 0u;
 }
 
@@ -7916,9 +8552,27 @@ int dm2_v1_runtime_set_champion_inventory_object(uint8_t champion,
     if (champion >= 4u || slot >= 30u) {
         return -1;
     }
-    (void)object;
-    /* No source DB allocator/record-chain owner exists yet. */
-    return -1;
+    if (!g_dm2_runtime.session_snapshot_valid) return -1;
+    if (g_dm2_runtime.source_party_valid) {
+        if (object > 0xffffu ||
+            (object != 0u && object != 0xffffu &&
+             !dm2_v1_record_pool_address(
+                 &g_dm2_runtime.record_pools, (int16_t)object)))
+            return -1;
+        g_dm2_runtime.source_party.hero[champion].item[slot] =
+            object == 0u || object == 0xffffu
+                ? (int16_t)-1 : (int16_t)(uint16_t)object;
+        g_dm2_runtime.champion_inventory_objects[champion][slot] = object;
+        dm2_runtime_copy_source_hero_to_snapshot(
+            &g_dm2_runtime.session_snapshot, champion,
+            &g_dm2_runtime.source_party.hero[champion]);
+        return 0;
+    }
+    ((DM2_ChampionRecord *)
+         g_dm2_runtime.session_snapshot.champion_data[champion])
+        ->inventory[slot] = object;
+    g_dm2_runtime.champion_inventory_objects[champion][slot] = object;
+    return 0;
 }
 
 static uint32_t dm2_v1_runtime_raw_sksave_hash(const uint8_t *data,
@@ -8463,6 +9117,63 @@ int dm2_v1_runtime_bind_fmtowns_english_text_companion(
 
 /* ── Engage command (hand actions) ────────────────────────────────── */
 
+typedef struct {
+    DM2_V1_RuntimeState *runtime;
+    int hero_index;
+    int queued;
+} DM2_RuntimeAttackQueueContext;
+
+static int dm2_runtime_queue_attack_timer(
+    void *context, uint8_t type, int16_t delay,
+    uint32_t game_tick, int16_t map)
+{
+    DM2_RuntimeAttackQueueContext *queue =
+        (DM2_RuntimeAttackQueueContext *)context;
+    DM2_V1_SourceTimer timer;
+    DM2_V1_SourceTimerResult result;
+
+    if (!queue || !queue->runtime || type != 0x47u || delay < 0 ||
+        map < 0 || map > 0xff) {
+        return 0;
+    }
+    memset(&timer, 0, sizeof(timer));
+    timer.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
+        ((game_tick + (uint32_t)delay) & DM2_V1_SOURCE_TIMER_TICK_MASK);
+    timer.type = type;
+    result = dm2_v1_source_timer_enqueue(
+        &queue->runtime->timer_queue, &timer, 0u);
+    if (result != DM2_V1_SOURCE_TIMER_OK) return 0;
+
+    /* skengage.cpp increments savegames1.b_02 before DM2_QUEUE_TIMER and
+     * sets the selected hero's 0x4000 flag only on the zero->one edge. */
+    if (queue->runtime->source_attack_counter == 0u &&
+        queue->runtime->source_curacthero > 0 &&
+        queue->runtime->source_curacthero <= DM2_MAX_HEROES) {
+        queue->runtime->source_party.hero[
+            queue->runtime->source_curacthero - 1].heroflag |= 0x4000;
+    }
+    queue->runtime->source_attack_counter++;
+    queue->queued = 1;
+    (void)queue->hero_index;
+    return 1;
+}
+
+static int dm2_runtime_query_cmd_field(
+    const DM2_V1_AssetLoader *loader, uint8_t cls1, uint8_t cls2,
+    int entry, int field, int16_t *out)
+{
+    DM2_V1_CmdstrEntryReceipt value;
+    if (!out) return 0;
+    memset(&value, 0, sizeof(value));
+    if (!dm2_v1_query_cmdstr_entry_receipt(
+            loader, cls1, cls2, entry, field, &value) || !value.found ||
+        value.value < INT16_MIN || value.value > INT16_MAX) {
+        return 0;
+    }
+    *out = (int16_t)value.value;
+    return 1;
+}
+
 int dm2_v1_runtime_engage_command(
     const DM2_V1_EngageCommandRequest *request,
     DM2_V1_EngageCommandReceipt *receipt)
@@ -8489,6 +9200,119 @@ int dm2_v1_runtime_engage_command(
      * the creature record resolver and AI spec query. */
 
     return dm2_v1_engage_command(&patched, receipt);
+}
+
+int dm2_v1_runtime_proceed_hand_command(
+    int slot_index, DM2_V1_EngageCommandReceipt *receipt)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_Hero *hero;
+    DM2_V1_GameState *game;
+    const DM2_V1_AssetLoader *loader;
+    DM2_V1_SkprojectQueryCls1Receipt cls1_receipt;
+    DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
+    DM2_V1_EngageCommandRequest request;
+    DM2_RuntimeAttackQueueContext queue;
+    uint16_t item;
+    uint8_t cls1 = 0xffu;
+    uint8_t cls2 = 0xffu;
+    int16_t where;
+    int entry;
+    int result;
+
+    if (receipt) memset(receipt, 0, sizeof(*receipt));
+    if (slot_index < 0 || slot_index > 2 || !rt->source_party_valid ||
+        !rt->session_snapshot_valid || !rt->record_pools_valid ||
+        !rt->boot || !rt->boot->assets_verified ||
+        !rt->boot->graphics_dat || !rt->source_party.curacthero ||
+        rt->source_party.curacthero > rt->source_party.heros_in_party ||
+        rt->source_party.curactmode < 0 || rt->source_party.curactmode > 1) {
+        if (receipt) receipt->fail_closed = 1;
+        return 0;
+    }
+    hero = &rt->source_party.hero[rt->source_party.curacthero - 1];
+    if (hero->curHP <= 0) {
+        if (receipt) {
+            receipt->valid = 1;
+            receipt->hero_dead = 1;
+        }
+        return 0;
+    }
+    item = (uint16_t)hero->item[rt->source_party.curactmode];
+    if (item == 0xffffu ||
+        !dm2_v1_skproject_query_cls1_from_record_ex(
+            item, &rt->record_pools, &cls1, &cls1_receipt) ||
+        !dm2_v1_skproject_query_cls2_from_record(
+            item, &rt->record_pools, &cls2, &cls2_receipt)) {
+        if (receipt) receipt->fail_closed = 1;
+        return 0;
+    }
+
+    /* c_events.cpp passes 0..2 to DM2_ENGAGE_COMMAND. The current item
+     * command table is the four CMDSTR text entries beginning at entry 8;
+     * resolve that table from the mounted real GDAT, never from labels or a
+     * host-side action list. */
+    entry = 8 + slot_index;
+    loader = dm2_v1_boot_asset_loader(rt->boot);
+    if (!loader) {
+        if (receipt) receipt->fail_closed = 1;
+        return 0;
+    }
+    memset(&cls1_receipt, 0, sizeof(cls1_receipt));
+    memset(&cls2_receipt, 0, sizeof(cls2_receipt));
+    memset(&request, 0, sizeof(request));
+    memset(&queue, 0, sizeof(queue));
+    if (!dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 17, &where) ||
+        (where != 0 && where != 1 && where - 1 != rt->source_party.curactmode) ||
+        !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 2,
+                                     &request.cmd.action_id) ||
+        request.cmd.action_id != 2 ||
+        !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 0,
+                                     &request.cmd.skill_type) ||
+        !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 3,
+                                     &request.cmd.power_base) ||
+        !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 4,
+                                     &request.cmd.power_random) ||
+        !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 5,
+                                     &request.cmd.delay) ||
+        !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 7,
+                                     &request.cmd.defense_class) ||
+        !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 9,
+                                     &request.cmd.skill_exp) ||
+        !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 0x10,
+                                     &request.cmd.damage_type)) {
+        if (receipt) receipt->fail_closed = 1;
+        return 0;
+    }
+    game = (DM2_V1_GameState *)rt->boot->dm2_state;
+    request.hero_index = rt->source_party.curacthero - 1;
+    request.hand = rt->source_party.curactmode;
+    request.hero_alive = 1;
+    request.hero_hp = hero->curHP;
+    request.hero_max_hp = hero->maxHP;
+    request.hero_mp = hero->curMP;
+    request.hero_abs_dir = hero->absdir;
+    request.hero_party_pos = hero->partypos;
+    request.item_handle = (int16_t)item;
+    request.party_x = game->party_x;
+    request.party_y = game->party_y;
+    request.party_dir = game->party_dir;
+    request.party_map = game->current_level;
+    request.creature_at_target = -1;
+    request.tile_value = 0;
+    request.game_tick = (uint32_t)rt->tick_count;
+    request.queue_timer_cb = dm2_runtime_queue_attack_timer;
+    request.queue_timer_ctx = &queue;
+    request.attack_counter = rt->source_attack_counter;
+    request.attack_hero_flag = rt->source_party.curacthero;
+    hero->heroflag |= 0x0800;
+    result = dm2_v1_runtime_engage_command(&request, receipt);
+    if (!queue.queued || !result) {
+        hero->heroflag &= (int16_t)~0x0800;
+        if (receipt) receipt->fail_closed = 1;
+        return 0;
+    }
+    return 1;
 }
 
 /* ── Source evidence ──────────────────────────────────────────────── */

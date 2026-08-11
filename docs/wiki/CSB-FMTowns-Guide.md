@@ -114,21 +114,29 @@ party data, events and timeline parts. The tail begins after the four
 CSB dungeon reader. MAP coordinates are bytes 6/7 (`OffsetMapX/Y`), not the
 unreferenced bytes 4/5; this follows ReDMCSB `DEFS.H` and `DUNGEON.C F0154`.
 
-This is deliberately not a partial live restore. A valid runtime handoff
-must bind the F31 `CHAMPION_EXCLUDING_PORTRAIT` body, external portraits,
-active groups, events and timeline together. Replacing only the dungeon or
-only the party pose would create an invented mixed save state. Until those
-owners are recovered, retain the receipt and source-backed entrance instead.
+The production M11 resume path binds those owners as one transaction. The
+real English and Japanese `MINI.DAT` files pass the end-to-end
+`test_csb_v1_fmtowns_mini_resume_real` gate: CHTWE/CHTWJ enters the saved
+map-4 pose at `(22,18)`, direction 2, with one champion and no title replay.
+This proves the shipped retail bootstrap save path. It does not prove an
+arbitrary user `CSBGAME.DAT` until that file passes the same native F0435
+header, five-part, portrait and dungeon-tail gates. The external
+`CSBGAME.DAT` and `CSBGAME-JP.DAT` files are retained as unclassified
+candidates. The current F7061/F7057 reader rejects them before a complete
+native F0435 state receipt is produced, so they are not positive save evidence
+and the F0433 write-back path remains closed. No generated save is used as a
+substitute.
 
 ## Utility boundary
 
 `UTILE.EXP` and `UTILJ.EXP` are separate C06_CEDT programs. Their P3
 envelopes, six-label source pools, C09 icon palette, source-coordinate menu
 boxes, F31 M653 font material and planar `.CMP` portrait decoder are
-verified. That does not authorize an M11 editor: the original EGB screen
-composition, file-picker, save/portrait transactions and F31J Shift-JIS
-EGB glyph consumer remain unbound. Keep Utility modal until those specific
-owners are evidenced.
+verified. The source-owned portrait transactions now cover revalidated
+`F7002_ReadCMP` import and existing-record `SAVE CHAMPIONS` replacement, but
+the original EGB screen composition and file-picker selector/event loop remain
+unbound. F31J's Shift-JIS EGB glyph consumer is also still open. Keep the
+Utility input modal until those specific UI owners are evidenced.
 
 ## Files to know
 

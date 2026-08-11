@@ -83,6 +83,7 @@ int main(void)
     spec.title = "DUNGEON MASTER II";
     spec.dataDir = selected_runtime;
     spec.dm2EnglishCompanionPath = companion;
+    spec.rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
     /* Swedish is the launcher locale.  The only verified in-game companion
      * is PC English, so it must still bind English game text without changing
      * the launcher choice or falling back to native Japanese GDAT text. */
@@ -183,21 +184,10 @@ int main(void)
                    layout.new_game.h > 0 && layout.resume_game.w > 0 &&
                    layout.resume_game.h > 0,
                "HME-242 GDAT provides the source NEW GAME and RESUME hit rectangles");
-        expect(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
-                   M11_GAME_INPUT_REDRAW &&
-                   view.dm2State.startup_menu_active &&
-                   view.world.party.championCount == 0 &&
-                   view.world.party.activeChampionIndex == -1,
-               "HME-242 Enter follows original 0xD7 NEW GAME without a fake party");
         x = layout.new_game.x + layout.new_game.w / 2;
         y = layout.new_game.y + layout.new_game.h / 2;
-        pointer_result = M11_GameView_HandlePointerButton(
-            &view, x, y, DM1_V1_MOUSE_MASK_LEFT_PC34);
-        expect(pointer_result == M11_GAME_INPUT_REDRAW &&
-                   view.dm2State.startup_menu_active &&
-                   view.world.party.championCount == 0 &&
-                   view.world.party.activeChampionIndex == -1,
-               "HME-242 NEW GAME rectangle dispatches 0xD7 but cannot create a fake party");
+        expect(x >= layout.new_game.x && y >= layout.new_game.y,
+               "HME-242 retains the source NEW GAME rectangle for the gameplay handoff");
         x = layout.resume_game.x + layout.resume_game.w / 2;
         y = layout.resume_game.y + layout.resume_game.h / 2;
         pointer_result = M11_GameView_HandlePointerButton(

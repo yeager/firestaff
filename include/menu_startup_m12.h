@@ -894,7 +894,8 @@ void M12_StartupMenu_SaveConfig(M12_StartupMenuState* state);
 
 /* ── Language cycle accessors ───────────────────────────────────────
  * M12_StartupMenu_GetLanguageCount() returns the number of locales
- * the user can cycle through in the launcher (currently 19).  The
+ * the user can cycle through in the launcher (20 concrete locales plus
+ * the AUTO policy entry).  The
  * same index range feeds the M12 settings row, the credits panel
  * overlay, and the in-game M11 l10n switch (see
  * m12_fs_language_from_menu_index for the >5 fallback to EN).
@@ -902,11 +903,13 @@ void M12_StartupMenu_SaveConfig(M12_StartupMenuState* state);
  * GetLanguageCode(index) returns the short locale code that maps to
  * po/startup-menu.<code>.po on disk (e.g. "EN", "SV", "FR", "DE",
  * "JA", "ZH", "CS", "DA", "ES", "FI", "HU", "IT", "KO", "NL", "NO",
- * "PL", "PT", "RU", "TR").  GetLanguageName(index) returns the
- * human-readable display name for the same slot.
+ * "PL", "PT", "RU", "TR", "ID", "AUTO").  AUTO resolves to the
+ * operating-system language and is not passed as a game-data locale.
+ * GetLanguageName(index) returns the human-readable display name for the
+ * same slot.
  *
  * Exposed so layout/l10n probes and the screen-reader manifest can
- * drive the 19-language cycle from the production source of truth
+ * drive the locale picker from the production source of truth
  * (g_languages[] / g_languageNames[]) without hardcoding a magic
  * number that drifts the moment a locale is added or removed. */
 int M12_StartupMenu_GetLanguageCount(void);

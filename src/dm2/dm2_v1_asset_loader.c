@@ -598,12 +598,26 @@ static uint8_t *dm2_decode_fmtowns_img2_c4(const uint8_t *raw,
                                             DM2_ImageFormat *out_format)
 {
     size_t pixel_count;
-    size_t cursor = 8u; /* four-byte IMG2 header, counted in nibbles */
+    /* FM Towns DM2 IMG2/IMG6 records carry a four-word prologue: two format
+     * words followed by width and height.  The compressed nibble stream
+     * begins after that prologue. */
+    size_t cursor;
     size_t pixel = 0u;
     uint8_t *pixels;
 
     if (!raw || raw_size < 4u || width <= 0 || height <= 0 ||
         (size_t)width > SIZE_MAX / (size_t)height) return NULL;
+    /* HME-242's TITLE/0/4 uses the compact two-word IMG2 header (320,200)
+     * followed immediately by the nibble stream.  Other Towns IMG2 members
+     * carry the documented four-word prologue.  Select the header length from
+     * the authenticated dimensions, never from a guessed decompression size. */
+    if (((uint16_t)raw[0] | ((uint16_t)raw[1] << 8)) == (uint16_t)width &&
+        ((uint16_t)raw[2] | ((uint16_t)raw[3] << 8)) == (uint16_t)height) {
+        cursor = 8u;
+    } else {
+        if (raw_size < 8u) return NULL;
+        cursor = 16u;
+    }
     pixel_count = (size_t)width * (size_t)height;
     if (pixel_count == 0u || pixel_count > (size_t)1024u * 1024u) return NULL;
     pixels = (uint8_t *)calloc(pixel_count, 1u);
@@ -675,6 +689,31 @@ static uint8_t *dm2_decode_fmtowns_img2_c4(const uint8_t *raw,
 fail:
     free(pixels);
     return NULL;
+}
+
+static uint8_t *dm2_decode_fmtowns_img6_c4(const uint8_t *raw,
+                                            size_t raw_size,
+                                            int width, int height,
+                                            DM2_ImageFormat *out_format)
+{
+    size_t row_bytes = ((size_t)width + 1u) / 2u;
+    size_t stride = (row_bytes + 15u) & ~15u;
+    size_t payload;
+    uint8_t *pixels;
+
+    if (!raw || raw_size < 8u || width <= 0 || height <= 0 ||
+        stride < row_bytes || (size_t)height > SIZE_MAX / stride ||
+        (payload = stride * (size_t)height) > raw_size - 8u) return NULL;
+    pixels = (uint8_t *)malloc((size_t)width * (size_t)height);
+    if (!pixels) return NULL;
+    for (int y = 0; y < height; ++y) {
+        const uint8_t *src = raw + 8u + (size_t)y * stride;
+        uint8_t *dst = pixels + (size_t)y * (size_t)width;
+        for (int x = 0; x < width; ++x)
+            dst[x] = (uint8_t)((src[(size_t)x / 2u] >> ((x & 1) ? 0u : 4u)) & 0x0fu);
+    }
+    if (out_format) *out_format = DM2_IMG_FMT_U4;
+    return pixels;
 }
 
 static int dm2_img3_read_nibble(const uint8_t *raw,
@@ -4326,7 +4365,7 @@ int dm2_v1_asset_load_interface_palette(
         irgb = dm2_v1_asset_load_typed_sized(
             loader, category, index, DM2_GDAT_ENTRY_TYPE_PAL_IRGB, 0,
             &irgb_size);
-        if (!irgb || irgb_size != 16u * 4u) return 0;
+        if (!irgb || (irgb_size != 16u * 4u && irgb_size != 6u * 16u * 4u)) return 0;
         for (color = 0; color < 16; ++color) {
             const uint8_t *src = irgb + (size_t)color * 4u;
             out_palette->rgb6[color][0] = (uint8_t)(src[1] >> 2u);
@@ -4434,11 +4473,26 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
     if (width <= 0 || height <= 0) return NULL;
 
     /* DMWeb's data-files format table identifies DMII FM Towns (0x8004)
-     * as IMG2 media.  It has only the four-byte width/height header; never
-     * route it through the PC IMG3 header/command decoder. */
+     * as IMG2/IMG6 media with a four-word prologue; never route it through
+     * the PC IMG3 header/command decoder. */
     if (loader->gdat_version == DM2_FMTOWNS_GDAT_VERSION) {
-        pixels = dm2_decode_fmtowns_img2_c4(raw, raw_size, width, height,
-                                            out_format);
+        uint16_t word2;
+        if (raw_size < 8u) return NULL;
+        width = (int)((uint16_t)raw[0] | ((uint16_t)raw[1] << 8));
+        height = (int)((uint16_t)raw[2] | ((uint16_t)raw[3] << 8));
+        word2 = (uint16_t)raw[2] | ((uint16_t)raw[3] << 8);
+        /* Retain the four-word form for non-HME members whose first words do
+         * not describe a sane source-sized surface. */
+        if (width <= 0 || width > 640 || height <= 0 || height > 400) {
+            word2 = (uint16_t)raw[2] | ((uint16_t)raw[3] << 8);
+            width = (int)((uint16_t)raw[4] | ((uint16_t)raw[5] << 8));
+            height = (int)((uint16_t)raw[6] | ((uint16_t)raw[7] << 8));
+        }
+        pixels = ((word2 & 0xfe00u) == 0x8000u)
+            ? dm2_decode_fmtowns_img6_c4(raw, raw_size, width, height,
+                                         out_format)
+            : dm2_decode_fmtowns_img2_c4(raw, raw_size, width, height,
+                                         out_format);
         if (!pixels) return NULL;
         if (out_width) *out_width = width;
         if (out_height) *out_height = height;

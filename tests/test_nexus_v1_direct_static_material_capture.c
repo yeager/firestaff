@@ -440,6 +440,11 @@ int main(void)
                 };
 
                 adjacency_transform_found = 1;
+                fprintf(stderr, "debug adj model=%d face=%u entry=%u\\n",
+                        adjacency.structure1f_source.entry
+                            .structure1a_structure3_model_index,
+                        adjacency.structure1f_source.entry.face,
+                        adjacency.structure1f_source.entry_index);
                 CHECK(adjacency.valid &&
                       adjacency.structure1f_record_source_bound &&
                       adjacency.face_mesh_adjacency_bound &&
@@ -553,6 +558,80 @@ int main(void)
                       m11_dungeon.structure3_topology_descriptor.no_draw_only &&
                       !m11_dungeon.structure3_topology_descriptor.fallback_visuals_permitted,
                       "M12/M11 champion handoff admits exact direct LEV Structure1F/Structure3 topology framing only as capture-required no-draw evidence");
+                if (!m11_dungeon.structure3_topology_descriptor.valid) {
+                    Nexus_V1_DgnStructure3PackageGeometryPacket dbg_packet;
+                    Nexus_V1_DgnStructure3MeshEntryReceipt dbg_mesh;
+                    memset(&dbg_packet, 0, sizeof(dbg_packet));
+                    memset(&dbg_mesh, 0, sizeof(dbg_mesh));
+                    fprintf(stderr, "debug nexus face=%u entry=%u packet=%d valid=%d bound=%d off=%u hash=%llu mesh=%d source=%d v=%d f=%d n=%d\n",
+                            m11_dungeon.structure2_face_descriptor.face_ordinal,
+                            m11_dungeon.structure2_face_descriptor.structure3_entry_index,
+                            nexus_v1_current_level_structure3_package_geometry_packet(
+                                &engine,
+                                m11_dungeon.structure2_face_descriptor.structure3_entry_index,
+                                m11_dungeon.structure2_face_descriptor.face_ordinal,
+                                &dbg_packet),
+                            dbg_packet.valid, dbg_packet.source_geometry_bound,
+                            dbg_packet.face_offset,
+                            (unsigned long long)dbg_packet.face_fnv1a64,
+                            nexus_v1_current_level_extract_structure3_mesh_entry(
+                                &engine,
+                                (int)m11_dungeon.structure2_face_descriptor.structure3_entry_index,
+                                NULL, 0, NULL, 0, NULL, 0, &dbg_mesh),
+                            dbg_mesh.source_identity_valid, dbg_mesh.vertex_count,
+                            dbg_mesh.face_count, dbg_mesh.normal_count);
+                    fprintf(stderr, "debug packetface v=%u,%u,%u,%u flags=%u raw9=%u fill=%u tri=%d descvalid=%d image=%u len=%u\\n",
+                            dbg_packet.face.vertex_indexes[0], dbg_packet.face.vertex_indexes[1],
+                            dbg_packet.face.vertex_indexes[2], dbg_packet.face.vertex_indexes[3],
+                            dbg_packet.face.flags, dbg_packet.face.raw_byte_9,
+                            dbg_packet.face.fill_selector, dbg_packet.face.triangle,
+                            m11_dungeon.structure2_face_descriptor.valid,
+                            m11_dungeon.structure2_face_descriptor.structure2_descriptor_index,
+                            m11_dungeon.structure2_face_descriptor.image_candidate_length);
+                    {
+                        Nexus_V1_DgnStructure2DescriptorCaptureTarget d24;
+                        Nexus_V1_DgnActiveStructure2DescriptorReceipt sr;
+                        memset(&d24, 0, sizeof(d24));
+                        memset(&sr, 0, sizeof(sr));
+                        nexus_v1_current_level_structure2_descriptor_receipt(&engine, &sr);
+                        fprintf(stderr, "debug s2 receipt=%d count=%d payload=%d opaque=%d size=%d\\n",
+                                sr.valid, sr.descriptor_count, sr.payload.valid,
+                                sr.payload.opaque_payload_offset, sr.payload.opaque_payload_size);
+                        fprintf(stderr, "debug desc24 result=%d valid=%d image=%u off=%d imageoff=%d len=%u\\n",
+                                nexus_v1_engine_build_structure2_descriptor_capture_target(&engine, 24, &d24),
+                                d24.valid, d24.descriptor.image_id, d24.descriptor_byte_offset,
+                                d24.opaque_payload_byte_offset,
+                                d24.image_payload_candidate_byte_count);
+                        for (int di = 0; di < engine.current_level.structure2_texture_count; ++di) {
+                            Nexus_V1_DgnStructure2DescriptorCaptureTarget dd;
+                            memset(&dd, 0, sizeof(dd));
+                            if (nexus_v1_engine_build_structure2_descriptor_capture_target(&engine, di, &dd) == 1 &&
+                                dd.valid && dd.descriptor.image_id == dbg_packet.face.fill_selector)
+                                fprintf(stderr, "debug matching descriptor index=%d image=%u len=%u\\n",
+                                        di, dd.descriptor.image_id,
+                                        dd.image_payload_candidate_byte_count);
+                        }
+                    }
+                    {
+                        const Nexus_V1_Level *lv = &engine.current_level;
+                        const uint8_t *raw = engine.current_level_dgn_data +
+                            lv->structure3_payload.byte_offset +
+                            (((uint32_t)engine.current_level_dgn_data[
+                                lv->structure3_payload.byte_offset + 4U] << 24) |
+                            ((uint32_t)engine.current_level_dgn_data[
+                                lv->structure3_payload.byte_offset + 5U] << 16) |
+                            ((uint32_t)engine.current_level_dgn_data[
+                                lv->structure3_payload.byte_offset + 6U] << 8) |
+                            (uint32_t)engine.current_level_dgn_data[
+                                lv->structure3_payload.byte_offset + 7U]) + 16U;
+                        fprintf(stderr, "debug rawface=%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x textures=%d ids=",
+                                raw[0],raw[1],raw[2],raw[3],raw[4],raw[5],raw[6],raw[7],raw[8],raw[9],raw[10],raw[11],
+                                lv->structure2_texture_count);
+                        for (int ti = 0; ti < lv->structure2_texture_count && ti < 8; ++ti)
+                            fprintf(stderr, "%u,", lv->structure2_textures[ti].image_id);
+                        fprintf(stderr, "\\n");
+                    }
+                }
                 memset(&topology_target, 0, sizeof(topology_target));
                 memset(&topology_import, 0, sizeof(topology_import));
                 CHECK(nexus_v1_launcher_build_m11_structure3_topology_capture_replay_target(

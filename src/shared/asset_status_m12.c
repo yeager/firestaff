@@ -335,6 +335,13 @@ static const M12_VersionSpec g_csbVersions[] = {
      * Towns extraction provides the corresponding asset inventory. */
     {"csb", "fmtowns-en", "FM Towns English", "FMT EN", g_csbGraphicsNames, "405b757038eea3c263e60f240854d6de", M12_ARCH_FM_TOWNS},
     {"csb", "fmtowns-ja", "FM Towns Japanese", "FMT JP", g_csbGraphicsNames, "761d6fc588b31aeaaa9caf3725e111b9", M12_ARCH_FM_TOWNS},
+    /* The verified PC 3.4 DOS route is retained separately from the Amiga
+     * catalogue even though the shared GRAPHICS.DAT digest is also present
+     * in the A31 multilanguage family.  m12_admit_csb_amiga31_title_package()
+     * remains the package discriminator for that shared digest; removing
+     * this row makes the real PC handoff and its required-file tests report
+     * an unsupported game. */
+    {"csb", "pc34-en", "PC 3.4 English", "PC 3.4 EN", g_csbGraphicsNames, "61fbfd56887c94adc26888a9491c6611", M12_ARCH_PC},
     /* ReDMCSB COMPILE.H:199-243: A31E is the original Amiga 3.1 English
      * media family.  Its GRAPHICS.DAT identity is also recorded by the
      * Amiga decoder and data validator; scanner and M11 must admit it. */
@@ -1288,6 +1295,33 @@ static int m12_csb_fmtowns_archive_stage(const char* archivePath,
     return 1;
 }
 
+/* Production CSB intake: keep the original ZIP and its raw CD image in
+ * bounded allocations only.  The older stage-to-path helper remains for
+ * development materializers, but normal admission must not create a game
+ * image in /tmp or beside the source archive. */
+static int m12_csb_fmtowns_archive_read_image(
+    const char* archivePath, uint8_t** outImage, size_t* outImageSize,
+    CSB_V1_FmtownsCdLayout* layout) {
+    uint8_t* image = NULL;
+    size_t imageSize = 0U;
+    if (!archivePath || !outImage || !outImageSize || !layout) return 0;
+    *outImage = NULL;
+    *outImageSize = 0U;
+    if (firestaff_zip_extract_by_suffix(archivePath, ".img", &image,
+                                        &imageSize) != 0 &&
+        firestaff_zip_extract_by_suffix(archivePath, ".bin", &image,
+                                        &imageSize) != 0) {
+        return 0;
+    }
+    if (csb_v1_fmtowns_cd_parse(image, imageSize, layout) != 0) {
+        free(image);
+        return 0;
+    }
+    *outImage = image;
+    *outImageSize = imageSize;
+    return 1;
+}
+
 /* The original CUE is the only authority for Red Book boundaries.  Never
  * derive a replacement from the ISO payload or an application track table. */
 static int m12_csb_fmtowns_archive_extract_cue(const char* archivePath,
@@ -1302,25 +1336,25 @@ static int m12_csb_fmtowns_archive_extract_cue(const char* archivePath,
     return asset_extract_virtual_path(virtualPath, cuePath);
 }
 
-static int m12_csb_fmtowns_extract_member(const char* imagePath,
-                                          const CSB_V1_FmtownsCdLayout* layout,
-                                          const char* directory,
-                                          const char* name,
-                                          uint8_t** bytes,
-                                          size_t* byteCount) {
+static int m12_csb_fmtowns_extract_member_bytes(
+    const uint8_t* image, size_t imageSize,
+    const CSB_V1_FmtownsCdLayout* layout, const char* directory,
+    const char* name, uint8_t** bytes, size_t* byteCount) {
     const CSB_V1_FmtownsCdFile* file;
     uint8_t* out;
-    if (!imagePath || !layout || !name || !bytes || !byteCount) return 0;
+    if (!image || !layout || !name || !bytes || !byteCount) return 0;
     *bytes = NULL;
     *byteCount = 0U;
     file = csb_v1_fmtowns_cd_find(layout, directory, name);
     if (!file || file->is_directory || file->size == 0U) return 0;
-    out = NULL;
-    if (csb_v1_fmtowns_cd_extract_file_alloc(imagePath, layout, file, &out,
-                                              byteCount) != 0) {
+    out = (uint8_t*)malloc(file->size);
+    if (!out || csb_v1_fmtowns_cd_extract(image, imageSize, file, out,
+                                          file->size) != 0) {
+        free(out);
         return 0;
     }
     *bytes = out;
+    *byteCount = file->size;
     return 1;
 }
 
@@ -1380,7 +1414,8 @@ static int m12_admit_csb_fmtowns_archive(M12_AssetStatus* status,
              ++candidateRootIndex) {
             for (archiveIndex = 0U; archiveNames[archiveIndex] != NULL; ++archiveIndex) {
                 char archivePath[M12_ASSET_DATA_DIR_CAPACITY];
-                char imagePath[M12_ASSET_DATA_DIR_CAPACITY] = {0};
+                uint8_t* image = NULL;
+                size_t imageSize = 0U;
                 CSB_V1_FmtownsCdLayout layout;
                 const char* archiveLeaf;
                 if (FSP_FileExists(candidateRoots[candidateRootIndex]) &&
@@ -1402,8 +1437,8 @@ static int m12_admit_csb_fmtowns_archive(M12_AssetStatus* status,
                                (int)sizeof(archivePath)) {
                     continue;
                 }
-                if (!m12_csb_fmtowns_archive_stage(archivePath, imagePath,
-                                                    sizeof(imagePath), &layout)) {
+                if (!m12_csb_fmtowns_archive_read_image(
+                        archivePath, &image, &imageSize, &layout)) {
                     continue;
                 }
                 for (languageIndex = 0U; languageIndex < 2U; ++languageIndex) {
@@ -1415,14 +1450,12 @@ static int m12_admit_csb_fmtowns_archive(M12_AssetStatus* status,
                 const char* expectedGraphics = languageIndex == 0U
                     ? "405b757038eea3c263e60f240854d6de"
                     : "761d6fc588b31aeaaa9caf3725e111b9";
-                if (!m12_csb_fmtowns_extract_member(imagePath, &layout,
-                                                    directories[languageIndex],
-                                                    "GRAPHICS.DAT", &graphics,
-                                                    &graphicsSize) ||
-                    !m12_csb_fmtowns_extract_member(imagePath, &layout,
-                                                    directories[languageIndex],
-                                                    "DUNGEON.DAT", &dungeon,
-                                                    &dungeonSize)) {
+                if (!m12_csb_fmtowns_extract_member_bytes(
+                        image, imageSize, &layout, directories[languageIndex],
+                        "GRAPHICS.DAT", &graphics, &graphicsSize) ||
+                    !m12_csb_fmtowns_extract_member_bytes(
+                        image, imageSize, &layout, directories[languageIndex],
+                        "DUNGEON.DAT", &dungeon, &dungeonSize)) {
                     free(graphics);
                     free(dungeon);
                     continue;
@@ -1448,7 +1481,7 @@ static int m12_admit_csb_fmtowns_archive(M12_AssetStatus* status,
                     break;
                 }
                 }
-                remove(imagePath);
+                free(image);
                 /* The parenthesized archive name is a downloader duplicate.
                  * Once one retail image has verified both language payloads,
                  * do not decompress its byte-identical sibling again. */
@@ -1856,6 +1889,47 @@ static int m12_join_optional_subdir(char* out,
 
 static int m12_path_is_virtual_asset(const char* path) {
     return path && strstr(path, "::") != NULL;
+}
+
+/* Production must never turn a packed game file into a second game-data
+ * tree.  Archive members remain the authenticated source locator; callers
+ * that support the format read them through their bounded in-memory reader.
+ * The test/development materializers are deliberately kept behind the
+ * existing test build boundary. */
+static int m12_source_runtime_root(const char* matchedPath,
+                                   char* outPath, size_t outPathSize) {
+    const char* separator;
+    size_t length;
+    if (!matchedPath || !matchedPath[0] || !outPath || outPathSize == 0U) {
+        return 0;
+    }
+    outPath[0] = '\0';
+    separator = strstr(matchedPath, "::");
+    if (separator) {
+        length = (size_t)(separator - matchedPath);
+        if (length == 0U || length >= outPathSize) return 0;
+        memcpy(outPath, matchedPath, length);
+        outPath[length] = '\0';
+        return 1;
+    }
+    return FSP_ParentDir(outPath, outPathSize, matchedPath);
+}
+
+static int m12_publish_source_runtime_root(M12_AssetStatus* status,
+                                            int gameIndex) {
+    const M12_AssetVersionStatus* version;
+    char sourceRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT) {
+        return 0;
+    }
+    version = m12_first_matched_version(status, gameIndex);
+    if (!version || !m12_source_runtime_root(version->matchedPath,
+                                             sourceRoot, sizeof(sourceRoot))) {
+        return 0;
+    }
+    m12_copy_string(status->runtimeDataDirs[gameIndex],
+                    sizeof(status->runtimeDataDirs[gameIndex]), sourceRoot);
+    return 1;
 }
 
 static void m12_classify_theron_media_path(M12_AssetStatus* status,
@@ -2765,50 +2839,10 @@ static uint32_t m12_rd32_be_local(const uint8_t* p) {
 static int m12_read_file_bytes(const char* path,
                                unsigned char** outData,
                                size_t* outSize) {
-    FILE* fp;
-    long end;
-    unsigned char* data;
-    size_t size;
     if (!path || !outData || !outSize) {
         return 0;
     }
-    *outData = NULL;
-    *outSize = 0U;
-    fp = fopen(path, "rb");
-    if (!fp) {
-        return 0;
-    }
-    if (fseek(fp, 0L, SEEK_END) != 0) {
-        fclose(fp);
-        return 0;
-    }
-    end = ftell(fp);
-    if (end <= 0L || end > (long)(16U * 1024U * 1024U)) {
-        fclose(fp);
-        return 0;
-    }
-    if (fseek(fp, 0L, SEEK_SET) != 0) {
-        fclose(fp);
-        return 0;
-    }
-    size = (size_t)end;
-    data = (unsigned char*)malloc(size);
-    if (!data) {
-        fclose(fp);
-        return 0;
-    }
-    if (fread(data, 1U, size, fp) != size) {
-        free(data);
-        fclose(fp);
-        return 0;
-    }
-    if (fclose(fp) != 0) {
-        free(data);
-        return 0;
-    }
-    *outData = data;
-    *outSize = size;
-    return 1;
+    return asset_read_path_alloc(path, (uint8_t**)outData, outSize);
 }
 
 static int m12_find_nexus_menu_bpk(const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
@@ -4726,6 +4760,14 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT) {
         return 1;
     }
+#if !defined(FIRESTAFF_ASSET_STATUS_TESTING) && \
+    !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
+    /* Never unpack or copy game data during a normal Firestaff run.  Keep
+     * the original directory/archive as the runtime owner.  A format whose
+     * launcher has no native packed-reader must fail its launch gate rather
+     * than silently receiving synthetic asset-cache files. */
+    return m12_publish_source_runtime_root(status, gameIndex);
+#endif
     gameId = g_games[gameIndex].gameId;
     optionalSeedPath[0] = '\0';
     if (!m12_game_uses_flat_dat_runtime(gameId) ||
@@ -6193,7 +6235,19 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
     versionIndex = M12_AssetStatus_FindVersionIndex("csb", versionId);
     if (versionIndex < 0) return 0;
     version = &status->versions[gameIndex][versionIndex];
-    if (!version->matched || !version->matchedPath[0] ||
+    if (!version->matched || !version->matchedPath[0]) {
+        if (outPathSize) outPath[0] = '\0';
+        return 0;
+    }
+#if !defined(FIRESTAFF_ASSET_STATUS_TESTING) && \
+    !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
+    if (!m12_source_runtime_root(version->matchedPath, outPath, outPathSize)) {
+        if (outPathSize) outPath[0] = '\0';
+        return 0;
+    }
+    return 1;
+#endif
+    if (
         !FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) ||
         !FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userDataDir,
                       "asset-cache") ||
@@ -6351,6 +6405,15 @@ int M12_AssetStatus_MaterializeDM1FmtownsRuntimeVersion(
     versionIndex = M12_AssetStatus_FindVersionIndex("dm1", versionId);
     if (versionIndex < 0) return 0;
     version = &status->versions[gameIndex][versionIndex];
+#if !defined(FIRESTAFF_ASSET_STATUS_TESTING) && \
+    !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
+    if (!version->matched ||
+        !m12_source_runtime_root(version->matchedPath, outPath, outPathSize)) {
+        outPath[0] = '\0';
+        return 0;
+    }
+    return 1;
+#endif
     if (!version->matched || !m12_path_is_virtual_asset(version->matchedPath) ||
         !FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) ||
         !FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userDataDir, "asset-cache") ||

@@ -8,6 +8,7 @@
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_engine_version_display_pc34_compat.h"
 #include "csb_v1_fmtowns_game.h"
+#include "csb_v1_fmtowns_cd.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.h"
 #include "csb_v1_startup_session_contract_pc34_compat.h"
@@ -16,6 +17,7 @@
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "firestaff/csb/v1/startup_entrance_pointer_pc34_compat.h"
 #include "fs_portable_compat.h"
+#include "firestaff_zip_extract.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "vga_palette_pc34_compat.h"
 
@@ -222,6 +224,12 @@ static int csb_v1_boot_materialize_runtime_pair_pc34(CSB_V1_BootProfile *profile
         profile->graphics_path);
     dungeon_virtual = csb_v1_boot_path_is_virtual_asset_pc34(
         profile->dungeon_path);
+#if !defined(FIRESTAFF_ASSET_STATUS_TESTING) && \
+    !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
+    /* A production boot must use the format-specific RAM reader.  Never
+     * materialize a virtual member into asset-cache as a substitute. */
+    if (graphics_virtual || dungeon_virtual) return 0;
+#endif
     if (!graphics_virtual && !dungeon_virtual) return 1;
     if (!FSP_GetUserDataDir(user_data, sizeof(user_data)) ||
         !FSP_JoinPath(cache_root, sizeof(cache_root), user_data, "asset-cache") ||
@@ -2448,15 +2456,219 @@ void csb_v1_boot_startup_launch_cleanup_pc34(
     memset(launch, 0, sizeof(*launch));
 }
 
-int csb_v1_boot_startup_launch_alloc_pc34(
+static int csb_v1_boot_reselect_fmtowns_variant_pc34(
+    CSB_V1_BootProfile *profile,
+    const char *data_dir,
+    int requested_variant)
+{
+    const char *directory;
+    const char *graphics_md5;
+    const char *dungeon_md5;
+    char candidate_root[ASSET_PATH_MAX];
+    char graphics_path[ASSET_PATH_MAX];
+    char dungeon_path[ASSET_PATH_MAX];
+
+    /* A selected FM Towns ZIP is a source container, not a directory.  Read
+     * its original IMG/BIN member into bounded RAM and expose the selected
+     * CDATA/CJDATA files as memory-owned runtime assets. */
+    if (profile && data_dir && data_dir[0] && FSP_FileExists(data_dir) &&
+        !FSP_DirExists(data_dir)) {
+        uint8_t *image = NULL;
+        size_t image_size = 0u;
+        CSB_V1_FmtownsCdLayout layout;
+        const char *directory;
+        const char *graphics_md5;
+        const char *dungeon_md5;
+        const CSB_V1_FmtownsCdFile *graphics_entry;
+        const CSB_V1_FmtownsCdFile *dungeon_entry;
+        const CSB_V1_FmtownsCdFile *executable_entry;
+        const CSB_V1_FmtownsCdFile *mini_entry;
+        const CSB_V1_FmtownsCdFile *title_entry;
+        const char *executable_name;
+        const char *mini_name;
+        if ((requested_variant != CSB_V1_VARIANT_FMTOWNS_EN &&
+             requested_variant != CSB_V1_VARIANT_FMTOWNS_JA) ||
+            (firestaff_zip_extract_by_suffix(data_dir, ".img", &image,
+                                              &image_size) != 0 &&
+             firestaff_zip_extract_by_suffix(data_dir, ".bin", &image,
+                                              &image_size) != 0) ||
+            csb_v1_fmtowns_cd_parse(image, image_size, &layout) != 0) {
+            free(image);
+            return 0;
+        }
+        directory = requested_variant == CSB_V1_VARIANT_FMTOWNS_JA
+            ? "CJDATA" : "CDATA";
+        graphics_md5 = requested_variant == CSB_V1_VARIANT_FMTOWNS_JA
+            ? "761d6fc588b31aeaaa9caf3725e111b9"
+            : "405b757038eea3c263e60f240854d6de";
+        dungeon_md5 = requested_variant == CSB_V1_VARIANT_FMTOWNS_JA
+            ? "7ca51c17ef8bd542ca5f0273672ec1a5"
+            : "83c56cf1b779e7460a55c9299ebeb04b";
+        graphics_entry = csb_v1_fmtowns_cd_find(&layout, directory,
+                                                "GRAPHICS.DAT");
+        dungeon_entry = csb_v1_fmtowns_cd_find(&layout, directory,
+                                                "DUNGEON.DAT");
+        executable_name = requested_variant == CSB_V1_VARIANT_FMTOWNS_JA
+            ? "CHTWJ.EXP" : "CHTWE.EXP";
+        mini_name = requested_variant == CSB_V1_VARIANT_FMTOWNS_JA
+            ? "MINI.DAT" : "MINI.DAT";
+        executable_entry = csb_v1_fmtowns_cd_find(&layout, NULL,
+                                                   executable_name);
+        mini_entry = csb_v1_fmtowns_cd_find(&layout, directory, mini_name);
+        title_entry = csb_v1_fmtowns_cd_find(&layout, NULL, "TITLE.ANM");
+        if (!graphics_entry || !dungeon_entry || graphics_entry->is_directory ||
+            dungeon_entry->is_directory || !executable_entry ||
+            executable_entry->is_directory || !mini_entry ||
+            mini_entry->is_directory ||
+            !title_entry || title_entry->is_directory ||
+            !(profile->fmtowns_graphics_bytes =
+                  (uint8_t *)malloc(graphics_entry->size)) ||
+            !(profile->fmtowns_dungeon_bytes =
+                  (uint8_t *)malloc(dungeon_entry->size)) ||
+            !(profile->fmtowns_executable_bytes =
+                  (uint8_t *)malloc(executable_entry->size)) ||
+            !(profile->fmtowns_mini_bytes =
+                  (uint8_t *)malloc(mini_entry->size)) ||
+            !(profile->fmtowns_title_bytes =
+                  (uint8_t *)malloc(title_entry->size)) ||
+            csb_v1_fmtowns_cd_extract(image, image_size, graphics_entry,
+                                      profile->fmtowns_graphics_bytes,
+                                      graphics_entry->size) != 0 ||
+            csb_v1_fmtowns_cd_extract(image, image_size, dungeon_entry,
+                                      profile->fmtowns_dungeon_bytes,
+                                      dungeon_entry->size) != 0 ||
+            csb_v1_fmtowns_cd_extract(image, image_size, executable_entry,
+                                      profile->fmtowns_executable_bytes,
+                                      executable_entry->size) != 0 ||
+            csb_v1_fmtowns_cd_extract(image, image_size, mini_entry,
+                                      profile->fmtowns_mini_bytes,
+                                      mini_entry->size) != 0 ||
+            csb_v1_fmtowns_cd_extract(image, image_size, title_entry,
+                                      profile->fmtowns_title_bytes,
+                                      title_entry->size) != 0) {
+            free(profile->fmtowns_graphics_bytes);
+            free(profile->fmtowns_dungeon_bytes);
+            free(profile->fmtowns_executable_bytes);
+            free(profile->fmtowns_mini_bytes);
+            free(profile->fmtowns_title_bytes);
+            profile->fmtowns_graphics_bytes = NULL;
+            profile->fmtowns_dungeon_bytes = NULL;
+            profile->fmtowns_executable_bytes = NULL;
+            profile->fmtowns_mini_bytes = NULL;
+            profile->fmtowns_title_bytes = NULL;
+            free(image);
+            return 0;
+        }
+        profile->fmtowns_graphics_size = graphics_entry->size;
+        profile->fmtowns_dungeon_size = dungeon_entry->size;
+        profile->fmtowns_executable_size = executable_entry->size;
+        profile->fmtowns_mini_size = mini_entry->size;
+        profile->fmtowns_title_size = title_entry->size;
+        snprintf(profile->graphics_path, sizeof(profile->graphics_path),
+                 "%s::%s/GRAPHICS.DAT", data_dir, directory);
+        snprintf(profile->dungeon_path, sizeof(profile->dungeon_path),
+                 "%s::%s/DUNGEON.DAT", data_dir, directory);
+        snprintf(profile->graphics_md5, sizeof(profile->graphics_md5), "%s",
+                 graphics_md5);
+        snprintf(profile->dungeon_md5, sizeof(profile->dungeon_md5), "%s",
+                 dungeon_md5);
+        profile->graphics_kind = csb_v1_boot_graphics_kind(
+            profile->graphics_path);
+        profile->variant_id = (CSB_V1_VariantId)requested_variant;
+        profile->graphics_verified = 1;
+        profile->dungeon_verified = 1;
+        profile->assets_verified = 1;
+        csb_v1_boot_startup_assets_resolve_pc34(profile);
+        free(image);
+        return 1;
+    }
+
+    if (!profile || !data_dir || !data_dir[0] ||
+        (requested_variant != CSB_V1_VARIANT_FMTOWNS_EN &&
+         requested_variant != CSB_V1_VARIANT_FMTOWNS_JA)) {
+        return 0;
+    }
+    directory = requested_variant == CSB_V1_VARIANT_FMTOWNS_JA
+        ? "CJDATA" : "CDATA";
+    graphics_md5 = requested_variant == CSB_V1_VARIANT_FMTOWNS_JA
+        ? "761d6fc588b31aeaaa9caf3725e111b9"
+        : "405b757038eea3c263e60f240854d6de";
+    dungeon_md5 = requested_variant == CSB_V1_VARIANT_FMTOWNS_JA
+        ? "7ca51c17ef8bd542ca5f0273672ec1a5"
+        : "83c56cf1b779e7460a55c9299ebeb04b";
+    /* M12's materialized cache has the selected pair at its root.  A loose
+     * original extraction has it below CDATA/CJDATA.  Try both layouts, but
+     * admit only the requested hash pair. */
+    if (FSP_JoinPath(candidate_root, sizeof(candidate_root), data_dir,
+                     "GRAPHICS.DAT") &&
+        FSP_JoinPath(dungeon_path, sizeof(dungeon_path), data_dir,
+                     "DUNGEON.DAT")) {
+        if (asset_file_matches_md5(candidate_root, graphics_md5) &&
+            asset_file_matches_md5(dungeon_path, dungeon_md5)) {
+            snprintf(profile->graphics_path, sizeof(profile->graphics_path),
+                     "%s", candidate_root);
+            snprintf(profile->dungeon_path, sizeof(profile->dungeon_path),
+                     "%s", dungeon_path);
+            snprintf(profile->graphics_md5, sizeof(profile->graphics_md5),
+                     "%s", graphics_md5);
+            snprintf(profile->dungeon_md5, sizeof(profile->dungeon_md5),
+                     "%s", dungeon_md5);
+            profile->graphics_kind = csb_v1_boot_graphics_kind(candidate_root);
+            profile->variant_id = (CSB_V1_VariantId)requested_variant;
+            profile->graphics_verified = 1;
+            profile->dungeon_verified = 1;
+            profile->assets_verified = 1;
+            return 1;
+        }
+    }
+    if (!FSP_JoinPath(candidate_root, sizeof(candidate_root), data_dir,
+                      directory) ||
+        !FSP_JoinPath(graphics_path, sizeof(graphics_path), candidate_root,
+                      "GRAPHICS.DAT") ||
+        !FSP_JoinPath(dungeon_path, sizeof(dungeon_path), candidate_root,
+                      "DUNGEON.DAT")) {
+        return 0;
+    }
+    if (!asset_file_matches_md5(graphics_path, graphics_md5) ||
+        !asset_file_matches_md5(dungeon_path, dungeon_md5)) {
+        return 0;
+    }
+    snprintf(profile->graphics_path, sizeof(profile->graphics_path), "%s",
+             graphics_path);
+    snprintf(profile->dungeon_path, sizeof(profile->dungeon_path), "%s",
+             dungeon_path);
+    snprintf(profile->graphics_md5, sizeof(profile->graphics_md5), "%s",
+             graphics_md5);
+    snprintf(profile->dungeon_md5, sizeof(profile->dungeon_md5), "%s",
+             dungeon_md5);
+    profile->graphics_kind = csb_v1_boot_graphics_kind(graphics_path);
+    profile->variant_id = (CSB_V1_VariantId)requested_variant;
+    profile->graphics_verified = 1;
+    profile->dungeon_verified = 1;
+    profile->assets_verified = 1;
+    return 1;
+}
+
+int csb_v1_boot_startup_launch_alloc_with_variant_pc34(
     const char *data_dir,
     const char *utility_search_dir,
     const char *save_path,
     const char *import_dm1_save_path,
     const char *resume_save_path,
+    int requested_variant,
     CSB_V1_BootStartupLaunch_PC34 *out_launch)
 {
     CSB_V1_StartupHostReceipt_PC34 failure_receipt;
+    int effective_variant = requested_variant;
+
+    /* An explicitly selected CSB FM Towns archive with no language bit uses
+     * the original English CDATA branch as AUTO.  The launcher sets the
+     * Japanese bit only for the selected CJDATA edition. */
+    if (data_dir && data_dir[0] && FSP_FileExists(data_dir) &&
+        !FSP_DirExists(data_dir) &&
+        effective_variant == CSB_V1_VARIANT_UNKNOWN) {
+        effective_variant = CSB_V1_VARIANT_FMTOWNS_EN;
+    }
 
     if (!out_launch) {
         return 0;
@@ -2474,13 +2686,27 @@ int csb_v1_boot_startup_launch_alloc_pc34(
         return 0;
     }
     csb_v1_boot_profile_init(out_launch->profile);
-    if (csb_v1_boot_scan_assets(out_launch->profile, data_dir) != 0) {
+    if (csb_v1_boot_scan_assets(out_launch->profile, data_dir) != 0 &&
+        !(effective_variant == CSB_V1_VARIANT_FMTOWNS_EN ||
+          effective_variant == CSB_V1_VARIANT_FMTOWNS_JA)) {
         csb_v1_boot_startup_failure_host_receipt_pc34(
             &failure_receipt,
             "CSB ASSETS MISSING");
         csb_v1_boot_startup_launch_cleanup_pc34(out_launch);
         out_launch->failure_host_receipt = failure_receipt;
         return 0;
+    }
+    if (effective_variant == CSB_V1_VARIANT_FMTOWNS_EN ||
+        effective_variant == CSB_V1_VARIANT_FMTOWNS_JA) {
+        if (!csb_v1_boot_reselect_fmtowns_variant_pc34(
+                out_launch->profile, data_dir, effective_variant)) {
+            csb_v1_boot_startup_failure_host_receipt_pc34(
+                &failure_receipt,
+                "CSB SELECTED FM TOWNS VARIANT MISSING");
+            csb_v1_boot_startup_launch_cleanup_pc34(out_launch);
+            out_launch->failure_host_receipt = failure_receipt;
+            return 0;
+        }
     }
     if (utility_search_dir && utility_search_dir[0] != '\0') {
         csb_v1_boot_copy(out_launch->profile->utility_search_root,
@@ -2519,6 +2745,19 @@ int csb_v1_boot_startup_launch_alloc_pc34(
         return 0;
     }
     return 1;
+}
+
+int csb_v1_boot_startup_launch_alloc_pc34(
+    const char *data_dir,
+    const char *utility_search_dir,
+    const char *save_path,
+    const char *import_dm1_save_path,
+    const char *resume_save_path,
+    CSB_V1_BootStartupLaunch_PC34 *out_launch)
+{
+    return csb_v1_boot_startup_launch_alloc_with_variant_pc34(
+        data_dir, utility_search_dir, save_path, import_dm1_save_path,
+        resume_save_path, CSB_V1_VARIANT_UNKNOWN, out_launch);
 }
 
 int csb_v1_boot_startup_launch_detach_runtime_pc34(
@@ -8571,6 +8810,21 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
     profile->dungeon_path[0] = '\0';
     profile->graphics_md5[0] = '\0';
     profile->dungeon_md5[0] = '\0';
+    free(profile->fmtowns_graphics_bytes);
+    free(profile->fmtowns_dungeon_bytes);
+    free(profile->fmtowns_executable_bytes);
+    free(profile->fmtowns_mini_bytes);
+    free(profile->fmtowns_title_bytes);
+    profile->fmtowns_graphics_bytes = NULL;
+    profile->fmtowns_graphics_size = 0u;
+    profile->fmtowns_dungeon_bytes = NULL;
+    profile->fmtowns_dungeon_size = 0u;
+    profile->fmtowns_executable_bytes = NULL;
+    profile->fmtowns_executable_size = 0u;
+    profile->fmtowns_mini_bytes = NULL;
+    profile->fmtowns_mini_size = 0u;
+    profile->fmtowns_title_bytes = NULL;
+    profile->fmtowns_title_size = 0u;
     profile->graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_NONE;
     profile->variant_id = CSB_V1_VARIANT_UNKNOWN;
     csb_v1_boot_reset_csbgraphics(profile);
@@ -8787,7 +9041,14 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
         CSB_V1_DungeonData *dungeon =
             (CSB_V1_DungeonData *)calloc(1, sizeof(CSB_V1_DungeonData));
         if (dungeon &&
-            csb_v1_dungeon_load_from_file(dungeon, profile->dungeon_path) == 0 &&
+            ((profile->fmtowns_dungeon_bytes &&
+              profile->fmtowns_dungeon_size > 0u &&
+              csb_v1_dungeon_load_source_bytes(
+                  dungeon, profile->fmtowns_dungeon_bytes,
+                  (int)profile->fmtowns_dungeon_size) == 0) ||
+             (!profile->fmtowns_dungeon_bytes &&
+              csb_v1_dungeon_load_from_file(dungeon,
+                                            profile->dungeon_path) == 0)) &&
             dungeon->square_bytes == 1 &&
             csb_v1_dungeon_initial_party_pose_pc34(
                 dungeon, &profile->runtime.current_level,
@@ -8841,6 +9102,21 @@ void csb_v1_boot_cleanup(CSB_V1_BootProfile *profile)
      * Source: ReDMCSB DUNGEON.C F0173/F0174 lines 2724-2755 */
     csb_v1_runtime_cleanup(&profile->runtime);
     csb_v1_boot_reset_csbgraphics(profile);
+    free(profile->fmtowns_graphics_bytes);
+    free(profile->fmtowns_dungeon_bytes);
+    free(profile->fmtowns_executable_bytes);
+    free(profile->fmtowns_mini_bytes);
+    free(profile->fmtowns_title_bytes);
+    profile->fmtowns_graphics_bytes = NULL;
+    profile->fmtowns_graphics_size = 0u;
+    profile->fmtowns_dungeon_bytes = NULL;
+    profile->fmtowns_dungeon_size = 0u;
+    profile->fmtowns_executable_bytes = NULL;
+    profile->fmtowns_executable_size = 0u;
+    profile->fmtowns_mini_bytes = NULL;
+    profile->fmtowns_mini_size = 0u;
+    profile->fmtowns_title_bytes = NULL;
+    profile->fmtowns_title_size = 0u;
     profile->state = CSB_V1_BOOT_STATE_PROFILE_READY;
     memset(&profile->runtime, 0, sizeof(profile->runtime));
     csb_v1_engine_version_display_set_csb(0);

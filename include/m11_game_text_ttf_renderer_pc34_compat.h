@@ -18,7 +18,7 @@
  * is a stub: all functions return 0 and the bitmap-glyph
  * fallback is used.  See CMakeLists.txt FIRESTAFF_HAVE_SDL3_TTF.
  *
- * Source-locked to the 19-language l10n set in
+ * Source-locked to the 20 concrete-language l10n set in
  * include/firestaff_l10n.h.
  */
 

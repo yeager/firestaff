@@ -21,6 +21,7 @@
  */
 
 #include "menu_startup_m12.h"
+#include "firestaff_l10n.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -181,13 +182,22 @@ static void test_global_language_and_preference_rows(void) {
                      &state, M12_STARTUP_SETTINGS_ROW_LANGUAGE),
                  "AUTO") == 0,
           "AUTO is shown instead of the resolved system language");
+    check(M12_StartupMenu_GetLanguageCount() == 21 &&
+              strcmp(M12_StartupMenu_GetLanguageCode(20), "AUTO") == 0,
+          "language picker exposes an explicit AUTO choice");
+    for (i = 0; i < M12_StartupMenu_GetLanguageCount(); ++i) {
+        const char* name = M12_StartupMenu_GetLanguageName(i);
+        check(name && name[0] != '\0', "language picker has a localized display name");
+    }
     state.view = M12_MENU_VIEW_SETTINGS;
     state.settingsSelectedIndex = M12_STARTUP_SETTINGS_ROW_LANGUAGE;
-    expectedLanguage = (state.settings.languageIndex + 1) %
-                       M12_StartupMenu_GetLanguageCount();
+    /* AUTO is the picker origin; the first concrete language to its right
+     * is English, whose persisted index remains 0 for compatibility. */
+    expectedLanguage = 1; /* explicit SV is the second concrete entry */
 
     /* LANGUAGE opens the picker; select its next concrete language and
      * confirm.  The global setting must update every launch slot. */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
@@ -195,10 +205,28 @@ static void test_global_language_and_preference_rows(void) {
           "global language advances in picker");
     check(state.languageExplicit == 1,
           "confirmed language selection becomes explicit");
+    check(state.settings.languageIndex == 1 &&
+              fs_l10n_get_language() == FS_LANG_SV,
+          "explicit Swedish selection updates the active l10n language");
     for (i = 0; i < M12_CONFIG_GAME_COUNT; ++i) {
         check(state.gameOptions[i].languageIndex == state.settings.languageIndex,
               "global language propagates to game slot");
     }
+
+    /* AUTO is a policy choice, not a new game-data language.  It resolves
+     * the current system locale for the runtime handoff while keeping the
+     * launcher preference non-explicit. */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_LEFT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_LEFT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_LEFT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    check(state.languageExplicit == 0 &&
+              strcmp(M12_StartupMenu_GetSettingsValue(
+                         &state, M12_STARTUP_SETTINGS_ROW_LANGUAGE),
+                     "AUTO") == 0,
+          "AUTO selection restores system-language policy");
+    check(fs_l10n_get_language() == fs_l10n_detect_system_language(),
+          "AUTO selection synchronizes the detected system language");
 
     rows = M12_StartupMenu_GetSettingsRowsForTab(1, &count);
     for (i = 0; rows && i < count; ++i) {

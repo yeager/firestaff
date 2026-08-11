@@ -574,6 +574,7 @@ typedef struct {
     const char* artpackPath; /* Optional M12-selected .fsart package. */
     int dm1Fmtowns;         /* Selected DM1 FM Towns edition. */
     int dm1FmtownsJapanese; /* Selected DM1 FM Towns language family. */
+    int csbFmtownsJapanese; /* Selected CSB FM Towns language family. */
     uint32_t csbSaveCandidateIdentity; /* M12-selected CSB save discovery identity. */
     int languageIndex;
     int rendererBackend;
@@ -1601,6 +1602,7 @@ typedef struct {
     CSB_V1_FmtownsUtilityFontReceipt csbFmtownsUtilityFontReceipt;
     CSB_V1_PartyState csbFmtownsUtilityParty;
     CSB_V1_FmtownsStartupPortraitReceipt csbFmtownsUtilityPortraitReceipt;
+    CSB_V1_FmtownsUtilityPortraitCatalog csbFmtownsUtilityPortraitCatalog;
     uint8_t csbFmtownsUtilityOriginalPortraits
         [CSB_V1_FMTOWNS_STARTUP_PORTRAIT_COUNT]
         [CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES];
