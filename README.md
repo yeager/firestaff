@@ -71,6 +71,7 @@ matching data is present:
 | Atari ST 2.0 and 2.1 | Native media uses its own animation, runtime, HUD and supported viewport-material routes. |
 | FM Towns English and Japanese | Native CD installations use their version-specific Towns packages for the supported title, Game and Utility routes. |
 | PC DOS 3.4 | Recognised source-reference edition. It remains useful for format and runtime comparison, but is not selected ahead of verified native Amiga CSB media. |
+| PC-9801 Japanese 3.1 | Not supported. The media is retained only as preservation reference and cannot select an M11 data, startup, gameplay or input route. |
 | X68000 Japanese 3.1 | Not supported. The media is retained only as preservation reference and does not select an M11 data, startup or gameplay route. |
 
 Recognition is deliberately separate from a playability claim. A recognised

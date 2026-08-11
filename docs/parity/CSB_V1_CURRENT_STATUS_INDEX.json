@@ -1,6 +1,6 @@
 {
   "schema": "firestaff.csb_v1.current_status_index.v1",
-  "generatedDate": "2026-06-30",
+  "generatedDate": "2026-08-11",
   "target": {
     "game": "Chaos Strikes Back",
     "primaryLane": "Atari ST v2.x",
@@ -27,7 +27,8 @@
       "Use CSBwin source-locks as an accepted functional template for CSBwin-owned save, Utility, custom-resource, and runtime workflow boundaries where ReDMCSB delegates or does not fully spell out the behavior.",
       "Do not inherit DM1 completion points into CSB without CSB-specific source/runtime evidence.",
       "Use CSB lineage and CSBWin as supporting references for utility-disk, QuickPlay, save/game-state, and runtime workflow boundaries.",
-      "Use original CSB captures only to promote visual, pixel, audio-cadence, timing, or same-state overlay rows."
+      "Use original CSB captures only to promote visual, pixel, audio-cadence, timing, or same-state overlay rows.",
+      "PC-9801 and X68000 media are preservation-only references: neither may become a selectable, launchable, cache, startup, gameplay or input route."
     ]
   },
   "currentBlockers": [
@@ -184,7 +185,7 @@
     {
       "criterion": "reference_inventory",
       "currentStatus": "SOURCE_LOCKED_PARTIAL",
-      "requiredForFullSupport": "Hash-locked CSB original payloads and version/platform inventory, with Atari ST v2.0/v2.1 kept separate from Amiga, PC-98, FM-Towns, X68000, CSBWin, and PC readiness lanes."
+      "requiredForFullSupport": "Hash-locked CSB original payloads and version/platform inventory, with Atari ST v2.0/v2.1 kept separate from Amiga, FM-Towns, CSBWin, and PC readiness lanes. PC-9801 and X68000 remain preservation-only and are excluded from support lanes."
     },
     {
       "criterion": "launch_smoke",
