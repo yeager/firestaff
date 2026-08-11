@@ -5286,6 +5286,16 @@ record boundary. Dynamic RNG/AI/T700/T900 behavior remains capture-gated.
 - 🔒 Only then enable runtime AI, attack/damage, generator timing, T700 and
   T900 semantics; keep the new witness-to-creature bridge fail-closed until
   that evidence exists.
+
+# Theron: repeat semantic capture with non-invasive video core
+
+- ✅ Rebuilt the external capture binary without pre-execution CPU operand
+  reads; pixel-exact startup video and authenticated CD/RAM receipts now agree
+  in the same build.
+- 🔒 The short replay still had zero valid `$B0E5` regular-spawn entries and
+  no target-write/creature join. Repeat from a user-created state at a visible
+  monster or object interaction; do not promote transport or RNG edge samples
+  to gameplay semantics.
 # Theron: prove ADPCM event ownership
 
 - 🔒 Capture a source-owned ADPCM-RAM CPU read/channel-start event and join it

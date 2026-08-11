@@ -1,5 +1,26 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-11 — non-invasive capture build preserves correct video and transport
+
+The external-disk replay `theron-capture-20260811-fixed-hooks` used the
+rebuilt capture binary after removing the pre-execution CPU operand reads that
+had corrupted the Mednafen picture. The same authenticated US CUE, MODE1/2048
+Track 02 payload (`ceb02343868f80cec899e9b239aff2da`) and System Card
+(`ff1a674273fe3540ccef576376407d1d`) were used. The pixel-exact startup image
+was correct, so this build is suitable for further capture work.
+
+The transition receipt records 25 CD IRQ callbacks, 161 raw-sector bindings,
+2 byte-exact CD-to-RAM origin receipts, 32 `$E009` dispatches, 65,536 bounded
+main-RAM consumer reads, 4,096 spawn-consumer reads and 1,536 bounded
+RNG-consumer samples. Host RUN/Button-I input was delivered through the real
+SDL2/Cocoa route.
+
+This run still contains zero valid `$B0E5` regular-spawn entries, zero target
+write ownership and no creature-record join. It therefore does not open RNG
+return ownership, creature AI, attack/damage/loot, generator timing, T700 or
+T900 semantics. The external raw trace remains outside GitHub and the
+production gates stay fail-closed.
+
 ## 2026-08-11 — real SDL2 SRAM replay reaches authenticated gameplay transport
 
 The external-disk replay `theron-capture-20260811-real-sdl2-sram` used the
