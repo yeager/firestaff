@@ -13410,3 +13410,11 @@ and production source-combat tests.
 - 🔒 Källbindningen är negativ: VDP1 mode-5-spannet matchar inget verifierat
   retail-underlag och FONT256-palett/textkonsument är fortsatt obunden. Ingen
   meny-, HUD- eller viewport-rendering öppnas.
+
+# Nexus: include startup assets in VDP1 source join (2026-08-11)
+
+- ✅ VDP1-källjoinen söker nu även i hashverifierade startup-resurser
+  (`MENU.BPK`, `TITLE.BIN`, `TITLE.CG`, `STABG.BIN` och `FONT256.S2D`), inte
+  bara DGN/LEV-filer.
+- ✅ Den autentiserade 361-frames-capturen gav fortfarande ingen exakt
+  startup-/DGN-matchning; semantic admission förblir därför korrekt blockerad.
