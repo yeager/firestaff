@@ -8397,16 +8397,18 @@ uint32_t dm2_v1_runtime_get_leader_hand_object(void) {
     return 0u;
 }
 
-void dm2_v1_runtime_set_leader_hand_object(uint32_t object) {
-    if (!g_dm2_runtime.session_snapshot_valid) return;
+int dm2_v1_runtime_set_leader_hand_object(uint32_t object) {
+    if (!g_dm2_runtime.session_snapshot_valid) return -1;
     if (g_dm2_runtime.source_party_valid) {
         if (object > 0xffffu ||
             (object != 0u && object != 0xffffu &&
              !dm2_v1_record_pool_address(
-                 &g_dm2_runtime.record_pools, (int16_t)object)))
-            return;
+                 &g_dm2_runtime.record_pools, (int16_t)object))) {
+            return -1;
+        }
     }
     g_dm2_runtime.leader_hand_object = object;
+    return 0;
 }
 
 int dm2_v1_runtime_is_sleeping(void) {
@@ -8552,13 +8554,16 @@ int dm2_v1_runtime_set_champion_inventory_object(uint8_t champion,
     if (champion >= 4u || slot >= 30u) {
         return -1;
     }
-    if (!g_dm2_runtime.session_snapshot_valid) return -1;
+    if (!g_dm2_runtime.session_snapshot_valid) {
+        return -1;
+    }
     if (g_dm2_runtime.source_party_valid) {
         if (object > 0xffffu ||
             (object != 0u && object != 0xffffu &&
              !dm2_v1_record_pool_address(
-                 &g_dm2_runtime.record_pools, (int16_t)object)))
+                 &g_dm2_runtime.record_pools, (int16_t)object))) {
             return -1;
+        }
         g_dm2_runtime.source_party.hero[champion].item[slot] =
             object == 0u || object == 0xffffu
                 ? (int16_t)-1 : (int16_t)(uint16_t)object;

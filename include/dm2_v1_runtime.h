@@ -1226,11 +1226,11 @@ int dm2_v1_runtime_import_original_sksave_state_entry(
     const char *save_root,
     const DM2_OriginalSaveStateCorpusEntry *selected_entry,
     DM2_V1_RuntimeOriginalCorpusImportReceipt *out);
-/* Compatibility accessors for the retired flat ObjectID cache.  Production
- * always reports no object; the setter is deliberately a no-op until the
- * original LeaderPossession/record-checkcode ownership is imported. */
+/* Source-session inventory/leader-hand accessors.  Non-empty ObjectIDs are
+ * accepted only when they resolve through the admitted source DB record
+ * pool; no host-side object cache is used. */
 uint32_t dm2_v1_runtime_get_leader_hand_object(void);
-void dm2_v1_runtime_set_leader_hand_object(uint32_t object);
+int dm2_v1_runtime_set_leader_hand_object(uint32_t object);
 /* Source UI event 142/143 (SLEEP/WAKE). This state is owned by the DM2
  * runtime input boundary and is consumed only by source HUD overlay logic. */
 int dm2_v1_runtime_is_sleeping(void);

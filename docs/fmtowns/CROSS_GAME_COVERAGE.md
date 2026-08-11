@@ -172,6 +172,11 @@ Every module below is source-locked with a real-data round-trip test:
   The native inventory census resolves 129/166 source contexts; ordinals
   47-49, 52-83, 99, and 110 have no matching Towns RAW4 geometry and remain
   fail-closed.
+  After authenticated `GAME_LOAD`, the source inventory bridge can now swap a
+  real `c_hero::item[30]` link with `LeaderPossession`, with record-pool
+  validation, `OBJECT_NULL` handling, read-back verification, and rollback.
+  This is a runtime transaction seam, not a replacement inventory panel; the
+  native panel and its remaining event ordering are still unavailable.
   The native viewport event 0x50/rect 0x0007 reaches the DM2 c_rwbb target
   resolver and cannot fall through to DM1's C080 handler. Inventory/dialogue
   pointer ownership and map-dependent viewport mutations remain fail-closed

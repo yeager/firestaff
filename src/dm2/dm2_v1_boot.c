@@ -10937,28 +10937,58 @@ int dm2_v1_boot_runtime_swap_inventory_slot(
 {
     uint32_t slot_object;
     uint32_t leader_object;
+    uint32_t slot_after;
+    uint32_t leader_after;
+    uint32_t expected_slot_after;
     dm2_v1_boot_runtime_inventory_receipt_clear(out_receipt);
-    if (!profile || !profile->dm2_state || !out_receipt ||
+    if (!profile || !out_receipt ||
         champion_index < 0 || champion_index >= 4 ||
         champion_slot < 0 || champion_slot >= 30) {
         return 0;
     }
+    if (!dm2_v1_boot_has_live_source_session(profile)) {
+        return 0;
+    }
     out_receipt->champion_index = champion_index;
     out_receipt->champion_slot = champion_slot;
-    /* skproject SKWINSPX/src/v4/skcorev4.h:146 and
-     * src/v0/sktypesx.h:196-200: leader possession includes a real cursor
-     * buffer.  SKSAVE persists its ObjectID via WRITE_RECORD_CHECKCODE, and
-     * c_hero::item uses 16-bit links.  Firestaff has not imported that DB
-     * record chain, so swapping the former 32-bit cache would fabricate
-     * playable state. */
-    slot_object = 0u;
-    leader_object = 0u;
+    /* c_gui_vp.cpp routes an item click through the source leader-hand
+     * possession and c_hero::item links.  Both runtime setters validate
+     * non-empty handles against the admitted GAME_LOAD DB pool, so this
+     * operation cannot create a host-only object or cross a partial session
+     * boundary. */
+    slot_object = dm2_v1_runtime_get_champion_inventory_object(
+        (uint8_t)champion_index, (uint8_t)champion_slot);
+    leader_object = dm2_v1_runtime_get_leader_hand_object();
     out_receipt->slot_object_before = slot_object;
     out_receipt->leader_hand_before = leader_object;
-    out_receipt->slot_object_after = slot_object;
-    out_receipt->leader_hand_after = leader_object;
+    if (dm2_v1_runtime_set_champion_inventory_object(
+            (uint8_t)champion_index, (uint8_t)champion_slot,
+            leader_object) != 0 ||
+        dm2_v1_runtime_set_leader_hand_object(slot_object) != 0) {
+        /* The first write is source-validated, but keep the transaction
+         * recoverable if a future owner tightens the second validation. */
+        (void)dm2_v1_runtime_set_champion_inventory_object(
+            (uint8_t)champion_index, (uint8_t)champion_slot, slot_object);
+        (void)dm2_v1_runtime_set_leader_hand_object(leader_object);
+        (void)dm2_v1_boot_runtime_capture(profile, &out_receipt->runtime);
+        return 0;
+    }
+    slot_after = dm2_v1_runtime_get_champion_inventory_object(
+        (uint8_t)champion_index, (uint8_t)champion_slot);
+    leader_after = dm2_v1_runtime_get_leader_hand_object();
+    expected_slot_after = leader_object == 0xffffu ? 0u : leader_object;
+    if (slot_after != expected_slot_after || leader_after != slot_object) {
+        (void)dm2_v1_runtime_set_champion_inventory_object(
+            (uint8_t)champion_index, (uint8_t)champion_slot, slot_object);
+        (void)dm2_v1_runtime_set_leader_hand_object(leader_object);
+        (void)dm2_v1_boot_runtime_capture(profile, &out_receipt->runtime);
+        return 0;
+    }
+    out_receipt->slot_object_after = slot_after;
+    out_receipt->leader_hand_after = leader_after;
+    out_receipt->status = "SOURCE INVENTORY SWAP";
     (void)dm2_v1_boot_runtime_capture(profile, &out_receipt->runtime);
-    return 0;
+    return 1;
 }
 
 static void dm2_v1_boot_runtime_render_receipt_clear(

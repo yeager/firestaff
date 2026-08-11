@@ -84,6 +84,16 @@ Runtime/startup:
 | `dm2_v1_fmtowns_music_lookup` | End-to-end dungeon-map → CDDA track lookup |
 | `dm2_v1_fmtowns_anim_stream` | Read-only TWANIM stream admission |
 
+The DM2 FM Towns runtime also has a source-bound inventory transaction bridge.
+After an authenticated `GAME_LOAD`, it exchanges a real `c_hero::item[30]`
+link with the source `LeaderPossession` record, validates both links against
+the admitted record pool, preserves the source `OBJECT_NULL` sentinel, and
+rolls back on any failed read-back. The real-media M11 regression exercises
+this with an item link from the mounted DM2 corpus; it does not manufacture a
+catalog item or use a host-side object cache. The native inventory panel,
+remaining context-specific event ordering, and unavailable pouch/quiver/
+scabbard/backpack slots remain fail-closed.
+
 ## CSB (6 headers)
 
 | Module | Purpose |

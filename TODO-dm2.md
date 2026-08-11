@@ -225,6 +225,14 @@ clipping is still unproven. Remaining weather work is to bind real original
     this transition, and command-specific action execution remains fail-closed
     when the selected hand has no authenticated action entry.
 
+  - 2026-08-11 follow-up: authenticated GAME_LOAD now exposes one source
+    inventory transaction seam. The runtime exchanges a real
+    `c_hero::item[30]` link with `LeaderPossession`, validates both links
+    against the admitted record pool, preserves the `OBJECT_NULL` sentinel
+    boundary, verifies the read-back, and rolls back on failure. The native
+    inventory panel, remaining context/event ordering, and pouch/quiver/
+    scabbard/backpack ownership are still open and remain unavailable.
+
   - 2026-08-06 follow-up: command dispatch now propagates a rejected
     source-GDAT image callback, so a failed title/menu blit aborts the
     presentation transaction instead of being reported as successfully drawn.

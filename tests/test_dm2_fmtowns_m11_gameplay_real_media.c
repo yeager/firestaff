@@ -42,6 +42,7 @@ int main(void)
     DM2_V1_BootExpandedRectReceipt action_rect;
     DM2_V1_BootExpandedRectReceipt command_rect;
     DM2_V1_BootExpandedRectReceipt viewport_rect;
+    DM2_V1_BootRuntimeInventoryReceipt inventory_receipt;
     DM2_V1_DungeonInputOwner input_owner;
     DM2_V1_DungeonInputReceipt input_receipt;
     static const struct {
@@ -143,6 +144,46 @@ int main(void)
           "FM Towns selects the first retained champion's authentic action hand");
     check(dm2_v1_runtime_activate_action_hand(0, 1) == 1,
           "FM Towns retains the first champion's second authentic hand");
+    {
+        int source_slot = -1;
+        uint32_t source_object = 0u;
+        int candidate_slot;
+        for (candidate_slot = 0; candidate_slot < 30; ++candidate_slot) {
+            uint32_t object = dm2_v1_runtime_get_champion_inventory_object(
+                0u, (uint8_t)candidate_slot);
+            if (object != 0u && object != 0xffffu) {
+                source_slot = candidate_slot;
+                source_object = object;
+                break;
+            }
+        }
+        check(source_slot >= 0 && source_object != 0u,
+              "FM Towns GAME_LOAD exposes an authentic item link for swap coverage");
+        if (source_slot >= 0) {
+            memset(&inventory_receipt, 0, sizeof(inventory_receipt));
+            {
+                int swap_ok = dm2_v1_boot_runtime_swap_inventory_slot(
+                      (DM2_V1_BootProfile *)view.dm2BootProfile,
+                      0, source_slot, &inventory_receipt);
+            check(
+                      swap_ok == 1 &&
+                      inventory_receipt.slot_object_before == source_object &&
+                      inventory_receipt.leader_hand_before == 0xffffu &&
+                      inventory_receipt.slot_object_after == 0u &&
+                      inventory_receipt.leader_hand_after == source_object,
+                  "FM Towns inventory swap transfers the authenticated DB link to the source leader hand");
+            }
+            memset(&inventory_receipt, 0, sizeof(inventory_receipt));
+            check(dm2_v1_boot_runtime_swap_inventory_slot(
+                      (DM2_V1_BootProfile *)view.dm2BootProfile,
+                      0, source_slot, &inventory_receipt) == 1 &&
+                      inventory_receipt.slot_object_before == 0u &&
+                      inventory_receipt.leader_hand_before == source_object &&
+                      inventory_receipt.slot_object_after == source_object &&
+                      inventory_receipt.leader_hand_after == 0u,
+                  "FM Towns inventory swap returns the same authenticated DB link without a host cache");
+        }
+    }
     memset(&input_owner, 0, sizeof(input_owner));
     check(dm2_v1_dungeon_input_owner_init_fmtowns(
               &input_owner, (DM2_V1_BootProfile *)view.dm2BootProfile),
