@@ -509,7 +509,11 @@ int theron_v1_mednafen_rng_consumer_trace_parse_file(
         previous_sequence = sequence;
         previous_window_complete = step + 1u == out->sample_limit;
         out->complete_window_seen |= previous_window_complete;
-        out->return_boundary_seen |= return_boundary != 0u;
+        if (return_boundary != 0u) {
+            out->return_boundary_seen = 1;
+            out->return_boundary_sample_count++;
+            out->last_return_boundary_a = (uint8_t)a;
+        }
     }
     fclose(file);
     if (previous_window_complete) out->complete_window_count++;

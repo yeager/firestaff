@@ -11,6 +11,13 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 - ✅ Den äldre 18-fälts-sidecarens 192-stegsformat kan nu läsas utan att
   moderna return-boundary-fält eller semantik uppfinns.
 
+## 2026-08-12 — rått A-värde vid RNG-returgräns sparas, semantik fortsatt stängd
+
+- ✅ RNG-parsern sparar nu A-registret och antal observationer vid den
+  instrumenterade stackbaserade returgränsen.
+- 🔒 Fältet är endast provenance. Det öppnar inte RNG-return, spawnstats eller
+  AI utan en source-bound caller och samma-session target-consumer.
+
 ## 2026-08-12 — JP-porträtt och originalmekanik är fortfarande öppna
 
 - 🔒 JP Track 02-rosterposterna är autentiserade, men ingen source-bound

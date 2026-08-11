@@ -13,6 +13,13 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   18-fältsrader och fönsterlängd härledd från första sekvenskanten.
 - 🔒 Ingen giltig `$B0E5`-spawnpost eller target-publicering finns ännu.
 
+## 2026-08-12 — RNG-returgränsens råa A-register bevaras
+
+- ✅ Parsern bevarar A-registret vid varje autentiserad stackbaserad
+  `return_boundary` och räknar observationerna.
+- ✅ Testet verifierar den råa returgränsen utan att göra A-värdet till en
+  host-RNG eller publicera spawn-/combatsemantik.
+
 ## 2026-08-12 — parity-matrisens överclaim korrigerad
 
 - ✅ Combat- och champion-systemets status skiljer nu autentiserade numeric

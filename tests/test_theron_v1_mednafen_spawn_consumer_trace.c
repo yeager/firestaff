@@ -245,6 +245,8 @@ int main(void) {
         assert(rng.sample_limit == 512u);
         assert(rng.sample_count == 2u && rng.window_count == 1u);
         assert(rng.return_boundary_seen && rng.last_return_pc == 0x5d90u);
+        assert(rng.return_boundary_sample_count == 1u &&
+               rng.last_return_boundary_a == 0x11u);
         assert(rng.last_pc == 0x5d70u && rng.last_bb == 0x71u);
         assert(!rng.semantic_publication_allowed);
         write_rng_fixture(path, 1);

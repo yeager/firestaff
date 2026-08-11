@@ -117,6 +117,11 @@ typedef struct {
     int complete_window_seen;
     int return_boundary_seen;
     int semantic_publication_allowed;
+    /* Raw A-register snapshot at the instrumented stack return boundary.
+     * This is capture evidence only; it is not promoted to an RNG result
+     * until the same-session caller and consumer are source-bound. */
+    uint32_t return_boundary_sample_count;
+    uint8_t last_return_boundary_a;
     /* The sidecar declares the bounded execution window.  This is capture
      * provenance only; it never publishes RNG or gameplay semantics. */
     uint32_t sample_limit;
