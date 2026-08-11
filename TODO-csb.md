@@ -257,8 +257,10 @@ populated dungeon states.
   verifies that the source-owned F0128 aperture changes after native input in
   both F31E and F31J. It now also uses the original Prison C004/C002 route to
   face the active retail group at map 4 `(21,18)` and requires a native F0115
-  creature blit with no marker fallback. Remaining work is capture-level
-  placement/order parity across naturally populated game states.
+  creature blit with no marker fallback. Its exact direction/depth-selected
+  creature bitmap must match the corresponding IMG2 source record. Remaining
+  work is capture-level placement/order parity across naturally populated game
+  states.
 
 - **FM-TOWNS-RESUME-001 — retail MINI.DAT resume is closed.** The real
   English and Japanese `CDATA/CJDATA/MINI.DAT` bootstrap saves now pass the

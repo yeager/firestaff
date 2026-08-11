@@ -16,6 +16,7 @@
 #include "csb_v1_fmtowns_switch.h"
 #include "csb_v1_fmtowns_utility_render.h"
 #include "dm1_v1_champion_status_layout_pc34_compat.h"
+#include "dm1_v1_creature_render_pc34_compat.h"
 #include "dm1_v1_input_command_queue_pc34_compat.h"
 #include "fs_portable_compat.h"
 #include "redmcsb_f7062_save_header_pc34_compat.h"
@@ -135,6 +136,60 @@ static int f31_has_native_runtime_group_sprite(const M11_GameViewState *view)
            group_sprite_count > 0 && group_marker_count == 0 &&
            object_marker_count == 0 && projectile_marker_count == 0 &&
            explosion_marker_count == 0;
+}
+
+static int f31_visible_group_sprite_matches_img2(const M11_GameViewState *view)
+{
+    const CSB_V1_BootProfile *profile;
+    CSB_V1_ViewportRuntimeThingOverlay overlays[80];
+    size_t overlay_count;
+    size_t overlay_index;
+
+    if (!view || !(profile = (const CSB_V1_BootProfile *)view->csbBootProfile) ||
+        !profile->graphics_path[0]) return 0;
+    overlay_count = csb_v1_viewport_runtime_collect_thing_overlays(
+        &profile->runtime, overlays, sizeof(overlays) / sizeof(overlays[0]));
+    if (overlay_count > sizeof(overlays) / sizeof(overlays[0])) return 0;
+    for (overlay_index = 0u; overlay_index < overlay_count; ++overlay_index) {
+        const CSB_V1_ViewportRuntimeThingOverlay *overlay =
+            &overlays[overlay_index];
+        const CSB_V1_ViewportRuntimeGroupOverlayPlacement *placement;
+        const M11_AssetSlot *asset;
+        CSB_V1_FmtownsItemDecodeReceipt receipt;
+        uint8_t *graphics;
+        uint8_t *expected;
+        size_t graphics_size = 0u;
+        unsigned int graphic;
+        int mirrored = 0;
+        int matches;
+
+        /* C004's source collision leaves the party at (22,18), then C002
+         * faces the west Prison group at (21,18). Do not let a different
+         * visible group satisfy this exact retail-state regression. */
+        if (overlay->kind != CSB_V1_VIEWPORT_RUNTIME_OVERLAY_GROUP ||
+            overlay->map_x != 21 || overlay->map_y != 18) continue;
+        placement = &overlay->group_placement;
+        graphic = dm1_creature_sprite_for_view(
+            placement->sprite_creature_type, placement->depth_index,
+            placement->sprite_direction, profile->runtime.party_dir, 0,
+            &mirrored);
+        if (graphic == 0u) continue;
+        asset = M11_AssetLoader_Load((M11_AssetLoader *)&view->assetLoader,
+                                     graphic);
+        graphics = load_file(profile->graphics_path, &graphics_size);
+        expected = (uint8_t *)malloc(640u * 400u);
+        memset(&receipt, 0, sizeof(receipt));
+        matches = asset && asset->loaded && asset->pixels && graphics &&
+            expected && csb_v1_fmtowns_graphics_decode_item(
+                graphics, graphics_size, graphic, expected, 640u * 400u,
+                &receipt) && receipt.valid && receipt.is_image &&
+            asset->width == receipt.width && asset->height == receipt.height &&
+            memcmp(asset->pixels, expected, receipt.pixel_count) == 0;
+        free(expected);
+        free(graphics);
+        if (matches) return 1;
+    }
+    return 0;
 }
 
 static uint32_t f31_advance_random_words(uint32_t state, unsigned int count)
@@ -1824,6 +1879,8 @@ int main(void)
         M11_GameView_Draw(&view, framebuffer, 320, 200);
         CHECK(f31_has_native_runtime_group_sprite(&view),
               "F31 F0115 draws the adjacent retail Prison group with a native sprite");
+        CHECK(f31_visible_group_sprite_matches_img2(&view),
+              "F31 Prison group sprite is byte-identical to its selected IMG2 record");
         CHECK(live_profile &&
                   M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
                       M11_GAME_INPUT_REDRAW &&

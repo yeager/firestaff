@@ -104,8 +104,9 @@ that the 224×136 F0128 aperture changes after live source input. It also
 executes the unmodified Prison C004/C002 command sequence: C004 attempts the
 west side-step into the active retail group at map 4 `(21,18)`, then C002
 faces it. F0115 must issue at least one native group sprite blit and no marker
-fallbacks. Exact capture-level draw order and placement across populated rooms
-remain open.
+fallbacks. The test also identifies that group's direction/depth-selected
+bitmap and byte-compares it with its exact IMG2 record. Capture-level draw
+order and placement across populated rooms remain open.
 
 ## F31 MINI.DAT is a native save bootstrap
 
