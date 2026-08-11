@@ -37,12 +37,12 @@ Firestaff's actual implementation state.
 | FM-Towns | 2.0 | EN/JP | 🔵 | `c_dm_fmtowns/` | — | DMWeb page: Japan CD line, November 1989, ¥8800, redump BIN/CUE masters T1/T2 plus ISO/CUE archive, English/Japanese screenshots, CD audio tracks 02-20, and FM Towns Shift-S / shifted-arrow command table. Bounded redump-layout classifier (`firestaff_fmtowns_cd_classify`, CTest `firestaff_fmtowns_cd_classify_unit`) parses redump CUE sheets and scores candidate disc images against the DMWeb-documented 17..19-audio-track table; no game data vendored. See the [DM1 FM Towns guide](wiki/DM1-FMTowns-Guide.md) for the runtime disc/executable/CDDA layout and current wiring status |
 | PC | 3.4 | EN | ✅ | `c_dm_pc_eng/` | yes (363,417 B) | canonical PC target; DMWeb page: 1992 DOS line, USA English media, VGA/EGA screenshots, PC-only ending animation, entrance music excerpt, and DOS keypad / Alt-S command table |
 | PC | 3.4 | EN/FR/GE | ✅ | `c_dm_pc_multilingual/` | yes (398,925 B) | multilingual, 748 items; DMWeb page: Europe English/French/German package plus French/German VGA screenshots and Spanish fan-translation provenance kept separate |
-| PC-9801 | 2.0a/2.0b | JP | 🔵 | `c_dm_pc98/` | — | DMWeb page: Japan 3.5-inch and 5.25-inch HDM/floppy line, 1990-02-09, ¥9800, 8-bit/16-bit screenshots, `2.0a` copy-protected original plus cracked image, and newer non-copy-protected `2.0b` original |
+| PC-9801 | 2.0a/2.0b | JP | ❌ | `c_dm_pc98/` | — | Preservation only. No DM1 scanner selection, startup, game-view or input route; the row retains DMWeb provenance for the Japanese HDM/floppy line. |
 | SNES | 1.0 NTSC | EN | 🔵 | `c_dm_snes/` | — | DMWeb page: SMC cartridge ROM, English screenshots/videos, SPC music, and English-only "master" skill-prefix bug |
 | SNES | 1.0 PAL | EN | 🔵 | `c_dm_snes/` | — | DMWeb page: Europe cartridge line; same English-version bug family, PAL timing needs separate runtime proof |
 | SNES | 1.0 NTSC | JP | 🔵 | `c_dm_snes/` | — | DMWeb page: Super Famicom ROM, Japanese screenshots/videos, alternate-ending save-corruption bug, Hissssa redraw bug, and See Through Walls freeze |
 | SNES | 1.1 NTSC | JP | 🔵 | `c_dm_snes/` | — | DMWeb page: fixes Japanese 1.0 alternate-ending save corruption and Hissssa redraw, but still has the Japanese See Through Walls freeze |
-| X68000 | 3.0 | JP | 🔵 | `c_dm_x68k/` | — | DMWeb page: Japan HDM/floppy line, 1990-01-26, ¥9800, 31 kHz screenshots, original image missing copy-protection sectors, cracked image, save disk, and X68000 keypad / Ctrl-S command table. **2026-06-25 bounded classifier:** `firestaff_x68k_media_classify_unit` PASS 12/12 covers 2DHD geometry (1232 KB), `HPR-0007` sentinel detection, blank save-disk shape, and FTL-magic handoff; `firestaff_x68k_ftl_handoff_unit` PASS 5/5 covers FTL `data_area1_memory_size` size-fit against the HDM.
+| X68000 | 3.0 | JP | ❌ | `c_dm_x68k/` | — | Preservation only. Read-only geometry and FTL receipts may remain, but no DM1 scanner selection, startup, game-view or input route is supported.
 
 **DMWeb overview boundary:** the DM overview page is the umbrella
 source for the cross-port differences that sit above the individual
@@ -74,7 +74,7 @@ data files.
 | FM-Towns | 3.1 | EN | 🔵 | `c_csb_fmtowns_en/` | — | 728-item GRAPHICS.DAT; DMWeb page: Japan BIN/CUE CD line, English screenshots, CD audio tracks 02-31, and FM Towns Ctrl-S/Shift-S plus shifted-arrow input |
 | FM-Towns | 3.1 | JP | 🔵 | `c_csb_fmtowns_jp/` | — | DMWeb page: Japan v3.1, release 1990-12-14, ¥9800, Japanese screenshots, Champion Editor/portrait-loading screens, redump.org and DMFiles BIN/CUE sources |
 | PC | 3.4 | EN | ✅ | — | yes (435,076 B) | Paul Stevens' unofficial Windows port (`CSBwin`) is what our `src/csb/` is based on; the underlying game is Atari ST 2.0. The PC "version" is a port, not a separate FTL release. |
-| PC-98 | 3.1 | JP | 🔵 | `c_csb_pc98/` | — | DMWeb PC-9801 page: Japan HDM/floppy line, 1990-12-21, ¥9800, original image missing copy-protection sectors, cracked image, 8-bit/16-bit screenshots, Champion Editor/portrait-loading screens, and PC-98 keypad / Alt-S input |
+| PC-9801 | 3.1 | JP | ❌ | `c_csb_pc98/` | — | Preservation only. No CSB scanner selection, startup, game-view or input route; the row retains the DMWeb HDM/floppy provenance. |
 | Apple IIGS | — | — | ❌ | not released | — | FTL never ported CSB to IIGS |
 
 ## DM2 (Dungeon Master II: The Legend of Skullkeep) — 15 tracked DMWeb/Greatstone rows
@@ -90,7 +90,7 @@ data files.
 | Macintosh | 1.0 | EN | 🔵 | `c_dm2_mac/` | — | DMWeb edition page: USA redump BIN/CUE CD image plus CD-content archives; upgraded 256-color graphics; QuickTime/MooV, MIDI/SoundMusicSys resources, Mac menu/balloon help, Command-key input table |
 | Macintosh | 1.0 | JP | 🔵 | `c_dm2_mac_jp/` | — | DMWeb edition page: Japan redump BIN/CUE CD image plus DMFiles archive; older 16-color graphics; intro animation also present on Sega CD; CD-audio tracks; `Skullkeep` resource-fork protection notes |
 | Macintosh | 1.0 | EN (demo) | 🔵 | `c_dm2_mac_demo/` | — | DMWeb edition page: USA demo redump BIN/CUE CD image plus HQX/CD-content handoff |
-| PC-9801 | 1.0 | JP | 🔵 | `c_dm2_pc98/` | — | four FDI disk images; no music; PC-98 keypad / Alt-S input table |
+| PC-9801 | 1.0 | JP | ❌ | `c_dm2_pc98/` | — | Preservation only. No DM2 scanner selection, startup, game-view or input route; four FDI disk images and the no-music/input facts remain documented. |
 | PC-9821 | 1.0 | JP | 🔵 | `c_dm2_pc9821/` | — | DMWeb edition page: Victor JP v1.0 BIN/CUE CD image, six CD.DAT music tracks, PC-98 keypad / Alt-S input table, LZEXE `FIRE.EXE` CD-ROM protection notes |
 | IBM PS/V | 1.0 | JP | 🔵 | `c_dm2_ibmpsv/` | — | DMWeb edition page: Victor JP v1.0 three-floppy/WinImage media; no music; IBM PS/V keypad / Alt-S / Shift-arrow input table; LZEXE `FIRE.EXE` protection notes |
 | Sega CD / Mega CD | 1.0 | EN | 🔵 | `c_dm2_segacd_en/` | — | DMWeb edition page: Europe + USA redump BIN/CUE CD images; USA also has DMFiles CD-content archive plus split data-track ISO and audio-track MP3 archives |

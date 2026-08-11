@@ -58,7 +58,7 @@ coverage**, not registry correctness.
 | Apple IIGS 2.0 English | 🟡 | 🟡 | n/a | DMWeb page lists PO disk images: original copy-protected image without working sector `$17`, Computist/ACS cracks, a hard-disk-patched image, and a save disk; 2.0 has a ROM03 main-dungeon `->002C` memory failure unless expansion memory is present |
 | Apple IIGS 2.1 English | 🟡 | 🟡 | n/a | DMWeb page lists separate original and Computist-cracked PO images; 2.1 fixes the ROM03 2.0 main-dungeon memory failure |
 | FM-Towns 2.0 English/Japanese | 🟡 | 🟡 | CD audio tracks 02-20 | DMWeb page identifies Japan v2.0 EN/JP media as redump BIN/CUE masters T1/T2 plus an ISO/CUE archive, with track 20 as 20 seconds of silence and an FM Towns-specific Shift-S / shifted-arrow input table |
-| PC-9801 2.0a/2.0b Japanese | 🟡 | 🟡 | n/a | DMWeb page identifies Japan HDM/floppy media: `2.0a` original image missing the copy-protection sector and a cracked `2.0a`, plus newer bug-fixed non-copy-protected `2.0b`; 8-bit/16-bit screenshot split and PC-98 keypad / Alt-S input table |
+| PC-9801 2.0a/2.0b Japanese | 🟡 | 🟡 | n/a | Preservation only: retain DMWeb's HDM/floppy, copy-protection and screenshot provenance, but do not acquire it for a Firestaff launch route. |
 | X68000 3.0 Japanese | 🟡 | 🟡 | n/a | DMWeb page identifies Japan v3.0 HDM/floppy media: original image missing copy-protection sectors, cracked image, and blank save disk; 31 kHz screenshot set and X68000 keypad / Ctrl-S input table |
 | SNES / Super Famicom 1.0/1.1 | ⚪ | ⚪ | SPC music | DMWeb page identifies four SMC cartridge ROMs: English NTSC 1.0, English PAL 1.0, Japanese NTSC 1.0, and Japanese NTSC 1.1; includes 19 SPC files, bsnes MP3 recordings, screenshots/videos, known slow-rendering behavior, and SNES-specific bug differences |
 
@@ -105,21 +105,13 @@ coverage**, not registry correctness.
    keyboard table. Firestaff needs BIN/CUE or ISO/CUE extraction, EN/JP
    hash classification, IMG2 real-asset proof, CD-audio receipts, and
    FM Towns input gates before native runtime claims.
-7. **PC-9801 2.0a / 2.0b JP** should be treated as a disk-image import
-   target. DMWeb's PC-9801 page separates `2.0a` original media that
-   cannot boot without its copy-protection sector from a cracked `2.0a`
-   and a newer, bug-fixed, non-copy-protected `2.0b` original. Firestaff
-   needs HDM/floppy extraction, original-vs-cracked classification,
-   extracted data-file hashes, 8-bit/16-bit presentation receipts, PC-98
-   keypad/Alt-S input gates, and protection provenance without committing
-   patched executables.
-8. **X68000 3.0 JP** should be treated as a disk-image import target.
-   DMWeb's X68000 page separates original HDM media that cannot boot
-   without copy-protection sectors from a cracked image and a blank save
-   disk. Firestaff needs HDM extraction, original-vs-cracked/save-disk
-   classification, extracted data-file hashes, 31 kHz presentation
-   receipts, X68000 keypad/arrow input gates, and `FTLCODE` / `DM.X`
-   protection provenance without committing patched executables.
+7. **PC-9801 2.0a / 2.0b JP** is preservation-only. DMWeb's distinction
+   between `2.0a` original media, cracked `2.0a` and bug-fixed `2.0b`
+   remains useful provenance, but it must not become a Firestaff import,
+   cache, startup, game-view or input target.
+8. **X68000 3.0 JP** is preservation-only. Its original, cracked and blank
+   HDM media remain useful provenance, but must not become a Firestaff
+   import, cache, startup, game-view or input target.
 9. **SNES / Super Famicom 1.0/1.1** remains outside the current
    code-complete path, but DMWeb now pins the ROM set and evidence
    boundary: English NTSC/PAL 1.0, Japanese NTSC 1.0/1.1, SMC cartridge
@@ -212,12 +204,10 @@ coverage**, not registry correctness.
    Champion Editor and portrait-loading screens, and the FM Towns
    Ctrl-S/Shift-S plus shifted-arrow input table before any native
    FM Towns CSB claim.
-8. **PC-9801 CSB HDM/input/presentation receipts** should follow
-   DMWeb's PC-9801 page: Japanese v3.1 original HDM media missing
-   copy-protection sectors, cracked media kept separate, 8-bit/16-bit
-   screenshots, Champion Editor and portrait-loading screens, PC-98
-   keypad / Alt-S input, and `CSBGAME` protection provenance before any
-   native PC-9801 CSB claim.
+8. **PC-9801 CSB HDM/input/presentation receipts** are preservation-only.
+   Keep Japanese v3.1 HDM, copy-protection and Champion Editor facts for
+   archival reference, but do not create a native PC-9801 CSB claim or a
+   Firestaff cache, startup, game-view or input route.
 10. **Atari ST CSB input/presentation receipts** should follow DMWeb's
    table and media notes: Insert/Clr Home turns, arrow movement, Ctrl-S
    disk menu, WinSTon/Smacker introduction video, no ending animation,
@@ -235,7 +225,7 @@ coverage**, not registry correctness.
 | Macintosh | 🔴 | 🔴 | DMWeb page identifies JP, USA, and USA demo as redump BIN/CUE CD images plus CD-content archives; JP has 16-color graphics, intro animation, CD-audio, and `Skullkeep` resource-fork protection offsets; USA has 256-color graphics, QuickTime/MooV, MIDI/SoundMusicSys resources, Mac menu/balloon help, and Command-key input |
 | Sega CD / Mega CD | 🔴 | 🔴 | DMWeb page identifies Europe/USA/Japan v1.0 as redump BIN/CUE CD images; USA/JP CD-content archives exist; data-track ISO + audio-track MP3 split; track 7 is 15 seconds of silence |
 | FM-Towns | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as a redump BIN/CUE CD image; CD audio has quieter tracks 2-6 plus silent track 8; Ctrl-Shift-S disk menu |
-| PC-9801 | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as four FDI disk images; no music; separate HDM/HDI demo |
+| PC-9801 | 🔴 | 🔴 | Preservation only: DMWeb identifies Japanese v1.0 FDI media, a no-music profile and a separate HDM/HDI demo, none of which is a Firestaff launch target. |
 | PC-9821 | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as a BIN/CUE CD image; six CD.DAT music tracks; PC-98 keypad / Alt-S input table; LZEXE `FIRE.EXE` CD-ROM protection notes |
 | IBM PS/V | 🔴 | 🔴 | DMWeb page identifies Japanese v1.0 as original three floppy disks plus WinImage disk images; no music; IBM PS/V keypad / Alt-S / Shift-arrow input table; LZEXE `FIRE.EXE` protection offsets `0x21989`/`0x1FB77` |
 | PC beta/demo | 🔴 | 🔴 | DMWeb PC page documents PC 0.9 beta plus five 1995 demo builds; earliest `FIRE.EXE`/LZ91 demo lacks music and save/load, later `SKULL.EXE`/Watcom demos vary `GRAPHICS.DAT`, `DUNGEON.DAT`, sound, logo, title, and ordering assets |

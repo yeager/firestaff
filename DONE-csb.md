@@ -7,7 +7,7 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 - ✅ 2026-08-11 CSB FM Towns native CLI launch regression: added the opt-in
   `csb_v1_fmtowns_native_cli_boot` CTest. With explicitly supplied licensed
   F31 media (`FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR`), it proves the direct
-  direct `--game csb --platform fm-towns` route first reaches the original
+  `--game csb --platform fm-towns` route first reaches the original
   `TITLE.ANM` owner and then completes the real AUTOEXEC/SWITCHTW/MINI.DAT
   path to the source start pose `(9,0,2)`. A separate normal-launcher check
   uses `--menu --script enter` with a launch receipt, so it verifies that the
