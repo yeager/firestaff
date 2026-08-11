@@ -28,7 +28,11 @@ VDP2_PAYLOAD_BYTES = 0x100 * 2 + 0x40000 * 2 + 0x800 * 2
 VDP1_STATE_RE = re.compile(
     rb"^state=tvmr:[0-9a-f]+,fbcr:[0-9a-f]+,ptmr:([0-9a-f]+),"
     rb"edsr:([0-9a-f]+),lopr:[0-9a-f]+,copr:[0-9a-f]+,"
-    rb"ret:[0-9a-f]+,fb:[01],sysclipx:[0-9a-f]+,sysclipy:[0-9a-f]+$"
+    # The current Firestaff patch appends the captured system-clip words.
+    # Older operator-built Mednafen binaries emit the same V2 state without
+    # those optional fields. They are not needed for transport validation;
+    # source ownership and production placement remain separately gated.
+    rb"ret:[0-9a-f]+,fb:[01](?:,sysclipx:[0-9a-f]+,sysclipy:[0-9a-f]+)?$"
 )
 
 

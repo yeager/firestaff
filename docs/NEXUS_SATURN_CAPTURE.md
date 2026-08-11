@@ -92,6 +92,12 @@ python3 scripts/analyze_nexus_vdp1_write_trace.py \
 V1-traces utan frame-markörer stöds fortfarande, men kan inte väljas med
 `--frame`. Saknad eller duplicerad markör gör analysen ogiltig.
 
+VDP1-V2-state har två operatörsvarianter i omlopp. Den aktuella patchen
+skriver även `sysclipx` och `sysclipy`; äldre externa Mednafen-buildar skriver
+samma V2-state utan de två suffixfälten. Firestaffs transportvalidator
+accepterar båda varianterna, men ingen av dem ger i sig assetägarskap eller
+produktionsrendering.
+
 ## Så görs själva dumpningen
 
 Körningen sker i denna ordning. Sökvägarna pekar medvetet på extern disk.
@@ -160,6 +166,21 @@ som en VDP1-write och körningen får inte höjas till semantic admission.
 Detta är ett capture-/instrumenteringsfel, inte ett påstående om Nexus'
 assetägare. Den råa frame-capturen är fortfarande användbar för den
 separata, capture-only-dekodern när framegräns och registerordning valideras.
+
+### Korrigerat inputfönster, 2026-08-11
+
+En ny extern körning använde A+START (`0x30`) vid SMPC-input-räknare 3500 och
+fångade 100 frames från capture-frame 300:
+
+`/Volumes/Extern-disk/nexus-saturn-capture/run-authentic-merged-menu-input-corrected-20260811a/`
+
+Transportvalidatorn godkänner hela körningen (`frames=100`, alla 100 frames
+med aktiv VDP1-observation). Samma körning visar en observerad VDP2-state-
+övergång: frame 0 har `BGON=0x000f` med NBG0–NBG3, frame 50 har `BGON=0x0103`
+med NBG0/NBG1, och frame 99 har `BGON=0x080c` med NBG2/NBG3. Det är ett starkt
+input-/transportwitness från samma retail-disc, men utan exakt VDP1/VDP2-
+source join är `asset_consumer_identity=unbound` och
+`host_composition_admission=blocked` fortfarande det korrekta resultatet.
 
 Minimal extern körning:
 
