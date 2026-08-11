@@ -4341,6 +4341,8 @@ static int m11_apply_boot_probe_event_token(M11_GameViewState* gameView,
         return 1;
     }
     if (sscanf(buffer, "click:%d:%d", &x, &y) == 2) {
+        M11_GameInputResult press_result;
+        M11_GameInputResult release_result;
         /* The normal SDL event loop has already presented the current frame
          * before it maps a window point through its content rectangle.  A
          * boot-probe advances game state without drawing, which left the
@@ -4353,12 +4355,18 @@ static int m11_apply_boot_probe_event_token(M11_GameViewState* gameView,
         if (!m11_map_window_pointer_to_game_source(gameView, x, y, &x, &y)) {
             return 1;
         }
+        /* A script click represents the same press/release pair delivered
+         * by SDL.  Some source-owned controls, including CSB Amiga's APPB
+         * language panel, deliberately consume the release rather than the
+         * initial press.  Sending only the press made that real path
+         * unreachable through --boot-probe even though it worked in the app. */
+        press_result = M11_GameView_HandlePointerButton(
+            gameView, x, y, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        release_result = M11_GameView_HandlePointerButtonRelease(
+            gameView, x, y, DM1_V1_MOUSE_MASK_LEFT_PC34);
         if (outResult) {
-            *outResult = M11_GameView_HandlePointerButton(
-                gameView, x, y, DM1_V1_MOUSE_MASK_LEFT_PC34);
-        } else {
-            (void)M11_GameView_HandlePointerButton(
-                gameView, x, y, DM1_V1_MOUSE_MASK_LEFT_PC34);
+            *outResult = release_result != M11_GAME_INPUT_IGNORED
+                ? release_result : press_result;
         }
         return 1;
     }

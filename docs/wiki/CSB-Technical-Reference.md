@@ -58,6 +58,13 @@ The real-media M12/M11 boundary test can be enabled with
 `FIRESTAFF_CSB_AMIGA31_DATA_DIR` pointing at a directory containing the
 verified Amiga 3.1 ADF or archive.
 
+The matching CLI regression accepts either form too. It first proves the
+native startup page, then runs the source-visible title sequence into the
+verified campaign runtime. For A31M this includes APPB's original English-box
+mouse-release after `TITL.DAT`; a boot-probe `click:x:y` now emits both the
+normal press and release, exactly as the SDL route does. The probe fixes its
+presentation to 320x200 so the source coordinates remain deterministic.
+
 FM Towns is treated the same way even though its retail archive contains a
 large CD image: temporary expansion happens inside the selected edition's
 Firestaff cache. On success it is atomically promoted to `FMTOWNS.IMG`; on
