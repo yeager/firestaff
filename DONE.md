@@ -6,6 +6,14 @@
 - ✅ Timeout output is preserved and sanitized; no screenshot is promoted and
   no timeout is treated as a runtime or semantic Theron success.
 
+# Theron: source creature identity is stable (2026-08-11)
+
+- ✅ Authenticated Track 02 creature IDs now use the source record reference
+  and member slot in both production admission paths.
+- ✅ `test_theron_v1_combat_runtime_source` and the real Track 02 dungeon
+  loader pass after the change; no synthetic creature stats or consumers were
+  introduced.
+
 # Theron: runtime-authenticated HuC6280 RNG core (2026-08-11)
 
 - ✅ A fresh instrumented Mednafen build captured the real `$45E3` and `$5D64`

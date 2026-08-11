@@ -1470,7 +1470,12 @@ static int theron_v1_world_admit_source_monster_member(
 
     creature = &world->creatures[world->creature_count];
     memset(creature, 0, sizeof(*creature));
-    creature->id = world->creature_count + 1;
+    /* Keep the live identity tied to the authenticated source group/member,
+     * not to the current pool order.  The explicit source-spawn bridge uses
+     * the same identity, so remove/reload cannot silently rename a creature
+     * or make a later source record collide with an old pool index. */
+    creature->id = ((int)record->source_ref << 2) | (int)slot;
+    if (creature->id <= 0) creature->id = world->creature_count + 1;
     creature->type = (uint8_t)(THERON_CREATURE_AKUTUBA + record->type);
     creature->level = (uint8_t)record->level;
     creature->dungeon_id = record->dungeon_id;

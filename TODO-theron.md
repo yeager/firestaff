@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — source creature IDs now survive pool rebuilds
+
+- ✅ Both authenticated category-4 level materialization and explicit source
+  admission derive IDs from `source_ref` plus member slot. Removing or
+  reloading a pool no longer renames a source creature by its array position.
+- 🔒 This is provenance-only; no unproven RNG, AI, combat, generator, T700,
+  T900, loot, presentation or event-audio semantics were enabled.
+
 ## 2026-08-11 — unbound source creatures cannot enter fixture combat
 
 - ✅ Source-backed members with authentic HP remain visible/collidable, but

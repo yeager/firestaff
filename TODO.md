@@ -1,5 +1,14 @@
 # Firestaff TODO - Open Work
 
+## Theron: source creature identity is stable across admission paths (2026-08-11)
+
+- ✅ Level materialization and explicit source-record admission now derive each
+  creature ID from the authenticated `source_ref` and member slot, instead of
+  using the mutable pool index.
+- 🔒 This only fixes provenance identity. RNG-spawn, AI, attacks, damage, loot,
+  generators, T700 and T900 remain closed until their original consumers are
+  captured and bound.
+
 ## Theron: static creature pool now copies authenticated group members (2026-08-11)
 
 - ✅ Category-4 Track 02 records now materialize one live pool entry per

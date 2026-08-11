@@ -62,6 +62,9 @@ int main(void) {
               creature->source_chested == -2 &&
               theron_v1_creature_count(&world, 1, 0) == 2,
           "published live creatures retain their authentic source identity");
+    CHECK(world.creatures[0].id == ((int)0x1200u << 2) &&
+              world.creatures[1].id == (((int)0x1200u << 2) | 1),
+          "source creature IDs remain tied to record and member slot");
     CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_AKUTUBA,
                                    1, 0, 1, 1) == -1 &&
               world.creature_count == 2,
