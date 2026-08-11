@@ -32,15 +32,15 @@ Claim: D2L2 and mirrored D2R2 use the ReDMCSB PC34 far-side wall lanes: wall cas
 
 ## Firestaff Evidence
 
-- PASS firestaff-d2-far-side-wall-metadata (dm1_v1_viewport_3d_pc34_compat.c:1201-1202)
-  - line 1201: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
-  - line 1201: DM1_PC34_ZONE_WALL_D2L2
-  - line 1201: DUNVIEW.C:6849-6858
-  - line 1201: DUNVIEW.C:6848-6862 wall case returns
-  - line 1202: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
-  - line 1202: DM1_PC34_ZONE_WALL_D2R2
-  - line 1202: DUNVIEW.C:6880-6889
-  - line 1202: DUNVIEW.C:6882-6893 wall case returns
+- PASS firestaff-d2-far-side-wall-metadata (dm1_v1_viewport_3d_pc34_compat.c:1203-1204)
+  - line 1203: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
+  - line 1203: DM1_PC34_ZONE_WALL_D2L2
+  - line 1203: DUNVIEW.C:6849-6858
+  - line 1203: DUNVIEW.C:6848-6862 wall case returns
+  - line 1204: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
+  - line 1204: DM1_PC34_ZONE_WALL_D2R2
+  - line 1204: DUNVIEW.C:6880-6889
+  - line 1204: DUNVIEW.C:6882-6893 wall case returns
 
 - PASS firestaff-d2-far-side-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:826-827)
   - line 826: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
@@ -50,8 +50,8 @@ Claim: D2L2 and mirrored D2R2 use the ReDMCSB PC34 far-side wall lanes: wall cas
   - line 827: DM1_PC34_ZONE_WALL_D2R2
   - line 827: "6893"
 
-- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:4553-4553)
-  - line 4553: DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns
+- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:4556-4556)
+  - line 4556: DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns
 
 ## Verification
 

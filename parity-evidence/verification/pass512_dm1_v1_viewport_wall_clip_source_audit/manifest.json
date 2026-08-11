@@ -19,125 +19,125 @@
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
-          "line": 2292,
+          "line": 2558,
           "needle": "DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate"
         },
         {
-          "line": 2298,
+          "line": 2564,
           "needle": "gate.source_lines = \"DUNVIEW.C:3053-3058,3198-3204; COORD.C:2390-2409; IMAGE3.C:866-889\";"
         },
         {
-          "line": 2304,
+          "line": 2570,
           "needle": "int src_x = frame->blit_x;"
         },
         {
-          "line": 2305,
+          "line": 2571,
           "needle": "int src_y = frame->blit_y;"
         },
         {
-          "line": 2312,
+          "line": 2578,
           "needle": "if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }"
         },
         {
-          "line": 2319,
+          "line": 2585,
           "needle": "if (src_x + width > source_width) width = source_width - src_x;"
         },
         {
-          "line": 2325,
+          "line": 2591,
           "needle": "gate.src_x = (int16_t)src_x;"
         },
         {
-          "line": 2330,
+          "line": 2596,
           "needle": "gate.height = (int16_t)height;"
         }
       ],
       "id": "local_clip_gate_contract",
-      "lines": "2292-2332",
-      "sha256": "d69f1d526aa58fce8dd8122c27f89e11b02b9655737bbeb8e8e40a703ade6434"
+      "lines": "2558-2598",
+      "sha256": "fa73242177ef31335a4d70d6cbdb0b48856ca81310c37a38ea751e758d3e7543"
     },
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
-          "line": 1444,
+          "line": 1586,
           "needle": "void dm1_viewport_3d_draw_wall(DM1_Viewport3DState *state,"
         },
         {
-          "line": 1450,
+          "line": 1592,
           "needle": "dm1_viewport_3d_resolve_wall_blit_clip_gate(frame, frame->byte_width, frame->height);"
         },
         {
-          "line": 1458,
+          "line": 1600,
           "needle": "const uint8_t *src_row = wall_bitmap + (gate.src_y + y) * bw + gate.src_x;"
         },
         {
-          "line": 1459,
+          "line": 1601,
           "needle": "uint8_t *dst_row = vp + (gate.dst_y + y) * vp_stride + gate.dst_x;"
         },
         {
-          "line": 1463,
+          "line": 1605,
           "needle": "if (pixel != COLOR_TRANSPARENT)"
         }
       ],
       "id": "local_transparent_wall_rows_use_clip_gate",
-      "lines": "1444-1468",
-      "sha256": "d69f1d526aa58fce8dd8122c27f89e11b02b9655737bbeb8e8e40a703ade6434"
+      "lines": "1586-1610",
+      "sha256": "fa73242177ef31335a4d70d6cbdb0b48856ca81310c37a38ea751e758d3e7543"
     },
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
-          "line": 1478,
+          "line": 1620,
           "needle": "void dm1_viewport_3d_draw_wall_opaque(DM1_Viewport3DState *state,"
         },
         {
-          "line": 1484,
+          "line": 1626,
           "needle": "dm1_viewport_3d_resolve_wall_blit_clip_gate(frame, frame->byte_width, frame->height);"
         },
         {
-          "line": 1492,
+          "line": 1634,
           "needle": "const uint8_t *src_row = wall_bitmap + (gate.src_y + y) * bw + gate.src_x;"
         },
         {
-          "line": 1494,
+          "line": 1636,
           "needle": "memcpy(dst_row, src_row, (size_t)gate.width);"
         }
       ],
       "id": "local_opaque_wall_rows_use_clip_gate",
-      "lines": "1478-1496",
-      "sha256": "d69f1d526aa58fce8dd8122c27f89e11b02b9655737bbeb8e8e40a703ade6434"
+      "lines": "1620-1638",
+      "sha256": "fa73242177ef31335a4d70d6cbdb0b48856ca81310c37a38ea751e758d3e7543"
     },
     {
       "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
-          "line": 1729,
+          "line": 2159,
           "needle": "static void test_wall_source_row_clip_occlusion_gate(void)"
         },
         {
-          "line": 1734,
+          "line": 2164,
           "needle": "check_int(\"wall_clip_gate.151713.src_x\", gate.src_x, 4);"
         },
         {
-          "line": 1758,
+          "line": 2188,
           "needle": "check_int(\"wall_clip_gate.occluded_source_row\", gate.visible ? 1 : 0, 0);"
         },
         {
-          "line": 1765,
+          "line": 2195,
           "needle": "static void test_wall_draw_uses_clip_gate_source_offsets(void)"
         },
         {
-          "line": 1777,
+          "line": 2207,
           "needle": "check_int(\"wall_clip_draw.source_offset_next\""
         },
         {
-          "line": 1784,
+          "line": 2214,
           "needle": "check_int(\"wall_clip_draw.opaque_copies_transparent_color\""
         }
       ],
       "id": "local_clip_tests_cover_source_and_viewport_occlusion",
-      "lines": "1729-1785",
-      "sha256": "b09d30d17ee008d223aabd753f4b1b4926aeca8d80e72dd74e5152166d2fe776"
+      "lines": "2159-2260",
+      "sha256": "bba3b4fc454fcb43c1ea97f26fc46531072a86f7457283fb9fc58ad2c2e87d2f"
     }
   ],
   "nonClaims": [

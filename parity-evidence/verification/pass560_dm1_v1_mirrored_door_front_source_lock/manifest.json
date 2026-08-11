@@ -3,31 +3,31 @@
     {
       "hits": [
         {
-          "line": 973,
+          "line": 975,
           "needle": "DM1_VIEW_SQUARE_D3R, 0x0128, 0x0439"
         },
         {
-          "line": 973,
+          "line": 975,
           "needle": "DUNVIEW.C:6579 floor ornament under mirrored rear pass"
         },
         {
-          "line": 973,
+          "line": 975,
           "needle": "DUNVIEW.C:6592-6593 optional button before door panel"
         },
         {
-          "line": 975,
+          "line": 977,
           "needle": "DM1_VIEW_SQUARE_D2L, 0x0218, 0x0349"
         },
         {
-          "line": 975,
+          "line": 977,
           "needle": "DUNVIEW.C:6988 floor ornament under rear pass"
         },
         {
-          "line": 976,
+          "line": 978,
           "needle": "DM1_VIEW_SQUARE_D2R, 0x0128, 0x0439"
         },
         {
-          "line": 976,
+          "line": 978,
           "needle": "DUNVIEW.C:7181 floor ornament under mirrored rear pass"
         }
       ],

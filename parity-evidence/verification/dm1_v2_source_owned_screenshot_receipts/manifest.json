@@ -1,10 +1,5 @@
 {
-  "errors": [
-    "direction 0 modes not pairwise distinct: v1=0x15996561, v20=0x15996561, v21=0xd7d3567b",
-    "direction 1 modes not pairwise distinct: v1=0xfddea8a9, v20=0xfddea8a9, v21=0x117f8cf3",
-    "direction 2 modes not pairwise distinct: v1=0x54e723c1, v20=0x54e723c1, v21=0x727d952b",
-    "direction 3 modes not pairwise distinct: v1=0xfddea8a9, v20=0xfddea8a9, v21=0x117f8cf3"
-  ],
+  "errors": [],
   "nonClaims": [
     "No DOSBox parity claim \u2014 receipts prove Firestaff-side determinism only.",
     "No original-vs-Firestaff pixel pairing performed.",
@@ -283,5 +278,5 @@
       "line": 90
     }
   ],
-  "status": "failed"
+  "status": "passed"
 }

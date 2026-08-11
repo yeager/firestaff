@@ -4,43 +4,43 @@
       "claim": "Firestaff exposes D1/D0 wall metadata with ReDMCSB return/alcove source anchors.",
       "hits": [
         {
-          "line": 1206,
+          "line": 1208,
           "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
         },
         {
-          "line": 1206,
+          "line": 1208,
           "needle": "DUNVIEW.C:7459-7460 side ornament then return"
         },
         {
-          "line": 1207,
+          "line": 1209,
           "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
         },
         {
-          "line": 1207,
+          "line": 1209,
           "needle": "DUNVIEW.C:7627-7628 side ornament then return"
         },
         {
-          "line": 1208,
+          "line": 1210,
           "needle": "DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C"
         },
         {
-          "line": 1208,
+          "line": 1210,
           "needle": "DUNVIEW.C:7842-7843 front alcove draws F0115"
         },
         {
-          "line": 1209,
+          "line": 1211,
           "needle": "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R"
         },
         {
-          "line": 1209,
+          "line": 1211,
           "needle": "DUNVIEW.C:8036-8038 wall case returns"
         },
         {
-          "line": 1210,
+          "line": 1212,
           "needle": "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
         },
         {
-          "line": 1210,
+          "line": 1212,
           "needle": "DUNVIEW.C:8142-8144 wall case returns"
         }
       ],
@@ -48,7 +48,7 @@
       "lines": "1200-1215",
       "missing": [],
       "path": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "1a88f9d1ddca5f3c85ed41b204224f30be1fa651a23f755d6daed996d7504244",
+      "sha256": "fa73242177ef31335a4d70d6cbdb0b48856ca81310c37a38ea751e758d3e7543",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -56,19 +56,19 @@
       "claim": "Open side branches keep their source cell-order contracts separate from wall-return blockers.",
       "hits": [
         {
-          "line": 221,
+          "line": 223,
           "needle": "DM1_VIEW_SQUARE_D1L, 1, -1"
         },
         {
-          "line": 222,
+          "line": 224,
           "needle": "DM1_VIEW_SQUARE_D1R, 1,  1"
         },
         {
-          "line": 224,
+          "line": 226,
           "needle": "DM1_VIEW_SQUARE_D0L, 0, -1"
         },
         {
-          "line": 225,
+          "line": 227,
           "needle": "DM1_VIEW_SQUARE_D0R, 0,  1"
         }
       ],
@@ -76,7 +76,7 @@
       "lines": "215-230",
       "missing": [],
       "path": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "1a88f9d1ddca5f3c85ed41b204224f30be1fa651a23f755d6daed996d7504244",
+      "sha256": "fa73242177ef31335a4d70d6cbdb0b48856ca81310c37a38ea751e758d3e7543",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },

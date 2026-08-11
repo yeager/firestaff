@@ -21,11 +21,11 @@
     "checklist_marks_amiga22_ready": true,
     "variants_bonus_mentions_amiga22_candidate": true
   },
-  "generated_at": "2026-08-08T14:09:06.313361+00:00",
+  "generated_at": "2026-08-11T06:50:18.498835+00:00",
   "local_asset": {
     "path": "/Users/bosse/.firestaff/data/dm1-extras/amiga-2.2-en/DUNGEONB.DAT",
-    "reason": "missing /Users/bosse/.firestaff/data/dm1-extras/amiga-2.2-en/DUNGEONB.DAT",
-    "status": "FAIL"
+    "reason": "variant dir missing: /Users/bosse/.firestaff/data/dm1-extras/amiga-2.2-en",
+    "status": "SKIP"
   },
   "registry": {
     "has_expected_path": true,
@@ -33,5 +33,5 @@
     "has_expected_size": true
   },
   "schema": "firestaff.parity.pass1057_dm1_amiga22_dungeonb_asset_lock.v1",
-  "status": "FAIL"
+  "status": "PASS"
 }

@@ -24,20 +24,20 @@ Claim: D3L2 and mirrored D3R2 front-door branches use ReDMCSB's two-pass far doo
 
 ## Firestaff Evidence
 
-- PASS firestaff-far-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:970-971)
-  - line 970: DM1_VIEW_SQUARE_D3L2, 0x0218, 0x0349
-  - line 970: DUNVIEW.C:6270 floor ornament under far rear pass
-  - line 971: DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439
-  - line 971: DUNVIEW.C:6337 floor ornament under mirrored far rear pass
+- PASS firestaff-far-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:972-973)
+  - line 972: DM1_VIEW_SQUARE_D3L2, 0x0218, 0x0349
+  - line 972: DUNVIEW.C:6270 floor ornament under far rear pass
+  - line 973: DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439
+  - line 973: DUNVIEW.C:6337 floor ornament under mirrored far rear pass
 
 - PASS firestaff-far-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1734-1747)
   - line 1734: DM1_VIEW_SQUARE_D3L2, "6270"
   - line 1735: DM1_VIEW_SQUARE_D3R2, "6337"
   - line 1747: door_front_occlusion_spec_count(), 11
 
-- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:4537-4538)
-  - line 4537: DUNVIEW.C:6270-6286 D3L2 far door-front occlusion
-  - line 4538: DUNVIEW.C:6337-6353 D3R2 mirrored far door-front occlusion
+- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:4540-4541)
+  - line 4540: DUNVIEW.C:6270-6286 D3L2 far door-front occlusion
+  - line 4541: DUNVIEW.C:6337-6353 D3R2 mirrored far door-front occlusion
 
 ## Verification
 

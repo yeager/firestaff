@@ -20,7 +20,7 @@
     "testExecutable": "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_movement_pipeline_pc34_compat",
     "testOutputLastLine": "403 passed, 0 failed"
   },
-  "head": "5b86fb7761acb05b116be27c386682552d3ba66e",
+  "head": "69530d9527f27f558fa4c71e443b64cbb41570e5",
   "nonClaims": [
     "does not replace pass571 turn no-step timing",
     "does not cover pass571 front-command queue/pending replay",
@@ -54,6 +54,6 @@
     }
   },
   "status": "PASS578_DM1_V1_STAIRS_BACKSTEP_COOLDOWN_GATE_SOURCE_LOCKED",
-  "timestampUtc": "2026-08-07T15:08:21.436843+00:00",
+  "timestampUtc": "2026-08-11T06:50:22.199772+00:00",
   "worktree": "/Volumes/Extern-disk/firestaff-claude"
 }

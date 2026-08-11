@@ -1,9 +1,9 @@
 {
   "schema": "firestaff.parity.pass475_dm1_v1_f0365_f0366_runtime_followup.v1",
-  "timestampUtc": "2026-08-07T15:26:49.025755+00:00",
+  "timestampUtc": "2026-08-11T06:46:49.824013+00:00",
   "status": "PASS475_FIRESTAFF_DM1_V1_INPUT_TO_F0365_F0366_ROUTE_CLOSED",
   "branch": "main",
-  "head": "9a3147ee699516b3defe997600f2e4614020c1c6",
+  "head": "69530d9527f27f558fa4c71e443b64cbb41570e5",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "closedBlocker": "Firestaff live M11 movement input now has a source-locked and regression-tested route through command ids into the F0380 -> F0365/F0366 compat boundary; no direct-move bypass remains in this seam.",
   "sourceAudit": [
@@ -90,7 +90,7 @@
         "-j2"
       ],
       "returncode": 0,
-      "tail": "lding C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_spell_casting_pc34_compat.c.o\n[1441/1451] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_stairs_level_pc34_compat.c.o\n[1442/1451] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o\n[1443/1451] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_text_message_pc34_compat.c.o\n[1444/1451] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_teleporter_pit_pc34_compat.c.o\n[1445/1451] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_light_pc34_compat.c.o\n[1446/1451] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/shared/fs_portable_compat.c.o\n[1447/1451] Linking C executable test_dm1_v1_input_command_queue_pc34_compat\n[1448/1451] Linking C executable test_dm1_v1_movement_command_core_pc34_compat\n[1449/1451] Linking C executable test_dm1_v1_movement_pipeline_pc34_compat\n[1450/1451] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat\n"
+      "tail": "lding C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_stairs_level_pc34_compat.c.o\n[1681/1691] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_spell_casting_pc34_compat.c.o\n[1682/1691] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o\n[1683/1691] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_text_message_pc34_compat.c.o\n[1684/1691] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_teleporter_pit_pc34_compat.c.o\n[1685/1691] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_light_pc34_compat.c.o\n[1686/1691] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/shared/fs_portable_compat.c.o\n[1687/1691] Linking C executable test_dm1_v1_movement_command_core_pc34_compat\n[1688/1691] Linking C executable test_dm1_v1_input_command_queue_pc34_compat\n[1689/1691] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat\n[1690/1691] Linking C executable test_dm1_v1_movement_pipeline_pc34_compat\n"
     },
     {
       "command": [
@@ -102,7 +102,7 @@
         "dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_movement_pipeline_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat"
       ],
       "returncode": 0,
-      "tail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1443: dm1_v1_input_command_queue_pc34_compat\n1/4 Test #1443: dm1_v1_input_command_queue_pc34_compat ..............   Passed    0.47 sec\n    Start 1452: dm1_v1_movement_command_core_pc34_compat\n2/4 Test #1452: dm1_v1_movement_command_core_pc34_compat ............   Passed    0.21 sec\n    Start 1595: dm1_v1_command_movement_sensor_timing_pc34_compat\n3/4 Test #1595: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.22 sec\n    Start 1771: dm1_v1_movement_pipeline_pc34_compat\n4/4 Test #1771: dm1_v1_movement_pipeline_pc34_compat ................   Passed    0.50 sec\n\n100% tests passed out of 4\n\nTotal Test time (real) =   1.51 sec\n"
+      "tail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1459: dm1_v1_input_command_queue_pc34_compat\n1/4 Test #1459: dm1_v1_input_command_queue_pc34_compat ..............   Passed    0.19 sec\n    Start 1468: dm1_v1_movement_command_core_pc34_compat\n2/4 Test #1468: dm1_v1_movement_command_core_pc34_compat ............   Passed    0.13 sec\n    Start 1611: dm1_v1_command_movement_sensor_timing_pc34_compat\n3/4 Test #1611: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.12 sec\n    Start 1787: dm1_v1_movement_pipeline_pc34_compat\n4/4 Test #1787: dm1_v1_movement_pipeline_pc34_compat ................   Passed    0.13 sec\n\n100% tests passed out of 4\n\nTotal Test time (real) =   0.64 sec\n"
     },
     {
       "command": [

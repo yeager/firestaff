@@ -74,7 +74,7 @@
       "citation": "m11_game_view.c:pit_open_check",
       "needles": [
         "Only open pits (MASK0x0008_PIT_OPEN) show the hole.",
-        "if (cell->square & 0x08) { /* PIT_OPEN */"
+        "(cell->square & 0x08)) { /* PIT_OPEN */"
       ],
       "verified": true,
       "why": "Pit rendering checks MASK0x0008_PIT_OPEN before drawing the hole graphic."
