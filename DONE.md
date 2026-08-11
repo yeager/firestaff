@@ -13434,3 +13434,12 @@ and production source-combat tests.
   bara DGN/LEV-filer.
 - ✅ Den autentiserade 361-frames-capturen gav fortfarande ingen exakt
   startup-/DGN-matchning; semantic admission förblir därför korrekt blockerad.
+
+# Nexus: bounded DGN subset receipt for Mednafen capture (2026-08-11)
+
+- ✅ Lade till `scripts/verify_nexus_v1_gameplay_capture_dgn_subset.py` för den
+  autentiserade 800-frames gameplay-capturen på extern disk.
+- ✅ Frame 799 verifierar 208 indexed VDP1-draws; 204 har exakt DGN-image- och
+  palettmatchning och 179 har minst en kanonisk Structure3-face-owner.
+- ✅ De fyra oägda offseten (`0x0d760`, `0x0ce40`, `0x0cf40`, `0x0dc60`) lämnas
+  uttryckligen oklassificerade; `semantic_admission=blocked` förblir ett krav.
