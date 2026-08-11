@@ -20,11 +20,9 @@
 #include "dm1_v1_atari_st_graphics_dat.h"
 #include "csb_v1_amiga_graphics_dat.h"
 #include "csb_v1_fmtowns_graphics_dat.h"
-#include "csb_v1_x68k_hdm.h"
 
 #include <stdlib.h>
 #include <stdint.h>
-#include <limits.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -280,57 +278,6 @@ int M11_AssetLoader_InitCsbFmtownsFromFile(M11_AssetLoader* loader,
     return 1;
 }
 
-int M11_AssetLoader_InitCsbX68kFromBuffer(M11_AssetLoader* loader,
-                                          const unsigned char *data,
-                                          long size) {
-    unsigned char *copy;
-    uint16_t item_count;
-
-    /* The parser's historical name is Amiga-specific, but it validates the
-     * common big-endian DMCSB2/IMG1 representation.  This admission point
-     * deliberately keeps that byte-layout reuse separate from platform
-     * classification: only a caller that already extracted X68000 media may
-     * select this branch. */
-    if (!loader || !data || size <= 0 ||
-        !csb_v1_amiga_graphics_probe(data, (size_t)size)) return 0;
-    item_count = (uint16_t)(((uint16_t)data[2] << 8) | data[3]);
-    if (!item_count) return 0;
-    copy = (unsigned char *)malloc((size_t)size);
-    if (!copy) return 0;
-    memcpy(copy, data, (size_t)size);
-    memset(loader, 0, sizeof(*loader));
-    loader->csbX68kData = copy;
-    loader->csbX68kDataSize = size;
-    loader->csbX68k = 1;
-    loader->graphicCount = item_count;
-    loader->initialized = 1;
-    snprintf(loader->graphicsDatPath, sizeof(loader->graphicsDatPath),
-             "(CSB X68000 DMCSB2, %ld bytes)", size);
-    return 1;
-}
-
-int M11_AssetLoader_InitCsbX68kFromHdm(M11_AssetLoader* loader,
-                                       const unsigned char *hdm,
-                                       size_t hdm_size) {
-    uint8_t *graphics = NULL;
-    size_t graphics_size = 0u;
-    int ok;
-
-    if (!loader || !hdm ||
-        !csb_v1_x68k_hdm_extract_root_file(hdm, hdm_size, "GRAPHICS.DAT",
-                                            NULL, 0u, &graphics_size, NULL) ||
-        graphics_size == 0u || graphics_size > (size_t)LONG_MAX) return 0;
-    graphics = (uint8_t *)malloc(graphics_size);
-    if (!graphics) return 0;
-    ok = csb_v1_x68k_hdm_extract_root_file(hdm, hdm_size, "GRAPHICS.DAT",
-                                            graphics, graphics_size,
-                                            &graphics_size, NULL) &&
-        M11_AssetLoader_InitCsbX68kFromBuffer(loader, graphics,
-                                              (long)graphics_size);
-    free(graphics);
-    return ok;
-}
-
 void M11_AssetLoader_Shutdown(M11_AssetLoader* loader) {
     int i;
     if (!loader) {
@@ -340,7 +287,6 @@ void M11_AssetLoader_Shutdown(M11_AssetLoader* loader) {
     free(loader->atariStData);
     free(loader->csbAmigaData);
     free(loader->csbFmtownsData);
-    free(loader->csbX68kData);
     for (i = 0; i < M11_ASSET_CACHE_SLOTS; ++i) {
         if (loader->cache[i].loaded && loader->cache[i].pixels) {
             free(loader->cache[i].pixels);
@@ -435,25 +381,6 @@ int M11_AssetLoader_QuerySize(const M11_AssetLoader* loader,
         free(pixels);
         if (outWidth) *outWidth = receipt.width;
         if (outHeight) *outHeight = receipt.height;
-        return 1;
-    }
-    if (loader->csbX68k) {
-        uint16_t x68kWidth = 0u;
-        uint16_t x68kHeight = 0u;
-        unsigned char *x68kPixels;
-
-        if (graphicIndex >= loader->graphicCount) return 0;
-        x68kPixels = (unsigned char *)malloc(1024u * 1024u);
-        if (!x68kPixels || !csb_v1_amiga_graphics_decode_item(
-                loader->csbX68kData, (size_t)loader->csbX68kDataSize,
-                (uint16_t)graphicIndex, x68kPixels, 1024u * 1024u,
-                &x68kWidth, &x68kHeight)) {
-            free(x68kPixels);
-            return 0;
-        }
-        free(x68kPixels);
-        if (outWidth) *outWidth = x68kWidth;
-        if (outHeight) *outHeight = x68kHeight;
         return 1;
     }
     rt = (const struct MemoryGraphicsDatRuntimeState_Compat*)loader->runtimeState;
@@ -659,30 +586,6 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
             return NULL;
         }
         free(townsPixels);
-        return m11_find_cached(loader, graphicIndex);
-    }
-
-    if (loader->csbX68k) {
-        CSB_V1_AmigaGraphicsItem item;
-        uint16_t x68kWidth = 0u, x68kHeight = 0u;
-        unsigned char *x68kPixels;
-        if (graphicIndex >= loader->graphicCount ||
-            !csb_v1_amiga_graphics_item(loader->csbX68kData,
-                                         (size_t)loader->csbX68kDataSize,
-                                         (uint16_t)graphicIndex, &item) ||
-            item.decompressedByteCount == 0u) return NULL;
-        x68kPixels = (unsigned char *)malloc(1024u * 1024u);
-        if (!x68kPixels || !csb_v1_amiga_graphics_decode_item(
-                loader->csbX68kData, (size_t)loader->csbX68kDataSize,
-                (uint16_t)graphicIndex, x68kPixels, 1024u * 1024u,
-                &x68kWidth, &x68kHeight) ||
-            !M11_AssetLoader_InstallDecodedPixels(loader, graphicIndex,
-                                                    x68kPixels, x68kWidth,
-                                                    x68kHeight)) {
-            free(x68kPixels);
-            return NULL;
-        }
-        free(x68kPixels);
         return m11_find_cached(loader, graphicIndex);
     }
 

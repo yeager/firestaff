@@ -524,7 +524,6 @@ typedef enum {
     M11_GAME_SOURCE_DIRECT_DUNGEON,
     M11_GAME_SOURCE_NEXUS_DGN,
     M11_GAME_SOURCE_THERON_TRACK02,
-    M11_GAME_SOURCE_CSB_X68K_HDM,
     M11_GAME_SOURCE_CSB_BOOT, /* CSB V1 hand-off: M11 owns the verified
                                * CSB boot profile and runtime save/resume
                                * boundary. The CSB viewport/gameplay bridge
@@ -1485,9 +1484,6 @@ typedef struct {
      * csbBootProfile owns the live CSB_V1_RuntimeProfile and any loaded
      * DUNGEON.DAT handle. */
     void *csbBootProfile;     /* CSB_V1_BootProfile* */
-    /* X68000 HDM startup state is deliberately separate from the PC-style
-     * boot profile; it owns decoded source assets only, not program emulation. */
-    void *csbX68kStartupHandoff; /* CSB_V1_X68kStartupHandoff* */
     /* Fresh CSB starts retain the source-owned C001--C040 session until
      * ENTRANCE.C F0807 has published the terminal live-HUD receipt. A
      * direct PC34 save restore is the documented LOADSAVE.C route and does
@@ -1887,8 +1883,6 @@ void M11_GameView_GetCameraOffset(const M11_GameViewState* state,
 void M11_GameView_Init(M11_GameViewState* state);
 void M11_GameView_Shutdown(M11_GameViewState* state);
 int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec);
-int M11_GameView_AdmitCsbX68kHdm(M11_GameViewState *state,
-                                 const char *hdm_path);
 int M11_GameView_ResolveNexusRuntimeDataDir(const M11_GameLaunchSpec* spec,
                                             char* outPath,
                                             int outPathSize);

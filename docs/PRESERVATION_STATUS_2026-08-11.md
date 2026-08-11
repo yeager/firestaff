@@ -7,7 +7,7 @@ testsvit och externa originalmedier. En grön parser eller en syntetisk fixtur
 | Spel | Bevarat och verifierat | Öppen gräns |
 |---|---|---|
 | DM1 | PC DOS 3.4 V1:s start, inmatning, vy, HUD, strid och sparande; separata Atari ST- och FM Towns-formatvägar | fler parvisa original-/Firestaff-fångster och granskade V2-material |
-| CSB | Amiga, Atari ST och FM Towns har separata indata- och startvägar. X68000 JP-HDM läses via Human68k FAT12: `GRAPHICS.DAT` (732 IMG1-poster), `DUNGEON.DAT` (två kartor), `ENTER.SNG` (MIDI), `AUTOEXEC.BAT` och `CHAOS_ST.X` har samlade realmedierekvitton | X68000-startprofil, skyddad originalklassning, DSA-/save-korpus och bredare HUD-/vyparitet |
+| CSB | Amiga, Atari ST och FM Towns har separata indata- och startvägar | X68000 är avsiktligt ostött; återstående gränser gäller DSA-/save-korpus och bredare HUD-/vyparitet för stödda plattformar |
 | DM2 | GDAT-, G1- och ljudgränser, startprofil och avgränsade V1/V2-rutter | full SKSAVE-ägarskap och sammanhängande originaldatakörning |
 | Nexus | Saturn DGN/DMDF, MNS, PRS3 och begränsade SAL/MAP-rekvitton | synlig materialsemantik, händelse-/ljuduppspelning och spelbar Saturn-rutt |
 | Theron's Quest | US/JP Track 02-identitet, sektorläsning, nivåramar och autentiserade fångstkedjor | spelägd Track 02-handoff, SRM-innehåll, palett-/bitmapägande och positiv spelbar fångst |
@@ -22,41 +22,12 @@ testsvit och externa originalmedier. En grön parser eller en syntetisk fixtur
   den externa, användarägda samlingen. Repositoryt innehåller kod,
   hashmetadata, små märkta fixturer och sammanfattade rekvitton.
 
-## Aktuella CSB X68000-rekvitton
+## CSB X68000
 
-Den lokala japanska v3.1-crackade HDM-avbilden är strukturellt läsbar men
-utgör inte ett äkthetsintyg. Den externa avbildning som testades har
-SHA-256 `e912addf1881b6c2b3cde4207507061a43459748082c75953cbc3c305fdf24e1`.
-`csb_v1_x68k_hdm` verifierar FAT12-kedjorna.
-`M11_AssetLoader_InitCsbX68kFromHdm` extraherar `GRAPHICS.DAT` till en
-X68000-märkt cache utan att ge den Amiga-identitet. Testet kör både en
-FAT12-fixtur och den externa avbilden; post 13 dekodas som 96 × 41 pixlar.
-`csb_v1_x68k_hdm_source_media_receipt` knyter samma HDM till `DUNGEON.DAT`,
-`ENTER.SNG`, `AUTOEXEC.BAT` och `CHAOS_ST.X`: den verifierade avbilden ger två
-kartor, startpositionen 0/9/0/riktning 2, 9 MIDI-spår med 3 205 händelser,
-kommandoföljden `CK`, `VIDSET`, `CHAOS_STRIKES_BACK` samt Human68k-programmets
-64-bytehuvud och textgräns. Kvittot behåller X68000-identiteten även när
-grafikformatet delas med Amiga och spärrar fortfarande native start. Detta är
-en verifierad media-till-källindata-handoff, inte en programemuleringsrutt.
+CSB för X68000 stöds inte. Externa HDM-avbilder får behållas som
+bevarandereferens, men Firestaff erbjuder ingen inläsning, cache, start- eller
+emuleringsrutt för dem.
 
-`csb_v1_x68k_startup_handoff_admit` använder samma godkända byte i ett ägt
-värdobjekt: den initierar en X68000-märkt M11-cache och laddar source-dungeon
-med den verifierade startpositionen. Den kör inte `CHAOS_ST.X`, återanvänder
-inte Amiga-identiteten och ansluter ännu inte till M11:s spelvy.
-
-Rootkatalogen är nu också läsbar i originalordning. Den verifierade avbilden
-har 27 vanliga rootfiler, där `CHAOS_ST.X`, `TITL.DAT`, `ANIM.DAT`,
-`ANIM.FTL`, `MINI.DAT` och `ENTER.SNG` finns tillsammans med grafik och
-dungeon. Det ger den faktiska filuppsättning som den kommande
-X68000-startvägen måste konsumera, men ersätter inte disassembly av
-`CHAOS_ST.X` eller dess plattformsspecifika startordning.
-
-`CHAOS_ST.X` har dessutom ett verifierat Human68k-`HU`-huvud. Den aktuella
-avbilden innehåller 9 020 byte text, 586 byte data, 2 126 byte BSS,
-562 byte relokering och 2 052 byte symboler; 68000-koden börjar vid offset
-64. Detta är en disassemblygrund för fortsatt startarbete, inte en emulator
-eller ett tillstånd att köra X68000-programmet på värden.
-
-Fördjupning: [bevarandeprinciper](wiki/Preservation.md),
+Fördjupning för stödda plattformar: [bevarandeprinciper](wiki/Preservation.md),
 [formatkatalog](GAME_DATA_FORMATS.md), [CSB-referens](REDMCSB_REFERENCE.md)
 och [gapplista](FIRESTAFF_GAP_LIST.md).

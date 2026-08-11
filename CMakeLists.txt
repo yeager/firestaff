@@ -6890,15 +6890,6 @@ set(M11_SOURCES
     src/csb/csb_v1_graphics_lzw_pc34_compat.c
     src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_amiga_graphics_dat.c
-    src/csb/csb_v1_x68k_hdm.c
-    src/csb/csb_v1_x68k_startup_catalog.c
-    src/csb/csb_v1_x68k_program.c
-    src/csb/csb_v1_x68k_autoexec.c
-    src/csb/csb_v1_x68k_graphics_handoff.c
-    src/csb/csb_v1_x68k_dungeon_handoff.c
-    src/csb/csb_v1_x68k_enter_sng.c
-    src/csb/csb_v1_x68k_source_media.c
-    src/csb/csb_v1_x68k_startup_handoff.c
     src/csb/csb_v1_amiga_titl_dat.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/shared/firestaff_amiga_adf.c
@@ -51235,30 +51226,6 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_asset_loader_blit_pc34_com
     )
 endif()
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_csb_x68k_asset_loader.c")
-    add_executable(test_m11_csb_x68k_asset_loader
-        tests/test_m11_csb_x68k_asset_loader.c)
-    target_link_libraries(test_m11_csb_x68k_asset_loader PRIVATE firestaff_m11)
-    target_include_directories(test_m11_csb_x68k_asset_loader PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    if(NOT MSVC)
-        target_compile_options(test_m11_csb_x68k_asset_loader PRIVATE -Wall -Wextra -Werror -pedantic -O2)
-    endif()
-    add_test(NAME m11_csb_x68k_asset_loader COMMAND test_m11_csb_x68k_asset_loader)
-    set_tests_properties(m11_csb_x68k_asset_loader PROPERTIES LABELS "m11;csb;x68k;synthetic_fixture")
-endif()
-
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_x68k_startup_handoff.c")
-    add_executable(test_csb_v1_x68k_startup_handoff
-        tests/test_csb_v1_x68k_startup_handoff.c)
-    target_link_libraries(test_csb_v1_x68k_startup_handoff PRIVATE firestaff_m11)
-    target_include_directories(test_csb_v1_x68k_startup_handoff PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_x68k_startup_handoff PRIVATE -Wall -Wextra -Werror -pedantic -O2)
-    endif()
-    add_test(NAME csb_v1_x68k_startup_handoff COMMAND test_csb_v1_x68k_startup_handoff)
-    set_tests_properties(csb_v1_x68k_startup_handoff PROPERTIES LABELS "csb;x68k;real_media;startup_handoff")
-endif()
-
 # M11 V2.0/V2.1 filter chain clamp contract. Pins the V2 visual
 # extras setter/getter clamp surface without requiring a window or
 # user-supplied game data.
@@ -53554,117 +53521,6 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_switch_dat.c")
     endif()
     add_test(NAME csb_v1_atari_switch_dat COMMAND test_csb_v1_atari_switch_dat)
     set_tests_properties(csb_v1_atari_switch_dat PROPERTIES LABELS "csb;atari;synthetic_fixture")
-endif()
-
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_x68k_hdm.c")
-    add_executable(test_csb_v1_x68k_hdm
-        tests/test_csb_v1_x68k_hdm.c
-        src/csb/csb_v1_x68k_hdm.c)
-    target_include_directories(test_csb_v1_x68k_hdm PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_x68k_hdm PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
-    endif()
-    add_test(NAME csb_v1_x68k_hdm COMMAND test_csb_v1_x68k_hdm)
-    set_tests_properties(csb_v1_x68k_hdm PROPERTIES LABELS "csb;x68k;synthetic_fixture")
-endif()
-
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_x68k_enter_sng.c")
-    add_executable(test_csb_v1_x68k_enter_sng
-        tests/test_csb_v1_x68k_enter_sng.c
-        src/csb/csb_v1_x68k_enter_sng.c
-        src/csb/csb_v1_x68k_hdm.c)
-    target_include_directories(test_csb_v1_x68k_enter_sng PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_x68k_enter_sng PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
-    endif()
-    add_test(NAME csb_v1_x68k_enter_sng COMMAND test_csb_v1_x68k_enter_sng)
-    set_tests_properties(csb_v1_x68k_enter_sng PROPERTIES LABELS "csb;x68k;midi;synthetic_fixture")
-endif()
-
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_x68k_dungeon_handoff.c")
-    add_executable(test_csb_v1_x68k_dungeon_handoff
-        tests/test_csb_v1_x68k_dungeon_handoff.c
-        src/csb/csb_v1_x68k_dungeon_handoff.c
-        src/csb/csb_v1_x68k_hdm.c
-        src/csb/csb_v1_dungeon_loader_pc34_compat.c
-        src/shared/dungeon_decompressor_ftl.c)
-    target_include_directories(test_csb_v1_x68k_dungeon_handoff PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_x68k_dungeon_handoff PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
-    endif()
-    add_test(NAME csb_v1_x68k_dungeon_handoff COMMAND test_csb_v1_x68k_dungeon_handoff)
-    set_tests_properties(csb_v1_x68k_dungeon_handoff PROPERTIES LABELS "csb;x68k;dungeon;synthetic_fixture")
-endif()
-
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_x68k_graphics_handoff.c")
-    add_executable(test_csb_v1_x68k_graphics_handoff
-        tests/test_csb_v1_x68k_graphics_handoff.c
-        src/csb/csb_v1_x68k_graphics_handoff.c
-        src/csb/csb_v1_x68k_hdm.c
-        src/csb/csb_v1_amiga_graphics_dat.c
-        src/dm1/dm1_v1_legacy_graphics_dat.c)
-    target_include_directories(test_csb_v1_x68k_graphics_handoff PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_x68k_graphics_handoff PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
-    endif()
-    add_test(NAME csb_v1_x68k_graphics_handoff COMMAND test_csb_v1_x68k_graphics_handoff)
-    set_tests_properties(csb_v1_x68k_graphics_handoff PROPERTIES LABELS "csb;x68k;graphics;synthetic_fixture")
-endif()
-
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_x68k_source_media.c")
-    add_executable(test_csb_v1_x68k_source_media
-        tests/test_csb_v1_x68k_source_media.c
-        src/csb/csb_v1_x68k_source_media.c
-        src/csb/csb_v1_x68k_hdm.c
-        src/csb/csb_v1_x68k_graphics_handoff.c
-        src/csb/csb_v1_x68k_dungeon_handoff.c
-        src/csb/csb_v1_x68k_enter_sng.c
-        src/csb/csb_v1_x68k_autoexec.c
-        src/csb/csb_v1_x68k_program.c
-        src/csb/csb_v1_amiga_graphics_dat.c
-        src/csb/csb_v1_dungeon_loader_pc34_compat.c
-        src/dm1/dm1_v1_legacy_graphics_dat.c
-        src/shared/dungeon_decompressor_ftl.c
-        src/shared/firestaff_x68k_media_receipt.c
-        src/shared/firestaff_x68k_media_classify.c
-        src/shared/firestaff_ftl_container.c
-        src/shared/asset_find_by_hash.c
-        src/shared/fs_portable_compat.c)
-    target_include_directories(test_csb_v1_x68k_source_media PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_x68k_source_media PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
-    endif()
-    add_test(NAME csb_v1_x68k_source_media COMMAND test_csb_v1_x68k_source_media)
-    set_tests_properties(csb_v1_x68k_source_media PROPERTIES LABELS "csb;x68k;real_media;source_receipt")
-endif()
-
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_x68k_startup_catalog.c")
-    add_executable(test_csb_v1_x68k_startup_catalog tests/test_csb_v1_x68k_startup_catalog.c src/csb/csb_v1_x68k_startup_catalog.c src/csb/csb_v1_x68k_hdm.c)
-    target_include_directories(test_csb_v1_x68k_startup_catalog PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_x68k_startup_catalog PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
-    endif()
-    add_test(NAME csb_v1_x68k_startup_catalog COMMAND test_csb_v1_x68k_startup_catalog)
-    set_tests_properties(csb_v1_x68k_startup_catalog PROPERTIES LABELS "csb;x68k;real_media;startup_catalog")
-endif()
-
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_x68k_program.c")
-    add_executable(test_csb_v1_x68k_program tests/test_csb_v1_x68k_program.c src/csb/csb_v1_x68k_program.c src/csb/csb_v1_x68k_hdm.c)
-    target_include_directories(test_csb_v1_x68k_program PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_x68k_program PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
-    endif()
-    add_test(NAME csb_v1_x68k_program COMMAND test_csb_v1_x68k_program)
-    set_tests_properties(csb_v1_x68k_program PROPERTIES LABELS "csb;x68k;real_media;disassembly")
-endif()
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_x68k_autoexec.c")
- add_executable(test_csb_v1_x68k_autoexec tests/test_csb_v1_x68k_autoexec.c src/csb/csb_v1_x68k_autoexec.c src/csb/csb_v1_x68k_hdm.c)
- target_include_directories(test_csb_v1_x68k_autoexec PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
- if(NOT MSVC)
-  target_compile_options(test_csb_v1_x68k_autoexec PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
- endif()
- add_test(NAME csb_v1_x68k_autoexec COMMAND test_csb_v1_x68k_autoexec)
- set_tests_properties(csb_v1_x68k_autoexec PROPERTIES LABELS "csb;x68k;real_media;startup")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_m11_game_handoff.c")

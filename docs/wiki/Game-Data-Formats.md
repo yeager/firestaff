@@ -23,7 +23,6 @@ Read support alone does not imply a complete game route.
 | Amiga | IMG1 nibble-RLE graphics. CSB also uses platform program assets such as TITL.DAT, APPB.FTL, KAOS.FTL and BJELoad_R. |
 | Atari ST | DMCSB1 catalogue with 563 Atari-LZW records decoded as big-endian IMG1. CSB uses ANIMATE.SCR, ANIMATE.DAT, ANIMATE.FTL, FTLCODE and CHAOS.FTL. |
 | FM Towns | 0x8001-wrapped IMG2 graphics, not PC IMG3. CSB's F31 chain includes RUN386.EXE, SWITCHTW.EXP, CHTWE.EXP or CHTWJ.EXP, and the Utility executables. |
-| CSB X68000 JP | 1,261,568-byte Human68k 2DHD HDM with a FAT12 root. The local v3.1 cracked image exposes `GRAPHICS.DAT` (DMCSB2/IMG1, 732 records), `DUNGEON.DAT`, format-1 `ENTER.SNG`, `AUTOEXEC.BAT` and `CHAOS_ST.X`; a joined source-media receipt preserves the X68000 identity across those startup boundaries, and raw HDM graphics enter only an X68000-labelled M11 cache. |
 
 CSB has no original DOS/PC 3.4 release. Its Amiga route is the default
 original-media path; Atari ST and FM Towns have separate verified media
@@ -37,24 +36,9 @@ while source-faithful F0433 writing remains closed. Legacy CSBWin
 csbgame*.dat files are fully authenticated into private candidates, but their
 dungeon state is not yet atomically published into a live session.
 
-The X68000 reader establishes a structural media boundary only. Its FAT12 root
-enumerator preserves the original non-directory order and has verified the
-27-file CSB v3.1 JP startup set, including `CHAOS_ST.X`, `TITL.DAT`,
-`ANIM.DAT`, `ANIM.FTL`, `MINI.DAT` and `ENTER.SNG`. It neither
-classifies the cracked HDM as canonical nor enables an X68000 boot profile;
-see [preservation status](../PRESERVATION_STATUS_2026-08-11.md).
-
-`AUTOEXEC.BAT` uses CRLF between commands and ends the final command at DOS EOF
-`0x1A`; the verified image contains `CK`, `VIDSET` and
-`CHAOS_STRIKES_BACK` in that order. `CHAOS_ST.X` is a Human68k `HU` executable
-with a 64-byte header. The local CSB v3.1 JP image verifies 9,020 text bytes,
-586 data bytes, 2,126 BSS bytes, 562 relocation bytes and 2,052 symbol bytes.
-These are source-layout and startup-order receipts, not an executable loader or
-emulator.
-
-The admitted X68000 startup handoff owns only decoded host graphics and source
-dungeon state. It does not retain the HDM, execute `CHAOS_ST.X`, or route the
-shared DMCSB2 record layout through the Amiga cache.
+CSB for X68000 is intentionally unsupported. Any local HDM is preservation
+reference only and must not select a data, startup or game-view route; see
+[preservation status](../PRESERVATION_STATUS_2026-08-11.md).
 
 ## Dungeon Master II
 

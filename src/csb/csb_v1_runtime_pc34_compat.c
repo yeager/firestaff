@@ -1083,18 +1083,10 @@ static const CSB_V1_VariantInfo g_csb_variants[CSB_V1_VARIANT_COUNT] = {
         "61fbfd56887c94adc26888a9491c6611",
         "61fbfd56887c94adc26888a9491c6611",
         "6695d2acebce49f95db1d8f3a5c733de"
-    },
-    [CSB_V1_VARIANT_X68000_JP] = {
-        CSB_V1_VARIANT_X68000_JP,
-        "X68000 Japanese 3.1",
-        "X68000:Human68k HDM",
-        "",
-        "",
-        ""
     }
 };
 
-_Static_assert(CSB_V1_VARIANT_X68000_JP == CSB_V1_VARIANT_COUNT - 1,
+_Static_assert(CSB_V1_VARIANT_AMIGA31_MULTI == CSB_V1_VARIANT_COUNT - 1,
                "CSB_V1_VARIANT_COUNT must match last enum value");
 
 /* ── Platform-specific save dir ────────────────────────────────────── */
