@@ -1049,19 +1049,9 @@ int csb_v1_fmtowns_game_write_user_save(
             header, sizeof(header), CSB_V1_FMTOWNS_CSB_HEADER_KEY_WORD_INDEX)) {
         goto done;
     }
-    random_state = runtime->csbwin_random_seed;
-    /* F7052 refreshes all sixteen header keys, including the eleven entries
-     * not used by the five F7055 save parts. They remain part of the native
-     * C5 header and must not be retained from the previous slot. */
-    for (index = 0u; index < 16u; ++index) {
-        uint16_t key = csb_v1_fmtowns_game_next_source_random_word(
-            &random_state);
-        csb_v1_fmtowns_game_write_le16(
-            header + CSB_V1_FMTOWNS_SAVE_HEADER_KEYS_OFFSET + index * 2u,
-            key);
-        if (index < 5u) keys[index] = key;
-    }
     for (index = 0u; index < 5u; ++index) {
+        keys[index] = csb_v1_fmtowns_game_read_le16(
+            header + CSB_V1_FMTOWNS_SAVE_HEADER_KEYS_OFFSET + index * 2u);
         checksums[index] = csb_v1_fmtowns_game_read_le16(
             header + CSB_V1_FMTOWNS_SAVE_HEADER_CHECKSUMS_OFFSET + index * 2u);
     }
@@ -1086,6 +1076,17 @@ int csb_v1_fmtowns_game_write_user_save(
         if (!redmcsb_f7057_read_save_part_with_checksum_pc34(
                 parts[index], part_sizes[index], keys[index], checksums[index]))
             goto done;
+    }
+    random_state = runtime->csbwin_random_seed;
+    /* F7052 reads the old keyed parts first, then refreshes all sixteen
+     * header keys. The first five keys drive F7058's rewritten parts. */
+    for (index = 0u; index < 16u; ++index) {
+        uint16_t key = csb_v1_fmtowns_game_next_source_random_word(
+            &random_state);
+        csb_v1_fmtowns_game_write_le16(
+            header + CSB_V1_FMTOWNS_SAVE_HEADER_KEYS_OFFSET + index * 2u,
+            key);
+        if (index < 5u) keys[index] = key;
     }
 
     csb_v1_fmtowns_game_write_le32(parts[0], runtime->game_time);
