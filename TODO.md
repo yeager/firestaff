@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+## Theron: inventory property category remains source-consistent (2026-08-11)
+
+- ✅ Real source item pickup/drop and inventory-slot validation now checks the
+  property table category against the decoded Track 02 object class.
+- 🔒 This is an integrity boundary, not recovered T900 equipment/use/stack
+  semantics; those still require the original runtime consumer.
+
 ## Theron: spawn-category provenance is fail-closed (2026-08-11)
 
 - ✅ Live creatures from direct user-data loads no longer receive a static

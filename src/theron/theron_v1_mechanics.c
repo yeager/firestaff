@@ -22,6 +22,7 @@
 #include "theron_v1_world.h"
 #include "theron_v1_track02_thing_data.h"
 #include "theron_v1_track02_item_properties.h"
+#include "theron_v1_track02_item_categories.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -99,6 +100,16 @@ static int theron_v1_source_item_category_is_carryable(uint8_t category) {
            category == THERON_CAT_POTION;
 }
 
+static uint8_t theron_v1_source_item_category_for_record(uint8_t category) {
+    switch (category) {
+    case THERON_CAT_WEAPON:   return THERON_ITEM_CAT_WEAPON;
+    case THERON_CAT_CLOTHING: return THERON_ITEM_CAT_ARMOR;
+    case THERON_CAT_SCROLL:
+    case THERON_CAT_POTION:   return THERON_ITEM_CAT_CONSUMABLE;
+    default:                  return 0u;
+    }
+}
+
 /* Validate the semantic fields that the loader exposes against the exact
  * source bytes retained on the object.  This is deliberately narrower than
  * an equip/use implementation: it proves that a real T900 item occurrence
@@ -119,6 +130,9 @@ static int theron_v1_source_item_record_matches_object(
             object->source_raw_size, &record) ||
         record.next_ref != object->source_next_ref ||
         !object->source_property_valid ||
+        object->source_item_category !=
+            theron_v1_source_item_category_for_record(
+                object->source_category) ||
         object->source_item_type >= theron_v1_track02_item_property_count() ||
         !(property = theron_v1_track02_item_property(
                   object->source_item_type)) ||

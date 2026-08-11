@@ -17,6 +17,7 @@
 #include "theron_v1_track02.h"
 #include "theron_v1_track02_thing_data.h"
 #include "theron_v1_track02_item_properties.h"
+#include "theron_v1_track02_item_categories.h"
 #include "theron_v1_world.h"
 
 #include <stdio.h>
@@ -794,6 +795,7 @@ static void test_source_item_pickup_provenance(void) {
     object.source_ref = 0x1233u;
     object.source_category = THERON_CAT_WEAPON;
     object.source_item_type = 6u;
+    object.source_item_category = THERON_ITEM_CAT_WEAPON;
     CHECK_INT("bound weapon without property row placed",
               theron_v1_object_place(&w, &object), 0);
     CHECK_INT("bound weapon without property row rejected",
@@ -811,6 +813,7 @@ static void test_source_item_pickup_provenance(void) {
     object.source_index = 7u;
     object.source_category = THERON_CAT_WEAPON;
     object.source_item_type = 6u;
+    object.source_item_category = THERON_ITEM_CAT_WEAPON;
     object.source_keep = 1u;
     object.source_cursed = 1u;
     object.source_poisoned = 1u;
@@ -848,6 +851,10 @@ static void test_source_item_pickup_provenance(void) {
     CHECK_INT("inventory source curse", carried->cursed, 1);
     CHECK_INT("inventory source property", carried->property[1], 0x2f);
     w.inventory_source[0][0].property[5] ^= 0x01u;
+    w.inventory_source[0][0].item_category = THERON_ITEM_CAT_ARMOR;
+    CHECK_INT("mutated source category rejected on drop",
+              theron_v1_drop_inventory_source_item(&w, 0, 0, 3, 4), -1);
+    w.inventory_source[0][0].item_category = THERON_ITEM_CAT_WEAPON;
     CHECK_INT("mutated property row rejected on drop",
               theron_v1_drop_inventory_source_item(&w, 0, 0, 3, 4), -1);
     w.inventory_source[0][0].property[5] ^= 0x01u;

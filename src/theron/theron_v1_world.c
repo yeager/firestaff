@@ -17,6 +17,7 @@
 
 #include "theron_v1_world.h"
 #include "theron_v1_track02_item_properties.h"
+#include "theron_v1_track02_item_categories.h"
 #include "theron_v1_track02_creature_names.h"
 #include "theron_v1_combat.h"
 #include "theron_v1_track02.h"
@@ -903,6 +904,13 @@ static int theron_v1_inventory_source_record_matches(
             carried->source_raw_size, &record) ||
         record.next_ref != carried->source_next_ref ||
         !carried->property_valid ||
+        ((carried->category == THERON_CAT_WEAPON &&
+          carried->item_category != THERON_ITEM_CAT_WEAPON) ||
+         (carried->category == THERON_CAT_CLOTHING &&
+          carried->item_category != THERON_ITEM_CAT_ARMOR) ||
+         ((carried->category == THERON_CAT_SCROLL ||
+           carried->category == THERON_CAT_POTION) &&
+          carried->item_category != THERON_ITEM_CAT_CONSUMABLE)) ||
         carried->item_type >= theron_v1_track02_item_property_count() ||
         !(property = theron_v1_track02_item_property(carried->item_type)) ||
         memcmp(carried->property, property,

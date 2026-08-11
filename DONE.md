@@ -1,3 +1,11 @@
+# Theron: inventory property category is source-checked (2026-08-11)
+
+- ✅ Authenticated weapon, clothing, scroll and potion records retain and
+  validate the matching Track 02 property category through pickup, slot swap,
+  drop and source-save state.
+- ✅ A mutated category is rejected by the inventory gate.
+- 🔒 No T900 equip/use/stack rule was invented or enabled.
+
 # Theron: unbound spawn categories are fail-closed (2026-08-11)
 
 - ✅ Direct Track 02 level loads no longer promote the reconstructed static

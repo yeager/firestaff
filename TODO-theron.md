@@ -2,6 +2,13 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — inventory property category is source-checked
+
+- ✅ Pickup, source-slot movement and drop now reject a carried record when
+  its property-category byte no longer agrees with the source object class.
+- 🔒 This hardens provenance only; property-byte meaning and T900 equip/use/
+  stack rules remain unpromoted.
+
 ## 2026-08-11 — unbound spawn categories are now fail-closed
 
 - ✅ Direct level loads no longer copy a reconstructed static spawn-zone
