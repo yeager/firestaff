@@ -1345,13 +1345,13 @@
   genom F0435 utan att TITLE.ANM spelas om. Läsaren för externa
   `CSBGAME.DAT`-slott validerar F31:s C5-huvud och fem checksummade delar
   innan någon runtime muteras, och `.BAK` återställs endast till den kanoniska
-  `CSBGAME.DAT`-slotten. Den aktuella externa EN/JP-korpusen har giltiga
-  header- och delchecksummor, men kombinerar en tvåkartors Prison-dungeon med
-  ett sparat kartindex som inte kan finnas där; den avvisas därför korrekt
-  före handoff och får inte räknas som en spelbar user-save. Kvar är en
-  konsekvent original user-save-korpus, bytekorrekt F0433-skrivning,
-  autentisk Utility Disk-filväljare, extern app-capture och bred fysisk
-  touch-/hjälpmedelsverifiering på varje plattform.
+  `CSBGAME.DAT`-slotten. Den externa engelska kandidaten kombinerar en
+  tvåkartors Prison-dungeon med ett sparat kartindex som inte kan finnas där
+  och avvisas därför före handoff. Den språkmatchade `CSBGAME-JP.DAT`
+  (SHA-256 `1c3b9d8c…cf0c2a1`) passerar däremot den opt-in-bundna F31J
+  F0435-korpusregressionen och startar den aktiva M11-runtimen. Kvar är
+  bytekorrekt F0433-skrivning, autentisk F31J Utility Disk-filväljare, extern
+  app-capture och bred fysisk touch-/hjälpmedelsverifiering på varje plattform.
 
 - 🔧 Theron real Track 02 loading now retains reserved category-4 monster
   bytes as source records while admitting only the authenticated 0..6 roster

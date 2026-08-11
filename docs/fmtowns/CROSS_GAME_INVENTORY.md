@@ -11,16 +11,19 @@ authoritative byte-verified cross-game coverage matrix, see
 [`CROSS_GAME_COVERAGE.md`](CROSS_GAME_COVERAGE.md). This file
 provides a per-module inventory grouped by game.
 
-## Save-media audit (2026-08-10)
+## Save-media audit (2026-08-12)
 
 The local FM Towns corpus was checked without modifying any source image:
 
 - CSB FM Towns archives expose the original CD image only; no additional
-  `CSBGAME.DAT`/`CSBGAME.BAK` member was found. The available
-  `CSBGAME.DAT` and `CSBGAME-JP.DAT` are retained as external, unclassified
-  candidates. The current F7061/F7057 reader rejects both before a valid
-  native save-tail receipt is produced; neither is positive Towns save
-  evidence.
+  `CSBGAME.DAT`/`CSBGAME.BAK` member was found. The external English
+  `CSBGAME.DAT` remains an incoherent candidate and the F7061/F7057/F0435
+  reader rejects it before mutation. The external Japanese
+  `CSBGAME-JP.DAT` is language-matched and passes the same native F31J
+  reader, materializing its authenticated party/map state. Its SHA-256 is
+  `1c3b9d8c9e3f5d7ee502b8f4a70af873013ee237d10ab9adfa21058afcf0c2a1`.
+  Both files remain user-owned external evidence; neither is committed or
+  treated as a generated replacement save.
 - DM2 FM Towns archives expose the original Victor CD image only; no
   `SKSAVE*` member or Towns save disk was found. The `SKSAVE0..3` files in the
   DOS archive are a different platform and are not used as substitutes.
