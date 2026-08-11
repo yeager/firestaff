@@ -10440,6 +10440,20 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
+# CSB Hint Oracle original HCSB.DAT archive boundary probe.  It validates
+# the source-cited duplicated size table and segment spans only; graphic
+# stream expansion remains a separate platform-specific task.
+add_executable(firestaff_csb_v1_hint_oracle_dat_real_probe
+    probes/csb/firestaff_csb_v1_hint_oracle_dat_real_probe.c
+    src/csb/csb_hint_oracle_dat.c
+)
+target_include_directories(firestaff_csb_v1_hint_oracle_dat_real_probe
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_hint_oracle_dat_real_probe
+        PRIVATE -Wall -Wextra -O2)
+endif()
+
 # CSB V1 CSBgraphics.dat index classifier + real-asset scan probe.
 # Bounded CSBWin custom graphics override classifier
 # (csbgraphics.dat header/index parser plus bounded single-entry
@@ -39158,6 +39172,24 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_csb_hint_oracle_htc
     )
 
+    # CSB Hint Oracle original HCSB.DAT graphic archive.  The strict index
+    # parser validates duplicated big-endian size tables and exact segment
+    # coverage before any platform graphic decoder can consume a segment.
+    add_executable(test_csb_hint_oracle_dat
+        tests/test_csb_hint_oracle_dat.c
+        src/csb/csb_hint_oracle_dat.c
+    )
+    target_include_directories(test_csb_hint_oracle_dat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_hint_oracle_dat PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_hint_oracle_dat_unit
+        COMMAND test_csb_hint_oracle_dat
+    )
+
     # CSB V1 CSBgraphics.dat index classifier — data-free contract
     # tests for the CSBWin "CSBgraphics.dat" header/index parser
     # and bounded single-entry LZW payload decode helper.
@@ -40589,6 +40621,19 @@ if(BUILD_TESTING)
         set_tests_properties(csb_v1_hint_oracle_real_htc_scan PROPERTIES
             LABELS "tier2;csb;hint_oracle;real_data;skip_safe"
             TIMEOUT 120
+        )
+    endif()
+
+    # HCSB.DAT is optional original Utility Disk media.  The probe exits 0
+    # without FIRESTAFF_CSB_HCSB_DAT and otherwise proves exact real segment
+    # boundaries; it intentionally does not claim graphic pixel parity.
+    if(TARGET firestaff_csb_v1_hint_oracle_dat_real_probe)
+        add_test(
+            NAME csb_v1_hint_oracle_dat_real
+            COMMAND firestaff_csb_v1_hint_oracle_dat_real_probe
+        )
+        set_tests_properties(csb_v1_hint_oracle_dat_real PROPERTIES
+            LABELS "tier2;csb;hint_oracle;real_data;skip_safe"
         )
     endif()
 

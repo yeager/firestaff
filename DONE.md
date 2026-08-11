@@ -13971,3 +13971,14 @@ and production source-combat tests.
   `MINI.DAT`-runtime och `--menu` → Enter passerar för båda språk. Sex
   närliggande verkliga F31-handoff-, spar- och arkivregressioner passerar
   också. Ingen speldata checkades in.
+# CSB Hint Oracle: original HCSB.DAT archive boundary is verified (2026-08-12)
+
+- ✅ Added a strict, read-only parser for the original Utility Disk graphics
+  archive, derived from ReDMCSB `HINTGRAP.C` `F1872_LoadGraphics()`. It
+  validates the duplicated 16-bit size table and exact four-byte-per-entry
+  header shape before a segment can be accessed.
+- ✅ The data-free contract test and opt-in real-data probe pass against the
+  external original ST 2.0/2.1 `HCSB.DAT`: four exact segments, 100/29146/
+  1497/32 bytes. No original asset was committed.
+- 🔒 This is not a graphics decoder or rendered UI. ReDMCSB's expansion path
+  and original-frame capture are still required for any graphical parity.

@@ -1,5 +1,16 @@
 # Firestaff TODO - Open Work
 
+# CSB Hint Oracle: HCSB.DAT archive is indexed; graphic stream remains open (2026-08-12)
+
+- ✅ The real Utility Disk `HCSB.DAT` container now has a strict source-cited
+  index: its duplicate big-endian size tables must agree and its segments must
+  account for the entire file. The real ST 2.0/2.1 archive proves four spans:
+  100, 29146, 1497 and 32 bytes.
+- 🔒 ReDMCSB identifies segments 0–2 as integer glyphs, Oracle bitmap and
+  font, but their platform graphic-expansion stream is not decoded or drawn.
+  Keep graphical Hint Oracle/M11/M12/pixel-parity claims closed until that
+  source-owned decoder and original-frame capture are present.
+
 # Nexus: bind verified SH-2 transform to an authenticated Saturn consumer (2026-08-11)
 
 - ✅ The captured `0x060135f8`/`0x060136c4` 8×48 transform is now isolated in

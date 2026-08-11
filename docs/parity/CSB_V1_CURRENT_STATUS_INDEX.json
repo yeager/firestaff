@@ -84,13 +84,15 @@
       "id": "csb_v1_utility_disk_payloads",
       "priority": "P4",
       "status": "ACTIVE_BOUNDED",
-      "summary": "Hint Oracle HTC scan/cache and text UI binding exist, but graphical overlay and additional Utility Disk variants remain open.",
+      "summary": "Hint Oracle HTC scan/cache and text UI binding exist; HCSB.DAT now has a real, strict four-segment archive index, but graphic-stream decoding and graphical overlay remain open.",
       "latestEvidence": [
         "TODO.md",
         "docs/FIRESTAFF_GAP_LIST.md",
-        "CTest csb_v1_utility_import_block_verify_pc34_compat"
+        "CTest csb_v1_utility_import_block_verify_pc34_compat",
+        "CTest csb_hint_oracle_dat_unit",
+        "CTest csb_v1_hint_oracle_dat_real"
       ],
-      "nextAction": "Add real Utility Disk variant receipts and render the actual Hint Oracle graphical overlay, including HCSB.HTC/HCSB.DAT provenance."
+      "nextAction": "Hash-admit and cache the matching HCSB.DAT variant, then implement the source-owned platform graphic-stream decoder and compare captured original Hint Oracle frames before binding a graphical route."
     },
     {
       "id": "csb_v1_audio_timing",
