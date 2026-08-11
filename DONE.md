@@ -13706,3 +13706,15 @@ and production source-combat tests.
   retur syntes; de 36 adresshittarna var overlay-träffar utan A=`0..3`.
   Därför förblir RNG, monster-AI, attack/skada, loot, generatorer, T700 och
   T900 fail-closed.
+
+# Theron: real US data consumer audit (2026-08-11)
+
+- ✅ Den hashverifierade `TQUS02.bin`-filen passerar samtliga sju
+  dungeon-ledgers med 2 186 thing-records, 165 monsterrecords, 392
+  materialiserade itemförekomster och 8 source-bound US-roster-namn.
+- ✅ Den riktiga 66-raders item-propertytabellen och palettefönstret matchar
+  source-bytes i samma audit.
+- 🔒 Thing-textens codoner dekoderas men innehåller obevisade `{}`-kontroller;
+  `world_load_dungeon_text()` publicerar därför 0 strängar. Detta är en
+  kvarvarande textconsumer-gate, inte ett godkännande av rådiagnostik som
+  speltext.

@@ -901,3 +901,18 @@ träffar utan A=`0..3`, medan `$4644` och `$4667` saknades.
 Detta är ett nytt negativt runtime-bevis, inte en grund för att fylla i
 monster-AI, attack/skada, loot, generatorer, T700 eller T900. Capturen och
 BIOS:et ligger kvar på extern disk; endast denna sammanfattning är i repot.
+
+## 2026-08-11 — real US data consumer audit after directed replay
+
+Den lokala hashverifierade `TQUS02.bin`-filen validerades mot samtliga sju
+dungeon-ledgers: 2 186 placerade thing-records, 165 monsterrecords, 392
+materialiserade itemförekomster och 8 source-bound US-roster-namn. Den riktiga
+66-raders item-propertytabellen och palettefönstret passerade också sina
+source-byte-kontroller.
+
+Textvägen visar däremot en konkret kvarvarande consumergräns. Thing-data
+dekoderas till observerade codon-strängar, men de innehåller obevisade `{}`-
+kontrollkoder och publiceras därför inte av `world_load_dungeon_text()`;
+testet får korrekt 0 publicerade world-strängar. Detta ska lösas med en
+autentiserad US textconsumer/codetabell från disassembly/runtime-capture, inte
+genom att göra den diagnostiska rådekodningen till speltext.

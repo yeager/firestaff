@@ -5156,6 +5156,14 @@ authenticated BPK). The remaining work is a Saturn executable or capture
   Its 36 B0E5 hits are overlay aliases with A outside `0..3`; capture a
   user-created state at a visible monster/object interaction before opening
   RNG, creature AI, combat, loot, generator timing, T700 or T900 semantics.
+
+# Theron US text consumer
+
+- 🔒 Real `TQUS02.bin` thing-data codons decode, but the observed `{}` control
+  symbols have no authenticated US text-consumer/codetable owner. The
+  production world text route therefore publishes zero strings. Bind the
+  original control meanings and destination before enabling dungeon text;
+  do not promote the diagnostic decode or hard-code a guessed replacement.
 ## Theron: nästa autentiserade runtime-vittne (2026-08-09)
 
 - Få en och samma Mednafen-session att nå ett riktigt monster efter Track
