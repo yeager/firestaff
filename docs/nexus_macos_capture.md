@@ -94,6 +94,7 @@ FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_READ_LIMIT=100000
 # Kodbuffert och registerkvitto för transformen före VDP1-skrivningen:
 FIRESTAFF_NEXUS_TRACE_VDP1_TRANSFORM_CODE=/extern/nexus-capture/run/transform-code.trace
 FIRESTAFF_NEXUS_TRACE_VDP1_TRANSFORM_CODE_AT=0x06012f4a
+FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE_START=0x06012e00
 ```
 
 Snapshotten valideras med:
