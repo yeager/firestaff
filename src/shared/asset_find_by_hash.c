@@ -299,6 +299,39 @@ static int scache_lookup(const ScanCache_I *c,
     return 0;
 }
 
+/* The persistent cache is also a directory inventory: reuse an admitted
+ * path only after restatting it against the saved metadata.  This avoids a
+ * recursive walk on unchanged libraries while invalidating immediately for
+ * deleted, resized, or retimestamped files. */
+static int scache_inventory_lookup(const ScanCache_I *c, const char *root,
+                                   const char *md5, char *out_path,
+                                   int out_path_len) {
+    size_t root_len;
+    int i;
+    if (!c || !root || !md5 || !out_path || out_path_len <= 0) return 0;
+    root_len = strlen(root);
+    while (root_len > 1 && root[root_len - 1] == '/') --root_len;
+    /* New scans are appended to the persistent inventory.  Search newest
+     * first: a launcher normally asks about the root it just scanned, so this
+     * keeps a large, long-lived cache from turning each lookup into a walk of
+     * unrelated older libraries. */
+    for (i = c->count - 1; i >= 0; --i) {
+        const ScanCacheEntry_I *entry = &c->entries[i];
+        struct stat st;
+        if (strcmp(entry->md5, md5) != 0 ||
+            strncmp(entry->path, root, root_len) != 0 ||
+            (root_len > 1 && entry->path[root_len] != '/' && entry->path[root_len] != '\0' &&
+             !(entry->path[root_len] == ':' && entry->path[root_len + 1] == ':')) ||
+            stat(entry->path, &st) != 0 ||
+            entry->mtime != (int64_t)st.st_mtime ||
+            entry->size != (int64_t)st.st_size) continue;
+        if (strlen(entry->path) >= (size_t)out_path_len) continue;
+        memcpy(out_path, entry->path, strlen(entry->path) + 1U);
+        return 1;
+    }
+    return 0;
+}
+
 static void scache_put(ScanCache_I *c,
                        const char *path, int64_t mt, int64_t sz,
                        const char *md5) {
@@ -5600,6 +5633,11 @@ int asset_find_by_md5(const char *searchDir, const char *expectedMd5,
     if (!normalize_md5(expectedMd5, normalizedMd5)) return 0;
     if (maxDepth < 0) maxDepth = 3;
     scan_cache_begin();
+    if (scache_inventory_lookup(s_scan_cache, searchDir, normalizedMd5,
+                                outPath, outPathLen)) {
+        scan_cache_end();
+        return 1;
+    }
     if (scan_container_by_md5(searchDir, normalizedMd5, outPath, outPathLen)) {
         scan_cache_end();
         return 1;
@@ -5658,6 +5696,26 @@ int asset_find_by_md5_list(const char *searchDir, const char *const *md5List,
         }
     }
     if (normalizedCount > 0) {
+        for (i = 0; i < normalizedCount; ++i) {
+            if (scache_inventory_lookup(s_scan_cache, searchDir,
+                                        normalizedPtrs[i], foundPaths[i],
+                                        ASSET_PATH_MAX)) {
+                matched[i] = 1;
+            }
+        }
+        for (i = 0; i < normalizedCount; ++i) {
+            if (matched[i] && copy_match_path(foundPaths[i], outPath,
+                                              outPathLen)) {
+                if (outMatchIndex) *outMatchIndex = originalIndices[i];
+                free(normalized);
+                free(normalizedPtrs);
+                free(foundPaths);
+                free(matched);
+                free(originalIndices);
+                scan_cache_end();
+                return 1;
+            }
+        }
         /* Keep direct archive selection equivalent to selecting its parent
          * directory. This is needed for launcher-selected .7z/.zip images. */
         (void)scan_container_by_md5_list(searchDir, normalizedPtrs,
@@ -5747,12 +5805,20 @@ static int asset_find_all_by_md5_list_internal(
         }
     }
     if (normalizedCount > 0) {
+        for (i = 0; i < normalizedCount; ++i) {
+            if (scache_inventory_lookup(s_scan_cache, searchDir,
+                                        normalizedPtrs[i], normalizedPaths[i],
+                                        ASSET_PATH_MAX)) {
+                normalizedMatched[i] = 1;
+                ++foundCount;
+            }
+        }
         /* A selected archive is itself a valid hash-search root.  The
          * single-hash API has always handled this case, but the batched API
          * previously called opendir() only and silently returned no archive
          * members.  That made a direct --data-dir <game.7z> fall back to a
          * sibling installation. */
-        if (scanContainers) {
+        if (foundCount < normalizedCount && scanContainers) {
             foundCount += scan_container_by_md5_list(
                 searchDir, normalizedPtrs, normalizedCount, normalizedPaths,
                 normalizedMatched);
@@ -5770,10 +5836,12 @@ static int asset_find_all_by_md5_list_internal(
                 ++foundCount;
             }
         }
-        foundCount += scan_dir_by_md5_list(searchDir, normalizedPtrs,
-                                            normalizedCount, normalizedPaths,
-                                            normalizedMatched, 0, maxDepth,
-                                            scanContainers);
+        if (foundCount < normalizedCount) {
+            foundCount += scan_dir_by_md5_list(searchDir, normalizedPtrs,
+                                                normalizedCount, normalizedPaths,
+                                                normalizedMatched, 0, maxDepth,
+                                                scanContainers);
+        }
         for (i = 0; i < normalizedCount; ++i) {
             if (normalizedMatched[i]) {
                 int original = originalIndices[i];

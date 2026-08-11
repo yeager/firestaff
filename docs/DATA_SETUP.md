@@ -107,4 +107,13 @@ firestaff --scan-data
 firestaff --data-dir /path/to/your/games --scan-data
 ```
 
+### Scan cache
+
+Firestaff stores verified file hashes in its local scan cache.  On a later
+scan of the same directory it reuses that inventory instead of hashing every
+file again.  Each cached result is rechecked against its path, size and
+modification time, so removed, replaced or changed files are scanned again
+automatically.  The cache grows with the library and is local-only; it never
+contains game data and must not be committed.
+
 Do not commit game data, saves or disc images to the Firestaff repository.
