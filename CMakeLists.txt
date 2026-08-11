@@ -6879,6 +6879,7 @@ set(M11_SOURCES
     src/csb/csb_v1_x68k_hdm.c
     src/csb/csb_v1_x68k_startup_catalog.c
     src/csb/csb_v1_x68k_program.c
+    src/csb/csb_v1_x68k_autoexec.c
     src/csb/csb_v1_x68k_graphics_handoff.c
     src/csb/csb_v1_x68k_dungeon_handoff.c
     src/csb/csb_v1_x68k_enter_sng.c
@@ -53626,6 +53627,15 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_x68k_program.c")
     endif()
     add_test(NAME csb_v1_x68k_program COMMAND test_csb_v1_x68k_program)
     set_tests_properties(csb_v1_x68k_program PROPERTIES LABELS "csb;x68k;real_media;disassembly")
+endif()
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_x68k_autoexec.c")
+ add_executable(test_csb_v1_x68k_autoexec tests/test_csb_v1_x68k_autoexec.c src/csb/csb_v1_x68k_autoexec.c src/csb/csb_v1_x68k_hdm.c)
+ target_include_directories(test_csb_v1_x68k_autoexec PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+ if(NOT MSVC)
+  target_compile_options(test_csb_v1_x68k_autoexec PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
+ endif()
+ add_test(NAME csb_v1_x68k_autoexec COMMAND test_csb_v1_x68k_autoexec)
+ set_tests_properties(csb_v1_x68k_autoexec PROPERTIES LABELS "csb;x68k;real_media;startup")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_m11_game_handoff.c")
