@@ -1678,6 +1678,53 @@ int main(void)
         free(graphics);
     }
     {
+        static const unsigned int f0115_native_families[] = {
+            454u, /* M613 first projectile */
+            486u, /* M614 first explosion */
+            498u, /* M612 first object */
+            584u  /* M618 first creature */
+        };
+        const CSB_V1_BootProfile *live_profile =
+            (const CSB_V1_BootProfile *)view.csbBootProfile;
+        uint8_t *graphics = NULL;
+        uint8_t *expected = NULL;
+        size_t graphics_size = 0u;
+        size_t family;
+
+        if (live_profile) {
+            graphics = load_file(live_profile->graphics_path, &graphics_size);
+            expected = (uint8_t *)malloc(640u * 400u);
+        }
+        /* ReDMCSB DEFS.H MEDIA720_F31E_F31J binds these F0115 first-native
+         * records; DUNVIEW.C uses their relative aspect offsets for object,
+         * group, projectile, and explosion passes.  This proves the F31 IMG2
+         * path supplies their genuine pixels before the shared F0115 drawers
+         * are admitted. */
+        for (family = 0u; graphics && expected &&
+             family < sizeof(f0115_native_families) /
+                 sizeof(f0115_native_families[0]); ++family) {
+            const unsigned int graphic = f0115_native_families[family];
+            const M11_AssetSlot *asset =
+                M11_AssetLoader_Load(&view.assetLoader, graphic);
+            CSB_V1_FmtownsItemDecodeReceipt receipt;
+
+            memset(&receipt, 0, sizeof(receipt));
+            CHECK(asset && asset->loaded && asset->pixels &&
+                      csb_v1_fmtowns_graphics_decode_item(
+                          graphics, graphics_size, graphic, expected,
+                          640u * 400u, &receipt) && receipt.valid &&
+                      receipt.is_image && asset->width == receipt.width &&
+                      asset->height == receipt.height &&
+                      memcmp(asset->pixels, expected,
+                             receipt.pixel_count) == 0,
+                  "F31 F0115 family is byte-identical to genuine GRAPHICS.DAT IMG2");
+        }
+        CHECK(graphics && expected,
+              "F31 real GRAPHICS.DAT opens for F0115-family verification");
+        free(expected);
+        free(graphics);
+    }
+    {
         const CSB_V1_BootProfile *live_profile =
             (const CSB_V1_BootProfile *)view.csbBootProfile;
         uint8_t *graphics = NULL;

@@ -248,6 +248,16 @@ populated dungeon states.
   files admitted by their authentic hashes. The real-data M11 handoff test
   passes for both languages.
 
+- **FM-TOWNS-F0115-001 — native runtime thing graphics are bound.** The F31
+  MEDIA720 build uses `M613=454`, `M614=486`, `M612=498`, and `M618=584` for
+  projectile, explosion, object, and creature families. M11 now admits the
+  shared F0115 drawers for F31 only through the active hash-verified
+  `GRAPHICS.DAT` IMG2 decoder; a missing record remains no-draw. The real-data
+  handoff regression byte-compares one IMG2 record from every family and
+  verifies that the source-owned F0128 aperture changes after native input in
+  both F31E and F31J. Remaining work is capture-level placement/order parity
+  across naturally populated game states.
+
 - **FM-TOWNS-RESUME-001 — retail MINI.DAT resume is closed.** The real
   English and Japanese `CDATA/CJDATA/MINI.DAT` bootstrap saves now pass the
   production M11 `savePath` boundary, restore the authenticated map-4 pose,

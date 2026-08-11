@@ -4228,32 +4228,37 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
     runtime_sprite_context.framebuffer_width = framebufferWidth;
     runtime_sprite_context.framebuffer_height = framebufferHeight;
     memset(&drawer_binding, 0, sizeof(drawer_binding));
-    if (!m11_csb_is_fmtowns_profile(profile)) {
-        drawer_binding.projectile_sprite_drawer =
-            m11_csb_viewport_projectile_sprite_drawer;
-        drawer_binding.projectile_sprite_user = &runtime_sprite_context;
-        drawer_binding.projectile_sprite_drawer_source_bound = 1;
-        drawer_binding.projectile_object_sprite_drawer =
-            m11_csb_viewport_projectile_object_sprite_drawer;
-        drawer_binding.projectile_object_sprite_user = &runtime_sprite_context;
-        drawer_binding.explosion_sprite_drawer =
-            m11_csb_viewport_explosion_sprite_drawer;
-        drawer_binding.explosion_sprite_user = &runtime_sprite_context;
-        drawer_binding.object_sprite_drawer =
-            m11_csb_viewport_object_sprite_drawer;
-        drawer_binding.object_sprite_user = &runtime_sprite_context;
-        /* DUNVIEW.C F0115 owns the perspective object bitmap.  If M11 cannot
-         * decode that active CSB GRAPHICS.DAT record, the viewport must not fall
-         * back to the icon atlas or a diagnostic marker. */
-        drawer_binding.object_sprite_drawer_source_bound = 1;
-        drawer_binding.object_icon_drawer =
-            m11_csb_viewport_object_icon_drawer;
-        drawer_binding.object_icon_user = &runtime_sprite_context;
-        drawer_binding.group_sprite_drawer =
-            m11_csb_viewport_group_sprite_drawer;
-        drawer_binding.group_sprite_user = &runtime_sprite_context;
-        drawer_binding.group_sprite_drawer_source_bound = 1;
-    }
+    /* F31E/F31J is MEDIA720.  ReDMCSB DEFS.H gives its native F0115
+     * families as M613=454 (projectiles), M614=486 (explosions),
+     * M612=498 (objects), and M618=584 (creatures), while DUNVIEW.C uses
+     * those same records for the F31 build.  The active loader already
+     * decodes this profile through IMAGE2.C's IMG2 path; binding the normal
+     * F0115 drawers therefore consumes verified F31 pixels rather than a
+     * PC surface.  Any absent native record remains no-draw in the drawer. */
+    drawer_binding.projectile_sprite_drawer =
+        m11_csb_viewport_projectile_sprite_drawer;
+    drawer_binding.projectile_sprite_user = &runtime_sprite_context;
+    drawer_binding.projectile_sprite_drawer_source_bound = 1;
+    drawer_binding.projectile_object_sprite_drawer =
+        m11_csb_viewport_projectile_object_sprite_drawer;
+    drawer_binding.projectile_object_sprite_user = &runtime_sprite_context;
+    drawer_binding.explosion_sprite_drawer =
+        m11_csb_viewport_explosion_sprite_drawer;
+    drawer_binding.explosion_sprite_user = &runtime_sprite_context;
+    drawer_binding.object_sprite_drawer =
+        m11_csb_viewport_object_sprite_drawer;
+    drawer_binding.object_sprite_user = &runtime_sprite_context;
+    /* DUNVIEW.C F0115 owns the perspective object bitmap.  If M11 cannot
+     * decode that active CSB GRAPHICS.DAT record, the viewport must not fall
+     * back to the icon atlas or a diagnostic marker. */
+    drawer_binding.object_sprite_drawer_source_bound = 1;
+    drawer_binding.object_icon_drawer =
+        m11_csb_viewport_object_icon_drawer;
+    drawer_binding.object_icon_user = &runtime_sprite_context;
+    drawer_binding.group_sprite_drawer =
+        m11_csb_viewport_group_sprite_drawer;
+    drawer_binding.group_sprite_user = &runtime_sprite_context;
+    drawer_binding.group_sprite_drawer_source_bound = 1;
     drawer_binding.runtime_overlay_source_required =
         state->csbDsaSaveRuntimeRouteRequired ? 1 : 0;
     drawer_binding.runtime_overlay_source_admitted =

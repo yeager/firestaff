@@ -94,6 +94,15 @@ that admission receipt. M11 opens only the source-bound C004 entrance and
 C002/C003 door sequence, then the verified C017/F0128 HUD/viewport session.
 It must not replay the standalone title timeline after this transition.
 
+F0128's runtime thing pass (`DUNVIEW.C F0115`) is also source-bound for both
+F31 editions. The verified IMG2 `GRAPHICS.DAT` decoder supplies the native
+MEDIA720 families: M613/454 for projectiles, M614/486 for explosions,
+M612/498 for objects, and M618/584 for creatures. An unavailable or malformed
+record is left blank; Firestaff never substitutes a PC bitmap or a marker.
+The real-media handoff test byte-compares a record from each family and checks
+that the 224×136 F0128 aperture changes after live source input. Exact
+capture-level draw order and placement across populated rooms remain open.
+
 ## F31 MINI.DAT is a native save bootstrap
 
 `MINI.DAT` is neither an Atari/Amiga GAMEBLOCK nor a substitute DUNGEON.DAT.
