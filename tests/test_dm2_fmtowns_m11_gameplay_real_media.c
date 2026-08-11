@@ -195,7 +195,8 @@ int main(void)
             unsigned int inventory_context_count = 0u;
             unsigned int inventory_native_gap_count = 0u;
             int exercised_inventory_route = 0;
-            int equipment_slot_seen[6] = {0, 0, 0, 0, 0, 0};
+            int equipment_slot_seen[11] = {0, 0, 0, 0, 0, 0,
+                                           0, 0, 0, 0, 0};
             for (candidate_index = 0u; candidate_index < candidate_count;
                  ++candidate_index) {
                 DM2_V1_FmtownsMouseInputCandidate candidate;
@@ -222,7 +223,7 @@ int main(void)
                             int source_slot = -1;
                             if (dm2_v1_fmtowns_inventory_slot_for_context(
                                     &context, &source_slot) &&
-                                source_slot >= 0 && source_slot < 6)
+                                source_slot >= 0 && source_slot < 11)
                                 equipment_slot_seen[source_slot] = 1;
                         }
                     }
@@ -282,7 +283,9 @@ int main(void)
                                  strcmp(route.source_context.groupName,
                                         "inventory.legs") == 0 ||
                                  strcmp(route.source_context.groupName,
-                                        "inventory.foot") == 0)) {
+                                        "inventory.foot") == 0 ||
+                                 strcmp(route.source_context.groupName,
+                                        "inventory.neck") == 0)) {
                                 int source_slot = -1;
                                 check(dm2_v1_fmtowns_inventory_slot_for_context(
                                           &route.source_context, &source_slot) &&
@@ -302,8 +305,9 @@ int main(void)
                   "FM Towns exercises an authenticated inventory route against real RAW4 data");
             check(equipment_slot_seen[0] && equipment_slot_seen[1] &&
                       equipment_slot_seen[2] && equipment_slot_seen[3] &&
-                      equipment_slot_seen[4] && equipment_slot_seen[5],
-                  "FM Towns authentic inventory contexts retain all six source equipment slots");
+                      equipment_slot_seen[4] && equipment_slot_seen[5] &&
+                      equipment_slot_seen[10],
+                  "FM Towns authentic inventory contexts retain all seven source equipment slots");
         }
         {
             DM2_V1_BootProfile tampered_profile =

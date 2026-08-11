@@ -368,6 +368,8 @@ int dm2_v1_fmtowns_inventory_slot_for_context(
         slot = 4;
     else if (strcmp(name, "inventory.foot") == 0)
         slot = 5;
+    else if (strcmp(name, "inventory.neck") == 0)
+        slot = 10;
     else
         return 0;
 
