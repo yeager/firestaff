@@ -122,6 +122,13 @@ gav korrupta magenta/olivfärgade streck. Det var alltså ett fel i lokal
 capture-build, inte i originalets Track 02-media eller i pixelprofilens
 skalning.
 
+Capture-builden på extern-disken byggdes därefter om mot samma rena
+`huc6280.cpp`. Den behåller CD/FIFO/RAM-observationerna via sina hookar men
+läser inte extra CPU-operander före varje instruktion. Den måste alltid
+genomgå samma visuella smoke-test innan den används för en ny runtime-capture;
+en capture som förvränger bilden är ogiltig även om dess receipts ser formellt
+kompletta ut.
+
 Starta videokontrollen så här:
 
 ```bash
