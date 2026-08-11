@@ -79,12 +79,15 @@ static int theron_v1_source_level_requires_item_provenance(
         world->current_level >= THERON_MAX_LEVELS_PER_DUNGEON) {
         return 0;
     }
+    /* Once the level header is authenticated, the generic host object path
+     * is no longer an admissible fallback.  The property table is checked by
+     * the pickup predicate below; keeping this gate at the header boundary
+     * makes a missing table fail closed instead of silently accepting a
+     * synthetic compact item ID. */
     return world->level_loaded[world->current_dungeon - 1]
                               [world->current_level] &&
            world->levels[world->current_dungeon - 1]
-                        [world->current_level].source_header_verified &&
-           world->levels[world->current_dungeon - 1]
-                        [world->current_level].source_item_property_table_verified;
+                        [world->current_level].source_header_verified;
 }
 
 /* Declared here because T900 altar handling appears before the T700 helper
