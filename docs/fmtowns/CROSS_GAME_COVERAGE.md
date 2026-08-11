@@ -147,11 +147,14 @@ Every module below is source-locked with a real-data round-trip test:
   Its C06 F7083/F7084 source-coordinate file-list state, nine-row raster,
   bounded scroll commands, and real `PORTRAIT` catalogue binding are now
   implemented. The remaining utility gap is wiring that state into C06's
-  modal event pump and returning the selected row to F7002. Arbitrary
-  `CSBGAME.DAT` load/write/resume remains fail-closed until its
-  exact source transactions are proven. The
-  external `fmtowns-save-corpus/CSBGAME.DAT` and `CSBGAME-JP.DAT` files are
-  retained as candidates, not used as synthetic substitutes.
+  modal event pump and returning the selected row to F7002. The direct F31
+  path can read/update an explicitly selected F0435-admitted `CSBGAME.DAT`,
+  and can make its first canonical slot from the hash-verified `MINI.DAT`
+  bootstrap with CEDTINC8 F7052's 16 part keys plus F7062's 127 header words.
+  C06 still has no source-bound drive-2 game-save destination, so its `GAME`
+  choice remains unavailable. Arbitrary external saves remain fail-closed:
+  `fmtowns-save-corpus/CSBGAME.DAT` and `CSBGAME-JP.DAT` are candidates, not
+  synthetic substitutes.
 - **DM2 FM Towns**: The authentic HME-242 CD path, TWANIM/TITLE/SWOOSH/END,
   M12 handoff, English companion overlay, title input, NEW GAME, active
   gameplay movement, viewport frame, native HUD plan, all 16 authentic
