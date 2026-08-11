@@ -35,12 +35,12 @@
  *       edition page lists 3.5" and 5.25" editions of each).
  *
  * Scope (kept narrow on purpose):
- *   - No file system mount, no FAT parsing, no sector read.
- *   - The "directory entries" we report are byte offsets where
- *     the synthetic 8.3 file-name signature was located in the
- *     fixture buffer. On a real HDM that would correspond to
- *     the FAT directory slot of the matching file. This is a
- *     fingerprint, not a runtime handoff.
+ *   - Read-only FAT12 root-directory parsing. PC-98 2HD media
+ *     stores one physical 1024-byte sector per image sector, and
+ *     this CSB media declares that same sector size in its DOS BPB.
+ *   - The "directory entries" we report are genuine 8.3 directory
+ *     slots when a valid root directory is present. Synthetic fixtures
+ *     retain a byte-signature fallback solely for data-free coverage.
  *   - No emulator wiring, no copy-protection sector decode,
  *     no launch claim. Those are tracked separately in
  *     docs/FIRESTAFF_GAP_LIST.md A1 row "DM1 PC-9801 HDM/floppy
@@ -154,6 +154,63 @@ static size_t find_filename_offset(const uint8_t* data, size_t data_size,
     const char* hit = mem_search(data, data_size,
                                  (const uint8_t*)name, name_len);
     return hit ? (size_t)(hit - (const char*)data) : 0;
+}
+
+static size_t pc98_physical_sector_bytes(FirestaffPc98MediaKind media) {
+    return (media == FIRESTAFF_PC98_MEDIA_2HD_RAW ||
+            media == FIRESTAFF_PC98_MEDIA_2HD_FDI) ? 1024u : 512u;
+}
+
+static uint16_t le16(const uint8_t* p) {
+    return (uint16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
+}
+
+/* PC-98 2HD HDM uses 1024-byte image sectors. The CSB 3.1 BPB records
+ * that size too; keeping the image geometry explicit prevents a generic
+ * FAT reader from treating this medium as a 512-byte PC floppy. */
+static size_t find_pc98_root_entry(const uint8_t* body, size_t body_size,
+                                   FirestaffPc98MediaKind media,
+                                   const uint8_t wanted[11]) {
+    uint16_t reserved, root_entries, sectors_per_fat;
+    uint8_t fat_count;
+    size_t physical_bytes, root_start, root_bytes, i;
+    if (!body || !wanted || body_size < 32u || body[13u] == 0u) return 0;
+    physical_bytes = pc98_physical_sector_bytes(media);
+    if (le16(body + 11u) != physical_bytes) return 0;
+    reserved = le16(body + 14u);
+    fat_count = body[16u];
+    root_entries = le16(body + 17u);
+    sectors_per_fat = le16(body + 22u);
+    if (reserved == 0u || fat_count == 0u || fat_count > 2u ||
+        root_entries == 0u || sectors_per_fat == 0u) return 0;
+    if ((size_t)reserved + (size_t)fat_count * sectors_per_fat >
+        SIZE_MAX / physical_bytes) return 0;
+    root_start = ((size_t)reserved + (size_t)fat_count * sectors_per_fat) *
+                 physical_bytes;
+    root_bytes = (size_t)root_entries * 32u;
+    if (root_start > body_size || root_bytes > body_size - root_start) return 0;
+    for (i = 0u; i < root_entries; ++i) {
+        const uint8_t* entry = body + root_start + i * 32u;
+        if (entry[0] == 0x00u) break;
+        if (entry[0] == 0xe5u || entry[11] == 0x0fu) continue;
+        if (mem_equal(entry, wanted, 11u)) return root_start + i * 32u;
+    }
+    return 0;
+}
+
+static size_t find_pc98_entry_or_fixture(const uint8_t* body,
+                                          size_t body_size,
+                                          FirestaffPc98MediaKind media,
+                                          const uint8_t wanted[11],
+                                          const char* fixture_name,
+                                          int* root_entry_out) {
+    size_t offset = find_pc98_root_entry(body, body_size, media, wanted);
+    if (offset != 0u) {
+        if (root_entry_out) *root_entry_out = 1;
+        return offset;
+    }
+    if (root_entry_out) *root_entry_out = 0;
+    return find_filename_offset(body, body_size, fixture_name);
 }
 
 /*
@@ -302,11 +359,26 @@ int FirestaffPc98HdmClassify(const uint8_t* data, size_t data_size,
     const uint8_t* body = data + body_offset;
     size_t body_size = data_size - body_offset;
 
-    size_t graphics_dat = find_filename_offset(body, body_size, "GRAPHICS.DAT");
-    size_t dungeon_dat  = find_filename_offset(body, body_size, "DUNGEON.DAT");
-    size_t necio_exe    = find_filename_offset(body, body_size, "NECIO.EXE");
-    size_t fires_exe    = find_filename_offset(body, body_size, "FIRES.EXE");
-    size_t csbgame_exe  = find_filename_offset(body, body_size, "CSBGAME.EXE");
+    static const uint8_t kGraphicsDat[11] = {'G','R','A','P','H','I','C','S','D','A','T'};
+    static const uint8_t kDungeonDat[11] = {'D','U','N','G','E','O','N',' ','D','A','T'};
+    static const uint8_t kNecio[11] = {'N','E','C','I','O',' ',' ',' ',' ',' ',' '};
+    static const uint8_t kFires[11] = {'F','I','R','E','S',' ',' ',' ',' ',' ',' '};
+    static const uint8_t kCsbgame[11] = {'C','S','B','G','A','M','E',' ',' ',' ',' '};
+    static const uint8_t kCjdata[11] = {'C','J','D','A','T','A',' ',' ',' ',' ',' '};
+    int csbgame_is_root = 0;
+    int cjdata_is_root = 0;
+    size_t graphics_dat = find_pc98_entry_or_fixture(body, body_size, out->media,
+                                                      kGraphicsDat, "GRAPHICS.DAT", NULL);
+    size_t dungeon_dat = find_pc98_entry_or_fixture(body, body_size, out->media,
+                                                     kDungeonDat, "DUNGEON.DAT", NULL);
+    size_t necio_exe = find_pc98_entry_or_fixture(body, body_size, out->media,
+                                                   kNecio, "NECIO.EXE", NULL);
+    size_t fires_exe = find_pc98_entry_or_fixture(body, body_size, out->media,
+                                                   kFires, "FIRES.EXE", NULL);
+    size_t csbgame_exe = find_pc98_entry_or_fixture(body, body_size, out->media,
+                                                     kCsbgame, "CSBGAME.EXE", &csbgame_is_root);
+    size_t cjdata_dir = find_pc98_entry_or_fixture(body, body_size, out->media,
+                                                    kCjdata, "CJDATA", &cjdata_is_root);
 
     out->graphics_dat_offset = graphics_dat;
     out->dungeon_dat_offset  = dungeon_dat;
@@ -318,7 +390,9 @@ int FirestaffPc98HdmClassify(const uint8_t* data, size_t data_size,
 
     /* Game fingerprint. DM1 PC-9801 ships NECIO.EXE + FIRES.EXE;
      * CSB PC-9801 ships CSBGAME.EXE + (smaller) GRAPHICS.DAT. */
-    if (csbgame_exe != 0u && graphics_dat != 0u && necio_exe == 0u) {
+    if (csbgame_exe != 0u &&
+        ((csbgame_is_root && cjdata_is_root && cjdata_dir != 0u) ||
+         (!csbgame_is_root && graphics_dat != 0u && necio_exe == 0u))) {
         out->game = FIRESTAFF_PC98_GAME_CSB;
     } else if (necio_exe != 0u || fires_exe != 0u || dungeon_dat != 0u) {
         out->game = FIRESTAFF_PC98_GAME_DM1;
@@ -392,7 +466,7 @@ int FirestaffPc98HdmClassify(const uint8_t* data, size_t data_size,
             out->version = FIRESTAFF_PC98_VERSION_UNKNOWN;
             out->protection = FIRESTAFF_PC98_PROTECT_UNKNOWN;
         }
-    } else if (out->game == FIRESTAFF_PC98_GAME_CSB) {
+    } else if (out->game == FIRESTAFF_PC98_GAME_CSB && !csbgame_is_root) {
         uint8_t csbgame_byte = 0;
         int csbgame_rc = read_fires_byte_at(
             body, body_size, csbgame_exe,
@@ -410,6 +484,12 @@ int FirestaffPc98HdmClassify(const uint8_t* data, size_t data_size,
                 ? FIRESTAFF_PC98_PROTECT_MISSING_BUT_PATCHED
                 : FIRESTAFF_PC98_PROTECT_PRESENT;
         }
+    } else if (out->game == FIRESTAFF_PC98_GAME_CSB) {
+        /* A root slot proves edition identity, but is not CSBGAME's
+         * payload. Do not add a protection offset to it and turn unrelated
+         * image bytes into a false original/cracked result. */
+        out->version = FIRESTAFF_PC98_VERSION_UNKNOWN;
+        out->protection = FIRESTAFF_PC98_PROTECT_UNKNOWN;
     }
 
     return 0;
@@ -543,6 +623,33 @@ static void synth_build_csb_2hd(uint8_t* buf, int cracked) {
     memcpy(buf + graphics_off, name_graphics, sizeof(name_graphics));
     buf[csbgame_off + FIRESTAFF_PC98_CSB_CSBGAME_PROTECT_OFFSET] =
         cracked ? 0x90 : 0x26;
+}
+
+static void synth_write_pc98_root_entry(uint8_t* entry,
+                                        const uint8_t name[11],
+                                        uint8_t attributes) {
+    memset(entry, 0, 32u);
+    memcpy(entry, name, 11u);
+    entry[11] = attributes;
+}
+
+static void synth_build_csb_2hd_root_directory(uint8_t* buf) {
+    static const uint8_t kCjdata[11] = {'C','J','D','A','T','A',' ',' ',' ',' ',' '};
+    static const uint8_t kCsbgame[11] = {'C','S','B','G','A','M','E',' ',' ',' ',' '};
+    static const uint8_t kFires[11] = {'F','I','R','E','S',' ',' ',' ',' ',' ',' '};
+    const size_t root_start = 5u * 1024u; /* reserved + 2 FATs * 2 sectors */
+    memset(buf, 0xe5, FIRESTAFF_PC98_2HD_BYTES);
+    memset(buf, 0, 1024u);             /* complete, unambiguous BPB sector */
+    buf[11] = 0x00; buf[12] = 0x04; /* 1024-byte sectors */
+    buf[13] = 0x01;                 /* sectors per cluster */
+    buf[14] = 0x01;                 /* one reserved sector */
+    buf[16] = 0x02;                 /* two FATs */
+    buf[17] = 0xc0;                 /* 192 root entries */
+    buf[22] = 0x02;                 /* two physical sectors per FAT */
+    synth_write_pc98_root_entry(buf + root_start, kCjdata, 0x10u);
+    synth_write_pc98_root_entry(buf + root_start + 32u, kCsbgame, 0x00u);
+    synth_write_pc98_root_entry(buf + root_start + 64u, kFires, 0x00u);
+    buf[root_start + 96u] = 0x00u;
 }
 
 /* ── Self-test ──────────────────────────────────────────────────── */
@@ -696,6 +803,24 @@ static int test_csb_31_original_and_cracked(void) {
     return 1;
 }
 
+static int test_csb_31_root_directory_identity(void) {
+    uint8_t* buf = (uint8_t*)malloc(FIRESTAFF_PC98_2HD_BYTES);
+    FirestaffPc98HdmClassification c;
+    int rc;
+    ST_ASSERT(buf != NULL, "alloc");
+    synth_build_csb_2hd_root_directory(buf);
+    rc = FirestaffPc98HdmClassify(buf, FIRESTAFF_PC98_2HD_BYTES, &c);
+    ST_ASSERT(rc == 0, "root classify");
+    ST_ASSERT(c.media == FIRESTAFF_PC98_MEDIA_2HD_RAW, "root 2hd raw");
+    ST_ASSERT(c.game == FIRESTAFF_PC98_GAME_CSB, "root csb");
+    ST_ASSERT(c.csbgame_exe_offset == 5u * 1024u + 32u, "root csbgame slot");
+    ST_ASSERT(c.version == FIRESTAFF_PC98_VERSION_UNKNOWN, "root version unknown");
+    ST_ASSERT(c.protection == FIRESTAFF_PC98_PROTECT_UNKNOWN,
+              "root protection unknown");
+    free(buf);
+    return 1;
+}
+
 static int test_fdi_header_recognized(void) {
     /* Build a synthetic FDI file with the documented 4096-byte
      * header + a 2HD raw HDM body. */
@@ -763,6 +888,7 @@ int FirestaffPc98HdmClassify_SelfTest(void) {
     RUN(test_dm1_20a_cracked);
     RUN(test_dm1_20b_original);
     RUN(test_csb_31_original_and_cracked);
+    RUN(test_csb_31_root_directory_identity);
     RUN(test_fdi_header_recognized);
     RUN(test_name_table_consistency);
     #undef RUN

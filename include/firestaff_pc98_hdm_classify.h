@@ -24,8 +24,8 @@
  *     - distinguishes a PC-98 2HD (1,261,568 B) or 2DD
  *       (737,280 B) raw HDM image from other byte streams;
  *     - detects the documented DM1 / CSB PC-98 boot-sector
- *       and FAT directory fingerprints (NECIO.SYS, FIRES.EXE,
- *       GRAPHICS.DAT, DUNGEON.DAT, CSBGAME.EXE etc.);
+ *       and FAT directory fingerprints (NECIO, FIRES, CJDATA,
+ *       CSBGAME etc.) from actual 8.3 directory entries;
  *     - classifies the 2.0a / 2.0b split using the known
  *       protection-status markers (NECIO.EXE byte at 0x1CF1 and
  *       the FIRES.EXE byte at 0x2636D);
@@ -37,7 +37,7 @@
  *       launch, and emulator handoff remain separate work.
  *
  *   The classifier operates purely on bytes in a caller-owned
- *   buffer. It does not touch any file system, does not mount
+ *   buffer. It does not touch the host file system, does not mount
  *   the image, and does not require DMWeb/dmweb hash matching
  *   to run. Tests are entirely data-free (synthetic fixtures).
  *

@@ -27,16 +27,47 @@
  *      src/shared/firestaff_pc98_hdm_classify.c \
  *      -o test_firestaff_pc98_hdm_classify
  *
- * Scope:
- *   Data-free synthetic fixtures only. No real HDM media.
- *   No runtime claim, no emulator wiring.
+ * Running with an HDM filename or `-` reads one caller-supplied image and
+ * prints its conservative receipt. This is local preservation verification,
+ * not a runtime or copy-protection claim.
  */
 
 #include "firestaff_pc98_hdm_classify.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-int main(void) {
+static int classify_stream(FILE* input) {
+    uint8_t* data;
+    size_t size;
+    FirestaffPc98HdmClassification result;
+    data = (uint8_t*)malloc(FIRESTAFF_PC98_2HD_BYTES + FIRESTAFF_PC98_FDI_HEADER);
+    if (!data) return 2;
+    size = fread(data, 1u, FIRESTAFF_PC98_2HD_BYTES + FIRESTAFF_PC98_FDI_HEADER, input);
+    if (ferror(input) || size == 0u || fgetc(input) != EOF ||
+        FirestaffPc98HdmClassify(data, size, &result) != 0) {
+        free(data);
+        return 2;
+    }
+    printf("media=%s game=%s version=%s protection=%s\n",
+           FirestaffPc98HdmMediaName(result.media),
+           FirestaffPc98HdmGameName(result.game),
+           FirestaffPc98HdmVersionName(result.version),
+           FirestaffPc98HdmProtectionName(result.protection));
+    free(data);
+    return result.media == FIRESTAFF_PC98_MEDIA_NOT_PC98 ? 1 : 0;
+}
+
+int main(int argc, char** argv) {
+    if (argc == 2) {
+        FILE* input = strcmp(argv[1], "-") == 0 ? stdin : fopen(argv[1], "rb");
+        int rc;
+        if (!input) return 2;
+        rc = classify_stream(input);
+        if (input != stdin) fclose(input);
+        return rc;
+    }
     int rc = FirestaffPc98HdmClassify_SelfTest();
     if (rc == 0) {
         printf("test_firestaff_pc98_hdm_classify: PASS\n");

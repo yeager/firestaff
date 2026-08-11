@@ -71,6 +71,25 @@ Firestaff cache. On success it is atomically promoted to `FMTOWNS.IMG`; on
 failure the staging file is removed. The directory containing the original
 ZIP/RAR remains read-only from Firestaff's point of view.
 
+### PC-9801 HDM preservation receipt
+
+PC-9801 CSB 3.1 is recognized as its own Japanese HDM/floppy family, never as
+PC, Atari ST, or FM Towns data. The byte classifier reads the actual FAT12
+root directory using the PC-98 2HD geometry: this corpus stores 1024-byte
+sectors and its root begins after one reserved sector plus two two-sector FATs
+(offset 5120). A verified root contains `CJDATA` and `CSBGAME`; `FIRES` may
+also be present. The classifier reports these directory-slot offsets and the
+`pc98-2hd-raw` media shape.
+
+It deliberately leaves the original-versus-cracked and protection fields
+unknown for this route. `CSBGAME`'s documented protection offset is relative
+to the executable payload, not to its root-directory entry; adding it to a
+directory offset would fabricate a result. FAT-chain extraction, file hashes,
+the PC-98 three-light-level presentation, native input, and a runtime launch
+remain separate proof gates. The receipt test accepts a supplied HDM path or
+standard input, so an archive member can be checked without leaving extracted
+game data on disk.
+
 ### Amiga 3.5 CAPS/IPF preservation boundary
 
 The available Amiga 3.5 CTRaw corpus is not an ADF: each game/utility image
