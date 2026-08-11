@@ -263,9 +263,12 @@ populated dungeon states.
   English candidate declares map 4 at (22,18), outside its two maps, while the
   Japanese candidate uses a different party envelope and is not interchangeable
   with the English handoff. The reader therefore rejects them before a
-  complete native F0435 state receipt is produced. The writer remains
-  unavailable for these files. `MINI.DAT` resume is the only positive save path
-  currently covered, and no synthetic save is used.
+  complete native F0435 state receipt is produced. The direct M11 F0433 path
+  can update an already-admitted, canonical `CSBGAME.DAT` slot and its F0435
+  readback is covered; that is not evidence for these inconsistent corpus
+  candidates, nor for C06's separate F7052 save-medium/create transaction.
+  `MINI.DAT` remains the only retail bootstrap path, and no synthetic save is
+  used.
 
 - **FM-TOWNS-C06-SAVE-001 — selected portrait save is bound; full game save remains closed.**
   `CEDT001.C:F7001` now opens its source `GAME` / `PORTRAIT` / `CANCEL`

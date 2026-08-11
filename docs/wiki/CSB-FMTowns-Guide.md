@@ -156,6 +156,14 @@ Adventure and name/title entry are also closed. F31J remains closed until the
 native Shift-JIS glyph consumer is recovered. Keep all of those routes modal
 until their specific owners are evidenced.
 
+This C06 boundary is narrower than the direct in-game save route. M11 can
+read and update an explicitly selected, already admitted native
+`CSBGAME.DAT` slot through F0435/F0433, including the source `.BAK` recovery
+rule. It does not turn Firestaff's default `.sav` into F31 media, create a
+slot from `MINI.DAT`, or establish C06's `F7052_SaveGame` file-medium
+transaction. The C06 `GAME` choices therefore remain closed until that
+separate creation and drive-2 mapping are source-bound.
+
 ## Files to know
 
 | Purpose | Path |
