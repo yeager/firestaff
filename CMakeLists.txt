@@ -53549,6 +53549,21 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_x68k_dungeon_handoff.c"
     set_tests_properties(csb_v1_x68k_dungeon_handoff PROPERTIES LABELS "csb;x68k;dungeon;synthetic_fixture")
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_x68k_graphics_handoff.c")
+    add_executable(test_csb_v1_x68k_graphics_handoff
+        tests/test_csb_v1_x68k_graphics_handoff.c
+        src/csb/csb_v1_x68k_graphics_handoff.c
+        src/csb/csb_v1_x68k_hdm.c
+        src/csb/csb_v1_amiga_graphics_dat.c
+        src/dm1/dm1_v1_legacy_graphics_dat.c)
+    target_include_directories(test_csb_v1_x68k_graphics_handoff PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_x68k_graphics_handoff PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_x68k_graphics_handoff COMMAND test_csb_v1_x68k_graphics_handoff)
+    set_tests_properties(csb_v1_x68k_graphics_handoff PROPERTIES LABELS "csb;x68k;graphics;synthetic_fixture")
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_m11_game_handoff.c")
     add_executable(test_csb_v1_fmtowns_m11_game_handoff
         tests/test_csb_v1_fmtowns_m11_game_handoff.c)
