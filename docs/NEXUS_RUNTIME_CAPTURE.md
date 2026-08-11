@@ -591,6 +591,20 @@ order carried by the raw-frame receipt for both VDP2 registers and CRAM. An
 older fixture with no producer order keeps the previous scoring fallback; a
 real Firestaff or Mednafen frame does not guess from register values.
 
+### Fresh reset witness
+
+An external reset-only run using the authenticated J BIOS and the merged
+English/European disc cue is retained at
+`/Volumes/Extern-disk/nexus-saturn-capture/run-reset-title-menu-20260811b/`.
+Its 300-frame raw stream has SHA-256
+`7756900f79ed3b7c4e680918a1f9604943fb96398b068866c77bc91b37d3f0ad` and
+passes the raw-layout validator. VDP2 is reset through the early frames,
+becomes display-active around frame 120, and then holds the observed
+`TVMD=0x8000`, `BGON=0x000f`, `CHCTLA=0x1010` state. No input was injected.
+This is useful reset/runtime evidence, but it does not identify a retail
+TITLE, MENU.BPK, FONT256 or host display consumer, so startup admission stays
+closed.
+
 On 2026-08-10 a bounded J-BIOS/English-media source-trace attempt reached
 500,000 SH-2 RAM-source rows but timed out before producing a complete frame
 capture. After rejecting zero-filled RAM and unmapped ISO padding, the trace

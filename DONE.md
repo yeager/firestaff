@@ -75,6 +75,19 @@
 - ✅ `firestaff` target build, Theron input facade tests, and pointer mapping
   tests pass. No BIOS or game data was added.
 
+# Nexus: fresh external reset witness (2026-08-11)
+
+- ✅ Ran the instrumented Mednafen Saturn hook with the authenticated J BIOS,
+  merged English/European cue and no input injection for 300 frames.
+- ✅ The external manifest and raw stream are retained on the external disk;
+  the raw stream hashes to
+  `7756900f79ed3b7c4e680918a1f9604943fb96398b068866c77bc91b37d3f0ad` and
+  passes `validate_nexus_saturn_runtime_capture.py`.
+- ✅ Confirmed reset VDP2 state followed by the active `TVMD/BGON/CHCTLA`
+  observation; no unverified title/menu interpretation was added.
+- 🔒 Startup launch remains capture-gated until the title/menu consumer is
+  joined to the same runtime capture.
+
 # Nexus: propagate VDP2 producer order into capture composition (2026-08-11)
 
 - ✅ Added the producer byte order to `Nexus_V1_Vdp2CaptureCompositeInput`.

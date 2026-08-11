@@ -88,6 +88,8 @@
 - ✅ Direct CLI launch now reports the exact M12 gate (`STARTUP PROOF
   MISSING`) instead of only `game unavailable`; the readiness verifier records
   this as `BLOCKED_CAPTURE` and tolerates the external-media scan duration.
+- ✅ A fresh 300-frame external reset witness is retained and raw-layout
+  verified; it confirms reset-to-active timing but not title/menu ownership.
 - 🔒 Admit a source-bound Saturn title/menu full-start package before enabling
   Nexus runtime launch or promoting a screenshot.
 
