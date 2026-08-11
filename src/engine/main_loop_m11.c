@@ -3393,7 +3393,9 @@ static void m11_phase_a_advance_boot_probe_frames(M11_GameViewState* gameView,
 static int m11_apply_architecture_override(M12_StartupMenuState* menuState,
                                            const char* gameId,
                                            int architecture) {
-    static const char* const gameIds[] = {"dm1", "csb", "dm2"};
+    static const char* const gameIds[] = {
+        "dm1", "csb", "dm2", "nexus", "theron"
+    };
     size_t gameStart = 0U;
     size_t gameEnd = sizeof(gameIds) / sizeof(gameIds[0]);
     size_t gameIndex;

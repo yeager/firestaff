@@ -297,26 +297,19 @@ static void run_real_launcher_handoff_if_available(void) {
         return;
     }
 
-    /* Source-faithful startup gate (nexus_v1_engine.c, "nexus: remove
-     * synthetic retail start pose"): real LEV00.DGN carries an empty
-     * Structure1B cell at the former synthetic party-start selector, and
-     * no Nexus Saturn start pose has been joined to the loaded retail
-     * bytes yet. M11 now refuses to open the launcher into a level-0
-     * session rather than manufacture a party pose, so this handoff is
-     * permanently blocked until a real Saturn start-pose source lands.
-     * Assert that blocked reality instead of the retired title/startup
-     * hold sequence, which can no longer be reached through level 0. */
+    /* The real title/menu is independent of the unbound LEV00 party pose.
+     * M11 must therefore enter the verified Saturn title route, while
+     * keeping dungeon placement absent rather than manufacturing a pose. */
     M11_GameView_Init(&view);
-    expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 0,
-                "M11 Nexus launcher handoff is blocked by the unproven LEV00 start pose");
-    expect_true(view.startedFromLauncher == 0,
-                "M11 does not mark Nexus startup as launcher-started when LEV00 is blocked");
-    expect_true(view.active == 0,
-                "M11 Nexus launcher handoff leaves view inactive when LEV00 is blocked");
-    expect_true(view.sourceKind == M11_GAME_SOURCE_BUILTIN_CATALOG,
-                "M11 Nexus launcher handoff falls back to the builtin catalog source");
-    expect_true(view.nexusEngine == NULL,
-                "M11 Nexus launcher handoff releases the Nexus engine on blocked LEV00 startup");
+    expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
+                "M11 Nexus launcher handoff reaches the verified title route");
+    expect_true(view.startedFromLauncher == 1,
+                "M11 marks the title route as launcher-started");
+    expect_true(view.active == 1 && view.sourceKind == M11_GAME_SOURCE_NEXUS_DGN,
+                "M11 retains the authenticated Nexus runtime while title is active");
+    expect_true(view.nexusEngine != NULL && view.nexusState.level_loaded == 0 &&
+                view.nexusState.party_x == -1 && view.nexusState.party_y == -1,
+                "Nexus title startup leaves the unproven dungeon pose absent");
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     (void)framebuffer_later;

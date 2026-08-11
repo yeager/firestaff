@@ -9056,13 +9056,11 @@ int nexus_v1_launcher_boot_level0_startup(
             &out_receipt->startup_receipt.host_receipt);
         return 0;
     }
-    if (nexus_v1_launcher_load_level(0) != 0) {
-        (void)nexus_v1_startup_boot_status_host_receipt(
-            NEXUS_V1_STARTUP_BOOT_STATUS_LEVEL_ERROR,
-            &out_receipt->startup_receipt.host_receipt);
-        nexus_v1_launcher_shutdown();
-        return 0;
-    }
+    /* The retail title/menu surfaces are independent of dungeon placement.
+     * Keep the verified title route available when a game-start pose has not
+     * yet been recovered; entering the dungeon remains capture-gated below.
+     * This deliberately does not install a guessed LEV00 coordinate. */
+    (void)nexus_v1_launcher_load_level(0);
     engine = nexus_v1_launcher_get_engine();
     if (!engine) {
         (void)nexus_v1_startup_boot_status_host_receipt(
@@ -9074,8 +9072,10 @@ int nexus_v1_launcher_boot_level0_startup(
     /* New selected-entry boots always start from Nexus defaults; save
      * resume applies persisted party/tick state in the M11 resume path. */
     nexus_v1_game_init(&engine->game, engine->data_dir);
-    nexus_v1_sync_dgn_runtime_pose(engine, 0, engine->game.party_x,
-                                   engine->game.party_y, engine->game.party_dir);
+    if (engine->level_loaded) {
+        nexus_v1_sync_dgn_runtime_pose(engine, 0, engine->game.party_x,
+                                       engine->game.party_y, engine->game.party_dir);
+    }
     {
         int rlowfix_size = 0;
         uint8_t *rlowfix = nexus_v1_read_file(engine, "RLOWFIX.BIN",

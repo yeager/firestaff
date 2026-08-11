@@ -216,6 +216,31 @@ const char *fs_l10n_language_name(FS_Language lang) {
 
 #include <stdlib.h>
 
+/* macOS applications commonly inherit the launcher environment instead of
+ * the user's login shell.  In particular, LC_ALL is often C.UTF-8 even when
+ * System Settings has a different preferred language. */
+#if defined(__APPLE__)
+#include <CoreFoundation/CoreFoundation.h>
+
+static FS_Language fs_l10n_detect_macos_preferred_language(void) {
+    CFArrayRef languages = CFLocaleCopyPreferredLanguages();
+    CFStringRef language;
+    char locale[64];
+    FS_Language detected = FS_LANG_EN;
+    if (!languages || CFArrayGetCount(languages) < 1) {
+        if (languages) CFRelease(languages);
+        return FS_LANG_EN;
+    }
+    language = (CFStringRef)CFArrayGetValueAtIndex(languages, 0);
+    if (language && CFStringGetCString(language, locale, sizeof(locale),
+                                       kCFStringEncodingUTF8)) {
+        detected = fs_l10n_language_from_locale(locale);
+    }
+    CFRelease(languages);
+    return detected;
+}
+#endif
+
 FS_Language fs_l10n_language_from_locale(const char *locale) {
     if (!locale || !locale[0]) return FS_LANG_EN;
     if ((locale[0] == 's' || locale[0] == 'S') &&
@@ -262,6 +287,12 @@ FS_Language fs_l10n_language_from_locale(const char *locale) {
 }
 
 FS_Language fs_l10n_detect_system_language(void) {
+#if defined(__APPLE__)
+    /* CoreFoundation is the authoritative per-user preference on macOS. Do
+     * this before environment variables: GUI launches routinely receive the
+     * C locale from their parent process. */
+    return fs_l10n_detect_macos_preferred_language();
+#else
     /* GNU/Linux LANGUAGE is a colon-separated user-preference list.  Steam
      * Game Mode may expose the UI locale there while leaving LANG at its
      * English runtime default, so honour it before LANG after the two
@@ -274,6 +305,7 @@ FS_Language fs_l10n_detect_system_language(void) {
         return fs_l10n_language_from_locale(val);
     }
     return FS_LANG_EN; /* default */
+#endif
 }
 
 /* Map UI language → asset dungeon.dat language.

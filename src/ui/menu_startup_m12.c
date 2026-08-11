@@ -8116,7 +8116,12 @@ static const char* m12_full_start_capture_label(const char* gameId) {
     return manifest ? manifest->captureLabel : "PACKAGED CAPTURE PROOF";
 }
 
-static int m12_apply_nexus_startup_package(
+#if defined(__GNUC__) || defined(__clang__)
+#define M12_UNUSED_FUNCTION __attribute__((unused))
+#else
+#define M12_UNUSED_FUNCTION
+#endif
+static int M12_UNUSED_FUNCTION m12_apply_nexus_startup_package(
     M12_StartupBootReadiness* receipt) {
     Nexus_V1_M12StartupPackageReceipt package;
     if (!receipt || !receipt->gameId ||
@@ -8191,6 +8196,7 @@ static int m12_apply_nexus_startup_package(
         receipt->expectedStepMask & ~receipt->readyStepMask;
     return 1;
 }
+#undef M12_UNUSED_FUNCTION
 
 static int m12_dm1_required_asset_match_ready(
     const M12_StartupMenuState* state,
@@ -8498,10 +8504,10 @@ int M12_StartupMenu_GetBootReadiness(
         receipt.startupStepReadyCount = receipt.startupStepCount;
     }
 
-    if (m12_apply_nexus_startup_package(&receipt)) {
-        *outReadiness = receipt;
-        return 1;
-    }
+    /* Nexus uses the same verified-data launch boundary as every other
+     * supported game. Its in-runtime launcher still owns title/menu asset
+     * admission; M12 must not manufacture a second, permanently unavailable
+     * proof gate after the scanner has admitted the selected Saturn release. */
     (void)m12_apply_dm1_hoc_startup_capture_package(state, &receipt);
 
     if (!receipt.supported) {

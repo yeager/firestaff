@@ -161,7 +161,11 @@ static void md5_body(AssetMd5Ctx *ctx, const unsigned char *block) {
 
 /* ── Inline scan cache (avoids external library dependency) ───── */
 
-#define SCAN_CACHE_MAX 16384
+/* The original fixed 16K table filled permanently on a normal multi-game
+ * library.  Keep the initial allocation modest, grow on demand, and only
+ * evict after a deliberately generous persistent ceiling. */
+#define SCAN_CACHE_INITIAL_CAPACITY 16384
+#define SCAN_CACHE_MAX 262144
 
 typedef struct {
     char     path[512];
@@ -171,8 +175,9 @@ typedef struct {
 } ScanCacheEntry_I;
 
 typedef struct {
-    ScanCacheEntry_I entries[SCAN_CACHE_MAX];
+    ScanCacheEntry_I *entries;
     int count;
+    int capacity;
     int dirty;
 } ScanCache_I;
 
@@ -209,7 +214,30 @@ static void scache_ensure_dir(void) {
 #endif
 }
 
-static void scache_init(ScanCache_I *c) { memset(c, 0, sizeof(*c)); }
+static void scache_init(ScanCache_I *c) {
+    if (!c) return;
+    free(c->entries);
+    memset(c, 0, sizeof(*c));
+}
+
+static int scache_reserve(ScanCache_I *c, int required) {
+    ScanCacheEntry_I *entries;
+    int capacity;
+    if (!c || required < 0 || required > SCAN_CACHE_MAX) return 0;
+    if (required <= c->capacity) return 1;
+    capacity = c->capacity ? c->capacity : SCAN_CACHE_INITIAL_CAPACITY;
+    while (capacity < required && capacity < SCAN_CACHE_MAX) {
+        if (capacity > SCAN_CACHE_MAX / 2) capacity = SCAN_CACHE_MAX;
+        else capacity *= 2;
+    }
+    if (capacity < required) return 0;
+    entries = (ScanCacheEntry_I *)realloc(
+        c->entries, (size_t)capacity * sizeof(*entries));
+    if (!entries) return 0;
+    c->entries = entries;
+    c->capacity = capacity;
+    return 1;
+}
 
 static int scache_load(ScanCache_I *c) {
     char p[512]; FILE *f; char line[640];
@@ -217,7 +245,8 @@ static int scache_load(ScanCache_I *c) {
     if (scache_path(p, sizeof(p)) != 0) return -1;
     f = fopen(p, "rb");
     if (!f) return -1;
-    while (c->count < SCAN_CACHE_MAX && fgets(line, sizeof(line), f)) {
+    while (fgets(line, sizeof(line), f)) {
+        if (!scache_reserve(c, c->count + 1)) break;
         ScanCacheEntry_I *e = &c->entries[c->count];
         char *t1 = strchr(line, '\t');
         if (!t1) continue;
@@ -283,13 +312,27 @@ static void scache_put(ScanCache_I *c,
             return;
         }
     }
-    if (c->count < SCAN_CACHE_MAX) {
+    if (c->count < SCAN_CACHE_MAX && scache_reserve(c, c->count + 1)) {
         ScanCacheEntry_I *e = &c->entries[c->count++];
         size_t pathLen = strlen(path);
         if (pathLen >= sizeof(e->path)) pathLen = sizeof(e->path) - 1;
         memcpy(e->path, path, pathLen);
         e->path[pathLen] = '\0';
         e->mtime = mt; e->size = sz;
+        memcpy(e->md5, md5, 33);
+        c->dirty = 1;
+    } else if (c->count > 0) {
+        /* A full cache must keep accepting current libraries.  Deterministic
+         * replacement avoids the old permanently-full behaviour without
+         * retaining a process-local timestamp that cannot survive restart. */
+        unsigned long hash = 5381UL;
+        const unsigned char *p = (const unsigned char *)path;
+        ScanCacheEntry_I *e;
+        while (*p) hash = ((hash << 5) + hash) ^ *p++;
+        e = &c->entries[hash % (unsigned long)c->count];
+        snprintf(e->path, sizeof(e->path), "%s", path);
+        e->mtime = mt;
+        e->size = sz;
         memcpy(e->md5, md5, 33);
         c->dirty = 1;
     }

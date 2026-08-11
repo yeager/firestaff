@@ -14061,6 +14061,10 @@ if(BUILD_TESTING)
             src/shared/firestaff_l10n.c)
         target_include_directories(test_firestaff_l10n PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        if(APPLE)
+            target_link_libraries(test_firestaff_l10n PRIVATE
+                "-framework CoreFoundation")
+        endif()
         if(NOT MSVC)
             target_compile_options(test_firestaff_l10n PRIVATE -Wall -Wextra -Werror)
         endif()
