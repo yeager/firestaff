@@ -53,6 +53,5 @@
 +}
  static int64 run_until_time;	// 32.32
  static int32 next_scsp_time;
-@@ -539,1 +539,2 @@
- SCSP.RW<T, false>(A & 0x1FFFFF, ret);
+@@ -541,0 +541,1 @@
 + FirestaffTraceScspRead(A, sizeof(T), (uint32)ret);
