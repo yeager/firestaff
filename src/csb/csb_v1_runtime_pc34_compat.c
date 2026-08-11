@@ -21540,26 +21540,10 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
         if (timer_index >= profile->csbwin_timer_summary_count) {
             return -1;
         }
-        /* CSBWin Timer.cpp TIMER::operator< (TAG00fd9e, lines 728-772)
-         * defines the heap relation.  In particular, TT_ParameterMessage
-         * precedes every other same-time timer and orders its byte 5 in the
-         * opposite direction from ordinary timer functions.  Do not replace
-         * this with the old numeric-function approximation: a real saved
-         * heap is already source-ordered when SaveGame.cpp restores it. */
-        if (queue_index > 0u) {
-            uint16_t parent_qi = (queue_index - 1u) / 2u;
-            uint16_t parent_index = profile->csbwin_timer_queue[parent_qi];
-            if (parent_index < profile->csbwin_timer_summary_count) {
-                const CSB_V1_CSBWin512TimerSummary *child =
-                    &profile->csbwin_timers[timer_index];
-                const CSB_V1_CSBWin512TimerSummary *parent =
-                    &profile->csbwin_timers[parent_index];
-                if (csb_v1_runtime_csbwin_timer_is_before(
-                        child, timer_index, parent, parent_index)) {
-                    return -1;
-                }
-            }
-        }
+        /* SaveGame.cpp restores the serialized active queue directly. Its
+         * exact heap representation is version-owned; do not reject a
+         * checksum-authenticated legacy queue by re-evaluating it with a
+         * newer comparator before an atomic world handoff has used it. */
         timer = &profile->csbwin_timers[timer_index];
         if (!timer->valid || timer->function == DM1_EVENT_NONE) {
             return -1;

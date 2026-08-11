@@ -69,6 +69,7 @@ static void test_staged_real_csbwin_save(void)
     CSB_V1_CSBWinLegacyResumePrepare tail_resume;
     CSB_V1_CSBWinSaveDiscoveryResult discovery;
     CSB_V1_RuntimeProfile runtime;
+    CSB_V1_RuntimeProfile timer_probe;
 
     if (!path || path[0] == '\0') {
         printf("SKIP: FIRESTAFF_CSBWIN_REAL_SAVE is not staged\n");
@@ -154,6 +155,13 @@ static void test_staged_real_csbwin_save(void)
           "legacy CSBGAME2 tail prepares a complete private resume transaction");
     csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(tail_candidate);
     tail_candidate = NULL;
+    csb_v1_runtime_init(&timer_probe, NULL);
+    CHECK(csb_v1_runtime_apply_csbwin_body_runtime_summaries(
+              &timer_probe, &body) == 0 &&
+          csb_v1_runtime_materialize_csbwin_item16_summaries(&timer_probe) >= 0 &&
+          csb_v1_runtime_materialize_csbwin_timer_queue(&timer_probe) >= 0,
+          "legacy CSBGAME2 timer pool materializes without a host re-sort");
+    csb_v1_runtime_cleanup(&timer_probe);
     free(bytes);
 
     /* The tail prepares privately but cannot be published while the live

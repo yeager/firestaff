@@ -4057,9 +4057,10 @@ that its exact runtime path is not already source-locked and tested.
     full legacy tail can be prepared privately as one verified resume
     candidate: `DUNGEONDATINDEX`, DB0–DB15, saved party pose, ITEM16 owners
     and the raw 10-byte TIMER/queue receipts agree. It is intentionally still
-    rejected before runtime publication: the live timer owner has not yet
-    adopted the source 10-byte TIMER representation, so publishing the world
-    would split a saved world from its event queue.
+    rejected before runtime publication: the live owner now materializes its
+    source 10-byte TIMER pool without re-sorting the serialized queue, but
+    the atomic operation that must also replace the saved DB0–DB15 world is
+    still missing. Publishing only the body/timers would split the save.
     2026-07-29: the export now also writes the documented, already-decoded
     champion fields in each 800-byte original record (identity, pose/action,
     vital stats, skills/experience, slots, load and shield), re-encrypting

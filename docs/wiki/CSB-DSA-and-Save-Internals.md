@@ -142,9 +142,11 @@ The checked CSBWin source-tree `csbgame2.dat` is a real legacy save with a
 10-byte `TIMER` representation. Firestaff verifies its GAMEBLOCK body and
 the complete saved-dungeon tail, then prepares a private candidate containing
 the saved pose, DB0–DB15 layout, ITEM16 ownership and raw TIMER/queue
-receipts. It does **not** publish that candidate: the live event queue has no
-source-faithful 10-byte TIMER owner. Keeping this rejection prevents a
-restored world from being paired with translated or reconstructed events.
+receipts. The live queue materializes the original 10-byte TIMER pool in its
+saved order; it does not re-sort it with a host comparator. It does **not**
+publish the candidate until the same transaction can replace the saved world.
+Keeping this boundary prevents a restored body/timer queue from being paired
+with a different dungeon.
 
 ## Viewport Test Coverage (47 files)
 
