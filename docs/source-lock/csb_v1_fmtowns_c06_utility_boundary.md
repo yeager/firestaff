@@ -37,7 +37,7 @@ utility flow or create replacement data:
 | Route | Missing original owner(s) | Why it remains closed |
 |---|---|---|
 | Make New Adventure | `CEDT006.C` F7086/F7090 | The separate new-adventure state transition has not been bound to F31 data. |
-| Save Champions dialog and destination | `CEDT001.C` F7000/F7001; F31 `#CHAMP_NAME#` file-operation mapping | F7001 asks whether to save the whole game, selected champion or cancel; F7000 then creates the selected portrait through the platform file-operation mapping. Rewriting all existing catalogue records was not source behavior, so the product route is disabled until this mapping is recovered. |
+| Save Champions dialog and destination | `CEDT001.C` F7000/F7001; `CEDTDATA.C G2297_DataFiles` | F7001 asks whether to save the whole game, selected champion or cancel. F7000's selected-portrait branch resolves the exact `2:\\#CHAMP_NAME#.CMP` template through the F31 file-operation layer. Drive `2:` is a dynamic portrait-save medium, not evidence that the scanned `PORTRAIT` directory is writable; the product route is disabled until that mount mapping is recovered. |
 | Name and title editing | `CEDT006.C` F7027/F7028/F7041 | Cursor timing, keyboard input and text commit remain unbound. |
 | F31J editor | `CEDT030.C` F7341 | The native Shift-JIS glyph consumer is not recovered; drawing host text would fabricate the screen. |
 
