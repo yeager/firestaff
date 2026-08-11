@@ -13982,3 +13982,16 @@ and production source-combat tests.
   1497/32 bytes. No original asset was committed.
 - 🔒 This is not a graphics decoder or rendered UI. ReDMCSB's expansion path
   and original-frame capture are still required for any graphical parity.
+
+# CSB Hint Oracle: original HCSB.DAT font raster is owned (2026-08-12)
+
+- ✅ `CSB_HintOracleGraphicsSurface` now decodes and retains HCSB.DAT segment
+  2 beside the Oracle bitmap and palette. The opt-in real-data CTest verifies
+  the original ST 2.0/2.1 raster is 256×27 indexed pixels, sourced from the
+  same hash-admitted archive (`708e113c869ab922633e885aa72a3c77`).
+- ✅ The dimensions and glyph source are locked to ReDMCSB `HINTTEXT.C`:
+  8×9 glyph rectangles are selected from a 256-pixel-wide source raster.
+  No host font, generated glyph bitmap or game-data payload was added.
+- 🔒 This does not yet draw a Hint Oracle page. Segment-0 control data,
+  original text layout, M11/M12 routing and original-frame pixel comparison
+  remain capture/source-consumer work.

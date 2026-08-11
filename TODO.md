@@ -11,9 +11,13 @@
   uses `HINT001.C`'s exact Atari RGB3-to-RGB4 palette conversion. The owned
   `CSB_HintOracleGraphicsSurface` therefore exposes the original 320×200
   indexed pixels and 16-colour palette without generating replacement art.
-- 🔒 Graphical Hint Oracle/M11/M12 routing, the original integer/font
-  consumers and original-frame pixel parity remain open. Do not treat the
-  decoded resource surface as a rendered Utility Disk screen.
+- ✅ Segment 2 is now decoded through that same source-owned IMG2 path as the
+  original ST 2.0/2.1 256×27 indexed font raster. `HINTTEXT.C` selects its
+  8×9 glyphs from this exact raster; no host font or synthetic glyph sheet is
+  admitted.
+- 🔒 Graphical Hint Oracle/M11/M12 routing, segment 0's integer consumer,
+  original text/page layout and original-frame pixel parity remain open. Do
+  not treat the decoded resource surfaces as a rendered Utility Disk screen.
 
 # Nexus: bind verified SH-2 transform to an authenticated Saturn consumer (2026-08-11)
 
