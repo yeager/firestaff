@@ -613,6 +613,18 @@ static void test_optional_real_sal_corpus_profile(void) {
               eng.sal_decoded_samples[4] != NULL &&
               eng.sal_decoded_sample_count[4] > 0,
               "SAL DataID 0 memory-backed tones materialize as bounded PCM");
+        if (level == 0) {
+            CHECK(eng.sal_decoded_sample_count[4] == 2710 &&
+                  eng.sal_decoded_samples[4][0] == (int16_t)0xfff1 &&
+                  eng.sal_decoded_samples[4][1] == (int16_t)0xffc6,
+                  "SAL 16-bit source keeps retail big-endian sample order");
+            CHECK(eng.sal_decoded_sample_count[12] == 1463,
+                  "SAL 8-bit source keeps its bounded sample count");
+            CHECK(eng.sal_decoded_samples[12] != NULL &&
+                  eng.sal_decoded_samples[12][0] == (int16_t)0x1200 &&
+                  eng.sal_decoded_samples[12][1] == (int16_t)0x1200,
+                  "SAL 8-bit source expands signed samples deterministically");
+        }
         if (receipt.sal_package_profile_supported) {
             profiled++;
             CHECK(receipt.sal_tone_bank_directory_supported == 1 &&
