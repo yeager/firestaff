@@ -459,7 +459,10 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
 - [~] Retain the authentic US English Mac `Music`, `General.sounds`, and
   `Weapon.sounds` Resource Manager forks in the boot profile. The retail image
   verifies their exact fork sizes and presence; MIDI/sound-resource decoding,
-  timing, and playback ownership remain open. Bind the Japanese
+  timing, and playback ownership remain open. A bounded format-1 `snd ` parser
+  now enumerates the authentic 2/19/12 resource sets and exposes the exact
+  sample range, rate, loop fields, and resource ID without copying the bytes.
+  Bind the Japanese
   CD-audio route separately. DOS HMP, FM Towns CD.DAT, and Amiga MOD paths are
   not fallbacks.
 - [x] Add the source-locked English Macintosh keyboard/menu table for both
