@@ -1684,39 +1684,56 @@ static int dm1_v1_melee_champion_is_lucky_f0308_pc34(
     int luckMin;
     int luckMax;
     int luckNew;
-    int lucky = 0;
+    int isLucky = 0;
     int rngCalls = 0;
     if (outRngCalls) *outRngCalls = 0;
     if (!champ || !rng) return 0;
 
+    /* Source (CHAMPION.C F0308 line 1140):
+     *   if (M005_RANDOM(2) && (M002_RANDOM(100) > Percentage)) return TRUE;
+     * Only that combined condition returns early WITHOUT touching luck.
+     * When M005 hits but the percentage comparison fails, control falls
+     * through to the luck branch below (which always rewrites Luck).  The
+     * shared combat_champion_is_lucky mirrors this; keep this local F0231
+     * copy structurally identical so their outcomes match seed-for-seed. */
     randShort = (unsigned int)F0732_COMBAT_RngRandom_Compat(rng, 2);
     rngCalls++;
     if (randShort != 0) {
         randPct = (unsigned int)F0732_COMBAT_RngRandom_Compat(rng, 100);
         rngCalls++;
-        lucky = randPct > (unsigned int)percentage;
-    } else {
-        luckCur = champ->statisticLuck;
-        luckMin = champ->statisticLuckMin;
-        luckMax = champ->statisticLuckMax;
-        if (luckCur > 0) {
-            unsigned int r =
-                (unsigned int)F0732_COMBAT_RngRandom_Compat(rng, luckCur << 1);
-            rngCalls++;
-            lucky = r > (unsigned int)percentage;
+        if (randPct > (unsigned int)percentage) {
+            if (outRngCalls) *outRngCalls = rngCalls;
+            return 1;  /* early TRUE; luck statistic is left untouched */
         }
-        luckNew = lucky ? luckCur - 2 : luckCur + 2;
-        if (luckNew > luckMax) luckNew = luckMax;
-        if (luckNew < luckMin) luckNew = luckMin;
-        if (luckNew < 0) luckNew = 0;
-        champ->statisticLuck = luckNew;
     }
+    luckCur = champ->statisticLuck;
+    luckMin = champ->statisticLuckMin;
+    luckMax = champ->statisticLuckMax;
+    if (luckCur <= 0) {
+        /* PC/I34E MEDIA722: Luck <= 0 forces non-lucky without draw. */
+        isLucky = 0;
+    } else {
+        unsigned int r = (unsigned int)F0732_COMBAT_RngRandom_Compat(
+            rng, (unsigned char)luckCur << 1);
+        rngCalls++;
+        isLucky = r > (unsigned int)percentage;
+    }
+    /* CHAMPION.C F0308:1138 rewrites Luck via F0026 with (minimum, luckNew,
+     * maximum).  When maximum is 0 (or otherwise <= new) the F0026 clamp
+     * still applies and the result becomes 0.  Do not short-circuit the
+     * clamp on luckMax==0 — that leaves the illegal +2 in place and breaks
+     * the F0308 "bounds luck to zero maximum" contract. */
+    luckNew = isLucky ? luckCur - 2 : luckCur + 2;
+    if (luckNew > luckMax) luckNew = luckMax;
+    if (luckNew < luckMin) luckNew = luckMin;
+    if (luckNew < 0) luckNew = 0;
+    champ->statisticLuck = luckNew;
     if (outRngCalls) *outRngCalls = rngCalls;
 
     /* ReDMCSB: CHAMPION.C F0308 lines 1120-1155 uses the same two-stage
      * random/luck mutation path that F0231 calls after failed dex/random hit,
      * then F0026-bounds current luck to [minimum, maximum]. */
-    return lucky;
+    return isLucky;
 }
 
 int dm1_v1_melee_timeline_cleanup_plan_f0190_pc34(
