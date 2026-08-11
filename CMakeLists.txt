@@ -57367,6 +57367,19 @@ add_executable(test_dm1_v1_dos_pc34_real_data_manifest
 target_include_directories(test_dm1_v1_dos_pc34_real_data_manifest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm1_v1_dos_pc34_real_data_manifest COMMAND test_dm1_v1_dos_pc34_real_data_manifest)
 
+# Native macOS host smoke: unlike the asset-free CI matrix this opt-in gate
+# runs the production M11 boot path against the user's authenticated DM1 data.
+# The script is skip-safe when no licensed corpus is installed and never
+# extracts or rewrites original game files.
+if(APPLE)
+    add_test(NAME dm1_macos_real_data_boot
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/scripts/test_dm1_macos_real_data_boot.sh
+                $<TARGET_FILE:firestaff>)
+    set_tests_properties(dm1_macos_real_data_boot PROPERTIES
+        LABELS "tier1;dm1;macos;real-data;boot;skip-safe"
+        TIMEOUT 90)
+endif()
+
 add_executable(test_dm1_v1_dos_pc34_an_container
     tests/test_dm1_v1_dos_pc34_an_container.c
     src/dm1/dm1_v1_dos_pc34_an_container.c

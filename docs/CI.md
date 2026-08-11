@@ -16,6 +16,12 @@ pushes to `main` and on pull requests.
   on Ubuntu, macOS and Windows;
 - deterministic world-hash comparison across the build platforms.
 
+On macOS, the local CTest inventory also includes
+`dm1_macos_real_data_boot`. It runs the production DM1 M11 boot probe against
+the authenticated corpus under `FIRESTAFF_DM1_MAC_DATA`, `FIRESTAFF_DATA`, or
+`~/.firestaff/data`. It is skip-safe when no licensed data is installed and
+does not extract or rewrite original files.
+
 The workflow uses a concurrency group for `main` and cancels an older run when
 a newer commit arrives. That is expected: always inspect the newest run for
 the current `main` SHA before treating a cancelled run as a failure.
