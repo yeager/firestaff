@@ -7,7 +7,7 @@ testsvit och externa originalmedier. En grön parser eller en syntetisk fixtur
 | Spel | Bevarat och verifierat | Öppen gräns |
 |---|---|---|
 | DM1 | PC DOS 3.4 V1:s start, inmatning, vy, HUD, strid och sparande; separata Atari ST- och FM Towns-formatvägar | fler parvisa original-/Firestaff-fångster och granskade V2-material |
-| CSB | Amiga, Atari ST och FM Towns har separata indata- och startvägar. X68000 JP-HDM läses via Human68k FAT12: `GRAPHICS.DAT` (732 IMG1-poster), `DUNGEON.DAT` (två kartor) och `ENTER.SNG` (MIDI) har realmedierekvitton | X68000-startprofil, skyddad originalklassning, DSA-/save-korpus och bredare HUD-/vyparitet |
+| CSB | Amiga, Atari ST och FM Towns har separata indata- och startvägar. X68000 JP-HDM läses via Human68k FAT12: `GRAPHICS.DAT` (732 IMG1-poster), `DUNGEON.DAT` (två kartor), `ENTER.SNG` (MIDI), `AUTOEXEC.BAT` och `CHAOS_ST.X` har samlade realmedierekvitton | X68000-startprofil, skyddad originalklassning, DSA-/save-korpus och bredare HUD-/vyparitet |
 | DM2 | GDAT-, G1- och ljudgränser, startprofil och avgränsade V1/V2-rutter | full SKSAVE-ägarskap och sammanhängande originaldatakörning |
 | Nexus | Saturn DGN/DMDF, MNS, PRS3 och begränsade SAL/MAP-rekvitton | synlig materialsemantik, händelse-/ljuduppspelning och spelbar Saturn-rutt |
 | Theron's Quest | US/JP Track 02-identitet, sektorläsning, nivåramar och autentiserade fångstkedjor | spelägd Track 02-handoff, SRM-innehåll, palett-/bitmapägande och positiv spelbar fångst |
@@ -31,12 +31,13 @@ SHA-256 `e912addf1881b6c2b3cde4207507061a43459748082c75953cbc3c305fdf24e1`.
 `M11_AssetLoader_InitCsbX68kFromHdm` extraherar `GRAPHICS.DAT` till en
 X68000-märkt cache utan att ge den Amiga-identitet. Testet kör både en
 FAT12-fixtur och den externa avbilden; post 13 dekodas som 96 × 41 pixlar.
-`csb_v1_x68k_hdm_source_media_receipt` knyter också samma HDM till
-`DUNGEON.DAT` och `ENTER.SNG`: den verifierade avbilden ger två kartor,
-startpositionen 0/9/0/riktning 2 samt 9 MIDI-spår med 3 205 händelser.
-Kvittot behåller X68000-identiteten även när grafikformatet delas med Amiga,
-och spärrar fortfarande native start. Detta är en verifierad
-media-till-källindata-handoff, inte en start- eller emuleringsrutt.
+`csb_v1_x68k_hdm_source_media_receipt` knyter samma HDM till `DUNGEON.DAT`,
+`ENTER.SNG`, `AUTOEXEC.BAT` och `CHAOS_ST.X`: den verifierade avbilden ger två
+kartor, startpositionen 0/9/0/riktning 2, 9 MIDI-spår med 3 205 händelser,
+kommandoföljden `CK`, `VIDSET`, `CHAOS_STRIKES_BACK` samt Human68k-programmets
+64-bytehuvud och textgräns. Kvittot behåller X68000-identiteten även när
+grafikformatet delas med Amiga och spärrar fortfarande native start. Detta är
+en verifierad media-till-källindata-handoff, inte en start- eller emuleringsrutt.
 
 Rootkatalogen är nu också läsbar i originalordning. Den verifierade avbilden
 har 27 vanliga rootfiler, där `CHAOS_ST.X`, `TITL.DAT`, `ANIM.DAT`,

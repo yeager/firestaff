@@ -53606,6 +53606,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_x68k_source_media.c")
         src/csb/csb_v1_x68k_graphics_handoff.c
         src/csb/csb_v1_x68k_dungeon_handoff.c
         src/csb/csb_v1_x68k_enter_sng.c
+        src/csb/csb_v1_x68k_autoexec.c
+        src/csb/csb_v1_x68k_program.c
         src/csb/csb_v1_amiga_graphics_dat.c
         src/csb/csb_v1_dungeon_loader_pc34_compat.c
         src/dm1/dm1_v1_legacy_graphics_dat.c

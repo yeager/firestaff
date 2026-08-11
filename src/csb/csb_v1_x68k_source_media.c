@@ -34,6 +34,10 @@ int csb_v1_x68k_hdm_source_media_receipt(
     if (!csb_v1_x68k_enter_sng_probe_hdm(hdm, hdm_size,
                                           &receipt.entrance_music))
         return CSB_V1_X68K_SOURCE_MEDIA_ERR_ENTRANCE_MUSIC;
+    if (!csb_v1_x68k_autoexec_receipt(hdm, hdm_size, &receipt.autoexec))
+        return CSB_V1_X68K_SOURCE_MEDIA_ERR_AUTOEXEC;
+    if (!csb_v1_x68k_chaos_st_receipt(hdm, hdm_size, &receipt.program))
+        return CSB_V1_X68K_SOURCE_MEDIA_ERR_PROGRAM;
     if (firestaff_x68k_media_receipt_sha256_hex(
             hdm, hdm_size, receipt.hdm_sha256, sizeof(receipt.hdm_sha256)) != 0)
         return CSB_V1_X68K_SOURCE_MEDIA_ERR_HASH;

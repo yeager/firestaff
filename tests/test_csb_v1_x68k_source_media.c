@@ -51,6 +51,11 @@ int main(void) {
             receipt.initial_party_y != 0 || receipt.initial_party_direction != 2 ||
             receipt.entrance_music.track_count != 9u ||
             receipt.entrance_music.event_count != 3205u ||
+            receipt.autoexec.command_count != 3u ||
+            strcmp(receipt.autoexec.commands[0], "CK") != 0 ||
+            strcmp(receipt.autoexec.commands[1], "VIDSET") != 0 ||
+            strcmp(receipt.autoexec.commands[2], "CHAOS_STRIKES_BACK") != 0 ||
+            receipt.program.text_bytes != 9020u || receipt.program.entry_offset != 64u ||
             !receipt.x68000_identity_bound || !receipt.shared_graphics_layout_only ||
             receipt.authenticity_claimed || receipt.native_runtime_launch_permitted) {
             free(hdm);
