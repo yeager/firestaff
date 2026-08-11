@@ -5261,3 +5261,10 @@ record boundary. Dynamic RNG/AI/T700/T900 behavior remains capture-gated.
 - ⏳ Nästa externa session måste nå ett giltigt `$B0E5` regular-spawn-entry
   (`A=0..3`) och binda det till `$4644/$4667`, `$C96B/$CC4C`, RNG-retur och
   ett efterföljande monsterrecord i samma körning.
+# Theron: complete same-session spawn semantic capture
+
+- 🔒 Capture a valid `$B0E5` regular-spawn entry (`A=0..3`) on external disk
+  and join `$4644/$4667`, RNG return, target write and live creature record.
+- 🔒 Only then enable runtime AI, attack/damage, generator timing, T700 and
+  T900 semantics; keep the new witness-to-creature bridge fail-closed until
+  that evidence exists.

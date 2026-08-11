@@ -1,5 +1,17 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-11 — authenticated witness-to-creature bridge remains capture-gated
+
+`theron_v1_creature_apply_spawn_consumer_witness()` now connects a complete
+`$B0E5-$B1EB` register witness to an already admitted live creature, but only
+when the creature carries the same authenticated regular-spawn category. It
+copies the witness receipt's HP, attack and defense and calls no host RNG.
+Static category-4 records, category-unknown creatures, incomplete witnesses
+and unauthenticated captures remain rejected. This is an integration boundary,
+not proof that a current capture contains the missing spawn event; the runtime
+semantic gate stays closed until the real same-session RNG return, target write
+and creature consumer are joined.
+
 ## 2026-08-11 — authenticated save replay observes RNG edges but no spawn
 
 The external-disk US Track 02 replay

@@ -1,6 +1,7 @@
 #include "theron_v1_combat.h"
 #include "theron_v1_mechanics.h"
 #include "theron_v1_startup_runtime_entry.h"
+#include "theron_v1_track02_creature_spawn.h"
 #include "theron_v1_track02_thing_data.h"
 #include "theron_v1_world.h"
 
@@ -166,6 +167,64 @@ int main(void) {
                                    1, 0, 1, 1) > 0 &&
               world.source_monster_count == 1 && world.creature_count == 2,
           "source group publishes without entering the random generator path");
+    creature = theron_v1_creature_at(&world, 0, 1, 1);
+    {
+        Theron_SpawnConsumerWitness witness;
+        Theron_Track02SpawnSource source;
+        Theron_V1_Creature *witness_creature = creature;
+        memset(&source, 0, sizeof(source));
+        source.authenticated = 1;
+        source.variant = THERON_V1_TRACK02_VARIANT_US_BIN;
+        source.zones[0].category = 3u;
+        /* The source category must be present before admission; this is not
+         * a host-side category assignment. */
+        memset(&world, 0, sizeof(world));
+        world.level_loaded[0][0] = 1;
+        world.levels[0][0].source_header_verified = 1;
+        CHECK(theron_v1_world_bind_track02_spawn_source(
+                  &world, &source, THERON_V1_TRACK02_VARIANT_US_BIN) == 1 &&
+                  theron_v1_world_bind_track02_monster(
+                      &world, 1, 0, 0x1201u, 0x0043u, 1, 1, 0u, 0u,
+                      health, 1u, 0u, 0x0020u, 0x1200u, 0) == 0 &&
+                  theron_v1_creature_spawn(
+                      &world, THERON_CREATURE_AKUTUBA, 1, 0, 1, 1) > 0,
+              "authenticated spawn category reaches live creature admission");
+        witness_creature = theron_v1_creature_at(&world, 0, 1, 1);
+        memset(&witness, 0, sizeof(witness));
+        witness.authenticated_execution = 1;
+        witness.category = 3u;
+        witness.b6 = 5u;
+        witness.b8_before_branch = 100u;
+        witness.helper_b8 = 100u;
+        witness.hp_accumulator = 200u;
+        witness.attack_accumulator = 10u;
+        witness.defense_accumulator = 20u;
+        witness.ld23a_b8 = 5u;
+        witness.ld23a_b4 = 7u;
+        CHECK(witness_creature != NULL &&
+                  theron_v1_creature_apply_spawn_consumer_witness(
+                      &world, witness_creature->id, &witness) == 0 &&
+                  witness_creature->hp == 350 &&
+                  witness_creature->attack == 15 &&
+                  witness_creature->defense == 27,
+              "authenticated spawn witness publishes only its source-derived stats");
+        witness.authenticated_execution = 0;
+        CHECK(theron_v1_creature_apply_spawn_consumer_witness(
+                  &world, witness_creature->id, &witness) == -1,
+              "unauthenticated spawn witness cannot mutate live creature stats");
+        (void)witness_creature;
+    }
+    /* Recreate the fixture world for the remaining fail-closed combat checks. */
+    memset(&world, 0, sizeof(world));
+    world.level_loaded[0][0] = 1;
+    world.levels[0][0].source_header_verified = 1;
+    CHECK(theron_v1_world_bind_track02_monster(
+              &world, 1, 0, 0x1201u, 0x0043u, 1, 1, 0u, 0u,
+              health, 1u, 0u, 0x0020u, 0x1200u, 0) == 0,
+          "remaining combat fixture source monster binds");
+    CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_AKUTUBA,
+                                   1, 0, 1, 1) > 0,
+          "remaining combat fixture source group publishes");
     creature = theron_v1_creature_at(&world, 0, 1, 1);
     CHECK(theron_v1_champion_attack(&world, 0, 1) == -1,
           "combat behavior stays blocked without the source consumer");

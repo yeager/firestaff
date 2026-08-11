@@ -24,6 +24,11 @@
 
 #include "theron_v1_champions.h"
 
+/* Defined by theron_v1_track02_creature_spawn.h.  Keeping this as a tagged
+ * forward declaration avoids making the combat API depend on the raw-data
+ * loader include order. */
+typedef struct Theron_SpawnConsumerWitness Theron_SpawnConsumerWitness;
+
 /* Forward declaration: Theron_V1_World is defined in theron_v1_world.h,
  * which includes this header for the creature/combat/sound types.
  * The typedef is skipped when theron_v1_world.h has already defined it. */
@@ -204,6 +209,14 @@ Theron_V1_Creature *theron_v1_creature_by_id(Theron_V1_World *world, int id);
 
 int  theron_v1_creature_count(const Theron_V1_World *world,
                                int dungeon_id, int level);
+
+/* Publish only a complete, authenticated $B0E5-$B1EB witness into a live
+ * creature whose source regular-spawn category matches the witness.  This
+ * does not call RNG and rejects static/category-unknown creatures. */
+int theron_v1_creature_apply_spawn_consumer_witness(
+    Theron_V1_World *world,
+    int creature_id,
+    const Theron_SpawnConsumerWitness *witness);
 
 /* ── Champion attack ─────────────────────────────────────────────── */
 int theron_v1_champion_attack(Theron_V1_World *world,

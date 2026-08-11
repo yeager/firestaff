@@ -13790,3 +13790,13 @@ and production source-combat tests.
   `world_load_dungeon_text()` publicerar därför 0 strängar. Detta är en
   kvarvarande textconsumer-gate, inte ett godkännande av rådiagnostik som
   speltext.
+# Theron: authenticated spawn witness reaches live creature boundary (2026-08-11)
+
+- ✅ Added a source-bound API that applies a complete `$B0E5-$B1EB` witness to
+  a live creature only when its authenticated regular-spawn category matches.
+- ✅ HP, attack and defense come exclusively from the witness receipt; host RNG,
+  static category guesses, incomplete witnesses and unknown categories reject.
+- ✅ Regression coverage passes together with real US/JP Track 02 object data,
+  creature-source admission, and Theron desktop input tests.
+- 🔒 This does not claim a positive runtime capture; the real RNG return,
+  target write and creature-consumer join remain required for full semantics.

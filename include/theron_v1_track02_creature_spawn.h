@@ -78,7 +78,7 @@ typedef struct {
  * ReDMCSB has no Theron's Quest source tree.  The byte-backed source lock is
  * docs/source-lock/theron-disassembly/theron-us-spawn-consumer.asm.
  */
-typedef struct {
+struct Theron_SpawnConsumerWitness {
     int authenticated_execution;
     uint8_t category;
     uint8_t b0;
@@ -96,7 +96,7 @@ typedef struct {
     uint16_t hp_accumulator;
     uint16_t attack_accumulator;
     uint16_t defense_accumulator;
-} Theron_SpawnConsumerWitness;
+};
 
 typedef struct {
     int valid;

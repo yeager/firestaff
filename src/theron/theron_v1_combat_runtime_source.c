@@ -271,6 +271,39 @@ int theron_v1_creature_count(const Theron_V1_World *world,
     return count;
 }
 
+int theron_v1_creature_apply_spawn_consumer_witness(
+    Theron_V1_World *world,
+    int creature_id,
+    const Theron_SpawnConsumerWitness *witness) {
+    Theron_V1_Creature *creature;
+    Theron_SpawnConsumerReceipt receipt;
+
+    /* The witness is the only permitted source for these fields.  In
+     * particular, do not accept a host seed or the reconstructed category
+     * formula here.  Source: THQUEST.ASM LB0E5-LB1EB. */
+    if (!world || !witness || !witness->authenticated_execution ||
+        witness->category >= THERON_CREATURE_SPAWN_CATEGORY_COUNT) {
+        return -1;
+    }
+    creature = theron_v1_creature_by_id(world, creature_id);
+    if (!creature || !(creature->flags & THERON_CF_ACTIVE) ||
+        creature->source_spawn_category != witness->category) {
+        return -1;
+    }
+    if (!theron_v1_track02_apply_spawn_consumer_witness(witness, &receipt) ||
+        !receipt.valid || receipt.hp_accumulator == 0u ||
+        receipt.hp_accumulator > THERON_CREATURE_HP_CAP ||
+        receipt.attack_accumulator > 0x7fffu ||
+        receipt.defense_accumulator > 0x7fffu) {
+        return -1;
+    }
+    creature->hp = (int)receipt.hp_accumulator;
+    creature->max_hp = creature->hp;
+    creature->attack = (int)receipt.attack_accumulator;
+    creature->defense = (int)receipt.defense_accumulator;
+    return 0;
+}
+
 int theron_v1_champion_attack(Theron_V1_World *world,
                               int attacking_slot, int target_creature_id) {
     (void)world; (void)attacking_slot; (void)target_creature_id; return -1;
