@@ -2462,6 +2462,7 @@ int csb_v1_fmtowns_utility_portrait_catalog_open(
     }
 #if defined(_WIN32)
     {
+        int written;
         WIN32_FIND_DATAA data;
         char pattern[sizeof(out_catalog->source_directory) + 8u];
         HANDLE handle;
@@ -2768,6 +2769,69 @@ static int csb_v1_fmtowns_utility_portrait_medium_path(
         !FSP_ParentDir(root, sizeof(root), root)) return 0;
     return FSP_JoinPath(out, out_size, root, "portraits");
 #endif
+}
+
+int csb_v1_fmtowns_utility_portrait_medium_catalog_open(
+    const CSB_V1_FmtownsUtilitySaveMappingReceipt *mapping,
+    CSB_V1_FmtownsSwitchLanguage language,
+    CSB_V1_FmtownsUtilityPortraitCatalog *out_catalog)
+{
+    if (!out_catalog) return 0;
+    memset(out_catalog, 0, sizeof(*out_catalog));
+    if (!mapping || !mapping->valid ||
+        strcmp(mapping->template_bytes, "2:\\#CHAMP_NAME#.CMP") != 0 ||
+        (language != CSB_FMTOWNS_SWITCH_ENGLISH &&
+         language != CSB_FMTOWNS_SWITCH_JAPANESE) ||
+        !csb_v1_fmtowns_utility_portrait_medium_path(
+            out_catalog->source_directory,
+            sizeof(out_catalog->source_directory)) ||
+        !FSP_CreateDirectoryRecursive(out_catalog->source_directory)) return 0;
+#if defined(_WIN32)
+    {
+        int written;
+        WIN32_FIND_DATAA data;
+        char pattern[sizeof(out_catalog->source_directory) + 8u];
+        HANDLE handle;
+        written = snprintf(pattern, sizeof(pattern), "%s\\*.CMP",
+                           out_catalog->source_directory);
+        if (written < 0 || (size_t)written >= sizeof(pattern)) return 0;
+        handle = FindFirstFileA(pattern, &data);
+        if (handle != INVALID_HANDLE_VALUE) {
+            do {
+                if ((data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0u &&
+                    !csb_v1_fmtowns_game_portrait_catalog_add(out_catalog,
+                                                               data.cFileName)) {
+                    FindClose(handle);
+                    return 0;
+                }
+            } while (FindNextFileA(handle, &data) != 0);
+            FindClose(handle);
+        }
+    }
+#else
+    {
+        DIR *directory = opendir(out_catalog->source_directory);
+        struct dirent *entry;
+        if (!directory) return 0;
+        while ((entry = readdir(directory)) != NULL) {
+            if (!csb_v1_fmtowns_game_portrait_catalog_add(out_catalog,
+                                                           entry->d_name)) {
+                closedir(directory);
+                return 0;
+            }
+        }
+        closedir(directory);
+    }
+#endif
+    qsort(out_catalog->entries, out_catalog->entry_count,
+          sizeof(out_catalog->entries[0]),
+          csb_v1_fmtowns_game_portrait_catalog_entry_compare);
+    out_catalog->valid = 1;
+    out_catalog->language = language;
+    out_catalog->source_evidence =
+        "ReDMCSB CEDT008.C F7083/F7084 NEW DISK; CEDT001.C F7000; "
+        "verified M747 2:\\#CHAMP_NAME#.CMP medium";
+    return 1;
 }
 
 int csb_v1_fmtowns_utility_save_selected_portrait(

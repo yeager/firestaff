@@ -273,7 +273,8 @@ populated dungeon states.
   `2:\#CHAMP_NAME#.CMP` mapping as a source receipt; `F7000` writes only the
   selected champion through that mapping to `.firestaff/portraits` on
   macOS/Linux and `INSTALLDIR\\portraits` on Windows; it never rewrites the
-  scanned CD `PORTRAIT/*.CMP` catalogue. The `GAME` choice remains blocked
+  scanned CD `PORTRAIT/*.CMP` catalogue. C06 `NEW DISK` now reopens that same
+  medium through the native CMP admission path. The `GAME` choice remains blocked
   until the distinct F31 `F7052_SaveGame`/C05 transaction is recovered.
 
 - **FM-TOWNS-C06-LOAD-001 — `F7002_ReadCMP` is now an authenticated import

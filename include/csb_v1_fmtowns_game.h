@@ -504,6 +504,15 @@ int csb_v1_fmtowns_utility_portrait_catalog_open(
     CSB_V1_FmtownsSwitchLanguage language,
     CSB_V1_FmtownsUtilityPortraitCatalog *out_catalog);
 
+/* CEDT008.C's NEW DISK command reopens the same F7002 picker against F7000's
+ * dynamic portrait medium.  Firestaff maps that source medium only after the
+ * verified #CHAMP_NAME# receipt is present; its .CMP records receive the
+ * normal native admission checks and never become CD-media provenance. */
+int csb_v1_fmtowns_utility_portrait_medium_catalog_open(
+    const CSB_V1_FmtownsUtilitySaveMappingReceipt *mapping,
+    CSB_V1_FmtownsSwitchLanguage language,
+    CSB_V1_FmtownsUtilityPortraitCatalog *out_catalog);
+
 /* Bind the native selector to one admitted catalogue entry.  The selected
  * index is a source-catalogue index, not a host path or a synthetic row. */
 int csb_v1_fmtowns_utility_portrait_selector_open(

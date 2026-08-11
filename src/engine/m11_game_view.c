@@ -9378,8 +9378,23 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
                 ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
         if (picker_command == CSB_V1_FMTOWNS_FILE_PICKER_NEW_DISK) {
-            m11_set_status(state, "CSB FM TOWNS", "NEW DISK UNAVAILABLE");
-            return M11_GAME_INPUT_IGNORED;
+            CSB_V1_FmtownsUtilityPortraitCatalog portrait_medium;
+            CSB_V1_FmtownsUtilityFilePicker picker;
+            memset(&portrait_medium, 0, sizeof(portrait_medium));
+            memset(&picker, 0, sizeof(picker));
+            if (!csb_v1_fmtowns_utility_portrait_medium_catalog_open(
+                    &state->csbFmtownsUtilitySaveMappingReceipt,
+                    state->csbFmtownsUtilityMenuReceipt.language,
+                    &portrait_medium) || portrait_medium.entry_count == 0u ||
+                !csb_v1_fmtowns_utility_file_picker_open(
+                    &portrait_medium, 0u, &picker)) {
+                m11_set_status(state, "CSB FM TOWNS", "PORTRAIT DISK EMPTY");
+                return M11_GAME_INPUT_IGNORED;
+            }
+            state->csbFmtownsUtilityPortraitCatalog = portrait_medium;
+            state->csbFmtownsUtilityFilePicker = picker;
+            return m11_csb_redraw_fmtowns_utility(state)
+                ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
         return m11_csb_redraw_fmtowns_utility(state)
             ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;

@@ -29,6 +29,7 @@ admitted separately and is never a fallback for F31E.
 | `.CMP` catalogue and picker state | `CEDT008.C` F7080/F7081/F7083/F7084 and `CEDT001.C F7002_ReadCMP` | Bound | Only valid, decoded `PORTRAIT/*.CMP` records are catalogued. M11 enters the source picker on `LOAD CHAMPIONS`, renders its nine-row F31E surface, sends source-coordinate clicks through F7084, then imports only the selected admitted record through F7002. |
 | F7000 portrait destination mapping | `CEDT001.C` F7000; `CEDTDATA.C` M747; verified UTILE/UTILJ strings | Bound to receipt | The native `2:\\#CHAMP_NAME#.CMP` mapping is read from the authenticated C06 image for English and Japanese. |
 | Selected CMP save | `CEDT001.C` F7000/F7001; `CEDTDATA.C` G2261/G2297 | Bound | The native GAME/PORTRAIT/CANCEL dialog is rendered with the verified F31 font. PORTRAIT writes only the selected champion to the mapped dynamic medium and preserves an admitted CMP header. |
+| Portrait-medium reload | `CEDT008.C` F7083/F7084 `NEW DISK` | Bound | `NEW DISK` reopens the verified F7000 portrait medium and reuses F7002's strict `.CMP` admission. An empty medium stays an explicit empty-disk result. |
 
 ## Explicitly closed routes
 

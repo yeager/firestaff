@@ -990,6 +990,16 @@ int main(void)
                                      copied_portraits.source_bytes[0],
                                      CSB_FMTOWNS_PORTRAIT_DATA_SIZE) == 0,
                           "F7000 preserves source header and writes live selected CMP fields");
+                    {
+                        CSB_V1_FmtownsUtilityPortraitCatalog saved_catalog;
+                        memset(&saved_catalog, 0, sizeof(saved_catalog));
+                        CHECK(csb_v1_fmtowns_utility_portrait_medium_catalog_open(
+                                  &utility_save_mapping, language, &saved_catalog) &&
+                                  saved_catalog.entry_count == 1u &&
+                                  strcmp(saved_catalog.entries[0].source_path,
+                                         saved_path) == 0,
+                              "C06 NEW DISK reopens the mapped portrait medium");
+                    }
                     restore_home = previous_home[0] != '\0'
                         ? FSP_SetEnv("HOME", previous_home, 1)
                         : FSP_UnsetEnv("HOME");
