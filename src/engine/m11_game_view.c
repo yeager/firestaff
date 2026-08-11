@@ -9389,24 +9389,15 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
         if (!m11_csb_fmtowns_utility_undo_portrait(state))
             return M11_GAME_INPUT_IGNORED;
     } else if (hit.action == CSB_V1_FMTOWNS_UTILITY_ACTION_SAVE_CHAMPIONS) {
-        /* F7001 writes only source-name-matched existing CMP records. The
-         * utility catalog was admitted from the same PORTRAIT directory when
-         * C06 opened, so this cannot silently redirect a save to a host or
-         * generated path. */
-        if (!csb_v1_fmtowns_utility_save_portraits(
-                &state->csbFmtownsUtilityPortraitCatalog,
-                &state->csbFmtownsUtilityParty,
-                &state->csbFmtownsUtilityPortraitReceipt)) {
-            m11_set_status(state, "CSB FM TOWNS", "CMP SAVE REJECTED");
-            return M11_GAME_INPUT_IGNORED;
-        }
-        memcpy(state->csbFmtownsUtilityOriginalPortraits,
-               state->csbFmtownsUtilityPortraitReceipt.source_bytes,
-               sizeof(state->csbFmtownsUtilityOriginalPortraits));
-        memset(state->csbFmtownsUtilityPortraitModified, 0,
-               sizeof(state->csbFmtownsUtilityPortraitModified));
-        state->csbFmtownsUtilityUndoAvailable = 0;
-        m11_set_status(state, "CSB FM TOWNS", "CMP SAVED");
+        /* F7001 does not batch-rewrite source-matched records. CEDT001.C
+         * first opens a three-choice dialog: save the whole game, save the
+         * selected champion through F7000's #CHAMP_NAME# file operation, or
+         * cancel. The latter depends on the F31 file-operation mapping and
+         * destination semantics, neither of which has been reconstructed.
+         * Do not substitute the old all-catalogue write helper: it created a
+         * non-source save route behind an authentic C06 button. */
+        m11_set_status(state, "CSB FM TOWNS", "C06 SAVE DIALOG UNAVAILABLE");
+        return M11_GAME_INPUT_IGNORED;
     } else if (hit.action == CSB_V1_FMTOWNS_UTILITY_ACTION_LOAD_CHAMPIONS) {
         if (!state->csbFmtownsUtilityPortraitCatalog.valid ||
             !csb_v1_fmtowns_utility_file_picker_open(

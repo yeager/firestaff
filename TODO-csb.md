@@ -267,15 +267,15 @@ populated dungeon states.
   unavailable for these files. `MINI.DAT` resume is the only positive save path
   currently covered, and no synthetic save is used.
 
-- **FM-TOWNS-C06-SAVE-001 — C06 `SAVE CHAMPIONS` now has a source-owned
-  `.CMP` write path.** The utility opens the authenticated `PORTRAIT`
-  catalogue, resolves each live party name to an existing admitted `.CMP`,
-  preserves the format and identity portion of the native header, writes the
-  live 8-byte name and padded 20-byte title fields, and atomically replaces
-  the receipt-bound 464-byte planar portrait payload. Unknown names, missing
-  catalogues, invalid records, and generated filenames remain rejected. The
-  real F31 portrait corpus covers the transaction, including title writeback, in
-  `csb_v1_fmtowns_m11_game_handoff`; C06 name/title editing remains open.
+- **FM-TOWNS-C06-SAVE-001 — C06 `SAVE CHAMPIONS` remains fail-closed.**
+  Disassembly of `CEDT001.C` shows that F7001 first asks whether to save the
+  complete game or the selected champion, and F7000 then creates the latter
+  through F31's `#CHAMP_NAME#` file-operation mapping. It is not a batch
+  rewrite of source-matched `PORTRAIT/*.CMP` records. M11 therefore reports
+  that the C06 save dialog is unavailable until that mapping and destination
+  semantics are recovered. The internal record serializer preserves native
+  identity bytes and writes C06's name/title/payload fields, with a real
+  F31-corpus test, but it is deliberately not reachable from the product.
 
 - **FM-TOWNS-C06-LOAD-001 — `F7002_ReadCMP` is now an authenticated import
   transaction.** Given an index returned by the admitted `PORTRAIT` catalogue,
