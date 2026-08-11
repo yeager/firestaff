@@ -13,6 +13,8 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 - 🔒 Den nya externa combat-capturen är verifierad som autoload/C96B-only:
   ingen `$CC4C`, giltig `$B0E5`-kategori eller CD→RAM-loadertransition. Den får
   inte användas för att fylla i syntetisk AI, RNG, T700 eller T900-semantik.
+- 🔒 Samma capture har ett nytt VDC/VCE-par som nu kan replayas screen-space;
+  square-to-tile, HUD- och gameplayägarskap är fortfarande separata gates.
 
 ## 2026-08-11 — ljudkonsument förblir capture-gated
 

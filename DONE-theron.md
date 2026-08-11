@@ -12,6 +12,8 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 - ✅ Den nya externa combat-capturen har klassificerats korrekt som negativt
   C96B-only/autoload-bevis. Parserns kompletta spawn-admission förblir stängd
   eftersom `$CC4C`, giltig `$B0E5`-kategori och loader-handoff saknas.
+- ✅ Dess riktiga VDC/VCE-snapshot (`411960eb`/`6fb303b5`) är nu bunden till
+  produktionens screen-space-presenter utan att öppna gameplaysemantik.
 
 ## 2026-08-11 — ljudstatus korrigerad till faktisk bevisnivå
 

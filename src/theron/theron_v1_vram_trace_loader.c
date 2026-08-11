@@ -171,6 +171,10 @@ int theron_v1_vram_trace_load_known_capture_files(
          * with the previously admitted source VCE bank; it authorizes only
          * bitmap/tile/palette replay, never square or object semantics. */
         {0x42a483acu, 0x6fb303b5u},
+        /* 2026-08-12 autoload combat capture.  The session is negative for
+         * gameplay handoff, but its complete VDC/VCE snapshots are real
+         * source-owned screen bytes and may be replayed screen-space only. */
+        {0x411960ebu, 0x6fb303b5u},
         /* 2026-08-09 clean external replay.  The transition receipt for
          * this run is intentionally negative, so this pair authorizes only
          * the complete source VDC/VCE screen route, not level or gameplay

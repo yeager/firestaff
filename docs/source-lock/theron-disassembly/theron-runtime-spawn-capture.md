@@ -947,3 +947,8 @@ capturen som komplett spawn-consumer, vilket är korrekt.
 Detta stärker den negativa beviskedjan men öppnar inte RNG-returägande,
 monster-/generatorlogik, AI, combat, T700, T900 eller ljudhändelser. Råtrace
 och BIOS ligger kvar på extern disk; inget av detta läggs i GitHub.
+
+Capturens kompletta screen-space-snapshot är däremot nu separat admissible:
+VDC-VRAM FNV-1a `411960eb` och VCE FNV-1a `6fb303b5`. Det paret går via den
+source-bound VDC/VCE-presentern, men får inte tolkas som square-, objekt-, HUD-
+eller monsterdata och används inte som README-screenshot.
