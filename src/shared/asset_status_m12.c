@@ -68,6 +68,12 @@ static const M12_AssetVersionStatus* m12_first_matched_version(
     int gameIndex);
 static int m12_path_is_virtual_asset(const char* path);
 static void m12_copy_string(char* out, size_t outSize, const char* value);
+static int m12_read_file_bytes(const char* path,
+                               unsigned char** outData,
+                               size_t* outSize);
+static int m12_read_csb_fmtowns_staged_image(const char* path,
+                                             uint8_t** outData,
+                                             size_t* outSize);
 static void m12_init_version_metadata(M12_AssetStatus* status);
 static void m12_init_required_file_metadata(M12_AssetStatus* status,
                                             int gameIndex);
@@ -1238,20 +1244,18 @@ static int m12_csb_fmtowns_make_stage_path(char* path, size_t pathSize) {
 #endif
 }
 
-/* A retail FM Towns image expands to roughly half a gigabyte.  Staging it in
- * /tmp can therefore fail even though the user deliberately selected an
- * archive on a spacious external game-data volume.  Prefer a sibling
- * temporary file on that volume; this keeps the read-only archive intact and
- * falls back to the legacy /tmp route when its parent is not writable. */
-static int m12_csb_fmtowns_make_archive_stage_path(const char* archivePath,
+/* A retail FM Towns image expands to roughly half a gigabyte.  Its transient
+ * image must live inside Firestaff's owned per-edition cache, never beside a
+ * user archive: a cancelled materialization used to strand multi-hundred-MB
+ * .firestaff-csb-fmtowns-* files in the user's game library. */
+static int m12_csb_fmtowns_make_archive_stage_path(const char* gameCacheDir,
                                                    char* path,
                                                    size_t pathSize) {
 #ifndef _WIN32
-    char parent[M12_ASSET_DATA_DIR_CAPACITY];
     int descriptor;
-    if (archivePath && FSP_ParentDir(parent, sizeof(parent), archivePath) &&
-        snprintf(path, pathSize, "%s/.firestaff-csb-fmtowns-XXXXXX", parent) <
-            (int)pathSize) {
+    if (gameCacheDir && FSP_CreateDirectoryRecursive(gameCacheDir) &&
+        FSP_JoinPath(path, pathSize, gameCacheDir,
+                     "FMTOWNS.IMG.stage-XXXXXX")) {
         descriptor = mkstemp(path);
         if (descriptor >= 0) {
             close(descriptor);
@@ -1265,12 +1269,13 @@ static int m12_csb_fmtowns_make_archive_stage_path(const char* archivePath,
 }
 
 static int m12_csb_fmtowns_archive_stage(const char* archivePath,
+                                         const char* gameCacheDir,
                                          char* imagePath, size_t imagePathSize,
                                          CSB_V1_FmtownsCdLayout* layout) {
     char virtualPath[M12_ASSET_DATA_DIR_CAPACITY + 64U];
     int extracted = 0;
     if (!archivePath || !imagePath || !layout ||
-        !m12_csb_fmtowns_make_archive_stage_path(archivePath, imagePath,
+        !m12_csb_fmtowns_make_archive_stage_path(gameCacheDir, imagePath,
                                                   imagePathSize)) {
         if (imagePath && imagePath[0] != '\0') remove(imagePath);
         return 0;
@@ -1304,6 +1309,10 @@ static int m12_csb_fmtowns_archive_read_image(
     CSB_V1_FmtownsCdLayout* layout) {
     uint8_t* image = NULL;
     size_t imageSize = 0U;
+    char userDataDir[M12_ASSET_DATA_DIR_CAPACITY];
+    char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char stagingDir[M12_ASSET_DATA_DIR_CAPACITY];
+    char stagePath[M12_ASSET_DATA_DIR_CAPACITY] = {0};
     if (!archivePath || !outImage || !outImageSize || !layout) return 0;
     *outImage = NULL;
     *outImageSize = 0U;
@@ -1311,7 +1320,23 @@ static int m12_csb_fmtowns_archive_read_image(
                                         &imageSize) != 0 &&
         firestaff_zip_extract_by_suffix(archivePath, ".bin", &image,
                                         &imageSize) != 0) {
-        return 0;
+        /* RAR needs the shared external extractor, whose path API writes a
+         * file.  Keep that short-lived file under Firestaff's cache, then
+         * return to the same bounded in-memory scanner used for ZIP. */
+        if (!FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) ||
+            !FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userDataDir,
+                          "asset-cache") ||
+            !FSP_JoinPath(stagingDir, sizeof(stagingDir), cacheRoot,
+                          "scan-staging") ||
+            !m12_csb_fmtowns_archive_stage(archivePath, stagingDir,
+                                             stagePath, sizeof(stagePath),
+                                             layout) ||
+            !m12_read_csb_fmtowns_staged_image(stagePath, &image,
+                                                &imageSize)) {
+            if (stagePath[0] != '\0') remove(stagePath);
+            return 0;
+        }
+        remove(stagePath);
     }
     if (csb_v1_fmtowns_cd_parse(image, imageSize, layout) != 0) {
         free(image);
@@ -2859,6 +2884,45 @@ static int m12_read_file_bytes(const char* path,
         return 0;
     }
     return asset_read_path_alloc(path, (uint8_t**)outData, outSize);
+}
+
+/* The generic path reader deliberately caps regular archive members at
+ * 16 MiB.  An original F31 RAR instead stores its complete 507 MiB raw CD as
+ * one member.  It reaches this reader only after the external extractor has
+ * written it to Firestaff-owned staging and the CD parser has accepted it.
+ * Keep a separate explicit ceiling so that this exception cannot become an
+ * unbounded general-purpose file loader. */
+static int m12_read_csb_fmtowns_staged_image(const char* path,
+                                             uint8_t** outData,
+                                             size_t* outSize) {
+    enum { M12_CSB_FMTOWNS_MAX_STAGED_IMAGE_BYTES = 768 * 1024 * 1024 };
+    FILE* file;
+    long size;
+    uint8_t* bytes;
+    if (!path || !outData || !outSize) return 0;
+    *outData = NULL;
+    *outSize = 0U;
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0L, SEEK_END) != 0 ||
+        (size = ftell(file)) <= 0 ||
+        (unsigned long)size > M12_CSB_FMTOWNS_MAX_STAGED_IMAGE_BYTES ||
+        fseek(file, 0L, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return 0;
+    }
+    bytes = (uint8_t*)malloc((size_t)size);
+    if (!bytes || fread(bytes, 1U, (size_t)size, file) != (size_t)size) {
+        free(bytes);
+        fclose(file);
+        return 0;
+    }
+    if (fclose(file) != 0) {
+        free(bytes);
+        return 0;
+    }
+    *outData = bytes;
+    *outSize = (size_t)size;
+    return 1;
 }
 
 static int m12_find_nexus_menu_bpk(const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
@@ -4519,7 +4583,8 @@ static int m12_materialize_csb_fmtowns_runtime_cache(
     archivePath[separator - version->matchedPath] = '\0';
     selectedDirectory = strcmp(version->versionId, "fmtowns-en") == 0
         ? "CDATA" : "CJDATA";
-    if (!m12_csb_fmtowns_archive_stage(archivePath, imagePath, sizeof(imagePath), &layout)) return 0;
+    if (!m12_csb_fmtowns_archive_stage(archivePath, gameCacheDir, imagePath,
+                                        sizeof(imagePath), &layout)) return 0;
     if (!FSP_JoinPath(cachedImagePath, sizeof(cachedImagePath), gameCacheDir,
                       "FMTOWNS.IMG") ||
         !FSP_JoinPath(cachedCuePath, sizeof(cachedCuePath), gameCacheDir,
@@ -4623,20 +4688,14 @@ static int m12_materialize_csb_fmtowns_runtime_cache(
             return 0;
         }
     }
-    /* Commit the image only after its entire ISO inventory was copied.  The
-     * staged image lives next to the user-selected archive so it does not
-     * consume a second full CD image in the Firestaff cache while extraction
-     * is in progress.  That archive may be on another mounted volume, where
-     * rename(2) cannot cross into the per-user cache.  Preserve the atomic
-     * same-volume fast path and copy only for that cross-volume case. */
+    /* Commit only after the entire ISO inventory was copied.  The staged
+     * image and cache target share Firestaff's private directory, so rename
+     * is atomic and no user-media directory is ever used as scratch space. */
     remove(cachedImagePath);
     if (rename(imagePath, cachedImagePath) != 0) {
-        if (!m12_copy_file_to_path(imagePath, cachedImagePath)) {
-            remove(cachedCuePath);
-            remove(imagePath);
-            return 0;
-        }
+        remove(cachedCuePath);
         remove(imagePath);
+        return 0;
     }
     return 1;
 }

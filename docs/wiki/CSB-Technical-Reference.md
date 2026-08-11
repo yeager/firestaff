@@ -58,6 +58,12 @@ The real-media M12/M11 boundary test can be enabled with
 `FIRESTAFF_CSB_AMIGA31_DATA_DIR` pointing at a directory containing the
 verified Amiga 3.1 ADF or archive.
 
+FM Towns is treated the same way even though its retail archive contains a
+large CD image: temporary expansion happens inside the selected edition's
+Firestaff cache. On success it is atomically promoted to `FMTOWNS.IMG`; on
+failure the staging file is removed. The directory containing the original
+ZIP/RAR remains read-only from Firestaff's point of view.
+
 ## CSB graphics formats
 
 Amiga CSB graphics use direct **IMG1** nibble-RLE records. Atari ST uses a
