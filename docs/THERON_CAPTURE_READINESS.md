@@ -33,8 +33,12 @@ The same real US CD route now also supplies the original-media dungeon frame
 in `verification-screens/theron-quest-us-dungeon-mednafen.png`. It is a
 reference image from Mednafen after the file-select/title route, not a
 Firestaff-rendered parity capture. The host pointer visible in that image is
-not a PC Engine mouse input; the verified local profile uses WASD as alternate
-PCE directional keys, `Z`/`X` for Button I/II, and `Return` for Run.
+not a PC Engine mouse input. That Mednafen replay profile uses WASD as
+alternate PCE directional keys, `Z`/`X` for Button I/II, and `Return` for Run.
+This is only the original-emulator capture profile. Firestaff's Theron
+runtime uses ordinary desktop controls: arrow keys or W/A/S/D for movement,
+mouse button 1/2 for Button I/II, and a free mouse pointer that never hops
+between objects.
 
 The Firestaff runtime still has no `README_ELIGIBLE` Theron row. The current
 public status should stay clear:
