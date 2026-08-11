@@ -22694,15 +22694,15 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
              * its startup, HUD or title assets inherit the first-match cache.
              * ReDMCSB COMPILE.H 199-243 separates these program families. */
             if (entry->gameId && strcmp(entry->gameId, "csb") == 0) {
-                /* Always give an archive-selected package its own cache.
-                 * The selected edition can itself be the scanner's first
-                 * match: A31E shares GRAPHICS.DAT with PC34 but owns a
-                 * distinct TITL.DAT/program family.  Reusing the generic
-                 * first-match cache would then make the boot detector see
-                 * PC34 bytes rather than the selected Amiga package.
+                /* An archive-selected package needs its own cache.  A loose
+                 * package stays with the verified source directory, which
+                 * retains all original startup siblings for direct CLI
+                 * launches.  A31E shares GRAPHICS.DAT with PC34 but owns a
+                 * distinct TITL.DAT/program family, so neither path may use
+                 * the scanner's generic first-match directory.
                  * ReDMCSB COMPILE.H 199-243 separates these media families. */
                 if (version->versionId) {
-                    if (!M12_AssetStatus_MaterializeCSBRuntimeVersion(
+                    if (!M12_AssetStatus_PrepareCSBRuntimeVersion(
                             &menuState->assetStatus, version->versionId,
                             selectedCsbRuntimeDataDir,
                             sizeof(selectedCsbRuntimeDataDir))) {
@@ -22862,7 +22862,17 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
         menuState->quickResumeGameId[0] != '\0' &&
         entry->gameId &&
         strcmp(menuState->quickResumeGameId, entry->gameId) == 0) {
-        spec.entranceResumeSavePath = menuState->quickResumeSavePath;
+        /* `--save` reaches M12 through the explicit quick-resume handoff.
+         * CSB's F0435 path owns a direct original container, rather than an
+         * entrance-menu choice.  Make it the boot savePath here so an old
+         * configured intent save cannot override the user's selected
+         * MINI.DAT/CSBGAME slot.  Other games retain their existing
+         * entrance-resume behavior. */
+        if (strcmp(entry->gameId, "csb") == 0) {
+            spec.savePath = menuState->quickResumeSavePath;
+        } else {
+            spec.entranceResumeSavePath = menuState->quickResumeSavePath;
+        }
     }
     spec.sourceKind = (entry->sourceKind == M12_MENU_SOURCE_CUSTOM_DUNGEON)
                           ? M11_GAME_SOURCE_CUSTOM_DUNGEON

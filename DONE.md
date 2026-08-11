@@ -1,3 +1,16 @@
+# CSB: direct original Atari save launch retains selected media ownership (2026-08-11)
+
+- ✅ `--game csb --platform atari-st --save MINI.DAT` now sends the explicit
+  original save through F0435, rather than allowing a configured launch save
+  to take precedence. The real Atari MINI.DAT corpus reaches an active,
+  loaded runtime through both the CLI and the M11 handoff.
+- ✅ A selected verified loose CSB package now stays in its original directory;
+  archive and ADF sources still use the hash-verified private cache. MINI.DAT
+  is selected by its native Atari/Amiga decoder before the broader CSBWin body
+  classifier; other save-slot names retain the compatible fallback order.
+- ✅ The focused recovery and CSBWin corpus regressions pass. No original game
+  files, caches or synthetic runtime media are committed.
+
 # Theron: preserve source-object ownership through save/load (2026-08-11)
 
 - ✅ World save version 11 now serializes the explicit 41-byte source-object

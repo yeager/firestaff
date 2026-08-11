@@ -4061,6 +4061,18 @@ that its exact runtime path is not already source-locked and tested.
     the adopted world is released once and no partial body/timer state is
     published on a failed preflight. Extended Features/DSA saves remain a
     distinct, fail-closed handoff boundary.
+    2026-08-11: launcher and fixture regressions no longer create synthetic
+    CSB `DUNGEON.DAT` or placeholder `GRAPHICS.DAT` to cross a runtime gate.
+    A hash-labelled metadata fixture is now explicitly required to fail before
+    boot, while the positive route remains the skip-safe original-media corpus.
+    2026-08-11: an explicit CLI `--save` now reaches CSB's source-owned F0435
+    path directly, instead of inheriting an unrelated configured launch save.
+    The verified loose Atari ST directory remains the selected runtime owner;
+    only archive/ADF media is materialized into a private cache. Real
+    `MINI.DAT` reaches an inactive startup with a loaded level, and its native
+    Atari/Amiga GAMEBLOCK reader is selected before the broader CSBWin body
+    classifier. Other original-slot names retain their established CSBWin-then-
+    F0435 fallback order for compatibility with source-shaped F0433 output.
     2026-07-29: the export now also writes the documented, already-decoded
     champion fields in each 800-byte original record (identity, pose/action,
     vital stats, skills/experience, slots, load and shield), re-encrypting

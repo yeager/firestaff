@@ -6551,6 +6551,36 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
     return 1;
 }
 
+int M12_AssetStatus_PrepareCSBRuntimeVersion(
+    const M12_AssetStatus* status, const char* versionId,
+    char* outPath, size_t outPathSize) {
+    int gameIndex = m12_game_index_from_id("csb");
+    int versionIndex;
+    const M12_AssetVersionStatus* version;
+
+    if (outPath && outPathSize) outPath[0] = '\0';
+    if (!status || !versionId || !outPath || outPathSize == 0U ||
+        gameIndex < 0) {
+        return 0;
+    }
+    versionIndex = M12_AssetStatus_FindVersionIndex("csb", versionId);
+    if (versionIndex < 0) return 0;
+    version = &status->versions[gameIndex][versionIndex];
+    if (!version->matched || version->matchedPath[0] == '\0') return 0;
+
+    /* A loose package was already verified in place.  Keeping its selected
+     * directory preserves all original startup siblings and lets direct CLI
+     * launches work even when the user-data cache is unavailable.  Archives
+     * and ADFs have no usable parent directory, so they still require the
+     * hash-verified, edition-private cache. */
+    if (!m12_path_is_virtual_asset(version->matchedPath)) {
+        return M12_AssetStatus_ResolveRuntimeDataDirForVersion(
+            status, "csb", versionId, outPath, outPathSize);
+    }
+    return M12_AssetStatus_MaterializeCSBRuntimeVersion(
+        status, versionId, outPath, outPathSize);
+}
+
 int M12_AssetStatus_MaterializeDM1FmtownsRuntimeVersion(
     const M12_AssetStatus* status, const char* versionId,
     char* outPath, size_t outPathSize) {

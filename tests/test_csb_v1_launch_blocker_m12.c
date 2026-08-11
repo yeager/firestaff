@@ -218,7 +218,8 @@ int main(void) {
     if (!expect(state.messageLine2 && strstr(state.messageLine2, "GRAPHICS.DAT") &&
                 strstr(state.messageLine2, "DUNGEON.DAT"),
                 "CSB V2.1 missing-data popup names both required V1 runtime files")) return 1;
-    if (!expect(state.messageLine3 && strstr(state.messageLine3, "DATA DIR:"),
+    if (!expect(state.messageLine3 &&
+                strstr(state.messageLine3, "/tmp/firestaff-test-no-assets"),
                 "CSB V2.1 missing-data popup names the searched data directory")) return 1;
 
     intent = M12_StartupMenu_GetLaunchIntent(&state);

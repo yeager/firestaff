@@ -8209,9 +8209,23 @@ int csb_v1_boot_runtime_load_original_save_receipt_pc34(
      * means the selected original container passed its source-owned shape
      * gate.  Do not use the private CSB header parser as provenance. */
     receipt.native_csb_header_valid = 1;
-    receipt.runtime_load_succeeded =
-        csb_v1_boot_runtime_load_game_from_path_pc34(profile, path, &game_time) ==
-        CSB_V1_LOAD_OK;
+    /* The startup handoff may already have completed F0435 for this exact
+     * original slot.  Receipt construction is observational in that case:
+     * re-reading MINI.DAT can run a second native decoder transaction after
+     * the live GAMEBLOCK is established.  Only load when the requested path
+     * is not the current verified native source. */
+    if (csb_v1_runtime_original_atari_save_source_path(&profile->runtime) &&
+        strcmp(csb_v1_runtime_original_atari_save_source_path(&profile->runtime),
+               path) == 0 &&
+        csb_v1_runtime_original_atari_save_source_current(&profile->runtime)) {
+        receipt.runtime_load_succeeded = 1;
+        game_time = profile->runtime.game_time;
+    } else {
+        receipt.runtime_load_succeeded =
+            csb_v1_boot_runtime_load_game_from_path_pc34(profile, path,
+                                                          &game_time) ==
+            CSB_V1_LOAD_OK;
+    }
     if (!receipt.runtime_load_succeeded) return 0;
     receipt.runtime_dungeon_ready = profile->runtime.dungeon_handle != NULL;
     receipt.runtime_party_ready = profile->runtime.champion_count >= 0;

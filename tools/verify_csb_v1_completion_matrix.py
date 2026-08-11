@@ -128,19 +128,13 @@ def main() -> int:
     ]
     route = ROUTE_TEST.read_text(encoding="utf-8", errors="replace") if ROUTE_TEST.exists() else ""
     runtime_route_test_needles = [
-        "Utility import -> NEW_GAME boundary",
-        "csb_v1_boot_enter_game",
-        "render_route_frame",
-        "DM1_V1_COMMAND_MOVE_FORWARD",
-        "csb_v1_movement_command_step_runtime_process_queue_pc34_compat",
-        "post-movement viewport frame renders without panel bleed",
-        "csb_v1_save_header_build",
-        "csb_v1_save_game",
-        "csb_v1_load_game",
-        "bounded save prefix reloads multi-step route state",
-        "not full CSB playability",
-        "full save compatibility",
-        "pixel parity",
+        "CSB runtime fixture-rejection gate",
+        "hand-written legacy dungeon",
+        "marker_graphics",
+        "csb_v1_dungeon_load_from_file",
+        "M11 entry refuses a filename-only graphics substitute",
+        "boot rejects legacy dungeon materialization",
+        "direct runtime boot rejects unverified fixture pair",
     ]
     missing_cmake = [needle for needle in runtime_spine_cmake_needles if needle not in cmake]
     forbidden_cmake = [needle for needle in forbidden_cmake_needles if needle in cmake]
@@ -235,7 +229,7 @@ def main() -> int:
             "forbidden_cmake_needles": forbidden_cmake,
             "missing_test_needles": missing_handoff,
             "missing_route_test_needles": missing_route,
-            "non_claim": "Fast PC/synthetic boot/runtime/viewport/bounded multi-step route gate plus save-prefix roundtrip only; not full CSB playability, original capture, full save compatibility, or pixel parity.",
+            "non_claim": "Fast PC real-asset and fixture-rejection gates only; not full CSB playability, original capture, full save compatibility, or pixel parity.",
         },
         "source_anchors": source_rows,
         "reference_anchors": reference_rows,

@@ -80,8 +80,8 @@
     {
       "id": "firestaff_m12_supports_csb_launch_intent",
       "role": "firestaff_positive",
-      "path": "/private/tmp/firestaff-csb-integrate/src/ui/menu_startup_m12.c",
-      "lines": "4890-4928",
+      "path": "/Volumes/Extern-disk/firestaff-dm1-agent-audit-20260806202550/src/ui/menu_startup_m12.c",
+      "lines": "5050-5080",
       "needles": [
         "All five catalogued games now have runtime launch boundaries",
         "strcmp(gameId, \"csb\") == 0"
@@ -92,8 +92,8 @@
     {
       "id": "firestaff_m12_launch_intent_uses_supported_game_and_assets",
       "role": "firestaff_positive",
-      "path": "/private/tmp/firestaff-csb-integrate/src/ui/menu_startup_m12.c",
-      "lines": "12569-12670",
+      "path": "/Volumes/Extern-disk/firestaff-dm1-agent-audit-20260806202550/src/ui/menu_startup_m12.c",
+      "lines": "12787-12910",
       "needles": [
         "M12_StartupMenu_GetLaunchIntent",
         "m12_game_supported(intent.gameId)",
@@ -105,8 +105,8 @@
     {
       "id": "firestaff_m11_csb_handoff_bypasses_dm1_loader",
       "role": "firestaff_positive",
-      "path": "/private/tmp/firestaff-csb-integrate/src/engine/m11_game_view.c",
-      "lines": "19595-19670",
+      "path": "/Volumes/Extern-disk/firestaff-dm1-agent-audit-20260806202550/src/engine/m11_game_view.c",
+      "lines": "22065-22140",
       "needles": [
         "CSB V1: bypass DM1 dungeon loader",
         "m11_csb_apply_boot_runtime_receipt",
@@ -118,7 +118,7 @@
     {
       "id": "firestaff_game_loop_csb_boots_profile",
       "role": "firestaff_positive",
-      "path": "/private/tmp/firestaff-csb-integrate/src/engine/firestaff_game_loop.c",
+      "path": "/Volumes/Extern-disk/firestaff-dm1-agent-audit-20260806202550/src/engine/firestaff_game_loop.c",
       "lines": "230-290",
       "needles": [
         "FS_GAME_CSB",
@@ -132,7 +132,7 @@
     {
       "id": "firestaff_pc_real_asset_probe_ticks_csb",
       "role": "firestaff_positive",
-      "path": "/private/tmp/firestaff-csb-integrate/probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c",
+      "path": "/Volumes/Extern-disk/firestaff-dm1-agent-audit-20260806202550/probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c",
       "lines": "1-960",
       "needles": [
         "PC-first CSB V1 real-data launch gate",

@@ -339,6 +339,32 @@ static int csb_v1_runtime_is_original_campaign_mini_path(const char *path)
     return 0;
 }
 
+/* CSBWin's source corpus uses the lowercase `csbgame2.dat` name.  The Atari
+ * and Amiga save-slot family is uppercase on its original media, and F0435
+ * owns those exact slot names (including the multilingual F/G variants).
+ * Keep the case distinction: it is provenance, not a host-normalised label. */
+static int csb_v1_runtime_is_native_original_slot_path(const char *path)
+{
+    static const char *const names[] = {
+        "CSBGAME.DAT", "CSBGAME2.DAT", "CSBGAMEF.DAT", "CSBGAMEG.DAT", NULL
+    };
+    const char *slash;
+    const char *backslash;
+    const char *name;
+    size_t index;
+
+    if (!path || !path[0]) return 0;
+    slash = strrchr(path, '/');
+    backslash = strrchr(path, '\\');
+    name = slash;
+    if (!name || (backslash && backslash > name)) name = backslash;
+    name = name ? name + 1 : path;
+    for (index = 0u; names[index] != NULL; ++index) {
+        if (strcmp(name, names[index]) == 0) return 1;
+    }
+    return 0;
+}
+
 int csb_v1_runtime_write_original_atari_save_to_path(
     const CSB_V1_RuntimeProfile *profile,
     const char *source_path,
@@ -2171,18 +2197,26 @@ int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
     memset(&image, 0, sizeof(image));
     memset(&header, 0, sizeof(header));
 
+    /* MINI.DAT is a source-owned Atari/Amiga campaign image, not a CSBWin
+     * save. Its big-endian GAMEBLOCK can satisfy the broad CSBWin body shape,
+     * so route this explicit Utility-media name through the native F0435
+     * decoder before considering CSBWin. */
+    if (csb_v1_runtime_is_original_campaign_mini_path(path) ||
+        csb_v1_runtime_is_native_original_slot_path(path)) {
+        if (csb_v1_runtime_try_load_original_atari_save_file(profile, path) ==
+            CSB_V1_LOAD_OK) {
+            return CSB_V1_LOAD_OK;
+        }
+    }
+
     /* CSBWin GAMEBLOCK1 is also 512 bytes, so the older Firestaff-native
-     * header probe can produce a misleading positive before the CSBWin body
+    * header probe can produce a misleading positive before the CSBWin body
      * sections are considered. Try the authenticated CSBWin resume body
-     * first; malformed/foreign fixtures still fail its checksum and section
-     * verification before falling through to the native and roster paths. */
+     * before falling through to native slots and roster paths. */
     if (csb_v1_runtime_apply_csbwin_resume_file(profile, path, 0u) == 0) {
         return CSB_V1_LOAD_OK;
     }
 
-    /* Atari ST/Amiga Utility Disk MINI.DAT is an original CSB campaign save,
-     * not a DUNGEON.DAT.  Its big-endian GAMEBLOCK sections are authenticated
-     * here before the F0435-style runtime handoff. */
     if (csb_v1_runtime_try_load_original_atari_save_file(profile, path) ==
         CSB_V1_LOAD_OK) {
         return CSB_V1_LOAD_OK;

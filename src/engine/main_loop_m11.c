@@ -225,16 +225,15 @@ static int M12_StartupMenu_PrepareSelectedGameLaunch(
     if (!entry || !entry->gameId || strcmp(entry->gameId, "csb") != 0) {
         return 1;
     }
-    /* Archive/ADF CSB media must enter M11 through the exact selected
-     * version's hash-verified private cache.  Passing the common scan root
-     * here can cross-bind an Amiga title program with PC, Atari or FM Towns
-     * files from the same library. */
+    /* The selected CSB edition owns this launch.  Archives/ADFs enter M11
+     * through a hash-verified private cache; an already verified loose
+     * package keeps its original directory and startup siblings. */
     versionIndex = menuState->gameOptions[menuState->activatedIndex].versionIndex;
     version = versionIndex >= 0
         ? M12_AssetStatus_GetVersion(&menuState->assetStatus, "csb",
                                      (size_t)versionIndex) : NULL;
     if (!version || !version->matched || !version->versionId ||
-        !M12_AssetStatus_MaterializeCSBRuntimeVersion(
+        !M12_AssetStatus_PrepareCSBRuntimeVersion(
             &menuState->assetStatus, version->versionId, runtimeDir,
             sizeof(runtimeDir))) {
         return 0;
