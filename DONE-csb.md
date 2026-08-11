@@ -1960,9 +1960,20 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   the raw M653 font, C09_ICON palette and the exact `CEDT006.C` F7030/F7034/
   F7042 box, button and swatch order. No host text or inferred layout is used.
 - ✅ C06 QUIT returns through the original English AUTOEXEC loop and observes
-  SWITCH.C's 60-VBlank delay. The F31J utility screen and all file-picker,
-  save and portrait-edit transactions remain deliberately closed pending
-  their native text and state consumers.
+  SWITCH.C's 60-VBlank delay. F31J remains closed pending its native
+  Shift-JIS glyph consumer. F31E's portrait editing is source-bounded:
+  CEDT006 F7037/F7044 retain one planar MINI.DAT undo copy before pixel
+  drawing, F7046 fills only the connected 32×29 source-colour area, and
+  Revert/Undo exchange only that selected portrait with its admitted
+  original. No user file is written by those operations.
+- ✅ The F31E C06 boundary stays deliberately narrow. `CEDT001 F7002` imports
+  only an already-selected, hash-admitted `.CMP`; `F7001` replaces only the
+  planar payload of source-name-matched existing records and preserves their
+  44-byte headers. File-picker drawing and input (CEDT008/CEDT013), the full
+  F7004 Load Champions command, Make New Adventure and name/title editing are
+  still closed because their original dialog and selector transactions have
+  not been recovered. The static F0689 arrow art is evidence only, never a
+  synthetic substitute for a live picker.
 - ✅ The source CEDT006 palette selector now follows F7043/F7036: every
   C09_ICON row moves the white selected-swatch exterior while retaining the
   indexed source colour. This state is local to the editor and cannot alter a

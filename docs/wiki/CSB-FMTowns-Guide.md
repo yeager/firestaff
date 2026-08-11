@@ -132,11 +132,23 @@ substitute.
 `UTILE.EXP` and `UTILJ.EXP` are separate C06_CEDT programs. Their P3
 envelopes, six-label source pools, C09 icon palette, source-coordinate menu
 boxes, F31 M653 font material and planar `.CMP` portrait decoder are
-verified. The source-owned portrait transactions now cover revalidated
-`F7002_ReadCMP` import and existing-record `SAVE CHAMPIONS` replacement, but
-the original EGB screen composition and file-picker selector/event loop remain
-unbound. F31J's Shift-JIS EGB glyph consumer is also still open. Keep the
-Utility input modal until those specific UI owners are evidenced.
+verified. For F31E this authorizes a deliberately small editor surface: the
+verified C06 frame, champion selection, palette selection, planar 32×29
+pixel drawing, connected-area fill, Revert and Undo. Each edit remains in
+the admitted `MINI.DAT` portrait bytes. The undo image is one source-format
+copy, and neither editing nor reverting writes a host or user save. The
+source-owned portrait transactions also cover revalidated `F7002_ReadCMP`
+import after a catalogue selection and existing-record `SAVE CHAMPIONS`
+replacement: F7001 preserves each admitted `.CMP` header and replaces only
+its planar payload.
+
+It does not authorize the rest of Utility. File-picker rendering and input
+(`CEDT008`/`CEDT013`) and the full `F7004_LoadChampions` command remain
+closed; a scanned portrait or a helper accepting an already-selected entry is
+not permission to substitute the selector. Make New Adventure and name/title
+entry are also closed. F31J remains closed until the native Shift-JIS glyph
+consumer is recovered. Keep all of those routes modal until their specific
+owners are evidenced.
 
 ## Files to know
 
@@ -148,6 +160,7 @@ Utility input modal until those specific UI owners are evidenced.
 | Animation stream | `src/csb/csb_v1_fmtowns_animation.c` |
 | Cache materializer | `src/shared/asset_status_m12.c` |
 | M11 startup, entrance and transport | `src/engine/m11_game_view.c` |
+| C06 preservation boundary | `docs/source-lock/csb_v1_fmtowns_c06_utility_boundary.md` |
 | Japanese C06 text boundary | `parity-evidence/csb_fmtowns_f31j_text_owner.md` |
 | Main remaining work | `TODO.md` (`CSB-FMTOWNS-RUNTIME-PARITY`) |
 

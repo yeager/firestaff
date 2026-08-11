@@ -2648,10 +2648,18 @@
   remaining Nexus Saturn page/tilemap/VDP2 gap and do not bypass either with
   synthetic data.
 
-- **CSB-FMTOWNS-C06-UTILITY-TRANSACTIONS:** F31E:s första C06-editorbild är
-  2026-08-08: filväljarpilarna avkodas nu med den verkliga F0689-striden
-  (31 logiska pixlar, 32-pixelbuffert). Återstår att binda den källägda
-  dialogytan och katalogvalet innan Load får lämna sin fail-closed-grind.
+- **CSB-FMTOWNS-C06-UTILITY-TRANSACTIONS:** F31E:s första C06-editorbild,
+  palettval, pixelritning, sammanhängande fyllning, Revert och Undo använder
+  sedan 2026-08-11 endast den verifierade UTILE/MINI.DAT-kedjan. F7037/F7044
+  och F7046 behåller sin enda undo-kopia i den källformatbundna
+  32×29-porträttbufferten; varken en värd-bitmap eller en skrivning till
+  användarens data skapas. Filväljarpilarna avkodas med den verkliga
+  F0689-striden (31 logiska pixlar, 32-pixelbuffert). F7002 kan importera en
+  redan vald, hash-admitterad `.CMP` och F7001 kan ersätta payloaden i en
+  namngiven befintlig post utan att skapa ett filnamn eller en ny fil.
+  Återstår att återvinna CEDT008/CEDT013:s dialog- och katalogtransaktion,
+  det fullständiga F7004-Load-flödet samt namn-/titelinmatningen innan Load
+  eller Make New Adventure får lämna sin fail-closed-grind.
 
 - **THERON-FORCEFIELD-REAL-DUNGEON:** Enter now reliably dispatches from the
   Soul Room forcefield focus, including the first attempt without prompt text.

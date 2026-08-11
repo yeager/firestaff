@@ -9351,9 +9351,11 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
         state->csbFmtownsUtilityUndoAvailable = 0;
         m11_set_status(state, "CSB FM TOWNS", "CMP SAVED");
     }
-    /* Load/save/new/revert/undo require CEDT006's authentic file/edit
-     * transactions. They remain modal and fail closed until that owner is
-     * recovered; they never receive a synthetic host implementation. */
+    /* Load and new-adventure still require CEDT006's authentic file/edit
+     * transactions. Those paths remain modal and fail closed until their
+     * owners are recovered; they never receive a synthetic host
+     * implementation. Revert and undo above are already bounded to the
+     * admitted F31 MINI.DAT portrait buffer. */
     return M11_GAME_INPUT_REDRAW;
 }
 
