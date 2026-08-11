@@ -3268,6 +3268,14 @@ int M11_PrepareDirectLaunchForGame(M12_StartupMenuState* menuState,
             }
             intent = M12_StartupMenu_GetLaunchIntent(menuState);
             if (!intent.valid) {
+                M12_StartupLaunchGate gate;
+                memset(&gate, 0, sizeof(gate));
+                if (M12_StartupMenu_GetLaunchGate(menuState, i, &gate) &&
+                    gate.blockedLabel && gate.blockedDetail) {
+                    fprintf(stderr,
+                            "firestaff: direct launch blocked: %s: %s\n",
+                            gate.blockedLabel, gate.blockedDetail);
+                }
                 menuState->launchRequested = 0;
                 return 0;
             }

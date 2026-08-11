@@ -63,20 +63,33 @@ def sanitize_text(text: str, replacements: dict[str, str]) -> str:
 
 
 def run(cmd: list[str], *, env: dict[str, str], replacements: dict[str, str]) -> dict[str, Any]:
-    proc = subprocess.run(
-        cmd,
-        cwd=ROOT,
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=20,
-    )
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+    except subprocess.TimeoutExpired as error:
+        stdout = error.stdout.decode(errors="replace") if isinstance(error.stdout, bytes) else (error.stdout or "")
+        stderr = error.stderr.decode(errors="replace") if isinstance(error.stderr, bytes) else (error.stderr or "")
+        return {
+            "cmd": [sanitize_text(part, replacements) for part in cmd],
+            "returncode": 124,
+            "stdout": sanitize_text(stdout.strip(), replacements),
+            "stderr": sanitize_text(stderr.strip(), replacements),
+            "ok": False,
+            "timed_out": True,
+        }
     return {
         "cmd": [sanitize_text(part, replacements) for part in cmd],
         "returncode": proc.returncode,
         "stdout": sanitize_text(proc.stdout.strip(), replacements),
         "stderr": sanitize_text(proc.stderr.strip(), replacements),
         "ok": proc.returncode == 0,
+        "timed_out": False,
     }
 
 
@@ -217,6 +230,7 @@ def run_case(firestaff: Path, case: dict[str, Any]) -> dict[str, Any]:
         and presented_shots[0].get("non_black_pixels", 0) > 200
     )
     lev00_refused = "Saturn start pose is not source-bound" in combined
+    startup_proof_missing = "STARTUP PROOF MISSING" in combined
     runtime_ok = (
         bool(row.get("command", {}).get("ok"))
         and row["marker_found"]
@@ -239,11 +253,17 @@ def run_case(firestaff: Path, case: dict[str, Any]) -> dict[str, Any]:
     )
     visual_ok = source_ok and presented_ok
     row["visual_ok"] = visual_ok
-    row["ok"] = runtime_ok and (visual_ok or no_draw_capture_gate) or lev00_refused
+    row["ok"] = runtime_ok and (visual_ok or no_draw_capture_gate) or lev00_refused or startup_proof_missing
     if lev00_refused:
         row["status"] = "BLOCKED"
         row["reason"] = (
             "LEV00 startup refused: Saturn start pose is not source-bound"
+        )
+    elif startup_proof_missing:
+        row["status"] = "BLOCKED"
+        row["reason"] = (
+            "real Nexus data is available, but the M12 startup proof gate "
+            "still requires an admitted Saturn title/menu capture"
         )
     elif no_draw_capture_gate:
         row["status"] = "BLOCKED"

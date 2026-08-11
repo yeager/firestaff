@@ -13499,6 +13499,15 @@ and production source-combat tests.
   500 000-raders menyförsök ger korrekt `retail_runtime_source_join=missing`
   i stället för ett falskt retail-ägarskap.
 
+# Nexus: make startup capture blocking explicit (2026-08-11)
+
+- ✅ M11 direct-launch diagnostics now expose the exact startup gate label and
+  detail. The Nexus screenshot-readiness verifier uses a 60-second external
+  scan budget and emits `BLOCKED_CAPTURE` for a real-data launch waiting on
+  Saturn title/menu proof.
+- ✅ The current run reports `STARTUP PROOF MISSING: NEXUS HOST-CALLER/FULL-START
+  PACKAGE RECEIPTS`; no fallback launch or synthetic screenshot was admitted.
+
 # Nexus: accept VDP1 V2 frame-scoped source-write evidence (2026-08-11)
 
 - ✅ `scripts/analyze_nexus_vdp1_source_write_join.py` now accepts both V1 and

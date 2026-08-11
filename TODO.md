@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+## Nexus: startup readiness receipt remains capture-blocked (2026-08-11)
+
+- ✅ Direct CLI launch now reports the exact M12 gate (`STARTUP PROOF
+  MISSING`) instead of only `game unavailable`; the readiness verifier records
+  this as `BLOCKED_CAPTURE` and tolerates the external-media scan duration.
+- 🔒 Admit a source-bound Saturn title/menu full-start package before enabling
+  Nexus runtime launch or promoting a screenshot.
+
 ## Nexus: consume VDP1 V2 frame-scoped source-write traces (2026-08-11)
 
 - ✅ Source-join analysis now accepts the authenticated V2 trace header,
