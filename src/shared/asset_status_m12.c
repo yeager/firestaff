@@ -1263,7 +1263,7 @@ static int m12_csb_fmtowns_make_archive_stage_path(const char* gameCacheDir,
         }
     }
 #else
-    (void)archivePath;
+    (void)gameCacheDir;
 #endif
     return m12_csb_fmtowns_make_stage_path(path, pathSize);
 }

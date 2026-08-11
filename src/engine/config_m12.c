@@ -1274,7 +1274,7 @@ static int m12_apply_layout_migrations(M12_Config* config) {
 int M12_Config_Load(M12_Config* config, const char* dataDirOverride) {
     FILE* fp;
     char line[1024];
-    const char* envDataDir;
+    const char* envDataDir = NULL;
     int hadExistingFile;
     int shouldSave = 0;
     if (!config) {
