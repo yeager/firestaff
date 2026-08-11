@@ -500,6 +500,15 @@ int csb_v1_fmtowns_game_create_utility_user_save_from_startup(
     const CSB_V1_FmtownsStartupPortraitReceipt *portraits,
     const char *save_path);
 
+/* Subsequent C06 F7052 saves reopen the already admitted M746 slot, patch
+ * only the utility-owned party and portrait fields, and retain the native
+ * F0433/F7062 write/backup transaction. */
+int csb_v1_fmtowns_game_write_utility_user_save(
+    CSB_V1_BootProfile *profile,
+    const CSB_V1_FmtownsGameHandoffReceipt *game_receipt,
+    const CSB_V1_FmtownsStartupPortraitReceipt *portraits,
+    const char *save_path);
+
 int csb_v1_fmtowns_utility_handoff_open(
     const CSB_V1_BootProfile *profile,
     CSB_V1_FmtownsSwitchLanguage language,

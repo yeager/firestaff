@@ -295,8 +295,9 @@ populated dungeon states.
   verified `MINI.DAT` state in an isolated runtime, copies C06's editor-owned
   champion records and four raw planar portrait blocks, and atomically publishes
   the first user-owned M746 `CSBGAME.DAT` only after the native F0435 reader can
-  admit it. It never serializes a separately active C03 session. Existing-slot
-  replacement remains open C06 work.
+  admit it. It never serializes a separately active C03 session. A later C06
+  save reopens the authenticated slot, writes the same editor-owned fields via
+  F0433/F7062, and retains the native `CSBGAME.BAK` rollback copy.
 
 - **FM-TOWNS-C06-LOAD-001 — `F7002_ReadCMP` is now an authenticated import
   transaction.** Given an index returned by the admitted `PORTRAIT` catalogue,

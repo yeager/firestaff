@@ -13,6 +13,12 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   party and portrait data. The native source's distinct DM-versus-CSB chooser
   remains outside this CSB-only route.
 
+- ✅ 2026-08-11 CSB FM Towns C06 repeated GAME save: after C06 creates its
+  first M746 `CSBGAME.DAT`, a further F7001 GAME operation reopens the native
+  slot and uses the F0433/F7062 keyed write path with `CSBGAME.BAK` rollback.
+  The F31E regression saves distinct editor names twice, admits the replacement
+  via F0435, then proves F7004 restores the second value and its raw portraits.
+
 - ✅ 2026-08-11 CSB FM Towns C06 GAME save: CEDT001.C `F7001` choice GAME now
   executes the recovered CEDTINC8.C `F7052` first-save transaction on an
   isolated, verified `MINI.DAT` state. C06's edited party records and all four

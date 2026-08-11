@@ -9377,10 +9377,18 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
                     profile->runtime.csbwin_random_seed;
                 save_profile.runtime.csbwin_random_seed_valid = 1;
                 existing = fopen(path, "rb");
-                if (!existing && strcmp(name, "CSBGAME.DAT") == 0) {
-                    saved = csb_v1_fmtowns_game_create_utility_user_save_from_startup(
-                        &save_profile, &game,
-                        &state->csbFmtownsUtilityPortraitReceipt, path);
+                if (strcmp(name, "CSBGAME.DAT") == 0) {
+                    if (existing) {
+                        fclose(existing);
+                        existing = NULL;
+                        saved = csb_v1_fmtowns_game_write_utility_user_save(
+                            &save_profile, &game,
+                            &state->csbFmtownsUtilityPortraitReceipt, path);
+                    } else {
+                        saved = csb_v1_fmtowns_game_create_utility_user_save_from_startup(
+                            &save_profile, &game,
+                            &state->csbFmtownsUtilityPortraitReceipt, path);
+                    }
                 }
             }
             if (existing) fclose(existing);

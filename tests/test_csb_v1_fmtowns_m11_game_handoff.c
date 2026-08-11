@@ -1277,6 +1277,7 @@ int main(void)
         {
             char utility_dir[] = "/tmp/firestaff-csb-c06-game-XXXXXX";
             char utility_save_path[1024];
+            char utility_backup_path[1024];
             CSB_V1_FmtownsUserSaveReceipt utility_save;
             CSB_V1_FmtownsStartupState utility_state;
             uint8_t *utility_bytes = NULL;
@@ -1326,6 +1327,27 @@ int main(void)
                        sizeof(saved_portraits));
                 snprintf(view.csbFmtownsUtilityParty.Champions[0].Name,
                          sizeof(view.csbFmtownsUtilityParty.Champions[0].Name),
+                         "%s", "SAVED2");
+                result = M11_GameView_HandlePointerButton(
+                    &view, 150, 190, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                result = M11_GameView_HandlePointerButton(
+                    &view, 112, 112, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                CHECK(created && result == M11_GAME_INPUT_REDRAW &&
+                          strcmp(view.lastOutcome, "GAME SAVED") == 0,
+                      "F31E C06 F7052 updates an existing native M746 slot");
+                memset(&utility_save, 0, sizeof(utility_save));
+                memset(&utility_state, 0, sizeof(utility_state));
+                CHECK(created && csb_v1_fmtowns_game_user_save_open(
+                          (const CSB_V1_BootProfile *)view.csbBootProfile,
+                          &direct_handoff, utility_save_path, &utility_save) &&
+                          csb_v1_fmtowns_game_load_user_save_state(
+                              &utility_save, &utility_state) &&
+                          strcmp(utility_state.party.Champions[0].Name,
+                                 "SAVED2") == 0,
+                      "F31E C06 existing-slot save remains F0435-readable");
+                csb_v1_fmtowns_game_startup_state_free(&utility_state);
+                snprintf(view.csbFmtownsUtilityParty.Champions[0].Name,
+                         sizeof(view.csbFmtownsUtilityParty.Champions[0].Name),
                          "%s", "CHANGED");
                 result = M11_GameView_HandlePointerButton(
                     &view, 50, 190, DM1_V1_MOUSE_MASK_LEFT_PC34);
@@ -1334,7 +1356,7 @@ int main(void)
                 CHECK(created && result == M11_GAME_INPUT_REDRAW &&
                           strcmp(view.lastOutcome, "GAME LOADED") == 0 &&
                           strcmp(view.csbFmtownsUtilityParty.Champions[0].Name,
-                                 "AB") == 0,
+                                 "SAVED2") == 0,
                       "F31E C06 F7004/F7051 restores the saved party into the editor");
                 CHECK(created &&
                           memcmp(view.csbFmtownsUtilityPortraitReceipt.source_bytes,
@@ -1342,6 +1364,9 @@ int main(void)
                                  sizeof(view.csbFmtownsUtilityPortraitReceipt.source_bytes)) == 0,
                       "F31E C06 F7051 retains the selected slot's raw portrait receipt");
                 remove(utility_save_path);
+                if (snprintf(utility_backup_path, sizeof(utility_backup_path),
+                             "%s/CSBGAME.BAK", utility_dir) >= 0)
+                    remove(utility_backup_path);
                 rmdir(utility_dir);
             } else {
                 CHECK(0, "F31E C06 GAME test can allocate an isolated temporary directory");

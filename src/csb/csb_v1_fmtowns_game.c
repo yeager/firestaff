@@ -1341,6 +1341,18 @@ int csb_v1_fmtowns_game_create_utility_user_save_from_startup(
         profile, game_receipt, portraits, save_path);
 }
 
+int csb_v1_fmtowns_game_write_utility_user_save(
+    CSB_V1_BootProfile *profile,
+    const CSB_V1_FmtownsGameHandoffReceipt *game_receipt,
+    const CSB_V1_FmtownsStartupPortraitReceipt *portraits,
+    const char *save_path)
+{
+    if (!portraits || !portraits->valid ||
+        portraits->source_size != sizeof(portraits->source_bytes)) return 0;
+    return csb_v1_fmtowns_game_write_user_save_internal(
+        profile, game_receipt, portraits, save_path, 1);
+}
+
 int csb_v1_fmtowns_game_apply_startup_state(
     CSB_V1_FmtownsStartupState *state, CSB_V1_RuntimeProfile *runtime)
 {
