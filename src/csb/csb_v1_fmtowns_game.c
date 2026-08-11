@@ -2348,8 +2348,19 @@ static int csb_v1_fmtowns_game_portrait_catalog_add_memory(
         return 1;
     }
     snprintf(entry->filename, sizeof(entry->filename), "%s", filename);
-    if (source_path)
-        snprintf(entry->source_path, sizeof(entry->source_path), "%s", source_path);
+    if (source_path) {
+        size_t source_path_length = strlen(source_path);
+        /* A truncated member reference is not a usable provenance receipt.
+         * Reject it rather than letting the compiler- or platform-dependent
+         * snprintf truncation turn an authentic packed source into a path
+         * that cannot be resolved again. */
+        if (source_path_length >= sizeof(entry->source_path)) {
+            ++catalog->rejected_entry_count;
+            memset(entry, 0, sizeof(*entry));
+            return 1;
+        }
+        memcpy(entry->source_path, source_path, source_path_length + 1u);
+    }
     entry->source_bytes = bytes;
     entry->source_bytes_size = byte_count;
     entry->source_fnv1a = csb_v1_fmtowns_game_bytes_fnv1a(bytes, byte_count);
