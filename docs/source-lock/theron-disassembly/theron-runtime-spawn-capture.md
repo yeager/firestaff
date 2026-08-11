@@ -1,5 +1,16 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-11 — exact `$C96B` body retained without semantic promotion
+
+The US Track 02 span at `$C96B-$CA69` is now retained verbatim as
+`theron-us-c96b-consumer.asm`, with the authenticated BIN MD5, raw offset and
+FNV-1a receipt. The disassembly proves the caller-provided `($3A)` writes,
+the `$2040->$2045` transfer and the surrounding table updates. It does not
+identify the pointed record or establish a creature, object, generator,
+T700, T900 or RNG return contract. The runtime therefore remains fail-closed
+for those semantics until one capture joins the caller, bank mapping,
+register state and return boundary.
+
 ## 2026-08-11 — register parser separates `$B0E5` address hits from spawn categories
 
 The register-sidecar parser now accepts the current external capture shape,

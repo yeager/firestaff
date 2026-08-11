@@ -4960,6 +4960,11 @@ authenticated BPK). The remaining work is a Saturn executable or capture
   contract in one execution. Do not merge it with the `.mc0` control-loop
   state or publish RNG/AI/T700/T900 semantics before that join.
 
+- ✅ 2026-08-11: retained the exact US `$C96B-$CA69` body in
+  `docs/source-lock/theron-disassembly/theron-us-c96b-consumer.asm`, including
+  its authenticated Track 02 source identity. The caller-owned `$3A` pointer
+  and record semantics remain unresolved; no runtime behavior was opened.
+
 # Theron register-bound RNG/record witness
 
 - 🔒 The external capture now records A/X/Y/SP/P for each bounded main-RAM
