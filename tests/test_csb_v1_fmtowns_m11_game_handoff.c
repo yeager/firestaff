@@ -1712,6 +1712,21 @@ int main(void)
                       &japanese_utility_height) && japanese_utility_frame &&
                   japanese_utility_width == 640 && japanese_utility_height == 400,
               "F31J Utility opens its ROM-bound native 640x400 C06 chooser");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        for (tick = 0u; tick < sizeof(framebuffer); ++tick) {
+            const size_t y = tick / 320u;
+            const size_t x = tick % 320u;
+            if (framebuffer[tick] != japanese_utility_frame[
+                    (y * 2u) * (size_t)japanese_utility_width + x * 2u]) {
+                fprintf(stderr,
+                        "NOTE: F31J C06 presentation does not retain the "
+                        "source 640x400 raster\n");
+                break;
+            }
+        }
+        CHECK(tick == sizeof(framebuffer),
+              "F31J C06 presentation maps the ROM-bound 640x400 chooser to M11");
         result = M11_GameView_HandlePointerButton(
             &view, 320, 225, DM1_V1_MOUSE_MASK_LEFT_PC34);
         CHECK(result == M11_GAME_INPUT_REDRAW &&

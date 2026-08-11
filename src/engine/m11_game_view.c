@@ -8624,6 +8624,41 @@ static void m11_csb_present_startup_raster(const unsigned char *source,
     }
 }
 
+/* F31J C06 switches the original program to its 640x400 page.  M11's
+ * presentation buffer can be 320x200 (or a host-scaled size), so retain
+ * every source pixel through the same nearest-neighbour presentation rule
+ * used for the native 320x200 startup pages.  The 640x400 source frame stays
+ * separately available through M11_GameView_GetCsbFmtownsUtilityJapaneseFrame;
+ * this helper only maps it to the active host surface. */
+static void m11_csb_present_highres_raster(const unsigned char *source,
+                                           int source_width,
+                                           int source_height,
+                                           unsigned char *destination,
+                                           int destination_width,
+                                           int destination_height)
+{
+    int x;
+    int y;
+
+    if (!source || !destination || source_width <= 0 || source_height <= 0 ||
+        destination_width <= 0 || destination_height <= 0) {
+        return;
+    }
+    if (destination_width == source_width && destination_height == source_height) {
+        memcpy(destination, source, (size_t)source_width * (size_t)source_height);
+        return;
+    }
+    for (y = 0; y < destination_height; ++y) {
+        const int source_y = (y * source_height) / destination_height;
+        for (x = 0; x < destination_width; ++x) {
+            const int source_x = (x * source_width) / destination_width;
+            destination[(size_t)y * (size_t)destination_width + (size_t)x] =
+                source[(size_t)source_y * (size_t)source_width +
+                       (size_t)source_x];
+        }
+    }
+}
+
 #define M11_CSB_FMTOWNS_TIMER_A_COUNT 100u
 #define M11_CSB_FMTOWNS_TIMER_A_TICK_US \
     (18u * (1024u - M11_CSB_FMTOWNS_TIMER_A_COUNT))
@@ -9435,7 +9470,11 @@ static int m11_csb_present_fmtowns_utility(M11_GameViewState *state,
     }
     if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) return 0;
     if (state->csbFmtownsUtilityJapaneseActive) {
-        memset(framebuffer, 0, (size_t)framebuffer_width * framebuffer_height);
+        m11_csb_present_highres_raster(
+            state->csbFmtownsUtilityJapanesePixels,
+            CSB_V1_FMTOWNS_UTILITY_JAPANESE_SCREEN_WIDTH,
+            CSB_V1_FMTOWNS_UTILITY_JAPANESE_SCREEN_HEIGHT,
+            framebuffer, framebuffer_width, framebuffer_height);
         return 1;
     }
     m11_csb_present_startup_raster(state->csbFmtownsUtilityPixels, framebuffer,

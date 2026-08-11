@@ -206,6 +206,11 @@ in its captured 640×400 geometry when the user supplies an authorised
 dialogs remain closed until their own source execution is recovered. Keep
 those routes modal until their specific owners are evidenced.
 
+When the active M11 canvas is 320×200, Firestaff presents that owned 640×400
+F31J source page by nearest-neighbour scaling. The native 640×400 indexed
+frame remains available to the presentation boundary; the scaling neither
+substitutes glyphs nor manufactures panel art.
+
 This C06 boundary is narrower than the direct in-game save route. M11 can
 read and update an explicitly selected, already admitted native
 `CSBGAME.DAT` slot through F0435/F0433, including the source `.BAK` recovery
