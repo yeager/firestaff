@@ -20,9 +20,11 @@
 #include "dm1_v1_atari_st_graphics_dat.h"
 #include "csb_v1_amiga_graphics_dat.h"
 #include "csb_v1_fmtowns_graphics_dat.h"
+#include "csb_v1_x68k_hdm.h"
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <limits.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -305,6 +307,28 @@ int M11_AssetLoader_InitCsbX68kFromBuffer(M11_AssetLoader* loader,
     snprintf(loader->graphicsDatPath, sizeof(loader->graphicsDatPath),
              "(CSB X68000 DMCSB2, %ld bytes)", size);
     return 1;
+}
+
+int M11_AssetLoader_InitCsbX68kFromHdm(M11_AssetLoader* loader,
+                                       const unsigned char *hdm,
+                                       size_t hdm_size) {
+    uint8_t *graphics = NULL;
+    size_t graphics_size = 0u;
+    int ok;
+
+    if (!loader || !hdm ||
+        !csb_v1_x68k_hdm_extract_root_file(hdm, hdm_size, "GRAPHICS.DAT",
+                                            NULL, 0u, &graphics_size, NULL) ||
+        graphics_size == 0u || graphics_size > (size_t)LONG_MAX) return 0;
+    graphics = (uint8_t *)malloc(graphics_size);
+    if (!graphics) return 0;
+    ok = csb_v1_x68k_hdm_extract_root_file(hdm, hdm_size, "GRAPHICS.DAT",
+                                            graphics, graphics_size,
+                                            &graphics_size, NULL) &&
+        M11_AssetLoader_InitCsbX68kFromBuffer(loader, graphics,
+                                              (long)graphics_size);
+    free(graphics);
+    return ok;
 }
 
 void M11_AssetLoader_Shutdown(M11_AssetLoader* loader) {

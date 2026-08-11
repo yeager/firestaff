@@ -6876,6 +6876,7 @@ set(M11_SOURCES
     src/csb/csb_v1_graphics_lzw_pc34_compat.c
     src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_amiga_graphics_dat.c
+    src/csb/csb_v1_x68k_hdm.c
     src/csb/csb_v1_amiga_titl_dat.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/shared/firestaff_amiga_adf.c
@@ -51214,8 +51215,7 @@ endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_csb_x68k_asset_loader.c")
     add_executable(test_m11_csb_x68k_asset_loader
-        tests/test_m11_csb_x68k_asset_loader.c
-        src/csb/csb_v1_x68k_hdm.c)
+        tests/test_m11_csb_x68k_asset_loader.c)
     target_link_libraries(test_m11_csb_x68k_asset_loader PRIVATE firestaff_m11)
     target_include_directories(test_m11_csb_x68k_asset_loader PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)

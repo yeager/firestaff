@@ -1,6 +1,8 @@
 #ifndef FIRESTAFF_ASSET_LOADER_M11_H
 #define FIRESTAFF_ASSET_LOADER_M11_H
 
+#include <stddef.h>
+
 /*
  * asset_loader_m11 — M11 GRAPHICS.DAT asset loader and blitter.
  *
@@ -142,6 +144,14 @@ int M11_AssetLoader_InitCsbFmtownsFromFile(M11_AssetLoader* loader,
 int M11_AssetLoader_InitCsbX68kFromBuffer(M11_AssetLoader* loader,
                                           const unsigned char *data,
                                           long size);
+
+/* Extract GRAPHICS.DAT from a structurally readable CSB X68000 Human68k
+ * HDM and initialize the separate X68000 cache. The image is read-only and
+ * is never retained by the loader. This is a media-to-graphics handoff, not
+ * an X68000 boot-profile or authenticity claim. */
+int M11_AssetLoader_InitCsbX68kFromHdm(M11_AssetLoader* loader,
+                                       const unsigned char *hdm,
+                                       size_t hdm_size);
 
 /* Shut down and free all cached data. */
 void M11_AssetLoader_Shutdown(M11_AssetLoader* loader);
