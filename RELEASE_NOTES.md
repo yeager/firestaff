@@ -74,6 +74,9 @@
   configured path and never formats user media.
 - `CI`: Align DM2 source-gated probes with their runtime owners and retain
   verified main-branch runs rather than cancelling them during rapid updates.
+- `CI`: Keep the CSB Amiga native-boot probe opt-in; a generic `data/csb`
+  directory is not evidence of a curated A31 media root and must not turn the
+  skip-safe check into a false failure.
 
 # Firestaff v3.0.308
 
