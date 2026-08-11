@@ -5,11 +5,13 @@
 #define CSB_HINT_ORACLE_GRAPHICS_SURFACE_HEIGHT 200u
 #define CSB_HINT_ORACLE_FONT_SURFACE_WIDTH 256u
 #define CSB_HINT_ORACLE_FONT_SURFACE_HEIGHT 27u
+#define CSB_HINT_ORACLE_GRAPHIC_CONTROL_WORDS 50u
 typedef struct {
     CSB_HintOracleDAT_RealCache source;
     uint8_t *pixels;
     uint8_t *font_pixels;
     uint8_t rgb4[48];
+    uint16_t controls[CSB_HINT_ORACLE_GRAPHIC_CONTROL_WORDS];
     uint16_t width,height;
     uint16_t font_width,font_height;
 } CSB_HintOracleGraphicsSurface;

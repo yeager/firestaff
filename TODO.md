@@ -20,6 +20,9 @@
   real-data probe checks that all selected pages have bounded slices and
   that every non-empty page decompresses successfully. Empty page records are
   retained as authored rather than rejected or replaced.
+- ✅ HCSB.DAT segment 0 is retained as its exact 50 big-endian control words,
+  including the ST archive's verified leading `0x0002/0x0620/0x0001/0x0770`
+  sequence. The `C26_SET_FONT_COLOR` transition semantics remain open.
 - 🔒 Graphical Hint Oracle/M11/M12 routing, segment 0's integer consumer,
   original text/page layout and original-frame pixel parity remain open. Do
   not treat the decoded resource surfaces as a rendered Utility Disk screen.

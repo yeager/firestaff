@@ -25,6 +25,12 @@ This binds source pixels and glyph geometry only. It does not establish the
 contents of segment 0, Hint Oracle page layout, palette transitions, M11/M12
 routing, or a frame-level parity claim.
 
+The same surface now retains segment 0 as exactly 50 big-endian control words,
+matching `HINTTEXT.C`'s `G3609_aui_GraphicIntegers`. The real ST archive locks
+the leading words as `0x0002`, `0x0620`, `0x0001`, `0x0770`; these are exposed
+unchanged for the later `C26_SET_FONT_COLOR` and palette-transition consumer.
+They are not guessed host colours.
+
 The text source is selected independently through
 `csb_hint_oracle_htc_get_hint_page_slice()`. Its one-based page number mirrors
 `HINTHINT.C` `C12_GET_HINT_TITLE_OR_PAGE`: page zero is a title request in the
