@@ -1,5 +1,20 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-11 — authentic user save reaches the source RNG consumer path
+
+The fresh Mednafen run using the operator's `TQUS...sav` (not a synthetic
+state) used the authenticated US Track 02 MODE1/2048 payload and System Card.
+Its receipt observed 25 CD IRQ callbacks, 161 raw-sector bindings, 2
+byte-exact CD-to-RAM origin receipts, 11 loader TII transfers, 31 `$4644`
+preconsumer observations, 96 `$4667` helper observations and 3,072 bounded
+RNG-consumer samples across six complete windows. The capture also emitted all
+15 scripted PCE input events and `transition=observed`.
+
+It still contained zero `$B0E5` regular-spawn entries and zero creature-record
+joins. The result is authenticated execution evidence for the original RNG
+consumer path, not proof of the RNG return owner or spawn semantics; AI,
+attack/damage, loot, generators, T700 and T900 remain fail-closed.
+
 ## 2026-08-11 — RNG capture is bounded per source window
 
 The reproducible Mednafen capture patch now limits both samples within a RNG

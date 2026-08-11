@@ -103,7 +103,10 @@ if ! grep -Fq 'mednafen_1.32.1_theron_rng_consumer_trace.patch' "$build_script" 
     exit 1
 fi
 if ! grep -Fq 'THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_RNG_CONSUMER_WINDOW_LIMIT' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_RNG_CONSUMER_WINDOW_LIMIT="$rng_consumer_window_limit"' "$script" ||
    ! grep -Fq 'rng_consumer_sample_limit=%u' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch" ||
+   ! grep -Fq 'rng_consumer_window_limit=%u' "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch" ||
    ! grep -Fq 'rng_consumer_sample_limit=' "$repo/src/theron/theron_v1_mednafen_spawn_consumer_trace.c"; then
     printf '%s\n' 'FAIL: RNG capture must declare and validate its bounded sample limit' >&2
     exit 1

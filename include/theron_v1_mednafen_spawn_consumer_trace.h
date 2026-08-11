@@ -125,6 +125,7 @@ typedef struct {
     /* The sidecar declares the bounded execution window.  This is capture
      * provenance only; it never publishes RNG or gameplay semantics. */
     uint32_t sample_limit;
+    uint32_t window_limit;
     uint32_t sample_count;
     uint32_t window_count;
     uint32_t complete_window_count;

@@ -63,6 +63,7 @@ static void write_rng_fixture(const char *path, int bad_step) {
     assert(file);
     fputs("source=mednafen-pce-instrumented-rng-consumer\n", file);
     fputs("rng_consumer_sample_limit=512\n", file);
+    fputs("rng_consumer_window_limit=1\n", file);
     fprintf(file,
             "rng_consumer_window sequence=1 step=0 pc=5d64 physical_pc=114d64 entry=5d64 a=01 x=02 y=03 sp=fe p=04 mpr0=1f b3=10 b4=20 b5=30 b6=40 b8=50 ba=60 bb=70 entry_sp=fe return_pc=5d90 return_boundary=0\n");
     fprintf(file,
@@ -269,6 +270,7 @@ int main(void) {
         assert(rng.step_verified && rng.physical_pc_bounds_verified);
         assert(rng.boundary_flags_verified && rng.target_5d64_seen);
         assert(rng.sample_limit == 512u);
+        assert(rng.window_limit == 1u);
         assert(rng.sample_count == 2u && rng.window_count == 1u);
         assert(rng.return_boundary_seen && rng.last_return_pc == 0x5d90u);
         assert(rng.return_boundary_sample_count == 1u &&

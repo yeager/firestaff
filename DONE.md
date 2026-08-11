@@ -13887,3 +13887,7 @@ and production source-combat tests.
 - ✅ Versionerad Mednafen-patch och capture-script begränsar både samples per RNG-fönster och antal kompletta fönster
 - ✅ smoke-capture med äkta US Track 02/System Card verifierade `WINDOW_LIMIT=4`, 662 rader och 133 594 byte utan obegränsad trace
 - 🔒 Capturen saknar fortfarande autentiserad CD/RAM- och creature-join; RNG, spawn, AI, T700 och T900 förblir fail-closed
+# Theron: authenticated user-save RNG path (2026-08-11)
+- ✅ Riktig användarägd `TQUS...sav` nådde `$4644`/`$4667` med 25 CD IRQ, 161 sektorsbindningar, 2 CD→RAM-originreceipts och 3 072 bounded RNG-samples över sex kompletta fönster
+- ✅ Alla 15 scripted PCE-inputevents och `transition=observed` verifierades
+- 🔒 `$B0E5` och creature-record join saknas fortfarande; ingen RNG-return, AI, attack/skada, loot, generator, T700 eller T900 publiceras

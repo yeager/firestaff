@@ -333,7 +333,9 @@ int theron_v1_mednafen_rng_consumer_trace_parse_file(
     unsigned int expected_step = 0u;
     unsigned int previous_sequence = 0u;
     unsigned int sample_limit = 0u;
+    unsigned int window_limit = 0u;
     int sample_limit_consumed = 0;
+    int window_limit_consumed = 0;
     int saw_record = 0;
     int previous_window_complete = 0;
     int legacy_format = 0;
@@ -369,6 +371,25 @@ int theron_v1_mednafen_rng_consumer_trace_parse_file(
             fclose(file);
             return 0;
         }
+        if (!read_line(file, line, sizeof(line))) {
+            out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
+            fclose(file);
+            return 0;
+        }
+        if (sscanf(line, "rng_consumer_window_limit=%u%n", &window_limit,
+                   &window_limit_consumed) == 1 &&
+            line[window_limit_consumed] == '\0') {
+            if (window_limit == 0u || window_limit > 1024u) {
+                out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
+                fclose(file);
+                return 0;
+            }
+        } else {
+            /* Older writers have no window-limit header; retain their first
+             * data row as the pending line for the normal grammar. */
+            snprintf(pending_line, sizeof(pending_line), "%s", line);
+            have_pending_line = 1;
+        }
     } else if (strncmp(line, "rng_consumer_window ",
                        sizeof("rng_consumer_window ") - 1u) == 0) {
         /* Early instrumented Mednafen traces predate the explicit limit
@@ -388,6 +409,7 @@ int theron_v1_mednafen_rng_consumer_trace_parse_file(
         return 0;
     }
     out->sample_limit = sample_limit;
+    out->window_limit = window_limit;
     out->sequence_verified = 1;
     out->step_verified = 1;
     out->physical_pc_bounds_verified = 1;
