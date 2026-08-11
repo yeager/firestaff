@@ -928,6 +928,7 @@ static int theron_v1_inventory_source_record_matches(
 
     if (!carried || !carried->valid || carried->source_ref == 0u ||
         carried->source_raw_size == 0u ||
+        carried->source_raw_size > sizeof(carried->source_raw) ||
         !theron_v1_track02_item_record_decode(
             carried->category, carried->source_raw,
             carried->source_raw_size, &record) ||

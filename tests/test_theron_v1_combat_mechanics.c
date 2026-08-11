@@ -876,6 +876,10 @@ static void test_source_item_pickup_provenance(void) {
     CHECK_INT("missing source property table rejects drop",
               theron_v1_drop_inventory_source_item(&w, 0, 0, 3, 4), -1);
     w.levels[0][0].source_item_property_table_verified = 1;
+    w.inventory_source[0][0].source_raw_size = 17u;
+    CHECK_INT("oversized source item bytes rejected on drop",
+              theron_v1_drop_inventory_source_item(&w, 0, 0, 3, 4), -1);
+    w.inventory_source[0][0].source_raw_size = 4u;
     w.inventory_source[0][0].property[5] ^= 0x01u;
     w.inventory_source[0][0].item_category = THERON_ITEM_CAT_ARMOR;
     CHECK_INT("mutated source category rejected on drop",

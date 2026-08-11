@@ -13862,3 +13862,7 @@ and production source-combat tests.
 - ✅ state-hashen täcker autentiserade monster-, object- och generatorrecords samt carried item-payloadens property/raw bytes
 - ✅ hashningen använder explicita fält och begränsar raw-längder, utan padding- eller syntetiska semantiktolkningar
 - ✅ verifierat med production combat bridge, world serialize-roundtrip och hela US Track 02-loadern för alla sju dungeons
+# Theron: validerar source item-recordens råstorlek (2026-08-11)
+- ✅ T900-provenancekontrollen avvisar `source_raw_size` över den lagrade 16-byte payloaden innan decode/drop
+- ✅ verifierat med `test_theron_v1_combat_mechanics` (130/130)
+- 🔒 Detta öppnar inte equip/use/stack-regler; det hindrar endast korrupt eller host-manipulerad rådata från att passera source-boundaryn
