@@ -189,11 +189,16 @@ static int run_diagonal_c37(int source_x, int source_y,
 
 int main(void)
 {
-    /* Diagonal C37, seed 1: north then east. Occupy north, move east. */
+    /* Diagonal C37, seed 1: F0732_COMBAT_RngRandom(rng, 2) returns 0 for
+     * this seed on Firestaff's RNG, so F0228's RANDOM(2) branch keeps
+     * primary=NORTH and secondary=EAST.  Blocked=(2,2)==north cell forces
+     * F0209 to fall back to secondary=EAST. */
     if (!run_diagonal_c37(2, 3, 3, 1, 2, 2, 1, 1u)) return 1;
-    /* Same source geometry with the other original F0228 tie order: east
-     * then north. Occupy east, so F0209 moves north. */
-    if (!run_diagonal_c37(2, 3, 3, 1, 3, 3, 0, 3u)) return 1;
+    /* Same source geometry with the tie order flipped: seed=6 makes the
+     * first RANDOM(2) return 1, so F0228 rewrites primary=EAST and
+     * secondary=NORTH.  Blocked=(3,3)==east cell forces F0209 to fall back
+     * to secondary=NORTH. */
+    if (!run_diagonal_c37(2, 3, 3, 1, 3, 3, 0, 6u)) return 1;
 
     puts("PASS: G0383 F0209 per-event secondary direction context");
     return 0;
