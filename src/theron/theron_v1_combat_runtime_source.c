@@ -102,6 +102,10 @@ static int theron_v1_publish_source_group(
         creature->y = record->y;
         creature->hp = (int)record->health[slot];
         creature->max_hp = creature->hp;
+        /* The category-4 record proves identity/HP/placement only.  Keep
+         * T500/T600 behaviour unavailable until its source consumer is
+         * authenticated; PASSIVE would be synthetic game semantics. */
+        creature->ai = THERON_AI_UNAVAILABLE;
         creature->primary_attack = THERON_ATTACK_NONE;
         creature->secondary_attack = THERON_ATTACK_NONE;
         creature->flags = THERON_CF_ACTIVE;

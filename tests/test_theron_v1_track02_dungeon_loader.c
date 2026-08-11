@@ -429,6 +429,7 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
             assert(creature->speed == 0);
             assert(creature->hp == creature->max_hp);
             assert(creature->primary_attack == THERON_ATTACK_NONE);
+            assert(creature->ai == THERON_AI_UNAVAILABLE);
             assert(creature->secondary_attack == THERON_ATTACK_NONE);
             /* This direct user-data loader has no authenticated spawn-source
              * receipt.  Static creature type must not be promoted into a
@@ -577,6 +578,7 @@ static void test_all_jp_dungeons(const uint8_t *ud, size_t ud_size) {
                    creature->type <= THERON_CREATURE_DEMON);
             assert(creature->hp == creature->max_hp);
             assert(creature->primary_attack == THERON_ATTACK_NONE);
+            assert(creature->ai == THERON_AI_UNAVAILABLE);
             assert(creature->secondary_attack == THERON_ATTACK_NONE);
         }
         if (d == 0)

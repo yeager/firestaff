@@ -526,6 +526,7 @@ void theron_v1_creature_ai_tick(Theron_V1_World *world) {
         Theron_V1_Creature *c = &world->creatures[i];
         if (!(c->flags & THERON_CF_ACTIVE)) continue;
         if (c->level != world->current_level) continue;
+        if (c->ai == THERON_AI_UNAVAILABLE) continue;
 
         if (world->world_tick < (uint64_t)c->next_move_tick) continue;
         c->next_move_tick = (int)world->world_tick + c->speed;

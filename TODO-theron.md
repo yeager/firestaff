@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — live source creatures no longer receive synthetic PASSIVE AI
+
+- ✅ Category-4 creatures admitted from authentic US/JP Track 02 records now
+  carry `THERON_AI_UNAVAILABLE` until the original T500/T600 AI consumer is
+  authenticated. The AI tick ignores that explicit unavailable state.
+- 🔒 This is a correctness boundary, not recovered AI: RNG-spawn, creature
+  AI, attacks, damage, loot, generator timing, T700 and T900 remain closed
+  until the disassembly consumer and a same-session runtime capture agree.
+
 ## 2026-08-11 — flerfönster-RNG-captures valideras korrekt
 
 - ✅ RNG-consumer-parsern räknar nu kompletta 512-stegsfönster i en längre

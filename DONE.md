@@ -1,3 +1,13 @@
+# Theron: source creatures fail closed without an authenticated AI consumer (2026-08-11)
+
+- ✅ Authentic category-4 US/JP Track 02 creature members no longer receive
+  the synthetic `PASSIVE` AI value during live admission.
+- ✅ Added an explicit `THERON_AI_UNAVAILABLE` state and regression coverage
+  over the real Track 02 dungeon loader; the AI tick leaves such creatures
+  untouched.
+- 🔒 No AI, attack, damage, loot, generator, T700 or T900 semantics were
+  inferred from the missing source consumer.
+
 # Theron: multi-window RNG consumer capture validation (2026-08-11)
 
 - ✅ The RNG trace parser now counts complete windows instead of assuming one

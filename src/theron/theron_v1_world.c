@@ -1500,7 +1500,10 @@ static int theron_v1_world_admit_source_monster_member(
     creature->y = record->y;
     creature->hp = (int)record->health[slot];
     creature->max_hp = (int)record->health[slot];
-    creature->ai = THERON_AI_PASSIVE;
+    /* Category-4 admission proves the source creature and its HP/placement,
+     * not its T500/T600 behaviour.  Do not turn missing source semantics
+     * into a synthetic PASSIVE creature. */
+    creature->ai = THERON_AI_UNAVAILABLE;
     creature->primary_attack = THERON_ATTACK_NONE;
     creature->secondary_attack = THERON_ATTACK_NONE;
     creature->flags = THERON_CF_ACTIVE;

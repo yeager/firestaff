@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+## Theron: preserve unavailable AI state until T500/T600 is authenticated (2026-08-11)
+
+- ✅ Real Track 02 category-4 creature admission now uses the explicit
+  `THERON_AI_UNAVAILABLE` state instead of synthetic `PASSIVE` behavior.
+- 🔒 This does not complete AI or combat. Authenticate the original T500/T600
+  consumer before assigning movement, attacks, damage, loot or generator
+  behavior.
+
 ## Nexus: obtain SAL/voice read witness (2026-08-11)
 
 - 🔒 The session-bound 300-frame read capture saw only SCSP mailbox/status

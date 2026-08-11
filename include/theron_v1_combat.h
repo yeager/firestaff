@@ -70,6 +70,11 @@ typedef enum {
 
 /* ── AI behaviour modes ─────────────────────────────────────────── */
 typedef enum {
+    /* The source record is authentic, but no captured T500/T600 AI
+     * consumer has assigned behaviour yet.  This is deliberately not a
+     * gameplay behaviour: live source creatures must fail closed rather
+     * than silently becoming PASSIVE. */
+    THERON_AI_UNAVAILABLE   = -1,
     THERON_AI_PASSIVE       = 0,  /* only attacks if cornered */
     THERON_AI_GUARD         = 1,  /* guards location, attacks if approached */
     THERON_AI_CHASE         = 2,  /* hunts party aggressively */
