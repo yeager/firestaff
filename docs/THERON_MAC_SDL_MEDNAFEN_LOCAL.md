@@ -24,6 +24,9 @@ Instrumenterad Mednafen-build:
 
 Instrumenterad binär:
   /Volumes/Extern-disk/theron-mednafen-real-sdl2-capture-20260809/install/bin/mednafen
+
+Ren PCE-videobinär utan Firestaff-capture-hooks:
+  /Volumes/Extern-disk/mednafen-1.32.1-clean-pce-20260811/src/mednafen
 ```
 
 Riktiga spelmedia och System Card ligger under:
@@ -108,6 +111,27 @@ pce.yscale 2.000000
 `pce.videoip 1` och `aspect_mult2` ger en filtrerad/interpolerad bild som kan
 se felaktig ut jämfört med den ursprungliga PCE-grafiken. Den lokala profilen
 och capture-profilen på extern-disken använder därför inställningarna ovan.
+
+Använd den rena PCE-videobinären när bilden ska granskas eller när Theron ska
+spelas. Capture-binären är endast för spårning. Den instrumenterade kärnan
+läser extra CPU-operander före instruktionsexekveringen för att hitta
+CD/RAM-konsumenter; den är därför inte en godkänd referens för visuell parity.
+En visuell kontroll den 2026-08-11 med samma äkta `TQUS.cue`, System Card och
+pixelprofil gav ren startup-bild med den rena binären, medan capture-binären
+gav korrupta magenta/olivfärgade streck. Det var alltså ett fel i lokal
+capture-build, inte i originalets Track 02-media eller i pixelprofilens
+skalning.
+
+Starta videokontrollen så här:
+
+```bash
+MEDNAFEN_HOME=/Users/bosse/.mednafen \
+/Volumes/Extern-disk/mednafen-1.32.1-clean-pce-20260811/src/mednafen \
+  /Volumes/Extern-disk/theron-full-media-20260810/TQUS.cue
+```
+
+Stäng processen med `Ctrl-C` när kontrollen är klar. Kör inte samtidigt en
+instrumenterad capture med samma Mednafen-home.
 
 ### Headless smoke-test
 
