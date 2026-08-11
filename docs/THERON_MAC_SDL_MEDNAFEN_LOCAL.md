@@ -92,6 +92,23 @@ den ska inte checkas in.
 
 ## Capturelägen
 
+### Pixel-exakt video
+
+För Theron ska Mednafen använda originalets pixelsteg utan interpolering:
+
+```ini
+pce.videoip 0
+pce.shader none
+pce.special none
+pce.stretch aspect
+pce.xscale 2.000000
+pce.yscale 2.000000
+```
+
+`pce.videoip 1` och `aspect_mult2` ger en filtrerad/interpolerad bild som kan
+se felaktig ut jämfört med den ursprungliga PCE-grafiken. Den lokala profilen
+och capture-profilen på extern-disken använder därför inställningarna ovan.
+
 ### Headless smoke-test
 
 Dummy-video är användbart för att kontrollera att patcharna och receipt-format
