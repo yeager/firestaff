@@ -316,9 +316,24 @@ int dm2_v1_mac_media_read_zip(const char *zip_path, DM2_V1_MacMedia *out) {
                   resource_extents, &resource_size) == 0)
         (void)copy_fork(&disk, alloc_size, alloc_start, extents, file_size, &out->music_map, &out->music_map_size);
     if (!out->demo) {
+        static const char *const sound_names[DM2_V1_MAC_SOUND_RESOURCE_COUNT] = {
+            "Music", "General.sounds", "Weapon.sounds"
+        };
         static const char *const movie_names[DM2_V1_MAC_MOVIE_COUNT] = {
             "Title.MooV", "Story.MooV", "Swoosh.MooV", "Credits.MooV", "Ending.MooV"
         };
+        for (size_t sound_index = 0u;
+             sound_index < DM2_V1_MAC_SOUND_RESOURCE_COUNT; ++sound_index) {
+            if (find_file(cat, cat_size, sound_names[sound_index], extents,
+                          &file_size, resource_extents, &resource_size) == 0 &&
+                resource_size != 0u &&
+                copy_fork(&disk, alloc_size, alloc_start, resource_extents,
+                          resource_size,
+                          &out->sound_resource_fork[sound_index],
+                          &out->sound_resource_fork_size[sound_index]) == 0) {
+                out->sound_resource_fork_present_mask |= 1u << sound_index;
+            }
+        }
         size_t movie_index;
         for (movie_index = 0u; movie_index < DM2_V1_MAC_MOVIE_COUNT; ++movie_index) {
             if (find_file(cat, cat_size, movie_names[movie_index], extents,
@@ -365,5 +380,7 @@ void dm2_v1_mac_media_free(DM2_V1_MacMedia *media) {
         free(media->movie_resource[i]);
         free(media->movie_moov[i]);
     }
+    for (size_t i = 0u; i < DM2_V1_MAC_SOUND_RESOURCE_COUNT; ++i)
+        free(media->sound_resource_fork[i]);
     memset(media, 0, sizeof(*media));
 }

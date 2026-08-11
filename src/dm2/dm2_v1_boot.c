@@ -106,6 +106,16 @@ static int dm2_v1_boot_load_mac_zip(DM2_V1_BootProfile *profile,
             media.movie_resource[movie_index] = NULL;
             media.movie_moov[movie_index] = NULL;
         }
+        for (size_t sound_index = 0u;
+             sound_index < DM2_V1_MAC_SOUND_RESOURCE_COUNT; ++sound_index) {
+            profile->mac_sound_resource_fork[sound_index] =
+                media.sound_resource_fork[sound_index];
+            profile->mac_sound_resource_fork_size[sound_index] =
+                media.sound_resource_fork_size[sound_index];
+            media.sound_resource_fork[sound_index] = NULL;
+        }
+        profile->mac_sound_resource_fork_present_mask =
+            media.sound_resource_fork_present_mask;
         profile->mac_movie_present_mask = media.movie_present_mask;
         profile->mac_movie_resource_present_mask = media.movie_resource_present_mask;
         profile->mac_movie_moov_present_mask = media.movie_moov_present_mask;
@@ -14596,6 +14606,13 @@ void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {
     profile->mac_movie_resource_present_mask = 0u;
     profile->mac_movie_moov_present_mask = 0u;
     profile->mac_movie_view_present_mask = 0u;
+    for (size_t sound_index = 0u;
+         sound_index < DM2_V1_MAC_SOUND_RESOURCE_COUNT; ++sound_index) {
+        free(profile->mac_sound_resource_fork[sound_index]);
+        profile->mac_sound_resource_fork[sound_index] = NULL;
+        profile->mac_sound_resource_fork_size[sound_index] = 0u;
+    }
+    profile->mac_sound_resource_fork_present_mask = 0u;
     dm2_v1_amiga_lzx_free(profile->amiga_swsh_bytes);
     dm2_v1_amiga_lzx_free(profile->amiga_titl_bytes);
     dm2_v1_amiga_lzx_free(profile->amiga_enda_bytes);

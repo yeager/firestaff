@@ -20,6 +20,7 @@ int main(void) {
                    p.mac_movie_resource_present_mask != 0x1du ||
                    p.mac_movie_moov_present_mask != 0x1du ||
                    p.mac_movie_moov_size[DM2_V1_MAC_MOVIE_TITLE] != 3286u)) ||
+        (!demo && p.mac_sound_resource_fork_present_mask != 0x7u) ||
         dm2_v1_boot_enter_game(&p) != 0) {
         fprintf(stderr, "DM2 Mac boot failed: platform=%d version=%s verified=%d g=%zu d=%zu\n",
                 p.platform, p.version_id, p.assets_verified,

@@ -41,6 +41,14 @@ int main(void) {
         dm2_v1_mac_media_free(&media);
         return 1;
     }
+    if (!demo && (media.sound_resource_fork_present_mask != 0x7u ||
+                  media.sound_resource_fork_size[DM2_V1_MAC_SOUND_MUSIC] != 662956u ||
+                  media.sound_resource_fork_size[DM2_V1_MAC_SOUND_GENERAL] != 134562u ||
+                  media.sound_resource_fork_size[DM2_V1_MAC_SOUND_WEAPON] != 50651u)) {
+        fprintf(stderr, "authentic Mac sound resource forks were not read\n");
+        dm2_v1_mac_media_free(&media);
+        return 1;
+    }
     if (!demo) {
         printf("retail movie mask=0x%08x resource=0x%08x moov=0x%08x sizes=%zu,%zu,%zu,%zu,%zu moov_size=%zu head=%02x%02x%02x%02x%02x%02x%02x%02x\n",
                media.movie_present_mask, media.movie_resource_present_mask,

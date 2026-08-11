@@ -5,6 +5,13 @@
 #include <stdint.h>
 
 #define DM2_V1_MAC_MOVIE_COUNT 5
+#define DM2_V1_MAC_SOUND_RESOURCE_COUNT 3
+
+typedef enum {
+    DM2_V1_MAC_SOUND_MUSIC = 0,
+    DM2_V1_MAC_SOUND_GENERAL,
+    DM2_V1_MAC_SOUND_WEAPON
+} DM2_V1_MacSoundResourceId;
 
 typedef enum {
     DM2_V1_MAC_MOVIE_TITLE = 0,
@@ -36,6 +43,9 @@ typedef struct {
     uint8_t *movie_moov[DM2_V1_MAC_MOVIE_COUNT];
     size_t movie_moov_size[DM2_V1_MAC_MOVIE_COUNT];
     uint32_t movie_moov_present_mask;
+    uint8_t *sound_resource_fork[DM2_V1_MAC_SOUND_RESOURCE_COUNT];
+    size_t sound_resource_fork_size[DM2_V1_MAC_SOUND_RESOURCE_COUNT];
+    uint32_t sound_resource_fork_present_mask;
     int demo;
 } DM2_V1_MacMedia;
 

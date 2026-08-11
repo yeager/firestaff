@@ -72,6 +72,10 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   `mdat`) for each present movie without changing either fork. This view is
   validated against the authentic retail boot profile; decoder, timing, audio,
   and presentation ownership remain separate.
+- The retail image also retains the complete authentic resource forks for
+  `Music` (662,956 bytes), `General.sounds` (134,562), and `Weapon.sounds`
+  (50,651). These are source-bound Mac resources, not DOS HMP substitutes;
+  decoding and playback remain a separate runtime owner.
 
 X68000 is not part of the DM2 support matrix.
 

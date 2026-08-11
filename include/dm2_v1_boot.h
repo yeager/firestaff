@@ -462,6 +462,9 @@ typedef struct {
     uint32_t mac_movie_moov_present_mask;
     DM2_V1_MacMovieView mac_movie_view[DM2_V1_MAC_MOVIE_COUNT];
     uint32_t mac_movie_view_present_mask;
+    uint8_t *mac_sound_resource_fork[DM2_V1_MAC_SOUND_RESOURCE_COUNT];
+    size_t mac_sound_resource_fork_size[DM2_V1_MAC_SOUND_RESOURCE_COUNT];
+    uint32_t mac_sound_resource_fork_present_mask;
 
     /* ── Save namespace ───────────────────────────────────── */
     char    save_root[1024];   /* saves/dm2/ */
