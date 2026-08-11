@@ -18,6 +18,7 @@
 #include "dm1_v1_champion_status_layout_pc34_compat.h"
 #include "dm1_v1_input_command_queue_pc34_compat.h"
 #include "fs_portable_compat.h"
+#include "redmcsb_f7062_save_header_pc34_compat.h"
 #include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
@@ -90,6 +91,13 @@ static uint32_t fnv1a(const uint8_t *bytes, size_t size)
         hash *= 16777619u;
     }
     return hash;
+}
+
+static uint32_t f31_advance_random_words(uint32_t state, unsigned int count)
+{
+    while (count-- != 0u)
+        state = state * UINT32_C(0xbb40e62d) + UINT32_C(11);
+    return state;
 }
 
 static int write_damaged_file(const char *path)
@@ -1586,8 +1594,17 @@ int main(void)
                                ? user_save_path : direct_handoff.startup_mini_path),
               "F31 resume test selects the authentic native save candidate");
         if (user_save_path && user_save_path[0]) {
+            CSB_V1_BootProfile *save_profile =
+                (CSB_V1_BootProfile *)view.csbBootProfile;
+            uint32_t random_before = save_profile
+                ? save_profile->runtime.csbwin_random_seed : 0u;
             CHECK(M11_GameView_QuickSave(&view),
                   "F31 live session writes the authenticated native CSBGAME.DAT slot");
+            CHECK(save_profile && save_profile->runtime.csbwin_random_seed_valid &&
+                      save_profile->runtime.csbwin_random_seed ==
+                          f31_advance_random_words(
+                              random_before, 16u + REDMCSB_F7062_RANDOM_WORDS),
+                  "F31 F7052 consumes 16 keys then F7062's 127 header words");
             memset(&user_save, 0, sizeof(user_save));
             CHECK(csb_v1_fmtowns_game_user_save_open(
                       (const CSB_V1_BootProfile *)view.csbBootProfile,

@@ -118,6 +118,18 @@ static uint32_t csb_v1_fmtowns_game_read_le32(const unsigned char *bytes);
 static int csb_v1_fmtowns_game_original_backup_path(
     const char *path, char *out, size_t out_size);
 
+static uint16_t csb_v1_fmtowns_game_next_source_random_word(
+    uint32_t *state)
+{
+    if (!state) return 0u;
+    /* ReDMCSB BASE.C F0027 advances the persisted G0349 stream before
+     * returning the high sixteen bits. CEDTINC8.C F7052 consumes sixteen
+     * words for save-part keys, then CEDTINC6.C F7062 consumes 127 more for
+     * the header's random first half. */
+    *state = *state * UINT32_C(0xbb40e62d) + UINT32_C(11);
+    return (uint16_t)(*state >> 8);
+}
+
 static int csb_v1_fmtowns_game_copy_file(const char *source_path,
                                          const char *destination_path)
 {
@@ -973,6 +985,7 @@ int csb_v1_fmtowns_game_write_user_save(
     uint16_t keys[5];
     uint16_t checksums[5];
     uint16_t random_words[REDMCSB_F7062_RANDOM_WORDS];
+    uint32_t random_state;
     unsigned char encoded_header[CSB_V1_FMTOWNS_SAVE_HEADER_BYTES];
     uint32_t file_size = 0u;
     uint32_t offset;
@@ -984,6 +997,7 @@ int csb_v1_fmtowns_game_write_user_save(
 
     if (!profile || !game_receipt || !save_path || !save_path[0] ||
         !profile->runtime.party_state_valid ||
+        !profile->runtime.csbwin_random_seed_valid ||
         !csb_v1_fmtowns_game_user_save_open(
             profile, game_receipt, save_path, &receipt) ||
         receipt.source_size == 0u || receipt.source_size > 0x7fffffffu) {
@@ -1035,9 +1049,19 @@ int csb_v1_fmtowns_game_write_user_save(
             header, sizeof(header), CSB_V1_FMTOWNS_CSB_HEADER_KEY_WORD_INDEX)) {
         goto done;
     }
+    random_state = runtime->csbwin_random_seed;
+    /* F7052 refreshes all sixteen header keys, including the eleven entries
+     * not used by the five F7055 save parts. They remain part of the native
+     * C5 header and must not be retained from the previous slot. */
+    for (index = 0u; index < 16u; ++index) {
+        uint16_t key = csb_v1_fmtowns_game_next_source_random_word(
+            &random_state);
+        csb_v1_fmtowns_game_write_le16(
+            header + CSB_V1_FMTOWNS_SAVE_HEADER_KEYS_OFFSET + index * 2u,
+            key);
+        if (index < 5u) keys[index] = key;
+    }
     for (index = 0u; index < 5u; ++index) {
-        keys[index] = csb_v1_fmtowns_game_read_le16(
-            header + CSB_V1_FMTOWNS_SAVE_HEADER_KEYS_OFFSET + index * 2u);
         checksums[index] = csb_v1_fmtowns_game_read_le16(
             header + CSB_V1_FMTOWNS_SAVE_HEADER_CHECKSUMS_OFFSET + index * 2u);
     }
@@ -1139,7 +1163,8 @@ int csb_v1_fmtowns_game_write_user_save(
             checksums[index]);
     }
     for (index = 0u; index < REDMCSB_F7062_RANDOM_WORDS; ++index)
-        random_words[index] = csb_v1_fmtowns_game_read_le16(header + index * 2u);
+        random_words[index] = csb_v1_fmtowns_game_next_source_random_word(
+            &random_state);
     if (!redmcsb_f7062_prepare_obfuscated_save_header_pc34(
             header, sizeof(header), CSB_V1_FMTOWNS_CSB_HEADER_KEY_WORD_INDEX,
             random_words, REDMCSB_F7062_RANDOM_WORDS,
@@ -1166,6 +1191,11 @@ int csb_v1_fmtowns_game_write_user_save(
         remove(temp_path);
         goto done;
     }
+    /* Both F7052's part keys and F7062's header filler have now consumed the
+     * shared source RNG. Commit the G0349 successor only after the native
+     * replacement becomes visible, so a host I/O failure cannot leave a
+     * durable save paired with a different runtime receipt. */
+    runtime->csbwin_random_seed = random_state;
     ok = 1;
 done:
     if (file) fclose(file);
