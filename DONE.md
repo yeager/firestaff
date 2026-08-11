@@ -13353,3 +13353,14 @@ and production source-combat tests.
 - ✅ Source-traceanalysatorn avvisar nu nollfylld RAM och omappad ISO-padding;
   500 000-raders menyförsök ger korrekt `retail_runtime_source_join=missing`
   i stället för ett falskt retail-ägarskap.
+
+# Nexus: expose authenticated VDP1 direct-color replay in viewport (2026-08-11)
+
+- ✅ Viewporten har nu en separat RGBA capture-yta för autentiserad VDP1
+  colour mode 5. Den återspelar rå Saturn-frame state genom samma
+  command-sequence decoder som den fristående capture-lanen.
+- ✅ Den indexed DGN-framebuffern påverkas inte, och receiptet lämnar
+  `renderer_permitted=0` tills exakt Saturn-källägare och materialbindning är
+  verifierade.
+- ✅ `test_nexus_v1_vdp1_capture_compositor` passerar mot den kompletta
+  engelska merged-disc-capturen på extern disk, både vid frame 0 och 599.

@@ -56,6 +56,40 @@ int nexus_viewport_replay_vdp1_capture_sequence(
     return 1;
 }
 
+int nexus_viewport_replay_vdp1_direct_color_capture(
+    Nexus_Viewport *vp,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    unsigned int frame_index,
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt *out_frame_receipt,
+    Nexus_V1_Vdp1CommandSequenceReceipt *out_sequence_receipt,
+    Nexus_V1_Vdp1DirectColorCaptureReceipt *out_receipt)
+{
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt frame_receipt;
+    Nexus_V1_Vdp1CommandSequenceReceipt sequence_receipt;
+    Nexus_V1_Vdp1DirectColorCaptureReceipt receipt;
+    int ok;
+
+    memset(&frame_receipt, 0, sizeof(frame_receipt));
+    memset(&sequence_receipt, 0, sizeof(sequence_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.capture_only = 1;
+    if (!vp || !capture_bytes) {
+        if (out_frame_receipt) *out_frame_receipt = frame_receipt;
+        if (out_sequence_receipt) *out_sequence_receipt = sequence_receipt;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    ok = nexus_v1_vdp1_capture_decode_direct_color_runtime_frame(
+        &vp->last_vdp1_direct_color_framebuffer,
+        capture_bytes, capture_byte_count, frame_index,
+        &frame_receipt, &sequence_receipt, &receipt);
+    vp->last_vdp1_direct_color_capture_receipt = receipt;
+    if (out_frame_receipt) *out_frame_receipt = frame_receipt;
+    if (out_sequence_receipt) *out_sequence_receipt = sequence_receipt;
+    if (out_receipt) *out_receipt = receipt;
+    return ok;
+}
+
 int nexus_viewport_replay_vdp2_nbg1_capture(
     Nexus_Viewport *vp,
     const Nexus_V1_Vdp2CaptureCompositeInput *input,

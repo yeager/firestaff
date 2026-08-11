@@ -189,6 +189,12 @@ typedef struct Nexus_Viewport {
      * captured display-origin/system-clip state as part of the same trace. */
     Nexus_V1_Vdp1CaptureCompositeReceipt last_vdp1_capture_receipt;
     Nexus_V1_Vdp1CaptureSequenceReceipt last_vdp1_sequence_receipt;
+    /* VDP1 colour mode 5 is retained in a separate RGBA capture surface.
+     * It must not be quantized into the indexed DGN framebuffer or treated
+     * as an owned material without an exact Saturn source join. */
+    Nexus_V1_Vdp1DirectColorFramebuffer last_vdp1_direct_color_framebuffer;
+    Nexus_V1_Vdp1DirectColorCaptureReceipt
+        last_vdp1_direct_color_capture_receipt;
     Nexus_V1_Vdp2CaptureCompositeReceipt last_vdp2_capture_receipt;
     Nexus_V1_Vdp2TilemapCaptureReceipt last_vdp2_tilemap_capture_receipt;
     Nexus_V1_StabgCaptureReceipt last_stabg_capture_receipt;
@@ -240,6 +246,17 @@ int nexus_viewport_replay_vdp1_capture_sequence(
     Nexus_Viewport *vp,
     const Nexus_V1_Vdp1CaptureSequenceInput *input,
     Nexus_V1_Vdp1CaptureSequenceReceipt *out_receipt);
+
+/* Decode one authenticated Saturn VDP1 colour-mode-5 draw into the
+ * viewport's separate RGBA capture surface. This is capture-only and never
+ * authorizes the normal indexed viewport renderer. */
+int nexus_viewport_replay_vdp1_direct_color_capture(
+    Nexus_Viewport *vp,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    unsigned int frame_index,
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt *out_frame_receipt,
+    Nexus_V1_Vdp1CommandSequenceReceipt *out_sequence_receipt,
+    Nexus_V1_Vdp1DirectColorCaptureReceipt *out_receipt);
 
 int nexus_viewport_replay_vdp2_nbg1_capture(
     Nexus_Viewport *vp,

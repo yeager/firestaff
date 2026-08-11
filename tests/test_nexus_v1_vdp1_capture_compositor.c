@@ -66,6 +66,10 @@ static int run_external_direct_color_capture(void)
     Nexus_V1_Vdp1CommandSequenceReceipt sequence;
     Nexus_V1_Vdp1DirectColorFramebuffer framebuffer;
     Nexus_V1_Vdp1DirectColorCaptureReceipt receipt;
+    Nexus_Viewport viewport;
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt viewport_frame;
+    Nexus_V1_Vdp1CommandSequenceReceipt viewport_sequence;
+    Nexus_V1_Vdp1DirectColorCaptureReceipt viewport_receipt;
     unsigned int frame_index;
     int found;
 
@@ -93,6 +97,18 @@ static int run_external_direct_color_capture(void)
         receipt.direct_color_mode && receipt.source_word_order_verified &&
         !receipt.renderer_permitted && receipt.written_pixels > 0 &&
         receipt.command_byte_offset != 0U;
+    nexus_viewport_init(&viewport);
+    memset(&viewport_frame, 0, sizeof(viewport_frame));
+    memset(&viewport_sequence, 0, sizeof(viewport_sequence));
+    memset(&viewport_receipt, 0, sizeof(viewport_receipt));
+    found = found &&
+        nexus_viewport_replay_vdp1_direct_color_capture(
+            &viewport, capture, (size_t)file_size, frame_index,
+            &viewport_frame, &viewport_sequence, &viewport_receipt) &&
+        viewport_receipt.valid && viewport_receipt.capture_only &&
+        !viewport_receipt.renderer_permitted &&
+        viewport_receipt.written_pixels > 0 &&
+        viewport.last_vdp1_direct_color_capture_receipt.valid;
     free(capture);
     return found;
 }
