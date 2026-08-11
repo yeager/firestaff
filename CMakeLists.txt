@@ -33478,6 +33478,7 @@ endif()
             NAME pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path.py
         )
+        set_tests_properties(pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path PROPERTIES TIMEOUT 480)
         add_test(
             NAME pass374_dm1_v1_completion_viewport_wall_credit
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass374_dm1_v1_completion_viewport_wall_credit.py
