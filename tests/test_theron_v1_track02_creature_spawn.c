@@ -41,7 +41,7 @@ static void assert_decoded_real_bin(const char *path,
     assert(theron_v1_track02_decode_spawn_source(bytes, size, variant,
                                                  &source) == 1);
     assert(source.authenticated == 1);
-    assert(source.variant == variant);
+    assert(source.variant == (int)variant);
     for (unsigned int i = 0; i < THERON_TRACK02_SPAWN_POINTER_COUNT; ++i) {
         const Theron_CreaturePointerEntry *expected =
             theron_v1_track02_creature_pointer(i);
