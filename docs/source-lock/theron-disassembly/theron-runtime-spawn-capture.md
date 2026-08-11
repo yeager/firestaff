@@ -871,3 +871,19 @@ This receipt does not prove the missing Track 02 square-to-tile/material
 consumer, level/object records, HUD ownership, creature semantics, or source
 bitmap decompressor. Those routes remain fail-closed; no world or object
 meaning is inferred from the BAT alone.
+
+## 2026-08-11 — MODE1/2048 CD→RAM transport witness
+
+En ny, avgränsad körning använde den autentiserade US-distributionens riktiga
+`TQUS.cue` med Track 02 i MODE1/2048 (`TQUS02.iso`, MD5
+`ceb02343868f80cec899e9b239aff2da`) och den lokala System Card-proveniensen
+`ff1a674273fe3540ccef576376407d1d`. Den instrumenterade Mednafen-sessionen
+gav 161 råsektorspann, 51 SCSI-läsningar, 2 byte-exakta CD→RAM-receipts,
+32 `$E009`-dispatches och 65 536 ordnade main-RAM-consumerläsningar. Samma
+session observerade 4 096 spawn-consumerläsningar och 3 584 RNG-windowläsningar.
+
+Detta är nu godkänt som transport/proveniens även när runtime-läsningarna är
+icke-noll. De är observationer, inte semantiskt bevis. `$B0E5` hade fortfarande
+0 giltiga regular-spawn-samples, och därför förblir RNG, spawn, creature-AI,
+combat, loot, generatorer, T700 och T900 fail-closed. Råtrace, VCE/VRAM och
+media ligger kvar på extern disk; inget BIOS eller spelmedia är incheckat.

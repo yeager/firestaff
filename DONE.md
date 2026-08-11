@@ -13683,3 +13683,14 @@ and production source-combat tests.
 - 🔒 Capturen hade `spawn_entry_b0e5_samples=0`, ingen `$4644`/`$4667`-
   sample och `semantic_publication_allowed=0`. RNG, AI, combat, loot,
   generatorer, T700 och T900 förblir därför stängda.
+
+# Theron: admit authentic MODE1/2048 transport receipt (2026-08-11)
+
+- ✅ Transition-receipt-parsern accepterar nu de två uttryckligen hashbundna
+  Track 02-varianterna MODE1/2352 och MODE1/2048.
+- ✅ Den riktiga externa MODE1/2048-capturen passerar testet med 2 autentiserade
+  CD→RAM-receipts, 65 536 main-RAM-läsningar, 4 096 spawn-läsningar och 3 584
+  RNG-windowläsningar.
+- 🔒 Runtime-läsningar publiceras fortfarande inte som semantik. Giltig
+  `$B0E5` regular-spawn och komplett return/join saknas; RNG, AI, T700 och
+  T900 är fortsatt fail-closed.

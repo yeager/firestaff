@@ -5192,3 +5192,11 @@ record boundary. Dynamic RNG/AI/T700/T900 behavior remains capture-gated.
   De ska inte främjas till RNG/spawn-statistik; nästa capture måste visa den
   source-bound regular-spawn-koden, `$4644`/`$4667`-retur och efterföljande
   monsterrecord i samma session.
+
+## Theron: join MODE1/2048 transport to semantic capture
+
+- 🔒 MODE1/2048 är nu autentiserad transport med positiva CD→RAM- och
+  main-RAM-receipts, men inte gameplay-semantik.
+- ⏳ Nästa externa session måste nå ett giltigt `$B0E5` regular-spawn-entry
+  (`A=0..3`) och binda det till `$4644/$4667`, `$C96B/$CC4C`, RNG-retur och
+  ett efterföljande monsterrecord i samma körning.

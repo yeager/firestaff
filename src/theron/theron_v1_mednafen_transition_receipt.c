@@ -6,6 +6,7 @@
 #include <string.h>
 
 #define THERON_US_TRACK02_MD5 "f23601102138f87c33025877767ebf76"
+#define THERON_US_TRACK02_MODE1_2048_MD5 "ceb02343868f80cec899e9b239aff2da"
 #define THERON_SYSTEM_CARD_MD5 "ff1a674273fe3540ccef576376407d1d"
 
 static int read_line(FILE *file, char *line, size_t capacity) {
@@ -71,6 +72,7 @@ int theron_v1_mednafen_transition_receipt_parse_file(
     char line[1024];
     unsigned int seen_counts = 0u;
     unsigned int required_counts = (1u << 16) - 1u;
+    int track02_mode_2048 = 0;
 
     if (!out) return 0;
     *out = receipt;
@@ -100,11 +102,15 @@ int theron_v1_mednafen_transition_receipt_parse_file(
             if (receipt.pce_module_verified || strcmp(value, "pce")) goto reject;
             receipt.pce_module_verified = 1;
         } else if (strcmp(key, "track02_mode") == 0) {
-            if (receipt.mode_verified || strcmp(value, "MODE1/2352")) goto reject;
+            if (receipt.mode_verified ||
+                (strcmp(value, "MODE1/2352") != 0 &&
+                 strcmp(value, "MODE1/2048") != 0)) goto reject;
+            track02_mode_2048 = strcmp(value, "MODE1/2048") == 0;
             receipt.mode_verified = 1;
         } else if (strcmp(key, "track02_md5") == 0) {
             if (receipt.track02_md5_verified ||
-                strcmp(value, THERON_US_TRACK02_MD5)) goto reject;
+                (strcmp(value, THERON_US_TRACK02_MD5) != 0 &&
+                 strcmp(value, THERON_US_TRACK02_MODE1_2048_MD5) != 0)) goto reject;
             snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s", value);
             receipt.track02_md5_verified = 1;
         } else if (strcmp(key, "system_card_md5") == 0) {
@@ -131,13 +137,14 @@ int theron_v1_mednafen_transition_receipt_parse_file(
         receipt.authenticated_cd_ram_receipts == 0u ||
         receipt.game_main_ram_e009_dispatches == 0u ||
         receipt.main_ram_consumer_reads == 0u ||
+        (track02_mode_2048 &&
+         strcmp(receipt.track02_md5, THERON_US_TRACK02_MODE1_2048_MD5) != 0) ||
+        (!track02_mode_2048 &&
+         strcmp(receipt.track02_md5, THERON_US_TRACK02_MD5) != 0) ||
         receipt.vdc_vram_snapshot_bytes != 65536u ||
-        receipt.vce_palette_snapshot_bytes != 1024u ||
-        receipt.main_ram_target_reads != 0u ||
-        receipt.main_ram_target_writes != 0u ||
-        receipt.spawn_consumer_reads != 0u ||
-        receipt.spawn_entry_b0e5_samples != 0u ||
-        receipt.rng_consumer_samples != 0u) goto reject_after_close;
+        receipt.vce_palette_snapshot_bytes != 1024u) goto reject_after_close;
+    /* Runtime reads are observations, not semantic proof.  In particular,
+     * seeing the spawn/RNG windows must not promote guessed game rules. */
     receipt.status = THERON_V1_MEDNAFEN_TRANSITION_READY;
     receipt.transport_verified = 1;
     receipt.semantic_publication_allowed = 0;

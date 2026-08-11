@@ -12,9 +12,10 @@ typedef enum {
 } Theron_V1MednafenTransitionStatus;
 
 /* Same-session transport admission for an explicitly captured original run.
- * The receipt proves authenticated media/loader transport only.  The zero
- * target and semantic fields are intentional: this type cannot authorize a
- * level, object, tile, creature, RNG, T700 or T900 interpretation. */
+ * The receipt proves authenticated media/loader transport only. Runtime
+ * target/spawn/RNG counters are retained as observations, but this type
+ * cannot authorize a level, object, tile, creature, RNG, T700 or T900
+ * interpretation. */
 typedef struct {
     Theron_V1MednafenTransitionStatus status;
     int source_header_verified;
