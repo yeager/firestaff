@@ -927,7 +927,11 @@ static void csb_v1_fmtowns_game_patch_party_part(
         for (stat = 0; stat < CSB_V1_FULL_SKILL_COUNT; ++stat) {
             unsigned char *skill = dst + skill_offset + stat * 6;
             uint32_t experience = champion->SkillExperience[stat];
-            csb_v1_fmtowns_game_write_le16(skill, champion->Skills[stat]);
+            /* Firestaff stores 16 playable skill levels; the native CSBWin
+             * record has four additional experience-only entries.  Keep
+             * those entries zero-level instead of indexing past Skills. */
+            csb_v1_fmtowns_game_write_le16(
+                skill, stat < CSB_V1_SKILL_COUNT ? champion->Skills[stat] : 0u);
             csb_v1_fmtowns_game_write_le16(skill + 2u,
                                            (uint16_t)experience);
             csb_v1_fmtowns_game_write_le16(skill + 4u,
@@ -1834,6 +1838,7 @@ int csb_v1_fmtowns_game_handoff_open(
     unsigned char music_table[CSB_V1_FMTOWNS_GAME_MUSIC_TABLE_BYTES];
     CSB_V1_VariantId expected_variant;
     int packed_media;
+    int path_length;
 
     if (!out_receipt) return 0;
     memset(out_receipt, 0, sizeof(*out_receipt));
@@ -1874,9 +1879,11 @@ int csb_v1_fmtowns_game_handoff_open(
         return 0;
     }
     if (packed_media) {
-        snprintf(out_receipt->executable_path,
-                 sizeof(out_receipt->executable_path), "%s::%s",
-                 profile->asset_root, name);
+        path_length = snprintf(out_receipt->executable_path,
+                               sizeof(out_receipt->executable_path), "%s::%s",
+                               profile->asset_root, name);
+        if (path_length < 0 || (size_t)path_length >=
+                sizeof(out_receipt->executable_path)) return 0;
         actual_size = (uint32_t)profile->fmtowns_executable_size;
         actual_hash = csb_v1_fmtowns_game_bytes_fnv1a(
             profile->fmtowns_executable_bytes,
