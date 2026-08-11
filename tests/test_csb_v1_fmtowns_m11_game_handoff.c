@@ -229,7 +229,7 @@ int main(void)
         if (!M12_AssetStatus_MaterializeCSBRuntimeVersion(
                 &asset_status, version_id, materialized_data_dir,
                 sizeof(materialized_data_dir)) ||
-            strcmp(materialized_data_dir, loose_data_dir) != 0) {
+            strcmp(materialized_data_dir, loose_data_dir) == 0) {
             fprintf(stderr, "SKIP: verified loose FM Towns %s CD root unavailable\n",
                     version_id);
             return 0;

@@ -49,10 +49,15 @@ The admitted CSB F31 disc contains both language trees:
 
 `src/shared/asset_status_m12.c` first verifies the selected hash pair, then
 materializes the complete ISO inventory and the original `FMTOWNS.IMG` /
-`FMTOWNS.CUE` pair. It must retain that pair for the original TD/TR CD-DA
-commands; a derived track table or generated PCM is not an equivalent source.
-The scanner reports each admitted CSB edition, rather than using the selected
-cache pair as evidence for another platform.
+`FMTOWNS.CUE` pair when the source is the retail ZIP/RAR. It must retain that
+pair for the original TD/TR CD-DA commands; a derived track table or generated
+PCM is not an equivalent source. A manually extracted original tree is also
+admitted only when both language pairs, their two P3 programs and all four
+registered hashes agree. It creates a language-private cache with the selected
+flat `GRAPHICS.DAT`/`DUNGEON.DAT`, root programs and original portraits, and
+removes stale archive CUE/IMG files so loose media cannot borrow CDDA from a
+different source. The scanner reports each admitted CSB edition, rather than
+using the selected cache pair as evidence for another platform.
 
 CSB uses its own 31-track Red Book layout. Do not reuse DM1's mixed
 MODE1/2048-and-audio offset calculation or DM2's Towns music helper. The CSB

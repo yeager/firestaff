@@ -3129,7 +3129,12 @@
   2026-08-06: a normal broad data-root scan now also admits the named retail
   FM Towns archive below its documented `csb/` child, so the launcher retains
   both F31 English and Japanese profiles rather than hiding them unless that
-  child is selected directly.
+  child is selected directly. 2026-08-11: a manually extracted original CD
+  tree is now admitted only as the complete hash-verified CDATA/CJDATA pair;
+  selected EN/JP launch receives a language-private cache and cannot inherit
+  a stale archive CUE/IMG audio owner. Remaining parity work is the original
+  C06 file-picker transaction and an internally consistent F31 user-save
+  corpus, not a fallback or synthetic save path.
 
 - **NEXUS-SFX-EVENT-DISPATCH-CAPTURE:** Host sound-request names are now
   2026-08-06 follow-up: the M11 Light/Torch/Darkness bridge now checks the

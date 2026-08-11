@@ -1856,6 +1856,18 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   the FM Towns cache and source-locked boot handoff; the real TITLE.ANM →
   SWITCHTW → CHTWE.EXP test also passes.
 
+# CSB FM Towns extracted-CD language cache (2026-08-11)
+
+- ✅ A manually extracted retail F31 tree is now accepted only when its
+  `CDATA` and `CJDATA` GRAPHICS/DUNGEON pairs, `CHTWE.EXP` and `CHTWJ.EXP`
+  all match the registered original identities. Each language then receives a
+  private flat runtime cache containing its selected data pair, shared retail
+  programs and all original CMP portraits.
+- ✅ A loose-tree launch removes stale `FMTOWNS.CUE`/`FMTOWNS.IMG` cache
+  artifacts so it cannot claim CDDA that belongs to an earlier ZIP/RAR
+  selection. The real-data handoff regression passes both SWITCHTW → CHTWE
+  and SWITCHTW → CHTWJ routes.
+
 # CSB selected-package cache handoff (2026-08-07)
 
 # CSB Atari ST runtime fail-closed session boundary (2026-08-07)
@@ -3709,4 +3721,3 @@ CTest passes.
   tick before accepting the first Entrance plan. This prevents the former
   black-screen rejection at the title/Entrance boundary.
 - The real local CSB M12-to-M11 handoff regression passes 500/500.
-
