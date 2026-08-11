@@ -1,0 +1,5 @@
+#include "csb_v1_x68k_program.h"
+#include <stdio.h>
+#include <stdlib.h>
+static int read_file(const char*p,uint8_t**o,size_t*n){FILE*f=fopen(p,"rb");long z;if(!f||fseek(f,0,SEEK_END)||(z=ftell(f))<=0||fseek(f,0,SEEK_SET)||!(*o=malloc((size_t)z))||fread(*o,1,(size_t)z,f)!=(size_t)z){if(f)fclose(f);free(*o);return 0;}fclose(f);*n=(size_t)z;return 1;}
+int main(void){const char*p=getenv("FIRESTAFF_CSB_X68K_HDM");uint8_t bad[8]={0};CSB_V1_X68kProgramReceipt r;if(csb_v1_x68k_chaos_st_receipt(bad,sizeof(bad),&r)||csb_v1_x68k_chaos_st_receipt(NULL,0,NULL))return 1;if(!p||!*p){puts("test_csb_v1_x68k_program: SKIP FIRESTAFF_CSB_X68K_HDM unset");return 0;}{uint8_t*h=NULL;size_t n=0;if(!read_file(p,&h,&n)||!csb_v1_x68k_chaos_st_receipt(h,n,&r)||r.text_bytes!=9020u||r.data_bytes!=586u||r.bss_bytes!=2126u||r.relocation_bytes!=562u||r.symbol_bytes!=2052u||r.file_bytes!=12284u||r.entry_offset!=64u||!r.human68k_x_format||r.executable_emulation_permitted){free(h);return 1;}free(h);}puts("test_csb_v1_x68k_program: PASS");return 0;}

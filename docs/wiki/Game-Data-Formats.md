@@ -44,6 +44,11 @@ enumerator preserves the original non-directory order and has verified the
 classifies the cracked HDM as canonical nor enables an X68000 boot profile;
 see [preservation status](../PRESERVATION_STATUS_2026-08-11.md).
 
+`CHAOS_ST.X` is a Human68k `HU` executable with a 64-byte header. The local
+CSB v3.1 JP image verifies 9,020 text bytes, 586 data bytes, 2,126 BSS bytes,
+562 relocation bytes and 2,052 symbol bytes. This is a source-layout receipt,
+not an executable loader or emulator.
+
 ## Dungeon Master II
 
 GRAPHICS.DAT is a typed GDAT record graph, not a flat sprite sheet.

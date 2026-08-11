@@ -45,6 +45,12 @@ dungeon. Det ger den faktiska filuppsättning som den kommande
 X68000-startvägen måste konsumera, men ersätter inte disassembly av
 `CHAOS_ST.X` eller dess plattformsspecifika startordning.
 
+`CHAOS_ST.X` har dessutom ett verifierat Human68k-`HU`-huvud. Den aktuella
+avbilden innehåller 9 020 byte text, 586 byte data, 2 126 byte BSS,
+562 byte relokering och 2 052 byte symboler; 68000-koden börjar vid offset
+64. Detta är en disassemblygrund för fortsatt startarbete, inte en emulator
+eller ett tillstånd att köra X68000-programmet på värden.
+
 Fördjupning: [bevarandeprinciper](wiki/Preservation.md),
 [formatkatalog](GAME_DATA_FORMATS.md), [CSB-referens](REDMCSB_REFERENCE.md)
 och [gapplista](FIRESTAFF_GAP_LIST.md).
