@@ -123,12 +123,12 @@ real English and Japanese `MINI.DAT` files pass the end-to-end
 map-4 pose at `(22,18)`, direction 2, with one champion and no title replay.
 This proves the shipped retail bootstrap save path. It does not prove an
 arbitrary user `CSBGAME.DAT` until that file passes the same native F0435
-header, five-part, portrait and dungeon-tail gates. The external
-`CSBGAME.DAT` and `CSBGAME-JP.DAT` files are retained as unclassified
-candidates. The current F7061/F7057 reader rejects them before a complete
-native F0435 state receipt is produced, so they are not positive save evidence
-and the F0433 write-back path remains closed. No generated save is used as a
-substitute.
+header, five-part, portrait and dungeon-tail gates. For F31E C06, the selected
+native `CSBGAME.DAT` medium is now read and updated through those gates:
+F7001/F7052 creates its first slot privately from the hash-verified
+`MINI.DAT`, F0433 updates later saves, F7004/F7051 reloads the same slot, and
+F0435 may restore its native `.BAK` when the primary is damaged. This is not a
+generic Firestaff save format and does not admit unverified external candidates.
 
 ## Utility boundary
 
@@ -145,16 +145,21 @@ import after a catalogue selection and the source `SAVE CHAMPIONS` dialog.
 F7000's `PORTRAIT` choice preserves an admitted `.CMP` header, then writes
 the selected champion's live name, title and planar payload to the separate
 portrait medium: `~/.firestaff/portraits` on macOS/Linux or
-`INSTALLDIR\\portraits` on Windows. The scanned CD catalogue stays read-only;
-F7001's whole-game branch is still deliberately unavailable.
+`INSTALLDIR\\portraits` on Windows. The scanned CD catalogue stays read-only.
+For F31E CSB, F7001's `GAME` choice is also bound: first save stages the
+admitted `MINI.DAT` privately, writes a canonical native `CSBGAME.DAT`, and
+later saves update that same slot through F0433 with the original `.BAK` rule.
+F7004's `GAME` choice reloads only an F0435-valid selected slot. The bound UI
+does not fabricate C06's separate Dungeon Master-versus-CSB destination chooser.
 
 It does not authorize the rest of Utility. `F7004_LoadChampions` now presents
 its native `GAME` / `PORTRAIT` / `CANCEL` choice before `PORTRAIT` opens the
-source-owned `CEDT008`/`CEDT013` picker. The whole-game branch remains closed:
-it belongs to the separately unbound `F7051_LoadGame` transaction. Make New
-Adventure and name/title entry are also closed. F31J remains closed until the
-native Shift-JIS glyph consumer is recovered. Keep all of those routes modal
-until their specific owners are evidenced.
+source-owned `CEDT008`/`CEDT013` picker. Make New Adventure remains closed:
+F7086/F7090 needs a verified source/destination dungeon transaction and the
+real F7020 equipped-object modifier removal, neither of which can be inferred
+from a party-only editor receipt. F31J's editor remains closed until the native
+Shift-JIS glyph consumer is recovered. Keep those routes modal until their
+specific owners are evidenced.
 
 This C06 boundary is narrower than the direct in-game save route. M11 can
 read and update an explicitly selected, already admitted native

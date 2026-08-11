@@ -32,6 +32,8 @@ admitted separately and is never a fallback for F31E.
 | Portrait-medium reload | `CEDT008.C` F7083/F7084 `NEW DISK` | Bound | `NEW DISK` reopens the verified F7000 portrait medium and reuses F7002's strict `.CMP` admission. An empty medium stays an explicit empty-disk result. |
 | Name and title editing | `CEDTDATA.C` G2272 entries 13/14; `CEDT006.C` F7027/F7028/F7038/F7041; `DEFS.H` `CHAMPION` | Bound for F31E | M11 routes real mouse fields and SDL text to the selected C06 champion. It reproduces the 6-pixel cursor geometry, uppercase A–Z plus `.,;:` filter, non-leading spaces, insertion/backspace, arrow/Home/End/Page Up/Page Down navigation and the source 30-VBlank blink cadence. The recovered source layout is `Name[8]` and `Title[20]`: C06 admits 7 name and 19 title characters. The field raster, underscores and cursor use only the admitted 5×6 C06 font. |
 | Native party save patch | ReDMCSB `DEFS.H` `CHAMPION`; `LOADSAVE.C` F0433/F0435; `CEDTINC8.C` F7052 | Bound | The F31 party part uses `Name[8]`, `Title[20]`, `Direction` at byte 28 and `Cell` at byte 29. Native F7052/F0433 writing clears and rewrites only these fixed source fields before re-obfuscating the part; F0435 readback verifies the complete identity and pose. |
+| C06 whole-game save | `CEDT001.C` F7001; `CEDTINC8.C` F7052; `LOADSAVE.C` F0433/F0435/F7062 | Bound for F31E CSB | The `GAME` choice makes a private runtime from the admitted `MINI.DAT` bootstrap on its first save, applies only C06's party edits and writes the five native parts, raw portrait receipt and F7062 tail to `CSBGAME.DAT`. Later saves use F0433's update path and retain the source `.BAK` recovery rule. It never serializes an unrelated M11/PC runtime. |
+| C06 whole-game load | `CEDT001.C` F7004; `CEDTINC8.C` F7051; `LOADSAVE.C` F0435/F7063 | Bound for F31E CSB | `GAME` load opens the same selected native slot, validates its header, five parts, portraits and tail, and restores the C06 party/portrait receipt. A damaged primary is recovered only through the native `CSBGAME.BAK` path. |
 
 ## Explicitly closed routes
 
@@ -40,8 +42,8 @@ utility flow or create replacement data:
 
 | Route | Missing original owner(s) | Why it remains closed |
 |---|---|---|
-| Make New Adventure | `CEDT006.C` F7086/F7090 | The separate new-adventure state transition has not been bound to F31 data. |
-| Whole-game Save Champions branch | `CEDT001.C` F7001 → F7052_SaveGame | The dialog's GAME choice belongs to the full F31 C05 save transaction. It must not be substituted with the selected-portrait writer. |
+| Make New Adventure | `CEDT006.C` F7086/F7090; `CEDTINCH.C` F7086; `CEDTINCI.C` F7088/F7089/F7090 | F7086 requires a valid source dungeon and unique party names. F7090 then copies destination header state, portraits and party placement, normalizes resources/status and removes every equipped item's statistic modifiers before collision resolution. Firestaff has a generic normalization contract, but no verified F31 source/destination-object transaction; it must not approximate F7020 modifier removal or invent a destination `MINI.DAT`. |
+| Dungeon Master versus CSB chooser | `CEDTINCD.C` F7051 | C06's separate destination game selection is not a CSB-only toggle. The bound route opens only the selected CSB native medium, rather than presenting a fabricated Dungeon Master choice. |
 | F31J editor | `CEDT030.C` F7341 | The native Shift-JIS glyph consumer is not recovered; drawing host text would fabricate the screen. |
 
 ## Verification
@@ -50,8 +52,9 @@ utility flow or create replacement data:
 With a hash-admitted F31E/F31J source tree it verifies the C06 P3 envelope,
 language-specific executable choice, menu bytes, icon palette, F31E font,
 the 24-record retail portrait catalogue, F7083/F7084 picker-to-F7002 import,
-the F7001 dialog, F7000 selected-portrait writer, the C06 text-edit contract
-and the 31/32 F0689 arrow stride.  The source `2:\\#CHAMP_NAME#.CMP` drive maps to
+the F7001 dialog, F7000 selected-portrait writer, native F7001/F7052 first and
+repeated GAME saves, F7004/F7051 GAME loads including `.BAK` recovery, the C06
+text-edit contract and the 31/32 F0689 arrow stride.  The source `2:\\#CHAMP_NAME#.CMP` drive maps to
 `~/.firestaff/portraits` on macOS/Linux and `INSTALLDIR\\portraits` on Windows;
 the scanned CD `PORTRAIT` catalogue remains read-only.
 It skips when licensed game data is absent. No original game bytes are stored
