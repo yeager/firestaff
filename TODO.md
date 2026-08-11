@@ -1,5 +1,15 @@
 # Firestaff TODO - Open Work
 
+# Theron: authenticated SDL2 SRAM replay reaches transport, not spawn semantics (2026-08-11)
+
+- ✅ An external-disk replay with a directly linked SDL2 2.30.9 runtime,
+  real US Track 02 CUE, System Card and operator-owned SRAM reached the
+  authenticated gameplay transport: 25 CD IRQs, 175 sector bindings, 4
+  CD→RAM origin receipts, 32 `$E009` dispatches and 1,536 RNG windows.
+- 🔒 The same session has zero `$B0E5` address hits. No monster category,
+  RNG-return ownership, creature AI/combat/loot, generator timing, T700
+  statistic or T900 object rule may be promoted from it.
+
 # Theron: US roster names are live; text control consumer remains unresolved (2026-08-11)
 
 - ✅ The authenticated US Track 02 name stream now reaches the production

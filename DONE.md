@@ -1,3 +1,15 @@
+# Theron: authentic SDL2 SRAM replay reaches gameplay transport (2026-08-11)
+
+- ✅ Built the official SDL2 2.30.9 runtime on the external disk and rebuilt
+  the instrumented Mednafen against the direct SDL2 dylib; no `sdl2-compat`
+  runtime was used for the capture.
+- ✅ Replayed real US Track 02 media with the authenticated System Card and
+  operator-owned SRAM. The capture recorded host input, CD/sector transport,
+  CD→RAM origin, `$E009` game-loader dispatches and bounded RNG-consumer
+  windows. Raw traces remain outside GitHub and no BIOS or game data was added.
+- 🔒 The session reached no regular `$B0E5` spawn entry, so creature AI,
+  combat, loot, generator, T700 and T900 semantics remain correctly gated.
+
 # Theron: bind real US roster names into the live forcefield party (2026-08-11)
 
 - ✅ The real US Track 02 codon roster is now regression-tested through the

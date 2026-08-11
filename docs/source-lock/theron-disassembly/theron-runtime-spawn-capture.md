@@ -1,5 +1,25 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-11 — real SDL2 SRAM replay reaches authenticated gameplay transport
+
+The external-disk replay `theron-capture-20260811-real-sdl2-sram` used the
+directly linked SDL2 2.30.9 runtime, the authenticated US Track 02 CUE
+(`ceb02343868f80cec899e9b239aff2da` for the MODE1/2048 Track 02 payload), the
+System Card MD5 `ff1a674273fe3540ccef576376407d1d`, and the operator-owned HUBM
+SRAM. Host RUN/Button-I input was observed by the instrumented emulator.
+
+The transition receipt records 105526 input transactions, 25 CD IRQ callbacks,
+175 raw-sector bindings, 4 authenticated CD-to-RAM origin receipts, 32 game
+`$E009` dispatches, 2048 ADPCM FIFO/RAM bytes and 1536 bounded RNG-consumer
+samples. This is stronger transport/runtime evidence than the prior
+save-state replay and is retained outside GitHub.
+
+The session still recorded zero `$B0E5` address hits, so it did not reach the
+regular-spawn entry. The capture therefore does not prove monster category,
+RNG return ownership, creature AI, attack/damage/loot, generator timing, T700
+statistics or T900 object rules. Those production semantics remain
+fail-closed; no values are synthesized from the transport receipt.
+
 ## 2026-08-11 — ADPCM FIFO/RAM pairs are now byte- and sequence-bound
 
 The CD-state intake now requires every authenticated
