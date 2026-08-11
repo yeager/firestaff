@@ -1698,15 +1698,16 @@ int main(void)
                     bootstrap_profile->runtime.party_state.Champions[0].Direction = 2u;
                     bootstrap_profile->runtime.party_state.Champions[0].Cell = 1u;
                 }
-                created = csb_v1_fmtowns_game_create_user_save_from_startup(
-                    bootstrap_profile, &direct_handoff, bootstrap_save_path);
+                CHECK(test_set_env("FIRESTAFF_QUICKSAVE_PATH", bootstrap_save_path),
+                      "F31 C140 binds the selected native save-disk slot");
+                created = M11_GameView_QuickSave(&view);
                 CHECK(created,
-                      "F31 F7052 creates a new canonical CSBGAME.DAT from verified MINI.DAT");
+                      "F31 C140/F7052 creates a new canonical CSBGAME.DAT from verified MINI.DAT");
                 memset(&bootstrap_save, 0, sizeof(bootstrap_save));
                 CHECK(created && csb_v1_fmtowns_game_user_save_open(
                           bootstrap_profile, &direct_handoff, bootstrap_save_path,
                           &bootstrap_save) && bootstrap_save.valid,
-                      "F31 F7052-created CSBGAME.DAT passes the native F0435 reader");
+                      "F31 C140/F7052-created CSBGAME.DAT passes the native F0435 reader");
                 memset(&bootstrap_state, 0, sizeof(bootstrap_state));
                 CHECK(created && csb_v1_fmtowns_game_load_user_save_state(
                           &bootstrap_save, &bootstrap_state) && bootstrap_state.valid &&

@@ -277,9 +277,12 @@ populated dungeon states.
   through the recovered F7052 key/header sequence. The first-save transaction
   is staging-only until the completed F0435-valid slot is atomically published;
   it neither accepts these inconsistent corpus candidates nor invents a save
-  envelope. C06's separate F7052 save-medium UI and drive-2 mapping remain
-  unbound. `MINI.DAT` remains the only retail bootstrap path, and no synthetic
-  save is used.
+  envelope. M11's F31 C140 route now maps F7052's M746 file id to the separate
+  user-owned `saves/csb/fmtowns/CSBGAME.DAT` medium, never the scanned C03
+  tree: its first save runs the verified MINI.DAT bootstrap and later saves
+  reopen/write the same native slot. C06's own `GAME` choice remains unbound
+  until its utility-dialog handoff is observed. `MINI.DAT` remains the only
+  retail bootstrap path, and no synthetic save is used.
 
 - **FM-TOWNS-C06-SAVE-001 — selected portrait save is bound; full game save remains closed.**
   `CEDT001.C:F7001` now opens its source `GAME` / `PORTRAIT` / `CANCEL`
@@ -308,8 +311,9 @@ populated dungeon states.
   preserves scroll/cancel commands, and hands an accepted row to F7002. The
   real F31E handoff test proves open, raster, selection and import. No host
   path or synthetic row is accepted. C06 F31E name/title editing is now
-  source-bound separately; full-game save and Make New Adventure remain
-  closed pending their C05 transaction.
+  source-bound separately; its `GAME` choice and Make New Adventure remain
+  closed pending their utility-dialog transaction. In-game C140 native saving
+  is bound separately through F7052.
 
 ### CSB V1
 

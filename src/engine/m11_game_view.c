@@ -13225,6 +13225,29 @@ int M11_GameView_GetQuickSavePath(const M11_GameViewState* state,
     return 1;
 }
 
+/* F31's F7052 does not select a host quicksave envelope: CEDTINC8.C chooses
+ * M746_FILE_ID_SAVE_CSBGAME_DAT before it creates the file.  Keep that slot
+ * on a separate user-owned save medium, never below the scanned C03 tree.
+ * An explicit FIRESTAFF_QUICKSAVE_PATH remains a caller-selected medium for
+ * tests, CLI users, and an already imported native save disk. */
+static int m11_csb_fmtowns_native_save_path(char *out, size_t out_size)
+{
+    const char *explicit_path;
+    char user_data[FSP_PATH_MAX];
+    char save_root[FSP_PATH_MAX];
+
+    if (!out || out_size == 0u) return 0;
+    explicit_path = getenv("FIRESTAFF_QUICKSAVE_PATH");
+    if (explicit_path && explicit_path[0]) {
+        int written = snprintf(out, out_size, "%s", explicit_path);
+        return written > 0 && (size_t)written < out_size;
+    }
+    return FSP_GetUserDataDir(user_data, sizeof(user_data)) &&
+           FSP_JoinPath(save_root, sizeof(save_root), user_data,
+                        "saves/csb/fmtowns") &&
+           FSP_JoinPath(out, out_size, save_root, "CSBGAME.DAT");
+}
+
 /* Firestaff builds before the CSB namespace split stored the bounded native
  * CSB snapshot under saves/dm1.  Keep a read-only migration path so an
  * upgrade neither hides a user's existing save nor treats it as original
@@ -25665,11 +25688,12 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
         state->csbBootProfile && m11_csb_is_fmtowns_profile(
             (const CSB_V1_BootProfile *)state->csbBootProfile)) {
         /* ReDMCSB LOADSAVE.C F0433 owns the F31 header, five keyed parts and
-         * slot replacement.  Start from the authenticated existing slot;
-         * the writer preserves opaque portraits and dungeon bytes and does
-         * not invent a Firestaff envelope or create a synthetic slot. */
+         * slot replacement.  F7052 creates M746/CSBGAME.DAT from the selected
+         * MINI.DAT on its first save; later F0433 calls update that same
+         * authenticated slot.  No Firestaff envelope is involved. */
         if (!state->csbBootProfile ||
-            !M11_GameView_GetQuickSavePath(state, path, sizeof(path))) {
+            !m11_csb_fmtowns_native_save_path(path, sizeof(path)) ||
+            !dm1_v1_save_prepare_parent_directory_pc34(path)) {
             m11_set_status(state, "SAVE", "FM TOWNS NATIVE SAVE FAILED");
             return 0;
         }
@@ -25681,11 +25705,23 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
                 return 0;
             }
         }
-        if (!csb_v1_fmtowns_game_write_user_save(
-                (CSB_V1_BootProfile *)state->csbBootProfile,
-                &state->csbFmtownsGameHandoffReceipt, path)) {
-            m11_set_status(state, "SAVE", "FM TOWNS NATIVE SAVE FAILED");
-            return 0;
+        {
+            FILE *existing = fopen(path, "rb");
+            int saved;
+            if (existing) {
+                fclose(existing);
+                saved = csb_v1_fmtowns_game_write_user_save(
+                    (CSB_V1_BootProfile *)state->csbBootProfile,
+                    &state->csbFmtownsGameHandoffReceipt, path);
+            } else {
+                saved = csb_v1_fmtowns_game_create_user_save_from_startup(
+                    (CSB_V1_BootProfile *)state->csbBootProfile,
+                    &state->csbFmtownsGameHandoffReceipt, path);
+            }
+            if (!saved) {
+                m11_set_status(state, "SAVE", "FM TOWNS NATIVE SAVE FAILED");
+                return 0;
+            }
         }
         M12_Config_SetLastSavePath(path);
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
@@ -26017,7 +26053,14 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
          * QuickLoad must not replace the world behind that active panel. */
         return 0;
     }
-    if (!M11_GameView_GetQuickSavePath(state, path, sizeof(path))) {
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT && state->csbBootProfile &&
+        m11_csb_is_fmtowns_profile(
+            (const CSB_V1_BootProfile *)state->csbBootProfile)) {
+        if (!m11_csb_fmtowns_native_save_path(path, sizeof(path))) {
+            m11_set_status(state, "LOAD", "SAVE PATH TOO LONG");
+            return 0;
+        }
+    } else if (!M11_GameView_GetQuickSavePath(state, path, sizeof(path))) {
         m11_set_status(state, "LOAD", "SAVE PATH TOO LONG");
         return 0;
     }

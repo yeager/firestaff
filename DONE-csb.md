@@ -17,6 +17,14 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   original FNV-1a hash and size. The test contributes no game data to the
   repository and does not permit cross-language fallback.
 
+- ✅ 2026-08-11 CSB FM Towns C140 native-save medium: M11 now maps F7052's
+  M746 file id to a separate user-owned `saves/csb/fmtowns/CSBGAME.DAT` slot,
+  never the scanned C03 program tree. The first C140 save materializes that
+  slot through the verified MINI.DAT/F7052 transaction; later C140 saves use
+  F0433 writeback and F9 reload resolves the same slot. The real F31E and F31J
+  M11 handoff regression exercises the first-save integration and reopens the
+  result via F0435 without adding game media to the repository.
+
 - ✅ 2026-08-11 CSB FM Towns native CLI launch regression: added the opt-in
   `csb_v1_fmtowns_native_cli_boot` CTest. With explicitly supplied licensed
   F31 media (`FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR`), it proves the direct
