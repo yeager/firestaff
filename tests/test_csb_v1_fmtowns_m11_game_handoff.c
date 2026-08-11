@@ -78,6 +78,19 @@ static uint8_t *load_file(const char *path, size_t *out_size)
     return bytes;
 }
 
+static uint32_t fnv1a(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!bytes) return 0u;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 static int write_damaged_file(const char *path)
 {
     static const unsigned char damaged[] = { 'b', 'a', 'd' };
@@ -145,6 +158,11 @@ int main(void)
     uint32_t expected_utility_initial_eip;
     CSB_V1_FmtownsSwitchLanguage language;
     char materialized_data_dir[M12_ASSET_DATA_DIR_CAPACITY];
+    char materialized_mini_path[M12_ASSET_DATA_DIR_CAPACITY];
+#if defined(FIRESTAFF_ASSET_STATUS_TESTING) || \
+    defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
+    char unselected_mini_path[M12_ASSET_DATA_DIR_CAPACITY];
+#endif
     M12_AssetStatus asset_status;
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
@@ -194,6 +212,8 @@ int main(void)
     uint8_t utility_portrait_before[CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES];
     uint8_t *encoded_dungeon_tail = NULL;
     uint8_t *original_dungeon_tail = NULL;
+    uint8_t *materialized_mini = NULL;
+    size_t materialized_mini_size = 0u;
     int utility_fill_x = -1;
     int utility_fill_y = -1;
 
@@ -230,12 +250,47 @@ int main(void)
         M12_AssetStatus_ScanGame(&asset_status, loose_data_dir, "csb");
         if (!M12_AssetStatus_MaterializeCSBRuntimeVersion(
                 &asset_status, version_id, materialized_data_dir,
-                sizeof(materialized_data_dir)) ||
-            strcmp(materialized_data_dir, loose_data_dir) == 0) {
+                sizeof(materialized_data_dir))) {
             fprintf(stderr, "SKIP: verified loose FM Towns %s CD root unavailable\n",
                     version_id);
             return 0;
         }
+#if defined(FIRESTAFF_ASSET_STATUS_TESTING) || \
+    defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
+        CHECK(strcmp(materialized_data_dir, loose_data_dir) != 0,
+              "development F31 materialization isolates a verified cache");
+#else
+        CHECK(strcmp(materialized_data_dir, loose_data_dir) == 0,
+              "production F31 materialization retains the verified disc root");
+#endif
+        if (snprintf(materialized_mini_path, sizeof(materialized_mini_path),
+                     "%s/%s/MINI.DAT", materialized_data_dir,
+                     language == CSB_FMTOWNS_SWITCH_ENGLISH ? "CDATA" : "CJDATA") < 0 ||
+            (materialized_mini = load_file(materialized_mini_path,
+                                           &materialized_mini_size)) == NULL) {
+            fprintf(stderr, "FAIL: loose F31 root retains selected MINI.DAT path\n");
+            ++failures;
+        } else {
+            CHECK(materialized_mini_size == expected_mini_size &&
+                  fnv1a(materialized_mini, materialized_mini_size) ==
+                      expected_mini_fnv1a,
+                  "loose F31 root retains its selected original MINI.DAT");
+            free(materialized_mini);
+            materialized_mini = NULL;
+        }
+#if defined(FIRESTAFF_ASSET_STATUS_TESTING) || \
+    defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
+        if (snprintf(unselected_mini_path, sizeof(unselected_mini_path),
+                     "%s/%s/MINI.DAT", materialized_data_dir,
+                     language == CSB_FMTOWNS_SWITCH_ENGLISH ? "CJDATA" : "CDATA") >= 0) {
+            materialized_mini = load_file(unselected_mini_path,
+                                          &materialized_mini_size);
+        }
+        CHECK(materialized_mini == NULL,
+              "F31 cache excludes a stale opposite-language MINI.DAT");
+        free(materialized_mini);
+        materialized_mini = NULL;
+#endif
         data_dir = materialized_data_dir;
     } else if (archive_data_dir && archive_data_dir[0]) {
         M12_AssetStatus_ScanGame(&asset_status, archive_data_dir, "csb");
@@ -1451,6 +1506,7 @@ int main(void)
           "F31 live map music waits 100 F0743 updates then selects its retail CUE track");
 
     M11_GameView_Shutdown(&view);
+    free(materialized_mini);
     if (failures) return 1;
     printf("PASS: real FM Towns SWITCHTW -> %s entrance handoff\n",
            expected_program);

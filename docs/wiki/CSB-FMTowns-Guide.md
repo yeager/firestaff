@@ -52,12 +52,15 @@ materializes the complete ISO inventory and the original `FMTOWNS.IMG` /
 `FMTOWNS.CUE` pair when the source is the retail ZIP/RAR. It must retain that
 pair for the original TD/TR CD-DA commands; a derived track table or generated
 PCM is not an equivalent source. A manually extracted original tree is also
-admitted only when both language pairs, their two P3 programs and all four
-registered hashes agree. It creates a language-private cache with the selected
-flat `GRAPHICS.DAT`/`DUNGEON.DAT`, root programs and original portraits, and
-removes stale archive CUE/IMG files so loose media cannot borrow CDDA from a
-different source. The scanner reports each admitted CSB edition, rather than
-using the selected cache pair as evidence for another platform.
+admitted only when both language packages, their two P3 programs and all six
+registered hashes agree. Production retains the original disc root and M11
+applies the selected F31 language before startup. The development/test
+materializer creates a language-private cache with the selected flat
+`GRAPHICS.DAT`/`DUNGEON.DAT`, the original nested `CDATA/MINI.DAT` or
+`CJDATA/MINI.DAT`, root programs and original portraits, and removes stale
+archive CUE/IMG files so loose media cannot borrow CDDA from a different
+source. The scanner reports each admitted CSB edition, rather than using the
+selected cache pair as evidence for another platform.
 
 CSB uses its own 31-track Red Book layout. Do not reuse DM1's mixed
 MODE1/2048-and-audio offset calculation or DM2's Towns music helper. The CSB
@@ -171,5 +174,9 @@ owners are evidenced.
   verified F31 owner is missing.
 - Keep the selected `CDATA`/`CJDATA` pair ahead of the opposite-language
   sidecar tree.
+- A development/test loose F31 cache must copy and hash the selected language's original
+  `CDATA/MINI.DAT` or `CJDATA/MINI.DAT` path alongside its flat
+  `GRAPHICS.DAT` and `DUNGEON.DAT`; title media alone is not a valid C03/C06
+  startup owner.
 - Keep original data out of the repository. Tests use user-supplied,
   hash-admitted media and skip safely when it is unavailable.

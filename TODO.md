@@ -3138,11 +3138,14 @@
   FM Towns archive below its documented `csb/` child, so the launcher retains
   both F31 English and Japanese profiles rather than hiding them unless that
   child is selected directly. 2026-08-11: a manually extracted original CD
-  tree is now admitted only as the complete hash-verified CDATA/CJDATA pair;
-  selected EN/JP launch receives a language-private cache and cannot inherit
-  a stale archive CUE/IMG audio owner. Remaining parity work is the original
-  C06 file-picker transaction and an internally consistent F31 user-save
-  corpus, not a fallback or synthetic save path.
+  tree is now admitted only as the complete hash-verified CDATA/CJDATA pair.
+  Production retains its original disc root and applies the selected EN/JP
+  handoff in M11; its development/test cache cannot inherit a stale archive
+  CUE/IMG audio owner. That cache copies and verifies the language-owned
+  `CDATA/MINI.DAT` or `CJDATA/MINI.DAT` body alongside flat `GRAPHICS.DAT`
+  and `DUNGEON.DAT`; it cannot borrow a prior cache's bootstrap save. Remaining
+  parity work is the original C06 file-picker transaction and an internally
+  consistent F31 user-save corpus, not a fallback or synthetic save path.
 
 - **NEXUS-SFX-EVENT-DISPATCH-CAPTURE:** Host sound-request names are now
   2026-08-06 follow-up: the M11 Light/Torch/Darkness bridge now checks the

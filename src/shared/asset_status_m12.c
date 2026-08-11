@@ -1513,6 +1513,10 @@ static int m12_admit_csb_fmtowns_loose_tree(
         "83c56cf1b779e7460a55c9299ebeb04b",
         "7ca51c17ef8bd542ca5f0273672ec1a5"
     };
+    static const char* const miniMd5s[] = {
+        "a5a82d0bda4c6ac7d55f63a7b4ca3862",
+        "dcac9931a5a1f1fd5fbb99ebb89e68d0"
+    };
     static const char* const programs[] = {"CHTWE.EXP", "CHTWJ.EXP"};
     size_t rootIndex;
     int admitted = 0;
@@ -1545,9 +1549,11 @@ static int m12_admit_csb_fmtowns_loose_tree(
                 char dataDirectory[M12_ASSET_DATA_DIR_CAPACITY];
                 char graphicsPath[M12_ASSET_DATA_DIR_CAPACITY];
                 char dungeonPath[M12_ASSET_DATA_DIR_CAPACITY];
+                char miniPath[M12_ASSET_DATA_DIR_CAPACITY];
                 char programPath[M12_ASSET_DATA_DIR_CAPACITY];
                 char graphicsMd5[M12_ASSET_MD5_CAPACITY];
                 char dungeonMd5[M12_ASSET_MD5_CAPACITY];
+                char miniMd5[M12_ASSET_MD5_CAPACITY];
                 size_t versionIndex;
                 if (!FSP_JoinPath(dataDirectory, sizeof(dataDirectory),
                                   candidates[candidateIndex],
@@ -1556,14 +1562,18 @@ static int m12_admit_csb_fmtowns_loose_tree(
                                   dataDirectory, "GRAPHICS.DAT") ||
                     !FSP_JoinPath(dungeonPath, sizeof(dungeonPath),
                                   dataDirectory, "DUNGEON.DAT") ||
+                    !FSP_JoinPath(miniPath, sizeof(miniPath),
+                                  dataDirectory, "MINI.DAT") ||
                     !FSP_JoinPath(programPath, sizeof(programPath),
                                   candidates[candidateIndex],
                                   programs[languageIndex]) ||
                     !FSP_FileExists(programPath) ||
                     !m12_file_md5_hex(graphicsPath, graphicsMd5) ||
                     !m12_file_md5_hex(dungeonPath, dungeonMd5) ||
+                    !m12_file_md5_hex(miniPath, miniMd5) ||
                     strcmp(graphicsMd5, graphicsMd5s[languageIndex]) != 0 ||
-                    strcmp(dungeonMd5, dungeonMd5s[languageIndex]) != 0) {
+                    strcmp(dungeonMd5, dungeonMd5s[languageIndex]) != 0 ||
+                    strcmp(miniMd5, miniMd5s[languageIndex]) != 0) {
                     allLanguages = 0;
                     break;
                 }
@@ -4360,10 +4370,14 @@ static int m12_materialize_csb_fmtowns_loose_runtime_cache(
     char discRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char sourcePath[M12_ASSET_DATA_DIR_CAPACITY];
     char destinationPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char destinationDataDirectory[M12_ASSET_DATA_DIR_CAPACITY];
     char portraitDirectory[M12_ASSET_DATA_DIR_CAPACITY];
     char destinationPortraitDirectory[M12_ASSET_DATA_DIR_CAPACITY];
     char md5[M12_ASSET_MD5_CAPACITY];
     const char* expectedDungeonMd5;
+    const char* expectedMiniMd5;
+    const char* dataDirectoryName;
+    const char* otherDataDirectoryName;
     size_t i;
 
     if (!version || !version->versionId || !gameCacheDir ||
@@ -4378,6 +4392,13 @@ static int m12_materialize_csb_fmtowns_loose_runtime_cache(
     expectedDungeonMd5 = strcmp(version->versionId, "fmtowns-en") == 0
         ? "83c56cf1b779e7460a55c9299ebeb04b"
         : "7ca51c17ef8bd542ca5f0273672ec1a5";
+    expectedMiniMd5 = strcmp(version->versionId, "fmtowns-en") == 0
+        ? "a5a82d0bda4c6ac7d55f63a7b4ca3862"
+        : "dcac9931a5a1f1fd5fbb99ebb89e68d0";
+    dataDirectoryName = strcmp(version->versionId, "fmtowns-en") == 0
+        ? "CDATA" : "CJDATA";
+    otherDataDirectoryName = strcmp(version->versionId, "fmtowns-en") == 0
+        ? "CJDATA" : "CDATA";
     /* A cache leaf may previously have been populated from the ZIP/RAR
      * release.  An extracted tree has no authenticated CUE/IMG owner, so
      * retaining those files would incorrectly bind stale archive CDDA to a
@@ -4388,6 +4409,16 @@ static int m12_materialize_csb_fmtowns_loose_runtime_cache(
     }
     if (FSP_JoinPath(destinationPath, sizeof(destinationPath), gameCacheDir,
                      "FMTOWNS.IMG")) {
+        (void)remove(destinationPath);
+    }
+    /* The cache leaf is reused after archive staging. Remove only the stale
+     * opposite-language bootstrap body, so the selected F31 package cannot
+     * silently inherit a prior F31E/F31J MINI.DAT. */
+    if (FSP_JoinPath(destinationDataDirectory,
+                     sizeof(destinationDataDirectory), gameCacheDir,
+                     otherDataDirectoryName) &&
+        FSP_JoinPath(destinationPath, sizeof(destinationPath),
+                     destinationDataDirectory, "MINI.DAT")) {
         (void)remove(destinationPath);
     }
     if (!FSP_JoinPath(destinationPath, sizeof(destinationPath), gameCacheDir,
@@ -4402,6 +4433,25 @@ static int m12_materialize_csb_fmtowns_loose_runtime_cache(
         !m12_copy_file_to_path(sourcePath, destinationPath) ||
         !m12_file_md5_hex(destinationPath, md5) ||
         strcmp(md5, expectedDungeonMd5) != 0) {
+        return 0;
+    }
+    /* STARTUP1.C F0435 consumes the language-owned CDATA/CJDATA/MINI.DAT
+     * after the selected CHTWE/CHTWJ program has passed its handoff gate.
+     * A loose cache without that original save body can draw a title but
+     * cannot own the C06 editor or Prison start state. Preserve the retail
+     * path instead of flattening MINI.DAT beside the DAT pair: the F31
+     * handoff resolves the original nested name. */
+    if (!FSP_JoinPath(sourcePath, sizeof(sourcePath), dataDirectory,
+                      "MINI.DAT") ||
+        !FSP_JoinPath(destinationDataDirectory,
+                      sizeof(destinationDataDirectory), gameCacheDir,
+                      dataDirectoryName) ||
+        !FSP_CreateDirectoryRecursive(destinationDataDirectory) ||
+        !FSP_JoinPath(destinationPath, sizeof(destinationPath),
+                      destinationDataDirectory, "MINI.DAT") ||
+        !m12_copy_file_to_path(sourcePath, destinationPath) ||
+        !m12_file_md5_hex(destinationPath, md5) ||
+        strcmp(md5, expectedMiniMd5) != 0) {
         return 0;
     }
     for (i = 0U; rootFiles[i] != NULL; ++i) {
@@ -6241,6 +6291,22 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
     }
 #if !defined(FIRESTAFF_ASSET_STATUS_TESTING) && \
     !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
+    if ((strcmp(versionId, "fmtowns-en") == 0 ||
+         strcmp(versionId, "fmtowns-ja") == 0) &&
+        !m12_path_is_virtual_asset(version->matchedPath)) {
+        char dataDirectory[M12_ASSET_DATA_DIR_CAPACITY];
+        /* A loose F31 GRAPHICS.DAT lives below CDATA/CJDATA, while its
+         * selected CHTWE/CHTWJ, TITLE.ANM and portrait owners live one level
+         * above. M11 receives the original disc root and applies the
+         * caller-selected language before the F31 handoff. */
+        if (!FSP_ParentDir(dataDirectory, sizeof(dataDirectory),
+                           version->matchedPath) ||
+            !FSP_ParentDir(outPath, outPathSize, dataDirectory)) {
+            outPath[0] = '\0';
+            return 0;
+        }
+        return 1;
+    }
     if (!m12_source_runtime_root(version->matchedPath, outPath, outPathSize)) {
         if (outPathSize) outPath[0] = '\0';
         return 0;
