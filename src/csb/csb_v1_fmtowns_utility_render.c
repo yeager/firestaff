@@ -173,8 +173,6 @@ int csb_v1_fmtowns_utility_render_game_save_medium_dialog(
     uint8_t *pixels, size_t pixel_capacity,
     CSB_V1_FmtownsUtilityRenderReceipt *out_receipt)
 {
-    static const uint8_t ok[] = "OK";
-    static const uint8_t cancel[] = "CANCEL";
     CSB_V1_FmtownsUtilityRenderReceipt receipt;
 
     memset(&receipt, 0, sizeof(receipt));
@@ -191,8 +189,10 @@ int csb_v1_fmtowns_utility_render_game_save_medium_dialog(
          game_source->save_prompt + 25u, 8u, pixels);
     text(font, 160, 86, C15_WHITE, C01_DARK_GRAY,
          (const uint8_t *)"A:", 2u, pixels);
-    button((C06_Box){80, 148, 128, 136}, ok, sizeof(ok), font, pixels);
-    button((C06_Box){165, 237, 128, 136}, cancel, sizeof(cancel), font, pixels);
+    button((C06_Box){80, 148, 128, 136}, game_source->ok,
+           sizeof(game_source->ok), font, pixels);
+    button((C06_Box){165, 237, 128, 136}, game_source->choices + 34u, 6u,
+           font, pixels);
     receipt.valid = 1;
     receipt.language = CSB_FMTOWNS_SWITCH_ENGLISH;
     receipt.source_fnv1a = handoff->executable_fnv1a ^ font->source_fnv1a ^

@@ -953,11 +953,13 @@ int main(void)
                   utility_game_source.title_file_offset == 0x11aa0u &&
                   utility_game_source.choices_file_offset == 0x11b4cu &&
                   utility_game_source.save_prompt_file_offset == 0x11db8u &&
+                  utility_game_source.ok_file_offset == 0x11afeu &&
                   memcmp(utility_game_source.title, "LOAD WHICH SAVED GAME?", 22u) == 0 &&
                   memcmp(utility_game_source.choices,
                          "DUNGEON MASTER\nCHAOS STRIKES BACK\nCANCEL", 39u) == 0 &&
                   memcmp(utility_game_source.save_prompt,
-                         "PLEASE PUT THE GAME SAVE\nDISK IN %DEVICE%", 41u) == 0,
+                         "PLEASE PUT THE GAME SAVE\nDISK IN %DEVICE%", 41u) == 0 &&
+                  memcmp(utility_game_source.ok, "OK", 3u) == 0,
               "F31E C06 source chooser and A: prompt retain their exact UTILE P3 bytes");
     } else {
         CHECK(!csb_v1_fmtowns_utility_game_source_open(

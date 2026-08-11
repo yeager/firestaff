@@ -34,6 +34,7 @@ extern "C" {
 #define CSB_V1_FMTOWNS_UTILITY_GAME_SOURCE_TITLE_BYTES 23u
 #define CSB_V1_FMTOWNS_UTILITY_GAME_SOURCE_CHOICES_BYTES 40u
 #define CSB_V1_FMTOWNS_UTILITY_GAME_SAVE_PROMPT_BYTES 42u
+#define CSB_V1_FMTOWNS_UTILITY_DIALOG_OK_BYTES 3u
 #define CSB_V1_FMTOWNS_UTILITY_MIRROR_BITMAP_BYTES 247u
 #define CSB_V1_FMTOWNS_UTILITY_FILE_PICKER_ARROWS_BYTES 324u
 /* F0689 reaches the end of C06's 31x75 IMG2 command stream after 290 bytes.
@@ -327,10 +328,12 @@ typedef struct CSB_V1_FmtownsUtilityGameSourceReceipt {
     uint32_t title_file_offset;
     uint32_t choices_file_offset;
     uint32_t save_prompt_file_offset;
+    uint32_t ok_file_offset;
     uint32_t source_fnv1a;
     uint8_t title[CSB_V1_FMTOWNS_UTILITY_GAME_SOURCE_TITLE_BYTES];
     uint8_t choices[CSB_V1_FMTOWNS_UTILITY_GAME_SOURCE_CHOICES_BYTES];
     uint8_t save_prompt[CSB_V1_FMTOWNS_UTILITY_GAME_SAVE_PROMPT_BYTES];
+    uint8_t ok[CSB_V1_FMTOWNS_UTILITY_DIALOG_OK_BYTES];
     const char *source_evidence;
 } CSB_V1_FmtownsUtilityGameSourceReceipt;
 

@@ -2498,9 +2498,11 @@ int csb_v1_fmtowns_utility_game_source_open(
         C06_GAME_SOURCE_TITLE_VIRTUAL_OFFSET = 0x118a0u,
         C06_GAME_SOURCE_CHOICES_VIRTUAL_OFFSET = 0x1194cu,
         C06_GAME_SAVE_PROMPT_VIRTUAL_OFFSET = 0x11bb8u,
+        C06_DIALOG_OK_VIRTUAL_OFFSET = 0x118feu,
         C06_GAME_SOURCE_TITLE_FNV1A = 0x7a56b380u,
         C06_GAME_SOURCE_CHOICES_FNV1A = 0x289297b9u,
-        C06_GAME_SAVE_PROMPT_FNV1A = 0xe89d74ecu
+        C06_GAME_SAVE_PROMPT_FNV1A = 0xe89d74ecu,
+        C06_DIALOG_OK_FNV1A = 0xf60df1fdu
     };
     CSB_V1_FmtownsUtilityHandoffReceipt handoff;
     uint32_t hash;
@@ -2522,7 +2524,11 @@ int csb_v1_fmtowns_utility_game_source_open(
         !csb_v1_fmtowns_utility_read_span(
             &handoff, handoff.p3_load_image_offset +
             C06_GAME_SAVE_PROMPT_VIRTUAL_OFFSET, out_receipt->save_prompt,
-            sizeof(out_receipt->save_prompt))) return 0;
+            sizeof(out_receipt->save_prompt)) ||
+        !csb_v1_fmtowns_utility_read_span(
+            &handoff, handoff.p3_load_image_offset +
+            C06_DIALOG_OK_VIRTUAL_OFFSET, out_receipt->ok,
+            sizeof(out_receipt->ok))) return 0;
     hash = csb_v1_fmtowns_game_bytes_fnv1a(out_receipt->title,
                                             sizeof(out_receipt->title));
     if (hash != C06_GAME_SOURCE_TITLE_FNV1A ||
@@ -2531,7 +2537,10 @@ int csb_v1_fmtowns_utility_game_source_open(
             C06_GAME_SOURCE_CHOICES_FNV1A ||
         csb_v1_fmtowns_game_bytes_fnv1a(out_receipt->save_prompt,
                                         sizeof(out_receipt->save_prompt)) !=
-            C06_GAME_SAVE_PROMPT_FNV1A) {
+            C06_GAME_SAVE_PROMPT_FNV1A ||
+        csb_v1_fmtowns_game_bytes_fnv1a(out_receipt->ok,
+                                        sizeof(out_receipt->ok)) !=
+            C06_DIALOG_OK_FNV1A) {
         memset(out_receipt, 0, sizeof(*out_receipt));
         return 0;
     }
@@ -2544,8 +2553,10 @@ int csb_v1_fmtowns_utility_game_source_open(
         C06_GAME_SOURCE_CHOICES_VIRTUAL_OFFSET;
     out_receipt->save_prompt_file_offset = handoff.p3_load_image_offset +
         C06_GAME_SAVE_PROMPT_VIRTUAL_OFFSET;
+    out_receipt->ok_file_offset = handoff.p3_load_image_offset +
+        C06_DIALOG_OK_VIRTUAL_OFFSET;
     out_receipt->source_fnv1a = hash ^ C06_GAME_SOURCE_CHOICES_FNV1A ^
-        C06_GAME_SAVE_PROMPT_FNV1A;
+        C06_GAME_SAVE_PROMPT_FNV1A ^ C06_DIALOG_OK_FNV1A;
     out_receipt->source_evidence =
         "UTILE.EXP P3 C06 strings at 0x118a0/0x1194c/0x11bb8; "
         "ReDMCSB CEDTDATA.C G7085/G7065 and diskneeded message table";
