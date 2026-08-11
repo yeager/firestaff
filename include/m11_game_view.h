@@ -1598,6 +1598,7 @@ typedef struct {
     uint8_t csbFmtownsUtilityPaletteRgb6
         [CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3];
     CSB_V1_FmtownsUtilityHandoffReceipt csbFmtownsUtilityHandoffReceipt;
+    CSB_V1_FmtownsUtilitySaveMappingReceipt csbFmtownsUtilitySaveMappingReceipt;
     CSB_V1_FmtownsUtilityMenuReceipt csbFmtownsUtilityMenuReceipt;
     CSB_V1_FmtownsUtilityFontReceipt csbFmtownsUtilityFontReceipt;
     CSB_V1_PartyState csbFmtownsUtilityParty;

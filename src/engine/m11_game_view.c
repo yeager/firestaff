@@ -8704,6 +8704,8 @@ static int m11_csb_enter_fmtowns_utility(
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
     memset(&state->csbFmtownsUtilityHandoffReceipt, 0,
            sizeof(state->csbFmtownsUtilityHandoffReceipt));
+    memset(&state->csbFmtownsUtilitySaveMappingReceipt, 0,
+           sizeof(state->csbFmtownsUtilitySaveMappingReceipt));
     memset(&state->csbFmtownsUtilityMenuReceipt, 0,
            sizeof(state->csbFmtownsUtilityMenuReceipt));
     memset(&state->csbFmtownsUtilityFontReceipt, 0,
@@ -8729,6 +8731,8 @@ static int m11_csb_enter_fmtowns_utility(
     memset(&rendered, 0, sizeof(rendered));
     if (!csb_v1_fmtowns_utility_handoff_open(
             profile, language, &state->csbFmtownsUtilityHandoffReceipt) ||
+        !csb_v1_fmtowns_utility_save_mapping_open(
+            profile, language, &state->csbFmtownsUtilitySaveMappingReceipt) ||
         !csb_v1_fmtowns_utility_menu_open(
             profile, language, &state->csbFmtownsUtilityMenuReceipt) ||
         !csb_v1_fmtowns_utility_font_open(
