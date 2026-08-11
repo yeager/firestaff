@@ -19,12 +19,13 @@ admitted separately and is never a fallback for F31E.
 | Surface | Retail evidence | Firestaff status | Boundary |
 |---|---|---|---|
 | C06 entry and menu labels | `UTILE.EXP`/`UTILJ.EXP` P3 images; ReDMCSB `COMPILE.H` C06_CEDT | Bound | `csb_v1_fmtowns_utility_handoff_open()` and `csb_v1_fmtowns_utility_menu_open()` reject a mismatched executable. |
+| F31J initial game-source chooser | Original `UTILJ.EXP` C06 handoff, Tsugaru capture, `FMT_FNT.ROM` and Tsugaru `KanjiROMAccess::FontROMCode()` | Bound, 640×400 | M11 presents the observed native geometry directly. The four chooser strings remain exact Shift-JIS capture bytes and every 16×16 glyph is fetched from the user-authorised font ROM. No Unicode or host-font fallback exists. |
 | F31E editor raster | ReDMCSB `CEDT006.C` F7030/F7034/F7042; C09_ICON and M653 material | Bound | M11 renders the English editor only from the admitted C06/MINI.DAT receipts. There is no host font or PC 3.4 backdrop. |
 | Palette selection | `CEDT006.C` F7035/F7036/F7043 | Bound | The selected C09 swatch is editor-local and cannot change a save. |
 | Pixel drawing | `CEDT006.C` F7037/F7044/F7045, lines 460/962/1010 | Bound | A single planar undo copy is retained before an edit. The target is the selected 32×29 MINI.DAT portrait, not a generated host bitmap. |
 | Connected fill | `CEDT006.C` F7046, line 1040 | Bound | The bounded 32×29 four-neighbour fill changes only the selected source-colour region. A no-op fill does not mark the portrait dirty. |
 | Revert and Undo | C06 menu rectangles in `CEDTDATA.C G2272_MouseInputs`; F7037 | Bound | Revert restores the admitted original portrait in memory; Undo exchanges the source-format undo copy. Neither operation writes a file. |
-| Quit | `CEDT006.C` F7005/F7050 and `SWITCH.C` | Bound | M11 returns to the English AUTOEXEC/SWITCHTW route and keeps the source sixty-VBlank delay. |
+| Quit | `CEDT006.C` F7005/F7050 and `SWITCH.C` | Bound | M11 returns to the selected language's AUTOEXEC/SWITCHTW route and keeps the source sixty-VBlank delay. |
 | Arrow bitmap | F31 `UTILE.EXP` virtual offset `0x14f70`; ReDMCSB F0689 | Bound to raster | The IMG2 stream is hash-checked and decoded as 31 logical pixels per 32-pixel row buffer for the C06 picker surface. |
 | `.CMP` catalogue and picker state | `CEDT001.C` F7004, `CEDT008.C` F7080/F7081/F7083/F7084 and `CEDT001.C F7002_ReadCMP` | Bound | `LOAD CHAMPIONS` first renders F7004's G7068/G7064 `GAME`/`PORTRAIT`/`CANCEL` dialog using G2261. Only its `PORTRAIT` choice opens the valid, decoded `PORTRAIT/*.CMP` catalogue. M11 renders its nine-row F31E surface, sends source-coordinate clicks through F7084, then imports only the selected admitted record through F7002. |
 | F7000 portrait destination mapping | `CEDT001.C` F7000; `CEDTDATA.C` M747; verified UTILE/UTILJ strings | Bound to receipt | The native `2:\\#CHAMP_NAME#.CMP` mapping is read from the authenticated C06 image for English and Japanese. |
@@ -44,7 +45,7 @@ utility flow or create replacement data:
 |---|---|---|
 | Make New Adventure | `CEDT006.C` F7086/F7090; `CEDTINCH.C` F7086; `CEDTINCI.C` F7088/F7089/F7090 | F7086 requires a valid source dungeon and unique party names. F7090 then copies destination header state, portraits and party placement, normalizes resources/status and removes every equipped item's statistic modifiers before collision resolution. Firestaff has a generic normalization contract, but no verified F31 source/destination-object transaction; it must not approximate F7020 modifier removal or invent a destination `MINI.DAT`. |
 | Dungeon Master versus CSB chooser | `CEDTINCD.C` F7051 | C06's separate destination game selection is not a CSB-only toggle. The bound route opens only the selected CSB native medium, rather than presenting a fabricated Dungeon Master choice. |
-| F31J editor | `CEDT030.C` F7341 | The native Shift-JIS glyph consumer is not recovered; drawing host text would fabricate the screen. |
+| F31J editor after the initial chooser | C06 edit and save-dialog execution beyond the captured selector | The initial selector is now ROM-bound, but the later editor, media prompts and write paths do not yet have their own F31J runtime captures and command receipts. They remain closed rather than reusing F31E geometry or strings. |
 
 ## Verification
 
@@ -59,6 +60,12 @@ text-edit contract and the 31/32 F0689 arrow stride.  The source `2:\\#CHAMP_NAM
 the scanned CD `PORTRAIT` catalogue remains read-only.
 It skips when licensed game data is absent. No original game bytes are stored
 in the repository.
+
+For the F31J selector route, set `FIRESTAFF_FMTOWNS_FONT_ROM` to the user's
+licensed, exact 256 KiB `FMT_FNT.ROM`. Firestaff reads it in place at runtime,
+validates its extent through the TBIOS shim and retains it only in process
+memory. It neither scans it into game data nor distributes it. Without that
+ROM the Japanese C06 route stays closed.
 
 The implementation boundary is in `src/csb/csb_v1_fmtowns_game.c`,
 `src/csb/csb_v1_fmtowns_utility_render.c` and

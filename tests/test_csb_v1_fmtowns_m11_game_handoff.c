@@ -315,6 +315,9 @@ int main(void)
     unsigned int mini_active_index;
     uint8_t utility_palette[CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3];
     uint8_t utility_frame[CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS];
+    const uint8_t *japanese_utility_frame = NULL;
+    int japanese_utility_width = 0;
+    int japanese_utility_height = 0;
     uint8_t utility_arrows[32u * 75u];
     uint8_t portrait_pixels[CSB_FMTOWNS_PORTRAIT_PIXEL_COUNT];
     uint8_t portrait_roundtrip[CSB_FMTOWNS_PORTRAIT_DATA_SIZE];
@@ -965,7 +968,7 @@ int main(void)
         CHECK(!csb_v1_fmtowns_utility_game_source_open(
                   (const CSB_V1_BootProfile *)view.csbBootProfile,
                   language, &utility_game_source),
-              "F31J C06 chooser remains closed until its native Shift-JIS glyph consumer exists");
+              "F31J C06 does not mislabel the English UTILE string pool as Japanese source text");
     }
     memset(&utility_font, 0, sizeof(utility_font));
     CHECK(csb_v1_fmtowns_utility_font_open(
@@ -1697,6 +1700,36 @@ int main(void)
               "F31E C06 return observes SWITCHTW's source VBlank wait");
         }
         (void)test_set_env("FIRESTAFF_QUICKSAVE_PATH", NULL);
+    } else if (getenv("FIRESTAFF_FMTOWNS_FONT_ROM")) {
+        /* The Japanese page has no host text fallback.  It is available only
+         * when the caller supplies the real FMT_FNT.ROM glyph device. */
+        result = M11_GameView_HandlePointerButton(
+            &view, 57, 59, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(result == M11_GAME_INPUT_REDRAW && view.csbFmtownsUtilityBound &&
+                  view.csbFmtownsUtilityJapaneseActive &&
+                  M11_GameView_GetCsbFmtownsUtilityJapaneseFrame(
+                      &view, &japanese_utility_frame, &japanese_utility_width,
+                      &japanese_utility_height) && japanese_utility_frame &&
+                  japanese_utility_width == 640 && japanese_utility_height == 400,
+              "F31J Utility opens its ROM-bound native 640x400 C06 chooser");
+        result = M11_GameView_HandlePointerButton(
+            &view, 320, 225, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(result == M11_GAME_INPUT_REDRAW &&
+                  view.csbFmtownsUtilityGameSourceDialogActive &&
+                  strcmp(view.lastOutcome, "CSB SAVE MEDIA REQUIRED") == 0,
+              "F31J C06 rejects a CSB choice until an authentic saved-game medium is admitted");
+        result = M11_GameView_HandlePointerButton(
+            &view, 320, 265, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(result == M11_GAME_INPUT_REDRAW && view.csbFmtownsSwitchBound &&
+                  !view.csbFmtownsUtilityBound &&
+                  view.csbFmtownsSwitchLanguage == CSB_FMTOWNS_SWITCH_JAPANESE,
+              "F31J C06 cancel returns through the Japanese AUTOEXEC/SWITCHTW route");
+        for (tick = 0u; tick < 80u && view.csbFmtownsSwitchVblanksRemaining != 0u;
+             ++tick) {
+            (void)M11_GameView_AdvanceIdleTick(&view);
+        }
+        CHECK(view.csbFmtownsSwitchVblanksRemaining == 0u,
+              "F31J C06 return observes SWITCHTW's source VBlank wait");
     }
 
     /* ReDMCSB SWITCH.C F2279 registers G4171 at (47,105), 62x39. */

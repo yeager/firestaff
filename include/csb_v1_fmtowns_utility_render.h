@@ -15,6 +15,15 @@ extern "C" {
 #define CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS \
     (CSB_V1_FMTOWNS_UTILITY_SCREEN_WIDTH * CSB_V1_FMTOWNS_UTILITY_SCREEN_HEIGHT)
 
+/* F31J C06 delegates its first selector to the Towns Shift-JIS text path.
+ * Tsugaru capture shows this page is a native 640x400 surface, not the
+ * 320x200 F31E editor raster doubled by a host scaler. */
+#define CSB_V1_FMTOWNS_UTILITY_JAPANESE_SCREEN_WIDTH 640u
+#define CSB_V1_FMTOWNS_UTILITY_JAPANESE_SCREEN_HEIGHT 400u
+#define CSB_V1_FMTOWNS_UTILITY_JAPANESE_SCREEN_PIXELS \
+    (CSB_V1_FMTOWNS_UTILITY_JAPANESE_SCREEN_WIDTH * \
+     CSB_V1_FMTOWNS_UTILITY_JAPANESE_SCREEN_HEIGHT)
+
 typedef struct CSB_V1_FmtownsUtilityRenderReceipt {
     int valid;
     CSB_V1_FmtownsSwitchLanguage language;
@@ -104,6 +113,16 @@ int csb_v1_fmtowns_utility_render_game_source_dialog(
     const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
     const CSB_V1_FmtownsUtilityGameSourceReceipt *game_source,
     const CSB_V1_FmtownsUtilityFontReceipt *font,
+    uint8_t *indexed_pixels, size_t pixel_capacity,
+    CSB_V1_FmtownsUtilityRenderReceipt *out_receipt);
+
+/* Render the observed F31J C06 source chooser at its original 640x400
+ * geometry.  Japanese glyphs are fetched through the bound TBIOS host, so
+ * this function rejects the page unless a verified FMT_FNT.ROM-backed host
+ * can supply every Shift-JIS glyph.  The bytes are the exact choices read
+ * from the original Tsugaru C06 capture, not translated host strings. */
+int csb_v1_fmtowns_utility_render_japanese_game_source_dialog(
+    const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
     uint8_t *indexed_pixels, size_t pixel_capacity,
     CSB_V1_FmtownsUtilityRenderReceipt *out_receipt);
 

@@ -724,6 +724,15 @@ static int m11_map_window_pointer_to_game_source(
                                            &framebufferX, &framebufferY)) {
         return 0;
     }
+    /* F31J C06 owns an observed native 640x400 selector.  Its coordinates
+     * are already the renderer's source coordinates; M11's 320x200 mapping
+     * must not halve its hit rectangles. */
+    if (M11_GameView_GetCsbFmtownsUtilityJapaneseFrame(
+            gameView, NULL, NULL, NULL)) {
+        *outX = framebufferX;
+        *outY = framebufferY;
+        return 1;
+    }
     /* V1_ORIGINAL returns 0 (pass-through): framebuffer coords ARE
      * source coords (320x200).  Only fail on NULL pointers. */
     (void)M11_MapPresentedGamePointToSourceForPresentation(
@@ -825,6 +834,9 @@ static int m11_dm1_v20_presentation_active(const M11_GameViewState* gameView) {
 
 static int m11_present_game_frame(const M11_GameViewState* gameView,
                                   const unsigned char** outPresentedFrame) {
+    const uint8_t *csb_fmtowns_japanese_frame = NULL;
+    int csb_fmtowns_japanese_width = 0;
+    int csb_fmtowns_japanese_height = 0;
     int scale = M11_GameView_PresentationIndexedScale(
         gameView ? gameView->presentationMode : M12_PRESENTATION_V1_ORIGINAL);
     int specialPalette =
@@ -853,6 +865,22 @@ static int m11_present_game_frame(const M11_GameViewState* gameView,
 
     if (outPresentedFrame) {
         *outPresentedFrame = NULL;
+    }
+    /* C06 F31J is a Towns-native 640x400 page, not an M11 320x200 source
+     * frame. Present it directly and exclude it from PC3.4 startup receipts. */
+    if (M11_GameView_GetCsbFmtownsUtilityJapaneseFrame(
+            gameView, &csb_fmtowns_japanese_frame,
+            &csb_fmtowns_japanese_width, &csb_fmtowns_japanese_height)) {
+        M11_Render_SetV2PresentationActive(0);
+        if (effectiveFilter != requestedFilter) {
+            M11_Render_SetScaleFilter(effectiveFilter);
+            restoreFilter = 1;
+        }
+        result = M11_Render_PresentIndexed(csb_fmtowns_japanese_frame,
+                                           csb_fmtowns_japanese_width,
+                                           csb_fmtowns_japanese_height);
+        if (restoreFilter) M11_Render_SetScaleFilter(requestedFilter);
+        return result == M11_RENDER_OK;
     }
     /* CSB's title, PRESENTS, CHAOS/STRIKES and Entrance pages own special
      * palette indices.  V2.0 cleanup is valid for the normal game surface,

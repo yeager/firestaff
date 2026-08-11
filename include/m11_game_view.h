@@ -1610,6 +1610,10 @@ typedef struct {
     /* C06_CEDT's first editor page stays separate from SWITCHTW and uses
      * the verified C09_ICON palette from the selected retail utility image. */
     uint8_t csbFmtownsUtilityPixels[CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS];
+    /* F31J C06's native TBIOS chooser is a distinct 640x400 surface.  Keep
+     * it heap-owned so the normal M11 320x200 game state is unchanged. */
+    uint8_t *csbFmtownsUtilityJapanesePixels;
+    int csbFmtownsUtilityJapaneseActive;
     uint8_t csbFmtownsUtilityPaletteRgb6
         [CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3];
     CSB_V1_FmtownsUtilityHandoffReceipt csbFmtownsUtilityHandoffReceipt;
@@ -2120,6 +2124,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                        unsigned char* framebuffer,
                        int framebufferWidth,
                        int framebufferHeight);
+/* Returns F31J C06's independently verified native selector surface. */
+int M11_GameView_GetCsbFmtownsUtilityJapaneseFrame(
+    const M11_GameViewState *state, const uint8_t **out_pixels,
+    int *out_width, int *out_height);
 /* Draw the F10 runtime graphics panel after the source-owned game frame.
  * It deliberately contains controls only, never substitute game artwork. */
 void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,

@@ -34,6 +34,8 @@
 #include "csb_v1_fmtowns_graphics_dat.h"
 #include "csb_v1_fmtowns_portrait.h"
 #include "csb_v1_fmtowns_utility_render.h"
+#include "fmtowns_bios_host.h"
+#include "fmtowns_tbios_shim.h"
 #include "csb_v1_csbwin_layout_0232.h"
 #include "csb_v1_csbwin_planar_bitmap.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
@@ -394,6 +396,46 @@ static void m11_csb_present_startup_raster(const unsigned char *source,
                                            unsigned char *framebuffer,
                                            int framebuffer_width,
                                            int framebuffer_height);
+
+/* The user explicitly authorises their own Towns ROM through this path.
+ * Nothing is copied into Firestaff's data tree and a missing or malformed
+ * ROM leaves F31J C06 closed instead of substituting a host font. */
+static uint8_t *g_m11_fmtowns_fnt_rom;
+
+static int m11_csb_bind_fmtowns_font_rom(void)
+{
+    const char *path;
+    FILE *file;
+    long size;
+    uint8_t *bytes;
+    if (fmtowns_bios_host_current_pc34() != NULL) return 1;
+    if (fmtowns_tbios_shim_has_rom_pc34()) {
+        fmtowns_bios_host_bind_pc34(fmtowns_tbios_shim_host_pc34());
+        return 1;
+    }
+    path = getenv("FIRESTAFF_FMTOWNS_FONT_ROM");
+    if (!path || !path[0] || !(file = fopen(path, "rb"))) return 0;
+    if (fseek(file, 0, SEEK_END) != 0 ||
+        (size = ftell(file)) != 8192L * 32L || fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return 0;
+    }
+    bytes = (uint8_t *)malloc((size_t)size);
+    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
+        fclose(file);
+        free(bytes);
+        return 0;
+    }
+    if (fclose(file) != 0 ||
+        !fmtowns_tbios_shim_load_rom_pc34(bytes, (size_t)size)) {
+        free(bytes);
+        return 0;
+    }
+    free(g_m11_fmtowns_fnt_rom);
+    g_m11_fmtowns_fnt_rom = bytes;
+    fmtowns_bios_host_bind_pc34(fmtowns_tbios_shim_host_pc34());
+    return 1;
+}
 
 #ifndef DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL
 #define DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL \
@@ -8820,12 +8862,7 @@ static int m11_csb_enter_fmtowns_utility(
     CSB_V1_FmtownsUtilityRenderReceipt rendered;
     const CSB_V1_BootProfile *profile;
 
-    /* C06 is its own Phar Lap program.  F31E can now reproduce F7042 from
-     * UTILE, MINI.DAT and the C06 font/IMG2 streams.  F31J remains closed:
-     * CEDT030 delegates its Shift-JIS text to the Towns native consumer and
-     * host text would be a synthetic replacement. */
-    if (!state || language != CSB_FMTOWNS_SWITCH_ENGLISH ||
-        !state->csbBootProfile) return 0;
+    if (!state || !state->csbBootProfile) return 0;
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
     memset(&state->csbFmtownsUtilityHandoffReceipt, 0,
            sizeof(state->csbFmtownsUtilityHandoffReceipt));
@@ -8862,6 +8899,9 @@ static int m11_csb_enter_fmtowns_utility(
     state->csbFmtownsUtilityEditCharacterIndex = 0u;
     state->csbFmtownsUtilityTextCursorVisible = 0;
     state->csbFmtownsUtilityTextCursorVblanksRemaining = 0u;
+    free(state->csbFmtownsUtilityJapanesePixels);
+    state->csbFmtownsUtilityJapanesePixels = NULL;
+    state->csbFmtownsUtilityJapaneseActive = 0;
     memset(&rendered, 0, sizeof(rendered));
     if (!csb_v1_fmtowns_utility_handoff_open(
             profile, language, &state->csbFmtownsUtilityHandoffReceipt) ||
@@ -8869,23 +8909,42 @@ static int m11_csb_enter_fmtowns_utility(
             profile, language, &state->csbFmtownsUtilitySaveMappingReceipt) ||
         !csb_v1_fmtowns_utility_menu_open(
             profile, language, &state->csbFmtownsUtilityMenuReceipt) ||
-        !csb_v1_fmtowns_utility_game_source_open(
-            profile, language, &state->csbFmtownsUtilityGameSourceReceipt) ||
         !csb_v1_fmtowns_utility_font_open(
             profile, language, &state->csbFmtownsUtilityFontReceipt) ||
         !csb_v1_fmtowns_utility_icon_palette_rgb6(
             &state->csbFmtownsUtilityMenuReceipt,
-            state->csbFmtownsUtilityPaletteRgb6) ||
-        !csb_v1_fmtowns_utility_render_game_source_dialog(
-            &state->csbFmtownsUtilityHandoffReceipt,
-            &state->csbFmtownsUtilityGameSourceReceipt,
-            &state->csbFmtownsUtilityFontReceipt,
-            state->csbFmtownsUtilityPixels,
-            sizeof(state->csbFmtownsUtilityPixels), &rendered)) {
+            state->csbFmtownsUtilityPaletteRgb6)) {
         memset(state->csbFmtownsUtilityPixels, 0,
                sizeof(state->csbFmtownsUtilityPixels));
         memset(state->csbFmtownsUtilityPaletteRgb6, 0,
                sizeof(state->csbFmtownsUtilityPaletteRgb6));
+        return 0;
+    }
+    if (language == CSB_FMTOWNS_SWITCH_JAPANESE) {
+        state->csbFmtownsUtilityJapanesePixels = (uint8_t *)malloc(
+            CSB_V1_FMTOWNS_UTILITY_JAPANESE_SCREEN_PIXELS);
+        if (!state->csbFmtownsUtilityJapanesePixels ||
+            !m11_csb_bind_fmtowns_font_rom() ||
+            !csb_v1_fmtowns_utility_render_japanese_game_source_dialog(
+                &state->csbFmtownsUtilityHandoffReceipt,
+                state->csbFmtownsUtilityJapanesePixels,
+                CSB_V1_FMTOWNS_UTILITY_JAPANESE_SCREEN_PIXELS, &rendered)) {
+            free(state->csbFmtownsUtilityJapanesePixels);
+            state->csbFmtownsUtilityJapanesePixels = NULL;
+            return 0;
+        }
+        state->csbFmtownsUtilityJapaneseActive = 1;
+    } else if (language == CSB_FMTOWNS_SWITCH_ENGLISH &&
+               csb_v1_fmtowns_utility_game_source_open(
+                   profile, language, &state->csbFmtownsUtilityGameSourceReceipt) &&
+               csb_v1_fmtowns_utility_render_game_source_dialog(
+                   &state->csbFmtownsUtilityHandoffReceipt,
+                   &state->csbFmtownsUtilityGameSourceReceipt,
+                   &state->csbFmtownsUtilityFontReceipt,
+                   state->csbFmtownsUtilityPixels,
+                   sizeof(state->csbFmtownsUtilityPixels), &rendered)) {
+        /* F31E source chooser is fully bound below. */
+    } else {
         return 0;
     }
     state->csbFmtownsUtilityBound = 1;
@@ -8898,6 +8957,14 @@ static int m11_csb_redraw_fmtowns_utility(M11_GameViewState *state)
 {
     CSB_V1_FmtownsUtilityRenderReceipt rendered;
     if (!state || !state->csbFmtownsUtilityBound) return 0;
+    if (state->csbFmtownsUtilityJapaneseActive) {
+        return state->csbFmtownsUtilityGameSourceDialogActive &&
+            state->csbFmtownsUtilityJapanesePixels &&
+            csb_v1_fmtowns_utility_render_japanese_game_source_dialog(
+                &state->csbFmtownsUtilityHandoffReceipt,
+                state->csbFmtownsUtilityJapanesePixels,
+                CSB_V1_FMTOWNS_UTILITY_JAPANESE_SCREEN_PIXELS, &rendered);
+    }
     memset(&rendered, 0, sizeof(rendered));
     if (state->csbFmtownsUtilityGameSourceDialogActive) {
         return csb_v1_fmtowns_utility_render_game_source_dialog(
@@ -9256,6 +9323,9 @@ static int m11_csb_bind_fmtowns_switch(M11_GameViewState *state,
     if (!m11_csb_is_fmtowns_profile(profile) || !profile->asset_root[0])
         return 0;
     state->csbFmtownsUtilityBound = 0;
+    state->csbFmtownsUtilityJapaneseActive = 0;
+    free(state->csbFmtownsUtilityJapanesePixels);
+    state->csbFmtownsUtilityJapanesePixels = NULL;
     memset(state->csbFmtownsUtilityPixels, 0,
            sizeof(state->csbFmtownsUtilityPixels));
     memset(&state->csbFmtownsUtilityHandoffReceipt, 0,
@@ -9354,8 +9424,28 @@ static int m11_csb_present_fmtowns_utility(M11_GameViewState *state,
         rgb6[color][2] = (uint8_t)(state->csbFmtownsUtilityPaletteRgb6[color & 15][2] << 2u);
     }
     if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) return 0;
+    if (state->csbFmtownsUtilityJapaneseActive) {
+        memset(framebuffer, 0, (size_t)framebuffer_width * framebuffer_height);
+        return 1;
+    }
     m11_csb_present_startup_raster(state->csbFmtownsUtilityPixels, framebuffer,
                                    framebuffer_width, framebuffer_height);
+    return 1;
+}
+
+int M11_GameView_GetCsbFmtownsUtilityJapaneseFrame(
+    const M11_GameViewState *state, const uint8_t **out_pixels,
+    int *out_width, int *out_height)
+{
+    if (out_pixels) *out_pixels = NULL;
+    if (out_width) *out_width = 0;
+    if (out_height) *out_height = 0;
+    if (!state || !state->active || !state->csbFmtownsUtilityBound ||
+        !state->csbFmtownsUtilityJapaneseActive ||
+        !state->csbFmtownsUtilityJapanesePixels) return 0;
+    if (out_pixels) *out_pixels = state->csbFmtownsUtilityJapanesePixels;
+    if (out_width) *out_width = CSB_V1_FMTOWNS_UTILITY_JAPANESE_SCREEN_WIDTH;
+    if (out_height) *out_height = CSB_V1_FMTOWNS_UTILITY_JAPANESE_SCREEN_HEIGHT;
     return 1;
 }
 
@@ -9460,6 +9550,27 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
          * source family, not a synthetic MINI.DAT editor.  DM media is not
          * yet admitted by this CSB-only installation, so retain the modal
          * and fail closed rather than accepting the label as a fake source. */
+        if (state->csbFmtownsUtilityJapaneseActive) {
+            if (x >= 160 && x <= 474 && y >= 176 && y <= 194) {
+                m11_set_status(state, "CSB FM TOWNS", "DUNGEON MASTER MEDIA REQUIRED");
+                return M11_GAME_INPUT_REDRAW;
+            }
+            if (x >= 160 && x <= 474 && y >= 216 && y <= 234) {
+                m11_set_status(state, "CSB FM TOWNS", "CSB SAVE MEDIA REQUIRED");
+                return M11_GAME_INPUT_REDRAW;
+            }
+            if (x >= 160 && x <= 474 && y >= 256 && y <= 274) {
+                state->csbFmtownsUtilityGameSourceDialogActive = 0;
+                state->csbFmtownsUtilityBound = 0;
+                state->csbFmtownsUtilityJapaneseActive = 0;
+                free(state->csbFmtownsUtilityJapanesePixels);
+                state->csbFmtownsUtilityJapanesePixels = NULL;
+                if (!m11_csb_bind_fmtowns_switch(
+                        state, CSB_FMTOWNS_SWITCH_JAPANESE))
+                    return M11_GAME_INPUT_IGNORED;
+            }
+            return M11_GAME_INPUT_REDRAW;
+        }
         if (x >= 80 && x <= 237 && y >= 88 && y <= 96) {
             m11_set_status(state, "CSB FM TOWNS", "DUNGEON MASTER MEDIA REQUIRED");
             return M11_GAME_INPUT_REDRAW;
@@ -21225,6 +21336,9 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     if (!state) {
         return;
     }
+    free(state->csbFmtownsUtilityJapanesePixels);
+    state->csbFmtownsUtilityJapanesePixels = NULL;
+    state->csbFmtownsUtilityJapaneseActive = 0;
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         csb_v2_runtime_cleanup();
     }

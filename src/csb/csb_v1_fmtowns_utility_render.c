@@ -2,6 +2,7 @@
 
 #include "csb_v1_fmtowns_graphics_dat.h"
 #include "csb_v1_fmtowns_portrait.h"
+#include "fmtowns_bios_host.h"
 
 #include <string.h>
 
@@ -129,6 +130,138 @@ static int c06_dialog_base(const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
     memset(pixels, C00_BLACK, CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS);
     filled_box((C06_Box){62, 255, 48, 149}, 2, C01_DARK_GRAY, C00_BLACK,
                pixels);
+    return 1;
+}
+
+static void c06_japanese_fill(C06_Box box, uint8_t color, uint8_t *pixels)
+{
+    int x, y;
+    if (box.left < 0) box.left = 0;
+    if (box.top < 0) box.top = 0;
+    if (box.right >= (int)CSB_V1_FMTOWNS_UTILITY_JAPANESE_SCREEN_WIDTH)
+        box.right = (int)CSB_V1_FMTOWNS_UTILITY_JAPANESE_SCREEN_WIDTH - 1;
+    if (box.bottom >= (int)CSB_V1_FMTOWNS_UTILITY_JAPANESE_SCREEN_HEIGHT)
+        box.bottom = (int)CSB_V1_FMTOWNS_UTILITY_JAPANESE_SCREEN_HEIGHT - 1;
+    for (y = box.top; y <= box.bottom; ++y)
+        for (x = box.left; x <= box.right; ++x)
+            pixels[(size_t)y * CSB_V1_FMTOWNS_UTILITY_JAPANESE_SCREEN_WIDTH + x] = color;
+}
+
+static void c06_japanese_box(C06_Box box, int width, uint8_t fill_color,
+                             uint8_t line_color, uint8_t *pixels)
+{
+    C06_Box inner;
+    c06_japanese_fill(box, line_color, pixels);
+    if (width <= 0) return;
+    inner.left = box.left + width;
+    inner.right = box.right - width;
+    inner.top = box.top + width;
+    inner.bottom = box.bottom - width;
+    c06_japanese_fill(inner, fill_color, pixels);
+}
+
+static int c06_japanese_text(int x, int y, uint8_t foreground,
+                             uint8_t background, const uint8_t *sjis,
+                             size_t byte_count, uint8_t *pixels)
+{
+    size_t at;
+    if (!sjis || (byte_count & 1u) != 0u) return 0;
+    for (at = 0u; at < byte_count; at += 2u) {
+        uint8_t glyph[32];
+        size_t glyph_size = 0u;
+        uint8_t glyph_width = 0u;
+        uint8_t glyph_height = 0u;
+        int row, column;
+        if (fmtowns_bios_host_fetch_sjis_glyph_pc34(
+                sjis[at], sjis[at + 1u], glyph, sizeof(glyph), &glyph_size,
+                &glyph_width, &glyph_height) != FMTOWNS_BIOS_HOST_OK ||
+            glyph_size != sizeof(glyph) || glyph_width != 16u ||
+            glyph_height != 16u) return 0;
+        for (row = 0; row < 16; ++row) {
+            for (column = 0; column < 16; ++column) {
+                const uint8_t bits = glyph[(size_t)row * 2u + (unsigned)column / 8u];
+                c06_japanese_fill((C06_Box){x + column, x + column,
+                                             y + row, y + row},
+                                  (bits & (uint8_t)(0x80u >> (column & 7)))
+                                      ? foreground : background,
+                                  pixels);
+            }
+        }
+        x += 16;
+    }
+    return 1;
+}
+
+static int c06_japanese_button(C06_Box box, const uint8_t *sjis,
+                               size_t byte_count, uint8_t *pixels)
+{
+    int text_x;
+    if (!sjis || (byte_count & 1u) != 0u) return 0;
+    c06_japanese_box(box, 4, C02_LIGHT_GRAY, C00_BLACK, pixels);
+    text_x = (box.left + box.right + 1 - (int)(byte_count / 2u) * 16) / 2;
+    return c06_japanese_text(text_x, box.top + 1, C15_WHITE, C00_BLACK,
+                             sjis, byte_count, pixels);
+}
+
+int csb_v1_fmtowns_utility_render_japanese_game_source_dialog(
+    const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
+    uint8_t *pixels, size_t pixel_capacity,
+    CSB_V1_FmtownsUtilityRenderReceipt *out_receipt)
+{
+    /* Original C06 capture, F31J: 「どのゲームを読み込みますか」,
+     * 「ダンジョンマスター」, 「カオスの逆襲」, 「キャンセル」. */
+    static const uint8_t title[] = {
+        0x82,0xc7,0x82,0xcc,0x83,0x51,0x81,0x5b,0x83,0x80,0x82,0xf0,
+        0x93,0xc7,0x82,0xdd,0x8d,0x9e,0x82,0xdd,0x82,0xdc,0x82,0xb7,
+        0x82,0xa9
+    };
+    static const uint8_t dungeon_master[] = {
+        0x83,0x5f,0x83,0x93,0x83,0x57,0x83,0x87,0x83,0x93,
+        0x83,0x7d,0x83,0x58,0x83,0x5e,0x81,0x5b
+    };
+    static const uint8_t chaos_strikes_back[] = {
+        0x83,0x4a,0x83,0x49,0x83,0x58,0x82,0xcc,
+        0x8b,0x74,0x8f,0x50
+    };
+    static const uint8_t cancel[] = {
+        0x83,0x4c,0x83,0x83,0x83,0x93,0x83,0x5a,0x83,0x8b
+    };
+    CSB_V1_FmtownsUtilityRenderReceipt receipt;
+    uint32_t source_hash = 2166136261u;
+    const uint8_t *parts[] = { title, dungeon_master, chaos_strikes_back, cancel };
+    const size_t sizes[] = { sizeof(title), sizeof(dungeon_master),
+                             sizeof(chaos_strikes_back), sizeof(cancel) };
+    size_t part;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!handoff || !pixels ||
+        pixel_capacity < CSB_V1_FMTOWNS_UTILITY_JAPANESE_SCREEN_PIXELS ||
+        !handoff->valid || !handoff->static_art_verified ||
+        handoff->language != CSB_FMTOWNS_SWITCH_JAPANESE ||
+        !fmtowns_bios_host_current_pc34()) return 0;
+    memset(pixels, C00_BLACK, CSB_V1_FMTOWNS_UTILITY_JAPANESE_SCREEN_PIXELS);
+    c06_japanese_box((C06_Box){124, 510, 96, 298}, 4,
+                     C01_DARK_GRAY, C00_BLACK, pixels);
+    if (!c06_japanese_text(216, 132, C15_WHITE, C01_DARK_GRAY,
+                           title, sizeof(title), pixels) ||
+        !c06_japanese_button((C06_Box){160, 474, 176, 194}, dungeon_master,
+                              sizeof(dungeon_master), pixels) ||
+        !c06_japanese_button((C06_Box){160, 474, 216, 234}, chaos_strikes_back,
+                              sizeof(chaos_strikes_back), pixels) ||
+        !c06_japanese_button((C06_Box){160, 474, 256, 274}, cancel,
+                              sizeof(cancel), pixels)) return 0;
+    for (part = 0u; part < sizeof(parts) / sizeof(parts[0]); ++part)
+        source_hash = fnv1a(parts[part], sizes[part]) ^ (source_hash * 16777619u);
+    receipt.valid = 1;
+    receipt.language = CSB_FMTOWNS_SWITCH_JAPANESE;
+    receipt.source_fnv1a = handoff->executable_fnv1a ^ source_hash;
+    receipt.pixel_fnv1a = fnv1a(pixels,
+                                CSB_V1_FMTOWNS_UTILITY_JAPANESE_SCREEN_PIXELS);
+    receipt.source_evidence =
+        "Original F31J C06 Tsugaru capture; FMT_FNT.ROM via "
+        "Tsugaru TownsPhysicalMemory::KanjiROMAccess::FontROMCode";
+    if (out_receipt) *out_receipt = receipt;
     return 1;
 }
 

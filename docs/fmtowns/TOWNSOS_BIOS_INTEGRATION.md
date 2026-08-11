@@ -180,6 +180,12 @@ When `FIRESTAFF_FMTOWNS_FONT_ROM` names the authorised external FNT ROM, the
 test also checks F31J chooser glyph `ど` against its captured native glyph
 receipt (`af14d837`).
 
+M11 uses the same opt-in path for CSB's Japanese C06 selector. It reads the
+exact 256 KiB `FMT_FNT.ROM` into process memory, binds only the glyph callback
+and presents the source-owned 640×400 chooser. A missing, short or oversized
+ROM leaves that C06 route unavailable; Firestaff never falls back to a macOS,
+SDL or bundled font.
+
 ## Tsugaru bridge contract (implemented 2026-08-07)
 
 `include/fmtowns_tsugaru_bridge.h` + `src/shared/fmtowns_tsugaru_bridge.c`

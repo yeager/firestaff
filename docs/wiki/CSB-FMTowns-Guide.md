@@ -193,9 +193,11 @@ its native `GAME` / `PORTRAIT` / `CANCEL` choice before `PORTRAIT` opens the
 source-owned `CEDT008`/`CEDT013` picker. Make New Adventure remains closed:
 F7086/F7090 needs a verified source/destination dungeon transaction and the
 real F7020 equipped-object modifier removal, neither of which can be inferred
-from a party-only editor receipt. F31J's editor remains closed until the native
-Shift-JIS glyph consumer is recovered. Keep those routes modal until their
-specific owners are evidenced.
+from a party-only editor receipt. F31J's initial C06 chooser is now available
+in its captured 640×400 geometry when the user supplies an authorised
+`FMT_FNT.ROM` through `FIRESTAFF_FMTOWNS_FONT_ROM`. The later editor and save
+dialogs remain closed until their own source execution is recovered. Keep
+those routes modal until their specific owners are evidenced.
 
 This C06 boundary is narrower than the direct in-game save route. M11 can
 read and update an explicitly selected, already admitted native
