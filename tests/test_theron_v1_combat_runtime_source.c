@@ -116,6 +116,15 @@ int main(void) {
     theron_v1_world_tick(&world);
     CHECK(world.timers[0].remaining_ticks == 1 && world.timer_count == 1,
           "source level does not execute legacy timer bytes");
+    {
+        world.source_monsters[0].raw_size = 1;
+        world.source_monsters[0].raw[0] = 0x90u;
+        uint64_t before = theron_v1_world_hash(&world);
+        world.source_monsters[0].raw[0] ^= 0x01u;
+        CHECK(theron_v1_world_hash(&world) != before,
+              "state hash includes authenticated source monster bytes");
+        world.source_monsters[0].raw[0] ^= 0x01u;
+    }
     world.party.champions[0].alive = 1;
     world.party.champions[0].food = 7;
     world.party.champions[0].water = 8;

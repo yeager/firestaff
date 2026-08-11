@@ -13858,3 +13858,7 @@ and production source-combat tests.
 - ✅ `theron_v1_timer_add()` avvisar host-timers när aktuell nivå har autentiserad Track 02-header
 - ✅ `theron_v1_tick_timers()` lämnar äldre sparade timerbytes orörda tills T700:s riktiga timerkonsument är bunden
 - ✅ verifierat med `test_theron_v1_combat_runtime_source` och `test_theron_v1_boot_runtime_input` (13/13)
+# Theron: source-provenance ingår nu i world-hash (2026-08-11)
+- ✅ state-hashen täcker autentiserade monster-, object- och generatorrecords samt carried item-payloadens property/raw bytes
+- ✅ hashningen använder explicita fält och begränsar raw-längder, utan padding- eller syntetiska semantiktolkningar
+- ✅ verifierat med production combat bridge, world serialize-roundtrip och hela US Track 02-loadern för alla sju dungeons

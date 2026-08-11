@@ -56,6 +56,17 @@ static uint64_t fnv64_word(uint64_t h, uint64_t val) {
     return h;
 }
 
+static uint64_t fnv64_bytes(uint64_t h, const uint8_t *bytes, size_t count) {
+    const uint64_t prime = THERON_HASH_FNV_PRIME;
+    size_t i;
+    if (!bytes) return h;
+    for (i = 0; i < count; ++i) {
+        h ^= bytes[i];
+        h *= prime;
+    }
+    return h;
+}
+
 /* ── Read helpers (big-endian 68000 → host LE) ─────────────────────── */
 
 static uint16_t rb16(const uint8_t *p) {
@@ -2233,6 +2244,70 @@ uint64_t theron_v1_world_hash(const Theron_V1_World *world) {
         h = fnv64_word(h, (uint64_t)(c->x) | ((uint64_t)(c->y) << 8));
         h = fnv64_word(h, (uint64_t)c->hp);
         h = fnv64_word(h, (uint64_t)c->flags);
+    }
+
+    /* Source provenance is part of the save identity.  T900/T700 may not
+     * consume these records yet, but dropping them from the hash would allow
+     * two different authenticated Track 02 states to compare equal. */
+    h = fnv64_word(h, THERON_HASH_SEED_SOURCE);
+    h = fnv64_word(h, world->source_monster_count);
+    for (unsigned int i = 0; i < world->source_monster_count; ++i) {
+        const Theron_V1_SourceMonsterRecord *r = &world->source_monsters[i];
+        h = fnv64_word(h, (uint64_t)r->dungeon_id);
+        h = fnv64_word(h, (uint64_t)r->level);
+        h = fnv64_word(h, (uint64_t)r->x | ((uint64_t)r->y << 16));
+        h = fnv64_word(h, (uint64_t)r->source_ref |
+                              ((uint64_t)r->source_index << 16));
+        h = fnv64_word(h, (uint64_t)r->type | ((uint64_t)r->position << 8) |
+                              ((uint64_t)r->number << 16));
+        h = fnv64_bytes(h, r->raw, r->raw_size <= sizeof(r->raw) ?
+                                      r->raw_size : sizeof(r->raw));
+    }
+    h = fnv64_word(h, world->source_object_count);
+    for (unsigned int i = 0; i < world->source_object_count; ++i) {
+        const Theron_V1_SourceObjectRecord *r = &world->source_objects[i];
+        h = fnv64_word(h, (uint64_t)r->dungeon_id);
+        h = fnv64_word(h, (uint64_t)r->level);
+        h = fnv64_word(h, (uint64_t)r->x | ((uint64_t)r->y << 16));
+        h = fnv64_word(h, (uint64_t)r->source_ref |
+                              ((uint64_t)r->next_ref << 16));
+        h = fnv64_word(h, (uint64_t)r->source_index |
+                              ((uint64_t)r->category << 16) |
+                              ((uint64_t)r->position << 24));
+        h = fnv64_bytes(h, r->raw, r->raw_size <= sizeof(r->raw) ?
+                                      r->raw_size : sizeof(r->raw));
+    }
+    h = fnv64_word(h, world->source_generator_count);
+    for (unsigned int i = 0; i < world->source_generator_count; ++i) {
+        const Theron_V1_SourceGeneratorRecord *r =
+            &world->source_generators[i];
+        h = fnv64_word(h, (uint64_t)r->dungeon_id);
+        h = fnv64_word(h, (uint64_t)r->level);
+        h = fnv64_word(h, (uint64_t)r->x | ((uint64_t)r->y << 16));
+        h = fnv64_word(h, (uint64_t)r->source_ref |
+                              ((uint64_t)r->source_index << 16));
+        h = fnv64_word(h, (uint64_t)r->type | ((uint64_t)r->value << 8) |
+                              ((uint64_t)r->once << 24) |
+                              ((uint64_t)r->effect << 32) |
+                              ((uint64_t)r->delay << 40));
+    }
+    for (int champion = 0; champion < THERON_MAX_CHAMPIONS; ++champion) {
+        for (int slot = 0; slot < THERON_INVENTORY_SLOTS; ++slot) {
+            const Theron_V1_InventorySourceRecord *r =
+                &world->inventory_source[champion][slot];
+            h = fnv64_word(h, (uint64_t)r->valid |
+                                  ((uint64_t)r->category << 8) |
+                                  ((uint64_t)r->item_type << 16) |
+                                  ((uint64_t)r->item_category << 24));
+            h = fnv64_word(h, (uint64_t)r->source_ref |
+                                  ((uint64_t)r->source_next_ref << 16));
+            h = fnv64_word(h, (uint64_t)r->source_index |
+                                  ((uint64_t)r->text_ref << 16));
+            h = fnv64_bytes(h, r->property, sizeof(r->property));
+            h = fnv64_bytes(h, r->source_raw,
+                            r->source_raw_size <= sizeof(r->source_raw) ?
+                                r->source_raw_size : sizeof(r->source_raw));
+        }
     }
 
     /* Seed: timers */
