@@ -430,15 +430,11 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
             assert(creature->hp == creature->max_hp);
             assert(creature->primary_attack == THERON_ATTACK_NONE);
             assert(creature->secondary_attack == THERON_ATTACK_NONE);
-            if (creature->type <= THERON_CREATURE_SHADO) {
-                const Theron_SpawnZoneDesc *zone =
-                    theron_v1_track02_spawn_zone(creature->type - 1u);
-                assert(zone != NULL);
-                assert(creature->source_spawn_category == zone->category);
-            } else {
-                /* THIEF/DEMON have no regular-spawn descriptor. */
-                assert(creature->source_spawn_category == 0xffu);
-            }
+            /* This direct user-data loader has no authenticated spawn-source
+             * receipt.  Static creature type must not be promoted into a
+             * regular-spawn category; the authenticated binding test above
+             * covers the real source-consumer path. */
+            assert(creature->source_spawn_category == 0xffu);
         }
         theron_v1_world_init_generators(world);
         world->world_tick = 60;

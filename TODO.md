@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+## Theron: spawn-category provenance is fail-closed (2026-08-11)
+
+- ✅ Live creatures from direct user-data loads no longer receive a static
+  spawn category when no authenticated Track 02 spawn-source receipt exists.
+- 🔒 The real category-0..3 spawn consumer, RNG admission, AI, combat,
+  generators, T700 and T900 remain closed pending an authenticated runtime
+  witness.
+
 ## Theron: source creature identity is stable across admission paths (2026-08-11)
 
 - ✅ Level materialization and explicit source-record admission now derive each

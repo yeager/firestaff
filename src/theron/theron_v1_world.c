@@ -1606,18 +1606,18 @@ uint8_t theron_v1_world_track02_spawn_category(
     const Theron_SpawnZoneDesc *zone;
     if (!world || creature_index >= THERON_TRACK02_CREATURE_TYPE_COUNT)
         return 0xffu;
-    /* JP is deliberately not interpreted through the US disassembly offsets.
-     * The source decoder must acquire a JP-specific layout before this path
-     * can publish a regular-spawn category. */
-    if (world->track02_spawn_source_variant ==
-            THERON_V1_TRACK02_VARIANT_JP_BIN &&
-        !world->track02_spawn_source.authenticated)
+    /* A regular-spawn category is a runtime-source receipt, not a property
+     * of the static creature type.  Do not fall back to the reconstructed
+     * descriptor table here: direct level loads and JP data have no
+     * authenticated US spawn consumer, so publishing that value would make
+     * inferred data look like a captured semantic field. */
+    if (!world->track02_spawn_source.authenticated ||
+        world->track02_spawn_source.variant !=
+            THERON_V1_TRACK02_VARIANT_US_BIN)
         return 0xffu;
-    if (world->track02_spawn_source.authenticated &&
-        creature_index < THERON_TRACK02_SPAWN_ZONE_COUNT)
-        zone = &world->track02_spawn_source.zones[creature_index];
-    else
-        zone = theron_v1_track02_spawn_zone(creature_index);
+    if (creature_index >= THERON_TRACK02_SPAWN_ZONE_COUNT)
+        return 0xffu;
+    zone = &world->track02_spawn_source.zones[creature_index];
     return zone ? zone->category : 0xffu;
 }
 

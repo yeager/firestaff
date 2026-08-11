@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — unbound spawn categories are now fail-closed
+
+- ✅ Direct level loads no longer copy a reconstructed static spawn-zone
+  category into live creature provenance.  The field is published only after
+  an authenticated US Track 02 spawn source is bound.
+- 🔒 This does not enable random spawning, AI, combat, generators, T700 or
+  T900 semantics; those still require their original runtime consumers.
+
 ## 2026-08-11 — source creature IDs now survive pool rebuilds
 
 - ✅ Both authenticated category-4 level materialization and explicit source

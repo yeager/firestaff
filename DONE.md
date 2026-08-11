@@ -1,3 +1,12 @@
+# Theron: unbound spawn categories are fail-closed (2026-08-11)
+
+- ✅ Direct Track 02 level loads no longer promote the reconstructed static
+  spawn-zone table into live creature records.
+- ✅ Only an authenticated US Track 02 spawn-source binding can publish a
+  regular-spawn category; JP and unbound routes remain `0xff`.
+- ✅ The real-data dungeon loader and combat-source tests pass after the
+  boundary change.
+
 # Theron: screenshot readiness timeout is fail-closed (2026-08-11)
 
 - ✅ `verify_theron_v1_runtime_screenshot_readiness.py` now records a real
