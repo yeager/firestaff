@@ -130,6 +130,9 @@ Körningen sker i denna ordning. Sökvägarna pekar medvetet på extern disk.
    `FIRESTAFF_NEXUS_TRACE_VDP1_REG_PC_LIST=0x0601307c,0x060262c4`.
    Det är viktigt att PC-listan, source-dumpen och rådumpen produceras av
    samma process; separata körningar får inte fogas ihop som ett bevis.
+   När VDP1-skrivaren anropar en transform kan den aktuella SH-2-koden och
+   registerläget fångas med
+   `FIRESTAFF_NEXUS_TRACE_VDP1_TRANSFORM_CODE_AT=0x06012f4a`.
 5. Starta Saturn-profilen genom
    `firestaff_nexus_v1_saturn_raw_capture_launcher.sh`. Launchern validerar
    BIOS och disc, startar Mednafen, väntar tills körningen är klar och skriver
