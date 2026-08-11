@@ -457,8 +457,12 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
   A bounded in-memory QuickTime view now joins each exact `moov` atom to its
   matching `mdat` atom in the boot profile, including that source-owned zero
   prefix; the retail gate passes for the four present movies (`0x19`, with
-  `Story.MooV` absent). Presentation
-  through the original QuickTime/MooV owner remains open. A native optional
+  `Story.MooV` absent). The M11 Mac startup route now presents the authentic
+  Title movie and binds the authentic Credits movie from the source-owned
+  Credits rectangle; Mac Return/Enter closes Credits through the source input
+  table. The demo keeps its static credits route because its real media has no
+  Credits movie. Presentation timing and ownership through the original
+  QuickTime/MooV owner remain open. A native optional
   FFmpeg-backed in-memory decoder now rebases the private QuickTime chunk
   offsets, decodes the authentic Cinepak video and PCM audio, and owns the
   Mac startup surface until the title reaches EOF; no movie file is written.

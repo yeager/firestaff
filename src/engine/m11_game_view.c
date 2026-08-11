@@ -1589,15 +1589,17 @@ static int m11_dm2_is_mac_profile(const DM2_V1_BootProfile *profile)
     return profile && profile->platform == DM2_PLATFORM_MAC_EN;
 }
 
-static int m11_dm2_bind_mac_movie(M11_GameViewState *state)
+static int m11_dm2_bind_mac_movie_index(M11_GameViewState *state, int movie_index)
 {
     const DM2_V1_BootProfile *profile;
     const DM2_V1_MacMovieView *view;
     if (!state || !(profile = (const DM2_V1_BootProfile *)state->dm2BootProfile) ||
-        !m11_dm2_is_mac_profile(profile)) return 1;
+        !m11_dm2_is_mac_profile(profile) || movie_index < 0 ||
+        movie_index >= DM2_V1_MAC_MOVIE_COUNT) return 0;
     if ((profile->mac_movie_view_present_mask &
-         (1u << DM2_V1_MAC_MOVIE_TITLE)) == 0u) return 1;
-    view = &profile->mac_movie_view[DM2_V1_MAC_MOVIE_TITLE];
+         (1u << movie_index)) == 0u) return 0;
+    dm2_v1_mac_movie_decoder_close(&state->dm2MacMovieDecoder);
+    view = &profile->mac_movie_view[movie_index];
     if (!dm2_v1_mac_movie_decoder_open(&state->dm2MacMovieDecoder,
                                        view->bytes, view->size) ||
         !dm2_v1_mac_movie_decoder_next(&state->dm2MacMovieDecoder)) {
@@ -1605,8 +1607,20 @@ static int m11_dm2_bind_mac_movie(M11_GameViewState *state)
         dm2_v1_mac_movie_decoder_close(&state->dm2MacMovieDecoder);
         return 0;
     }
+    state->dm2MacMovieIndex = movie_index;
+    state->dm2MacMovieComplete = 0;
     state->dm2MacMovieActive = 1;
     return 1;
+}
+
+static int m11_dm2_bind_mac_movie(M11_GameViewState *state)
+{
+    const DM2_V1_BootProfile *profile;
+    if (!state || !(profile = (const DM2_V1_BootProfile *)state->dm2BootProfile) ||
+        !m11_dm2_is_mac_profile(profile)) return 1;
+    if ((profile->mac_movie_view_present_mask &
+         (1u << DM2_V1_MAC_MOVIE_TITLE)) == 0u) return 1;
+    return m11_dm2_bind_mac_movie_index(state, DM2_V1_MAC_MOVIE_TITLE);
 }
 
 static int m11_dm2_present_mac_movie(M11_GameViewState *state,
@@ -1646,6 +1660,10 @@ static int m11_dm2_present_mac_movie(M11_GameViewState *state,
     if (!dm2_v1_mac_movie_decoder_next(&state->dm2MacMovieDecoder)) {
         state->dm2MacMovieActive = 0;
         state->dm2MacMovieComplete = 1;
+        if (state->dm2MacMovieIndex == DM2_V1_MAC_MOVIE_CREDITS) {
+            state->dm2State.startup_credits_active = 0;
+            state->dm2State.startup_credits_remaining_ticks = 0;
+        }
         dm2_v1_mac_movie_decoder_close(&state->dm2MacMovieDecoder);
     }
     return 1;
@@ -2756,6 +2774,10 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
             ((const DM2_V1_BootProfile *)state->dm2BootProfile)->platform ==
                 DM2_PLATFORM_MAC_EN) {
             state->dm2State.startup_credits_active = 0;
+            if (state->dm2MacMovieActive) {
+                state->dm2MacMovieActive = 0;
+                dm2_v1_mac_movie_decoder_close(&state->dm2MacMovieDecoder);
+            }
             return M11_GAME_INPUT_REDRAW;
         }
         return M11_GAME_INPUT_IGNORED;
@@ -31422,6 +31444,7 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
 static M11_GameInputResult m11_dm2_startup_enter_credits(
     M11_GameViewState *state)
 {
+    const DM2_V1_BootProfile *profile;
     const DM2_V1_AssetLoader *loader;
     DM2_V1_QueryGdatSummaryImageReceipt image;
     DM2_V1_InterfacePalette palette;
@@ -31429,7 +31452,23 @@ static M11_GameInputResult m11_dm2_startup_enter_credits(
     uint32_t raw_bytes = 0u;
     int credits_material_ready = 0;
 
-    if (!state || !state->dm2BootProfile) return M11_GAME_INPUT_IGNORED;
+    if (!state || !(profile = (const DM2_V1_BootProfile *)state->dm2BootProfile))
+        return M11_GAME_INPUT_IGNORED;
+    /* The retail Macintosh title menu owns Credits.MooV. The demo has no
+     * such movie and continues through its admitted static title asset. */
+    if (m11_dm2_is_mac_profile(profile) &&
+        (profile->mac_movie_view_present_mask &
+         (1u << DM2_V1_MAC_MOVIE_CREDITS)) != 0u) {
+        state->dm2State.startup_credits_active = 1;
+        state->dm2State.startup_credits_remaining_ticks = 0;
+        if (!m11_dm2_bind_mac_movie_index(
+                state, DM2_V1_MAC_MOVIE_CREDITS)) {
+            /* A present authentic movie that cannot be decoded is a black,
+             * fail-closed Mac credits route, never a PC image substitution. */
+            state->dm2MacMovieRejected = 1;
+        }
+        return M11_GAME_INPUT_REDRAW;
+    }
     /* SKProject startend.cpp::DM2_SHOW_CREDITS draws TITLE/0/dt07/1.
      * The pointer caller has already proved the matching RAW4 rectangle. */
     loader = dm2_v1_boot_asset_loader(
@@ -31507,10 +31546,15 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
              * screen. */
             state->dm2State.startup_credits_active = 0;
             state->dm2State.startup_credits_remaining_ticks = 0;
+            if (state->dm2MacMovieActive) {
+                state->dm2MacMovieActive = 0;
+                dm2_v1_mac_movie_decoder_close(&state->dm2MacMovieDecoder);
+            }
             return M11_GAME_INPUT_REDRAW;
         }
         return M11_GAME_INPUT_IGNORED;
     }
+    if (state->dm2MacMovieActive) return M11_GAME_INPUT_IGNORED;
     memset(&aux_layout, 0, sizeof(aux_layout));
     if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0 &&
         dm2_v1_boot_startup_menu_aux_pointer_layout(

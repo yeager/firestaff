@@ -1824,6 +1824,7 @@ typedef struct {
     int dm2DosMveIntroRejected;
     int dm2DosMveIntroComplete;
     DM2_V1_MacMovieDecoder dm2MacMovieDecoder;
+    int dm2MacMovieIndex;
     int dm2MacMovieActive;
     int dm2MacMovieRejected;
     int dm2MacMovieComplete;

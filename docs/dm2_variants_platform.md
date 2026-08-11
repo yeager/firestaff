@@ -72,8 +72,12 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   `mdat`) for each present movie without changing either fork. The view keeps
   the authentic four-byte prefix present before `Swoosh.MooV`'s `mdat` out of
   the atom stream while preserving the source fork as the authority. The
-  retail decoder gate covers all four present movies; exact timing and
-  presentation ownership remain separate.
+  retail decoder gate covers all four present movies. M11 now presents the
+  authentic Title movie at Mac startup and opens authentic Credits from the
+  authenticated Credits rectangle; Mac Return/Enter closes that movie through
+  the source input table. The demo has no Credits movie and remains on its
+  authenticated static route. Exact timing and presentation ownership remain
+  separate.
 - The retail image also retains the complete authentic resource forks for
   `Music` (662,956 bytes), `General.sounds` (134,562), and `Weapon.sounds`
   (50,651). These are source-bound Mac resources, not DOS HMP substitutes;

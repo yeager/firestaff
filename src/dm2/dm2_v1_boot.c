@@ -10057,9 +10057,17 @@ int dm2_v1_boot_startup_menu_aux_pointer_layout(
     if (!dm2_v1_boot_startup_menu_event_rect(raw, raw_size, 0x019bu,
                                              &out_layout->show_credits) ||
         !dm2_v1_boot_startup_menu_event_rect(raw, raw_size, 0x01b2u,
-                                             &out_layout->quit_game) ||
-        !dm2_v1_boot_startup_menu_event_rect(raw, raw_size, 0x0002u,
-                                             &out_layout->dismiss_credits)) {
+                                             &out_layout->quit_game)) {
+        memset(out_layout, 0, sizeof(*out_layout));
+        goto done;
+    }
+    /* The Macintosh title table has the authenticated Credits and Quit
+     * rectangles, but not the common PC 0x0002 dismissal rectangle.  The
+     * Macintosh event table closes credits on Return/Enter instead; preserve
+     * that source boundary instead of borrowing a PC coordinate. */
+    if (!dm2_v1_boot_startup_menu_event_rect(raw, raw_size, 0x0002u,
+                                             &out_layout->dismiss_credits) &&
+        profile->platform != DM2_PLATFORM_MAC_EN) {
         memset(out_layout, 0, sizeof(*out_layout));
         goto done;
     }

@@ -2590,8 +2590,9 @@ int dm2_v1_boot_startup_menu_pointer_layout(
     DM2_V1_BootProfile *profile,
     DM2_V1_StartupMenuPointerLayout *out_layout);
 
-/* Source rectangle ids 0x019b (credits), 0x01b2 (quit) and 0x0002
- * (credits dismissal) from SHOW_MENU_SCREEN's installed RAW4 table. */
+/* Source rectangle ids 0x019b (credits), 0x01b2 (quit) and, on non-Mac
+ * profiles, 0x0002 (credits dismissal) from SHOW_MENU_SCREEN's installed
+ * RAW4 table. Mac closes credits through its Return/Enter event instead. */
 int dm2_v1_boot_startup_menu_aux_pointer_layout(
     DM2_V1_BootProfile *profile,
     DM2_V1_StartupMenuAuxPointerLayout *out_layout);
