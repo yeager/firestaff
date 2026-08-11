@@ -1383,6 +1383,7 @@ int csb_v1_fmtowns_game_user_save_open(
     uint16_t expected_platform;
     int header_ok;
     uint32_t actual_size;
+    CSB_V1_FmtownsGameHandoffReceipt tail_receipt;
 
     if (!out_receipt) return 0;
     memset(out_receipt, 0, sizeof(*out_receipt));
@@ -1454,6 +1455,28 @@ int csb_v1_fmtowns_game_user_save_open(
     if (offset > actual_size ||
         CSB_V1_FMTOWNS_EXTERNAL_PORTRAIT_BYTES *
             CSB_V1_FMTOWNS_EXTERNAL_PORTRAIT_COUNT > actual_size - offset) return 0;
+    /* F0435/F7063 consumes the native dungeon tail after the four portrait
+     * rasters. A valid header and five checksummed parts are not enough to
+     * admit a slot: the tail must be complete and the saved pose must belong
+     * to one of its original maps. C12/C13 layouts are not interchangeable. */
+    memset(&tail_receipt, 0, sizeof(tail_receipt));
+    tail_receipt.valid = 1;
+    tail_receipt.startup_mini_verified = 1;
+    tail_receipt.startup_mini_size = actual_size;
+    tail_receipt.startup_mini_fnv1a = out_receipt->source_fnv1a;
+    tail_receipt.startup_mini_verified_save_body_offset = offset;
+    tail_receipt.startup_mini_party_map_x = (int16_t)csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_PARTY_MAP_X_OFFSET);
+    tail_receipt.startup_mini_party_map_y = (int16_t)csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_PARTY_MAP_Y_OFFSET);
+    tail_receipt.startup_mini_party_direction = (int16_t)csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_PARTY_DIRECTION_OFFSET);
+    tail_receipt.startup_mini_party_map_index = (int16_t)csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_PARTY_MAP_INDEX_OFFSET);
+    snprintf(tail_receipt.startup_mini_path,
+             sizeof(tail_receipt.startup_mini_path), "%s", save_path);
+    if (!csb_v1_fmtowns_game_startup_mini_dungeon_tail_open(&tail_receipt))
+        return 0;
     out_receipt->valid = 1;
     out_receipt->language = game_receipt->language;
     out_receipt->variant_id = game_receipt->variant_id;
@@ -1485,11 +1508,12 @@ int csb_v1_fmtowns_game_user_save_open(
     out_receipt->party_map_index = (int16_t)csb_v1_fmtowns_game_read_le16(
         global_data + CSB_V1_FMTOWNS_GLOBAL_PARTY_MAP_INDEX_OFFSET);
     out_receipt->portraits_offset = offset;
-    out_receipt->dungeon_tail_offset = 0u;
-    out_receipt->dungeon_tail_size = 0u;
-    out_receipt->dungeon_tail_checksum = 0u;
-    out_receipt->dungeon_bytes = profile->fmtowns_dungeon_bytes;
-    out_receipt->dungeon_bytes_size = profile->fmtowns_dungeon_size;
+    out_receipt->dungeon_tail_offset =
+        tail_receipt.startup_mini_dungeon_tail_offset;
+    out_receipt->dungeon_tail_size =
+        tail_receipt.startup_mini_dungeon_tail_size;
+    out_receipt->dungeon_tail_checksum =
+        tail_receipt.startup_mini_dungeon_tail_checksum;
     snprintf(out_receipt->source_path, sizeof(out_receipt->source_path), "%s", save_path);
     snprintf(out_receipt->dungeon_path, sizeof(out_receipt->dungeon_path), "%s",
              profile->dungeon_path);
@@ -1568,7 +1592,11 @@ int csb_v1_fmtowns_game_load_user_save_state(
     CSB_V1_FmtownsGameHandoffReceipt compat;
 
     if (!receipt || !out_state || !receipt->valid || !receipt->source_path[0] ||
-        receipt->source_size == 0u || receipt->portraits_offset == 0u) return 0;
+        receipt->source_size == 0u || receipt->portraits_offset == 0u ||
+        receipt->dungeon_tail_size == 0u ||
+        receipt->dungeon_tail_offset != receipt->portraits_offset +
+            CSB_V1_FMTOWNS_EXTERNAL_PORTRAIT_BYTES *
+                CSB_V1_FMTOWNS_EXTERNAL_PORTRAIT_COUNT) return 0;
     memset(&compat, 0, sizeof(compat));
     compat.valid = 1;
     compat.language = receipt->language;
@@ -1596,11 +1624,13 @@ int csb_v1_fmtowns_game_load_user_save_state(
     compat.startup_mini_party_direction = receipt->party_direction;
     compat.startup_mini_party_map_index = receipt->party_map_index;
     compat.startup_mini_verified_save_body_offset = receipt->portraits_offset;
-    compat.startup_dungeon_bytes = receipt->dungeon_bytes;
-    compat.startup_dungeon_bytes_size = receipt->dungeon_bytes_size;
-    snprintf(compat.startup_dungeon_path, sizeof(compat.startup_dungeon_path),
-             "%s", receipt->dungeon_path);
-    /* F0435 reopens the selected CD DUNGEON.DAT after reading CSBGAME.DAT. */
+    compat.startup_mini_dungeon_tail_verified = 1;
+    compat.startup_mini_dungeon_tail_offset = receipt->dungeon_tail_offset;
+    compat.startup_mini_dungeon_tail_size = receipt->dungeon_tail_size;
+    compat.startup_mini_dungeon_tail_checksum = receipt->dungeon_tail_checksum;
+    /* F0435 keeps the accepted save file open while F0434 consumes its
+     * appended dungeon. Reuse the same checksum-checked transfer, not a
+     * MINI.DAT or host snapshot substitution. */
     return csb_v1_fmtowns_game_load_startup_state(&compat, out_state);
 }
 
