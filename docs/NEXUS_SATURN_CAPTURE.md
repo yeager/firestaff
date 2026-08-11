@@ -161,6 +161,11 @@ som koefficienter. Detta är ett transform-/tile-expansionssteg efter asset-
 dekodningen. Det får inte ersättas med en host-side PRS3-blit utan samma
 input-, koefficient- och CLUT-bevis.
 
+Koefficientkvittot från en autentisk körning visade initialt `r10=0x04bc` och
+`r9=0x0a70`. Därefter uppdaterades literalpoolen med signerade 16-bitarsvärden
+från SH-2-kedjan. Spåret är därför en del av samma-sessionens proveniens, men
+är inte i sig ett bevis på vilken meny-, HUD- eller viewport-asset som valdes.
+
 ### Verifierad extern körning 2026-08-11
 
 En autentisk engelskspråkig data-track-körning gjordes på extern disk med den
