@@ -19,7 +19,8 @@ if [[ ! -e "$data_root" ]]; then
 fi
 
 log="$(mktemp -t firestaff-dm1-macos-boot.XXXXXX)"
-trap 'rm -f "$log"' EXIT
+small_log="$(mktemp -t firestaff-dm1-macos-small-window.XXXXXX)"
+trap 'rm -f "$log" "$small_log"' EXIT
 
 set +e
 SDL_VIDEODRIVER=dummy FIRESTAFF_DATA="$data_root" "$binary" \
@@ -53,6 +54,26 @@ for field in \
   if [[ "$receipt" != *"$field"* ]]; then
     echo "$receipt"
     echo "FAIL: DM1 macOS receipt is missing $field" >&2
+    exit 1
+  fi
+done
+
+set +e
+SDL_VIDEODRIVER=dummy FIRESTAFF_DATA="$data_root" "$binary" \
+  --game dm1 --platform pc --duration 0 --width 640 --height 400 \
+  --boot-probe >"$small_log" 2>&1
+small_status=$?
+set -e
+if [[ "$small_status" != 0 ]]; then
+  cat "$small_log"
+  echo "FAIL: DM1 macOS small-window probe exited with status $small_status" >&2
+  exit "$small_status"
+fi
+small_receipt="$(grep 'FIRESTAFF BOOT PROBE READY:' "$small_log" | tail -n 1 || true)"
+for field in 'window=640x400' 'windowMode=0'; do
+  if [[ "$small_receipt" != *"$field"* ]]; then
+    echo "$small_receipt"
+    echo "FAIL: DM1 macOS small-window receipt is missing $field" >&2
     exit 1
   fi
 done
