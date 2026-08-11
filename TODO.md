@@ -3143,9 +3143,13 @@
   handoff in M11; its development/test cache cannot inherit a stale archive
   CUE/IMG audio owner. That cache copies and verifies the language-owned
   `CDATA/MINI.DAT` or `CJDATA/MINI.DAT` body alongside flat `GRAPHICS.DAT`
-  and `DUNGEON.DAT`; it cannot borrow a prior cache's bootstrap save. Remaining
-  parity work is the original C06 file-picker transaction and an internally
-  consistent F31 user-save corpus, not a fallback or synthetic save path.
+  and `DUNGEON.DAT`; it cannot borrow a prior cache's bootstrap save. The F31E
+  C06 file-picker, first/repeated native GAME save, GAME load and `.BAK`
+  recovery are now covered by real-media regressions. Remaining parity work is
+  F31J's EGB Shift-JIS text consumer, C06's separate Dungeon Master-versus-CSB
+  destination selection, Make New Adventure's F7086/F7090 source/destination
+  object transaction, and broader user-save corpus coverage—not a fallback or
+  synthetic save path.
 
 - **NEXUS-SFX-EVENT-DISPATCH-CAPTURE:** Host sound-request names are now
   2026-08-06 follow-up: the M11 Light/Torch/Darkness bridge now checks the

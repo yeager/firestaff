@@ -283,21 +283,24 @@ populated dungeon states.
   reopen/write the same native slot. `MINI.DAT` remains the only retail
   bootstrap path, and no synthetic save is used.
 
-- **FM-TOWNS-C06-SAVE-001 — selected portrait save and first GAME save are bound.**
+- **FM-TOWNS-C06-SAVE-001 — selected portrait save and F31E GAME save/load are bound.**
   `CEDT001.C:F7001` now opens its source `GAME` / `PORTRAIT` / `CANCEL`
   dialog. The authenticated UTILE/UTILJ images retain the exact native
   `2:\#CHAMP_NAME#.CMP` mapping as a source receipt; `F7000` writes only the
   selected champion through that mapping to `.firestaff/portraits` on
   macOS/Linux and `INSTALLDIR\\portraits` on Windows; it never rewrites the
   scanned CD `PORTRAIT/*.CMP` catalogue. C06 `NEW DISK` now reopens that same
-  medium through the native CMP admission path. `GAME` now recreates
+  medium through the native CMP admission path. For F31E CSB, `GAME` now recreates
   `CEDT001.C:F7001` choice 1 / `CEDTINC8.C:F7052`: it starts from the selected
   verified `MINI.DAT` state in an isolated runtime, copies C06's editor-owned
   champion records and four raw planar portrait blocks, and atomically publishes
   the first user-owned M746 `CSBGAME.DAT` only after the native F0435 reader can
   admit it. It never serializes a separately active C03 session. A later C06
   save reopens the authenticated slot, writes the same editor-owned fields via
-  F0433/F7062, and retains the native `CSBGAME.BAK` rollback copy.
+  F0433/F7062, and retains the native `CSBGAME.BAK` rollback copy. F7004's
+  F31E `GAME` load reopens that same F0435/F7063-valid slot and restores the
+  party plus raw portraits; a damaged primary is recovered through the native
+  `.BAK` path. This does not claim an F31J C06 text/editor implementation.
 
 - **FM-TOWNS-C06-LOAD-001 — `F7002_ReadCMP` is now an authenticated import
   transaction.** Given an index returned by the admitted `PORTRAIT` catalogue,
