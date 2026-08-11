@@ -89,5 +89,30 @@ int main(void)
         }
     }
     puts("PASS: CSB Amiga selection admits verified native A31E");
+    {
+        int pc98 = M12_AssetStatus_FindVersionIndex("dm2", "pc98-ja-demo");
+        int selected;
+        memset(&status, 0, sizeof(status));
+        if (pc98 < 0) {
+            fprintf(stderr, "FAIL: missing DM2 PC-9801 catalogue identity\n");
+            return 1;
+        }
+        /* Recognition is retained for preservation diagnostics, but matched
+         * PC-9801 media must never become a launch candidate. */
+        status.versions[2][pc98].matched = 1;
+        selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+            &status, "dm2", M12_ARCH_PC98);
+        if (selected >= 0) {
+            fprintf(stderr, "FAIL: matched PC-9801 media became launchable\n");
+            return 1;
+        }
+        selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+            &status, "dm2", M12_ARCH_AUTO);
+        if (selected >= 0) {
+            fprintf(stderr, "FAIL: AUTO selected unsupported PC-9801 media\n");
+            return 1;
+        }
+    }
+    puts("PASS: matched PC-9801 media remains non-launchable");
     return 0;
 }
