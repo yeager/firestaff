@@ -414,10 +414,15 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--width") == 0 && i + 1 < argc) {
             opts.windowWidth = atoi(argv[++i]);
+            /* An explicit size describes a windowed presentation.  The
+             * launcher may still be maximized by the saved default, but a
+             * requested small/large Mac window must not be silently lost. */
+            opts.windowModeOverride = M11_WINDOW_MODE_WINDOWED;
             continue;
         }
         if (strcmp(a, "--height") == 0 && i + 1 < argc) {
             opts.windowHeight = atoi(argv[++i]);
+            opts.windowModeOverride = M11_WINDOW_MODE_WINDOWED;
             continue;
         }
         if (strcmp(a, "--script") == 0 && i + 1 < argc) {
@@ -627,6 +632,10 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--fullscreen") == 0) {
             opts.windowModeOverride = M11_WINDOW_MODE_FULLSCREEN;
+            continue;
+        }
+        if (strcmp(a, "--windowed") == 0) {
+            opts.windowModeOverride = M11_WINDOW_MODE_WINDOWED;
             continue;
         }
         if (strcmp(a, "--no-vsync") == 0) {

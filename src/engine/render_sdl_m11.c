@@ -1050,7 +1050,7 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
         "Firestaff",
         windowWidth,
         windowHeight,
-        SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+        SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
 #else
     g_state.window = SDL_CreateWindow(
         "Firestaff",
@@ -1058,7 +1058,7 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
         SDL_WINDOWPOS_CENTERED,
         windowWidth,
         windowHeight,
-        SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
+        SDL_WINDOW_RESIZABLE);
 #endif
 
     if (!g_state.window) {
@@ -1167,7 +1167,11 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
     g_state.displayAspectMode = M11_DISPLAY_ASPECT_CONTENT; /* content-native aspect */
     g_state.presentationFillWindow = 0;
     g_state.paletteLevel = 0;
-    g_state.windowMode = M11_WINDOW_MODE_MAXIMIZED;
+    /* The startup menu applies the saved presentation mode after the window
+     * exists.  Starting windowed is essential for explicit --width/--height
+     * requests; otherwise SDL's maximized flag discards the requested Mac
+     * window size before the menu can apply its override. */
+    g_state.windowMode = M11_WINDOW_MODE_WINDOWED;
     g_state.integerScaling = 0; /* non-integer scaling for full-window FIT */
     g_state.scaleFilter = M11_SCALE_FILTER_NEAREST;
     g_state.vsync = M11_VSYNC_ON;

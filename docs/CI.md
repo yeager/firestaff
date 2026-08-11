@@ -22,6 +22,12 @@ the authenticated corpus under `FIRESTAFF_DM1_MAC_DATA`, `FIRESTAFF_DATA`, or
 `~/.firestaff/data`. It is skip-safe when no licensed data is installed and
 does not extract or rewrite original files.
 
+For a manual macOS window-size check, pass `--width` and `--height`. Explicit
+dimensions select windowed mode and are reported by the boot-probe receipt as
+`window=<width>x<height> windowMode=0`; `--fullscreen` remains an explicit
+override. This covers both small and large native macOS host windows without
+treating macOS as an unverified historical DM1 source port.
+
 The workflow uses a concurrency group for `main` and cancels an older run when
 a newer commit arrives. That is expected: always inspect the newest run for
 the current `main` SHA before treating a cancelled run as a failure.
