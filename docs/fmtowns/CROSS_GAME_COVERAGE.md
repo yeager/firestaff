@@ -135,10 +135,11 @@ Every module below is source-locked with a real-data round-trip test:
 - **CSB FM Towns**: The authenticated CHTWE/CHTWJ, SWITCHTW, MINI.DAT,
   portrait, dungeon-tail, utility, and source HUD routes are wired. The
   real English and Japanese `MINI.DAT` files resume through M11 into the
-  saved map-4 state without replaying the title. C06 `SAVE CHAMPIONS` now
-  writes only existing, authenticated `.CMP` records from the real
-  `PORTRAIT` catalogue: the native header is preserved and only the
-  receipt-bound planar payload changes. `F7002_ReadCMP` also imports a
+  saved map-4 state without replaying the title. C06 `SAVE CHAMPIONS` opens
+  the source `GAME` / `PORTRAIT` / `CANCEL` dialog; its selected-portrait
+  route preserves an authenticated CMP header and writes to the separate
+  `.firestaff/portraits` medium (or `INSTALLDIR\\portraits` on Windows), not
+  the read-only CD `PORTRAIT` catalogue. `F7002_ReadCMP` also imports a
   revalidated selected catalogue entry into the selected party slot, copying
   only its source name/title and planar payload. The catalog-bound selector
   preserves the authenticated source order, provides bounded previous/next

@@ -524,16 +524,26 @@ int csb_v1_fmtowns_utility_portrait_selector_load(
     CSB_V1_PartyState *party, uint16_t selected_champion,
     CSB_V1_FmtownsStartupPortraitReceipt *portraits);
 
-/* F7001_SaveChampions / CEDT001.C: write only already-admitted .CMP
- * records. Every party champion must match an existing catalog entry by its
- * source name; the function never invents a filename or creates a portrait
- * record. It preserves the format/identity portion of the 44-byte header,
- * then writes C06's live 8-byte name and 20-byte title fields alongside the
- * receipt-bound 464-byte planar payload. */
+/* Legacy internal serializer for existing admitted CMP records.  F7001 does
+ * not dispatch this batch operation: its reachable PORTRAIT choice is
+ * csb_v1_fmtowns_utility_save_selected_portrait() below. */
 int csb_v1_fmtowns_utility_save_portraits(
     const CSB_V1_FmtownsUtilityPortraitCatalog *catalog,
     const CSB_V1_PartyState *party,
     const CSB_V1_FmtownsStartupPortraitReceipt *portraits);
+
+/* F7000_SavePortrait / CEDTDATA.C M747_FILE_ID_SAVE_CMP writes precisely
+ * one selected champion to the dynamic portrait medium, named
+ * `2:\\#CHAMP_NAME#.CMP` by the original file table.  Firestaff maps that
+ * medium to ~/.firestaff/portraits on macOS/Linux and INSTALLDIR\\portraits
+ * on Windows.  The destination is created on demand; source CD/catalogue
+ * files are never overwritten. */
+int csb_v1_fmtowns_utility_save_selected_portrait(
+    const CSB_V1_FmtownsUtilitySaveMappingReceipt *mapping,
+    const CSB_V1_FmtownsUtilityPortraitCatalog *catalog,
+    const CSB_V1_PartyState *party,
+    const CSB_V1_FmtownsStartupPortraitReceipt *portraits,
+    uint16_t selected_champion, char *out_path, size_t out_path_size);
 
 /* F7002_ReadCMP / CEDT001.C: import one already-selected, authenticated
  * .CMP record into the currently selected party slot.  The selector itself

@@ -17,6 +17,7 @@
 #include "csb_v1_fmtowns_utility_render.h"
 #include "dm1_v1_champion_status_layout_pc34_compat.h"
 #include "dm1_v1_input_command_queue_pc34_compat.h"
+#include "fs_portable_compat.h"
 #include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
@@ -951,6 +952,55 @@ int main(void)
                                      CSB_FMTOWNS_PORTRAIT_DATA_SIZE) == 0,
                           "F7001 preserves CMP identity fields and writes live title plus planar payload");
                 }
+                /* F7000 writes the selected champion to its dynamic drive
+                 * rather than overwriting an admitted CD catalogue entry.
+                 * Point HOME at this already-cleaned test root so the real
+                 * POSIX mapping is exercised without touching user data. */
+                {
+                    char saved_path[FSP_PATH_MAX];
+                    char saved_dir[FSP_PATH_MAX];
+                    char firestaff_dir[FSP_PATH_MAX];
+                    char previous_home[FSP_PATH_MAX];
+                    const char *home = getenv("HOME");
+                    uint8_t saved_record[CSB_FMTOWNS_PORTRAIT_FILE_SIZE];
+                    FILE *saved_file;
+                    int saved_read;
+                    int restore_home;
+                    snprintf(previous_home, sizeof(previous_home), "%s",
+                             home ? home : "");
+                    FSP_SetEnv("HOME", temporary_dir, 1);
+                    CHECK(csb_v1_fmtowns_utility_save_selected_portrait(
+                              &utility_save_mapping,
+                              &copied_catalog, &copied_party, &copied_portraits,
+                              0u, saved_path, sizeof(saved_path)),
+                          "F7000 writes the selected CMP to the mapped portrait medium");
+                    saved_file = fopen(saved_path, "rb");
+                    saved_read = saved_file &&
+                        fread(saved_record, 1u, sizeof(saved_record), saved_file) ==
+                            sizeof(saved_record);
+                    if (saved_file) fclose(saved_file);
+                    CHECK(saved_read &&
+                              csb_v1_fmtowns_portrait_probe(saved_record,
+                                                            sizeof(saved_record)) &&
+                              memcmp(saved_record, before, 16u) == 0 &&
+                              memcmp(saved_record + 24u,
+                                     copied_party.Champions[0].Title,
+                                     strlen(copied_party.Champions[0].Title)) == 0 &&
+                              memcmp(saved_record + payload_offset,
+                                     copied_portraits.source_bytes[0],
+                                     CSB_FMTOWNS_PORTRAIT_DATA_SIZE) == 0,
+                          "F7000 preserves source header and writes live selected CMP fields");
+                    restore_home = previous_home[0] != '\0'
+                        ? FSP_SetEnv("HOME", previous_home, 1)
+                        : FSP_UnsetEnv("HOME");
+                    CHECK(restore_home == 0, "F7000 test restores HOME");
+                    if (FSP_ParentDir(saved_dir, sizeof(saved_dir), saved_path) &&
+                        FSP_ParentDir(firestaff_dir, sizeof(firestaff_dir), saved_dir)) {
+                        remove(saved_path);
+                        rmdir(saved_dir);
+                        rmdir(firestaff_dir);
+                    }
+                }
             }
         }
         for (entry_index = 0u;
@@ -1101,19 +1151,23 @@ int main(void)
         CHECK(memcmp(framebuffer, view.csbFmtownsSwitchPixels,
                      sizeof(framebuffer)) != 0 && framebuffer[9u * 320u + 6u] == 9u,
               "F31E Utility presents its C06-owned source raster, not SWITCHTW");
-        /* F7001 presents its own three-choice save dialog before F7000 can
-         * resolve the selected portrait's receipt-bound
-         * `2:\\#CHAMP_NAME#.CMP` destination. The mapping is now retained by
-         * the live M11 C06 owner, but the modal and its write branches remain
-         * fail-closed rather than reusing Firestaff's former batch-rewrite
-         * shortcut. */
+        /* F7001 presents its own GAME / PORTRAIT / CANCEL dialog.  Its
+         * selected-portrait branch resolves the dynamic 2:\\#CHAMP_NAME#
+         * medium separately from the scanned read-only CD catalogue. The
+         * M747 mapping itself is retained from the authentic F31 image. */
         result = M11_GameView_HandlePointerButton(
             &view, 150, 190, DM1_V1_MOUSE_MASK_LEFT_PC34);
-        CHECK(result == M11_GAME_INPUT_IGNORED &&
+        CHECK(result == M11_GAME_INPUT_REDRAW &&
                   view.csbFmtownsUtilityBound &&
                   view.csbFmtownsUtilitySaveMappingReceipt.valid &&
+                  view.csbFmtownsUtilitySaveDialogActive &&
                   !view.csbFmtownsUtilityFilePickerActive,
-              "F31E C06 SAVE CHAMPIONS keeps its bound mapping but stays closed until the native modal is bound");
+              "F31E C06 SAVE CHAMPIONS opens its source GAME/PORTRAIT/CANCEL dialog");
+        result = M11_GameView_HandlePointerButton(
+            &view, 150, 132, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(result == M11_GAME_INPUT_REDRAW &&
+                  !view.csbFmtownsUtilitySaveDialogActive,
+              "F31E C06 save-dialog cancel restores the editor");
         result = M11_GameView_HandlePointerButton(
             &view, 50, 190, DM1_V1_MOUSE_MASK_LEFT_PC34);
         CHECK(result == M11_GAME_INPUT_REDRAW &&

@@ -95,6 +95,19 @@ int csb_v1_fmtowns_utility_render_initial(
     uint8_t *indexed_pixels, size_t pixel_capacity,
     CSB_V1_FmtownsUtilityRenderReceipt *out_receipt);
 
+/* CEDT001.C F7001's native three-choice save dialog.  The editor beneath
+ * it and its 5x6 font remain receipt-bound; the choices use CEDTDATA.C
+ * G2261 source hit rectangles: GAME, PORTRAIT, CANCEL. */
+int csb_v1_fmtowns_utility_render_save_dialog(
+    const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
+    const CSB_V1_FmtownsUtilityMenuReceipt *menu,
+    const CSB_V1_FmtownsUtilityFontReceipt *font,
+    const CSB_V1_PartyState *party,
+    const CSB_V1_FmtownsStartupPortraitReceipt *portraits,
+    uint16_t selected_champion_index, uint8_t selected_color_index,
+    uint8_t *indexed_pixels, size_t pixel_capacity,
+    CSB_V1_FmtownsUtilityRenderReceipt *out_receipt);
+
 #ifdef __cplusplus
 }
 #endif

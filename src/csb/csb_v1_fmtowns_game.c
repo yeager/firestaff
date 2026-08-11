@@ -3,6 +3,7 @@
 #include "redmcsb_f7061_save_header_pc34_compat.h"
 #include "redmcsb_f7062_save_header_pc34_compat.h"
 #include "redmcsb_f7055_saveutil_pc34_compat.h"
+#include "fs_portable_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -2660,9 +2661,9 @@ int csb_v1_fmtowns_utility_save_portraits(
         party->ChampionCount > (int)CSB_V1_FMTOWNS_STARTUP_PORTRAIT_COUNT)
         return 0;
 
-    /* F7001 writes the four selected records as one user operation. Resolve
-     * every destination before touching disk so an unrecognised champion
-     * cannot cause a partial write or a generated fallback filename. */
+    /* Legacy test-only helper: resolve existing media records before touching
+     * disk.  The live F7001 route uses F7000's selected dynamic destination
+     * and must never call this batch rewrite. */
     for (champion_index = 0u;
          champion_index < (unsigned int)party->ChampionCount;
          ++champion_index) {
@@ -2742,6 +2743,130 @@ int csb_v1_fmtowns_utility_save_portraits(
             remove(temporary_path);
             return 0;
         }
+    }
+    return 1;
+}
+
+static int csb_v1_fmtowns_utility_portrait_medium_path(
+    char *out, size_t out_size)
+{
+    char root[FSP_PATH_MAX];
+
+    if (!out || out_size == 0u) return 0;
+#if defined(_WIN32)
+    {
+        DWORD length = GetModuleFileNameA(NULL, root, (DWORD)sizeof(root));
+        if (length == 0u || length >= sizeof(root) ||
+            !FSP_ParentDir(root, sizeof(root), root)) return 0;
+        return FSP_JoinPath(out, out_size, root, "portraits");
+    }
+#else
+    /* The default originals location ends in ~/.firestaff/data.  Its parent
+     * is deliberately the user-selected Firestaff root, not a game-media
+     * directory, because F7000's drive 2: is a writable portrait disk. */
+    if (!FSP_GetDefaultOriginalsDir(root, sizeof(root)) ||
+        !FSP_ParentDir(root, sizeof(root), root)) return 0;
+    return FSP_JoinPath(out, out_size, root, "portraits");
+#endif
+}
+
+int csb_v1_fmtowns_utility_save_selected_portrait(
+    const CSB_V1_FmtownsUtilitySaveMappingReceipt *mapping,
+    const CSB_V1_FmtownsUtilityPortraitCatalog *catalog,
+    const CSB_V1_PartyState *party,
+    const CSB_V1_FmtownsStartupPortraitReceipt *portraits,
+    uint16_t selected_champion, char *out_path, size_t out_path_size)
+{
+    const CSB_V1_Champion *champion;
+    unsigned char record[CSB_FMTOWNS_PORTRAIT_FILE_SIZE];
+    char directory[FSP_PATH_MAX];
+    char filename[CSB_V1_MAX_NAME_LEN + 5u];
+    char destination[FSP_PATH_MAX];
+    char temporary[FSP_PATH_MAX];
+    size_t name_length = 0u;
+    size_t index;
+    const CSB_V1_FmtownsUtilityPortraitCatalogEntry *template_entry = NULL;
+    FILE *file;
+
+    if (out_path && out_path_size != 0u) out_path[0] = '\0';
+    if (!mapping || !mapping->valid ||
+        strcmp(mapping->template_bytes, "2:\\#CHAMP_NAME#.CMP") != 0 ||
+        !catalog || !catalog->valid || !party || !portraits || !portraits->valid ||
+        selected_champion >= (uint16_t)party->ChampionCount ||
+        selected_champion >= CSB_V1_FMTOWNS_STARTUP_PORTRAIT_COUNT ||
+        !csb_v1_fmtowns_utility_portrait_medium_path(
+            directory, sizeof(directory)) ||
+        !FSP_CreateDirectoryRecursive(directory)) return 0;
+
+    champion = &party->Champions[selected_champion];
+    /* G2246_CMPData starts from a real CMP selected by C06.  Preserve that
+     * source record's opaque 44-byte identity header instead of inventing
+     * platform/dungeon words for a new host file. */
+    for (index = 0u; index < catalog->entry_count; ++index) {
+        const CSB_V1_FmtownsUtilityPortraitCatalogEntry *entry =
+            &catalog->entries[index];
+        if (entry->portrait.valid &&
+            strncmp(entry->portrait.name, champion->Name,
+                    CSB_V1_MAX_NAME_LEN) == 0) {
+            template_entry = entry;
+            break;
+        }
+    }
+    if (!template_entry) return 0;
+    /* F7000 admits only A-Z from the first eight CMP name bytes and falls
+     * back to PORTRAIT when none survive.  Do not use a host filename or
+     * preserve punctuation that the original file operation discards. */
+    for (index = 0u; index < CSB_V1_MAX_NAME_LEN &&
+         champion->Name[index] != '\0'; ++index) {
+        unsigned char ch = (unsigned char)champion->Name[index];
+        if (ch >= 'A' && ch <= 'Z') filename[name_length++] = (char)ch;
+    }
+    if (name_length == 0u) {
+        memcpy(filename, "PORTRAIT", 8u);
+        name_length = 8u;
+    }
+    memcpy(filename + name_length, ".CMP", 5u);
+    if (!FSP_JoinPath(destination, sizeof(destination), directory, filename) ||
+        snprintf(temporary, sizeof(temporary), "%s.firestaff-tmp",
+                 destination) < 0 || strlen(temporary) >= sizeof(temporary))
+        return 0;
+
+    if (template_entry->source_bytes) {
+        if (template_entry->source_bytes_size != sizeof(record)) return 0;
+        memcpy(record, template_entry->source_bytes, sizeof(record));
+    } else if (!csb_v1_fmtowns_game_read_span(template_entry->source_path, 0u,
+                                               record, sizeof(record)) ||
+               !csb_v1_fmtowns_portrait_probe(record, sizeof(record))) {
+        return 0;
+    }
+    /* F7000 writes 508 bytes after replacing its live name, title and planar
+     * portrait payload.  The copied source header stays byte-exact. */
+    memcpy(record + 16u, champion->Name, CSB_FMTOWNS_PORTRAIT_NAME_LEN);
+    memcpy(record + 24u, champion->Title, CSB_FMTOWNS_PORTRAIT_TITLE_LEN);
+    memcpy(record + CSB_FMTOWNS_PORTRAIT_HEADER_SIZE,
+           portraits->source_bytes[selected_champion],
+           CSB_FMTOWNS_PORTRAIT_DATA_SIZE);
+    if (!csb_v1_fmtowns_portrait_probe(record, sizeof(record))) return 0;
+
+    file = fopen(temporary, "wb");
+    if (!file) return 0;
+    if (fwrite(record, 1u, sizeof(record), file) != sizeof(record) ||
+        fflush(file) != 0) {
+        fclose(file);
+        remove(temporary);
+        return 0;
+    }
+    if (fclose(file) != 0) {
+        remove(temporary);
+        return 0;
+    }
+    if (rename(temporary, destination) != 0) {
+        remove(temporary);
+        return 0;
+    }
+    if (out_path && out_path_size != 0u) {
+        if (snprintf(out_path, out_path_size, "%s", destination) < 0 ||
+            strlen(destination) >= out_path_size) return 0;
     }
     return 1;
 }

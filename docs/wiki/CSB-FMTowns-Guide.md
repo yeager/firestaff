@@ -141,9 +141,12 @@ pixel drawing, connected-area fill, Revert and Undo. Each edit remains in
 the admitted `MINI.DAT` portrait bytes. The undo image is one source-format
 copy, and neither editing nor reverting writes a host or user save. The
 source-owned portrait transactions also cover revalidated `F7002_ReadCMP`
-import after a catalogue selection and existing-record `SAVE CHAMPIONS`
-replacement: F7001 preserves each admitted `.CMP` header and replaces only
-its planar payload.
+import after a catalogue selection and the source `SAVE CHAMPIONS` dialog.
+F7000's `PORTRAIT` choice preserves an admitted `.CMP` header, then writes
+the selected champion's live name, title and planar payload to the separate
+portrait medium: `~/.firestaff/portraits` on macOS/Linux or
+`INSTALLDIR\\portraits` on Windows. The scanned CD catalogue stays read-only;
+F7001's whole-game branch is still deliberately unavailable.
 
 It does not authorize the rest of Utility. File-picker rendering and input
 (`CEDT008`/`CEDT013`) and the full `F7004_LoadChampions` command remain

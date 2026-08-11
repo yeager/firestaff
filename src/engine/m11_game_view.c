@@ -8728,6 +8728,7 @@ static int m11_csb_enter_fmtowns_utility(
     state->csbFmtownsUtilityUndoModified = 0;
     state->csbFmtownsUtilityUndoAvailable = 0;
     state->csbFmtownsUtilityFilePickerActive = 0;
+    state->csbFmtownsUtilitySaveDialogActive = 0;
     memset(&rendered, 0, sizeof(rendered));
     if (!csb_v1_fmtowns_utility_handoff_open(
             profile, language, &state->csbFmtownsUtilityHandoffReceipt) ||
@@ -8786,6 +8787,18 @@ static int m11_csb_redraw_fmtowns_utility(M11_GameViewState *state)
             &state->csbFmtownsUtilityHandoffReceipt,
             &state->csbFmtownsUtilityFontReceipt,
             &state->csbFmtownsUtilityFilePicker,
+            state->csbFmtownsUtilityPixels,
+            sizeof(state->csbFmtownsUtilityPixels), &rendered);
+    }
+    if (state->csbFmtownsUtilitySaveDialogActive) {
+        return csb_v1_fmtowns_utility_render_save_dialog(
+            &state->csbFmtownsUtilityHandoffReceipt,
+            &state->csbFmtownsUtilityMenuReceipt,
+            &state->csbFmtownsUtilityFontReceipt,
+            &state->csbFmtownsUtilityParty,
+            &state->csbFmtownsUtilityPortraitReceipt,
+            state->csbFmtownsUtilitySelectedChampion,
+            state->csbFmtownsUtilitySelectedColor,
             state->csbFmtownsUtilityPixels,
             sizeof(state->csbFmtownsUtilityPixels), &rendered);
     }
@@ -9117,6 +9130,7 @@ static int m11_csb_bind_fmtowns_switch(M11_GameViewState *state,
            sizeof(state->csbFmtownsUtilityPortraitModified));
     state->csbFmtownsUtilityUndoModified = 0;
     state->csbFmtownsUtilityUndoAvailable = 0;
+    state->csbFmtownsUtilitySaveDialogActive = 0;
     m11_csb_release_fmtowns_switch(state);
     if (snprintf(path, sizeof(path), "%s/SWITCHTW.EXP", profile->asset_root) < 0 ||
         strlen(path) >= sizeof(path)) return 0;
@@ -9289,6 +9303,43 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
                         DM1_V1_MOUSE_MASK_RIGHT_PC34)) == 0 ||
         !state->csbBootProfile) return M11_GAME_INPUT_REDRAW;
     memset(&hit, 0, sizeof(hit));
+    if (state->csbFmtownsUtilitySaveDialogActive) {
+        if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0)
+            return M11_GAME_INPUT_REDRAW;
+        if (x >= 80 && x <= 148 && y >= 108 && y <= 116) {
+            /* F7001 choice 1 calls F7052_SaveGame.  Its F31 save medium and
+             * full C05 record are separately owned, so do not confuse it
+             * with the portrait-disk operation just because both choices
+             * share this native dialog. */
+            state->csbFmtownsUtilitySaveDialogActive = 0;
+            m11_set_status(state, "CSB FM TOWNS", "GAME SAVE UNAVAILABLE");
+        } else if (x >= 165 && x <= 237 && y >= 108 && y <= 116) {
+            char saved_path[FSP_PATH_MAX];
+            int saved = csb_v1_fmtowns_utility_save_selected_portrait(
+                &state->csbFmtownsUtilitySaveMappingReceipt,
+                &state->csbFmtownsUtilityPortraitCatalog,
+                &state->csbFmtownsUtilityParty,
+                &state->csbFmtownsUtilityPortraitReceipt,
+                state->csbFmtownsUtilitySelectedChampion,
+                saved_path, sizeof(saved_path));
+            state->csbFmtownsUtilitySaveDialogActive = 0;
+            if (!saved) {
+                m11_set_status(state, "CSB FM TOWNS", "CMP SAVE REJECTED");
+            } else {
+                uint16_t champion = state->csbFmtownsUtilitySelectedChampion;
+                memcpy(state->csbFmtownsUtilityOriginalPortraits[champion],
+                       state->csbFmtownsUtilityPortraitReceipt.source_bytes[champion],
+                       CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES);
+                state->csbFmtownsUtilityPortraitModified[champion] = 0u;
+                state->csbFmtownsUtilityUndoAvailable = 0;
+                m11_set_status(state, "CSB FM TOWNS", "CHAMPION SAVED");
+            }
+        } else if (x >= 123 && x <= 196 && y >= 128 && y <= 136) {
+            state->csbFmtownsUtilitySaveDialogActive = 0;
+        } else return M11_GAME_INPUT_REDRAW;
+        return m11_csb_redraw_fmtowns_utility(state)
+            ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+    }
     if (state->csbFmtownsUtilityFilePickerActive) {
         if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0)
             return M11_GAME_INPUT_REDRAW;
@@ -9395,15 +9446,12 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
         if (!m11_csb_fmtowns_utility_undo_portrait(state))
             return M11_GAME_INPUT_IGNORED;
     } else if (hit.action == CSB_V1_FMTOWNS_UTILITY_ACTION_SAVE_CHAMPIONS) {
-        /* F7001 does not batch-rewrite source-matched records. CEDT001.C
-         * first opens a three-choice dialog: save the whole game, save the
-         * selected champion through F7000's #CHAMP_NAME# file operation, or
-         * cancel. The latter depends on the F31 file-operation mapping and
-         * destination semantics, neither of which has been reconstructed.
-         * Do not substitute the old all-catalogue write helper: it created a
-         * non-source save route behind an authentic C06 button. */
-        m11_set_status(state, "CSB FM TOWNS", "C06 SAVE DIALOG UNAVAILABLE");
-        return M11_GAME_INPUT_IGNORED;
+        /* F7001's F31E dialogue, not a direct all-catalogue host write. */
+        state->csbFmtownsUtilitySaveDialogActive = 1;
+        if (!m11_csb_redraw_fmtowns_utility(state)) {
+            state->csbFmtownsUtilitySaveDialogActive = 0;
+            return M11_GAME_INPUT_IGNORED;
+        }
     } else if (hit.action == CSB_V1_FMTOWNS_UTILITY_ACTION_LOAD_CHAMPIONS) {
         if (!state->csbFmtownsUtilityPortraitCatalog.valid ||
             !csb_v1_fmtowns_utility_file_picker_open(

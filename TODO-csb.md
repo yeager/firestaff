@@ -267,18 +267,14 @@ populated dungeon states.
   unavailable for these files. `MINI.DAT` resume is the only positive save path
   currently covered, and no synthetic save is used.
 
-- **FM-TOWNS-C06-SAVE-001 — C06 `SAVE CHAMPIONS` remains fail-closed.**
-  Disassembly of `CEDT001.C` shows that F7001 first asks whether to save the
-  complete game or the selected champion, and F7000 then creates the latter
-  through F31's `#CHAMP_NAME#` file-operation mapping. It is not a batch
-  rewrite of source-matched `PORTRAIT/*.CMP` records. The authenticated
-  UTILE/UTILJ images now prove and expose the exact native
-  `2:\#CHAMP_NAME#.CMP` mapping as a source receipt for both languages. M11
-  still reports that the C06 save dialog is unavailable until F7001's
-  three-choice modal, selected-champion record construction, and whole-game
-  branch are wired. The internal record serializer preserves native identity
-  bytes and writes C06's name/title/payload fields, with a real F31-corpus
-  test, but it is deliberately not reachable from the product.
+- **FM-TOWNS-C06-SAVE-001 — selected portrait save is bound; full game save remains closed.**
+  `CEDT001.C:F7001` now opens its source `GAME` / `PORTRAIT` / `CANCEL`
+  dialog. The authenticated UTILE/UTILJ images retain the exact native
+  `2:\#CHAMP_NAME#.CMP` mapping as a source receipt; `F7000` writes only the
+  selected champion through that mapping to `.firestaff/portraits` on
+  macOS/Linux and `INSTALLDIR\\portraits` on Windows; it never rewrites the
+  scanned CD `PORTRAIT/*.CMP` catalogue. The `GAME` choice remains blocked
+  until the distinct F31 `F7052_SaveGame`/C05 transaction is recovered.
 
 - **FM-TOWNS-C06-LOAD-001 — `F7002_ReadCMP` is now an authenticated import
   transaction.** Given an index returned by the admitted `PORTRAIT` catalogue,
