@@ -1665,7 +1665,7 @@ int csb_v1_fmtowns_game_user_save_open(
              profile->dungeon_path);
     out_receipt->source_evidence =
         "ReDMCSB LOADSAVE.C F0435 lines 2700-2890; CEDTINC6.C F7057/F7061; "
-        "F31E F0435 opens CDATA/DUNGEON.DAT after the save parts.";
+        "F0434 continues on the same save-file handle with the F7063 dungeon tail.";
     return 1;
 }
 

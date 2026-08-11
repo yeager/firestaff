@@ -269,9 +269,11 @@ populated dungeon states.
   csb_v1_fmtowns_user_save_corpus regression supplies the licensed media plus
   those external candidate files, proves that F31E stays rejected, F31J
   materializes its authenticated state, and neither source file changes. The
-  direct M11 F0433 path
-  can update an already-admitted canonical `CSBGAME.DAT` slot and can make a
-  new canonical slot from the selected, hash-verified `MINI.DAT` bootstrap
+  direct M11 F0433 path now resumes the valid F31J slot before writing it,
+  verifies the source event-allocation envelope, preserves the language-owned
+  tail and reopens the replacement through F0435. A MINI.DAT session cannot
+  write across into that distinct F31J slot. It can also make a new canonical
+  slot from the selected, hash-verified `MINI.DAT` bootstrap
   through the recovered F7052 key/header sequence. The first-save transaction
   is staging-only until the completed F0435-valid slot is atomically published;
   it neither accepts these inconsistent corpus candidates nor invents a save

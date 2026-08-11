@@ -582,6 +582,37 @@ int main(void)
                   resumed_probe.partyY == user_save.party_map_y &&
                   resumed_probe.championCount == user_save.party_champion_count,
               "direct F31 resume enters CHTWE/CHTWJ GAMELOOP without title replay");
+        if (result) {
+            CSB_V1_BootProfile *resumed_profile =
+                (CSB_V1_BootProfile *)resumed_view.csbBootProfile;
+            uint32_t random_before = resumed_profile
+                ? resumed_profile->runtime.csbwin_random_seed : 0u;
+
+            CHECK(test_set_env("FIRESTAFF_QUICKSAVE_PATH", user_save_path),
+                  "F31 resumed session keeps its canonical save slot selected");
+            CHECK(resumed_profile && resumed_profile->runtime.party_state_valid &&
+                      resumed_profile->runtime.csbwin_random_seed_valid &&
+                      resumed_profile->runtime.dungeon_handle &&
+                      resumed_profile->runtime.active_group_state_count <=
+                          user_save.active_group_capacity &&
+                      resumed_profile->runtime.timeline_queue.maxEvents >= 0 &&
+                      resumed_profile->runtime.timeline_queue.maxEvents <=
+                          user_save.event_maximum_count,
+                  "F31 resumed runtime remains within its authenticated F0433 save envelope");
+            CHECK(M11_GameView_QuickSave(&resumed_view),
+                  "F31 resumed session writes its authenticated native CSBGAME.DAT slot");
+            CHECK(resumed_profile && resumed_profile->runtime.csbwin_random_seed_valid &&
+                      resumed_profile->runtime.csbwin_random_seed ==
+                          f31_advance_random_words(
+                              random_before, 16u + REDMCSB_F7062_RANDOM_WORDS),
+                  "F31 resumed F7052/F7062 path consumes source RNG words exactly once");
+            memset(&user_save, 0, sizeof(user_save));
+            CHECK(csb_v1_fmtowns_game_user_save_open(
+                      resumed_profile, &resumed_view.csbFmtownsGameHandoffReceipt,
+                      user_save_path, &user_save) && user_save.valid &&
+                      user_save.dungeon_tail_size > 0u,
+                  "F31 resumed writeback remains readable through the native F0435 reader");
+        }
         M11_GameView_Shutdown(&resumed_view);
         memset(&external_save_handoff, 0, sizeof(external_save_handoff));
         CHECK(csb_v1_fmtowns_game_user_save_handoff_open(
@@ -1713,23 +1744,11 @@ int main(void)
                                ? user_save_path : direct_handoff.startup_mini_path),
               "F31 resume test selects the authentic native save candidate");
         if (user_save_path && user_save_path[0]) {
-            CSB_V1_BootProfile *save_profile =
-                (CSB_V1_BootProfile *)view.csbBootProfile;
-            uint32_t random_before = save_profile
-                ? save_profile->runtime.csbwin_random_seed : 0u;
-            CHECK(M11_GameView_QuickSave(&view),
-                  "F31 live session writes the authenticated native CSBGAME.DAT slot");
-            CHECK(save_profile && save_profile->runtime.csbwin_random_seed_valid &&
-                      save_profile->runtime.csbwin_random_seed ==
-                          f31_advance_random_words(
-                              random_before, 16u + REDMCSB_F7062_RANDOM_WORDS),
-                  "F31 F7052 consumes 16 keys then F7062's 127 header words");
-            memset(&user_save, 0, sizeof(user_save));
-            CHECK(csb_v1_fmtowns_game_user_save_open(
-                      (const CSB_V1_BootProfile *)view.csbBootProfile,
-                      &direct_handoff, user_save_path, &user_save) &&
-                      user_save.valid && user_save.dungeon_tail_size > 0u,
-                  "F31 writeback remains readable through the native F0435 reader");
+            CHECK(!M11_GameView_QuickSave(&view) &&
+                      strcmp(view.lastAction, "SAVE") == 0 &&
+                      strcmp(view.lastOutcome,
+                             "FM TOWNS NATIVE SAVE FAILED") == 0,
+                  "F31 MINI.DAT session cannot overwrite a distinct resumed slot");
         } else {
             CHECK(!M11_GameView_QuickSave(&view) &&
                       strcmp(view.lastAction, "SAVE") == 0 &&
