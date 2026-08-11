@@ -90,29 +90,64 @@ int main(void)
     }
     puts("PASS: CSB Amiga selection admits verified native A31E");
     {
-        int pc98 = M12_AssetStatus_FindVersionIndex("dm2", "pc98-ja-demo");
-        int selected;
-        memset(&status, 0, sizeof(status));
-        if (pc98 < 0) {
-            fprintf(stderr, "FAIL: missing DM2 PC-9801 catalogue identity\n");
-            return 1;
+        static const char *const pc98_versions[] = {
+            "pc98-ja-demo", "pc9821-ja"
+        };
+        static const char *const game_ids[] = {
+            "dm1", "csb", "dm2", "nexus", "theron"
+        };
+        size_t version_index;
+        size_t game_index;
+
+        /* Recognition is retained for preservation diagnostics, but every
+         * registered PC-9801/PC-9821 route must remain non-launchable even
+         * when its own media fingerprint matched.  The same policy excludes
+         * X68000 for every game: no game is allowed to grow a selectable
+         * preservation-only platform route by catalogue accident. */
+        for (version_index = 0u;
+             version_index < sizeof(pc98_versions) / sizeof(pc98_versions[0]);
+             ++version_index) {
+            int pc98 = M12_AssetStatus_FindVersionIndex("dm2",
+                                                         pc98_versions[version_index]);
+            int selected;
+            memset(&status, 0, sizeof(status));
+            if (pc98 < 0) {
+                fprintf(stderr, "FAIL: missing DM2 PC-98 catalogue identity %s\n",
+                        pc98_versions[version_index]);
+                return 1;
+            }
+            status.versions[2][pc98].matched = 1;
+            selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+                &status, "dm2", M12_ARCH_PC98);
+            if (selected >= 0) {
+                fprintf(stderr,
+                        "FAIL: matched PC-98 media became launchable: %s\n",
+                        pc98_versions[version_index]);
+                return 1;
+            }
+            selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+                &status, "dm2", M12_ARCH_AUTO);
+            if (selected >= 0) {
+                fprintf(stderr,
+                        "FAIL: AUTO selected unsupported PC-98 media: %s\n",
+                        pc98_versions[version_index]);
+                return 1;
+            }
         }
-        /* Recognition is retained for preservation diagnostics, but matched
-         * PC-9801 media must never become a launch candidate. */
-        status.versions[2][pc98].matched = 1;
-        selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
-            &status, "dm2", M12_ARCH_PC98);
-        if (selected >= 0) {
-            fprintf(stderr, "FAIL: matched PC-9801 media became launchable\n");
-            return 1;
-        }
-        selected = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
-            &status, "dm2", M12_ARCH_AUTO);
-        if (selected >= 0) {
-            fprintf(stderr, "FAIL: AUTO selected unsupported PC-9801 media\n");
-            return 1;
+        for (game_index = 0u;
+             game_index < sizeof(game_ids) / sizeof(game_ids[0]);
+             ++game_index) {
+            if (M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+                    &status, game_ids[game_index], M12_ARCH_PC98) >= 0 ||
+                M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+                    &status, game_ids[game_index], M12_ARCH_X68000) >= 0) {
+                fprintf(stderr,
+                        "FAIL: unsupported PC-98/X68000 route exposed for %s\n",
+                        game_ids[game_index]);
+                return 1;
+            }
         }
     }
-    puts("PASS: matched PC-9801 media remains non-launchable");
+    puts("PASS: PC-9801/PC-9821 and X68000 media remain non-launchable");
     return 0;
 }
