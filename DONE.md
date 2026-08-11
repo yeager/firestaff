@@ -13901,7 +13901,8 @@ and production source-combat tests.
   to the live English C06 owner. The authentic 5×6 font renders both source
   fields, underscores and 6-pixel cursor; mouse, SDL text, backspace, Escape,
   Home/End and arrow navigation reproduce the native 7-character name and
-  19-character title contract.
+  19-character title contract. The cursor now toggles only after its recovered
+  30 C06 VBlanks and resets that cadence on each source-style cursor update.
 - ✅ Real-media regression `test_csb_v1_fmtowns_m11_game_handoff` now proves
   the uppercase/punctuation filter, insertion/backspace and complete 19-byte
   title capacity against the licensed F31E corpus. F31J remains closed because

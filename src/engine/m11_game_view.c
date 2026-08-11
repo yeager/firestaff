@@ -8732,6 +8732,8 @@ static int m11_csb_enter_fmtowns_utility(
     state->csbFmtownsUtilityLoadDialogActive = 0;
     state->csbFmtownsUtilityEditField = -1;
     state->csbFmtownsUtilityEditCharacterIndex = 0u;
+    state->csbFmtownsUtilityTextCursorVisible = 0;
+    state->csbFmtownsUtilityTextCursorVblanksRemaining = 0u;
     memset(&rendered, 0, sizeof(rendered));
     if (!csb_v1_fmtowns_utility_handoff_open(
             profile, language, &state->csbFmtownsUtilityHandoffReceipt) ||
@@ -8827,6 +8829,7 @@ static int m11_csb_redraw_fmtowns_utility(M11_GameViewState *state)
         state->csbFmtownsUtilitySelectedColor,
         state->csbFmtownsUtilityEditField,
         state->csbFmtownsUtilityEditCharacterIndex,
+        state->csbFmtownsUtilityTextCursorVisible,
         state->csbFmtownsUtilityPixels,
         sizeof(state->csbFmtownsUtilityPixels), &rendered);
 }
@@ -9452,6 +9455,8 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
         state->csbFmtownsUtilityEditCharacterIndex = (uint8_t)
             ((x - 16) / 6 < 0 ? 0 :
              ((x - 16) / 6 > (int)length ? (int)length : (x - 16) / 6));
+        state->csbFmtownsUtilityTextCursorVisible = 1;
+        state->csbFmtownsUtilityTextCursorVblanksRemaining = 30u;
         return m11_csb_redraw_fmtowns_utility(state)
             ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
     }
@@ -9463,6 +9468,8 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
         state->csbFmtownsUtilityEditCharacterIndex = (uint8_t)
             ((x - 16) / 6 < 0 ? 0 :
              ((x - 16) / 6 > (int)length ? (int)length : (x - 16) / 6));
+        state->csbFmtownsUtilityTextCursorVisible = 1;
+        state->csbFmtownsUtilityTextCursorVblanksRemaining = 30u;
         return m11_csb_redraw_fmtowns_utility(state)
             ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
     }
@@ -9575,6 +9582,12 @@ static M11_GameInputResult m11_csb_fmtowns_utility_redraw_text(
         ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
 }
 
+static void m11_csb_fmtowns_utility_reset_text_cursor(M11_GameViewState *state)
+{
+    state->csbFmtownsUtilityTextCursorVisible = 1;
+    state->csbFmtownsUtilityTextCursorVblanksRemaining = 30u;
+}
+
 M11_GameInputResult M11_GameView_ConsumeCsbFmtownsUtilityTextInput(
     M11_GameViewState *state, const char *text)
 {
@@ -9608,6 +9621,7 @@ M11_GameInputResult M11_GameView_ConsumeCsbFmtownsUtilityTextInput(
         changed = 1;
     }
     state->csbFmtownsUtilityEditCharacterIndex = (uint8_t)cursor;
+    if (changed) m11_csb_fmtowns_utility_reset_text_cursor(state);
     return changed ? m11_csb_fmtowns_utility_redraw_text(state)
                    : M11_GAME_INPUT_IGNORED;
 }
@@ -9667,6 +9681,7 @@ M11_GameInputResult M11_GameView_HandleCsbFmtownsUtilityTextKey(
         default: return M11_GAME_INPUT_IGNORED;
     }
     state->csbFmtownsUtilityEditCharacterIndex = (uint8_t)cursor;
+    m11_csb_fmtowns_utility_reset_text_cursor(state);
     return m11_csb_fmtowns_utility_redraw_text(state);
 }
 
@@ -26320,8 +26335,20 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     }
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         state->csbFmtownsUtilityBound) {
-        /* C06 owns its modal editor loop. Do not advance a PC34/entrance
-         * tick behind a source-owned utility page. */
+        /* CEDT006.C F7027/F7041 runs its cursor on the C06 VBlank loop:
+         * toggle it every 30 VBlanks while still keeping PC34/entrance
+         * simulation out of the source-owned modal page. */
+        if (M11_GameView_CsbFmtownsUtilityTextInputActive(state)) {
+            if (state->csbFmtownsUtilityTextCursorVblanksRemaining > 0u)
+                --state->csbFmtownsUtilityTextCursorVblanksRemaining;
+            if (state->csbFmtownsUtilityTextCursorVblanksRemaining == 0u) {
+                state->csbFmtownsUtilityTextCursorVisible =
+                    !state->csbFmtownsUtilityTextCursorVisible;
+                state->csbFmtownsUtilityTextCursorVblanksRemaining = 30u;
+                return m11_csb_redraw_fmtowns_utility(state)
+                    ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+            }
+        }
         return M11_GAME_INPUT_IGNORED;
     }
     mouthRedraw = m11_tick_v1_mouth_animation(state);

@@ -1635,6 +1635,8 @@ typedef struct {
      * host keyboard text. */
     int csbFmtownsUtilityEditField;
     uint8_t csbFmtownsUtilityEditCharacterIndex;
+    int csbFmtownsUtilityTextCursorVisible;
+    uint8_t csbFmtownsUtilityTextCursorVblanksRemaining;
     int csbFmtownsUtilityBound;
     /* The selected SWITCHTW Game exit is a separate F31 C03_GAME program.
      * Retain its verified identity alongside the launch gate so M11 can open

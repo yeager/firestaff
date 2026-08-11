@@ -1146,7 +1146,7 @@ int main(void)
                       csb_v1_fmtowns_utility_render_editor(
                           &utility_handoff, &utility_menu, &utility_font,
                           &multi_champion_party, &mini_portraits, 2u, 0u,
-                          -1, 0u,
+                          -1, 0u, 0,
                           utility_frame, sizeof(utility_frame),
                           &utility_render) && utility_render.valid &&
                       utility_frame[(60u + (sample / 32u) * 3u) * 320u +
@@ -1192,6 +1192,15 @@ int main(void)
             &view, M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_BACKSPACE);
         CHECK(strcmp(view.csbFmtownsUtilityParty.Champions[0].Name, "AB") == 0,
               "F31E C06 name editing inserts and backspaces at its source cursor");
+        for (tick = 0u; tick < 29u; ++tick) {
+            CHECK(M11_GameView_AdvanceIdleTick(&view) == M11_GAME_INPUT_IGNORED,
+                  "F31E C06 cursor waits the recovered thirty VBlanks");
+        }
+        result = M11_GameView_AdvanceIdleTick(&view);
+        CHECK(result == M11_GAME_INPUT_REDRAW &&
+                  !view.csbFmtownsUtilityTextCursorVisible &&
+                  view.csbFmtownsUtilityTextCursorVblanksRemaining == 30u,
+              "F31E C06 cursor toggles after exactly thirty VBlanks");
         result = M11_GameView_HandlePointerButton(
             &view, 16, 104, DM1_V1_MOUSE_MASK_LEFT_PC34);
         (void)M11_GameView_HandleCsbFmtownsUtilityTextKey(
