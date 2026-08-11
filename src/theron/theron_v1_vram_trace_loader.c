@@ -382,16 +382,22 @@ int theron_v1_vram_trace_render_bat_preview(Theron_V1_Viewport *vp,
             int bat_word = bat_start_word + y * 64 + x;
             int atlas_index = vp->bat_atlas_indices[bat_word];
             const TQR_Tile *tile;
+            uint8_t decoded_tile[64];
 
             if (atlas_index < 0 || atlas_index >= vp->palette.tile_count)
                 continue;
             tile = &vp->palette.tiles[atlas_index];
             if (!tile->data) continue;
+            /* The atlas keeps the source-owned PCE planar bytes.  Decode
+             * them before preview/presentation; treating the 32 raw 4bpp
+             * bytes as 64 indexed pixels produces a plausible-looking but
+             * incorrect screen and bypasses the real bitmap decoder. */
+            tqr_decode_tile(decoded_tile, tile->data, tile->bpp);
             for (int row = 0; row < TQR_TILE_DIM; ++row) {
                 uint8_t *dst = vp->fb.data +
                     (dst_y + y * TQR_TILE_DIM + row) * vp->fb.stride +
                     dst_x + x * TQR_TILE_DIM;
-                const uint8_t *src = tile->data + row * TQR_TILE_DIM;
+                const uint8_t *src = decoded_tile + row * TQR_TILE_DIM;
                 uint8_t palette_base = (uint8_t)(tile->pal_group *
                                                  TQR_PALETTE_GROUP_SIZE);
                 for (int px = 0; px < TQR_TILE_DIM; ++px) {

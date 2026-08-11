@@ -5,6 +5,15 @@
 - ✅ The launcher regression covers the new receipt path; this remains
   observational and does not authorize SAL decoding or host playback.
 
+# Theron: real BAT tiles are decoded before presentation (2026-08-11)
+
+- ✅ Fixed the authenticated VRAM/VCE preview path to decode source-owned PCE
+  planar 2/4bpp tiles before rendering indexed pixels.
+- ✅ Added a regression assertion for the decoded palette-group pixel and
+  passed the real US dungeon capture: 1,057 atlas tiles, 896 screen cells.
+- 🔒 No square, perspective, creature, object or synthetic asset semantics
+  were added.
+
 # Theron: disassembly-visible spawn arithmetic receipt (2026-08-11)
 
 - ✅ Added a fail-closed witness API for the visible `$B0E5-$B1EB` arithmetic.

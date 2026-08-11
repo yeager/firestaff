@@ -2,6 +2,18 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — authenticated BAT preview now decodes real PCE tiles
+
+- ✅ The source-bound VRAM/VCE presentation route now runs every admitted BAT
+  tile through the real PCE planar 2/4bpp decoder before applying its BAT/VCE
+  palette group. It no longer treats raw 32-byte 4bpp planes as indexed
+  pixels.
+- ✅ The real external US dungeon pair (`VRAM=5d20ebc7`, `VCE=ea83f117`)
+  passes the production capture test with 1,057 atlas tiles, 896 screen cells
+  and a non-empty authenticated frame.
+- 🔒 This fixes bitmap decoding only. Square-to-tile, depth/perspective and
+  creature/object atlas ownership remain separate source-consumer gates.
+
 ## 2026-08-11 — disassembly-visible spawn arithmetic is receipt-only
 
 - ✅ `theron_v1_track02_apply_spawn_consumer_witness()` now reproduces the

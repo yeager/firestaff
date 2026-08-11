@@ -153,6 +153,10 @@ static void test_populate_tiles(void) {
     assert(theron_v1_vram_trace_bat_atlas_index(&vp, 3) == -1);
     assert(theron_v1_vram_trace_render_bat_preview(&vp, 0, 3, 1, 0, 0) == 3);
     assert(framebuffer[0] != 0 || framebuffer[8] != 0 || framebuffer[16] != 0);
+    /* The source tile bytes are planar 4bpp (all 0x01 for tile 0).  After
+     * decoding, the rightmost pixel of the first tile is palette index 15,
+     * then BAT group 3 contributes the indexed base 48. */
+    assert(framebuffer[7] == 63);
     assert(theron_v1_vram_trace_render_bat_preview(&vp, 0, 3, 1,
                                                    TQR_FB_W - 16, 0) == -1);
 
