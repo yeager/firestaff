@@ -13477,3 +13477,14 @@ and production source-combat tests.
   VDP2`.
 - 🔒 Hela resultatet är fortsatt `renderer_permitted=0`, eftersom VDP2:s
   retail source-owner och text/overlay-consumer ännu inte är bevisade.
+
+# Nexus: audit CPU versus SCU-DMA VDP2 upload path (2026-08-11)
+
+- ✅ En autentiserad 30-frame witness med J-BIOS/merged English-disc och
+  VDP2-writer-trace slutfördes på extern disk:
+  `run-codex-vdp2-dma-owner-20260811`.
+- ✅ Den instrumenterade SCU-DMA-vägen gav inga writes i denna meny-window;
+  VDP2-state kommer från CPU/writer-lanen och får därför inte bindas till
+  DMA-assetproveniens.
+- 🔒 FONT256 page/character-generator/palette gav fortfarande ingen komplett
+  retail source-join; textconsumer och menyadmission förblir blockerade.
