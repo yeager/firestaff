@@ -360,6 +360,9 @@ scratch=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-theron-controller-patch.XXXXXX")
 trap 'rm -rf "$scratch"' EXIT
 cp -R "$MEDNAFEN_SOURCE/." "$scratch/source"
 git -C "$scratch/source" apply --recount --whitespace=nowarn "$patch_file"
+main_ram_consumer_rendered="$scratch/theron-main-ram-consumer-read.rendered.patch"
+sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
+    "$main_ram_consumer_patch_file" >"$main_ram_consumer_rendered"
 patch -d "$scratch/source" -p1 --batch --forward <"$input_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$cd_register_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$state_patch_file"
@@ -374,7 +377,7 @@ patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_loader_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_window_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_critical_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_register_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_consumer_patch_file"
+patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_consumer_rendered"
 patch -d "$scratch/source" -p1 --batch --forward <"$fifo_origin_v2_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$adpcm_fifo_ram_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$adpcm_fifo_direct_read_patch_file"

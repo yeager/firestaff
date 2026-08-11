@@ -74,8 +74,12 @@ adpcm_context_rendered="$build_root/theron-adpcm-fifo-ram-trace.rendered.patch"
 sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$adpcm_context_patch" > "$adpcm_context_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$adpcm_context_rendered"
+main_ram_consumer_read_patch="$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch"
+main_ram_consumer_read_rendered="$build_root/theron-main-ram-consumer-read.rendered.patch"
+sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$main_ram_consumer_read_patch" \
+    > "$main_ram_consumer_read_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch"
+    < "$main_ram_consumer_read_rendered"
 patch -d "$build_root/source" -p1 --batch --forward \
     < <(sed 's/^ FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
         "$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_write_trace.patch")

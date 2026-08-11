@@ -1,6 +1,6 @@
 --- a/src/pce/huc6280.h
 +++ b/src/pce/huc6280.h
-@@ -413,8 +413,19 @@
+@@ -413,8 +413,18 @@
 	INLINE void WrMem(unsigned int address, uint8 V)
 	{
 	 uint8 wmpr = MPR[address >> 13];
