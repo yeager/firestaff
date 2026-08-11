@@ -257,10 +257,15 @@ populated dungeon states.
 
 - **FM-TOWNS-SAVE-001 — arbitrary user-save compatibility remains open.** The
   external `fmtowns-save-corpus/CSBGAME.DAT` and `CSBGAME-JP.DAT` files are
-  retained as unclassified candidates; the current F7061/F7057 reader rejects
-  them before a complete native F0435 state receipt is produced. The writer
-  therefore remains unavailable for those files. `MINI.DAT` resume is the only
-  positive save path currently covered, and no synthetic save is used.
+  retained as unclassified candidates. Both pass the C5 header and five
+  F7057-part checks and their appended tails parse as two-map Prison dungeon
+  streams, but the saved global pose is not consistent with those tails: the
+  English candidate declares map 4 at (22,18), outside its two maps, while the
+  Japanese candidate uses a different party envelope and is not interchangeable
+  with the English handoff. The reader therefore rejects them before a
+  complete native F0435 state receipt is produced. The writer remains
+  unavailable for these files. `MINI.DAT` resume is the only positive save path
+  currently covered, and no synthetic save is used.
 
 - **FM-TOWNS-C06-SAVE-001 — C06 `SAVE CHAMPIONS` now has a source-owned
   `.CMP` write path.** The utility opens the authenticated `PORTRAIT`
