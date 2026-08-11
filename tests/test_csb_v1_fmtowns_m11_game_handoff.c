@@ -93,6 +93,25 @@ static uint32_t fnv1a(const uint8_t *bytes, size_t size)
     return hash;
 }
 
+/* DUNVIEW.C F0128 owns exactly this aperture at (48,33).  Keep the live
+ * frame assertion scoped to those source-owned pixels: C017 HUD updates
+ * elsewhere on the page must neither satisfy nor mask a stale viewport. */
+static uint32_t f31_viewport_fnv1a(const uint8_t *framebuffer)
+{
+    uint32_t hash = 2166136261u;
+    int x;
+    int y;
+
+    if (!framebuffer) return 0u;
+    for (y = 33; y < 169; ++y) {
+        for (x = 48; x < 272; ++x) {
+            hash ^= framebuffer[(size_t)y * 320u + (size_t)x];
+            hash *= UINT32_C(16777619);
+        }
+    }
+    return hash;
+}
+
 static uint32_t f31_advance_random_words(uint32_t state, unsigned int count)
 {
     while (count-- != 0u)
@@ -178,6 +197,7 @@ int main(void)
     int result;
     int door_frame_seen = 0;
     int live_frame_nonblack = 0;
+    uint32_t live_viewport_hash = 0u;
     int game_music_started = 0;
     uint8_t expected_game_music_track = 0u;
     CSB_V1_FmtownsSwitchInputReceipt switch_input;
@@ -1618,6 +1638,11 @@ int main(void)
     }
     CHECK(live_frame_nonblack,
           "F31 C017 HUD and F0128 viewport draw a real live frame after Prison");
+    live_viewport_hash = f31_viewport_fnv1a(framebuffer);
+    CHECK(live_viewport_hash != 0u &&
+              view.csbState.runtime_viewport_source_session_ready &&
+              view.csbState.runtime_viewport_pixel_hash != 0u,
+          "F31 first F0128 aperture is source-receipted before live input");
     {
         const CSB_V1_BootProfile *live_profile =
             (const CSB_V1_BootProfile *)view.csbBootProfile;
@@ -1723,6 +1748,13 @@ int main(void)
                   live_profile->runtime.last_input_dispatch.dequeued &&
                   live_profile->runtime.last_input_dispatch.dispatchedMove,
               "F31 live viewport routes C003 through the dungeon command queue");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        CHECK(live_viewport_hash != 0u &&
+                  f31_viewport_fnv1a(framebuffer) != live_viewport_hash &&
+                  view.csbState.runtime_viewport_source_session_ready &&
+                  view.csbState.runtime_viewport_pixel_hash != 0u,
+              "F31 F0128 redraws its source-owned aperture after live movement input");
         /* FMTOWNS.H aliases F0387/F0391 to DRAW_DMENU/DYNAMENU, whose first
          * action row is x=232..318/y=77..83.  CHTWE/CHTWJ must use that
          * source rectangle even though it has no DM1 startup receipt.  This
