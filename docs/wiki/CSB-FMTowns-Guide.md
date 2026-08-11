@@ -100,8 +100,12 @@ MEDIA720 families: M613/454 for projectiles, M614/486 for explosions,
 M612/498 for objects, and M618/584 for creatures. An unavailable or malformed
 record is left blank; Firestaff never substitutes a PC bitmap or a marker.
 The real-media handoff test byte-compares a record from each family and checks
-that the 224×136 F0128 aperture changes after live source input. Exact
-capture-level draw order and placement across populated rooms remain open.
+that the 224×136 F0128 aperture changes after live source input. It also
+executes the unmodified Prison C004/C002 command sequence: C004 attempts the
+west side-step into the active retail group at map 4 `(21,18)`, then C002
+faces it. F0115 must issue at least one native group sprite blit and no marker
+fallbacks. Exact capture-level draw order and placement across populated rooms
+remain open.
 
 ## F31 MINI.DAT is a native save bootstrap
 

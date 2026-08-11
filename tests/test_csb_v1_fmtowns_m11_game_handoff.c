@@ -112,6 +112,31 @@ static uint32_t f31_viewport_fnv1a(const uint8_t *framebuffer)
     return hash;
 }
 
+static int f31_has_native_runtime_group_sprite(const M11_GameViewState *view)
+{
+    int object_sprite_count;
+    int object_icon_count;
+    int object_marker_count;
+    int group_sprite_count;
+    int group_marker_count;
+    int projectile_sprite_count;
+    int projectile_material_count;
+    int projectile_marker_count;
+    int explosion_sprite_count;
+    int explosion_marker_count;
+
+    return M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
+               view,
+               &object_sprite_count, &object_icon_count,
+               &object_marker_count, &group_sprite_count,
+               &group_marker_count, &projectile_sprite_count,
+               &projectile_material_count, &projectile_marker_count,
+               &explosion_sprite_count, &explosion_marker_count) &&
+           group_sprite_count > 0 && group_marker_count == 0 &&
+           object_marker_count == 0 && projectile_marker_count == 0 &&
+           explosion_marker_count == 0;
+}
+
 static uint32_t f31_advance_random_words(uint32_t state, unsigned int count)
 {
     while (count-- != 0u)
@@ -1789,6 +1814,16 @@ int main(void)
                       ((prior_direction + 1) & 3) &&
                   view.csbState.party_dir == live_profile->runtime.party_dir,
               "F31 live HUD routes C002 into the original runtime party state");
+        /* The initial Prison record has active GROUP records on both sides
+         * of the party. C004 first attempts the source-owned side step into
+         * the west group; C002 then faces that same real group. This proves
+         * F0115 emits a native creature blit from the admitted
+         * MINI.DAT/GRAPHICS.DAT pair, without adding a test object or
+         * manufacturing a viewport state. */
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        CHECK(f31_has_native_runtime_group_sprite(&view),
+              "F31 F0115 draws the adjacent retail Prison group with a native sprite");
         CHECK(live_profile &&
                   M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
                       M11_GAME_INPUT_REDRAW &&

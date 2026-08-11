@@ -255,8 +255,10 @@ populated dungeon states.
   `GRAPHICS.DAT` IMG2 decoder; a missing record remains no-draw. The real-data
   handoff regression byte-compares one IMG2 record from every family and
   verifies that the source-owned F0128 aperture changes after native input in
-  both F31E and F31J. Remaining work is capture-level placement/order parity
-  across naturally populated game states.
+  both F31E and F31J. It now also uses the original Prison C004/C002 route to
+  face the active retail group at map 4 `(21,18)` and requires a native F0115
+  creature blit with no marker fallback. Remaining work is capture-level
+  placement/order parity across naturally populated game states.
 
 - **FM-TOWNS-RESUME-001 — retail MINI.DAT resume is closed.** The real
   English and Japanese `CDATA/CJDATA/MINI.DAT` bootstrap saves now pass the
