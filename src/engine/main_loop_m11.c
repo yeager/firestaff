@@ -4051,8 +4051,7 @@ static int m11_game_view_is_theron(const M11_GameViewState* gameView) {
 
 static int m11_game_view_supports_held_motion_input(
     const M11_GameViewState* gameView) {
-    if (!gameView || !M11_InputSourceSupportsHeldMotion(gameView->sourceId,
-                                                          gameView->active)) {
+    if (!gameView || !gameView->active) {
         return 0;
     }
     /* TITLE/ENTRANCE have their own source dispatch.  GAMELOOP.C's held
@@ -4062,6 +4061,14 @@ static int m11_game_view_supports_held_motion_input(
         return gameView->theronState.startup_phase ==
                    THERON_STARTUP_PHASE_IN_DUNGEON &&
                gameView->theronState.level_loaded;
+    }
+    /* Theron is identified by its authenticated Track 02 source kind above,
+     * not by a launcher label.  Other source kinds retain the shared source
+     * id gate below.  This keeps a verified regional/format-specific Theron
+     * label from disabling normal held WASD/arrow input. */
+    if (!M11_InputSourceSupportsHeldMotion(gameView->sourceId,
+                                           gameView->active)) {
+        return 0;
     }
     return !m11_game_view_is_csb(gameView) ||
            (!gameView->csbState.startup_title_active &&
