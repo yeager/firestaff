@@ -234,12 +234,15 @@ int F0606_CHAMPION_ParseMirrorTextIdentity_Compat(
      * followed by the field separator: `AL0796_ui_Character = *L0798_pc_Character++`
      * consumes one byte, and the next iteration expects '\n'. The champion
      * text encoding stores the sex line as a single 'M' or 'F' between two
-     * newlines, so a text whose 4th newline-separated block starts with 'M'
-     * or 'F' but has additional characters (e.g. the C24_SCROLL hint text
-     * "FREE THE GEM") must be rejected. Without this length check the mirror
-     * catalog admits scroll bodies as fake champion records, shifting the
-     * portrait-ordinal->name mapping by one for every accidental parse. */
-    if (sexStart[1] != '\n') return 0;
+     * separators, so a text whose 4th separator-terminated block starts with
+     * 'M' or 'F' but has additional characters (e.g. the C24_SCROLL hint
+     * text "FREE THE GEM") must be rejected. Without this length check the
+     * mirror catalog admits scroll bodies as fake champion records, shifting
+     * the portrait-ordinal->name mapping by one for every accidental parse.
+     * Both '\n' (original DOS newline form) and '|' (Firestaff canonical
+     * seed form) are legitimate separators here — mirror_text_is_separator
+     * treats them equivalently. */
+    if (!mirror_text_is_separator(sexStart[1])) return 0;
     champ->sex = (unsigned char)sexStart[0];
     statStart = mirror_text_find_separator(sexStart);
     if (!statStart) return 0;

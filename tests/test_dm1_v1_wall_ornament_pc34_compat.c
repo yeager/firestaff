@@ -260,8 +260,12 @@ int main(void)
     expect_int("mirror.plan.18.orn_h", mirrorPlan.ornament.height, 43);
     expect_int("mirror.plan.18.orn_transparent",
                mirrorPlan.ornament.transparentColor, 10);
+    /* dm1_v1_front_mirror_render_plan_pc34 applies the D2 palette override
+     * for the C346 champion mirror (source color 5 -> display 3) so the
+     * brown mirror frame paints correctly.  See test_dm1_v1_champion_mirror
+     * for the render-receipt contract. */
     expect_int("mirror.plan.18.orn_native_palette",
-               mirrorPlan.ornament.paletteMapValid, 0);
+               mirrorPlan.ornament.paletteMapValid, 1);
     expect_int("mirror.plan.18.portrait_graphic",
                mirrorPlan.portraitGraphicIndex, 26);
     expect_int("mirror.plan.18.srcX", mirrorPlan.portraitSrcX, 64);
