@@ -3484,9 +3484,17 @@ static int m11_apply_architecture_override(M12_StartupMenuState* menuState,
 static int m11_apply_csb_fmtowns_japanese_override(
     M12_StartupMenuState* menuState)
 {
+    static const char* const game_ids[M12_CONFIG_GAME_COUNT] = {
+        "dm1", "csb", "dm2", "nexus", "theron"
+    };
+    int game_index;
     size_t version_count;
     size_t version_index;
     if (!menuState) return 0;
+    for (game_index = 0; game_index < M12_CONFIG_GAME_COUNT; ++game_index) {
+        if (strcmp(game_ids[game_index], "csb") == 0) break;
+    }
+    if (game_index >= M12_CONFIG_GAME_COUNT) return 0;
     version_count = M12_AssetStatus_GetVersionCount("csb");
     for (version_index = 0u; version_index < version_count; ++version_index) {
         const M12_AssetVersionStatus* version =
@@ -3494,8 +3502,8 @@ static int m11_apply_csb_fmtowns_japanese_override(
                                        version_index);
         if (!version || !version->matched || !version->versionId ||
             strcmp(version->versionId, "fmtowns-ja") != 0) continue;
-        menuState->gameOptions[1].architectureIndex = M12_ARCH_FM_TOWNS;
-        menuState->gameOptions[1].versionIndex = (int)version_index;
+        menuState->gameOptions[game_index].architectureIndex = M12_ARCH_FM_TOWNS;
+        menuState->gameOptions[game_index].versionIndex = (int)version_index;
         return 1;
     }
     return 0;
