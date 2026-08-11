@@ -435,20 +435,24 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
   the dungeon header, not a payload to expand.
 - [ ] Admit the authentic Japanese 1.0 and French StuffIt editions
   independently once their container/resource-fork readers are verified.
-- [ ] Add a source-owned Mac container/resource-fork reader for the verified
+- [~] Add a source-owned Mac container/resource-fork reader for the verified
   CD/content archives, including StuffIt/HQX/resource-fork provenance. The
-  reader must preserve the original file/resource identity and fail closed on
-  flattened or ambiguous input.
+  reader now reads classic HFS data and resource forks in RAM and preserves
+  their identity; Japanese/French StuffIt/HQX variants still fail closed until
+  independently verified.
 - [ ] Bind the Mac big-endian `DUNGEON.DAT` and `GRAPHICS.DAT` pair to one
   platform-specific boot receipt. Japanese 16-colour and US English
   256-colour graphics must remain separate layouts and hashes.
-- [~] Read the authentic retail Mac QuickTime `MooV` data forks in RAM. The
-  verified retail image contains `Title.MooV`, `Swoosh.MooV`, `Credits.MooV`
-  and `Ending.MooV` (CTest records their presence and sizes); `Story.MooV` is
-  absent from this original image and is not invented. Presentation through
-  the original QuickTime/MooV owner remains open. Do not replace these with
-  converted MP4 files in the source runtime; converted files may be
-  verification derivatives only.
+- [~] Read the authentic retail Mac QuickTime `MooV` data and resource forks in
+  RAM. The verified retail image contains `Title.MooV`, `Swoosh.MooV`,
+  `Credits.MooV` and `Ending.MooV` (CTest records their presence, sizes, HFS
+  resource forks, and `moov` resource payloads); `Story.MooV` is absent
+  from this original image and is not invented. The complete source-owned
+  HFS fork pair is now available to the boot profile without writing a
+  flattened movie.
+  Presentation through the original QuickTime/MooV owner remains open. Do not
+  replace these with converted MP4 files in the source runtime; converted
+  files may be verification derivatives only.
 - [ ] Bind the US English Mac MIDI/SoundMusicSys resources and the Japanese
   CD-audio route separately. DOS HMP, FM Towns CD.DAT, and Amiga MOD paths are
   not fallbacks.

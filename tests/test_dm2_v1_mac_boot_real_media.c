@@ -16,6 +16,10 @@ int main(void) {
         p.graphics_mem_size != (demo ? 3110116u : 8157169u) ||
         p.dungeon_mem_size != (demo ? 6535u : 39411u) ||
         (!demo && (!p.music_map_verified || p.music_map_size != 176u)) ||
+        (!demo && (p.mac_movie_present_mask != 0x1du ||
+                   p.mac_movie_resource_present_mask != 0x1du ||
+                   p.mac_movie_moov_present_mask != 0x1du ||
+                   p.mac_movie_moov_size[DM2_V1_MAC_MOVIE_TITLE] != 3286u)) ||
         dm2_v1_boot_enter_game(&p) != 0) {
         fprintf(stderr, "DM2 Mac boot failed: platform=%d version=%s verified=%d g=%zu d=%zu\n",
                 p.platform, p.version_id, p.assets_verified,

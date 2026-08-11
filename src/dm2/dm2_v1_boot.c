@@ -93,6 +93,22 @@ static int dm2_v1_boot_load_mac_zip(DM2_V1_BootProfile *profile,
         profile->dungeon_mem_size = media.dungeon_size;
         int demo_media = media.demo;
         media.graphics = NULL; media.dungeon = NULL;
+        for (size_t movie_index = 0u;
+             movie_index < DM2_V1_MAC_MOVIE_COUNT; ++movie_index) {
+            profile->mac_movie_data[movie_index] = media.movie[movie_index];
+            profile->mac_movie_data_size[movie_index] = media.movie_size[movie_index];
+            profile->mac_movie_resource[movie_index] = media.movie_resource[movie_index];
+            profile->mac_movie_resource_size[movie_index] =
+                media.movie_resource_size[movie_index];
+            profile->mac_movie_moov[movie_index] = media.movie_moov[movie_index];
+            profile->mac_movie_moov_size[movie_index] = media.movie_moov_size[movie_index];
+            media.movie[movie_index] = NULL;
+            media.movie_resource[movie_index] = NULL;
+            media.movie_moov[movie_index] = NULL;
+        }
+        profile->mac_movie_present_mask = media.movie_present_mask;
+        profile->mac_movie_resource_present_mask = media.movie_resource_present_mask;
+        profile->mac_movie_moov_present_mask = media.movie_moov_present_mask;
         if (media.music_map && media.music_map_size <= sizeof(profile->music_map_data)) {
             memcpy(profile->music_map_data, media.music_map, media.music_map_size);
             profile->music_map_size = media.music_map_size;
@@ -14549,6 +14565,21 @@ void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {
     free(profile->dungeon_mem);
     profile->dungeon_mem = NULL;
     profile->dungeon_mem_size = 0u;
+    for (size_t movie_index = 0u;
+         movie_index < DM2_V1_MAC_MOVIE_COUNT; ++movie_index) {
+        free(profile->mac_movie_data[movie_index]);
+        free(profile->mac_movie_resource[movie_index]);
+        free(profile->mac_movie_moov[movie_index]);
+        profile->mac_movie_data[movie_index] = NULL;
+        profile->mac_movie_resource[movie_index] = NULL;
+        profile->mac_movie_moov[movie_index] = NULL;
+        profile->mac_movie_data_size[movie_index] = 0u;
+        profile->mac_movie_resource_size[movie_index] = 0u;
+        profile->mac_movie_moov_size[movie_index] = 0u;
+    }
+    profile->mac_movie_present_mask = 0u;
+    profile->mac_movie_resource_present_mask = 0u;
+    profile->mac_movie_moov_present_mask = 0u;
     dm2_v1_amiga_lzx_free(profile->amiga_swsh_bytes);
     dm2_v1_amiga_lzx_free(profile->amiga_titl_bytes);
     dm2_v1_amiga_lzx_free(profile->amiga_enda_bytes);

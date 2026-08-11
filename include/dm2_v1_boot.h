@@ -12,6 +12,7 @@
 #include "dm2_v1_fmtowns_anim_stream.h"
 #include "dm2_v1_dos_startup_media.h"
 #include "dm2_v1_dos_intro_mve_owner.h"
+#include "dm2_v1_mac_media.h"
 #include "dm2_v1_party.h"
 #include <stddef.h>
 
@@ -445,6 +446,19 @@ typedef struct {
     size_t   graphics_mem_size;
     uint8_t *dungeon_mem;    /* malloc'd DUNGEON.DAT from disc image */
     size_t   dungeon_mem_size;
+
+    /* Authentic US Macintosh MooV forks retained in RAM.  The data fork,
+     * Resource Manager fork, and extracted moov resource remain separate so
+     * no flattened or converted movie is mistaken for original media. */
+    uint8_t *mac_movie_data[DM2_V1_MAC_MOVIE_COUNT];
+    size_t   mac_movie_data_size[DM2_V1_MAC_MOVIE_COUNT];
+    uint8_t *mac_movie_resource[DM2_V1_MAC_MOVIE_COUNT];
+    size_t   mac_movie_resource_size[DM2_V1_MAC_MOVIE_COUNT];
+    uint8_t *mac_movie_moov[DM2_V1_MAC_MOVIE_COUNT];
+    size_t   mac_movie_moov_size[DM2_V1_MAC_MOVIE_COUNT];
+    uint32_t mac_movie_present_mask;
+    uint32_t mac_movie_resource_present_mask;
+    uint32_t mac_movie_moov_present_mask;
 
     /* ── Save namespace ───────────────────────────────────── */
     char    save_root[1024];   /* saves/dm2/ */

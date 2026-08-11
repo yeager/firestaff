@@ -61,7 +61,8 @@ static int read_catalog(const MacDisk *d, uint32_t alloc_size,
 }
 
 static int find_file(const uint8_t *cat, size_t cat_size, const char *wanted,
-                     Extent *extents, uint32_t *data_size) {
+                     Extent *data_extents, uint32_t *data_size,
+                     Extent *resource_extents, uint32_t *resource_size) {
     size_t node;
     size_t wanted_len = strlen(wanted);
     for (node = 0; node + 512u <= cat_size; node += 512u) {
@@ -82,12 +83,19 @@ static int find_file(const uint8_t *cat, size_t cat_size, const char *wanted,
             name_len = rec[6];
             if (name_len != wanted_len || memcmp(rec + 7, wanted, name_len) != 0) continue;
             data = 1u + key_len + ((key_len & 1u) == 0u ? 1u : 0u);
-            if (data + 74u + 8u > ob - oa || rec[data] != 2u) continue;
+            /* HFSCatalogFile is 102 bytes.  The first three data extents
+             * start at +74 and the first three resource extents at +86,
+             * each descriptor being (startBlock, blockCount), 4 bytes. */
+            if (data + 98u > ob - oa || rec[data] != 2u) continue;
             *data_size = be32(rec + data + 26u);
-            memset(extents, 0, sizeof(Extent) * 3u);
+            *resource_size = be32(rec + data + 36u);
+            memset(data_extents, 0, sizeof(Extent) * 3u);
+            memset(resource_extents, 0, sizeof(Extent) * 3u);
             for (size_t e = 0; e < 3u; ++e) {
-                extents[e].start = be16(rec + data + 74u + e * 8u);
-                extents[e].count = be16(rec + data + 76u + e * 8u);
+                data_extents[e].start = be16(rec + data + 74u + e * 4u);
+                data_extents[e].count = be16(rec + data + 76u + e * 4u);
+                resource_extents[e].start = be16(rec + data + 86u + e * 4u);
+                resource_extents[e].count = be16(rec + data + 88u + e * 4u);
             }
             return 0;
         }
@@ -123,6 +131,68 @@ static int copy_fork(const MacDisk *d, uint32_t alloc_size,
     if (copied != file_size) { free(bytes); return -1; }
     *out = bytes; *out_size = file_size;
     return 0;
+}
+
+/* Read one authentic Resource Manager resource from a classic Mac resource
+ * fork.  Offsets are deliberately kept relative to the fork; callers retain
+ * the complete fork as preservation evidence and may also request the raw
+ * resource payload. */
+static int copy_resource_type(const uint8_t *fork, size_t fork_size,
+                              const char wanted_type[4],
+                              uint8_t **out, size_t *out_size) {
+    uint32_t data_offset, data_length, map_offset, map_length;
+    uint16_t type_offset;
+    size_t type_list, type_count, i;
+    if (!fork || !wanted_type || !out || !out_size || fork_size < 256u) return -1;
+    data_offset = be32(fork + 0u);
+    map_offset = be32(fork + 4u);
+    data_length = be32(fork + 8u);
+    map_length = be32(fork + 12u);
+    if (data_offset > fork_size || data_length > fork_size - data_offset ||
+        map_offset > fork_size || map_length > fork_size - map_offset ||
+        map_offset < 16u || map_length < 30u) return -1;
+    /* Resource maps contain a 16-byte header copy, then the map metadata. */
+    if (map_length < 28u) return -1;
+    /* Map header: 16-byte file-header copy, next-map handle (4), file
+     * reference number (2), attributes (2), type-list offset (2), and
+     * name-list offset (2). */
+    type_offset = be16(fork + map_offset + 24u);
+    if ((size_t)type_offset + 2u > map_length) return -1;
+    type_list = map_offset + type_offset;
+    type_count = (size_t)be16(fork + type_list) + 1u;
+    if (type_count == 0u || type_count > 4096u ||
+        type_count > (map_length - type_offset - 2u) / 8u) return -1;
+    for (i = 0u; i < type_count; ++i) {
+        const uint8_t *entry = fork + type_list + 2u + i * 8u;
+        uint16_t reference_offset, reference_count;
+        size_t ref_list;
+        if (memcmp(entry, wanted_type, 4u) != 0) continue;
+        reference_count = (uint16_t)(be16(entry + 4u) + 1u);
+        reference_offset = be16(entry + 6u);
+        if (reference_count == 0u || reference_count > 4096u ||
+            reference_offset > map_length - type_offset ||
+            (size_t)reference_count >
+                (map_length - type_offset - reference_offset) / 12u) return -1;
+        ref_list = type_list + reference_offset;
+        {
+            const uint8_t *ref = fork + ref_list;
+            uint32_t resource_offset = ((uint32_t)ref[5] << 16) |
+                                       ((uint32_t)ref[6] << 8) | ref[7];
+            uint32_t resource_length;
+            size_t data_pos;
+            if (resource_offset > data_length || data_length - resource_offset < 4u)
+                return -1;
+            data_pos = (size_t)data_offset + resource_offset;
+            resource_length = be32(fork + data_pos);
+            if (resource_length > data_length - resource_offset - 4u) return -1;
+            *out = (uint8_t *)malloc(resource_length);
+            if (!*out) return -1;
+            memcpy(*out, fork + data_pos + 4u, resource_length);
+            *out_size = resource_length;
+            return 0;
+        }
+    }
+    return -1;
 }
 
 static int copy_dmfiles_entry(const uint8_t *dmfiles, size_t dmfiles_size,
@@ -209,7 +279,8 @@ int dm2_v1_mac_media_read_zip(const char *zip_path, DM2_V1_MacMedia *out) {
     MacDisk disk;
     uint32_t alloc_size, catalog_size, file_size;
     uint16_t alloc_start, cat_start;
-    Extent extents[3];
+    Extent extents[3], resource_extents[3];
+    uint32_t resource_size;
     int rc = -1;
     if (!zip_path || !out) return -1;
     memset(out, 0, sizeof(*out));
@@ -218,10 +289,12 @@ int dm2_v1_mac_media_read_zip(const char *zip_path, DM2_V1_MacMedia *out) {
                    &catalog_size, &cat_start) != 0) goto done;
     cat_size = catalog_size;
     if (read_catalog(&disk, alloc_size, alloc_start, cat_start, cat_size, &cat) != 0) goto done;
-    if (find_file(cat, cat_size, "Graphics.dat", extents, &file_size) == 0 &&
+    if (find_file(cat, cat_size, "Graphics.dat", extents, &file_size,
+                  resource_extents, &resource_size) == 0 &&
         copy_fork(&disk, alloc_size, alloc_start, extents, file_size,
                   &out->graphics, &out->graphics_size) == 0 &&
-        find_file(cat, cat_size, "Dungeon.dat", extents, &file_size) == 0 &&
+        find_file(cat, cat_size, "Dungeon.dat", extents, &file_size,
+                  resource_extents, &resource_size) == 0 &&
         copy_fork(&disk, alloc_size, alloc_start, extents, file_size,
                   &out->dungeon, &out->dungeon_size) == 0) {
         /* Full retail Mac media exposes the game files directly. */
@@ -230,7 +303,7 @@ int dm2_v1_mac_media_read_zip(const char *zip_path, DM2_V1_MacMedia *out) {
         size_t installer_size = 0;
         dm2_v1_mac_media_free(out);
         if (find_file(cat, cat_size, "Install Dungeon MasterII Demo", extents,
-                      &file_size) != 0 ||
+                      &file_size, resource_extents, &resource_size) != 0 ||
             copy_fork(&disk, alloc_size, alloc_start, extents, file_size,
                       &installer, &installer_size) != 0 ||
             read_demo_from_installer(installer, installer_size, out) != 0) {
@@ -239,7 +312,8 @@ int dm2_v1_mac_media_read_zip(const char *zip_path, DM2_V1_MacMedia *out) {
         }
         free(installer);
     }
-    if (find_file(cat, cat_size, "md.dat", extents, &file_size) == 0)
+    if (find_file(cat, cat_size, "md.dat", extents, &file_size,
+                  resource_extents, &resource_size) == 0)
         (void)copy_fork(&disk, alloc_size, alloc_start, extents, file_size, &out->music_map, &out->music_map_size);
     if (!out->demo) {
         static const char *const movie_names[DM2_V1_MAC_MOVIE_COUNT] = {
@@ -248,11 +322,30 @@ int dm2_v1_mac_media_read_zip(const char *zip_path, DM2_V1_MacMedia *out) {
         size_t movie_index;
         for (movie_index = 0u; movie_index < DM2_V1_MAC_MOVIE_COUNT; ++movie_index) {
             if (find_file(cat, cat_size, movie_names[movie_index], extents,
-                          &file_size) == 0 &&
+                          &file_size, resource_extents, &resource_size) == 0 &&
                 copy_fork(&disk, alloc_size, alloc_start, extents, file_size,
                           &out->movie[movie_index],
                           &out->movie_size[movie_index]) == 0) {
                 out->movie_present_mask |= (uint32_t)1u << movie_index;
+                if (resource_size != 0u &&
+                    copy_fork(&disk, alloc_size, alloc_start,
+                              resource_extents, resource_size,
+                              &out->movie_resource[movie_index],
+                              &out->movie_resource_size[movie_index]) == 0) {
+                    out->movie_resource_present_mask |= (uint32_t)1u << movie_index;
+                    if (copy_resource_type(out->movie_resource[movie_index],
+                                           out->movie_resource_size[movie_index],
+                                           "moov", &out->movie_moov[movie_index],
+                                           &out->movie_moov_size[movie_index]) == 0 &&
+                        out->movie_moov_size[movie_index] >= 8u &&
+                        memcmp(out->movie_moov[movie_index] + 4u, "moov", 4u) == 0) {
+                        out->movie_moov_present_mask |= (uint32_t)1u << movie_index;
+                    } else {
+                        free(out->movie_moov[movie_index]);
+                        out->movie_moov[movie_index] = NULL;
+                        out->movie_moov_size[movie_index] = 0u;
+                    }
+                }
             }
         }
     }
@@ -267,6 +360,10 @@ void dm2_v1_mac_media_free(DM2_V1_MacMedia *media) {
     if (!media) return;
     free(media->graphics); free(media->dungeon); free(media->music_map);
     for (size_t i = 0u; i < DM2_V1_MAC_MOVIE_COUNT; ++i)
+    {
         free(media->movie[i]);
+        free(media->movie_resource[i]);
+        free(media->movie_moov[i]);
+    }
     memset(media, 0, sizeof(*media));
 }

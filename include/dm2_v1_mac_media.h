@@ -27,6 +27,15 @@ typedef struct {
     uint8_t *movie[DM2_V1_MAC_MOVIE_COUNT];
     size_t movie_size[DM2_V1_MAC_MOVIE_COUNT];
     uint32_t movie_present_mask;
+    /* Classic HFS resource forks are retained separately.  For MooV files
+     * this is the authentic Resource Manager fork containing the moov
+     * resource; it is not flattened or converted on disk. */
+    uint8_t *movie_resource[DM2_V1_MAC_MOVIE_COUNT];
+    size_t movie_resource_size[DM2_V1_MAC_MOVIE_COUNT];
+    uint32_t movie_resource_present_mask;
+    uint8_t *movie_moov[DM2_V1_MAC_MOVIE_COUNT];
+    size_t movie_moov_size[DM2_V1_MAC_MOVIE_COUNT];
+    uint32_t movie_moov_present_mask;
     int demo;
 } DM2_V1_MacMedia;
 

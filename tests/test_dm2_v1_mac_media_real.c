@@ -31,11 +31,22 @@ int main(void) {
         dm2_v1_mac_media_free(&media);
         return 1;
     }
+    if (!demo &&
+        (((media.movie_resource_present_mask &
+             ((uint32_t)1u << DM2_V1_MAC_MOVIE_TITLE)) == 0u) ||
+         ((media.movie_moov_present_mask &
+             ((uint32_t)1u << DM2_V1_MAC_MOVIE_TITLE)) == 0u) ||
+         media.movie_moov_size[DM2_V1_MAC_MOVIE_TITLE] < 8u)) {
+        fprintf(stderr, "authentic Mac Title.MooV resource/moov was not read\n");
+        dm2_v1_mac_media_free(&media);
+        return 1;
+    }
     if (!demo) {
-        printf("retail movie mask=0x%08x sizes=%zu,%zu,%zu,%zu,%zu head=%02x%02x%02x%02x%02x%02x%02x%02x\n",
-               media.movie_present_mask, media.movie_size[0],
+        printf("retail movie mask=0x%08x resource=0x%08x moov=0x%08x sizes=%zu,%zu,%zu,%zu,%zu moov_size=%zu head=%02x%02x%02x%02x%02x%02x%02x%02x\n",
+               media.movie_present_mask, media.movie_resource_present_mask,
+               media.movie_moov_present_mask, media.movie_size[0],
                media.movie_size[1], media.movie_size[2], media.movie_size[3],
-               media.movie_size[4], media.movie[0][0], media.movie[0][1],
+               media.movie_size[4], media.movie_moov_size[0], media.movie[0][0], media.movie[0][1],
                media.movie[0][2], media.movie[0][3], media.movie[0][4],
                media.movie[0][5], media.movie[0][6], media.movie[0][7]);
     }

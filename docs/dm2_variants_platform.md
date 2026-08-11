@@ -61,11 +61,14 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   freeze, wake, save and quit are dispatched through the existing runtime
   boundaries. Wall-button actions remain explicit and fail closed until their
   original Mac wall-button owner is implemented.
-- Retail HFS media now exposes the authentic raw `MooV` data forks in memory:
+- Retail HFS media now exposes the authentic raw `MooV` data forks and HFS
+  Resource Manager forks in memory. The four present movies have source-owned
+  `moov` resource payloads; Firestaff keeps the data fork, complete resource
+  fork, and extracted resource separate:
   `Title.MooV` (2,403,013 bytes), `Swoosh.MooV` (463,528), `Credits.MooV`
   (5,601,948), and `Ending.MooV` (6,138,318). `Story.MooV` is absent from
-  this image. Firestaff does not synthesize or convert these files; QuickTime
-  playback is still a separate runtime owner.
+  this image. Firestaff does not synthesize, flatten, or convert these files;
+  QuickTime playback is still a separate runtime owner.
 
 X68000 is not part of the DM2 support matrix.
 
