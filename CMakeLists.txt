@@ -16877,6 +16877,30 @@ endif()
     set_tests_properties(csb_v1_fmtowns_native_cli_boot PROPERTIES
         LABELS "tier2;csb;fmtowns;startup;cli;real_data;skip_safe"
     )
+    # Keep both language-private F31 program chains independently runnable.
+    # The inherited FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR names user-supplied
+    # original media; these rows add only the selected language and therefore
+    # skip cleanly when the corpus is absent.
+    add_test(
+        NAME csb_v1_fmtowns_en_native_cli_real_media
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_native_cli_boot.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(csb_v1_fmtowns_en_native_cli_real_media PROPERTIES
+        LABELS "tier2;csb;fmtowns;english;startup;cli;menu;real_data;skip_safe"
+        ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=en;FIRESTAFF_AUDIO_ENABLE_SDL=0"
+        TIMEOUT 120
+    )
+    add_test(
+        NAME csb_v1_fmtowns_ja_native_cli_real_media
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_native_cli_boot.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(csb_v1_fmtowns_ja_native_cli_real_media PROPERTIES
+        LABELS "tier2;csb;fmtowns;japanese;startup;cli;menu;real_data;skip_safe"
+        ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=ja;FIRESTAFF_AUDIO_ENABLE_SDL=0"
+        TIMEOUT 120
+    )
     add_test(
         NAME csb_v20_m11_prison_runtime_hud_pc34
         COMMAND test_csb_v1_m11_prison_runtime_hud_pc34
@@ -53669,6 +53693,18 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_m11_game_handof
              COMMAND test_csb_v1_fmtowns_m11_game_handoff)
     set_tests_properties(csb_v1_fmtowns_m11_game_handoff PROPERTIES
         LABELS "csb;fmtowns;real_data;m11")
+    add_test(NAME csb_v1_fmtowns_en_m11_real_media_handoff
+             COMMAND test_csb_v1_fmtowns_m11_game_handoff)
+    set_tests_properties(csb_v1_fmtowns_en_m11_real_media_handoff PROPERTIES
+        LABELS "tier2;csb;fmtowns;english;m11;handoff;real_data;skip_safe"
+        ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=en;FIRESTAFF_AUDIO_ENABLE_SDL=0"
+        TIMEOUT 120)
+    add_test(NAME csb_v1_fmtowns_ja_m11_real_media_handoff
+             COMMAND test_csb_v1_fmtowns_m11_game_handoff)
+    set_tests_properties(csb_v1_fmtowns_ja_m11_real_media_handoff PROPERTIES
+        LABELS "tier2;csb;fmtowns;japanese;m11;handoff;real_data;skip_safe"
+        ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=ja;FIRESTAFF_AUDIO_ENABLE_SDL=0"
+        TIMEOUT 120)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_user_save_corpus.c")

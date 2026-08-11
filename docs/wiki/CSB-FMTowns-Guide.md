@@ -62,6 +62,16 @@ archive CUE/IMG files so loose media cannot borrow CDDA from a different
 source. The scanner reports each admitted CSB edition, rather than using the
 selected cache pair as evidence for another platform.
 
+The opt-in real-media CTest rows retain that separation: with
+`FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR` set, the English and Japanese pairs
+`csb_v1_fmtowns_{en,ja}_native_cli_real_media` exercise direct CLI startup
+and `--menu` launch, while
+`csb_v1_fmtowns_{en,ja}_m11_real_media_handoff` verifies the corresponding
+M11 language-private title, switch and Game-program handoff. They add no
+fixture bytes and report `SKIP` when the licensed disc is unavailable.
+They disable SDL device playback only for headless test stability; source
+music and sound-route receipts remain part of the verified startup state.
+
 CSB uses its own 31-track Red Book layout. Do not reuse DM1's mixed
 MODE1/2048-and-audio offset calculation or DM2's Towns music helper. The CSB
 reader is `src/csb/csb_v1_fmtowns_cd.c`; M11's live transport boundary is in
