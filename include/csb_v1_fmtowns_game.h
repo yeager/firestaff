@@ -504,8 +504,9 @@ int csb_v1_fmtowns_utility_portrait_selector_load(
 /* F7001_SaveChampions / CEDT001.C: write only already-admitted .CMP
  * records. Every party champion must match an existing catalog entry by its
  * source name; the function never invents a filename or creates a portrait
- * record. The 44-byte header is preserved byte-for-byte and only the
- * receipt-bound 464-byte planar payload is replaced. */
+ * record. It preserves the format/identity portion of the 44-byte header,
+ * then writes C06's live 8-byte name and 20-byte title fields alongside the
+ * receipt-bound 464-byte planar payload. */
 int csb_v1_fmtowns_utility_save_portraits(
     const CSB_V1_FmtownsUtilityPortraitCatalog *catalog,
     const CSB_V1_PartyState *party,

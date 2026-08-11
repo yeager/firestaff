@@ -919,17 +919,25 @@ int main(void)
                 if (file) fclose(file);
                 if (read_ok) {
                     copied_portraits.source_bytes[0][0] ^= 0x01u;
+                    snprintf(copied_party.Champions[0].Title,
+                             sizeof(copied_party.Champions[0].Title),
+                             "%s", "SOURCE TITLE");
                     CHECK(csb_v1_fmtowns_utility_save_portraits(
                               &copied_catalog, &copied_party, &copied_portraits),
                           "F7001 saves an admitted existing CMP atomically");
                     file = fopen(copied_catalog.entries[target].source_path, "rb");
                     read_ok = file && fread(after, 1u, sizeof(after), file) == sizeof(after);
                     if (file) fclose(file);
-                    CHECK(read_ok && memcmp(before, after, payload_offset) == 0 &&
+                    CHECK(read_ok &&
+                              memcmp(before, after, 24u) == 0 &&
+                              memcmp(after + 24u,
+                                     copied_party.Champions[0].Title,
+                                     strlen(copied_party.Champions[0].Title)) == 0 &&
+                              after[24u + strlen(copied_party.Champions[0].Title)] == 0 &&
                               memcmp(after + payload_offset,
                                      copied_portraits.source_bytes[0],
                                      CSB_FMTOWNS_PORTRAIT_DATA_SIZE) == 0,
-                          "F7001 preserves the authentic CMP header and replaces only planar payload");
+                          "F7001 preserves CMP identity fields and writes live title plus planar payload");
                 }
             }
         }

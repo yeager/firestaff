@@ -26,8 +26,8 @@ admitted separately and is never a fallback for F31E.
 | Revert and Undo | C06 menu rectangles in `CEDTDATA.C G2272_MouseInputs`; F7037 | Bound | Revert restores the admitted original portrait in memory; Undo exchanges the source-format undo copy. Neither operation writes a file. |
 | Quit | `CEDT006.C` F7005/F7050 and `SWITCH.C` | Bound | M11 returns to the English AUTOEXEC/SWITCHTW route and keeps the source sixty-VBlank delay. |
 | Arrow bitmap | F31 `UTILE.EXP` virtual offset `0x14f70`; ReDMCSB F0689 | Bound to raster | The IMG2 stream is hash-checked and decoded as 31 logical pixels per 32-pixel row buffer for the C06 picker surface. |
-| `.CMP` catalogue and picker state | `CEDT008.C` F7080/F7081/F7083/F7084 and `CEDT001.C F7002_ReadCMP` | Partially bound | Only valid, decoded `PORTRAIT/*.CMP` records are catalogued. The nine-row source list, exact F31E hit boxes, bounded scroll ordinals and selected catalogue index are implemented; the C06 modal event pump still owns the final F7002 handoff. |
-| Existing-record portrait save | `CEDT001.C F7001_SaveChampions` | Bound, narrow | Every party champion must match an admitted source name. F7001 preserves the 44-byte CMP header and replaces only the receipt-bound 464-byte planar payload; it creates no file or filename. |
+| `.CMP` catalogue and picker state | `CEDT008.C` F7080/F7081/F7083/F7084 and `CEDT001.C F7002_ReadCMP` | Bound | Only valid, decoded `PORTRAIT/*.CMP` records are catalogued. M11 enters the source picker on `LOAD CHAMPIONS`, renders its nine-row F31E surface, sends source-coordinate clicks through F7084, then imports only the selected admitted record through F7002. |
+| Existing-record portrait save | `CEDT001.C F7001_SaveChampions`; `CEDT006.C` C12 branch | Bound, narrow | Every party champion must match an admitted source name. F7001 preserves CMP format/identity bytes, writes the live 8-byte name and 20-byte title fields, then atomically replaces the receipt-bound 464-byte planar payload; it creates no file or filename. |
 
 ## Explicitly closed routes
 
@@ -36,8 +36,6 @@ utility flow or create replacement data:
 
 | Route | Missing original owner(s) | Why it remains closed |
 |---|---|---|
-| C06 modal file-picker integration | `CEDT008.C` F7084; `CEDT013.C` F7196/F7316 | The source-coordinate surface, list state and command ordinals are bound, but the C06 modal event pump and its final F7002 return contract are not yet owned by the runtime. |
-| Full Load Champions command | `CEDT001.C` F7003/F7004 | F7002 accepts only an already-selected catalogue record. A scan is not evidence for the original selector or all-champion load transaction. |
 | Make New Adventure | `CEDT006.C` F7086/F7090 | The separate new-adventure state transition has not been bound to F31 data. |
 | Name and title editing | `CEDT006.C` F7027/F7028/F7041 | Cursor timing, keyboard input and text commit remain unbound. |
 | F31J editor | `CEDT030.C` F7341 | The native Shift-JIS glyph consumer is not recovered; drawing host text would fabricate the screen. |
@@ -47,8 +45,8 @@ utility flow or create replacement data:
 `tests/test_csb_v1_fmtowns_m11_game_handoff.c` is an opt-in, real-media test.
 With a hash-admitted F31E/F31J source tree it verifies the C06 P3 envelope,
 language-specific executable choice, menu bytes, icon palette, F31E font,
-the 24-record retail portrait catalogue, F7083/F7084 list state and the
-31/32 F0689 arrow stride.
+the 24-record retail portrait catalogue, F7083/F7084 picker-to-F7002 import,
+F7001's title/payload writeback, and the 31/32 F0689 arrow stride.
 It skips when licensed game data is absent. No original game bytes are stored
 in the repository.
 

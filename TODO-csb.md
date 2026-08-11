@@ -270,10 +270,11 @@ populated dungeon states.
 - **FM-TOWNS-C06-SAVE-001 — C06 `SAVE CHAMPIONS` now has a source-owned
   `.CMP` write path.** The utility opens the authenticated `PORTRAIT`
   catalogue, resolves each live party name to an existing admitted `.CMP`,
-  preserves its 44-byte native header, and atomically replaces only the
-  receipt-bound 464-byte planar portrait payload. Unknown names, missing
+  preserves the format and identity portion of the native header, writes the
+  live 8-byte name and padded 20-byte title fields, and atomically replaces
+  the receipt-bound 464-byte planar portrait payload. Unknown names, missing
   catalogues, invalid records, and generated filenames remain rejected. The
-  real F31 portrait corpus covers the transaction in
+  real F31 portrait corpus covers the transaction, including title writeback, in
   `csb_v1_fmtowns_m11_game_handoff`; C06 name/title editing remains open.
 
 - **FM-TOWNS-C06-LOAD-001 — `F7002_ReadCMP` is now an authenticated import

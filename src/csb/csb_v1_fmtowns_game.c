@@ -2666,6 +2666,18 @@ int csb_v1_fmtowns_utility_save_portraits(
                      entry->source_path) < 0 ||
             strlen(temporary_path) >= sizeof(temporary_path))
             return 0;
+        /* CEDT006.C dispatches SAVE CHAMPIONS by first copying the live
+         * champion name (8 bytes) and title (20 bytes) into C06's CMP
+         * buffer, then F7001 writes that complete record.  Keeping the
+         * original header here discarded legitimate title changes while
+         * reporting a successful C06 save.  The remaining header words are
+        * source identity/format fields and stay byte-for-byte intact. */
+        memset(source + 16u, 0, CSB_FMTOWNS_PORTRAIT_NAME_LEN);
+        strncpy((char *)source + 16u, party->Champions[champion_index].Name,
+                CSB_FMTOWNS_PORTRAIT_NAME_LEN);
+        memset(source + 24u, 0, CSB_FMTOWNS_PORTRAIT_TITLE_LEN);
+        strncpy((char *)source + 24u, party->Champions[champion_index].Title,
+                CSB_FMTOWNS_PORTRAIT_TITLE_LEN);
         memcpy(source + CSB_FMTOWNS_PORTRAIT_HEADER_SIZE,
                portraits->source_bytes[champion_index],
                CSB_FMTOWNS_PORTRAIT_DATA_SIZE);
