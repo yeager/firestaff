@@ -194,7 +194,8 @@ F7004's `GAME` choice reloads only an F0435-valid selected slot.
 It does not authorize the rest of Utility. The source-family chooser and its
 A: medium gate were captured with the original F31J disc in Tsugaru running
 the verified Towns ROM set (`TBIOS_V31L22A`), then implemented only for the
-English font consumer. `F7004_LoadChampions` now presents
+narrow F31J selector and its ROM-bound Shift-JIS font consumer.
+`F7004_LoadChampions` now presents
 its native `GAME` / `PORTRAIT` / `CANCEL` choice before `PORTRAIT` opens the
 source-owned `CEDT008`/`CEDT013` picker. Make New Adventure remains closed:
 F7086/F7090 needs a verified source/destination dungeon transaction and the

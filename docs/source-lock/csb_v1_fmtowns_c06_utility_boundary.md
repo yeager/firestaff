@@ -49,6 +49,23 @@ utility flow or create replacement data:
 
 ## Verification
 
+### Reproducible F31J C06 witness (Tsugaru, 2026-08-12)
+
+The local original F31J CUE was run with the user-owned full Towns ROM set in
+Tsugaru CUI. Tsugaru identified the firmware as `TBIOS_V31L22A`; this is the
+same BIOS identity recorded by the F31J selector boundary. Its own event-log
+playback was used for input, so the capture did not depend on a host mouse
+coordinate transform. From the Japanese AUTOEXEC menu, the second illustrated
+entry opens C06's 640×400 source chooser. The chooser visibly offers Dungeon
+Master, Chaos Strikes Back and Cancel. Selecting Chaos Strikes Back reaches
+the separate prompt that requires the game-save disk in `A:` before any editor
+or save transaction starts.
+
+This witness confirms the ordering and A:-medium gate only. It does **not**
+authorize a F31J editor, file picker, write path, or a generated save medium.
+The captures and event scripts remain in the user-owned external capture
+directory and are deliberately not repository assets.
+
 `tests/test_csb_v1_fmtowns_m11_game_handoff.c` is an opt-in, real-media test.
 With a hash-admitted F31E/F31J source tree it verifies the C06 P3 envelope,
 language-specific executable choice, menu bytes, icon palette, F31E font,
