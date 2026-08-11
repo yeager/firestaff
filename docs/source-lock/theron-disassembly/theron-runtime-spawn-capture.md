@@ -887,3 +887,17 @@ icke-noll. De är observationer, inte semantiskt bevis. `$B0E5` hade fortfarande
 0 giltiga regular-spawn-samples, och därför förblir RNG, spawn, creature-AI,
 combat, loot, generatorer, T700 och T900 fail-closed. Råtrace, VCE/VRAM och
 media ligger kvar på extern disk; inget BIOS eller spelmedia är incheckat.
+
+## 2026-08-11 — directed Button-II replay still misses gameplay ownership
+
+En ny extern replay använde samma hashverifierade US Track 02/System Card och
+det lokala användarskapade `.mc0`-state:t, med riktade Button-II- och
+rörelsehändelser. Mednafen accepterade den verkliga Track 02-bilden och
+producerade 65 536 main-RAM-consumer-rader, 4 096 spawn-consumer-rader och
+11 422 183 RNG-consumerobservationer. Den nådde däremot ingen transition och
+ingen giltig `$B0E5`-execution sample: 36 adresshittar var återigen overlay-
+träffar utan A=`0..3`, medan `$4644` och `$4667` saknades.
+
+Detta är ett nytt negativt runtime-bevis, inte en grund för att fylla i
+monster-AI, attack/skada, loot, generatorer, T700 eller T900. Capturen och
+BIOS:et ligger kvar på extern disk; endast denna sammanfattning är i repot.

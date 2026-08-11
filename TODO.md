@@ -5148,6 +5148,14 @@ authenticated BPK). The remaining work is a Saturn executable or capture
   and 65,536 ordered main-RAM consumer reads. The parser now accepts the
   instrumenter's optional register suffix and keeps the C3A0 target bytes
   provenance-only; no creature/T700/T900 meaning is inferred.
+
+# Theron directed gameplay witness
+
+- 🔒 The latest external Button-II/movement replay still has no transition,
+  valid `$B0E5` regular-spawn execution sample, or `$4644/$4667` return join.
+  Its 36 B0E5 hits are overlay aliases with A outside `0..3`; capture a
+  user-created state at a visible monster/object interaction before opening
+  RNG, creature AI, combat, loot, generator timing, T700 or T900 semantics.
 ## Theron: nästa autentiserade runtime-vittne (2026-08-09)
 
 - Få en och samma Mednafen-session att nå ett riktigt monster efter Track

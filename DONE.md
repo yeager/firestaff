@@ -13694,3 +13694,15 @@ and production source-combat tests.
 - 🔒 Runtime-läsningar publiceras fortfarande inte som semantik. Giltig
   `$B0E5` regular-spawn och komplett return/join saknas; RNG, AI, T700 och
   T900 är fortsatt fail-closed.
+
+# Theron: directed Button-II replay keeps gameplay semantics closed (2026-08-11)
+
+- ✅ En ny extern replay använde den hashverifierade US Track 02/System Card
+  och ett användarskapat `.mc0`-state med riktade Button-II-/rörelsehändelser.
+- ✅ Capturen gav 65 536 main-RAM-consumer-rader, 4 096 spawn-consumer-rader
+  och 11 422 183 RNG-consumerobservationer utan att råmedia eller BIOS lades i
+  repot.
+- 🔒 Ingen transition, giltig `$B0E5`-execution sample eller `$4644`/`$4667`-
+  retur syntes; de 36 adresshittarna var overlay-träffar utan A=`0..3`.
+  Därför förblir RNG, monster-AI, attack/skada, loot, generatorer, T700 och
+  T900 fail-closed.
