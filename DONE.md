@@ -1,3 +1,13 @@
+# Theron: admit clean real VDC/VCE screen-space replay (2026-08-11)
+
+- ✅ Added the externally retained US Track 02/System Card pair
+  `VRAM=a449538a`, `VCE=ea83f117` to the exact source allow-list. The raw
+  snapshots remain outside the repository.
+- ✅ Production testing decoded 1 057 BAT tiles, verified the VCE relation,
+  presented 43 696 non-zero pixels and passed the boot presenter route.
+- 🔒 The associated transition is negative, so no dungeon-square, perspective,
+  HUD, object or gameplay meaning was inferred and no screenshot was promoted.
+
 # Theron: real MISC records round-trip through neutral source items (2026-08-11)
 
 - ✅ Category-10 records from the real US and JP Track 02 dungeon banks now

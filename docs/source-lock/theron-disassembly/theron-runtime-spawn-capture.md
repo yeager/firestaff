@@ -872,6 +872,19 @@ consumer, level/object records, HUD ownership, creature semantics, or source
 bitmap decompressor. Those routes remain fail-closed; no world or object
 meaning is inferred from the BAT alone.
 
+## 2026-08-09 — clean external screen-space replay retained
+
+The external capture directory also contains a complete 64 KiB VRAM snapshot
+with FNV-1a `a449538a` and a 1 KiB VCE snapshot with FNV-1a `ea83f117`. The
+session used the authenticated US Track 02 BIN and System Card, and the raw
+files remain outside GitHub. The transition receipt for this run has no
+semantic loader transition, so the runtime allow-list admits this pair only
+for source VDC tile decoding, atlas binding and VCE palette presentation.
+
+It does not authorize a dungeon level, square-to-tile mapping, HUD/object
+owner, creature, T700 or T900 consumer. No README screenshot is promoted from
+this capture.
+
 ## 2026-08-11 — MODE1/2048 CD→RAM transport witness
 
 En ny, avgränsad körning använde den autentiserade US-distributionens riktiga

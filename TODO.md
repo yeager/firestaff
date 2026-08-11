@@ -1,5 +1,14 @@
 # Firestaff TODO - Open Work
 
+# Theron: screen-space VDC/VCE route is real, semantic viewport remains open (2026-08-11)
+
+- ✅ A second complete external 64 KiB VRAM/1 KiB VCE pair is now admitted by
+  exact FNV-1a identity (`a449538a`/`ea83f117`). Production decoding bound
+  1 057 BAT tiles, 512 palette entries and presented 43 696 non-zero pixels.
+- 🔒 The capture's transition receipt is negative. Square-to-tile,
+  perspective, HUD/object ownership and a README-eligible gameplay frame are
+  still not proven by this screen-space replay.
+
 # Theron: neutral source-item carrier is not full T900 semantics (2026-08-11)
 
 - ✅ Real category-10 `MISC` records now materialize as a neutral

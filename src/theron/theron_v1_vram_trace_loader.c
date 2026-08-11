@@ -170,7 +170,12 @@ int theron_v1_vram_trace_load_known_capture_files(
          * medium/System Card pair.  This is a new screen-space VDC image
          * with the previously admitted source VCE bank; it authorizes only
          * bitmap/tile/palette replay, never square or object semantics. */
-        {0x42a483acu, 0x6fb303b5u}
+        {0x42a483acu, 0x6fb303b5u},
+        /* 2026-08-09 clean external replay.  The transition receipt for
+         * this run is intentionally negative, so this pair authorizes only
+         * the complete source VDC/VCE screen route, not level or gameplay
+         * ownership. */
+        {0xa449538au, 0xea83f117u}
     };
 
     if (!vp || !vram_path || !vce_path) return -1;
