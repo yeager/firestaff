@@ -1438,6 +1438,10 @@ typedef struct DM2_V1_DungeonData {
      * ownership table.  A byte-square map alone is not a playable graph. */
     int record_graph_complete;
     int g1_w0_chains_disabled;
+    /* Mac/Amiga File_header and DB records store words big-endian.  Keep the
+     * source bytes unchanged and make every shared accessor honor this flag. */
+    int words_big_endian;
+    int source_words_big_endian;
     DM2_V1_G1PartialMapBootReceipt partial_map_boot;
     uint8_t *raw_data;
     int raw_size;

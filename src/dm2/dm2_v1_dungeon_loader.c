@@ -66,7 +66,17 @@ static uint16_t rd16le(const uint8_t *p) {
     return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
 }
 
+static uint16_t rd16be_local(const uint8_t *p) {
+    return ((uint16_t)p[0] << 8) | (uint16_t)p[1];
+}
+
 #define RD16(p) rd16le(p)
+
+static uint16_t dm2_v1_dungeon_rd16(const DM2_V1_DungeonData *d,
+                                    const uint8_t *p)
+{
+    return d && d->words_big_endian ? rd16be_local(p) : rd16le(p);
+}
 
 static void wr16le(uint8_t *p, uint16_t v) {
     p[0] = (uint8_t)(v & 0xffu);
@@ -754,6 +764,8 @@ static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
     memcpy(out->raw_data, dat, (size_t)size);
     out->raw_size = size;
     out->record_graph_complete = 1;
+    out->words_big_endian = 1;
+    out->source_words_big_endian = 1;
     out->g1_w0_chains_disabled = 1;
     if (!dm2_v1_dungeon_validate_record_graph(out))
         out->record_graph_complete = 0;
@@ -868,6 +880,8 @@ static int dm2_v1_try_load_be_demo_layout(DM2_V1_DungeonData *out,
     memcpy(out->raw_data, dat, (size_t)size);
     out->raw_size = size;
     out->record_graph_complete = 1;
+    out->words_big_endian = 1;
+    out->source_words_big_endian = 1;
     if (!dm2_v1_dungeon_validate_record_graph(out)) out->record_graph_complete = 0;
     return 1;
 }
@@ -1321,7 +1335,8 @@ int dm2_v1_dungeon_get_first_thing(const DM2_V1_DungeonData *d,
     column_offset = d->column_index_base + (column_index + x) * 2;
     if (column_offset < 0 || column_offset + 1 >= d->raw_size)
         return -1;
-    thing_index = (int)RD16(d->raw_data + column_offset);
+    thing_index = (int)dm2_v1_dungeon_rd16(
+        d, d->raw_data + column_offset);
     square_offset = d->raw_map_data_base + d->level_offsets[level] +
                     x * d->level_heights[level];
     for (int row = 0; row < y; ++row) {
@@ -1333,8 +1348,8 @@ int dm2_v1_dungeon_get_first_thing(const DM2_V1_DungeonData *d,
         return -1;
     if (d->square_first_thing_base + thing_index * 2 + 1 >= d->raw_size)
         return -1;
-    return (int)RD16(d->raw_data + d->square_first_thing_base +
-                     thing_index * 2);
+    return (int)dm2_v1_dungeon_rd16(
+        d, d->raw_data + d->square_first_thing_base + thing_index * 2);
 }
 
 int dm2_v1_dungeon_set_first_thing(DM2_V1_DungeonData *d,
@@ -1366,7 +1381,8 @@ int dm2_v1_dungeon_set_first_thing(DM2_V1_DungeonData *d,
     column_offset = d->column_index_base + (column_index + x) * 2;
     if (column_offset < 0 || column_offset + 1 >= d->raw_size)
         return -1;
-    thing_index = (int)RD16(d->raw_data + column_offset);
+    thing_index = (int)dm2_v1_dungeon_rd16(
+        d, d->raw_data + column_offset);
     square_offset = d->raw_map_data_base + d->level_offsets[level] +
                     x * d->level_heights[level];
     for (int row = 0; row < y; ++row) {
@@ -2492,7 +2508,7 @@ int dm2_v1_dungeon_get_next_thing(const DM2_V1_DungeonData *d,
     record = dm2_v1_dungeon_get_thing_record(d, thing, NULL, NULL, &size);
     if (!record || size < 2) return -1;
     {
-        uint16_t w0 = RD16(record);
+        uint16_t w0 = dm2_v1_dungeon_rd16(d, record);
         if (w0 == DM2_THING_NULL_MARKER)
             return -1;
         return (int)w0;
@@ -3209,8 +3225,9 @@ int dm2_v1_dungeon_validate_file_header_runtime_map(
      * root and c_record.cpp follows GenericRecord::w0.  Keep this route
      * distinct from the PC G1 extension layout. */
     if (!out || !d || !d->raw_data || d->square_bytes != 1 ||
-        d->g1_extension_base >= 0 || !d->record_graph_complete ||
-        d->g1_w0_chains_disabled || map < 0 || map >= d->level_count ||
+        (!d->source_words_big_endian &&
+         (d->g1_extension_base >= 0 || d->g1_w0_chains_disabled)) ||
+        !d->record_graph_complete || map < 0 || map >= d->level_count ||
         !dm2_v1_dungeon_collect_g1_map_corpus_receipt(d, &corpus) ||
         !corpus.available || corpus.g1_layout_absent) {
         return 0;

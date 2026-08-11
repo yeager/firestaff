@@ -51,6 +51,12 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   39,411-byte big-endian dungeon; the demo uses its 6,535-byte truncated
   big-endian File_header/map data. Japanese and French Mac containers remain
   preservation inputs, not launchable variants.
+- The Mac dungeon reader keeps the ZIP/HFS source bytes intact and carries the
+  68k word order through the authenticated column, ground-stack and record-link
+  accessors. Both English ZIPs now pass the source record-graph and start-pose
+  gates. Retail map-wide GAME_LOAD remains fail-closed where map 5 contains
+  unproven record roots; the demo has no champion-DYN4 roster and remains a
+  title/demo route.
 - The English Macintosh input table is source-locked and tested for both
   versions: inventory keys, movement aliases, freeze/wake, Command-O/S/Q,
   entrance/credits Return, and the three wall-button columns. Only actions

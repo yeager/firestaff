@@ -442,7 +442,13 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
   independently verified.
 - [ ] Bind the Mac big-endian `DUNGEON.DAT` and `GRAPHICS.DAT` pair to one
   platform-specific boot receipt. Japanese 16-colour and US English
-  256-colour graphics must remain separate layouts and hashes.
+  256-colour graphics must remain separate layouts and hashes. The shared
+  dungeon reader now preserves the source bytes, carries explicit 68k word
+  endianness through column/ground-stack/record links, and proves the
+  record-graph and start-pose gate for both authentic English ZIPs. Retail
+  map-wide GAME_LOAD still remains closed where map 5 contains unproven
+  record roots; the demo has no champion-DYN4 roster and therefore remains a
+  title/demo route.
 - [~] Read the authentic retail Mac QuickTime `MooV` data and resource forks in
   RAM. The verified retail image contains `Title.MooV`, `Swoosh.MooV`,
   `Credits.MooV` and `Ending.MooV` (CTest records their presence, sizes, HFS
