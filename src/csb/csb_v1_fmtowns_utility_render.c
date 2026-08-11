@@ -115,6 +115,85 @@ static void button(C06_Box box, const uint8_t *label, size_t label_max,
          box.bottom - 2, C15_WHITE, C00_BLACK, label, chars, pixels);
 }
 
+static int c06_dialog_base(const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
+                           const CSB_V1_FmtownsUtilityFontReceipt *font,
+                           uint8_t *pixels, size_t pixel_capacity,
+                           CSB_V1_FmtownsUtilityRenderReceipt *out_receipt)
+{
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!handoff || !font || !pixels ||
+        pixel_capacity < CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS ||
+        !handoff->valid || !handoff->static_art_verified || !font->valid ||
+        handoff->language != CSB_FMTOWNS_SWITCH_ENGLISH ||
+        font->language != CSB_FMTOWNS_SWITCH_ENGLISH) return 0;
+    memset(pixels, C00_BLACK, CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS);
+    filled_box((C06_Box){62, 255, 48, 149}, 2, C01_DARK_GRAY, C00_BLACK,
+               pixels);
+    return 1;
+}
+
+int csb_v1_fmtowns_utility_render_game_source_dialog(
+    const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
+    const CSB_V1_FmtownsUtilityFontReceipt *font,
+    uint8_t *pixels, size_t pixel_capacity,
+    CSB_V1_FmtownsUtilityRenderReceipt *out_receipt)
+{
+    static const uint8_t title[] = "LOAD WHICH SAVED GAME?";
+    static const uint8_t dungeon_master[] = "DUNGEON MASTER";
+    static const uint8_t chaos_strikes_back[] = "CHAOS STRIKES BACK";
+    static const uint8_t cancel[] = "CANCEL";
+    CSB_V1_FmtownsUtilityRenderReceipt receipt;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!c06_dialog_base(handoff, font, pixels, pixel_capacity, &receipt))
+        return 0;
+    text(font, 95, 70, C15_WHITE, C01_DARK_GRAY, title, sizeof(title), pixels);
+    button((C06_Box){80, 237, 88, 96}, dungeon_master,
+           sizeof(dungeon_master), font, pixels);
+    button((C06_Box){80, 237, 108, 116}, chaos_strikes_back,
+           sizeof(chaos_strikes_back), font, pixels);
+    button((C06_Box){80, 237, 128, 136}, cancel, sizeof(cancel), font, pixels);
+    receipt.valid = 1;
+    receipt.language = CSB_FMTOWNS_SWITCH_ENGLISH;
+    receipt.source_fnv1a = handoff->executable_fnv1a ^ font->source_fnv1a;
+    receipt.pixel_fnv1a = fnv1a(pixels, CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS);
+    receipt.source_evidence =
+        "Tsugaru F31J/TBIOS capture; ReDMCSB CEDTDATA.C G7085/G7065; "
+        "CEDT005.C G2260";
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int csb_v1_fmtowns_utility_render_game_save_medium_dialog(
+    const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
+    const CSB_V1_FmtownsUtilityFontReceipt *font,
+    uint8_t *pixels, size_t pixel_capacity,
+    CSB_V1_FmtownsUtilityRenderReceipt *out_receipt)
+{
+    static const uint8_t line1[] = "GAME SAVE DISK";
+    static const uint8_t line2[] = "DRIVE A:";
+    static const uint8_t ok[] = "OK";
+    static const uint8_t cancel[] = "CANCEL";
+    CSB_V1_FmtownsUtilityRenderReceipt receipt;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!c06_dialog_base(handoff, font, pixels, pixel_capacity, &receipt))
+        return 0;
+    text(font, 121, 76, C15_WHITE, C01_DARK_GRAY, line1, sizeof(line1), pixels);
+    text(font, 139, 86, C15_WHITE, C01_DARK_GRAY, line2, sizeof(line2), pixels);
+    button((C06_Box){80, 148, 128, 136}, ok, sizeof(ok), font, pixels);
+    button((C06_Box){165, 237, 128, 136}, cancel, sizeof(cancel), font, pixels);
+    receipt.valid = 1;
+    receipt.language = CSB_FMTOWNS_SWITCH_ENGLISH;
+    receipt.source_fnv1a = handoff->executable_fnv1a ^ font->source_fnv1a;
+    receipt.pixel_fnv1a = fnv1a(pixels, CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS);
+    receipt.source_evidence =
+        "Tsugaru F31J/TBIOS capture; F31E UTILE.EXP string table: "
+        "GAME SAVE DISK / DISK IN %DEVICE%; CEDTDATA.C G7061/G2259";
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 static void blit(const uint8_t *source, int width, int height, int x, int y,
                  int transparent, uint8_t *pixels)
 {

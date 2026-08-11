@@ -2662,10 +2662,16 @@
   ursprungliga `.BAK`-återställningen) och PORTRAIT går vidare till den
   källägda CEDT008/CEDT013-väljaren. Namn- och titelinmatning är avgränsad
   till den laddade C06-partyn och testas tillsammans med den privata
-  GAME-saven. Återstår endast den separata Dungeon Master-versus-CSB-
-  destinationsdialogen och Make New Adventure:s F7086/F7090/F7020-
-  transaktion; båda stannar fail-closed tills en verifierad
-  källa-/destinationsdungeon och objektmodifierarägarna finns.
+  GAME-saven. 2026-08-11: en reproducerbar Tsugaru-körning med original-CD
+  och `TBIOS_V31L22A` bekräftar C06:s föregående källval (`DUNGEON MASTER`,
+  `CHAOS STRIKES BACK`, `CANCEL`) och dess separata A:-prompt för
+  game-save-disken. F31E visar nu samma källval; CSB fortsätter enbart efter
+  att en F0435-giltig `CSBGAME.DAT`/`.BAK` har öppnats, medan CD:ns
+  `MINI.DAT` aldrig används som falsk sparskiva. Dungeon Master-grenen är
+  fortsatt stängd utan egen autentiserad DM-mediumkonsument. Återstår Make
+  New Adventure:s F7086/F7090/F7020-transaktion; den stannar fail-closed
+  tills en verifierad källa-/destinationsdungeon och
+  objektmodifierarägarna finns.
 
 - **THERON-FORCEFIELD-REAL-DUNGEON:** Enter now reliably dispatches from the
   Soul Room forcefield focus, including the first attempt without prompt text.
@@ -3155,9 +3161,11 @@
   `CDATA/MINI.DAT` or `CJDATA/MINI.DAT` body alongside flat `GRAPHICS.DAT`
   and `DUNGEON.DAT`; it cannot borrow a prior cache's bootstrap save. The F31E
   C06 file-picker, first/repeated native GAME save, GAME load and `.BAK`
-  recovery are now covered by real-media regressions. Remaining parity work is
-  F31J's EGB Shift-JIS text consumer, C06's separate Dungeon Master-versus-CSB
-  destination selection, Make New Adventure's F7086/F7090 source/destination
+  recovery are now covered by real-media regressions. En Tsugaru-capture
+  binder dessutom C06:s inledande spelkällval och A:-krav; F31E:s gate kräver
+  nu en F0435-giltig native medium och accepterar inte `MINI.DAT` som save.
+  Remaining parity work is F31J's EGB Shift-JIS text consumer, C06's Dungeon
+  Master-mediumkonsument, Make New Adventure's F7086/F7090 source/destination
   object transaction, and broader user-save corpus coverage—not a fallback or
   synthetic save path.
 

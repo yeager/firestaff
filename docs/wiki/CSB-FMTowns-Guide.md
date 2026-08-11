@@ -163,9 +163,15 @@ envelopes, six-label source pools, C09 icon palette, source-coordinate menu
 boxes, F31 M653 font material and planar `.CMP` portrait decoder are
 verified. For F31E this authorizes a deliberately small editor surface: the
 verified C06 frame, champion selection, palette selection, planar 32×29
-pixel drawing, connected-area fill, Revert and Undo. Each edit remains in
-the admitted `MINI.DAT` portrait bytes. The undo image is one source-format
-copy, and neither editing nor reverting writes a host or user save. The
+pixel drawing, connected-area fill, Revert and Undo. C06 first shows the
+source-owned `LOAD WHICH SAVED GAME?` choice (`DUNGEON MASTER`, `CHAOS
+STRIKES BACK`, `CANCEL`). The CSB branch then waits for the separately
+selected A: game-save medium; a CD `MINI.DAT` is explicitly not accepted as
+that medium. Only an F0435-valid native `CSBGAME.DAT` (or its native `.BAK`
+recovery) opens the editor. The current CSB installation keeps the Dungeon
+Master branch closed until corresponding DM media is admitted. The undo image
+is one source-format copy, and neither editing nor reverting writes a host or
+user save. The
 source-owned portrait transactions also cover revalidated `F7002_ReadCMP`
 import after a catalogue selection and the source `SAVE CHAMPIONS` dialog.
 F7000's `PORTRAIT` choice preserves an admitted `.CMP` header, then writes
@@ -175,10 +181,12 @@ portrait medium: `~/.firestaff/portraits` on macOS/Linux or
 For F31E CSB, F7001's `GAME` choice is also bound: first save stages the
 admitted `MINI.DAT` privately, writes a canonical native `CSBGAME.DAT`, and
 later saves update that same slot through F0433 with the original `.BAK` rule.
-F7004's `GAME` choice reloads only an F0435-valid selected slot. The bound UI
-does not fabricate C06's separate Dungeon Master-versus-CSB destination chooser.
+F7004's `GAME` choice reloads only an F0435-valid selected slot.
 
-It does not authorize the rest of Utility. `F7004_LoadChampions` now presents
+It does not authorize the rest of Utility. The source-family chooser and its
+A: medium gate were captured with the original F31J disc in Tsugaru running
+the verified Towns ROM set (`TBIOS_V31L22A`), then implemented only for the
+English font consumer. `F7004_LoadChampions` now presents
 its native `GAME` / `PORTRAIT` / `CANCEL` choice before `PORTRAIT` opens the
 source-owned `CEDT008`/`CEDT013` picker. Make New Adventure remains closed:
 F7086/F7090 needs a verified source/destination dungeon transaction and the

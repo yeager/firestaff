@@ -96,6 +96,25 @@ int csb_v1_fmtowns_utility_render_initial(
     uint8_t *indexed_pixels, size_t pixel_capacity,
     CSB_V1_FmtownsUtilityRenderReceipt *out_receipt);
 
+/* C06's first modal is not the portrait editor.  F31E CEDTDATA.C G7085 and
+ * G7065 ask which saved-game family is to become C0_GAME_SOURCE.  The F31J
+ * equivalent remains deliberately closed until its TBIOS glyph path is
+ * reproduced rather than replaced with host text. */
+int csb_v1_fmtowns_utility_render_game_source_dialog(
+    const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
+    const CSB_V1_FmtownsUtilityFontReceipt *font,
+    uint8_t *indexed_pixels, size_t pixel_capacity,
+    CSB_V1_FmtownsUtilityRenderReceipt *out_receipt);
+
+/* After the CSB branch C06 waits for its selected native game-save medium in
+ * drive A:.  This is intentionally a distinct modal: it must not fall
+ * through to the retail CD's MINI.DAT bootstrap as though it were a save. */
+int csb_v1_fmtowns_utility_render_game_save_medium_dialog(
+    const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
+    const CSB_V1_FmtownsUtilityFontReceipt *font,
+    uint8_t *indexed_pixels, size_t pixel_capacity,
+    CSB_V1_FmtownsUtilityRenderReceipt *out_receipt);
+
 /* CEDT001.C F7001's native three-choice save dialog.  The editor beneath
  * it and its 5x6 font remain receipt-bound; the choices use CEDTDATA.C
  * G2261 source hit rectangles: GAME, PORTRAIT, CANCEL. */

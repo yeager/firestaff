@@ -1321,18 +1321,58 @@ int main(void)
 
     if (language == CSB_FMTOWNS_SWITCH_ENGLISH) {
         /* SWITCH.C button two exits with status five and AUTOEXEC.BAT opens
-         * UTILE.EXP. The recovered C06 F7042 page consumes only UTILE and
-         * MINI.DAT bytes; it must not keep SWITCHTW as a synthetic backdrop. */
+         * UTILE.EXP. C06 first owns its source-family chooser; it must not
+         * present the MINI.DAT editor until an F0435 game-save medium is read. */
         result = M11_GameView_HandlePointerButton(
             &view, 57, 59, DM1_V1_MOUSE_MASK_LEFT_PC34);
         CHECK(result == M11_GAME_INPUT_REDRAW && view.csbFmtownsUtilityBound &&
                   !view.csbFmtownsSwitchBound && !view.csbState.startup_entrance_active,
-              "F31E Utility opens its verified C06 initial editor owner");
+              "F31E Utility opens its verified C06 game-source chooser");
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, 320, 200);
         CHECK(memcmp(framebuffer, view.csbFmtownsSwitchPixels,
-                     sizeof(framebuffer)) != 0 && framebuffer[9u * 320u + 6u] == 9u,
-              "F31E Utility presents its C06-owned source raster, not SWITCHTW");
+                     sizeof(framebuffer)) != 0,
+              "F31E Utility presents its C06 source chooser, not SWITCHTW");
+        result = M11_GameView_HandlePointerButton(
+            &view, 160, 112, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(result == M11_GAME_INPUT_REDRAW &&
+                  view.csbFmtownsUtilityGameSaveMediumDialogActive &&
+                  !M11_GameView_CsbFmtownsUtilityTextInputActive(&view),
+              "F31E C06 CSB choice waits for the separate A: save medium");
+        result = M11_GameView_HandlePointerButton(
+            &view, 112, 132, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(result == M11_GAME_INPUT_REDRAW &&
+                  view.csbFmtownsUtilityGameSaveMediumDialogActive &&
+                  strcmp(view.lastOutcome, "GAME SAVE DISK REQUIRED") == 0,
+              "F31E C06 rejects the CD MINI.DAT when no A: game-save medium exists");
+        result = M11_GameView_HandlePointerButton(
+            &view, 200, 132, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(result == M11_GAME_INPUT_REDRAW &&
+                  view.csbFmtownsUtilityGameSourceDialogActive,
+              "F31E C06 save-medium cancel returns to the source chooser");
+        result = M11_GameView_HandlePointerButton(
+            &view, 160, 132, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(result == M11_GAME_INPUT_REDRAW && view.csbFmtownsSwitchBound &&
+                  !view.csbFmtownsUtilityBound,
+              "F31E C06 source-dialog cancel returns through AUTOEXEC to SWITCHTW");
+        for (tick = 0u; tick < 80u && view.csbFmtownsSwitchVblanksRemaining != 0u;
+             ++tick) {
+            (void)M11_GameView_AdvanceIdleTick(&view);
+        }
+        /* The old direct-editor regression suite needs a separately supplied
+         * F0435 save medium.  A retail install with only CD files must stop
+         * above; it may not synthesize that missing A: disk. */
+        if (user_save_path && user_save_path[0] &&
+            test_set_env("FIRESTAFF_QUICKSAVE_PATH", user_save_path)) {
+            result = M11_GameView_HandlePointerButton(
+                &view, 57, 59, DM1_V1_MOUSE_MASK_LEFT_PC34);
+            result = M11_GameView_HandlePointerButton(
+                &view, 160, 112, DM1_V1_MOUSE_MASK_LEFT_PC34);
+            result = M11_GameView_HandlePointerButton(
+                &view, 112, 132, DM1_V1_MOUSE_MASK_LEFT_PC34);
+            CHECK(result == M11_GAME_INPUT_REDRAW &&
+                      !view.csbFmtownsUtilityGameSaveMediumDialogActive,
+                  "F31E C06 opens its editor from the supplied native A: medium");
         /* CEDTDATA.C entries 13/14 and CEDT006.C F7027/F7041: the editor
          * owns native name/title text, including F31's 7/19 byte limits and
          * its upper-case punctuation filter. */
@@ -1632,6 +1672,8 @@ int main(void)
         }
         CHECK(view.csbFmtownsSwitchVblanksRemaining == 0u,
               "F31E C06 return observes SWITCHTW's source VBlank wait");
+        }
+        (void)test_set_env("FIRESTAFF_QUICKSAVE_PATH", NULL);
     }
 
     /* ReDMCSB SWITCH.C F2279 registers G4171 at (47,105), 62x39. */

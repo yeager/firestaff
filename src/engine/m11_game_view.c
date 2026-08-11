@@ -8817,7 +8817,6 @@ static int m11_csb_bind_fmtowns_switch(
 static int m11_csb_enter_fmtowns_utility(
     M11_GameViewState *state, CSB_V1_FmtownsSwitchLanguage language)
 {
-    CSB_V1_FmtownsGameHandoffReceipt game;
     CSB_V1_FmtownsUtilityRenderReceipt rendered;
     const CSB_V1_BootProfile *profile;
 
@@ -8836,7 +8835,6 @@ static int m11_csb_enter_fmtowns_utility(
            sizeof(state->csbFmtownsUtilityMenuReceipt));
     memset(&state->csbFmtownsUtilityFontReceipt, 0,
            sizeof(state->csbFmtownsUtilityFontReceipt));
-    memset(&game, 0, sizeof(game));
     memset(&state->csbFmtownsUtilityPortraitReceipt, 0,
            sizeof(state->csbFmtownsUtilityPortraitReceipt));
     memset(&state->csbFmtownsUtilityPortraitCatalog, 0,
@@ -8854,6 +8852,8 @@ static int m11_csb_enter_fmtowns_utility(
     state->csbFmtownsUtilityUndoModified = 0;
     state->csbFmtownsUtilityUndoAvailable = 0;
     state->csbFmtownsUtilityFilePickerActive = 0;
+    state->csbFmtownsUtilityGameSourceDialogActive = 1;
+    state->csbFmtownsUtilityGameSaveMediumDialogActive = 0;
     state->csbFmtownsUtilitySaveDialogActive = 0;
     state->csbFmtownsUtilityLoadDialogActive = 0;
     state->csbFmtownsUtilityEditField = -1;
@@ -8869,20 +8869,12 @@ static int m11_csb_enter_fmtowns_utility(
             profile, language, &state->csbFmtownsUtilityMenuReceipt) ||
         !csb_v1_fmtowns_utility_font_open(
             profile, language, &state->csbFmtownsUtilityFontReceipt) ||
-        !csb_v1_fmtowns_game_handoff_open(profile, language, &game) ||
-        !csb_v1_fmtowns_game_load_startup_party(
-            &game, &state->csbFmtownsUtilityParty) ||
-        !csb_v1_fmtowns_game_load_startup_portraits(
-            &game, &state->csbFmtownsUtilityPortraitReceipt) ||
         !csb_v1_fmtowns_utility_icon_palette_rgb6(
             &state->csbFmtownsUtilityMenuReceipt,
             state->csbFmtownsUtilityPaletteRgb6) ||
-        !csb_v1_fmtowns_utility_render_initial(
+        !csb_v1_fmtowns_utility_render_game_source_dialog(
             &state->csbFmtownsUtilityHandoffReceipt,
-            &state->csbFmtownsUtilityMenuReceipt,
             &state->csbFmtownsUtilityFontReceipt,
-            &state->csbFmtownsUtilityParty,
-            &state->csbFmtownsUtilityPortraitReceipt,
             state->csbFmtownsUtilityPixels,
             sizeof(state->csbFmtownsUtilityPixels), &rendered)) {
         memset(state->csbFmtownsUtilityPixels, 0,
@@ -8891,17 +8883,6 @@ static int m11_csb_enter_fmtowns_utility(
                sizeof(state->csbFmtownsUtilityPaletteRgb6));
         return 0;
     }
-    /* The editor can operate on the authenticated MINI.DAT portraits even
-     * when the optional PORTRAIT directory is absent. F7001 remains
-     * unavailable without a real C06 catalog; opening C06 itself must not
-     * be made dependent on that optional file-picker corpus. */
-    (void)csb_v1_fmtowns_utility_portrait_catalog_open(
-        profile, language, &state->csbFmtownsUtilityPortraitCatalog);
-    state->csbFmtownsUtilitySelectedChampion = 0u;
-    state->csbFmtownsUtilitySelectedColor = 0u;
-    memcpy(state->csbFmtownsUtilityOriginalPortraits,
-           state->csbFmtownsUtilityPortraitReceipt.source_bytes,
-           sizeof(state->csbFmtownsUtilityOriginalPortraits));
     state->csbFmtownsUtilityBound = 1;
     /* AUTOEXEC.BAT has transferred ownership from SWITCHTW to C06. */
     state->csbFmtownsSwitchBound = 0;
@@ -8913,6 +8894,20 @@ static int m11_csb_redraw_fmtowns_utility(M11_GameViewState *state)
     CSB_V1_FmtownsUtilityRenderReceipt rendered;
     if (!state || !state->csbFmtownsUtilityBound) return 0;
     memset(&rendered, 0, sizeof(rendered));
+    if (state->csbFmtownsUtilityGameSourceDialogActive) {
+        return csb_v1_fmtowns_utility_render_game_source_dialog(
+            &state->csbFmtownsUtilityHandoffReceipt,
+            &state->csbFmtownsUtilityFontReceipt,
+            state->csbFmtownsUtilityPixels,
+            sizeof(state->csbFmtownsUtilityPixels), &rendered);
+    }
+    if (state->csbFmtownsUtilityGameSaveMediumDialogActive) {
+        return csb_v1_fmtowns_utility_render_game_save_medium_dialog(
+            &state->csbFmtownsUtilityHandoffReceipt,
+            &state->csbFmtownsUtilityFontReceipt,
+            state->csbFmtownsUtilityPixels,
+            sizeof(state->csbFmtownsUtilityPixels), &rendered);
+    }
     if (state->csbFmtownsUtilityFilePickerActive) {
         return csb_v1_fmtowns_utility_render_file_picker(
             &state->csbFmtownsUtilityHandoffReceipt,
@@ -9451,6 +9446,94 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
                         DM1_V1_MOUSE_MASK_RIGHT_PC34)) == 0 ||
         !state->csbBootProfile) return M11_GAME_INPUT_REDRAW;
     memset(&hit, 0, sizeof(hit));
+    if (state->csbFmtownsUtilityGameSourceDialogActive) {
+        if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0)
+            return M11_GAME_INPUT_REDRAW;
+        /* CEDTDATA.C G2260/G7065: the initial C06 dialog chooses the
+         * source family, not a synthetic MINI.DAT editor.  DM media is not
+         * yet admitted by this CSB-only installation, so retain the modal
+         * and fail closed rather than accepting the label as a fake source. */
+        if (x >= 80 && x <= 237 && y >= 88 && y <= 96) {
+            m11_set_status(state, "CSB FM TOWNS", "DUNGEON MASTER MEDIA REQUIRED");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (x >= 80 && x <= 237 && y >= 108 && y <= 116) {
+            state->csbFmtownsUtilityGameSourceDialogActive = 0;
+            state->csbFmtownsUtilityGameSaveMediumDialogActive = 1;
+            return m11_csb_redraw_fmtowns_utility(state)
+                ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
+        if (x >= 80 && x <= 237 && y >= 128 && y <= 136) {
+            state->csbFmtownsUtilityGameSourceDialogActive = 0;
+            state->csbFmtownsUtilityBound = 0;
+            memset(state->csbFmtownsUtilityPixels, 0,
+                   sizeof(state->csbFmtownsUtilityPixels));
+            if (!m11_csb_bind_fmtowns_switch(
+                    state, CSB_FMTOWNS_SWITCH_ENGLISH))
+                return M11_GAME_INPUT_IGNORED;
+            return M11_GAME_INPUT_REDRAW;
+        }
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (state->csbFmtownsUtilityGameSaveMediumDialogActive) {
+        CSB_V1_FmtownsGameHandoffReceipt game;
+        CSB_V1_FmtownsUserSaveReceipt save;
+        CSB_V1_FmtownsStartupState save_state;
+        CSB_V1_FmtownsStartupPortraitReceipt save_portraits;
+        CSB_V1_BootProfile *profile =
+            (CSB_V1_BootProfile *)state->csbBootProfile;
+        char path[FSP_PATH_MAX];
+        int loaded = 0;
+        if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0)
+            return M11_GAME_INPUT_REDRAW;
+        if (x >= 165 && x <= 237 && y >= 128 && y <= 136) {
+            state->csbFmtownsUtilityGameSaveMediumDialogActive = 0;
+            state->csbFmtownsUtilityGameSourceDialogActive = 1;
+            return m11_csb_redraw_fmtowns_utility(state)
+                ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
+        if (!(x >= 80 && x <= 148 && y >= 128 && y <= 136))
+            return M11_GAME_INPUT_REDRAW;
+        memset(&game, 0, sizeof(game));
+        memset(&save, 0, sizeof(save));
+        memset(&save_state, 0, sizeof(save_state));
+        memset(&save_portraits, 0, sizeof(save_portraits));
+        /* C06's source reader accepts only a full F0435 CSBGAME.DAT (or its
+         * native recovery sibling).  The installed CD MINI.DAT is never a
+         * substitute for the A: game-save medium. */
+        if (csb_v1_fmtowns_game_handoff_open(
+                profile, CSB_FMTOWNS_SWITCH_ENGLISH, &game) &&
+            m11_csb_fmtowns_native_save_path(path, sizeof(path)) &&
+            csb_v1_fmtowns_game_user_save_open_or_restore_backup(
+                profile, &game, path, &save) &&
+            csb_v1_fmtowns_game_load_user_save_state(&save, &save_state) &&
+            csb_v1_fmtowns_game_load_user_save_portraits(
+                &save, &save_portraits)) {
+            state->csbFmtownsUtilityParty = save_state.party;
+            state->csbFmtownsUtilityPortraitReceipt = save_portraits;
+            memcpy(state->csbFmtownsUtilityOriginalPortraits,
+                   save_portraits.source_bytes,
+                   sizeof(state->csbFmtownsUtilityOriginalPortraits));
+            memset(state->csbFmtownsUtilityPortraitModified, 0,
+                   sizeof(state->csbFmtownsUtilityPortraitModified));
+            state->csbFmtownsUtilityUndoAvailable = 0;
+            state->csbFmtownsUtilitySelectedChampion = 0u;
+            state->csbFmtownsUtilitySelectedColor = 0u;
+            (void)csb_v1_fmtowns_utility_portrait_catalog_open(
+                profile, CSB_FMTOWNS_SWITCH_ENGLISH,
+                &state->csbFmtownsUtilityPortraitCatalog);
+            loaded = 1;
+        }
+        csb_v1_fmtowns_game_startup_state_free(&save_state);
+        if (!loaded) {
+            m11_set_status(state, "CSB FM TOWNS", "GAME SAVE DISK REQUIRED");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        state->csbFmtownsUtilityGameSaveMediumDialogActive = 0;
+        m11_set_status(state, "CSB FM TOWNS", "GAME SAVE LOADED");
+        return m11_csb_redraw_fmtowns_utility(state)
+            ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+    }
     if (state->csbFmtownsUtilitySaveDialogActive) {
         if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0)
             return M11_GAME_INPUT_REDRAW;
@@ -9781,6 +9864,8 @@ int M11_GameView_CsbFmtownsUtilityTextInputActive(
     return state && state->active && state->csbFmtownsUtilityBound &&
            state->csbFmtownsUtilityEditField >= 0 &&
            state->csbFmtownsUtilityEditField <= 1 &&
+           !state->csbFmtownsUtilityGameSourceDialogActive &&
+           !state->csbFmtownsUtilityGameSaveMediumDialogActive &&
            !state->csbFmtownsUtilityFilePickerActive &&
            !state->csbFmtownsUtilitySaveDialogActive &&
            !state->csbFmtownsUtilityLoadDialogActive;

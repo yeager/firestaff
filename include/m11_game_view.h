@@ -1631,6 +1631,10 @@ typedef struct {
     uint8_t csbFmtownsUtilitySelectedColor;
     CSB_V1_FmtownsUtilityFilePicker csbFmtownsUtilityFilePicker;
     int csbFmtownsUtilityFilePickerActive;
+    /* C06 starts by selecting C0_GAME_SOURCE.  It cannot expose the editor
+     * before an independently admitted original game-save medium is read. */
+    int csbFmtownsUtilityGameSourceDialogActive;
+    int csbFmtownsUtilityGameSaveMediumDialogActive;
     /* CEDT001.C F7001's GAME / PORTRAIT / CANCEL dialog. */
     int csbFmtownsUtilitySaveDialogActive;
     /* CEDT001.C F7004's distinct GAME / PORTRAIT / CANCEL dialog. */
