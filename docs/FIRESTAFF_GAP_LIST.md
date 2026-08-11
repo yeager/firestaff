@@ -19,9 +19,11 @@ emulator/runtime routes; this rule overrides older open-import wording below.
 strictly indexed as a four-segment archive from the real Utility Disk
 structure. The parser verifies its duplicated big-endian size table and exact
 file coverage before exposing a segment; the real English ST 2.0/2.1 archive
-proves spans `100`, `29146`, `1497` and `32` bytes. This is a resource-boundary
-receipt only: no host renderer or platform graphic decoder may claim the
-original Oracle bitmap/font pixels yet.
+proves spans `100`, `29146`, `1497` and `32` bytes. Segment 1 now follows the
+source-owned IMG2 expansion path and segment 3 follows `HINT001.C`'s exact
+Atari RGB3-to-RGB4 conversion, producing an owned original 320×200 indexed
+surface. This remains a resource boundary: graphical UI routing, original
+integer/font consumers and frame/pixel parity are still open.
 
 2026-07-31 correction: the isolated `csb_hint_oracle_graphical_overlay`
 module, which drew a hardcoded frame and 5×7 font rather than original Utility
