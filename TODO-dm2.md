@@ -419,18 +419,20 @@ clipping is still unproven. Remaining weather work is to bind real original
 DM2 Macintosh is a separate 68k platform family, not a DOS or FM Towns
 asset variant. The local corpus contains authentic English and Japanese Mac
 archives, a French StuffIt image, and Mac-specific `GRAPHICS.DAT` fingerprints.
-The large English retail ZIP is now admitted and read without extracting game
-files: Firestaff reads the raw MODE1/2352 BIN, Apple Partition Map, HFS
-catalogue and the big-endian `DMFiles` forks directly into RAM. The smaller
-English "The First Chapter" ZIP is a different installer: its MacBinary data
-fork contains a StuffIt/TTComp payload and remains a separate open gate.
+The large English retail ZIP and the smaller English "The First Chapter" demo
+are admitted and read without extracting game files. Firestaff reads the raw
+MODE1/2352 BIN, Apple Partition Map and HFS catalogue directly into RAM; the
+demo additionally walks its genuine StuffIt 2 `DMFiles` member in RAM. The
+retail and demo use separate hash-paired big-endian dungeon receipts.
 
 - [x] Admit the authentic large US English retail ZIP independently as
   `mac-en-retail`; keep its HFS container as the runtime owner and never
   extract its game files to the staging directory.
-- [ ] Admit the smaller US English "The First Chapter" demo independently.
-  Its source-owned StuffIt/TTComp reader is still required; never promote its
-  compressed payload or a retail hash to the other edition.
+- [x] Admit the smaller US English "The First Chapter" demo independently.
+  The authentic installer is read in RAM, its `DMFiles/Graphics.dat` and
+  6,535-byte `Dungeon.dat` are hash-verified, and its truncated big-endian
+  File_header/map data enters the real dungeon loader. The leading bytes are
+  the dungeon header, not a payload to expand.
 - [ ] Admit the authentic Japanese 1.0 and French StuffIt editions
   independently once their container/resource-fork readers are verified.
 - [ ] Add a source-owned Mac container/resource-fork reader for the verified

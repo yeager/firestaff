@@ -364,6 +364,7 @@ static const M12_VersionSpec g_dm2Versions[] = {
     {"dm2", "pc98-ja-demo", "PC-9801 Japanese Demo", "PC-98 Demo", g_dm2GraphicsNames, "a0277195099b2ace51d4e085f7eef835", M12_ARCH_PC98},
     {"dm2", "amiga-en", "Amiga AGA English", "Amiga EN", g_dm2GraphicsNames, "1c940ea95703eaea0ecdf84d17e954b9", M12_ARCH_AMIGA},
     {"dm2", "mac-en-retail", "Macintosh English retail", "Mac EN retail", g_dm2GraphicsNames, "5cab25f6b975957eae4a203174e7f2a6", M12_ARCH_MAC},
+    {"dm2", "mac-en-demo", "Macintosh English demo", "Mac EN demo", g_dm2GraphicsNames, "4bf28b3d84e6799d7686c6aaf96cbf23", M12_ARCH_MAC},
     /* DM2 boot profile / DMWeb-authenticated PC-9821 pair.  This is a
      * retail Japanese variant, not the separate PC-9801 demo above.
      * dm2_v1_boot.c admits GRAPHICS a80c555a... only with DUNGEON
@@ -1199,9 +1200,12 @@ static int m12_admit_dm2_mac_archive(M12_AssetStatus* status,
             dm2_v1_boot_profile_init(&profile);
             if (dm2_v1_boot_scan_assets(&profile, candidate) == 0 &&
                 profile.assets_verified && profile.platform == DM2_PLATFORM_MAC_EN) {
+                const char *version_id =
+                    strcmp(profile.version_id, "mac-en-demo") == 0
+                        ? "mac-en-demo" : "mac-en-retail";
                 for (vi = 0; vi < g_games[gameIndex].versionCount; ++vi) {
                     M12_AssetVersionStatus *v = &status->versions[gameIndex][vi];
-                    if (strcmp(v->versionId, "mac-en-retail") != 0) continue;
+                    if (strcmp(v->versionId, version_id) != 0) continue;
                     v->matched = 1;
                     snprintf(v->matchedPath, sizeof(v->matchedPath),
                              "%s::HFS/DMFiles/Graphics.dat", candidate);

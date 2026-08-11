@@ -40,15 +40,17 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
 - Macintosh is a separate 68k release family with its own big-endian data,
   resource-fork/container and menu/audio conventions. It is not a DOS or FM
   Towns data alias.
-- Firestaff admits the authentic large US English retail ZIP as
-  `mac-en-retail`. Its raw MODE1/2352 BIN is read in memory through the Apple
-  Partition Map and HFS catalogue; `DMFiles/Dungeon.dat`, `Graphics.dat`, and
-  `md.dat` remain owned by the original ZIP and are never unpacked to the
+- Firestaff admits both authentic US English ZIPs as separate versions:
+  `mac-en-retail` (the large retail disc) and `mac-en-demo` (the smaller First
+  Chapter demo). Both raw MODE1/2352 BINs are read in memory through the Apple
+  Partition Map and HFS catalogue; the demo additionally walks its genuine
+  StuffIt 2 `DMFiles` member in RAM. `DMFiles/Dungeon.dat`, `Graphics.dat`,
+  and `md.dat` remain owned by the original ZIP and are never unpacked to the
   game-data directory.
-- The smaller English "The First Chapter" ZIP is not the retail disc. It is a
-  MacBinary StuffIt/TTComp installer and is intentionally not reported as
-  playable until a source-owned reader verifies it. Japanese and French Mac
-  containers remain preservation inputs, not launchable variants.
+- The two versions have separate hash-paired boot receipts. Retail uses the
+  39,411-byte big-endian dungeon; the demo uses its 6,535-byte truncated
+  big-endian File_header/map data. Japanese and French Mac containers remain
+  preservation inputs, not launchable variants.
 
 X68000 is not part of the DM2 support matrix.
 

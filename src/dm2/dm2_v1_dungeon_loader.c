@@ -778,6 +778,100 @@ static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
     return 1;
 }
 
+/* The Macintosh demo is the authentic 6,535-byte truncated File_header
+ * family.  Unlike the later retail Mac member it has no legacy 0x313b word
+ * at offset 2: offset 2 is mapDataSize, as specified by SKProject's
+ * File_header.  Keep this admission narrow and endian-correct; it must not
+ * become a permissive fallback for arbitrary short buffers. */
+static int dm2_v1_try_load_be_demo_layout(DM2_V1_DungeonData *out,
+                                          const uint8_t *dat,
+                                          int size) {
+    int map_count, total_columns = 0, raw_map_bytes = 0;
+    int column_index_base, sft_base, text_base, thing_cursor;
+    long thing_total = 0;
+    if (!out || !dat || size < DM2_DUNGEON_HEADER_SIZE) return 0;
+    map_count = (int)dat[4];
+    if (map_count != 8 || rd16be(dat + 2) != 1335u ||
+        rd16be(dat + 0) != 6u ||
+        size != 6535 || size < DM2_DUNGEON_HEADER_SIZE + map_count * 16)
+        return 0;
+    memset(out, 0, sizeof(*out));
+    out->level_count = map_count;
+    out->square_bytes = 1;
+    out->raw_map_data_base = -1;
+    out->column_index_base = DM2_DUNGEON_HEADER_SIZE + map_count * 16;
+    out->square_first_thing_base = -1;
+    out->text_data_base = -1;
+    out->g1_extension_base = -1;
+    out->g1_extension_size = 0;
+    out->square_first_thing_count = (int)rd16be(dat + 10);
+    out->text_word_count = (int)rd16be(dat + 6);
+    for (int i = 0; i < DM2_THING_TYPE_COUNT; ++i) {
+        out->thing_data_bases[i] = -1;
+        out->thing_type_counts[i] = (int)rd16be(dat + 12 + i * 2);
+    }
+    for (int i = 0; i < map_count; ++i) {
+        const uint8_t *m = dat + DM2_DUNGEON_HEADER_SIZE + i * 16;
+        int w = (int)(((rd16be(m + 8) >> 6) & 0x1fu) + 1u);
+        int h = (int)(((rd16be(m + 8) >> 11) & 0x1fu) + 1u);
+        int rel = (int)rd16be(m + 0);
+        int end = rel + w * h;
+        if (w < 1 || w > DM2_V1_MAX_MAP_SIZE || h < 1 ||
+            h > DM2_V1_MAX_MAP_SIZE || end < rel) return 0;
+        if (end > raw_map_bytes) raw_map_bytes = end;
+        out->level_widths[i] = w;
+        out->level_heights[i] = h;
+        out->level_offsets[i] = rel;
+        out->map_offset_x[i] = m[6];
+        out->map_offset_y[i] = m[7];
+        out->map_door_set0[i] = (int)((rd16be(m + 14) >> 8) & 0x0fu);
+        out->map_door_set1[i] = (int)((rd16be(m + 14) >> 12) & 0x0fu);
+        out->map_use_door0[i] = (int)((rd16be(m + 2) >> 7) & 1u);
+        out->map_use_door1[i] = (int)((rd16be(m + 2) >> 8) & 1u);
+        out->map_door_ornate_count[i] = (int)(rd16be(m + 12) & 0x0fu);
+        out->level_types[i] = (i == 0) ? DM2_LEVEL_OUTDOOR : DM2_LEVEL_INDOOR;
+        total_columns += w;
+    }
+    {
+        uint16_t start = rd16be(dat + 8);
+        int x = (int)(start & 0x1fu), y = (int)((start >> 5) & 0x1fu);
+        if (x < out->level_widths[0] && y < out->level_heights[0]) {
+            out->initial_party_pose_valid = 1;
+            out->initial_party_x = x; out->initial_party_y = y;
+            out->initial_party_dir = (int)((start >> 10) & 0x03u);
+        }
+    }
+    column_index_base = out->column_index_base;
+    sft_base = column_index_base + total_columns * 2;
+    text_base = sft_base + out->square_first_thing_count * 2;
+    thing_cursor = text_base + out->text_word_count * 2;
+    if (thing_cursor < text_base || thing_cursor > size) return 0;
+    for (int i = 0; i < DM2_THING_TYPE_COUNT; ++i) {
+        int count = out->thing_type_counts[i];
+        int bytes = (int)s_dm2_db_record_size[i];
+        long pool = (long)count * (long)bytes;
+        if (count < 0 || bytes < 0 || pool < 0 ||
+            thing_total + pool > INT32_MAX || thing_cursor + pool > size)
+            return 0;
+        out->thing_data_bases[i] = count > 0 && bytes > 0 ? thing_cursor : -1;
+        thing_cursor += (int)pool; thing_total += pool;
+    }
+    if (raw_map_bytes <= 0 || thing_cursor + raw_map_bytes > size ||
+        size - (thing_cursor + raw_map_bytes) > 16)
+        return 0;
+    out->raw_map_data_base = thing_cursor;
+    out->column_index_base = column_index_base;
+    out->square_first_thing_base = sft_base;
+    out->text_data_base = text_base;
+    out->raw_data = (uint8_t *)malloc((size_t)size);
+    if (!out->raw_data) return -1;
+    memcpy(out->raw_data, dat, (size_t)size);
+    out->raw_size = size;
+    out->record_graph_complete = 1;
+    if (!dm2_v1_dungeon_validate_record_graph(out)) out->record_graph_complete = 0;
+    return 1;
+}
+
 /* ── Public API ───────────────────────────────────────────────────── */
 
 int dm2_v1_dungeon_load(DM2_V1_DungeonData *out,
@@ -797,6 +891,10 @@ int dm2_v1_dungeon_load(DM2_V1_DungeonData *out,
         return (skproject_layout > 0) ? 0 : -1;
 
     skproject_layout = dm2_v1_try_load_be_byte_layout(out, dat, size);
+    if (skproject_layout != 0)
+        return (skproject_layout > 0) ? 0 : -1;
+
+    skproject_layout = dm2_v1_try_load_be_demo_layout(out, dat, size);
     if (skproject_layout != 0)
         return (skproject_layout > 0) ? 0 : -1;
 

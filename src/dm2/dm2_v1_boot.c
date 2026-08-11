@@ -91,6 +91,7 @@ static int dm2_v1_boot_load_mac_zip(DM2_V1_BootProfile *profile,
         profile->graphics_mem_size = media.graphics_size;
         profile->dungeon_mem = media.dungeon;
         profile->dungeon_mem_size = media.dungeon_size;
+        int demo_media = media.demo;
         media.graphics = NULL; media.dungeon = NULL;
         if (media.music_map && media.music_map_size <= sizeof(profile->music_map_data)) {
             memcpy(profile->music_map_data, media.music_map, media.music_map_size);
@@ -106,10 +107,19 @@ static int dm2_v1_boot_load_mac_zip(DM2_V1_BootProfile *profile,
                           profile->graphics_md5);
         dm2_md5_bytes_hex(profile->dungeon_mem, profile->dungeon_mem_size,
                           profile->dungeon_md5);
-        snprintf(profile->graphics_path, sizeof(profile->graphics_path),
-                 "%s::HFS/DMFiles/Graphics.dat", candidates[c]);
-        snprintf(profile->dungeon_path, sizeof(profile->dungeon_path),
-                 "%s::HFS/DMFiles/Dungeon.dat", candidates[c]);
+        if (demo_media) {
+            snprintf(profile->graphics_path, sizeof(profile->graphics_path),
+                     "%s::HFS/Install Dungeon MasterII Demo/DMFiles/Graphics.dat",
+                     candidates[c]);
+            snprintf(profile->dungeon_path, sizeof(profile->dungeon_path),
+                     "%s::HFS/Install Dungeon MasterII Demo/DMFiles/Dungeon.dat",
+                     candidates[c]);
+        } else {
+            snprintf(profile->graphics_path, sizeof(profile->graphics_path),
+                     "%s::HFS/DMFiles/Graphics.dat", candidates[c]);
+            snprintf(profile->dungeon_path, sizeof(profile->dungeon_path),
+                     "%s::HFS/DMFiles/Dungeon.dat", candidates[c]);
+        }
         snprintf(profile->asset_root, sizeof(profile->asset_root), "%s", candidates[c]);
         return 1;
     }
@@ -2303,7 +2313,8 @@ static const char *const g_dm2_graphics_hashes[] = {
     "b4d733576ea60c41737f79f212faf528",  /* PC French */
     "e52ab5e01715042b16a4dcff02052e5d",  /* PC German/English JewelCase */
     "027ff3b8ddc2c4c4cdda7ada0b0bc46c",  /* FM Towns Japanese (HME-242) */
-    "5cab25f6b975957eae4a203174e7f2a6",  /* Mac EN/FR (identical) */
+    "5cab25f6b975957eae4a203174e7f2a6",  /* Mac EN/FR retail */
+    "4bf28b3d84e6799d7686c6aaf96cbf23",  /* Mac EN demo */
     "1c940ea95703eaea0ecdf84d17e954b9",  /* Amiga EN */
     "a654ba19e9a6919f46818ecd23d7ea9d",  /* Mega CD Japanese */
     "a80c555a858ef7770e1d7f3d2e37fec3",  /* PC-9821 Japanese */
@@ -2312,7 +2323,8 @@ static const char *const g_dm2_graphics_hashes[] = {
 
 static const char *const g_dm2_dungeon_hashes [] = {
     "6caccd7875009e82fe2e28e7f6d6adc0",  /* PC EN/FR/DE (all identical, LE) */
-    "719ae78bc124027806c65491a256827d",  /* Mac EN/FR + Amiga EN (BE, identical) */
+    "719ae78bc124027806c65491a256827d",  /* Mac/Amiga retail (BE) */
+    "c9c909cb8cc2ed68def20211b8c1caf6",  /* Mac EN demo */
     "74c7549f174574201988bf936385841a",  /* FM Towns Japanese (LE) */
     "92f83c251fec69e01c594bc01ce5cd51",  /* Mega CD Japanese (BE) */
     "fa644b2451af197874ee7dc3951e7033",  /* PC-9821 Japanese (LE) */
@@ -2335,6 +2347,7 @@ static const DM2_V1_AssetHashPair g_dm2_asset_hash_pairs[] = {
     {"e52ab5e01715042b16a4dcff02052e5d", "6caccd7875009e82fe2e28e7f6d6adc0"},
     {"027ff3b8ddc2c4c4cdda7ada0b0bc46c", "74c7549f174574201988bf936385841a"},
     {"5cab25f6b975957eae4a203174e7f2a6", "719ae78bc124027806c65491a256827d"},
+    {"4bf28b3d84e6799d7686c6aaf96cbf23", "c9c909cb8cc2ed68def20211b8c1caf6"},
     {"1c940ea95703eaea0ecdf84d17e954b9", "719ae78bc124027806c65491a256827d"},
     {"a654ba19e9a6919f46818ecd23d7ea9d", "92f83c251fec69e01c594bc01ce5cd51"},
     {"a80c555a858ef7770e1d7f3d2e37fec3", "fa644b2451af197874ee7dc3951e7033"}
@@ -3463,7 +3476,8 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
             profile->platform = DM2_PLATFORM_PC_JEWEL;
         } else if (md5_matches(profile->graphics_md5, "027ff3b8ddc2c4c4cdda7ada0b0bc46c")) {
             profile->platform = DM2_PLATFORM_FMTOWNS_JA;
-        } else if (md5_matches(profile->graphics_md5, "5cab25f6b975957eae4a203174e7f2a6")) {
+        } else if (md5_matches(profile->graphics_md5, "5cab25f6b975957eae4a203174e7f2a6") ||
+                   md5_matches(profile->graphics_md5, "4bf28b3d84e6799d7686c6aaf96cbf23")) {
             profile->platform = DM2_PLATFORM_MAC_EN;
         } else if (md5_matches(profile->graphics_md5, "1c940ea95703eaea0ecdf84d17e954b9")) {
             profile->platform = DM2_PLATFORM_AMIGA_EN;
@@ -3496,7 +3510,13 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
         case DM2_PLATFORM_PC_FR:    strncpy(profile->version_id, "pc-fr",   sizeof(profile->version_id) - 1); break;
         case DM2_PLATFORM_PC_JEWEL:   strncpy(profile->version_id, "pc-jewel",    sizeof(profile->version_id) - 1); break;
         case DM2_PLATFORM_FMTOWNS_JA: strncpy(profile->version_id, "fmtowns-ja", sizeof(profile->version_id) - 1); break;
-        case DM2_PLATFORM_MAC_EN:      strncpy(profile->version_id, "mac-en",      sizeof(profile->version_id) - 1); break;
+        case DM2_PLATFORM_MAC_EN:
+            strncpy(profile->version_id,
+                    md5_matches(profile->graphics_md5,
+                                "4bf28b3d84e6799d7686c6aaf96cbf23")
+                        ? "mac-en-demo" : "mac-en",
+                    sizeof(profile->version_id) - 1);
+            break;
         case DM2_PLATFORM_MAC_FR:      strncpy(profile->version_id, "mac-fr",      sizeof(profile->version_id) - 1); break;
         case DM2_PLATFORM_AMIGA_EN:    strncpy(profile->version_id, "amiga-en",    sizeof(profile->version_id) - 1); break;
         case DM2_PLATFORM_MEGACD_JA:   strncpy(profile->version_id, "megacd-ja",   sizeof(profile->version_id) - 1); break;
