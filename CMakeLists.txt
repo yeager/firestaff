@@ -11396,6 +11396,21 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_media_real.c")
     add_test(NAME dm2_v1_mac_media_real COMMAND test_dm2_v1_mac_media_real)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_input.c")
+    add_executable(test_dm2_v1_mac_input
+        tests/test_dm2_v1_mac_input.c
+        src/dm2/dm2_v1_mac_input.c
+        src/dm1/dm1_v1_input_command_queue_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_mac_input PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_mac_input PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm2_v1_mac_input COMMAND test_dm2_v1_mac_input)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_move_2fcf_0434.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_move_2fcf_0434.c")
     add_executable(test_dm2_v1_move_2fcf_0434

@@ -449,10 +449,15 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
 - [ ] Bind the US English Mac MIDI/SoundMusicSys resources and the Japanese
   CD-audio route separately. DOS HMP, FM Towns CD.DAT, and Amiga MOD paths are
   not fallbacks.
-- [ ] Implement and test the Mac menu/file actions (New/Open/Save), balloon
-  help, Command-key input, and the Mac-specific wall/button hotkeys against
-  an original executable or emulator trace. Unsupported actions must remain
-  unavailable.
+- [x] Add the source-locked English Macintosh keyboard/menu table for both
+  admitted US versions. `dm2_v1_mac_input` covers champion/leader inventory,
+  movement, freeze, Command-O/S/Q, entrance New, credits close, and the three
+  wall-button columns. Queue-compatible actions are forwarded to the existing
+  command boundary; Mac-only actions remain explicit and unavailable until a
+  native Mac dispatcher owns them. Source: DMWeb Macintosh edition page.
+- [ ] Bind the Mac input table to the native runtime dispatcher, including
+  balloon help, held-button ordering, and the Mac-specific wall/button actions,
+  against an original executable or emulator trace.
 - [ ] Acquire an authentic Mac save corpus for both language families and
   verify native load/save round trips. A DOSBox `SKSAVE` or a generated save
   cannot close this gate.

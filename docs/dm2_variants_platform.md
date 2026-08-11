@@ -51,6 +51,11 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   39,411-byte big-endian dungeon; the demo uses its 6,535-byte truncated
   big-endian File_header/map data. Japanese and French Mac containers remain
   preservation inputs, not launchable variants.
+- The English Macintosh input table is source-locked and tested for both
+  versions: inventory keys, movement aliases, freeze/wake, Command-O/S/Q,
+  entrance/credits Return, and the three wall-button columns. Only actions
+  represented by the existing command queue are enqueued; Mac-only actions
+  remain explicit until their native dispatcher is implemented.
 
 X68000 is not part of the DM2 support matrix.
 
