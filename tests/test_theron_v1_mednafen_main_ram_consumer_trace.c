@@ -48,6 +48,42 @@ static int test_escaped_newline_trace(void) {
 #endif
 }
 
+static int test_code_bank_reader_trace(void) {
+#if defined(_WIN32)
+    return 1;
+#else
+    char path[512];
+    const char *tmpdir = getenv("TMPDIR");
+    const char *trace =
+        "source=mednafen-pce-instrumented-main-ram-consumer\n"
+        "main_ram_consumer_read sequence=0 logical_address=21f9 physical_address=1f01f9 value=46 reader_pc=4630 reader_physical_pc=0d0630\n";
+    Theron_V1MednafenMainRamConsumerTraceReceipt receipt;
+    if (!tmpdir || !tmpdir[0]) tmpdir = "/tmp";
+    if (snprintf(path, sizeof(path), "%s/firestaff-theron-consumer-bank-XXXXXX",
+                 tmpdir) <= 0) return 0;
+    int fd = mkstemp(path);
+    FILE *file;
+    int result;
+
+    if (fd < 0) return 0;
+    file = fdopen(fd, "wb");
+    if (!file) {
+        close(fd);
+        unlink(path);
+        return 0;
+    }
+    if (fputs(trace, file) == EOF || fclose(file) != 0) {
+        unlink(path);
+        return 0;
+    }
+    result = theron_v1_mednafen_main_ram_consumer_trace_parse_file(path, &receipt) &&
+             receipt.status == THERON_V1_MEDNAFEN_MAIN_RAM_CONSUMER_TRACE_READY &&
+             receipt.first_reader_physical_pc == 0x0d0630u;
+    unlink(path);
+    return result;
+#endif
+}
+
 int main(void) {
     const char *path = getenv("THERON_MEDNAFEN_MAIN_RAM_CONSUMER_TRACE");
     Theron_V1MednafenMainRamConsumerTraceReceipt receipt;
@@ -60,6 +96,10 @@ int main(void) {
 
     if (!test_escaped_newline_trace()) {
         fprintf(stderr, "FAIL: escaped newline consumer trace normalization\n");
+        return 1;
+    }
+    if (!test_code_bank_reader_trace()) {
+        fprintf(stderr, "FAIL: HuC6280 code-bank reader address\n");
         return 1;
     }
 
@@ -81,6 +121,10 @@ int main(void) {
            receipt.source_trace_md5, receipt.read_count,
            receipt.first_physical_address, receipt.last_physical_address,
            receipt.first_reader_physical_pc, receipt.last_reader_physical_pc);
+    if (getenv("THERON_MEDNAFEN_MAIN_RAM_CONSUMER_PARSE_ONLY")) {
+        puts("PASS: parser-only capture admission; code-window semantics not requested");
+        return 0;
+    }
     if (!theron_v1_mednafen_main_ram_consumer_trace_verify_code_window(
             path, 0x2c54u, code_window, sizeof(code_window))) {
         fprintf(stderr, "FAIL: captured HuC6280 code window was not verified\n");

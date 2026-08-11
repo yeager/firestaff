@@ -825,3 +825,18 @@ regular-spawn-kategori `0..3`. `$4644`, `$4667`, giltiga spawn-samples,
 RNG-fönster och target writes var noll. Därför öppnas ingen RNG-, AI-,
 combat-, loot-, generator-, T700- eller T900-semantik. Rådata stannade på
 extern disk och Mednafen stängdes efter den avgränsade körningen.
+
+## 2026-08-11 — C3A0 same-session target reads admitted as provenance
+
+The external-disk state-autoload run produced 65,536 ordered
+`main_ram_consumer_read` rows. The C3A0 register window and the target sidecar
+are from the same run: C3A0 reads observed main-RAM bytes at `$271e-$272b`
+through the authenticated HuC6280 code bank `$0dxxxx`. The raw consumer trace
+has MD5 `4d9da34dd8a0042dc302449af78c54cc` and is accepted by Firestaff's
+parser after allowing the instrumenter's optional `a/x/y/sp/p` suffix fields.
+
+This is a real C3A0-to-main-RAM observation, not a semantic record label. The
+capture does not identify those bytes as creature, object, generator, T700 or
+T900 data, and it has no valid regular `$B0E5` category plus complete return
+contract. RNG, AI, combat, loot, generator timing and T700/T900 publication
+therefore remain blocked.

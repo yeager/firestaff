@@ -13617,3 +13617,12 @@ and production source-combat tests.
   DMA-assetproveniens.
 - 🔒 FONT256 page/character-generator/palette gav fortfarande ingen komplett
   retail source-join; textconsumer och menyadmission förblir blockerade.
+
+# Theron: accept authenticated C3A0 consumer trace shape (2026-08-11)
+
+- ✅ Main-RAM consumer parsing now accepts valid HuC6280 instruction banks
+  outside `$1fxxxx` and validates optional `a/x/y/sp/p` register suffixes.
+- ✅ Regression coverage includes a `$0d0630` reader-bank receipt; the real
+  external trace was accepted with 65,536 ordered reads.
+- 🔒 C3A0 target bytes remain provenance-only until a valid `$B0E5` category
+  and complete return contract identify their gameplay semantics.

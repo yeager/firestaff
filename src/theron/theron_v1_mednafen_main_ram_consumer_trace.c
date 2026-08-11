@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <sys/stat.h>
 
 #if defined(_WIN32)
@@ -20,6 +21,32 @@
  * checked.  This remains an intake limit only; the parser never publishes
  * the bytes as level, object, tile, palette or HUD data. */
 #define THERON_V1_CONSUMER_TRACE_MAX_BYTES (16u * 1024u * 1024u)
+
+/* The consumed byte must be in the HuC6280's mapped main-RAM window, but the
+ * instruction which consumed it may execute from any mapped 21-bit bank.
+ * Real Theron captures execute this routine from physical $0dxxxx. */
+static int huc6280_physical_address(unsigned address) {
+    return address <= 0x1fffffu;
+}
+
+/* Newer instrumented binaries append CPU register snapshots after the
+ * stable six-field receipt.  Validate that suffix as key=hex tokens while
+ * keeping the stable parser independent of optional instrumentation fields. */
+static int optional_register_suffix(const char *suffix) {
+    const unsigned char *cursor = (const unsigned char *)suffix;
+    if (!cursor) return 0;
+    while (*cursor) {
+        if (!isspace(*cursor)) return 0;
+        while (isspace(*cursor)) ++cursor;
+        if (!*cursor) break;
+        if (!isalpha(*cursor)) return 0;
+        while (isalpha(*cursor)) ++cursor;
+        if (*cursor++ != '=') return 0;
+        if (!isxdigit(*cursor)) return 0;
+        while (isxdigit(*cursor)) ++cursor;
+    }
+    return 1;
+}
 
 static int read_line(FILE *file, char *line, size_t capacity) {
     size_t length;
@@ -139,11 +166,11 @@ int theron_v1_mednafen_main_ram_consumer_trace_parse_file(
                    "reader_physical_pc=%x%n",
                    &sequence, &logical_address, &physical_address, &value,
                    &reader_pc, &reader_physical_pc, &consumed) != 6 ||
-            line[consumed] != '\0' || sequence != receipt.read_count ||
+            !optional_register_suffix(line + consumed) ||
+            sequence != receipt.read_count ||
             logical_address > 0xffffu || physical_address < 0x1f0000u ||
             physical_address >= 0x1f8000u || value > 0xffu ||
-            reader_pc > 0xffffu || reader_physical_pc < 0x1f0000u ||
-            reader_physical_pc >= 0x1f8000u) {
+            reader_pc > 0xffffu || !huc6280_physical_address(reader_physical_pc)) {
             fclose(file);
             return reject(&receipt);
         }
@@ -228,8 +255,7 @@ int theron_v1_mednafen_main_ram_consumer_trace_verify_code_window(
         }
         (void)sequence;
         (void)physical_address;
-        if (line[consumed] != '\n' && line[consumed] != '\r' &&
-            line[consumed] != '\0') continue;
+        if (!optional_register_suffix(line + consumed)) continue;
         if (logical_address != reader_pc ||
             physical_address != reader_physical_pc ||
             reader_pc < start_pc ||

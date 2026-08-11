@@ -5107,6 +5107,11 @@ authenticated BPK). The remaining work is a Saturn executable or capture
   generic table/code reads, but a same-session `$B0E5` category entry and
   return-value boundary are still required before opening RNG or creature
   semantics.
+
+- ✅ 2026-08-11: C3A0 capture reached authenticated `$0dxxxx` HuC6280 code
+  and 65,536 ordered main-RAM consumer reads. The parser now accepts the
+  instrumenter's optional register suffix and keeps the C3A0 target bytes
+  provenance-only; no creature/T700/T900 meaning is inferred.
 ## Theron: nästa autentiserade runtime-vittne (2026-08-09)
 
 - Få en och samma Mednafen-session att nå ett riktigt monster efter Track
