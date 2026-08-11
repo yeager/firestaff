@@ -54,6 +54,14 @@ typedef struct {
     uint16_t spawn_rng_cc4c_bytes;
     uint32_t spawn_rng_cc4c_file_offset;
     uint32_t spawn_rng_cc4c_fnv1a;
+    /* Additional US Track 02 caller window at $c3a0.  It is a byte-backed
+     * source-consumer reference only; the pointed RAM tables remain
+     * semantically unidentified. */
+    int spawn_runtime_c3a0_verified;
+    uint16_t spawn_runtime_c3a0_address;
+    uint16_t spawn_runtime_c3a0_bytes;
+    uint32_t spawn_runtime_c3a0_file_offset;
+    uint32_t spawn_runtime_c3a0_fnv1a;
     /* Static palette consumer from the retail HuC6280 bank. The routine
      * proves the VCE write contract only; its dynamic $27c4/$27c5 source
      * pointer is not a Track 02 palette binding by itself. */

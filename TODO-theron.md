@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — ny autentiserad `$C3A0`-caller är source-lockad
+
+- ✅ Ett nytt 150-byte US Track 02-fragment från raw-offset `$9C450` / HuC6280
+  `$C3A0` matchar `TQUS02.bin` byte för byte och FNV-1a `$666DED61`.
+- ✅ Disassembly-admissionen verifierar nu fragmentet tillsammans med de
+  befintliga `$4667`, `$C96B` och `$CC4C`-fönstren.
+- 🔒 Fragmentet visar källkodens caller-/tabellflöde men identifierar inte
+  `$2998/$299C` som creature-, generator-, T700- eller T900-records. Ingen
+  spelsemantik öppnas utan samma-session runtime-bevis.
+
 ## 2026-08-11 — live source creatures no longer receive synthetic PASSIVE AI
 
 - ✅ Category-4 creatures admitted from authentic US/JP Track 02 records now

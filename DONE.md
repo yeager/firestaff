@@ -1,5 +1,14 @@
 # Nexus: bounded SAL PCM materialization (2026-08-11)
 
+# Theron: authenticate the US `$C3A0` caller window (2026-08-11)
+
+- ✅ Added the real 150-byte `TQUS02.bin` caller window at raw `$9c450` /
+  HuC6280 `$c3a0` to the source-lock documentation.
+- ✅ Disassembly admission now checks its exact bytes and FNV-1a
+  `$666ded61`; the real US BIN regression passes.
+- 🔒 The pointed `$2998/$299c` tables remain semantically unidentified, so no
+  creature, generator, T700 or T900 behavior was guessed or enabled.
+
 - ✅ Implemented the DMWeb DataID 0 directory walk already established by the
   retail SAL corpus receipt: memory-backed entries now decode to signed host
   PCM using their authenticated 8/16-bit width and bounded layer/loop span.

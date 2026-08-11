@@ -69,11 +69,17 @@ static void verify(const char *env_name, const char *name, int variant,
         assert(receipt.spawn_rng_cc4c_bytes == 200u);
         assert(receipt.spawn_rng_cc4c_file_offset == 0xa4accu);
         assert(receipt.spawn_rng_cc4c_fnv1a == 0x4ad0801eu);
+        assert(receipt.spawn_runtime_c3a0_verified);
+        assert(receipt.spawn_runtime_c3a0_address == 0xc3a0u);
+        assert(receipt.spawn_runtime_c3a0_bytes == 150u);
+        assert(receipt.spawn_runtime_c3a0_file_offset == 0x9c450u);
+        assert(receipt.spawn_runtime_c3a0_fnv1a == 0x666ded61u);
     } else {
         assert(!receipt.spawn_rng_helper_verified);
         assert(!receipt.spawn_rng_preconsumer_verified);
         assert(!receipt.spawn_rng_c96b_verified);
         assert(!receipt.spawn_rng_cc4c_verified);
+        assert(!receipt.spawn_runtime_c3a0_verified);
     }
     assert(!receipt.semantic_publication_allowed);
     assert(receipt.fragment_address == 0x243eu);

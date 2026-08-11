@@ -55,6 +55,10 @@
 #define THERON_SPAWN_CC4C_ADDRESS 0xcc4cu
 #define THERON_SPAWN_CC4C_BYTES 200u
 #define THERON_SPAWN_CC4C_FNV1A 0x4ad0801eu
+#define THERON_US_SPAWN_C3A0_FILE_OFFSET 0x9c450u
+#define THERON_SPAWN_C3A0_ADDRESS 0xc3a0u
+#define THERON_SPAWN_C3A0_BYTES 150u
+#define THERON_SPAWN_C3A0_FNV1A 0x666ded61u
 
 static const uint8_t g_fragment[THERON_FRAGMENT_BYTES] = {
     0xb2, 0x2e, 0x85, 0x0e, 0xe6, 0x2e, 0xd0, 0x02, 0xe6, 0x2f, 0x86, 0x0f,
@@ -99,6 +103,25 @@ static const uint8_t g_spawn_rng_preconsumer[
     0x85, 0xad, 0xa5, 0xa9, 0x85, 0x8a, 0xa5, 0xad, 0x85,
     0x8b, 0xa5, 0xab, 0xa4, 0xac, 0x20, 0x6b, 0xc9, 0xd0,
     0x02, 0x46, 0xb4, 0xa6, 0xbb, 0x20, 0x4c, 0xcc, 0x60
+};
+
+/* Source-backed $c3a0 caller window. The final bytes continue into the
+ * following routine; the full window is retained for exact identity while
+ * the source-lock document describes only the RTS-bounded caller body. */
+static const uint8_t g_spawn_runtime_c3a0[THERON_SPAWN_C3A0_BYTES] = {
+    0xc9, 0x01, 0xd0, 0x0b, 0xa9, 0x87, 0x85, 0xab, 0xa9, 0xff, 0x85, 0xac,
+    0x4c, 0x66, 0xc1, 0xc9, 0x02, 0xd0, 0x0b, 0xa9, 0x83, 0x85, 0xab, 0xa9,
+    0xff, 0x85, 0xac, 0x4c, 0x66, 0xc1, 0xa9, 0x80, 0x85, 0xab, 0xa9, 0xff,
+    0x85, 0xac, 0x20, 0x67, 0x46, 0x29, 0x7f, 0x69, 0x63, 0x80, 0x28, 0xa9,
+    0x82, 0x85, 0xab, 0xa9, 0xff, 0x85, 0xac, 0xa9, 0xb4, 0x80, 0x1c, 0xa9,
+    0x83, 0x85, 0xab, 0xa9, 0xff, 0x85, 0xac, 0xa9, 0x96, 0x80, 0x10, 0xa9,
+    0x96, 0x80, 0x02, 0xa9, 0xfa, 0x48, 0xa9, 0x80, 0x85, 0xab, 0xa9, 0xff,
+    0x85, 0xac, 0x68, 0x85, 0xa9, 0x20, 0x00, 0xc0, 0xbd, 0x98, 0x29, 0xc5,
+    0xad, 0xbd, 0x9c, 0x29, 0xe5, 0xae, 0xb0, 0x0e, 0xa5, 0xa9, 0x4a, 0xc9,
+    0x02, 0xb0, 0x02, 0xa9, 0x02, 0xbd, 0x98, 0x29, 0x85, 0xad, 0xa5, 0xa9,
+    0x85, 0x8a, 0xa5, 0xad, 0x85, 0x8b, 0xa5, 0xab, 0xa4, 0xac, 0x20, 0x6b,
+    0xc9, 0xd0, 0x02, 0x46, 0xb4, 0xa6, 0xbb, 0x20, 0x4c, 0xcc, 0x60, 0xa5,
+    0xb3, 0x29, 0xe0, 0xc9, 0x80, 0xd0,
 };
 
 static uint32_t fnv1a(const uint8_t *bytes, size_t count) {
@@ -163,6 +186,7 @@ int theron_v1_huc6280_disassembly_read_file(
     uint8_t spawn_rng_preconsumer[THERON_SPAWN_RNG_PRECONSUMER_BYTES];
     uint8_t spawn_rng_c96b[THERON_SPAWN_C96B_BYTES];
     uint8_t spawn_rng_cc4c[THERON_SPAWN_CC4C_BYTES];
+    uint8_t spawn_runtime_c3a0[THERON_SPAWN_C3A0_BYTES];
     int raw_bin_variant;
     uint32_t expected_size;
     uint32_t bank_file_offset;
@@ -222,7 +246,10 @@ int theron_v1_huc6280_disassembly_read_file(
               sizeof(spawn_rng_c96b) ||
           fseek(file, THERON_US_SPAWN_CC4C_FILE_OFFSET, SEEK_SET) != 0 ||
           fread(spawn_rng_cc4c, 1u, sizeof(spawn_rng_cc4c), file) !=
-              sizeof(spawn_rng_cc4c))) ||
+              sizeof(spawn_rng_cc4c) ||
+          fseek(file, THERON_US_SPAWN_C3A0_FILE_OFFSET, SEEK_SET) != 0 ||
+          fread(spawn_runtime_c3a0, 1u, sizeof(spawn_runtime_c3a0), file) !=
+              sizeof(spawn_runtime_c3a0))) ||
         (raw_bin_variant &&
          (fseek(file, (long)(bank_file_offset +
                              THERON_VCE_PALETTE_CONSUMER_BANK_OFFSET),
@@ -260,6 +287,9 @@ int theron_v1_huc6280_disassembly_read_file(
         (track02_variant == THERON_TRACK02_VARIANT_US_BIN &&
          fnv1a(spawn_rng_cc4c, sizeof(spawn_rng_cc4c)) !=
              THERON_SPAWN_CC4C_FNV1A) ||
+        (track02_variant == THERON_TRACK02_VARIANT_US_BIN &&
+         memcmp(spawn_runtime_c3a0, g_spawn_runtime_c3a0,
+                sizeof(spawn_runtime_c3a0)) != 0) ||
         decompressor[0] != 0xa5u || decompressor[1] != 0x2eu ||
         decompressor[2] != 0x85u || decompressor[3] != 0x32u ||
         decompressor[sizeof(decompressor) - 1u] != 0x60u) {
@@ -308,6 +338,13 @@ int theron_v1_huc6280_disassembly_read_file(
         receipt.spawn_rng_cc4c_file_offset = THERON_US_SPAWN_CC4C_FILE_OFFSET;
         receipt.spawn_rng_cc4c_fnv1a = fnv1a(
             spawn_rng_cc4c, sizeof(spawn_rng_cc4c));
+        receipt.spawn_runtime_c3a0_verified = 1;
+        receipt.spawn_runtime_c3a0_address = THERON_SPAWN_C3A0_ADDRESS;
+        receipt.spawn_runtime_c3a0_bytes = THERON_SPAWN_C3A0_BYTES;
+        receipt.spawn_runtime_c3a0_file_offset =
+            THERON_US_SPAWN_C3A0_FILE_OFFSET;
+        receipt.spawn_runtime_c3a0_fnv1a = fnv1a(
+            spawn_runtime_c3a0, sizeof(spawn_runtime_c3a0));
     }
     receipt.semantic_publication_allowed = 0;
     receipt.source_file_size = expected_size;

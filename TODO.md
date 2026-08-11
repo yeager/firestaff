@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+## Theron: bind the newly source-locked `$C3A0` caller to runtime ownership (2026-08-11)
+
+- ✅ Exact US Track 02 bytes at raw `$9c450` / HuC6280 `$c3a0` are now
+  verified by the disassembly admission.
+- 🔒 Capture a same-session execution window that joins `$C3A0` → `$C96B` /
+  `$CC4C` → target RAM before assigning creature, object, generator, T700 or
+  T900 meaning to `$2998/$299C`.
+
 ## Nexus: bind decoded SAL tones to SDDRVS/SCSP playback (2026-08-11)
 
 - ✅ DMWeb DataID 0 tone descriptors now materialize authenticated
