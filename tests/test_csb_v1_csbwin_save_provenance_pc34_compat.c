@@ -65,6 +65,8 @@ static void test_staged_real_csbwin_save(void)
     CSB_V1_CSBWin512BodyReport body;
     CSB_V1_CSBWinDungeonTailPrefix tail_prefix;
     CSB_V1_CSBWinDungeonTailDatabaseLayout tail_databases;
+    CSB_V1_CSBWinLegacyDungeonCandidate *tail_candidate = NULL;
+    CSB_V1_CSBWinLegacyResumePrepare tail_resume;
     CSB_V1_CSBWinSaveDiscoveryResult discovery;
     CSB_V1_RuntimeProfile runtime;
 
@@ -140,18 +142,29 @@ static void test_staged_real_csbwin_save(void)
           tail_databases.checksum_offset + 2u == body.appended_size &&
           tail_databases.computed_checksum == tail_databases.stored_checksum,
           "legacy CSBGAME2 tail DB0-DB15 spans and checksum authenticate");
+    memset(&tail_resume, 0, sizeof(tail_resume));
+    CHECK(csb_v1_csbwin_dungeon_tail_prepare_legacy_candidate(
+              bytes + body.appended_offset, body.appended_size,
+              &tail_candidate) == CSB_V1_CSBWIN_DUNGEON_TAIL_OK &&
+          csb_v1_csbwin_dungeon_tail_prepare_legacy_resume(
+              tail_candidate, &body, bytes + body.appended_offset,
+              body.appended_size, &tail_resume) == CSB_V1_CSBWIN_DUNGEON_TAIL_OK &&
+          tail_resume.valid && tail_resume.party_level == 4u &&
+          tail_resume.party_x == 22u && tail_resume.party_y == 18u,
+          "legacy CSBGAME2 tail prepares a complete private resume transaction");
+    csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(tail_candidate);
+    tail_candidate = NULL;
     free(bytes);
 
-    /* The complete legacy stream is now structurally verified above, but
-     * applying its DB records to Firestaff's active world remains intentionally
-     * closed until the source-owned record conversion and atomic handoff exist. */
+    /* The tail prepares privately but cannot be published while the live
+     * queue lacks source-owned support for this legacy 10-byte TIMER layout. */
     csb_v1_runtime_init(&runtime, NULL);
     runtime.game_time = 919u;
     runtime.party_x = 7;
     CHECK(csb_v1_runtime_apply_csbwin_resume_file(&runtime, path, 0u) != 0 &&
           runtime.game_time == 919u && runtime.party_x == 7 &&
           !runtime.csbwin_save_provenance.valid,
-          "legacy CSBGAME2 dungeon stream fails closed before runtime import");
+          "legacy CSBGAME2 10-byte timer layout fails closed before runtime import");
     csb_v1_runtime_cleanup(&runtime);
 }
 

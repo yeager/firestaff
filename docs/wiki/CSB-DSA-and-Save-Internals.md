@@ -136,6 +136,16 @@ Q-CSB-09 save/Utility Disk interop is covered by 32 test files spanning:
 15 of the 32 files are executable test binaries; the remainder are shared
 fixture/header support. All pass.
 
+### Legacy CSBWin `csbgame2.dat` boundary
+
+The checked CSBWin source-tree `csbgame2.dat` is a real legacy save with a
+10-byte `TIMER` representation. Firestaff verifies its GAMEBLOCK body and
+the complete saved-dungeon tail, then prepares a private candidate containing
+the saved pose, DB0–DB15 layout, ITEM16 ownership and raw TIMER/queue
+receipts. It does **not** publish that candidate: the live event queue has no
+source-faithful 10-byte TIMER owner. Keeping this rejection prevents a
+restored world from being paired with translated or reconstructed events.
+
 ## Viewport Test Coverage (47 files)
 
 Q-CSB-06 dungeon viewport geometry is covered by 47 viewport tests:
