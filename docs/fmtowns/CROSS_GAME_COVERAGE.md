@@ -143,8 +143,11 @@ Every module below is source-locked with a real-data round-trip test:
   only its source name/title and planar payload. The catalog-bound selector
   preserves the authenticated source order, provides bounded previous/next
   movement, and delegates the selected row to that same import transaction.
-  Its remaining gap is C06's source-level F7083/F7084 drawing and modal input
-  loop. Arbitrary `CSBGAME.DAT` load/write/resume remains fail-closed until its
+  Its C06 F7083/F7084 source-coordinate file-list state, nine-row raster,
+  bounded scroll commands, and real `PORTRAIT` catalogue binding are now
+  implemented. The remaining utility gap is wiring that state into C06's
+  modal event pump and returning the selected row to F7002. Arbitrary
+  `CSBGAME.DAT` load/write/resume remains fail-closed until its
   exact source transactions are proven. The
   external `fmtowns-save-corpus/CSBGAME.DAT` and `CSBGAME-JP.DAT` files are
   retained as candidates, not used as synthetic substitutes.

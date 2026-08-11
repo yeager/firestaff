@@ -122,6 +122,176 @@ static void blit(const uint8_t *source, int width, int height, int x, int y,
     }
 }
 
+static uint32_t portrait_catalog_hash(
+    const CSB_V1_FmtownsUtilityPortraitCatalog *catalog)
+{
+    uint32_t hash = 2166136261u;
+    uint16_t index;
+    if (!catalog || !catalog->valid || catalog->entry_count == 0u) return 0u;
+    for (index = 0u; index < catalog->entry_count; ++index) {
+        const CSB_V1_FmtownsUtilityPortraitCatalogEntry *entry =
+            &catalog->entries[index];
+        size_t i;
+        for (i = 0u; i < sizeof(entry->filename) && entry->filename[i]; ++i) {
+            hash ^= (uint8_t)entry->filename[i];
+            hash *= 16777619u;
+        }
+        hash ^= entry->source_fnv1a;
+        hash *= 16777619u;
+        hash ^= entry->portrait.pixel_fnv1a;
+        hash *= 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
+static int picker_box_contains(int left, int right, int top, int bottom,
+                               int x, int y)
+{
+    return x >= left && x <= right && y >= top && y <= bottom;
+}
+
+int csb_v1_fmtowns_utility_file_picker_open(
+    const CSB_V1_FmtownsUtilityPortraitCatalog *catalog,
+    uint16_t initial_index,
+    CSB_V1_FmtownsUtilityFilePicker *out_picker)
+{
+    uint32_t hash;
+    if (!out_picker) return 0;
+    memset(out_picker, 0, sizeof(*out_picker));
+    hash = portrait_catalog_hash(catalog);
+    if (!hash || initial_index >= catalog->entry_count ||
+        !catalog->entries[initial_index].portrait.valid) return 0;
+    out_picker->valid = 1;
+    /* F7083 always resets FirstFileNameIndex before drawing the list. */
+    out_picker->first_index = 0u;
+    out_picker->selected_index = initial_index;
+    out_picker->catalog_fnv1a = hash;
+    out_picker->catalog = catalog;
+    out_picker->source_evidence =
+        "ReDMCSB CEDT008.C F7083/F7084; CEDTDATA.C G2285/G7048/G7049";
+    return 1;
+}
+
+int csb_v1_fmtowns_utility_file_picker_input(
+    CSB_V1_FmtownsUtilityFilePicker *picker,
+    int16_t source_x, int16_t source_y,
+    int *out_command, int *out_catalog_index)
+{
+    int command = 0;
+    int index = -1;
+    int row;
+    if (out_command) *out_command = 0;
+    if (out_catalog_index) *out_catalog_index = -1;
+    if (!picker || !picker->valid || !picker->catalog ||
+        picker->catalog_fnv1a != portrait_catalog_hash(picker->catalog)) return 0;
+    /* F31E CEDTDATA.C: G2285_as_FilePickerDialogButtons[0..4]. */
+    if (picker_box_contains(77, 129, 63, 135, source_x, source_y)) {
+        command = CSB_V1_FMTOWNS_FILE_PICKER_FILE_LIST;
+        row = ((int)source_y - 62) / 8; /* F7084's FileListTopOnScreen. */
+        if (row < 0) row = 0;
+        if (row > 8) row = 8;
+        index = (int)picker->first_index + row;
+        if (index >= (int)picker->catalog->entry_count) index = -1;
+        else picker->selected_index = (uint16_t)index;
+    } else if (picker_box_contains(165, 237, 106, 114, source_x, source_y)) {
+        command = CSB_V1_FMTOWNS_FILE_PICKER_NEW_DISK;
+    } else if (picker_box_contains(165, 237, 126, 134, source_x, source_y)) {
+        command = CSB_V1_FMTOWNS_FILE_PICKER_CANCEL;
+    } else if (picker_box_contains(135, 151, 63, 98, source_x, source_y)) {
+        command = CSB_V1_FMTOWNS_FILE_PICKER_UP;
+        if (picker->first_index > 0u) {
+            picker->first_index--;
+        }
+    } else if (picker_box_contains(135, 151, 100, 135, source_x, source_y)) {
+        command = CSB_V1_FMTOWNS_FILE_PICKER_DOWN;
+        if ((unsigned int)picker->catalog->entry_count >
+            (unsigned int)picker->first_index + 9u) {
+            picker->first_index++;
+        }
+    } else {
+        return 0;
+    }
+    if (out_command) *out_command = command;
+    if (out_catalog_index) *out_catalog_index = index;
+    return 1;
+}
+
+int csb_v1_fmtowns_utility_render_file_picker(
+    const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
+    const CSB_V1_FmtownsUtilityFontReceipt *font,
+    const CSB_V1_FmtownsUtilityFilePicker *picker,
+    uint8_t *pixels, size_t pixel_capacity,
+    CSB_V1_FmtownsUtilityRenderReceipt *out_receipt)
+{
+    static const uint8_t new_disk[] = "NEW DISK";
+    static const uint8_t cancel[] = "CANCEL";
+    uint8_t arrows[32u * 75u];
+    CSB_V1_FmtownsItemDecodeReceipt decoded;
+    uint32_t catalog_hash;
+    uint16_t row;
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!handoff || !font || !picker || !pixels ||
+        pixel_capacity < CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS ||
+        !handoff->valid || !handoff->static_art_verified ||
+        !handoff->file_picker_arrows_fnv1a || !font->valid ||
+        !picker->valid || !picker->catalog ||
+        handoff->language != CSB_FMTOWNS_SWITCH_ENGLISH ||
+        font->language != CSB_FMTOWNS_SWITCH_ENGLISH ||
+        picker->catalog_fnv1a != (catalog_hash = portrait_catalog_hash(picker->catalog)))
+        return 0;
+    memset(&decoded, 0, sizeof(decoded));
+    if (!csb_v1_fmtowns_img2_decode_strided(
+            handoff->file_picker_arrows,
+            CSB_V1_FMTOWNS_UTILITY_FILE_PICKER_ARROWS_BYTES,
+            31u, 75u, 32u, arrows, sizeof(arrows), &decoded) ||
+        !decoded.valid || decoded.stream_bytes_consumed !=
+            CSB_V1_FMTOWNS_UTILITY_FILE_PICKER_ARROWS_STREAM_BYTES)
+        return 0;
+
+    memset(pixels, C00_BLACK, CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS);
+    filled_box((C06_Box){62, 255, 48, 149}, 1, C00_BLACK, C02_LIGHT_GRAY, pixels);
+    filled_box((C06_Box){77, 129, 63, 135}, 1, C00_BLACK, C02_LIGHT_GRAY, pixels);
+    blit(arrows, 32, 75, 134, 62, C01_DARK_GRAY, pixels);
+    button((C06_Box){165, 237, 106, 114}, new_disk, sizeof(new_disk) - 1u,
+           font, pixels);
+    button((C06_Box){165, 237, 126, 134}, cancel, sizeof(cancel) - 1u,
+           font, pixels);
+    for (row = 0u; row < 9u; ++row) {
+        uint16_t index = (uint16_t)(picker->first_index + row);
+        if (index >= picker->catalog->entry_count) break;
+        text(font, 80, 72 + (int)row * 8, C15_WHITE, C00_BLACK,
+             (const uint8_t *)picker->catalog->entries[index].filename,
+             sizeof(picker->catalog->entries[index].filename), pixels);
+    }
+    if (picker->selected_index >= picker->first_index &&
+        picker->selected_index < picker->first_index + 9u &&
+        picker->selected_index < picker->catalog->entry_count) {
+        int y = 62 + ((int)picker->selected_index - picker->first_index) * 8;
+        /* F7084 inverts the selected row; this indexed equivalent is
+         * deliberately limited to the authenticated list rectangle. */
+        for (row = 0u; row < 8u; ++row) {
+            int x;
+            for (x = 77; x <= 129; ++x)
+                pixels[(size_t)(y + row) *
+                       CSB_V1_FMTOWNS_UTILITY_SCREEN_WIDTH + (size_t)x] ^= 0x0fu;
+        }
+    }
+    if (out_receipt) {
+        out_receipt->valid = 1;
+        out_receipt->language = CSB_FMTOWNS_SWITCH_ENGLISH;
+        out_receipt->source_fnv1a = handoff->executable_fnv1a ^
+                                    font->source_fnv1a ^ catalog_hash;
+        out_receipt->pixel_fnv1a = fnv1a(
+            pixels, CSB_V1_FMTOWNS_UTILITY_SCREEN_PIXELS);
+        out_receipt->file_picker_first_index = picker->first_index;
+        out_receipt->file_picker_selected_index = picker->selected_index;
+        out_receipt->source_evidence =
+            "ReDMCSB CEDT008.C F7080/F7081/F7083/F7084; "
+            "CEDTINCF.C F7082; CEDTDATA.C G2285/G2284/G7046-G7051";
+    }
+    return 1;
+}
+
 int csb_v1_fmtowns_utility_render_editor(
     const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
     const CSB_V1_FmtownsUtilityMenuReceipt *menu,

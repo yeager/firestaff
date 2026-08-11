@@ -23,8 +23,51 @@ typedef struct CSB_V1_FmtownsUtilityRenderReceipt {
     uint16_t rendered_champion_count;
     uint16_t selected_champion_index;
     uint8_t selected_color_index;
+    uint16_t file_picker_first_index;
+    uint16_t file_picker_selected_index;
     const char *source_evidence;
 } CSB_V1_FmtownsUtilityRenderReceipt;
+
+enum {
+    CSB_V1_FMTOWNS_FILE_PICKER_FILE_LIST = 1,
+    CSB_V1_FMTOWNS_FILE_PICKER_NEW_DISK = 2,
+    CSB_V1_FMTOWNS_FILE_PICKER_CANCEL = 3,
+    CSB_V1_FMTOWNS_FILE_PICKER_UP = 4,
+    CSB_V1_FMTOWNS_FILE_PICKER_DOWN = 5
+};
+
+typedef struct CSB_V1_FmtownsUtilityFilePicker {
+    int valid;
+    uint16_t first_index;
+    uint16_t selected_index;
+    uint32_t catalog_fnv1a;
+    const CSB_V1_FmtownsUtilityPortraitCatalog *catalog;
+    const char *source_evidence;
+} CSB_V1_FmtownsUtilityFilePicker;
+
+/* CEDT008.C F7083/F7084 file-list state.  The catalogue is the admitted
+ * PORTRAIT directory; this state never owns or invents a filename. */
+int csb_v1_fmtowns_utility_file_picker_open(
+    const CSB_V1_FmtownsUtilityPortraitCatalog *catalog,
+    uint16_t initial_index,
+    CSB_V1_FmtownsUtilityFilePicker *out_picker);
+
+/* Apply one source-coordinate mouse command.  The returned command is one
+ * of the five C06 ordinals above; a file-list command returns the selected
+ * catalogue index, while buttons return -1. */
+int csb_v1_fmtowns_utility_file_picker_input(
+    CSB_V1_FmtownsUtilityFilePicker *picker,
+    int16_t source_x, int16_t source_y,
+    int *out_command, int *out_catalog_index);
+
+/* Render the native C06 file-picker surface from the authenticated
+ * executable's arrow bitmap, interface font and portrait catalogue. */
+int csb_v1_fmtowns_utility_render_file_picker(
+    const CSB_V1_FmtownsUtilityHandoffReceipt *handoff,
+    const CSB_V1_FmtownsUtilityFontReceipt *font,
+    const CSB_V1_FmtownsUtilityFilePicker *picker,
+    uint8_t *indexed_pixels, size_t pixel_capacity,
+    CSB_V1_FmtownsUtilityRenderReceipt *out_receipt);
 
 /* Recreate C06_CEDT's first F31E editor frame directly from the selected
  * retail executable and MINI.DAT payload.  Every glyph, menu label, portrait

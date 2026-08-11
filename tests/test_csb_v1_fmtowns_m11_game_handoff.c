@@ -195,6 +195,7 @@ int main(void)
     CSB_V1_FmtownsUtilityFontReceipt utility_font;
     CSB_V1_FmtownsUtilityPortraitCatalog utility_portrait_catalog;
     CSB_V1_FmtownsUtilityPortraitSelector utility_portrait_selector;
+    CSB_V1_FmtownsUtilityFilePicker utility_file_picker;
     CSB_V1_FmtownsUtilityRenderReceipt utility_render;
     CSB_V1_FmtownsUtilityMenuHitBox utility_hit;
     CSB_V1_FmtownsItemDecodeReceipt utility_arrows_decode;
@@ -791,6 +792,34 @@ int main(void)
               strcmp(utility_portrait_catalog.entries[0].filename, "ALEX.CMP") == 0 &&
               utility_portrait_catalog.entries[0].portrait.valid,
           "F31 C06 FILE_PICKER catalogues only real admitted PORTRAIT CMP files");
+    memset(&utility_file_picker, 0, sizeof(utility_file_picker));
+    CHECK(csb_v1_fmtowns_utility_file_picker_open(
+              &utility_portrait_catalog, 0u, &utility_file_picker) &&
+              utility_file_picker.valid && utility_file_picker.first_index == 0u &&
+              utility_file_picker.selected_index == 0u,
+          "F31 C06 F7083 opens the native file-picker state on the real catalog");
+    {
+        int picker_command = 0;
+        int picker_index = -1;
+        CHECK(csb_v1_fmtowns_utility_file_picker_input(
+                  &utility_file_picker, 80, 63, &picker_command,
+                  &picker_index) &&
+                  picker_command == CSB_V1_FMTOWNS_FILE_PICKER_FILE_LIST &&
+                  picker_index == 0,
+              "F31 C06 F7084 resolves the first authentic file-list row");
+        CHECK(csb_v1_fmtowns_utility_file_picker_input(
+                  &utility_file_picker, 140, 120, &picker_command,
+                  &picker_index) &&
+                  picker_command == CSB_V1_FMTOWNS_FILE_PICKER_DOWN &&
+                  utility_file_picker.first_index == 1u && picker_index == -1,
+              "F31 C06 F7084 applies bounded one-row down scrolling");
+        CHECK(csb_v1_fmtowns_utility_file_picker_input(
+                  &utility_file_picker, 180, 130, &picker_command,
+                  &picker_index) &&
+                  picker_command == CSB_V1_FMTOWNS_FILE_PICKER_CANCEL &&
+                  picker_index == -1,
+              "F31 C06 F7084 preserves the source cancel command");
+    }
     memset(&utility_portrait_selector, 0, sizeof(utility_portrait_selector));
     CHECK(csb_v1_fmtowns_utility_portrait_selector_open(
               &utility_portrait_catalog, 0u, &utility_portrait_selector) &&
@@ -985,6 +1014,16 @@ int main(void)
     if (language == CSB_FMTOWNS_SWITCH_ENGLISH) {
         memset(&utility_render, 0, sizeof(utility_render));
         memset(utility_frame, 0, sizeof(utility_frame));
+        CHECK(csb_v1_fmtowns_utility_render_file_picker(
+                  &utility_handoff, &utility_font, &utility_file_picker,
+                  utility_frame, sizeof(utility_frame), &utility_render) &&
+                  utility_render.valid && utility_render.file_picker_first_index == 1u &&
+                  utility_render.file_picker_selected_index == 0u &&
+                  utility_frame[63u * 320u + 77u] == 2u &&
+                  utility_frame[106u * 320u + 165u] == 0u,
+              "F31E C06 file-picker raster uses the real font, arrows and list geometry");
+        memset(&utility_render, 0, sizeof(utility_render));
+        memset(utility_frame, 0, sizeof(utility_frame));
         CHECK(csb_v1_fmtowns_utility_render_initial(
                   &utility_handoff, &utility_menu, &utility_font, &mini_party,
                   &mini_portraits, utility_frame, sizeof(utility_frame),
@@ -1054,6 +1093,22 @@ int main(void)
         CHECK(memcmp(framebuffer, view.csbFmtownsSwitchPixels,
                      sizeof(framebuffer)) != 0 && framebuffer[9u * 320u + 6u] == 9u,
               "F31E Utility presents its C06-owned source raster, not SWITCHTW");
+        result = M11_GameView_HandlePointerButton(
+            &view, 50, 190, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(result == M11_GAME_INPUT_REDRAW &&
+                  view.csbFmtownsUtilityFilePickerActive,
+              "F31E C06 LOAD CHAMPIONS enters the source-owned file picker");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        CHECK(framebuffer[63u * 320u + 77u] == 13u,
+              "F31E C06 file picker presents its real list and arrow raster");
+        result = M11_GameView_HandlePointerButton(
+            &view, 80, 63, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(result == M11_GAME_INPUT_REDRAW &&
+                  !view.csbFmtownsUtilityFilePickerActive &&
+                  strcmp(view.csbFmtownsUtilityParty.Champions[0].Name,
+                         view.csbFmtownsUtilityPortraitCatalog.entries[0].portrait.name) == 0,
+              "F31E C06 F7002 imports the selected authenticated CMP into the party");
         result = M11_GameView_HandlePointerButton(
             &view, 290, 67, DM1_V1_MOUSE_MASK_LEFT_PC34);
         memset(framebuffer, 0, sizeof(framebuffer));

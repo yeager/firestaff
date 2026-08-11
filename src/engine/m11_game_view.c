@@ -8711,6 +8711,8 @@ static int m11_csb_enter_fmtowns_utility(
            sizeof(state->csbFmtownsUtilityPortraitReceipt));
     memset(&state->csbFmtownsUtilityPortraitCatalog, 0,
            sizeof(state->csbFmtownsUtilityPortraitCatalog));
+    memset(&state->csbFmtownsUtilityFilePicker, 0,
+           sizeof(state->csbFmtownsUtilityFilePicker));
     memset(&state->csbFmtownsUtilityParty, 0,
            sizeof(state->csbFmtownsUtilityParty));
     memset(state->csbFmtownsUtilityOriginalPortraits, 0,
@@ -8721,6 +8723,7 @@ static int m11_csb_enter_fmtowns_utility(
            sizeof(state->csbFmtownsUtilityPortraitModified));
     state->csbFmtownsUtilityUndoModified = 0;
     state->csbFmtownsUtilityUndoAvailable = 0;
+    state->csbFmtownsUtilityFilePickerActive = 0;
     memset(&rendered, 0, sizeof(rendered));
     if (!csb_v1_fmtowns_utility_handoff_open(
             profile, language, &state->csbFmtownsUtilityHandoffReceipt) ||
@@ -8772,6 +8775,14 @@ static int m11_csb_redraw_fmtowns_utility(M11_GameViewState *state)
     CSB_V1_FmtownsUtilityRenderReceipt rendered;
     if (!state || !state->csbFmtownsUtilityBound) return 0;
     memset(&rendered, 0, sizeof(rendered));
+    if (state->csbFmtownsUtilityFilePickerActive) {
+        return csb_v1_fmtowns_utility_render_file_picker(
+            &state->csbFmtownsUtilityHandoffReceipt,
+            &state->csbFmtownsUtilityFontReceipt,
+            &state->csbFmtownsUtilityFilePicker,
+            state->csbFmtownsUtilityPixels,
+            sizeof(state->csbFmtownsUtilityPixels), &rendered);
+    }
     return csb_v1_fmtowns_utility_render_editor(
         &state->csbFmtownsUtilityHandoffReceipt,
         &state->csbFmtownsUtilityMenuReceipt,
@@ -9264,12 +9275,58 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
     M11_GameViewState *state, int x, int y, int button_mask)
 {
     CSB_V1_FmtownsUtilityMenuHitBox hit;
+    int picker_command;
+    int picker_index;
     int champion;
     if (!state || !state->csbFmtownsUtilityBound ||
         (button_mask & (DM1_V1_MOUSE_MASK_LEFT_PC34 |
                         DM1_V1_MOUSE_MASK_RIGHT_PC34)) == 0 ||
         !state->csbBootProfile) return M11_GAME_INPUT_REDRAW;
     memset(&hit, 0, sizeof(hit));
+    if (state->csbFmtownsUtilityFilePickerActive) {
+        if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0)
+            return M11_GAME_INPUT_REDRAW;
+        picker_command = 0;
+        picker_index = -1;
+        if (!csb_v1_fmtowns_utility_file_picker_input(
+                &state->csbFmtownsUtilityFilePicker, (int16_t)x, (int16_t)y,
+                &picker_command, &picker_index))
+            return M11_GAME_INPUT_REDRAW;
+        if (picker_command == CSB_V1_FMTOWNS_FILE_PICKER_FILE_LIST) {
+            if (picker_index < 0 ||
+                !csb_v1_fmtowns_utility_load_portrait(
+                    &state->csbFmtownsUtilityPortraitCatalog,
+                    (uint16_t)picker_index,
+                    &state->csbFmtownsUtilityParty,
+                    state->csbFmtownsUtilitySelectedChampion,
+                    &state->csbFmtownsUtilityPortraitReceipt)) {
+                m11_set_status(state, "CSB FM TOWNS", "CMP LOAD REJECTED");
+                return M11_GAME_INPUT_IGNORED;
+            }
+            memcpy(state->csbFmtownsUtilityOriginalPortraits[
+                       state->csbFmtownsUtilitySelectedChampion],
+                   state->csbFmtownsUtilityPortraitReceipt.source_bytes[
+                       state->csbFmtownsUtilitySelectedChampion],
+                   CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES);
+            state->csbFmtownsUtilityPortraitModified[
+                state->csbFmtownsUtilitySelectedChampion] = 0u;
+            state->csbFmtownsUtilityUndoAvailable = 0;
+            state->csbFmtownsUtilityFilePickerActive = 0;
+            return m11_csb_redraw_fmtowns_utility(state)
+                ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
+        if (picker_command == CSB_V1_FMTOWNS_FILE_PICKER_CANCEL) {
+            state->csbFmtownsUtilityFilePickerActive = 0;
+            return m11_csb_redraw_fmtowns_utility(state)
+                ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
+        if (picker_command == CSB_V1_FMTOWNS_FILE_PICKER_NEW_DISK) {
+            m11_set_status(state, "CSB FM TOWNS", "NEW DISK UNAVAILABLE");
+            return M11_GAME_INPUT_IGNORED;
+        }
+        return m11_csb_redraw_fmtowns_utility(state)
+            ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+    }
     /* CEDTDATA.C G2272_MouseInputs[0..3] and F7050 first select only an
      * existing source champion.  The retained MINI.DAT portrait receipt is
      * re-expanded; no temporary host portrait is ever installed. */
@@ -9350,12 +9407,24 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
                sizeof(state->csbFmtownsUtilityPortraitModified));
         state->csbFmtownsUtilityUndoAvailable = 0;
         m11_set_status(state, "CSB FM TOWNS", "CMP SAVED");
+    } else if (hit.action == CSB_V1_FMTOWNS_UTILITY_ACTION_LOAD_CHAMPIONS) {
+        if (!state->csbFmtownsUtilityPortraitCatalog.valid ||
+            !csb_v1_fmtowns_utility_file_picker_open(
+                &state->csbFmtownsUtilityPortraitCatalog, 0u,
+                &state->csbFmtownsUtilityFilePicker)) {
+            m11_set_status(state, "CSB FM TOWNS", "CMP CATALOG UNAVAILABLE");
+            return M11_GAME_INPUT_IGNORED;
+        }
+        state->csbFmtownsUtilityFilePickerActive = 1;
+        if (!m11_csb_redraw_fmtowns_utility(state)) {
+            state->csbFmtownsUtilityFilePickerActive = 0;
+            return M11_GAME_INPUT_IGNORED;
+        }
     }
-    /* Load and new-adventure still require CEDT006's authentic file/edit
-     * transactions. Those paths remain modal and fail closed until their
-     * owners are recovered; they never receive a synthetic host
-     * implementation. Revert and undo above are already bounded to the
-     * admitted F31 MINI.DAT portrait buffer. */
+    /* New-adventure still requires CEDT006's authentic file/edit
+     * transaction. It remains fail-closed; no synthetic host implementation
+     * is substituted. Revert, undo and the catalog-bound F7002 load above
+     * remain bounded to admitted F31 source records. */
     return M11_GAME_INPUT_REDRAW;
 }
 

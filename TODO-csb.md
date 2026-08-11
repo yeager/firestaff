@@ -288,7 +288,10 @@ populated dungeon states.
   transaction. The real English catalogue covers catalog binding, movement,
   and import in `csb_v1_fmtowns_m11_game_handoff`. The remaining gap is wiring
   the selector into C06's source-level F7083/F7084 drawing and modal
-  keyboard/mouse loop; no host path or synthetic row is accepted.
+  keyboard/mouse loop; the source-coordinate file-list state, bounded
+  scrolling, command ordinals, and real-data raster are now implemented,
+  but the C06 utility main loop still needs to own the modal event pump and
+  return the selected row to F7002. No host path or synthetic row is accepted.
 
 ### CSB V1
 
