@@ -1,3 +1,15 @@
+# Theron: bind real US roster names into the live forcefield party (2026-08-11)
+
+- ✅ The real US Track 02 codon roster is now regression-tested through the
+  source media receipt into the production forcefield party handoff. The
+  selected PENTAI/TIRAN records retain their source-bound health values while
+  their display names come from the authenticated Track 02 stream.
+- ✅ The focused test target now links the runtime libraries required by that
+  live handoff. No labels, BIOS, disc images or generated game data were
+  added.
+- 🔒 US title/control-code expansion and the original dungeon text consumer
+  remain separate capture/disassembly work; this change promotes names only.
+
 # Nexus: correct VDP1 frame-boundary attribution (2026-08-11)
 
 - ✅ Fixed `scripts/analyze_nexus_vdp1_write_trace.py` to attach writes after

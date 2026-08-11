@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+# Theron: US roster names are live; text control consumer remains unresolved (2026-08-11)
+
+- ✅ The authenticated US Track 02 name stream now reaches the production
+  forcefield party handoff and is covered with real-data regression tests.
+- 🔒 The remaining US text path still contains unresolved `{}` control values;
+  the original HuC6280 text consumer and title/control expansion are not yet
+  proven and must not be replaced with host-authored strings.
+
 # Theron: raw text glyph stream retained; control consumer still unresolved (2026-08-11)
 
 - ✅ The real packed 5-bit values, including end/padding/control values, now

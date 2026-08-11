@@ -1,6 +1,8 @@
 #include "theron_v1_startup_media.h"
 #include "theron_v1_world.h"
 #include "theron_v1_track02.h"
+#include "theron_v1_startup_flow.h"
+#include "theron_v1_dungeon_progression.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -178,6 +180,57 @@ static void check_real_us_roster(const char *path, const char *md5) {
     free(track02);
 }
 
+static void check_real_us_roster_reaches_party(
+    const char *path,
+    const char *md5) {
+    Theron_StartupMediaStateReceipt receipt;
+    Theron_StartupFlow flow;
+    Theron_DungeonProgression progression;
+    Theron_V1_Party party;
+    const char *names[THERON_STARTUP_MEDIA_ROSTER_CAPACITY];
+    uint8_t *track02;
+    size_t track02_bytes = 0u;
+    size_t i;
+
+    track02 = read_file(path, &track02_bytes);
+    if (!track02) {
+        fprintf(stderr, "skipping US party roster (missing %s)\n", path);
+        return;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    theron_v1_startup_media_capture_track02_state_receipt(
+        track02, track02_bytes, md5, &receipt);
+    CHECK(receipt.startup_roster_name_status == THERON_TRACK02_SIGNAL_OK);
+    CHECK(receipt.startup_roster_name_count == 8);
+    for (i = 0u; i < (size_t)receipt.startup_roster_name_count; ++i) {
+        names[i] = receipt.startup_roster_names[i];
+    }
+
+    theron_v1_startup_flow_init(&flow);
+    theron_v1_dungeon_progression_init(&progression);
+    CHECK(theron_v1_startup_choose_stage(
+              &flow, &progression, THERON_DUNGEON_1_AKUTUBA) ==
+          THERON_STARTUP_OK);
+    CHECK(theron_v1_startup_select_mirror(&flow, 6) == THERON_STARTUP_OK);
+    CHECK(theron_v1_startup_select_mirror(&flow, 2) == THERON_STARTUP_OK);
+    memset(&party, 0, sizeof(party));
+    CHECK(theron_v1_startup_enter_forcefield_with_roster(
+              &flow, &party, names, receipt.startup_roster_name_count) ==
+          THERON_STARTUP_OK);
+    CHECK(strcmp(party.champions[THERON_CHAMPION_SLOT_THERON].name,
+                 "THERON") == 0);
+    CHECK(strcmp(party.champions[THERON_CHAMPION_SLOT_COMPANION_1].name,
+                 "PENTAI") == 0);
+    CHECK(strcmp(party.champions[THERON_CHAMPION_SLOT_COMPANION_2].name,
+                 "TIRAN") == 0);
+    CHECK(party.champions[THERON_CHAMPION_SLOT_COMPANION_1].health == 550);
+    CHECK(party.champions[THERON_CHAMPION_SLOT_COMPANION_2].health == 450);
+    fprintf(stderr,
+            "US Track 02 roster names reach live forcefield party: %d names\n",
+            receipt.startup_roster_name_count);
+    free(track02);
+}
+
 int main(void) {
     Theron_V1_World world;
     const char *real_path = getenv("FIRESTAFF_THERON_TRACK02_RAW");
@@ -209,6 +262,7 @@ int main(void) {
     if (default_track02_path("TQUS02.bin", us_path, sizeof(us_path))) {
         check_real_palette(us_path, THERON_TRACK02_MD5_US_BIN, "US");
         check_real_us_roster(us_path, THERON_TRACK02_MD5_US_BIN);
+        check_real_us_roster_reaches_party(us_path, THERON_TRACK02_MD5_US_BIN);
     }
     if (default_track02_path("TQJP02.bin", jp_path, sizeof(jp_path))) {
         check_real_palette(jp_path, THERON_TRACK02_MD5_JP_BIN, "JP");
