@@ -61,7 +61,8 @@ if "$launcher" --operator-only --mednafen /usr/bin/true \
   exit 1
 fi
 
-python3 - "$tmp_dir/fake-mednafen" <<'PY'
+vdp2_fake="$tmp_dir/fake-mednafen-vdp2"
+python3 - "$vdp2_fake" <<'PY'
 import os
 import sys
 from pathlib import Path
@@ -94,6 +95,31 @@ Path(sys.argv[1]).write_text(
 )
 os.chmod(sys.argv[1], 0o755)
 PY
+python3 - "$tmp_dir/fake-mednafen" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+Path(sys.argv[1]).write_text(
+    "#!/bin/sh\n"
+    "printf '%s,%s,%s' \"$FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_PC\" "
+    "\"$FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_MIN\" "
+    "\"$FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_MAX\" > "
+    "\"$FIRESTAFF_NEXUS_TRACE_OUTPUT\"\n",
+    encoding="utf-8",
+)
+os.chmod(sys.argv[1], 0o755)
+PY
+FIRESTAFF_NEXUS_TRACE_VDP2_REGS="$tmp_dir/vdp2-registers.trace" \
+FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_PC=0x06011860 \
+FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_MIN=0x0 \
+FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_MAX=0x40000 \
+"$launcher" --operator-only --launch --mednafen "$vdp2_fake" \
+  --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
+  --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
+  --trace "$tmp_dir/trace-vdp2-env.raw" --validator /usr/bin/true \
+  --manifest "$tmp_dir/manifest-vdp2-env.txt" >/dev/null
+grep -Fq '0x06011860,0x0,0x40000' "$tmp_dir/trace-vdp2-env.raw"
 FIRESTAFF_NEXUS_TRACE_VDP1_WRITES="$write_trace" \
 FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE="$writer_code_trace" \
 FIRESTAFF_NEXUS_TRACE_VDP1_SNAPSHOT="$snapshot" \

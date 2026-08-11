@@ -282,12 +282,19 @@ Firestaff-delen avgör därefter om tillståndet kan bindas till en känd källa
 Exempelvärdena nedan är platshållare; använd egna, hashverifierade sökvägar:
 
 ```sh
-export FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REGS=/Volumes/Extern-disk/run/vdp2-writer-regs.trace
+export FIRESTAFF_NEXUS_TRACE_VDP2_REGS=/Volumes/Extern-disk/run/vdp2-writer-regs.trace
 export FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REG_PC=0x06017702
 export FIRESTAFF_NEXUS_TRACE_VDP2_WRITE_PC=0x06017702
 export FIRESTAFF_NEXUS_TRACE_VDP2_WRITES=/Volumes/Extern-disk/run/vdp2-writes.trace
 export FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT=/Volumes/Extern-disk/run/post.snapshot
 export FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT_LIMIT=64
+
+# För den byggda Mednafen-diagnostiken som dumpar källbytesfält från
+# FirestaffTraceVdp2Registers måste register-hooken dessutom få ett eget
+# PC- och adressintervall. VDP2-VRAM ligger i intervallet 0x00000–0x3ffff.
+export FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_PC=0x06011860
+export FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_MIN=0x0
+export FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_MAX=0x40000
 
 probes/nexus/firestaff_nexus_v1_saturn_raw_capture_launcher.sh \
   --operator-only --launch --no-waiting \
@@ -329,9 +336,12 @@ En komplett dumpning på extern disk ser därför ut så här:
 ```sh
 run=/Volumes/Extern-disk/nexus-saturn-capture/run-menu-$(date +%Y%m%d-%H%M%S)
 mkdir -p "$run"
-export FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REGS="$run/vdp2-writer-regs.trace"
+export FIRESTAFF_NEXUS_TRACE_VDP2_REGS="$run/vdp2-writer-regs.trace"
 export FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REG_PC=0x0601184c
 export FIRESTAFF_NEXUS_TRACE_VDP2_WRITE_PC=0x0601184c
+export FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_PC=0x06011860
+export FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_MIN=0x0
+export FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_MAX=0x40000
 export FIRESTAFF_NEXUS_TRACE_VDP2_WRITES="$run/vdp2-writes.trace"
 export FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT="$run/post.snapshot"
 export FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT_LIMIT=80

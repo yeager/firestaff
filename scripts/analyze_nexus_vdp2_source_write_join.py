@@ -16,8 +16,11 @@ from pathlib import Path
 
 REGISTER = re.compile(
     r"^(?:frame=[0-9]+ )?addr=0x(?P<addr>[0-9a-fA-F]+) pc=0x(?P<pc>[0-9a-fA-F]+)"
-    r"(?P<registers>.*) src_r(?P<src_reg>[0-9]+)=0x(?P<src>[0-9a-fA-F]+)"
-    r" src[0-9]+_words=(?P<words>[0-9a-fA-F]{4}(?:,[0-9a-fA-F]{4}){7})$")
+    r"(?P<registers>.*?) src_r(?P<src_reg>[0-9]+)=0x(?P<src>[0-9a-fA-F]+)"
+    # The diagnostic hook names the r4 sample `src_words`, while r5 and
+    # future numbered samples use `src5_words`; accept both spellings.
+    r" src[0-9]*_words=(?P<words>[0-9a-fA-F]{4}(?:,[0-9a-fA-F]{4}){7})"
+    r"(?: src_r[0-9]+=0x[0-9a-fA-F]+ src[0-9]*_words=[0-9a-fA-F,]+)?$")
 WRITE = re.compile(
     r"^area=(?P<area>[a-z]+) addr=0x(?P<addr>[0-9a-fA-F]+)"
     r" size=(?P<size>[0-9]+) value=0x(?P<value>[0-9a-fA-F]+)"
@@ -64,13 +67,19 @@ def main() -> int:
                 continue
             writes.append((int(match["addr"], 16), int(match["size"]),
                            int(match["value"], 16), match["area"]))
-        if len(writes) != len(witnesses):
-            raise ValueError(f"register/write sequence length differs: {len(witnesses)} vs {len(writes)}")
+        # The register hook is capped independently from the write hook and
+        # also observes CRAM/register writes interleaved with VRAM writes.
+        # Join by destination address and occurrence, rather than assuming
+        # that the two bounded streams have identical length/order.
+        witnesses_by_address = {}
+        for witness in witnesses:
+            witnesses_by_address.setdefault(witness[0], []).append(witness)
         rows = []
-        for (write_addr, write_size, value, area), (source_addr, source,
-                                                     source_bytes) in zip(writes, witnesses):
-            if write_addr != source_addr:
-                raise ValueError(f"register/write address differs at 0x{write_addr:x}")
+        for write_addr, write_size, value, area in writes:
+            candidates = witnesses_by_address.get(write_addr)
+            if not candidates:
+                continue
+            _, source, source_bytes = candidates.pop(0)
             if source is None:
                 continue
             if write_size != 2 or source_bytes[:2] != value.to_bytes(2, "big"):
@@ -89,6 +98,11 @@ def main() -> int:
                 continue
             data = path.read_bytes()
             for _, source, source_bytes, _ in rows:
+                # A zero-filled witness is an initialization write, not an
+                # asset identity. Do not turn it into a false positive by
+                # matching the same padding in every candidate file.
+                if len(set(source_bytes)) <= 1:
+                    continue
                 offset = data.find(source_bytes)
                 if offset >= 0:
                     asset_hits.append((path.name, offset))
