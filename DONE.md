@@ -13850,3 +13850,7 @@ and production source-combat tests.
   nexus_v1_saturn_tile_transform` pass.
 - 🔒 This is transform provenance only; no CLUT, VDP1/VDP2, menu, HUD or
   viewport ownership was inferred.
+# Theron: Mednafen-grafikprofilen avgränsad mot fel emulator (2026-08-11)
+- ✅ verifierade den rena PCE-binären mot äkta `TQUS.cue` och System Card med `pce.videoip=0`, `pce.shader=none`, `pce.special=none` och aspect-preserving 2×-skalning
+- ✅ fastställde att den synliga felbilden kom från en DOSBox-X-instans, inte från Theron/Mednafen
+- ✅ dokumenterade fönstertitel, ren profil och BIOS-länk utanför repot i `docs/THERON_MAC_SDL_MEDNAFEN_LOCAL.md`

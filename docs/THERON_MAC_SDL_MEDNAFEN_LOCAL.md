@@ -97,6 +97,18 @@ den ska inte checkas in.
 
 ### Pixel-exakt video
 
+Kontrollera först fönstertiteln. `Dungeon Master - Theron's Quest (USA)` är
+Mednafen; ett synligt `DOSBox-X`-fönster är en annan emulator och ska inte
+användas som Theron-referens. Om bilden är färggröt, har fel HUD eller visar
+helt andra spelgrafik ska den instansen stängas innan någon grafikbedömning
+görs.
+
+Använd inte en gammal global Mednafen-profil för felsökning. Den rena profilen
+ska innehålla endast den användarägda System Card-filen som symbolisk länk i
+`$MEDNAFEN_HOME/firmware/syscard3.pce`; speldata och BIOS ska aldrig kopieras
+till repot. Starta sedan med flaggorna nedan. Detta låser både emulator och
+videoväg till den verifierade Theron-körningen.
+
 För Theron ska Mednafen använda originalets pixelsteg utan interpolering:
 
 ```ini
