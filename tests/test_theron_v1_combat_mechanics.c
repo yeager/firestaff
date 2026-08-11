@@ -828,6 +828,15 @@ static void test_source_item_pickup_provenance(void) {
               theron_v1_click_route(&w, 2, 2, THERON_CMD_TAKE), 0);
     CHECK(theron_v1_object_at_in_dungeon(&w, w.current_dungeon, 0, 2, 2) == NULL,
           "picked source object leaves active floor lookup");
+    for (int object_index = 0; object_index < w.object_count; ++object_index) {
+        if (w.objects[object_index].source_ref == 0x1234u) {
+            w.objects[object_index].flags &= ~THERON_OBJ_F_PICKED_UP;
+            w.objects[object_index].flags |= THERON_OBJ_F_DESTROYED;
+            break;
+        }
+    }
+    CHECK(theron_v1_object_at_in_dungeon(&w, w.current_dungeon, 0, 2, 2) == NULL,
+          "destroyed source object leaves active floor lookup");
     CHECK_INT("compact inventory keeps source item id",
               w.party.champions[0].inventory[0], 6);
     carried = theron_v1_inventory_source_at(&w, 0, 0);
