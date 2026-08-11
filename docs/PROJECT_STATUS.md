@@ -1,6 +1,6 @@
 # Firestaff project status
 
-**Last reviewed: 2026-08-08.** This page is the concise status source for the
+**Last reviewed: 2026-08-11.** This page is the concise status source for the
 README and wiki. The full documentation map is in
 [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md).
 
@@ -14,6 +14,9 @@ source audits and capture receipts remain in the linked game documentation.
 | Dungeon Master II: Skullkeep | Active hardening | Boot/profile, GDAT utilities, V2 presentation, lighting, HUD, movement and controller slices | SKSAVE ownership, V1 dungeon/render/mechanics parity and live material/audio routes |
 | DM Nexus | Active real-data bring-up | Saturn DMDF/DGN data, world/render/save/mechanics slices and V2 presentation | Saturn runtime/frame capture, material semantics, event/audio playback and full playability |
 | Theron's Quest | Active real-media bring-up | JP/US Track 02 identity, parser, level framing, mechanics, progression and capture instrumentation | Full Track 02 handoff, save body semantics, bitmap/palette binding and JP capture |
+
+The dated [preservation status](PRESERVATION_STATUS_2026-08-11.md) records
+the current source, format and real-media boundary for every game.
 
 ## Shared presentation priority
 

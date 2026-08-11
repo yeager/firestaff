@@ -6,6 +6,10 @@
 
 This section documents all functions, data structures, file formats, and other technical details recovered through disassembly and reconstruction of the five Dungeon Master game engines. The information is valuable for game preservation, future reverse engineering efforts, and understanding how these classic RPGs work at the binary level.
 
+Use the [dated preservation status](../PRESERVATION_STATUS_2026-08-11.md)
+with this index: it distinguishes a source/disassembly anchor from a
+real-media receipt, runtime handoff or pixel-paired claim.
+
 ## Per-Game Documentation
 
 | Game | Platform | Reference Source | RE Page | Functions | Modules | Parity Evidence |

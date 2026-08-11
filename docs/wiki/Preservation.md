@@ -56,6 +56,9 @@ The detailed gaps are in [missing functions by game](../MISSING_FUNCTIONS_BY_GAM
 and the synthetic-data inventory is in
 [synthetic data by game](../SYNTHETIC_DATA_BY_GAME.md).
 
+The current cross-game source, format and real-media boundary is maintained in
+[Preservation status 2026-08-11](../PRESERVATION_STATUS_2026-08-11.md).
+
 ## Capture manifest minimum
 
 Every promoted original capture should record:
