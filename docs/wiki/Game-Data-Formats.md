@@ -44,13 +44,17 @@ enumerator preserves the original non-directory order and has verified the
 classifies the cracked HDM as canonical nor enables an X68000 boot profile;
 see [preservation status](../PRESERVATION_STATUS_2026-08-11.md).
 
-`AUTOEXEC.BAT` is a CRLF-delimited Human68k startup script ending in DOS EOF
+`AUTOEXEC.BAT` uses CRLF between commands and ends the final command at DOS EOF
 `0x1A`; the verified image contains `CK`, `VIDSET` and
 `CHAOS_STRIKES_BACK` in that order. `CHAOS_ST.X` is a Human68k `HU` executable
 with a 64-byte header. The local CSB v3.1 JP image verifies 9,020 text bytes,
 586 data bytes, 2,126 BSS bytes, 562 relocation bytes and 2,052 symbol bytes.
 These are source-layout and startup-order receipts, not an executable loader or
 emulator.
+
+The admitted X68000 startup handoff owns only decoded host graphics and source
+dungeon state. It does not retain the HDM, execute `CHAOS_ST.X`, or route the
+shared DMCSB2 record layout through the Amiga cache.
 
 ## Dungeon Master II
 

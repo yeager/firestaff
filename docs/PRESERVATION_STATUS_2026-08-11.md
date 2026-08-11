@@ -37,7 +37,12 @@ kartor, startpositionen 0/9/0/riktning 2, 9 MIDI-spår med 3 205 händelser,
 kommandoföljden `CK`, `VIDSET`, `CHAOS_STRIKES_BACK` samt Human68k-programmets
 64-bytehuvud och textgräns. Kvittot behåller X68000-identiteten även när
 grafikformatet delas med Amiga och spärrar fortfarande native start. Detta är
-en verifierad media-till-källindata-handoff, inte en start- eller emuleringsrutt.
+en verifierad media-till-källindata-handoff, inte en programemuleringsrutt.
+
+`csb_v1_x68k_startup_handoff_admit` använder samma godkända byte i ett ägt
+värdobjekt: den initierar en X68000-märkt M11-cache och laddar source-dungeon
+med den verifierade startpositionen. Den kör inte `CHAOS_ST.X`, återanvänder
+inte Amiga-identiteten och ansluter ännu inte till M11:s spelvy.
 
 Rootkatalogen är nu också läsbar i originalordning. Den verifierade avbilden
 har 27 vanliga rootfiler, där `CHAOS_ST.X`, `TITL.DAT`, `ANIM.DAT`,

@@ -32,16 +32,19 @@ static int name83(const char *name, uint8_t out[11]) {
     if (dot) {
         if (dot == name || !dot[1]) return 0;
         for (i = 0u; name + i < dot; ++i) {
-            if (i >= 8u || !isalnum((unsigned char)name[i])) return 0;
+            if (i >= 8u || !(isalnum((unsigned char)name[i]) ||
+                            name[i] == '_' || name[i] == '-')) return 0;
             out[base++] = (uint8_t)toupper((unsigned char)name[i]);
         }
         for (i = 0u; dot[1u + i]; ++i) {
-            if (i >= 3u || !isalnum((unsigned char)dot[1u + i])) return 0;
+            if (i >= 3u || !(isalnum((unsigned char)dot[1u + i]) ||
+                            dot[1u + i] == '_' || dot[1u + i] == '-')) return 0;
             out[8u + ext++] = (uint8_t)toupper((unsigned char)dot[1u + i]);
         }
     } else {
         for (i = 0u; name[i]; ++i) {
-            if (i >= 8u || !isalnum((unsigned char)name[i])) return 0;
+            if (i >= 8u || !(isalnum((unsigned char)name[i]) ||
+                            name[i] == '_' || name[i] == '-')) return 0;
             out[base++] = (uint8_t)toupper((unsigned char)name[i]);
         }
     }

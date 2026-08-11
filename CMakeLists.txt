@@ -6898,6 +6898,7 @@ set(M11_SOURCES
     src/csb/csb_v1_x68k_dungeon_handoff.c
     src/csb/csb_v1_x68k_enter_sng.c
     src/csb/csb_v1_x68k_source_media.c
+    src/csb/csb_v1_x68k_startup_handoff.c
     src/csb/csb_v1_amiga_titl_dat.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/shared/firestaff_amiga_adf.c
@@ -51244,6 +51245,18 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_csb_x68k_asset_loader.c")
     endif()
     add_test(NAME m11_csb_x68k_asset_loader COMMAND test_m11_csb_x68k_asset_loader)
     set_tests_properties(m11_csb_x68k_asset_loader PROPERTIES LABELS "m11;csb;x68k;synthetic_fixture")
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_x68k_startup_handoff.c")
+    add_executable(test_csb_v1_x68k_startup_handoff
+        tests/test_csb_v1_x68k_startup_handoff.c)
+    target_link_libraries(test_csb_v1_x68k_startup_handoff PRIVATE firestaff_m11)
+    target_include_directories(test_csb_v1_x68k_startup_handoff PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_x68k_startup_handoff PRIVATE -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_x68k_startup_handoff COMMAND test_csb_v1_x68k_startup_handoff)
+    set_tests_properties(csb_v1_x68k_startup_handoff PROPERTIES LABELS "csb;x68k;real_media;startup_handoff")
 endif()
 
 # M11 V2.0/V2.1 filter chain clamp contract. Pins the V2 visual

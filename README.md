@@ -71,7 +71,7 @@ matching data is present:
 | Atari ST 2.0 and 2.1 | Native media uses its own animation, runtime, HUD and supported viewport-material routes. |
 | FM Towns English and Japanese | Native CD installations use their version-specific Towns packages for the supported title, Game and Utility routes. |
 | PC DOS 3.4 | Recognised source-reference edition. It remains useful for format and runtime comparison, but is not selected ahead of verified native Amiga CSB media. |
-| X68000 Japanese 3.1 | Structurally readable HDM route: verified FAT12 extraction hands native `GRAPHICS.DAT` to a separate M11 cache. This is not yet a boot profile or an authenticity claim. |
+| X68000 Japanese 3.1 | Structurally readable HDM route: verified FAT12 extraction binds native `GRAPHICS.DAT` to a separate M11 cache and loads the source dungeon through an X68000 startup handoff. This is not yet an M11 game-view boot profile or an authenticity claim. |
 
 Recognition is deliberately separate from a playability claim. A recognised
 edition has passed the data gate; it does not imply that every screen, save

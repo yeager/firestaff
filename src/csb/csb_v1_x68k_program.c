@@ -26,11 +26,14 @@ int csb_v1_x68k_chaos_st_receipt(const uint8_t *hdm, size_t hdm_size,
         free(bytes);
         return 0;
     }
-    receipt.text_bytes = be32(bytes + 4u);
-    receipt.data_bytes = be32(bytes + 8u);
-    receipt.bss_bytes = be32(bytes + 12u);
-    receipt.relocation_bytes = be32(bytes + 16u);
-    receipt.symbol_bytes = be32(bytes + 20u);
+    /* Human68k's 64-byte header places three longword fields between the
+     * HU magic and the executable segment sizes.  The CSB v3.1 JP program
+     * has its text/data/BSS/relocation/symbol sizes at 0x0c..0x1c. */
+    receipt.text_bytes = be32(bytes + 12u);
+    receipt.data_bytes = be32(bytes + 16u);
+    receipt.bss_bytes = be32(bytes + 20u);
+    receipt.relocation_bytes = be32(bytes + 24u);
+    receipt.symbol_bytes = be32(bytes + 28u);
     stored_bytes = 64u + (uint64_t)receipt.text_bytes + receipt.data_bytes +
         receipt.relocation_bytes + receipt.symbol_bytes;
     if (stored_bytes != size || receipt.text_bytes == 0u) {
