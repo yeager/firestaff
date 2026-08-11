@@ -20,10 +20,10 @@ Ren Mednafen-källtree:
   /Volumes/Extern-disk/theron-mednafen-clean-source-20260809/mednafen
 
 Instrumenterad Mednafen-build:
-  /Volumes/Extern-disk/theron-mednafen-real-sdl2-capture-20260809
+  /Volumes/Extern-disk/mednafen-firestaff-real-sdl2-20260811
 
 Instrumenterad binär:
-  /Volumes/Extern-disk/theron-mednafen-real-sdl2-capture-20260809/install/bin/mednafen
+  /Volumes/Extern-disk/mednafen-firestaff-real-sdl2-20260811/install/bin/mednafen
 
 Ren PCE-videobinär utan Firestaff-capture-hooks:
   /Volumes/Extern-disk/mednafen-1.32.1-clean-pce-20260811/src/mednafen
@@ -113,27 +113,38 @@ se felaktig ut jämfört med den ursprungliga PCE-grafiken. Den lokala profilen
 och capture-profilen på extern-disken använder därför inställningarna ovan.
 
 Använd den rena PCE-videobinären när bilden ska granskas eller när Theron ska
-spelas. Capture-binären är endast för spårning. Den instrumenterade kärnan
-läser extra CPU-operander före instruktionsexekveringen för att hitta
-CD/RAM-konsumenter; den är därför inte en godkänd referens för visuell parity.
-En visuell kontroll den 2026-08-11 med samma äkta `TQUS.cue`, System Card och
-pixelprofil gav ren startup-bild med den rena binären, medan capture-binären
-gav korrupta magenta/olivfärgade streck. Det var alltså ett fel i lokal
-capture-build, inte i originalets Track 02-media eller i pixelprofilens
-skalning.
+spelas. Capture-binären är i första hand för spårning. Den aktuella builden är
+ombyggd mot samma rena `huc6280.cpp` som referensbinären och läser inte extra
+CPU-operander före varje instruktion.
+En äldre visuell kontroll den 2026-08-11 med samma äkta `TQUS.cue`, System
+Card och pixelprofil gav ren startup-bild med den rena binären, medan den då
+aktuella capture-binä­ren gav korrupta magenta/olivfärgade streck. Det var ett
+fel i den gamla lokala capture-builden, inte i originalets Track 02-media
+eller i pixelprofilens skalning. Den ombyggda binären är den som anges ovan.
 
-Capture-builden på extern-disken byggdes därefter om mot samma rena
-`huc6280.cpp`. Den behåller CD/FIFO/RAM-observationerna via sina hookar men
-läser inte extra CPU-operander före varje instruktion. Den måste alltid
-genomgå samma visuella smoke-test innan den används för en ny runtime-capture;
-en capture som förvränger bilden är ogiltig även om dess receipts ser formellt
-kompletta ut.
+Den äldre capture-binä­ren får inte användas. Den gav korrupta
+magenta/olivfärgade streck. Den aktuella capture-binä­ren behåller
+CD/FIFO/RAM-observationerna via sina hookar, men måste ändå genomgå samma
+visuella smoke-test innan ny runtime-capture; en capture som förvränger bilden
+är ogiltig även om receipts ser formellt kompletta ut.
 
 Starta videokontrollen så här:
 
 ```bash
 MEDNAFEN_HOME=/Users/bosse/.mednafen \
 /Volumes/Extern-disk/mednafen-1.32.1-clean-pce-20260811/src/mednafen \
+  -pce.stretch aspect -pce.videoip 0 -pce.special none \
+  -pce.xscale 2.000000 -pce.yscale 2.000000 \
+  /Volumes/Extern-disk/theron-full-media-20260810/TQUS.cue
+```
+
+För capture används samma grafikflaggor med den aktuella capture-binä­ren:
+
+```bash
+MEDNAFEN_HOME=/Users/bosse/.mednafen \
+/Volumes/Extern-disk/mednafen-firestaff-real-sdl2-20260811/install/bin/mednafen \
+  -pce.stretch aspect -pce.videoip 0 -pce.special none \
+  -pce.xscale 2.000000 -pce.yscale 2.000000 \
   /Volumes/Extern-disk/theron-full-media-20260810/TQUS.cue
 ```
 
