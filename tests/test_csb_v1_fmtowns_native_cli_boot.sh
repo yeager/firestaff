@@ -42,7 +42,7 @@ case "$title_output" in
 esac
 
 runtime_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
-    --game csb --data-dir "$data_dir" --platform fm-towns --boot-probe \
+    --menu --game csb --data-dir "$data_dir" --platform fm-towns --boot-probe \
     --boot-probe-frames 2000 --boot-probe-expect-phase inactive \
     --boot-probe-expect-runtime --boot-probe-expect-party 9,0,2 \
     --duration 0 2>&1)" || {
@@ -59,4 +59,4 @@ case "$runtime_output" in
         ;;
 esac
 
-echo "PASS: native CSB FM Towns CLI title and MINI.DAT runtime boot"
+echo "PASS: native CSB FM Towns direct CLI title and start-menu MINI.DAT runtime boot"
