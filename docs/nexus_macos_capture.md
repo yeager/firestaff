@@ -81,6 +81,8 @@ FIRESTAFF_NEXUS_TRACE_VDP1_REGS=/extern/nexus-capture/run/vdp1-regs.trace
 FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_DUMP=/extern/nexus-capture/run/source.dump
 FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_DUMP_AT=0x63e00
 FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_DUMP_SIZE=0x8200
+# Flera möjliga VDP1-konsumenter kan provas i samma session.
+FIRESTAFF_NEXUS_TRACE_VDP1_REG_PC_LIST=0x0601307c,0x060262c4,0x060262d4
 
 # Riktad SH-2-läslogg för att följa transformen före VDP1-skrivningen:
 FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_READS=/extern/nexus-capture/run/vdp1-source-reads.trace

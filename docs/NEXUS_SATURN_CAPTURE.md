@@ -125,6 +125,11 @@ Körningen sker i denna ordning. Sökvägarna pekar medvetet på extern disk.
 3. Bygg den patchade Mednafen-kopian i en separat katalog på extern disk.
 4. Skapa en ny körkatalog och sätt miljövariablerna för rådump, registerspår,
    VDP2-write-spår och post-write-snapshot.
+   För VDP1-källproveniens kan samma körning dessutom rikta registerprovet
+   mot flera SH-2-PC:n med
+   `FIRESTAFF_NEXUS_TRACE_VDP1_REG_PC_LIST=0x0601307c,0x060262c4`.
+   Det är viktigt att PC-listan, source-dumpen och rådumpen produceras av
+   samma process; separata körningar får inte fogas ihop som ett bevis.
 5. Starta Saturn-profilen genom
    `firestaff_nexus_v1_saturn_raw_capture_launcher.sh`. Launchern validerar
    BIOS och disc, startar Mednafen, väntar tills körningen är klar och skriver
@@ -134,6 +139,12 @@ Körningen sker i denna ordning. Sökvägarna pekar medvetet på extern disk.
 7. Behandla resultatet som `blocked` tills både skrivordning och källbytes
    identitet är verifierade. En tekniskt giltig VDP2-snapshot är inte i sig
    bevis för att bytesen är menytext, FONT256 eller HUD.
+
+Varje receipt ska därför innehålla BIOS- och disc-hash, sessionsnamn,
+framefönster, rådumpens layout samt SHA-256 för varje faktiskt producerat
+register-, source- och VDP-skrivspår. Om processen timeoutar eller rådumpen
+inte får sitt capture-magic ska körningen kasseras som observationsförsök,
+även om enskilda tracefiler hann skrivas.
 
 ### Verifierad extern körning 2026-08-11
 
