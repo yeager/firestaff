@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+# Theron: raw text glyph stream retained; control consumer still unresolved (2026-08-11)
+
+- ✅ The real packed 5-bit values, including end/padding/control values, now
+  survive the diagnostic ASCII decode in a bounded raw glyph stream.
+- 🔒 This does not assign meanings to `{`/`}` or publish dungeon text. The
+  original HuC6280 text consumer and its control-code expansion still need a
+  runtime/disassembly join.
+
 # Theron: screen-space VDC/VCE route is real, semantic viewport remains open (2026-08-11)
 
 - ✅ A second complete external 64 KiB VRAM/1 KiB VCE pair is now admitted by

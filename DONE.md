@@ -1,3 +1,12 @@
+# Theron: retain authentic raw text glyph values (2026-08-11)
+
+- ✅ The Track 02 text decoder now retains every packed 5-bit value, including
+  values after an end marker, beside its diagnostic string output.
+- ✅ Real AKUTUBA, DRATOR, FORMICIA, SARMON, SHADODAN, THIEVES and DEMON text
+  streams pass the lossless glyph-count regression.
+- 🔒 Control-code meanings and the original HuC6280 text consumer remain
+  closed; the world text loader still refuses diagnostic-only strings.
+
 # Theron: admit clean real VDC/VCE screen-space replay (2026-08-11)
 
 - ✅ Added the externally retained US Track 02/System Card pair

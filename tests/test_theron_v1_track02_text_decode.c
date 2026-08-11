@@ -65,6 +65,9 @@ static void test_codon_basic(void) {
     assert(theron_v1_track02_text_decode(codons, 2, &tb) == 0);
     assert(tb.count == 1);
     assert(strcmp(tb.strings[0], "abc") == 0);
+    assert(tb.raw_glyph_count == 6);
+    assert(tb.raw_glyphs[0] == 0 && tb.raw_glyphs[1] == 1 &&
+           tb.raw_glyphs[2] == 2 && tb.raw_glyphs[3] == THERON_TEXT_END_MARKER);
     printf("  Basic codon decode OK\n");
 }
 
@@ -112,6 +115,7 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
             assert(tb->count > 0);
             assert(tb->diagnostic_only);
             assert(tb->unresolved_control_codes > 0);
+            assert(tb->raw_glyph_count > 0);
         }
 
         free(tb);
