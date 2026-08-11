@@ -159,10 +159,7 @@ int main(void)
     CSB_V1_FmtownsSwitchLanguage language;
     char materialized_data_dir[M12_ASSET_DATA_DIR_CAPACITY];
     char materialized_mini_path[M12_ASSET_DATA_DIR_CAPACITY];
-#if defined(FIRESTAFF_ASSET_STATUS_TESTING) || \
-    defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
     char unselected_mini_path[M12_ASSET_DATA_DIR_CAPACITY];
-#endif
     M12_AssetStatus asset_status;
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
@@ -257,14 +254,8 @@ int main(void)
                     version_id);
             return 0;
         }
-#if defined(FIRESTAFF_ASSET_STATUS_TESTING) || \
-    defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
         CHECK(strcmp(materialized_data_dir, loose_data_dir) != 0,
-              "development F31 materialization isolates a verified cache");
-#else
-        CHECK(strcmp(materialized_data_dir, loose_data_dir) == 0,
-              "production F31 materialization retains the verified disc root");
-#endif
+              "F31 materialization isolates the selected verified cache");
         if (snprintf(materialized_mini_path, sizeof(materialized_mini_path),
                      "%s/%s/MINI.DAT", materialized_data_dir,
                      language == CSB_FMTOWNS_SWITCH_ENGLISH ? "CDATA" : "CJDATA") < 0 ||
@@ -280,8 +271,6 @@ int main(void)
             free(materialized_mini);
             materialized_mini = NULL;
         }
-#if defined(FIRESTAFF_ASSET_STATUS_TESTING) || \
-    defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
         if (snprintf(unselected_mini_path, sizeof(unselected_mini_path),
                      "%s/%s/MINI.DAT", materialized_data_dir,
                      language == CSB_FMTOWNS_SWITCH_ENGLISH ? "CJDATA" : "CDATA") >= 0) {
@@ -292,7 +281,6 @@ int main(void)
               "F31 cache excludes a stale opposite-language MINI.DAT");
         free(materialized_mini);
         materialized_mini = NULL;
-#endif
         data_dir = materialized_data_dir;
     } else if (archive_data_dir && archive_data_dir[0]) {
         M12_AssetStatus_ScanGame(&asset_status, archive_data_dir, "csb");
