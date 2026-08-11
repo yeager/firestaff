@@ -1,5 +1,6 @@
 #include "asset_loader_m11.h"
 #include "csb_v1_x68k_hdm.h"
+#include "m11_game_view.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -143,6 +144,24 @@ int main(void) {
         free(hdm);
         if (!ok) {
             puts("test_m11_csb_x68k_asset_loader: original media mismatch");
+            return 1;
+        }
+    }
+    {
+        M11_GameViewState state;
+        memset(&state, 0, sizeof(state));
+        M11_GameView_Init(&state);
+        if (!M11_GameView_AdmitCsbX68kHdm(&state, path) ||
+            state.sourceKind != M11_GAME_SOURCE_CSB_X68K_HDM ||
+            !state.csbX68kStartupHandoff || state.csbBootProfile) {
+            M11_GameView_Shutdown(&state);
+            puts("test_m11_csb_x68k_asset_loader: M11 source admission failed");
+            return 1;
+        }
+        M11_GameView_Shutdown(&state);
+        if (state.csbX68kStartupHandoff ||
+            state.sourceKind == M11_GAME_SOURCE_CSB_X68K_HDM) {
+            puts("test_m11_csb_x68k_asset_loader: M11 source cleanup failed");
             return 1;
         }
     }

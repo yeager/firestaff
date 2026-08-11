@@ -30,6 +30,7 @@
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_x68k_startup_handoff.h"
 #include "csb_v1_fmtowns_cd.h"
 #include "csb_v1_fmtowns_graphics_dat.h"
 #include "csb_v1_fmtowns_portrait.h"
@@ -6286,7 +6287,7 @@ static int m11_write_quicksave_pc34_tail(const M11_GameViewState *state,
     const struct DungeonDatState_Compat *dungeon;
     char sidecar_path[M11_GAME_VIEW_PATH_CAPACITY + 16];
     unsigned char header[16];
-    FILE *file;
+    FILE *file = NULL;
 
     if (!state || !path || !m11_build_quicksave_pc34_tail_path(
             path, sidecar_path, sizeof(sidecar_path))) {
@@ -20334,6 +20335,42 @@ int M11_GameView_SetCsbEntranceF0128Raster(
     return 1;
 }
 
+int M11_GameView_AdmitCsbX68kHdm(M11_GameViewState *state,
+                                 const char *hdm_path)
+{
+    FILE *file = NULL;
+    long length;
+    uint8_t *bytes = NULL;
+    CSB_V1_X68kStartupHandoff *handoff = NULL;
+
+    if (!state || !hdm_path || !hdm_path[0] || !(file = fopen(hdm_path, "rb")) ||
+        fseek(file, 0, SEEK_END) != 0 || (length = ftell(file)) <= 0 ||
+        fseek(file, 0, SEEK_SET) != 0 ||
+        !(bytes = (uint8_t *)malloc((size_t)length)) ||
+        fread(bytes, 1u, (size_t)length, file) != (size_t)length ||
+        !(handoff = (CSB_V1_X68kStartupHandoff *)calloc(1u, sizeof(*handoff))) ||
+        csb_v1_x68k_startup_handoff_admit(handoff, bytes, (size_t)length) !=
+            CSB_V1_X68K_STARTUP_HANDOFF_OK) {
+        if (file) fclose(file);
+        free(bytes);
+        if (handoff) {
+            csb_v1_x68k_startup_handoff_cleanup(handoff);
+            free(handoff);
+        }
+        return 0;
+    }
+    fclose(file);
+    free(bytes);
+    if (state->csbX68kStartupHandoff) {
+        csb_v1_x68k_startup_handoff_cleanup(
+            (CSB_V1_X68kStartupHandoff *)state->csbX68kStartupHandoff);
+        free(state->csbX68kStartupHandoff);
+    }
+    state->csbX68kStartupHandoff = handoff;
+    state->sourceKind = M11_GAME_SOURCE_CSB_X68K_HDM;
+    return 1;
+}
+
 void M11_GameView_Shutdown(M11_GameViewState* state) {
     if (!state) {
         return;
@@ -20400,6 +20437,12 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
         csb_v1_boot_cleanup((CSB_V1_BootProfile*)state->csbBootProfile);
         free(state->csbBootProfile);
         state->csbBootProfile = NULL;
+    }
+    if (state->csbX68kStartupHandoff) {
+        csb_v1_x68k_startup_handoff_cleanup(
+            (CSB_V1_X68kStartupHandoff *)state->csbX68kStartupHandoff);
+        free(state->csbX68kStartupHandoff);
+        state->csbX68kStartupHandoff = NULL;
     }
     if (state->dm2BootProfile) {
         dm2_v1_boot_cleanup((DM2_V1_BootProfile*)state->dm2BootProfile);
