@@ -274,9 +274,12 @@ int nexus_v1_saturn_runtime_capture_frame(
             receipt.vdp1_word_order = mednafen_magic_present
                 ? NEXUS_V1_SATURN_VDP1_WORD_ORDER_BIG
                 : NEXUS_V1_SATURN_VDP1_WORD_ORDER_LITTLE;
+            /* The upstream Mednafen container is explicitly big-endian.
+             * Historical Firestaff V1/V2 containers predate a byte-order
+             * field and must be resolved from their register witness. */
             receipt.vdp2_word_order = mednafen_magic_present
                 ? NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG
-                : NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_LITTLE;
+                : NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_UNKNOWN;
             receipt.vdp1_execution_active = state_present &&
                 receipt.ptmr != 0U && receipt.edsr != 0U &&
                 receipt.vdp1_payload_nonzero;

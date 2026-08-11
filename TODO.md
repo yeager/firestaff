@@ -74,8 +74,9 @@
 
 ## Nexus: make VDP2 capture byte order producer-defined (2026-08-11)
 
-- ✅ The runtime receipt now distinguishes historical Firestaff host-order
-  words from the Mednafen candidate's explicit big-endian words.
+- ✅ The runtime receipt now distinguishes the Mednafen candidate's explicit
+  big-endian words from historical Firestaff captures whose order is resolved
+  from the register witness.
 - ✅ Regression coverage uses nonzero `TVMD=0x8000` and `BGON=0x0002` values
   in both encodings; the authenticated external frame still parses as raw
   evidence only.

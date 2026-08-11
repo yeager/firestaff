@@ -75,8 +75,8 @@ typedef struct {
     size_t vdp2_vram_size;
     size_t vdp2_register_size;
     Nexus_V1_SaturnVdp1WordOrder vdp1_word_order;
-    /* Firestaff captures predate the Mednafen PR and store host-order words;
-     * the Mednafen producer serializes Saturn words as big-endian. */
+    /* Mednafen captures are explicit big-endian. Historical Firestaff
+     * captures have no order field and are resolved by the register receipt. */
     Nexus_V1_SaturnVdp2RegisterByteOrder vdp2_word_order;
     int semantic_admission_blocked;
 } Nexus_V1_SaturnRuntimeCaptureFrameReceipt;

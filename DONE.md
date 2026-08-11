@@ -87,8 +87,9 @@
 
 # Nexus: producer-defined VDP2 byte order (2026-08-11)
 
-- ✅ Moved the VDP2 byte-order enum into the frame receipt contract and record
-  the producer-defined order from the Firestaff or Mednafen magic header.
+- ✅ Moved the VDP2 byte-order enum into the frame receipt contract; Mednafen
+  captures declare big-endian order and legacy Firestaff captures resolve it
+  from the register witness.
 - ✅ Kept the legacy value-scoring fallback for older in-memory callers.
 - ✅ Built and ran `test_nexus_v1_saturn_runtime_capture`; synthetic Firestaff
   and Mednafen cases now verify nonzero `TVMD`/`BGON` decoding, and the
