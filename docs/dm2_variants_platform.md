@@ -69,19 +69,21 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   (5,601,948), and `Ending.MooV` (6,138,318). `Story.MooV` is absent from
   this image. Firestaff does not synthesize, flatten, or convert these files;
   Firestaff also builds a bounded in-memory QuickTime view (`moov` followed by
-  `mdat`) for each present movie without changing either fork. This view is
-  validated against the authentic retail boot profile; decoder, timing, audio,
-  and presentation ownership remain separate.
+  `mdat`) for each present movie without changing either fork. The view keeps
+  the authentic four-byte prefix present before `Swoosh.MooV`'s `mdat` out of
+  the atom stream while preserving the source fork as the authority. The
+  retail decoder gate covers all four present movies; exact timing and
+  presentation ownership remain separate.
 - The retail image also retains the complete authentic resource forks for
   `Music` (662,956 bytes), `General.sounds` (134,562), and `Weapon.sounds`
   (50,651). These are source-bound Mac resources, not DOS HMP substitutes;
   a bounded format-1 `snd ` parser now validates their authentic resource
   counts and sample headers in place. The exact signed 8-bit sample range from
   resource 10001 is hash-checked and transported through the SDL host mixer at
-  its source rate. The authentic `Title.MooV` is also presented through an
-  optional FFmpeg-backed in-memory QuickTime decoder: Cinepak frames and the
-  movie's PCM audio are delivered to the M11 surface/mixer without creating a
-  converted movie file. Complete Mac resource selection, timing, and
+  its source rate. The four present movies are also available through an
+  optional FFmpeg-backed in-memory QuickTime decoder: Cinepak/Animation frames
+  and each movie's PCM audio are delivered to the M11 surface/mixer without
+  creating a converted movie file. Complete Mac resource selection, timing, and
   MIDI/music scheduling remain separate runtime work.
 
 X68000 is not part of the DM2 support matrix.

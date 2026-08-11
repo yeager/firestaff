@@ -451,10 +451,13 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
   HFS fork pair is now available to the boot profile without writing a
   flattened movie. `dm2_v1_mac_movie_decoder_real` and
   `dm2_v1_mac_m11_movie_runtime_real` now prove authentic Cinepak/PCM decode
-  and M11 startup binding from the retail ZIP.
+  and M11 startup binding from the retail ZIP. The decoder gate covers all
+  four present movies (`Title`, `Swoosh`, `Credits`, `Ending`); `Swoosh.MooV`
+  is admitted with its authentic four-byte prefix before the `mdat` atom.
   A bounded in-memory QuickTime view now joins each exact `moov` atom to its
-  matching exact `mdat` atom in the boot profile; the retail gate passes for
-  the four present movies (`0x19`, with `Story.MooV` absent). Presentation
+  matching `mdat` atom in the boot profile, including that source-owned zero
+  prefix; the retail gate passes for the four present movies (`0x19`, with
+  `Story.MooV` absent). Presentation
   through the original QuickTime/MooV owner remains open. A native optional
   FFmpeg-backed in-memory decoder now rebases the private QuickTime chunk
   offsets, decodes the authentic Cinepak video and PCM audio, and owns the

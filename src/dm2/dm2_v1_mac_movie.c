@@ -16,6 +16,27 @@ static int exact_atom(const uint8_t *bytes, size_t size, const char type[4]) {
     return memcmp(bytes + 4u, type, 4u) == 0;
 }
 
+static int find_data_atom(const uint8_t *bytes, size_t size,
+                          size_t *out_offset, size_t *out_size) {
+    size_t offset;
+    if (!bytes || !out_offset || !out_size) return 0;
+    /* Some authentic MooV data forks carry a short, non-atom prefix before
+     * the mdat atom.  It is part of the source fork, but not part of the
+     * QuickTime atom stream consumed by the private decoder view. */
+    for (offset = 0u; offset <= 64u && offset + 8u <= size; ++offset) {
+        uint32_t atom_size = be32(bytes + offset);
+        if ((atom_size == 0u ||
+             (atom_size >= 8u && (size_t)atom_size == size - offset)) &&
+            size - offset >= 8u &&
+            memcmp(bytes + offset + 4u, "mdat", 4u) == 0) {
+            *out_offset = offset;
+            *out_size = size - offset;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static void put_be32(uint8_t *p, uint32_t value) {
     p[0] = (uint8_t)(value >> 24); p[1] = (uint8_t)(value >> 16);
     p[2] = (uint8_t)(value >> 8); p[3] = (uint8_t)value;
@@ -100,18 +121,22 @@ int dm2_v1_mac_movie_view_build(const uint8_t *data_fork, size_t data_size,
                                 const uint8_t *moov, size_t moov_size,
                                 DM2_V1_MacMovieView *out) {
     uint8_t *bytes;
+    size_t data_offset;
+    size_t atom_size;
+    size_t rebase_offset;
     if (!out) return -1;
     memset(out, 0, sizeof(*out));
-    if (!exact_atom(data_fork, data_size, "mdat") ||
+    if (!find_data_atom(data_fork, data_size, &data_offset, &atom_size) ||
         !exact_atom(moov, moov_size, "moov") ||
-        moov_size > SIZE_MAX - data_size) return -1;
-    bytes = (uint8_t *)malloc(moov_size + data_size);
+        moov_size > SIZE_MAX - atom_size || data_offset > moov_size) return -1;
+    bytes = (uint8_t *)malloc(moov_size + atom_size);
     if (!bytes) return -1;
     memcpy(bytes, moov, moov_size);
-    memcpy(bytes + moov_size, data_fork, data_size);
-    mac_movie_rebase_atoms(bytes, moov_size, moov_size, data_size);
+    memcpy(bytes + moov_size, data_fork + data_offset, atom_size);
+    rebase_offset = moov_size - data_offset;
+    mac_movie_rebase_atoms(bytes, moov_size, rebase_offset, data_size);
     out->bytes = bytes;
-    out->size = moov_size + data_size;
+    out->size = moov_size + atom_size;
     out->moov_offset = 0u;
     out->mdat_offset = moov_size;
     return 0;
