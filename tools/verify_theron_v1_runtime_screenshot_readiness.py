@@ -12,6 +12,7 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -152,7 +153,11 @@ def screenshot_rows(directory: Path) -> list[dict[str, Any]]:
     return rows
 
 
-def run_case(firestaff: Path, case: dict[str, Any]) -> dict[str, Any]:
+def run_case(
+    firestaff: Path,
+    case: dict[str, Any],
+    retain_dir: Path | None = None,
+) -> dict[str, Any]:
     data_dir = Path(case["path"])
     row: dict[str, Any] = {
         "id": case["id"],
@@ -184,6 +189,11 @@ def run_case(firestaff: Path, case: dict[str, Any]) -> dict[str, Any]:
         env = os.environ.copy()
         env["HOME"] = str(temp_home)
         env.setdefault("SDL_VIDEODRIVER", "dummy")
+        # A headless screenshot probe must not ask macOS CoreAudio to open a
+        # physical device.  SDL3 can block in CoreAudio device discovery
+        # before Firestaff reaches the Track 02 handoff; the existing runtime
+        # boot probes use the same dummy-audio contract.
+        env.setdefault("SDL_AUDIODRIVER", "dummy")
         env["FIRESTAFF_FAIL_IF_NO_LAUNCH"] = "1"
         env["FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON"] = str(probe_path)
         env["FIRESTAFF_AUTOTEST_SCREENSHOT_DIR"] = str(screenshot_dir)
@@ -215,6 +225,24 @@ def run_case(firestaff: Path, case: dict[str, Any]) -> dict[str, Any]:
             row["probe"] = json.loads(probe_path.read_text(encoding="utf-8"))
         row["screenshots"] = screenshot_rows(screenshot_dir)
         row["presented_screenshots"] = screenshot_rows(presented_dir)
+
+        # Retention is opt-in and must point outside the repository for the
+        # normal readiness run.  This copies only the BMP emitted by the real
+        # Firestaff process; it never creates a substitute frame or copies
+        # original game-data bytes.  The default remains temporary output.
+        if retain_dir is not None:
+            case_dir = retain_dir / str(case["id"])
+            case_dir.mkdir(parents=True, exist_ok=True)
+            retained: list[str] = []
+            for image_path in sorted(screenshot_dir.glob("*.bmp")):
+                destination = case_dir / f"source-{image_path.name}"
+                shutil.copy2(image_path, destination)
+                retained.append(str(destination))
+            for image_path in sorted(presented_dir.glob("*.bmp")):
+                destination = case_dir / f"presented-{image_path.name}"
+                shutil.copy2(image_path, destination)
+                retained.append(str(destination))
+            row["retained_screenshots"] = retained
 
     probe = row.get("probe") or {}
     source_shots = row.get("screenshots") or []
@@ -301,6 +329,12 @@ def main() -> int:
         metavar="ID=PATH",
         help="Override/add a Theron data case. May be supplied more than once.",
     )
+    parser.add_argument(
+        "--retain-dir",
+        type=Path,
+        default=None,
+        help="Optional external directory for retaining real emitted BMPs; never use this to promote them automatically.",
+    )
     args = parser.parse_args()
     firestaff = args.build_dir / "firestaff"
     cases = list(DEFAULT_CASES)
@@ -329,7 +363,7 @@ def main() -> int:
         print(f"FAIL {PASS}: missing firestaff binary", file=sys.stderr)
         return 1
 
-    result["cases"] = [run_case(firestaff, case) for case in cases]
+    result["cases"] = [run_case(firestaff, case, args.retain_dir) for case in cases]
     present_rows = [row for row in result["cases"] if row.get("present")]
     if not present_rows:
         result["status"] = "SKIP"
