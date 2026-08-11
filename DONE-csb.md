@@ -18,6 +18,8 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   slot and uses the F0433/F7062 keyed write path with `CSBGAME.BAK` rollback.
   The F31E regression saves distinct editor names twice, admits the replacement
   via F0435, then proves F7004 restores the second value and its raw portraits.
+  It also corrupts only that temporary primary slot and proves F7051/F0435
+  republishes the validated backup as the canonical file before C06 receives it.
 
 - ✅ 2026-08-11 CSB FM Towns C06 GAME save: CEDT001.C `F7001` choice GAME now
   executes the recovered CEDTINC8.C `F7052` first-save transaction on an

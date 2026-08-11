@@ -1363,6 +1363,26 @@ int main(void)
                                  saved_portraits,
                                  sizeof(view.csbFmtownsUtilityPortraitReceipt.source_bytes)) == 0,
                       "F31E C06 F7051 retains the selected slot's raw portrait receipt");
+                CHECK(created && write_damaged_file(utility_save_path),
+                      "F31E C06 backup recovery test can damage only its private slot");
+                snprintf(view.csbFmtownsUtilityParty.Champions[0].Name,
+                         sizeof(view.csbFmtownsUtilityParty.Champions[0].Name),
+                         "%s", "DAMAGED");
+                result = M11_GameView_HandlePointerButton(
+                    &view, 50, 190, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                result = M11_GameView_HandlePointerButton(
+                    &view, 112, 112, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                CHECK(created && result == M11_GAME_INPUT_REDRAW &&
+                          strcmp(view.lastOutcome, "GAME LOADED") == 0 &&
+                          strcmp(view.csbFmtownsUtilityParty.Champions[0].Name,
+                                 "AB") == 0,
+                      "F31E C06 F7051 restores the native CSBGAME.BAK slot");
+                memset(&utility_save, 0, sizeof(utility_save));
+                CHECK(created && csb_v1_fmtowns_game_user_save_open(
+                          (const CSB_V1_BootProfile *)view.csbBootProfile,
+                          &direct_handoff, utility_save_path, &utility_save) &&
+                          utility_save.valid && !utility_save.recovered_from_backup,
+                      "F31E C06 backup recovery republishes a canonical F0435 slot");
                 remove(utility_save_path);
                 if (snprintf(utility_backup_path, sizeof(utility_backup_path),
                              "%s/CSBGAME.BAK", utility_dir) >= 0)
