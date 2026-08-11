@@ -27,11 +27,11 @@ the TownsOS TBIOS entry point vector installed by Phar Lap init.
 
 ## Physical BIOS ROM
 
-**FMT_F20.ROM** (Fujitsu FM Towns II F20) is the reference BIOS
-binary. Copy from a real FM Towns machine or the retrobios archive.
-Any Firestaff BIOS integration must load this ROM at the physical
-address the TownsOS runtime expects (see Tsugaru `tbiosid.cpp` for
-the base-address probe).
+**FMT_F20.ROM** (Fujitsu FM Towns II F20) is a TownsOS system ROM. Copy it
+from a real FM Towns machine or an authorised archive when running the full
+emulator. **FMT_FNT.ROM** is the separate 256 KiB Kanji/font device that
+TBIOS programs read for 16×16 JIS glyphs. Firestaff's narrow glyph shim must
+consume `FMT_FNT.ROM`, never pretend that F20 contains the font table.
 
 ## TBIOS version fingerprints (from Tsugaru source)
 
@@ -153,11 +153,11 @@ dispatch paths.
 `include/fmtowns_tbios_shim.h` + `src/shared/fmtowns_tbios_shim.c`
 ship the Option-B path. The shim:
 
-- Reads a real Fujitsu `FMT_F20.ROM` via
-  `fmtowns_tbios_shim_load_rom_pc34(bytes, size)`. Rejects buffers
-  that fail the "V" + digit / "towns" / "tbios" signature check
-  every FMT_F20 revision carries, and buffers smaller than
-  `KANJI_OFFSET + 94*94*32` bytes.
+- Reads a real Fujitsu `FMT_FNT.ROM` via
+  `fmtowns_tbios_shim_load_rom_pc34(bytes, size)`. It accepts exactly the
+  native 256 KiB `8192 × 32`-byte device extent and rejects incomplete or
+  oversized input. The external verification corpus used here has SHA-256
+  `aa9e9565d3047c51ee418712be8daa391b0d8f21f92fc02e4616e3523ca50b9d`.
 - Exposes a `fmtowns_bios_host_t*` via
   `fmtowns_tbios_shim_host_pc34()` that consumers can bind through
   `fmtowns_bios_host_bind_pc34()`. Only `tbios_fetch_sjis_glyph` is
@@ -165,18 +165,20 @@ ship the Option-B path. The shim:
   correct behaviour when only the JDM text-render surface is being
   served (games' Phar Lap thunks would need a full CPU emulator
   such as Tsugaru).
-- Fetches Shift-JIS glyphs by direct table lookup: ANK 8x16 at
-  ROM offset `0x3d800` (16 bytes/glyph), JIS X 0208 16x16 at
-  `0x40000` (32 bytes/glyph). Shift-JIS to JIS conversion follows
-  the standard row/col formula.
+- Converts Shift-JIS to JIS X 0208, then applies Tsugaru's exact
+  `TownsPhysicalMemory::KanjiROMAccess::FontROMCode()` block mapping to
+  `FMT_FNT.ROM`'s 8192 16×16 slots (32 bytes/glyph). No host font or linear
+  F20 offset is involved.
 - Fail-closed contract: `UNBOUND` until a ROM is loaded; `FAILED`
   for pairs that fall outside a recognised region; `BAD_ARGS` for
   undersized destination buffers.
 
-Tests cover fail-closed, bogus ROM rejection, undersized ROM,
-ANK path, SJIS path with planted glyph bytes, out-of-range trail,
-buffer-too-small, unload, and end-to-end dispatch through
-`fmtowns_bios_host_fetch_sjis_glyph_pc34()`.
+Tests cover fail-closed, malformed extent rejection, Tsugaru-compatible
+slot mapping with planted glyph bytes, out-of-range trail, buffer-too-small,
+unload and end-to-end dispatch through `fmtowns_bios_host_fetch_sjis_glyph_pc34()`.
+When `FIRESTAFF_FMTOWNS_FONT_ROM` names the authorised external FNT ROM, the
+test also checks F31J chooser glyph `ど` against its captured native glyph
+receipt (`af14d837`).
 
 ## Tsugaru bridge contract (implemented 2026-08-07)
 

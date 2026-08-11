@@ -19,11 +19,11 @@ extern "C" {
  * host entry returns FMTOWNS_BIOS_HOST_UNSUPPORTED (a Tsugaru or
  * full-emulator adapter is the correct home for those).
  *
- * The shim reads a real Fujitsu FMT_F20.ROM (or compatible TBIOS
- * ROM dump) and performs a direct table lookup into the ANK 8x16
- * region for narrow characters and the JIS X 0208 16x16 region for
- * Shift-JIS pairs. Font offsets inside FMT_F20 are well documented
- * (see references section of TOWNSOS_BIOS_INTEGRATION.md).
+ * The shim reads a real Fujitsu FMT_FNT.ROM font ROM and performs a
+ * direct lookup into its native JIS 16x16 glyph table for Shift-JIS
+ * pairs.  FMT_F20.ROM is the separate system/boot ROM; it must not be
+ * treated as the glyph store.  This mapping follows Tsugaru's
+ * TownsPhysicalMemory::KanjiROMAccess::FontROMCode().
  *
  * Fail-closed contract:
  *   * `fmtowns_tbios_shim_load_rom_pc34()` returns non-zero iff the
@@ -34,14 +34,13 @@ extern "C" {
  *     recognised region, the entry returns FMTOWNS_BIOS_HOST_FAILED.
  */
 
-/* Load a TownsOS BIOS ROM image into the shim. `rom_bytes` must
- * remain valid for the shim's lifetime (the shim does not copy).
- * Returns 1 if `rom_size` and the leading signature are consistent
- * with FMT_F20.ROM (128 KiB, starts with "V31L" or similar TBIOS
- * fingerprint); 0 otherwise. Calling with rom=NULL clears the
- * currently loaded ROM and restores the fail-closed default. */
-int fmtowns_tbios_shim_load_rom_pc34(const uint8_t *rom_bytes,
-                                     size_t rom_size);
+/* Load a FMT_FNT.ROM image into the shim. `font_rom_bytes` must remain valid
+ * for the shim's lifetime (the shim does not copy).  Returns 1 only for the
+ * exact 256 KiB FM Towns font-ROM extent; malformed or incomplete media is
+ * rejected. Calling with font_rom_bytes=NULL clears the current binding and
+ * restores the fail-closed default. */
+int fmtowns_tbios_shim_load_rom_pc34(const uint8_t *font_rom_bytes,
+                                     size_t font_rom_size);
 
 /* Return 1 if a ROM is currently loaded and validated. */
 int fmtowns_tbios_shim_has_rom_pc34(void);

@@ -5,24 +5,59 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* ROM_MIN_BYTES per the shim: KANJI_OFFSET + 94*94*32 = 0x40000 + 282752
- * = 0x84c00 = 543232 bytes. Round up to 640 KiB for the fixture. */
-#define FIX_ROM_SIZE (640u * 1024u)
+/* FMT_FNT.ROM is 8192 native 16x16 glyphs at 32 bytes per glyph. */
+#define FIX_ROM_SIZE (8192u * 32u)
 
 static uint8_t *make_valid_rom_fixture(void) {
     uint8_t *rom = (uint8_t *)calloc(1, FIX_ROM_SIZE);
-    /* Signature required by rom_signature_ok: "V" + digit at [0..1],
-     * "towns" at 0x10, "tbios" at 0x18. */
-    memcpy(rom + 0x00, "V31L22A", 7);
-    memcpy(rom + 0x10, "towns", 5);
-    memcpy(rom + 0x18, "tbios", 5);
-    /* Plant identifiable bytes for ANK 'A' (0x41) at ANK_OFFSET + 0x41*16. */
-    size_t ank = 0x3d800u + 0x41u * 16u;
-    for (int i = 0; i < 16; ++i) rom[ank + i] = (uint8_t)(0xa0 + i);
-    /* Plant identifiable bytes for JIS row 0x21, col 0x21 at
-     * KANJI_OFFSET + 0. */
-    for (int i = 0; i < 32; ++i) rom[0x40000u + i] = (uint8_t)(0xb0 + i);
+    /* JIS row 0x21/column 0x21 resolves to native FNT slot zero. */
+    for (int i = 0; i < 32; ++i) rom[i] = (uint8_t)(0xb0 + i);
     return rom;
+}
+
+static uint32_t fnv1a(const uint8_t *bytes, size_t count) {
+    uint32_t hash = UINT32_C(2166136261);
+    size_t i;
+    for (i = 0u; i < count; ++i) {
+        hash ^= bytes[i];
+        hash *= UINT32_C(16777619);
+    }
+    return hash;
+}
+
+static void test_real_font_rom_if_configured(const fmtowns_bios_host_t *host) {
+    const char *path = getenv("FIRESTAFF_FMTOWNS_FONT_ROM");
+    FILE *file;
+    uint8_t *bytes;
+    uint8_t glyph[32];
+    size_t size;
+    size_t n;
+    uint8_t width;
+    uint8_t height;
+
+    if (!path || !path[0]) return;
+    file = fopen(path, "rb");
+    assert(file != NULL);
+    assert(fseek(file, 0L, SEEK_END) == 0);
+    size = (size_t)ftell(file);
+    assert(size == FIX_ROM_SIZE);
+    assert(fseek(file, 0L, SEEK_SET) == 0);
+    bytes = (uint8_t *)malloc(size);
+    assert(bytes != NULL);
+    assert(fread(bytes, 1u, size, file) == size);
+    fclose(file);
+
+    /* Tsugaru's FontROMCode maps the F31J chooser's first glyph, ど
+     * (Shift-JIS 82c7 -> JIS 2449), to native slot 393.  The checked
+     * FMT_FNT.ROM glyph has this independently captured FNV-1a receipt. */
+    assert(fmtowns_tbios_shim_load_rom_pc34(bytes, size) == 1);
+    assert(host->tbios_fetch_sjis_glyph(NULL, 0x82, 0xc7, glyph,
+                                        sizeof(glyph), &n, &width, &height)
+           == FMTOWNS_BIOS_HOST_OK);
+    assert(n == sizeof(glyph) && width == 16u && height == 16u);
+    assert(fnv1a(glyph, sizeof(glyph)) == UINT32_C(0xaf14d837));
+    assert(fmtowns_tbios_shim_load_rom_pc34(NULL, 0) == 1);
+    free(bytes);
 }
 
 int main(void) {
@@ -47,11 +82,8 @@ int main(void) {
     assert(fmtowns_tbios_shim_load_rom_pc34(bogus, sizeof(bogus)) == 0);
     assert(fmtowns_tbios_shim_has_rom_pc34() == 0);
 
-    /* Undersized ROM with good header still rejected. */
+    /* An incomplete FMT_FNT.ROM is rejected. */
     uint8_t small[1024] = {0};
-    memcpy(small + 0x00, "V31L22A", 7);
-    memcpy(small + 0x10, "towns", 5);
-    memcpy(small + 0x18, "tbios", 5);
     assert(fmtowns_tbios_shim_load_rom_pc34(small, sizeof(small)) == 0);
 
     /* Valid ROM accepted. */
@@ -59,14 +91,8 @@ int main(void) {
     assert(fmtowns_tbios_shim_load_rom_pc34(rom, FIX_ROM_SIZE) == 1);
     assert(fmtowns_tbios_shim_has_rom_pc34() == 1);
 
-    /* ANK path: (0x41, 0) returns the 16 bytes we planted. */
-    memset(buf, 0, sizeof(buf));
-    assert(host->tbios_fetch_sjis_glyph(NULL, 0x41, 0x00, buf, sizeof(buf), &n, &gw, &gh)
-           == FMTOWNS_BIOS_HOST_OK);
-    assert(n == 16 && gw == 8 && gh == 16);
-    for (int i = 0; i < 16; ++i) assert(buf[i] == (uint8_t)(0xa0 + i));
-
-    /* SJIS path: (0x81, 0x40) maps to JIS row 0x21, col 0x21. */
+    /* SJIS path: (0x81, 0x40) maps to JIS row 0x21, col 0x21 and
+     * therefore FMT_FNT native slot zero. */
     memset(buf, 0, sizeof(buf));
     assert(host->tbios_fetch_sjis_glyph(NULL, 0x81, 0x40, buf, sizeof(buf), &n, &gw, &gh)
            == FMTOWNS_BIOS_HOST_OK);
@@ -105,8 +131,9 @@ int main(void) {
     assert(fmtowns_bios_host_call_pc34(FMTOWNS_BIOS_SLOT_TBIOS, &regs)
            == FMTOWNS_BIOS_HOST_UNSUPPORTED);
     fmtowns_bios_host_unbind_pc34();
-
+    assert(fmtowns_tbios_shim_load_rom_pc34(NULL, 0) == 1);
     free(rom);
+    test_real_font_rom_if_configured(host);
     puts("All fmtowns_tbios_shim tests passed.");
     return 0;
 }

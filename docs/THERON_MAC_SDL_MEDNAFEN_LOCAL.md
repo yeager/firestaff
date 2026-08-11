@@ -244,8 +244,10 @@ Tsugaru används för verkliga FM Towns-CD-bilder, originalets TownsOS/TBIOS
 och den separata FM Towns-körningen för DM1, CSB och DM2.
 
 Tsugaru använder en katalog med FM Towns-ROM-filer som första argument. Det är
-inte samma sak som Firestaffs enskilda `FMT_F20.ROM` för TBIOS-shimmen. Håll
-emulator, BIOS och spelmedia på extern-disken och lägg aldrig in dem i Git:
+inte samma sak som Firestaffs enskilda `FMT_FNT.ROM` för den smala
+Shift-JIS-glyfshimmen; `FMT_F20.ROM` är den separata system-ROM:en för en
+full TownsOS-körning. Håll emulator, BIOS och spelmedia på extern-disken och
+lägg aldrig in dem i Git:
 
 ```bash
 TOWNS_ROOT=/Volumes/Extern-disk/TOWNSEMU

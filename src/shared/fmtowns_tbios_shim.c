@@ -3,58 +3,34 @@
 #include <string.h>
 
 /*
- * FMT_F20.ROM font layout (Fujitsu FM Towns TBIOS ROM):
- *   * ANK 8x16 (256 narrow glyphs)   : offset 0x3d800, 16 bytes/glyph
- *   * JIS X 0208 16x16 (kanji/kana)  : offset 0x40000, 32 bytes/glyph
+ * FMT_FNT.ROM is the separate 256 KiB FM Towns font device:
+ *   * 8192 native glyph slots
+ *   * 32 bytes per 16x16 glyph (two big-endian bytes per row)
  *
- * JIS X 0208 glyph index inside the ROM is derived from a
- * Shift-JIS pair (lead, trail) by the standard SJIS -> JIS row/col
- * conversion, then indexed as ((row - 0x21) * 94 + (col - 0x21)) * 32.
- *
- * These offsets are public in the FM Towns technical literature and
- * are what a Tsugaru font-render path also consumes. The shim reads
- * them directly; no CPU emulation required for text-render service.
+ * The slot mapping is not a linear JIS row/column table.  It is the exact
+ * mapping used by Tsugaru's TownsPhysicalMemory::KanjiROMAccess::FontROMCode
+ * after converting Shift-JIS to JIS X 0208.  FMT_F20.ROM is a different,
+ * 512 KiB system ROM and contains no complete substitute font table.
  */
 
-#define ANK_OFFSET       0x3d800u
-#define ANK_ENTRY_BYTES  16u
-#define ANK_ENTRY_W       8u
-#define ANK_ENTRY_H      16u
-
-#define KANJI_OFFSET     0x40000u
-#define KANJI_ENTRY_BYTES 32u
-#define KANJI_ENTRY_W    16u
-#define KANJI_ENTRY_H    16u
-
-#define ROM_MIN_BYTES    (KANJI_OFFSET + 94u * 94u * KANJI_ENTRY_BYTES)
+#define FMTOWNS_FNT_GLYPH_COUNT 8192u
+#define FMTOWNS_FNT_GLYPH_BYTES 32u
+#define FMTOWNS_FNT_ROM_BYTES \
+    (FMTOWNS_FNT_GLYPH_COUNT * FMTOWNS_FNT_GLYPH_BYTES)
 
 static const uint8_t *g_rom = NULL;
 static size_t         g_rom_size = 0;
 
-static int rom_signature_ok(const uint8_t *rom, size_t size) {
-    if (!rom || size < ROM_MIN_BYTES) return 0;
-    /* FMT_F20.ROM is 512 KiB and starts with "V31L" or a similar
-     * TBIOS version fingerprint at offset 0. Do not enforce a
-     * single fingerprint here (users may load a compatible dump);
-     * only check the printable-ASCII "Vxx" prefix and the "towns"
-     * / "tbios" strings that every FMT_F20 revision carries at
-     * offsets 0x10 and 0x18 respectively. */
-    if (rom[0] != 'V' || rom[1] < '0' || rom[1] > '9') return 0;
-    if (memcmp(rom + 0x10, "towns", 5) != 0) return 0;
-    if (memcmp(rom + 0x18, "tbios", 5) != 0) return 0;
-    return 1;
-}
-
-int fmtowns_tbios_shim_load_rom_pc34(const uint8_t *rom_bytes,
-                                     size_t rom_size) {
-    if (rom_bytes == NULL) {
+int fmtowns_tbios_shim_load_rom_pc34(const uint8_t *font_rom_bytes,
+                                     size_t font_rom_size) {
+    if (font_rom_bytes == NULL) {
         g_rom = NULL;
         g_rom_size = 0;
         return 1;
     }
-    if (!rom_signature_ok(rom_bytes, rom_size)) return 0;
-    g_rom = rom_bytes;
-    g_rom_size = rom_size;
+    if (font_rom_size != FMTOWNS_FNT_ROM_BYTES) return 0;
+    g_rom = font_rom_bytes;
+    g_rom_size = font_rom_size;
     return 1;
 }
 
@@ -87,6 +63,27 @@ static int sjis_to_jis(uint8_t lead, uint8_t trail,
     return 1;
 }
 
+/* Exact Tsugaru FontROMCode mapping for the JIS pair most recently written
+ * to CFF94/CFF95.  It returns one of FMT_FNT.ROM's 8192 16x16 glyph slots. */
+static unsigned int fnt_rom_code(uint8_t jis_high, uint8_t jis_low) {
+    unsigned int block;
+    unsigned int x;
+    unsigned int y;
+    if (jis_high < 0x28u) {
+        block = ((unsigned int)jis_low - 0x20u) >> 5u;
+        x = (unsigned int)jis_low & 0x1fu;
+        y = (unsigned int)jis_high & 7u;
+        if (block == 1u) block = 2u;
+        else if (block == 2u) block = 1u;
+        return block * 32u * 8u + y * 32u + x;
+    }
+    block = ((((unsigned int)jis_high - 0x30u) >> 4u) * 3u) +
+        (((unsigned int)jis_low - 0x20u) >> 5u);
+    x = (unsigned int)jis_low & 0x1fu;
+    y = (unsigned int)jis_high & 0x0fu;
+    return 0x400u + block * 32u * 16u + y * 32u + x;
+}
+
 static fmtowns_bios_status_t shim_fetch_sjis(
         void *ctx, uint8_t lead, uint8_t trail,
         uint8_t *out, size_t cap, size_t *n,
@@ -95,31 +92,18 @@ static fmtowns_bios_status_t shim_fetch_sjis(
     if (!g_rom) return FMTOWNS_BIOS_HOST_UNBOUND;
     if (!out || cap == 0) return FMTOWNS_BIOS_HOST_BAD_ARGS;
 
-    /* ANK 8x16 path when caller passed lead in the ASCII range and
-     * trail == 0 (a convention this shim documents; JDM font module
-     * only ever calls with true SJIS pairs, so this branch is here
-     * mainly for symmetry and testability). */
-    if (trail == 0u && lead < 0x80u) {
-        if (cap < ANK_ENTRY_BYTES) return FMTOWNS_BIOS_HOST_BAD_ARGS;
-        size_t src = ANK_OFFSET + (size_t)lead * ANK_ENTRY_BYTES;
-        if (src + ANK_ENTRY_BYTES > g_rom_size) return FMTOWNS_BIOS_HOST_FAILED;
-        memcpy(out, g_rom + src, ANK_ENTRY_BYTES);
-        if (n)  *n  = ANK_ENTRY_BYTES;
-        if (gw) *gw = (uint8_t)ANK_ENTRY_W;
-        if (gh) *gh = (uint8_t)ANK_ENTRY_H;
-        return FMTOWNS_BIOS_HOST_OK;
-    }
-
     uint8_t row, col;
     if (!sjis_to_jis(lead, trail, &row, &col)) return FMTOWNS_BIOS_HOST_FAILED;
-    if (cap < KANJI_ENTRY_BYTES) return FMTOWNS_BIOS_HOST_BAD_ARGS;
-    unsigned int idx = ((unsigned int)row - 0x21u) * 94u + ((unsigned int)col - 0x21u);
-    size_t src = KANJI_OFFSET + (size_t)idx * KANJI_ENTRY_BYTES;
-    if (src + KANJI_ENTRY_BYTES > g_rom_size) return FMTOWNS_BIOS_HOST_FAILED;
-    memcpy(out, g_rom + src, KANJI_ENTRY_BYTES);
-    if (n)  *n  = KANJI_ENTRY_BYTES;
-    if (gw) *gw = (uint8_t)KANJI_ENTRY_W;
-    if (gh) *gh = (uint8_t)KANJI_ENTRY_H;
+    if (cap < FMTOWNS_FNT_GLYPH_BYTES) return FMTOWNS_BIOS_HOST_BAD_ARGS;
+    unsigned int idx = fnt_rom_code(row, col);
+    size_t src = (size_t)idx * FMTOWNS_FNT_GLYPH_BYTES;
+    if (idx >= FMTOWNS_FNT_GLYPH_COUNT ||
+        src + FMTOWNS_FNT_GLYPH_BYTES > g_rom_size)
+        return FMTOWNS_BIOS_HOST_FAILED;
+    memcpy(out, g_rom + src, FMTOWNS_FNT_GLYPH_BYTES);
+    if (n)  *n  = FMTOWNS_FNT_GLYPH_BYTES;
+    if (gw) *gw = 16u;
+    if (gh) *gh = 16u;
     return FMTOWNS_BIOS_HOST_OK;
 }
 

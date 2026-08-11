@@ -122,7 +122,8 @@ Every module below is source-locked with a real-data round-trip test:
 
 - `docs/fmtowns/all_games_real_data_hashes.json`
 - `docs/fmtowns/pharlap_call_sites.json` (502 call sites, 11 binaries)
-- `docs/fmtowns/TOWNSOS_BIOS_INTEGRATION.md` (Tsugaru + FMT_F20.ROM)
+- `docs/fmtowns/TOWNSOS_BIOS_INTEGRATION.md` (Tsugaru + FMT_F20.ROM system
+  ROM and FMT_FNT.ROM glyph device)
 - `docs/fmtowns/CROSS_GAME_INVENTORY.md` (earlier inventory)
 - `docs/dm1/fmtowns_real_data_hashes.json` (DM1-specific hashes)
 - `parity-evidence/dm1_fmtowns_region_table_full.md` (994 records)
