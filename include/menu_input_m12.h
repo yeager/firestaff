@@ -46,7 +46,12 @@ typedef enum {
     M12_MENU_INPUT_CHAMPION_4_INVENTORY,
     /* Runtime-only presentation panel. F10 opens it while a game view is
      * active; unlike the launcher settings, this never fabricates assets. */
-    M12_MENU_INPUT_GRAPHICS_POPUP
+    M12_MENU_INPUT_GRAPHICS_POPUP,
+    /* Native DM2 Macintosh actions which are not PC queue aliases. */
+    M12_MENU_INPUT_LEADER_INVENTORY,
+    M12_MENU_INPUT_MAC_WALL_LEFT,
+    M12_MENU_INPUT_MAC_WALL_CENTER,
+    M12_MENU_INPUT_MAC_WALL_RIGHT
 } M12_MenuInput;
 
 #endif

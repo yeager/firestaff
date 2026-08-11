@@ -56,6 +56,11 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   entrance/credits Return, and the three wall-button columns. Only actions
   represented by the existing command queue are enqueued; Mac-only actions
   remain explicit until their native dispatcher is implemented.
+- In the M11/SDL route, an admitted `DM2_PLATFORM_MAC_EN` profile takes
+  precedence over generic PC key aliases. Movement, champion/leader inventory,
+  freeze, wake, save and quit are dispatched through the existing runtime
+  boundaries. Wall-button actions remain explicit and fail closed until their
+  original Mac wall-button owner is implemented.
 
 X68000 is not part of the DM2 support matrix.
 

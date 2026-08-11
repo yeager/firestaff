@@ -30530,6 +30530,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (!state->dm2World) {
             return M11_GAME_INPUT_IGNORED;
         }
+        if (input == M12_MENU_INPUT_FREEZE_TOGGLE) {
+            state->dm2GameFrozen = !state->dm2GameFrozen;
+            m11_set_status(state, "DM2 MAC", state->dm2GameFrozen ? "FROZEN" : "ACTIVE");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (state->dm2GameFrozen) {
+            return M11_GAME_INPUT_IGNORED;
+        }
         if (state->dm2State.startup_menu_active) {
             return m11_dm2_startup_handle_input(state, input);
         }
@@ -30605,6 +30613,20 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             state->mapOverlayActive = 0;
             M11_GameView_ToggleInventoryPanel(state);
             return M11_GAME_INPUT_REDRAW;
+        }
+        if (input == M12_MENU_INPUT_LEADER_INVENTORY) {
+            state->mapOverlayActive = 0;
+            M11_GameView_ToggleInventoryPanel(state);
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (input == M12_MENU_INPUT_MAC_WALL_LEFT ||
+            input == M12_MENU_INPUT_MAC_WALL_CENTER ||
+            input == M12_MENU_INPUT_MAC_WALL_RIGHT) {
+            /* Keep the native Mac wall-button identity visible to the
+             * dispatcher. There is no source-owned DM2 wall-button runtime
+             * yet; do not silently turn it into a front-cell attack. */
+            m11_set_status(state, "DM2 MAC", "WALL BUTTON UNAVAILABLE");
+            return M11_GAME_INPUT_IGNORED;
         }
         if (input == M12_MENU_INPUT_SAVE_GAME) {
             if (M11_GameView_QuickSave(state)) {

@@ -55,6 +55,7 @@
 #include "csb_v1_boot.h"
 #include "csb_v1_f0908_f0909_f0910_swsh_sound_pc34_compat.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_mac_input.h"
 #include "fs_gesture_navigation_gate.h"
 
 #include <stdio.h>
@@ -4206,6 +4207,84 @@ static int m11_dm1_sdl_key_to_menu_input(int key, int ctrlDown, int shiftDown,
     return 0;
 }
 
+/* The two admitted US Macintosh DM2 editions share this English input table.
+ * Resolve it before the generic PC aliases so left/right and the keypad keep
+ * their original Macintosh meaning. */
+static int m11_dm2_mac_sdl_key_to_menu_input(
+    const M11_GameViewState *gameView, const SDL_KeyboardEvent *keyEvent,
+    M12_MenuInput *outInput)
+{
+    DM2_V1_MacInputReceipt receipt;
+    DM2_V1_MacInputPhase phase = DM2_V1_MAC_INPUT_GAMEPLAY;
+    uint32_t key;
+    uint32_t modifiers = 0u;
+
+    if (!gameView || !keyEvent || !outInput ||
+        gameView->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
+        !gameView->dm2BootProfile ||
+        ((const DM2_V1_BootProfile *)gameView->dm2BootProfile)->platform !=
+            DM2_PLATFORM_MAC_EN) {
+        return 0;
+    }
+    key = (uint32_t)keyEvent->key;
+    if (keyEvent->mod & SDL_KMOD_GUI) modifiers |= DM2_V1_MAC_MOD_COMMAND;
+
+    switch (keyEvent->key) {
+        case SDLK_RETURN: key = DM2_V1_MAC_KEY_RETURN; break;
+        case SDLK_KP_ENTER: key = DM2_V1_MAC_KEY_ENTER; break;
+        case SDLK_ESCAPE: key = DM2_V1_MAC_KEY_ESCAPE; break;
+        case SDLK_UP: key = DM2_V1_MAC_KEY_UP; break;
+        case SDLK_DOWN: key = DM2_V1_MAC_KEY_DOWN; break;
+        case SDLK_LEFT: key = DM2_V1_MAC_KEY_LEFT; break;
+        case SDLK_RIGHT: key = DM2_V1_MAC_KEY_RIGHT; break;
+        case SDLK_HOME: key = DM2_V1_MAC_KEY_HOME; break;
+        case SDLK_END: key = DM2_V1_MAC_KEY_END; break;
+        case SDLK_PAGEUP: key = DM2_V1_MAC_KEY_PAGE_UP; break;
+        case SDLK_PAGEDOWN: key = DM2_V1_MAC_KEY_PAGE_DOWN; break;
+        case SDLK_HELP: key = DM2_V1_MAC_KEY_HELP; break;
+        case SDLK_DELETE: key = DM2_V1_MAC_KEY_DELETE; break;
+        case SDLK_KP_1: key = DM2_V1_MAC_KEY_NUMPAD_1; break;
+        case SDLK_KP_2: key = DM2_V1_MAC_KEY_NUMPAD_2; break;
+        case SDLK_KP_3: key = DM2_V1_MAC_KEY_NUMPAD_3; break;
+        case SDLK_KP_4: key = DM2_V1_MAC_KEY_NUMPAD_4; break;
+        case SDLK_KP_5: key = DM2_V1_MAC_KEY_NUMPAD_5; break;
+        case SDLK_KP_6: key = DM2_V1_MAC_KEY_NUMPAD_6; break;
+        case SDLK_KP_7: key = DM2_V1_MAC_KEY_NUMPAD_7; break;
+        case SDLK_KP_8: key = DM2_V1_MAC_KEY_NUMPAD_8; break;
+        case SDLK_KP_9: key = DM2_V1_MAC_KEY_NUMPAD_9; break;
+        case SDLK_F1: key = DM2_V1_MAC_KEY_F1; break;
+        case SDLK_F2: key = DM2_V1_MAC_KEY_F2; break;
+        case SDLK_F3: key = DM2_V1_MAC_KEY_F3; break;
+        case SDLK_F4: key = DM2_V1_MAC_KEY_F4; break;
+        case SDLK_F13: key = DM2_V1_MAC_KEY_F13; break;
+        case SDLK_F14: key = DM2_V1_MAC_KEY_F14; break;
+        case SDLK_F15: key = DM2_V1_MAC_KEY_F15; break;
+        default: break;
+    }
+    if (!dm2_v1_mac_input_resolve(key, modifiers, phase, &receipt)) return 0;
+    switch (receipt.action) {
+        case DM2_V1_MAC_ACTION_TOGGLE_CHAMPION_0: *outInput = M12_MENU_INPUT_CHAMPION_1_INVENTORY; return 1;
+        case DM2_V1_MAC_ACTION_TOGGLE_CHAMPION_1: *outInput = M12_MENU_INPUT_CHAMPION_2_INVENTORY; return 1;
+        case DM2_V1_MAC_ACTION_TOGGLE_CHAMPION_2: *outInput = M12_MENU_INPUT_CHAMPION_3_INVENTORY; return 1;
+        case DM2_V1_MAC_ACTION_TOGGLE_CHAMPION_3: *outInput = M12_MENU_INPUT_CHAMPION_4_INVENTORY; return 1;
+        case DM2_V1_MAC_ACTION_TOGGLE_LEADER: *outInput = M12_MENU_INPUT_LEADER_INVENTORY; return 1;
+        case DM2_V1_MAC_ACTION_FREEZE: *outInput = M12_MENU_INPUT_FREEZE_TOGGLE; return 1;
+        case DM2_V1_MAC_ACTION_SAVE_GAME: *outInput = M12_MENU_INPUT_SAVE_GAME; return 1;
+        case DM2_V1_MAC_ACTION_QUIT: *outInput = M12_MENU_INPUT_BACK; return 1;
+        case DM2_V1_MAC_ACTION_TURN_LEFT: *outInput = M12_MENU_INPUT_TURN_LEFT; return 1;
+        case DM2_V1_MAC_ACTION_MOVE_FORWARD: *outInput = M12_MENU_INPUT_UP; return 1;
+        case DM2_V1_MAC_ACTION_TURN_RIGHT: *outInput = M12_MENU_INPUT_TURN_RIGHT; return 1;
+        case DM2_V1_MAC_ACTION_MOVE_LEFT: *outInput = M12_MENU_INPUT_STRAFE_LEFT; return 1;
+        case DM2_V1_MAC_ACTION_MOVE_BACKWARD: *outInput = M12_MENU_INPUT_DOWN; return 1;
+        case DM2_V1_MAC_ACTION_MOVE_RIGHT: *outInput = M12_MENU_INPUT_STRAFE_RIGHT; return 1;
+        case DM2_V1_MAC_ACTION_WALL_LEFT: *outInput = M12_MENU_INPUT_MAC_WALL_LEFT; return 1;
+        case DM2_V1_MAC_ACTION_WALL_CENTER: *outInput = M12_MENU_INPUT_MAC_WALL_CENTER; return 1;
+        case DM2_V1_MAC_ACTION_WALL_RIGHT: *outInput = M12_MENU_INPUT_MAC_WALL_RIGHT; return 1;
+        case DM2_V1_MAC_ACTION_WAKE: *outInput = M12_MENU_INPUT_ACCEPT; return 1;
+        default: return 0;
+    }
+}
+
 static int m11_push_script_event_token(const char* token, size_t len) {
     char buffer[128];
     SDL_Event ev;
@@ -5225,6 +5304,13 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                                   (ev.key.mod & SDL_KMOD_CTRL) != 0,
                                                   &csbInput)) {
                     return csbInput;
+                }
+            }
+            if (gameView && gameView->active) {
+                M12_MenuInput macInput = M12_MENU_INPUT_NONE;
+                if (m11_dm2_mac_sdl_key_to_menu_input(
+                        gameView, &ev.key, &macInput)) {
+                    return macInput;
                 }
             }
             if (gameView && gameView->active &&

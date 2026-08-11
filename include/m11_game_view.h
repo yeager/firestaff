@@ -955,6 +955,7 @@ typedef struct {
     int inventoryPanelActive;    /* 1 when full inventory grid is displayed */
     int inventorySelectedSlot;   /* currently highlighted slot index (-1 = none) */
     int csbGameFrozen;           /* CSB C147/C148 freeze/unfreeze keyboard state */
+    int dm2GameFrozen;           /* Macintosh C147-style freeze/unfreeze state */
     /* ReDMCSB COMMAND.C C140 / LOADSAVE.C F0433-F0435 save-disk modal.
      * Choice is one-based so it matches the source dialog hit rectangles. */
     int csbDiskMenuActive;
