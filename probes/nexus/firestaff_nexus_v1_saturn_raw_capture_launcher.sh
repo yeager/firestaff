@@ -165,6 +165,7 @@ umask 077
   printf 'bios_sha256=%s\nbios_region=%s\ndisc_sha256=%s\nskip_frames=%s\nframe_limit=%s\npress_start_frame=%s\npress_start_length=%s\npress_button_mask=%s\npress_sequence=%s\n' \
     "$(lower "$bios_sha256")" "$bios_region" "$(lower "$disc_sha256")" "$skip_frames" "$frame_limit" "$press_start_frame" "$press_start_length" "$press_button_mask" "${FIRESTAFF_NEXUS_TRACE_PRESS_SEQUENCE:-}"
   printf 'mednafen_home=%s\ntrace_session=%s\nno_waiting=%s\nrequire_input_window=%s\ntimeout_seconds=%s\n' "${mednafen_home:-}" "$trace_session" "$no_waiting" "$require_input_window" "$timeout_seconds"
+  printf 'vdp1_reg_pc_list=%s\n' "${FIRESTAFF_NEXUS_TRACE_VDP1_REG_PC_LIST:-}"
   printf 'capture_magic=FIRESTAFF_NEXUS_SATURN_RUNTIME_CAPTURE_V1\n'
 } > "$manifest_tmp"
 mv "$manifest_tmp" "$manifest"
