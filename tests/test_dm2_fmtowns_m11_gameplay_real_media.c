@@ -129,8 +129,24 @@ int main(void)
               M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
               M11_GAME_INPUT_REDRAW,
           "FM Towns active session accepts turn and movement through M11");
+    check(M11_GameView_HandleInput(
+              &view, M12_MENU_INPUT_INVENTORY_TOGGLE) ==
+              M11_GAME_INPUT_REDRAW && view.inventoryPanelActive == 1,
+          "FM Towns opens inventory only through the authenticated CHARSHEET frame");
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+    {
+        size_t panel_pixels = 0u;
+        size_t pixel_index;
+        for (pixel_index = 0u; pixel_index < sizeof(framebuffer); ++pixel_index)
+            if (framebuffer[pixel_index] != 0u) ++panel_pixels;
+        check(panel_pixels > 0u,
+              "FM Towns inventory draw consumes original CHARSHEET pixels");
+    }
+    check(M11_GameView_HandleInput(
+              &view, M12_MENU_INPUT_BACK) == M11_GAME_INPUT_REDRAW &&
+              view.inventoryPanelActive == 0,
+          "FM Towns inventory closes through the source panel boundary");
     check(view.dm2State.level_loaded &&
               ((DM2_V1_BootProfile *)view.dm2BootProfile)
                   ->source_game_load_session_ready,
@@ -188,6 +204,64 @@ int main(void)
     check(dm2_v1_dungeon_input_owner_init_fmtowns(
               &input_owner, (DM2_V1_BootProfile *)view.dm2BootProfile),
           "FM Towns binds the native dungeon input owner");
+    {
+        int exercised_m11_inventory_pointer = 0;
+        unsigned int candidate_index;
+        check(M11_GameView_HandleInput(
+                  &view, M12_MENU_INPUT_INVENTORY_TOGGLE) ==
+                  M11_GAME_INPUT_REDRAW && view.inventoryPanelActive,
+              "FM Towns reopens the source inventory before pointer routing");
+        for (candidate_index = 0u;
+             candidate_index < dm2_v1_dungeon_input_owner_fmtowns_candidate_count(
+                                   &input_owner) && !exercised_m11_inventory_pointer;
+             ++candidate_index) {
+            DM2_V1_FmtownsMouseInputCandidate candidate;
+            DM2_V1_BootExpandedRectReceipt native_rect;
+            unsigned int context_count;
+            unsigned int context_ordinal;
+            if (!dm2_v1_dungeon_input_owner_fmtowns_candidate(
+                    &input_owner, candidate_index, &candidate) ||
+                !(candidate.button_mask & 0x0003u) ||
+                !dm2_v1_dungeon_input_owner_fmtowns_candidate_native_rect(
+                    &input_owner, candidate_index, &native_rect) ||
+                !native_rect.valid)
+                continue;
+            context_count =
+                dm2_v1_dungeon_input_owner_fmtowns_candidate_context_count(
+                    &input_owner, candidate_index);
+            for (context_ordinal = 0u;
+                 context_ordinal < context_count &&
+                 !exercised_m11_inventory_pointer;
+                 ++context_ordinal) {
+                Dm2TouchClickZonePc34Compat context;
+                int source_slot = -1;
+                memset(&context, 0, sizeof(context));
+                if (!dm2_v1_dungeon_input_owner_fmtowns_candidate_context_at(
+                        &input_owner, candidate_index, context_ordinal,
+                        &context) ||
+                    context.view != DM2_TOUCH_CLICK_VIEW_INVENTORY_PC34_COMPAT)
+                    continue;
+                check(M11_GameView_HandlePointerButton(
+                          &view, native_rect.rect.x / 2,
+                          native_rect.rect.y / 2,
+                          candidate.button_mask & 0x0003u) ==
+                          M11_GAME_INPUT_REDRAW,
+                      "FM Towns M11 pointer consumes an authenticated inventory context");
+                if (dm2_v1_fmtowns_inventory_slot_for_context(
+                        &context, &source_slot)) {
+                    check(view.inventorySelectedSlot == source_slot,
+                          "FM Towns M11 pointer retains the authenticated inventory slot");
+                }
+                exercised_m11_inventory_pointer = 1;
+            }
+        }
+        check(exercised_m11_inventory_pointer,
+              "FM Towns M11 exercises a real inventory pointer context");
+        check(M11_GameView_HandleInput(
+                  &view, M12_MENU_INPUT_BACK) == M11_GAME_INPUT_REDRAW &&
+                  !view.inventoryPanelActive,
+              "FM Towns M11 closes the source inventory after pointer routing");
+    }
     check(((DM2_V1_BootProfile *)view.dm2BootProfile)
                   ->fmtowns_skull_mouse_input_table_hash == 0x1500c4c9u,
           "FM Towns retains the authenticated full SKULL.EXP MOUSE_INPUT table receipt");

@@ -67,6 +67,8 @@
 #include "dm2_v1_tech_magic.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_dungeon_input_owner.h"
+#include "dm2_v1_inventory_panel.h"
+#include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "theron/theron_v1_asset_loader.h"
 
 #include "asset_status_m12.h"
@@ -29992,14 +29994,47 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         }
         if (input == M12_MENU_INPUT_INVENTORY_TOGGLE) {
             if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
-                /* SKProject CHANGE_VIEWPORT_TO_INVENTORY owns a DM2-specific
-                 * GDAT/CHAMPIONS layout and event table. The shared M11
-                 * inventory panel is built from DM1 GRAPHICS.DAT slots, so
-                 * it cannot stand in for that source surface. */
-                state->inventoryPanelActive = 0;
-                /* No source-owned c_gui_draw/dialogue producer is bound for
-                 * this unavailable route. Keep the control boundary silent
-                 * rather than exposing a host-authored English label. */
+                const DM2_V1_BootProfile *profile =
+                    (const DM2_V1_BootProfile *)state->dm2BootProfile;
+                DM2_V1_QueryGdatSummaryImageReceipt summary;
+                DM2_V1_GdatGfxRawMaterialReceipt material;
+                uint8_t *frame_pixels = NULL;
+                int frame_width = 0;
+                int frame_height = 0;
+                DM2_ImageFormat frame_format = DM2_IMG_FMT_UNKNOWN;
+                const DM2_V1_AssetLoader *loader =
+                    dm2_v1_boot_asset_loader(profile);
+                memset(&summary, 0, sizeof(summary));
+                memset(&material, 0, sizeof(material));
+                /* The host control is admitted only when the original
+                 * CHARSHEET frame is present in the selected FM Towns
+                 * GRAPHICS.DAT. This is a source-material gate, not a
+                 * replacement DM1 panel. */
+                if (!m11_dm2_is_fmtowns_profile(profile) || !loader ||
+                    !dm2_v1_query_gdat_summary_image_receipt(
+                        loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0, 1,
+                        &summary) || !summary.accepted || summary.colors != 255u ||
+                    !dm2_v1_gdat_image_raw_material_receipt(
+                        loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0, 1,
+                        &material) || !material.accepted ||
+                    !material.source_hash || !material.receipt_hash ||
+                    !(frame_pixels = dm2_v1_asset_load_image_field(
+                          loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0, 1,
+                          &frame_width, &frame_height, &frame_format)) ||
+                    frame_width <= 0 || frame_height <= 0 ||
+                    (frame_format != DM2_IMG_FMT_IMG3 &&
+                     frame_format != DM2_IMG_FMT_U4)) {
+                    dm2_v1_asset_free_pixels(frame_pixels);
+                    state->inventoryPanelActive = 0;
+                    m11_set_status(state, NULL, NULL);
+                    return M11_GAME_INPUT_REDRAW;
+                }
+                dm2_v1_asset_free_pixels(frame_pixels);
+                state->mapOverlayActive = 0;
+                state->inventoryPanelActive = !state->inventoryPanelActive;
+                if (state->inventoryPanelActive &&
+                    state->inventorySelectedSlot < 0)
+                    state->inventorySelectedSlot = 0;
                 m11_set_status(state, NULL, NULL);
                 return M11_GAME_INPUT_REDRAW;
             }
@@ -30024,6 +30059,16 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_IGNORED;
         }
         if (state->inventoryPanelActive) {
+            if (input == M12_MENU_INPUT_UP || input == M12_MENU_INPUT_LEFT) {
+                if (state->inventorySelectedSlot > 0)
+                    --state->inventorySelectedSlot;
+                return M11_GAME_INPUT_REDRAW;
+            }
+            if (input == M12_MENU_INPUT_DOWN || input == M12_MENU_INPUT_RIGHT) {
+                if (state->inventorySelectedSlot < DM2_V1_INV_SLOT_COUNT - 1)
+                    ++state->inventorySelectedSlot;
+                return M11_GAME_INPUT_REDRAW;
+            }
             return input == M12_MENU_INPUT_NONE
                        ? M11_GAME_INPUT_IGNORED
                        : M11_GAME_INPUT_REDRAW;
@@ -31722,6 +31767,40 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         if (dm2StartupPointer != M11_GAME_INPUT_IGNORED) {
             return dm2StartupPointer;
         }
+    }
+
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+        state->inventoryPanelActive &&
+        m11_dm2_is_fmtowns_profile(
+            (const DM2_V1_BootProfile *)state->dm2BootProfile)) {
+        DM2_V1_DungeonInputOwner input_owner;
+        DM2_V1_FmtownsUiRouteReceipt route;
+        const DM2_V1_BootProfile *profile =
+            (const DM2_V1_BootProfile *)state->dm2BootProfile;
+        memset(&route, 0, sizeof(route));
+        if (dm2_v1_dungeon_input_owner_init_fmtowns(
+                &input_owner, profile) &&
+            dm2_v1_dungeon_input_owner_fmtowns_route_context(
+                &input_owner, DM2_V1_FMTOWNS_UI_INVENTORY,
+                (int16_t)x, (int16_t)y, (unsigned int)buttonMask, &route) &&
+            route.accepted) {
+            int source_slot = -1;
+            if (route.candidate.event_index == 11u) {
+                state->inventoryPanelActive = 0;
+                return M11_GAME_INPUT_REDRAW;
+            }
+            if (dm2_v1_fmtowns_inventory_slot_for_context(
+                    &route.source_context, &source_slot) &&
+                source_slot >= 0 && source_slot < 30) {
+                /* Selection is the source-owned first step. Moving or
+                 * equipping an item remains a separate source transaction;
+                 * do not turn a pointer hit into an invented swap. */
+                state->inventorySelectedSlot = source_slot;
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_REDRAW;
+        }
+        return M11_GAME_INPUT_IGNORED;
     }
 
     /* Endgame restart/quit controls.  ReDMCSB ENDGAME.C F0444 lines
@@ -59046,6 +59125,74 @@ void M11_GameView_DrawFpsOverlay(const M11_GameViewState* state,
                   7, 6, text, &style);
 }
 
+static int m11_draw_dm2_fmtowns_inventory_panel(
+    const M11_GameViewState *state,
+    unsigned char *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height)
+{
+    const DM2_V1_BootProfile *profile;
+    const DM2_V1_AssetLoader *loader;
+    DM2_V1_QueryGdatSummaryImageReceipt summary;
+    DM2_V1_GdatGfxRawMaterialReceipt material;
+    DM2_V1_GdatRaw4BlitPlacement placement;
+    uint8_t *pixels = NULL;
+    int width = 0;
+    int height = 0;
+    DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+    int row;
+
+    if (!state || !framebuffer || framebuffer_width <= 0 ||
+        framebuffer_height <= 0 ||
+        !m11_dm2_is_fmtowns_profile(
+            (const DM2_V1_BootProfile *)state->dm2BootProfile)) {
+        return 0;
+    }
+    profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
+    loader = dm2_v1_boot_asset_loader(profile);
+    memset(&summary, 0, sizeof(summary));
+    memset(&material, 0, sizeof(material));
+    memset(&placement, 0, sizeof(placement));
+    if (!loader ||
+        !dm2_v1_query_gdat_summary_image_receipt(
+            loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0, 1,
+            &summary) ||
+        !summary.accepted || summary.colors != 255u ||
+        !dm2_v1_gdat_image_raw_material_receipt(
+            loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0, 1,
+            &material) ||
+        !material.accepted || !material.source_hash ||
+        !material.receipt_hash ||
+        !(pixels = dm2_v1_asset_load_image_field(
+              loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0, 1,
+              &width, &height, &format)) ||
+        width <= 0 || height <= 0 ||
+        (format != DM2_IMG_FMT_IMG3 && format != DM2_IMG_FMT_U4) ||
+        !dm2_v1_gdat_door_overlay_query_raw4_blit_placement(
+            loader, DM2_V1_INVENTORY_SURVEY_PREVIEW_RECT, width, height,
+            &placement) ||
+        placement.source_x < 0 || placement.source_y < 0 ||
+        placement.destination.x < 0 || placement.destination.y < 0 ||
+        placement.destination.w <= 0 || placement.destination.h <= 0 ||
+        placement.source_x + placement.destination.w > width ||
+        placement.source_y + placement.destination.h > height ||
+        placement.destination.x + placement.destination.w > framebuffer_width ||
+        placement.destination.y + placement.destination.h > framebuffer_height) {
+        dm2_v1_asset_free_pixels(pixels);
+        return 0;
+    }
+    for (row = 0; row < placement.destination.h; ++row) {
+        memcpy(framebuffer + (size_t)(placement.destination.y + row) *
+                   (size_t)framebuffer_width +
+                   (size_t)placement.destination.x,
+               pixels + (size_t)(placement.source_y + row) *
+                   (size_t)width + (size_t)placement.source_x,
+               (size_t)placement.destination.w);
+    }
+    dm2_v1_asset_free_pixels(pixels);
+    return 1;
+}
+
 void M11_GameView_Draw(const M11_GameViewState* state,
                        unsigned char* framebuffer,
                        int framebufferWidth,
@@ -59676,6 +59823,19 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           0, 0, framebufferWidth, framebufferHeight,
                           M11_COLOR_BLACK);
+        }
+        if (state->inventoryPanelActive) {
+            /* FM Towns CHANGE_VIEWPORT_TO_INVENTORY replaces the dungeon
+             * page with the source CHARSHEET frame.  Consume only the
+             * authenticated RECT_1EE material and its RAW4 placement; a
+             * missing frame must not leave the live dungeon visible behind
+             * an asserted inventory state. */
+            if (!m11_draw_dm2_fmtowns_inventory_panel(
+                    state, framebuffer, framebufferWidth, framebufferHeight)) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              0, 0, framebufferWidth, framebufferHeight,
+                              M11_COLOR_BLACK);
+            }
         }
         /* The accepted V1 runtime frame is the only HUD owner.  SKProject
          * drives interface images from live GUI/session state (not a static

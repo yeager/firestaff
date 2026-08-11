@@ -6370,6 +6370,7 @@ add_library(firestaff_m10 STATIC
     src/dm2/dm2_v1_creature_tables.c
     src/dm2/dm2_v1_party.c
     src/dm2/dm2_v1_hand_action_gdat.c
+    src/dm2/dm2_v1_inventory_panel.c
     src/dm2/dm2_v1_asset_loader.c
     # The FM Towns ISO reader is shared by the DM2 boot receipt and M12's
     # read-only archive admission.  Keep one implementation in M10 so the

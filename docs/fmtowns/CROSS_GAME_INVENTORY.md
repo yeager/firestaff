@@ -94,6 +94,14 @@ catalog item or use a host-side object cache. The native inventory panel,
 remaining context-specific event ordering, and unavailable pouch/quiver/
 scabbard/backpack slots remain fail-closed.
 
+M11 now consumes the authentic FM Towns CHARSHEET frame for the inventory
+view. This route is distinct from the PC-English companion: the Towns image
+uses the global 255-colour `PAL_IRGB` route and a source RAW4 crop at
+`RECT_1EE`. M11 admits the panel only after those original bytes and the
+decoded IMG3/U4 material are verified, then routes pointer hits through the
+authenticated Towns context table. No host-authored panel pixels or labels
+are used.
+
 ## CSB (6 headers)
 
 | Module | Purpose |

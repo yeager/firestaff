@@ -233,6 +233,14 @@ clipping is still unproven. Remaining weather work is to bind real original
     inventory panel, remaining context/event ordering, and pouch/quiver/
     scabbard/backpack ownership are still open and remain unavailable.
 
+  - 2026-08-11 follow-up: FM Towns M11 now admits the real
+    `INTERFACE_CHARSHEET/0/dtImage/1` inventory frame after validating its
+    global 255-colour source route, raw material receipt, decoded IMG3/U4
+    pixels, and `RECT_1EE` RAW4 crop placement. The authenticated Towns
+    inventory context table is now consumed by M11 for panel pointer routing
+    and slot selection. Item movement/equip commits, source text, and the
+    remaining non-equipment owners are still separate fail-closed work.
+
   - 2026-08-06 follow-up: command dispatch now propagates a rejected
     source-GDAT image callback, so a failed title/menu blit aborts the
     presentation transaction instead of being reported as successfully drawn.
