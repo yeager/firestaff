@@ -27,6 +27,14 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   avvisad utan `$CC4C`, giltig `$B0E5`-kategori och semantic publication.
 - 🔒 Capturen öppnar därför inte RNG, AI, combat, generatorer, T700 eller T900.
 
+## 2026-08-12 — Stage-2-session klassificerad utan gameplay-publicering
+
+- ✅ En ny isolerad Mednafen-session med direkt SDL2-länk nådde Stage-2 och
+  gav 2 048 autentiserade registerprover; parsern behåller detta som
+  provenance även när `$CC4C`/`$B0E5` saknas helt.
+- 🔒 Ingen dungeon-/objectkonsument eller originalmekanik öppnas av detta
+  transport-/startupbevis.
+
 ## 2026-08-12 — parity-matrisens överclaim korrigerad
 
 - ✅ Combat- och champion-systemets status skiljer nu autentiserade numeric
