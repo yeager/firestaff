@@ -159,10 +159,12 @@ until their specific owners are evidenced.
 This C06 boundary is narrower than the direct in-game save route. M11 can
 read and update an explicitly selected, already admitted native
 `CSBGAME.DAT` slot through F0435/F0433, including the source `.BAK` recovery
-rule. It does not turn Firestaff's default `.sav` into F31 media, create a
-slot from `MINI.DAT`, or establish C06's `F7052_SaveGame` file-medium
-transaction. The C06 `GAME` choices therefore remain closed until that
-separate creation and drive-2 mapping are source-bound.
+rule. Its recovered F7052 first-save helper can also materialize a new
+canonical `CSBGAME.DAT` from the hash-verified selected `MINI.DAT`: it stages
+the bootstrap privately, rebuilds the five keyed parts and F7062 header, then
+atomically publishes only an F0435-valid native file. It does not turn
+Firestaff's default `.sav` into F31 media or choose C06's drive-2 destination.
+The C06 `GAME` choices remain closed until that UI mapping is source-bound.
 
 ## Files to know
 

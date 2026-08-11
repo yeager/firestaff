@@ -264,11 +264,14 @@ populated dungeon states.
   Japanese candidate uses a different party envelope and is not interchangeable
   with the English handoff. The reader therefore rejects them before a
   complete native F0435 state receipt is produced. The direct M11 F0433 path
-  can update an already-admitted, canonical `CSBGAME.DAT` slot and its F0435
-  readback is covered; that is not evidence for these inconsistent corpus
-  candidates, nor for C06's separate F7052 save-medium/create transaction.
-  `MINI.DAT` remains the only retail bootstrap path, and no synthetic save is
-  used.
+  can update an already-admitted canonical `CSBGAME.DAT` slot and can make a
+  new canonical slot from the selected, hash-verified `MINI.DAT` bootstrap
+  through the recovered F7052 key/header sequence. The first-save transaction
+  is staging-only until the completed F0435-valid slot is atomically published;
+  it neither accepts these inconsistent corpus candidates nor invents a save
+  envelope. C06's separate F7052 save-medium UI and drive-2 mapping remain
+  unbound. `MINI.DAT` remains the only retail bootstrap path, and no synthetic
+  save is used.
 
 - **FM-TOWNS-C06-SAVE-001 — selected portrait save is bound; full game save remains closed.**
   `CEDT001.C:F7001` now opens its source `GAME` / `PORTRAIT` / `CANCEL`
@@ -278,7 +281,8 @@ populated dungeon states.
   macOS/Linux and `INSTALLDIR\\portraits` on Windows; it never rewrites the
   scanned CD `PORTRAIT/*.CMP` catalogue. C06 `NEW DISK` now reopens that same
   medium through the native CMP admission path. The `GAME` choice remains blocked
-  until the distinct F31 `F7052_SaveGame`/C05 transaction is recovered.
+  until the distinct F31 `F7052_SaveGame`/C05 UI transaction and its drive-2
+  mapping are source-bound.
 
 - **FM-TOWNS-C06-LOAD-001 — `F7002_ReadCMP` is now an authenticated import
   transaction.** Given an index returned by the admitted `PORTRAIT` catalogue,

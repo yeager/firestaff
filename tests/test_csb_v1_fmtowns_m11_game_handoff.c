@@ -1585,6 +1585,51 @@ int main(void)
                        CSB_V1_F0070_ATTRIBUTE_ICON_DIRTY_PC34) != 0u,
                   "F31 F0070 releases the real champion into its selected source icon cell");
         }
+        /* CEDTINC8.C F7052 creates M746's first CSBGAME.DAT from the selected
+         * verified MINI.DAT.  Exercise that transaction with real source
+         * bytes: the temporary directory is removed before this test exits. */
+#ifndef _WIN32
+        if (!user_save_path || !user_save_path[0]) {
+            char bootstrap_dir[] = "/tmp/firestaff-csb-bootstrap-XXXXXX";
+            char bootstrap_save_path[1024];
+            char bootstrap_stage_path[1024];
+            CSB_V1_BootProfile *bootstrap_profile =
+                (CSB_V1_BootProfile *)view.csbBootProfile;
+            CSB_V1_FmtownsUserSaveReceipt bootstrap_save;
+            uint32_t random_before = bootstrap_profile
+                ? bootstrap_profile->runtime.csbwin_random_seed : 0u;
+            int created = 0;
+            if (mkdtemp(bootstrap_dir) != NULL &&
+                snprintf(bootstrap_save_path, sizeof(bootstrap_save_path),
+                         "%s/CSBGAME.DAT", bootstrap_dir) >= 0 &&
+                snprintf(bootstrap_stage_path, sizeof(bootstrap_stage_path),
+                         "%s.firestaff-bootstrap", bootstrap_save_path) >= 0) {
+                created = csb_v1_fmtowns_game_create_user_save_from_startup(
+                    bootstrap_profile, &direct_handoff, bootstrap_save_path);
+                CHECK(created,
+                      "F31 F7052 creates a new canonical CSBGAME.DAT from verified MINI.DAT");
+                memset(&bootstrap_save, 0, sizeof(bootstrap_save));
+                CHECK(created && csb_v1_fmtowns_game_user_save_open(
+                          bootstrap_profile, &direct_handoff, bootstrap_save_path,
+                          &bootstrap_save) && bootstrap_save.valid,
+                      "F31 F7052-created CSBGAME.DAT passes the native F0435 reader");
+                CHECK(created && bootstrap_profile->runtime.csbwin_random_seed ==
+                          f31_advance_random_words(
+                              random_before, 16u + REDMCSB_F7062_RANDOM_WORDS),
+                      "F31 first-save path consumes F7052 and F7062 RNG words exactly once");
+                {
+                    FILE *stage = fopen(bootstrap_stage_path, "rb");
+                    CHECK(stage == NULL,
+                          "F31 first-save bootstrap staging file is never retained");
+                    if (stage) fclose(stage);
+                }
+                remove(bootstrap_save_path);
+                rmdir(bootstrap_dir);
+            } else {
+                CHECK(0, "F31 first-save test can allocate an isolated temporary directory");
+            }
+        }
+#endif
         /* F0433 writes only an already-admitted native F31 slot.  It must
          * still reject MINI.DAT and every non-canonical target, while a real
          * CSBGAME.DAT must survive a native write followed by F0435 readback.

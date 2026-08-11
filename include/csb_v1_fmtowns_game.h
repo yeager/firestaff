@@ -471,6 +471,15 @@ int csb_v1_fmtowns_game_write_user_save(
     const CSB_V1_FmtownsGameHandoffReceipt *game_receipt,
     const char *save_path);
 
+/* CEDTINC8.C F7052's first-save path.  Materialize a new canonical F31
+ * CSBGAME.DAT from the already verified selected MINI.DAT, then run the same
+ * F0433/F7052 writer used for an admitted slot.  The destination must not
+ * exist; a sibling staging file is removed on every failure. */
+int csb_v1_fmtowns_game_create_user_save_from_startup(
+    CSB_V1_BootProfile *profile,
+    const CSB_V1_FmtownsGameHandoffReceipt *game_receipt,
+    const char *save_path);
+
 int csb_v1_fmtowns_utility_handoff_open(
     const CSB_V1_BootProfile *profile,
     CSB_V1_FmtownsSwitchLanguage language,

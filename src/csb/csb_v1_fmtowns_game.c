@@ -970,10 +970,10 @@ static void csb_v1_fmtowns_game_patch_party_part(
     (void)title_bytes;
 }
 
-int csb_v1_fmtowns_game_write_user_save(
+static int csb_v1_fmtowns_game_write_user_save_internal(
     CSB_V1_BootProfile *profile,
     const CSB_V1_FmtownsGameHandoffReceipt *game_receipt,
-    const char *save_path)
+    const char *save_path, int rotate_backup)
 {
     CSB_V1_FmtownsUserSaveReceipt receipt;
     CSB_V1_RuntimeProfile *runtime;
@@ -1182,11 +1182,13 @@ int csb_v1_fmtowns_game_write_user_save(
         goto done;
     }
     file = NULL;
-    if (!csb_v1_fmtowns_game_original_backup_path(
-            save_path, backup_path, sizeof(backup_path)) ||
-        !csb_v1_fmtowns_game_copy_file(save_path, backup_path)) {
-        remove(temp_path);
-        goto done;
+    if (rotate_backup) {
+        if (!csb_v1_fmtowns_game_original_backup_path(
+                save_path, backup_path, sizeof(backup_path)) ||
+            !csb_v1_fmtowns_game_copy_file(save_path, backup_path)) {
+            remove(temp_path);
+            goto done;
+        }
     }
     if (rename(temp_path, save_path) != 0) {
         remove(temp_path);
@@ -1202,6 +1204,97 @@ done:
     if (file) fclose(file);
     free(file_bytes);
     for (index = 0u; index < 5u; ++index) free(parts[index]);
+    return ok;
+}
+
+int csb_v1_fmtowns_game_write_user_save(
+    CSB_V1_BootProfile *profile,
+    const CSB_V1_FmtownsGameHandoffReceipt *game_receipt,
+    const char *save_path)
+{
+    return csb_v1_fmtowns_game_write_user_save_internal(
+        profile, game_receipt, save_path, 1);
+}
+
+int csb_v1_fmtowns_game_create_user_save_from_startup(
+    CSB_V1_BootProfile *profile,
+    const CSB_V1_FmtownsGameHandoffReceipt *game_receipt,
+    const char *save_path)
+{
+    unsigned char *startup_bytes = NULL;
+    char backup_path[1024];
+    char staging_path[1024];
+    FILE *existing = NULL;
+    uint32_t random_before;
+    int ok = 0;
+
+    /* CEDTINC8.C F7052 opens M746 (CSBGAME.DAT), creates its first native
+     * record, and only then replaces the selected medium.  Keep the verified
+     * MINI.DAT bootstrap private in a sibling stage: it is never published at
+     * the canonical destination. */
+    if (!profile || !game_receipt || !save_path || !save_path[0] ||
+        !profile->runtime.csbwin_random_seed_valid ||
+        !csb_v1_fmtowns_game_receipt_source_matches(game_receipt) ||
+        !csb_v1_fmtowns_game_original_backup_path(
+            save_path, backup_path, sizeof(backup_path)) ||
+        snprintf(staging_path, sizeof(staging_path), "%s.firestaff-bootstrap",
+                 save_path) < 0 || strlen(staging_path) >= sizeof(staging_path)) {
+        return 0;
+    }
+    existing = fopen(save_path, "rb");
+    if (existing) {
+        fclose(existing);
+        return 0;
+    }
+    existing = fopen(staging_path, "rb");
+    if (existing) {
+        fclose(existing);
+        return 0;
+    }
+    startup_bytes = (unsigned char *)malloc(game_receipt->startup_mini_size);
+    if (!startup_bytes ||
+        !csb_v1_fmtowns_game_read_startup_span(
+            game_receipt, 0u, startup_bytes, game_receipt->startup_mini_size) ||
+        !(existing = fopen(staging_path, "wb"))) {
+        remove(staging_path);
+        free(startup_bytes);
+        return 0;
+    }
+    if (fwrite(startup_bytes, 1u, game_receipt->startup_mini_size, existing) !=
+            game_receipt->startup_mini_size) {
+        fclose(existing);
+        existing = NULL;
+        remove(staging_path);
+        free(startup_bytes);
+        return 0;
+    }
+    if (fclose(existing) != 0) {
+        existing = NULL;
+        remove(staging_path);
+        free(startup_bytes);
+        return 0;
+    }
+    existing = NULL;
+    free(startup_bytes);
+    random_before = profile->runtime.csbwin_random_seed;
+    if (!csb_v1_fmtowns_game_write_user_save_internal(
+            profile, game_receipt, staging_path, 0)) goto done;
+    /* The target was absent on entry and is checked again before publication.
+     * Do not replace a slot another process has created while F7052 ran. */
+    existing = fopen(save_path, "rb");
+    if (existing) {
+        fclose(existing);
+        existing = NULL;
+        goto done;
+    }
+    if (rename(staging_path, save_path) != 0) goto done;
+    ok = 1;
+done:
+    if (existing) fclose(existing);
+    if (!ok) {
+        profile->runtime.csbwin_random_seed = random_before;
+        remove(staging_path);
+    }
     return ok;
 }
 
