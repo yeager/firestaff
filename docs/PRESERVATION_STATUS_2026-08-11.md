@@ -25,7 +25,9 @@ testsvit och externa originalmedier. En grön parser eller en syntetisk fixtur
 ## Aktuella CSB X68000-rekvitton
 
 Den lokala japanska v3.1-crackade HDM-avbilden är strukturellt läsbar men
-utgör inte ett äkthetsintyg. `csb_v1_x68k_hdm` verifierar FAT12-kedjorna.
+utgör inte ett äkthetsintyg. Den externa avbildning som testades har
+SHA-256 `e912addf1881b6c2b3cde4207507061a43459748082c75953cbc3c305fdf24e1`.
+`csb_v1_x68k_hdm` verifierar FAT12-kedjorna.
 `M11_AssetLoader_InitCsbX68kFromHdm` extraherar `GRAPHICS.DAT` till en
 X68000-märkt cache utan att ge den Amiga-identitet. Testet kör både en
 FAT12-fixtur och den externa avbilden; post 13 dekodas som 96 × 41 pixlar.
