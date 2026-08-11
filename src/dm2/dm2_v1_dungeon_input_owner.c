@@ -342,6 +342,39 @@ int dm2_v1_dungeon_input_owner_fmtowns_route_context(
     return 0;
 }
 
+int dm2_v1_fmtowns_inventory_slot_for_context(
+    const Dm2TouchClickZonePc34Compat *source_context,
+    int *out_slot)
+{
+    const char *name;
+    int slot = -1;
+
+    if (out_slot) *out_slot = -1;
+    if (!source_context || !out_slot ||
+        source_context->view != DM2_TOUCH_CLICK_VIEW_INVENTORY_PC34_COMPAT ||
+        !source_context->groupName)
+        return 0;
+
+    name = source_context->groupName;
+    if (strcmp(name, "inventory.hand_right") == 0)
+        slot = 0;
+    else if (strcmp(name, "inventory.hand_left") == 0)
+        slot = 1;
+    else if (strcmp(name, "inventory.head") == 0)
+        slot = 2;
+    else if (strcmp(name, "inventory.body") == 0)
+        slot = 3;
+    else if (strcmp(name, "inventory.legs") == 0)
+        slot = 4;
+    else if (strcmp(name, "inventory.foot") == 0)
+        slot = 5;
+    else
+        return 0;
+
+    *out_slot = slot;
+    return 1;
+}
+
 int dm2_v1_dungeon_input_owner_route(
     const DM2_V1_DungeonInputOwner *owner,
     int16_t screen_x,

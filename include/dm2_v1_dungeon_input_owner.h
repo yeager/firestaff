@@ -116,6 +116,13 @@ int dm2_v1_dungeon_input_owner_fmtowns_route_context(
     int16_t screen_x, int16_t screen_y, unsigned int button_mask,
     DM2_V1_FmtownsUiRouteReceipt *out_receipt);
 
+/* Decode only equipment contexts whose slot owner is explicit in the
+ * source inventory definitions.  Pouches, quivers, and backpack contexts
+ * intentionally return 0 until their original owner chain is recovered. */
+int dm2_v1_fmtowns_inventory_slot_for_context(
+    const Dm2TouchClickZonePc34Compat *source_context,
+    int *out_slot);
+
 typedef void (*DM2_V1_DungeonInputEventSink)(void *ctx,
                                               int16_t event_index,
                                               int16_t x,

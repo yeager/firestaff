@@ -195,6 +195,7 @@ int main(void)
             unsigned int inventory_context_count = 0u;
             unsigned int inventory_native_gap_count = 0u;
             int exercised_inventory_route = 0;
+            int equipment_slot_seen[6] = {0, 0, 0, 0, 0, 0};
             for (candidate_index = 0u; candidate_index < candidate_count;
                  ++candidate_index) {
                 DM2_V1_FmtownsMouseInputCandidate candidate;
@@ -217,7 +218,13 @@ int main(void)
                             &context) &&
                         context.view == DM2_TOUCH_CLICK_VIEW_INVENTORY_PC34_COMPAT) {
                         has_inventory_context = 1;
-                        break;
+                        if (context.groupName) {
+                            int source_slot = -1;
+                            if (dm2_v1_fmtowns_inventory_slot_for_context(
+                                    &context, &source_slot) &&
+                                source_slot >= 0 && source_slot < 6)
+                                equipment_slot_seen[source_slot] = 1;
+                        }
                     }
                 }
                 if (!has_inventory_context) continue;
@@ -263,6 +270,25 @@ int main(void)
                                       route.candidate.source_record_index ==
                                           candidate.source_record_index,
                                   "FM Towns inventory route uses authenticated native geometry and source context");
+                            if (route.source_context.groupName &&
+                                (strcmp(route.source_context.groupName,
+                                        "inventory.hand_right") == 0 ||
+                                 strcmp(route.source_context.groupName,
+                                        "inventory.hand_left") == 0 ||
+                                 strcmp(route.source_context.groupName,
+                                        "inventory.head") == 0 ||
+                                 strcmp(route.source_context.groupName,
+                                        "inventory.body") == 0 ||
+                                 strcmp(route.source_context.groupName,
+                                        "inventory.legs") == 0 ||
+                                 strcmp(route.source_context.groupName,
+                                        "inventory.foot") == 0)) {
+                                int source_slot = -1;
+                                check(dm2_v1_fmtowns_inventory_slot_for_context(
+                                          &route.source_context, &source_slot) &&
+                                          source_slot >= 0 && source_slot <= 5,
+                                      "FM Towns equipment context retains the source inventory slot");
+                            }
                             exercised_inventory_route = 1;
                         }
                     }
@@ -274,6 +300,10 @@ int main(void)
                   "FM Towns keeps 37 inventory controls fail-closed without Towns RAW4 geometry");
             check(exercised_inventory_route,
                   "FM Towns exercises an authenticated inventory route against real RAW4 data");
+            check(equipment_slot_seen[0] && equipment_slot_seen[1] &&
+                      equipment_slot_seen[2] && equipment_slot_seen[3] &&
+                      equipment_slot_seen[4] && equipment_slot_seen[5],
+                  "FM Towns authentic inventory contexts retain all six source equipment slots");
         }
         {
             DM2_V1_BootProfile tampered_profile =
