@@ -227,6 +227,30 @@ int main(void) {
             assert(!registers.semantic_publication_allowed);
         }
     }
+    {
+        const char *negative_trace =
+            getenv("THERON_REAL_NEGATIVE_SPAWN_REGISTER_TRACE");
+        if (negative_trace && negative_trace[0]) {
+            Theron_V1SpawnRegisterTraceReceipt registers;
+            /* A real C96B-only/autoload run is useful negative evidence.  It
+             * must remain parseable as an execution window while proving
+             * that the missing CC4C/regular-spawn edge cannot publish game
+             * semantics. */
+            assert(!theron_v1_mednafen_spawn_register_trace_parse_file(
+                negative_trace, &registers));
+            assert(!theron_v1_mednafen_spawn_register_trace_parse_execution_window_file(
+                negative_trace, &registers));
+            assert(registers.status == THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED);
+            assert(registers.sample_count > 0u);
+            assert(registers.c96b_window_seen);
+            assert(!registers.cc4c_window_seen);
+            assert(registers.spawn_entry_b0e5_address_hits > 0u);
+            assert(registers.spawn_entry_b0e5_invalid_category_samples ==
+                   registers.spawn_entry_b0e5_address_hits);
+            assert(!registers.spawn_entry_b0e5_seen);
+            assert(!registers.semantic_publication_allowed);
+        }
+    }
     write_register_fixture(path, 1, 1, 1u);
     {
         Theron_V1SpawnRegisterTraceReceipt registers;

@@ -20,6 +20,13 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 - ✅ Testet verifierar den råa returgränsen utan att göra A-värdet till en
   host-RNG eller publicera spawn-/combatsemantik.
 
+## 2026-08-12 — C96B-only combat-capture får explicit negativ regression
+
+- ✅ Spawntrace-testet kan nu ta emot en autentiserad C96B-only/autoload-trace
+  via `THERON_REAL_NEGATIVE_SPAWN_REGISTER_TRACE` och kräver att den förblir
+  avvisad utan `$CC4C`, giltig `$B0E5`-kategori och semantic publication.
+- 🔒 Capturen öppnar därför inte RNG, AI, combat, generatorer, T700 eller T900.
+
 ## 2026-08-12 — parity-matrisens överclaim korrigerad
 
 - ✅ Combat- och champion-systemets status skiljer nu autentiserade numeric

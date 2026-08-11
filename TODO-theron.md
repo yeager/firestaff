@@ -18,6 +18,15 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 - 🔒 Fältet är endast provenance. Det öppnar inte RNG-return, spawnstats eller
   AI utan en source-bound caller och samma-session target-consumer.
 
+## 2026-08-12 — C96B-only combat-capture registreras som negativt testfall
+
+- ✅ Den autentiserade externa combat-capturen kan nu köras som ett explicit
+  negativt parserfall: `$C96B`-läsningar och `$B0E5`-adressöverlagringar
+  bevaras, medan avsaknad av `$CC4C` och giltig kategori fortsätter att
+  avvisa runtime-semantic publication.
+- 🔒 Detta är captureklassificering, inte återvunnen RNG, AI, combat, T700,
+  generator eller T900-semantik.
+
 ## 2026-08-12 — JP-porträtt och originalmekanik är fortfarande öppna
 
 - 🔒 JP Track 02-rosterposterna är autentiserade, men ingen source-bound
