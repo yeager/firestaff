@@ -474,6 +474,10 @@ typedef enum {
     CSB_V1_VARIANT_AMIGA31_EN         = 11,  /* Amiga 3.1 English       MEDIA37 A31E */
     /* ReDMCSB COMPILE.H:246-269: A31M's APPB is C08_LANG and KAOS is C03_GAME. */
     CSB_V1_VARIANT_AMIGA31_MULTI      = 12,  /* Amiga 3.1 EN/FR/DE      MEDIA38 A31M */
+    /* The HDM reader admits this only as a structural X68000 source route.
+     * Its DMCSB2 graphics bytes deliberately have no standalone hash entry:
+     * the same byte layout must never select this platform from an Amiga file. */
+    CSB_V1_VARIANT_X68000_JP           = 13,  /* X68000 3.1 Japanese HDM */
     CSB_V1_VARIANT_COUNT
 } CSB_V1_VariantId;
 

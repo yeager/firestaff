@@ -344,6 +344,14 @@ static void test_amiga31_media_registry(void)
     CHECK(csb_v1_runtime_variant_from_hint("amiga31_multi") ==
               CSB_V1_VARIANT_AMIGA31_MULTI,
           "Amiga 3.1 multilanguage launcher hint selects the A31M runtime profile");
+    {
+        const CSB_V1_VariantInfo *x68000 =
+            csb_v1_runtime_get_variant_info(CSB_V1_VARIANT_X68000_JP);
+        CHECK(x68000 && strcmp(x68000->name, "X68000 Japanese 3.1") == 0 &&
+              strcmp(x68000->media_ref, "X68000:Human68k HDM") == 0 &&
+              x68000->md5_gfx[0] == '\0' && x68000->md5_dungeon[0] == '\0',
+              "X68000 is explicit but cannot be selected from a shared graphics hash");
+    }
 }
 
 /* The launcher materializes the selected Atari ST package before M11 opens
