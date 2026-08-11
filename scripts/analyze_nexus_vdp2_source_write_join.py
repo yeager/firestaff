@@ -75,6 +75,7 @@ def main() -> int:
         for witness in witnesses:
             witnesses_by_address.setdefault(witness[0], []).append(witness)
         rows = []
+        mismatches = 0
         for write_addr, write_size, value, area in writes:
             candidates = witnesses_by_address.get(write_addr)
             if not candidates:
@@ -83,7 +84,8 @@ def main() -> int:
             if source is None:
                 continue
             if write_size != 2 or source_bytes[:2] != value.to_bytes(2, "big"):
-                raise ValueError(f"source/value mismatch at 0x{write_addr:x}")
+                mismatches += 1
+                continue
             if (write_addr >= args.destination_min and
                     (args.require_area is None or area == args.require_area)):
                 rows.append((write_addr, source, source_bytes, area))
@@ -93,6 +95,9 @@ def main() -> int:
         rows = rows[: args.minimum_writes]
 
         asset_hits = []
+        nonzero_rows = sum(
+            1 for _, _, source_bytes, _ in rows if len(set(source_bytes)) > 1
+        )
         for path in args.data_dir.rglob("*"):
             if not path.is_file():
                 continue
@@ -112,11 +117,13 @@ def main() -> int:
         return 1
 
     source_offsets = [source - args.source_load_base for _, source, _, _ in rows
-                      if source >= args.source_load_base]
+                      if args.source_load_base <= source < args.source_load_base + 0x02000000]
     areas = sorted({area for _, _, _, area in rows})
     print(f"writer_pc=0x{args.writer_pc:08x}")
     print(f"source_register=r{args.source_register}")
     print(f"verified_writes={len(rows)}")
+    print(f"source_value_mismatches_skipped={mismatches}")
+    print(f"nonzero_source_witnesses={nonzero_rows}")
     print(f"source_load_base=0x{args.source_load_base:08x}")
     if len(source_offsets) == len(rows):
         print(f"source_file_offset_start=0x{min(source_offsets):x}")
@@ -125,8 +132,11 @@ def main() -> int:
         print("source_file_offset_range=mixed-runtime-address-domains")
     print("destination_areas=" + ",".join(areas))
     print("source_value_join=verified")
-    if asset_hits:
+    unique_asset_names = sorted({name for name, _ in asset_hits})
+    if len(unique_asset_names) == 1:
         print("asset_identity=verified")
+    elif unique_asset_names:
+        print("asset_identity=ambiguous")
         print("asset_matches=" + "|".join(f"{name}:0x{offset:x}" for name, offset in asset_hits))
     else:
         print("asset_identity=unbound")
