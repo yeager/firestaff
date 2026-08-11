@@ -13449,3 +13449,14 @@ and production source-combat tests.
   palettmatchning och 179 har minst en kanonisk Structure3-face-owner.
 - ✅ De fyra oägda offseten (`0x0d760`, `0x0ce40`, `0x0cf40`, `0x0dc60`) lämnas
   uttryckligen oklassificerade; `semantic_admission=blocked` förblir ett krav.
+
+# Nexus: replay authenticated gameplay capture through C compositor (2026-08-11)
+
+- ✅ `test_nexus_v1_vdp1_capture_compositor` accepterar nu två separata,
+  exakt räknade witness-fönster: den tidigare 900-frame-capturen och den
+  autentiserade 800-frame gameplay-capturen.
+- ✅ Den nya capturen passerar Firestaffs riktiga VDP1-sekvensreplay med
+  `212` draws, `194` DGN-materialjoins, `1` oägd non-mode-1-draw, `17` oägda
+  mode-1-draws och `7` icke-draw-kommandon.
+- 🔒 Oägda kommandon hålls capture-only; de öppnar inte HUD-, meny- eller
+  semantisk viewport-rendering.

@@ -129,6 +129,7 @@ static int run_external_dgn_mode1_capture(void)
     Nexus_V1_SaturnRuntimeCaptureFrameReceipt frame;
     Nexus_V1_Vdp1CaptureVramSequenceReceipt replay;
     unsigned int frame_index;
+    int known_capture_window;
     int ok;
 
     if (!capture_path || !*capture_path || !dgn_path || !*dgn_path ||
@@ -166,20 +167,35 @@ static int run_external_dgn_mode1_capture(void)
     nexus_fb_clear(&framebuffer);
     memset(&frame, 0, sizeof(frame));
     memset(&replay, 0, sizeof(replay));
+    /* These are two independently authenticated witness windows: the
+     * original 900-frame receipt and the later 800-frame gameplay receipt.
+     * Unowned commands stay capture-only in both windows. */
     ok = nexus_v1_vdp1_capture_replay_runtime_frame_mode1_sequence(
         &framebuffer, capture, (size_t)capture_size, frame_index,
         nexus_v1_vdp1_dgn_material_resolver, &resolver, &frame, &replay) &&
         frame.valid && replay.valid && replay.command_sequence.valid &&
-        replay.draw_commands_seen == 235 &&
-        replay.draw_commands_resolved == 218 &&
-        replay.unowned_non_mode1_draw_commands == 1 &&
-        replay.unowned_mode1_draw_commands == 16 &&
-        replay.skipped_non_draw_commands == 7 &&
-        replay.replay.valid && replay.replay.source_joins_verified == 218 &&
-        replay.replay.palette_joins_verified == 218 &&
+        ((replay.draw_commands_seen == 235 &&
+          replay.draw_commands_resolved == 218 &&
+          replay.unowned_non_mode1_draw_commands == 1 &&
+          replay.unowned_mode1_draw_commands == 16 &&
+          replay.skipped_non_draw_commands == 7) ||
+         (replay.draw_commands_seen == 212 &&
+          replay.draw_commands_resolved == 194 &&
+          replay.unowned_non_mode1_draw_commands == 1 &&
+          replay.unowned_mode1_draw_commands == 17 &&
+          replay.skipped_non_draw_commands == 7)) &&
+        replay.replay.valid &&
+        ((replay.replay.source_joins_verified == 218 &&
+          replay.replay.palette_joins_verified == 218) ||
+         (replay.replay.source_joins_verified == 194 &&
+          replay.replay.palette_joins_verified == 194)) &&
         !replay.system_clip_state_missing &&
         replay.system_clip_state_verified && replay.system_clip_x == 319 &&
         replay.system_clip_y == 223 && replay.replay.renderer_permitted;
+    known_capture_window =
+        (replay.draw_commands_seen == 235 && replay.draw_commands_resolved == 218) ||
+        (replay.draw_commands_seen == 212 && replay.draw_commands_resolved == 194);
+    if (ok && !known_capture_window) ok = 0;
     free(capture);
     free(dgn);
     return ok;
