@@ -38,6 +38,7 @@
 #include "dm2_v1_sound.h"
 #include "dm2_v1_music_map.h"
 #include "dm2_v1_cdda_cd_dat.h"
+#include "dm2_v1_mac_media.h"
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_startup_presentation.h"
 #include "dm2_v1_viewport_renderer.h"
@@ -60,6 +61,60 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
                                               int *out_category,
                                               int *out_index,
                                               int *out_field);
+static void dm2_md5_bytes_hex(const uint8_t *bytes, size_t size,
+                              char out_hex[33]);
+
+static int dm2_v1_boot_load_mac_zip(DM2_V1_BootProfile *profile,
+                                    const char *base) {
+    static const char *names[] = {
+        "Dungeon-Master-II-Skullkeep_Mac_EN (1).zip",
+        "Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+    };
+    char candidates[5][512];
+    size_t i;
+    if (!profile || !base) return 0;
+    if (strstr(base, ".zip") != NULL && FSP_FileExists(base)) {
+        snprintf(candidates[0], sizeof(candidates[0]), "%s", base);
+        i = 1;
+    } else {
+        i = 0;
+        for (size_t n = 0; n < sizeof(names) / sizeof(names[0]); ++n) {
+            snprintf(candidates[i++], sizeof(candidates[0]), "%s/%s", base, names[n]);
+            snprintf(candidates[i++], sizeof(candidates[0]), "%s/dm2/%s", base, names[n]);
+        }
+    }
+    for (size_t c = 0; c < i; ++c) {
+        DM2_V1_MacMedia media;
+        if (!FSP_FileExists(candidates[c]) ||
+            dm2_v1_mac_media_read_zip(candidates[c], &media) != 0) continue;
+        profile->graphics_mem = media.graphics;
+        profile->graphics_mem_size = media.graphics_size;
+        profile->dungeon_mem = media.dungeon;
+        profile->dungeon_mem_size = media.dungeon_size;
+        media.graphics = NULL; media.dungeon = NULL;
+        if (media.music_map && media.music_map_size <= sizeof(profile->music_map_data)) {
+            memcpy(profile->music_map_data, media.music_map, media.music_map_size);
+            profile->music_map_size = media.music_map_size;
+            profile->music_map_verified = media.music_map_size == sizeof(profile->music_map_data);
+            snprintf(profile->music_map_path, sizeof(profile->music_map_path),
+                     "%s::HFS/DMFiles/md.dat", candidates[c]);
+        }
+        dm2_v1_mac_media_free(&media);
+        profile->graphics_size = profile->graphics_mem_size;
+        profile->dungeon_size = profile->dungeon_mem_size;
+        dm2_md5_bytes_hex(profile->graphics_mem, profile->graphics_mem_size,
+                          profile->graphics_md5);
+        dm2_md5_bytes_hex(profile->dungeon_mem, profile->dungeon_mem_size,
+                          profile->dungeon_md5);
+        snprintf(profile->graphics_path, sizeof(profile->graphics_path),
+                 "%s::HFS/DMFiles/Graphics.dat", candidates[c]);
+        snprintf(profile->dungeon_path, sizeof(profile->dungeon_path),
+                 "%s::HFS/DMFiles/Dungeon.dat", candidates[c]);
+        snprintf(profile->asset_root, sizeof(profile->asset_root), "%s", candidates[c]);
+        return 1;
+    }
+    return 0;
+}
 
 static uint16_t dm2_v1_boot_read_le16(const uint8_t *data)
 {
@@ -3373,6 +3428,12 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
         }
     }
 
+    /* A selected Macintosh ZIP also has a CUE sheet.  Probe its HFS owner
+     * before the generic disc-image route, otherwise the MODE1 track can be
+     * mistaken for FM Towns merely because the container carries a cue. */
+    if (!profile->graphics_path[0] || !profile->dungeon_path[0]) {
+        (void)dm2_v1_boot_load_mac_zip(profile, base);
+    }
     /* If no loose files found, try FM Towns disc image in ZIP */
     if (!profile->graphics_path[0] || !profile->dungeon_path[0]) {
         dm2_v1_boot_load_fmtowns_disc_from_zip(profile, base);

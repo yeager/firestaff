@@ -419,13 +419,20 @@ clipping is still unproven. Remaining weather work is to bind real original
 DM2 Macintosh is a separate 68k platform family, not a DOS or FM Towns
 asset variant. The local corpus contains authentic English and Japanese Mac
 archives, a French StuffIt image, and Mac-specific `GRAPHICS.DAT` fingerprints.
-Existing bounded Mac coverage includes big-endian dungeon loading, French
-asset loading, and Mac music-file classification; this does not constitute a
-playable Macintosh runtime.
+The large English retail ZIP is now admitted and read without extracting game
+files: Firestaff reads the raw MODE1/2352 BIN, Apple Partition Map, HFS
+catalogue and the big-endian `DMFiles` forks directly into RAM. The smaller
+English "The First Chapter" ZIP is a different installer: its MacBinary data
+fork contains a StuffIt/TTComp payload and remains a separate open gate.
 
-- [ ] Admit each authentic Mac edition independently: US English 1.0,
-  Japanese 1.0, and the US English demo. Keep demo media and retail media
-  separate; do not reuse the DOS or FM Towns boot profile.
+- [x] Admit the authentic large US English retail ZIP independently as
+  `mac-en-retail`; keep its HFS container as the runtime owner and never
+  extract its game files to the staging directory.
+- [ ] Admit the smaller US English "The First Chapter" demo independently.
+  Its source-owned StuffIt/TTComp reader is still required; never promote its
+  compressed payload or a retail hash to the other edition.
+- [ ] Admit the authentic Japanese 1.0 and French StuffIt editions
+  independently once their container/resource-fork readers are verified.
 - [ ] Add a source-owned Mac container/resource-fork reader for the verified
   CD/content archives, including StuffIt/HQX/resource-fork provenance. The
   reader must preserve the original file/resource identity and fail closed on

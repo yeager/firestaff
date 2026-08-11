@@ -363,6 +363,7 @@ static const M12_VersionSpec g_dm2Versions[] = {
     {"dm2", "pc-jewel", "PC German/English JewelCase", "PC JewelCase", g_dm2GraphicsNames, "e52ab5e01715042b16a4dcff02052e5d", M12_ARCH_PC},
     {"dm2", "pc98-ja-demo", "PC-9801 Japanese Demo", "PC-98 Demo", g_dm2GraphicsNames, "a0277195099b2ace51d4e085f7eef835", M12_ARCH_PC98},
     {"dm2", "amiga-en", "Amiga AGA English", "Amiga EN", g_dm2GraphicsNames, "1c940ea95703eaea0ecdf84d17e954b9", M12_ARCH_AMIGA},
+    {"dm2", "mac-en-retail", "Macintosh English retail", "Mac EN retail", g_dm2GraphicsNames, "5cab25f6b975957eae4a203174e7f2a6", M12_ARCH_MAC},
     /* DM2 boot profile / DMWeb-authenticated PC-9821 pair.  This is a
      * retail Japanese variant, not the separate PC-9801 demo above.
      * dm2_v1_boot.c admits GRAPHICS a80c555a... only with DUNGEON
@@ -1159,6 +1160,56 @@ static int m12_admit_dm2_amiga_archive(M12_AssetStatus* status,
                 m12_copy_string(status->runtimeDataDirs[gameIndex],
                                 sizeof(status->runtimeDataDirs[gameIndex]),
                                 candidates[candidateIndex]);
+                dm2_v1_boot_cleanup(&profile);
+                return 1;
+            }
+            dm2_v1_boot_cleanup(&profile);
+        }
+    }
+    return 0;
+}
+
+/* Macintosh retail is an HFS filesystem inside a raw MODE1/2352 BIN.  The
+ * DM2 boot owner reads that container in RAM; M12 only publishes the same
+ * outer ZIP as the selected runtime owner. */
+static int m12_admit_dm2_mac_archive(M12_AssetStatus* status,
+                                      int gameIndex,
+                                      const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+                                      size_t rootCount,
+                                      const char* preferredArchive) {
+    static const char *names[] = {
+        "Dungeon-Master-II-Skullkeep_Mac_EN (1).zip",
+        "Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+    };
+    size_t r, n, vi;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "dm2") != 0) return 0;
+    for (r = 0; r < (rootCount ? rootCount : 1u); ++r) {
+        char candidate[M12_ASSET_DATA_DIR_CAPACITY];
+        for (n = 0; n < sizeof(names) / sizeof(names[0]); ++n) {
+            if (preferredArchive && preferredArchive[0] &&
+                strstr(preferredArchive, names[n]) != NULL) {
+                snprintf(candidate, sizeof(candidate), "%s", preferredArchive);
+            } else {
+                if (r >= rootCount) continue;
+                snprintf(candidate, sizeof(candidate), "%s/%s", roots[r], names[n]);
+            }
+            if (!FSP_FileExists(candidate)) continue;
+            DM2_V1_BootProfile profile;
+            dm2_v1_boot_profile_init(&profile);
+            if (dm2_v1_boot_scan_assets(&profile, candidate) == 0 &&
+                profile.assets_verified && profile.platform == DM2_PLATFORM_MAC_EN) {
+                for (vi = 0; vi < g_games[gameIndex].versionCount; ++vi) {
+                    M12_AssetVersionStatus *v = &status->versions[gameIndex][vi];
+                    if (strcmp(v->versionId, "mac-en-retail") != 0) continue;
+                    v->matched = 1;
+                    snprintf(v->matchedPath, sizeof(v->matchedPath),
+                             "%s::HFS/DMFiles/Graphics.dat", candidate);
+                    snprintf(v->matchedMd5, sizeof(v->matchedMd5), "%s",
+                             profile.graphics_md5);
+                    m12_copy_string(status->runtimeDataDirs[gameIndex],
+                                    sizeof(status->runtimeDataDirs[gameIndex]), candidate);
+                }
                 dm2_v1_boot_cleanup(&profile);
                 return 1;
             }
@@ -5816,6 +5867,8 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
             (void)m12_admit_dm2_amiga_archive(status, i, roots, rootCount,
                                               requestedDataDir);
+            (void)m12_admit_dm2_mac_archive(status, i, roots, rootCount,
+                                             requestedDataDir);
 #endif
         } else if (strcmp(g_games[i].gameId, "csb") == 0) {
             /* m12_fill_game_versions retains the verified FM Towns rows.
@@ -6113,6 +6166,8 @@ void M12_AssetStatus_ScanGameWithOptions(
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
             (void)m12_admit_dm2_amiga_archive(status, gameIndex,
                                               roots, rootCount, requestedDataDir);
+            (void)m12_admit_dm2_mac_archive(status, gameIndex, roots, rootCount,
+                                             requestedDataDir);
 #endif
         }
     }
@@ -6671,6 +6726,7 @@ const char* M12_Architecture_Label(int architecture) {
     case M12_ARCH_AMIGA:     return "Amiga";
     case M12_ARCH_ATARI_ST:  return "Atari ST";
     case M12_ARCH_FM_TOWNS:  return "FM Towns";
+    case M12_ARCH_MAC:       return "Macintosh";
     case M12_ARCH_X68000:    return "X68000 (unsupported)";
     case M12_ARCH_PC98:      return "PC-9801 (unsupported)";
     case M12_ARCH_PCE:       return "PC Engine";
@@ -6687,6 +6743,7 @@ const char* M12_Architecture_ShortLabel(int architecture) {
     case M12_ARCH_AMIGA:     return "Amiga";
     case M12_ARCH_ATARI_ST:  return "ST";
     case M12_ARCH_FM_TOWNS:  return "FMT";
+    case M12_ARCH_MAC:       return "Mac";
     case M12_ARCH_X68000:    return "X68k off";
     case M12_ARCH_PC98:      return "PC-98 off";
     case M12_ARCH_PCE:       return "PCE";
@@ -6720,7 +6777,7 @@ int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
     size_t i;
     static const int pcFirstAutoPriority[] = {
         /* DM1 and DM2 have a verified PC primary route. */
-        M12_ARCH_PC, M12_ARCH_AMIGA, M12_ARCH_ATARI_ST, M12_ARCH_FM_TOWNS,
+        M12_ARCH_PC, M12_ARCH_MAC, M12_ARCH_AMIGA, M12_ARCH_ATARI_ST, M12_ARCH_FM_TOWNS,
         M12_ARCH_PCE, M12_ARCH_SATURN, M12_ARCH_APPLE_IIGS
     };
     static const int csbAutoPriority[] = {

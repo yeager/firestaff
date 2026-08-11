@@ -254,6 +254,7 @@ typedef enum {
     M12_ARCH_AMIGA,
     M12_ARCH_ATARI_ST,
     M12_ARCH_FM_TOWNS,
+    M12_ARCH_MAC,
     M12_ARCH_X68000,
     M12_ARCH_PC98,
     M12_ARCH_PCE,

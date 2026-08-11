@@ -40,10 +40,15 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
 - Macintosh is a separate 68k release family with its own big-endian data,
   resource-fork/container and menu/audio conventions. It is not a DOS or FM
   Towns data alias.
-- Firestaff admits the authentic Mac archives for inspection and keeps Mac
-  support on its own platform path. A playable Mac runtime still requires the
-  source-owned resource-fork, movie, menu/input, audio and save/load gates in
-  `TODO-dm2.md`.
+- Firestaff admits the authentic large US English retail ZIP as
+  `mac-en-retail`. Its raw MODE1/2352 BIN is read in memory through the Apple
+  Partition Map and HFS catalogue; `DMFiles/Dungeon.dat`, `Graphics.dat`, and
+  `md.dat` remain owned by the original ZIP and are never unpacked to the
+  game-data directory.
+- The smaller English "The First Chapter" ZIP is not the retail disc. It is a
+  MacBinary StuffIt/TTComp installer and is intentionally not reported as
+  playable until a source-owned reader verifies it. Japanese and French Mac
+  containers remain preservation inputs, not launchable variants.
 
 X68000 is not part of the DM2 support matrix.
 

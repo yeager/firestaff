@@ -1,0 +1,26 @@
+#include "dm2_v1_boot.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+int main(void) {
+    const char *zip = getenv("FIRESTAFF_DM2_MAC_EN_ZIP");
+    DM2_V1_BootProfile p;
+    if (!zip || !zip[0]) { puts("SKIP: FIRESTAFF_DM2_MAC_EN_ZIP is not set"); return 0; }
+    dm2_v1_boot_profile_init(&p);
+    if (dm2_v1_boot_scan_assets(&p, zip) != 0 || !p.assets_verified ||
+        p.platform != DM2_PLATFORM_MAC_EN || strcmp(p.version_id, "mac-en") != 0 ||
+        p.graphics_mem_size != 8157169u || p.dungeon_mem_size != 39411u ||
+        !p.music_map_verified || p.music_map_size != 176u ||
+        dm2_v1_boot_enter_game(&p) != 0) {
+        fprintf(stderr, "DM2 Mac boot failed: platform=%d version=%s verified=%d g=%zu d=%zu\n",
+                p.platform, p.version_id, p.assets_verified,
+                p.graphics_mem_size, p.dungeon_mem_size);
+        fprintf(stderr, "hashes: %s %s\\n", p.graphics_md5, p.dungeon_md5);
+        dm2_v1_boot_cleanup(&p);
+        return 1;
+    }
+    dm2_v1_boot_cleanup(&p);
+    puts("PASS: DM2 Macintosh retail boots from the original ZIP in RAM");
+    return 0;
+}

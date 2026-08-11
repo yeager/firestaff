@@ -11385,6 +11385,17 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_fire_blit_rows.c"
         COMMAND test_dm2_v1_fire_blit_rows)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_media_real.c")
+    add_executable(test_dm2_v1_mac_media_real
+        tests/test_dm2_v1_mac_media_real.c
+        src/dm2/dm2_v1_mac_media.c)
+    target_include_directories(test_dm2_v1_mac_media_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_mac_media_real PRIVATE
+        firestaff_zip_extract firestaff_zlib)
+    add_test(NAME dm2_v1_mac_media_real COMMAND test_dm2_v1_mac_media_real)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_move_2fcf_0434.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_move_2fcf_0434.c")
     add_executable(test_dm2_v1_move_2fcf_0434
@@ -57017,6 +57028,15 @@ if(NOT MSVC)
     target_compile_options(test_dm2_v1_amiga_boot_real_media PRIVATE -Wall -Wextra -Werror -O2)
 endif()
 add_test(NAME test_dm2_v1_amiga_boot_real_media COMMAND test_dm2_v1_amiga_boot_real_media)
+
+add_executable(test_dm2_v1_mac_boot_real_media
+    tests/test_dm2_v1_mac_boot_real_media.c)
+target_include_directories(test_dm2_v1_mac_boot_real_media PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm2_v1_mac_boot_real_media PRIVATE firestaff_dm2)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_mac_boot_real_media PRIVATE -Wall -Wextra -Werror -O2)
+endif()
+add_test(NAME test_dm2_v1_mac_boot_real_media COMMAND test_dm2_v1_mac_boot_real_media)
 
 add_executable(test_dm2_v1_fmtowns_disc
     tests/test_dm2_v1_fmtowns_disc.c
