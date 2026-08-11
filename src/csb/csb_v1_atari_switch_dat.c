@@ -23,6 +23,27 @@ static int has_span(size_t byte_count, size_t offset, size_t length)
     return offset <= byte_count && length <= byte_count - offset;
 }
 
+static int emit_color(uint8_t *pixels, size_t total, size_t *position,
+                      uint8_t color, size_t count)
+{
+    if (!pixels || !position || count > total - *position) return 0;
+    memset(pixels + *position, color, count);
+    *position += count;
+    return 1;
+}
+
+static int emit_previous_row(uint8_t *pixels, size_t total, size_t row_stride,
+                             size_t *position, size_t count)
+{
+    size_t index;
+    if (!pixels || !position || *position < row_stride ||
+        count > total - *position) return 0;
+    for (index = 0u; index < count; ++index)
+        pixels[*position + index] = pixels[*position + index - row_stride];
+    *position += count;
+    return 1;
+}
+
 static uint16_t header_checksum(const uint8_t *header, const uint8_t *segments,
                                 size_t segment_bytes)
 {
@@ -134,5 +155,91 @@ int csb_v1_atari_switch_dat_parse(const uint8_t *bytes, size_t byte_count,
         }
     }
     out->valid = 1;
+    return 1;
+}
+
+int csb_v1_atari_switch_graphic_decode_indexed(
+    const uint8_t *graphic, size_t graphic_byte_count,
+    uint8_t *indexed_pixels, size_t pixel_capacity,
+    CSB_V1_AtariSwitchGraphicReceipt *out)
+{
+    CSB_V1_AtariSwitchGraphicReceipt receipt;
+    uint16_t width;
+    uint16_t height;
+    size_t row_stride;
+    size_t total;
+    size_t source = 4u;
+    size_t position = 0u;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (out) *out = receipt;
+    if (!graphic || !indexed_pixels || graphic_byte_count < 5u) return 0;
+    width = read_be16(graphic);
+    height = read_be16(graphic + 2u);
+    if (width == 0u || height == 0u) return 0;
+    row_stride = ((size_t)width + 15u) & ~(size_t)15u;
+    if (row_stride == 0u || row_stride > SIZE_MAX / (size_t)height) return 0;
+    total = row_stride * (size_t)height;
+    if (total > pixel_capacity) return 0;
+    memset(indexed_pixels, 0, total);
+
+    while (position < total) {
+        uint8_t command;
+        uint8_t color;
+        size_t count;
+        size_t index;
+
+        if (source >= graphic_byte_count) return 0;
+        command = graphic[source++];
+        color = command & 0x0fu;
+        if ((command & 0x80u) == 0u) {
+            count = (size_t)(command >> 4u) + 1u;
+            if (!emit_color(indexed_pixels, total, &position, color, count))
+                return 0;
+            continue;
+        }
+        if (source >= graphic_byte_count) return 0;
+        count = graphic[source++];
+        if ((command & 0x40u) != 0u) {
+            if (source >= graphic_byte_count) return 0;
+            count = (count << 8u) | graphic[source++];
+        }
+        count++;
+        switch (command & 0x30u) {
+        case 0x00u:
+        case 0x20u:
+            if (!emit_color(indexed_pixels, total, &position, color, count))
+                return 0;
+            break;
+        case 0x10u:
+            if (count > total - position) return 0;
+            if ((count & 1u) != 0u) {
+                indexed_pixels[position++] = color;
+                count--;
+            }
+            if (count / 2u > graphic_byte_count - source) return 0;
+            for (index = 0u; index < count / 2u; ++index) {
+                uint8_t packed = graphic[source++];
+                indexed_pixels[position++] = packed >> 4u;
+                indexed_pixels[position++] = packed & 0x0fu;
+            }
+            break;
+        case 0x30u:
+            if (!emit_previous_row(indexed_pixels, total, row_stride,
+                                   &position, count) ||
+                !emit_color(indexed_pixels, total, &position, color, 1u))
+                return 0;
+            break;
+        default:
+            return 0;
+        }
+    }
+    receipt.valid = 1;
+    receipt.visible_width = width;
+    receipt.height = height;
+    receipt.row_stride = row_stride;
+    receipt.pixel_count = total;
+    receipt.source_bytes_consumed = source;
+    if (out) *out = receipt;
     return 1;
 }

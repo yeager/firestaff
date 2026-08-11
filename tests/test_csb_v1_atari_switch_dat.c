@@ -105,6 +105,41 @@ static size_t make_switch_dat(uint8_t *bytes, size_t capacity)
     return total;
 }
 
+static void test_graphic_expansion(void)
+{
+    static const uint8_t literal[] = {
+        0u, 5u, 0u, 1u, 0x90u, 4u, 0x12u, 0x34u, 0xa0u, 10u
+    };
+    static const uint8_t copied_rows[] = {
+        0u, 17u, 0u, 2u, 0x81u, 15u, 0x82u, 15u,
+        0xb0u, 15u, 0x83u, 14u
+    };
+    uint8_t pixels[64];
+    CSB_V1_AtariSwitchGraphicReceipt receipt;
+
+    CHECK(csb_v1_atari_switch_graphic_decode_indexed(
+              literal, sizeof(literal), pixels, sizeof(pixels), &receipt) &&
+              receipt.valid && receipt.visible_width == 5u &&
+              receipt.height == 1u && receipt.row_stride == 16u &&
+              receipt.pixel_count == 16u && receipt.source_bytes_consumed == sizeof(literal) &&
+              pixels[0] == 0u && pixels[1] == 1u && pixels[2] == 2u &&
+              pixels[3] == 3u && pixels[4] == 4u && pixels[15] == 0u,
+          "expands F0466 literal colors, extended fills, and source-owned row padding");
+    CHECK(csb_v1_atari_switch_graphic_decode_indexed(
+              copied_rows, sizeof(copied_rows), pixels, sizeof(pixels), &receipt) &&
+              receipt.row_stride == 32u && pixels[0] == 1u && pixels[15] == 1u &&
+              pixels[16] == 2u && pixels[31] == 2u && pixels[32] == 1u &&
+              pixels[47] == 1u && pixels[48] == 0u && pixels[49] == 3u &&
+              pixels[63] == 3u,
+          "expands F0466 previous-row commands across padded Atari rows");
+    CHECK(!csb_v1_atari_switch_graphic_decode_indexed(
+               literal, sizeof(literal) - 1u, pixels, sizeof(pixels), &receipt),
+          "rejects a truncated F0466 literal stream");
+    CHECK(!csb_v1_atari_switch_graphic_decode_indexed(
+               copied_rows, sizeof(copied_rows), pixels, 63u, &receipt),
+          "rejects a destination that cannot hold original padded rows");
+}
+
 int main(int argc, char **argv)
 {
     uint8_t bytes[256];
@@ -132,6 +167,34 @@ int main(int argc, char **argv)
                   "retains an original source-owned switch background");
             CHECK(receipt.has_palette,
                   "binds the optional source-owned switch palette when present");
+            {
+                size_t index;
+                size_t decoded = 0u;
+                for (index = 0u; index < receipt.option_count; ++index) {
+                    const CSB_V1_AtariSwitchOption *option = &receipt.options[index];
+                    CSB_V1_AtariSwitchGraphicReceipt graphic_receipt;
+                    uint8_t *pixels;
+                    size_t stride;
+                    size_t pixel_count;
+                    if (!option->enabled) continue;
+                    stride = ((size_t)option->pixel_width + 15u) & ~(size_t)15u;
+                    pixel_count = stride * (size_t)option->pixel_height;
+                    pixels = (uint8_t *)malloc(pixel_count);
+                    CHECK(pixels != NULL && csb_v1_atari_switch_graphic_decode_indexed(
+                              real_bytes + option->graphic_offset,
+                              option->graphic_byte_count, pixels, pixel_count,
+                              &graphic_receipt) && graphic_receipt.valid &&
+                              graphic_receipt.visible_width == option->pixel_width &&
+                              graphic_receipt.height == option->pixel_height &&
+                              graphic_receipt.row_stride == stride &&
+                              graphic_receipt.source_bytes_consumed <= option->graphic_byte_count,
+                          "expands one original Atari ST switch graphic without replacement pixels");
+                    free(pixels);
+                    ++decoded;
+                }
+                CHECK(decoded > 0u,
+                      "verifies every enabled original switch graphic span");
+            }
             free(real_bytes);
         }
         printf("csb_v1_atari_switch_dat real: %d/%d assertions passed\n",
@@ -140,6 +203,7 @@ int main(int argc, char **argv)
     }
 
     CHECK(byte_count != 0u, "builds a bounded FTL fixture");
+    test_graphic_expansion();
     CHECK(csb_v1_atari_switch_dat_parse(bytes, byte_count, &receipt),
           "accepts a checksummed Atari ST SWITCH.DAT layout");
     CHECK(receipt.valid && receipt.header_segment_count == 3u &&
