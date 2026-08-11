@@ -462,6 +462,10 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
   timing, and playback ownership remain open. A bounded format-1 `snd ` parser
   now enumerates the authentic 2/19/12 resource sets and exposes the exact
   sample range, rate, loop fields, and resource ID without copying the bytes.
+  The exact signed 8-bit sample range from `General.sounds` resource 10001 is
+  now hash-checked and transported through the existing SDL host mixer at its
+  source rate; full Mac resource selection, timing, and MIDI/music scheduling
+  remain open.
   Bind the Japanese
   CD-audio route separately. DOS HMP, FM Towns CD.DAT, and Amiga MOD paths are
   not fallbacks.

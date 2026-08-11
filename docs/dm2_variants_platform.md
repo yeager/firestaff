@@ -76,8 +76,10 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   `Music` (662,956 bytes), `General.sounds` (134,562), and `Weapon.sounds`
   (50,651). These are source-bound Mac resources, not DOS HMP substitutes;
   a bounded format-1 `snd ` parser now validates their authentic resource
-  counts and sample headers in place; SDL playback and MIDI scheduling remain
-  a separate runtime owner.
+  counts and sample headers in place. The exact signed 8-bit sample range from
+  resource 10001 is hash-checked and transported through the SDL host mixer at
+  its source rate; complete Mac resource selection, timing, and MIDI/music
+  scheduling remain separate runtime work.
 
 X68000 is not part of the DM2 support matrix.
 

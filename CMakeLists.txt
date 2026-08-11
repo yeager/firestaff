@@ -11425,6 +11425,22 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_sound_real.c")
     add_test(NAME dm2_v1_mac_sound_real COMMAND test_dm2_v1_mac_sound_real)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_sound_audio_real.c")
+    add_executable(test_dm2_v1_mac_sound_audio_real
+        tests/test_dm2_v1_mac_sound_audio_real.c
+        src/dm2/dm2_v1_mac_sound.c
+        src/dm2/dm2_v1_mac_media.c)
+    target_include_directories(test_dm2_v1_mac_sound_audio_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_mac_sound_audio_real PRIVATE
+        firestaff_m11 firestaff_zip_extract firestaff_zlib)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_mac_sound_audio_real PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm2_v1_mac_sound_audio_real
+        COMMAND test_dm2_v1_mac_sound_audio_real)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_input.c")
     add_executable(test_dm2_v1_mac_input
         tests/test_dm2_v1_mac_input.c

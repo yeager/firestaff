@@ -79,6 +79,7 @@ typedef struct {
     M11_SoundBuffer csbAmigaRuntimePcm;
     M11_SoundBuffer csbFmtownsAnmPcm;
     M11_SoundBuffer dm2FmtownsTitlePcm;
+    M11_SoundBuffer dm2MacSndPcm;
     int dm1SwshProgramAccepted;
     int dm1SwshRegisterWriteCount;
     int dm1SwshWaitVblankCount;
@@ -116,6 +117,13 @@ typedef struct {
     unsigned int dm2FmtownsTitleSoundHash;
     int dm2FmtownsTitleSoundPlayCount;
     int dm2FmtownsTitleSoundQueuedCount;
+    int dm2MacSndAccepted;
+    int dm2MacSndByteCount;
+    int dm2MacSndRateHz;
+    int dm2MacSndResourceId;
+    unsigned int dm2MacSndHash;
+    int dm2MacSndPlayCount;
+    int dm2MacSndQueuedCount;
 } M11_AudioState;
 
 int M11_Audio_Init(M11_AudioState* state);
@@ -224,6 +232,15 @@ int M11_Audio_PlayDm2FmtownsTitlePcm(M11_AudioState* state,
                                      int sourceBytes,
                                      int sourceRateHz,
                                      unsigned int sourceHash);
+/* Classic Macintosh Sound Manager format-1 `snd ` transport. The caller
+ * passes the exact sampled bytes exposed by dm2_v1_mac_sound; only bounded
+ * signed 8-bit resampling to the host stream is performed. */
+int M11_Audio_PlayDm2MacSndPcm(M11_AudioState* state,
+                               const int8_t* source,
+                               int sourceBytes,
+                               int sourceRateHz,
+                               int resourceId,
+                               unsigned int sourceHash);
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId);
 int M11_Audio_SetTitleMusicEnabled(M11_AudioState* state, int enabled);
 int M11_Audio_TitleMusicEnabled(const M11_AudioState* state);

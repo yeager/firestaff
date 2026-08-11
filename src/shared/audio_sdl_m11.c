@@ -1113,6 +1113,7 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
         m11_sound_free(&state->csbAmigaRuntimePcm);
         m11_sound_free(&state->csbFmtownsAnmPcm);
         m11_sound_free(&state->dm2FmtownsTitlePcm);
+        m11_sound_free(&state->dm2MacSndPcm);
     }
 
     state->initialized = 0;
@@ -1163,6 +1164,13 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     state->dm2FmtownsTitleSoundHash = 0u;
     state->dm2FmtownsTitleSoundPlayCount = 0;
     state->dm2FmtownsTitleSoundQueuedCount = 0;
+    state->dm2MacSndAccepted = 0;
+    state->dm2MacSndByteCount = 0;
+    state->dm2MacSndRateHz = 0;
+    state->dm2MacSndResourceId = -1;
+    state->dm2MacSndHash = 0u;
+    state->dm2MacSndPlayCount = 0;
+    state->dm2MacSndQueuedCount = 0;
 }
 
 int M11_Audio_IsAvailable(const M11_AudioState* state) {
@@ -1825,6 +1833,60 @@ int M11_Audio_PlayDm2FmtownsTitlePcm(M11_AudioState* state,
                               state->dm2FmtownsTitlePcm.sampleCount,
                               state->sfxVolume)) {
         ++state->dm2FmtownsTitleSoundQueuedCount;
+    }
+#endif
+    return 1;
+}
+
+int M11_Audio_PlayDm2MacSndPcm(M11_AudioState* state,
+                               const int8_t* source,
+                               int sourceBytes,
+                               int sourceRateHz,
+                               int resourceId,
+                               unsigned int sourceHash)
+{
+    unsigned int outputCount;
+    unsigned int outputIndex;
+    if (!state || !state->initialized || !source || sourceBytes <= 0 ||
+        sourceRateHz <= 0 || sourceRateHz > 200000 || resourceId < 0 ||
+        sourceHash == 0u ||
+        m11_fnv1a_bytes((const unsigned char*)source, sourceBytes) != sourceHash) {
+        if (state) {
+            m11_sound_clear(&state->dm2MacSndPcm);
+            state->dm2MacSndAccepted = 0;
+        }
+        return 0;
+    }
+    outputCount = ((unsigned int)sourceBytes * M11_AUDIO_SAMPLE_RATE +
+                   (unsigned int)sourceRateHz - 1u) /
+                  (unsigned int)sourceRateHz;
+    if (outputCount == 0u || outputCount > 262144u ||
+        !m11_sound_reserve(&state->dm2MacSndPcm, (int)outputCount)) {
+        m11_sound_clear(&state->dm2MacSndPcm);
+        state->dm2MacSndAccepted = 0;
+        return 0;
+    }
+    for (outputIndex = 0u; outputIndex < outputCount; ++outputIndex) {
+        unsigned int sourceIndex =
+            outputIndex * (unsigned int)sourceRateHz / M11_AUDIO_SAMPLE_RATE;
+        if (sourceIndex >= (unsigned int)sourceBytes)
+            sourceIndex = (unsigned int)sourceBytes - 1u;
+        state->dm2MacSndPcm.samples[outputIndex] =
+            (float)source[sourceIndex] / 128.0f;
+    }
+    state->dm2MacSndPcm.sampleCount = (int)outputCount;
+    state->dm2MacSndAccepted = 1;
+    state->dm2MacSndByteCount = sourceBytes;
+    state->dm2MacSndRateHz = sourceRateHz;
+    state->dm2MacSndResourceId = resourceId;
+    state->dm2MacSndHash = sourceHash;
+    ++state->dm2MacSndPlayCount;
+#if M11_HAVE_SDL_AUDIO
+    if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream &&
+        m11_sdl_queue_samples(state, state->dm2MacSndPcm.samples,
+                              state->dm2MacSndPcm.sampleCount,
+                              state->sfxVolume)) {
+        ++state->dm2MacSndQueuedCount;
     }
 #endif
     return 1;
