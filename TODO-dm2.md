@@ -442,10 +442,13 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
 - [ ] Bind the Mac big-endian `DUNGEON.DAT` and `GRAPHICS.DAT` pair to one
   platform-specific boot receipt. Japanese 16-colour and US English
   256-colour graphics must remain separate layouts and hashes.
-- [ ] Extract and present the authentic Macintosh QuickTime `MooV` movies
-  (`TITLE`, `STORY`, `SWOOSH`, `CREDITS`, and `ENDING`) from data/resource
-  forks. Do not replace them with converted MP4 files in the source runtime;
-  converted files may be verification derivatives only.
+- [~] Read the authentic retail Mac QuickTime `MooV` data forks in RAM. The
+  verified retail image contains `Title.MooV`, `Swoosh.MooV`, `Credits.MooV`
+  and `Ending.MooV` (CTest records their presence and sizes); `Story.MooV` is
+  absent from this original image and is not invented. Presentation through
+  the original QuickTime/MooV owner remains open. Do not replace these with
+  converted MP4 files in the source runtime; converted files may be
+  verification derivatives only.
 - [ ] Bind the US English Mac MIDI/SoundMusicSys resources and the Japanese
   CD-audio route separately. DOS HMP, FM Towns CD.DAT, and Amiga MOD paths are
   not fallbacks.

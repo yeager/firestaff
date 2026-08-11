@@ -241,6 +241,21 @@ int dm2_v1_mac_media_read_zip(const char *zip_path, DM2_V1_MacMedia *out) {
     }
     if (find_file(cat, cat_size, "md.dat", extents, &file_size) == 0)
         (void)copy_fork(&disk, alloc_size, alloc_start, extents, file_size, &out->music_map, &out->music_map_size);
+    if (!out->demo) {
+        static const char *const movie_names[DM2_V1_MAC_MOVIE_COUNT] = {
+            "Title.MooV", "Story.MooV", "Swoosh.MooV", "Credits.MooV", "Ending.MooV"
+        };
+        size_t movie_index;
+        for (movie_index = 0u; movie_index < DM2_V1_MAC_MOVIE_COUNT; ++movie_index) {
+            if (find_file(cat, cat_size, movie_names[movie_index], extents,
+                          &file_size) == 0 &&
+                copy_fork(&disk, alloc_size, alloc_start, extents, file_size,
+                          &out->movie[movie_index],
+                          &out->movie_size[movie_index]) == 0) {
+                out->movie_present_mask |= (uint32_t)1u << movie_index;
+            }
+        }
+    }
     rc = 0;
 done:
     free(cat); free(image);
@@ -251,5 +266,7 @@ done:
 void dm2_v1_mac_media_free(DM2_V1_MacMedia *media) {
     if (!media) return;
     free(media->graphics); free(media->dungeon); free(media->music_map);
+    for (size_t i = 0u; i < DM2_V1_MAC_MOVIE_COUNT; ++i)
+        free(media->movie[i]);
     memset(media, 0, sizeof(*media));
 }

@@ -25,6 +25,18 @@ int main(void) {
         dm2_v1_mac_media_free(&media);
         return 1;
     }
+    if (!demo && (media.movie_present_mask &
+                  ((uint32_t)1u << DM2_V1_MAC_MOVIE_TITLE)) == 0u) {
+        fprintf(stderr, "authentic retail Mac Title.MooV was not read\n");
+        dm2_v1_mac_media_free(&media);
+        return 1;
+    }
+    if (!demo) {
+        printf("retail movie mask=0x%08x sizes=%zu,%zu,%zu,%zu,%zu\n",
+               media.movie_present_mask, media.movie_size[0],
+               media.movie_size[1], media.movie_size[2], media.movie_size[3],
+               media.movie_size[4]);
+    }
     dm2_v1_mac_media_free(&media);
     puts(demo ? "PASS: authentic DM2 Macintosh demo installer read in RAM"
               : "PASS: authentic DM2 Macintosh retail HFS forks read in RAM");

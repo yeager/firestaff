@@ -4,6 +4,16 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define DM2_V1_MAC_MOVIE_COUNT 5
+
+typedef enum {
+    DM2_V1_MAC_MOVIE_TITLE = 0,
+    DM2_V1_MAC_MOVIE_STORY,
+    DM2_V1_MAC_MOVIE_SWOOSH,
+    DM2_V1_MAC_MOVIE_CREDITS,
+    DM2_V1_MAC_MOVIE_ENDING
+} DM2_V1_MacMovieId;
+
 /* Read the original Macintosh CD image contained in a ZIP without creating
  * a mounted or extracted game-data directory.  The returned forks are owned
  * by the caller and must be freed with dm2_v1_mac_media_free(). */
@@ -14,6 +24,9 @@ typedef struct {
     size_t dungeon_size;
     uint8_t *music_map;
     size_t music_map_size;
+    uint8_t *movie[DM2_V1_MAC_MOVIE_COUNT];
+    size_t movie_size[DM2_V1_MAC_MOVIE_COUNT];
+    uint32_t movie_present_mask;
     int demo;
 } DM2_V1_MacMedia;
 
