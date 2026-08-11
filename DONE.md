@@ -1,3 +1,9 @@
+# Theron: JP roster text copies authenticated raw bytes (2026-08-11)
+
+- ✅ JP names and titles now reach startup from verified Track 02 raw offsets,
+  with regression checks against the original `TQJP02.bin` bytes.
+- 🔒 No JP portrait ID/pixels or original font/VDC consumer was inferred.
+
 # Theron: latest authenticated VDC/VCE screen pair admitted (2026-08-11)
 
 - ✅ The production viewport accepts the exact-size external capture with

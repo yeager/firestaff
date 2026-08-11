@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+## Theron: JP roster text is raw-source-owned (2026-08-11)
+
+- ✅ JP startup names/titles now copy from the authenticated Track 02 bytes at
+  their verified offsets; host search literals are admission checks only.
+- 🔒 JP portraits and the original font/VDC text consumer remain open.
+
 ## Theron: latest authenticated VDC/VCE screen pair admitted (2026-08-11)
 
 - ✅ The source-bound viewport allowlist now includes the verified external

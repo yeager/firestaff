@@ -15,6 +15,8 @@ Följande fält binds från bytesen i `TQJP02.bin`:
 - de sju attributbytesen
 - de 16 skillbytesen och högsta skill per klass
 - primärklass härledd från dessa source skills
+- startup-namn och titlar kopieras från de verifierade råoffsetarna efter
+  byte-matchning; de skickas inte vidare från söksträngarnas hostkonstanter
 
 JP-recorden ligger vid den verifierade råa rosterklustern `0xB3D98` och får
 endast användas med JP BIN-MD5 `b7afb338ad31be1025b53f9aff12d73a`. Den första
@@ -22,8 +24,9 @@ Theron-posten verifieras lokalt som HP `175`, stamina `1500` och mana `35`.
 
 ## Gräns
 
-Detta är en source-bound rosterbindning, inte ett bevis på originalets
-portrait-, palette-, text- eller T900-consumer. `portrait_index` lämnas därför
+Detta är en source-bound roster- och textpayload-bindning, inte ett bevis på
+originalets portrait-, palette-, font/VDC-text- eller T900-consumer.
+`portrait_index` lämnas därför
 `THERON_PORTRAIT_UNAVAILABLE`. Utrustning, inventory, use/equip/stack, RNG,
 AI, T700 och ljud öppnas inte av denna receipt.
 

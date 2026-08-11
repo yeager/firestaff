@@ -1676,6 +1676,8 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_roster_names(
         size_t title_offset = 0u;
         size_t title_user_offset = 0u;
         int title_offset_valid = 0;
+        char decoded_name[THERON_TRACK02_STARTUP_ROSTER_NAME_CAPACITY];
+        char decoded_title[THERON_TRACK02_STARTUP_ROSTER_TITLE_CAPACITY];
         Theron_Track02SignalStatus status;
 
         if (!bytes_find(cluster,
@@ -1711,11 +1713,34 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_roster_names(
             }
             title_offset_valid = 1;
         }
+        if (strlen(name) >= sizeof(decoded_name) ||
+            marker->raw_offset > track02_size ||
+            name_offset > track02_size - marker->raw_offset ||
+            strlen(name) > track02_size - marker->raw_offset - name_offset) {
+            return THERON_TRACK02_SIGNAL_BAD_INPUT;
+        }
+        memcpy(decoded_name, track02_data + marker->raw_offset + name_offset,
+               strlen(name));
+        decoded_name[strlen(name)] = '\0';
+        decoded_title[0] = '\0';
+        if (title_offset_valid) {
+            if (strlen(title) >= sizeof(decoded_title) ||
+                marker->raw_offset > track02_size ||
+                title_offset > track02_size - marker->raw_offset ||
+                strlen(title) >
+                    track02_size - marker->raw_offset - title_offset) {
+                return THERON_TRACK02_SIGNAL_BAD_INPUT;
+            }
+            memcpy(decoded_title,
+                   track02_data + marker->raw_offset + title_offset,
+                   strlen(title));
+            decoded_title[strlen(title)] = '\0';
+        }
         catalog_add_startup_roster_name(out_catalog,
-                                        name,
+                                        decoded_name,
                                         marker->raw_offset + name_offset,
                                         user_offset,
-                                        title,
+                                        decoded_title,
                                         title_offset_valid
                                             ? marker->raw_offset + title_offset
                                             : 0u,

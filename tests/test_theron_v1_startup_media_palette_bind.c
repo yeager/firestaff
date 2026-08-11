@@ -95,6 +95,7 @@ static void check_real_palette(
 
 static void check_real_jp_roster(const char *path, const char *md5) {
     Theron_StartupMediaStateReceipt receipt;
+    Theron_Track02StartupRosterNameCatalog catalog;
     uint8_t *track02;
     size_t track02_bytes = 0u;
     static const char *const names[] = {
@@ -116,12 +117,28 @@ static void check_real_jp_roster(const char *path, const char *md5) {
     memset(&receipt, 0, sizeof(receipt));
     theron_v1_startup_media_capture_track02_state_receipt(
         track02, track02_bytes, md5, &receipt);
+    memset(&catalog, 0, sizeof(catalog));
+    CHECK(theron_v1_track02_catalog_startup_roster_names(
+              track02, track02_bytes, md5, &catalog) ==
+          THERON_TRACK02_SIGNAL_OK);
     CHECK(receipt.track02_variant == THERON_TRACK02_VARIANT_JP_BIN);
     CHECK(receipt.startup_roster_name_status == THERON_TRACK02_SIGNAL_OK);
     CHECK(receipt.startup_roster_name_count == 8);
     for (i = 0; i < 8; ++i) {
         CHECK(strcmp(receipt.startup_roster_names[i], names[i]) == 0);
         CHECK(strcmp(receipt.startup_roster_titles[i], titles[i]) == 0);
+        CHECK(catalog.names[i].raw_offset + strlen(names[i]) <= track02_bytes);
+        CHECK(memcmp(catalog.names[i].name,
+                     track02 + catalog.names[i].raw_offset,
+                     strlen(names[i])) == 0);
+        if (titles[i][0] != '\0') {
+            CHECK(catalog.names[i].title_offset_valid);
+            CHECK(catalog.names[i].title_raw_offset + strlen(titles[i]) <=
+                  track02_bytes);
+            CHECK(memcmp(catalog.names[i].title,
+                         track02 + catalog.names[i].title_raw_offset,
+                         strlen(titles[i])) == 0);
+        }
     }
     fprintf(stderr,
             "JP Track 02 roster bind from real media OK: %d names/titles\n",

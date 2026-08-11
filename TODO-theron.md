@@ -2,6 +2,13 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — JP roster text now copies verified raw bytes
+
+- ✅ JP startup names and titles are emitted from the authenticated raw
+  offsets after matching, rather than from the expected search literals.
+- 🔒 This proves payload provenance only; the original JP portrait/font/VDC
+  consumer remains unresolved.
+
 ## 2026-08-11 — authenticated manual VRAM/VCE capture is admitted
 
 - ✅ The production viewport now accepts the externally captured US Track 02
