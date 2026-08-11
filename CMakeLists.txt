@@ -6882,6 +6882,7 @@ set(M11_SOURCES
     src/csb/csb_v1_fmtowns_portrait.c
     src/csb/csb_v1_fmtowns_anm.c
     src/csb/csb_v1_fmtowns_switch.c
+    src/csb/csb_v1_atari_switch_dat.c
     src/csb/csb_v1_fmtowns_game.c
     src/csb/csb_v1_fmtowns_utility_render.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
@@ -53488,6 +53489,18 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_switch.c")
     add_test(NAME csb_v1_fmtowns_switch COMMAND test_csb_v1_fmtowns_switch)
     set_tests_properties(csb_v1_fmtowns_switch PROPERTIES
         SKIP_RETURN_CODE 77 LABELS "csb;fmtowns;real_data")
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_switch_dat.c")
+    add_executable(test_csb_v1_atari_switch_dat
+        tests/test_csb_v1_atari_switch_dat.c
+        src/csb/csb_v1_atari_switch_dat.c)
+    target_include_directories(test_csb_v1_atari_switch_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_atari_switch_dat PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_atari_switch_dat COMMAND test_csb_v1_atari_switch_dat)
+    set_tests_properties(csb_v1_atari_switch_dat PROPERTIES LABELS "csb;atari;synthetic_fixture")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_m11_game_handoff.c")
