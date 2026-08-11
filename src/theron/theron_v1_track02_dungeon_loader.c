@@ -128,6 +128,19 @@ static int materialize_source_item(
         object->source_keep = record->value.potion.keep;
         object->source_power = record->value.potion.power;
         break;
+    case THERON_CAT_MISC:
+        /* Category 10 is a real carried-record family in DMBUILDER6.  The
+         * type byte is an item-table index, but the original T900 consumer
+         * that turns it into food/key/equipment semantics is not identified.
+         * Keep the occurrence playable as a neutral source item instead of
+         * inventing that consumer. */
+        object->type = THERON_OBJTYPE_SOURCE_ITEM;
+        object->item_index = record->value.misc.type;
+        object->source_item_type = record->value.misc.type;
+        object->source_keep = record->value.misc.keep;
+        object->source_capacity = record->value.misc.capacity;
+        object->quantity = 1;
+        break;
     case THERON_CAT_CHEST:
         object->type = THERON_OBJTYPE_CHEST;
         object->source_chested = record->value.chest.chested;
@@ -152,12 +165,21 @@ static int materialize_source_item(
         case THERON_CAT_CLOTHING: expected = THERON_ITEM_CAT_ARMOR; break;
         case THERON_CAT_SCROLL:
         case THERON_CAT_POTION:   expected = THERON_ITEM_CAT_CONSUMABLE; break;
+        case THERON_CAT_MISC:
+            /* Unlike the record family, the item-table category is source
+             * data and may be retained without naming its T900 action. */
+            expected = theron_v1_track02_item_category(
+                (unsigned int)object->item_index);
+            break;
         /* DMBUILDER6/src/dms.h: category-9 dm_chest stores chested/data1
          * and has no global item-id field.  Binding its data1 byte through
          * the 66-entry item table would invent a T900 inventory identity. */
         default: break;
         }
-        if (expected != 0u &&
+        if ((expected == THERON_ITEM_CAT_COMPASS ||
+             expected == THERON_ITEM_CAT_WEAPON ||
+             expected == THERON_ITEM_CAT_ARMOR ||
+             expected == THERON_ITEM_CAT_CONSUMABLE) &&
             theron_v1_track02_item_category((unsigned int)object->item_index) ==
                 expected) {
             uint8_t source_property[THERON_TRACK02_ITEM_PROPERTY_SIZE];

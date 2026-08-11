@@ -1,3 +1,14 @@
+# Theron: real MISC records round-trip through neutral source items (2026-08-11)
+
+- ✅ Category-10 records from the real US and JP Track 02 dungeon banks now
+  materialize as neutral source-item objects instead of disappearing from the
+  playable object table.
+- ✅ Real-data regression coverage exercises pickup and drop of a MISC record,
+  including source reference, item-table category and authenticated property
+  validation. No BIOS, disc image or generated game data was added.
+- 🔒 This is source-preserving transport only. T900 use/equip/stack and exact
+  food/key semantics remain gated by the original runtime consumer.
+
 # Theron: preserve raw monster records through live creatures (2026-08-11)
 
 - ✅ Category-4 monster records from the authenticated Track 02 dungeon

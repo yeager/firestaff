@@ -99,7 +99,8 @@ static int theron_v1_source_item_category_is_carryable(uint8_t category) {
     return category == THERON_CAT_WEAPON ||
            category == THERON_CAT_CLOTHING ||
            category == THERON_CAT_SCROLL ||
-           category == THERON_CAT_POTION;
+           category == THERON_CAT_POTION ||
+           category == THERON_CAT_MISC;
 }
 
 static uint8_t theron_v1_source_item_category_for_record(uint8_t category) {
@@ -132,9 +133,15 @@ static int theron_v1_source_item_record_matches_object(
             object->source_raw_size, &record) ||
         record.next_ref != object->source_next_ref ||
         !object->source_property_valid ||
-        object->source_item_category !=
-            theron_v1_source_item_category_for_record(
-                object->source_category) ||
+        (object->source_category != THERON_CAT_MISC &&
+         object->source_item_category !=
+             theron_v1_source_item_category_for_record(
+                 object->source_category)) ||
+        (object->source_category == THERON_CAT_MISC &&
+         (object->source_item_category != THERON_ITEM_CAT_COMPASS &&
+          object->source_item_category != THERON_ITEM_CAT_WEAPON &&
+          object->source_item_category != THERON_ITEM_CAT_ARMOR &&
+          object->source_item_category != THERON_ITEM_CAT_CONSUMABLE)) ||
         object->source_item_type >= theron_v1_track02_item_property_count() ||
         !(property = theron_v1_track02_item_property(
                   object->source_item_type)) ||
@@ -164,6 +171,9 @@ static int theron_v1_source_item_record_matches_object(
         return record.value.potion.type == object->source_item_type &&
                record.value.potion.power == object->source_power &&
                record.value.potion.keep == object->source_keep;
+    case THERON_CAT_MISC:
+        return record.value.misc.type == object->source_item_type &&
+               record.value.misc.keep == object->source_keep;
     default:
         return 0;
     }

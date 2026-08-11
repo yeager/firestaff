@@ -409,6 +409,7 @@ static int theron_v1_object_is_carried_item(const Theron_V1_Object *object) {
     case THERON_OBJTYPE_KEY:
     case THERON_OBJTYPE_WEAPON:
     case THERON_OBJTYPE_ARMOR:
+    case THERON_OBJTYPE_SOURCE_ITEM:
         return 1;
     default:
         return 0;
@@ -927,7 +928,14 @@ static int theron_v1_inventory_source_record_matches(
           carried->item_category != THERON_ITEM_CAT_ARMOR) ||
          ((carried->category == THERON_CAT_SCROLL ||
            carried->category == THERON_CAT_POTION) &&
+          carried->item_category != THERON_ITEM_CAT_CONSUMABLE) ||
+         (carried->category == THERON_CAT_MISC &&
+          carried->item_category != THERON_ITEM_CAT_COMPASS &&
+          carried->item_category != THERON_ITEM_CAT_WEAPON &&
+          carried->item_category != THERON_ITEM_CAT_ARMOR &&
           carried->item_category != THERON_ITEM_CAT_CONSUMABLE)) ||
+        (carried->category == THERON_CAT_MISC &&
+         carried->item_type >= theron_v1_track02_item_category_count()) ||
         carried->item_type >= theron_v1_track02_item_property_count() ||
         !(property = theron_v1_track02_item_property(carried->item_type)) ||
         memcmp(carried->property, property,
@@ -956,6 +964,11 @@ static int theron_v1_inventory_source_record_matches(
         return record.value.potion.type == carried->item_type &&
                record.value.potion.power == carried->power &&
                record.value.potion.keep == carried->keep;
+    case THERON_CAT_MISC:
+        return record.value.misc.type == carried->item_type &&
+               record.value.misc.keep == carried->keep &&
+               theron_v1_track02_item_category(carried->item_type) ==
+                   carried->item_category;
     default:
         return 0;
     }
@@ -1041,6 +1054,7 @@ int theron_v1_drop_inventory_source_item(
     case THERON_CAT_CLOTHING: object.type = THERON_OBJTYPE_ARMOR; break;
     case THERON_CAT_SCROLL:   object.type = THERON_OBJTYPE_SCROLL; break;
     case THERON_CAT_POTION:   object.type = THERON_OBJTYPE_POTION; break;
+    case THERON_CAT_MISC:     object.type = THERON_OBJTYPE_SOURCE_ITEM; break;
     case THERON_CAT_CHEST:    object.type = THERON_OBJTYPE_CHEST; break;
     default: return -1;
     }

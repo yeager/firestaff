@@ -235,7 +235,8 @@ static void assert_real_item_roundtrip(Theron_V1_World *world) {
             (object->source_category != THERON_CAT_WEAPON &&
              object->source_category != THERON_CAT_CLOTHING &&
              object->source_category != THERON_CAT_SCROLL &&
-             object->source_category != THERON_CAT_POTION)) {
+             object->source_category != THERON_CAT_POTION &&
+             object->source_category != THERON_CAT_MISC)) {
             continue;
         }
         /* The source loader can retain more than one thing at a square;
@@ -268,6 +269,54 @@ static void assert_real_item_roundtrip(Theron_V1_World *world) {
         found = 1;
         break;
     }
+    assert(found);
+}
+
+static void assert_real_misc_roundtrip(Theron_V1_World *world) {
+    int found = 0;
+    int original_level = world->current_level;
+
+    /* Category 10 is the newly admitted neutral source-item carrier.  Walk
+     * every loaded level because MISC occurrences are not guaranteed on the
+     * initial map. */
+    for (int i = 0; i < world->object_count; ++i) {
+        Theron_V1_Object *object = &world->objects[i];
+        int inventory_slot = -1;
+        int before;
+        if (object->source_category != THERON_CAT_MISC ||
+            !object->source_ref || !object->source_property_valid ||
+            object->type != THERON_OBJTYPE_SOURCE_ITEM ||
+            theron_v1_object_at_in_dungeon(
+                world, world->current_dungeon, object->level,
+                object->x, object->y) != object) {
+            continue;
+        }
+        world->current_level = object->level;
+        before = world->object_count;
+        assert(theron_v1_click_route(world, object->x, object->y,
+                                     THERON_CMD_TAKE) == 0);
+        for (int slot = 0; slot < THERON_INVENTORY_SLOTS; ++slot) {
+            if (world->party.champions[world->party.active_slot]
+                    .inventory[slot] == object->source_item_type &&
+                world->inventory_source[world->party.active_slot][slot]
+                    .valid) {
+                inventory_slot = slot;
+                break;
+            }
+        }
+        assert(inventory_slot >= 0);
+        assert(world->inventory_source[world->party.active_slot]
+                   [inventory_slot].category == THERON_CAT_MISC);
+        assert(theron_v1_drop_inventory_source_item(
+                   world, world->party.active_slot, inventory_slot,
+                   object->x, object->y) > 0);
+        assert(world->object_count == before + 1);
+        assert(world->objects[world->object_count - 1].source_ref ==
+               object->source_ref);
+        found = 1;
+        break;
+    }
+    world->current_level = original_level;
     assert(found);
 }
 
@@ -536,6 +585,8 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         assert(world->object_count == result.total_things_placed);
         if (d == 0)
             assert_real_item_roundtrip(world);
+        if (d == 0)
+            assert_real_misc_roundtrip(world);
             assert_real_chests_are_not_itemrecords(
                 world, result.source_category_counts[THERON_CAT_CHEST]);
 
@@ -587,6 +638,8 @@ static void test_all_jp_dungeons(const uint8_t *ud, size_t ud_size) {
         }
         if (d == 0)
             assert_real_item_roundtrip(world);
+        if (d == 0)
+            assert_real_misc_roundtrip(world);
             assert_real_chests_are_not_itemrecords(
                 world, result.source_category_counts[THERON_CAT_CHEST]);
         free(world);

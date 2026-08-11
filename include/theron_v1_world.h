@@ -281,6 +281,10 @@ typedef enum {
     THERON_OBJTYPE_TRIGGER      = 16,   /* event trigger */
     THERON_OBJTYPE_SOUND        = 17,   /* ambient/one-shot sound trigger */
     THERON_OBJTYPE_PIT          = 18,   /* pit trap object record */
+    /* Neutral carrier for a real category-10 Track 02 misc record.  This is
+     * deliberately not a guessed food/key/equipment meaning; the original
+     * T900 consumer still owns that distinction. */
+    THERON_OBJTYPE_SOURCE_ITEM  = 19,
     THERON_OBJTYPE_QUEST_ITEM   = 128,
 } Theron_V1_ObjectType;
 

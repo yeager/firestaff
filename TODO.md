@@ -1,5 +1,15 @@
 # Firestaff TODO - Open Work
 
+# Theron: neutral source-item carrier is not full T900 semantics (2026-08-11)
+
+- ✅ Real category-10 `MISC` records now materialize as a neutral
+  `SOURCE_ITEM` object. Their authenticated item-table category, property row
+  and raw record survive pickup, save/load and drop without synthesizing a
+  food, key or equipment meaning.
+- 🔒 The original T900 consumer still has to prove which MISC records are
+  usable, equipable, stackable or consumable. The neutral carrier must not be
+  presented as recovered item behavior.
+
 # Theron: raw monster-record consumer still unresolved (2026-08-11)
 
 - ✅ Authentic category-4 records now retain their exact 16-byte source
