@@ -462,6 +462,26 @@ call any of these states a menu, HUD or viewport. The latest frame-0 startup
 attempt is a one-frame reset witness (`TVMD=0`, `BGON=0`) and supplies no
 startup asset-consumer evidence.
 
+## Latest J/J startup-to-menu attempt
+
+The external run
+`/Volumes/Extern-disk/nexus-saturn-capture/run-authentic-merged-startup-menu-20260811d/`
+contains 200 frames from the merged English disc with the authenticated J
+BIOS. The bounded active-low `START+A` input window is frames 120–129. The
+raw VDP1/VDP2 stream is SHA-256
+`1f1b63b7917ecc347eb2e931fefe2881d64faf96338e0fd04312c1e5887a2008` and
+contains 156 frames with observed VDP1 activity.
+
+The post-input window changes VDP state and produces a mode-5 VDP1 source
+span at `0x10000`, but the span has no exact match in the verified MENU.BPK,
+MNS, DGN or other retail source corpus. The VDP2 character lane reports
+`font256_vram_span_matches=1/4` and `font256_cram_palette_matches=0/1`, with
+the text consumer still unbound. The paired SCSP traces record a producer
+mailbox write of `0x02` and the sound-CPU mailbox/voice-register corridor, but
+do not identify a menu event, MAP row or SAL sample. This is authenticated
+transition evidence only; startup→menu, menu text, HUD and viewport admission
+remain blocked.
+
 The producer also has a bounded SCSP-read trace with an optional sound-CPU PC
 filter. In the retained 100-record European gameplay window, reads were
 observed from shared sound RAM and driver setup tables, but none from the

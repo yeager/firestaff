@@ -13372,3 +13372,14 @@ and production source-combat tests.
   verifierade.
 - ✅ `test_nexus_v1_vdp1_capture_compositor` passerar mot den kompletta
   engelska merged-disc-capturen på extern disk, både vid frame 0 och 599.
+
+# Nexus: verify J/J startup-to-menu transition window (2026-08-11)
+
+- ✅ En ny 200-frames capture med autentiserad J-BIOS, merged English-disc och
+  bounded `START+A`-fönster valideras på extern disk; 156 frames har aktiv
+  VDP1-state.
+- ✅ Samma körning har separata main-SH-2- och SCSP-traces med sessionen
+  `startup-menu-20260811d`; SLEV/SAL/SDDRVS-runtimejoin-testet passerar.
+- 🔒 Källbindningen är negativ: VDP1 mode-5-spannet matchar inget verifierat
+  retail-underlag och FONT256-palett/textkonsument är fortsatt obunden. Ingen
+  meny-, HUD- eller viewport-rendering öppnas.

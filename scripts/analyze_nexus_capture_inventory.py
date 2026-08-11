@@ -131,6 +131,7 @@ def main() -> int:
         vdp1_draw_frames = 0
         vdp1_draw_commands = 0
         vdp1_draw_sources: list[str] = []
+        first = "none"
         for frame, state in zip(frames, states):
             registers = frame["vdp2-regs"]
             byte_order = detect_byte_order(registers)
