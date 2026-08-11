@@ -6877,6 +6877,10 @@ set(M11_SOURCES
     src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_amiga_graphics_dat.c
     src/csb/csb_v1_x68k_hdm.c
+    src/csb/csb_v1_x68k_graphics_handoff.c
+    src/csb/csb_v1_x68k_dungeon_handoff.c
+    src/csb/csb_v1_x68k_enter_sng.c
+    src/csb/csb_v1_x68k_source_media.c
     src/csb/csb_v1_amiga_titl_dat.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/shared/firestaff_amiga_adf.c
@@ -53575,6 +53579,31 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_x68k_graphics_handoff.c
     endif()
     add_test(NAME csb_v1_x68k_graphics_handoff COMMAND test_csb_v1_x68k_graphics_handoff)
     set_tests_properties(csb_v1_x68k_graphics_handoff PROPERTIES LABELS "csb;x68k;graphics;synthetic_fixture")
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_x68k_source_media.c")
+    add_executable(test_csb_v1_x68k_source_media
+        tests/test_csb_v1_x68k_source_media.c
+        src/csb/csb_v1_x68k_source_media.c
+        src/csb/csb_v1_x68k_hdm.c
+        src/csb/csb_v1_x68k_graphics_handoff.c
+        src/csb/csb_v1_x68k_dungeon_handoff.c
+        src/csb/csb_v1_x68k_enter_sng.c
+        src/csb/csb_v1_amiga_graphics_dat.c
+        src/csb/csb_v1_dungeon_loader_pc34_compat.c
+        src/dm1/dm1_v1_legacy_graphics_dat.c
+        src/shared/dungeon_decompressor_ftl.c
+        src/shared/firestaff_x68k_media_receipt.c
+        src/shared/firestaff_x68k_media_classify.c
+        src/shared/firestaff_ftl_container.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c)
+    target_include_directories(test_csb_v1_x68k_source_media PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_x68k_source_media PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_x68k_source_media COMMAND test_csb_v1_x68k_source_media)
+    set_tests_properties(csb_v1_x68k_source_media PROPERTIES LABELS "csb;x68k;real_media;source_receipt")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_m11_game_handoff.c")

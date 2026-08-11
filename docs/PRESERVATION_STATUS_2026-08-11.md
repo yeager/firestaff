@@ -31,7 +31,12 @@ SHA-256 `e912addf1881b6c2b3cde4207507061a43459748082c75953cbc3c305fdf24e1`.
 `M11_AssetLoader_InitCsbX68kFromHdm` extraherar `GRAPHICS.DAT` till en
 X68000-märkt cache utan att ge den Amiga-identitet. Testet kör både en
 FAT12-fixtur och den externa avbilden; post 13 dekodas som 96 × 41 pixlar.
-Detta är en media-till-grafik-handoff, inte en start- eller emuleringsrutt.
+`csb_v1_x68k_hdm_source_media_receipt` knyter också samma HDM till
+`DUNGEON.DAT` och `ENTER.SNG`: den verifierade avbilden ger två kartor,
+startpositionen 0/9/0/riktning 2 samt 9 MIDI-spår med 3 205 händelser.
+Kvittot behåller X68000-identiteten även när grafikformatet delas med Amiga,
+och spärrar fortfarande native start. Detta är en verifierad
+media-till-källindata-handoff, inte en start- eller emuleringsrutt.
 
 Fördjupning: [bevarandeprinciper](wiki/Preservation.md),
 [formatkatalog](GAME_DATA_FORMATS.md), [CSB-referens](REDMCSB_REFERENCE.md)

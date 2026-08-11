@@ -23,7 +23,7 @@ Read support alone does not imply a complete game route.
 | Amiga | IMG1 nibble-RLE graphics. CSB also uses platform program assets such as TITL.DAT, APPB.FTL, KAOS.FTL and BJELoad_R. |
 | Atari ST | DMCSB1 catalogue with 563 Atari-LZW records decoded as big-endian IMG1. CSB uses ANIMATE.SCR, ANIMATE.DAT, ANIMATE.FTL, FTLCODE and CHAOS.FTL. |
 | FM Towns | 0x8001-wrapped IMG2 graphics, not PC IMG3. CSB's F31 chain includes RUN386.EXE, SWITCHTW.EXP, CHTWE.EXP or CHTWJ.EXP, and the Utility executables. |
-| CSB X68000 JP | 1,261,568-byte Human68k 2DHD HDM with a FAT12 root. The local v3.1 cracked image exposes `GRAPHICS.DAT` (DMCSB2/IMG1, 732 records), `DUNGEON.DAT` and format-1 `ENTER.SNG`; raw HDM graphics enter only an X68000-labelled M11 cache. |
+| CSB X68000 JP | 1,261,568-byte Human68k 2DHD HDM with a FAT12 root. The local v3.1 cracked image exposes `GRAPHICS.DAT` (DMCSB2/IMG1, 732 records), `DUNGEON.DAT` and format-1 `ENTER.SNG`; a joined source-media receipt preserves the X68000 identity across all three boundaries, and raw HDM graphics enter only an X68000-labelled M11 cache. |
 
 CSB has no original DOS/PC 3.4 release. Its Amiga route is the default
 original-media path; Atari ST and FM Towns have separate verified media
