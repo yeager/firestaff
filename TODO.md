@@ -1,5 +1,17 @@
 # Firestaff TODO - Open Work
 
+# Theron: follow-up autoload capture still stops before gameplay consumer (2026-08-11)
+
+- ✅ The external authenticated Mednafen run accepted the real Track 02 BIN,
+  System Card and operator save-state, and produced source-bound VDC/VCE plus
+  input, main-RAM and `$CC4C` execution traces. Mednafen was terminated by the
+  capture cleanup path; no process was left running.
+- 🔒 The run ended without a valid `$B0E5` category-0..3 sample, without a
+  same-session `$C3A0` → `$C96B/$CC4C` → target-RAM join, and without a valid
+  transition receipt. The observation is transport/execution evidence only;
+  it does not authorize RNG, dynamic spawn, AI, attacks, damage, loot,
+  generator timing, T700 or T900 semantics.
+
 # Theron: source-bound square/material consumer and README capture (2026-08-11)
 
 - ✅ A new authenticated VDC/VCE screen-space pair is admitted and renders

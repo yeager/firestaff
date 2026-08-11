@@ -1,3 +1,14 @@
+# Theron: authenticated follow-up capture audited (2026-08-11)
+
+- ✅ Ran the external Mednafen capture with the real US Track 02 media,
+  authentic System Card and operator-provided save-state; the raw trace stayed
+  on the external disk and no BIOS, BIN, ISO or trace was added to GitHub.
+- ✅ The capture produced 14 authenticated scripted input events, 13 `$CC4C`
+  execution-window observations and source-bound VDC/VCE snapshots.
+- ✅ The trace was checked for `$B0E5`, `$C3A0`/target-RAM and transition
+  evidence; none formed a valid gameplay handoff. The runtime remains
+  fail-closed for unresolved RNG/AI/combat/loot/generator/T700/T900 rules.
+
 # Theron: admit authenticated US screen-space VDC/VCE capture (2026-08-11)
 
 - ✅ Added the real external replay pair VRAM FNV-1a `42a483ac` (65,536
