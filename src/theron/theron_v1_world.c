@@ -382,6 +382,21 @@ static int theron_v1_world_source_level_verified(
                         [world->current_level].source_header_verified;
 }
 
+static int theron_v1_object_is_carried_item(const Theron_V1_Object *object) {
+    if (!object) return 0;
+    switch (object->type) {
+    case THERON_OBJTYPE_POTION:
+    case THERON_OBJTYPE_SCROLL:
+    case THERON_OBJTYPE_FOOD:
+    case THERON_OBJTYPE_KEY:
+    case THERON_OBJTYPE_WEAPON:
+    case THERON_OBJTYPE_ARMOR:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 static uint8_t *theron_inventory_source_write(
     uint8_t *out, const Theron_V1_InventorySourceRecord *record) {
     *out++ = record->valid;
@@ -1038,7 +1053,12 @@ Theron_V1_Object *theron_v1_object_at(Theron_V1_World *world,
     if (!world) return NULL;
     for (int i = 0; i < world->object_count; i++) {
         Theron_V1_Object *o = &world->objects[i];
-        if (o->level == level && o->x == x && o->y == y) return o;
+        /* T900 removes a carried occurrence from the active floor-object
+         * view.  Keep the record in the table for source/save provenance,
+         * but never let later look/use routing rediscover a picked object. */
+        if (!(theron_v1_object_is_carried_item(o) &&
+              (o->flags & THERON_OBJ_F_PICKED_UP)) &&
+            o->level == level && o->x == x && o->y == y) return o;
     }
     return NULL;
 }
@@ -1048,7 +1068,9 @@ Theron_V1_Object *theron_v1_object_at_in_dungeon(
     if (!world) return NULL;
     for (int i = 0; i < world->object_count; i++) {
         Theron_V1_Object *o = &world->objects[i];
-        if (o->dungeon_id == dungeon_id && o->level == level &&
+        if (!(theron_v1_object_is_carried_item(o) &&
+              (o->flags & THERON_OBJ_F_PICKED_UP)) &&
+            o->dungeon_id == dungeon_id && o->level == level &&
             o->x == x && o->y == y) {
             return o;
         }

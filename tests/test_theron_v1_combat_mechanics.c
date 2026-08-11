@@ -826,6 +826,8 @@ static void test_source_item_pickup_provenance(void) {
     CHECK_INT("source weapon placed", theron_v1_object_place(&w, &object), 0);
     CHECK_INT("source weapon picked up",
               theron_v1_click_route(&w, 2, 2, THERON_CMD_TAKE), 0);
+    CHECK(theron_v1_object_at_in_dungeon(&w, w.current_dungeon, 0, 2, 2) == NULL,
+          "picked source object leaves active floor lookup");
     CHECK_INT("compact inventory keeps source item id",
               w.party.champions[0].inventory[0], 6);
     carried = theron_v1_inventory_source_at(&w, 0, 0);
