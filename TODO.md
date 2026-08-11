@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+## Nexus: authenticate SCSP reads against SAL/SDDRVS (2026-08-11)
+
+- 🔒 The external launcher can now collect bounded SCSP reads. Run a new
+  operator-owned gameplay capture with the read trace, then bind reads to the
+  authenticated SDDRVS handler, MAP row and SAL window before enabling decode
+  or playback.
+
 ## Theron: M11 handoff test is headless-safe (2026-08-11)
 
 - ✅ The Theron M12/M11 boundary test selects SDL's dummy audio driver when

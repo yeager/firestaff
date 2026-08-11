@@ -1,3 +1,10 @@
+# Nexus: SCSP-read capture handoff (2026-08-11)
+
+- ✅ The external-only Saturn capture launcher now propagates bounded sound-CPU
+  SCSP-read tracing and records its SHA-256 in the manifest.
+- ✅ The launcher regression covers the new receipt path; this remains
+  observational and does not authorize SAL decoding or host playback.
+
 # Theron: disassembly-visible spawn arithmetic receipt (2026-08-11)
 
 - ✅ Added a fail-closed witness API for the visible `$B0E5-$B1EB` arithmetic.

@@ -76,12 +76,28 @@ PY
 write_trace="$tmp_dir/vdp1-writes.trace"
 writer_code_trace="$tmp_dir/writer-code.trace"
 snapshot="$tmp_dir/vdp1-snapshot.raw"
+scsp_read_trace="$tmp_dir/scsp-reads.trace"
 printf 'write-receipt' > "$write_trace"
 printf 'writer-code-receipt' > "$writer_code_trace"
 printf 'snapshot-receipt' > "$snapshot"
+printf 'scsp-read-receipt' > "$scsp_read_trace"
+python3 - "$tmp_dir/fake-mednafen" "$scsp_read_trace" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+Path(sys.argv[1]).write_text(
+    "#!/bin/sh\n"
+    "printf 'authenticated-test-trace' > \"$FIRESTAFF_NEXUS_TRACE_OUTPUT\"\n"
+    "printf 'scsp-read-receipt' > \"$FIRESTAFF_NEXUS_TRACE_SCSP_READS\"\n",
+    encoding="utf-8",
+)
+os.chmod(sys.argv[1], 0o755)
+PY
 FIRESTAFF_NEXUS_TRACE_VDP1_WRITES="$write_trace" \
 FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE="$writer_code_trace" \
 FIRESTAFF_NEXUS_TRACE_VDP1_SNAPSHOT="$snapshot" \
+FIRESTAFF_NEXUS_TRACE_SCSP_READS="$scsp_read_trace" \
 "$launcher" --operator-only --launch --mednafen "$tmp_dir/fake-mednafen" \
   --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
   --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
@@ -92,6 +108,7 @@ grep -Fq 'raw_bytes=24' "$tmp_dir/manifest-real.txt"
 grep -Fq "vdp1_write_trace_sha256=$(shasum -a 256 "$write_trace" | awk '{print $1}')" "$tmp_dir/manifest-real.txt"
 grep -Fq "vdp1_writer_code_trace_sha256=$(shasum -a 256 "$writer_code_trace" | awk '{print $1}')" "$tmp_dir/manifest-real.txt"
 grep -Fq "vdp1_snapshot_sha256=$(shasum -a 256 "$snapshot" | awk '{print $1}')" "$tmp_dir/manifest-real.txt"
+grep -Fq "FIRESTAFF_NEXUS_TRACE_SCSP_READS_sha256=$(shasum -a 256 "$scsp_read_trace" | awk '{print $1}')" "$tmp_dir/manifest-real.txt"
 if "$launcher" --operator-only --launch --mednafen /usr/bin/true \
   --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
   --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \

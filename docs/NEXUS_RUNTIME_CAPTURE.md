@@ -322,6 +322,23 @@ python3 scripts/analyze_nexus_slev_sal_runtime_corridor.py \
 The missing handler and event-to-SAL relation keep SLEV/SAL/SDDRVS playback
 capture-gated.
 
+For the next operator capture, the external Mednafen diagnostic build can
+also record sound-CPU reads. Set the trace path and a bounded SCSP range before
+launching the existing raw-capture launcher:
+
+```text
+FIRESTAFF_NEXUS_TRACE_SCSP_READS=/Volumes/Extern-disk/nexus-saturn-capture/run-scsp-read/scsp-reads.trace
+FIRESTAFF_NEXUS_TRACE_SCSP_READ_MIN=0x100000
+FIRESTAFF_NEXUS_TRACE_SCSP_READ_MAX=0x101000
+FIRESTAFF_NEXUS_TRACE_SCSP_READ_LIMIT=200000
+```
+
+The launcher propagates these variables and records the resulting trace hash
+in the manifest. This trace is still observational: a read of a SCSP address
+does not by itself identify a SLEV selector, SAL codec or host-playback route.
+It is intended to provide the missing source-to-voice evidence needed before
+those runtime gates can be reconsidered.
+
 The producer also records 64 unique VDP2 writer code windows. The primary
 window at `PC=0x06011924` contains the runtime words
 `25fe 0000 25fe 007c ...`, while the initial register setup at
