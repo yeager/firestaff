@@ -9678,6 +9678,18 @@ M11_GameInputResult M11_GameView_HandleCsbFmtownsUtilityTextKey(
                 state->csbFmtownsUtilityParty.Champions[
                     state->csbFmtownsUtilitySelectedChampion].Title, 19u);
             break;
+        /* CEDT006.C F7041: F31 0x520D and 0x5210 switch to the beginning
+         * of the adjoining source field, unlike Up/Down which use its end. */
+        case M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_PAGE_UP:
+            if (field_index != 1) return M11_GAME_INPUT_IGNORED;
+            state->csbFmtownsUtilityEditField = 0;
+            cursor = 0u;
+            break;
+        case M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_PAGE_DOWN:
+            if (field_index != 0) return M11_GAME_INPUT_IGNORED;
+            state->csbFmtownsUtilityEditField = 1;
+            cursor = 0u;
+            break;
         default: return M11_GAME_INPUT_IGNORED;
     }
     state->csbFmtownsUtilityEditCharacterIndex = (uint8_t)cursor;

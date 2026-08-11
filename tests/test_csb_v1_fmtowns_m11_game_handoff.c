@@ -1211,6 +1211,16 @@ int main(void)
                   strcmp(view.csbFmtownsUtilityParty.Champions[0].Title,
                          "ABCDEFGHIJKLMNOPQRS") == 0,
               "F31E C06 title retains its recovered nineteen-character limit");
+        (void)M11_GameView_HandleCsbFmtownsUtilityTextKey(
+            &view, M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_PAGE_UP);
+        CHECK(view.csbFmtownsUtilityEditField == 0 &&
+                  view.csbFmtownsUtilityEditCharacterIndex == 0u,
+              "F31E C06 Page Up switches from title to the start of name");
+        (void)M11_GameView_HandleCsbFmtownsUtilityTextKey(
+            &view, M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_PAGE_DOWN);
+        CHECK(view.csbFmtownsUtilityEditField == 1 &&
+                  view.csbFmtownsUtilityEditCharacterIndex == 0u,
+              "F31E C06 Page Down switches from name to the start of title");
         /* F7001 presents its own GAME / PORTRAIT / CANCEL dialog.  Its
          * selected-portrait branch resolves the dynamic 2:\\#CHAMP_NAME#
          * medium separately from the scanned read-only CD catalogue. The

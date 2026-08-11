@@ -4857,6 +4857,8 @@ static int m11_csb_fmtowns_utility_handle_keydown(
         case SDLK_END: mapped = M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_END; break;
         case SDLK_UP: mapped = M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_UP; break;
         case SDLK_DOWN: mapped = M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_DOWN; break;
+        case SDLK_PAGEUP: mapped = M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_PAGE_UP; break;
+        case SDLK_PAGEDOWN: mapped = M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_PAGE_DOWN; break;
         default: return 1;
     }
     result = M11_GameView_HandleCsbFmtownsUtilityTextKey(gameView, mapped);
