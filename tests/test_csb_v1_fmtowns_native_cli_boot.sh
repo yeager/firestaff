@@ -118,4 +118,23 @@ case "$menu_output" in
         ;;
 esac
 
+if [ -n "$user_save" ]; then
+    menu_resume_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+        SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+        --menu --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
+        --save "$user_save" --script enter --duration 1000 2>&1)" || {
+        printf '%s\n' "$menu_resume_output" >&2
+        exit 1
+    }
+    case "$menu_resume_output" in
+        *"CSB READY: gameId=csb"*"route=f0435-resume"*) ;;
+        *)
+            echo "FAIL: start-menu launch dropped the explicit F31 save" >&2
+            printf '%s\n' "$menu_resume_output" >&2
+            exit 1
+            ;;
+    esac
+    echo "PASS: native CSB FM Towns start menu resumes the selected F0435 save"
+fi
+
 echo "PASS: native CSB FM Towns CLI title, MINI.DAT runtime, and start-menu launch"

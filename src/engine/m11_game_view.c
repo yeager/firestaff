@@ -22430,8 +22430,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
          * m11_resolve_builtin_dungeon_path; we use "CSB READY" here as
          * the canonical CSB-side marker (same string as the in-app status
          * line above so probe + UI stay in sync). */
-        fprintf(stderr, "CSB READY: gameId=csb dataDir=%s\n",
-                spec->dataDir ? spec->dataDir : "(null)");
+        fprintf(stderr, "CSB READY: gameId=csb dataDir=%s route=%s\n",
+                spec->dataDir ? spec->dataDir : "(null)",
+                (spec->savePath && spec->savePath[0] != '\0')
+                    ? "f0435-resume" : "startup");
         return 1;
     }
     /* ── DM2 V1: bypass DM1 dungeon loader, use DM2 V1 runtime boot ──

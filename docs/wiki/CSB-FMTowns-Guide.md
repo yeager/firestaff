@@ -72,9 +72,11 @@ and `--menu` launch, while
 M11 language-private title, switch and Game-program handoff. They add no
 fixture bytes and report `SKIP` when the licensed disc is unavailable.
 When `FIRESTAFF_CSB_FMTOWNS_USER_SAVE` names a language-matched, original
-F0435 save, the native CLI probe also requires `--save` to enter the live
-C03 game session directly. That path must not replay `TITLE.ANM` or route
-the F31 bytes through the Atari/CSBWin save readers.
+F0435 save, the native regression requires both direct `--save` and
+`--menu --save` followed by Enter to enter the live C03 game session. The
+explicit path is bound before either launch route builds its M12 intent, so
+the menu route cannot silently discard it. Neither route may replay
+`TITLE.ANM` or send F31 bytes through the Atari/CSBWin save readers.
 They disable SDL device playback only for headless test stability; source
 music and sound-route receipts remain part of the verified startup state.
 

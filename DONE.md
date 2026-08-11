@@ -1,3 +1,16 @@
+# CSB F31: explicit user save has CLI/start-menu parity (2026-08-12)
+
+- ✅ An explicit language-matched original F0435 `CSBGAME.DAT` now binds to
+  M12 before the direct-launch/menu split. `--menu --game csb --save …` then
+  retains that exact path when Enter opens the selected F31 row.
+- ✅ The opt-in native real-media test proves both direct CLI resume and
+  start-menu → Enter → F0435 resume with the same external user save. The
+  successful launcher marker distinguishes `route=f0435-resume` from an
+  ordinary title/startup handoff.
+- 🔒 The source-owned F0435 reader remains the byte authority: mismatched,
+  malformed or non-F31 saves stay rejected, and no Atari/CSBWin importer is
+  used as a fallback.
+
 # CSB: direct original Atari save launch retains selected media ownership (2026-08-11)
 
 - ✅ `--game csb --platform atari-st --save MINI.DAT` now sends the explicit

@@ -6492,28 +6492,31 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             runRc = 2;
             goto cleanup;
         }
-        /* Keep CLI resume on the same M12 intent -> M11 launch contract as
-         * the save browser. The game-specific importer remains the only
-         * authority on the supplied bytes; this only supplies its path. */
-        if (o->savePath && o->savePath[0] != '\0') {
-            snprintf(menuState.quickResumeSavePath,
-                     sizeof(menuState.quickResumeSavePath),
-                     "%s", o->savePath);
-            snprintf(menuState.quickResumeGameId,
-                     sizeof(menuState.quickResumeGameId),
-                     "%s", o->gameId ? o->gameId : "");
-            menuState.quickResumeAvailable = 1;
-            menuState.quickResumeLaunchRequested = 1;
-            if (o->gameId && strcmp(o->gameId, "csb") == 0) {
-                /* The menu discovery identity is mandatory for an implicit
-                 * CSBWin corpus choice.  `--save` is an explicit user path;
-                 * let the source-owned F0435/original-container admission in
-                 * M11 validate its bytes instead of dropping it before the
-                 * launch intent is built.  This non-zero token is only the
-                 * M12 handoff marker, never a substitute save identity. */
-                M12_StartupMenu_BindCSBSaveCandidateIdentity(&menuState, 1u);
-            }
+    }
+    /* Keep an explicit CLI resume on the same M12 intent -> M11 launch
+     * contract as the save browser.  This belongs outside directLaunch: with
+     * `--menu --game ... --save ...`, the selected menu row must carry the
+     * same supplied path when Enter requests its later handoff.  The
+     * game-specific importer remains the only authority on the bytes. */
+    if (o->savePath && o->savePath[0] != '\0') {
+        snprintf(menuState.quickResumeSavePath,
+                 sizeof(menuState.quickResumeSavePath),
+                 "%s", o->savePath);
+        snprintf(menuState.quickResumeGameId,
+                 sizeof(menuState.quickResumeGameId),
+                 "%s", o->gameId ? o->gameId : "");
+        menuState.quickResumeAvailable = 1;
+        menuState.quickResumeLaunchRequested = 1;
+        if (o->gameId && strcmp(o->gameId, "csb") == 0) {
+            /* The menu discovery identity is mandatory for an implicit
+             * CSBWin corpus choice.  `--save` is an explicit user path; let
+             * F0435/original-container admission validate its bytes instead
+             * of dropping it before the launch intent is built.  This token
+             * is only the M12 handoff marker, never a save identity. */
+            M12_StartupMenu_BindCSBSaveCandidateIdentity(&menuState, 1u);
         }
+    }
+    if (o->directLaunch) {
         /* CLI direct launch bypasses only the M12 menu. The launch still
          * enters through M11_GameView_OpenSelectedMenuEntry(), so DM1 keeps
          * the ReDMCSB TITLE/ENTRANCE order (TITLE.C F0437 before
