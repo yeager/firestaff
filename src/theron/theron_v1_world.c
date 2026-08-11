@@ -113,6 +113,7 @@ static void ww64(uint8_t *p, uint64_t value) {
 #define THERON_CREATURE_WIRE_BYTES_V10 107u
 #define THERON_GENERATOR_WIRE_BYTES 32u
 #define THERON_GENERATOR_WIRE_BYTES_V6 36u
+#define THERON_SOURCE_OBJECT_WIRE_BYTES 41u
 
 static size_t theron_generator_wire_size(void) {
     return THERON_GENERATOR_WIRE_BYTES_V6;
@@ -128,6 +129,39 @@ static size_t theron_creature_wire_size_for_version(uint16_t version) {
 static size_t theron_generator_wire_size_for_version(uint16_t version) {
     return version >= 6u ? THERON_GENERATOR_WIRE_BYTES_V6
                          : THERON_GENERATOR_WIRE_BYTES;
+}
+
+static uint8_t *theron_source_object_write(
+    uint8_t *out, const Theron_V1_SourceObjectRecord *record) {
+    ww32(out, (uint32_t)record->dungeon_id); out += 4;
+    ww32(out, (uint32_t)record->level); out += 4;
+    ww32(out, (uint32_t)record->x); out += 4;
+    ww32(out, (uint32_t)record->y); out += 4;
+    ww16(out, record->source_ref); out += 2;
+    ww16(out, record->next_ref); out += 2;
+    ww16(out, record->source_index); out += 2;
+    *out++ = record->category;
+    *out++ = record->position;
+    *out++ = record->raw_size;
+    memcpy(out, record->raw, sizeof(record->raw));
+    return out + sizeof(record->raw);
+}
+
+static const uint8_t *theron_source_object_read(
+    const uint8_t *in, Theron_V1_SourceObjectRecord *record) {
+    memset(record, 0, sizeof(*record));
+    record->dungeon_id = (int32_t)rw32(in); in += 4;
+    record->level = (int32_t)rw32(in); in += 4;
+    record->x = (int32_t)rw32(in); in += 4;
+    record->y = (int32_t)rw32(in); in += 4;
+    record->source_ref = rw16(in); in += 2;
+    record->next_ref = rw16(in); in += 2;
+    record->source_index = rw16(in); in += 2;
+    record->category = *in++;
+    record->position = *in++;
+    record->raw_size = *in++;
+    memcpy(record->raw, in, sizeof(record->raw));
+    return in + sizeof(record->raw);
 }
 
 /* Source generator records are save data, not an inferred executable
@@ -2373,7 +2407,8 @@ static size_t serialize_size(const Theron_V1_World *world) {
         world->timer_count < 0 || world->timer_count > THERON_MAX_TIMERS ||
         world->creature_count < 0 ||
         world->creature_count > THERON_MAX_CREATURES_PER_LEVEL ||
-        world->source_generator_count > THERON_MAX_SOURCE_GENERATORS) {
+        world->source_generator_count > THERON_MAX_SOURCE_GENERATORS ||
+        world->source_object_count > THERON_MAX_SOURCE_OBJECT_RECORDS) {
         return 0;
     }
     size_t n = 0;
@@ -2403,6 +2438,9 @@ static size_t serialize_size(const Theron_V1_World *world) {
     n += sizeof(world->generator_spawn_count);
     n += sizeof(world->generator_next_tick);
     n += sizeof(world->generator_active_count);
+    n += sizeof(uint32_t); /* source object count */
+    n += (size_t)world->source_object_count *
+         THERON_SOURCE_OBJECT_WIRE_BYTES;
     return n;
 }
 
@@ -2479,6 +2517,11 @@ static size_t theroned_world_serialize(const Theron_V1_World *world,
     }
     ww32(out, (uint32_t)world->generator_active_count);
     out += sizeof(uint32_t);
+    ww32(out, world->source_object_count);
+    out += sizeof(uint32_t);
+    for (unsigned int i = 0; i < world->source_object_count; ++i) {
+        out = theron_source_object_write(out, &world->source_objects[i]);
+    }
 
     return need;
 }
@@ -2505,6 +2548,7 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
     uint16_t ver = rw16(in);
     if (ver != 1u && ver != 2u && ver != 3u && ver != 4u && ver != 5u &&
         ver != 6u && ver != 7u && ver != 8u &&
+        ver != 9u && ver != 10u &&
         ver != THERON_WORLD_SAVE_VERSION) return -3;
     const int legacy_host_records = (ver == 1u);
     in += sizeof(uint16_t) * 2;
@@ -2576,6 +2620,8 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
     memset(world->creatures, 0, sizeof(world->creatures));
     world->source_generator_count = 0;
     memset(world->source_generators, 0, sizeof(world->source_generators));
+    world->source_object_count = 0;
+    memset(world->source_objects, 0, sizeof(world->source_objects));
     memset(world->generator_spawn_count, 0,
            sizeof(world->generator_spawn_count));
     memset(world->generator_next_tick, 0,
@@ -2623,7 +2669,8 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
                     const size_t runtime_tail =
                         runtime_slots * sizeof(uint32_t) +
                         runtime_slots * sizeof(uint64_t) +
-                        sizeof(world->generator_active_count);
+                        sizeof(world->generator_active_count) +
+                        (ver >= 11u ? sizeof(uint32_t) : 0u);
                     if (remaining < sizeof(uint32_t) + runtime_tail)
                         return -1;
                     uint32_t generator_count = rw32(in);
@@ -2632,8 +2679,12 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
                     const size_t generator_wire =
                         theron_generator_wire_size_for_version(ver);
                     if (generator_count > THERON_MAX_SOURCE_GENERATORS ||
-                        (size_t)generator_count * generator_wire +
-                            runtime_tail != remaining) return -1;
+                        (ver < 11u &&
+                         (size_t)generator_count * generator_wire +
+                             runtime_tail != remaining) ||
+                        (ver >= 11u &&
+                         (size_t)generator_count * generator_wire +
+                             runtime_tail > remaining)) return -1;
                     world->source_generator_count = generator_count;
                     for (uint32_t i = 0; i < generator_count; ++i) {
                         in = theron_generator_read(
@@ -2652,6 +2703,29 @@ int theron_v1_world_deserialize(Theron_V1_World *world,
                     if (world->generator_active_count < 0 ||
                         world->generator_active_count >
                             (int32_t)THERON_MAX_SOURCE_GENERATORS) return -1;
+                    if (ver >= 11u) {
+                        const size_t fixed_runtime_tail =
+                            runtime_slots * sizeof(uint32_t) +
+                            runtime_slots * sizeof(uint64_t) +
+                            sizeof(world->generator_active_count);
+                        const size_t source_object_tail =
+                            remaining - (size_t)generator_count *
+                                generator_wire - fixed_runtime_tail;
+                        uint32_t source_object_count = rw32(in);
+                        in += sizeof(uint32_t);
+                        if (source_object_count >
+                                THERON_MAX_SOURCE_OBJECT_RECORDS ||
+                            source_object_tail != sizeof(uint32_t) +
+                                (size_t)source_object_count *
+                                    THERON_SOURCE_OBJECT_WIRE_BYTES) {
+                            return -1;
+                        }
+                        world->source_object_count = source_object_count;
+                        for (uint32_t i = 0; i < source_object_count; ++i) {
+                            in = theron_source_object_read(
+                                in, &world->source_objects[i]);
+                        }
+                    }
                 }
             }
         } else {

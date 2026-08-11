@@ -1,3 +1,16 @@
+# Theron: preserve source-object ownership through save/load (2026-08-11)
+
+- ✅ World save version 11 now serializes the explicit 41-byte source-object
+  occurrence ledger, including dungeon/level position, linked source refs,
+  category and raw payload. This prevents a carried real item from losing its
+  source identity after a save and resume.
+- ✅ Added a round-trip regression for the ledger; old save versions 1–10
+  remain readable without inventing source records. Real US Track 02 loader,
+  production combat bridge and 131-case mechanics regression pass.
+- 🔒 This preserves provenance only. Original RNG ownership, AI/combat/loot,
+  generator consumers, T700/T900 semantics and media consumers remain gated by
+  authenticated runtime evidence.
+
 # Theron: authentic SDL2 SRAM replay reaches gameplay transport (2026-08-11)
 
 - ✅ Built the official SDL2 2.30.9 runtime on the external disk and rebuilt

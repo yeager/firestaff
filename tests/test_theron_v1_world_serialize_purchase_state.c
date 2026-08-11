@@ -171,6 +171,19 @@ static void seed_world(Theron_V1_World *world) {
     world->generator_spawn_count[13] = 9;
     world->generator_next_tick[13] = 0x1112131415161718ULL;
     world->generator_active_count = 14;
+    world->source_object_count = 1;
+    world->source_objects[0].dungeon_id = THERON_DUNGEON_3_FORMIC;
+    world->source_objects[0].level = 2;
+    world->source_objects[0].x = 7;
+    world->source_objects[0].y = 9;
+    world->source_objects[0].source_ref = 0x1234;
+    world->source_objects[0].next_ref = 0x5678;
+    world->source_objects[0].source_index = 0x0042;
+    world->source_objects[0].category = THERON_CAT_WEAPON;
+    world->source_objects[0].position = 0;
+    world->source_objects[0].raw_size = 6;
+    world->source_objects[0].raw[0] = 0xde;
+    world->source_objects[0].raw[5] = 0xad;
     theron_v1_party_recalculate_loads(&world->party);
 }
 
@@ -301,6 +314,20 @@ static void test_round_trip_keeps_purchase_state(void) {
                 restored.generator_next_tick[13] == 0x1112131415161718ULL &&
                 restored.generator_active_count == 14,
                 "generator source record and runtime state survive round-trip");
+    expect_true(restored.source_object_count == 1 &&
+                restored.source_objects[0].dungeon_id ==
+                    THERON_DUNGEON_3_FORMIC &&
+                restored.source_objects[0].level == 2 &&
+                restored.source_objects[0].x == 7 &&
+                restored.source_objects[0].y == 9 &&
+                restored.source_objects[0].source_ref == 0x1234 &&
+                restored.source_objects[0].next_ref == 0x5678 &&
+                restored.source_objects[0].source_index == 0x0042 &&
+                restored.source_objects[0].category == THERON_CAT_WEAPON &&
+                restored.source_objects[0].raw_size == 6 &&
+                restored.source_objects[0].raw[0] == 0xde &&
+                restored.source_objects[0].raw[5] == 0xad,
+                "source object occurrence survives round-trip");
 
     free(buffer);
 
