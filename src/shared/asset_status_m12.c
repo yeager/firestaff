@@ -18,8 +18,12 @@
 #include <stdlib.h>
 #include <string.h>
 #ifdef _WIN32
+#include <sys/stat.h>
+#include <sys/utime.h>
 #include <windows.h>
 #else
+#include <sys/stat.h>
+#include <utime.h>
 #include <unistd.h>
 #endif
 
@@ -2163,6 +2167,8 @@ static int m12_copy_file_to_path(const char* srcPath, const char* dstPath) {
     FILE* out;
     unsigned char buffer[8192];
     size_t n;
+    struct stat sourceStatus;
+    struct stat destinationStatus;
     if (!srcPath || !dstPath || m12_path_is_virtual_asset(srcPath)) {
         return 0;
     }
@@ -2174,6 +2180,19 @@ static int m12_copy_file_to_path(const char* srcPath, const char* dstPath) {
      * leave the bytes untouched rather than turning a re-scan into data
      * loss. */
     if (strcmp(srcPath, dstPath) == 0) {
+        return 1;
+    }
+    /* Cache materialization used to rewrite every source file on each start.
+     * Preserve the source modification time after a successful copy and use
+     * the same (size, mtime) invalidation key as the persistent scan cache.
+     * This avoids re-copying a verified loose package while a changed source,
+     * truncated cache member, or missing member still takes the full copy
+     * path. The later package-specific hash gates remain the authority for
+     * launch admission. */
+    if (stat(srcPath, &sourceStatus) == 0 &&
+        stat(dstPath, &destinationStatus) == 0 &&
+        sourceStatus.st_size == destinationStatus.st_size &&
+        sourceStatus.st_mtime == destinationStatus.st_mtime) {
         return 1;
     }
     in = fopen(srcPath, "rb");
@@ -2198,7 +2217,25 @@ static int m12_copy_file_to_path(const char* srcPath, const char* dstPath) {
         return 0;
     }
     fclose(in);
-    return fclose(out) == 0;
+    if (fclose(out) != 0) {
+        return 0;
+    }
+#ifdef _WIN32
+    {
+        struct _utimbuf times;
+        times.actime = sourceStatus.st_atime;
+        times.modtime = sourceStatus.st_mtime;
+        (void)_utime(dstPath, &times);
+    }
+#else
+    {
+        struct utimbuf times;
+        times.actime = sourceStatus.st_atime;
+        times.modtime = sourceStatus.st_mtime;
+        (void)utime(dstPath, &times);
+    }
+#endif
+    return 1;
 }
 
 static int m12_game_uses_flat_dat_runtime(const char* gameId) {
