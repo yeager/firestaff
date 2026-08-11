@@ -1,0 +1,6 @@
+#include "csb_hint_oracle_graphics_surface.h"
+#include <stdlib.h>
+#include <string.h>
+void csb_hint_oracle_graphics_surface_init(CSB_HintOracleGraphicsSurface *s){if(s){memset(s,0,sizeof(*s));csb_hint_oracle_dat_real_cache_init(&s->source);}}
+void csb_hint_oracle_graphics_surface_free(CSB_HintOracleGraphicsSurface *s){if(s){free(s->pixels);csb_hint_oracle_dat_real_cache_free(&s->source);memset(s,0,sizeof(*s));}}
+int csb_hint_oracle_graphics_surface_load(CSB_HintOracleGraphicsSurface *s,const char *dir,int depth,const char *md5){const uint8_t *img,*pal;size_t ni,np;int rc;if(!s)return -1;csb_hint_oracle_graphics_surface_free(s);csb_hint_oracle_graphics_surface_init(s);rc=csb_hint_oracle_dat_real_scan_and_load(dir,depth,md5,&s->source);if(rc)return rc;if(csb_hint_oracle_dat_get_segment(&s->source.archive,1,&img,&ni)||csb_hint_oracle_dat_get_segment(&s->source.archive,3,&pal,&np))goto bad;s->pixels=(uint8_t*)malloc(CSB_HINT_ORACLE_GRAPHICS_SURFACE_WIDTH*CSB_HINT_ORACLE_GRAPHICS_SURFACE_HEIGHT);if(!s->pixels)goto bad;if(!csb_hint_oracle_dat_img2_decode(img,ni,&s->width,&s->height,s->pixels,64000,NULL)||s->width!=320||s->height!=200||!csb_hint_oracle_dat_palette_decode(pal,np,s->rgb4))goto bad;return 0;bad:csb_hint_oracle_graphics_surface_free(s);return -4;}
