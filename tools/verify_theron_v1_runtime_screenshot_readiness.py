@@ -157,6 +157,8 @@ def run_case(
     firestaff: Path,
     case: dict[str, Any],
     retain_dir: Path | None = None,
+    vram_snapshot: Path | None = None,
+    vce_snapshot: Path | None = None,
 ) -> dict[str, Any]:
     data_dir = Path(case["path"])
     row: dict[str, Any] = {
@@ -194,6 +196,13 @@ def run_case(
         # before Firestaff reaches the Track 02 handoff; the existing runtime
         # boot probes use the same dummy-audio contract.
         env.setdefault("SDL_AUDIODRIVER", "dummy")
+        if vram_snapshot is not None and vce_snapshot is not None:
+            # This is an explicit, externally retained VDC/VCE witness.  It
+            # enables source-screen capture only; the runtime still keeps
+            # square/object/HUD semantics closed until their consumers are
+            # authenticated separately.
+            env["FIRESTAFF_THERON_VRAM_SNAPSHOT"] = str(vram_snapshot)
+            env["FIRESTAFF_THERON_VCE_SNAPSHOT"] = str(vce_snapshot)
         env["FIRESTAFF_FAIL_IF_NO_LAUNCH"] = "1"
         env["FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON"] = str(probe_path)
         env["FIRESTAFF_AUTOTEST_SCREENSHOT_DIR"] = str(screenshot_dir)
@@ -311,6 +320,7 @@ def write_outputs(result: dict[str, Any]) -> None:
         "- These receipts prove Firestaff can emit Theron runtime screenshot artifacts when the Track 02 launch reaches M11.",
         "- Any deterministic fallback asset rejects this gate; only source-backed startup graphics may pass.",
         "- No generated, mock, or synthetic image is promoted by this gate.",
+        "- An externally retained, hash-authenticated VDC/VCE pair can be supplied with `--vram-snapshot` and `--vce-snapshot`; this admits only the captured source screen and does not open square, object, HUD or gameplay semantics.",
         "- README-eligible Theron screenshots still need reviewed real runtime frames and stronger semantic Track 02 loader parity.",
         "",
         f"Manifest: `{rel_or_str(MANIFEST)}`",
@@ -335,7 +345,21 @@ def main() -> int:
         default=None,
         help="Optional external directory for retaining real emitted BMPs; never use this to promote them automatically.",
     )
+    parser.add_argument(
+        "--vram-snapshot",
+        type=Path,
+        default=None,
+        help="Explicit external 64 KiB authenticated VDC snapshot for source-screen capture.",
+    )
+    parser.add_argument(
+        "--vce-snapshot",
+        type=Path,
+        default=None,
+        help="Explicit external 1 KiB authenticated VCE snapshot paired with --vram-snapshot.",
+    )
     args = parser.parse_args()
+    if (args.vram_snapshot is None) != (args.vce_snapshot is None):
+        parser.error("--vram-snapshot and --vce-snapshot must be supplied together")
     firestaff = args.build_dir / "firestaff"
     cases = list(DEFAULT_CASES)
     for item in args.case:
@@ -343,7 +367,13 @@ def main() -> int:
             print(f"invalid --case value, expected ID=PATH: {item}", file=sys.stderr)
             return 2
         cid, cpath = item.split("=", 1)
-        cases.append({"id": cid, "label": cid.replace("_", " "), "path": Path(cpath)})
+        replacement = {"id": cid, "label": cid.replace("_", " "), "path": Path(cpath)}
+        for index, existing in enumerate(cases):
+            if existing["id"] == cid:
+                cases[index] = replacement
+                break
+        else:
+            cases.append(replacement)
 
     result: dict[str, Any] = {
         "schema": "firestaff.parity.theron_v1_runtime_screenshot_readiness.v1",
@@ -363,7 +393,16 @@ def main() -> int:
         print(f"FAIL {PASS}: missing firestaff binary", file=sys.stderr)
         return 1
 
-    result["cases"] = [run_case(firestaff, case, args.retain_dir) for case in cases]
+    result["cases"] = [
+        run_case(
+            firestaff,
+            case,
+            args.retain_dir,
+            args.vram_snapshot,
+            args.vce_snapshot,
+        )
+        for case in cases
+    ]
     present_rows = [row for row in result["cases"] if row.get("present")]
     if not present_rows:
         result["status"] = "SKIP"

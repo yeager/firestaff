@@ -22,7 +22,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "FIRESTAFF BOOT PROBE READY: gameId=theron sourceKind=4 sourceId=theron assetMd5=f23601102138f87c33025877767ebf76 dataDir=<canonical_pcengine_root-data-dir> frames=0 inputs=11 scriptFrames=0 presentationMode=0 presentation=320x200 phase=theron-runtime startupActive=0 startupFrame=0 startupAnimation=theron-runtime startupAnimationActive=0 titleFrame=0 titleFrameMax=0 titleReady=1 levelLoaded=1 map=0 party=1,0,0 champions=2 runtimeTick=0 csbViewportHash=0 csbV22CellsPainted=0 dm1WorldTick=0 startedFromLauncher=1 introBypassed=0 dm1HoCBootSummary=missing\nAUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260811-021956.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260811-021956.bmp",
+        "stderr": "FIRESTAFF BOOT PROBE READY: gameId=theron sourceKind=4 sourceId=theron assetMd5=f23601102138f87c33025877767ebf76 dataDir=<canonical_pcengine_root-data-dir> frames=0 inputs=11 scriptFrames=0 presentationMode=0 presentation=320x200 phase=theron-runtime startupActive=0 startupFrame=0 startupAnimation=theron-runtime startupAnimationActive=0 titleFrame=0 titleFrameMax=0 titleReady=1 levelLoaded=1 map=0 party=1,0,0 champions=2 runtimeTick=0 csbViewportHash=0 csbV22CellsPainted=0 dm1WorldTick=0 startedFromLauncher=1 introBypassed=0 dm1HoCBootSummary=missing\nAUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260811-022712.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260811-022712.bmp",
         "stdout": "[TQR] Verified Track 02 accepted: <canonical_pcengine_root-data-dir>/TQUS02.bin; later original graphics bank is not captured yet, so fallback visuals stay disabled\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)",
         "timed_out": false
       },
@@ -36,7 +36,7 @@
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-presented-20260811-021956.bmp",
+          "name": "firestaff-presented-20260811-022712.bmp",
           "non_black_pixels": 0,
           "sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f",
           "size": 192054,
@@ -85,7 +85,7 @@
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-20260811-021956.bmp",
+          "name": "firestaff-20260811-022712.bmp",
           "non_black_pixels": 0,
           "sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f",
           "size": 192054,
@@ -121,7 +121,7 @@
     }
   ],
   "firestaff": "build/firestaff",
-  "generated_at": "2026-08-11T00:19:55.732067+00:00",
+  "generated_at": "2026-08-11T00:27:11.894814+00:00",
   "non_claims": [
     "No public Theron screenshot image is promoted.",
     "No generated or mock image is used.",
