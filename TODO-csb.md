@@ -274,8 +274,7 @@ populated dungeon states.
   receipt-bound 464-byte planar portrait payload. Unknown names, missing
   catalogues, invalid records, and generated filenames remain rejected. The
   real F31 portrait corpus covers the transaction in
-  `csb_v1_fmtowns_m11_game_handoff`; C06 `LOAD CHAMPIONS`, name/title editing,
-  and the native file-picker selection loop remain open.
+  `csb_v1_fmtowns_m11_game_handoff`; C06 name/title editing remains open.
 
 - **FM-TOWNS-C06-LOAD-001 — `F7002_ReadCMP` is now an authenticated import
   transaction.** Given an index returned by the admitted `PORTRAIT` catalogue,
@@ -286,12 +285,12 @@ populated dungeon states.
   preserves the authenticated source-sorted 24-entry list, provides bounded
   previous/next movement, and delegates the selected row to this same import
   transaction. The real English catalogue covers catalog binding, movement,
-  and import in `csb_v1_fmtowns_m11_game_handoff`. The remaining gap is wiring
-  the selector into C06's source-level F7083/F7084 drawing and modal
-  keyboard/mouse loop; the source-coordinate file-list state, bounded
-  scrolling, command ordinals, and real-data raster are now implemented,
-  but the C06 utility main loop still needs to own the modal event pump and
-  return the selected row to F7002. No host path or synthetic row is accepted.
+  and import in `csb_v1_fmtowns_m11_game_handoff`. **2026-08-11 modal loop
+  closed:** M11's C06 utility owner enters F7083 on `LOAD CHAMPIONS`, renders
+  the admitted source raster, sends source-coordinate left-clicks to F7084,
+  preserves scroll/cancel commands, and hands an accepted row to F7002. The
+  real F31E handoff test proves open, raster, selection and import. No host
+  path or synthetic row is accepted. Name/title editing remains separate.
 
 ### CSB V1
 
