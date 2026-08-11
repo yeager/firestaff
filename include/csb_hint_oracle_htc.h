@@ -113,6 +113,16 @@ int csb_hint_oracle_htc_get_hint_content_slice(
     const uint8_t **out_compressed,
     size_t *out_compressed_size);
 
+/* Return one original Hint Oracle page. `page_number` is one-based, matching
+ * ReDMCSB HINTHINT.C's C12_GET_HINT_TITLE_OR_PAGE contract: zero selects the
+ * title and page numbers 1..page_count select decompressed page content. */
+int csb_hint_oracle_htc_get_hint_page_slice(
+    const CSB_HintOracleHTC *htc,
+    size_t hint_index,
+    size_t page_number,
+    const uint8_t **out_compressed,
+    size_t *out_compressed_size);
+
 int csb_hint_oracle_htc_lzw_decompress(const uint8_t *compressed,
                                        size_t compressed_size,
                                        uint8_t *out,

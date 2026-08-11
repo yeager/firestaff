@@ -226,6 +226,24 @@ static int test_content_slices_and_lzw(void)
         compressed, compressed_size, decoded, sizeof(decoded),
         &decoded_size) == CSB_HINT_ORACLE_HTC_OK);
     ASSERT_TRUE(strcmp((const char *)decoded, "Anywhere") == 0);
+
+    ASSERT_TRUE(csb_hint_oracle_htc_get_hint_page_slice(
+        &htc, 0u, 1u, &compressed, &compressed_size) ==
+        CSB_HINT_ORACLE_HTC_OK);
+    ASSERT_TRUE(compressed == htc.contents);
+    ASSERT_TRUE(csb_hint_oracle_htc_get_hint_page_slice(
+        &htc, 1u, 1u, &compressed, &compressed_size) ==
+        CSB_HINT_ORACLE_HTC_OK);
+    ASSERT_TRUE(csb_hint_oracle_htc_lzw_decompress(
+        compressed, compressed_size, decoded, sizeof(decoded),
+        &decoded_size) == CSB_HINT_ORACLE_HTC_OK);
+    ASSERT_TRUE(strcmp((const char *)decoded, "Anywhere") == 0);
+    ASSERT_TRUE(csb_hint_oracle_htc_get_hint_page_slice(
+        &htc, 0u, 0u, &compressed, &compressed_size) ==
+        CSB_HINT_ORACLE_HTC_ERR_ARGUMENT);
+    ASSERT_TRUE(csb_hint_oracle_htc_get_hint_page_slice(
+        &htc, 0u, 4u, &compressed, &compressed_size) ==
+        CSB_HINT_ORACLE_HTC_ERR_BAD_HINT_RANGE);
     return 1;
 }
 

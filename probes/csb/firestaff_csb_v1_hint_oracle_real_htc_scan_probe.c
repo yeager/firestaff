@@ -112,8 +112,10 @@ int main(int argc, char **argv)
     char default_dir[1024];
     char scratch_buf[256];
     char hint_name[64];
-    uint8_t page_buf[2048];
+    uint8_t page_buf[2240];
     size_t page_size = 0u;
+    size_t pages_checked = 0u;
+    size_t empty_pages = 0u;
     uint16_t indices[8];
     size_t count = 0u;
     size_t known_count = 0u;
@@ -191,6 +193,42 @@ int main(int argc, char **argv)
           "real HCSB.HTC exposes at least one hint record");
     CHECK(cache.htc.page_count > 0u,
           "real HCSB.HTC exposes at least one compressed page");
+
+    /* HINTHINT.C selects pages by a one-based page number within the
+     * selected hint. Exercise that exact selector for every authored page,
+     * rather than checking only each hint's first page. */
+    for (i = 0u; i < cache.htc.hint_count; ++i) {
+        CSB_HintOracleHTC_Hint hint;
+        size_t page_number;
+        CHECK(csb_hint_oracle_htc_get_hint(&cache.htc, i, &hint) ==
+                  CSB_HINT_ORACLE_HTC_OK,
+              "real-asset hint record is readable");
+        for (page_number = 1u; page_number <= hint.page_count; ++page_number) {
+            const uint8_t *compressed = NULL;
+            size_t compressed_size = 0u;
+            size_t decoded_size = 0u;
+            int page_rc = csb_hint_oracle_htc_get_hint_page_slice(
+                &cache.htc, i, page_number, &compressed, &compressed_size);
+            CHECK(page_rc == CSB_HINT_ORACLE_HTC_OK && compressed != NULL,
+                  "real-asset authored page has a bounded slice");
+            if (page_rc == CSB_HINT_ORACLE_HTC_OK) {
+                if (compressed_size == 0u) {
+                    ++empty_pages;
+                } else {
+                    CHECK(csb_hint_oracle_htc_lzw_decompress(
+                              compressed, compressed_size, page_buf,
+                              sizeof(page_buf), &decoded_size) ==
+                              CSB_HINT_ORACLE_HTC_OK && decoded_size > 0u,
+                          "real-asset non-empty page decompresses");
+                }
+            }
+            ++pages_checked;
+        }
+    }
+    CHECK(pages_checked == cache.htc.page_count,
+          "per-hint page ranges cover the real page table exactly");
+    printf("authored_pages=%zu empty_pages=%zu nonempty_pages=%zu\n",
+           pages_checked, empty_pages, pages_checked - empty_pages);
 
     /* Cross-check the matched MD5 against the known list. */
     {

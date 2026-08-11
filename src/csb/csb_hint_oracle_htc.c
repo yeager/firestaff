@@ -288,6 +288,48 @@ int csb_hint_oracle_htc_get_hint_content_slice(
     return CSB_HINT_ORACLE_HTC_OK;
 }
 
+int csb_hint_oracle_htc_get_hint_page_slice(
+    const CSB_HintOracleHTC *htc,
+    size_t hint_index,
+    size_t page_number,
+    const uint8_t **out_compressed,
+    size_t *out_compressed_size)
+{
+    CSB_HintOracleHTC_Hint hint;
+    size_t page_index;
+    size_t offset = 0u;
+    size_t i;
+    uint16_t length;
+    int rc;
+
+    if (!htc || !out_compressed || !out_compressed_size ||
+        hint_index >= htc->hint_count || page_number == 0u) {
+        return CSB_HINT_ORACLE_HTC_ERR_ARGUMENT;
+    }
+    rc = csb_hint_oracle_htc_get_hint(htc, hint_index, &hint);
+    if (rc != CSB_HINT_ORACLE_HTC_OK) {
+        return rc;
+    }
+    if (page_number > hint.page_count) {
+        return CSB_HINT_ORACLE_HTC_ERR_BAD_HINT_RANGE;
+    }
+    page_index = (size_t)hint.first_page_index + page_number - 1u;
+    if (page_index >= htc->page_count) {
+        return CSB_HINT_ORACLE_HTC_ERR_BAD_HINT_RANGE;
+    }
+    for (i = 0u; i < page_index; ++i) {
+        offset += csb_hint_oracle_htc_page_compressed_length(htc, i);
+    }
+    length = csb_hint_oracle_htc_page_compressed_length(htc, page_index);
+    if (offset > htc->content_size ||
+        (size_t)length > htc->content_size - offset) {
+        return CSB_HINT_ORACLE_HTC_ERR_BAD_CONTENT_SIZE;
+    }
+    *out_compressed = htc->contents + offset;
+    *out_compressed_size = length;
+    return CSB_HINT_ORACLE_HTC_OK;
+}
+
 static int lzw_read_code(const uint8_t *compressed,
                          size_t compressed_size,
                          size_t *bit_pos,

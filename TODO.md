@@ -15,6 +15,11 @@
   original ST 2.0/2.1 256×27 indexed font raster. `HINTTEXT.C` selects its
   8×9 glyphs from this exact raster; no host font or synthetic glyph sheet is
   admitted.
+- ✅ The HTC reader now exposes every authored page by the original one-based
+  page number used by `HINTHINT.C`, not only a hint's first page. The
+  real-data probe checks that all selected pages have bounded slices and
+  that every non-empty page decompresses successfully. Empty page records are
+  retained as authored rather than rejected or replaced.
 - 🔒 Graphical Hint Oracle/M11/M12 routing, segment 0's integer consumer,
   original text/page layout and original-frame pixel parity remain open. Do
   not treat the decoded resource surfaces as a rendered Utility Disk screen.

@@ -24,3 +24,10 @@ copying any original bytes into the repository.
 This binds source pixels and glyph geometry only. It does not establish the
 contents of segment 0, Hint Oracle page layout, palette transitions, M11/M12
 routing, or a frame-level parity claim.
+
+The text source is selected independently through
+`csb_hint_oracle_htc_get_hint_page_slice()`. Its one-based page number mirrors
+`HINTHINT.C` `C12_GET_HINT_TITLE_OR_PAGE`: page zero is a title request in the
+original program, while page numbers 1 through the hint's page count select
+compressed content. The reader deliberately exposes only the latter; title
+text remains the authenticated HTC hint-name record.
