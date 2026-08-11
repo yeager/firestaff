@@ -13911,3 +13911,14 @@ and production source-combat tests.
 - ✅ The native F7052/F0433 writer now uses that same `8 + 20`-byte F31
   identity layout and the source direction/cell byte order. A real-media
   F7052 → F0435 round trip proves no title truncation or pose-field swap.
+# CSB Atari ST: original blank Save Disk MSA boundary (2026-08-11)
+
+- ✅ Lade till en skrivskyddad MSA/FAT12-kataloginventering och en
+  realmedia-CTest för originalarkivets Atari ST Save Disk. Den riktiga
+  720 KiB-MSA:n avkodas och har exakt noll vanliga rotfiler: den är en
+  formaterad, tom sparskiva och inte ett syntetiskt eller trasigt
+  `CSBGAME.DAT`-prov.
+- ✅ Den nya kontrollen publicerar aldrig en sparning och skapar ingen
+  ersättningsfil. En tom originalskiva betyder uttryckligen att det saknas en
+  återupptagbar session; den befintliga `MINI.DAT`-runtimetesten är fortsatt
+  den separata verkliga start-/sparningskorpusen.

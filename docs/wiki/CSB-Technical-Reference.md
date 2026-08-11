@@ -75,6 +75,14 @@ sequence, and the first native FTLCODE runtime frame. The existing
 `csb_v1_atari_mini_runtime_archive` test covers the original `MINI.DAT`
 resume path from the archive without adding a synthetic save.
 
+The same Atari archive also preserves the retail **Save Disk** as a 720 KiB
+MSA/FAT12 medium. Its root directory is genuinely empty: it is formatted
+media awaiting the game’s native save transaction, not a carrier for a hidden
+`CSBGAME.DAT`. The skip-safe `csb_v1_atari_save_disk_archive` test extracts
+only that member, decodes the MSA container, inventories the root directory,
+and requires the zero-file result. Firestaff must report this as *no saved
+session* and must never invent a replacement save merely to launch it.
+
 FM Towns is treated the same way even though its retail archive contains a
 large CD image: temporary expansion happens inside the selected edition's
 Firestaff cache. On success it is atomically promoted to `FMTOWNS.IMG`; on

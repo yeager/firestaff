@@ -25,6 +25,7 @@ static void put_le32(unsigned char *p, unsigned long value) {
 int main(void) {
     enum { track_bytes = 9 * 512, image_bytes = 10 + 2 + track_bytes };
     unsigned char image[image_bytes], out[2];
+    char names[1][13];
     size_t out_size = 0u;
     CSB_V1_AtariMsaReceipt receipt;
     unsigned char *disk = image + 12;
@@ -44,6 +45,14 @@ int main(void) {
                                              out, sizeof(out), &out_size, &receipt) ||
         out_size != 2u || memcmp(out, "OK", 2u) != 0 || receipt.side_count != 1u ||
         receipt.sectors_per_track != 9u || receipt.root_file_count != 1u) {
+        return 1;
+    }
+    if (!csb_v1_atari_msa_list_root_files(image, sizeof(image), names, 1u,
+                                          &out_size, &receipt) ||
+        out_size != 1u || strcmp(names[0], "SAVE.DAT") != 0 ||
+        receipt.root_file_count != 1u ||
+        !csb_v1_atari_msa_list_root_files(image, sizeof(image), NULL, 0u,
+                                          &out_size, NULL) || out_size != 1u) {
         return 1;
     }
     put_le16(disk + 11, 512); put_le16(disk + 14, 1); put_le16(disk + 17, 1);
@@ -76,6 +85,12 @@ int main(void) {
                     receipt.last_track, receipt.decoded_disk_bytes);
             free(real); return 1;
         }
+        if (!csb_v1_atari_msa_list_root_files(real, (size_t)file_size, NULL, 0u,
+                                              &out_size, &receipt) ||
+            out_size != receipt.root_file_count || out_size != 0u) {
+            free(real); return 1;
+        }
+        puts("PASS: original Atari CSB save disk is a blank formatted medium");
         free(real);
         puts("PASS: original Atari CSB save disk MSA decodes to 720 KiB");
     }

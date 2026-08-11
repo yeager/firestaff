@@ -21,7 +21,7 @@ Read support alone does not imply a complete game route.
 | --- | --- |
 | PC 3.4 | GRAPHICS.DAT IMG3 records: packed 4-bit pixels, high nibble first, with row padding; DUNGEON.DAT provides the dungeon and linked thing records. |
 | Amiga | IMG1 nibble-RLE graphics. CSB also uses platform program assets such as TITL.DAT, APPB.FTL, KAOS.FTL and BJELoad_R. |
-| Atari ST | DMCSB1 catalogue with 563 Atari-LZW records decoded as big-endian IMG1. CSB uses ANIMATE.SCR, ANIMATE.DAT, ANIMATE.FTL, FTLCODE and CHAOS.FTL. |
+| Atari ST | DMCSB1 catalogue with 563 Atari-LZW records decoded as big-endian IMG1. CSB uses ANIMATE.SCR, ANIMATE.DAT, ANIMATE.FTL, FTLCODE and CHAOS.FTL. The retail Save Disk is a 720 KiB MSA/FAT12 blank formatted medium; an empty root means no save, not missing game data. |
 | FM Towns | 0x8001-wrapped IMG2 graphics, not PC IMG3. CSB's F31 chain includes RUN386.EXE, SWITCHTW.EXP, CHTWE.EXP or CHTWJ.EXP, and the Utility executables. |
 
 CSB has no original DOS/PC 3.4 release. Its Amiga route is the default

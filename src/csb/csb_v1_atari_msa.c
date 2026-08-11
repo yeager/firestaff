@@ -111,6 +111,50 @@ static int msa_name83(const char *name, uint8_t out[11]) {
     return base && (!dot || ext);
 }
 
+static int msa_root_directory(const uint8_t *disk, size_t disk_size,
+                              const uint8_t **out_root, uint16_t *out_entries,
+                              int *out_little) {
+    uint16_t bps, reserved, root_entries, sectors_per_fat;
+    uint8_t fats;
+    size_t root_offset, root_bytes;
+    int little;
+
+    if (!disk || disk_size < 512u || !out_root || !out_entries || !out_little)
+        return 0;
+    little = be16(disk + 11) != 512u && le16(disk + 11) == 512u;
+    bps = fat16(disk + 11, little); reserved = fat16(disk + 14, little);
+    fats = disk[16]; root_entries = fat16(disk + 17, little);
+    sectors_per_fat = fat16(disk + 22, little);
+    if (bps != 512u || !fats || !root_entries || !sectors_per_fat) return 0;
+    root_offset = ((size_t)reserved + (size_t)fats * sectors_per_fat) * bps;
+    root_bytes = (size_t)root_entries * 32u;
+    if (root_offset > disk_size || root_bytes > disk_size - root_offset) return 0;
+    *out_root = disk + root_offset; *out_entries = root_entries;
+    *out_little = little;
+    return 1;
+}
+
+static int msa_root_file_name(const uint8_t entry[32], char out_name[13]) {
+    size_t base = 8u, ext = 3u, cursor = 0u, i;
+
+    while (base && entry[base - 1u] == ' ') --base;
+    while (ext && entry[8u + ext - 1u] == ' ') --ext;
+    if (!base) return 0;
+    for (i = 0u; i < base; ++i) {
+        if (!isalnum(entry[i])) return 0;
+        out_name[cursor++] = (char)toupper(entry[i]);
+    }
+    if (ext) {
+        out_name[cursor++] = '.';
+        for (i = 0u; i < ext; ++i) {
+            if (!isalnum(entry[8u + i])) return 0;
+            out_name[cursor++] = (char)toupper(entry[8u + i]);
+        }
+    }
+    out_name[cursor] = '\0';
+    return 1;
+}
+
 int csb_v1_atari_msa_probe(const uint8_t *msa, size_t msa_size,
                            CSB_V1_AtariMsaReceipt *out_receipt) {
     uint8_t *disk = NULL;
@@ -121,6 +165,41 @@ int csb_v1_atari_msa_probe(const uint8_t *msa, size_t msa_size,
     if (!result) return 0;
     if (out_receipt) *out_receipt = receipt;
     return 1;
+}
+
+int csb_v1_atari_msa_list_root_files(const uint8_t *msa, size_t msa_size,
+                                     char (*out_names)[13],
+                                     size_t out_capacity, size_t *out_count,
+                                     CSB_V1_AtariMsaReceipt *out_receipt) {
+    uint8_t *disk = NULL;
+    size_t disk_size = 0u, i, count = 0u;
+    const uint8_t *root;
+    uint16_t root_entries;
+    int little;
+    CSB_V1_AtariMsaReceipt receipt;
+
+    if (out_count) *out_count = 0u;
+    if (!out_count || !msa_decode(msa, msa_size, &disk, &disk_size, &receipt) ||
+        !msa_root_directory(disk, disk_size, &root, &root_entries, &little)) goto fail;
+    (void)little;
+    for (i = 0u; i < root_entries; ++i) {
+        const uint8_t *entry = root + i * 32u;
+        char file_name[13];
+        if (entry[0] == 0x00u) break;
+        if (entry[0] == 0xe5u || (entry[11] & 0x18u) != 0u) continue;
+        if (!msa_root_file_name(entry, file_name)) goto fail;
+        if (out_names && count < out_capacity) memcpy(out_names[count], file_name, sizeof(file_name));
+        ++count;
+    }
+    if (out_names && count > out_capacity) goto fail;
+    receipt.root_file_count = (uint16_t)count;
+    *out_count = count;
+    if (out_receipt) *out_receipt = receipt;
+    free(disk);
+    return 1;
+fail:
+    free(disk);
+    return 0;
 }
 
 int csb_v1_atari_msa_read_sector(const uint8_t *msa, size_t msa_size,

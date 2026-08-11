@@ -24,6 +24,16 @@ typedef struct {
 int csb_v1_atari_msa_probe(const uint8_t *msa, size_t msa_size,
                            CSB_V1_AtariMsaReceipt *out_receipt);
 
+/* Inventory the ordinary 8.3 files in the decoded GEMDOS root directory.
+ * `out_names` contains uppercase, NUL-terminated names such as
+ * "CSBGAME.DAT". Pass NULL and zero capacity to obtain the exact count.
+ * Volume labels, directories, deleted entries, and malformed images are
+ * rejected from the inventory rather than being exposed as playable data. */
+int csb_v1_atari_msa_list_root_files(const uint8_t *msa, size_t msa_size,
+                                     char (*out_names)[13],
+                                     size_t out_capacity, size_t *out_count,
+                                     CSB_V1_AtariMsaReceipt *out_receipt);
+
 /* Read one 8.3 root-directory file from a complete MSA image. `name` may be
  * written as "CSBGAME.DAT". With out_bytes == NULL, out_size receives the
  * exact file length. A malformed image, non-root file, FAT loop, or missing

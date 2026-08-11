@@ -16877,6 +16877,14 @@ endif()
         LABELS "tier2;csb;atari;save;runtime;real_data;archive;skip_safe"
     )
     add_test(
+        NAME csb_v1_atari_save_disk_archive
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_save_disk_archive.sh"
+            "$<TARGET_FILE:test_csb_v1_atari_msa>"
+    )
+    set_tests_properties(csb_v1_atari_save_disk_archive PROPERTIES
+        LABELS "tier2;csb;atari;save;msa;real_data;archive;skip_safe"
+    )
+    add_test(
         NAME csb_v1_amiga_native_cli_boot
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_amiga_native_cli_boot.sh"
             "$<TARGET_FILE:firestaff>"
