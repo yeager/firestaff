@@ -1,5 +1,14 @@
 # Firestaff TODO - Open Work
 
+## Nexus: bind decoded SAL tones to SDDRVS/SCSP playback (2026-08-11)
+
+- ✅ DMWeb DataID 0 tone descriptors now materialize authenticated
+  memory-backed 8/16-bit signed PCM into bounded diagnostic buffers for all
+  16 retail SAL banks (49 directory entries per bank where present).
+- 🔒 Production playback remains blocked until an authenticated SLEV/MAP
+  selector, SDDRVS voice submission and SCSP rate/loop consumer are joined in
+  one gameplay capture.
+
 ## Theron: preserve unavailable AI state until T500/T600 is authenticated (2026-08-11)
 
 - ✅ Real Track 02 category-4 creature admission now uses the explicit

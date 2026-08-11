@@ -1,3 +1,13 @@
+# Nexus: bounded SAL PCM materialization (2026-08-11)
+
+- ✅ Implemented the DMWeb DataID 0 directory walk already established by the
+  retail SAL corpus receipt: memory-backed entries now decode to signed host
+  PCM using their authenticated 8/16-bit width and bounded layer/loop span.
+- ✅ All 16 supplied retail SAL/MAP pairs build and load with 49 diagnostic
+  tone candidates; runtime receipt tests pass.
+- 🔒 This is not yet production playback: event selector meaning, sample rate,
+  SDDRVS voice ownership and SCSP submission remain capture-gated.
+
 # Theron: source creatures fail closed without an authenticated AI consumer (2026-08-11)
 
 - ✅ Authentic category-4 US/JP Track 02 creature members no longer receive

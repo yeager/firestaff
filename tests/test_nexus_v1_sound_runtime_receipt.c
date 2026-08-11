@@ -607,9 +607,12 @@ static void test_optional_real_sal_corpus_profile(void) {
               "real SAL/MAP corpus load succeeds");
         CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0,
               "real SAL/MAP corpus receipt emits");
-        CHECK(eng.sal_decode_ready == 0 &&
-              eng.sal_decoded_tone_count == 0,
-              "SAL bytes remain undecoded pending authenticated SCSP capture");
+        CHECK(eng.sal_decode_ready == 1 &&
+              eng.sal_decoded_tone_count == eng.sal_tone_entry_count &&
+              eng.sal_decoded_tone_count > 4 &&
+              eng.sal_decoded_samples[4] != NULL &&
+              eng.sal_decoded_sample_count[4] > 0,
+              "SAL DataID 0 memory-backed tones materialize as bounded PCM");
         if (receipt.sal_package_profile_supported) {
             profiled++;
             CHECK(receipt.sal_tone_bank_directory_supported == 1 &&

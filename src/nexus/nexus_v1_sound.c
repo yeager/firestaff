@@ -644,7 +644,7 @@ int nexus_sound_init(Nexus_SoundEngine *eng) {
     clear_map_route(eng);
     clear_sal_profile(eng);
     printf("Nexus sound: initialized (event dispatch capture-gated, "
-           "SAL decode capture-gated, CD playback capture-gated)\n");
+           "SAL PCM diagnostic decode enabled, playback capture-gated)\n");
     return 0;
 }
 
@@ -1034,7 +1034,8 @@ static int record_event_window(Nexus_SoundEngine *eng,
  * record lookup using the source-bound event selector table.  Because no
  * Saturn source has yet proven the NEXUS_SFX_* → MAP selector mapping, the
  * table is empty by default and the dispatch records the attempt but stays
- * blocked.  Actual SAL sample decode remains gated by
+ * blocked.  SAL PCM materialization is available for bounded diagnostics;
+ * production playback remains gated by
  * nexus_v1_audio_decode_supported(NEXUS_V1_AUDIO_KIND_SAL_BANK), which is
  * currently 0 (fail-closed).
  *
@@ -1297,14 +1298,98 @@ static void nexus_sound_free_decoded(Nexus_SoundEngine *eng) {
 }
 
 int nexus_sound_decode_sal(Nexus_SoundEngine *eng) {
+    int i;
+    int decoded = 0;
+
     if (!eng) return 0;
     nexus_sound_free_decoded(eng);
-    /* The DMWeb directory/profile receipt is real source evidence, but it
-     * does not establish Saturn SCSP sample encoding, rate, loop points,
-     * voice ownership, or the SLEV/MAP event selector.  Do not turn those
-     * bounded fields into host PCM candidates until an authenticated
-     * SDDRVS/SCSP execution capture joins the complete path. */
-    return 0;
+    if (!eng->sal_data || !eng->sal_tone_bank_directory_supported ||
+        eng->sal_tone_entry_count <= 4 || eng->sal_tone_entry_count > 64 ||
+        eng->sal_tone_bank_offset < 0 || eng->sal_tone_bank_bytes <= 0) {
+        return 0;
+    }
+
+    /* DMWeb's DataID 0 directory identifies the SCSP source descriptor.  The
+     * descriptor's layer start is relative to the tone-bank base; bit 4 of
+     * byte 7 selects the 8/16-bit source width, while bytes 12..13 contain
+     * the inclusive loop/sample end.  This is deliberately a bounded PCM
+     * materialization only: sample rate, event selector and SDDRVS voice
+     * ownership remain separate runtime gates. */
+    for (i = 4; i < eng->sal_tone_entry_count; ++i) {
+        int entry_offset;
+        int next_offset;
+        int entry_size;
+        int bytes_per_sample;
+        int source_control;
+        int layer_start;
+        int sample_count;
+        int sample_bytes;
+        int j;
+        const uint8_t *entry;
+        int16_t *samples;
+
+        entry_offset = read_u16_be(eng->sal_data + eng->sal_tone_bank_offset +
+                                   i * 2);
+        next_offset = i + 1 < eng->sal_tone_entry_count
+            ? read_u16_be(eng->sal_data + eng->sal_tone_bank_offset +
+                          (i + 1) * 2)
+            : entry_offset + 4;
+        if (entry_offset < 0 || next_offset < entry_offset ||
+            next_offset > eng->sal_tone_bank_bytes ||
+            entry_offset > eng->sal_tone_bank_bytes - 4) {
+            nexus_sound_free_decoded(eng);
+            return 0;
+        }
+        entry = eng->sal_data + eng->sal_tone_bank_offset + entry_offset;
+        entry_size = 4 + 32 * ((int)entry[2] + 1);
+        if (entry_size < 4 || entry_offset > eng->sal_tone_bank_bytes -
+            entry_size || (i + 1 < eng->sal_tone_entry_count &&
+            entry_size > next_offset - entry_offset)) {
+            nexus_sound_free_decoded(eng);
+            return 0;
+        }
+        bytes_per_sample = ((entry[7] >> 4) & 1U) != 0U ? 1 : 2;
+        source_control = 2 * (entry[6] & 1U) + (entry[7] >> 7);
+        layer_start = ((entry[7] & 0x0fU) << 16) |
+                      ((int)entry[8] << 8) | entry[9];
+        sample_count = ((int)entry[12] << 8) | entry[13];
+        if (sample_count < 0 || sample_count == INT_MAX ||
+            sample_count > INT_MAX - 1) {
+            nexus_sound_free_decoded(eng);
+            return 0;
+        }
+        sample_count++;
+        sample_bytes = sample_count * bytes_per_sample;
+        if (source_control != 0) {
+            /* SCSP noise sources have no SAL PCM payload.  They remain an
+             * admitted descriptor but are intentionally not host samples. */
+            continue;
+        }
+        if (layer_start < 0 || layer_start > eng->sal_tone_bank_bytes ||
+            sample_bytes < 0 || sample_bytes > eng->sal_tone_bank_bytes -
+            layer_start) {
+            nexus_sound_free_decoded(eng);
+            return 0;
+        }
+        samples = (int16_t *)malloc((size_t)sample_count * sizeof(*samples));
+        if (!samples) {
+            nexus_sound_free_decoded(eng);
+            return 0;
+        }
+        for (j = 0; j < sample_count; ++j) {
+            const uint8_t *sample = eng->sal_data + eng->sal_tone_bank_offset +
+                layer_start + j * bytes_per_sample;
+            samples[j] = bytes_per_sample == 1
+                ? (int16_t)((int8_t)sample[0] << 8)
+                : (int16_t)(((uint16_t)sample[0] << 8) | sample[1]);
+        }
+        eng->sal_decoded_samples[i] = samples;
+        eng->sal_decoded_sample_count[i] = sample_count;
+        decoded++;
+    }
+    eng->sal_decoded_tone_count = eng->sal_tone_entry_count;
+    eng->sal_decode_ready = decoded > 0;
+    return eng->sal_decode_ready;
 }
 
 int nexus_sound_mix(Nexus_SoundEngine *eng, int16_t *out, int max_samples) {
