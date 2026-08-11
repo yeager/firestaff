@@ -141,6 +141,26 @@ men den bevisar ännu inte menytext, HUD, viewport, PRS3-palettägare eller
 DGN-faceägare. Den härledda CUE:n får inte presenteras som en komplett
 retail-disc med ljudspår.
 
+### Startup-witness från frame 0, 2026-08-11
+
+En separat körning från reset, med samma hashverifierade merged-disc och
+japanska BIOS, visar en verklig uppstartssekvens i transportlagret:
+
+`/Volumes/Extern-disk/nexus-saturn-capture/run-authentic-merged-startup-source-20260811b/`
+
+Vid frame 100 lämnar VDP2 resetläget och använder fyra character layers.
+Från frame 110 är `TVMD=0x8000`, `BGON=0x000f`, `CHCTLA=0x1010` och
+`CHCTLB=0x1022`. Samtidigt går VDP1 från idle till fem draw records och
+ändrar källpositioner över efterföljande frames. Detta är verifierad
+startup-animation, men inte en semantiskt identifierad meny eller titelbild.
+
+VDP1-write-spåret från samma körning är ogiltigt som komplett skrivbevis:
+validatorn avvisar rad 200242 (`addraddr=...`). Den raden räknas därför inte
+som en VDP1-write och körningen får inte höjas till semantic admission.
+Detta är ett capture-/instrumenteringsfel, inte ett påstående om Nexus'
+assetägare. Den råa frame-capturen är fortfarande användbar för den
+separata, capture-only-dekodern när framegräns och registerordning valideras.
+
 Minimal extern körning:
 
 ```sh
