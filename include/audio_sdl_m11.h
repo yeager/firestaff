@@ -80,6 +80,7 @@ typedef struct {
     M11_SoundBuffer csbFmtownsAnmPcm;
     M11_SoundBuffer dm2FmtownsTitlePcm;
     M11_SoundBuffer dm2MacSndPcm;
+    M11_SoundBuffer dm2MacMoviePcm;
     int dm1SwshProgramAccepted;
     int dm1SwshRegisterWriteCount;
     int dm1SwshWaitVblankCount;
@@ -241,6 +242,10 @@ int M11_Audio_PlayDm2MacSndPcm(M11_AudioState* state,
                                int sourceRateHz,
                                int resourceId,
                                unsigned int sourceHash);
+int M11_Audio_PlayDm2MacMoviePcm(M11_AudioState* state,
+                                 const int16_t* source,
+                                 int sourceSamples,
+                                 int sourceRateHz);
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId);
 int M11_Audio_SetTitleMusicEnabled(M11_AudioState* state, int enabled);
 int M11_Audio_TitleMusicEnabled(const M11_AudioState* state);

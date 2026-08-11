@@ -78,8 +78,11 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   a bounded format-1 `snd ` parser now validates their authentic resource
   counts and sample headers in place. The exact signed 8-bit sample range from
   resource 10001 is hash-checked and transported through the SDL host mixer at
-  its source rate; complete Mac resource selection, timing, and MIDI/music
-  scheduling remain separate runtime work.
+  its source rate. The authentic `Title.MooV` is also presented through an
+  optional FFmpeg-backed in-memory QuickTime decoder: Cinepak frames and the
+  movie's PCM audio are delivered to the M11 surface/mixer without creating a
+  converted movie file. Complete Mac resource selection, timing, and
+  MIDI/music scheduling remain separate runtime work.
 
 X68000 is not part of the DM2 support matrix.
 

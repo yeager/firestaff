@@ -453,7 +453,11 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
   A bounded in-memory QuickTime view now joins each exact `moov` atom to its
   matching exact `mdat` atom in the boot profile; the retail gate passes for
   the four present movies (`0x19`, with `Story.MooV` absent). Presentation
-  through the original QuickTime/MooV owner remains open. Do not
+  through the original QuickTime/MooV owner remains open. A native optional
+  FFmpeg-backed in-memory decoder now rebases the private QuickTime chunk
+  offsets, decodes the authentic Cinepak video and PCM audio, and owns the
+  Mac startup surface until the title reaches EOF; no movie file is written.
+  Do not
   replace these with converted MP4 files in the source runtime; converted
   files may be verification derivatives only.
 - [~] Retain the authentic US English Mac `Music`, `General.sounds`, and

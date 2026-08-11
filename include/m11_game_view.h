@@ -66,6 +66,7 @@
 #include "dm1_v1_f0740_f0743_music_source_pc34_compat.h"
 #include "dm1_v1_fmtowns_startup.h"
 #include "m11_dm2_mve_presenter.h"
+#include "dm2_v1_mac_movie_decoder.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -1822,6 +1823,10 @@ typedef struct {
     int dm2DosMveIntroActive;
     int dm2DosMveIntroRejected;
     int dm2DosMveIntroComplete;
+    DM2_V1_MacMovieDecoder dm2MacMovieDecoder;
+    int dm2MacMovieActive;
+    int dm2MacMovieRejected;
+    int dm2MacMovieComplete;
     int dm2SaveDialoguePanelActive;
     struct {
         int level_loaded;

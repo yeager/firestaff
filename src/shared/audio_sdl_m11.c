@@ -1114,6 +1114,7 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
         m11_sound_free(&state->csbFmtownsAnmPcm);
         m11_sound_free(&state->dm2FmtownsTitlePcm);
         m11_sound_free(&state->dm2MacSndPcm);
+        m11_sound_free(&state->dm2MacMoviePcm);
     }
 
     state->initialized = 0;
@@ -1888,6 +1889,38 @@ int M11_Audio_PlayDm2MacSndPcm(M11_AudioState* state,
                               state->sfxVolume)) {
         ++state->dm2MacSndQueuedCount;
     }
+#endif
+    return 1;
+}
+
+int M11_Audio_PlayDm2MacMoviePcm(M11_AudioState* state,
+                                 const int16_t* source,
+                                 int sourceSamples,
+                                 int sourceRateHz)
+{
+    unsigned int outputCount;
+    unsigned int outputIndex;
+    if (!state || !state->initialized || !source || sourceSamples <= 0 ||
+        sourceRateHz <= 0 || sourceRateHz > 200000) return 0;
+    outputCount = ((unsigned int)sourceSamples * M11_AUDIO_SAMPLE_RATE +
+                   (unsigned int)sourceRateHz - 1u) /
+                  (unsigned int)sourceRateHz;
+    if (outputCount == 0u || outputCount > 524288u ||
+        !m11_sound_reserve(&state->dm2MacMoviePcm, (int)outputCount)) return 0;
+    for (outputIndex = 0u; outputIndex < outputCount; ++outputIndex) {
+        unsigned int sourceIndex =
+            outputIndex * (unsigned int)sourceRateHz / M11_AUDIO_SAMPLE_RATE;
+        if (sourceIndex >= (unsigned int)sourceSamples)
+            sourceIndex = (unsigned int)sourceSamples - 1u;
+        state->dm2MacMoviePcm.samples[outputIndex] =
+            (float)source[sourceIndex] / 32768.0f;
+    }
+    state->dm2MacMoviePcm.sampleCount = (int)outputCount;
+#if M11_HAVE_SDL_AUDIO
+    if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream)
+        (void)m11_sdl_queue_samples(state, state->dm2MacMoviePcm.samples,
+                                    state->dm2MacMoviePcm.sampleCount,
+                                    state->musicVolume);
 #endif
     return 1;
 }

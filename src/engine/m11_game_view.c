@@ -68,6 +68,7 @@
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_dungeon_input_owner.h"
 #include "dm2_v1_inventory_panel.h"
+#include "dm2_v1_mac_movie_decoder.h"
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "theron/theron_v1_asset_loader.h"
 
@@ -1583,6 +1584,73 @@ static int m11_dm2_bind_dos_intro(M11_GameViewState *state)
     return 1;
 }
 
+static int m11_dm2_is_mac_profile(const DM2_V1_BootProfile *profile)
+{
+    return profile && profile->platform == DM2_PLATFORM_MAC_EN;
+}
+
+static int m11_dm2_bind_mac_movie(M11_GameViewState *state)
+{
+    const DM2_V1_BootProfile *profile;
+    const DM2_V1_MacMovieView *view;
+    if (!state || !(profile = (const DM2_V1_BootProfile *)state->dm2BootProfile) ||
+        !m11_dm2_is_mac_profile(profile)) return 1;
+    if ((profile->mac_movie_view_present_mask &
+         (1u << DM2_V1_MAC_MOVIE_TITLE)) == 0u) return 1;
+    view = &profile->mac_movie_view[DM2_V1_MAC_MOVIE_TITLE];
+    if (!dm2_v1_mac_movie_decoder_open(&state->dm2MacMovieDecoder,
+                                       view->bytes, view->size) ||
+        !dm2_v1_mac_movie_decoder_next(&state->dm2MacMovieDecoder)) {
+        state->dm2MacMovieRejected = 1;
+        dm2_v1_mac_movie_decoder_close(&state->dm2MacMovieDecoder);
+        return 0;
+    }
+    state->dm2MacMovieActive = 1;
+    return 1;
+}
+
+static int m11_dm2_present_mac_movie(M11_GameViewState *state,
+                                     unsigned char *framebuffer,
+                                     int framebuffer_width,
+                                     int framebuffer_height)
+{
+    const int16_t *audio_samples = NULL;
+    int audio_sample_count = 0;
+    int audio_rate_hz = 0;
+    int x;
+    int y;
+    if (!state || !framebuffer || !state->dm2MacMovieActive ||
+        !state->dm2MacMovieDecoder.frame_ready) return 0;
+    if (dm2_v1_mac_movie_decoder_take_audio(
+            &state->dm2MacMovieDecoder, &audio_samples,
+            &audio_sample_count, &audio_rate_hz)) {
+        (void)M11_Audio_PlayDm2MacMoviePcm(
+            &state->audioState, audio_samples, audio_sample_count,
+            audio_rate_hz);
+    }
+    if (M11_Render_SetIndexedPaletteRgb6(
+            state->dm2MacMovieDecoder.palette_rgb6) != M11_RENDER_OK) {
+        state->dm2MacMovieRejected = 1;
+        state->dm2MacMovieActive = 0;
+        return 0;
+    }
+    for (y = 0; y < framebuffer_height; ++y) {
+        const int source_y = y * 200 / framebuffer_height;
+        for (x = 0; x < framebuffer_width; ++x) {
+            const int source_x = x * 320 / framebuffer_width;
+            framebuffer[(size_t)y * (size_t)framebuffer_width + (size_t)x] =
+                state->dm2MacMovieDecoder.pixels[(size_t)source_y * 320u +
+                                                  (size_t)source_x];
+        }
+    }
+    if (!dm2_v1_mac_movie_decoder_next(&state->dm2MacMovieDecoder)) {
+        state->dm2MacMovieActive = 0;
+        state->dm2MacMovieComplete = 1;
+        dm2_v1_mac_movie_decoder_close(&state->dm2MacMovieDecoder);
+    }
+    return 1;
+}
+
 static int m11_dm2_present_dos_intro(M11_GameViewState *state,
                                      unsigned char *framebuffer,
                                      int framebuffer_width,
@@ -2376,6 +2444,10 @@ static int m11_dm2_apply_boot_runtime_receipt(
          * separately authenticated TWANIM media cannot be replayed. */
         state->dm2FmtownsTitleRejected = 1;
     }
+    if (m11_dm2_is_mac_profile(receipt->profile) &&
+        spec->launcherOptionsBound && !m11_dm2_bind_mac_movie(state)) {
+        state->dm2MacMovieRejected = 1;
+    }
     return 1;
 }
 
@@ -2688,6 +2760,7 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
         }
         return M11_GAME_INPUT_IGNORED;
     }
+    if (state->dm2MacMovieActive) return M11_GAME_INPUT_IGNORED;
     /* The title-menu keyboard table is original data, not M12 row logic.
      * SKProject's SKULLWIN/v1d39bc.dat begins with { 0x80d7, 0x001c }:
      * translated Enter (0x1c) resolves to UI event 215 / raw event 0xd7.
@@ -21046,6 +21119,7 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
          * owned by the verified GDAT loader in the DM2 boot profile. */
         dm2_v1_sound_bind_playback_backend(NULL);
         m11_dm2_mve_presenter_close(&state->dm2DosMvePresenter);
+        dm2_v1_mac_movie_decoder_close(&state->dm2MacMovieDecoder);
     }
     theron_v1_track01_cdda_stream_stop(&state->theronTrack01CddaStream);
     m11_nexus_release_title(state);
@@ -60374,7 +60448,18 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           0, 0, framebufferWidth, framebufferHeight,
                           M11_COLOR_BLACK);
-            if (((M11_GameViewState *)state)->dm2DosMveIntroActive) {
+            if (((M11_GameViewState *)state)->dm2MacMovieActive) {
+                /* Macintosh SHOW_MENU_SCREEN is preceded by the authentic
+                 * Title.MooV.  Its decoded frame owns the surface until the
+                 * movie reaches EOF; the static SKULL menu cannot appear
+                 * early. */
+                startup_menu_drawn = m11_dm2_present_mac_movie(
+                    (M11_GameViewState *)state, framebuffer,
+                    framebufferWidth, framebufferHeight);
+            } else if (((M11_GameViewState *)state)->dm2MacMovieRejected) {
+                /* Missing QuickTime decoder or a malformed source stream is
+                 * a black, fail-closed Mac launch, never a PC title fallback. */
+            } else if (((M11_GameViewState *)state)->dm2DosMveIntroActive) {
                 /* IBMIOP's PC-DOS MVE is earlier than SHOW_MENU_SCREEN.
                  * While it owns the screen, do not evaluate any GDAT title,
                  * credits or host overlay route.  The presenter advances at
