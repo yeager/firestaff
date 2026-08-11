@@ -128,6 +128,11 @@ int main(void) {
           M12_MENU_INPUT_ACTION);
     CHECK(M11_TheronMouseButtonToInput(SDL_BUTTON_MIDDLE) ==
           M12_MENU_INPUT_NONE);
+    /* Pointer motion is deliberately not a source command.  The live SDL
+     * route only updates the host pointer position; clicks are the sole
+     * Button I/II ingress, so moving across HUD/object regions cannot hop
+     * between objects as a selection cursor. */
+    CHECK(M11_TheronMouseButtonToInput(0) == M12_MENU_INPUT_NONE);
     CHECK(M11_TheronTouchButtonInput(0) == M12_MENU_INPUT_ACCEPT);
     CHECK(M11_TheronTouchButtonInput(1) == M12_MENU_INPUT_ACTION);
 

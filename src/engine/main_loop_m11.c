@@ -4933,6 +4933,12 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             if (m11_game_view_is_theron(gameView)) {
                 M12_MenuInput buttonInput =
                     M11_TheronMouseButtonToInput(ev.button.button);
+                /* Ordinary desktop mouse contract: Button I/II are left/right
+                 * only.  Do not let a physical middle button fall through to
+                 * the startup pointer dispatcher as a synthetic right click. */
+                if (buttonInput == M12_MENU_INPUT_NONE) {
+                    continue;
+                }
                 if (gameViewResult) {
                     if (m11_map_window_pointer_to_game_source(
                             gameView, (int)ev.button.x, (int)ev.button.y,
@@ -5470,6 +5476,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             if (m11_game_view_is_theron(gameView)) {
                 M12_MenuInput buttonInput =
                     M11_TheronMouseButtonToInput(ev.button.button);
+                /* SDL_BUTTON_MIDDLE is intentionally not a Theron control;
+                 * keep it inert during startup as well as in the dungeon. */
+                if (buttonInput == M12_MENU_INPUT_NONE) {
+                    continue;
+                }
                 if (gameViewResult) {
                     if (m11_map_window_pointer_to_game_source(
                             gameView, ev.button.x, ev.button.y,
