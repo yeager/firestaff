@@ -104,6 +104,18 @@ int main(void) {
           "scripted Demon remains blocked without a spawn record");
     world.current_dungeon = 1;
     world.current_level = 0;
+    CHECK(theron_v1_timer_add(&world, THERON_TIMER_REPEAT, 0, 1, 1, NULL) == -1 &&
+              world.timer_count == 0,
+          "source level rejects host timer without authenticated T700 consumer");
+    world.timer_count = 1;
+    world.timers[0].id = 91;
+    world.timers[0].kind = THERON_TIMER_REPEAT;
+    world.timers[0].remaining_ticks = 1;
+    world.timers[0].interval_ticks = 3;
+    world.timers[0].flags = THERON_TIMER_F_ACTIVE;
+    theron_v1_world_tick(&world);
+    CHECK(world.timers[0].remaining_ticks == 1 && world.timer_count == 1,
+          "source level does not execute legacy timer bytes");
     world.party.champions[0].alive = 1;
     world.party.champions[0].food = 7;
     world.party.champions[0].water = 8;

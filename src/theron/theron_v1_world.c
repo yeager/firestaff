@@ -1254,6 +1254,11 @@ int theron_v1_timer_add(Theron_V1_World *world,
                         int interval_ticks,
                         void *userdata) {
     if (!world || world->timer_count >= THERON_MAX_TIMERS) return -1;
+    /* THQUEST.ASM T700's timer table is not the generic host timer API.
+     * Until its Track 02 producer/consumer is authenticated, accepting a
+     * host timer on a source-bound level would create timing semantics that
+     * do not come from the disc. */
+    if (theron_v1_world_source_level_verified(world)) return -1;
     Theron_V1_Timer *t = &world->timers[world->timer_count++];
     t->id               = g_next_timer_id++;
     t->kind             = kind;
@@ -1297,6 +1302,10 @@ void theron_v1_timer_resume(Theron_V1_World *world, int id) {
 
 void theron_v1_tick_timers(Theron_V1_World *world) {
     if (!world) return;
+    /* A save may still contain legacy timer bytes.  Preserve them until the
+     * source timer consumer is known; do not let the fixture countdown mutate
+     * an authenticated Track 02 level. */
+    if (theron_v1_world_source_level_verified(world)) return;
     for (int i = 0; i < world->timer_count; ) {
         Theron_V1_Timer *t = &world->timers[i];
         if ((t->flags & THERON_TIMER_F_ACTIVE) &&

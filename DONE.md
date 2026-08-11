@@ -13854,3 +13854,7 @@ and production source-combat tests.
 - ✅ verifierade den rena PCE-binären mot äkta `TQUS.cue` och System Card med `pce.videoip=0`, `pce.shader=none`, `pce.special=none` och aspect-preserving 2×-skalning
 - ✅ fastställde att den synliga felbilden kom från en DOSBox-X-instans, inte från Theron/Mednafen
 - ✅ dokumenterade fönstertitel, ren profil och BIOS-länk utanför repot i `docs/THERON_MAC_SDL_MEDNAFEN_LOCAL.md`
+# Theron: stängde generisk timerväg på source-bound nivå (2026-08-11)
+- ✅ `theron_v1_timer_add()` avvisar host-timers när aktuell nivå har autentiserad Track 02-header
+- ✅ `theron_v1_tick_timers()` lämnar äldre sparade timerbytes orörda tills T700:s riktiga timerkonsument är bunden
+- ✅ verifierat med `test_theron_v1_combat_runtime_source` och `test_theron_v1_boot_runtime_input` (13/13)
