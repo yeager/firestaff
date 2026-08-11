@@ -1,3 +1,20 @@
+# Theron: inventory provenance now requires the authenticated property table (2026-08-11)
+
+- ✅ Loaded levels retain the verified/unverified state of the complete
+  source-owned 66-row Track 02 item-property table.
+- ✅ Source inventory swap/drop now fail closed when that table is absent,
+  even if the map header itself is valid.
+- ✅ Regression coverage passes for real Track 02 dungeon loading and the
+  missing-table rejection path.
+- 🔒 No T900 equip/use/stack semantics were inferred.
+
+# Nexus: session-bound SCSP-read witness (2026-08-11)
+
+- ✅ The corrected external Mednafen build produced a valid 300-frame raw
+  witness and a session-bound 200,000-row SCSP-read trace.
+- 🔒 The reads cover only `0x100420`/`0x100408`; no SAL window or voice
+  parameter was observed, so SLEV/SAL playback remains blocked.
+
 # Nexus: SCSP-read capture handoff (2026-08-11)
 
 - ✅ The external-only Saturn capture launcher now propagates bounded sound-CPU

@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+## Nexus: obtain SAL/voice read witness (2026-08-11)
+
+- 🔒 The session-bound 300-frame read capture saw only SCSP mailbox/status
+  reads. Extend the authenticated gameplay window or filter the sound-CPU
+  reader corridor until a SAL window and voice-parameter consumer are observed.
+
 ## Nexus: authenticate SCSP reads against SAL/SDDRVS (2026-08-11)
 
 - 🔒 The external launcher can now collect bounded SCSP reads. Run a new

@@ -339,6 +339,16 @@ does not by itself identify a SLEV selector, SAL codec or host-playback route.
 It is intended to provide the missing source-to-voice evidence needed before
 those runtime gates can be reconsidered.
 
+The corrected external build produced a valid 300-frame menu-window witness at
+`/Volumes/Extern-disk/nexus-saturn-capture/run-scsp-read-menu-20260811c/`.
+The raw capture SHA-256 is
+`13a7cd31ad1fe1eaa1368e7b8c4403fe43d8f03a6541f25ac86bc0c44a96b9b3`.
+The read trace is session-bound and contains 200,000 reads, but only the
+mailbox/status addresses `0x100420` and `0x100408`; it contains no SAL-window
+or voice-parameter read. The paired write trace reaches the same authenticated
+mailbox corridor, while event-selector semantics, SAL codec and playback stay
+blocked. This is a negative runtime result, not a decoder admission.
+
 The producer also records 64 unique VDP2 writer code windows. The primary
 window at `PC=0x06011924` contains the runtime words
 `25fe 0000 25fe 007c ...`, while the initial register setup at
