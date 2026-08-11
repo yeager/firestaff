@@ -482,6 +482,16 @@ int csb_v1_fmtowns_game_create_user_save_from_startup(
     const CSB_V1_FmtownsGameHandoffReceipt *game_receipt,
     const char *save_path);
 
+/* C06_CEDT F7001 -> F7052 starts from the same authenticated MINI.DAT as
+ * C03, but replaces its editor-owned champion records and the four original
+ * planar portrait blocks before the first M746/CSBGAME.DAT is published.
+ * The destination must be absent, just as in F7052's create path. */
+int csb_v1_fmtowns_game_create_utility_user_save_from_startup(
+    CSB_V1_BootProfile *profile,
+    const CSB_V1_FmtownsGameHandoffReceipt *game_receipt,
+    const CSB_V1_FmtownsStartupPortraitReceipt *portraits,
+    const char *save_path);
+
 int csb_v1_fmtowns_utility_handoff_open(
     const CSB_V1_BootProfile *profile,
     CSB_V1_FmtownsSwitchLanguage language,

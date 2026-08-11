@@ -4,6 +4,14 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## Chaos Strikes Back (CSB)
 
+- ✅ 2026-08-11 CSB FM Towns C06 GAME save: CEDT001.C `F7001` choice GAME now
+  executes the recovered CEDTINC8.C `F7052` first-save transaction on an
+  isolated, verified `MINI.DAT` state. C06's edited party records and all four
+  original planar portrait blocks are copied into a private M746
+  `CSBGAME.DAT`, then reopened through F0435 before the regression accepts the
+  result. The test uses separately supplied licensed F31E media and a temporary
+  save directory; it neither mutates scanned media nor commits game data.
+
 - ✅ 2026-08-11 CSB FM Towns real user-save corpus boundary: added the opt-in
   `csb_v1_fmtowns_user_save_corpus` CTest. With separately supplied licensed
   F31 media and external candidate files, it proves the English `CSBGAME.DAT`

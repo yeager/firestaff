@@ -280,20 +280,23 @@ populated dungeon states.
   envelope. M11's F31 C140 route now maps F7052's M746 file id to the separate
   user-owned `saves/csb/fmtowns/CSBGAME.DAT` medium, never the scanned C03
   tree: its first save runs the verified MINI.DAT bootstrap and later saves
-  reopen/write the same native slot. C06's own `GAME` choice remains unbound
-  until its utility-dialog handoff is observed. `MINI.DAT` remains the only
-  retail bootstrap path, and no synthetic save is used.
+  reopen/write the same native slot. `MINI.DAT` remains the only retail
+  bootstrap path, and no synthetic save is used.
 
-- **FM-TOWNS-C06-SAVE-001 — selected portrait save is bound; full game save remains closed.**
+- **FM-TOWNS-C06-SAVE-001 — selected portrait save and first GAME save are bound.**
   `CEDT001.C:F7001` now opens its source `GAME` / `PORTRAIT` / `CANCEL`
   dialog. The authenticated UTILE/UTILJ images retain the exact native
   `2:\#CHAMP_NAME#.CMP` mapping as a source receipt; `F7000` writes only the
   selected champion through that mapping to `.firestaff/portraits` on
   macOS/Linux and `INSTALLDIR\\portraits` on Windows; it never rewrites the
   scanned CD `PORTRAIT/*.CMP` catalogue. C06 `NEW DISK` now reopens that same
-  medium through the native CMP admission path. The `GAME` choice remains blocked
-  until the distinct F31 `F7052_SaveGame`/C05 UI transaction and its drive-2
-  mapping are source-bound.
+  medium through the native CMP admission path. `GAME` now recreates
+  `CEDT001.C:F7001` choice 1 / `CEDTINC8.C:F7052`: it starts from the selected
+  verified `MINI.DAT` state in an isolated runtime, copies C06's editor-owned
+  champion records and four raw planar portrait blocks, and atomically publishes
+  the first user-owned M746 `CSBGAME.DAT` only after the native F0435 reader can
+  admit it. It never serializes a separately active C03 session. Existing-slot
+  replacement and F7004 GAME loading remain open C06 work.
 
 - **FM-TOWNS-C06-LOAD-001 — `F7002_ReadCMP` is now an authenticated import
   transaction.** Given an index returned by the admitted `PORTRAIT` catalogue,
@@ -310,10 +313,10 @@ populated dungeon states.
   the admitted source raster, sends source-coordinate left-clicks to F7084,
   preserves scroll/cancel commands, and hands an accepted row to F7002. The
   real F31E handoff test proves open, raster, selection and import. No host
-  path or synthetic row is accepted. C06 F31E name/title editing is now
-  source-bound separately; its `GAME` choice and Make New Adventure remain
-  closed pending their utility-dialog transaction. In-game C140 native saving
-  is bound separately through F7052.
+  path or synthetic row is accepted. C06 F31E name/title editing and its first
+  `GAME` save are source-bound separately; Make New Adventure and F7004 GAME
+  loading remain open. In-game C140 native saving is bound separately through
+  F7052.
 
 ### CSB V1
 

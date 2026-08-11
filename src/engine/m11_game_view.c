@@ -9267,6 +9267,7 @@ static int m11_csb_bind_fmtowns_title(M11_GameViewState *state,
                                       int ending_handoff);
 static int m11_csb_enter_fmtowns_game(M11_GameViewState *state,
                                       CSB_V1_FmtownsSwitchLanguage language);
+static int m11_csb_fmtowns_native_save_path(char *out, size_t out_size);
 
 static M11_GameInputResult m11_csb_handle_fmtowns_switch_pointer(
     M11_GameViewState *state, int x, int y, int button_mask)
@@ -9343,12 +9344,54 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
         if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0)
             return M11_GAME_INPUT_REDRAW;
         if (x >= 80 && x <= 148 && y >= 108 && y <= 116) {
-            /* F7001 choice 1 calls F7052_SaveGame.  Its F31 save medium and
-             * full C05 record are separately owned, so do not confuse it
-             * with the portrait-disk operation just because both choices
-             * share this native dialog. */
+            CSB_V1_FmtownsGameHandoffReceipt game;
+            CSB_V1_FmtownsStartupState startup;
+            CSB_V1_BootProfile save_profile;
+            CSB_V1_BootProfile *profile =
+                (CSB_V1_BootProfile *)state->csbBootProfile;
+            char path[FSP_PATH_MAX];
+            FILE *existing = NULL;
+            int saved = 0;
+            /* F7001 choice 1 calls F7052 with C0_GAME_SOURCE.  Rebuild its
+             * source GAME from verified MINI.DAT in a private runtime: C06
+             * must never serialize whichever C03 session happens to be open.
+             * F7052 then receives C06's edited champion array and its raw
+             * encoded portraits on the native M746 medium. */
+            memset(&game, 0, sizeof(game));
+            memset(&startup, 0, sizeof(startup));
+            save_profile = *profile;
+            memset(&save_profile.runtime, 0, sizeof(save_profile.runtime));
+            if (csb_v1_fmtowns_game_handoff_open(
+                    profile, CSB_FMTOWNS_SWITCH_ENGLISH, &game) &&
+                csb_v1_fmtowns_game_load_startup_state(&game, &startup) &&
+                csb_v1_fmtowns_game_apply_startup_state(
+                    &startup, &save_profile.runtime) &&
+                csb_v1_runtime_set_party_state(
+                    &save_profile.runtime, &state->csbFmtownsUtilityParty) == 0 &&
+                profile->runtime.csbwin_random_seed_valid &&
+                m11_csb_fmtowns_native_save_path(path, sizeof(path)) &&
+                dm1_v1_save_prepare_parent_directory_pc34(path)) {
+                const char *name = strrchr(path, '/');
+                name = name ? name + 1 : path;
+                save_profile.runtime.csbwin_random_seed =
+                    profile->runtime.csbwin_random_seed;
+                save_profile.runtime.csbwin_random_seed_valid = 1;
+                existing = fopen(path, "rb");
+                if (!existing && strcmp(name, "CSBGAME.DAT") == 0) {
+                    saved = csb_v1_fmtowns_game_create_utility_user_save_from_startup(
+                        &save_profile, &game,
+                        &state->csbFmtownsUtilityPortraitReceipt, path);
+                }
+            }
+            if (existing) fclose(existing);
+            if (save_profile.runtime.dungeon_handle) {
+                csb_v1_dungeon_free(save_profile.runtime.dungeon_handle);
+                free(save_profile.runtime.dungeon_handle);
+            }
+            csb_v1_fmtowns_game_startup_state_free(&startup);
             state->csbFmtownsUtilitySaveDialogActive = 0;
-            m11_set_status(state, "CSB FM TOWNS", "GAME SAVE UNAVAILABLE");
+            m11_set_status(state, "CSB FM TOWNS",
+                           saved ? "GAME SAVED" : "GAME SAVE REJECTED");
         } else if (x >= 165 && x <= 237 && y >= 108 && y <= 116) {
             char saved_path[FSP_PATH_MAX];
             int saved = csb_v1_fmtowns_utility_save_selected_portrait(

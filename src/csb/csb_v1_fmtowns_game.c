@@ -981,6 +981,7 @@ static void csb_v1_fmtowns_game_patch_party_part(
 static int csb_v1_fmtowns_game_write_user_save_internal(
     CSB_V1_BootProfile *profile,
     const CSB_V1_FmtownsGameHandoffReceipt *game_receipt,
+    const CSB_V1_FmtownsStartupPortraitReceipt *portraits,
     const char *save_path, int rotate_backup)
 {
     CSB_V1_FmtownsUserSaveReceipt receipt;
@@ -1038,6 +1039,18 @@ static int csb_v1_fmtowns_game_write_user_save_internal(
     if (!file_bytes || !(file = fopen(save_path, "rb")) ||
         fread(file_bytes, 1u, file_size, file) != file_size) goto done;
     fclose(file); file = NULL;
+    /* F7052 writes C06's encoded portrait array after the five save parts.
+     * Its bytes are planar F31 data, not a Firestaff portrait model. */
+    if (portraits) {
+        if (!portraits->valid || portraits->language != game_receipt->language ||
+            portraits->variant_id != game_receipt->variant_id ||
+            portraits->source_size != sizeof(portraits->source_bytes) ||
+            receipt.portraits_offset > file_size ||
+            sizeof(portraits->source_bytes) >
+                file_size - receipt.portraits_offset) goto done;
+        memcpy(file_bytes + receipt.portraits_offset, portraits->source_bytes,
+               sizeof(portraits->source_bytes));
+    }
     /* F0433/F0802 writes a save-specific dungeon tail, not necessarily the
      * complete CD DUNGEON.DAT image. Some authentic C03/C04 slots carry a
      * 6540-byte tail while the mounted CD dungeon is 33114 bytes. Never
@@ -1221,12 +1234,13 @@ int csb_v1_fmtowns_game_write_user_save(
     const char *save_path)
 {
     return csb_v1_fmtowns_game_write_user_save_internal(
-        profile, game_receipt, save_path, 1);
+        profile, game_receipt, NULL, save_path, 1);
 }
 
-int csb_v1_fmtowns_game_create_user_save_from_startup(
+static int csb_v1_fmtowns_game_create_user_save_from_startup_internal(
     CSB_V1_BootProfile *profile,
     const CSB_V1_FmtownsGameHandoffReceipt *game_receipt,
+    const CSB_V1_FmtownsStartupPortraitReceipt *portraits,
     const char *save_path)
 {
     unsigned char *startup_bytes = NULL;
@@ -1286,7 +1300,7 @@ int csb_v1_fmtowns_game_create_user_save_from_startup(
     free(startup_bytes);
     random_before = profile->runtime.csbwin_random_seed;
     if (!csb_v1_fmtowns_game_write_user_save_internal(
-            profile, game_receipt, staging_path, 0)) goto done;
+            profile, game_receipt, portraits, staging_path, 0)) goto done;
     /* The target was absent on entry and is checked again before publication.
      * Do not replace a slot another process has created while F7052 ran. */
     existing = fopen(save_path, "rb");
@@ -1304,6 +1318,27 @@ done:
         remove(staging_path);
     }
     return ok;
+}
+
+int csb_v1_fmtowns_game_create_user_save_from_startup(
+    CSB_V1_BootProfile *profile,
+    const CSB_V1_FmtownsGameHandoffReceipt *game_receipt,
+    const char *save_path)
+{
+    return csb_v1_fmtowns_game_create_user_save_from_startup_internal(
+        profile, game_receipt, NULL, save_path);
+}
+
+int csb_v1_fmtowns_game_create_utility_user_save_from_startup(
+    CSB_V1_BootProfile *profile,
+    const CSB_V1_FmtownsGameHandoffReceipt *game_receipt,
+    const CSB_V1_FmtownsStartupPortraitReceipt *portraits,
+    const char *save_path)
+{
+    if (!portraits || !portraits->valid ||
+        portraits->source_size != sizeof(portraits->source_bytes)) return 0;
+    return csb_v1_fmtowns_game_create_user_save_from_startup_internal(
+        profile, game_receipt, portraits, save_path);
 }
 
 int csb_v1_fmtowns_game_apply_startup_state(

@@ -1269,6 +1269,64 @@ int main(void)
         CHECK(result == M11_GAME_INPUT_REDRAW &&
                   !view.csbFmtownsUtilitySaveDialogActive,
               "F31E C06 save-dialog cancel restores the editor");
+#ifndef _WIN32
+        /* C06 F7001 choice GAME must construct its own F7052 transaction
+         * from MINI.DAT, rather than borrowing this test's active C03
+         * runtime.  Keep the new M746 medium in a private directory and
+         * reopen it through F0435 before continuing with the editor tests. */
+        {
+            char utility_dir[] = "/tmp/firestaff-csb-c06-game-XXXXXX";
+            char utility_save_path[1024];
+            CSB_V1_FmtownsUserSaveReceipt utility_save;
+            CSB_V1_FmtownsStartupState utility_state;
+            uint8_t *utility_bytes = NULL;
+            size_t utility_size = 0u;
+            int created = 0;
+            if (mkdtemp(utility_dir) != NULL &&
+                snprintf(utility_save_path, sizeof(utility_save_path),
+                         "%s/CSBGAME.DAT", utility_dir) >= 0) {
+                CHECK(test_set_env("FIRESTAFF_QUICKSAVE_PATH", utility_save_path),
+                      "F31E C06 GAME selects an isolated M746 save medium");
+                result = M11_GameView_HandlePointerButton(
+                    &view, 150, 190, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                result = M11_GameView_HandlePointerButton(
+                    &view, 112, 112, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                created = result == M11_GAME_INPUT_REDRAW &&
+                    strcmp(view.lastOutcome, "GAME SAVED") == 0;
+                CHECK(created,
+                      "F31E C06 GAME runs F7052 against its private MINI.DAT receipt");
+                memset(&utility_save, 0, sizeof(utility_save));
+                CHECK(created && csb_v1_fmtowns_game_user_save_open(
+                          (const CSB_V1_BootProfile *)view.csbBootProfile,
+                          &direct_handoff, utility_save_path, &utility_save) &&
+                          utility_save.valid,
+                      "F31E C06 GAME output passes the native F0435 reader");
+                memset(&utility_state, 0, sizeof(utility_state));
+                CHECK(created && csb_v1_fmtowns_game_load_user_save_state(
+                          &utility_save, &utility_state) && utility_state.valid &&
+                          strcmp(utility_state.party.Champions[0].Name, "AB") == 0 &&
+                          strcmp(utility_state.party.Champions[0].Title,
+                                 "ABCDEFGHIJKLMNOPQRS") == 0,
+                      "F31E C06 GAME preserves editor-owned name and title bytes");
+                utility_bytes = load_file(utility_save_path, &utility_size);
+                CHECK(created && utility_bytes &&
+                          utility_save.portraits_offset <= utility_size &&
+                          sizeof(view.csbFmtownsUtilityPortraitReceipt.source_bytes) <=
+                              utility_size - utility_save.portraits_offset &&
+                          memcmp(utility_bytes + utility_save.portraits_offset,
+                                 view.csbFmtownsUtilityPortraitReceipt.source_bytes,
+                                 sizeof(view.csbFmtownsUtilityPortraitReceipt.source_bytes)) == 0,
+                      "F31E C06 GAME writes the editor's raw F31 portrait receipt");
+                free(utility_bytes);
+                csb_v1_fmtowns_game_startup_state_free(&utility_state);
+                remove(utility_save_path);
+                rmdir(utility_dir);
+            } else {
+                CHECK(0, "F31E C06 GAME test can allocate an isolated temporary directory");
+            }
+            (void)test_set_env("FIRESTAFF_QUICKSAVE_PATH", NULL);
+        }
+#endif
         result = M11_GameView_HandlePointerButton(
             &view, 50, 190, DM1_V1_MOUSE_MASK_LEFT_PC34);
         CHECK(result == M11_GAME_INPUT_REDRAW &&
