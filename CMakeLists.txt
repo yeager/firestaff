@@ -20036,6 +20036,21 @@ endif()
         NAME csb_v1_m11_launcher_handoff_boundary
         COMMAND test_csb_v1_m11_launcher_handoff_boundary
     )
+    # Opt-in real-media companion.  The shared executable keeps its
+    # data-free launcher boundary in the default CTest lane; this row selects
+    # the A31 path only when the operator supplies an original Amiga root via
+    # FIRESTAFF_CSB_AMIGA31_DATA_DIR.  It exercises M12's selected-package
+    # materialization and M11's native title-to-runtime handoff, never a
+    # PC34 or fixture substitute.
+    add_test(
+        NAME csb_v1_amiga31_m12_m11_real_media_handoff
+        COMMAND test_csb_v1_m11_launcher_handoff_boundary
+    )
+    set_tests_properties(csb_v1_amiga31_m12_m11_real_media_handoff PROPERTIES
+        LABELS "tier2;csb;amiga;m12;m11;launcher;startup;real_data;skip_safe"
+        ENVIRONMENT "FIRESTAFF_CSB_AMIGA31_ONLY=1"
+        TIMEOUT 120
+    )
 
     add_executable(test_csb_v1_m11_startup_vblank_cadence
         tests/test_csb_v1_m11_startup_vblank_cadence.c

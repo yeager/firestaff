@@ -54,9 +54,11 @@ This matters for shared game libraries: an Amiga 3.1 title program and its
 `GRAPHICS.DAT`/`DUNGEON.DAT` must not be combined with PC, Atari ST, or FM
 Towns files found beside the archive. The source archive remains untouched;
 the cache is local derived data and is not game media to commit or distribute.
-The real-media M12/M11 boundary test can be enabled with
-`FIRESTAFF_CSB_AMIGA31_DATA_DIR` pointing at a directory containing the
-verified Amiga 3.1 ADF or archive.
+The opt-in CTest `csb_v1_amiga31_m12_m11_real_media_handoff` can be enabled
+with `FIRESTAFF_CSB_AMIGA31_DATA_DIR` pointing at a directory containing the
+verified Amiga 3.1 ADF or archive. It selects the Amiga package in M12,
+verifies its private cache members, and requires M11's native title-to-runtime
+handoff; without supplied original media it reports an explicit skip.
 
 The matching CLI regression accepts either form too. It first proves the
 native startup page, then runs the source-visible title sequence into the
