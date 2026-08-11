@@ -151,7 +151,10 @@ void theron_vp_clear(Theron_V1_Viewport *vp, uint8_t color_index) {
 }
 
 const char *theron_v1_viewport_source_evidence(void) {
-    /* This reports only the capture-side bank ownership. It does not claim
-     * that a dungeon square or UI record has been mapped to these tiles. */
-    return "NO VERIFIED TRACK02 TILE/MATERIAL/UI BANK";
+    /* The authenticated VDC/VCE route now owns a screen-space BAT/tile atlas
+     * when a known capture is mounted.  It still does not identify a dungeon
+     * square/material selector, perspective transform, HUD record or object
+     * consumer; keep those claims explicitly separate. */
+    return "AUTHENTICATED SCREEN-SPACE VDC/VCE BAT-TILE ATLAS; "
+           "SQUARE/MATERIAL/PERSPECTIVE/HUD/OBJECT CONSUMERS BLOCKED";
 }

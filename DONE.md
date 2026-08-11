@@ -13800,3 +13800,12 @@ and production source-combat tests.
   creature-source admission, and Theron desktop input tests.
 - 🔒 This does not claim a positive runtime capture; the real RNG return,
   target write and creature-consumer join remain required for full semantics.
+# Theron: clarify authenticated screen-space atlas evidence (2026-08-11)
+
+- ✅ Verified the external-disk US capture route with 1,057 BAT-tile bindings,
+  512 VCE entries and 38,907 presented source pixels.
+- ✅ Corrected the production viewport evidence string to distinguish the
+  authenticated screen-space VDC/VCE atlas from still-unproven square,
+  perspective, HUD and object consumers.
+- 🔒 No README screenshot was promoted; the existing human-review promotion
+  gate remains authoritative.
