@@ -53534,6 +53534,21 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_x68k_enter_sng.c")
     set_tests_properties(csb_v1_x68k_enter_sng PROPERTIES LABELS "csb;x68k;midi;synthetic_fixture")
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_x68k_dungeon_handoff.c")
+    add_executable(test_csb_v1_x68k_dungeon_handoff
+        tests/test_csb_v1_x68k_dungeon_handoff.c
+        src/csb/csb_v1_x68k_dungeon_handoff.c
+        src/csb/csb_v1_x68k_hdm.c
+        src/csb/csb_v1_dungeon_loader_pc34_compat.c
+        src/shared/dungeon_decompressor_ftl.c)
+    target_include_directories(test_csb_v1_x68k_dungeon_handoff PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_x68k_dungeon_handoff PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_x68k_dungeon_handoff COMMAND test_csb_v1_x68k_dungeon_handoff)
+    set_tests_properties(csb_v1_x68k_dungeon_handoff PROPERTIES LABELS "csb;x68k;dungeon;synthetic_fixture")
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_m11_game_handoff.c")
     add_executable(test_csb_v1_fmtowns_m11_game_handoff
         tests/test_csb_v1_fmtowns_m11_game_handoff.c)
