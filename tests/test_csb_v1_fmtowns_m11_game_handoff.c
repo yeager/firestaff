@@ -299,6 +299,7 @@ int main(void)
     CSB_V1_FmtownsUtilityHandoffReceipt utility_handoff;
     CSB_V1_FmtownsUtilitySaveMappingReceipt utility_save_mapping;
     CSB_V1_FmtownsUtilityMenuReceipt utility_menu;
+    CSB_V1_FmtownsUtilityGameSourceReceipt utility_game_source;
     CSB_V1_FmtownsUtilityFontReceipt utility_font;
     CSB_V1_FmtownsUtilityPortraitCatalog utility_portrait_catalog;
     CSB_V1_FmtownsUtilityPortraitSelector utility_portrait_selector;
@@ -944,6 +945,26 @@ int main(void)
                   (language == CSB_FMTOWNS_SWITCH_ENGLISH ? 0xfd9986bfu :
                                                            0xdceefc60u),
           "verified F31 profile resolves its language-owned C06 menu bytes");
+    memset(&utility_game_source, 0, sizeof(utility_game_source));
+    if (language == CSB_FMTOWNS_SWITCH_ENGLISH) {
+        CHECK(csb_v1_fmtowns_utility_game_source_open(
+                  (const CSB_V1_BootProfile *)view.csbBootProfile,
+                  language, &utility_game_source) && utility_game_source.valid &&
+                  utility_game_source.title_file_offset == 0x11aa0u &&
+                  utility_game_source.choices_file_offset == 0x11b4cu &&
+                  utility_game_source.save_prompt_file_offset == 0x11db8u &&
+                  memcmp(utility_game_source.title, "LOAD WHICH SAVED GAME?", 22u) == 0 &&
+                  memcmp(utility_game_source.choices,
+                         "DUNGEON MASTER\nCHAOS STRIKES BACK\nCANCEL", 39u) == 0 &&
+                  memcmp(utility_game_source.save_prompt,
+                         "PLEASE PUT THE GAME SAVE\nDISK IN %DEVICE%", 41u) == 0,
+              "F31E C06 source chooser and A: prompt retain their exact UTILE P3 bytes");
+    } else {
+        CHECK(!csb_v1_fmtowns_utility_game_source_open(
+                  (const CSB_V1_BootProfile *)view.csbBootProfile,
+                  language, &utility_game_source),
+              "F31J C06 chooser remains closed until its native Shift-JIS glyph consumer exists");
+    }
     memset(&utility_font, 0, sizeof(utility_font));
     CHECK(csb_v1_fmtowns_utility_font_open(
               (const CSB_V1_BootProfile *)view.csbBootProfile,
