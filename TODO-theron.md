@@ -2,6 +2,13 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — RNG edge capture is still not a spawn handoff
+
+- 🔒 En extern autentiserad US-save-replay observerar `$4644`/`$4667` och
+  RNG-fönster, men ingen giltig `$B0E5`-kategori eller target-publicering.
+  Den får inte öppna RNG-return, monsterstats, AI, combat, loot, generatorer,
+  T700 eller T900.
+
 ## 2026-08-12 — JP-porträtt och originalmekanik är fortfarande öppna
 
 - 🔒 JP Track 02-rosterposterna är autentiserade, men ingen source-bound

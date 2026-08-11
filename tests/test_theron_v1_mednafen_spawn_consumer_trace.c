@@ -219,7 +219,11 @@ int main(void) {
              * run's sample limit into the source test. */
             assert(registers.sample_count > 0u);
             assert(registers.c96b_window_seen && registers.cc4c_window_seen);
-            assert(!registers.preconsumer_4644_seen && !registers.helper_4667_seen);
+            /* A real session may legitimately observe the RNG preconsumer
+             * and helper before it fails to reach a valid regular-spawn
+             * publication.  Their presence is provenance, not semantic
+             * ownership; only the explicit publication gate must remain
+             * closed here. */
             assert(!registers.semantic_publication_allowed);
         }
     }

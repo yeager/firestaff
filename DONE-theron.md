@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — extern RNG-edge capture klassificerad utan överclaim
+
+- ✅ `theron-capture-20260811-cocoa-save.trace.*` verifierades som autentiserad
+  US/System Card-session med 2 048 registerprover, 12 `$4644`- och 50
+  `$4667`-observationer.
+- ✅ Testprovet kräver nu parserad provenance och stängd semantikgate, men
+  antar inte felaktigt att alla riktiga körningar måste sakna RNG-edgefönster.
+- 🔒 Ingen giltig `$B0E5`-spawnpost eller target-publicering finns ännu.
+
 ## 2026-08-12 — parity-matrisens överclaim korrigerad
 
 - ✅ Combat- och champion-systemets status skiljer nu autentiserade numeric

@@ -1,5 +1,18 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-11 — authenticated save replay observes RNG edges but no spawn
+
+The external-disk US Track 02 replay
+`theron-capture-20260811-cocoa-save.trace.*` used the authenticated Track 02
+MD5 `f23601102138f87c33025877767ebf76` and System Card MD5
+`ff1a674273fe3540ccef576376407d1d`. Its transition receipt records 2,048
+spawn-register samples, 12 `$4644` preconsumer observations and 50 `$4667`
+helper observations, while recording zero valid `$B0E5` entries and no target
+publication. The session is therefore useful provenance for the RNG edge
+windows, but it does not bind a return value to a monster record or establish
+AI, attack, damage, loot, generator, T700 or T900 ownership. The raw capture
+remains outside GitHub and the production semantic gate stays closed.
+
 ## 2026-08-11 — same-session `$5D64` RNG consumer reaches 22 complete windows
 
 The external-disk US Track 02 capture used the authenticated Track 02 BIN
