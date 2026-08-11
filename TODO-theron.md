@@ -2,6 +2,12 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — M11 handoff regression test is headless-safe
+
+- ✅ The boundary test uses SDL dummy audio by default, preventing a local
+  CoreAudio wait from being mistaken for a Theron runtime hang.
+- 🔒 This does not alter production audio-device selection.
+
 ## 2026-08-11 — JP roster text now copies verified raw bytes
 
 - ✅ JP startup names and titles are emitted from the authenticated raw

@@ -57,6 +57,22 @@ static int g_failures = 0;
 static int g_passed = 0;
 static int g_skipped = 0;
 
+static void force_headless_audio_for_boundary_test(void) {
+    /* M11_GameView_Init opens SDL audio even though this boundary test never
+     * presents sound.  Keep direct local invocations deterministic and avoid
+     * blocking on a physical CoreAudio device that is unavailable or busy.
+     * Production launches retain the user's selected SDL audio driver. */
+    const char* current = getenv("SDL_AUDIODRIVER");
+    if (current && current[0] != '\0') {
+        return;
+    }
+#if defined(_WIN32)
+    (void)_putenv_s("SDL_AUDIODRIVER", "dummy");
+#else
+    (void)setenv("SDL_AUDIODRIVER", "dummy", 1);
+#endif
+}
+
 static void expect_true(int condition, const char* message) {
     if (!condition) {
         fprintf(stderr, "FAIL: %s\n", message);
@@ -652,6 +668,7 @@ static void run_real_us_roster_text_forcefield_handoff_if_available(void) {
 
 int main(void) {
     printf("=== Theron V1 M12/M11 launcher handoff boundary ===\n");
+    force_headless_audio_for_boundary_test();
 
     run_empty_launcher_boundary();
     run_track02_startup_overlay_regression();

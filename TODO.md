@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+## Theron: M11 handoff test is headless-safe (2026-08-11)
+
+- ✅ The Theron M12/M11 boundary test selects SDL's dummy audio driver when
+  no driver is supplied, so direct local runs cannot block on CoreAudio.
+- 🔒 This changes only test harness setup; production audio remains unchanged.
+
 ## Theron: JP roster text is raw-source-owned (2026-08-11)
 
 - ✅ JP startup names/titles now copy from the authenticated Track 02 bytes at
