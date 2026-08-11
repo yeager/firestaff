@@ -16,18 +16,24 @@ TRACE_LINE = re.compile(
 )
 
 
-def read_rows(path: Path) -> list[dict[str, int]]:
+def read_rows(path: Path) -> tuple[list[dict[str, int]], str | None]:
     lines = path.read_text(encoding="ascii").splitlines()
     if not lines or lines[0] != TRACE_HEADER:
         raise ValueError(f"{path}: bad trace header")
     rows: list[dict[str, int]] = []
-    for number, line in enumerate(lines[1:], 2):
+    session = None
+    data_lines = lines[1:]
+    if data_lines and data_lines[0].startswith("session="):
+        session = data_lines.pop(0)[len("session="):]
+        if not session or any(character.isspace() for character in session):
+            raise ValueError(f"{path}: invalid capture session metadata")
+    for number, line in enumerate(data_lines, 2 if session is None else 3):
         match = TRACE_LINE.fullmatch(line)
         if not match:
             raise ValueError(f"{path}: malformed line {number}")
         rows.append({key: int(value, 16 if key != "size" else 10)
                      for key, value in match.groupdict().items()})
-    return rows
+    return rows, session
 
 
 def main() -> int:
@@ -37,7 +43,7 @@ def main() -> int:
     parser.add_argument("--require-address", type=lambda value: int(value, 0))
     args = parser.parse_args()
     try:
-        rows = read_rows(args.trace)
+        rows, session = read_rows(args.trace)
     except (OSError, UnicodeError, ValueError) as error:
         print(f"NEXUS_SCSP_READ_TRACE_INVALID: {error}")
         return 1
@@ -45,6 +51,7 @@ def main() -> int:
     addresses = Counter(row["addr"] for row in rows)
     pcs = Counter(row["pc"] for row in rows)
     print(f"read_count={len(rows)}")
+    print(f"capture_session={session or 'unbound'}")
     print("addresses=" + ",".join(f"0x{addr:06x}:{count}" for addr, count in addresses.most_common()))
     print("pcs=" + ",".join(f"0x{pc:08x}:{count}" for pc, count in pcs.most_common()))
     if args.require_pc is not None:

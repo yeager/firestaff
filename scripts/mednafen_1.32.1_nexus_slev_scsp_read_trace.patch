@@ -10,6 +10,7 @@
 +static unsigned FirestaffScspReadTraceCount;
 +static unsigned FirestaffScspReadTraceLimit = 100000;
 +static bool FirestaffScspReadTraceConfigured;
++static bool FirestaffScspReadTraceSessionWritten;
  static FILE *FirestaffMainScspTraceFile;
  static uint32 FirestaffMainScspTraceMin = 0;
  static uint32 FirestaffMainScspTraceMax = 0x200000;
@@ -41,6 +42,7 @@
 +  FirestaffScspReadTraceFile = fopen(path, "wb");
 +  if(!FirestaffScspReadTraceFile) return;
 +  fputs("FIRESTAFF_NEXUS_SCSP_READ_TRACE_V1\n", FirestaffScspReadTraceFile);
++  FirestaffTraceWriteSession(FirestaffScspReadTraceFile, &FirestaffScspReadTraceSessionWritten);
 + }
 + fprintf(FirestaffScspReadTraceFile,
 +  "addr=0x%06x size=%u value=0x%08x pc=0x%08x\n",
