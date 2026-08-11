@@ -2680,6 +2680,12 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
      * navigation must not leak into SHOW_MENU_SCREEN while its 1,800-step
      * event loop owns the screen. */
     if (state->dm2State.startup_credits_active) {
+        if (input == M12_MENU_INPUT_ACCEPT && state->dm2BootProfile &&
+            ((const DM2_V1_BootProfile *)state->dm2BootProfile)->platform ==
+                DM2_PLATFORM_MAC_EN) {
+            state->dm2State.startup_credits_active = 0;
+            return M11_GAME_INPUT_REDRAW;
+        }
         return M11_GAME_INPUT_IGNORED;
     }
     /* The title-menu keyboard table is original data, not M12 row logic.
@@ -2693,6 +2699,11 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
      *
      * Arrow, action and back tokens remain inert: no source title-menu
      * keyboard binding for them has been imported. */
+    if (state->dm2BootProfile &&
+        ((const DM2_V1_BootProfile *)state->dm2BootProfile)->platform ==
+            DM2_PLATFORM_MAC_EN && input == M12_MENU_INPUT_BACK) {
+        return M11_GAME_INPUT_RETURN_TO_MENU;
+    }
     if (input != M12_MENU_INPUT_ACCEPT || !state->dm2BootProfile) {
         return M11_GAME_INPUT_IGNORED;
     }
