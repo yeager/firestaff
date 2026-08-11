@@ -2657,9 +2657,15 @@
   F0689-striden (31 logiska pixlar, 32-pixelbuffert). F7002 kan importera en
   redan vald, hash-admitterad `.CMP` och F7001 kan ersätta payloaden i en
   namngiven befintlig post utan att skapa ett filnamn eller en ny fil.
-  Återstår att återvinna CEDT008/CEDT013:s dialog- och katalogtransaktion,
-  det fullständiga F7004-Load-flödet samt namn-/titelinmatningen innan Load
-  eller Make New Adventure får lämna sin fail-closed-grind.
+  F7004:s kompletta F31E-val är nu bundet: dialogen erbjuder GAME, PORTRAIT
+  och CANCEL, GAME återläser endast en F0435-giltig vald slot (med den
+  ursprungliga `.BAK`-återställningen) och PORTRAIT går vidare till den
+  källägda CEDT008/CEDT013-väljaren. Namn- och titelinmatning är avgränsad
+  till den laddade C06-partyn och testas tillsammans med den privata
+  GAME-saven. Återstår endast den separata Dungeon Master-versus-CSB-
+  destinationsdialogen och Make New Adventure:s F7086/F7090/F7020-
+  transaktion; båda stannar fail-closed tills en verifierad
+  källa-/destinationsdungeon och objektmodifierarägarna finns.
 
 - **THERON-FORCEFIELD-REAL-DUNGEON:** Enter now reliably dispatches from the
   Soul Room forcefield focus, including the first attempt without prompt text.
