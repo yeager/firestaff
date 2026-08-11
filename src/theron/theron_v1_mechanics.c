@@ -82,7 +82,9 @@ static int theron_v1_source_level_requires_item_provenance(
     return world->level_loaded[world->current_dungeon - 1]
                               [world->current_level] &&
            world->levels[world->current_dungeon - 1]
-                        [world->current_level].source_header_verified;
+                        [world->current_level].source_header_verified &&
+           world->levels[world->current_dungeon - 1]
+                        [world->current_level].source_item_property_table_verified;
 }
 
 /* Declared here because T900 altar handling appears before the T700 helper

@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — inventory transitions now require the authenticated property table
+
+- ✅ The loaded level now retains whether the complete source-owned 66-row
+  Track 02 item-property table matched the selected US/JP bank.
+- ✅ Source inventory swap/drop transitions require both the object-record
+  header and that table-authentication bit; a map header alone is no longer
+  sufficient.
+- 🔒 This remains provenance validation. T900 equip/use/stack semantics are
+  still not implemented without the original consumer capture.
+
 ## 2026-08-11 — authenticated BAT preview now decodes real PCE tiles
 
 - ✅ The source-bound VRAM/VCE presentation route now runs every admitted BAT

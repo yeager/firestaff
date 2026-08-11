@@ -240,6 +240,9 @@ typedef struct {
     uint8_t source_door_type1;
     uint8_t source_door_type2;
     uint8_t source_header_verified;
+    /* The T900 item-property consumer may only run after the complete
+     * source-owned 66-row table has been verified for this loaded bank. */
+    uint8_t source_item_property_table_verified;
     /* Per-map source records retained from the real Track 02 map-bank
      * directory. These are provenance fields only: no creature graphics or
      * thing-list semantics are inferred from them. */

@@ -774,6 +774,7 @@ static void test_source_item_pickup_provenance(void) {
     w.current_level = 0;
     w.level_loaded[0][0] = 1;
     w.levels[0][0].source_header_verified = 1;
+    w.levels[0][0].source_item_property_table_verified = 1;
     memset(&unbound, 0, sizeof(unbound));
     unbound.type = THERON_OBJTYPE_WEAPON;
     unbound.item_index = 6;
@@ -850,6 +851,10 @@ static void test_source_item_pickup_provenance(void) {
     CHECK_INT("inventory source charges", carried->charges, 3);
     CHECK_INT("inventory source curse", carried->cursed, 1);
     CHECK_INT("inventory source property", carried->property[1], 0x2f);
+    w.levels[0][0].source_item_property_table_verified = 0;
+    CHECK_INT("missing source property table rejects drop",
+              theron_v1_drop_inventory_source_item(&w, 0, 0, 3, 4), -1);
+    w.levels[0][0].source_item_property_table_verified = 1;
     w.inventory_source[0][0].property[5] ^= 0x01u;
     w.inventory_source[0][0].item_category = THERON_ITEM_CAT_ARMOR;
     CHECK_INT("mutated source category rejected on drop",

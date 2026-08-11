@@ -383,6 +383,13 @@ static int theron_v1_world_source_level_verified(
                         [world->current_level].source_header_verified;
 }
 
+static int theron_v1_world_source_item_table_verified(
+    const Theron_V1_World *world) {
+    if (!theron_v1_world_source_level_verified(world)) return 0;
+    return world->levels[world->current_dungeon - 1]
+                      [world->current_level].source_item_property_table_verified;
+}
+
 static int theron_v1_object_is_carried_item(const Theron_V1_Object *object) {
     if (!object) return 0;
     switch (object->type) {
@@ -965,7 +972,8 @@ int theron_v1_swap_inventory_source_slots(
     if (theron_v1_world_source_level_verified(world)) {
         /* Real levels may only move a complete source-backed occurrence or an
          * empty slot. Never carry a compact ID without its authenticated row. */
-        if ((champion->inventory[inventory_slot_a] != THERON_ITEM_NONE &&
+        if (!theron_v1_world_source_item_table_verified(world) ||
+            (champion->inventory[inventory_slot_a] != THERON_ITEM_NONE &&
              !theron_v1_inventory_source_record_matches(a)) ||
             (champion->inventory[inventory_slot_b] != THERON_ITEM_NONE &&
              !theron_v1_inventory_source_record_matches(b)) ||
@@ -1008,6 +1016,7 @@ int theron_v1_drop_inventory_source_item(
     if (theron_v1_world_source_level_verified(world) &&
         (!carried->property_valid ||
          !theron_v1_inventory_source_record_matches(carried) ||
+         !theron_v1_world_source_item_table_verified(world) ||
          carried->item_type !=
              world->party.champions[champion_slot].inventory[inventory_slot])) {
         /* Mirror the source pickup gate: a real T900 drop cannot recreate

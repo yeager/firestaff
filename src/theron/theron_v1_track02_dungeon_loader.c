@@ -291,6 +291,16 @@ int theron_v1_track02_load_full_dungeon_for_variant(
     result->levels_loaded = theron_v1_world_load_track02_dungeon(world, dungeon_id, &dd);
     if (result->levels_loaded <= 0) return -1;
 
+    /* Keep the table-authentication boundary attached to each loaded level.
+     * T900 inventory transitions must not infer this from the map header:
+     * the object records and the 66-row property table are separate source
+     * consumers. */
+    for (int level = 0; level < result->levels_loaded &&
+                       level < THERON_MAX_LEVELS_PER_DUNGEON; ++level) {
+        world->levels[di][level].source_item_property_table_verified =
+            (uint8_t)(property_table_verified != 0);
+    }
+
     unsigned int total_tiles = 0;
     uint8_t flat_tiles[8192];
     unsigned int fp2 = 0;
