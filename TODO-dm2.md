@@ -312,6 +312,14 @@ clipping is still unproven. Remaining weather work is to bind real original
     panel through the M11 owner. The remaining context-specific candidates
     are still inventory/status/dialogue work, not generic hitboxes.
 
+  - **2026-08-11 FM Towns dungeon-context guard:** the live dungeon pointer
+    route now consults the authenticated source context inventory before
+    emitting an event. A native rectangle shared with inventory, status, or
+    dialogue is not sufficient by itself; records without a dungeon context
+    remain unavailable until their own live owner is bound. This closes the
+    cross-view hit-test leak without borrowing PC geometry or inventing a
+    replacement control.
+
   - **2026-08-11 FM Towns inventory layout census:** the native RAW4 bridge
     now resolves 129 of the 166 source inventory route contexts. Ordinals
     47-49, 52-83, 99, and 110 have no matching rectangle in the authenticated

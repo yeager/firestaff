@@ -89,6 +89,33 @@ static int dm2_v1_rect_contains(const DM2_V1_InterfaceRect *rect,
            x < rect->x + rect->w && y < rect->y + rect->h;
 }
 
+/* The relocated Towns table is shared by dungeon, champion, inventory,
+ * status and dialogue branches.  A rectangle hit alone is not enough to
+ * select a dungeon command: the same native rectangle may be reused by a
+ * different branch.  Keep the runtime route on the source context owner and
+ * leave records that have no dungeon context available only to a future
+ * context-specific consumer. */
+static int dm2_v1_fmtowns_candidate_has_dungeon_context(
+    const DM2_V1_DungeonInputOwner *owner,
+    const DM2_V1_FmtownsMouseInputCandidate *candidate)
+{
+    unsigned int context_count;
+    unsigned int context_index;
+
+    if (!owner || !candidate) return 0;
+    context_count = DM2_TOUCHCLICK_Compat_GetSourceRecordContextCount(
+        candidate->event_index, candidate->rect_id, candidate->button_mask);
+    for (context_index = 0u; context_index < context_count; ++context_index) {
+        Dm2TouchClickZonePc34Compat context;
+        if (DM2_TOUCHCLICK_Compat_GetSourceRecordContextAt(
+                candidate->event_index, candidate->rect_id,
+                candidate->button_mask, context_index, &context) &&
+            context.view == DM2_TOUCH_CLICK_VIEW_DUNGEON_PC34_COMPAT)
+            return 1;
+    }
+    return 0;
+}
+
 static uint32_t dm2_v1_dungeon_input_table_hash(void)
 {
     uint32_t hash = 2166136261u;
@@ -316,6 +343,9 @@ int dm2_v1_dungeon_input_owner_route(
             uint16_t source_button_mask;
             if (!dm2_v1_dungeon_input_owner_fmtowns_candidate(
                     owner, ordinal, &candidate))
+                continue;
+            if (!dm2_v1_fmtowns_candidate_has_dungeon_context(
+                    owner, &candidate))
                 continue;
             source_button_mask = candidate.button_mask;
             if ((source_button_mask & button_mask) == 0u)
