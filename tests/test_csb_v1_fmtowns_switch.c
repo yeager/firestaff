@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static int passed;
 static int failed;
@@ -32,6 +33,8 @@ static uint8_t *read_file(const char *path, size_t *out_size)
 int main(int argc, char **argv)
 {
     const char *path = argc == 2 ? argv[1] : getenv("FIRESTAFF_CSB_FMTOWNS_SWITCH");
+    const char *data_dir;
+    char inferred_path[1024];
     CSB_V1_FmtownsSwitchReceipt receipt;
     CSB_V1_FmtownsItemDecodeReceipt page;
     CSB_V1_FmtownsSwitchInputReceipt click;
@@ -40,8 +43,20 @@ int main(int argc, char **argv)
     size_t byte_count;
     size_t index;
 
+    /* The native CLI and M11 real-media tests already use this selected F31
+     * root.  Reuse it when a stand-alone SWITCHTW path was not supplied so a
+     * normal real-data lane proves the actual switch-page decoder instead of
+     * reporting a misleading skip.  An explicit argv/env path remains useful
+     * for isolated files and takes precedence. */
+    if (!path && (data_dir = getenv("FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR")) &&
+        data_dir[0] != '\0' &&
+        snprintf(inferred_path, sizeof(inferred_path), "%s/SWITCHTW.EXP",
+                 data_dir) > 0 && strlen(inferred_path) < sizeof(inferred_path)) {
+        path = inferred_path;
+    }
     if (!path) {
-        puts("SKIP: set FIRESTAFF_CSB_FMTOWNS_SWITCH to original SWITCHTW.EXP");
+        puts("SKIP: set FIRESTAFF_CSB_FMTOWNS_SWITCH or "
+             "FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR to original F31 media");
         return 77;
     }
     bytes = read_file(path, &byte_count);
