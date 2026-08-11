@@ -25,6 +25,10 @@ int main(void)
     CSB_HintOracleDAT archive;
     const uint8_t *segment = NULL;
     size_t size = 0u;
+    const uint8_t solid_img[] = {0, 2, 0, 1, 0x05, 0x06};
+    const uint8_t literal_img[] = {0, 2, 0, 1, 0x90, 1, 0xab};
+    uint8_t pixels[4];
+    uint16_t width = 0u, height = 0u;
 
     check(csb_hint_oracle_dat_parse(valid, sizeof(valid), &archive) ==
               CSB_HINT_ORACLE_DAT_OK,
@@ -53,6 +57,18 @@ int main(void)
     check(csb_hint_oracle_dat_parse(valid, 13u, &archive) ==
               CSB_HINT_ORACLE_DAT_ERR_TRUNCATED,
           "truncated header is rejected");
+    check(csb_hint_oracle_dat_img2_decode(solid_img, sizeof(solid_img),
+              &width, &height, pixels, sizeof(pixels), NULL) &&
+              width == 2u && height == 1u && pixels[0] == 5u &&
+              pixels[1] == 6u,
+          "short IMG2 commands decode indexed pixels");
+    check(csb_hint_oracle_dat_img2_decode(literal_img, sizeof(literal_img),
+              &width, &height, pixels, sizeof(pixels), NULL) &&
+              pixels[0] == 10u && pixels[1] == 11u,
+          "literal IMG2 nibble pair decodes");
+    check(!csb_hint_oracle_dat_img2_decode(literal_img, 6u,
+              &width, &height, pixels, sizeof(pixels), NULL),
+          "truncated IMG2 literal is rejected");
 
     return failures ? 1 : 0;
 }

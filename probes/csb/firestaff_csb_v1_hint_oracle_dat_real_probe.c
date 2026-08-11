@@ -26,6 +26,10 @@ int main(int argc, char **argv)
     uint8_t *bytes = NULL;
     size_t byte_count = 0u;
     CSB_HintOracleDAT archive;
+    const uint8_t *oracle_segment;
+    size_t oracle_size;
+    uint8_t *pixels;
+    uint16_t width, height;
     size_t i;
     int rc;
     if (!path || !path[0]) {
@@ -47,6 +51,18 @@ int main(int argc, char **argv)
     for (i = 0u; i < archive.segment_count; ++i)
         printf("  segment[%zu] offset=%zu size=%u\n", i,
                archive.segment_offsets[i], (unsigned)archive.segment_sizes[i]);
+    if (archive.segment_count > 1u &&
+        csb_hint_oracle_dat_get_segment(&archive, 1u, &oracle_segment,
+                                        &oracle_size) == CSB_HINT_ORACLE_DAT_OK) {
+        pixels = (uint8_t *)malloc(640u * 400u);
+        if (!pixels || !csb_hint_oracle_dat_img2_decode(oracle_segment,
+                oracle_size, &width, &height, pixels, 640u * 400u, NULL) ||
+            width != 320u || height != 200u) {
+            fprintf(stderr, "FAIL: Oracle IMG2 decode\n");
+            free(pixels); free(bytes); return 1;
+        }
+        free(pixels);
+    }
     free(bytes);
     return 0;
 }

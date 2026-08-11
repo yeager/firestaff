@@ -53,6 +53,17 @@ int csb_hint_oracle_dat_get_segment(const CSB_HintOracleDAT *archive,
                                     const uint8_t **out_bytes,
                                     size_t *out_size);
 
+/* Decode an Atari/Amiga HCSB.DAT IMG2 segment into 4-bit indexed pixels.
+ * The segment starts with BE16 width/height and uses ReDMCSB EXPAND.C
+ * F0466 command bytes. No palette or display surface is implied. */
+int csb_hint_oracle_dat_img2_decode(const uint8_t *segment,
+                                    size_t segment_size,
+                                    uint16_t *out_width,
+                                    uint16_t *out_height,
+                                    uint8_t *out_pixels,
+                                    size_t out_capacity,
+                                    size_t *out_bytes_consumed);
+
 const char *csb_hint_oracle_dat_result_name(int result);
 
 #ifdef __cplusplus
