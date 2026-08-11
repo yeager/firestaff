@@ -4,6 +4,8 @@
 
 - ✅ Category-4 Track 02 records now materialize one live pool entry per
   non-zero source HP word, preserving packed cell and source provenance.
+- ✅ Source-backed members are rejected by the generic fixture combat path
+  until their original attack/damage consumer is authenticated.
 - 🔒 The generic random-wave path remains closed until its real HuC6280 RNG,
   AI/combat, generator, T700 and T900 consumers are captured together.
 

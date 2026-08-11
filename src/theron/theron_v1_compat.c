@@ -288,6 +288,12 @@ int theron_v1_champion_attack(Theron_V1_World *world,
 
     Theron_V1_Creature *c = theron_v1_creature_by_id(world, target_creature_id);
     if (!c || !(c->flags & THERON_CF_ACTIVE)) return -1;
+    /* Static category-4 members now have authentic HP, but their attack and
+     * damage consumers are not yet source-bound.  Do not let the generic
+     * fixture combat path mutate a real source creature. */
+    if (c->source_ref != 0u &&
+        (c->attack <= 0 || c->primary_attack == THERON_ATTACK_NONE))
+        return -1;
 
     Theron_V1_Champion *attacker =
         theron_v1_party_getChampion(&world->party, attacking_slot);
@@ -365,6 +371,9 @@ int theron_v1_champion_cast_spell(Theron_V1_World *world,
     /* Offensive spells target a creature */
     Theron_V1_Creature *c = theron_v1_creature_by_id(world, target_creature_id);
     if (!c || !(c->flags & THERON_CF_ACTIVE)) return -1;
+    if (c->source_ref != 0u &&
+        (c->attack <= 0 || c->primary_attack == THERON_ATTACK_NONE))
+        return -1;
 
     int spell_power = caster->anti_magic / 2 + mana_cost / 3;
 
@@ -420,6 +429,11 @@ Theron_CombatResult theron_v1_creature_attack_champion(
 
     Theron_V1_Creature *c = theron_v1_creature_by_id(world, creature_id);
     if (!c || !(c->flags & THERON_CF_ACTIVE)) return THERON_COMBAT_MISS;
+    /* A source-backed record with no authenticated attack owner is visible
+     * and collidable, but cannot be advanced through guessed combat stats. */
+    if (c->source_ref != 0u &&
+        (c->attack <= 0 || c->primary_attack == THERON_ATTACK_NONE))
+        return THERON_COMBAT_MISS;
 
     Theron_V1_Champion *defender =
         theron_v1_party_getChampion(&world->party, champion_slot);

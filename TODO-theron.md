@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — unbound source creatures cannot enter fixture combat
+
+- ✅ Source-backed members with authentic HP remain visible/collidable, but
+  champion damage, creature attacks and spell damage now reject them while
+  their original attack consumer is unknown.
+- 🔒 This is a safety boundary, not completed combat parity; the real attack,
+  damage, AI and event-sound owners still require the authenticated runtime
+  capture described below.
+
 ## 2026-08-11 — category-4 members now materialize from real HP records
 
 - ✅ Live static creatures are now admitted one-for-one from authenticated
