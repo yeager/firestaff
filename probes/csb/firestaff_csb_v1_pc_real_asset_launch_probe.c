@@ -57,9 +57,19 @@ static const char *pc_data_dir(int argc, char **argv, char *buf, size_t buf_size
 static int pc_data_present(const char *dir)
 {
     CSB_V1_BootProfile profile;
+    int present;
     if (!dir || dir[0] == '\0') return 0;
     csb_v1_boot_profile_init(&profile);
-    return csb_v1_boot_scan_assets(&profile, dir) == 0;
+    /* The default user-data root may legitimately contain another verified
+     * CSB edition, notably the FM Towns CD tree.  This probe is evidence for
+     * PC 3.4 only; never turn a correctly discovered different medium into a
+     * misleading PC checksum/pixel failure. */
+    present = csb_v1_boot_scan_assets(&profile, dir) == 0 &&
+        profile.variant_id == CSB_V1_VARIANT_PC34_EN &&
+        strcmp(profile.graphics_md5, "61fbfd56887c94adc26888a9491c6611") == 0 &&
+        strcmp(profile.dungeon_md5, "6695d2acebce49f95db1d8f3a5c733de") == 0;
+    csb_v1_boot_cleanup(&profile);
+    return present;
 }
 
 static int raster_rows_match_surface(const CSB_V1_StartupRuntimeRaster_PC34 *raster,

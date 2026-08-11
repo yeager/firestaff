@@ -361,6 +361,9 @@ static int pc_csb_data_present(const char *dir)
     if (!dir || dir[0] == '\0') return 0;
     csb_v1_boot_profile_init(&profile);
     present = csb_v1_boot_scan_assets(&profile, dir) == 0 &&
+              profile.variant_id == CSB_V1_VARIANT_PC34_EN &&
+              strcmp(profile.graphics_md5,
+                     CANONICAL_PC_CSB_GRAPHICS_MD5) == 0 &&
               strstr(profile.graphics_path, "::") == NULL &&
               strstr(profile.dungeon_path, "::") == NULL;
     /* This probe parses GRAPHICS.DAT directly with fopen(). Archive-backed

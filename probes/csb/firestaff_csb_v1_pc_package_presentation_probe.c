@@ -132,7 +132,9 @@ int main(int argc, char **argv)
     csb_v1_startup_real_receipt_init(&real_package);
     scan_result = csb_v1_startup_real_scan_and_receipt(data_dir, 4,
                                                         &real_package);
-    if (scan_result != CSB_V1_STARTUP_REAL_OK || !real_package.matched) {
+    if (scan_result != CSB_V1_STARTUP_REAL_OK || !real_package.matched ||
+        real_package.variant_id != CSB_V1_VARIANT_PC34_EN ||
+        real_package.graphics_kind != CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS) {
         printf("SKIP: verified PC CSB package unavailable (result=%s).\n",
                csb_v1_startup_real_result_name(scan_result));
         return 0;
