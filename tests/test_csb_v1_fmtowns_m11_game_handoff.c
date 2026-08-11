@@ -1638,6 +1638,7 @@ int main(void)
             CSB_V1_BootProfile *bootstrap_profile =
                 (CSB_V1_BootProfile *)view.csbBootProfile;
             CSB_V1_FmtownsUserSaveReceipt bootstrap_save;
+            CSB_V1_FmtownsStartupState bootstrap_state;
             uint32_t random_before = bootstrap_profile
                 ? bootstrap_profile->runtime.csbwin_random_seed : 0u;
             int created = 0;
@@ -1646,6 +1647,16 @@ int main(void)
                          "%s/CSBGAME.DAT", bootstrap_dir) >= 0 &&
                 snprintf(bootstrap_stage_path, sizeof(bootstrap_stage_path),
                          "%s.firestaff-bootstrap", bootstrap_save_path) >= 0) {
+                if (bootstrap_profile) {
+                    snprintf(bootstrap_profile->runtime.party_state.Champions[0].Name,
+                             sizeof(bootstrap_profile->runtime.party_state.Champions[0].Name),
+                             "%s", "F31NAME");
+                    snprintf(bootstrap_profile->runtime.party_state.Champions[0].Title,
+                             sizeof(bootstrap_profile->runtime.party_state.Champions[0].Title),
+                             "%s", "F31 NINETEEN CHARS!");
+                    bootstrap_profile->runtime.party_state.Champions[0].Direction = 2u;
+                    bootstrap_profile->runtime.party_state.Champions[0].Cell = 1u;
+                }
                 created = csb_v1_fmtowns_game_create_user_save_from_startup(
                     bootstrap_profile, &direct_handoff, bootstrap_save_path);
                 CHECK(created,
@@ -1655,6 +1666,17 @@ int main(void)
                           bootstrap_profile, &direct_handoff, bootstrap_save_path,
                           &bootstrap_save) && bootstrap_save.valid,
                       "F31 F7052-created CSBGAME.DAT passes the native F0435 reader");
+                memset(&bootstrap_state, 0, sizeof(bootstrap_state));
+                CHECK(created && csb_v1_fmtowns_game_load_user_save_state(
+                          &bootstrap_save, &bootstrap_state) && bootstrap_state.valid &&
+                          strcmp(bootstrap_state.party.Champions[0].Name,
+                                 "F31NAME") == 0 &&
+                          strcmp(bootstrap_state.party.Champions[0].Title,
+                                 "F31 NINETEEN CHARS!") == 0 &&
+                          bootstrap_state.party.Champions[0].Direction == 2u &&
+                          bootstrap_state.party.Champions[0].Cell == 1u,
+                      "F31 F0433/F0435 preserves 8/20 name-title bytes and direction/cell order");
+                csb_v1_fmtowns_game_startup_state_free(&bootstrap_state);
                 CHECK(created && bootstrap_profile->runtime.csbwin_random_seed ==
                           f31_advance_random_words(
                               random_before, 16u + REDMCSB_F7062_RANDOM_WORDS),

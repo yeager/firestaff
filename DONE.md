@@ -13907,3 +13907,6 @@ and production source-combat tests.
   the uppercase/punctuation filter, insertion/backspace and complete 19-byte
   title capacity against the licensed F31E corpus. F31J remains closed because
   its native Shift-JIS text consumer has not been recovered.
+- ✅ The native F7052/F0433 writer now uses that same `8 + 20`-byte F31
+  identity layout and the source direction/cell byte order. A real-media
+  F7052 → F0435 round trip proves no title truncation or pose-field swap.

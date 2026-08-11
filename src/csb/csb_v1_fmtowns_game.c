@@ -892,8 +892,10 @@ static void csb_v1_fmtowns_game_patch_party_part(
     unsigned char *bytes, const CSB_V1_PartyState *party)
 {
     enum {
-        champion_bytes = 319u, name_bytes = 8u, title_bytes = 16u,
-        cell_offset = 28u, direction_offset = 29u, action_offset = 32u,
+        /* ReDMCSB DEFS.H CHAMPION: Name[8], Title[20], Direction, Cell.
+         * F0433 must patch the same F31 record layout that F0435 reads. */
+        champion_bytes = 319u, name_bytes = 8u, title_bytes = 20u,
+        direction_offset = 28u, cell_offset = 29u, action_offset = 32u,
         incantation_offset = 34u, facing_offset = 40u,
         poison_event_count_offset = 42u, enable_action_event_offset = 44u,
         hide_damage_event_offset = 46u, attributes_offset = 48u,
@@ -912,6 +914,11 @@ static void csb_v1_fmtowns_game_patch_party_part(
         const CSB_V1_Champion *champion = &party->Champions[champion_index];
         int stat;
         if (champion_index >= party->ChampionCount) continue;
+        memset(dst, 0, name_bytes + title_bytes);
+        memcpy(dst, champion->Name,
+               strlen(champion->Name) < name_bytes ? strlen(champion->Name) : name_bytes);
+        memcpy(dst + name_bytes, champion->Title,
+               strlen(champion->Title) < title_bytes ? strlen(champion->Title) : title_bytes);
         memcpy(dst + cell_offset, &champion->Cell, 1u);
         memcpy(dst + direction_offset, &champion->Direction, 1u);
         dst[action_offset] = champion->ActionIndex;
@@ -969,8 +976,6 @@ static void csb_v1_fmtowns_game_patch_party_part(
         csb_v1_fmtowns_game_write_le16(dst + shield_offset,
                                        champion->ShieldStrength);
     }
-    (void)name_bytes;
-    (void)title_bytes;
 }
 
 static int csb_v1_fmtowns_game_write_user_save_internal(
