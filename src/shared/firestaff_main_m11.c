@@ -72,7 +72,7 @@ static void usage(const char* prog) {
             "  --no-vsync          Disable vertical sync\n"
             "  --fps               Show FPS counter\n"
             "  --game <id>         Start game directly: dm1, csb, dm2, nexus, theron\n"
-            "  --platform <name>   Select source platform: auto, pc, amiga, atari-st, fm-towns, saturn\n"
+            "  --platform <name>   Select source platform: auto, pc, amiga, atari-st, fm-towns, pce, saturn\n"
             "  --fm-towns          Select the verified FM Towns edition (dm1, csb, or dm2)\n"
             "  --amiga             Select the verified Amiga edition (including DM2 Amiga English)\n"
             "  --retroachievements Enable RetroAchievements runtime bridge\n"
@@ -387,7 +387,6 @@ static int parse_architecture(const char* value, int* out_architecture) {
     else if (strcmp(value, "fm-towns") == 0 || strcmp(value, "fmtowns") == 0 ||
              strcmp(value, "fm_towns") == 0)
         *out_architecture = M12_ARCH_FM_TOWNS;
-    else if (strcmp(value, "x68000") == 0) *out_architecture = M12_ARCH_X68000;
     else if (strcmp(value, "pce") == 0 || strcmp(value, "pc-engine") == 0)
         *out_architecture = M12_ARCH_PCE;
     else if (strcmp(value, "saturn") == 0) *out_architecture = M12_ARCH_SATURN;
@@ -561,7 +560,7 @@ int main(int argc, char** argv) {
         if (strcmp(a, "--platform") == 0 && i + 1 < argc) {
             if (!parse_architecture(argv[++i], &opts.architectureOverride)) {
                 fprintf(stderr,
-                        "firestaff: --platform must be auto, pc, amiga, atari-st, fm-towns, pce, saturn, or x68000\n");
+                        "firestaff: --platform must be auto, pc, amiga, atari-st, fm-towns, pce, or saturn\n");
                 return 2;
             }
             continue;

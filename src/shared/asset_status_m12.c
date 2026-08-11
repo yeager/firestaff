@@ -341,13 +341,6 @@ static const M12_VersionSpec g_csbVersions[] = {
      * Towns extraction provides the corresponding asset inventory. */
     {"csb", "fmtowns-en", "FM Towns English", "FMT EN", g_csbGraphicsNames, "405b757038eea3c263e60f240854d6de", M12_ARCH_FM_TOWNS},
     {"csb", "fmtowns-ja", "FM Towns Japanese", "FMT JP", g_csbGraphicsNames, "761d6fc588b31aeaaa9caf3725e111b9", M12_ARCH_FM_TOWNS},
-    /* The verified PC 3.4 DOS route is retained separately from the Amiga
-     * catalogue even though the shared GRAPHICS.DAT digest is also present
-     * in the A31 multilanguage family.  m12_admit_csb_amiga31_title_package()
-     * remains the package discriminator for that shared digest; removing
-     * this row makes the real PC handoff and its required-file tests report
-     * an unsupported game. */
-    {"csb", "pc34-en", "PC 3.4 English", "PC 3.4 EN", g_csbGraphicsNames, "61fbfd56887c94adc26888a9491c6611", M12_ARCH_PC},
     /* ReDMCSB COMPILE.H:199-243: A31E is the original Amiga 3.1 English
      * media family.  Its GRAPHICS.DAT identity is also recorded by the
      * Amiga decoder and data validator; scanner and M11 must admit it. */
@@ -6678,7 +6671,7 @@ const char* M12_Architecture_Label(int architecture) {
     case M12_ARCH_AMIGA:     return "Amiga";
     case M12_ARCH_ATARI_ST:  return "Atari ST";
     case M12_ARCH_FM_TOWNS:  return "FM Towns";
-    case M12_ARCH_X68000:    return "X68000";
+    case M12_ARCH_X68000:    return "X68000 (unsupported)";
     case M12_ARCH_PC98:      return "PC-9801 (unsupported)";
     case M12_ARCH_PCE:       return "PC Engine";
     case M12_ARCH_SATURN:    return "Saturn";
@@ -6694,7 +6687,7 @@ const char* M12_Architecture_ShortLabel(int architecture) {
     case M12_ARCH_AMIGA:     return "Amiga";
     case M12_ARCH_ATARI_ST:  return "ST";
     case M12_ARCH_FM_TOWNS:  return "FMT";
-    case M12_ARCH_X68000:    return "X68k";
+    case M12_ARCH_X68000:    return "X68k off";
     case M12_ARCH_PC98:      return "PC-98 off";
     case M12_ARCH_PCE:       return "PCE";
     case M12_ARCH_SATURN:    return "Saturn";
@@ -6712,10 +6705,12 @@ static int m12_version_is_launchable(const char *gameId,
      * now binds from its version-private ADF materialisation.  Catalogue
      * order may therefore select A31E without borrowing A31M media.
      * ReDMCSB COMPILE.H:199-213, 246-269. */
-    /* PC-9801 media may be retained for preservation receipts, but no
-     * Firestaff game exposes a selectable or launchable PC-9801 route. */
+    /* PC-9801 and X68000 media may be retained for preservation receipts,
+     * but no Firestaff game exposes selectable or launchable routes for
+     * either platform. */
     return gameId && version && version->versionId &&
-           version->architecture != M12_ARCH_PC98;
+           version->architecture != M12_ARCH_PC98 &&
+           version->architecture != M12_ARCH_X68000;
 }
 
 int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
@@ -6726,7 +6721,6 @@ int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
     static const int pcFirstAutoPriority[] = {
         /* DM1 and DM2 have a verified PC primary route. */
         M12_ARCH_PC, M12_ARCH_AMIGA, M12_ARCH_ATARI_ST, M12_ARCH_FM_TOWNS,
-        M12_ARCH_X68000,
         M12_ARCH_PCE, M12_ARCH_SATURN, M12_ARCH_APPLE_IIGS
     };
     static const int csbAutoPriority[] = {
