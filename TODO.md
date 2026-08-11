@@ -1,5 +1,14 @@
 # Firestaff TODO - Open Work
 
+## Nexus: carry VDP2 producer order into composition (2026-08-11)
+
+- ✅ Source-bound NBG1 composition now uses the raw receipt's explicit
+  little-/big-endian producer order for registers and CRAM.
+- ✅ Legacy zero-order fixtures retain the compatibility scorer; real capture
+  paths no longer infer byte order from plausible register values.
+- 🔒 The compositor remains capture-only until the captured NBG1 source owner,
+  tilemap/CLUT consumer and host placement are source-bound.
+
 ## Nexus: make VDP2 capture byte order producer-defined (2026-08-11)
 
 - ✅ The runtime receipt now distinguishes historical Firestaff host-order

@@ -86,6 +86,7 @@ int main(void)
     input.capture_cram_size = 4096;
     input.vdp2_registers = registers;
     input.vdp2_registers_size = sizeof(registers);
+    input.register_byte_order = NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG;
     input.source_bitmap = bitmap;
     input.source_bitmap_size = NEXUS_V1_VDP2_NBG1_BITMAP_BYTES;
     input.source_palette = cram;
@@ -126,6 +127,7 @@ int main(void)
     wl16(registers + 0x28, 0x1211);
     wl16(registers + 0x2c, 0x0000);
     input.original_saturn_capture_verified = 1;
+    input.register_byte_order = NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_LITTLE;
     if (!nexus_v1_vdp2_capture_composite_nbg1_bitmap(
             &viewport.fb, &input, &receipt) || !receipt.valid) {
         fprintf(stderr, "FAIL: little-endian VDP2 NBG1 replay\n");

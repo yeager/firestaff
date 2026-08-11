@@ -1,3 +1,13 @@
+# Nexus: propagate VDP2 producer order into capture composition (2026-08-11)
+
+- ✅ Added the producer byte order to `Nexus_V1_Vdp2CaptureCompositeInput`.
+- ✅ Register and CRAM decoding now follows the authenticated Firestaff or
+  Mednafen order; older fixture callers retain the compatibility fallback.
+- ✅ VDP2 compositor and VDP1/VDP2 composition tests pass, including explicit
+  big- and little-endian register fixtures.
+- 🔒 No startup/menu/HUD/viewport semantics were admitted by this transport
+  and composition fix.
+
 # Nexus: producer-defined VDP2 byte order (2026-08-11)
 
 - ✅ Moved the VDP2 byte-order enum into the frame receipt contract and record

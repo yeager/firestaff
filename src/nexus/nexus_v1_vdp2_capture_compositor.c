@@ -46,19 +46,21 @@ static uint16_t read_register16(const uint8_t *registers, size_t offset)
         ? read_le16(registers + offset) : read_be16(registers + offset);
 }
 
+static uint16_t read_register16_ordered(
+    const uint8_t *registers, size_t offset,
+    Nexus_V1_SaturnVdp2RegisterByteOrder order)
+{
+    if (order == NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG)
+        return read_be16(registers + offset);
+    if (order == NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_LITTLE)
+        return read_le16(registers + offset);
+    return read_register16(registers, offset);
+}
+
 static uint8_t expand5(uint16_t value, unsigned shift)
 {
     uint8_t result = (uint8_t)(((value >> shift) & 0x1fU) << 3U);
     return (uint8_t)(result | (result >> 5U));
-}
-
-static uint32_t cram_to_rgba(const uint8_t *entry)
-{
-    uint16_t value = read_be16(entry);
-    return UINT32_C(0xff000000) |
-        ((uint32_t)expand5(value, 0U) << 16U) |
-        ((uint32_t)expand5(value, 5U) << 8U) |
-        (uint32_t)expand5(value, 10U);
 }
 
 static uint32_t cram_to_rgba_ordered(
@@ -110,11 +112,15 @@ int nexus_v1_vdp2_capture_composite_nbg1_bitmap(
         *out_receipt = receipt;
         return 0;
     }
-    bgon = read_register16(input->vdp2_registers, 0x20U);
-    chctla = read_register16(input->vdp2_registers, 0x28U);
-    bmpna = read_register16(input->vdp2_registers, 0x2cU);
-    craofa = read_register16(input->vdp2_registers,
-                             NEXUS_V1_VDP2_CRAOFA_OFFSET);
+    bgon = read_register16_ordered(input->vdp2_registers, 0x20U,
+                                   input->register_byte_order);
+    chctla = read_register16_ordered(input->vdp2_registers, 0x28U,
+                                     input->register_byte_order);
+    bmpna = read_register16_ordered(input->vdp2_registers, 0x2cU,
+                                    input->register_byte_order);
+    craofa = read_register16_ordered(
+        input->vdp2_registers, NEXUS_V1_VDP2_CRAOFA_OFFSET,
+        input->register_byte_order);
     if ((bgon & 0x0002U) == 0U || (chctla & 0x0200U) == 0U ||
         ((chctla >> 10U) & 3U) != 0U || ((chctla >> 12U) & 3U) != 1U ||
         /* NBG1 owns BMPNA bits 8..10; bits 0..2 belong to NBG0. */
@@ -142,7 +148,8 @@ int nexus_v1_vdp2_capture_composite_nbg1_bitmap(
     receipt.height = input->height;
     receipt.palette_base = input->palette_base;
     for (x = 0; x < 256; ++x)
-        framebuffer->palette[x] = cram_to_rgba(input->source_palette + x * 2);
+        framebuffer->palette[x] = cram_to_rgba_ordered(
+            input->source_palette + x * 2, input->register_byte_order);
     for (y = 0; y < input->height; ++y) {
         for (x = 0; x < input->width; ++x) {
             uint8_t index = input->source_bitmap[
@@ -204,9 +211,11 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_bitmap(
         if (out_register_receipt) *out_register_receipt = registers;
         return 0;
     }
-    bmpna = read_register16(frame.vdp2_registers, 0x2cU);
-    craofa = read_register16(frame.vdp2_registers,
-                             NEXUS_V1_VDP2_CRAOFA_OFFSET);
+    bmpna = read_register16_ordered(frame.vdp2_registers, 0x2cU,
+                                    registers.byte_order);
+    craofa = read_register16_ordered(
+        frame.vdp2_registers, NEXUS_V1_VDP2_CRAOFA_OFFSET,
+        registers.byte_order);
     /* This bounded lane follows the 512x256, 8bpp source geometry used by
      * the authenticated frame analyzer. NBG1 BMPNA and CRAOFA non-zero
      * variants need their own Saturn address proof before admission. */
@@ -217,8 +226,9 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_bitmap(
         if (out_register_receipt) *out_register_receipt = registers;
         return 0;
     }
-    bitmap_offset = (((uint32_t)read_register16(
-        frame.vdp2_registers, 0x3cU) >> 4U) & 7U) * UINT32_C(0x20000);
+    bitmap_offset = (((uint32_t)read_register16_ordered(
+        frame.vdp2_registers, 0x3cU, registers.byte_order) >> 4U) & 7U) *
+        UINT32_C(0x20000);
     if (bitmap_offset > frame.vdp2_vram_size -
             NEXUS_V1_VDP2_NBG1_BITMAP_BYTES) {
         if (out_frame_receipt) *out_frame_receipt = frame;

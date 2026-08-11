@@ -585,6 +585,11 @@ candidate's explicit big-endian VDP2 word order. This proves raw tilemap
 decoding only; no Nexus source span, menu identity or production compositor
 is admitted by that result.
 
+The source-bound NBG1 bitmap compositor now consumes the same explicit byte
+order carried by the raw-frame receipt for both VDP2 registers and CRAM. An
+older fixture with no producer order keeps the previous scoring fallback; a
+real Firestaff or Mednafen frame does not guess from register values.
+
 On 2026-08-10 a bounded J-BIOS/English-media source-trace attempt reached
 500,000 SH-2 RAM-source rows but timed out before producing a complete frame
 capture. After rejecting zero-filled RAM and unmapped ISO padding, the trace

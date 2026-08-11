@@ -21,6 +21,9 @@ typedef struct {
     int capture_cram_size;
     const uint8_t *vdp2_registers;
     int vdp2_registers_size;
+    /* Set from Nexus_V1_SaturnRuntimeCaptureFrameReceipt when the input came
+     * from a raw producer. UNKNOWN preserves older fixture compatibility. */
+    Nexus_V1_SaturnVdp2RegisterByteOrder register_byte_order;
     const uint8_t *source_bitmap;
     int source_bitmap_size;
     const uint8_t *source_palette;
