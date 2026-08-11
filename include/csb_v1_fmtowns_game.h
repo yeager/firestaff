@@ -462,6 +462,14 @@ int csb_v1_fmtowns_game_load_user_save_state(
     const CSB_V1_FmtownsUserSaveReceipt *receipt,
     CSB_V1_FmtownsStartupState *out_state);
 
+/* F7051/F2124 keeps the four native planar portraits immediately after the
+ * five authenticated save parts. Recheck the complete selected slot before
+ * exposing those bytes to C06; no decoded or host portrait substitute is
+ * accepted. */
+int csb_v1_fmtowns_game_load_user_save_portraits(
+    const CSB_V1_FmtownsUserSaveReceipt *receipt,
+    CSB_V1_FmtownsStartupPortraitReceipt *out_receipt);
+
 /* F0433/F0435 native F31 write path. The writer starts from the authenticated
  * existing slot, patches only fields owned by the live F31 runtime, rebuilds
  * all five keyed parts and the F7062 header, and replaces the slot atomically.

@@ -9423,10 +9423,44 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
         if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0)
             return M11_GAME_INPUT_REDRAW;
         if (x >= 80 && x <= 148 && y >= 108 && y <= 116) {
-            /* F7004 choice 1 delegates to F7051_LoadGame.  The distinct
-             * C05 disk selection and whole-state handoff remain unbound. */
+            CSB_V1_FmtownsGameHandoffReceipt game;
+            CSB_V1_FmtownsUserSaveReceipt save;
+            CSB_V1_FmtownsStartupState save_state;
+            CSB_V1_FmtownsStartupPortraitReceipt save_portraits;
+            CSB_V1_BootProfile *profile =
+                (CSB_V1_BootProfile *)state->csbBootProfile;
+            char path[FSP_PATH_MAX];
+            int loaded = 0;
+            /* F7004 choice GAME delegates to F7051(C0_GAME_SOURCE), which
+             * opens the selected C5 slot and F2124's four portrait blocks.
+             * C06 keeps that result as editor state; it does not enter C03
+             * or substitute the active host game runtime. */
+            memset(&game, 0, sizeof(game));
+            memset(&save, 0, sizeof(save));
+            memset(&save_state, 0, sizeof(save_state));
+            memset(&save_portraits, 0, sizeof(save_portraits));
+            if (csb_v1_fmtowns_game_handoff_open(
+                    profile, CSB_FMTOWNS_SWITCH_ENGLISH, &game) &&
+                m11_csb_fmtowns_native_save_path(path, sizeof(path)) &&
+                csb_v1_fmtowns_game_user_save_open_or_restore_backup(
+                    profile, &game, path, &save) &&
+                csb_v1_fmtowns_game_load_user_save_state(&save, &save_state) &&
+                csb_v1_fmtowns_game_load_user_save_portraits(
+                    &save, &save_portraits)) {
+                state->csbFmtownsUtilityParty = save_state.party;
+                state->csbFmtownsUtilityPortraitReceipt = save_portraits;
+                memcpy(state->csbFmtownsUtilityOriginalPortraits,
+                       save_portraits.source_bytes,
+                       sizeof(state->csbFmtownsUtilityOriginalPortraits));
+                memset(state->csbFmtownsUtilityPortraitModified, 0,
+                       sizeof(state->csbFmtownsUtilityPortraitModified));
+                state->csbFmtownsUtilityUndoAvailable = 0;
+                loaded = 1;
+            }
+            csb_v1_fmtowns_game_startup_state_free(&save_state);
             state->csbFmtownsUtilityLoadDialogActive = 0;
-            m11_set_status(state, "CSB FM TOWNS", "GAME LOAD UNAVAILABLE");
+            m11_set_status(state, "CSB FM TOWNS",
+                           loaded ? "GAME LOADED" : "GAME LOAD REJECTED");
         } else if (x >= 165 && x <= 237 && y >= 108 && y <= 116) {
             state->csbFmtownsUtilityLoadDialogActive = 0;
             if (!state->csbFmtownsUtilityPortraitCatalog.valid ||

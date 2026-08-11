@@ -1815,6 +1815,44 @@ int csb_v1_fmtowns_game_load_user_save_state(
     return csb_v1_fmtowns_game_load_startup_state(&compat, out_state);
 }
 
+int csb_v1_fmtowns_game_load_user_save_portraits(
+    const CSB_V1_FmtownsUserSaveReceipt *receipt,
+    CSB_V1_FmtownsStartupPortraitReceipt *out_receipt)
+{
+    uint32_t actual_size;
+    uint32_t actual_fnv1a;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!receipt || !receipt->valid || !receipt->source_path[0] ||
+        receipt->source_size == 0u || receipt->source_fnv1a == 0u ||
+        receipt->portraits_offset > receipt->source_size ||
+        sizeof(out_receipt->source_bytes) >
+            receipt->source_size - receipt->portraits_offset) return 0;
+    /* F0435 and F2124 consume one selected file handle. Recompute the
+     * receipt identity here so a swapped path cannot combine validated party
+     * parts with portraits from another user file. */
+    actual_fnv1a = csb_v1_fmtowns_game_file_fnv1a(receipt->source_path,
+                                                   &actual_size);
+    if (actual_fnv1a != receipt->source_fnv1a ||
+        actual_size != receipt->source_size ||
+        !csb_v1_fmtowns_game_read_span(
+            receipt->source_path, receipt->portraits_offset,
+            (unsigned char *)out_receipt->source_bytes,
+            sizeof(out_receipt->source_bytes))) return 0;
+    out_receipt->valid = 1;
+    out_receipt->language = receipt->language;
+    out_receipt->variant_id = receipt->variant_id;
+    out_receipt->source_file_offset = receipt->portraits_offset;
+    out_receipt->source_size = sizeof(out_receipt->source_bytes);
+    out_receipt->source_fnv1a = csb_v1_fmtowns_game_bytes_fnv1a(
+        (const unsigned char *)out_receipt->source_bytes,
+        sizeof(out_receipt->source_bytes));
+    out_receipt->source_evidence =
+        "ReDMCSB CEDTINCD.C F7051; CEDT019.C F2124 lines 85-109";
+    return 1;
+}
+
 static int csb_v1_fmtowns_utility_icon_palette_open(
     const CSB_V1_FmtownsUtilityHandoffReceipt *source_receipt,
     uint32_t file_offset,

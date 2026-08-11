@@ -1280,6 +1280,8 @@ int main(void)
             CSB_V1_FmtownsUserSaveReceipt utility_save;
             CSB_V1_FmtownsStartupState utility_state;
             uint8_t *utility_bytes = NULL;
+            uint8_t saved_portraits[CSB_V1_FMTOWNS_STARTUP_PORTRAIT_COUNT]
+                                   [CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES];
             size_t utility_size = 0u;
             int created = 0;
             if (mkdtemp(utility_dir) != NULL &&
@@ -1319,6 +1321,26 @@ int main(void)
                       "F31E C06 GAME writes the editor's raw F31 portrait receipt");
                 free(utility_bytes);
                 csb_v1_fmtowns_game_startup_state_free(&utility_state);
+                memcpy(saved_portraits,
+                       view.csbFmtownsUtilityPortraitReceipt.source_bytes,
+                       sizeof(saved_portraits));
+                snprintf(view.csbFmtownsUtilityParty.Champions[0].Name,
+                         sizeof(view.csbFmtownsUtilityParty.Champions[0].Name),
+                         "%s", "CHANGED");
+                result = M11_GameView_HandlePointerButton(
+                    &view, 50, 190, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                result = M11_GameView_HandlePointerButton(
+                    &view, 112, 112, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                CHECK(created && result == M11_GAME_INPUT_REDRAW &&
+                          strcmp(view.lastOutcome, "GAME LOADED") == 0 &&
+                          strcmp(view.csbFmtownsUtilityParty.Champions[0].Name,
+                                 "AB") == 0,
+                      "F31E C06 F7004/F7051 restores the saved party into the editor");
+                CHECK(created &&
+                          memcmp(view.csbFmtownsUtilityPortraitReceipt.source_bytes,
+                                 saved_portraits,
+                                 sizeof(view.csbFmtownsUtilityPortraitReceipt.source_bytes)) == 0,
+                      "F31E C06 F7051 retains the selected slot's raw portrait receipt");
                 remove(utility_save_path);
                 rmdir(utility_dir);
             } else {

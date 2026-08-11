@@ -4,6 +4,15 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## Chaos Strikes Back (CSB)
 
+- ✅ 2026-08-11 CSB FM Towns C06 GAME load: F7004's CSB GAME branch now
+  reproduces F7051/F0435 admission for the user-owned M746 `CSBGAME.DAT`.
+  The C06 editor receives the verified party and F2124's four raw planar
+  portraits from one rehashed file receipt; it never borrows C03's live
+  runtime or a host portrait. The real F31E regression creates an isolated
+  C06 save, changes the editor state, then proves GAME load restores that
+  party and portrait data. The native source's distinct DM-versus-CSB chooser
+  remains outside this CSB-only route.
+
 - ✅ 2026-08-11 CSB FM Towns C06 GAME save: CEDT001.C `F7001` choice GAME now
   executes the recovered CEDTINC8.C `F7052` first-save transaction on an
   isolated, verified `MINI.DAT` state. C06's edited party records and all four

@@ -296,7 +296,7 @@ populated dungeon states.
   champion records and four raw planar portrait blocks, and atomically publishes
   the first user-owned M746 `CSBGAME.DAT` only after the native F0435 reader can
   admit it. It never serializes a separately active C03 session. Existing-slot
-  replacement and F7004 GAME loading remain open C06 work.
+  replacement remains open C06 work.
 
 - **FM-TOWNS-C06-LOAD-001 — `F7002_ReadCMP` is now an authenticated import
   transaction.** Given an index returned by the admitted `PORTRAIT` catalogue,
@@ -314,9 +314,14 @@ populated dungeon states.
   preserves scroll/cancel commands, and hands an accepted row to F7002. The
   real F31E handoff test proves open, raster, selection and import. No host
   path or synthetic row is accepted. C06 F31E name/title editing and its first
-  `GAME` save are source-bound separately; Make New Adventure and F7004 GAME
-  loading remain open. In-game C140 native saving is bound separately through
-  F7052.
+  `GAME` save are source-bound separately. **2026-08-11 F7004 CSB load closed:**
+  the GAME choice now reopens the user-owned M746 `CSBGAME.DAT` through the
+  native F0435/F7063 receipt and restores its party plus four raw planar
+  portraits into C06. The selected file is rehashed before the portrait read,
+  so the validated save parts cannot be paired with a swapped portrait span.
+  The source's separate Dungeon Master-versus-CSB selection and Make New
+  Adventure remain open; Firestaff's C06 path intentionally admits only CSB.
+  In-game C140 native saving is bound separately through F7052.
 
 ### CSB V1
 
