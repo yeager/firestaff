@@ -156,11 +156,15 @@ static void test_staged_real_csbwin_save(void)
     csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(tail_candidate);
     tail_candidate = NULL;
     csb_v1_runtime_init(&timer_probe, NULL);
-    CHECK(csb_v1_runtime_apply_csbwin_body_runtime_summaries(
+    CHECK(csb_v1_runtime_apply_csbwin_gameblock2_summary(
+              &timer_probe, &body) == 0 &&
+          csb_v1_runtime_apply_csbwin_champion_summaries(
+              &timer_probe, &body) == 0 &&
+          csb_v1_runtime_apply_csbwin_body_runtime_summaries(
               &timer_probe, &body) == 0 &&
           csb_v1_runtime_materialize_csbwin_item16_summaries(&timer_probe) >= 0 &&
           csb_v1_runtime_materialize_csbwin_timer_queue(&timer_probe) >= 0,
-          "legacy CSBGAME2 timer pool materializes without a host re-sort");
+          "legacy CSBGAME2 body and timer pool materialize without a host re-sort");
     csb_v1_runtime_cleanup(&timer_probe);
     free(bytes);
 
