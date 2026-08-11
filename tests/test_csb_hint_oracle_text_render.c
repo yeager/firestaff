@@ -1,0 +1,4 @@
+#include "csb_hint_oracle_graphics_surface.h"
+#include <stdio.h>
+#include <string.h>
+int main(void){CSB_HintOracleGraphicsSurface s;uint8_t font[256u*27u],frame[320u*200u];memset(&s,0,sizeof(s));memset(font,12,sizeof(font));memset(frame,1,sizeof(frame));s.font_pixels=font;s.font_width=256;s.font_height=27;font[(size_t)9u*256u+8u]=7u;font[(size_t)9u*256u+9u]=7u;if(!csb_hint_oracle_graphics_surface_blit_st_text(&s,frame,sizeof(frame),10,20," A")||frame[20u*320u+19u]!=7u||frame[20u*320u+10u]!=1u){fprintf(stderr,"FAIL: ST font mapping\n");return 1;}if(!csb_hint_oracle_graphics_surface_blit_st_text(&s,frame,sizeof(frame),-1,0,"A")||frame[0]!=7u){fprintf(stderr,"FAIL: clipping/key\n");return 1;}puts("csb_hint_oracle_text_render: PASS");return 0;}

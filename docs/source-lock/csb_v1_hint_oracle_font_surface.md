@@ -31,3 +31,10 @@ The text source is selected independently through
 original program, while page numbers 1 through the hint's page count select
 compressed content. The reader deliberately exposes only the latter; title
 text remains the authenticated HTC hint-name record.
+
+`csb_hint_oracle_graphics_surface_blit_st_text()` is the bounded ST glyph
+consumer. It follows `HINTTEXT.C`'s `character - ' '` glyph lookup, 8×9
+source cells and nine-pixel advance. `BLIT.C` identifies the `C12` argument
+as the transparent source colour, so index 12 is not written to the target.
+This is a glyph primitive only: title/page rectangles, segment-0 palette
+changes and complete screen composition remain separate evidence gates.

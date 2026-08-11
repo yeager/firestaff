@@ -16,4 +16,10 @@ typedef struct {
 void csb_hint_oracle_graphics_surface_init(CSB_HintOracleGraphicsSurface *surface);
 void csb_hint_oracle_graphics_surface_free(CSB_HintOracleGraphicsSurface *surface);
 int csb_hint_oracle_graphics_surface_load(CSB_HintOracleGraphicsSurface *surface,const char *data_dir,int max_depth,const char *expected_md5);
+/* ReDMCSB HINTTEXT.C F1882_PrintTextString() for the ST font raster:
+ * printable ASCII indexes an 8x9 glyph at (character-' ') and advances 9px.
+ * Colour 12 is the source F0132 transparent colour. */
+int csb_hint_oracle_graphics_surface_blit_st_text(
+    const CSB_HintOracleGraphicsSurface *surface, uint8_t *frame,
+    size_t frame_size, int x, int y, const char *text);
 #endif
