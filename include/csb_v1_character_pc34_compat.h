@@ -21,7 +21,9 @@
 #define CSB_V1_MAX_CHAMPIONS     4
 #define CSB_V1_SLOT_COUNT       30
 #define CSB_V1_MAX_NAME_LEN     15
-#define CSB_V1_MAX_TITLE_LEN    15
+/* ReDMCSB DEFS.H CHAMPION: Name[8], Title[20].  The F31 C06 editor
+ * intentionally exposes all nineteen title characters. */
+#define CSB_V1_MAX_TITLE_LEN    19
 #define CSB_V1_SKILL_COUNT      16
 #define CSB_V1_FULL_SKILL_COUNT 20
 #define CSB_V1_STAT_COUNT        7  /* STR, DEX, WIS, VIT, ANTIMAGIC, ANTIFIRE, LUCK */
@@ -145,7 +147,7 @@
 typedef struct {
     /* ── Core identity ── */
     char     Name[CSB_V1_MAX_NAME_LEN + 1];          /*  0  offset 0 */
-    char     Title[CSB_V1_MAX_TITLE_LEN + 1];         /* 16  offset 16 */
+    char     Title[CSB_V1_MAX_TITLE_LEN + 1];         /* F31 source: 20 bytes */
 
     /* ── Portrait bitmap (planar, 32×29, 128×29 bytes) ── */
     uint8_t  Portrait[CSB_V1_PORTRAIT_BYTE_COUNT];   /* 32  offset 32 */

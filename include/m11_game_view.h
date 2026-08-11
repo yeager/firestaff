@@ -505,6 +505,17 @@ typedef enum {
 } M11_GameInputResult;
 
 typedef enum {
+    M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_BACKSPACE = 1,
+    M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_CLEAR,
+    M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_LEFT,
+    M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_RIGHT,
+    M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_HOME,
+    M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_END,
+    M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_UP,
+    M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_DOWN
+} M11_CsbFmtownsUtilityTextKey;
+
+typedef enum {
     M11_ENDGAME_F0445_EVENT_NONE = 0,
     M11_ENDGAME_F0445_EVENT_SETUP = 1,
     M11_ENDGAME_F0445_EVENT_FIREBALL_BURST = 2,
@@ -1620,6 +1631,10 @@ typedef struct {
     int csbFmtownsUtilitySaveDialogActive;
     /* CEDT001.C F7004's distinct GAME / PORTRAIT / CANCEL dialog. */
     int csbFmtownsUtilityLoadDialogActive;
+    /* CEDT006.C F7027/F7041 text cursor state. -1 means no C06 field owns
+     * host keyboard text. */
+    int csbFmtownsUtilityEditField;
+    uint8_t csbFmtownsUtilityEditCharacterIndex;
     int csbFmtownsUtilityBound;
     /* The selected SWITCHTW Game exit is a separate F31 C03_GAME program.
      * Retain its verified identity alongside the launch gate so M11 can open
@@ -2058,6 +2073,12 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
     int x,
     int y,
     int buttonMask);
+int M11_GameView_CsbFmtownsUtilityTextInputActive(
+    const M11_GameViewState* state);
+M11_GameInputResult M11_GameView_ConsumeCsbFmtownsUtilityTextInput(
+    M11_GameViewState* state, const char* text);
+M11_GameInputResult M11_GameView_HandleCsbFmtownsUtilityTextKey(
+    M11_GameViewState* state, M11_CsbFmtownsUtilityTextKey key);
 
 /* One SDL finger contact after main_loop_m11 has mapped it into the native
  * source framebuffer.  Gesture commands deliberately re-enter the normal

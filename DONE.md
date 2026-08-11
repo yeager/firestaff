@@ -13891,3 +13891,18 @@ and production source-combat tests.
 - ✅ Riktig användarägd `TQUS...sav` nådde `$4644`/`$4667` med 25 CD IRQ, 161 sektorsbindningar, 2 CD→RAM-originreceipts och 3 072 bounded RNG-samples över sex kompletta fönster
 - ✅ Alla 15 scripted PCE-inputevents och `transition=observed` verifierades
 - 🔒 `$B0E5` och creature-record join saknas fortfarande; ingen RNG-return, AI, attack/skada, loot, generator, T700 eller T900 publiceras
+# CSB FM Towns F31E C06: champion-text parity and source layout repair (2026-08-11)
+
+- ✅ Recovered ReDMCSB `DEFS.H`'s actual F31 `CHAMPION` layout: `Name[8]`,
+  `Title[20]`, followed by `Direction` then `Cell`. The F31 MINI.DAT decoder
+  now reads all 20 title bytes and the original direction/cell order instead
+  of silently applying the unrelated PC-style 16-byte title assumption.
+- ✅ Bound `CEDTDATA.C` fields 13/14 and `CEDT006.C` F7027/F7028/F7038/F7041
+  to the live English C06 owner. The authentic 5×6 font renders both source
+  fields, underscores and 6-pixel cursor; mouse, SDL text, backspace, Escape,
+  Home/End and arrow navigation reproduce the native 7-character name and
+  19-character title contract.
+- ✅ Real-media regression `test_csb_v1_fmtowns_m11_game_handoff` now proves
+  the uppercase/punctuation filter, insertion/backspace and complete 19-byte
+  title capacity against the licensed F31E corpus. F31J remains closed because
+  its native Shift-JIS text consumer has not been recovered.

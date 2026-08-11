@@ -19,6 +19,13 @@ enum {
 
 typedef struct C06_Box { int left, right, top, bottom; } C06_Box;
 
+static size_t c06_text_length(const char *text, size_t maximum)
+{
+    size_t length = 0u;
+    while (length < maximum && text[length] != '\0') ++length;
+    return length;
+}
+
 static uint32_t fnv1a(const uint8_t *bytes, size_t count)
 {
     uint32_t hash = 2166136261u;
@@ -299,6 +306,7 @@ int csb_v1_fmtowns_utility_render_editor(
     const CSB_V1_PartyState *party,
     const CSB_V1_FmtownsStartupPortraitReceipt *portraits,
     uint16_t selected_champion_index, uint8_t selected_color_index,
+    int edit_field, uint8_t edit_character_index,
     uint8_t *pixels, size_t pixel_capacity,
     CSB_V1_FmtownsUtilityRenderReceipt *out_receipt)
 {
@@ -311,6 +319,9 @@ int csb_v1_fmtowns_utility_render_editor(
     };
     static const C06_Box name_boxes[4] = {
         {4, 48, 3, 11}, {71, 115, 3, 11}, {138, 182, 3, 11}, {205, 249, 3, 11}
+    };
+    static const C06_Box edit_boxes[2] = {
+        {15, 59, 87, 95}, {15, 131, 100, 108}
     };
     uint8_t mirror[48u * 41u];
     uint8_t portrait[CSB_FMTOWNS_PORTRAIT_PIXEL_COUNT];
@@ -332,7 +343,8 @@ int csb_v1_fmtowns_utility_render_editor(
         party->ChampionCount < 1 || party->ChampionCount > CSB_V1_MAX_CHAMPIONS)
         return 0;
     champion_count = (unsigned int)party->ChampionCount;
-    if (selected_champion_index >= champion_count || selected_color_index > 15u)
+    if (selected_champion_index >= champion_count || selected_color_index > 15u ||
+        edit_field < -1 || edit_field > 1)
         return 0;
     memset(&decoded, 0, sizeof(decoded));
     if (!csb_v1_fmtowns_img2_decode(handoff->mirror_bitmap,
@@ -392,6 +404,27 @@ int csb_v1_fmtowns_utility_render_editor(
     filled_box((C06_Box){286, 303, 43 + (int)selected_color_index * 8,
                          49 + (int)selected_color_index * 8}, 1,
                C15_WHITE, selected_color_index, pixels);
+    /* CEDT006.C F7038/F7027: source text fields and the one-pixel cursor.
+     * The font and underscores are native F31 bytes, not host widgets. */
+    for (index = 0u; index < 2u; ++index) {
+        const uint8_t *value = (const uint8_t *)(index == 0u
+            ? party->Champions[selected_champion_index].Name
+            : party->Champions[selected_champion_index].Title);
+        unsigned int maximum = index == 0u ? 7u : 19u;
+        fill(edit_boxes[index], C01_DARK_GRAY, pixels);
+        text(font, edit_boxes[index].left + 2, edit_boxes[index].bottom - 2,
+             C09_GOLD, C01_DARK_GRAY, value, maximum, pixels);
+        text(font, edit_boxes[index].left + 2 +
+                    (int)c06_text_length((const char *)value, maximum) * 6,
+             edit_boxes[index].bottom - 2, C09_GOLD, C01_DARK_GRAY,
+             (const uint8_t *)"___________________" + (19u - maximum +
+             c06_text_length((const char *)value, maximum)), maximum, pixels);
+    }
+    if (edit_field >= 0) {
+        C06_Box cursor = edit_boxes[edit_field];
+        cursor.left = cursor.right = cursor.left + 1 + (int)edit_character_index * 6;
+        fill(cursor, C15_WHITE, pixels);
+    }
     filled_box((C06_Box){286, 303, 43 + (int)selected_color_index * 8,
                          49 + (int)selected_color_index * 8}, 1,
                C15_WHITE, selected_color_index, pixels);
@@ -424,7 +457,7 @@ int csb_v1_fmtowns_utility_render_initial(
     CSB_V1_FmtownsUtilityRenderReceipt *out_receipt)
 {
     return csb_v1_fmtowns_utility_render_editor(
-        handoff, menu, font, party, portraits, 0u, 0u, pixels,
+        handoff, menu, font, party, portraits, 0u, 0u, -1, 0u, pixels,
         pixel_capacity, out_receipt);
 }
 
@@ -449,7 +482,7 @@ int csb_v1_fmtowns_utility_render_save_dialog(
     memset(&receipt, 0, sizeof(receipt));
     if (!csb_v1_fmtowns_utility_render_editor(
             handoff, menu, font, party, portraits, selected_champion_index,
-            selected_color_index, pixels, pixel_capacity, &receipt)) return 0;
+            selected_color_index, -1, 0u, pixels, pixel_capacity, &receipt)) return 0;
     /* CEDT001.C F7001 calls F7072 with G2254/G2261.  The dialog's text and
      * three labels are the original F31E CEDTDATA strings, rendered with
      * the verified F31 font; its button rectangles are G2261 exactly. */
@@ -491,7 +524,7 @@ int csb_v1_fmtowns_utility_render_load_dialog(
     memset(&receipt, 0, sizeof(receipt));
     if (!csb_v1_fmtowns_utility_render_editor(
             handoff, menu, font, party, portraits, selected_champion_index,
-            selected_color_index, pixels, pixel_capacity, &receipt)) return 0;
+            selected_color_index, -1, 0u, pixels, pixel_capacity, &receipt)) return 0;
     /* CEDT001.C F7004 calls F7072 with G2254/G2261.  Its only difference
      * from F7001 is G7068's three original F31E text lines. */
     filled_box((C06_Box){62, 255, 48, 149}, 2, C01_DARK_GRAY, C00_BLACK,

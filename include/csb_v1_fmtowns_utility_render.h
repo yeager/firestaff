@@ -82,6 +82,7 @@ int csb_v1_fmtowns_utility_render_editor(
     const CSB_V1_PartyState *party,
     const CSB_V1_FmtownsStartupPortraitReceipt *portraits,
     uint16_t selected_champion_index, uint8_t selected_color_index,
+    int edit_field, uint8_t edit_character_index,
     uint8_t *indexed_pixels, size_t pixel_capacity,
     CSB_V1_FmtownsUtilityRenderReceipt *out_receipt);
 

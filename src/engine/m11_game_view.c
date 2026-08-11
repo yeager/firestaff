@@ -8730,6 +8730,8 @@ static int m11_csb_enter_fmtowns_utility(
     state->csbFmtownsUtilityFilePickerActive = 0;
     state->csbFmtownsUtilitySaveDialogActive = 0;
     state->csbFmtownsUtilityLoadDialogActive = 0;
+    state->csbFmtownsUtilityEditField = -1;
+    state->csbFmtownsUtilityEditCharacterIndex = 0u;
     memset(&rendered, 0, sizeof(rendered));
     if (!csb_v1_fmtowns_utility_handoff_open(
             profile, language, &state->csbFmtownsUtilityHandoffReceipt) ||
@@ -8823,6 +8825,8 @@ static int m11_csb_redraw_fmtowns_utility(M11_GameViewState *state)
         &state->csbFmtownsUtilityPortraitReceipt,
         state->csbFmtownsUtilitySelectedChampion,
         state->csbFmtownsUtilitySelectedColor,
+        state->csbFmtownsUtilityEditField,
+        state->csbFmtownsUtilityEditCharacterIndex,
         state->csbFmtownsUtilityPixels,
         sizeof(state->csbFmtownsUtilityPixels), &rendered);
 }
@@ -9437,6 +9441,31 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
         return m11_csb_redraw_fmtowns_utility(state)
             ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
     }
+    /* CEDTDATA.C G2272_MouseInputs[13..14] and CEDT006.C F7028.  These
+     * fields edit the already selected champion; clicking a top portrait is
+     * the separate C01..C04 selection route. */
+    if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0 &&
+        x >= 15 && x <= 59 && y >= 87 && y <= 95) {
+        size_t length = strlen(state->csbFmtownsUtilityParty.Champions[
+            state->csbFmtownsUtilitySelectedChampion].Name);
+        state->csbFmtownsUtilityEditField = 0;
+        state->csbFmtownsUtilityEditCharacterIndex = (uint8_t)
+            ((x - 16) / 6 < 0 ? 0 :
+             ((x - 16) / 6 > (int)length ? (int)length : (x - 16) / 6));
+        return m11_csb_redraw_fmtowns_utility(state)
+            ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+    }
+    if ((button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0 &&
+        x >= 15 && x <= 131 && y >= 100 && y <= 108) {
+        size_t length = strlen(state->csbFmtownsUtilityParty.Champions[
+            state->csbFmtownsUtilitySelectedChampion].Title);
+        state->csbFmtownsUtilityEditField = 1;
+        state->csbFmtownsUtilityEditCharacterIndex = (uint8_t)
+            ((x - 16) / 6 < 0 ? 0 :
+             ((x - 16) / 6 > (int)length ? (int)length : (x - 16) / 6));
+        return m11_csb_redraw_fmtowns_utility(state)
+            ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+    }
     /* CEDTDATA.C G2272_MouseInputs[0..3] and F7050 first select only an
      * existing source champion.  The retained MINI.DAT portrait receipt is
      * re-expanded; no temporary host portrait is ever installed. */
@@ -9518,6 +9547,127 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
      * is substituted. Revert, undo and the catalog-bound F7002 load above
      * remain bounded to admitted F31 source records. */
     return M11_GAME_INPUT_REDRAW;
+}
+
+static size_t m11_csb_fmtowns_utility_text_length(const char *text,
+                                                   size_t maximum)
+{
+    size_t length = 0u;
+    while (length < maximum && text[length] != '\0') ++length;
+    return length;
+}
+
+int M11_GameView_CsbFmtownsUtilityTextInputActive(
+    const M11_GameViewState *state)
+{
+    return state && state->active && state->csbFmtownsUtilityBound &&
+           state->csbFmtownsUtilityEditField >= 0 &&
+           state->csbFmtownsUtilityEditField <= 1 &&
+           !state->csbFmtownsUtilityFilePickerActive &&
+           !state->csbFmtownsUtilitySaveDialogActive &&
+           !state->csbFmtownsUtilityLoadDialogActive;
+}
+
+static M11_GameInputResult m11_csb_fmtowns_utility_redraw_text(
+    M11_GameViewState *state)
+{
+    return m11_csb_redraw_fmtowns_utility(state)
+        ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+}
+
+M11_GameInputResult M11_GameView_ConsumeCsbFmtownsUtilityTextInput(
+    M11_GameViewState *state, const char *text)
+{
+    char *field;
+    size_t maximum;
+    size_t cursor;
+    int changed = 0;
+    if (!M11_GameView_CsbFmtownsUtilityTextInputActive(state) || !text)
+        return M11_GAME_INPUT_IGNORED;
+    field = state->csbFmtownsUtilityEditField == 0
+        ? state->csbFmtownsUtilityParty.Champions[
+              state->csbFmtownsUtilitySelectedChampion].Name
+        : state->csbFmtownsUtilityParty.Champions[
+              state->csbFmtownsUtilitySelectedChampion].Title;
+    maximum = state->csbFmtownsUtilityEditField == 0 ? 7u : 19u;
+    cursor = state->csbFmtownsUtilityEditCharacterIndex;
+    while (*text != '\0') {
+        unsigned char character = (unsigned char)*text++;
+        size_t length;
+        if (character >= 'a' && character <= 'z')
+            character = (unsigned char)(character + 'A' - 'a');
+        if (!((character >= 'A' && character <= 'Z') || character == '.' ||
+              character == ',' || character == ';' || character == ':' ||
+              (character == ' ' && cursor != 0u))) continue;
+        length = m11_csb_fmtowns_utility_text_length(field, maximum);
+        if (cursor >= maximum) continue;
+        if (length >= maximum) length = maximum - 1u;
+        memmove(field + cursor + 1u, field + cursor, length - cursor + 1u);
+        field[cursor++] = (char)character;
+        field[maximum] = '\0';
+        changed = 1;
+    }
+    state->csbFmtownsUtilityEditCharacterIndex = (uint8_t)cursor;
+    return changed ? m11_csb_fmtowns_utility_redraw_text(state)
+                   : M11_GAME_INPUT_IGNORED;
+}
+
+M11_GameInputResult M11_GameView_HandleCsbFmtownsUtilityTextKey(
+    M11_GameViewState *state, M11_CsbFmtownsUtilityTextKey key)
+{
+    char *field;
+    size_t maximum, length, cursor;
+    int field_index;
+    if (!M11_GameView_CsbFmtownsUtilityTextInputActive(state))
+        return M11_GAME_INPUT_IGNORED;
+    field_index = state->csbFmtownsUtilityEditField;
+    field = field_index == 0
+        ? state->csbFmtownsUtilityParty.Champions[
+              state->csbFmtownsUtilitySelectedChampion].Name
+        : state->csbFmtownsUtilityParty.Champions[
+              state->csbFmtownsUtilitySelectedChampion].Title;
+    maximum = field_index == 0 ? 7u : 19u;
+    length = m11_csb_fmtowns_utility_text_length(field, maximum);
+    cursor = state->csbFmtownsUtilityEditCharacterIndex;
+    if (cursor > length) cursor = length;
+    switch (key) {
+        case M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_BACKSPACE:
+            if (cursor == 0u) return M11_GAME_INPUT_IGNORED;
+            memmove(field + cursor - 1u, field + cursor, length - cursor + 1u);
+            --cursor;
+            break;
+        case M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_CLEAR:
+            memset(field, 0, maximum + 1u);
+            cursor = 0u;
+            break;
+        case M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_LEFT:
+            if (cursor == 0u) return M11_GAME_INPUT_IGNORED;
+            --cursor;
+            break;
+        case M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_RIGHT:
+            if (cursor >= length) return M11_GAME_INPUT_IGNORED;
+            ++cursor;
+            break;
+        case M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_HOME: cursor = 0u; break;
+        case M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_END: cursor = length; break;
+        case M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_UP:
+            if (field_index != 1) return M11_GAME_INPUT_IGNORED;
+            state->csbFmtownsUtilityEditField = 0;
+            cursor = m11_csb_fmtowns_utility_text_length(
+                state->csbFmtownsUtilityParty.Champions[
+                    state->csbFmtownsUtilitySelectedChampion].Name, 7u);
+            break;
+        case M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_DOWN:
+            if (field_index != 0) return M11_GAME_INPUT_IGNORED;
+            state->csbFmtownsUtilityEditField = 1;
+            cursor = m11_csb_fmtowns_utility_text_length(
+                state->csbFmtownsUtilityParty.Champions[
+                    state->csbFmtownsUtilitySelectedChampion].Title, 19u);
+            break;
+        default: return M11_GAME_INPUT_IGNORED;
+    }
+    state->csbFmtownsUtilityEditCharacterIndex = (uint8_t)cursor;
+    return m11_csb_fmtowns_utility_redraw_text(state);
 }
 
 static int m11_csb_bind_fmtowns_title(M11_GameViewState *state,

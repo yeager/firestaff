@@ -4831,6 +4831,39 @@ m11_dm1_rename_handle_keydown(M11_GameViewState* gameView,
     return M11_GAME_INPUT_IGNORED;
 }
 
+static int m11_csb_fmtowns_utility_consume_text_input(
+    M11_GameViewState *gameView, const char *text,
+    M11_GameInputResult *outResult)
+{
+    M11_GameInputResult result;
+    if (!M11_GameView_CsbFmtownsUtilityTextInputActive(gameView)) return 0;
+    result = M11_GameView_ConsumeCsbFmtownsUtilityTextInput(gameView, text);
+    if (outResult) *outResult = result;
+    return 1;
+}
+
+static int m11_csb_fmtowns_utility_handle_keydown(
+    M11_GameViewState *gameView, int key, M11_GameInputResult *outResult)
+{
+    M11_CsbFmtownsUtilityTextKey mapped;
+    M11_GameInputResult result;
+    if (!M11_GameView_CsbFmtownsUtilityTextInputActive(gameView)) return 0;
+    switch (key) {
+        case SDLK_BACKSPACE: mapped = M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_BACKSPACE; break;
+        case SDLK_ESCAPE: mapped = M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_CLEAR; break;
+        case SDLK_LEFT: mapped = M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_LEFT; break;
+        case SDLK_RIGHT: mapped = M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_RIGHT; break;
+        case SDLK_HOME: mapped = M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_HOME; break;
+        case SDLK_END: mapped = M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_END; break;
+        case SDLK_UP: mapped = M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_UP; break;
+        case SDLK_DOWN: mapped = M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_DOWN; break;
+        default: return 1;
+    }
+    result = M11_GameView_HandleCsbFmtownsUtilityTextKey(gameView, mapped);
+    if (outResult) *outResult = result;
+    return 1;
+}
+
 static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                          M12_StartupMenuState* menuState,
                                          const M12_GamepadMap* gamepadMap,
@@ -5090,6 +5123,12 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                               gameViewResult)) {
             return M12_MENU_INPUT_NONE;
         }
+        if (ev.type == SDL_EVENT_TEXT_INPUT &&
+            m11_csb_fmtowns_utility_consume_text_input(gameView,
+                                                        ev.text.text,
+                                                        gameViewResult)) {
+            return M12_MENU_INPUT_NONE;
+        }
         if (ev.type == SDL_EVENT_KEY_DOWN) {
             if (menuState && useModernLauncher &&
                 (!gameView || !gameView->active) &&
@@ -5134,6 +5173,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 if (gameViewResult) {
                     *gameViewResult = renameResult;
                 }
+                return M12_MENU_INPUT_NONE;
+            }
+            if (m11_csb_fmtowns_utility_handle_keydown(gameView,
+                                                       (int)ev.key.key,
+                                                       gameViewResult)) {
                 return M12_MENU_INPUT_NONE;
             }
             if (m11_game_view_is_csb(gameView)) {
@@ -5612,6 +5656,12 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                                               gameViewResult)) {
             return M12_MENU_INPUT_NONE;
         }
+        if (ev.type == SDL_TEXTINPUT &&
+            m11_csb_fmtowns_utility_consume_text_input(gameView,
+                                                        ev.text.text,
+                                                        gameViewResult)) {
+            return M12_MENU_INPUT_NONE;
+        }
         if (ev.type == SDL_KEYDOWN) {
             if (menuState && useModernLauncher &&
                 (!gameView || !gameView->active) &&
@@ -5661,6 +5711,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                 if (gameViewResult) {
                     *gameViewResult = renameResult;
                 }
+                return M12_MENU_INPUT_NONE;
+            }
+            if (m11_csb_fmtowns_utility_handle_keydown(gameView,
+                                                       (int)ev.key.keysym.sym,
+                                                       gameViewResult)) {
                 return M12_MENU_INPUT_NONE;
             }
             if (m11_game_view_is_csb(gameView)) {

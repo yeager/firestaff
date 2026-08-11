@@ -1146,6 +1146,7 @@ int main(void)
                       csb_v1_fmtowns_utility_render_editor(
                           &utility_handoff, &utility_menu, &utility_font,
                           &multi_champion_party, &mini_portraits, 2u, 0u,
+                          -1, 0u,
                           utility_frame, sizeof(utility_frame),
                           &utility_render) && utility_render.valid &&
                       utility_frame[(60u + (sample / 32u) * 3u) * 320u +
@@ -1169,6 +1170,38 @@ int main(void)
         CHECK(memcmp(framebuffer, view.csbFmtownsSwitchPixels,
                      sizeof(framebuffer)) != 0 && framebuffer[9u * 320u + 6u] == 9u,
               "F31E Utility presents its C06-owned source raster, not SWITCHTW");
+        /* CEDTDATA.C entries 13/14 and CEDT006.C F7027/F7041: the editor
+         * owns native name/title text, including F31's 7/19 byte limits and
+         * its upper-case punctuation filter. */
+        result = M11_GameView_HandlePointerButton(
+            &view, 16, 90, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(result == M11_GAME_INPUT_REDRAW &&
+                  M11_GameView_CsbFmtownsUtilityTextInputActive(&view),
+              "F31E C06 name field takes the native text cursor");
+        result = M11_GameView_HandleCsbFmtownsUtilityTextKey(
+            &view, M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_CLEAR);
+        result = M11_GameView_ConsumeCsbFmtownsUtilityTextInput(
+            &view, "ab-");
+        CHECK(result == M11_GAME_INPUT_REDRAW &&
+                  strcmp(view.csbFmtownsUtilityParty.Champions[0].Name, "AB") == 0,
+              "F31E C06 name text uppercases letters and rejects non-source punctuation");
+        (void)M11_GameView_HandleCsbFmtownsUtilityTextKey(
+            &view, M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_LEFT);
+        (void)M11_GameView_ConsumeCsbFmtownsUtilityTextInput(&view, "c");
+        (void)M11_GameView_HandleCsbFmtownsUtilityTextKey(
+            &view, M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_BACKSPACE);
+        CHECK(strcmp(view.csbFmtownsUtilityParty.Champions[0].Name, "AB") == 0,
+              "F31E C06 name editing inserts and backspaces at its source cursor");
+        result = M11_GameView_HandlePointerButton(
+            &view, 16, 104, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        (void)M11_GameView_HandleCsbFmtownsUtilityTextKey(
+            &view, M11_CSB_FMTOWNS_UTILITY_TEXT_KEY_CLEAR);
+        result = M11_GameView_ConsumeCsbFmtownsUtilityTextInput(
+            &view, "abcdefghijklmnopqrst");
+        CHECK(result == M11_GAME_INPUT_REDRAW &&
+                  strcmp(view.csbFmtownsUtilityParty.Champions[0].Title,
+                         "ABCDEFGHIJKLMNOPQRS") == 0,
+              "F31E C06 title retains its recovered nineteen-character limit");
         /* F7001 presents its own GAME / PORTRAIT / CANCEL dialog.  Its
          * selected-portrait branch resolves the dynamic 2:\\#CHAMP_NAME#
          * medium separately from the scanned read-only CD catalogue. The

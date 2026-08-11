@@ -519,9 +519,12 @@ int csb_v1_fmtowns_game_load_startup_party(
         name_offset = 0u,
         name_bytes = 8u,
         title_offset = 8u,
-        title_bytes = 16u,
-        cell_offset = 28u,
-        direction_offset = 29u,
+        /* ReDMCSB DEFS.H CHAMPION: Name[8], Title[20], Direction, Cell.
+         * These are the F31's 319-byte records; do not reuse the PC34
+         * 16-byte title layout here. */
+        title_bytes = 20u,
+        direction_offset = 28u,
+        cell_offset = 29u,
         action_offset = 32u,
         incantation_offset = 34u,
         facing_offset = 40u,

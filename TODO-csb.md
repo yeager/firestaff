@@ -299,7 +299,9 @@ populated dungeon states.
   the admitted source raster, sends source-coordinate left-clicks to F7084,
   preserves scroll/cancel commands, and hands an accepted row to F7002. The
   real F31E handoff test proves open, raster, selection and import. No host
-  path or synthetic row is accepted. Name/title editing remains separate.
+  path or synthetic row is accepted. C06 F31E name/title editing is now
+  source-bound separately; full-game save and Make New Adventure remain
+  closed pending their C05 transaction.
 
 ### CSB V1
 
