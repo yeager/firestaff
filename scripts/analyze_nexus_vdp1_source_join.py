@@ -137,7 +137,13 @@ def retail_file_matches(data_dir: Path, source: bytes) -> tuple[list[str], list[
     word_swap: list[str] = []
     scanned = 0
     rejected = 0
-    for name, expected in sorted(DISC_HASH.items()):
+    # Startup resources are separate from the LEV/DGN disc-file table.  They
+    # are still authenticated retail inputs and must be in the same negative
+    # source-join search; otherwise a TITLE/MENU VDP1 upload can be reported
+    # as unbound merely because it is not a Structure2 file.
+    expected_hashes = dict(DISC_HASH)
+    expected_hashes.update(STARTUP_ASSET_HASHES)
+    for name, expected in sorted(expected_hashes.items()):
         path = data_dir / name
         if not path.is_file():
             continue
