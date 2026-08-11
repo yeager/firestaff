@@ -38580,6 +38580,25 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_nexus_v1_vdp12_capture_composition
     )
 
+    add_executable(test_nexus_v1_vdp12_runtime_composition
+        tests/test_nexus_v1_vdp12_runtime_composition.c
+    )
+    target_include_directories(test_nexus_v1_vdp12_runtime_composition PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_nexus_v1_vdp12_runtime_composition PRIVATE
+        firestaff_nexus
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_vdp12_runtime_composition PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_vdp12_runtime_composition
+        COMMAND test_nexus_v1_vdp12_runtime_composition
+    )
+
     # Packages a pre-recorded Mednafen debugger trace with one exact atomic
     # owner/Structure3/Structure2 request. It deliberately has no emulator,
     # decoder, or render dependency and cannot fabricate a capture.

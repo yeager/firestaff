@@ -1,3 +1,10 @@
+# Theron: M11 handoff test is headless-safe (2026-08-11)
+
+- ✅ The Theron launcher-handoff test now defaults to SDL dummy audio when
+  `SDL_AUDIODRIVER` is unset, while preserving an explicitly selected driver.
+- ✅ Empty-data and authenticated US Track 02 handoff runs pass without a
+  physical CoreAudio dependency.
+
 # Theron: JP roster text copies authenticated raw bytes (2026-08-11)
 
 - ✅ JP names and titles now reach startup from verified Track 02 raw offsets,
@@ -13460,3 +13467,13 @@ and production source-combat tests.
   mode-1-draws och `7` icke-draw-kommandon.
 - 🔒 Oägda kommandon hålls capture-only; de öppnar inte HUD-, meny- eller
   semantisk viewport-rendering.
+
+# Nexus: runtime VDP2-under-VDP1 composition lane (2026-08-11)
+
+- ✅ Lade till en explicit runtime-API som först återspelar NBG1 tilemap från
+  samma autentiserade Saturn-frame och därefter DGN-bundna VDP1 mode-1-draws.
+- ✅ Frame 799 passerar med separat VDP2-registerreceipt och VDP1-sekvensreceipt;
+  båda lagren skriver till samma framebuffer och lagerordningen är `VDP1 over
+  VDP2`.
+- 🔒 Hela resultatet är fortsatt `renderer_permitted=0`, eftersom VDP2:s
+  retail source-owner och text/overlay-consumer ännu inte är bevisade.

@@ -276,6 +276,25 @@ int nexus_viewport_replay_vdp12_capture_composition(
     const Nexus_V1_Vdp12CaptureCompositionInput *input,
     Nexus_V1_Vdp12CaptureCompositionReceipt *out_receipt);
 
+/* Replay one authenticated raw frame with the bounded NBG1 tilemap beneath
+ * the DGN-owned VDP1 mode-1 command sequence.  Layer order is explicit in
+ * the function name and the result remains capture-only until the VDP2
+ * source owner and text/overlay consumer are independently proven. */
+int nexus_viewport_replay_vdp12_runtime_frame_mode1_over_tilemap(
+    Nexus_Viewport *vp,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    unsigned int frame_index,
+    Nexus_V1_Vdp1CaptureSequenceMaterialResolver resolve_material,
+    void *resolver_context,
+    int vdp2_source_x, int vdp2_source_y,
+    int vdp2_width, int vdp2_height,
+    int vdp2_destination_x, int vdp2_destination_y,
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt *out_frame_receipt,
+    Nexus_V1_SaturnVdp2RegisterReceipt *out_vdp2_register_receipt,
+    Nexus_V1_Vdp2TilemapCaptureReceipt *out_vdp2_receipt,
+    Nexus_V1_Vdp1CaptureVramSequenceReceipt *out_vdp1_receipt,
+    Nexus_V1_Vdp12CaptureCompositionReceipt *out_receipt);
+
 /* Convert indexed framebuffer to RGBA for SDL presentation */
 void nexus_viewport_to_rgba(const Nexus_Viewport *vp, uint32_t *rgba_out);
 

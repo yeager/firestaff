@@ -251,6 +251,79 @@ int nexus_viewport_replay_vdp12_capture_composition(
     return 1;
 }
 
+int nexus_viewport_replay_vdp12_runtime_frame_mode1_over_tilemap(
+    Nexus_Viewport *vp,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    unsigned int frame_index,
+    Nexus_V1_Vdp1CaptureSequenceMaterialResolver resolve_material,
+    void *resolver_context,
+    int vdp2_source_x, int vdp2_source_y,
+    int vdp2_width, int vdp2_height,
+    int vdp2_destination_x, int vdp2_destination_y,
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt *out_frame_receipt,
+    Nexus_V1_SaturnVdp2RegisterReceipt *out_vdp2_register_receipt,
+    Nexus_V1_Vdp2TilemapCaptureReceipt *out_vdp2_receipt,
+    Nexus_V1_Vdp1CaptureVramSequenceReceipt *out_vdp1_receipt,
+    Nexus_V1_Vdp12CaptureCompositionReceipt *out_receipt)
+{
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt frame;
+    Nexus_V1_SaturnVdp2RegisterReceipt registers;
+    Nexus_V1_Vdp2TilemapCaptureReceipt vdp2;
+    Nexus_V1_Vdp1CaptureVramSequenceReceipt vdp1;
+    Nexus_V1_Vdp12CaptureCompositionReceipt receipt;
+    Nexus_Framebuffer saved;
+
+    memset(&frame, 0, sizeof(frame));
+    memset(&registers, 0, sizeof(registers));
+    memset(&vdp2, 0, sizeof(vdp2));
+    memset(&vdp1, 0, sizeof(vdp1));
+    memset(&receipt, 0, sizeof(receipt));
+    if (out_frame_receipt) *out_frame_receipt = frame;
+    if (out_vdp2_register_receipt) *out_vdp2_register_receipt = registers;
+    if (out_vdp2_receipt) *out_vdp2_receipt = vdp2;
+    if (out_vdp1_receipt) *out_vdp1_receipt = vdp1;
+    if (out_receipt) *out_receipt = receipt;
+    if (!vp || !capture_bytes || !resolve_material || !out_receipt)
+        return 0;
+
+    saved = vp->fb;
+    if (!nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
+            &vp->fb, capture_bytes, capture_byte_count, frame_index,
+            vdp2_source_x, vdp2_source_y, vdp2_width, vdp2_height,
+            vdp2_destination_x, vdp2_destination_y, &frame, &registers,
+            &vdp2) ||
+        !nexus_v1_vdp1_capture_replay_runtime_frame_mode1_sequence(
+            &vp->fb, capture_bytes, capture_byte_count, frame_index,
+            resolve_material, resolver_context, &frame, &vdp1)) {
+        vp->fb = saved;
+        if (out_frame_receipt) *out_frame_receipt = frame;
+        if (out_vdp2_register_receipt) *out_vdp2_register_receipt = registers;
+        if (out_vdp2_receipt) *out_vdp2_receipt = vdp2;
+        if (out_vdp1_receipt) *out_vdp1_receipt = vdp1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    vp->last_vdp2_tilemap_capture_receipt = vdp2;
+    vp->last_vdp1_sequence_receipt = vdp1.replay;
+    receipt.valid = 1;
+    receipt.layer_order_verified = 1;
+    receipt.vdp2_verified = 1;
+    receipt.vdp1_verified = 1;
+    receipt.vdp1_over_vdp2 = 1;
+    receipt.vdp2_written_pixels = vdp2.written_pixels;
+    receipt.vdp1_written_pixels = vdp1.replay.written_pixels;
+    /* The tilemap decoder is intentionally capture-only until its source
+     * bytes have a retail owner and a text/overlay consumer receipt. */
+    receipt.renderer_permitted = vdp2.renderer_permitted &&
+        vdp1.replay.renderer_permitted;
+    if (out_frame_receipt) *out_frame_receipt = frame;
+    if (out_vdp2_register_receipt) *out_vdp2_register_receipt = registers;
+    if (out_vdp2_receipt) *out_vdp2_receipt = vdp2;
+    if (out_vdp1_receipt) *out_vdp1_receipt = vdp1;
+    *out_receipt = receipt;
+    return 1;
+}
+
 static int viewport_count_written_pixels(const Nexus_Framebuffer *fb)
 {
     int i;
