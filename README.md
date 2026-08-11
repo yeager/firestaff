@@ -48,10 +48,13 @@ screens, a short touch is Button I and a long touch is Button II.
 
 ![Original Theron's Quest USA title/menu capture](verification-screens/theron-quest-us-main-menu.png)
 
+![Original Theron's Quest USA dungeon capture](verification-screens/theron-quest-us-dungeon-mednafen.png)
+
 This is a real original-media Mednafen capture of the USA release, included
-as reference evidence. It is not a generated image and is not presented as a
-completed Firestaff runtime screenshot; see the [capture handoff record](docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md)
-for its media identity and scope.
+as reference evidence. The dungeon image is also original-media evidence; it
+is not a generated image and neither image is presented as a completed
+Firestaff runtime screenshot. See the [capture handoff record](docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md)
+for the media identities and scope.
 
 ## Chaos Strikes Back editions
 
