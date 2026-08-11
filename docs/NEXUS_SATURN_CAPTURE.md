@@ -25,11 +25,13 @@ assetverifiering hör kvar i det separata capturelagret. De kan användas i
 PR-beskrivningen som reproduktionsbevis, men ska inte bli hårdkodad
 Nexus-logik i Mednafen.
 
-Nuvarande status är alltså: vi har en fungerande lokal proof-of-concept och
-en verifierad dumpningsmetod, men ingen färdig upstream-PR ännu. Nästa steg
-är att extrahera den generiska snapshotdelen, lägga till ett litet test för
-formatet och skicka den som en separat förändring med ett reproducerbart
-Saturn-testfall.
+Nuvarande status är alltså: den generiska snapshotdelen är extraherad som en
+ren extern patch och passerar `git apply --check`. På en ren extern checkout
+bygger dessutom `make -C src/ss -j2 vdp1.o vdp2.o` med patchen. Ett PR-underlag
+finns på extern disk i
+`/Volumes/Extern-disk/mednafen-nexus-upstream-pr-v1-clean/PR_DESCRIPTION.md`.
+Den är fortfarande inte inskickad upstream; formatdiskussion och full
+Mednafen-byggning återstår före submission.
 
 ## Förutsättningar
 
