@@ -80,3 +80,25 @@ int csb_v1_x68k_hdm_graphics_item(const uint8_t *hdm, size_t hdm_size,
     free(bytes);
     return result;
 }
+
+int csb_v1_x68k_hdm_graphics_decode_item(const uint8_t *hdm, size_t hdm_size,
+                                         uint16_t item_index,
+                                         uint8_t *indexed_pixels,
+                                         size_t indexed_pixel_capacity,
+                                         uint16_t *out_width,
+                                         uint16_t *out_height) {
+    uint8_t *bytes = NULL;
+    size_t size = 0u;
+    int result;
+
+    if (out_width) *out_width = 0u;
+    if (out_height) *out_height = 0u;
+    if (!indexed_pixels ||
+        !extract_graphics(hdm, hdm_size, &bytes, &size, NULL)) return 0;
+    result = csb_v1_amiga_graphics_decode_item(bytes, size, item_index,
+                                               indexed_pixels,
+                                               indexed_pixel_capacity,
+                                               out_width, out_height);
+    free(bytes);
+    return result;
+}

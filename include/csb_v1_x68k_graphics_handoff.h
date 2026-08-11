@@ -40,4 +40,15 @@ int csb_v1_x68k_hdm_graphics_item(const uint8_t *hdm, size_t hdm_size,
                                   uint16_t item_index,
                                   CSB_V1_X68kGraphicsItem *out);
 
+/* Decode one direct X68000 IMG1 record into 4-bit indexed pixels.  This
+ * carries no Amiga release classification: the shared decoder is used only
+ * because the original X68000 media stores the same big-endian IMG1 bytes.
+ * The caller owns indexed_pixels. */
+int csb_v1_x68k_hdm_graphics_decode_item(const uint8_t *hdm, size_t hdm_size,
+                                         uint16_t item_index,
+                                         uint8_t *indexed_pixels,
+                                         size_t indexed_pixel_capacity,
+                                         uint16_t *out_width,
+                                         uint16_t *out_height);
+
 #endif /* FIRESTAFF_CSB_V1_X68K_GRAPHICS_HANDOFF_H */

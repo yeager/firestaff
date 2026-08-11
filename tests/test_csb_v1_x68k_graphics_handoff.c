@@ -26,9 +26,17 @@ int main(void) {
     const uint8_t invalid[4] = {0u, 0u, 0u, 0u};
     CSB_V1_X68kGraphicsReceipt receipt;
     CSB_V1_X68kGraphicsItem first;
+    uint8_t pixels[640u * 400u];
+    uint16_t width = 0u;
+    uint16_t height = 0u;
+    uint16_t item13_width = 0u;
+    uint16_t item13_height = 0u;
 
     if (csb_v1_x68k_hdm_graphics_receipt(invalid, sizeof(invalid), &receipt) ||
-        csb_v1_x68k_hdm_graphics_item(invalid, sizeof(invalid), 0u, &first)) {
+        csb_v1_x68k_hdm_graphics_item(invalid, sizeof(invalid), 0u, &first) ||
+        csb_v1_x68k_hdm_graphics_decode_item(invalid, sizeof(invalid), 0u,
+                                              pixels, sizeof(pixels), &width,
+                                              &height)) {
         puts("test_csb_v1_x68k_graphics_handoff: invalid media accepted");
         return 1;
     }
@@ -46,13 +54,30 @@ int main(void) {
             !csb_v1_x68k_hdm_graphics_item(hdm, hdm_size, 0u, &first) ||
             first.data_offset != 5860u || first.stored_byte_count == 0u ||
             first.stored_byte_count != first.decoded_byte_count ||
-            csb_v1_x68k_hdm_graphics_item(hdm, hdm_size, 732u, &first)) {
+            csb_v1_x68k_hdm_graphics_item(hdm, hdm_size, 732u, &first) ||
+            !csb_v1_x68k_hdm_graphics_decode_item(hdm, hdm_size, 13u,
+                                                   pixels, sizeof(pixels),
+                                                   &width, &height) ||
+            width != 96u || height != 41u) {
             free(hdm);
             puts("test_csb_v1_x68k_graphics_handoff: original media mismatch");
             return 1;
         }
+        item13_width = width;
+        item13_height = height;
+        if (csb_v1_x68k_hdm_graphics_decode_item(hdm, hdm_size, 13u,
+                                                  pixels, 0u, &width,
+                                                  &height)) {
+            free(hdm);
+            puts("test_csb_v1_x68k_graphics_handoff: undersized output accepted");
+            return 1;
+        }
         free(hdm);
     }
-    puts("test_csb_v1_x68k_graphics_handoff: PASS");
+    if (item13_width != 96u || item13_height != 41u) {
+        puts("test_csb_v1_x68k_graphics_handoff: item13 receipt changed");
+        return 1;
+    }
+    puts("test_csb_v1_x68k_graphics_handoff: PASS item13=96x41");
     return 0;
 }
