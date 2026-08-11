@@ -128,6 +128,7 @@
 #include "dm1_v1_fmtowns_pic_library_loader.h"
 #include "dm1_v1_fmtowns_menu_render.h"
 #include "firestaff_fmtowns_disc.h"
+#include "firestaff_zip_extract.h"
 #include "dm1_v1_endgame_system_pc34_compat.h"
 #include "dm1_v1_c15_layout_pc34_compat.h"
 #include "dm1_v1_endgame_presentation_pc34_compat.h"
@@ -6248,6 +6249,20 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
                 &state->assetLoader, receipt->graphics_dat_path, 1) ||
             M11_AssetLoader_InitDm1AtariStFromFile(
                 &state->assetLoader, receipt->graphics_dat_path);
+        /* A packed FM Towns source has no filesystem pathname that the
+         * legacy loader can open.  Prefer the authenticated legacy parser
+         * over the generic IMG3 probe: both formats may accept a loose
+         * prefix, but only the legacy binding supplies the FM Towns title
+         * and menu graphics contract. */
+        if (!legacyLoaded && state->fmtownsGraphicsDat &&
+            state->fmtownsGraphicsDatSize > 0) {
+            legacyLoaded =
+                M11_AssetLoader_InitDm1LegacyFromBuffer(
+                    &state->assetLoader,
+                    state->fmtownsGraphicsDat,
+                    (long)state->fmtownsGraphicsDatSize,
+                    0);
+        }
         if (!legacyLoaded &&
             !M11_AssetLoader_Init(&state->assetLoader,
                                    receipt->graphics_dat_path)) {
@@ -13384,6 +13399,66 @@ static int m11_materialize_dm1_virtual_pair(char *dungeon_path,
         return 0;
     }
     return 1;
+}
+
+/* Read an authenticated FM Towns ISO member into bounded RAM.  The ZIP and
+ * BIN remain the source of truth; this helper never writes a game-data file. */
+static int m11_dm1_fmtowns_read_archive_member(
+    const char *archive_path, const char *member,
+    uint8_t **out_bytes, size_t *out_size) {
+    uint8_t *image = NULL;
+    size_t image_size = 0U;
+    FmtownsDiscProbeResult disc;
+    const FmtownsIsoEntry *entry;
+    int ok = 0;
+    if (!archive_path || !member || !out_bytes || !out_size) return 0;
+    *out_bytes = NULL;
+    *out_size = 0U;
+    if (firestaff_zip_extract_by_suffix(archive_path, ".bin",
+                                        &image, &image_size) != 0 ||
+        fmtowns_disc_probe(image, image_size, FMTOWNS_SECTOR_2048,
+                           &disc) != 0) goto done;
+    entry = fmtowns_disc_find(&disc, member);
+    if (!entry || fmtowns_disc_extract_alloc(
+            image, image_size, FMTOWNS_SECTOR_2048, entry,
+            out_bytes, out_size) != 0) goto done;
+    ok = 1;
+done:
+    free(image);
+    if (!ok) {
+        free(*out_bytes);
+        *out_bytes = NULL;
+        *out_size = 0U;
+    }
+    return ok;
+}
+
+static int m11_dm1_fmtowns_startup_from_archive(
+    const char *archive_path, int japanese,
+    DM1_V1_FmtownsStartupReceipt *out) {
+    uint8_t *autoexec = NULL, *game = NULL, *menu = NULL;
+    uint8_t *icons = NULL, *info = NULL;
+    size_t autoexec_size = 0U, game_size = 0U, menu_size = 0U;
+    size_t icon_size = 0U, info_size = 0U;
+    const char *game_name = japanese ? "JDM.EXP" : "EDM.EXP";
+    int ok = 0;
+    if (!out || !archive_path) return 0;
+    if (!m11_dm1_fmtowns_read_archive_member(
+            archive_path, "AUTOEXEC.BAT", &autoexec, &autoexec_size) ||
+        !m11_dm1_fmtowns_read_archive_member(
+            archive_path, game_name, &game, &game_size) ||
+        !m11_dm1_fmtowns_read_archive_member(
+            archive_path, "TMENU.EXP", &menu, &menu_size) ||
+        !m11_dm1_fmtowns_read_archive_member(
+            archive_path, "TMENU.ICN", &icons, &icon_size) ||
+        !m11_dm1_fmtowns_read_archive_member(
+            archive_path, "TMENU.INF", &info, &info_size)) goto done;
+    ok = dm1_v1_fmtowns_startup_receipt(
+        autoexec, autoexec_size, game, game_size, menu, menu_size,
+        icons, icon_size, info, info_size, out);
+done:
+    free(autoexec); free(game); free(menu); free(icons); free(info);
+    return ok;
 }
 
 static int m11_resolve_builtin_dungeon_path(char* out,
@@ -20943,6 +21018,9 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
         M11_AssetLoader_Shutdown(&state->assetLoader);
         state->assetsAvailable = 0;
     }
+    free(state->fmtownsGraphicsDat);
+    state->fmtownsGraphicsDat = NULL;
+    state->fmtownsGraphicsDatSize = 0U;
     if (state->active) {
         F0883_WORLD_Free_Compat(&state->world);
     }
@@ -21713,6 +21791,9 @@ static void m11_apply_launcher_options_handoff(
 int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec) {
     char dungeonPath[M11_GAME_VIEW_PATH_CAPACITY];
     int dm1_dungeon_path_hash_resolved = 0;
+    int dm1FmtownsBufferLoaded = 0;
+    uint8_t *dm1FmtownsDungeonBytes = NULL;
+    size_t dm1FmtownsDungeonSize = 0U;
     if (!state || !spec || !spec->title) {
         return 0;
     }
@@ -22075,15 +22156,26 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
          * it or fall through to the entrance-menu failure path.  Admit only
          * the language-specific, source-locked member hash selected by M12. */
         if (spec->dm1Fmtowns && spec->dataDir && spec->dataDir[0] != '\0') {
-            static const char *const fmtownsDungeonMd5[] = {
-                "3dc0a932d0e0adfe59878f07c51700c5",
-                "fe098f70ce83cfe3f2333565093daf35"
-            };
-            if (FSP_JoinPath(dungeonPath, sizeof(dungeonPath),
-                             spec->dataDir, "DUNGEON.DAT") &&
-                asset_file_matches_md5(
-                    dungeonPath,
-                    fmtownsDungeonMd5[spec->dm1FmtownsJapanese ? 1 : 0])) {
+            const char *prefix = spec->dm1FmtownsJapanese ? "JDATA/" : "DATA/";
+            if (FSP_DirExists(spec->dataDir) &&
+                ((!spec->dm1FmtownsJapanese &&
+                  FSP_JoinPath(dungeonPath, sizeof(dungeonPath), spec->dataDir,
+                               "DUNGEON.DAT") &&
+                  FSP_FileExists(dungeonPath)) ||
+                 (spec->dm1FmtownsJapanese &&
+                  FSP_JoinPath(dungeonPath, sizeof(dungeonPath), spec->dataDir,
+                               "JDATA/DUNGEON.DAT") &&
+                  FSP_FileExists(dungeonPath)) ||
+                 (!spec->dm1FmtownsJapanese &&
+                  FSP_JoinPath(dungeonPath, sizeof(dungeonPath), spec->dataDir,
+                               "DATA/DUNGEON.DAT") &&
+                  FSP_FileExists(dungeonPath)))) {
+                dm1FmtownsPath = 1;
+                dm1_dungeon_path_hash_resolved = 1;
+                facts.explicit_dungeon_path = dungeonPath;
+            } else if (snprintf(dungeonPath, sizeof(dungeonPath),
+                                "%s::%sDUNGEON.DAT",
+                                spec->dataDir, prefix) > 0) {
                 dm1FmtownsPath = 1;
                 dm1_dungeon_path_hash_resolved = 1;
                 facts.explicit_dungeon_path = dungeonPath;
@@ -22142,9 +22234,36 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         /* Jobb F2: re-apply the launcher-options runtime handoff after
          * the Shutdown/Init re-init above. */
         m11_apply_launcher_options_handoff(state, spec);
+        if (spec->dm1Fmtowns && spec->dataDir &&
+            !FSP_DirExists(spec->dataDir)) {
+            if (!m11_dm1_fmtowns_read_archive_member(
+                    spec->dataDir,
+                    spec->dm1FmtownsJapanese ? "JDATA/GRAPHICS.DAT" :
+                                                "DATA/GRAPHICS.DAT",
+                    &state->fmtownsGraphicsDat,
+                    &state->fmtownsGraphicsDatSize)) {
+                return 0;
+            }
+        }
     }
-    fprintf(stderr, "LOADING DUNGEON: [%s]\n", dungeonPath);
-    if (F0882_WORLD_InitFromDungeonDat_Compat(dungeonPath, 0xF1A5U, &state->world) != 1) {
+    if (spec->dm1Fmtowns && spec->dataDir && !FSP_DirExists(spec->dataDir) &&
+        m11_dm1_fmtowns_read_archive_member(
+            spec->dataDir,
+            spec->dm1FmtownsJapanese ? "JDATA/DUNGEON.DAT" : "DATA/DUNGEON.DAT",
+            &dm1FmtownsDungeonBytes, &dm1FmtownsDungeonSize)) {
+        dm1FmtownsBufferLoaded =
+            F0882_WORLD_InitFromDungeonDatBuffer_Compat(
+                dm1FmtownsDungeonBytes, (int)dm1FmtownsDungeonSize,
+                0xF1A5U, &state->world);
+    } else {
+        fprintf(stderr, "LOADING DUNGEON: [%s]\n", dungeonPath);
+        dm1FmtownsBufferLoaded =
+            F0882_WORLD_InitFromDungeonDat_Compat(
+                dungeonPath, 0xF1A5U, &state->world);
+    }
+    free(dm1FmtownsDungeonBytes);
+    dm1FmtownsDungeonBytes = NULL;
+    if (dm1FmtownsBufferLoaded != 1) {
         if (spec->gameId && strcmp(spec->gameId, "dm1") == 0) {
             DM1_V1_StartupDungeonLoadFacts_PC34 facts;
             DM1_V1_StartupDungeonLoadReceipt_PC34 receipt;
@@ -22204,12 +22323,35 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
          * selected materialized directory; this prevents a sibling language
          * executable or the PC34 TITLE path from being consumed silently. */
         if (state->assetLoader.legacyDm1) {
+            char fmtownsStartupRoot[FSP_PATH_MAX];
+            const char *startupRoot = spec->dataDir;
             memset(&state->dm1FmtownsStartupReceipt, 0,
                    sizeof(state->dm1FmtownsStartupReceipt));
+            /* The selected FM Towns GRAPHICS.DAT is owned by DATA/ or
+             * JDATA/, while the original launcher programs live at the ISO
+             * root.  M12 intentionally hands the runtime the selected data
+             * directory; walk back one level for the source startup owner. */
+            if (spec->dataDir && FSP_DirExists(spec->dataDir) &&
+                FSP_ParentDir(fmtownsStartupRoot, sizeof(fmtownsStartupRoot),
+                              spec->dataDir)) {
+                char autoexecPath[FSP_PATH_MAX];
+                if (FSP_JoinPath(autoexecPath, sizeof(autoexecPath),
+                                 fmtownsStartupRoot, "AUTOEXEC.BAT") &&
+                    FSP_FileExists(autoexecPath)) {
+                    startupRoot = fmtownsStartupRoot;
+                }
+            }
             state->dm1FmtownsStartupReceiptValid =
                 dm1_v1_fmtowns_startup_receipt_from_directory(
-                    spec->dataDir, spec->dm1FmtownsJapanese,
+                    startupRoot, spec->dm1FmtownsJapanese,
                     &state->dm1FmtownsStartupReceipt);
+            if (!state->dm1FmtownsStartupReceiptValid &&
+                spec->dataDir && !FSP_DirExists(spec->dataDir)) {
+                state->dm1FmtownsStartupReceiptValid =
+                    m11_dm1_fmtowns_startup_from_archive(
+                        spec->dataDir, spec->dm1FmtownsJapanese,
+                        &state->dm1FmtownsStartupReceipt);
+            }
             if (!state->dm1FmtownsStartupReceiptValid ||
                 !dm1_v1_fmtowns_startup_receipt_is_native(
                     &state->dm1FmtownsStartupReceipt)) {

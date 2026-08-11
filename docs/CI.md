@@ -22,6 +22,12 @@ the authenticated corpus under `FIRESTAFF_DM1_MAC_DATA`, `FIRESTAFF_DATA`, or
 `~/.firestaff/data`. It is skip-safe when no licensed data is installed and
 does not extract or rewrite original files.
 
+When the corpus contains the authenticated DM1 FM Towns package, the same
+gate also exercises `--platform fm-towns`. The probe covers both an extracted
+ISO tree and the packed ZIP/BIN source. For the packed case, the ISO members
+are decoded into bounded memory and passed to the original-format loaders;
+Firestaff does not create a second game-data tree.
+
 For a manual macOS window-size check, pass `--width` and `--height`. Explicit
 dimensions select windowed mode and are reported by the boot-probe receipt as
 `window=<width>x<height> windowMode=0`; `--fullscreen` remains an explicit

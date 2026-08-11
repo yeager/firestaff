@@ -1,4 +1,5 @@
 #include "dm1_v1_fmtowns_startup.h"
+#include "memory_tick_orchestrator_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +30,20 @@ int main(void) {
         strcmp(menuReceipt.entries[0].program_path, "\\JDM.EXP") ||
         strcmp(menuReceipt.entries[1].program_path, "\\EDM.EXP")) {
         fprintf(stderr,"FAIL: original TMENU.INF launch records\n"); return 1;
+    }
+    {
+        uint8_t *dungeonBytes = NULL;
+        size_t dungeonSize = 0;
+        struct GameWorld_Compat world;
+        if (!read_file(root, "DATA/DUNGEON.DAT", &dungeonBytes, &dungeonSize) ||
+            !F0882_WORLD_InitFromDungeonDatBuffer_Compat(
+                dungeonBytes, (int)dungeonSize, 0xF1A5U, &world)) {
+            free(dungeonBytes);
+            fprintf(stderr,"FAIL: FM Towns DUNGEON.DAT RAM handoff\n");
+            return 1;
+        }
+        F0883_WORLD_Free_Compat(&world);
+        free(dungeonBytes);
     }
     free(a);free(g);free(m);free(i);free(n); puts("PASS: original FM Towns startup owner and menu media"); return 0;
 }

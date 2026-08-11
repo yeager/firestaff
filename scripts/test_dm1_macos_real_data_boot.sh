@@ -20,7 +20,8 @@ fi
 
 log="$(mktemp -t firestaff-dm1-macos-boot.XXXXXX)"
 small_log="$(mktemp -t firestaff-dm1-macos-small-window.XXXXXX)"
-trap 'rm -f "$log" "$small_log"' EXIT
+fmtowns_log="$(mktemp -t firestaff-dm1-macos-fmtowns.XXXXXX)"
+trap 'rm -f "$log" "$small_log" "$fmtowns_log"' EXIT
 
 set +e
 SDL_VIDEODRIVER=dummy FIRESTAFF_DATA="$data_root" "$binary" \
@@ -77,5 +78,32 @@ for field in 'window=640x400' 'windowMode=0'; do
     exit 1
   fi
 done
+
+# Exercise the native FM Towns path only when the user's corpus visibly
+# contains that edition.  This keeps CI media-free while making the packed
+# ZIP/BIN handoff a real-data gate on development machines.
+if find "$data_root" -type f \( \
+  -iname '*fm*towns*.zip' -o -iname '*fmtowns*.zip' -o \
+  -iname '*fm*towns*.cue' -o -iname '*fmtowns*.cue' \) -print -quit | grep -q . || \
+   find "$data_root" -type f -path '*/fmtowns_iso/*' -print -quit | grep -q .; then
+  set +e
+  SDL_VIDEODRIVER=dummy FIRESTAFF_DATA="$data_root" "$binary" \
+    --game dm1 --platform fm-towns --duration 0 --boot-probe >"$fmtowns_log" 2>&1
+  fmtowns_status=$?
+  set -e
+  if [[ "$fmtowns_status" != 0 ]]; then
+    cat "$fmtowns_log"
+    echo "FAIL: DM1 FM Towns macOS boot probe exited with status $fmtowns_status" >&2
+    exit "$fmtowns_status"
+  fi
+  fmtowns_receipt="$(grep 'FIRESTAFF BOOT PROBE READY:' "$fmtowns_log" | tail -n 1 || true)"
+  for field in 'gameId=dm1' 'levelLoaded=1' 'phase=dm1-runtime'; do
+    if [[ "$fmtowns_receipt" != *"$field"* ]]; then
+      echo "$fmtowns_receipt"
+      echo "FAIL: DM1 FM Towns receipt is missing $field" >&2
+      exit 1
+    fi
+  done
+fi
 
 echo "PASS: DM1 macOS real-data boot (${data_root})"

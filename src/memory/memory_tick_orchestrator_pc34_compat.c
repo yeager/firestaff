@@ -1401,6 +1401,53 @@ fail:
     return 0;
 }
 
+int F0882_WORLD_InitFromDungeonDatBuffer_Compat(
+    const unsigned char* dungeonBytes,
+    int dungeonByteCount,
+    uint32_t seed,
+    struct GameWorld_Compat* outWorld)
+{
+    struct DungeonDatState_Compat* dungeon = NULL;
+    struct DungeonThings_Compat* things = NULL;
+    int direction = 0, py = 0, px = 0;
+
+    if (!dungeonBytes || dungeonByteCount <= 0 || !outWorld) return 0;
+    dungeon = (struct DungeonDatState_Compat*)calloc(1, sizeof(*dungeon));
+    things = (struct DungeonThings_Compat*)calloc(1, sizeof(*things));
+    if (!dungeon || !things) goto fail;
+    if (!F0504_DUNGEON_LoadTailBuffer_Compat(
+            dungeonBytes, dungeonByteCount, dungeon, things)) goto fail;
+    (void)F0502b_DUNGEON_CheckBug0_08SftOverfill_Compat(dungeon, things);
+    memset(outWorld, 0, sizeof(*outWorld));
+    outWorld->dungeon = dungeon;
+    outWorld->things = things;
+    outWorld->ownsDungeon = 1;
+    outWorld->dungeonFingerprint = dungeon_file_fingerprint(
+        "dm1-fmtowns-dungeon-buffer");
+    if (!F0881_WORLD_InitDefault_Compat(outWorld, seed)) goto fail;
+    F0501_DUNGEON_DecodePartyLocation_Compat(
+        dungeon->header.initialPartyLocation, &direction, &py, &px);
+    outWorld->party.mapIndex = 0;
+    outWorld->party.mapX = px;
+    outWorld->party.mapY = py;
+    (void)F0284_CHAMPION_SetPartyDirection_Compat(&outWorld->party, direction);
+    outWorld->partyMapIndex = 0;
+    if (F0195_DM1_GROUP_AddAllActiveGroups_Compat(outWorld) < 0) goto fail;
+    return 1;
+
+fail:
+    if (dungeon) {
+        F0502_DUNGEON_FreeTileData_Compat(dungeon);
+        F0500_DUNGEON_FreeDatHeader_Compat(dungeon);
+        free(dungeon);
+    }
+    if (things) {
+        F0504_DUNGEON_FreeThingData_Compat(things);
+        free(things);
+    }
+    return 0;
+}
+
 void F0883_WORLD_Free_Compat(struct GameWorld_Compat* world) {
     if (!world) return;
     if (world->ownsDungeon) {

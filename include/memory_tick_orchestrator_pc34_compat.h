@@ -362,6 +362,14 @@ int F0882_WORLD_InitFromDungeonDat_Compat(
     uint32_t seed,
     struct GameWorld_Compat* outWorld);
 
+/* Same source-owned world handoff for packed media already decoded into
+ * bounded memory. The bytes are never written to a game-data path. */
+int F0882_WORLD_InitFromDungeonDatBuffer_Compat(
+    const unsigned char* dungeonBytes,
+    int dungeonByteCount,
+    uint32_t seed,
+    struct GameWorld_Compat* outWorld);
+
 void F0883_WORLD_Free_Compat(struct GameWorld_Compat* world);
 
 int F0880b_WORLD_Clone_Compat(
