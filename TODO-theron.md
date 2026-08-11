@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — category-4 members now materialize from real HP records
+
+- ✅ Live static creatures are now admitted one-for-one from authenticated
+  Track 02 category-4 group members. Each member copies its real HP word,
+  packed cell ordinal, group count and source identity into the runtime pool;
+  the previous fixture-stat path is no longer used for this source route.
+- 🔒 Attack, defense, speed, AI, loot and generator behavior remain explicitly
+  unpopulated until their original consumers are bound by the HuC6280
+  disassembly and a same-session authenticated runtime capture.
+
 ## 2026-08-11 — production replay now uses the authenticated native screen consumer
 
 - ✅ När ett hashverifierat VRAM/VCE-par uttryckligen monteras går Therons

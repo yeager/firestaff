@@ -1448,6 +1448,57 @@ int theron_v1_transition_execute(Theron_V1_World *world) {
  * source ledger until their type/graphics/AI consumer is bound.
  * ══════════════════════════════════════════════════════════════════════ */
 
+/* Materialize one authenticated category-4 member without passing through
+ * the generic fixture spawn API.  The source record owns the member HP and
+ * packed cell; no host RNG, per-type template, attack, AI, speed, or loot
+ * default is allowed to fill fields that the original consumer has not yet
+ * been bound to a runtime witness.
+ *
+ * Source lock: Track 02 DungeonGroup category-4 record and the retained
+ * THQUEST.ASM T500/T600 consumer boundary. */
+static int theron_v1_world_admit_source_monster_member(
+    Theron_V1_World *world,
+    const Theron_V1_SourceMonsterRecord *record,
+    unsigned int slot,
+    unsigned int member_count) {
+    Theron_V1_Creature *creature;
+    if (!world || !record || slot >= member_count ||
+        record->type >= THERON_TRACK02_CREATURE_TYPE_COUNT ||
+        record->health[slot] == 0u ||
+        world->creature_count >= THERON_MAX_CREATURES_PER_LEVEL)
+        return -1;
+
+    creature = &world->creatures[world->creature_count];
+    memset(creature, 0, sizeof(*creature));
+    creature->id = world->creature_count + 1;
+    creature->type = (uint8_t)(THERON_CREATURE_AKUTUBA + record->type);
+    creature->level = (uint8_t)record->level;
+    creature->dungeon_id = record->dungeon_id;
+    creature->x = record->x;
+    creature->y = record->y;
+    creature->hp = (int)record->health[slot];
+    creature->max_hp = (int)record->health[slot];
+    creature->ai = THERON_AI_PASSIVE;
+    creature->primary_attack = THERON_ATTACK_NONE;
+    creature->secondary_attack = THERON_ATTACK_NONE;
+    creature->flags = THERON_CF_ACTIVE;
+    creature->source_ref = record->source_ref;
+    creature->source_index = record->source_index;
+    creature->source_chested = record->chested;
+    creature->source_position = record->position;
+    creature->source_slot = (uint8_t)slot;
+    creature->source_cell = (uint8_t)((record->position >> (slot * 2u)) & 0x03u);
+    creature->source_group_count = (uint8_t)member_count;
+    creature->source_direction_flags = record->direction_flags;
+    creature->source_flags_word = record->flags_word;
+    creature->source_unknown_word = record->unknown_word;
+    creature->source_spawn_category =
+        theron_v1_world_track02_spawn_category(
+            world, (unsigned int)record->type);
+    ++world->creature_count;
+    return creature->id;
+}
+
 int theron_v1_world_spawn_level_creatures(Theron_V1_World *world) {
     if (!world) return -1;
     int di = world->current_dungeon - 1;
@@ -1490,14 +1541,14 @@ int theron_v1_world_spawn_level_creatures(Theron_V1_World *world) {
         if (record->dungeon_id != world->current_dungeon ||
             record->level != lvl) continue;
         if (record->type >= THERON_TRACK02_CREATURE_TYPE_COUNT) continue;
+        unsigned int members = (unsigned int)record->number + 1u;
+        if (members > 4u) members = 4u;
         {
             /* The category-4 record encodes the member count in one byte,
              * but the source record owns exactly four health words.  Keep
              * the same bounded Group-count contract in both passes; a
              * malformed or future variant record must not turn admission
              * into an out-of-bounds read. */
-            unsigned int members = (unsigned int)record->number + 1u;
-            if (members > 4u) members = 4u;
             unsigned int slot;
             int has_live_member = 0;
             for (slot = 0; slot < members; ++slot) {
@@ -1508,20 +1559,17 @@ int theron_v1_world_spawn_level_creatures(Theron_V1_World *world) {
             }
             if (!has_live_member) continue;
         }
-        /* Track 02's authenticated creature-name table at UD $2741EF is
-         * zero-based (AKUTUBA=0..DEMON=6), while the live C API reserves
-         * zero for NONE.  Route the raw value through the same admission
-         * boundary used by explicit source occurrences so that source
-         * identity, sparse group members, cell decoding and fail-closed
-         * attack/AI/loot fields cannot diverge between the two paths.
-         *
-         * Source: THQUEST.ASM category-4 group consumer; the regular RNG
-         * overlay remains separate and is still not invoked here. */
-        if (theron_v1_creature_spawn(
-                world,
-                (Theron_CreatureType)(THERON_CREATURE_AKUTUBA + record->type),
-                world->current_dungeon, lvl, record->x, record->y) < 0) {
-            return -1;
+        /* Track 02's category-4 group stores one source HP word per live
+         * member.  Admit each non-zero member directly; the regular RNG
+         * overlay at $B0E5 remains a separate, still-gated path. */
+        {
+            unsigned int slot;
+            for (slot = 0; slot < members; ++slot) {
+                if (record->health[slot] == 0u) continue;
+                if (theron_v1_world_admit_source_monster_member(
+                        world, record, slot, members) < 0)
+                    return -1;
+            }
         }
     }
     return 0;

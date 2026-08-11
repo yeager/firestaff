@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+## Theron: static creature pool now copies authenticated group members (2026-08-11)
+
+- ✅ Category-4 Track 02 records now materialize one live pool entry per
+  non-zero source HP word, preserving packed cell and source provenance.
+- 🔒 The generic random-wave path remains closed until its real HuC6280 RNG,
+  AI/combat, generator, T700 and T900 consumers are captured together.
+
 ## Theron: RNG core bound; gameplay consumers remain open (2026-08-11)
 
 - ✅ The authenticated runtime overlay now proves the `$4667` state update and

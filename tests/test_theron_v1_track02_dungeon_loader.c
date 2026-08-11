@@ -419,6 +419,14 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
             assert(creature->source_cell ==
                    (uint8_t)((creature->source_position >>
                               (creature->source_slot * 2u)) & 0x03u));
+            assert(creature->source_slot < 4u);
+            assert(creature->source_group_count ==
+                   (uint8_t)(source->number + 1u));
+            assert(creature->hp == (int)source->health[creature->source_slot]);
+            assert(creature->max_hp == creature->hp);
+            assert(creature->attack == 0);
+            assert(creature->defense == 0);
+            assert(creature->speed == 0);
             assert(creature->hp == creature->max_hp);
             assert(creature->primary_attack == THERON_ATTACK_NONE);
             assert(creature->secondary_attack == THERON_ATTACK_NONE);
