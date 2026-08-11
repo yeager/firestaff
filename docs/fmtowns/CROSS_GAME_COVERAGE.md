@@ -179,9 +179,11 @@ Every module below is source-locked with a real-data round-trip test:
   M11 also consumes the real `INTERFACE_CHARSHEET/0/dtImage/1` frame through
   the global 255-colour `PAL_IRGB` route and its authenticated `RECT_1EE`
   RAW4 source crop. Authenticated Towns inventory contexts route pointer
-  input to M11 for panel and slot selection. This is not a claim of complete
-  inventory parity: source text, item movement/equip commits, and
-  non-equipment owners remain unavailable and fail closed.
+  input to M11 for panel and slot selection; the seven source-explicit
+  equipment slots now commit clicks through the same authenticated exchange.
+  This is not a claim of complete inventory parity: source text, the
+  unproven non-equipment owners, and rune/moneybox/status mutations remain
+  unavailable and fail closed.
   The native viewport event 0x50/rect 0x0007 reaches the DM2 c_rwbb target
   resolver and cannot fall through to DM1's C080 handler. Inventory/dialogue
   pointer ownership and map-dependent viewport mutations remain fail-closed

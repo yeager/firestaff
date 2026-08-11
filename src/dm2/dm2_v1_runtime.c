@@ -8481,6 +8481,17 @@ int dm2_v1_runtime_activate_action_hand(int hero_index, int hand) {
     return 1;
 }
 
+int dm2_v1_runtime_get_active_champion_index(void) {
+    const DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    if (!rt->source_party_valid || !rt->session_snapshot_valid ||
+        rt->source_party.curacthero <= 0 ||
+        rt->source_party.curacthero > rt->source_party.heros_in_party ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES) {
+        return -1;
+    }
+    return rt->source_party.curacthero - 1;
+}
+
 void dm2_v1_runtime_clear_new_game_party_state(void) {
     /* SKWINSPX/src/v5/sksvgame.cpp::DM2_LOAD_NEW_DUNGEON clears
      * party.heros_in_party and ddat.savegamewpc.w_00 before

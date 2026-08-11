@@ -1243,6 +1243,9 @@ int dm2_v1_runtime_cycle_action_champion(void);
  * caller supplies the already-resolved source hero index and hand; no
  * champion or item is created when the source session is incomplete. */
 int dm2_v1_runtime_activate_action_hand(int hero_index, int hand);
+/* Read the source party.curacthero owner as a zero-based champion index.
+ * Returns -1 until an authenticated GAME_LOAD party is live. */
+int dm2_v1_runtime_get_active_champion_index(void);
 /* DM2_LOAD_NEW_DUNGEON clears the old party before it admits the new G1
  * structure. This clears only Firestaff's cached representation of that
  * source-owned party/hand state; it does not construct a replacement party. */

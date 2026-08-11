@@ -45,6 +45,8 @@ int main(void)
     DM2_V1_BootRuntimeInventoryReceipt inventory_receipt;
     DM2_V1_DungeonInputOwner input_owner;
     DM2_V1_DungeonInputReceipt input_receipt;
+    int populated_source_slot = -1;
+    uint32_t populated_source_object = 0u;
     static const struct {
         uint16_t event_index;
         uint16_t rect_id;
@@ -84,6 +86,8 @@ int main(void)
     M11_GameView_Init(&view);
     check(dm2_v1_runtime_cycle_action_champion() == 0,
           "DM2 champion cycling stays unavailable before source GAME_LOAD");
+    check(dm2_v1_runtime_get_active_champion_index() == -1,
+          "DM2 active champion stays unavailable before source GAME_LOAD");
     check(M11_GameView_Start(&view, &spec) == 1,
           "FM Towns DM2 starts through the M11 boot owner");
     for (step = 0; step < 20000 && view.dm2FmtownsSwooshActive; ++step) {
@@ -160,6 +164,8 @@ int main(void)
           "FM Towns selects the first retained champion's authentic action hand");
     check(dm2_v1_runtime_activate_action_hand(0, 1) == 1,
           "FM Towns retains the first champion's second authentic hand");
+    check(dm2_v1_runtime_get_active_champion_index() == 0,
+          "FM Towns reads the source party.curacthero for inventory ownership");
     {
         int source_slot = -1;
         uint32_t source_object = 0u;
@@ -176,6 +182,8 @@ int main(void)
         check(source_slot >= 0 && source_object != 0u,
               "FM Towns GAME_LOAD exposes an authentic item link for swap coverage");
         if (source_slot >= 0) {
+            populated_source_slot = source_slot;
+            populated_source_object = source_object;
             memset(&inventory_receipt, 0, sizeof(inventory_receipt));
             {
                 int swap_ok = dm2_v1_boot_runtime_swap_inventory_slot(
@@ -251,6 +259,19 @@ int main(void)
                         &context, &source_slot)) {
                     check(view.inventorySelectedSlot == source_slot,
                           "FM Towns M11 pointer retains the authenticated inventory slot");
+                    if (source_slot == populated_source_slot) {
+                        check(dm2_v1_runtime_get_champion_inventory_object(
+                                  0u, (uint8_t)source_slot) == 0u &&
+                                  dm2_v1_runtime_get_leader_hand_object() ==
+                                      populated_source_object,
+                              "FM Towns M11 inventory click commits the authenticated source item exchange");
+                        memset(&inventory_receipt, 0,
+                               sizeof(inventory_receipt));
+                        check(dm2_v1_boot_runtime_swap_inventory_slot(
+                                  (DM2_V1_BootProfile *)view.dm2BootProfile,
+                                  0, source_slot, &inventory_receipt) == 1,
+                              "FM Towns restores the source inventory after pointer transaction coverage");
+                    }
                 }
                 exercised_m11_inventory_pointer = 1;
             }

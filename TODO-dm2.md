@@ -347,9 +347,11 @@ clipping is still unproven. Remaining weather work is to bind real original
     full SKULL.EXP table receipt and native rectangle admission. The generic
     c_input sleep/wake callbacks remain available, but event 142/143 are not
     present in the authenticated 264-record pointer span and are therefore
-    not claimed as pointer routes. Item-slot, rune, moneybox, and status
-    mutations remain fail-closed until the original record-chain owner is
-    recovered.
+    not claimed as pointer routes. The seven source-explicit equipment slots
+    now commit through the authenticated item-slot transaction when their
+    native pointer context is clicked. Rune, moneybox, status, and
+    non-equipment inventory mutations remain fail-closed until their original
+    record-chain owners are recovered.
 
   - **2026-08-11 source-session inventory links:** source-complete GAME_LOAD
     sessions now expose and update `c_hero::item[30]` through the runtime

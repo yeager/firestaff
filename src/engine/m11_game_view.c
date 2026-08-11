@@ -31891,10 +31891,22 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             if (dm2_v1_fmtowns_inventory_slot_for_context(
                     &route.source_context, &source_slot) &&
                 source_slot >= 0 && source_slot < 30) {
-                /* Selection is the source-owned first step. Moving or
-                 * equipping an item remains a separate source transaction;
-                 * do not turn a pointer hit into an invented swap. */
+                DM2_V1_BootRuntimeInventoryReceipt inventory_receipt;
+                int champion_index =
+                    dm2_v1_runtime_get_active_champion_index();
                 state->inventorySelectedSlot = source_slot;
+                /* c_events.cpp:45 performs the source item-slot exchange
+                 * immediately. Use the already authenticated GAME_LOAD
+                 * record chain and LeaderPossession transaction; if the
+                 * source owner rejects the operation, leave the selection
+                 * visible but do not invent a host-side move. */
+                memset(&inventory_receipt, 0, sizeof(inventory_receipt));
+                if (champion_index >= 0 &&
+                    dm2_v1_boot_runtime_swap_inventory_slot(
+                        (DM2_V1_BootProfile *)state->dm2BootProfile,
+                        champion_index, source_slot, &inventory_receipt)) {
+                    m11_set_status(state, "DM2 FM TOWNS", "ITEM MOVED");
+                }
                 return M11_GAME_INPUT_REDRAW;
             }
             return M11_GAME_INPUT_REDRAW;
