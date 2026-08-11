@@ -929,3 +929,21 @@ kontrollkoder och publiceras därför inte av `world_load_dungeon_text()`;
 testet får korrekt 0 publicerade world-strängar. Detta ska lösas med en
 autentiserad US textconsumer/codetabell från disassembly/runtime-capture, inte
 genom att göra den diagnostiska rådekodningen till speltext.
+
+## 2026-08-12 — autoload combat capture remains a C96B-only witness
+
+Den externa capture-katalogen `theron-capture-20260812-combat` använde den
+autentiserade US-CD:n, System Card och det lokala Mednafen-autoload-state:t.
+Mednafen bekräftar därför den riktiga Track 02-identiteten, men capturen visar
+`cd_irq_callbacks=1`, `non_system_card_pcecd_reads=0`, `transition=missing` och
+`main_ram_loader_tii_transfers=0`. Den är alltså inte en CD→RAM→level-handoff.
+
+Registertrace innehåller 65 536 samplingar och en 16-bitars sekvens-wrap, men
+bara `$C96B`-fönster. Den innehåller inga `$CC4C`, `$4644`, `$4667` eller giltiga
+`$B0E5`-samples. Spawn-read-tracen läser i stället bank-1F-adresser `$2072`
+till `$2081` utan `$5D64/$5D6A`-mål. Den befintliga parsern avvisar därför
+capturen som komplett spawn-consumer, vilket är korrekt.
+
+Detta stärker den negativa beviskedjan men öppnar inte RNG-returägande,
+monster-/generatorlogik, AI, combat, T700, T900 eller ljudhändelser. Råtrace
+och BIOS ligger kvar på extern disk; inget av detta läggs i GitHub.

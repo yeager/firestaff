@@ -10,6 +10,9 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 - 🔒 Paritetsmatrisen räknar nu fixture-/numeric-record-bevis som `PARTIAL` för
   combat och champion-systemet; T500/T600/T900-konsumenterna måste fortfarande
   bindas mot samma-session runtime-data innan produktionen öppnas.
+- 🔒 Den nya externa combat-capturen är verifierad som autoload/C96B-only:
+  ingen `$CC4C`, giltig `$B0E5`-kategori eller CD→RAM-loadertransition. Den får
+  inte användas för att fylla i syntetisk AI, RNG, T700 eller T900-semantik.
 
 ## 2026-08-11 — ljudkonsument förblir capture-gated
 

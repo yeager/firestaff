@@ -9,6 +9,9 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   porträttkonsumenter.
 - ✅ JP-porträttindex lämnas fail-closed tills riktiga pixels och deras
   HuC6280/VDC-ägare kan bindas i samma runtime-capture.
+- ✅ Den nya externa combat-capturen har klassificerats korrekt som negativt
+  C96B-only/autoload-bevis. Parserns kompletta spawn-admission förblir stängd
+  eftersom `$CC4C`, giltig `$B0E5`-kategori och loader-handoff saknas.
 
 ## 2026-08-11 — ljudstatus korrigerad till faktisk bevisnivå
 
