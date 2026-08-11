@@ -143,10 +143,11 @@ The checked CSBWin source-tree `csbgame2.dat` is a real legacy save with a
 the complete saved-dungeon tail, then prepares a private candidate containing
 the saved pose, DB0–DB15 layout, ITEM16 ownership and raw TIMER/queue
 receipts. The live queue materializes the original 10-byte TIMER pool in its
-saved order; it does not re-sort it with a host comparator. It does **not**
-publish the candidate until the same transaction can replace the saved world.
-Keeping this boundary prevents a restored body/timer queue from being paired
-with a different dungeon.
+saved order; it does not re-sort it with a host comparator. Once all checks
+pass, Firestaff atomically replaces the live dungeon with the prepared
+candidate and publishes the body, party and queue together. A failed
+preflight publishes none of them. Extended Features/DSA saves still require
+their separate source-owned world handoff.
 
 ## Viewport Test Coverage (47 files)
 

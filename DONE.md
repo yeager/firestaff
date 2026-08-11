@@ -13922,3 +13922,13 @@ and production source-combat tests.
   ersättningsfil. En tom originalskiva betyder uttryckligen att det saknas en
   återupptagbar session; den befintliga `MINI.DAT`-runtimetesten är fortsatt
   den separata verkliga start-/sparningskorpusen.
+# CSBWin: legacy `csbgame2.dat` atomic world resume (2026-08-11)
+
+- ✅ Den autentiska CSBWin-källträdssparningen med 10-byte `TIMER` kan nu
+  återupptas som en enda transaktion. GAMEBLOCK2, champions, ITEM16,
+  originalets serialiserade timerkö och den checksummade DB0–DB15-världen
+  kontrolleras innan den privata dungeon-kandidaten blir live.
+- ✅ Realkorpustesten bekräftar den sparade Prison-positionen `(22,18)` på
+  nivå 4, elva nivåer, en icke-tom källägd runtimekö och att städning släpper
+  den adopterade världen. Ingen
+  delvis body/timer-import får publiceras om preflighten misslyckas.

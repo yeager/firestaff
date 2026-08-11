@@ -168,16 +168,22 @@ static void test_staged_real_csbwin_save(void)
     csb_v1_runtime_cleanup(&timer_probe);
     free(bytes);
 
-    /* The tail prepares privately but cannot be published while the live
-     * queue lacks source-owned support for this legacy 10-byte TIMER layout. */
+    /* The legacy tail, authenticated body, ITEM16, and source queue publish
+     * in one transaction.  There is no Extended Features preamble here. */
     csb_v1_runtime_init(&runtime, NULL);
     runtime.game_time = 919u;
     runtime.party_x = 7;
-    CHECK(csb_v1_runtime_apply_csbwin_resume_file(&runtime, path, 0u) != 0 &&
-          runtime.game_time == 919u && runtime.party_x == 7 &&
-          !runtime.csbwin_save_provenance.valid,
-          "legacy CSBGAME2 10-byte timer layout fails closed before runtime import");
+    CHECK(csb_v1_runtime_apply_csbwin_resume_file(&runtime, path, 0u) == 0 &&
+          runtime.party_x == 22 && runtime.party_y == 18 &&
+          runtime.current_level == 4 && runtime.dungeon_handle != NULL &&
+          runtime.dungeon_handle->level_count == 11 &&
+          csb_v1_dungeon_get_current() == runtime.dungeon_handle &&
+          runtime.timeline_queue.eventCount > 0 &&
+          runtime.csbwin_save_provenance.valid,
+          "legacy CSBGAME2 atomically restores its authenticated world");
     csb_v1_runtime_cleanup(&runtime);
+    CHECK(csb_v1_dungeon_get_current() == NULL,
+          "legacy CSBGAME2 handoff cleanup releases the adopted world");
 }
 
 int main(void)

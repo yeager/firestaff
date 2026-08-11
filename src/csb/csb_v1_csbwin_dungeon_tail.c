@@ -623,6 +623,19 @@ const CSB_V1_CSBWinDungeonTailDatabaseLayout
     return candidate ? &candidate->databases : NULL;
 }
 
+int csb_v1_csbwin_dungeon_tail_take_legacy_candidate_dungeon(
+    CSB_V1_CSBWinLegacyDungeonCandidate *candidate,
+    CSB_V1_DungeonData *out_dungeon)
+{
+    if (!candidate || !out_dungeon || !candidate->dungeon.raw_data ||
+        candidate->dungeon.level_count <= 0 || candidate->dungeon.square_bytes != 1) {
+        return 0;
+    }
+    *out_dungeon = candidate->dungeon;
+    memset(&candidate->dungeon, 0, sizeof(candidate->dungeon));
+    return 1;
+}
+
 int csb_v1_csbwin_dungeon_tail_candidate_identity(
     const CSB_V1_CSBWinLegacyDungeonCandidate *candidate,
     CSB_V1_CSBWinLegacyDungeonCandidateIdentity *out)

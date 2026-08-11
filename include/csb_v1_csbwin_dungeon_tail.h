@@ -273,6 +273,13 @@ const CSB_V1_CSBWinDungeonTailDatabaseLayout
     *csb_v1_csbwin_dungeon_tail_candidate_databases(
         const CSB_V1_CSBWinLegacyDungeonCandidate *candidate);
 
+/* Move a fully prepared legacy candidate's dungeon to caller-owned storage.
+ * This is only for the final all-or-nothing resume commit; it clears the
+ * candidate's former storage so discard remains safe. */
+int csb_v1_csbwin_dungeon_tail_take_legacy_candidate_dungeon(
+    CSB_V1_CSBWinLegacyDungeonCandidate *candidate,
+    CSB_V1_DungeonData *out_dungeon);
+
 /* Return immutable source-tail provenance owned by `candidate`.  On an
  * invalid argument `out` is unchanged. */
 int csb_v1_csbwin_dungeon_tail_candidate_identity(

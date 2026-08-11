@@ -4053,14 +4053,14 @@ that its exact runtime path is not already source-locked and tested.
     EXPOOL nor the newer dungeon-tail prefix, so production explicitly
     rejects it before runtime/world import. DSA remains unproven: the file
     has no Extended Features/DSA prefix.
-    2026-08-11: the same real source file now additionally proves that the
-    full legacy tail can be prepared privately as one verified resume
-    candidate: `DUNGEONDATINDEX`, DB0–DB15, saved party pose, ITEM16 owners
-    and the raw 10-byte TIMER/queue receipts agree. It is intentionally still
-    rejected before runtime publication: the live owner now materializes its
-    source 10-byte TIMER pool without re-sorting the serialized queue, but
-    the atomic operation that must also replace the saved DB0–DB15 world is
-    still missing. Publishing only the body/timers would split the save.
+    2026-08-11: the same real source file now proves a complete legacy resume
+    transaction. Its `DUNGEONDATINDEX`, DB0–DB15, saved party pose, ITEM16
+    owners and raw 10-byte TIMER/queue receipts are prepared before Firestaff
+    replaces the live dungeon in one ownership transfer. The original queue
+    is retained in serialized order rather than host-resorted; cleanup proves
+    the adopted world is released once and no partial body/timer state is
+    published on a failed preflight. Extended Features/DSA saves remain a
+    distinct, fail-closed handoff boundary.
     2026-07-29: the export now also writes the documented, already-decoded
     champion fields in each 800-byte original record (identity, pose/action,
     vital stats, skills/experience, slots, load and shield), re-encrypting

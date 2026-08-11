@@ -21860,6 +21860,10 @@ int csb_v1_runtime_apply_csbwin_resume_file(
     CSB_V1_CSBWinExtendedTailReport tail;
     CSB_V1_CSBWinDungeonTailPrefix dungeon_tail;
     CSB_V1_CSBWinDungeonTailDatabaseLayout dungeon_databases;
+    CSB_V1_CSBWinLegacyDungeonCandidate *legacy_dungeon = NULL;
+    CSB_V1_CSBWinLegacyResumePrepare legacy_resume;
+    CSB_V1_DungeonData *legacy_dungeon_handle = NULL;
+    CSB_V1_DungeonData *previous_dungeon_handle;
 
     CSB_V1_RuntimeProfile candidate;
     size_t core_offset = 0u;
@@ -21939,7 +21943,7 @@ int csb_v1_runtime_apply_csbwin_resume_file(
         return -1;
     }
     if (!csb_v1_csbwin_512_validate_appended_expool_tail(&report) &&
-        !(core_offset != 0u && tail.valid && report.appended_size != 0u)) {
+        report.appended_size == 0u) {
         free(bytes);
         return -1;
     }
@@ -21970,11 +21974,34 @@ int csb_v1_runtime_apply_csbwin_resume_file(
             free(bytes);
             return -1;
         }
+        if (!features.valid) {
+            memset(&legacy_resume, 0, sizeof(legacy_resume));
+            if (csb_v1_csbwin_dungeon_tail_prepare_legacy_candidate(
+                    dungeon_tail_bytes, report.appended_size,
+                    &legacy_dungeon) != CSB_V1_CSBWIN_DUNGEON_TAIL_OK ||
+                csb_v1_csbwin_dungeon_tail_prepare_legacy_resume(
+                    legacy_dungeon, &report, dungeon_tail_bytes,
+                    report.appended_size, &legacy_resume) !=
+                    CSB_V1_CSBWIN_DUNGEON_TAIL_OK) {
+                csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(legacy_dungeon);
+                free(bytes);
+                return -1;
+            }
+        }
+    }
+    previous_dungeon_handle = profile->dungeon_handle;
+    if ((previous_dungeon_handle &&
+         csb_v1_dungeon_get_current() != previous_dungeon_handle) ||
+        (!previous_dungeon_handle && csb_v1_dungeon_get_current())) {
+        csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(legacy_dungeon);
+        free(bytes);
+        return -1;
     }
     candidate = *profile;
     previous_dungeon_level = csb_v1_dungeon_get_current_level();
     if (csb_v1_runtime_stage_csbwin_resume_report(&candidate, &report) != 0) {
         csb_v1_dungeon_set_current_level(previous_dungeon_level);
+        csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(legacy_dungeon);
         free(bytes);
         return -1;
     }
@@ -21991,6 +22018,7 @@ int csb_v1_runtime_apply_csbwin_resume_file(
     }
     if (csb_v1_runtime_stage_csbwin_dsa_tracing(&candidate) != 0) {
         csb_v1_dungeon_set_current_level(previous_dungeon_level);
+        csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(legacy_dungeon);
         free(bytes);
         return -1;
     }
@@ -21999,6 +22027,7 @@ int csb_v1_runtime_apply_csbwin_resume_file(
                 &candidate, bytes, file_size, &features, &tail) != 0) {
             csb_v1_runtime_cleanup_csbwin_extended_state(&candidate);
             csb_v1_dungeon_set_current_level(previous_dungeon_level);
+            csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(legacy_dungeon);
             free(bytes);
             return -1;
         }
@@ -22025,9 +22054,30 @@ int csb_v1_runtime_apply_csbwin_resume_file(
     strncpy(candidate.csbwin_save_provenance.source_path, path,
             sizeof(candidate.csbwin_save_provenance.source_path) - 1u);
     free(bytes);
+    if (legacy_dungeon) {
+        legacy_dungeon_handle = (CSB_V1_DungeonData *)calloc(
+            1u, sizeof(*legacy_dungeon_handle));
+        if (!legacy_dungeon_handle ||
+            !csb_v1_csbwin_dungeon_tail_take_legacy_candidate_dungeon(
+                legacy_dungeon, legacy_dungeon_handle)) {
+            free(legacy_dungeon_handle);
+            csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(legacy_dungeon);
+            return -1;
+        }
+        candidate.dungeon_handle = legacy_dungeon_handle;
+        candidate.dungeon_path = NULL;
+        memset(&candidate.dungeon_asset, 0, sizeof(candidate.dungeon_asset));
+        csb_v1_dungeon_set_current(legacy_dungeon_handle);
+        csb_v1_dungeon_set_current_level(candidate.current_level);
+        free(previous_dungeon_handle);
+    }
     csb_v1_runtime_cleanup_csbwin_extended_state(profile);
     *profile = candidate;
+    if (legacy_dungeon_handle) {
+        csb_v1_runtime_sync_map_difficulty(profile);
+    }
     (void)csb_v1_runtime_claim_csbwin_item16_ai_ownership(profile);
+    csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(legacy_dungeon);
     return 0;
 }
 
