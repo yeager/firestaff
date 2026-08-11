@@ -64,6 +64,17 @@ Firestaff cache. On success it is atomically promoted to `FMTOWNS.IMG`; on
 failure the staging file is removed. The directory containing the original
 ZIP/RAR remains read-only from Firestaff's point of view.
 
+### Amiga 3.5 CAPS/IPF preservation boundary
+
+The available Amiga 3.5 CTRaw corpus is not an ADF: each game/utility image
+starts with the `CAPS` container signature and contains CAPS/IPF flux-track
+records. Those records are evidence of protected original floppy media, not
+flat AmigaDOS sectors from which `GRAPHICS.DAT`, `DUNGEON.DAT`, or program
+files may be guessed. Firestaff therefore reports this form as unsupported
+until a bounded CAPS/IPF decoder can prove its sector reconstruction against
+an original 3.5 corpus. It must not relabel the files as ADF, borrow a 3.1
+cache, or use a cracked/hard-disk replacement as a silent fallback.
+
 ## CSB graphics formats
 
 Amiga CSB graphics use direct **IMG1** nibble-RLE records. Atari ST uses a
