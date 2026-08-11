@@ -335,6 +335,19 @@ typedef struct CSB_V1_FmtownsUtilityPortraitCatalog {
     const char *source_evidence;
 } CSB_V1_FmtownsUtilityPortraitCatalog;
 
+/* CEDT008.C F7083/F7084 selector state.  The selector is deliberately
+ * catalog-bound: it can move only across already admitted PORTRAIT records
+ * and cannot turn a filename, row number, or generated entry into a load
+ * candidate.  The catalog remains owned by the caller. */
+typedef struct CSB_V1_FmtownsUtilityPortraitSelector {
+    int valid;
+    uint16_t selected_index;
+    uint16_t entry_count;
+    uint32_t catalog_fnv1a;
+    const CSB_V1_FmtownsUtilityPortraitCatalog *catalog;
+    const char *source_evidence;
+} CSB_V1_FmtownsUtilityPortraitSelector;
+
 /* Admit precisely the F31E/F31J executable selected by SWITCHTW.  A valid
  * CSB profile alone is deliberately insufficient: this gate also checks the
  * exact retail program identity before the entrance/HUD session is opened. */
@@ -467,6 +480,26 @@ int csb_v1_fmtowns_utility_portrait_catalog_open(
     const CSB_V1_BootProfile *profile,
     CSB_V1_FmtownsSwitchLanguage language,
     CSB_V1_FmtownsUtilityPortraitCatalog *out_catalog);
+
+/* Bind the native selector to one admitted catalogue entry.  The selected
+ * index is a source-catalogue index, not a host path or a synthetic row. */
+int csb_v1_fmtowns_utility_portrait_selector_open(
+    const CSB_V1_FmtownsUtilityPortraitCatalog *catalog,
+    uint16_t initial_index,
+    CSB_V1_FmtownsUtilityPortraitSelector *out_selector);
+
+/* F7084 arrow movement.  Movement is bounded by the admitted catalogue;
+ * there is no wraparound and no fallback entry at either end. */
+int csb_v1_fmtowns_utility_portrait_selector_move(
+    CSB_V1_FmtownsUtilityPortraitSelector *selector,
+    int direction);
+
+/* Revalidate the selected catalogue entry through the existing F7002
+ * transaction. */
+int csb_v1_fmtowns_utility_portrait_selector_load(
+    const CSB_V1_FmtownsUtilityPortraitSelector *selector,
+    CSB_V1_PartyState *party, uint16_t selected_champion,
+    CSB_V1_FmtownsStartupPortraitReceipt *portraits);
 
 /* F7001_SaveChampions / CEDT001.C: write only already-admitted .CMP
  * records. Every party champion must match an existing catalog entry by its

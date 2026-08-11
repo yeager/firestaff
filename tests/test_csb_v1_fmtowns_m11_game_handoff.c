@@ -194,6 +194,7 @@ int main(void)
     CSB_V1_FmtownsUtilityMenuReceipt utility_menu;
     CSB_V1_FmtownsUtilityFontReceipt utility_font;
     CSB_V1_FmtownsUtilityPortraitCatalog utility_portrait_catalog;
+    CSB_V1_FmtownsUtilityPortraitSelector utility_portrait_selector;
     CSB_V1_FmtownsUtilityRenderReceipt utility_render;
     CSB_V1_FmtownsUtilityMenuHitBox utility_hit;
     CSB_V1_FmtownsItemDecodeReceipt utility_arrows_decode;
@@ -790,6 +791,34 @@ int main(void)
               strcmp(utility_portrait_catalog.entries[0].filename, "ALEX.CMP") == 0 &&
               utility_portrait_catalog.entries[0].portrait.valid,
           "F31 C06 FILE_PICKER catalogues only real admitted PORTRAIT CMP files");
+    memset(&utility_portrait_selector, 0, sizeof(utility_portrait_selector));
+    CHECK(csb_v1_fmtowns_utility_portrait_selector_open(
+              &utility_portrait_catalog, 0u, &utility_portrait_selector) &&
+              utility_portrait_selector.valid &&
+              utility_portrait_selector.selected_index == 0u &&
+              utility_portrait_selector.entry_count ==
+                  utility_portrait_catalog.entry_count,
+          "F31 C06 selector binds its initial row to the authenticated catalog");
+    CHECK(csb_v1_fmtowns_utility_portrait_selector_move(
+              &utility_portrait_selector, 1) &&
+              utility_portrait_selector.selected_index == 1u &&
+              csb_v1_fmtowns_utility_portrait_selector_move(
+                  &utility_portrait_selector, -1) &&
+              utility_portrait_selector.selected_index == 0u &&
+              !csb_v1_fmtowns_utility_portrait_selector_move(
+                  &utility_portrait_selector, -1),
+          "F31 C06 selector follows bounded source arrow movement");
+    if (utility_portrait_catalog.entry_count > 0u &&
+        mini_party.ChampionCount > 0) {
+        CSB_V1_PartyState selector_party = mini_party;
+        CSB_V1_FmtownsStartupPortraitReceipt selector_portraits = mini_portraits;
+        CHECK(csb_v1_fmtowns_utility_portrait_selector_load(
+                  &utility_portrait_selector, &selector_party, 0u,
+                  &selector_portraits) &&
+                  strcmp(selector_party.Champions[0].Name,
+                         utility_portrait_catalog.entries[0].portrait.name) == 0,
+              "F31 C06 selector load revalidates the selected authentic CMP");
+    }
 #ifndef _WIN32
     if (language == CSB_FMTOWNS_SWITCH_ENGLISH &&
         utility_portrait_catalog.valid && utility_portrait_catalog.entry_count > 0u) {

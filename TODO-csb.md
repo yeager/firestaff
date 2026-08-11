@@ -282,10 +282,13 @@ populated dungeon states.
   Firestaff rechecks the exact 508-byte file and its catalogue hash, then
   copies only that record's native 464-byte planar payload and 8/20-byte
   name/title into the selected party slot. It never accepts a host path,
-  creates a row, or chooses a fallback. The real 24-file English catalogue
-  covers the import in `csb_v1_fmtowns_m11_game_handoff`; the C06 selector and
-  its modal keyboard/mouse loop still need source-level recovery before this
-  transaction can be exposed through gameplay input.
+  creates a row, or chooses a fallback. The catalog-bound selector now
+  preserves the authenticated source-sorted 24-entry list, provides bounded
+  previous/next movement, and delegates the selected row to this same import
+  transaction. The real English catalogue covers catalog binding, movement,
+  and import in `csb_v1_fmtowns_m11_game_handoff`. The remaining gap is wiring
+  the selector into C06's source-level F7083/F7084 drawing and modal
+  keyboard/mouse loop; no host path or synthetic row is accepted.
 
 ### CSB V1
 

@@ -2463,6 +2463,84 @@ int csb_v1_fmtowns_utility_portrait_catalog_open(
     return 1;
 }
 
+static uint32_t csb_v1_fmtowns_utility_portrait_catalog_hash(
+    const CSB_V1_FmtownsUtilityPortraitCatalog *catalog)
+{
+    uint32_t hash = 2166136261u;
+    uint16_t index;
+
+    if (!catalog || !catalog->valid || catalog->entry_count == 0u) return 0u;
+    for (index = 0u; index < catalog->entry_count; ++index) {
+        const CSB_V1_FmtownsUtilityPortraitCatalogEntry *entry =
+            &catalog->entries[index];
+        size_t i;
+        for (i = 0u; i < sizeof(entry->filename) && entry->filename[i]; ++i) {
+            hash ^= (uint8_t)entry->filename[i];
+            hash *= 16777619u;
+        }
+        hash ^= entry->source_fnv1a;
+        hash *= 16777619u;
+        hash ^= entry->portrait.pixel_fnv1a;
+        hash *= 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
+int csb_v1_fmtowns_utility_portrait_selector_open(
+    const CSB_V1_FmtownsUtilityPortraitCatalog *catalog,
+    uint16_t initial_index,
+    CSB_V1_FmtownsUtilityPortraitSelector *out_selector)
+{
+    uint32_t catalog_hash;
+
+    if (!out_selector) return 0;
+    memset(out_selector, 0, sizeof(*out_selector));
+    catalog_hash = csb_v1_fmtowns_utility_portrait_catalog_hash(catalog);
+    if (!catalog_hash || initial_index >= catalog->entry_count ||
+        !catalog->entries[initial_index].portrait.valid) return 0;
+    out_selector->valid = 1;
+    out_selector->selected_index = initial_index;
+    out_selector->entry_count = catalog->entry_count;
+    out_selector->catalog_fnv1a = catalog_hash;
+    out_selector->catalog = catalog;
+    out_selector->source_evidence =
+        "ReDMCSB CEDT008.C F7083/F7084; CEDT001.C F7002_ReadCMP";
+    return 1;
+}
+
+int csb_v1_fmtowns_utility_portrait_selector_move(
+    CSB_V1_FmtownsUtilityPortraitSelector *selector,
+    int direction)
+{
+    int next;
+
+    if (!selector || !selector->valid || !selector->catalog ||
+        selector->entry_count != selector->catalog->entry_count ||
+        selector->catalog_fnv1a !=
+            csb_v1_fmtowns_utility_portrait_catalog_hash(selector->catalog) ||
+        (direction != -1 && direction != 1)) return 0;
+    next = (int)selector->selected_index + direction;
+    if (next < 0 || next >= (int)selector->entry_count ||
+        !selector->catalog->entries[next].portrait.valid) return 0;
+    selector->selected_index = (uint16_t)next;
+    return 1;
+}
+
+int csb_v1_fmtowns_utility_portrait_selector_load(
+    const CSB_V1_FmtownsUtilityPortraitSelector *selector,
+    CSB_V1_PartyState *party, uint16_t selected_champion,
+    CSB_V1_FmtownsStartupPortraitReceipt *portraits)
+{
+    if (!selector || !selector->valid || !selector->catalog ||
+        selector->entry_count != selector->catalog->entry_count ||
+        selector->catalog_fnv1a !=
+            csb_v1_fmtowns_utility_portrait_catalog_hash(selector->catalog))
+        return 0;
+    return csb_v1_fmtowns_utility_load_portrait(
+        selector->catalog, selector->selected_index, party,
+        selected_champion, portraits);
+}
+
 int csb_v1_fmtowns_utility_load_portrait(
     const CSB_V1_FmtownsUtilityPortraitCatalog *catalog,
     uint16_t catalog_index, CSB_V1_PartyState *party,

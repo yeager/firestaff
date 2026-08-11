@@ -140,9 +140,12 @@ Every module below is source-locked with a real-data round-trip test:
   `PORTRAIT` catalogue: the native header is preserved and only the
   receipt-bound planar payload changes. `F7002_ReadCMP` also imports a
   revalidated selected catalogue entry into the selected party slot, copying
-  only its source name/title and planar payload. C06 `LOAD CHAMPIONS`, its native
-  file-picker selection loop, and arbitrary `CSBGAME.DAT` load/write/resume
-  remain fail-closed until their exact source transactions are proven. The
+  only its source name/title and planar payload. The catalog-bound selector
+  preserves the authenticated source order, provides bounded previous/next
+  movement, and delegates the selected row to that same import transaction.
+  Its remaining gap is C06's source-level F7083/F7084 drawing and modal input
+  loop. Arbitrary `CSBGAME.DAT` load/write/resume remains fail-closed until its
+  exact source transactions are proven. The
   external `fmtowns-save-corpus/CSBGAME.DAT` and `CSBGAME-JP.DAT` files are
   retained as candidates, not used as synthetic substitutes.
 - **DM2 FM Towns**: The authentic HME-242 CD path, TWANIM/TITLE/SWOOSH/END,
