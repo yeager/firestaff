@@ -80,6 +80,13 @@ typedef struct {
     long csbFmtownsDataSize;
     int csbFmtowns;
 
+    /* CSB X68000 DMCSB2 source.  It shares big-endian IMG1 record bytes
+     * with the Amiga container family, but remains a separate platform
+     * identity and can only be initialized through its native handoff. */
+    unsigned char *csbX68kData;
+    long csbX68kDataSize;
+    int csbX68k;
+
     /* Cache */
     M11_AssetSlot cache[M11_ASSET_CACHE_SLOTS];
     int cacheUsed;
@@ -127,6 +134,14 @@ int M11_AssetLoader_InitCsbAmigaFromFile(M11_AssetLoader* loader,
  * expanded by the F31-specific decoder. */
 int M11_AssetLoader_InitCsbFmtownsFromFile(M11_AssetLoader* loader,
                                            const char *graphicsDatPath);
+
+/* Initialize from extracted CSB X68000 GRAPHICS.DAT bytes.  The input is
+ * copied, so it may be released after this call.  The shared DMCSB2/IMG1
+ * decoder is used solely for its source layout; the loader keeps X68000
+ * platform identity separate from CSB Amiga. */
+int M11_AssetLoader_InitCsbX68kFromBuffer(M11_AssetLoader* loader,
+                                          const unsigned char *data,
+                                          long size);
 
 /* Shut down and free all cached data. */
 void M11_AssetLoader_Shutdown(M11_AssetLoader* loader);

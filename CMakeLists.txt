@@ -51212,6 +51212,19 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_asset_loader_blit_pc34_com
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_csb_x68k_asset_loader.c")
+    add_executable(test_m11_csb_x68k_asset_loader
+        tests/test_m11_csb_x68k_asset_loader.c
+        src/csb/csb_v1_x68k_hdm.c)
+    target_link_libraries(test_m11_csb_x68k_asset_loader PRIVATE firestaff_m11)
+    target_include_directories(test_m11_csb_x68k_asset_loader PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_m11_csb_x68k_asset_loader PRIVATE -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME m11_csb_x68k_asset_loader COMMAND test_m11_csb_x68k_asset_loader)
+    set_tests_properties(m11_csb_x68k_asset_loader PROPERTIES LABELS "m11;csb;x68k;synthetic_fixture")
+endif()
+
 # M11 V2.0/V2.1 filter chain clamp contract. Pins the V2 visual
 # extras setter/getter clamp surface without requiring a window or
 # user-supplied game data.
