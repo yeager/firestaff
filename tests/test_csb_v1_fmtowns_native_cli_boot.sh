@@ -4,6 +4,7 @@ set -eu
 firestaff_cli="${1:?Firestaff executable is required}"
 data_dir="${FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR:-}"
 language="${FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE:-en}"
+user_save="${FIRESTAFF_CSB_FMTOWNS_USER_SAVE:-}"
 edition_arg=""
 expected_cache="csb-fmtowns-en"
 
@@ -68,6 +69,34 @@ case "$runtime_output" in
         exit 1
         ;;
 esac
+
+# An explicit F31 save is a distinct C03/F0435 route.  It must not replay
+# TITLE.ANM or pass the bytes to the Atari/CSBWin importer merely because the
+# launcher was started from a generic --game csb invocation.  Keep this opt-in
+# because a save is language-owned and the test may not manufacture one.
+if [ -n "$user_save" ]; then
+    if [ ! -f "$user_save" ]; then
+        echo "FAIL: requested F31 user save is unavailable: $user_save" >&2
+        exit 1
+    fi
+    resume_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+        --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
+        --save "$user_save" --boot-probe --boot-probe-expect-phase inactive \
+        --boot-probe-expect-runtime --boot-probe-expect-startup-active 0 \
+        --boot-probe-expect-level-loaded 1 --duration 0 2>&1)" || {
+        printf '%s\n' "$resume_output" >&2
+        exit 1
+    }
+    case "$resume_output" in
+        *"phase=inactive"*"startupActive=0"*"levelLoaded=1"*) ;;
+        *)
+            echo "FAIL: explicit F31 save did not resume through C03/F0435" >&2
+            printf '%s\n' "$resume_output" >&2
+            exit 1
+            ;;
+    esac
+    echo "PASS: native CSB FM Towns CLI resumes the selected F0435 save"
+fi
 
 # boot-probe intentionally runs the direct launch path, so it cannot prove the
 # regular launcher route. Exercise that route separately: --menu retains the
