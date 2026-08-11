@@ -1155,18 +1155,28 @@ int dm2_v1_asset_champion_revive_data(
         }
         memcpy(candidate.name2, name.text + name2_offset, name2_length);
     }
-    candidate.hit_points_base = (uint16_t)raw[0] | ((uint16_t)raw[1] << 8);
-    candidate.stamina_base = (uint16_t)raw[2] | ((uint16_t)raw[3] << 8);
-    candidate.mana_base = (uint16_t)raw[4] | ((uint16_t)raw[5] << 8);
+    candidate.hit_points_base = loader->big_endian ?
+        ((uint16_t)raw[0] << 8) | raw[1] :
+        (uint16_t)raw[0] | ((uint16_t)raw[1] << 8);
+    candidate.stamina_base = loader->big_endian ?
+        ((uint16_t)raw[2] << 8) | raw[3] :
+        (uint16_t)raw[2] | ((uint16_t)raw[3] << 8);
+    candidate.mana_base = loader->big_endian ?
+        ((uint16_t)raw[4] << 8) | raw[5] :
+        (uint16_t)raw[4] | ((uint16_t)raw[5] << 8);
     for (i = 0; i < 7; ++i) {
-        uint16_t value = (uint16_t)raw[(3 + i) * 2] |
-                         ((uint16_t)raw[(3 + i) * 2 + 1] << 8);
+        size_t offset = (size_t)(3 + i) * 2u;
+        uint16_t value = loader->big_endian ?
+            ((uint16_t)raw[offset] << 8) | raw[offset + 1u] :
+            (uint16_t)raw[offset] | ((uint16_t)raw[offset + 1u] << 8);
         /* c_hero.cpp applies DM2_MAX in word precision and then CUTX8. */
         candidate.ability_base[i] = (uint8_t)(value < 30u ? 30u : value);
     }
     for (i = 0; i < 16; ++i) {
-        uint16_t value = (uint16_t)raw[(10 + i) * 2] |
-                         ((uint16_t)raw[(10 + i) * 2 + 1] << 8);
+        size_t offset = (size_t)(10 + i) * 2u;
+        uint16_t value = loader->big_endian ?
+            ((uint16_t)raw[offset] << 8) | raw[offset + 1u] :
+            (uint16_t)raw[offset] | ((uint16_t)raw[offset + 1u] << 8);
         /* The source shifts by CUTX8(value); retain only the same byte that
          * can influence the resulting c_hero skill word. */
         candidate.skill_level[i] = (uint8_t)value;

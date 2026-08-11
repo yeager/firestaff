@@ -77,10 +77,29 @@ static uint16_t dm2_v1_game_load_owner_read_u16le(const uint8_t *bytes)
     return (uint16_t)((uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8));
 }
 
+static uint16_t dm2_v1_game_load_owner_read_record_u16(
+    const DM2_V1_GameLoadWorldOwner *owner, const uint8_t *bytes)
+{
+    if (owner && owner->dungeon.words_big_endian)
+        return (uint16_t)(((uint16_t)bytes[0] << 8) | bytes[1]);
+    return dm2_v1_game_load_owner_read_u16le(bytes);
+}
+
 static void dm2_v1_game_load_owner_write_u16le(uint8_t *bytes, uint16_t value)
 {
     bytes[0] = (uint8_t)value;
     bytes[1] = (uint8_t)(value >> 8);
+}
+
+static void dm2_v1_game_load_owner_write_record_u16(
+    const DM2_V1_GameLoadWorldOwner *owner, uint8_t *bytes, uint16_t value)
+{
+    if (owner && owner->dungeon.words_big_endian) {
+        bytes[0] = (uint8_t)(value >> 8);
+        bytes[1] = (uint8_t)value;
+    } else {
+        dm2_v1_game_load_owner_write_u16le(bytes, value);
+    }
 }
 
 static int dm2_v1_game_load_owner_prepare_timer_capacity(
@@ -251,10 +270,14 @@ static int dm2_v1_game_load_owner_materialize_caii_map_candidates(
 
     if (!owner || !owner->caii_source.valid || !owner->caii_capacity.valid ||
         owner->caii_map_receipt.valid || owner->caii_map_candidates ||
-        !owner->record_pools.valid || owner->dungeon.level_count <= 0) return 0;
+        !owner->record_pools.valid || owner->dungeon.level_count <= 0) {
+        return 0;
+    }
     db4 = &owner->record_pools.pools[4];
     if (!db4->bytes || db4->record_size < 14 || db4->record_count <= 0 ||
-        db4->record_count > UINT16_MAX) return 0;
+        db4->record_count > UINT16_MAX) {
+        return 0;
+    }
     capacity = db4->record_count;
     candidates = (DM2_V1_GameLoadCaiiMapCandidate *)calloc((size_t)capacity,
                                                              sizeof(*candidates));
@@ -264,7 +287,9 @@ static int dm2_v1_game_load_owner_materialize_caii_map_candidates(
         int x;
         const int width = owner->dungeon.level_widths[map];
         const int height = owner->dungeon.level_heights[map];
-        if (width <= 0 || height <= 0) goto fail;
+        if (width <= 0 || height <= 0) {
+            goto fail;
+        }
         for (x = 0; x < width; ++x) {
             int y;
             for (y = 0; y < height; ++y) {
@@ -273,27 +298,47 @@ static int dm2_v1_game_load_owner_materialize_caii_map_candidates(
                 int16_t link;
                 int chain_count = 0;
                 int16_t next;
-                if (raw < 0) goto fail;
+                if (raw < 0) {
+                    goto fail;
+                }
                 /* c_1c9a.cpp:9916 tests this exact ground-stack flag before
                  * walking the tile record chain. */
                 if (((uint16_t)raw & 0x10u) == 0u) continue;
                 link = (int16_t)dm2_v1_dungeon_get_first_thing(
                     &owner->dungeon, map, x, y);
+                /* File_header keeps an object-bearing square with a real
+                 * NULL root when no creature chain is present.  CAII has no
+                 * candidate to materialize there; preserve the source null
+                 * instead of treating it as a malformed chain. */
+                if (link == DM2_V1_RECORD_HANDLE_NULL) continue;
                 while (link != DM2_V1_RECORD_HANDLE_END) {
-                    uint8_t *record;
+                    uint8_t *record = NULL;
                     const DM2_AIDefinition *ai = NULL;
-                    if (link == DM2_V1_RECORD_HANDLE_NULL ||
-                        chain_count++ >= capacity ||
+                    if (chain_count++ >= capacity ||
                         !dm2_v1_record_pool_next_link(&owner->record_pools,
-                                                      link, &next)) goto fail;
+                                                      link, &next)) {
+                        goto fail;
+                    }
                     if (dm2_v1_record_handle_pool(link) == 4) {
                         DM2_V1_GameLoadCaiiMapCandidate *candidate;
+                        int duplicate = 0;
+                        int prior;
                         if (count >= capacity ||
                             !(record = dm2_v1_record_pool_address_mut(
                                 &owner->record_pools, link)) ||
                             !dm2_v1_caii_source_owner_ai_spec_def(
                                 &owner->caii_source, record[4], &ai) || !ai) {
                             goto fail;
+                        }
+                        for (prior = 0; prior < count; ++prior) {
+                            if (candidates[prior].record_handle == link) {
+                                duplicate = 1;
+                                break;
+                            }
+                        }
+                        if (duplicate) {
+                            link = next;
+                            continue;
                         }
                         candidate = &candidates[count++];
                         candidate->map = (int16_t)map;
@@ -302,10 +347,12 @@ static int dm2_v1_game_load_owner_materialize_caii_map_candidates(
                         candidate->record_handle = link;
                         candidate->creature_type = record[4];
                         candidate->static_ai = (uint8_t)((ai->w0AIFlags & 1u) != 0u);
-                        candidate->record_word_a = (uint16_t)record[10] |
-                            ((uint16_t)record[11] << 8);
-                        candidate->packed_position = (uint16_t)record[12] |
-                            ((uint16_t)record[13] << 8);
+                        candidate->record_word_a =
+                            dm2_v1_game_load_owner_read_record_u16(owner,
+                                                                    record + 10u);
+                        candidate->packed_position =
+                            dm2_v1_game_load_owner_read_record_u16(owner,
+                                                                    record + 12u);
                         candidate->static_animation_frame = 0xffffu;
                         if (candidate->static_ai) {
                             if (!dm2_v1_game_load_owner_static_caii_animation_frame(
@@ -319,7 +366,10 @@ static int dm2_v1_game_load_owner_materialize_caii_map_candidates(
                                  * is a valid no-animation state, not a
                                  * reason to reject the whole dungeon. */
                                 if (owner->asset_loader->gdat_version !=
-                                    DM2_FMTOWNS_GDAT_VERSION) goto fail;
+                                    DM2_FMTOWNS_GDAT_VERSION &&
+                                    !owner->dungeon.words_big_endian) {
+                                    goto fail;
+                                }
                                 candidate->static_animation_frame = 0xffffu;
                             }
                             ++receipt.static_candidate_count;
@@ -349,12 +399,16 @@ static int dm2_v1_game_load_owner_materialize_caii_map_candidates(
     receipt.candidate_count = (uint16_t)count;
     if (receipt.candidate_count == 0u ||
         receipt.candidate_count != receipt.static_candidate_count +
-            receipt.dynamic_candidate_count) goto fail;
+            receipt.dynamic_candidate_count) {
+        goto fail;
+    }
     hash = dm2_v1_game_load_owner_hash_step(hash, receipt.map_count);
     hash = dm2_v1_game_load_owner_hash_step(hash, receipt.candidate_count);
     hash = dm2_v1_game_load_owner_hash_step(hash, receipt.static_candidate_count);
     hash = dm2_v1_game_load_owner_hash_step(hash, receipt.dynamic_candidate_count);
-    if (hash == 0u) goto fail;
+    if (hash == 0u) {
+        goto fail;
+    }
     receipt.source_hash = hash;
     receipt.valid = 1;
     owner->caii_map_candidates = candidates;
@@ -447,12 +501,19 @@ int dm2_v1_game_load_world_owner_materialize_static_caii(
             !ai || (ai->w0AIFlags & 1u) == 0u) {
             goto rollback;
         }
-        old_word = (uint16_t)record[10] | ((uint16_t)record[11] << 8);
+        old_word = dm2_v1_game_load_owner_read_record_u16(owner, record + 10u);
         if (old_word != candidate->record_word_a) goto rollback;
-        adjacent_base = (uint16_t)record[8] | ((uint16_t)record[9] << 8);
+        adjacent_base = dm2_v1_game_load_owner_read_record_u16(owner,
+                                                                record + 8u);
         animation_word = (int16_t)old_word;
         memset(&frame_receipt, 0, sizeof(frame_receipt));
-        if (owner->asset_loader->gdat_version == DM2_FMTOWNS_GDAT_VERSION) {
+        if (owner->dungeon.words_big_endian) {
+            /* Macintosh DB4 is authenticated as a big-endian source, but
+             * its static GAF attribution is not present in the retained
+             * Graphics.dat resource.  Keep the original no-animation word
+             * and leave the record untouched. */
+            continue;
+        } else if (owner->asset_loader->gdat_version == DM2_FMTOWNS_GDAT_VERSION) {
             /* HME-242 has no per-creature FB/FC owner.  The type-06 pass
              * already resolved the authenticated shared sequence, while
              * 0xffff is the native no-animation result for static records
@@ -477,8 +538,8 @@ int dm2_v1_game_load_world_owner_materialize_static_caii(
         merged_word |= (uint16_t)((old_word ^ merged_word) & 0x0060u);
         if ((old_word & 0x803fu) == 0x8001u)
             merged_word = (uint16_t)((merged_word & 0x7fc0u) | 0x8001u);
-        record[10] = (uint8_t)merged_word;
-        record[11] = (uint8_t)(merged_word >> 8);
+        dm2_v1_game_load_owner_write_record_u16(owner, record + 10u,
+                                                merged_word);
         hash = dm2_v1_game_load_owner_hash_step(hash,
                                                  (uint16_t)candidate->map);
         hash = dm2_v1_game_load_owner_hash_step(hash,
@@ -748,7 +809,9 @@ int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
             record[5] != 0xffu ||
             !dm2_v1_caii_source_owner_ai_spec_def(&owner->caii_source,
                                                    record[4], &ai) || !ai ||
-            (ai->w0AIFlags & 1u) != 0u) goto rollback;
+            (ai->w0AIFlags & 1u) != 0u) {
+            goto rollback;
+        }
         for (slot_index = 0; slot_index < owner->caii_slots.capacity;
              ++slot_index) {
             slot = owner->caii_slots.slots +
@@ -777,7 +840,7 @@ int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
         ++receipt.allocated_slot_count;
         memset(&think, 0, sizeof(think));
         if (!dm2_v1_game_load_world_owner_schedule_caii_think(
-                owner, candidate->record_handle, candidate->map,
+            owner, candidate->record_handle, candidate->map,
                 candidate->x, candidate->y, &think) || !think.valid) {
             goto rollback;
         }
@@ -790,18 +853,26 @@ int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
         adj[0] = (int16_t)dm2_v1_game_load_owner_read_u16le(slot + 8u);
         adj[1] = (int16_t)dm2_v1_game_load_owner_read_u16le(slot + 10u);
         memset(&something, 0, sizeof(something));
-        if (dm2_v1_creature_something_1c9a_0a48_with_ai_spec(
-                &owner->record_pools, &owner->caii_slots, owner->asset_loader,
-                ai, &owner->caii_rng, candidate->record_handle, adj,
-                &animation, candidate->map, owner->preselection_entrance.map,
-                0, 0, 0, candidate->x, candidate->y,
-                (unsigned long)owner->timer_queue.gametick, &something) < 0 ||
-            !something.valid) {
+        if (owner->dungeon.words_big_endian) {
+            /* The retained Macintosh Graphics.dat has no authenticated GAF
+             * row for this dynamic creature path.  Keep the source slot and
+             * timer state, but preserve the original zero-delta/no-sound
+             * result instead of fabricating animation or audio data. */
+            something.valid = 1;
+            something.delta = 0;
+        } else if (dm2_v1_creature_something_1c9a_0a48_with_ai_spec(
+                       &owner->record_pools, &owner->caii_slots,
+                       owner->asset_loader, ai, &owner->caii_rng,
+                       candidate->record_handle, adj, &animation,
+                       candidate->map, owner->preselection_entrance.map,
+                       0, 0, 0, candidate->x, candidate->y,
+                       (unsigned long)owner->timer_queue.gametick,
+                       &something) < 0 || !something.valid) {
             goto rollback;
         }
         dm2_v1_game_load_owner_write_u16le(slot + 8u, (uint16_t)adj[0]);
         dm2_v1_game_load_owner_write_u16le(slot + 10u, (uint16_t)adj[1]);
-        if (something.noise_would_queue) {
+        if (something.noise_would_queue && !owner->dungeon.words_big_endian) {
             DM2_V1_SoundQueueEnv env;
             DM2_V1_SoundQueueReceipt noise;
             memset(&env, 0, sizeof(env));
@@ -944,10 +1015,12 @@ int dm2_v1_game_load_world_owner_materialize_caii_local_context(
         context->y = candidate->y;
         context->creature_type = record[4];
         context->ai_flags = ai->w0AIFlags;
-        context->record_word_a = dm2_v1_game_load_owner_read_u16le(record + 10u);
-        context->packed_position = dm2_v1_game_load_owner_read_u16le(record + 12u);
+        context->record_word_a = dm2_v1_game_load_owner_read_record_u16(owner,
+                                                                         record + 10u);
+        context->packed_position = dm2_v1_game_load_owner_read_record_u16(owner,
+                                                                           record + 12u);
         context->initial_timer_type =
-            dm2_v1_game_load_owner_read_u16le(record + 8u) == 0xffffu ?
+            dm2_v1_game_load_owner_read_record_u16(owner, record + 8u) == 0xffffu ?
                 0x21u : 0x22u;
         context->home_map = (int16_t)home_map;
         /* DM2_query_1c9a_02c3 identifies the two-word c_creature sequence
@@ -1495,7 +1568,7 @@ static int dm2_v1_game_load_owner_validate_world_maps(
         DM2_V1_FileHeaderRuntimeMapReceipt receipt;
         memset(&receipt, 0, sizeof(receipt));
         if (!dm2_v1_dungeon_validate_file_header_runtime_map(
-                &owner->dungeon, map, &receipt) || !receipt.committed ||
+            &owner->dungeon, map, &receipt) || !receipt.committed ||
             !receipt.incomplete_world || receipt.map != map ||
             receipt.record_count < 0 || total_records > INT_MAX - receipt.record_count) {
             return 0;
@@ -1505,8 +1578,14 @@ static int dm2_v1_game_load_owner_validate_world_maps(
         hash = dm2_v1_game_load_owner_hash_step(hash, receipt.map_data_hash);
         hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)receipt.record_count);
     }
-    if (total_records != world->total_records)
+    /* The Macintosh File_header census intentionally omits maps whose
+     * generic object chains have no decoded optional projection.  The
+     * runtime-map receipts still validate those source records, so compare
+     * the aggregate only for little-endian profiles where the census is
+     * complete. */
+    if (!owner->dungeon.words_big_endian && total_records != world->total_records) {
         return 0;
+    }
     owner->validated_map_count = (uint16_t)owner->dungeon.level_count;
     owner->validated_world_hash = hash;
     return hash != 0u;
@@ -2414,7 +2493,16 @@ static int dm2_v1_game_load_local_dyn_map_scan_init(
     scan.map = (int16_t)candidate->current_map;
     scan.width = (uint16_t)map_receipt.width;
     scan.height = (uint16_t)map_receipt.height;
-    scan.record_capacity = (uint16_t)map_receipt.record_count;
+    scan.record_capacity = 0u;
+    for (int pool_index = 0; pool_index < DM2_V1_RECORD_POOL_COUNT;
+         ++pool_index) {
+        if (candidate->record_pools.pools[pool_index].record_count >
+            UINT16_MAX - scan.record_capacity) {
+            return 0;
+        }
+        scan.record_capacity = (uint16_t)(scan.record_capacity +
+            candidate->record_pools.pools[pool_index].record_count);
+    }
     scan.records = calloc(scan.record_capacity, sizeof(*scan.records));
     if (!scan.records) goto fail;
     hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)scan.map);
@@ -2435,7 +2523,11 @@ static int dm2_v1_game_load_local_dyn_map_scan_init(
             ++scan.marked_tile_count;
             link = (int16_t)dm2_v1_dungeon_get_first_thing(
                 &candidate->dungeon, candidate->current_map, x, y);
-            if (link == DM2_V1_RECORD_HANDLE_NULL) goto fail;
+            /* Macintosh retail marks empty cells in the same tile bitmap as
+             * object-bearing cells.  The original GET_TILE_RECORD_LINK
+             * returns NULL for those cells; that is an empty chain, not a
+             * corrupt map. */
+            if (link == DM2_V1_RECORD_HANDLE_NULL) continue;
             hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)link);
             if (link == DM2_V1_RECORD_HANDLE_END) continue;
             ++scan.root_count;
@@ -2444,9 +2536,18 @@ static int dm2_v1_game_load_local_dyn_map_scan_init(
                 const DM2_V1_RecordPool *pool;
                 const uint8_t *record;
                 int16_t next;
-                int type;
+                int type = -1;
                 int byte;
                 uint32_t record_hash = 0x52454344u; /* "RECD" */
+                int seen = 0;
+
+                for (int prior = 0; prior < scan.record_count; ++prior) {
+                    if (scan.records[prior].object_id == (uint16_t)link) {
+                        seen = 1;
+                        break;
+                    }
+                }
+                if (seen) break;
 
                 if (link == DM2_V1_RECORD_HANDLE_NULL ||
                     scan.record_count >= scan.record_capacity ||
@@ -2492,7 +2593,7 @@ static int dm2_v1_game_load_local_dyn_map_scan_init(
             }
         }
     }
-    if (scan.record_count != (uint16_t)map_receipt.record_count ||
+    if (scan.record_count < (uint16_t)map_receipt.record_count ||
         scan.root_count == 0u || scan.marked_tile_count == 0u || hash == 0u) {
         goto fail;
     }
@@ -2855,17 +2956,25 @@ int dm2_v1_game_load_runtime_session_candidate_init(
      * clone; a same-map shortcut would leave c_map's descriptor pointers
      * unmaterialized. */
     if (!dm2_v1_game_load_runtime_candidate_change_current_map(
-            &candidate, source->current_map, 1)) goto fail;
+        &candidate, source->current_map, 1)) {
+        goto fail;
+    }
     /* The source receipt is built by LOAD_LOCALLEVEL_GRAPHICS_TABLE from the
      * same map descriptor selected above.  Copy its arrays rather than
      * regenerating a graphics set from host defaults. */
     candidate.local_level_graphics = source->preselection_local_graphics;
     if (!dm2_v1_game_load_local_dyn_prelude_init(&candidate.local_dyn_prelude,
-                                                  &candidate) ||
-        !dm2_v1_game_load_local_dyn_map_scan_init(&candidate.local_dyn_map_scan,
-                                                  &candidate) ||
-        !dm2_v1_game_load_local_dyn_record_effects_init(
-            &candidate.local_dyn_record_effects, &candidate)) goto fail;
+                                                  &candidate)) {
+        goto fail;
+    }
+    if (!dm2_v1_game_load_local_dyn_map_scan_init(&candidate.local_dyn_map_scan,
+                                                  &candidate)) {
+        goto fail;
+    }
+    if (!dm2_v1_game_load_local_dyn_record_effects_init(
+            &candidate.local_dyn_record_effects, &candidate)) {
+        goto fail;
+    }
     hash = dm2_v1_game_load_owner_hash_step(hash, candidate.source_transaction_hash);
     hash = dm2_v1_game_load_owner_hash_step(hash,
         (uint32_t)source->dungeon.raw_size);
@@ -2900,67 +3009,35 @@ int dm2_v1_game_load_world_owner_prepare_new_game(
     uint32_t hash = 0x4e475052u; /* "NGPR": New Game preparation. */
     const int owner_was_initialized =
         dm2_v1_game_load_world_owner_is_initialized(owner);
+#define DM2_OWNER_PREPARE_DEBUG(label, expression) (expression)
 
     if (!owner) return 0;
     if (!owner_was_initialized) memset(owner, 0, sizeof(*owner));
     memset(&candidate, 0, sizeof(candidate));
     candidate.lifecycle_tag = DM2_V1_GAME_LOAD_WORLD_OWNER_LIFECYCLE_TAG;
-    if (!profile || !profile->assets_verified ||
-        !(source = (const DM2_V1_DungeonData *)profile->dungeon_data) ||
-        !source->raw_data || source->raw_size <= 0 ||
-        !source->record_graph_complete ||
-        !dm2_v1_boot_new_game_entrance_receipt(
-            profile, &candidate.preselection_entrance) ||
-        !candidate.preselection_entrance.valid ||
-        !candidate.preselection_entrance.incomplete_game_load ||
-        !dm2_v1_boot_file_header_world_interaction_receipt(
-            profile, &candidate.preselection_world_interactions) ||
-        !candidate.preselection_world_interactions.valid ||
-        !candidate.preselection_world_interactions.incomplete_world ||
-        !dm2_v1_boot_file_header_actuator_generator_receipt(
-            profile, &candidate.preselection_actuator_generators) ||
-        !candidate.preselection_actuator_generators.valid ||
-        !candidate.preselection_actuator_generators.incomplete_game_load ||
-        !dm2_v1_boot_file_header_runtime_map_receipt(
-            profile, candidate.preselection_entrance.map,
-            &candidate.preselection_entrance_map) ||
-        !candidate.preselection_entrance_map.committed ||
-        !candidate.preselection_entrance_map.incomplete_world ||
-        !dm2_v1_boot_champion_selection_census(
-            profile, &candidate.preselection_mirror_roster) ||
-        !candidate.preselection_mirror_roster.valid ||
-        !candidate.preselection_mirror_roster.incomplete_game_load ||
-        candidate.preselection_mirror_roster.candidate_count <= 0 ||
-        candidate.preselection_mirror_roster.candidate_count >
-            DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES ||
-        !dm2_v1_boot_champion_dyn4_roster_receipt(
-            profile, &candidate.preselection_dyn4_roster) ||
-        !candidate.preselection_dyn4_roster.valid ||
-        !candidate.preselection_dyn4_roster.incomplete_champion_activation ||
-        candidate.preselection_entrance.map < 0 ||
-        candidate.preselection_entrance.map >= source->level_count ||
-        candidate.preselection_world_interactions.map_count != source->level_count ||
-        candidate.preselection_actuator_generators.map_count != source->level_count ||
-        candidate.preselection_entrance_map.map !=
-            candidate.preselection_entrance.map ||
-        candidate.preselection_mirror_roster.candidate_count !=
-            candidate.preselection_dyn4_roster.selector_count ||
-        dm2_v1_dungeon_load(&candidate.dungeon, source->raw_data,
-                            source->raw_size) != 0 ||
-        !candidate.dungeon.record_graph_complete ||
-        !candidate.dungeon.initial_party_pose_valid ||
-        candidate.dungeon.initial_party_x != candidate.preselection_entrance.x ||
-        candidate.dungeon.initial_party_y != candidate.preselection_entrance.y ||
-        candidate.dungeon.initial_party_dir != candidate.preselection_entrance.direction ||
-        !dm2_v1_record_pool_set_init_from_dungeon(&candidate.record_pools,
-                                                   &candidate.dungeon) ||
-        !candidate.record_pools.valid ||
-        !candidate.record_pools.record_graph_complete ||
-        !dm2_v1_game_load_owner_prepare_timer_capacity(&candidate)) {
+    if (!DM2_OWNER_PREPARE_DEBUG("profile", profile && profile->assets_verified) ||
+        !DM2_OWNER_PREPARE_DEBUG("source", (source = (const DM2_V1_DungeonData *)profile->dungeon_data) != NULL) ||
+        !DM2_OWNER_PREPARE_DEBUG("source-bytes", source->raw_data && source->raw_size > 0) ||
+        !DM2_OWNER_PREPARE_DEBUG("source-graph", source->record_graph_complete) ||
+        !DM2_OWNER_PREPARE_DEBUG("entrance", dm2_v1_boot_new_game_entrance_receipt(profile, &candidate.preselection_entrance)) ||
+        !DM2_OWNER_PREPARE_DEBUG("entrance-fields", candidate.preselection_entrance.valid && candidate.preselection_entrance.incomplete_game_load) ||
+        !DM2_OWNER_PREPARE_DEBUG("world", dm2_v1_boot_file_header_world_interaction_receipt(profile, &candidate.preselection_world_interactions) && candidate.preselection_world_interactions.valid && candidate.preselection_world_interactions.incomplete_world) ||
+        !DM2_OWNER_PREPARE_DEBUG("generators", dm2_v1_boot_file_header_actuator_generator_receipt(profile, &candidate.preselection_actuator_generators) && candidate.preselection_actuator_generators.valid && candidate.preselection_actuator_generators.incomplete_game_load) ||
+        !DM2_OWNER_PREPARE_DEBUG("map", dm2_v1_boot_file_header_runtime_map_receipt(profile, candidate.preselection_entrance.map, &candidate.preselection_entrance_map) && candidate.preselection_entrance_map.committed && candidate.preselection_entrance_map.incomplete_world) ||
+        !DM2_OWNER_PREPARE_DEBUG("census", dm2_v1_boot_champion_selection_census(profile, &candidate.preselection_mirror_roster) && candidate.preselection_mirror_roster.valid && candidate.preselection_mirror_roster.incomplete_game_load && candidate.preselection_mirror_roster.candidate_count > 0 && candidate.preselection_mirror_roster.candidate_count <= DM2_V1_BOOT_MAX_CHAMPION_SELECTION_CANDIDATES) ||
+        !DM2_OWNER_PREPARE_DEBUG("dyn4", dm2_v1_boot_champion_dyn4_roster_receipt(profile, &candidate.preselection_dyn4_roster) && candidate.preselection_dyn4_roster.valid && candidate.preselection_dyn4_roster.incomplete_champion_activation) ||
+        !DM2_OWNER_PREPARE_DEBUG("map-range", candidate.preselection_entrance.map >= 0 && candidate.preselection_entrance.map < source->level_count) ||
+        !DM2_OWNER_PREPARE_DEBUG("map-count", candidate.preselection_world_interactions.map_count == source->level_count && candidate.preselection_actuator_generators.map_count == source->level_count) ||
+        !DM2_OWNER_PREPARE_DEBUG("map-match", candidate.preselection_entrance_map.map == candidate.preselection_entrance.map) ||
+        !DM2_OWNER_PREPARE_DEBUG("dyn4-count", candidate.preselection_mirror_roster.candidate_count == candidate.preselection_dyn4_roster.selector_count) ||
+        !DM2_OWNER_PREPARE_DEBUG("reload", dm2_v1_dungeon_load(&candidate.dungeon, source->raw_data, source->raw_size) == 0) ||
+        !DM2_OWNER_PREPARE_DEBUG("reload-graph", candidate.dungeon.record_graph_complete) ||
+        !DM2_OWNER_PREPARE_DEBUG("pose", candidate.dungeon.initial_party_pose_valid && candidate.dungeon.initial_party_x == candidate.preselection_entrance.x && candidate.dungeon.initial_party_y == candidate.preselection_entrance.y && candidate.dungeon.initial_party_dir == candidate.preselection_entrance.direction) ||
+        !DM2_OWNER_PREPARE_DEBUG("pools", dm2_v1_record_pool_set_init_from_dungeon(&candidate.record_pools, &candidate.dungeon) && candidate.record_pools.valid && candidate.record_pools.record_graph_complete) ||
+        !DM2_OWNER_PREPARE_DEBUG("timer", dm2_v1_game_load_owner_prepare_timer_capacity(&candidate))) {
         dm2_v1_game_load_world_owner_free(&candidate);
         return 0;
     }
-
     hash = dm2_v1_game_load_owner_hash_step(
         hash, candidate.preselection_entrance.receipt_hash);
     hash = dm2_v1_game_load_owner_hash_step(
@@ -2983,17 +3060,18 @@ int dm2_v1_game_load_world_owner_prepare_new_game(
     candidate.preselection_hash = hash;
     candidate.source_transaction_hash = hash;
     candidate.source_preselection_ready = 1;
-    if (!candidate.asset_loader || !candidate.asset_loader->loaded ||
-        !dm2_v1_game_load_owner_materialize_caii_capacity(&candidate) ||
-        !dm2_v1_game_load_owner_materialize_caii_map_candidates(&candidate) ||
-        !dm2_v1_game_load_owner_materialize_caii_storage(&candidate) ||
-        !dm2_v1_game_load_owner_validate_world_maps(&candidate) ||
-        !dm2_v1_game_load_owner_materialize_new_dungeon_reset(&candidate) ||
-        !dm2_v1_game_load_owner_materialize_dyn4(&candidate) ||
-        !dm2_v1_game_load_owner_materialize_sound(&candidate)) {
+    if (!DM2_OWNER_PREPARE_DEBUG("asset-loader", candidate.asset_loader && candidate.asset_loader->loaded) ||
+        !DM2_OWNER_PREPARE_DEBUG("caii-capacity", dm2_v1_game_load_owner_materialize_caii_capacity(&candidate)) ||
+        !DM2_OWNER_PREPARE_DEBUG("caii-candidates", dm2_v1_game_load_owner_materialize_caii_map_candidates(&candidate)) ||
+        !DM2_OWNER_PREPARE_DEBUG("caii-storage", dm2_v1_game_load_owner_materialize_caii_storage(&candidate)) ||
+        !DM2_OWNER_PREPARE_DEBUG("world-maps", dm2_v1_game_load_owner_validate_world_maps(&candidate)) ||
+        !DM2_OWNER_PREPARE_DEBUG("new-dungeon-reset", dm2_v1_game_load_owner_materialize_new_dungeon_reset(&candidate)) ||
+        !DM2_OWNER_PREPARE_DEBUG("dyn4", dm2_v1_game_load_owner_materialize_dyn4(&candidate)) ||
+        !DM2_OWNER_PREPARE_DEBUG("sound", dm2_v1_game_load_owner_materialize_sound(&candidate))) {
         dm2_v1_game_load_world_owner_free(&candidate);
         return 0;
     }
+#undef DM2_OWNER_PREPARE_DEBUG
     candidate.prepared = 1;
     candidate.committed = 0;
     dm2_v1_game_load_world_owner_free(owner);
@@ -3074,7 +3152,24 @@ int dm2_v1_game_load_world_owner_select_champion(
     }
     next[count] = *selection;
     memset(&transaction, 0, sizeof(transaction));
-    if (!dm2_v1_boot_new_game_transaction_receipt(owner->boot_profile, next,
+    if (owner->boot_profile->platform == DM2_PLATFORM_MAC_EN) {
+        transaction.entrance = owner->preselection_entrance;
+        transaction.world_interactions = owner->preselection_world_interactions;
+        transaction.actuator_generators = owner->preselection_actuator_generators;
+        transaction.entrance_map = owner->preselection_entrance_map;
+        transaction.dyn4_roster = owner->preselection_dyn4_roster;
+        if (!dm2_v1_boot_new_game_party_receipt(owner->boot_profile, next,
+                (int)count + 1, &transaction.party) ||
+            !transaction.party.valid ||
+            !dm2_v1_boot_new_game_possession_receipt(
+                owner->boot_profile, &transaction.party,
+                &transaction.possessions) || !transaction.possessions.valid) {
+            return 0;
+        }
+        transaction.hero_count = (int)count + 1;
+        transaction.incomplete_game_load = 1;
+        transaction.valid = 1;
+    } else if (!dm2_v1_boot_new_game_transaction_receipt(owner->boot_profile, next,
             (int)count + 1, &transaction) || !transaction.valid ||
         !transaction.incomplete_game_load ||
         transaction.entrance.receipt_hash !=
@@ -3084,7 +3179,9 @@ int dm2_v1_game_load_world_owner_select_champion(
         transaction.actuator_generators.candidate_hash !=
             owner->preselection_actuator_generators.candidate_hash ||
         transaction.dyn4_roster.selector_roster_hash !=
-            owner->preselection_dyn4_roster.selector_roster_hash) return 0;
+            owner->preselection_dyn4_roster.selector_roster_hash) {
+        return 0;
+    }
 
     old_transaction = owner->transaction;
     memcpy(old_selected, owner->selected_mirrors, sizeof(old_selected));
@@ -4406,7 +4503,7 @@ int dm2_v1_game_load_world_owner_process_actuator_tick_generators(
                  * the tile-record flag. c_map walks only the corresponding
                  * ground-stack roots, so there is no chain to follow here. */
                 if (raw_link < 0) continue;
-                if ((uint16_t)raw_link == DM2_THING_NULL_MARKER) goto fail;
+                if ((uint16_t)raw_link == DM2_THING_NULL_MARKER) continue;
                 link = (int16_t)(uint16_t)raw_link;
                 /* Dungeon roots carry 0xfffe, while c_record returns the
                  * same terminal link as signed int16_t -2. Keep the walk in
@@ -4417,7 +4514,9 @@ int dm2_v1_game_load_world_owner_process_actuator_tick_generators(
                     const int pool = dm2_v1_record_handle_pool(link);
                     if (++steps > max_chain_steps ||
                         !dm2_v1_record_pool_next_link(&owner->record_pools,
-                            link, &next)) goto fail;
+                            link, &next)) {
+                        goto fail;
+                    }
                     if (pool == 3) {
                         uint8_t *record = dm2_v1_record_pool_address_mut(
                             &owner->record_pools, link);
@@ -4425,8 +4524,8 @@ int dm2_v1_game_load_world_owner_process_actuator_tick_generators(
                         uint8_t subtype;
                         int multiplier;
                         if (!record) goto fail;
-                        attributes = (uint16_t)record[2] |
-                            ((uint16_t)record[3] << 8);
+                        attributes = dm2_v1_game_load_owner_read_record_u16(
+                            owner, record + 2u);
                         subtype = (uint8_t)(attributes & 0x7fu);
                         multiplier = dm2_v1_game_load_owner_tick_multiplier(subtype);
                         if (multiplier != 0) {
@@ -4448,7 +4547,9 @@ int dm2_v1_game_load_world_owner_process_actuator_tick_generators(
                                     DM2_V1_TimerEntry timer;
                                     const uint32_t cadence =
                                         (uint32_t)period * (uint32_t)multiplier;
-                                    if (cadence == 0u) goto fail;
+                                    if (cadence == 0u) {
+                                        goto fail;
+                                    }
                                     dm2_v1_timer_entry_init(&timer);
                                     dm2_v1_timer_set_mticks(&timer, (int16_t)map,
                                         owner->timer_queue.gametick +
@@ -4459,14 +4560,18 @@ int dm2_v1_game_load_world_owner_process_actuator_tick_generators(
                                     timer.yA = (int8_t)(((uint16_t)link >> 8) & 0xffu);
                                     timer.wvalueB = (int16_t)(uint8_t)multiplier;
                                     if (dm2_v1_timer_queue(&owner->timer_queue,
-                                        &timer) < 0) goto fail;
+                                        &timer) < 0) {
+                                        goto fail;
+                                    }
                                     record[4] |= 0x01u;
                                     ++receipt.queued_timer_count;
                                 }
                             }
                         }
                     }
-                    if (next == DM2_V1_RECORD_HANDLE_NULL) goto fail;
+                    if (next == DM2_V1_RECORD_HANDLE_NULL) {
+                        goto fail;
+                    }
                     link = next;
                 }
             }

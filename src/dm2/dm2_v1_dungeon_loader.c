@@ -3987,12 +3987,19 @@ int dm2_v1_dungeon_materialize_file_header_runtime_map_teleporters(
     return 1;
 }
 
+typedef struct {
+    const DM2_V1_DungeonData *dungeon;
+    DM2_V1_G1RuntimeMapDoorReceipt *receipt;
+} DM2_V1_FileHeaderDoorCollector;
+
 static int dm2_v1_file_header_collect_door_record(
     void *user, uint16_t thing, int type, int index, const uint8_t *record,
     int record_size, int level, int x, int y)
 {
+    DM2_V1_FileHeaderDoorCollector *collector =
+        (DM2_V1_FileHeaderDoorCollector *)user;
     DM2_V1_G1RuntimeMapDoorReceipt *receipt =
-        (DM2_V1_G1RuntimeMapDoorReceipt *)user;
+        collector ? collector->receipt : NULL;
     DM2_V1_G1DirectDoorRoot *door;
     uint16_t attributes;
 
@@ -4003,7 +4010,7 @@ static int dm2_v1_file_header_collect_door_record(
     if (!record || record_size < 4 || index < 0 ||
         receipt->door_root_count >= DM2_V1_G1_RUNTIME_MAP_MAX_DOOR_ROOTS)
         return -1;
-    attributes = RD16(record + 2);
+    attributes = dm2_v1_dungeon_rd16(collector->dungeon, record + 2);
     door = &receipt->doors[receipt->door_root_count++];
     door->x = x; door->y = y; door->object_id = thing;
     door->index = (uint16_t)index;
@@ -4026,25 +4033,35 @@ int dm2_v1_dungeon_collect_file_header_runtime_map_doors(
     DM2_V1_G1RuntimeMapDoorReceipt *out)
 {
     DM2_V1_G1RuntimeMapDoorReceipt candidate;
+    DM2_V1_FileHeaderDoorCollector collector;
 
     if (!out || !d) return 0;
     memset(&candidate, 0, sizeof(candidate));
     candidate.incomplete_world = 1;
     candidate.map = map;
+    collector.dungeon = d;
+    collector.receipt = &candidate;
     if (dm2_v1_dungeon_walk_file_header_runtime_map(
-            d, map, dm2_v1_file_header_collect_door_record, &candidate) < 0 ||
+            d, map, dm2_v1_file_header_collect_door_record, &collector) < 0 ||
         candidate.door_record_reads != candidate.door_root_count) return 0;
     candidate.committed = 1;
     *out = candidate;
     return 1;
 }
 
+typedef struct {
+    const DM2_V1_DungeonData *dungeon;
+    DM2_V1_FileHeaderRuntimeTeleporterReceipt *receipt;
+} DM2_V1_FileHeaderTeleporterCollector;
+
 static int dm2_v1_file_header_collect_teleporter_record(
     void *user, uint16_t thing, int type, int index, const uint8_t *record,
     int record_size, int level, int x, int y)
 {
+    DM2_V1_FileHeaderTeleporterCollector *collector =
+        (DM2_V1_FileHeaderTeleporterCollector *)user;
     DM2_V1_FileHeaderRuntimeTeleporterReceipt *receipt =
-        (DM2_V1_FileHeaderRuntimeTeleporterReceipt *)user;
+        collector ? collector->receipt : NULL;
     DM2_V1_G1DirectTeleporterRoot *teleporter;
     uint16_t w2, w4;
 
@@ -4052,7 +4069,8 @@ static int dm2_v1_file_header_collect_teleporter_record(
     if (!record || record_size < 6 || index < 0 ||
         receipt->teleporter_root_count >=
             DM2_V1_FILE_HEADER_RUNTIME_MAX_TELEPORTERS) return -1;
-    w2 = RD16(record + 2); w4 = RD16(record + 4);
+    w2 = dm2_v1_dungeon_rd16(collector->dungeon, record + 2);
+    w4 = dm2_v1_dungeon_rd16(collector->dungeon, record + 4);
     teleporter = &receipt->teleporters[receipt->teleporter_root_count++];
     teleporter->x = x; teleporter->y = y; teleporter->object_id = thing;
     teleporter->index = (uint16_t)index;
@@ -4075,14 +4093,17 @@ int dm2_v1_dungeon_collect_file_header_runtime_map_teleporters(
     DM2_V1_FileHeaderRuntimeTeleporterReceipt *out)
 {
     DM2_V1_FileHeaderRuntimeTeleporterReceipt candidate;
+    DM2_V1_FileHeaderTeleporterCollector collector;
 
     if (!out || !d) return 0;
     memset(&candidate, 0, sizeof(candidate));
     candidate.incomplete_world = 1;
     candidate.map = map;
+    collector.dungeon = d;
+    collector.receipt = &candidate;
     if (dm2_v1_dungeon_walk_file_header_runtime_map(
             d, map, dm2_v1_file_header_collect_teleporter_record,
-            &candidate) < 0 ||
+            &collector) < 0 ||
         candidate.teleporter_record_reads != candidate.teleporter_root_count)
         return 0;
     candidate.committed = 1;
@@ -4090,12 +4111,19 @@ int dm2_v1_dungeon_collect_file_header_runtime_map_teleporters(
     return 1;
 }
 
+typedef struct {
+    const DM2_V1_DungeonData *dungeon;
+    DM2_V1_G1RuntimeMapActuatorReceipt *receipt;
+} DM2_V1_FileHeaderActuatorCollector;
+
 static int dm2_v1_file_header_collect_actuator_record(
     void *user, uint16_t thing, int type, int index, const uint8_t *record,
     int record_size, int level, int x, int y)
 {
+    DM2_V1_FileHeaderActuatorCollector *collector =
+        (DM2_V1_FileHeaderActuatorCollector *)user;
     DM2_V1_G1RuntimeMapActuatorReceipt *receipt =
-        (DM2_V1_G1RuntimeMapActuatorReceipt *)user;
+        collector ? collector->receipt : NULL;
     DM2_V1_G1DirectActuatorRoot *actuator;
     uint16_t w2, w4, w6;
 
@@ -4103,7 +4131,9 @@ static int dm2_v1_file_header_collect_actuator_record(
     if (!record || record_size < 8 || index < 0 ||
         receipt->actuator_root_count >=
             DM2_V1_G1_RUNTIME_MAP_MAX_ACTUATOR_ROOTS) return -1;
-    w2 = RD16(record + 2); w4 = RD16(record + 4); w6 = RD16(record + 6);
+    w2 = dm2_v1_dungeon_rd16(collector->dungeon, record + 2);
+    w4 = dm2_v1_dungeon_rd16(collector->dungeon, record + 4);
+    w6 = dm2_v1_dungeon_rd16(collector->dungeon, record + 6);
     actuator = &receipt->actuators[receipt->actuator_root_count++];
     actuator->x = x; actuator->y = y; actuator->object_id = thing;
     actuator->index = (uint16_t)index;
@@ -4134,25 +4164,35 @@ int dm2_v1_dungeon_collect_file_header_runtime_map_actuators(
     DM2_V1_G1RuntimeMapActuatorReceipt *out)
 {
     DM2_V1_G1RuntimeMapActuatorReceipt candidate;
+    DM2_V1_FileHeaderActuatorCollector collector;
 
     if (!out || !d) return 0;
     memset(&candidate, 0, sizeof(candidate));
     candidate.incomplete_world = 1;
     candidate.map = map;
+    collector.dungeon = d;
+    collector.receipt = &candidate;
     if (dm2_v1_dungeon_walk_file_header_runtime_map(
-            d, map, dm2_v1_file_header_collect_actuator_record, &candidate) < 0 ||
+            d, map, dm2_v1_file_header_collect_actuator_record, &collector) < 0 ||
         candidate.actuator_record_reads != candidate.actuator_root_count) return 0;
     candidate.committed = 1;
     *out = candidate;
     return 1;
 }
 
+typedef struct {
+    const DM2_V1_DungeonData *dungeon;
+    DM2_V1_FileHeaderRuntimeTextReceipt *receipt;
+} DM2_V1_FileHeaderTextCollector;
+
 static int dm2_v1_file_header_collect_text_record(
     void *user, uint16_t thing, int type, int index, const uint8_t *record,
     int record_size, int level, int x, int y)
 {
+    DM2_V1_FileHeaderTextCollector *collector =
+        (DM2_V1_FileHeaderTextCollector *)user;
     DM2_V1_FileHeaderRuntimeTextReceipt *receipt =
-        (DM2_V1_FileHeaderRuntimeTextReceipt *)user;
+        collector ? collector->receipt : NULL;
     DM2_V1_FileHeaderTextRecord *text;
     uint16_t w2;
 
@@ -4165,7 +4205,7 @@ static int dm2_v1_file_header_collect_text_record(
             DM2_V1_FILE_HEADER_RUNTIME_MAX_TEXT_RECORDS) {
         return -1;
     }
-    w2 = RD16(record + 2);
+    w2 = dm2_v1_dungeon_rd16(collector->dungeon, record + 2);
     text = &receipt->texts[receipt->text_record_count++];
     text->x = x;
     text->y = y;
@@ -4187,13 +4227,16 @@ int dm2_v1_dungeon_materialize_file_header_runtime_map_texts(
     DM2_V1_FileHeaderRuntimeTextReceipt *out)
 {
     DM2_V1_FileHeaderRuntimeTextReceipt candidate;
+    DM2_V1_FileHeaderTextCollector collector;
 
     if (!out || !d) return 0;
     memset(&candidate, 0, sizeof(candidate));
     candidate.incomplete_world = 1;
     candidate.map = map;
+    collector.dungeon = d;
+    collector.receipt = &candidate;
     if (dm2_v1_dungeon_walk_file_header_runtime_map(
-            d, map, dm2_v1_file_header_collect_text_record, &candidate) < 0 ||
+            d, map, dm2_v1_file_header_collect_text_record, &collector) < 0 ||
         candidate.text_record_reads != candidate.text_record_count) {
         return 0;
     }
@@ -4266,23 +4309,34 @@ int dm2_v1_dungeon_collect_g1_champion_mirrors(
                 if (raw < 0) return 0;
                 if ((raw & 0x10) == 0) continue;
                 thing = dm2_v1_dungeon_get_first_thing(d, map, x, y);
-                if (thing < 0 || thing == (int)DM2_THING_NULL_MARKER)
-                    return 0;
+                if (thing < 0) return 0;
+                /* File_header preserves object-bearing squares with an
+                 * authentic null/end root. They contain no champion marker;
+                 * do not reject the rest of the Mac level census. */
+                if (thing == (int)DM2_THING_NULL_MARKER ||
+                    thing == (int)DM2_THING_END_MARKER)
+                    continue;
                 while (thing != (int)DM2_THING_END_MARKER) {
                     int type = -1;
                     int record_size = 0;
                     const uint8_t *record;
                     uint16_t w2;
 
-                    if (++steps > total_records) return 0;
+                    if (++steps > total_records) {
+                        return 0;
+                    }
                     record = dm2_v1_dungeon_get_thing_record(
                         d, (uint16_t)thing, &type, NULL, &record_size);
-                    if (!record) return 0;
+                    if (!record) {
+                        return 0;
+                    }
                     if (type == 3) {
                         DM2_V1_G1ChampionMirrorRoot *mirror;
-                        if (record_size < 8) return 0;
+                        if (record_size < 8) {
+                            return 0;
+                        }
                         ++candidate.actuator_record_reads;
-                        w2 = RD16(record + 2);
+                        w2 = dm2_v1_dungeon_rd16(d, record + 2);
                         if ((w2 & 0x007fu) == 0x007eu) {
                             if (candidate.mirror_count >=
                                 DM2_V1_G1_MAX_CHAMPION_MIRRORS) {
@@ -4305,7 +4359,9 @@ int dm2_v1_dungeon_collect_g1_champion_mirrors(
                     }
                     thing = dm2_v1_dungeon_get_next_thing(
                         d, (uint16_t)thing);
-                    if (thing < 0) return 0;
+                    if (thing < 0) {
+                        return 0;
+                    }
                 }
             }
         }

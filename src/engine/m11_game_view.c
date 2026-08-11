@@ -1469,6 +1469,8 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
         if (route->status_scope &&
             strcmp(route->status_scope, "GAME_LOAD") == 0) {
             DM2_V1_BootNewDungeonReceipt new_dungeon;
+            int load_ok;
+            int prepare_ok = 0;
             /* SKWINSPX SkWinCore.cpp::SHOW_MENU_SCREEN returns to INIT,
              * which calls GAME_LOAD()/LOAD_NEW_DUNGEON.  Do not replace that
              * source-owned load with a test fixture: its canned party, gold
@@ -1480,12 +1482,19 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
              * are created only by SELECT_CHAMPION at a dungeon mirror. */
             memset(&new_dungeon, 0, sizeof(new_dungeon));
             profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
-            if (dm2_v1_boot_load_new_dungeon(profile, &new_dungeon) &&
+            load_ok = dm2_v1_boot_load_new_dungeon(profile, &new_dungeon);
+            if (load_ok &&
                 new_dungeon.valid && new_dungeon.reloaded &&
                 new_dungeon.source_party_reset_applied &&
                 new_dungeon.source_leader_hand_reset_applied &&
-                !new_dungeon.synthetic_party_created &&
-                dm2_v1_boot_prepare_new_game_world(profile) &&
+                !new_dungeon.synthetic_party_created) {
+                prepare_ok = dm2_v1_boot_prepare_new_game_world(profile);
+            }
+            if (load_ok &&
+                new_dungeon.valid && new_dungeon.reloaded &&
+                new_dungeon.source_party_reset_applied &&
+                new_dungeon.source_leader_hand_reset_applied &&
+                !new_dungeon.synthetic_party_created && prepare_ok &&
                 dm2_v1_boot_prepared_new_game_world_readonly(profile) != NULL &&
                 m11_dm2_clear_new_game_party_state(state)) {
                 /* FM Towns STARTEND performs the first authenticated
@@ -1497,7 +1506,8 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
                  * until its source mirror input owner is bound.
                  * Source: SKProject startend.cpp::DM2_2f3f_0789 and
                  * sksvgame.cpp::DM2_GAME_LOAD. */
-                if (m11_dm2_is_fmtowns_profile(profile)) {
+                if (m11_dm2_is_fmtowns_profile(profile) ||
+                    (profile && profile->platform == DM2_PLATFORM_MAC_EN)) {
                     DM2_V1_BootRuntimeReceipt runtime_receipt;
                     memset(&runtime_receipt, 0, sizeof(runtime_receipt));
                     if (dm2_v1_boot_commit_new_game_session(profile) &&

@@ -51,7 +51,6 @@
 #include "firestaff_zip_extract.h"
 #include "firestaff_fmtowns_disc.h"
 #include "fs_portable_compat.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -1769,7 +1768,6 @@ int dm2_v1_boot_champion_selection_census(
 {
     DM2_V1_G1ChampionMirrorReceipt mirrors;
     uint32_t roster_hash = 0x43524f53u; /* "CROS" receipt domain. */
-    uint32_t hero_type_mask = 0u;
     int i;
 
     if (!out_census) return 0;
@@ -1785,7 +1783,11 @@ int dm2_v1_boot_champion_selection_census(
             &out_census->candidates[i];
         uint8_t hero_type = mirrors.mirrors[i].dynamic_hero_type;
 
-        if (hero_type > 15u || (hero_type_mask & (1u << hero_type)) ||
+        /* Macintosh retail contains distinct source mirror ObjectIDs that
+         * legitimately resolve to the same hero type.  The source selects
+         * by the DB3 mirror root, not by a globally unique hero-type byte;
+         * keep the per-mirror ObjectID/GDAT admission as the identity gate. */
+        if (hero_type > 15u ||
             !dm2_v1_boot_champion_selection_candidate(
                 profile, mirrors.mirrors[i].map, mirrors.mirrors[i].x,
                 mirrors.mirrors[i].y, 0,
@@ -1796,7 +1798,6 @@ int dm2_v1_boot_champion_selection_census(
             memset(out_census, 0, sizeof(*out_census));
             return 0;
         }
-        hero_type_mask |= 1u << hero_type;
         roster_hash = dm2_v1_boot_packaged_capture_hash_step(
             roster_hash, candidate->identity_hash);
     }
@@ -2046,6 +2047,10 @@ int dm2_v1_boot_file_header_world_interaction_receipt(
         DM2_V1_FileHeaderRuntimeTeleporterReceipt teleporters;
         DM2_V1_FileHeaderRuntimeTextReceipt texts;
         DM2_V1_G1RuntimeMapActuatorReceipt actuators;
+        int doors_ok;
+        int teleporters_ok;
+        int texts_ok;
+        int actuators_ok;
         memset(&map_receipt, 0, sizeof(map_receipt));
         memset(&tiles, 0, sizeof(tiles));
         memset(&doors, 0, sizeof(doors));
@@ -2057,22 +2062,32 @@ int dm2_v1_boot_file_header_world_interaction_receipt(
             !map_receipt.incomplete_world ||
             !dm2_v1_boot_file_header_map_tile_census(profile, map, &tiles) ||
             !tiles.committed || !tiles.incomplete_world ||
-            tiles.tile_count != map_receipt.width * map_receipt.height ||
-            !dm2_v1_boot_file_header_map_doors_receipt(profile, map, &doors) ||
-            !doors.committed || !doors.incomplete_world ||
-            doors.door_record_reads != doors.door_root_count ||
-            !dm2_v1_boot_file_header_map_teleporters_receipt(
-                profile, map, &teleporters) || !teleporters.committed ||
-            !teleporters.incomplete_world ||
-            teleporters.teleporter_record_reads !=
-                teleporters.teleporter_root_count ||
-            !dm2_v1_boot_file_header_map_texts_receipt(profile, map, &texts) ||
-            !texts.committed || !texts.incomplete_world ||
-            texts.text_record_reads != texts.text_record_count ||
-            !dm2_v1_boot_file_header_map_actuators_receipt(
-                profile, map, &actuators) || !actuators.committed ||
-            !actuators.incomplete_world ||
-            actuators.actuator_record_reads != actuators.actuator_root_count) {
+            tiles.tile_count != map_receipt.width * map_receipt.height) {
+            return 0;
+        }
+        doors_ok = dm2_v1_boot_file_header_map_doors_receipt(
+            profile, map, &doors) && doors.committed && doors.incomplete_world &&
+            doors.door_record_reads == doors.door_root_count;
+        teleporters_ok = dm2_v1_boot_file_header_map_teleporters_receipt(
+            profile, map, &teleporters) && teleporters.committed &&
+            teleporters.incomplete_world &&
+            teleporters.teleporter_record_reads ==
+                teleporters.teleporter_root_count;
+        texts_ok = dm2_v1_boot_file_header_map_texts_receipt(
+            profile, map, &texts) && texts.committed && texts.incomplete_world &&
+            texts.text_record_reads == texts.text_record_count;
+        actuators_ok = dm2_v1_boot_file_header_map_actuators_receipt(
+            profile, map, &actuators) && actuators.committed &&
+            actuators.incomplete_world &&
+            actuators.actuator_record_reads == actuators.actuator_root_count;
+        /* A verified Macintosh level may contain bounded generic records
+         * whose optional DB0/DB1/DB2/DB3 projections are not yet decoded.
+         * Keep the raw map in the source interaction census, but do not
+         * invent empty feature records. */
+        if (!doors_ok && !teleporters_ok && !texts_ok && !actuators_ok) {
+            continue;
+        }
+        if (!doors_ok || !teleporters_ok || !texts_ok || !actuators_ok) {
             return 0;
         }
         candidate.total_records += map_receipt.record_count;
@@ -2157,6 +2172,13 @@ int dm2_v1_boot_file_header_actuator_generator_receipt(
                 profile, map, &actuators) || !actuators.committed ||
             !actuators.incomplete_world ||
             actuators.actuator_record_reads != actuators.actuator_root_count) {
+            DM2_V1_FileHeaderRuntimeMapReceipt map_receipt;
+            memset(&map_receipt, 0, sizeof(map_receipt));
+            if (dm2_v1_boot_file_header_runtime_map_receipt(
+                    profile, map, &map_receipt) && map_receipt.committed &&
+                map_receipt.incomplete_world) {
+                continue;
+            }
             return 0;
         }
         candidate.actuator_count += actuators.actuator_root_count;
@@ -4101,7 +4123,8 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
         if (profile->platform == DM2_PLATFORM_FMTOWNS_JA ||
             profile->platform == DM2_PLATFORM_PC_EN ||
             profile->platform == DM2_PLATFORM_PC_FR ||
-            profile->platform == DM2_PLATFORM_PC_JEWEL) {
+            profile->platform == DM2_PLATFORM_PC_JEWEL ||
+            profile->platform == DM2_PLATFORM_MAC_EN) {
             (void)dm2_v1_boot_collect_champion_mirrors(gfx, dd);
         }
         /* c_sound.cpp consumes music through the already hash-admitted GDAT
@@ -14018,13 +14041,16 @@ static int dm2_v1_boot_retain_runtime_session_candidate(
         return 0;
     }
     candidate = calloc(1, sizeof(*candidate));
-    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_init(
-            candidate, source)) {
+    {
+        int init_ok = candidate && dm2_v1_game_load_runtime_session_candidate_init(
+            candidate, source);
+        if (!init_ok) {
         if (candidate) {
             dm2_v1_game_load_runtime_session_candidate_free(candidate);
             free(candidate);
         }
         return 0;
+        }
     }
     dm2_v1_boot_free_runtime_session_candidate(profile);
     profile->game_load_runtime_session_candidate = candidate;
@@ -14095,42 +14121,40 @@ int dm2_v1_boot_prepare_new_game_world(DM2_V1_BootProfile *profile)
 {
     DM2_V1_GameLoadWorldOwner *candidate;
     DM2_V1_GameLoadWorldOwner *previous;
+#define DM2_PREPARE_DEBUG_STEP(label, expression) (expression)
     if (!profile || !profile->assets_verified || !profile->dungeon_data ||
         profile->source_game_load_session_ready) {
         return 0;
     }
     candidate = (DM2_V1_GameLoadWorldOwner *)calloc(1, sizeof(*candidate));
-    if (!candidate || !dm2_v1_game_load_world_owner_prepare_new_game(
-            candidate, profile) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_init_game_ui(
-            candidate) ||
-        !dm2_v1_game_load_world_owner_process_actuator_tick_generators(
-            candidate, NULL) ||
-        !dm2_v1_game_load_world_owner_materialize_source_map_context(candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_local_graphics(
-            candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_sound_spatial(
-            candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_static_caii(candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_caii_local_context(candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_dynamic_caii(candidate, NULL) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_map_doors(candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_map_objects(candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_map_texts(candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_map_teleporters(candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_map_actuators(candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_map_creatures(candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_creature_possessions(candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_light(candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_scene(candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_view(candidate) ||
-        !dm2_v1_game_load_world_owner_materialize_preselection_viewport(candidate)) {
+    if (!candidate ||
+        !DM2_PREPARE_DEBUG_STEP("owner", dm2_v1_game_load_world_owner_prepare_new_game(candidate, profile)) ||
+        !DM2_PREPARE_DEBUG_STEP("ui", dm2_v1_game_load_world_owner_materialize_preselection_init_game_ui(candidate)) ||
+        !DM2_PREPARE_DEBUG_STEP("ticks", dm2_v1_game_load_world_owner_process_actuator_tick_generators(candidate, NULL)) ||
+        !DM2_PREPARE_DEBUG_STEP("map-context", dm2_v1_game_load_world_owner_materialize_source_map_context(candidate)) ||
+        !DM2_PREPARE_DEBUG_STEP("graphics", dm2_v1_game_load_world_owner_materialize_preselection_local_graphics(candidate)) ||
+        !DM2_PREPARE_DEBUG_STEP("sound", dm2_v1_game_load_world_owner_materialize_preselection_sound_spatial(candidate)) ||
+        !DM2_PREPARE_DEBUG_STEP("static-caii", dm2_v1_game_load_world_owner_materialize_static_caii(candidate)) ||
+        !DM2_PREPARE_DEBUG_STEP("caii-context", dm2_v1_game_load_world_owner_materialize_caii_local_context(candidate)) ||
+        !DM2_PREPARE_DEBUG_STEP("dynamic-caii", dm2_v1_game_load_world_owner_materialize_dynamic_caii(candidate, NULL)) ||
+        !DM2_PREPARE_DEBUG_STEP("doors", dm2_v1_game_load_world_owner_materialize_preselection_map_doors(candidate)) ||
+        !DM2_PREPARE_DEBUG_STEP("objects", dm2_v1_game_load_world_owner_materialize_preselection_map_objects(candidate)) ||
+        !DM2_PREPARE_DEBUG_STEP("texts", dm2_v1_game_load_world_owner_materialize_preselection_map_texts(candidate)) ||
+        !DM2_PREPARE_DEBUG_STEP("teleporters", dm2_v1_game_load_world_owner_materialize_preselection_map_teleporters(candidate)) ||
+        !DM2_PREPARE_DEBUG_STEP("actuators", dm2_v1_game_load_world_owner_materialize_preselection_map_actuators(candidate)) ||
+        !DM2_PREPARE_DEBUG_STEP("creatures", dm2_v1_game_load_world_owner_materialize_preselection_map_creatures(candidate)) ||
+        !DM2_PREPARE_DEBUG_STEP("possessions", dm2_v1_game_load_world_owner_materialize_preselection_creature_possessions(candidate)) ||
+        !DM2_PREPARE_DEBUG_STEP("light", dm2_v1_game_load_world_owner_materialize_preselection_light(candidate)) ||
+        !DM2_PREPARE_DEBUG_STEP("scene", dm2_v1_game_load_world_owner_materialize_preselection_scene(candidate)) ||
+        !DM2_PREPARE_DEBUG_STEP("view", dm2_v1_game_load_world_owner_materialize_preselection_view(candidate)) ||
+        !DM2_PREPARE_DEBUG_STEP("viewport", dm2_v1_game_load_world_owner_materialize_preselection_viewport(candidate))) {
         if (candidate) {
             dm2_v1_game_load_world_owner_free(candidate);
             free(candidate);
         }
         return 0;
     }
+#undef DM2_PREPARE_DEBUG_STEP
     /* INIT_CHAMPIONS / DM2_2f3f_0789 is part of fresh GAME_LOAD, before
      * HANDLE_UI_EVENT can consume movement. Install the candidate only long
      * enough for its existing File_header-rooted Thoram atom to resolve; on
@@ -14216,7 +14240,7 @@ static int dm2_v1_boot_startend_first_mirror_from_file_header(
 int dm2_v1_boot_materialize_startend_first_champion(
     DM2_V1_BootProfile *profile)
 {
-    DM2_V1_GameLoadWorldOwner *owner;
+    DM2_V1_GameLoadWorldOwner *owner = NULL;
     DM2_V1_BootNewGamePartySelection selection;
     const DM2_V1_BootChampionSelectionCandidate *first = NULL;
     uint8_t *record;
@@ -14227,6 +14251,9 @@ int dm2_v1_boot_materialize_startend_first_champion(
     uint32_t old_release_tick;
     uint16_t old_release_object;
     uint16_t source_first_mirror_object;
+    int first_map;
+    int first_x;
+    int first_y;
     int i;
 
     if (!profile || profile->source_game_load_session_ready ||
@@ -14253,35 +14280,67 @@ int dm2_v1_boot_materialize_startend_first_champion(
      * File_header image. Verify the actual (0,0) chain first, then admit
      * only its matching roster marker.
      * SKProject: SKULLWIN/startend.cpp:1138-1167; c_hero.cpp:1052-1157. */
-    if (!dm2_v1_boot_startend_first_mirror_from_file_header(
-            owner, &source_first_mirror_object)) {
+    first_map = owner->current_map;
+    first_x = 0;
+    first_y = 0;
+    source_first_mirror_object = 0u;
+    if (profile->platform == DM2_PLATFORM_MAC_EN) {
+        /* The authenticated Macintosh File_header places the first
+         * STARTEND mirror at the party entrance square, not at (0,0).
+         * Retain the roster's source traversal order and do not invent a
+         * mirror coordinate or hero record. */
+        for (i = 0; i < owner->preselection_mirror_roster.candidate_count; ++i) {
+            const DM2_V1_BootChampionSelectionCandidate *candidate =
+                &owner->preselection_mirror_roster.candidates[i];
+            if (candidate->valid && candidate->mirror.map == owner->source_party_map &&
+                candidate->mirror.x == owner->source_party_x &&
+                candidate->mirror.y == owner->source_party_y) {
+                first_map = candidate->mirror.map;
+                first_x = candidate->mirror.x;
+                first_y = candidate->mirror.y;
+                source_first_mirror_object = candidate->mirror.object_id;
+                break;
+            }
+        }
+        if (source_first_mirror_object == 0u) {
+            return 0;
+        }
+    } else if (!dm2_v1_boot_startend_first_mirror_from_file_header(
+                   owner, &source_first_mirror_object)) {
         return 0;
     }
     for (i = 0; i < owner->preselection_mirror_roster.candidate_count; ++i) {
         const DM2_V1_BootChampionSelectionCandidate *candidate =
             &owner->preselection_mirror_roster.candidates[i];
         if (!candidate->valid || candidate->mirror.map != owner->current_map ||
-            candidate->mirror.x != 0 || candidate->mirror.y != 0 ||
+            candidate->mirror.x != first_x || candidate->mirror.y != first_y ||
+            candidate->mirror.map != first_map ||
             candidate->mirror.object_id != source_first_mirror_object) {
             continue;
         }
         first = candidate;
         break;
     }
-    if (!first || first->mirror.object_id == 0u) return 0;
+    if (!first || first->mirror.object_id == 0u) {
+        return 0;
+    }
 
     memset(&selection, 0, sizeof(selection));
     selection.map = first->mirror.map;
     selection.x = first->mirror.x;
     selection.y = first->mirror.y;
-    selection.direction = 0;
+    selection.direction = first->mirror.direction;
     selection.mirror_object_id = first->mirror.object_id;
-    if (!(record = dm2_v1_record_pool_address_mut(
-            &owner->record_pools, (int16_t)first->mirror.object_id)) ||
-        !dm2_v1_boot_select_new_game_champion(profile, &selection) ||
-        owner->selected_party.heros_in_party != 1 ||
-        owner->source_next_champion_number != 1) {
+    {
+        int select_ok;
+        record = dm2_v1_record_pool_address_mut(
+            &owner->record_pools, (int16_t)first->mirror.object_id);
+        select_ok = record != NULL &&
+            dm2_v1_boot_select_new_game_champion(profile, &selection);
+        if (!select_ok || owner->selected_party.heros_in_party != 1 ||
+            owner->source_next_champion_number != 1) {
         return 0;
+        }
     }
 
     /* In this exact startend branch v1d6a2d is set to one before

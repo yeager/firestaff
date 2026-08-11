@@ -54,6 +54,14 @@ static uint16_t rd16(const uint8_t *p)
     return (uint16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
 }
 
+static uint16_t rd16_record(const DM2_V1_RecordPoolSet *pool_set,
+                            const uint8_t *p)
+{
+    if (pool_set && pool_set->words_big_endian)
+        return (uint16_t)(((uint16_t)p[0] << 8) | p[1]);
+    return rd16(p);
+}
+
 /* DM2_4FCC frame walk (skproject/SKULLWIN/c_creature.cpp:3285-3378) over
  * an already loaded dtRaw7/0xfc info table — shared by GAF's dynamic
  * tail (c_creature.cpp:3278) and the exported standalone
@@ -456,7 +464,8 @@ int32_t dm2_v1_creature_something_1c9a_0a48_with_ai_spec(
         if (!anim) {
             /* c_1c9a.cpp:5462-5477 — fetch through GAF. */
             int32_t parl01 =
-                (ai_spec->w0AIFlags & 0x1u) ? (int32_t)rd16(rec + 0xc) : 0;
+                (ai_spec->w0AIFlags & 0x1u) ?
+                    (int32_t)rd16_record(pool_set, rec + 0xc) : 0;
             uint16_t adj_base = vw_04;
             int16_t frame_word = (int16_t)vw_08;
             DM2_V1_CreatureAnimFrameReceipt grc;
@@ -548,7 +557,7 @@ int32_t dm2_v1_creature_something_1c9a_0a48_with_ai_spec(
 
     /* c_1c9a.cpp:5547-5667 — the delta arithmetic, verbatim branches. */
     {
-        uint16_t flags = rd16(rec + 0xa);
+        uint16_t flags = rd16_record(pool_set, rec + 0xa);
         if ((flags & 0x40u) == 0u) {
             int32_t d = (int32_t)((anim[3] & 0x0cu) >> 2);
             int skip00533 = 1;

@@ -60,6 +60,7 @@ typedef struct {
 
 typedef struct DM2_V1_RecordPoolSet {
     DM2_V1_RecordPool pools[DM2_V1_RECORD_POOL_COUNT];
+    int words_big_endian;       /* retained from the authenticated dungeon */
     int valid;                  /* 1 only after a validated G1 population */
     int record_graph_complete;  /* mirrors the loader's graph state */
 } DM2_V1_RecordPoolSet;

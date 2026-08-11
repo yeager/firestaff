@@ -34,14 +34,33 @@ static int scene_source_raw_index(const DM2_V1_AssetLoader *loader,
     return 0;
 }
 
-static uint16_t read_le16(const uint8_t *bytes)
+static uint16_t read16(const uint8_t *bytes, int big_endian)
 {
-    return (uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8);
+    return big_endian ? (uint16_t)(((uint16_t)bytes[0] << 8) | bytes[1]) :
+        (uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8);
 }
 
-static int16_t read_le16s(const uint8_t *bytes)
+static int16_t read16s(const uint8_t *bytes, int big_endian)
 {
-    return (int16_t)read_le16(bytes);
+    return (int16_t)read16(bytes, big_endian);
+}
+
+static int scene_rect_pair_valid(uint16_t floor_rect, uint16_t ceiling_rect)
+{
+    return floor_rect == DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER &&
+           ceiling_rect == DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER;
+}
+
+static uint16_t scene_floor_rect(const DM2_V1_AssetLoader *loader)
+{
+    (void)loader;
+    return DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER;
+}
+
+static uint16_t scene_ceiling_rect(const DM2_V1_AssetLoader *loader)
+{
+    (void)loader;
+    return DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER;
 }
 
 static int dm2_v1_gdat_scene_image_local_palette(
@@ -129,8 +148,8 @@ static uint32_t dm2_v1_gdat_scene_draw_order_hash(
     if (!plan || plan->draw_order[0] != 1u || plan->draw_order[1] != 0u ||
         plan->commands[0].field != DM2_GDAT_GFXSET_FLOOR ||
         plan->commands[1].field != DM2_GDAT_GFXSET_CEIL ||
-        plan->rects[0].rect_number != DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER ||
-        plan->rects[1].rect_number != DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER) {
+        !scene_rect_pair_valid(plan->rects[0].rect_number,
+                               plan->rects[1].rect_number)) {
         return 0u;
     }
     for (size_t i = 0u; i < 2u; ++i) {
@@ -248,8 +267,8 @@ uint32_t dm2_v1_gdat_scene_query_blit_rect_hash(
     uint32_t hash = 2166136261u;
 
     if (!receipt || !receipt->valid ||
-        receipt->floor_rect_number != DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER ||
-        receipt->ceiling_rect_number != DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER ||
+        !scene_rect_pair_valid(receipt->floor_rect_number,
+                               receipt->ceiling_rect_number) ||
         receipt->table_hash == 0u || receipt->floor_row_hash == 0u ||
         receipt->ceiling_row_hash == 0u) {
         return 0u;
@@ -268,20 +287,21 @@ uint32_t dm2_v1_gdat_scene_query_blit_rect_hash(
 
 static const uint8_t *find_compressed_rect_row(const uint8_t *table,
                                                 size_t table_size,
-                                                uint16_t rect_number)
+                                                uint16_t rect_number,
+                                                int big_endian)
 {
     uint16_t group_count;
     size_t rows_offset;
 
-    if (!table || table_size < 4u || read_le16(table) != 0xfc0du) return NULL;
-    group_count = read_le16(table + 2u);
+    if (!table || table_size < 4u || read16(table, big_endian) != 0xfc0du) return NULL;
+    group_count = read16(table + 2u, big_endian);
     if (group_count == 0u || (size_t)group_count > (table_size - 4u) / 4u) {
         return NULL;
     }
     rows_offset = 4u + (size_t)group_count * 4u;
     for (uint16_t group = 0u; group < group_count; ++group) {
-        uint16_t first = read_le16(table + 4u + (size_t)group * 4u);
-        uint16_t last = read_le16(table + 6u + (size_t)group * 4u);
+        uint16_t first = read16(table + 4u + (size_t)group * 4u, big_endian);
+        uint16_t last = read16(table + 6u + (size_t)group * 4u, big_endian);
         size_t count = last >= first ? (size_t)(last - first + 1u) : 0u;
 
         if (count == 0u || count > (table_size - rows_offset) / 8u) {
@@ -298,6 +318,7 @@ static const uint8_t *find_compressed_rect_row(const uint8_t *table,
 static int decode_viewport_root_rect(const uint8_t *table, size_t table_size,
                                      const uint8_t *row, uint16_t rect_number,
                                      uint16_t width, uint16_t height,
+                                     int big_endian,
                                      DM2_V1_GdatSceneBlitRect *out_rect)
 {
     const uint8_t *reference;
@@ -309,27 +330,31 @@ static int decode_viewport_root_rect(const uint8_t *table, size_t table_size,
      * no adjustment, and record 3 clips only to (0,0,224,136). No alternate
      * anchor, source crop, or nested clip is admitted here. */
     if (!table || !row || !out_rect || width == 0u || height == 0u ||
-        (read_le16s(row) != 11 && read_le16s(row) != 14) ||
-        read_le16s(row + 4u) != 0 ||
-        read_le16s(row + 6u) != 0) {
+        (read16s(row, big_endian) != 11 && read16s(row, big_endian) != 14) ||
+        read16s(row + 4u, big_endian) != 0 ||
+        read16s(row + 6u, big_endian) != 0) {
         return 0;
     }
-    reference = find_compressed_rect_row(table, table_size, read_le16(row + 2u));
-    if (!reference || read_le16s(reference) != 1 ||
-        read_le16s(reference + 4u) != 0 || read_le16s(reference + 6u) != 0) {
+    reference = find_compressed_rect_row(table, table_size,
+                                         read16(row + 2u, big_endian), big_endian);
+    if (!reference || read16s(reference, big_endian) != 1 ||
+        read16s(reference + 4u, big_endian) != 0 ||
+        read16s(reference + 6u, big_endian) != 0) {
         return 0;
     }
-    clip = find_compressed_rect_row(table, table_size, read_le16(reference + 2u));
-    if (!clip || read_le16s(clip) != 9 || read_le16s(clip + 2u) != 0 ||
-        read_le16s(clip + 4u) != DM2_V1_GDAT_SCENE_VIEWPORT_WIDTH ||
-        read_le16s(clip + 6u) != DM2_V1_GDAT_SCENE_VIEWPORT_HEIGHT ||
+    clip = find_compressed_rect_row(table, table_size,
+                                    read16(reference + 2u, big_endian), big_endian);
+    if (!clip || read16s(clip, big_endian) != 9 ||
+        read16s(clip + 2u, big_endian) != 0 ||
+        read16s(clip + 4u, big_endian) != DM2_V1_GDAT_SCENE_VIEWPORT_WIDTH ||
+        read16s(clip + 6u, big_endian) != DM2_V1_GDAT_SCENE_VIEWPORT_HEIGHT ||
         width > DM2_V1_GDAT_SCENE_VIEWPORT_WIDTH ||
         height > DM2_V1_GDAT_SCENE_VIEWPORT_HEIGHT) {
         return 0;
     }
     out_rect->rect_number = rect_number;
     out_rect->x = 0;
-    out_rect->y = read_le16s(row) == 11 ? 0 :
+    out_rect->y = read16s(row, big_endian) == 11 ? 0 :
         (int16_t)(DM2_V1_GDAT_SCENE_VIEWPORT_HEIGHT - height);
     out_rect->width = width;
     out_rect->height = height;
@@ -483,19 +508,20 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
     DM2_V1_GdatSceneM11CommandPlan *out_plan)
 {
     static const uint8_t fields[2] = { DM2_GDAT_GFXSET_FLOOR, DM2_GDAT_GFXSET_CEIL };
-    static const uint16_t rect_numbers[2] = {
-        DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER,
-        DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER
-    };
+    uint16_t rect_numbers[2];
     DM2_V1_GdatSceneM11CommandPlan candidate;
     uint32_t hash = 2166136261u;
 
     if (!out_plan) return 0;
+    rect_numbers[0] = scene_floor_rect(loader);
+    rect_numbers[1] = scene_ceiling_rect(loader);
     memset(out_plan, 0, sizeof(*out_plan));
     memset(&candidate, 0, sizeof(candidate));
     if (!loader || !dm2_v1_asset_loader_verify(loader) ||
         !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_SCENE_COLORKEY, &candidate.scene_colorkey) ||
-        !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_SCENE_FLAGS, &candidate.scene_flags)) return 0;
+        !dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset, DM2_GDAT_GFXSET_SCENE_FLAGS, &candidate.scene_flags)) {
+        return 0;
+    }
     /* skproject UPDATE_GFXSET admits the active GRAPHICSSET scene material
      * after SCENE_COLORKEY/SCENE_FLAGS plus its floor/ceiling IMG3 records.
      * Light control words are retained for c_light consumers when present,
@@ -507,7 +533,9 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
     (void)dm2_v1_asset_load_word_value(
         loader, DM2_GDAT_CATEGORY_GRAPHICSSET, graphicsset,
         DM2_GDAT_GFXSET_AMBIANT_DARKNESS, &candidate.ambient_darkness);
-    if (candidate.ambient_darkness > 8u) return 0;
+    if (candidate.ambient_darkness > 8u) {
+        return 0;
+    }
     /* skproject QUERY_GDAT_ENTRY_DATA_INDEX returns zero for a missing
      * dtWordValue entry. GRAPHICSSET 2 in the canonical PC corpus has no
      * AMBIANT_LIGHT row, so preserve that source zero without borrowing a
@@ -526,15 +554,15 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
     if (!dm2_v1_gdat_scene_query_blit_rect_receipt(
             loader, &candidate.query_blit_rect) ||
         !candidate.query_blit_rect.valid ||
-        candidate.query_blit_rect.floor_rect_number !=
-            DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER ||
-        candidate.query_blit_rect.ceiling_rect_number !=
-            DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER) {
+        !scene_rect_pair_valid(candidate.query_blit_rect.floor_rect_number,
+                               candidate.query_blit_rect.ceiling_rect_number)) {
         return 0;
     }
     candidate.query_blit_rect_hash =
         dm2_v1_gdat_scene_query_blit_rect_hash(&candidate.query_blit_rect);
-    if (!candidate.query_blit_rect_hash) return 0;
+    if (!candidate.query_blit_rect_hash) {
+        return 0;
+    }
     for (int i = 0; i < 2; ++i) {
         DM2_V1_GdatSceneM11Command *command = &candidate.commands[i];
         const uint8_t *raw;
@@ -542,7 +570,8 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
         int width = 0, height = 0;
         int palette_ok;
         DM2_V1_GdatGfxRawMaterialReceipt material;
-        uint16_t raw_index;
+        uint16_t raw_index = 0u;
+        memset(&material, 0, sizeof(material));
         command->field = fields[i];
         raw = dm2_v1_asset_load_sized(loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
                                       graphicsset, fields[i], &raw_size);
@@ -593,10 +622,11 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
             DM2_GDAT_ENTRY_TYPE_RAW4, 0, &table_size);
         for (int i = 0; i < 2; ++i) {
             const uint8_t *row = find_compressed_rect_row(
-                table, table_size, rect_numbers[i]);
+                table, table_size, rect_numbers[i], loader->big_endian);
             if (!decode_viewport_root_rect(table, table_size, row, rect_numbers[i],
                                          candidate.commands[i].width,
                                          candidate.commands[i].height,
+                                         loader->big_endian,
                                          &candidate.rects[i])) {
                 dm2_v1_gdat_scene_m11_command_plan_free(&candidate);
                 return 0;
@@ -666,15 +696,18 @@ int dm2_v1_gdat_scene_query_blit_rect_receipt(
     table = dm2_v1_asset_load_typed_sized(
         loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
         DM2_GDAT_ENTRY_TYPE_RAW4, 0, &table_size);
+    if (!table || table_size == 0u) return 0;
     floor_row = find_compressed_rect_row(
-        table, table_size, DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER);
+        table, table_size, scene_floor_rect(loader),
+        loader->big_endian);
     ceiling_row = find_compressed_rect_row(
-        table, table_size, DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER);
+        table, table_size, scene_ceiling_rect(loader),
+        loader->big_endian);
     if (!floor_row || !ceiling_row) return 0;
 
     memset(&candidate, 0, sizeof(candidate));
-    candidate.floor_rect_number = DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER;
-    candidate.ceiling_rect_number = DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER;
+    candidate.floor_rect_number = scene_floor_rect(loader);
+    candidate.ceiling_rect_number = scene_ceiling_rect(loader);
     candidate.table_hash = hash_bytes(2166136261u, table, table_size);
     candidate.floor_row_hash = hash_bytes(2166136261u, floor_row, 8u);
     candidate.ceiling_row_hash = hash_bytes(2166136261u, ceiling_row, 8u);

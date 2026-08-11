@@ -42,16 +42,25 @@ enum {
     DM2_V1_RAW_MAP_DESC_SIZE = 16
 };
 
-static int16_t dm2_v1_rd16(const uint8_t *p)
+static int16_t dm2_v1_rd16(const DM2_V1_RecordPoolSet *set,
+                           const uint8_t *p)
 {
-    return (int16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
+    uint16_t value = set && set->words_big_endian
+        ? (uint16_t)(((uint16_t)p[0] << 8) | p[1])
+        : (uint16_t)(p[0] | ((uint16_t)p[1] << 8));
+    return (int16_t)value;
 }
 
-static void dm2_v1_wr16(uint8_t *p, int16_t v)
+static void dm2_v1_wr16(const DM2_V1_RecordPoolSet *set, uint8_t *p, int16_t v)
 {
     uint16_t u = (uint16_t)v;
-    p[0] = (uint8_t)(u & 0xffu);
-    p[1] = (uint8_t)((u >> 8) & 0xffu);
+    if (set && set->words_big_endian) {
+        p[0] = (uint8_t)(u >> 8);
+        p[1] = (uint8_t)(u & 0xffu);
+    } else {
+        p[0] = (uint8_t)(u & 0xffu);
+        p[1] = (uint8_t)((u >> 8) & 0xffu);
+    }
 }
 
 static uint16_t dm2_v1_raw_rd16(const uint8_t *p)
@@ -665,13 +674,13 @@ int dm2_v1_sksave_map_owner_detach_dynamic_records(
                     if (current_pool >= 4) {
                         /* sksvgame.cpp:1138-1150: sever the dynamic record
                          * before CUT_RECORD_FROM rewires its real tile owner. */
-                        dm2_v1_wr16(record, DM2_V1_RECORD_HANDLE_END);
+                        dm2_v1_wr16(set, record, DM2_V1_RECORD_HANDLE_END);
                         if (previous == DM2_V1_RECORD_HANDLE_NULL) {
                             owner->ground_stack_links[ground_index] = (uint16_t)next;
                         } else {
                             uint8_t *prev = dm2_v1_record_pool_address_mut(set, previous);
                             if (!prev) return 0;
-                            dm2_v1_wr16(prev, next);
+                            dm2_v1_wr16(set, prev, next);
                         }
                         ++detached;
                     } else {
@@ -836,7 +845,7 @@ static uint16_t dm2_v1_sksave_pool_alloc(void *context, int record_type)
     for (index = 0; index < pool->record_count; ++index) {
         uint8_t *record = pool->bytes +
             (size_t)index * (size_t)pool->record_size;
-        if (dm2_v1_rd16(record) == DM2_V1_RECORD_HANDLE_NULL) {
+        if (dm2_v1_rd16(ctx->set, record) == DM2_V1_RECORD_HANDLE_NULL) {
             return (uint16_t)(((uint16_t)record_type << 10) | (uint16_t)index);
         }
     }
@@ -901,7 +910,7 @@ static int dm2_v1_sksave_pool_append(void *context, uint16_t new_link,
             return 0;
         } else return -1;
     } else if (!owner_link || map_y != 0) return -1;
-    dm2_v1_wr16((uint8_t *)dm2_v1_record_pool_address_mut(
+    dm2_v1_wr16(ctx->set, (uint8_t *)dm2_v1_record_pool_address_mut(
                     ctx->set, (int16_t)new_link), DM2_V1_RECORD_HANDLE_END);
     cursor = *owner_link;
     if (cursor == (uint16_t)DM2_V1_RECORD_HANDLE_END) {
@@ -913,10 +922,10 @@ static int dm2_v1_sksave_pool_append(void *context, uint16_t new_link,
             ctx->set, (int16_t)cursor);
         uint16_t next;
         if (!record) return -1;
-        next = (uint16_t)dm2_v1_rd16(record);
+        next = (uint16_t)dm2_v1_rd16(ctx->set, record);
         if (next == (uint16_t)DM2_V1_RECORD_HANDLE_NULL) return -1;
         if (next == (uint16_t)DM2_V1_RECORD_HANDLE_END) {
-            dm2_v1_wr16(record, (int16_t)new_link);
+            dm2_v1_wr16(ctx->set, record, (int16_t)new_link);
             return 0;
         }
         cursor = next;
@@ -977,7 +986,7 @@ static int dm2_v1_sksave_pool_set_possession_continuation(
         ctx->set->pools[type].record_size < 4) {
         return -1;
     }
-    dm2_v1_wr16(record + 2, (int16_t)continuation);
+    dm2_v1_wr16(ctx->set, record + 2, (int16_t)continuation);
     ctx->continuation_hash = dm2_v1_sksave_hash_bytes(
         ctx->continuation_hash, (const uint8_t *)&record_link,
         sizeof(record_link));
@@ -1077,7 +1086,7 @@ int dm2_v1_record_pool_next_link(const DM2_V1_RecordPoolSet *set,
     }
     /* c_record.cpp:56 — DM2_GET_NEXT_RECORD_LINK reads the record's first
      * word. */
-    *out_next = dm2_v1_rd16(addr);
+    *out_next = dm2_v1_rd16(set, addr);
     return 1;
 }
 
@@ -1102,7 +1111,7 @@ int dm2_v1_record_pool_append_to_list(DM2_V1_RecordPoolSet *set,
     }
     /* c_record.cpp:71 — *dest = OBJECT_END_MARKER terminates the appended
      * record's own link before chaining. */
-    dm2_v1_wr16(record_addr, DM2_V1_RECORD_HANDLE_END);
+    dm2_v1_wr16(set, record_addr, DM2_V1_RECORD_HANDLE_END);
 
     /* c_record.cpp:75-79 (x < 0 path) — walk to the last link slot and
      * store the appended record there. */
@@ -1120,9 +1129,9 @@ int dm2_v1_record_pool_append_to_list(DM2_V1_RecordPoolSet *set,
         if (cursor_addr == NULL) {
             return 0; /* unresolvable chain: fail-closed, no mutation */
         }
-        next = dm2_v1_rd16(cursor_addr);
+        next = dm2_v1_rd16(set, cursor_addr);
         if (next == DM2_V1_RECORD_HANDLE_END) {
-            dm2_v1_wr16(cursor_addr, record);
+            dm2_v1_wr16(set, cursor_addr, record);
             return 1;
         }
         if (next == DM2_V1_RECORD_HANDLE_NULL) {
@@ -1155,7 +1164,7 @@ int dm2_v1_record_pool_cut_from_list(DM2_V1_RecordPoolSet *set,
         if (cursor_addr == NULL) {
             return 0;
         }
-        next = dm2_v1_rd16(cursor_addr);
+        next = dm2_v1_rd16(set, cursor_addr);
         if (cursor == record) {
             /* c_record.cpp:122+ list path — splice the successor into the
              * predecessor's link slot (or the list head). */
@@ -1167,7 +1176,7 @@ int dm2_v1_record_pool_cut_from_list(DM2_V1_RecordPoolSet *set,
                 if (prev_addr == NULL) {
                     return 0;
                 }
-                dm2_v1_wr16(prev_addr, next);
+                dm2_v1_wr16(set, prev_addr, next);
             }
             return 1;
         }
@@ -1315,6 +1324,7 @@ int dm2_v1_record_pool_set_init_from_dungeon(DM2_V1_RecordPoolSet *set,
     }
     set->valid = 1;
     set->record_graph_complete = d->record_graph_complete;
+    set->words_big_endian = d->words_big_endian;
     return 1;
 }
 
@@ -1451,7 +1461,7 @@ int dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
         for (index = 0; index < target->record_count; ++index) {
             uint8_t *record = target->bytes +
                 (size_t)index * (size_t)target->record_size;
-            dm2_v1_wr16(record, DM2_V1_RECORD_HANDLE_NULL);
+            dm2_v1_wr16(set, record, DM2_V1_RECORD_HANDLE_NULL);
         }
     }
     return 1;
@@ -1604,7 +1614,7 @@ static void dm2_v1_sksave_rebuild_set_record_timer_backlink(
     }
     /* SKProject sksvgame.cpp::DM2_3a15_020f stores the timer index in
      * the c_record word at offset 6 for tty1d/tty1e. */
-    dm2_v1_wr16(record + 6u, timer_index);
+    dm2_v1_wr16(context->pools, record + 6u, timer_index);
 }
 
 static int dm2_v1_record_pool_walk_raw_sksave_special_timer_chains(
@@ -2071,6 +2081,7 @@ int dm2_v1_record_pool_set_clone(DM2_V1_RecordPoolSet *out,
     }
     candidate.valid = 1;
     candidate.record_graph_complete = 1;
+    candidate.words_big_endian = source->words_big_endian;
     *out = candidate;
     return 1;
 

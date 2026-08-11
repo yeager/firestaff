@@ -12,6 +12,7 @@ int main(void)
     const char *zip = getenv("FIRESTAFF_DM2_MAC_EN_ZIP");
     unsigned char framebuffer[320u * 200u];
     DM2_V1_StartupMenuAuxPointerLayout aux;
+    DM2_V1_StartupMenuPointerLayout menu;
     int frame;
 
     if (!zip || !zip[0]) {
@@ -73,6 +74,21 @@ int main(void)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+
+    memset(&menu, 0, sizeof(menu));
+    if (!dm2_v1_boot_startup_menu_pointer_layout(
+            (DM2_V1_BootProfile *)state.dm2BootProfile, &menu) ||
+        !menu.valid ||
+        M11_GameView_HandleInput(&state, M12_MENU_INPUT_ACCEPT) ==
+            M11_GAME_INPUT_IGNORED || state.dm2State.startup_menu_active ||
+        !state.dm2State.level_loaded ||
+        !((DM2_V1_BootProfile *)state.dm2BootProfile)
+             ->source_game_load_session_ready) {
+        fprintf(stderr, "Mac New Game did not publish authentic STARTEND\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    puts("PASS: M11 publishes authentic Mac New Game STARTEND session");
 
     printf("PASS: M11 binds authentic Mac Title.MooV at startup: frame=%u\n",
            state.dm2MacMovieDecoder.frame_index);
