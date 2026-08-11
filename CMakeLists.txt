@@ -11932,6 +11932,8 @@ if(BUILD_TESTING)
             COMMAND test_m11_dm1_unreadable_inscription_host_presentation_receipt
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
+        set_tests_properties(m11_dm1_unreadable_inscription_host_presentation_receipt
+            PROPERTIES TIMEOUT 300)
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_f0107_hidden_inscription_fail_closed.c")
@@ -34890,6 +34892,7 @@ if(NOT TARGET test_m11_dm1_hoc_no_fallback_panel)
     endif()
     add_test(NAME m11_dm1_hoc_no_fallback_panel
         COMMAND test_m11_dm1_hoc_no_fallback_panel)
+    set_tests_properties(m11_dm1_hoc_no_fallback_panel PROPERTIES TIMEOUT 300)
 endif()
 
 if(NOT TARGET test_m11_dm1_hoc_rename_font_source_gate)
