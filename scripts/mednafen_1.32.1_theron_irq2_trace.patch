@@ -166,7 +166,8 @@ index 347482c4..61d4758e 100644
 +     logical_pc == 0xc96b || logical_pc == 0xcc4c ||
 +     (logical_pc >= 0xca00 && logical_pc <= 0xca69) ||
 +     (logical_pc >= 0xccf0 && logical_pc <= 0xcd13) ||
-+     logical_pc == 0xb0e5) &&
++     logical_pc == 0xb0e5 ||
++     (logical_pc >= 0xb07d && logical_pc <= 0xb0e4)) &&
 +    TheronIrq2TraceSpawnRegisterSamples < TheronIrq2TraceSpawnRegisterSampleLimit)
 + {
 +  const uint32 reg_a = trace_regs->GetRegister(trace_regs->Regs[1].id, NULL, 0) & 0xff;
@@ -195,12 +196,13 @@ index 347482c4..61d4758e 100644
 +  }
 +  if(TheronIrq2TraceSpawnRegisters)
 +  {
-+   fprintf(TheronIrq2TraceSpawnRegisters, "spawn_consumer_registers sequence=%u pc=%04x physical_pc=%08x a=%02x x=%02x y=%02x sp=%02x p=%02x mpr0=%02x mpr_pc=%02x b3=%02x b4=%02x b5=%02x b6=%02x b8=%02x ba=%02x bb=%02x c96b_window=%u cc4c_window=%u preconsumer_4644=%u helper_4667=%u spawn_entry_b0e5=%u\n",
++   fprintf(TheronIrq2TraceSpawnRegisters, "spawn_consumer_registers sequence=%u pc=%04x physical_pc=%08x a=%02x x=%02x y=%02x sp=%02x p=%02x mpr0=%02x mpr_pc=%02x b3=%02x b4=%02x b5=%02x b6=%02x b8=%02x ba=%02x bb=%02x c96b_window=%u cc4c_window=%u preconsumer_4644=%u helper_4667=%u spawn_entry_b0e5=%u caller_b07d_window=%u\n",
 +     TheronIrq2TraceSpawnRegisterSamples++, logical_pc, trace_physical_pc, reg_a, reg_x,
 +     reg_y, reg_sp, reg_p, reg_mpr0, trace_mpr, ram_b3, ram_b4, ram_b5, ram_b6,
 +     ram_b8, ram_ba, ram_bb, logical_pc >= 0xc96b && logical_pc <= 0xca69,
 +     logical_pc >= 0xcc4c && logical_pc <= 0xcd13, logical_pc == 0x4644,
-+     logical_pc == 0x4667, logical_pc == 0xb0e5);
++     logical_pc == 0x4667, logical_pc == 0xb0e5,
++     logical_pc >= 0xb07d && logical_pc <= 0xb0e4);
 +   fflush(TheronIrq2TraceSpawnRegisters);
 +  }
 + }

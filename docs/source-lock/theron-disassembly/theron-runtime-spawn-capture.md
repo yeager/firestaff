@@ -21,6 +21,11 @@ that cross that boundary. The observed writes to `$2980/$2990/$29A0` and
 meaning is inferred from their addresses. A future capture must join this
 caller, a valid category, the RNG return and the target write in one session.
 
+The register sidecar now emits `caller_b07d_window=1` for the authenticated
+`$B07D-$B0E4` caller range. The parser keeps this as provenance and does not
+require it for older v3 sidecars; it is available to the next same-session
+semantic correlation.
+
 ## 2026-08-11 — register parser separates `$B0E5` address hits from spawn categories
 
 The register-sidecar parser now accepts the current external capture shape,

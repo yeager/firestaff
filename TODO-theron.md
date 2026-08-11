@@ -37,6 +37,9 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   är creature-statistik. Nästa positiva capture ska binda samma caller,
   giltig kategori 0–3, RNG-retur och efterföljande writes till ett riktigt
   Track 02-record innan någon gameplaysemantik aktiveras.
+- ✅ Register-sidecaren kan nu märka den statiska caller-window:n som
+  `caller_b07d_window=1`; äldre v3-sidecars fortsätter att läsas som
+  provenance utan den nya flaggan.
 
 ## 2026-08-10 — README capture is reference-only
 

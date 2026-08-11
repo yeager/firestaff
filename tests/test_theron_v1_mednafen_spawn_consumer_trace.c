@@ -42,8 +42,9 @@ static void write_execution_window_fixture(const char *path) {
     FILE *file = fopen(path, "wb");
     assert(file);
     fputs("source=mednafen-pce-instrumented-spawn-registers-v3\n", file);
-    fputs("spawn_consumer_registers sequence=0 pc=ca00 physical_pc=0d4a00 a=01 x=02 y=03 sp=fe p=04 mpr0=1f mpr_pc=6a b3=10 b4=20 b5=30 b6=40 b8=50 ba=60 bb=70 c96b_window=1 cc4c_window=0 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=0\n", file);
-    fputs("spawn_consumer_registers sequence=1 pc=cd00 physical_pc=0d4d00 a=11 x=12 y=13 sp=fd p=05 mpr0=1f mpr_pc=6a b3=11 b4=21 b5=31 b6=41 b8=51 ba=61 bb=71 c96b_window=0 cc4c_window=1 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=0\n", file);
+    fputs("spawn_consumer_registers sequence=0 pc=ca00 physical_pc=0d2a00 a=01 x=02 y=03 sp=fe p=04 mpr0=1f mpr_pc=69 b3=10 b4=20 b5=30 b6=40 b8=50 ba=60 bb=70 c96b_window=1 cc4c_window=0 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=0 caller_b07d_window=0\n", file);
+    fputs("spawn_consumer_registers sequence=1 pc=cd00 physical_pc=0d4d00 a=11 x=12 y=13 sp=fd p=05 mpr0=1f mpr_pc=6a b3=11 b4=21 b5=31 b6=41 b8=51 ba=61 bb=71 c96b_window=0 cc4c_window=1 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=0 caller_b07d_window=0\n", file);
+    fputs("spawn_consumer_registers sequence=2 pc=b07d physical_pc=0d307d a=21 x=22 y=23 sp=fc p=06 mpr0=1f mpr_pc=69 b3=12 b4=22 b5=32 b6=42 b8=52 ba=62 bb=72 c96b_window=0 cc4c_window=0 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=0 caller_b07d_window=1\n", file);
     fclose(file);
 }
 
@@ -192,8 +193,10 @@ int main(void) {
         assert(theron_v1_mednafen_spawn_register_trace_parse_execution_window_file(
             path, &registers));
         assert(registers.status == THERON_V1_SPAWN_CONSUMER_TRACE_READY);
-        assert(registers.sample_count == 2u);
+        assert(registers.sample_count == 3u);
         assert(registers.c96b_window_seen && registers.cc4c_window_seen);
+        assert(registers.caller_b07d_window_seen &&
+               registers.caller_b07d_window_samples == 1u);
         assert(!registers.preconsumer_4644_seen && !registers.helper_4667_seen);
         assert(!registers.semantic_publication_allowed);
     }
