@@ -120,6 +120,7 @@ typedef struct {
     uint32_t sample_limit;
     uint32_t sample_count;
     uint32_t window_count;
+    uint32_t complete_window_count;
     uint32_t first_sequence;
     uint32_t last_sequence;
     uint32_t first_step;

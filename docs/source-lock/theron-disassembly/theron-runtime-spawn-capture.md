@@ -1,5 +1,20 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-11 — same-session `$5D64` RNG consumer reaches 22 complete windows
+
+The external-disk US Track 02 capture used the authenticated Track 02 BIN
+`f23601102138f87c33025877767ebf76` and System Card
+`ff1a674273fe3540ccef576376407d1d`. Its RNG sidecar contains 11,264 samples,
+exactly 22 complete 512-step windows through `$5D64`; the separate 256-byte
+`$5D64` code window matches the source BIN at the authenticated RNG-code
+offset. This is now accepted by the multi-window parser.
+
+The same capture has no valid `$B0E5` regular-spawn entry, no target write
+ownership and no creature/T700/T900 event join. It therefore proves execution
+and source provenance of the original RNG consumer only; no host RNG,
+spawnstats, AI, combat, loot, generator or stat semantics are promoted from
+it.
+
 ## 2026-08-11 — exact `$C96B` body retained without semantic promotion
 
 The US Track 02 span at `$C96B-$CA69` is now retained verbatim as

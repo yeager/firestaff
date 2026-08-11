@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — flerfönster-RNG-captures valideras korrekt
+
+- ✅ RNG-consumer-parsern räknar nu kompletta 512-stegsfönster i en längre
+  samma-session-trace; en korrekt trace avvisas inte längre bara för att den
+  innehåller flera fönster.
+- ✅ Extern US Track 02-capture har 22 kompletta `$5D64`-fönster och en
+  source-byte-matchad `$5D64`-kodwindow.
+- 🔒 Detta bevisar källkonsumentens körning och kodproveniens, men inte ännu
+  vilket returvärde som ägs av spawnstats eller senare creature-semantik.
+
 ## 2026-08-11 — inventory transitions now require the authenticated property table
 
 - ✅ The loaded level now retains whether the complete source-owned 66-row

@@ -408,6 +408,7 @@ int theron_v1_mednafen_rng_consumer_trace_parse_file(
             out->window_count = 1u;
             saw_record = 1;
         } else if (sequence != previous_sequence) {
+            if (previous_window_complete) out->complete_window_count++;
             out->window_count++;
         }
         out->last_sequence = sequence;
@@ -439,6 +440,7 @@ int theron_v1_mednafen_rng_consumer_trace_parse_file(
         out->return_boundary_seen |= return_boundary != 0u;
     }
     fclose(file);
+    if (previous_window_complete) out->complete_window_count++;
     if (!saw_record || (!out->target_5d64_seen && !out->target_5d6a_seen)) {
         out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
         return 0;

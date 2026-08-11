@@ -1,3 +1,12 @@
+# Theron: multi-window RNG consumer capture validation (2026-08-11)
+
+- ✅ The RNG trace parser now counts complete windows instead of assuming one
+  512-step window per capture.
+- ✅ The external US Track 02 capture validates 11,264 samples across 22
+  complete `$5D64` windows and a source-matching RNG code window.
+- 🔒 No RNG return value was connected to spawnstats or creature semantics;
+  the original caller/target ownership remains gated.
+
 # Theron: inventory provenance now requires the authenticated property table (2026-08-11)
 
 - ✅ Loaded levels retain the verified/unverified state of the complete
