@@ -149,6 +149,18 @@ register-, source- och VDP-skrivspår. Om processen timeoutar eller rådumpen
 inte får sitt capture-magic ska körningen kasseras som observationsförsök,
 även om enskilda tracefiler hann skrivas.
 
+### Runtime-transformen före VDP1
+
+SH-2-kodkvittot från samma externa Mednafen-gren visar att VDP1-kedjan inte är
+en direkt PRS3-kopia. Rutinen vid `0x060132e0` anropas med 18 iterationer,
+läser med `0x80` bytes stride och skriver med `0x1c0` bytes stride. Den anropar
+pixelrutinen vid `0x060135f8`, som gör åtta pass. Den innersta rutinen vid
+`0x060136c4` hämtar packade bytes från tile-input, applicerar `0xf000`-masken,
+justerar nibblepositionen och skriver 16-bitars output med två runtimevärden
+som koefficienter. Detta är ett transform-/tile-expansionssteg efter asset-
+dekodningen. Det får inte ersättas med en host-side PRS3-blit utan samma
+input-, koefficient- och CLUT-bevis.
+
 ### Verifierad extern körning 2026-08-11
 
 En autentisk engelskspråkig data-track-körning gjordes på extern disk med den
