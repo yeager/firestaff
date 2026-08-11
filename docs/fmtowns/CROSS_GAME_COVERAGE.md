@@ -175,8 +175,12 @@ Every module below is source-locked with a real-data round-trip test:
   After authenticated `GAME_LOAD`, the source inventory bridge can now swap a
   real `c_hero::item[30]` link with `LeaderPossession`, with record-pool
   validation, `OBJECT_NULL` handling, read-back verification, and rollback.
-  This is a runtime transaction seam, not a replacement inventory panel; the
-  native panel and its remaining event ordering are still unavailable.
+  M11 also consumes the real `INTERFACE_CHARSHEET/0/dtImage/1` frame through
+  the global 255-colour `PAL_IRGB` route and its authenticated `RECT_1EE`
+  RAW4 source crop. Authenticated Towns inventory contexts route pointer
+  input to M11 for panel and slot selection. This is not a claim of complete
+  inventory parity: source text, item movement/equip commits, and
+  non-equipment owners remain unavailable and fail closed.
   The native viewport event 0x50/rect 0x0007 reaches the DM2 c_rwbb target
   resolver and cannot fall through to DM1's C080 handler. Inventory/dialogue
   pointer ownership and map-dependent viewport mutations remain fail-closed
