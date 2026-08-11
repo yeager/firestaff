@@ -1906,6 +1906,8 @@ static int m12_path_is_virtual_asset(const char* path) {
  * that support the format read them through their bounded in-memory reader.
  * The test/development materializers are deliberately kept behind the
  * existing test build boundary. */
+#if !defined(FIRESTAFF_ASSET_STATUS_TESTING) && \
+    !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
 static int m12_source_runtime_root(const char* matchedPath,
                                    char* outPath, size_t outPathSize) {
     const char* separator;
@@ -1924,9 +1926,12 @@ static int m12_source_runtime_root(const char* matchedPath,
     }
     return FSP_ParentDir(outPath, outPathSize, matchedPath);
 }
+#endif
 
+#if !defined(FIRESTAFF_ASSET_STATUS_TESTING) && \
+    !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
 static int m12_publish_source_runtime_root(M12_AssetStatus* status,
-                                            int gameIndex) {
+                                           int gameIndex) {
     const M12_AssetVersionStatus* version;
     char sourceRoot[M12_ASSET_DATA_DIR_CAPACITY];
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT) {
@@ -1941,6 +1946,7 @@ static int m12_publish_source_runtime_root(M12_AssetStatus* status,
                     sizeof(status->runtimeDataDirs[gameIndex]), sourceRoot);
     return 1;
 }
+#endif
 
 static void m12_classify_theron_media_path(M12_AssetStatus* status,
                                            const char* path) {
@@ -5390,7 +5396,9 @@ static int m12_scan_explicit_file_request(M12_AssetStatus* status,
  * and deterministic. */
 static int m12_theron_tracked_path_is_stale(const char* matchedPath,
                                             const char* matchedMd5) {
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
     char freshMd5[M12_ASSET_MD5_CAPACITY];
+#endif
     if (!matchedPath || matchedPath[0] == '\0') {
         return 1;
     }
