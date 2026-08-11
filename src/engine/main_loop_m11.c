@@ -212,7 +212,33 @@ static int DM1_V1_InputMenuTokenUsesHeldRepeatPc34Compat(int token) {
 }
 static int M12_StartupMenu_PrepareSelectedGameLaunch(
         M12_StartupMenuState* menuState) {
-    return menuState != NULL;
+    const M12_MenuEntry* entry;
+    const M12_AssetVersionStatus* version;
+    char runtimeDir[M12_ASSET_DATA_DIR_CAPACITY];
+    int versionIndex;
+    if (!menuState || menuState->activatedIndex < 0) return 0;
+    entry = M12_StartupMenu_GetEntry(menuState, menuState->activatedIndex);
+    if (!entry || !entry->gameId || strcmp(entry->gameId, "csb") != 0) {
+        return 1;
+    }
+    /* Archive/ADF CSB media must enter M11 through the exact selected
+     * version's hash-verified private cache.  Passing the common scan root
+     * here can cross-bind an Amiga title program with PC, Atari or FM Towns
+     * files from the same library. */
+    versionIndex = menuState->gameOptions[menuState->activatedIndex].versionIndex;
+    version = versionIndex >= 0
+        ? M12_AssetStatus_GetVersion(&menuState->assetStatus, "csb",
+                                     (size_t)versionIndex) : NULL;
+    if (!version || !version->matched || !version->versionId ||
+        !M12_AssetStatus_MaterializeCSBRuntimeVersion(
+            &menuState->assetStatus, version->versionId, runtimeDir,
+            sizeof(runtimeDir))) {
+        return 0;
+    }
+    snprintf(menuState->assetStatus.runtimeDataDirs[1],
+             sizeof(menuState->assetStatus.runtimeDataDirs[1]), "%s",
+             runtimeDir);
+    return 1;
 }
 
 static void m11_set_launch_failed_message(M12_StartupMenuState* menuState) {

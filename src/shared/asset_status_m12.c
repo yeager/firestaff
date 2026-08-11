@@ -6289,30 +6289,6 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
         if (outPathSize) outPath[0] = '\0';
         return 0;
     }
-#if !defined(FIRESTAFF_ASSET_STATUS_TESTING) && \
-    !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
-    if ((strcmp(versionId, "fmtowns-en") == 0 ||
-         strcmp(versionId, "fmtowns-ja") == 0) &&
-        !m12_path_is_virtual_asset(version->matchedPath)) {
-        char dataDirectory[M12_ASSET_DATA_DIR_CAPACITY];
-        /* A loose F31 GRAPHICS.DAT lives below CDATA/CJDATA, while its
-         * selected CHTWE/CHTWJ, TITLE.ANM and portrait owners live one level
-         * above. M11 receives the original disc root and applies the
-         * caller-selected language before the F31 handoff. */
-        if (!FSP_ParentDir(dataDirectory, sizeof(dataDirectory),
-                           version->matchedPath) ||
-            !FSP_ParentDir(outPath, outPathSize, dataDirectory)) {
-            outPath[0] = '\0';
-            return 0;
-        }
-        return 1;
-    }
-    if (!m12_source_runtime_root(version->matchedPath, outPath, outPathSize)) {
-        if (outPathSize) outPath[0] = '\0';
-        return 0;
-    }
-    return 1;
-#endif
     if (
         !FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) ||
         !FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userDataDir,
