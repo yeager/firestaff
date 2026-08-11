@@ -336,6 +336,10 @@ int theron_v1_mednafen_rng_consumer_trace_parse_file(
     int sample_limit_consumed = 0;
     int saw_record = 0;
     int previous_window_complete = 0;
+    int legacy_format = 0;
+    int legacy_limit_inferred = 0;
+    int have_pending_line = 0;
+    char pending_line[768];
 
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
@@ -352,11 +356,33 @@ int theron_v1_mednafen_rng_consumer_trace_parse_file(
         return 0;
     }
     out->source_header_verified = 1;
-    if (!read_line(file, line, sizeof(line)) ||
-        sscanf(line, "rng_consumer_sample_limit=%u%n", &sample_limit,
-               &sample_limit_consumed) != 1 ||
-        line[sample_limit_consumed] != '\0' || sample_limit < 512u ||
-        sample_limit > 65536u) {
+    if (!read_line(file, line, sizeof(line))) {
+        out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
+        fclose(file);
+        return 0;
+    }
+    if (sscanf(line, "rng_consumer_sample_limit=%u%n", &sample_limit,
+               &sample_limit_consumed) == 1 &&
+        line[sample_limit_consumed] == '\0') {
+        if (sample_limit < 512u || sample_limit > 65536u) {
+            out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
+            fclose(file);
+            return 0;
+        }
+    } else if (strncmp(line, "rng_consumer_window ",
+                       sizeof("rng_consumer_window ") - 1u) == 0) {
+        /* Early instrumented Mednafen traces predate the explicit limit
+         * header and emitted the original 512-step capture budget.  The
+         * record grammar below is still checked byte-for-byte; this is
+         * format compatibility only, not a gameplay assumption. */
+        /* The old writer did not emit its per-window budget.  Leave the
+         * temporary bound wide enough to inspect the first window; the
+         * actual budget is inferred only at its authenticated sequence edge. */
+        sample_limit = 65536u;
+        legacy_format = 1;
+        snprintf(pending_line, sizeof(pending_line), "%s", line);
+        have_pending_line = 1;
+    } else {
         out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
         fclose(file);
         return 0;
@@ -367,20 +393,34 @@ int theron_v1_mednafen_rng_consumer_trace_parse_file(
     out->physical_pc_bounds_verified = 1;
     out->boundary_flags_verified = 1;
 
-    while (read_line(file, line, sizeof(line))) {
+    while (have_pending_line || read_line(file, line, sizeof(line))) {
         unsigned int sequence, step, pc, physical_pc;
         unsigned int a, x, y, sp, p, mpr0;
         unsigned int b3, b4, b5, b6, b8, ba, bb, entry_sp, return_pc;
         unsigned int return_boundary;
         int consumed = 0;
+        int parsed_fields;
         int is_target_5d64, is_target_5d6a;
         int sequence_ok, step_ok, entry_ok;
 
-        if (sscanf(line,
+        if (have_pending_line) have_pending_line = 0;
+        parsed_fields = sscanf(line,
                    "rng_consumer_window sequence=%u step=%u pc=%x physical_pc=%x entry=%15s a=%x x=%x y=%x sp=%x p=%x mpr0=%x b3=%x b4=%x b5=%x b6=%x b8=%x ba=%x bb=%x entry_sp=%x return_pc=%x return_boundary=%u%n",
                    &sequence, &step, &pc, &physical_pc, entry, &a, &x, &y,
                    &sp, &p, &mpr0, &b3, &b4, &b5, &b6, &b8, &ba, &bb,
-                   &entry_sp, &return_pc, &return_boundary, &consumed) != 21 ||
+                   &entry_sp, &return_pc, &return_boundary, &consumed);
+        if (parsed_fields != 21 && legacy_format) {
+            consumed = 0;
+            entry_sp = 0u;
+            return_pc = 0u;
+            return_boundary = 0u;
+            parsed_fields = sscanf(line,
+                   "rng_consumer_window sequence=%u step=%u pc=%x physical_pc=%x entry=%15s a=%x x=%x y=%x sp=%x p=%x mpr0=%x b3=%x b4=%x b5=%x b6=%x b8=%x ba=%x bb=%x%n",
+                   &sequence, &step, &pc, &physical_pc, entry, &a, &x, &y,
+                   &sp, &p, &mpr0, &b3, &b4, &b5, &b6, &b8, &ba, &bb,
+                   &consumed);
+        }
+        if ((parsed_fields != 21 && (!legacy_format || parsed_fields != 18)) ||
             line[consumed] != '\0' || sequence == 0u ||
             step >= out->sample_limit ||
             pc > 0xffffu || return_pc > 0xffffu || entry_sp > 0xffu ||
@@ -407,6 +447,19 @@ int theron_v1_mednafen_rng_consumer_trace_parse_file(
             sequence_ok = 1;
             step_ok = step == expected_step;
         } else {
+            if (legacy_format && !legacy_limit_inferred &&
+                out->window_count == 1u) {
+                /* The first sequence edge is the only source-owned place
+                 * where the legacy writer exposes its window length. */
+                if (expected_step == 0u || expected_step > 65536u) {
+                    out->status = THERON_V1_SPAWN_CONSUMER_TRACE_REJECTED;
+                    fclose(file);
+                    return 0;
+                }
+                out->sample_limit = expected_step;
+                legacy_limit_inferred = 1;
+                previous_window_complete = 1;
+            }
             sequence_ok = sequence == previous_sequence + 1u;
             step_ok = step == 0u && previous_window_complete;
         }

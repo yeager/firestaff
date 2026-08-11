@@ -8,6 +8,8 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   RNG-fönster, men ingen giltig `$B0E5`-kategori eller target-publicering.
   Den får inte öppna RNG-return, monsterstats, AI, combat, loot, generatorer,
   T700 eller T900.
+- ✅ Den äldre 18-fälts-sidecarens 192-stegsformat kan nu läsas utan att
+  moderna return-boundary-fält eller semantik uppfinns.
 
 ## 2026-08-12 — JP-porträtt och originalmekanik är fortfarande öppna
 

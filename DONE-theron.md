@@ -9,6 +9,8 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   `$4667`-observationer.
 - ✅ Testprovet kräver nu parserad provenance och stängd semantikgate, men
   antar inte felaktigt att alla riktiga körningar måste sakna RNG-edgefönster.
+- ✅ RNG-parsern accepterar dessutom den autentiserade äldre sidecar-layouten:
+  18-fältsrader och fönsterlängd härledd från första sekvenskanten.
 - 🔒 Ingen giltig `$B0E5`-spawnpost eller target-publicering finns ännu.
 
 ## 2026-08-12 — parity-matrisens överclaim korrigerad
