@@ -12,3 +12,7 @@
   `PORTRAIT` picker, applies source F7084 scrolling/hit boxes, and imports
   the selected real `.CMP` through F7002. New-disk media switching remains
   fail-closed until its native C06 transaction is recovered.
+- CSB: FM Towns C06 now exposes a receipt-bound F7000 portrait-save filename
+  mapping from the authentic English and Japanese utility executables
+  (`2:\\#CHAMP_NAME#.CMP`). The M11 save dialog remains fail-closed until its
+  native three-choice modal and record/write branches are bound.

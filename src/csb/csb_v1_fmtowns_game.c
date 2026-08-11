@@ -84,6 +84,12 @@ enum {
     CSB_V1_FMTOWNS_UTILE_FILE_PICKER_ARROWS_OFFSET = 0x14f70u,
     CSB_V1_FMTOWNS_UTILJ_FILE_PICKER_ARROWS_OFFSET = 0x14fd8u,
     CSB_V1_FMTOWNS_UTILITY_FILE_PICKER_ARROWS_FNV1A = 0xe2226054u,
+    /* CEDT001.C F7000's source-owned filename operation.  These are raw
+     * offsets in the verified UTILE/UTILJ P3 images, confirmed by the
+     * #CHAMP_NAME# and 2:\\#CHAMP_NAME#.CMP string references. */
+    CSB_V1_FMTOWNS_UTILE_SAVE_CMP_MAPPING_OFFSET = 0x11ffcu,
+    CSB_V1_FMTOWNS_UTILJ_SAVE_CMP_MAPPING_OFFSET = 0x12064u,
+    CSB_V1_FMTOWNS_UTILITY_SAVE_CMP_MAPPING_BYTES = 20u,
     /* The retail F31E/F31J programs carry identical 10*32*32 selector
      * tables. These offsets are from the raw verified executable image. */
     CSB_V1_FMTOWNS_CHTWE_MUSIC_TABLE_OFFSET = 271144u,
@@ -2167,6 +2173,42 @@ int csb_v1_fmtowns_utility_handoff_open(
         "ReDMCSB SWITCH.C F2279; AUTOEXEC.BAT exits 2/5; "
         "COMPILE.H EXEID 63/64 lines 379-385 C06_CEDT";
     return 1;
+}
+
+int csb_v1_fmtowns_utility_save_mapping_open(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_FmtownsSwitchLanguage language,
+    CSB_V1_FmtownsUtilitySaveMappingReceipt *out_receipt)
+{
+    CSB_V1_FmtownsUtilityHandoffReceipt handoff;
+    uint32_t source_offset;
+    unsigned char source[CSB_V1_FMTOWNS_UTILITY_SAVE_CMP_MAPPING_BYTES];
+    static const unsigned char expected[] =
+        "2:\\#CHAMP_NAME#.CMP";
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (sizeof(expected) != CSB_V1_FMTOWNS_UTILITY_SAVE_CMP_MAPPING_BYTES ||
+        !csb_v1_fmtowns_utility_handoff_open(profile, language, &handoff))
+        return 0;
+    source_offset = language == CSB_FMTOWNS_SWITCH_ENGLISH ?
+        CSB_V1_FMTOWNS_UTILE_SAVE_CMP_MAPPING_OFFSET :
+        CSB_V1_FMTOWNS_UTILJ_SAVE_CMP_MAPPING_OFFSET;
+    if (!csb_v1_fmtowns_utility_read_span(
+            &handoff, source_offset, source, sizeof(source)) ||
+        memcmp(source, expected, sizeof(expected)) != 0) return 0;
+    memcpy(out_receipt->template_bytes, source, sizeof(source));
+    out_receipt->valid = 1;
+    out_receipt->language = language;
+    out_receipt->variant_id = handoff.variant_id;
+    out_receipt->source_file_offset = source_offset;
+    out_receipt->source_size = sizeof(source);
+    out_receipt->source_fnv1a = csb_v1_fmtowns_game_bytes_fnv1a(
+        source, sizeof(source));
+    out_receipt->source_evidence =
+        "ReDMCSB CEDT001.C F7000; CEDTDATA.C M747_FILE_ID_SAVE_CMP; "
+        "verified UTILE/UTILJ 2:\\#CHAMP_NAME#.CMP mapping";
+    return out_receipt->source_fnv1a != 0u;
 }
 
 int csb_v1_fmtowns_utility_menu_open(

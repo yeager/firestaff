@@ -188,6 +188,7 @@ int main(void)
     CSB_V1_FmtownsStartupState external_save_state;
     CSB_V1_DungeonData mini_dungeon;
     CSB_V1_FmtownsUtilityHandoffReceipt utility_handoff;
+    CSB_V1_FmtownsUtilitySaveMappingReceipt utility_save_mapping;
     CSB_V1_FmtownsUtilityMenuReceipt utility_menu;
     CSB_V1_FmtownsUtilityFontReceipt utility_font;
     CSB_V1_FmtownsUtilityPortraitCatalog utility_portrait_catalog;
@@ -750,6 +751,17 @@ int main(void)
                   (language == CSB_FMTOWNS_SWITCH_ENGLISH ? 0x14f70u :
                                                            0x14fd8u),
           "verified F31 profile resolves its language-owned C06 P3 envelope");
+    memset(&utility_save_mapping, 0, sizeof(utility_save_mapping));
+    CHECK(csb_v1_fmtowns_utility_save_mapping_open(
+              (const CSB_V1_BootProfile *)view.csbBootProfile,
+              language, &utility_save_mapping) &&
+              utility_save_mapping.valid &&
+              strcmp(utility_save_mapping.template_bytes,
+                     "2:\\#CHAMP_NAME#.CMP") == 0 &&
+              utility_save_mapping.source_file_offset ==
+                  (language == CSB_FMTOWNS_SWITCH_ENGLISH ? 0x11ffcu :
+                                                           0x12064u),
+          "F7000 save mapping is bound to the authentic C06 image");
     memset(&utility_menu, 0, sizeof(utility_menu));
     CHECK(csb_v1_fmtowns_utility_menu_open(
               (const CSB_V1_BootProfile *)view.csbBootProfile,

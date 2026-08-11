@@ -271,11 +271,14 @@ populated dungeon states.
   Disassembly of `CEDT001.C` shows that F7001 first asks whether to save the
   complete game or the selected champion, and F7000 then creates the latter
   through F31's `#CHAMP_NAME#` file-operation mapping. It is not a batch
-  rewrite of source-matched `PORTRAIT/*.CMP` records. M11 therefore reports
-  that the C06 save dialog is unavailable until that mapping and destination
-  semantics are recovered. The internal record serializer preserves native
-  identity bytes and writes C06's name/title/payload fields, with a real
-  F31-corpus test, but it is deliberately not reachable from the product.
+  rewrite of source-matched `PORTRAIT/*.CMP` records. The authenticated
+  UTILE/UTILJ images now prove and expose the exact native
+  `2:\#CHAMP_NAME#.CMP` mapping as a source receipt for both languages. M11
+  still reports that the C06 save dialog is unavailable until F7001's
+  three-choice modal, selected-champion record construction, and whole-game
+  branch are wired. The internal record serializer preserves native identity
+  bytes and writes C06's name/title/payload fields, with a real F31-corpus
+  test, but it is deliberately not reachable from the product.
 
 - **FM-TOWNS-C06-LOAD-001 — `F7002_ReadCMP` is now an authenticated import
   transaction.** Given an index returned by the admitted `PORTRAIT` catalogue,

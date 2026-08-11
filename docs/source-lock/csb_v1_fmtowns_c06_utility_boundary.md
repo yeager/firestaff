@@ -28,6 +28,7 @@ admitted separately and is never a fallback for F31E.
 | Arrow bitmap | F31 `UTILE.EXP` virtual offset `0x14f70`; ReDMCSB F0689 | Bound to raster | The IMG2 stream is hash-checked and decoded as 31 logical pixels per 32-pixel row buffer for the C06 picker surface. |
 | `.CMP` catalogue and picker state | `CEDT008.C` F7080/F7081/F7083/F7084 and `CEDT001.C F7002_ReadCMP` | Bound | Only valid, decoded `PORTRAIT/*.CMP` records are catalogued. M11 enters the source picker on `LOAD CHAMPIONS`, renders its nine-row F31E surface, sends source-coordinate clicks through F7084, then imports only the selected admitted record through F7002. |
 | Existing-record CMP serializer | CMP layout; `CEDT006.C` C12 copy sequence | Internal only | The tested serializer preserves CMP format/identity bytes and writes C06's 8-byte name, 20-byte title and planar payload fields. It is not exposed as C06 save behavior. |
+| F7000 portrait destination mapping | `CEDT001.C` F7000; `CEDTDATA.C` M747; verified UTILE/UTILJ strings | Bound to receipt | The native `2:\\#CHAMP_NAME#.CMP` mapping is read from the authenticated C06 image for English and Japanese. It is a source receipt, not a host path, and does not by itself close the three-choice save dialog or whole-game save route. |
 
 ## Explicitly closed routes
 
@@ -37,7 +38,7 @@ utility flow or create replacement data:
 | Route | Missing original owner(s) | Why it remains closed |
 |---|---|---|
 | Make New Adventure | `CEDT006.C` F7086/F7090 | The separate new-adventure state transition has not been bound to F31 data. |
-| Save Champions dialog and destination | `CEDT001.C` F7000/F7001; `CEDTDATA.C G2297_DataFiles` | F7001 asks whether to save the whole game, selected champion or cancel. F7000's selected-portrait branch resolves the exact `2:\\#CHAMP_NAME#.CMP` template through the F31 file-operation layer. Drive `2:` is a dynamic portrait-save medium, not evidence that the scanned `PORTRAIT` directory is writable; the product route is disabled until that mount mapping is recovered. |
+| Save Champions dialog and destination | `CEDT001.C` F7000/F7001; F31 `#CHAMP_NAME#` file-operation mapping | The filename mapping is now receipt-bound, but F7001's three-choice modal, selected-champion record construction, and whole-game branch are not yet wired to M11. Rewriting all existing catalogue records remains disabled because it is not source behavior. |
 | Name and title editing | `CEDT006.C` F7027/F7028/F7041 | Cursor timing, keyboard input and text commit remain unbound. |
 | F31J editor | `CEDT030.C` F7341 | The native Shift-JIS glyph consumer is not recovered; drawing host text would fabricate the screen. |
 

@@ -47,6 +47,7 @@ extern "C" {
 #define CSB_V1_FMTOWNS_STARTUP_PORTRAIT_BYTES 464u
 #define CSB_V1_FMTOWNS_UTILITY_PORTRAIT_CATALOG_CAPACITY 24u
 #define CSB_V1_FMTOWNS_UTILITY_PORTRAIT_FILENAME_CAPACITY 13u
+#define CSB_V1_FMTOWNS_UTILITY_SAVE_MAPPING_CAPACITY 32u
 
 /* ReDMCSB DEFS.H command ordinals consumed by CEDT006.C's C06 loop. */
 typedef enum CSB_V1_FmtownsUtilityMenuAction {
@@ -277,6 +278,21 @@ typedef struct CSB_V1_FmtownsUtilityHandoffReceipt {
     const char *source_evidence;
 } CSB_V1_FmtownsUtilityHandoffReceipt;
 
+/* CEDT001.C F7000 expands the source-owned #CHAMP_NAME# file operation.
+ * This receipt retains the exact mapping from the selected UTILE/UTILJ
+ * image; it is not a host path and cannot be used without the authenticated
+ * C06 handoff. */
+typedef struct CSB_V1_FmtownsUtilitySaveMappingReceipt {
+    int valid;
+    CSB_V1_FmtownsSwitchLanguage language;
+    CSB_V1_VariantId variant_id;
+    uint32_t source_file_offset;
+    uint32_t source_size;
+    uint32_t source_fnv1a;
+    char template_bytes[CSB_V1_FMTOWNS_UTILITY_SAVE_MAPPING_CAPACITY];
+    const char *source_evidence;
+} CSB_V1_FmtownsUtilitySaveMappingReceipt;
+
 /* C06's first menu is retained as source bytes.  Japanese remains Shift-JIS
  * until the native Towns text path is decoded; callers must not replace it
  * with translated host strings. */
@@ -459,6 +475,13 @@ int csb_v1_fmtowns_utility_handoff_open(
     const CSB_V1_BootProfile *profile,
     CSB_V1_FmtownsSwitchLanguage language,
     CSB_V1_FmtownsUtilityHandoffReceipt *out_receipt);
+
+/* Bind F7000's real portrait-save filename template from the selected C06
+ * executable.  No destination is invented when this receipt is absent. */
+int csb_v1_fmtowns_utility_save_mapping_open(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_FmtownsSwitchLanguage language,
+    CSB_V1_FmtownsUtilitySaveMappingReceipt *out_receipt);
 
 int csb_v1_fmtowns_utility_menu_open(
     const CSB_V1_BootProfile *profile,
