@@ -6679,7 +6679,7 @@ const char* M12_Architecture_Label(int architecture) {
     case M12_ARCH_ATARI_ST:  return "Atari ST";
     case M12_ARCH_FM_TOWNS:  return "FM Towns";
     case M12_ARCH_X68000:    return "X68000";
-    case M12_ARCH_PC98:      return "PC-9801";
+    case M12_ARCH_PC98:      return "PC-9801 (unsupported)";
     case M12_ARCH_PCE:       return "PC Engine";
     case M12_ARCH_SATURN:    return "Saturn";
     case M12_ARCH_APPLE_IIGS: return "Apple IIGS";
@@ -6695,7 +6695,7 @@ const char* M12_Architecture_ShortLabel(int architecture) {
     case M12_ARCH_ATARI_ST:  return "ST";
     case M12_ARCH_FM_TOWNS:  return "FMT";
     case M12_ARCH_X68000:    return "X68k";
-    case M12_ARCH_PC98:      return "PC-98";
+    case M12_ARCH_PC98:      return "PC-98 off";
     case M12_ARCH_PCE:       return "PCE";
     case M12_ARCH_SATURN:    return "Saturn";
     case M12_ARCH_APPLE_IIGS: return "IIGS";
@@ -6712,7 +6712,10 @@ static int m12_version_is_launchable(const char *gameId,
      * now binds from its version-private ADF materialisation.  Catalogue
      * order may therefore select A31E without borrowing A31M media.
      * ReDMCSB COMPILE.H:199-213, 246-269. */
-    return gameId && version && version->versionId;
+    /* PC-9801 media may be retained for preservation receipts, but no
+     * Firestaff game exposes a selectable or launchable PC-9801 route. */
+    return gameId && version && version->versionId &&
+           version->architecture != M12_ARCH_PC98;
 }
 
 int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
@@ -6723,7 +6726,7 @@ int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
     static const int pcFirstAutoPriority[] = {
         /* DM1 and DM2 have a verified PC primary route. */
         M12_ARCH_PC, M12_ARCH_AMIGA, M12_ARCH_ATARI_ST, M12_ARCH_FM_TOWNS,
-        M12_ARCH_X68000, M12_ARCH_PC98,
+        M12_ARCH_X68000,
         M12_ARCH_PCE, M12_ARCH_SATURN, M12_ARCH_APPLE_IIGS
     };
     static const int csbAutoPriority[] = {

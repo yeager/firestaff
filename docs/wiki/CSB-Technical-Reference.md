@@ -71,10 +71,11 @@ Firestaff cache. On success it is atomically promoted to `FMTOWNS.IMG`; on
 failure the staging file is removed. The directory containing the original
 ZIP/RAR remains read-only from Firestaff's point of view.
 
-### PC-9801 HDM preservation receipt
+### PC-9801 HDM preservation receipt (unsupported)
 
-PC-9801 CSB 3.1 is recognized as its own Japanese HDM/floppy family, never as
-PC, Atari ST, or FM Towns data. The byte classifier reads the actual FAT12
+PC-9801 CSB 3.1 is preserved as its own Japanese HDM/floppy family, never as
+PC, Atari ST, or FM Towns data. It is intentionally unsupported by Firestaff:
+it cannot be selected or launched from the menu or CLI. The byte classifier reads the actual FAT12
 root directory using the PC-98 2HD geometry: this corpus stores 1024-byte
 sectors and its root begins after one reserved sector plus two two-sector FATs
 (offset 5120). A verified root contains `CJDATA` and `CSBGAME`; `FIRES` may
