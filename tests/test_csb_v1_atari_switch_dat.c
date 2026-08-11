@@ -1,6 +1,7 @@
 #include "csb_v1_atari_switch_dat.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int passed;
@@ -9,6 +10,26 @@ static int failed;
 #define CHECK(condition, text) do { \
     if (condition) ++passed; else { ++failed; printf("FAIL: %s\\n", text); } \
 } while (0)
+
+static uint8_t *read_file(const char *path, size_t *out_size)
+{
+    FILE *file;
+    long length;
+    uint8_t *bytes = NULL;
+
+    if (!path || !out_size || !(file = fopen(path, "rb"))) return NULL;
+    if (fseek(file, 0L, SEEK_END) != 0 || (length = ftell(file)) <= 0 ||
+        fseek(file, 0L, SEEK_SET) != 0 ||
+        !(bytes = (uint8_t *)malloc((size_t)length)) ||
+        fread(bytes, 1u, (size_t)length, file) != (size_t)length) {
+        free(bytes);
+        fclose(file);
+        return NULL;
+    }
+    fclose(file);
+    *out_size = (size_t)length;
+    return bytes;
+}
 
 static void put_be16(uint8_t *bytes, uint16_t value)
 {
@@ -84,11 +105,39 @@ static size_t make_switch_dat(uint8_t *bytes, size_t capacity)
     return total;
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
     uint8_t bytes[256];
     size_t byte_count = make_switch_dat(bytes, sizeof(bytes));
     CSB_V1_AtariSwitchDatReceipt receipt;
+    const char *real_path = argc == 2 ? argv[1] : getenv("FIRESTAFF_CSB_ATARI_SWITCH");
+
+    if (argc > 2) {
+        fputs("usage: test_csb_v1_atari_switch_dat [original-SWITCH.DAT]\n", stderr);
+        return 2;
+    }
+
+    if (real_path) {
+        uint8_t *real_bytes;
+        size_t real_size;
+        real_bytes = read_file(real_path, &real_size);
+        CHECK(real_bytes != NULL, "reads the requested original SWITCH.DAT");
+        if (real_bytes) {
+            CHECK(real_size == 7405u,
+                  "keeps the documented Atari ST 2.x SWITCH.DAT byte size");
+            CHECK(csb_v1_atari_switch_dat_parse(real_bytes, real_size, &receipt),
+                  "parses the checksummed original Atari ST switch data");
+            CHECK(receipt.valid && receipt.header_segment_count > 0u &&
+                  receipt.option_count > 0u && receipt.options[0].enabled,
+                  "retains an original source-owned switch background");
+            CHECK(receipt.has_palette,
+                  "binds the optional source-owned switch palette when present");
+            free(real_bytes);
+        }
+        printf("csb_v1_atari_switch_dat real: %d/%d assertions passed\n",
+               passed, passed + failed);
+        return failed ? 1 : 0;
+    }
 
     CHECK(byte_count != 0u, "builds a bounded FTL fixture");
     CHECK(csb_v1_atari_switch_dat_parse(bytes, byte_count, &receipt),
