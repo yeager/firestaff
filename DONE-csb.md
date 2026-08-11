@@ -8,10 +8,13 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   `csb_v1_fmtowns_native_cli_boot` CTest. With explicitly supplied licensed
   F31 media (`FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR`), it proves the direct
   direct `--game csb --platform fm-towns` route first reaches the original
-  `TITLE.ANM` owner and then proves `--menu` completes the real
-  AUTOEXEC/SWITCHTW/MINI.DAT path to the source start pose `(9,0,2)`. The
-  new `--csb-fmtowns-ja` selector binds only the matched `fmtowns-ja` cache
-  row; the same test proves that F31J does not silently fall back to F31E. It
+  `TITLE.ANM` owner and then completes the real AUTOEXEC/SWITCHTW/MINI.DAT
+  path to the source start pose `(9,0,2)`. A separate normal-launcher check
+  uses `--menu --script enter` with a launch receipt, so it verifies that the
+  selected CSB entry reaches the native F31 handoff without treating
+  boot-probe's intentional direct-launch mode as menu coverage. The new
+  `--csb-fmtowns-ja` selector binds only the matched `fmtowns-ja` cache row;
+  the same test proves that F31J does not silently fall back to F31E. It
   supplies neither fixture bytes,
   synthetic save data nor a host input shortcut, and skips safely where no
   licensed media has been configured. Local verification: `cmake --build

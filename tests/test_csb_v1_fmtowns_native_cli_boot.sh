@@ -52,7 +52,7 @@ case "$title_output" in
 esac
 
 runtime_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
-    --menu --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg --boot-probe \
+    --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg --boot-probe \
     --boot-probe-frames 2000 --boot-probe-expect-phase inactive \
     --boot-probe-expect-runtime --boot-probe-expect-party 9,0,2 \
     --duration 0 2>&1)" || {
@@ -69,4 +69,24 @@ case "$runtime_output" in
         ;;
 esac
 
-echo "PASS: native CSB FM Towns direct CLI title and start-menu MINI.DAT runtime boot"
+# boot-probe intentionally runs the direct launch path, so it cannot prove the
+# regular launcher route. Exercise that route separately: --menu retains the
+# selected CSB row, and Enter must request the native F31 handoff.
+menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+    SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+    --menu --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
+    --script enter --duration 1000 2>&1)" || {
+    printf '%s\n' "$menu_output" >&2
+    exit 1
+}
+
+case "$menu_output" in
+    *"CSB READY: gameId=csb"*"dataDir="*"$expected_cache"*) ;;
+    *)
+        echo "FAIL: CSB FM Towns start-menu Enter did not request native launch" >&2
+        printf '%s\n' "$menu_output" >&2
+        exit 1
+        ;;
+esac
+
+echo "PASS: native CSB FM Towns CLI title, MINI.DAT runtime, and start-menu launch"
