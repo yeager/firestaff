@@ -788,6 +788,24 @@ static void test_source_item_pickup_provenance(void) {
               theron_v1_object_place(&w, &unbound), 0);
     CHECK_INT("real-level generic weapon pickup rejected",
               theron_v1_click_route(&w, 1, 1, THERON_CMD_TAKE), -1);
+    {
+        Theron_V1_Object locked_door;
+        memset(&locked_door, 0, sizeof(locked_door));
+        locked_door.type = THERON_OBJTYPE_DOOR;
+        locked_door.flags = THERON_DOOR_F_LOCKED;
+        locked_door.dungeon_id = w.current_dungeon;
+        locked_door.level = w.current_level;
+        locked_door.x = 4;
+        locked_door.y = 4;
+        CHECK_INT("source-bound locked door placed",
+                  theron_v1_object_place(&w, &locked_door), 0);
+        w.party.champions[0].inventory[0] = THERON_ITEM_KEY;
+        CHECK_INT("source-bound door rejects host key ID",
+                  theron_v1_door_open(&w, 4, 4), -1);
+        CHECK_INT("source-bound explicit unlock rejects host key ID",
+                  theron_v1_door_unlock_with_key(&w, 4, 4, THERON_ITEM_KEY), -1);
+        w.party.champions[0].inventory[0] = THERON_ITEM_NONE;
+    }
     w.levels[0][0].source_item_property_table_verified = 1;
     memset(&object, 0, sizeof(object));
     object.type = THERON_OBJTYPE_WEAPON;

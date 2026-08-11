@@ -536,6 +536,13 @@ int theron_v1_door_open(Theron_V1_World *world, int x, int y) {
     if (d->flags & THERON_DOOR_F_BROKEN) return -1;
 
     if (d->flags & THERON_DOOR_F_LOCKED) {
+        if (theron_v1_source_level_requires_item_provenance(world)) {
+            /* The legacy THERON_ITEM_KEY value is a host compatibility ID,
+             * not the authenticated Track 02 object identity.  Until the
+             * original T900 key/object consumer is captured, never let it
+             * unlock a real source-bound door. */
+            return -1;
+        }
         Theron_V1_Champion *champion =
             theron_v1_party_getChampion(&world->party,
                                         world->party.active_slot);
@@ -593,6 +600,7 @@ int theron_v1_door_unlock_with_key(Theron_V1_World *world,
                                       int x, int y, int key_item) {
     if (!world) return -1;
     if (key_item != THERON_ITEM_KEY) return -1;
+    if (theron_v1_source_level_requires_item_provenance(world)) return -1;
     Theron_V1_Object *d = theron_v1_object_at_in_dungeon(
         world, world->current_dungeon, world->current_level, x, y);
     if (!d || d->type != THERON_OBJTYPE_DOOR) return -1;
