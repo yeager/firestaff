@@ -1,5 +1,17 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-11 — RNG capture is bounded per source window
+
+The reproducible Mednafen capture patch now limits both samples within a RNG
+window and the number of complete source windows. The launcher validates and
+forwards `THERON_CAPTURE_RNG_CONSUMER_WINDOW_LIMIT` (1–1024), and records the
+chosen value in the transition receipt. A smoke capture against the
+authenticated US Track 02/System Card with the limit set to 4 emitted
+`rng_consumer_window_limit=4`, 662 rows and 133,594 bytes; it did not produce a
+dynamic CD/RAM or creature join. The receipt remains negative evidence and is
+kept on the external disk; no RNG, spawn, AI, T700 or T900 semantics are
+promoted from it.
+
 ## 2026-08-11 — corrected capture replay isolates a bank-overlay `$B0E5` hit
 
 The external-disk replay `theron-capture-20260812-state-replay-fixed` used the

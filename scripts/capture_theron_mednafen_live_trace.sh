@@ -43,6 +43,7 @@ replay_input_script=${THERON_CAPTURE_REPLAY_INPUT_SCRIPT:-}
 autoload_state=${THERON_CAPTURE_AUTOLOAD_STATE:-}
 autoload_movie=${THERON_CAPTURE_AUTOLOAD_MOVIE:-}
 rng_consumer_sample_limit=${THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT:-512}
+rng_consumer_window_limit=${THERON_CAPTURE_RNG_CONSUMER_WINDOW_LIMIT:-32}
 main_ram_consumer_sample_limit=${THERON_CAPTURE_MAIN_RAM_CONSUMER_SAMPLE_LIMIT:-65536}
 input_route=${THERON_CAPTURE_INPUT_ROUTE:-pid}
 host_focus_x=${THERON_CAPTURE_FOCUS_X:-960}
@@ -66,6 +67,11 @@ fi
 if [[ ! "$rng_consumer_sample_limit" =~ ^[0-9]+$ ]] ||
    (( rng_consumer_sample_limit < 512 || rng_consumer_sample_limit > 65536 )); then
     printf '%s\n' 'FAIL: THERON_CAPTURE_RNG_CONSUMER_SAMPLE_LIMIT must be an integer from 512 through 65536' >&2
+    exit 1
+fi
+if [[ ! "$rng_consumer_window_limit" =~ ^[0-9]+$ ]] ||
+   (( rng_consumer_window_limit < 1 || rng_consumer_window_limit > 1024 )); then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_RNG_CONSUMER_WINDOW_LIMIT must be an integer from 1 through 1024' >&2
     exit 1
 fi
 if [[ ! "$main_ram_consumer_sample_limit" =~ ^[0-9]+$ ]] ||
@@ -876,6 +882,7 @@ launch=(
     FIRESTAFF_THERON_SPAWN_REGISTER_SAMPLE_LIMIT="${THERON_CAPTURE_SPAWN_REGISTER_SAMPLE_LIMIT:-65536}" \
     FIRESTAFF_THERON_RNG_CONSUMER_TRACE="$rng_consumer_trace" \
     FIRESTAFF_THERON_RNG_CONSUMER_SAMPLE_LIMIT="$rng_consumer_sample_limit" \
+    FIRESTAFF_THERON_RNG_CONSUMER_WINDOW_LIMIT="$rng_consumer_window_limit" \
     FIRESTAFF_THERON_RNG_CODE_TRACE="$rng_code_trace" \
     FIRESTAFF_THERON_VRAM_SNAPSHOT="$vram_snapshot" \
     FIRESTAFF_THERON_VCE_SNAPSHOT="$vce_snapshot" \
@@ -1215,6 +1222,7 @@ transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$inp
     printf 'spawn_entry_b0e5_samples=%s\n' "$transition_spawn_entry_b0e5_count"
     printf 'rng_consumer_samples=%s\n' "$transition_rng_consumer_sample_count"
     printf 'rng_consumer_sample_limit=%s\n' "$rng_consumer_sample_limit"
+    printf 'rng_consumer_window_limit=%s\n' "$rng_consumer_window_limit"
     printf 'rng_code_windows=%s\n' "$transition_rng_code_window_count"
     printf 'scripted_pce_input_events=%s\n' "$transition_scripted_input_count"
     printf 'vdc_vram_snapshot_bytes=65536\n'

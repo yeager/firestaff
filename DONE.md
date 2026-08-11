@@ -13883,3 +13883,7 @@ and production source-combat tests.
 - ✅ source-bound pickup kräver nu matchande `source_ref`, `next_ref`, `source_index`, kategori och råbytespayload i nivåns riktiga object-ledger
 - ✅ ett äkta itemrecord kan inte längre återanvändas som en ny hostförekomst på fel plats
 - ✅ verifierat med 131/131 combat-mechanics, hela US Track 02-loadern för sju dungeons och production combat bridge
+# Theron: bound RNG consumer capture windows (2026-08-11)
+- ✅ Versionerad Mednafen-patch och capture-script begränsar både samples per RNG-fönster och antal kompletta fönster
+- ✅ smoke-capture med äkta US Track 02/System Card verifierade `WINDOW_LIMIT=4`, 662 rader och 133 594 byte utan obegränsad trace
+- 🔒 Capturen saknar fortfarande autentiserad CD/RAM- och creature-join; RNG, spawn, AI, T700 och T900 förblir fail-closed

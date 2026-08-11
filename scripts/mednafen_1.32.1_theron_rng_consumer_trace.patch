@@ -1,7 +1,7 @@
 diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -175,3 +175,13 @@
+@@ -175,3 +175,15 @@
  static FILE *TheronIrq2TraceSpawnRegisters;
  static unsigned TheronIrq2TraceSpawnRegisterSamples;
 +static FILE *TheronIrq2TraceRngConsumer;
@@ -10,12 +10,14 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 +static unsigned TheronIrq2TraceRngWindowRemaining;
 +static unsigned TheronIrq2TraceRngSampleLimit = 512;
 +static bool TheronIrq2TraceRngSampleLimitInitialized;
++/* Bound complete source windows as well as samples within each window. */
++static unsigned TheronIrq2TraceRngWindowLimit = 32;
 +static unsigned TheronIrq2TraceRngEntrySP;
 +static unsigned TheronIrq2TraceRngReturnPC;
 +static FILE *TheronIrq2TraceRngCode;
 +static bool TheronIrq2TraceRngCodeSeen[8];
  static void FlushTheronIrq2Trace(void)
-@@ -200,3 +204,112 @@
+@@ -200,3 +204,120 @@
   const RegGroupType *trace_regs = (*CurGame->Debugger->RegGroups)[0];
   const uint32 logical_pc = trace_regs->GetRegister(trace_regs->Regs[0].id, NULL, 0) & 0xffff;
 + static const uint32 rng_entry_pcs[8] = {
@@ -28,7 +30,8 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 + for(code_slot = 0; code_slot < 8u &&
 +     rng_entry_pcs[code_slot] != logical_pc; ++code_slot) {}
 + const bool rng_entry = code_slot < 8u;
-+ if(rng_entry)
++ if(rng_entry && TheronIrq2TraceRngWindowSequence <
++                    TheronIrq2TraceRngWindowLimit)
 + {
 +  const uint32 code_mpr = trace_regs->GetRegister(
 +   trace_regs->Regs[6 + (logical_pc >> 13)].id, NULL, 0) & 0xff;
@@ -65,6 +68,11 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 +   if(limit_text && sscanf(limit_text, "%u", &parsed_limit) == 1 &&
 +      parsed_limit >= 512u && parsed_limit <= 65536u)
 +    TheronIrq2TraceRngSampleLimit = parsed_limit;
++   limit_text = getenv("FIRESTAFF_THERON_RNG_CONSUMER_WINDOW_LIMIT");
++   parsed_limit = 0;
++   if(limit_text && sscanf(limit_text, "%u", &parsed_limit) == 1 &&
++      parsed_limit > 0u && parsed_limit <= 1024u)
++    TheronIrq2TraceRngWindowLimit = parsed_limit;
 +   TheronIrq2TraceRngSampleLimitInitialized = true;
 +  }
 +  TheronIrq2TraceRngWindowRemaining = TheronIrq2TraceRngSampleLimit;
@@ -107,8 +115,10 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 +    if(TheronIrq2TraceRngConsumer)
 +     fprintf(TheronIrq2TraceRngConsumer,
 +             "source=mednafen-pce-instrumented-rng-consumer\n"
-+             "rng_consumer_sample_limit=%u\n",
-+             TheronIrq2TraceRngSampleLimit);
++             "rng_consumer_sample_limit=%u\n"
++             "rng_consumer_window_limit=%u\n",
++             TheronIrq2TraceRngSampleLimit,
++             TheronIrq2TraceRngWindowLimit);
 +   }
 +  }
 +  if(TheronIrq2TraceRngConsumer)
