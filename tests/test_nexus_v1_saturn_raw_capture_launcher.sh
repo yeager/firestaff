@@ -122,6 +122,39 @@ FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_LIMIT=20000 \
   --trace "$tmp_dir/trace-vdp2-env.raw" --validator /usr/bin/true \
   --manifest "$tmp_dir/manifest-vdp2-env.txt" >/dev/null
 grep -Fq '0x06011860,0x0,0x40000,20000' "$tmp_dir/trace-vdp2-env.raw"
+source_read_fake="$tmp_dir/fake-mednafen-source-read"
+python3 - "$source_read_fake" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+Path(sys.argv[1]).write_text(
+    "#!/bin/sh\n"
+    "printf '%s,%s,%s,%s,%s,%s' "
+    "\"$FIRESTAFF_NEXUS_TRACE_VDP2_SOURCE_READS\" "
+    "\"$FIRESTAFF_NEXUS_TRACE_VDP2_SOURCE_READ_MIN\" "
+    "\"$FIRESTAFF_NEXUS_TRACE_VDP2_SOURCE_READ_MAX\" "
+    "\"$FIRESTAFF_NEXUS_TRACE_VDP2_SOURCE_READ_PC_MIN\" "
+    "\"$FIRESTAFF_NEXUS_TRACE_VDP2_SOURCE_READ_PC_MAX\" "
+    "\"$FIRESTAFF_NEXUS_TRACE_VDP2_SOURCE_READ_LIMIT\" > "
+    "\"$FIRESTAFF_NEXUS_TRACE_OUTPUT\"\n",
+    encoding="utf-8",
+)
+os.chmod(sys.argv[1], 0o755)
+PY
+FIRESTAFF_NEXUS_TRACE_VDP2_SOURCE_READS="$tmp_dir/source-reads.trace" \
+FIRESTAFF_NEXUS_TRACE_VDP2_SOURCE_READ_MIN=0x0 \
+FIRESTAFF_NEXUS_TRACE_VDP2_SOURCE_READ_MAX=0x80000 \
+FIRESTAFF_NEXUS_TRACE_VDP2_SOURCE_READ_PC_MIN=0x06002fc4 \
+FIRESTAFF_NEXUS_TRACE_VDP2_SOURCE_READ_PC_MAX=0x06002fc6 \
+FIRESTAFF_NEXUS_TRACE_VDP2_SOURCE_READ_LIMIT=200000 \
+"$launcher" --operator-only --launch --mednafen "$source_read_fake" \
+  --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
+  --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
+  --trace "$tmp_dir/trace-vdp2-source-read-env.raw" --validator /usr/bin/true \
+  --manifest "$tmp_dir/manifest-vdp2-source-read-env.txt" >/dev/null
+grep -Fq "$tmp_dir/source-reads.trace,0x0,0x80000,0x06002fc4,0x06002fc6,200000" \
+  "$tmp_dir/trace-vdp2-source-read-env.raw"
 FIRESTAFF_NEXUS_TRACE_VDP1_WRITES="$write_trace" \
 FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE="$writer_code_trace" \
 FIRESTAFF_NEXUS_TRACE_VDP1_SNAPSHOT="$snapshot" \
