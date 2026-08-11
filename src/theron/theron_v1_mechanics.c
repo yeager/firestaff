@@ -182,6 +182,31 @@ static int theron_v1_source_item_record_matches_object(
     }
 }
 
+static int theron_v1_source_item_occurrence_exists(
+    const Theron_V1_World *world, const Theron_V1_Object *object) {
+    if (!world || !object || object->source_ref == 0u ||
+        object->source_raw_size == 0u ||
+        object->source_raw_size > sizeof(object->source_raw)) {
+        return 0;
+    }
+    for (unsigned int i = 0u; i < world->source_object_count; ++i) {
+        const Theron_V1_SourceObjectRecord *source =
+            &world->source_objects[i];
+        if (source->dungeon_id != object->dungeon_id ||
+            source->level != object->level ||
+            source->source_ref != object->source_ref ||
+            source->next_ref != object->source_next_ref ||
+            source->source_index != object->source_index ||
+            source->category != object->source_category ||
+            source->raw_size != object->source_raw_size ||
+            memcmp(source->raw, object->source_raw, source->raw_size) != 0) {
+            continue;
+        }
+        return 1;
+    }
+    return 0;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Command / click routing
  * ══════════════════════════════════════════════════════════════════════ */
@@ -237,12 +262,14 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
                  o->source_category) ||
              !o->source_property_valid ||
              o->source_item_type != (uint8_t)item_id ||
-             !theron_v1_source_item_record_matches_object(o))) {
+             !theron_v1_source_item_record_matches_object(o) ||
+             !theron_v1_source_item_occurrence_exists(world, o))) {
             /* ReDMCSB THQUEST T900 owns the object/category transition. A
              * real Track 02 level must never turn an unbound host object into
              * a carried item merely because its compact ID looks usable. The
-             * source property row is also required: without it the later
-             * equip/use consumer would have no authenticated stat payload. */
+             * source property row and exact source-object occurrence are also
+             * required: without them the later equip/use consumer would have
+             * no authenticated stat payload or ownership origin. */
             return -1;
         }
         champion = theron_v1_party_getChampion(&world->party,

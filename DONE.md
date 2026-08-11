@@ -13866,3 +13866,7 @@ and production source-combat tests.
 - ✅ T900-provenancekontrollen avvisar `source_raw_size` över den lagrade 16-byte payloaden innan decode/drop
 - ✅ verifierat med `test_theron_v1_combat_mechanics` (130/130)
 - 🔒 Detta öppnar inte equip/use/stack-regler; det hindrar endast korrupt eller host-manipulerad rådata från att passera source-boundaryn
+# Theron: pickup binds till autentiserad source-object-occurrence (2026-08-11)
+- ✅ source-bound pickup kräver nu matchande `source_ref`, `next_ref`, `source_index`, kategori och råbytespayload i nivåns riktiga object-ledger
+- ✅ ett äkta itemrecord kan inte längre återanvändas som en ny hostförekomst på fel plats
+- ✅ verifierat med 131/131 combat-mechanics, hela US Track 02-loadern för sju dungeons och production combat bridge

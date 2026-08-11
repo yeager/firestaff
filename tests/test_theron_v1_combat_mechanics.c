@@ -848,6 +848,12 @@ static void test_source_item_pickup_provenance(void) {
     memcpy(object.source_property,
            theron_v1_track02_item_property(6u),
            sizeof(object.source_property));
+    CHECK_INT("source item occurrence binds",
+              theron_v1_world_bind_track02_source_object(
+                  &w, w.current_dungeon, 0, object.source_ref,
+                  object.source_next_ref, object.source_index,
+                  object.source_category, 0u, object.x, object.y,
+                  object.source_raw, object.source_raw_size), 0);
     CHECK_INT("source weapon placed", theron_v1_object_place(&w, &object), 0);
     CHECK_INT("source weapon picked up",
               theron_v1_click_route(&w, 2, 2, THERON_CMD_TAKE), 0);
