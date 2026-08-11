@@ -1102,16 +1102,18 @@ int main(void)
                      sizeof(framebuffer)) != 0 && framebuffer[9u * 320u + 6u] == 9u,
               "F31E Utility presents its C06-owned source raster, not SWITCHTW");
         /* F7001 presents its own three-choice save dialog before F7000 can
-         * resolve the selected portrait's `2:\\#CHAMP_NAME#.CMP` destination.
-         * That mount mapping is deliberately not guessed from the scanned
-         * PORTRAIT directory, so the source button must remain inert rather
-         * than reusing Firestaff's former batch-rewrite shortcut. */
+         * resolve the selected portrait's receipt-bound
+         * `2:\\#CHAMP_NAME#.CMP` destination. The mapping is now retained by
+         * the live M11 C06 owner, but the modal and its write branches remain
+         * fail-closed rather than reusing Firestaff's former batch-rewrite
+         * shortcut. */
         result = M11_GameView_HandlePointerButton(
             &view, 150, 190, DM1_V1_MOUSE_MASK_LEFT_PC34);
         CHECK(result == M11_GAME_INPUT_IGNORED &&
                   view.csbFmtownsUtilityBound &&
+                  view.csbFmtownsUtilitySaveMappingReceipt.valid &&
                   !view.csbFmtownsUtilityFilePickerActive,
-              "F31E C06 SAVE CHAMPIONS stays closed until its native drive mapping is bound");
+              "F31E C06 SAVE CHAMPIONS keeps its bound mapping but stays closed until the native modal is bound");
         result = M11_GameView_HandlePointerButton(
             &view, 50, 190, DM1_V1_MOUSE_MASK_LEFT_PC34);
         CHECK(result == M11_GAME_INPUT_REDRAW &&
