@@ -142,11 +142,17 @@ Useful command-line options:
 ```text
 firestaff --game <dm1|csb|dm2|nexus|theron>
           --data-dir <path>
+          --platform <auto|pc|amiga|atari-st|fm-towns|pce|saturn>
+          --csb-fmtowns-ja
           --scan-data
           --fullscreen
           --scale-mode <n>
           --version
 ```
+
+`--csb-fmtowns-ja` is an explicit CSB-only F31J request. It selects the
+hash-verified Japanese FM Towns package and fails if that original package is
+not present; it never guesses from the host language or falls back to F31E.
 
 Run the local test suite with:
 

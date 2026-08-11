@@ -49,6 +49,8 @@ typedef struct {
     int architectureOverride; /* M12_ARCH_*; -1 keeps the saved/menu choice.
                                  --fm-towns is the shorthand for
                                  M12_ARCH_FM_TOWNS. */
+    int csbFmtownsJapanese; /* Select the verified CSB F31J package rather
+                               than the architecture's default F31E row. */
     int directLaunch;      /* Non-zero when --game should bypass M12. */
     int bootProbe;         /* Non-zero for deterministic --game boot smoke:
                               prepare/open selected-entry startup, then exit. */

@@ -3361,6 +3361,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->dm2EnglishCompanionPath = NULL;
     opts->gameId         = NULL;
     opts->architectureOverride = -1;
+    opts->csbFmtownsJapanese = 0;
     opts->directLaunch   = 0;
     opts->bootProbe      = 0;
     opts->bootProbeFrames = 0;
@@ -3473,6 +3474,31 @@ static int m11_apply_architecture_override(M12_StartupMenuState* menuState,
         applied++;
     }
     return applied;
+}
+
+/* F31E and F31J share the FM Towns architecture, so selecting the platform
+ * alone deliberately follows the ordinary matched-version policy (English
+ * first). The CLI needs a separate, exact edition request for a user who has
+ * the Japanese retail package. Never infer this from host locale or generic
+ * language settings: it selects only the authenticated CSB catalogue row. */
+static int m11_apply_csb_fmtowns_japanese_override(
+    M12_StartupMenuState* menuState)
+{
+    size_t version_count;
+    size_t version_index;
+    if (!menuState) return 0;
+    version_count = M12_AssetStatus_GetVersionCount("csb");
+    for (version_index = 0u; version_index < version_count; ++version_index) {
+        const M12_AssetVersionStatus* version =
+            M12_AssetStatus_GetVersion(&menuState->assetStatus, "csb",
+                                       version_index);
+        if (!version || !version->matched || !version->versionId ||
+            strcmp(version->versionId, "fmtowns-ja") != 0) continue;
+        menuState->gameOptions[1].architectureIndex = M12_ARCH_FM_TOWNS;
+        menuState->gameOptions[1].versionIndex = (int)version_index;
+        return 1;
+    }
+    return 0;
 }
 
 static int m11_apply_auto_architecture_override(M12_StartupMenuState* menuState,
@@ -6083,6 +6109,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             fprintf(stderr,
                     "firestaff: requested platform %s is not catalogued for the selected game\n",
                     M12_Architecture_Label(o->architectureOverride));
+            free(launcherFramebuffer);
+            M11_Render_Shutdown();
+            return 2;
+        }
+    }
+    if (o->csbFmtownsJapanese) {
+        if (!o->gameId || strcmp(o->gameId, "csb") != 0 ||
+            !m11_apply_csb_fmtowns_japanese_override(&menuState)) {
+            fprintf(stderr,
+                    "firestaff: --csb-fmtowns-ja requires matched CSB FM Towns Japanese media\n");
             free(launcherFramebuffer);
             M11_Render_Shutdown();
             return 2;
