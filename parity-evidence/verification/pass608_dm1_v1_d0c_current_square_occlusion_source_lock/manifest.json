@@ -5,27 +5,27 @@
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
-          "line": 1139,
+          "line": 1141,
           "needle": "{ DM1_VIEW_SQUARE_D0C, 0x0021, true, true, false, true, true, true, false,"
         },
         {
-          "line": 1141,
+          "line": 1143,
           "needle": "DUNVIEW.C:8241-8273 stairs front bitmap draws and breaks before F0115"
         },
         {
-          "line": 1142,
+          "line": 1144,
           "needle": "DUNVIEW.C:8274-8292 pit floor/ceiling bitmap before F0115"
         },
         {
-          "line": 1144,
+          "line": 1146,
           "needle": "DUNVIEW.C:8294 F0115 object/creature/projectile/explosion handoff with C0x0021"
         },
         {
-          "line": 1145,
+          "line": 1147,
           "needle": "DUNVIEW.C:8295-8308 teleporter field after F0115"
         },
         {
-          "line": 1146,
+          "line": 1148,
           "needle": "DUNVIEW.C:8185-8240 door-side case breaks before common F0115; no wall case in D0C"
         }
       ],
@@ -69,11 +69,11 @@
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "hits": [
         {
-          "line": 4535,
+          "line": 4538,
           "needle": "DUNVIEW.C:8185-8240,8241-8308 D0C door-side/stairs foreground blockers draw before common F0115; pit/ceiling/F0115/teleporter-field order"
         },
         {
-          "line": 4550,
+          "line": 4553,
           "needle": "DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion: copy front frame, composite hole, blit temporary frame before common F0115"
         }
       ],

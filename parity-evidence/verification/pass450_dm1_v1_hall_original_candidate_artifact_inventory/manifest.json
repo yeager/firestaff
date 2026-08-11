@@ -1,10 +1,10 @@
 {
   "schema": "pass450_dm1_v1_hall_original_candidate_artifact_inventory.v1",
-  "timestampUtc": "2026-08-07T15:09:32.186775+00:00",
+  "timestampUtc": "2026-08-11T06:49:42.533888+00:00",
   "status": "PASS_PASS450_CORRECTED_TERMINAL_ORIGINAL_FRAMES_INVENTORIED",
   "repo": "/Volumes/Extern-disk/firestaff-claude",
   "branch": "main",
-  "head": "2b31abedeb59bfea9e6d5d7616bd5a22143c657b",
+  "head": "69530d9527f27f558fa4c71e443b64cbb41570e5",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "dataHashLock": [
     {

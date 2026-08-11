@@ -3,24 +3,24 @@
     {
       "hits": [
         {
-          "line": 970,
+          "line": 972,
           "needle": "DM1_VIEW_SQUARE_D3L2, 0x0218, 0x0349"
         },
         {
-          "line": 970,
+          "line": 972,
           "needle": "DUNVIEW.C:6270 floor ornament under far rear pass"
         },
         {
-          "line": 971,
+          "line": 973,
           "needle": "DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439"
         },
         {
-          "line": 971,
+          "line": 973,
           "needle": "DUNVIEW.C:6337 floor ornament under mirrored far rear pass"
         }
       ],
       "id": "firestaff-far-door-front-metadata",
-      "lines": "970-971",
+      "lines": "972-973",
       "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -49,16 +49,16 @@
     {
       "hits": [
         {
-          "line": 4537,
+          "line": 4540,
           "needle": "DUNVIEW.C:6270-6286 D3L2 far door-front occlusion"
         },
         {
-          "line": 4538,
+          "line": 4541,
           "needle": "DUNVIEW.C:6337-6353 D3R2 mirrored far door-front occlusion"
         }
       ],
       "id": "firestaff-source-evidence-string",
-      "lines": "4537-4538",
+      "lines": "4540-4541",
       "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"

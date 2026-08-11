@@ -3,27 +3,27 @@
     {
       "hits": [
         {
-          "line": 995,
+          "line": 997,
           "needle": "DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736"
         },
         {
-          "line": 996,
+          "line": 998,
           "needle": "DUNVIEW.C:8185-8188"
         },
         {
-          "line": 997,
+          "line": 999,
           "needle": "DUNVIEW.C:8199-8201"
         },
         {
-          "line": 998,
+          "line": 1000,
           "needle": "DUNVIEW.C:8206-8210"
         },
         {
-          "line": 999,
+          "line": 1001,
           "needle": "DUNVIEW.C:8215-8216"
         },
         {
-          "line": 1000,
+          "line": 1002,
           "needle": "DUNVIEW.C:8240,8294"
         }
       ],
@@ -69,11 +69,11 @@
     {
       "hits": [
         {
-          "line": 4550,
+          "line": 4553,
           "needle": "DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion"
         },
         {
-          "line": 4550,
+          "line": 4553,
           "needle": "copy front frame, composite hole, blit temporary frame before common F0115"
         }
       ],

@@ -38,13 +38,13 @@ Claim: D3R, D2L, and D2R front-door branches use ReDMCSB's two-pass door-front o
 ## Firestaff Evidence
 
 - PASS firestaff-mirrored-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:968-982)
-  - line 973: DM1_VIEW_SQUARE_D3R, 0x0128, 0x0439
-  - line 973: DUNVIEW.C:6579 floor ornament under mirrored rear pass
-  - line 973: DUNVIEW.C:6592-6593 optional button before door panel
-  - line 975: DM1_VIEW_SQUARE_D2L, 0x0218, 0x0349
-  - line 975: DUNVIEW.C:6988 floor ornament under rear pass
-  - line 976: DM1_VIEW_SQUARE_D2R, 0x0128, 0x0439
-  - line 976: DUNVIEW.C:7181 floor ornament under mirrored rear pass
+  - line 975: DM1_VIEW_SQUARE_D3R, 0x0128, 0x0439
+  - line 975: DUNVIEW.C:6579 floor ornament under mirrored rear pass
+  - line 975: DUNVIEW.C:6592-6593 optional button before door panel
+  - line 977: DM1_VIEW_SQUARE_D2L, 0x0218, 0x0349
+  - line 977: DUNVIEW.C:6988 floor ornament under rear pass
+  - line 978: DM1_VIEW_SQUARE_D2R, 0x0128, 0x0439
+  - line 978: DUNVIEW.C:7181 floor ornament under mirrored rear pass
 
 - PASS firestaff-mirrored-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1730-1775)
   - line 1737: { DM1_VIEW_SQUARE_D3R, "6579", "6580", "6582", "6592", "6598", "6601", 0x0128, 0x0439, {2, 1}, {3, 4} },

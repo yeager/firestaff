@@ -1,7 +1,7 @@
 {
   "blocker": "no promotable original overlay/capture frame exists yet; exact command: python3 tools/verify_pass475_dm1_v1_movement_viewport_wall_live_click_capture.py --seconds 10",
   "branch": "main",
-  "head": "5b86fb7761acb05b116be27c386682552d3ba66e",
+  "head": "69530d9527f27f558fa4c71e443b64cbb41570e5",
   "liveAttempt": null,
   "nonClaims": [
     "no original frame promoted as parity evidence",
@@ -150,5 +150,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS548_NO_PROMOTABLE_ORIGINAL_CAPTURE",
-  "timestampUtc": "2026-08-07T15:08:07.936792+00:00"
+  "timestampUtc": "2026-08-11T06:49:41.212977+00:00"
 }

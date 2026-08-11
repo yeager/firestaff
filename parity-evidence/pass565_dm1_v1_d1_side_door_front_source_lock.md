@@ -27,8 +27,8 @@ Claim: D1L and mirrored D1R front-door branches use ReDMCSB two-pass door-front 
 ## Firestaff Evidence
 
 - PASS firestaff-d1-side-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 978: DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039
-  - line 979: DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049
+  - line 980: DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039
+  - line 981: DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049
 
 - PASS firestaff-d1-side-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1-9999)
   - line 176: DM1_VIEW_SQUARE_D1L
@@ -37,8 +37,8 @@ Claim: D1L and mirrored D1R front-door branches use ReDMCSB two-pass door-front 
   - line 1785: door_front_occlusion.d1l_side_door_front_spec
 
 - PASS firestaff-d1-side-door-front-source-evidence (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 4544: DUNVIEW.C:7493-7536
-  - line 4545: DUNVIEW.C:7661-7704
+  - line 4547: DUNVIEW.C:7493-7536
+  - line 4548: DUNVIEW.C:7661-7704
 
 ## Verification
 

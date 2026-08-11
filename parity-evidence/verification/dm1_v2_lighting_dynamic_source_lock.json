@@ -37,17 +37,11 @@
       "text": "int16_t G0039_ai_Graphic562_LightPowerToLightAmount[16] = { 0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100 };"
     }
   ],
-  "errors": [
-    "missing Firestaff lighting source-lock text presentation-only in dm1_v2_lighting_dynamic_pc34.c",
-    "missing Firestaff lighting source-lock text PANEL.C:F0337_INVENTORY_SetDungeonViewPalette in dm1_v2_lighting_dynamic_pc34.c",
-    "missing Firestaff lighting source-lock text additive light map/fog overlay in dm1_v2_lighting_dynamic_pc34.c",
-    "missing Firestaff lighting source-lock text half radius => squared falloff in test_dm1_v2_lighting_dynamic_pc34.c",
-    "missing Firestaff lighting source-lock text additive overlay clamps in test_dm1_v2_lighting_dynamic_pc34.c"
-  ],
+  "errors": [],
   "evidenceImpact": {
     "completionMatrixGap": "Phase 4 lighting/effects remains incomplete; this locks the V2 lighting palette presentation gate to ReDMCSB-selected DM1 V1 palette indices and deterministic invalid-input fallback only.",
     "verifiedCompletionPercent": null
   },
   "scope": "dm1_v2_lighting_dynamic_pc34 presentation-only source-lock",
-  "status": "failed"
+  "status": "passed"
 }

@@ -27,12 +27,12 @@ Claim: ReDMCSB PC34/I34E D0C door-side with Thieves Eye copies the front door fr
 ## Firestaff Evidence
 
 - PASS firestaff-d0c-thieves-eye-metadata (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 995: DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736
-  - line 996: DUNVIEW.C:8185-8188
-  - line 997: DUNVIEW.C:8199-8201
-  - line 998: DUNVIEW.C:8206-8210
-  - line 999: DUNVIEW.C:8215-8216
-  - line 1000: DUNVIEW.C:8240,8294
+  - line 997: DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736
+  - line 998: DUNVIEW.C:8185-8188
+  - line 999: DUNVIEW.C:8199-8201
+  - line 1000: DUNVIEW.C:8206-8210
+  - line 1001: DUNVIEW.C:8215-8216
+  - line 1002: DUNVIEW.C:8240,8294
 
 - PASS firestaff-d0c-thieves-eye-test (test_dm1_v1_viewport_3d_pc34_compat.c:1-9999)
   - line 1840: test_d0c_thieves_eye_door_frame_occlusion_order
@@ -43,8 +43,8 @@ Claim: ReDMCSB PC34/I34E D0C door-side with Thieves Eye copies the front door fr
   - line 1856: 8294
 
 - PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 4550: DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion
-  - line 4550: copy front frame, composite hole, blit temporary frame before common F0115
+  - line 4553: DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion
+  - line 4553: copy front frame, composite hole, blit temporary frame before common F0115
 
 ## Verification
 

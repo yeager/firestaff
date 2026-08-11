@@ -27,75 +27,75 @@
       "forbiddenHits": [],
       "hits": [
         {
-          "line": 1201,
+          "line": 1203,
           "needle": "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2"
         },
         {
-          "line": 1201,
+          "line": 1203,
           "needle": "DM1_PC34_ZONE_WALL_D2L2"
         },
         {
-          "line": 1201,
+          "line": 1203,
           "needle": "DUNVIEW.C:6848-6862 wall case returns"
         },
         {
-          "line": 1202,
+          "line": 1204,
           "needle": "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2"
         },
         {
-          "line": 1202,
+          "line": 1204,
           "needle": "DM1_PC34_ZONE_WALL_D2R2"
         },
         {
-          "line": 1202,
+          "line": 1204,
           "needle": "DUNVIEW.C:6882-6893 wall case returns"
         },
         {
-          "line": 1206,
+          "line": 1208,
           "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
         },
         {
-          "line": 1206,
+          "line": 1208,
           "needle": "DM1_PC34_ZONE_WALL_D1L"
         },
         {
-          "line": 1206,
+          "line": 1208,
           "needle": "DUNVIEW.C:7459-7460 side ornament then return"
         },
         {
-          "line": 1207,
+          "line": 1209,
           "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
         },
         {
-          "line": 1207,
+          "line": 1209,
           "needle": "DM1_PC34_ZONE_WALL_D1R"
         },
         {
-          "line": 1207,
+          "line": 1209,
           "needle": "DUNVIEW.C:7627-7628 side ornament then return"
         },
         {
-          "line": 1209,
+          "line": 1211,
           "needle": "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R"
         },
         {
-          "line": 1209,
+          "line": 1211,
           "needle": "DM1_PC34_ZONE_WALL_D0L"
         },
         {
-          "line": 1209,
+          "line": 1211,
           "needle": "DUNVIEW.C:8036-8038 wall case returns"
         },
         {
-          "line": 1210,
+          "line": 1212,
           "needle": "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
         },
         {
-          "line": 1210,
+          "line": 1212,
           "needle": "DM1_PC34_ZONE_WALL_D0R"
         },
         {
-          "line": 1210,
+          "line": 1212,
           "needle": "DUNVIEW.C:8142-8144 wall case returns"
         }
       ],
@@ -103,7 +103,7 @@
       "lines": "1-9999",
       "missing": [],
       "path": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "1a88f9d1ddca5f3c85ed41b204224f30be1fa651a23f755d6daed996d7504244",
+      "sha256": "fa73242177ef31335a4d70d6cbdb0b48856ca81310c37a38ea751e758d3e7543",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -112,39 +112,39 @@
       "forbiddenHits": [],
       "hits": [
         {
-          "line": 2555,
+          "line": 2558,
           "needle": "DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate"
         },
         {
-          "line": 2567,
+          "line": 2570,
           "needle": "int src_x = frame->blit_x;"
         },
         {
-          "line": 2568,
+          "line": 2571,
           "needle": "int src_y = frame->blit_y;"
         },
         {
-          "line": 2575,
+          "line": 2578,
           "needle": "if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }"
         },
         {
-          "line": 2582,
+          "line": 2585,
           "needle": "if (src_x + width > source_width) width = source_width - src_x;"
         },
         {
-          "line": 2585,
+          "line": 2588,
           "needle": "if (width <= 0 || height <= 0) return gate;"
         },
         {
-          "line": 2587,
+          "line": 2590,
           "needle": "gate.visible = true;"
         },
         {
-          "line": 2588,
+          "line": 2591,
           "needle": "gate.src_x = (int16_t)src_x;"
         },
         {
-          "line": 2589,
+          "line": 2592,
           "needle": "gate.src_y = (int16_t)src_y;"
         }
       ],
@@ -152,7 +152,7 @@
       "lines": "1-9999",
       "missing": [],
       "path": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "1a88f9d1ddca5f3c85ed41b204224f30be1fa651a23f755d6daed996d7504244",
+      "sha256": "fa73242177ef31335a4d70d6cbdb0b48856ca81310c37a38ea751e758d3e7543",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
