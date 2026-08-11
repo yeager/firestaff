@@ -61,22 +61,49 @@ def sanitize_text(text: str, replacements: dict[str, str]) -> str:
 
 
 def run(cmd: list[str], *, env: dict[str, str], replacements: dict[str, str]) -> dict[str, Any]:
-    proc = subprocess.run(
-        cmd,
-        cwd=ROOT,
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=20,
-    )
     redacted_cmd = [sanitize_text(part, replacements) for part in cmd]
-    return {
-        "cmd": redacted_cmd,
-        "returncode": proc.returncode,
-        "stdout": sanitize_text(proc.stdout.strip(), replacements),
-        "stderr": sanitize_text(proc.stderr.strip(), replacements),
-        "ok": proc.returncode == 0,
-    }
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=20,
+        )
+        return {
+            "cmd": redacted_cmd,
+            "returncode": proc.returncode,
+            "stdout": sanitize_text(proc.stdout.strip(), replacements),
+            "stderr": sanitize_text(proc.stderr.strip(), replacements),
+            "timed_out": False,
+            "ok": proc.returncode == 0,
+        }
+    except subprocess.TimeoutExpired as exc:
+        # A real SDL/Firestaff launch can remain in its source-owned loop when
+        # the probe route does not reach an exit boundary.  The readiness gate
+        # must record that as an ordinary negative receipt, not crash and lose
+        # the case-level evidence.  TimeoutExpired output may be bytes even
+        # though text=True was requested on older macOS Python builds.
+        def captured_text(value: object) -> str:
+            if value is None:
+                return ""
+            if isinstance(value, bytes):
+                return value.decode("utf-8", errors="replace")
+            return str(value)
+
+        stdout = sanitize_text(captured_text(exc.stdout).strip(), replacements)
+        stderr = sanitize_text(captured_text(exc.stderr).strip(), replacements)
+        timeout_note = "runtime probe exceeded 20-second readiness timeout"
+        stderr = f"{stderr}\n{timeout_note}" if stderr else timeout_note
+        return {
+            "cmd": redacted_cmd,
+            "returncode": 124,
+            "stdout": stdout,
+            "stderr": stderr,
+            "timed_out": True,
+            "ok": False,
+        }
 
 
 def bmp_info(path: Path) -> dict[str, Any]:

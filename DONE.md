@@ -1,3 +1,11 @@
+# Theron: screenshot readiness timeout is fail-closed (2026-08-11)
+
+- ✅ `verify_theron_v1_runtime_screenshot_readiness.py` now records a real
+  Firestaff/SDL probe timeout as a structured negative case (`returncode=124`)
+  instead of aborting with an uncaught Python exception.
+- ✅ Timeout output is preserved and sanitized; no screenshot is promoted and
+  no timeout is treated as a runtime or semantic Theron success.
+
 # Theron: runtime-authenticated HuC6280 RNG core (2026-08-11)
 
 - ✅ A fresh instrumented Mednafen build captured the real `$45E3` and `$5D64`
