@@ -10453,6 +10453,17 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_hint_oracle_dat_real_probe
         PRIVATE -Wall -Wextra -O2)
 endif()
+add_executable(firestaff_csb_v1_hint_oracle_dat_real_scan_probe
+    probes/csb/firestaff_csb_v1_hint_oracle_dat_real_scan_probe.c
+    src/csb/csb_hint_oracle_dat.c
+    src/csb/csb_hint_oracle_dat_real_scan.c
+    src/shared/asset_find_by_hash.c
+    src/shared/fs_portable_compat.c)
+target_include_directories(firestaff_csb_v1_hint_oracle_dat_real_scan_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_hint_oracle_dat_real_scan_probe PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v1_hint_oracle_dat_real_scan_probe PRIVATE -Wall -Wextra -O2)
+endif()
 
 # CSB V1 CSBgraphics.dat index classifier + real-asset scan probe.
 # Bounded CSBWin custom graphics override classifier
@@ -40634,6 +40645,17 @@ if(BUILD_TESTING)
         )
         set_tests_properties(csb_v1_hint_oracle_dat_real PROPERTIES
             LABELS "tier2;csb;hint_oracle;real_data;skip_safe"
+        )
+    endif()
+
+    if(TARGET firestaff_csb_v1_hint_oracle_dat_real_scan_probe)
+        add_test(
+            NAME csb_v1_hint_oracle_dat_real_scan
+            COMMAND firestaff_csb_v1_hint_oracle_dat_real_scan_probe
+        )
+        set_tests_properties(csb_v1_hint_oracle_dat_real_scan PROPERTIES
+            LABELS "tier2;csb;hint_oracle;real_data;skip_safe"
+            TIMEOUT 120
         )
     endif()
 
