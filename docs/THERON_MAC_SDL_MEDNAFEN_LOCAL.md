@@ -128,6 +128,19 @@ CD/FIFO/RAM-observationerna via sina hookar, men måste ändå genomgå samma
 visuella smoke-test innan ny runtime-capture; en capture som förvränger bilden
 är ogiltig även om receipts ser formellt kompletta ut.
 
+Verifierad capture-binär efter korrigeringen (2026-08-11):
+
+```text
+MD5 1ec797bb7d1aea4d756521686d7b0c36
+```
+
+Orsaken till den tidigare korrupta bilden var en capture-hook i HuC6280:s
+`WrMem()` som utförde två mappade skrivningar för samma CPU-byte. Den andra
+skrivningen påverkade VDC/VCE och gav magenta/olivfärgade bildfel. Hooken gör
+nu endast observation och originalets enda `WriteMap`-skrivning. Den rena
+videobinär­en och capture-binär­en är därefter jämförda med samma äkta Track 02,
+System Card, videoflaggor och temporär Mednafen-home vid både 3 och 8 sekunder.
+
 Starta videokontrollen så här:
 
 ```bash
