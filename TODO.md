@@ -102,6 +102,9 @@
   `frame=N` precedes that frame's writes. The external startup witness at
   frame 106 now reports 16 640 writes from `PC=0x0601307c` into `0x63e00`;
   the regression is CTest-covered.
+- ✅ A later 80-frame external window now contains a complete VDP1 chain and
+  a non-empty Saturn-rendered Victor startup frame; the raw witness is
+  hash-bound in `docs/NEXUS_SATURN_CAPTURE.md`.
 - 🔒 This repairs evidence tooling only; the VDP1 asset owner, CLUT,
   placement, menu/HUD/viewport consumer and production renderer remain gated.
 

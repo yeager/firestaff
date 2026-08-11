@@ -8,6 +8,9 @@
   16 640 writes, `PC=0x0601307c` and VDP1 target `0x63e00`; a synthetic
   three-frame contract test is registered as
   `nexus_v1_vdp1_write_trace_frame_contract`.
+- ✅ A later external boot-window capture contains a complete VDP1 chain and
+  a real Saturn-rendered Victor startup frame; its raw SHA-256 and exact
+  capture-only boundary are documented in `docs/NEXUS_SATURN_CAPTURE.md`.
 - 🔒 This strengthens source/capture evidence only. It does not infer MENU,
   HUD, viewport, PRS3 ownership or production renderer permission.
 

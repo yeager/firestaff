@@ -78,9 +78,10 @@ addr=0x63e00 size=2 value=0x.... pc0=0x........ pc1=0x........
 frame=300
 ```
 
-En markör skrivs vid samma vertikal-blanking-hook som rådumpens frame-id.
-Skrivningar före `frame=300`-markören tillhör därför den VDP1-bild som
-fångas som frame 300; detta är en transportgräns, inte en assetägare.
+En markör skrivs vid samma vertikal-blanking-hook som rådumpens frame-id,
+innan VDP1-skrivningarna för den framen registreras. Skrivningar efter
+`frame=300`-markören tillhör därför den VDP1-bild som fångas som frame 300;
+detta är en transportgräns, inte en assetägare.
 Välj en frame med:
 
 ```sh
@@ -91,6 +92,21 @@ python3 scripts/analyze_nexus_vdp1_write_trace.py \
 
 V1-traces utan frame-markörer stöds fortfarande, men kan inte väljas med
 `--frame`. Saknad eller duplicerad markör gör analysen ogiltig.
+
+### Stabil startup-witness, 2026-08-11
+
+Den externa J-BIOS/English-capture-körningen
+`/Volumes/Extern-disk/nexus-saturn-capture/run-codex-stable-vdp1-window-se2woL/`
+validerar 80 frames efter en 1 200-frame boot-window. Frame 0 har en komplett
+VDP1-kedja med fyra poster: system clip `(319,223)`, local coordinate `(0,0)`;
+en mode-5 direct-colour draw och END. VDP1-framebufferten ändras över tiden,
+och en extern framebuffer-dekodning visar den Saturn-renderade Victor-start-
+animationen. Rådumpens SHA-256 är
+`49b0e2cfa3d0394fda966ca40f0adc3bc36475f298b4fa743188d3bec1c999f1`.
+
+Detta bevisar en autentisk VDP1 startup-frame och timing, men inte vilken
+retailfil som äger mode-5-källan, inte PRS3/FONT256/MENU-konsumtion och inte
+M12-produktionsrendering. `semantic_admission` förblir därför `blocked`.
 
 VDP1-V2-state har två operatörsvarianter i omlopp. Den aktuella patchen
 skriver även `sysclipx` och `sysclipy`; äldre externa Mednafen-buildar skriver
