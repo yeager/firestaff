@@ -93,6 +93,9 @@ enum {
 
 static int csb_v1_fmtowns_game_read_span(const char *path, uint32_t offset,
                                          unsigned char *bytes, size_t size);
+static int csb_v1_fmtowns_utility_read_span(
+    const CSB_V1_FmtownsUtilityHandoffReceipt *receipt, uint32_t offset,
+    unsigned char *bytes, size_t size);
 static int csb_v1_fmtowns_game_read_startup_span(
     const CSB_V1_FmtownsGameHandoffReceipt *receipt, uint32_t offset,
     unsigned char *bytes, size_t size);
@@ -1639,15 +1642,16 @@ int csb_v1_fmtowns_game_load_user_save_state(
 }
 
 static int csb_v1_fmtowns_utility_icon_palette_open(
-    const char *path, uint32_t file_offset,
+    const CSB_V1_FmtownsUtilityHandoffReceipt *source_receipt,
+    uint32_t file_offset,
     CSB_V1_FmtownsUtilityHandoffReceipt *receipt)
 {
     uint8_t source[CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_RECORD_BYTES];
     uint32_t index;
 
-    if (!path || !receipt ||
-        !csb_v1_fmtowns_game_read_span(path, file_offset, source,
-                                       sizeof(source))) return 0;
+    if (!source_receipt || !receipt ||
+        !csb_v1_fmtowns_utility_read_span(source_receipt, file_offset, source,
+                                          sizeof(source))) return 0;
     for (index = 0u;
          index < CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT;
          ++index) {
@@ -1666,18 +1670,19 @@ static int csb_v1_fmtowns_utility_icon_palette_open(
 }
 
 static int csb_v1_fmtowns_utility_static_art_open(
-    const char *path, uint32_t mirror_offset, uint32_t arrows_offset,
+    const CSB_V1_FmtownsUtilityHandoffReceipt *source_receipt,
+    uint32_t mirror_offset, uint32_t arrows_offset,
     CSB_V1_FmtownsUtilityHandoffReceipt *receipt)
 {
-    if (!path || !receipt ||
-        !csb_v1_fmtowns_game_read_span(
-            path, mirror_offset, receipt->mirror_bitmap,
+    if (!source_receipt || !receipt ||
+        !csb_v1_fmtowns_utility_read_span(
+            source_receipt, mirror_offset, receipt->mirror_bitmap,
             sizeof(receipt->mirror_bitmap)) ||
         csb_v1_fmtowns_game_bytes_fnv1a(receipt->mirror_bitmap,
                                         sizeof(receipt->mirror_bitmap)) !=
             CSB_V1_FMTOWNS_UTILITY_MIRROR_BITMAP_FNV1A ||
-        !csb_v1_fmtowns_game_read_span(
-            path, arrows_offset, receipt->file_picker_arrows,
+        !csb_v1_fmtowns_utility_read_span(
+            source_receipt, arrows_offset, receipt->file_picker_arrows,
             sizeof(receipt->file_picker_arrows)) ||
         csb_v1_fmtowns_game_bytes_fnv1a(receipt->file_picker_arrows,
                                         sizeof(receipt->file_picker_arrows)) !=
@@ -1743,6 +1748,22 @@ static int csb_v1_fmtowns_game_read_span(const char *path, uint32_t offset,
     return 1;
 }
 
+static int csb_v1_fmtowns_utility_read_span(
+    const CSB_V1_FmtownsUtilityHandoffReceipt *receipt, uint32_t offset,
+    unsigned char *bytes, size_t size)
+{
+    if (!receipt || !bytes || size == 0u ||
+        offset > receipt->executable_size ||
+        size > receipt->executable_size - offset) return 0;
+    if (receipt->executable_bytes &&
+        receipt->executable_bytes_size == receipt->executable_size) {
+        memcpy(bytes, receipt->executable_bytes + offset, size);
+        return 1;
+    }
+    return csb_v1_fmtowns_game_read_span(receipt->executable_path, offset,
+                                         bytes, size);
+}
+
 static uint32_t csb_v1_fmtowns_game_file_fnv1a(const char *path,
                                                  uint32_t *out_size)
 {
@@ -1778,7 +1799,8 @@ static uint32_t csb_v1_fmtowns_game_file_fnv1a(const char *path,
 }
 
 static int csb_v1_fmtowns_utility_p3_header_open(
-    const char *path, uint32_t expected_file_size,
+    const CSB_V1_FmtownsUtilityHandoffReceipt *source_receipt,
+    uint32_t expected_file_size,
     CSB_V1_FmtownsUtilityHandoffReceipt *receipt)
 {
     unsigned char header[0x78];
@@ -1791,8 +1813,9 @@ static int csb_v1_fmtowns_utility_p3_header_open(
     uint32_t memory_size;
     uint32_t initial_eip;
 
-    if (!path || !receipt ||
-        !csb_v1_fmtowns_game_read_span(path, 0u, header, sizeof(header)) ||
+    if (!source_receipt || !receipt ||
+        !csb_v1_fmtowns_utility_read_span(source_receipt, 0u, header,
+                                          sizeof(header)) ||
         header[0] != 'P' || header[1] != '3' ||
         csb_v1_fmtowns_game_read_le16(header + 2u) != 1u) return 0;
     header_size = csb_v1_fmtowns_game_read_le16(header + 4u);
@@ -2085,14 +2108,22 @@ int csb_v1_fmtowns_utility_handoff_open(
             CSB_V1_FMTOWNS_UTILJ_FILE_PICKER_ARROWS_OFFSET;
         expected_variant = CSB_V1_VARIANT_FMTOWNS_JA;
     } else return 0;
-    if (profile->variant_id != expected_variant ||
-        snprintf(out_receipt->executable_path,
-                 sizeof(out_receipt->executable_path), "%s/%s",
-                 profile->asset_root, name) < 0 ||
-        strlen(out_receipt->executable_path) >=
-            sizeof(out_receipt->executable_path)) return 0;
-    actual_hash = csb_v1_fmtowns_game_file_fnv1a(
-        out_receipt->executable_path, &actual_size);
+    if (profile->variant_id != expected_variant) return 0;
+    if (profile->fmtowns_utility_bytes && profile->fmtowns_utility_size) {
+        out_receipt->executable_bytes = profile->fmtowns_utility_bytes;
+        out_receipt->executable_bytes_size = profile->fmtowns_utility_size;
+        actual_size = (uint32_t)profile->fmtowns_utility_size;
+        actual_hash = csb_v1_fmtowns_game_bytes_fnv1a(
+            profile->fmtowns_utility_bytes, profile->fmtowns_utility_size);
+    } else {
+        if (snprintf(out_receipt->executable_path,
+                     sizeof(out_receipt->executable_path), "%s/%s",
+                     profile->asset_root, name) < 0 ||
+            strlen(out_receipt->executable_path) >=
+                sizeof(out_receipt->executable_path)) return 0;
+        actual_hash = csb_v1_fmtowns_game_file_fnv1a(
+            out_receipt->executable_path, &actual_size);
+    }
     if (actual_size != expected_size || actual_hash != expected_hash) {
         memset(out_receipt, 0, sizeof(*out_receipt));
         return 0;
@@ -2100,17 +2131,18 @@ int csb_v1_fmtowns_utility_handoff_open(
     /* COMPILE.H EXEID 63/64 lines 379-385 identifies these P3 executables
      * as separate C06_CEDT programs. Bind their native entry envelopes before
      * any future TBIOS/CEDT decoder consumes a menu or save command. */
-    if (!csb_v1_fmtowns_utility_p3_header_open(out_receipt->executable_path,
-                                                actual_size, out_receipt)) {
+    out_receipt->executable_size = actual_size;
+    out_receipt->executable_fnv1a = actual_hash;
+    if (!csb_v1_fmtowns_utility_p3_header_open(out_receipt, actual_size,
+                                               out_receipt)) {
         memset(out_receipt, 0, sizeof(*out_receipt));
         return 0;
     }
     /* ReDMCSB CEDT027.C:45-62 declares C09_ICON.  The exact indexed RGB6
      * sequence is present in each verified F31 C06 image, at a different
      * raw offset because the English and Japanese P3 layouts differ. */
-    if (!csb_v1_fmtowns_utility_icon_palette_open(out_receipt->executable_path,
-                                                  icon_palette_offset,
-                                                  out_receipt)) {
+    if (!csb_v1_fmtowns_utility_icon_palette_open(
+            out_receipt, icon_palette_offset, out_receipt)) {
         memset(out_receipt, 0, sizeof(*out_receipt));
         return 0;
     }
@@ -2118,8 +2150,8 @@ int csb_v1_fmtowns_utility_handoff_open(
      * these two native bitmaps. Their retail image locations differ by
      * language, so bind them before any host rendering path can see them. */
     if (!csb_v1_fmtowns_utility_static_art_open(
-            out_receipt->executable_path, mirror_bitmap_offset,
-            file_picker_arrows_offset, out_receipt)) {
+            out_receipt, mirror_bitmap_offset, file_picker_arrows_offset,
+            out_receipt)) {
         memset(out_receipt, 0, sizeof(*out_receipt));
         return 0;
     }
@@ -2129,8 +2161,6 @@ int csb_v1_fmtowns_utility_handoff_open(
     out_receipt->utility_program_is_c06_cedt = 1;
     out_receipt->language = language;
     out_receipt->variant_id = expected_variant;
-    out_receipt->executable_size = actual_size;
-    out_receipt->executable_fnv1a = actual_hash;
     snprintf(out_receipt->executable_name, sizeof(out_receipt->executable_name),
              "%s", name);
     out_receipt->source_evidence =
@@ -2171,8 +2201,8 @@ int csb_v1_fmtowns_utility_menu_open(
     } else return 0;
     if (byte_count > sizeof(out_receipt->source_bytes) ||
         virtual_offset > UINT32_MAX - handoff.p3_load_image_offset ||
-        !csb_v1_fmtowns_game_read_span(
-            handoff.executable_path,
+        !csb_v1_fmtowns_utility_read_span(
+            &handoff,
             handoff.p3_load_image_offset + virtual_offset,
             out_receipt->source_bytes, byte_count) ||
         csb_v1_fmtowns_game_bytes_fnv1a(out_receipt->source_bytes,
@@ -2219,8 +2249,8 @@ int csb_v1_fmtowns_utility_font_open(
     /* CEDT019.C:18 declares G1103; CEDTFNT.C:43-94 expands exactly these
      * 420 source bytes into native C06 text colors.  Bind the recovered
      * object to its own retail program rather than shipping its bytes. */
-    if (!csb_v1_fmtowns_game_read_span(
-            handoff.executable_path, source_offset,
+    if (!csb_v1_fmtowns_utility_read_span(
+            &handoff, source_offset,
             out_receipt->source_bytes,
             sizeof(out_receipt->source_bytes)) ||
         csb_v1_fmtowns_game_bytes_fnv1a(out_receipt->source_bytes,
@@ -2296,6 +2326,37 @@ static int csb_v1_fmtowns_game_portrait_catalog_add(
     return 1;
 }
 
+static int csb_v1_fmtowns_game_portrait_catalog_add_memory(
+    CSB_V1_FmtownsUtilityPortraitCatalog *catalog, const char *filename,
+    const uint8_t *bytes, size_t byte_count, const char *source_path)
+{
+    CSB_V1_FmtownsUtilityPortraitCatalogEntry *entry;
+    uint8_t pixels[CSB_FMTOWNS_PORTRAIT_PIXEL_COUNT];
+
+    if (!catalog || !filename || !bytes ||
+        byte_count != CSB_FMTOWNS_PORTRAIT_FILE_SIZE ||
+        !csb_v1_fmtowns_game_cmp_filename_is_valid(filename)) return 0;
+    if (catalog->entry_count >= CSB_V1_FMTOWNS_UTILITY_PORTRAIT_CATALOG_CAPACITY) {
+        ++catalog->rejected_entry_count;
+        return 1;
+    }
+    entry = &catalog->entries[catalog->entry_count];
+    if (!csb_v1_fmtowns_portrait_decode(
+            bytes, byte_count, pixels, sizeof(pixels), &entry->portrait)) {
+        ++catalog->rejected_entry_count;
+        memset(entry, 0, sizeof(*entry));
+        return 1;
+    }
+    snprintf(entry->filename, sizeof(entry->filename), "%s", filename);
+    if (source_path)
+        snprintf(entry->source_path, sizeof(entry->source_path), "%s", source_path);
+    entry->source_bytes = bytes;
+    entry->source_bytes_size = byte_count;
+    entry->source_fnv1a = csb_v1_fmtowns_game_bytes_fnv1a(bytes, byte_count);
+    ++catalog->entry_count;
+    return 1;
+}
+
 int csb_v1_fmtowns_utility_portrait_catalog_open(
     const CSB_V1_BootProfile *profile,
     CSB_V1_FmtownsSwitchLanguage language,
@@ -2321,6 +2382,30 @@ int csb_v1_fmtowns_utility_portrait_catalog_open(
                        profile->asset_root);
     if (written < 0 || (size_t)written >= sizeof(out_catalog->source_directory))
         return 0;
+    if (profile->fmtowns_portrait_count > 0u) {
+        uint16_t index;
+        for (index = 0u; index < profile->fmtowns_portrait_count; ++index) {
+            char source_path[sizeof(out_catalog->source_directory) + 64u];
+            written = snprintf(source_path, sizeof(source_path),
+                               "%s::PORTRAIT/%s", profile->asset_root,
+                               profile->fmtowns_portrait_names[index]);
+            if (written < 0 || (size_t)written >= sizeof(source_path) ||
+                !csb_v1_fmtowns_game_portrait_catalog_add_memory(
+                    out_catalog, profile->fmtowns_portrait_names[index],
+                    profile->fmtowns_portrait_bytes[index],
+                    profile->fmtowns_portrait_sizes[index], source_path))
+                return 0;
+        }
+        qsort(out_catalog->entries, out_catalog->entry_count,
+              sizeof(out_catalog->entries[0]),
+              csb_v1_fmtowns_game_portrait_catalog_entry_compare);
+        out_catalog->valid = 1;
+        out_catalog->language = language;
+        out_catalog->source_evidence =
+            "ReDMCSB CEDT008.C FILE_PICKER / CEDT001.C F7002_ReadCMP; "
+            "PORTRAIT.C F7251; packed ISO member view";
+        return 1;
+    }
 #if defined(_WIN32)
     {
         WIN32_FIND_DATAA data;
@@ -2383,15 +2468,27 @@ int csb_v1_fmtowns_utility_load_portrait(
         !party || selected_champion >= (uint16_t)party->ChampionCount ||
         !portraits || !portraits->valid) return 0;
     entry = &catalog->entries[catalog_index];
-    if (!entry->portrait.valid || !entry->source_path[0] ||
-        !csb_v1_fmtowns_game_read_span(entry->source_path, 0u, source,
-                                       sizeof(source)) ||
-        !csb_v1_fmtowns_portrait_probe(source, sizeof(source))) return 0;
+    if (!entry->portrait.valid ||
+        (!entry->source_bytes && !entry->source_path[0])) return 0;
+    if (entry->source_bytes) {
+        if (entry->source_bytes_size != sizeof(source)) return 0;
+        memcpy(source, entry->source_bytes, sizeof(source));
+    } else if (!csb_v1_fmtowns_game_read_span(
+                   entry->source_path, 0u, source, sizeof(source))) {
+        return 0;
+    }
+    if (!csb_v1_fmtowns_portrait_probe(source, sizeof(source))) return 0;
     /* CEDT008's selector returns a file name, not a stale directory row.
      * Recheck the exact admitted file before copying its payload so a host
      * replacement between scan and selection cannot enter the party. */
-    source_fnv1a = csb_v1_fmtowns_game_file_fnv1a(
-        entry->source_path, &source_size);
+    if (entry->source_bytes) {
+        source_size = (uint32_t)entry->source_bytes_size;
+        source_fnv1a = csb_v1_fmtowns_game_bytes_fnv1a(
+            entry->source_bytes, entry->source_bytes_size);
+    } else {
+        source_fnv1a = csb_v1_fmtowns_game_file_fnv1a(
+            entry->source_path, &source_size);
+    }
     if (source_size != CSB_FMTOWNS_PORTRAIT_FILE_SIZE ||
         source_fnv1a == 0u || source_fnv1a != entry->source_fnv1a) return 0;
 
@@ -2453,6 +2550,15 @@ int csb_v1_fmtowns_utility_save_portraits(
             }
         }
         if (entry_indices[champion_index] < 0) return 0;
+    }
+    /* A packed CD member is an authenticated read source, not a writable
+     * save destination.  Reject the complete operation before touching any
+     * loose file so a mixed catalog can never produce a partial save. */
+    for (champion_index = 0u;
+         champion_index < (unsigned int)party->ChampionCount;
+         ++champion_index) {
+        if (catalog->entries[entry_indices[champion_index]].source_bytes)
+            return 0;
     }
 
     for (champion_index = 0u;

@@ -100,6 +100,15 @@ typedef struct CSB_V1_BootProfile {
     size_t fmtowns_mini_size;
     uint8_t *fmtowns_title_bytes;
     size_t fmtowns_title_size;
+    /* Read-only C06 members from packed FM Towns media.  These buffers keep
+     * UTILE/UTILJ and portrait CMP files available without materialising a loose
+     * CD tree.  They are never written back to the source image. */
+    uint8_t *fmtowns_utility_bytes;
+    size_t fmtowns_utility_size;
+    uint8_t *fmtowns_portrait_bytes[24];
+    size_t fmtowns_portrait_sizes[24];
+    char fmtowns_portrait_names[24][13];
+    uint16_t fmtowns_portrait_count;
 
     /* Optional raw PC34 SWSHSND.C G0746 payload.  It is accepted only from
      * the selected CSB asset root, at the original byte count; callers must

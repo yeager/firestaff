@@ -87,8 +87,9 @@ typedef struct CSB_V1_FmtownsGameHandoffReceipt {
     uint32_t executable_fnv1a;
     char executable_name[16];
     char executable_path[512];
-    /* Non-owning bounded view of the original CD member.  It is populated
-     * for packed FM Towns media and keeps all C03 reads in RAM. */
+    /* Non-owning view for packed FM Towns media.  Loose development trees
+     * continue to use executable_path; packed callers retain the original
+     * member in this bounded view instead of extracting it. */
     const uint8_t *executable_bytes;
     size_t executable_bytes_size;
     char graphics_md5[33];
@@ -245,6 +246,11 @@ typedef struct CSB_V1_FmtownsUtilityHandoffReceipt {
     uint32_t executable_fnv1a;
     char executable_name[16];
     char executable_path[512];
+    /* Non-owning view for packed FM Towns media.  Loose development trees
+     * continue to use executable_path; packed callers retain the original
+     * member in this bounded view instead of extracting it. */
+    const uint8_t *executable_bytes;
+    size_t executable_bytes_size;
     /* Bounded Phar Lap level-1 P3 envelope from the verified C06 image.
      * This exposes the real native entry point without claiming to emulate
      * its TBIOS menu, editor pixels, or save transactions. */
@@ -312,6 +318,8 @@ typedef struct CSB_V1_FmtownsUtilityFontReceipt {
 typedef struct CSB_V1_FmtownsUtilityPortraitCatalogEntry {
     char filename[CSB_V1_FMTOWNS_UTILITY_PORTRAIT_FILENAME_CAPACITY];
     char source_path[512];
+    const uint8_t *source_bytes;
+    size_t source_bytes_size;
     uint32_t source_fnv1a;
     CSB_V1_FmtownsPortraitReceipt portrait;
 } CSB_V1_FmtownsUtilityPortraitCatalogEntry;
