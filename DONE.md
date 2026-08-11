@@ -1,3 +1,11 @@
+# Theron: latest authenticated VDC/VCE screen pair admitted (2026-08-11)
+
+- ✅ The production viewport accepts the exact-size external capture with
+  VRAM FNV-1a `5d20ebc7` and VCE FNV-1a `ea83f117`.
+- ✅ Palette/tile relation and authenticated native-screen rendering remain
+  source-bound; no synthetic pixels or gameplay mapping were added.
+- 🔒 Square-to-tile, perspective, HUD and object semantics remain unproven.
+
 # Theron: inventory property category is source-checked (2026-08-11)
 
 - ✅ Authenticated weapon, clothing, scroll and potion records retain and

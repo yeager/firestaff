@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+## Theron: latest authenticated VDC/VCE screen pair admitted (2026-08-11)
+
+- ✅ The source-bound viewport allowlist now includes the verified external
+  US Track 02 manual screen capture (`5d20ebc7` / `ea83f117`).
+- 🔒 It does not authorize inferred dungeon tiles, perspective, HUD or object
+  semantics.
+
 ## Theron: inventory property category remains source-consistent (2026-08-11)
 
 - ✅ Real source item pickup/drop and inventory-slot validation now checks the

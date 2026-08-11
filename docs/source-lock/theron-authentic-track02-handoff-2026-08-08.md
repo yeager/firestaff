@@ -33,6 +33,13 @@ FNV-1a identities `VRAM=105dcffb` and `VCE=ea83f117`. The raw pair remains on
 the external disk; only its identity is tracked here. Its admission is still
 screen-space-only and does not authorize square-to-tile or gameplay rules.
 
+The later authenticated manual dungeon capture from 2026-08-10 is also
+admitted by the production screen loader as `VRAM=5d20ebc7` and
+`VCE=ea83f117`. Its external receipt records the US Track 02 hash, System
+Card hash, Mednafen binary identity, CD-sector transition and 64 KiB/1 KiB
+snapshot sizes. This extends the source-bound screen-state allowlist only;
+it does not promote a dungeon-square, object, AI or T900 consumer.
+
 The host event path received a real macOS Return key pair (`SDL scancode 40`),
 Mednafen exposed the configured PCE Run bit as `raw=0008`, and the CD trace
 recorded 56 SCSI reads and 175 raw-sector records. The first authenticated

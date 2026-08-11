@@ -2,6 +2,13 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-11 — authenticated manual VRAM/VCE capture is admitted
+
+- ✅ The production viewport now accepts the externally captured US Track 02
+  screen pair `VRAM=5d20ebc7`, `VCE=ea83f117` after exact-size/hash checks.
+- 🔒 This is screen-space bitmap/palette ownership only; square-to-tile,
+  perspective, HUD and gameplay consumers remain separately gated.
+
 ## 2026-08-11 — inventory property category is source-checked
 
 - ✅ Pickup, source-slot movement and drop now reject a carried record when

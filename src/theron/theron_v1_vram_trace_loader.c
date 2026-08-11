@@ -160,7 +160,12 @@ int theron_v1_vram_trace_load_known_capture_files(
         /* 2026-08-10 corrected cold-start transport capture.  This pair
          * owns only the captured VDC/VCE bitmap and palette banks; the
          * dungeon square/material consumer remains deliberately closed. */
-        {0x4a2186a2u, 0xaa11c4f2u}
+        {0x4a2186a2u, 0xaa11c4f2u},
+        /* 2026-08-10 manual dungeon capture from the authenticated US
+         * Track 02/System Card session.  Its VCE snapshot is the same
+         * source-owned palette bank, while the VRAM image is a later
+         * screen-state snapshot. */
+        {0x5d20ebc7u, 0xea83f117u}
     };
 
     if (!vp || !vram_path || !vce_path) return -1;
