@@ -82,7 +82,12 @@ int main(void)
             &frame, &registers, &vdp2, &vdp1, &composition) ||
         !frame.valid || !registers.valid || !vdp2.valid || !vdp2.capture_only ||
         vdp2.renderer_permitted || !vdp1.valid || !vdp1.replay.valid ||
-        vdp1.replay.source_joins_verified < 190 ||
+        !((vdp1.draw_commands_seen == 212 &&
+           vdp1.draw_commands_resolved == 194 &&
+           vdp1.replay.source_joins_verified == 194) ||
+          (vdp1.draw_commands_seen == 235 &&
+           vdp1.draw_commands_resolved == 218 &&
+           vdp1.replay.source_joins_verified == 218)) ||
         !composition.valid || !composition.layer_order_verified ||
         !composition.vdp1_over_vdp2 || composition.renderer_permitted ||
         composition.vdp2_written_pixels <= 0 ||
