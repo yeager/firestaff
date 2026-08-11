@@ -13714,6 +13714,18 @@ and production source-combat tests.
 - 🔒 Hela resultatet är fortsatt `renderer_permitted=0`, eftersom VDP2:s
   retail source-owner och text/overlay-consumer ännu inte är bevisade.
 
+# Nexus: audit stabil mode-5-startkälla (2026-08-11)
+
+- ✅ Den autentiska externa 80-frame-capturen har verifierats med en komplett
+  frame-0 VDP1 command-chain och mode-5 direct-colour-källspannet
+  `0x63e00..0x6c000`.
+- ✅ Samtliga 80 frame-span jämfördes mot lokala Nexus-filer och engelska
+  ISO:n i både rå och 16-bitars bytevänd ordning; ingen exakt 33 280-byte-träff
+  hittades.
+- 🔒 Resultatet är ett reproducerbart negativt provenance-resultat.
+  `source_join=unbound` kvarstår tills en samma-session source-buffer- eller
+  CD-läsningsreceipt binder runtime-spannet till en retail-källa.
+
 # Nexus: audit CPU versus SCU-DMA VDP2 upload path (2026-08-11)
 
 - ✅ En autentiserad 30-frame witness med J-BIOS/merged English-disc och

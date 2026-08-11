@@ -176,6 +176,18 @@ Från frame 110 är `TVMD=0x8000`, `BGON=0x000f`, `CHCTLA=0x1010` och
 ändrar källpositioner över efterföljande frames. Detta är verifierad
 startup-animation, men inte en semantiskt identifierad meny eller titelbild.
 
+Den stabilare 80-frame-witnessen
+`/Volumes/Extern-disk/nexus-saturn-capture/run-codex-stable-vdp1-window-se2woL/`
+har dessutom en komplett mode-5 direct-colour draw vid frame 0. Drawen läser
+VDP1-VRAM-spannet `0x63e00..0x6c000` (33 280 bytes). Spannet jämfördes mot
+alla lokala Nexus-filer och den engelska ISO:n för varje frame i samma
+capture, både som råa bytes och med 16-bitars Saturn-byteordning återställd.
+Ingen exakt träff hittades. Capturekedjan är alltså autentisk, men vi saknar
+fortfarande source-buffer-/CD-läsningsreceipten som krävs för att säga om
+spannet kommer från `TITLE.CG`, `TITLE.BIN`, `MENU.BPK` eller en annan
+runtime-dekomprimerad källa. `source_join=unbound` och
+`semantic_admission=blocked` är därför fortsatt korrekt.
+
 VDP1-write-spåret från samma körning är ogiltigt som komplett skrivbevis:
 validatorn avvisar rad 200242 (`addraddr=...`). Den raden räknas därför inte
 som en VDP1-write och körningen får inte höjas till semantic admission.

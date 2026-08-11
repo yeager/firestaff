@@ -5222,6 +5222,14 @@ authenticated BPK). The remaining work is a Saturn executable or capture
 - ⏳ Den fulla SH-2-source-tracen är för tung vid skip 10500 och måste köras
   med ett tidigare, verifierat input-/framefönster eller snävare destination.
   Inget menyägarskap får antas från timeout-spåren.
+
+# Nexus: binda stabil mode-5-startkälla
+
+- 🔒 Den autentiska 80-frame-witnessen har en komplett mode-5 direct-colour-
+  draw från VDP1-VRAM `0x63e00..0x6c000`, men 33 280-byte-spannet saknar exakt
+  träff i den lokala Nexus-korpusen och engelska ISO:n, även efter Saturn-
+  byteordningsnormalisering. Få source-buffer/CD-läsningsreceipt i samma
+  session innan titel, meny, HUD eller viewport får publiceras.
 # Theron: bound category-4 source group materialization
 
 The static source-monster bridge now uses the authenticated four-health-word
