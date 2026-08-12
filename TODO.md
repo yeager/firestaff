@@ -3224,10 +3224,15 @@
   recovery are now covered by real-media regressions. En Tsugaru-capture
   binder dessutom C06:s inledande spelkällval och A:-krav; F31E:s gate kräver
   nu en F0435-giltig native medium och accepterar inte `MINI.DAT` som save.
-  Remaining parity work is F31J's EGB Shift-JIS text consumer, C06's Dungeon
-  Master-mediumkonsument, Make New Adventure's F7086/F7090 source/destination
-  object transaction, and broader user-save corpus coverage—not a fallback or
-  synthetic save path.
+  F31J:s första C06-väljare har nu en ROM-bunden Shift-JIS/EGB-konsument: den
+  hämtar varje 16×16-glyph från en användarauktoriserad 256 KiB `FMT_FNT.ROM`
+  och saknar Unicode- eller värdfontsfallback. Den verifierades 2026-08-12
+  med den verkliga font-ROM:en (`fmt_fnt.rom`) genom
+  `test_fmtowns_tbios_shim`, inklusive den infångade `ど`-glyphens FNV-1a
+  `af14d837`. Återstår C06:s Dungeon Master-mediumkonsument, Make New
+  Adventure:s F7086/F7090 source/destination object transaction, F31J:s
+  senare editor- och savedialoger samt bredare user-save-corpus coverage—not
+  a fallback or synthetic save path.
 
 - **NEXUS-SFX-EVENT-DISPATCH-CAPTURE:** Host sound-request names are now
   2026-08-06 follow-up: the M11 Light/Torch/Darkness bridge now checks the

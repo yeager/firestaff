@@ -9575,8 +9575,9 @@ static M11_GameInputResult m11_csb_handle_fmtowns_switch_pointer(
     } else if (receipt.action == CSB_FMTOWNS_SWITCH_ACTION_UTILITY) {
         /* AUTOEXEC.BAT exits 2/5 into the separate F31 C06_CEDT owner.
          * The English frame is admitted only after UTILE's P3/menu/font
-         * chain verifies; F31J remains closed until native Shift-JIS draw
-         * ownership is reconstructed. */
+         * chain verifies. F31J's captured first chooser has its own
+         * FMT_FNT.ROM-backed Shift-JIS consumer; later C06 dialogs remain
+         * deliberately closed until their owners are recovered. */
         if (!m11_csb_enter_fmtowns_utility(
                 state, state->csbFmtownsSwitchLanguage)) {
             m11_set_status(state, "CSB FM TOWNS", "UTILITY OWNER UNAVAILABLE");
