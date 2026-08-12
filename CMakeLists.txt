@@ -17122,6 +17122,16 @@ endif()
     set_tests_properties(csb_v1_amiga_native_cli_boot PROPERTIES
         LABELS "tier2;csb;amiga;startup;cli;real_data;skip_safe"
     )
+    # CSB has no original DOS release.  Keep the CLI from treating a shared
+    # Atari ST graphics hash or stale cache as a PC compatibility launch.
+    add_test(
+        NAME csb_v1_pc_platform_rejected
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_pc_platform_rejected.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(csb_v1_pc_platform_rejected PROPERTIES
+        LABELS "csb;cli;platform;dos;closed"
+    )
     add_test(
         NAME csb_v1_fmtowns_native_cli_boot
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_native_cli_boot.sh"

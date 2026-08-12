@@ -6386,9 +6386,21 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         if (!m11_apply_architecture_override(&menuState,
                                              o->gameId,
                                              o->architectureOverride)) {
-            fprintf(stderr,
-                    "firestaff: requested platform %s is not catalogued for the selected game\n",
-                    M12_Architecture_Label(o->architectureOverride));
+            /* CSB never had an original DOS release.  Say that explicitly
+             * instead of leaving an apparent generic platform error which
+             * could invite a caller to substitute the same-hash Atari ST
+             * GRAPHICS.DAT or a stale materialized cache.  CSBWin remains a
+             * separately authenticated compatibility/save boundary; it is
+             * not an original DOS catalogue row. */
+            if (o->gameId && strcmp(o->gameId, "csb") == 0 &&
+                o->architectureOverride == M12_ARCH_PC) {
+                fprintf(stderr,
+                        "firestaff: CSB has no original DOS/PC release; use --platform amiga, atari-st, or fm-towns\n");
+            } else {
+                fprintf(stderr,
+                        "firestaff: requested platform %s is not catalogued for the selected game\n",
+                        M12_Architecture_Label(o->architectureOverride));
+            }
             free(launcherFramebuffer);
             M11_Render_Shutdown();
             return 2;

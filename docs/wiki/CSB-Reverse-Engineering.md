@@ -35,10 +35,11 @@ ls include/csb_v1_* | sort # 245 files
 
 ## 2. IMG1 Graphics Format (Amiga)
 
-CSB's original PC data file is `CSBGRAPHICS.DAT`, but it is **not** encoded
-like DM1's PC `GRAPHICS.DAT`. It uses the Amiga v3.1 **IMG1 nibble-RLE**
-format inherited from the CSB Amiga release, wrapped in a big-endian
-`DMCSB2` container.
+CSB has no original PC/DOS release. `CSBgraphics.dat` is a CSBWin custom
+override file, not an original PC data file. The original Amiga v3.1 graphic
+stream uses **IMG1 nibble-RLE**, wrapped in a big-endian `DMCSB2` container;
+it is deliberately kept distinct from DM1 PC `GRAPHICS.DAT` and from the
+CSBWin override format.
 
 ### Container header
 

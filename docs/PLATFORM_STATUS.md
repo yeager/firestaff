@@ -33,7 +33,7 @@ parity gate is complete.
 | Atari ST | **Verified route** | Native data path, source-locked startup and matching legacy-save route are tested. | Broader campaign, HUD/viewport and pixel parity. |
 | Amiga | **Verified route** | Verified native Amiga family is the default CSB route; startup and bounded runtime slices pass with original data. | Full campaign, save and visual parity. |
 | FM Towns | **Verified route** | English/Japanese native packages have separate data, startup, Utility Disk and input paths. | Wider gameplay, Champion Editor and CD-audio parity. |
-| PC DOS | **Data path** | Useful as a source and format reference. | It is not selected ahead of a verified native route. |
+| DOS / PC | **No original release** | CSB has no DOS/PC edition. `--platform pc` is closed before media selection; CSBWin is a separate compatibility/save reference. | A future explicit CSBWin compatibility route needs its own authenticated media and end-to-end proof; it must not be presented as DOS. |
 | PC-9801 | **Unsupported** | Preservation reference only. | None. |
 | X68000 | **Unsupported** | Preservation reference only. | None. |
 

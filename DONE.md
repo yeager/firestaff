@@ -2,6 +2,16 @@
 
 # CSBWin C017 inventory: authored empty-slot atlas parity (2026-08-12)
 
+# CSB: DOS/PC request fails closed before platform selection (2026-08-12)
+
+- ✅ CSB has no original DOS/PC release. The CLI now reports that fact for
+  `--game csb --platform pc` and names the supported original routes rather
+  than selecting a same-hash Atari ST package or stale asset cache. CTest
+  `csb_v1_pc_platform_rejected` checks the nonzero result, exact boundary
+  message, absence of `CSB READY`, and absence of `csb-st`/`csb-pc` runtime
+  cache selection. CSBWin remains a distinct authenticated compatibility/save
+  reference and is not represented as DOS support.
+
 - ✅ Atari ST/CSBWin-inventariet använder nu originalets C232- och
   C042–C048-ägda tomslottsikoner, inklusive skadad hand-/klädslottsvariant och
   den valda vapenhandens kist-/skrollregel. Den äkta C017-bildrutan verifieras

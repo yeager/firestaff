@@ -70,7 +70,7 @@ matching data is present:
 | Amiga 3.1 and 3.5 | Default CSB route when a verified native program handoff is available. Native startup, entrance, supported HUD and viewport material use the Amiga data path. |
 | Atari ST 2.0 and 2.1 | Native media uses its own animation, runtime, HUD and supported viewport-material routes. |
 | FM Towns English and Japanese | Native CD installations use their version-specific Towns packages for the supported title, Game and Utility routes. |
-| PC DOS 3.4 | Recognised source-reference edition. It remains useful for format and runtime comparison, but is not selected ahead of verified native Amiga CSB media. |
+| DOS / PC | No original CSB release exists. `--platform pc` fails closed; CSBWin files are a separately authenticated compatibility/save reference, not a DOS game edition. |
 | PC-9801 Japanese 3.1 | Not supported. The media is retained only as preservation reference and cannot select an M11 data, startup, gameplay or input route. |
 | X68000 Japanese 3.1 | Not supported. The media is retained only as preservation reference and does not select an M11 data, startup or gameplay route. |
 
@@ -139,7 +139,7 @@ local data directory; repository CI enforces this boundary.
 | Game | Playable | Verified runtime routes | Data/preservation only | Unsupported |
 |---|---|---|---|---|
 | DM1 | PC DOS 3.4 | Atari ST | Amiga, FM Towns, PC-9801 preservation | X68000 |
-| CSB | — | Atari ST, Amiga, FM Towns | PC DOS reference | PC-9801, X68000 |
+| CSB | — | Atari ST, Amiga, FM Towns | CSBWin compatibility/save reference | PC-9801, X68000 |
 | DM2 | — | DOS, FM Towns, Mac retail, Mac First Chapter demo | Amiga, Mac JP/FR | X68000 |
 | Nexus | — | Saturn Japanese bounded phase launch | Saturn demo/fan translations | — |
 | Theron's Quest | — | — | PC Engine/TurboGrafx US and Japanese Track 02 routes | — |
@@ -184,6 +184,10 @@ firestaff --game <dm1|csb|dm2|nexus|theron>
 `--csb-fmtowns-ja` is an explicit CSB-only F31J request. It selects the
 hash-verified Japanese FM Towns package and fails if that original package is
 not present; it never guesses from the host language or falls back to F31E.
+CSB has no original DOS/PC edition: `--game csb --platform pc` is deliberately
+rejected and cannot reuse Atari ST material that happens to share a graphics
+hash. CSBWin data is handled only by its authenticated compatibility/save
+boundary, not as a substitute DOS release.
 `--csb-utility-disk` opens the separately preserved FM Towns C06 Utility Disk
 after the normal verified CSB F31 boot; it implies `--game csb --platform
 fm-towns` and fails closed if that package is unavailable. The start menu also

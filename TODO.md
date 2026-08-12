@@ -1,5 +1,15 @@
 # Firestaff TODO - Open Work
 
+# CSB PC/DOS request is a closed platform boundary (2026-08-12)
+
+- ✅ CSB has no original DOS release. `--game csb --platform pc` now fails
+  before media selection with an explicit native-platform list, and the
+  data-independent `csb_v1_pc_platform_rejected` regression proves it cannot
+  emit `CSB READY` or select a stale `csb-st`/`csb-pc` cache. CSBWin remains a
+  separately authenticated compatibility/save boundary, never a relabelled
+  DOS edition. The remaining work is a real CSBWin compatibility corpus and
+  full end-to-end proof, not a generic-PC fallback.
+
 # CSB Hint Oracle: Atari R1 original-media start routes are live; capture parity remains open (2026-08-12)
 
 - ✅ The real Utility Disk `HCSB.DAT` container now has a strict source-cited

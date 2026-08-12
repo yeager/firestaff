@@ -15,7 +15,7 @@ real-media receipt, runtime handoff or pixel-paired claim.
 | Game | Platform | Reference Source | RE Page | Functions | Modules | Parity Evidence |
 |------|----------|-----------------|---------|-----------|---------|-----------------|
 | [Dungeon Master (DM1)](DM1-Reverse-Engineering) | DOS PC 3.4 | ReDMCSB | [DM1 RE](DM1-Reverse-Engineering) | F-number registry and PC34 format work | Source maps and focused receipts | See repository corpus |
-| [Chaos Strikes Back (CSB)](CSB-Reverse-Engineering) | DOS PC 3.4 | ReDMCSB + CSBWin | [CSB RE](CSB-Reverse-Engineering) | Shared engine plus CSB DSA/save work | CSB-specific modules and receipts | See repository corpus |
+| [Chaos Strikes Back (CSB)](CSB-Reverse-Engineering) | Amiga, Atari ST, FM Towns; CSBWin compatibility reference | ReDMCSB + CSBWin | [CSB RE](CSB-Reverse-Engineering) | Shared engine plus CSB DSA/save work | CSB-specific modules and receipts | No original DOS release; see repository corpus |
 | [Dungeon Master II (DM2)](DM2-Reverse-Engineering) | DOS | skproject | [DM2 RE](DM2-Reverse-Engineering) | skproject module and symbol audit | GDAT, records and runtime receipts | See repository corpus |
 | [Theron's Quest](Therons-Quest-Reverse-Engineering) | PC Engine CD | PC Engine disassembly and CD analysis | [Theron RE](Therons-Quest-Reverse-Engineering) | HuC6280 disassembly + retail media receipts | Track 02 loader and level-frame work | runtime handoff open |
 | [DM Nexus](Nexus-Reverse-Engineering) | Sega Saturn | Saturn SH-2 disassembly and retail media analysis | [Nexus RE](Nexus-Reverse-Engineering) | SH-2/VDP/SCSP receipts | DGN/MNS/PRS3/SAL/MAP work | full runtime handoff open |
