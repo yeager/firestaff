@@ -54,6 +54,11 @@
   are source evidence for static dialogs only; gameplay pointer/drag control
   records remain owned by the original dynamic `CODE(3)`/`CODE(11)` path.
 
+- `DM2 Macintosh dynamic-control source audit`: Extend the retained disassembly
+  evidence to the `CODE(11)+0x3186` rectangle builder and its
+  `CODE(11)+0x3474` publication call. The native pointer gate now has a precise
+  materialization boundary; it still rejects guessed CHARSHEET coordinates.
+
 - `DM2 Macintosh pointer target identity`: Preserve the exact renderer-owned
   `c_rwbb` target index through native wall-button dispatch. Pointer clicks no
   longer collapse multiple dynamic controls into a guessed left/centre/right

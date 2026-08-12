@@ -43,7 +43,10 @@ disassembly provides two additional ownership anchors. The routine at
 `CODE(11)+0x0214` allocates four 0x12-byte dynamic records and fills them from
 the source champion/control tables. The routine at `CODE(11)+0x0308` resolves
 an event through the authenticated DB/ObjectID links and walks the source
-record chain before changing the event/control state. These are source
+record chain before changing the event/control state. The shared builder at
+`CODE(11)+0x3186` derives the control rectangle from the live record, source
+viewport state, and Mac color/control tables before publishing it; its
+`CODE(11)+0x3474` call site is the materialization boundary. These are source
 builders/resolvers, not a reusable screen-coordinate table.
 
 The current Firestaff boundary therefore treats keyboard/gamepad confirmation
