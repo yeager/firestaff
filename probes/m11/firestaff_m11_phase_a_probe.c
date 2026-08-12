@@ -111,8 +111,8 @@ int main(int argc, char** argv) {
            "framebuffer is 320*200 = 64000 bytes");
 
     record(&t, "INV_A03B",
-           M11_Render_GetWindowMode() == M11_WINDOW_MODE_WINDOWED,
-           "default startup window mode preserves requested window geometry");
+           M11_Render_GetWindowMode() == M11_WINDOW_MODE_MAXIMIZED,
+           "default startup window mode is maximized");
 
     /* ---------- INV_A04: palette[0][0] == (0,0,0) ---------- */
     const unsigned char* c0 = F9010_VGA_GetColorRgb_Compat(0, 0);
@@ -344,7 +344,7 @@ int main(int argc, char** argv) {
                M11_Render_GetPaletteLevel() == 0 &&
                M11_Render_GetDisplayAspectMode() == M11_DISPLAY_ASPECT_CONTENT &&
                M11_Render_GetIntegerScaling() == 0 &&
-               M11_Render_GetWindowMode() == M11_WINDOW_MODE_WINDOWED &&
+               M11_Render_GetWindowMode() == M11_WINDOW_MODE_MAXIMIZED &&
                framebufferZeroOk &&
                freshPresented == NULL &&
                freshPresentedW == 0 &&
