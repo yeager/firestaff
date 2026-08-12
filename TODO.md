@@ -1397,7 +1397,11 @@
   F1/F2-panelordningen efter F0435: F1 öppnar första återställda championen,
   F2 växlar till den andra och ett nytt F2 stänger samma panel. GAMEBLOCK-
   spegeln får uppdatera roster/data men inte skriva över PANEL.C:s öppna
-  championordinal.
+  championordinal. 2026-08-12: CSBWin `ShowHideInventory`-pariteten täcker
+  även dess första synliga transaktion: originalets C017 blittras exakt till
+  C0128-viewporten `(48,33)` för F1 och F2, och stängning återställer hela
+  C232-HUD:n. Senare stats-/backpack-ritning har egna CSBWin-geometrier och
+  objektägare och hålls stängd i stället för att återanvända PC3.4-panelen.
 
 - 🔧 PC34:s Utility-import kan nu i den opt-in-bundna realdatakedjan läsa en
   klassificerad original-`DMSAVE.DAT` tillsammans med den hashverifierade

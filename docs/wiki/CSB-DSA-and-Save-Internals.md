@@ -180,6 +180,14 @@ and a second F2 closes that same panel. Champion presence and stats remain
 GAMEBLOCK-owned; the open-panel ordinal is PANEL.C state and must not be
 replaced by the party leader during that refresh.
 
+For the Atari ST/CSBWin runtime, `CSBCode.cpp::ShowHideInventory` changes to
+`VM_INVENTORY` and first copies graphic C017 into the C0128 viewport at
+`(48,33)`, size `224x136`. The real-save regression verifies that exact C017
+raster after both F1 and F2, and verifies the complete C232 adventure HUD is
+restored after closing. Its later character-state, health/stamina/mana and
+30-backpack-item operations have separate CSBWin coordinate and object owners;
+they remain closed rather than borrowing PC 3.4 inventory geometry.
+
 ## Viewport Test Coverage (47 files)
 
 Q-CSB-06 dungeon viewport geometry is covered by 47 viewport tests:

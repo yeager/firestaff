@@ -170,6 +170,40 @@ static int check_atari_st_c232_hud_frame(const char *graphics_path,
     return plan.valid && matched == CSB_V1_CSBWIN_LAYOUT_0232_HUD_MATERIAL_COUNT;
 }
 
+/* CSBWin CSBCode.cpp::ShowHideInventory begins by copying C017 to the
+ * C0128 viewport. The following health/stamina/mana and backpack draws have
+ * separate owners, so this checks only the one complete source raster that
+ * this runtime route is allowed to publish today. */
+static int check_atari_st_c017_inventory_viewport(const char *graphics_path,
+                                                   const unsigned char *framebuffer)
+{
+    unsigned char *expected = NULL;
+    int width = 0;
+    int height = 0;
+    int row;
+    int matches = 0;
+    CSB_V1_StartupGraphicDecodeReceipt_PC34 receipt;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!graphics_path || !framebuffer ||
+        !csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+            graphics_path, 17u, &expected, &width, &height, &receipt) ||
+        !receipt.valid || width != 224 || height != 136) {
+        free(expected);
+        return 0;
+    }
+    matches = 1;
+    for (row = 0; row < height; ++row) {
+        if (memcmp(framebuffer + (size_t)(33 + row) * 320u + 48u,
+                   expected + (size_t)row * 224u, 224u) != 0) {
+            matches = 0;
+            break;
+        }
+    }
+    free(expected);
+    return matches;
+}
+
 int main(void)
 {
     char fallback[1024];
@@ -339,15 +373,30 @@ int main(void)
                   M11_GAME_INPUT_REDRAW && view.inventoryPanelActive &&
                   view.world.party.activeChampionIndex == 0,
               "stock CSBWin F1 opens the first restored champion inventory");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        CHECK(profile && check_atari_st_c017_inventory_viewport(
+                             profile->graphics_path, framebuffer),
+              "stock CSBWin F1 presents source C017 in the inventory viewport");
         CHECK(M11_GameView_HandleInput(
                   &view, M12_MENU_INPUT_CHAMPION_2_INVENTORY) ==
                   M11_GAME_INPUT_REDRAW && view.inventoryPanelActive &&
                   view.world.party.activeChampionIndex == 1,
               "stock CSBWin F2 switches to the second restored champion inventory");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        CHECK(profile && check_atari_st_c017_inventory_viewport(
+                             profile->graphics_path, framebuffer),
+              "stock CSBWin F2 keeps source C017 in the inventory viewport");
         CHECK(M11_GameView_HandleInput(
                   &view, M12_MENU_INPUT_CHAMPION_2_INVENTORY) ==
                   M11_GAME_INPUT_REDRAW && !view.inventoryPanelActive,
               "stock CSBWin F2 closes its restored champion inventory");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        CHECK(profile && check_atari_st_c232_hud_frame(profile->graphics_path,
+                                                        framebuffer),
+              "stock CSBWin close restores the complete C232 HUD composition");
         M11_GameView_Shutdown(&view);
         if (failures) return 1;
         puts("PASS: stock CSBWin F0435 C0128/C232 runtime frame");

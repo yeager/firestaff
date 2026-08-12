@@ -3802,6 +3802,30 @@ static int m11_csb_present_atari_st_runtime_hud(
         receipt.material_count != CSB_V1_CSBWIN_LAYOUT_0232_HUD_MATERIAL_COUNT) {
         return 0;
     }
+    if (state->inventoryPanelActive) {
+        const uint8_t *inventory_pixels = NULL;
+        int inventory_width = 0;
+        int inventory_height = 0;
+        int row;
+
+        /* CSBWin CSBCode.cpp::ShowHideInventory switches to VM_INVENTORY
+         * and its first paint operation is TAG022a60(17, d.pViewportBMP).
+         * C017 is therefore an original 224x136 replacement for the C0128
+         * viewport at (48,33), not an extra C232 HUD material.  The later
+         * health/stamina/mana, backpack-item and character-state draws have
+         * their own CSBWin geometry and owners; do not approximate them with
+         * the PC3.4 panel renderer here. */
+        if (!m11_csb_csbwin_hud_source_resolver(
+                state, 17u, &inventory_pixels, &inventory_width,
+                &inventory_height) || inventory_width != 224 ||
+            inventory_height != 136) {
+            return 0;
+        }
+        for (row = 0; row < inventory_height; ++row) {
+            memcpy(candidate + (size_t)(33 + row) * 320u + 48u,
+                   inventory_pixels + (size_t)row * 224u, 224u);
+        }
+    }
     for (y = 0; y < 200; ++y) {
         memcpy(framebuffer + (size_t)y * (size_t)framebuffer_width,
                candidate + (size_t)y * 320u, 320u);
