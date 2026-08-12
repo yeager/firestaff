@@ -45,7 +45,8 @@
 - `DM2 Macintosh gameplay MIDI clock`: Advance authentic `Midi` map cues on
   the source DM2 55 ms gameplay tick after New Game, for both English Mac
   editions. The route remains in-memory and fail-closed when no CoreMIDI
-  backend is available; no DOS HMP or synthetic music is substituted.
+  backend is available; each event is consumed once per source loop and no
+  DOS HMP or synthetic music is substituted.
 
 - `DM2 Macintosh champion inventory command`: Publish the authenticated
   GAME_LOAD party snapshot to M11 and route the source English Mac F1-F4

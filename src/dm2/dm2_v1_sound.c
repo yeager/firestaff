@@ -32,6 +32,12 @@ static uint32_t g_dm2_music_loop_duration_us;
 static int g_dm2_music_loop_enabled;
 static int g_dm2_music_backend_proven;
 static uint16_t g_dm2_music_ticks_per_quarter = 96u;
+/* The source MIDI player consumes each event once as its playhead crosses
+ * the event tick.  Keep this clock separate from the host's frame clock so
+ * repeated M11 idle calls cannot resend the already-consumed prefix. */
+static int g_dm2_music_schedule_clock_valid;
+static uint16_t g_dm2_music_schedule_loop_count;
+static uint32_t g_dm2_music_schedule_playhead_us;
 
 /* CDDA state for FM Towns raw PCM playback */
 static uint8_t *g_dm2_cdda_pcm_data;
@@ -151,6 +157,13 @@ static uint32_t dm2_music_ticks_to_us(uint32_t ticks, uint16_t division)
 {
     if (division == 0u) return 0u;
     return (uint32_t)(((uint64_t)ticks * 500000u) / division);
+}
+
+static void dm2_music_reset_schedule_clock(void)
+{
+    g_dm2_music_schedule_clock_valid = 0;
+    g_dm2_music_schedule_loop_count = 0u;
+    g_dm2_music_schedule_playhead_us = 0u;
 }
 
 static int dm2_inspect_smf_track(const uint8_t *data,
@@ -398,6 +411,7 @@ static int dm2_inspect_hmp(const uint8_t *data,
      * events to the live scheduler until that backend contract is ported. */
     memset(g_dm2_music_events, 0, sizeof(g_dm2_music_events));
     g_dm2_music_event_count = 0;
+    dm2_music_reset_schedule_clock();
     receipt->schedule_event_count = 0u;
     receipt->schedule_handoff_ready = 0;
     receipt->midi_handoff_ready = 0;
@@ -1579,6 +1593,7 @@ void dm2_v1_sound_bind_verified_music_assets(const char *asset_root,
     (void)asset_root;
     (void)primary_assets_verified;
     g_dm2_music_event_count = 0;
+    dm2_music_reset_schedule_clock();
     g_dm2_music_loop_duration_us = 0;
     g_dm2_music_loop_enabled = 0;
     g_dm2_music_backend_proven = 0;
@@ -1590,6 +1605,7 @@ int dm2_v1_sound_inspect_music_data(const uint8_t *data, size_t size,
 {
     int result;
     g_dm2_music_event_count = 0;
+    dm2_music_reset_schedule_clock();
     dm2_music_receipt_clear(out_receipt);
     if (!data || size == 0u || !out_receipt)
         return DM2_V1_MUSIC_INSPECT_BAD_HEADER;
@@ -1603,6 +1619,7 @@ int dm2_v1_sound_inspect_music_data(const uint8_t *data, size_t size,
         out_receipt->midi_handoff_ready = 0;
         out_receipt->schedule_handoff_ready = 0;
         g_dm2_music_event_count = 0;
+        dm2_music_reset_schedule_clock();
     }
     return result;
 }
@@ -1772,6 +1789,7 @@ int dm2_v1_sound_schedule_music(uint32_t elapsed_us,
     uint32_t playhead = elapsed_us;
     uint16_t loop_count = 0;
     uint16_t due = 0;
+    int first_schedule;
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (g_dm2_music_event_count == 0u || !out_receipt) return 0;
     if (g_dm2_music_loop_enabled && g_dm2_music_loop_duration_us != 0u &&
@@ -1780,13 +1798,19 @@ int dm2_v1_sound_schedule_music(uint32_t elapsed_us,
         playhead = elapsed_us % g_dm2_music_loop_duration_us;
         if (playhead == 0u) playhead = g_dm2_music_loop_duration_us;
     }
+    first_schedule = !g_dm2_music_schedule_clock_valid;
     for (uint16_t i = 0; i < g_dm2_music_event_count; ++i) {
         uint32_t event_us =
             g_dm2_music_loop_duration_us && g_dm2_music_events[i].tick != 0u
                 ? dm2_music_ticks_to_us(g_dm2_music_events[i].tick,
                                         g_dm2_music_ticks_per_quarter)
                 : 0u;
-        if (event_us <= playhead) {
+        int newly_due = first_schedule ||
+                        loop_count != g_dm2_music_schedule_loop_count
+                            ? event_us <= playhead
+                            : event_us > g_dm2_music_schedule_playhead_us &&
+                                  event_us <= playhead;
+        if (newly_due) {
             due++;
             if (g_dm2_music_backend_proven &&
                 g_dm2_music_events[i].status >= 0x80u &&
@@ -1795,6 +1819,9 @@ int dm2_v1_sound_schedule_music(uint32_t elapsed_us,
             }
         }
     }
+    g_dm2_music_schedule_clock_valid = 1;
+    g_dm2_music_schedule_loop_count = loop_count;
+    g_dm2_music_schedule_playhead_us = playhead;
     out_receipt->valid = 1;
     out_receipt->event_count_due = due;
     out_receipt->loop_count = loop_count;
@@ -1833,6 +1860,7 @@ int dm2_v1_sound_stop_music(void) {
     dm2_v1_midi_backend_close();
     memset(g_dm2_music_events, 0, sizeof(g_dm2_music_events));
     g_dm2_music_event_count = 0;
+    dm2_music_reset_schedule_clock();
     g_dm2_music_loop_duration_us = 0;
     g_dm2_music_loop_enabled = 0;
     g_dm2_music_backend_proven = 0;

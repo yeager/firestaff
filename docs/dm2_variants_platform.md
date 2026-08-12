@@ -153,8 +153,10 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   event resources without flattening or extracting the application. During
   gameplay, the Mac runtime advances an authenticated MIDI map cue on the
   same 55 ms source tick used by the DM2 runtime after a cue is selected; it
-  does not use a host frame delta. CoreMIDI device/timing parity and native
-  pointer/drag ownership remain open gates.
+  does not use a host frame delta, and the scheduler consumes each event once
+  as the source playhead crosses it instead of replaying the elapsed prefix
+  on every host tick. CoreMIDI device/timing parity and native pointer/drag
+  ownership remain open gates.
 
 X68000 is not part of the DM2 support matrix.
 
