@@ -1,33 +1,34 @@
-# Bevarandestatus 2026-08-11
+# Preservation status 2026-08-12
 
-Det här är en tvärspelsöversikt över vad Firestaff kan belägga i källkod,
-testsvit och externa originalmedier. En grön parser eller en syntetisk fixtur
-är inte ett påstående om spelbarhet eller bildparitet.
+This cross-game summary records what Firestaff can substantiate through source
+code, tests and external original media. A passing parser or synthetic fixture
+is not a claim of playability or pixel parity.
 
-| Spel | Bevarat och verifierat | Öppen gräns |
+| Game | Preserved and verified | Open boundary |
 |---|---|---|
-| DM1 | PC DOS 3.4 V1:s start, inmatning, vy, HUD, strid och sparande; separata Atari ST- och FM Towns-formatvägar | fler parvisa original-/Firestaff-fångster och granskade V2-material |
-| CSB | Amiga, Atari ST och FM Towns har separata indata- och startvägar | X68000 är avsiktligt ostött; återstående gränser gäller DSA-/save-korpus och bredare HUD-/vyparitet för stödda plattformar |
-| DM2 | GDAT-, G1- och ljudgränser, startprofil och avgränsade V1/V2-rutter | full SKSAVE-ägarskap och sammanhängande originaldatakörning |
-| Nexus | Saturn DGN/DMDF, MNS, PRS3 och begränsade SAL/MAP-rekvitton | synlig materialsemantik, händelse-/ljuduppspelning och spelbar Saturn-rutt |
-| Theron's Quest | US/JP Track 02-identitet, sektorläsning, nivåramar och autentiserade fångstkedjor | spelägd Track 02-handoff, SRM-innehåll, palett-/bitmapägande och positiv spelbar fångst |
+| DM1 | PC DOS 3.4 V1 startup, input, viewport, HUD, combat and saves; separate Atari ST and FM Towns format paths | More paired original-vs-Firestaff captures and reviewed V2 material |
+| CSB | Separate Amiga, Atari ST and FM Towns input and startup paths | X68000 is intentionally unsupported; remaining work covers DSA/save corpus and broader HUD/viewport parity on supported platforms |
+| DM2 | DOS/FM Towns routes plus large and small English Macintosh routes from authentic ZIPs in RAM; Mac media, movies, sound, MIDI, input and New Game are verified | Full V1/SKSAVE ownership, Mac GAME_LOAD/Resume, dynamic pointer/drag ownership and continuous original-data gameplay |
+| Nexus | Saturn DGN/DMDF, MNS, PRS3 and bounded SAL/MAP receipts | Visible material semantics, event/audio playback and a playable Saturn route |
+| Theron's Quest | US/JP Track 02 identity, sector reading, level framing and authenticated capture chains | Game-owned Track 02 handoff, SRM contents, palette/bitmap ownership and positive gameplay capture |
 
-## Format- och disassemblyprinciper
+## Format and disassembly principles
 
-- ReDMCSB är den primära kontrollflödesreferensen för DM1 och CSB. CSBWin
-  används som separat referens för dess egna resurser och sparformat.
-- DM2 följs till skproject och dess symbolrevision. Nexus och Theron saknar
-  rekonstruerad källkod; där krävs disassembly, råmedia och fångstrekvitton.
-- Originalarkiv, diskavbilder, BIOS, SRAM och råa emulatorfångster stannar i
-  den externa, användarägda samlingen. Repositoryt innehåller kod,
-  hashmetadata, små märkta fixturer och sammanfattade rekvitton.
+- ReDMCSB is the primary control-flow reference for DM1 and CSB. CSBWin is a
+  separate reference for its own resources and save formats.
+- DM2 follows skproject and its symbol audit. Nexus and Theron have no
+  reconstructed source; their evidence must come from disassembly, raw media
+  and capture receipts.
+- Original archives, disk images, BIOS files, SRAM and raw emulator captures
+  remain in the external user-owned collection. The repository contains code,
+  hash metadata, small labelled fixtures and summarized receipts.
 
 ## CSB X68000
 
-CSB för X68000 stöds inte. Externa HDM-avbilder får behållas som
-bevarandereferens, men Firestaff erbjuder ingen inläsning, cache, start- eller
-emuleringsrutt för dem.
+CSB for X68000 is unsupported. External HDM images may remain as preservation
+references, but Firestaff provides no reader, cache, startup or emulation route
+for them.
 
-Fördjupning för stödda plattformar: [bevarandeprinciper](wiki/Preservation.md),
-[formatkatalog](GAME_DATA_FORMATS.md), [CSB-referens](REDMCSB_REFERENCE.md)
-och [gapplista](FIRESTAFF_GAP_LIST.md).
+For supported-platform detail, see [preservation principles](wiki/Preservation.md),
+[game-data formats](GAME_DATA_FORMATS.md), [CSB reference](REDMCSB_REFERENCE.md)
+and the [gap list](FIRESTAFF_GAP_LIST.md).

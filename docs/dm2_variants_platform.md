@@ -94,9 +94,10 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   `PUSH_BUTTON_SWITCH` (`0x46`) chain may mutate only its direct DB0 door
   targets. Authenticated local-action DB3 chains for `0x17`, `0x18` and
   `0x1A` use the source actuator-list rotation path (including mixed chain
-  members). Source `0x04` wall- and floor-mecha timers now enter the
-  source-owned DB3/DB14 actuator walkers at runtime; target classes whose
-  owners are not yet complete remain fail-closed. Remote Mac `0x17`/`0x1A`
+  members). Source `0x04` wall- and floor-mecha timers remain fail-closed
+  until the complete DB3/DB14/DB0 GAME_LOAD transaction is owned atomically;
+  Firestaff must not derive mutable targets from raw timer bytes. Remote Mac
+  `0x17`/`0x1A`
   item admission and the small demo's authentic target class 7 still require
   their original GAME_LOAD owner before mutation.
   No chain is converted into a DM1 front-cell action.
@@ -189,7 +190,9 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   dialog/control resources, not permission to invent gameplay hit rectangles;
   native CHARSHEET pointer/drag ownership still depends on the dynamic
   `Control`/event records published by `CODE(3)`/`CODE(11)`. CoreMIDI
-  device/timing parity and that dynamic pointer owner remain open gates.
+  device/timing parity and that dynamic pointer owner remain open gates. This
+  is a verified media/resource boundary, not a claim of complete Macintosh
+  playability.
 
 X68000 is not part of the DM2 support matrix.
 

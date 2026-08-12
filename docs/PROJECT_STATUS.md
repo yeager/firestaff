@@ -9,11 +9,11 @@ source audits and capture receipts remain in the linked game documentation.
 
 | Game | Current status | What is verified | Main open boundary |
 |---|---|---|---|
-| Dungeon Master 1 | Playable/source-locked V1; native macOS host smoke verified | PC 3.4 runtime, viewport, HUD, input, combat, saves, Apple Silicon macOS boot and original-data gates | C13 save corpus, broader original-vs-Firestaff capture and V2 material; the unreleased historical Macintosh prototype has no local authenticated data |
-| Chaos Strikes Back | Active hardening | Source-locked engine slices, dungeon model, mechanics, startup and Utility Disk paths; Atari ST/Amiga resume and a stock CSBWin legacy-save resume through both menu and CLI | Extended Features/DSA corpus, wider real-data runtime, HUD/viewport and pixel evidence |
-| Dungeon Master II: Skullkeep | Active hardening | Boot/profile, GDAT utilities, V2 presentation, lighting, HUD, movement and controller slices | SKSAVE ownership, V1 dungeon/render/mechanics parity and live material/audio routes |
-| DM Nexus | Active real-data bring-up | Saturn DMDF/DGN data, world/render/save/mechanics slices and V2 presentation | Saturn runtime/frame capture, material semantics, event/audio playback and full playability |
-| Theron's Quest | Active real-media bring-up | JP/US Track 02 identity, parser, level framing, mechanics, progression and capture instrumentation | Full Track 02 handoff, save body semantics, bitmap/palette binding and JP capture |
+| Dungeon Master 1 | Playable PC V1 plus bounded Atari route | PC DOS 3.4 runtime, viewport, HUD, input, combat, saves and original-data gates; Atari ST launch/data path | Broader original-vs-Firestaff capture, V2 material, Amiga/FM Towns runtime proof and the C13 save corpus |
+| Chaos Strikes Back | Verified native routes, not complete campaign parity | Amiga default; Atari ST legacy-save route; FM Towns English/Japanese startup, Utility Disk and input paths | Wider campaign/save/HUD/viewport parity and Extended Features/DSA corpus |
+| Dungeon Master II: Skullkeep | Two English Macintosh routes verified to bounded New Game | DOS/FM Towns runtime slices; large Mac retail and small First Chapter ZIPs read in RAM with separate media, movie, sound, MIDI, input and New Game gates | Complete V1 parity; Mac GAME_LOAD/Resume and native dynamic pointer/drag ownership |
+| DM Nexus | Bounded Saturn real-data phase launch | Authentic Japanese Saturn DM.BIN/Track 1, DGN/DMDF/MNS/PRS3 parsing and phase-launch gate | Full gameplay, material semantics, event/audio playback and public frame capture |
+| Theron's Quest | Real-media data/parser bring-up | Japanese/US Track 02 identity, parser, level framing, mechanics and capture instrumentation | Game-owned dungeon handoff, saves, bitmap/palette binding and positive gameplay capture |
 
 The dated [preservation status](PRESERVATION_STATUS_2026-08-11.md) records
 the current source, format and real-media boundary for every game.

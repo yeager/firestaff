@@ -4,13 +4,11 @@ Firestaff is a clean-room engine for the Dungeon Master games. It reads the
 original files you own, identifies each edition by its content hash and keeps
 that data separate from the program.
 
-Dungeon Master for PC DOS 3.4 is the current playable route. Its native Atari
-ST graphics container is also recognised and launch-ready when matching media
-is supplied. Chaos Strikes Back starts from verified native Amiga editions by
-default; Atari ST and FM Towns have their own native data paths. CSB campaign,
-save and presentation parity are still under active development. Dungeon Master
-II, DM Nexus and Theron's Quest are also active development routes, not
-finished releases.
+Dungeon Master for PC DOS 3.4 is the current fully playable route. The other
+games have separate, edition-specific routes at different levels of readiness.
+Firestaff never borrows data from another platform to make an incomplete route
+look playable. The complete game/platform matrix is in
+[Platform status](docs/PLATFORM_STATUS.md).
 
 [![CI](https://github.com/yeager/firestaff/actions/workflows/verify.yml/badge.svg)](https://github.com/yeager/firestaff/actions/workflows/verify.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -26,19 +24,21 @@ dungeon view, HUD, controls, combat and save handling use original data.
 
 The other games are active development routes. Firestaff detects their real
 media and exposes only paths with a verified handoff; it never borrows data
-from another edition to fill a gap. The detailed status is kept in
-[project status](docs/PROJECT_STATUS.md). The published documentation is
+from another edition to fill a gap. The detailed status is kept in the
+[project status](docs/PROJECT_STATUS.md) and the per-platform matrix in
+[Platform status](docs/PLATFORM_STATUS.md). The published documentation is
 available at [yeager.github.io/firestaff](https://yeager.github.io/firestaff/).
-The dated [preservation status](docs/PRESERVATION_STATUS_2026-08-11.md)
+The [preservation status](docs/PRESERVATION_STATUS_2026-08-11.md), reviewed
+2026-08-12,
 separates source/disassembly evidence, real-media receipts and open routes.
 
 | Game | Current scope |
 |---|---|
 | Dungeon Master | Playable PC DOS 3.4 route. Atari ST media has its own native graphics decoder and launch path; further parity work continues. |
 | Chaos Strikes Back | Native Amiga is the default route when verified media is available. Atari ST and FM Towns have their own native data and startup paths; a stock legacy CSBWin save is verified through both menu and CLI when paired with matching Atari ST data. The Atari C017 inventory uses its original C232/C042–C048 icon atlas, including empty-slot symbols; the transient attacking-hand overlay and campaign parity remain open. |
-| Dungeon Master II: Skullkeep | Engine and data work in progress. |
-| DM Nexus | Saturn real-data bring-up in progress. |
-| Theron's Quest | PC Engine real-media bring-up in progress. |
+| Dungeon Master II: Skullkeep | DOS and FM Towns have verified runtime slices. Amiga is a separate data path. Both authentic English Mac versions boot and pass bounded New Game/media/input tests; full Mac Resume and native drag/drop remain closed. |
+| DM Nexus | Japanese Saturn real-data route reaches bounded phase launch; full playability and visible material/audio parity remain open. |
+| Theron's Quest | Japanese and US Track 02 media/parser routes are admitted and source-checked; game-owned dungeon handoff and full playability remain open. |
 
 Theron's Quest uses ordinary desktop controls in Firestaff: Up/W moves
 forward, Down/S moves backward, and Left/A and Right/D turn while held.
@@ -133,6 +133,20 @@ explains the verified containers, record families and save boundaries.
 Original BIOS/firmware and game media are never bundled with Firestaff or
 stored in this repository. Supply your own legally obtained files through the
 local data directory; repository CI enforces this boundary.
+
+### Platform status at a glance
+
+| Game | Playable | Verified runtime routes | Data/preservation only | Unsupported |
+|---|---|---|---|---|
+| DM1 | PC DOS 3.4 | Atari ST | Amiga, FM Towns, PC-9801 preservation | X68000 |
+| CSB | — | Atari ST, Amiga, FM Towns | PC DOS reference | PC-9801, X68000 |
+| DM2 | — | DOS, FM Towns, Mac retail, Mac First Chapter demo | Amiga, Mac JP/FR | X68000 |
+| Nexus | — | Saturn Japanese bounded phase launch | Saturn demo/fan translations | — |
+| Theron's Quest | — | — | PC Engine/TurboGrafx US and Japanese Track 02 routes | — |
+
+This table is a summary. Use [Platform status](docs/PLATFORM_STATUS.md) for
+the exact feature boundary and [Project status](docs/PROJECT_STATUS.md) for
+cross-game evidence rules.
 
 ## Running Firestaff
 

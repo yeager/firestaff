@@ -7,6 +7,18 @@ skproject reference material, the corresponding Firestaff module registry,
 the hex-offset disassembly modules, the GDAT graphics format, DUNGEON.DAT
 differences from DM1, and the current symbol-audit and lane status.
 
+## Current Macintosh boundary
+
+The large English retail ZIP and the small First Chapter demo are separate
+authentic Macintosh inputs. Firestaff reads both in memory, preserving their
+HFS/StuffIt layout and resource ownership, and both pass bounded boot, media,
+input and New Game gates. This is a real-media route, not complete Macintosh
+playability: GAME_LOAD/Resume, the dynamic Control/Event pointer-drag owner,
+full MIDI scheduling and Japanese/French runtime proof remain open. The
+[platform status matrix](../PLATFORM_STATUS.md) is the canonical per-platform
+summary; DOSBox `SKSAVE` files are DOS evidence and must not be presented as
+Macintosh saves.
+
 ## 1. skproject Source File Map
 
 Firestaff comments and headers cite skproject `.cpp` files as their source

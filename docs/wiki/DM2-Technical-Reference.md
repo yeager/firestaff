@@ -1,12 +1,32 @@
 # Dungeon Master II: Skullkeep Technical Reference
 
-> **Status reviewed 2026-08-08.** DM2 has substantial skproject-anchored and
-> real-data slices, while V1 dungeon/render/mechanics parity remains active.
+> **Status reviewed 2026-08-12.** DM2 has verified DOS and FM Towns runtime
+> slices. Both authentic English Macintosh editions boot from their original
+> ZIPs in RAM and pass bounded New Game/media/input gates. Full V1 parity,
+> Mac GAME_LOAD/Resume and native Mac pointer/drag ownership remain open.
 
 ## Scope
 
 DM2 V1 follows skproject. It is independent from the DM1/CSB compatibility
-path and requires original PC `GRAPHICS.DAT` plus `DUNGEON.DAT` by hash.
+path. DOS uses the paired PC `GRAPHICS.DAT` plus `DUNGEON.DAT` hashes; the
+Towns and Macintosh routes keep their original platform containers, byte
+order and resource ownership separate.
+
+## Macintosh editions
+
+Firestaff currently admits two English Macintosh editions independently:
+
+| Edition | Verified | Still closed |
+|---|---|---|
+| Large retail | Authentic ZIP/BIN, HFS, big-endian dungeon, title/MooV, sound, MIDI, input, New Game and bounded wall interaction | Complete GAME_LOAD/Resume, native dynamic Control/Event pointer owner, CoreMIDI timing and full parity |
+| Small First Chapter demo | Authentic ZIP, in-memory StuffIt `DMFiles`, truncated big-endian dungeon, 16-entry roster, static startup, input and New Game | The authoritative ZIP has no application fork; dynamic pointer/drag ownership and Resume cannot be claimed |
+
+Production never extracts these game files to a Firestaff data directory and
+never borrows the retail application fork for the demo. The DOSBox saves in
+`Downloads/dm2` are DOS saves and are not valid evidence for Macintosh Resume.
+The [platform status matrix](../PLATFORM_STATUS.md) is the current summary;
+the [Mac source-lock note](../source-lock/dm2-mac-editor-preservation-note.md)
+records the application/resource evidence and its limits.
 
 ## Boot and GDAT
 

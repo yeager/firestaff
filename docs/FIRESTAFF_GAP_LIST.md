@@ -317,6 +317,14 @@ Source: `docs/NEXUS_PLAN.md` (similar scope), greatstone `g_dm2.html`
 | DM2 PC-9801/PC-9821/IBM PS/V 1.0 (jp) | EXTRACTED — `dm2-extras/pc9821-jp/`; PC-9801 media is preservation-only and must not gain a cache, startup, game-view or input route. DMWeb's PC-9821 page identifies the separate JP v1.0 BIN/CUE CD line with six CD.DAT music tracks, while the IBM PS/V page documents its distinct floppy media and input/protection facts. |
 | DM2 FM-Towns 1.0 (jp) | EXTRACTED — `dm2-extras/fm-towns-ja/`; DMWeb's FM Towns edition page identifies the JP v1.0 release as a redump BIN/CUE CD image with CD-audio differences (tracks 2-6 slightly quieter, extra silent track 8) and a distinct Ctrl-Shift-S / shifted-arrow command table |
 
+**DM2 Macintosh status correction (reviewed 2026-08-12):** the English retail
+and First Chapter routes are verified bounded New Game/media/input routes, not
+complete Macintosh gameplay. Source `0x04` wall/floor timers are fail-closed
+until the complete DB3/DB14/DB0 GAME_LOAD transaction is owned atomically. The
+authentic Mac save corpus, complete GAME_LOAD/Resume owner and dynamic
+Control/Event pointer/drag owner are still absent; DOSBox `SKSAVE` files are
+not Macintosh evidence.
+
 ---
 
 ## E. Nexus gaps (Saturn)

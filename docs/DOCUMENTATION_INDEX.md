@@ -14,7 +14,7 @@ original-media playability or pixel parity.
 |---|---|---|
 | Dungeon Master (DM1) | Playable PC 3.4 V1 runtime with source-locked startup, HUD, viewport, combat, saves and original-data gates | Continued original-route captures and V2 visual polish |
 | Chaos Strikes Back (CSB) | Source-locked engine slices, startup/entrance, dungeon model, DSA, mechanics, utility/import and rendering contracts | End-to-end real-data runtime proof |
-| Dungeon Master II: Skullkeep | Boot/profile, GDAT utilities, V2 presentation, lighting, HUD, movement, controller and real-data slices | V1 dungeon/render/mechanics parity with real assets |
+| Dungeon Master II: Skullkeep | DOS/FM Towns runtime slices; both English Macintosh editions boot from authentic ZIPs and pass bounded New Game/media/input gates | Complete V1 parity; Mac GAME_LOAD/Resume and native dynamic pointer/drag ownership |
 | DM Nexus | Saturn DMDF/DGN, world, save, mechanics, V2 presentation, MNS/SAL/MAP and bounded PRS3 evidence | Positive real-asset runtime handoff, visible material rendering and full playability |
 | Theron's Quest | JP/US Track 02 identity, startup records, descriptor/level framing, parser, mechanics, progression, save boundary and capture instrumentation | Game-owned Track 02 dungeon handoff, object/level semantics, bitmap/palette binding and app capture |
 
@@ -26,6 +26,7 @@ handoff is not proven.
 
 - [README](../README.md) — user-facing overview, supported platforms and quick start
 - [Project status](PROJECT_STATUS.md) — short cross-game status matrix
+- [Platform status](PLATFORM_STATUS.md) — current status for every game and platform
 - [Game data setup](DATA_SETUP.md) — legal data intake and scanner behavior
 - [Game-data formats](GAME_DATA_FORMATS.md) — verified containers, record families and save boundaries
 - [CI guide](CI.md) — GitHub Actions checks and local reproduction
@@ -34,7 +35,7 @@ handoff is not proven.
 - [Missing functions by game](MISSING_FUNCTIONS_BY_GAME.md) — code, data and verification gaps
 - [Synthetic data by game](SYNTHETIC_DATA_BY_GAME.md) — fixtures, placeholders and real-data replacements
 - [Preservation and provenance](wiki/Preservation.md) — evidence levels, capture manifests and external data rules
-- [Preservation status 2026-08-11](PRESERVATION_STATUS_2026-08-11.md) — cross-game real-media, format and disassembly boundary
+- [Preservation status (reviewed 2026-08-12)](PRESERVATION_STATUS_2026-08-11.md) — cross-game real-media, format and disassembly boundary
 - [External preservation archive](PRESERVATION_ARCHIVE.md) — moved historical runs and checksum manifest
 - [DMWeb and Greatstone references](DMWEB_REFERENCE.md) — external provenance index
 - [Theron real-data inventory](THERON_REALDATA_INVENTORY.md) — Track 02/19 media identities and placeholder boundaries
@@ -48,7 +49,7 @@ wiki and are copied by `scripts/sync_wiki.sh` during release work.
 
 - **DM1:** [technical reference](wiki/DM1-Technical-Reference.md), [PC34 internals](wiki/DM1-PC34-Internals.md), [reverse engineering](wiki/DM1-Reverse-Engineering.md), [FM Towns guide](wiki/DM1-FMTowns-Guide.md)
 - **CSB:** [technical reference](wiki/CSB-Technical-Reference.md), [DSA and saves](wiki/CSB-DSA-and-Save-Internals.md), [FM Towns guide](wiki/CSB-FMTowns-Guide.md), [reverse engineering](wiki/CSB-Reverse-Engineering.md)
-- **DM2:** [technical reference](wiki/DM2-Technical-Reference.md), [GDAT internals](wiki/DM2-GDAT-Internals.md), [reverse engineering](wiki/DM2-Reverse-Engineering.md)
+- **DM2:** [technical reference](wiki/DM2-Technical-Reference.md), [GDAT internals](wiki/DM2-GDAT-Internals.md), [reverse engineering](wiki/DM2-Reverse-Engineering.md), [platform status](PLATFORM_STATUS.md)
 - **Nexus:** [technical reference](wiki/Nexus-Technical-Reference.md), [DGN/PRS3](wiki/Nexus-DGN-and-PRS3-Internals.md), [SAL/MAP](wiki/Nexus-SAL-MAP-Internals.md), [reverse engineering](wiki/Nexus-Reverse-Engineering.md)
 - **Theron:** [technical reference](wiki/Therons-Quest-Technical-Reference.md), [Track 02 internals](wiki/Therons-Quest-Track02-Internals.md), [reverse engineering](wiki/Therons-Quest-Reverse-Engineering.md)
 
@@ -79,4 +80,4 @@ release, run the focused tests for the affected game, check Markdown links and
 run the build/CI commands in [CI.md](CI.md). Do not commit original game data,
 emulator saves, private capture logs or generated placeholder art.
 
-**Last reviewed:** 2026-08-11.
+**Last reviewed:** 2026-08-12.
