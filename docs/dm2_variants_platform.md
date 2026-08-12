@@ -94,6 +94,11 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   real-media gate rejects zero-duration or non-monotonic frame timing instead
   of inventing a host cadence. Exact original presentation ownership remains
   separate.
+- The small First Chapter demo is also admitted through the complete M11
+  launch path: its static Mac startup surface accepts New Game and publishes
+  the authentic source session from the truncated File_header and real
+  16-entry mirror roster. This is separately gated from the retail movie
+  route; the demo does not borrow retail QuickTime or title pixels.
 - The retail image also retains the complete authentic resource forks for
   `Music` (662,956 bytes), `General.sounds` (134,562), and `Weapon.sounds`
   (50,651). These are source-bound Mac resources, not DOS HMP substitutes;

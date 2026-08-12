@@ -57326,6 +57326,15 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
 endif()
 add_test(NAME test_dm2_v1_mac_demo_new_game_real COMMAND test_dm2_v1_mac_demo_new_game_real)
 
+add_executable(test_dm2_v1_mac_demo_m11_new_game_real
+    tests/test_dm2_v1_mac_demo_m11_new_game_real.c)
+target_include_directories(test_dm2_v1_mac_demo_m11_new_game_real PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm2_v1_mac_demo_m11_new_game_real PRIVATE firestaff_m11)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
+    target_compile_options(test_dm2_v1_mac_demo_m11_new_game_real PRIVATE -Wall -Wextra -Werror -O2)
+endif()
+add_test(NAME test_dm2_v1_mac_demo_m11_new_game_real COMMAND test_dm2_v1_mac_demo_m11_new_game_real)
+
 add_executable(test_dm2_v1_fmtowns_disc
     tests/test_dm2_v1_fmtowns_disc.c
     src/dm2/dm2_v1_fmtowns_disc.c
