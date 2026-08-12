@@ -1050,7 +1050,7 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
         "Firestaff",
         windowWidth,
         windowHeight,
-        SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+        SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_HIGH_PIXEL_DENSITY);
 #else
     g_state.window = SDL_CreateWindow(
         "Firestaff",
@@ -1058,7 +1058,7 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
         SDL_WINDOWPOS_CENTERED,
         windowWidth,
         windowHeight,
-        SDL_WINDOW_RESIZABLE);
+        SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
 #endif
 
     if (!g_state.window) {
@@ -1167,11 +1167,7 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
     g_state.displayAspectMode = M11_DISPLAY_ASPECT_CONTENT; /* content-native aspect */
     g_state.presentationFillWindow = 0;
     g_state.paletteLevel = 0;
-    /* The startup menu applies the saved presentation mode after the window
-     * exists.  Starting windowed is essential for explicit --width/--height
-     * requests; otherwise SDL's maximized flag discards the requested Mac
-     * window size before the menu can apply its override. */
-    g_state.windowMode = M11_WINDOW_MODE_WINDOWED;
+    g_state.windowMode = M11_WINDOW_MODE_MAXIMIZED;
     g_state.integerScaling = 0; /* non-integer scaling for full-window FIT */
     g_state.scaleFilter = M11_SCALE_FILTER_NEAREST;
     g_state.vsync = M11_VSYNC_ON;
@@ -1211,25 +1207,10 @@ void M11_Render_Shutdown(void) {
         g_state.window = NULL;
     }
     SDL_QuitSubSystem(SDL_INIT_VIDEO);
-    g_state.initialised = 0;
-    g_state.quitRequested = 0;
-    g_state.windowW = 0;
-    g_state.windowH = 0;
-    g_state.renderW = 0;
-    g_state.renderH = 0;
-    g_state.paletteLevel = 0;
-    g_state.displayAspectMode = M11_DISPLAY_ASPECT_16_9;
-    g_state.presentationFillWindow = 0;
-    g_state.windowMode = M11_WINDOW_MODE_WINDOWED;
-    g_state.integerScaling = 0; /* non-integer scaling for full-window FIT */
-    g_state.scaleFilter = M11_SCALE_FILTER_NEAREST;
-    g_state.vsync = M11_VSYNC_ON;
-    g_state.contentW = 0;
-    g_state.contentH = 0;
-    g_state.textureW = 0;
-    g_state.textureH = 0;
-    g_state.presentedW = 0;
-    g_state.presentedH = 0;
+    /* Re-initialisation must start from a completely clean renderer state;
+     * reset all scalar, palette, indexed-mode, and V2 presentation fields
+     * after the owned SDL resources and buffers have been released. */
+    memset(&g_state, 0, sizeof(g_state));
 }
 
 void M11_Render_DiscardPresentationTexture(void) {

@@ -18,6 +18,7 @@ static const char* const g_changelogLines[] = {
     "",
     "V" FIRESTAFF_VERSION_NUMBER "  (current build)",
     "  - Startup menu configuration, input, data-directory selection, and display integration fixes.",
+    "  - SDL renderer startup now maximizes consistently and shutdown fully resets presentation state for clean reinitialization.",
     "",
     "V3.0.188  (2026-07-30)",
     "  - Packages the verified CSB V2.x PC3.4 test lane and original CSBWin GRAPHICS.DAT startup decoding.",

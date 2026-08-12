@@ -2,6 +2,11 @@
 
 ## Fixed
 
+- `M11 SDL renderer lifecycle`: Restore maximized startup consistently across
+  SDL3 and SDL2, and fully clear renderer state during shutdown so a later
+  init cannot inherit palette, indexed-mode, V2 presentation, or stale-output
+  settings. This fixes the macOS Phase A startup-window and re-init gates.
+
 - `--game CLI parsing`: Fix direct game selection by accepting the documented space-separated form, conventional `--game=<id>` form, and macOS rich-text pasted en/em dash forms before the verified direct-launch gate.
 - `M11 Phase A verification`: Fix the renderer smoke probe to retain the intentional windowed default that preserves explicit macOS window dimensions across startup and reinitialization.
 
