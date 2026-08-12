@@ -1264,9 +1264,11 @@ static uint8_t *zip_load_entry_bytes(const char *zipPath, const char *entryName,
     return NULL;
 }
 
+#ifndef _WIN32
 static uint8_t *external_read_entry_bytes(const char *archivePath,
                                           const char *entryName,
                                           size_t *out_size);
+#endif
 
 int asset_read_path_alloc(const char *path, uint8_t **outBytes,
                           size_t *outSize) {
