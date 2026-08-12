@@ -29232,11 +29232,17 @@ static int csb_v1_runtime_dsa_cast_spell(void *user,
 
     if (!profile || !parameters) return 0;
     /* Magic.cpp::DSACastSpell calls CallSpellFilter before CastSpell when
-     * STKOP_FilteredCast is used.  The runtime does not yet own that full
-     * actuator/EXPOOL transaction, so accepting a filtered action merely
-     * because its later CastSpell branch is silent would skip source effects.
-     * Keep FILTEREDCAST fail-closed until that owner is complete. */
-    if (filtered) return 0;
+     * STKOP_FilteredCast is used, but CallSpellFilter is itself an optional
+     * feature: it returns immediately unless the authenticated Extended
+     * Features location has bit 31 set.  Do not reject that no-filter source
+     * path merely because the opcode is named FILTEREDCAST.  An enabled
+     * location may contain several type-47 actuators and each may rewrite the
+     * 14-word packet, so it remains fail-closed until that whole ordered,
+     * atomic traversal has a runtime owner. */
+    if (filtered &&
+        (profile->csbwin_extended_spell_filter_location & 0x80000000u) != 0u) {
+        return 0;
+    }
     return parameters[0] == 1 && parameters[3] == -1;
 }
 

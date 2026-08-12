@@ -1450,8 +1450,17 @@ int main(void)
         configure_action(&action, filtered_abort_cast_words, 1);
         check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
                   &profile, &runner, &action, abort_cast_parameters, 14,
+                  NULL) == 1 && runner.last_execution.cast_spell_count == 1u &&
+                  runner.last_execution.last_cast_spell_filtered,
+              "STKOP_FilteredCast follows Magic.cpp's no-filter path when bit 31 is clear");
+
+        profile.csbwin_extended_spell_filter_location = 0x80000012u;
+        configure_action(&action, filtered_abort_cast_words, 1);
+        check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+                  &profile, &runner, &action, abort_cast_parameters, 14,
                   NULL) == 0,
-              "STKOP_FilteredCast rejects even a silent abort until CallSpellFilter has a source owner");
+              "STKOP_FilteredCast remains closed while an enabled filter traversal lacks an atomic owner");
+        profile.csbwin_extended_spell_filter_location = 0u;
     }
 
     /* The dungeon is caller-owned stack storage; the process exits after this

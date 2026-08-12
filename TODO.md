@@ -4112,6 +4112,14 @@ that its exact runtime path is not already source-locked and tested.
     input are verified against PC34 data. Do not reopen without a repro.
 
 21. **CSB-DSA-FULL-OPCODE-FAMILY:** Extend authenticated CSBWin DSA execution
+   2026-08-12: `FILTEREDCAST` now follows CSBWin `Magic.cpp`'s actual
+    no-filter branch when the authenticated Extended Features
+    `spellFilterLocation` has bit 31 clear. `CallSpellFilter()` returns before
+    locating an actuator in that case, so the complete signed 14-word packet
+    can reach the already admitted action-1 silent abort without inventing a
+    filter transaction. An enabled location remains fail-closed: CSBWin walks
+    every type-47 actuator on the square and each may rewrite the packet, so
+    Firestaff must first own that ordered traversal atomically.
    2026-07-29: direct `CAST` and `FILTEREDCAST` now preserve CSBWin
     Magic.cpp's exact signed 14-word `SPELL_PARAMETERS` payload and defer it
     until the complete authenticated action succeeds. They require a real
