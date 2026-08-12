@@ -122,9 +122,22 @@ static int exercise_zip(const char *zip)
                                        &played) ||
         played.played_count != 1u || played.playback_unavailable ||
         capture.starts != 1u || capture.sample_count == 0u ||
-        state.sample_slots[0] != source->w_05) {
+        state.sample_slots[0] != source->w_00) {
         fprintf(stderr, "Mac ZIP authenticated SFX did not reach capture backend: %s\n",
                 zip);
+        result = 1;
+        goto done;
+    }
+    /* The original slot-state table must remain recyclable after a voice
+     * finishes.  A raw GDAT offset such as 1269 is outside that table and
+     * would incorrectly consume a new slot on every source SFX. */
+    capture.starts = 0u;
+    memset(&played, 0, sizeof(played));
+    if (!dm2_v1_sound_queue_play_sound(&state, &state.immediate[0], 1,
+                                       &played) ||
+        played.played_count != 1u || capture.starts != 1u ||
+        state.sample_slots[0] != source->w_00) {
+        fprintf(stderr, "Mac ZIP SFX slot was not recyclable: %s\n", zip);
         result = 1;
         goto done;
     }

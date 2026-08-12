@@ -132,6 +132,9 @@
   existing playback backend; the real retail and First Chapter ZIP gates
   each prove a captured PCM voice. Missing bindings, samples or backends
   remain fail-closed, with no synthetic audio or unpacked game data.
+  Runtime sample slots retain the source `w_00` binding identity rather than
+  the large `w_05` file offset, so completed voices recycle the original
+  slot-state table correctly.
 
 - `DM2 Macintosh movie verification`: Advance the real-media M11 movie gate
   with a controlled source-clock in CI. The retail QuickTime title now reaches

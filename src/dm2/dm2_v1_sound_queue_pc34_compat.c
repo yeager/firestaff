@@ -312,7 +312,11 @@ int dm2_v1_sound_queue_play_sound(DM2_V1_SoundQueueState *state,
                                                      &raw_index) &&
                 dm2_v1_sound_play_raw_positional(
                     raw_index, e->ub_05, e->ub_06, e->ub_07, &playback)) {
-                state->sample_slots[free_slot] = (int32_t)raw_index;
+                /* c_sound.cpp's sample-state table is indexed by the
+                 * sndptr4 binding slot (w_00), not by the GDAT raw offset
+                 * (w_05).  Keep the runtime slot identity source-shaped so
+                 * the 64-slot scan can recycle it on the next sound. */
+                state->sample_slots[free_slot] = (int32_t)e->sample_id;
                 receipt.played_count++;
                 receipt.playback_unavailable = 0;
             } else {
