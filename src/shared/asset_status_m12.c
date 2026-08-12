@@ -1187,6 +1187,7 @@ static int m12_admit_dm2_mac_archive(M12_AssetStatus* status,
         "Dungeon-Master-II-Skullkeep_Mac_EN.zip"
     };
     size_t r, n, vi;
+    int admitted = 0;
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
         strcmp(g_games[gameIndex].gameId, "dm2") != 0) return 0;
     for (r = 0; r < (rootCount ? rootCount : 1u); ++r) {
@@ -1217,14 +1218,20 @@ static int m12_admit_dm2_mac_archive(M12_AssetStatus* status,
                              profile.graphics_md5);
                     m12_copy_string(status->runtimeDataDirs[gameIndex],
                                     sizeof(status->runtimeDataDirs[gameIndex]), candidate);
+                    admitted = 1;
                 }
                 dm2_v1_boot_cleanup(&profile);
-                return 1;
+                /* Keep scanning the sibling candidates. A user data root may
+                 * legitimately contain both the large retail image and the
+                 * smaller First Chapter demo; the launcher must expose both
+                 * authenticated editions instead of making the first archive
+                 * hide the second one. */
+                continue;
             }
             dm2_v1_boot_cleanup(&profile);
         }
     }
-    return 0;
+    return admitted;
 }
 #endif
 

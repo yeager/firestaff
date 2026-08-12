@@ -47,6 +47,9 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   StuffIt 2 `DMFiles` member in RAM. `DMFiles/Dungeon.dat`, `Graphics.dat`,
   and `md.dat` remain owned by the original ZIP and are never unpacked to the
   game-data directory.
+- A shared DM2 data-root scan admits both Mac versions in one pass. The first
+  matching archive no longer hides its sibling, so the launcher can present
+  the large retail and small demo entries together.
 - The two versions have separate hash-paired boot receipts. Retail uses the
   39,411-byte big-endian dungeon; the demo uses its 6,535-byte truncated
   big-endian File_header/map data. Japanese and French Mac containers remain

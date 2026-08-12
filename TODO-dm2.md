@@ -436,6 +436,9 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
 - [x] Publish the authentic Mac `Dungeon.dat` member as a required-file receipt
   for both English editions. Direct launch from either original ZIP now remains
   launch-ready without extracting the BIN, HFS files or resource forks.
+- [x] Keep both authenticated English Mac editions visible when the launcher
+  scans a shared DM2 data root containing both original ZIPs. The scan no longer
+  stops after the first Mac archive.
 - [ ] Admit the authentic Japanese 1.0 and French StuffIt editions
   independently once their container/resource-fork readers are verified.
 - [~] Add a source-owned Mac container/resource-fork reader for the verified

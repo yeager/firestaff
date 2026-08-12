@@ -42,6 +42,10 @@
 
 ### Changed
 
+- `DM2 Macintosh edition discovery`: Keep both authenticated English Mac
+  editions visible when a shared data directory contains the large retail ZIP
+  and the smaller First Chapter ZIP. Archive discovery now scans all matching
+  Mac candidates instead of stopping at the first one.
 - `DM2 Macintosh launcher admission`: Fix the required-file gate for the two
   authentic English Mac ZIPs. The large retail image and the smaller First
   Chapter demo now publish their source-owned HFS `Dungeon.dat` alongside
