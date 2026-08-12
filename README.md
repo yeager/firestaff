@@ -154,6 +154,11 @@ firestaff --game <dm1|csb|dm2|nexus|theron>
 `--csb-fmtowns-ja` is an explicit CSB-only F31J request. It selects the
 hash-verified Japanese FM Towns package and fails if that original package is
 not present; it never guesses from the host language or falls back to F31E.
+The initial Japanese C06 Utility chooser additionally requires the user's
+authorised 256 KiB `FMT_FNT.ROM`; set `FIRESTAFF_FMTOWNS_FONT_ROM` to that
+file before launch. Firestaff uses the ROM only for its original Shift-JIS
+glyphs and keeps the route closed if the file is missing or malformed; it
+never substitutes a system font or installs the ROM into game data.
 
 Run the local test suite with:
 
