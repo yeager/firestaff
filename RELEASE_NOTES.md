@@ -85,6 +85,10 @@
   with a controlled source-clock in CI. The retail QuickTime title now reaches
   its authenticated menu before the Credits.MooV pointer and Return/Enter
   checks run; production playback remains wall-clock based.
+- `DM2 Macintosh application resources`: Add real-media checks for the
+  authentic File, Edit and Options `MENU` resources and the settings `DITL`
+  resource in the retained retail application fork. No guessed menu geometry
+  or editor data is admitted.
 
 ## Nexus
 

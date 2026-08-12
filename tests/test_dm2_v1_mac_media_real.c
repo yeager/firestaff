@@ -81,6 +81,39 @@ int main(void) {
                 return 1;
             }
         }
+        /* The original Mac event loop owns these resources.  Keep the
+         * application menu boundary source-verified before any future
+         * native pointer/menu dispatcher is allowed to consume a click. */
+        {
+            static const int16_t menu_ids[] = { 129, 130, 131 };
+            size_t menu_index;
+            const uint8_t *resource = NULL;
+            size_t resource_size = 0u;
+            for (menu_index = 0u;
+                 menu_index < sizeof(menu_ids) / sizeof(menu_ids[0]);
+                 ++menu_index) {
+                if (dm2_v1_mac_resource_find(
+                        media.application_resource,
+                        media.application_resource_size, "MENU",
+                        menu_ids[menu_index], &resource, &resource_size,
+                        &receipt) != 0 || resource_size < 4u ||
+                    receipt.id != menu_ids[menu_index]) {
+                    fprintf(stderr, "authentic Mac MENU resource %d was not parsed\n",
+                            menu_ids[menu_index]);
+                    dm2_v1_mac_media_free(&media);
+                    return 1;
+                }
+            }
+            if (dm2_v1_mac_resource_find(
+                    media.application_resource,
+                    media.application_resource_size, "DITL", 132,
+                    &resource, &resource_size, &receipt) != 0 ||
+                resource_size < 2u || receipt.id != 132) {
+                fprintf(stderr, "authentic Mac DITL(132) was not parsed\n");
+                dm2_v1_mac_media_free(&media);
+                return 1;
+            }
+        }
     }
     if (!demo) {
         printf("retail movie mask=0x%08x resource=0x%08x moov=0x%08x sizes=%zu,%zu,%zu,%zu,%zu moov_size=%zu head=%02x%02x%02x%02x%02x%02x%02x%02x\n",
