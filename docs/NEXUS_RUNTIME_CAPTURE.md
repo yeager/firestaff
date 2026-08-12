@@ -60,11 +60,13 @@ optional environment variable
 of `frame:length:mask` entries, for example
 `1250:60:0x10,1350:60:0x10,1450:60:0x20`. The sequence is recorded in the
 manifest and is applied to the real SMPC input stream in one emulator session;
-the masks are the Saturn pad bits exposed by the instrumented SMPC hook. The
+the masks are the Saturn pad bits exposed by the instrumented SMPC hook; the
+hook clears those bits during each interval because the Saturn pad bus is
+active-low. The
 13-bit path includes the right-shoulder bit (`0x1000`), which is required for
 the documented Nexus debug sequence `L, R, X, Up, C, Left, L, Right`.
-This sequence is an emulator investigation aid only; it is not an input-provenance
-facility. The resulting frame still requires an exact MENU.BPK/FONT256 or
+This sequence is an emulator investigation aid and input-provenance record
+only. The resulting frame still requires an exact MENU.BPK/FONT256 or
 other source-consumer join before startup or menu presentation can open.
 
 For long operator-only scans, the capture patch also accepts the inherited

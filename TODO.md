@@ -17,9 +17,11 @@
   windows through `FIRESTAFF_NEXUS_TRACE_PRESS_SEQUENCE` as
   `frame:length:mask,...`. The 13-bit mask preserves the Saturn right shoulder
   bit required by the original Nexus debug sequence.
+- ✅ The injection now honours the Saturn bus's active-low semantics: selected
+  bits are cleared only for the requested interval and released afterward.
 - ✅ Patch application was checked against a clean Mednafen 1.32.1 source tree;
-  the Firestaff target still builds and all 15 targeted Nexus title/startup
-  tests pass against the real data corpus.
+  the Firestaff target still builds, the input patch applies after the capture
+  patches, and a J/J raw-capture smoke run produced two valid frames.
 - 🔒 A J-BIOS/J-retail run still did not produce a startup→menu witness within
   the bounded capture window. The original debug sequence is therefore an
   investigation aid, not a start-pose receipt or a production unlock.
