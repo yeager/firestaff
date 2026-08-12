@@ -1,3 +1,13 @@
+# CSB: V2.2 avvisar genererad artpack-cache (2026-08-12)
+
+- ✅ CSB:s produktionsväg öppnar inte längre `v22_inplace_cache.bin`, som
+  skapas av host-PNG-filer och inte är originalspeldata. Arkivimporten
+  extraherar därför inte heller cachen.
+- ✅ V2.2:s F0128-ingång är no-draw och lämnar den autentiserade V1-bilden
+  byte för byte intakt. När V2.2 efterfrågas återgår M11 till V2.1.
+- 🔒 En framtida CSB V2.2-väg kräver en original-dataavkodare, källpalett,
+  källstyrd placering och pixelparitetsbevis innan den kan rita något.
+
 # CSB F31: explicit user save has CLI/start-menu parity (2026-08-12)
 
 - ✅ An explicit language-matched original F0435 `CSBGAME.DAT` now binds to

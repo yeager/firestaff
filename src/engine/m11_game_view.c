@@ -292,18 +292,9 @@ static int m11_csb_v22_materialize_artpack(const char *artpack_path,
             return 0;
         }
     }
-    {
-        char cache_file[FSP_PATH_MAX];
-        char virtual_path[ASSET_PATH_MAX];
-        if (!FSP_JoinPath(cache_file, sizeof(cache_file), cache_dir,
-                          "v22_inplace_cache.bin") ||
-            snprintf(virtual_path, sizeof(virtual_path), "%s::%s",
-                     artpack_path, "v22_inplace_cache.bin") >=
-                (int)sizeof(virtual_path) ||
-            !asset_extract_virtual_path(virtual_path, cache_file)) {
-            return 0;
-        }
-    }
+    /* Do not extract `v22_inplace_cache.bin`. It is a generated host-art
+     * cache, not original CSB material, and the CSB V2.2 renderer rejects it
+     * outright. The manifest may still be inspected by the provenance gate. */
     csb_v22_set_manifest_file_path(manifest);
     for (slot = 0; slot < CSB_V22_FAMG_MATERIAL_COUNT; ++slot) {
         CSB_V22_FamgSlotInfo info;
@@ -11530,8 +11521,8 @@ static int m11_csb_apply_boot_runtime_receipt(
         package_identity = (package_identity ^ (unsigned char)*identity_text) * 16777619u;
     }
     /* Keep this in sync with the CSB V2.2 material admission decision. A
-     * requested V2.2 mode may resolve to V2.1 when no reviewed real pack is
-     * installed; M11 must not restore the raw request at this handoff. */
+     * requested V2.2 mode resolves to V2.1 until original-CSB material is
+     * decoded and pixel-verified; M11 must not restore the raw request. */
     csb_v2_presentation_mode_set_m12(spec->presentationMode);
     switch (csb_v2_presentation_mode_get()) {
         case CSB_V2_PM_V20_FILTERED:
@@ -30020,16 +30011,11 @@ static int m11_graphics_popup_mode_count(const M11_GameViewState* state) {
         state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
         return M12_PRESENTATION_V22_MODERN;
     }
-    /* M12's installed bit is cross-game launcher state. CSB V2.2 has a
-     * stricter per-game provenance gate, so a finished DM1 pack must not
-     * expose CSB V2.2 in the live graphics menu. */
+    /* M12's installed bit is cross-game launcher state. CSB V2.2 has no
+     * original-material decoder yet, so a finished DM1 or generated CSB pack
+     * must not expose it in the live graphics menu. */
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-        /* CSB owns both its pack admission and material provenance.  Do not
-         * consult M12's DM1-oriented launcher bit after this: a real,
-         * complete CSB pack may be installed without any DM1 V2.2 pack. */
-        return csb_v22_famg_is_finished_real()
-            ? M12_PRESENTATION_MODE_COUNT
-            : M12_PRESENTATION_V22_MODERN;
+        return M12_PRESENTATION_V22_MODERN;
     }
     M12_Config_Load(&config, NULL);
     /* A selected archive is not installed material. In particular it may

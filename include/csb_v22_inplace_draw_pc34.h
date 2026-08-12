@@ -14,8 +14,10 @@
  *     -> source palette quantization -> original command clip
  *     -> return replacement count only for the admitted command
  *
- * When V22 is not active, or its selected material lacks a complete source
- * receipt, lookup returns NULL and the V1 draw path is unchanged.
+ * There is currently no authenticated original-CSB replacement-art decoder.
+ * Generated `v22_inplace_cache.bin` files are explicitly rejected, so lookup
+ * returns NULL and the V1 draw path is unchanged.  This API remains as the
+ * no-draw integration seam for a future source-complete implementation.
  *
  * Source-lock: csb_v22_shape_cache_pc34.h (the cache),
  * csb_v22_modern_assets_pc34.c (manifest lookup),

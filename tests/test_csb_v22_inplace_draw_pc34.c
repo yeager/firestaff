@@ -1,471 +1,79 @@
-/*
- * test_csb_v22_inplace_draw_pc34.c — CSB V2.2 in-place bitmap cache + render pass
- *
- * Tests the V22 in-place foundation:
- *   - Init/shutdown lifecycle
- *   - Active flag reflects cache load state
- *   - Cache file presence/format validation (skip if missing)
- *   - get_cell_bitmap returns NULL when no V22 cache populated
- *   - get_cell_asset_id returns NULL when V22 not active
- *   - source-bound F0128 commands replace only admitted original material
- *   - Source evidence citation
- *
- * Test does NOT modify any V1/V2 state — read-only verification.
- * Skips cache-dependent assertions when ~/.firestaff/assets/csb/modern/
- * v22_inplace_cache.bin is missing or invalid.
- */
-
+/* CSB V2.2 must not consume generated host-art cache bytes. */
 #include "csb_v22_inplace_draw_pc34.h"
-#include "csb_v22_modern_assets_pc34.h"
-#include "csb_v22_shape_cache_pc34.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-static int failures = 0;
-static int checks = 0;
+static int checks;
+static int failures;
 
-static unsigned fnv1a32(const char* text) {
-    unsigned h = 2166136261u;
-    while (*text) h = (h ^ (unsigned char)*text++) * 16777619u;
-    return h;
-}
+#define CHECK(expr, message) do { \
+    ++checks; \
+    if (!(expr)) { \
+        ++failures; \
+        fprintf(stderr, "FAIL %s:%d: %s — %s\n", \
+                __FILE__, __LINE__, #expr, message); \
+    } \
+} while (0)
 
-static unsigned fnv1a_bytes(const unsigned char *bytes, size_t size) {
-    unsigned hash = 2166136261u;
-    size_t index;
-    for (index = 0; index < size; ++index) {
-        hash = (hash ^ bytes[index]) * 16777619u;
-    }
-    return hash;
-}
-
-static void put_u32(unsigned char* out, unsigned value) {
-    out[0] = (unsigned char)(value & 0xffu);
-    out[1] = (unsigned char)((value >> 8) & 0xffu);
-    out[2] = (unsigned char)((value >> 16) & 0xffu);
-    out[3] = (unsigned char)((value >> 24) & 0xffu);
-}
-
-static int mkdir_p(const char* path) {
-    char command[512];
-    int n = snprintf(command, sizeof(command), "mkdir -p '%s'", path);
-    return n > 0 && (size_t)n < sizeof(command) && system(command) == 0;
-}
-
-static int write_file(const char* path, const void* bytes, size_t size) {
-    FILE* fp = fopen(path, "wb");
-    if (!fp) return 0;
-    int ok = fwrite(bytes, 1, size, fp) == size;
-    fclose(fp);
-    return ok;
-}
-
-#define CHECK(expr, msg) \
-    do { checks++; if (!(expr)) { \
-        fprintf(stderr, "FAIL %s:%d: %s — %s\n", __FILE__, __LINE__, #expr, (msg)); \
-        failures++; } } while (0)
-
-static void test_init_shutdown(void) {
-    int active_before = csb_v22_inplace_draw_active();
-    (void)active_before;
-    int r1 = csb_v22_inplace_draw_init();
-    int r2 = csb_v22_inplace_draw_init();
-    CHECK(r1 == r2, "init is idempotent (same return on repeat call)");
-    int active_after = csb_v22_inplace_draw_active();
-    CHECK((active_after == 0) || (active_after == 1), "active is 0 or 1");
-    csb_v22_inplace_draw_shutdown();
-    CHECK(csb_v22_inplace_draw_active() == 0, "active==0 after shutdown");
-    int r3 = csb_v22_inplace_draw_init();
-    CHECK((r3 == 0) || (r3 == 1), "re-init returns 0 or 1");
-    csb_v22_inplace_draw_shutdown();
-}
-
-static void test_source_evidence(void) {
-    const char* ev = csb_v22_inplace_draw_source_evidence();
-    CHECK(ev != NULL, "evidence non-null");
-    CHECK(strlen(ev) > 0, "evidence non-empty");
-    CHECK(strstr(ev, "ReDMCSB") != NULL || strstr(ev, "csb_v22") != NULL,
-          "evidence cites source");
-}
-
-static void test_cache_load_path(void) {
-    int r = csb_v22_inplace_draw_init();
-    int active = csb_v22_inplace_draw_active();
-    if (r == 1) {
-        CHECK(active == 1, "active==1 after successful init");
-    } else {
-        CHECK(active == 0, "active==0 when cache missing/invalid");
-    }
-    csb_v22_inplace_draw_shutdown();
-}
-
-static void test_cache_uses_configured_manifest_root(void) {
-    const char* root = "/tmp/scratch/csb-v22-configured-root";
-    const char* data_dir = "/tmp/scratch/csb-v22-configured-root/data/csb";
-    const char* modern_dir = "/tmp/scratch/csb-v22-configured-root/assets/csb/modern";
-    char cache_path[512];
-    unsigned char cache[68];
-    const uint32_t* pixels;
-    int w = 0, h = 0;
-
-    CHECK(mkdir_p(data_dir), "create configured data directory");
-    CHECK(mkdir_p(modern_dir), "create configured modern directory");
-    snprintf(cache_path, sizeof(cache_path), "%s/v22_inplace_cache.bin", modern_dir);
-    memset(cache, 0, sizeof(cache));
-    memcpy(cache, "FSV22C\0\0", 8);
-    put_u32(cache + 8, 1);  /* format version */
-    put_u32(cache + 12, 1); /* entry count */
-    put_u32(cache + 32, fnv1a32("wall_shapes"));
-    put_u32(cache + 36, fnv1a32("wall_dungeon_d0_01"));
-    put_u32(cache + 40, 1);
-    put_u32(cache + 44, 1);
-    put_u32(cache + 48, 4);
-    put_u32(cache + 52, 64);
-    cache[64] = 0x33; /* B */
-    cache[65] = 0x22; /* G */
-    cache[66] = 0x11; /* R */
-    cache[67] = 0xff; /* A */
-    CHECK(write_file(cache_path, cache, sizeof(cache)), "write configured cache");
+static void test_generated_cache_is_never_activated(void)
+{
+    int width = -1;
+    int height = -1;
 
     csb_v22_inplace_draw_shutdown();
-    csb_v22_set_manifest_path(data_dir);
-    CHECK(csb_v22_inplace_draw_init() == 1, "configured cache initializes");
-    pixels = csb_v22_inplace_get_bitmap_by_id("wall_shapes", "wall_dungeon_d0_01", &w, &h);
-    CHECK(pixels != NULL, "configured cache bitmap is addressable");
-    CHECK(w == 1 && h == 1, "configured cache bitmap dimensions");
-    CHECK(pixels && pixels[0] == 0xff112233u, "configured cache preserves AARRGGBB pixel order");
-    csb_v22_inplace_draw_shutdown();
-    (void)root;
-}
-
-static void test_cache_rejects_malformed_entries_atomically(void) {
-    const char* root = "/tmp/scratch/csb-v22-malformed-cache";
-    const char* data_dir = "/tmp/scratch/csb-v22-malformed-cache/data/csb";
-    const char* modern_dir = "/tmp/scratch/csb-v22-malformed-cache/assets/csb/modern";
-    char cache_path[512];
-    unsigned char cache[68];
-
-    CHECK(mkdir_p(data_dir), "create malformed-cache data directory");
-    CHECK(mkdir_p(modern_dir), "create malformed-cache modern directory");
-    snprintf(cache_path, sizeof(cache_path), "%s/v22_inplace_cache.bin", modern_dir);
-    memset(cache, 0, sizeof(cache));
-    memcpy(cache, "FSV22C\0\0", 8);
-    put_u32(cache + 8, 1);
-    put_u32(cache + 12, 1);
-    put_u32(cache + 32, fnv1a32("wall_shapes"));
-    put_u32(cache + 36, fnv1a32("wall_dungeon_d0_01"));
-    put_u32(cache + 40, 1);
-    put_u32(cache + 44, 1);
-    put_u32(cache + 48, 4);
-    put_u32(cache + 52, 0xfffffffcu); /* Must not wrap into the file. */
-    CHECK(write_file(cache_path, cache, sizeof(cache)), "write malformed cache");
-
-    csb_v22_inplace_draw_shutdown();
-    csb_v22_set_manifest_path(data_dir);
     CHECK(csb_v22_inplace_draw_init() == 0,
-          "out-of-range RGBA offset rejects the complete cache");
+          "V2.2 has no original-CSB replacement-art decoder");
     CHECK(csb_v22_inplace_draw_active() == 0,
-          "malformed cache never becomes an active source for V2.2 pixels");
-    CHECK(csb_v22_inplace_get_bitmap_by_id("wall_shapes", "wall_dungeon_d0_01",
-                                           NULL, NULL) == NULL,
-          "rejected cache exposes no retained bitmap pointer");
-    csb_v22_inplace_draw_shutdown();
-    (void)root;
+          "generated host-art cache cannot become a live source");
+    CHECK(csb_v22_inplace_get_bitmap_by_id("door_shapes", "door_d0_01",
+                                           &width, &height) == NULL,
+          "no generated bitmap pointer is exposed");
+    CHECK(width == 0 && height == 0,
+          "no-draw lookup clears output dimensions");
 }
 
-static void test_cache_rejects_ambiguous_entries_atomically(void) {
-    const char* root = "/tmp/scratch/csb-v22-ambiguous-cache";
-    const char* data_dir = "/tmp/scratch/csb-v22-ambiguous-cache/data/csb";
-    const char* modern_dir = "/tmp/scratch/csb-v22-ambiguous-cache/assets/csb/modern";
-    char cache_path[512];
-    unsigned char cache[104];
-
-    CHECK(mkdir_p(data_dir), "create ambiguous-cache data directory");
-    CHECK(mkdir_p(modern_dir), "create ambiguous-cache modern directory");
-    snprintf(cache_path, sizeof(cache_path), "%s/v22_inplace_cache.bin", modern_dir);
-    memset(cache, 0, sizeof(cache));
-    memcpy(cache, "FSV22C\0\0", 8);
-    put_u32(cache + 8, 1);
-    put_u32(cache + 12, 2);
-    put_u32(cache + 32, fnv1a32("wall_shapes"));
-    put_u32(cache + 36, fnv1a32("wall_dungeon_d0_01"));
-    put_u32(cache + 40, 1);
-    put_u32(cache + 44, 1);
-    put_u32(cache + 48, 4);
-    put_u32(cache + 52, 96);
-    put_u32(cache + 64, fnv1a32("wall_shapes"));
-    put_u32(cache + 68, fnv1a32("wall_dungeon_d0_02"));
-    put_u32(cache + 72, 1);
-    put_u32(cache + 76, 1);
-    put_u32(cache + 80, 4);
-    put_u32(cache + 84, 96); /* Distinct keys must not alias the same RGBA. */
-    CHECK(write_file(cache_path, cache, sizeof(cache)), "write overlapping cache");
-
-    csb_v22_inplace_draw_shutdown();
-    csb_v22_set_manifest_path(data_dir);
-    CHECK(csb_v22_inplace_draw_init() == 0,
-          "overlapping RGBA spans reject the complete cache");
-    CHECK(csb_v22_inplace_draw_active() == 0,
-          "overlapping cache never becomes an active V2.2 source");
-
-    put_u32(cache + 84, 100);
-    put_u32(cache + 68, fnv1a32("wall_dungeon_d0_01"));
-    CHECK(write_file(cache_path, cache, sizeof(cache)), "write duplicate-key cache");
-    CHECK(csb_v22_inplace_draw_init() == 0,
-          "duplicate cache key rejects the complete cache");
-    CHECK(csb_v22_inplace_get_bitmap_by_id("wall_shapes", "wall_dungeon_d0_01",
-                                           NULL, NULL) == NULL,
-          "duplicate cache exposes no retained bitmap pointer");
-    csb_v22_inplace_draw_shutdown();
-    (void)root;
-}
-
-static void test_f0128_door_command_consumes_admitted_source_material(void) {
-    const char* root = "/tmp/scratch/csb-v22-command-root";
-    const char* data_dir = "/tmp/scratch/csb-v22-command-root/data/csb";
-    const char* modern_dir = "/tmp/scratch/csb-v22-command-root/assets/csb/modern";
-    const char manifest[] =
-        "{\n"
-        "  \"routeProvenance\": [\n"
-        "    {\n"
-        "      \"id\": \"door_d0_01\",\n"
-        "      \"category\": \"door_shapes\",\n"
-        "      \"sourceGraphicIndex\": 248,\n"
-        "      \"sourceRecordSha256\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n"
-        "      \"sourceDimensions\": [96, 88],\n"
-        "      \"outputDimensions\": [96, 88]\n"
-        "    },\n"
-        "    {\n"
-        "      \"id\": \"door_d1_01\",\n"
-        "      \"category\": \"door_shapes\",\n"
-        "      \"sourceGraphicIndex\": 247,\n"
-        "      \"sourceRecordSha256\": \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\n"
-        "      \"sourceDimensions\": [64, 61],\n"
-        "      \"outputDimensions\": [64, 96]\n"
-        "    }\n"
-        "  ]\n"
-        "}\n";
-    char cache_path[512];
-    char manifest_path[512];
-    unsigned char cache[112];
-    unsigned char framebuffer[320 * 200];
-    uint8_t palette[256][3];
-    unsigned char d1_source[96 * 88];
-    unsigned char d2_source[64 * 61];
+static void test_f0128_framebuffer_is_preserved(void)
+{
     CSB_V1_ViewportRuntimeDrawCommandPc34 command;
-
-    CHECK(mkdir_p(data_dir), "create command-test data directory");
-    CHECK(mkdir_p(modern_dir), "create command-test modern directory");
-    snprintf(cache_path, sizeof(cache_path), "%s/v22_inplace_cache.bin", modern_dir);
-    snprintf(manifest_path, sizeof(manifest_path), "%s/modern_asset_manifest.json", modern_dir);
-    CHECK(write_file(manifest_path, manifest, strlen(manifest)),
-          "write command-test route provenance manifest");
-
-    memset(cache, 0, sizeof(cache));
-    memcpy(cache, "FSV22C\0\0", 8);
-    put_u32(cache + 8, 1);  /* format version */
-    put_u32(cache + 12, 2); /* entry count */
-    put_u32(cache + 32, fnv1a32("door_shapes"));
-    put_u32(cache + 36, fnv1a32("door_d0_01"));
-    put_u32(cache + 40, 2);
-    put_u32(cache + 44, 1);
-    put_u32(cache + 48, 8);
-    put_u32(cache + 52, 96);
-    put_u32(cache + 64, fnv1a32("door_shapes"));
-    put_u32(cache + 68, fnv1a32("door_d1_01"));
-    put_u32(cache + 72, 2);
-    put_u32(cache + 76, 1);
-    put_u32(cache + 80, 8);
-    put_u32(cache + 84, 104);
-    /* First source pixel is opaque red; the second is C10-style transparent.
-     * Scaling the 2x1 source across the D1 clip makes alpha preservation easy
-     * to observe without relying on any generated art. */
-    cache[96] = 0x00; cache[97] = 0x00; cache[98] = 0xff; cache[99] = 0xff;
-    cache[104] = 0xff; cache[105] = 0x00; cache[106] = 0x00; cache[107] = 0xff;
-    CHECK(write_file(cache_path, cache, sizeof(cache)), "write command-test cache");
+    unsigned char framebuffer[320 * 200];
+    unsigned char before[320 * 200];
+    uint8_t palette[256][3];
 
     memset(&command, 0, sizeof(command));
-    command.route = CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34;
-    command.source_graphics_item_index = 248;
-    memset(command.source_record_sha256, 'a', 64);
-    command.source_record_sha256[64] = '\0';
-    command.transparent_color = 10;
-    command.clip_x = 48;
-    command.clip_y = 33;
-    command.clip_w = 128;
-    command.clip_h = 102;
-    command.draw_order = 0x0111;
     memset(framebuffer, 0x5a, sizeof(framebuffer));
-    memset(d1_source, 0x41, sizeof(d1_source));
-    memset(d2_source, 0x52, sizeof(d2_source));
+    memcpy(before, framebuffer, sizeof(before));
+    memset(palette, 0x3f, sizeof(palette));
 
-    csb_v22_inplace_draw_shutdown();
-    csb_v22_set_manifest_path(data_dir);
-    CHECK(csb_v22_inplace_draw_init() == 1, "command-test cache initializes");
-    CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 0,
-          "unbound palette leaves the source F0128 command untouched");
-    memset(palette, 0, sizeof(palette));
-    palette[0x30][0] = 63; /* original indexed red used by the fixture */
-    palette[0x03][2] = 63; /* original indexed blue used by the D2 fixture */
     CHECK(csb_v22_inplace_draw_set_indexed_palette_rgb6(palette) == 1,
-          "command-test binds an original indexed palette");
-    CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 0,
-          "route metadata without a decoded original source span is rejected");
-    command.decoded_pixels = d1_source;
-    command.decoded_size = sizeof(d1_source);
-    command.decoded_width = 96;
-    command.decoded_height = 88;
-    command.material_hash = fnv1a_bytes(d1_source, sizeof(d1_source));
-    CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 0,
-          "fixture cache without a finished source pack leaves D1 source-owned");
-    CHECK(framebuffer[33 * 320 + 48] == 0x5a,
-          "unadmitted cache pixel cannot replace the F0128 clip");
-    CHECK(framebuffer[33 * 320 + 112] == 0x5a,
-          "transparent modern pixel preserves the source framebuffer");
-    CHECK(framebuffer[32 * 320 + 48] == 0x5a &&
-          framebuffer[33 * 320 + 47] == 0x5a &&
-          framebuffer[33 * 320 + 176] == 0x5a,
-          "door replacement never escapes the original F0128 clip");
-
-    memset(framebuffer, 0x5a, sizeof(framebuffer));
-    command.route = CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34;
-    command.source_graphics_item_index = 247;
-    memset(command.source_record_sha256, 'b', 64);
-    command.source_record_sha256[64] = '\0';
-    command.clip_x = 76;
-    command.clip_y = 47;
-    command.clip_w = 72;
-    command.clip_h = 74;
-    command.draw_order = 0x0111;
-    command.decoded_pixels = d2_source;
-    command.decoded_size = sizeof(d2_source);
-    command.decoded_width = 64;
-    command.decoded_height = 61;
-    command.material_hash = fnv1a_bytes(d2_source, sizeof(d2_source));
-    CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 0,
-          "fixture cache without a finished source pack leaves D2 source-owned");
-    CHECK(framebuffer[47 * 320 + 76] == 0x5a,
-          "unadmitted D2 cache pixel cannot replace the F0128 clip");
-    CHECK(framebuffer[47 * 320 + 112] == 0x5a,
-          "D2 transparent modern pixel preserves the source framebuffer");
-    CHECK(framebuffer[46 * 320 + 76] == 0x5a &&
-          framebuffer[47 * 320 + 75] == 0x5a &&
-          framebuffer[47 * 320 + 148] == 0x5a,
-          "D2 replacement never escapes its original F0128 clip");
-    command.transparent_color = 0;
-    CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 0,
-          "unproven transparency contract remains source-owned");
+          "source palette remains accepted for a future authenticated path");
+    CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer,
+                                                320, 200) == 0,
+          "no V2.2 replacement is composed without original material");
+    CHECK(memcmp(framebuffer, before, sizeof(framebuffer)) == 0,
+          "no-draw path preserves source-owned F0128 pixels byte-for-byte");
+    csb_v22_inplace_draw_clear_indexed_palette();
     csb_v22_inplace_draw_shutdown();
-    (void)root;
+    CHECK(csb_v22_inplace_draw_active() == 0,
+          "shutdown remains idempotently inactive");
 }
 
-static void test_f0128_door_uses_bound_source_palette(void) {
-    const char* root = "/tmp/scratch/csb-v22-palette-root";
-    const char* data_dir = "/tmp/scratch/csb-v22-palette-root/data/csb";
-    const char* modern_dir = "/tmp/scratch/csb-v22-palette-root/assets/csb/modern";
-    const char manifest[] =
-        "{\n"
-        "  \"routeProvenance\": [\n"
-        "  {\n"
-        "    \"id\": \"door_d0_01\",\n"
-        "    \"category\": \"door_shapes\",\n"
-        "    \"sourceGraphicIndex\": 248,\n"
-        "    \"sourceRecordSha256\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n"
-        "    \"sourceDimensions\": [96, 88],\n"
-        "    \"outputDimensions\": [96, 88]\n"
-        "  }]\n"
-        "}\n";
-    char cache_path[512];
-    char manifest_path[512];
-    unsigned char cache[68];
-    unsigned char framebuffer[320 * 200];
-    uint8_t palette[256][3];
-    unsigned char d1_source[96 * 88];
-    CSB_V1_ViewportRuntimeDrawCommandPc34 command;
-    CSB_V22_RouteProvenancePc34 provenance;
-
-    CHECK(mkdir_p(data_dir), "create palette-test data directory");
-    CHECK(mkdir_p(modern_dir), "create palette-test modern directory");
-    snprintf(cache_path, sizeof(cache_path), "%s/v22_inplace_cache.bin", modern_dir);
-    snprintf(manifest_path, sizeof(manifest_path), "%s/modern_asset_manifest.json", modern_dir);
-    CHECK(write_file(manifest_path, manifest, strlen(manifest)),
-          "write palette-test route provenance manifest");
-    memset(cache, 0, sizeof(cache));
-    memcpy(cache, "FSV22C\0\0", 8);
-    put_u32(cache + 8, 1);
-    put_u32(cache + 12, 1);
-    put_u32(cache + 32, fnv1a32("door_shapes"));
-    put_u32(cache + 36, fnv1a32("door_d0_01"));
-    put_u32(cache + 40, 1);
-    put_u32(cache + 44, 1);
-    put_u32(cache + 48, 4);
-    put_u32(cache + 52, 64);
-    /* AARRGGBB: this deliberately does not have an EGA-cube exact match. */
-    cache[64] = 0x11; cache[65] = 0x22; cache[66] = 0x33; cache[67] = 0xff;
-    CHECK(write_file(cache_path, cache, sizeof(cache)), "write palette-test cache");
-
-    memset(palette, 0, sizeof(palette));
-    /* 8-bit RGB (16,32,49) after six-bit expansion: exact source match. */
-    palette[7][0] = 4; palette[7][1] = 8; palette[7][2] = 12;
-    memset(&command, 0, sizeof(command));
-    command.route = CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34;
-    command.source_graphics_item_index = 248;
-    memset(command.source_record_sha256, 'a', 64);
-    command.source_record_sha256[64] = '\0';
-    command.transparent_color = 10;
-    command.clip_x = 48; command.clip_y = 33;
-    command.clip_w = 96; command.clip_h = 88;
-    command.draw_order = 0x0111;
-    memset(d1_source, 0x63, sizeof(d1_source));
-    command.decoded_pixels = d1_source;
-    command.decoded_size = sizeof(d1_source);
-    command.decoded_width = 96;
-    command.decoded_height = 88;
-    command.material_hash = fnv1a_bytes(d1_source, sizeof(d1_source));
-    memset(framebuffer, 0, sizeof(framebuffer));
-
-    csb_v22_inplace_draw_shutdown();
-    csb_v22_set_manifest_path(data_dir);
-    CHECK(csb_v22_inplace_draw_init() == 1, "palette-test cache initializes");
-    memset(&provenance, 0, sizeof(provenance));
-    CHECK(csb_v22_get_route_provenance("door_shapes", "door_d0_01", &provenance) == 1,
-          "palette-test provenance is parsed");
-    CHECK(strcmp(provenance.source_record_sha256, command.source_record_sha256) == 0,
-          "palette-test command has exact source record identity");
-    CHECK(csb_v22_inplace_draw_set_indexed_palette_rgb6(palette) == 1,
-          "bind original indexed palette");
-    CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 0,
-          "fixture cache remains blocked despite an original palette");
-    CHECK(framebuffer[33 * 320 + 48] == 0,
-          "blocked fixture cache leaves the source framebuffer untouched");
-    csb_v22_inplace_draw_shutdown();
-    (void)root;
+static void test_source_evidence_records_the_boundary(void)
+{
+    const char *evidence = csb_v22_inplace_draw_source_evidence();
+    CHECK(evidence != NULL && strstr(evidence, "ReDMCSB") != NULL,
+          "evidence cites the source compositor");
+    CHECK(evidence != NULL && strstr(evidence, "v22_inplace_cache.bin") != NULL,
+          "evidence names the rejected generated cache format");
+    CHECK(evidence != NULL && strstr(evidence, "original") != NULL,
+          "evidence states the original-data admission requirement");
 }
 
-static void test_double_shutdown_safe(void) {
-    csb_v22_inplace_draw_init();
-    csb_v22_inplace_draw_shutdown();
-    csb_v22_inplace_draw_shutdown();
-    CHECK(csb_v22_inplace_draw_active() == 0, "double shutdown safe");
-}
-
-int main(void) {
-    test_init_shutdown();
-    test_source_evidence();
-    test_cache_load_path();
-    test_cache_uses_configured_manifest_root();
-    test_cache_rejects_malformed_entries_atomically();
-    test_cache_rejects_ambiguous_entries_atomically();
-    test_f0128_door_command_consumes_admitted_source_material();
-    test_f0128_door_uses_bound_source_palette();
-    test_double_shutdown_safe();
+int main(void)
+{
+    test_generated_cache_is_never_activated();
+    test_f0128_framebuffer_is_preserved();
+    test_source_evidence_records_the_boundary();
     printf("csb_v22_inplace_draw_pc34: checks=%d failures=%d\n", checks, failures);
-    if (failures > 0) {
-        printf("csb_v22_inplace_draw_pc34: FAIL\n");
-        return 1;
-    }
-    printf("csb_v22_inplace_draw_pc34: PASS\n");
-    return 0;
+    return failures ? 1 : 0;
 }

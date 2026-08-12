@@ -3964,7 +3964,14 @@ the selected game's data set, Firestaff must decode and use those bytes.  A
 missing or still-undecoded original format must fail closed with a specific
 diagnostic; it must not silently fall back to a generated visual.
 
-- **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
+- **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport.
+  **2026-08-12 generated-art boundary repair:** `csb_v22_inplace_draw_pc34`
+  no longer opens `v22_inplace_cache.bin`. That file is built from host PNG
+  material and cannot stand in for an original CSB decoder; all V2.2 F0128
+  replacement requests now remain byte-for-byte on the authenticated V1
+  framebuffer. M11 falls back to V2.1 when V2.2 is selected. Remaining work
+  is an original-CSB material decoder with source palette, command placement
+  and pixel-parity evidence.
   **2026-07-31 D2C partly-open-door follow-up:** removed the duplicate,
   contract-only F0111 metadata/probe surface. It had no M11 consumer and no
   original bitmap decoder; the active D2C F0111 source-material route remains

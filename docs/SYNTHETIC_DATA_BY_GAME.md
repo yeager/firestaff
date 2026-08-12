@@ -94,8 +94,10 @@ source-owned materialposter och en pixelverifiering finns.
 - `parity-evidence/verification/csb_v1_experimental_launch_intent_fixture.json`
   är en explicit experimentell fixture och får inte räknas som autentisk
   launch- eller gameplay-evidens.
-- CSB V2.2:s tidigare procedural/material-fixtures är testmaterial. De ska
-  inte ritas i produktion när motsvarande GRAPHICS.DAT-post saknas.
+- CSB V2.2:s tidigare procedural/material-fixtures och den genererade
+  `v22_inplace_cache.bin` är testmaterial. De öppnas inte av produktionen;
+  V1:s verifierade F0128-resultat behålls byte för byte tills en original
+  CSB-avkodare med palett- och pixelparitetsbevis finns.
 
 ### Riktig källa
 
@@ -106,7 +108,8 @@ proberna när de är tillgängliga.
 ### Beslut
 
 Fixtures får finnas för parser- och rescan-kontrakt. De ska vara explicit
-fixture-only. Procedural V2.2-art ska inte ersätta riktiga CSB-poster.
+fixture-only. Procedural V2.2-art och genererade cachefiler ska inte ersätta
+riktiga CSB-poster.
 
 ## Nexus
 
