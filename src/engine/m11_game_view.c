@@ -3767,9 +3767,10 @@ static int m11_csb_csbwin_hud_source_resolver(
 }
 
 /* CSBWin Character.cpp::DisplayBackpackItem calls DrawItem for raw M516
- * slots C00..C29 while C017 owns the empty panel.  Draw only a source-proven
- * occupied icon here: C232 supplies both the IconDisplay destination and the
- * C042..C048 atlas selection, so the PC3.4 object-icon zone is never used. */
+ * slots C00..C29.  C017 owns the panel background, while C232 supplies both
+ * the IconDisplay destination and the C042..C048 atlas selection.  This
+ * includes CSBWin's authored empty-slot special objects; the PC3.4 object
+ * icon zone is never used. */
 static int m11_csb_compose_csbwin_inventory_icons(
     M11_GameViewState *state, const CSB_V1_BootProfile *profile,
     const CSB_V1_CSBWinLayout0232 *layout, uint8_t *pixels)
@@ -3837,9 +3838,29 @@ static int m11_csb_compose_csbwin_inventory_icons(
                 }
             }
         }
-        if (thing == THING_NONE || thing == THING_ENDOFLIST) continue;
-        object_name_index = csb_v1_boot_runtime_object_icon_index_pc34(
-            profile, thing);
+        if (thing == THING_NONE || thing == THING_ENDOFLIST) {
+            /* Character.cpp::DisplayBackpackItem: empty C00..C05 use the
+             * Special_n family (and its wounded neighbour); C10..C13 use
+             * Special_j..Special_m; all remaining empty slots use Special_f.
+             * These are object-name indices in the same real C232 atlas. */
+            if (source_slot <= 5) {
+                object_name_index = 212 + 2 * source_slot +
+                    ((champion->wounds & (1u << source_slot)) ? 1 : 0);
+            } else if (source_slot >= 10 && source_slot <= 13) {
+                object_name_index = 208 + (source_slot - 10);
+            } else {
+                object_name_index = 204;
+            }
+        } else {
+            object_name_index = csb_v1_boot_runtime_object_icon_index_pc34(
+                profile, thing);
+            /* The selected character's weapon hand displays OpenChest and
+             * Scroll for Chest/OpenScroll, exactly as DisplayBackpackItem. */
+            if (source_slot == 1 &&
+                (object_name_index == 144 || object_name_index == 30)) {
+                ++object_name_index;
+            }
+        }
         if (object_name_index < 0 || !csb_v1_csbwin_layout_0232_build_inventory_icon_material(
                 layout, (uint16_t)source_slot,
                 (uint16_t)object_name_index, &material) || !material.valid ||

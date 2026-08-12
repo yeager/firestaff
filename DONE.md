@@ -1,5 +1,15 @@
 # CSB Hint Oracle: authentic Atari R1 start routes (2026-08-12)
 
+# CSBWin C017 inventory: authored empty-slot atlas parity (2026-08-12)
+
+- ✅ Atari ST/CSBWin-inventariet använder nu originalets C232- och
+  C042–C048-ägda tomslottsikoner, inklusive skadad hand-/klädslottsvariant och
+  den valda vapenhandens kist-/skrollregel. Den äkta C017-bildrutan verifieras
+  mot samtliga 30 källatlasskärningar; inga PC3.4- eller värdfallbackar ritas.
+- 🔒 Attackhandens C035-lager kräver fortfarande en autentiserad live-receipt
+  för `AttackingCharacterOrdinal`. Se
+  `parity-evidence/csbwin_inventory_icon_atlas_20260812.md`.
+
 - ✅ `csb_v1_atari_mini_menu_resume_archive` now exercises the ordinary M12
   Continue row with only extracted original Atari ST files. It persists the
   native `MINI.DAT` path in an isolated launcher profile, navigates from the

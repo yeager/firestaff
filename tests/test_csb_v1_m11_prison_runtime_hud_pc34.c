@@ -250,9 +250,26 @@ static int check_atari_st_c017_inventory_viewport(
             }
             free(frame);
         }
-        if (thing == THING_NONE || thing == THING_ENDOFLIST) continue;
-        object_name_index = csb_v1_boot_runtime_object_icon_index_pc34(
-            profile, thing);
+        if (thing == THING_NONE || thing == THING_ENDOFLIST) {
+            /* CSBWin Character.cpp::DisplayBackpackItem's exact empty-slot
+             * icon selection.  The real atlas crop below must prove that the
+             * production C017 layer did not leave these slots as background. */
+            if (source_slot <= 5) {
+                object_name_index = 212 + 2 * source_slot +
+                    ((champion->wounds & (1u << source_slot)) ? 1 : 0);
+            } else if (source_slot >= 10 && source_slot <= 13) {
+                object_name_index = 208 + (source_slot - 10);
+            } else {
+                object_name_index = 204;
+            }
+        } else {
+            object_name_index = csb_v1_boot_runtime_object_icon_index_pc34(
+                profile, thing);
+            if (source_slot == 1 &&
+                (object_name_index == 144 || object_name_index == 30)) {
+                ++object_name_index;
+            }
+        }
         memset(&material, 0, sizeof(material));
         memset(&receipt, 0, sizeof(receipt));
         if (object_name_index < 0 ||

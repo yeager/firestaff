@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+- **CSBWIN-INVENTORY-C035 — attacking-hand overlay remains receipt-blocked.**
+  `Character.cpp::DisplayBackpackItem` selects C035 when the selected weapon
+  hand belongs to `AttackingCharacterOrdinal`. Firestaff's admitted Atari
+  runtime receipt has no source-owned live attack ordinal, so C035 must remain
+  undrawn. Required evidence: a checked CSBWin runtime handoff that carries
+  the ordinal through the frame boundary and a real-data C017 comparison.
+  Do not infer this transient state from inventory contents or PC3.4 input.
+
 ## ReDMCSB CSB Reference-Boundary Audit
 
 ### ReDMCSB Numbered-Symbol Audit (2026-07-14)

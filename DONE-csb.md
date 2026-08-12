@@ -4,6 +4,21 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 
 ## Chaos Strikes Back (CSB)
 
+- ✅ 2026-08-12 CSBWin C017 inventory atlas parity: Atari ST/CSBWin-
+  inventariet återger nu originalets tomslottsymboler ur samma C232-ägda
+  C042–C048-atlas som vanliga föremål: `Special_n`-familjen för hand- och
+  klädslots, `Special_j..m` för magizonen och `Special_f` för övriga slots.
+  C033/C034 ligger fortsatt under ikonen med originalets index-12-transparens.
+  Vald vapenhand visar dessutom `OpenChest` respektive `Scroll` enligt
+  `Character.cpp::DisplayBackpackItem`.
+- ✅ Realdatatestet bygger den kompletta C017-ytan från autentisk
+  CSBWin-grafik och jämför samtliga 30 ikoner mot M11:s slutliga bildruta.
+  Ingen PC3.4-ikon, värdritad tomslottsmarkering eller syntetisk data används.
+  Se `parity-evidence/csbwin_inventory_icon_atlas_20260812.md` för
+  käll- och formatdokumentation.
+- 🔒 C035:s attackhand kräver ännu en källbunden
+  `AttackingCharacterOrdinal`-receipt och är fortsatt spärrad.
+
 - ✅ 2026-08-11 CSB FM Towns C06 GAME load: F7004's CSB GAME branch now
   reproduces F7051/F0435 admission for the user-owned M746 `CSBGAME.DAT`.
   The C06 editor receives the verified party and F2124's four raw planar
