@@ -71,6 +71,7 @@ jobs:
         if: runner.os == 'macOS'
         env:
           HOMEBREW_NO_AUTO_UPDATE: '1'
+          HOMEBREW_NO_REQUIRE_TAP_TRUST: '1'
         run: |
           if ! brew list --formula sdl3 >/dev/null 2>&1; then
             brew install sdl3
