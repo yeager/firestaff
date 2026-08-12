@@ -37,7 +37,12 @@
 #define FIRESTAFF_AMIGA_ADF_API static
 #include "firestaff_amiga_adf.c"
 #undef FIRESTAFF_AMIGA_ADF_API
-#include "dm1_v1_atari_st_stx.h"
+/* Focused probes link this scanner as a single translation unit and do not
+ * otherwise need the DM1 runtime. Keep the protected-disk reader local here
+ * so every scanner consumer gets the same authentic STX implementation. */
+#define FIRESTAFF_DM1_V1_ATARI_ST_STX_STATIC
+#include "../dm1/dm1_v1_atari_st_stx.c"
+#undef FIRESTAFF_DM1_V1_ATARI_ST_STX_STATIC
 
 #define ASSET_SCAN_MAX_FILE_BYTES (32LL * 1024LL * 1024LL)
 #define ASSET_ZIP_MAX_ENTRY_BYTES (16U * 1024U * 1024U)
@@ -1259,11 +1264,9 @@ static uint8_t *zip_load_entry_bytes(const char *zipPath, const char *entryName,
     return NULL;
 }
 
-#ifndef _WIN32
 static uint8_t *external_read_entry_bytes(const char *archivePath,
                                           const char *entryName,
                                           size_t *out_size);
-#endif
 
 int asset_read_path_alloc(const char *path, uint8_t **outBytes,
                           size_t *outSize) {

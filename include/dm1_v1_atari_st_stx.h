@@ -24,15 +24,24 @@ typedef struct {
 } DM1_V1_AtariStStx;
 typedef DM1_V1_AtariStStx DM1_V1_AtariStx;
 
-int dm1_v1_atari_st_stx_open(const uint8_t *data, size_t size,
-                             DM1_V1_AtariStx *out);
-int dm1_v1_atari_st_stx_read_sector(const DM1_V1_AtariStx *stx,
-                                    uint32_t logical_sector,
-                                    uint8_t *out, size_t capacity);
-int dm1_v1_atari_st_stx_extract_file(const DM1_V1_AtariStx *stx,
-                                     const char *name83,
-                                     uint8_t *out, size_t capacity,
-                                     size_t *out_size);
+#ifdef FIRESTAFF_DM1_V1_ATARI_ST_STX_STATIC
+#define FIRESTAFF_DM1_V1_ATARI_ST_STX_API static
+#else
+#define FIRESTAFF_DM1_V1_ATARI_ST_STX_API
+#endif
+
+FIRESTAFF_DM1_V1_ATARI_ST_STX_API int
+dm1_v1_atari_st_stx_open(const uint8_t *data, size_t size,
+                         DM1_V1_AtariStx *out);
+FIRESTAFF_DM1_V1_ATARI_ST_STX_API int
+dm1_v1_atari_st_stx_read_sector(const DM1_V1_AtariStx *stx,
+                                uint32_t logical_sector,
+                                uint8_t *out, size_t capacity);
+FIRESTAFF_DM1_V1_ATARI_ST_STX_API int
+dm1_v1_atari_st_stx_extract_file(const DM1_V1_AtariStx *stx,
+                                 const char *name83,
+                                 uint8_t *out, size_t capacity,
+                                 size_t *out_size);
 
 #ifdef __cplusplus
 }

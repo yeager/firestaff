@@ -1,4 +1,24 @@
-# Firestaff v3.0.311
+# Firestaff v3.0.312
+
+## DM1
+
+### Fixed
+
+- `DM1 Atari STX reader linkage`: Fix focused asset-scanner tests by making the authentic protected-disk reader available without requiring an unrelated runtime library at link time.
+- `DM1 Atari and Amiga media boot`: Fix authenticated Atari STX and Amiga ADF/7z startup by reading bounded in-memory media and admitting real GRAPHICS.DAT/DUNGEON.DAT payloads without creating a loose production game-data tree.
+
+## CSB
+
+### Fixed
+
+- `CSB platform admission`: Reject a nonexistent DOS platform explicitly while retaining the verified native Atari ST, Amiga and FM Towns start-menu routes.
+- `CSB legacy save roundtrip`: Fix the authenticated CSBWin save tail roundtrip and keep the F31 utility path closed when its required original ROM is absent.
+
+## Firestaff
+
+### Fixed
+
+- `Cross-platform asset scanner build`: Fix Windows archive reads so they fail closed with an explicit extractor declaration while Unix external-archive reads stay behind the existing bounded shell-out path.
 
 ## Fixed
 

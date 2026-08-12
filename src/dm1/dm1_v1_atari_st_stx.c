@@ -44,8 +44,15 @@ static int track_info(const DM1_V1_AtariStx *stx, uint32_t track,
            range_ok(offset, *block_size, stx->size);
 }
 
-int dm1_v1_atari_st_stx_open(const uint8_t *data, size_t size,
-                             DM1_V1_AtariStx *out)
+#ifdef FIRESTAFF_DM1_V1_ATARI_ST_STX_STATIC
+#define FIRESTAFF_DM1_V1_ATARI_ST_STX_API static
+#else
+#define FIRESTAFF_DM1_V1_ATARI_ST_STX_API
+#endif
+
+FIRESTAFF_DM1_V1_ATARI_ST_STX_API int
+dm1_v1_atari_st_stx_open(const uint8_t *data, size_t size,
+                         DM1_V1_AtariStx *out)
 {
     uint32_t offset = STX_HEADER_SIZE;
     uint32_t sectors = 0u;
@@ -133,9 +140,10 @@ static int read_track_sector(const DM1_V1_AtariStx *stx, uint32_t track,
     }
 }
 
-int dm1_v1_atari_st_stx_read_sector(const DM1_V1_AtariStx *stx,
-                                    uint32_t logical_sector,
-                                    uint8_t *out, size_t capacity)
+FIRESTAFF_DM1_V1_ATARI_ST_STX_API int
+dm1_v1_atari_st_stx_read_sector(const DM1_V1_AtariStx *stx,
+                                uint32_t logical_sector,
+                                uint8_t *out, size_t capacity)
 {
     uint32_t cursor = 0u;
     if (!stx || !out || capacity < SECTOR_SIZE || logical_sector >= stx->sector_count)
@@ -170,10 +178,11 @@ static int name_matches(const uint8_t *entry, const char *name)
     return entry[11] == 0u;
 }
 
-int dm1_v1_atari_st_stx_extract_file(const DM1_V1_AtariStx *stx,
-                                     const char *name83,
-                                     uint8_t *out, size_t capacity,
-                                     size_t *out_size)
+FIRESTAFF_DM1_V1_ATARI_ST_STX_API int
+dm1_v1_atari_st_stx_extract_file(const DM1_V1_AtariStx *stx,
+                                 const char *name83,
+                                 uint8_t *out, size_t capacity,
+                                 size_t *out_size)
 {
     uint8_t sector[SECTOR_SIZE];
     uint8_t fat[2048];
