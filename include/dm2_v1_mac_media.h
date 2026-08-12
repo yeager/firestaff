@@ -46,6 +46,12 @@ typedef struct {
     uint8_t *sound_resource_fork[DM2_V1_MAC_SOUND_RESOURCE_COUNT];
     size_t sound_resource_fork_size[DM2_V1_MAC_SOUND_RESOURCE_COUNT];
     uint32_t sound_resource_fork_present_mask;
+    /* Complete retail Mac application forks, retained for native resource
+     * inspection without creating an extracted application on disk. */
+    uint8_t *application_data;
+    size_t application_data_size;
+    uint8_t *application_resource;
+    size_t application_resource_size;
     int demo;
 } DM2_V1_MacMedia;
 

@@ -42,6 +42,10 @@
 
 ### Changed
 
+- `DM2 Macintosh application ownership`: Retain the complete authentic retail
+  `Dungeon Master II` application data and resource forks in memory. The
+  source-owned `Midi`, `snd `, menu and event resources are now available to
+  the native Mac runtime path without extracting the application.
 - `DM2 Macintosh edition discovery`: Keep both authenticated English Mac
   editions visible when a shared data directory contains the large retail ZIP
   and the smaller First Chapter ZIP. Archive discovery now scans all matching

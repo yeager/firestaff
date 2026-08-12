@@ -493,6 +493,10 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
   now hash-checked and transported through the existing SDL host mixer at its
   source rate; full Mac resource selection, timing, and MIDI/music scheduling
   remain open.
+- [x] Retain the authentic retail `Dungeon Master II` application data and
+  resource forks in RAM (`484,944` and `5,046,234` bytes). The complete
+  MacBinary/application resource owner is now available for source-locked
+  `Midi`, `snd `, menu and event-resource work; no application is extracted.
   Bind the Japanese
   CD-audio route separately. DOS HMP, FM Towns CD.DAT, and Amiga MOD paths are
   not fallbacks.

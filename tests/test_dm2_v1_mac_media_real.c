@@ -49,6 +49,21 @@ int main(void) {
         dm2_v1_mac_media_free(&media);
         return 1;
     }
+    if (!demo && (media.application_data_size != 484944u ||
+                  media.application_resource_size != 5046234u ||
+                  !media.application_data || !media.application_resource ||
+                  memcmp(media.application_data, "Joy!", 4u) != 0)) {
+        fprintf(stderr, "authentic Mac application forks were not retained: data=%zu resource=%zu ptr=%d/%d\n",
+                media.application_data_size, media.application_resource_size,
+                media.application_data != NULL, media.application_resource != NULL);
+        if (media.application_data) {
+            fprintf(stderr, "application head=%02x%02x%02x%02x\n",
+                    media.application_data[0], media.application_data[1],
+                    media.application_data[2], media.application_data[3]);
+        }
+        dm2_v1_mac_media_free(&media);
+        return 1;
+    }
     if (!demo) {
         printf("retail movie mask=0x%08x resource=0x%08x moov=0x%08x sizes=%zu,%zu,%zu,%zu,%zu moov_size=%zu head=%02x%02x%02x%02x%02x%02x%02x%02x\n",
                media.movie_present_mask, media.movie_resource_present_mask,

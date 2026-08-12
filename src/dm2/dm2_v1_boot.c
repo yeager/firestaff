@@ -115,6 +115,12 @@ static int dm2_v1_boot_load_mac_zip(DM2_V1_BootProfile *profile,
         }
         profile->mac_sound_resource_fork_present_mask =
             media.sound_resource_fork_present_mask;
+        profile->mac_application_data = media.application_data;
+        profile->mac_application_data_size = media.application_data_size;
+        profile->mac_application_resource = media.application_resource;
+        profile->mac_application_resource_size = media.application_resource_size;
+        media.application_data = NULL;
+        media.application_resource = NULL;
         profile->mac_movie_present_mask = media.movie_present_mask;
         profile->mac_movie_resource_present_mask = media.movie_resource_present_mask;
         profile->mac_movie_moov_present_mask = media.movie_moov_present_mask;
@@ -14703,6 +14709,12 @@ void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {
         profile->mac_sound_resource_fork_size[sound_index] = 0u;
     }
     profile->mac_sound_resource_fork_present_mask = 0u;
+    free(profile->mac_application_data);
+    free(profile->mac_application_resource);
+    profile->mac_application_data = NULL;
+    profile->mac_application_resource = NULL;
+    profile->mac_application_data_size = 0u;
+    profile->mac_application_resource_size = 0u;
     dm2_v1_amiga_lzx_free(profile->amiga_swsh_bytes);
     dm2_v1_amiga_lzx_free(profile->amiga_titl_bytes);
     dm2_v1_amiga_lzx_free(profile->amiga_enda_bytes);

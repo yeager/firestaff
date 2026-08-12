@@ -48,6 +48,14 @@ int main(void) {
         return 1;
     }
     if (!demo) {
+        if (!profile.mac_application_data ||
+            profile.mac_application_data_size != 484944u ||
+            !profile.mac_application_resource ||
+            profile.mac_application_resource_size != 5046234u) {
+            fprintf(stderr, "DM2 Mac application forks were not retained\n");
+            dm2_v1_boot_cleanup(&profile);
+            return 1;
+        }
         /* The canonical Mac File_header uses the same 44-map layout as the
          * retail PC family.  Validate every authentic map, not just the
          * entrance maps, so a shifted header cannot hide later roots. */

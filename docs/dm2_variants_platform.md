@@ -125,6 +125,10 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   creating a converted movie file. Frame timing is now source-duration gated in
   M11. Complete Mac resource selection, gameplay timing, and MIDI/music
   scheduling remain separate runtime work.
+- The retail HFS volume's real `Dungeon Master II` application is also kept as
+  separate in-memory data/resource forks (`484,944` / `5,046,234` bytes).
+  This preserves the source owner for the authentic `Midi`, `snd `, menu and
+  event resources without flattening or extracting the application.
 
 X68000 is not part of the DM2 support matrix.
 

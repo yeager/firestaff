@@ -103,6 +103,65 @@ static int find_file(const uint8_t *cat, size_t cat_size, const char *wanted,
     return -1;
 }
 
+/* Retail media contains an alias and the real application with the same
+ * display name. Select the largest valid record so the alias cannot shadow
+ * the application's resource fork. */
+static int find_file_largest(const uint8_t *cat, size_t cat_size,
+                             const char *wanted, Extent *data_extents,
+                             uint32_t *data_size, Extent *resource_extents,
+                             uint32_t *resource_size) {
+    Extent best_data[3] = {{0}}, best_resource[3] = {{0}};
+    uint32_t best_data_size = 0u, best_resource_size = 0u;
+    size_t node;
+    size_t wanted_len = strlen(wanted);
+    int found = 0;
+    for (node = 0; node + 512u <= cat_size; node += 512u) {
+        const uint8_t *n = cat + node;
+        uint16_t records, r;
+        if (n[8] != 0xffu) continue;
+        records = be16(n + 10);
+        if (records == 0u || records > 64u) continue;
+        for (r = 0u; r < records; ++r) {
+            size_t oa = be16(n + 512u - 2u * (r + 1u));
+            size_t ob = be16(n + 512u - 2u * (r + 2u));
+            const uint8_t *rec;
+            size_t key_len, data;
+            uint32_t ds, rs;
+            Extent de[3], re[3];
+            if (oa < 14u || ob <= oa || ob > 512u) continue;
+            rec = n + oa;
+            key_len = rec[0];
+            if (key_len < 7u || 1u + key_len > ob - oa || rec[6] > 31u ||
+                rec[6] != wanted_len || memcmp(rec + 7, wanted, wanted_len) != 0)
+                continue;
+            data = 1u + key_len + ((key_len & 1u) == 0u ? 1u : 0u);
+            if (data + 98u > ob - oa || rec[data] != 2u) continue;
+            ds = be32(rec + data + 26u);
+            rs = be32(rec + data + 36u);
+            if (found && ds + rs <= best_data_size + best_resource_size) continue;
+            memset(de, 0, sizeof(de));
+            memset(re, 0, sizeof(re));
+            for (size_t e = 0u; e < 3u; ++e) {
+                de[e].start = be16(rec + data + 74u + e * 4u);
+                de[e].count = be16(rec + data + 76u + e * 4u);
+                re[e].start = be16(rec + data + 86u + e * 4u);
+                re[e].count = be16(rec + data + 88u + e * 4u);
+            }
+            memcpy(best_data, de, sizeof(best_data));
+            memcpy(best_resource, re, sizeof(best_resource));
+            best_data_size = ds;
+            best_resource_size = rs;
+            found = 1;
+        }
+    }
+    if (!found) return -1;
+    memcpy(data_extents, best_data, sizeof(best_data));
+    memcpy(resource_extents, best_resource, sizeof(best_resource));
+    *data_size = best_data_size;
+    *resource_size = best_resource_size;
+    return 0;
+}
+
 static int copy_fork(const MacDisk *d, uint32_t alloc_size,
                      uint16_t alloc_start,
                      const Extent extents[3], uint32_t file_size,
@@ -363,6 +422,18 @@ int dm2_v1_mac_media_read_zip(const char *zip_path, DM2_V1_MacMedia *out) {
                 }
             }
         }
+        if (find_file_largest(cat, cat_size, "Dungeon Master II", extents,
+                              &file_size, resource_extents, &resource_size) == 0) {
+            (void)copy_fork(&disk, alloc_size, alloc_start, extents, file_size,
+                            &out->application_data,
+                            &out->application_data_size);
+            if (resource_size != 0u) {
+                (void)copy_fork(&disk, alloc_size, alloc_start,
+                                resource_extents, resource_size,
+                                &out->application_resource,
+                                &out->application_resource_size);
+            }
+        }
     }
     rc = 0;
 done:
@@ -382,5 +453,7 @@ void dm2_v1_mac_media_free(DM2_V1_MacMedia *media) {
     }
     for (size_t i = 0u; i < DM2_V1_MAC_SOUND_RESOURCE_COUNT; ++i)
         free(media->sound_resource_fork[i]);
+    free(media->application_data);
+    free(media->application_resource);
     memset(media, 0, sizeof(*media));
 }

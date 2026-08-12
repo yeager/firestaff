@@ -465,6 +465,10 @@ typedef struct {
     uint8_t *mac_sound_resource_fork[DM2_V1_MAC_SOUND_RESOURCE_COUNT];
     size_t mac_sound_resource_fork_size[DM2_V1_MAC_SOUND_RESOURCE_COUNT];
     uint32_t mac_sound_resource_fork_present_mask;
+    uint8_t *mac_application_data;
+    size_t mac_application_data_size;
+    uint8_t *mac_application_resource;
+    size_t mac_application_resource_size;
 
     /* ── Save namespace ───────────────────────────────────── */
     char    save_root[1024];   /* saves/dm2/ */
