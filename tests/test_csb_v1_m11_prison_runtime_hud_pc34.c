@@ -175,6 +175,9 @@ int main(void)
     char fallback[1024];
     const char *data_dir = csb_data_dir(fallback, sizeof(fallback));
     const char *csbwin_data_dir = getenv("FIRESTAFF_CSBWIN_DATA_DIR");
+    const char *csbwin_resume_data_dir =
+        getenv("FIRESTAFF_CSBWIN_REAL_DATA_DIR");
+    const char *csbwin_resume_save = getenv("FIRESTAFF_CSBWIN_REAL_SAVE");
     const char *fmtowns_data_dir = getenv("FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR");
     const char *fmtowns_user_save = getenv("FIRESTAFF_CSB_FMTOWNS_USER_SAVE");
     const char *mode_text = getenv("FIRESTAFF_CSB_PRESENTATION_MODE");
@@ -247,6 +250,59 @@ int main(void)
         M11_GameView_Shutdown(&view);
         if (failures) return 1;
         puts("PASS: FM Towns native G0447 HUD input route");
+        return 0;
+    }
+
+    /* A real legacy CSBWin save bypasses ANIM.C just as LOADSAVE.C F0435
+     * does.  The regular C001--C005 regression below deliberately has no
+     * save and therefore cannot prove that the post-load C232 HUD and
+     * C0128 viewport reach the user-visible M11 page.  Keep this opt-in
+     * corpus path ahead of it: an explicit source save must never be
+     * mistaken for a title-only boot. */
+    if (csbwin_resume_data_dir && csbwin_resume_data_dir[0] &&
+        csbwin_resume_save && csbwin_resume_save[0]) {
+        const CSB_V1_BootProfile *profile;
+
+        memset(&spec, 0, sizeof(spec));
+        spec.title = "CHAOS STRIKES BACK";
+        spec.gameId = "csb";
+        spec.sourceId = "csb";
+        spec.dataDir = csbwin_resume_data_dir;
+        spec.savePath = csbwin_resume_save;
+        spec.rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
+        spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
+        spec.presentationWidth = 320;
+        spec.presentationHeight = 200;
+        M11_GameView_Init(&view);
+        CHECK(M11_GameView_Start(&view, &spec),
+              "stock CSBWin csbgame2.dat opens the F0435 runtime route");
+        profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
+        CHECK(profile &&
+                  (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+                   profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
+                  profile->runtime.current_level == 4 &&
+                  profile->runtime.party_x == 22 &&
+                  profile->runtime.party_y == 18 &&
+                  profile->runtime.party_dir == 2 &&
+                  profile->runtime.party_state.ChampionCount == 2 &&
+                  !view.csbState.startup_title_active &&
+                  view.csbAtariStRuntimeHandoffComplete,
+              "stock CSBWin resume reaches its saved Atari ST runtime state");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        for (y = 33; y < 169; ++y) {
+            for (x = 48; x < 272; ++x) {
+                if (framebuffer[y * 320 + x] != 0u) ++viewport_nonblack;
+            }
+        }
+        CHECK(viewport_nonblack > 0,
+              "stock CSBWin resume presents source-owned C0128 viewport pixels");
+        CHECK(profile && check_atari_st_c232_hud_frame(profile->graphics_path,
+                                                        framebuffer),
+              "stock CSBWin resume presents every C232-owned HUD pixel");
+        M11_GameView_Shutdown(&view);
+        if (failures) return 1;
+        puts("PASS: stock CSBWin F0435 C0128/C232 runtime frame");
         return 0;
     }
 

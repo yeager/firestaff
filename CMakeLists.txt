@@ -17005,6 +17005,19 @@ endif()
     )
     set_tests_properties(csb_v1_m11_prison_runtime_hud_pc34 PROPERTIES
         LABELS "csb;real_data;m11;hud")
+    # The stock CSBWin corpus is optional.  Its wrapper stages only explicitly
+    # supplied user media and otherwise skips; unlike the title-only row above,
+    # it proves the F0435 resume page contains the source-owned C0128 viewport
+    # and the complete C232 HUD composition.
+    add_test(
+        NAME csb_v1_csbwin_f0435_runtime_frame
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_csbwin_f0435_runtime_frame.sh"
+            "$<TARGET_FILE:test_csb_v1_m11_prison_runtime_hud_pc34>"
+    )
+    set_tests_properties(csb_v1_csbwin_f0435_runtime_frame PROPERTIES
+        LABELS "tier2;csb;csbwin;save;runtime;hud;viewport;real_data;skip_safe"
+        TIMEOUT 45
+    )
     add_test(
         NAME csb_v1_atari_mini_runtime_archive
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_mini_runtime_archive.sh"

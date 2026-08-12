@@ -166,9 +166,12 @@ F0435 resume route through both `--game csb --save` and the ordinary start
 menu. The menu hands the hash-selected Atari ST edition forward to runtime
 preparation; a stale persisted menu selection cannot redirect that resume to
 the PC 3.4 profile. The receipt reaches the saved map and party pose before
-any live runtime tick. This proves one legacy, non-extended CSBWin body only;
-it supplies no Extended Features/DSA action, spell-filter, or world-effect
-evidence.
+any live runtime tick. A separate runtime-frame check then verifies non-empty
+source C0128 viewport pixels at the native `(48,33)` 224x136 rectangle and
+compares every C232-owned HUD pixel with a fresh composition from the same
+selected `graphics.dat`. This proves one legacy, non-extended CSBWin body
+only; it supplies no Extended Features/DSA action, spell-filter, or
+world-effect evidence.
 
 ## Viewport Test Coverage (47 files)
 

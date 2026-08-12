@@ -4178,6 +4178,14 @@ that its exact runtime path is not already source-locked and tested.
     `FIRESTAFF_CSBWIN_REAL_DATA_DIR` and `FIRESTAFF_CSBWIN_REAL_SAVE` are
     staged: it asserts M12 AUTO selects the ST MEDIA332 pair and that the
     public F0435 receipt reaches map 4 at (22,18,2) with both champions.
+    2026-08-12 runtime-frame follow-up: the same unmodified source corpus
+    now has a skip-safe end-to-end M11 frame regression.  Immediately after
+    F0435, it requires the saved ST map/party state, non-empty source-owned
+    C0128 viewport pixels at (48,33)–(271,168), and an exact per-pixel C232
+    HUD composition reconstructed from the selected `graphics.dat` records.
+    This proves that the legacy CSBWin save does not merely pass a boot
+    receipt: its authentic viewport and HUD reach the user-visible page.
+    It does not promote unobserved DSA/Extended Features effects.
     2026-08-11: launcher and fixture regressions no longer create synthetic
     CSB `DUNGEON.DAT` or placeholder `GRAPHICS.DAT` to cross a runtime gate.
     A hash-labelled metadata fixture is now explicitly required to fail before
