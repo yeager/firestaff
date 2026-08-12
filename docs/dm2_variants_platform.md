@@ -95,6 +95,12 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   panel. Inventory item-slot selection, drag/drop and the remaining native
   modal event owner are still fail-closed until their Mac source owner is
   recovered.
+- The authenticated GAME_LOAD party snapshot is now copied read-only into
+  the M11 presentation mirror. This enables the English Mac F1-F4 champion
+  inventory commands to select a real party champion and open/close the Mac
+  CHARSHEET route on both editions. The snapshot copy does not create heroes
+  or invent missing item records; native item-slot and drag/drop event
+  ownership remains a separate gate.
 - Retail HFS media now exposes the authentic raw `MooV` data forks and HFS
   Resource Manager forks in memory. The four present movies have source-owned
   `moov` resource payloads; Firestaff keeps the data fork, complete resource

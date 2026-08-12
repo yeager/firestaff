@@ -1276,6 +1276,10 @@ int dm2_v1_runtime_activate_action_hand(int hero_index, int hand);
 /* Read the source party.curacthero owner as a zero-based champion index.
  * Returns -1 until an authenticated GAME_LOAD party is live. */
 int dm2_v1_runtime_get_active_champion_index(void);
+/* Copy the authenticated GAME_LOAD party snapshot for presentation owners.
+ * This is a read-only handoff; it never constructs a hero or fills missing
+ * inventory records. */
+int dm2_v1_runtime_get_session_snapshot(DM2_V1_SessionState *out_session);
 /* Source c_events.cpp:1846 (DM2_CLICK_INVENTORY_EYE).  The eye selects
  * v1e0976 for the authenticated eventqueue.event_heroidx without changing
  * party.curacthero. No host champion index is accepted. */

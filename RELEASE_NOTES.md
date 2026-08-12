@@ -42,6 +42,12 @@
 
 ### Changed
 
+- `DM2 Macintosh champion inventory command`: Publish the authenticated
+  GAME_LOAD party snapshot to M11 and route the source English Mac F1-F4
+  champion-inventory commands to the Mac CHARSHEET owner. The selected
+  champion is retained across runtime mirroring; no DM1 champion panel or
+  synthetic hero data is used.
+
 - `DM2 Macintosh inventory frame`: Admit the authentic 16-colour
   `INTERFACE_CHARSHEET/0/dtImage/1` frame in both the large retail and small
   First Chapter Mac editions. The M11 inventory toggle now consumes the

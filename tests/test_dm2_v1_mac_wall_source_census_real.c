@@ -130,6 +130,23 @@ static int run_one(const char *zip, const char *source_id)
         }
         puts("  authenticated Mac CHARSHEET inventory frame accepted");
     }
+    if (M11_GameView_HandleInput(
+            &state, M12_MENU_INPUT_CHAMPION_1_INVENTORY) !=
+            M11_GAME_INPUT_REDRAW || !state.inventoryPanelActive ||
+        state.world.party.activeChampionIndex != 0) {
+        fprintf(stderr, "Mac F1 champion inventory owner did not open: %s\n",
+                source_id);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK) !=
+            M11_GAME_INPUT_REDRAW || state.inventoryPanelActive) {
+        fprintf(stderr, "Mac F1 champion inventory owner did not close: %s\n",
+                source_id);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    puts("  authenticated Mac F1 champion inventory command accepted");
     profile = (DM2_V1_BootProfile *)state.dm2BootProfile;
     dungeon = profile ? (DM2_V1_DungeonData *)profile->dungeon_data : NULL;
     if (!dungeon || !dungeon->record_graph_complete) {

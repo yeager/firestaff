@@ -8969,6 +8969,16 @@ int dm2_v1_runtime_get_active_champion_index(void) {
     return rt->source_party.curacthero - 1;
 }
 
+int dm2_v1_runtime_get_session_snapshot(DM2_V1_SessionState *out_session)
+{
+    if (!out_session || !g_dm2_runtime.source_party_valid ||
+        !g_dm2_runtime.session_snapshot_valid) {
+        return 0;
+    }
+    *out_session = g_dm2_runtime.session_snapshot;
+    return 1;
+}
+
 int dm2_v1_runtime_click_inventory_eye(void) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     int hero;

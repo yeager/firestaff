@@ -1093,9 +1093,13 @@ static int m11_dm1_hoc_floor_item_capture_observed(int itemPresent)
            s_m11_dm1_floor_item_host_presentation_receipt.transparentColor == 10;
 }
 
+static void m11_dm2_mirror_session_party(
+    M11_GameViewState *state, const DM2_V1_SessionState *session);
+
 static void m11_sync_dm2_state_from_runtime(M11_GameViewState *state)
 {
     DM2_V1_BootRuntimeReceipt receipt;
+    DM2_V1_SessionState session;
     if (!state) {
         return;
     }
@@ -1109,6 +1113,9 @@ static void m11_sync_dm2_state_from_runtime(M11_GameViewState *state)
     state->dm2State.party_dir = receipt.party_dir;
     state->dm2State.tick_count = receipt.tick_count;
     state->dm2State.leader_hand_object = receipt.leader_hand_object;
+    if (dm2_v1_runtime_get_session_snapshot(&session)) {
+        m11_dm2_mirror_session_party(state, &session);
+    }
 }
 
 static void m11_dm2_cdda_play(void *ctx, const uint8_t *pcm, size_t size,
@@ -1155,8 +1162,10 @@ static void m11_dm2_mirror_session_party(M11_GameViewState *state,
                                          const DM2_V1_SessionState *session)
 {
     int count;
+    int previous_active;
 
     if (!state || !session) return;
+    previous_active = state->world.party.activeChampionIndex;
     count = session->champion_count;
     if (count < 0) count = 0;
     if (count > CHAMPION_MAX_PARTY) count = CHAMPION_MAX_PARTY;
@@ -1165,9 +1174,11 @@ static void m11_dm2_mirror_session_party(M11_GameViewState *state,
            sizeof(state->dm2State.champion_inventory_objects));
     state->world.party.championCount = count;
     state->world.party.activeChampionIndex =
-        (count > 0 && session->leader_index < (uint8_t)count)
-            ? (int)session->leader_index
-            : (count > 0 ? 0 : -1);
+        (previous_active >= 0 && previous_active < count)
+            ? previous_active
+            : ((count > 0 && session->leader_index < (uint8_t)count)
+                   ? (int)session->leader_index
+                   : (count > 0 ? 0 : -1));
     state->world.party.mapX = (int)session->party_x;
     state->world.party.mapY = (int)session->party_y;
     state->world.party.mapIndex = (int)session->party_level;
@@ -31227,6 +31238,36 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         }
         if (!state->dm2World) {
             return M11_GAME_INPUT_IGNORED;
+        }
+        if (input >= M12_MENU_INPUT_CHAMPION_1_INVENTORY &&
+            input <= M12_MENU_INPUT_CHAMPION_4_INVENTORY) {
+            const DM2_V1_BootProfile *profile =
+                (const DM2_V1_BootProfile *)state->dm2BootProfile;
+            const int champion_index =
+                (int)(input - M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+            const int same_open = state->inventoryPanelActive &&
+                state->world.party.activeChampionIndex == champion_index;
+            /* The English Mac table maps F1-F4 to the original champion
+             * inventory command. Do not send it through the DM1 champion
+             * panel: the Mac CHARSHEET frame is the admitted owner here,
+             * and this presentation selection does not mutate the runtime
+             * action-hero field. */
+            if (!m11_dm2_is_mac_profile(profile) ||
+                champion_index < 0 ||
+                champion_index >= state->world.party.championCount ||
+                !state->world.party.champions[champion_index].present) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+            state->mapOverlayActive = 0;
+            state->world.party.activeChampionIndex = champion_index;
+            if (same_open) {
+                state->inventoryPanelActive = 0;
+                state->inventorySelectedSlot = -1;
+            } else {
+                state->inventoryPanelActive = 1;
+                state->inventorySelectedSlot = 0;
+            }
+            return M11_GAME_INPUT_REDRAW;
         }
         if (input == M12_MENU_INPUT_FREEZE_TOGGLE) {
             state->dm2GameFrozen = !state->dm2GameFrozen;
