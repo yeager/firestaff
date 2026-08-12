@@ -1118,6 +1118,16 @@ int main(void)
             &layout, 29u, 99u, &material));
         CHECK(material.valid && material.graphic_index == 48u &&
               material.source_x == 48u && material.source_y == 0u);
+        {
+            uint16_t source_slot = UINT16_MAX;
+            CHECK(csb_v1_csbwin_layout_0232_inventory_slot_at_point(
+                &layout, 48, 33, 59, 56, &source_slot) && source_slot == 0u);
+            CHECK(csb_v1_csbwin_layout_0232_inventory_slot_at_point(
+                &layout, 48, 33, 76, 73, &source_slot) && source_slot == 0u);
+            CHECK(!csb_v1_csbwin_layout_0232_inventory_slot_at_point(
+                &layout, 48, 33, 77, 56, &source_slot) &&
+                source_slot == UINT16_MAX);
+        }
         CHECK(!csb_v1_csbwin_layout_0232_build_inventory_icon_material(
             &layout, 30u, 0u, &material));
     }

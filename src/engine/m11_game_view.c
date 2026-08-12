@@ -31930,6 +31930,8 @@ static int m11_process_v1_inventory_pointer_target(M11_GameViewState* state,
                                                     int x,
                                                     int y,
                                                     int* outSourceSlotBoxIndex);
+static int m11_csb_atari_st_inventory_source_slot_at_point(
+    const M11_GameViewState *state, int x, int y, int *out_source_slot);
 
 static M11_GameInputResult m11_theron_handle_startup_pointer(
     M11_GameViewState* state,
@@ -33135,6 +33137,24 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
      * passed through the presentation-to-source mapper in main_loop_m11, so
      * scaled and letterboxed views hit the original source geometry. */
     if (m11_source_is_csb(state)) {
+        /* CSBWin's selected-inventory page replaces C0128 with C017. Its
+         * own C232 IconDisplay rectangles must win before the normal live
+         * command surface can interpret the same point as a viewport click. */
+        if (state->inventoryPanelActive &&
+            (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0) {
+            int source_slot = -1;
+
+            if (m11_csb_atari_st_inventory_source_slot_at_point(
+                    state, x, y, &source_slot)) {
+                if (!m11_process_v1_inventory_slot_box_click(
+                        state, source_slot + 8)) {
+                    return M11_GAME_INPUT_IGNORED;
+                }
+                state->v1InventoryDragActive = 1;
+                state->v1InventoryDragSourceSlotBox = source_slot + 8;
+                return M11_GAME_INPUT_REDRAW;
+            }
+        }
         CSB_V1_CommandInputGeometryResultPc34Compat csb_pointer;
         if (CSB_V1_CommandInputGeometryFromPointerPc34Compat(
                 x, y, buttonMask, &csb_pointer)) {
@@ -33521,6 +33541,24 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
     if (state->inventoryPanelActive && !state->showDebugHUD) {
         int space = DM1_V1_MOUSE_SPACE_NONE_PC34;
         int zoneId = 0;
+        /* CSBWin's C017 inventory owns its active slot geometry in C232.
+         * Resolve that data-owned layer before any PC3.4 C507 table can see
+         * the same screen coordinates. */
+        if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+            (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0) {
+            int source_slot = -1;
+
+            if (m11_csb_atari_st_inventory_source_slot_at_point(
+                    state, x, y, &source_slot)) {
+                if (!m11_process_v1_inventory_slot_box_click(
+                        state, source_slot + 8)) {
+                    return M11_GAME_INPUT_IGNORED;
+                }
+                state->v1InventoryDragActive = 1;
+                state->v1InventoryDragSourceSlotBox = source_slot + 8;
+                return M11_GAME_INPUT_REDRAW;
+            }
+        }
         int command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
             DM1_V1_MOUSE_LIST_INVENTORY_PC34,
             x, y,
@@ -52082,6 +52120,44 @@ static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
     return 1;
 }
 
+/* CSBWin Character.cpp::DisplayBackpackItem selects IconDisplay[n + 8], then
+ * builds the inclusive 18x18 button rectangle at (pixelX - 1, pixelY - 1).
+ * C017 is copied to the M11 source page at (48,33).  The Atari path must use
+ * those native, data-owned rectangles rather than the unrelated PC3.4 C507
+ * mouse table. */
+static int m11_csb_atari_st_inventory_source_slot_at_point(
+    const M11_GameViewState *state, int x, int y, int *out_source_slot)
+{
+    enum { VIEWPORT_X = 48, VIEWPORT_Y = 33 };
+    const CSB_V1_BootProfile *profile;
+    CSB_V1_CSBWinLayout0232 layout;
+    uint16_t source_slot = UINT16_MAX;
+
+    if (out_source_slot) *out_source_slot = -1;
+    if (!state || !state->inventoryPanelActive ||
+        state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbBootProfile) {
+        return 0;
+    }
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if ((profile->variant_id != CSB_V1_VARIANT_ST20_EN &&
+         profile->variant_id != CSB_V1_VARIANT_ST21_EN) ||
+        !profile->graphics_verified || !profile->graphics_path[0] ||
+        !csb_v1_csbwin_layout_0232_read_graphics_dat(profile->graphics_path,
+                                                      &layout) ||
+        !layout.valid) {
+        return 0;
+    }
+    if (!csb_v1_csbwin_layout_0232_inventory_slot_at_point(
+            &layout, VIEWPORT_X, VIEWPORT_Y, x, y,
+            &source_slot) ||
+        source_slot >= CSB_V1_CSBWIN_LAYOUT_0232_INVENTORY_SLOT_COUNT) {
+        return 0;
+    }
+    if (out_source_slot) *out_source_slot = (int)source_slot;
+    return 1;
+}
+
 static int m11_process_v1_inventory_pointer_target(M11_GameViewState* state,
                                                     int x,
                                                     int y,
@@ -52092,6 +52168,24 @@ static int m11_process_v1_inventory_pointer_target(M11_GameViewState* state,
 
     if (outSourceSlotBoxIndex) *outSourceSlotBoxIndex = 0;
     if (!state || !state->inventoryPanelActive) return 0;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        state->csbBootProfile) {
+        const CSB_V1_BootProfile *profile =
+            (const CSB_V1_BootProfile *)state->csbBootProfile;
+        if (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+            profile->variant_id == CSB_V1_VARIANT_ST21_EN) {
+            int source_slot = -1;
+
+            if (!m11_csb_atari_st_inventory_source_slot_at_point(
+                    state, x, y, &source_slot) ||
+                !m11_process_v1_inventory_slot_box_click(
+                    state, source_slot + 8)) {
+                return 0;
+            }
+            if (outSourceSlotBoxIndex) *outSourceSlotBoxIndex = source_slot + 8;
+            return 1;
+        }
+    }
     command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
         DM1_V1_MOUSE_LIST_INVENTORY_PC34, x, y,
         DM1_V1_MOUSE_MASK_LEFT_PC34, &space, &zoneId);

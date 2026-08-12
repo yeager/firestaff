@@ -147,6 +147,14 @@ int csb_v1_csbwin_layout_0232_build_inventory_icon_material(
     uint16_t object_name_index,
     CSB_V1_CSBWinInventoryIconMaterial0232 *out_material);
 
+/* CSBWin Character.cpp::DisplayBackpackItem uses IconDisplay[n + 8] as an
+ * inclusive 18x18 screen-space slot rectangle after C017 is copied to its
+ * viewport origin. Returns one matching raw C00..C29 slot, never a PC3.4
+ * inventory-zone approximation. */
+int csb_v1_csbwin_layout_0232_inventory_slot_at_point(
+    const CSB_V1_CSBWinLayout0232 *layout, int viewport_x, int viewport_y,
+    int x, int y, uint16_t *out_source_slot);
+
 /* Atomically overlay C232's original indexed HUD materials onto a 320x200
  * logical frame. Every one of the ten original records must resolve with
  * sufficient source pixels; otherwise the caller's frame and receipt remain

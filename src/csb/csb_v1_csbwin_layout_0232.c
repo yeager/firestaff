@@ -315,6 +315,31 @@ int csb_v1_csbwin_layout_0232_build_inventory_icon_material(
     return 1;
 }
 
+int csb_v1_csbwin_layout_0232_inventory_slot_at_point(
+    const CSB_V1_CSBWinLayout0232 *layout, int viewport_x, int viewport_y,
+    int x, int y, uint16_t *out_source_slot)
+{
+    size_t source_slot;
+
+    if (out_source_slot) *out_source_slot = UINT16_MAX;
+    if (!layout || !layout->valid) return 0;
+    for (source_slot = 0u;
+         source_slot < CSB_V1_CSBWIN_LAYOUT_0232_INVENTORY_SLOT_COUNT;
+         ++source_slot) {
+        const CSB_V1_CSBWinIconDisplay0232 *icon = &layout->icon_display[
+            CSB_V1_CSBWIN_LAYOUT_0232_INVENTORY_SLOT_FIRST + source_slot];
+        const int left = viewport_x + icon->pixel_x - 1;
+        const int top = viewport_y + icon->pixel_y - 1;
+
+        if (icon->pixel_x < 0 || icon->pixel_y < 0) return 0;
+        if (x >= left && x < left + 18 && y >= top && y < top + 18) {
+            if (out_source_slot) *out_source_slot = (uint16_t)source_slot;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static uint32_t csb_v1_csbwin_layout_0232_hash_bytes(
     uint32_t hash, const uint8_t *bytes, size_t size)
 {

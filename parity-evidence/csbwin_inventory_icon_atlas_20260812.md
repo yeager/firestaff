@@ -2,10 +2,10 @@
 
 ## Scope
 
-This record documents the Atari ST / CSBWin inventory pixels that Firestaff
-may compose after the authentic C017 inventory surface has been decoded. It
-does not establish inventory input, item transfer, attack-hand animation, or
-general CSBWin save compatibility.
+This record documents the Atari ST / CSBWin inventory pixels and C232-owned
+slot hit testing that Firestaff may use after the authentic C017 inventory
+surface has been decoded. It does not establish chest contents, attack-hand
+animation, or general CSBWin save compatibility.
 
 ## Original owner
 
@@ -22,6 +22,8 @@ general CSBWin save compatibility.
   other empty slot uses `Special_f`.
 - In selected slot 1 only, `Chest` becomes `OpenChest` and `OpenScroll`
   becomes `Scroll` before the atlas crop is chosen.
+- The same `IconDisplay[n + 8]` location starts the source's inclusive 18×18
+  inventory click rectangle.
 
 `CSBWin/Objects.h` fixes those object-name indices: `Chest=0x90`,
 `OpenChest=0x91`, `OpenScroll=0x1e`, `Scroll=0x1f`, `Special_f=0xcc`,
@@ -35,11 +37,24 @@ If any C232 destination, atlas crop, or source graphic cannot be resolved,
 the complete Atari HUD composition rejects instead of substituting a PC3.4 or
 host icon.
 
+`csb_v1_csbwin_layout_0232_inventory_slot_at_point` derives the active raw
+C00..C29 slot directly from those C232 records at C017's `(48,33)` source-page
+origin. M11 resolves that path before its generic live CSB command geometry,
+so a C017 slot cannot be misclassified as a PC3.4 C507 zone or a viewport
+click. The resulting item transaction remains the existing runtime-owned
+inventory writer and rejects when its source-owned placement rules reject.
+
 The real-data CTest `csb_v1_m11_prison_runtime_hud_pc34` reconstructs the
 whole 224×136 C017 aperture from the same authentic graphics file and checks
 all thirty icon destinations against M11's final framebuffer. Its expected
 frame includes empty-slot symbols, wounded-slot variants, C033/C034 frames,
 and the selected-hand chest/scroll presentation rule.
+
+The data-free C232 layout regression checks slot 0's exact top-left and
+bottom-right inclusion plus its adjacent miss. The available legacy real save
+contains no occupied inventory slot, so it cannot independently prove a
+pickup mutation without fabricating a test item; it still exercises authentic
+startup, C017 composition and the real C232 decoder.
 
 ## Still open
 

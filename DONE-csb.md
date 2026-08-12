@@ -16,6 +16,12 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   Ingen PC3.4-ikon, värdritad tomslottsmarkering eller syntetisk data används.
   Se `parity-evidence/csbwin_inventory_icon_atlas_20260812.md` för
   käll- och formatdokumentation.
+- ✅ Atari ST:s C017-slotar tar nu även pekarinmatning direkt från C232:s
+  `IconDisplay[8..37]`-rektanglar, före den generella CSB-vägen. Därmed kan
+  ingen C017-slot tolkas som en PC3.4-C507-yta eller ett viewportklick.
+  Layouttestet låser de exakta 18×18-gränserna; den tillgängliga äkta sparfilen
+  har inga upptagbara föremål och används därför endast för start- och
+  bildruteverifiering, inte för en konstruerad pickup.
 - 🔒 C035:s attackhand kräver ännu en källbunden
   `AttackingCharacterOrdinal`-receipt och är fortsatt spärrad.
 
