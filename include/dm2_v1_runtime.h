@@ -338,12 +338,18 @@ typedef struct DM2_V1_RuntimeMacWallButtonReceipt {
     int actuators_seen;
     int doors_mutated;
     int blocked_incomplete_chain;
+    int source_actuator_type;
+    int source_local_action;
+    int blocked_unsupported_source_type;
+    int local_actuator_list_rotated;
     uint32_t source_receipt_hash;
 } DM2_V1_RuntimeMacWallButtonReceipt;
 
 /* Consume a native Mac left/centre/right wall-button action only when the
  * last authenticated viewport frame supplied the matching c_rwbb target and
- * its complete tile chain is source-owned PUSH_BUTTON_SWITCH (0x46). */
+ * the source-owned wall chain admits the corresponding Mac action.  Local
+ * DB3 actions retain the source's list-rotation semantics; remote/item
+ * actions remain fail-closed until their complete owner is available. */
 int dm2_v1_runtime_activate_mac_wall_button(
     int column, DM2_V1_RuntimeMacWallButtonReceipt *out_receipt);
 uint32_t dm2_v1_runtime_frame_presentation_state_hash(

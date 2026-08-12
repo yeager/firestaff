@@ -7121,6 +7121,49 @@ int dm2_v1_runtime_route_viewport_click(
     return 0;
 }
 
+typedef struct {
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_RecordPoolSet *pools;
+    int level;
+} DM2_V1_MacWallRotateContext;
+
+static int16_t dm2_v1_mac_wall_get_tile_link(void *ctx, int16_t x, int16_t y)
+{
+    DM2_V1_MacWallRotateContext *c = (DM2_V1_MacWallRotateContext *)ctx;
+    if (!c || !c->dungeon) return DM2_V1_RECORD_HANDLE_END;
+    return (int16_t)dm2_v1_dungeon_get_first_thing(c->dungeon, c->level, x, y);
+}
+
+static int16_t dm2_v1_mac_wall_get_next_link(void *ctx, uint16_t rw)
+{
+    DM2_V1_MacWallRotateContext *c = (DM2_V1_MacWallRotateContext *)ctx;
+    int16_t next = DM2_V1_RECORD_HANDLE_END;
+    if (!c || !c->pools || !dm2_v1_record_pool_next_link(c->pools,
+                                                          (int16_t)rw, &next))
+        return DM2_V1_RECORD_HANDLE_END;
+    return next;
+}
+
+static void dm2_v1_mac_wall_set_next_link(void *ctx, uint16_t rw, int16_t next)
+{
+    DM2_V1_MacWallRotateContext *c = (DM2_V1_MacWallRotateContext *)ctx;
+    uint8_t *record;
+    if (!c || !c->pools) return;
+    record = dm2_v1_record_pool_address_mut(c->pools, (int16_t)rw);
+    if (!record) return;
+    record[0] = (uint8_t)((uint16_t)next & 0xffu);
+    record[1] = (uint8_t)(((uint16_t)next >> 8) & 0xffu);
+}
+
+static void dm2_v1_mac_wall_set_tile_link(void *ctx, int16_t x, int16_t y,
+                                           int16_t rw)
+{
+    DM2_V1_MacWallRotateContext *c = (DM2_V1_MacWallRotateContext *)ctx;
+    if (!c || !c->dungeon) return;
+    (void)dm2_v1_dungeon_set_first_thing(c->dungeon, c->level, x, y,
+                                         (uint16_t)rw);
+}
+
 int dm2_v1_runtime_activate_mac_wall_button(
     int column, DM2_V1_RuntimeMacWallButtonReceipt *out_receipt)
 {
@@ -7190,8 +7233,87 @@ int dm2_v1_runtime_activate_mac_wall_button(
         return 0;
     }
     {
+        DM2_V1_MacWallRotateContext rotate_ctx;
+        DM2_V1_ActuatorRotateCallbacks rotate_cb;
+        uint16_t source_object = (uint16_t)
+            g_dm2_runtime.source_click_targets[target_index].object_id;
+        uint16_t source_handle = (uint16_t)DM2_V1_RECORD_HANDLE_NULL;
+        uint8_t source_type = 0xffu;
+        uint8_t source_local = 0u;
+        int16_t walk;
+        int walk_steps = 0;
         DM2_V1_ActuatorEventReceipt event;
         uint32_t hash = 2166136261u;
+
+        /* Resolve the exact source object in the live tile chain.  A Mac
+         * column alone is insufficient: the original c_rwbb target owns the
+         * wall mechanism and its DB3 record. */
+        walk = (int16_t)dm2_v1_dungeon_get_first_thing(
+            dungeon, g_dm2_runtime.dungeon_level, target_x, target_y);
+        while ((uint16_t)walk != (uint16_t)DM2_V1_RECORD_HANDLE_END &&
+               (uint16_t)walk != (uint16_t)DM2_V1_RECORD_HANDLE_NULL &&
+               walk_steps++ < 256) {
+            const uint8_t *record = dm2_v1_record_pool_address(
+                &g_dm2_runtime.record_pools, walk);
+            int16_t next;
+            if (record && dm2_v1_record_handle_pool(walk) == DM2_DB_ACTUATOR &&
+                ((uint16_t)walk == source_object ||
+                 (uint16_t)source_handle ==
+                     (uint16_t)DM2_V1_RECORD_HANDLE_NULL)) {
+                source_handle = (uint16_t)walk;
+                source_type = dm2_actu_type(record);
+                source_local = (uint8_t)((dm2_actu_w4(record) >> 11) & 1u);
+                if ((uint16_t)walk == source_object) break;
+            }
+            if (!dm2_v1_record_pool_next_link(&g_dm2_runtime.record_pools,
+                                              walk, &next)) break;
+            walk = next;
+        }
+        if ((uint16_t)source_handle ==
+            (uint16_t)DM2_V1_RECORD_HANDLE_NULL) {
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        receipt.source_actuator_type = source_type;
+        receipt.source_local_action = source_local;
+
+        if (source_type != DM2_ACTU_PUSH_BUTTON_SWITCH) {
+            if (source_local && (source_type == DM2_ACTU_2_STATE_SWITCH ||
+                                 source_type == DM2_ACTU_WALL_SWITCH ||
+                                 source_type == DM2_ACTU_KEY_HOLE)) {
+                memset(&rotate_cb, 0, sizeof(rotate_cb));
+                rotate_ctx.dungeon = (DM2_V1_DungeonData *)dungeon;
+                rotate_ctx.pools = &g_dm2_runtime.record_pools;
+                rotate_ctx.level = g_dm2_runtime.dungeon_level;
+                rotate_cb.get_tile_record_link = dm2_v1_mac_wall_get_tile_link;
+                rotate_cb.get_next_record_link = dm2_v1_mac_wall_get_next_link;
+                rotate_cb.set_next_record_link = dm2_v1_mac_wall_set_next_link;
+                rotate_cb.set_tile_record_link = dm2_v1_mac_wall_set_tile_link;
+                receipt.local_actuator_list_rotated =
+                    dm2_v1_rotate_actuator_list(
+                        target_x, target_y,
+                        (uint8_t)(((uint16_t)source_handle >> 14) & 3u),
+                        &rotate_cb, &rotate_ctx);
+                hash ^= (uint32_t)target_index; hash *= 16777619u;
+                hash ^= (uint32_t)source_handle; hash *= 16777619u;
+                hash ^= (uint32_t)source_type; hash *= 16777619u;
+                hash ^= (uint32_t)receipt.local_actuator_list_rotated;
+                receipt.valid = 1;
+                receipt.accepted = 1;
+                receipt.source_target_index = target_index;
+                receipt.view_slot = target_slot;
+                receipt.map = g_dm2_runtime.dungeon_level;
+                receipt.x = target_x;
+                receipt.y = target_y;
+                receipt.actuators_seen = 1;
+                receipt.source_receipt_hash = hash;
+                if (out_receipt) *out_receipt = receipt;
+                return 1;
+            }
+            receipt.blocked_unsupported_source_type = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
         memset(&event, 0, sizeof(event));
         if (!dm2_v1_push_button_switch_chain(
                 &g_dm2_runtime.record_pools,

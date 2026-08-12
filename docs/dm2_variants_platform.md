@@ -74,11 +74,12 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   freeze, wake, save and quit are dispatched through the existing runtime
   boundaries. Mac wall-button columns now reach a
   source-owned activation gate: Firestaff consumes the authenticated
-  `c_rwbb` target and commits only a complete real `PUSH_BUTTON_SWITCH`
-  (`0x46`) chain whose targets are direct DB0 doors. Mixed, unresolved or
-  non-`0x46` chains remain fail-closed; they are not converted into a DM1
-  front-cell action. The complete native owners for 0x17/0x18/0x1A and the
-  remaining Mac menu actions are still open.
+  `c_rwbb` target. A complete real `PUSH_BUTTON_SWITCH` (`0x46`) chain may
+  mutate only its direct DB0 door targets. Authenticated local-action DB3
+  chains for `0x17`, `0x18` and `0x1A` use the source actuator-list rotation
+  path (including mixed chain members); remote `0x17`/`0x1A` item/target
+  owners remain fail-closed until their complete GAME_LOAD owner is bound.
+  No chain is converted into a DM1 front-cell action.
 - Retail HFS media now exposes the authentic raw `MooV` data forks and HFS
   Resource Manager forks in memory. The four present movies have source-owned
   `moov` resource payloads; Firestaff keeps the data fork, complete resource

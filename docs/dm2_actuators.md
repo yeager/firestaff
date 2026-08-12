@@ -55,11 +55,11 @@ Wall-mounted actuators that respond to player keypress:
 
 **Source/runtime status**: These are separate source mechanisms, not interchangeable
 with the Mac door-button target (`0x46`). The source `PLAYER_TESTING_WALL` path
-handles facing-wall interaction, alcoves, levers and keyholes; `0x1A` additionally
-requires the source item-admission/keyhole path. Firestaff currently exposes only
-the authenticated Mac `0x46` door-button path. It refuses `0x17`, `0x18` and
-`0x1A` until their complete source owner is bound to the live GAME_LOAD state;
-no coordinate-only or generic actuator fallback is allowed.
+handles facing-wall interaction, alcoves, levers and keyholes. Authenticated
+local-action records use the source actuator-list rotation path and preserve all
+interleaved chain records. Remote `0x17` and `0x1A` records remain fail-closed
+until their complete item/target owner is bound to live GAME_LOAD state. No
+coordinate-only or generic actuator fallback is allowed.
 
 ## Logic and Wiring Actuators
 

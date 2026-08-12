@@ -298,7 +298,6 @@ int16_t *dm2_v1_oversee_record(
             }
         }
         /* Advance to next record */
-        int16_t next = cb->get_next_record_link(ctx, w);
         uint8_t *rec = cb->get_record_address(ctx, w);
         if (!rec)
             return NULL;
@@ -313,38 +312,58 @@ int dm2_v1_rotate_actuator_list(
     if (!cb)
         return 0;
     int16_t rec = cb->get_tile_record_link(ctx, map_x, map_y);
-    uint16_t actuators[3] = { OBJECT_END_WORD, OBJECT_END_WORD, OBJECT_END_WORD };
-    int act_count = 0;
-    int16_t saved_next = (int16_t)OBJECT_END_WORD;
+    uint16_t nodes[1024];
+    uint16_t reordered[1024];
+    int node_count = 0;
+    int first_match = -1;
+    int last_match = -1;
+    int match_count = 0;
 
-    /* Walk tile chain, collect actuators matching direction */
+    /* Keep every chain member.  The original implementation rewired only
+     * actuator handles and could detach text/items interleaved on the same
+     * tile.  Source list rotation moves the selected actuator within the
+     * complete chain, so all other links must survive unchanged. */
     while ((uint16_t)rec != OBJECT_END_WORD &&
            (uint16_t)rec != OBJECT_NULL_WORD) {
         uint16_t w = (uint16_t)rec;
         uint16_t db_type = (w >> 10) & 0xF;
         uint16_t dir = (w >> 14) & 0x3;
+        int16_t next;
+        if (node_count >= (int)(sizeof(nodes) / sizeof(nodes[0])))
+            return 0;
+        nodes[node_count] = w;
         if (db_type == DB_ACTUATOR && dir == direction) {
-            if (act_count < 3) {
-                actuators[act_count] = w;
-                act_count++;
-            }
+            if (first_match < 0) first_match = node_count;
+            last_match = node_count;
+            match_count++;
         }
-        int16_t next = cb->get_next_record_link(ctx, w);
-        if (act_count > 0 && act_count <= 3) {
-            saved_next = next;
-        }
+        node_count++;
+        next = cb->get_next_record_link(ctx, w);
         rec = next;
     }
-
-    if (act_count < 2)
+    if (match_count < 2 || first_match < 0 || last_match < 0)
         return 0;
 
-    /* Rotate: move last actuator to front position.
-     * For 2 actuators [A, B]: becomes [B, A]
-     * For 3 actuators [A, B, C]: becomes [C, A, B] */
-    uint16_t last = actuators[act_count - 1];
-    cb->set_next_record_link(ctx, last, (int16_t)actuators[0]);
-    cb->set_next_record_link(ctx, actuators[act_count - 2], saved_next);
-
+    /* Move the last matching actuator immediately before the first matching
+     * actuator.  This is equivalent to [A,B,C] -> [C,A,B], while retaining
+     * any non-actuator records between those nodes. */
+    {
+        int out = 0;
+        int i;
+        uint16_t last = nodes[last_match];
+        for (i = 0; i < node_count; ++i) {
+            if (i == last_match) continue;
+            if (i == first_match) reordered[out++] = last;
+            reordered[out++] = nodes[i];
+        }
+        for (i = 0; i + 1 < node_count; ++i)
+            cb->set_next_record_link(ctx, reordered[i],
+                                     (int16_t)reordered[i + 1]);
+        cb->set_next_record_link(ctx, reordered[node_count - 1],
+                                 (int16_t)OBJECT_END_WORD);
+        if (cb->set_tile_record_link)
+            cb->set_tile_record_link(ctx, map_x, map_y,
+                                     (int16_t)reordered[0]);
+    }
     return 1;
 }
