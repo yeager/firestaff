@@ -69,7 +69,12 @@ jobs:
 
       - name: Install SDL3 (macOS)
         if: runner.os == 'macOS'
-        run: brew install sdl3 || true
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+        run: |
+          if ! brew list --formula sdl3 >/dev/null 2>&1; then
+            brew install sdl3
+          fi
 
       - name: Install SDL3 (Linux)
         if: runner.os == 'Linux'
