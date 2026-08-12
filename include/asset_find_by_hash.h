@@ -88,6 +88,14 @@ int asset_read_path_alloc(const char *path,
                           uint8_t **outBytes,
                           size_t *outSize);
 
+/* Read a verified nested disk member (for example
+ * archive.zip::game.stx::DUNGEON.DAT) directly into bounded RAM.  This is
+ * the production path for protected Atari/ST and Amiga media; it never
+ * writes an extracted game-data file. */
+int asset_read_virtual_path_alloc(const char *virtualPath,
+                                  uint8_t **outBytes,
+                                  size_t *outSize);
+
 /*
  * Missing-extractor diagnostics.
  *

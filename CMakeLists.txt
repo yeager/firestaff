@@ -7259,6 +7259,7 @@ set(M12_SOURCES
     src/engine/config_m12.c
     src/shared/asset_status_m12.c
     src/shared/asset_find_by_hash.c
+    src/dm1/dm1_v1_atari_st_stx.c
     src/nexus/nexus_v1_bpk_archive.c
     src/shared/firestaff_theron_media_classify.c
     src/shared/firestaff_mapfile.c

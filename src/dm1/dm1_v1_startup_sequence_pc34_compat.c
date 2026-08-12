@@ -736,7 +736,7 @@ int dm1_v1_startup_graphics_bind_receipt_pc34(
            facts->dungeon_path[slash_pos - 1] != '\\') {
         --slash_pos;
     }
-    if (slash_pos > 0 &&
+    if (strstr(facts->dungeon_path, "::") == NULL && slash_pos > 0 &&
         slash_pos + 13 < sizeof(receipt.graphics_dat_path)) {
         memcpy(receipt.graphics_dat_path,
                facts->dungeon_path,
@@ -745,6 +745,28 @@ int dm1_v1_startup_graphics_bind_receipt_pc34(
                "GRAPHICS.DAT",
                13);
         receipt.bind_graphics_dat = 1;
+    } else {
+        const char *last_virtual_separator = NULL;
+        const char *separator = strstr(facts->dungeon_path, "::");
+        while (separator) {
+            last_virtual_separator = separator;
+            separator = strstr(separator + 2, "::");
+        }
+        if (last_virtual_separator) {
+            size_t prefix = (size_t)(last_virtual_separator - facts->dungeon_path) + 2u;
+            const char *entry = facts->dungeon_path + prefix;
+            const char *slash = strrchr(entry, '/');
+            if (slash) {
+                prefix = (size_t)(slash - facts->dungeon_path) + 1u;
+            }
+            if (prefix + 13u < sizeof(receipt.graphics_dat_path)) {
+                memcpy(receipt.graphics_dat_path,
+                       facts->dungeon_path, prefix);
+                memcpy(receipt.graphics_dat_path + prefix,
+                       "GRAPHICS.DAT", 13);
+                receipt.bind_graphics_dat = 1;
+            }
+        }
     }
     *out_receipt = receipt;
     return 1;

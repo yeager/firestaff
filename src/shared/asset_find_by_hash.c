@@ -37,6 +37,7 @@
 #define FIRESTAFF_AMIGA_ADF_API static
 #include "firestaff_amiga_adf.c"
 #undef FIRESTAFF_AMIGA_ADF_API
+#include "dm1_v1_atari_st_stx.h"
 
 #define ASSET_SCAN_MAX_FILE_BYTES (32LL * 1024LL * 1024LL)
 #define ASSET_ZIP_MAX_ENTRY_BYTES (16U * 1024U * 1024U)
@@ -557,6 +558,7 @@ typedef enum {
     ASSET_CONTAINER_CHD,
     ASSET_CONTAINER_ADF,
     ASSET_CONTAINER_ATARI_ST,
+    ASSET_CONTAINER_ATARI_STX,
     ASSET_CONTAINER_ATARI_MSA,
     ASSET_CONTAINER_EXTERNAL
 } AssetContainerKind;
@@ -628,6 +630,10 @@ static int is_adf_path(const char *path) {
  * emulator or a host archive tool. */
 static int is_atari_st_path(const char *path) {
     return has_case_suffix(path, ".st");
+}
+
+static int is_atari_stx_path(const char *path) {
+    return has_case_suffix(path, ".stx");
 }
 
 static int is_atari_msa_path(const char *path) {
@@ -711,6 +717,7 @@ static AssetContainerKind asset_container_kind_from_suffix(const char *path) {
     if (is_chd_path(path)) return ASSET_CONTAINER_CHD;
     if (is_adf_path(path)) return ASSET_CONTAINER_ADF;
     if (is_atari_st_path(path)) return ASSET_CONTAINER_ATARI_ST;
+    if (is_atari_stx_path(path)) return ASSET_CONTAINER_ATARI_STX;
     if (is_atari_msa_path(path)) return ASSET_CONTAINER_ATARI_MSA;
     if (is_external_archive_path(path)) return ASSET_CONTAINER_EXTERNAL;
     return ASSET_CONTAINER_NONE;
@@ -3114,6 +3121,8 @@ static uint8_t *atari_msa_decode_image(const uint8_t *source, size_t source_size
                                        size_t *out_size);
 static int atari_st_visit_files(const uint8_t *image, size_t image_size,
                                 AtariStFileVisitor visitor, void *user_data);
+static int atari_stx_visit_files(const uint8_t *image, size_t image_size,
+                                 AtariStFileVisitor visitor, void *user_data);
 
 #ifndef _WIN32
 static int shell_append_quoted(char *cmd, size_t cmdSize, const char *arg) {
@@ -3722,7 +3731,8 @@ static int scan_zip_nested_disk_by_md5_list(const char *zip_path,
             fread(name, 1U, name_len, fp) != name_len) break;
         name[name_len] = '\0';
         pos += 46U + name_len + extra_len + comment_len;
-        if (is_adf_path(name) || is_atari_st_path(name) || is_atari_msa_path(name)) {
+        if (is_adf_path(name) || is_atari_st_path(name) || is_atari_stx_path(name) ||
+            is_atari_msa_path(name)) {
             size_t image_size = 0U;
             uint8_t *image = zip_load_entry_bytes(zip_path, name, &image_size);
             NestedDiskListMatch matches;
@@ -3735,9 +3745,29 @@ static int scan_zip_nested_disk_by_md5_list(const char *zip_path,
             matches.md5_count = md5_count;
             matches.out_paths = out_paths;
             matches.matched = matched;
+            {
+                AssetMd5Ctx image_md5;
+                char image_hex[33];
+                int image_index;
+                md5_init(&image_md5);
+                md5_update(&image_md5, image, (unsigned int)image_size);
+                md5_final(&image_md5, image_hex);
+                image_index = md5_list_match_index(image_hex, md5_list,
+                                                   matched, md5_count);
+                if (image_index >= 0 && !matched[image_index] &&
+                    copy_virtual_match_path(zip_path, name,
+                                            out_paths[image_index],
+                                            ASSET_PATH_MAX)) {
+                    matched[image_index] = 1;
+                    ++found_count;
+                }
+            }
             if (is_adf_path(name)) {
                 result = firestaff_amiga_adf_visit_ofs_files(
                     image, image_size, nested_disk_find_list_visitor, &matches);
+            } else if (is_atari_stx_path(name)) {
+                result = atari_stx_visit_files(image, image_size,
+                                               nested_disk_find_list_visitor, &matches);
             } else if (is_atari_st_path(name)) {
                 result = atari_st_visit_files(image, image_size,
                                               nested_disk_find_list_visitor, &matches);
@@ -4355,6 +4385,45 @@ static int atari_st_entry_name(const uint8_t entry[32], char out[13]) {
     return 1;
 }
 
+/* STX is a protected/transport image, not a raw GEMDOS sector image.  The
+ * DM1 STX reader reconstructs logical sectors without altering the source;
+ * expose the same bounded root-directory visitor used by raw ST images so
+ * hash discovery and virtual extraction can use the authentic .stx member. */
+static int atari_stx_visit_files(const uint8_t *image, size_t image_size,
+                                 AtariStFileVisitor visitor, void *user_data) {
+    DM1_V1_AtariStx stx;
+    uint8_t root[512];
+    if (!image || !visitor ||
+        !dm1_v1_atari_st_stx_open(image, image_size, &stx) ||
+        !dm1_v1_atari_st_stx_read_sector(&stx, 5u, root, sizeof(root))) {
+        return -1;
+    }
+    for (size_t offset = 0u; offset + 32u <= sizeof(root); offset += 32u) {
+        const uint8_t *entry = root + offset;
+        char name[13];
+        uint32_t file_size;
+        uint8_t *bytes;
+        size_t actual_size = 0u;
+        int result;
+        if (entry[0] == 0u) break;
+        if (!atari_st_entry_name(entry, name)) continue;
+        file_size = atari_st_le32(entry + 28u);
+        if (file_size == 0u || file_size > ASSET_ZIP_MAX_ENTRY_BYTES) continue;
+        bytes = (uint8_t *)malloc(file_size);
+        if (!bytes) return -1;
+        if (!dm1_v1_atari_st_stx_extract_file(&stx, name, bytes,
+                                               file_size, &actual_size) ||
+            actual_size != file_size) {
+            free(bytes);
+            return -1;
+        }
+        result = visitor(name, bytes, actual_size, user_data);
+        free(bytes);
+        if (result != 0) return result;
+    }
+    return 0;
+}
+
 static int atari_st_visit_files(const uint8_t *image, size_t image_size,
                                 AtariStFileVisitor visitor, void *user_data) {
     uint16_t bytes_per_sector;
@@ -4668,6 +4737,61 @@ static int atari_st_extract_entry_to_path(const char *st_path, const char *entry
     return result >= 0 && extract.extracted;
 }
 
+static int scan_atari_stx_by_md5(const char *stx_path, const char *expected_md5,
+                                 char *out_path, int out_path_len) {
+    uint8_t *image;
+    size_t image_size;
+    AdfSingleMatch match;
+    int result;
+    if (!stx_path || !expected_md5) return 0;
+    memset(&match, 0, sizeof(match));
+    match.expected_md5 = expected_md5;
+    image = adf_load_image(stx_path, &image_size);
+    if (!image) return 0;
+    result = atari_stx_visit_files(image, image_size, adf_find_single_visitor, &match);
+    free(image);
+    return result >= 0 && match.found &&
+           copy_virtual_match_path(stx_path, match.name, out_path, out_path_len);
+}
+
+static int scan_atari_stx_by_md5_list(const char *stx_path,
+                                      const char *const *md5_list, int md5_count,
+                                      char out_paths[][ASSET_PATH_MAX], int matched[]) {
+    uint8_t *image;
+    size_t image_size;
+    AdfListMatch matches;
+    int result;
+    if (!stx_path || !md5_list || md5_count <= 0 || !out_paths || !matched) return 0;
+    image = adf_load_image(stx_path, &image_size);
+    if (!image) return 0;
+    memset(&matches, 0, sizeof(matches));
+    matches.container = stx_path;
+    matches.md5_list = md5_list;
+    matches.md5_count = md5_count;
+    matches.out_paths = out_paths;
+    matches.matched = matched;
+    result = atari_stx_visit_files(image, image_size, adf_find_list_visitor, &matches);
+    free(image);
+    return result < 0 ? 0 : matches.found_count;
+}
+
+static int atari_stx_extract_entry_to_path(const char *stx_path, const char *entry,
+                                           const char *out_file_path) {
+    uint8_t *image;
+    size_t image_size;
+    AdfExtractMatch extract;
+    int result;
+    if (!stx_path || !entry || !out_file_path) return 0;
+    image = adf_load_image(stx_path, &image_size);
+    if (!image) return 0;
+    extract.entry = entry;
+    extract.out_path = out_file_path;
+    extract.extracted = 0;
+    result = atari_stx_visit_files(image, image_size, adf_extract_visitor, &extract);
+    free(image);
+    return result >= 0 && extract.extracted;
+}
+
 static int scan_atari_msa_by_md5(const char *msa_path, const char *expected_md5,
                                  char *out_path, int out_path_len) {
     uint8_t *packed, *image;
@@ -4749,6 +4873,9 @@ static int zip_extract_nested_disk_entry_to_path(const char *zip_path,
     if (is_adf_path(disk_entry)) {
         result = firestaff_amiga_adf_visit_ofs_files(image, image_size,
                                                       adf_extract_visitor, &extract);
+    } else if (is_atari_stx_path(disk_entry)) {
+        result = atari_stx_visit_files(image, image_size,
+                                       adf_extract_visitor, &extract);
     } else if (is_atari_st_path(disk_entry)) {
         result = atari_st_visit_files(image, image_size, adf_extract_visitor, &extract);
     } else if (is_atari_msa_path(disk_entry)) {
@@ -5285,6 +5412,9 @@ static int scan_container_by_md5(const char *path, const char *expectedMd5,
     if (kind == ASSET_CONTAINER_ATARI_ST) {
         return scan_atari_st_by_md5(path, expectedMd5, outPath, outPathLen);
     }
+    if (kind == ASSET_CONTAINER_ATARI_STX) {
+        return scan_atari_stx_by_md5(path, expectedMd5, outPath, outPathLen);
+    }
     if (kind == ASSET_CONTAINER_ATARI_MSA) {
         return scan_atari_msa_by_md5(path, expectedMd5, outPath, outPathLen);
     }
@@ -5346,6 +5476,9 @@ static int scan_container_by_md5_list(const char *path, const char *const *md5Li
     }
     if (kind == ASSET_CONTAINER_ATARI_ST) {
         return scan_atari_st_by_md5_list(path, md5List, md5Count, outPaths, matched);
+    }
+    if (kind == ASSET_CONTAINER_ATARI_STX) {
+        return scan_atari_stx_by_md5_list(path, md5List, md5Count, outPaths, matched);
     }
     if (kind == ASSET_CONTAINER_ATARI_MSA) {
         return scan_atari_msa_by_md5_list(path, md5List, md5Count, outPaths, matched);
@@ -5935,6 +6068,10 @@ int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath)
                 return external_atari_st_extract_entry_to_path(
                     container, disk_entry, nested + 2, outFilePath);
             }
+            if (is_atari_stx_path(disk_entry)) {
+                return external_atari_st_extract_entry_to_path(
+                    container, disk_entry, nested + 2, outFilePath);
+            }
             if (is_atari_msa_path(disk_entry)) {
                 return external_atari_msa_extract_entry_to_path(
                     container, disk_entry, nested + 2, outFilePath);
@@ -5968,6 +6105,9 @@ int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath)
     if (kind == ASSET_CONTAINER_ATARI_ST) {
         return atari_st_extract_entry_to_path(container, entry, outFilePath);
     }
+    if (kind == ASSET_CONTAINER_ATARI_STX) {
+        return atari_stx_extract_entry_to_path(container, entry, outFilePath);
+    }
     if (kind == ASSET_CONTAINER_ATARI_MSA) {
         return atari_msa_extract_entry_to_path(container, entry, outFilePath);
     }
@@ -5981,7 +6121,7 @@ int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath)
             }
             memcpy(adf_entry, entry, adf_len);
             adf_entry[adf_len] = '\0';
-            if (is_atari_st_path(adf_entry)) {
+            if (is_atari_st_path(adf_entry) || is_atari_stx_path(adf_entry)) {
                 return external_atari_st_extract_entry_to_path(
                     container, adf_entry, nested + 2, outFilePath);
             }
@@ -6003,4 +6143,104 @@ int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath)
      * the referenced payload as an ISO-like image, so extraction must not
      * reapply the filename-suffix gate here. */
     return iso_extract_entry_to_path(container, entry, outFilePath);
+}
+
+typedef struct {
+    const char *wanted;
+    uint8_t *bytes;
+    size_t size;
+} AssetReadVirtualMatch;
+
+static int asset_read_virtual_visitor(const char *name, const uint8_t *bytes,
+                                      size_t byte_count, void *user_data) {
+    AssetReadVirtualMatch *match = (AssetReadVirtualMatch *)user_data;
+    if (!match || !name || !bytes || asset_casecmp(name, match->wanted) != 0) {
+        return 0;
+    }
+    match->bytes = (uint8_t *)malloc(byte_count);
+    if (!match->bytes) return -1;
+    memcpy(match->bytes, bytes, byte_count);
+    match->size = byte_count;
+    return 1;
+}
+
+int asset_read_virtual_path_alloc(const char *virtualPath,
+                                  uint8_t **outBytes,
+                                  size_t *outSize) {
+    const char *first;
+    const char *second;
+    char container[ASSET_PATH_MAX];
+    char disk[ASSET_PATH_MAX];
+    size_t containerLength;
+    size_t diskLength;
+    uint8_t *image = NULL;
+    size_t imageSize = 0U;
+    AssetReadVirtualMatch match;
+    int result = -1;
+    if (!virtualPath || !outBytes || !outSize) return 0;
+    *outBytes = NULL;
+    *outSize = 0U;
+    first = strstr(virtualPath, "::");
+    if (!first) return 0;
+    second = strstr(first + 2, "::");
+    if (!second) {
+        size_t containerLength = (size_t)(first - virtualPath);
+        char container[ASSET_PATH_MAX];
+        if (containerLength == 0U || containerLength >= sizeof(container)) {
+            return 0;
+        }
+        memcpy(container, virtualPath, containerLength);
+        container[containerLength] = '\0';
+        if (asset_container_kind_for_path(container) == ASSET_CONTAINER_EXTERNAL) {
+            uint8_t *member = external_read_entry_bytes(
+                container, first + 2, outSize);
+            if (!member) return 0;
+            *outBytes = member;
+            return 1;
+        }
+        return 0;
+    }
+    if (!second) return 0;
+    containerLength = (size_t)(first - virtualPath);
+    diskLength = (size_t)(second - (first + 2));
+    if (containerLength == 0U || containerLength >= sizeof(container) ||
+        diskLength == 0U || diskLength >= sizeof(disk) || second[2] == '\0') {
+        return 0;
+    }
+    memcpy(container, virtualPath, containerLength);
+    container[containerLength] = '\0';
+    memcpy(disk, first + 2, diskLength);
+    disk[diskLength] = '\0';
+    if (asset_container_kind_for_path(container) == ASSET_CONTAINER_ZIP) {
+        image = zip_load_entry_bytes(container, disk, &imageSize);
+    } else if (asset_container_kind_for_path(container) == ASSET_CONTAINER_EXTERNAL) {
+        image = external_read_entry_bytes(container, disk, &imageSize);
+    }
+    if (!image) return 0;
+    memset(&match, 0, sizeof(match));
+    match.wanted = second + 2;
+    if (is_adf_path(disk)) {
+        result = firestaff_amiga_adf_visit_ofs_files(
+            image, imageSize, asset_read_virtual_visitor, &match);
+    } else if (is_atari_stx_path(disk)) {
+        result = atari_stx_visit_files(image, imageSize,
+                                       asset_read_virtual_visitor, &match);
+    } else if (is_atari_st_path(disk)) {
+        result = atari_st_visit_files(image, imageSize,
+                                      asset_read_virtual_visitor, &match);
+    } else if (is_atari_msa_path(disk)) {
+        uint8_t *decoded;
+        size_t decodedSize;
+        decoded = atari_msa_decode_image(image, imageSize, &decodedSize);
+        if (decoded) {
+            result = atari_st_visit_files(decoded, decodedSize,
+                                          asset_read_virtual_visitor, &match);
+            free(decoded);
+        }
+    }
+    free(image);
+    if (result < 0 || !match.bytes) return 0;
+    *outBytes = match.bytes;
+    *outSize = match.size;
+    return 1;
 }

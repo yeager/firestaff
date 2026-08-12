@@ -3035,6 +3035,18 @@ static int m11_selected_dm1_is_fmtowns(const M12_StartupMenuState* menuState,
             strcmp(version->versionId, "fmtowns-ja") == 0);
 }
 
+static int m11_selected_dm1_is_atari(const M12_StartupMenuState* menuState,
+                                     const M12_MenuEntry* entry) {
+    int versionIndex;
+    if (!menuState || !entry || !entry->gameId ||
+        strcmp(entry->gameId, "dm1") != 0) return 0;
+    versionIndex = menuState->gameOptions[0].versionIndex;
+    if (versionIndex < 0) return 0;
+    return M12_AssetStatus_GetVersionArchitecture("dm1",
+                                                   (size_t)versionIndex) ==
+           M12_ARCH_ATARI_ST;
+}
+
 static int m11_play_dm1_fmtowns_title_if_available(
     M11_GameViewState *gameView, int *outPlayedAnyFrame) {
     const DM1_V1_FmtownsStartupReceipt *plan;
@@ -3165,6 +3177,10 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
      * source-visible transaction is only for the DOS launcher and would
      * incorrectly force the native edition through the entrance handoff. */
     if (m11_selected_dm1_is_fmtowns(menuState, launchEntry)) {
+        dm1RouteReceipt.use_dm1_transaction = 0;
+        dm1RouteReceipt.use_generic_launch = 1;
+    }
+    if (m11_selected_dm1_is_atari(menuState, launchEntry)) {
         dm1RouteReceipt.use_dm1_transaction = 0;
         dm1RouteReceipt.use_generic_launch = 1;
     }

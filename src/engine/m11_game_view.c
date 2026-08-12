@@ -47,6 +47,7 @@
 #include "csb_v1_amiga_titl_dat.h"
 #include "csb_v1_startup_session_contract_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
+#include "dungeon_decompressor_ftl.h"
 #include "csb_v1_f0093_replacement_palette_pc34_compat.h"
 #include "csb_v1_input_command_bridge_pc34_compat.h"
 #include "csb_v1_magic_rune_cost_pc34_compat.h"
@@ -6754,6 +6755,14 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
         return 0;
     }
     if (!receipt->bind_graphics_dat) {
+        return 1;
+    }
+    /* The Atari ST path has already bound the authenticated STX member in
+     * RAM.  The receipt still records the sibling GRAPHICS.DAT identity,
+     * but must not reopen its virtual name through fopen(). */
+    if (strstr(receipt->graphics_dat_path, "::") != NULL &&
+        (state->assetLoader.atariStDm1 || state->assetLoader.legacyDm1)) {
+        state->assetsAvailable = 1;
         return 1;
     }
     /* FM Towns and Amiga DM1 keep the original legacy IMAGE2 container;
@@ -14237,6 +14246,134 @@ static int m11_materialize_dm1_virtual_asset(const char *virtual_path,
     return 1;
 }
 
+static int m11_dm1_graphics_is_atari_st(const char *md5) {
+    static const char *const hashes[] = {
+        "b3cfd84e44cdf07ce2eeba47e87f772b",
+        "7eee396993745e8af212f44d75ff6c1a",
+        "5095a13692702235d2e74f6b2b1367a9",
+        "9ce2eaf7a9e78620e3f17594437caffa",
+        "2bdc5f431f84c0ece738f54dbd787c3b",
+        "0d7af44dd14f383464288abdcec76afc",
+        "7adc4a6ca70292db277528ca1bbcbb96",
+        NULL
+    };
+    int i;
+    if (!md5) return 0;
+    for (i = 0; hashes[i]; ++i) {
+        if (strcmp(md5, hashes[i]) == 0) return 1;
+    }
+    return 0;
+}
+
+static int m11_dm1_normalize_atari_dungeon(uint8_t **bytes,
+                                           size_t *size) {
+    uint8_t *grown;
+    uint16_t checksum = 0u;
+    size_t i;
+    uint8_t mapCount;
+    uint16_t squareFirstThingCount;
+    uint16_t textDataWordCount;
+    uint16_t thingCounts[16];
+    size_t offset;
+    unsigned totalColumns = 0u;
+    static const uint8_t thingWordOffsets[16][8] = {
+        {0, 2}, {0, 2, 4}, {0, 2}, {0, 2, 4, 6},
+        {0, 2, 6, 8, 10, 12, 14}, {0, 2}, {0, 2}, {0, 2},
+        {0, 2}, {0, 2, 4, 6}, {0, 2}, {0}, {0}, {0},
+        {0, 2, 6}, {0, 2}
+    };
+    static const uint8_t thingWordCounts[16] = {
+        2, 3, 2, 4, 7, 2, 2, 2, 2, 4, 2, 0, 0, 0, 3, 2
+    };
+    static const uint8_t thingRecordSizes[16] = {
+        4, 6, 4, 8, 16, 4, 4, 4, 4, 8, 4, 0, 0, 0, 8, 4
+    };
+    if (!bytes || !*bytes || !size || *size == 0u || (*size & 1u) != 0u) {
+        return 0;
+    }
+    if (*size < DUNGEON_HEADER_SIZE || (*bytes)[4] == 0u ||
+        (*bytes)[4] > DUNGEON_MAX_MAPS) {
+        return 0;
+    }
+    mapCount = (*bytes)[4];
+    squareFirstThingCount = (uint16_t)((*bytes)[10] << 8u | (*bytes)[11]);
+    textDataWordCount = (uint16_t)((*bytes)[6] << 8u | (*bytes)[7]);
+    for (i = 0u; i < 16u; ++i) {
+        thingCounts[i] = (uint16_t)((*bytes)[12u + i * 2u] << 8u |
+                                    (*bytes)[13u + i * 2u]);
+    }
+    /* Header and map descriptors are Motorola-order words, but mapCount and
+     * the two header byte fields are byte values.  The map tile bytes and
+     * the byte-packed fields inside each thing stay in source order. */
+    for (i = 0u; i < 4u; i += 2u) {
+        uint8_t value = (*bytes)[i];
+        (*bytes)[i] = (*bytes)[i + 1u];
+        (*bytes)[i + 1u] = value;
+    }
+    for (i = 6u; i < DUNGEON_HEADER_SIZE; i += 2u) {
+        uint8_t value = (*bytes)[i];
+        (*bytes)[i] = (*bytes)[i + 1u];
+        (*bytes)[i + 1u] = value;
+    }
+    for (i = 0u; i < mapCount; ++i) {
+        size_t mapOffset = DUNGEON_HEADER_SIZE + i * DUNGEON_MAP_DESC_SIZE;
+        uint16_t rawBitA;
+        size_t j;
+        if (mapOffset + DUNGEON_MAP_DESC_SIZE > *size) return 0;
+        rawBitA = (uint16_t)((*bytes)[mapOffset + 8u] << 8u |
+                             (*bytes)[mapOffset + 9u]);
+        totalColumns += (unsigned)(((rawBitA >> 6u) & 0x1fu) + 1u);
+        for (j = 0u; j < 6u; j += 2u) {
+            uint8_t value = (*bytes)[mapOffset + j];
+            (*bytes)[mapOffset + j] = (*bytes)[mapOffset + j + 1u];
+            (*bytes)[mapOffset + j + 1u] = value;
+        }
+        for (j = 8u; j < DUNGEON_MAP_DESC_SIZE; j += 2u) {
+            uint8_t value = (*bytes)[mapOffset + j];
+            (*bytes)[mapOffset + j] = (*bytes)[mapOffset + j + 1u];
+            (*bytes)[mapOffset + j + 1u] = value;
+        }
+    }
+    offset = DUNGEON_HEADER_SIZE + (size_t)mapCount * DUNGEON_MAP_DESC_SIZE;
+    offset += (size_t)totalColumns * 2u;
+    offset += (size_t)squareFirstThingCount * 2u;
+    offset += (size_t)textDataWordCount * 2u;
+    for (i = DUNGEON_HEADER_SIZE + (size_t)mapCount * DUNGEON_MAP_DESC_SIZE;
+         i < offset; i += 2u) {
+        uint8_t value = (*bytes)[i];
+        (*bytes)[i] = (*bytes)[i + 1u];
+        (*bytes)[i + 1u] = value;
+    }
+    for (i = 0u; i < 16u; ++i) {
+        size_t record;
+        for (record = 0u; record < thingCounts[i]; ++record) {
+            size_t base = offset + record * thingRecordSizes[i];
+            unsigned word;
+            for (word = 0u; word < thingWordCounts[i]; ++word) {
+                size_t at = base + thingWordOffsets[i][word];
+                if (at + 1u >= *size) return 0;
+                {
+                    uint8_t value = (*bytes)[at];
+                    (*bytes)[at] = (*bytes)[at + 1u];
+                    (*bytes)[at + 1u] = value;
+                }
+            }
+        }
+        offset += (size_t)thingCounts[i] * thingRecordSizes[i];
+    }
+    /* The authenticated Atari file has the same DUNGEON body layout but no
+     * PC34 trailing byte-sum word.  Add that parser-only word in RAM; the
+     * STX/ZIP source remains byte-for-byte untouched. */
+    grown = (uint8_t *)realloc(*bytes, *size + 2u);
+    if (!grown) return 0;
+    *bytes = grown;
+    for (i = 0u; i < *size; ++i) checksum = (uint16_t)(checksum + grown[i]);
+    grown[*size] = (uint8_t)(checksum & 0xffu);
+    grown[*size + 1u] = (uint8_t)(checksum >> 8u);
+    *size += 2u;
+    return 1;
+}
+
 static int m11_materialize_dm1_virtual_pair(char *dungeon_path,
                                             size_t dungeon_path_size)
 {
@@ -14367,6 +14504,7 @@ static int m11_resolve_builtin_dungeon_path(char* out,
     {
         static const struct { const char *game; const char *md5; } kExpectedHashes[] = {
             { "dm1",  "766450c940651fc021c92fe5d0d0b3a6" },
+            { "dm1",  "050fb2cfded1b502ec2c53956b94c5bd" },
             { "csb",  "6695d2acebce49f95db1d8f3a5c733de" },
             { "dm2",  "6caccd7875009e82fe2e28e7f6d6adc0" },
             { "nexus", "e88d60859f65f08fa622e1992b02280f" },
@@ -22699,6 +22837,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     int dm1FmtownsBufferLoaded = 0;
     uint8_t *dm1FmtownsDungeonBytes = NULL;
     size_t dm1FmtownsDungeonSize = 0U;
+    uint8_t *dm1VirtualDungeonBytes = NULL;
+    size_t dm1VirtualDungeonSize = 0U;
+    int dm1AtariDungeonFormat = 0;
+    int dm1EndianDungeonFormat = 0;
     if (!state || !spec || !spec->title) {
         return 0;
     }
@@ -23130,11 +23272,75 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         return 0;
     }
     if (spec->gameId && strcmp(spec->gameId, "dm1") == 0 &&
+        !spec->dm1Fmtowns && spec->verifiedAssetPath &&
+        strstr(spec->verifiedAssetPath, "::") != NULL) {
+        const char *last = NULL;
+        const char *sep = strstr(spec->verifiedAssetPath, "::");
+        size_t prefix;
+        while (sep) { last = sep; sep = strstr(sep + 2, "::"); }
+        if (last) {
+            const char *entry = last + 2;
+            const char *slash = strrchr(entry, '/');
+            prefix = (size_t)(last - spec->verifiedAssetPath) + 2u;
+            if (slash) prefix += (size_t)(slash - entry) + 1u;
+            if (prefix + sizeof("DUNGEON.DAT") < sizeof(dungeonPath)) {
+                memcpy(dungeonPath, spec->verifiedAssetPath, prefix);
+                memcpy(dungeonPath + prefix, "DUNGEON.DAT",
+                       sizeof("DUNGEON.DAT"));
+                dm1_dungeon_path_hash_resolved = 1;
+            }
+        }
+    }
+    if (spec->gameId && strcmp(spec->gameId, "dm1") == 0 &&
         dm1_dungeon_path_hash_resolved &&
         !spec->dm1Fmtowns &&
-        !m11_materialize_dm1_virtual_pair(dungeonPath,
-                                          sizeof(dungeonPath))) {
-        return 0;
+        strstr(dungeonPath, "::") != NULL) {
+        if (!asset_read_virtual_path_alloc(dungeonPath,
+                                           &dm1VirtualDungeonBytes,
+                                           &dm1VirtualDungeonSize)) {
+            return 0;
+        }
+        dm1AtariDungeonFormat =
+            m11_dm1_graphics_is_atari_st(spec->verifiedAssetMd5) ||
+            strstr(dungeonPath, ".stx::") != NULL ||
+            strstr(dungeonPath, "Atari ST v1.2") != NULL;
+        dm1EndianDungeonFormat = dm1AtariDungeonFormat;
+        if (dm1VirtualDungeonSize >= 8u &&
+            dm1VirtualDungeonBytes[0] == 0x81u &&
+            dm1VirtualDungeonBytes[1] == 0x04u) {
+            size_t decompressedSize =
+                ((size_t)dm1VirtualDungeonBytes[2] << 24u) |
+                ((size_t)dm1VirtualDungeonBytes[3] << 16u) |
+                ((size_t)dm1VirtualDungeonBytes[4] << 8u) |
+                (size_t)dm1VirtualDungeonBytes[5];
+            uint8_t *decompressed = (uint8_t *)calloc(1u, decompressedSize);
+            if (!decompressed || decompressedSize < 2u ||
+                !ftl_decompress_dungeon(
+                    dm1VirtualDungeonBytes + 8u,
+                    dm1VirtualDungeonSize - 8u,
+                    decompressed, (long)decompressedSize)) {
+                free(decompressed);
+                free(dm1VirtualDungeonBytes);
+                dm1VirtualDungeonBytes = NULL;
+                return 0;
+            }
+            free(dm1VirtualDungeonBytes);
+            dm1VirtualDungeonBytes = decompressed;
+            dm1VirtualDungeonSize = decompressedSize - 2u;
+            dm1EndianDungeonFormat = 1;
+        }
+        if (dm1EndianDungeonFormat) {
+            /* MEDIA240 Atari DM1 stores the DUNGEON.DAT scalar fields in
+             * Motorola word order.  The source file remains untouched; the
+             * parser receives a bounded RAM view in the PC-compatible word
+             * order used by the shared world decoder. */
+            if (!m11_dm1_normalize_atari_dungeon(&dm1VirtualDungeonBytes,
+                                                 &dm1VirtualDungeonSize)) {
+                free(dm1VirtualDungeonBytes);
+                dm1VirtualDungeonBytes = NULL;
+                return 0;
+            }
+        }
     }
     {
         int savedDebugHUD = state->showDebugHUD;
@@ -23159,7 +23365,71 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             }
         }
     }
-    if (spec->dm1Fmtowns && spec->dataDir && !FSP_DirExists(spec->dataDir) &&
+    if (dm1VirtualDungeonBytes &&
+        (dm1AtariDungeonFormat || dm1EndianDungeonFormat)) {
+        char graphicsVirtual[M11_GAME_VIEW_PATH_CAPACITY];
+        const char *entryStart = strstr(dungeonPath, "::");
+        const char *lastSeparator = entryStart;
+        size_t siblingPrefix;
+        uint8_t *graphicsBytes = NULL;
+        size_t graphicsSize = 0U;
+        int usedVerifiedGraphicsPath = 0;
+        if (spec->verifiedAssetPath && strstr(spec->verifiedAssetPath, "::") &&
+            (strstr(spec->verifiedAssetPath, "GRAPHICS.DAT") ||
+             strstr(spec->verifiedAssetPath, "graphics.dat")) &&
+            snprintf(graphicsVirtual, sizeof(graphicsVirtual), "%s",
+                     spec->verifiedAssetPath) < (int)sizeof(graphicsVirtual)) {
+            usedVerifiedGraphicsPath = 1;
+        }
+        if (usedVerifiedGraphicsPath) {
+            lastSeparator = NULL;
+        }
+        while (lastSeparator) {
+            const char *next = strstr(lastSeparator + 2, "::");
+            if (!next) break;
+            lastSeparator = next;
+        }
+        siblingPrefix = lastSeparator
+            ? (size_t)(lastSeparator - dungeonPath) + 2u : 0u;
+        if (lastSeparator && strchr(lastSeparator + 2, '/') != NULL) {
+            const char *slash = strrchr(lastSeparator + 2, '/');
+            siblingPrefix = (size_t)(slash - dungeonPath) + 1u;
+        }
+        if (!usedVerifiedGraphicsPath &&
+            (!lastSeparator || siblingPrefix + sizeof("GRAPHICS.DAT") >=
+             sizeof(graphicsVirtual))) {
+            free(dm1VirtualDungeonBytes);
+            dm1VirtualDungeonBytes = NULL;
+            return 0;
+        }
+        if (!usedVerifiedGraphicsPath) {
+            memcpy(graphicsVirtual, dungeonPath, siblingPrefix);
+            memcpy(graphicsVirtual + siblingPrefix,
+                   "GRAPHICS.DAT", sizeof("GRAPHICS.DAT"));
+        }
+        if (!asset_read_virtual_path_alloc(graphicsVirtual, &graphicsBytes,
+                                            &graphicsSize) ||
+            ((dm1AtariDungeonFormat)
+                 ? !M11_AssetLoader_InitDm1AtariStFromBuffer(
+                       &state->assetLoader, graphicsBytes, (long)graphicsSize)
+                 : (!M11_AssetLoader_InitDm1LegacyFromBuffer(
+                       &state->assetLoader, graphicsBytes, (long)graphicsSize, 0) &&
+                    !M11_AssetLoader_InitDm1LegacyFromBuffer(
+                       &state->assetLoader, graphicsBytes, (long)graphicsSize, 1)))) {
+            free(graphicsBytes);
+            free(dm1VirtualDungeonBytes);
+            dm1VirtualDungeonBytes = NULL;
+            return 0;
+        }
+        free(graphicsBytes);
+        state->assetsAvailable = 1;
+    }
+    if (dm1VirtualDungeonBytes) {
+        dm1FmtownsBufferLoaded =
+            F0882_WORLD_InitFromDungeonDatBuffer_Compat(
+                dm1VirtualDungeonBytes, (int)dm1VirtualDungeonSize,
+                0xF1A5U, &state->world);
+    } else if (spec->dm1Fmtowns && spec->dataDir && !FSP_DirExists(spec->dataDir) &&
         m11_dm1_fmtowns_read_archive_member(
             spec->dataDir,
             spec->dm1FmtownsJapanese ? "JDATA/DUNGEON.DAT" : "DATA/DUNGEON.DAT",
@@ -23176,6 +23446,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     }
     free(dm1FmtownsDungeonBytes);
     dm1FmtownsDungeonBytes = NULL;
+    free(dm1VirtualDungeonBytes);
+    dm1VirtualDungeonBytes = NULL;
     if (dm1FmtownsBufferLoaded != 1) {
         if (spec->gameId && strcmp(spec->gameId, "dm1") == 0) {
             DM1_V1_StartupDungeonLoadFacts_PC34 facts;
@@ -23235,7 +23507,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
          * GRAPHICS.DAT.  Admit the native startup receipt only from the
          * selected materialized directory; this prevents a sibling language
          * executable or the PC34 TITLE path from being consumed silently. */
-        if (state->assetLoader.legacyDm1) {
+        if (state->assetLoader.legacyDm1 &&
+            !state->assetLoader.legacyBigEndian) {
             char fmtownsStartupRoot[FSP_PATH_MAX];
             const char *startupRoot = spec->dataDir;
             memset(&state->dm1FmtownsStartupReceipt, 0,
