@@ -31417,6 +31417,29 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_IGNORED;
         }
         if (state->inventoryPanelActive) {
+            if (m11_dm2_is_mac_profile(
+                    (const DM2_V1_BootProfile *)state->dm2BootProfile) &&
+                (input == M12_MENU_INPUT_ACCEPT ||
+                 input == M12_MENU_INPUT_ACTION)) {
+                DM2_V1_BootRuntimeInventoryReceipt receipt;
+                int champion_index = state->world.party.activeChampionIndex;
+                int slot = state->inventorySelectedSlot;
+                memset(&receipt, 0, sizeof(receipt));
+                /* The Mac source owns the ObjectID/possession transaction;
+                 * keyboard/gamepad confirmation is only an alternate host
+                 * device for the same authenticated slot operation. It must
+                 * never turn a missing slot or item into a host object. */
+                if (champion_index >= 0 && champion_index < CHAMPION_MAX_PARTY &&
+                    slot >= 0 && slot < DM2_V1_INV_SLOT_COUNT &&
+                    dm2_v1_boot_runtime_swap_inventory_slot(
+                        (DM2_V1_BootProfile *)state->dm2BootProfile,
+                        champion_index, slot, &receipt)) {
+                    m11_sync_dm2_state_from_runtime(state);
+                    m11_set_status(state, "DM2 MAC", "SOURCE ITEM MOVED");
+                    return M11_GAME_INPUT_REDRAW;
+                }
+                return M11_GAME_INPUT_IGNORED;
+            }
             if (input == M12_MENU_INPUT_UP || input == M12_MENU_INPUT_LEFT) {
                 if (state->inventorySelectedSlot > 0)
                     --state->inventorySelectedSlot;

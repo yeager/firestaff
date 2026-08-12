@@ -139,6 +139,14 @@ static int run_one(const char *zip, const char *source_id)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+    if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_ACCEPT) !=
+            M11_GAME_INPUT_REDRAW || !state.inventoryPanelActive) {
+        fprintf(stderr, "Mac authenticated keyboard item transaction unavailable: %s\n",
+                source_id);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    puts("  authenticated Mac keyboard item transaction accepted");
     if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK) !=
             M11_GAME_INPUT_REDRAW || state.inventoryPanelActive) {
         fprintf(stderr, "Mac F1 champion inventory owner did not close: %s\n",

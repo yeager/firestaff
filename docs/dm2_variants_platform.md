@@ -101,6 +101,13 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   CHARSHEET route on both editions. The snapshot copy does not create heroes
   or invent missing item records; native item-slot and drag/drop event
   ownership remains a separate gate.
+- Keyboard/gamepad confirmation of the selected slot is now an accessibility
+  path into the same authenticated ObjectID/leader-possession exchange for
+  both English editions. A missing or rejected source slot remains unavailable;
+  Firestaff does not create an item. Native Mac pointer and drag/drop input is
+  still blocked until the dynamic Control/Event owner from the retained Mac
+  application is bound. The Mac `CODE(3)` path does not use the PC or FM Towns
+  expanded-rect table, so those coordinates are not reused.
 - Retail HFS media now exposes the authentic raw `MooV` data forks and HFS
   Resource Manager forks in memory. The four present movies have source-owned
   `moov` resource payloads; Firestaff keeps the data fork, complete resource

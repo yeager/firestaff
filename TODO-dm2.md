@@ -519,6 +519,12 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
   classes 0/1 enter the authentic wall/floor-mecha chain walkers. Remote
   `0x17`/`0x1A` delivery and the demo's target class 7 remain fail-closed when
   their target owner is unavailable. No synthetic attack is substituted.
+- [~] Provide an accessible keyboard/gamepad confirmation for the selected
+  Mac CHARSHEET item slot. Both English editions now call the authenticated
+  ObjectID/leader-possession exchange, so a real slot can be committed without
+  a host item. Native Mac pointer/drag ownership remains open: the retail
+  `CODE(3)` dispatcher consumes dynamically published Mac controls, not the
+  PC or FM Towns expanded-rect table, and guessed coordinates are rejected.
 - [ ] Acquire an authentic Mac save corpus for both language families and
   verify native load/save round trips. A DOSBox `SKSAVE` or a generated save
   cannot close this gate.
