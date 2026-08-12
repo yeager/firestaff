@@ -116,6 +116,11 @@
   source `c_rwbb` wall-button targets to the existing authenticated DB3/DB14
   wall-action chain. Other viewport target kinds remain fail-closed until
   their original Mac action owner is recovered.
+- `DM2 Macintosh CHARSHEET modal input`: Prevent pointer clicks in the open
+  inventory frame from falling through to viewport movement or a PC/FMTowns
+  inventory rectangle. Until the authentic dynamic `CODE(3)`/`CODE(11)`
+  controls are materialized, the modal pointer route stays fail-closed for
+  both English editions.
 
 ## Nexus
 
