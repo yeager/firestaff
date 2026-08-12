@@ -8765,6 +8765,7 @@ static int dm2_runtime_original_corpus_entry_matches(
            left->payload_size == right->payload_size &&
            left->payload_hash == right->payload_hash &&
            left->source_file_hash == right->source_file_hash &&
+           left->words_big_endian == right->words_big_endian &&
            strcmp(left->path, right->path) == 0 &&
            expected->state_hash == actual->state_hash;
 }
@@ -8793,7 +8794,9 @@ int dm2_v1_runtime_import_original_sksave_state_entry(
     /* GAME_LOAD consumes the selected save stream, not a directory default.
      * Rebuild the diagnostic census first so a stale row can never be used
      * to select a different valid SKSave (including a Firestaff session). */
-    if (!dm2_v1_original_save_state_corpus_probe(save_root, &state_corpus)) {
+    if (!dm2_v1_original_save_state_corpus_probe_ordered(
+            save_root, selected_entry->candidate.words_big_endian,
+            &state_corpus)) {
         return 0;
     }
     out->original_candidate_count = state_corpus.original_candidate_count;
