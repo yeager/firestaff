@@ -79,6 +79,13 @@
   paths bound to the original FM Towns ZIP and the verified English companion
   data, without rewriting the disc image.
 
+### Fixed
+
+- `DM2 Macintosh movie verification`: Advance the real-media M11 movie gate
+  with a controlled source-clock in CI. The retail QuickTime title now reaches
+  its authenticated menu before the Credits.MooV pointer and Return/Enter
+  checks run; production playback remains wall-clock based.
+
 ## Nexus
 
 ### Changed

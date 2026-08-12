@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <SDL3/SDL.h>
+
 int main(void)
 {
     M11_GameViewState state;
@@ -42,8 +44,22 @@ int main(void)
     }
 
     memset(framebuffer, 0, sizeof(framebuffer));
-    for (frame = 0; state.dm2MacMovieActive && frame < 2000; ++frame)
+    /* M11_GameView_Draw uses the host monotonic clock to honour each
+     * authentic QuickTime frame duration.  A tight headless loop otherwise
+     * redraws frame 1 thousands of times without advancing the source
+     * movie, making the following menu click occur before the Mac title
+     * event loop has returned. */
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    for (frame = 0; state.dm2MacMovieActive && frame < 10000; ++frame) {
+        /* Advance the test clock by one source frame.  This keeps the
+         * production path wall-clock based while avoiding a multi-second
+         * wait for the complete retail title movie in CI. */
+        state.dm2MacMovieStartUs =
+            SDL_GetTicksNS() / UINT64_C(1000) -
+            state.dm2MacMovieDecoder.presentation_time_us -
+            state.dm2MacMovieDecoder.frame_duration_us - 1u;
         M11_GameView_Draw(&state, framebuffer, 320, 200);
+    }
 
     memset(&aux, 0, sizeof(aux));
     if (state.dm2MacMovieActive ||
