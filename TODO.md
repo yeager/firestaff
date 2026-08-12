@@ -4174,6 +4174,10 @@ that its exact runtime path is not already source-locked and tested.
     restored ST game loop without demanding PC3.4's unrelated C040 HUD
     session. The regression uses the actual source-tree corpus; no renamed
     file, cache copy, or synthetic game state participates.
+    The common direct-launch regression now also runs this real corpus when
+    `FIRESTAFF_CSBWIN_REAL_DATA_DIR` and `FIRESTAFF_CSBWIN_REAL_SAVE` are
+    staged: it asserts M12 AUTO selects the ST MEDIA332 pair and that the
+    public F0435 receipt reaches map 4 at (22,18,2) with both champions.
     2026-08-11: launcher and fixture regressions no longer create synthetic
     CSB `DUNGEON.DAT` or placeholder `GRAPHICS.DAT` to cross a runtime gate.
     A hash-labelled metadata fixture is now explicitly required to fail before

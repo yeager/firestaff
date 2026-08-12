@@ -762,12 +762,52 @@ static void run_real_data_handoff_if_available(void) {
     }
 }
 
+/* A stock CSBWin installation uses the original Atari ST MEDIA332 data pair
+ * but retains mixed-case DOS/Windows filenames.  This tests the complete
+ * command-line path, including M12's AUTO-version repair before the selected
+ * CSB package is prepared and M11's F0435 handoff.  The corpus is supplied
+ * by the operator and is never copied into the source tree. */
+static void run_staged_csbwin_resume_if_available(void) {
+    const char *data_dir = getenv("FIRESTAFF_CSBWIN_REAL_DATA_DIR");
+    const char *save_path = getenv("FIRESTAFF_CSBWIN_REAL_SAVE");
+    M11_PhaseA_Options opts;
+
+    if (!data_dir || !data_dir[0] || !save_path || !save_path[0]) {
+        expect_skip("FIRESTAFF_CSBWIN_REAL_DATA_DIR/SAVE not staged");
+        return;
+    }
+    M11_PhaseA_SetDefaultOptions(&opts);
+    opts.bootProbe = 1;
+    opts.gameId = "csb";
+    opts.dataDir = data_dir;
+    opts.savePath = save_path;
+    opts.architectureOverride = M12_ARCH_AUTO;
+    opts.durationMs = 0;
+    opts.bootProbeExpectRuntime = 1;
+    opts.bootProbeExpectParty = 1;
+    opts.bootProbeExpectPartyX = 22;
+    opts.bootProbeExpectPartyY = 18;
+    opts.bootProbeExpectPartyDir = 2;
+    opts.bootProbeExpectChampions = 1;
+    opts.bootProbeExpectChampionCount = 2;
+    opts.bootProbeExpectLevelLoaded = 1;
+    opts.bootProbeExpectMap = 1;
+    opts.bootProbeExpectMapIndex = 4;
+    opts.bootProbeExpectAssetMd5 = "ebf6a57af3f27782e358c0490bfd2f2e";
+    opts.bootProbeExpectStartupActive = 0;
+    opts.bootProbeExpectRuntimeTickMax = 0;
+    test_setenv("SDL_VIDEODRIVER", "dummy");
+    expect_true(M11_PhaseA_Run(&opts) == 0,
+                "stock CSBWin AUTO launch resumes its authentic F0435 save");
+}
+
 int main(void) {
     printf("=== M11 direct-launch preparation all-games gate ===\n");
 
     run_empty_data_rejection();
     run_boot_probe_empty_data_rejection();
     run_real_data_handoff_if_available();
+    run_staged_csbwin_resume_if_available();
 
     printf("\nM11 direct-launch preparation all-games gate: %d passed, %d failed, %d skipped\n",
            g_passed, g_failures, g_skipped);
