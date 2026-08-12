@@ -433,6 +433,9 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
   6,535-byte `Dungeon.dat` are hash-verified, and its truncated big-endian
   File_header/map data enters the real dungeon loader. The leading bytes are
   the dungeon header, not a payload to expand.
+- [x] Publish the authentic Mac `Dungeon.dat` member as a required-file receipt
+  for both English editions. Direct launch from either original ZIP now remains
+  launch-ready without extracting the BIN, HFS files or resource forks.
 - [ ] Admit the authentic Japanese 1.0 and French StuffIt editions
   independently once their container/resource-fork readers are verified.
 - [~] Add a source-owned Mac container/resource-fork reader for the verified

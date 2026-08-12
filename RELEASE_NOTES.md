@@ -42,6 +42,11 @@
 
 ### Changed
 
+- `DM2 Macintosh launcher admission`: Fix the required-file gate for the two
+  authentic English Mac ZIPs. The large retail image and the smaller First
+  Chapter demo now publish their source-owned HFS `Dungeon.dat` alongside
+  `Graphics.dat`, retain the original ZIP as the runtime owner, and launch
+  without unpacking game data.
 - `DM2 Macintosh actuator runtime`: Bind authentic `0x04` wall- and
   floor-mecha timers to the source-owned DB3/DB14 chain walkers. Unsupported
   target classes remain fail-closed, and no synthetic terrain mutation is

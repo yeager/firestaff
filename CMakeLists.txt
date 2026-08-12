@@ -11461,6 +11461,20 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_media_real.c")
     add_test(NAME dm2_v1_mac_media_real COMMAND test_dm2_v1_mac_media_real)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_mac_asset_status_real.c")
+    add_executable(test_dm2_mac_asset_status_real
+        tests/test_dm2_mac_asset_status_real.c)
+    target_include_directories(test_dm2_mac_asset_status_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_mac_asset_status_real PRIVATE
+        firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_mac_asset_status_real PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm2_mac_asset_status_real
+        COMMAND test_dm2_mac_asset_status_real)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_movie_view_real.c")
     add_executable(test_dm2_v1_mac_movie_view_real
         tests/test_dm2_v1_mac_movie_view_real.c)

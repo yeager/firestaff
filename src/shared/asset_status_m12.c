@@ -1273,6 +1273,60 @@ static void m12_publish_dm2_fmtowns_required_files(M12_AssetStatus* status,
     }
 }
 
+static void m12_publish_dm2_mac_required_files(M12_AssetStatus* status,
+                                                int gameIndex) {
+    const M12_AssetVersionStatus* version;
+    const char* separator;
+    const char* dungeon_member;
+    const char* dungeon_md5;
+    size_t archive_length;
+    size_t i;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "dm2") != 0) {
+        return;
+    }
+    version = m12_first_matched_version(status, gameIndex);
+    if (!version || !version->versionId ||
+        (strcmp(version->versionId, "mac-en-demo") != 0 &&
+         strcmp(version->versionId, "mac-en-retail") != 0)) {
+        return;
+    }
+    separator = strstr(version->matchedPath, "::");
+    if (!separator) {
+        return;
+    }
+    archive_length = (size_t)(separator - version->matchedPath);
+    if (archive_length == 0U) {
+        return;
+    }
+    if (strcmp(version->versionId, "mac-en-demo") == 0) {
+        dungeon_member = "HFS/Install Dungeon MasterII Demo/DMFiles/Dungeon.dat";
+        dungeon_md5 = "c9c909cb8cc2ed68def20211b8c1caf6";
+    } else {
+        dungeon_member = "HFS/DMFiles/Dungeon.dat";
+        dungeon_md5 = "719ae78bc124027806c65491a256827d";
+    }
+    for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
+        M12_AssetRequiredFileStatus* required =
+            &status->requiredFiles[gameIndex][i];
+        if (strcmp(required->roleId, "graphics") == 0) {
+            required->matched = 1;
+            snprintf(required->matchedPath, sizeof(required->matchedPath),
+                     "%.*s::%s", (int)archive_length, version->matchedPath,
+                     "HFS/DMFiles/Graphics.dat");
+            snprintf(required->matchedHash, sizeof(required->matchedHash), "%s",
+                     version->matchedMd5);
+        } else if (strcmp(required->roleId, "dungeon") == 0) {
+            required->matched = 1;
+            snprintf(required->matchedPath, sizeof(required->matchedPath),
+                     "%.*s::%s", (int)archive_length, version->matchedPath,
+                     dungeon_member);
+            snprintf(required->matchedHash, sizeof(required->matchedHash), "%s",
+                     dungeon_md5);
+        }
+    }
+}
+
 /* ReDMCSB FMTOWNS.H and the F31M CHTWE.EXP/CHTWJ.EXP link manifests keep the
  * two language payloads in CDATA and CJDATA on one raw MODE1/2352 CD.  The
  * retail ZIP wraps that image, so neither payload is a ZIP member that the
@@ -5945,6 +5999,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         if (strcmp(g_games[i].gameId, "dm2") == 0) {
             size_t requiredIndex;
             m12_publish_dm2_fmtowns_required_files(status, i);
+            m12_publish_dm2_mac_required_files(status, i);
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
             m12_publish_dm2_amiga_required_files(status, i);
 #endif
@@ -6238,6 +6293,7 @@ void M12_AssetStatus_ScanGameWithOptions(
     if (strcmp(g_games[gameIndex].gameId, "dm2") == 0) {
         size_t requiredIndex;
         m12_publish_dm2_fmtowns_required_files(status, gameIndex);
+        m12_publish_dm2_mac_required_files(status, gameIndex);
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
         m12_publish_dm2_amiga_required_files(status, gameIndex);
 #endif
