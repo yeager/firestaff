@@ -298,11 +298,24 @@ static int dm2_v1_sksave_owner_decode_fixed(
     for (uint16_t i = 0; i < owner->state.champion_count; ++i)
         if (dm2_suppress_reader_read(&reader, hero_mask, sizeof(DM2_V1_Hero),
                 (uint8_t *)&owner->heroes[i], 0u)) return 0;
+    for (uint16_t i = 0; i < owner->state.champion_count; ++i)
+        dm2_v1_hero_normalize_original_words(&owner->heroes[i],
+            owner->state.dungeon.words_big_endian);
     if (dm2_suppress_reader_read(&reader, state_mask, sizeof(owner->savegames1),
             owner->savegames1, 0u)) return 0;
     for (uint16_t i = 0; i < owner->state.timer_count; ++i)
         if (dm2_suppress_reader_read(&reader, timer_mask, 12u,
                 owner->timers[i].bytes, 0u)) return 0;
+    if (owner->state.dungeon.words_big_endian) {
+        for (uint16_t i = 0; i < owner->state.timer_count; ++i) {
+            uint8_t *b = owner->timers[i].bytes;
+            uint8_t t;
+            t = b[0]; b[0] = b[3]; b[3] = t;
+            t = b[1]; b[1] = b[2]; b[2] = t;
+            t = b[6]; b[6] = b[7]; b[7] = t;
+            t = b[8]; b[8] = b[9]; b[9] = t;
+        }
+    }
     return reader.position == owner->state.record_link_bitstream_offset -
         owner->state.dungeon.suppress_state_offset &&
         reader.bits_remaining == owner->state.record_link_bitstream_bits_remaining;
@@ -339,9 +352,10 @@ static int dm2_v1_sksave_owner_retain_creature_ai_flags(
     return 1;
 }
 
-int dm2_v1_sksave_game_load_owner_init(
+int dm2_v1_sksave_game_load_owner_init_ordered(
     DM2_V1_SksaveGameLoadOwner *owner,
     const uint8_t *raw_body, size_t raw_body_size, uint16_t savegamew7,
+    int words_big_endian,
     const DM2_V1_AssetLoader *asset_loader,
     DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
     void *query_creature_ai_flags_ctx)
@@ -359,8 +373,8 @@ int dm2_v1_sksave_game_load_owner_init(
     candidate.timer_free_head = -1;
     candidate.leader_hand_root = DM2_V1_RECORD_HANDLE_END;
     if (!raw_body || !savegamew7 ||
-        !dm2_v1_original_raw_sksave_fixed_state_receipt(raw_body,
-            raw_body_size, &candidate.state) || !candidate.state.valid ||
+        !dm2_v1_original_raw_sksave_fixed_state_receipt_ordered(raw_body,
+            raw_body_size, words_big_endian, &candidate.state) || !candidate.state.valid ||
         !dm2_v1_sksave_owner_decode_fixed(&candidate, raw_body, raw_body_size) ||
         !dm2_v1_record_pool_materialize_raw_sksave_game_load_owner(
             &candidate, raw_body, raw_body_size, savegamew7, asset_loader,
@@ -385,9 +399,10 @@ int dm2_v1_sksave_game_load_owner_init(
     return 1;
 }
 
-int dm2_v1_sksave_game_load_owner_init_to_recycler_boundary(
+int dm2_v1_sksave_game_load_owner_init_to_recycler_boundary_ordered(
     DM2_V1_SksaveGameLoadOwner *owner,
     const uint8_t *raw_body, size_t raw_body_size, uint16_t savegamew7,
+    int words_big_endian,
     const DM2_V1_AssetLoader *asset_loader,
     DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
     void *query_creature_ai_flags_ctx)
@@ -404,8 +419,8 @@ int dm2_v1_sksave_game_load_owner_init_to_recycler_boundary(
     candidate.timer_free_head = -1;
     candidate.leader_hand_root = DM2_V1_RECORD_HANDLE_END;
     if (!raw_body || !savegamew7 ||
-        !dm2_v1_original_raw_sksave_fixed_state_receipt(raw_body,
-            raw_body_size, &candidate.state) || !candidate.state.valid ||
+        !dm2_v1_original_raw_sksave_fixed_state_receipt_ordered(raw_body,
+            raw_body_size, words_big_endian, &candidate.state) || !candidate.state.valid ||
         !dm2_v1_sksave_owner_decode_fixed(&candidate, raw_body, raw_body_size)) {
         dm2_v1_sksave_game_load_owner_free(&candidate);
         if (!owner_was_initialized) memset(owner, 0, sizeof(*owner));
@@ -439,6 +454,30 @@ int dm2_v1_sksave_game_load_owner_init_to_recycler_boundary(
     if (owner_was_initialized) dm2_v1_sksave_game_load_owner_free(owner);
     *owner = candidate;
     return 1;
+}
+
+int dm2_v1_sksave_game_load_owner_init(
+    DM2_V1_SksaveGameLoadOwner *owner,
+    const uint8_t *raw_body, size_t raw_body_size, uint16_t savegamew7,
+    const DM2_V1_AssetLoader *asset_loader,
+    DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
+    void *query_creature_ai_flags_ctx)
+{
+    return dm2_v1_sksave_game_load_owner_init_ordered(
+        owner, raw_body, raw_body_size, savegamew7, 0, asset_loader,
+        query_creature_ai_flags, query_creature_ai_flags_ctx);
+}
+
+int dm2_v1_sksave_game_load_owner_init_to_recycler_boundary(
+    DM2_V1_SksaveGameLoadOwner *owner,
+    const uint8_t *raw_body, size_t raw_body_size, uint16_t savegamew7,
+    const DM2_V1_AssetLoader *asset_loader,
+    DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
+    void *query_creature_ai_flags_ctx)
+{
+    return dm2_v1_sksave_game_load_owner_init_to_recycler_boundary_ordered(
+        owner, raw_body, raw_body_size, savegamew7, 0, asset_loader,
+        query_creature_ai_flags, query_creature_ai_flags_ctx);
 }
 
 int dm2_v1_sksave_game_load_owner_creature_ai_flags(

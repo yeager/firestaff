@@ -107,6 +107,12 @@ _Static_assert(offsetof(DM2_V1_Hero, timeridx) == 0x2eu,
 _Static_assert(offsetof(DM2_V1_Hero, item) == 0xc3u,
                "DM2 c_hero item-link offset");
 
+/* Convert scalar c_hero fields from an authenticated big-endian original
+ * stream into Firestaff's host representation. Raw hashes are calculated
+ * before this conversion; the helper only affects the live owner. */
+void dm2_v1_hero_normalize_original_words(DM2_V1_Hero *hero,
+                                           int words_big_endian);
+
 typedef struct {
     DM2_V1_Hero hero[DM2_MAX_HEROES];
     int16_t     heros_in_party;

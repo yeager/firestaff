@@ -63,9 +63,26 @@ static void dm2_v1_wr16(const DM2_V1_RecordPoolSet *set, uint8_t *p, int16_t v)
     }
 }
 
-static uint16_t dm2_v1_raw_rd16(const uint8_t *p)
+static uint16_t dm2_v1_raw_rd16(const uint8_t *p, int words_big_endian)
 {
-    return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
+    return words_big_endian
+        ? (uint16_t)(((uint16_t)p[0] << 8) | p[1])
+        : (uint16_t)p[0] | ((uint16_t)p[1] << 8);
+}
+
+static void dm2_v1_sksave_normalize_timer_words(
+    DM2_V1_SaveTimerRecord *timer, int words_big_endian)
+{
+    uint8_t t;
+    if (!timer || !words_big_endian) return;
+    t = timer->bytes[0]; timer->bytes[0] = timer->bytes[3];
+    timer->bytes[3] = t;
+    t = timer->bytes[1]; timer->bytes[1] = timer->bytes[2];
+    timer->bytes[2] = t;
+    t = timer->bytes[6]; timer->bytes[6] = timer->bytes[7];
+    timer->bytes[7] = t;
+    t = timer->bytes[8]; timer->bytes[8] = timer->bytes[9];
+    timer->bytes[9] = t;
 }
 
 static int dm2_v1_sksave_map_owner_ground_index(
@@ -215,7 +232,7 @@ int dm2_v1_sksave_map_owner_init(
            dungeon_receipt->map_data_byte_count);
     for (i = 0u; i < (size_t)dungeon_receipt->column_index_count; ++i) {
         owner->column_indices[i] = dm2_v1_raw_rd16(raw_body +
-            column_index_base + i * 2u);
+            column_index_base + i * 2u, dungeon_receipt->words_big_endian);
     }
     owner->column_index_count = dungeon_receipt->column_index_count;
     owner->map_tiles_size = dungeon_receipt->map_data_byte_count;
@@ -234,7 +251,8 @@ int dm2_v1_sksave_map_owner_init(
         owner->map_tile_offsets[i] = (uint16_t)offset;
     }
     for (i = 0u; i < (size_t)dungeon_receipt->ground_stack_count; ++i) {
-        uint16_t link = dm2_v1_raw_rd16(raw_body + ground_stack_base + i * 2u);
+        uint16_t link = dm2_v1_raw_rd16(raw_body + ground_stack_base + i * 2u,
+            dungeon_receipt->words_big_endian);
         if (link != 0xfffeu && link != 0xffffu &&
             (dm2_v1_record_handle_pool((int16_t)link) >= DM2_V1_RECORD_POOL_COUNT ||
              dm2_v1_record_handle_index((int16_t)link) >=
@@ -1408,6 +1426,7 @@ int dm2_v1_record_pool_set_init_from_raw_sksave(
     }
 
     set->valid = 1;
+    set->words_big_endian = dungeon_receipt->words_big_endian;
     /* The raw prefix is only the exact DB baseline.  GAME_LOAD still calls
      * DM2_READ_SKSAVE_DUNGEON to clear/rebuild dynamic records and attach
      * every saved link, so this must never pass a complete-graph gate. */
@@ -1724,6 +1743,13 @@ static int dm2_v1_record_pool_walk_raw_sksave_special_timer_chains(
         !timer_stream.valid ||
         timer_stream.raw_hash != state_receipt->timers_hash) {
         goto done;
+    }
+    if (state_receipt->dungeon.words_big_endian) {
+        uint16_t i;
+        for (i = 0u; i < state_receipt->champion_count; ++i)
+            dm2_v1_hero_normalize_original_words(&heroes[i], 1);
+        for (i = 0u; i < state_receipt->timer_count; ++i)
+            dm2_v1_sksave_normalize_timer_words(&timers[i], 1);
     }
     /* DM2_GAME_LOAD assigns ddat.v1e0266 from the authenticated
      * s_savegamebuffer before it enters DM2_READ_SKSAVE_DUNGEON.  The latter

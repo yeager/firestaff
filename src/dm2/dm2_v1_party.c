@@ -18,6 +18,33 @@ void dm2_v1_party_hero_init(DM2_V1_Hero *hero) {
     memset(hero, 0, sizeof(*hero));
 }
 
+static void dm2_v1_swap16_at(uint8_t *p)
+{
+    uint8_t t = p[0]; p[0] = p[1]; p[1] = t;
+}
+
+static void dm2_v1_swap32_at(uint8_t *p)
+{
+    uint8_t t;
+    t = p[0]; p[0] = p[3]; p[3] = t;
+    t = p[1]; p[1] = p[2]; p[2] = t;
+}
+
+void dm2_v1_hero_normalize_original_words(DM2_V1_Hero *hero,
+                                           int words_big_endian)
+{
+    size_t off;
+    if (!hero || !words_big_endian) return;
+    for (off = 0x2eu; off <= 0x48u; off += 2u)
+        dm2_v1_swap16_at((uint8_t *)hero + off);
+    for (off = 0x5fu; off < 0x5fu + 20u; off += 4u)
+        dm2_v1_swap32_at((uint8_t *)hero + off);
+    for (off = 0xc3u; off < 0xc3u + 16u; off += 2u)
+        dm2_v1_swap16_at((uint8_t *)hero + off);
+    dm2_v1_swap16_at((uint8_t *)hero + 0xffu);
+    dm2_v1_swap16_at((uint8_t *)hero + 0x103u);
+}
+
 void dm2_v1_party_state_init(DM2_V1_Party *party) {
     int i;
     for (i = 0; i < DM2_MAX_HEROES; ++i)

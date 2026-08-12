@@ -26,7 +26,10 @@ The retail Macintosh save container uses the same 42-byte logical header but
 stores its words big-endian. Its source gate is `w_timer_flag == 1`,
 `unknown_38 == 0` and `unknown_40 == 0`; `unknown_36` remains an opaque
 per-save value. Firestaff therefore has an explicit big-endian receipt path
-for the raw dungeon prefix and the initial `s_savegamebuffer` scalar fields.
+for the raw dungeon prefix, the initial `s_savegamebuffer` scalar fields, and
+the retained GAME_LOAD owner’s c_map/c_record/c_hero/c_tim word fields. The
+legacy public owner constructors remain little-endian DOS wrappers; platform
+code must use the ordered constructor with an authenticated Macintosh receipt.
 This is separate from the DOS little-endian loader: a Mac-shaped header is not
 admitted to Resume until the remaining `DM2_GAME_LOAD` record and possession
 stream has a live source owner.

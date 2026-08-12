@@ -150,6 +150,16 @@ int dm2_v1_sksave_game_load_owner_init(
     DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
     void *query_creature_ai_flags_ctx);
 
+/* Ordered variant for original platform saves.  `words_big_endian` is part
+ * of the authenticated raw-dungeon receipt and is never inferred from the
+ * host.  The legacy entry point above remains the little-endian DOS wrapper. */
+int dm2_v1_sksave_game_load_owner_init_ordered(
+    DM2_V1_SksaveGameLoadOwner *owner,
+    const uint8_t *raw_body, size_t raw_body_size, uint16_t savegamew7,
+    int words_big_endian, const DM2_V1_AssetLoader *asset_loader,
+    DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
+    void *query_creature_ai_flags_ctx);
+
 /* Retain an otherwise rejected import only when the real source stream has
  * reached DB0 or DB2 exhaustion in DM2_READ_SKSAVE_DUNGEON. The retained
  * state is an inspection transaction through the exact allocator boundary:
@@ -164,6 +174,13 @@ int dm2_v1_sksave_game_load_owner_init_to_recycler_boundary(
     DM2_V1_SksaveGameLoadOwner *owner,
     const uint8_t *raw_body, size_t raw_body_size, uint16_t savegamew7,
     const DM2_V1_AssetLoader *asset_loader,
+    DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
+    void *query_creature_ai_flags_ctx);
+
+int dm2_v1_sksave_game_load_owner_init_to_recycler_boundary_ordered(
+    DM2_V1_SksaveGameLoadOwner *owner,
+    const uint8_t *raw_body, size_t raw_body_size, uint16_t savegamew7,
+    int words_big_endian, const DM2_V1_AssetLoader *asset_loader,
     DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
     void *query_creature_ai_flags_ctx);
 

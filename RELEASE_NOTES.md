@@ -13,6 +13,11 @@
   the complete GAME_LOAD owner are available; no synthetic save or Resume
   claim was added.
 
+- `DM2 Macintosh GAME_LOAD owner byte order`: Carry the authenticated Mac
+  word order through c_map links, c_record words, c_hero scalar fields, and
+  c_tim scalar fields. Existing DOS owner constructors remain little-endian
+  wrappers; no synthetic Mac save was added.
+
 ### Changed
 
 - `Japanese Macintosh media`: Read the authentic multi-track CD's later

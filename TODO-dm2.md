@@ -542,6 +542,11 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
   order, or fallback guess selects the word order. This does not claim Mac
   Resume: an authentic Mac save corpus and the complete GAME_LOAD owner are
   still required.
+- [x] Carry the authenticated Macintosh byte order through the retained
+  GAME_LOAD inspection owner: c_map column/ground links, c_record words,
+  c_hero scalar words, and c_tim scalar words now use the source dungeon
+  receipt instead of the host/DOS default. This is an import-path correction,
+  not a Mac Resume claim; no authentic Mac save is present to exercise it.
 - [ ] Bind the small-edition dynamic Mac application owner. The separate
   `Downloads/DungeonMasterII_demo.hqx` preservation source contains an
   authentic 484,815-byte application data fork and 1,889,960-byte resource
