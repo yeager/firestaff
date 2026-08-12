@@ -3585,7 +3585,7 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
             strncpy(profile->version_id,
                     md5_matches(profile->graphics_md5,
                                 "4bf28b3d84e6799d7686c6aaf96cbf23")
-                        ? "mac-en-demo" : "mac-en",
+                        ? "mac-en-demo" : "mac-en-retail",
                     sizeof(profile->version_id) - 1);
             break;
         case DM2_PLATFORM_MAC_FR:      strncpy(profile->version_id, "mac-fr",      sizeof(profile->version_id) - 1); break;

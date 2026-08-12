@@ -18,7 +18,7 @@ int main(void) {
     dm2_v1_boot_profile_init(&profile);
     if (dm2_v1_boot_scan_assets(&profile, zip) != 0 ||
         !profile.assets_verified || profile.platform != DM2_PLATFORM_MAC_EN ||
-        strcmp(profile.version_id, demo ? "mac-en-demo" : "mac-en") != 0 ||
+        strcmp(profile.version_id, demo ? "mac-en-demo" : "mac-en-retail") != 0 ||
         profile.graphics_mem_size != (demo ? 3110116u : 8157169u) ||
         profile.dungeon_mem_size != (demo ? 6535u : 39411u) ||
         (!demo && (!profile.music_map_verified ||
