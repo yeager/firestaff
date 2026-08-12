@@ -3287,13 +3287,14 @@ static int m11_open_csb_hint_oracle_from_menu(
     M11_GameViewState *gameView, M12_StartupMenuState *menuState)
 {
     const char *data_dir;
-    char mini_path[1024];
     if (!gameView || !menuState || !menuState->csbHintOracleLaunchRequested)
         return 0;
     data_dir = M12_StartupMenu_AssetDataDir(menuState);
     if (!data_dir || !data_dir[0] ||
-        !FSP_JoinPath(mini_path, sizeof(mini_path), data_dir, "MINI.DAT") ||
-        !M11_GameView_StartCsbHintOracle(gameView, data_dir, mini_path)) {
+        /* The selected archive can contain the complete original R1 triplet.
+         * Let the source-owned Hint Oracle ingress discover and materialize
+         * its hash-admitted MINI.DAT instead of requiring a loose sibling. */
+        !M11_GameView_StartCsbHintOracle(gameView, data_dir, NULL)) {
         menuState->csbHintOracleLaunchRequested = 0;
         menuState->view = M12_MENU_VIEW_MESSAGE;
         menuState->messageLine1 = "CSB UTILITY DISK NOT READY";
@@ -6253,10 +6254,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     const M11_PhaseA_Options* o;
     runtimeOptions = opts ? *opts : defaults;
     if (runtimeOptions.csbHintOracle && (!runtimeOptions.dataDir ||
-                                         !runtimeOptions.dataDir[0] ||
-                                         !runtimeOptions.savePath ||
-                                         !runtimeOptions.savePath[0])) {
-        fprintf(stderr, "firestaff: --csb-hint-oracle requires --data-dir and --save <MINI.DAT>\n");
+                                         !runtimeOptions.dataDir[0])) {
+        fprintf(stderr, "firestaff: --csb-hint-oracle requires --data-dir\n");
         return 2;
     }
     if (runtimeOptions.csbFmtownsUtilityDisk &&

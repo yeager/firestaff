@@ -1944,6 +1944,10 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
 int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir);
 int M11_GameView_StartCsbHintOracle(M11_GameViewState* state,
                                     const char *dataDir,
+                                    /* NULL scans the selected data root for
+                                     * the hash-verified Atari R1 MINI.DAT;
+                                     * a non-NULL path is an explicit native
+                                     * save medium. */
                                     const char *savePath);
 /* Open C06_CEDT only after the selected FM Towns CSB package completed its
  * normal verified boot admission.  This is deliberately distinct from the

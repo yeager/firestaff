@@ -52,9 +52,12 @@
   rutor och den ursprungliga fonten kommer från HINTDATA.C, HINTMAIN.C,
   HINTHINT.C och HINTTEXT.C. Originalmediaregressionen täcker varje läge.
 - ✅ Den synliga posten `CSB UTILITY DISK — HINT ORACLE` startar samma
-  källägd R1-runtime som CLI:t `--csb-hint-oracle --data-dir <root> --save
-  <MINI.DAT>`. Båda vägar hashverifierar `HCSB.HTC`/`HCSB.DAT` och avvisar en
-  icke-nativ `MINI.DAT` innan originalets LOAD-ruta får använda dess position.
+  källägd R1-runtime som CLI:t `--csb-hint-oracle --data-dir <root>`.
+  Båda vägar materialiserar den hashverifierade Atari R1-trion
+  `HCSB.HTC`/`HCSB.DAT`/`MINI.DAT` direkt från lösa filer eller ett stött
+  arkiv och avvisar en icke-nativ `MINI.DAT` innan originalets LOAD-ruta får
+  använda dess position. `--save <MINI.DAT>` är fortfarande ett explicit,
+  separat val av nativ sparfil.
 - 🔒 Originalets händelsekadens samt fångad originalframe-pixelparitet återstår.
 
 # Nexus: bind verified SH-2 transform to an authenticated Saturn consumer (2026-08-11)

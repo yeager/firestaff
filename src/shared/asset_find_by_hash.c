@@ -1252,6 +1252,12 @@ static uint8_t *zip_load_entry_bytes(const char *zipPath, const char *entryName,
     return NULL;
 }
 
+#ifndef _WIN32
+static uint8_t *external_read_entry_bytes(const char *archivePath,
+                                          const char *entryName,
+                                          size_t *out_size);
+#endif
+
 int asset_read_path_alloc(const char *path, uint8_t **outBytes,
                           size_t *outSize) {
     const char *separator;
@@ -1275,7 +1281,15 @@ int asset_read_path_alloc(const char *path, uint8_t **outBytes,
          * Amiga, Atari).  They must be admitted by those readers rather
          * than silently passed through a host extractor. */
         if (strstr(separator + 2, "::") != NULL) return 0;
-        bytes = zip_load_entry_bytes(container, separator + 2, outSize);
+        if (asset_container_kind_for_path(container) == ASSET_CONTAINER_EXTERNAL) {
+#ifdef _WIN32
+            return 0;
+#else
+            bytes = external_read_entry_bytes(container, separator + 2, outSize);
+#endif
+        } else {
+            bytes = zip_load_entry_bytes(container, separator + 2, outSize);
+        }
         if (!bytes) return 0;
         *outBytes = bytes;
         return 1;

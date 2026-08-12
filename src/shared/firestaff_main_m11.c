@@ -40,7 +40,7 @@ static void usage(const char* prog) {
             "  --data-dir <path>   Asset directory (default: FIRESTAFF_DATA env var)\n"
             "  --theron-authenticated-fallback  Run Theron from verified Track 02 records when the original CD runtime handoff is unavailable (non-parity)\n"
             "  --save <path>       Resume a validated save for --game\n"
-            "  --csb-hint-oracle   Open Atari R1 CSB Utility Disk Hint Oracle (requires --data-dir and --save MINI.DAT)\n"
+            "  --csb-hint-oracle   Open Atari R1 CSB Utility Disk Hint Oracle (requires --data-dir; optional --save MINI.DAT)\n"
             "  --csb-utility-disk  Open the verified FM Towns CSB C06 Utility Disk\n"
             "  --dm2-english-companion <path>  Hash-verified PC-English GRAPHICS.DAT for DM2 FM Towns\n"
             "  --scan-data         Recursively scan asset directory by hash and exit\n"
@@ -690,10 +690,9 @@ int main(int argc, char** argv) {
         fprintf(stderr, "firestaff: --boot-probe requires --game <id>\n");
         return 2;
     }
-    if (opts.csbHintOracle && (!opts.dataDir || !opts.dataDir[0] ||
-                               !opts.savePath || !opts.savePath[0])) {
+    if (opts.csbHintOracle && (!opts.dataDir || !opts.dataDir[0])) {
         fprintf(stderr,
-                "firestaff: --csb-hint-oracle requires --data-dir and --save <MINI.DAT>\n");
+                "firestaff: --csb-hint-oracle requires --data-dir\n");
         return 2;
     }
     if (opts.csbFmtownsUtilityDisk &&

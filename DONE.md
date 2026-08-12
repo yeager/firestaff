@@ -7,11 +7,13 @@
   F0435 (`CSB READY … route=f0435-resume`) without using CLI `--save`.
 
 - ✅ `CSB UTILITY DISK — HINT ORACLE` är nu en separat M12-post och
-  `--csb-hint-oracle --data-dir <root> --save <MINI.DAT>` är dess explicita
-  CLI-motsvarighet. Båda går genom samma M11-runtime, använder den
+  `--csb-hint-oracle --data-dir <root>` är dess CLI-motsvarighet. Båda går
+  genom samma M11-runtime, använder den
   ursprungliga 320×200-ytan och accepterar endast den hashverifierade Atari R1
   `HCSB.HTC`/`HCSB.DAT`-kombinationen plus en dekoderverifierad nativ
-  `MINI.DAT`. Det är inte CSB:s vanliga spelstart eller FM Towns-verktyget.
+  `MINI.DAT`. Den sammanhängande trion kan materialiseras från ett stött
+  arkiv; `--save <MINI.DAT>` väljer i stället en explicit nativ sparfil.
+  Det är inte CSB:s vanliga spelstart eller FM Towns-verktyget.
   Originalets musklicksrutor styr LOAD/LAST/NEXT/DONE/EXIT/OK; ingen ny
   tangentmappning har hittats på.
 

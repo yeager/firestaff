@@ -160,7 +160,10 @@ after the normal verified CSB F31 boot; it implies `--game csb --platform
 fm-towns` and fails closed if that package is unavailable. The start menu also
 has a dedicated **CSB Utility Disk (FM Towns)** entry. This is distinct from
 the Atari R1 Hint Oracle (`--csb-hint-oracle`) and never substitutes its data
-or UI.
+or UI. The Hint Oracle needs `--data-dir <root>` containing the verified Atari
+R1 `HCSB.HTC`, `HCSB.DAT` and native `MINI.DAT`; those files may be loose or
+inside a supported archive. `--save <MINI.DAT>` is optional and selects an
+explicit native save instead of the verified R1 `MINI.DAT` found in that root.
 The initial Japanese C06 Utility chooser additionally requires the user's
 authorised 256 KiB `FMT_FNT.ROM`; set `FIRESTAFF_FMTOWNS_FONT_ROM` to that
 file before launch. Firestaff uses the ROM only for its original Shift-JIS

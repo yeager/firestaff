@@ -23276,6 +23276,53 @@ int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir) {
     }
 }
 
+/* This is the exact Atari R1 MINI.DAT staged with the R1 HCSB.HTC/DAT pair
+ * in the PP hard-disk Utility Disk.  A filename alone is never enough: the
+ * optional CLI path remains caller-selected, while automatic discovery is
+ * tied to this digest before its native checksum decoder is allowed to read
+ * the bytes. */
+#define M11_CSB_HINT_ORACLE_ATARI_R1_MINI_MD5 "531ea104a2fbc2011ea73d11f274c57d"
+
+static int m11_csb_hint_oracle_materialize_virtual_save(
+    const char *virtual_path, char *out_path, size_t out_path_size)
+{
+    char user_data[FSP_PATH_MAX];
+    char cache_dir[FSP_PATH_MAX];
+    if (!virtual_path || !out_path || out_path_size == 0u) return 0;
+    if (!strstr(virtual_path, "::")) {
+        if (strlen(virtual_path) >= out_path_size) return 0;
+        memcpy(out_path, virtual_path, strlen(virtual_path) + 1u);
+        return 1;
+    }
+    if (!FSP_GetUserDataDir(user_data, sizeof(user_data)) ||
+        !FSP_JoinPath(cache_dir, sizeof(cache_dir), user_data,
+                      "asset-cache/csb-hint-oracle") ||
+        !FSP_CreateDirectoryRecursive(cache_dir) ||
+        !FSP_JoinPath(out_path, out_path_size, cache_dir, "MINI.DAT") ||
+        !asset_extract_virtual_path(virtual_path, out_path)) {
+        if (out_path_size > 0u) out_path[0] = '\0';
+        return 0;
+    }
+    return 1;
+}
+
+static int m11_csb_hint_oracle_resolve_native_save(
+    const char *data_dir, const char *requested_path,
+    char *out_path, size_t out_path_size)
+{
+    char found[ASSET_PATH_MAX];
+    if (!data_dir || !data_dir[0] || !out_path || out_path_size == 0u) return 0;
+    if (requested_path && requested_path[0]) {
+        if (strlen(requested_path) >= out_path_size) return 0;
+        memcpy(out_path, requested_path, strlen(requested_path) + 1u);
+        return 1;
+    }
+    if (!asset_find_by_md5(data_dir, M11_CSB_HINT_ORACLE_ATARI_R1_MINI_MD5,
+                           found, (int)sizeof(found), 8)) return 0;
+    return m11_csb_hint_oracle_materialize_virtual_save(found, out_path,
+                                                         out_path_size);
+}
+
 static int m11_csb_hint_oracle_read_native_save(
     const char *path, CSB_V1_AtariSaveInfo *out_info)
 {
@@ -23308,7 +23355,10 @@ int M11_GameView_StartCsbHintOracle(M11_GameViewState *state,
 {
     CSB_HintOracleAtariRuntime *runtime;
     CSB_V1_AtariSaveInfo *save_info;
-    if (!state || !dataDir || !dataDir[0] || !savePath || !savePath[0]) return 0;
+    char resolved_save_path[FSP_PATH_MAX];
+    if (!state || !dataDir || !dataDir[0] ||
+        !m11_csb_hint_oracle_resolve_native_save(
+            dataDir, savePath, resolved_save_path, sizeof(resolved_save_path))) return 0;
     runtime = (CSB_HintOracleAtariRuntime *)calloc(1u, sizeof(*runtime));
     save_info = (CSB_V1_AtariSaveInfo *)calloc(1u, sizeof(*save_info));
     if (!runtime || !save_info) {
@@ -23319,7 +23369,7 @@ int M11_GameView_StartCsbHintOracle(M11_GameViewState *state,
     csb_hint_oracle_atari_runtime_init(runtime);
     if (csb_hint_oracle_atari_runtime_load_assets(runtime, dataDir, NULL, 8) !=
             CSB_HINT_ORACLE_ATARI_RUNTIME_OK ||
-        !m11_csb_hint_oracle_read_native_save(savePath, save_info)) {
+        !m11_csb_hint_oracle_read_native_save(resolved_save_path, save_info)) {
         csb_hint_oracle_atari_runtime_free(runtime);
         free(runtime);
         free(save_info);
