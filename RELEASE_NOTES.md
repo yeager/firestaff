@@ -46,6 +46,10 @@
   `Dungeon Master II` application data and resource forks in memory. The
   source-owned `Midi`, `snd `, menu and event resources are now available to
   the native Mac runtime path without extracting the application.
+- `DM2 Macintosh MIDI route`: Parse all 28 authentic `Midi` resources (IDs
+  1000-1027) directly from the retained application resource fork and route
+  `md.dat` map selections to their original SMF payloads. No DOS HMP or
+  synthetic replacement is used; native CoreMIDI timing parity remains open.
 - `DM2 Macintosh edition discovery`: Keep both authenticated English Mac
   editions visible when a shared data directory contains the large retail ZIP
   and the smaller First Chapter ZIP. Archive discovery now scans all matching

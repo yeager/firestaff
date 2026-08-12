@@ -491,8 +491,10 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
   sample range, rate, loop fields, and resource ID without copying the bytes.
   The exact signed 8-bit sample range from `General.sounds` resource 10001 is
   now hash-checked and transported through the existing SDL host mixer at its
-  source rate; full Mac resource selection, timing, and MIDI/music scheduling
-  remain open.
+  source rate. The 28 authentic application `Midi` resources (IDs 1000-1027)
+  are parsed in place as SMF and the Mac map-trigger route now selects them
+  directly; native CoreMIDI scheduling parity and the remaining `snd ` timing
+  classes remain open.
 - [x] Retain the authentic retail `Dungeon Master II` application data and
   resource forks in RAM (`484,944` and `5,046,234` bytes). The complete
   MacBinary/application resource owner is now available for source-locked

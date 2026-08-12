@@ -9,6 +9,7 @@
  */
 
 #include "dm2_v1_sound.h"
+#include "dm2_v1_mac_media.h"
 #include "dm2_v1_midi_backend.h"
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_sound_queue_pc34_compat.h"
@@ -1649,6 +1650,41 @@ int dm2_v1_sound_queue_music(int track, int loop,
         return DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE;
     }
 
+    g_dm2_music_loop_enabled = loop ? 1 : 0;
+    g_dm2_music_loop_duration_us = stream.loop_duration_us;
+    g_dm2_music_backend_proven =
+        dm2_v1_midi_backend_open() == DM2_V1_MIDI_BACKEND_READY;
+    if (out_receipt) {
+        out_receipt->decoder_proven = 1;
+        out_receipt->backend_proven = g_dm2_music_backend_proven;
+        out_receipt->schedule_handoff_ready = stream.schedule_handoff_ready;
+        out_receipt->loop_duration_us = stream.loop_duration_us;
+        out_receipt->schedule_event_count = stream.schedule_event_count;
+        out_receipt->request_queued = g_dm2_music_event_count > 0u;
+    }
+    return g_dm2_music_backend_proven
+               ? DM2_V1_MUSIC_QUEUE_READY
+               : DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE;
+}
+
+int dm2_v1_sound_queue_mac_midi(const uint8_t *resource_fork,
+                                size_t resource_fork_size, int resource_id,
+                                int loop, DM2_V1_MusicQueueReceipt *out_receipt) {
+    const uint8_t *data = NULL;
+    size_t size = 0u;
+    DM2_V1_MusicStreamReceipt stream;
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (dm2_v1_mac_resource_find(resource_fork, resource_fork_size, "Midi",
+                                 (int16_t)resource_id, &data, &size, NULL) != 0)
+        return DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
+    if (out_receipt) {
+        snprintf(out_receipt->asset_path, sizeof(out_receipt->asset_path),
+                 "Dungeon Master II::Midi(%d)", resource_id);
+        out_receipt->asset_resolved = 1;
+    }
+    if (dm2_v1_sound_inspect_music_data(data, size, &stream) !=
+        DM2_V1_MUSIC_INSPECT_OK || !stream.midi_handoff_ready)
+        return DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE;
     g_dm2_music_loop_enabled = loop ? 1 : 0;
     g_dm2_music_loop_duration_us = stream.loop_duration_us;
     g_dm2_music_backend_proven =

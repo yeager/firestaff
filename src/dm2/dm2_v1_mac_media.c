@@ -254,6 +254,65 @@ static int copy_resource_type(const uint8_t *fork, size_t fork_size,
     return -1;
 }
 
+int dm2_v1_mac_resource_find(const uint8_t *fork, size_t fork_size,
+                             const char type[4], int16_t id,
+                             const uint8_t **out_data, size_t *out_size,
+                             DM2_V1_MacResourceReceipt *out_receipt) {
+    uint32_t data_offset, data_length, map_offset, map_length;
+    uint16_t type_offset;
+    size_t type_list, type_count, i;
+    if (out_data) *out_data = NULL;
+    if (out_size) *out_size = 0u;
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!fork || !type || !out_data || !out_size || fork_size < 256u) return -1;
+    data_offset = be32(fork); map_offset = be32(fork + 4u);
+    data_length = be32(fork + 8u); map_length = be32(fork + 12u);
+    if (data_offset > fork_size || data_length > fork_size - data_offset ||
+        map_offset > fork_size || map_length > fork_size - map_offset ||
+        map_length < 28u) return -1;
+    type_offset = be16(fork + map_offset + 24u);
+    if ((size_t)type_offset + 2u > map_length) return -1;
+    type_list = map_offset + type_offset;
+    type_count = (size_t)be16(fork + type_list) + 1u;
+    if (type_count == 0u || type_count > 4096u ||
+        type_count > (map_length - type_offset - 2u) / 8u) return -1;
+    for (i = 0u; i < type_count; ++i) {
+        const uint8_t *entry = fork + type_list + 2u + i * 8u;
+        uint16_t count, ref_offset, r;
+        if (memcmp(entry, type, 4u) != 0) continue;
+        count = (uint16_t)(be16(entry + 4u) + 1u);
+        ref_offset = be16(entry + 6u);
+        if (count == 0u || count > 4096u ||
+            ref_offset > map_length - type_offset ||
+            (size_t)count > (map_length - type_offset - ref_offset) / 12u)
+            return -1;
+        for (r = 0u; r < count; ++r) {
+            const uint8_t *ref = fork + type_list + ref_offset + (size_t)r * 12u;
+            int16_t resource_id = (int16_t)be16(ref);
+            uint32_t resource_offset = ((uint32_t)ref[5] << 16) |
+                                       ((uint32_t)ref[6] << 8) | ref[7];
+            size_t pos;
+            uint32_t length;
+            if (resource_id != id) continue;
+            if (resource_offset > data_length ||
+                data_length - resource_offset < 4u) return -1;
+            pos = (size_t)data_offset + resource_offset;
+            length = be32(fork + pos);
+            if (length > data_length - resource_offset - 4u) return -1;
+            *out_data = fork + pos + 4u;
+            *out_size = length;
+            if (out_receipt) {
+                out_receipt->id = resource_id;
+                out_receipt->offset = pos + 4u;
+                out_receipt->size = length;
+            }
+            return 0;
+        }
+        return -1;
+    }
+    return -1;
+}
+
 static int copy_dmfiles_entry(const uint8_t *dmfiles, size_t dmfiles_size,
                               const char *wanted, size_t expected_size,
                               uint8_t **out, size_t *out_size) {

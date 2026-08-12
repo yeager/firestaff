@@ -1233,6 +1233,13 @@ static void dm2_runtime_refresh_music_map_trigger(DM2_V1_RuntimeState *rt)
             receipt.source_stream_resolved = queue.asset_resolved ? 1 : 0;
             free(pcm);
         }
+    } else if ((rt->boot->platform == DM2_PLATFORM_MAC_EN ||
+                rt->boot->platform == DM2_PLATFORM_MAC_FR) &&
+               rt->boot->mac_application_resource) {
+        receipt.queue_result = dm2_v1_sound_queue_mac_midi(
+            rt->boot->mac_application_resource,
+            rt->boot->mac_application_resource_size, 1000 + track, 1, &queue);
+        receipt.source_stream_resolved = queue.asset_resolved ? 1 : 0;
     } else {
         receipt.queue_result = dm2_v1_sound_queue_music(track, 1, &queue);
         receipt.source_stream_resolved = queue.asset_resolved ? 1 : 0;

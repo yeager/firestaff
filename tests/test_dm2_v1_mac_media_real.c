@@ -65,6 +65,24 @@ int main(void) {
         return 1;
     }
     if (!demo) {
+        const uint8_t *midi = NULL;
+        size_t midi_size = 0u;
+        DM2_V1_MacResourceReceipt receipt;
+        for (int resource_id = 1000; resource_id <= 1027; ++resource_id) {
+            if (dm2_v1_mac_resource_find(media.application_resource,
+                                         media.application_resource_size, "Midi",
+                                         (int16_t)resource_id, &midi, &midi_size,
+                                         &receipt) != 0 ||
+                receipt.id != resource_id || receipt.size != midi_size ||
+                midi_size < 14u || memcmp(midi, "MThd", 4u) != 0) {
+                fprintf(stderr, "authentic Mac Midi resource %d was not parsed\n",
+                        resource_id);
+                dm2_v1_mac_media_free(&media);
+                return 1;
+            }
+        }
+    }
+    if (!demo) {
         printf("retail movie mask=0x%08x resource=0x%08x moov=0x%08x sizes=%zu,%zu,%zu,%zu,%zu moov_size=%zu head=%02x%02x%02x%02x%02x%02x%02x%02x\n",
                media.movie_present_mask, media.movie_resource_present_mask,
                media.movie_moov_present_mask, media.movie_size[0],

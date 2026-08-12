@@ -6,6 +6,7 @@
 
 #define DM2_V1_MAC_MOVIE_COUNT 5
 #define DM2_V1_MAC_SOUND_RESOURCE_COUNT 3
+#define DM2_V1_MAC_MIDI_RESOURCE_MAX 64
 
 typedef enum {
     DM2_V1_MAC_SOUND_MUSIC = 0,
@@ -20,6 +21,17 @@ typedef enum {
     DM2_V1_MAC_MOVIE_CREDITS,
     DM2_V1_MAC_MOVIE_ENDING
 } DM2_V1_MacMovieId;
+
+typedef struct {
+    int16_t id;
+    size_t offset;
+    size_t size;
+} DM2_V1_MacResourceReceipt;
+
+int dm2_v1_mac_resource_find(const uint8_t *fork, size_t fork_size,
+                             const char type[4], int16_t id,
+                             const uint8_t **out_data, size_t *out_size,
+                             DM2_V1_MacResourceReceipt *out_receipt);
 
 /* Read the original Macintosh CD image contained in a ZIP without creating
  * a mounted or extracted game-data directory.  The returned forks are owned
