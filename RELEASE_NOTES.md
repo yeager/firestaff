@@ -53,6 +53,11 @@
   exchange for both English Mac editions. The operation remains fail-closed
   for missing slots and never creates a host-side item.
 
+- `DM2 Macintosh pointer-source audit`: Record the authenticated retail
+  `CODE(11)` dynamic-control and ObjectID resolver anchors. Native pointer and
+  drag/drop remain unavailable until those dynamic records are bound; no
+  static PC or FM Towns rectangle is used.
+
 - `DM2 Macintosh inventory frame`: Admit the authentic 16-colour
   `INTERFACE_CHARSHEET/0/dtImage/1` frame in both the large retail and small
   First Chapter Mac editions. The M11 inventory toggle now consumes the
