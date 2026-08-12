@@ -37,6 +37,8 @@ y 18 with two matching hints.
 
 ## Remaining boundary
 
-This is a C runtime owner, not an M11/M12 menu feature. `HINTDATA.C` command
-rectangles, `HINTMAIN.C` event cadence, original click capture and full frame
-pixel comparison must be bound before a user-facing claim is made.
+This is a C runtime owner, not an M11/M12 menu feature. Its pointer dispatcher
+already uses the Atari R1 `HINTDATA.C` LOAD/LAST/NEXT/DONE/EXIT/OK and seven
+hint-row rectangles, then invokes the corresponding `HINTMAIN.C` transition.
+M11/M12 ownership, original event cadence, click capture and full frame pixel
+comparison must still be bound before a user-facing claim is made.

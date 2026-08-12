@@ -94,6 +94,54 @@ int csb_hint_oracle_atari_runtime_done(CSB_HintOracleAtariRuntime *runtime)
         CSB_HINT_ORACLE_ATARI_RUNTIME_ERR_SESSION;
 }
 
+static int in_button(int x, int y, int left, int right, int top, int bottom)
+{
+    return x >= left && x <= right && y >= top && y <= bottom;
+}
+
+int csb_hint_oracle_atari_runtime_handle_click(
+    CSB_HintOracleAtariRuntime *runtime, int x, int y,
+    const CSB_V1_AtariSaveInfo *info)
+{
+    size_t row;
+    if (!runtime) return CSB_HINT_ORACLE_ATARI_RUNTIME_ERR_ARGUMENT;
+    if (!runtime->assets_loaded) return CSB_HINT_ORACLE_ATARI_RUNTIME_ERR_NOT_READY;
+    /* HINTDATA.C MEDIA762_AU1E rectangles: LOAD/LAST/NEXT/OK share
+     * 127..194,179..192; DONE/EXIT share 221..289,179..192. */
+    if (runtime->session.state == CSB_HINT_ORACLE_SESSION_AWAIT_LOAD) {
+        if (in_button(x, y, 127, 194, 179, 192))
+            return csb_hint_oracle_atari_runtime_select_save(runtime, info);
+        if (in_button(x, y, 221, 289, 179, 192)) {
+            csb_hint_oracle_session_close(&runtime->session);
+            return CSB_HINT_ORACLE_ATARI_RUNTIME_OK;
+        }
+        return CSB_HINT_ORACLE_ATARI_RUNTIME_OK;
+    }
+    if (runtime->session.state == CSB_HINT_ORACLE_SESSION_HINT_LIST) {
+        for (row = 0u; row < CSB_HINT_ORACLE_SESSION_MAX_SELECTED_HINTS; ++row) {
+            if (in_button(x, y, 40, 280, 30 + (int)row * 16,
+                          42 + (int)row * 16))
+                return csb_hint_oracle_atari_runtime_open_hint_row(runtime, row);
+        }
+        if (in_button(x, y, 221, 289, 179, 192))
+            return csb_hint_oracle_atari_runtime_done(runtime);
+        return CSB_HINT_ORACLE_ATARI_RUNTIME_OK;
+    }
+    if (runtime->session.state == CSB_HINT_ORACLE_SESSION_HINT_PAGE) {
+        if (in_button(x, y, 33, 100, 179, 192))
+            return csb_hint_oracle_atari_runtime_previous_page(runtime);
+        if (in_button(x, y, 127, 194, 179, 192))
+            return csb_hint_oracle_atari_runtime_next_page(runtime);
+        if (in_button(x, y, 221, 289, 179, 192))
+            return csb_hint_oracle_atari_runtime_done(runtime);
+        return CSB_HINT_ORACLE_ATARI_RUNTIME_OK;
+    }
+    if (runtime->session.state == CSB_HINT_ORACLE_SESSION_NO_CLUE &&
+        in_button(x, y, 127, 194, 179, 192))
+        return csb_hint_oracle_atari_runtime_done(runtime);
+    return CSB_HINT_ORACLE_ATARI_RUNTIME_OK;
+}
+
 int csb_hint_oracle_atari_runtime_render_page(
     const CSB_HintOracleAtariRuntime *runtime, uint8_t *frame, size_t frame_size)
 {

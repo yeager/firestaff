@@ -66,6 +66,13 @@ int csb_hint_oracle_atari_runtime_next_page(
     CSB_HintOracleAtariRuntime *runtime);
 int csb_hint_oracle_atari_runtime_done(CSB_HintOracleAtariRuntime *runtime);
 
+/* HINTDATA.C / HINTMAIN.C pointer command dispatcher for the Atari R1
+ * rectangles. `info` is consumed only by the LOAD rectangle while the
+ * runtime waits for a save; all other commands ignore it. */
+int csb_hint_oracle_atari_runtime_handle_click(
+    CSB_HintOracleAtariRuntime *runtime, int x, int y,
+    const CSB_V1_AtariSaveInfo *info);
+
 /* Render the current original 320x200 R1 page. No host frame, font or palette
  * fallback is generated when the session is not on a valid page. */
 int csb_hint_oracle_atari_runtime_render_page(

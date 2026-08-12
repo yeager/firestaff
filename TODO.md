@@ -42,8 +42,12 @@
   frame, font or palette fallback. The real-data regression decodes the
   staged MINI.DAT (currently map 4, x 22, y 18), finds two hints and renders
   its first page.
-- 🔒 M11/M12 ownership and input routing, original click layout/cadence and
-  captured original-frame pixel parity remain open. The R1 runtime is a
+- ✅ Atari R1-runtimeens pointerdispatcher använder nu HINTDATA.C:s LOAD,
+  LAST, NEXT, DONE/EXIT, OK och sju hint-rad-rektanglar direkt mot
+  HINTMAIN.C:s sessionövergångar; LOAD tar fortfarande endast en kontrollerad
+  MINI.DAT-receipt.
+- 🔒 M11/M12-ägarskap, originalets händelsekadens och fångad
+  originalframe-pixelparitet återstår. R1-runtimevägen är en
   source-owned consumer, not yet a user-visible launcher route.
 
 # Nexus: bind verified SH-2 transform to an authenticated Saturn consumer (2026-08-11)

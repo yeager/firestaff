@@ -63,10 +63,10 @@ static int test_real_atari_r1_triplet_if_staged(void)
                  CSB_HINT_ORACLE_ATARI_R1_HTC_MD5) == 0);
     CHECK(strcmp(runtime.graphics.source.matched_md5,
                  CSB_HINT_ORACLE_ATARI_R1_DAT_MD5) == 0);
-    CHECK(csb_hint_oracle_atari_runtime_select_save(&runtime, &info) == 0);
+    CHECK(csb_hint_oracle_atari_runtime_handle_click(&runtime, 130, 180, &info) == 0);
     CHECK(runtime.session.state == CSB_HINT_ORACLE_SESSION_HINT_LIST);
     CHECK(runtime.session.selected_hint_count > 0u);
-    CHECK(csb_hint_oracle_atari_runtime_open_hint_row(&runtime, 0u) == 0);
+    CHECK(csb_hint_oracle_atari_runtime_handle_click(&runtime, 50, 35, NULL) == 0);
     rc = csb_hint_oracle_atari_runtime_render_page(&runtime, frame, sizeof(frame));
     CHECK(rc == 0);
     CHECK(memcmp(frame, runtime.graphics.pixels, sizeof(frame)) != 0);
