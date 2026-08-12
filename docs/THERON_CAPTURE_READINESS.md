@@ -16,11 +16,12 @@ screen replay without unlocking generated tiles or unproven square-to-tile
 semantics. The resulting frame remains diagnostic evidence: it is not yet a
 README-eligible gameplay screenshot.
 
-**Last verified: 2026-08-09.** The fresh authentic US Track 02 capture used
-the real CUE/BIN and a real SDL2 Mednafen build. It observed 161 raw sectors,
-51 SCSI read commands and 25 CD IRQ callbacks, but zero game-owned `$E009`
-data reads. This is a useful negative boundary: the transport is real, while
-the dungeon handoff is not yet proven.
+**Last verified: 2026-08-12.** The fresh authentic US CUE/ISO capture used
+the real System Card 3.0 and the instrumented real-SDL2 Mednafen build. It
+observed 161 raw sectors, 51 SCSI read commands, 25 CD IRQ callbacks, two
+authenticated CD-to-RAM receipts and 32 game-main-RAM `$E009` dispatches. It
+still observed zero game-owned `$E009` data reads. This is a useful bounded
+result: the transport is real, while the dungeon handoff is not yet proven.
 
 An additional authenticated GUI capture now proves the real BIOS Run-to-CD
 Track 02 startup handoff and supplies the original-media title/menu image in
@@ -79,6 +80,12 @@ The strongest current proof is:
   `TQR level load` boot milestone when those data paths are present.
 - `theron_v1_m11_direct_launch`: M11 consumes the hash-verified Track 02 path
   without re-walking the data root and builds the Theron world and viewport.
+- `theron_v1_raw_bin_runtime_boot`: the normal user-owned
+  `~/.firestaff/data/theron/TQUS02.bin` layout is launched through the actual
+  CLI, enters the source-backed Theron runtime, loads the first level and
+  forms the initial party. It is a real-media test and SKIPs on hosts without
+  that copyrighted file; it does not assert unproven later rendering, combat
+  or dungeon semantics.
 - `theron_v1_viewport_renderer` and `theron_v1_rendering`: the data-free
   Theron viewport, palette, UI chrome, and M11 blit contracts are covered.
 - `theron_v1_cross_route_mechanics`: synthetic runtime mechanics now cover a
