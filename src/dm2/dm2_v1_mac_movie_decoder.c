@@ -260,11 +260,20 @@ int dm2_v1_mac_movie_decoder_next(DM2_V1_MacMovieDecoder *decoder)
                 decoder->rejected = 1;
                 return 0;
             }
+            if (impl->frame->best_effort_timestamp == AV_NOPTS_VALUE ||
+                impl->frame->best_effort_timestamp < 0 ||
+                impl->frame->duration <= 0) {
+                decoder->rejected = 1;
+                return 0;
+            }
             decoder->frame_index++;
             decoder->frame_ready = 1;
             decoder->presentation_time_us = av_rescale_q(
                 impl->frame->best_effort_timestamp,
                 impl->time_base, (AVRational){1, 1000000});
+            decoder->frame_duration_us = av_rescale_q(
+                impl->frame->duration, impl->time_base,
+                (AVRational){1, 1000000});
             return 1;
         }
     }

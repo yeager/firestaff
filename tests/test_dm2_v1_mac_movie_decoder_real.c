@@ -45,6 +45,7 @@ int main(void)
         int advanced;
         int audio_total = 0;
         int frame;
+        uint64_t previous_time = 0u;
         const int index = movie_indices[movie];
 
         memset(&view, 0, sizeof(view));
@@ -69,6 +70,19 @@ int main(void)
                 audio && count > 0 && rate > 0) {
                 audio_total += count;
             }
+            if (decoder.frame_duration_us == 0u ||
+                (frame > 0 && decoder.presentation_time_us <= previous_time)) {
+                fprintf(stderr, "authentic Mac %s has invalid frame timing: frame=%d time=%llu duration=%llu previous=%llu\n",
+                        movie_names[movie], frame,
+                        (unsigned long long)decoder.presentation_time_us,
+                        (unsigned long long)decoder.frame_duration_us,
+                        (unsigned long long)previous_time);
+                dm2_v1_mac_movie_decoder_close(&decoder);
+                dm2_v1_mac_movie_view_free(&view);
+                dm2_v1_mac_media_free(&media);
+                return 1;
+            }
+            previous_time = decoder.presentation_time_us;
             if (frame != 11) advanced = dm2_v1_mac_movie_decoder_next(&decoder);
         }
         if (!(opened && advanced && decoder.frame_ready &&

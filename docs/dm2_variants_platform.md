@@ -89,7 +89,10 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   authentic Title movie at Mac startup and opens authentic Credits from the
   authenticated Credits rectangle; Mac Return/Enter closes that movie through
   the source input table. The demo has no Credits movie and remains on its
-  authenticated static route. Exact timing and presentation ownership remain
+  authenticated static route. M11 now holds each decoded frame for the
+  positive duration carried by its authentic QuickTime frame record; the
+  real-media gate rejects zero-duration or non-monotonic frame timing instead
+  of inventing a host cadence. Exact original presentation ownership remains
   separate.
 - The retail image also retains the complete authentic resource forks for
   `Music` (662,956 bytes), `General.sounds` (134,562), and `Weapon.sounds`
@@ -100,8 +103,9 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   its source rate. The four present movies are also available through an
   optional FFmpeg-backed in-memory QuickTime decoder: Cinepak/Animation frames
   and each movie's PCM audio are delivered to the M11 surface/mixer without
-  creating a converted movie file. Complete Mac resource selection, timing, and
-  MIDI/music scheduling remain separate runtime work.
+  creating a converted movie file. Frame timing is now source-duration gated in
+  M11. Complete Mac resource selection, gameplay timing, and MIDI/music
+  scheduling remain separate runtime work.
 
 X68000 is not part of the DM2 support matrix.
 

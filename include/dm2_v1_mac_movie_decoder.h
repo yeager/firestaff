@@ -10,6 +10,7 @@ typedef struct {
     uint8_t palette_rgb6[256u][3u];
     uint32_t frame_index;
     uint64_t presentation_time_us;
+    uint64_t frame_duration_us;
     int width;
     int height;
     int frame_ready;

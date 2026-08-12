@@ -1661,6 +1661,8 @@ static int m11_dm2_bind_mac_movie_index(M11_GameViewState *state, int movie_inde
     }
     state->dm2MacMovieIndex = movie_index;
     state->dm2MacMovieComplete = 0;
+    state->dm2MacMovieStartUs = 0u;
+    state->dm2MacMovieFrameShown = 0;
     state->dm2MacMovieActive = 1;
     return 1;
 }
@@ -1683,10 +1685,42 @@ static int m11_dm2_present_mac_movie(M11_GameViewState *state,
     const int16_t *audio_samples = NULL;
     int audio_sample_count = 0;
     int audio_rate_hz = 0;
+    const uint64_t now_us = SDL_GetTicksNS() / UINT64_C(1000);
+    uint64_t frame_deadline_us;
     int x;
     int y;
     if (!state || !framebuffer || !state->dm2MacMovieActive ||
         !state->dm2MacMovieDecoder.frame_ready) return 0;
+    if (state->dm2MacMovieStartUs == 0u) {
+        state->dm2MacMovieStartUs = now_us;
+    }
+    frame_deadline_us = state->dm2MacMovieDecoder.presentation_time_us;
+    if (state->dm2MacMovieDecoder.frame_duration_us == 0u) {
+        state->dm2MacMovieRejected = 1;
+        state->dm2MacMovieActive = 0;
+        return 0;
+    }
+    frame_deadline_us += state->dm2MacMovieDecoder.frame_duration_us;
+    if (state->dm2MacMovieFrameShown &&
+        now_us - state->dm2MacMovieStartUs < frame_deadline_us) {
+        /* Keep the current source frame on screen until its authentic
+         * QuickTime duration expires. The old implementation advanced on
+         * every host draw and therefore ran the Mac movies too quickly. */
+        goto render_frame;
+    }
+    if (!state->dm2MacMovieFrameShown) {
+        state->dm2MacMovieFrameShown = 1;
+    } else if (!dm2_v1_mac_movie_decoder_next(&state->dm2MacMovieDecoder)) {
+        state->dm2MacMovieActive = 0;
+        state->dm2MacMovieComplete = 1;
+        if (state->dm2MacMovieIndex == DM2_V1_MAC_MOVIE_CREDITS) {
+            state->dm2State.startup_credits_active = 0;
+            state->dm2State.startup_credits_remaining_ticks = 0;
+        }
+        dm2_v1_mac_movie_decoder_close(&state->dm2MacMovieDecoder);
+        return 0;
+    }
+render_frame:
     if (dm2_v1_mac_movie_decoder_take_audio(
             &state->dm2MacMovieDecoder, &audio_samples,
             &audio_sample_count, &audio_rate_hz)) {
@@ -1708,15 +1742,6 @@ static int m11_dm2_present_mac_movie(M11_GameViewState *state,
                 state->dm2MacMovieDecoder.pixels[(size_t)source_y * 320u +
                                                   (size_t)source_x];
         }
-    }
-    if (!dm2_v1_mac_movie_decoder_next(&state->dm2MacMovieDecoder)) {
-        state->dm2MacMovieActive = 0;
-        state->dm2MacMovieComplete = 1;
-        if (state->dm2MacMovieIndex == DM2_V1_MAC_MOVIE_CREDITS) {
-            state->dm2State.startup_credits_active = 0;
-            state->dm2State.startup_credits_remaining_ticks = 0;
-        }
-        dm2_v1_mac_movie_decoder_close(&state->dm2MacMovieDecoder);
     }
     return 1;
 }

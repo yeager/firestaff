@@ -1837,6 +1837,8 @@ typedef struct {
     int dm2MacMovieActive;
     int dm2MacMovieRejected;
     int dm2MacMovieComplete;
+    uint64_t dm2MacMovieStartUs;
+    int dm2MacMovieFrameShown;
     int dm2SaveDialoguePanelActive;
     struct {
         int level_loaded;
