@@ -1,5 +1,16 @@
 # Firestaff TODO - Open Work
 
+# Theron: `$B0E5` capture reserve confirms non-spawn overlays (2026-08-12)
+
+- ✅ The reproducible external Mednafen capture now retains a separate,
+  bounded 256-sample `$B0E5` reserve after the ordinary spawn-register
+  window is full. A 12-second replay of the operator-owned US CUE save state
+  recorded 164 `$B0E5` address hits while remaining bounded to 595 KiB.
+- 🔒 Every retained hit had A=`$80` or `$85`, not the disassembly's regular
+  spawn categories `0..3`; the run also lacked a transition and authenticated
+  CD→RAM receipt. Treat this as negative evidence only: RNG ownership, spawn,
+  creature AI/combat/loot, generator timing, T700 and T900 stay fail-closed.
+
 # Nexus: startup status no longer reports a false green state (2026-08-12)
 
 - ✅ `M11_GameView_StartNexus` now distinguishes a title/assets boot from a

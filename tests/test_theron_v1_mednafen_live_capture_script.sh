@@ -272,6 +272,8 @@ if ! grep -Fq 'spawn_consumer_read sequence=%u logical_address=%04x physical_add
     exit 1
 fi
 if ! grep -Fq 'spawn_consumer_registers sequence=%u pc=%04x physical_pc=%08x' "$irq2_patch" ||
+   ! grep -Fq 'TheronIrq2TraceSpawnEntryB0E5SampleLimit = 256' "$irq2_patch" ||
+   ! grep -Fq 'logical_pc == 0xb0e5 &&' "$irq2_patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_SPAWN_REGISTER_TRACE="$spawn_register_trace"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_SPAWN_REGISTER_SAMPLE_LIMIT=' "$script" ||
    ! grep -Fq 'spawn_register_samples=%s' "$script"; then
