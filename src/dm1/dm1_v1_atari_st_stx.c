@@ -228,8 +228,10 @@ dm1_v1_atari_st_stx_extract_file(const DM1_V1_AtariStx *stx,
          * buffer. Reject rather than read out of bounds. */
         if (fat_offset + 1u >= sizeof(fat)) return 0;
         uint32_t next = (cluster & 1u) == 0u
-            ? (fat[fat_offset] | ((fat[fat_offset + 1u] & 0x0fu) << 8))
-            : ((fat[fat_offset] >> 4) | (fat[fat_offset + 1u] << 4));
+            ? (uint32_t)(fat[fat_offset] |
+                         ((fat[fat_offset + 1u] & 0x0fu) << 8))
+            : (uint32_t)((fat[fat_offset] >> 4) |
+                         (fat[fat_offset + 1u] << 4));
         if (next == cluster || *out_size == before) return 0;
         cluster = next & 0xfffu;
     }
