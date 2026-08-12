@@ -20,6 +20,9 @@ typedef struct {
 #define CSB_V1_CSBWIN_LAYOUT_0232_OBJECT_GRAPHIC_GROUPS 7u
 #define CSB_V1_CSBWIN_LAYOUT_0232_DEFAULT_GRAPHIC_COUNT 70u
 #define CSB_V1_CSBWIN_LAYOUT_0232_HUD_MATERIAL_COUNT 10u
+#define CSB_V1_CSBWIN_LAYOUT_0232_INVENTORY_SLOT_FIRST 8u
+#define CSB_V1_CSBWIN_LAYOUT_0232_INVENTORY_SLOT_COUNT 30u
+#define CSB_V1_CSBWIN_LAYOUT_0232_OBJECT_GRAPHIC_FIRST 42u
 #define CSB_V1_CSBWIN_LAYOUT_0232_VIEWPORT_PALETTE_COUNT 6u
 #define CSB_V1_CSBWIN_LAYOUT_0232_PALETTE_COLOR_COUNT 16u
 
@@ -80,6 +83,18 @@ typedef struct {
         CSB_V1_CSBWIN_LAYOUT_0232_HUD_MATERIAL_COUNT];
 } CSB_V1_CSBWinHudMaterialPlan0232;
 
+/* CSBWin Character.cpp::DrawItem takes a 16x16 icon from C042..C048.
+ * The C232 Word612 table supplies the first object-name index in each atlas;
+ * IconDisplay[8..37] supplies the corresponding inventory destinations in
+ * the 224x136 C017 viewport. */
+typedef struct {
+    int valid;
+    uint16_t graphic_index;
+    uint16_t source_x;
+    uint16_t source_y;
+    CSB_V1_CSBWinIconDisplay0232 destination;
+} CSB_V1_CSBWinInventoryIconMaterial0232;
+
 /* A source image resolver is deliberately supplied by the caller.  C232 is
  * a layout record; it never owns a synthetic replacement for a missing
  * GRAPHICS.DAT image.  Pixels stay valid for the whole composition call. */
@@ -123,6 +138,14 @@ int csb_v1_csbwin_layout_0232_rect_is_screen_valid(
 int csb_v1_csbwin_layout_0232_build_hud_material_plan(
     const CSB_V1_CSBWinLayout0232 *layout,
     CSB_V1_CSBWinHudMaterialPlan0232 *out_plan);
+
+/* Build the precise source-atlas crop and C017-local destination used by
+ * DrawItem(squareNumber = source_slot + 8, object_name_index).  The caller
+ * owns the actual source pixels and must reject an unresolved atlas. */
+int csb_v1_csbwin_layout_0232_build_inventory_icon_material(
+    const CSB_V1_CSBWinLayout0232 *layout, uint16_t source_slot,
+    uint16_t object_name_index,
+    CSB_V1_CSBWinInventoryIconMaterial0232 *out_material);
 
 /* Atomically overlay C232's original indexed HUD materials onto a 320x200
  * logical frame. Every one of the ten original records must resolve with

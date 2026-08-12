@@ -3755,6 +3755,64 @@ static int m11_csb_csbwin_hud_source_resolver(
     return 1;
 }
 
+/* CSBWin Character.cpp::DisplayBackpackItem calls DrawItem for raw M516
+ * slots C00..C29 while C017 owns the empty panel.  Draw only a source-proven
+ * occupied icon here: C232 supplies both the IconDisplay destination and the
+ * C042..C048 atlas selection, so the PC3.4 object-icon zone is never used. */
+static int m11_csb_compose_csbwin_inventory_icons(
+    M11_GameViewState *state, const CSB_V1_BootProfile *profile,
+    const CSB_V1_CSBWinLayout0232 *layout, uint8_t *pixels)
+{
+    const struct ChampionState_Compat *champion;
+    int source_slot;
+
+    if (!state || !profile || !layout || !layout->valid || !pixels ||
+        state->world.party.activeChampionIndex < 0 ||
+        state->world.party.activeChampionIndex >= state->world.party.championCount ||
+        state->world.party.activeChampionIndex >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+    champion = &state->world.party.champions[
+        state->world.party.activeChampionIndex];
+    if (!champion->present || champion->hp.current == 0u) return 0;
+    for (source_slot = 0;
+         source_slot < (int)CSB_V1_CSBWIN_LAYOUT_0232_INVENTORY_SLOT_COUNT;
+         ++source_slot) {
+        int m11_slot = m11_csb_mapped_inventory_slot(source_slot);
+        unsigned short thing;
+        int object_name_index;
+        CSB_V1_CSBWinInventoryIconMaterial0232 material;
+        const uint8_t *source_pixels = NULL;
+        int source_width = 0;
+        int source_height = 0;
+        int row;
+
+        if (m11_slot < 0 || m11_slot >= CHAMPION_SLOT_COUNT) return 0;
+        thing = champion->inventory[m11_slot];
+        if (thing == THING_NONE || thing == THING_ENDOFLIST) continue;
+        object_name_index = csb_v1_boot_runtime_object_icon_index_pc34(
+            profile, thing);
+        if (object_name_index < 0 || !csb_v1_csbwin_layout_0232_build_inventory_icon_material(
+                layout, (uint16_t)source_slot,
+                (uint16_t)object_name_index, &material) || !material.valid ||
+            !m11_csb_csbwin_hud_source_resolver(
+                state, material.graphic_index, &source_pixels, &source_width,
+                &source_height) || !source_pixels || material.source_x + 16u >
+                (uint16_t)source_width || material.source_y + 16u >
+                (uint16_t)source_height) {
+            return 0;
+        }
+        for (row = 0; row < 16; ++row) {
+            memcpy(pixels + (size_t)(33 + material.destination.pixel_y + row) *
+                       320u + (size_t)(48 + material.destination.pixel_x),
+                   source_pixels + (size_t)(material.source_y + row) *
+                       (size_t)source_width + material.source_x,
+                   16u);
+        }
+    }
+    return 1;
+}
+
 /* The Atari/CSBWin startup route has no PC34 C017/C040 terminal page.  Its
  * real runtime HUD owner is instead the C232 coordinate record plus the
  * source graphics it references.  Present that complete, atomic layer after
@@ -3812,9 +3870,10 @@ static int m11_csb_present_atari_st_runtime_hud(
          * and its first paint operation is TAG022a60(17, d.pViewportBMP).
          * C017 is therefore an original 224x136 replacement for the C0128
          * viewport at (48,33), not an extra C232 HUD material.  The later
-         * health/stamina/mana, backpack-item and character-state draws have
-         * their own CSBWin geometry and owners; do not approximate them with
-         * the PC3.4 panel renderer here. */
+         * health/stamina/mana and character-state draws have their own
+         * CSBWin geometry and owners; do not approximate them with the PC3.4
+         * panel renderer here. Backpack items are the exception: C232 owns
+         * both their geometry and their seven source atlas groups. */
         if (!m11_csb_csbwin_hud_source_resolver(
                 state, 17u, &inventory_pixels, &inventory_width,
                 &inventory_height) || inventory_width != 224 ||
@@ -3824,6 +3883,10 @@ static int m11_csb_present_atari_st_runtime_hud(
         for (row = 0; row < inventory_height; ++row) {
             memcpy(candidate + (size_t)(33 + row) * 320u + 48u,
                    inventory_pixels + (size_t)row * 224u, 224u);
+        }
+        if (!m11_csb_compose_csbwin_inventory_icons(state, profile, &layout,
+                                                     candidate)) {
+            return 0;
         }
     }
     for (y = 0; y < 200; ++y) {

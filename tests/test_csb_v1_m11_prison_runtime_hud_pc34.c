@@ -10,6 +10,7 @@
 #include "asset_loader_m11.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_csbwin_layout_0232.h"
+#include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_atari_save_runtime_handoff_pc34_compat.h"
 #include "csb_v1_f0070_champion_formation_pc34_compat.h"
 #include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
@@ -171,13 +172,17 @@ static int check_atari_st_c232_hud_frame(const char *graphics_path,
 }
 
 /* CSBWin CSBCode.cpp::ShowHideInventory begins by copying C017 to the
- * C0128 viewport. The following health/stamina/mana and backpack draws have
- * separate owners, so this checks only the one complete source raster that
- * this runtime route is allowed to publish today. */
-static int check_atari_st_c017_inventory_viewport(const char *graphics_path,
-                                                   const unsigned char *framebuffer)
+ * C0128 viewport. Character state and health/stamina/mana retain separate
+ * owners, but backpack icons are DrawItem crops from C232's atlas geometry;
+ * this checks the complete source-owned layer that this route publishes. */
+static int check_atari_st_c017_inventory_viewport(
+    const char *graphics_path, const M11_GameViewState *view,
+    const unsigned char *framebuffer)
 {
     unsigned char *expected = NULL;
+    CSB_V1_CSBWinLayout0232 layout;
+    const CSB_V1_BootProfile *profile;
+    const struct ChampionState_Compat *champion;
     int width = 0;
     int height = 0;
     int row;
@@ -185,12 +190,59 @@ static int check_atari_st_c017_inventory_viewport(const char *graphics_path,
     CSB_V1_StartupGraphicDecodeReceipt_PC34 receipt;
 
     memset(&receipt, 0, sizeof(receipt));
-    if (!graphics_path || !framebuffer ||
+    if (!graphics_path || !view || !framebuffer || !view->csbBootProfile ||
         !csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
             graphics_path, 17u, &expected, &width, &height, &receipt) ||
-        !receipt.valid || width != 224 || height != 136) {
+        !receipt.valid || width != 224 || height != 136 ||
+        !csb_v1_csbwin_layout_0232_read_graphics_dat(graphics_path, &layout) ||
+        !layout.valid || view->world.party.activeChampionIndex < 0 ||
+        view->world.party.activeChampionIndex >= view->world.party.championCount ||
+        view->world.party.activeChampionIndex >= CHAMPION_MAX_PARTY) {
         free(expected);
         return 0;
+    }
+    profile = (const CSB_V1_BootProfile *)view->csbBootProfile;
+    champion = &view->world.party.champions[
+        view->world.party.activeChampionIndex];
+    for (int source_slot = 0;
+         source_slot < (int)CSB_V1_CSBWIN_LAYOUT_0232_INVENTORY_SLOT_COUNT;
+         ++source_slot) {
+        const int m11_slot = csb_v1_runtime_m11_inventory_slot_for_csb_slot_pc34(
+            source_slot);
+        const unsigned short thing = (m11_slot >= 0 &&
+            m11_slot < CHAMPION_SLOT_COUNT) ? champion->inventory[m11_slot] :
+            THING_NONE;
+        int object_name_index;
+        CSB_V1_CSBWinInventoryIconMaterial0232 material;
+        unsigned char *atlas = NULL;
+        int atlas_width = 0;
+        int atlas_height = 0;
+
+        if (thing == THING_NONE || thing == THING_ENDOFLIST) continue;
+        object_name_index = csb_v1_boot_runtime_object_icon_index_pc34(
+            profile, thing);
+        memset(&material, 0, sizeof(material));
+        memset(&receipt, 0, sizeof(receipt));
+        if (object_name_index < 0 ||
+            !csb_v1_csbwin_layout_0232_build_inventory_icon_material(
+                &layout, (uint16_t)source_slot,
+                (uint16_t)object_name_index, &material) || !material.valid ||
+            !csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+                graphics_path, material.graphic_index, &atlas, &atlas_width,
+                &atlas_height, &receipt) || !receipt.valid || !atlas ||
+            material.source_x + 16u > (uint16_t)atlas_width ||
+            material.source_y + 16u > (uint16_t)atlas_height) {
+            free(atlas);
+            free(expected);
+            return 0;
+        }
+        for (row = 0; row < 16; ++row) {
+            memcpy(expected + (size_t)(material.destination.pixel_y + row) *
+                       224u + material.destination.pixel_x,
+                   atlas + (size_t)(material.source_y + row) *
+                       (size_t)atlas_width + material.source_x, 16u);
+        }
+        free(atlas);
     }
     matches = 1;
     for (row = 0; row < height; ++row) {
@@ -376,8 +428,8 @@ int main(void)
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, 320, 200);
         CHECK(profile && check_atari_st_c017_inventory_viewport(
-                             profile->graphics_path, framebuffer),
-              "stock CSBWin F1 presents source C017 in the inventory viewport");
+                             profile->graphics_path, &view, framebuffer),
+              "stock CSBWin F1 presents source C017 and C232 object icons");
         CHECK(M11_GameView_HandleInput(
                   &view, M12_MENU_INPUT_CHAMPION_2_INVENTORY) ==
                   M11_GAME_INPUT_REDRAW && view.inventoryPanelActive &&
@@ -386,8 +438,8 @@ int main(void)
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, 320, 200);
         CHECK(profile && check_atari_st_c017_inventory_viewport(
-                             profile->graphics_path, framebuffer),
-              "stock CSBWin F2 keeps source C017 in the inventory viewport");
+                             profile->graphics_path, &view, framebuffer),
+              "stock CSBWin F2 keeps source C017 and C232 object icons");
         CHECK(M11_GameView_HandleInput(
                   &view, M12_MENU_INPUT_CHAMPION_2_INVENTORY) ==
                   M11_GAME_INPUT_REDRAW && !view.inventoryPanelActive,

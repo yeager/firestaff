@@ -1002,8 +1002,11 @@ int main(void)
     put_be16(graphic, 914u + 45u * 6u, 224);
     put_be16(graphic, 914u + 45u * 6u + 2u, 96);
     put_be16(graphic, 914u + 45u * 6u + 4u, 179);
-    put_be16(graphic, 1218u, 0);
-    put_be16(graphic, 1218u + 12u, 96);
+    for (index = 0; index < 7; ++index) {
+        put_be16(graphic, 1218u + (size_t)index * 2u, index * 16);
+    }
+    put_be16(graphic, 914u + 8u * 6u, 12);
+    put_be16(graphic, 914u + 8u * 6u + 2u, 24);
     put_be16(graphic, 1280u, 0x0123);
     put_be16(graphic, 1280u + 2u * 16u + 30u, 0x0765);
     put_be16(graphic, 1534u, 1);
@@ -1103,6 +1106,21 @@ int main(void)
           plan.entries[4].destination.y1 == 69);
     CHECK(plan.entries[9].graphic_index == 9u &&
           plan.entries[9].destination.y1 == 160);
+    {
+        CSB_V1_CSBWinInventoryIconMaterial0232 material;
+        CHECK(csb_v1_csbwin_layout_0232_build_inventory_icon_material(
+            &layout, 0u, 17u, &material));
+        CHECK(material.valid && material.graphic_index == 43u &&
+              material.source_x == 16u && material.source_y == 0u &&
+              material.destination.pixel_x == 12 &&
+              material.destination.pixel_y == 24);
+        CHECK(csb_v1_csbwin_layout_0232_build_inventory_icon_material(
+            &layout, 29u, 99u, &material));
+        CHECK(material.valid && material.graphic_index == 48u &&
+              material.source_x == 48u && material.source_y == 0u);
+        CHECK(!csb_v1_csbwin_layout_0232_build_inventory_icon_material(
+            &layout, 30u, 0u, &material));
+    }
     check_hud_composition(&plan);
     layout.magic_box.y2 = 200;
     CHECK(!csb_v1_csbwin_layout_0232_rect_is_screen_valid(&layout.magic_box));

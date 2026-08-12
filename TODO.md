@@ -1398,10 +1398,12 @@
   F2 växlar till den andra och ett nytt F2 stänger samma panel. GAMEBLOCK-
   spegeln får uppdatera roster/data men inte skriva över PANEL.C:s öppna
   championordinal. 2026-08-12: CSBWin `ShowHideInventory`-pariteten täcker
-  även dess första synliga transaktion: originalets C017 blittras exakt till
-  C0128-viewporten `(48,33)` för F1 och F2, och stängning återställer hela
-  C232-HUD:n. Senare stats-/backpack-ritning har egna CSBWin-geometrier och
-  objektägare och hålls stängd i stället för att återanvända PC3.4-panelen.
+  originalets C017 till C0128-viewporten `(48,33)` för F1 och F2, C232:s
+  verkliga `IconDisplay[8..37]` och de sju C042–C048-atlaserna för varje
+  upptagen M516 C00..C29-slot. Den riktiga legacy-CSBWin-saven verifierar
+  hela detta lager byte för byte; stängning återställer C232-HUD:n. Stats,
+  health/stamina/mana och character-state har egna CSBWin-ägare och hålls
+  fortsatt stängda i stället för att återanvända PC3.4-panelen.
 
 - 🔧 PC34:s Utility-import kan nu i den opt-in-bundna realdatakedjan läsa en
   klassificerad original-`DMSAVE.DAT` tillsammans med den hashverifierade

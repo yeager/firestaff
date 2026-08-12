@@ -271,6 +271,50 @@ int csb_v1_csbwin_layout_0232_build_hud_material_plan(
     return out_plan->valid;
 }
 
+int csb_v1_csbwin_layout_0232_build_inventory_icon_material(
+    const CSB_V1_CSBWinLayout0232 *layout, uint16_t source_slot,
+    uint16_t object_name_index,
+    CSB_V1_CSBWinInventoryIconMaterial0232 *out_material)
+{
+    size_t group;
+    uint16_t relative_index;
+    const CSB_V1_CSBWinIconDisplay0232 *destination;
+
+    if (!out_material) return 0;
+    memset(out_material, 0, sizeof(*out_material));
+    if (!layout || !layout->valid ||
+        source_slot >= CSB_V1_CSBWIN_LAYOUT_0232_INVENTORY_SLOT_COUNT ||
+        layout->object_graphic_first[0] != 0u) {
+        return 0;
+    }
+    group = 0u;
+    for (size_t index = 1u;
+         index < CSB_V1_CSBWIN_LAYOUT_0232_OBJECT_GRAPHIC_GROUPS; ++index) {
+        if (layout->object_graphic_first[index] <=
+                layout->object_graphic_first[index - 1u]) {
+            return 0;
+        }
+        if (object_name_index >= layout->object_graphic_first[index]) {
+            group = index;
+        }
+    }
+    relative_index = (uint16_t)(object_name_index -
+        layout->object_graphic_first[group]);
+    destination = &layout->icon_display[
+        CSB_V1_CSBWIN_LAYOUT_0232_INVENTORY_SLOT_FIRST + source_slot];
+    if (destination->pixel_x < 0 || destination->pixel_y < 0 ||
+        destination->pixel_x > 208 || destination->pixel_y > 120) {
+        return 0;
+    }
+    out_material->graphic_index =
+        (uint16_t)(CSB_V1_CSBWIN_LAYOUT_0232_OBJECT_GRAPHIC_FIRST + group);
+    out_material->source_x = (uint16_t)((relative_index & 15u) * 16u);
+    out_material->source_y = (uint16_t)((relative_index & 0xfff0u));
+    out_material->destination = *destination;
+    out_material->valid = 1;
+    return 1;
+}
+
 static uint32_t csb_v1_csbwin_layout_0232_hash_bytes(
     uint32_t hash, const uint8_t *bytes, size_t size)
 {
