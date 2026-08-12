@@ -179,6 +179,15 @@ staging and records source-file provenance only after commit. This evidence is
 limited to the legacy non-extended save; Extended Features/DSA handoff and
 effects remain separately authenticated and fail closed without their corpus.
 
+The current CSBWin write boundary is deliberately narrower than its resume
+boundary. Firestaff can make a byte-identical, provenance-checked copy of an
+authenticated legacy CSBWin save, and it can export a bounded core image for
+decoder tests. It must not present either operation as F0433 Save and Play:
+the variable saved-dungeon, timer, queue and optional EXPOOL/DSA payloads have
+not yet been reconstructed into a complete CSBWin writer. A resumed CSBWin
+session therefore keeps native saving fail closed rather than producing a
+plausible but incomplete `CSBGAME*.DAT`.
+
 ## Reference Limits
 
 ReDMCSB and CSBWin answer different questions. ReDMCSB is the primary source

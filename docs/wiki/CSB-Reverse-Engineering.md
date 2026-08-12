@@ -224,6 +224,15 @@ behavior (DSA execution, extended timers).
 Test coverage: 32 save/Utility Disk files (Q-CSB-09), 15 of which are
 executable test binaries; all pass.
 
+For a legacy CSBWin source artifact, `csb_v1_runtime_export_csbwin_source_save_to_path()`
+is intentionally a provenance-checked byte copy with source-slot backup
+rotation. `csb_v1_runtime_export_csbwin_core_save_to_path()` writes only the
+bounded core used by decoder tests. Neither is a user-facing F0433 writer: a
+complete CSBWin save also owns its saved dungeon, timer array, heap order and
+possibly EXPOOL/DSA continuation data. Until those sections can be rebuilt and
+verified together, M11 rejects Save and Play for a resumed CSBWin GAMEBLOCK
+instead of emitting an incomplete `CSBGAME*.DAT`.
+
 ### Timer queue restart boundary
 
 For a resumed CSBWin save, `TIMER`/`TimerQueue` state remains source-owned:
