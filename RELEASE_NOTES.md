@@ -6,6 +6,8 @@
 
 ## DM2
 
+- `DM2 0x04 actuator timers`: Remove the incomplete wall/floor timer-byte mutation path from the production runtime. Timers now remain fail-closed until the original GAME_LOAD DB3/DB14/DB0 transaction is restored as one authenticated session owner.
+
 - `DM2 Macintosh save-corpus byte order`: Route the shared SKSave corpus gate
   through an explicit big-endian raw-body reader for the Macintosh profile;
   DOS keeps the explicit little-endian path. The candidate receipt now retains
