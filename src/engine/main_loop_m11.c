@@ -6405,9 +6405,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             /* CSB never had an original DOS release.  Say that explicitly
              * instead of leaving an apparent generic platform error which
              * could invite a caller to substitute the same-hash Atari ST
-             * GRAPHICS.DAT or a stale materialized cache.  CSBWin remains a
-             * separately authenticated compatibility/save boundary; it is
-             * not an original DOS catalogue row. */
+             * GRAPHICS.DAT or a stale materialized cache.  CSBWin is a
+             * source/disassembly reference, not a Firestaff PC catalogue
+             * row or a substitute game package. */
             if (o->gameId && strcmp(o->gameId, "csb") == 0 &&
                 o->architectureOverride == M12_ARCH_PC) {
                 fprintf(stderr,

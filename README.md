@@ -35,7 +35,7 @@ separates source/disassembly evidence, real-media receipts and open routes.
 | Game | Current scope |
 |---|---|
 | Dungeon Master | Playable PC DOS 3.4 route. Atari ST media has its own native graphics decoder and launch path; further parity work continues. |
-| Chaos Strikes Back | Native Amiga is the default route when verified media is available. Atari ST and FM Towns have their own native data and startup paths; a stock legacy CSBWin save is verified through both menu and CLI when paired with matching Atari ST data. The Atari C017 inventory uses its original C232/C042–C048 icon atlas, including empty-slot symbols; the transient attacking-hand overlay and campaign parity remain open. |
+| Chaos Strikes Back | Native Amiga is the default route when verified media is available. Atari ST and FM Towns have their own native data and startup paths. CSBWin is used only as source/disassembly evidence; it is not a Firestaff game route. The Atari C017 inventory uses its original C232/C042–C048 icon atlas, including empty-slot symbols; the transient attacking-hand overlay and campaign parity remain open. |
 | Dungeon Master II: Skullkeep | DOS and FM Towns have verified runtime slices. Amiga is a separate data path. Both authentic English Mac versions boot and pass bounded New Game/media/input tests; full Mac Resume and native drag/drop remain closed. |
 | DM Nexus | Japanese Saturn real-data route reaches bounded phase launch; full playability and visible material/audio parity remain open. |
 | Theron's Quest | Japanese and US Track 02 media/parser routes are admitted and source-checked; game-owned dungeon handoff and full playability remain open. |
@@ -70,7 +70,7 @@ matching data is present:
 | Amiga 3.1 and 3.5 | Default CSB route when a verified native program handoff is available. Native startup, entrance, supported HUD and viewport material use the Amiga data path. |
 | Atari ST 2.0 and 2.1 | Native media uses its own animation, runtime, HUD and supported viewport-material routes. |
 | FM Towns English and Japanese | Native CD installations use their version-specific Towns packages for the supported title, Game and Utility routes. |
-| DOS / PC | No original CSB release exists. `--platform pc` fails closed; CSBWin files are a separately authenticated compatibility/save reference, not a DOS game edition. |
+| DOS / PC | No original CSB release exists. `--platform pc` fails closed. CSBWin is a source/disassembly reference only, not a game edition or runtime route. |
 | PC-9801 Japanese 3.1 | Not supported. The media is retained only as preservation reference and cannot select an M11 data, startup, gameplay or input route. |
 | X68000 Japanese 3.1 | Not supported. The media is retained only as preservation reference and does not select an M11 data, startup or gameplay route. |
 
@@ -92,8 +92,9 @@ firestaff --game csb --data-dir /path/to/CSB --save /path/to/CSBGAME2.DAT
 The loader validates the full save body and source provenance before starting.
 It does not treat an arbitrary 512-byte header, renamed copy, compact roster,
 or `DMSAVE.*` file as a CSB resume. Extended Features/DSA saves remain
-fail-closed pending authenticated real-save coverage; the legacy path must not
-be read as a claim of complete CSBWin compatibility.
+fail-closed pending authenticated real-save coverage; its behavior is
+source-locked against CSBWin reference code and does not create a CSBWin game
+route.
 
 ## Your game data
 
@@ -139,7 +140,7 @@ local data directory; repository CI enforces this boundary.
 | Game | Playable | Verified runtime routes | Data/preservation only | Unsupported |
 |---|---|---|---|---|
 | DM1 | PC DOS 3.4 | Atari ST | Amiga, FM Towns, PC-9801 preservation | X68000 |
-| CSB | — | Atari ST, Amiga, FM Towns | CSBWin compatibility/save reference | PC-9801, X68000 |
+| CSB | — | Atari ST, Amiga, FM Towns | CSBWin source/disassembly reference | PC-9801, X68000 |
 | DM2 | — | DOS, FM Towns, Mac retail, Mac First Chapter demo | Amiga, Mac JP/FR | X68000 |
 | Nexus | — | Saturn Japanese bounded phase launch | Saturn demo/fan translations | — |
 | Theron's Quest | — | — | PC Engine/TurboGrafx US and Japanese Track 02 routes | — |
@@ -186,8 +187,8 @@ hash-verified Japanese FM Towns package and fails if that original package is
 not present; it never guesses from the host language or falls back to F31E.
 CSB has no original DOS/PC edition: `--game csb --platform pc` is deliberately
 rejected and cannot reuse Atari ST material that happens to share a graphics
-hash. CSBWin data is handled only by its authenticated compatibility/save
-boundary, not as a substitute DOS release.
+hash. CSBWin is source/disassembly evidence only, not a substitute DOS release
+or a Firestaff data/runtime route.
 `--csb-utility-disk` opens the separately preserved FM Towns C06 Utility Disk
 after the normal verified CSB F31 boot; it implies `--game csb --platform
 fm-towns` and fails closed if that package is unavailable. The start menu also

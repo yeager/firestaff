@@ -9,8 +9,8 @@
   than selecting a same-hash Atari ST package or stale asset cache. CTest
   `csb_v1_pc_platform_rejected` checks the nonzero result, exact boundary
   message, absence of `CSB READY`, and absence of `csb-st`/`csb-pc` runtime
-  cache selection. CSBWin remains a distinct authenticated compatibility/save
-  reference and is not represented as DOS support.
+  cache selection. CSBWin remains a source/disassembly reference only and is
+  not represented as DOS support or a Firestaff PC runtime.
 
 - ✅ Atari ST/CSBWin-inventariet använder nu originalets C232- och
   C042–C048-ägda tomslottsikoner, inklusive skadad hand-/klädslottsvariant och

@@ -20,15 +20,10 @@ the current source, format and real-media boundary for every game.
 
 ## CSB boundary in brief
 
-The verified stock CSBWin path is deliberately narrow: a matching Atari ST
-2.0/2.1 `GRAPHICS.DAT`/`DUNGEON.DAT` pair plus an original-named, complete
-legacy CSBWin save can resume through either the start menu or
-`--game csb --save`.  The tested source save has two champions and the legacy
-10-byte timer representation.  That is a real-data resume receipt, not a
-claim of complete CSBWin compatibility: Extended Features, DSA world effects,
-and unsupported save shapes remain fail-closed until an authenticated corpus
-and source-bound runtime evidence are available.  PC-9801 and X68000 are not
-supported CSB platforms.
+CSBWin is retained as a source/disassembly reference for engine and format
+research. It is not game data, not a Firestaff PC route, and cannot make CSB
+into a DOS title: CSB has no original DOS release and `--platform pc` remains
+closed. PC-9801 and X68000 are also unsupported CSB platforms.
 
 ## Shared presentation priority
 
