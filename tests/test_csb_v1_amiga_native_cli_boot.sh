@@ -66,12 +66,12 @@ runtime_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
 }
 
 case "$runtime_output" in
-    *"phase=inactive"*"startupActive=0"*"levelLoaded=1"*"runtimeTick="*) ;;
+    *"phase=inactive"*"startupActive=0"*"levelLoaded=1"*"party=9,1,2"*"runtimeTick="*) ;;
     *)
-        echo "FAIL: native Amiga CSB CLI boot did not reach its runtime" >&2
+        echo "FAIL: native Amiga CSB CLI route did not consume its first UP movement" >&2
         printf '%s\n' "$runtime_output" >&2
         exit 1
         ;;
 esac
 
-echo "PASS: native CSB Amiga CLI title input reaches the verified runtime"
+echo "PASS: native CSB Amiga CLI title input reaches verified runtime movement"

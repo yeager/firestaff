@@ -1360,7 +1360,11 @@
   C004-Prison-ytan, C002/C003-dörrkedjan, C005-credits och C407/C411-klickzonerna
   är nu bundna till A31/A35:s egna data; C409 Resume är fortsatt stängd utan
   en verifierad originalsave. Utility-diskens filväljare saknar däremot ännu
-  en fullständig Amiga-konsument och corpusbevis.
+  en fullständig Amiga-konsument och corpusbevis. **2026-08-12:** den
+  verkliga A31 CLI-regressionen fortsätter därefter genom titelinput och en
+  `UP`-rörelse: stockruttens `(9,0,2)` når `(9,1,2)` medan den egna 50 Hz
+  runtimeklockan fortgår. Därmed är det ett runtime-inmatningsbevis, inte
+  endast en A31-titelcapture.
   Den sista DL-posten läser utanför FTL-itemet i originalprogrammet och
   lämnas därför synligt på senast kompletta originalbild tills en autentisk
   allocationscapture finns. A31E har ingen TITL/APPA-kedja: dess egen,
