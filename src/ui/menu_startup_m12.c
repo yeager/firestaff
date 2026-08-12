@@ -684,6 +684,7 @@ static const M12_MenuEntry g_entryTemplate[] = {
     {.title = _("DUNGEON MASTER NEXUS"), .gameId = "nexus", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
     /* BLOCKED_ON_REFERENCE: no source; TurboGrafx-16 / PC Engine release (Hudson Soft, 1992). */
     {.title = _("THERON'S QUEST"), .gameId = "theron", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
+    {.title = _("CSB UTILITY DISK — HINT ORACLE"), .gameId = "csb-hint-oracle", .kind = M12_MENU_ENTRY_CSB_HINT_ORACLE, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 0},
     {.title = _("MUSEUM OF LORE"), .gameId = NULL, .kind = M12_MENU_ENTRY_MUSEUM, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 1},
     {.title = _("SETTINGS"), .gameId = NULL, .kind = M12_MENU_ENTRY_SETTINGS, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 1}
 };
@@ -1662,6 +1663,11 @@ static void m12_sync_entries_from_assets(M12_StartupMenuState* state) {
                 m12_game_supported(state->entries[i].gameId) &&
                 M12_AssetStatus_GameAvailable(&state->assetStatus,
                                               state->entries[i].gameId);
+        } else if (state->entries[i].kind == M12_MENU_ENTRY_CSB_HINT_ORACLE) {
+            /* It is a separately distributed Utility Disk program, not a
+             * normal CSB game corpus. Keep the entry visible and let the
+             * shared M11 handoff hash-admit its exact R1 files on activation. */
+            state->entries[i].available = 1;
         }
     }
 }
@@ -5291,6 +5297,19 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
                                                  g_museumCategories[state->museumSelectedIndex].pageCount);
         return;
     }
+    if (entry->kind == M12_MENU_ENTRY_CSB_HINT_ORACLE) {
+        if (entry->available) {
+            state->activatedIndex = state->selectedIndex;
+            state->launchRequested = 0;
+            state->csbHintOracleLaunchRequested = 1;
+            return;
+        }
+        m12_enter_message_view(state);
+        state->messageLine1 = m12_tr(state, "DATA FILES NOT FOUND");
+        state->messageLine2 = "CSB UTILITY DISK (ATARI R1) REQUIRED";
+        state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
+        return;
+    }
     state->activatedIndex = state->selectedIndex;
     if (entry->available) {
         int gi = m12_clamp_index(state->selectedIndex, M12_CONFIG_GAME_COUNT);
@@ -7348,6 +7367,9 @@ static const char* m12_game_card_line1(const M12_MenuEntry* entry) {
     if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
         return "CONFIG";
     }
+    if (entry->kind == M12_MENU_ENTRY_CSB_HINT_ORACLE) {
+        return "CSB UTILITY";
+    }
     if (entry->gameId && strcmp(entry->gameId, "dm1") == 0) {
         return "DM1";
     }
@@ -7375,6 +7397,9 @@ static const char* m12_game_card_line2(const M12_StartupMenuState* state,
     if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
         return "PERSISTED";
     }
+    if (entry->kind == M12_MENU_ENTRY_CSB_HINT_ORACLE) {
+        return "ATARI R1 HINT ORACLE";
+    }
     return m12_selected_version_label(state, gameIndex, 1);
 }
 
@@ -7387,6 +7412,9 @@ static const char* m12_game_card_line3(const M12_StartupMenuState* state,
     }
     if (entry->kind == M12_MENU_ENTRY_SETTINGS) {
         return _("SETTINGS");
+    }
+    if (entry->kind == M12_MENU_ENTRY_CSB_HINT_ORACLE) {
+        return _("SELECT TO VERIFY ORIGINAL DATA");
     }
     version = m12_selected_version_status(state, gameIndex);
     if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
@@ -7434,6 +7462,10 @@ static void m12_format_hash_summary(const M12_MenuEntry* entry,
         snprintf(out, outSize, "PROFILE AND DATA PATH");
         return;
     }
+    if (entry->kind == M12_MENU_ENTRY_CSB_HINT_ORACLE) {
+        snprintf(out, outSize, "HCSB.HTC + HCSB.DAT + MINI.DAT");
+        return;
+    }
     hashCount = (unsigned long)M12_AssetStatus_GameKnownHashCount(entry->gameId);
     verifiedFiles = (unsigned long)M12_AssetStatus_GameVerifiedFileCount(entry->gameId);
     requiredFiles = (unsigned long)M12_AssetStatus_GameRequiredFileCount(entry->gameId);
@@ -7463,7 +7495,8 @@ static void m12_draw_box_motif(unsigned char* framebuffer,
                                int h,
                                const M12_MenuEntry* entry,
                                unsigned char accent) {
-    if (!entry || entry->kind == M12_MENU_ENTRY_SETTINGS) {
+    if (!entry || entry->kind == M12_MENU_ENTRY_SETTINGS ||
+        entry->kind == M12_MENU_ENTRY_CSB_HINT_ORACLE) {
         m12_draw_frame(framebuffer, framebufferWidth, framebufferHeight, x + 10, y + 6, w - 20, h - 12, M12_COLOR_LIGHT_CYAN, M12_COLOR_BLACK);
         m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 16, y + 12, w - 32, 4, accent);
         m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight, x + 16, y + 22, w - 24, 4, M12_COLOR_DARK_GRAY);
@@ -7504,7 +7537,9 @@ static void m12_draw_card_preview(unsigned char* framebuffer,
                                   int h,
                                   unsigned char fill,
                                   unsigned char accent) {
-    if (entry && entry->kind != M12_MENU_ENTRY_SETTINGS && art && M12_CardArt_HasImage(art)) {
+    if (entry && entry->kind != M12_MENU_ENTRY_SETTINGS &&
+        entry->kind != M12_MENU_ENTRY_CSB_HINT_ORACLE &&
+        art && M12_CardArt_HasImage(art)) {
         M12_CardArt_DrawPreview(art,
                                 framebuffer,
                                 framebufferWidth,
@@ -9941,6 +9976,9 @@ static const char* m12_entry_detail_line(const M12_MenuEntry* entry) {
     }
     if (entry->kind == M12_MENU_ENTRY_MUSEUM) {
         return "LORE, CREDITS, AND PRESERVATION NOTES";
+    }
+    if (entry->kind == M12_MENU_ENTRY_CSB_HINT_ORACLE) {
+        return "SELECT TO VERIFY ATARI R1 UTILITY DISK";
     }
     if (entry->available) {
         return "VERIFIED DATA READY";

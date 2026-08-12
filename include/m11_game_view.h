@@ -544,6 +544,7 @@ typedef enum {
                                * is still narrower than DM1, so M11 dispatch
                                * paths must not fall through to the DM1 world
                                * tick or loader when this source is active. */
+    M11_GAME_SOURCE_CSB_HINT_ORACLE,
     M11_GAME_SOURCE_DM2_BOOT /* DM2 V1 hand-off: M11 owns the launch but the
                               * actual game state + tick + rendering go
                               * through dm2_v1_boot_enter_game() and the
@@ -1500,6 +1501,9 @@ typedef struct {
      * csbBootProfile owns the live CSB_V1_RuntimeProfile and any loaded
      * DUNGEON.DAT handle. */
     void *csbBootProfile;     /* CSB_V1_BootProfile* */
+    /* Separate HINTLOAD/HINTMAIN Atari R1 program state. */
+    void *csbHintOracleRuntime;
+    void *csbHintOracleSaveInfo;
     /* Fresh CSB starts retain the source-owned C001--C040 session until
      * ENTRANCE.C F0807 has published the terminal live-HUD receipt. A
      * direct PC34 save restore is the documented LOADSAVE.C route and does
@@ -1938,6 +1942,9 @@ int M11_GameView_ResolveNexusRuntimeDataDir(const M11_GameLaunchSpec* spec,
 int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                                        const M12_StartupMenuState* menuState);
 int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir);
+int M11_GameView_StartCsbHintOracle(M11_GameViewState* state,
+                                    const char *dataDir,
+                                    const char *savePath);
 int M11_GameView_Dm1StartupIntroBypassed(const M11_GameViewState* state);
 int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                                      M11_BootProbeReceipt* out);

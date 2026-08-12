@@ -6900,6 +6900,18 @@ set(M11_SOURCES
     src/dm1/dm1_v1_custom_dungeon_loader.c
     src/dm1/dm1_v1_champion_status_layout_pc34_compat.c
     src/csb/csb_v1_boot.c
+    src/csb/csb_hint_oracle_atari_runtime.c
+    src/csb/csb_hint_oracle_atari_save_session.c
+    src/csb/csb_hint_oracle_session.c
+    src/csb/csb_hint_oracle_graphics_surface.c
+    src/csb/csb_hint_oracle_dat_real_scan.c
+    src/csb/csb_hint_oracle_dat.c
+    src/csb/csb_hint_oracle_htc.c
+    src/csb/csb_hint_oracle_htc_real_scan.c
+    src/csb/csb_hint_oracle_htc_variant.c
+    src/csb/csb_hint_oracle_ui_panel.c
+    src/csb/csb_hint_oracle_ui_runtime_binding.c
+    src/csb/csb_v1_atari_save_decode_pc34_compat.c
     src/csb/csb_v1_atari_st_animation_assets.c
     src/csb/csb_v1_audio_runtime_pc34_compat.c
     src/csb/csb_v1_atari_st_animation_discovery.c

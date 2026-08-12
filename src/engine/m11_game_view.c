@@ -30,6 +30,8 @@
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
 #include "csb_v1_boot.h"
+#include "csb_hint_oracle_atari_runtime.h"
+#include "csb_v1_atari_save_decode_pc34_compat.h"
 #include "csb_v1_fmtowns_cd.h"
 #include "csb_v1_fmtowns_graphics_dat.h"
 #include "csb_v1_fmtowns_portrait.h"
@@ -21401,6 +21403,14 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     if (!state) {
         return;
     }
+    if (state->csbHintOracleRuntime) {
+        csb_hint_oracle_atari_runtime_free(
+            (CSB_HintOracleAtariRuntime *)state->csbHintOracleRuntime);
+        free(state->csbHintOracleRuntime);
+        state->csbHintOracleRuntime = NULL;
+    }
+    free(state->csbHintOracleSaveInfo);
+    state->csbHintOracleSaveInfo = NULL;
     free(state->csbFmtownsUtilityJapanesePixels);
     state->csbFmtownsUtilityJapanesePixels = NULL;
     state->csbFmtownsUtilityJapaneseActive = 0;
@@ -23246,6 +23256,64 @@ int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir) {
         }
         return ok;
     }
+}
+
+static int m11_csb_hint_oracle_read_native_save(
+    const char *path, CSB_V1_AtariSaveInfo *out_info)
+{
+    FILE *file;
+    long size;
+    uint8_t *bytes;
+    int ok;
+    if (!path || !path[0] || !out_info || !(file = fopen(path, "rb"))) return 0;
+    if (fseek(file, 0, SEEK_END) != 0 || (size = ftell(file)) <= 0 ||
+        fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return 0;
+    }
+    bytes = (uint8_t *)malloc((size_t)size);
+    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
+        free(bytes);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    ok = csb_v1_atari_save_decode_pc34_compat(bytes, (size_t)size, out_info) ==
+         CSB_V1_ATARI_SAVE_OK;
+    free(bytes);
+    return ok;
+}
+
+int M11_GameView_StartCsbHintOracle(M11_GameViewState *state,
+                                    const char *dataDir,
+                                    const char *savePath)
+{
+    CSB_HintOracleAtariRuntime *runtime;
+    CSB_V1_AtariSaveInfo *save_info;
+    if (!state || !dataDir || !dataDir[0] || !savePath || !savePath[0]) return 0;
+    runtime = (CSB_HintOracleAtariRuntime *)calloc(1u, sizeof(*runtime));
+    save_info = (CSB_V1_AtariSaveInfo *)calloc(1u, sizeof(*save_info));
+    if (!runtime || !save_info) {
+        free(runtime);
+        free(save_info);
+        return 0;
+    }
+    csb_hint_oracle_atari_runtime_init(runtime);
+    if (csb_hint_oracle_atari_runtime_load_assets(runtime, dataDir, NULL, 8) !=
+            CSB_HINT_ORACLE_ATARI_RUNTIME_OK ||
+        !m11_csb_hint_oracle_read_native_save(savePath, save_info)) {
+        csb_hint_oracle_atari_runtime_free(runtime);
+        free(runtime);
+        free(save_info);
+        return 0;
+    }
+    state->csbHintOracleRuntime = runtime;
+    state->csbHintOracleSaveInfo = save_info;
+    state->active = 1;
+    state->sourceKind = M11_GAME_SOURCE_CSB_HINT_ORACLE;
+    snprintf(state->sourceId, sizeof(state->sourceId), "csb-hint-oracle-atari-r1");
+    m11_set_status(state, "CSB UTILITY DISK", "HINT ORACLE");
+    return 1;
 }
 
 int M11_GameView_Dm1StartupIntroBypassed(const M11_GameViewState* state) {
@@ -32449,6 +32517,18 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
 
     if (!state || !state->active || buttonMask == 0) {
         return M11_GAME_INPUT_IGNORED;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_HINT_ORACLE) {
+        CSB_HintOracleAtariRuntime *runtime =
+            (CSB_HintOracleAtariRuntime *)state->csbHintOracleRuntime;
+        CSB_V1_AtariSaveInfo *save_info =
+            (CSB_V1_AtariSaveInfo *)state->csbHintOracleSaveInfo;
+        if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0 || !runtime ||
+            csb_hint_oracle_atari_runtime_handle_click(runtime, x, y, save_info) !=
+                CSB_HINT_ORACLE_ATARI_RUNTIME_OK) return M11_GAME_INPUT_IGNORED;
+        if (runtime->session.state == CSB_HINT_ORACLE_SESSION_CLOSED)
+            return M11_GAME_INPUT_RETURN_TO_MENU;
+        return M11_GAME_INPUT_REDRAW;
     }
     state->pointerPositionKnown = 1;
     state->pointerX = x;
@@ -60257,6 +60337,28 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     int avgWater = 0;
     char champion[24];
     if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
+        return;
+    }
+    if (state && state->active &&
+        state->sourceKind == M11_GAME_SOURCE_CSB_HINT_ORACLE) {
+        const CSB_HintOracleAtariRuntime *runtime =
+            (const CSB_HintOracleAtariRuntime *)state->csbHintOracleRuntime;
+        uint8_t rgb6[256][3];
+        int color;
+        if (!runtime || csb_hint_oracle_atari_runtime_render_frame(
+                            runtime, framebuffer,
+                            (size_t)framebufferWidth * (size_t)framebufferHeight) !=
+                            CSB_HINT_ORACLE_ATARI_RUNTIME_OK) {
+            memset(framebuffer, 0,
+                   (size_t)framebufferWidth * (size_t)framebufferHeight);
+            return;
+        }
+        for (color = 0; color < 256; ++color) {
+            rgb6[color][0] = (uint8_t)(runtime->graphics.rgb4[(color & 15) * 3] * 4u);
+            rgb6[color][1] = (uint8_t)(runtime->graphics.rgb4[(color & 15) * 3 + 1] * 4u);
+            rgb6[color][2] = (uint8_t)(runtime->graphics.rgb4[(color & 15) * 3 + 2] * 4u);
+        }
+        (void)M11_Render_SetIndexedPaletteRgb6(rgb6);
         return;
     }
     /* The receipt is frame-local evidence from F0115's completed floor-item

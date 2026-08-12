@@ -84,7 +84,7 @@
       "id": "csb_v1_utility_disk_payloads",
       "priority": "P4",
       "status": "ACTIVE_BOUNDED",
-      "summary": "The Atari R1 Hint Oracle now joins hash-admitted HCSB.HTC/HCSB.DAT with an authenticated MINI.DAT coordinate receipt and renders all original 320x200 states: LOAD prompt, source-order list, no-clue acknowledgement and page. M11/M12 routing, original click/cadence capture and pixel-parity evidence remain open.",
+      "summary": "The Atari R1 Hint Oracle joins hash-admitted HCSB.HTC/HCSB.DAT with an authenticated MINI.DAT coordinate receipt and renders all original 320x200 states: LOAD prompt, source-order list, no-clue acknowledgement and page. M12's separate CSB Utility Disk entry and CLI --csb-hint-oracle route use the same M11 owner. Original click/cadence capture and pixel-parity evidence remain open.",
       "latestEvidence": [
         "TODO.md",
         "docs/FIRESTAFF_GAP_LIST.md",
@@ -93,7 +93,7 @@
         "CTest csb_v1_hint_oracle_dat_real",
         "CTest csb_hint_oracle_atari_runtime_unit"
       ],
-      "nextAction": "Bind the source-owned Atari R1 runtime to an M11/M12 Utility Disk entry, preserving HINTDATA.C click rectangles and HINTMAIN.C state/cadence; then compare captured original Hint Oracle frames before promoting pixel parity."
+      "nextAction": "Capture original Atari R1 Hint Oracle pointer/cadence traces and compare original frames against the routed runtime before promoting pixel parity."
     },
     {
       "id": "csb_v1_audio_timing",

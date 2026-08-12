@@ -55,7 +55,8 @@ typedef enum {
 typedef enum {
     M12_MENU_ENTRY_GAME = 0,
     M12_MENU_ENTRY_SETTINGS,
-    M12_MENU_ENTRY_MUSEUM
+    M12_MENU_ENTRY_MUSEUM,
+    M12_MENU_ENTRY_CSB_HINT_ORACLE
 } M12_MenuEntryKind;
 
 typedef enum {
@@ -572,8 +573,8 @@ typedef enum {
 } M12_SettingsTab;
 
 typedef struct M12_StartupMenuState {
-    M12_MenuEntry entries[7];
-    M12_GameCardArt cardArt[7];
+    M12_MenuEntry entries[8];
+    M12_GameCardArt cardArt[8];
     int selectedIndex;
     int settingsSelectedIndex;
     int settingsTabIndex;      /* 0=Display 1=Video 2=Audio 3=Misc */
@@ -585,6 +586,7 @@ typedef struct M12_StartupMenuState {
     int selectedGameId; /* which game is selected in game select */
     int shouldExit;
     int launchRequested;
+    int csbHintOracleLaunchRequested;
     int activatedIndex;
     M12_MenuView view;
     const char* messageLine1;

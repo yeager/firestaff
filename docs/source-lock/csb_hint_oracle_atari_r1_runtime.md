@@ -1,7 +1,7 @@
 # CSB Hint Oracle Atari R1 runtime source lock
 
-`CSB_HintOracleAtariRuntime` is the complete source-owned, non-launcher
-consumer for the documented Atari ST 2.0/2.1 Utility Disk R1 Oracle path.
+`CSB_HintOracleAtariRuntime` is the complete source-owned consumer for the
+documented Atari ST 2.0/2.1 Utility Disk R1 Oracle path.
 
 ## Admitted original inputs
 
@@ -48,8 +48,14 @@ staged receipt is map 4, x 22, y 18 with two matching hints.
 
 ## Remaining boundary
 
-This is a C runtime owner, not an M11/M12 menu feature. Its pointer dispatcher
-already uses the Atari R1 `HINTDATA.C` LOAD/LAST/NEXT/DONE/EXIT/OK and seven
-hint-row rectangles, then invokes the corresponding `HINTMAIN.C` transition.
-M11/M12 ownership, original event cadence, click capture and full frame pixel
-comparison must still be bound before a user-facing claim is made.
+Firestaff exposes the same runtime through both `--csb-hint-oracle --data-dir
+<root> --save <MINI.DAT>` and the `CSB UTILITY DISK — HINT ORACLE` start-menu
+entry. The latter binds `<selected-data-dir>/MINI.DAT`; both paths hash-admit
+the R1 HCSB pair before the native save decoder may provide the original LOAD
+control with a location receipt. Its pointer dispatcher uses the Atari R1
+`HINTDATA.C` LOAD/LAST/NEXT/DONE/EXIT/OK and seven hint-row rectangles, then
+invokes the corresponding `HINTMAIN.C` transition.
+
+Original event cadence, captured original clicks and full-frame pixel
+comparison remain open. The exposed route must not be presented as pixel
+parity until those recordings exist.

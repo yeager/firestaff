@@ -1,6 +1,6 @@
 # Firestaff TODO - Open Work
 
-# CSB Hint Oracle: Atari R1 original-media runtime is recovered; M11/M12 routing remains open (2026-08-12)
+# CSB Hint Oracle: Atari R1 original-media start routes are live; capture parity remains open (2026-08-12)
 
 - ✅ The real Utility Disk `HCSB.DAT` container now has a strict source-cited
   index: its duplicate big-endian size tables must agree and its segments must
@@ -51,9 +51,11 @@
   no-clue/OK och en sida med LAST/NEXT/DONE efter sidgränserna. Strängar,
   rutor och den ursprungliga fonten kommer från HINTDATA.C, HINTMAIN.C,
   HINTHINT.C och HINTTEXT.C. Originalmediaregressionen täcker varje läge.
-- 🔒 M11/M12-ägarskap, originalets händelsekadens och fångad
-  originalframe-pixelparitet återstår. R1-runtimevägen är en källägd
-  mottagare, inte ännu en synlig startväg för användaren.
+- ✅ Den synliga posten `CSB UTILITY DISK — HINT ORACLE` startar samma
+  källägd R1-runtime som CLI:t `--csb-hint-oracle --data-dir <root> --save
+  <MINI.DAT>`. Båda vägar hashverifierar `HCSB.HTC`/`HCSB.DAT` och avvisar en
+  icke-nativ `MINI.DAT` innan originalets LOAD-ruta får använda dess position.
+- 🔒 Originalets händelsekadens samt fångad originalframe-pixelparitet återstår.
 
 # Nexus: bind verified SH-2 transform to an authenticated Saturn consumer (2026-08-11)
 

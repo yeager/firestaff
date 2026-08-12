@@ -3237,6 +3237,28 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     return 0;
 }
 
+static int m11_open_csb_hint_oracle_from_menu(
+    M11_GameViewState *gameView, M12_StartupMenuState *menuState)
+{
+    const char *data_dir;
+    char mini_path[1024];
+    if (!gameView || !menuState || !menuState->csbHintOracleLaunchRequested)
+        return 0;
+    data_dir = M12_StartupMenu_AssetDataDir(menuState);
+    if (!data_dir || !data_dir[0] ||
+        !FSP_JoinPath(mini_path, sizeof(mini_path), data_dir, "MINI.DAT") ||
+        !M11_GameView_StartCsbHintOracle(gameView, data_dir, mini_path)) {
+        menuState->csbHintOracleLaunchRequested = 0;
+        menuState->view = M12_MENU_VIEW_MESSAGE;
+        menuState->messageLine1 = "CSB UTILITY DISK NOT READY";
+        menuState->messageLine2 = "ATARI R1 HCSB.HTC, HCSB.DAT AND MINI.DAT REQUIRED";
+        menuState->messageLine3 = "ESC RETURNS TO MENU";
+        return 0;
+    }
+    menuState->csbHintOracleLaunchRequested = 0;
+    return 1;
+}
+
 static int m11_restart_current_launch(M11_GameViewState* gameView,
                                       M12_StartupMenuState* menuState,
                                       uint32_t* idleAccumulatorMs,
@@ -3386,6 +3408,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->script         = NULL;
     opts->dataDir        = NULL;
     opts->savePath       = NULL;
+    opts->csbHintOracle  = 0;
     opts->dm2EnglishCompanionPath = NULL;
     opts->gameId         = NULL;
     opts->architectureOverride = -1;
@@ -6182,6 +6205,13 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     M11_PhaseA_Options runtimeOptions;
     const M11_PhaseA_Options* o;
     runtimeOptions = opts ? *opts : defaults;
+    if (runtimeOptions.csbHintOracle && (!runtimeOptions.dataDir ||
+                                         !runtimeOptions.dataDir[0] ||
+                                         !runtimeOptions.savePath ||
+                                         !runtimeOptions.savePath[0])) {
+        fprintf(stderr, "firestaff: --csb-hint-oracle requires --data-dir and --save <MINI.DAT>\n");
+        return 2;
+    }
     if (runtimeOptions.bootProbe && (!runtimeOptions.gameId || runtimeOptions.gameId[0] == '\0')) {
         fprintf(stderr, "firestaff: --boot-probe requires --game <id>\n");
         return 2;
@@ -6485,7 +6515,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
 #endif
 
     /* Always present at least once so the window actually has content. */
-    if (o->directLaunch) {
+    if (o->directLaunch && !o->csbHintOracle) {
         if (!M11_PrepareDirectLaunchForGame(&menuState, o->gameId)) {
             fprintf(stderr, "firestaff: game unavailable for --game: %s\n",
                     o->gameId ? o->gameId : "(null)");
@@ -6498,7 +6528,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
      * `--menu --game ... --save ...`, the selected menu row must carry the
      * same supplied path when Enter requests its later handoff.  The
      * game-specific importer remains the only authority on the bytes. */
-    if (o->savePath && o->savePath[0] != '\0') {
+    if (o->savePath && o->savePath[0] != '\0' && !o->csbHintOracle) {
         snprintf(menuState.quickResumeSavePath,
                  sizeof(menuState.quickResumeSavePath),
                  "%s", o->savePath);
@@ -6516,7 +6546,14 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             M12_StartupMenu_BindCSBSaveCandidateIdentity(&menuState, 1u);
         }
     }
-    if (o->directLaunch) {
+    if (o->csbHintOracle) {
+        if (!M11_GameView_StartCsbHintOracle(&gameView, o->dataDir, o->savePath)) {
+            fprintf(stderr, "firestaff: CSB Hint Oracle requires verified Atari R1 HCSB media and a native MINI.DAT\n");
+            runRc = 3;
+            goto cleanup;
+        }
+        launchedEver = 1;
+    } else if (o->directLaunch) {
         /* CLI direct launch bypasses only the M12 menu. The launch still
          * enters through M11_GameView_OpenSelectedMenuEntry(), so DM1 keeps
          * the ReDMCSB TITLE/ENTRANCE order (TITLE.C F0437 before
@@ -6957,7 +6994,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             if (menuState.shouldExit) {
                 break;
             }
-            if (m11_open_requested_launch(&gameView,
+            if (m11_open_csb_hint_oracle_from_menu(&gameView, &menuState) ||
+                m11_open_requested_launch(&gameView,
                                           &menuState,
                                           &idleAccumulatorMs,
                                           o->dataDir,
@@ -7130,7 +7168,8 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     if (menuState.shouldExit) {
                         break;
                     }
-                    if (m11_open_requested_launch(&gameView,
+                    if (m11_open_csb_hint_oracle_from_menu(&gameView, &menuState) ||
+                        m11_open_requested_launch(&gameView,
                                                   &menuState,
                                                   &idleAccumulatorMs,
                                                   o->dataDir,

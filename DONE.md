@@ -1,4 +1,13 @@
-# CSB Hint Oracle: complete authentic Atari R1 runtime handoff (2026-08-12)
+# CSB Hint Oracle: authentic Atari R1 start routes (2026-08-12)
+
+- ✅ `CSB UTILITY DISK — HINT ORACLE` är nu en separat M12-post och
+  `--csb-hint-oracle --data-dir <root> --save <MINI.DAT>` är dess explicita
+  CLI-motsvarighet. Båda går genom samma M11-runtime, använder den
+  ursprungliga 320×200-ytan och accepterar endast den hashverifierade Atari R1
+  `HCSB.HTC`/`HCSB.DAT`-kombinationen plus en dekoderverifierad nativ
+  `MINI.DAT`. Det är inte CSB:s vanliga spelstart eller FM Towns-verktyget.
+  Originalets musklicksrutor styr LOAD/LAST/NEXT/DONE/EXIT/OK; ingen ny
+  tangentmappning har hittats på.
 
 - ✅ The R1 runtime now renders every source state on the decoded 320×200
   HCSB.DAT surface: the LOAD/EXIT prompt, selected source-order hint rows plus
