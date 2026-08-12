@@ -502,9 +502,12 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
   inventory, freeze, wake, save and quit reach the existing M11 boundaries.
   Held keyboard/gamepad motion now uses the source input boundary and the Mac
   A/D/W/S/X/Z/C and keypad meanings; SDL autorepeat is ignored for those
-  actions. Balloon help and the three Mac wall-button actions still need their
-  original runtime owners; wall actions remain explicit and fail closed
-  instead of becoming a synthetic attack.
+  actions. Balloon help remains open. Mac wall-button input now reaches the
+  source-owned actuator path: local DB3 rotation is admitted, and timer
+  classes 0/1 enter the authentic wall/floor-mecha chain walkers. Remote
+  `0x17`/`0x1A` item admission and the demo's target class 7 remain fail-closed
+  until their complete GAME_LOAD owners are bound. No synthetic attack is
+  substituted.
 - [ ] Acquire an authentic Mac save corpus for both language families and
   verify native load/save round trips. A DOSBox `SKSAVE` or a generated save
   cannot close this gate.

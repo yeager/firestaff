@@ -79,8 +79,11 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   `PUSH_BUTTON_SWITCH` (`0x46`) chain may mutate only its direct DB0 door
   targets. Authenticated local-action DB3 chains for `0x17`, `0x18` and
   `0x1A` use the source actuator-list rotation path (including mixed chain
-  members); remote `0x17`/`0x1A` item/target owners remain fail-closed until
-  their complete GAME_LOAD owner is bound.
+  members). Source `0x04` wall- and floor-mecha timers now enter the
+  source-owned DB3/DB14 actuator walkers at runtime; target classes whose
+  owners are not yet complete remain fail-closed. Remote Mac `0x17`/`0x1A`
+  item admission and the small demo's authentic target class 7 still require
+  their original GAME_LOAD owner before mutation.
   No chain is converted into a DM1 front-cell action.
 - Retail HFS media now exposes the authentic raw `MooV` data forks and HFS
   Resource Manager forks in memory. The four present movies have source-owned

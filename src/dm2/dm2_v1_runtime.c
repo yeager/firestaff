@@ -4409,6 +4409,69 @@ static int dm2_runtime_tile_class_at(void *user, int map, int x, int y) {
         (const DM2_V1_DungeonData *)rt->boot->dungeon_data, map, x, y);
 }
 
+/* Source-owned 0x04 wall/floor mecha boundaries.
+ * c_tim_proc.cpp dispatches by target square class and passes Value2 and
+ * ActionType into ACTUATE_*_MECHA.  The existing source-locked walkers own
+ * the record-chain admission and all mutations; the runtime only supplies
+ * the live session owners and decodes the timer fields. */
+static int dm2_runtime_actuate_wall_mecha_timer(
+    void *user, const DM2_V1_SourceTimer *timer, uint16_t source_index,
+    DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_ActuatorEventReceipt event;
+    int map, x, y, action, direction;
+
+    (void)source_index;
+    (void)receipt;
+    if (!rt || !timer || !rt->boot || !rt->boot->dungeon_data ||
+        !rt->record_pools_valid) {
+        return 1; /* the source consumes the timer; unavailable owners fail closed */
+    }
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    x = (int)(int8_t)(timer->value_a & 0xff);
+    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
+    direction = (int)(uint8_t)(timer->value_b & 0xff);
+    action = (int)(uint8_t)((timer->value_b >> 8) & 0xff);
+    memset(&event, 0, sizeof(event));
+    (void)dm2_v1_actuate_wall_mecha(
+        &rt->record_pools, (DM2_V1_DungeonData *)rt->boot->dungeon_data,
+        rt->caii_ready ? &rt->caii : NULL, &rt->timer_queue,
+        map, x, y, action, direction, rt->tick_count,
+        NULL, 0, NULL, NULL, &event);
+    rt->actuator_tile_wall_mecha++;
+    return 1;
+}
+
+static int dm2_runtime_actuate_floor_mecha_timer(
+    void *user, const DM2_V1_SourceTimer *timer, uint16_t source_index,
+    DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_ActuatorEventReceipt event;
+    int map, x, y, action, direction;
+
+    (void)source_index;
+    (void)receipt;
+    if (!rt || !timer || !rt->boot || !rt->boot->dungeon_data ||
+        !rt->record_pools_valid) {
+        return 1;
+    }
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    x = (int)(int8_t)(timer->value_a & 0xff);
+    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
+    direction = (int)(uint8_t)(timer->value_b & 0xff);
+    action = (int)(uint8_t)((timer->value_b >> 8) & 0xff);
+    memset(&event, 0, sizeof(event));
+    (void)dm2_v1_actuate_floor_mecha(
+        &rt->record_pools, (DM2_V1_DungeonData *)rt->boot->dungeon_data,
+        rt->caii_ready ? &rt->caii : NULL, &rt->timer_queue,
+        map, x, y, action, direction, rt->tick_count,
+        NULL, 0, NULL, NULL, &event);
+    rt->floor_mecha_timers++;
+    return 1;
+}
+
 /*
  * dm2_runtime_process_0c_timer — 0x0C timer handler.
  * Source: SKProject/SKULLWIN/c_tim_proc.cpp:25-31 DM2_PROCESS_TIMER_0C.
@@ -4686,22 +4749,12 @@ void dm2_v1_runtime_tick(void) {
             dispatcher.handlers[DM2_V1_TIMER_THINK_CREATURE_B] =
                 dm2_runtime_think_creature_timer;
         }
-        /* c_tim_proc's 0x04 dispatch is record-owned: its DB3/DB14 target,
-         * direction and payload decide every observable square mutation.
-         * Firestaff has the timer bytes but not that complete GAME_LOAD
-         * transaction yet.  In particular, the old class-2/4/5/6 helpers
-         * derived pit, door, teleporter and trick-wall state from value_b;
-         * that was a host-side substitute, not an authenticated actuator.
-         * Leave all actuator classes unbound so PROCEED_TIMERS consumes an
-         * unsupported source timer without changing the real dungeon.
-         *
-         * Re-admit a class only with its live DB3/DB14 record link, payload
-         * grammar, map owner and any required follow-up timer in one receipt.
-         * Source: skproject/SKULLWIN/c_tim_proc.cpp:4214-4230,
-         * DM2_INVOKE_ACTUATOR / DM2_INVOKE_MESSAGE. */
+        /* c_tim_proc's 0x04 dispatch is record-owned. Wall/floor classes now
+         * enter the complete source actuator chain walkers. Other classes
+         * remain fail-closed; no value_b-only terrain mutation is allowed. */
         dispatcher.tile_class_at = dm2_runtime_tile_class_at;
-        /* No dispatcher.actuator_tile[] binding until the source transaction
-         * above exists. */
+        dispatcher.actuator_tile[0] = dm2_runtime_actuate_wall_mecha_timer;
+        dispatcher.actuator_tile[1] = dm2_runtime_actuate_floor_mecha_timer;
         dispatcher.handlers[DM2_V1_TIMER_UPDATE_WEATHER] =
             dm2_runtime_update_weather_timer;
         /* STEP/DESTROY_DOOR likewise need the decoded DB0 direction,
