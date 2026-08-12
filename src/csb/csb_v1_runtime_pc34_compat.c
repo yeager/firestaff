@@ -32,6 +32,7 @@
 #include "fs_portable_compat.h"
 #include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "csb_v1_csbwin_save_loader_boundary_pc34_compat.h"
 #include "csb_v1_atari_save_runtime_handoff_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
@@ -2285,6 +2286,7 @@ int csb_v1_runtime_can_load_resume_path(const char *path)
 {
     CSB_V1_RuntimeSaveImageV1 image;
     CSB_V1_SaveHeader header;
+    CSB_V1_CSBWinSaveDiscoveryResult csbwin;
 
     if (!path || path[0] == '\0') {
         return 0;
@@ -2299,9 +2301,7 @@ int csb_v1_runtime_can_load_resume_path(const char *path)
      * campaign boundary.  Admit only the current full image here; its header
      * checksum is verified by csb_v1_load_game(), and the remaining runtime
      * invariants are rechecked transactionally by apply_save_image() before
-     * any live profile is changed.  Do not broaden this to CSBWin bodies or
-     * compact CSBGAME rosters: their complete original-world handoffs remain
-     * separately gated by their authenticated corpus readers. */
+     * any live profile is changed. */
     memset(&image, 0, sizeof(image));
     memset(&header, 0, sizeof(header));
     if (csb_v1_load_game(path, &image, (int)sizeof(image), &header) ==
@@ -2334,6 +2334,27 @@ int csb_v1_runtime_can_load_resume_path(const char *path)
             csb_v1_runtime_can_prepare_original_atari_save_file(backup_path)) {
             return 1;
         }
+    }
+    /* CSBWin SaveGame.cpp stores a full XOR-obfuscated GAMEBLOCK body under
+     * the CSBGAME/DMSAVE filename family.  The runtime already restores an
+     * authenticated legacy body and its complete dungeon tail atomically,
+     * but Resume previously hid that very same file because this predicate
+     * only knew the native Firestaff and Atari containers.  Classification is
+     * read-only: require both a source-owned filename and a complete body
+     * checksum before exposing F0435.  Compact CSBGAME rosters, arbitrary
+     * 512-byte blobs and header-only candidates remain outside Resume. */
+    memset(&csbwin, 0, sizeof(csbwin));
+    (void)csb_v1_csbwin_save_loader_boundary_classify_file(path, 0u,
+                                                            &csbwin);
+    if ((csbwin.file_kind == CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_DAT ||
+         csbwin.file_kind == CSB_V1_CSBWIN_SAVE_FILE_CSBGAME2_DAT ||
+         csbwin.file_kind == CSB_V1_CSBWIN_SAVE_FILE_CSBGAME3_DAT ||
+         csbwin.file_kind == CSB_V1_CSBWIN_SAVE_FILE_CSBGAME4_DAT ||
+         csbwin.file_kind == CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_BAK) &&
+        csbwin.xor512_body_valid &&
+        csbwin.xor512_body_report.header.verdict ==
+            CSB_V1_CSBWIN_512_VERDICT_CSB) {
+        return 1;
     }
     return 0;
 }

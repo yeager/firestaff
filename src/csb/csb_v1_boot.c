@@ -8202,6 +8202,35 @@ static uint32_t csb_v1_boot_original_save_fnv1a32(
     return hash ? hash : 1u;
 }
 
+static uint32_t csb_v1_boot_original_save_file_fnv1a32(
+    const char *path, size_t *out_size)
+{
+    unsigned char buffer[4096];
+    FILE *file;
+    size_t total = 0u;
+    size_t count;
+    uint32_t hash = 2166136261u;
+
+    if (out_size) *out_size = 0u;
+    if (!path || !path[0]) return 0u;
+    file = fopen(path, "rb");
+    if (!file) return 0u;
+    while ((count = fread(buffer, 1u, sizeof(buffer), file)) != 0u) {
+        size_t i;
+        for (i = 0u; i < count; ++i) {
+            hash = (hash ^ buffer[i]) * 16777619u;
+        }
+        total += count;
+    }
+    if (ferror(file) || total == 0u) {
+        fclose(file);
+        return 0u;
+    }
+    fclose(file);
+    if (out_size) *out_size = total;
+    return hash ? hash : 1u;
+}
+
 int csb_v1_boot_runtime_load_original_save_receipt_pc34(
     CSB_V1_BootProfile *profile, const char *path,
     CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 *out_receipt)
@@ -8210,6 +8239,7 @@ int csb_v1_boot_runtime_load_original_save_receipt_pc34(
     unsigned char raw_header[512];
     FILE *file;
     uint32_t game_time = 0u;
+    CSB_V1_CSBWinSaveProvenance_PC34 csbwin_provenance;
 
     if (!out_receipt) return 0;
     memset(out_receipt, 0, sizeof(*out_receipt));
@@ -8242,7 +8272,13 @@ int csb_v1_boot_runtime_load_original_save_receipt_pc34(
     if (!receipt.runtime_load_succeeded) return 0;
     receipt.runtime_dungeon_ready = profile->runtime.dungeon_handle != NULL;
     receipt.runtime_party_ready = profile->runtime.champion_count >= 0;
-    if (!csb_v1_runtime_original_atari_save_source_current(
+    memset(&csbwin_provenance, 0, sizeof(csbwin_provenance));
+    receipt.csbwin_save_valid =
+        csb_v1_runtime_get_csbwin_save_provenance(&profile->runtime,
+                                                  &csbwin_provenance) == 0 &&
+        strcmp(csbwin_provenance.source_path, path) == 0;
+    if (!receipt.csbwin_save_valid &&
+        !csb_v1_runtime_original_atari_save_source_current(
             &profile->runtime)) return 0;
     /* F0435 may have restored CSBGAMEx.BAK over an unreadable selected
      * original slot.  Hash the recovered source only after that transaction;
@@ -8258,8 +8294,16 @@ int csb_v1_boot_runtime_load_original_save_receipt_pc34(
     receipt.runtime_current_level_after = profile->runtime.current_level;
     receipt.runtime_champion_count_after = profile->runtime.champion_count;
     receipt.runtime_game_time_after = game_time;
-    receipt.native_header_fnv1a =
-        csb_v1_boot_original_save_fnv1a32(raw_header, sizeof(raw_header));
+    if (receipt.csbwin_save_valid) {
+        receipt.native_header_fnv1a =
+            csb_v1_boot_original_save_file_fnv1a32(path, &receipt.source_size);
+        if (receipt.native_header_fnv1a != csbwin_provenance.source_fnv1a ||
+            receipt.source_size != csbwin_provenance.source_size) return 0;
+    } else {
+        receipt.native_header_fnv1a =
+            csb_v1_boot_original_save_fnv1a32(raw_header, sizeof(raw_header));
+        receipt.source_size = sizeof(raw_header);
+    }
     memcpy(receipt.dungeon_md5, profile->dungeon_md5,
            sizeof(receipt.dungeon_md5));
     receipt.source_identity_hash =
@@ -8270,7 +8314,9 @@ int csb_v1_boot_runtime_load_original_save_receipt_pc34(
         16777619u;
     if (receipt.source_identity_hash == 0u) return 0;
     snprintf(receipt.save_path, sizeof(receipt.save_path), "%s", path);
-    receipt.source_evidence = "ReDMCSB LOADSAVE.C F0435";
+    receipt.source_evidence = receipt.csbwin_save_valid
+        ? "CSBWin SaveGame.cpp GAMEBLOCK + ReDMCSB LOADSAVE.C F0435"
+        : "ReDMCSB LOADSAVE.C F0435";
     receipt.valid = receipt.runtime_dungeon_ready && receipt.runtime_party_ready &&
         receipt.native_header_fnv1a != 0u && receipt.dungeon_md5[0] != '\0' &&
         receipt.source_identity_hash != 0u;
@@ -8293,9 +8339,19 @@ int csb_v1_boot_original_save_runtime_receipt_current_pc34(
         strcmp(profile->dungeon_md5, receipt->dungeon_md5) != 0 ||
         receipt->native_header_fnv1a == 0u ||
         receipt->source_identity_hash == 0u ||
-        !csb_v1_runtime_original_atari_save_source_current(
-            &profile->runtime)) {
+        !(receipt->csbwin_save_valid
+              ? csb_v1_boot_original_save_file_fnv1a32(
+                    receipt->save_path, NULL) == receipt->native_header_fnv1a
+              : csb_v1_runtime_original_atari_save_source_current(
+                    &profile->runtime))) {
         return 0;
+    }
+    if (receipt->csbwin_save_valid) {
+        size_t source_size = 0u;
+        return csb_v1_boot_original_save_file_fnv1a32(
+                   receipt->save_path, &source_size) ==
+                   receipt->native_header_fnv1a &&
+               source_size == receipt->source_size;
     }
     file = fopen(receipt->save_path, "rb");
     if (!file || fread(raw_header, 1u, sizeof(raw_header), file) !=

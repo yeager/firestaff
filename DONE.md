@@ -14042,6 +14042,18 @@ and production source-combat tests.
   den adopterade världen. Ingen
   delvis body/timer-import får publiceras om preflighten misslyckas.
 
+# CSBWin: namnbundet F0435-Resume via startmeny och CLI (2026-08-12)
+
+- ✅ En komplett, checksummaverifierad CSBWin-save kan nu användas som CSB
+  Resume från både startmenyn och CLI när den har en original CSB-slotroll:
+  `CSBGAME.DAT`, `CSBGAME2.DAT`, `CSBGAME3.DAT`, `CSBGAME4.DAT` eller
+  `CSBGAME.BAK`. Bootens F0435-kvitto binder hela filens storlek och FNV-1a
+  till den återställda runtimeprofilen, så en ändrad sparfil blockeras före
+  nästa tick och F9-laddning.
+- 🔒 Spärren är avsiktligt smal: `DMSAVE.DAT`/`.BAK`, okända filnamn,
+  kompakta `CSBGAME`-rostrar och partiella eller trasiga GAMEBLOCK-kroppar
+  annonseras inte som CSB Resume.
+
 # CSB FM Towns: verklig CLI- och startmenystart från extraherad F31-skiva (2026-08-11)
 
 - ✅ Rättade editionsmaterialiseringen för en lös, hash-verifierad F31-skiva.

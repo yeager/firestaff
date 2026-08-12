@@ -333,12 +333,12 @@ int main(void) {
     /* ── Runtime handoff from verified CSBWin 512-byte save ── */
     {
         CSB_V1_RuntimeProfile runtime;
-        const char* path = "firestaff-csbwin-runtime-import.csb";
+        const char* path = "CSBGAME2.DAT";
 
         CHECK(firestaff_test_write_csbwin_resume_fixture(path, 0),
               "write verified CSBWin runtime import fixture");
-        CHECK(!csb_v1_runtime_can_load_resume_path(path),
-              "runtime resume validator keeps a corpus-less CSBWin body out of Resume");
+        CHECK(csb_v1_runtime_can_load_resume_path(path),
+              "runtime resume validator admits a complete CSBWin body under its original slot name");
         csb_v1_runtime_init(&runtime, NULL);
         runtime.party_x = 1;
         runtime.party_y = 1;

@@ -828,6 +828,7 @@ int main(void) {
     char wrongKnownGameQuickResumePath[512];
     char originalCsbGameBrowserSavePath[512];
     char originalCsbGameSlotSavePath[512];
+    char originalCsbWinSlotSavePath[512];
     char originalDmSaveBrowserSavePath[512];
     char originalDm1SavePath[512];
     char noDm1CsbSavePath[512];
@@ -1044,6 +1045,9 @@ int main(void) {
     if (!expect(state.quickResumeAvailable == 0,
                 "compact CSBGAME2.DAT must not enable CSB quick Resume")) return 1;
 
+    snprintf(originalCsbWinSlotSavePath, sizeof(originalCsbWinSlotSavePath),
+             "%s/CSBGAME3.DAT", tmpTemplate);
+
     /* This is intentionally an opt-in real-corpus lane. MINI.DAT has a
      * distinct Atari/Amiga GAMEBLOCK layout and must classify as CSB before
      * the runtime accepts its authenticated bytes. */
@@ -1075,6 +1079,16 @@ int main(void) {
     force_csb_available(&state);
     if (!expect(state.quickResumeAvailable == 0,
                 "CSBWin body discovery must not advertise Resume before full world handoff")) return 1;
+
+    if (!expect(firestaff_test_write_csbwin_resume_fixture(
+                    originalCsbWinSlotSavePath, 0),
+                "should write original-slot CSBWin quicksave")) return 1;
+    M12_Config_SetLastSavePath(originalCsbWinSlotSavePath);
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    force_csb_available(&state);
+    if (!expect(state.quickResumeAvailable == 1 &&
+                strcmp(state.quickResumeSavePath, originalCsbWinSlotSavePath) == 0,
+                "complete CSBGAME3.DAT must enable CSB quick Resume")) return 1;
 
     snprintf(importedCsbWinQuickResumePath,
              sizeof(importedCsbWinQuickResumePath),
@@ -1172,6 +1186,18 @@ int main(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     if (!expect(state.launchRequested == 0,
                 "save browser must not launch CSBWin before full world handoff")) return 1;
+
+    snprintf(originalCsbWinSlotSavePath, sizeof(originalCsbWinSlotSavePath),
+             "%s/CSBGAME3.DAT", tmpTemplate);
+    if (!expect(firestaff_test_write_csbwin_resume_fixture(
+                    originalCsbWinSlotSavePath, 0),
+                "should write original-name CSBWin browser save")) return 1;
+    M12_StartupMenu_InitWithDataDir(&state, tmpTemplate, NULL);
+    force_csb_available(&state);
+    if (!expect(M12_StartupMenu_OpenSaveBrowser(&state) == 0 &&
+                select_save_entry(&state, "CSBGAME3.DAT") &&
+                state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 1,
+                "save browser must launch a complete original-slot CSBWin save")) return 1;
 
     snprintf(importedCsbWinBrowserSavePath, sizeof(importedCsbWinBrowserSavePath),
              "%s/firestaff-imported-csbwin-browser.sav", tmpTemplate);

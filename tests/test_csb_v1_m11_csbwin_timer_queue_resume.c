@@ -33,25 +33,24 @@ static void fill_spec(M11_GameLaunchSpec *spec, const char *data_dir,
 int main(void)
 {
     const char *data_dir = getenv("FIRESTAFF_CSB_DATA_DIR");
-    char save_template[] = "/tmp/firestaff-csbwin-timer-XXXXXX";
+    char save_dir[] = "/tmp/firestaff-csbwin-timer-XXXXXX";
+    char save_path[512];
     CSB_V1_BootProfile *profile;
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
-    int fd;
 
     if (!data_dir || !data_dir[0]) {
         puts("SKIP: FIRESTAFF_CSB_DATA_DIR is not set");
         return 0;
     }
-    fd = mkstemp(save_template);
-    if (fd < 0) {
+    if (!mkdtemp(save_dir)) {
         fputs("FAIL: unable to allocate CSBWin save fixture\n", stderr);
         return 1;
     }
-    close(fd);
-    CHECK(firestaff_test_write_csbwin_resume_fixture(save_template, 0),
+    snprintf(save_path, sizeof(save_path), "%s/CSBGAME2.DAT", save_dir);
+    CHECK(firestaff_test_write_csbwin_resume_fixture(save_path, 0),
           "fixture writes checksum-verified CSBWin timer queue");
-    fill_spec(&spec, data_dir, save_template);
+    fill_spec(&spec, data_dir, save_path);
     M11_GameView_Init(&view);
     CHECK(M11_GameView_Start(&view, &spec),
           "M11 accepts the verified CSBWin timer queue");
@@ -66,14 +65,15 @@ int main(void)
           "M11 binds active queue slots and restored source tick atomically");
     M11_GameView_Shutdown(&view);
 
-    CHECK(firestaff_test_write_csbwin_resume_fixture(save_template, 1),
+    CHECK(firestaff_test_write_csbwin_resume_fixture(save_path, 1),
           "fixture writes a corrupt CSBWin timer queue");
     M11_GameView_Init(&view);
     CHECK(!M11_GameView_Start(&view, &spec) && !view.active &&
               view.csbBootProfile == NULL,
           "M11 rejects a corrupt queue before a session can publish");
     M11_GameView_Shutdown(&view);
-    remove(save_template);
+    remove(save_path);
+    rmdir(save_dir);
     if (failures) {
         fprintf(stderr, "FAIL: csb_v1_m11_csbwin_timer_queue_resume (%d failures)\n",
                 failures);

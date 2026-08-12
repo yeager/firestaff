@@ -1264,8 +1264,7 @@ int main(void) {
              ".\\firestaff-csb-m11-quicksave.sav");
     snprintf(roster_save_path, sizeof(roster_save_path),
              ".\\firestaff-csb-m11-roster.sav");
-    snprintf(csbwin_save_path, sizeof(csbwin_save_path),
-             ".\\firestaff-csb-m11-csbwin.sav");
+    snprintf(csbwin_save_path, sizeof(csbwin_save_path), ".\\CSBGAME2.DAT");
     snprintf(dm1_import_path, sizeof(dm1_import_path),
              ".\\firestaff-csb-m11-dm1import.sav");
 #else
@@ -1302,15 +1301,12 @@ int main(void) {
         remove(roster_save_tmpl);
     }
     {
-        int fd = mkstemp(csbwin_save_tmpl);
-        if (fd < 0) {
+        if (!mkdtemp(csbwin_save_tmpl)) {
             fprintf(stderr, "FAIL: could not create temporary CSBWin save path\n");
             return 1;
         }
-        close(fd);
-        snprintf(csbwin_save_path, sizeof(csbwin_save_path), "%s.sav",
+        snprintf(csbwin_save_path, sizeof(csbwin_save_path), "%s/CSBGAME2.DAT",
                  csbwin_save_tmpl);
-        remove(csbwin_save_tmpl);
     }
     {
         int fd = mkstemp(dm1_import_tmpl);
@@ -2598,6 +2594,9 @@ int main(void) {
     remove(quick_save_path);
     remove(roster_save_path);
     remove(csbwin_save_path);
+#ifndef _WIN32
+    rmdir(csbwin_save_tmpl);
+#endif
     remove(dm1_import_path);
 
     if (g_failures) {

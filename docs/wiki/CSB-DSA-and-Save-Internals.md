@@ -149,6 +149,17 @@ candidate and publishes the body, party and queue together. A failed
 preflight publishes none of them. Extended Features/DSA saves still require
 their separate source-owned world handoff.
 
+### CSBWin F0435 admission in the launcher
+
+The launcher and CLI admit a CSBWin resume only when all three conditions
+hold: the complete GAMEBLOCK body validates, its XOR key verdict is CSB, and
+the basename is an original CSB slot (`CSBGAME.DAT`, `CSBGAME2.DAT`,
+`CSBGAME3.DAT`, `CSBGAME4.DAT`, or `CSBGAME.BAK`). The boot receipt records
+the full-file FNV-1a and byte count from runtime provenance and rechecks them
+before live ticks and F9 reloads. `DMSAVE.DAT`/`.BAK`, unnamed copies,
+compact rosters and incomplete bodies therefore cannot become a CSB Resume
+candidate, even if they resemble a 512-byte CSBWin header.
+
 ## Viewport Test Coverage (47 files)
 
 Q-CSB-06 dungeon viewport geometry is covered by 47 viewport tests:

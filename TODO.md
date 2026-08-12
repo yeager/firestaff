@@ -4140,6 +4140,13 @@ that its exact runtime path is not already source-locked and tested.
     the adopted world is released once and no partial body/timer state is
     published on a failed preflight. Extended Features/DSA saves remain a
     distinct, fail-closed handoff boundary.
+    2026-08-12: a complete CSB-keyed CSBWin GAMEBLOCK may now cross the
+    user-facing F0435 boundary through both the start menu and CLI, but only
+    under a source-defined CSB slot name (`CSBGAME.DAT`, `CSBGAME2.DAT`,
+    `CSBGAME3.DAT`, `CSBGAME4.DAT`, or `CSBGAME.BAK`). The boot receipt binds
+    the whole source file's FNV-1a and size to the resumed session. `DMSAVE*`,
+    unknown names, compact rosters and incomplete/corrupt bodies remain
+    fail-closed; Extended Features/DSA still needs its own world handoff.
     2026-08-11: launcher and fixture regressions no longer create synthetic
     CSB `DUNGEON.DAT` or placeholder `GRAPHICS.DAT` to cross a runtime gate.
     A hash-labelled metadata fixture is now explicitly required to fail before

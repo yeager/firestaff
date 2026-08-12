@@ -1462,11 +1462,13 @@ typedef struct CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 {
     int runtime_load_succeeded;
     int runtime_dungeon_ready;
     int runtime_party_ready;
+    int csbwin_save_valid;
     char save_path[CSB_V1_BOOT_STARTUP_RESUME_PATH_CAP_PC34];
     int runtime_current_level_after;
     int runtime_champion_count_after;
     uint32_t runtime_game_time_after;
     uint32_t native_header_fnv1a;
+    size_t source_size;
     char dungeon_md5[33];
     uint32_t source_identity_hash;
     const char *source_evidence;
