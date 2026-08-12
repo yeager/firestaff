@@ -49,6 +49,17 @@ so a C017 slot cannot be misclassified as a PC3.4 C507 zone or a viewport
 click. The resulting item transaction remains the existing runtime-owned
 inventory writer and rejects when its source-owned placement rules reject.
 
+`Mouse.cpp` treats the C232 eye and mouth boxes as controls separate from the
+item-slot list. In the verified CSBWin media the mouth box occupies the same
+top-band coordinate range as the normal champion-status route. While C017 is
+active, M11 therefore resolves those C232 controls before the top-row
+dispatcher. An empty-hand mouth click remains on the existing source-command
+state path, and `ShowHideInventory` clears that transient page state whenever
+the selected champion changes or the inventory closes. This establishes input
+precedence only; the C020/C030/C031 food-and-water raster is intentionally not
+claimed until its CSBWin-specific C232 placement record is independently
+recovered.
+
 The real-data CTest `csb_v1_m11_prison_runtime_hud_pc34` reconstructs the
 whole 224×136 C017 aperture from the same authentic graphics file and checks
 all thirty icon destinations against M11's final framebuffer. Its expected

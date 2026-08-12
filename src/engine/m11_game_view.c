@@ -32075,6 +32075,8 @@ static int m11_process_v1_inventory_pointer_target(M11_GameViewState* state,
                                                     int* outSourceSlotBoxIndex);
 static int m11_csb_atari_st_inventory_source_slot_at_point(
     const M11_GameViewState *state, int x, int y, int *out_source_slot);
+static int m11_csb_atari_st_inventory_control_at_point(
+    const M11_GameViewState *state, int x, int y, int *out_command);
 
 static M11_GameInputResult m11_theron_handle_startup_pointer(
     M11_GameViewState* state,
@@ -33250,6 +33252,24 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
      * movement, champion, action, or spell hit testing. */
     if (m11_source_is_csb(state) && state->csbBootProfile) {
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+    }
+
+    /* CSBWin stores C232's eye/mouth hit boxes in the top status-band
+     * coordinate range (the verified mouth box is x55..72, y12..29).  While
+     * C017 owns the visible page they are not champion-status clicks, so
+     * resolve these original controls before the normal C012--C015 top-row
+     * dispatcher can close or switch the inventory panel. */
+    if (m11_source_is_csb(state) && state->inventoryPanelActive &&
+        (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0) {
+        int control_command = 0;
+        if (m11_csb_atari_st_inventory_control_at_point(
+                state, x, y, &control_command)) {
+            if ((control_command == 70 && m11_process_v1_mouth_click(state)) ||
+                (control_command == 71 && m11_process_v1_eye_click(state))) {
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
     }
 
     {
@@ -52301,6 +52321,43 @@ static int m11_csb_atari_st_inventory_source_slot_at_point(
     return 1;
 }
 
+/* Mouse.cpp dispatches C232's eye and mouth rectangles independently of the
+ * inventory-slot button list. Resolve those original inclusive rectangles
+ * before PC3.4 command geometry can reinterpret the point. */
+static int m11_csb_atari_st_inventory_control_at_point(
+    const M11_GameViewState *state, int x, int y, int *out_command)
+{
+    const CSB_V1_BootProfile *profile;
+    CSB_V1_CSBWinLayout0232 layout;
+
+    if (out_command) *out_command = 0;
+    if (!state || !state->inventoryPanelActive ||
+        state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbBootProfile) {
+        return 0;
+    }
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if ((profile->variant_id != CSB_V1_VARIANT_ST20_EN &&
+         profile->variant_id != CSB_V1_VARIANT_ST21_EN) ||
+        !profile->graphics_verified || !profile->graphics_path[0] ||
+        !csb_v1_csbwin_layout_0232_read_graphics_dat(profile->graphics_path,
+                                                      &layout) ||
+        !layout.valid) {
+        return 0;
+    }
+    if (x >= layout.mouth_box.x1 && x <= layout.mouth_box.x2 &&
+        y >= layout.mouth_box.y1 && y <= layout.mouth_box.y2) {
+        if (out_command) *out_command = 70;
+        return 1;
+    }
+    if (x >= layout.eye_box.x1 && x <= layout.eye_box.x2 &&
+        y >= layout.eye_box.y1 && y <= layout.eye_box.y2) {
+        if (out_command) *out_command = 71;
+        return 1;
+    }
+    return 0;
+}
+
 static int m11_process_v1_inventory_pointer_target(M11_GameViewState* state,
                                                     int x,
                                                     int y,
@@ -56060,6 +56117,10 @@ static M11_GameInputResult m11_toggle_champion_inventory(M11_GameViewState* stat
     state->mapOverlayActive = 0;
     state->spellPanelOpen = 0;
     state->world.party.activeChampionIndex = championIndex;
+    /* CSBWin ShowHideInventory redraws C017 for both a close and a champion
+     * switch.  DisplayFoodWater is a transient empty-hand page on that
+     * surface, never state that may survive onto another champion's page. */
+    state->v1FoodWaterPanelActive = 0;
     if (sameOpen) {
         state->inventoryPanelActive = 0;
         state->inventorySelectedSlot = -1;

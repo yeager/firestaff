@@ -562,10 +562,24 @@ int main(void)
         CHECK(profile && check_atari_st_c017_inventory_viewport(
                              profile->graphics_path, &view, framebuffer),
               "stock CSBWin F1 presents C017, C033/C034 and C232 source icons");
+        {
+            CSB_V1_CSBWinLayout0232 layout;
+            memset(&layout, 0, sizeof(layout));
+            DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(&view);
+            CHECK(profile && csb_v1_csbwin_layout_0232_read_graphics_dat(
+                                 profile->graphics_path, &layout) && layout.valid &&
+                      M11_GameView_HandlePointerButton(
+                          &view, (layout.mouth_box.x1 + layout.mouth_box.x2) / 2,
+                          (layout.mouth_box.y1 + layout.mouth_box.y2) / 2,
+                          M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_REDRAW &&
+                      view.inventoryPanelActive && view.v1FoodWaterPanelActive,
+                  "stock CSBWin C232 mouth wins over the overlapping top-row route");
+        }
         CHECK(M11_GameView_HandleInput(
                   &view, M12_MENU_INPUT_CHAMPION_2_INVENTORY) ==
                   M11_GAME_INPUT_REDRAW && view.inventoryPanelActive &&
-                  view.world.party.activeChampionIndex == 1,
+                  view.world.party.activeChampionIndex == 1 &&
+                  !view.v1FoodWaterPanelActive,
               "stock CSBWin F2 switches to the second restored champion inventory");
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, 320, 200);

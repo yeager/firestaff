@@ -22,6 +22,13 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   Layouttestet låser de exakta 18×18-gränserna; den tillgängliga äkta sparfilen
   har inga upptagbara föremål och används därför endast för start- och
   bildruteverifiering, inte för en konstruerad pickup.
+- ✅ CSBWin C232:s mun- och ögonkontroller får företräde framför den
+  överlappande topp-radens championrutt medan C017 är öppet. Det gör att ett
+  tomhänt munklick når originalets kommandotillstånd i stället för att stänga
+  eller byta inventarium. Ett F1–F4-byte eller stängning rensar det tillfälliga
+  munläget, precis som `ShowHideInventory`. Den källverifierade rasterplaceringen
+  av C020/C030/C031 är fortfarande uttryckligen öppen och ersätts inte med
+  uppskattade koordinater.
 - ✅ CSBWin C017:s HEALTH/STAMINA/MANA-rader använder nu den autentiska råa
   M653-fonten från Atari ST `GRAPHICS.DAT` post `0x822d` (557). Detta följer
   `CSBCode.cpp::TAG001c6e`, som laddar exakt 768 byte med `NOT_EXPANDED`, och
