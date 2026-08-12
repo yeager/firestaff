@@ -58,6 +58,7 @@ static int files_equal(const char *left_path, const char *right_path)
 static void test_staged_real_csbwin_save(void)
 {
     const char *path = getenv("FIRESTAFF_CSBWIN_REAL_SAVE");
+    const char *roundtrip_path = "firestaff-csbwin-legacy-roundtrip.sav";
     FILE *file;
     long size_long = 0L;
     size_t size;
@@ -69,6 +70,7 @@ static void test_staged_real_csbwin_save(void)
     CSB_V1_CSBWinLegacyResumePrepare tail_resume;
     CSB_V1_CSBWinSaveDiscoveryResult discovery;
     CSB_V1_RuntimeProfile runtime;
+    CSB_V1_RuntimeProfile roundtrip;
     CSB_V1_RuntimeProfile timer_probe;
 
     if (!path || path[0] == '\0') {
@@ -177,14 +179,32 @@ static void test_staged_real_csbwin_save(void)
           runtime.current_level == 4 && runtime.dungeon_handle != NULL &&
           runtime.dungeon_handle->level_count == 11 &&
           csb_v1_dungeon_get_current() == runtime.dungeon_handle &&
-          runtime.timeline_queue.eventCount > 0 &&
+          runtime.timeline_queue.eventCount == runtime.csbwin_num_timer &&
           runtime.csbwin_save_provenance.valid &&
           runtime.csbwin_timer_record_size == 10u &&
           runtime.csbwin_legacy_dungeon_tail_valid &&
           runtime.csbwin_legacy_dungeon_tail_size == body.appended_size &&
           runtime.csbwin_legacy_dungeon_tail_fnv1a == body.appended_fnv1a,
           "legacy CSBGAME2 atomically restores its authenticated world");
+    CHECK(csb_v1_runtime_export_csbwin_core_save_to_path(
+              &runtime, roundtrip_path) == 0,
+          "legacy CSBGAME2 export retains the source timer pool and complete dungeon tail");
     csb_v1_runtime_cleanup(&runtime);
+    CHECK(csb_v1_dungeon_get_current() == NULL,
+          "legacy CSBGAME2 export releases its source runtime before independent resume");
+    csb_v1_runtime_init(&roundtrip, NULL);
+    CHECK(csb_v1_runtime_apply_csbwin_resume_file(
+              &roundtrip, roundtrip_path, 0u) == 0 &&
+          roundtrip.party_x == 22 && roundtrip.party_y == 18 &&
+          roundtrip.current_level == 4 && roundtrip.dungeon_handle != NULL &&
+          roundtrip.timeline_queue.eventCount == roundtrip.csbwin_num_timer &&
+          roundtrip.csbwin_timer_record_size == 10u &&
+          roundtrip.csbwin_legacy_dungeon_tail_valid &&
+          roundtrip.csbwin_legacy_dungeon_tail_size == body.appended_size &&
+          roundtrip.csbwin_legacy_dungeon_tail_fnv1a == body.appended_fnv1a,
+          "exported legacy CSBGAME2 re-authenticates with the same source state");
+    csb_v1_runtime_cleanup(&roundtrip);
+    remove(roundtrip_path);
     CHECK(csb_v1_dungeon_get_current() == NULL,
           "legacy CSBGAME2 handoff cleanup releases the adopted world");
 }

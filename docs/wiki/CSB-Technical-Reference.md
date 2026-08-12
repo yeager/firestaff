@@ -181,15 +181,16 @@ effects remain separately authenticated and fail closed without their corpus.
 
 The current CSBWin write boundary is deliberately narrower than its resume
 boundary. Firestaff can make a byte-identical, provenance-checked copy of an
-authenticated legacy CSBWin save, and it can export a bounded core image for
-decoder tests. A verified legacy `CSBGAME2.DAT` now retains its original
-10-byte TIMER width and complete 32,655-byte saved-dungeon tail as separate,
-checksummed runtime receipts; it is never reclassified as DB11/EXPOOL. This
-does not authorize F0433 Save and Play: the live Firestaff timeline currently
-contains internal events which do not have one-to-one CSBWin TIMER receipts,
-so the complete timer pool/heap and optional EXPOOL/DSA payloads cannot yet be
-written together. A resumed CSBWin session therefore keeps native saving fail
-closed rather than producing a plausible but incomplete `CSBGAME*.DAT`.
+authenticated legacy CSBWin save. For the unmodified, verified legacy
+`CSBGAME2.DAT` route, it also exports a complete re-authenticating body: the
+original 10-byte TIMER width, raw CSBWin queue representation, and complete
+32,655-byte saved-dungeon tail are retained as separate checksummed receipts
+and are never reclassified as DB11/EXPOOL. This is an import/export identity
+proof, not general F0433 Save and Play: once Firestaff mutates a live session,
+every changed timer, heap position, dungeon byte, and optional EXPOOL/DSA
+payload still needs a source-owned writer receipt. Native saving after such
+mutation remains fail closed rather than producing a plausible but incomplete
+`CSBGAME*.DAT`.
 
 ## Reference Limits
 

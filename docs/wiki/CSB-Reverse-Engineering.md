@@ -226,17 +226,20 @@ executable test binaries; all pass.
 
 For a legacy CSBWin source artifact, `csb_v1_runtime_export_csbwin_source_save_to_path()`
 is intentionally a provenance-checked byte copy with source-slot backup
-rotation. `csb_v1_runtime_export_csbwin_core_save_to_path()` writes only the
-bounded core used by decoder tests. The verified legacy path retains the exact
-TIMER-record width and complete saved-dungeon tail separately from DB11/EXPOOL
-state, after the tail prefix, DB0–DB15 spans, and terminal checksum pass.
-Neither operation is a user-facing F0433 writer: the imported CSBWin timer
-pool has 25 active source entries in the staged corpus while Firestaff's live
-timeline contains additional internal events without source-slot receipts.
-Until that projection plus the saved dungeon, heap order, and optional
-EXPOOL/DSA continuation data can be rebuilt and verified together, M11 rejects
-Save and Play for a resumed CSBWin GAMEBLOCK instead of emitting an incomplete
-`CSBGAME*.DAT`.
+rotation. `csb_v1_runtime_export_csbwin_core_save_to_path()` writes the
+complete legacy body only while every live event still has its original source
+receipt. The verified legacy path retains the exact TIMER-record width, raw
+CSBWin queue order, and complete saved-dungeon tail separately from
+DB11/EXPOOL state, after the tail prefix, DB0–DB15 spans, and terminal
+checksum pass. A stock `CSBGAME2.DAT` round-trips through independent runtime
+ownership and re-authenticates. ITEM16 ownership is restored without injecting
+new C37 entries because CSBWin `SaveGame.cpp` restores ITEM16 and TIMER data
+without calling `ProcessMonstersOnLevel()` in the resume branch.
+
+This is not yet a user-facing F0433 writer after play: a changed timer, heap
+position, dungeon record, or EXPOOL/DSA continuation needs a source-owned
+writer receipt. M11 therefore still rejects Save and Play for a mutated
+resumed CSBWin GAMEBLOCK instead of emitting an incomplete `CSBGAME*.DAT`.
 
 ### Timer queue restart boundary
 

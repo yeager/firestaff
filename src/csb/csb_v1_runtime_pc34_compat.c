@@ -21128,8 +21128,9 @@ static int csb_v1_runtime_has_c37_for_square(
     return 0;
 }
 
-int csb_v1_runtime_claim_csbwin_item16_ai_ownership(
-    CSB_V1_RuntimeProfile *profile)
+static int csb_v1_runtime_claim_csbwin_item16_ai_ownership_internal(
+    CSB_V1_RuntimeProfile *profile,
+    int queue_missing_c37)
 {
     uint16_t item_index;
     int claimed = 0;
@@ -21178,7 +21179,8 @@ int csb_v1_runtime_claim_csbwin_item16_ai_ownership(
         if (group_record && thing_type == 4 && thing_size > 4) {
             creature_type = (int)group_record[4];
         }
-        if (!csb_v1_runtime_has_c37_for_square(
+        if (queue_missing_c37 &&
+            !csb_v1_runtime_has_c37_for_square(
                 profile,
                 map_index,
                 map_x,
@@ -21197,11 +21199,19 @@ int csb_v1_runtime_claim_csbwin_item16_ai_ownership(
 
     /* CSBWin CSB.h ITEM16 stores active-monster records keyed by the DB4
      * monster/group index, while ReDMCSB GROUP.C F0209 resumes live monster
-     * behavior through C37 square events.  This bridge claims each decoded
-     * ITEM16 whose C04 group thing is still present in the loaded dungeon and
-     * ensures there is a C37 owner tick unless the imported timer queue
-     * already supplied one for that square. */
+     * behavior through C37 square events. A new/loaded ReDMCSB world needs
+     * that bridge to schedule a missing C37. CSBWin SaveGame.cpp's resume
+     * path is different: it restores the authenticated TIMER pool and ITEM16
+     * records but does not call ProcessMonstersOnLevel(), so it must not add
+     * an invented timer after that restore. */
     return claimed;
+}
+
+int csb_v1_runtime_claim_csbwin_item16_ai_ownership(
+    CSB_V1_RuntimeProfile *profile)
+{
+    return csb_v1_runtime_claim_csbwin_item16_ai_ownership_internal(
+        profile, 1);
 }
 
 static int csb_v1_runtime_csbwin_timer_is_before(
@@ -21896,7 +21906,8 @@ int csb_v1_runtime_apply_csbwin_resume_report(
     csb_v1_runtime_reset_csbwin_extended_metadata(&candidate);
     csb_v1_runtime_cleanup_csbwin_extended_state(profile);
     *profile = candidate;
-    (void)csb_v1_runtime_claim_csbwin_item16_ai_ownership(profile);
+    (void)csb_v1_runtime_claim_csbwin_item16_ai_ownership_internal(
+        profile, 0);
     return 0;
 }
 
@@ -22159,7 +22170,8 @@ int csb_v1_runtime_apply_csbwin_resume_file(
     if (legacy_dungeon_handle) {
         csb_v1_runtime_sync_map_difficulty(profile);
     }
-    (void)csb_v1_runtime_claim_csbwin_item16_ai_ownership(profile);
+    (void)csb_v1_runtime_claim_csbwin_item16_ai_ownership_internal(
+        profile, 0);
     csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(legacy_dungeon);
     return 0;
 }
@@ -22446,14 +22458,11 @@ static int csb_v1_runtime_build_csbwin_core_summary(
                 (int)profile->csbwin_num_timer) {
             return -1;
         }
-        /* CSBWin SaveGame.cpp writes the TIMER array together with its
-         * TimerQueue heap. A live event can still match its source slot
-         * after a timer mutation, while the retained serialized heap no
-         * longer orders that timer correctly. Do not emit that plausible
-         * but invalid resume artifact. */
-        if (!csb_v1_runtime_validate_csbwin_timer_heap(profile)) {
-            return -1;
-        }
+        /* SaveGame.cpp serializes its TimerQueue raw. The authenticated
+         * legacy queue is not a Firestaff heap and must not be reordered or
+         * rejected through the host comparator. The per-live-event receipts
+         * below still reject any runtime drift before these source bytes are
+         * emitted again. */
         for (i = 0u; i < (uint16_t)profile->timeline_queue.eventCount; ++i) {
             const int event_index = profile->timeline_queue.timeline[i];
             const struct DM1_Event_V1 *event;
@@ -22491,9 +22500,7 @@ static int csb_v1_runtime_build_csbwin_core_summary(
         /* TimerQueue serializes the complete TIMER pool, including dormant
          * and free-list entries. Only the runtime's live timeline can be
          * correlated with a scheduled event here; requiring every source
-         * queue slot to be live rejects an unmodified authentic CSBGAME2.
-         * csb_v1_runtime_validate_csbwin_timer_heap() above still validates
-         * the retained serialized heap as a whole. */
+         * queue slot to be live rejects an unmodified authentic CSBGAME2. */
 
         summary->max_timers = profile->csbwin_max_timers;
         summary->num_timer = profile->csbwin_num_timer;
