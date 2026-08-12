@@ -3619,6 +3619,17 @@ static DM2_V1_ViewportRect dm2_v1_viewport_wall_frame_rect(int view_square)
     return rect;
 }
 
+int dm2_v1_viewport_wall_frame_rect_for_square(
+    int view_square, DM2_V1_ViewportRect *out_rect)
+{
+    DM2_V1_ViewportRect rect;
+
+    if (!out_rect) return 0;
+    rect = dm2_v1_viewport_wall_frame_rect(view_square);
+    *out_rect = rect;
+    return rect.w > 0 && rect.h > 0;
+}
+
 static DM2_V1_ViewportRect dm2_v1_viewport_door_visible_panel_rect(
     const DM2_V1_ViewportRect *panel_rect,
     int door_open_pct)

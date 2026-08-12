@@ -56,8 +56,10 @@ Wall-mounted actuators that respond to player keypress:
 **Source/runtime status**: These are separate source mechanisms, not interchangeable
 with the Mac door-button target (`0x46`). The source `PLAYER_TESTING_WALL` path
 handles facing-wall interaction, alcoves, levers and keyholes. Authenticated
-local-action records use the source actuator-list rotation path and preserve all
-interleaved chain records. Remote `0x17` and `0x1A` records remain fail-closed
+local-action records receive a renderer-owned target from the visible wall tile
+when no door-button `c_rwbb` exists, then use the source actuator-list rotation
+path while preserving all interleaved chain records. Remote `0x17` and `0x1A`
+records remain fail-closed
 until their complete item/target owner is bound to live GAME_LOAD state. No
 coordinate-only or generic actuator fallback is allowed.
 

@@ -2465,6 +2465,8 @@ int dm2_v1_gfx_fetch(int gdat_index, const uint8_t **out_pixels,
 
 /* ── Wall frame lookup ─────────────────────────────────────────── */
 const DM2_WallFrame *dm2_v1_get_wall_frame(int view_square);
+int dm2_v1_viewport_wall_frame_rect_for_square(
+    int view_square, DM2_V1_ViewportRect *out_rect);
 
 /* ── Source evidence ───────────────────────────────────────────── */
 const char *dm2_v1_viewport_source_evidence(void);

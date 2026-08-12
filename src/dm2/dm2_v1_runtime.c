@@ -57,6 +57,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+static void dm2_v1_runtime_append_mac_wall_targets(
+    const DM2_V1_DungeonData *dungeon, const DM2_V1_GameState *game);
+
 /* ── DM2 V1 Runtime State ─────────────────────────────────────────── */
 
 typedef struct {
@@ -6234,6 +6237,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
                         rt->source_click_target_count) *
                    sizeof(rt->source_click_targets[0]));
     }
+    dm2_v1_runtime_append_mac_wall_targets(
+        (const DM2_V1_DungeonData *)rt->boot->dungeon_data,
+        (const DM2_V1_GameState *)rt->boot->dm2_state);
     /* LOAD_GDAT_INTERFACE_00_02 must hand the full original command family
      * to M11. The count proves all chrome and four party portraits consumed
      * their plan-owned pixels; a partial plan cannot fall through to a
@@ -7162,6 +7168,90 @@ static void dm2_v1_mac_wall_set_tile_link(void *ctx, int16_t x, int16_t y,
     if (!c || !c->dungeon) return;
     (void)dm2_v1_dungeon_set_first_thing(c->dungeon, c->level, x, y,
                                          (uint16_t)rw);
+}
+
+static int dm2_v1_runtime_mac_wall_target_exists(int view_slot)
+{
+    for (int i = 0; i < (int)g_dm2_runtime.source_click_target_count; ++i) {
+        if ((int)g_dm2_runtime.source_click_targets[i].view_slot == view_slot &&
+            g_dm2_runtime.source_click_targets[i].target_kind == 4u) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* Mac wall controls can be standalone DB3 records rather than door buttons.
+ * Publish a source-shaped target only after the live map and record graph
+ * prove that the visible wall cell owns a real interactive mechanism. */
+static void dm2_v1_runtime_append_mac_wall_targets(
+    const DM2_V1_DungeonData *dungeon, const DM2_V1_GameState *game)
+{
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
+    static const struct { int square; int forward; int lateral; } cells[] = {
+        { DM2_SQ_D0L, 0, -1 }, { DM2_SQ_D0C, 1, 0 },
+        { DM2_SQ_D0R, 0, 1 }, { DM2_SQ_D1L, 1, -1 },
+        { DM2_SQ_D1C, 2, 0 }, { DM2_SQ_D1R, 1, 1 },
+        { DM2_SQ_D2L, 2, -1 }, { DM2_SQ_D2C, 3, 0 },
+        { DM2_SQ_D2R, 2, 1 }
+    };
+
+    if (!dungeon || !game || dungeon->level_count <= 0 ||
+        g_dm2_runtime.source_click_target_count >=
+            DM2_V1_VIEWPORT_CLICK_TARGET_COUNT) return;
+    for (size_t i = 0; i < sizeof(cells) / sizeof(cells[0]); ++i) {
+        const int square = cells[i].square;
+        DM2_V1_ViewportRect rect;
+        int x, y;
+        int16_t walk;
+        int16_t source = DM2_V1_RECORD_HANDLE_NULL;
+        int steps = 0;
+
+        if (dm2_v1_runtime_mac_wall_target_exists(square) ||
+            !dm2_v1_viewport_wall_frame_rect_for_square(square, &rect)) continue;
+        x = game->party_x + dx[game->party_dir & 3] * cells[i].forward -
+            dy[game->party_dir & 3] * cells[i].lateral;
+        y = game->party_y + dy[game->party_dir & 3] * cells[i].forward +
+            dx[game->party_dir & 3] * cells[i].lateral;
+        if (dm2_v1_dungeon_get_square_type(
+                dungeon, g_dm2_runtime.dungeon_level, x, y) != 0) continue;
+        walk = (int16_t)dm2_v1_dungeon_get_first_thing(
+            dungeon, g_dm2_runtime.dungeon_level, x, y);
+        while ((uint16_t)walk != (uint16_t)DM2_V1_RECORD_HANDLE_END &&
+               (uint16_t)walk != (uint16_t)DM2_V1_RECORD_HANDLE_NULL &&
+               steps++ < 256) {
+            const uint8_t *record = dm2_v1_record_pool_address(
+                &g_dm2_runtime.record_pools, walk);
+            int16_t next;
+            if (record && dm2_v1_record_handle_pool(walk) == DM2_DB_ACTUATOR) {
+                uint8_t type = dm2_actu_type(record);
+                if (type == DM2_ACTU_2_STATE_SWITCH ||
+                    type == DM2_ACTU_WALL_SWITCH || type == DM2_ACTU_KEY_HOLE) {
+                    source = walk;
+                    break;
+                }
+            }
+            if (!dm2_v1_record_pool_next_link(&g_dm2_runtime.record_pools,
+                                              walk, &next)) break;
+            walk = next;
+        }
+        if ((uint16_t)source == (uint16_t)DM2_V1_RECORD_HANDLE_NULL) continue;
+        if (g_dm2_runtime.source_click_target_count >=
+            DM2_V1_VIEWPORT_CLICK_TARGET_COUNT) return;
+        {
+            DM2_V1_ViewportClickTarget *target =
+                &g_dm2_runtime.source_click_targets[
+                    g_dm2_runtime.source_click_target_count++];
+            target->x = (int16_t)rect.x;
+            target->y = (int16_t)rect.y;
+            target->w = (int16_t)rect.w;
+            target->h = (int16_t)rect.h;
+            target->object_id = source;
+            target->view_slot = (uint8_t)square;
+            target->target_kind = 4u;
+        }
+    }
 }
 
 int dm2_v1_runtime_activate_mac_wall_button(
