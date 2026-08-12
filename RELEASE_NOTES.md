@@ -13,6 +13,9 @@
   `Graphics.DAT` members in RAM. A real-media gate records the 2,025,699-byte
   graphics and 37,957-byte dungeon members; Japanese boot/runtime admission
   remains closed pending its separate source lock.
+- `Mac edition separation`: The small First Chapter media gate now rejects
+  any application data or resource fork, preventing the large retail Mac
+  application from becoming an accidental runtime fallback.
 
 # Firestaff v3.0.310
 

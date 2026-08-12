@@ -50,6 +50,9 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
 - A shared DM2 data-root scan admits both Mac versions in one pass. The first
   matching archive no longer hides its sibling, so the launcher can present
   the large retail and small demo entries together.
+- The small demo gate also requires that no Macintosh application data or
+  resource fork is present. Its launch path therefore cannot silently borrow
+  the large retail application's dynamic Control/Event owner.
 - The two versions have separate hash-paired boot receipts. Retail uses the
   39,411-byte big-endian dungeon; the demo uses its 6,535-byte truncated
   big-endian File_header/map data. The Japanese Mac multi-track archive is now
