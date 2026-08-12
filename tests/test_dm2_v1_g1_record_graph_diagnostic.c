@@ -86,6 +86,8 @@ static int verify_real_push_button_switch(DM2_V1_DungeonData *d)
     const uint8_t *actuator = NULL;
     int candidate_map = -1;
     int candidate_action = -1;
+    int candidate_x = -1;
+    int candidate_y = -1;
     int16_t target_link = DM2_V1_RECORD_HANDLE_NULL;
 
     if (!d || !dm2_v1_record_pool_set_init_from_dungeon(&pools, d)) {
@@ -119,6 +121,8 @@ static int verify_real_push_button_switch(DM2_V1_DungeonData *d)
                                 actuator = record;
                                 candidate_map = map;
                                 candidate_action = 2;
+                                candidate_x = x;
+                                candidate_y = y;
                                 target_link = (int16_t)root;
                                 break;
                             }
@@ -156,6 +160,27 @@ static int verify_real_push_button_switch(DM2_V1_DungeonData *d)
             receipt.door_bit13_toggled != 1) {
             dm2_v1_record_pool_set_free(&pools);
             return 0;
+        }
+        {
+            DM2_V1_ActuatorEventReceipt chain_receipt;
+            uint16_t chain_before = after;
+            memset(&chain_receipt, 0, sizeof(chain_receipt));
+            if (dm2_v1_push_button_switch_chain(
+                    &pools, d, candidate_map, candidate_x, candidate_y,
+                    candidate_action, &chain_receipt)) {
+                uint16_t chain_after =
+                    (uint16_t)door[2] | ((uint16_t)door[3] << 8);
+                if (((chain_before ^ chain_after) != 0x2000u) ||
+                    chain_receipt.push_button_invoked <= 0 ||
+                    chain_receipt.door_bit13_toggled <= 0) {
+                    dm2_v1_record_pool_set_free(&pools);
+                    return 0;
+                }
+                printf("PASS: real PUSH_BUTTON_SWITCH chain uses source map %d at (%d,%d)\n",
+                       candidate_map, candidate_x, candidate_y);
+            } else {
+                printf("INFO: first real PUSH_BUTTON_SWITCH tile is not an all-0x46 source chain\n");
+            }
         }
     }
     printf("PASS: real PUSH_BUTTON_SWITCH uses source map %d and direct DB0\n",

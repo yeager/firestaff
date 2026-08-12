@@ -63,17 +63,22 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   now pass separate real-media New Game gates without extracting the ZIP data.
 - The English Macintosh input table is source-locked and tested for both
   versions: inventory keys, movement aliases, freeze/wake, Command-O/S/Q,
-  entrance/credits Return, and the three wall-button columns. Only actions
-  represented by the existing command queue are enqueued; Mac-only actions
-  remain explicit until their native dispatcher is implemented. Held
+  entrance/credits Return, and the three wall-button columns. Actions
+  represented by the existing command queue are enqueued; wall-button columns
+  use the separate source-owned activation gate described below. Held
   keyboard/gamepad movement uses the same source boundary, with Mac-specific
   A/D/W/S/X/Z/C and keypad meanings; host autorepeat is not used as the game
   clock.
 - In the M11/SDL route, an admitted `DM2_PLATFORM_MAC_EN` profile takes
   precedence over generic PC key aliases. Movement, champion/leader inventory,
   freeze, wake, save and quit are dispatched through the existing runtime
-  boundaries. Wall-button actions remain explicit and fail closed until their
-  original Mac wall-button owner is implemented.
+  boundaries. Mac wall-button columns now reach a
+  source-owned activation gate: Firestaff consumes the authenticated
+  `c_rwbb` target and commits only a complete real `PUSH_BUTTON_SWITCH`
+  (`0x46`) chain whose targets are direct DB0 doors. Mixed, unresolved or
+  non-`0x46` chains remain fail-closed; they are not converted into a DM1
+  front-cell action. The complete native owners for 0x17/0x18/0x1A and the
+  remaining Mac menu actions are still open.
 - Retail HFS media now exposes the authentic raw `MooV` data forks and HFS
   Resource Manager forks in memory. The four present movies have source-owned
   `moov` resource payloads; Firestaff keeps the data fork, complete resource

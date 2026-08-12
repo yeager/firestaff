@@ -325,6 +325,27 @@ typedef struct DM2_V1_RuntimeViewportClickReceipt {
 int dm2_v1_runtime_route_viewport_click(
     int screen_x, int screen_y,
     DM2_V1_RuntimeViewportClickReceipt *out_receipt);
+
+typedef struct DM2_V1_RuntimeMacWallButtonReceipt {
+    int valid;
+    int accepted;
+    int column;
+    int source_target_index;
+    int view_slot;
+    int map;
+    int x;
+    int y;
+    int actuators_seen;
+    int doors_mutated;
+    int blocked_incomplete_chain;
+    uint32_t source_receipt_hash;
+} DM2_V1_RuntimeMacWallButtonReceipt;
+
+/* Consume a native Mac left/centre/right wall-button action only when the
+ * last authenticated viewport frame supplied the matching c_rwbb target and
+ * its complete tile chain is source-owned PUSH_BUTTON_SWITCH (0x46). */
+int dm2_v1_runtime_activate_mac_wall_button(
+    int column, DM2_V1_RuntimeMacWallButtonReceipt *out_receipt);
 uint32_t dm2_v1_runtime_frame_presentation_state_hash(
     uint32_t scene_light_hash, uint16_t ambient_light,
     uint32_t c_light_receipt_hash, uint32_t c_light_source_state_hash,

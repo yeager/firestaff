@@ -31007,9 +31007,17 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (input == M12_MENU_INPUT_MAC_WALL_LEFT ||
             input == M12_MENU_INPUT_MAC_WALL_CENTER ||
             input == M12_MENU_INPUT_MAC_WALL_RIGHT) {
-            /* Keep the native Mac wall-button identity visible to the
-             * dispatcher. There is no source-owned DM2 wall-button runtime
-             * yet; do not silently turn it into a front-cell attack. */
+            DM2_V1_RuntimeMacWallButtonReceipt receipt;
+            int column = input == M12_MENU_INPUT_MAC_WALL_LEFT ? 0 :
+                (input == M12_MENU_INPUT_MAC_WALL_CENTER ? 1 : 2);
+            if (dm2_v1_runtime_activate_mac_wall_button(column, &receipt) &&
+                receipt.accepted) {
+                m11_sync_dm2_state_from_runtime(state);
+                m11_set_status(state, "DM2 MAC", "WALL BUTTON ACTIVATED");
+                return M11_GAME_INPUT_REDRAW;
+            }
+            /* No source target or complete 0x46 chain: never substitute a
+             * DM1 front-cell action or a coordinate-only mutation. */
             m11_set_status(state, "DM2 MAC", "WALL BUTTON UNAVAILABLE");
             return M11_GAME_INPUT_IGNORED;
         }

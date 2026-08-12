@@ -438,6 +438,16 @@ int dm2_v1_push_button_switch(DM2_V1_RecordPoolSet *pool_set,
                               int action_type,
                               DM2_V1_ActuatorEventReceipt *receipt);
 
+/* Source-order WALL/FLOOR_MECHA arm for a complete 0x46 chain.  The
+ * originating tile chain must contain only PUSH_BUTTON_SWITCH records, and
+ * every actuator must address the first record of a real DB0 door tile.  All
+ * targets are validated before the first bit-13 write. */
+int dm2_v1_push_button_switch_chain(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_DungeonData *dungeon,
+    int map, int x, int y, int action_type,
+    DM2_V1_ActuatorEventReceipt *receipt);
+
 /* CREATURE_GENERATOR — allocate and place a new creature.
  * Source: skevent.cpp:1740-1759, skcrture.cpp:6311-6362 */
 int dm2_v1_creature_generator(DM2_V1_RecordPoolSet *pool_set,

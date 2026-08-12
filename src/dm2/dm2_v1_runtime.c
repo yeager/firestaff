@@ -7121,6 +7121,105 @@ int dm2_v1_runtime_route_viewport_click(
     return 0;
 }
 
+int dm2_v1_runtime_activate_mac_wall_button(
+    int column, DM2_V1_RuntimeMacWallButtonReceipt *out_receipt)
+{
+    DM2_V1_RuntimeMacWallButtonReceipt receipt;
+    const DM2_V1_DungeonData *dungeon;
+    const DM2_V1_GameState *game;
+    int target_index = -1;
+    int target_slot = -1;
+    int target_x = -1;
+    int target_y = -1;
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
+    static const struct { int square; int forward; int lateral; } cells[] = {
+        { DM2_SQ_D0L, 0, -1 }, { DM2_SQ_D0C, 1, 0 },
+        { DM2_SQ_D0R, 0, 1 }, { DM2_SQ_D1L, 1, -1 },
+        { DM2_SQ_D1C, 2, 0 }, { DM2_SQ_D1R, 1, 1 },
+        { DM2_SQ_D2L, 2, -1 }, { DM2_SQ_D2C, 3, 0 },
+        { DM2_SQ_D2R, 2, 1 }
+    };
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.column = column;
+    receipt.source_target_index = -1;
+    receipt.view_slot = -1;
+    receipt.map = -1;
+    receipt.x = -1;
+    receipt.y = -1;
+    if (column < 0 || column > 2 || !g_dm2_runtime.boot ||
+        !g_dm2_runtime.boot->source_game_load_session_ready ||
+        !g_dm2_last_m11_frame.valid || !g_dm2_runtime.source_party_valid ||
+        !g_dm2_runtime.record_pools_valid ||
+        !(dungeon = (const DM2_V1_DungeonData *)g_dm2_runtime.boot->dungeon_data) ||
+        !(game = (const DM2_V1_GameState *)g_dm2_runtime.boot->dm2_state)) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    for (int i = 0; i < (int)g_dm2_runtime.source_click_target_count; ++i) {
+        const DM2_V1_ViewportClickTarget *target =
+            &g_dm2_runtime.source_click_targets[i];
+        const int centre_x = target->x + target->w / 2;
+        const int target_column = centre_x < DM2_VP_WIDTH / 3 ? 0 :
+            (centre_x < (DM2_VP_WIDTH * 2) / 3 ? 1 : 2);
+        if (target->target_kind == 4u && target_column == column) {
+            target_index = i;
+            target_slot = target->view_slot;
+            break;
+        }
+    }
+    if (target_index < 0) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    for (size_t i = 0; i < sizeof(cells) / sizeof(cells[0]); ++i) {
+        if (cells[i].square != target_slot) continue;
+        target_x = game->party_x +
+            dx[game->party_dir & 3] * cells[i].forward -
+            dy[game->party_dir & 3] * cells[i].lateral;
+        target_y = game->party_y +
+            dy[game->party_dir & 3] * cells[i].forward +
+            dx[game->party_dir & 3] * cells[i].lateral;
+        break;
+    }
+    if (target_x < 0 || target_y < 0 ||
+        target_x >= dungeon->level_widths[g_dm2_runtime.dungeon_level] ||
+        target_y >= dungeon->level_heights[g_dm2_runtime.dungeon_level]) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    {
+        DM2_V1_ActuatorEventReceipt event;
+        uint32_t hash = 2166136261u;
+        memset(&event, 0, sizeof(event));
+        if (!dm2_v1_push_button_switch_chain(
+                &g_dm2_runtime.record_pools,
+                (DM2_V1_DungeonData *)dungeon,
+                g_dm2_runtime.dungeon_level, target_x, target_y,
+                DM2_ACTMSG_TOGGLE, &event)) {
+            receipt.blocked_incomplete_chain = event.fail_closed;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        hash ^= (uint32_t)target_index; hash *= 16777619u;
+        hash ^= (uint32_t)target_slot; hash *= 16777619u;
+        hash ^= (uint32_t)event.door_bit13_toggled; hash *= 16777619u;
+        receipt.valid = 1;
+        receipt.accepted = 1;
+        receipt.source_target_index = target_index;
+        receipt.view_slot = target_slot;
+        receipt.map = g_dm2_runtime.dungeon_level;
+        receipt.x = target_x;
+        receipt.y = target_y;
+        receipt.actuators_seen = event.push_button_invoked;
+        receipt.doors_mutated = event.door_bit13_toggled;
+        receipt.source_receipt_hash = hash;
+    }
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_runtime_last_raw_sksave_handoff_receipt(
     DM2_V1_RuntimeRawSaveHandoffReceipt *out_receipt)
 {

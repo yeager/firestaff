@@ -9,6 +9,8 @@
 
 #include "dm2_v1_actuator_event_pc34_compat.h"
 
+#include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "dm2_v1_caii_alloc_pc34_compat.h"
@@ -274,6 +276,104 @@ int dm2_v1_push_button_switch(DM2_V1_RecordPoolSet *pool_set,
         default: return 0;
     }
     if (receipt) receipt->door_bit13_toggled++;
+    return 1;
+}
+
+int dm2_v1_push_button_switch_chain(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_DungeonData *dungeon,
+    int map, int x, int y, int action_type,
+    DM2_V1_ActuatorEventReceipt *receipt)
+{
+    int capacity = 0;
+    int count = 0;
+    int16_t link;
+    int16_t *actuators = NULL;
+    DM2_V1_ActuatorEventReceipt local;
+
+    memset(&local, 0, sizeof(local));
+    if (!pool_set || !pool_set->valid || !dungeon || map < 0 ||
+        map >= dungeon->level_count || x < 0 || y < 0 ||
+        x >= dungeon->level_widths[map] || y >= dungeon->level_heights[map] ||
+        action_type < DM2_ACTMSG_OPEN_SET || action_type > DM2_ACTMSG_TOGGLE) {
+        if (receipt) *receipt = local;
+        return 0;
+    }
+    for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        const DM2_V1_RecordPool *pool = &pool_set->pools[db];
+        if (pool->record_count < 0 || pool->extension_count < 0 ||
+            capacity > INT_MAX - pool->record_count - pool->extension_count) {
+            if (receipt) *receipt = local;
+            return 0;
+        }
+        capacity += pool->record_count + pool->extension_count;
+    }
+    if (capacity <= 0) {
+        if (receipt) *receipt = local;
+        return 0;
+    }
+    actuators = calloc((size_t)capacity, sizeof(*actuators));
+    if (!actuators) {
+        if (receipt) *receipt = local;
+        return 0;
+    }
+    link = (int16_t)dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+    while (link != DM2_V1_RECORD_HANDLE_END) {
+        const uint8_t *actuator;
+        int16_t next;
+        int target_x;
+        int target_y;
+        int16_t direct_link;
+
+        if (link == DM2_V1_RECORD_HANDLE_NULL || count >= capacity ||
+            dm2_v1_record_handle_pool(link) != DM2_DB_ACTUATOR ||
+            !(actuator = dm2_v1_record_pool_address(pool_set, link)) ||
+            dm2_actu_type(actuator) != DM2_ACTU_PUSH_BUTTON_SWITCH ||
+            !dm2_v1_record_pool_next_link(pool_set, link, &next)) {
+            local.fail_closed = count != 0;
+            free(actuators);
+            if (receipt) *receipt = local;
+            return 0;
+        }
+        target_x = (int)dm2_actu_xcoord(actuator);
+        target_y = (int)dm2_actu_ycoord(actuator);
+        direct_link = dm2_v1_tile_record_link(
+            dungeon, map, target_x, target_y);
+        if (target_x < 0 || target_y < 0 ||
+            target_x >= dungeon->level_widths[map] ||
+            target_y >= dungeon->level_heights[map] ||
+            direct_link == DM2_V1_RECORD_HANDLE_NULL ||
+            direct_link == DM2_V1_RECORD_HANDLE_END ||
+            dm2_v1_record_handle_pool(direct_link) != DM2_DB_DOOR ||
+            !dm2_v1_record_pool_address(pool_set, direct_link)) {
+            local.fail_closed = 1;
+            free(actuators);
+            if (receipt) *receipt = local;
+            return 0;
+        }
+        actuators[count++] = link;
+        link = next;
+    }
+    if (count == 0) {
+        free(actuators);
+        if (receipt) *receipt = local;
+        return 0;
+    }
+    for (int i = 0; i < count; ++i) {
+        const uint8_t *actuator = dm2_v1_record_pool_address(
+            pool_set, actuators[i]);
+        if (!dm2_v1_push_button_switch(pool_set, dungeon, actuator, map,
+                                       action_type, &local)) {
+            local.fail_closed = 1;
+            free(actuators);
+            if (receipt) *receipt = local;
+            return 0;
+        }
+        ++local.push_button_invoked;
+    }
+    local.valid = 1;
+    free(actuators);
+    if (receipt) *receipt = local;
     return 1;
 }
 
