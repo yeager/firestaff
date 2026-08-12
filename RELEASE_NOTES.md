@@ -1,3 +1,9 @@
+# Firestaff v3.0.311
+
+## Fixed
+
+- `--game CLI parsing`: Fix direct game selection by accepting the documented space-separated form, conventional `--game=<id>` form, and macOS rich-text pasted en/em dash forms before the verified direct-launch gate.
+
 # Firestaff v3.0.310
 
 ## DM1
