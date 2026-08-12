@@ -60,9 +60,11 @@ jobs:
             build_parallel: '3'
 
     runs-on: ${{ matrix.os }}
-    # A platform build must fail visibly when the compiler or runner stalls;
-    # an indefinitely running build is not verification.
-    timeout-minutes: 30
+    # A platform build must fail visibly when the compiler or runner stalls.
+    # Windows compiles the full source tree through MSYS2 with three bounded
+    # workers and demonstrably needs more than 30 minutes on a cold runner.
+    # Keep a finite limit, but allow the complete compile and test suite to run.
+    timeout-minutes: 60
     defaults:
       run:
         shell: ${{ matrix.shell }}
