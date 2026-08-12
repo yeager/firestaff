@@ -37,7 +37,10 @@ tests each source rectangle, and returns the owning action index. The event
 loop at `CODE(3)+0x0358` consumes that result and dispatches the object's
 action byte; it is not a PC `GRAPHICS.DAT` rectangle table.
 
-The implementation consequence is strict: Firestaff must recover and bind
-that Mac-owned rectangle/action list before accepting gameplay mouse or touch
-events for either English edition. Until then the runtime remains fail-closed;
-no PC or FM Towns coordinates are substituted.
+The implementation consequence is strict: Firestaff may accept a Mac gameplay
+pointer only after resolving a rectangle published by the authenticated Mac
+viewport path. The currently recovered owner is the source `c_rwbb` wall-button
+target (`b_0b == 4`): it is dispatched through the live DB3/DB14 wall-action
+chain for both English editions. Other target kinds remain fail-closed until
+their original Mac action owner is recovered; no PC or FM Towns coordinates
+are substituted.

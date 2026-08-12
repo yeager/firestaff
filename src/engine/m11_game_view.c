@@ -33560,6 +33560,15 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             DM2_V1_DungeonInputReceipt input_receipt;
             M12_MenuInput routed_input = M12_MENU_INPUT_NONE;
 
+            /* The Macintosh build does not use the PC MOUSE_INPUT rectangle
+             * table.  Its C080 owner resolves the renderer's live c_rwbb
+             * target list first, then dispatches the recovered Mac action
+             * owner.  Bypass the PC admission gate here or this path can
+             * never reach m11_process_dm2_v1_c080_click. */
+            if (profile && m11_dm2_is_mac_profile(profile)) {
+                return m11_process_dm2_v1_c080_click(state, x, y);
+            }
+
             /* SKProject routes a live DM2 click through c_tmouse/c_input's
              * active GDAT table.  PC-English uses its recovered PC matrix;
              * FM Towns uses only its authenticated RAW4 rectangle subset. */
