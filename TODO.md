@@ -1400,10 +1400,12 @@
   championordinal. 2026-08-12: CSBWin `ShowHideInventory`-pariteten täcker
   originalets C017 till C0128-viewporten `(48,33)` för F1 och F2, C232:s
   verkliga `IconDisplay[8..37]` och de sju C042–C048-atlaserna för varje
-  upptagen M516 C00..C29-slot. Den riktiga legacy-CSBWin-saven verifierar
-  hela detta lager byte för byte; stängning återställer C232-HUD:n. Stats,
-  health/stamina/mana och character-state har egna CSBWin-ägare och hålls
-  fortsatt stängda i stället för att återanvända PC3.4-panelen.
+  upptagen M516 C00..C29-slot. C00..C05 får dessutom den källägda C033- eller
+  C034-ramen efter GAMEBLOCK:s sårmask före ikonblitten. Den riktiga legacy-
+  CSBWin-saven verifierar hela detta lager byte för byte; stängning återställer
+  C232-HUD:n. Stats, health/stamina/mana, character-state och tomslotts-
+  symbolerna har egna CSBWin-ägare och hålls fortsatt stängda i stället för
+  att återanvända PC3.4-panelen.
 
 - 🔧 PC34:s Utility-import kan nu i den opt-in-bundna realdatakedjan läsa en
   klassificerad original-`DMSAVE.DAT` tillsammans med den hashverifierade

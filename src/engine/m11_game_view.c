@@ -3780,6 +3780,7 @@ static int m11_csb_compose_csbwin_inventory_icons(
          ++source_slot) {
         int m11_slot = m11_csb_mapped_inventory_slot(source_slot);
         unsigned short thing;
+        unsigned int frame_graphic = 0u;
         int object_name_index;
         CSB_V1_CSBWinInventoryIconMaterial0232 material;
         const uint8_t *source_pixels = NULL;
@@ -3789,6 +3790,42 @@ static int m11_csb_compose_csbwin_inventory_icons(
 
         if (m11_slot < 0 || m11_slot >= CHAMPION_SLOT_COUNT) return 0;
         thing = champion->inventory[m11_slot];
+        /* Character.cpp::DisplayBackpackItem first overlays the source
+         * C033 normal/C034 wounded 18x18 frame for C00..C05, then DrawItem
+         * paints the 16x16 object on top. C017 owns the remaining empty-slot
+         * content, so no host slot fill is permitted. */
+        if (source_slot <= 5) {
+            const uint8_t *frame_pixels = NULL;
+            int frame_width = 0;
+            int frame_height = 0;
+
+            frame_graphic = (champion->wounds & (1u << source_slot)) ?
+                34u : 33u;
+            if (!m11_csb_csbwin_hud_source_resolver(
+                    state, (uint16_t)frame_graphic, &frame_pixels,
+                    &frame_width, &frame_height) || !frame_pixels ||
+                frame_width < 18 || frame_height < 18) {
+                return 0;
+            }
+            for (row = 0; row < 18; ++row) {
+                int column;
+                uint8_t *destination = pixels +
+                    (size_t)(33 + layout->icon_display[
+                        CSB_V1_CSBWIN_LAYOUT_0232_INVENTORY_SLOT_FIRST +
+                        source_slot].pixel_y - 1 + row) * 320u +
+                    (size_t)(48 + layout->icon_display[
+                        CSB_V1_CSBWIN_LAYOUT_0232_INVENTORY_SLOT_FIRST +
+                        source_slot].pixel_x - 1);
+                const uint8_t *source = frame_pixels +
+                    (size_t)row * (size_t)frame_width;
+                for (column = 0; column < 18; ++column) {
+                    /* TAG0088b2's C06 transparency key is 12. */
+                    if ((source[column] & M11_FB_INDEX_MASK) != 12u) {
+                        destination[column] = source[column] & M11_FB_INDEX_MASK;
+                    }
+                }
+            }
+        }
         if (thing == THING_NONE || thing == THING_ENDOFLIST) continue;
         object_name_index = csb_v1_boot_runtime_object_icon_index_pc34(
             profile, thing);

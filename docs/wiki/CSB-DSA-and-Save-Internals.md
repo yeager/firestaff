@@ -186,12 +186,16 @@ For the Atari ST/CSBWin runtime, `CSBCode.cpp::ShowHideInventory` changes to
 `DrawItem` for raw M516 slots C00–C29: C232 `IconDisplay[8..37]` supplies the
 C017-local destination, while C232 `Word612` selects the matching C042–C048
 16x16 atlas cell. Firestaff now performs that same source-only composition for
-occupied slots from the restored GAMEBLOCK mirror. The real legacy-save
+occupied slots from the restored GAMEBLOCK mirror. For C00–C05 it also follows
+`DisplayBackpackItem`'s preceding C033 normal or C034 wounded 18x18 frame,
+using the restored champion wound mask and the source transparency key 12.
+The real legacy-save
 regression reconstructs C017 plus every occupied atlas crop directly from the
 selected `graphics.dat` after both F1 and F2, then verifies that closing
-restores the complete C232 adventure HUD. Character-state and
-health/stamina/mana remain closed because their source renderers are separate;
-no PC 3.4 inventory geometry or icon atlas is used as a substitute.
+restores the complete C232 adventure HUD. Character-state, health/stamina/mana
+and the empty-slot special symbols remain closed because their source
+renderers are separate; no PC 3.4 inventory geometry or icon atlas is used as
+a substitute.
 
 ## Viewport Test Coverage (47 files)
 
