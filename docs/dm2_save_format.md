@@ -20,6 +20,22 @@ SKProject retains `l38` from the previous header, changes `w0` to 1 and copies
 the entered name. Header shape is only a container gate; the raw dungeon and
 SUPPRESS stream must parse before a save is admitted.
 
+### Macintosh retail byte order
+
+The retail Macintosh save container uses the same 42-byte logical header but
+stores its words big-endian. Its source gate is `w_timer_flag == 1`,
+`unknown_38 == 0` and `unknown_40 == 0`; `unknown_36` remains an opaque
+per-save value. Firestaff therefore has an explicit big-endian receipt path
+for the raw dungeon prefix and the initial `s_savegamebuffer` scalar fields.
+This is separate from the DOS little-endian loader: a Mac-shaped header is not
+admitted to Resume until the remaining `DM2_GAME_LOAD` record and possession
+stream has a live source owner.
+
+No Mac save file is currently present in `.firestaff/data/dm2`, so this is
+format support and preservation evidence, not a claim that Mac Resume is
+complete. Firestaff does not create a fixture or synthetic Mac save to close
+that gate.
+
 ## Save Sections (in order)
 1. **Dungeon header** (`DunHeader`, 44 bytes)
 2. **Map headers array** (`dunMapsHeaders`, `nMaps << 4` bytes)

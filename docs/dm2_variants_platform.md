@@ -108,6 +108,12 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   still blocked until the dynamic Control/Event owner from the retained Mac
   application is bound. The Mac `CODE(3)` path does not use the PC or FM Towns
   expanded-rect table, so those coordinates are not reused.
+- Mac retail save parsing preserves the source big-endian word order for the
+  42-byte save header, dungeon prefix, column/ground links and initial
+  `s_savegamebuffer` scalars. This is a read-only admission boundary only:
+  `.firestaff/data/dm2` contains no authentic Mac save to verify, and Resume
+  remains closed until the complete Mac `DM2_GAME_LOAD` record/possession
+  owner is implemented. No synthetic save is used.
 - Retail HFS media now exposes the authentic raw `MooV` data forks and HFS
   Resource Manager forks in memory. The four present movies have source-owned
   `moov` resource payloads; Firestaff keeps the data fork, complete resource

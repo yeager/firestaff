@@ -146,6 +146,10 @@ typedef enum DM2_V1_SaveCandidateKind {
 #define DM2_RAW_SKSAVE_MAX_MAPS 64
 typedef struct {
     int valid;
+    /* Original raw SKSave word order. DOS is little-endian; the retail
+     * Macintosh save stream is big-endian.  This is source provenance, not
+     * a host-endian promise. */
+    uint8_t words_big_endian;
     uint8_t map_count;
     uint16_t map_data_byte_count;
     uint16_t column_index_count;
@@ -424,6 +428,15 @@ int dm2_v1_original_raw_sksave_dungeon_receipt(
     size_t buf_size,
     DM2_V1_OriginalRawDungeonReceipt *out_receipt);
 
+/* Same bounded receipt with an explicit source word order.  The explicit
+ * form is used by the Macintosh container gate; it never guesses between
+ * DOS and Mac layouts and still admits only a structurally valid prefix. */
+int dm2_v1_original_raw_sksave_dungeon_receipt_ordered(
+    const uint8_t *buf,
+    size_t buf_size,
+    int words_big_endian,
+    DM2_V1_OriginalRawDungeonReceipt *out_receipt);
+
 /* Expose one authenticated saved-map tile span. The returned hash covers
  * exactly the source byte-square span; no square type or object link is
  * inferred here. */
@@ -457,6 +470,13 @@ int dm2_v1_original_raw_sksave_tile_record_link(
 int dm2_v1_original_raw_sksave_fixed_state_receipt(
     const uint8_t *buf,
     size_t buf_size,
+    DM2_V1_OriginalRawSaveStateReceipt *out_receipt);
+
+/* Explicit Macintosh/DOS word-order variant of the same read-only receipt. */
+int dm2_v1_original_raw_sksave_fixed_state_receipt_ordered(
+    const uint8_t *buf,
+    size_t buf_size,
+    int words_big_endian,
     DM2_V1_OriginalRawSaveStateReceipt *out_receipt);
 
 /* Materialize only the original c_hero records from the same shared

@@ -42,6 +42,13 @@
 
 ### Changed
 
+- `DM2 Macintosh save provenance`: Add an explicit big-endian receipt path
+  for the authentic Mac retail save body, dungeon prefix, column/ground links
+  and initial save-state scalars. This is not a playable Resume claim:
+  no authentic Mac save is present in the repository data root, so the
+  remaining record/possession `DM2_GAME_LOAD` owner stays fail-closed and no
+  synthetic save is introduced.
+
 - `DM2 Macintosh gameplay MIDI clock`: Advance authentic `Midi` map cues on
   the source DM2 55 ms gameplay tick after New Game, for both English Mac
   editions. The route remains in-memory and fail-closed when no CoreMIDI
