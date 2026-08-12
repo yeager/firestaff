@@ -312,6 +312,49 @@ typedef struct {
     void *cdda_cb_ctx;
 } DM2_V1_RuntimeState;
 
+static const uint8_t *dm2_runtime_mac_record_accessor(
+    uint16_t handle, uint16_t *out_size, void *user)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    const uint8_t *record;
+    int pool;
+
+    if (out_size) *out_size = 0u;
+    if (!rt || !rt->record_pools_valid) return NULL;
+    record = dm2_v1_record_pool_address(&rt->record_pools, (int16_t)handle);
+    if (!record) return NULL;
+    pool = dm2_v1_record_handle_pool((int16_t)handle);
+    if (out_size) *out_size = (uint16_t)
+        dm2_v1_record_pool_record_size(pool);
+    return record;
+}
+
+static int32_t dm2_runtime_mac_key_can_handle(
+    uint16_t actuator, int16_t expected_item_type, void *user)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    uint16_t held;
+    uint8_t cls2 = 0xffu;
+    uint16_t distinctive = 0xffffu;
+    DM2_V1_SkprojectQueryCls2Receipt cls_receipt;
+    DM2_V1_SkprojectDistinctiveItemtypeReceipt type_receipt;
+
+    (void)actuator;
+    if (!rt || !rt->record_pools_valid || expected_item_type < 0) return 0;
+    held = (uint16_t)rt->leader_hand_object;
+    if (held == (uint16_t)DM2_V1_RECORD_HANDLE_NULL ||
+        held == (uint16_t)DM2_V1_RECORD_HANDLE_END) return 0;
+    memset(&cls_receipt, 0, sizeof(cls_receipt));
+    if (!dm2_v1_skproject_query_cls2_from_record(
+            held, &rt->record_pools, &cls2, &cls_receipt) ||
+        cls2 == 0xffu) return 0;
+    memset(&type_receipt, 0, sizeof(type_receipt));
+    if (!dm2_v1_skproject_get_distinctive_itemtype(
+            held, cls2, &distinctive, &type_receipt) ||
+        !type_receipt.valid) return 0;
+    return distinctive == (uint16_t)expected_item_type;
+}
+
 static DM2_V1_RuntimeState g_dm2_runtime;
 static int g_dm2_last_asset_floor_ceiling_count = 0;
 static int g_dm2_last_fallback_floor_ceiling_count = 0;
@@ -7383,6 +7426,7 @@ int dm2_v1_runtime_activate_mac_wall_button(
         uint16_t source_handle = (uint16_t)DM2_V1_RECORD_HANDLE_NULL;
         uint8_t source_type = 0xffu;
         uint8_t source_local = 0u;
+        const uint8_t *source_record = NULL;
         int16_t walk;
         int walk_steps = 0;
         DM2_V1_ActuatorEventReceipt event;
@@ -7417,8 +7461,35 @@ int dm2_v1_runtime_activate_mac_wall_button(
             if (out_receipt) *out_receipt = receipt;
             return 0;
         }
+        source_record = dm2_v1_record_pool_address(
+            &g_dm2_runtime.record_pools, (int16_t)source_handle);
+        if (!source_record) {
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
         receipt.source_actuator_type = source_type;
         receipt.source_local_action = source_local;
+
+        /* c_events.cpp::PLAYER_TESTING_WALL -> KEY_HOLE uses the source
+         * 19f0_2723 item-admission predicate.  The actuator Data word is
+         * the distinctive item type (not a host item id); resolve the held
+         * record through the live DB pool before any keyhole mutation. */
+        if (source_type == DM2_ACTU_KEY_HOLE) {
+            DM2_V1_Skproject19f02723Receipt admission;
+            int16_t arg1 = (dm2_actu_w4(source_record) & 0x4u)
+                ? 2 : 1;
+            memset(&admission, 0, sizeof(admission));
+            if (!dm2_v1_skproject_19f0_2723(
+                    source_handle, arg1,
+                    (int16_t)dm2_actu_data(source_record), 0,
+                    dm2_runtime_mac_record_accessor,
+                    dm2_runtime_mac_key_can_handle,
+                    &g_dm2_runtime, &admission) || !admission.result) {
+                receipt.blocked_item_admission = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+        }
 
         if (source_type != DM2_ACTU_PUSH_BUTTON_SWITCH) {
             if (source_local && (source_type == DM2_ACTU_2_STATE_SWITCH ||
@@ -7452,6 +7523,31 @@ int dm2_v1_runtime_activate_mac_wall_button(
                 receipt.source_receipt_hash = hash;
                 if (out_receipt) *out_receipt = receipt;
                 return 1;
+            }
+            if (!source_local && (source_type == DM2_ACTU_2_STATE_SWITCH ||
+                                  source_type == DM2_ACTU_WALL_SWITCH ||
+                                  source_type == DM2_ACTU_KEY_HOLE)) {
+                const uint8_t action = source_type == DM2_ACTU_KEY_HOLE
+                    ? DM2_ACTMSG_OPEN_SET : DM2_ACTMSG_TOGGLE;
+                if (source_record && dm2_v1_invoke_actuator(
+                        &g_dm2_runtime.timer_queue, source_record, action, 0,
+                        g_dm2_runtime.dungeon_level,
+                        (uint32_t)g_dm2_runtime.tick_count)) {
+                    receipt.remote_message_queued = 1;
+                    receipt.valid = 1;
+                    receipt.accepted = 1;
+                    receipt.source_target_index = target_index;
+                    receipt.view_slot = target_slot;
+                    receipt.map = g_dm2_runtime.dungeon_level;
+                    receipt.x = target_x;
+                    receipt.y = target_y;
+                    receipt.actuators_seen = 1;
+                    hash ^= (uint32_t)source_handle; hash *= 16777619u;
+                    hash ^= (uint32_t)action; hash *= 16777619u;
+                    receipt.source_receipt_hash = hash;
+                    if (out_receipt) *out_receipt = receipt;
+                    return 1;
+                }
             }
             receipt.blocked_unsupported_source_type = 1;
             if (out_receipt) *out_receipt = receipt;

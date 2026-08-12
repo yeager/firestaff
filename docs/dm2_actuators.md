@@ -58,10 +58,11 @@ with the Mac door-button target (`0x46`). The source `PLAYER_TESTING_WALL` path
 handles facing-wall interaction, alcoves, levers and keyholes. Authenticated
 local-action records receive a renderer-owned target from the visible wall tile
 when no door-button `c_rwbb` exists, then use the source actuator-list rotation
-path while preserving all interleaved chain records. Remote `0x17` and `0x1A`
-records remain fail-closed
-until their complete item/target owner is bound to live GAME_LOAD state. No
-coordinate-only or generic actuator fallback is allowed.
+path while preserving all interleaved chain records. Keyhole (`0x1A`) actions
+first pass the source `19f0_2723` distinctive-item admission and only then
+rotate or queue the source `0x04` message. Remote `0x17` and `0x1A` target
+delivery remains fail-closed when the target square has no supported source
+owner. No coordinate-only or generic actuator fallback is allowed.
 
 ## Logic and Wiring Actuators
 

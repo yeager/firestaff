@@ -46,6 +46,9 @@
   floor-mecha timers to the source-owned DB3/DB14 chain walkers. Unsupported
   target classes remain fail-closed, and no synthetic terrain mutation is
   introduced.
+- `DM2 Macintosh keyholes`: Apply the source `19f0_2723` distinctive-item
+  admission before local keyhole mutation or a remote `0x04` message is
+  queued.
 - `DM2 save and movement ownership`: Retain and validate source-owned
   SKSAVE, movement, timer and query state through private candidate paths;
   incomplete or synthetic legacy inputs remain rejected.

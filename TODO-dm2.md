@@ -505,9 +505,8 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
   actions. Balloon help remains open. Mac wall-button input now reaches the
   source-owned actuator path: local DB3 rotation is admitted, and timer
   classes 0/1 enter the authentic wall/floor-mecha chain walkers. Remote
-  `0x17`/`0x1A` item admission and the demo's target class 7 remain fail-closed
-  until their complete GAME_LOAD owners are bound. No synthetic attack is
-  substituted.
+  `0x17`/`0x1A` delivery and the demo's target class 7 remain fail-closed when
+  their target owner is unavailable. No synthetic attack is substituted.
 - [ ] Acquire an authentic Mac save corpus for both language families and
   verify native load/save round trips. A DOSBox `SKSAVE` or a generated save
   cannot close this gate.
