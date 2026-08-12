@@ -2892,6 +2892,9 @@ typedef struct {
 typedef struct {
     int valid;
     struct PartyState_Compat party;
+    /* CHARDESC::poisonCount is distinct from the generic accumulated
+     * PoisonDose. CSBWin Viewport.cpp::DisplayFoodWater gates C032 here. */
+    uint8_t csbwin_poison_count[CHAMPION_MAX_PARTY];
 } CSB_V1_RuntimePartyMirrorReceipt_PC34;
 typedef struct {
     int valid;

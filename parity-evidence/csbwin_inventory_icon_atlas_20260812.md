@@ -67,10 +67,13 @@ colours 11/8, and the two-pixel black tail. The real-data CTest performs the
 decoded C232 click and validates C030 plus the resulting bar pixels in the
 final framebuffer.
 
-C032 är medvetet inte bunden ännu: originalet använder `CHARDESC::poisonCount`,
-inte den generella Firestaff-spegelns `poisonDose`. Att göra den likställningen
-skulle vara syntetisk data. Kravet är därför en utökad CSBWin runtime-receipt
-med det faktiska fältet.
+C032 använder nu `CHARDESC::poisonCount` utan ersättning: den verifierade
+CSBWin-avkodaren läser byte 42 till `CSB_V1_Champion::PoisonEventCount`, och
+M11-spegelkvittot bär sedan värdet i det separata
+`csbwin_poison_count[]`-fältet. Det är inte `ChampionState_Compat::poisonDose`.
+När den valda mästarens räknare är skild från noll kopieras den riktiga
+C032-ytan till C232:s `wRectPos966`; annars lämnas ytan oritad, precis som
+`Viewport.cpp::DisplayFoodWater`.
 
 The real-data CTest `csb_v1_m11_prison_runtime_hud_pc34` reconstructs the
 whole 224×136 C017 aperture from the same authentic graphics file and checks

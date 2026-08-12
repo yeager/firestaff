@@ -3004,6 +3004,7 @@ int csb_v1_runtime_party_mirror_receipt_from_profile_pc34(
         dst->direction = (unsigned char)(src->Direction & 3u);
         dst->wounds = src->Wounds;
         dst->poisonDose = src->PoisonDose;
+        out_receipt->csbwin_poison_count[i] = src->PoisonEventCount;
         dst->food = src->Food;
         dst->water = src->Water;
         dst->actionDefense = 0;

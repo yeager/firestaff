@@ -626,6 +626,47 @@ int main(void)
                           "stock CSBWin mouth frame copies C030 at C232's decoded destination");
                 }
                 free(food_label);
+                {
+                    CSB_V1_StartupGraphicDecodeReceipt_PC34 poison_receipt;
+                    unsigned char *poison_label = NULL;
+                    int poison_width = 0;
+                    int poison_height = 0;
+                    int poison_pixel = -1;
+
+                    view.csbwinPoisonCount[
+                        view.world.party.activeChampionIndex] = 1u;
+                    memset(framebuffer, 0, sizeof(framebuffer));
+                    M11_GameView_Draw(&view, framebuffer, 320, 200);
+                    memset(&poison_receipt, 0, sizeof(poison_receipt));
+                    CHECK(profile && csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+                                         profile->graphics_path, 32u, &poison_label,
+                                         &poison_width, &poison_height,
+                                         &poison_receipt) && poison_receipt.valid &&
+                              poison_label && poison_width >=
+                                  layout.poison_box.x2 - layout.poison_box.x1 + 1 &&
+                              poison_height >=
+                                  layout.poison_box.y2 - layout.poison_box.y1 + 1,
+                          "CSBWin poisonCount route resolves real C032 material");
+                    if (poison_label) {
+                        int pixel;
+                        for (pixel = 0; pixel < poison_width * poison_height; ++pixel) {
+                            if (poison_label[pixel] != 0u) {
+                                poison_pixel = pixel;
+                                break;
+                            }
+                        }
+                        CHECK(poison_pixel >= 0 &&
+                                  framebuffer[(layout.poison_box.y1 +
+                                               poison_pixel / poison_width) * 320 +
+                                              layout.poison_box.x1 +
+                                              poison_pixel % poison_width] ==
+                                      poison_label[poison_pixel],
+                              "CSBWin poisonCount route copies C032 at C232's decoded destination");
+                    }
+                    free(poison_label);
+                    view.csbwinPoisonCount[
+                        view.world.party.activeChampionIndex] = 0u;
+                }
             }
         }
         CHECK(M11_GameView_HandleInput(

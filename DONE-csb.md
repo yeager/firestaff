@@ -35,8 +35,12 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   signerade -1024..2048-omräkning, varningsfärger och tvåpixels svarta slut.
   Realtidstestet klickar den avkodade munrutan i den licensierade CSBWin-
   sparningen och kontrollerar C030-destinationen samt stapelpixlarna i den
-  färdiga 320×200-bilden. C032 är fortsatt spärrad eftersom dess separata
-  CSBWin-`poisonCount` ännu inte finns i runtime-receiptet.
+  färdiga 320×200-bilden. C032 följer nu exakt `CHARDESC::poisonCount` från
+  byte 42 i den verifierade CSBWin-sparposten. Fältet går separat från
+  `PoisonDose` genom `CSB_V1_RuntimePartyMirrorReceipt_PC34` till M11 och
+  ritar den riktiga C032-ytan endast när den källägda räknaren är skild från
+  noll. Handofftestet låser denna fältöverföring och HUD-testet jämför C032
+  med den verkliga grafikposten på C232:s avkodade destination.
 - ✅ CSBWin C017:s HEALTH/STAMINA/MANA-rader använder nu den autentiska råa
   M653-fonten från Atari ST `GRAPHICS.DAT` post `0x822d` (557). Detta följer
   `CSBCode.cpp::TAG001c6e`, som laddar exakt 768 byte med `NOT_EXPANDED`, och

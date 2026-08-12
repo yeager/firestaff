@@ -1337,6 +1337,7 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
           "boot runtime object-slot facade rejects invalid object thing");
     /* CSBWin stores transient object-in-hand separately from champion ready-hand slots. */
     p.runtime.party_state.LeaderHandThing = 0x1234u;
+    p.runtime.party_state.Champions[0].PoisonEventCount = 7u;
     CHECK(csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
               &p.runtime,
               &mirror_receipt) == 1 && mirror_receipt.valid,
@@ -1347,9 +1348,10 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
               mirror_receipt.view.party_y == p.runtime.party_y &&
               mirror_receipt.party.party.championCount == 2 &&
               mirror_receipt.party.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] == 0x1200u &&
+              mirror_receipt.party.csbwin_poison_count[0] == 7u &&
               mirror_receipt.leader_hand_present &&
               mirror_receipt.leader_hand_thing == 0x1234u,
-          "combined M11 mirror receipt carries view state, party mirror and leader hand");
+          "combined M11 mirror receipt carries view state, party mirror, CSBWin poisonCount and leader hand");
     memset(&mirror_receipt, 0, sizeof(mirror_receipt));
     CHECK(csb_v1_boot_runtime_m11_mirror_receipt_pc34(
               &p,

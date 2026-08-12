@@ -812,6 +812,8 @@ typedef struct {
     unsigned short v1ScrollPanelThing;
     int v1ChampionStatsPanelActive;
     int v1FoodWaterPanelActive;
+    /* Source-owned CSBWin CHARDESC::poisonCount from the runtime mirror. */
+    unsigned char csbwinPoisonCount[CHAMPION_MAX_PARTY];
     /* Pass 42: V1-chrome-mode reroute bookkeeping.  Last payload
      * pushed into the message log from m11_set_status /
      * m11_set_inspect_readout, used to suppress back-to-back

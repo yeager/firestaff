@@ -3958,6 +3958,9 @@ static int m11_csb_draw_csbwin_food_water_panel(
                                               &layout->food_label_box, pixels) ||
         !m11_csb_copy_csbwin_graphic_to_rect(state, 31u,
                                               &layout->water_label_box, pixels) ||
+        (state->csbwinPoisonCount[state->world.party.activeChampionIndex] != 0u &&
+         !m11_csb_copy_csbwin_graphic_to_rect(state, 32u,
+                                               &layout->poison_box, pixels)) ||
         !m11_csb_draw_csbwin_food_water_bar(pixels, champion->food, 69, 5u) ||
         !m11_csb_draw_csbwin_food_water_bar(pixels, champion->water, 92, 14u)) {
         return 0;
@@ -5270,6 +5273,8 @@ static void m11_apply_csb_runtime_m11_mirror_receipt(
     state->csbState.tick_count = receipt->view.tick_count;
     if (receipt->party.valid) {
         state->world.party = receipt->party.party;
+        memcpy(state->csbwinPoisonCount, receipt->party.csbwin_poison_count,
+               sizeof(state->csbwinPoisonCount));
         if (inventoryChampionIndex >= 0 &&
             inventoryChampionIndex < state->world.party.championCount &&
             inventoryChampionIndex < CHAMPION_MAX_PARTY &&
