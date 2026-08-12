@@ -47,6 +47,15 @@ elif [[ "$(cat "$marker" 2>/dev/null)" != "$patch_id" ]]; then
   echo "ERROR: external Mednafen source has an older or unknown Firestaff patch; use a fresh build directory" >&2
   exit 2
 fi
+input_sequence_marker="$source_dir/.firestaff-nexus-input-sequence-patched"
+input_sequence_patch_id='FIRESTAFF_NEXUS_INPUT_SEQUENCE_V1_13BIT'
+if [[ ! -f "$input_sequence_marker" ]]; then
+  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_input_sequence.patch"
+  printf '%s\n' "$input_sequence_patch_id" > "$input_sequence_marker"
+elif [[ "$(cat "$input_sequence_marker" 2>/dev/null)" != "$input_sequence_patch_id" ]]; then
+  echo "ERROR: external Mednafen source has an older or unknown input-sequence patch; use a fresh build directory" >&2
+  exit 2
+fi
 cd_read_marker="$source_dir/.firestaff-nexus-cdb-read-trace-patched"
 cd_read_patch_id='FIRESTAFF_NEXUS_SATURN_CDB_READ_TRACE_V2_LBA_FILTER'
 if [[ ! -f "$cd_read_marker" ]]; then
@@ -169,5 +178,7 @@ strings "$capture_bin" | grep -F \
   'FIRESTAFF_NEXUS_TRACE_MAIN_SCSP_WRITES' >/dev/null
 strings "$capture_bin" | grep -F \
   'FIRESTAFF_NEXUS_TRACE_SESSION' >/dev/null
+strings "$capture_bin" | grep -F \
+  'FIRESTAFF_NEXUS_TRACE_PRESS_SEQUENCE' >/dev/null
 printf 'instrumented_mednafen=%s\n' "$capture_bin"
 printf 'source_patch=%s\n' "$repo_root/scripts/mednafen_1.32.1_nexus_saturn_capture.patch"

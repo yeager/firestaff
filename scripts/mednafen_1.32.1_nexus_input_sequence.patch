@@ -1,0 +1,57 @@
+--- src/ss/smpc.cpp
++++ src/ss/smpc.cpp
+@@ -241,0 +242,4 @@
++static uint64_t FirestaffPressSequenceFrame[16];
++static uint64_t FirestaffPressSequenceLength[16];
++static uint16_t FirestaffPressSequenceMask[16];
++static unsigned FirestaffPressSequenceCount;
+@@ -703,1 +707,25 @@
+-  FirestaffPressButtonMask &= 0x0fffU;
++  FirestaffPressButtonMask &= 0x1fffU;
++  const char *sequence = getenv("FIRESTAFF_NEXUS_TRACE_PRESS_SEQUENCE");
++  if(sequence && *sequence)
++  {
++   char *copy = strdup(sequence);
++   char *entry = copy;
++   while(copy && entry && *entry && FirestaffPressSequenceCount < 16)
++   {
++    char *next = strchr(entry, ',');
++    if(next) *next++ = '\0';
++    char *colon1 = strchr(entry, ':');
++    char *colon2 = colon1 ? strchr(colon1 + 1, ':') : NULL;
++    if(colon1 && colon2)
++    {
++     *colon1 = *colon2 = '\0';
++     FirestaffPressSequenceFrame[FirestaffPressSequenceCount] = strtoull(entry, NULL, 10);
++     FirestaffPressSequenceLength[FirestaffPressSequenceCount] = strtoull(colon1 + 1, NULL, 10);
++     FirestaffPressSequenceMask[FirestaffPressSequenceCount] = (uint16_t)strtoull(colon2 + 1, NULL, 0) & 0x1fffU;
++     if(!FirestaffPressSequenceLength[FirestaffPressSequenceCount]) FirestaffPressSequenceLength[FirestaffPressSequenceCount] = 1;
++     FirestaffPressSequenceCount++;
++    }
++    entry = next;
++   }
++   free(copy);
++  }
+@@ -708,9 +736,17 @@
+- if(VirtualPortsDPtr[0] && FirestaffPressStartFrame)
++ if(VirtualPortsDPtr[0])
+  {
+-  const uint64_t end = FirestaffPressStartFrame + FirestaffPressStartLength;
+-  if(FirestaffCurrentFrame >= FirestaffPressStartFrame && FirestaffCurrentFrame < end)
+-   VirtualPortsDPtr[0][0] |= (uint8)FirestaffPressButtonMask;
+-  else if(FirestaffCurrentFrame == end)
+-   VirtualPortsDPtr[0][0] &= (uint8)~FirestaffPressButtonMask;
++  uint16_t mask = 0;
++  if(FirestaffPressStartFrame)
++  {
++   const uint64_t end = FirestaffPressStartFrame + FirestaffPressStartLength;
++   if(FirestaffCurrentFrame >= FirestaffPressStartFrame && FirestaffCurrentFrame < end) mask |= FirestaffPressButtonMask;
++  }
++  for(unsigned i = 0; i < FirestaffPressSequenceCount; i++)
++  {
++   const uint64_t end = FirestaffPressSequenceFrame[i] + FirestaffPressSequenceLength[i];
++   if(FirestaffCurrentFrame >= FirestaffPressSequenceFrame[i] && FirestaffCurrentFrame < end) mask |= FirestaffPressSequenceMask[i];
++  }
++  VirtualPortsDPtr[0][0] |= (uint8)mask;
++  VirtualPortsDPtr[0][1] |= (uint8)(mask >> 8);
+  }
