@@ -1945,6 +1945,10 @@ int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir);
 int M11_GameView_StartCsbHintOracle(M11_GameViewState* state,
                                     const char *dataDir,
                                     const char *savePath);
+/* Open C06_CEDT only after the selected FM Towns CSB package completed its
+ * normal verified boot admission.  This is deliberately distinct from the
+ * Atari R1 Hint Oracle utility. */
+int M11_GameView_EnterCsbFmtownsUtility(M11_GameViewState *state);
 int M11_GameView_Dm1StartupIntroBypassed(const M11_GameViewState* state);
 int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
                                      M11_BootProbeReceipt* out);

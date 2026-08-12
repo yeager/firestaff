@@ -190,8 +190,26 @@ static void run_empty_data_rejection(void) {
 
     {
         M12_StartupMenuState menu;
+        int index;
+        const M12_MenuEntry* utility_entry = NULL;
         M12_StartupMenu_InitWithDataDir(&menu, empty_dir, NULL);
         dismiss_initial_message(&menu);
+        for (index = 0; index < M12_StartupMenu_GetEntryCount(); ++index) {
+            const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(&menu, index);
+            if (entry && entry->kind == M12_MENU_ENTRY_CSB_FMTOWNS_UTILITY) {
+                utility_entry = entry;
+                menu.selectedIndex = index;
+                break;
+            }
+        }
+        expect_true(utility_entry && utility_entry->gameId &&
+                        strcmp(utility_entry->gameId, "csb") == 0 &&
+                        utility_entry->available == 1,
+                    "FM Towns CSB Utility Disk is a visible dedicated menu entry");
+        M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+        expect_true(menu.csbFmtownsUtilityLaunchRequested == 1 &&
+                        menu.launchRequested == 0,
+                    "FM Towns CSB Utility Disk menu entry requests its dedicated route");
         expect_true(M11_PrepareDirectLaunchForGame(&menu, "not-a-game") == 0,
                     "direct launch refuses unknown game id");
         expect_true(M11_PrepareDirectLaunchForGame(&menu, NULL) == 0,
@@ -276,6 +294,8 @@ static void run_boot_probe_empty_data_rejection(void) {
                 "boot-probe DM1 HoC full graphics expectation is opt-in");
     expect_true(opts.bootProbeExpectDm1HoCReleaseAppCapture == 0,
                 "boot-probe DM1 HoC release-app expectation is opt-in");
+    expect_true(opts.csbFmtownsUtilityDisk == 0,
+                "FM Towns CSB Utility Disk direct route is opt-in");
     opts.bootProbe = 1;
     opts.gameId = "dm1";
     opts.dataDir = empty_dir;
@@ -291,6 +311,14 @@ static void run_boot_probe_empty_data_rejection(void) {
     opts.durationMs = 0;
     expect_true(M11_PhaseA_Run(&opts) == 2,
                 "boot-probe refuses missing game id before renderer startup");
+
+    M11_PhaseA_SetDefaultOptions(&opts);
+    opts.csbFmtownsUtilityDisk = 1;
+    opts.gameId = "dm1";
+    opts.dataDir = empty_dir;
+    opts.durationMs = 0;
+    expect_true(M11_PhaseA_Run(&opts) == 2,
+                "CSB Utility Disk route rejects a non-CSB game before renderer startup");
 }
 
 static void run_real_data_handoff_if_available(void) {

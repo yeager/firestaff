@@ -145,6 +145,7 @@ firestaff --game <dm1|csb|dm2|nexus|theron>
           --data-dir <path>
           --platform <auto|pc|amiga|atari-st|fm-towns|pce|saturn>
           --csb-fmtowns-ja
+          --csb-utility-disk
           --scan-data
           --fullscreen
           --scale-mode <n>
@@ -154,6 +155,12 @@ firestaff --game <dm1|csb|dm2|nexus|theron>
 `--csb-fmtowns-ja` is an explicit CSB-only F31J request. It selects the
 hash-verified Japanese FM Towns package and fails if that original package is
 not present; it never guesses from the host language or falls back to F31E.
+`--csb-utility-disk` opens the separately preserved FM Towns C06 Utility Disk
+after the normal verified CSB F31 boot; it implies `--game csb --platform
+fm-towns` and fails closed if that package is unavailable. The start menu also
+has a dedicated **CSB Utility Disk (FM Towns)** entry. This is distinct from
+the Atari R1 Hint Oracle (`--csb-hint-oracle`) and never substitutes its data
+or UI.
 The initial Japanese C06 Utility chooser additionally requires the user's
 authorised 256 KiB `FMT_FNT.ROM`; set `FIRESTAFF_FMTOWNS_FONT_ROM` to that
 file before launch. Firestaff uses the ROM only for its original Shift-JIS

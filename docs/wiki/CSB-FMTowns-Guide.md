@@ -164,6 +164,14 @@ generic Firestaff save format and does not admit unverified external candidates.
 
 ## Utility boundary
 
+Firestaff exposes the recovered C06 route explicitly in both launch surfaces:
+the start menu's **CSB Utility Disk (FM Towns)** entry and
+`firestaff --csb-utility-disk --data-dir <path>`. The CLI option implies CSB
+and FM Towns. Both routes first select a hash-verified F31 package, execute
+the normal C03 boot boundary, then enter C06; they fail closed when that
+package cannot be admitted. They are not aliases for the separate Atari R1
+Hint Oracle route (`--csb-hint-oracle`).
+
 `UTILE.EXP` and `UTILJ.EXP` are separate C06_CEDT programs. Their P3
 envelopes, six-label source pools, C09 icon palette, source-coordinate menu
 boxes, F31 M653 font material and planar `.CMP` portrait decoder are

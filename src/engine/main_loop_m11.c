@@ -244,6 +244,10 @@ static int M12_StartupMenu_PrepareSelectedGameLaunch(
     return 1;
 }
 
+static int m11_apply_architecture_override(M12_StartupMenuState* menuState,
+                                           const char* gameId,
+                                           int architecture);
+
 static void m11_set_launch_failed_message(M12_StartupMenuState* menuState) {
     const M12_MenuEntry* entry = NULL;
     const char* gameId = NULL;
@@ -3237,6 +3241,48 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     return 0;
 }
 
+/* The F31 Utility route is not a generic game launch and must not inherit
+ * whatever CSB platform was last selected.  It first selects a matched FM
+ * Towns package from M12's catalogue, then uses the regular verified C03
+ * boot boundary before entering C06_CEDT. */
+static int m11_open_csb_fmtowns_utility_from_menu(
+    M11_GameViewState *gameView, M12_StartupMenuState *menuState,
+    uint32_t *idleAccumulatorMs, const char *dataDir)
+{
+    int index;
+    int count;
+
+    if (!gameView || !menuState ||
+        !menuState->csbFmtownsUtilityLaunchRequested) return 0;
+    menuState->csbFmtownsUtilityLaunchRequested = 0;
+    if (!m11_apply_architecture_override(menuState, "csb",
+                                         M12_ARCH_FM_TOWNS)) {
+        goto unavailable;
+    }
+    count = M12_StartupMenu_GetEntryCount();
+    for (index = 0; index < count; ++index) {
+        const M12_MenuEntry *entry = M12_StartupMenu_GetEntry(menuState, index);
+        if (entry && entry->kind == M12_MENU_ENTRY_GAME && entry->gameId &&
+            strcmp(entry->gameId, "csb") == 0) {
+            menuState->activatedIndex = index;
+            menuState->launchRequested = 1;
+            if (m11_open_requested_launch(gameView, menuState,
+                                          idleAccumulatorMs, dataDir, 0) &&
+                M11_GameView_EnterCsbFmtownsUtility(gameView)) {
+                return 1;
+            }
+            goto unavailable;
+        }
+    }
+unavailable:
+    menuState->launchRequested = 0;
+    menuState->view = M12_MENU_VIEW_MESSAGE;
+    menuState->messageLine1 = "CSB UTILITY DISK NOT READY";
+    menuState->messageLine2 = "VERIFIED FM TOWNS CSB MEDIA REQUIRED";
+    menuState->messageLine3 = "ESC RETURNS TO MENU";
+    return 0;
+}
+
 static int m11_open_csb_hint_oracle_from_menu(
     M11_GameViewState *gameView, M12_StartupMenuState *menuState)
 {
@@ -3409,6 +3455,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->dataDir        = NULL;
     opts->savePath       = NULL;
     opts->csbHintOracle  = 0;
+    opts->csbFmtownsUtilityDisk = 0;
     opts->dm2EnglishCompanionPath = NULL;
     opts->gameId         = NULL;
     opts->architectureOverride = -1;
@@ -6212,6 +6259,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         fprintf(stderr, "firestaff: --csb-hint-oracle requires --data-dir and --save <MINI.DAT>\n");
         return 2;
     }
+    if (runtimeOptions.csbFmtownsUtilityDisk &&
+        (!runtimeOptions.gameId ||
+         strcmp(runtimeOptions.gameId, "csb") != 0)) {
+        fprintf(stderr, "firestaff: --csb-utility-disk requires CSB FM Towns media\n");
+        return 2;
+    }
     if (runtimeOptions.bootProbe && (!runtimeOptions.gameId || runtimeOptions.gameId[0] == '\0')) {
         fprintf(stderr, "firestaff: --boot-probe requires --game <id>\n");
         return 2;
@@ -6549,6 +6602,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     if (o->csbHintOracle) {
         if (!M11_GameView_StartCsbHintOracle(&gameView, o->dataDir, o->savePath)) {
             fprintf(stderr, "firestaff: CSB Hint Oracle requires verified Atari R1 HCSB media and a native MINI.DAT\n");
+            runRc = 3;
+            goto cleanup;
+        }
+        launchedEver = 1;
+    } else if (o->csbFmtownsUtilityDisk) {
+        if (!m11_open_requested_launch(&gameView, &menuState,
+                                       &idleAccumulatorMs, o->dataDir,
+                                       o->bootProbe) ||
+            !M11_GameView_EnterCsbFmtownsUtility(&gameView)) {
+            fprintf(stderr, "firestaff: CSB Utility Disk requires verified FM Towns CSB media\n");
             runRc = 3;
             goto cleanup;
         }
@@ -6994,7 +7057,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             if (menuState.shouldExit) {
                 break;
             }
-            if (m11_open_csb_hint_oracle_from_menu(&gameView, &menuState) ||
+            if (m11_open_csb_fmtowns_utility_from_menu(
+                    &gameView, &menuState, &idleAccumulatorMs, o->dataDir) ||
+                m11_open_csb_hint_oracle_from_menu(&gameView, &menuState) ||
                 m11_open_requested_launch(&gameView,
                                           &menuState,
                                           &idleAccumulatorMs,
@@ -7168,7 +7233,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     if (menuState.shouldExit) {
                         break;
                     }
-                    if (m11_open_csb_hint_oracle_from_menu(&gameView, &menuState) ||
+                    if (m11_open_csb_fmtowns_utility_from_menu(
+                            &gameView, &menuState, &idleAccumulatorMs,
+                            o->dataDir) ||
+                        m11_open_csb_hint_oracle_from_menu(&gameView, &menuState) ||
                         m11_open_requested_launch(&gameView,
                                                   &menuState,
                                                   &idleAccumulatorMs,

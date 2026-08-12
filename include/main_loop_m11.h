@@ -42,6 +42,8 @@ typedef struct {
     const char* savePath;  /* Optional validated save to resume after launch. */
     /* Launch the separate original Atari R1 CSB Utility Disk Hint Oracle. */
     int csbHintOracle;
+    /* Open the verified FM Towns C06 CSB Utility Disk directly. */
+    int csbFmtownsUtilityDisk;
     /* Explicit hash-verified PC-English GRAPHICS.DAT companion for a
        Japanese DM2 FM Towns launch.  The boot layer consumes it only in RAM;
        it is never extracted beside the selected game media. */

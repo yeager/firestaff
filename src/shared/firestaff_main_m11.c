@@ -41,6 +41,7 @@ static void usage(const char* prog) {
             "  --theron-authenticated-fallback  Run Theron from verified Track 02 records when the original CD runtime handoff is unavailable (non-parity)\n"
             "  --save <path>       Resume a validated save for --game\n"
             "  --csb-hint-oracle   Open Atari R1 CSB Utility Disk Hint Oracle (requires --data-dir and --save MINI.DAT)\n"
+            "  --csb-utility-disk  Open the verified FM Towns CSB C06 Utility Disk\n"
             "  --dm2-english-companion <path>  Hash-verified PC-English GRAPHICS.DAT for DM2 FM Towns\n"
             "  --scan-data         Recursively scan asset directory by hash and exit\n"
             "  --scan-game-data    Alias for --scan-data\n"
@@ -441,6 +442,13 @@ int main(int argc, char** argv) {
             opts.directLaunch = 1;
             continue;
         }
+        if (strcmp(a, "--csb-utility-disk") == 0) {
+            opts.csbFmtownsUtilityDisk = 1;
+            opts.gameId = "csb";
+            opts.architectureOverride = M12_ARCH_FM_TOWNS;
+            opts.directLaunch = 1;
+            continue;
+        }
         if (strcmp(a, "--theron-authenticated-fallback") == 0) {
             theronAuthenticatedFallback = 1;
             continue;
@@ -686,6 +694,11 @@ int main(int argc, char** argv) {
                                !opts.savePath || !opts.savePath[0])) {
         fprintf(stderr,
                 "firestaff: --csb-hint-oracle requires --data-dir and --save <MINI.DAT>\n");
+        return 2;
+    }
+    if (opts.csbFmtownsUtilityDisk &&
+        (!opts.gameId || strcmp(opts.gameId, "csb") != 0)) {
+        fprintf(stderr, "firestaff: --csb-utility-disk requires CSB FM Towns media\n");
         return 2;
     }
     if (opts.savePath && !opts.csbHintOracle && !opts.gameId) {

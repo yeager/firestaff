@@ -456,6 +456,18 @@ int main(void)
           "verified F31 M653 raw interface font is bound before title playback");
     CHECK(view.csbFmtownsTitleBound && !view.csbStartupRuntimeAssetSession,
           "FM Towns title remains separate from the Game entrance session");
+    CHECK(M11_GameView_EnterCsbFmtownsUtility(&view) &&
+              view.csbFmtownsSwitchBound && view.csbFmtownsUtilityBound,
+          "direct C06 entry reuses verified F31 boot before binding Utility Disk");
+    M11_GameView_Shutdown(&view);
+    M11_GameView_Init(&view);
+    result = M11_GameView_Start(&view, &spec);
+    CHECK(result,
+          "verified F31 media can restart its real TITLE.ANM owner after direct C06 entry");
+    if (!result) {
+        M11_GameView_Shutdown(&view);
+        return 1;
+    }
     memset(&boot_probe, 0, sizeof(boot_probe));
     CHECK(M11_GameView_GetBootProbeReceipt(&view, &boot_probe) &&
               strcmp(boot_probe.startupPhase, "csb-fmtowns-title") == 0 &&

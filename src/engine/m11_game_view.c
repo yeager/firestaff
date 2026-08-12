@@ -9016,6 +9016,23 @@ static int m11_csb_enter_fmtowns_utility(
     return 1;
 }
 
+int M11_GameView_EnterCsbFmtownsUtility(M11_GameViewState *state)
+{
+    const CSB_V1_BootProfile *profile;
+    CSB_V1_FmtownsSwitchLanguage language;
+
+    if (!state || !state->active ||
+        state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !(profile = (const CSB_V1_BootProfile *)state->csbBootProfile) ||
+        !m11_csb_is_fmtowns_profile(profile)) {
+        return 0;
+    }
+    language = profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA
+        ? CSB_FMTOWNS_SWITCH_JAPANESE : CSB_FMTOWNS_SWITCH_ENGLISH;
+    return m11_csb_bind_fmtowns_switch(state, language) &&
+           m11_csb_enter_fmtowns_utility(state, language);
+}
+
 static int m11_csb_redraw_fmtowns_utility(M11_GameViewState *state)
 {
     CSB_V1_FmtownsUtilityRenderReceipt rendered;

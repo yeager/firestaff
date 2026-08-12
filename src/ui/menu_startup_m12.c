@@ -684,6 +684,7 @@ static const M12_MenuEntry g_entryTemplate[] = {
     {.title = _("DUNGEON MASTER NEXUS"), .gameId = "nexus", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
     /* BLOCKED_ON_REFERENCE: no source; TurboGrafx-16 / PC Engine release (Hudson Soft, 1992). */
     {.title = _("THERON'S QUEST"), .gameId = "theron", .kind = M12_MENU_ENTRY_GAME, .sourceKind = M12_MENU_SOURCE_BUILTIN_CATALOG, .available = 0},
+    {.title = _("CSB UTILITY DISK (FM TOWNS)"), .gameId = "csb", .kind = M12_MENU_ENTRY_CSB_FMTOWNS_UTILITY, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 1},
     {.title = _("CSB UTILITY DISK — HINT ORACLE"), .gameId = "csb-hint-oracle", .kind = M12_MENU_ENTRY_CSB_HINT_ORACLE, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 0},
     {.title = _("MUSEUM OF LORE"), .gameId = NULL, .kind = M12_MENU_ENTRY_MUSEUM, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 1},
     {.title = _("SETTINGS"), .gameId = NULL, .kind = M12_MENU_ENTRY_SETTINGS, .sourceKind = M12_MENU_SOURCE_SYSTEM, .available = 1}
@@ -1667,6 +1668,10 @@ static void m12_sync_entries_from_assets(M12_StartupMenuState* state) {
             /* It is a separately distributed Utility Disk program, not a
              * normal CSB game corpus. Keep the entry visible and let the
              * shared M11 handoff hash-admit its exact R1 files on activation. */
+            state->entries[i].available = 1;
+        } else if (state->entries[i].kind == M12_MENU_ENTRY_CSB_FMTOWNS_UTILITY) {
+            /* C06 belongs only to a verified F31 package.  Keep the entry
+             * visible so its activation can report the exact missing route. */
             state->entries[i].available = 1;
         }
     }
@@ -5308,6 +5313,12 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
         state->messageLine1 = m12_tr(state, "DATA FILES NOT FOUND");
         state->messageLine2 = "CSB UTILITY DISK (ATARI R1) REQUIRED";
         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
+        return;
+    }
+    if (entry->kind == M12_MENU_ENTRY_CSB_FMTOWNS_UTILITY) {
+        state->activatedIndex = state->selectedIndex;
+        state->launchRequested = 0;
+        state->csbFmtownsUtilityLaunchRequested = 1;
         return;
     }
     state->activatedIndex = state->selectedIndex;

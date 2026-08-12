@@ -2728,7 +2728,10 @@
   fortsatt stängd utan egen autentiserad DM-mediumkonsument. Återstår Make
   New Adventure:s F7086/F7090/F7020-transaktion; den stannar fail-closed
   tills en verifierad källa-/destinationsdungeon och
-  objektmodifierarägarna finns.
+  objektmodifierarägarna finns. 2026-08-12: C06 är nu åtkomlig utan dold
+  genväg, både som startmenyns `CSB UTILITY DISK (FM TOWNS)` och via
+  `--csb-utility-disk`; båda väljer endast ett verifierat F31-paket, går
+  genom vanlig C03-boot och kan inte falla tillbaka till Atari Hint Oracle.
   Dialogrubriken, alla tre val och den fullständiga game-save-prompten läses
   nu var för sig ur hashverifierade `UTILE.EXP` P3-spann; inga engelska
   värdsträngar används som ersättning.
