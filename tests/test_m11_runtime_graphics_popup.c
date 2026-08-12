@@ -2,11 +2,8 @@
 #include "m11_qol_runtime.h"
 #include "config_m12.h"
 #include "render_sdl_m11.h"
-#include "csb_v22_finished_art_material_gate_pc34.h"
-#include "csb_v22_modern_assets_pc34.h"
 #include "csb_v2_filter_config_pc34.h"
 #include "csb_v2_texture_upscale_pc34.h"
-#include "fs_portable_compat.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -29,115 +26,6 @@ static void set_test_home(void) {
     unsetenv("XDG_CONFIG_HOME");
     unsetenv("XDG_DATA_HOME");
 #endif
-}
-
-static void write_csb_v22_finished_fixture(const char* dataDir) {
-    static const struct {
-        const char* id;
-        const char* category;
-        int width;
-        int height;
-    } slots[] = {
-        { "wall_dungeon_d0_01", "wall_shapes", 96, 96 },
-        { "wall_dungeon_d1_01", "wall_shapes", 96, 96 },
-        { "wall_dungeon_d2_01", "wall_shapes", 96, 96 },
-        { "door_d0_01", "door_shapes", 64, 96 },
-        { "door_d1_01", "door_shapes", 64, 96 },
-        { "door_d2_01", "door_shapes", 64, 96 },
-        { "floor_plain_d0_01", "floor_shapes", 96, 96 },
-        { "floor_plain_d1_01", "floor_shapes", 96, 96 },
-        { "floor_plain_d2_01", "floor_shapes", 96, 96 },
-        { "floor_cracked_d0_01", "floor_shapes", 96, 96 },
-        { "floor_cracked_d1_01", "floor_shapes", 96, 96 },
-        { "floor_cracked_d2_01", "floor_shapes", 96, 96 },
-        { "floor_mossy_d0_01", "floor_shapes", 96, 96 },
-        { "floor_mossy_d1_01", "floor_shapes", 96, 96 },
-        { "floor_mossy_d2_01", "floor_shapes", 96, 96 },
-        { "floor_pit_01", "floor_shapes", 96, 96 },
-        { "floor_stairs_up_01", "floor_shapes", 96, 96 },
-        { "floor_stairs_down_01", "floor_shapes", 96, 96 },
-        { "ceiling_01", "wall_shapes", 96, 96 },
-        { "creature_demon_d0_01", "creature_shapes", 64, 64 },
-        { "creature_demon_d1_01", "creature_shapes", 64, 64 },
-        { "creature_demon_d2_01", "creature_shapes", 64, 64 },
-        { "prison_door_01", "wall_shapes", 64, 96 },
-        { "lord_order_01", "wall_shapes", 96, 96 },
-        { "chaos_rune_0_01", "chaos_runes", 32, 32 },
-        { "chaos_rune_1_01", "chaos_runes", 32, 32 },
-        { "chaos_rune_2_01", "chaos_runes", 32, 32 },
-        { "chaos_rune_3_01", "chaos_runes", 32, 32 },
-        { "dsa_scroll_01", "dsa_scrolls", 32, 32 }
-    };
-    char root[FSP_PATH_MAX];
-    char parent[FSP_PATH_MAX];
-    char modern[FSP_PATH_MAX];
-    char manifest[FSP_PATH_MAX];
-    const char* slash;
-    FILE* fp;
-
-    snprintf(root, sizeof(root), "%s", dataDir);
-    slash = strrchr(root, '/');
-    assert(slash != NULL);
-    root[slash - root] = '\0';             /* .../data */
-    snprintf(parent, sizeof(parent), "%s", root);
-    slash = strrchr(parent, '/');
-    assert(slash != NULL);
-    parent[slash - parent] = '\0';         /* fixture root */
-    snprintf(modern, sizeof(modern), "%s/assets/csb/modern", parent);
-    assert(FSP_CreateDirectoryRecursive(modern) == 1);
-    snprintf(manifest, sizeof(manifest), "%s/modern_asset_manifest.json", modern);
-    fp = fopen(manifest, "wb");
-    assert(fp != NULL);
-    static const char* const categories[] = {
-        "wall_shapes", "floor_shapes", "creature_shapes", "door_shapes",
-        "chaos_runes", "dsa_scrolls"
-    };
-    fputs("{\"manifestVersion\":\"1.0.0\"", fp);
-    for (size_t categoryIndex = 0;
-         categoryIndex < sizeof(categories) / sizeof(categories[0]);
-         ++categoryIndex) {
-        int first = 1;
-        fprintf(fp, ",\"%s\":[", categories[categoryIndex]);
-        for (size_t i = 0; i < sizeof(slots) / sizeof(slots[0]); ++i) {
-            if (strcmp(slots[i].category, categories[categoryIndex]) != 0) continue;
-            {
-                char category[FSP_PATH_MAX];
-                char asset[FSP_PATH_MAX];
-                FILE* assetFile;
-                snprintf(category, sizeof(category), "%s/%s", modern,
-                         slots[i].category);
-                assert(FSP_CreateDirectoryRecursive(category) == 1);
-                snprintf(asset, sizeof(asset), "%s/%s.png", category,
-                         slots[i].id);
-                assetFile = fopen(asset, "wb");
-                assert(assetFile != NULL);
-                fputs("source-derived-fixture", assetFile);
-                fclose(assetFile);
-                fprintf(fp, "%s{\"id\":\"%s\",\"generator\":\"original_csb_pc34_graphics_dat\","
-                            "\"source_file\":\"%s.png\",\"width\":%d,\"height\":%d,"
-                            "\"f0128ProjectionStatus\":\"admitted_real\"}",
-                        first ? "" : ",", slots[i].id, slots[i].id,
-                        slots[i].width, slots[i].height);
-                first = 0;
-            }
-        }
-        fputs("]", fp);
-    }
-    fputs(",\"routeProvenance\":[", fp);
-    for (size_t i = 0; i < sizeof(slots) / sizeof(slots[0]); ++i) {
-        fprintf(fp, "%s{\"id\":\"%s\",\"category\":\"%s\","
-                    "\"f0128ProjectionStatus\":\"admitted_real\"}",
-                i == 0 ? "" : ",", slots[i].id, slots[i].category);
-    }
-    fputs("],\"slots\":[", fp);
-    for (size_t i = 0; i < sizeof(slots) / sizeof(slots[0]); ++i) {
-        fprintf(fp, "%s{\"id\":\"%s\",\"generator\":\"original_csb_pc34_graphics_dat\","
-                    "\"source_file\":\"%s.png\",\"width\":%d,\"height\":%d}",
-                i == 0 ? "" : ",", slots[i].id, slots[i].id,
-                slots[i].width, slots[i].height);
-    }
-    fputs("]}", fp);
-    fclose(fp);
 }
 
 int main(void) {
@@ -345,30 +233,9 @@ int main(void) {
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.graphicsPopupActive == 0);
 
-    /* A complete CSB-specific material manifest must expose V2.2 even when
-     * M12 has no global (DM1) artpack-installed bit. */
-    {
-        const char* dataDir = "/tmp/firestaff-csb-v22-popup/data/csb";
-        assert(FSP_CreateDirectoryRecursive(dataDir) == 1);
-        write_csb_v22_finished_fixture(dataDir);
-        csb_v22_famg_set_manifest_path(dataDir);
-        csb_v22_set_manifest_path(dataDir);
-        assert(csb_v22_famg_is_finished_real() == 1);
-        assert(csb_v22_modern_assets_available() == 1);
-        config.v22_modern_assets_installed = 0;
-        config.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
-        assert(M12_Config_Save(&config) == 1);
-        state.presentationMode = M12_PRESENTATION_V21_UPSCALED;
-        result = M11_GameView_HandleInput(&state,
-                                          M12_MENU_INPUT_GRAPHICS_POPUP);
-        assert(result == M11_GAME_INPUT_REDRAW);
-        result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
-        assert(result == M11_GAME_INPUT_REDRAW);
-        assert(state.presentationMode == M12_PRESENTATION_V22_MODERN);
-        result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK);
-        assert(result == M11_GAME_INPUT_REDRAW);
-        assert(state.graphicsPopupActive == 0);
-    }
+    /* CSB V2.2 cannot be opened by a test-generated manifest or host PNG
+     * placeholders. The production renderer accepts only future original CSB
+     * decoded material; until then the F10 route stays on V1/V2.1. */
 
     /* CSB owns a separate V2 filter contract. The in-game F10 panel must
      * persist and apply CSB's filter settings, not mutate DM1's settings
