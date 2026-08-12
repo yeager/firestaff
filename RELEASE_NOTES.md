@@ -89,6 +89,10 @@
   authentic File, Edit and Options `MENU` resources and the settings `DITL`
   resource in the retained retail application fork. No guessed menu geometry
   or editor data is admitted.
+- `DM2 Macintosh viewport input`: Bind Mac clicks on renderer-published
+  source `c_rwbb` wall-button targets to the existing authenticated DB3/DB14
+  wall-action chain. Other viewport target kinds remain fail-closed until
+  their original Mac action owner is recovered.
 
 ## Nexus
 
