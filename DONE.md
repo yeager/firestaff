@@ -2078,13 +2078,12 @@ rendering remain blocked.
 - ✅ Direktstart med `--save` går samma CHTWE/CHTWJ → F0435 → GAMELOOP-väg:
   den autentiska F31-sparningens party, karta och championantal binds utan
   titelrepetition eller felaktig Atari/CSBWin-tolkning.
-- ✅ F0433-skrivning är fortfarande spärrad. Firestaff skriver alltså inte en
-  privat eller delvis rekonstruerad fil över en äkta FM Towns-save innan
-  bytekorrekt write-back och backupflöde har verifierats mot ett verkligt
-  användarsparat corpus.
-- ✅ Spara-kommandot stoppar nu före värdsökväg och PC/Atari-kontroller i en
-  FM Towns-session. Det visar att just F31:s native write-back saknas, i
-  stället för att felaktigt rapportera en gammal främmande sparkvittens.
+- ✅ F0433/F7052:s native write-back är nu bunden till en redan verifierad
+  kanonisk F31-slot: den bevarar källans okända bytes, uppdaterar endast
+  ägda delar, skriver fem omkodade och checksummade delar samt F7062-huvudet,
+  roterar den ursprungliga `.BAK`-sökvägen och publicerar atomärt. M11:s
+  F31-regression provar skrivning följd av F0435-läsning. Det är inte ännu en
+  byte-för-byte-påstådd matchning mot en extern originalskrivning.
 
 # Theron: Firestaff WASD, mus och touch (2026-08-09)
 

@@ -1439,9 +1439,13 @@
   tvåkartors Prison-dungeon med ett sparat kartindex som inte kan finnas där
   och avvisas därför före handoff. Den språkmatchade `CSBGAME-JP.DAT`
   (SHA-256 `1c3b9d8c…cf0c2a1`) passerar däremot den opt-in-bundna F31J
-  F0435-korpusregressionen och startar den aktiva M11-runtimen. Kvar är
-  bytekorrekt F0433-skrivning, autentisk F31J Utility Disk-filväljare, extern
-  app-capture och bred fysisk touch-/hjälpmedelsverifiering på varje plattform.
+  F0435-korpusregressionen och startar den aktiva M11-runtimen. F0433/F7052
+  skriver nu endast en redan verifierad, kanonisk F31-slot via temporär fil,
+  ursprunglig `.BAK`-rotation, fem checksummade delar och F7062-huvud; M11:s
+  native write/readback-regression täcker den vägen. Kvar är en oberoende
+  bytejämförelse mot en fångad original-F31-skrivning, autentisk F31J Utility
+  Disk-filväljare, extern app-capture och bred fysisk touch-/hjälpmedels-
+  verifiering på varje plattform.
 
 - 🔧 Theron real Track 02 loading now retains reserved category-4 monster
   bytes as source records while admitting only the authenticated 0..6 roster
