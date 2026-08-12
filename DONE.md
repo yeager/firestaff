@@ -1,5 +1,11 @@
 # CSB Hint Oracle: authentic Atari R1 start routes (2026-08-12)
 
+- ✅ `csb_v1_atari_mini_menu_resume_archive` now exercises the ordinary M12
+  Continue row with only extracted original Atari ST files. It persists the
+  native `MINI.DAT` path in an isolated launcher profile, navigates from the
+  selected CSB row to Continue, and proves that M12 hands the exact path to
+  F0435 (`CSB READY … route=f0435-resume`) without using CLI `--save`.
+
 - ✅ `CSB UTILITY DISK — HINT ORACLE` är nu en separat M12-post och
   `--csb-hint-oracle --data-dir <root> --save <MINI.DAT>` är dess explicita
   CLI-motsvarighet. Båda går genom samma M11-runtime, använder den

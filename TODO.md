@@ -4152,6 +4152,13 @@ that its exact runtime path is not already source-locked and tested.
     Atari/Amiga GAMEBLOCK reader is selected before the broader CSBWin body
     classifier. Other original-slot names retain their established CSBWin-then-
     F0435 fallback order for compatibility with source-shaped F0433 output.
+    2026-08-12: the ordinary M12 Continue row is separately proven against
+    the original Atari archive. The regression persists its native `MINI.DAT`
+    in an isolated launcher profile, selects Continue from the CSB menu and
+    requires the resulting `CSB READY` receipt to report `route=f0435-resume`;
+    it does not use the explicit CLI `--save` ingress. This closes the launcher
+    handoff evidence gap for that authenticated Atari save, not the wider
+    CSBWin/DSA save corpus gap.
     2026-07-29: the export now also writes the documented, already-decoded
     champion fields in each 800-byte original record (identity, pose/action,
     vital stats, skills/experience, slots, load and shield), re-encrypting

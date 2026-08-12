@@ -71,11 +71,12 @@
       "id": "csb_v1_save_compatibility_real_artifacts",
       "priority": "P3",
       "status": "ACTIVE_BLOCKER",
-      "summary": "CSB roster import, save-section work, and a bounded route save-prefix roundtrip exist, but real CSB save compatibility artifacts and broad roundtrip evidence remain open.",
+      "summary": "CSB roster import, save-section work, and a bounded route save-prefix roundtrip exist. The native Atari MINI.DAT path is also verified through the ordinary M12 Continue row into F0435, but real CSB save compatibility artifacts and broad roundtrip evidence remain open.",
       "latestEvidence": [
         "TODO.md",
         "docs/FINAL_CSB_GAPS.md",
         "CTest csb_v1_save_import_path_pc34_compat",
+        "CTest csb_v1_atari_mini_menu_resume_archive",
         "CTest csb_v1_runtime_route_first_frame_movement_utility_gate"
       ],
       "nextAction": "Probe real CSBGAME.DAT / utility-disk save artifacts through import, runtime load, save/write-back, and reload receipts."

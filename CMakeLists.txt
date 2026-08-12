@@ -16987,6 +16987,18 @@ endif()
     set_tests_properties(csb_v1_atari_mini_runtime_archive PROPERTIES
         LABELS "tier2;csb;atari;save;runtime;real_data;archive;skip_safe"
     )
+    # The normal launcher Resume row must carry an authenticated original
+    # Atari MINI.DAT through M12, rather than relying on the explicit
+    # command-line --save ingress covered by the runtime archive test.
+    add_test(
+        NAME csb_v1_atari_mini_menu_resume_archive
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_mini_menu_resume_archive.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(csb_v1_atari_mini_menu_resume_archive PROPERTIES
+        LABELS "tier2;csb;atari;save;resume;menu;real_data;archive;skip_safe"
+        TIMEOUT 45
+    )
     add_test(
         NAME csb_v1_atari_save_disk_archive
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_save_disk_archive.sh"
