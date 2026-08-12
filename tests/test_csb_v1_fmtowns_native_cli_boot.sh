@@ -70,6 +70,28 @@ case "$runtime_output" in
         ;;
 esac
 
+# F31's native MINI.DAT route must leave the title/utility program chain and
+# feed its first real movement command into the shared CSB runtime. The stock
+# English corpus starts at (9,0), facing south; one source UP command reaches
+# (9,1) without a fabricated save or a PC/Atari fallback.
+movement_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+    --width 320 --height 200 --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
+    --boot-probe --boot-probe-frames 2000 --script up \
+    --boot-probe-expect-phase inactive --boot-probe-expect-runtime \
+    --boot-probe-expect-level-loaded 1 --duration 0 2>&1)" || {
+    printf '%s\n' "$movement_output" >&2
+    exit 1
+}
+
+case "$movement_output" in
+    *"phase=inactive"*"levelLoaded=1"*"party=9,1,2"*"dm1WorldTick="*) ;;
+    *)
+        echo "FAIL: native FM Towns CSB runtime did not consume its first UP command" >&2
+        printf '%s\n' "$movement_output" >&2
+        exit 1
+        ;;
+esac
+
 # An explicit F31 save is a distinct C03/F0435 route.  It must not replay
 # TITLE.ANM or pass the bytes to the Atari/CSBWin importer merely because the
 # launcher was started from a generic --game csb invocation.  Keep this opt-in
@@ -137,4 +159,4 @@ if [ -n "$user_save" ]; then
     echo "PASS: native CSB FM Towns start menu resumes the selected F0435 save"
 fi
 
-echo "PASS: native CSB FM Towns CLI title, MINI.DAT runtime, and start-menu launch"
+echo "PASS: native CSB FM Towns CLI title, MINI.DAT runtime/movement, and start-menu launch"

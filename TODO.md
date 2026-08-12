@@ -3251,6 +3251,12 @@
   Adventure:s F7086/F7090 source/destination object transaction, F31J:s
   senare editor- och savedialoger samt bredare user-save-corpus coverage—not
   a fallback or synthetic save path.
+  **2026-08-12 F31 runtime-input receipt:** the native CLI regression now
+  advances both authenticated F31E and F31J media through TITLE.ANM →
+  SWITCHTW → MINI.DAT and injects one source `UP` command only after runtime
+  admission. The stock start pose `(9,0,2)` becomes `(9,1,2)` with a live
+  world tick, proving the program chain reaches shared CSB movement rather
+  than stopping at a title or boot receipt.
 
 - **NEXUS-SFX-EVENT-DISPATCH-CAPTURE:** Host sound-request names are now
   2026-08-06 follow-up: the M11 Light/Torch/Darkness bridge now checks the
