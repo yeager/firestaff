@@ -1,6 +1,6 @@
 # Firestaff TODO - Open Work
 
-# CSB Hint Oracle: source selection state is recovered; product routing remains open (2026-08-12)
+# CSB Hint Oracle: Atari R1 original-media runtime is recovered; M11/M12 routing remains open (2026-08-12)
 
 - ✅ The real Utility Disk `HCSB.DAT` container now has a strict source-cited
   index: its duplicate big-endian size tables must agree and its segments must
@@ -35,10 +35,16 @@
   `CSB_V1_AtariSaveInfo` receipt from the Atari MINI.DAT path and maps its
   `party_map_index/party_x/party_y` directly into the Oracle selector. Invalid
   signed poses are rejected before the unsigned HTC lookup.
-- 🔒 Graphical Hint Oracle/M11/M12 routing and presentation of that existing
-  Atari-save handoff, original text/page layout and original-frame pixel
-  parity remain open. Do not treat the state module or decoded resources as a
-  rendered Utility Disk screen.
+- ✅ `CSB_HintOracleAtariRuntime` now owns the complete documented Atari R1
+  triplet: exact `HCSB.HTC` and `HCSB.DAT` hashes plus the authenticated
+  MINI.DAT receipt. It selects the original hints and renders the selected
+  one-based page into the original 320×200 indexed surface without a host
+  frame, font or palette fallback. The real-data regression decodes the
+  staged MINI.DAT (currently map 4, x 22, y 18), finds two hints and renders
+  its first page.
+- 🔒 M11/M12 ownership and input routing, original click layout/cadence and
+  captured original-frame pixel parity remain open. The R1 runtime is a
+  source-owned consumer, not yet a user-visible launcher route.
 
 # Nexus: bind verified SH-2 transform to an authenticated Saturn consumer (2026-08-11)
 

@@ -84,15 +84,16 @@
       "id": "csb_v1_utility_disk_payloads",
       "priority": "P4",
       "status": "ACTIVE_BOUNDED",
-      "summary": "Hint Oracle HTC scan/cache and text UI binding exist; HCSB.DAT now has a real, strict four-segment archive index, but graphic-stream decoding and graphical overlay remain open.",
+      "summary": "The Atari R1 Hint Oracle now joins hash-admitted HCSB.HTC/HCSB.DAT with an authenticated MINI.DAT coordinate receipt and renders the selected original 320x200 page. M11/M12 routing, original click/cadence capture and pixel-parity evidence remain open.",
       "latestEvidence": [
         "TODO.md",
         "docs/FIRESTAFF_GAP_LIST.md",
         "CTest csb_v1_utility_import_block_verify_pc34_compat",
         "CTest csb_hint_oracle_dat_unit",
-        "CTest csb_v1_hint_oracle_dat_real"
+        "CTest csb_v1_hint_oracle_dat_real",
+        "CTest csb_hint_oracle_atari_runtime_unit"
       ],
-      "nextAction": "Hash-admit and cache the matching HCSB.DAT variant, then implement the source-owned platform graphic-stream decoder and compare captured original Hint Oracle frames before binding a graphical route."
+      "nextAction": "Bind the source-owned Atari R1 runtime to an M11/M12 Utility Disk entry, preserving HINTDATA.C click rectangles and HINTMAIN.C state/cadence; then compare captured original Hint Oracle frames before promoting pixel parity."
     },
     {
       "id": "csb_v1_audio_timing",

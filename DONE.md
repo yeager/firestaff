@@ -1,3 +1,14 @@
+# CSB Hint Oracle: complete authentic Atari R1 runtime handoff (2026-08-12)
+
+- ✅ Added `CSB_HintOracleAtariRuntime`, which atomically admits the known
+  Atari ST 2.0/2.1 R1 HCSB.HTC/HCSB.DAT pair, consumes the checked native
+  MINI.DAT coordinate receipt, runs the recovered source selection/page state
+  and renders a selected page using only the original 320×200 art/font/palette.
+- ✅ `test_csb_hint_oracle_atari_runtime` fails closed without admitted assets
+  and has an opt-in original-media receipt. Against the staged R1 triplet it
+  decodes map 4 / x 22 / y 18, selects two authored hints and renders page 1.
+  No game files or generated graphics are committed.
+
 # CSB Hint Oracle: authenticated Atari save-coordinate bridge (2026-08-12)
 
 - ✅ `CSB_HintOracleAtariSaveSession` connects the existing checked

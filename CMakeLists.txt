@@ -39223,6 +39223,31 @@ add_executable(test_nexus_v1_dgn_material_raster
     endif()
     add_test(NAME csb_hint_oracle_text_render_unit COMMAND test_csb_hint_oracle_text_render)
 
+    add_executable(test_csb_hint_oracle_atari_runtime
+        tests/test_csb_hint_oracle_atari_runtime.c
+        src/csb/csb_hint_oracle_atari_runtime.c
+        src/csb/csb_hint_oracle_atari_save_session.c
+        src/csb/csb_hint_oracle_session.c
+        src/csb/csb_hint_oracle_graphics_surface.c
+        src/csb/csb_hint_oracle_dat_real_scan.c
+        src/csb/csb_hint_oracle_dat.c
+        src/csb/csb_hint_oracle_htc.c
+        src/csb/csb_hint_oracle_htc_real_scan.c
+        src/csb/csb_hint_oracle_htc_variant.c
+        src/csb/csb_hint_oracle_ui_panel.c
+        src/csb/csb_hint_oracle_ui_runtime_binding.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_csb_hint_oracle_atari_runtime PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_hint_oracle_atari_runtime PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_hint_oracle_atari_runtime PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(NAME csb_hint_oracle_atari_runtime_unit COMMAND test_csb_hint_oracle_atari_runtime)
+
     # CSB Hint Oracle original HCSB.DAT graphic archive.  The strict index
     # parser validates duplicated big-endian size tables and exact segment
     # coverage before any platform graphic decoder can consume a segment.
