@@ -4189,7 +4189,10 @@ that its exact runtime path is not already source-locked and tested.
     The same real-session regression also turns right through COMMAND.C's
     C001/C002 bridge after F0435 and verifies the live GAMEBLOCK direction,
     M11 mirror, and fresh C232 HUD redraw.  It never writes the supplied
-    source save.
+    source save. The supplied saved pose is enclosed; an attempted westward
+    C003 forward command is now also proven to dequeue through F0380 while
+    retaining the source wall-blocked party pose, rather than becoming a
+    generic host move or an ignored input.
     2026-08-11: launcher and fixture regressions no longer create synthetic
     CSB `DUNGEON.DAT` or placeholder `GRAPHICS.DAT` to cross a runtime gate.
     A hash-labelled metadata fixture is now explicitly required to fail before

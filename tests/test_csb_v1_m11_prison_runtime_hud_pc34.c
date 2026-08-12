@@ -316,6 +316,19 @@ int main(void)
         CHECK(check_atari_st_c232_hud_frame(profile->graphics_path,
                                             framebuffer),
               "stock CSBWin turn redraw keeps the complete C232 HUD composition");
+        /* This stock save is enclosed at its restored pose: C0128's west
+         * cell is a source wall.  The command must still reach F0380's live
+         * queue and then preserve the GAMEBLOCK pose; ignoring the input or
+         * walking through the source wall would both be regressions. */
+        CHECK(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
+                  M11_GAME_INPUT_REDRAW &&
+                  profile->runtime.last_input_dispatch.dequeued &&
+                  profile->runtime.last_input_dispatch.command ==
+                      DM1_V1_COMMAND_MOVE_FORWARD &&
+                  profile->runtime.party_x == 22 &&
+                  profile->runtime.party_y == 18 &&
+                  view.world.party.mapX == 22 && view.world.party.mapY == 18,
+              "stock CSBWin resume preserves the source wall-blocked movement result");
         M11_GameView_Shutdown(&view);
         if (failures) return 1;
         puts("PASS: stock CSBWin F0435 C0128/C232 runtime frame");
