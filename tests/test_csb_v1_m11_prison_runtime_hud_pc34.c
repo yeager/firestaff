@@ -574,6 +574,59 @@ int main(void)
                           M11_DM1_MOUSE_MASK_LEFT) == M11_GAME_INPUT_REDRAW &&
                       view.inventoryPanelActive && view.v1FoodWaterPanelActive,
                   "stock CSBWin C232 mouth wins over the overlapping top-row route");
+            {
+                const struct ChampionState_Compat *champion =
+                    &view.world.party.champions[view.world.party.activeChampionIndex];
+                CSB_V1_StartupGraphicDecodeReceipt_PC34 label_receipt;
+                unsigned char *food_label = NULL;
+                int label_width = 0;
+                int label_height = 0;
+                int bar_width = ((int)champion->food + 1024) / 32;
+                int water_bar_width = ((int)champion->water + 1024) / 32;
+                unsigned char bar_color = champion->food < -512 ? 8u :
+                    (champion->food < 0 ? 11u : 5u);
+                unsigned char water_bar_color = champion->water < -512 ? 8u :
+                    (champion->water < 0 ? 11u : 14u);
+                int label_pixel = -1;
+
+                if (bar_width >= 96) bar_width = 95;
+                if (water_bar_width >= 96) water_bar_width = 95;
+                memset(framebuffer, 0, sizeof(framebuffer));
+                M11_GameView_Draw(&view, framebuffer, 320, 200);
+                CHECK(bar_width >= 0 &&
+                          framebuffer[69 * 320 + 113] == bar_color &&
+                          framebuffer[92 * 320 + 113] == water_bar_color &&
+                          framebuffer[69 * 320 + 113 + bar_width + 1] == 12u &&
+                          framebuffer[92 * 320 + 113 + water_bar_width + 1] == 12u,
+                      "stock CSBWin mouth frame uses Viewport.cpp food/water bar geometry");
+                memset(&label_receipt, 0, sizeof(label_receipt));
+                CHECK(profile && csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+                                     profile->graphics_path, 30u, &food_label,
+                                     &label_width, &label_height, &label_receipt) &&
+                          label_receipt.valid && food_label &&
+                          label_width >= layout.food_label_box.x2 -
+                              layout.food_label_box.x1 + 1 &&
+                          label_height >= layout.food_label_box.y2 -
+                              layout.food_label_box.y1 + 1,
+                      "stock CSBWin mouth frame resolves real C030 label material");
+                if (food_label) {
+                    int pixel;
+                    for (pixel = 0; pixel < label_width * label_height; ++pixel) {
+                        if (food_label[pixel] != 0u) {
+                            label_pixel = pixel;
+                            break;
+                        }
+                    }
+                    CHECK(label_pixel >= 0 &&
+                              framebuffer[(layout.food_label_box.y1 +
+                                           label_pixel / label_width) * 320 +
+                                          layout.food_label_box.x1 +
+                                          label_pixel % label_width] ==
+                                  food_label[label_pixel],
+                          "stock CSBWin mouth frame copies C030 at C232's decoded destination");
+                }
+                free(food_label);
+            }
         }
         CHECK(M11_GameView_HandleInput(
                   &view, M12_MENU_INPUT_CHAMPION_2_INVENTORY) ==

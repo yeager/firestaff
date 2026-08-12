@@ -55,10 +55,22 @@ top-band coordinate range as the normal champion-status route. While C017 is
 active, M11 therefore resolves those C232 controls before the top-row
 dispatcher. An empty-hand mouth click remains on the existing source-command
 state path, and `ShowHideInventory` clears that transient page state whenever
-the selected champion changes or the inventory closes. This establishes input
-precedence only; the C020/C030/C031 food-and-water raster is intentionally not
-claimed until its CSBWin-specific C232 placement record is independently
-recovered.
+the selected champion changes or the inventory closes. The food-and-water
+raster is now source-bound as well: a 32-bit CSBWin layout probe resolves
+`DBank::Byte1832` at 26696 and `wRectPos926/950/958/966` at
+27602/27578/27570/27562. Since `CSBCode.cpp` expands C232 at `Byte1832 + 2`,
+the raw C232 offsets are 904/880/872/864, matching the decoder. On the active
+mouth path, Firestaff copies C020/C030/C031 to those rectangles and reproduces
+`Viewport.cpp::DrawFoodWaterBar`: food at
+`(113,69)` in colour 5, water at `(113,92)` in colour 14, signed warning
+colours 11/8, and the two-pixel black tail. The real-data CTest performs the
+decoded C232 click and validates C030 plus the resulting bar pixels in the
+final framebuffer.
+
+C032 är medvetet inte bunden ännu: originalet använder `CHARDESC::poisonCount`,
+inte den generella Firestaff-spegelns `poisonDose`. Att göra den likställningen
+skulle vara syntetisk data. Kravet är därför en utökad CSBWin runtime-receipt
+med det faktiska fältet.
 
 The real-data CTest `csb_v1_m11_prison_runtime_hud_pc34` reconstructs the
 whole 224×136 C017 aperture from the same authentic graphics file and checks

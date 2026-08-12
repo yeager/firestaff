@@ -11,6 +11,13 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   Do not infer this transient state from inventory contents or PC3.4 input.
   Capture contract: `parity-evidence/csbwin_attacking_character_ordinal_capture_contract_20260812.md`.
 
+- **CSBWIN-INVENTORY-C032 — poison label remains receipt-blocked.**
+  `Viewport.cpp::DisplayFoodWater` gates C032 on CSBWin `CHARDESC::poisonCount`.
+  C232 supplies its verified rectangle, but Firestaff's current Atari mirror
+  carries no source-owned `poisonCount` field. Do not substitute the generic
+  `ChampionState_Compat::poisonDose`; capture the signed CSBWin field in the
+  same runtime receipt before enabling C032.
+
 ## ReDMCSB CSB Reference-Boundary Audit
 
 ### ReDMCSB Numbered-Symbol Audit (2026-07-14)

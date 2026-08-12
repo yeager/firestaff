@@ -3883,6 +3883,88 @@ static int m11_csb_compose_csbwin_inventory_icons(
     return 1;
 }
 
+/* Viewport.cpp::DisplayFoodWater is a separate, transient C017 paint.  C232
+ * supplies the three destination rectangles, but the selected character's
+ * signed food/water values supply the bars.  Keep this apart from the static
+ * C232 HUD plan: C017 has already replaced that aperture at this point. */
+static int m11_csb_copy_csbwin_graphic_to_rect(
+    M11_GameViewState *state, uint16_t graphic_index,
+    const CSB_V1_CSBWinRect0232 *destination, uint8_t *pixels)
+{
+    const uint8_t *source = NULL;
+    int source_width = 0;
+    int source_height = 0;
+    int width;
+    int height;
+    int row;
+
+    if (!state || !destination || !pixels ||
+        !csb_v1_csbwin_layout_0232_rect_is_screen_valid(destination) ||
+        !m11_csb_csbwin_hud_source_resolver(state, graphic_index, &source,
+                                             &source_width, &source_height)) {
+        return 0;
+    }
+    width = destination->x2 - destination->x1 + 1;
+    height = destination->y2 - destination->y1 + 1;
+    if (!source || source_width < width || source_height < height) return 0;
+    for (row = 0; row < height; ++row) {
+        memcpy(pixels + (size_t)(destination->y1 + row) * 320u +
+                   (size_t)destination->x1,
+               source + (size_t)row * (size_t)source_width, (size_t)width);
+    }
+    return 1;
+}
+
+static int m11_csb_draw_csbwin_food_water_bar(
+    uint8_t *pixels, int value, int y, uint8_t color)
+{
+    int width;
+
+    /* CHARDESC keeps this same signed range.  Do not permit an unverified
+     * host value to turn Viewport.cpp::DrawHorzBar into an invented shape. */
+    if (!pixels || value < -1024 || value > 2048) return 0;
+    if (value < 0) color = 11u;
+    if (value < -512) color = 8u;
+    width = (value + 1024) / 32;
+    if (width >= 96) width = 95;
+    /* DrawHorzBar stores inclusive x2/y2 endpoints. */
+    /* TAG0088b2's active CSBWin palette maps source colour 0 (black) to
+     * indexed pixel 12.  The C020 surface and the real frame use that same
+     * index; writing host index 0 here would visibly cut a false seam. */
+    m11_fill_rect(pixels, 320, 200, 115, y + 2, width + 1, 7, 12u);
+    m11_fill_rect(pixels, 320, 200, 113, y, width + 1, 7, color);
+    return 1;
+}
+
+static int m11_csb_draw_csbwin_food_water_panel(
+    M11_GameViewState *state, const CSB_V1_CSBWinLayout0232 *layout,
+    uint8_t *pixels)
+{
+    const struct ChampionState_Compat *champion;
+
+    if (!state || !layout || !layout->valid || !pixels ||
+        !state->v1FoodWaterPanelActive || !state->inventoryPanelActive ||
+        state->world.party.activeChampionIndex < 0 ||
+        state->world.party.activeChampionIndex >= state->world.party.championCount ||
+        state->world.party.activeChampionIndex >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+    champion = &state->world.party.champions[
+        state->world.party.activeChampionIndex];
+    if (!champion->present || champion->hp.current == 0u ||
+        !m11_csb_copy_csbwin_graphic_to_rect(state, 20u,
+                                              &layout->food_water_box, pixels) ||
+        !m11_csb_copy_csbwin_graphic_to_rect(state, 30u,
+                                              &layout->food_label_box, pixels) ||
+        !m11_csb_copy_csbwin_graphic_to_rect(state, 31u,
+                                              &layout->water_label_box, pixels) ||
+        !m11_csb_draw_csbwin_food_water_bar(pixels, champion->food, 69, 5u) ||
+        !m11_csb_draw_csbwin_food_water_bar(pixels, champion->water, 92, 14u)) {
+        return 0;
+    }
+    return 1;
+}
+
 /* Character.cpp::TAG014af6 keeps a fixed three-column field even when the
  * input would have a fourth digit: it returns byte 1 of its four-byte scratch
  * buffer. Keep the unusual source behavior rather than using host printf
@@ -4026,6 +4108,7 @@ static int m11_csb_present_atari_st_runtime_hud(
                                                      candidate)) {
             return 0;
         }
+        (void)m11_csb_draw_csbwin_food_water_panel(state, &layout, candidate);
         /* Text is a separately admitted raw M653 consumer.  A malformed
          * font must not invent glyphs or suppress the already verified C017
          * pixel layer; it leaves only this source text undrawn. */

@@ -26,9 +26,17 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   överlappande topp-radens championrutt medan C017 är öppet. Det gör att ett
   tomhänt munklick når originalets kommandotillstånd i stället för att stänga
   eller byta inventarium. Ett F1–F4-byte eller stängning rensar det tillfälliga
-  munläget, precis som `ShowHideInventory`. Den källverifierade rasterplaceringen
-  av C020/C030/C031 är fortfarande uttryckligen öppen och ersätts inte med
-  uppskattade koordinater.
+  munläget, precis som `ShowHideInventory`. C020/C030/C031 är nu verifierade
+  mot CSBWin: `CSBCode.cpp` expanderar C232 vid `DBank::Byte1832 + 2`, och den
+  ursprungliga 32-bitars `DBank`-layouten placerar `wRectPos926/950/958/966`
+  vid råoffset `904/880/872/864`. När munläget är aktivt ritar Firestaff de
+  verkliga C020-, C030- och C031-ytorna, följt av
+  `Viewport.cpp::DrawFoodWaterBar` vid `(113,69)` och `(113,92)` med dess
+  signerade -1024..2048-omräkning, varningsfärger och tvåpixels svarta slut.
+  Realtidstestet klickar den avkodade munrutan i den licensierade CSBWin-
+  sparningen och kontrollerar C030-destinationen samt stapelpixlarna i den
+  färdiga 320×200-bilden. C032 är fortsatt spärrad eftersom dess separata
+  CSBWin-`poisonCount` ännu inte finns i runtime-receiptet.
 - ✅ CSBWin C017:s HEALTH/STAMINA/MANA-rader använder nu den autentiska råa
   M653-fonten från Atari ST `GRAPHICS.DAT` post `0x822d` (557). Detta följer
   `CSBCode.cpp::TAG001c6e`, som laddar exakt 768 byte med `NOT_EXPANDED`, och
