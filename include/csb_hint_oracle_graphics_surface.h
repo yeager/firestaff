@@ -24,4 +24,8 @@ int csb_hint_oracle_graphics_surface_load(CSB_HintOracleGraphicsSurface *surface
 int csb_hint_oracle_graphics_surface_blit_st_text(
     const CSB_HintOracleGraphicsSurface *surface, uint8_t *frame,
     size_t frame_size, int x, int y, const char *text);
+int csb_hint_oracle_graphics_surface_blit_st_centered_box(
+    const CSB_HintOracleGraphicsSurface *surface, uint8_t *frame,
+    size_t frame_size, int left, int right, int top, int bottom,
+    const char *text);
 #endif
