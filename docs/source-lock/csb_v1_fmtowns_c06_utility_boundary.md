@@ -84,6 +84,14 @@ validates its extent through the TBIOS shim and retains it only in process
 memory. It neither scans it into game data nor distributes it. Without that
 ROM the Japanese C06 route stays closed.
 
+The opt-in `csb_v1_fmtowns_user_save_corpus` regression accepts either one
+already selected F31 package through `FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR`, or
+a mixed licensed CD tree through `FIRESTAFF_CSB_FMTOWNS_LOOSE_DATA_DIR`.  In
+the latter case it materializes `fmtowns-en` and `fmtowns-ja` separately before
+opening each candidate save.  This keeps a rejected English `CSBGAME.DAT` from
+being tested against Japanese media, and proves that the admitted Japanese
+`CSBGAME-JP.DAT` stays bound to the F31J package.
+
 The implementation boundary is in `src/csb/csb_v1_fmtowns_game.c`,
 `src/csb/csb_v1_fmtowns_utility_render.c` and
 `src/engine/m11_game_view.c`. The callable-symbol inventory deliberately

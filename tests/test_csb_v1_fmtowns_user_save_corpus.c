@@ -8,6 +8,7 @@
  */
 #include "csb_v1_boot.h"
 #include "csb_v1_fmtowns_game.h"
+#include "asset_status_m12.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -116,12 +117,46 @@ static void check_candidate(const char *data_dir, const char *corpus_dir,
 int main(void)
 {
     const char *data_dir = getenv("FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR");
+    const char *loose_data_dir =
+        getenv("FIRESTAFF_CSB_FMTOWNS_LOOSE_DATA_DIR");
     const char *corpus_dir = getenv("FIRESTAFF_CSB_FMTOWNS_SAVE_CORPUS_DIR");
+    char english_data_dir[M12_ASSET_DATA_DIR_CAPACITY];
+    char japanese_data_dir[M12_ASSET_DATA_DIR_CAPACITY];
+    M12_AssetStatus asset_status;
 
-    if (!data_dir || !data_dir[0] || !corpus_dir || !corpus_dir[0]) {
-        printf("SKIP: set FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR and "
+    if ((!data_dir || !data_dir[0]) &&
+        (!loose_data_dir || !loose_data_dir[0])) {
+        printf("SKIP: set FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR or "
+               "FIRESTAFF_CSB_FMTOWNS_LOOSE_DATA_DIR, and "
                "FIRESTAFF_CSB_FMTOWNS_SAVE_CORPUS_DIR\n");
         return 0;
+    }
+    if (!corpus_dir || !corpus_dir[0]) {
+        printf("SKIP: set FIRESTAFF_CSB_FMTOWNS_SAVE_CORPUS_DIR\n");
+        return 0;
+    }
+    if (loose_data_dir && loose_data_dir[0]) {
+        memset(&asset_status, 0, sizeof(asset_status));
+        memset(english_data_dir, 0, sizeof(english_data_dir));
+        memset(japanese_data_dir, 0, sizeof(japanese_data_dir));
+        M12_AssetStatus_ScanGame(&asset_status, loose_data_dir, "csb");
+        if (!M12_AssetStatus_MaterializeCSBRuntimeVersion(
+                &asset_status, "fmtowns-en", english_data_dir,
+                sizeof(english_data_dir)) ||
+            !M12_AssetStatus_MaterializeCSBRuntimeVersion(
+                &asset_status, "fmtowns-ja", japanese_data_dir,
+                sizeof(japanese_data_dir))) {
+            printf("SKIP: verified English and Japanese F31 packages are "
+                   "unavailable under FIRESTAFF_CSB_FMTOWNS_LOOSE_DATA_DIR\n");
+            return 0;
+        }
+        check_candidate(english_data_dir, corpus_dir, "CSBGAME.DAT",
+                        CSB_FMTOWNS_SWITCH_ENGLISH,
+                        CSB_V1_VARIANT_FMTOWNS_EN, 0);
+        check_candidate(japanese_data_dir, corpus_dir, "CSBGAME-JP.DAT",
+                        CSB_FMTOWNS_SWITCH_JAPANESE,
+                        CSB_V1_VARIANT_FMTOWNS_JA, 1);
+        return failures == 0 ? 0 : 1;
     }
     check_candidate(data_dir, corpus_dir, "CSBGAME.DAT",
                     CSB_FMTOWNS_SWITCH_ENGLISH, CSB_V1_VARIANT_FMTOWNS_EN, 0);
