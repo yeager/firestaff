@@ -2502,16 +2502,19 @@ int csb_v1_fmtowns_utility_game_source_open(
         C06_GAME_SOURCE_TITLE_FNV1A = 0x7a56b380u,
         C06_GAME_SOURCE_CHOICES_FNV1A = 0x289297b9u,
         C06_GAME_SAVE_PROMPT_FNV1A = 0xe89d74ecu,
-        C06_DIALOG_OK_FNV1A = 0xf60df1fdu
+        C06_DIALOG_OK_FNV1A = 0xf60df1fdu,
+        C06_GAME_SOURCE_TITLE_F31J_FNV1A = 0xff18ba3fu,
+        C06_GAME_SOURCE_CHOICES_F31J_FNV1A = 0xfefe61beu,
+        C06_GAME_SAVE_PROMPT_F31J_FNV1A = 0x4ba0cfecu,
+        C06_DIALOG_OK_F31J_FNV1A = 0x973d52a6u
     };
     CSB_V1_FmtownsUtilityHandoffReceipt handoff;
     uint32_t hash;
 
     if (!out_receipt) return 0;
     memset(out_receipt, 0, sizeof(*out_receipt));
-    /* The Japanese branch calls TBIOS for Shift-JIS glyphs. Its bytes remain
-     * preserved in UTILJ but must not be re-labelled with English host text. */
-    if (language != CSB_FMTOWNS_SWITCH_ENGLISH ||
+    if ((language != CSB_FMTOWNS_SWITCH_ENGLISH &&
+         language != CSB_FMTOWNS_SWITCH_JAPANESE) ||
         !csb_v1_fmtowns_utility_handoff_open(profile, language, &handoff) ||
         !csb_v1_fmtowns_utility_read_span(
             &handoff, handoff.p3_load_image_offset +
@@ -2531,16 +2534,24 @@ int csb_v1_fmtowns_utility_game_source_open(
             sizeof(out_receipt->ok))) return 0;
     hash = csb_v1_fmtowns_game_bytes_fnv1a(out_receipt->title,
                                             sizeof(out_receipt->title));
-    if (hash != C06_GAME_SOURCE_TITLE_FNV1A ||
+    if (hash != (language == CSB_FMTOWNS_SWITCH_ENGLISH
+                     ? C06_GAME_SOURCE_TITLE_FNV1A
+                     : C06_GAME_SOURCE_TITLE_F31J_FNV1A) ||
         csb_v1_fmtowns_game_bytes_fnv1a(out_receipt->choices,
                                         sizeof(out_receipt->choices)) !=
-            C06_GAME_SOURCE_CHOICES_FNV1A ||
+            (language == CSB_FMTOWNS_SWITCH_ENGLISH
+                 ? C06_GAME_SOURCE_CHOICES_FNV1A
+                 : C06_GAME_SOURCE_CHOICES_F31J_FNV1A) ||
         csb_v1_fmtowns_game_bytes_fnv1a(out_receipt->save_prompt,
                                         sizeof(out_receipt->save_prompt)) !=
-            C06_GAME_SAVE_PROMPT_FNV1A ||
+            (language == CSB_FMTOWNS_SWITCH_ENGLISH
+                 ? C06_GAME_SAVE_PROMPT_FNV1A
+                 : C06_GAME_SAVE_PROMPT_F31J_FNV1A) ||
         csb_v1_fmtowns_game_bytes_fnv1a(out_receipt->ok,
                                         sizeof(out_receipt->ok)) !=
-            C06_DIALOG_OK_FNV1A) {
+            (language == CSB_FMTOWNS_SWITCH_ENGLISH
+                 ? C06_DIALOG_OK_FNV1A
+                 : C06_DIALOG_OK_F31J_FNV1A)) {
         memset(out_receipt, 0, sizeof(*out_receipt));
         return 0;
     }
@@ -2555,11 +2566,22 @@ int csb_v1_fmtowns_utility_game_source_open(
         C06_GAME_SAVE_PROMPT_VIRTUAL_OFFSET;
     out_receipt->ok_file_offset = handoff.p3_load_image_offset +
         C06_DIALOG_OK_VIRTUAL_OFFSET;
-    out_receipt->source_fnv1a = hash ^ C06_GAME_SOURCE_CHOICES_FNV1A ^
-        C06_GAME_SAVE_PROMPT_FNV1A ^ C06_DIALOG_OK_FNV1A;
+    out_receipt->source_fnv1a = hash ^
+        (language == CSB_FMTOWNS_SWITCH_ENGLISH
+             ? C06_GAME_SOURCE_CHOICES_FNV1A
+             : C06_GAME_SOURCE_CHOICES_F31J_FNV1A) ^
+        (language == CSB_FMTOWNS_SWITCH_ENGLISH
+             ? C06_GAME_SAVE_PROMPT_FNV1A
+             : C06_GAME_SAVE_PROMPT_F31J_FNV1A) ^
+        (language == CSB_FMTOWNS_SWITCH_ENGLISH
+             ? C06_DIALOG_OK_FNV1A
+             : C06_DIALOG_OK_F31J_FNV1A);
     out_receipt->source_evidence =
-        "UTILE.EXP P3 C06 strings at 0x118a0/0x1194c/0x11bb8; "
-        "ReDMCSB CEDTDATA.C G7085/G7065 and diskneeded message table";
+        language == CSB_FMTOWNS_SWITCH_ENGLISH
+            ? "UTILE.EXP P3 C06 strings at 0x118a0/0x1194c/0x11bb8; "
+              "ReDMCSB CEDTDATA.C G7085/G7065 and diskneeded message table"
+            : "UTILJ.EXP P3 Shift-JIS C06 strings at 0x118a0/0x1194c/0x11bb8; "
+              "TBIOS glyph consumer remains required for rendering";
     return 1;
 }
 

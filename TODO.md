@@ -3271,10 +3271,15 @@
   `test_fmtowns_tbios_shim`, inklusive den infångade `ど`-glyphens FNV-1a
   `af14d837`. F31J:s M11-probe kontrollerar nu även att C06 förblir stängd
   utan den uttryckligt auktoriserade ROM:en; den får inte ersätta Shift-JIS
-  med värdfont eller råka ta över från SWITCHTW. Återstår C06:s Dungeon Master-mediumkonsument, Make New
-  Adventure:s F7086/F7090 source/destination object transaction, F31J:s
-  senare editor- och savedialoger samt bredare user-save-corpus coverage—not
-  a fallback or synthetic save path.
+  med värdfont eller råka ta över från SWITCHTW. F31J:s egna C06-käll- och
+  save-mediumstränggrupper är dessutom bundna till `UTILJ.EXP` P3
+  (`0x118a0`, `0x1194c`, `0x11bb8`, `0x118fe`) med separata
+  Shift-JIS-hashar. De får inte återanvända F31E:s ASCII-text eller
+  320×200-rendering. Återstår C06:s Dungeon Master-mediumkonsument, den
+  infångade 640×400-följddialogens interaktion, Make New Adventure:s
+  F7086/F7090 source/destination object transaction, F31J:s senare editor-
+  och savedialoger samt bredare user-save-corpus coverage—not a fallback or
+  synthetic save path.
   **2026-08-12 F31 runtime-input receipt:** the native CLI regression now
   advances both authenticated F31E and F31J media through TITLE.ANM →
   SWITCHTW → MINI.DAT and injects one source `UP` command only after runtime

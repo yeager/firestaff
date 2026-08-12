@@ -988,10 +988,22 @@ int main(void)
                   memcmp(utility_game_source.ok, "OK", 3u) == 0,
               "F31E C06 source chooser and A: prompt retain their exact UTILE P3 bytes");
     } else {
-        CHECK(!csb_v1_fmtowns_utility_game_source_open(
+        CHECK(csb_v1_fmtowns_utility_game_source_open(
                   (const CSB_V1_BootProfile *)view.csbBootProfile,
-                  language, &utility_game_source),
-              "F31J C06 does not mislabel the English UTILE string pool as Japanese source text");
+                  language, &utility_game_source) && utility_game_source.valid &&
+                  utility_game_source.title_file_offset == 0x11aa0u &&
+                  utility_game_source.choices_file_offset == 0x11b4cu &&
+                  utility_game_source.save_prompt_file_offset == 0x11db8u &&
+                  utility_game_source.ok_file_offset == 0x11afeu &&
+                  utility_game_source.title[0] == 0x82u &&
+                  utility_game_source.title[1] == 0xb1u &&
+                  utility_game_source.choices[0] == 0x83u &&
+                  utility_game_source.choices[1] == 0x4au &&
+                  utility_game_source.save_prompt[0] == 0x83u &&
+                  utility_game_source.save_prompt[1] == 0x5fu &&
+                  utility_game_source.ok[0] == 0x83u &&
+                  utility_game_source.ok[1] == 0x5au,
+              "F31J C06 binds its own authenticated Shift-JIS source and save-medium strings");
     }
     memset(&utility_font, 0, sizeof(utility_font));
     CHECK(csb_v1_fmtowns_utility_font_open(

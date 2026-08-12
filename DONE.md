@@ -14041,6 +14041,21 @@ and production source-combat tests.
 - ✅ The native F7052/F0433 writer now uses that same `8 + 20`-byte F31
   identity layout and the source direction/cell byte order. A real-media
   F7052 → F0435 round trip proves no title truncation or pose-field swap.
+
+# CSB FM Towns F31J C06: source and save-medium receipt (2026-08-12)
+
+- ✅ F31J authenticates its own C06 game-source and game-save-medium string
+  groups from `UTILJ.EXP`'s Phar Lap P3 image at virtual offsets `0x118a0`,
+  `0x1194c`, `0x11bb8` and `0x118fe`. The four retained spans are individually
+  hash-bound as Shift-JIS data; no F31E ASCII pool is accepted.
+- ✅ The real-media M11 handoff regression asserts the language-owned offsets
+  and leading Shift-JIS bytes. F31E/F31J CLI real-media boot tests remain
+  green.
+- 🔒 This authenticates data for the later F31J C06 flow only. Its native
+  640×400 follow-up-dialog geometry and interaction still require an original
+  Tsugaru capture, so no English renderer or guessed click rectangles are
+  enabled.
+
 # CSB Atari ST: original blank Save Disk MSA boundary (2026-08-11)
 
 - ✅ Lade till en skrivskyddad MSA/FAT12-kataloginventering och en
