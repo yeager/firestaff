@@ -457,8 +457,8 @@ int main(void)
     CHECK(view.csbFmtownsTitleBound && !view.csbStartupRuntimeAssetSession,
           "FM Towns title remains separate from the Game entrance session");
     CHECK(M11_GameView_EnterCsbFmtownsUtility(&view) &&
-              view.csbFmtownsSwitchBound && view.csbFmtownsUtilityBound,
-          "direct C06 entry reuses verified F31 boot before binding Utility Disk");
+              !view.csbFmtownsSwitchBound && view.csbFmtownsUtilityBound,
+          "direct C06 entry reuses verified F31 boot before C06 takes ownership from SWITCHTW");
     M11_GameView_Shutdown(&view);
     M11_GameView_Init(&view);
     result = M11_GameView_Start(&view, &spec);
