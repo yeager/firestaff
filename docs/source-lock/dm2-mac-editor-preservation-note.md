@@ -62,3 +62,20 @@ target (`b_0b == 4`): it is dispatched through the live DB3/DB14 wall-action
 chain for both English editions. Other target kinds remain fail-closed until
 their original Mac action owner is recovered; no PC or FM Towns coordinates
 are substituted.
+
+## Separate small-demo application evidence
+
+The local Downloads corpus also contains the original `DungeonMasterII_demo.hqx`
+installer. Its StuffIt payload has a real demo application with a 484,815-byte
+data fork and a 1,889,960-byte resource fork. The resource fork contains a
+23,908-byte `CODE(11)` resource with SHA-256
+`c238573c9fe7e99d18d8c85ec3dfa2014ba8cbecd905e72088492f73aed9f311`; its
+`CODE(11)+0x0214` control-builder entry is the same source routine as the
+retail edition but uses the demo's own A5-global offsets. The demo's authentic
+`Dungeon.dat` and `Graphics.dat` are 6,535 and 3,110,116 bytes respectively.
+
+This installer is preservation/disassembly evidence, not a replacement for
+the authoritative `.firestaff/data/dm2` CD ZIP. The verified small CD image
+contains the real `DMFiles` game data but no application fork, so Firestaff does
+not silently copy the Downloads application into production or claim native
+small-edition dynamic pointer ownership without an in-scope packed source.

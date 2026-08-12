@@ -535,6 +535,12 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
 - [ ] Acquire an authentic Mac save corpus for both language families and
   verify native load/save round trips. A DOSBox `SKSAVE` or a generated save
   cannot close this gate.
+- [ ] Bind the small-edition dynamic Mac application owner. The separate
+  `Downloads/DungeonMasterII_demo.hqx` preservation source contains an
+  authentic 484,815-byte application data fork and 1,889,960-byte resource
+  fork, including an edition-specific `CODE(11)`; the authoritative small CD
+  ZIP under `.firestaff/data/dm2` contains only `DMFiles` and no application
+  fork. Do not copy or synthesize that application in the production path.
 - [~] Add end-to-end Mac startup, viewport, inventory-cursor, movie, audio,
   input, save/load, and pixel/audio regression gates before claiming Mac
   gameplay support. Retail startup/movie/audio and both-version boot gates

@@ -59,6 +59,12 @@
   `CODE(11)+0x3474` publication call. The native pointer gate now has a precise
   materialization boundary; it still rejects guessed CHARSHEET coordinates.
 
+- `DM2 Macintosh small-demo provenance`: Record the separate authentic
+  `DungeonMasterII_demo.hqx` application evidence and its edition-specific
+  `CODE(11)` hash. The source is preservation evidence only because the
+  authoritative small CD ZIP contains `DMFiles` without an application fork;
+  Firestaff does not copy it into production or fabricate a replacement.
+
 - `DM2 Macintosh pointer target identity`: Preserve the exact renderer-owned
   `c_rwbb` target index through native wall-button dispatch. Pointer clicks no
   longer collapse multiple dynamic controls into a guessed left/centre/right
