@@ -201,6 +201,12 @@ Ett headless-resultat får inte ensam öppna RNG, spawn, AI, T700, T900 eller
 grafiksemantik. Sidecars måste ha rätt media-, System Card- och
 disassemblyproveniens och klarera respektive verifierare.
 
+Capture-scriptet använder den begärda mjuka timeoutsignalen först, men gör en
+kontrollerad tvångsavslutning fem sekunder senare om Mednafen bara hanterar
+signalen internt och fortsätter sin loop. Detta lämnar ingen emulatorprocess
+eller låst, isolerad Mednafen-home kvar efter en misslyckad capture. En
+avbruten eller negativ receipt är fortfarande inte semantiskt underlag.
+
 ### Äkta Cocoa/Quartz-input
 
 Lämna `THERON_CAPTURE_SDL_VIDEODRIVER` tomt eller använd `cocoa`. Mednafen
