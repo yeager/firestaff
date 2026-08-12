@@ -50,6 +50,9 @@
   1000-1027) directly from the retained application resource fork and route
   `md.dat` map selections to their original SMF payloads. No DOS HMP or
   synthetic replacement is used; native CoreMIDI timing parity remains open.
+- `DM2 Macintosh variant identity`: Report the large English edition as
+  `mac-en-retail` consistently with asset admission and capture gates; the
+  smaller First Chapter edition remains `mac-en-demo`.
 - `DM2 Macintosh edition discovery`: Keep both authenticated English Mac
   editions visible when a shared data directory contains the large retail ZIP
   and the smaller First Chapter ZIP. Archive discovery now scans all matching
