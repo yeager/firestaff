@@ -557,3 +557,23 @@ metadata eller bara följer kommandoramen; ingen CLUT/palett får antas.
 Nästa textsteg är att binda den lästa källbufferten till FONT256.S2D:s
 verifierade Page/CG/palette-sektioner och till PNCN/CHCTLA-konsumenten; PND
 värden ensamma räcker inte för text- eller menyadmission.
+# 2026-08-12 — authentic Saturn start-pose capture remains open
+
+- ✅ An authentic English merged Saturn disc was replayed with the matching
+  Japanese BIOS on the external capture disk. Four-frame raw witnesses pass
+  the transport and active-VDP1/VDP2 checks; `semantic_admission` remains
+  correctly blocked.
+- ✅ The documented debug input route was injected as active-low Saturn pad
+  input in one emulator session, including the required START/pause step and
+  `L, R, X, Up, C, Left, L, Right` sequence. The external run is reproducible
+  and uses no copied or synthetic game data.
+- 🔒 A direct SH-2 probe for the documented debug routine at `0x060100fa`
+  did not observe that PC during the tested route. Therefore `Map_X`,
+  `Map_Y`, `Level`, and the retail entrance pose are still not source-bound.
+  No coordinate inferred from a first walkable DGN cell, a host screenshot,
+  or a debug-menu description may be promoted into production startup.
+- Next exact gate: capture a same-session Saturn execution that reaches the
+  debug routine or another retail caller that writes the entrance pose, then
+  join those values to the authenticated `LEV00.DGN` source and the first
+  gameplay VDP1/VDP2 frame. Until that exists, LEV00 startup must remain
+  fail-closed.
