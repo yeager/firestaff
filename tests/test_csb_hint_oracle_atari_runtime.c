@@ -46,6 +46,7 @@ static int test_real_atari_r1_triplet_if_staged(void)
     CSB_V1_AtariSaveInfo info;
     CSB_HintOracleAtariRuntime runtime;
     int rc;
+    size_t selected_count;
     if (!root || !root[0]) {
         puts("csb_hint_oracle_atari_runtime: SKIP (FIRESTAFF_CSB_HINT_ORACLE_DATA_DIR unset)");
         return 1;
@@ -66,13 +67,19 @@ static int test_real_atari_r1_triplet_if_staged(void)
     CHECK(csb_hint_oracle_atari_runtime_handle_click(&runtime, 130, 180, &info) == 0);
     CHECK(runtime.session.state == CSB_HINT_ORACLE_SESSION_HINT_LIST);
     CHECK(runtime.session.selected_hint_count > 0u);
+    selected_count = runtime.session.selected_hint_count;
     CHECK(csb_hint_oracle_atari_runtime_handle_click(&runtime, 50, 35, NULL) == 0);
     rc = csb_hint_oracle_atari_runtime_render_page(&runtime, frame, sizeof(frame));
     CHECK(rc == 0);
     CHECK(memcmp(frame, runtime.graphics.pixels, sizeof(frame)) != 0);
+    /* HINTMAIN.C command 5: page -> list, then list -> LOAD prompt. */
+    CHECK(csb_hint_oracle_atari_runtime_handle_click(&runtime, 230, 180, NULL) == 0);
+    CHECK(runtime.session.state == CSB_HINT_ORACLE_SESSION_HINT_LIST);
+    CHECK(csb_hint_oracle_atari_runtime_handle_click(&runtime, 230, 180, NULL) == 0);
+    CHECK(runtime.session.state == CSB_HINT_ORACLE_SESSION_AWAIT_LOAD);
     printf("csb_hint_oracle_atari_runtime: real receipt map=%d x=%d y=%d hints=%zu\n",
            (int)info.party_map_index, (int)info.party_x, (int)info.party_y,
-           runtime.session.selected_hint_count);
+           selected_count);
     csb_hint_oracle_atari_runtime_free(&runtime);
     free(mini);
     return 1;
