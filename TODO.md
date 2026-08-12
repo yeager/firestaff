@@ -3256,7 +3256,9 @@
   och saknar Unicode- eller värdfontsfallback. Den verifierades 2026-08-12
   med den verkliga font-ROM:en (`fmt_fnt.rom`) genom
   `test_fmtowns_tbios_shim`, inklusive den infångade `ど`-glyphens FNV-1a
-  `af14d837`. Återstår C06:s Dungeon Master-mediumkonsument, Make New
+  `af14d837`. F31J:s M11-probe kontrollerar nu även att C06 förblir stängd
+  utan den uttryckligt auktoriserade ROM:en; den får inte ersätta Shift-JIS
+  med värdfont eller råka ta över från SWITCHTW. Återstår C06:s Dungeon Master-mediumkonsument, Make New
   Adventure:s F7086/F7090 source/destination object transaction, F31J:s
   senare editor- och savedialoger samt bredare user-save-corpus coverage—not
   a fallback or synthetic save path.

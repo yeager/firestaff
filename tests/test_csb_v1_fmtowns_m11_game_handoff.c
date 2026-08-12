@@ -456,9 +456,20 @@ int main(void)
           "verified F31 M653 raw interface font is bound before title playback");
     CHECK(view.csbFmtownsTitleBound && !view.csbStartupRuntimeAssetSession,
           "FM Towns title remains separate from the Game entrance session");
-    CHECK(M11_GameView_EnterCsbFmtownsUtility(&view) &&
-              !view.csbFmtownsSwitchBound && view.csbFmtownsUtilityBound,
-          "direct C06 entry reuses verified F31 boot before C06 takes ownership from SWITCHTW");
+    /* F31J C06 renders Shift-JIS through the user-authorised FMT_FNT.ROM.
+     * Its absence is not permission to use a host font, so the Japanese
+     * utility must remain closed until that real ROM device is supplied.
+     * F31E has its own authenticated bitmap/text route and needs no ROM. */
+    if (language == CSB_FMTOWNS_SWITCH_JAPANESE &&
+        !getenv("FIRESTAFF_FMTOWNS_FONT_ROM")) {
+        CHECK(!M11_GameView_EnterCsbFmtownsUtility(&view) &&
+                  view.csbFmtownsSwitchBound && !view.csbFmtownsUtilityBound,
+              "F31J C06 remains fail-closed without an authorised FMT_FNT.ROM");
+    } else {
+        CHECK(M11_GameView_EnterCsbFmtownsUtility(&view) &&
+                  !view.csbFmtownsSwitchBound && view.csbFmtownsUtilityBound,
+              "direct C06 entry reuses verified F31 boot before C06 takes ownership from SWITCHTW");
+    }
     M11_GameView_Shutdown(&view);
     M11_GameView_Init(&view);
     result = M11_GameView_Start(&view, &spec);
