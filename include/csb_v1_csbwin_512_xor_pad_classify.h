@@ -126,7 +126,10 @@ extern "C" {
  * adjacent DSA/database records. (Restored 2026-07-18 after the a192cb2b0
  * worktree-merge clobber reverted this to 4096, which overflowed the
  * 24-record EDT_Palette bundle.) */
-#define CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES 8192u
+/* A stock CSBWin CSBGAME2.DAT legacy saved-dungeon stream is 32655 bytes.
+ * Keep a bounded complete receipt so an authenticated legacy save never gets
+ * silently converted into an opaque/truncated DB11 candidate. */
+#define CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES 65536u
 #define CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES 256u
 #define CSB_V1_CSBWIN_DSA_TRACING_WORDS 8u
 /* CSBWin CSB.h: EDT_Database=5, EDBT_DSAtraces=7. */

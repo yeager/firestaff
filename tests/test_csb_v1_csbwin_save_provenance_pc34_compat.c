@@ -123,9 +123,8 @@ static void test_staged_real_csbwin_save(void)
     memset(&tail_prefix, 0, sizeof(tail_prefix));
     memset(&tail_databases, 0, sizeof(tail_databases));
     CHECK(body.appended_offset + body.appended_size == size &&
-          body.appended_truncated &&
-          body.appended_preserved_size ==
-              CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES &&
+          !body.appended_truncated &&
+          body.appended_preserved_size == body.appended_size &&
           csb_v1_csbwin_dungeon_tail_parse_prefix(
               bytes + body.appended_offset, body.appended_size, 0u,
               &tail_prefix) == CSB_V1_CSBWIN_DUNGEON_TAIL_OK &&
@@ -179,7 +178,11 @@ static void test_staged_real_csbwin_save(void)
           runtime.dungeon_handle->level_count == 11 &&
           csb_v1_dungeon_get_current() == runtime.dungeon_handle &&
           runtime.timeline_queue.eventCount > 0 &&
-          runtime.csbwin_save_provenance.valid,
+          runtime.csbwin_save_provenance.valid &&
+          runtime.csbwin_timer_record_size == 10u &&
+          runtime.csbwin_legacy_dungeon_tail_valid &&
+          runtime.csbwin_legacy_dungeon_tail_size == body.appended_size &&
+          runtime.csbwin_legacy_dungeon_tail_fnv1a == body.appended_fnv1a,
           "legacy CSBGAME2 atomically restores its authenticated world");
     csb_v1_runtime_cleanup(&runtime);
     CHECK(csb_v1_dungeon_get_current() == NULL,

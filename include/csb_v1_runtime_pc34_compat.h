@@ -630,6 +630,10 @@ typedef struct {
     uint16_t                csbwin_num_timer;
     uint16_t                csbwin_first_avail_timer;
     uint16_t                csbwin_max_timers;
+    /* SaveGame.cpp accepts 10-, 12-, and 16-byte TIMER records.  A resumed
+     * legacy CSBGAME2.DAT must retain its authenticated width on export; a
+     * host default would move the following TimerQueue and dungeon tail. */
+    uint16_t                csbwin_timer_record_size;
     uint16_t                csbwin_item16_queue_len;
     uint16_t                csbwin_max_item16;
     uint16_t                csbwin_timer_sequence;
@@ -650,6 +654,14 @@ typedef struct {
     uint32_t                csbwin_appended_tail_fnv1a;
     int                     csbwin_appended_tail_truncated;
     uint8_t                 csbwin_appended_tail[CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES];
+    /* A legacy CSBWin save's verified tail is a saved dungeon, not DB11 /
+     * EXPOOL.  Retain it separately so core export can copy it byte-for-byte
+     * without exposing it to EXPOOL consumers. */
+    int                     csbwin_legacy_dungeon_tail_valid;
+    size_t                  csbwin_legacy_dungeon_tail_size;
+    uint32_t                csbwin_legacy_dungeon_tail_fnv1a;
+    uint8_t                 csbwin_legacy_dungeon_tail[
+                                CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES];
     CSB_V1_CSBWinSaveProvenance_PC34 csbwin_save_provenance;
     /* CSBWin SaveGame.cpp ReadExtendedFeatures()/ReadDSAs()/ReadGameInfo()
      * owns this separately from the regular GAMEBLOCK sections. Imported DSA

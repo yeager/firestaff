@@ -20598,6 +20598,7 @@ int csb_v1_runtime_apply_csbwin_gameblock2_summary(
     profile->csbwin_num_timer = summary->num_timer;
     profile->csbwin_first_avail_timer = summary->first_avail_timer;
     profile->csbwin_max_timers = summary->max_timers;
+    profile->csbwin_timer_record_size = summary->timer_record_size;
     profile->csbwin_item16_queue_len = summary->item16_queue_len;
     profile->csbwin_max_item16 = summary->max_item16;
     profile->csbwin_timer_sequence = summary->timer_sequence;
@@ -21003,6 +21004,7 @@ int csb_v1_runtime_apply_csbwin_body_runtime_summaries(
     memcpy(profile->csbwin_timer_queue,
            summary->timer_queue,
            sizeof(profile->csbwin_timer_queue));
+    profile->csbwin_timer_record_size = summary->timer_record_size;
     return 0;
 }
 
@@ -21920,6 +21922,7 @@ int csb_v1_runtime_apply_csbwin_resume_file(
     CSB_V1_CSBWinLegacyResumePrepare legacy_resume;
     CSB_V1_DungeonData *legacy_dungeon_handle = NULL;
     CSB_V1_DungeonData *previous_dungeon_handle;
+    const uint8_t *verified_legacy_dungeon_tail = NULL;
 
     CSB_V1_RuntimeProfile candidate;
     size_t core_offset = 0u;
@@ -22043,6 +22046,11 @@ int csb_v1_runtime_apply_csbwin_resume_file(
                 free(bytes);
                 return -1;
             }
+            /* This is a CSBWin legacy saved dungeon, not an EXPOOL payload.
+             * All of SaveGame.cpp's ReadDatabases-equivalent structural and
+             * checksum gates above have succeeded, so retain these exact
+             * bytes for a future same-layout writer. */
+            verified_legacy_dungeon_tail = dungeon_tail_bytes;
         }
     }
     previous_dungeon_handle = profile->dungeon_handle;
@@ -22071,6 +22079,25 @@ int csb_v1_runtime_apply_csbwin_resume_file(
         candidate.csbwin_appended_tail_truncated = 0;
         memset(candidate.csbwin_appended_tail, 0,
                sizeof(candidate.csbwin_appended_tail));
+    }
+    candidate.csbwin_legacy_dungeon_tail_valid = 0;
+    candidate.csbwin_legacy_dungeon_tail_size = 0u;
+    candidate.csbwin_legacy_dungeon_tail_fnv1a = 0u;
+    memset(candidate.csbwin_legacy_dungeon_tail, 0,
+           sizeof(candidate.csbwin_legacy_dungeon_tail));
+    if (verified_legacy_dungeon_tail) {
+        if (report.appended_size >
+            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES) {
+            csb_v1_dungeon_set_current_level(previous_dungeon_level);
+            csb_v1_csbwin_dungeon_tail_discard_legacy_candidate(legacy_dungeon);
+            free(bytes);
+            return -1;
+        }
+        candidate.csbwin_legacy_dungeon_tail_valid = 1;
+        candidate.csbwin_legacy_dungeon_tail_size = report.appended_size;
+        candidate.csbwin_legacy_dungeon_tail_fnv1a = report.appended_fnv1a;
+        memcpy(candidate.csbwin_legacy_dungeon_tail,
+               verified_legacy_dungeon_tail, report.appended_size);
     }
     if (csb_v1_runtime_stage_csbwin_dsa_tracing(&candidate) != 0) {
         csb_v1_dungeon_set_current_level(previous_dungeon_level);
@@ -22263,7 +22290,17 @@ static int csb_v1_runtime_build_csbwin_core_summary(
     summary->header_valid = 1;
     summary->header.verdict = CSB_V1_CSBWIN_512_VERDICT_CSB;
     summary->header.key_index = CSB_V1_CSBWIN_512_KEY_CSB;
-    summary->timer_record_size = 16u;
+    /* Firestaff's native save image predates this receipt and therefore has
+     * no serialized CSBWin TIMER-width field. Retain its established 16-byte
+     * core-export default, but never use that fallback for an authenticated
+     * CSBWin resume which has recorded its original width. */
+    summary->timer_record_size = profile->csbwin_timer_record_size != 0u
+        ? profile->csbwin_timer_record_size : 16u;
+    if (summary->timer_record_size != 10u &&
+        summary->timer_record_size != 12u &&
+        summary->timer_record_size != 16u) {
+        return -1;
+    }
     summary->header.public_fields.csbwin_random_game_id =
         (uint32_t)csb_v1_runtime_effective_game_id(profile);
     summary->header.public_fields.csbwin_total_move_count =
@@ -22289,6 +22326,24 @@ static int csb_v1_runtime_build_csbwin_core_summary(
             profile->csbwin_appended_tail_truncated;
         memcpy(summary->appended_preserved,
                profile->csbwin_appended_tail,
+               summary->appended_preserved_size);
+    } else if (profile->csbwin_legacy_dungeon_tail_valid) {
+        if (profile->csbwin_legacy_dungeon_tail_size == 0u ||
+            profile->csbwin_legacy_dungeon_tail_size >
+                CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
+            profile->csbwin_legacy_dungeon_tail_fnv1a !=
+                csb_v1_runtime_fnv1a32(
+                    profile->csbwin_legacy_dungeon_tail,
+                    profile->csbwin_legacy_dungeon_tail_size)) {
+            return -1;
+        }
+        summary->appended_offset = 0u;
+        summary->appended_size = profile->csbwin_legacy_dungeon_tail_size;
+        summary->appended_preserved_size =
+            profile->csbwin_legacy_dungeon_tail_size;
+        summary->appended_fnv1a = profile->csbwin_legacy_dungeon_tail_fnv1a;
+        memcpy(summary->appended_preserved,
+               profile->csbwin_legacy_dungeon_tail,
                summary->appended_preserved_size);
     }
     summary->game_time = profile->game_time;
@@ -22388,7 +22443,7 @@ static int csb_v1_runtime_build_csbwin_core_summary(
             profile->timeline_queue.eventCount < 0 ||
             profile->timeline_queue.eventCount > DM1_EVENT_MAX_COUNT ||
             profile->timeline_queue.eventCount !=
-                (int)profile->csbwin_timer_queue_summary_count) {
+                (int)profile->csbwin_num_timer) {
             return -1;
         }
         /* CSBWin SaveGame.cpp writes the TIMER array together with its
@@ -22433,9 +22488,12 @@ static int csb_v1_runtime_build_csbwin_core_summary(
             }
             seen[queue_slot] = 1u;
         }
-        for (i = 0u; i < profile->csbwin_timer_queue_summary_count; ++i) {
-            if (!seen[i]) return -1;
-        }
+        /* TimerQueue serializes the complete TIMER pool, including dormant
+         * and free-list entries. Only the runtime's live timeline can be
+         * correlated with a scheduled event here; requiring every source
+         * queue slot to be live rejects an unmodified authentic CSBGAME2.
+         * csb_v1_runtime_validate_csbwin_timer_heap() above still validates
+         * the retained serialized heap as a whole. */
 
         summary->max_timers = profile->csbwin_max_timers;
         summary->num_timer = profile->csbwin_num_timer;
