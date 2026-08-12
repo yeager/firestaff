@@ -3,7 +3,7 @@
 @@ -140,0 +140,2 @@
 +#include <stdio.h>
 +#include <stdlib.h>
-@@ -534,0 +536,24 @@
+@@ -534,0 +536,30 @@
 +static void FirestaffTraceNexusCDRead(uint32 lba)
 +{
 + static FILE *file;
@@ -34,5 +34,5 @@
 + count++;
 + if((count & 0x3ffU) == 0) fflush(file);
 +}
-@@ -2370,0 +2370,1 @@
-+ FirestaffTraceNexusCDRead(CurSector - 150);
+@@ -2377,0 +2377,1 @@
++           FirestaffTraceNexusCDRead(CurSector - 150);
