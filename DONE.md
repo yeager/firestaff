@@ -1,3 +1,17 @@
+# CSB Hint Oracle: original C26 font-colour substitution (2026-08-12)
+
+- ✅ The HCSB renderer now consumes the actual segment-0 C26 control pair
+  before any title or hint page is drawn. ReDMCSB `HINTTEXT.C` stores the
+  target as `target * 10`; `F0129_VIDEO_BlitShrinkWithPaletteChanges` reduces
+  that table value back to an indexed colour. For the authenticated ST 2.0/2.1
+  HCSB.DAT this proves the exact source mapping `9 → 1`, not a host-selected
+  font colour.
+- ✅ `test_csb_hint_oracle_text_render` covers the C26 mapping and has an
+  opt-in real-media receipt for MD5 `708e113c869ab922633e885aa72a3c77`.
+  Source font index 12 stays transparent.
+- 🔒 Oracle page selection/input, M11/M12 ownership and original-frame pixel
+  parity remain open; consuming C26 does not make the Utility Disk UI live.
+
 # CSB: V2.2 avvisar genererad artpack-cache (2026-08-12)
 
 - ✅ CSB:s produktionsväg öppnar inte längre `v22_inplace_cache.bin`, som

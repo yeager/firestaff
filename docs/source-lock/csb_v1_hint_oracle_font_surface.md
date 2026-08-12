@@ -28,8 +28,13 @@ routing, or a frame-level parity claim.
 The same surface now retains segment 0 as exactly 50 big-endian control words,
 matching `HINTTEXT.C`'s `G3609_aui_GraphicIntegers`. The real ST archive locks
 the leading words as `0x0002`, `0x0620`, `0x0001`, `0x0770`; these are exposed
-unchanged for the later `C26_SET_FONT_COLOR` and palette-transition consumer.
-They are not guessed host colours.
+unchanged for the source `C26_SET_FONT_COLOR` consumer. `HINTSCR.C` and
+`HINT001.C` pass words 5 and 4 to `HINTTEXT.C`; its initial `G3658_ == -1`
+branch writes `target * 10` into the font palette-change table, and
+`F0129_VIDEO_BlitShrinkWithPaletteChanges` converts that table entry back to
+the destination index. The authenticated ST archive's words 5/4 are `9/1`,
+so Firestaff applies the source-owned `9 → 1` font-pixel mapping while leaving
+the transparent source index 12 unchanged. They are not guessed host colours.
 
 The text source is selected independently through
 `csb_hint_oracle_htc_get_hint_page_slice()`. Its one-based page number mirrors

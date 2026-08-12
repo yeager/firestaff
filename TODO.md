@@ -22,7 +22,10 @@
   retained as authored rather than rejected or replaced.
 - ✅ HCSB.DAT segment 0 is retained as its exact 50 big-endian control words,
   including the ST archive's verified leading `0x0002/0x0620/0x0001/0x0770`
-  sequence. The `C26_SET_FONT_COLOR` transition semantics remain open.
+  sequence. `HINTSCR.C`/`HINT001.C` feed control words 5 and 4 into
+  `HINTTEXT.C`'s initial `C26_SET_FONT_COLOR` call; `F0129` resolves the
+  source's `9 → 1` font-index substitution. The original-data regression
+  also verifies that transparent index 12 remains unchanged.
 - 🔒 Graphical Hint Oracle/M11/M12 routing, segment 0's integer consumer,
   original text/page layout and original-frame pixel parity remain open. Do
   not treat the decoded resource surfaces as a rendered Utility Disk screen.

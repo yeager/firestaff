@@ -11,6 +11,11 @@ typedef struct {
     CSB_HintOracleDAT_RealCache source;
     uint8_t *pixels;
     uint8_t *font_pixels;
+    /* HINTTEXT.C C26_SET_FONT_COLOR remaps this bitmap through F0129.
+     * Preserve the decoded font and carry the resulting source-index map
+     * separately for each text blit. */
+    uint8_t font_palette_indices[16];
+    int font_palette_indices_valid;
     uint8_t rgb4[48];
     uint16_t controls[CSB_HINT_ORACLE_GRAPHIC_CONTROL_WORDS];
     uint16_t width,height;
