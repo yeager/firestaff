@@ -97,11 +97,12 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   recovered.
 - Dynamic creature admission now reads the authenticated FB/FC/FD animation
   tables from the selected Mac `Graphics.dat` through the same source-owned
-  GAF lookup used by the other admitted editions. The small First Chapter
-  image may legitimately lack a row present in retail; that case preserves
-  the source creature/timer owner with no animation rather than borrowing the
-  retail table or inventing a frame. Both behaviors are covered by the real
-  Mac edition census gate.
+  GAF lookup used by the other admitted editions. Each authenticated Mac
+  image may legitimately lack a row on a particular source path; that case
+  preserves the source creature/timer owner with no animation rather than
+  borrowing the other edition's table or inventing a frame. The fallback is
+  limited to the two authenticated English Mac dungeon sizes, and both
+  editions are covered by the real-media census gate.
 - The authenticated GAME_LOAD party snapshot is now copied read-only into
   the M11 presentation mirror. This enables the English Mac F1-F4 champion
   inventory commands to select a real party champion and open/close the Mac

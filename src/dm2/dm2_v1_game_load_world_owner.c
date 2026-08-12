@@ -872,7 +872,15 @@ int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
              * timer owner, but keep the original fail-closed no-animation
              * result for a missing source row; never borrow the retail table
              * or create a replacement frame. */
-            if (!owner->dungeon.words_big_endian) goto rollback;
+            /* Only the two authenticated English Macintosh dungeon images
+             * are allowed to take this source-defined no-animation branch.
+             * Do not let a broad endian check hide a mismatch in another
+             * big-endian platform or an unadmitted Mac image. */
+            if (!owner->dungeon.words_big_endian ||
+                (owner->dungeon.raw_size != 6535u &&
+                 owner->dungeon.raw_size != 39411u)) {
+                goto rollback;
+            }
             memset(&something, 0, sizeof(something));
             something.valid = 1;
             something.delta = 0;
