@@ -26,6 +26,12 @@ if ! grep -Fq 'THERON_US_CUE:-${THERON_CUE:-}' "$script" ||
     printf 'FAIL: live capture must support the authenticated Japanese CUE/ISO route\n' >&2
     exit 1
 fi
+if ! grep -Fq 'capture_force_kill_seconds=5' "$script" ||
+   ! grep -Fq 'gtimeout -k "$capture_force_kill_seconds" -s "$capture_shutdown_signal"' "$script" ||
+   ! grep -Fq 'timeout -k "$capture_force_kill_seconds" -s "$capture_shutdown_signal"' "$script"; then
+    printf '%s\n' 'FAIL: live capture timeout must force-terminate a Mednafen process that ignores its soft shutdown signal' >&2
+    exit 1
+fi
 if [[ ! -x "$later_raw_receipt" ]] ||
    ! grep -Fq 'captured physical-to-raw Track 02 delta is not the observed US value' "$later_raw_receipt" ||
    ! grep -Fq 'no Stage-3 descriptor binds the range, so payload semantics remain blocked' "$later_raw_receipt"; then

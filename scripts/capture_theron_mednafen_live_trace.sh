@@ -466,10 +466,15 @@ capture_timeout_seconds=$seconds
 if [[ "$host_input_requested" == 1 ]]; then
     capture_timeout_seconds=$((seconds + capture_startup_grace))
 fi
+# Mednafen acknowledges SIGINT as an in-emulator event and may keep its main
+# loop alive. Keep the requested soft shutdown signal for trace flushing, but
+# bound that grace period so a failed capture cannot retain the isolated home
+# lock or leave an orphaned emulator process behind.
+capture_force_kill_seconds=5
 if command -v gtimeout >/dev/null 2>&1; then
-    timeout_command=(gtimeout -s "$capture_shutdown_signal" "$capture_timeout_seconds")
+    timeout_command=(gtimeout -k "$capture_force_kill_seconds" -s "$capture_shutdown_signal" "$capture_timeout_seconds")
 elif command -v timeout >/dev/null 2>&1; then
-    timeout_command=(timeout -s "$capture_shutdown_signal" "$capture_timeout_seconds")
+    timeout_command=(timeout -k "$capture_force_kill_seconds" -s "$capture_shutdown_signal" "$capture_timeout_seconds")
 else
     printf '%s\n' 'FAIL: timeout or gtimeout is required for bounded live capture' >&2
     exit 1
