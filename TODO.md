@@ -1364,7 +1364,9 @@
   verkliga A31 CLI-regressionen fortsätter därefter genom titelinput och en
   `UP`-rörelse: stockruttens `(9,0,2)` når `(9,1,2)` medan den egna 50 Hz
   runtimeklockan fortgår. Därmed är det ett runtime-inmatningsbevis, inte
-  endast en A31-titelcapture.
+  endast en A31-titelcapture. Samma opt-in-regression provar också M12:s
+  vanliga Startmeny → Enter-väg och kräver att den behåller den utvalda
+  `csb-amiga*`-profilen; den direkta CLI-proben ensam kan inte bevisa detta.
   Den sista DL-posten läser utanför FTL-itemet i originalprogrammet och
   lämnas därför synligt på senast kompletta originalbild tills en autentisk
   allocationscapture finns. A31E har ingen TITL/APPA-kedja: dess egen,
@@ -1397,7 +1399,10 @@
   50 Hz-VBL-överlämning, C232-HUD, 022e-viewport, originalpalett och
   GAMEBLOCK-inmatning används utan PC34-surface-ersättning. Kvar för
   Atari är bredare Utility-disk- och extern capture-paritet, inte grundläggande
-  start- eller runtimehandoff. Den äkta legacy-CSBWin-saven täcker dessutom
+  start- eller runtimehandoff. Den verkliga Atari-arkivregressionen täcker nu
+  både CLI `--save MINI.DAT` och M12:s vanliga Startmeny → Enter för en ny
+  körning; den separata menu-resume-proben täcker F0435. Den äkta
+  legacy-CSBWin-saven täcker dessutom
   F1/F2-panelordningen efter F0435: F1 öppnar första återställda championen,
   F2 växlar till den andra och ett nytt F2 stänger samma panel. GAMEBLOCK-
   spegeln får uppdatera roster/data men inte skriva över PANEL.C:s öppna

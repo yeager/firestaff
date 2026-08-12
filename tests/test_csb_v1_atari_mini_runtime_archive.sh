@@ -72,5 +72,26 @@ if [ -x "$firestaff_cli" ]; then
             exit 1
             ;;
     esac
+
+    # The usual M12 start-menu path owns a fresh Atari run.  The separate
+    # menu-resume regression below exercises MINI.DAT/F0435; retain this
+    # start-path receipt so a regression cannot leave only explicit saves
+    # launchable.  The extracted package is still the authenticated original
+    # archive member set, never a synthetic flat-data fixture.
+    menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+        SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+        --menu --game csb --data-dir "$tmp_dir" --platform atari-st \
+        --script enter --duration 1000 2>&1)" || {
+        printf '%s\n' "$menu_output" >&2
+        exit 1
+    }
+    case "$menu_output" in
+        *"CSB READY: gameId=csb"*"route=startup"*) ;;
+        *)
+            echo "FAIL: CSB Atari start-menu Enter did not launch native media" >&2
+            printf '%s\n' "$menu_output" >&2
+            exit 1
+            ;;
+    esac
 fi
 echo "PASS: original CSB Atari MINI.DAT runtime/save archive corpus"
