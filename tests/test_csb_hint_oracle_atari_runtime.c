@@ -30,6 +30,8 @@ static int test_not_ready_fails_closed(void)
     memset(&info, 0, sizeof(info));
     CHECK(csb_hint_oracle_atari_runtime_select_save(&runtime, &info) ==
           CSB_HINT_ORACLE_ATARI_RUNTIME_ERR_NOT_READY);
+    CHECK(csb_hint_oracle_atari_runtime_render_frame(&runtime, frame, sizeof(frame)) ==
+          CSB_HINT_ORACLE_ATARI_RUNTIME_ERR_NOT_READY);
     CHECK(csb_hint_oracle_atari_runtime_render_page(&runtime, frame, sizeof(frame)) ==
           CSB_HINT_ORACLE_ATARI_RUNTIME_ERR_NOT_READY);
     csb_hint_oracle_atari_runtime_free(&runtime);
@@ -64,10 +66,16 @@ static int test_real_atari_r1_triplet_if_staged(void)
                  CSB_HINT_ORACLE_ATARI_R1_HTC_MD5) == 0);
     CHECK(strcmp(runtime.graphics.source.matched_md5,
                  CSB_HINT_ORACLE_ATARI_R1_DAT_MD5) == 0);
+    /* HINTMAIN.C state 1: original prompt plus LOAD/EXIT on HCSB.DAT. */
+    CHECK(csb_hint_oracle_atari_runtime_render_frame(&runtime, frame, sizeof(frame)) == 0);
+    CHECK(memcmp(frame, runtime.graphics.pixels, sizeof(frame)) != 0);
     CHECK(csb_hint_oracle_atari_runtime_handle_click(&runtime, 130, 180, &info) == 0);
     CHECK(runtime.session.state == CSB_HINT_ORACLE_SESSION_HINT_LIST);
     CHECK(runtime.session.selected_hint_count > 0u);
     selected_count = runtime.session.selected_hint_count;
+    /* HINTHINT.C C06: authored source-order title rows plus DONE. */
+    CHECK(csb_hint_oracle_atari_runtime_render_frame(&runtime, frame, sizeof(frame)) == 0);
+    CHECK(memcmp(frame, runtime.graphics.pixels, sizeof(frame)) != 0);
     CHECK(csb_hint_oracle_atari_runtime_handle_click(&runtime, 50, 35, NULL) == 0);
     rc = csb_hint_oracle_atari_runtime_render_page(&runtime, frame, sizeof(frame));
     CHECK(rc == 0);
@@ -77,6 +85,11 @@ static int test_real_atari_r1_triplet_if_staged(void)
     CHECK(runtime.session.state == CSB_HINT_ORACLE_SESSION_HINT_LIST);
     CHECK(csb_hint_oracle_atari_runtime_handle_click(&runtime, 230, 180, NULL) == 0);
     CHECK(runtime.session.state == CSB_HINT_ORACLE_SESSION_AWAIT_LOAD);
+    /* HINTMAIN.C's no-clue state has no inferred data: it is solely the
+     * original fixed text and OK control over the decoded HCSB surface. */
+    runtime.session.state = CSB_HINT_ORACLE_SESSION_NO_CLUE;
+    CHECK(csb_hint_oracle_atari_runtime_render_frame(&runtime, frame, sizeof(frame)) == 0);
+    CHECK(memcmp(frame, runtime.graphics.pixels, sizeof(frame)) != 0);
     printf("csb_hint_oracle_atari_runtime: real receipt map=%d x=%d y=%d hints=%zu\n",
            (int)info.party_map_index, (int)info.party_x, (int)info.party_y,
            selected_count);

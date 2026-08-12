@@ -73,8 +73,17 @@ int csb_hint_oracle_atari_runtime_handle_click(
     CSB_HintOracleAtariRuntime *runtime, int x, int y,
     const CSB_V1_AtariSaveInfo *info);
 
-/* Render the current original 320x200 R1 page. No host frame, font or palette
- * fallback is generated when the session is not on a valid page. */
+/* Render the current original 320x200 R1 Hint Oracle state. This covers the
+ * LOAD prompt, selected-hint list, no-clue acknowledgement and hint page.
+ * Every state starts with HCSB.DAT's decoded original screen; its text uses
+ * the decoded original HCSB font and HINTDATA.C/HINTMAIN.C rectangles.
+ * No host frame, font or palette fallback is generated. */
+int csb_hint_oracle_atari_runtime_render_frame(
+    const CSB_HintOracleAtariRuntime *runtime,
+    uint8_t *frame, size_t frame_size);
+
+/* Compatibility entry point for callers that specifically require a hint
+ * page. It rejects every other session state. */
 int csb_hint_oracle_atari_runtime_render_page(
     const CSB_HintOracleAtariRuntime *runtime,
     uint8_t *frame, size_t frame_size);

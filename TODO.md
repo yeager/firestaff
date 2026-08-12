@@ -46,9 +46,14 @@
   LAST, NEXT, DONE/EXIT, OK och sju hint-rad-rektanglar direkt mot
   HINTMAIN.C:s sessionövergångar; LOAD tar fortfarande endast en kontrollerad
   MINI.DAT-receipt.
+- ✅ Samma R1-runtime renderar nu alla fyra källägen ovanpå den avkodade
+  HCSB.DAT-ytan: LOAD/EXIT-prompten, den källordnade hintlistan/DONE,
+  no-clue/OK och en sida med LAST/NEXT/DONE efter sidgränserna. Strängar,
+  rutor och den ursprungliga fonten kommer från HINTDATA.C, HINTMAIN.C,
+  HINTHINT.C och HINTTEXT.C. Originalmediaregressionen täcker varje läge.
 - 🔒 M11/M12-ägarskap, originalets händelsekadens och fångad
-  originalframe-pixelparitet återstår. R1-runtimevägen är en
-  source-owned consumer, not yet a user-visible launcher route.
+  originalframe-pixelparitet återstår. R1-runtimevägen är en källägd
+  mottagare, inte ännu en synlig startväg för användaren.
 
 # Nexus: bind verified SH-2 transform to an authenticated Saturn consumer (2026-08-11)
 

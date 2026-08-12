@@ -142,20 +142,95 @@ int csb_hint_oracle_atari_runtime_handle_click(
     return CSB_HINT_ORACLE_ATARI_RUNTIME_OK;
 }
 
+static int render_centered(const CSB_HintOracleAtariRuntime *runtime,
+                           uint8_t *frame, int left, int right,
+                           int top, int bottom, const char *text)
+{
+    return csb_hint_oracle_graphics_surface_blit_st_centered_box(
+        &runtime->graphics, frame, 64000u, left, right, top, bottom, text);
+}
+
+static int render_button(const CSB_HintOracleAtariRuntime *runtime,
+                         uint8_t *frame, int left, int right,
+                         const char *label)
+{
+    /* HINTDATA.C gives all Atari R1 button rectangles the common 179..192
+     * vertical span. HINTSCR's input layer owns the border; HINTTEXT draws
+     * the label in the same original font/palette as the content. */
+    return render_centered(runtime, frame, left, right, 179, 192, label);
+}
+
+int csb_hint_oracle_atari_runtime_render_frame(
+    const CSB_HintOracleAtariRuntime *runtime, uint8_t *frame, size_t frame_size)
+{
+    size_t row;
+    CSB_HintOracleHTC_Hint hint;
+    if (!runtime || !frame) return CSB_HINT_ORACLE_ATARI_RUNTIME_ERR_ARGUMENT;
+    if (!runtime->assets_loaded || !runtime->graphics.pixels || frame_size < 64000u)
+        return CSB_HINT_ORACLE_ATARI_RUNTIME_ERR_NOT_READY;
+    memcpy(frame, runtime->graphics.pixels, 64000u);
+    switch (runtime->session.state) {
+    case CSB_HINT_ORACLE_SESSION_AWAIT_LOAD:
+        if (!render_centered(runtime, frame, 31, 290, 50, 150,
+                             "Chaos Strikes Back/Hint Oracle//Please insert a Chaos Strikes Back saved game disk in drive A://Then press LOAD") ||
+            !render_button(runtime, frame, 127, 194, "LOAD") ||
+            !render_button(runtime, frame, 221, 289, "EXIT"))
+            return CSB_HINT_ORACLE_ATARI_RUNTIME_ERR_RENDER;
+        break;
+    case CSB_HINT_ORACLE_SESSION_HINT_LIST:
+        if (runtime->session.selected_hint_count == 0u ||
+            runtime->session.selected_hint_count > CSB_HINT_ORACLE_SESSION_MAX_SELECTED_HINTS)
+            return CSB_HINT_ORACLE_ATARI_RUNTIME_ERR_NOT_READY;
+        for (row = 0u; row < runtime->session.selected_hint_count; ++row) {
+            if (csb_hint_oracle_htc_get_hint(
+                    &runtime->htc_panel.cache.htc,
+                    runtime->session.selected_hint_indices[row], &hint) !=
+                CSB_HINT_ORACLE_HTC_OK ||
+                !render_centered(runtime, frame, 40, 280,
+                                 30 + (int)row * 16, 42 + (int)row * 16,
+                                 hint.name))
+                return CSB_HINT_ORACLE_ATARI_RUNTIME_ERR_RENDER;
+        }
+        if (!render_button(runtime, frame, 221, 289, "DONE"))
+            return CSB_HINT_ORACLE_ATARI_RUNTIME_ERR_RENDER;
+        break;
+    case CSB_HINT_ORACLE_SESSION_NO_CLUE:
+        if (!render_centered(runtime, frame, 31, 290, 70, 150,
+                             "There are no clues for this location.") ||
+            !render_button(runtime, frame, 127, 194, "OK"))
+            return CSB_HINT_ORACLE_ATARI_RUNTIME_ERR_RENDER;
+        break;
+    case CSB_HINT_ORACLE_SESSION_HINT_PAGE:
+        if (runtime->session.selected_row >= runtime->session.selected_hint_count ||
+            !csb_hint_oracle_graphics_surface_render_st_hint_page(
+                &runtime->graphics, &runtime->htc_panel.cache.htc,
+                runtime->session.selected_hint_indices[runtime->session.selected_row],
+                runtime->session.page_number, frame, frame_size))
+            return CSB_HINT_ORACLE_ATARI_RUNTIME_ERR_RENDER;
+        if (csb_hint_oracle_htc_get_hint(
+                &runtime->htc_panel.cache.htc,
+                runtime->session.selected_hint_indices[runtime->session.selected_row],
+                &hint) != CSB_HINT_ORACLE_HTC_OK ||
+            !render_button(runtime, frame, 221, 289, "DONE") ||
+            (runtime->session.page_number > 1u &&
+             !render_button(runtime, frame, 33, 100, "LAST")) ||
+            (runtime->session.page_number < hint.page_count &&
+             !render_button(runtime, frame, 127, 194, "NEXT")))
+            return CSB_HINT_ORACLE_ATARI_RUNTIME_ERR_RENDER;
+        break;
+    default:
+        return CSB_HINT_ORACLE_ATARI_RUNTIME_ERR_NOT_READY;
+    }
+    return CSB_HINT_ORACLE_ATARI_RUNTIME_OK;
+}
+
 int csb_hint_oracle_atari_runtime_render_page(
     const CSB_HintOracleAtariRuntime *runtime, uint8_t *frame, size_t frame_size)
 {
     if (!runtime || !frame) return CSB_HINT_ORACLE_ATARI_RUNTIME_ERR_ARGUMENT;
-    if (!runtime->assets_loaded ||
-        runtime->session.state != CSB_HINT_ORACLE_SESSION_HINT_PAGE ||
-        runtime->session.selected_row >= runtime->session.selected_hint_count)
+    if (runtime->session.state != CSB_HINT_ORACLE_SESSION_HINT_PAGE)
         return CSB_HINT_ORACLE_ATARI_RUNTIME_ERR_NOT_READY;
-    return csb_hint_oracle_graphics_surface_render_st_hint_page(
-        &runtime->graphics, &runtime->htc_panel.cache.htc,
-        runtime->session.selected_hint_indices[runtime->session.selected_row],
-        runtime->session.page_number, frame, frame_size) ?
-        CSB_HINT_ORACLE_ATARI_RUNTIME_OK :
-        CSB_HINT_ORACLE_ATARI_RUNTIME_ERR_RENDER;
+    return csb_hint_oracle_atari_runtime_render_frame(runtime, frame, frame_size);
 }
 
 const char *csb_hint_oracle_atari_runtime_result_name(int result)

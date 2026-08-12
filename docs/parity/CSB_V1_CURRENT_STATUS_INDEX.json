@@ -84,7 +84,7 @@
       "id": "csb_v1_utility_disk_payloads",
       "priority": "P4",
       "status": "ACTIVE_BOUNDED",
-      "summary": "The Atari R1 Hint Oracle now joins hash-admitted HCSB.HTC/HCSB.DAT with an authenticated MINI.DAT coordinate receipt and renders the selected original 320x200 page. M11/M12 routing, original click/cadence capture and pixel-parity evidence remain open.",
+      "summary": "The Atari R1 Hint Oracle now joins hash-admitted HCSB.HTC/HCSB.DAT with an authenticated MINI.DAT coordinate receipt and renders all original 320x200 states: LOAD prompt, source-order list, no-clue acknowledgement and page. M11/M12 routing, original click/cadence capture and pixel-parity evidence remain open.",
       "latestEvidence": [
         "TODO.md",
         "docs/FIRESTAFF_GAP_LIST.md",

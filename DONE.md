@@ -1,5 +1,14 @@
 # CSB Hint Oracle: complete authentic Atari R1 runtime handoff (2026-08-12)
 
+- ✅ The R1 runtime now renders every source state on the decoded 320×200
+  HCSB.DAT surface: the LOAD/EXIT prompt, selected source-order hint rows plus
+  DONE, the no-clue/OK acknowledgement and page-specific LAST/NEXT/DONE.
+  Text is the decoded Utility Disk font and `HINTTEXT.C` box algorithm; state
+  strings and rectangles come directly from `HINTDATA.C`, `HINTMAIN.C` and
+  `HINTHINT.C`. The real-media regression renders each state and rejects an
+  unloaded or closed state. This is still a runtime surface, not an M11/M12
+  launcher or a pixel-parity claim.
+
 - ✅ Added `CSB_HintOracleAtariRuntime`, which atomically admits the known
   Atari ST 2.0/2.1 R1 HCSB.HTC/HCSB.DAT pair, consumes the checked native
   MINI.DAT coordinate receipt, runs the recovered source selection/page state
