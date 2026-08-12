@@ -37580,20 +37580,16 @@ static M11_GameInputResult m11_process_dm2_v1_c080_click(
         !receipt.accepted) {
         return M11_GAME_INPUT_IGNORED;
     }
-    /* The Macintosh c_rwbb owner dispatches a rendered wall-button target
-     * through the active left/centre/right column. Firestaff already
-     * retains the exact source target rectangle and DB3/DB14 chain for this
-     * target kind; use that receipt rather than the PC MOUSE_INPUT table.
-     * Other target kinds still have no recovered Mac action owner and remain
-     * fail-closed. */
+    /* The Macintosh c_rwbb owner dispatches the exact rendered wall-button
+     * target. Do not collapse a native target into a left/centre/right
+     * column: CODE(3) carries the dynamic action byte and the target's
+     * ObjectID/DB3 chain is the ownership boundary. Other target kinds still
+     * have no recovered Mac action owner and remain fail-closed. */
     if (m11_dm2_is_mac_profile(
             (const DM2_V1_BootProfile *)state->dm2BootProfile) &&
         receipt.target_kind == 4 && receipt.rect.w > 0) {
-        const int centre_x = receipt.rect.x + receipt.rect.w / 2;
-        const int column = centre_x < DM2_VP_WIDTH / 3 ? 0 :
-            (centre_x < (DM2_VP_WIDTH * 2) / 3 ? 1 : 2);
         DM2_V1_RuntimeMacWallButtonReceipt wall_receipt;
-        if (dm2_v1_runtime_activate_mac_wall_button(column,
+        if (dm2_v1_runtime_activate_mac_wall_target(receipt.target_index,
                                                      &wall_receipt) &&
             wall_receipt.accepted) {
             m11_sync_dm2_state_from_runtime(state);

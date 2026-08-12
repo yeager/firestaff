@@ -48,6 +48,11 @@
 
 ### Changed
 
+- `DM2 Macintosh pointer target identity`: Preserve the exact renderer-owned
+  `c_rwbb` target index through native wall-button dispatch. Pointer clicks no
+  longer collapse multiple dynamic controls into a guessed left/centre/right
+  column; the source ObjectID and DB3/DB14 chain remain the action owner.
+
 - `DM2 Macintosh pointer-owner source lock`: Add a real-media gate for the
   retail `CODE(3)` and `CODE(11)` resources and their disassembly entry
   anchors. The gate protects the dynamic-control boundary without converting

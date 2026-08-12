@@ -355,6 +355,11 @@ typedef struct DM2_V1_RuntimeMacWallButtonReceipt {
  * message; unsupported target owners remain fail-closed. */
 int dm2_v1_runtime_activate_mac_wall_button(
     int column, DM2_V1_RuntimeMacWallButtonReceipt *out_receipt);
+/* Dispatch the exact renderer-published c_rwbb target selected by a native
+ * Macintosh pointer hit.  The column wrapper above remains for the
+ * source-keyboard wall actions; pointer input must retain target identity. */
+int dm2_v1_runtime_activate_mac_wall_target(
+    int target_index, DM2_V1_RuntimeMacWallButtonReceipt *out_receipt);
 uint32_t dm2_v1_runtime_frame_presentation_state_hash(
     uint32_t scene_light_hash, uint16_t ambient_light,
     uint32_t c_light_receipt_hash, uint32_t c_light_source_state_hash,

@@ -525,6 +525,9 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
   a host item. Native Mac pointer/drag ownership remains open: the retail
   `CODE(3)` dispatcher consumes dynamically published Mac controls, not the
   PC or FM Towns expanded-rect table, and guessed coordinates are rejected.
+  The recovered wall-button subset now preserves the exact renderer-published
+  target identity through dispatch; inventory drag/drop and other dynamic
+  control kinds still require their source record materialization.
 - [ ] Acquire an authentic Mac save corpus for both language families and
   verify native load/save round trips. A DOSBox `SKSAVE` or a generated save
   cannot close this gate.

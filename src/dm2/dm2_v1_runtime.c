@@ -7357,13 +7357,13 @@ static void dm2_v1_runtime_append_mac_wall_targets(
     }
 }
 
-int dm2_v1_runtime_activate_mac_wall_button(
-    int column, DM2_V1_RuntimeMacWallButtonReceipt *out_receipt)
+static int dm2_v1_runtime_activate_mac_wall_target_for_target(
+    int target_index, int column,
+    DM2_V1_RuntimeMacWallButtonReceipt *out_receipt)
 {
     DM2_V1_RuntimeMacWallButtonReceipt receipt;
     const DM2_V1_DungeonData *dungeon;
     const DM2_V1_GameState *game;
-    int target_index = -1;
     int target_slot = -1;
     int target_x = -1;
     int target_y = -1;
@@ -7384,7 +7384,9 @@ int dm2_v1_runtime_activate_mac_wall_button(
     receipt.map = -1;
     receipt.x = -1;
     receipt.y = -1;
-    if (column < 0 || column > 2 || !g_dm2_runtime.boot ||
+    if (column < 0 || column > 2 || target_index < 0 ||
+        target_index >= (int)g_dm2_runtime.source_click_target_count ||
+        !g_dm2_runtime.boot ||
         !g_dm2_runtime.boot->source_game_load_session_ready ||
         !g_dm2_last_m11_frame.valid || !g_dm2_runtime.source_party_valid ||
         !g_dm2_runtime.record_pools_valid ||
@@ -7393,22 +7395,11 @@ int dm2_v1_runtime_activate_mac_wall_button(
         if (out_receipt) *out_receipt = receipt;
         return 0;
     }
-    for (int i = 0; i < (int)g_dm2_runtime.source_click_target_count; ++i) {
-        const DM2_V1_ViewportClickTarget *target =
-            &g_dm2_runtime.source_click_targets[i];
-        const int centre_x = target->x + target->w / 2;
-        const int target_column = centre_x < DM2_VP_WIDTH / 3 ? 0 :
-            (centre_x < (DM2_VP_WIDTH * 2) / 3 ? 1 : 2);
-        if (target->target_kind == 4u && target_column == column) {
-            target_index = i;
-            target_slot = target->view_slot;
-            break;
-        }
-    }
-    if (target_index < 0) {
+    if (g_dm2_runtime.source_click_targets[target_index].target_kind != 4u) {
         if (out_receipt) *out_receipt = receipt;
         return 0;
     }
+    target_slot = g_dm2_runtime.source_click_targets[target_index].view_slot;
     for (size_t i = 0; i < sizeof(cells) / sizeof(cells[0]); ++i) {
         if (cells[i].square != target_slot) continue;
         target_x = game->party_x +
@@ -7586,6 +7577,42 @@ int dm2_v1_runtime_activate_mac_wall_button(
     }
     if (out_receipt) *out_receipt = receipt;
     return 1;
+}
+
+int dm2_v1_runtime_activate_mac_wall_target(
+    int target_index, DM2_V1_RuntimeMacWallButtonReceipt *out_receipt)
+{
+    int column;
+    const DM2_V1_ViewportClickTarget *target;
+
+    if (target_index < 0 ||
+        target_index >= (int)g_dm2_runtime.source_click_target_count) {
+        return 0;
+    }
+    target = &g_dm2_runtime.source_click_targets[target_index];
+    if (target->target_kind != 4u || target->w <= 0) return 0;
+    column = (target->x + target->w / 2) < DM2_VP_WIDTH / 3 ? 0 :
+        ((target->x + target->w / 2) < (DM2_VP_WIDTH * 2) / 3 ? 1 : 2);
+    return dm2_v1_runtime_activate_mac_wall_target_for_target(
+        target_index, column, out_receipt);
+}
+
+int dm2_v1_runtime_activate_mac_wall_button(
+    int column, DM2_V1_RuntimeMacWallButtonReceipt *out_receipt)
+{
+    if (column < 0 || column > 2) return 0;
+    for (int i = 0; i < (int)g_dm2_runtime.source_click_target_count; ++i) {
+        const DM2_V1_ViewportClickTarget *target =
+            &g_dm2_runtime.source_click_targets[i];
+        const int centre_x = target->x + target->w / 2;
+        const int target_column = centre_x < DM2_VP_WIDTH / 3 ? 0 :
+            (centre_x < (DM2_VP_WIDTH * 2) / 3 ? 1 : 2);
+        if (target->target_kind == 4u && target_column == column) {
+            return dm2_v1_runtime_activate_mac_wall_target_for_target(
+                i, column, out_receipt);
+        }
+    }
+    return 0;
 }
 
 int dm2_v1_runtime_last_raw_sksave_handoff_receipt(
