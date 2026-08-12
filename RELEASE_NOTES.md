@@ -42,6 +42,13 @@
 
 ### Changed
 
+- `DM2 Macintosh inventory frame`: Admit the authentic 16-colour
+  `INTERFACE_CHARSHEET/0/dtImage/1` frame in both the large retail and small
+  First Chapter Mac editions. The M11 inventory toggle now consumes the
+  source RAW4 placement and local palette in memory; it does not reuse the
+  DM1 panel or create replacement art. Item-slot event ownership remains a
+  separate open gate.
+
 - `DM2 Macintosh application ownership`: Retain the complete authentic retail
   `Dungeon Master II` application data and resource forks in memory. The
   source-owned `Midi`, `snd `, menu and event resources are now available to

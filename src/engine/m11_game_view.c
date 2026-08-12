@@ -31132,13 +31132,17 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 memset(&summary, 0, sizeof(summary));
                 memset(&material, 0, sizeof(material));
                 /* The host control is admitted only when the original
-                 * CHARSHEET frame is present in the selected FM Towns
-                 * GRAPHICS.DAT. This is a source-material gate, not a
-                 * replacement DM1 panel. */
-                if (!m11_dm2_is_fmtowns_profile(profile) || !loader ||
+                 * CHARSHEET frame is present in the selected platform's
+                 * GRAPHICS.DAT. Mac and FM Towns use separate authenticated
+                 * media, but this static frame owner is the same source
+                 * CHARSHEET/RAW4 contract; it is not a replacement DM1
+                 * panel. */
+                if ((!m11_dm2_is_fmtowns_profile(profile) &&
+                     !m11_dm2_is_mac_profile(profile)) || !loader ||
                     !dm2_v1_query_gdat_summary_image_receipt(
                         loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0, 1,
-                        &summary) || !summary.accepted || summary.colors != 255u ||
+                        &summary) || !summary.accepted ||
+                    (summary.colors != 16u && summary.colors != 255u) ||
                     !dm2_v1_gdat_image_raw_material_receipt(
                         loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0, 1,
                         &material) || !material.accepted ||
@@ -60380,7 +60384,7 @@ void M11_GameView_DrawFpsOverlay(const M11_GameViewState* state,
                   7, 6, text, &style);
 }
 
-static int m11_draw_dm2_fmtowns_inventory_panel(
+static int m11_draw_dm2_inventory_panel(
     const M11_GameViewState *state,
     unsigned char *framebuffer,
     int framebuffer_width,
@@ -60399,8 +60403,10 @@ static int m11_draw_dm2_fmtowns_inventory_panel(
 
     if (!state || !framebuffer || framebuffer_width <= 0 ||
         framebuffer_height <= 0 ||
-        !m11_dm2_is_fmtowns_profile(
-            (const DM2_V1_BootProfile *)state->dm2BootProfile)) {
+        (!m11_dm2_is_fmtowns_profile(
+             (const DM2_V1_BootProfile *)state->dm2BootProfile) &&
+         !m11_dm2_is_mac_profile(
+            (const DM2_V1_BootProfile *)state->dm2BootProfile))) {
         return 0;
     }
     profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
@@ -60412,7 +60418,8 @@ static int m11_draw_dm2_fmtowns_inventory_panel(
         !dm2_v1_query_gdat_summary_image_receipt(
             loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0, 1,
             &summary) ||
-        !summary.accepted || summary.colors != 255u ||
+        !summary.accepted ||
+        (summary.colors != 16u && summary.colors != 255u) ||
         !dm2_v1_gdat_image_raw_material_receipt(
             loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0, 1,
             &material) ||
@@ -60435,6 +60442,37 @@ static int m11_draw_dm2_fmtowns_inventory_panel(
         placement.destination.y + placement.destination.h > framebuffer_height) {
         dm2_v1_asset_free_pixels(pixels);
         return 0;
+    }
+    if (summary.colors == 16u) {
+        DM2_V1_InventoryPanelSurveyFrameReceipt survey;
+        DM2_V1_InventoryPanelHudBlit blit;
+        DM2_V1_InventoryPanelHudSurface surface;
+        DM2_V1_InventoryPanelHudConsumptionReceipt consumed;
+        memset(&survey, 0, sizeof(survey));
+        memset(&blit, 0, sizeof(blit));
+        memset(&surface, 0, sizeof(surface));
+        memset(&consumed, 0, sizeof(consumed));
+        if (!dm2_v1_inventory_panel_survey_frame_receipt(loader, &survey) ||
+            !survey.valid || survey.decoded_width != (uint16_t)width ||
+            survey.decoded_height != (uint16_t)height ||
+            placement.destination.w != (int)survey.decoded_width ||
+            placement.destination.h != (int)survey.decoded_height) {
+            dm2_v1_asset_free_pixels(pixels);
+            return 0;
+        }
+        blit.rect_number = survey.expanded_rect_index;
+        blit.destination_x = placement.destination.x;
+        blit.destination_y = placement.destination.y;
+        blit.width = survey.decoded_width;
+        blit.height = survey.decoded_height;
+        blit.transparent_index = UINT8_MAX;
+        surface.pixels = framebuffer;
+        surface.width = framebuffer_width;
+        surface.height = framebuffer_height;
+        surface.stride = framebuffer_width;
+        dm2_v1_asset_free_pixels(pixels);
+        return dm2_v1_inventory_panel_consume_survey_frame(
+            loader, &survey, &blit, &surface, &consumed) && consumed.valid;
     }
     for (row = 0; row < placement.destination.h; ++row) {
         memcpy(framebuffer + (size_t)(placement.destination.y + row) *
@@ -61118,7 +61156,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
              * authenticated RECT_1EE material and its RAW4 placement; a
              * missing frame must not leave the live dungeon visible behind
              * an asserted inventory state. */
-            if (!m11_draw_dm2_fmtowns_inventory_panel(
+            if (!m11_draw_dm2_inventory_panel(
                     state, framebuffer, framebufferWidth, framebufferHeight)) {
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                               0, 0, framebufferWidth, framebufferHeight,

@@ -109,6 +109,27 @@ static int run_one(const char *zip, const char *source_id)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+    {
+        unsigned char inventory_frame[320u * 200u];
+        if (M11_GameView_HandleInput(
+                &state, M12_MENU_INPUT_INVENTORY_TOGGLE) !=
+                M11_GAME_INPUT_REDRAW || !state.inventoryPanelActive) {
+            fprintf(stderr, "Mac authenticated CHARSHEET inventory did not open: %s\n",
+                    source_id);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        memset(inventory_frame, 0, sizeof(inventory_frame));
+        M11_GameView_Draw(&state, inventory_frame, 320, 200);
+        if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK) !=
+                M11_GAME_INPUT_REDRAW || state.inventoryPanelActive) {
+            fprintf(stderr, "Mac CHARSHEET inventory did not close: %s\n",
+                    source_id);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        puts("  authenticated Mac CHARSHEET inventory frame accepted");
+    }
     profile = (DM2_V1_BootProfile *)state.dm2BootProfile;
     dungeon = profile ? (DM2_V1_DungeonData *)profile->dungeon_data : NULL;
     if (!dungeon || !dungeon->record_graph_complete) {

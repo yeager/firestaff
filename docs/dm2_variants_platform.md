@@ -88,6 +88,13 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   item admission and the small demo's authentic target class 7 still require
   their original GAME_LOAD owner before mutation.
   No chain is converted into a DM1 front-cell action.
+- Both English Mac editions now also admit the authentic 16-colour
+  `INTERFACE_CHARSHEET/0/dtImage/1` inventory frame. The M11 inventory toggle
+  consumes its original local palette and `RECT_1EE`/RAW4 placement directly
+  from the selected Mac `Graphics.dat`, without extracting or redrawing the
+  panel. Inventory item-slot selection, drag/drop and the remaining native
+  modal event owner are still fail-closed until their Mac source owner is
+  recovered.
 - Retail HFS media now exposes the authentic raw `MooV` data forks and HFS
   Resource Manager forks in memory. The four present movies have source-owned
   `moov` resource payloads; Firestaff keeps the data fork, complete resource
