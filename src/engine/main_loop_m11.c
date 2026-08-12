@@ -215,6 +215,7 @@ static int M12_StartupMenu_PrepareSelectedGameLaunch(
         M12_StartupMenuState* menuState) {
     const M12_MenuEntry* entry;
     const M12_AssetVersionStatus* version;
+    M12_LaunchIntent intent;
     char runtimeDir[M12_ASSET_DATA_DIR_CAPACITY];
     int versionIndex;
     if (!menuState || menuState->activatedIndex < 0 ||
@@ -228,7 +229,16 @@ static int M12_StartupMenu_PrepareSelectedGameLaunch(
     /* The selected CSB edition owns this launch.  Archives/ADFs enter M11
      * through a hash-verified private cache; an already verified loose
      * package keeps its original directory and startup siblings. */
-    versionIndex = menuState->gameOptions[menuState->activatedIndex].versionIndex;
+    /* M12 may repair a stale persisted version/architecture selection while
+     * building the launch intent.  Direct CLI starts previously validated
+     * that effective ST edition, then this preparatory CSB step reopened the
+     * stale (often unavailable PC3.4) slot and failed before M11 received
+     * the verified runtime directory.  The intent is the selected-launch
+     * authority for both the menu and CLI. */
+    intent = M12_StartupMenu_GetLaunchIntent(menuState);
+    versionIndex = intent.valid && intent.options.versionIndex >= 0
+        ? intent.options.versionIndex
+        : menuState->gameOptions[menuState->activatedIndex].versionIndex;
     version = versionIndex >= 0
         ? M12_AssetStatus_GetVersion(&menuState->assetStatus, "csb",
                                      (size_t)versionIndex) : NULL;

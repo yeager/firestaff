@@ -5443,6 +5443,27 @@ static void test_runtime_mirror_accepts_empty_source_title(void)
     csb_v1_runtime_cleanup(&runtime);
 }
 
+/* Stock CSBWin Game/CSB installations preserve mixed-case original names:
+ * graphics.dat, Dungeon.dat, and csbgame2.dat.  The scanner advertises the
+ * pair by content hash; direct boot must consume that same verified pair
+ * rather than requiring a case-normalised copied cache. */
+static void test_staged_csbwin_mixed_case_directory_boot(void)
+{
+    const char *data_dir = getenv("FIRESTAFF_CSBWIN_REAL_DATA_DIR");
+    const char *save_path = getenv("FIRESTAFF_CSBWIN_REAL_SAVE");
+    CSB_V1_BootStartupLaunch_PC34 launch;
+
+    if (!data_dir || !data_dir[0] || !save_path || !save_path[0]) {
+        puts("  SKIP: FIRESTAFF_CSBWIN_REAL_DATA_DIR/SAVE not staged");
+        return;
+    }
+    memset(&launch, 0, sizeof(launch));
+    CHECK(csb_v1_boot_startup_launch_alloc_pc34(
+              data_dir, NULL, save_path, NULL, NULL, &launch) == 1,
+          "stock mixed-case CSBWin data directory boots its source save");
+    csb_v1_boot_startup_launch_cleanup_pc34(&launch);
+}
+
 int main(void)
 {
     const char *focus_dsa_save_handoff =
@@ -5466,6 +5487,7 @@ int main(void)
     test_startup_real_asset_receipt_is_skip_safe_and_deterministic();
     test_startup_full_runtime_receipt_requires_complete_real_session();
     test_runtime_variant_hint_identity();
+    test_staged_csbwin_mixed_case_directory_boot();
     test_runtime_boot_rejects_unmaterialized_media();
     test_runtime_mirror_accepts_empty_source_title();
     test_enter_game_rotate_party_aligns_champion_state();

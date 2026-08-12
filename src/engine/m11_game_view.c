@@ -11701,6 +11701,32 @@ static int m11_csb_apply_boot_runtime_receipt(
         state->csbOriginalSaveRuntimeReceipt = original_save_receipt;
         state->csbOriginalSaveRuntimeReceiptRequired = 1;
 
+        /* CSBWin's stock Game/CSB package carries the original Atari ST
+         * MEDIA332 pair.  F0435 has already restored its live world above;
+         * it must enter the native ST viewport handoff directly, not try to
+         * open the unrelated PC3.4 C040 HUD session below.  The latter has
+         * no owner in the ST package and used to reject an otherwise fully
+         * authenticated CSBWin resume from both the menu and --game csb.
+         *
+         * ReDMCSB LOADSAVE.C F0435 returns to GAMELOOP after a successful
+         * load; ANIM.C's title path is bypassed for the same reason. */
+        if (receipt->receipts.handoff.direct_resume_loaded &&
+            (receipt->profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+             receipt->profile->variant_id == CSB_V1_VARIANT_ST21_EN)) {
+            ((CSB_V1_BootProfile *)state->csbBootProfile)->runtime.state =
+                CSB_STATE_GAME;
+            state->csbStartupExpectedPackageIdentity =
+                package_identity ? package_identity : 1u;
+            m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+            state->csbState.startup_title_active = 0;
+            state->csbState.startup_entrance_active = 0;
+            state->csbState.startup_entrance_dismissed = 1;
+            state->csbState.startup_entrance_credits_active = 0;
+            state->csbState.startup_entrance_opening_active = 0;
+            state->csbAtariStRuntimeHandoffComplete = 1;
+            return 1;
+        }
+
         /* ReDMCSB LOADSAVE.C F0435 restores the GAMEBLOCK and enters the
          * live loop.  A valid original resume must not be routed back through
          * the selected platform's title program: on ST that used to replay
@@ -22499,6 +22525,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                     ? CSB_V1_VARIANT_FMTOWNS_JA
                     : CSB_V1_VARIANT_UNKNOWN,
                 &launch)) {
+            fprintf(stderr, "firestaff: CSB boot rejected: %s\n",
+                    launch.failure_host_receipt.status
+                        ? launch.failure_host_receipt.status
+                        : "unknown failure");
             (void)m11_csb_startup_apply_host_receipt(
                 state,
                 &launch.failure_host_receipt);
@@ -22508,10 +22538,12 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         if (!csb_v1_boot_startup_launch_detach_runtime_pc34(
                 &launch,
                 &runtime_receipt)) {
+            fprintf(stderr, "firestaff: CSB boot could not detach runtime receipt\n");
             csb_v1_boot_startup_launch_cleanup_pc34(&launch);
             return 0;
         }
         if (!m11_csb_apply_boot_runtime_receipt(state, spec, &runtime_receipt)) {
+            fprintf(stderr, "firestaff: CSB runtime handoff rejected\n");
             csb_v1_boot_startup_launch_cleanup_pc34(&launch);
             return 0;
         }

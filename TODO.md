@@ -4166,6 +4166,14 @@ that its exact runtime path is not already source-locked and tested.
     the whole source file's FNV-1a and size to the resumed session. `DMSAVE*`,
     unknown names, compact rosters and incomplete/corrupt bodies remain
     fail-closed; Extended Features/DSA still needs its own world handoff.
+    2026-08-12 follow-up: the stock CSBWin `Game/CSB` directory (mixed-case
+    `graphics.dat`, `Dungeon.dat`, `csbgame2.dat`) now completes that same
+    F0435 resume via both `--game csb --save` and the start-menu route. M12
+    carries its effective hash-selected ST edition into the runtime-prep
+    stage instead of reopening a stale PC3.4 choice, and M11 enters the
+    restored ST game loop without demanding PC3.4's unrelated C040 HUD
+    session. The regression uses the actual source-tree corpus; no renamed
+    file, cache copy, or synthetic game state participates.
     2026-08-11: launcher and fixture regressions no longer create synthetic
     CSB `DUNGEON.DAT` or placeholder `GRAPHICS.DAT` to cross a runtime gate.
     A hash-labelled metadata fixture is now explicitly required to fail before
