@@ -53,7 +53,13 @@ Wall-mounted actuators that respond to player keypress:
 | 0x46 | PUSH_BUTTON_WALL_SWITCH | Push-button style (requires release to activate) |
 | 0x26 | SWITCH_SIGN_FOR_CREATURE | A switch whose state is visible to creature AI |
 
-**Activation method**: Player faces the wall and presses a key. The 2-state wall switch (0x17) toggles between on/off each activation. Push-button switch (0x46) activates on press.
+**Source/runtime status**: These are separate source mechanisms, not interchangeable
+with the Mac door-button target (`0x46`). The source `PLAYER_TESTING_WALL` path
+handles facing-wall interaction, alcoves, levers and keyholes; `0x1A` additionally
+requires the source item-admission/keyhole path. Firestaff currently exposes only
+the authenticated Mac `0x46` door-button path. It refuses `0x17`, `0x18` and
+`0x1A` until their complete source owner is bound to the live GAME_LOAD state;
+no coordinate-only or generic actuator fallback is allowed.
 
 ## Logic and Wiring Actuators
 
