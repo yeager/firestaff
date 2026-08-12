@@ -31,8 +31,12 @@
   `(255,255)` entries are accepted, the list ends after seven rows, the first
   page is one-based, and LAST/NEXT do not wrap. It takes coordinates only from
   its caller; it does not invent or parse a save format.
-- 🔒 Graphical Hint Oracle/M11/M12 routing, the authenticated save/runtime
-  coordinate handoff, original text/page layout and original-frame pixel
+- ✅ `CSB_HintOracleAtariSaveSession` accepts only the checked native
+  `CSB_V1_AtariSaveInfo` receipt from the Atari MINI.DAT path and maps its
+  `party_map_index/party_x/party_y` directly into the Oracle selector. Invalid
+  signed poses are rejected before the unsigned HTC lookup.
+- 🔒 Graphical Hint Oracle/M11/M12 routing and presentation of that existing
+  Atari-save handoff, original text/page layout and original-frame pixel
   parity remain open. Do not treat the state module or decoded resources as a
   rendered Utility Disk screen.
 

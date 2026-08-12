@@ -1,6 +1,7 @@
 /* Source-state contract for ReDMCSB HINTHINT.C.  Synthetic HTC bytes are
  * deliberately used only to exercise the parser/session boundary. */
 #include "csb_hint_oracle_htc.h"
+#include "csb_hint_oracle_atari_save_session.h"
 #include "csb_hint_oracle_session.h"
 
 #include <stdio.h>
@@ -89,9 +90,30 @@ static int test_no_clue_and_close(void)
     return 1;
 }
 
+static int test_authenticated_atari_receipt_adapter(void)
+{
+    uint8_t raw[320];
+    CSB_HintOracleHTC htc;
+    CSB_HintOracleSession session;
+    CSB_V1_AtariSaveInfo info;
+    memset(&info, 0, sizeof(info));
+    CHECK(csb_hint_oracle_htc_parse(raw, fixture(raw, sizeof(raw)), &htc) == 0);
+    info.party_map_index = 4;
+    info.party_x = 9;
+    info.party_y = 7;
+    CHECK(csb_hint_oracle_atari_save_session_select(&session, &htc, &info) == 0);
+    CHECK(session.state == CSB_HINT_ORACLE_SESSION_HINT_LIST);
+    CHECK(session.selected_hint_count == 7u);
+    info.party_x = -1;
+    CHECK(csb_hint_oracle_atari_save_session_select(&session, &htc, &info) ==
+          CSB_HINT_ORACLE_ATARI_SAVE_SESSION_ERR_POSE);
+    return 1;
+}
+
 int main(void)
 {
-    int ok = test_source_seven_row_cap_and_page_state() && test_no_clue_and_close();
+    int ok = test_source_seven_row_cap_and_page_state() && test_no_clue_and_close() &&
+             test_authenticated_atari_receipt_adapter();
     puts(ok ? "csb_hint_oracle_session: PASS" : "csb_hint_oracle_session: FAIL");
     return ok ? 0 : 1;
 }

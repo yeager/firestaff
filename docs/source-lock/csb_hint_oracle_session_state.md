@@ -31,10 +31,15 @@ save selection. `close` is separate for the original EXIT control.
 
 ## Boundary
 
-This module accepts coordinates; it does not load arbitrary save files and
-does not connect itself to M11/M12. A production caller must pass the map and
-X/Y from an authenticated Atari CSB save reader or a verified live runtime.
-That missing binding, visual layout and frame/pixel parity remain open.
+`CSB_HintOracleAtariSaveSession` now supplies the native saved-game side of
+this boundary. It accepts only `CSB_V1_AtariSaveInfo`, the checked GAMEBLOCK2
+receipt emitted by `csb_v1_atari_save_decode_pc34_compat()` and the Atari
+MINI.DAT runtime handoff. Its signed map/X/Y values must fit in the original
+unsigned bytes before it calls the session. It does not accept CSBWin saves,
+generic runtime coordinates or a replacement parser.
+
+The adapter is still not connected to M11/M12 presentation. Visual layout and
+frame/pixel parity remain open.
 
 `test_csb_hint_oracle_session` creates eight matching authored records and
 checks that exactly the first seven source-order entries survive, followed by

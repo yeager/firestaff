@@ -39195,6 +39195,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         tests/test_csb_hint_oracle_session.c
         src/csb/csb_hint_oracle_htc.c
         src/csb/csb_hint_oracle_session.c
+        src/csb/csb_hint_oracle_atari_save_session.c
     )
     target_include_directories(test_csb_hint_oracle_session PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

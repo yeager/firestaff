@@ -1,3 +1,14 @@
+# CSB Hint Oracle: authenticated Atari save-coordinate bridge (2026-08-12)
+
+- ✅ `CSB_HintOracleAtariSaveSession` connects the existing checked
+  `CSB_V1_AtariSaveInfo` GAMEBLOCK2 receipt to the recovered Oracle session.
+  It copies only `party_map_index`, `party_x` and `party_y` after range checks;
+  CSBWin/general runtime coordinates and a second save parser are deliberately
+  outside this boundary.
+- ✅ The Oracle session test confirms that the authentic-receipt shaped input
+  selects the source-order seven-row list and that an invalid signed pose is
+  rejected before it can reach the HTC lookup.
+
 # CSB Hint Oracle: HINTHINT.C selection and page session (2026-08-12)
 
 - ✅ Added `CSB_HintOracleSession`, a deliberately I/O-free recovery of the
