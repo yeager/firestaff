@@ -364,6 +364,37 @@ static int is_game_id(const char* value) {
             strcmp(value, "theron") == 0);
 }
 
+/* Accept the conventional --option=value spelling as well as the space form.
+ * The two typographic dash aliases make a pasted command from macOS Notes,
+ * Messages or rich-text documentation recoverable instead of inexplicably
+ * reporting an unknown argument.  They are deliberately limited to --game:
+ * game selection is the command most commonly copied verbatim from the
+ * launcher documentation, and accepting arbitrary Unicode option prefixes
+ * would make misspelled switches harder to diagnose. */
+static int is_game_option_name(const char* value) {
+    return value &&
+           (strcmp(value, "--game") == 0 ||
+            strcmp(value, "\xE2\x80\x94game") == 0 || /* em dash */
+            strcmp(value, "\xE2\x80\x93game") == 0);  /* en dash */
+}
+
+static const char* game_option_inline_value(const char* value) {
+    static const char* const prefixes[] = {
+        "--game=",
+        "\xE2\x80\x94game=", /* em dash */
+        "\xE2\x80\x93game="  /* en dash */
+    };
+    size_t i;
+    if (!value) return NULL;
+    for (i = 0U; i < sizeof(prefixes) / sizeof(prefixes[0]); ++i) {
+        size_t length = strlen(prefixes[i]);
+        if (strncmp(value, prefixes[i], length) == 0 && value[length] != '\0') {
+            return value + length;
+        }
+    }
+    return NULL;
+}
+
 static int parse_presentation_mode(const char* value, int* out_mode) {
     if (!value || !out_mode) return 0;
     if (strcmp(value, "v1") == 0 || strcmp(value, "0") == 0) {
@@ -408,6 +439,7 @@ int main(int argc, char** argv) {
 
     for (int i = 1; i < argc; ++i) {
         const char* a = argv[i];
+        const char* inlineGameId;
         if (strcmp(a, "--help") == 0 || strcmp(a, "-h") == 0) {
             usage(argv[0]);
             return 0;
@@ -574,8 +606,14 @@ int main(int argc, char** argv) {
             opts.bootProbeExpectDm1HoCReleaseAppCapture = 1;
             continue;
         }
-        if (strcmp(a, "--game") == 0 && i + 1 < argc) {
+        if (is_game_option_name(a) && i + 1 < argc) {
             opts.gameId = argv[++i];
+            opts.directLaunch = 1;
+            continue;
+        }
+        inlineGameId = game_option_inline_value(a);
+        if (inlineGameId) {
+            opts.gameId = inlineGameId;
             opts.directLaunch = 1;
             continue;
         }

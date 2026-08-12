@@ -7345,6 +7345,17 @@ if(NOT MSVC)
     target_compile_options(firestaff PRIVATE -Wall -Wextra -O2)
 endif()
 
+if(BUILD_TESTING AND NOT WIN32)
+    add_test(
+        NAME firestaff_cli_game_option_forms
+        COMMAND ${CMAKE_COMMAND} -E env
+                "FIRESTAFF_BIN=$<TARGET_FILE:firestaff>"
+                sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_cli_game_option_forms.sh)
+    set_tests_properties(firestaff_cli_game_option_forms PROPERTIES
+        LABELS "cli;launcher;data_free"
+        TIMEOUT 15)
+endif()
+
 add_executable(firestaff_artpack_studio
     tools/firestaff_artpack_studio_launcher.c
 )
