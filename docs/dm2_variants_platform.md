@@ -175,8 +175,13 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   same 55 ms source tick used by the DM2 runtime after a cue is selected; it
   does not use a host frame delta, and the scheduler consumes each event once
   as the source playhead crosses it instead of replaying the elapsed prefix
-  on every host tick. CoreMIDI device/timing parity and native pointer/drag
-  ownership remain open gates.
+  on every host tick. The retained application resource map is also
+  source-censused: it contains `CNTL` resources 130 and 131 (32 bytes each),
+  alongside the `MENU`, `DITL`, and `DLOG` families. These are authentic
+  dialog/control resources, not permission to invent gameplay hit rectangles;
+  native CHARSHEET pointer/drag ownership still depends on the dynamic
+  `Control`/event records published by `CODE(3)`/`CODE(11)`. CoreMIDI
+  device/timing parity and that dynamic pointer owner remain open gates.
 
 X68000 is not part of the DM2 support matrix.
 

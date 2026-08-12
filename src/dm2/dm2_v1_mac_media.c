@@ -313,6 +313,60 @@ int dm2_v1_mac_resource_find(const uint8_t *fork, size_t fork_size,
     return -1;
 }
 
+static int mac_resource_type_list(const uint8_t *fork, size_t fork_size,
+                                  size_t *out_type_list, size_t *out_count,
+                                  size_t *out_map_length,
+                                  size_t *out_type_offset) {
+    uint32_t map_offset, map_length;
+    uint16_t type_offset;
+    size_t type_list, type_count;
+    if (!fork || fork_size < 256u || !out_type_list || !out_count ||
+        !out_map_length || !out_type_offset) return -1;
+    map_offset = be32(fork + 4u);
+    map_length = be32(fork + 12u);
+    if (map_offset > fork_size || map_length > fork_size - map_offset ||
+        map_length < 28u) return -1;
+    type_offset = be16(fork + map_offset + 24u);
+    if ((size_t)type_offset + 2u > map_length) return -1;
+    type_list = map_offset + type_offset;
+    type_count = (size_t)be16(fork + type_list) + 1u;
+    if (type_count == 0u || type_count > 4096u ||
+        type_count > (map_length - type_offset - 2u) / 8u) return -1;
+    *out_type_list = type_list;
+    *out_count = type_count;
+    *out_map_length = map_length;
+    *out_type_offset = type_offset;
+    return 0;
+}
+
+int dm2_v1_mac_resource_type_count(const uint8_t *fork, size_t fork_size) {
+    size_t type_list, type_count, map_length, type_offset;
+    if (mac_resource_type_list(fork, fork_size, &type_list, &type_count,
+                               &map_length, &type_offset) != 0) return -1;
+    (void)type_list; (void)map_length; (void)type_offset;
+    return (int)type_count;
+}
+
+int dm2_v1_mac_resource_type_at(const uint8_t *fork, size_t fork_size,
+                                int index,
+                                DM2_V1_MacResourceTypeReceipt *out_receipt) {
+    size_t type_list, type_count, map_length, type_offset;
+    const uint8_t *entry;
+    uint16_t count;
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt || index < 0 ||
+        mac_resource_type_list(fork, fork_size, &type_list, &type_count,
+                               &map_length, &type_offset) != 0 ||
+        (size_t)index >= type_count) return -1;
+    entry = fork + type_list + 2u + (size_t)index * 8u;
+    memcpy(out_receipt->type, entry, 4u);
+    count = (uint16_t)(be16(entry + 4u) + 1u);
+    if (count == 0u || count > 4096u) return -1;
+    out_receipt->count = count;
+    (void)map_length; (void)type_offset;
+    return 0;
+}
+
 static int copy_dmfiles_entry(const uint8_t *dmfiles, size_t dmfiles_size,
                               const char *wanted, size_t expected_size,
                               uint8_t **out, size_t *out_size) {

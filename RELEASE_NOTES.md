@@ -48,6 +48,12 @@
 
 ### Changed
 
+- `DM2 Macintosh Resource Manager census`: Add an in-memory type-list reader
+  for the authentic retail application fork and lock `CNTL` resources 130/131
+  (32 bytes each) alongside the real `MENU`, `DITL`, and `DLOG` families. These
+  are source evidence for static dialogs only; gameplay pointer/drag control
+  records remain owned by the original dynamic `CODE(3)`/`CODE(11)` path.
+
 - `DM2 Macintosh pointer target identity`: Preserve the exact renderer-owned
   `c_rwbb` target index through native wall-button dispatch. Pointer clicks no
   longer collapse multiple dynamic controls into a guessed left/centre/right

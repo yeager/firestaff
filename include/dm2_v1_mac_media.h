@@ -28,10 +28,23 @@ typedef struct {
     size_t size;
 } DM2_V1_MacResourceReceipt;
 
+typedef struct {
+    char type[4];
+    uint16_t count;
+} DM2_V1_MacResourceTypeReceipt;
+
 int dm2_v1_mac_resource_find(const uint8_t *fork, size_t fork_size,
                              const char type[4], int16_t id,
                              const uint8_t **out_data, size_t *out_size,
                              DM2_V1_MacResourceReceipt *out_receipt);
+
+/* Enumerate the authentic Resource Manager type list without copying any
+ * resource payload.  The type order and per-type counts remain source data;
+ * callers must not turn this into host UI geometry. */
+int dm2_v1_mac_resource_type_count(const uint8_t *fork, size_t fork_size);
+int dm2_v1_mac_resource_type_at(const uint8_t *fork, size_t fork_size,
+                                int index,
+                                DM2_V1_MacResourceTypeReceipt *out_receipt);
 
 /* Read the original Macintosh CD image contained in a ZIP without creating
  * a mounted or extracted game-data directory.  The returned forks are owned

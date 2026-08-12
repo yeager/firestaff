@@ -499,6 +499,10 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
   resource forks in RAM (`484,944` and `5,046,234` bytes). The complete
   MacBinary/application resource owner is now available for source-locked
   `Midi`, `snd `, menu and event-resource work; no application is extracted.
+  The Resource Manager type list is now readable without copying payloads;
+  the real retail fork is source-locked with `CNTL` 130/131 (32 bytes each),
+  plus its `MENU`/`DITL`/`DLOG` families. These static dialog controls do not
+  close the separate dynamic gameplay Control/Event gate.
   Bind the Japanese
   CD-audio route separately. DOS HMP, FM Towns CD.DAT, and Amiga MOD paths are
   not fallbacks.
