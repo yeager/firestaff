@@ -9,6 +9,7 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   undrawn. Required evidence: a checked CSBWin runtime handoff that carries
   the ordinal through the frame boundary and a real-data C017 comparison.
   Do not infer this transient state from inventory contents or PC3.4 input.
+  Capture contract: `parity-evidence/csbwin_attacking_character_ordinal_capture_contract_20260812.md`.
 
 ## ReDMCSB CSB Reference-Boundary Audit
 
