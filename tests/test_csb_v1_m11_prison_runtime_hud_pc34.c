@@ -300,6 +300,22 @@ int main(void)
         CHECK(profile && check_atari_st_c232_hud_frame(profile->graphics_path,
                                                         framebuffer),
               "stock CSBWin resume presents every C232-owned HUD pixel");
+        /* COMMAND.C F0361/F0380 routes a turn through the CSB GAMEBLOCK,
+         * not the generic DM1 world mirror.  A right turn is safe to prove
+         * against the stock save: it mutates only the live party direction
+         * and formation, leaves the source save untouched, and forces the
+         * subsequent C0128 composition to consume the new orientation. */
+        CHECK(M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_RIGHT) ==
+                  M11_GAME_INPUT_REDRAW &&
+                  profile->runtime.party_dir == 3 &&
+                  profile->runtime.party_state.PartyDirection == 3 &&
+                  view.world.party.direction == 3,
+              "stock CSBWin resume routes TURN RIGHT through the live GAMEBLOCK");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        CHECK(check_atari_st_c232_hud_frame(profile->graphics_path,
+                                            framebuffer),
+              "stock CSBWin turn redraw keeps the complete C232 HUD composition");
         M11_GameView_Shutdown(&view);
         if (failures) return 1;
         puts("PASS: stock CSBWin F0435 C0128/C232 runtime frame");
