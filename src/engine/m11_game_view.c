@@ -27779,6 +27779,31 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             (DM2_V1_BootProfile *)state->dm2BootProfile,
             NULL);
         m11_sync_dm2_state_from_runtime(state);
+        if (m11_dm2_is_mac_profile(
+                (const DM2_V1_BootProfile *)state->dm2BootProfile)) {
+            DM2_V1_MusicScheduleReceipt music_schedule;
+            /* The Mac CODE(3)/CODE(11) path queues Midi resources when the
+             * source map owner changes.  Gameplay must advance that same
+             * queue on the DM2 source tick; leaving scheduling in the
+             * startup branch makes the real Mac music stop after New Game.
+             * dm2_v1_runtime_tick() advances gametick in 55 ms units, so do
+             * not substitute a host frame delta here. */
+            if (state->dm2State.music_elapsed_us <=
+                UINT32_MAX - 55000u) {
+                state->dm2State.music_elapsed_us += 55000u;
+            }
+            memset(&music_schedule, 0, sizeof(music_schedule));
+            if (dm2_v1_sound_schedule_music(
+                    state->dm2State.music_elapsed_us,
+                    &music_schedule)) {
+                state->dm2State.music_schedule_ready =
+                    music_schedule.pcm_handoff_ready;
+                state->dm2State.music_loop_duration_us = 0u;
+                state->dm2State.music_loop_count = music_schedule.loop_count;
+                state->dm2State.music_events_due =
+                    music_schedule.event_count_due;
+            }
+        }
         return M11_GAME_INPUT_REDRAW;
     }
     /* Nexus V1: use the Nexus tick function instead of DM1's m11_apply_tick.

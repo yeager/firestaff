@@ -150,7 +150,11 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
 - The retail HFS volume's real `Dungeon Master II` application is also kept as
   separate in-memory data/resource forks (`484,944` / `5,046,234` bytes).
   This preserves the source owner for the authentic `Midi`, `snd `, menu and
-  event resources without flattening or extracting the application.
+  event resources without flattening or extracting the application. During
+  gameplay, the Mac runtime advances an authenticated MIDI map cue on the
+  same 55 ms source tick used by the DM2 runtime after a cue is selected; it
+  does not use a host frame delta. CoreMIDI device/timing parity and native
+  pointer/drag ownership remain open gates.
 
 X68000 is not part of the DM2 support matrix.
 
