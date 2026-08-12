@@ -1331,6 +1331,7 @@ static void test_real_slot_load_is_blocked(const char *root)
 static void test_real_state_corpus(const char *root)
 {
     DM2_OriginalSaveStateCorpusReceipt state;
+    DM2_OriginalSaveStateCorpusReceipt ordered_state;
     unsigned int entry;
     int state_ok;
 
@@ -1349,6 +1350,12 @@ static void test_real_state_corpus(const char *root)
                state.corpus_hash);
     }
     CHECK(state_ok, "real SKSave corpus retains every source-owned fixed state receipt");
+    memset(&ordered_state, 0, sizeof(ordered_state));
+    CHECK(dm2_v1_original_save_state_corpus_probe_ordered(
+              root, 0, &ordered_state) &&
+              ordered_state.corpus_hash == state.corpus_hash &&
+              ordered_state.entry_count == state.entry_count,
+          "explicit little-endian corpus path preserves the real DOS receipt");
     for (entry = 0u; entry < state.entry_count; ++entry) {
         const DM2_OriginalSaveStateCorpusEntry *current = &state.entries[entry];
         int pool;
@@ -1356,6 +1363,7 @@ static void test_real_state_corpus(const char *root)
         int nonempty_pool_seen = 0;
 
         CHECK(current->candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW &&
+                  current->candidate.words_big_endian == 0u &&
                   !current->candidate.import_rejected &&
                   current->candidate.payload_size > 0u &&
                   current->candidate.payload_hash != 0u &&

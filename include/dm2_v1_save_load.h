@@ -154,6 +154,8 @@ typedef struct {
 #define DM2_SK_CORPUS_RECEIPT_MAX 16u
 typedef struct {
     int kind;
+    /* Explicit source word order for an admitted raw SKSave body. */
+    uint8_t words_big_endian;
     int import_rejected;
     size_t payload_size;
     uint32_t payload_hash;
@@ -310,6 +312,12 @@ bool dm2_v1_original_save_state_corpus_probe(
     const char *save_base,
     DM2_OriginalSaveStateCorpusReceipt *out_receipt);
 
+/* Explicit Macintosh/DOS variant of the read-only original-save census. */
+bool dm2_v1_original_save_state_corpus_probe_ordered(
+    const char *save_base,
+    int words_big_endian,
+    DM2_OriginalSaveStateCorpusReceipt *out_receipt);
+
 /* Initialise slot manager with save base directory (NULL = cwd). */
 void dm2_sl_init(DM2_SL_State *state, const char *save_base);
 
@@ -373,6 +381,11 @@ bool dm2_v1_save_has_valid_last_session(const char *save_base);
  * diagnostic rejections and are never loadable corpus entries. */
 bool dm2_v1_sksave_corpus_scan(const char *save_base,
                                DM2_SKSaveCorpusReceipt *out_receipt);
+
+/* Same corpus scan with an explicit raw-body word order. */
+bool dm2_v1_sksave_corpus_scan_ordered(const char *save_base,
+                                       int words_big_endian,
+                                       DM2_SKSaveCorpusReceipt *out_receipt);
 
 /* Diagnostic-only wrapper for the isolated save-load test.  A live DM2
  * session must validate an actual save candidate; it must not expose a

@@ -722,7 +722,8 @@ static uint32_t dm2_sksave_corpus_file_hash(const char *path)
 static void dm2_sksave_corpus_classify_payload(
     DM2_SKSaveCorpusReceipt *receipt,
     const char *path,
-    size_t payload_size)
+    size_t payload_size,
+    int words_big_endian)
 {
     FILE *f;
     uint8_t *payload;
@@ -769,8 +770,9 @@ static void dm2_sksave_corpus_classify_payload(
         /* The raw branch is an evidence-only census.  It must not go through
          * dm2_v1_session_import_raw_sksave_payload(), which correctly rejects
          * a partial GAME_LOAD as a playable Firestaff session. */
-        if (!dm2_v1_original_raw_sksave_dungeon_receipt(
-                payload, payload_size, &raw_dungeon) || !raw_dungeon.valid) {
+        if (!dm2_v1_original_raw_sksave_dungeon_receipt_ordered(
+                payload, payload_size, words_big_endian, &raw_dungeon) ||
+            !raw_dungeon.valid) {
             free(payload);
             fclose(f);
             receipt->import_rejected_candidate_count++;
@@ -832,6 +834,8 @@ static void dm2_sksave_corpus_classify_payload(
             DM2_SKSaveCandidateReceipt *entry =
                 &receipt->candidate_receipts[receipt->candidate_receipt_count++];
             entry->kind = candidate.kind;
+            entry->words_big_endian = candidate.kind ==
+                DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW && words_big_endian ? 1u : 0u;
             entry->import_rejected = 0;
             entry->payload_size = payload_size;
             entry->payload_hash = dm2_sksave_corpus_payload_hash(
@@ -871,7 +875,7 @@ static void __attribute__((unused)) dm2_sksave_corpus_probe_candidate(
         if (alternate_name) receipt->alternate_name_candidate_count++;
         dm2_sksave_corpus_accept(receipt, path, payload_size);
         before_importable = receipt->importable_candidate_count;
-        dm2_sksave_corpus_classify_payload(receipt, path, payload_size);
+        dm2_sksave_corpus_classify_payload(receipt, path, payload_size, 0);
         if (receipt->importable_candidate_count > before_importable) {
             if (recursive) receipt->recursive_importable_candidate_count++;
         }
@@ -1299,8 +1303,9 @@ bool dm2_v1_save_has_valid_last_session(const char *save_base)
     return true;
 }
 
-bool dm2_v1_sksave_corpus_scan(const char *save_base,
-                               DM2_SKSaveCorpusReceipt *out_receipt)
+bool dm2_v1_sksave_corpus_scan_ordered(const char *save_base,
+                                       int words_big_endian,
+                                       DM2_SKSaveCorpusReceipt *out_receipt)
 {
     DM2_SKCorpusProbeStatus status;
     size_t payload_size = 0;
@@ -1325,7 +1330,8 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
     if (status == DM2_SK_CORPUS_VALID) {
         out_receipt->has_last_session = true;
         dm2_sksave_corpus_accept(out_receipt, path, payload_size);
-        dm2_sksave_corpus_classify_payload(out_receipt, path, payload_size);
+        dm2_sksave_corpus_classify_payload(out_receipt, path, payload_size,
+                                           words_big_endian);
     } else if (status == DM2_SK_CORPUS_INVALID) {
         out_receipt->invalid_candidate_count++;
     }
@@ -1347,7 +1353,7 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
              * corpus receipt classify it as a second live import. */
             dm2_sksave_corpus_accept(out_receipt, path, payload_size);
             dm2_sksave_corpus_classify_payload(out_receipt, path,
-                                               payload_size);
+                                               payload_size, words_big_endian);
         }
     } else if (status == DM2_SK_CORPUS_INVALID) {
         out_receipt->invalid_candidate_count++;
@@ -1365,7 +1371,8 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
             out_receipt->valid_slot_count++;
             out_receipt->valid_slot_mask |= (uint16_t)(1u << slot);
             dm2_sksave_corpus_accept(out_receipt, path, payload_size);
-            dm2_sksave_corpus_classify_payload(out_receipt, path, payload_size);
+            dm2_sksave_corpus_classify_payload(out_receipt, path, payload_size,
+                                               words_big_endian);
         } else if (status == DM2_SK_CORPUS_INVALID) {
             out_receipt->invalid_candidate_count++;
         }
@@ -1379,7 +1386,8 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
         if (status == DM2_SK_CORPUS_VALID) {
             out_receipt->valid_slot_backup_count++;
             dm2_sksave_corpus_accept(out_receipt, path, payload_size);
-            dm2_sksave_corpus_classify_payload(out_receipt, path, payload_size);
+        dm2_sksave_corpus_classify_payload(out_receipt, path, payload_size,
+                                           words_big_endian);
         } else if (status == DM2_SK_CORPUS_INVALID) {
             out_receipt->invalid_candidate_count++;
         }
@@ -1395,6 +1403,12 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
 #endif
 
     return true;
+}
+
+bool dm2_v1_sksave_corpus_scan(const char *save_base,
+                               DM2_SKSaveCorpusReceipt *out_receipt)
+{
+    return dm2_v1_sksave_corpus_scan_ordered(save_base, 0, out_receipt);
 }
 
 bool dm2_v1_distant_environment_timer_corpus_probe(
@@ -1503,6 +1517,7 @@ static int dm2_v1_original_raw_timer_stream_receipt(
     const uint8_t *payload,
     size_t payload_size,
     uint8_t expected_timer_count,
+    int words_big_endian,
     uint32_t *out_offset,
     uint32_t *out_byte_count,
     uint32_t *out_hash)
@@ -1516,8 +1531,8 @@ static int dm2_v1_original_raw_timer_stream_receipt(
     if (out_hash) *out_hash = 0u;
     if (!payload || !out_offset || !out_byte_count || !out_hash ||
         payload_size > UINT32_MAX ||
-        !dm2_v1_original_raw_sksave_fixed_state_receipt(payload, payload_size,
-                                                         &state) ||
+        !dm2_v1_original_raw_sksave_fixed_state_receipt_ordered(
+            payload, payload_size, words_big_endian, &state) ||
         !state.valid || state.timer_count != expected_timer_count) {
         return 0;
     }
@@ -1538,8 +1553,9 @@ static int dm2_v1_original_raw_timer_stream_receipt(
     return 1;
 }
 
-bool dm2_v1_original_save_state_corpus_probe(
+bool dm2_v1_original_save_state_corpus_probe_ordered(
     const char *save_base,
+    int words_big_endian,
     DM2_OriginalSaveStateCorpusReceipt *out_receipt)
 {
     DM2_SKSaveCorpusReceipt corpus;
@@ -1548,7 +1564,8 @@ bool dm2_v1_original_save_state_corpus_probe(
 
     if (!out_receipt) return false;
     memset(out_receipt, 0, sizeof(*out_receipt));
-    if (!dm2_v1_sksave_corpus_scan(save_base, &corpus)) return false;
+    if (!dm2_v1_sksave_corpus_scan_ordered(save_base, words_big_endian,
+                                           &corpus)) return false;
 
     /* skproject/SKWIN/SkWinCore.cpp GAME_LOAD ^2066:2F8C-319F opens the
      * chosen SKSave, then reads skload_table_60, champions and 10-byte timer
@@ -1594,10 +1611,10 @@ bool dm2_v1_original_save_state_corpus_probe(
             /* SKProject sksvgame.cpp::DM2_GAME_LOAD reads these raw sections
              * before later runtime ownership.  Census them directly, without
              * treating an incomplete read as a resumable session. */
-            if (!dm2_v1_original_raw_sksave_dungeon_receipt(
-                    payload, payload_size, &raw_dungeon) ||
-                !dm2_v1_original_raw_sksave_fixed_state_receipt(
-                    payload, payload_size, &raw_state) ||
+            if (!dm2_v1_original_raw_sksave_dungeon_receipt_ordered(
+                    payload, payload_size, words_big_endian, &raw_dungeon) ||
+                !dm2_v1_original_raw_sksave_fixed_state_receipt_ordered(
+                    payload, payload_size, words_big_endian, &raw_state) ||
                 !raw_dungeon.valid || !raw_state.valid) {
                 out_receipt->original_candidate_list_complete = 0;
                 out_receipt->rejected_candidate_count++;
@@ -1674,6 +1691,7 @@ bool dm2_v1_original_save_state_corpus_probe(
             }
             if (!dm2_v1_original_raw_timer_stream_receipt(
                     payload, payload_size, target->timer_count,
+                    words_big_endian,
                     &target->raw_timer_stream_offset,
                     &target->raw_timer_stream_byte_count,
                     &target->raw_timer_stream_hash)) {
@@ -1749,6 +1767,14 @@ bool dm2_v1_original_save_state_corpus_probe(
     hash = dm2_sksave_corpus_hash_step(hash, out_receipt->rejected_candidate_count);
     out_receipt->corpus_hash = hash;
     return true;
+}
+
+bool dm2_v1_original_save_state_corpus_probe(
+    const char *save_base,
+    DM2_OriginalSaveStateCorpusReceipt *out_receipt)
+{
+    return dm2_v1_original_save_state_corpus_probe_ordered(
+        save_base, 0, out_receipt);
 }
 
 bool dm2_v1_sksave_corpus_load_first_importable(

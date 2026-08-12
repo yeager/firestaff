@@ -6,6 +6,13 @@
 
 ## DM2
 
+- `DM2 Macintosh save-corpus byte order`: Route the shared SKSave corpus gate
+  through an explicit big-endian raw-body reader for the Macintosh profile;
+  DOS keeps the explicit little-endian path. The candidate receipt now retains
+  the source word order. This is evidence-only until authentic Mac saves and
+  the complete GAME_LOAD owner are available; no synthetic save or Resume
+  claim was added.
+
 ### Changed
 
 - `Japanese Macintosh media`: Read the authentic multi-track CD's later

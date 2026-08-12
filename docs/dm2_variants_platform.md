@@ -133,7 +133,9 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   `s_savegamebuffer` scalars. This is a read-only admission boundary only:
   `.firestaff/data/dm2` contains no authentic Mac save to verify, and Resume
   remains closed until the complete Mac `DM2_GAME_LOAD` record/possession
-  owner is implemented. No synthetic save is used.
+  owner is implemented. The corpus scanner now carries an explicit
+  big-endian body-order receipt for a future authentic Mac corpus; it never
+  guesses from the host or filename. No synthetic save is used.
 - Retail HFS media now exposes the authentic raw `MooV` data forks and HFS
   Resource Manager forks in memory. The four present movies have source-owned
   `moov` resource payloads; Firestaff keeps the data fork, complete resource

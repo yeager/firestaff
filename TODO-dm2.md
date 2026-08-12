@@ -536,6 +536,12 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
 - [ ] Acquire an authentic Mac save corpus for both language families and
   verify native load/save round trips. A DOSBox `SKSAVE` or a generated save
   cannot close this gate.
+- [x] Keep the save-corpus evidence path endian-explicit. The shared 42-byte
+  container gate now routes the admitted raw body through an explicit
+  little-endian DOS or big-endian Macintosh reader; no filename, host byte
+  order, or fallback guess selects the word order. This does not claim Mac
+  Resume: an authentic Mac save corpus and the complete GAME_LOAD owner are
+  still required.
 - [ ] Bind the small-edition dynamic Mac application owner. The separate
   `Downloads/DungeonMasterII_demo.hqx` preservation source contains an
   authentic 484,815-byte application data fork and 1,889,960-byte resource

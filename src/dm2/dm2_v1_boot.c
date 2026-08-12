@@ -12388,7 +12388,10 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         ? startup_save_root
         : profile->save_root;
     out_receipt->save_corpus_scan_complete =
-        dm2_v1_sksave_corpus_scan(save_corpus_root, &save_corpus) ? 1 : 0;
+        dm2_v1_sksave_corpus_scan_ordered(
+            save_corpus_root,
+            profile->platform == DM2_PLATFORM_MAC_EN ? 1 : 0,
+            &save_corpus) ? 1 : 0;
     out_receipt->save_corpus_valid_candidate_count =
         (int)save_corpus.has_last_session +
         (int)save_corpus.has_last_session_backup +
@@ -12423,8 +12426,10 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
         out_receipt->save_corpus_hash,
         out_receipt->save_corpus_valid_slot_mask);
     out_receipt->save_corpus_original_state_scan_complete =
-        dm2_v1_original_save_state_corpus_probe(
-            save_corpus_root, &original_save_state_corpus) ? 1 : 0;
+        dm2_v1_original_save_state_corpus_probe_ordered(
+            save_corpus_root,
+            profile->platform == DM2_PLATFORM_MAC_EN ? 1 : 0,
+            &original_save_state_corpus) ? 1 : 0;
     out_receipt->save_corpus_original_state_list_complete =
         original_save_state_corpus.original_candidate_list_complete;
     out_receipt->save_corpus_original_state_candidate_count =
