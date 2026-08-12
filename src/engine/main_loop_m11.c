@@ -4342,6 +4342,16 @@ static int m11_dm2_mac_sdl_key_to_menu_input(
             DM2_PLATFORM_MAC_EN) {
         return 0;
     }
+    /* The Macintosh table has separate entrance and credits owners.  The
+     * old host adapter always asked for GAMEPLAY, which happened to turn
+     * Return into the same host Accept token but lost the source action
+     * identity and could admit gameplay keys while the modal movie/event
+     * loop still owned the screen. */
+    if (gameView->dm2State.startup_credits_active) {
+        phase = DM2_V1_MAC_INPUT_CREDITS;
+    } else if (gameView->dm2State.startup_menu_active) {
+        phase = DM2_V1_MAC_INPUT_ENTRANCE;
+    }
     key = (uint32_t)keyEvent->key;
     if (keyEvent->mod & SDL_KMOD_GUI) modifiers |= DM2_V1_MAC_MOD_COMMAND;
 
