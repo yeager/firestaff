@@ -42,6 +42,11 @@
 
 ### Changed
 
+- `DM2 Macintosh pointer-owner source lock`: Add a real-media gate for the
+  retail `CODE(3)` and `CODE(11)` resources and their disassembly entry
+  anchors. The gate protects the dynamic-control boundary without converting
+  runtime-created Mac records into guessed static rectangles.
+
 - `DM2 Macintosh creature animation admission`: Remove an incorrect blanket
   big-endian disable that prevented authentic Mac `Graphics.dat` FB/FC/FD
   creature animation rows from reaching the source GAF lookup. The large
