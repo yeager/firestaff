@@ -1541,6 +1541,27 @@ static int dm2_v1_sound_find_entry_by_raw_index(uint16_t raw_index,
     return 0;
 }
 
+int dm2_v1_sound_play_raw_positional(
+    uint16_t raw_index, int volume, int16_t dx, int16_t dy,
+    DM2_V1_SoundPlaybackReceipt *out_receipt)
+{
+    uint8_t cls1;
+    uint8_t cls2;
+    uint8_t cls3;
+    if (!dm2_v1_sound_find_entry_by_raw_index(raw_index, &cls1, &cls2,
+                                              &cls3)) {
+        dm2_v1_sound_playback_clear_receipt(out_receipt);
+        if (out_receipt) {
+            out_receipt->valid = 1u;
+            out_receipt->rejected_decode_failed = 1u;
+            out_receipt->raw_index = raw_index;
+        }
+        return 0;
+    }
+    return dm2_v1_sound_play_gdat_entry_positional(
+        cls1, cls2, cls3, volume, dx, dy, out_receipt);
+}
+
 /* dm2_v1_sound_play — DM2_PLAY_SOUND()
  * Source: SKULLWIN/c_sound.cpp:342-434
  * sound_id is the GDAT raw sample binding owned by the source queue entry

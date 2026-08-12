@@ -72,6 +72,12 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   keyboard/gamepad movement uses the same source boundary, with Mac-specific
   A/D/W/S/X/Z/C and keypad meanings; host autorepeat is not used as the game
   clock.
+- The authenticated GAME_LOAD sound owner is wired for both English
+  editions. Immediate gameplay SFX resolve the source `xsndptr2` binding
+  (`w_00`) to its real GDAT raw sample (`w_05`), decode the original Mac
+  `Graphics.dat` payload in memory and hand it to the verified playback
+  backend. Missing source rows or an unavailable backend stay fail-closed;
+  no DOS sample, `snd ` MIDI instrument resource or synthetic PCM is used.
 - In the M11/SDL route, an admitted `DM2_PLATFORM_MAC_EN` profile takes
   precedence over generic PC key aliases. Movement, champion/leader inventory,
   freeze, wake, save and quit are dispatched through the existing runtime

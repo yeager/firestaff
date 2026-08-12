@@ -11563,6 +11563,20 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_sound_audio_real.c"
         COMMAND test_dm2_v1_mac_sound_audio_real)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_sfx_queue_real.c")
+    add_executable(test_dm2_v1_mac_sfx_queue_real
+        tests/test_dm2_v1_mac_sfx_queue_real.c)
+    target_include_directories(test_dm2_v1_mac_sfx_queue_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_mac_sfx_queue_real PRIVATE
+        firestaff_m12 firestaff_m11 firestaff_v2 firestaff_dm2 firestaff_m10 SDL3::SDL3 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_mac_sfx_queue_real PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME dm2_v1_mac_sfx_queue_real
+        COMMAND test_dm2_v1_mac_sfx_queue_real)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_input.c")
     add_executable(test_dm2_v1_mac_input
         tests/test_dm2_v1_mac_input.c
@@ -20515,6 +20529,8 @@ endif()
     add_executable(test_dm2_v1_sound_queue_pc34_compat
         tests/test_dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_sound_queue_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_sound_queue_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -20522,6 +20538,7 @@ endif()
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_sound_queue_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
+    target_link_libraries(test_dm2_v1_sound_queue_pc34_compat PRIVATE firestaff_m10 m)
     add_test(
         NAME dm2_v1_sound_queue_pc34_compat
         COMMAND test_dm2_v1_sound_queue_pc34_compat

@@ -19,6 +19,7 @@
  */
 
 #include "dm2_v1_sound_queue_pc34_compat.h"
+#include "dm2_v1_sound.h"
 
 #include <string.h>
 
@@ -50,6 +51,23 @@ static uint16_t dm2_v1_sound_queue_entry_capacity(
     if (!state) return 0u;
     return state->ssound_entries ? state->ssound_entries_capacity :
         DM2_V1_SOUND_SSOUND_QUEUE_CAP;
+}
+
+static int dm2_v1_sound_queue_binding_raw_index(
+    const DM2_V1_SoundQueueState *state, int16_t binding,
+    uint16_t *out_raw_index)
+{
+    const DM2_V1_SoundSsoundEntry *entries =
+        dm2_v1_sound_queue_entries_const(state);
+    uint16_t count = state ? state->ssound_count : 0u;
+    if (!entries || !out_raw_index || binding < 0) return 0;
+    for (uint16_t i = 0; i < count; ++i) {
+        if (entries[i].w_00 == binding && entries[i].w_05 >= 0) {
+            *out_raw_index = (uint16_t)entries[i].w_05;
+            return 1;
+        }
+    }
+    return 0;
 }
 
 static void dm2_v1_sound_queue_clear_receipt(DM2_V1_SoundQueueReceipt *r)
@@ -284,9 +302,23 @@ int dm2_v1_sound_queue_play_sound(DM2_V1_SoundQueueState *state,
             if (out_receipt) *out_receipt = receipt;
             return 0;
         }
-        /* do_sound (c_sfx.cpp:47-77) needs the resolved sample payload and a
-         * verified backend; neither is proven, so the slot table is left
-         * untouched and playback is receipted unavailable (fail-closed). */
+        /* c_sfx.cpp:47-77: resolve the source queue binding to its GDAT raw
+         * sample and hand the verified bytes to the bound playback backend.
+         * A missing binding or backend is not replaced with synthetic audio. */
+        {
+            uint16_t raw_index;
+            DM2_V1_SoundPlaybackReceipt playback;
+            if (dm2_v1_sound_queue_binding_raw_index(state, e->sample_id,
+                                                     &raw_index) &&
+                dm2_v1_sound_play_raw_positional(
+                    raw_index, e->ub_05, e->ub_06, e->ub_07, &playback)) {
+                state->sample_slots[free_slot] = (int32_t)raw_index;
+                receipt.played_count++;
+                receipt.playback_unavailable = 0;
+            } else {
+                receipt.rejected_sample_unresolved++;
+            }
+        }
         receipt.permutation[i] = entries[i].ub_0b;
         receipt.attenuation[i] = e->metric_attenuation;
         receipt.bearing[i] = e->metric_bearing;

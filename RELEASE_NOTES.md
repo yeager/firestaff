@@ -126,6 +126,13 @@
 
 ### Fixed
 
+- `DM2 Macintosh gameplay SFX`: Complete the authenticated `GAME_LOAD` sound
+  handoff for both English Mac editions. The source `xsndptr2` binding slot is
+  now resolved through its real `w_05` GDAT raw sample and decoded by the
+  existing playback backend; the real retail and First Chapter ZIP gates
+  each prove a captured PCM voice. Missing bindings, samples or backends
+  remain fail-closed, with no synthetic audio or unpacked game data.
+
 - `DM2 Macintosh movie verification`: Advance the real-media M11 movie gate
   with a controlled source-clock in CI. The retail QuickTime title now reaches
   its authenticated menu before the Credits.MooV pointer and Return/Enter

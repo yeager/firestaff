@@ -359,6 +359,13 @@ int dm2_v1_sound_play_gdat_entry_positional(
     uint8_t cls1, uint8_t cls2, uint8_t cls3, int volume,
     int16_t dx, int16_t dy, DM2_V1_SoundPlaybackReceipt *out_receipt);
 
+/* Play the source queue's w_05 GDAT raw binding.  The runtime queue stores
+ * w_00 as the sndptr4 binding slot and w_05 as the actual GDAT raw index;
+ * this entry point keeps that distinction explicit. */
+int dm2_v1_sound_play_raw_positional(
+    uint16_t raw_index, int volume, int16_t dx, int16_t dy,
+    DM2_V1_SoundPlaybackReceipt *out_receipt);
+
 void dm2_v1_sound_stop_all_voices(void);
 int dm2_v1_sound_voice_active(unsigned voice_slot);
 

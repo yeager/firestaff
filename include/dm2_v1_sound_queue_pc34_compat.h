@@ -164,7 +164,9 @@ typedef struct {
     int valid;
     int gate_rejected;
     int no_free_sample_slot;
-    int playback_unavailable;  /* always 1: no verified sample backend */
+    int playback_unavailable;  /* 1 only when every eligible entry failed */
+    int rejected_sample_unresolved;
+    uint16_t played_count;
     uint16_t entries_processed;
     uint8_t permutation[DM2_V1_SOUND_PLAY_MAX];
     uint8_t attenuation[DM2_V1_SOUND_PLAY_MAX];
@@ -221,8 +223,9 @@ int dm2_v1_sound_queue_r8fe_precedes(const DM2_V1_SoundSfx *lhs,
 int dm2_v1_sound_queue_sample_state(int32_t sample_index);
 
 /* DM2_PLAY_SOUND, c_sound.cpp:342-434: gate, per-entry R_928, permutation
- * bubble sort, 64-slot free-sample scan with early return.  Playback is
- * reported unavailable; the slot table is never mutated (fail-closed). */
+ * bubble sort, 64-slot free-sample scan with early return.  When a verified
+ * GDAT loader and playback backend are bound, each source w_05 raw sample is
+ * handed to that backend; unresolved source rows remain fail-closed. */
 int dm2_v1_sound_queue_play_sound(DM2_V1_SoundQueueState *state,
                                   DM2_V1_SoundSfx *entries,
                                   uint16_t count,
