@@ -6192,11 +6192,17 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
         memcpy(container, virtualPath, containerLength);
         container[containerLength] = '\0';
         if (asset_container_kind_for_path(container) == ASSET_CONTAINER_EXTERNAL) {
+#ifdef _WIN32
+            /* External archives use the host extractor, which is deliberately
+             * unavailable on Windows.  Keep this virtual path closed there. */
+            return 0;
+#else
             uint8_t *member = external_read_entry_bytes(
                 container, first + 2, outSize);
             if (!member) return 0;
             *outBytes = member;
             return 1;
+#endif
         }
         return 0;
     }
@@ -6214,7 +6220,9 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
     if (asset_container_kind_for_path(container) == ASSET_CONTAINER_ZIP) {
         image = zip_load_entry_bytes(container, disk, &imageSize);
     } else if (asset_container_kind_for_path(container) == ASSET_CONTAINER_EXTERNAL) {
+#ifndef _WIN32
         image = external_read_entry_bytes(container, disk, &imageSize);
+#endif
     }
     if (!image) return 0;
     memset(&match, 0, sizeof(match));
