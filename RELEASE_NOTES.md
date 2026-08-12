@@ -42,6 +42,14 @@
 
 ### Changed
 
+- `DM2 Macintosh creature animation admission`: Remove an incorrect blanket
+  big-endian disable that prevented authentic Mac `Graphics.dat` FB/FC/FD
+  creature animation rows from reaching the source GAF lookup. The large
+  retail edition now uses its authenticated rows, while a missing row in the
+  smaller First Chapter corpus remains a source-owned no-animation result;
+  no retail data or synthetic frame is substituted. The real-media census
+  covers both English Mac editions.
+
 - `DM2 Macintosh save provenance`: Add an explicit big-endian receipt path
   for the authentic Mac retail save body, dungeon prefix, column/ground links
   and initial save-state scalars. This is not a playable Resume claim:

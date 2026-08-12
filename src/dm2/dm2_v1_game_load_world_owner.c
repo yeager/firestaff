@@ -853,14 +853,13 @@ int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
         adj[0] = (int16_t)dm2_v1_game_load_owner_read_u16le(slot + 8u);
         adj[1] = (int16_t)dm2_v1_game_load_owner_read_u16le(slot + 10u);
         memset(&something, 0, sizeof(something));
-        if (owner->dungeon.words_big_endian) {
-            /* The retained Macintosh Graphics.dat has no authenticated GAF
-             * row for this dynamic creature path.  Keep the source slot and
-             * timer state, but preserve the original zero-delta/no-sound
-             * result instead of fabricating animation or audio data. */
-            something.valid = 1;
-            something.delta = 0;
-        } else if (dm2_v1_creature_something_1c9a_0a48_with_ai_spec(
+        /* The authenticated Macintosh Graphics.dat carries the same
+         * source-owned FB/FC/FD creature animation tables as the other
+         * admitted DM2 editions.  Endianness belongs to the dungeon/record
+         * owner, not to the GAF table lookup; do not turn a valid Mac GAF row
+         * into a synthetic zero-delta creature merely because its records
+         * are big-endian. */
+        if (dm2_v1_creature_something_1c9a_0a48_with_ai_spec(
                        &owner->record_pools, &owner->caii_slots,
                        owner->asset_loader, ai, &owner->caii_rng,
                        candidate->record_handle, adj, &animation,
@@ -868,7 +867,15 @@ int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
                        0, 0, 0, candidate->x, candidate->y,
                        (unsigned long)owner->timer_queue.gametick,
                        &something) < 0 || !something.valid) {
-            goto rollback;
+            /* The small First Chapter image has a smaller authenticated
+             * creature/animation corpus.  Preserve its source creature and
+             * timer owner, but keep the original fail-closed no-animation
+             * result for a missing source row; never borrow the retail table
+             * or create a replacement frame. */
+            if (!owner->dungeon.words_big_endian) goto rollback;
+            memset(&something, 0, sizeof(something));
+            something.valid = 1;
+            something.delta = 0;
         }
         dm2_v1_game_load_owner_write_u16le(slot + 8u, (uint16_t)adj[0]);
         dm2_v1_game_load_owner_write_u16le(slot + 10u, (uint16_t)adj[1]);
