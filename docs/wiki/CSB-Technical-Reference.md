@@ -29,7 +29,7 @@ checks. They are not a claim of end-to-end real-data playability:
 | Q-CSB-06 | Dungeon viewport geometry | 47 viewport tests: walls D0-D3 all sides, doors, partly-open doors, ornaments, floor/ceiling, backgrounds, center fields, footprints, projectile routing, item explosions |
 | Q-CSB-07 | Thing/sensor runtime | 38 sensor/teleporter tests (37 pass, 1 game-data-dependent): F0267-F0276 sensor families, F0247 teleporter/projectile impact, Lord Chaos teleport direction, teleporter rotation |
 | Q-CSB-08 | Combat and movement runtime | Grey Lord combat, projectile speed, F0247 teleporter impact/retention, F0266 group move projectile receipt, F0115 projectile viewport rendering |
-| Q-CSB-09 | Original saves and Utility Disk | 32 save/utility test files (15 tests pass): save header build/read, native F0435 provenance, export/import, CSBWin save loader boundary, utility save transaction |
+| Q-CSB-09 | Original saves and Utility Disk | 32 save/utility test files (15 tests pass): save header build/read, native F0435 provenance, export/import, CSBWin save loader boundary, Utility Disk transaction, stock CSBWin menu/CLI resume |
 | Q-CSB-10 | Media, input and expansion packages | 17 test files, all passing: package identity, sound filter, expansion save identity; keyboard commands test exists (3 game-data-dependent failures) |
 
 ## Startup and Dungeon
@@ -169,10 +169,15 @@ source-owned C14/C49 entries rather than degrading to invented melee.
 ## Save Ownership
 
 Save interop is anchored on F0435 native provenance, export/import round
-trips, the CSBWin save loader boundary, and the utility save transaction path
-(32 save/utility test files). CSBWin GAMEBLOCK1/body import rejects malformed
-non-empty DB11/EXPOOL tails before atomic runtime staging and records
-source-file provenance only after commit.
+trips, the CSBWin save loader boundary, and the Utility Disk transaction path
+(32 save/utility test files). A stock, mixed-case CSBWin `Game/CSB` directory
+is tested end-to-end through both the start menu and direct `--game csb --save`
+launch: matching Atari ST media remains the selected runtime owner, while the
+complete legacy save body supplies the resume state. CSBWin GAMEBLOCK1/body
+import rejects malformed non-empty DB11/EXPOOL tails before atomic runtime
+staging and records source-file provenance only after commit. This evidence is
+limited to the legacy non-extended save; Extended Features/DSA handoff and
+effects remain separately authenticated and fail closed without their corpus.
 
 ## Reference Limits
 

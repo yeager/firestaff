@@ -35,7 +35,7 @@ separates source/disassembly evidence, real-media receipts and open routes.
 | Game | Current scope |
 |---|---|
 | Dungeon Master | Playable PC DOS 3.4 route. Atari ST media has its own native graphics decoder and launch path; further parity work continues. |
-| Chaos Strikes Back | Native Amiga is the default route when verified media is available. Atari ST and FM Towns have their own native data and startup paths. Campaign parity is still being completed. |
+| Chaos Strikes Back | Native Amiga is the default route when verified media is available. Atari ST and FM Towns have their own native data and startup paths; a stock legacy CSBWin save is verified through both menu and CLI when paired with matching Atari ST data. Campaign parity is still being completed. |
 | Dungeon Master II: Skullkeep | Engine and data work in progress. |
 | DM Nexus | Saturn real-data bring-up in progress. |
 | Theron's Quest | PC Engine real-media bring-up in progress. |
@@ -79,6 +79,21 @@ edition has passed the data gate; it does not imply that every screen, save
 format or gameplay path has reached parity. Firestaff keeps each edition on
 its own data path and never borrows files from another release to make a route
 appear to work.
+
+### CSBWin legacy saves
+
+A complete original-named legacy CSBWin slot can resume with matching Atari
+ST 2.0/2.1 `GRAPHICS.DAT` and `DUNGEON.DAT`, from both the launcher and CLI:
+
+```bash
+firestaff --game csb --data-dir /path/to/CSB --save /path/to/CSBGAME2.DAT
+```
+
+The loader validates the full save body and source provenance before starting.
+It does not treat an arbitrary 512-byte header, renamed copy, compact roster,
+or `DMSAVE.*` file as a CSB resume. Extended Features/DSA saves remain
+fail-closed pending authenticated real-save coverage; the legacy path must not
+be read as a claim of complete CSBWin compatibility.
 
 ## Your game data
 

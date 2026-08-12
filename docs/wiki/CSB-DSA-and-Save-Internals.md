@@ -160,6 +160,16 @@ before live ticks and F9 reloads. `DMSAVE.DAT`/`.BAK`, unnamed copies,
 compact rosters and incomplete bodies therefore cannot become a CSB Resume
 candidate, even if they resemble a 512-byte CSBWin header.
 
+The stock CSBWin `Game/CSB` corpus is also an end-to-end regression: its
+mixed-case `graphics.dat`, `Dungeon.dat`, and `csbgame2.dat` complete the
+F0435 resume route through both `--game csb --save` and the ordinary start
+menu. The menu hands the hash-selected Atari ST edition forward to runtime
+preparation; a stale persisted menu selection cannot redirect that resume to
+the PC 3.4 profile. The receipt reaches the saved map and party pose before
+any live runtime tick. This proves one legacy, non-extended CSBWin body only;
+it supplies no Extended Features/DSA action, spell-filter, or world-effect
+evidence.
+
 ## Viewport Test Coverage (47 files)
 
 Q-CSB-06 dungeon viewport geometry is covered by 47 viewport tests:

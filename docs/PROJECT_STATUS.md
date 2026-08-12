@@ -1,6 +1,6 @@
 # Firestaff project status
 
-**Last reviewed: 2026-08-11.** This page is the concise status source for the
+**Last reviewed: 2026-08-12.** This page is the concise status source for the
 README and wiki. The full documentation map is in
 [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md).
 
@@ -10,13 +10,25 @@ source audits and capture receipts remain in the linked game documentation.
 | Game | Current status | What is verified | Main open boundary |
 |---|---|---|---|
 | Dungeon Master 1 | Playable/source-locked V1; native macOS host smoke verified | PC 3.4 runtime, viewport, HUD, input, combat, saves, Apple Silicon macOS boot and original-data gates | C13 save corpus, broader original-vs-Firestaff capture and V2 material; the unreleased historical Macintosh prototype has no local authenticated data |
-| Chaos Strikes Back | Active hardening | Source-locked engine slices, dungeon model, mechanics, startup and utility/import paths | DSA/save corpus, wider real-data runtime, HUD/viewport and pixel evidence |
+| Chaos Strikes Back | Active hardening | Source-locked engine slices, dungeon model, mechanics, startup and Utility Disk paths; Atari ST/Amiga resume and a stock CSBWin legacy-save resume through both menu and CLI | Extended Features/DSA corpus, wider real-data runtime, HUD/viewport and pixel evidence |
 | Dungeon Master II: Skullkeep | Active hardening | Boot/profile, GDAT utilities, V2 presentation, lighting, HUD, movement and controller slices | SKSAVE ownership, V1 dungeon/render/mechanics parity and live material/audio routes |
 | DM Nexus | Active real-data bring-up | Saturn DMDF/DGN data, world/render/save/mechanics slices and V2 presentation | Saturn runtime/frame capture, material semantics, event/audio playback and full playability |
 | Theron's Quest | Active real-media bring-up | JP/US Track 02 identity, parser, level framing, mechanics, progression and capture instrumentation | Full Track 02 handoff, save body semantics, bitmap/palette binding and JP capture |
 
 The dated [preservation status](PRESERVATION_STATUS_2026-08-11.md) records
 the current source, format and real-media boundary for every game.
+
+## CSB boundary in brief
+
+The verified stock CSBWin path is deliberately narrow: a matching Atari ST
+2.0/2.1 `GRAPHICS.DAT`/`DUNGEON.DAT` pair plus an original-named, complete
+legacy CSBWin save can resume through either the start menu or
+`--game csb --save`.  The tested source save has two champions and the legacy
+10-byte timer representation.  That is a real-data resume receipt, not a
+claim of complete CSBWin compatibility: Extended Features, DSA world effects,
+and unsupported save shapes remain fail-closed until an authenticated corpus
+and source-bound runtime evidence are available.  PC-9801 and X68000 are not
+supported CSB platforms.
 
 ## Shared presentation priority
 
