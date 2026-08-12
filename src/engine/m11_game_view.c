@@ -24930,8 +24930,31 @@ int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir) {
         nexus_v1_launcher_shutdown();
         return 0;
     }
-    fprintf(stderr, "NEXUS STARTUP RECEIPT READY: gameId=nexus dataDir=%s\n",
-            dataDir);
+    /* A title/assets boot is not the same thing as a playable Nexus start.
+     * In particular, the real Saturn start pose and menu surface may still
+     * be capture-gated while the title route is usable.  Do not report a
+     * green startup receipt when the engine has no loaded level. */
+    {
+        const Nexus_V1_LauncherStartupAssetsReceipt *assets =
+            &runtime_receipt.startup_assets;
+        const char *status = assets->real_menu_surface_route_ready
+            ? "ready"
+            : "blocked";
+        const char *blocker = assets->real_menu_surface_blocker
+            ? assets->real_menu_surface_blocker
+            : (assets->real_menu_surface_route_blocked
+                   ? "menu-surface"
+                   : "none");
+        fprintf(stderr,
+                "NEXUS STARTUP RECEIPT: status=%s gameId=nexus dataDir=%s "
+                "title=%d levelLoaded=%d menu=%d blocker=%s\n",
+                status,
+                dataDir,
+                runtime_receipt.title_loaded,
+                runtime_receipt.level_loaded,
+                assets->real_menu_surface_route_ready,
+                blocker);
+    }
     return 1;
 }
 

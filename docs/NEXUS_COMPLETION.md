@@ -7,6 +7,13 @@ Implementeringstäckning mäter byggt format-, analys- och capture-stöd.
 Produktionsgrad mäter vad som faktiskt får användas i en spelbar,
 regionmatchad Saturn-kedja.
 
+Den verifierade Nexus-starten skiljer nu uttryckligen mellan titel-/assetboot
+och spelbar start. Firestaff skriver inte längre `NEXUS STARTUP RECEIPT READY`
+när `levelLoaded=0`; den rapporterar i stället `status=blocked` med aktuell
+källägd spärr. Det ändrar inte produktionsgraden: den autentiska
+startup→meny→LEV00-kedjan saknar fortfarande en verifierad startpositions- och
+konsument-witness.
+
 | Område | Verifierade grindar | Implementeringstäckning | Produktionsgrad | Huvudspärr |
 |---|---:|---:|---:|---|
 | Uppstart | 3/6 | 50,0 % | 0 % | J-BIOS/media-paret är nu tillgängligt och en reset-frame är validerad, men ingen giltig startup→meny-witness |

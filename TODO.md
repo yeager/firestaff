@@ -1,5 +1,16 @@
 # Firestaff TODO - Open Work
 
+# Nexus: startup status no longer reports a false green state (2026-08-12)
+
+- ✅ `M11_GameView_StartNexus` now distinguishes a title/assets boot from a
+  playable start. It reports `status=blocked`, `levelLoaded=0` and the
+  source-owned blocker when the Saturn start pose or menu consumer is still
+  capture-gated. The old unconditional `NEXUS STARTUP RECEIPT READY` message
+  was misleading and has been removed.
+- 🔒 This is a reporting correction, not a start-pose implementation. The
+  real Nexus corpus still lacks an authenticated startup→menu→LEV00 handoff;
+  no coordinate, pixels or menu text were invented.
+
 # CSB PC/DOS request is a closed platform boundary (2026-08-12)
 
 - ✅ CSB has no original DOS release. `--game csb --platform pc` now fails
