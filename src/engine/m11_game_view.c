@@ -33263,6 +33263,19 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         return M11_GAME_INPUT_IGNORED;
     }
 
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+        state->inventoryPanelActive &&
+        m11_dm2_is_mac_profile(
+            (const DM2_V1_BootProfile *)state->dm2BootProfile)) {
+        /* The English Macintosh CHARSHEET owns pointer dispatch through
+         * dynamically published Control/Event records in CODE(3)/CODE(11).
+         * Until those records are materialized from the retained application
+         * source, consume the modal pointer event here.  Falling through to
+         * the viewport or a PC/FMTowns inventory rectangle would turn an
+         * unauthenticated click into movement or an item transaction. */
+        return M11_GAME_INPUT_IGNORED;
+    }
+
     /* Endgame restart/quit controls.  ReDMCSB ENDGAME.C F0444 lines
      * 485-559 installs G0446_as_Graphic561_PrimaryMouseInput_RestartGame
      * only after the final screen is drawn and only when

@@ -119,6 +119,15 @@ static int run_one(const char *zip, const char *source_id)
             M11_GameView_Shutdown(&state);
             return 1;
         }
+        if (M11_GameView_HandlePointerButton(
+                &state, 0, 0, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+                M11_GAME_INPUT_IGNORED || !state.inventoryPanelActive) {
+            fprintf(stderr,
+                    "Mac CHARSHEET pointer leaked into gameplay route: %s\n",
+                    source_id);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
         memset(inventory_frame, 0, sizeof(inventory_frame));
         M11_GameView_Draw(&state, inventory_frame, 320, 200);
         if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK) !=
