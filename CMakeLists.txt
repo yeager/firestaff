@@ -52408,6 +52408,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_hmp_music_parser.c"
     add_executable(test_dm2_v1_hmp_music_parser
         tests/test_dm2_v1_hmp_music_parser.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_mac_media.c
+        src/shared/firestaff_zip_extract.c
         src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
         src/dm2/dm2_v1_asset_loader.c
