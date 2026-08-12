@@ -106,7 +106,7 @@
       "id": "firestaff_m11_csb_handoff_bypasses_dm1_loader",
       "role": "firestaff_positive",
       "path": "/Volumes/Extern-disk/firestaff-dm1-agent-audit-20260806202550/src/engine/m11_game_view.c",
-      "lines": "22165-22240",
+      "lines": "22441-22502",
       "needles": [
         "CSB V1: bypass DM1 dungeon loader",
         "m11_csb_apply_boot_runtime_receipt",
