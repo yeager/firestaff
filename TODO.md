@@ -1,6 +1,6 @@
 # Firestaff TODO - Open Work
 
-# CSB Hint Oracle: HCSB.DAT graphics are decoded; UI parity remains open (2026-08-12)
+# CSB Hint Oracle: source selection state is recovered; product routing remains open (2026-08-12)
 
 - ✅ The real Utility Disk `HCSB.DAT` container now has a strict source-cited
   index: its duplicate big-endian size tables must agree and its segments must
@@ -26,9 +26,15 @@
   `HINTTEXT.C`'s initial `C26_SET_FONT_COLOR` call; `F0129` resolves the
   source's `9 → 1` font-index substitution. The original-data regression
   also verifies that transparent index 12 remains unchanged.
-- 🔒 Graphical Hint Oracle/M11/M12 routing, segment 0's integer consumer,
-  original text/page layout and original-frame pixel parity remain open. Do
-  not treat the decoded resource surfaces as a rendered Utility Disk screen.
+- ✅ `CSB_HintOracleSession` now implements `HINTHINT.C`'s C09/F1940 state
+  contract: location records are consumed in authored order, exact and
+  `(255,255)` entries are accepted, the list ends after seven rows, the first
+  page is one-based, and LAST/NEXT do not wrap. It takes coordinates only from
+  its caller; it does not invent or parse a save format.
+- 🔒 Graphical Hint Oracle/M11/M12 routing, the authenticated save/runtime
+  coordinate handoff, original text/page layout and original-frame pixel
+  parity remain open. Do not treat the state module or decoded resources as a
+  rendered Utility Disk screen.
 
 # Nexus: bind verified SH-2 transform to an authenticated Saturn consumer (2026-08-11)
 

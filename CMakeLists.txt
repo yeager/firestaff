@@ -39189,6 +39189,21 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_csb_hint_oracle_htc
     )
 
+    # ReDMCSB HINTHINT.C source-state: C09's source-order seven-row cap and
+    # F1940's non-wrapping one-based LAST/NEXT page state.
+    add_executable(test_csb_hint_oracle_session
+        tests/test_csb_hint_oracle_session.c
+        src/csb/csb_hint_oracle_htc.c
+        src/csb/csb_hint_oracle_session.c
+    )
+    target_include_directories(test_csb_hint_oracle_session PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_hint_oracle_session PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(NAME csb_hint_oracle_session_unit COMMAND test_csb_hint_oracle_session)
+
     add_executable(test_csb_hint_oracle_text_render
         tests/test_csb_hint_oracle_text_render.c
         src/csb/csb_hint_oracle_graphics_surface.c

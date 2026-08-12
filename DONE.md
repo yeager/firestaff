@@ -1,3 +1,16 @@
+# CSB Hint Oracle: HINTHINT.C selection and page session (2026-08-12)
+
+- ✅ Added `CSB_HintOracleSession`, a deliberately I/O-free recovery of the
+  original Utility Disk's selection state. It preserves `C09_SELECT_HINTS`'
+  authored location-record order, exact-or-wildcard matching and the hard
+  seven-row limit; it also preserves `F1940_CPSX`'s one-based first page and
+  non-wrapping LAST/NEXT boundaries.
+- ✅ The regression builds an HTC fixture with eight eligible locations and
+  proves that only the first seven source-order hints can appear, then covers
+  page boundaries, DONE transitions, no-clue and close. The caller remains
+  responsible for passing coordinates from an authenticated CSB Atari
+  save/runtime handoff.
+
 # CSB Hint Oracle: original C26 font-colour substitution (2026-08-12)
 
 - ✅ The HCSB renderer now consumes the actual segment-0 C26 control pair
