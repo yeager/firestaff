@@ -50,3 +50,9 @@ changes and complete screen composition remain separate evidence gates.
 width, `/` forces a line break, lines advance by 11 pixels and are centered.
 For a current Hint Oracle page use title box 10..309, 5..30 and content box
 34..285, 31..164 from `HINTHINT.C`.
+
+`csb_hint_oracle_graphics_surface_render_st_hint_page()` now composes those
+pieces: it begins with the authenticated 320×200 Oracle surface, selects the
+authenticated HTC title and one-based page, then draws them in the two source
+rectangles. A zero-length authored page remains a title-only frame. Palette
+transition parity is deliberately not claimed by this composition.

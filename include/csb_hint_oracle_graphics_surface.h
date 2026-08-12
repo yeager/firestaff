@@ -1,6 +1,7 @@
 #ifndef FIRESTAFF_CSB_HINT_ORACLE_GRAPHICS_SURFACE_H
 #define FIRESTAFF_CSB_HINT_ORACLE_GRAPHICS_SURFACE_H
 #include "csb_hint_oracle_dat_real_scan.h"
+#include "csb_hint_oracle_htc.h"
 #define CSB_HINT_ORACLE_GRAPHICS_SURFACE_WIDTH 320u
 #define CSB_HINT_ORACLE_GRAPHICS_SURFACE_HEIGHT 200u
 #define CSB_HINT_ORACLE_FONT_SURFACE_WIDTH 256u
@@ -28,4 +29,8 @@ int csb_hint_oracle_graphics_surface_blit_st_centered_box(
     const CSB_HintOracleGraphicsSurface *surface, uint8_t *frame,
     size_t frame_size, int left, int right, int top, int bottom,
     const char *text);
+int csb_hint_oracle_graphics_surface_render_st_hint_page(
+    const CSB_HintOracleGraphicsSurface *surface,
+    const CSB_HintOracleHTC *htc, size_t hint_index, size_t page_number,
+    uint8_t *frame, size_t frame_size);
 #endif
