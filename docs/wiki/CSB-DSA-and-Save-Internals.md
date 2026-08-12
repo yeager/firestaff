@@ -173,6 +173,13 @@ selected `graphics.dat`. This proves one legacy, non-extended CSBWin body
 only; it supplies no Extended Features/DSA action, spell-filter, or
 world-effect evidence.
 
+The same real-save regression also drives the restored two-champion GAMEBLOCK
+through F1 then F2 twice. It proves that the source panel ordinal survives a
+GAMEBLOCK mirror refresh: F1 opens champion one, F2 switches to champion two,
+and a second F2 closes that same panel. Champion presence and stats remain
+GAMEBLOCK-owned; the open-panel ordinal is PANEL.C state and must not be
+replaced by the party leader during that refresh.
+
 ## Viewport Test Coverage (47 files)
 
 Q-CSB-06 dungeon viewport geometry is covered by 47 viewport tests:

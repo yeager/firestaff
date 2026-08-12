@@ -329,6 +329,25 @@ int main(void)
                   profile->runtime.party_y == 18 &&
                   view.world.party.mapX == 22 && view.world.party.mapY == 18,
               "stock CSBWin resume preserves the source wall-blocked movement result");
+        /* The restored GAMEBLOCK has exactly two living champions.  F1/F2
+         * must select those source slots directly: opening the first panel,
+         * switching to the second, then pressing F2 again closes that same
+         * panel.  This prevents the resume route from falling back to the
+         * synthetic Atari-MINI champion fixture. */
+        CHECK(M11_GameView_HandleInput(
+                  &view, M12_MENU_INPUT_CHAMPION_1_INVENTORY) ==
+                  M11_GAME_INPUT_REDRAW && view.inventoryPanelActive &&
+                  view.world.party.activeChampionIndex == 0,
+              "stock CSBWin F1 opens the first restored champion inventory");
+        CHECK(M11_GameView_HandleInput(
+                  &view, M12_MENU_INPUT_CHAMPION_2_INVENTORY) ==
+                  M11_GAME_INPUT_REDRAW && view.inventoryPanelActive &&
+                  view.world.party.activeChampionIndex == 1,
+              "stock CSBWin F2 switches to the second restored champion inventory");
+        CHECK(M11_GameView_HandleInput(
+                  &view, M12_MENU_INPUT_CHAMPION_2_INVENTORY) ==
+                  M11_GAME_INPUT_REDRAW && !view.inventoryPanelActive,
+              "stock CSBWin F2 closes its restored champion inventory");
         M11_GameView_Shutdown(&view);
         if (failures) return 1;
         puts("PASS: stock CSBWin F0435 C0128/C232 runtime frame");

@@ -1393,7 +1393,11 @@
   50 Hz-VBL-överlämning, C232-HUD, 022e-viewport, originalpalett och
   GAMEBLOCK-inmatning används utan PC34-surface-ersättning. Kvar för
   Atari är bredare Utility-disk- och extern capture-paritet, inte grundläggande
-  start- eller runtimehandoff.
+  start- eller runtimehandoff. Den äkta legacy-CSBWin-saven täcker dessutom
+  F1/F2-panelordningen efter F0435: F1 öppnar första återställda championen,
+  F2 växlar till den andra och ett nytt F2 stänger samma panel. GAMEBLOCK-
+  spegeln får uppdatera roster/data men inte skriva över PANEL.C:s öppna
+  championordinal.
 
 - 🔧 PC34:s Utility-import kan nu i den opt-in-bundna realdatakedjan läsa en
   klassificerad original-`DMSAVE.DAT` tillsammans med den hashverifierade

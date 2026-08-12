@@ -4935,9 +4935,19 @@ static void m11_apply_csb_runtime_m11_mirror_receipt(
     M11_GameViewState *state,
     const CSB_V1_RuntimeM11MirrorReceipt_PC34 *receipt)
 {
+    int inventoryChampionIndex;
+
     if (!state || !receipt || !receipt->valid) {
         return;
     }
+    /* G0423 is PANEL.C state, not a GAMEBLOCK field.  A runtime mirror is
+     * authoritative for champion presence and stats, but must not replace
+     * the currently open inventory ordinal with the party leader.  In
+     * particular, COMMAND.C may refresh the GAMEBLOCK before handling a
+     * repeated F1--F4 key; losing G0423 here prevents the second key from
+     * closing its own panel. */
+    inventoryChampionIndex = state->inventoryPanelActive
+        ? state->world.party.activeChampionIndex : -1;
     state->csbState.level_loaded = receipt->view.level_loaded;
     state->csbState.current_level = receipt->view.current_level;
     state->csbState.current_map_difficulty =
@@ -4948,6 +4958,17 @@ static void m11_apply_csb_runtime_m11_mirror_receipt(
     state->csbState.tick_count = receipt->view.tick_count;
     if (receipt->party.valid) {
         state->world.party = receipt->party.party;
+        if (inventoryChampionIndex >= 0 &&
+            inventoryChampionIndex < state->world.party.championCount &&
+            inventoryChampionIndex < CHAMPION_MAX_PARTY &&
+            state->world.party.champions[inventoryChampionIndex].present) {
+            state->world.party.activeChampionIndex = inventoryChampionIndex;
+        } else if (state->inventoryPanelActive) {
+            /* PANEL.C refuses an invalid/dead M516 record.  Do the same
+             * when a live runtime update removed the open champion. */
+            state->inventoryPanelActive = 0;
+            state->inventorySelectedSlot = -1;
+        }
     }
     if (receipt->leader_hand_present) {
         state->leaderHandObjectPresent = 1;
