@@ -22,6 +22,16 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   Layouttestet låser de exakta 18×18-gränserna; den tillgängliga äkta sparfilen
   har inga upptagbara föremål och används därför endast för start- och
   bildruteverifiering, inte för en konstruerad pickup.
+- ✅ CSBWin C017:s HEALTH/STAMINA/MANA-rader använder nu den autentiska råa
+  M653-fonten från Atari ST `GRAPHICS.DAT` post `0x822d` (557). Detta följer
+  `CSBCode.cpp::TAG001c6e`, som laddar exakt 768 byte med `NOT_EXPANDED`, och
+  `Character.cpp::PrintLifeForces`/`PrintLifeForce`: engelska etiketter samt
+  HP, stamina/10 och mana vid källans `(5|55|73|79, 116|124|132)` med
+  `TextOut_OneLine`-ursprunget `y - 4`. Bindningen kräver en DMCSB1-tabell
+  med exakt 563 poster och en 768-bytes fontpost; saknad eller felaktig font lämnar endast
+  texten odragen och kan aldrig låna PC3.4- eller värdglyfer. Realdatatestet
+  återbygger samma C017-ytan, inklusive varje M653-glyf och det ursprungliga
+  treteckensformatet för aktuellt/maximalt värde, från `csbgame2.dat`.
 - 🔒 C035:s attackhand kräver ännu en källbunden
   `AttackingCharacterOrdinal`-receipt och är fortsatt spärrad.
 

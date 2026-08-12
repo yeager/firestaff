@@ -40,6 +40,7 @@
 #include "fmtowns_tbios_shim.h"
 #include "csb_v1_csbwin_layout_0232.h"
 #include "csb_v1_csbwin_planar_bitmap.h"
+#include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
 #include "csb_v1_atari_st_animation_assets.h"
 #include "csb_v1_amiga_graphics_dat.h"
@@ -3882,6 +3883,74 @@ static int m11_csb_compose_csbwin_inventory_icons(
     return 1;
 }
 
+/* Character.cpp::TAG014af6 keeps a fixed three-column field even when the
+ * input would have a fourth digit: it returns byte 1 of its four-byte scratch
+ * buffer. Keep the unusual source behavior rather than using host printf
+ * formatting, whose width is a minimum rather than this exact truncation. */
+static void m11_csbwin_format_life_force(unsigned int value, char out[4])
+{
+    char scratch[5] = { ' ', ' ', ' ', ' ', '\0' };
+    int cursor = 4;
+
+    if (value > 9999u) value = 9999u;
+    do {
+        scratch[--cursor] = (char)('0' + (value % 10u));
+        value /= 10u;
+    } while (value != 0u && cursor > 0);
+    memcpy(out, scratch + 1, 4u);
+}
+
+/* CSBWin CSBCode.cpp::ShowHideInventory writes the three English inventory
+ * labels through TextToViewport, then Character.cpp::PrintLifeForces writes
+ * the matching current/max values.  TextToViewport addresses its first row
+ * at y - 4, and M653 advances exactly eight pixels per glyph. */
+static int m11_csb_draw_csbwin_inventory_life_forces(
+    const M11_GameViewState *state, uint8_t *pixels)
+{
+    static const char *const labels[] = { "HEALTH", "STAMINA", "MANA" };
+    static const int lines[] = { 116, 124, 132 };
+    const struct ChampionState_Compat *champion;
+    unsigned int values[3];
+    unsigned int maximums[3];
+    int index;
+
+    if (!state || !pixels || !state->originalFontAvailable ||
+        !M11_Font_IsLoaded(&state->originalFont) ||
+        M11_Font_ResolvedGraphicIndex(&state->originalFont) !=
+            M11_FONT_GRAPHIC_INDEX_LEGACY ||
+        state->world.party.activeChampionIndex < 0 ||
+        state->world.party.activeChampionIndex >= state->world.party.championCount ||
+        state->world.party.activeChampionIndex >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+    champion = &state->world.party.champions[
+        state->world.party.activeChampionIndex];
+    if (!champion->present || champion->hp.current == 0u) return 0;
+    values[0] = champion->hp.current;
+    values[1] = champion->stamina.current / 10u;
+    values[2] = champion->mana.current;
+    maximums[0] = champion->hp.maximum;
+    maximums[1] = champion->stamina.maximum / 10u;
+    maximums[2] = champion->mana.maximum;
+    for (index = 0; index < 3; ++index) {
+        char value_text[4];
+        char maximum_text[4];
+        const int y = lines[index] - 4;
+
+        m11_csbwin_format_life_force(values[index], value_text);
+        m11_csbwin_format_life_force(maximums[index], maximum_text);
+        M11_Font_DrawString(&state->originalFont, pixels, 320, 200,
+                            48 + 5, 33 + y, labels[index], 13u, -1, 1);
+        M11_Font_DrawString(&state->originalFont, pixels, 320, 200,
+                            48 + 55, 33 + y, value_text, 13u, -1, 1);
+        M11_Font_DrawString(&state->originalFont, pixels, 320, 200,
+                            48 + 73, 33 + y, "/", 13u, -1, 1);
+        M11_Font_DrawString(&state->originalFont, pixels, 320, 200,
+                            48 + 79, 33 + y, maximum_text, 13u, -1, 1);
+    }
+    return 1;
+}
+
 /* The Atari/CSBWin startup route has no PC34 C017/C040 terminal page.  Its
  * real runtime HUD owner is instead the C232 coordinate record plus the
  * source graphics it references.  Present that complete, atomic layer after
@@ -3957,6 +4026,10 @@ static int m11_csb_present_atari_st_runtime_hud(
                                                      candidate)) {
             return 0;
         }
+        /* Text is a separately admitted raw M653 consumer.  A malformed
+         * font must not invent glyphs or suppress the already verified C017
+         * pixel layer; it leaves only this source text undrawn. */
+        (void)m11_csb_draw_csbwin_inventory_life_forces(state, candidate);
     }
     for (y = 0; y < 200; ++y) {
         memcpy(framebuffer + (size_t)y * (size_t)framebuffer_width,
@@ -8894,6 +8967,35 @@ done:
     return result;
 }
 
+/* CSBWin CSBCode.cpp::TAG001c6e expands the original Atari ST M653 payload
+ * from GRAPHICS.DAT item 0x822d (the NOT_EXPANDED bit plus item 0x22d).  It
+ * is a raw 1024x6 1bpp font, not an IMG1/IMG2 drawable record. */
+static int m11_csb_load_atari_st_m653_font(const char *graphics_path,
+                                           M11_FontState *font)
+{
+    enum { CSBWIN_M653_GRAPHIC = 0x22d, CSBWIN_GRAPHICS_ITEM_COUNT = 563 };
+    CSB_AtariStLoader loader;
+    uint8_t raw_font[M11_FONT_BITMAP_BYTES];
+    int result = 0;
+
+    if (!graphics_path || !graphics_path[0] || !font) return 0;
+    csb_atari_st_graphics_loader_init(&loader);
+    if (!csb_atari_st_graphics_loader_open(&loader, graphics_path) ||
+        loader.item_count != CSBWIN_GRAPHICS_ITEM_COUNT ||
+        loader.items[CSBWIN_M653_GRAPHIC].decompressed_size !=
+            M11_FONT_BITMAP_BYTES ||
+        csb_atari_st_graphics_loader_read_item(
+            &loader, CSBWIN_M653_GRAPHIC, raw_font, sizeof(raw_font)) !=
+            M11_FONT_BITMAP_BYTES) {
+        goto done;
+    }
+    result = M11_Font_LoadFromRawBitmap(font, M11_FONT_GRAPHIC_INDEX_LEGACY,
+                                        raw_font, sizeof(raw_font));
+done:
+    csb_atari_st_graphics_loader_close(&loader);
+    return result;
+}
+
 static void m11_csb_dispatch_fmtowns_cdda_track(M11_GameViewState *state,
                                                 uint16_t source_track)
 {
@@ -11821,6 +11923,22 @@ static int m11_csb_apply_boot_runtime_receipt(
                                         receipt->graphics_path)) {
         /* Atari ST GRAPHICS.DAT has a separate C232/022e consumer. */
         state->assetsAvailable = 1;
+        /* CSBWin's TAG001c6e always binds raw M653 item 0x822d before
+         * TextToViewport can draw the selected-inventory labels or values.
+         * A malformed/missing source payload leaves that text undrawn; do
+         * not inherit the PC3.4 font or use Firestaff's diagnostic glyphs. */
+        state->originalFontAvailable = m11_csb_load_atari_st_m653_font(
+            receipt->graphics_path, &state->originalFont);
+    }
+    /* Some ST package revisions happen to pass the shared table-envelope
+     * probe before their native decoder is selected.  M653 is nevertheless
+     * CSBWin's raw C822D record, so resolve it independently of that drawable
+     * loader choice and never retain a foreign PC font. */
+    if ((receipt->profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+         receipt->profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
+        !state->originalFontAvailable) {
+        state->originalFontAvailable = m11_csb_load_atari_st_m653_font(
+            receipt->graphics_path, &state->originalFont);
     }
     state->csbBootProfile = receipt->profile;
     state->csbStartupAssetGateReceipt = receipt->startup_asset_gate;

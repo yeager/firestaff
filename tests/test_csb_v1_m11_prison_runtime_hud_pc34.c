@@ -10,7 +10,9 @@
 #include "asset_loader_m11.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_csbwin_layout_0232.h"
+#include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
+#include "font_m11.h"
 #include "csb_v1_atari_save_runtime_handoff_pc34_compat.h"
 #include "csb_v1_f0070_champion_formation_pc34_compat.h"
 #include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
@@ -171,6 +173,77 @@ static int check_atari_st_c232_hud_frame(const char *graphics_path,
     return plan.valid && matched == CSB_V1_CSBWIN_LAYOUT_0232_HUD_MATERIAL_COUNT;
 }
 
+static void format_csbwin_life_force(unsigned int value, char out[4])
+{
+    char scratch[5] = { ' ', ' ', ' ', ' ', '\0' };
+    int cursor = 4;
+
+    if (value > 9999u) value = 9999u;
+    do {
+        scratch[--cursor] = (char)('0' + (value % 10u));
+        value /= 10u;
+    } while (value != 0u && cursor > 0);
+    memcpy(out, scratch + 1, 4u);
+}
+
+/* Reconstruct exactly the source TextToViewport calls from CSBCode.cpp
+ * ShowHideInventory and Character.cpp PrintLifeForces.  M653 is raw item
+ * 0x822d and TextOut_OneLine starts at its supplied y minus four rows. */
+static int draw_atari_st_csbwin_inventory_life_forces(
+    const char *graphics_path, const struct ChampionState_Compat *champion,
+    unsigned char *pixels)
+{
+    static const char *const labels[] = { "HEALTH", "STAMINA", "MANA" };
+    static const int lines[] = { 116, 124, 132 };
+    CSB_AtariStLoader loader;
+    M11_FontState font;
+    unsigned char raw_font[M11_FONT_BITMAP_BYTES];
+    unsigned int values[3];
+    unsigned int maximums[3];
+    int index;
+    int ok = 0;
+
+    if (!graphics_path || !champion || !pixels || !champion->present ||
+        champion->hp.current == 0u) return 0;
+    csb_atari_st_graphics_loader_init(&loader);
+    M11_Font_Init(&font);
+    if (!csb_atari_st_graphics_loader_open(&loader, graphics_path) ||
+        loader.item_count != 563u ||
+        loader.items[0x22du].decompressed_size != M11_FONT_BITMAP_BYTES ||
+        csb_atari_st_graphics_loader_read_item(
+            &loader, 0x22du, raw_font, sizeof(raw_font)) !=
+            M11_FONT_BITMAP_BYTES ||
+        !M11_Font_LoadFromRawBitmap(&font, M11_FONT_GRAPHIC_INDEX_LEGACY,
+                                    raw_font, sizeof(raw_font))) {
+        goto done;
+    }
+    values[0] = champion->hp.current;
+    values[1] = champion->stamina.current / 10u;
+    values[2] = champion->mana.current;
+    maximums[0] = champion->hp.maximum;
+    maximums[1] = champion->stamina.maximum / 10u;
+    maximums[2] = champion->mana.maximum;
+    for (index = 0; index < 3; ++index) {
+        char value_text[4];
+        char maximum_text[4];
+        const int y = lines[index] - 4;
+
+        format_csbwin_life_force(values[index], value_text);
+        format_csbwin_life_force(maximums[index], maximum_text);
+        M11_Font_DrawString(&font, pixels, 224, 136, 5, y, labels[index],
+                            13u, -1, 1);
+        M11_Font_DrawString(&font, pixels, 224, 136, 55, y, value_text,
+                            13u, -1, 1);
+        M11_Font_DrawString(&font, pixels, 224, 136, 73, y, "/", 13u, -1, 1);
+        M11_Font_DrawString(&font, pixels, 224, 136, 79, y, maximum_text,
+                            13u, -1, 1);
+    }
+    ok = 1;
+done:
+    csb_atari_st_graphics_loader_close(&loader);
+    return ok;
+}
+
 /* CSBWin CSBCode.cpp::ShowHideInventory begins by copying C017 to the
  * C0128 viewport. Character state and health/stamina/mana retain separate
  * owners, but backpack icons are DrawItem crops from C232's atlas geometry;
@@ -292,6 +365,11 @@ static int check_atari_st_c017_inventory_viewport(
                        (size_t)atlas_width + material.source_x, 16u);
         }
         free(atlas);
+    }
+    if (!draw_atari_st_csbwin_inventory_life_forces(
+            graphics_path, champion, expected)) {
+        free(expected);
+        return 0;
     }
     matches = 1;
     for (row = 0; row < height; ++row) {
@@ -423,6 +501,11 @@ int main(void)
                   !view.csbState.startup_title_active &&
                   view.csbAtariStRuntimeHandoffComplete,
               "stock CSBWin resume reaches its saved Atari ST runtime state");
+        CHECK(view.originalFontAvailable &&
+                  M11_Font_IsLoaded(&view.originalFont) &&
+                  M11_Font_ResolvedGraphicIndex(&view.originalFont) ==
+                      M11_FONT_GRAPHIC_INDEX_LEGACY,
+              "stock CSBWin binds raw C822D M653 without a PC or host fallback");
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, 320, 200);
         for (y = 33; y < 169; ++y) {

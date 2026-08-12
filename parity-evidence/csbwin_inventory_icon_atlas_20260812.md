@@ -24,6 +24,11 @@ animation, or general CSBWin save compatibility.
   becomes `Scroll` before the atlas crop is chosen.
 - The same `IconDisplay[n + 8]` location starts the source's inclusive 18×18
   inventory click rectangle.
+- `CSBCode.cpp::TAG001c6e` expands raw `GRAPHICS.DAT` item `0x822d` into the
+  768-byte M653 font before inventory text can render. `ShowHideInventory`
+  prints `HEALTH`, `STAMINA` and `MANA`; `Character.cpp::PrintLifeForces`
+  prints HP, stamina divided by ten and mana as current/max pairs. All calls
+  use `TextToViewport`, whose `TextOut_OneLine` destination begins at `y-4`.
 
 `CSBWin/Objects.h` fixes those object-name indices: `Chest=0x90`,
 `OpenChest=0x91`, `OpenScroll=0x1e`, `Scroll=0x1f`, `Special_f=0xcc`,
@@ -55,6 +60,15 @@ bottom-right inclusion plus its adjacent miss. The available legacy real save
 contains no occupied inventory slot, so it cannot independently prove a
 pickup mutation without fabricating a test item; it still exercises authentic
 startup, C017 composition and the real C232 decoder.
+
+The same real-data CTest now also reads raw item `0x22d` through the native
+DMCSB1 LZW envelope, requires its exact 768-byte size, and rebuilds all three
+life-force rows in the expected C017 aperture with the source M653 glyphs.
+It compares those glyphs and source's unusual fixed three-column numeric
+format directly with M11's final framebuffer. A missing, malformed or
+wrong-sized raw font cannot select a PC3.4 record or a host font; it simply
+leaves the source text absent while the independently verified C017 raster
+remains available.
 
 ## Still open
 
