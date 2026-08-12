@@ -60,6 +60,9 @@ jobs:
             build_parallel: '3'
 
     runs-on: ${{ matrix.os }}
+    # A platform build must fail visibly when the compiler or runner stalls;
+    # an indefinitely running build is not verification.
+    timeout-minutes: 30
     defaults:
       run:
         shell: ${{ matrix.shell }}
