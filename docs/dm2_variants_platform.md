@@ -52,8 +52,11 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   the large retail and small demo entries together.
 - The two versions have separate hash-paired boot receipts. Retail uses the
   39,411-byte big-endian dungeon; the demo uses its 6,535-byte truncated
-  big-endian File_header/map data. Japanese and French Mac containers remain
-  preservation inputs, not launchable variants.
+  big-endian File_header/map data. The Japanese Mac multi-track archive is now
+  readable through its authentic late Apple_HFS partition and
+  case-preserving catalogue as a media-only gate; it remains a preservation
+  input, not a launchable variant, until its Japanese graphics/dungeon pair
+  and runtime are source-locked. French Mac remains preservation-only.
 - The Mac dungeon reader keeps the ZIP/HFS source bytes intact and carries the
   68k word order through the authenticated column, ground-stack and record-link
   accessors. Both English ZIPs now pass the source record-graph and start-pose

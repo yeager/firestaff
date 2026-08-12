@@ -443,9 +443,10 @@ retail and demo use separate hash-paired big-endian dungeon receipts.
   independently once their container/resource-fork readers are verified.
 - [~] Add a source-owned Mac container/resource-fork reader for the verified
   CD/content archives, including StuffIt/HQX/resource-fork provenance. The
-  reader now reads classic HFS data and resource forks in RAM and preserves
-  their identity; Japanese/French StuffIt/HQX variants still fail closed until
-  independently verified.
+  reader now reads classic HFS data and resource forks in RAM, including the
+  late-partition, case-preserving Japanese CD data track, and preserves its
+  identity. Japanese boot admission and French StuffIt/HQX handling still fail
+  closed until their platform/runtime owners are independently verified.
 - [ ] Bind the Mac big-endian `DUNGEON.DAT` and `GRAPHICS.DAT` pair to one
   platform-specific boot receipt. Japanese 16-colour and US English
   256-colour graphics must remain separate layouts and hashes. The shared

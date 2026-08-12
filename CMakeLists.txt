@@ -11472,6 +11472,18 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_media_real.c")
     add_test(NAME dm2_v1_mac_media_real COMMAND test_dm2_v1_mac_media_real)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_japanese_media_real.c")
+    add_executable(test_dm2_v1_mac_japanese_media_real
+        tests/test_dm2_v1_mac_japanese_media_real.c
+        src/dm2/dm2_v1_mac_media.c)
+    target_include_directories(test_dm2_v1_mac_japanese_media_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_mac_japanese_media_real PRIVATE
+        firestaff_zip_extract firestaff_zlib)
+    add_test(NAME dm2_v1_mac_japanese_media_real
+        COMMAND test_dm2_v1_mac_japanese_media_real)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_midi_real.c")
     add_executable(test_dm2_v1_mac_midi_real
         tests/test_dm2_v1_mac_midi_real.c)

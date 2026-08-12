@@ -4,6 +4,16 @@
 
 - `--game CLI parsing`: Fix direct game selection by accepting the documented space-separated form, conventional `--game=<id>` form, and macOS rich-text pasted en/em dash forms before the verified direct-launch gate.
 
+## DM2
+
+### Changed
+
+- `Japanese Macintosh media`: Read the authentic multi-track CD's later
+  Apple_HFS partition and original case-preserving `Dungeon.DAT`/
+  `Graphics.DAT` members in RAM. A real-media gate records the 2,025,699-byte
+  graphics and 37,957-byte dungeon members; Japanese boot/runtime admission
+  remains closed pending its separate source lock.
+
 # Firestaff v3.0.310
 
 ## DM1

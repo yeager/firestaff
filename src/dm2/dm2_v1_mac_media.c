@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 /* Macintosh CDs in the verified DM2 set are raw MODE1/2352 images.  HFS is
  * addressed in 512-byte logical blocks inside the 2048-byte user area. */
@@ -13,6 +14,17 @@ static uint16_t be16(const uint8_t *p) { return (uint16_t)(((uint16_t)p[0] << 8)
 static uint32_t be32(const uint8_t *p) {
     return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
            ((uint32_t)p[2] << 8) | p[3];
+}
+
+static int mac_name_equal(const uint8_t *name, size_t name_len,
+                          const char *wanted) {
+    size_t i, wanted_len = strlen(wanted);
+    if (name_len != wanted_len) return 0;
+    for (i = 0u; i < name_len; ++i) {
+        if (tolower((unsigned char)name[i]) !=
+            tolower((unsigned char)wanted[i])) return 0;
+    }
+    return 1;
 }
 
 static const uint8_t *block(const MacDisk *d, size_t n) {
@@ -28,7 +40,12 @@ static int locate_hfs(const uint8_t *image, size_t size, MacDisk *d,
     size_t logical_blocks = size / 2352u * 4u;
     size_t candidate;
     d->image = image; d->size = size;
-    for (candidate = 0; candidate < logical_blocks && candidate < 128u; ++candidate) {
+    /* The English images place the HFS volume near the beginning of the
+     * data track.  The authentic Japanese multi-track image has an ISO
+     * partition first and its Apple_HFS partition begins much later.  Scan
+     * the bounded source image instead of assuming the first 128 logical
+     * blocks own the Mac volume. */
+    for (candidate = 0; candidate < logical_blocks; ++candidate) {
         const uint8_t *mdb = block(&(MacDisk){image, size, candidate}, candidate + 2u);
         if (!mdb || be16(mdb) != 0x4244u) continue;
         *alloc_size = be16(mdb + 22);
@@ -64,7 +81,6 @@ static int find_file(const uint8_t *cat, size_t cat_size, const char *wanted,
                      Extent *data_extents, uint32_t *data_size,
                      Extent *resource_extents, uint32_t *resource_size) {
     size_t node;
-    size_t wanted_len = strlen(wanted);
     for (node = 0; node + 512u <= cat_size; node += 512u) {
         const uint8_t *n = cat + node;
         uint16_t records, r;
@@ -81,7 +97,7 @@ static int find_file(const uint8_t *cat, size_t cat_size, const char *wanted,
             key_len = rec[0];
             if (key_len < 7u || 1u + key_len > ob - oa || rec[6] > 31u) continue;
             name_len = rec[6];
-            if (name_len != wanted_len || memcmp(rec + 7, wanted, name_len) != 0) continue;
+            if (!mac_name_equal(rec + 7, name_len, wanted)) continue;
             data = 1u + key_len + ((key_len & 1u) == 0u ? 1u : 0u);
             /* HFSCatalogFile is 102 bytes.  The first three data extents
              * start at +74 and the first three resource extents at +86,
@@ -113,7 +129,6 @@ static int find_file_largest(const uint8_t *cat, size_t cat_size,
     Extent best_data[3] = {{0}}, best_resource[3] = {{0}};
     uint32_t best_data_size = 0u, best_resource_size = 0u;
     size_t node;
-    size_t wanted_len = strlen(wanted);
     int found = 0;
     for (node = 0; node + 512u <= cat_size; node += 512u) {
         const uint8_t *n = cat + node;
@@ -132,7 +147,7 @@ static int find_file_largest(const uint8_t *cat, size_t cat_size,
             rec = n + oa;
             key_len = rec[0];
             if (key_len < 7u || 1u + key_len > ob - oa || rec[6] > 31u ||
-                rec[6] != wanted_len || memcmp(rec + 7, wanted, wanted_len) != 0)
+                !mac_name_equal(rec + 7, rec[6], wanted))
                 continue;
             data = 1u + key_len + ((key_len & 1u) == 0u ? 1u : 0u);
             if (data + 98u > ob - oa || rec[data] != 2u) continue;
