@@ -99,6 +99,11 @@ int main(void)
                       title.decoded_map_source_bound == 0 &&
                       title.decoded_map_pixels[0] == NULL,
                   "failed title decode clears earlier map allocations and metadata");
+            check(nexus_v1_title_decode_mapd(
+                      broken_mapd, 4U, title_cg, cg_size, &title) == 0 &&
+                      title.decoded_map_count == 0 &&
+                      title.decoded_map_pixels[0] == NULL,
+                  "undersized title input clears stale decoded state");
             free(broken_mapd);
         }
     }

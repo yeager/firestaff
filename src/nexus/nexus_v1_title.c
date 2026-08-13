@@ -66,13 +66,16 @@ int nexus_v1_title_decode_mapd(const uint8_t *mapd,
                                Nexus_TitleScreen *title)
 {
     int map;
-    if (!mapd || mapd_size < NEXUS_TITLE_MAPD_MIN_BYTES || !title_cg || !title ||
+    if (!title) {
+        return 0;
+    }
+    nexus_title_clear_decoded_maps(title);
+    if (!mapd || mapd_size < NEXUS_TITLE_MAPD_MIN_BYTES || !title_cg ||
         title_cg_bytes < (size_t)5249U * 32U ||
         memcmp(mapd, "MAPD", 4) != 0 ||
         memcmp(mapd + 8U, "TIBG", 4) != 0) {
         return 0;
     }
-    nexus_title_clear_decoded_maps(title);
     for (map = 0; map < NEXUS_V1_TITLE_MAP_COUNT; ++map) {
         size_t map_offset = 0x40U + (size_t)map * 0x1c04U;
         uint8_t *out = (uint8_t *)calloc(

@@ -3,10 +3,11 @@
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
 2026-08-13: The source-only TITLE.BIN MAPD/TIBG decoder now clears previously
-decoded maps and metadata before a new decode and on every later-map failure.
-An invalid retail-shaped map can no longer leave an earlier allocation or a
-stale source-bound receipt visible to the next startup attempt. The real
-TITLE.BIN/TITLE.CG map test and the full title/boot/launch selection pass.
+decoded maps and metadata before every decode, including invalid input, and on
+every later-map failure. An invalid retail-shaped map can no longer leave an
+earlier allocation or a stale source-bound receipt visible to the next startup
+attempt. The real TITLE.BIN/TITLE.CG map test and the full title/boot/launch
+selection pass.
 
 2026-08-13: CLI boot probes now select SDL's dummy video driver by default
 when the caller has not selected a driver. This keeps the receipt-producing
