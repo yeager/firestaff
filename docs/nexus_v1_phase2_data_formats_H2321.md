@@ -78,7 +78,12 @@ ReDMCSB (WIP20210206) covers DM1/CSB/DM2 only — **no Saturn/Nexus code exists 
 
 **Total: 4,393,984 bytes (~4.2 MB).** DM1: ~33 KB for all 8 levels. Ratio: ~130×.
 
-**Provenance:** Extracted from DM Nexus Saturn ISO (disc hash not yet SHA256-locked — disc image absent).
+**Provenance:** Extracted from the operator-owned English Saturn ISO in
+`/Volumes/Extern-disk/FirestaffUserData/data/nexus`. The ISO SHA-256 is
+`16786e6165d8cbf7f6394dd9bc7171fbb561c1ba40b77ad7cba3c275fde2804e`; the
+matching CUE SHA-256 is
+`b96f01e2f8ce3ab9c8e4a33d5a0c7076cdc1bfd247a85a1454e6c36c8a616f33`.
+The media remains external and is not committed to Git.
 
 ### 1.2 File Structure — DMWeb correction
 
@@ -1153,8 +1158,8 @@ typedef struct {
 | DMDF vertex stride | **Medium** | Bug: 10B loaded vs 16B struct |
 | DMDF face format | **High** | Triangle assumption plausible |
 | DMDF VDP1 texture | **None** | Saturn-specific, not documented |
-| SNDLEV\*.SAL | **None** | No binary inspection |
-| SNDLEV\*.MAP | **None** | Size suggests index table, not verified |
+| SNDLEV\*.SAL | **Medium** | 16 authentic byte-level receipts; DataID-0 directory/metadata bounded, codec/rate/loop semantics still capture-gated |
+| SNDLEV\*.MAP | **Medium** | 16 authentic bounded receipts; event selector and driver handoff still capture-gated |
 | CD audio mapping | **High** | Level-pair → track mapping confirmed |
 | Nexus save format | **Medium** | Implemented but format origin unknown |
 | DGN thing/object list | **None** | Embedded but unparsed |
@@ -1163,7 +1168,7 @@ typedef struct {
 
 | Gap | Severity | Blocking |
 |-----|----------|----------|
-| No disc image | **CRITICAL** | All hashes unverifiable |
+| Authenticated external disc/ISO corpus | **Resolved for external corpus** | ISO/CUE hashes are locked outside the repository; media remains user-supplied and is never committed |
 | DGN 3D geometry blob | **HIGH** | Cannot render dungeon geometry |
 | DMDF vertex stride bug | **HIGH** | Models loaded incorrectly |
 | VDP1 BITMAP texture | **HIGH** | Cannot display creature textures |
@@ -1172,7 +1177,7 @@ typedef struct {
 | FACE.BIN portraits | **MEDIUM** | Champion portraits missing |
 | Full 24-champion roster | **MEDIUM** | Only 8 champions defined |
 | Shift-JIS kanji lookup | **MEDIUM** | All kanji displayed as "?" |
-| SDDRVS.TSK analysis | **LOW** | Sound driver not examined |
+| SDDRVS.TSK runtime ABI | **MEDIUM** | Static/dispatch-corridor receipts exist; SCSP event-to-driver playback owner remains unproven |
 
 ### 10.3 No ReDMCSB Equivalent
 
