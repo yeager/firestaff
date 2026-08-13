@@ -2,6 +2,20 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: An authentic J-BIOS/English-Merged 300-frame capture with the
+SCSP and main-CPU trace hooks enabled timed out with `capture_exit_status=137`
+before a complete raw witness or either trace file was written
+(`scsp-probe-nO6ZMP` on the external disk). This is a negative emulator/capture
+diagnostic only; it does not establish SLEV/SAL/SCSP ownership and does not
+open sound playback.
+
+2026-08-13: A separate 60-frame retry used a fresh Mednafen home and the same
+authentic BIOS/disc hashes (`scsp-short-GKFcbl`). It also reached the launcher
+timeout with status 137 before producing a raw witness or SCSP trace. The
+fresh-profile retry rules out the prior session lock as the explanation, but
+does not change the production gate: SLEV/SAL/SCSP ownership and playback
+remain unverified.
+
 2026-08-13: The raw-capture launcher now starts the emulator in a dedicated
 process group when `setsid` is available, with a Python `os.setsid()` fallback
 on macOS. Timeout and signal cleanup therefore terminate the actual Mednafen
