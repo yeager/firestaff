@@ -69,6 +69,11 @@ lossless source handoff only: the public world-text table remains empty until
 the original HuC6280 control-code consumer and its VDC destination are joined
 by disassembly or runtime capture.
 
+The same admission rule now applies to the VDC producer sidecar: the live
+transition receipt publishes `vdc_io_writes` and rejects a capture with no
+actual VDC write rows. This closes a provenance gap, but it does not identify
+which writes belong to text, BAT, square, HUD, object or gameplay consumers.
+
 ---
 
 ## 2. PC Engine CD Layout

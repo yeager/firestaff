@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — VDC-I/O-proveniens ingår nu i transition-admission
+
+- ✅ Capture-skriptet räknar autentiska `vdc_io_write`-rader och skriver
+  `vdc_io_writes` i transition-receiptet. Receipt-parsern kräver ett positivt
+  antal tillsammans med 64 KiB VDC-VRAM och 1 KiB VCE.
+- 🔒 Detta binder transportproveniens, inte text-, BAT-, square-, HUD- eller
+  gameplaysemantik. Den ursprungliga HuC6280-textkonsumenten är fortfarande
+  nästa källgräns.
+
 ## 2026-08-11 — RNG edge capture is still not a spawn handoff
 
 - 🔒 En extern autentiserad US-save-replay observerar `$4644`/`$4667` och

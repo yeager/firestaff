@@ -22,7 +22,7 @@ static const char *fixture =
     "main_ram_target_reads=0\nmain_ram_target_writes=0\n"
     "spawn_consumer_reads=0\nspawn_entry_b0e5_samples=0\n"
     "rng_consumer_samples=0\nvdc_vram_snapshot_bytes=65536\n"
-    "vce_palette_snapshot_bytes=1024\ntransition=observed\n";
+    "vce_palette_snapshot_bytes=1024\nvdc_io_writes=1\ntransition=observed\n";
 
 static const char *iso_fixture =
     "source=authentic-mednafen-transition-receipt\n"
@@ -37,7 +37,7 @@ static const char *iso_fixture =
     "main_ram_target_reads=0\nmain_ram_target_writes=0\n"
     "spawn_consumer_reads=0\nspawn_entry_b0e5_samples=0\n"
     "rng_consumer_samples=0\nvdc_vram_snapshot_bytes=65536\n"
-    "vce_palette_snapshot_bytes=1024\ntransition=observed\n";
+    "vce_palette_snapshot_bytes=1024\nvdc_io_writes=1\ntransition=observed\n";
 
 int main(void) {
 #if defined(_WIN32)
@@ -63,7 +63,29 @@ int main(void) {
     assert(receipt.authenticated_cd_ram_receipts == 1u);
     assert(receipt.main_ram_consumer_reads == 1u);
     assert(receipt.main_ram_target_reads == 0u);
+    assert(receipt.vdc_io_writes == 1u);
     unlink(path);
+
+    {
+        char invalid_fixture[2048];
+        char *vdc_count;
+        assert(snprintf(invalid_fixture, sizeof(invalid_fixture), "%s", fixture) > 0);
+        vdc_count = strstr(invalid_fixture, "vdc_io_writes=1");
+        assert(vdc_count != NULL);
+        vdc_count[strlen("vdc_io_writes=")] = '0';
+        assert(snprintf(path, sizeof(path), "%s/firestaff-theron-transition-XXXXXX",
+                        tmpdir) > 0);
+        fd = mkstemp(path);
+        assert(fd >= 0);
+        file = fdopen(fd, "wb");
+        assert(file);
+        assert(fputs(invalid_fixture, file) >= 0);
+        assert(fclose(file) == 0);
+        assert(!theron_v1_mednafen_transition_receipt_parse_file(path, &receipt));
+        assert(receipt.status == THERON_V1_MEDNAFEN_TRANSITION_REJECTED);
+        assert(!receipt.transport_verified);
+        unlink(path);
+    }
 
     assert(snprintf(path, sizeof(path), "%s/firestaff-theron-transition-XXXXXX",
                     tmpdir) > 0);

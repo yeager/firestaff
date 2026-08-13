@@ -1187,6 +1187,7 @@ transition_spawn_helper_4667_special_count=$(perl -ne 'if (/^spawn_consumer_regi
 transition_rng_consumer_sample_count=$(trace_count '^rng_consumer_window ' "$rng_consumer_trace")
 transition_rng_code_window_count=$(trace_count '^rng_code_window ' "$rng_code_trace")
 transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$input_trace")
+transition_vdc_io_write_count=$(trace_count '^vdc_io_write ' "$vdc_io_trace")
 {
     printf '%s\n' 'source=authentic-mednafen-transition-receipt'
     printf 'mednafen_module=%s\n' "$capture_mednafen_module"
@@ -1247,6 +1248,7 @@ transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$inp
     printf 'scripted_pce_input_events=%s\n' "$transition_scripted_input_count"
     printf 'vdc_vram_snapshot_bytes=65536\n'
     printf 'vce_palette_snapshot_bytes=1024\n'
+    printf 'vdc_io_writes=%s\n' "$transition_vdc_io_write_count"
     trace_input_order_receipt "$input_trace"
     if [[ "$host_input_requested" == 1 ]]; then
         if [[ -n "$host_key_sequence" ]]; then

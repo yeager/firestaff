@@ -441,6 +441,7 @@ if ! grep -Fq 'trace_count()' "$script" ||
     exit 1
 fi
 if ! grep -Fq 'source=authentic-mednafen-transition-receipt' "$script" ||
+   ! grep -Fq 'vdc_io_writes=%s' "$script" ||
    ! grep -Fq 'transition=missing' "$script" ||
    ! grep -Fq 'transition=observed' "$script"; then
     printf 'FAIL: capture script must publish an observed-or-missing transition receipt\n' >&2

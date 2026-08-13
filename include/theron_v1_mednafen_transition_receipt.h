@@ -42,6 +42,7 @@ typedef struct {
     uint64_t rng_consumer_samples;
     uint64_t vdc_vram_snapshot_bytes;
     uint64_t vce_palette_snapshot_bytes;
+    uint64_t vdc_io_writes;
     char track02_md5[33];
     char system_card_md5[33];
     char source_trace_path[THERON_V1_MEDNAFEN_TRANSITION_PATH_CAPACITY];

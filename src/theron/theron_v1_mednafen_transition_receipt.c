@@ -56,6 +56,7 @@ static int set_count(const char *key, const char *value,
     else COUNT_FIELD("rng_consumer_samples", rng_consumer_samples, 1u << 13)
     else COUNT_FIELD("vdc_vram_snapshot_bytes", vdc_vram_snapshot_bytes, 1u << 14)
     else COUNT_FIELD("vce_palette_snapshot_bytes", vce_palette_snapshot_bytes, 1u << 15)
+    else COUNT_FIELD("vdc_io_writes", vdc_io_writes, 1u << 16)
     else return 1; /* Unknown forward-compatible receipt field. */
 #undef COUNT_FIELD
 
@@ -71,7 +72,7 @@ int theron_v1_mednafen_transition_receipt_parse_file(
     FILE *file;
     char line[1024];
     unsigned int seen_counts = 0u;
-    unsigned int required_counts = (1u << 16) - 1u;
+    unsigned int required_counts = (1u << 17) - 1u;
     int track02_mode_2048 = 0;
 
     if (!out) return 0;
@@ -142,7 +143,8 @@ int theron_v1_mednafen_transition_receipt_parse_file(
         (!track02_mode_2048 &&
          strcmp(receipt.track02_md5, THERON_US_TRACK02_MD5) != 0) ||
         receipt.vdc_vram_snapshot_bytes != 65536u ||
-        receipt.vce_palette_snapshot_bytes != 1024u) goto reject_after_close;
+        receipt.vce_palette_snapshot_bytes != 1024u ||
+        receipt.vdc_io_writes == 0u) goto reject_after_close;
     /* Runtime reads are observations, not semantic proof.  In particular,
      * seeing the spawn/RNG windows must not promote guessed game rules. */
     receipt.status = THERON_V1_MEDNAFEN_TRANSITION_READY;

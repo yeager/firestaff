@@ -254,6 +254,13 @@ included in the transition receipt as `spawn_consumer_reads`. A zero count is
 valid evidence that the capture did not reach the disassembly-owned consumer;
 host-generated data must not replace it.
 
+The transition receipt now also includes `vdc_io_writes`, counted from the
+side-effect-free VDC-port witness. Admission requires a positive count in
+addition to the exact 64 KiB VDC-VRAM and 1 KiB VCE snapshots. This prevents a
+header-only VDC sidecar from looking like a complete source-screen capture;
+the field remains transport provenance and does not publish a VDC destination
+or text/BAT/square/HUD semantic owner.
+
 ## 2026-08-09 — fresh cold-start transport receipt
 
 The context-bound instrumented Mednafen build was replayed from a clean boot
