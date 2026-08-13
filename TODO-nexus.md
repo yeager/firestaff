@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: Disassembly follow-up of the authentic `DM.BIN` confirms that
+`EV_SAVE` and `EV_SAVELOAD` are members of the retail event-name string table
+at `0x06046fec` and `0x06046ff4`. The following bytes form a separate
+pointer/debug table; no direct SH-2 PC-relative `MOV.L` reference to either
+save string was found. This is useful provenance for the event table, but it
+does not identify the Saturn backup-RAM record, save consumer, or field
+semantics. The Saturn save-import gate therefore remains closed.
+
 2026-08-13: `nexus_v1_direct_static_material_capture` now separates the
 authentic LEV01 source check from its operator-only VDP1 capture-envelope
 fixture. With only the retail corpus present it exits as an explicit CTest
