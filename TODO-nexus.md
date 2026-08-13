@@ -1284,3 +1284,11 @@ värden ensamma räcker inte för text- eller menyadmission.
   kan inte användas ensam eftersom den hänvisar till saknade ljudspår. Ingen
   pose eller presentation härleds från bootloggningen; den är endast positiv
   media-/regiondiagnostik.
+- 2026-08-13: En ny extern instrumenterad Mednafen-körning med samma
+  hashverifierade J-BIOS och merged CUE/ISO producerade en komplett rå-witness
+  med 1 800 frames (`run-codex-followup-ksBZRF`). Rålayoutvalidatorn passerar,
+  men körningen gav inga separata SH-2-pose-/source-write-spår och den
+  semantiska admissionen är fortsatt `blocked`. Den får därför inte användas
+  för att öppna LEV01, härleda level/x/y/facing eller marknadsföra Saturn-
+  presentation som färdig. Underlaget ligger kvar på extern-disken och inte i
+  repositoriet.
