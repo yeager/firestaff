@@ -135,6 +135,12 @@ static int test_real_decode(void) {
         free(data);
         return 1;
     }
+    if (nexus_v1_item_ibs_render_floor_image(
+            data, size, reused_palette_index, &result, floor_rgba, -1) != 0) {
+        fprintf(stderr, "  FAIL negative floor-image capacity was accepted\n");
+        free(data);
+        return 1;
+    }
 
     unique_img = 0;
     memset(seen, 0, sizeof(seen));

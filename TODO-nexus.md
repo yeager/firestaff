@@ -2,6 +2,11 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: ITEM.IBS floor-image-rendering avvisar nu negativ
+`rgba_capacity`, och floor-image/palette-offsets kontrolleras med 64-bitars
+aritmetik innan source bytes läses. Den autentiska ITEM.IBS-kedjan med
+palette reuse och alla verifierade inventory/floor-data passerar fortsatt.
+
 2026-08-13: PRS3-headern avvisar nu nollstor stream och
 `uncompressed_size` som inte ryms i dekoder-API:ts `int`-kontrakt. Detta
 förhindrar att en skadad header passerar framing och senare wrap:ar vid

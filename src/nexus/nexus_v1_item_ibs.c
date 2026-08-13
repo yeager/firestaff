@@ -220,7 +220,7 @@ int nexus_v1_item_ibs_decode(const uint8_t *data, int data_size,
             if (fd->encoding == 0x0008 && fd->width > 0 && fd->height > 0) {
                 uint32_t px_count = (uint32_t)fd->width * (uint32_t)fd->height;
                 uint32_t byte_count = (px_count + 1) / 2;
-                uint32_t abs_img = floor_base + fd->image_offset;
+                    uint64_t abs_img = (uint64_t)floor_base + fd->image_offset;
                 uint32_t pal_rgba[16];
                 int pid = fd->palette_id < 64 ? fd->palette_id : -1;
                 int j;
@@ -231,8 +231,8 @@ int nexus_v1_item_ibs_decode(const uint8_t *data, int data_size,
                 }
 
                 if (fd->palette_offset) {
-                    uint32_t abs_pal = floor_base + fd->palette_offset;
-                    if ((int)(abs_pal + 32) <= data_size) {
+                    uint64_t abs_pal = (uint64_t)floor_base + fd->palette_offset;
+                    if (abs_pal + 32U <= (uint64_t)data_size) {
                         for (j = 0; j < 16; ++j)
                             floor_pals[pid][j] = bgr555_to_rgba(read_be16(data + abs_pal + j * 2));
                         floor_pal_valid[pid] = 1;
@@ -245,7 +245,8 @@ int nexus_v1_item_ibs_decode(const uint8_t *data, int data_size,
                 }
                 memcpy(pal_rgba, floor_pals[pid], sizeof(pal_rgba));
 
-                if ((int)(abs_img + byte_count) <= data_size && px_count <= 16384) {
+                if (abs_img + byte_count <= (uint64_t)data_size &&
+                    px_count <= 16384) {
                     uint32_t rgba[16384];
                     const uint8_t *src = data + abs_img;
                     for (j = 0; j < byte_count; ++j) {
@@ -308,7 +309,8 @@ int nexus_v1_item_ibs_render_floor_image(const uint8_t *data, int data_size,
     int j;
     const uint8_t *src;
 
-    if (!data || data_size <= 0 || !rgba_out || !result || !result->valid)
+    if (!data || data_size <= 0 || !rgba_out || !result || !result->valid ||
+        rgba_capacity < 0)
         return 0;
     if (floor_index < 0 || floor_index >= result->floor_images_decoded) return 0;
 
