@@ -88,6 +88,15 @@ the pending source/destination join. Its `dispatch_sequence=unbound` marker
 keeps the E009/CD-sector ownership boundary explicit. It is provenance only;
 it does not turn those writes into semantic game data.
 
+The longer authenticated replay also reaches the source-owned `$CC4C` path and
+its `$4644` preconsumer / `$4667` helper windows. The execution-window parser
+accepts this as provenance even when the bounded run does not visit `$C96B`;
+the strict spawn-admission parser still requires both windows, a valid
+`$B0E5` category, and the later source-owned writes. In the current replay all
+`$4667` samples have `$B3=$FF`, so the `$B3 & 7 == 4` RAM-loaded branch is not
+observed. No RNG, spawn, AI, T700 or T900 semantics are promoted from this
+window.
+
 ## Stage-2 bank and destination contract
 
 The authenticated US and JP retail projections also contain the same generic
