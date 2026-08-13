@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: A short clean J-region capture at
+`/Volumes/Extern-disk/nexus-capture-20260813/run-attachment-j-short-20260813/`
+validated 60 raw frames and 16 active VDP1 observations with
+`capture_exit_status=0`. The instrumented Mednafen build emitted no
+`FIRESTAFF_NEXUS_TRACE_SH2_RAM_WRITES` or memory-snapshot artifact even when
+the launcher paths were supplied; the raw witness is consequently transport
+evidence only and does not bind a LEV01 pose or save consumer.
+
 2026-08-13: The attached authentic J-BIOS 1.01 was extracted outside the
 repository and hash-verified as
 `dcfef4b99605f872b6c3b6d05c045385cdea3d1b702906a0ed930df7bcb7deac`. A new

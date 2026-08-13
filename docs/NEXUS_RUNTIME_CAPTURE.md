@@ -293,6 +293,14 @@ blocked.
 
 ## Session-bound SCSP/SLEV corridor
 
+The short clean J-region diagnostic run at
+`/Volumes/Extern-disk/nexus-capture-20260813/run-attachment-j-short-20260813/`
+validated 60 raw frames and 16 active VDP1 observations, but produced no
+SH-2 RAM-write or memory-snapshot artifact despite the launcher receiving
+those output paths. This is a capture-tooling limitation: the witness remains
+transport-only and cannot identify a LEV01 pose, save write, or runtime
+consumer.
+
 A separate operator-only J-BIOS/English-media run is retained outside the
 repository at
 `/Volumes/Extern-disk/nexus-saturn-capture/run-codex-scsp-menu-bound-20260810/`.
