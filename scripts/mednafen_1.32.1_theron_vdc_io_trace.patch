@@ -1,0 +1,59 @@
+--- a/src/pce/pce.cpp
++++ b/src/pce/pce.cpp
+@@ -188,6 +188,46 @@
+  trace_count++;
+ }
+FIRESTAFF_PATCH_BLANK_CONTEXT
++/* Optional, side-effect-free VDC port trace used to tie a captured Theron's
++ * Quest screen to the original HuC6280 producer.  The VDC state machine is
++ * deliberately left untouched: this hook only observes the write immediately
++ * before the existing VCE path receives it. */
++static void TheronTraceVDCIOWrite(uint32 physical, uint8 value)
++{
++ static FILE *trace = NULL;
++ static unsigned trace_count = 0;
++ const char *path;
++ uint16 writer_pc;
++ uint32 writer_physical_pc;
++
++ if(trace_count >= 65536)
++  return;
++ if(!trace)
++ {
++  path = getenv("FIRESTAFF_THERON_VDC_IO_TRACE");
++  if(!path || !*path)
++   return;
++  trace = fopen(path, "w");
++  if(!trace)
++   return;
++  fputs("FIRESTAFF_THERON_VDC_IO_TRACE_V1\n", trace);
++  fputs("source=mednafen-pce-instrumented-vdc-io\n", trace);
++ }
++
++ writer_pc = HuCPU.GetRegister(HuC6280::GSREG_PC);
++ writer_physical_pc =
++  (HuCPU.GetRegister(HuC6280::GSREG_MPR0 + (writer_pc >> 13)) << 13) |
++  (writer_pc & 0x1fff);
++ fprintf(trace,
++         "vdc_io_write sequence=%u timestamp=%u logical_address=%04x physical_address=%06x value=%02x writer_pc=%04x writer_physical_pc=%06x a=%02x x=%02x y=%02x\n",
++         trace_count++, HuCPU.Timestamp(), HuCPU.GetLastLogicalWriteAddr(),
++         physical, value, writer_pc, writer_physical_pc,
++         HuCPU.GetRegister(HuC6280::GSREG_A),
++         HuCPU.GetRegister(HuC6280::GSREG_X),
++         HuCPU.GetRegister(HuC6280::GSREG_Y));
++ fflush(trace);
++}
++
+ static DECLFW(BaseRAMWriteSGX)
+ {
+  TheronTracePCECDDataDestination(A, V);
+@@ -292,7 +332,8 @@
+ {
+  switch(A & 0x1c00)
+  {
+-  case 0x0000: HuCPU.StealCycle();
++  case 0x0000: TheronTraceVDCIOWrite(A, V);
++               HuCPU.StealCycle();
+FIRESTAFF_PATCH_VDC_WRITE_CONTEXT
+FIRESTAFF_PATCH_VDC_BREAK_CONTEXT
+FIRESTAFF_PATCH_BLANK_CONTEXT

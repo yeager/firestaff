@@ -1115,3 +1115,26 @@ No RNG return ownership, creature spawn, AI, attack/damage, loot, generator
 timing, T700 or T900 rule is published from this capture. The next positive
 witness must still show A=`0..3` together with the caller/helper return path,
 a source-owned target write and a live creature record in one execution.
+
+## 2026-08-13 — side-effect-free HuC6280→VDC port witness
+
+The existing patched PCE Mednafen route now has an optional bounded
+`FIRESTAFF_THERON_VDC_IO_TRACE` observer. It records each original VDC-port
+write before the normal VCE/VDC path receives it, with its HuC6280 logical and
+MPR-derived physical program counter, timestamp, port address, value and A/X/Y
+register values. The observer changes no VDC state and is capped at 65,536
+records.
+
+The isolated 12-second US CUE/System Card/state replay produced 65,536
+newline-delimited records. Its primary game-code writers were physical PCs in
+`$0E1Axx` and `$0E1Bxx`; the port stream included the normal MAWR/VWR select
+and data sequence. This proves that the original runtime, rather than
+Firestaff, drove the captured VDC destination.
+
+It is deliberately not a source-to-VRAM admission by itself: the same replay
+still had zero authenticated CD-to-main-RAM receipts and no live level
+transition. In particular, a writer PC and a VDC address do not identify the
+retail byte span that supplied a tile, nor assign square, object, HUD, portrait
+or text semantics. Those presentation routes remain fail-closed until one
+capture joins original CD/RAM data consumption and the VDC transfer in the
+same execution.
