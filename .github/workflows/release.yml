@@ -87,6 +87,13 @@ jobs:
             exit 1
           fi
 
+          existing_tag_target="$(git rev-list -n 1 "$tag" 2>/dev/null || true)"
+          if [[ -n "$existing_tag_target" && "$existing_tag_target" != "$GITHUB_SHA" ]]; then
+            echo "::error::Release tag $tag already points to $existing_tag_target, but this workflow runs at $GITHUB_SHA"
+            echo "::error::Use a new version or move the tag explicitly before rebuilding the release."
+            exit 1
+          fi
+
           release_notes="RELEASE_NOTES.md"
           if [[ -f "RELEASE_${version}.md" ]]; then
             release_notes="RELEASE_${version}.md"
