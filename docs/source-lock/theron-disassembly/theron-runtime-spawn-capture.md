@@ -994,6 +994,15 @@ extern disk och Mednafen stängdes efter den avgränsade körningen.
 
 ## 2026-08-11 — C3A0 same-session target reads admitted as provenance
 
+## 2026-08-13 — longer authenticated CD/RAM transport replay
+
+The replay transition receipt is now admitted with 161 raw sector spans, 47
+byte-exact CD-to-RAM origin receipts and 32 game-owned `$E009` dispatches. The
+receipt test uses campaign-stable minimums rather than an exact old fixture
+length. This proves transport and dispatch provenance only: its 512 `$2600`
+reads are `$CB22` zero-readback traffic, so no level/object or presentation
+semantics are promoted.
+
 The receipt now separates the observed `$CB22` init/readback helper from
 non-init target reads and counts the byte-locked `$C3A0-$C429` caller shape
 independently (including non-zero and distinct reader-PC counts). This is a

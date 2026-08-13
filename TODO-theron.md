@@ -2,6 +2,19 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — autentiserad CD→RAM-transport från replay är nu verifierad
+
+- ✅ Replayens transition-receipt (`theron-capture-20260813/replay`) är
+  parserad som `observed`: 161 råsektorer, 47 byte-exakta CD→RAM-origin-
+  receipts och 32 game-owned `$E009`-dispatchar, med hashverifierad US Track
+  02 och System Card.
+- ✅ Regressionen kräver nu verifierade minimikrav i stället för den tidigare
+  felaktiga exakta kampanjlängden (`2` CD-receipts/`3584` RNG-prover), så nya
+  autentiserade replaylängder inte avvisas godtyckligt.
+- 🔒 Samma replay har fortfarande 512 `$2600`-läsningar, alla från `$CB22`
+  och med noll icke-nollvärden. Transporten öppnar därför inte level/object,
+  square-to-tile, HUD, creature, combat, T700 eller T900-semantik.
+
 ## 2026-08-13 — consumer-receipt skiljer initiering från source-caller
 
 - ✅ Receipten räknar nu separat `$CB22`-initieringsläsningar, övriga
