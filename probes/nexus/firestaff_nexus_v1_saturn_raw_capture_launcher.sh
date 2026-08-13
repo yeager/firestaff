@@ -70,6 +70,17 @@ append_trace_receipts() {
     fi
   done
 }
+capture_manifest_finalized=0
+finalize_capture_manifest() {
+  local status="${1:-1}"
+  [[ -n "${manifest:-}" && -f "$manifest" ]] || return 0
+  if ((capture_manifest_finalized)); then return 0; fi
+  capture_manifest_finalized=1
+  if ! grep -q '^capture_exit_status=' "$manifest"; then
+    printf 'capture_exit_status=%s\n' "$status" >> "$manifest"
+  fi
+  append_trace_receipts || true
+}
 require_hash() {
   [[ -f "$1" && "${#2}" -eq 64 && "$2" =~ ^[[:xdigit:]]+$ ]] || return 1
   [[ "$(lower "$(hash_file "$1")")" == "$(lower "$2")" ]]
@@ -102,6 +113,7 @@ cleanup_capture_child() {
   fi
   capture_timeout_pid=
   capture_child_pid=
+  finalize_capture_manifest "$status" || true
   return "$status"
 }
 
@@ -467,8 +479,7 @@ trap - INT TERM EXIT
 if ((capture_status == 0)) && [[ ! -s "$trace" ]]; then
   capture_status=1
 fi
-printf 'capture_exit_status=%s\n' "$capture_status" >> "$manifest"
-append_trace_receipts
+finalize_capture_manifest "$capture_status"
 ((capture_status == 0)) || exit "$capture_status"
 [[ -s "$trace" ]] || exit 1
 run_validator "$trace" --require-frames "$frame_limit"
