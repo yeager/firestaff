@@ -2,6 +2,18 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-14: A direct Mednafen run with the authenticated J BIOS and English
+merged disc was allowed to run interactively on the external disk at
+`/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-interactive-save-20260814/`.
+Mednafen created its normal empty backup containers (`.bcr` expands to the
+512 KiB image with 512 non-zero format bytes; `.bkr` is 32 KiB with 64
+non-zero format bytes) and an `.smpc` peripheral state, but no played Nexus
+save. The resulting hashes are `4f8250fcab72ad2941f2e3d7410f90d1d1be55b6f3dead9dfced86f2c1063037`
+for the expanded `.bcr` image and
+`6a0d5bcdf8c8243c4f6b8666e76aa0fc8f4eef56df7993b414f3fa7bb3a3e141` for the
+`.bkr` image. This is a real negative save attempt, not a Saturn save
+fixture; the save-import gate remains closed.
+
 2026-08-13: A rebuilt instrumented Mednafen 1.32.1 (O1, authentic J BIOS and
 English merged disc) completed a 301-frame Saturn capture at
 `/Volumes/Extern-disk/nexus-saturn-capture/run-firestaff-instrumented-20260813-204423/`.

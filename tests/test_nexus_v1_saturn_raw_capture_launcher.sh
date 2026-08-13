@@ -42,6 +42,25 @@ grep -Fq 'press_start_frame=1000' "$tmp_dir/manifest-custom.txt"
 grep -Fq 'press_start_length=60' "$tmp_dir/manifest-custom.txt"
 grep -Fq 'press_button_mask=0x30' "$tmp_dir/manifest-custom.txt"
 
+if FIRESTAFF_NEXUS_TRACE_PRESS_SEQUENCE='840:60:60:0x10' \
+  "$launcher" --operator-only --mednafen /usr/bin/true \
+    --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
+    --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
+    --trace "$tmp_dir/trace-sequence-reject.raw" --validator "$validator" \
+    --manifest "$tmp_dir/manifest-sequence-reject.txt" >/dev/null 2>&1; then
+  echo "expected malformed press-sequence rejection" >&2
+  exit 1
+fi
+
+FIRESTAFF_NEXUS_TRACE_PRESS_SEQUENCE='840:60:0x10,960:60:0x20' \
+"$launcher" --operator-only --mednafen /usr/bin/true \
+  --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
+  --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
+  --trace "$tmp_dir/trace-sequence.raw" --validator "$validator" \
+  --manifest "$tmp_dir/manifest-sequence.txt" --skip-frames 0 --frame-limit 1200 \
+  --require-input-window >/dev/null
+grep -Fq 'press_sequence=840:60:0x10,960:60:0x20' "$tmp_dir/manifest-sequence.txt"
+
 "$launcher" --operator-only --mednafen /usr/bin/true \
   --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
   --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
