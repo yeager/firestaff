@@ -459,22 +459,15 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
         Theron_V1_Object *d = theron_v1_object_at_in_dungeon(
                                 world, world->current_dungeon,
                                 world->current_level, nx, ny);
-        if (d && d->type == THERON_OBJTYPE_DOOR) {
-            if (!theron_v1_door_state_is_passable(d->state)) {
-                /* Try auto-open */
-                theron_v1_door_open(world, nx, ny);
-                /* If auto-open failed (e.g. no key), block */
-                d = theron_v1_object_by_id(world, d->id);
-                if (!d || !theron_v1_door_state_is_passable(d->state)) {
-                    return THERON_MOVE_BLOCKED;
-                }
-            }
-        }
-        if (d && theron_v1_door_state_is_passable(d->state)) {
-            tile = THERON_SQUARE_FLOOR; /* treat open door as floor */
-        } else {
+        /* T900 separates the door-use command from the movement route:
+         * stepping onto a closed/locked door does not implicitly consume a
+         * key or mutate the object.  The explicit door_open route owns that
+         * state transition. */
+        if (!d || d->type != THERON_OBJTYPE_DOOR ||
+            !theron_v1_door_state_is_passable(d->state)) {
             return THERON_MOVE_BLOCKED;
         }
+        tile = THERON_SQUARE_FLOOR; /* treat an already-open door as floor */
     }
 
     /* ── Special squares: teleporter ── */

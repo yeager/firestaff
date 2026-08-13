@@ -275,6 +275,10 @@ static void probe_first_room_runtime(void) {
     memcpy(&world.levels[THERON_DUNGEON_1_AKUTUBA - 1][0],
            &level, sizeof(level));
     world.level_loaded[THERON_DUNGEON_1_AKUTUBA - 1][0] = 1;
+    /* The stairs query is only special when its destination is resident;
+     * provide the synthetic next-level residency that the transition gate
+     * requires. */
+    world.level_loaded[THERON_DUNGEON_1_AKUTUBA - 1][1] = 1;
 
     /* Party placement (THQUEST.ASM T520).  level_load always sets
      * start_dir = 0 (NORTH default; T520 overrides at runtime).  Use

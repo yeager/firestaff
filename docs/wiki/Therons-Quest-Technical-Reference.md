@@ -1,5 +1,12 @@
 # Theron's Quest Technical Reference
 
+## Door movement boundary
+
+Movement does not implicitly open a closed or locked door. The explicit
+door-use route performs the state transition and key validation; this keeps
+source-bound Track 02 object state transactional and fail-closed. A stair
+query likewise returns `STAIRS` only when the destination level is resident.
+
 ## Track 02 map-directory boundary
 
 The world handoff validates the complete authenticated Track 02 map directory

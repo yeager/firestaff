@@ -8,6 +8,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — Door movement remains fail-closed
+
+- ✅ Movement onto a closed or locked door blocks; the explicit door-use route
+  owns opening and key validation, so a key is never consumed implicitly by a
+  movement step.
+- ✅ The first-room synthetic fixture marks the destination level resident
+  before expecting a stair transition.
+- ✅ The full Theron suite is green; six media-dependent tests remain expected
+  skips when their external captures are absent.
+
 ## 2026-08-13 — Track 02 map-directory envelope is fail-closed
 
 - ✅ `theron_v1_world_load_track02_dungeon()` validates the complete map
