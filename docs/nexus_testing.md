@@ -178,6 +178,10 @@ and decoded.
 | Audio | Authentic SAL/MAP provenance and bounded DataID 0 PCM diagnostics are tested; original selector, SDDRVS/SCSP ownership and playback remain open. |
 | Verification | 173/173 executed Nexus tests pass against the external corpus; 11 private capture/save gates are skip-safe. |
 
+The external visual baseline now includes clean window-captured Mednafen
+witnesses for the authentic Nexus logo and intro sequence. These are reference
+frames only; no menu, LEV01 or Saturn-save claim is made from them.
+
 ---
 
 ## How to Start Testing (Immediate Steps)
