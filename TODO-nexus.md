@@ -1306,3 +1306,11 @@ värden ensamma räcker inte för text- eller menyadmission.
   endast disassembly-struktur; kommando-, event-, SAL-, SCSP- och playback-
   semantiken är fortsatt spärrad tills en autentisk Saturn-körning binder
   ägarskap och anrops-ABI.
+- 2026-08-13: En längre autentisk Saturn-witness (`run-codex-long-menu-20260813`)
+  kördes med J-BIOS 1.01, den hashverifierade merged CUE:n och Saturns riktiga
+  START/A/B/C/X-masker. Råtransporten validerar 3 000 frames på extern-disken,
+  varav 2 956 har aktiv VDP1-observation. Körningen gav fortfarande ingen
+  källbunden LEV01-pose, menyidentitet, SLEV-tasköverföring eller SCSP-
+  ljudhändelse. Den avbröts efter att hela framefönstret skrivits och har
+  därför `capture_exit_status=143`; den är endast observation och får inte
+  användas som presentation-, gameplay- eller playback-bevis.
