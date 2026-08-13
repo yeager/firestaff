@@ -1,12 +1,29 @@
 # Firestaff TODO - THERON
 
-> **Latest capture boundary (2026-08-13):** The authenticated Main-RAM
-> consumer sidecar is parser-ready but still init-only: `$2600-$27FF` has 512
+> **Latest capture boundary (2026-08-13):** A scripted authenticated
+> Mednafen replay is parser-ready but still init-only: `$2600-$27FF` has 512
 > zero-valued `$CB22` reads, no `$C3A0` reader, and no dynamic level/object
 > consumer. Use `THERON_MEDNAFEN_MAIN_RAM_CONSUMER_PARSE_ONLY=1` for that
 > receipt; keep the `$2c54-$2c69` execution-window gate separate.
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
+
+## 2026-08-13 — scripted replay reaches authenticated transport, not gameplay
+
+- ✅ En extern-disk-körning med hashverifierad US Track 02 och System Card
+  accepterar den scriptade PCE-sekvensen `run@1:1,run@480:30,i@900:30` och
+  ger ett parser-godkänt transition-receipt: 240 råsektorspann, 25 CD-IRQ-
+  callbacks, 256 autentiserade CD-RAM-kvitton och 32 game-owned `$E009`-
+  dispatchar.
+- ✅ Main-RAM-sidecaren är verifierad med `reads=65536`, `target_reads=512`,
+  `target_nonzero=0`, `target_init=512` och `target_runtime=0`. Den separata
+  transition-testen passerar också.
+- 🔒 Replayen visar fortfarande ingen dynamisk level/object-consumer: ingen
+  `$C3A0`-läsare, ingen source-owned publicering och ingen square/tile/HUD/
+  T700/T900-semantik får öppnas. Sidecars och den instrumenterade binären
+  ligger kvar lokalt på extern-disk och ska inte committas.
+- ✅ Reproducerbarheten är dokumenterad i
+  `docs/source-lock/theron-disassembly/theron-scripted-replay-transport-boundary-20260813.md`.
 
 ## 2026-08-13 — Door movement remains fail-closed
 

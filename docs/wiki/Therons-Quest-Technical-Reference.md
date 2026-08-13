@@ -7,6 +7,21 @@ door-use route performs the state transition and key validation; this keeps
 source-bound Track 02 object state transactional and fail-closed. A stair
 query likewise returns `STAIRS` only when the destination level is resident.
 
+## Scripted replay transport boundary
+
+The latest authenticated external-disk replay uses the US Track 02/System
+Card identity and the scripted PCE sequence `run@1:1,run@480:30,i@900:30`.
+It proves CD transport and initialization: 240 raw-sector spans, 25 CD IRQ
+callbacks, 256 authenticated CD-RAM receipts, 32 game-owned `$E009`
+dispatches, and a parser-approved transition receipt.
+
+The Main-RAM consumer sidecar is still init-only. It has 65,536 reads and 512
+reads in `$2600-$27FF`, all zero-valued reads from `$CB22`; it has no runtime
+reads, no `$C3A0` reader, and no dynamic level/object publication. Therefore
+this replay does not open square/tile/HUD/T700/T900 semantics or production
+dungeon admission. The raw sidecars and instrumented emulator remain local on
+the external disk.
+
 ## Track 02 map-directory boundary
 
 The world handoff validates the complete authenticated Track 02 map directory
