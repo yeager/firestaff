@@ -1076,3 +1076,25 @@ Capturens kompletta screen-space-snapshot är däremot nu separat admissible:
 VDC-VRAM FNV-1a `411960eb` och VCE FNV-1a `6fb303b5`. Det paret går via den
 source-bound VDC/VCE-presentern, men får inte tolkas som square-, objekt-, HUD-
 eller monsterdata och används inte som README-screenshot.
+
+## 2026-08-12 — bounded `$B0E5` reserve rejects the active state’s non-spawn calls
+
+The reproducible capture patch reserves at most 256 register rows for logical
+`$B0E5` after its ordinary register budget is exhausted. This avoids dense
+`$C3A0`/`$CAxx` execution windows hiding every later `$B0E5` observation while
+keeping the trace bounded. The 12-second isolated replay of the operator-owned
+US CUE state recorded 164 retained `$B0E5` address hits in a 595 KiB register
+sidecar.
+
+Every retained entry had `A=$80` or `A=$85`; neither is in the source-locked
+regular-spawn dispatch domain `0..3`. The same run had
+`transition=missing` and zero authenticated CD-to-RAM receipts. It therefore
+remains negative evidence only, even though its state image contains one exact
+copy of the source-lock caller and `$B0E5` byte spans. The presence of source
+bytes in a Mednafen state does not establish that a particular runtime call
+uses the regular-spawn contract.
+
+No RNG return ownership, creature spawn, AI, attack/damage, loot, generator
+timing, T700 or T900 rule is published from this capture. The next positive
+witness must still show A=`0..3` together with the caller/helper return path,
+a source-owned target write and a live creature record in one execution.
