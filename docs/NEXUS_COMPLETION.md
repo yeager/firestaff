@@ -2,6 +2,16 @@
 
 ## Current external-data verification — 2026-08-13
 
+## Media discovery correction — 2026-08-14
+
+Nexus discovery now validates each CUE/BIN/ISO candidate before selecting it.
+This is required for authentic data directories that contain more than one
+regional image or unrelated media: directory enumeration order is not a source
+identity. A candidate is admitted only when its ISO tree contains the real
+`DM.BIN` and `LEV01.DGN` files. Firestaff reads the selected original image in
+place; it does not unpack or rewrite game data. The focused ISO/CUE, launch,
+manifest, and external-data tests pass.
+
 The external checkout was tested against
 `/Volumes/Extern-disk/FirestaffUserData/data/nexus`: all 304 registered Nexus
 CTest cases completed successfully. Fourteen tests remain intentionally

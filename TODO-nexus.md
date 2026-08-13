@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-14: Nexus disc discovery now validates every CUE/BIN/ISO candidate
+before selecting it. A mixed data directory can contain multiple regional
+images or an unrelated disc; Firestaff no longer trusts the first directory
+entry and reports no Nexus disc unless the candidate contains the authentic
+`DM.BIN` and `LEV01.DGN` admission files. The reader still consumes the
+original image in place and never materializes game data. Focused ISO, launch,
+manifest, and external-data tests pass.
+
 2026-08-14: The complete authentic English CUE was tested in an external
 development directory after extracting the real ISO and Japanese audio
 tracks from the supplied Nexus 7z archive. This removes the earlier missing-
