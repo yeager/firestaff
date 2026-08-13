@@ -65,9 +65,12 @@ DMN_ABS.TXT, DMN_BIB.TXT, DMN_CPY.TXT: tiny text files.
 
 ## Key Findings
 
-1. **16 dungeon levels** (same as DM1) — confirms Nexus is a DM1 remake
-2. **30 creature models** — all DM1 creatures present as 3D models
-3. **Per-level sound banks** — each level has its own audio
+1. **16 dungeon levels** (same count as DM1) — confirms the corpus contains
+   LEV00–LEV15, but does not by itself prove shared runtime format or mechanics
+2. **30 creature models** — the retail corpus contains 30 named model assets;
+   matching names do not prove DM1 runtime ownership or behavior
+3. **Per-level sound banks** — each level has an associated SAL/MAP pair;
+   selector ownership and playback semantics remain capture-gated
 4. **DM.BIN (542 KB)** — likely the game logic/engine binary (SH2 code)
 5. **3 FMV cutscenes** — Saturn AVI format
 6. **FONT256.S2D** — 256-character font (includes Japanese)

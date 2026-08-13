@@ -9,6 +9,11 @@ has distinct storage instead of aliasing the last result. This helper remains
 excluded from the production Nexus library; the fix is covered by
 `nexus_v1_text` and does not open Saturn text presentation.
 
+2026-08-13: `docs/NEXUS_FILE_CLASSIFICATION.md` no longer calls the matching
+16-level count or creature names proof that Nexus is a DM1 remake. The retail
+corpus establishes file presence only; runtime ownership, format identity and
+behavior remain source-/capture-gated.
+
 2026-08-13: A fresh external-disk J-BIOS/English-Merged run at
 `/Volumes/Extern-disk/nexus-capture-20260813/run-followup-20260813b/` produced
 301 frames and passes the raw-layout validator with the locked BIOS and disc
