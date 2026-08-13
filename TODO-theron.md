@@ -2,6 +2,19 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — consumer-receipt skiljer initiering från source-caller
+
+- ✅ Receipten räknar nu separat `$CB22`-initieringsläsningar, övriga
+  runtime-läsningar och läsningar från det byte-lockade `$C3A0–$C429`-fönstret.
+  För C3A0-fönstret behålls även icke-nollantal och distinkta reader-PC:er.
+- ✅ Den externa VDC-replayens main-RAM-sidecar (MD5
+  `c6f8f3bc32ce4b29ac32b376096756d1`) passerar parser-only med 311
+  target-läsningar, 128 icke-noll, och fortsatt `semantic_publication=blocked`.
+  Fälten bevarar caller-proveniens men klassificerar inte level, square,
+  object, HUD, creature, T700 eller T900.
+- 🔒 Replayen saknar fortfarande autentiserad CD/FIFO→RAM-origin i samma
+  session. Ingen gameplaysemantik öppnas av den nya shape-kvittensen.
+
 ## 2026-08-13 — autentiserad VDC/VCE-pair från RAM-replay admitted screen-space
 
 - ✅ `theron_v1_vram_trace_load_known_capture_files()` accepterar nu den

@@ -994,6 +994,12 @@ extern disk och Mednafen stängdes efter den avgränsade körningen.
 
 ## 2026-08-11 — C3A0 same-session target reads admitted as provenance
 
+The receipt now separates the observed `$CB22` init/readback helper from
+non-init target reads and counts the byte-locked `$C3A0-$C429` caller shape
+independently (including non-zero and distinct reader-PC counts). This is a
+provenance refinement only; it does not turn the target bytes into a level,
+square, object, HUD, creature, T700 or T900 record.
+
 The external-disk state-autoload run produced 65,536 ordered
 `main_ram_consumer_read` rows. The C3A0 register window and the target sidecar
 are from the same run: C3A0 reads observed main-RAM bytes at `$271e-$272b`

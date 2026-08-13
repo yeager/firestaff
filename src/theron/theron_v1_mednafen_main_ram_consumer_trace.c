@@ -113,6 +113,8 @@ int theron_v1_mednafen_main_ram_consumer_trace_parse_file(
     int first_line = 1;
     uint16_t target_reader_pcs[128] = {0};
     uint32_t target_reader_pc_count = 0u;
+    uint16_t target_c3a0_reader_pcs[128] = {0};
+    uint32_t target_c3a0_reader_pc_count = 0u;
 
     if (!out) return 0;
     *out = receipt;
@@ -195,6 +197,31 @@ int theron_v1_mednafen_main_ram_consumer_trace_parse_file(
             receipt.target_2600_bytes_present = 1;
             receipt.target_2600_read_count++;
             if (value != 0u) receipt.target_2600_nonzero_read_count++;
+            if (reader_pc == 0xcb22u) {
+                receipt.target_2600_init_read_count++;
+            } else {
+                receipt.target_2600_runtime_read_count++;
+            }
+            if (reader_pc >= 0xc3a0u && reader_pc <= 0xc429u) {
+                receipt.target_2600_c3a0_read_count++;
+                if (value != 0u) receipt.target_2600_c3a0_nonzero_read_count++;
+                if (target_c3a0_reader_pc_count < 128u) {
+                    uint32_t i;
+                    int seen = 0;
+                    for (i = 0u; i < target_c3a0_reader_pc_count; ++i) {
+                        if (target_c3a0_reader_pcs[i] == (uint16_t)reader_pc) {
+                            seen = 1;
+                            break;
+                        }
+                    }
+                    if (!seen) {
+                        target_c3a0_reader_pcs[target_c3a0_reader_pc_count++] =
+                            (uint16_t)reader_pc;
+                        receipt.target_2600_c3a0_distinct_reader_pc_count =
+                            target_c3a0_reader_pc_count;
+                    }
+                }
+            }
             if (target_reader_pc_count < 128u) {
                 uint32_t i;
                 int seen = 0;

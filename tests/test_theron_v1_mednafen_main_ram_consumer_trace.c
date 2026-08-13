@@ -120,6 +120,11 @@ static int test_target_window_provenance(void) {
              receipt.target_2600_read_count == 2u &&
              receipt.target_2600_nonzero_read_count == 1u &&
              receipt.target_2600_distinct_reader_pc_count == 2u &&
+             receipt.target_2600_init_read_count == 1u &&
+             receipt.target_2600_runtime_read_count == 1u &&
+             receipt.target_2600_c3a0_read_count == 1u &&
+             receipt.target_2600_c3a0_nonzero_read_count == 1u &&
+             receipt.target_2600_c3a0_distinct_reader_pc_count == 1u &&
              !receipt.semantic_publication_allowed;
     unlink(path);
     return result;
@@ -164,6 +169,8 @@ int main(void) {
     printf("PASS: md5=%s reads=%u first_physical=%x last_physical=%x "
            "first_reader=%x last_reader=%x target_2600=%s target_reads=%u "
            "target_nonzero=%u target_readers=%u "
+           "target_init=%u target_runtime=%u target_c3a0=%u "
+           "target_c3a0_nonzero=%u target_c3a0_readers=%u "
            "semantic_publication=blocked\n",
            receipt.source_trace_md5, receipt.read_count,
            receipt.first_physical_address, receipt.last_physical_address,
@@ -171,7 +178,12 @@ int main(void) {
            receipt.target_2600_bytes_present ? "present" : "absent",
            receipt.target_2600_read_count,
            receipt.target_2600_nonzero_read_count,
-           receipt.target_2600_distinct_reader_pc_count);
+           receipt.target_2600_distinct_reader_pc_count,
+           receipt.target_2600_init_read_count,
+           receipt.target_2600_runtime_read_count,
+           receipt.target_2600_c3a0_read_count,
+           receipt.target_2600_c3a0_nonzero_read_count,
+           receipt.target_2600_c3a0_distinct_reader_pc_count);
     if (getenv("THERON_MEDNAFEN_MAIN_RAM_CONSUMER_PARSE_ONLY")) {
         puts("PASS: parser-only capture admission; code-window semantics not requested");
         return 0;

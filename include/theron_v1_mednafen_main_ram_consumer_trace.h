@@ -27,6 +27,13 @@ typedef struct {
     uint32_t target_2600_read_count;
     uint32_t target_2600_nonzero_read_count;
     uint32_t target_2600_distinct_reader_pc_count;
+    /* Source-window shape, still provenance only.  $CB22 is the observed
+     * clear/readback helper; $C3A0-$C429 is the byte-locked caller window. */
+    uint32_t target_2600_init_read_count;
+    uint32_t target_2600_runtime_read_count;
+    uint32_t target_2600_c3a0_read_count;
+    uint32_t target_2600_c3a0_nonzero_read_count;
+    uint32_t target_2600_c3a0_distinct_reader_pc_count;
     int semantic_publication_allowed;
     uint32_t read_count;
     uint32_t first_logical_address;
