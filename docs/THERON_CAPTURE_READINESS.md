@@ -40,22 +40,18 @@ also pass. These are transport/readiness gates only; they do not promote the
 missing game-owned dungeon, spawn, or RNG consumers.
 
 An additional authenticated GUI capture now proves the real BIOS Run-to-CD
-Track 02 startup handoff and supplies the original-media title/menu image in
-`verification-screens/theron-quest-us-main-menu.png`. This is a real original
-game capture, not a Firestaff frame. Its complete hashes and narrow evidence
+Track 02 startup handoff. Its original emulator image is kept local and is
+not a public Firestaff screenshot. Its complete hashes and narrow evidence
 boundary are recorded in
 [`docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md`](source-lock/theron-authentic-track02-handoff-2026-08-08.md).
 
-The same real US CD route now also supplies the original-media dungeon frame
-in `verification-screens/theron-quest-us-dungeon-mednafen.png`. It is a
-reference image from Mednafen after the file-select/title route, not a
-Firestaff-rendered parity capture. The host pointer visible in that image is
-not a PC Engine mouse input. That Mednafen replay profile uses WASD as
-alternate PCE directional keys, `Z`/`X` for Button I/II, and `Return` for Run.
-This is only the original-emulator capture profile. Firestaff's Theron
+The same real US CD route also has a local original-emulator dungeon frame;
+it is not part of the public repository or README. Firestaff's Theron
 runtime uses ordinary desktop controls: arrow keys or W/A/S/D for movement,
 mouse button 1/2 for Button I/II, and a free mouse pointer that never hops
 between objects.
+
+README-eligible screenshots must be rendered by Firestaff itself.
 
 The Firestaff runtime still has no `README_ELIGIBLE` Theron row. The current
 public status should stay clear:

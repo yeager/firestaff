@@ -85,47 +85,45 @@ HUD binding, RNG consumption, creature AI/attacks/damage/loot, generator
 timing, T700 stat cadence, or T900 object rules. Those remain fail-closed until
 their own authenticated runtime consumer and disassembly receipts exist.
 
-The corresponding tracked image is
-`verification-screens/theron-quest-us-main-menu.png`. Its README caption
-identifies it as an original-media Mednafen capture so it cannot be confused
-with a completed Firestaff runtime screenshot.
+The corresponding original-emulator image remains a local-only artifact. It
+is not tracked or promoted as Firestaff output.
 
-## Additional original-media dungeon capture
+## Additional original-media dungeon capture (local only)
 
 **Verified: 2026-08-09.** A second real Mednafen session used the extracted US
 CUE/BIN set and the same verified System Card. After the authentic file-select
 and title/menu route, the game reached the original dungeon view. The tracked
-864×696 RGBA crop is:
+864×696 RGBA crop is kept locally and is not tracked:
 
 | Artifact | Identity |
 |---|---|
 | US CUE used for the session | MD5 `63dbd2fab613b2e8030ff4e44b978a39` |
 | System Card 3.0 | MD5 `ff1a674273fe3540ccef576376407d1d` |
 | Mednafen | 1.32.1 |
-| Tracked dungeon image | SHA-256 `0ae87857bdd33dadc2881f2ff5ca00007df6b9b406f124f10115f2fa589ae540` |
+| Dungeon image | Local-only original-emulator artifact; SHA-256 `0ae87857bdd33dadc2881f2ff5ca00007df6b9b406f124f10115f2fa589ae540` |
 
 This is original-game evidence only. It does not promote the Firestaff
 runtime screenshot gate or prove square-to-tile, HUD, creature, T700, T900,
 or other unresolved semantic consumers.
 
-## Operator-supplied gameplay and inventory captures
+## Operator-supplied gameplay and inventory captures (local only)
 
 **Verified: 2026-08-09.** The operator supplied two additional screenshots
-from the same original US Theron's Quest/Mednafen workflow. They are tracked
-as original-media reference captures, not generated Firestaff frames:
+from the same original US Theron's Quest/Mednafen workflow. They remain
+local-only original-media reference captures, not generated Firestaff frames:
 
 | Artifact | Dimensions | SHA-256 | Narrow evidence |
 |---|---:|---|---|
-| `verification-screens/theron-quest-us-akutuba-original-capture.png` | 819×657 | `13b0795054dea2a37c32392fbc2a6f212d1695f236fce394bbff824be929b718` | AKUTUBA scene/roster presentation |
-| `verification-screens/theron-quest-us-inventory-original-capture.png` | 841×611 | `3d9bbd84eeb05d9e35bc9e9dfef9d38c3a5c8effa2642b5190528ece7c344c4f` | champion portrait, equipment layout, health/stamina/mana and food/water HUD |
-| `verification-screens/theron-quest-us-dungeon-hud-original-capture.png` | 847×602 | `dbc654b10d3a8b163b5c0d6cea76131f1334707c8cbc58f540a030168cbd3b63` | dungeon perspective, two-champion HUD and source control panel |
-| `verification-screens/theron-quest-us-dungeon-item-ground-original-capture.png` | 853×573 | `96c82861c0183563f07574bddb36abb6059bd82bd4622114e04bd9bd097c2447` | dungeon perspective with a ground item |
-| `verification-screens/theron-quest-us-dungeon-niche-item-original-capture.png` | 847×625 | `ddd063e7ea584d6f06ee2a02f5ad6d5a3539aaea3bfcd65bd6c333cd5b0b9318` | dungeon perspective with an item in a wall niche |
+| AKUTUBA capture | 819×657 | `13b0795054dea2a37c32392fbc2a6f212d1695f236fce394bbff824be929b718` | AKUTUBA scene/roster presentation |
+| Inventory capture | 841×611 | `3d9bbd84eeb05d9e35bc9e9dfef9d38c3a5c8effa2642b5190528ece7c344c4f` | champion portrait, equipment layout, health/stamina/mana and food/water HUD |
+| Dungeon HUD capture | 847×602 | `dbc654b10d3a8b163b5c0d6cea76131f1334707c8cbc58f540a030168cbd3b63` | dungeon perspective, two-champion HUD and source control panel |
+| Ground-item capture | 853×573 | `96c82861c0183563f07574bddb36abb6059bd82bd4622114e04bd9bd097c2447` | dungeon perspective with a ground item |
+| Niche-item capture | 847×625 | `ddd063e7ea584d6f06ee2a02f5ad6d5a3539aaea3bfcd65bd6c333cd5b0b9318` | dungeon perspective with an item in a wall niche |
 
-These images are useful visual evidence for the source presentation and for
-the README reference gallery. The screenshots alone do not prove the
+These local images are useful visual evidence for source analysis, but are
+not part of the public Firestaff screenshot set. The captures alone do not prove the
 underlying RNG, AI, attack, damage, loot, generator, T700 or T900 consumers;
 those still require a same-run runtime receipt or a complete source-bound
 static consumer proof. The two latest supplied files had the same
 `ddd063e7ea584d6f06ee2a02f5ad6d5a3539aaea3bfcd65bd6c333cd5b0b9318` hash, so
-only one copy is tracked.
+only one local copy is retained.

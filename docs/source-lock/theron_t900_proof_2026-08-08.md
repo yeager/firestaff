@@ -132,9 +132,9 @@ objectkonsument.
 Den positiva GUI-körningen är nu ett separat startup-/mediareceipt: en riktig
 macOS Quartz Return-händelse (`SDL scancode 40`) når Mednafen, PCE-input visar
 Run-biten `raw=0008`, och samma körning loggar 56 SCSI-läsningar samt 175
-råsektorer från autentiserat US Track 02. Den första menyrutan är sparad som
-`verification-screens/theron-quest-us-main-menu.png` och dess fullständiga
-hashar och begränsningar finns i
+råsektorer från autentiserat US Track 02. Den första menyrutan är ett
+lokalt originalemulatorartefakt; inga sådana skärmbilder trackas eller används
+som Firestaff-output. Fullständiga hashar och begränsningar finns i
 `docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md`.
 Detta ersätter den tidigare negativa slutsatsen om att ingen Track 02-handoff
 alls var bevisad, men den visar fortfarande inte `$2600`-konsumenten eller
