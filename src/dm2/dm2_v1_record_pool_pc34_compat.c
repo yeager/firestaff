@@ -68,7 +68,7 @@ static int16_t dm2_v1_pool_rd16(const DM2_V1_RecordPoolSet *set,
 {
     if (set && set->source_words_big_endian)
         return (int16_t)(((uint16_t)p[0] << 8) | p[1]);
-    return dm2_v1_rd16(p);
+    return dm2_v1_rd16(set, p);
 }
 
 static void dm2_v1_pool_wr16(const DM2_V1_RecordPoolSet *set,
@@ -79,11 +79,11 @@ static void dm2_v1_pool_wr16(const DM2_V1_RecordPoolSet *set,
         p[0] = (uint8_t)(u >> 8);
         p[1] = (uint8_t)u;
     } else {
-        dm2_v1_wr16(p, v);
+        dm2_v1_wr16(set, p, v);
     }
 }
 
-static uint16_t dm2_v1_raw_rd16(const uint8_t *p)
+static uint16_t dm2_v1_raw_rd16(const uint8_t *p, int words_big_endian)
 {
     return words_big_endian
         ? (uint16_t)(((uint16_t)p[0] << 8) | p[1])
@@ -1144,7 +1144,7 @@ static uint16_t dm2_v1_sksave_pool_recycle_direct(
     }
     pool = &ctx->set->pools[requested_db];
     memset(record, 0, (size_t)pool->record_size);
-    dm2_v1_wr16(record, DM2_V1_RECORD_HANDLE_END);
+    dm2_v1_wr16(ctx->set, record, DM2_V1_RECORD_HANDLE_END);
     if (requested_db == 2u && ctx->recycle_db2_count != UINT16_MAX)
         ++ctx->recycle_db2_count;
     ctx->map_owner->recycle_scan_map[requested_db] = candidate.cursor_after;
@@ -1189,7 +1189,7 @@ static uint16_t dm2_v1_sksave_pool_alloc(void *context, int record_type)
         for (index = 0; index < pool->record_count; ++index) {
             uint8_t *record = pool->bytes +
                 (size_t)index * (size_t)pool->record_size;
-            if (dm2_v1_rd16(record) == DM2_V1_RECORD_HANDLE_NULL) {
+            if (dm2_v1_rd16(ctx->set, record) == DM2_V1_RECORD_HANDLE_NULL) {
                 if (first_free < 0) first_free = index;
                 if (free_count != UINT16_MAX) ++free_count;
             }
@@ -1447,7 +1447,7 @@ int dm2_v1_record_pool_next_link(const DM2_V1_RecordPoolSet *set,
      * word. */
     *out_next = set->source_words_big_endian
         ? (int16_t)(((uint16_t)addr[0] << 8) | addr[1])
-        : dm2_v1_rd16(addr);
+        : dm2_v1_rd16(set, addr);
     return 1;
 }
 

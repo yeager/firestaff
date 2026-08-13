@@ -494,6 +494,13 @@ static const char* const g_originalCandidateNames[] = {
     "DUNGEON_XMAP.dat",
     "DUNGEON_SHOP.DAT",
     "DUNGEON_1MONS.dat",
+    /* Theron's original Track 02 distributions are commonly surfaced as
+     * these ISO/BIN filenames. They are evidence candidates even when the
+     * bytes are later rejected by the version MD5 gate. */
+    "TQJP02End.iso",
+    "TQUS02End.iso",
+    "TQJP02.bin",
+    "TQUS02.bin",
     "00.hmp.mid",
     "01.hmp.mid",
     "02.hmp.mid",
@@ -5834,9 +5841,17 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
     if (FSP_FileExists(requestedDataDir) &&
         !FSP_DirExists(requestedDataDir) &&
         m12_explicit_path_is_archive(requestedDataDir)) {
-        /* An archive is a precise user selection. Keep it as the root, so
-         * sibling game media cannot override the selected package. */
-        effectiveRequestedDataDir = requestedDataDir;
+        /* An explicit container is still a file selection, not a runtime
+         * directory. Scan its containing directory while retaining the
+         * selected path for the hash-first admission helpers. This keeps
+         * dataDir/runtime discovery stable for rejected ISO/BIN/ZIP paths
+         * and prevents a file path from leaking as a directory root. */
+        if (FSP_ParentDir(containerParent, sizeof(containerParent),
+                          requestedDataDir)) {
+            effectiveRequestedDataDir = containerParent;
+        } else {
+            effectiveRequestedDataDir = requestedDataDir;
+        }
         requestedFileScanParent = 1;
     } else if (FSP_FileExists(requestedDataDir) &&
                !FSP_DirExists(requestedDataDir) &&

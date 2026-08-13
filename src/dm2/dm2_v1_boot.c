@@ -14442,9 +14442,6 @@ int dm2_v1_boot_materialize_startend_first_champion(
     uint32_t old_release_tick;
     uint16_t old_release_object;
     uint16_t source_first_mirror_object;
-    int first_map;
-    int first_x;
-    int first_y;
     int i;
 
     if (!profile || profile->source_game_load_session_ready ||
@@ -14512,7 +14509,6 @@ int dm2_v1_boot_materialize_startend_first_champion(
         owner->selected_party.heros_in_party != 1 ||
         owner->source_next_champion_number != 1) {
         return 0;
-        }
     }
 
     /* In this exact startend branch v1d6a2d is set to one before

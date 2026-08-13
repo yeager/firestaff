@@ -384,7 +384,7 @@ struct DM2_V1_RuntimeState {
     void *cdda_cb_ctx;
 };
 
-static const uint8_t *dm2_runtime_mac_record_accessor(
+static const uint8_t * __attribute__((unused)) dm2_runtime_mac_record_accessor(
     uint16_t handle, uint16_t *out_size, void *user)
 {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
@@ -401,7 +401,7 @@ static const uint8_t *dm2_runtime_mac_record_accessor(
     return record;
 }
 
-static int32_t dm2_runtime_mac_key_can_handle(
+static int32_t __attribute__((unused)) dm2_runtime_mac_key_can_handle(
     uint16_t actuator, int16_t expected_item_type, void *user)
 {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;

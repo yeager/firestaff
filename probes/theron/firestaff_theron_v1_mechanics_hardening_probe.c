@@ -88,6 +88,13 @@ static void make_world(Theron_V1_World *w) {
     w->party.active_slot = 0;
 }
 
+static void install_fixture_object(Theron_V1_World *w,
+                                   int index,
+                                   Theron_V1_Object object) {
+    object.dungeon_id = 1;
+    w->objects[index] = object;
+}
+
 /* ═══════════════════════════════════════════════════════════════
  * TEST: movement — wall blocking
  * ═══════════════════════════════════════════════════════════════ */
@@ -205,7 +212,7 @@ static void test_click_route_use_door(void) {
     d.state = THERON_DOOR_STATE_CLOSED;
     d.x     = 8; d.y = 7;
     d.level = 0;
-    w.objects[0] = d;
+    install_fixture_object(&w, 0, d);
     w.object_count = 1;
 
     CHECK_INT("USE on closed door returns 0",
@@ -225,7 +232,7 @@ static void test_click_route_use_door(void) {
     d.flags = THERON_DOOR_F_LOCKED;
     d.x     = 8; d.y = 7;
     d.level = 0;
-    w2.objects[0] = d;
+    install_fixture_object(&w2, 0, d);
     w2.object_count = 1;
 
     CHECK_INT("unlock with key succeeds",
@@ -253,7 +260,7 @@ static void test_door_open_close(void) {
     d.flags = 0;
     d.x     = 5; d.y = 5;
     d.level = 0;
-    w.objects[0] = d;
+    install_fixture_object(&w, 0, d);
     w.object_count = 1;
 
     CHECK_INT("door_open returns 0",
@@ -273,7 +280,7 @@ static void test_door_open_close(void) {
     /* Closing locked door → locked state */
     d.state = THERON_DOOR_STATE_CLOSED;
     d.flags = THERON_DOOR_F_LOCKED;
-    w.objects[0] = d;
+    install_fixture_object(&w, 0, d);
     CHECK_INT("door_is_locked true for locked door",
               theron_v1_door_is_locked(&w, 5, 5),
               1);
@@ -301,14 +308,14 @@ static void test_altar_resurrection(void) {
     a.state = 0;
     a.x     = 6; a.y = 6;
     a.level = 0;
-    w.objects[0] = a;
+    install_fixture_object(&w, 0, a);
     Theron_V1_Object spawner;
     memset(&spawner, 0, sizeof(spawner));
     spawner.id = 2;
     spawner.type = THERON_OBJTYPE_CREATURE_SPAWNER;
     spawner.x = 5; spawner.y = 5;
     spawner.level = 0;
-    w.objects[1] = spawner;
+    install_fixture_object(&w, 1, spawner);
     w.object_count = 2;
 
     uint32_t gold_before = w.party.gold;
@@ -337,7 +344,7 @@ static void test_altar_resurrection(void) {
     w2.party.champions[1].health = 0;
     memset(&a, 0, sizeof(a));
     a.id = 2; a.type = THERON_OBJTYPE_ALTAR_VI; a.x = 6; a.y = 6; a.level = 0;
-    w2.objects[0] = a; w2.object_count = 1;
+    install_fixture_object(&w2, 0, a); w2.object_count = 1;
     CHECK_INT("altar with insufficient gold returns -1",
               theron_v1_altar_of_vi_resurrect(&w2, 6, 6),
               -1);
@@ -365,7 +372,7 @@ static void test_pool_recovery(void) {
     p.type  = THERON_OBJTYPE_POOL;
     p.x     = 7; p.y = 7;
     p.level = 0;
-    w.objects[0] = p;
+    install_fixture_object(&w, 0, p);
     w.object_count = 1;
 
     int r = theron_v1_pool_use(&w, 7, 7);
@@ -467,14 +474,14 @@ static void test_alarm_trigger(void) {
     a.type  = THERON_OBJTYPE_ALARM;
     a.x     = 3; a.y = 3;
     a.level = 0;
-    w.objects[0] = a;
+    install_fixture_object(&w, 0, a);
     Theron_V1_Object spawner;
     memset(&spawner, 0, sizeof(spawner));
     spawner.id = 2;
     spawner.type = THERON_OBJTYPE_CREATURE_SPAWNER;
     spawner.x = 5; spawner.y = 5;
     spawner.level = 0;
-    w.objects[1] = spawner;
+    install_fixture_object(&w, 1, spawner);
     w.object_count = 2;
 
     CHECK_INT("alarm_trigger returns 0",
@@ -514,8 +521,8 @@ static void test_trigger_activate(void) {
     d.x     = 5; d.y = 4;
     d.level = 0;
 
-    w.objects[0] = t;
-    w.objects[1] = d;
+    install_fixture_object(&w, 0, t);
+    install_fixture_object(&w, 1, d);
     w.object_count = 2;
 
     CHECK_INT("trigger_activate returns 0",
@@ -572,7 +579,7 @@ static void test_click_route_take(void) {
     c.type  = THERON_OBJTYPE_CHEST;
     c.x     = 6; c.y = 6;
     c.level = 0;
-    w.objects[0] = c;
+    install_fixture_object(&w, 0, c);
     w.object_count = 1;
 
     CHECK_INT("TAKE on chest returns 0",

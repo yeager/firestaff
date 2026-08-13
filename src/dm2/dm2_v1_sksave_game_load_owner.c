@@ -1081,7 +1081,7 @@ int dm2_v1_sksave_game_load_owner_schedule_think_timer(
     return 1;
 }
 
-int dm2_v1_sksave_game_load_owner_init(
+int dm2_v1_sksave_game_load_owner_init_ordered(
     DM2_V1_SksaveGameLoadOwner *owner,
     const uint8_t *raw_body, size_t raw_body_size, uint16_t savegamew7,
     int words_big_endian,

@@ -947,6 +947,9 @@ static void test_runtime_export_continue_roundtrip(void) {
     source.party.champion_count = THERON_MAX_CHAMPIONS;
     source.party.gold = 444u;
     snprintf(source.party.champions[0].name, sizeof(source.party.champions[0].name), "Theron");
+    snprintf(source.party.champions[1].name, sizeof(source.party.champions[1].name), "Mara");
+    snprintf(source.party.champions[2].name, sizeof(source.party.champions[2].name), "Linos");
+    snprintf(source.party.champions[3].name, sizeof(source.party.champions[3].name), "Hexa");
     source.party.champions[0].health = 77;
     expect_true(theron_v1_srm_runtime_export_path(&source, path, &receipt) == THERON_V1_SRM_RUNTIME_OK && receipt.srm_size > 10u,
                 "runtime export writes gzip .srm bytes");

@@ -96,6 +96,7 @@ static Theron_V1_Object make_object(int id,
     o.type = (uint8_t)type;
     o.x = x;
     o.y = y;
+    o.dungeon_id = 1;
     o.level = 0;
     o.linked_id = linked_id;
     return o;

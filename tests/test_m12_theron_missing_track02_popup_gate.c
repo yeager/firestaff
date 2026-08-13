@@ -147,6 +147,12 @@ static int launcher_in_clean_main(const M12_StartupMenuState* state) {
            popup_lines_cleared(state);
 }
 
+static void force_english_locale(M12_StartupMenuState* state) {
+    if (!state) return;
+    state->languageExplicit = 1;
+    state->settings.languageIndex = 0; /* ENGLISH */
+}
+
 static int render_smoke_nonblank(const M12_StartupMenuState* state, const char* label) {
     const int w = M12_ModernMenu_NativeWidth();
     const int h = M12_ModernMenu_NativeHeight();
@@ -298,6 +304,7 @@ static void check_card_click_popup_surfaces_track02_hint(char* dataDir) {
     int theronIndex = 4;
 
     M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
+    force_english_locale(&state);
     /* The empty-data init surfaces the "NO GAME DATA FOUND" popup.
      * Dismiss it so we land on a clean MAIN view. */
     if (state.view == M12_MENU_VIEW_MESSAGE) {
@@ -317,7 +324,7 @@ static void check_card_click_popup_surfaces_track02_hint(char* dataDir) {
 
     line1 = state.messageLine1 ? state.messageLine1 : "";
     line2 = state.messageLine2 ? state.messageLine2 : "";
-    CHECK_STR_STARTS_WITH(line1, "THERON");
+    CHECK_STR_STARTS_WITH(line1, "Theron's Quest");
     CHECK_STR_CONTAINS(line1, "GAME DATA NOT FOUND");
     /* The popup body must mention the .BIN/.ISO extension so the
      * user knows which file format to drop, JP/US so a valid US
@@ -349,6 +356,7 @@ static void check_options_launch_popup_surfaces_track02_hint(char* dataDir) {
     int theronIndex = 4;
 
     M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
+    force_english_locale(&state);
     if (state.view == M12_MENU_VIEW_MESSAGE) {
         M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     }
@@ -398,6 +406,7 @@ static void check_quick_resume_popup_surfaces_track02_hint(char* dataDir) {
     const char* line2;
 
     M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
+    force_english_locale(&state);
     if (state.view == M12_MENU_VIEW_MESSAGE) {
         M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     }
@@ -417,7 +426,7 @@ static void check_quick_resume_popup_surfaces_track02_hint(char* dataDir) {
 
     line1 = state.messageLine1 ? state.messageLine1 : "";
     line2 = state.messageLine2 ? state.messageLine2 : "";
-    CHECK_STR_STARTS_WITH(line1, "THERON");
+    CHECK_STR_STARTS_WITH(line1, "Theron's Quest");
     CHECK_STR_CONTAINS(line2, ".BIN");
     CHECK_STR_CONTAINS(line2, ".ISO");
     CHECK_STR_CONTAINS(line2, "JP/US");
@@ -435,6 +444,7 @@ static void check_unrelated_games_unaffected_by_theron_gate(char* dataDir) {
     const char* line2;
 
     M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
+    force_english_locale(&state);
     if (state.view == M12_MENU_VIEW_MESSAGE) {
         M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     }
@@ -467,7 +477,7 @@ static void check_unrelated_games_unaffected_by_theron_gate(char* dataDir) {
 
     line1 = state.messageLine1 ? state.messageLine1 : "";
     line2 = state.messageLine2 ? state.messageLine2 : "";
-    CHECK_STR_STARTS_WITH(line1, "DM1");
+    CHECK_STR_STARTS_WITH(line1, "Dungeon Master");
     CHECK_STR_CONTAINS(line1, "GAME DATA NOT FOUND");
     /* The DM1 popup must NOT carry the Theron Track 02 hint. */
     if (line2 && strstr(line2, ".BIN") != NULL && strstr(line2, "TRACK 02") != NULL) {
