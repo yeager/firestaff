@@ -21,6 +21,7 @@ typedef struct Theron_Track02ObjectTable Theron_Track02ObjectTable;
 #include "theron_v1_combat.h"
 #include "theron_v1_dungeon_progression.h"
 #include "theron_v1_track02_spawn_binding.h"
+#include "theron_v1_track02_text_decode.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -343,6 +344,8 @@ typedef struct {
 /* Raw Track 02 dungeon-text words retained by the loaded world.  These are
  * source bytes for the unresolved HuC6280 text consumer, not host strings. */
 #define THERON_MAX_SOURCE_DUNGEON_TEXT 1024u
+#define THERON_MAX_SOURCE_DUNGEON_TEXT_TOKENS \
+    (THERON_MAX_SOURCE_DUNGEON_TEXT * 3u)
 
 /* A decoded source monster remains available as provenance even after its
  * static group members are admitted to the live creature pool.  The live
@@ -597,6 +600,12 @@ struct Theron_V1_World {
     int source_dungeon_text_dungeon_id;
     unsigned int source_dungeon_text_count;
     uint16_t source_dungeon_text[THERON_MAX_SOURCE_DUNGEON_TEXT];
+    /* Positional codec provenance for the same source words.  Token kind is
+     * limited to raw/control/end at the codec boundary; it does not assign
+     * the original HuC6280 control-code meaning or a UI destination. */
+    unsigned int source_dungeon_text_token_count;
+    Theron_TextToken source_dungeon_text_tokens[
+        THERON_MAX_SOURCE_DUNGEON_TEXT_TOKENS];
 
     /* Deterministic state hash */
     uint64_t state_hash;
@@ -644,6 +653,12 @@ int theron_v1_world_source_dungeon_text_word(
     const Theron_V1_World *world,
     unsigned int word_index,
     uint16_t *out_word);
+unsigned int theron_v1_world_source_dungeon_text_token_count(
+    const Theron_V1_World *world);
+int theron_v1_world_source_dungeon_text_token(
+    const Theron_V1_World *world,
+    unsigned int token_index,
+    Theron_TextToken *out_token);
 void theron_v1_party_place(Theron_V1_World *world, int x, int y, int dir);
 
 /* ── Object database API ─────────────────────────────────────────── */

@@ -362,12 +362,15 @@ int theron_v1_track02_load_full_dungeon_for_variant(
     result->source_text_data_count = td->text_data_count;
     memcpy(result->source_text_data, td->text_data,
            (size_t)td->text_data_count * sizeof(td->text_data[0]));
-    /* Keep the lossless source stream in the live world as well as in the
-     * transient receipt.  This does not publish text or resolve controls. */
+    /* Keep the lossless source stream and its positional token view in the
+     * live world as well as in the transient receipt.  This does not publish
+     * text or resolve controls. */
     world->source_dungeon_text_dungeon_id = dungeon_id;
-    world->source_dungeon_text_count = td->text_data_count;
-    memcpy(world->source_dungeon_text, td->text_data,
-           (size_t)td->text_data_count * sizeof(td->text_data[0]));
+    if (theron_v1_world_load_dungeon_text(
+            world, td->text_data, td->text_data_count) < 0) {
+        free(td);
+        return -1;
+    }
 
     TilePosition *pos_table = NULL;
     if (gref_count > 0u) {

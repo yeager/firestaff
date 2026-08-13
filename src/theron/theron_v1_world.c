@@ -805,6 +805,13 @@ int theron_v1_world_load_track02_dungeon(
     if (!world || !dd) return -1;
     if (dungeon_id < 1 || dungeon_id > THERON_DUNGEON_COUNT) return -1;
 
+    /* A selected dungeon bank owns the live text provenance.  Clear the
+     * previous bank before loading a new one so a JP/no-text route or a
+     * failed reload cannot expose stale source words/tokens. */
+    world->source_dungeon_text_dungeon_id = 0;
+    world->source_dungeon_text_count = 0;
+    world->source_dungeon_text_token_count = 0;
+
     int slot = dungeon_id - 1;
     int loaded = 0;
 
@@ -3204,11 +3211,28 @@ int theron_v1_world_load_dungeon_text(Theron_V1_World *world,
 {
     if (!world) return -1;
     world->dungeon_text_count = 0;
+    world->source_dungeon_text_count = 0;
+    world->source_dungeon_text_token_count = 0;
     if (!codons || codon_count == 0) return 0;
 
     Theron_TextBlock tb;
     if (theron_v1_track02_text_decode(codons, codon_count, &tb) != 0)
         return -1;
+
+    /* Retain the lossless source view in the live world before applying the
+     * semantic publication gate.  The raw words and positional tokens are
+     * the only source-owned values admitted here; control-code interpretation
+     * remains closed until the original HuC6280 consumer is bound. */
+    if (codon_count > THERON_MAX_SOURCE_DUNGEON_TEXT ||
+        tb.token_count > THERON_MAX_SOURCE_DUNGEON_TEXT_TOKENS) {
+        return -1;
+    }
+    world->source_dungeon_text_count = codon_count;
+    memcpy(world->source_dungeon_text, codons,
+           (size_t)codon_count * sizeof(codons[0]));
+    world->source_dungeon_text_token_count = tb.token_count;
+    memcpy(world->source_dungeon_text_tokens, tb.tokens,
+           (size_t)tb.token_count * sizeof(tb.tokens[0]));
 
     /* The authentic Track 02 stream is retained by the decoder for
      * diagnostics, but braces are unresolved source control codes until the
@@ -3249,5 +3273,24 @@ int theron_v1_world_source_dungeon_text_word(
     if (!world || !out_word || word_index >= world->source_dungeon_text_count)
         return 0;
     *out_word = world->source_dungeon_text[word_index];
+    return 1;
+}
+
+unsigned int theron_v1_world_source_dungeon_text_token_count(
+    const Theron_V1_World *world)
+{
+    return world ? world->source_dungeon_text_token_count : 0u;
+}
+
+int theron_v1_world_source_dungeon_text_token(
+    const Theron_V1_World *world,
+    unsigned int token_index,
+    Theron_TextToken *out_token)
+{
+    if (!world || !out_token ||
+        token_index >= world->source_dungeon_text_token_count) {
+        return 0;
+    }
+    *out_token = world->source_dungeon_text_tokens[token_index];
     return 1;
 }

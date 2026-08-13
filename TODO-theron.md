@@ -8,6 +8,9 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   med källord och slot (`word_index`/`packed_slot`) i en tokenvy.
 - ✅ Codec-lagret skiljer nu råtecken, kända codec-markörer och slutmarkör
   utan att påstå vad de ursprungliga HuC6280-kontrollkoderna betyder.
+- ✅ Live world state behåller nu både råa textord och deras positionsbundna
+  tokenvy genom dungeon-loadern; en senare consumer-bindning behöver inte
+  återskapa tokenpositioner från media.
 - 🔒 Detta är förlustfri positionsproveniens, inte en öppning av text-, meny-
   eller HUD-semantik. Den game-owned textkonsumenten och dess VDC-mål måste
   fortfarande bindas i samma körning innan world/UI-publicering tillåts.

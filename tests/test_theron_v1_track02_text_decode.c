@@ -157,6 +157,19 @@ static int test_all_dungeons(const uint8_t *ud, size_t ud_size) {
             world, td->text_data, td->text_data_count) == 0);
         CHECK(world->dungeon_text_count == 0);
         CHECK(theron_v1_world_dungeon_text(world, 0) == NULL);
+        CHECK(theron_v1_world_source_dungeon_text_count(world) ==
+              td->text_data_count);
+        CHECK(theron_v1_world_source_dungeon_text_token_count(world) ==
+              tb->token_count);
+        {
+            Theron_TextToken token;
+            CHECK(theron_v1_world_source_dungeon_text_token(
+                world, 0u, &token));
+            CHECK(token.value == tb->tokens[0].value &&
+                  token.word_index == tb->tokens[0].word_index &&
+                  token.packed_slot == tb->tokens[0].packed_slot &&
+                  token.kind == tb->tokens[0].kind);
+        }
 
         free(world);
         free(tb);
