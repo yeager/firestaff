@@ -30,6 +30,9 @@ target_include_directories(test_nexus_v1_champion_plrd PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_champion_plrd PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_champion_plrd COMMAND test_nexus_v1_champion_plrd)
+set_tests_properties(nexus_v1_champion_plrd PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    LABELS "nexus;champions;real-media;tier4")
 
 add_executable(test_nexus_v1_saturn_tile_transform
     tests/test_nexus_v1_saturn_tile_transform.c

@@ -2,6 +2,12 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: The authentic PLRD champion regression now receives
+`FIRESTAFF_NEXUS_DATA_DIR` from CTest instead of silently running its missing-
+data path. It verifies the real first/last resistance pairs (`35/40` and
+`34/50`) and the fail-closed startup presentation contract. The complete
+Nexus/V2/M11 selection passes 296/296 with 14 explicit Saturn-capture skips.
+
 2026-08-13: Documentation audit removed unsupported claims that Nexus has a
 verified SLEV script VM or source-bound door/teleport/spawn actions. `SLEV*.BIN`
 and `SDDRVS.TSK` remain authentic preservation inputs with unresolved runtime
