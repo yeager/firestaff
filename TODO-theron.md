@@ -2,6 +2,20 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — savestate-replayen är fortfarande negativ för game-owned CD
+
+- ✅ En ny lokal replay från den autentiserade dungeon-savestaten gav 65 756
+  registerprover, 256 `$B0E5`-adressöverlagringar, 4 096
+  `spawn_consumer_read`-rader och 2 213 RNG-prover. US Track 02 och System
+  Card var hashverifierade.
+- 🔒 Replayen gav bara en CD IRQ efter autoload: noll råsektorer, noll
+  source-backed CD→RAM-receipts, noll giltiga `$B0E5`-kategorier och noll
+  `$4644/$4667`-prover. Den får därför inte öppna spawn, RNG, AI, combat,
+  loot, T700 eller T900.
+- ✅ Samma externa US/JP mechanics-playability-probe passerar 79/79 och
+  fortsätter att täcka source-bound grid/loader medan de dynamiska
+  originalkonsumenterna är fail-closed.
+
 ## 2026-08-13 — capturebaserad Theron-regression är verifierad
 
 - ✅ Hela Theron-regressionen på extern `TMPDIR` passerar: 253 valda tester,

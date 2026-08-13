@@ -1151,3 +1151,17 @@ Firestaff now validates this sidecar through
 monotonic timestamps, bounded addresses/registers and writer coordinates are
 all checked. The parser remains provenance-only and does not change the
 negative semantic conclusion above.
+## 2026-08-13 — fresh dungeon savestate replay remains transport-negative
+
+A new local replay from the authenticated dungeon `.mc0` state was run against
+the hash-verified US Track 02 and System Card. It produced 65,756 register
+samples, 256 `$B0E5` address-overlay hits, 4,096 `spawn_consumer_read` rows,
+and 2,213 RNG samples. The replay produced only one CD IRQ after autoload:
+zero raw sectors, zero source-backed CD-to-RAM receipts, zero valid regular
+`$B0E5` categories, and zero `$4644`/`$4667` samples. The result is retained
+outside GitHub at `/Volumes/Extern-disk/theron-capture-20260813-state/` and
+does not authorize spawn, RNG, AI, combat, loot, T700, or T900 semantics.
+
+The source-bound US/JP mechanics-playability probe independently passes 79/79;
+that result covers the authenticated grid/loader path only and is not merged
+with this negative runtime replay.
