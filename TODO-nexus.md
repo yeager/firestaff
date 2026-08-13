@@ -2,6 +2,17 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: A rebuilt instrumented Mednafen 1.32.1 (O1, authentic J BIOS and
+English merged disc) completed a 301-frame Saturn capture at
+`/Volumes/Extern-disk/nexus-saturn-capture/run-firestaff-instrumented-20260813-204423/`.
+The BIOS and disc hashes in `manifest.txt` match the documented source media;
+the raw witness is 474,867,164 bytes with SHA-256
+`fe0d581359d7c6b9f6a19e2f1b9fb709dbae047d928434cceaf1d8be6ff72878`.
+The transport validator passes with active VDP1 frames and the run produced
+VDP1, VDP2 and SCSP traces. The trace proves runtime activity only: source
+asset identity, semantic consumer, and final presentation remain unbound, so
+`semantic_admission=blocked` is retained and no Saturn production gate opens.
+
 2026-08-13: Removed two unsupported `NEXUS_SFX_FOOTSTEP` emissions from
 water/fire traversal. ReDMCSB `MOVESENS.C` records the square sensors and
 movement result but the successful party-step path has no sound request;
