@@ -2,6 +2,17 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-14: A clean, non-instrumented Mednafen session was run with the
+authentic English merged CUE, J-BIOS configuration and explicit Saturn
+bindings (`START=keyboard 0x0 40`, `A=keyboard 0x0 89`). Window-ID-bound
+screenshots at
+`/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-clean-interactive-20260814/`
+show the original Nexus logo and later original intro imagery without the
+previous OpenCaptive/DOSBox desktop contamination. The witnesses are valid
+visual reference material, with SHA-256 values recorded beside the PNGs, but
+they do not show the startup menu, LEV01 or a played save. No production gate
+is opened from these images alone.
+
 2026-08-13: A clean interactive Mednafen session was repeated with the
 verified non-instrumented Mednafen build, the authentic English merged CUE and
 the external J-BIOS configuration. The emulator reached Saturn video
