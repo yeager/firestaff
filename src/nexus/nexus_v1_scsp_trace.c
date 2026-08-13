@@ -4,7 +4,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#define NEXUS_V1_SCSP_TRACE_MAX_BYTES (16U * 1024U * 1024U)
+/* The instrumented Saturn producer can emit one record per SCSP write for a
+ * long capture window.  The authenticated gameplay traces are about 33 MiB;
+ * 16 MiB rejected those complete traces before header validation.  Keep an
+ * explicit ceiling, but allow the largest supported bounded witness. */
+#define NEXUS_V1_SCSP_TRACE_MAX_BYTES (64U * 1024U * 1024U)
 
 static uint64_t fnv1a64(const uint8_t *data, size_t size)
 {
