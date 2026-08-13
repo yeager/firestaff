@@ -293,7 +293,7 @@ h_before == h_after → PASS
 ### Gate Conditions
 
 - `NEXUS_SAVE_MAGIC` (`0x53584E46`) written and read back correctly
-- `NEXUS_SAVE_VERSION` (2) written and read back correctly
+- `NEXUS_SAVE_VERSION` (3) written and read back correctly
 - World hash identical before save and after load
 - CRC-32 of data section validates integrity
 - Unknown variant: `nexus_v1_save_probe()` returns non-empty reason string
@@ -361,10 +361,16 @@ Update `g_nexusVersions[]` in `src/shared/asset_status_m12.c` with confirmed has
 - ✅ All probes: headless with graceful skip when no game data
 - ✅ Source evidence tied to disc/version hashes (Section 9)
 
-**Status: COMPLETE ✅**
+**Status: PARTIAL — verification suite complete, runtime parity gates open**
 
-> **2026-05-27 hash lock:** All 138 file SHA256 hashes computed from live Sega Saturn
-> disc extraction at `~/.firestaff/data/nexus/`. Hash manifest:
+The listed headless/parser and Firestaff-native save checks are complete. This
+does not certify Saturn runtime parity: authentic startup/menu progression,
+VDP1/VDP2 presentation, original Saturn save import, audio dispatch, and a
+played level remain open capture/source gates. Synthetic fixtures in this
+document are test scaffolding only and are never production game data.
+
+> **2026-05-27 hash lock:** The historical 138-file SHA256 manifest was computed
+> from a live Sega Saturn extraction. Hash manifest:
 > `scripts/fixtures/nexus_v1_disc_file_hashes.py`. Sizes in
 > `scripts/fixtures/nexus_v1_asset_sizes.py`. Disc-image-level SHA256 pending `.cue/.bin`
 > acquisition; individual file hashes are real and locked.

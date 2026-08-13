@@ -68,9 +68,11 @@ admitted to production rendering.
 retained DM.BIN/disassembly does not bind a level-to-CDDA selector. Tracks 2–9
 are a retail disc-layout receipt; playback is not promoted.
 
-### 9. No save/load implementation
+### 9. Saturn save/load format unresolved
 **Severity:** MEDIUM
-**Details:** No save/load code in Nexus V1. Saturn save format unknown.
+**Details:** Firestaff-native `FNXS` version 3 save/load exists and has
+round-trip coverage. The original Saturn memory-card format and an authentic
+played save are still unresolved, so no Saturn importer is claimed.
 
 ### 10. No V2 renderer scaffold wired
 **Severity:** MEDIUM

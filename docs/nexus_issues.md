@@ -131,14 +131,19 @@ track count or level order.
 
 ---
 
-### M6: No Save/Load Implementation
+### M6: Saturn Save/Load Format Not Reversed
 
 **Severity:** MEDIUM
-**Status:** No save/load code exists for Nexus
+**Status:** Firestaff-native save/load is implemented and round-tripped. The
+original Saturn memory-card format is still not source-bound.
 
-Saturn save format unknown. No save/load round-trip possible.
+The native `FNXS` format is version 3 and is deliberately separate from the
+original Saturn format. It must not be presented as an import of Saturn
+backup-RAM data.
 
-**Action required:** Identify save format from disc or documentation. Implement save/load. Write round-trip test.
+**Action required:** Recover an authentic played Saturn save and the original
+load/save consumer before implementing an importer. Keep the native round-trip
+tests as coverage, but do not use synthetic Saturn save bytes as evidence.
 
 ---
 

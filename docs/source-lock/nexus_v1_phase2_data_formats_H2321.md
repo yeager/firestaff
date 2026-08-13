@@ -888,7 +888,7 @@ Atomic write: `save.tmp` → `fsync` → rename (no partially-written saves).
 
 Source: `src/nexus/nexus_v1_save_load.c`, `include/nexus_v1_save.h`
 
-### 11.2 Save Data Sections (v2)
+### 11.2 Save Data Sections (v3)
 
 | Section | Content | Serialization |
 |---------|---------|---------------|
@@ -919,7 +919,7 @@ Source: `src/nexus/nexus_v1_world.c`, `docs/nexus_save_format.md`
 
 | Sub-format | Status | Evidence |
 |-----------|--------|---------|
-| Native save header | ✅ v2 format | `nexus_v1_save.h` |
+| Native save header | ✅ v3 format | `nexus_v1_save.h` |
 | CRC-32 integrity | ✅ Implemented | `crc32_update()` |
 | Slot manager | ✅ 8 slots + browse | `nexus_v1_save_load.c` |
 | Champion serialization | ✅ Binary blob | `nexus_v1_save_load.c` |
@@ -952,9 +952,9 @@ Source: `src/nexus/nexus_v1_world.c`, `docs/nexus_save_format.md`
 | SWTCHR.BIN | Single | Unknown graphics | 38 KB | ⚠️ Raw read only |
 | DM.BIN | Single | SH-2 big-endian | 542 KB | ⚠️ ISO-loadable, not parsed |
 | 0DMSTRT.BIN | Single | Binary data | 39 KB | ⚠️ ISO-loadable, not parsed |
-| Nexus save (native) | Firestaff v2 | LE binary | variable | ✅ Full R/W |
+| Nexus save (native) | Firestaff FNXS v3 | LE binary | variable | ✅ Full R/W |
 | CD-DA tracks | 8 tracks (2–9) | Red Book Audio | 44.1 kHz/stereo/16b | ⚠️ Track switch only |
-| Per-level CD track map | 16 levels | — (2/track) | — | ✅ `nexus_v1_cd_track_for_level()` |
+| Per-level CD track map | 16 levels | — | — | ⚠️ Selector not source-bound; function returns `-1` |
 
 ---
 
