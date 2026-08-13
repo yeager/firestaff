@@ -13,6 +13,23 @@ visual reference material, with SHA-256 values recorded beside the PNGs, but
 they do not show the startup menu, LEV01 or a played save. No production gate
 is opened from these images alone.
 
+2026-08-14: A longer clean replay waited through 240 seconds after the
+authentic title input. The title/entrance animation continued and later
+returned to the original entrance imagery; no startup menu, LEV01 viewport or
+played save appeared. The window-captured witnesses and hashes are at
+`/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-post-title-long-20260814/`.
+This reproduces the negative transition with correct bindings and confirms
+that additional blind START/A presses would not be valid source-owned menu or
+pose proof.
+
+2026-08-14: A cold-boot time scan sampled the clean Mednafen window every 15
+seconds and located the real `PRESS START BUTTON` prompt at approximately
+225–240 seconds. A new run sent START only in that measured window. The
+resulting 20/80/140-second witnesses show the authentic post-title transition
+(title frame, red-gem sequence, then entrance doors), but not the startup menu
+or LEV01. This proves the binding and the title-to-transition input edge; it
+does not prove a playable handoff or justify a synthetic pose.
+
 2026-08-13: A clean interactive Mednafen session was repeated with the
 verified non-instrumented Mednafen build, the authentic English merged CUE and
 the external J-BIOS configuration. The emulator reached Saturn video
