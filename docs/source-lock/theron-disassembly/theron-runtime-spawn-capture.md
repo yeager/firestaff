@@ -1009,6 +1009,23 @@ It does not authorize a dungeon level, square-to-tile mapping, HUD/object
 owner, creature, T700 or T900 consumer. No README screenshot is promoted from
 this capture.
 
+## 2026-08-13 — CUE/state screen-space replay retained
+
+The existing patched Mednafen capture producer replayed the authentic retail
+US `TQUS.cue` with its hash-locked MODE1/2048 Track 02
+(`ceb02343868f80cec899e9b239aff2da`), the local System Card
+(`ff1a674273fe3540ccef576376407d1d`), and the operator's matching Mednafen
+state. Its clean shutdown wrote a 65,536-byte VDC snapshot with FNV-1a
+`8165c4d4` and a 1,024-byte VCE snapshot with FNV-1a `ea83f117`.
+
+The raw files remain on the external disk and are not game data committed to
+Git. The production allow-list admits this exact VDC/VCE pair only as a
+screen-space tile and palette replay. The real-capture regression verified
+1,057 BAT tiles, 50,455 non-zero preview pixels and 38,167 presented pixels.
+It does not establish the original bitmap loader, VDC transfer provenance,
+HUD ownership, a dungeon map/object interpretation, or any combat/spawn
+consumer; those semantic routes remain closed.
+
 ## 2026-08-11 — MODE1/2048 CD→RAM transport witness
 
 En ny, avgränsad körning använde den autentiserade US-distributionens riktiga
