@@ -1,11 +1,19 @@
 # Nexus V1 Test Coverage Report
 
+> Current report: the authenticated external Nexus corpus is available at
+> `/Volumes/Extern-disk/FirestaffUserData/data/nexus`. The Nexus V1/V2/M11
+> selection contains 296 tests and passes 296/296 on that corpus. The detailed
+> per-file table below is a historical snapshot and must not be read as the
+> current test inventory.
+
 ## Summary
 
-Nexus V1 implementation: 20 source files in src/nexus/, static library libfirestaff_nexus.a.
-Nexus V1 tests: **0 tests**. No CTest entries. No test binaries. No test fixtures.
+Current coverage includes ISO/CUE reads, DGN/DMDF/PRS3/FACE/ITEM/SMAP/FONT
+receipts, launcher handoff, host mechanics, save round-trips, capture schemas
+and fail-closed no-fallback boundaries. Private Saturn capture/save tests are
+explicitly skip-safe and remain open evidence gates.
 
-The test suite has 387 tests but none are for Nexus. All existing tests are DM1 V1/V2 and memory subsystem tests.
+The remainder of this page preserves the old gap inventory for provenance.
 
 ---
 
@@ -38,7 +46,7 @@ The test suite has 387 tests but none are for Nexus. All existing tests are DM1 
 
 ---
 
-## What's Well-Tested (DM1, not Nexus)
+## Historical snapshot: What's Well-Tested (DM1, not Nexus)
 
 The well-tested areas are all DM1 V1, not Nexus V1. This is relevant because DM1 parity serves as a proxy for Nexus mechanics:
 
@@ -64,7 +72,7 @@ The well-tested areas are all DM1 V1, not Nexus V1. This is relevant because DM1
 
 ---
 
-## Coverage Gaps for Nexus V1
+## Historical snapshot: Coverage Gaps for Nexus V1
 
 ### Critical Gaps
 
@@ -86,7 +94,7 @@ The well-tested areas are all DM1 V1, not Nexus V1. This is relevant because DM1
 
 ---
 
-## Fixture Availability
+## Historical snapshot: Fixture Availability
 
 | Fixture Type | DM1 | Nexus |
 |-------------|-----|-------|

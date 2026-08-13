@@ -106,10 +106,18 @@ int nexus_v1_launcher_init(const char *data_dir) {
         return -1;
     }
 
-    /* Already initialized — return success without re-init */
+    /* Reusing the singleton is safe only for the same source root.  M11 can
+     * switch game profiles or an operator can point a second probe at a
+     * different authentic corpus in one process.  Keeping the old engine in
+     * that case silently serves the previous game's files and state. */
     if (s_initialized) {
-        printf("Nexus launcher: already initialized\n");
-        return 0;
+        if (strcmp(s_engine.data_dir, data_dir) == 0) {
+            printf("Nexus launcher: already initialized\n");
+            return 0;
+        }
+        printf("Nexus launcher: switching data root from '%s' to '%s'\n",
+               s_engine.data_dir, data_dir);
+        nexus_v1_launcher_shutdown();
     }
 
     /* Init the engine singleton.
@@ -133,8 +141,20 @@ int nexus_v1_launcher_load_level(int level) {
         printf("Nexus launcher: not initialized — call nexus_v1_launcher_init first\n");
         return -1;
     }
-    if (level < 0 || level > 15) {
-        printf("Nexus launcher: invalid level %d (must be 0-15)\n", level);
+    /* LEV00 is the retail title/entrance image, not a playable dungeon.
+     * A native resume must never route a saved session back into it; the
+     * source-owned playable handoff starts at LEV01. */
+    if (level < NEXUS_V1_FIRST_PLAYABLE_LEVEL || level > 15) {
+        printf("Nexus launcher: invalid level %d (must be 1-15)\n", level);
+        return -1;
+    }
+    /* The loader is also used by native resume.  Never install a playable
+     * level while the engine still carries the title boot's unplaced pose. */
+    if (s_engine.game.party_x < 0 || s_engine.game.party_x >= NEXUS_MAX_MAP_SIZE ||
+        s_engine.game.party_y < 0 || s_engine.game.party_y >= NEXUS_MAX_MAP_SIZE ||
+        s_engine.game.party_dir < 0 || s_engine.game.party_dir > 3) {
+        printf("Nexus launcher: playable level %d requires a validated pose\n",
+               level);
         return -1;
     }
     int rc = nexus_v1_load_level(&s_engine, level);
@@ -9057,10 +9077,11 @@ int nexus_v1_launcher_boot_level0_startup(
         return 0;
     }
     /* The retail title/menu surfaces are independent of dungeon placement.
-     * Keep the verified title route available when a game-start pose has not
-     * yet been recovered; entering the dungeon remains capture-gated below.
-     * This deliberately does not install a guessed LEV00 coordinate. */
-    (void)nexus_v1_launcher_load_level(0);
+     * LEV00 is the title-sequence entrance image, not a playable runtime
+     * level, so do not route it through nexus_v1_load_level(). That loader
+     * must reject LEV00 until a real Saturn gameplay handoff exists. Keeping
+     * title startup independent also prevents a missing start pose from
+     * turning a valid title boot into a false level error. */
     engine = nexus_v1_launcher_get_engine();
     if (!engine) {
         (void)nexus_v1_startup_boot_status_host_receipt(
@@ -9072,10 +9093,9 @@ int nexus_v1_launcher_boot_level0_startup(
     /* New selected-entry boots always start from Nexus defaults; save
      * resume applies persisted party/tick state in the M11 resume path. */
     nexus_v1_game_init(&engine->game, engine->data_dir);
-    if (engine->level_loaded) {
-        nexus_v1_sync_dgn_runtime_pose(engine, 0, engine->game.party_x,
-                                       engine->game.party_y, engine->game.party_dir);
-    }
+    /* No DGN runtime state is installed by the title boot. The first
+     * playable route must load hash-verified LEV01 and apply a source-bound
+     * Saturn coordinate/facing before it may become runtime state. */
     {
         int rlowfix_size = 0;
         uint8_t *rlowfix = nexus_v1_read_file(engine, "RLOWFIX.BIN",
@@ -9236,7 +9256,7 @@ int nexus_v1_launcher_resume_from_save_path(
     if (level < 0 || level > 15) {
         level = header.current_level;
     }
-    if (level < 0 || level > 15) {
+    if (level < NEXUS_V1_FIRST_PLAYABLE_LEVEL || level > 15) {
         (void)nexus_v1_startup_resume_status_host_receipt(
             NEXUS_V1_STARTUP_RESUME_STATUS_LEVEL_INVALID,
             &out_receipt->host_receipt);
@@ -9256,15 +9276,15 @@ int nexus_v1_launcher_resume_from_save_path(
                  world.party_dir);
         return 0;
     }
-
-    if (nexus_v1_launcher_load_level(level) != 0) {
+    if (world.party_x < 0 || world.party_x >= NEXUS_MAX_MAP_SIZE ||
+        world.party_y < 0 || world.party_y >= NEXUS_MAX_MAP_SIZE) {
         (void)nexus_v1_startup_resume_status_host_receipt(
-            NEXUS_V1_STARTUP_RESUME_STATUS_LEVEL_ERROR,
+            NEXUS_V1_STARTUP_RESUME_STATUS_POSE_INVALID,
             &out_receipt->host_receipt);
         snprintf(out_receipt->diagnostic,
                  sizeof(out_receipt->diagnostic),
-                 "level %d load failed",
-                 level);
+                 "bad pose %d,%d",
+                 world.party_x, world.party_y);
         return 0;
     }
 
@@ -9276,6 +9296,23 @@ int nexus_v1_launcher_resume_from_save_path(
         snprintf(out_receipt->diagnostic,
                  sizeof(out_receipt->diagnostic),
                  "engine lost");
+        return 0;
+    }
+    /* Seed the loader with the save-owned pose so it cannot transiently
+     * render or materialize a playable level at the title's (-1) pose. */
+    engine->game.party_x = world.party_x;
+    engine->game.party_y = world.party_y;
+    engine->game.party_dir = world.party_dir;
+    engine->game.game_started = 1;
+
+    if (nexus_v1_launcher_load_level(level) != 0) {
+        (void)nexus_v1_startup_resume_status_host_receipt(
+            NEXUS_V1_STARTUP_RESUME_STATUS_LEVEL_ERROR,
+            &out_receipt->host_receipt);
+        snprintf(out_receipt->diagnostic,
+                 sizeof(out_receipt->diagnostic),
+                 "level %d load failed",
+                 level);
         return 0;
     }
 

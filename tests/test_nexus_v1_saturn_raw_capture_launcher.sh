@@ -50,6 +50,29 @@ grep -Fq 'press_button_mask=0x30' "$tmp_dir/manifest-custom.txt"
   --frame-limit 560 --press-start-frame 10500 --press-start-length 60 \
   --require-input-window >/dev/null
 grep -Fq 'require_input_window=1' "$tmp_dir/manifest-window.txt"
+options_fake="$tmp_dir/fake-mednafen-options"
+python3 - "$options_fake" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+Path(sys.argv[1]).write_text(
+    "#!/bin/sh\n"
+    "printf '%s\\n' \"$@\" > \"$FIRESTAFF_NEXUS_TRACE_OUTPUT\"\n",
+    encoding="utf-8",
+)
+os.chmod(sys.argv[1], 0o755)
+PY
+FIRESTAFF_NEXUS_MEDNAFEN_OPTIONS='-sound 0 -videoip 0' \
+"$launcher" --operator-only --launch --mednafen "$options_fake" \
+  --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
+  --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
+  --trace "$tmp_dir/trace-options.raw" --validator /usr/bin/true \
+  --manifest "$tmp_dir/manifest-options.txt" >/dev/null
+grep -Fxq -- '-sound' "$tmp_dir/trace-options.raw"
+grep -Fxq -- '0' "$tmp_dir/trace-options.raw"
+grep -Fxq -- '-videoip' "$tmp_dir/trace-options.raw"
+grep -Fq 'mednafen_options=-sound\ 0\ -videoip\ 0' "$tmp_dir/manifest-options.txt"
 if "$launcher" --operator-only --mednafen /usr/bin/true \
   --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
   --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
@@ -116,7 +139,7 @@ FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_PC=0x06011860 \
 FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_MIN=0x0 \
 FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_MAX=0x40000 \
 FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_LIMIT=20000 \
-"$launcher" --operator-only --launch --mednafen "$vdp2_fake" \
+"$launcher" --operator-only --launch --mednafen "$tmp_dir/fake-mednafen" \
   --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
   --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
   --trace "$tmp_dir/trace-vdp2-env.raw" --validator /usr/bin/true \
@@ -155,6 +178,46 @@ FIRESTAFF_NEXUS_TRACE_VDP2_SOURCE_READ_LIMIT=200000 \
   --manifest "$tmp_dir/manifest-vdp2-source-read-env.txt" >/dev/null
 grep -Fq "$tmp_dir/source-reads.trace,0x0,0x80000,0x06002fc4,0x06002fc6,200000" \
   "$tmp_dir/trace-vdp2-source-read-env.raw"
+sh2_memory_fake="$tmp_dir/fake-mednafen-sh2-memory"
+python3 - "$sh2_memory_fake" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+Path(sys.argv[1]).write_text(
+    "#!/bin/sh\n"
+    "printf '%s,%s,%s,%s,%s' "
+    "\"$FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT\" "
+    "\"$FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT_FRAMES\" "
+    "\"$FIRESTAFF_NEXUS_TRACE_SH2_RAM_READS\" "
+    "\"$FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MIN\" "
+    "\"$FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MAX\" > "
+    "\"$FIRESTAFF_NEXUS_TRACE_OUTPUT\"\n"
+    "printf 'memory-snapshot' > \"$FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT\"\n"
+    "printf 'ram-read' > \"$FIRESTAFF_NEXUS_TRACE_SH2_RAM_READS\"\n",
+    encoding="utf-8",
+)
+os.chmod(sys.argv[1], 0o755)
+PY
+sh2_memory_snapshot="$tmp_dir/sh2-memory.snapshot"
+sh2_ram_reads="$tmp_dir/sh2-ram-reads.trace"
+FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT="$sh2_memory_snapshot" \
+FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT_FRAMES=',12,13,' \
+FIRESTAFF_NEXUS_TRACE_SH2_RAM_READS="$sh2_ram_reads" \
+FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MIN=0x06064500 \
+FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MAX=0x060646ff \
+FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_LIMIT=4000 \
+"$launcher" --operator-only --launch --mednafen "$sh2_memory_fake" \
+  --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
+  --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
+  --trace "$tmp_dir/trace-sh2-memory.raw" --validator /usr/bin/true \
+  --manifest "$tmp_dir/manifest-sh2-memory.txt" >/dev/null
+grep -Fq "$sh2_memory_snapshot,,12,13,,$sh2_ram_reads,0x06064500,0x060646ff" \
+  "$tmp_dir/trace-sh2-memory.raw"
+grep -Fq "FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT_sha256=$(shasum -a 256 "$sh2_memory_snapshot" | awk '{print $1}')" \
+  "$tmp_dir/manifest-sh2-memory.txt"
+grep -Fq "FIRESTAFF_NEXUS_TRACE_SH2_RAM_READS_sha256=$(shasum -a 256 "$sh2_ram_reads" | awk '{print $1}')" \
+  "$tmp_dir/manifest-sh2-memory.txt"
 dma_fake="$tmp_dir/fake-mednafen-dma"
 python3 - "$dma_fake" <<'PY'
 import os
@@ -192,7 +255,7 @@ FIRESTAFF_NEXUS_TRACE_VDP1_WRITES="$write_trace" \
 FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE="$writer_code_trace" \
 FIRESTAFF_NEXUS_TRACE_VDP1_SNAPSHOT="$snapshot" \
 FIRESTAFF_NEXUS_TRACE_SCSP_READS="$scsp_read_trace" \
-"$launcher" --operator-only --launch --mednafen "$tmp_dir/fake-mednafen" \
+"$launcher" --operator-only --launch --mednafen "$vdp2_fake" \
   --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
   --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
   --trace "$tmp_dir/trace-real.raw" --validator /usr/bin/true \

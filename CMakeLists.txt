@@ -166,6 +166,7 @@ target_include_directories(test_nexus_v1_hud_layout PRIVATE
 target_link_libraries(test_nexus_v1_hud_layout PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_hud_layout COMMAND test_nexus_v1_hud_layout)
 set_tests_properties(nexus_v1_hud_layout PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
     LABELS "nexus;hud;tier4;real_data;skip_safe"
     SKIP_RETURN_CODE 77)
 
@@ -176,6 +177,7 @@ target_include_directories(test_nexus_v1_startup_menu_source PRIVATE
 target_link_libraries(test_nexus_v1_startup_menu_source PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_startup_menu_source COMMAND test_nexus_v1_startup_menu_source)
 set_tests_properties(nexus_v1_startup_menu_source PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
     LABELS "nexus;startup;menu;tier4;real_data;skip_safe"
     SKIP_RETURN_CODE 77)
 
@@ -215,6 +217,7 @@ target_include_directories(test_nexus_v1_hud_hit_rects PRIVATE
 target_link_libraries(test_nexus_v1_hud_hit_rects PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_hud_hit_rects COMMAND test_nexus_v1_hud_hit_rects)
 set_tests_properties(nexus_v1_hud_hit_rects PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
     LABELS "nexus;hud;tier4;real_data;skip_safe"
     SKIP_RETURN_CODE 77)
 
@@ -225,7 +228,7 @@ target_include_directories(test_nexus_v1_champion_panel PRIVATE
 target_link_libraries(test_nexus_v1_champion_panel PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_champion_panel COMMAND test_nexus_v1_champion_panel)
 set_tests_properties(nexus_v1_champion_panel PROPERTIES
-    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=$ENV{HOME}/.firestaff/data/nexus"
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
     SKIP_RETURN_CODE 77
     LABELS "nexus;hud;real-media;tier4")
 
@@ -655,7 +658,7 @@ target_include_directories(test_nexus_v1_title_mapd_real PRIVATE
 target_link_libraries(test_nexus_v1_title_mapd_real PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_title_mapd_real COMMAND test_nexus_v1_title_mapd_real)
 set_tests_properties(nexus_v1_title_mapd_real PROPERTIES
-    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=$ENV{HOME}/.firestaff/data/nexus"
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
     SKIP_RETURN_CODE 77)
 add_executable(test_nexus_v1_saturn_card_m11_no_draw_startup tests/test_nexus_v1_saturn_card_m11_no_draw_startup.c src/shared/asset_find_by_hash.c)
 target_include_directories(test_nexus_v1_saturn_card_m11_no_draw_startup PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -43052,6 +43055,7 @@ add_test(
     COMMAND test_nexus_v1_sal_opaque_prefix_corpus
 )
 set_tests_properties(nexus_v1_sal_opaque_prefix_corpus PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
     LABELS "tier4;nexus;audio;sal;corpus;receipt;skip_safe"
     SKIP_RETURN_CODE 77
 )
@@ -43152,7 +43156,7 @@ if(BUILD_TESTING)
     add_test(
         NAME nexus_v1_track1_phase_launch_extracted_root
         COMMAND firestaff_nexus_v1_track1_phase_launch_probe
-                "$ENV{HOME}/.firestaff/data/nexus"
+                "${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
     )
     set_tests_properties(nexus_v1_track1_phase_launch_extracted_root PROPERTIES
         LABELS "tier1;nexus;track1;phase_launch;live;extracted"
@@ -43185,7 +43189,7 @@ if(BUILD_TESTING)
     add_test(
         NAME nexus_v1_track1_real_screen_capture_readiness_extracted_root
         COMMAND firestaff_nexus_v1_track1_real_screen_capture_readiness_probe
-                "$ENV{HOME}/.firestaff/data/nexus"
+                "${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
                 "${CMAKE_BINARY_DIR}/nexus_v1_track1_real_screen_capture_readiness_extracted_root"
     )
     set_tests_properties(nexus_v1_track1_real_screen_capture_readiness_extracted_root PROPERTIES
@@ -43264,7 +43268,7 @@ if(BUILD_TESTING)
     add_test(
         NAME nexus_v1_mns_multi_model_bounds_real_corpus
         COMMAND firestaff_nexus_v1_mns_multi_model_bounds_probe
-                "$ENV{HOME}/.firestaff/data/nexus"
+                "${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
     )
     set_tests_properties(nexus_v1_mns_multi_model_bounds_real_corpus PROPERTIES
         LABELS "tier1;nexus;mns;multi_model;live;extracted;skip_safe"
@@ -43290,7 +43294,7 @@ if(BUILD_TESTING)
     add_test(
         NAME nexus_v1_track1_screen_capture_readiness_extracted_root
         COMMAND firestaff_nexus_v1_track1_screen_capture_readiness_probe
-                "$ENV{HOME}/.firestaff/data/nexus"
+                "${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
     )
     set_tests_properties(nexus_v1_track1_screen_capture_readiness_extracted_root PROPERTIES
         LABELS "tier1;nexus;track1;screen_capture;readiness;live;extracted;skip_safe"
@@ -43325,10 +43329,21 @@ endif()
 
 add_test(
     NAME nexus_v1_launch_smoke
-    COMMAND firestaff_nexus_v1_launch_smoke_probe "$ENV{HOME}/.firestaff/data/nexus/"
+    COMMAND firestaff_nexus_v1_launch_smoke_probe "${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/"
 )
 set_tests_properties(nexus_v1_launch_smoke PROPERTIES
     LABELS "tier1;nexus;launch;smoke;skip_safe"
+)
+
+add_test(
+    NAME nexus_v1_iso_only_launch
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_iso_only_launch.sh
+            $<TARGET_FILE:firestaff_nexus_v1_launch_smoke_probe>
+)
+set_tests_properties(nexus_v1_iso_only_launch PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    LABELS "tier1;nexus;launch;iso;real_data;skip_safe"
+    SKIP_RETURN_CODE 77
 )
 
 add_executable(test_nexus_v1_script_vm
@@ -43388,6 +43403,8 @@ endif()
 #                       CREATURE.C, LOADSAVE.C, F0209_GROUP
 add_executable(firestaff_nexus_v1_mechanics_parity_probe
     probes/nexus/firestaff_nexus_v1_mechanics_parity_probe.c
+    src/nexus/nexus_v1_combat.c
+    src/nexus/nexus_v1_item_use.c
 )
 target_link_libraries(firestaff_nexus_v1_mechanics_parity_probe PRIVATE
     firestaff_nexus firestaff_m10
@@ -43414,6 +43431,7 @@ add_test(
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/nexus/firestaff_nexus_v1_mechanics_playability_probe.c")
     add_executable(firestaff_nexus_v1_mechanics_playability_probe
         probes/nexus/firestaff_nexus_v1_mechanics_playability_probe.c
+        src/nexus/nexus_v1_combat.c
     )
     target_link_libraries(firestaff_nexus_v1_mechanics_playability_probe PRIVATE
         firestaff_nexus firestaff_m10

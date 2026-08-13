@@ -2,6 +2,109 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: Documentation audit removed unsupported claims that Nexus has a
+verified SLEV script VM or source-bound door/teleport/spawn actions. `SLEV*.BIN`
+and `SDDRVS.TSK` remain authentic preservation inputs with unresolved runtime
+ownership; hypothetical action names are explicitly non-production. No game
+data was created or repacked.
+
+2026-08-13: Nexus engine receipts are now fail-closed for synthetic
+presentation. DGN Structure2/material, MNS/ITEM/SMAP auxiliary, SLEV/SAL trace,
+SFX and MENU.BPK error/default paths no longer set
+`fallback_visuals_permitted=1`; the DGN/PRS3 join also reports no runtime
+rendering, no fallback pixels, no-draw and real-mesh blocking until Saturn
+consumer evidence exists. The full Nexus suite remains green after the
+fail-closed expectation audit (296 selected Nexus tests, 14 skip-safe).
+
+2026-08-13: An isolated authentic J-BIOS/English-Merged Saturn run was made
+on the external disk at
+`/Volumes/Extern-disk/nexus-capture-20260813/run-jp-merged/`. The operator
+inputs are hash-bound in `manifest.txt`; the raw validator passes 60 frames
+and 16 active VDP1 observations. This is a transport/state witness only.
+Semantic admission remains blocked because the run has no byte-exact
+startup-to-menu identity, LEV01 start-pose consumer, HUD/viewport owner, or
+SLEV/SAL dispatch proof. No BIOS, disc, raw capture, screenshot, or extracted
+disc image was added to the repository.
+
+2026-08-13: The external-disk build configuration now points the real-data
+ DGN tests at `/Volumes/Extern-disk/FirestaffUserData/data/nexus`. The former
+ skip-only tests `nexus_v1_dgn_face_material_retail_corpus` and
+ `nexus_v1_engine_dgn_face_material_source_receipt` now pass against all 16
+ authenticated LEV files; the retail census is 17,821 textured faces (17,401
+static and 420 animated selectors). No capture or game bytes were generated.
+
+2026-08-13: CTest now supplies the configured Nexus data root to the real
+`DM.BIN` HUD/startup tests and the SAL opaque-prefix corpus test. HUD layout
+(80 entries), HUD hit rectangles (40 entries), startup/menu anchors and all 16
+SAL opaque prefixes pass from the authentic external corpus; no longer falsely
+skip because the test process inherited no data-root environment.
+
+2026-08-13: Track-1 readiness probes now match the production provenance
+boundary. Real FACE.BIN and FONT256.S2D bytes are admitted and retained, but
+the unproven Saturn VDP1/text consumers remain closed; the probes no longer
+mistake source retention for presentation parity. The launcher regression
+probe also now exercises the fake Mednafen instance that receives the VDP2
+register environment, so the test validates the actual forwarding path.
+
+2026-08-13: Nexus diagnostic mechanics now exercise the real study
+implementations for combat, item use, inventory routing, and light dispatch.
+The source-less lanes are explicit test fixtures only; production ISO/extracted
+runtime remains gated until Saturn action ownership is proven. Death drops are
+still intentionally empty because no authentic Nexus drop-table owner has
+been identified. No drop table or gameplay value is synthesized.
+
+2026-08-12: Nexus-startgrinden är verifierad men inte löst. Den autentiska
+mediekatalogen `/Users/bosse/.firestaff/data/nexus` innehåller den stora
+English-ISO:n, men den lokala English-CUE:n refererar till separata japanska
+track-filer som inte finns i katalogen. Mednafen avvisar därför CUE:n innan
+emulering; ISO:n kan inte laddas direkt av den använda CD-läsaren eftersom den
+överskrider dess ISO-storleksgräns. Den externa, hashbundna merged-cue:n
+används endast som verifieringscontainer och speldata kopieras eller packas
+inte upp av Firestaff.
+
+Samma-sessionens externa inputprobe visar korrekt Saturn active-low-bytepar:
+START `ffef`, L `f7ff`, R `efff`, X `feff`, UP `fffe`, C `ff7f`, LEFT
+`fffb`, RIGHT `fff7`. Disassembly av den autentiska `DM.BIN`-källan visar
+också att `0x060100fa` är en verklig SH-2-funktionsingång, medan boot går in
+via `0x06010000`; tidigare probes som endast väntade på läsning vid
+`0x060100fa` var därför otillräckliga.
+
+Kvarvarande gate: fånga source-owned level/x/y/dir och bind den mot
+`LEV01.DGN`. Den tidigare sessionen `authentic-start-handoff-myJFf9` är
+inte giltig spelverifiering: den kördes utan explicit BIOS och de renderade
+bilderna visar Saturns CD-spelare, inte Nexus. Den får därför inte användas
+som bevis för debugsekvens, spelstate eller startposition. Den första giltiga
+BIOS-bundna körningen är `bios-source-probe-20260813`; dess PC-trace visar
+autentisk `DM.BIN`-exekvering från `0x06010006`, men bara tidig boot är ännu
+fångad. Ingen byteexakt positionspost är identifierad eller validerad.
+Ett separat skrivspår är därför endast diagnostiskt och får inte öppna
+handoffen innan skrivningens ägare och fältsemantik är bundna med disassembly.
+Inga koordinater får promoveras från första gångbara cell, testfixture eller
+annan inferens.
+
+2026-08-13: En tidigare PC-/source-read-trace från
+`authentic-start-handoff-myJFf9` är ogiltig som spelbevis eftersom körningen
+var Saturns CD-spelare. Den nya BIOS-bundna trace:n
+`bios-source-probe-20260813` visar däremot verklig exekvering av autentisk
+`DM.BIN` från `0x06010006` och vidare SH-2-kod. Den visar ännu inte en stabil
+skrivning av level/x/y/dir som kan bindas till `LEV01.DGN`. PC-tracern är
+extern Mednafen-diagnostik och ingår inte i Firestaffs runtime. Nexus fortsätter
+därför korrekt att neka produktionsstart tills en källägd posepost och dess
+konsument är bevisade.
+
+2026-08-13: `run-start180-sequence-fullram-5000-20260813` och de närliggande
+full-RAM-dumparna är inte spelstartbevis. Deras VDP1-frame visar Saturns
+CD-spelare (TRACKS/TIME), inte Nexus, och får därför inte användas för
+`LEV01`, party-position, facing eller viewport-paritet. De behålls som
+diagnostik för emulatorns råcapture och är fortsatt semantiskt blockerade.
+
+2026-08-13: Två nya EU-BIOS/English-Merged-körningar med den autentiska
+ inputsekvensen nådde inte capture-fönstret inom timeout. Den ena blev för
+ långsam av fulla SH-2-RAM-snapshots; den andra producerade ingen rå witness
+ före timeout. De är därför negativa diagnostikresultat, inte spelstartbevis.
+ Ingen level/x/y/dir får promoveras från dem. Nästa försök måste först få en
+ komplett rå frame-witness och därefter en source-owned posejoin mot `LEV01`.
+
 2026-08-10: Den fungerande J-BIOS/English-disc-profilen har nu en
 registerbunden VDP2-witness på extern disk. PC `0x06011924` skriver PND-/map-
 transport till `0x25E50000` (VDP2 VRAM `0x50000`) med `R2=0x06000220` och
@@ -421,6 +524,10 @@ neither word receives task, target, callback, or dispatch semantics.
 
 - 🔧 Mechanics parity hardening: movement, click routes, item usage, doors, pits, teleporters, triggers, combat, AI, and sound are implemented; remaining work is broader runtime/probe coverage beyond compile/save-load gates. 2026-07-22 update (Lane D, cycle 3): creature attack damage is now applied to the party leader (or first living party member) and total party death sets `game_over=1` / `game_over_reason=2 (all_dead)`. The empty-party `nexus_mechanics_party_alive()` bug is fixed (empty party is dead, not alive). The mechanics parity probe now covers the integrated tick with a synthetic scorpion-vs-party combat scenario. 2026-07-22 update (Lane D, cycle 4): champion death auto-leader promotion is implemented. `nexus_v1_champion_on_death_update_leader()` in `src/nexus/nexus_v1_champions.c` promotes the first living party member to leader when the current leader dies, matching ReDMCSB CHAMPION.C F0319 lines ~1662-1679. The mechanics tick calls it after creature-attack damage and stamina-collapse death. The mechanics parity probe now verifies non-leader death leaves leader unchanged, leader death promotes the next living member, and total party death returns no successor. 2026-07-22 update (Lane D, cycle 5): pit/chute square-event integration is implemented — stepping on a `NEXUS_SQUARE_CHUTE` now forces a level transition to `map_index + 1` via `pending_level_change`. Item usage/click-route wiring is implemented — `NEXUS_CMD_USE_ITEM` consumes the selected leader inventory slot (`use_item_slot`), applies consumables (health/mana/stamina potions, antidote, corn, water flask) and equips weapons/armor, then clears the slot and recalculates load. Source locks: DM1 MOVESENS.C F0267/F0268 (chute/pit), COMMAND.C item-use dispatch, CHAMPION.C F0309 equipment slots. The mechanics parity probe now covers both new behaviors (207/207 PASS). 2026-07-22 update (Lane D, cycle 6): mouse click-route dispatch for inventory/world objects is implemented — `nexus_click_route_dispatch()` translates inventory-slot, equipment-slot, world-square, door-square, and floor-item clicks into the same command queue used by keyboard input (`NEXUS_CMD_USE_ITEM`, turns, `NEXUS_CMD_FORWARD`, `NEXUS_CMD_INTERACT`). New `NEXUS_CMD_INTERACT` picks up floor items at the party's current square into the leader's inventory. Source locks: DM1 COMMAND.C mouse/click dispatch, CLIKMENU.C F0366 command queue, CHAMPION.C F0309 equipment slots, MOVESENS.C F0267/F0268 square interaction. The mechanics parity probe now covers click-route dispatch (218/218 PASS) and the dedicated `test_nexus_v1_click_route` regression test covers 31 checks. 2026-07-23 update (Lane D, cycle 7): pit/teleporter broader runtime coverage is implemented — `nexus_process_square_event` now reports the registered stair facing (`out_target_dir`) for stairs up/down; `nexus_mechanics_tick` processes `pending_teleport` before the step cooldown so teleporter warps are immediate, and cross-level teleporters set `pending_level_change` to the target level. New regression test `test_nexus_v1_pit_teleporter_runtime` covers chute step, chute max-level clamp, same-level/cross-level/unregistered teleporters, and stairs down/up targets (24/24 PASS). The mechanics parity probe adds Probe 12 for teleporter runtime (same-level, cross-level, unregistered) and now passes 226/226. Source locks: DM1 MOVESENS.C F0267/F0268 (teleporter/pit/stair sensors), DUNGEON.C square type dispatch, CLIKMENU.C:264-276 level-transition special cases. 2026-07-23 update (Lane D, cycle 8): stairs/exit/alarm broader runtime coverage is implemented — unregistered stairs now fall back to the adjacent level (down +1, up -1, clamped to [0,15]); registered stairs keep their exact target level/coordinates/facing; exit squares only end the game on the final level (level 15), with non-final exits treated as ordinary floor; alarm traps now alert only creatures on the current level and set a bounded 60-tick alarm timer that keeps alerted creatures chasing even when the party moves out of normal detection range. `Nexus_Creature` gains a `level` field, `Nexus_V1_CreatureManager` gains `alarm_timer`, and `nexus_v1_creature_spawn_on_level()` is added so probes/tests can place creatures on specific levels. `nexus_v1_creatures_tick()` now skips/attacks only creatures on the active level. `test_nexus_v1_pit_teleporter_runtime` expanded to 34 checks covering stairs down/up registered/unregistered and final/non-final exits. The mechanics parity probe adds Probe 14 for stairs/exit/alarm runtime and now passes 240/240. Source locks: DM1 MOVESENS.C F0267/F0268 (stairs/exit sensors), F0277 ALARM; CLIKMENU.C F0364_COMMAND_TakeStairs; ReDMCSB CHAMPION.C F0309 equipment slots. 2026-07-23 update (Lane D, cycle 9): water/fire square traversal mechanics are implemented — water squares (type 21) now block movement unless the party leader carries a Rope (item 65); fire squares (type 22) block movement unless the party leader carries a Rune of Fire (item 80). The passability gate lives in `nexus_mechanics_tick()` alongside the existing door key check; the square event layer now emits `NEXUS_EVENT_CROSS_WATER` and `NEXUS_EVENT_CROSS_FIRE`. New `NEXUS_MOVE_CROSS_WATER`, `NEXUS_MOVE_CROSS_FIRE`, `NEXUS_MOVE_BLOCKED_WATER`, `NEXUS_MOVE_BLOCKED_FIRE`, and `NEXUS_MOVE_BLOCKED_DOOR` result codes are defined in `nexus_v1_movement.h`. `test_nexus_v1_pit_teleporter_runtime` expanded to 44 checks covering water/fire blocked/crossed and square-event returns. The mechanics parity probe adds Probe 15 for water/fire square runtime and now passes 251/251. Source locks: DM1 MOVESENS.C F0267/F0268 water/fire square sensors; nexus_v1_inventory.c Rope (65), Rune of Fire (80). 2026-07-23 update (Lane D, cycle 10): real-DGN playability probe is implemented — new `firestaff_nexus_v1_mechanics_playability_probe` loads retail `LEV00.DGN` from `FIRESTAFF_NEXUS_DATA_DIR` (or `~/.firestaff/data/nexus`), verifies 64x64 Structure1B load, initializes a party on the actual starting floor square, exercises forward movement/turning on real geometry, verifies OOB/map-edge blocking, reports decoded floor/wall/door counts, and flood-fills reachable passable squares. The probe is skip-safe when the retail corpus is absent. Source locks: DMWeb DGN Structure1B format; ReDMCSB DUNGEON.C, COMMAND.C, MOVESENS.C, CHAMPION.C. CTest `firestaff_nexus_v1_mechanics_playability` passes 16/16 against the local Track 1 LEV00.DGN and exits 0 (skip) when data is missing. 2026-07-23 update (Lane D, cycle 11): expanded the real-DGN playability probe to all 16 retail levels (LEV00–LEV15). `firestaff_nexus_v1_mechanics_playability_probe` now loops over LEV00.DGN–LEV15.DGN, loads each through the existing Structure1B decoder, verifies 64×64 dimensions, counts floor/wall/door squares, checks OOB boundary blocking, real wall blocking, forward movement/turning on real floor, and flood-fills reachable passable squares; the probe reports 253/253 PASS against the local Track 1 corpus and remains skip-safe when data is absent. A companion CTest regression test `nexus_v1_dgn_multi_level_playability` (`tests/test_nexus_v1_dgn_multi_level_playability.c`) covers the same core checks across all 16 levels and returns 77 when no data is present. Remaining mechanics work: sound playback binding (still blocked on SAL decode), stairs/exit/alarm exact original timing/feedback, and real-data playability probes for additional square-event semantics once Structure1B wall/special-square decoding is source-locked against original Saturn evidence.
 
+- 2026-08-13 correction: the real-DGN playability probe retains LEV00 only for
+  title/entrance geometry validation. It skips gameplay mechanics for that
+  non-playable file and runs movement/reachability checks on LEV01–LEV15.
+
 - 🔧 DMDF embedded BITMAP/palette/string runtime handoff remains open after the parser-level bounds gates. The real MNS `TEXT` descriptor and BGR555 material-bank route is now regression-covered: all 30 retail models retain matching descriptor/pixel receipts and all 815 source textures decode. The seven creature banks whose source colour cardinality exceeds the indexed 256-entry host bank now retain exact BGR555 words in a source-only direct-colour lane; they are not quantized, substituted, or admitted to the indexed viewport. VDP1 command/CLUT ownership, direct-colour display semantics, texture upload and runtime render binding remain capture-gated.
 
 - 🔧 2026-06-28 Nexus V1 save multi-slot round-trip follow-up: new `test_nexus_v1_save_multislot_roundtrip_pc34_compat` (CTest `nexus_v1_save_multislot_roundtrip_pc34_compat`) drives 4 distinct slots (0..3) with distinct per-slot world + champion state through `nexus_v1_save_full` / `nexus_v1_load_full` and verifies party_level/x/y/dir + world_tick + per-object (type, state, x, y, level, quantity, linked_id, flags) + per-event (type, level, x, y, arg0, arg1, fired, repeat) + per-active-timer (id, kind, level, remaining_ticks, interval_ticks, flags) + transition (pending, target, spawn_x, spawn_y) + per-champion stat blobs (name, primary_class, hp, max_hp, stamina, max_stamina, mana, max_mana, str, dex, wis, vit, anti_magic, anti_fire, fighter/ninja/priest/wizard level, food, water, alive, portrait_index, wounds, attributes, inventory[30]) + party[] indices round-trip per slot, plus manager slot cache + scan() + isolation + deletion + CRC tamper rejection (one-byte flip in the data section → `NEXUS_SAVE_ERR_CRC`) + foreign-magic rejection (`NEXUS_SAVE_ERR_UNKNOWN_VARIANT` + non-empty diagnostic). Source-lock: `src/nexus/nexus_v1_save_load.c` (NEXUS_SAVE_MAGIC='FNXS', CRC-32 over champion+world data sections) + `src/nexus/nexus_v1_world.c` (party + objects + events + active timers + transition + world_tick + state_hash) + `src/nexus/nexus_v1_champions.c` (CHPN magic, 270-byte champion blob) + ReDMCSB LOADSAVE.C F0433/F0434 lineage. Same family, disjoint scope: existing slot-0/party-x test still covers the single-field gate; this new test extends coverage to 4 slots + 30+ per-slot world/champion fields + cache/scan/isolation/deletion + CRC + unknown variant. Companion source-side fixes (also shipped this pass): (a) `nexus_v1_champion_pool_serialize_size` now matches the actual `wr32`-based 24-byte header (was claiming 22 with a `version(2)` that the serialize code does not write); (b) `champion_blob_size` now counts 25 int fields per champion (was 23, which under-counted by 8 bytes/champion and silently overflowed the 24-champion pool blob in older code paths); (c) `nexus_v1_world_serialize_size` now omits the bogus 4-byte object-count prefix (the actual serialize path reads the count once from the header); (d) `nexus_v1_load_full` and `nexus_v1_load_full_from_path` now allocate buffers via the new `nexus_v1_save_max_champion_pool_size` / `nexus_v1_save_max_world_size` helpers instead of asking the destination's serialize_size (which underestimates because the destination has not been loaded yet — the prior code only worked when the saved world happened to have no objects/events/timers). Remaining save-slot work: original Saturn 8 KB memory card format reverse-engineering (Firestaff-native only today), real-asset save compatibility artifacts, and broader per-game (DM1/CSB/DM2/Theron) save interoperability.
@@ -572,8 +679,220 @@ värden ensamma räcker inte för text- eller menyadmission.
   `Map_Y`, `Level`, and the retail entrance pose are still not source-bound.
   No coordinate inferred from a first walkable DGN cell, a host screenshot,
   or a debug-menu description may be promoted into production startup.
-- Next exact gate: capture a same-session Saturn execution that reaches the
-  debug routine or another retail caller that writes the entrance pose, then
-  join those values to the authenticated `LEV00.DGN` source and the first
-  gameplay VDP1/VDP2 frame. Until that exists, LEV00 startup must remain
-  fail-closed.
+- 🔎 A second external diagnostic run now traces both 16-bit and 32-bit
+  SH-2 work-RAM writes over the same authentic input route. It confirms that
+  the observed writes are dominated by menu/VDP preparation and animated
+  runtime buffers; no stable level/x/y/dir record with a disassembly-bound
+  writer has been identified yet. This trace remains external evidence only.
+- 2026-08-13 correction from the DMWeb DGN reference: `LEV00.DGN` is the
+  title-sequence entrance image and is not playable; `LEV01.DGN` is the Hall
+  of Champions where the game starts. Firestaff now records LEV00 as title-only
+  and requires hash-verified LEV01 when admitting an extracted retail corpus.
+  The remaining capture gate is therefore the exact Saturn LEV01 start
+  coordinate and facing, joined to the first gameplay VDP1/VDP2 frame. No
+  coordinate inferred from DGN geometry, a host screenshot, or a debug-menu
+  description may be promoted into production startup.
+- 2026-08-13 disassembly follow-up: the retail `DM.BIN` debug-print routine at
+  `0x060120d6` is now mapped without modifying the game image. Its `MapX` and
+  `MapY` labels read through the work-RAM pointer stored at `0x0606455c`
+  (fields at offsets `+8` and `+10`); `Ms_X`, `Ms_Y`, and `camX/Y/Z` are read
+  from separate debug/runtime buffers. Existing authentic traces show only
+  BIOS/VDP initialisation writes for these regions, not a stable Saturn
+  level/x/y/facing writer. These addresses are therefore provenance evidence,
+  not a start-pose binding. The LEV01 capture gate remains open.
+- 2026-08-13 authentic runtime follow-up: external run
+  `run-pose-bind-20260813g` (J BIOS, merged English disc, the documented
+  active-low input sequence) completed with 331 raw frames. Frames 155–167
+  contain 160–248 linked VDP1 commands and the expected active 3D command
+  corridor. The textured records are primarily mode-5/direct-colour spans
+  sourced from runtime VRAM buffers; the bounded LEV/Structure2 byte-join
+  consequently reports zero source matches. This is a valid capture and a
+  stronger runtime observation, but it does not identify LEV01, the party
+  position, or facing. It must remain capture-only until a source-owned join
+  supplies those fields.
+- 2026-08-13: En inventory av autentiska Mednafen-backupfiler på extern disk
+  (`*.bcr`/`*.bkr` under Nexus-capture-sessionerna) gav samma 524288-byte
+  backupbild i alla undersökta körningar. Innehållet är emulatorns tomma
+  `BackUpRam Format`-image; ingen körning innehåller en verifierad Nexus-save
+  med level/x/y/dir eller champion-state. `*.smpc` är input-/periferistate och
+  är inte en spel-save. Dessa filer får därför inte användas som savegame,
+  startpose eller genväg runt Saturns start-capture-gate.
+- 2026-08-13: En ny direktkörning, `run-pose-bind-20260813m`, använde samma
+  autentiska J-BIOS, engelska merged-disc och aktiva låg-nivå-inputsekvens.
+  Råtransporten innehåller 240 frames och passerar VDP1-aktivitetskontrollen.
+  SH-2-källspåret innehåller däremot främst källbundna skrivningar till
+  `0x0606xxxx`-render-/objektbuffertar samt tabellpekare runt `0x06063cxx` och
+  `0x060645xx`; de återkommande writer-PC:erna (`0x060125xx`–`0x060127xx`
+  och `0x0602dcxx`–`0x0602exx`) identifierar inte en LEV01-spelstate. Ingen
+  verifierad level/x/y/dir/facing-post hittades. Capturen är därför giltig
+  diagnostisk evidens men får inte markera Nexus som spelbar eller skapa en
+  syntetisk startpose.
+- 2026-08-13: `run-pose-bind-20260813zd` är en komplett 500-frame capture med
+  autentiskt J-BIOS och den hashverifierade engelska merged-skivan. START+A
+  samt den dokumenterade diagnostiksekvensen matades in korrekt. Vid frames
+  320–420 är VDP1-kedjan aktiv (11 poster, 8 draws, user/system clip och
+  local-coordinate), men båda framebuffererna och VDP2-tillståndet är
+  stabila på Saturn/SEGA-startbilden; ingen LEV01- eller spelstate-identitet
+  kan bindas. Detta är negativ capture-evidens, inte en giltig startpose.
+- 2026-08-13: två längre autentiska replayförsök med EU-BIOS och samma
+  engelska merged-skiva (`run-pose-bind-20260813zf` och `run-pose-bind-20260813zh`)
+  nådde inte sitt `skip_frames=10000`-fönster inom den dokumenterade
+  300-sekundersgränsen. De producerade därför ingen komplett raw witness.
+  Detta reproducerar emulator-/capture-prestandagränsen; det är inte skäl
+  att anta en pose eller att koppla LEV01 direkt till Firestaff.
+- 2026-08-13: `run-pose-bind-20260813zj` är en komplett 1200-frame replay
+  från frame 0 med samma hashverifierade engelska merged-skiva och EU-BIOS.
+  START+A hölls vid frame 600 och den aktiva låg-nivåsekvensen kördes vid
+  720–1040. Capturen är transportgiltig, men frame 500 har bara den korta
+  startup-kedjan (8 draws), frames 600–900 är idle/övergång och frames
+  1000–1199 har en enda draw. Ingen av dessa frames når den 200+ draw-kedja
+  som den äldre gameplay-vittnet hade, och ingen LEV01/source-bound pose
+  kan därför bindas. Detta utesluter den testade sena START+A-timingen som
+  lösning; produktionen ska fortsatt fail-closed.
+- 2026-08-13: Ett tunt fönster (`run-pose-bind-20260813zk`) försökte fånga
+  exakt frame 10500 med EU-BIOS, samma engelska merged-skiva och START+A.
+  Emulatorn nådde inte `skip_frames=10500` inom 600 sekunder; ingen raw frame
+  skapades och manifestet har `capture_exit_status=1`. Detta mäter den
+  reproducerbara prestandagränsen för den instrumenterade Saturn-emulatorn,
+  inte en spelstate. Ingen syntetisk acceleration eller pose används.
+- 2026-08-13: Nexus ISO-läsaren avvisar nu negativa chunk-offsetar och alla
+  läsningar som går utanför den autentiska ISO-filens deklarerade storlek.
+  Tidigare kunde en chunk-läsning passera filslutet och blanda in nästa sektor.
+  Regressionen täcks av `nexus_v1_iso_cue_data_track_gate`; bygg och Nexus-
+  regressionen passerar 295/295 körda tester. Detta är en läsarfix och öppnar
+  inte Saturns fortfarande obundna LEV01-startpose.
+- 2026-08-13: Sektorläsaren kräver nu en full 2048-byte payload från varje
+  sektor. Trunkerade ISO/BIN-filer avvisas i stället för att behandlas som
+  lyckade nollfyllda reads. Regressionen täcker detta och körs mot den riktiga
+  Nexus-katalogen; 3/3 relevanta tester passerar. LEV01-startgaten påverkas
+  inte och förblir fail-closed tills Saturns pose är verifierad.
+- 2026-08-13: Den äldre autentiska gameplay-witnessens disc-identitet
+  `85caab0b6b1beb7ca0297b43b3fa1c56b6c9afd112c80a96776b1ed62822381e` är nu
+  återfunnen som den riktiga franska data-only-CUE:n på extern-disken. En ny
+  source-join av witnessens frame 760 binder den byte-swapade texturen till
+  `LEV00.DGN`, inte `LEV01.DGN`. Witnessen är därför giltig media-/render-
+  evidens men inte ett LEV01-startbevis; Firestaff ska fortsatt inte använda
+  den för att gissa party-position eller riktning.
+- 2026-08-13: En omkörning med samma franska CUE, EU-BIOS, inputsekvens och
+  källspår (`run-french-pose-20260813b`) nådde inte `skip_frames=10000` inom
+  300 sekunder. Den producerade inget komplett `runtime.raw`; spåret innehåller
+  främst startupens bulk-clear och renderbuffertar, utan verifierad posepost.
+  Detta är ett reproducerat prestanda-/capture-negativ, inte en grund för
+  syntetisk startstate.
+- 2026-08-13: Resume-vägen avvisar nu LEV00 explicit. LEV00 är den
+  autentiska titel-/entrébilden; native saved-game resume är begränsad till
+  första spelbara nivån LEV01 och kräver fortfarande save-filens validerade
+  pose.
+- 2026-08-13: Native resume validerar nu också save-filens x/y inom Nexus
+  autentiska 64x64-karta och seedar den validerade pose:n före level-loadern.
+  Det förhindrar att en korrupt eller felaktig save först installerar en
+  spelbar level med title-bootens obundna (-1)-pose. Nexus-regressionen
+  passerar 295/295 körda tester; privata Saturn-capturetester är fortsatt
+  skip-safe.
+- 2026-08-13: Resume-status skiljer nu uttryckligen `POSE_INVALID` från
+  ogiltig level och riktning, så launcher/UI-diagnostik inte döljer ett
+  koordinatfel som ett level-fel.
+- 2026-08-13: Den autentiska minnesdumpen
+  `authentic-pose-deltas-20260812b/memory.snapshot` innehåller 19 SH-2-
+  minnesögonblick från frame 0–940. Den disassembly-bundna work-RAM-
+  pekaren `0x0606455c` och dess `+8/+10`-fält är noll i varje snapshot;
+  ingen level/x/y/facing-post kan därför härledas ur dumpen. Dumpen är
+  bevarad som negativ diagnostisk evidens, inte som savegame eller
+  produktions-startpose.
+- 2026-08-13: Nexus-launchern återinitialiserar nu singleton-enginen när
+  `data_dir` faktiskt byts. Tidigare kunde en process som växlade profil eller
+  autentisk spelkorpus tyst fortsätta läsa den föregående mappen. Samma
+  sökväg är fortsatt idempotent; byte och återbyte täcks av
+  `m11_nexus_startup_gate` mot extern-korpus. Detta löser datakällans livscykel
+  men öppnar inte den fortfarande obundna Saturn-LEV01-startposen.
+- 2026-08-13: Launcher-kontraktet är nu synkroniserat med den källbundna
+  produktionen: publika kommentarer anger LEV01–LEV15 som spelbara nivåer,
+  LEV00 som titel/entré, och att en validerad pose krävs före nivåöppning.
+  `m11_nexus_startup_gate` täcker både avvisning av LEV00 och fortsatt stängd
+  LEV01 utan autentiserad Saturn-pose. Ingen speldata eller startposition har
+  skapats.
+- 2026-08-13: Disassembly-/writer-auditen av de autentiska sessionerna är
+  skärpt. `DM.BIN`-rutinen runt `0x06012758` skriver från källtabellen
+  `0x060356e4` till resurs-/pekartabellen vid `0x06064554` och efterföljande
+  poster; detta är inte level/x/y/facing-state. De verifierade spåren visar
+  ingen icke-nollskrivning till `0x0606455c`, och minnesläsningarna därifrån
+  är fortsatt noll. Denna kedja får därför inte användas som startpose. De
+  två nya EU/French-capturerna (`run-nexus-lev01-pose-followup-20260813*`)
+  nådde inte en komplett rå witness inom 360 sekunder och är endast negativ
+  diagnostik. LEV01-gaten förblir stängd.
+- 2026-08-13: `nexus_v1_load_level()` validerar nu den nya filens existens och
+  autentiska bytehash innan den rensar den aktiva nivåns runtime-/capture-
+  state. Ett misslyckat nivåbyte kan därför inte längre tömma en fungerande
+  nivå före felrapporten. Bygg, `m11_nexus_startup_gate` och hela Nexus-
+  regressionen passerar; ändringen skapar ingen ny speldata.
+- 2026-08-13: Dungeon-start-receipten markerar nu en giltig cell med okänd
+  riktning som `blocked-direction` i stället för `READY`. Det synkroniserar
+  resolver- och apply-kontrakten och hindrar en ofullständig Saturn-pose från
+  att se spelklar ut för en caller. Regressionen finns i
+  `nexus_v1_dungeon_start_provenance`.
+- 2026-08-13: Den publika Nexus-debugreferensen beskriver den autentiska
+  paussekvensen och debugfälten `Map_X`, `Map_Y` och `Level`, men publicerar
+  ingen retail-startpost för LEV01. Den får därför användas som input-/
+  disassemblyreferens, inte som koordinatkälla. Ingen pose har skapats från
+  den informationen.
+- 2026-08-13: En djupare SH-2-genomgång skiljer nu debugfältens get/set från
+  retail-starten. Rutinen runt `0x06011f50` läser Map_X/Map_Y via
+  `0x0606455c+8/+10`, medan rutinen runt `0x06011f9c` skriver samma två fält
+  när debugmenyns selector 3 används. Anropen kommer från debug-/menyvägen,
+  inte från en verifierad LEV01-loader eller save-consumer. Kedjan är därför
+  en autentisk disassemblyreferens men ingen tillåten produktionspose.
+- 2026-08-13: DGN Structure1F-wall-sensorns autentiska byte 9 (`sensor_type`)
+  bevaras nu separat från byte 12:s råa trigger/control-värde. Real-data-
+  regressionen på `LEV01.DGN` verifierar både inskriptionstyp `0x8B` och
+  championtyp `0x63`; tidigare parser tappade denna typinformation. Full
+  Nexus-svit passerar seriellt 295/295 körda tester.
+- 2026-08-13: Disassemblyn av den autentiska DGN-loadern runt `0x06017e6e`
+  visar att den läser `LEV%02d.DGN` och kopierar filens nivå-/strukturmetadata
+  till egna runtime-tabeller. Den skriver inte `Map_X/Map_Y` via strukturen
+  bakom `0x0606455c`. Den enda verifierade skrivaren till dessa fält är
+  debugmenyns selector-3-rutin runt `0x06011f9c`; den får därför inte användas
+  som retail-start eller som källa för en syntetisk LEV01-pose. Startgaten
+  förblir stängd tills en autentisk retailkedja eller save-consumer binder
+  level/x/y/facing.
+- 2026-08-13: Nexus runtime markerar nu saknade SLEV-/SAL-ägare och
+  obundna host-traces med `fallback_visuals_permitted=0`. Tidigare sattes
+  dessa fyra blockeringar till `1`, vilket kunde tolkas som tillåtelse att
+  fylla ett riktigt men odekoderat dataflöde med syntetisk presentation.
+  Äkta SLEV-, SAL- och MAP-bytes behålls som receipts, men dispatch, ljud och
+  visuella ersättningar är fortsatt stängda tills originalets konsument är
+  bevisad.
+- 2026-08-13: Den direkta J-BIOS/engelska-capturekörningen
+  `run-debug-lev01-sequence-20260813` öppnade den autentiska merged-skivan och
+  identifierade Nexus korrekt, men Mednafen avslutade med `SIGBUS` under
+  video-/emulatorinitiering innan en giltig rå capture skapades
+  (`capture_exit_status=1`, inget `runtime.raw`). Detta är reproducerad
+  emulatordiagnostik, inte LEV01-evidens och inte grund för syntetisk pose.
+- 2026-08-13: Den äldre externa, instrumenterade Mednafen-binären gav i stället
+  en komplett 100-frame witness i
+  `run-debug-lev01-alt100-20260813/runtime.raw` med samma hashverifierade
+  J-BIOS och engelska merged-skiva. Rålayouten passerar och 56 frames visar
+  aktiv VDP1; framebuffer, VDP1-VRAM och VDP2-regioner förändras. Witnessen
+  saknar dock en source-owned LEV01/state-join och dess semantiska admission
+  är därför fortfarande blockerad. Den öppnar inte Nexus-starten.
+- 2026-08-13: CMake-testkonfigurationen använder nu
+  `FIRESTAFF_WORKSPACE_DATA_DIR` även för champion-panel, TITLE MAPD, Track-1-
+  launch, screen-readiness, MNS-korpus och launch-smoke. En extern-data-build
+  behöver därför inte råka läsa `~/.firestaff/data/nexus` för dessa portar.
+  Med den autentiska korpusen på `/Volumes/Extern-disk/FirestaffUserData/data/nexus`
+  passerar alla sju berörda real-data-tester. Saturn-JA-extra-gaterna är
+  fortsatt skip-safe eftersom ingen extraherad originalkorpus finns på disken.
+- 2026-08-13: En ny `nexus_v1_iso_only_launch`-gate kör launch-smoke från en
+  temporär mapp som endast innehåller länkar till originalets CUE/ISO. Den
+  verifierar därmed att Firestaff läser Nexus direkt från skivavbilden utan att
+  packa upp speldata. Den passerar mot den engelska originalskivan på extern-
+  disken; testmappen och länkarna raderas efter körningen.
+- 2026-08-13: Real-data-regressionen för `SNDLEV00-15.SAL` verifierar nu också
+  den befintliga bounded DataID 0-PCM-diagnostiken: memory-sourced entries
+  materialiseras till host-endian `int16_t`-bufferar, noise-sourced entries
+  får inga påhittade samplebufferar och alla sample-counts hålls inom gräns.
+  Detta öppnar inte Saturns selector-, SDDRVS/SCSP- eller playback-gate.
+- 2026-08-13: Efter ISO-only- och SAL-regressionerna passerar Nexus V1/V2/M11-
+  urvalet 296/296 körda tester mot extern-diskens autentiska korpus. Fjorton
+  privata Saturn-gater är fortfarande korrekt skip-safe: de kräver autentisk
+  VDP1/VDP2-capture, SLEV/SAL/SCSP-trace eller Saturn-save som inte finns i
+  den aktuella externa datakällan.

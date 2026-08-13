@@ -6,7 +6,10 @@ Dungeon Master Nexus (Saturn, 1996) uses a fundamentally different audio archite
 
 The retail disc has CD-DA tracks plus per-level `SNDLEV*.SAL`/`.MAP` sound
 assets. The presence of either source does not prove the Saturn selector,
-codec, SCSP voice setup, or host playback path.
+SCSP voice setup, or host playback path. Firestaff performs a bounded
+diagnostic PCM materialization for authenticated DataID 0 tone-bank entries;
+that cache is not proof of the Saturn codec/voice ABI and is not connected to
+production playback.
 
 ## Audio Architecture
 
@@ -17,7 +20,7 @@ Nexus V1 supports two data source modes:
 | Mode | Detection | Engine Source |
 |------|-----------|---------------|
 | ISO | Looks for `.cue` file in data directory | `NEXUS_SRC_ISO` |
-| Extracted | Checks for `DM.BIN` or `LEV00.DGN` | `NEXUS_SRC_EXTRACTED` |
+| Extracted | Requires authenticated `DM.BIN` and first playable `LEV01.DGN` | `NEXUS_SRC_EXTRACTED` |
 
 - **ISO mode**: Reads files directly from a CUE/BIN image via `nexus_iso_open_cue()`
 - **Extracted mode**: Reads flat files from data directory (e.g., `DM.BIN`, `LEV*.DGN`)
@@ -71,7 +74,11 @@ No audio-specific data files in the V1 engine source. Audio is driven entirely b
 
 - [ ] CD track mapping per level — source selector not recovered
 - [ ] CD audio playback — Saturn CDDA owner/track handoff not captured
-- [ ] SFX system — SAL codec/SCSP playback not captured
+- [x] Bounded SAL DataID 0 PCM diagnostic decode — authenticated banks and
+  memory/noise source descriptors are regression-tested against the external
+  corpus; this does not authorize event dispatch or playback.
+- [ ] SFX system — original selector, SDDRVS/SCSP voice ownership and playback
+  are not captured
 - [ ] Voice/dialogue — **Not implemented**
 - [ ] Footstep audio — configured (`cfg->footstep_audio = 1`) but no playback
 

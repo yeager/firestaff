@@ -3,6 +3,7 @@
 #include <string.h>
 #include "asset_find_by_hash.h"
 #include "nexus_v1_dgn.h"
+#include "nexus_v1_dungeon.h"
 
 static uint8_t *load_file(const char *path, int *size_out) {
     FILE *f = fopen(path, "rb");
@@ -92,6 +93,34 @@ static int test_all_levels(const char *data_dir) {
             fail++;
             free(buf);
             continue;
+        }
+
+        if (i == 1) {
+            Nexus_V1_Level level;
+            int entry;
+            int saw_inscription = 0;
+            int saw_champion = 0;
+            memset(&level, 0, sizeof(level));
+            if (nexus_v1_level_load(&level, buf, sz, i) != 0) {
+                printf("FAIL LEV01 Structure1F load for sensor-type regression\n");
+                fail++;
+                free(buf);
+                continue;
+            }
+            for (entry = 0; entry < level.structure1f_entry_count; ++entry) {
+                const Nexus_V1_DgnStructure1FEntry *record =
+                    &level.structure1f_entries[entry];
+                if (record->family != NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS)
+                    continue;
+                if (record->sensor_type == 0x8bU) saw_inscription = 1;
+                if (record->sensor_type == 0x63U) saw_champion = 1;
+            }
+            if (!saw_inscription || !saw_champion) {
+                printf("FAIL LEV01 wall sensor type byte was not retained\n");
+                fail++;
+                free(buf);
+                continue;
+            }
         }
 
         int ok = 1;

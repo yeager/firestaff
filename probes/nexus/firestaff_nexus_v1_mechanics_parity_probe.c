@@ -936,6 +936,7 @@ static PROBE_NOINLINE void probe_mechanics_tick_combat(void)
     /* Mechanics state: party at (10,10), scorpion adjacent at (11,10). */
     Nexus_MechanicsState st;
     nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
+    st.map_index = 0;
     nexus_v1_creatures_init(&engine.creatures);
     nexus_v1_creature_spawn(&engine.creatures, 0 /* Scorpion */, 11, 10, NEXUS_DIR_WEST);
 
@@ -1245,7 +1246,7 @@ static PROBE_NOINLINE void probe_click_route_dispatch(void)
      * INTERACT command placed at the queue head. */
     nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
     nexus_floor_init();
-    nexus_floor_drop(10, 10, 63, 1); /* Corn */
+    nexus_floor_drop_source(10, 10, 63, 1, 0U, 0U, -1); /* fixture corn */
     target = nexus_click_target_floor_item(10, 10, 0);
     CHECK(nexus_click_route_dispatch(&st, &engine, &target) == NEXUS_CLICK_RESULT_OK,
           "click-route floor item dispatches OK");

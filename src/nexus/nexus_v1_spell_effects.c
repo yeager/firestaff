@@ -129,9 +129,11 @@ int nexus_v1_spell_effect_attack_projectile(
     }
 }
 
-/* DM.BIN 0x0204E2: status effect resistance check.
- * attack_power = random(0..31) + caster_stat + (power+1)*2 - 16
- * Spell hits if attack_power > target_defense. */
+/* DM.BIN 0x0204E2 contains the status-effect hit test, but this narrow
+ * adapter only owns the target status array. It has no caster statistic,
+ * target defense, or authenticated RNG/target-routing context, so it must
+ * not claim to perform that resistance check. The caller-facing combat route
+ * remains source-locked until those inputs are bound to the retail consumer. */
 Nexus_SpellEffectResult nexus_v1_spell_effect_debuff(
     int spell_type, int power,
     Nexus_StatusEffects *target_status) {

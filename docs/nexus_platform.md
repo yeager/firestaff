@@ -101,7 +101,7 @@ Nexus V1 supports two data source modes (nexus_v1_engine.c):
 
 Discovery priority:
 1. Search for .cue file in data directory → open .bin as ISO
-2. Otherwise check for extracted files (DM.BIN, LEV00.DGN presence)
+2. Otherwise check for extracted files (authenticated DM.BIN and LEV01.DGN)
 
 Saturn disc image structure:
 - **Track 1**: MODE1/2352, ISO 9660 filesystem, game data (133 MB)

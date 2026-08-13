@@ -31,11 +31,12 @@ Without selectable modes, difficulty in Nexus arises from:
 ### A. Champion Composition
 - Party of 4 vs. solo run — difficulty scales dramatically with party size
 - Class mix: Fighters provide durability, Wizards/Ninjas provide offense
-- Anti-Magic and Anti-Fire resistances (start at 5 in Nexus vs. 0 in DM1)
+- Anti-Magic and Anti-Fire resistances loaded from each authentic Nexus PLRD
+  record; their hostile-damage consumers are not yet source-bound
 
 ### B. Dungeon Design — 16 Levels vs. DM1's 10
 Nexus has 16 dungeon levels (LEV00–LEV15) vs. DM1's 10 levels. The extra 6 levels represent a deeper dungeon with corresponding difficulty scaling:
-- LEV00: Entry level (relatively easy)
+- LEV00: Title/entrance sequence; not a playable difficulty level
 - LEV01–LEV07: Standard dungeon progression
 - LEV08–LEV12: Mid-to-deep dungeon, harder encounters
 - LEV13–LEV15: Deepest levels, highest creature HP/damage

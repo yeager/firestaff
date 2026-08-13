@@ -31,29 +31,28 @@ The only "debug" references in nexus source are routine development notes:
 
 No production debug/build cheats exist in the source.
 
-## 3. SDDRVS.TSK Debug Scripts
+## 3. SDDRVS.TSK and SLEV status
 
-SDDRVS.TSK is a Saturn task/script VM that processes per-level event scripts
-(SLEV00-15.BIN). Scripts define teleporter logic, door animations, trap
-triggers, and cutscene sequencing.
+The external corpus contains `SDDRVS.TSK` and `SLEV00.BIN`–`SLEV15.BIN`, but
+their event ownership and ABI are not proven. Firestaff's disassembly audit
+only establishes that the SLEV files have an SH-2-shaped entry/header and
+bounded literal references. It does not establish teleporter, door, trap or
+cutscene rules, and it does not prove that `SDDRVS.TSK` is their dispatcher.
 
-nexus_sensors.md notes: "Debug scripts can be hot-swapped without recompiling EXE"
--- developers could swap SLEV*.BIN files without rebuilding the game.
-This hot-swap capability could theoretically inject custom script logic,
-but only if SDDRVS.TSK were fully understood and implemented.
+Status: Firestaff retains the authentic bytes and profile receipts, but does
+not parse or execute them. No hot-swap facility, cheat route, or script
+semantics should be inferred from the files.
 
-Status: SDDRVS.TSK parser is NOT implemented in Firestaff.
+## 4. Teleport claims
 
-## 4. In-Game Teleport Mechanics (Not Cheats)
-
-The game has in-universe teleport mechanics (types 9/10) that warp the party
-to another dungeon square with HP damage on arrival. These are normal game
-mechanics, not cheats. No debug teleport commands exist in source.
+Teleport-like square records are present in the bounded DGN study, but their
+retail event consumer and damage/timing semantics are not source-bound. They
+must not be presented as a verified playable mechanic or as a debug command.
 
 ## 5. DM1 Cheats Carried to Nexus?
 
-DM1 has known cheat codes documented in firestaff materials. Since Nexus
-runs DM1 game logic but with different rendering engine and data structures:
+DM1 has known cheat codes documented in Firestaff materials. Nexus has a
+different executable and data model, so DM1 behaviour cannot be inherited:
 - Maybe: DM1 cheat input sequences could theoretically work
 - Unlikely: Champion/party data structures differ significantly
 - Not tested: No DM1 cheats verified against Nexus
@@ -78,7 +77,7 @@ consistent with a niche Japanese Saturn title from 1998 -- such games
 almost never had their cheat codes widely documented or preserved.
 
 Unlike DM1 (which appeared on many platforms with an active cracking/scene
-community), Nexus flew entirely under the radar. If the Saturn disc image
-were obtained and an SH2 disassembly produced, debug features might be
-found in the binary (debug print strings, breakpoint handlers, developer
-menu branches), but no such analysis has been performed.
+community), Nexus has little public hacking documentation. The authentic
+Saturn disc and SH-2 disassembly have been inspected for the current bounded
+routes, but no retail cheat/debug route has been source-bound. Further debug
+claims require a new disassembly or runtime witness.

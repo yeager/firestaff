@@ -8,11 +8,12 @@
 > and [`docs/NEXUS_STALE_CLAIM_AUDIT.md`](NEXUS_STALE_CLAIM_AUDIT.md).
 
 ## Summary
-Nexus carries forward DM1 bugs (BUG0 series) since it re-implements DM1
-game logic. There are also Nexus-specific gaps and known issues in the
-Firestaff codebase. The original Saturn binary has not been disassembled,
-so some "bugs" here may be Firestaff implementation gaps rather than
-bugs in the original game.
+This page separates historical DM1 bug references from current Nexus gates.
+Nexus has an authenticated external corpus, a launcher/runtime boundary and a
+296/296 passing Nexus regression selection. The original Saturn executable is
+partly disassembled, but start pose, VDP1/VDP2 consumers, SLEV/SAL runtime
+ownership and Saturn saves remain unproven. No DM1 bug is automatically
+promoted to a Nexus bug.
 
 ## 1. BUG0 Issues (DM1 Bugs Inherited by Nexus)
 
@@ -40,16 +41,15 @@ of continuous play due to a 24-bit timeline counter overflow.
 
 ## 2. Firestaff Implementation Gaps (Not Original Bugs)
 
-Critical blockers (Firestaff-specific):
-- B1: No Sega Saturn disc image present in repository
-- B2: Nexus static library not linked into any binary (no --profile nexus)
-- B3: Zero tests for Nexus (387 DM1 tests exist, 0 for Nexus)
-- B4: No game loop integration (nexus_v1_engine.c isolated dead code)
+Historical blockers B1-B4 are obsolete. Current Firestaff-specific gates are
+the authentic Saturn LEV01 start pose, VDP1/VDP2 presentation consumers,
+SLEV/SAL event/audio ownership and Saturn memory-card save compatibility.
 
 High-priority missing implementations:
 - M1: VDP1/VDP2 texture format not implemented
 - M2: DMDF model format not fully documented
-- M3: ISO 9660 + Saturn header parser incomplete/untested
+- M3: ISO/CUE boundary and sector reads are tested; full Saturn consumer parity
+  remains open
 - M4: Shift-JIS text decoding not implemented
 
 ## 3. Design Quirks (Not Bugs)

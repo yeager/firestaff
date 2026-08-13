@@ -2,8 +2,9 @@
  * test_m11_nexus_startup_gate.c -- M11 Nexus startup ownership gate.
  *
  * Scope: startup handoff only. Empty or partial Nexus data must not leave
- * M11 in an active half-started state; a real extracted/ISO data directory,
- * when staged locally, must reach M11_GAME_SOURCE_NEXUS_DGN.
+ * M11 in an active half-started state; a real extracted/ISO data directory
+ * must reach the title/asset boot while remaining blocked before LEV01 until
+ * the Saturn start-pose witness exists.
  *
  * Source: src/nexus/nexus_v1_launcher.c owns init/load-level sequencing;
  * src/engine/m11_game_view.c M11_GameView_StartNexus owns the M11 handoff.
@@ -710,7 +711,7 @@ static void expect_failed_start_is_inactive(const char* data_dir,
 }
 
 static const char* nexus_data_dir(char fallback[512]) {
-    const char* data_dir = getenv("FIRESTAFF_NEXUS_V1_DATA_DIR");
+    const char* data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     if (data_dir && data_dir[0]) {
         return data_dir;
     }
@@ -846,6 +847,42 @@ int main(void) {
 
     real_dir = nexus_data_dir(real_fallback);
     if (real_dir && real_dir[0]) {
+        char alternate_real_dir[1024];
+        Nexus_V1_Engine *launcher_engine;
+
+        /* The launcher is a process singleton, but its source root is not.
+         * Exercise the real corpus twice through distinct path spellings so a
+         * profile/corpus switch cannot silently retain the previous engine. */
+        expect_true(nexus_v1_launcher_init(real_dir) == 0,
+                    "real Nexus launcher initializes from the authentic root");
+        launcher_engine = nexus_v1_launcher_get_engine();
+        expect_true(launcher_engine != NULL &&
+                        strcmp(launcher_engine->data_dir, real_dir) == 0,
+                    "real Nexus launcher records the authentic root");
+        snprintf(alternate_real_dir, sizeof(alternate_real_dir), "%s%s.",
+                 real_dir, TEST_PATH_SEP);
+        expect_true(nexus_v1_launcher_init(alternate_real_dir) == 0,
+                    "real Nexus launcher accepts a changed authentic root spelling");
+        launcher_engine = nexus_v1_launcher_get_engine();
+        expect_true(launcher_engine != NULL &&
+                        strcmp(launcher_engine->data_dir, alternate_real_dir) == 0,
+                    "real Nexus launcher switches source roots instead of reusing stale state");
+        expect_true(nexus_v1_launcher_init(real_dir) == 0,
+                    "real Nexus launcher switches back to the authentic root");
+        launcher_engine = nexus_v1_launcher_get_engine();
+        expect_true(launcher_engine != NULL &&
+                        strcmp(launcher_engine->data_dir, real_dir) == 0,
+                    "real Nexus launcher restores the requested source root");
+        expect_true(nexus_v1_launcher_load_level(0) != 0,
+                    "real Nexus launcher rejects title-only LEV00 as playable");
+        expect_true(nexus_v1_launcher_load_level(1) != 0 &&
+                        launcher_engine->game.current_level == 0 &&
+                        launcher_engine->game.party_x == -1 &&
+                        launcher_engine->game.party_y == -1 &&
+                        launcher_engine->game.party_dir == -1,
+                    "real Nexus launcher keeps LEV01 closed until pose is source-bound");
+        nexus_v1_launcher_shutdown();
+
         static M11_GameViewState view;
         M11_GameLaunchSpec spec;
         fill_nexus_spec(&spec, real_dir);
@@ -865,10 +902,10 @@ int main(void) {
                         "real Nexus startup claims Nexus sourceKind");
             expect_true(view.nexusEngine != NULL,
                         "real Nexus startup exposes engine");
-            expect_true(view.nexusState.level_loaded == 1,
-                        "real Nexus startup loads level zero");
-            expect_true(strstr(view.dungeonPath, "LEV00.DGN") != NULL,
-                        "real Nexus startup exposes level path");
+            expect_true(view.nexusState.level_loaded == 0,
+                        "real Nexus startup keeps LEV00 title-only");
+            expect_true(view.dungeonPath[0] == '\0',
+                        "real Nexus title boot exposes no playable level path");
             expect_true(view.nexusState.title_active == 1,
                         "real Nexus startup enters title phase");
             expect_true(view.nexusEngine &&
@@ -880,6 +917,28 @@ int main(void) {
                                 view.nexusEngine) == 0 &&
                             nexus_v1_startup_surfaces_ready(view.nexusEngine),
                         "real Nexus startup caches full TITLE/WARNING/GAMEOVER/STABG graphics");
+
+            /* A real corpus currently proves title/asset boot only.  Do not
+             * run the old post-title fixture below: it treated LEV00 as a
+             * playable level and promoted FACE/menus before the Saturn
+             * LEV01 pose and consumer witness had been captured.  Keeping
+             * this explicit branch makes the regression test enforce the
+             * production fail-closed boundary instead of masking it. */
+            if (view.nexusState.level_loaded == 0) {
+                expect_true(view.nexusState.title_active == 1,
+                            "real Nexus title/asset boot remains in title phase");
+                expect_true(view.nexusState.party_x == -1 &&
+                                view.nexusState.party_y == -1 &&
+                                view.nexusState.party_dir == -1,
+                            "real Nexus title boot does not manufacture a party pose");
+                expect_true(view.dungeonPath[0] == '\0',
+                            "real Nexus title boot does not claim a dungeon path");
+                expect_true(view.active == 1 && view.startedFromLauncher == 1,
+                            "real Nexus title boot remains an active launcher session");
+                M11_GameView_Shutdown(&view);
+                nexus_v1_launcher_shutdown();
+                goto real_media_complete;
+            }
             expect_canonical_face_media_is_blocked(real_dir);
             if (view.nexusEngine &&
                 !nexus_v1_startup_faces_ready(view.nexusEngine)) {

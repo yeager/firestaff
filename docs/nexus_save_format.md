@@ -57,9 +57,20 @@ geometry_size    : int
 
 ## Original Game Format Context
 
-The original Saturn game used **memory card blocks** (8 KB per save) with a
-proprietary header tracking: party data, champion state, dungeon progress,
-and inventory. No file-level save image is reverse-engineered in this codebase.
+The original Saturn game used Saturn backup-RAM/memory-card storage with a
+proprietary save layout. The exact save-record size and header are not
+source-locked in this codebase; do not treat the common 8 KiB block size as a
+verified Nexus save-format fact.
+
+## External Capture Inventory
+
+The Nexus capture corpus was checked on 2026-08-13. The available Mednafen
+backup files (`*.bcr`/`*.bkr`) contain the same empty 512 KiB Backup-RAM image;
+this is an observed container size, not a decoded save-record size. They do
+not contain a played Nexus save or a source-owned level/position/facing
+record. Mednafen `*.smpc` files are peripheral/input state, not game saves.
+They remain diagnostic artifacts and are not admitted as save data or as a
+substitute for the authentic Saturn start-state capture.
 
 ## Conclusion
 

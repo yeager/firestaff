@@ -164,7 +164,9 @@ int main(void) {
     char profile_nexus_dir[FSP_PATH_MAX];
     char profile_dm_bin_dst[FSP_PATH_MAX];
     char level_src[FSP_PATH_MAX];
+    char level_one_src[FSP_PATH_MAX];
     char level_dst[FSP_PATH_MAX];
+    char level_one_dst[FSP_PATH_MAX];
     char wrong_level_canonical_dst[FSP_PATH_MAX];
     char negative_root[FSP_PATH_MAX];
     char negative_nexus_dir[FSP_PATH_MAX];
@@ -180,6 +182,7 @@ int main(void) {
     char profile_level_root[FSP_PATH_MAX];
     char profile_level_nexus_dir[FSP_PATH_MAX];
     char profile_level_dst[FSP_PATH_MAX];
+    char profile_level_one_dst[FSP_PATH_MAX];
     Nexus_V1_Engine engine;
     Nexus_V1_GameState game;
     Nexus_V1_BootProfile profile;
@@ -355,9 +358,14 @@ int main(void) {
         copy_file_bytes(dm_bin_src, dm_bin_dst) &&
         FSP_JoinPath(level_src, sizeof(level_src), data_root, "LEV00.DGN") &&
         local_file_exists(level_src) &&
+        FSP_JoinPath(level_one_src, sizeof(level_one_src), data_root, "LEV01.DGN") &&
+        local_file_exists(level_one_src) &&
         FSP_JoinPath(level_dst, sizeof(level_dst), root,
                      "renamed-level-zero.payload") &&
         copy_file_bytes(level_src, level_dst) &&
+        FSP_JoinPath(level_one_dst, sizeof(level_one_dst), root,
+                     "renamed-level-one.payload") &&
+        copy_file_bytes(level_one_src, level_one_dst) &&
         FSP_JoinPath(wrong_level_canonical_dst,
                      sizeof(wrong_level_canonical_dst),
                      root,
@@ -494,8 +502,8 @@ int main(void) {
                       "Nexus MENU.BPK renderer handoff keeps Saturn presentation gated");
             check_int(handoff.can_render_stored_surfaces == 0 &&
                           handoff.blocks_real_menu_surface_render == 1 &&
-                          handoff.fallback_visuals_permitted == 1,
-                      "Nexus MENU.BPK handoff remains blocked without Saturn presentation capture");
+                          handoff.fallback_visuals_permitted == 0,
+                      "Nexus MENU.BPK handoff forbids fallback without Saturn presentation capture");
             check_int(handoff.surface_entries == 162U &&
                           handoff.blocked_prs3_surfaces == 162U,
                       "Nexus MENU.BPK handoff retains PRS3 source provenance");
@@ -517,6 +525,12 @@ int main(void) {
                                "renamed-dm-bin.marker") &&
                   copy_file_bytes(dm_bin_src, profile_dm_bin_dst),
                   "renamed DM.BIN profile fixture written");
+        check_int(FSP_JoinPath(profile_level_one_dst,
+                               sizeof(profile_level_one_dst),
+                               profile_nexus_dir,
+                               "renamed-level-one.payload") &&
+                      copy_file_bytes(level_one_src, profile_level_one_dst),
+                  "renamed LEV01.DGN profile fixture written");
         memset(&profile, 0, sizeof(profile));
         memset(diags, 0, sizeof(diags));
         check_int(Nexus_V1_BootProfile_Init(&profile, profile_root, profile_root, 0U) == 0,

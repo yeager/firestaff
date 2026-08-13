@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 static void le32(unsigned char *p,unsigned v){p[0]=v;p[1]=v>>8;p[2]=v>>16;p[3]=v>>24;}
-static int iso(const char *p){unsigned char s[2048];FILE*f=fopen(p,"wb");int i;if(!f)return 0;for(i=0;i<23;i++){memset(s,0,sizeof(s));if(i==16){s[0]=1;memcpy(s+1,"CD001",5);s[156]=34;le32(s+158,20);le32(s+166,2048);s[188]=1;}if(i==20){s[0]=41;le32(s+2,21);le32(s+10,2048);s[32]=8;memcpy(s+33,"DM.BIN;1",8);s[41]=44;le32(s+43,22);le32(s+51,2048);s[73]=11;memcpy(s+74,"LEV00.DGN;1",11);}if(i==21)memset(s,0,sizeof(s));if(fwrite(s,1,sizeof(s),f)!=sizeof(s)){fclose(f);return 0;}}return fclose(f)==0;}
+static int iso(const char *p){unsigned char s[2048];FILE*f=fopen(p,"wb");int i;if(!f)return 0;for(i=0;i<24;i++){memset(s,0,sizeof(s));if(i==16){s[0]=1;memcpy(s+1,"CD001",5);s[156]=34;le32(s+158,20);le32(s+166,2048);s[188]=1;}if(i==20){s[0]=41;le32(s+2,21);le32(s+10,2048);s[32]=8;memcpy(s+33,"DM.BIN;1",8);s[41]=44;le32(s+43,22);le32(s+51,2048);s[73]=11;memcpy(s+74,"LEV00.DGN;1",11);s[85]=44;le32(s+87,23);le32(s+95,2048);s[117]=11;memcpy(s+118,"LEV01.DGN;1",11);}if(i==21||i==22||i==23)memset(s,0,sizeof(s));if(fwrite(s,1,sizeof(s),f)!=sizeof(s)){fclose(f);return 0;}}return fclose(f)==0;}
 static int sh(const char*p,char out[65]){char c[512],l[128];FILE*f;snprintf(c,sizeof(c),"shasum -a 256 '%s'",p);f=popen(c,"r");if(!f||!fgets(l,sizeof(l),f)){if(f)pclose(f);return 0;}pclose(f);memcpy(out,l,64);out[64]=0;return 1;}
 int main(void) {
  Nexus_V1_DgnMultiLevelCaptureAdjudicationReceipt d={0}; Nexus_V1_LevCorpusDiscoveryReceipt c={0}; Nexus_V1_SlevTaskBodyCapturePlan s={0}; Nexus_V1_SalCapturePlan a={0}; Nexus_V1_MultiLevelCaptureCampaignLauncherInput in={0}; Nexus_V1_MultiLevelCaptureCampaignLaunchPlan p; int i;

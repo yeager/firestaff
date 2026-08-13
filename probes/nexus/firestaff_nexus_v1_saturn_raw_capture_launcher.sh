@@ -42,6 +42,18 @@ append_trace_receipts() {
     fi
   done
   for trace_var in \
+    FIRESTAFF_NEXUS_TRACE_SH2_PC \
+    FIRESTAFF_NEXUS_TRACE_SH2_PC_TRACE \
+    FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT \
+    FIRESTAFF_NEXUS_TRACE_SH2_RAM_READS; do
+    trace_path="${!trace_var:-}"
+    if [[ -n "$trace_path" && -s "$trace_path" ]] &&
+       ! grep -q "^${trace_var}_sha256=" "$manifest"; then
+      printf '%s_sha256=%s\n' "$trace_var" \
+        "$(lower "$(hash_file "$trace_path")")" >> "$manifest"
+    fi
+  done
+  for trace_var in \
     FIRESTAFF_NEXUS_TRACE_SCSP_WRITES \
     FIRESTAFF_NEXUS_TRACE_MAIN_SCSP_WRITES \
     FIRESTAFF_NEXUS_TRACE_SCSP_READS \
@@ -104,6 +116,7 @@ mednafen_home=
 no_waiting=0
 require_input_window=0
 bios_region=eu
+mednafen_options=()
 while (($#)); do
   case "$1" in
     --launch) launch=1; shift ;;
@@ -116,6 +129,17 @@ while (($#)); do
     *) usage; exit 2 ;;
   esac
 done
+
+# Optional emulator-only tuning for long raw captures.  Keep this separate
+# from Firestaff runtime configuration and record it in the manifest so a
+# faster headless capture remains reproducible.
+if [[ -n "${FIRESTAFF_NEXUS_MEDNAFEN_OPTIONS:-}" ]]; then
+  read -r -a mednafen_options <<< "$FIRESTAFF_NEXUS_MEDNAFEN_OPTIONS"
+fi
+mednafen_command=("$mednafen")
+if ((${#mednafen_options[@]} > 0)); then
+  mednafen_command+=("${mednafen_options[@]}")
+fi
 
 if [[ -z "${trace_session:-}" ]]; then
   trace_session="${FIRESTAFF_NEXUS_TRACE_SESSION:-nexus-$(date -u +%Y%m%dT%H%M%SZ)-$$}"
@@ -168,6 +192,7 @@ umask 077
     "$(lower "$bios_sha256")" "$bios_region" "$(lower "$disc_sha256")" "$skip_frames" "$frame_limit" "$press_start_frame" "$press_start_length" "$press_button_mask" "${FIRESTAFF_NEXUS_TRACE_PRESS_SEQUENCE:-}"
   printf 'mednafen_home=%s\ntrace_session=%s\nno_waiting=%s\nrequire_input_window=%s\ntimeout_seconds=%s\n' "${mednafen_home:-}" "$trace_session" "$no_waiting" "$require_input_window" "$timeout_seconds"
   printf 'vdp1_reg_pc_list=%s\n' "${FIRESTAFF_NEXUS_TRACE_VDP1_REG_PC_LIST:-}"
+  printf 'mednafen_options=%q\n' "${mednafen_options[*]-}"
   printf 'capture_magic=FIRESTAFF_NEXUS_SATURN_RUNTIME_CAPTURE_V1\n'
 } > "$manifest_tmp"
 mv "$manifest_tmp" "$manifest"
@@ -178,7 +203,7 @@ printf 'bios_region=%s\n' "$bios_region"
 printf 'disc=%q\n' "$disc"
 printf 'trace=%q\n' "$trace"
 printf 'manifest=%q\n' "$manifest"
-printf 'command=%q -filesys.untrusted_fip_check 0 %s %q %q\n' "$mednafen" "$bios_option" "$bios" "$disc"
+printf 'command=%q %q -filesys.untrusted_fip_check 0 %s %q %q\n' "$mednafen" "${mednafen_options[*]-}" "$bios_option" "$bios" "$disc"
 ((launch)) || exit 0
 ((operator_only)) || exit 1
 
@@ -192,6 +217,15 @@ if [[ -n "$mednafen_home" ]]; then
   HOME="$mednafen_home" \
   FIRESTAFF_NEXUS_TRACE_OUTPUT="$trace" \
   FIRESTAFF_NEXUS_TRACE_SESSION="$trace_session" \
+  FIRESTAFF_NEXUS_TRACE_SH2_PC="${FIRESTAFF_NEXUS_TRACE_SH2_PC:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_PC_TRACE="${FIRESTAFF_NEXUS_TRACE_SH2_PC_TRACE:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_PC_MIN="${FIRESTAFF_NEXUS_TRACE_SH2_PC_MIN:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_PC_MAX="${FIRESTAFF_NEXUS_TRACE_SH2_PC_MAX:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_PC_LIMIT="${FIRESTAFF_NEXUS_TRACE_SH2_PC_LIMIT:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_PC_WINDOW="${FIRESTAFF_NEXUS_TRACE_SH2_PC_WINDOW:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_PC_SNAPSHOT="${FIRESTAFF_NEXUS_TRACE_SH2_PC_SNAPSHOT:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT="${FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT_FRAMES="${FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT_FRAMES:-}" \
   FIRESTAFF_NEXUS_NO_WAITING="$waiting_env" \
   FIRESTAFF_NEXUS_TRACE_SKIP_FRAMES="$skip_frames" \
   FIRESTAFF_NEXUS_TRACE_FRAME_LIMIT="$frame_limit" \
@@ -274,6 +308,10 @@ if [[ -n "$mednafen_home" ]]; then
   FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_LIMIT="${FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_LIMIT:-}" \
   FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_PC_MIN="${FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_PC_MIN:-}" \
   FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_PC_MAX="${FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_PC_MAX:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_RAM_READS="${FIRESTAFF_NEXUS_TRACE_SH2_RAM_READS:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MIN="${FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MIN:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MAX="${FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MAX:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_LIMIT="${FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_LIMIT:-}" \
   FIRESTAFF_NEXUS_TRACE_SCU_DMA_WRITES="${FIRESTAFF_NEXUS_TRACE_SCU_DMA_WRITES:-}" \
   FIRESTAFF_NEXUS_TRACE_SCU_DMA_SOURCE_MIN="${FIRESTAFF_NEXUS_TRACE_SCU_DMA_SOURCE_MIN:-}" \
   FIRESTAFF_NEXUS_TRACE_SCU_DMA_SOURCE_MAX="${FIRESTAFF_NEXUS_TRACE_SCU_DMA_SOURCE_MAX:-}" \
@@ -285,12 +323,21 @@ if [[ -n "$mednafen_home" ]]; then
   FIRESTAFF_NEXUS_TRACE_CD_READ_MIN_LBA="${FIRESTAFF_NEXUS_TRACE_CD_READ_MIN_LBA:-}" \
   FIRESTAFF_NEXUS_TRACE_CD_READ_MAX_LBA="${FIRESTAFF_NEXUS_TRACE_CD_READ_MAX_LBA:-}" \
   SDL_AUDIODRIVER="${SDL_AUDIODRIVER:-}" \
-    "$mednafen" -filesys.untrusted_fip_check 0 "$bios_option" "$bios" "$disc" &
+    "${mednafen_command[@]}" -filesys.untrusted_fip_check 0 "$bios_option" "$bios" "$disc" &
   capture_child_pid=$!
 else
   trap cleanup_capture_child INT TERM EXIT
   FIRESTAFF_NEXUS_TRACE_OUTPUT="$trace" \
   FIRESTAFF_NEXUS_TRACE_SESSION="$trace_session" \
+  FIRESTAFF_NEXUS_TRACE_SH2_PC="${FIRESTAFF_NEXUS_TRACE_SH2_PC:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_PC_TRACE="${FIRESTAFF_NEXUS_TRACE_SH2_PC_TRACE:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_PC_MIN="${FIRESTAFF_NEXUS_TRACE_SH2_PC_MIN:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_PC_MAX="${FIRESTAFF_NEXUS_TRACE_SH2_PC_MAX:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_PC_LIMIT="${FIRESTAFF_NEXUS_TRACE_SH2_PC_LIMIT:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_PC_WINDOW="${FIRESTAFF_NEXUS_TRACE_SH2_PC_WINDOW:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_PC_SNAPSHOT="${FIRESTAFF_NEXUS_TRACE_SH2_PC_SNAPSHOT:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT="${FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT_FRAMES="${FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT_FRAMES:-}" \
   FIRESTAFF_NEXUS_NO_WAITING="$waiting_env" \
   FIRESTAFF_NEXUS_TRACE_SKIP_FRAMES="$skip_frames" \
   FIRESTAFF_NEXUS_TRACE_FRAME_LIMIT="$frame_limit" \
@@ -369,6 +416,10 @@ else
   FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_LIMIT="${FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_LIMIT:-}" \
   FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_PC_MIN="${FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_PC_MIN:-}" \
   FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_PC_MAX="${FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_PC_MAX:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_RAM_READS="${FIRESTAFF_NEXUS_TRACE_SH2_RAM_READS:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MIN="${FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MIN:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MAX="${FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MAX:-}" \
+  FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_LIMIT="${FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_LIMIT:-}" \
   FIRESTAFF_NEXUS_TRACE_SCU_DMA_WRITES="${FIRESTAFF_NEXUS_TRACE_SCU_DMA_WRITES:-}" \
   FIRESTAFF_NEXUS_TRACE_SCU_DMA_SOURCE_MIN="${FIRESTAFF_NEXUS_TRACE_SCU_DMA_SOURCE_MIN:-}" \
   FIRESTAFF_NEXUS_TRACE_SCU_DMA_SOURCE_MAX="${FIRESTAFF_NEXUS_TRACE_SCU_DMA_SOURCE_MAX:-}" \
@@ -380,7 +431,7 @@ else
   FIRESTAFF_NEXUS_TRACE_CD_READ_MIN_LBA="${FIRESTAFF_NEXUS_TRACE_CD_READ_MIN_LBA:-}" \
   FIRESTAFF_NEXUS_TRACE_CD_READ_MAX_LBA="${FIRESTAFF_NEXUS_TRACE_CD_READ_MAX_LBA:-}" \
   SDL_AUDIODRIVER="${SDL_AUDIODRIVER:-}" \
-    "$mednafen" -filesys.untrusted_fip_check 0 "$bios_option" "$bios" "$disc" &
+    "${mednafen_command[@]}" -filesys.untrusted_fip_check 0 "$bios_option" "$bios" "$disc" &
   capture_child_pid=$!
 fi
 if ((timeout_seconds > 0)); then

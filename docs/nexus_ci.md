@@ -16,7 +16,8 @@ the Saturn BIOS remain user-supplied and are never placed in CI.
 Runs on: ubuntu-24.04, macos-14, windows-2022
 
 Jobs:
-1. cmake-build: Configure and build with CMake, run firestaff_m11_phase_a_probe and firestaff_m11_audio_probe (smoke tests)
+1. cmake-build: Configure and build with CMake, run the shared M11 smoke probes
+   and build the Nexus production library used by `firestaff_m11`
 2. verify: Run M10 verify script (if GRAPHICS.DAT present), deterministic hash via headless driver, cross-platform determinism check
 3. web-wasm-toolchain-probe: Check Web/WASM toolchain availability
 4. warnings-check: -Wall -Wextra -Werror on all probes
@@ -54,14 +55,16 @@ Nexus V1 CI requires a fundamentally different setup because:
 2. No Saturn BIOS/capture artifact may be committed to CI
 3. Real-media tests require the user's private corpus
 
-### Current CI for Nexus (Phase 0-1)
+### Current CI for Nexus
 
 - cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-- cmake --build build --target firestaff_nexus
+- cmake --build build --target firestaff_nexus firestaff_m11
 - test -f build/libfirestaff_nexus.a
 - ctest --test-dir build -R '^nexus_production_source_boundary$'
 
-This minimal job proves the library compiles on every push.
+This proves the production library and its host executable compile on every
+push. It does not claim Saturn playability: private BIOS/media and capture
+artifacts are deliberately excluded from CI.
 
 ### Remaining CI expansion after source-owned runtime handoff
 

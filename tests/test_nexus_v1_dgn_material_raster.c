@@ -9,11 +9,11 @@
 
 static int failures;
 
-/* Fixture-only coordinates.  The real LEV00.DGN cell at (11,29) is empty;
- * keep these values local to this deterministic probe so they cannot become
- * a production Nexus start position through a public header. */
+/* Fixture-only coordinates.  LEV00 is title/entrance-only, so this
+ * deterministic probe uses the first playable level and keeps the values
+ * local so they cannot become a production Nexus start position. */
 enum {
-    TEST_SYNTHETIC_PARTY_LEVEL = 0,
+    TEST_SYNTHETIC_PARTY_LEVEL = 1,
     TEST_SYNTHETIC_PARTY_X = 11,
     TEST_SYNTHETIC_PARTY_Y = 29,
     TEST_SYNTHETIC_PARTY_DIR = 0
@@ -233,7 +233,7 @@ int main(void) {
     expect(nexus_v1_level_load(&engine.current_level,
                                dgn,
                                (int)sizeof(dgn),
-                               0) == 0,
+                               TEST_SYNTHETIC_PARTY_LEVEL) == 0,
            "viewport DGN fixture loads through real Structure1B parser");
     expect(nexus_v1_game_resolve_dungeon_start(
                &engine.current_level, TEST_SYNTHETIC_PARTY_LEVEL,
@@ -245,7 +245,8 @@ int main(void) {
            "DGN-backed new-game start accepts the verified Structure1B cell");
     memset(&game, 0, sizeof(game));
     expect(nexus_v1_game_apply_dungeon_start(&game, &start) == 1 &&
-               game.current_level == 0 && game.party_x == 11 &&
+               game.current_level == TEST_SYNTHETIC_PARTY_LEVEL &&
+               game.party_x == 11 &&
                game.party_y == 29 && game.party_dir == 0,
            "new-game host state consumes the validated DGN start pose");
     set_dgn_collision_ref(structure1, 0x40, TEST_SYNTHETIC_PARTY_X,
@@ -253,7 +254,7 @@ int main(void) {
     expect(nexus_v1_level_load(&engine.current_level,
                                dgn,
                                (int)sizeof(dgn),
-                               0) == 0 &&
+                               TEST_SYNTHETIC_PARTY_LEVEL) == 0 &&
                nexus_v1_game_resolve_dungeon_start(
                    &engine.current_level, TEST_SYNTHETIC_PARTY_LEVEL,
                    TEST_SYNTHETIC_PARTY_X, TEST_SYNTHETIC_PARTY_Y,
@@ -266,7 +267,7 @@ int main(void) {
     expect(nexus_v1_level_load(&engine.current_level,
                                dgn,
                                (int)sizeof(dgn),
-                               0) == 0,
+                               TEST_SYNTHETIC_PARTY_LEVEL) == 0,
            "start-cell fixture restores its passable DGN route");
     for (int y = 0; y < NEXUS_MAX_MAP_SIZE; ++y) {
         for (int x = 0; x < NEXUS_MAX_MAP_SIZE; ++x) {
@@ -277,13 +278,13 @@ int main(void) {
     }
     engine.level_loaded = 1;
     engine.initialized = 1;
-    engine.game.current_level = 0;
+    engine.game.current_level = 1;
     engine.game.party_x = 3;
     engine.game.party_y = 4;
     engine.game.party_dir = 0;
     engine.current_level_dgn_data = dgn;
     engine.current_level_dgn_size = (int)sizeof(dgn);
-    engine.current_level_structure2_source.level_index = 0;
+    engine.current_level_structure2_source.level_index = 1;
     engine.current_level_structure2_source.canonical_hash_verified = 1;
     engine.current_level_structure2_source.structure2_payload_envelope_valid = 1;
     engine.current_level_structure2_source.materialization_bound = 1;
@@ -384,7 +385,7 @@ int main(void) {
                engine.dgn_material_plan.receipt.status ==
                    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE &&
                !engine.dgn_material_plan.receipt.blocks_real_dgn_mesh_render &&
-               engine.dgn_material_plan.receipt.fallback_visuals_permitted,
+               !engine.dgn_material_plan.receipt.fallback_visuals_permitted,
            "a changed retained LEV buffer blocks the material host route despite valid MNS sources");
     }
     dgn[0] ^= 1U;
@@ -429,7 +430,7 @@ int main(void) {
                    NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE &&
                !engine.dgn_material_plan.receipt.plan_ready &&
                !engine.dgn_material_plan.receipt.blocks_real_dgn_mesh_render &&
-               engine.dgn_material_plan.receipt.fallback_visuals_permitted,
+               !engine.dgn_material_plan.receipt.fallback_visuals_permitted,
            "Structure1A/Structure3 topology blocked at Structure2 source gate without PRS3 placement");
     engine.current_level.structure1f_entry_count = 0;
     engine.current_level.geometry_info.structure1f_declared = 0;

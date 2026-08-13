@@ -6,13 +6,16 @@ Nexus-startskärm.
 ## Verifierad initieringsordning
 
 `nexus_v1_init()` väljer först ett hashverifierat extracted-korpus när `DM.BIN`
-och `LEV00.DGN` finns som riktiga lösa filer. En giltig samlokaliserad retail-
+och den autentiska DGN-korpusen finns som riktiga lösa filer. `LEV00.DGN` är
+en titel-/entréresurs; den första spelbara nivån är `LEV01.DGN`. En giltig samlokaliserad retail-
 ISO kan därefter läsas som kompletterande källa för exakta ISO-medlemmar. Om
 endast ISO-data finns används ISO-läsaren direkt.
 
 Efter källval försöker motorn läsa riktiga `RLOWFIX.BIN`, startup-ytor,
 `FACE.BIN`, `FONT256.S2D`, ljudmetadata och övriga källfiler. Saknade eller
-obundna konsumenter får inte ersättas med syntetiska ytor.
+obundna konsumenter får inte ersättas med syntetiska ytor. Titelstart får
+därför inte rapportera en spelposition förrän Saturns autentiska `LEV01`-
+position och riktning har fångats och bundits till samma runtime-källa.
 
 ## Verifierade startup-resurser
 

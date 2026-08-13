@@ -3984,6 +3984,13 @@ int main(void)
                               "NEXUS RESUME LEVEL INVALID") == 0,
                    "Nexus resume receipt owns bad-level status");
             expect(nexus_v1_startup_resume_status_host_receipt(
+                       NEXUS_V1_STARTUP_RESUME_STATUS_POSE_INVALID,
+                       &boot_receipt) &&
+                       boot_receipt.status &&
+                       strcmp(boot_receipt.status,
+                              "NEXUS RESUME POSE INVALID") == 0,
+                   "Nexus resume receipt owns bad-pose status");
+            expect(nexus_v1_startup_resume_status_host_receipt(
                        NEXUS_V1_STARTUP_RESUME_STATUS_RESUMED,
                        &boot_receipt) &&
                        boot_receipt.input_result ==

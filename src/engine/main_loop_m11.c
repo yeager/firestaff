@@ -3949,6 +3949,18 @@ static void m11_write_autotest_runtime_probe(const char* path,
                 lastOutcome = "THERON RUNTIME (TRACK 02 DUNGEON)";
             }
         }
+        /* Nexus title/asset boot is deliberately not a playable dungeon
+         * state.  Keep the JSON receipt source-faithful: zero is a valid
+         * coordinate, so it must not stand in for an unknown Saturn start
+         * pose while LEV01 admission is blocked. */
+        if (gameView && gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN &&
+            !gameView->nexusState.level_loaded) {
+            mapIndex = -1;
+            mapX = -1;
+            mapY = -1;
+            direction = -1;
+            championCount = 0;
+        }
         fprintf(f,
             "{\n"
             "  \"schema\": \"firestaff_m11_autotest_runtime_probe.v1\",\n"

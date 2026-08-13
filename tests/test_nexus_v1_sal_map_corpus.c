@@ -196,6 +196,27 @@ int main(void) {
                   sound.sal_tone_entry_count - 4 &&
               sound.sal_tone_sample_payload_bytes > 0,
               "retail SAL tone metadata preserves 8/16-bit source payload");
+        CHECK(sound.sal_decode_ready == 1 &&
+                  sound.sal_decoded_tone_count == sound.sal_tone_entry_count,
+              "retail SAL tone bank decodes into the bounded PCM diagnostic cache");
+        {
+            int decoded_samples = 0;
+            int tone;
+            for (tone = 4; tone < sound.sal_tone_entry_count; ++tone) {
+                if (sound.sal_decoded_sample_count[tone] > 0) {
+                    CHECK(sound.sal_decoded_samples[tone] != NULL,
+                          "decoded retail SAL memory source owns PCM samples");
+                    CHECK(sound.sal_decoded_sample_count[tone] <= 65536,
+                          "decoded retail SAL sample count stays bounded");
+                    decoded_samples++;
+                } else {
+                    CHECK(sound.sal_decoded_samples[tone] == NULL,
+                          "retail SAL noise source has no synthetic PCM payload");
+                }
+            }
+            CHECK(decoded_samples == sound.sal_tone_memory_source_count,
+                  "decoded retail SAL sample slots match source descriptors");
+        }
         record_total += sound.map_record_count;
         CHECK(sound.map_out_of_bounds_record_count == 0,
               "every retail MAP window is inside its SAL bank");

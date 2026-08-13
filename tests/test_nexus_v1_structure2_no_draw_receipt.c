@@ -71,7 +71,7 @@ int main(void) {
         engine.dgn_material_plan.structure2_source_level_index != -1 ||
         engine.dgn_material_plan.structure2_source_canonical_hash_verified ||
         engine.dgn_material_plan.structure2_source_envelope_valid ||
-        !engine.dgn_material_plan.receipt.fallback_visuals_permitted) {
+        engine.dgn_material_plan.receipt.fallback_visuals_permitted) {
         fprintf(stderr, "Invalid Structure2 descriptor envelope reached the material plan\n");
         return 1;
     }
@@ -130,7 +130,7 @@ int main(void) {
         engine.dgn_material_plan.structure1a_structure3_topology_candidate_receipt
             .topology_candidate_count != 0 ||
         engine.dgn_material_plan.structure1a_structure3_topology_candidates_consumed ||
-        !engine.dgn_material_plan.receipt.fallback_visuals_permitted) {
+        engine.dgn_material_plan.receipt.fallback_visuals_permitted) {
         fprintf(stderr, "Incomplete DGN data did not produce a no-draw plan\n");
         return 1;
     }

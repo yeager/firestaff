@@ -57,7 +57,7 @@ static int write_nexus_iso(const char *path)
             sector[188] = 1;
         } else if (i == 20) {
             int offset = write_record(sector, 21, "DM.BIN;1");
-            if (!offset || !write_record(sector + offset, 22, "LEV00.DGN;1")) {
+            if (!offset || !write_record(sector + offset, 22, "LEV01.DGN;1")) {
                 fclose(file);
                 return 0;
             }
@@ -66,6 +66,18 @@ static int write_nexus_iso(const char *path)
             fclose(file);
             return 0;
         }
+    }
+    return fclose(file) == 0;
+}
+
+static int write_truncated_iso(const char *path)
+{
+    FILE *file = fopen(path, "wb");
+    uint8_t byte = 0;
+    if (!file) return 0;
+    if (fwrite(&byte, 1U, 1U, file) != 1U) {
+        fclose(file);
+        return 0;
     }
     return fclose(file) == 0;
 }
@@ -83,29 +95,43 @@ static int write_text(const char *path, const char *text)
 
 int main(void)
 {
-    char root[256], audio[320], data[320], cue[320];
+    char root[256], audio[320], data[320], truncated[320], cue[320];
     char nested[320], nested_data[384], nested_cue[320];
     char real_cue[768];
     const char *real_root;
     Nexus_ISOReader reader;
     Nexus_ISO_CueMediaReceipt media;
+    uint8_t chunk[8];
     FILE *audio_file;
 
     snprintf(root, sizeof(root), "/tmp/firestaff-nexus-cue-%ld", (long)getpid());
     CHECK("temporary root", mkdir(root, 0700) == 0);
     snprintf(audio, sizeof(audio), "%s/audio.bin", root);
     snprintf(data, sizeof(data), "%s/data.bin", root);
+    snprintf(truncated, sizeof(truncated), "%s/truncated.bin", root);
     snprintf(cue, sizeof(cue), "%s/disc.cue", root);
     audio_file = fopen(audio, "wb");
     CHECK("audio decoy", audio_file && fputc(0, audio_file) != EOF && fclose(audio_file) == 0);
     CHECK("data ISO", write_nexus_iso(data));
+    CHECK("truncated ISO fixture", write_truncated_iso(truncated));
     CHECK("lowercase multi-file cue", write_text(cue,
           "file \"audio.bin\" binary\n  track 01 audio\n"
           "file \"data.bin\" binary\n  track 02 mode1/2048\n"));
     memset(&reader, 0, sizeof(reader));
     CHECK("cue chooses data after audio", nexus_iso_open_cue(&reader, cue) == 2 &&
           nexus_iso_is_nexus(&reader) && strstr(reader.path, "data.bin") != NULL);
+    {
+        const Nexus_ISOFile *dm_bin = nexus_iso_find(&reader, "DM.BIN");
+        CHECK("chunk read rejects negative offset", dm_bin &&
+              nexus_iso_read_file_chunk(&reader, dm_bin, -1, chunk, 1) == -1);
+        CHECK("chunk read rejects overrun", dm_bin &&
+              nexus_iso_read_file_chunk(&reader, dm_bin, 1, chunk, 1) == -1);
+        CHECK("zero-length chunk is harmless", dm_bin &&
+              nexus_iso_read_file_chunk(&reader, dm_bin, 1, chunk, 0) == 0);
+    }
     nexus_iso_close(&reader);
+    memset(&reader, 0, sizeof(reader));
+    CHECK("truncated ISO is rejected", nexus_iso_open(&reader, truncated) == -1);
     CHECK("complete CUE media receipt", nexus_iso_cue_media_receipt(cue, &media) == 0 &&
           media.valid && media.declared_file_count == 2 &&
           media.present_file_count == 2 && media.missing_file_count == 0);
@@ -139,7 +165,7 @@ int main(void)
     }
 
     remove(nested_cue); remove(nested_data); rmdir(nested);
-    remove(cue); remove(data); remove(audio); rmdir(root);
+    remove(cue); remove(data); remove(truncated); remove(audio); rmdir(root);
     if (failures) return 1;
     puts("Nexus CUE data-track gate: PASS");
     return 0;

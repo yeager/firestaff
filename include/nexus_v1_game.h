@@ -6,12 +6,19 @@
 
 /* Nexus V1 game state — ties together DM1 logic + Nexus 3D assets. */
 
+/* DMWeb identifies LEV00.DGN as the title-sequence entrance image and
+ * LEV01.DGN as the Hall of Champions where the game starts.  Keep this
+ * distinction explicit so a title asset cannot become a playable map. */
+#define NEXUS_V1_TITLE_LEVEL 0
+#define NEXUS_V1_FIRST_PLAYABLE_LEVEL 1
+
 typedef enum {
     NEXUS_V1_DUNGEON_START_MISSING = 0,
     NEXUS_V1_DUNGEON_START_READY = 1,
     NEXUS_V1_DUNGEON_START_BLOCKED_LEVEL = 2,
     NEXUS_V1_DUNGEON_START_BLOCKED_COORDINATE = 3,
-    NEXUS_V1_DUNGEON_START_BLOCKED_CELL = 4
+    NEXUS_V1_DUNGEON_START_BLOCKED_CELL = 4,
+    NEXUS_V1_DUNGEON_START_BLOCKED_DIRECTION = 5
 } Nexus_V1_DungeonStartStatus;
 
 typedef struct {

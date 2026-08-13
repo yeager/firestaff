@@ -379,7 +379,7 @@ static void test_engine_owned_slev_profile_route_stays_blocked(void) {
               NEXUS_SLEV_LITERAL_SH2_MOVL_PC_RELATIVE_R0 &&
           route.task_header_profile_bound && !route.saturn_task_dispatch_proven &&
           !route.dispatch_permitted && route.blocks_real_script_dispatch &&
-          route.fallback_visuals_permitted,
+          !route.fallback_visuals_permitted,
           "engine binds only the active verified SLEV task profile");
     engine.level_aux_runtime_receipt.slev.canonical_hash_verified = 0;
     CHECK(nexus_v1_current_level_script_route_receipt(&engine, &route) == 0 &&
@@ -425,20 +425,17 @@ static void test_engine_slev_capture_target_stays_source_bound(void) {
           "capture target loads canonical SLEV profile");
     remove(path);
     memset(&target, 0, sizeof(target));
-    /* nexus_v1_engine_build_slev_capture_target now succeeds and reports
-     * fallback_visuals_permitted (the fail-closed default is never cleared
-     * to 0 in the success path -- see the route/target checks above), but
-     * nexus_v1_engine_write_slev_capture_target still requires the target
-     * to explicitly forbid fallback before it will persist a capture-target
-     * file, so the write is refused and *out_target is left untouched. */
-    CHECK(nexus_v1_engine_write_slev_capture_target(&engine, path, &target) == 0 &&
-          !target.valid && target.level_index == 0 &&
-          !target.original_saturn_execution_required &&
-          !target.task_body_dispatch_proven && !target.no_dispatch_only &&
+    /* A source-bound target remains an evidence request until an authentic
+     * Saturn execution capture exists.  It must not persist a synthetic
+     * replacement or claim fallback visuals. */
+    CHECK(nexus_v1_engine_write_slev_capture_target(&engine, path, &target) == 1 &&
+          target.valid && target.level_index == 0 &&
+          target.original_saturn_execution_required &&
+          !target.task_body_dispatch_proven && target.no_dispatch_only &&
           !target.fallback_visuals_permitted,
-          "fallback-permitted capture target is not persisted to disk");
+          "source-bound SLEV capture target is persisted without fallback");
     file = fopen(path, "rb");
-    CHECK(file == NULL, "SLEV capture target file is not written");
+    CHECK(file != NULL, "SLEV capture target file is written");
     if (file) {
         fclose(file);
     }
@@ -538,7 +535,7 @@ static void test_engine_slev_trace_admission_stays_no_dispatch(void) {
           receipt.callback_or_write_pc == 0x06001280u &&
           receipt.callback_or_write_is_write && receipt.trace_chain_complete &&
           !receipt.task_body_dispatch_proven && !receipt.dispatch_permitted &&
-          receipt.blocks_real_script_dispatch && receipt.fallback_visuals_permitted,
+          receipt.blocks_real_script_dispatch && !receipt.fallback_visuals_permitted,
           "matched Mednafen trace is retained only as opaque dispatch evidence");
     CHECK(nexus_v1_current_level_slev_trace_admission_receipt(&engine, &stored) == 0 &&
           stored.status == NEXUS_V1_SLEV_TRACE_ADMITTED_OPAQUE &&
@@ -558,7 +555,7 @@ static void test_engine_slev_trace_admission_stays_no_dispatch(void) {
           evidence.callback_or_write_is_write &&
           !evidence.task_body_dispatch_proven && !evidence.dispatch_permitted &&
           evidence.blocks_real_script_dispatch &&
-          evidence.fallback_visuals_permitted,
+          !evidence.fallback_visuals_permitted,
           "raw trace proves observation order without promoting task semantics");
     CHECK(nexus_v1_engine_consume_slev_execution_trace(&engine,
                                                        &host_receipt) == 1 &&
@@ -573,7 +570,7 @@ static void test_engine_slev_trace_admission_stays_no_dispatch(void) {
           !host_receipt.task_body_dispatch_proven &&
           !host_receipt.dispatch_permitted &&
           host_receipt.blocks_real_script_dispatch &&
-          host_receipt.fallback_visuals_permitted,
+          !host_receipt.fallback_visuals_permitted,
           "admitted SLEV trace reaches the active host route without dispatch");
     CHECK(nexus_v1_current_level_slev_trace_host_receipt(&engine,
                                                          &stored_host) == 0 &&

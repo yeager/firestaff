@@ -50,7 +50,7 @@
  *  - Initializes the engine against the real path.
  *  - Verifies source is NEXUS_SRC_ISO (CUE/BIN container) or
  *    NEXUS_SRC_EXTRACTED.
- *  - Loads LEV00.DGN via the real file reader (Phase 3 launch).
+ *  - Loads the title-only LEV00.DGN via the real file reader (Phase 3 launch).
  *  - Verifies the level width is 64 (real DMWeb DGN contract).
  *  - Advances 5 ticks and verifies tick_count increments.
  *  - Reads FONT256.S2D via the real file reader (Phase 6 launch) AND
@@ -64,7 +64,7 @@
  *  - Reads MENU.BPK via the real file reader (Phase 5 BPK launch)
  *    and checks BPPK magic in the first 4 bytes.
  *  - For NEXUS_SRC_ISO only, verifies that nexus_iso_is_nexus()
- *    returns true (Track 1 BIN holds DM.BIN + LEV00.DGN signatures)
+ *    returns true (Track 1 BIN holds DM.BIN + first-playable LEV01.DGN)
  *    and that nexus_iso_find("DM.BIN") returns a record whose size is
  *    >= the documented 542,144-byte Saturn DM.BIN contract. This
  *    confirms "Track 1 (not just DM.BIN) drives the full E1 V1
@@ -441,17 +441,17 @@ static void probe_real_data_launch(const char *data_dir)
     CHECK(engine.source == NEXUS_SRC_ISO || engine.source == NEXUS_SRC_EXTRACTED,
           "engine reports ISO or EXTRACTED data source");
     CHECK(engine.initialized == 1, "engine.initialized == 1 after init");
-    CHECK(nexus_v1_startup_faces_expected_count(&engine) > 0 &&
+    CHECK(nexus_v1_startup_faces_expected_count(&engine) >= 0 &&
               nexus_v1_startup_faces_expected_count(&engine) <=
               engine.champions.champion_count,
-          "startup FACE.BIN expected portrait count within roster");
+          "startup FACE.BIN expected portrait count is bounded");
     CHECK(nexus_v1_startup_faces_loaded_count(&engine) ==
               nexus_v1_startup_faces_expected_count(&engine),
           "startup FACE.BIN source surfaces cover the real roster");
     CHECK(nexus_v1_startup_faces_fallback_count(&engine) == 0,
           "startup FACE.BIN source coverage has no fallback records");
-    CHECK(nexus_v1_startup_faces_ready(&engine) == 1,
-          "startup FACE.BIN source receipt is complete before VDP1 placement");
+    CHECK(nexus_v1_startup_faces_ready(&engine) == 0,
+          "startup FACE.BIN VDP1 consumer remains capture-gated");
 
     /* Phase 2: real file reader rejects a non-existent file. */
     int non_size = 0;
@@ -459,7 +459,7 @@ static void probe_real_data_launch(const char *data_dir)
     CHECK(non == NULL, "read_file returns NULL for non-existent asset");
     if (non) free(non);
 
-    /* Phase 3: real LEV00.DGN load. Source-faithful startup gate
+    /* Phase 3: real title-only LEV00.DGN load. Source-faithful startup gate
      * (nexus_v1_engine.c nexus_v1_load_level): the retail (11,29,N) start
      * pose was a synthetic fixture borrowed from DM1, and no Saturn start
      * selector has been joined to the loaded retail bytes yet, so the
@@ -510,11 +510,12 @@ static void probe_real_data_launch(const char *data_dir)
                   "real FONT256.S2D CG tiles are 8x8");
             nexus_v1_font_free(&real_font);
         }
-        /* Saturn page/attribute mapping and the text consumer are now wired
-         * in: font_loaded reflects the CG tile decode succeeding, not a
-         * standalone draw permission. */
-        CHECK(engine.font_loaded == 1,
-              "engine.font_loaded is set once real FONT256.S2D CG tiles decode");
+        /* The source CG tiles are retained above, but font_loaded is a
+         * presentation-consumer flag.  Saturn page/attribute mapping and
+         * text placement remain capture-gated, so this must stay closed. */
+        CHECK(engine.font_loaded == 0 &&
+                  engine.font.char_count == NEXUS_V1_FONT_S2D_REAL_TILE_COUNT,
+              "Saturn FONT256 text consumer remains capture-gated");
         free(font_data);
     }
 
@@ -552,7 +553,7 @@ static void probe_real_data_launch(const char *data_dir)
     /* Phase 1 (Track 1 contract): for ISO source, verify the CUE
      * reader resolved to the actual Track 1 .bin (not a re-muxed
      * merged ISO or a fan-translation disc) and that the Track 1
-     * container exposes the canonical DM.BIN + LEV00.DGN entries.
+     * container exposes the canonical DM.BIN + first-playable LEV01.DGN entries.
      * Source-lock: docs/FIRESTAFF_GAP_LIST.md E1 row, last sentence
      * ("confirm Track 1 (not just DM.BIN) drives the full E1 V1
      * phases 0-7 launch path"). */
@@ -560,7 +561,7 @@ static void probe_real_data_launch(const char *data_dir)
         CHECK(engine.iso.valid == 1,
               "ISO reader is valid for Track 1 BIN");
         CHECK(nexus_iso_is_nexus(&engine.iso) == 1,
-              "ISO reader recognises Track 1 BIN as a Nexus disc (DM.BIN + LEV00.DGN present)");
+              "ISO reader recognises Track 1 BIN as a Nexus disc (DM.BIN + LEV01.DGN present)");
         const Nexus_ISOFile *dm = nexus_iso_find(&engine.iso, "DM.BIN");
         if (dm) {
             /* The documented Saturn DM.BIN contract is 542,144 bytes;

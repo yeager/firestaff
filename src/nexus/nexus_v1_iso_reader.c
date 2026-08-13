@@ -10,9 +10,11 @@
 static int read_sector_payload(FILE *fp, uint32_t sector, int sector_size,
                                int data_offset, uint8_t *buf) {
     int64_t offset = (int64_t)sector * sector_size + data_offset;
+    size_t read_size;
     memset(buf, 0, NEXUS_ISO_DATA_SIZE);
     if (fseek(fp, (long)offset, SEEK_SET) != 0) return -1;
-    return (int)fread(buf, 1, NEXUS_ISO_DATA_SIZE, fp);
+    read_size = fread(buf, 1, NEXUS_ISO_DATA_SIZE, fp);
+    return read_size == NEXUS_ISO_DATA_SIZE ? 0 : -1;
 }
 
 static uint32_t r32le(const uint8_t *p) {
@@ -340,7 +342,13 @@ int nexus_iso_read_file_chunk(Nexus_ISOReader *reader, const Nexus_ISOFile *file
     uint32_t sector;
     int sector_offset;
 
-    if (!reader || !reader->fp || !file || !buffer) return -1;
+    if (!reader || !reader->fp || !file || !buffer ||
+        file_offset < 0 || chunk_size < 0 ||
+        (uint32_t)file_offset > file->size ||
+        (uint32_t)chunk_size > file->size - (uint32_t)file_offset) {
+        return -1;
+    }
+    if (chunk_size == 0) return 0;
 
     sector = file->lba + (file_offset / NEXUS_ISO_DATA_SIZE);
     sector_offset = file_offset % NEXUS_ISO_DATA_SIZE;
@@ -373,8 +381,10 @@ void nexus_iso_close(Nexus_ISOReader *reader) {
 }
 
 int nexus_iso_is_nexus(const Nexus_ISOReader *reader) {
-    /* Check for DM Nexus signature files */
+    /* DM.BIN plus the first playable DGN are the admission signature.  The
+     * title-only LEV00.DGN is not sufficient: accepting it alone lets a
+     * disc enter the Nexus runtime without an authenticated gameplay level. */
     return reader && reader->valid &&
            nexus_iso_find(reader, "DM.BIN") != NULL &&
-           nexus_iso_find(reader, "LEV00.DGN") != NULL;
+           nexus_iso_find(reader, "LEV01.DGN") != NULL;
 }

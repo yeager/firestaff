@@ -19,7 +19,7 @@
 ### File Overview
 | Level | File | Size (bytes) | Grid | Notes |
 |-------|------|-------------|------|-------|
-| 0 | LEV00.DGN | 147,456 | 64×64 Structure1B | Entry level; start pose is not inferred |
+| 0 | LEV00.DGN | 147,456 | 64×64 Structure1B | Title-sequence entrance image; not playable |
 | 1 | LEV01.DGN | 280,576 | 64×64 Structure1B | |
 | 2 | LEV02.DGN | 272,384 | 64×64 Structure1B | |
 | 3 | LEV03.DGN | 290,816 | 64×64 Structure1B | |

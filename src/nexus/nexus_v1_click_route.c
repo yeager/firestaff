@@ -55,7 +55,11 @@ static Nexus_ClickResult click_route_inventory(Nexus_MechanicsState *st,
      * side effects.  Keep both inventory-use and equipment-unequip routes
      * fail-closed; otherwise a click would silently execute the inherited
      * DM1 slot semantics in a real Nexus session. */
-    if (!nexus_v1_action_semantics_proven())
+    /* The source-less lane is the explicit fixture/compatibility owner used
+     * by click-route tests and tools.  Retail ISO/extracted sessions still
+     * require the Saturn action receipt. */
+    if (engine->source != NEXUS_SRC_NONE &&
+        !nexus_v1_action_semantics_proven())
         return NEXUS_CLICK_RESULT_NO_ACTION;
     champ_idx = target->champion_index;
 

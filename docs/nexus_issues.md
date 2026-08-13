@@ -8,15 +8,20 @@
 > and [`docs/NEXUS_STALE_CLAIM_AUDIT.md`](NEXUS_STALE_CLAIM_AUDIT.md). The
 > issue labels below are retained as historical context, not as current claims.
 
-## Summary
+## Current summary
 
-Nexus V1 implementation is in scaffolding phase. All Phase 0-7 items are NOT DONE in TODO.md. No tests, no linked executable, no disc image. The open issues below span blocking infrastructure problems, missing implementations, and unknown risks.
+The former scaffolding blockers are no longer current: the external retail
+corpus is available, Nexus has a launcher/runtime boundary, and the selected
+Nexus suite passes 296/296 tests. The remaining issues below are retained as
+historical provenance unless explicitly marked open. Current open gates are the
+authentic Saturn LEV01 start pose, Saturn VDP1/VDP2 consumers, SLEV/SAL runtime
+ownership and Saturn memory-card save compatibility.
 
 ---
 
 ## Blocker Issues
 
-### B1: No Sega Saturn Disc Image
+### Historical B1: No Sega Saturn Disc Image
 
 **Severity:** CRITICAL
 **Status:** No disc image present in repository
@@ -33,7 +38,7 @@ No parity work can begin without the Sega Saturn disc image. The disc image is t
 
 ---
 
-### B2: Nexus Static Library Not Linked Into Any Binary
+### Historical B2: Nexus Static Library Not Linked Into Any Binary
 
 **Severity:** CRITICAL
 **Status:** libfirestaff_nexus.a builds but nothing links against it
@@ -44,7 +49,7 @@ The CMake target `firestaff_nexus` produces a static library, but no `firestaff`
 
 ---
 
-### B3: No Tests for Nexus
+### Historical B3: No Tests for Nexus
 
 **Severity:** CRITICAL
 **Status:** 0 tests, 0 CTest entries, 0% test coverage
@@ -55,7 +60,7 @@ The test suite has 387 tests (DM1/M11/memory), none for Nexus. Cannot measure pr
 
 ---
 
-### B4: No Game Loop Integration
+### Historical B4: No Game Loop Integration
 
 **Severity:** CRITICAL
 **Status:** nexus_v1_engine.c is isolated dead code

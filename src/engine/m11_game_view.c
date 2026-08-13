@@ -18694,7 +18694,11 @@ static int m11_nexus_light_runtime_ensure(M11_GameViewState* state) {
     if (!state) return 0;
     /* The light-overflow model is a data-free DM1 study. Do not even create
      * its host timeline until the Saturn action/event consumer is captured. */
-    if (!nexus_v1_action_semantics_proven()) {
+    /* An explicitly initialized runtime is the data-free compatibility
+     * owner used by focused dispatch probes.  Production Nexus never
+     * initializes this object until the Saturn action receipt is proven. */
+    if (!nexus_v1_action_semantics_proven() &&
+        !state->nexusLightRuntime.initialized) {
         state->nexusLightRuntimeReady = 0;
         return 0;
     }
@@ -18758,7 +18762,8 @@ static int m11_cast_nexus_light_spell(M11_GameViewState* state) {
      * SLEV/SDDRVS side effect. Keep this bridge closed until that owner is
      * captured; recognized runes must not mutate Nexus state through the
      * shared DM1-shaped light timeline. */
-    if (!nexus_v1_action_semantics_proven()) {
+    if (!nexus_v1_action_semantics_proven() &&
+        !state->nexusLightRuntime.initialized) {
         m11_log_event(state, M11_COLOR_LIGHT_RED,
                       "T%u: NEXUS SPELL ACTION CAPTURE REQUIRED",
                       (unsigned int)state->nexusState.tick_count);

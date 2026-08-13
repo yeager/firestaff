@@ -8,7 +8,7 @@
  *
  * Owns the Nexus_V1_Engine singleton. Provides:
  *   - launcher_init()       — discover game data, init engine
- *   - launcher_load_level()  — load a dungeon level (0-15)
+ *   - launcher_load_level()  — load a playable dungeon level (1-15)
  *   - launcher_get_engine()  — access singleton (for M11 render loop)
  *
  * Design rationale:
@@ -49,11 +49,14 @@ extern "C" {
  * - Scans data_dir for CUE/BIN (Saturn CD) or extracted files.
  * - Calls nexus_v1_init() on the singleton.
  * - Returns 0 on success, -1 on failure.
- * - Safe to call multiple times; only first call has effect
- *   (subsequent calls return 0 if already initialized). */
+ * - Safe to call multiple times with the same data_dir (idempotent).
+ * - A different data_dir tears down the old source-bound engine and
+ *   initializes the requested corpus. */
 int nexus_v1_launcher_init(const char *data_dir);
 
-/* Load a dungeon level (0-15) into the engine.
+/* Load a playable dungeon level (1-15) into the engine.
+ * LEV00 is the title/entrance asset and is not a playable level. A
+ * validated source-bound party pose must already be present.
  * Calls nexus_v1_load_level() on the singleton.
  * Returns 0 on success, -1 if launcher not init'd or level load failed. */
 int nexus_v1_launcher_load_level(int level);

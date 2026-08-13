@@ -74,12 +74,13 @@ DM1-kompatibilitet gäller Nexus runtime.
 - vs. DM1's single global SND.GAM bank
 - 8 Red Book CD-DA audio tracks (tracks 2–9 of disc)
 
-### 2.5 Per-Level Scripts (SLEV*.BIN)
-- 2–12 KB of script data per level (`SLEV00.BIN` through `SLEV15.BIN`)
-- Declarative scripting vs. DM1's hardwired game loop
-- SLEV bytes are real SH-2 task candidates; event dispatch and script execution
-  are not yet proven
-- DM1 had no scripting — sensors were compile-time behavior in the game loop
+### 2.5 Per-Level SLEV Files
+- `SLEV00.BIN` through `SLEV15.BIN` are authentic per-level files.
+- Their bounded entry spine is SH-2-shaped and retained as source evidence.
+- Event ownership, opcode meanings, dispatch ABI and execution are not yet
+  proven; Firestaff does not treat them as a declarative script language.
+- DM1 had no general scripting VM; that comparison must not be used to infer
+  Nexus semantics.
 
 ### 2.6 Minimap Data (SMAP*.BIN)
 - Each level has a 17–30 KB minimap/automap binary
@@ -113,7 +114,8 @@ DM1-kompatibilitet gäller Nexus runtime.
 - **3D polygon dungeon rendering** (unique in series)
 - **FMV cutscenes** (unique in series)
 - **Per-level sound banks** (unique vs. DM1's single global bank)
-- **Level scripting VM** (SDDRVS.TSK) — declarative scripting no other DM game has
+- **Per-level task files** (SLEV*.BIN) — authentic files whose event/script role
+  remains unresolved; no declarative VM is admitted
 - **16-level fixed grid** dungeon (DM1: variable grid, 10 levels)
 - **Minimap binary data** (DM1 had ASCII chart only)
 - **Japanese-language UI** with katakana champion names
@@ -127,7 +129,7 @@ DM1-kompatibilitet gäller Nexus runtime.
 
 ```
 LEV00-15.DGN     — 16 level data files (DM1 had DUNGEON.DAT, 33 KB)
-SLEV00-15.BIN    — per-level scripts (new concept)
+SLEV00-15.BIN    — per-level task candidates; event semantics unresolved
 SMAP00-15.BIN    — per-level minimap data (new concept)
 SNDLEV00-15.SAL  — per-level sound banks (new concept)
 SNDLEV00-15.MAP  — per-level sound mapping tables (new concept)

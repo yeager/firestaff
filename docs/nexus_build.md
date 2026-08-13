@@ -66,7 +66,9 @@ with no SDL, no `m` (math library), and no other Firestaff libraries linked.
 ### Build Artifacts
 - **Static library**: `build/libfirestaff_nexus.a`
 - **Verification binaries**: `build/verification-nexus-*` (when wired in)
-- **No standalone Nexus executable yet** — library exists but not linked into a binary
+- **Runtime executable:** Nexus is hosted by the shared `firestaff_m11` executable;
+  `firestaff_nexus` is the production static library and data/runtime boundary.
+  It is not shipped as a separate standalone Nexus binary.
 
 ---
 
@@ -123,8 +125,11 @@ cmake --build build
 - Big-endian byte order handled via explicit byte-swapping functions
 
 ### Linking
-Currently `firestaff_nexus` is NOT linked into any test executable.
-The library is fully compiled but "orphaned" — no `add_executable` references it.
+The `firestaff_nexus` library is linked by the Nexus CTest/probe targets. The
+current Nexus V1/V2/M11 selection contains 296 tests; use the external corpus
+path documented in `docs/nexus_testing.md` for real-data verification.
+The library is linked by the Nexus CTest/probe targets and the M11 handoff
+boundary; it is not an orphaned library.
 
 Status from CMakeLists.txt:
 ```
@@ -144,8 +149,8 @@ set_tests_properties(dm1_v2_completion_matrix_gate PROPERTIES WILL_FAIL TRUE)
 | Compiler flags | -std=c99 -O2 | -std=c11 -O2 |
 | External libs | m (math), SDL3 | none |
 | Generated code | None | None |
-| Test coverage | 304 tests | 0 tests |
-| Executable link | Yes (dm1_v1_engine) | No (library only) |
+| Test coverage | 304 tests | 296 Nexus V1/V2/M11 tests |
+| Executable link | Yes (dm1_v1_engine) | CTest/probe executables and M11 handoff |
 
 ---
 
@@ -186,9 +191,12 @@ cmake -B build && cmake --build build --target firestaff_nexus
 - ✅ `libfirestaff_nexus.a` compiles successfully
 - ✅ 19 source files, no compilation errors
 - ✅ No link dependencies on SDL/external libs
-- ❌ No executable links against `firestaff_nexus`
-- ❌ No CTest entries for Nexus
-- ❌ No parity evidence directory for Nexus
+- ✅ `firestaff_m11` links the Nexus runtime through the M11 game-view host
+- ✅ Nexus has a large CTest catalogue, including real-data and skip-safe gates
+- ✅ Nexus parity/capture evidence is kept under `parity-evidence/` and on the
+  user-owned external capture disk
+- ⚠️ A complete Saturn startup-to-LEV01 production handoff is not yet proven;
+  tests that require that private capture remain skip-safe
 
 ---
 

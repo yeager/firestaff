@@ -169,18 +169,15 @@ Source: `src/nexus/nexus_v1_combat.c`
 
 ---
 
-## 8. Anti-Magic Stat
+## 8. Anti-Magic and Anti-Fire Stats
 
-Every champion starts with `anti_magic = 5` (default value set in champion init):
-```c
-c->anti_magic = 5;
-c->anti_fire = 5;
-```
+The authenticated `PLRD` record supplies `anti_magic` and `anti_fire` at
+record offsets 17 and 18. The party shield and fire-shield effects increase
+those fields. A complete hostile-spell resistance calculation is not yet
+admitted because the current effect API lacks the retail target and RNG
+inputs. See `docs/nexus_resistance.md` for the boundary.
 
-This stat is stored but not currently used in any resistance calculation in the
-casting code. See `docs/nexus_resistance.md` for full details.
-
-Source: `src/nexus/nexus_v1_champions.c`
+Source: `src/nexus/nexus_v1_champions.c`, `src/nexus/nexus_v1_magic.c`
 
 ---
 

@@ -121,10 +121,10 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
         /* Creatures only act on their own level. */
         if (c->level != map_index) continue;
         /* Fail-closed: actors without a proven type binding (type_index
-         * < 0) have no source-locked stats, and hidden actors (Structure1B
-         * invisible-by-default bit) wait for SLEV reveal triggers.
-         * SLEV01.BIN entry 1 (0x018C): engine cmd R4=9, model index at
-         * RAM 0x0020116C. Guarded by byte 7 bit 3 one-shot flag. */
+         * < 0) have no source-locked stats. Hidden actors from the real DGN
+         * invisible-by-default bit also remain idle until the original
+         * reveal/event consumer is authenticated; SLEV task profiling alone
+         * does not prove that consumer or its RAM ABI. */
         if (c->type_index < 0 || c->hidden) continue;
 
         /* Alarm override: while a level alarm is active, all living creatures

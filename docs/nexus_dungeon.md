@@ -2,11 +2,16 @@
 
 ## 1. Level Architecture
 
-**16 levels: LEV00.DGN – LEV15.DGN**
+**16 authenticated DGN files: LEV00.DGN – LEV15.DGN**
+
+`LEV00.DGN` is the title-sequence entrance asset, not the first playable
+dungeon. The retail game starts in the Hall of Champions represented by
+`LEV01.DGN`; Firestaff keeps LEV00 available for source inspection but does
+not use it to manufacture a gameplay start position.
 
 | Level | Size (bytes) | File |
 |-------|-------------|------|
-| LEV00 | 147,456 | 64×64 Structure1B cells |
+| LEV00 | 147,456 | 64×64 Structure1B title/entrance cells |
 | LEV01 | 280,576 | |
 | LEV02 | 272,384 | |
 | LEV03 | 290,816 | |
@@ -63,16 +68,16 @@ the event dispatcher and script execution are not enabled.
 | File size (all levels) | ~33 KB | ~4.3 MB |
 | Level format | Inline in EXE | Standalone DGN files |
 | 3D geometry | None (2D sprites) | Baked into DGN files |
-| Sensors | Hardwired game loop | SDDRVS.TSK scripts |
-| Overworld | None | Yes (separate map) |
-| Teleporters | Hardwired square types | Scripted in TSK |
+| Sensors | Hardwired game loop | Runtime owner not verified |
+| Overworld | None | Not verified; no authenticated map file or runtime consumer |
+| Teleporters | Hardwired square types | Runtime consumer not verified |
 
 ## 5. 3D Geometry in DGN Files
 
 DGN geometry sections store pre-computed polygon data (vertices + face indices) for:
 - Wall front/side faces at each grid position
-- Floor and ceiling meshes per square
-- Door/teleporter geometry overlays
+- Floor and ceiling mesh candidates per square
+- Door/teleporter geometry candidates
 
 The files contain bounded geometry/material candidates, but the runtime
 consumer still has to be joined to an authenticated Saturn VDP1 capture. A

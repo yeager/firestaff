@@ -141,7 +141,7 @@ Each champion has three magic-related stats:
 int mana, max_mana;          /* magical energy pool */
 int priest_level;            /* priest-class skill level */
 int wizard_level;            /* wizard-class skill level */
-int anti_magic;               /* resistance to hostile magic (default 5) */
+    int anti_magic;               /* PLRD resistance; hostile route pending */
 ```
 
 Starting mana pools (from `nexus_v1_champions.c` roster):

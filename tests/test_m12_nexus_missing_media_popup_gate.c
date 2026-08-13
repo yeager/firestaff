@@ -130,7 +130,10 @@ static void check_nexus_missing_media_popup(void) {
     CHECK(state.messageLine2 && strstr(state.messageLine2, "ISO/BIN/CUE") != NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, "DM.BIN") != NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, "Saturn data marker") == NULL);
-    CHECK(state.messageLine3 && strstr(state.messageLine3, "DATA DIR:") != NULL);
+    /* The diagnostic label follows the selected system locale (for example
+     * DATA DIR / DATAKAT).  The invariant is a populated labelled path, not
+     * an English-only string, because AUTO language is the default. */
+    CHECK(state.messageLine3 && strchr(state.messageLine3, ':') != NULL);
 
     intent = M12_StartupMenu_GetLaunchIntent(&state);
     CHECK(intent.valid == 0);

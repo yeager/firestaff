@@ -74,9 +74,10 @@ int nexus_v1_game_resolve_dungeon_start(
         *out_receipt = receipt;
         return 0;
     }
-    /* The resolver is a LEV00-only compatibility seam; the retail pose
-     * itself remains unbound and is never supplied by production startup. */
-    if (requested_level != 0) {
+    /* LEV00 is the title-sequence entrance image, not a playable dungeon.
+     * The retail start pose belongs to the Hall of Champions in LEV01, but
+     * its source-owned coordinate/direction is still uncaptured. */
+    if (requested_level != NEXUS_V1_FIRST_PLAYABLE_LEVEL) {
         receipt.status = NEXUS_V1_DUNGEON_START_BLOCKED_LEVEL;
         *out_receipt = receipt;
         return 0;
@@ -86,6 +87,11 @@ int nexus_v1_game_resolve_dungeon_start(
         nexus_v1_level_get_cell_geometry(level, requested_x, requested_y,
                                          &cell) != 0) {
         receipt.status = NEXUS_V1_DUNGEON_START_BLOCKED_COORDINATE;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (normalized_dir < 0 || normalized_dir > 3) {
+        receipt.status = NEXUS_V1_DUNGEON_START_BLOCKED_DIRECTION;
         *out_receipt = receipt;
         return 0;
     }
@@ -133,6 +139,7 @@ const char *nexus_v1_dungeon_start_status_name(
     case NEXUS_V1_DUNGEON_START_BLOCKED_LEVEL: return "blocked-level";
     case NEXUS_V1_DUNGEON_START_BLOCKED_COORDINATE: return "blocked-coordinate";
     case NEXUS_V1_DUNGEON_START_BLOCKED_CELL: return "blocked-cell";
+    case NEXUS_V1_DUNGEON_START_BLOCKED_DIRECTION: return "blocked-direction";
     default: return "unknown";
     }
 }

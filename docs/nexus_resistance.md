@@ -1,116 +1,49 @@
 # Nexus V1 — Magic Resistance
 
-**Audit date:** 2026-05-25
-**Sources:** `src/nexus/nexus_v1_champions.c`, `include/nexus_v1_champions.h`, `src/nexus/nexus_v1_magic.c`, `src/nexus/nexus_v1_combat.c`, `docs/spells_resistance.md` (DM1 V1)
+**Audit date:** 2026-08-13
+**Sources:** `src/nexus/nexus_v1_champions.c`, `include/nexus_v1_champions.h`,
+`src/nexus/nexus_v1_magic.c`, `src/nexus/nexus_v1_spell_effects.c`,
+`src/nexus/nexus_v1_combat.c`, and the retail Nexus `DM.BIN` disassembly.
 
----
+## Current binding
 
-## 1. Overview
+Nexus champions have `anti_magic` and `anti_fire` fields. They are loaded from
+the authenticated 64-byte `PLRD` records at offsets 17 and 18. The loader does
+not invent replacement values when an authenticated PLRD source is absent.
+The fields are serialized by the save code and the party shield/fire-shield
+paths increase the corresponding field.
 
-Nexus V1 champions have two resistance stats: `anti_magic` and `anti_fire`.
-Both are initialized to 5 for every champion but are **not currently checked**
-in any casting or damage function in the Nexus V1 source. The resistance
-system is a stub — the stats exist in the champion struct but have no
-runtime effect.
+The fields are not yet consumed by a complete hostile-spell or fire-damage
+route. This is deliberately different from claiming that the resistance
+system is complete.
 
----
+## What the retail evidence shows
 
-## 2. Resistance Stats in Champion Struct
+The disassembly identifies a status-effect hit test around `DM.BIN` address
+`0x0204E2`, including caster power, target defense, a random component, and
+anti-magic effectiveness. The current `nexus_v1_spell_effect_debuff()` API
+only receives an already-selected target status array. It has no caster stat,
+target defense, or authenticated retail RNG/target-routing context, so it only
+applies the requested status and does not run that resistance check.
 
-```c
-typedef struct {
-    /* ... */
-    int strength, dexterity, wisdom, vitality;
-    int anti_magic, anti_fire;  /* resistance stats */
-    /* ... */
-} Nexus_V1_Champion;
-```
+No authenticated Nexus creature-resistance consumer is currently bound in
+`nexus_v1_creatures.c`, and no source-bound `anti_fire` reduction path exists
+in combat. DM1 resistance documentation is a reference only; its values and
+formulas must not be copied into Nexus.
 
-Both fields are `int` (not `uint8_t` or similar), allowing values beyond 0-100.
+## Status
 
-Source: `include/nexus_v1_champions.h`
+- Champion resistance fields: **implemented from PLRD and serialized**.
+- Shield stat changes: **implemented**.
+- Hostile status resistance: **not admitted; source inputs are missing**.
+- Creature resistance: **not admitted; retail consumer is missing**.
+- Fire resistance during damage: **not admitted**.
 
----
+## Remaining work
 
-## 3. Initialization
-
-In `nexus_v1_champions.c`, every champion in the roster is initialized with:
-```c
-c->anti_magic = 5;
-c->anti_fire = 5;
-```
-
-This is a flat default value — there is no stat-based derivation or
-class-based modifier at creation time. All 8 champions in the roster get
-the same resistance values.
-
-Source: `src/nexus/nexus_v1_champions.c`
-
----
-
-## 4. DM1 Resistance Reference
-
-For comparison, DM1's resistance system (from `spells_resistance.md`):
-- Creatures have magic resistance rated 0-200 (or 0-999 for bosses)
-- Resistance acts as a percentage reduction to incoming spell damage
-- High resistance can fully block low-power spells
-- Anti-magic champ stats provide partial party protection
-
-Nexus V1 does not yet implement any equivalent:
-- No creature resistance values found in `nexus_v1_creatures.c`
-- No champion-side resistance check in `nexus_v1_cast_spell`
-- No damage reduction path using `anti_magic` or `anti_fire`
-
-Source: `docs/spells_resistance.md`, `src/nexus/nexus_v1_creatures.c` (grep for resistance)
-
----
-
-## 5. What Uses Anti-Magic and Anti-Fire
-
-**Anti-magic:** Listed as a champion stat, initialized to 5, never read in any
-casting or combat function in the Nexus V1 source.
-
-**Anti-fire:** Listed as a champion stat, initialized to 5, never read in any
-casting or combat function in the Nexus V1 source.
-
-Grep across all `src/nexus/` files:
-```
-nexus_v1_champions.c:    c->anti_magic = 5;
-nexus_v1_champions.c:    c->anti_fire = 5;
-```
-No other occurrences of either field name.
-
-Source: `grep -r 'anti_magic\|anti_fire' src/nexus/`
-
----
-
-## 6. Planned Role (from Header Comments)
-
-The `nexus_v1_champions.h` comment notes:
-```
-/* DM Nexus has the same champion system as DM1 but with Japanese names.
- * 20 retail PLRD records in a legacy 24-slot capacity; up to 4 are active.
- * Stats, skills, spells identical to DM1 engine. */
-```
-
-This suggests `anti_magic` and `anti_fire` should behave identically to DM1
-once implemented, but the current source does not wire them into any gameplay path.
-
----
-
-## Status: NOT IMPLEMENTED (STUB)
-
-- Champion resistance stats: **stub** — initialized to 5, never checked
-- Creature magic resistance: **not implemented** — no values in `nexus_v1_creatures.c`
-- Resistance check during spell casting: **not implemented**
-- Fire resistance check in damage: **not implemented**
-- No `nexus_v1_resistance_check()` function exists in the codebase
-
----
-
-## TODO
-
-- Add resistance check to `nexus_v1_cast_spell` for hostile spell effects on champions
-- Add creature resistance values to `nexus_v1_creatures.c`
-- Add fire resistance check to `nexus_v1_take_damage` for fire-based attacks
-- Align default values with DM1 balance (anti_magic 5 seems low for a baseline)
+- Bind the `DM.BIN` status-test inputs to an authenticated Saturn combat route.
+- Bind creature resistance values to their retail consumer before adding them
+  to the creature model.
+- Bind fire-damage reduction to the retail damage route.
+- Capture an authentic startup/combat/save path proving how PLRD resistance
+  values are consumed.

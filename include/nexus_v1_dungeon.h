@@ -165,6 +165,9 @@ typedef struct {
     int8_t offset_y;
     uint8_t model_or_aspect;
     uint8_t rotation;
+    /* Structure1Fc/1Ff sensor type byte.  Wall sensors keep their
+     * trigger/control byte separately in type_or_control. */
+    uint8_t sensor_type;
     uint8_t type_or_control;
     uint8_t width;
     uint8_t height;

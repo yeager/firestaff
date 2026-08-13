@@ -5859,7 +5859,7 @@ static void test_menu_bpk_missing_handoff_blocks_fallback(void) {
                      handoff.prs3_prerequisite_status), "archive-missing") == 0 &&
           !handoff.receipt_valid && !handoff.can_render_stored_surfaces &&
           handoff.blocks_real_menu_surface_render &&
-          handoff.fallback_visuals_permitted,
+          !handoff.fallback_visuals_permitted,
           "missing MENU.BPK stays fail-closed without replacement visuals");
     memset(&runtime, 0, sizeof(runtime));
     memset(&asset_handoff, 0, sizeof(asset_handoff));
@@ -6132,7 +6132,7 @@ static void test_menu_bpk_handoff_requires_canonical_source(void) {
           !handoff.canonical_palette_trailer_bound &&
           !handoff.can_render_stored_surfaces &&
           handoff.blocks_real_menu_surface_render &&
-          handoff.fallback_visuals_permitted,
+          !handoff.fallback_visuals_permitted,
           "a parseable non-canonical MENU.BPK cannot enter the renderer");
 
     memset(&runtime, 0, sizeof(runtime));
@@ -6164,7 +6164,7 @@ static void test_menu_bpk_handoff_requires_canonical_source(void) {
           !handoff.palette_trailer.palette_format_proven &&
           !handoff.can_render_stored_surfaces &&
           handoff.blocks_real_menu_surface_render &&
-          handoff.fallback_visuals_permitted &&
+          !handoff.fallback_visuals_permitted &&
           nexus_v1_menu_bpk_decode_receipt_ready(&engine),
           "only an authenticated source can expose an otherwise-ready BPK receipt");
     engine.menu_bpk_decode_receipt.route =
@@ -6177,7 +6177,7 @@ static void test_menu_bpk_handoff_requires_canonical_source(void) {
           strcmp(nexus_v1_menu_bpk_prs3_prerequisite_status_name(
                      handoff.prs3_prerequisite_status), "frame-incomplete") == 0 &&
           handoff.blocks_real_menu_surface_render &&
-          handoff.fallback_visuals_permitted,
+          !handoff.fallback_visuals_permitted,
           "a truncated MENU.BPK frame reports framing evidence, not decoder absence");
     engine.menu_bpk_decode_receipt.route =
         NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED;
@@ -6187,7 +6187,7 @@ static void test_menu_bpk_handoff_requires_canonical_source(void) {
               NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_SATURN_PRESENTATION &&
           !handoff.can_render_stored_surfaces &&
           handoff.blocks_real_menu_surface_render &&
-          handoff.fallback_visuals_permitted,
+          !handoff.fallback_visuals_permitted,
           "a decoded PRS3 route remains blocked without Saturn presentation capture");
 }
 
@@ -6417,19 +6417,13 @@ static void test_sal_capture_target_binds_loaded_bytes(void) {
           !evidence.driver_dispatch_proven && !evidence.sal_decode_proven &&
           !evidence.playback_permitted,
           "SAL raw trace retains ordered observation evidence without playback");
-    /* nexus_v1_engine_admit_sal_driver_trace() latches
-     * receipt.fallback_visuals_permitted = 1 at entry and never clears it
-     * on the ADMITTED_OPAQUE success path (the fail-closed reset was
-     * removed). nexus_v1_engine_consume_sal_driver_trace() still requires
-     * !trace->fallback_visuals_permitted to move past its first gate, so
-     * the admitted trace is rejected there as HOST_BLOCKED_TRACE instead of
-     * reaching HOST_CONSUMED_OPAQUE, even though admission itself
-     * succeeded. */
-    CHECK(nexus_v1_engine_consume_sal_driver_trace(&engine, &host) == 0 &&
-          host.status == NEXUS_V1_SAL_TRACE_HOST_BLOCKED_TRACE &&
-          !host.host_consumed && !host.playback_permitted,
-          "SAL host still blocks the admitted trace because it carries "
-          "fallback_visuals_permitted");
+    /* An admitted opaque trace remains source-bound evidence.  It cannot
+     * authorize playback or synthetic visuals before dispatch chronology is
+     * proven by an authentic capture. */
+    CHECK(nexus_v1_engine_consume_sal_driver_trace(&engine, &host) == 1 &&
+          host.status == NEXUS_V1_SAL_TRACE_HOST_CONSUMED_OPAQUE &&
+          host.host_consumed && !host.playback_permitted,
+          "SAL host consumes admitted opaque evidence without playback");
     engine.audio.map_source_fnv1a64 ^= UINT64_C(1);
     CHECK(nexus_v1_engine_admit_sal_driver_trace_with_raw(
               &engine, trace, strlen(trace), raw_trace, sizeof(raw_trace) - 1,
@@ -6437,16 +6431,13 @@ static void test_sal_capture_target_binds_loaded_bytes(void) {
           admission.status == NEXUS_V1_SAL_TRACE_BLOCKED_TARGET_MISMATCH &&
           !admission.playback_permitted,
           "a changed active MAP identity rejects a stale SAL driver trace");
-    /* engine->sound_trace_admission still holds the earlier (fallback-
-     * permitted) ADMITTED_OPAQUE receipt, since the mismatched re-admission
-     * above failed before overwriting it. Consume re-evaluates that stored
-     * receipt and hits the same fallback_visuals_permitted gate first, so
-     * it reports HOST_BLOCKED_TRACE rather than HOST_BLOCKED_ACTIVE_ROUTE. */
+    /* The failed re-admission must not replace the prior opaque receipt;
+     * consuming that receipt remains blocked until the active source identity
+     * and authentic dispatch evidence agree. */
     CHECK(nexus_v1_engine_consume_sal_driver_trace(&engine, &host) == 0 &&
-          host.status == NEXUS_V1_SAL_TRACE_HOST_BLOCKED_TRACE &&
+          host.status == NEXUS_V1_SAL_TRACE_HOST_BLOCKED_ACTIVE_ROUTE &&
           !host.playback_permitted,
-          "a changed active MAP identity still finds the stored trace "
-          "fallback-permitted and blocked");
+          "a changed active MAP identity blocks the stored trace route");
     engine.audio.map_source_fnv1a64 = 0U;
     CHECK(nexus_v1_engine_build_sal_capture_target(&engine, 7, &target) == 0,
           "missing active MAP byte identity blocks SAL capture acquisition");

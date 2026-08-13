@@ -385,9 +385,14 @@ int nexus_v1_dgn_menu_prs3_route_gate(
         out_receipt->dgn_package_host_bound &&
         out_receipt->prs3_output_upload_bound &&
         !out_receipt->original_saturn_capture_authenticated;
-    out_receipt->runtime_dgn_render_permitted = 1;
-    out_receipt->startup_menu_render_permitted = 1;
-    out_receipt->fallback_visuals_permitted = 1;
+    /* This function joins provenance receipts only.  It does not authenticate
+     * a Saturn frame, VDP1 command stream, or host replacement pixels.  Keep
+     * every presentation path closed even when both source receipts join. */
+    out_receipt->runtime_dgn_render_permitted = 0;
+    out_receipt->startup_menu_render_permitted = 0;
+    out_receipt->fallback_visuals_permitted = 0;
+    out_receipt->no_draw_only = 1;
+    out_receipt->blocks_real_dgn_mesh_render = 1;
     return out_receipt->route_proof_bound;
 }
 

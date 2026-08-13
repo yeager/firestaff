@@ -3,7 +3,7 @@
  * =====================================
  * Nexus V1 Launch Smoke Test
  *
- * Verifies: nexus_v1_init → nexus_v1_load_level(0) → nexus_v1_tick
+ * Verifies: nexus_v1_init → title-only LEV00 rejection → nexus_v1_tick
  *
  * Run (with real Saturn data):
  *   SDL_VIDEODRIVER=dummy ./build/firestaff_nexus_v1_launch_smoke_probe \
@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
 
     /* ── Step 2: Load Level 0 ─────────────────────────────────────── */
     printf("\n[Step 2: Load Level 0]\n");
-    printf("  Loading entrance dungeon (LEV00.DGN)...\n");
+    printf("  Loading title-only entrance asset (LEV00.DGN)...\n");
 
     /* Real LEV00.DGN carries an empty Structure1B cell at the former
      * synthetic party-start selector, and no Nexus Saturn start pose has

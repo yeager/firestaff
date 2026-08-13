@@ -6,27 +6,35 @@
 > list only. Use [`docs/NEXUS_STRICT_FIDELITY_INVENTORY.md`](NEXUS_STRICT_FIDELITY_INVENTORY.md)
 > for the current verified gaps and gates.
 
-## Overview
+## Current status
 
-Nexus V1 implementation is not complete enough to have regression tests. What exists is scaffolding only (20 source files, no tests, no linked executable).
+The Nexus V1/V2/M11 CTest selection contains 296 tests and passes 296/296
+against the authenticated external corpus. The remaining skipped tests require
+private Saturn captures or saves and are evidence gates, not implementation
+failures. This page keeps older issue history below for provenance; its old
+"no tests" and "scaffolding only" statements are obsolete.
 
 A "regression" in this context means: behavior that has regressed relative to the original Sega Saturn game, or relative to the stated Nexus plan.
 
 ---
 
-## Phase Status: All NOT DONE
+## Phase Status
 
-Every claimed feature in TODO.md for Nexus V1 has a regression relative to plan because nothing is wired to an executable yet.
+The following boundaries are implemented and regression-tested: external
+corpus discovery, ISO/CUE reads, DGN parsing, bounded auxiliary receipts,
+launcher handoff, host mechanics, native saves, and fail-closed presentation.
+Saturn start-pose, VDP1/VDP2 consumers, SLEV/SAL runtime semantics and Saturn
+save compatibility remain open.
 
 ---
 
 ## Known Implementation Gaps (Not Yet Regressions, But Will Be)
 
-### 1. Nexus static library not linked into any binary
+### Historical issue 1: Nexus static library not linked into any binary
 **Severity:** CRITICAL (blocking)
 **Details:** libfirestaff_nexus.a compiles but nothing links against it. No firestaff --profile nexus exists.
 
-### 2. No disc image or fixtures
+### Historical issue 2: No disc image or fixtures
 **Severity:** CRITICAL (blocking)
 **Details:** No Sega Saturn disc image is present in the repository. No tools/extract_nexus_iso.py has been tested against real data. Phase 0 (provenance gate) is not satisfied.
 

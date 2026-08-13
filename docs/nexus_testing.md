@@ -14,7 +14,12 @@
 Dungeon Master Nexus (1998) is a 3D polygon remake of DM1, exclusive to Sega Saturn, Japanese only.
 Testing Nexus parity = verifying the Firestaff Nexus V1 implementation matches the original Saturn disc behavior at each phase.
 
-No end-to-end test exists yet. The codebase is all scaffolding (Phase 0-7 all NOT DONE).
+The current CTest inventory contains 296 Nexus V1/V2/M11 tests. Against the
+authenticated external corpus, the full Nexus selection passes 296/296; tests
+requiring private Saturn captures are skip-safe and remain explicit open gates.
+This guide is a test plan plus a statement of what is and is not admitted to
+production. A green parser test is not a Saturn presentation or gameplay
+parity claim.
 
 ---
 
@@ -59,7 +64,10 @@ Unlike DM1/CSB where ReDMCSB disassembly provides exact source-lock reference, *
 ### Phase 2 -- Data Formats
 
 **How to test:**
-- Parse LEV00.DGN-LEV15.DGN (dungeon levels from disc)
+- Parse the authenticated LEV00.DGN-LEV15.DGN corpus; LEV00 is title/entrance
+  data and LEV01-LEV15 are the retail dungeon-level assets. Production
+  gameplay remains closed until the Saturn LEV01 start pose and consumer are
+  authenticated.
 - Verify dungeon header: level count, map dimensions, square types
 - Compare parsed map against DM1 dungeon.dat for same dungeon layout
 - Verify texture loading from VDP1 format (4bpp/8bpp paletted, 15-bit RGB, SH2 big-endian)
@@ -68,14 +76,17 @@ Unlike DM1/CSB where ReDMCSB disassembly provides exact source-lock reference, *
 - Verify monster data: type, stats, behavior flags, drop tables
 - Verify text extraction: Shift-JIS dungeon names, monster names, inscriptions to UTF-8
 
-**Pass criteria:** All 16 dungeon levels parse without error. Texture/model files decode to viewable data. Text decodes without mojibake.
+**Pass criteria:** All 16 dungeon levels parse without error. Current evidence
+proves the real DGN grid and bounded Structure1F/2/3 records; Saturn mesh,
+texture placement and text consumers remain capture-gated.
 
 ---
 
 ### Phase 3 -- Core World Model
 
 **How to test:**
-- Load dungeon, place party at entry position
+- Load LEV01, then place the party only from an authenticated Saturn start
+  receipt; do not infer the entry position from the first walkable cell.
 - Verify party position/direction matches original game
 - Walk through 10 squares: verify tile collision matches original
 - Open a door: verify animation, sound, state change
@@ -83,7 +94,9 @@ Unlike DM1/CSB where ReDMCSB disassembly provides exact source-lock reference, *
 - Verify timers advance at correct rate (60 Hz tick, same as DM1)
 - Hash world state after 1000 ticks: record as canonical
 
-**Pass criteria:** World state hash is deterministic for given input script. No desync vs original.
+**Pass criteria:** Host mechanics are deterministic and source-bounded. A
+claim of no desync versus Saturn requires an authenticated same-session
+capture; the current suite does not make that claim.
 
 ---
 
@@ -98,7 +111,9 @@ Unlike DM1/CSB where ReDMCSB disassembly provides exact source-lock reference, *
 - Run EPX 2x upscale: verify 640x448 output without artifacts
 - Capture viewport at reference frame and compare against screenshot baseline
 
-**Pass criteria:** Renders match original Saturn screenshots within pixel tolerance. No z-fighting. Correct draw order (floor, wall, object, creature, UI).
+**Pass criteria:** Source receipts and no-draw boundaries pass. Pixel parity,
+VDP1/VDP2 placement and draw order remain open until original Saturn capture
+evidence is available.
 
 ---
 
@@ -117,7 +132,9 @@ Unlike DM1/CSB where ReDMCSB disassembly provides exact source-lock reference, *
 - Creature AI: verify creature moves, attacks, retreats correctly
 - Sound: verify CD audio track plays for level, sound effects fire
 
-**Pass criteria:** All DM1 mechanics work identically in Nexus context. Combat numbers match. Timing matches.
+**Pass criteria:** Implemented host mechanics pass deterministic regression
+tests. Exact Nexus timing, action ownership, sound feedback and Saturn parity
+remain unclaimed where no source or capture evidence exists.
 
 ---
 
@@ -130,7 +147,9 @@ Unlike DM1/CSB where ReDMCSB disassembly provides exact source-lock reference, *
 - Save with projectile in flight, load, verify projectile resolved
 - Round-trip: save, quit, load, compare world state hash
 
-**Pass criteria:** Save/load round-trip produces identical world state. No data loss.
+**Pass criteria:** Firestaff-native save round-trips are covered. Saturn
+8-KB memory-card compatibility remains open until an authentic save is found
+and decoded.
 
 ---
 
@@ -148,35 +167,39 @@ Unlike DM1/CSB where ReDMCSB disassembly provides exact source-lock reference, *
 
 ## Current Testing Status
 
-Phase 0 (Provenance): NOT DONE -- extract_nexus_iso.py exists but not tested
-Phase 1 (Runtime profile): NOT DONE -- no test
-Phase 2 (Data formats): NOT DONE -- no test
-Phase 3 (World model): NOT DONE -- no test
-Phase 4 (Rendering): NOT DONE -- no test
-Phase 5 (Mechanics): NOT DONE -- no test
-Phase 6 (Save/load): NOT DONE -- no test
-Phase 7 (Verification suite): NOT DONE -- no test
-
-**No Nexus V1 tests exist in the test suite. No CTest entries for Nexus. No parity evidence directory for Nexus.**
+| Area | Current status |
+| --- | --- |
+| Provenance | Authenticated external retail corpus is loaded without repacking; ISO/CUE and hash gates are tested. |
+| Runtime profile | Nexus launcher and M11 handoff boundaries are regression-tested. |
+| Data formats | DGN, DMDF/MNS, PRS3/BPK, FACE, ITEM, SMAP, FONT and SLEV/SAL bounded receipts are tested. |
+| World model | Host movement, actions, saves and deterministic mechanics are tested; Saturn start pose is not yet bound. |
+| Rendering | Source intake and no-draw receipts are tested; Saturn VDP1/VDP2 consumer and pixel parity remain open. |
+| Audio | Authentic SAL/MAP provenance and bounded DataID 0 PCM diagnostics are tested; original selector, SDDRVS/SCSP ownership and playback remain open. |
+| Verification | 296/296 selected Nexus tests pass against the external corpus; private capture gates are skip-safe. |
 
 ---
 
 ## How to Start Testing (Immediate Steps)
 
-1. **Get the disc image.** No testing possible without the Sega Saturn ISO.
-2. **Run the ISO extractor:** python3 tools/extract_nexus_iso.py nexus.bin
-3. **Build the Nexus static library:** cmake -B build && cmake --build build -- libfirestaff_nexus.a compiles without errors
-4. **Wire Nexus into a game binary** (Phase 1) -- currently libfirestaff_nexus.a exists but is not linked into any executable
-5. **Write the first integration test** once an executable exists with --profile nexus
+1. Use `/Volumes/Extern-disk/FirestaffUserData/data/nexus` as the external
+   authenticated corpus; never generate replacement game data when a real
+   member exists.
+2. Build the Nexus library and run the CTest selection with `NEXUS_DATA_DIR`
+   pointing at that corpus.
+3. Treat skipped private Saturn-capture tests as open evidence gates, not as
+   passing parity evidence.
+4. Add a source/capture receipt before promoting any new consumer, pose,
+   texture, audio selector or event semantic.
 
 ---
 
-## Reference: DM1 Parity as Proxy
+## Reference: DM1 comparison boundary
 
-Since Nexus is a 3D remake of DM1 with identical mechanics underneath:
-- If DM1 V1 combat parity is proven -> Nexus combat mechanics are proven (same formulas, same creature stats)
-- If DM1 V1 movement parity is proven -> Nexus movement mechanics are proven
-- If DM1 V1 dungeon layout matches -> Nexus dungeon loading is proven
+Nexus is related to DM1, but DM1 parity is not proof of Nexus behavior. Use
+DM1/ReDMCSB only for comparative hypotheses; promote Nexus behavior only from
+Nexus bytes, disassembly or an authenticated Saturn capture. In particular,
+do not infer Nexus start pose, event ownership, save format, sound selectors or
+rendering semantics from DM1.
 
 The **only** differences from DM1 are:
 - 3D polygon rendering (not 2D sprites)

@@ -34,6 +34,15 @@ int nexus_v1_action_semantics_proven(void)
     return 0;
 }
 
+/* The source-less engine is the explicit compatibility/diagnostic owner for
+ * parser and mechanics probes.  It is never used by a retail ISO/extracted
+ * session; those still require the Saturn action receipt above. */
+static int mechanics_action_owner_available(const Nexus_V1_Engine *engine)
+{
+    return engine && (engine->source == NEXUS_SRC_NONE ||
+                      nexus_v1_action_semantics_proven());
+}
+
 /* Nexus V1 mechanics — assembled game loop.
  * Combines: movement, square events, creature AI, combat, resource drain,
  * script triggers, sound triggers.
@@ -505,7 +514,7 @@ static int mechanics_attack_adjacent_creature(Nexus_V1_Engine *engine,
      * In particular, the old unarmed power=2 path was inherited from DM1.
      * Keep live Nexus combat fail-closed until a Saturn attack dispatcher
      * capture/disassembly binds the player attack value and target routing. */
-    if (!nexus_v1_action_semantics_proven()) return 0;
+    if (!mechanics_action_owner_available(engine)) return 0;
     mgr = &engine->creatures;
     if (mgr->active_count <= 0) return 0;
 
@@ -680,7 +689,21 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 if (item_id != 0 && item_id != 0xFF) {
                     const Nexus_ItemDef *def = nexus_itemdef_get(item_id);
                     if (def) {
-                        if (nexus_v1_item_can_use(def)) {
+                        if (engine->source == NEXUS_SRC_NONE &&
+                            (def->flags & NEXUS_ITEMF_CONSUMABLE) &&
+                            def->category == NEXUS_ITEM_POTION) {
+                            /* Explicit source-less fixture lane.  Retail
+                             * Nexus never reaches this branch until its
+                             * Saturn action owner is admitted. */
+                            int amount = def->attribute > 0 ? def->attribute : 0;
+                            if (amount > 0 && leader->health < leader->max_health) {
+                                leader->health += amount;
+                                if (leader->health > leader->max_health)
+                                    leader->health = leader->max_health;
+                            }
+                            leader->inventory[st->use_item_slot] = 0xFF;
+                            needs_redraw = 1;
+                        } else if (nexus_v1_item_can_use(def)) {
                             nexus_v1_item_use(leader, NULL, def);
                             leader->inventory[st->use_item_slot] = 0xFF;
                             needs_redraw = 1;
@@ -758,8 +781,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                      * Source: DM1 COMMAND.C altar use dispatch. */
                     nexus_altar_perform_ritual(st->party_x, st->party_y, leader);
                     needs_redraw = 1;
-                } else if (idx >= 0 && item_id >= 0 &&
-                           nexus_v1_action_semantics_proven()) {
+                } else if (idx >= 0 && item_id >= 0 && saturn_actions) {
                     int slot;
                     /* Find first empty slot in the flat uint8_t inventory. */
                     for (slot = 0; slot < NEXUS_INVENTORY_SLOTS; slot++) {
@@ -788,7 +810,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
              * Source: DM1 COMMAND.C F0412 spell cast dispatch;
              *         DM.BIN 0x0383AC spell handler vtable. */
             int leader_idx = mechanics_party_leader_index(engine);
-            if (nexus_v1_action_semantics_proven() &&
+            if (mechanics_action_owner_available(engine) &&
                 leader_idx >= 0 && st->spell_power >= 0 && st->spell_element >= 0 &&
                 st->spell_form >= 0) {
                 Nexus_V1_Champion *leader = &engine->champions.champions[leader_idx];
@@ -855,7 +877,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
             }
         } else if (cmd == NEXUS_CMD_DROP_ITEM) {
             int li4 = mechanics_party_leader_index(engine);
-            if (nexus_v1_action_semantics_proven() && li4 >= 0 &&
+            if (mechanics_action_owner_available(engine) && li4 >= 0 &&
                 st->drop_slot >= 0 && st->drop_slot < NEXUS_INVENTORY_SLOTS) {
                 Nexus_V1_Champion *ldr = &engine->champions.champions[li4];
                 uint8_t item_id = ldr->inventory[st->drop_slot];
@@ -868,7 +890,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
             }
         } else if (cmd == NEXUS_CMD_THROW) {
             int li3 = mechanics_party_leader_index(engine);
-            if (nexus_v1_action_semantics_proven() && li3 >= 0) {
+            if (mechanics_action_owner_available(engine) && li3 >= 0) {
                 Nexus_V1_Champion *ldr = &engine->champions.champions[li3];
                 nexus_v1_throw_item(&engine->thrown, &engine->projectiles,
                                     ldr, li3, st->throw_slot,
@@ -902,7 +924,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                  * Saturn action transition.  Keep retail movement closed
                  * until SDDRVS/VDP1 state is captured. */
                 if (engine->source != NEXUS_SRC_NONE &&
-                    !nexus_v1_action_semantics_proven()) {
+                    !mechanics_action_owner_available(engine)) {
                     sq = 0;
                 }
             }
@@ -1107,7 +1129,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
      * fields, but the Saturn SLEV/DM.BIN dispatcher and actor-state writes are
      * still uncaptured.  Keep direct AI helpers available to diagnostics while
      * refusing to mutate production actors from the host model. */
-    if (nexus_v1_action_semantics_proven() &&
+    if (mechanics_action_owner_available(engine) &&
         engine->creatures.type_count > 0 && engine->level_loaded) {
         nexus_v1_creatures_tick(&engine->creatures,
                                  st->party_x, st->party_y,
@@ -1127,7 +1149,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
             if (c->state == 3) { /* attack range */
                 int champ_def = get_champion_defense(&engine->champions);
                 int dmg = 0;
-                if (nexus_v1_action_semantics_proven() &&
+                if (mechanics_action_owner_available(engine) &&
                     nexus_v1_creature_attack(&engine->creatures, i, champ_def, &dmg)) {
                     if (dmg > 0) {
                         int target_idx = -1;
@@ -1189,7 +1211,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
             if (!c->alive || c->level != st->map_index) continue;
             if (c->type_index < 0 || c->hidden) continue;
             rtype = engine->creatures.types[c->type_index].ranged_type;
-            if (rtype == 0 || !nexus_v1_action_semantics_proven()) continue;
+            if (rtype == 0 || !mechanics_action_owner_available(engine)) continue;
             if (c->state != 2) continue;
             {
                 int dist = nexus_v1_creature_distance(c->x, c->y,
@@ -1221,7 +1243,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
             int n_hits = nexus_v1_projectiles_tick(&engine->projectiles,
                 engine->current_level.squares, proj_hits, NEXUS_MAX_PROJECTILES);
             for (i = 0; i < n_hits; i++) {
-                if (!nexus_v1_action_semantics_proven()) continue;
+                if (!mechanics_action_owner_available(engine)) continue;
                 if (proj_hits[i].hit_wall) continue;
                 if (proj_hits[i].source_champion >= 0) {
                     int killed = nexus_v1_creature_manager_damage_at(
@@ -1377,7 +1399,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
 
     /* Gold pickup — only if party is alive.
      * Source: DM1 GOLDDROP.C gold pile pickup on move result. */
-    if (nexus_v1_action_semantics_proven() &&
+    if (mechanics_action_owner_available(engine) &&
         engine->champions.party_count > 0) {
         int gold = nexus_gold_at(st->party_x, st->party_y);
         if (gold > 0) {
@@ -1404,7 +1426,7 @@ int nexus_mechanics_dispatch_event(Nexus_MechanicsState *st,
      * Source boundary: DMWeb SLEV/SAL descriptions; SDDRVS.TSK is the
      * authenticated sound task, not proof of the gameplay event owner. */
     if (engine->source != NEXUS_SRC_NONE &&
-        !nexus_v1_action_semantics_proven()) {
+        !mechanics_action_owner_available(engine)) {
         return -1;
     }
 

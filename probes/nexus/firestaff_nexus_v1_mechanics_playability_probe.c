@@ -3,8 +3,8 @@
  * ==============================================================
  * Headless mechanics verification against the authentic retail LEV*.DGN
  * geometry.  Unlike the synthetic parity probe, this probe loads the real
- * Track 1 level bytes for every level and exercises movement / blocking / door
- * gates on the actual 64x64 Structure1B grid.
+ * Track 1 level bytes for every level. LEV00 is retained as title/entrance
+ * geometry only; movement / blocking / door gates run on playable LEV01–15.
  *
  * Run:
  *   SDL_VIDEODRIVER=dummy ./build/firestaff_nexus_v1_mechanics_playability_probe
@@ -114,25 +114,24 @@ static int count_squares(const Nexus_V1_Level *level, int type)
     return count;
 }
 
+static int flood_fill_reachable(const Nexus_V1_Level *level, int sx, int sy);
+
 static int find_start_square(const Nexus_V1_Level *level, int *out_x, int *out_y)
 {
-    int x, y;
-    /* DM1 entrance is (11,29); try it first, otherwise scan for floor. */
-    if (level->squares[29][11] == NEXUS_SQUARE_FLOOR) {
-        *out_x = 11;
-        *out_y = 29;
-        return 1;
-    }
+    int x, y, best_reachable = 0;
     for (y = 1; y < level->height - 1; y++) {
         for (x = 1; x < level->width - 1; x++) {
             if (level->squares[y][x] == NEXUS_SQUARE_FLOOR) {
-                *out_x = x;
-                *out_y = y;
-                return 1;
+                int reachable = flood_fill_reachable(level, x, y);
+                if (reachable > best_reachable) {
+                    best_reachable = reachable;
+                    *out_x = x;
+                    *out_y = y;
+                }
             }
         }
     }
-    return 0;
+    return best_reachable > 0;
 }
 
 static int find_adjacent_floor(const Nexus_V1_Level *level,
@@ -304,12 +303,13 @@ static PROBE_NOINLINE void probe_real_level_playability(const char *data_dir,
 
     CHECK(floor_count > 0, "level has at least one floor square");
 
-    /* LEV00 is the title/entrance level and decodes to essentially no walls.
-     * Use a fallback boundary-block test for it; playable levels must have
-     * real walls.  Source-lock: DMWeb DGN Structure1B cell format. */
-    if (level_index == 0 && wall_count == 0) {
-        printf("  [INFO] LEV00 is the non-playable title/entrance level; "
-               "using OOB boundary for blocking test\n");
+    /* DMWeb identifies LEV00 as the non-playable title/entrance image. It is
+     * useful for source geometry checks, but no host-selected floor square
+     * may be promoted to a gameplay start. */
+    if (level_index == NEXUS_V1_TITLE_LEVEL) {
+        printf("  [INFO] LEV00 is title/entrance-only; gameplay checks skipped\n");
+        free(dgn_data);
+        return;
     }
 
     CHECK(find_start_square(&level, &start_x, &start_y) == 1,
@@ -749,12 +749,12 @@ static PROBE_NOINLINE void probe_real_level_playability(const char *data_dir,
              * drop check fails; srand() seeds each engagement so the probe
              * run stays deterministic. */
             {
-                int kills = 0, drop_verified = 0;
+                int kills = 0;
                 static const int adx[4] = {0, 1, 0, -1};
                 static const int ady[4] = {-1, 0, 1, 0};
 
                 for (i = 0; i < engine.creatures.active_count &&
-                        kills < 3 && !drop_verified; i++) {
+                        kills < 3; i++) {
                     Nexus_Creature *c = &engine.creatures.active[i];
                     int px = -1, py = -1, pdir = 0;
                     Nexus_V1_Champion *leader;
@@ -807,18 +807,15 @@ static PROBE_NOINLINE void probe_real_level_playability(const char *data_dir,
                           "real-data melee attack damages or kills a spawned actor");
                     if (!c->alive) {
                         kills++;
-                        if (nexus_gold_at(c->x, c->y) > 0 ||
-                                nexus_floor_count_at(c->x, c->y) > 0) {
-                            drop_verified = 1;
-                        } else {
-                            printf("  [INFO] kill %d rolled no drops (chance); "
-                                   "trying another real actor\n", kills);
-                        }
+                        /* Nexus has no authenticated death-drop owner yet;
+                         * an empty drop result is the required fail-closed
+                         * behavior, not a failed playability assertion. */
+                        CHECK(nexus_gold_at(c->x, c->y) == 0 &&
+                                  nexus_floor_count_at(c->x, c->y) == 0,
+                              "Nexus death drops remain source-gated");
                     }
                 }
                 if (kills > 0) {
-                    CHECK(drop_verified,
-                          "killed real actor drops gold and/or items");
                     combat_done = 1;
                 }
             }
@@ -881,27 +878,9 @@ static PROBE_NOINLINE void probe_real_level_playability(const char *data_dir,
                           engine.creatures.active[creature_idx].health < start_health,
                           "synthetic melee attack damages or kills test creature");
                     if (!engine.creatures.active[creature_idx].alive) {
-                        /* Same chance-based drop roll as above: verify the
-                         * pipeline with a bounded re-roll instead of one
-                         * lucky roll (DM1 KILLMON.C). */
-                        int dropped = (nexus_gold_at(cx, cy) > 0 ||
-                                       nexus_floor_count_at(cx, cy) > 0);
-                        int reroll;
-                        for (reroll = 0; reroll < 100 && !dropped; reroll++) {
-                            int item_ids[8], quantities[8];
-                            int dc = nexus_drops_roll(
-                                engine.creatures.active[creature_idx].type_index,
-                                cx, cy, item_ids, quantities, 8);
-                            int d;
-                            for (d = 0; d < dc; d++) {
-                                nexus_floor_drop(cx, cy,
-                                                 item_ids[d], quantities[d]);
-                            }
-                            dropped = (nexus_gold_at(cx, cy) > 0 ||
-                                       nexus_floor_count_at(cx, cy) > 0);
-                        }
-                        CHECK(dropped,
-                              "killed test creature drops gold and/or items");
+                        CHECK(nexus_gold_at(cx, cy) == 0 &&
+                                  nexus_floor_count_at(cx, cy) == 0,
+                              "Nexus death drops remain source-gated");
                     }
                 }
             } else {

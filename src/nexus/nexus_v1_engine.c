@@ -515,7 +515,7 @@ static int nexus_v1_structure2_source_receipt(
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->level_index = level_index;
     out_receipt->payload_decoder_permitted = 0;
-    out_receipt->fallback_visuals_permitted = 1;
+    out_receipt->fallback_visuals_permitted = 0;
     if (!engine || !level || level_index < 0 || level_index > 15) return 0;
 
     snprintf(name, sizeof(name), "LEV%02d.DGN", level_index);
@@ -828,7 +828,7 @@ int nexus_v1_inspect_dgn_material_corpus(
     memset(&receipt, 0, sizeof(receipt));
     receipt.attempted = 1;
     receipt.expected_level_count = 16;
-    receipt.fallback_visuals_permitted = 1;
+    receipt.fallback_visuals_permitted = 0;
     receipt.floor_coverage.category = NEXUS_V1_DGN_MATERIAL_CATEGORY_FLOOR;
     receipt.ceiling_coverage.category = NEXUS_V1_DGN_MATERIAL_CATEGORY_CEILING;
     receipt.wall_coverage.category = NEXUS_V1_DGN_MATERIAL_CATEGORY_WALL;
@@ -1343,7 +1343,11 @@ void nexus_v1_sync_dgn_runtime_pose(Nexus_V1_Engine *engine,
                                     int level, int party_x, int party_y,
                                     int party_dir) {
     if (!engine) return;
-    party_dir &= 3;
+    /* -1 is the real unplaced/uncaptured state. Do not turn it into a
+     * valid Saturn direction while the title route loads static assets. */
+    if (party_dir >= 0) {
+        party_dir &= 3;
+    }
     if (engine->game.current_level != level) {
         nexus_v1_engine_clear_external_prs3_placement_receipt(engine);
     } else if (engine->game.party_x != party_x ||
@@ -1897,7 +1901,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
         plan->receipt.status =
             NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE;
         plan->receipt.blocks_real_dgn_mesh_render = 0;
-        plan->receipt.fallback_visuals_permitted = 1;
+        plan->receipt.fallback_visuals_permitted = 0;
         return NULL;
     }
     if (!static_mns_route_bound &&
@@ -1908,14 +1912,14 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
         plan->receipt.status =
             NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE1B_SELECTOR;
         plan->receipt.blocks_real_dgn_mesh_render = 0;
-        plan->receipt.fallback_visuals_permitted = 1;
+        plan->receipt.fallback_visuals_permitted = 0;
         return NULL;
     }
     if (!static_mns_route_bound && !bpk_material_route_bound) {
         plan->receipt.status =
             NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE;
         plan->receipt.blocks_real_dgn_mesh_render = 0;
-        plan->receipt.fallback_visuals_permitted = 1;
+        plan->receipt.fallback_visuals_permitted = 0;
         return NULL;
     }
     if (nexus_v1_level_build_dgn_view_render_plan(
@@ -1931,7 +1935,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
             engine, &plan->structure3_face_material_source) != 0 ||
         !plan->structure3_face_material_source.can_submit_raster_input) {
         plan->receipt.blocks_real_dgn_mesh_render = 0;
-        plan->receipt.fallback_visuals_permitted = 1;
+        plan->receipt.fallback_visuals_permitted = 0;
         return NULL;
     }
     plan->structure3_face_material_source_consumed = 1;
@@ -1946,7 +1950,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
             NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
             &plan->structure2_floor_command_source_receipt) != 0) {
         plan->receipt.blocks_real_dgn_mesh_render = 0;
-        plan->receipt.fallback_visuals_permitted = 1;
+        plan->receipt.fallback_visuals_permitted = 0;
         return NULL;
     }
     plan->structure2_floor_command_sources_consumed =
@@ -1964,7 +1968,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
             NEXUS_V1_DGN_RUNTIME_DIRECT_SOURCE_MAX,
             &plan->structure1f_direct_floor_source_receipt) != 0) {
         plan->receipt.blocks_real_dgn_mesh_render = 0;
-        plan->receipt.fallback_visuals_permitted = 1;
+        plan->receipt.fallback_visuals_permitted = 0;
         return NULL;
     }
     plan->structure1f_direct_floor_sources_consumed =
@@ -1980,7 +1984,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
             NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
             &plan->structure1a_owned_cell_source_receipt) != 0) {
         plan->receipt.blocks_real_dgn_mesh_render = 0;
-        plan->receipt.fallback_visuals_permitted = 1;
+        plan->receipt.fallback_visuals_permitted = 0;
         return NULL;
     }
     plan->structure1a_owned_cell_sources_consumed =
@@ -1995,7 +1999,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
             NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
             &plan->structure1a_structure3_topology_candidate_receipt) != 0) {
         plan->receipt.blocks_real_dgn_mesh_render = 0;
-        plan->receipt.fallback_visuals_permitted = 1;
+        plan->receipt.fallback_visuals_permitted = 0;
         return NULL;
     }
     plan->structure1a_structure3_topology_candidates_consumed =
@@ -2068,7 +2072,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
         /* Source-only topology commands must not fall through to the
          * material loop and become a host plan. */
         plan->receipt.plan_ready = 0;
-        plan->receipt.fallback_visuals_permitted = 1;
+        plan->receipt.fallback_visuals_permitted = 0;
         return NULL;
     }
     /* Direct Structure1Fa records get the same one-way host consumption.
@@ -2085,7 +2089,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
                 NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
                 &plan->structure1f_item_command_binding_receipt) != 0) {
             plan->receipt.blocks_real_dgn_mesh_render = 0;
-            plan->receipt.fallback_visuals_permitted = 1;
+            plan->receipt.fallback_visuals_permitted = 0;
             return NULL;
         }
         plan->structure1f_item_command_sources_consumed =
@@ -2110,7 +2114,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
                 NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS,
                 &plan->structure1f_item_floor_material_receipt) != 0) {
             plan->receipt.blocks_real_dgn_mesh_render = 0;
-            plan->receipt.fallback_visuals_permitted = 1;
+            plan->receipt.fallback_visuals_permitted = 0;
             return NULL;
         }
         plan->structure1f_item_floor_materials_consumed =
@@ -2164,7 +2168,7 @@ const Nexus_V1_DgnMaterialPlan *nexus_v1_prepare_dgn_material_plan(
     if (plan->receipt.missing_material_count > 0) {
         plan->receipt.plan_ready = 0;
         plan->receipt.blocks_real_dgn_mesh_render = 0;
-        plan->receipt.fallback_visuals_permitted = 1;
+        plan->receipt.fallback_visuals_permitted = 0;
         return NULL;
     }
     plan->valid = 1;
@@ -2413,7 +2417,7 @@ static void nexus_v1_inspect_dgn_material_container(
      * exists. */
     out_receipt->identity_verified = 0;
     out_receipt->host_route_permitted = 0;
-    out_receipt->fallback_visuals_permitted = 1;
+    out_receipt->fallback_visuals_permitted = 0;
 }
 
 static int nexus_v1_iso_file_has_dmdf_magic(Nexus_V1_Engine *engine,
@@ -2544,19 +2548,19 @@ static int find_iso(const char *dir, char *disc_path, int max_len) {
 /* Check if extracted files exist */
 static int has_extracted(const char *dir) {
     const char *dm_bin_md5 = nexus_known_boot_file_md5("DM.BIN");
-    const char *lev00_md5 = nexus_known_boot_file_md5("LEV00.DGN");
-    const char *required[] = {dm_bin_md5, lev00_md5, NULL};
+    const char *lev01_md5 = nexus_known_boot_file_md5("LEV01.DGN");
+    const char *required[] = {dm_bin_md5, lev01_md5, NULL};
     char paths[2][ASSET_PATH_MAX];
     int matched[2] = {0, 0};
     char direct_path[ASSET_PATH_MAX];
-    if (!dir || !dm_bin_md5 || !lev00_md5) return 0;
+    if (!dir || !dm_bin_md5 || !lev01_md5) return 0;
 
     /* Fast path for the normal extracted layout. This also prevents a
      * co-located ISO or external archive from changing source selection. */
     snprintf(direct_path, sizeof(direct_path), "%s/DM.BIN", dir);
     if (asset_file_matches_md5(direct_path, dm_bin_md5)) {
-        snprintf(direct_path, sizeof(direct_path), "%s/LEV00.DGN", dir);
-        if (asset_file_matches_md5(direct_path, lev00_md5)) return 1;
+        snprintf(direct_path, sizeof(direct_path), "%s/LEV01.DGN", dir);
+        if (asset_file_matches_md5(direct_path, lev01_md5)) return 1;
     }
 
     /* Use the ordinary-file scan explicitly. A mixed root may also contain
@@ -2964,8 +2968,9 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
 
     /* Prefer a complete hash-verified extracted corpus when present. This
      * lets materialized retail files win over a parallel ISO entry whose
-     * sector payload may be a different revision. ISO remains the fallback
-     * for users who keep the disc image only. */
+     * sector payload may be a different revision. LEV01 is required here
+     * because LEV00 is title-only; ISO remains the fallback for users who
+     * keep the disc image only. */
     if (has_extracted(data_dir)) {
         engine->source = NEXUS_SRC_EXTRACTED;
         nexus_v1_try_open_supplemental_iso(engine);
@@ -2999,7 +3004,7 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
         uint8_t *material_data;
         memset(&engine->dgn_static_material_sources, 0,
                sizeof(engine->dgn_static_material_sources));
-        engine->dgn_static_material_sources.fallback_visuals_permitted = 1;
+        engine->dgn_static_material_sources.fallback_visuals_permitted = 0;
         (void)nexus_v1_level_aux_source_receipt(
             engine, "SN_FLOOR.MNS",
             &engine->dgn_static_material_sources.floor_mns);
@@ -3294,7 +3299,7 @@ int nexus_v1_engine_dm_bin_vdp1_register_table_receipt(
     memset(&receipt, 0, sizeof(receipt));
     receipt.table_offset = -1;
     receipt.no_draw_only = 0;
-    receipt.fallback_visuals_permitted = 1;
+    receipt.fallback_visuals_permitted = 0;
     if (!engine ||
         nexus_v1_level_aux_source_receipt(engine, "DM.BIN", &receipt.source) != 0 ||
         !receipt.source.canonical_hash_verified) {
@@ -3363,7 +3368,7 @@ int nexus_v1_engine_dm_bin_vdp1_state_route_receipt(
     receipt.first_sh2_literal_load_offset = -1;
     receipt.last_sh2_literal_load_offset = -1;
     receipt.no_draw_only = 0;
-    receipt.fallback_visuals_permitted = 1;
+    receipt.fallback_visuals_permitted = 0;
     if (!engine ||
         nexus_v1_level_aux_source_receipt(engine, "DM.BIN", &receipt.source) != 0 ||
         !receipt.source.canonical_hash_verified) {
@@ -3576,7 +3581,7 @@ static void nexus_v1_load_item_ibs_runtime_source(Nexus_V1_Engine *engine)
     memset(&engine->item_ibs_bank, 0, sizeof(engine->item_ibs_bank));
     memset(&engine->item_ibs_runtime_source, 0,
            sizeof(engine->item_ibs_runtime_source));
-    engine->item_ibs_runtime_source.fallback_visuals_permitted = 1;
+    engine->item_ibs_runtime_source.fallback_visuals_permitted = 0;
     (void)nexus_v1_level_aux_source_receipt(
         engine, "ITEM.IBS", &engine->item_ibs_runtime_source.source);
     if (!engine->item_ibs_runtime_source.source.canonical_hash_verified) {
@@ -4482,7 +4487,7 @@ static void nexus_v1_load_smap_runtime(Nexus_V1_Engine *engine, int level)
            sizeof(engine->smap_runtime_receipt));
     engine->smap_runtime_receipt.level_index = level;
     engine->smap_runtime_receipt.no_draw_only = 0;
-    engine->smap_runtime_receipt.fallback_visuals_permitted = 1;
+    engine->smap_runtime_receipt.fallback_visuals_permitted = 0;
     snprintf(name, sizeof(name), "SMAP%02d.BIN", level);
     (void)nexus_v1_level_aux_source_receipt(
         engine, name, &engine->smap_runtime_receipt.source);
@@ -4534,18 +4539,6 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     int loaded_bytes_canonical;
 
     if (!engine || level < 0 || level >= NEXUS_MAX_LEVELS) return -1;
-    /* A reload may replace the same numeric level with fresh source bytes.
-     * Retained capture evidence is therefore never valid across this boundary. */
-    nexus_v1_engine_clear_external_prs3_placement_receipt(engine);
-    free(engine->smap_rgba);
-    engine->smap_rgba = NULL;
-    memset(&engine->smap_runtime_receipt, 0,
-           sizeof(engine->smap_runtime_receipt));
-    engine->m11_direct_lev_dungeon_no_draw_valid = 0;
-    engine->m11_direct_lev_dungeon_route_epoch = 0U;
-    memset(&engine->m11_direct_lev_dungeon, 0,
-           sizeof(engine->m11_direct_lev_dungeon));
-    engine->current_level_source_path[0] = '\0';
     snprintf(name, sizeof(name), "LEV%02d.DGN", level);
 
     data = nexus_v1_read_file(engine, name, &size);
@@ -4564,6 +4557,23 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
         free(data);
         return -1;
     }
+
+    /* Do not invalidate a working level until the replacement source has
+     * been found and hash-verified. A failed level switch must be atomic at
+     * the public loader boundary: callers may keep rendering the current
+     * level and inspect its source receipt after a missing or foreign file.
+     * Retained capture evidence is still cleared before the first mutation
+     * of the current level below. */
+    nexus_v1_engine_clear_external_prs3_placement_receipt(engine);
+    free(engine->smap_rgba);
+    engine->smap_rgba = NULL;
+    memset(&engine->smap_runtime_receipt, 0,
+           sizeof(engine->smap_runtime_receipt));
+    engine->m11_direct_lev_dungeon_no_draw_valid = 0;
+    engine->m11_direct_lev_dungeon_route_epoch = 0U;
+    memset(&engine->m11_direct_lev_dungeon, 0,
+           sizeof(engine->m11_direct_lev_dungeon));
+    engine->current_level_source_path[0] = '\0';
 
     /* Preserve the exact source selected by the same identity hash that
      * admitted `data`. A canonical filename is not a source path: renamed
@@ -4638,12 +4648,12 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     nexus_v1_load_shop_catalog(engine);
     (void)nexus_v1_decode_structure2_animation_materials(engine, data, size);
 
-    /* Saturn start pose is not source-bound — the retail start selector
-     * chooses the party position from the DGN champion placement table,
-     * which requires capture evidence we don't have yet. Block LEV00
-     * startup until that evidence chain is complete. */
-    if (level == 0 && !engine->game.game_started) {
-        fprintf(stderr, "nexus: Saturn start pose is not source-bound\n");
+    /* LEV00 is title-only.  The first playable map is LEV01, but the Saturn
+     * start selector still has no source-bound pose.  Keep both the title
+     * compatibility path and retail gameplay fail-closed until that exact
+     * level/x/y/direction chain is captured. */
+    if (level == NEXUS_V1_TITLE_LEVEL && !engine->game.game_started) {
+        fprintf(stderr, "nexus: LEV00 is title-only; Saturn start pose is not source-bound\n");
         /* A blocked entrance must not leave a parsed but unusable level in
          * the runtime.  This is the same fail-closed boundary as the pose
          * receipt: dimensions, source bytes, and level ownership all reset. */
@@ -4672,7 +4682,7 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     memset(&engine->level_aux_runtime_receipt, 0,
            sizeof(engine->level_aux_runtime_receipt));
     engine->level_aux_runtime_receipt.level_index = level;
-    engine->level_aux_runtime_receipt.fallback_visuals_permitted = 1;
+    engine->level_aux_runtime_receipt.fallback_visuals_permitted = 0;
     engine->level_aux_runtime_receipt.sound_driver =
         engine->sound_driver_source;
     (void)nexus_v1_level_aux_source_receipt(
@@ -4688,13 +4698,15 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     engine->script_trace_admission.status = NEXUS_V1_SLEV_TRACE_MISSING;
     engine->script_trace_admission.level_index = level;
     engine->script_trace_admission.blocks_real_script_dispatch = 1;
-    engine->script_trace_admission.fallback_visuals_permitted = 1;
+    /* An unknown real SLEV task is not permission to invent a visual or
+     * gameplay substitute. Keep this receipt fail-closed for production. */
+    engine->script_trace_admission.fallback_visuals_permitted = 0;
     memset(&engine->script_trace_host_receipt, 0,
            sizeof(engine->script_trace_host_receipt));
     engine->script_trace_host_receipt.status = NEXUS_V1_SLEV_TRACE_HOST_MISSING;
     engine->script_trace_host_receipt.level_index = level;
     engine->script_trace_host_receipt.blocks_real_script_dispatch = 1;
-    engine->script_trace_host_receipt.fallback_visuals_permitted = 1;
+    engine->script_trace_host_receipt.fallback_visuals_permitted = 0;
     free(script_data);
     nexus_script_on_level_load(&engine->script_vm, level);
 
@@ -4725,13 +4737,15 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     engine->sound_trace_admission.status = NEXUS_V1_SAL_TRACE_MISSING;
     engine->sound_trace_admission.level_index = level;
     engine->sound_trace_admission.blocks_real_sfx_playback = 1;
-    engine->sound_trace_admission.fallback_visuals_permitted = 1;
+    /* Missing SAL ownership/codec evidence must not enable synthetic sound
+     * or presentation data. */
+    engine->sound_trace_admission.fallback_visuals_permitted = 0;
     memset(&engine->sound_trace_host_receipt, 0,
            sizeof(engine->sound_trace_host_receipt));
     engine->sound_trace_host_receipt.status = NEXUS_V1_SAL_TRACE_HOST_MISSING;
     engine->sound_trace_host_receipt.level_index = level;
     engine->sound_trace_host_receipt.blocks_real_sfx_playback = 1;
-    engine->sound_trace_host_receipt.fallback_visuals_permitted = 1;
+    engine->sound_trace_host_receipt.fallback_visuals_permitted = 0;
     free(sal_data);
     free(map_data);
 
@@ -7621,7 +7635,7 @@ int nexus_v1_current_level_structure1f_face_mesh_receipt(
     memset(&receipt, 0, sizeof(receipt));
     receipt.level_index = -1;
     receipt.no_draw_only = 0;
-    receipt.fallback_visuals_permitted = 1;
+    receipt.fallback_visuals_permitted = 0;
     if (!engine || !engine->level_loaded || !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0) {
         *out_receipt = receipt;
@@ -8905,7 +8919,7 @@ int nexus_v1_current_level_aux_runtime_receipt(
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->level_index = -1;
-    out_receipt->fallback_visuals_permitted = 1;
+    out_receipt->fallback_visuals_permitted = 0;
     if (!engine || !engine->level_loaded) return 0;
     *out_receipt = engine->level_aux_runtime_receipt;
     return 0;
@@ -8919,7 +8933,7 @@ int nexus_v1_current_level_smap_runtime_receipt(
     memset(out_receipt, 0, sizeof(*out_receipt));
     out_receipt->level_index = -1;
     out_receipt->no_draw_only = 0;
-    out_receipt->fallback_visuals_permitted = 1;
+    out_receipt->fallback_visuals_permitted = 0;
     if (!engine || !engine->level_loaded) return 0;
     *out_receipt = engine->smap_runtime_receipt;
     return 0;
@@ -9154,7 +9168,7 @@ int nexus_v1_current_level_script_route_receipt(
     out_receipt->status = NEXUS_V1_LEVEL_SCRIPT_ROUTE_MISSING;
     out_receipt->level_index = -1;
     out_receipt->blocks_real_script_dispatch = 1;
-    out_receipt->fallback_visuals_permitted = 1;
+    out_receipt->fallback_visuals_permitted = 0;
     if (!engine || !engine->level_loaded) return 0;
 
     out_receipt->level_index = engine->level_aux_runtime_receipt.level_index;
@@ -9209,7 +9223,7 @@ int nexus_v1_engine_build_slev_capture_target(
     out_target->level_index = -1;
     out_target->original_saturn_execution_required = 1;
     out_target->no_dispatch_only = 1;
-    out_target->fallback_visuals_permitted = 1;
+    out_target->fallback_visuals_permitted = 0;
     if (nexus_v1_current_level_script_route_receipt(engine, &route) != 1 ||
         route.status != NEXUS_V1_LEVEL_SCRIPT_ROUTE_BOUND_TASK_PROFILE ||
         !route.canonical_slev_source_verified ||
@@ -9391,7 +9405,7 @@ int nexus_v1_engine_admit_sal_driver_trace(
     receipt.status = NEXUS_V1_SAL_TRACE_MISSING;
     receipt.level_index = -1;
     receipt.blocks_real_sfx_playback = 1;
-    receipt.fallback_visuals_permitted = 1;
+    receipt.fallback_visuals_permitted = 0;
     if (!engine || !trace_text || trace_size == 0 ||
         !nexus_v1_slev_trace_value(trace_text, trace_size, "raw_map_selector",
                                    value, sizeof(value)) ||
@@ -9507,7 +9521,7 @@ int nexus_v1_current_level_sal_trace_admission_receipt(
     out_receipt->status = NEXUS_V1_SAL_TRACE_MISSING;
     out_receipt->level_index = -1;
     out_receipt->blocks_real_sfx_playback = 1;
-    out_receipt->fallback_visuals_permitted = 1;
+    out_receipt->fallback_visuals_permitted = 0;
     if (!engine || !engine->level_loaded) return 0;
     *out_receipt = engine->sound_trace_admission;
     return 0;
@@ -9527,7 +9541,7 @@ int nexus_v1_engine_admit_sal_driver_trace_with_raw(
     receipt.status = NEXUS_V1_SAL_TRACE_MISSING;
     receipt.level_index = -1;
     receipt.blocks_real_sfx_playback = 1;
-    receipt.fallback_visuals_permitted = 1;
+    receipt.fallback_visuals_permitted = 0;
     if (!engine || !raw_trace || raw_trace_size == 0 || !trace_text ||
         !nexus_v1_slev_trace_value(trace_text, trace_size,
                                    "raw_trace_fnv1a64", value,
@@ -9566,7 +9580,7 @@ int nexus_v1_engine_consume_sal_driver_trace(
     receipt.status = NEXUS_V1_SAL_TRACE_HOST_MISSING;
     receipt.level_index = -1;
     receipt.blocks_real_sfx_playback = 1;
-    receipt.fallback_visuals_permitted = 1;
+    receipt.fallback_visuals_permitted = 0;
     if (!engine || !engine->level_loaded) {
         *out_receipt = receipt;
         return 0;
@@ -9639,7 +9653,7 @@ int nexus_v1_current_level_sal_trace_host_receipt(
     out_receipt->status = NEXUS_V1_SAL_TRACE_HOST_MISSING;
     out_receipt->level_index = -1;
     out_receipt->blocks_real_sfx_playback = 1;
-    out_receipt->fallback_visuals_permitted = 1;
+    out_receipt->fallback_visuals_permitted = 0;
     if (!engine || !engine->level_loaded) return 0;
     *out_receipt = engine->sound_trace_host_receipt;
     return 0;
@@ -10008,7 +10022,7 @@ int nexus_v1_engine_admit_slev_execution_trace(
     receipt.status = NEXUS_V1_SLEV_TRACE_MISSING;
     receipt.level_index = -1;
     receipt.blocks_real_script_dispatch = 1;
-    receipt.fallback_visuals_permitted = 1;
+    receipt.fallback_visuals_permitted = 0;
     if (!engine || !trace_text || trace_size == 0 ||
         nexus_v1_engine_build_slev_capture_target(engine, &target) != 1) {
         *out_receipt = receipt;
@@ -10127,7 +10141,7 @@ int nexus_v1_engine_admit_slev_execution_trace_with_raw(
     receipt.status = NEXUS_V1_SLEV_TRACE_MISSING;
     receipt.level_index = -1;
     receipt.blocks_real_script_dispatch = 1;
-    receipt.fallback_visuals_permitted = 1;
+    receipt.fallback_visuals_permitted = 0;
     if (!engine || !raw_trace || raw_trace_size == 0 || !trace_text ||
         !nexus_v1_slev_trace_value(trace_text, trace_size, "raw_trace_fnv1a64",
                                    value, sizeof(value)) ||
@@ -10161,7 +10175,7 @@ int nexus_v1_current_level_slev_trace_admission_receipt(
     out_receipt->status = NEXUS_V1_SLEV_TRACE_MISSING;
     out_receipt->level_index = -1;
     out_receipt->blocks_real_script_dispatch = 1;
-    out_receipt->fallback_visuals_permitted = 1;
+    out_receipt->fallback_visuals_permitted = 0;
     if (!engine || !engine->level_loaded) return 0;
     *out_receipt = engine->script_trace_admission;
     return 0;
@@ -10180,7 +10194,7 @@ int nexus_v1_engine_consume_slev_execution_trace(
     receipt.status = NEXUS_V1_SLEV_TRACE_HOST_MISSING;
     receipt.level_index = -1;
     receipt.blocks_real_script_dispatch = 1;
-    receipt.fallback_visuals_permitted = 1;
+    receipt.fallback_visuals_permitted = 0;
     if (!engine || !engine->level_loaded) {
         *out_receipt = receipt;
         return 0;
@@ -10250,7 +10264,7 @@ int nexus_v1_current_level_slev_trace_host_receipt(
     out_receipt->status = NEXUS_V1_SLEV_TRACE_HOST_MISSING;
     out_receipt->level_index = -1;
     out_receipt->blocks_real_script_dispatch = 1;
-    out_receipt->fallback_visuals_permitted = 1;
+    out_receipt->fallback_visuals_permitted = 0;
     if (!engine || !engine->level_loaded) return 0;
     *out_receipt = engine->script_trace_host_receipt;
     return 0;
@@ -10287,7 +10301,7 @@ int nexus_v1_build_sal_dispatch_evidence(
     receipt.status = NEXUS_V1_SAL_DISPATCH_EVIDENCE_MISSING;
     receipt.level_index = -1;
     receipt.blocks_real_sfx_playback = 1;
-    receipt.fallback_visuals_permitted = 1;
+    receipt.fallback_visuals_permitted = 0;
     if (!engine || !engine->level_loaded || !raw_trace || raw_trace_size == 0) {
         *out_receipt = receipt;
         return 0;
@@ -10351,7 +10365,7 @@ int nexus_v1_build_slev_dispatch_evidence(
     receipt.status = NEXUS_V1_SLEV_DISPATCH_EVIDENCE_MISSING;
     receipt.level_index = -1;
     receipt.blocks_real_script_dispatch = 1;
-    receipt.fallback_visuals_permitted = 1;
+    receipt.fallback_visuals_permitted = 0;
     if (!engine || !engine->level_loaded || !raw_trace || raw_trace_size == 0) {
         *out_receipt = receipt;
         return 0;
@@ -10420,7 +10434,7 @@ int nexus_v1_dgn_static_material_source_receipt(
     Nexus_V1_DgnStaticMaterialSourceReceipt *out_receipt) {
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
-    out_receipt->fallback_visuals_permitted = 1;
+    out_receipt->fallback_visuals_permitted = 0;
     if (!engine) return 0;
     *out_receipt = engine->dgn_static_material_sources;
     return 0;
@@ -11970,7 +11984,7 @@ int nexus_v1_menu_bpk_renderer_handoff_receipt(
     out_receipt->decode_route = NEXUS_V1_BPK_DECODE_ROUTE_INVALID;
     /* MENU.BPK absence is never permission for a replacement menu surface. */
     out_receipt->blocks_real_menu_surface_render = 1;
-    out_receipt->fallback_visuals_permitted = 1;
+    out_receipt->fallback_visuals_permitted = 0;
 
     if (!engine) return -1;
     out_receipt->attempted = engine->menu_bpk_decode_receipt_attempted;
@@ -12045,7 +12059,7 @@ int nexus_v1_menu_bpk_renderer_handoff_receipt(
     }
     /* Stored original bytes may be presented by their own route, but no
      * BPK status ever authorizes a generated replacement surface. */
-    out_receipt->fallback_visuals_permitted = 1;
+    out_receipt->fallback_visuals_permitted = 0;
     /* Preserve SATURN_PRESENTATION below when the source is not drawable. */
     out_receipt->prs3_prerequisite_status =
         nexus_v1_menu_bpk_prs3_prerequisite_from_handoff(out_receipt);
@@ -12483,7 +12497,7 @@ int nexus_v1_current_level_sfx_runtime_receipt(
         memset(out_receipt, 0, sizeof(*out_receipt));
         out_receipt->status = NEXUS_SFX_RUNTIME_MISSING;
         out_receipt->level_index = -1;
-        out_receipt->fallback_visuals_permitted = 1;
+        out_receipt->fallback_visuals_permitted = 0;
         return 0;
     }
     *out_receipt = engine->sfx_runtime_receipt;

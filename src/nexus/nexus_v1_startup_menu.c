@@ -185,6 +185,9 @@ int nexus_v1_startup_resume_status_host_receipt(
     case NEXUS_V1_STARTUP_RESUME_STATUS_DIR_INVALID:
         out_receipt->status = "NEXUS RESUME DIR INVALID";
         break;
+    case NEXUS_V1_STARTUP_RESUME_STATUS_POSE_INVALID:
+        out_receipt->status = "NEXUS RESUME POSE INVALID";
+        break;
     case NEXUS_V1_STARTUP_RESUME_STATUS_LEVEL_ERROR:
         out_receipt->status = "NEXUS RESUME LEVEL ERROR";
         break;

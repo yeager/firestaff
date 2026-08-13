@@ -230,6 +230,15 @@ def run_case(firestaff: Path, case: dict[str, Any]) -> dict[str, Any]:
         and presented_shots[0].get("non_black_pixels", 0) > 200
     )
     lev00_refused = "Saturn start pose is not source-bound" in combined
+    title_boot_blocked = (
+        "blocker=title-vdp-capture-required" in combined
+        and probe.get("lastOutcome") == "NEXUS TITLE"
+        and bool(row.get("command", {}).get("ok"))
+        and probe.get("schema") == "firestaff_m11_autotest_runtime_probe.v1"
+        and probe.get("launchedEver") == 1
+        and probe.get("active") == 1
+        and probe.get("sourceId") == "nexus"
+    )
     startup_proof_missing = "STARTUP PROOF MISSING" in combined
     runtime_ok = (
         bool(row.get("command", {}).get("ok"))
@@ -253,11 +262,22 @@ def run_case(firestaff: Path, case: dict[str, Any]) -> dict[str, Any]:
     )
     visual_ok = source_ok and presented_ok
     row["visual_ok"] = visual_ok
-    row["ok"] = runtime_ok and (visual_ok or no_draw_capture_gate) or lev00_refused or startup_proof_missing
+    row["ok"] = (
+        runtime_ok and (visual_ok or no_draw_capture_gate)
+        or lev00_refused
+        or title_boot_blocked
+        or startup_proof_missing
+    )
     if lev00_refused:
         row["status"] = "BLOCKED"
         row["reason"] = (
             "LEV00 startup refused: Saturn start pose is not source-bound"
+        )
+    elif title_boot_blocked:
+        row["status"] = "BLOCKED"
+        row["reason"] = (
+            "real Nexus title and asset boot succeeded, but the authenticated "
+            "Saturn LEV01 start pose and presentation handoff are still required"
         )
     elif startup_proof_missing:
         row["status"] = "BLOCKED"

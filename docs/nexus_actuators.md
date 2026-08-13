@@ -45,11 +45,14 @@ DM2_INVOKE_ACTUATOR queues timed activations. Door state via DoorBit09/DoorBit10
 
 ---
 
-## 3. Nexus V1 Actuator Model (SDDRVS.TSK Script Actions)
+## 3. Nexus V1 Actuator Status
 
-Nexus has NO pre-defined actuator type enum. Actions are script opcodes in SDDRVS.TSK.
+Nexus has no source-verified actuator enum or action ABI in Firestaff. The
+authentic `SDDRVS.TSK`/`SLEV*.BIN` files are retained as evidence, but their
+runtime ownership and event dispatcher have not been identified.
 
-Hypothetical SDDRVS.TSK Action Opcodes:
+The following names and values are investigation placeholders only. They are
+not parsed, executed, or presented as Nexus features:
 
 Movement: ACT_TELEPORT(0x30), ACT_SET_SQUARE_TYPE(0x31), ACT_ROTATE_WALL(0x32),
   ACT_OPEN_DOOR(0x33), ACT_CLOSE_DOOR(0x34), ACT_TOGGLE_DOOR(0x35)
@@ -60,7 +63,8 @@ Party: ACT_DAMAGE_PARTY(0x60), ACT_HEAL_PARTY(0x61), ACT_GIVE_GOLD(0x62),
 Logic: ACT_SET_FLAG(0x70), ACT_CLEAR_FLAG(0x71), ACT_WAIT_TICKS(0x72),
   ACT_END_GAME(0x7F)
 
-Nexus doors controlled by script. Levers via COND_PARTY_FACING + COND_PARTY_ON_XY.
+Nexus door, lever, trap, spawn, audio and logic ownership remains capture- and
+disassembly-gated. No production behavior may be implemented from this sketch.
 
 ---
 
@@ -68,18 +72,19 @@ Nexus doors controlled by script. Levers via COND_PARTY_FACING + COND_PARTY_ON_X
 
 | Aspect          | DM1                  | DM2                     | Nexus V1           |
 |-----------------|----------------------|-------------------------|---------------------|
-| Door control    | Square type 4        | Door tile+0x17/0x18     | Tile+ACT_OPEN/CLOSE|
-| Lever/switch    | Wall sensor C001-C004| Actuator 0x17/0x18/0x46 | COND+ACT script     |
-| Trap/trapdoor   | Square type 7        | Actuator shooter        | ACT_DAMAGE+WARP     |
-| Creature spawn  | Hardwired level data | Actuator 0x2E           | ACT_SPAWN_CREATURE  |
-| Logic chains    | None                 | RELAY+COUNTER           | Script AND/OR+flags |
-| Timer events    | C006 countdown       | TICK_GENERATOR 0x1E     | ACT_WAIT_TICKS      |
+| Door control    | Square type 4        | Door tile+0x17/0x18     | Unresolved          |
+| Lever/switch    | Wall sensor C001-C004| Actuator 0x17/0x18/0x46 | Unresolved          |
+| Trap/trapdoor   | Square type 7        | Actuator shooter        | Unresolved          |
+| Creature spawn  | Hardwired level data | Actuator 0x2E           | Unresolved          |
+| Logic chains    | None                 | RELAY+COUNTER           | Unresolved          |
+| Timer events    | C006 countdown       | TICK_GENERATOR 0x1E     | Unresolved          |
 
 ---
 
 ## 5. Firestaff Actuator Implementation
 
-Current: nexus_v1_dungeon.c parses grid only. No door state machine.
+Current: `nexus_v1_dungeon.c` parses authenticated grid/structure records;
+Nexus event/action ownership remains closed.
 
 Required: SDDRVS.TSK parser, door state struct, action dispatcher, timer queue, flag store.
 

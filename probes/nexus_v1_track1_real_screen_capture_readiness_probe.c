@@ -36,7 +36,8 @@
  *
  * Real-data path (when argv[1] is a usable Nexus data root):
  *  - nexus_v1_init() reports NEXUS_SRC_ISO or NEXUS_SRC_EXTRACTED.
- *  - nexus_v1_load_level(0) decodes the real 147,456-byte LEV00.DGN
+ *  - the real 147,456-byte title-only LEV00.DGN remains source-readable;
+ *    playable readiness is checked against LEV01.DGN
  *    into a 64x64 grid.
  *  - nexus_v1_load_model("SCORPION.MNS") parses the real 53,052-byte
  *    MNS asset and registers it in engine.models[].
@@ -562,15 +563,15 @@ static void run_phase_real_capture(const char *data_dir, const char *out_dir)
           engine.source == NEXUS_SRC_EXTRACTED,
           "real engine reports ISO or EXTRACTED source");
 
-    r = nexus_v1_load_level(&engine, 0);
+    r = nexus_v1_load_level(&engine, NEXUS_V1_FIRST_PLAYABLE_LEVEL);
     if (r != 0) {
-        SKIP("nexus_v1_load_level(0) failed; real capture path skipped");
+        SKIP("nexus_v1_load_level(LEV01) failed; real capture path skipped");
         nexus_v1_shutdown(&engine);
         return;
     }
     CHECK(engine.current_level.width == 64 &&
           engine.current_level.height == 64,
-          "real LEV00.DGN decodes as 64x64 Structure1B");
+          "real LEV01.DGN decodes as 64x64 Structure1B");
 
     /* Drive the DMDF parser against the real SCORPION.MNS. This is
      * the "MNS rendering" handoff closure from E1 Phase 4. */

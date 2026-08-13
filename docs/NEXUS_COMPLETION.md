@@ -11,8 +11,19 @@ Den verifierade Nexus-starten skiljer nu uttryckligen mellan titel-/assetboot
 och spelbar start. Firestaff skriver inte längre `NEXUS STARTUP RECEIPT READY`
 när `levelLoaded=0`; den rapporterar i stället `status=blocked` med aktuell
 källägd spärr. Det ändrar inte produktionsgraden: den autentiska
-startup→meny→LEV00-kedjan saknar fortfarande en verifierad startpositions- och
+startup→meny→LEV01-kedjan saknar fortfarande en verifierad startpositions- och
 konsument-witness.
+
+Aktuell extern-disk-audit 2026-08-13: den verifierade spelkorpusen innehåller
+CUE/ISO och extraherade retailfiler. En ny isolerad J-BIOS/English-Merged-
+capture finns nu som operatorunderlag på extern disk:
+`/Volumes/Extern-disk/nexus-capture-20260813/run-jp-merged/`. Den binder
+BIOS- och disc-hash, 60 råa frames och 16 aktiva VDP1-observationer; den
+separata validatorn passerar med `--require-frames 60 --require-vdp1-activity`.
+Capture:n är ändå semantic-blocked: ingen byteexakt startup→meny-identitet,
+startpose, HUD/viewport-konsument eller SLEV/SAL-dispatch är verifierad.
+Saturn-BIOS, disc och capture-byte ligger utanför repot och får inte läsas som
+Firestaff-distribution.
 
 | Område | Verifierade grindar | Implementeringstäckning | Produktionsgrad | Huvudspärr |
 |---|---:|---:|---:|---|
@@ -35,6 +46,17 @@ Produktionsgraden är 0 % för båda måtten just nu: den validerade J-capturen
 är en reset-/transportwitness utan startup→meny-identitet, och den befintliga
 E-BIOS/French-capturen öppnar inte heller semantiska runtimekonsumenter.
 Siffrorna ska inte medelvärdesbildas mellan modellerna.
+
+## Extern retailkorpus
+
+Den separata autentiska korpusen på extern disk är verifierad genom launcher-
+boot och nivåprobe: `FIRESTAFF_NEXUS_DATA_DIR` pekar på korpusen, den
+kompletterande engelska CUE:n öppnas utan att filerna packas om, titel- och
+varningsytorna laddas och `LEV01.DGN`–`LEV15.DGN` klarar den riktiga
+64×64-struktur- och spelbarhetsproben. Detta bekräftar dataåtkomst och
+formatläsning, men inte Saturns saknade startup→LEV01-pose eller VDP-
+konsumenter. Firestaff ska därför fortfarande stoppa före spelbar runtime när
+ingen autentiserad save eller Saturn-witness finns.
 
 ## Räkneregel
 

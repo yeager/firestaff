@@ -9,13 +9,15 @@ is extremely limited without the original disc image and disassembly.
 
 Short answer: Not practically, at this time.
 
-Obstacles:
+Current boundaries:
 - No source code -- not open-source, no ReDMCSB-style decompilation exists
-- No disc image -- the repository has no Saturn disc image (critical blocker)
+- The authenticated retail corpus is available outside the repository on the
+  external disk; Firestaff reads it without repacking the game files
 - No source-locked event VM -- SLEV/SDDRVS profiling exists, but event and
   runtime ownership remain unproven
 - Big-endian only -- all data is SH2 big-endian; no off-the-shelf tools apply
-- Japanese text -- Shift-JIS encoded; no translation tooling in tree
+- Japanese text -- Shift-JIS encoded; glyph mapping and Saturn placement
+  remain capture-gated
 - No community -- no known Nexus modding forum, tool, or patch community
 
 What Could Be Modified (Theoretically):

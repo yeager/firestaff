@@ -77,11 +77,15 @@ Firestaff's reimplementation (the `firestaff_nexus` library) is itself a form of
 
 ## 5. Secret/Undocumented Features
 
-### Per-Level Scripting (SDDRVS.TSK)
-- The `SDDRVS.TSK` file (26 KB) is described as a "sound driver task" but may also contain a script VM
-- If it implements a declarative scripting system, that counts as undocumented bonus functionality
-- Level scripts in `SLEV00-15.BIN` (2–12 KB each) control events, spawns, triggers
-- This is a hidden layer of game logic not present in any other DM title
+### Per-Level Task Data (SLEV00-15.BIN)
+- `SDDRVS.TSK` is source-verified as a Saturn sound-driver task; a secondary
+  trigger/script role has not been established.
+- `SLEV00-15.BIN` are authentic per-level files with bounded SH-2-shaped entry
+  profiles. Their event ownership, opcodes, dispatcher and execution ABI are
+  unresolved.
+- Firestaff therefore does not describe a Nexus scripting VM or claim that the
+  files control events, spawns or triggers. This remains preservation research,
+  not shipped functionality.
 
 ### DMDF 3D Model Format
 - 30 `.MNS` creature model files — each is a 3D polygon model with animations
@@ -110,7 +114,7 @@ Firestaff's reimplementation (the `firestaff_nexus` library) is itself a form of
 | Pre-order bonus | No | No | No | **No** |
 | FMV cutscenes | No | No | No | **Yes (3 AVI)** |
 | Per-level audio | No | No | No | **Yes (8 CD tracks)** |
-| Level scripting | No | No | No | **Yes (SLEV*.BIN)** |
+| Level scripting | No | No | No | **Unresolved (SLEV*.BIN)** |
 | 3D models | No | No | No | **Yes (30 .MNS)** |
 | Multilingual | EN/JP (separate DAT) | EN | EN only | **JP only** |
 | Cross-platform (modern) | ReDMCSB + DOSBox | Partial | SKULL.ASM + DOSBox | **Firestaff (native)** |
@@ -119,4 +123,8 @@ Firestaff's reimplementation (the `firestaff_nexus` library) is itself a form of
 
 ## 7. Bonus Content Conclusion
 
-**The original Nexus release had no special editions or bonus discs.** The game itself IS the content — 137 files on a Saturn CD, including the only FMV in the series, unique per-level audio, and a scripting VM. The closest thing to "bonus content" is Firestaff's reimplementation, which makes Nexus playable on modern hardware with full source code transparency.
+**The original Nexus release had no special editions or bonus discs.** The game
+itself is the content — 137 files on a Saturn CD, including the only FMV in the
+series and unique per-level audio. A scripting VM has not been proven. Firestaff
+keeps the unresolved task files as preservation evidence instead of inventing
+their semantics.

@@ -2412,6 +2412,7 @@ static void nexus_v1_level_copy_structure1f_entries(
             case NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS:
                 dst->x = src[1]; dst->y = src[2];
                 dst->model_or_aspect = src[5]; dst->rotation = src[6];
+                dst->sensor_type = src[12];
                 dst->width = src[10]; dst->height = src[11];
                 dst->type_or_control = src[12]; dst->destination_x = src[13];
                 dst->destination_y = src[14]; dst->destination_orientation = src[15];
@@ -2430,6 +2431,7 @@ static void nexus_v1_level_copy_structure1f_entries(
                 dst->face = src[1]; dst->structure1a_index = rb16(src + 2);
                 dst->rotation = src[4]; dst->offset_x = (int8_t)src[5];
                 dst->offset_y = (int8_t)src[6]; dst->model_or_aspect = src[7];
+                dst->sensor_type = src[9];
                 dst->type_or_control = src[12]; dst->destination_x = src[13];
                 dst->destination_y = src[14]; dst->destination_orientation = src[15];
                 break;

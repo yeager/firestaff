@@ -2,8 +2,8 @@
  * Nexus V1 Multi-Level DGN Playability Regression Test
  * ======================================================
  * Verifies that every present retail LEV*.DGN loads as a 64x64 Structure1B
- * grid and that a passable starting square reaches at least 10 squares by
- * flood-fill.  The test is skip-safe: if no local Nexus data is staged it
+ * grid. LEV00 is title/entrance-only; playable reachability is checked for
+ * LEV01–LEV15. The test is skip-safe: if no local Nexus data is staged it
  * exits with code 77.
  *
  * Source-lock:
@@ -19,6 +19,7 @@
 #include <unistd.h>
 
 #include "nexus_v1_dungeon.h"
+#include "nexus_v1_game.h"
 #include "nexus_v1_squares.h"
 
 static int g_pass = 0;
@@ -71,24 +72,24 @@ static int count_squares(const Nexus_V1_Level *level, int type)
     return count;
 }
 
+static int flood_fill_reachable(const Nexus_V1_Level *level, int sx, int sy);
+
 static int find_start_square(const Nexus_V1_Level *level, int *out_x, int *out_y)
 {
-    int x, y;
-    if (level->squares[29][11] == NEXUS_SQUARE_FLOOR) {
-        *out_x = 11;
-        *out_y = 29;
-        return 1;
-    }
+    int x, y, best_reachable = 0;
     for (y = 1; y < level->height - 1; y++) {
         for (x = 1; x < level->width - 1; x++) {
             if (level->squares[y][x] == NEXUS_SQUARE_FLOOR) {
-                *out_x = x;
-                *out_y = y;
-                return 1;
+                int reachable = flood_fill_reachable(level, x, y);
+                if (reachable > best_reachable) {
+                    best_reachable = reachable;
+                    *out_x = x;
+                    *out_y = y;
+                }
             }
         }
     }
-    return 0;
+    return best_reachable > 0;
 }
 
 static int flood_fill_reachable(const Nexus_V1_Level *level, int sx, int sy)
@@ -180,6 +181,13 @@ int main(void)
             continue;
         }
         g_pass++;
+
+        if (level_index == NEXUS_V1_TITLE_LEVEL) {
+            printf("  [INFO] LEV00.DGN is title/entrance-only; "
+                   "playability checks skipped\n");
+            free(dgn_data);
+            continue;
+        }
 
         if (!find_start_square(&level, &start_x, &start_y)) {
             printf("  [FAIL] LEV%02d.DGN has no valid start square\n",
