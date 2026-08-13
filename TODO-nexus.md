@@ -2,6 +2,13 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: Nexus text-helper hardening fixed two boundedness defects in the
+diagnostic SJIS/ASCII extractor: zero- and undersized output buffers are now
+terminated without an out-of-bounds write, and each returned extracted string
+has distinct storage instead of aliasing the last result. This helper remains
+excluded from the production Nexus library; the fix is covered by
+`nexus_v1_text` and does not open Saturn text presentation.
+
 2026-08-13: A fresh external-disk J-BIOS/English-Merged run at
 `/Volumes/Extern-disk/nexus-capture-20260813/run-followup-20260813b/` produced
 301 frames and passes the raw-layout validator with the locked BIOS and disc

@@ -1,4 +1,17 @@
 cmake_minimum_required(VERSION 3.20)
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_text.c")
+    add_executable(test_nexus_v1_text
+        tests/test_nexus_v1_text.c
+        src/nexus/nexus_v1_text.c
+        src/nexus/nexus_v1_s2d_text_layout.c
+        src/nexus/nexus_v1_saturn_font.c
+        src/nexus/nexus_v1_font_s2d.c)
+    target_include_directories(test_nexus_v1_text PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    add_test(NAME nexus_v1_text
+        COMMAND test_nexus_v1_text)
+endif()
 if(POLICY CMP0156)
     # Firestaff's M11/M12 test and probe targets still contain static
     # archive cycles. Keep repeated static libraries on link lines until

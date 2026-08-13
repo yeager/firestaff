@@ -11,17 +11,22 @@ int nexus_v1_sjis_to_utf8(const uint8_t *sjis, int sjis_len,
     char *utf8_out, int utf8_max)
 {
     int si = 0, ui = 0;
-    if (!sjis || !utf8_out) return 0;
+    if (!sjis || !utf8_out || utf8_max <= 0 || sjis_len <= 0) {
+        if (utf8_out && utf8_max > 0) utf8_out[0] = 0;
+        return 0;
+    }
 
-    while (si < sjis_len && ui < utf8_max - 3) {
+    while (si < sjis_len && ui < utf8_max - 1) {
         uint8_t b = sjis[si];
         if (b == 0) break;
 
         if (b >= 0x20 && b <= 0x7E) {
+            if (ui + 1 >= utf8_max) break;
             /* ASCII */
             utf8_out[ui++] = (char)b;
             si++;
         } else if (b >= 0xA1 && b <= 0xDF) {
+            if (ui + 3 >= utf8_max) break;
             /* Half-width katakana -> UTF-8 (U+FF61-U+FF9F) */
             uint16_t cp = 0xFF61 + (b - 0xA1);
             utf8_out[ui++] = (char)(0xE0 | (cp >> 12));
@@ -44,8 +49,17 @@ int nexus_v1_sjis_to_utf8(const uint8_t *sjis, int sjis_len,
 int nexus_v1_extract_strings(const uint8_t *data, int size,
     char **out_strings, int max_strings)
 {
+    /* The legacy API returns pointers rather than accepting caller-owned
+     * buffers. Keep one bounded slot per returned string; a single shared
+     * temporary made every result alias the last extracted string. */
+    static char string_buffers[64][256];
     int count = 0, i = 0;
-    if (!data || !out_strings) return 0;
+    if (!data || size <= 0 || !out_strings || max_strings <= 0) return 0;
+    if (max_strings > (int)(sizeof(string_buffers) /
+                            sizeof(string_buffers[0]))) {
+        max_strings = (int)(sizeof(string_buffers) /
+                             sizeof(string_buffers[0]));
+    }
 
     while (i < size && count < max_strings) {
         /* Find runs of printable bytes */
@@ -56,11 +70,12 @@ int nexus_v1_extract_strings(const uint8_t *data, int size,
                (data[i] >= 0xE0 && data[i] <= 0xEF)))
             i++;
         if (i - start >= 4) {
-            static char buf[256];
             int converted = nexus_v1_sjis_to_utf8(
-                data + start, i - start, buf, sizeof(buf));
+                data + start, i - start, string_buffers[count],
+                (int)sizeof(string_buffers[count]));
             if (converted >= 0) {
-                out_strings[count++] = buf;
+                out_strings[count] = string_buffers[count];
+                count++;
             }
         }
         i++;
