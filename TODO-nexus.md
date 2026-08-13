@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: Re-run from the external checkout against
+`/Volumes/Extern-disk/FirestaffUserData/data/nexus` passed 108 of 117 selected
+Nexus tests. The remaining nine are the explicitly capture-/trace-gated tests
+and were reported as skip-safe because their authenticated Saturn producer
+artifacts are absent. Launch, ISO-only reading, real DGN content/geometry and
+multi-level playability, SLEV VM, SAL corpus, sound metadata, save, mechanics,
+and runtime-readiness checks all passed. This is verification of the current
+implementation, not proof of the still-open LEV01 pose, VDP1/VDP2 semantic
+join, SLEV/SCSP dispatch, or full presentation gates.
+
 2026-08-13: Nexus CMake/CTest data-root wiring is verified on the external
 checkout. `project()` and the first `include(CTest)` now precede the early
 optional test declarations, and the canonical `FIRESTAFF_WORKSPACE_DATA_DIR`
