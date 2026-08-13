@@ -82,6 +82,16 @@ the same session has no game-owned FIFO-to-RAM receipt, spawn-consumer read or
 RNG window. This is transport provenance only; the raw capture remains local
 and is not a GitHub wiki artifact.
 
+**Split-CUE normalization witness (2026-08-13):** a private CUE using the
+authenticated concatenated ISO (`TQUS19.iso + TQUS02End.iso`, MD5
+`ceb02343868f80cec899e9b239aff2da`) reached same-session game-owned
+transport cleanly. It produced 161 raw sectors, 32 `$E009` dispatches and a
+parser-approved 65,536-row main-RAM sidecar. The `$2600-$27FF` window still
+contains only 512 zero-valued `$CB22` initialization reads, with no runtime or
+`$C3A0-$C429` readers; the 256-row spawn sidecar has no valid `$B0E5` entry or
+source-owned target publication. This is a stronger transport witness, not a
+level/object or gameplay consumer; raw sidecars remain external-only.
+
 **Cold-start capture boundary (2026-08-13):** a separate instrumented replay
 read 256 raw 2352-byte sectors from LBA 3234, but remained in the BIOS/CD
 reader. It produced no game-owned `$E009` dispatch, no CD/FIFO-to-RAM origin

@@ -8,6 +8,19 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — split-CUE-normalisering ger starkare transport-witness
+
+- ✅ Den privata split-ISO-normaliseringen (`TQUS19.iso + TQUS02End.iso`)
+  gav en parser-godkänd samma-session med 161 råsektorer, 32 game-owned
+  `$E009`-dispatchar och 65 536 main-RAM-läsningar.
+- 🔒 `$2600–$27FF` innehåller fortfarande endast 512 noll-läsningar från
+  initieringsläsaren `$CB22`; runtime-/`$C3A0–$C429`-läsningar saknas.
+  Spawnsidecaren saknar giltig `$B0E5`, source-owned target-publicering och
+  live creature-record. Ingen level/object/square/HUD/T700/T900-semantik
+  öppnas.
+- ✅ Proveniens och sidecar-hashar är dokumenterade i
+  `docs/source-lock/theron-disassembly/theron-split-cue-consumer-capture-20260813.md`.
+
 ## 2026-08-13 — source-bound pit blockeras utan fixture-skada
 
 - ✅ Query, movement och den publika pit-handlern känner nu igen att T700-
