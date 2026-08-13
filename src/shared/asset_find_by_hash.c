@@ -324,7 +324,9 @@ static int scache_inventory_lookup(const ScanCache_I *c, const char *root,
     for (i = c->count - 1; i >= 0; --i) {
         const ScanCacheEntry_I *entry = &c->entries[i];
         struct stat st;
+        size_t entry_len = strlen(entry->path);
         if (strcmp(entry->md5, md5) != 0 ||
+            entry_len < root_len ||
             strncmp(entry->path, root, root_len) != 0 ||
             (root_len > 1 && entry->path[root_len] != '/' && entry->path[root_len] != '\0' &&
              !(entry->path[root_len] == ':' && entry->path[root_len + 1] == ':')) ||

@@ -126,8 +126,9 @@ int main(int argc, char **argv) {
     PROBE_ASSERT(engine.current_level.height == 0,
                  "level height == 0 when LEV00 startup is blocked (got %d)",
                  engine.current_level.height);
-    PROBE_ASSERT(engine.game.current_level == 0,
-                 "game.current_level == 0 (got %d)", engine.game.current_level);
+    PROBE_ASSERT(engine.game.current_level == -1,
+                 "game.current_level == -1 while LEV00 startup is blocked (got %d)",
+                 engine.game.current_level);
 
     /* Party pose stays at its unset sentinel since no start pose was ever
      * committed for the blocked level. */

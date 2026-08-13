@@ -90,13 +90,15 @@ static int  nexus_v1_boot_check_asset_file(const char *dir,
                                             const char *filename,
                                             Nexus_V1_DiagnosticCode okCode,
                                             Nexus_V1_Diagnostic *diags,
-                                            size_t *outIndex);
+                                            size_t *outIndex,
+                                            size_t maxDiags);
 static int  nexus_v1_boot_check_asset_hash_or_file(const char *dir,
                                                     const char *filename,
                                                     const char *md5,
                                                     Nexus_V1_DiagnosticCode okCode,
                                                     Nexus_V1_Diagnostic *diags,
-                                                    size_t *outIndex);
+                                                    size_t *outIndex,
+                                                    size_t maxDiags);
 
 /* ── Public API ────────────────────────────────────────────────── */
 
@@ -157,11 +159,13 @@ int Nexus_V1_BootProfile_ValidateAssets(const Nexus_V1_BootProfile *profile,
                                               "e88d60859f65f08fa622e1992b02280f",
                                               NEXUS_V1_DIAG_OK,
                                               diags,
-                                              &diagCount) != 0
+                                              &diagCount,
+                                              maxDiags) != 0
         && diagCount < maxDiags) {
         /* Missing DM.BIN is non-fatal if SEGADATA.BIN exists */
         (void)nexus_v1_boot_check_asset_file(dataDir, "SEGADATA.BIN",
-                                            NEXUS_V1_DIAG_OK, diags, &diagCount);
+                                            NEXUS_V1_DIAG_OK, diags, &diagCount,
+                                            maxDiags);
     }
 
     /* Check for the real Saturn DGN material containers.
@@ -172,12 +176,12 @@ int Nexus_V1_BootProfile_ValidateAssets(const Nexus_V1_BootProfile *profile,
     (void)nexus_v1_boot_check_asset_hash_or_file(dataDir, "SN_FLOOR.MNS",
                                                  "85c517e8e0bd84e00da58295dca5b409",
                                                  NEXUS_V1_DIAG_MISSING_FLOOR_MATERIAL,
-                                                 diags, &diagCount);
+                                                 diags, &diagCount, maxDiags);
     if (diagCount < maxDiags) {
         (void)nexus_v1_boot_check_asset_hash_or_file(dataDir, "SN_WALL.MNS",
                                                      "ae67ca9fa8d09481e1849a42aaaa2eb6",
                                                      NEXUS_V1_DIAG_MISSING_WALL_MATERIAL,
-                                                     diags, &diagCount);
+                                                     diags, &diagCount, maxDiags);
     }
 
     /* Check for DGN level directory — at least one level must exist */
@@ -185,7 +189,8 @@ int Nexus_V1_BootProfile_ValidateAssets(const Nexus_V1_BootProfile *profile,
                                                "603ec9c531a92539babdda84ab09e78e",
                                                NEXUS_V1_DIAG_OK,
                                                diags,
-                                               &diagCount) != 0 &&
+                                               &diagCount,
+                                               maxDiags) != 0 &&
         diagCount < maxDiags) {
             diags[diagCount].code = NEXUS_V1_DIAG_MISSING_DGN_LEVEL;
             snprintf(diags[diagCount].message, sizeof(diags[0].message),
@@ -208,7 +213,7 @@ int Nexus_V1_BootProfile_ValidateAssets(const Nexus_V1_BootProfile *profile,
         dataDir, "RLOWFIX.BIN",
         "14c3a7e6fed2dc9e53a727640d4c9348",
         NEXUS_V1_DIAG_MISSING_CHAMPION_DATA,
-        diags, &diagCount);
+        diags, &diagCount, maxDiags);
 
     return (int)diagCount;
 }
@@ -297,7 +302,8 @@ static int nexus_v1_boot_check_asset_file(const char *dir,
                                            const char *filename,
                                            Nexus_V1_DiagnosticCode okCode,
                                            Nexus_V1_Diagnostic *diags,
-                                           size_t *outIndex) {
+                                           size_t *outIndex,
+                                           size_t maxDiags) {
     char path[512];
     Nexus_V1_DiagnosticCode diagCode;
     int missing = 0;
@@ -319,7 +325,7 @@ static int nexus_v1_boot_check_asset_file(const char *dir,
     }
 
     if (missing) {
-        if (*outIndex >= (size_t)NEXUS_V1_DIAG_COUNT) {
+        if (*outIndex >= maxDiags) {
             return -1;
         }
         if (diagCode != okCode) {
@@ -348,7 +354,8 @@ static int nexus_v1_boot_check_asset_hash_or_file(const char *dir,
                                                    const char *md5,
                                                    Nexus_V1_DiagnosticCode okCode,
                                                    Nexus_V1_Diagnostic *diags,
-                                                   size_t *outIndex) {
+                                                   size_t *outIndex,
+                                                   size_t maxDiags) {
     char matched[ASSET_PATH_MAX];
     char canonical[ASSET_PATH_MAX];
     FILE *file;
@@ -369,7 +376,7 @@ static int nexus_v1_boot_check_asset_hash_or_file(const char *dir,
         if (asset_find_by_md5(dir, md5, matched, (int)sizeof(matched), 8)) {
             return 0;
         }
-        if (*outIndex >= (size_t)NEXUS_V1_DIAG_COUNT) return -1;
+        if (*outIndex >= maxDiags) return -1;
         diags[*outIndex].code = (okCode != NEXUS_V1_DIAG_OK)
             ? okCode : NEXUS_V1_DIAG_MISSING_DM_BIN;
         snprintf(diags[*outIndex].message,
@@ -390,5 +397,6 @@ static int nexus_v1_boot_check_asset_hash_or_file(const char *dir,
                                         (int)sizeof(matched), 8)) {
         return 0;
     }
-    return nexus_v1_boot_check_asset_file(dir, filename, okCode, diags, outIndex);
+    return nexus_v1_boot_check_asset_file(dir, filename, okCode, diags,
+                                          outIndex, maxDiags);
 }
