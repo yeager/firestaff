@@ -1328,3 +1328,7 @@ värden ensamma räcker inte för text- eller menyadmission.
   manifestposter och fyra parserfixturer mot den riktiga datan. Detta ändrar
   inte Saturns fortfarande stängda presentation-, pose-, save- eller
   ljudgater.
+- 2026-08-13: Asset-manifestproben är nu en riktig CMake/CTest-target
+  (`nexus_v1_asset_manifest`) med `-Werror`, extern Nexus-datakatalog och
+  skip-safe beteende när originaldata saknas. Det förhindrar att manifest- och
+  ISO-läsregressioner bara testas manuellt.
