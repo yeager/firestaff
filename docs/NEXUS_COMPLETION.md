@@ -9,6 +9,13 @@ regionmatchad Saturn-kedja.
 
 ## Current evidence correction — 2026-08-13
 
+The CLI boot-probe path now selects SDL's dummy video driver by default when
+no driver was supplied. This makes headless Nexus receipts reproducible on CI
+and display-less hosts; it does not alter interactive rendering. With the
+authentic external Nexus corpus, the probe exits cleanly and still reports
+the source-owned title VDP-capture blocker rather than claiming a playable
+menu.
+
 The local Nexus boot-profile hardening is now verified: nested asset checks
 honour the caller's diagnostic-buffer capacity instead of using the enum's
 larger maximum. This prevents validation from corrupting adjacent runtime

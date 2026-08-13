@@ -2,6 +2,12 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: CLI boot probes now select SDL's dummy video driver by default
+when the caller has not selected a driver. This keeps the receipt-producing
+Nexus verification path deterministic on CI and display-less hosts while
+leaving normal interactive rendering unchanged. The authentic Nexus boot
+probe exits cleanly and reports the existing title VDP-capture blocker.
+
 2026-08-13: Two additional operator-only J-BIOS/English-merged capture
 attempts (`run-followup-20260813c12` and `run-followup-20260813c14`) used the
 hash-verified BIOS/disc pair and the documented nine-window active-low debug
