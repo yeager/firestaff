@@ -780,6 +780,14 @@ if [[ -n "$configured_home" ]]; then
         printf '%s\n' 'FAIL: could not prepare an isolated Mednafen capture home' >&2
         exit 1
     fi
+    # A PCE CD backup-RAM file is exactly 2048 bytes.  A malformed file in
+    # the user's normal Mednafen profile makes the isolated emulator abort
+    # before its trace producer opens.  This private copy is disposable, so
+    # remove only malformed PCE-sized .sav files here; never alter the real
+    # configured home or a valid 2048-byte save.
+    if [[ -d "$home_dir/sav" ]]; then
+        find "$home_dir/sav" -type f -name '*.sav' ! -size 2048c -delete
+    fi
 fi
 link_capture_cue_members() {
     local source_cue=$1
