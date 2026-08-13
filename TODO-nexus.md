@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: A fresh external-disk J-BIOS/English-Merged run at
+`/Volumes/Extern-disk/nexus-capture-20260813/run-followup-20260813b/` produced
+301 frames and passes the raw-layout validator with the locked BIOS and disc
+hashes. The witness reports changed `vdp1-fb0`, `vdp1-fb1`, and `vdp2-regs`
+regions, but `semantic_admission=blocked`; it contains no byte-exact
+startup-to-menu identity, LEV01 pose consumer, or source-owned HUD/viewport
+join. The raw capture remains operator diagnostics outside the repository and
+must not open a production renderer gate.
+
 2026-08-13: Disassembly follow-up of the authentic `DM.BIN` confirms that
 `EV_SAVE` and `EV_SAVELOAD` are members of the retail event-name string table
 at `0x06046fec` and `0x06046ff4`. The following bytes form a separate
