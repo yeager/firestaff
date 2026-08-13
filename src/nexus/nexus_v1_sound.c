@@ -992,7 +992,7 @@ int nexus_sound_map_lookup_raw_selector(const Nexus_SoundEngine *eng,
     }
 
     /* A duplicated selector has no source-backed precedence rule. */
-    if (matches == 0 || out_window->sal_size <= 0 ||
+    if (matches != 1 || out_window->sal_size <= 0 ||
         out_window->sal_offset < 0 ||
         (out_window->data_id != 0)) {
         memset(out_window, 0, sizeof(*out_window));

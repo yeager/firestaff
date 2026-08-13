@@ -409,6 +409,7 @@ static void test_sfx_map_record_table_receipt(void) {
 static void test_sfx_map_duplicate_event_receipt(void) {
     Nexus_SoundEngine eng;
     Nexus_SfxRuntimeReceipt receipt;
+    Nexus_SoundMapWindow window;
     static unsigned char sal_data[297082];
     static unsigned char map_data[66];
 
@@ -454,6 +455,8 @@ static void test_sfx_map_duplicate_event_receipt(void) {
           receipt.map_duplicate_record_event_count == 1 &&
           receipt.map_has_duplicate_record_events == 1,
           "SFX MAP record receipt exposes event range and duplicates");
+    CHECK(nexus_sound_map_lookup_raw_selector(&eng, 0x10, &window) == -1,
+          "ambiguous duplicate MAP selector cannot choose a SAL window");
     nexus_sound_play(&eng, NEXUS_SFX_PIT_FALL);
     CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0 &&
           receipt.last_event_record_found == 0 &&

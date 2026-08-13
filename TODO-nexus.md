@@ -2,6 +2,12 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: `nexus_sound_map_lookup_raw_selector()` avvisar nu tvetydiga
+selectors med mer än en DataID 0-post. Den tidigare implementationen valde
+den sista matchningen trots att ingen retail precedence-regel är verifierad.
+Regressionen passerar mot både MAP-fixture och de 16 autentiska SNDLEV-bankerna;
+SLEV/SCSP-eventgaten förblir oförändrade.
+
 2026-08-13: `asset_find_by_hash.c` använder nu begränsad `snprintf` i stället
 för macOS-deprecierad `sprintf`. Detta behövdes för att Nexus real-data-targets
 skulle bygga med ASan/UBSan och `-Werror`; hashresultatet är oförändrat.
