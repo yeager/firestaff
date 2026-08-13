@@ -14,7 +14,7 @@
  * {
  *   "name": "...",
  *   "level": 0,
- *   "provenance_seed": "TODO: pending disc image",
+ *   "provenance_seed": "SHA256(LEV00.DGN)=24e3b3cdf2496b53f489df456d822ba85593a67325f90dd414c6af26bf683d9a",
  *   "steps": [
  *     { "action": "MOVE_FORWARD", "ticks": 1 },
  *     { "action": "TURN_RIGHT",   "ticks": 1 },
@@ -97,20 +97,6 @@ static int next_token(JsonParser *p, TokenKind *tok, char *buf, int bufsz) {
     }
 
     return -1; /* unknown char */
-}
-
-static int parse_string_value(JsonParser *p, const char *key, char *out, int out_sz) {
-    char keybuf[64];
-    TokenKind tok;
-    if (next_token(p, &tok, keybuf, sizeof(keybuf)) != 0) return -1;
-    if (tok != TOKEN_STRING) return -1;
-    /* Check if key matches */
-    if (strcmp(keybuf, key) != 0) return 0; /* key doesn't match — not an error, caller handles */
-    if (next_token(p, &tok, out, out_sz) != 0) return -1;
-    if (tok != TOKEN_COLON) return -1;
-    if (next_token(p, &tok, out, out_sz) != 0) return -1;
-    if (tok != TOKEN_STRING) return -1;
-    return 1; /* found and consumed */
 }
 
 /* Find "key": "value" in current object context */
@@ -298,7 +284,6 @@ static int apply_action(Nexus_V1_World *world, ActionKind act, int ticks) {
 static int parse_steps(JsonParser *p, ActionKind *acts, int *ticks_arr, uint64_t *expected_hash, int *n_steps) {
     /* Assumes current token is '[' */
     TokenKind tok;
-    char buf[256];
 
     *n_steps = 0;
     int cap = 32;
@@ -402,9 +387,8 @@ static void run_default_script(void) {
     printf("  party_pos=(%d,%d) dir=%d\n", world.party_x, world.party_y, world.party_dir);
 
     printf("\n  Script executed successfully — hash is deterministic.\n");
-    printf("  NOTE: Without the disc image, no expected hash is available.\n");
-    printf("        The hash value is stable across runs, confirming\n");
-    printf("        deterministic behavior in the absence of game data.\n");
+    printf("  NOTE: This default path is a parser/movement fixture; it does not\n");
+    printf("        claim the retail Saturn start pose or replace LEV01 data.\n");
 }
 
 /* ── Main ──────────────────────────────────────────────────────────────── */

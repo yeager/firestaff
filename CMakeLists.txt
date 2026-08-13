@@ -43421,6 +43421,31 @@ set_tests_properties(nexus_v1_asset_manifest PROPERTIES
     SKIP_RETURN_CODE 77
 )
 
+# Deterministic input/world-hash probe. Its default fixture is explicitly
+# non-retail; scripts may carry a real LEV00 provenance seed, but the probe
+# never promotes a synthetic coordinate to the Saturn start pose.
+add_executable(firestaff_nexus_v1_viewport_gate_probe
+    probes/nexus_v1_viewport_gate_probe.c
+)
+target_link_libraries(firestaff_nexus_v1_viewport_gate_probe PRIVATE
+    firestaff_nexus firestaff_m10
+)
+target_include_directories(firestaff_nexus_v1_viewport_gate_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_v1_viewport_gate_probe PRIVATE
+        -Wall -Wextra -Werror -O2
+    )
+endif()
+add_test(
+    NAME nexus_v1_viewport_gate
+    COMMAND firestaff_nexus_v1_viewport_gate_probe
+)
+set_tests_properties(nexus_v1_viewport_gate PROPERTIES
+    LABELS "tier1;nexus;viewport;deterministic;skip_safe"
+)
+
 add_executable(test_nexus_v1_script_vm
     tests/test_nexus_v1_script_vm.c
 )

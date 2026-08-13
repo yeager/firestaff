@@ -1338,3 +1338,9 @@ värden ensamma räcker inte för text- eller menyadmission.
   räcker för boot-validering utan uppackning: `nexus_v1_boot_profile_iso_only`
   passerar tillsammans med det vanliga smoke-testet. Ingen ny fallback eller
   kopierad speldata har lagts till.
+- 2026-08-13: Den gamla viewport-gate-proben innehöll fortfarande en falsk
+  `TODO: pending disc image`-provenance-text och två oanvända lokala symboler.
+  Provenance-raden använder nu den verifierade LEV00-hashen, standardutskriften
+  säger uttryckligen att fixture-koordinaten inte är Saturns startpose, och
+  proben är inkopplad i CMake/CTest med `-Werror`. `nexus_v1_viewport_gate`
+  passerar; detta öppnar inte retail-viewportens capture-gate.
