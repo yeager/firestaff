@@ -2,6 +2,20 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-14: A focused Mednafen run with the authenticated J BIOS and English
+merged disc produced real visual startup witnesses on the external disk at
+`/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-interactive-input-20260814/`.
+The four screenshots cover the Saturn/SEGA and TrueMotion startup sequence and
+the Nexus intro imagery; SHA-256 receipts are recorded beside the PNGs. A
+second run at
+`/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-interactive-menu-20260814/`
+waited through the intro and sent the configured START/A keys. The post-input
+frames were black transition frames, not an authenticated menu or LEV01
+consumer. No played save was produced: the only files were Mednafen's empty
+`.bcr`/`.bkr` containers and `.smpc` peripheral state. This is valid visual
+startup evidence and a negative save attempt; it does not open the Saturn
+startup/menu, LEV01, presentation, or save-import gates.
+
 2026-08-14: A direct Mednafen run with the authenticated J BIOS and English
 merged disc was allowed to run interactively on the external disk at
 `/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-interactive-save-20260814/`.
