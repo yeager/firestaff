@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-14: The complete authentic English CUE was tested in an external
+development directory after extracting the real ISO and Japanese audio
+tracks from the supplied Nexus 7z archive. This removes the earlier missing-
+audio ambiguity without changing Firestaff runtime data. Mednafen recognised
+all nine tracks with the exact user-data ISO and E BIOS; after START the
+original display entered a persistent black transition, and A did not produce
+a menu or LEV01. No save was produced. The external hashes and screenshots
+are recorded at
+`/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-authentic-full-cue-20260814/visual-receipts.txt`.
+
 2026-08-14: Repeated the Mednafen startup using the exact authentic English
 ISO from `/Volumes/Extern-disk/FirestaffUserData/data/nexus`, rather than the
 earlier external merged ISO. The ISO SHA-256 is
