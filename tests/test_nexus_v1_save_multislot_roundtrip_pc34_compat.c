@@ -920,6 +920,29 @@ int main(void) {
             verify_world_roundtrip(&world_before[PATH_SLOT], &direct_world, PATH_SLOT);
             verify_pool_roundtrip (&pool_before[PATH_SLOT],  &direct_pool,  PATH_SLOT);
         }
+
+        /* A valid header must not make the raw loader partially populate a
+         * caller-owned state buffer.  The loader now rejects undersized
+         * destinations before reading either section. */
+        {
+            uint8_t tiny_champion[1] = {0};
+            uint8_t tiny_world[1] = {0};
+            Nexus_V1_SaveHeader tiny_header;
+            size_t tiny_champion_size = 0;
+            size_t tiny_world_size = 0;
+            char tiny_diag[256] = {0};
+            Nexus_SaveResult tiny_result = nexus_v1_load_from_path(
+                direct_path, &tiny_header,
+                tiny_champion, sizeof(tiny_champion), &tiny_champion_size,
+                tiny_world, sizeof(tiny_world), &tiny_world_size,
+                tiny_diag, sizeof(tiny_diag));
+            expect(tiny_result == NEXUS_SAVE_ERR_READ,
+                   "raw FNXS load rejects undersized destination buffers");
+            expect(strstr(tiny_diag, "buffers too small") != NULL,
+                   "undersized FNXS load reports the buffer contract");
+            expect(tiny_champion_size == 0 && tiny_world_size == 0,
+                   "undersized FNXS load reports no partially read sections");
+        }
         NSR_UNLINK(direct_path);
     }
 

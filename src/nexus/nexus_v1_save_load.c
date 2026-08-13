@@ -216,6 +216,41 @@ const char *nexus_v1_save_probe(const char *path,
         goto fail;
     }
 
+    /* A valid magic/version is not enough to admit a save.  Validate the
+     * section arithmetic and the declared payload extent before exposing the
+     * header to slot scanners or loaders.  Trailing bytes are allowed for
+     * opt-in extensions such as NGLT, but the canonical champion/world
+     * payload must be complete and internally consistent. */
+    {
+        uint64_t section_size = (uint64_t)hdr.champion_data_size +
+                                (uint64_t)hdr.world_data_size;
+        uint64_t minimum_file_size = (uint64_t)sizeof(Nexus_V1_SaveHeader) +
+                                     section_size;
+        if (hdr.header_size != (uint16_t)sizeof(Nexus_V1_SaveHeader)) {
+            snprintf(s_diagnostic, sizeof(s_diagnostic),
+                     "unsupported header size %u (expected %zu)",
+                     (unsigned)hdr.header_size,
+                     sizeof(Nexus_V1_SaveHeader));
+            fclose(f);
+            goto fail;
+        }
+        if ((uint64_t)hdr.data_size != section_size) {
+            snprintf(s_diagnostic, sizeof(s_diagnostic),
+                     "inconsistent section sizes (data=%u, sections=%llu)",
+                     (unsigned)hdr.data_size,
+                     (unsigned long long)section_size);
+            fclose(f);
+            goto fail;
+        }
+        if (fsize < 0 || (uint64_t)fsize < minimum_file_size) {
+            snprintf(s_diagnostic, sizeof(s_diagnostic),
+                     "truncated save payload (file=%ld, expected at least %llu)",
+                     fsize, (unsigned long long)minimum_file_size);
+            fclose(f);
+            goto fail;
+        }
+    }
+
     /* Header looks valid — copy out if requested */
     if (out_header) *out_header = hdr;
     if (out_file_size) *out_file_size = (size_t)fsize;
@@ -344,10 +379,16 @@ static Nexus_SaveResult do_load(const char *path,
         return NEXUS_SAVE_ERR_VERSION;
     }
 
-    /* Seek to end to validate file is large enough, then back to data start */
+    /* Seek to end after the probe's structural validation, then back to the
+     * data start. */
     fseek(f, 0, SEEK_END);
     long fsize = ftell(f);
-    (void)fsize;
+    if (fsize < 0) {
+        fclose(f);
+        if (out_diagnostic && diag_size > 0)
+            snprintf(out_diagnostic, diag_size, "cannot determine save size");
+        return NEXUS_SAVE_ERR_READ;
+    }
     fseek(f, sizeof(hdr), SEEK_SET);
 
     /* Use sizes from the v2+ header to split champion/world data.
@@ -357,9 +398,20 @@ static Nexus_SaveResult do_load(const char *path,
     size_t champ_size = (hdr.version >= 2) ? hdr.champion_data_size : (hdr.data_size / 2);
     size_t world_size = (hdr.version >= 2) ? hdr.world_data_size : (hdr.data_size - champ_size);
 
-    /* For safety, cap champion read to available space */
-    size_t read_champ = (champ_size <= champion_buf_size) ? champ_size : champion_buf_size;
-    size_t read_world = (world_size <= world_buf_size) ? world_size : world_buf_size;
+    /* Partial section reads are unsafe: they can leave a caller's state
+     * half-populated and, for legacy CRC-less files, appear successful.
+     * Require the caller to provide complete destinations instead. */
+    if ((champ_size > 0 && (!champion_data || champion_buf_size < champ_size)) ||
+        (world_size > 0 && (!world_data || world_buf_size < world_size))) {
+        fclose(f);
+        if (out_diagnostic && diag_size > 0)
+            snprintf(out_diagnostic, diag_size,
+                     "destination buffers too small for save sections");
+        return NEXUS_SAVE_ERR_READ;
+    }
+
+    size_t read_champ = champ_size;
+    size_t read_world = world_size;
 
     if (champion_data && read_champ > 0) {
         if (fread(champion_data, 1, read_champ, f) != read_champ) {

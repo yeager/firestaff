@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: FNXS-läsaren validerar nu headerstorlek, champion/world-
+sektionsaritmetik och deklarerad filstorlek innan en save accepteras. Den
+vägrar också destinationbuffertar som är för små i stället för att göra en
+delvis load som kunde lämna caller-state inkonsekvent, särskilt i CRC-lösa
+äldre varianter. Rich multi-slot round-trip-regressionen täcker kontraktet.
+Detta gäller Firestaffs native save-format och är inte Saturn memory-card-
+import; den autentiska Saturn-savegaten är fortsatt capture-blockerad.
+
 2026-08-13: Fixed a real runtime divergence in the Nexus encumbrance path.
 `nexus_v1_encumbrance_recalc_max_load()` now delegates to the disassembly-bound
 `nexus_champion_get_maximum_load()` formula, so stamina scaling, wound penalties,
