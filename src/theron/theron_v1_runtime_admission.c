@@ -3887,6 +3887,12 @@ int theron_v1_runtime_publish_track02_object_gameplay_state(
     int removed = 0;
     int placed = 0;
     int original_count;
+    int selected_record_count = 0;
+    int before_current_dungeon;
+    int before_current_level;
+    int before_thing_count;
+    Theron_V1_Object object_backup[THERON_MAX_OBJECTS];
+    Theron_RuntimeLevelMedia runtime_media_backup;
     size_t i;
 
     if (out) {
@@ -3934,9 +3940,41 @@ int theron_v1_runtime_publish_track02_object_gameplay_state(
         return 0;
     }
 
+    /* Validate the complete selected-level set before removing the existing
+     * objects.  The source handoff is a transaction: a malformed record or a
+     * full object pool must not expose a partially published level. */
+    original_count = world->object_count;
+    memcpy(object_backup, world->objects, sizeof(object_backup));
+    runtime_media_backup = world->runtime_media;
+    before_current_dungeon = world->current_dungeon;
+    before_current_level = world->current_level;
+    before_thing_count = world->levels[dungeon_slot][selected_level].thing_count;
+    for (i = 0u; i < objects->record_count; ++i) {
+        const Theron_Track02ObjectTableRecord *record = &objects->records[i];
+        if (record->level_index != semantics->selected_level_index) continue;
+        if (!theron_v1_runtime_track02_object_kind_supported(record->kind) ||
+            record->x >=
+                (uint8_t)world->levels[dungeon_slot][selected_level].width ||
+            record->y >=
+                (uint8_t)world->levels[dungeon_slot][selected_level].height) {
+            return 0;
+        }
+        ++selected_record_count;
+    }
+    for (int read_index = 0; read_index < original_count; ++read_index) {
+        if (world->objects[read_index].dungeon_id == (int)dungeon_id &&
+            world->objects[read_index].level == selected_level) {
+            ++removed;
+        }
+    }
+    if (original_count - removed + selected_record_count >
+        THERON_MAX_OBJECTS) {
+        return 0;
+    }
+    removed = 0;
+
     receipt.before_world_hash = theron_v1_world_hash(world);
     receipt.before_object_count = world->object_count;
-    original_count = world->object_count;
     for (int read_index = 0; read_index < original_count; ++read_index) {
         Theron_V1_Object object = world->objects[read_index];
         if (object.dungeon_id == (int)dungeon_id &&
@@ -3955,13 +3993,6 @@ int theron_v1_runtime_publish_track02_object_gameplay_state(
         if (record->level_index != semantics->selected_level_index) {
             continue;
         }
-        if (!theron_v1_runtime_track02_object_kind_supported(record->kind) ||
-            record->x >=
-                (uint8_t)world->levels[dungeon_slot][selected_level].width ||
-            record->y >=
-                (uint8_t)world->levels[dungeon_slot][selected_level].height) {
-            return 0;
-        }
         memset(&object, 0, sizeof(object));
         object.type = record->kind;
         object.state = record->flags & 0x03u;
@@ -3972,11 +4003,25 @@ int theron_v1_runtime_publish_track02_object_gameplay_state(
         object.quantity = record->argument ? record->argument : 1;
         object.flags = record->flags;
         if (theron_v1_object_place(world, &object) != 0) {
+            memcpy(world->objects, object_backup, sizeof(object_backup));
+            world->object_count = original_count;
+            world->runtime_media = runtime_media_backup;
+            world->current_dungeon = before_current_dungeon;
+            world->current_level = before_current_level;
+            world->levels[dungeon_slot][selected_level].thing_count =
+                before_thing_count;
             return 0;
         }
         ++placed;
     }
     if (placed != (int)semantics->selected_level_record_count) {
+        memcpy(world->objects, object_backup, sizeof(object_backup));
+        world->object_count = original_count;
+        world->runtime_media = runtime_media_backup;
+        world->current_dungeon = before_current_dungeon;
+        world->current_level = before_current_level;
+        world->levels[dungeon_slot][selected_level].thing_count =
+            before_thing_count;
         return 0;
     }
 

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <limits.h>
 #include <string.h>
 
 #include "theron_v1_raw_loader_trace.h"
@@ -403,6 +404,7 @@ int main(void) {
     Theron_V1RuntimeTrack02ObjectGameplaySemanticsReceipt
         target_object_gameplay_semantics;
     Theron_V1RuntimeTrack02ObjectWorldHandoffReceipt object_world_handoff;
+    Theron_V1RuntimeTrack02ObjectWorldHandoffReceipt failed_object_world_handoff;
     Theron_V1RuntimeTrack02LevelTransitionHandoffReceipt
         level_transition_handoff;
     Theron_V1RuntimeTrack02LevelTransitionRuntimeReceipt
@@ -446,6 +448,8 @@ int main(void) {
     uint32_t target_object_placement_state_hash = 0u;
     uint32_t object_runtime_state_hash = 0u;
     uint32_t target_object_runtime_state_hash = 0u;
+    uint64_t failed_publish_world_hash = 0u;
+    int failed_publish_object_count = 0;
     uint32_t bitmap_palette_source_hash = 0u;
     unsigned int runtime_kind_low_mask = 0u;
     unsigned int target_runtime_kind_low_mask = 0u;
@@ -2129,6 +2133,23 @@ int main(void) {
     CHECK(!object_world_handoff.dungeon_runtime_admission_allowed);
     CHECK(!object_world_handoff.dungeon_draw_allowed);
     CHECK(!object_world_handoff.fallback_visuals_allowed);
+
+    /* Force the only remaining object-placement failure after preflight: an
+     * unrelated retained object owns INT_MAX as its ID.  The source handoff
+     * must roll back the removed/replaced level rather than leak a partial
+     * world mutation. */
+    world.objects[0].id = INT_MAX;
+    failed_publish_world_hash = theron_v1_world_hash(&world);
+    failed_publish_object_count = world.object_count;
+    memset(&failed_object_world_handoff, 0, sizeof(failed_object_world_handoff));
+    CHECK(!theron_v1_runtime_publish_track02_object_gameplay_state(
+        &world, THERON_DUNGEON_1_AKUTUBA, &object_gameplay_semantics,
+        &object_table, &failed_object_world_handoff));
+    CHECK(!failed_object_world_handoff.valid &&
+          world.object_count == failed_publish_object_count &&
+          theron_v1_world_hash(&world) == failed_publish_world_hash &&
+          world.objects[0].id == INT_MAX && world.objects[0].level == 1);
+    world.objects[0].id = 1;
 
     selected_level_index = 1u;
     target_object_placement_state_hash =

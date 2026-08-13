@@ -8,6 +8,17 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — source-gated object handoff is transactional
+
+- ✅ Den redan source-gated object-gameplay-handoffen validerar nu hela den
+  valda nivån före mutation och återställer objektpool, aktuell nivå,
+  `thing_count` och runtime-media om ett senare placement-steg fallerar.
+  Regressionen tvingar fram ett `INT_MAX`-ID på ett kvarvarande objekt och
+  verifierar att världens hash och objektpool är oförändrade efter avslag.
+- 🔒 Detta ändrar inte semantikgrinden: samma-sessionens autentiserade
+  object-consumer krävs fortfarande innan handoffen får öppna dungeon-draw,
+  square-to-tile eller fallback-free gameplay.
+
 ## 2026-08-13 — source-runtime state invariants are no longer no-op
 
 - ✅ Produktionsadaptern klampar nu championens HP, stamina och mana till

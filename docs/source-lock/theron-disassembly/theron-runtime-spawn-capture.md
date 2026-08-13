@@ -1237,3 +1237,13 @@ does not authorize spawn, RNG, AI, combat, loot, T700, or T900 semantics.
 The source-bound US/JP mechanics-playability probe independently passes 79/79;
 that result covers the authenticated grid/loader path only and is not merged
 with this negative runtime replay.
+
+## 2026-08-13 — source-gated object publication is transactional
+
+The authenticated object-gameplay handoff now validates the complete selected
+level before removing the prior level objects. It retains a rollback snapshot
+for the object pool, selected-level `thing_count`, current level and runtime
+media. If a later placement fails, the world hash and object pool are restored
+and the receipt remains invalid. This protects the already-proven handoff
+boundary; it does not promote dungeon drawing, square-to-tile mapping or any
+unbound HuC6280 consumer.
