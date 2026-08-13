@@ -1277,3 +1277,10 @@ värden ensamma räcker inte för text- eller menyadmission.
 - 2026-08-13: SMAP-dekoderns publika RGBA-kapacitet avvisar nu uttryckligen
   negativa värden och har en regression för detta. Det ändrar inte någon
   autentisk bilddata; alla SMAP00-15 läses fortsatt från originalfilerna.
+- 2026-08-13: En lokal stock-Mednafen med autentiskt J-BIOS 1.01 och den
+  externa engelska merged CUE/ISO:n nådde Saturns `DUNGEON MASTER NEXUS`-
+  initiering och rapporterade nio spår, men hann inte fram till en verifierad
+  startup→meny- eller LEV01-witness före tidsgränsen. Den lösa engelska CUE:n
+  kan inte användas ensam eftersom den hänvisar till saknade ljudspår. Ingen
+  pose eller presentation härleds från bootloggningen; den är endast positiv
+  media-/regiondiagnostik.
