@@ -520,7 +520,8 @@ set -e
 if ((validator_status == 0)); then
   capture_status=0
 else
-  capture_status=${capture_status:-1}
+  # A zero emulator exit status never overrides a failed raw-layout check.
+  capture_status=1
 fi
 finalize_capture_manifest "$capture_status"
 ((capture_status == 0)) || exit "$capture_status"

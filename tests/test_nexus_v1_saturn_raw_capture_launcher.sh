@@ -359,4 +359,27 @@ if [[ -e "$tmp_dir/trace-timeout.raw" ]]; then
 fi
 grep -Fq 'capture_exit_status=1' "$tmp_dir/manifest-timeout.txt"
 
+reject_validator="$tmp_dir/reject-validator"
+python3 - "$reject_validator" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+Path(sys.argv[1]).write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+os.chmod(sys.argv[1], 0o755)
+PY
+set +e
+"$launcher" --operator-only --launch --mednafen "$tmp_dir/fake-mednafen" \
+  --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
+  --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
+  --trace "$tmp_dir/trace-rejected.raw" --validator "$reject_validator" \
+  --manifest "$tmp_dir/manifest-rejected.txt" >/dev/null 2>&1
+rejected_status=$?
+set -e
+if [[ "$rejected_status" -eq 0 ]]; then
+  echo "invalid raw capture must fail even when Mednafen exits zero" >&2
+  exit 1
+fi
+grep -Fq 'capture_exit_status=1' "$tmp_dir/manifest-rejected.txt"
+
 echo "nexus Saturn raw capture launcher: PASS"
