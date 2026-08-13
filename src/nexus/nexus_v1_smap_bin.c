@@ -98,7 +98,12 @@ int nexus_v1_smap_decode(const uint8_t *data, int data_size,
     if (!nexus_v1_smap_parse_header(data, data_size, &hdr)) return 0;
 
     total_pixels = NEXUS_SMAP_PIXEL_WIDTH * NEXUS_SMAP_PIXEL_HEIGHT;
-    if (!rgba_out || rgba_capacity < total_pixels) return 0;
+    /* Keep the public byte-count contract explicit.  The capacity is an int
+     * for compatibility with the other Firestaff decoders; reject a signed
+     * negative value before it can be treated as an available buffer by a
+     * future refactor of the size check. */
+    if (!rgba_out || rgba_capacity < 0 || rgba_capacity < total_pixels)
+        return 0;
 
     for (i = 0; i < NEXUS_SMAP_PALETTE_COLORS; ++i) {
         uint16_t c = read_be16(data + hdr.palette_offset + i * 2);

@@ -75,6 +75,12 @@ static int test_synthetic(void) {
             free(valid);
             return 1;
         }
+        if (nexus_v1_smap_decode(
+                valid, valid_size, rgba, -1, &decoded)) {
+            free(rgba);
+            free(valid);
+            return 1;
+        }
         free(rgba);
     }
     free(valid);

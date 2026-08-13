@@ -1274,3 +1274,6 @@ värden ensamma räcker inte för text- eller menyadmission.
   privata Saturn-gater är fortfarande korrekt skip-safe: de kräver autentisk
   VDP1/VDP2-capture, SLEV/SAL/SCSP-trace eller Saturn-save som inte finns i
   den aktuella externa datakällan.
+- 2026-08-13: SMAP-dekoderns publika RGBA-kapacitet avvisar nu uttryckligen
+  negativa värden och har en regression för detta. Det ändrar inte någon
+  autentisk bilddata; alla SMAP00-15 läses fortsatt från originalfilerna.
