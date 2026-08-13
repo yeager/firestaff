@@ -4,6 +4,7 @@
 
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #ifdef _WIN32
 #include <io.h>
@@ -43,15 +44,22 @@ int main(void) {
     Theron_V1CaptureManifest resolved;
     Theron_V1_BootProfile profile;
     char written[1024];
-    char track02_path[] = "/tmp/firestaff-theron-track02-XXXXXX";
-    char system_card_path[] = "/tmp/firestaff-theron-system-card-XXXXXX";
-    char trace_path[] = "/tmp/firestaff-theron-loader-trace-XXXXXX";
-    char manifest_path[] = "/tmp/firestaff-theron-capture-manifest-XXXXXX";
+    const char *tmpdir = getenv("TMPDIR");
+    char track02_path[1024];
+    char system_card_path[1024];
+    char trace_path[1024];
+    char manifest_path[1024];
     int track02_fd;
     int system_card_fd;
     int trace_fd;
     int manifest_fd;
     int mutate_fd;
+
+    if (!tmpdir || !tmpdir[0]) tmpdir = "/tmp";
+    snprintf(track02_path, sizeof(track02_path), "%s/firestaff-theron-track02-XXXXXX", tmpdir);
+    snprintf(system_card_path, sizeof(system_card_path), "%s/firestaff-theron-system-card-XXXXXX", tmpdir);
+    snprintf(trace_path, sizeof(trace_path), "%s/firestaff-theron-loader-trace-XXXXXX", tmpdir);
+    snprintf(manifest_path, sizeof(manifest_path), "%s/firestaff-theron-capture-manifest-XXXXXX", tmpdir);
 
     check(theron_v1_capture_manifest_parse(valid, &manifest),
           "accepts exact, lower-case MD5-bound manifest");

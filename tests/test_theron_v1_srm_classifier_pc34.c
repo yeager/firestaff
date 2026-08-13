@@ -88,8 +88,11 @@ static int make_temp_root(char out[THERON_V1_SRM_PATH_MAX]) {
     return 0;
 #else
     /* POSIX: mkdtemp for portability. */
-    static const char *template = "/tmp/firestaff_theron_srm_unit_XXXXXX";
-    if (strlen(template) + 1 > THERON_V1_SRM_PATH_MAX) return 0;
+    const char *tmpdir = getenv("TMPDIR");
+    char template[THERON_V1_SRM_PATH_MAX];
+    if (!tmpdir || !tmpdir[0]) tmpdir = "/tmp";
+    if (snprintf(template, sizeof(template), "%s/firestaff_theron_srm_unit_XXXXXX", tmpdir) >=
+        (int)sizeof(template)) return 0;
     strncpy(out, template, THERON_V1_SRM_PATH_MAX - 1);
     out[THERON_V1_SRM_PATH_MAX - 1] = '\0';
     return mkdtemp(out) != NULL;
@@ -265,11 +268,15 @@ static void test_env_override(void) {
         strncpy(saved, prev, THERON_V1_SRM_PATH_MAX - 1);
         saved[THERON_V1_SRM_PATH_MAX - 1] = '\0';
     }
-    tst_setenv("FIRESTAFF_THERON_SRM_DIR", TST_ENV_ROOT);
+    char env_root[THERON_V1_SRM_PATH_MAX];
+    const char *tmpdir = getenv("TMPDIR");
+    if (!tmpdir || !tmpdir[0]) tmpdir = "/tmp";
+    snprintf(env_root, sizeof(env_root), "%s/firestaff_theron_srm_unit_env", tmpdir);
+    tst_setenv("FIRESTAFF_THERON_SRM_DIR", env_root);
     char root[THERON_V1_SRM_PATH_MAX] = {0};
     int rc = theron_v1_srm_default_root(root);
     expect_true(rc == 1, "env override resolves");
-    expect_true(strcmp(root, TST_ENV_ROOT) == 0,
+    expect_true(strcmp(root, env_root) == 0,
                 "env override wins over default");
     if (had_prev) {
         tst_setenv("FIRESTAFF_THERON_SRM_DIR", saved);
@@ -341,7 +348,11 @@ static void test_absent_root_is_clean_manifest(void) {
         strncpy(saved, prev, THERON_V1_SRM_PATH_MAX - 1);
         saved[THERON_V1_SRM_PATH_MAX - 1] = '\0';
     }
-    tst_setenv("FIRESTAFF_THERON_SRM_DIR", TST_ABSENT_ROOT);
+    char absent_root[THERON_V1_SRM_PATH_MAX];
+    const char *tmpdir = getenv("TMPDIR");
+    if (!tmpdir || !tmpdir[0]) tmpdir = "/tmp";
+    snprintf(absent_root, sizeof(absent_root), "%s/firestaff_theron_srm_unit_no_such_root", tmpdir);
+    tst_setenv("FIRESTAFF_THERON_SRM_DIR", absent_root);
 
     Theron_V1SrmManifest m;
     memset(&m, 0, sizeof(m));

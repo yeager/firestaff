@@ -36,12 +36,21 @@
 #include <stdint.h>
 #include <assert.h>
 #include <sys/stat.h>
+#if !defined(_WIN32)
+#include <unistd.h>
+#endif
 
 /* ── Test counters ─────────────────────────────────────────────────── */
 
 static int g_tests_run    = 0;
 static int g_tests_passed = 0;
 static int g_failures     = 0;
+
+static void theron_test_fixture_path(char out[512], const char *name) {
+    const char *tmpdir = getenv("TMPDIR");
+    if (!tmpdir || !tmpdir[0]) tmpdir = "/tmp";
+    snprintf(out, 512, "%s/%s", tmpdir, name);
+}
 
 #define TEST(name) do {                                             \
     printf("  %-55s ", name);                                      \
@@ -603,7 +612,8 @@ static int test_asset_load_raw_track02_fallback(void) {
     TEST("Runtime: raw Track 02 without supplemental markers stays loadable");
 
     {
-        const char *empty_path = "/tmp/firestaff_theron_empty_asset_test.bin";
+        char empty_path[512];
+        theron_test_fixture_path(empty_path, "firestaff_theron_empty_asset_test.bin");
         FILE *empty = fopen(empty_path, "wb");
         TrAssetBundle empty_bundle;
         ASSERT(empty != NULL, "could not create empty asset fixture");
@@ -613,7 +623,8 @@ static int test_asset_load_raw_track02_fallback(void) {
         remove(empty_path);
     }
 
-    const char *path = "/tmp/firestaff_theron_raw_track02_test.bin";
+    char path[512];
+    theron_test_fixture_path(path, "firestaff_theron_raw_track02_test.bin");
     static const uint8_t raw_track02[32] = {
         0x20, 0x48, 0x55, 0x43, 0x36, 0x32, 0x38, 0x30,
         0x00, 0x01, 0x02, 0x03, 0x10, 0x11, 0x12, 0x13,
@@ -637,7 +648,8 @@ static int test_asset_load_raw_track02_fallback(void) {
     tr_asset_free(&bundle);
 
     {
-        const char *marker_path = "/tmp/firestaff_theron_legacy_marker_test.bin";
+        char marker_path[512];
+        theron_test_fixture_path(marker_path, "firestaff_theron_legacy_marker_test.bin");
         static const uint8_t marker_like_track02[32] = {
             'T', 'H', 'G', '3', 1, 0, 16, 0,
             0, 0, 1, 0, 1, 0, 1, 0,

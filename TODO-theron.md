@@ -1927,3 +1927,15 @@ required before semantic promotion.
 - Completed: category-4 live-creature admission now applies the same
   four-member source bound in its counting and materialization passes.
 - Remaining: authenticate dynamic RNG, AI, T700 and T900 consumers.
+
+# 2026-08-13 — Theron-verifier tests respect external TMPDIR
+
+- Completed: capture-manifest, HuC6280 event-log, SRM-classifier and rendering
+  fixtures now place their temporary files below `TMPDIR` when it is set.
+  This allows the focused Theron verification set to run on the external disk
+  when the macOS system volume is full, without changing runtime paths or
+  promoting synthetic rendering.
+- Remaining: the full suite still requires the missing authenticated System
+  Card/capture inputs, and the semantic text, square/material, RNG/AI/loot and
+  T700/T900 consumers remain closed until their source/runtime joins are
+  proven.

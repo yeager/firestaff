@@ -25,12 +25,18 @@ static void write_log(FILE *file, unsigned int loader_pc) {
 }
 
 int main(void) {
-    const char *path = "/tmp/firestaff-theron-huc6280-capture.log";
+    const char *tmpdir = getenv("TMPDIR");
+    char path[1024];
+    char link_path[1024];
     Theron_V1Track02Huc6280CaptureEventLog log;
     Theron_V1Track02CaptureTraceManifest manifest;
     Theron_V1Track02ProvenanceRuntimeConsumerReceipt provenance = {0};
     Theron_V1Track02LevelObjectTracePreparationReceipt preparation = {0};
     FILE *file;
+
+    if (!tmpdir || !tmpdir[0]) tmpdir = "/tmp";
+    snprintf(path, sizeof(path), "%s/firestaff-theron-huc6280-capture.log", tmpdir);
+    snprintf(link_path, sizeof(link_path), "%s/firestaff-theron-huc6280-capture-link.log", tmpdir);
 
     CHECK(theron_v1_track02_huc6280_capture_event_log_parse(NULL, &log));
     CHECK(log.status == THERON_V1_TRACK02_HUC6280_CAPTURE_LOG_UNAVAILABLE);
@@ -46,12 +52,12 @@ int main(void) {
     CHECK(log.status == THERON_V1_TRACK02_HUC6280_CAPTURE_LOG_READY);
     CHECK(log.opaque_cd_read_window_retained && log.opaque_dungeon_window_retained);
 #if !defined(_WIN32)
-    remove("/tmp/firestaff-theron-huc6280-capture-link.log");
-    CHECK(symlink(path, "/tmp/firestaff-theron-huc6280-capture-link.log") == 0);
+    remove(link_path);
+    CHECK(symlink(path, link_path) == 0);
     CHECK(theron_v1_track02_huc6280_capture_event_log_parse(
-        "/tmp/firestaff-theron-huc6280-capture-link.log", &log));
+        link_path, &log));
     CHECK(log.status == THERON_V1_TRACK02_HUC6280_CAPTURE_LOG_REJECTED);
-    remove("/tmp/firestaff-theron-huc6280-capture-link.log");
+    remove(link_path);
     CHECK(theron_v1_track02_huc6280_capture_event_log_parse(path, &log));
     CHECK(log.status == THERON_V1_TRACK02_HUC6280_CAPTURE_LOG_READY);
 #endif
