@@ -2273,7 +2273,51 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_bitmap_samples(
     }
 
     if (variant == THERON_TRACK02_VARIANT_US_ISO &&
-        signal.anchor_count == 1u) {
+        signal.anchor_count == TQR_US_ISO_RETAIL_BANK_ANCHOR_COUNT) {
+        /* The authenticated full US ISO has three byte-identical 2 KiB
+         * windows at its three observed span anchors.  The raw-BIN catalog
+         * already samples this exact byte sequence across three anchors;
+         * apply that same bounded sampling plan to the retail ISO rather
+         * than falling through with only the first 20 samples.  This is a
+         * transport equivalence only: it does not assign a loader, palette,
+         * or display destination to the bytes. */
+        for (size_t i = 0u;
+             i < sizeof(raw_tail_sample_specs) /
+                     sizeof(raw_tail_sample_specs[0]);
+             ++i) {
+            size_t raw_offset =
+                signal.post_boundary_span_offsets[0] +
+                raw_tail_sample_specs[i].span_delta;
+            (void)catalog_add_startup_bitmap_sample_from_offset(
+                out_catalog, track02_data, track02_size, md5_hex,
+                raw_tail_sample_specs[i].route_bit, raw_offset);
+        }
+        for (size_t i = 0u;
+             i < sizeof(raw_bank_mirror_sample_specs) /
+                     sizeof(raw_bank_mirror_sample_specs[0]);
+             ++i) {
+            size_t raw_offset =
+                signal.post_boundary_span_offsets
+                    [raw_bank_mirror_sample_specs[i].anchor_index] +
+                raw_bank_mirror_sample_specs[i].span_delta;
+            (void)catalog_add_startup_bitmap_sample_from_offset(
+                out_catalog, track02_data, track02_size, md5_hex,
+                raw_bank_mirror_sample_specs[i].route_bit, raw_offset);
+        }
+        for (size_t i = 0u;
+             i < sizeof(raw_bank_deep_sample_specs) /
+                     sizeof(raw_bank_deep_sample_specs[0]);
+             ++i) {
+            size_t raw_offset =
+                signal.post_boundary_span_offsets
+                    [raw_bank_deep_sample_specs[i].anchor_index] +
+                raw_bank_deep_sample_specs[i].span_delta;
+            (void)catalog_add_startup_bitmap_sample_from_offset(
+                out_catalog, track02_data, track02_size, md5_hex,
+                raw_bank_deep_sample_specs[i].route_bit, raw_offset);
+        }
+    } else if (variant == THERON_TRACK02_VARIANT_US_ISO &&
+               signal.anchor_count == 1u) {
         for (size_t i = 0u;
              i < sizeof(iso_extended_sample_specs) /
                      sizeof(iso_extended_sample_specs[0]);
