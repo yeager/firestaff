@@ -161,6 +161,26 @@ static void test_world_square_turn_then_forward(void) {
           "no second command queued for diagonal/far target");
 }
 
+static void test_world_square_directly_behind_turns_twice(void) {
+    Nexus_V1_Engine engine;
+    Nexus_MechanicsState st;
+    Nexus_ClickTarget target;
+    int cmd1, cmd2, cmd3;
+
+    reset_engine_for_click_tests(&engine, &st);
+    target = nexus_click_target_world_square(10, 11); /* directly south */
+    CHECK(nexus_click_route_dispatch(&st, &engine, &target) == NEXUS_CLICK_RESULT_OK,
+          "world square behind dispatches OK");
+    CHECK(nexus_mechanics_pop_command(&st, &cmd1) == 1 &&
+          cmd1 == NEXUS_CMD_TURN_LEFT,
+          "behind square queues first left turn");
+    CHECK(nexus_mechanics_pop_command(&st, &cmd2) == 1 &&
+          cmd2 == NEXUS_CMD_TURN_LEFT,
+          "behind square queues second left turn");
+    CHECK(nexus_mechanics_pop_command(&st, &cmd3) == 0,
+          "behind square does not queue forward prematurely");
+}
+
 static void test_world_square_wall_no_path(void) {
     Nexus_V1_Engine engine;
     Nexus_MechanicsState st;
@@ -260,6 +280,7 @@ int main(void) {
     test_equipment_slot_click_empty();
     test_world_square_forward();
     test_world_square_turn_then_forward();
+    test_world_square_directly_behind_turns_twice();
     test_world_square_wall_no_path();
     test_door_square_click_forces_forward();
     test_floor_item_pickup_at_current_square();

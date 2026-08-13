@@ -22,19 +22,26 @@ static int click_route_push(Nexus_MechanicsState *st, int cmd) {
 }
 
 /* ── Helper: push the turn that makes |target_dir| the new facing. ── */
-static void click_route_push_turn_to(Nexus_MechanicsState *st,
-                                      int current_dir, int target_dir) {
+static int click_route_push_turn_to(Nexus_MechanicsState *st,
+                                     int current_dir, int target_dir) {
     int diff;
-    if (!st) return;
+    if (!st) return 0;
     diff = nexus_dir_diff(current_dir, target_dir);
-    if (diff == 0) return;
-    if (diff == 1 || diff == -3) {
+    if (diff == 0) return 1;
+    if (diff == 1) {
         /* target is 90° to the right */
-        click_route_push(st, NEXUS_CMD_TURN_RIGHT);
-    } else if (diff == -1 || diff == 2) {
-        /* target is 90° to the left (or directly behind: turn left twice) */
-        click_route_push(st, NEXUS_CMD_TURN_LEFT);
+        return click_route_push(st, NEXUS_CMD_TURN_RIGHT) >= 0;
+    } else if (diff == -1) {
+        /* target is 90° to the left */
+        return click_route_push(st, NEXUS_CMD_TURN_LEFT) >= 0;
+    } else if (diff == 2 || diff == -2) {
+        /* A target directly behind needs two quarter-turns. */
+        if (click_route_push(st, NEXUS_CMD_TURN_LEFT) < 0 ||
+            click_route_push(st, NEXUS_CMD_TURN_LEFT) < 0)
+            return 0;
+        return 1;
     }
+    return 0;
 }
 
 /* ── Inventory / equipment slot click ── */
@@ -152,8 +159,8 @@ static Nexus_ClickResult click_route_world_square(Nexus_MechanicsState *st,
 
     /* Otherwise turn toward the target first.  The UI can re-issue the click
      * after the tick consumes the turn. */
-    click_route_push_turn_to(st, current_dir, target_dir);
-    return NEXUS_CLICK_RESULT_OK;
+    return click_route_push_turn_to(st, current_dir, target_dir)
+        ? NEXUS_CLICK_RESULT_OK : NEXUS_CLICK_RESULT_BLOCKED;
 }
 
 /* ── Floor item click: move onto the square, then interact to pick up. ── */

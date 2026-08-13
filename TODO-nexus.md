@@ -2,6 +2,12 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: Nexus klickrutt korrigerad. Ett mål rakt bakom partyt köar nu två
+autentiska kvartssvängar i stället för en ofullständig sväng, och misslyckad
+inmatning till den fulla kommandokön rapporteras som blockerad. Regressionen
+ligger i `nexus_v1_click_route` och passerar tillsammans med extern real-data-
+test för ISO och multi-level playability.
+
 2026-08-13: Nexus ISO-läsaren har härdats mot korrupta eller fientliga
 directory-poster. Poster kortare än ISO 9660:s 34-byte minimum, namn som
 överskrider sin egen post, uint32-storlekar som inte ryms i den publika
