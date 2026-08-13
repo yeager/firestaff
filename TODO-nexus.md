@@ -1292,3 +1292,10 @@ värden ensamma räcker inte för text- eller menyadmission.
   för att öppna LEV01, härleda level/x/y/facing eller marknadsföra Saturn-
   presentation som färdig. Underlaget ligger kvar på extern-disken och inte i
   repositoriet.
+- 2026-08-13: En kompletterande 600-frame-körning (`run-codex-menu-seq-MM15gB`)
+  använde den verifierade Saturn-mappningen för START/A/B/C/X
+  (`0x10/0x20/0x40/0x80/0x100`) i stället för att tolka råmaskerna som
+  generella piltangenter. Rålayouten passerar med `capture_exit_status=0` och
+  framebuffer-/VDP2-registerförändringar, men ingen menyidentitet,
+  LEV01-pose eller source-write-bindning uppstod. Resultatet förblir därför
+  observation-only och öppnar ingen produktionsgate.
