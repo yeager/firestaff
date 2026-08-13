@@ -1935,10 +1935,10 @@ required before semantic promotion.
   This allows the focused Theron verification set to run on the external disk
   when the macOS system volume is full, without changing runtime paths or
   promoting synthetic rendering.
-- Remaining: the full suite still requires the missing authenticated System
-  Card/capture inputs, and the semantic text, square/material, RNG/AI/loot and
-  T700/T900 consumers remain closed until their source/runtime joins are
-  proven.
+- Remaining: the full suite still requires complete authenticated runtime
+  capture inputs beyond the available System Card and media, and the semantic
+  text, square/material, RNG/AI/loot and T700/T900 consumers remain closed
+  until their source/runtime joins are proven.
 
 # 2026-08-13 — fresh System Card replay confirms transport-only boundary
 
