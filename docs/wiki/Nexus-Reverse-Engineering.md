@@ -162,7 +162,7 @@ DM Nexus ships on a Sega Saturn CD (ISO9660-derived layout, read via
 | `*.SMAP` | Texture atlas / sprite map binary | `nexus_v1_smap_bin.c` |
 | `FACE.BIN` | Champion portrait bitmaps | `nexus_v1_face_bin.c` |
 | `*.SAL` / `SLEVxx` | Audio containers (streamed level/effect audio) | `nexus_v1_sal_*.c`, `nexus_v1_slev_sal_asset_discovery.c`, `nexus_v1_sndlev_map_provenance.c` |
-| `0DMSTRT.BIN` | Saturn boot-library image (39516 bytes, SHA-256 pinned) | `nexus_v1_0dmstrt_structure_admission.c` |
+| `0DMSTRT.BIN` | Saturn boot-library image (39516 bytes, SHA-256 pinned) | `nexus_v1_0dmstrt_structure_admission.c`; bounded entry listing in `docs/source-lock/nexus-0dmstrt-boot-stub-2026-08-13.md` |
 | `RLOWFIX.BIN` | Creature stat table (`CRET` records) and other fixed low-memory tables | `nexus_v1_creatures.c` (`nexus_v1_creatures_load_cret`) |
 | `DM.BIN` | Main SH-2 executable; source of extracted combat/AI data tables | `nexus_v1_creatures.h` combat table getters |
 

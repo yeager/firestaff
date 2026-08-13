@@ -12,6 +12,15 @@ Detta är reproducerad negativ evidens. Ingen level/x/y/facing får härledas
 från den, och Firestaff fortsätter att vägra spelbar startup utan autentisk
 retailkedja eller save-consumer.
 
+2026-08-13: Static SH-2 disassembly of the authenticated `0DMSTRT.BIN` is
+recorded in `docs/source-lock/nexus-0dmstrt-boot-stub-2026-08-13.md`. The first
+stub initializes the stack at `0x060FFFFC`, jumps through `0x06010014`, calls
+the bounded internal entry path, and loads the observed `0x06010888`–
+`0x0601089C` pointer cluster. This identifies a real boot-library entry but
+does not bind a level/x/y/facing consumer. The LEV01 production gate therefore
+remains correctly closed pending an authenticated original execution trace or
+save consumer.
+
 2026-08-13: Den autentiska externa VDP1-råcapturen
 `/Volumes/Extern-disk/nexus-saturn-capture/run-codex-menu-long-20260809f/runtime-vdp12.raw`
 är nu verifierad med sin manifestdeklarerade längd på 900 frames. Analysen fann
