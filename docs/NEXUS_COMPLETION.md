@@ -7,6 +7,20 @@ Implementeringstäckning mäter byggt format-, analys- och capture-stöd.
 Produktionsgrad mäter vad som faktiskt får användas i en spelbar,
 regionmatchad Saturn-kedja.
 
+## Current evidence correction — 2026-08-13
+
+The later J-BIOS/English-Merged run at
+`/Volumes/Extern-disk/nexus-capture-20260813/run-followup-20260813c5/`
+used the documented active-low debug sequence and produced a validator-clean
+1,200-frame raw witness. It did not produce a source-owned LEV01 level/x/y/
+facing record. Its long operator process ended before the launcher's final
+receipt append, so the capture is diagnostic evidence only and is not counted
+as a complete semantic gate. The launcher now finalizes `capture_exit_status`
+and available trace hashes on signal/timeout; the regression is covered by the
+raw-capture launcher test. This does not change the production status below:
+Saturn startup, HUD/viewport, SLEV/SAL playback, and Saturn save import remain
+closed until their source-owned runtime joins are authenticated.
+
 Den verifierade Nexus-starten skiljer nu uttryckligen mellan titel-/assetboot
 och spelbar start. Firestaff skriver inte längre `NEXUS STARTUP RECEIPT READY`
 när `levelLoaded=0`; den rapporterar i stället `status=blocked` med aktuell
