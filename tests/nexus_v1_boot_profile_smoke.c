@@ -18,7 +18,7 @@ static int g_fail = 0;
     else { g_fail++; printf("  FAIL: %s\n", msg); } \
 } while (0)
 
-int main(void) {
+int main(int argc, char **argv) {
     printf("\n=== Nexus V1 Boot Profile Smoke Test ===\n\n");
 
     /* ── 1. Default profile ── */
@@ -116,6 +116,26 @@ int main(void) {
         CHECK(r == NULL, "GetSaveRoot(NULL) == NULL");
         unsigned int f = Nexus_V1_BootProfile_SupportedFeatures(NULL);
         CHECK(f == 0U, "SupportedFeatures(NULL) == 0");
+    }
+
+    /* ── 8. Optional real-data ISO-only validation ── */
+    if (argc > 1 && argv[1] && argv[1][0]) {
+        Nexus_V1_BootProfile prof;
+        Nexus_V1_Diagnostic diags[32];
+        int count;
+        printf("\n8. ISO-only asset validation: %s\n", argv[1]);
+        CHECK(Nexus_V1_BootProfile_Init(&prof, argv[1], ".", 0U) == 0,
+              "Init() accepts real data root");
+        count = Nexus_V1_BootProfile_ValidateAssets(&prof, diags, 32);
+        if (count != 0) {
+            int i;
+            for (i = 0; i < count && i < 32; ++i) {
+                printf("  diagnostic[%d]: %s — %s\n", i,
+                       diags[i].message, diags[i].detail);
+            }
+        }
+        CHECK(count == 0,
+              "ISO-only Nexus corpus passes boot-profile asset validation");
     }
 
     /* ── Summary ── */

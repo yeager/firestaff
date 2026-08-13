@@ -1332,3 +1332,9 @@ värden ensamma räcker inte för text- eller menyadmission.
   (`nexus_v1_asset_manifest`) med `-Werror`, extern Nexus-datakatalog och
   skip-safe beteende när originaldata saknas. Det förhindrar att manifest- och
   ISO-läsregressioner bara testas manuellt.
+- 2026-08-13: Boot-profilens hashbaserade asset-sökning är nu täckt av en
+  separat ISO-only CTest-körning mot extern-diskens engelska Nexus-ISO. Den
+  verifierar att den befintliga virtuella ISO-medlemshanteringen faktiskt
+  räcker för boot-validering utan uppackning: `nexus_v1_boot_profile_iso_only`
+  passerar tillsammans med det vanliga smoke-testet. Ingen ny fallback eller
+  kopierad speldata har lagts till.

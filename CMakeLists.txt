@@ -40683,6 +40683,17 @@ if(BUILD_TESTING)
         COMMAND test_nexus_v1_boot_profile_smoke
     )
 
+    add_test(
+        NAME nexus_v1_boot_profile_iso_only
+        COMMAND test_nexus_v1_boot_profile_smoke
+                "${FIRESTAFF_WORKSPACE_DATA_DIR}"
+    )
+    set_tests_properties(nexus_v1_boot_profile_iso_only PROPERTIES
+        ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+        LABELS "tier1;nexus;boot;iso;real_data;skip_safe"
+        SKIP_RETURN_CODE 77
+    )
+
     # ── Nexus V2 Phase 3 HUD Overlay smoke test ─────────────────────
     # Source-lock: src/nexus/nexus_v2_hud_overlay.c
     # Phase 3: Enhanced UI overlays
