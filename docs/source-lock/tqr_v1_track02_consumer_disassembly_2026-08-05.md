@@ -109,3 +109,13 @@ renderer. The upstream author also records that text encoding/decoding alone
 did not make in-game scroll text display correctly. Firestaff consequently
 keeps the control-code and renderer boundary fail-closed; it does not promote
 these diagnostic strings into a menu, scroll, plaque or HUD surface.
+
+## 2026-08-13 — positional text-codon provenance
+
+The Track 02 codec now exposes a positional view of every packed five-bit
+value: source word index, packed slot, value, and codec-level kind. This keeps
+the source boundaries available for a future same-session HuC6280 consumer
+join while preserving the existing raw-glyph stream. The `raw/control/end`
+labels are deliberately limited to codec markers; they do not assign the
+original control-code meanings or a VDC destination. The text consumer and
+source-LBA/payload join therefore remain a promotion gate.

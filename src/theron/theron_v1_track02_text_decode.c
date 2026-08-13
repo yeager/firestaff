@@ -51,6 +51,17 @@ int theron_v1_track02_text_decode(
             char c = decode_letter(w, k);
             if (out->raw_glyph_count < THERON_TEXT_MAX_RAW_GLYPHS)
                 out->raw_glyphs[out->raw_glyph_count++] = glyph;
+            if (out->token_count < THERON_TEXT_MAX_RAW_GLYPHS) {
+                Theron_TextToken *token = &out->tokens[out->token_count++];
+                token->value = glyph;
+                token->word_index = (uint16_t)(i - 1u);
+                token->packed_slot = (uint8_t)k;
+                token->kind = glyph == THERON_TEXT_END_MARKER
+                    ? THERON_TEXT_TOKEN_END
+                    : ((glyph == 27u || glyph == 28u)
+                        ? THERON_TEXT_TOKEN_CONTROL
+                        : THERON_TEXT_TOKEN_RAW);
+            }
             /* Keep consuming the rest of this packed word after an end
              * marker.  Those padding/control values are part of the real
              * source stream even though they do not belong to the decoded

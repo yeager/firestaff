@@ -76,6 +76,11 @@ static int test_codon_basic(void) {
     CHECK(tb.raw_glyph_count == 6);
     CHECK(tb.raw_glyphs[0] == 0 && tb.raw_glyphs[1] == 1 &&
           tb.raw_glyphs[2] == 2 && tb.raw_glyphs[3] == THERON_TEXT_END_MARKER);
+    CHECK(tb.token_count == 6);
+    CHECK(tb.tokens[0].word_index == 0 && tb.tokens[0].packed_slot == 0 &&
+          tb.tokens[0].kind == THERON_TEXT_TOKEN_RAW);
+    CHECK(tb.tokens[3].word_index == 1 && tb.tokens[3].packed_slot == 0 &&
+          tb.tokens[3].kind == THERON_TEXT_TOKEN_END);
     printf("  Basic codon decode OK\n");
     return 1;
 }
@@ -134,6 +139,16 @@ static int test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         CHECK(tb->diagnostic_only);
         CHECK(tb->unresolved_control_codes > 0);
         CHECK(tb->raw_glyph_count == td->text_data_count * 3u);
+        CHECK(tb->token_count == tb->raw_glyph_count);
+        CHECK(tb->tokens[0].word_index == 0 &&
+              tb->tokens[0].packed_slot == 0);
+        CHECK(tb->tokens[tb->token_count - 1u].word_index ==
+              td->text_data_count - 1u);
+        for (unsigned int ti = 0; ti < tb->token_count; ++ti) {
+            CHECK(tb->tokens[ti].word_index == ti / 3u);
+            CHECK(tb->tokens[ti].packed_slot == ti % 3u);
+            CHECK(tb->tokens[ti].value == tb->raw_glyphs[ti]);
+        }
 
         Theron_V1_World *world = calloc(1, sizeof(*world));
         CHECK(world != NULL);
