@@ -28,7 +28,7 @@ returned for rows whose data directory is missing on this host.
 
 | Case | Classification | Source sha256 | Probe summary | Notes |
 |---|---|---|---|---|
-| canonical_pcengine_root | `README_INELIGIBLE` | `a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f` | sourceId=theron launchedEver=1 gameTick=0 mapIndex=0 lastOutcome='THERON RUNTIME (TRACK 02 DUNGEON)' | readiness row status is 'FAIL', not PASS; presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels) |
+| canonical_pcengine_root | `README_INELIGIBLE` | `—` | sourceId=None launchedEver=None gameTick=0 mapIndex=0 lastOutcome='' | readiness row status is 'SKIP', not PASS; probe.sourceId is None, expected 'theron'; probe.launchedEver is None, expected 1 (real runtime launch); probe.schema is None, expected 'firestaff_m11_autotest_runtime_probe.v1'; 'TQR level load' boot marker not present in launch output; no semantic Track 02 loader evidence in probe (gameTick=0, party.mapIndex=0, lastOutcome=''); boot probe parked at THERON READY without decoding Track 02 content; presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels) |
 | jp_extras_track02_bin | `SKIPPED_NO_DATA` | `—` | sourceId=None launchedEver=None gameTick=None mapIndex=None lastOutcome=None | data directory missing; row skipped, not promoted |
 | us_extras_track02_bin | `SKIPPED_NO_DATA` | `—` | sourceId=None launchedEver=None gameTick=None mapIndex=None lastOutcome=None | data directory missing; row skipped, not promoted |
 

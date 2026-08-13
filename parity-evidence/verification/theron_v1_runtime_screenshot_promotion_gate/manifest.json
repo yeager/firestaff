@@ -28,7 +28,7 @@
     "source BMP sha256 unique across all rows",
     "presented BMP is valid 320x200 24-bit BMP with >200 non-black pixels"
   ],
-  "generated_at": "2026-08-12T01:35:15.222754+00:00",
+  "generated_at": "2026-08-13T22:15:37.631144+00:00",
   "nonClaims": [
     "No Theron screenshot is promoted into README, verification-screens/, or docs/compare/ by this gate.",
     "No generated, illustrated, or mock Theron image is created or copied.",
@@ -44,18 +44,23 @@
       "eligible": false,
       "label": "Theron canonical PC Engine root",
       "notes": [
-        "readiness row status is 'FAIL', not PASS",
+        "readiness row status is 'SKIP', not PASS",
+        "probe.sourceId is None, expected 'theron'",
+        "probe.launchedEver is None, expected 1 (real runtime launch)",
+        "probe.schema is None, expected 'firestaff_m11_autotest_runtime_probe.v1'",
+        "'TQR level load' boot marker not present in launch output",
+        "no semantic Track 02 loader evidence in probe (gameTick=0, party.mapIndex=0, lastOutcome=''); boot probe parked at THERON READY without decoding Track 02 content",
         "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)"
       ],
-      "presented_sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f",
+      "presented_sha256": null,
       "probe_summary": {
         "gameTick": 0,
-        "lastOutcome": "THERON RUNTIME (TRACK 02 DUNGEON)",
-        "launchedEver": 1,
+        "lastOutcome": "",
+        "launchedEver": null,
         "party.mapIndex": 0,
-        "sourceId": "theron"
+        "sourceId": null
       },
-      "source_sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f"
+      "source_sha256": null
     },
     {
       "case_id": "jp_extras_track02_bin",

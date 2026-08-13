@@ -51,7 +51,7 @@
     "presented BMP is a valid 320x200 24-bit BMP with >200 non-black pixels",
     "operator-local reviewer sign-off reports reviewed=true with non-empty reviewer and review_date"
   ],
-  "generated_at": "2026-08-12T01:35:15.265831+00:00",
+  "generated_at": "2026-08-13T22:15:37.689872+00:00",
   "nonClaims": [
     "No Theron screenshot is promoted into README, verification-screens/, or docs/compare/ by this checklist.",
     "No generated, illustrated, or mock Theron image is created or copied.",
@@ -71,8 +71,8 @@
         {
           "key": "real_runtime_capture",
           "label": "real Firestaff Theron launch under dummy video (probe.sourceId=='theron', launchedEver==1)",
-          "note": "probe.sourceId='theron', launchedEver=1",
-          "verdict": "PASS"
+          "note": "probe.sourceId=None, launchedEver=None",
+          "verdict": "FAIL"
         },
         {
           "key": "no_fallback_assets",
@@ -83,19 +83,19 @@
         {
           "key": "tqr_level_load_marker",
           "label": "launch output contains the 'TQR level load' boot marker",
-          "note": "'TQR level load' boot marker present in row notes",
-          "verdict": "PASS"
+          "note": "'TQR level load' boot marker not present in launch output",
+          "verdict": "FAIL"
         },
         {
           "key": "semantic_track02_evidence",
           "label": "runtime probe shows semantic Track 02 loader evidence (gameTick>0, party.mapIndex!=0, or lastOutcome beyond 'THERON READY')",
-          "note": "gameTick=0, party.mapIndex=0, lastOutcome='THERON RUNTIME (TRACK 02 DUNGEON)'",
-          "verdict": "PASS"
+          "note": "gameTick=0, party.mapIndex=0, lastOutcome=''",
+          "verdict": "FAIL"
         },
         {
           "key": "unique_source_bmp",
           "label": "source BMP sha256 is unique across all rows (duplicate sha256s indicate a shared placeholder fixture)",
-          "note": "source sha256 a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f unique",
+          "note": "source sha256 <none> unique",
           "verdict": "PASS"
         },
         {
@@ -114,17 +114,17 @@
       "classification": "REVIEW_CHECKLIST_INELIGIBLE",
       "label": "Theron canonical PC Engine root",
       "machine_eligible": false,
-      "presented_sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f",
+      "presented_sha256": null,
       "probe_summary": {
         "gameTick": 0,
-        "lastOutcome": "THERON RUNTIME (TRACK 02 DUNGEON)",
-        "launchedEver": 1,
+        "lastOutcome": "",
+        "launchedEver": null,
         "party.mapIndex": 0,
-        "sourceId": "theron"
+        "sourceId": null
       },
       "reviewer_signed_off": false,
       "reviewer_signoff_record": null,
-      "source_sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f"
+      "source_sha256": null
     },
     {
       "case_id": "jp_extras_track02_bin",
