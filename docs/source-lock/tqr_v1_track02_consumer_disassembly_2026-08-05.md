@@ -85,3 +85,27 @@ values remain present. Accordingly the world-text loader continues to reject
 that block, and this disassembly still authorizes no text, menu, dungeon,
 object, tile, palette or viewport semantics. A future promotion requires the
 executing HuC6280 text consumer plus its source-LBA/payload join.
+
+## 2026-08-12 — complete US dungeon-text ledger is now release-build tested
+
+The source-admission regression now reads the operator-supplied, hash-locked
+US `TQUS02.bin` directly and checks every one of the seven dungeon text
+windows. It admits only their real word counts
+`013c,d0,e0,e8,e0,d9,e8`, observes decoded terminator counts
+`17,11,11,15,13,13,13`, and retains all three five-bit glyph values from every
+source word. Every block contains unresolved control glyphs; the regression
+therefore also proves that `theron_v1_world_load_dungeon_text()` publishes
+zero world/UI strings for all seven, including in builds where `NDEBUG` would
+otherwise erase C `assert()` checks.
+
+The source-layout receipt agrees with DMBuilder's
+`DMBUILDER6/src/loaddungeon.c` at upstream commit
+`7f080387adc13a5b9ea1383c0604f97c8f78c2b2` (file SHA-256
+`36fc0467c5746b44b93a70bc2be20df98b471ab3e4e38382b715ef5df31f54b2`):
+its `iTQMemOffset[][5]` table and `iTQTextDataSize[]` table specify the same
+seven source windows, then hand the raw words to `loadTexts()`. This is an
+offset/ownership cross-check, not evidence for the original PC Engine text
+renderer. The upstream author also records that text encoding/decoding alone
+did not make in-game scroll text display correctly. Firestaff consequently
+keeps the control-code and renderer boundary fail-closed; it does not promote
+these diagnostic strings into a menu, scroll, plaque or HUD surface.

@@ -2,7 +2,6 @@
 #include "theron_v1_track02_thing_data.h"
 #include "theron_v1_track02_text_decode.h"
 #include "theron_v1_world.h"
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +9,15 @@
 #define SECTOR_SIZE 2352
 #define UD_PER_SECTOR 2048
 #define SYNC_OFFSET 16
+
+/* This target is also built with NDEBUG by some release configurations, so
+ * do not use assert() for source-admission checks. */
+#define CHECK(condition) do { \
+    if (!(condition)) { \
+        fprintf(stderr, "FAIL: %s (%s:%d)\n", #condition, __FILE__, __LINE__); \
+        return 0; \
+    } \
+} while (0)
 
 static uint8_t *load_track02_ud(const char *path, size_t *out_size) {
     FILE *fp = fopen(path, "rb");
@@ -56,30 +64,37 @@ static const char *find_track02(void) {
     return NULL;
 }
 
-static void test_codon_basic(void) {
+static int test_codon_basic(void) {
     uint16_t codons[2];
     codons[0] = (0 << 10) | (1 << 5) | 2;
     codons[1] = (THERON_TEXT_END_MARKER << 10) | 0 | 0;
 
     Theron_TextBlock tb;
-    assert(theron_v1_track02_text_decode(codons, 2, &tb) == 0);
-    assert(tb.count == 1);
-    assert(strcmp(tb.strings[0], "abc") == 0);
-    assert(tb.raw_glyph_count == 6);
-    assert(tb.raw_glyphs[0] == 0 && tb.raw_glyphs[1] == 1 &&
-           tb.raw_glyphs[2] == 2 && tb.raw_glyphs[3] == THERON_TEXT_END_MARKER);
+    CHECK(theron_v1_track02_text_decode(codons, 2, &tb) == 0);
+    CHECK(tb.count == 1);
+    CHECK(strcmp(tb.strings[0], "abc") == 0);
+    CHECK(tb.raw_glyph_count == 6);
+    CHECK(tb.raw_glyphs[0] == 0 && tb.raw_glyphs[1] == 1 &&
+          tb.raw_glyphs[2] == 2 && tb.raw_glyphs[3] == THERON_TEXT_END_MARKER);
     printf("  Basic codon decode OK\n");
+    return 1;
 }
 
-static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
+static int test_all_dungeons(const uint8_t *ud, size_t ud_size) {
     const char *names[] = {
         "AKUTUBA", "DRATOR", "FORMICIA", "SARMON",
         "SHADODAN", "THIEVES", "DEMON"
     };
+    static const unsigned int expected_word_counts[] = {
+        0x013c, 0x00d0, 0x00e0, 0x00e8, 0x00e0, 0x00d9, 0x00e8
+    };
+    static const unsigned int expected_string_counts[] = {
+        17, 11, 11, 15, 13, 13, 13
+    };
 
     for (unsigned int d = 0; d < 7; d++) {
         Theron_DungeonData dd;
-        assert(theron_v1_track02_dungeon_map_load(ud, ud_size, d, &dd));
+        CHECK(theron_v1_track02_dungeon_map_load(ud, ud_size, d, &dd));
 
         unsigned int total_tiles = 0;
         uint8_t flat_tiles[8192];
@@ -97,36 +112,48 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
             theron_v1_track02_compute_ground_ref_count(flat_tiles, total_tiles);
 
         Theron_ThingData *td = calloc(1, sizeof(Theron_ThingData));
-        assert(td);
+        CHECK(td != NULL);
         int ok = theron_v1_track02_thing_data_load(
             ud, ud_size, d, dd.object_counts, gref_count, td);
-        assert(ok);
+        CHECK(ok);
+        CHECK(td->text_data_count == expected_word_counts[d]);
 
         Theron_TextBlock *tb = calloc(1, sizeof(Theron_TextBlock));
-        assert(tb);
-        assert(theron_v1_track02_text_decode(
+        CHECK(tb != NULL);
+        CHECK(theron_v1_track02_text_decode(
             td->text_data, td->text_data_count, tb) == 0);
 
         printf("  %s: %u text strings decoded\n", names[d], tb->count);
         for (unsigned int s = 0; s < tb->count && s < 5; s++)
             printf("    [%u]: \"%s\"\n", s, tb->strings[s]);
 
-        if (d == 0) {
-            assert(tb->count > 0);
-            assert(tb->diagnostic_only);
-            assert(tb->unresolved_control_codes > 0);
-            assert(tb->raw_glyph_count > 0);
-        }
+        /* Every source block contains unresolved control glyphs.  This
+         * verifies the real US stream and, critically, that none of its
+         * candidate text is accidentally exposed as gameplay/UI text. */
+        CHECK(tb->count == expected_string_counts[d]);
+        CHECK(tb->diagnostic_only);
+        CHECK(tb->unresolved_control_codes > 0);
+        CHECK(tb->raw_glyph_count == td->text_data_count * 3u);
 
+        Theron_V1_World *world = calloc(1, sizeof(*world));
+        CHECK(world != NULL);
+        theron_v1_world_init(world);
+        CHECK(theron_v1_world_load_dungeon_text(
+            world, td->text_data, td->text_data_count) == 0);
+        CHECK(world->dungeon_text_count == 0);
+        CHECK(theron_v1_world_dungeon_text(world, 0) == NULL);
+
+        free(world);
         free(tb);
         free(td);
     }
+    return 1;
 }
 
 int main(void) {
     printf("test_theron_v1_track02_text_decode\n");
 
-    test_codon_basic();
+    if (!test_codon_basic()) return 1;
 
     const char *path = find_track02();
     if (!path) {
@@ -141,44 +168,9 @@ int main(void) {
         return 0;
     }
 
-    test_all_dungeons(ud, ud_size);
-
-    /* World text loading integration test */
-    {
-        Theron_DungeonData dd;
-        assert(theron_v1_track02_dungeon_map_load(ud, ud_size, 0, &dd));
-        unsigned int total_tiles = 0;
-        uint8_t flat_tiles[8192];
-        unsigned int flat_pos = 0;
-        for (unsigned int m = 0; m < dd.map_count; m++) {
-            unsigned int w = dd.maps[m].header.x_dim + 1u;
-            unsigned int h = dd.maps[m].header.y_dim + 1u;
-            total_tiles += w * h;
-            for (unsigned int x = 0; x < w; x++)
-                for (unsigned int y = 0; y < h; y++)
-                    flat_tiles[flat_pos++] = dd.maps[m].tiles[x][y];
-        }
-        unsigned int gref_count =
-            theron_v1_track02_compute_ground_ref_count(flat_tiles, total_tiles);
-        Theron_ThingData *td = calloc(1, sizeof(Theron_ThingData));
-        assert(td);
-        assert(theron_v1_track02_thing_data_load(
-            ud, ud_size, 0, dd.object_counts, gref_count, td));
-
-        Theron_V1_World *w2 = calloc(1, sizeof(Theron_V1_World));
-        assert(w2);
-        theron_v1_world_init(w2);
-        int count = theron_v1_world_load_dungeon_text(
-            w2, td->text_data, td->text_data_count);
-        /* Raw Track 02 text remains diagnostic-only until the original
-         * HuC6280 text consumer binds the brace/control-code values. */
-        assert(count == 0);
-        assert(w2->dungeon_text_count == (unsigned)count);
-        assert(theron_v1_world_dungeon_text(w2, 0) == NULL);
-        assert(theron_v1_world_dungeon_text(w2, (unsigned)count) == NULL);
-        printf("  World text load: %d strings from AKUTUBA\n", count);
-        free(w2);
-        free(td);
+    if (!test_all_dungeons(ud, ud_size)) {
+        free(ud);
+        return 1;
     }
 
     free(ud);
