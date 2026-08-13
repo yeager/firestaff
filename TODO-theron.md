@@ -2,6 +2,19 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — autentiserad VDC/VCE-pair från RAM-replay admitted screen-space
+
+- ✅ `theron_v1_vram_trace_load_known_capture_files()` accepterar nu den
+  externa, hashverifierade pairen `theron-vdc-ram.exXuQu`:
+  VRAM FNV-1a `087da136`, VCE FNV-1a `5376a91b`.
+- ✅ Pairen kan användas av produktionsviewportens autentiserade
+  screen-space-rendering; råfilerna ligger kvar lokalt på extern-disk och
+  kopieras inte till GitHub.
+- 🔒 Capturens `$2600–$27FF`-läsningar föregås av samma `$CB22`-rutin som
+  skriver nollor till RAM-fönstret. Det är därför inte ett bevis på level-,
+  object-, square-, HUD-, T700- eller T900-konsument. De semantiska grindarna
+  förblir stängda.
+
 ## 2026-08-13 — game-owned `$2600`-fönster bevaras som proveniens
 
 - ✅ `theron_v1_mednafen_main_ram_consumer_trace_parse_file()` behåller nu

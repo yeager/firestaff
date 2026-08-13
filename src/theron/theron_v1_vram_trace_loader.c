@@ -184,7 +184,12 @@ int theron_v1_vram_trace_load_known_capture_files(
          * Mednafen capture producer.  This is a distinct live VRAM image
          * paired with the already admitted source VCE bank; it remains a
          * screen-space-only route. */
-        {0x8165c4d4u, 0xea83f117u}
+        {0x8165c4d4u, 0xea83f117u},
+        /* 2026-08-13 authenticated RAM/VDC replay.  The capture has a
+         * complete source VDC/VCE pair, but its $2600 window is still an
+         * initialization/readback loop and does not identify a level,
+         * object, square, HUD or gameplay consumer. */
+        {0x087da136u, 0x5376a91bu}
     };
 
     if (!vp || !vram_path || !vce_path) return -1;

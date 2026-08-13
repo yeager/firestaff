@@ -1,5 +1,18 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-13 — RAM/VDC-replayens VDC/VCE-pair är screen-space-admitted
+
+Den externa replayen `theron-vdc-ram.exXuQu` har en komplett 64 KiB VDC- och
+1 KiB VCE-snapshot. Pairens FNV-1a-identiteter är VRAM `087da136` och VCE
+`5376a91b`; de är nu upptagna i den kända capture-listan för
+`theron_v1_vram_trace_load_known_capture_files()`.
+
+Detta öppnar endast återgivning av den autentiserade native screen-space-
+bilden. I samma session skriver `$CB22` nollor över `$2600–$2EFF` och läser
+sedan tillbaka området. Den observationen klassificerar inte bytes som level,
+object, square, HUD, T700 eller T900, så alla sådana semantiska grindar är
+fortsatt stängda.
+
 ## 2026-08-13 — `$2600`-läsning bevaras i parsern
 
 Parsern för `main_ram_consumer` nollställer inte längre
