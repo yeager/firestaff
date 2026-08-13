@@ -10,6 +10,7 @@
 #include "firestaff_zip_extract.h"
 #include "fs_portable_compat.h"
 #include "nexus_v1_bpk_archive.h"
+#include "nexus_v1_iso_reader.h"
 #include "theron_v1_track02.h"
 #include "theron_v1_track02_raw_media_intake.h"
 
@@ -3672,6 +3673,68 @@ static int m12_try_match_direct_nexus_request(
     return 0;
 }
 
+/* The launcher scans a directory before the Nexus engine is constructed. A
+ * directory containing only the authentic multi-disc 7z therefore needs an
+ * explicit Nexus admission path: the generic hash walker cannot see an ISO
+ * nested in a solid external archive. Read the named English ISO member into
+ * memory, validate its real ISO9660/Nexus tree, and retain the archive member
+ * as the runtime source. The archive itself is never rewritten. */
+static int m12_admit_nexus_7z_directory_source(
+    M12_AssetStatus* status,
+    int gameIndex,
+    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t rootCount) {
+    static const char archiveName[] =
+        "Dungeon Master Nexus for Sega Saturn Japanese, English and French.7z";
+    static const char isoMember[] = "Dungeon Master Nexus (English).iso";
+    static const char archiveMd5[] = "cf158b32f342c168fc570d36a0f1c637";
+    size_t rootIndex;
+    int versionIndex;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "nexus") != 0) {
+        return 0;
+    }
+    versionIndex = m12_nexus_version_index_for_md5(archiveMd5);
+    if (versionIndex < 0) {
+        return 0;
+    }
+    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+        char archivePath[M12_ASSET_DATA_DIR_CAPACITY];
+        char virtualPath[M12_ASSET_DATA_DIR_CAPACITY];
+        uint8_t *isoBytes = NULL;
+        size_t isoSize = 0U;
+        Nexus_ISOReader iso;
+        if (snprintf(archivePath, sizeof(archivePath), "%s/%s",
+                     roots[rootIndex], archiveName) >= (int)sizeof(archivePath) ||
+            !FSP_FileExists(archivePath) ||
+            snprintf(virtualPath, sizeof(virtualPath), "%s::%s",
+                     archivePath, isoMember) >= (int)sizeof(virtualPath) ||
+            asset_read_path_alloc(virtualPath, &isoBytes, &isoSize) == 0) {
+            free(isoBytes);
+            continue;
+        }
+        memset(&iso, 0, sizeof(iso));
+        if (nexus_iso_open_memory(&iso, isoBytes, isoSize, virtualPath) < 0 ||
+            !nexus_iso_is_nexus(&iso)) {
+            nexus_iso_close(&iso);
+            continue;
+        }
+        nexus_iso_close(&iso);
+        status->versions[gameIndex][versionIndex].matched = 1;
+        m12_copy_string(status->versions[gameIndex][versionIndex].matchedPath,
+                        sizeof(status->versions[gameIndex][versionIndex].matchedPath),
+                        virtualPath);
+        m12_copy_string(status->versions[gameIndex][versionIndex].matchedMd5,
+                        sizeof(status->versions[gameIndex][versionIndex].matchedMd5),
+                        archiveMd5);
+        m12_copy_string(status->runtimeDataDirs[gameIndex],
+                        sizeof(status->runtimeDataDirs[gameIndex]),
+                        archivePath);
+        return 1;
+    }
+    return 0;
+}
+
 static void m12_fill_game_versions(M12_AssetStatus* status,
                                    int gameIndex,
                                    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
@@ -5994,6 +6057,31 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
              strcmp(selected->versionId, "fmtowns-ja") == 0);
         int reqMatch = m12_fill_required_files(status, i, roots, rootCount,
                                                skipNestedArchiveScan);
+        int nexusArchiveAdmitted = strcmp(g_games[i].gameId, "nexus") == 0 &&
+            m12_admit_nexus_7z_directory_source(status, i, roots, rootCount);
+        if (nexusArchiveAdmitted) {
+            size_t requiredIndex;
+            reqMatch = 1;
+            for (requiredIndex = 0U;
+                 requiredIndex < status->requiredFileCounts[i];
+                 ++requiredIndex) {
+                M12_AssetRequiredFileStatus *required =
+                    &status->requiredFiles[i][requiredIndex];
+                if (required->roleId && strcmp(required->roleId, "data") == 0) {
+                    required->matched = 1;
+                    m12_copy_string(required->matchedPath,
+                                    sizeof(required->matchedPath),
+                                    status->versions[i][m12_nexus_version_index_for_md5(
+                                        "cf158b32f342c168fc570d36a0f1c637")].matchedPath);
+                    m12_copy_string(required->sourcePath,
+                                    sizeof(required->sourcePath),
+                                    required->matchedPath);
+                    m12_copy_string(required->matchedHash,
+                                    sizeof(required->matchedHash),
+                                    "cf158b32f342c168fc570d36a0f1c637");
+                }
+            }
+        }
         if (strcmp(g_games[i].gameId, "dm1") == 0) {
             size_t requiredIndex;
             m12_publish_dm1_fmtowns_required_files(status, i);
@@ -6180,6 +6268,7 @@ void M12_AssetStatus_ScanGameWithOptions(
     int dm2ExplicitAmiga = 0;
     int dm2ExplicitMac = 0;
     int dm2ExplicitFmtowns = 0;
+    int nexusArchiveAdmitted = 0;
     int reqMatch;
     int i;
     if (!status) {
@@ -6252,6 +6341,10 @@ void M12_AssetStatus_ScanGameWithOptions(
                                (requestedDataDir && requestedDataDir[0] != '\0'),
                                (options && options->looseFilesOnly) ||
                                csbFmtownsAdmitted);
+        if (strcmp(g_games[gameIndex].gameId, "nexus") == 0) {
+            nexusArchiveAdmitted = m12_admit_nexus_7z_directory_source(
+                status, gameIndex, roots, rootCount);
+        }
         if (strcmp(g_games[gameIndex].gameId, "dm1") == 0) {
             dm1FmtownsAdmitted = m12_admit_dm1_fmtowns_archive(
                 status, gameIndex, roots, rootCount, requestedDataDir);
@@ -6329,6 +6422,28 @@ void M12_AssetStatus_ScanGameWithOptions(
                                        rootCount,
                                        (options && options->looseFilesOnly) ||
                                        csbFmtownsAdmitted || dm1FmtownsAdmitted);
+    if (nexusArchiveAdmitted) {
+        size_t requiredIndex;
+        reqMatch = 1;
+        for (requiredIndex = 0U;
+             requiredIndex < status->requiredFileCounts[gameIndex];
+             ++requiredIndex) {
+            M12_AssetRequiredFileStatus *required =
+                &status->requiredFiles[gameIndex][requiredIndex];
+            if (required->roleId && strcmp(required->roleId, "data") == 0) {
+                required->matched = 1;
+                m12_copy_string(required->matchedPath,
+                                sizeof(required->matchedPath),
+                                status->versions[gameIndex][m12_nexus_version_index_for_md5(
+                                    "cf158b32f342c168fc570d36a0f1c637")].matchedPath);
+                m12_copy_string(required->sourcePath,
+                                sizeof(required->sourcePath), required->matchedPath);
+                m12_copy_string(required->matchedHash,
+                                sizeof(required->matchedHash),
+                                "cf158b32f342c168fc570d36a0f1c637");
+            }
+        }
+    }
     if (strcmp(g_games[gameIndex].gameId, "dm1") == 0) {
         size_t requiredIndex;
         m12_publish_dm1_fmtowns_required_files(status, gameIndex);

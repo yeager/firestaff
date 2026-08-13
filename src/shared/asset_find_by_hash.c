@@ -46,6 +46,7 @@
 
 #define ASSET_SCAN_MAX_FILE_BYTES (32LL * 1024LL * 1024LL)
 #define ASSET_ZIP_MAX_ENTRY_BYTES (16U * 1024U * 1024U)
+#define ASSET_VIRTUAL_DISC_MAX_BYTES (512ULL * 1024ULL * 1024ULL)
 #define ASSET_TAR_MAX_ENTRY_BYTES (32U * 1024U * 1024U)
 #define ASSET_GZIP_TAR_MAX_BYTES (128U * 1024U * 1024U)
 #define ASSET_ISO_SECTOR_SIZE 2048U
@@ -3599,7 +3600,12 @@ static uint8_t *external_read_entry_bytes(const char *archivePath,
     uint8_t *bytes = NULL;
     size_t used = 0U, capacity = 0U;
     int ok = 1;
+    size_t maxBytes;
     if (!archivePath || !entryName || !out_size) return NULL;
+    maxBytes = (has_case_suffix(entryName, ".iso") ||
+                has_case_suffix(entryName, ".bin"))
+        ? (size_t)ASSET_VIRTUAL_DISC_MAX_BYTES
+        : (size_t)ASSET_SCAN_MAX_FILE_BYTES;
     tool = external_archive_tool_for_path(archivePath);
     if (!tool || !external_entry_command(cmd, sizeof(cmd), tool, archivePath, entryName)) {
         return NULL;
@@ -3610,7 +3616,7 @@ static uint8_t *external_read_entry_bytes(const char *archivePath,
         uint8_t chunk[8192];
         size_t got = fread(chunk, 1U, sizeof(chunk), pipe);
         if (got > 0U) {
-            if (used > (size_t)ASSET_SCAN_MAX_FILE_BYTES - got) {
+            if (used > maxBytes - got) {
                 ok = 0;
                 break;
             }

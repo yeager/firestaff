@@ -4,6 +4,13 @@
 
 ## Authentic archive-source verification — 2026-08-14
 
+Archive-only directory launch is now source-complete at the media handoff:
+M12 admits the real English ISO member from the supplied `.7z`, and Nexus
+directory discovery uses the same memory-backed ISO reader as direct archive
+launch. A real copy of the supplied archive was tested without extracting or
+writing game data. The remaining result is the existing authentic Saturn
+presentation blocker, not a missing-data error.
+
 The supplied authentic Nexus `.7z` can now be passed directly as the data
 source. Firestaff selects the real English ISO member and opens its ISO 9660
 tree in memory (`137` files); it does not rewrite the archive or create game
