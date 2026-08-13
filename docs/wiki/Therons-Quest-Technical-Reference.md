@@ -1,5 +1,13 @@
 # Theron's Quest Technical Reference
 
+## Track 02 map-directory boundary
+
+The world handoff validates the complete authenticated Track 02 map directory
+before replacing a dungeon bank. A zero or oversized map count, or a map whose
+`x_dim + 1` / `y_dim + 1` exceeds Firestaff's fixed square grid, is rejected
+without changing the previous bank. This protects the source-bound state
+boundary; it does not claim the unresolved post-CD level/object consumer.
+
 ## Door state boundary
 
 The runtime treats `LOCKED=6` as a sentinel state, not as a later opening

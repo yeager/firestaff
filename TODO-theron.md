@@ -8,6 +8,18 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — Track 02 map-directory envelope is fail-closed
+
+- ✅ `theron_v1_world_load_track02_dungeon()` validates the complete map
+  directory before clearing or replacing a dungeon bank. Zero/oversized map
+  counts and `x_dim/y_dim + 1` values beyond the fixed world grid are rejected
+  without changing the previously loaded bank.
+- ✅ A regression covers both invalid dimensions and an oversized directory;
+  the real US/JP Track 02 loader suite remains green.
+- 🔒 This is an intake/state-safety invariant only. It does not promote the
+  missing post-CD level/object consumer or any square/tile/HUD/T700/T900
+  semantics.
+
 ## 2026-08-13 — split-CUE-normalisering ger starkare transport-witness
 
 - ✅ Den privata split-ISO-normaliseringen (`TQUS19.iso + TQUS02End.iso`)

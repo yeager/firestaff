@@ -859,6 +859,31 @@ static void test_generator_binding_rejects_non_source_records(void) {
     assert(world.source_generator_count == 1);
 }
 
+static void test_world_load_rejects_invalid_directory_envelope(void) {
+    Theron_DungeonData invalid = {0};
+    Theron_V1_World world;
+
+    theron_v1_world_init(&world);
+    world.level_loaded[0][0] = 1;
+    world.levels[0][0].source_header_verified = 1;
+    world.levels[0][0].width = 7;
+    world.levels[0][0].height = 9;
+
+    invalid.map_count = 1;
+    invalid.maps[0].header.x_dim = THERON_MAX_MAP_SIZE;
+    invalid.maps[0].header.y_dim = 0;
+    assert(theron_v1_world_load_track02_dungeon(&world, 1, &invalid) == -1);
+    assert(world.level_loaded[0][0] == 1);
+    assert(world.levels[0][0].source_header_verified == 1);
+    assert(world.levels[0][0].width == 7);
+    assert(world.levels[0][0].height == 9);
+
+    invalid.maps[0].header.x_dim = 0;
+    invalid.map_count = THERON_MAX_LEVELS_PER_DUNGEON + 1u;
+    assert(theron_v1_world_load_track02_dungeon(&world, 1, &invalid) == -1);
+    assert(world.level_loaded[0][0] == 1);
+}
+
 static void test_object_binding_rejects_unverified_locations(void) {
     Theron_V1_World world;
     const uint8_t raw[2] = {0xFF, 0xFF};
@@ -913,6 +938,7 @@ int main(void) {
     printf("test_theron_v1_track02_dungeon_loader\n");
 
     test_generator_binding_rejects_non_source_records();
+    test_world_load_rejects_invalid_directory_envelope();
     test_object_binding_rejects_unverified_locations();
 
     const char *path = find_track02();

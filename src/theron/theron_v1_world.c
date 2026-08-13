@@ -805,6 +805,26 @@ int theron_v1_world_load_track02_dungeon(
     if (!world || !dd) return -1;
     if (dungeon_id < 1 || dungeon_id > THERON_DUNGEON_COUNT) return -1;
 
+    /* Validate the complete directory before clearing or replacing the
+     * selected bank.  Track 02 headers store dimensions as max-index bytes
+     * (x_dim/y_dim + 1), while Theron_V1_Level owns fixed-size square arrays.
+     * The source decoder normally enforces this envelope, but this handoff
+     * is also a public boundary for authenticated/captured directory data.
+     * Never retain a width/height larger than the backing array or silently
+     * truncate a directory with more levels than the world can address. */
+    if (dd->map_count == 0u ||
+        dd->map_count > THERON_MAX_LEVELS_PER_DUNGEON) {
+        return -1;
+    }
+    for (unsigned int m = 0u; m < dd->map_count; ++m) {
+        unsigned int width = (unsigned int)dd->maps[m].header.x_dim + 1u;
+        unsigned int height = (unsigned int)dd->maps[m].header.y_dim + 1u;
+        if (width == 0u || height == 0u ||
+            width > THERON_MAX_MAP_SIZE || height > THERON_MAX_MAP_SIZE) {
+            return -1;
+        }
+    }
+
     /* A selected dungeon bank owns the live text provenance.  Clear the
      * previous bank before loading a new one so a JP/no-text route or a
      * failed reload cannot expose stale source words/tokens. */
