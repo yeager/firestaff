@@ -2,6 +2,13 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-14: Verified the supplied authentic Nexus `.7z` directly as a
+Firestaff data source. Firestaff selected the real English ISO member and
+opened its ISO 9660 tree (`137` files) without changing the archive or adding
+game-data files. The boot probe reports the expected title-only,
+capture-blocked state (`levelLoaded=0`); this is no longer a media-discovery
+failure.
+
 2026-08-14: Status-count correction: the current configured external-data
 selection runs 184 Nexus tests, with 173 passing and 11 intentional
 capture-gated skips. Earlier 304/14 figures describe a broader registration

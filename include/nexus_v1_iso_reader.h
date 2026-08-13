@@ -24,6 +24,8 @@ typedef struct {
 
 typedef struct {
     FILE *fp;
+    uint8_t *memory;
+    size_t memory_size;
     char path[512];
     Nexus_ISOFile files[NEXUS_ISO_MAX_FILES];
     int file_count;
@@ -41,6 +43,8 @@ typedef struct {
 
 /* Open a Saturn BIN file (Track 1) and parse the ISO 9660 filesystem */
 int nexus_iso_open(Nexus_ISOReader *reader, const char *bin_path);
+int nexus_iso_open_memory(Nexus_ISOReader *reader, uint8_t *data,
+                          size_t data_size, const char *source_name);
 
 /* Open from CUE file (finds Track 1 BIN automatically) */
 int nexus_iso_open_cue(Nexus_ISOReader *reader, const char *cue_path);

@@ -17,13 +17,19 @@ static int seek_file(FILE *fp, int64_t offset)
 #endif
 }
 
-static int read_sector_payload(FILE *fp, uint32_t sector, int sector_size,
-                               int data_offset, uint8_t *buf) {
+static int read_sector_payload(const Nexus_ISOReader *reader, uint32_t sector,
+                               int sector_size, int data_offset, uint8_t *buf) {
     int64_t offset = (int64_t)sector * sector_size + data_offset;
     size_t read_size;
     memset(buf, 0, NEXUS_ISO_DATA_SIZE);
-    if (seek_file(fp, offset) != 0) return -1;
-    read_size = fread(buf, 1, NEXUS_ISO_DATA_SIZE, fp);
+    if (!reader || offset < 0) return -1;
+    if (reader->memory) {
+        if ((uint64_t)offset + NEXUS_ISO_DATA_SIZE > reader->memory_size) return -1;
+        memcpy(buf, reader->memory + offset, NEXUS_ISO_DATA_SIZE);
+        return 0;
+    }
+    if (!reader->fp || seek_file(reader->fp, offset) != 0) return -1;
+    read_size = fread(buf, 1, NEXUS_ISO_DATA_SIZE, reader->fp);
     return read_size == NEXUS_ISO_DATA_SIZE ? 0 : -1;
 }
 
@@ -70,7 +76,7 @@ static int parse_dir_record(const uint8_t *data, int offset, int buf_size,
 #define NEXUS_ISO_MAX_DIR_DEPTH 8
 
 /* Recursively parse directory tree */
-static int parse_directory_depth(FILE *fp, uint32_t dir_lba, uint32_t dir_size,
+static int parse_directory_depth(const Nexus_ISOReader *reader, uint32_t dir_lba, uint32_t dir_size,
     int sector_size, int data_offset,
     Nexus_ISOFile *files, int *count, int max_files, int depth)
 {
@@ -86,7 +92,7 @@ static int parse_directory_depth(FILE *fp, uint32_t dir_lba, uint32_t dir_size,
         uint32_t remaining = dir_size - (uint32_t)s * NEXUS_ISO_DATA_SIZE;
         int sector_bytes = remaining > NEXUS_ISO_DATA_SIZE
             ? NEXUS_ISO_DATA_SIZE : (int)remaining;
-        if (read_sector_payload(fp, dir_lba + s, sector_size, data_offset,
+        if (read_sector_payload(reader, dir_lba + s, sector_size, data_offset,
                                 sector_buf) < 0) return -1;
 
         offset = 0;
@@ -105,7 +111,7 @@ static int parse_directory_depth(FILE *fp, uint32_t dir_lba, uint32_t dir_size,
                            strcmp(entry.name, "..") != 0 &&
                            entry.lba != dir_lba) {
                     /* Recurse into subdirectory */
-                    if (parse_directory_depth(fp, entry.lba, entry.size,
+                    if (parse_directory_depth(reader, entry.lba, entry.size,
                                                sector_size, data_offset,
                                                files, count, max_files,
                                                depth + 1) < 0) {
@@ -119,11 +125,11 @@ static int parse_directory_depth(FILE *fp, uint32_t dir_lba, uint32_t dir_size,
     return 0;
 }
 
-static int parse_directory(FILE *fp, uint32_t dir_lba, uint32_t dir_size,
+static int parse_directory(const Nexus_ISOReader *reader, uint32_t dir_lba, uint32_t dir_size,
     int sector_size, int data_offset,
     Nexus_ISOFile *files, int *count, int max_files)
 {
-    return parse_directory_depth(fp, dir_lba, dir_size, sector_size,
+    return parse_directory_depth(reader, dir_lba, dir_size, sector_size,
                                  data_offset, files, count, max_files, 0);
 }
 
@@ -145,11 +151,11 @@ int nexus_iso_open(Nexus_ISOReader *reader, const char *bin_path) {
     /* Saturn dumps are commonly raw MODE1/2352 BINs; some users stage
      * plain 2048-byte ISO data images.  Accept both because the launcher
      * advertises ISO/BIN as first-class Nexus input. */
-    if (read_sector_payload(reader->fp, 16, sector_size, data_offset, pvd) < 0 ||
+    if (read_sector_payload(reader, 16, sector_size, data_offset, pvd) < 0 ||
         pvd[0] != 1 || memcmp(pvd + 1, "CD001", 5) != 0) {
         sector_size = NEXUS_ISO_DATA_SIZE;
         data_offset = 0;
-        if (read_sector_payload(reader->fp, 16, sector_size, data_offset, pvd) < 0 ||
+        if (read_sector_payload(reader, 16, sector_size, data_offset, pvd) < 0 ||
             pvd[0] != 1 || memcmp(pvd + 1, "CD001", 5) != 0) {
             goto fail;
         }
@@ -162,7 +168,7 @@ int nexus_iso_open(Nexus_ISOReader *reader, const char *bin_path) {
 
     /* Parse file tree */
     reader->file_count = 0;
-    if (parse_directory(reader->fp, root_lba, root_size,
+    if (parse_directory(reader, root_lba, root_size,
         reader->sector_size, reader->data_offset,
         reader->files, &reader->file_count, NEXUS_ISO_MAX_FILES) < 0) {
         goto fail;
@@ -174,6 +180,38 @@ int nexus_iso_open(Nexus_ISOReader *reader, const char *bin_path) {
 fail:
     fclose(reader->fp);
     reader->fp = NULL;
+    return -1;
+}
+
+int nexus_iso_open_memory(Nexus_ISOReader *reader, uint8_t *data,
+                          size_t data_size, const char *source_name) {
+    uint8_t pvd[NEXUS_ISO_DATA_SIZE];
+    uint32_t root_lba, root_size;
+    if (!reader || !data || data_size == 0U) { free(data); return -1; }
+    memset(reader, 0, sizeof(*reader));
+    reader->memory = data;
+    reader->memory_size = data_size;
+    reader->sector_size = NEXUS_ISO_SECTOR_SIZE;
+    reader->data_offset = NEXUS_ISO_DATA_OFFSET;
+    if (source_name) strncpy(reader->path, source_name, sizeof(reader->path) - 1U);
+    if (read_sector_payload(reader, 16, reader->sector_size, reader->data_offset, pvd) < 0 ||
+        pvd[0] != 1 || memcmp(pvd + 1, "CD001", 5) != 0) {
+        reader->sector_size = NEXUS_ISO_DATA_SIZE;
+        reader->data_offset = 0;
+        if (read_sector_payload(reader, 16, reader->sector_size, reader->data_offset, pvd) < 0 ||
+            pvd[0] != 1 || memcmp(pvd + 1, "CD001", 5) != 0) goto fail;
+    }
+    root_lba = r32le(pvd + 158);
+    root_size = r32le(pvd + 166);
+    if (parse_directory(reader, root_lba, root_size, reader->sector_size,
+                        reader->data_offset, reader->files, &reader->file_count,
+                        NEXUS_ISO_MAX_FILES) < 0) goto fail;
+    reader->valid = 1;
+    return reader->file_count;
+fail:
+    free(reader->memory);
+    reader->memory = NULL;
+    reader->memory_size = 0U;
     return -1;
 }
 
@@ -338,7 +376,7 @@ int nexus_iso_read_file(Nexus_ISOReader *reader, const Nexus_ISOFile *file,
     int remaining, offset = 0;
     uint32_t sector;
 
-    if (!reader || !reader->fp || !file || !buffer || buffer_size < 0) return -1;
+    if (!reader || (!reader->fp && !reader->memory) || !file || !buffer || buffer_size < 0) return -1;
     if (file->size > (uint32_t)buffer_size || file->size > (uint32_t)INT_MAX)
         return -1;
 
@@ -347,7 +385,7 @@ int nexus_iso_read_file(Nexus_ISOReader *reader, const Nexus_ISOFile *file,
 
     while (remaining > 0) {
         int chunk = remaining > NEXUS_ISO_DATA_SIZE ? NEXUS_ISO_DATA_SIZE : remaining;
-        if (read_sector_payload(reader->fp, sector, reader->sector_size,
+        if (read_sector_payload(reader, sector, reader->sector_size,
                                 reader->data_offset, sector_buf) < 0) return -1;
         memcpy(buffer + offset, sector_buf, chunk);
         offset += chunk;
@@ -366,7 +404,7 @@ int nexus_iso_read_file_chunk(Nexus_ISOReader *reader, const Nexus_ISOFile *file
     uint32_t sector;
     int sector_offset;
 
-    if (!reader || !reader->fp || !file || !buffer ||
+    if (!reader || (!reader->fp && !reader->memory) || !file || !buffer ||
         file_offset < 0 || chunk_size < 0 ||
         (uint32_t)file_offset > file->size ||
         (uint32_t)chunk_size > file->size - (uint32_t)file_offset) {
@@ -381,7 +419,7 @@ int nexus_iso_read_file_chunk(Nexus_ISOReader *reader, const Nexus_ISOFile *file
 
     while (read_total < chunk_size) {
         int avail, to_copy;
-        if (read_sector_payload(reader->fp, sector, reader->sector_size,
+        if (read_sector_payload(reader, sector, reader->sector_size,
                                 reader->data_offset, sector_buf) < 0) return -1;
         avail = NEXUS_ISO_DATA_SIZE - sector_offset;
         to_copy = chunk_size - read_total;
@@ -403,6 +441,11 @@ void nexus_iso_close(Nexus_ISOReader *reader) {
     if (reader && reader->fp) {
         fclose(reader->fp);
         reader->fp = NULL;
+    }
+    if (reader && reader->memory) {
+        free(reader->memory);
+        reader->memory = NULL;
+        reader->memory_size = 0U;
     }
     if (reader) reader->valid = 0;
 }

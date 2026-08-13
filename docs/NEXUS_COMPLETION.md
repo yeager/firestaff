@@ -2,6 +2,15 @@
 
 ## Current external-data verification — 2026-08-13
 
+## Authentic archive-source verification — 2026-08-14
+
+The supplied authentic Nexus `.7z` can now be passed directly as the data
+source. Firestaff selects the real English ISO member and opens its ISO 9660
+tree in memory (`137` files); it does not rewrite the archive or create game
+data files. The boot probe reaches the authentic title route and reports
+`levelLoaded=0` with the existing Saturn-capture blocker, so the remaining
+failure is presentation/start-pose evidence rather than media discovery.
+
 ## Verification-count correction — 2026-08-14
 
 The current configured external-data CTest selection contains 184 Nexus tests:

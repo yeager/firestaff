@@ -2546,6 +2546,18 @@ static int nexus_try_open_disc_path(Nexus_V1_Engine *engine, const char *path) {
     } else if (nexus_path_has_ext(path, ".bin") ||
                nexus_path_has_ext(path, ".iso")) {
         n = nexus_iso_open(&engine->iso, path);
+    } else if (nexus_path_has_ext(path, ".7z")) {
+        char virtual_path[768];
+        uint8_t *image = NULL;
+        size_t image_size = 0U;
+        if (snprintf(virtual_path, sizeof(virtual_path),
+                     "%s::Dungeon Master Nexus (English).iso", path) >=
+                (int)sizeof(virtual_path) ||
+            !asset_read_path_alloc(virtual_path, &image, &image_size)) {
+            free(image);
+            return 0;
+        }
+        n = nexus_iso_open_memory(&engine->iso, image, image_size, path);
     }
     if (n > 0 && nexus_iso_is_nexus(&engine->iso)) {
         engine->source = NEXUS_SRC_ISO;
@@ -2559,7 +2571,7 @@ static int nexus_try_open_disc_path(Nexus_V1_Engine *engine, const char *path) {
 /* Try to find ISO/CUE/BIN in data directory — cross-platform */
 #ifdef _WIN32
 static int find_iso(const char *dir, char *disc_path, int max_len) {
-    static const char* const patterns[] = {"*.cue", "*.bin", "*.iso", NULL};
+    static const char* const patterns[] = {"*.cue", "*.bin", "*.iso", "*.7z", NULL};
     WIN32_FIND_DATAA fd;
     HANDLE h = INVALID_HANDLE_VALUE;
     char pattern[512];
@@ -2592,7 +2604,7 @@ static int find_iso(const char *dir, char *disc_path, int max_len) {
 }
 #else
 static int find_iso(const char *dir, char *disc_path, int max_len) {
-    static const char* const exts[] = {".cue", ".bin", ".iso", NULL};
+    static const char* const exts[] = {".cue", ".bin", ".iso", ".7z", NULL};
     DIR *d = opendir(dir);
     struct dirent *ent;
     int ext_index;
