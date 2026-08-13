@@ -48,6 +48,29 @@ The bounded `MAPD/TIBG` receipt also requires the complete section: five
 the MAPD start). A shorter block is rejected before palette reads; this is
 format validation only and does not authorize Saturn presentation.
 
+### Retail MAPD preservation observation
+
+Decoding the five authenticated 512×224 indexed maps from the external
+English retail corpus produces five distinct source images whose visible
+letterforms are `N`, `E`, `X`, `U`, and `S`, respectively. This identifies the
+content of the five MAPD planes; it does not establish their Saturn display
+order, frame timing, VDP2 layer assignment, or executable title-state owner.
+
+The decoded pixel-plane SHA-256 receipts are:
+
+| MAPD plane | Observed letterform | Pixel-plane SHA-256 |
+|---:|:---:|:---|
+| 0 | N | `f816105d6362d0b569e2787f4895710cb6272841fbe00d9e1ec494b5ababefa5` |
+| 1 | E | `cee98c6b82e36b37a6bc285d62896468194de01faeff048c0ab8865f84962ad6` |
+| 2 | X | `d1795a76f459f789943c6985500c968ed9b961cc781c7dd56b88abdbf6bd28cd` |
+| 3 | U | `b5cd2e767d4ee592f908268a00400251ceb4f69c4393a7df775c1e0fcd5e1498` |
+| 4 | S | `6dbb2f3bea87a8b79219f0a73c0b2f49d12a572829c8913b501fbce58f74647` |
+
+These are preservation receipts derived from the real `TITLE.BIN` and
+`TITLE.CG`; no generated image is used. The Saturn capture corpus currently
+contains no exact MAPD plane span in VDP2 VRAM, so the production title route
+remains capture-gated.
+
 ---
 
 ## 4. Title Screen vs Intro Movie

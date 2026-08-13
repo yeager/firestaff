@@ -9,6 +9,12 @@ earlier allocation or a stale source-bound receipt visible to the next startup
 attempt. The real TITLE.BIN/TITLE.CG map test and the full title/boot/launch
 selection pass.
 
+2026-08-13: Preservation analysis of the five real MAPD planes identifies the
+source letterforms N/E/X/U/S and records their decoded pixel hashes in
+`docs/nexus_title.md`. This is source-format evidence only. Exact MAPD-plane
+spans were not found in the authenticated Saturn VDP2 captures, so no title
+display or startup→menu gate is opened.
+
 2026-08-13: CLI boot probes now select SDL's dummy video driver by default
 when the caller has not selected a driver. This keeps the receipt-producing
 Nexus verification path deterministic on CI and display-less hosts while
