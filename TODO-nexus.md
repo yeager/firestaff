@@ -2,6 +2,41 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-14: A follow-up clean Mednafen run sent the authentic Saturn A
+button at 60 and 120 seconds after START, then continued to 240 seconds.
+The window-only witnesses are in
+`run-nexus-post-transition-buttons-20260814b/`; the sequence still returns
+to the original title/entrance imagery and never exposes the startup menu,
+LEV01 viewport or a played save. This is a useful negative input witness,
+not a gameplay proof. The six post-START PNG hashes are, in order 0/20/60/
+120/180/240 seconds:
+`ab35d3607dffdfd38846d536360980638cb8c0e30e858faac410031084cc4582`,
+`246276ca24807a984a52d440cda31ba6dbc8a7583f506bb3ace40291de188a4d`,
+`00c29657913fa14ce32775ab8ee71f700913b50da9bb327ef800e25baefdb696`,
+`511a7cfd69d92a1b620668665a540912a4da6643871677a5c109f97152900f09`,
+`418f707bce0cf844892c8a33da2a26c15a7b70a89c177541376f8150e92f3614`, and
+`70beab80f13c1aaddb2624535a0c6ff37b7318e502f1fbf4a1121e1fa5bcd423`.
+
+2026-08-14: A clean window-ID-bound Mednafen run used the authentic English
+merged CUE and J-BIOS, sent START at the measured title prompt (225 seconds),
+and captured only the Mednafen window. The real sequence is visible in
+`run-nexus-clean-start-20260814`: the post-input frames show the Nexus title,
+orange transition and entrance imagery. SHA-256 witnesses are
+`before-start.png`
+`96081e77894104f08e9e3c5c11a5db193791f2d86f7d5808e9b10d32b5263313`,
+`after-start-000s.png`
+`3182e090fde2ca21c0281705de510c32f6da42c36f18345052bb37cf32f5ddee`,
+`after-start-020s.png`
+`246276ca24807a984a52d440cda31ba6dbc8a7583f506bb3ace40291de188a4d`,
+`after-start-060s.png`
+`67445059fb0cc3a64a7a70eefbe08c59d2e41d31b9bb22c0aefff4359b68cf18`,
+`after-start-120s.png`
+`e7b8f04595b23b9335550d0fb35e8c6101e3152141da7d953853bfaacc3278c5`, and
+`after-start-240s.png`
+`f56395f6c38068bdc5d54830aecfda5abd5e27a384765f369df9487d2c2e587c`.
+The startup menu, LEV01 viewport and played save remain unproven; these
+witnesses therefore do not open a production parity gate.
+
 2026-08-14: A raw Saturn capture retry using the authenticated English merged
 CUE, J-BIOS and the previously working instrumented Mednafen binary was
 stopped after the launcher timeout window. The measured title input sequence
