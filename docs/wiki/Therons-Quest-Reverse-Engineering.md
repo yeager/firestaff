@@ -82,6 +82,16 @@ the same session has no game-owned FIFO-to-RAM receipt, spawn-consumer read or
 RNG window. This is transport provenance only; the raw capture remains local
 and is not a GitHub wiki artifact.
 
+**Cold-start capture boundary (2026-08-13):** a separate instrumented replay
+read 256 raw 2352-byte sectors from LBA 3234, but remained in the BIOS/CD
+reader. It produced no game-owned `$E009` dispatch, no CD/FIFO-to-RAM origin
+receipt and no RNG window. Its 512 reads in `$2600-$27FF` were zero-valued
+`$CB22` initialization reads, and its spawn sidecar stayed in `$20EC-$20EE`.
+This is a reproducible negative witness: it must not be combined with another
+session or used to unlock level, object, creature, combat, T700 or T900
+semantics. The raw sidecars and instrumented emulator remain on the external
+disk; only their hashes and conclusion are documented here.
+
 The full Theron CTest selection is now green on an external temporary volume:
 253 selected tests pass, including the three capture-gated tests when supplied
 with the local authenticated VRAM/VCE, Main-RAM, and CD-state fixtures. Six

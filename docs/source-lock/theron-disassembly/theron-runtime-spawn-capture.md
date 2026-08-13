@@ -1,5 +1,28 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-13 — instrumenterad cold-start når endast CD-transport
+
+Den färska extern-disk-körningen `theron-capture-next/trace/theron2` använde
+den hashverifierade US Track 02-payloaden och System Carden. Den läste 256
+råsektorer (`LBA 3234`, `2352` byte per sektor) och producerade 3 584
+main-RAM-target-writes samt 4 096 spawn-consumer-rader. Sidecar-hasharna är:
+
+```text
+theron2.trace                         8b5e0c1aaf9ccc036080378a22f7d3a8
+theron2.trace.cd                      4dc4a60043131578d8abc6ad4b70e484
+theron2.trace.main-ram-consumer       21f771f92a35704cf0ea8be3a2adf199
+theron2.trace.main-ram-target         d6efcb0336bae0109f3df0f0d8c50fe4
+theron2.trace.spawn-consumer          98c52dabc7696422c681b17e4a35d0ae
+```
+
+Detta är endast transport-/adressproveniens. Körningen fastnar i BIOS/CD-
+läsaren och har noll game-owned `$E009`-dispatchar, noll CD/FIFO→RAM-origin-
+receipts och noll RNG-window-prover. `$2600–$27FF` läses 512 gånger, alla
+med värdet noll från `$CB22`; spawn-sidecaren stannar vid `$20EC–$20EE`.
+Det finns därför inget source-bound level/object-consumer, ingen
+`$B0E5`-kategori och ingen target-publicering att öppna. Denna capture får
+inte kombineras med andra sessioner och råfilerna ligger kvar utanför GitHub.
+
 ## 2026-08-13 — production state primitives remain separate from gameplay consumers
 
 The production Theron adapter now implements only the API-level state

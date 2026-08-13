@@ -8,6 +8,22 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — ny instrumenterad cold-start når bara CD-transport
+
+- ✅ En färsk extern-disk-körning mot hashverifierad US Track 02/System Card
+  läser 256 råa 2352-byte-sektorer från LBA 3234. Den visar dessutom 3 584
+  target-writes och 4 096 spawn-consumer-läsningar som rå provenance.
+- 🔒 Körningen loopar i BIOS/CD-läsaren: den ger noll game-owned `$E009`-
+  dispatchar, noll CD/FIFO→RAM-origin-kvittot, noll RNG-fönster och noll
+  autentiserad level/object-consumer. De 512 läsningarna i `$2600–$27FF` är
+  alla nollor från `$CB22`; de får inte öppna level, object, square, HUD,
+  creature, combat, T700 eller T900.
+- 🔒 Spawn-sidecaren läser endast initieringsområdet `$20EC–$20EE` och
+  saknar `$B0E5`-kategori, returägarskap och source-owned target-publicering.
+  Capturet är därför ett reproducerbart negativt witness, inte ny gameplay-
+  semantik. Råa sidecars och den instrumenterade byggningen ligger kvar på
+  extern-disk.
+
 ## 2026-08-13 — source-gated object handoff is transactional
 
 - ✅ Den redan source-gated object-gameplay-handoffen validerar nu hela den
