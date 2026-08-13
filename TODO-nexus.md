@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: Fixed a real runtime divergence in the Nexus encumbrance path.
+`nexus_v1_encumbrance_recalc_max_load()` now delegates to the disassembly-bound
+`nexus_champion_get_maximum_load()` formula, so stamina scaling, wound penalties,
+minimum handling and ten-unit rounding are identical during engine ticks,
+champion initialization and save/load. A regression test covers the parity
+boundary. This does not alter the separate Saturn presentation/audio/save
+capture gates below.
+
 2026-08-13: The full external-data Nexus selection completed 304/304 CTest
 cases. Fourteen tests remain intentional capture-gated skips. The authentic
 English `MENU.BPK` decoder also passes all 162 PRS3 surface decodes, and the

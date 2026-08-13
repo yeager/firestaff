@@ -122,7 +122,29 @@ int main(void) {
         }
     }
 
-    /* Test 8: NULL safety */
+    /* Test 8: the public encumbrance recalculation must agree with the
+     * disassembly-bound champion formula, including stamina, wounds and the
+     * original ten-unit rounding. */
+    {
+        Nexus_V1_Champion ch;
+        int expected;
+        memset(&ch, 0, sizeof(ch));
+        ch.strength = 37;
+        ch.stamina = 23;
+        ch.max_stamina = 100;
+        ch.wounds = NEXUS_WOUND_LEGS | NEXUS_WOUND_HEAD;
+        expected = nexus_champion_get_maximum_load(&ch);
+        nexus_v1_encumbrance_recalc_max_load(&ch);
+        if (ch.max_load != expected || ch.max_load % 10 != 0) {
+            fprintf(stderr, "FAIL: canonical max_load=%d expected=%d\n",
+                    ch.max_load, expected);
+            fail++;
+        } else {
+            printf("  Canonical max-load parity: %d OK\n", ch.max_load);
+        }
+    }
+
+    /* Test 9: NULL safety */
     {
         if (nexus_v1_encumbrance_move_ticks(NULL) != 8 ||
             nexus_v1_encumbrance_stamina_cost(NULL) != NEXUS_STAMINA_COST_LIGHT ||

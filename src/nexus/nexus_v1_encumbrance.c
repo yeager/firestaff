@@ -45,17 +45,12 @@ int nexus_v1_encumbrance_ratio(const Nexus_V1_Champion *champion) {
 }
 
 void nexus_v1_encumbrance_recalc_max_load(Nexus_V1_Champion *champion) {
-    int base, wound_penalty;
     if (!champion) return;
 
-    base = (champion->strength << 3) + 100;
-
-    wound_penalty = 0;
-    if (champion->wounds & 1) wound_penalty += base / 8;
-    if (champion->wounds & 2) wound_penalty += base / 6;
-    if (champion->wounds & 4) wound_penalty += base / 4;
-    if (champion->wounds & 8) wound_penalty += base / 4;
-
-    champion->max_load = base - wound_penalty;
-    if (champion->max_load < 10) champion->max_load = 10;
+    /* Keep this public encumbrance API on the same source-locked path as
+     * champion initialization and save/load.  The former local formula
+     * omitted low-stamina scaling, used different wound penalties, and did
+     * not apply DM.BIN's ten-unit rounding, so callers could disagree about
+     * whether the same champion was overloaded. */
+    champion->max_load = nexus_champion_get_maximum_load(champion);
 }
