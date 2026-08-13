@@ -1159,6 +1159,14 @@ värden ensamma räcker inte för text- eller menyadmission.
   Med den autentiska korpusen på `/Volumes/Extern-disk/FirestaffUserData/data/nexus`
   passerar alla sju berörda real-data-tester. Saturn-JA-extra-gaterna är
   fortsatt skip-safe eftersom ingen extraherad originalkorpus finns på disken.
+- 2026-08-13: En riktad pose-bind-capture (`run-pose-bind-20260813`, 600
+  frames, autentiskt J-BIOS och hashverifierad merged-skiva) gav en viktig
+  negativ korrigering. DM.BIN-rutinen runt `0x0601275e` skriver
+  `0x06064560`, `0x06064564` och `0x06064568` från källtabellen
+  `0x060356e4`; bytesekvensen är en tabell-/pekarskrivning och inte en
+  level/x/y/facing-post. `0x0606455c`, den disassembly-bundna posepekaren,
+  fick ingen icke-nollskrivning i witnessen. Capturen får därför inte öppna
+  LEV01-startgaten eller användas för att skapa en pose.
 - 2026-08-13: En ny `nexus_v1_iso_only_launch`-gate kör launch-smoke från en
   temporär mapp som endast innehåller länkar till originalets CUE/ISO. Den
   verifierar därmed att Firestaff läser Nexus direkt från skivavbilden utan att
