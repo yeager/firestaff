@@ -5595,6 +5595,9 @@ authenticated BPK). The remaining work is a Saturn executable or capture
 
 # Theron US text consumer
 
+- ✅ The authenticated dungeon codon words now survive the real US/JP
+  Track 02 dungeon load in live world state as a lossless source stream;
+  this removes a transient-loader lifetime gap without publishing UI text.
 - 🔒 Real `TQUS02.bin` thing-data codons decode, but the observed `{}` control
   symbols have no authenticated US text-consumer/codetable owner. The
   production world text route therefore publishes zero strings. Bind the

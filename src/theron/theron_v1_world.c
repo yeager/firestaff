@@ -3234,3 +3234,20 @@ const char *theron_v1_world_dungeon_text(const Theron_V1_World *world,
     if (!world || text_index >= world->dungeon_text_count) return NULL;
     return world->dungeon_texts[text_index];
 }
+
+unsigned int theron_v1_world_source_dungeon_text_count(
+    const Theron_V1_World *world)
+{
+    return world ? world->source_dungeon_text_count : 0u;
+}
+
+int theron_v1_world_source_dungeon_text_word(
+    const Theron_V1_World *world,
+    unsigned int word_index,
+    uint16_t *out_word)
+{
+    if (!world || !out_word || word_index >= world->source_dungeon_text_count)
+        return 0;
+    *out_word = world->source_dungeon_text[word_index];
+    return 1;
+}

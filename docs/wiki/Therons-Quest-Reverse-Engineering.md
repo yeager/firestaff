@@ -63,6 +63,12 @@ The naming convention `theron_v1_*` marks source-locked/provenance-bound
 modules tied to real disc bytes; `theron_v22_*`/`theron_v2_*` mark the
 modern presentation layer (equivalent role to `dm1v2` for DM1).
 
+The Track 02 dungeon loader retains each authenticated little-endian text
+word in live world state alongside the transient load receipt. This is a
+lossless source handoff only: the public world-text table remains empty until
+the original HuC6280 control-code consumer and its VDC destination are joined
+by disassembly or runtime capture.
+
 ---
 
 ## 2. PC Engine CD Layout

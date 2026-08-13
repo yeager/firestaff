@@ -112,6 +112,11 @@ The strongest current proof is:
   the 9-word stride sequence (entries 0x0020..0x2020, stride 0x0400) without
   claiming per-entry semantic type, dungeon-level binding, or loader
   handoff.
+- `theron_v1_track02_dungeon_loader`: authenticated dungeon-text codons are
+  copied into the live world as raw source words during a real US/JP dungeon
+  load. This is a lossless handoff for the future HuC6280 consumer;
+  `world_dungeon_text()` still publishes zero strings while control-code
+  ownership and the destination renderer remain unresolved.
 - `theron_v1_level_descriptor`: reads all 53 six-byte descriptor records from
   authenticated US Track 02 user data at UD `0x619900` and rejects a bytewise
   mismatch against the source-locked table. This is a real-data receipt, not

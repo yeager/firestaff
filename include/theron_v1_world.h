@@ -340,6 +340,10 @@ typedef struct {
 
 #define THERON_MAX_OBJECTS 4096
 
+/* Raw Track 02 dungeon-text words retained by the loaded world.  These are
+ * source bytes for the unresolved HuC6280 text consumer, not host strings. */
+#define THERON_MAX_SOURCE_DUNGEON_TEXT 1024u
+
 /* A decoded source monster remains available as provenance even after its
  * static group members are admitted to the live creature pool.  The live
  * admission copies only fields present in the record; combat/AI consumers
@@ -586,6 +590,14 @@ struct Theron_V1_World {
     unsigned int dungeon_text_count;
     char dungeon_texts[64][256];
 
+    /* The diagnostic/UI text table above intentionally stays empty while the
+     * original control-code consumer is unresolved.  Keep the authenticated
+     * little-endian source words in the live world so a later consumer join
+     * does not have to reload or reconstruct them. */
+    int source_dungeon_text_dungeon_id;
+    unsigned int source_dungeon_text_count;
+    uint16_t source_dungeon_text[THERON_MAX_SOURCE_DUNGEON_TEXT];
+
     /* Deterministic state hash */
     uint64_t state_hash;
 };
@@ -626,6 +638,12 @@ int theron_v1_world_load_dungeon_text(Theron_V1_World *world,
 
 const char *theron_v1_world_dungeon_text(const Theron_V1_World *world,
                                           unsigned int text_index);
+unsigned int theron_v1_world_source_dungeon_text_count(
+    const Theron_V1_World *world);
+int theron_v1_world_source_dungeon_text_word(
+    const Theron_V1_World *world,
+    unsigned int word_index,
+    uint16_t *out_word);
 void theron_v1_party_place(Theron_V1_World *world, int x, int y, int dir);
 
 /* ── Object database API ─────────────────────────────────────────── */

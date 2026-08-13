@@ -427,6 +427,15 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         assert(result.source_property_table_verified == 1);
         assert(result.source_property_table_offset == 0x099825u);
         assert(result.source_text_data_count <= THERON_TRACK02_SOURCE_TEXT_MAX);
+        assert(theron_v1_world_source_dungeon_text_count(world) ==
+               result.source_text_data_count);
+        if (result.source_text_data_count > 0u) {
+            uint16_t source_word = 0;
+            assert(theron_v1_world_source_dungeon_text_word(
+                world, 0u, &source_word));
+            assert(source_word == result.source_text_data[0]);
+            assert(world->source_dungeon_text_dungeon_id == (int)d + 1);
+        }
         if (d == 0)
             assert(result.source_text_data_count == 0x013C);
         assert(result.source_object_count ==
