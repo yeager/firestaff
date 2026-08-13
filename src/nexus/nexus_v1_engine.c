@@ -2415,6 +2415,34 @@ static uint8_t *nexus_v1_read_iso_file(Nexus_V1_Engine *engine,
                                        int *out_size);
 static int find_iso(const char *dir, char *disc_path, int max_len);
 
+/* Use the source-owned ISO reader for loose images and for the real ISO
+ * member inside an external Nexus archive.  Directory discovery must not
+ * pass a .7z filename to the raw ISO reader. */
+static int nexus_open_disc_reader(Nexus_ISOReader *reader, const char *path) {
+    if (!reader || !path || !path[0]) return -1;
+    if (nexus_path_has_ext(path, ".cue"))
+        return nexus_iso_open_cue(reader, path);
+    if (nexus_path_has_ext(path, ".bin") ||
+        nexus_path_has_ext(path, ".iso"))
+        return nexus_iso_open(reader, path);
+    if (nexus_path_has_ext(path, ".7z")) {
+        char virtual_path[768];
+        uint8_t *image = NULL;
+        size_t image_size = 0U;
+        int opened;
+        if (snprintf(virtual_path, sizeof(virtual_path),
+                     "%s::Dungeon Master Nexus (English).iso", path) >=
+                (int)sizeof(virtual_path) ||
+            !asset_read_path_alloc(virtual_path, &image, &image_size)) {
+            free(image);
+            return -1;
+        }
+        opened = nexus_iso_open_memory(reader, image, image_size, path);
+        return opened;
+    }
+    return -1;
+}
+
 /* DGN material containers are deliberately narrower than the general asset
  * resolver. They must be an exact source entry named FLOORS.BPK or WALLS.BPK:
  * no hash fallback, DMDF-family scan, MENU.BPK, or opaque archive payload can
@@ -2541,24 +2569,7 @@ static void nexus_v1_try_open_supplemental_iso(Nexus_V1_Engine *engine) {
 static int nexus_try_open_disc_path(Nexus_V1_Engine *engine, const char *path) {
     int n = -1;
     if (!engine || !path || !path[0]) return 0;
-    if (nexus_path_has_ext(path, ".cue")) {
-        n = nexus_iso_open_cue(&engine->iso, path);
-    } else if (nexus_path_has_ext(path, ".bin") ||
-               nexus_path_has_ext(path, ".iso")) {
-        n = nexus_iso_open(&engine->iso, path);
-    } else if (nexus_path_has_ext(path, ".7z")) {
-        char virtual_path[768];
-        uint8_t *image = NULL;
-        size_t image_size = 0U;
-        if (snprintf(virtual_path, sizeof(virtual_path),
-                     "%s::Dungeon Master Nexus (English).iso", path) >=
-                (int)sizeof(virtual_path) ||
-            !asset_read_path_alloc(virtual_path, &image, &image_size)) {
-            free(image);
-            return 0;
-        }
-        n = nexus_iso_open_memory(&engine->iso, image, image_size, path);
-    }
+    n = nexus_open_disc_reader(&engine->iso, path);
     if (n > 0 && nexus_iso_is_nexus(&engine->iso)) {
         engine->source = NEXUS_SRC_ISO;
         printf("Nexus: opened disc image %s with %d files\n", path, n);
@@ -2586,9 +2597,7 @@ static int find_iso(const char *dir, char *disc_path, int max_len) {
             snprintf(candidate_path, sizeof(candidate_path), "%s\\%s", dir,
                      fd.cFileName);
             memset(&candidate, 0, sizeof(candidate));
-            opened = nexus_path_has_ext(candidate_path, ".cue")
-                ? nexus_iso_open_cue(&candidate, candidate_path)
-                : nexus_iso_open(&candidate, candidate_path);
+            opened = nexus_open_disc_reader(&candidate, candidate_path);
             if (opened > 0 && nexus_iso_is_nexus(&candidate)) {
                 snprintf(disc_path, max_len, "%s", candidate_path);
                 nexus_iso_close(&candidate);
@@ -2622,9 +2631,7 @@ static int find_iso(const char *dir, char *disc_path, int max_len) {
                 snprintf(candidate_path, sizeof(candidate_path), "%s/%s", dir,
                          ent->d_name);
                 memset(&candidate, 0, sizeof(candidate));
-                opened = nexus_path_has_ext(candidate_path, ".cue")
-                    ? nexus_iso_open_cue(&candidate, candidate_path)
-                    : nexus_iso_open(&candidate, candidate_path);
+                opened = nexus_open_disc_reader(&candidate, candidate_path);
                 if (opened > 0 && nexus_iso_is_nexus(&candidate)) {
                     snprintf(disc_path, max_len, "%s", candidate_path);
                     nexus_iso_close(&candidate);
