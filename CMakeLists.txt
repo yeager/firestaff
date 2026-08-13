@@ -1,4 +1,21 @@
 cmake_minimum_required(VERSION 3.20)
+project(Firestaff VERSION 3.0.312 LANGUAGES C)
+
+# Resolve the canonical user-data root before any test or probe declaration
+# expands it into a CTest environment/command.  This must precede the large
+# target inventory below; defining it later leaves early Nexus real-data
+# tests with an empty `/nexus` path at configure time.
+if(NOT DEFINED FIRESTAFF_WORKSPACE_DATA_DIR)
+    set(FIRESTAFF_WORKSPACE_DATA_DIR "$ENV{HOME}/.firestaff/data")
+endif()
+if("${FIRESTAFF_WORKSPACE_DATA_DIR}" STREQUAL "")
+    message(FATAL_ERROR "FIRESTAFF_WORKSPACE_DATA_DIR must not be empty")
+endif()
+
+# The first optional Nexus test targets are declared before the historical
+# CTest include later in this file. Initialize CTest here so their add_test()
+# calls are registered instead of silently disappearing from the test plan.
+include(CTest)
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_text.c")
     add_executable(test_nexus_v1_text
@@ -156,7 +173,9 @@ target_include_directories(test_nexus_v1_dgn_level_content PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_dgn_level_content PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_dgn_level_content COMMAND test_nexus_v1_dgn_level_content)
-set_tests_properties(nexus_v1_dgn_level_content PROPERTIES LABELS "nexus;dgn;tier4")
+set_tests_properties(nexus_v1_dgn_level_content PROPERTIES
+    ENVIRONMENT "NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    LABELS "nexus;dgn;tier4;real_data")
 
 add_executable(test_nexus_v1_cret_creature_stats
     tests/test_nexus_v1_cret_creature_stats.c)
@@ -4117,8 +4136,6 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.312 LANGUAGES C)
-
 set(FIRESTAFF_DUNGEON_STUDIO_VERSION "0.1")
 set(FIRESTAFF_SAVEGAME_EDITOR_VERSION "0.1")
 set(FIRESTAFF_ARTPACK_STUDIO_VERSION "0.1")
@@ -4149,9 +4166,6 @@ endif()
 # valid data directory. Default to the Firestaff canonical user data
 # root; callers may override with -DFIRESTAFF_WORKSPACE_DATA_DIR=... on
 # the cmake command line.
-if(NOT DEFINED FIRESTAFF_WORKSPACE_DATA_DIR)
-    set(FIRESTAFF_WORKSPACE_DATA_DIR "$ENV{HOME}/.firestaff/data")
-endif()
 if(NOT DEFINED FIRESTAFF_DM1_WORKSPACE_DATA_DIR)
     set(FIRESTAFF_DM1_WORKSPACE_DATA_DIR "$ENV{HOME}/.firestaff/data/dm1")
 endif()
@@ -14299,8 +14313,6 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/dm1/firestaff_dm1_v1_viewport_pale
 endif()
 
 # ── CTest integration ────────────────────────────────────────────────
-include(CTest)
-
 if(BUILD_TESTING)
  if(TARGET test_nexus_v2_production_runtime_boundary)
   add_test(NAME nexus_v2_production_runtime_boundary
@@ -38747,6 +38759,10 @@ add_executable(test_nexus_v1_dgn_material_raster
         NAME nexus_v1_dgn_geometry_readiness
         COMMAND test_nexus_v1_dgn_geometry_readiness
     )
+    set_tests_properties(nexus_v1_dgn_geometry_readiness PROPERTIES
+        ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+        LABELS "nexus;dgn;real_data;tier4"
+        SKIP_RETURN_CODE 77)
 
     add_executable(test_nexus_v1_direct_static_material_capture
         tests/test_nexus_v1_direct_static_material_capture.c
@@ -43489,6 +43505,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_multi_level_playa
         COMMAND test_nexus_v1_dgn_multi_level_playability
     )
     set_tests_properties(nexus_v1_dgn_multi_level_playability PROPERTIES
+        ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
         SKIP_RETURN_CODE 77
         LABELS "nexus;dgn;mechanics;real_data;skip_safe"
     )

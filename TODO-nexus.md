@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: Nexus CMake/CTest data-root wiring is verified on the external
+checkout. `project()` and the first `include(CTest)` now precede the early
+optional test declarations, and the canonical `FIRESTAFF_WORKSPACE_DATA_DIR`
+is initialized before any test command expands it. The authenticated DGN
+gates receive `/Volumes/Extern-disk/FirestaffUserData/data/nexus` in CTest;
+the focused text/content/geometry/multi-level selection passes 4/4. The full
+cross-game build was intentionally not used as a Nexus completion claim.
+
 2026-08-13: The source-only TITLE.BIN MAPD/TIBG decoder now clears previously
 decoded maps and metadata before every decode, including invalid input, and on
 every later-map failure. An invalid retail-shaped map can no longer leave an
