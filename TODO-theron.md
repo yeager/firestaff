@@ -11,6 +11,16 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   gameplaysemantik. Den ursprungliga HuC6280-textkonsumenten är fortfarande
   nästa källgräns.
 
+## 2026-08-13 — TQTR-verifieringen kan köras på extern temporär disk
+
+- ✅ `test_theron_v1_vram_trace_loader` använder nu `TMPDIR` för sin utökade
+  TQTR-fixture. Därmed kan den köras när macOS-systemvolymens `/tmp` är full,
+  utan att testet skriver till eller kräver plats där.
+- ✅ Den autentiserade US screen-space-capturen passerar separat med
+  `vram_nonzero=24336`, `bat_tiles=1057` och `presented_nonzero=44947`.
+- 🔒 Detta öppnar fortfarande inte square-to-tile, text, HUD- eller
+  gameplaysemantik.
+
 ## 2026-08-11 — RNG edge capture is still not a spawn handoff
 
 - 🔒 En extern autentiserad US-save-replay observerar `$4644`/`$4667` och

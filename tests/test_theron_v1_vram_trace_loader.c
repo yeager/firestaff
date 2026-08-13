@@ -65,7 +65,8 @@ static void write_u32_le(FILE *file, uint32_t value) {
 }
 
 static void test_load_tqtr_extended_vram_alignment(void) {
-    const char *path = "/tmp/firestaff_theron_vram_trace_loader.tqtr";
+    static char path[512];
+    const char *tmpdir = getenv("TMPDIR");
     const uint32_t vram_size = THERON_VRAM_SIZE + 16u;
     const uint32_t vce_size = THERON_VCE_SIZE + 8u;
     uint8_t vram[THERON_VRAM_SIZE];
@@ -74,6 +75,10 @@ static void test_load_tqtr_extended_vram_alignment(void) {
     uint8_t vce_extension[8];
     FILE *file;
     Theron_V1_Viewport vp;
+
+    if (!tmpdir || !tmpdir[0]) tmpdir = "/tmp";
+    assert(snprintf(path, sizeof(path), "%s/firestaff_theron_vram_trace_loader.tqtr",
+                    tmpdir) > 0);
 
     memset(vram, 0, sizeof(vram));
     memset(vce, 0, sizeof(vce));
