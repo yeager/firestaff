@@ -1344,3 +1344,6 @@ värden ensamma räcker inte för text- eller menyadmission.
   säger uttryckligen att fixture-koordinaten inte är Saturns startpose, och
   proben är inkopplad i CMake/CTest med `-Werror`. `nexus_v1_viewport_gate`
   passerar; detta öppnar inte retail-viewportens capture-gate.
+- 2026-08-13: En sista Nexus-sökning efter `TODO: pending disc image` i aktiva
+  Nexus-prober ger nu inga kvarvarande träffar. Historiska DONE-/audittexter
+  lämnas orörda; de är inte aktiva runtimekällor.
