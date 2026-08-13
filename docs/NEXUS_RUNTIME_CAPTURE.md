@@ -81,6 +81,21 @@ adjacent frames. This proves observed runtime change in the producer without
 identifying a menu, HUD, viewport, CLUT, or consumer; the tool always keeps
 semantic admission blocked.
 
+The external short J-region run
+`/Volumes/Extern-disk/nexus-capture-20260813/run-attachment-j-short-snapshot-20260813/`
+also demonstrates the snapshot profile. Its authentic 60-frame raw witness
+has SHA-256
+`b7d09f7103f21202392533f454acc8fe9839b790e7e30d03d85ff6e615b62d13`, and
+`memory.snapshot` contains four V1 records (frames 0, 20, 40 and 59), each
+covering the 2 MiB SH-2 WorkRAM range `0x06000000..0x061fffff`; the artifact
+SHA-256 is
+`837e15c76b206c59ab2a4bf27bdd87322067619223d51e4a8055ebdb99e1c8b9`. The
+snapshot-capable binary did not emit the separate RAM-write trace in this
+run. The external RAM-trace-capable binary is retained as a separate profile;
+the launcher must not combine or synthesize outputs from the two binaries.
+The snapshot is raw memory evidence only and does not bind LEV01, a save
+record, a pose, or a presentation consumer.
+
 ## Authenticated VDP1 DGN material join
 
 The external European run

@@ -2,6 +2,19 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: A second short J-region run used the external Mednafen
+`snapshot-build-7` binary, which advertises the SH-2 memory-snapshot hook.
+Against the same hash-verified authentic BIOS/disc pair it produced a clean
+60-frame raw witness and four 2 MiB WorkRAM snapshots at frames 0/20/40/59.
+The snapshot artifact is 8,388,802 bytes and has SHA-256
+`837e15c76b206c59ab2a4bf27bdd87322067619223d51e4a8055ebdb99e1c8b9`. The
+raw witness is unchanged (`b7d09f7103f21202392533f454acc8fe9839b790e7e30d03d85ff6e615b62d13`).
+This build did not emit `ram-writes.trace`; the other external build emits
+that trace but does not advertise the snapshot hook. The two artifacts are
+therefore retained as separate operator instrumentation profiles. The new
+snapshots contain no authenticated LEV01 start-pose consumer, so the Saturn
+pose/save/presentation gates remain closed.
+
 2026-08-13: A short clean J-region capture at
 `/Volumes/Extern-disk/nexus-capture-20260813/run-attachment-j-short-20260813/`
 validated 60 raw frames and 16 active VDP1 observations with
