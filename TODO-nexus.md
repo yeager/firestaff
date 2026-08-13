@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: The raw-capture launcher now starts the emulator in a dedicated
+process group when `setsid` is available, with a Python `os.setsid()` fallback
+on macOS. Timeout and signal cleanup therefore terminate the actual Mednafen
+process instead of an intermediate shell and leave a hashable
+`capture_exit_status` receipt. The synthetic launcher regression passes. Two
+new authentic J-BIOS/English-Merged attempts (`c10` at 180 seconds and `c11`
+at 300 seconds) both ended with status 137 and no raw witness; they are
+negative diagnostics, not gameplay evidence. No production gate is opened.
+
 2026-08-13: A J-BIOS/English-Merged external run applied the documented
 active-low Nexus debug sequence as nine explicit SMPC windows at frames
 300-650. The 1,200-frame raw witness validates successfully

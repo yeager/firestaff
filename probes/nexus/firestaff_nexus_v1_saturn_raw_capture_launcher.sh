@@ -166,6 +166,21 @@ mednafen_command=("$mednafen")
 if ((${#mednafen_options[@]} > 0)); then
   mednafen_command+=("${mednafen_options[@]}")
 fi
+capture_session_launcher=()
+if command -v setsid >/dev/null 2>&1; then
+  capture_session_launcher=(setsid)
+elif command -v python3 >/dev/null 2>&1; then
+  # macOS does not ship setsid.  The validator already requires Python for
+  # .py validators, so use a tiny external-session wrapper there as well.
+  capture_session_launcher=(python3 -c 'import os,sys; os.setsid(); os.execvp(sys.argv[1],sys.argv[1:])')
+fi
+launch_capture_process() {
+  if ((${#capture_session_launcher[@]})); then
+    exec "${capture_session_launcher[@]}" "$@"
+  else
+    exec "$@"
+  fi
+}
 
 if [[ -z "${trace_session:-}" ]]; then
   trace_session="${FIRESTAFF_NEXUS_TRACE_SESSION:-nexus-$(date -u +%Y%m%dT%H%M%SZ)-$$}"
@@ -216,7 +231,7 @@ umask 077
   printf 'FIRESTAFF_NEXUS_SATURN_RAW_CAPTURE_PLAN_V1\n'
   printf 'bios_sha256=%s\nbios_region=%s\ndisc_sha256=%s\nskip_frames=%s\nframe_limit=%s\npress_start_frame=%s\npress_start_length=%s\npress_button_mask=%s\npress_sequence=%s\n' \
     "$(lower "$bios_sha256")" "$bios_region" "$(lower "$disc_sha256")" "$skip_frames" "$frame_limit" "$press_start_frame" "$press_start_length" "$press_button_mask" "${FIRESTAFF_NEXUS_TRACE_PRESS_SEQUENCE:-}"
-  printf 'mednafen_home=%s\ntrace_session=%s\nno_waiting=%s\nrequire_input_window=%s\ntimeout_seconds=%s\n' "${mednafen_home:-}" "$trace_session" "$no_waiting" "$require_input_window" "$timeout_seconds"
+  printf 'mednafen_home=%s\ntrace_session=%s\ncapture_session_launcher=%s\nno_waiting=%s\nrequire_input_window=%s\ntimeout_seconds=%s\n' "${mednafen_home:-}" "$trace_session" "${capture_session_launcher[*]-}" "$no_waiting" "$require_input_window" "$timeout_seconds"
   printf 'vdp1_reg_pc_list=%s\n' "${FIRESTAFF_NEXUS_TRACE_VDP1_REG_PC_LIST:-}"
   printf 'mednafen_options=%q\n' "${mednafen_options[*]-}"
   printf 'capture_magic=FIRESTAFF_NEXUS_SATURN_RUNTIME_CAPTURE_V1\n'
@@ -349,7 +364,8 @@ if [[ -n "$mednafen_home" ]]; then
   FIRESTAFF_NEXUS_TRACE_CD_READ_MIN_LBA="${FIRESTAFF_NEXUS_TRACE_CD_READ_MIN_LBA:-}" \
   FIRESTAFF_NEXUS_TRACE_CD_READ_MAX_LBA="${FIRESTAFF_NEXUS_TRACE_CD_READ_MAX_LBA:-}" \
   SDL_AUDIODRIVER="${SDL_AUDIODRIVER:-}" \
-    "${mednafen_command[@]}" -filesys.untrusted_fip_check 0 "$bios_option" "$bios" "$disc" &
+    launch_capture_process "${mednafen_command[@]}" \
+      -filesys.untrusted_fip_check 0 "$bios_option" "$bios" "$disc" &
   capture_child_pid=$!
   capture_process_group_pid="$(ps -o pgid= -p "$capture_child_pid" 2>/dev/null | tr -d ' ')"
   [[ "$capture_process_group_pid" == "$capture_child_pid" ]] || capture_process_group_pid=
@@ -459,7 +475,8 @@ else
   FIRESTAFF_NEXUS_TRACE_CD_READ_MIN_LBA="${FIRESTAFF_NEXUS_TRACE_CD_READ_MIN_LBA:-}" \
   FIRESTAFF_NEXUS_TRACE_CD_READ_MAX_LBA="${FIRESTAFF_NEXUS_TRACE_CD_READ_MAX_LBA:-}" \
   SDL_AUDIODRIVER="${SDL_AUDIODRIVER:-}" \
-    "${mednafen_command[@]}" -filesys.untrusted_fip_check 0 "$bios_option" "$bios" "$disc" &
+    launch_capture_process "${mednafen_command[@]}" \
+      -filesys.untrusted_fip_check 0 "$bios_option" "$bios" "$disc" &
   capture_child_pid=$!
   capture_process_group_pid="$(ps -o pgid= -p "$capture_child_pid" 2>/dev/null | tr -d ' ')"
   [[ "$capture_process_group_pid" == "$capture_child_pid" ]] || capture_process_group_pid=
