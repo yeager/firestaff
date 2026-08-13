@@ -1098,6 +1098,16 @@ the remaining SRM blocker is still only original body-layout correlation.
     savestate run has no same-session CD-origin receipt, so level/object and
     gameplay semantics remain blocked.
 
+  - 2026-08-14 same-process continuity replay: a fresh real-SDL instrumented
+    process produced 256 authenticated CD→RAM receipts, 32 game-owned
+    `$E009` dispatches and 4,096 runtime-table rows after selecting the
+    verified Theron state slot 6 and issuing Load State in that same process.
+    This closes the earlier process-continuity gap, but the runtime rows still
+    begin after explicit state injection; there is no source-LBA → RAM-write
+    → record-mutation join. The result therefore remains a continuity witness,
+    not a level/object or gameplay semantic promotion. Capture binary MD5:
+    `2d84469309f81c582ed59160493fa170`.
+
 - 2026-08-06 update: the Track 02 thing-category enum is now source-bound to
   the retail order used by DMBUILDER6 (`4=monster`, `5=weapon`, `6=clothing`,
   `7=scroll`, `8=potion`, `9=chest`, `10=misc`, `14=missile`, `15=cloud`).

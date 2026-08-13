@@ -63,6 +63,23 @@ it cannot establish that the runtime bytes were produced by those seven
 source locations during the captured session. No level, square, object,
 creature, inventory, or timer semantics are promoted from this overlap.
 
+## Same-process continuity replay
+
+A fresh real-SDL instrumented process then read the authenticated US medium
+before state injection. Its sidecars contain 256 authenticated CD→RAM
+receipts, 32 game-owned `$E009` dispatches, and 4,096
+`theron_runtime_record_table` rows. The verified Theron state was copied into
+the private Mednafen state directory, state slot 6 was selected, and Load
+State was issued in that same process. The capture binary MD5 was
+`2d84469309f81c582ed59160493fa170`.
+
+This is stronger process continuity than the autoload replay, but it is not a
+causal source join. The runtime table appears after explicit savestate
+injection; the trace does not bind a Track 02 source LBA to a particular RAM
+write and subsequent `$6000`/`$611D` mutation. No level, object, square,
+creature, inventory, HUD, T700, or T900 semantic gate is opened by this
+receipt.
+
 ## Production boundary
 
 This receipt closes a useful instrumentation gap but leaves
