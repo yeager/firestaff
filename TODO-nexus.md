@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: Den senaste pose-auditen gav ingen tillåten LEV01-startpose.
+I de externa spåren `run-nexus-lev01-pose-followup-20260813` och
+`run-pose-bind-20260813v` observerades tio skrivningar vardera till den
+disassembly-bundna work-RAM-posten `0x0606455c..0x06064580`; alla hade
+`value=0x00000000` (`nonzero=0`). De riktade LEV01-capturerna
+`run-lev01-start-probe-20260813*` producerade ingen komplett rå-witness.
+Detta är reproducerad negativ evidens. Ingen level/x/y/facing får härledas
+från den, och Firestaff fortsätter att vägra spelbar startup utan autentisk
+retailkedja eller save-consumer.
+
 2026-08-13: Den autentiska externa VDP1-råcapturen
 `/Volumes/Extern-disk/nexus-saturn-capture/run-codex-menu-long-20260809f/runtime-vdp12.raw`
 är nu verifierad med sin manifestdeklarerade längd på 900 frames. Analysen fann
