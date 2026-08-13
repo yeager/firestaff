@@ -13,6 +13,18 @@ VDP1, VDP2 and SCSP traces. The trace proves runtime activity only: source
 asset identity, semantic consumer, and final presentation remain unbound, so
 `semantic_admission=blocked` is retained and no Saturn production gate opens.
 
+2026-08-13: A fresh authenticated J-BIOS/English-Merged capture at
+`/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-scsp-main-20260813-205421/`
+recorded identical trace-session metadata for the Saturn main CPU and sound
+CPU. All 16 `SLEV`, `SNDLEV*.MAP`, `SNDLEV*.SAL` files and `SDDRVS.TSK` were
+hash-verified. The capture contains four nonzero sound-CPU mailbox writes and
+three main-CPU mailbox writes, but no observed `SDDRVS.TSK` command handler at
+runtime PC `0x3224`; selector, SAL codec, and playback therefore remain
+unproven. A 900-frame retry with START/A/B/C/X input at
+`run-nexus-scsp-sequence-20260813-205738/` reproduced the same mailbox-only
+initialisation pattern. Both captures are valid negative runtime evidence;
+neither opens the SLEV/SAL/SCSP production gate.
+
 2026-08-13: Removed two unsupported `NEXUS_SFX_FOOTSTEP` emissions from
 water/fire traversal. ReDMCSB `MOVESENS.C` records the square sensors and
 movement result but the successful party-step path has no sound request;
