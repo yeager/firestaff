@@ -2,6 +2,13 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: `nexus_v1_sjis_to_utf8()` no longer discards an unsupported
+source byte after emitting an ASCII/kana prefix. Such input now clears the
+output and returns `-1`, matching the fail-closed contract for unverified
+JIS X 0208 text. `test_nexus_v1_text` covers the regression. This does not
+claim Shift-JIS double-byte decoding or Saturn text-consumer parity; those
+remain capture-/glyph-map-gated.
+
 2026-08-13: ITEM.IBS floor-image-rendering avvisar nu negativ
 `rgba_capacity`, och floor-image/palette-offsets kontrolleras med 64-bitars
 aritmetik innan source bytes läses. Den autentiska ITEM.IBS-kedjan med
