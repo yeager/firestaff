@@ -44,7 +44,10 @@ jobs:
             shell: bash
             generator: Ninja
             exe: ''
-            build_parallel: ''
+            # Keep the full-source build within the runner's memory budget.
+            # Unrestricted Ninja parallelism can starve the runner before the
+            # production-boundary and CTest steps are reached.
+            build_parallel: '3'
           - os: macos-14
             shell: bash
             generator: Unix Makefiles
