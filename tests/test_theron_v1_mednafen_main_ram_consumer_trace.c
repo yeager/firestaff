@@ -84,6 +84,44 @@ static int test_code_bank_reader_trace(void) {
 #endif
 }
 
+static int test_target_window_provenance(void) {
+#if defined(_WIN32)
+    return 1;
+#else
+    char path[512];
+    const char *tmpdir = getenv("TMPDIR");
+    const char *trace =
+        "source=mednafen-pce-instrumented-main-ram-consumer\n"
+        "main_ram_consumer_read sequence=0 logical_address=25ff physical_address=1f05ff value=00 reader_pc=cb22 reader_physical_pc=002b22 a=01 x=ff y=00 sp=fa p=04\n"
+        "main_ram_consumer_read sequence=1 logical_address=2600 physical_address=1f0600 value=00 reader_pc=cb22 reader_physical_pc=002b22 a=01 x=ff y=00 sp=fa p=04\n";
+    Theron_V1MednafenMainRamConsumerTraceReceipt receipt;
+    if (!tmpdir || !tmpdir[0]) tmpdir = "/tmp";
+    if (snprintf(path, sizeof(path), "%s/firestaff-theron-target-window-XXXXXX",
+                 tmpdir) <= 0) return 0;
+    int fd = mkstemp(path);
+    FILE *file;
+    int result;
+
+    if (fd < 0) return 0;
+    file = fdopen(fd, "wb");
+    if (!file) {
+        close(fd);
+        unlink(path);
+        return 0;
+    }
+    if (fputs(trace, file) == EOF || fclose(file) != 0) {
+        unlink(path);
+        return 0;
+    }
+    result = theron_v1_mednafen_main_ram_consumer_trace_parse_file(path, &receipt) &&
+             receipt.status == THERON_V1_MEDNAFEN_MAIN_RAM_CONSUMER_TRACE_READY &&
+             receipt.target_2600_bytes_present &&
+             !receipt.semantic_publication_allowed;
+    unlink(path);
+    return result;
+#endif
+}
+
 int main(void) {
     const char *path = getenv("THERON_MEDNAFEN_MAIN_RAM_CONSUMER_TRACE");
     Theron_V1MednafenMainRamConsumerTraceReceipt receipt;
@@ -102,6 +140,10 @@ int main(void) {
         fprintf(stderr, "FAIL: HuC6280 code-bank reader address\n");
         return 1;
     }
+    if (!test_target_window_provenance()) {
+        fprintf(stderr, "FAIL: target RAM window provenance retention\n");
+        return 1;
+    }
 
     if (!path || !path[0]) {
         puts("SKIP: THERON_MEDNAFEN_MAIN_RAM_CONSUMER_TRACE is not set");
@@ -110,17 +152,18 @@ int main(void) {
     if (!theron_v1_mednafen_main_ram_consumer_trace_parse_file(path, &receipt) ||
         receipt.status != THERON_V1_MEDNAFEN_MAIN_RAM_CONSUMER_TRACE_READY ||
         !receipt.source_trace_md5_verified || !receipt.source_header_verified ||
-        !receipt.bank_coordinates_verified || receipt.target_2600_bytes_present ||
+        !receipt.bank_coordinates_verified ||
         receipt.semantic_publication_allowed || receipt.read_count == 0u) {
         fprintf(stderr, "FAIL: real Mednafen consumer trace was not accepted\n");
         return 1;
     }
     printf("PASS: md5=%s reads=%u first_physical=%x last_physical=%x "
-           "first_reader=%x last_reader=%x target_2600=absent "
+           "first_reader=%x last_reader=%x target_2600=%s "
            "semantic_publication=blocked\n",
            receipt.source_trace_md5, receipt.read_count,
            receipt.first_physical_address, receipt.last_physical_address,
-           receipt.first_reader_physical_pc, receipt.last_reader_physical_pc);
+           receipt.first_reader_physical_pc, receipt.last_reader_physical_pc,
+           receipt.target_2600_bytes_present ? "present" : "absent");
     if (getenv("THERON_MEDNAFEN_MAIN_RAM_CONSUMER_PARSE_ONLY")) {
         puts("PASS: parser-only capture admission; code-window semantics not requested");
         return 0;

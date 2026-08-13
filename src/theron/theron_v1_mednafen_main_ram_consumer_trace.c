@@ -184,6 +184,12 @@ int theron_v1_mednafen_main_ram_consumer_trace_parse_file(
         receipt.last_physical_address = physical_address;
         receipt.last_reader_pc = reader_pc;
         receipt.last_reader_physical_pc = reader_physical_pc;
+        /* Preserve the narrow address-window fact separately from the
+         * semantic gate. A read in $2600-$27FF proves only that instrumented
+         * game code touched the RAM window; it does not classify the bytes
+         * as an object, level, T700 or T900 record. */
+        if (logical_address >= 0x2600u && logical_address <= 0x27ffu)
+            receipt.target_2600_bytes_present = 1;
         receipt.read_count++;
     }
     fclose(file);
@@ -195,7 +201,6 @@ int theron_v1_mednafen_main_ram_consumer_trace_parse_file(
     receipt.status = THERON_V1_MEDNAFEN_MAIN_RAM_CONSUMER_TRACE_READY;
     receipt.source_trace_md5_verified = 1;
     receipt.bank_coordinates_verified = 1;
-    receipt.target_2600_bytes_present = 0;
     receipt.semantic_publication_allowed = 0;
     snprintf(receipt.source_trace_path, sizeof(receipt.source_trace_path), "%s", path);
     snprintf(receipt.source_trace_md5, sizeof(receipt.source_trace_md5), "%s", md5);

@@ -1,5 +1,15 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-13 — `$2600`-läsning bevaras i parsern
+
+Parsern för `main_ram_consumer` nollställer inte längre
+`target_2600_bytes_present` efter att ha läst sidecar-raderna. Ett lokalt
+MPR-bundet extern-disk-spår (`mpr.trace.main-ram-consumer`, MD5
+`12f470ef2c38febd9b2c9699dad3b4cb`) innehåller en sammanhängande läsning från
+`$2600` och rapporteras därför som `target_2600=present` i parser-only-läge.
+Detta är fortfarande en adress-/körningsproveniens, inte en identifiering av
+recordtypen eller en öppning av object-, T700- eller T900-semantik.
+
 ## 2026-08-11 — authentic user save reaches the source RNG consumer path
 
 The fresh Mednafen run using the operator's `TQUS...sav` (not a synthetic

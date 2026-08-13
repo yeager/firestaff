@@ -2,6 +2,19 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — game-owned `$2600`-fönster bevaras som proveniens
+
+- ✅ `theron_v1_mednafen_main_ram_consumer_trace_parse_file()` behåller nu
+  `target_2600_bytes_present` när en verifierad `main_ram_consumer_read`
+  faktiskt ligger i `$2600–$27FF`. Den tidigare slutinitieringen nollställde
+  flaggan och kastade bort observationen.
+- ✅ Ett nytt parser-test täcker en läsning över fönstergränsen. Den lokala
+  MPR-capturen från extern-disken (`mpr.trace.main-ram-consumer`, MD5
+  `12f470ef2c38febd9b2c9699dad3b4cb`) passerar parser-only och rapporterar
+  `target_2600=present`.
+- 🔒 Detta klassificerar endast adressproveniens. Det identifierar inte bytes
+  som level, object, T700 eller T900 och öppnar ingen gameplaysemantik.
+
 ## 2026-08-13 — textcodonens positionsproveniens är nu bevarad
 
 - ✅ Track 02-textavkodaren behåller varje packat 5-bitarsvärde tillsammans
