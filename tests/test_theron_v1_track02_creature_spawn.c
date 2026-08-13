@@ -4,6 +4,17 @@
 #include <stdio.h>
 #include <string.h>
 
+/* This target is also built with NDEBUG by release configurations.  Keep the
+ * source-admission assertions live: a passing executable must have evaluated
+ * its real Track 02 checks, not merely compiled them away. */
+#undef assert
+#define assert(condition) do { \
+    if (!(condition)) { \
+        fprintf(stderr, "FAIL: %s (%s:%d)\n", #condition, __FILE__, __LINE__); \
+        exit(EXIT_FAILURE); \
+    } \
+} while (0)
+
 static uint8_t *read_file(const char *path, size_t *size_out) {
     FILE *file;
     long size;
@@ -210,18 +221,21 @@ int main(void) {
         if (!jp) jp = "/Users/bosse/.firestaff/data/theron/TQJP02.bin";
         FILE *us_file = fopen(us, "rb");
         FILE *jp_file = fopen(jp, "rb");
-        if (!us_file || !jp_file) {
-            if (us_file) fclose(us_file);
+        if (!us_file) {
             if (jp_file) fclose(jp_file);
-            puts("SKIP: authentic Theron Track 02 BINs not present");
+            puts("SKIP: authentic US Theron Track 02 BIN not present");
             return 77;
         }
         fclose(us_file);
-        fclose(jp_file);
         assert_decoded_real_bin(us, THERON_V1_TRACK02_VARIANT_US_BIN);
         /* JP is a real, hash-verified asset, but its pointer table is not at
          * the US disassembly offsets.  Do not silently reinterpret it. */
-        assert_real_bin_rejected(jp, THERON_V1_TRACK02_VARIANT_JP_BIN);
+        if (jp_file) {
+            fclose(jp_file);
+            assert_real_bin_rejected(jp, THERON_V1_TRACK02_VARIANT_JP_BIN);
+        } else {
+            puts("NOTE: JP Track 02 BIN not present; JP-offset rejection skipped");
+        }
     }
 
     printf("PASS: theron_v1_track02_creature_spawn\n");
