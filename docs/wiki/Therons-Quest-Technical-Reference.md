@@ -1,6 +1,6 @@
 # Theron's Quest Technical Reference
 
-> **Status reviewed 2026-08-12.** JP/US Track 02 identity and several loader
+> **Status reviewed 2026-08-13.** JP/US Track 02 identity and several loader
 > receipts are real-data verified. Game-owned dungeon handoff, object/level
 > semantics and bitmap/palette binding remain open. The verified startup
 > boundary does not establish the Firestaff `$2600` consumer or gameplay
