@@ -1351,3 +1351,8 @@ värden ensamma räcker inte för text- eller menyadmission.
   autentiska `DMN_ABS.TXT`-läsningen som en extracted-source fallback. Texten
   är korrigerad till `supplemental ISO`, vilket motsvarar engine-koden och
   bekräftar att originalmedlemmen läses från skivan utan materialisering.
+- 2026-08-13: Bootprofilens publika API-kommentarer är synkade med den
+  verifierade källmodellen: Nexus-data kan vara hashverifierad ISO/CUE,
+  container eller lös fil och Firestaff behöver inte packa upp originalet.
+  Boot-/ISO-smoke, ISO-only launch och den riktiga extern-disk-korpusen
+  passerar efter ändringen.

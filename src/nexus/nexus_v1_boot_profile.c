@@ -199,7 +199,7 @@ int Nexus_V1_BootProfile_ValidateAssets(const Nexus_V1_BootProfile *profile,
                      "Level file not found by hash or path: %s%sLEV00.DGN",
                      dataDir, sep);
             snprintf(diags[diagCount].suggestion, sizeof(diags[0].suggestion),
-                     "Ensure Nexus CD image extraction includes the LEV00.DGN payload.");
+                     "Ensure the Nexus ISO/container exposes the LEV00.DGN member or provide its hash-verified loose file.");
             diagCount++;
     }
 

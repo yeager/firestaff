@@ -53,9 +53,9 @@ extern "C" {
 typedef enum {
     /*
      * NEXUS_V1_RF_USE_SATURN_CD:
-     *   Load dungeon assets directly from extracted Saturn CD image
-     *   rather than pre-built .bin files. Must verify DM.BIN header
-     *   magic and checksum before loading.
+     *   Load dungeon assets from a hash-verified Saturn container or its
+     *   loose members. The runtime may read ISO members in place; it must
+     *   not require Firestaff to unpack the original game data.
      */
     NEXUS_V1_RF_USE_SATURN_CD          = (1 << 0),
 
@@ -141,9 +141,9 @@ typedef struct {
     unsigned int runtimeFlags;
 
     /* dataDir:
-     *   Root path for nexus game assets. When USE_SATURN_CD is
-     *   active, this directory must contain a DM.BIN or a
-     *   SATURNDAT/ directory with extracted CD image contents.
+     *   Root path for Nexus game assets. When USE_SATURN_CD is active,
+     *   this directory may contain a DM.BIN/loose corpus, an ISO/CUE
+     *   container, or another hash-verified supported container.
      *   Defaults to $FIRESTAFF_DATA/nexus/ or ~/.firestaff/data/nexus/
      */
     const char *dataDir;
