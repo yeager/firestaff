@@ -19,16 +19,22 @@ manifests tied to exact disc/version hashes.
 **Source:** `docs/NEXUS_FILE_CLASSIFICATION.md` (137 files from Sega Saturn ISO
 Track 1, volume DUNGEONMASTERNEXUS, product T-9111G V1.003, released 1998-02-03).
 
-**Provenance gate:** All 138 file SHA256 hashes computed from live extraction at
-`~/.firestaff/data/nexus/` (Sega Saturn disc T-9111G V1.003, ~115 MB ISO, 1998-02-03).
-Disc image SHA256: `TODO: pending disc image` (only the top-level disc-image hash is TBD;
-individual file hashes are real). Hash manifest: `scripts/fixtures/nexus_v1_disc_file_hashes.py`.
+**Provenance gate:** The 137 game-file SHA256 hashes are computed from the live
+English Saturn ISO/extraction at `/Volumes/Extern-disk/FirestaffUserData/data/nexus/`
+(Sega Saturn disc T-9111G V1.003, 1998-02-03). The generated 138-entry scan also
+contains the local `FILE_LISTING.txt` provenance record. The original English
+ISO identity is SHA-256
+`16786e6165d8cbf7f6394dd9bc7171fbb561c1ba40b77ad7cba3c275fde2804e`
+(123,011,072 bytes); its companion CUE is
+`b96f01e2f8ce3ab9c8e4a33d5a0c7076cdc1bfd247a85a1454e6c36c8a616f33`.
+Hash manifest: `scripts/fixtures/nexus_v1_disc_file_hashes.py`.
 
 **Real sizes:** `scripts/fixtures/nexus_v1_asset_sizes.py` (auto-generated from
 live scan of `~/.firestaff/data/nexus/`). Contains 138 files.
 
 Disc structure:
-- Track 1 (MODE1/2352, ISO 9660): 137+ files, ~115 MB
+- Track 1 (2048-byte ISO image in the staged corpus): 137 game files,
+  123,011,072 bytes
 - Tracks 2–9 (Red Book Audio CD-DA): 8 CD audio tracks for per-level music
 
 ### 1.1 Dungeon Levels (.DGN) — 16 files, 4,263,936 bytes total
