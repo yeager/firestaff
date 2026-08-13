@@ -4272,6 +4272,14 @@ endif()
 # ── Python discovery for source-shape/evidence gates ───────────────
 find_package(Python3 COMPONENTS Interpreter QUIET)
 
+if(Python3_EXECUTABLE)
+    add_test(NAME nexus_v1_vdp2_register_writer_source_suffix
+        COMMAND ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_vdp2_register_writer.py)
+    set_tests_properties(nexus_v1_vdp2_register_writer_source_suffix PROPERTIES
+        LABELS "nexus;vdp2;capture;parser;regression")
+endif()
+
 # -- zlib discovery (optional, used by asset-scanner ZIP/gzip paths) --
 #
 # Default to Firestaff's bundled miniz provider so release binaries do not

@@ -19,9 +19,9 @@ from pathlib import Path
 REG_LINE = re.compile(r"^(?:frame=[0-9]+ )?addr=0x([0-9a-fA-F]+) pc=0x([0-9a-fA-F]+)(.*)$")
 REG_VALUE = re.compile(r" r([0-9]+)=0x([0-9a-fA-F]+)")
 SOURCE_BYTES_R4 = re.compile(
-    r" src_r4=0x([0-9a-fA-F]+) src_words=([0-9a-fA-F]{4}(?:,[0-9a-fA-F]{4}){7})$")
+    r" src_r4=0x([0-9a-fA-F]+) src_words=([0-9a-fA-F]{4}(?:,[0-9a-fA-F]{4}){7})(?= src_r5=|$)")
 SOURCE_BYTES_R5 = re.compile(
-    r" src_r5=0x([0-9a-fA-F]+) src5_words=([0-9a-fA-F]{4}(?:,[0-9a-fA-F]{4}){7})$")
+    r" src_r5=0x([0-9a-fA-F]+) src5_words=([0-9a-fA-F]{4}(?:,[0-9a-fA-F]{4}){7})(?= |$)")
 WRITE_LINE = re.compile(
     r"^area=([a-z]+) addr=0x([0-9a-fA-F]+) size=([0-9]+) value=0x([0-9a-fA-F]+) "
     r"pc0=0x([0-9a-fA-F]+) pc1=0x([0-9a-fA-F]+)$"
