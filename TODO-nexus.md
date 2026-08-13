@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-14: A separate authenticated run with the same real Saturn gamepad
+configuration tested A at the end of the title/attract sequence. The run is
+at `/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-a-at-title-20260814/`;
+the post-A witness `03-after-a.png` has SHA-256
+`a8098c15145f1c633d754cfd41b03dfc8840df5f89c99b5d9c7caaa1d4652e8f`.
+It remains an original Nexus intro frame rather than the startup menu or
+LEV01. No save container was produced beyond the emulator lock/config files;
+the played-save gate remains closed.
+
 2026-08-14: A repeat run with the previously verified Saturn gamepad
 bindings (`START=keyboard 0x0 40`, `A=keyboard 0x0 89`) reached the real Nexus
 title prompt from the authentic J-BIOS/English merged disc. The external
