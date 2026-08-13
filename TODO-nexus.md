@@ -2,6 +2,25 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: Two additional operator-only J-BIOS/English-merged capture
+attempts (`run-followup-20260813c12` and `run-followup-20260813c14`) used the
+hash-verified BIOS/disc pair and the documented nine-window active-low debug
+sequence. Both stopped before producing `runtime.raw`: c12 stalled during
+the OpenGL/audio initialization profile, while c14 stalled in the corrected
+headless-options profile. The launcher recorded exit status 130 after
+controlled termination. These are emulator diagnostics only; they do not
+bind LEV01, pose, SLEV/SAL ownership, save state, or presentation and must
+not open a production gate.
+
+2026-08-13: Nexus boot-profile validation now passes its caller-provided
+diagnostic capacity through every nested asset check. Previously a caller
+with fewer than `NEXUS_V1_DIAG_COUNT` entries could receive an out-of-bounds
+diagnostic write and have adjacent game state corrupted. The regression is
+covered by the real-data boot hash scan and the focused launch tests; the
+external-disk Nexus selection passes 304/304 executed tests. Capture-only
+gates remain explicitly skipped when their authenticated producer artifact is
+absent.
+
 2026-08-13: A second short J-region run used the external Mednafen
 `snapshot-build-7` binary, which advertises the SH-2 memory-snapshot hook.
 Against the same hash-verified authentic BIOS/disc pair it produced a clean

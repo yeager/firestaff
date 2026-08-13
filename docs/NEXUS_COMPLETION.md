@@ -9,6 +9,16 @@ regionmatchad Saturn-kedja.
 
 ## Current evidence correction — 2026-08-13
 
+The local Nexus boot-profile hardening is now verified: nested asset checks
+honour the caller's diagnostic-buffer capacity instead of using the enum's
+larger maximum. This prevents validation from corrupting adjacent runtime
+state. The focused boot/launch set and the external-data Nexus selection both
+pass after the fix. Two further operator-only J-BIOS capture attempts
+(`run-followup-20260813c12` and `run-followup-20260813c14`) stopped before a
+raw witness during the external Mednafen video/init profile, so they add only
+negative emulator diagnostics and do not change the production percentages or
+open any Saturn gate.
+
 The latest attached-media J-region run at
 `/Volumes/Extern-disk/nexus-capture-20260813/run-attachment-j-20260813/`
 used the hash-verified J BIOS 1.01 and English merged CUE, and produced 1,200
