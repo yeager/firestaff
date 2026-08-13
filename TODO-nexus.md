@@ -2,6 +2,22 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: A J-BIOS/English-Merged external run applied the documented
+active-low Nexus debug sequence as nine explicit SMPC windows at frames
+300-650. The 1,200-frame raw witness validates successfully
+(`runtime.raw`, SHA-256
+`f3817d004d7242405274056ca36f8ed961abca930e797654a4400db3bb8b7e4c`), and
+the launcher manifest now records the input sequence plus hashes for the
+2 MiB frame-900 memory snapshot (`8c72af9618cde805310a3186d966bdd1d15f670f6b0bc3b45806b912294c8fe2`)
+and bounded RAM-write trace (`38e072e5dbc3c6b534b77f5dabd9e11c3704c2c469c4f6f23d945a1554dbd25c`).
+The raw validator passes, but the long operator process was terminated before
+the launcher's final receipt-append step; the capture is therefore not a
+complete manifest artifact and is not promoted as a formal gate input. The
+trace contains no write to the previously suspected `0x0606455c` pose pointer,
+and the snapshot does not contain a source-owned level/x/y/facing record. This
+is a negative diagnostic result; the LEV01 start-pose gate and all dependent
+production routes remain closed.
+
 2026-08-13: A clean, instrumented Mednafen build was verified against the
 authentic English-merged Saturn disc and EU BIOS. The external capture at
 `/Volumes/Extern-disk/nexus-capture-20260813/run-followup-20260813c4/`
