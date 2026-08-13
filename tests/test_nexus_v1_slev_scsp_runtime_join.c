@@ -57,6 +57,7 @@ int main(void)
     Nexus_SoundEngine engine;
     Nexus_SfxRuntimeReceipt sound_receipt;
     int ok = 0;
+    int external_corridor_proven = 0;
 
     if (!data_dir || !data_dir[0] || !scsp_path || !scsp_path[0] ||
         !main_path || !main_path[0]) {
@@ -88,13 +89,14 @@ int main(void)
             join_receipt.sal_codec_proven || join_receipt.playback_permitted) {
             goto cleanup;
         }
-    } else if (join_receipt.runtime_corridor_proven ||
+        } else if (join_receipt.runtime_corridor_proven ||
                !join_receipt.blocks_real_sfx_playback ||
                join_receipt.event_selector_semantics_proven ||
                join_receipt.sal_codec_proven || join_receipt.playback_permitted) {
         /* A partial capture must stay blocked, never become a false join. */
         goto cleanup;
     }
+    external_corridor_proven = join_receipt.runtime_corridor_proven;
     complete_trace_fixture = scsp_receipt;
     complete_trace_fixture.scsp_voice_register_write_count = 1U;
     complete_trace_fixture.command_handler_pc_3224_count = 1U;
@@ -165,6 +167,8 @@ cleanup:
         puts("FAIL: Nexus SLEV/SAL/SCSP runtime join");
         return 1;
     }
-    puts("test_nexus_v1_slev_scsp_runtime_join: PASS (source-bound, playback blocked)");
+    puts(external_corridor_proven
+             ? "test_nexus_v1_slev_scsp_runtime_join: PASS (source-bound corridor, playback blocked)"
+             : "test_nexus_v1_slev_scsp_runtime_join: PASS (join correctly blocked, playback blocked)");
     return 0;
 }

@@ -334,8 +334,8 @@ observes mailbox value `0x02` at the expected mailbox and binds the producer
 and consumer traces to the same session. It does not observe the verified
 SDDRVS command handler at `PC=0x3224`, an event selector, a MAP row, a SAL
 codec/sample, or a SCSP voice write. The C runtime join test therefore passes
-with `source-bound, playback blocked`; this is a positive provenance receipt,
-not an audio playback admission.
+only as a correctly blocked, playback-blocked result for this capture; it is
+not a positive source-bound corridor receipt or an audio playback admission.
 
 Reproduce the source-bound check with:
 

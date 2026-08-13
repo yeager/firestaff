@@ -5,10 +5,12 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 2026-08-13: The SCSP trace parser now accepts the authenticated long-form
 gameplay witnesses (the largest current trace is about 33 MiB) under a bounded
 64 MiB ceiling. The previous 16 MiB ceiling rejected them before parsing. Both
-external `run-slev-scsp-gameplay-20260811j` and `...k` trace pairs now pass
-`nexus_v1_scsp_trace` and `nexus_v1_slev_scsp_runtime_join`. This establishes
-the observed producer-to-SDDRVS-to-SCSP runtime corridor only; event/MAP/SAL
-semantics and host playback remain blocked.
+external `run-slev-scsp-gameplay-20260811j` and `...k` trace pairs now pass the
+structural `nexus_v1_scsp_trace` check, and the runtime-join test remains
+correctly fail-closed. These particular traces observe mailbox/voice activity
+but do not contain the disassembly-bound SDDRVS handler PC `0x3224`, so they do
+not prove the producer-to-SDDRVS-to-SCSP corridor. Event/MAP/SAL semantics and
+host playback remain blocked.
 
 2026-08-13: Re-run from the external checkout against
 `/Volumes/Extern-disk/FirestaffUserData/data/nexus` passed 108 of 117 selected

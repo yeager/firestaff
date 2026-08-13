@@ -1,5 +1,15 @@
 # Nexus: verifierad färdigställandegrad
 
+## Correction — long SCSP traces remain structurally admitted only
+
+The parser ceiling is now 64 MiB, so the authenticated gameplay traces of
+about 33 MiB are no longer rejected before parsing. The two retained
+`run-slev-scsp-gameplay-20260811j/k` pairs pass structural trace validation.
+Their runtime join is still fail-closed: neither trace contains the
+disassembly-bound SDDRVS handler PC `0x3224`. They therefore do not open the
+producer-to-SDDRVS-to-SCSP production gate, and no event, MAP, SAL or playback
+semantics are claimed.
+
 Det finns ingen meningsfull procent baserad på antal C-filer eller tester. Den
 redovisningen skulle räkna parserkod och no-op-grind som färdig runtime.
 Här skiljer vi därför på implementeringstäckning och produktionsgrad.
