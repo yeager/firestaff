@@ -3177,7 +3177,7 @@ static const char* m12_effective_version_md5(const M12_VersionSpec* spec) {
         return g_m12TestDm1MultiGraphicsMd5;
     }
     if (spec && strcmp(spec->gameId, "csb") == 0 &&
-        strcmp(spec->versionId, "pc34-en") == 0 &&
+        strcmp(spec->versionId, "amiga31-en") == 0 &&
         g_m12TestCsbGraphicsMd5[0] != '\0') {
         return g_m12TestCsbGraphicsMd5;
     }

@@ -182,8 +182,8 @@ static int seed_payload(const char* root,
  *     `dm1/GRAPHICS.DAT` synthetic file is intentionally written
  *     to prove that the data-dir picker does NOT auto-promote a
  *     well-named but unknown-hash file.
- *   - `csb/GRAPHICS.DAT` -> TestSetCsb registers against
- *     `csb pc34-en`.
+ *   - `csb/GRAPHICS.DAT` -> TestSetCsb registers against the supported
+ *     `csb amiga31-en` row. CSB has no original DOS/PC route.
  *   - `dm2/GRAPHICS.DAT` -> TestSetDm2 registers against
  *     `dm2 pc-en`.
  *   - `theron/Theron's Quest (Japan) (Track 02).iso` ->
@@ -257,7 +257,7 @@ static int build_platform_matrix_root(const char* root,
                       "platform-matrix DM1 legacy-dos dungeon v1\n",
                       h->dm1DosDungeon)) return 0;
 
-    /* CSB PC 3.4 canonical. */
+    /* CSB Amiga 3.1 English canonical test leaf. */
     if (!seed_payload(root, "csb/GRAPHICS.DAT",
                       "platform-matrix CSB graphics v1\n",
                       h->csbGraphics)) return 0;
@@ -452,7 +452,7 @@ static void check_full_layout_scan(const char* root,
     check_int(M12_AssetStatus_GameAvailable(&status, "dm1") == 1,
               "DM1 must be available when its pc34-multi row matches");
     check_int(M12_AssetStatus_GameAvailable(&status, "csb") == 1,
-              "CSB must be available when its pc34-en row matches");
+              "CSB must be available when its amiga31-en row matches");
     check_int(M12_AssetStatus_GameAvailable(&status, "dm2") == 1,
               "DM2 must be available when its pc-en row matches");
     check_int(M12_AssetStatus_GameAvailable(&status, "theron") == 1,
@@ -474,8 +474,8 @@ static void check_full_layout_scan(const char* root,
             M12_AssetStatus_GetFirstMatchedVersion(&status, "csb");
         check_int(first != NULL,
                   "first-matched CSB version must not be NULL");
-        check_int(first && strcmp(first->versionId, "pc34-en") == 0,
-                  "first-matched CSB version must be the pc34-en row");
+        check_int(first && strcmp(first->versionId, "amiga31-en") == 0,
+                  "first-matched CSB version must be the amiga31-en row");
     }
     {
         const M12_AssetVersionStatus* first =
