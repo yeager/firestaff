@@ -214,6 +214,35 @@ static void test_unresolved_teleporter_blocks(void) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+ * TEST: stairs without a loaded destination fail closed
+ * ═══════════════════════════════════════════════════════════════ */
+static void test_unloaded_stairs_block(void) {
+    printf("[test:unloaded_stairs_block]\n");
+
+    Theron_V1_World w;
+    make_world(&w);
+    w.levels[0][0].squares[8][9] = THERON_SQUARE_STAIRS_DOWN;
+    w.party.leader_x = 8;
+    w.party.leader_y = 8;
+    w.party.champions[0].stamina = 37;
+    w.transition_pending = 0;
+
+    CHECK_INT("unloaded stairs query blocks",
+              theron_v1_get_move_result(&w, THERON_DIR_EAST),
+              THERON_MOVE_BLOCKED);
+    CHECK_INT("unloaded stairs movement blocks",
+              theron_v1_move_party(&w, THERON_DIR_EAST),
+              THERON_MOVE_BLOCKED);
+    CHECK_INT("unloaded stairs keeps current level", w.current_level, 0);
+    CHECK_INT("unloaded stairs keeps leader x", w.party.leader_x, 8);
+    CHECK_INT("unloaded stairs keeps leader y", w.party.leader_y, 8);
+    CHECK_INT("unloaded stairs keeps transition clear",
+              w.transition_pending, 0);
+    CHECK_INT("unloaded stairs does not apply move effects",
+              w.party.champions[0].stamina, 37);
+}
+
+/* ═══════════════════════════════════════════════════════════════
  * TEST: click route — MOVE
  * ═══════════════════════════════════════════════════════════════ */
 static void test_click_route_move(void) {
@@ -671,6 +700,7 @@ int main(void) {
     test_get_move_result();
     test_pit_fall();
     test_unresolved_teleporter_blocks();
+    test_unloaded_stairs_block();
     test_click_route_move();
     test_click_route_use_door();
     test_door_open_close();

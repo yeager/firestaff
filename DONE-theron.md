@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — unloaded stairs no longer report success
+
+- ✅ Stairs query and movement now require a loaded destination level and
+  propagate transition failure as `THERON_MOVE_BLOCKED`.
+- ✅ The hardening probe verifies that an unloaded stairs destination leaves
+  party position, level, transition state and stamina unchanged.
+- 🔒 This does not infer dynamic source-level loading or new stairs semantics.
+
 ## 2026-08-13 — unresolved teleporter movement is fail-closed
 
 - ✅ Movement now checks the transactional teleporter resolver result instead

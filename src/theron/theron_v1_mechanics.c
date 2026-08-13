@@ -387,6 +387,15 @@ Theron_MoveResult theron_v1_get_move_result(const Theron_V1_World *world, int di
         return THERON_MOVE_PIT_FALL;
     }
     if (tile == THERON_SQUARE_STAIRS_UP || tile == THERON_SQUARE_STAIRS_DOWN) {
+        int target_level = world->current_level +
+            (tile == THERON_SQUARE_STAIRS_UP ? -1 : 1);
+        if (target_level < 0 ||
+            target_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+            world->current_dungeon < 1 ||
+            world->current_dungeon > THERON_DUNGEON_COUNT ||
+            !world->level_loaded[world->current_dungeon - 1][target_level]) {
+            return THERON_MOVE_BLOCKED;
+        }
         return THERON_MOVE_STAIRS;
     }
     if (tile == THERON_SQUARE_TELEPORTER) {
@@ -488,8 +497,9 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
     /* ── Special squares: stairs ── */
     if (tile == THERON_SQUARE_STAIRS_UP || tile == THERON_SQUARE_STAIRS_DOWN) {
         /* Teleporter-style result: queue transition but don't move */
-        theron_v1_check_transition(world, nx, ny);
-        theron_v1_transition_execute(world);
+        if (theron_v1_check_transition(world, nx, ny) == 0 ||
+            theron_v1_transition_execute(world) < 0)
+            return THERON_MOVE_BLOCKED;
         theron_v1_apply_post_move_effects(world);
         return THERON_MOVE_STAIRS;
     }

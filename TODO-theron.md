@@ -8,6 +8,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — oladdade stairs blockeras fail-closed
+
+- ✅ Movement query och mutation kräver nu att stairs-målleveln faktiskt är
+  laddad. Ett misslyckat `transition_execute()` rapporteras inte längre som en
+  lyckad `THERON_MOVE_STAIRS` och inga move-effects körs.
+- ✅ Hardening-proben verifierar att en stairs-down utan laddad level lämnar
+  partyposition, level, transition-state och stamina oförändrade.
+- 🔒 Detta är en state-invariant; dynamisk source-owned level loading och
+  originalets stairs-consumer är fortfarande separata capture-gated frågor.
+
 ## 2026-08-13 — olösbar teleportering blockeras fail-closed
 
 - ✅ Rörelsevägen respekterar nu `theron_v1_teleporter_resolve()`-returen:

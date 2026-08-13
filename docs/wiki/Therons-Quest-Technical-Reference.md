@@ -22,6 +22,14 @@ this guard does not infer new dungeon semantics.
 > the mechanics-hardening probe. Source-owned level/object consumers remain
 > capture-gated.
 
+## Stairs failure boundary
+
+Movement queries and execution require the stairs destination level to be
+loaded. If transition setup or execution fails, the result is
+`THERON_MOVE_BLOCKED`; no party position, transition state or per-move effect
+is published. This preserves the fail-closed boundary while dynamic
+source-owned level loading and the original stairs consumer remain unresolved.
+
 > **Status reviewed 2026-08-13.** JP/US Track 02 identity and several loader
 > receipts are real-data verified. Game-owned dungeon handoff, object/level
 > semantics and bitmap/palette binding remain open. The verified startup
