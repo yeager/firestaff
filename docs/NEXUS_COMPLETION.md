@@ -1,5 +1,19 @@
 # Nexus: verifierad färdigställandegrad
 
+## Current external-data verification — 2026-08-13
+
+The external checkout was tested against
+`/Volumes/Extern-disk/FirestaffUserData/data/nexus`: all 304 registered Nexus
+CTest cases completed successfully. Fourteen tests remain intentionally
+capture-gated and are reported as skips, not as passing semantic evidence.
+The real English `MENU.BPK` decoder independently decodes all 162 PRS3
+surfaces (`test_nexus_v1_bppk`), and the engine exposes the resulting
+`READY_DECODED` source route. This does not authorize Saturn presentation:
+the menu still requires an authenticated PALT/VDP1 consumer join, and the
+startup/menu, LEV01 pose, HUD/viewport, SLEV/SAL playback, and Saturn-save
+production gates remain closed where their source-owned runtime witnesses are
+missing.
+
 ## Correction — long SCSP traces remain structurally admitted only
 
 The parser ceiling is now 64 MiB, so the authenticated gameplay traces of

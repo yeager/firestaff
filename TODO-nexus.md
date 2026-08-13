@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: The full external-data Nexus selection completed 304/304 CTest
+cases. Fourteen tests remain intentional capture-gated skips. The authentic
+English `MENU.BPK` decoder also passes all 162 PRS3 surface decodes, and the
+engine reports the source route as `READY_DECODED`; the remaining blocker is
+the Saturn presentation join (PALT/VDP1 consumer and menu identity), not the
+PRS3 byte decoder itself. LEV01 pose, HUD/viewport production, SLEV/SAL
+playback, and Saturn-save import remain separately capture-gated.
+
 2026-08-13: The VDP1 external compositor test no longer incorrectly requires
 the direct-colour and indexed DGN/Mode-1 witnesses to be the same frame. The
 authenticated J capture `run-codex-j-menu-long-20260809` frame 500 passes the
