@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-14: A raw Saturn capture retry using the authenticated English merged
+CUE, J-BIOS and the previously working instrumented Mednafen binary was
+stopped after the launcher timeout window. The measured title input sequence
+(`13500:60:0x10`) was accepted and the emulator stayed active, but no
+`runtime.raw` witness was flushed. This is a capture-tool failure, not proof
+of a menu or LEV01 transition; the fail-closed launcher now records the
+non-zero capture status when the requested raw witness is missing. The full
+Nexus regression remains green against the external real corpus: 184/184
+executed tests pass and 11 capture-gated tests remain intentional skips.
+
 2026-08-14: A clean, non-instrumented Mednafen session was run with the
 authentic English merged CUE, J-BIOS configuration and explicit Saturn
 bindings (`START=keyboard 0x0 40`, `A=keyboard 0x0 89`). Window-ID-bound
