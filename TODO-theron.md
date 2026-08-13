@@ -2,6 +2,18 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — capturebaserad Theron-regression är verifierad
+
+- ✅ Hela Theron-regressionen på extern `TMPDIR` passerar: 253 valda tester,
+  varav 247 körda och 6 korrekta capture-skippar utan lokala fixtures.
+- ✅ Med autentiserade lokala fixtures passerar även VRAM/VCE-readiness,
+  Main-RAM-consumer och CD-state-sidecar. Den färska replayen ger 161 råa
+  sektorer, 51 SCSI-läsningar, 25 CD IRQ, 47 FIFO→RAM-receipts och 65 536
+  VDC-skrivningar.
+- 🔒 Detta löser testmiljö- och transportblockern. Gameplaysemantik är ännu
+  inte öppnad: sessionen saknar game-owned FIFO→RAM-receipt, spawn-consumer
+  och RNG-window.
+
 ## 2026-08-13 — VDC-I/O-proveniens ingår nu i transition-admission
 
 - ✅ Capture-skriptet räknar autentiska `vdc_io_write`-rader och skriver

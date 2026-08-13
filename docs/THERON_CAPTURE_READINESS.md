@@ -33,6 +33,12 @@ spawn-consumer reads, and no RNG windows; it remains transport evidence only.
 The raw local output is outside GitHub at
 `/Volumes/Extern-disk/theron-capture-20260813/replay/`.
 
+The external-`TMPDIR` Theron regression is green: 253 selected CTest cases
+passed (247 executed, six expected capture skips). With the local authenticated
+fixtures, the VRAM/VCE readiness, Main-RAM consumer, and CD-state sidecar tests
+also pass. These are transport/readiness gates only; they do not promote the
+missing game-owned dungeon, spawn, or RNG consumers.
+
 An additional authenticated GUI capture now proves the real BIOS Run-to-CD
 Track 02 startup handoff and supplies the original-media title/menu image in
 `verification-screens/theron-quest-us-main-menu.png`. This is a real original

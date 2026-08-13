@@ -82,6 +82,13 @@ the same session has no game-owned FIFO-to-RAM receipt, spawn-consumer read or
 RNG window. This is transport provenance only; the raw capture remains local
 and is not a GitHub wiki artifact.
 
+The full Theron CTest selection is now green on an external temporary volume:
+253 selected tests pass, including the three capture-gated tests when supplied
+with the local authenticated VRAM/VCE, Main-RAM, and CD-state fixtures. Six
+tests remain expected skips when those local fixtures are absent. This closes
+the test-environment blocker, not the semantic one: no game-owned dungeon
+handoff, spawn consumer, or RNG window is admitted yet.
+
 ---
 
 ## 2. PC Engine CD Layout
