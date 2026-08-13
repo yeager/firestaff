@@ -100,19 +100,32 @@ run_validator() {
 }
 
 capture_child_pid=
+capture_process_group_pid=
 capture_timeout_pid=
+terminate_capture_process() {
+  local pid="${1:-}"
+  [[ -n "$pid" ]] || return 0
+  if [[ -n "${capture_process_group_pid:-}" && "$capture_process_group_pid" == "$pid" ]]; then
+    kill -TERM -- "-$pid" 2>/dev/null || true
+    sleep 1
+    kill -KILL -- "-$pid" 2>/dev/null || true
+  else
+    kill -TERM "$pid" 2>/dev/null || true
+    sleep 1
+    kill -KILL "$pid" 2>/dev/null || true
+  fi
+}
 cleanup_capture_child() {
   local status=$?
   if [[ -n "$capture_timeout_pid" ]] && kill -0 "$capture_timeout_pid" 2>/dev/null; then
     kill -TERM "$capture_timeout_pid" 2>/dev/null || true
   fi
   if [[ -n "$capture_child_pid" ]] && kill -0 "$capture_child_pid" 2>/dev/null; then
-    kill -TERM "$capture_child_pid" 2>/dev/null || true
-    sleep 1
-    kill -KILL "$capture_child_pid" 2>/dev/null || true
+    terminate_capture_process "$capture_child_pid"
   fi
   capture_timeout_pid=
   capture_child_pid=
+  capture_process_group_pid=
   finalize_capture_manifest "$status" || true
   return "$status"
 }
@@ -338,6 +351,8 @@ if [[ -n "$mednafen_home" ]]; then
   SDL_AUDIODRIVER="${SDL_AUDIODRIVER:-}" \
     "${mednafen_command[@]}" -filesys.untrusted_fip_check 0 "$bios_option" "$bios" "$disc" &
   capture_child_pid=$!
+  capture_process_group_pid="$(ps -o pgid= -p "$capture_child_pid" 2>/dev/null | tr -d ' ')"
+  [[ "$capture_process_group_pid" == "$capture_child_pid" ]] || capture_process_group_pid=
 else
   trap cleanup_capture_child INT TERM EXIT
   FIRESTAFF_NEXUS_TRACE_OUTPUT="$trace" \
@@ -446,19 +461,17 @@ else
   SDL_AUDIODRIVER="${SDL_AUDIODRIVER:-}" \
     "${mednafen_command[@]}" -filesys.untrusted_fip_check 0 "$bios_option" "$bios" "$disc" &
   capture_child_pid=$!
+  capture_process_group_pid="$(ps -o pgid= -p "$capture_child_pid" 2>/dev/null | tr -d ' ')"
+  [[ "$capture_process_group_pid" == "$capture_child_pid" ]] || capture_process_group_pid=
 fi
 if ((timeout_seconds > 0)); then
   (
     sleep "$timeout_seconds"
     if [[ -n "$capture_child_pid" ]] && kill -0 "$capture_child_pid" 2>/dev/null; then
-      kill -TERM "$capture_child_pid" 2>/dev/null || true
       # Mednafen's signal handler flushes the capture but may not return
       # promptly. Give it a short grace period, then guarantee that the
       # operator launcher cannot remain attached to a dead capture session.
-      sleep 2
-      if kill -0 "$capture_child_pid" 2>/dev/null; then
-        kill -KILL "$capture_child_pid" 2>/dev/null || true
-      fi
+      terminate_capture_process "$capture_child_pid"
     fi
   ) &
   capture_timeout_pid=$!
@@ -472,6 +485,7 @@ if [[ -n "$capture_timeout_pid" ]] && kill -0 "$capture_timeout_pid" 2>/dev/null
 fi
 capture_timeout_pid=
 capture_child_pid=
+capture_process_group_pid=
 trap - INT TERM EXIT
 # Mednafen's signal handler can return success after SIGTERM even when the
 # capture hook never reached its first complete frame. The raw witness is
