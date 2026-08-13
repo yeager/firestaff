@@ -2,6 +2,22 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-14: A repeat run with the previously verified Saturn gamepad
+bindings (`START=keyboard 0x0 40`, `A=keyboard 0x0 89`) reached the real Nexus
+title prompt from the authentic J-BIOS/English merged disc. The external
+receipt directory is
+`/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-menu-authenticated-20260814/`:
+the title prompt witness is `12-after-start-65s.png` (SHA-256
+`2e4ec570ec933d8afe6ddcba0f980b08a1fcc5a2ad8818b65be27da4ab0ee6eb`). A
+subsequent START produced real Nexus video frames (`16-dismissed.png`, SHA-256
+`b3436a8c2162b09bf1e827b1a276703b47efcdc4b9fea86c3bd10e2f770b607a`, and
+`17-after-start-followup.png`, SHA-256
+`88d6ac768f3c393b59e8a368b383a078747f832819507a89f7dab822e5d716c2`) but
+returned to the original attract/intro sequence. The apparent menu behind the
+Mednafen window was OpenCaptive, not Nexus. Therefore this run proves the
+authentic title/input path only; Nexus menu, LEV01, and played-save gates
+remain closed.
+
 2026-08-14: A second authenticated interactive run at
 `/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-interactive-title-to-menu-20260814/`
 confirmed the real Nexus title progression after START: `Now Loading` at
