@@ -26,6 +26,37 @@ static uint64_t nexus_title_fnv1a64(const uint8_t *bytes, size_t size)
  * The final palette word therefore ends at 0x8c74. */
 #define NEXUS_TITLE_MAPD_MIN_BYTES 0x8c74U
 
+static void nexus_title_clear_decoded_maps(Nexus_TitleScreen *title)
+{
+    int map;
+    if (!title) {
+        return;
+    }
+    for (map = 0; map < NEXUS_V1_TITLE_MAP_COUNT; ++map) {
+        free(title->decoded_map_pixels[map]);
+        title->decoded_map_pixels[map] = NULL;
+    }
+    memset(title->decoded_map_source_offsets, 0,
+           sizeof(title->decoded_map_source_offsets));
+    memset(title->decoded_map_cell_bytes, 0,
+           sizeof(title->decoded_map_cell_bytes));
+    memset(title->decoded_map_tile_min, 0,
+           sizeof(title->decoded_map_tile_min));
+    memset(title->decoded_map_tile_max, 0,
+           sizeof(title->decoded_map_tile_max));
+    memset(title->decoded_map_word0_or, 0,
+           sizeof(title->decoded_map_word0_or));
+    memset(title->decoded_map_word1_or, 0,
+           sizeof(title->decoded_map_word1_or));
+    memset(title->decoded_map_word1_attribute_or, 0,
+           sizeof(title->decoded_map_word1_attribute_or));
+    memset(title->decoded_map_cell_fnv1a64, 0,
+           sizeof(title->decoded_map_cell_fnv1a64));
+    memset(title->decoded_map_palette, 0, sizeof(title->decoded_map_palette));
+    title->decoded_map_count = 0;
+    title->decoded_map_source_bound = 0;
+}
+
 /* DMWeb, Dungeon Master Nexus Data File Decoder: MAPD contains five
  * 64x28 tilemaps; TITLE.CG supplies the 5249 contiguous 8x8 4bpp tiles. */
 int nexus_v1_title_decode_mapd(const uint8_t *mapd,
@@ -41,6 +72,7 @@ int nexus_v1_title_decode_mapd(const uint8_t *mapd,
         memcmp(mapd + 8U, "TIBG", 4) != 0) {
         return 0;
     }
+    nexus_title_clear_decoded_maps(title);
     for (map = 0; map < NEXUS_V1_TITLE_MAP_COUNT; ++map) {
         size_t map_offset = 0x40U + (size_t)map * 0x1c04U;
         uint8_t *out = (uint8_t *)calloc(
@@ -54,11 +86,13 @@ int nexus_v1_title_decode_mapd(const uint8_t *mapd,
         uint16_t word1_attribute_or = 0U;
         if (!out || map_offset + 4U + 0x1c00U > mapd_size) {
             free(out);
+            nexus_title_clear_decoded_maps(title);
             return 0;
         }
         if (nexus_title_be16(mapd + map_offset) != 0x0040U ||
             nexus_title_be16(mapd + map_offset + 2U) != 0x001cU) {
             free(out);
+            nexus_title_clear_decoded_maps(title);
             return 0;
         }
         for (cell = 0; cell < 64 * 28; ++cell) {
@@ -73,6 +107,7 @@ int nexus_v1_title_decode_mapd(const uint8_t *mapd,
             if (tile_index < 0 || tile_index >= 5249 ||
                 (size_t)tile_index * 32U + 32U > title_cg_bytes) {
                 free(out);
+                nexus_title_clear_decoded_maps(title);
                 return 0;
             }
             if ((uint16_t)tile_index < tile_min)

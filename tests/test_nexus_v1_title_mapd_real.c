@@ -85,6 +85,23 @@ int main(void)
     for (map = 0; map < 16; ++map)
         check(title.decoded_map_palette[map] != 0,
               "retail MAPD palette word is populated");
+    {
+        unsigned char *broken_mapd = (unsigned char *)malloc(0x8c74U);
+        check(broken_mapd != NULL, "title MAPD regression buffer allocates");
+        if (broken_mapd) {
+            memcpy(broken_mapd, title_bin + 0x0e278U, 0x8c74U);
+            broken_mapd[0x40U + 0x1c04U] = 0;
+            broken_mapd[0x40U + 0x1c04U + 1U] = 0;
+            check(nexus_v1_title_decode_mapd(
+                      broken_mapd, 0x8c74U, title_cg, cg_size, &title) == 0,
+                  "corrupt later title map is rejected");
+            check(title.decoded_map_count == 0 &&
+                      title.decoded_map_source_bound == 0 &&
+                      title.decoded_map_pixels[0] == NULL,
+                  "failed title decode clears earlier map allocations and metadata");
+            free(broken_mapd);
+        }
+    }
     title.pixels = (unsigned char *)malloc(1U);
     check(title.pixels != NULL, "title presentation sentinel allocates");
     title.width = NEXUS_V1_TITLE_MAP_WIDTH;
