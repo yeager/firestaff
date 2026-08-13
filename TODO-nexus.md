@@ -2,6 +2,12 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: FACE.BIN-headern validerar nu deklarerad filstorlek, tabellens
+minimala start, strikt stigande portrait-offsets och sista portraitens
+deklarerade filgräns. Portrait-dekodning använder den autentiska deklarerade
+storleken som övre bound i stället för en större caller-buffer. Den riktiga
+20-portraiters FACE.BIN-korpusen passerar fortfarande komplett.
+
 2026-08-13: BPX/BPK:s stored-extraktion avvisar nu payloader över `INT_MAX`.
 API:t returnerar byteantal som `int`; tidigare kunde en stor men boundsmässigt
 godkänd `uint32`-storlek kopieras och sedan wrap:a till ett negativt returvärde.

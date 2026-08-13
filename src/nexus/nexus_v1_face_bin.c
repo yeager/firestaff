@@ -37,8 +37,14 @@ int nexus_v1_face_bin_parse_header(const uint8_t *data, int data_size,
     out->portrait_count = read_be16(data + 8);
     if (out->portrait_count > NEXUS_FACE_BIN_PORTRAIT_COUNT) return 0;
     if (data_size < 16 + out->portrait_count * 2) return 0;
-    for (i = 0; i < out->portrait_count; ++i)
+    if (out->file_size < (uint32_t)(16 + out->portrait_count * 2) ||
+        out->file_size > (uint32_t)data_size) return 0;
+    for (i = 0; i < out->portrait_count; ++i) {
         out->offsets[i] = read_be16(data + 16 + i * 2);
+        if (out->offsets[i] < 16 + out->portrait_count * 2 ||
+            (uint32_t)out->offsets[i] >= out->file_size ||
+            (i > 0 && out->offsets[i] <= out->offsets[i - 1])) return 0;
+    }
     out->valid = 1;
     return 1;
 }
@@ -64,8 +70,10 @@ int nexus_v1_face_bin_decode_portrait(const uint8_t *data, int data_size,
 
     out->index = portrait_index;
 
+    if (header->file_size > (uint32_t)data_size) return 0;
     pal_data = data + header->offsets[portrait_index];
-    if (header->offsets[portrait_index] + 128 > data_size) return 0;
+    if ((uint32_t)header->offsets[portrait_index] + 128U > header->file_size)
+        return 0;
 
     for (i = 0; i < NEXUS_FACE_BIN_PALETTE_COLORS; ++i)
         out->palette_rgba[i] = bgr555_to_rgba(read_be16(pal_data + i * 2));
@@ -74,9 +82,9 @@ int nexus_v1_face_bin_decode_portrait(const uint8_t *data, int data_size,
     if (portrait_index + 1 < header->portrait_count)
         next_offset = header->offsets[portrait_index + 1];
     else
-        next_offset = data_size;
+        next_offset = (int)header->file_size;
     prs3_size = next_offset - prs3_offset;
-    if (prs3_offset + prs3_size > data_size || prs3_size < 16) return 0;
+    if (prs3_size < 16) return 0;
 
     prs3_data = data + prs3_offset;
     if (!nexus_v1_prs3_parse_header(prs3_data, prs3_size, &prs3_hdr))

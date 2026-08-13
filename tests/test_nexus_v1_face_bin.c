@@ -25,9 +25,14 @@ static uint8_t *load_file(const char *path, int *out_size) {
 
 static int test_synthetic_header(void) {
     Nexus_V1_FaceBinHeader hdr;
-    uint8_t bad[16];
+    uint8_t bad[32];
     memset(bad, 0, sizeof(bad));
     if (nexus_v1_face_bin_parse_header(bad, 16, &hdr)) return 1;
+    memcpy(bad, "FACE", 4);
+    bad[7] = 32; /* declared file size */
+    bad[9] = 1;  /* one portrait */
+    bad[17] = 16; /* offset overlaps the header/table */
+    if (nexus_v1_face_bin_parse_header(bad, (int)sizeof(bad), &hdr)) return 1;
     if (nexus_v1_face_bin_parse_header(NULL, 0, &hdr)) return 1;
     printf("  PASS synthetic_header\n");
     return 0;
