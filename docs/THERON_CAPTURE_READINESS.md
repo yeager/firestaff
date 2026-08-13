@@ -95,7 +95,12 @@ The strongest current proof is:
   present, the verifier launches Firestaff under dummy video and records M11
   runtime-probe JSON plus source/presented BMP hash receipts. Rows that report
   deterministic fallback assets are capture-path proof, not final art or
-  source-bank proof. Missing data is a successful SKIP, not a failure.
+  source-bank proof. Without an explicit authenticated VDC/VCE pair the gate
+  is a successful SKIP; a black fail-closed viewport is never accepted as a
+  screenshot. To verify the real source-screen route on this host, use the
+  external pair /Users/bosse/.firestaff/cache/theron/full-capture-3/theron.vram
+  and theron.vce with --vram-snapshot and --vce-snapshot. Missing data is also
+  a successful SKIP, not a failure.
 - `theron_v1_track02_bank` and `theron_v1_track02_descriptor_table`: when
   real Track 02 data is present, both probes hash-gate the bank-anchor
   offsets and the 9-word little-endian stride table shape on the US ISO

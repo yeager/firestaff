@@ -156,6 +156,7 @@ def screenshot_rows(directory: Path) -> list[dict[str, Any]]:
 def run_case(
     firestaff: Path,
     case: dict[str, Any],
+    capture_pair_supplied: bool,
     retain_dir: Path | None = None,
     vram_snapshot: Path | None = None,
     vce_snapshot: Path | None = None,
@@ -174,6 +175,9 @@ def run_case(
     }
     if not data_dir.exists():
         row["reason"] = "data directory missing"
+        return row
+    if not capture_pair_supplied:
+        row["reason"] = "authenticated VDC/VCE pair not supplied"
         return row
 
     with tempfile.TemporaryDirectory(prefix=f"firestaff-{PASS}-{case['id']}-") as td:
@@ -320,7 +324,8 @@ def write_outputs(result: dict[str, Any]) -> None:
         "- These receipts prove Firestaff can emit Theron runtime screenshot artifacts when the Track 02 launch reaches M11.",
         "- Any deterministic fallback asset rejects this gate; only source-backed startup graphics may pass.",
         "- No generated, mock, or synthetic image is promoted by this gate.",
-        "- An externally retained, hash-authenticated VDC/VCE pair can be supplied with `--vram-snapshot` and `--vce-snapshot`; this admits only the captured source screen and does not open square, object, HUD or gameplay semantics.",
+        "- Without an explicit authenticated VDC/VCE pair, this gate is SKIP; a black fail-closed viewport is never treated as a passing screenshot.",
+        "- Supply an externally retained, hash-authenticated VDC/VCE pair with --vram-snapshot and --vce-snapshot; this admits only the captured source screen and does not open square, object, HUD or gameplay semantics.",
         "- README-eligible Theron screenshots still need reviewed real runtime frames and stronger semantic Track 02 loader parity.",
         "",
         f"Manifest: `{rel_or_str(MANIFEST)}`",
@@ -397,6 +402,7 @@ def main() -> int:
         run_case(
             firestaff,
             case,
+            args.vram_snapshot is not None,
             args.retain_dir,
             args.vram_snapshot,
             args.vce_snapshot,
@@ -410,7 +416,14 @@ def main() -> int:
         write_outputs(result)
         print(f"SKIP {PASS}: no Theron data directories present")
         return 0
-    ok = all(row.get("ok") for row in present_rows)
+    active_rows = [row for row in present_rows if row.get("status") != "SKIP"]
+    if not active_rows:
+        result["status"] = "SKIP"
+        result["reason"] = "authenticated VDC/VCE pair not supplied"
+        write_outputs(result)
+        print(f"SKIP {PASS}: authenticated VDC/VCE pair not supplied")
+        return 0
+    ok = all(row.get("ok") for row in active_rows)
     result["status"] = "PASS" if ok else "FAIL"
     write_outputs(result)
     if ok:
