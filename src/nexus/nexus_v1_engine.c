@@ -2294,6 +2294,61 @@ static uint8_t *nexus_read_host_file(const char *path, int *out_size) {
     return buf;
 }
 
+/* Hash discovery may return a source-owned virtual path such as
+ * `disc.iso::DM.BIN` or `assets.zip::DM.BIN`.  Treating that string as a host
+ * filename silently made authenticated archive-backed Nexus media look
+ * missing.  Read the member into bounded caller-owned memory instead; no
+ * game-data file is materialized. */
+static uint8_t *nexus_v1_read_iso_reader_file(
+    Nexus_ISOReader *reader, const Nexus_ISOFile *file, int *out_size);
+
+static uint8_t *nexus_read_source_path(const char *path, int *out_size) {
+    const char *separator;
+    char container[512];
+    size_t container_size;
+    uint8_t *bytes = NULL;
+    size_t byte_count = 0U;
+
+    if (!path || !path[0]) return NULL;
+    separator = strstr(path, "::");
+    if (!separator) return nexus_read_host_file(path, out_size);
+    container_size = (size_t)(separator - path);
+    if (container_size == 0U || container_size >= sizeof(container) ||
+        !separator[2]) return NULL;
+    memcpy(container, path, container_size);
+    container[container_size] = '\0';
+
+    /* ISO members need the sector-aware reader; ZIP/7z members use the
+     * shared in-memory archive reader. */
+    if (nexus_path_has_ext(container, ".cue") ||
+        nexus_path_has_ext(container, ".bin") ||
+        nexus_path_has_ext(container, ".iso")) {
+        Nexus_ISOReader reader;
+        const Nexus_ISOFile *member;
+        int opened;
+        memset(&reader, 0, sizeof(reader));
+        opened = nexus_path_has_ext(container, ".cue")
+            ? nexus_iso_open_cue(&reader, container)
+            : nexus_iso_open(&reader, container);
+        if (opened <= 0 || !nexus_iso_is_nexus(&reader) ||
+            !(member = nexus_iso_find(&reader, separator + 2))) {
+            nexus_iso_close(&reader);
+            return NULL;
+        }
+        bytes = nexus_v1_read_iso_reader_file(&reader, member, out_size);
+        nexus_iso_close(&reader);
+        return bytes;
+    }
+
+    if (!asset_read_path_alloc(path, &bytes, &byte_count) ||
+        byte_count > (size_t)INT_MAX) {
+        free(bytes);
+        return NULL;
+    }
+    if (out_size) *out_size = (int)byte_count;
+    return bytes;
+}
+
 static uint8_t *nexus_v1_read_extracted_file(Nexus_V1_Engine *engine,
                                              const char *name,
                                              int *out_size) {
@@ -2318,7 +2373,7 @@ static uint8_t *nexus_v1_read_extracted_file(Nexus_V1_Engine *engine,
             }
         }
         if (!known_name || exact_path_verified) {
-            return nexus_read_host_file(path, out_size);
+            return nexus_read_source_path(path, out_size);
         }
     }
     /* Keep hash discovery aligned with the source receipt. Several retail
@@ -2329,12 +2384,12 @@ static uint8_t *nexus_v1_read_extracted_file(Nexus_V1_Engine *engine,
         if (strcasecmp(g_nexus_known_boot_files[i].name, name) == 0 &&
             asset_find_by_md5(engine->data_dir, g_nexus_known_boot_files[i].md5,
                               path, (int)sizeof(path), 8)) {
-            return nexus_read_host_file(path, out_size);
+            return nexus_read_source_path(path, out_size);
         }
     }
     if (nexus_v1_find_dmdf_family_file(engine->data_dir, name, path,
                                        (int)sizeof(path))) {
-        return nexus_read_host_file(path, out_size);
+        return nexus_read_source_path(path, out_size);
     }
     return NULL;
 }

@@ -2,6 +2,23 @@
 
 ## Current external-data verification — 2026-08-13
 
+## Verification-count correction — 2026-08-14
+
+The current configured external-data CTest selection contains 184 Nexus tests:
+173 pass and 11 are intentional capture-gated skips. The older 304/14 count
+below belongs to a broader registration set and must not be presented as the
+current configured run. Neither count opens the still-missing Saturn semantic
+gates.
+
+## Authenticated virtual-source read correction — 2026-08-14
+
+Hash-based discovery may identify a real Nexus asset as a virtual source path,
+for example `disc.iso::DM.BIN` or an archive member. The runtime now reads ISO
+members with the sector-aware reader and other supported archive members with
+the bounded in-memory reader. It no longer treats the virtual path as a host
+filename, and it never writes a materialized game-data file. Real ISO, launch,
+manifest, and hash-scan regressions pass.
+
 ## Media discovery correction — 2026-08-14
 
 Nexus discovery now validates each CUE/BIN/ISO candidate before selecting it.

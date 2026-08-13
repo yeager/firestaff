@@ -2,6 +2,19 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-14: Status-count correction: the current configured external-data
+selection runs 184 Nexus tests, with 173 passing and 11 intentional
+capture-gated skips. Earlier 304/14 figures describe a broader registration
+set and are historical, not the current run. No Saturn semantic gate is
+reclassified by this correction.
+
+2026-08-14: Fixed Nexus authenticated virtual-source reads. Hash discovery can
+return `disc.iso::MEMBER` or an archive member instead of a loose filename;
+the runtime now routes ISO members through the sector reader and other archive
+members through the bounded in-memory source reader. Nothing is written back
+to the game-data directory. The real Nexus ISO/launch/manifest/hash-scan
+regressions pass.
+
 2026-08-14: Nexus disc discovery now validates every CUE/BIN/ISO candidate
 before selecting it. A mixed data directory can contain multiple regional
 images or an unrelated disc; Firestaff no longer trusts the first directory
