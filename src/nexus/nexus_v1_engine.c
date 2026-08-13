@@ -2512,11 +2512,26 @@ static int find_iso(const char *dir, char *disc_path, int max_len) {
     for (i = 0; patterns[i] != NULL; ++i) {
         snprintf(pattern, sizeof(pattern), "%s\\%s", dir, patterns[i]);
         h = FindFirstFileA(pattern, &fd);
-        if (h != INVALID_HANDLE_VALUE) {
-            snprintf(disc_path, max_len, "%s\\%s", dir, fd.cFileName);
-            FindClose(h);
-            return 1;
+        while (h != INVALID_HANDLE_VALUE) {
+            Nexus_ISOReader candidate;
+            char candidate_path[512];
+            int opened;
+            snprintf(candidate_path, sizeof(candidate_path), "%s\\%s", dir,
+                     fd.cFileName);
+            memset(&candidate, 0, sizeof(candidate));
+            opened = nexus_path_has_ext(candidate_path, ".cue")
+                ? nexus_iso_open_cue(&candidate, candidate_path)
+                : nexus_iso_open(&candidate, candidate_path);
+            if (opened > 0 && nexus_iso_is_nexus(&candidate)) {
+                snprintf(disc_path, max_len, "%s", candidate_path);
+                nexus_iso_close(&candidate);
+                FindClose(h);
+                return 1;
+            }
+            nexus_iso_close(&candidate);
+            if (!FindNextFileA(h, &fd)) break;
         }
+        if (h != INVALID_HANDLE_VALUE) FindClose(h);
     }
     return 0;
 }
@@ -2534,9 +2549,22 @@ static int find_iso(const char *dir, char *disc_path, int max_len) {
             int ext_len = (int)strlen(exts[ext_index]);
             if (len > ext_len &&
                 strcasecmp(ent->d_name + len - ext_len, exts[ext_index]) == 0) {
-                snprintf(disc_path, max_len, "%s/%s", dir, ent->d_name);
-                closedir(d);
-                return 1;
+                Nexus_ISOReader candidate;
+                char candidate_path[512];
+                int opened;
+                snprintf(candidate_path, sizeof(candidate_path), "%s/%s", dir,
+                         ent->d_name);
+                memset(&candidate, 0, sizeof(candidate));
+                opened = nexus_path_has_ext(candidate_path, ".cue")
+                    ? nexus_iso_open_cue(&candidate, candidate_path)
+                    : nexus_iso_open(&candidate, candidate_path);
+                if (opened > 0 && nexus_iso_is_nexus(&candidate)) {
+                    snprintf(disc_path, max_len, "%s", candidate_path);
+                    nexus_iso_close(&candidate);
+                    closedir(d);
+                    return 1;
+                }
+                nexus_iso_close(&candidate);
             }
         }
     }
