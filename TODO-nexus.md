@@ -1318,3 +1318,13 @@ värden ensamma räcker inte för text- eller menyadmission.
   den begärda framekorpusen före den tolkar emulatorns timeout/SIGTERM-status.
   En komplett råcapture kan därför avslutas rent efter timeout och få status
   `0`; en trunkerad eller felaktig capture förblir underkänd.
+- 2026-08-13: Asset-manifestproben är korrigerad mot den autentiska engelska
+  Saturn-korpusen på extern-disken. Den använder nu verifierade storlekar från
+  `scripts/fixtures/nexus_v1_asset_sizes.py`, undviker `size_t`-underflow vid
+  små MAP-filer och räknar ISO-medlemmar som tillgängliga utan uppackning.
+  Den accepterar även dokumenterade alternativa retailrevisioner för MENU.BPK,
+  RLOWFIX.BIN, DMV0-2.AVI och DMN_ABS/DMN_BIB. DMDF-fixturen skriver nu sina
+  räknare på den offset som parsern faktiskt läser. Proben passerar 137/137
+  manifestposter och fyra parserfixturer mot den riktiga datan. Detta ändrar
+  inte Saturns fortfarande stängda presentation-, pose-, save- eller
+  ljudgater.

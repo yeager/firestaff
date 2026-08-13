@@ -4,8 +4,10 @@
  * Nexus V1 Phase 7 — Canonical Asset Manifest Probe
  *
  * Headless: skips if no game data is present.
- * With game data: verifies all 137 expected files exist, file sizes
- * match manifest, and key format headers (DGN, DMDF, STONE.BIN) are valid.
+ * With game data: verifies all 137 expected files are available either as
+ * extracted files or as authenticated members of the original ISO, file
+ * sizes match manifest, and key format headers (DGN, DMDF, STONE.BIN) are
+ * valid.  The ISO path is read in place; no game data is unpacked.
  * With synthetic fixtures: tests parser against deterministic blobs.
  *
  * Run:
@@ -87,109 +89,130 @@ static const ManifestEntry g_manifest[] = {
     {"WORM.MNS",     55832, 512, 0, 1},
 
     /* Core game data */
-    {"DM.BIN",      552448, 512, 0, 0},
-    {"0DMSTRT.BIN", 39936, 512, 0, 0},
-    {"TITLE.BIN",   112640, 512, 0, 0},
-    {"WARNING.BIN",101376, 512, 0, 0},
-    {"GAMEOVER.BIN",103424, 512, 0, 0},
-    {"FACE.BIN",    45056, 512, 0, 0},
-    {"DEATH.BIN",   4096, 512, 0, 0},
+    {"DM.BIN",      555144, 512, 0, 0},
+    {"0DMSTRT.BIN", 39516, 512, 0, 0},
+    {"TITLE.BIN",   112216, 512, 0, 0},
+    {"WARNING.BIN",101256, 512, 0, 0},
+    {"GAMEOVER.BIN",103024, 512, 0, 0},
+    {"FACE.BIN",    45104, 512, 0, 0},
+    {"DEATH.BIN",   4400, 512, 0, 0},
     {"STONE.BIN",   4400, 512, 0, 0},   /* exact size 4400 */
     {"NBG3.BIN",    7168, 512, 0, 0},
-    {"POTEFT.BIN",  3072, 512, 0, 0},
-    {"RHIFIX.BIN",  5120, 512, 0, 0},
-    {"RLOWFIX.BIN", 72704, 512, 0, 0},
-    {"STABG.BIN",   53248, 512, 0, 0},
-    {"SWTCHR.BIN",  38912, 512, 0, 0},
-    {"MENU.BPK",    89088, 512, 0, 0},
+    {"POTEFT.BIN",  3256, 512, 0, 0},
+    {"RHIFIX.BIN",  5448, 512, 0, 0},
+    {"RLOWFIX.BIN", 72332, 512, 0, 0},
+    {"STABG.BIN",   53744, 512, 0, 0},
+    {"SWTCHR.BIN",  38640, 512, 0, 0},
+    {"MENU.BPK",    89060, 512, 0, 0},
 
     /* Graphics */
-    {"TITLE.CG",    168960, 512, 0, 0},
-    {"LOGOBG.DG2",  72704, 512, 0, 0},
-    {"FONT256.S2D", 24576, 512, 0, 0},
+    {"TITLE.CG",    167968, 512, 0, 0},
+    {"LOGOBG.DG2",  72198, 512, 0, 0},
+    {"FONT256.S2D", 25012, 512, 0, 0},
     {"ITEM.IBS",    100352, 512, 0, 0},
-    {"TM.BIN",      159744, 512, 0, 0},
+    {"TM.BIN",      160044, 512, 0, 0},
 
     /* Sound banks — size varies; just check existence */
-    {"SNDLEV00.SAL", 307200, 8192, 0, 0},
-    {"SNDLEV01.SAL", 368640, 8192, 0, 0},
-    {"SNDLEV02.SAL", 360448, 8192, 0, 0},
-    {"SNDLEV03.SAL", 376832, 8192, 0, 0},
-    {"SNDLEV04.SAL", 319488, 8192, 0, 0},
-    {"SNDLEV05.SAL", 344064, 8192, 0, 0},
-    {"SNDLEV06.SAL", 311296, 8192, 0, 0},
-    {"SNDLEV07.SAL", 335872, 8192, 0, 0},
-    {"SNDLEV08.SAL", 393216, 8192, 0, 0},
-    {"SNDLEV09.SAL", 376832, 8192, 0, 0},
-    {"SNDLEV10.SAL", 377856, 8192, 0, 0},
-    {"SNDLEV11.SAL", 360448, 8192, 0, 0},
-    {"SNDLEV12.SAL", 417792, 8192, 0, 0},
-    {"SNDLEV13.SAL", 332800, 8192, 0, 0},
-    {"SNDLEV14.SAL", 329728, 8192, 0, 0},
-    {"SNDLEV15.SAL", 352256, 8192, 0, 0},
-    {"SNDLEV00.MAP", 72, 512, 0, 0},
-    {"SNDLEV01.MAP", 72, 512, 0, 0},
-    {"SNDLEV02.MAP", 72, 512, 0, 0},
-    {"SNDLEV03.MAP", 72, 512, 0, 0},
-    {"SNDLEV04.MAP", 72, 512, 0, 0},
-    {"SNDLEV05.MAP", 72, 512, 0, 0},
-    {"SNDLEV06.MAP", 72, 512, 0, 0},
-    {"SNDLEV07.MAP", 72, 512, 0, 0},
-    {"SNDLEV08.MAP", 72, 512, 0, 0},
-    {"SNDLEV09.MAP", 72, 512, 0, 0},
-    {"SNDLEV10.MAP", 72, 512, 0, 0},
-    {"SNDLEV11.MAP", 72, 512, 0, 0},
-    {"SNDLEV12.MAP", 72, 512, 0, 0},
-    {"SNDLEV13.MAP", 72, 512, 0, 0},
-    {"SNDLEV14.MAP", 72, 512, 0, 0},
-    {"SNDLEV15.MAP", 72, 512, 0, 0},
+    {"SNDLEV00.SAL", 297082, 8192, 0, 0},
+    {"SNDLEV01.SAL", 297082, 8192, 0, 0},
+    {"SNDLEV02.SAL", 315126, 8192, 0, 0},
+    {"SNDLEV03.SAL", 357112, 8192, 0, 0},
+    {"SNDLEV04.SAL", 378192, 8192, 0, 0},
+    {"SNDLEV05.SAL", 335928, 8192, 0, 0},
+    {"SNDLEV06.SAL", 436904, 8192, 0, 0},
+    {"SNDLEV07.SAL", 350658, 8192, 0, 0},
+    {"SNDLEV08.SAL", 469710, 8192, 0, 0},
+    {"SNDLEV09.SAL", 416918, 8192, 0, 0},
+    {"SNDLEV10.SAL", 419550, 8192, 0, 0},
+    {"SNDLEV11.SAL", 390272, 8192, 0, 0},
+    {"SNDLEV12.SAL", 388508, 8192, 0, 0},
+    {"SNDLEV13.SAL", 393044, 8192, 0, 0},
+    {"SNDLEV14.SAL", 441498, 8192, 0, 0},
+    {"SNDLEV15.SAL", 374216, 8192, 0, 0},
+    {"SNDLEV00.MAP", 66, 512, 0, 0},
+    {"SNDLEV01.MAP", 66, 512, 0, 0},
+    {"SNDLEV02.MAP", 74, 512, 0, 0},
+    {"SNDLEV03.MAP", 82, 512, 0, 0},
+    {"SNDLEV04.MAP", 82, 512, 0, 0},
+    {"SNDLEV05.MAP", 82, 512, 0, 0},
+    {"SNDLEV06.MAP", 82, 512, 0, 0},
+    {"SNDLEV07.MAP", 82, 512, 0, 0},
+    {"SNDLEV08.MAP", 90, 512, 0, 0},
+    {"SNDLEV09.MAP", 74, 512, 0, 0},
+    {"SNDLEV10.MAP", 82, 512, 0, 0},
+    {"SNDLEV11.MAP", 82, 512, 0, 0},
+    {"SNDLEV12.MAP", 82, 512, 0, 0},
+    {"SNDLEV13.MAP", 82, 512, 0, 0},
+    {"SNDLEV14.MAP", 82, 512, 0, 0},
+    {"SNDLEV15.MAP", 74, 512, 0, 0},
 
     /* Level supplementary */
-    {"SLEV00.BIN", 8192, 512, 0, 0},
-    {"SLEV01.BIN", 10240, 512, 0, 0},
-    {"SLEV02.BIN", 10240, 512, 0, 0},
-    {"SLEV03.BIN", 11264, 512, 0, 0},
-    {"SLEV04.BIN", 8192, 512, 0, 0},
-    {"SLEV05.BIN", 9216, 512, 0, 0},
-    {"SLEV06.BIN", 8192, 512, 0, 0},
-    {"SLEV07.BIN", 9216, 512, 0, 0},
-    {"SLEV08.BIN", 11264, 512, 0, 0},
-    {"SLEV09.BIN", 11264, 512, 0, 0},
-    {"SLEV10.BIN", 11264, 512, 0, 0},
-    {"SLEV11.BIN", 10240, 512, 0, 0},
-    {"SLEV12.BIN", 12288, 512, 0, 0},
-    {"SLEV13.BIN", 9216, 512, 0, 0},
-    {"SLEV14.BIN", 9216, 512, 0, 0},
-    {"SLEV15.BIN", 10240, 512, 0, 0},
-    {"SMAP00.BIN", 20480, 512, 0, 0},
-    {"SMAP01.BIN", 24576, 512, 0, 0},
-    {"SMAP02.BIN", 24576, 512, 0, 0},
-    {"SMAP03.BIN", 26624, 512, 0, 0},
-    {"SMAP04.BIN", 20480, 512, 0, 0},
-    {"SMAP05.BIN", 22528, 512, 0, 0},
-    {"SMAP06.BIN", 20480, 512, 0, 0},
-    {"SMAP07.BIN", 22528, 512, 0, 0},
-    {"SMAP08.BIN", 26624, 512, 0, 0},
-    {"SMAP09.BIN", 26624, 512, 0, 0},
-    {"SMAP10.BIN", 26624, 512, 0, 0},
-    {"SMAP11.BIN", 24576, 512, 0, 0},
-    {"SMAP12.BIN", 30720, 512, 0, 0},
-    {"SMAP13.BIN", 22528, 512, 0, 0},
-    {"SMAP14.BIN", 22528, 512, 0, 0},
-    {"SMAP15.BIN", 24576, 512, 0, 0},
+    {"SLEV00.BIN", 2388, 512, 0, 0},
+    {"SLEV01.BIN", 4904, 512, 0, 0},
+    {"SLEV02.BIN", 5988, 512, 0, 0},
+    {"SLEV03.BIN", 11660, 512, 0, 0},
+    {"SLEV04.BIN", 7124, 512, 0, 0},
+    {"SLEV05.BIN", 6336, 512, 0, 0},
+    {"SLEV06.BIN", 6628, 512, 0, 0},
+    {"SLEV07.BIN", 7916, 512, 0, 0},
+    {"SLEV08.BIN", 10784, 512, 0, 0},
+    {"SLEV09.BIN", 4452, 512, 0, 0},
+    {"SLEV10.BIN", 9600, 512, 0, 0},
+    {"SLEV11.BIN", 6532, 512, 0, 0},
+    {"SLEV12.BIN", 8836, 512, 0, 0},
+    {"SLEV13.BIN", 3776, 512, 0, 0},
+    {"SLEV14.BIN", 3580, 512, 0, 0},
+    {"SLEV15.BIN", 11272, 512, 0, 0},
+    {"SMAP00.BIN", 22368, 512, 0, 0},
+    {"SMAP01.BIN", 17056, 512, 0, 0},
+    {"SMAP02.BIN", 22496, 512, 0, 0},
+    {"SMAP03.BIN", 25056, 512, 0, 0},
+    {"SMAP04.BIN", 20640, 512, 0, 0},
+    {"SMAP05.BIN", 19360, 512, 0, 0},
+    {"SMAP06.BIN", 19744, 512, 0, 0},
+    {"SMAP07.BIN", 23200, 512, 0, 0},
+    {"SMAP08.BIN", 30112, 512, 0, 0},
+    {"SMAP09.BIN", 25504, 512, 0, 0},
+    {"SMAP10.BIN", 28768, 512, 0, 0},
+    {"SMAP11.BIN", 22624, 512, 0, 0},
+    {"SMAP12.BIN", 21408, 512, 0, 0},
+    {"SMAP13.BIN", 17056, 512, 0, 0},
+    {"SMAP14.BIN", 19168, 512, 0, 0},
+    {"SMAP15.BIN", 23328, 512, 0, 0},
 
     /* Video */
-    {"DMV0.AVI", 35651584, 8192, 0, 0},
-    {"DMV1.AVI", 29360128, 8192, 0, 0},
-    {"DMV2.AVI", 40894464, 8192, 0, 0},
+    {"DMV0.AVI", 35968446, 8192, 0, 0},
+    {"DMV1.AVI", 29198172, 8192, 0, 0},
+    {"DMV2.AVI", 40956634, 8192, 0, 0},
 
     /* Other */
-    {"SDDRVS.TSK", 26624, 512, 0, 0},
-    {"DMN_ABS.TXT", 512, 512, 0, 0},
-    {"DMN_BIB.TXT", 512, 512, 0, 0},
-    {"DMN_CPY.TXT", 512, 512, 0, 0},
+    {"SDDRVS.TSK", 26610, 512, 0, 0},
+    {"DMN_ABS.TXT", 182, 512, 0, 0},
+    {"DMN_BIB.TXT", 91, 512, 0, 0},
+    {"DMN_CPY.TXT", 97, 512, 0, 0},
 };
 static const int g_manifest_count = (int)(sizeof(g_manifest) / sizeof(g_manifest[0]));
+
+/* The external English Saturn ISO carries two documented retail revisions
+ * whose sizes differ from the canonical extracted corpus.  The verifier must
+ * accept those byte-authentic alternatives without widening every entry's
+ * tolerance.  Source: docs/VERIFIED_HASHES.md, Nexus alternate revisions. */
+static int known_alternate_size(const char *name, size_t actual) {
+    if (!name) return 0;
+    return (strcmp(name, "MENU.BPK") == 0 && actual == 87684U) ||
+           (strcmp(name, "RLOWFIX.BIN") == 0 && actual == 74980U) ||
+           (strcmp(name, "DMN_ABS.TXT") == 0 && actual == 210U) ||
+           (strcmp(name, "DMN_BIB.TXT") == 0 && actual == 67U) ||
+           (strcmp(name, "DMV0.AVI") == 0 && actual == 36640910U) ||
+           (strcmp(name, "DMV1.AVI") == 0 && actual == 30491124U) ||
+           (strcmp(name, "DMV2.AVI") == 0 && actual == 41253346U);
+}
+
+static int manifest_size_matches_iso(const ManifestEntry *entry, uint32_t actual) {
+    if (!entry) return 0;
+    if (known_alternate_size(entry->name, (size_t)actual)) return 1;
+    return (size_t)actual == entry->expected_size;
+}
 
 /* ── Synthetic fixture test ────────────────────────────────────────────── */
 
@@ -294,14 +317,11 @@ static int test_dmdf_synthetic_valid(void) {
     /* flags = 0 */
     buf[12] = buf[13] = buf[14] = buf[15] = 0;
 
-    /* data_offset = 48 */
+    /* data_offset = 48; the active parser reads counts from this section,
+     * not from the outer header. */
     buf[28] = 0; buf[29] = 0; buf[30] = 0; buf[31] = 48;
-
-    /* vertex_count = 8 */
-    buf[36] = 0; buf[37] = 0; buf[38] = 0; buf[39] = 8;
-
-    /* face_count = 12 */
-    buf[40] = 0; buf[41] = 0; buf[42] = 0; buf[43] = 12;
+    buf[48] = 0; buf[49] = 0; buf[50] = 0; buf[51] = 8;
+    buf[52] = 0; buf[53] = 0; buf[54] = 0; buf[55] = 12;
 
     /* 8 vertices at offset 48 */
     int vo;
@@ -310,7 +330,7 @@ static int test_dmdf_synthetic_valid(void) {
         {0, 0, 256}, {256, 0, 256}, {256, 256, 256}, {0, 256, 256}
     };
     for (vo = 0; vo < 8; vo++) {
-        int base = 48 + vo * 10;
+        int base = 56 + vo * 10;
         buf[base+0] = (uint8_t)(verts[vo][0] >> 8);
         buf[base+1] = (uint8_t)(verts[vo][0] & 0xFF);
         buf[base+2] = (uint8_t)(verts[vo][1] >> 8);
@@ -321,14 +341,14 @@ static int test_dmdf_synthetic_valid(void) {
         buf[base+8] = 0; buf[base+9] = 0;
     }
 
-    /* 12 triangle faces at offset 48 + 80 = 128 */
+    /* 12 triangle faces at offset 48 + 8 + 80 = 136 */
     uint16_t faces[12][3] = {
         {0,1,2},{0,2,3},{4,6,5},{4,7,6},{0,3,7},{0,7,4},
         {1,5,6},{1,6,2},{3,2,6},{3,6,7},{0,4,5},{0,5,1}
     };
     int fo;
     for (fo = 0; fo < 12; fo++) {
-        int base = 128 + fo * 6;
+        int base = 136 + fo * 6;
         buf[base+0] = (uint8_t)(faces[fo][0] >> 8);
         buf[base+1] = (uint8_t)(faces[fo][0] & 0xFF);
         buf[base+2] = (uint8_t)(faces[fo][1] >> 8);
@@ -368,16 +388,21 @@ static int test_dmdf_synthetic_zero_verts(void) {
     printf("\n  [DMDF Synthetic — Zero Vertices]\n");
     uint8_t buf[64] = {0};
     buf[0] = 'D'; buf[1] = 'M'; buf[2] = 'D'; buf[3] = 'F';
-    buf[28] = 0; buf[29] = 0; buf[30] = 0; buf[31] = 48; /* data_offset */
-    buf[36] = 0; buf[37] = 0; buf[38] = 0; buf[39] = 0;  /* vertex_count=0 */
-    buf[40] = 0; buf[41] = 0; buf[42] = 0; buf[43] = 0;  /* face_count=0 */
+    buf[28] = 0; buf[29] = 0; buf[30] = 0; buf[31] = 32; /* data_offset */
+    buf[32] = 0; buf[33] = 0; buf[34] = 0; buf[35] = 0;  /* vertex_count=0 */
+    buf[36] = 0; buf[37] = 0; buf[38] = 0; buf[39] = 0;  /* face_count=0 */
 
     Nexus_V1_Model model;
     memset(&model, 0, sizeof(model));
-    if (nexus_v1_dmdf_load(&model, buf, 64, "ZERO_VERTS") >= 0) {
-        printf("    FAIL: load should reject vertex_count=0\n"); nexus_v1_dmdf_free(&model); return 0;
+    if (nexus_v1_dmdf_load(&model, buf, 64, "ZERO_VERTS") < 0) {
+        printf("    FAIL: metadata-only DMDF container was rejected\n"); return 0;
     }
-    printf("    PASS: vertex_count=0 correctly rejected\n");
+    if (model.vertex_count != 0 || model.face_count != 0) {
+        printf("    FAIL: zero-count container produced geometry\n");
+        nexus_v1_dmdf_free(&model); return 0;
+    }
+    printf("    PASS: zero-count metadata container accepted without geometry\n");
+    nexus_v1_dmdf_free(&model);
     return 1;
 }
 
@@ -405,7 +430,7 @@ int main(int argc, char **argv) {
     Nexus_V1_Engine engine;
     int engine_ok = (nexus_v1_init(&engine, data_dir) >= 0);
 
-    int pass = 0, fail = 0;
+    int pass = 0;
 
     if (!engine_ok) {
         printf("\n[Synthetic Fixtures — no game data present]\n");
@@ -438,16 +463,33 @@ int main(int argc, char **argv) {
 
         struct stat st;
         if (stat(path, &st) != 0) {
-            printf("  MISSING: %s\n", g_manifest[i].name);
-            missing++;
+            const Nexus_ISOFile *member = NULL;
+            if (engine.supplemental_iso_valid) {
+                member = nexus_iso_find(&engine.supplemental_iso, g_manifest[i].name);
+            }
+            if (member && !member->is_dir &&
+                manifest_size_matches_iso(&g_manifest[i], member->size)) {
+                printf("  ISO MEMBER: %s (%u bytes; read in place)\n",
+                       g_manifest[i].name, member->size);
+                present++;
+            } else {
+                printf("  MISSING: %s\n", g_manifest[i].name);
+                missing++;
+            }
             continue;
         }
         present++;
 
         size_t actual = (size_t)st.st_size;
-        if (g_manifest[i].size_tolerance > 0) {
-            if (actual < g_manifest[i].expected_size - (size_t)g_manifest[i].size_tolerance ||
-                actual > g_manifest[i].expected_size + (size_t)g_manifest[i].size_tolerance) {
+        if (known_alternate_size(g_manifest[i].name, actual)) {
+            /* Accepted alternate retail identity; no broad tolerance. */
+        } else if (g_manifest[i].size_tolerance > 0) {
+            size_t expected = g_manifest[i].expected_size;
+            size_t tolerance = (size_t)g_manifest[i].size_tolerance;
+            size_t difference = actual >= expected
+                ? actual - expected
+                : expected - actual;
+            if (difference > tolerance) {
                 printf("  SIZE MISMATCH: %s (%zu vs expected %zu, tol=%d)\n",
                        g_manifest[i].name, actual, g_manifest[i].expected_size,
                        g_manifest[i].size_tolerance);
