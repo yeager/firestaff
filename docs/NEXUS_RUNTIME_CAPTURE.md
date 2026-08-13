@@ -785,6 +785,31 @@ temporary framebuffer and published only after all commands pass. This closes
 the single-command-to-command-list handoff mechanically, but does not claim
 that the current European traces are a complete retail viewport scene.
 
+### Separate authenticated VDP1 witness windows
+
+The external VDP1 compositor verifier accepts separate capture paths for the
+two real witness windows. This is required because the retained authentic
+captures do not place the direct-colour and indexed DGN/Mode-1 observations in
+the same frame:
+
+```sh
+FIRESTAFF_NEXUS_RUNTIME_CAPTURE=\
+  /Volumes/Extern-disk/nexus-saturn-capture/run-codex-sysclip-gameplay-20260809/runtime-vdp12.raw \
+FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME=756 \
+FIRESTAFF_NEXUS_RUNTIME_CAPTURE_DIRECT_COLOR=\
+  /Volumes/Extern-disk/nexus-saturn-capture/run-codex-j-menu-long-20260809/runtime-vdp12.raw \
+FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME_DIRECT_COLOR=500 \
+FIRESTAFF_NEXUS_DGN_SOURCE=/Volumes/Extern-disk/FirestaffUserData/data/nexus/LEV00.DGN \
+  build/test_nexus_v1_vdp1_capture_compositor
+```
+
+The command passes with the gameplay witness's System Clip `(319,223)`, 237
+draw records, 219 resolved DGN source/palette joins, and an atomic replay
+receipt. The independent J frame 500 passes the direct-colour decoder and
+viewport adapter. The VDP2 bitmap compositor passes against that same J frame
+500. These receipts prove bounded, source-bound capture replay only; they do
+not identify the retail scene owner or authorize the production renderer.
+
 `nexus_v1_vdp1_command_sequence_frame()` now performs the same bounded
 CMDLINK traversal in C. On the authenticated European frame 899 snapshot it
 reports 220 records, 215 draw records, two User Clip records, two

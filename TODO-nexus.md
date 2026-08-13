@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: The VDP1 external compositor test no longer incorrectly requires
+the direct-colour and indexed DGN/Mode-1 witnesses to be the same frame. The
+authenticated J capture `run-codex-j-menu-long-20260809` frame 500 passes the
+direct-colour lane, while `run-codex-sysclip-gameplay-20260809` frame 756
+passes the DGN/Mode-1 replay with System Clip `(319,223)`, 237 draw records,
+219 source/palette joins, and `renderer_permitted=1` in the capture-only
+receipt. The VDP2 bitmap compositor also passes against the authentic J frame
+500. These are source-bound capture results; they do not open the missing
+retail scene-owner, transform/culling, or production-raster gates.
+
 2026-08-13: The SCSP trace parser now accepts the authenticated long-form
 gameplay witnesses (the largest current trace is about 33 MiB) under a bounded
 64 MiB ceiling. The previous 16 MiB ceiling rejected them before parsing. Both

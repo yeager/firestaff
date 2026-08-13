@@ -57,8 +57,8 @@ static int resolve_sequence_material(
 
 static int run_external_direct_color_capture(void)
 {
-    const char *path = getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE");
-    const char *frame_text = getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME");
+    const char *path = getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE_DIRECT_COLOR");
+    const char *frame_text = getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME_DIRECT_COLOR");
     FILE *file;
     long file_size;
     uint8_t *capture;
@@ -73,6 +73,14 @@ static int run_external_direct_color_capture(void)
     unsigned int frame_index;
     int found;
 
+    /* Direct-colour and indexed DGN material witnesses are different
+     * authenticated windows in the retained corpus.  Fall back to the
+     * historical shared variables for single-window callers, but allow the
+     * two real windows to be supplied independently. */
+    if (!path || !*path) path = getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE");
+    if (!frame_text || !*frame_text) {
+        frame_text = getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME");
+    }
     if (!path || !*path || !frame_text || !*frame_text) return 1;
     frame_index = (unsigned int)strtoul(frame_text, NULL, 0);
     file = fopen(path, "rb");
@@ -183,19 +191,45 @@ static int run_external_dgn_mode1_capture(void)
           replay.draw_commands_resolved == 194 &&
           replay.unowned_non_mode1_draw_commands == 1 &&
           replay.unowned_mode1_draw_commands == 17 &&
+          replay.skipped_non_draw_commands == 7) ||
+         (replay.draw_commands_seen == 237 &&
+          replay.draw_commands_resolved == 219 &&
+          replay.unowned_non_mode1_draw_commands == 3 &&
+          replay.unowned_mode1_draw_commands == 15 &&
           replay.skipped_non_draw_commands == 7)) &&
         replay.replay.valid &&
-        ((replay.replay.source_joins_verified == 218 &&
-          replay.replay.palette_joins_verified == 218) ||
+         ((replay.replay.source_joins_verified == 218 &&
+           replay.replay.palette_joins_verified == 218) ||
          (replay.replay.source_joins_verified == 194 &&
-          replay.replay.palette_joins_verified == 194)) &&
+          replay.replay.palette_joins_verified == 194) ||
+         (replay.replay.source_joins_verified == 219 &&
+          replay.replay.palette_joins_verified == 219)) &&
         !replay.system_clip_state_missing &&
         replay.system_clip_state_verified && replay.system_clip_x == 319 &&
         replay.system_clip_y == 223 && replay.replay.renderer_permitted;
     known_capture_window =
         (replay.draw_commands_seen == 235 && replay.draw_commands_resolved == 218) ||
-        (replay.draw_commands_seen == 212 && replay.draw_commands_resolved == 194);
+        (replay.draw_commands_seen == 212 && replay.draw_commands_resolved == 194) ||
+        (replay.draw_commands_seen == 237 && replay.draw_commands_resolved == 219);
     if (ok && !known_capture_window) ok = 0;
+    if (!ok) {
+        fprintf(stderr,
+                "external VDP1 replay: frame=%u draws=%d resolved=%d "
+                "unowned_mode1=%d unowned_other=%d skipped=%d "
+                "clip_missing=%d clip_verified=%d clip=%d,%d "
+                "replay_valid=%d joins=%d/%d renderer=%d\n",
+                frame_index, replay.draw_commands_seen,
+                replay.draw_commands_resolved,
+                replay.unowned_mode1_draw_commands,
+                replay.unowned_non_mode1_draw_commands,
+                replay.skipped_non_draw_commands,
+                replay.system_clip_state_missing,
+                replay.system_clip_state_verified,
+                replay.system_clip_x, replay.system_clip_y,
+                replay.replay.valid, replay.replay.source_joins_verified,
+                replay.replay.palette_joins_verified,
+                replay.replay.renderer_permitted);
+    }
     free(capture);
     free(dgn);
     return ok;
@@ -476,14 +510,21 @@ int main(void)
         return 1;
     }
     free(vdp1_vram);
-    if (getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE") &&
-        getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME") &&
-        !getenv("FIRESTAFF_NEXUS_DGN_SOURCE") &&
+    /* Direct-colour and DGN/Mode-1 are separate authenticated windows in
+     * the Saturn capture. Allow an explicit direct-colour capture to be
+     * supplied alongside the independent Mode-1 capture. */
+    if (((getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE_DIRECT_COLOR") &&
+          getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME_DIRECT_COLOR")) ||
+         (getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE") &&
+          getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME") &&
+          !getenv("FIRESTAFF_NEXUS_DGN_SOURCE"))) &&
         !run_external_direct_color_capture()) {
         fprintf(stderr, "FAIL: external direct-color capture decode\n");
         return 1;
     }
-    if (getenv("FIRESTAFF_NEXUS_DGN_SOURCE") &&
+    if (getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE") &&
+        getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME") &&
+        getenv("FIRESTAFF_NEXUS_DGN_SOURCE") &&
         !run_external_dgn_mode1_capture()) {
         fprintf(stderr, "FAIL: external DGN mode-1 capture replay\n");
         return 1;
