@@ -2,6 +2,13 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: `nexus_v1_direct_static_material_capture` now separates the
+authentic LEV01 source check from its operator-only VDP1 capture-envelope
+fixture. With only the retail corpus present it exits as an explicit CTest
+skip; it no longer combines real DGN bytes with fabricated capture payloads.
+The production Structure1F/Structure3 renderer remains closed until a
+hash-bound Saturn runtime artifact exists.
+
 2026-08-13: The authentic PLRD champion regression now receives
 `FIRESTAFF_NEXUS_DATA_DIR` from CTest instead of silently running its missing-
 data path. It verifies the real first/last resistance pairs (`35/40` and

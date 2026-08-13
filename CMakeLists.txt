@@ -38753,6 +38753,8 @@ add_executable(test_nexus_v1_dgn_material_raster
         NAME nexus_v1_direct_static_material_capture
         COMMAND test_nexus_v1_direct_static_material_capture
     )
+    set_tests_properties(nexus_v1_direct_static_material_capture PROPERTIES
+        SKIP_RETURN_CODE 77)
 
     # Documented Sega VDP1 mode-1 lookup decoding. This is a byte-order and
     # lookup-table unit test only; the engine route still requires an

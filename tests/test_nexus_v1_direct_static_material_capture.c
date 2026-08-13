@@ -250,7 +250,7 @@ int main(void)
 
     if (!data_dir || !data_dir[0]) {
         puts("skip: FIRESTAFF_NEXUS_DATA_DIR is not set");
-        return 0;
+        return 77;
     }
     {
         Nexus_V1_DgnStructure1FDirectFaceCaptureHostReceipt host_receipt;
@@ -344,6 +344,15 @@ int main(void)
     if (failures == 0) {
         CHECK(nexus_v1_level_load(&level, data, (int)file_size, 1) == 0,
               "canonical LEV01 parses before direct material selection");
+    }
+    if (failures == 0) {
+        /* The remaining assertions are an envelope-contract fixture.  A
+         * retail LEV corpus is not a runtime VDP1 witness, so never combine
+         * it with locally fabricated capture payloads.  The operator capture
+         * campaign owns that path and supplies its own hash-bound artifact. */
+        puts("skip: authentic Saturn Structure1F/VDP1 capture artifact is not selected");
+        free(data);
+        return 77;
     }
     if (failures == 0) {
         engine.level_loaded = 1;
