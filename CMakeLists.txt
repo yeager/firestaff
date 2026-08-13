@@ -43391,6 +43391,17 @@ set_tests_properties(nexus_v1_iso_only_launch PROPERTIES
     SKIP_RETURN_CODE 77
 )
 
+add_test(
+    NAME nexus_v1_iso_only_asset_manifest
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_iso_only_asset_manifest.sh
+            $<TARGET_FILE:firestaff_nexus_v1_asset_manifest_probe>
+)
+set_tests_properties(nexus_v1_iso_only_asset_manifest PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    LABELS "tier1;nexus;manifest;iso;real_data;skip_safe"
+    SKIP_RETURN_CODE 77
+)
+
 # ── Nexus V1 canonical asset manifest probe ──────────────────────────
 # Verifies the real 137-file corpus from extracted files and authenticated
 # ISO members. The probe never extracts container-only assets; it exercises

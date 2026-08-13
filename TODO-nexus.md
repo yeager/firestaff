@@ -1356,6 +1356,11 @@ värden ensamma räcker inte för text- eller menyadmission.
   container eller lös fil och Firestaff behöver inte packa upp originalet.
   Boot-/ISO-smoke, ISO-only launch och den riktiga extern-disk-korpusen
   passerar efter ändringen.
+- 2026-08-13: En separat `nexus_v1_iso_only_asset_manifest`-gate verifierar nu
+  hela den autentiska 137-medlemskorpusen genom CUE/ISO-läsaren. Den använder
+  en tillfällig root med endast symlänkad CUE/ISO och kräver inga uppackade
+  originalfiler. Detta stärker ISO-läsningen utan att öppna någon Saturn-
+  presentations- eller spelstartsgate.
 - 2026-08-13: Verifieringsdokumentet hade kvar en inaktuell rad som kallade
   disc-image-hashen "pending" och blandade ihop den historiska 138-filsmappen
   med den aktuella 137-medlemskorpusen. Den är nu korrigerad med den verifierade

@@ -37,6 +37,54 @@ typedef struct {
     int         check_dmdf;      /* validate DMDF magic */
 } ManifestEntry;
 
+/* Retail ISO directory records are not guaranteed to use the same spelling
+ * or directory prefix as the extracted DMWeb names.  Keep the manifest
+ * lookup strict: accept an exact member first, then a unique basename match
+ * (case-insensitive).  Ambiguous basenames remain missing rather than being
+ * guessed. */
+static const Nexus_ISOFile *find_manifest_iso_member(
+    const Nexus_ISOReader *reader, const char *name)
+{
+    const Nexus_ISOFile *match = NULL;
+    const char *slash;
+    int i;
+
+    if (!reader || !name) return NULL;
+    match = nexus_iso_find(reader, name);
+    if (match) return match;
+
+    slash = strrchr(name, '/');
+    if (!slash) slash = strrchr(name, '\\');
+    name = slash ? slash + 1 : name;
+    for (i = 0; i < reader->file_count; ++i) {
+        const char *member_name = reader->files[i].name;
+        const char *member_slash = strrchr(member_name, '/');
+        if (!member_slash) member_slash = strrchr(member_name, '\\');
+        member_name = member_slash ? member_slash + 1 : member_name;
+        if (strcasecmp(member_name, name) != 0) continue;
+        if (match) return NULL; /* never guess between duplicate basenames */
+        match = &reader->files[i];
+    }
+    return match;
+}
+
+static const Nexus_ISOFile *find_manifest_member(
+    const Nexus_V1_Engine *engine, const char *name)
+{
+    const Nexus_ISOFile *member;
+
+    if (!engine || !name) return NULL;
+    if (engine->source == NEXUS_SRC_ISO) {
+        member = find_manifest_iso_member(&engine->iso, name);
+        if (member) return member;
+    }
+    if (engine->supplemental_iso_valid) {
+        member = find_manifest_iso_member(&engine->supplemental_iso, name);
+        return member;
+    }
+    return NULL;
+}
+
 static const ManifestEntry g_manifest[] = {
     /* Dungeon Levels — 16 files */
     {"LEV00.DGN", 147456, 512, 1, 0},
@@ -463,10 +511,8 @@ int main(int argc, char **argv) {
 
         struct stat st;
         if (stat(path, &st) != 0) {
-            const Nexus_ISOFile *member = NULL;
-            if (engine.supplemental_iso_valid) {
-                member = nexus_iso_find(&engine.supplemental_iso, g_manifest[i].name);
-            }
+            const Nexus_ISOFile *member = find_manifest_member(
+                &engine, g_manifest[i].name);
             if (member && !member->is_dir &&
                 manifest_size_matches_iso(&g_manifest[i], member->size)) {
                 printf("  ISO MEMBER: %s (%u bytes; read in place)\n",
