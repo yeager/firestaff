@@ -10,7 +10,8 @@
 ## Summary
 This page separates historical DM1 bug references from current Nexus gates.
 Nexus has an authenticated external corpus, a launcher/runtime boundary and a
-297/297 passing Nexus regression selection. The original Saturn executable is
+304/304 passing external-data Nexus CTest selection (with capture-gated tests
+reported as skips). The original Saturn executable is
 partly disassembled, but start pose, VDP1/VDP2 consumers, SLEV/SAL runtime
 ownership and Saturn saves remain unproven. No DM1 bug is automatically
 promoted to a Nexus bug.
@@ -45,12 +46,17 @@ Historical blockers B1-B4 are obsolete. Current Firestaff-specific gates are
 the authentic Saturn LEV01 start pose, VDP1/VDP2 presentation consumers,
 SLEV/SAL event/audio ownership and Saturn memory-card save compatibility.
 
-High-priority missing implementations:
-- M1: VDP1/VDP2 texture format not implemented
-- M2: DMDF model format not fully documented
-- M3: ISO/CUE boundary and sector reads are tested; full Saturn consumer parity
-  remains open
-- M4: Shift-JIS text decoding not implemented
+High-priority remaining production gates:
+- M1: VDP1/VDP2 source formats and bounded capture replay are implemented;
+  authenticated Saturn scene ownership, transform/culling and production
+  pixel consumers remain open.
+- M2: DMDF/MNS model structures and real material payloads are parsed;
+  face selection, transform/culling and production raster ownership remain
+  capture-gated.
+- M3: ISO/CUE boundary and sector reads are verified; Saturn startup-to-LEV01
+  identity and the real start pose remain unbound.
+- M4: FONT256/S2D glyph data is decoded; the Saturn text/page consumer and
+  menu composition remain capture-gated.
 
 ## 3. Design Quirks (Not Bugs)
 
