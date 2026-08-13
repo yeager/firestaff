@@ -374,6 +374,8 @@ static void test_water_blocked_without_rope(void) {
     CHECK(redraw == 1, "water square is always passable (no gate in DM.BIN)");
     CHECK(st.party_x == 10 && st.party_y == 9,
           "water square allows movement (DM.BIN: no CMP/EQ #21 in movement path)");
+    CHECK(engine.audio.last_event == NEXUS_SFX_NONE,
+          "water crossing does not invent a party footstep sound");
 }
 
 static void test_water_crossed_with_rope(void) {
@@ -424,6 +426,8 @@ static void test_fire_crossed_with_rune(void) {
     CHECK(redraw == 1, "fire with fire_shield allows crossing");
     CHECK(st.party_x == 10 && st.party_y == 9,
           "fire with fire_shield moves party (DM.BIN 0x0603C386 bit 0 gate)");
+    CHECK(engine.audio.last_event == NEXUS_SFX_NONE,
+          "fire crossing does not invent a party footstep sound");
 }
 
 static void test_square_event_water_returns_cross_water(void) {

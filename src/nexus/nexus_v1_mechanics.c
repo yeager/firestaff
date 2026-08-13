@@ -1099,15 +1099,11 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 case NEXUS_EVENT_CROSS_WATER:
                     /* Water crossed with rope. No additional effect in V1.
                      * Source: DM1 MOVESENS.C water square sensor. */
-                    if (saturn_actions)
-                        nexus_sound_play(&engine->audio, NEXUS_SFX_FOOTSTEP);
                     break;
                 case NEXUS_EVENT_CROSS_FIRE:
                     /* Fire crossed with fire-rune protection. No additional
                      * effect in V1.
                      * Source: DM1 MOVESENS.C fire square sensor. */
-                    if (saturn_actions)
-                        nexus_sound_play(&engine->audio, NEXUS_SFX_FOOTSTEP);
                     break;
                 default:
                     break;

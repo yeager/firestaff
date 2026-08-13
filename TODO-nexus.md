@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: Removed two unsupported `NEXUS_SFX_FOOTSTEP` emissions from
+water/fire traversal. ReDMCSB `MOVESENS.C` records the square sensors and
+movement result but the successful party-step path has no sound request;
+Firestaff therefore no longer invents a host footstep when crossing either
+protected square. `test_nexus_v1_pit_teleporter_runtime` covers both negative
+audio cases. This does not bind the still-capture-gated Saturn SLEV/MAP/SCSP
+sound route.
+
 2026-08-13: `nexus_v1_sjis_to_utf8()` no longer discards an unsupported
 source byte after emitting an ASCII/kana prefix. Such input now clears the
 output and returns `-1`, matching the fail-closed contract for unverified
