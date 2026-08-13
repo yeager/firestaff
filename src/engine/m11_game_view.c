@@ -26902,36 +26902,18 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     if (campaignMedia && campaignPlan && !srmCampaignReplay &&
         !srmLaunchDiscovery && !launchTraceIdentity && !traceBundle &&
         !sectorRecordCorpus && (!captureManifestPath || !captureManifestPath[0])) {
-        /* Raw MODE1/2352 Track 02 media can run the full startup launch path
-         * directly from the verified payload; this mirrors the direct-launch
-         * test path and avoids the no-draw capture-required gate for ordinary
-         * raw BIN files that have no CUE pair.  Keep the capture-required
-         * path for MODE1/2048 ISO media and for any case where captures are
-         * actually present. */
-        int can_launch_from_raw_track02 =
-            campaignMedia->direct_media.mode1_2352 != 0;
-        if (!can_launch_from_raw_track02) {
-            savedDebugHUD = state->showDebugHUD;
-            M11_GameView_Shutdown(state);
-            M11_GameView_Init(state);
-            state->showDebugHUD = savedDebugHUD;
-            if (!M11_GameView_TheronBindTrack02StartupCaptureRequired(
-                    state, campaignMedia, campaignPlan, campaignMediaScanEpoch)) {
-                return 0;
-            }
-            snprintf(state->bootAssetMd5, sizeof(state->bootAssetMd5), "%s", verifiedMd5);
-            snprintf(state->title, sizeof(state->title), "%s", "THERON'S QUEST");
-            snprintf(state->sourceId,
-                     sizeof(state->sourceId),
-                     "%s",
-                     launcherSourceId && launcherSourceId[0]
-                         ? launcherSourceId
-                         : "theron");
-            snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s", verifiedPath);
-            return 1;
-        }
-        /* fall through to the full Track 02 startup launch below */
-        raw_track02_bypass = 1;
+        /* Both hash-verified Track 02 layouts own the title/startup route.
+         * MODE1/2048 CUE media has no raw IPL receipt, but it now has the
+         * same complete, source-backed ISO bitmap anchors as the raw BIN
+         * route.  Sending it to "CAPTURE REQUIRED" here made a valid retail
+         * CUE unusable from the start menu before the verified startup
+         * loader could run.
+         *
+         * Retain the raw-only convenience below: only MODE1/2352 supplies
+         * the separately verified initial-level path, so ISO continues at
+         * the title/stage-select boundary.  It neither auto-loads a dungeon
+         * nor promotes any level, object, AI, T700, or T900 semantics. */
+        raw_track02_bypass = campaignMedia->direct_media.mode1_2352 != 0;
     }
     memset(&launch, 0, sizeof(launch));
     savedDebugHUD = state->showDebugHUD;

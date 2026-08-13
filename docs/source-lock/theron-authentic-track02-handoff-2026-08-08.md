@@ -57,6 +57,21 @@ System Card + US CUE/Track 02
         -> authentic Theron's Quest title/menu frame
 ```
 
+## Firestaff CUE launch boundary
+
+**Verified: 2026-08-13.** A hash-verified retail `MODE1/2048` CUE no longer
+falls into Firestaff's obsolete `TRACK02 CAPTURE REQUIRED` page. The normal
+M12 → M11 handoff resolves the CUE to its declared Track 02 ISO and opens the
+source-backed Theron title gate. The same boundary is covered by the opt-in
+real-media launcher regression and by `firestaff --game theron --data-dir
+<cue-root> --boot-probe` against ISO MD5
+`ceb02343868f80cec899e9b239aff2da`.
+
+This is deliberately narrower than a gameplay admission: ISO launches at the
+title/stage-select boundary and does not auto-load a dungeon. The raw
+MODE1/2352 convenience path remains the only route with its separately
+verified initial-level load. No level/object, AI, T700 or T900 gate changed.
+
 ## Explicitly not proven
 
 This receipt does not prove Firestaff's `$2600` main-RAM consumer, semantic

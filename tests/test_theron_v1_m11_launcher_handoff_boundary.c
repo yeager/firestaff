@@ -524,8 +524,11 @@ static void run_real_launcher_handoff_if_available(void) {
 static void run_explicit_real_cue_campaign_if_available(void) {
     const char *cue_path = getenv("FIRESTAFF_THERON_CUE");
     M12_AssetStatus status;
+    M12_StartupMenuState menu;
+    M11_GameViewState view;
     const Theron_V1Track02CampaignMediaDiscoveryReceipt *media;
     Theron_V1Track02RawMediaIntakeReceipt intake;
+    int opened;
 
     if (!cue_path || !cue_path[0]) {
         expect_skip("FIRESTAFF_THERON_CUE is unset");
@@ -550,6 +553,32 @@ static void run_explicit_real_cue_campaign_if_available(void) {
                     strcmp(media->track02_md5, intake.track02_md5) == 0 &&
                     strcmp(media->direct_media.media_path, cue_path) == 0,
                 "explicit authentic Theron CUE retains CUE-backed raw Track 02 provenance");
+    if (!media || !media->launchable_direct_media ||
+        strcmp(media->track02_md5, intake.track02_md5) != 0) {
+        return;
+    }
+
+    /* Regression for MODE1/2048 retail media: its verified CUE must reach
+     * the same bounded title route as raw Track 02 instead of being replaced
+     * by the obsolete capture-required page.  This asserts the real M12→M11
+     * handoff, not just the lower-level media scanner. */
+    init_menu_without_gallery(&menu, cue_path, "theron");
+    dismiss_initial_message(&menu);
+    menu.selectedIndex = 4;
+    menu.activatedIndex = 4;
+    menu.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    menu.view = M12_MENU_VIEW_GAME_OPTIONS;
+    menu.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
+    M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+    M11_GameView_Init(&view);
+    opened = M11_GameView_OpenSelectedMenuEntry(&view, &menu);
+    expect_true(opened == 1 && view.active &&
+                    view.sourceKind == M11_GAME_SOURCE_THERON_TRACK02 &&
+                    !view.theronState.dungeon_capture_required &&
+                    view.theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
+                    view.theronState.startup_media_ready,
+                "explicit authentic MODE1/2048 CUE opens the source-backed Theron title gate");
+    M11_GameView_Shutdown(&view);
 }
 
 static void run_production_forcefield_transition_without_roster(void) {
