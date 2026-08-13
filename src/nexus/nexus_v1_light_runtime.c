@@ -19,7 +19,7 @@
  * Saturn DM.BIN/FONT256.S2D/MNS is touched, no real `.sav` byte
  * stream is read. The save blob it produces is meant to be embedded
  * as a typed sub-section inside the existing `FNXS` save format
- * (see include/nexus_v1_save.h, NEXUS_SAVE_VERSION v2).
+ * (see include/nexus_v1_save.h, NEXUS_SAVE_VERSION v3).
  */
 
 #include "nexus_v1_light_runtime.h"

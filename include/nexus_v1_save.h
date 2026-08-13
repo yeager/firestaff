@@ -46,7 +46,7 @@
 
 typedef struct {
     uint32_t magic;               /* NEXUS_SAVE_MAGIC ('FNXS') */
-    uint16_t version;             /* NEXUS_SAVE_VERSION (2) */
+    uint16_t version;             /* NEXUS_SAVE_VERSION (3) */
     uint16_t header_size;         /* sizeof(this struct) */
     uint32_t data_size;           /* total bytes of champion_data + world_data sections */
     uint32_t champion_data_size;  /* bytes of champion data section (v2+) */

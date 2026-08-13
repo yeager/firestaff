@@ -1,28 +1,14 @@
 # Nexus V1 Autosave
 
-## Status: NOT IMPLEMENTED
+## Status: not implemented
 
-There is **no autosave** functionality in Nexus V1. No timer-based saves,
-no level-change triggers, no event-driven persistence.
+Nexus V1 has Firestaff-native FNXS save/load, but no automatic save policy.
+There are no timer-based saves, level-change autosaves, or shutdown autosaves.
 
-## What Code Shows
+The current save commands and quick-resume route require an explicit save
+operation. `nexus_v1_tick()` and `nexus_v1_load_level()` do not write a save
+implicitly.
 
-- `nexus_v1_tick()` in `nexus_v1_engine.c` — game loop tick at 55ms / 18.2 Hz.
-  Currently empty (stub). No save logic present.
-- `nexus_v1_load_level()` — level loader. No autosave on level transition.
-- No `autosave` keyword anywhere in the Nexus source tree.
-
-## Comparison to DM1
-
-DM1 (the reference engine) has a similar gap — the DM1 engine in Firestaff
-also lacks a save system. This is consistent with both engines being
-early-phase reimplementations focused on rendering, movement, and combat.
-
-## Future Consideration
-
-An autosave system would logically trigger on:
-- Level change (entering new dungeon floor)
-- Party death/revival
-- End of game session (shutdown hook)
-
-No such hooks exist yet.
+This is separate from the unresolved original Saturn save consumer. Any
+future autosave policy must write only a Firestaff-native FNXS file until
+authentic Saturn save evidence exists.

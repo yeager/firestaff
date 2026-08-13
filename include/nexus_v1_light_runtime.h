@@ -28,7 +28,7 @@
  * integration. It does NOT touch any real Nexus asset, real Saturn
  * DM.BIN/FONT256.S2D/MNS, or a real `.sav` byte stream. The save
  * blob it produces is meant to be embedded as a typed sub-section
- * inside the existing `FNXS` data section (NEXUS_SAVE_VERSION v2),
+ * inside the existing `FNXS` data section (NEXUS_SAVE_VERSION v3),
  * not to replace the existing save header layout.
  *
  * Source-lock

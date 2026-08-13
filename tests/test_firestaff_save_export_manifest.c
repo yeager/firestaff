@@ -213,7 +213,7 @@ static int write_nexus_save_fixture(const char* path,
     /* NEXUS_SAVE_MAGIC = 'FNXS' = 0x53584E46u (little-endian
      * representation is "FNXS" as bytes at offset 0). */
     header[0] = 'F'; header[1] = 'N'; header[2] = 'X'; header[3] = 'S';
-    write_u32_le(header + 4, 2u);                /* NEXUS_SAVE_VERSION */
+    write_u32_le(header + 4, 3u);                /* NEXUS_SAVE_VERSION */
     write_u32_le(header + 8, 64u);               /* header_size */
     total = 64u + bodySize;
     write_u32_le(header + 12, (uint32_t)total); /* data_size */
@@ -358,11 +358,12 @@ static int test_detector(void) {
     /* Nexus prefix. */
     memset(nexusHeader, 0, sizeof(nexusHeader));
     memcpy(nexusHeader, "FNXS", 4);
-    write_u32_le(nexusHeader + 4, 2u);
+    write_u32_le(nexusHeader + 4, 3u);
     check(FirestaffSaveExport_DetectKind(nexusHeader, sizeof(nexusHeader),
                                          magic, sizeof(magic), &version) ==
               FIRESTAFF_SAVE_EXPORT_KIND_NEXUS_V1,
           "detector recognises FNXS");
+    check(version == 3u, "detector returns Nexus FNXS formatVersion 3");
 
     /* Theron prefix. */
     memset(theronHeader, 0, sizeof(theronHeader));
@@ -558,7 +559,7 @@ static int test_multi_kind_round_trip(void) {
         { FIRESTAFF_SAVE_EXPORT_KIND_DM1_V1,    "FSDM1SV1", 1u, "firestaff-dm1",    64u, write_dm1_save_fixture },
         { FIRESTAFF_SAVE_EXPORT_KIND_CSB_V1,    "RDMCSB20", 1u, "firestaff-csb",    64u, write_csb_save_fixture },
         { FIRESTAFF_SAVE_EXPORT_KIND_DM2_V1,    "BEEF\0DEAD", 1u, "firestaff-dm2",  16u, write_dm2_save_fixture },
-        { FIRESTAFF_SAVE_EXPORT_KIND_NEXUS_V1,  "FNXS",     2u, "firestaff-nexus",  64u, write_nexus_save_fixture },
+        { FIRESTAFF_SAVE_EXPORT_KIND_NEXUS_V1,  "FNXS",     3u, "firestaff-nexus",  64u, write_nexus_save_fixture },
         { FIRESTAFF_SAVE_EXPORT_KIND_THERON_V1, "TQR ",     1u, "firestaff-theron", 32u, write_theron_save_fixture },
     };
     int nCases = (int)(sizeof(cases) / sizeof(cases[0]));
@@ -679,7 +680,7 @@ static int test_kind_mismatch_rejection(void) {
     rc = FirestaffSaveExport_ImportFile(
             exportDir, "dm1-slot",
             FIRESTAFF_SAVE_EXPORT_KIND_NEXUS_V1,
-            "FNXS", 2u,
+            "FNXS", 3u,
             targetPath,
             NULL, 0, NULL, 0,
             errBuf, sizeof(errBuf));

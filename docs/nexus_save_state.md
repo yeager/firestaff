@@ -1,66 +1,23 @@
-# Nexus V1 Saved State — What Is Tracked
+# Nexus V1 Saved State
 
-## Status: ENGINE EXISTS, SAVE NOT IMPLEMENTED
+## Status: engine and Firestaff-native save exist
 
-The Nexus V1 engine defines all the state structures that **would** be saved,
-but no save/load mechanism exists to persist them.
+The Firestaff-native FNXS serializer persists the bounded runtime state. It
+must not be confused with a decoded Saturn save record.
 
-## State Structures Defined
+## State covered by FNXS
 
-### Game State (`Nexus_V1_GameState`)
-- `current_level` — dungeon level index (0–15)
-- `party_x`, `party_y` — party grid position
-- `party_dir` — facing direction (0=North, matching DM1)
-- `game_started` — boolean flag
-- `data_dir` — path to game data
+- Resume level, party coordinates, facing, game time, and state hash.
+- Champion pool, party membership, leader, authenticated PLRD-derived
+  champion fields, inventory, and runtime values.
+- Serialized world state and the optional `NGLT` light-runtime section.
 
-### Champion State (`Nexus_V1_Champion`)
-The save container has capacity for the legacy 24-slot model. The live retail
-source currently supplies 20 PLRD records:
-- Identity: `name_ascii`, `name_jp`, `primary_class`, `portrait_index`
-- Vital stats: `health/max_health`, `stamina/max_stamina`, `mana/max_mana`
-- Attributes: `strength`, `dexterity`, `wisdom`, `vitality`
-- Resistances: `anti_magic`, `anti_fire`
-- Class levels: `fighter_level`, `ninja_level`, `priest_level`, `wizard_level`
-- Survival: `alive`
-- Provisions: `food`, `water` are not present in the authenticated PLRD
-  resource; the runtime leaves them unbound until a Saturn start/save
-  consumer is captured.
-- Inventory: `inventory[30]` — array of item indices
+The native format is little-endian, version 3, CRC-protected, and bounded by
+the serializers in `src/nexus/nexus_v1_save_load.c`.
 
-### Champion Pool (`Nexus_V1_ChampionPool`)
-- `champions[24]` — 20 live PLRD records plus four reserved capacity slots
-- `party[4]` — active party champion indices
-- `party_count`, `leader_index`
+## Not yet source-locked from Saturn
 
-### Dungeon Level (`Nexus_V1_Level`)
-- `width`, `height` — grid dimensions (typically 32×32)
-- `squares[y][x]` — 5-bit wall type per cell (16×16 possible tile types)
-- `has_3d_geometry` — flag
-- `geometry_offset`, `geometry_size` — raw 3D geometry data
-
-## What Would Be Saved
-
-A complete save would need to persist:
-1. **Game progress**: current level, party position/direction
-2. **Champions**: the 20 authenticated PLRD records (alive status,
-   HP/stamina/mana, class levels,
-   food/water, inventory)
-3. **Party composition**: which 4 champions are active, leader
-4. **Dungeon state**: current level grid (potentially with dynamic changes)
-5. **3D geometry**: raw geometry data for loaded levels
-
-## What Is NOT Tracked
-
-- Quest progress or events (no event system yet)
-- World map state (Nexus is dungeon-only currently)
-- Any per-champion skill/spell progression beyond class levels
-- Chest/door states (no interaction system fully implemented)
-
-## Notes
-
-Production retains PLRD's six raw TABL indices and codes, but does not invent
-host names or glyphs before the Saturn TEXT/TABL/FONT256 consumer is bound.
-The former 8/24 fixture table is not used by production. The 30-slot storage
-shape is retained for the authenticated PLRD equipment/backpack ordinals;
-Nexus gameplay semantics remain capture-gated.
+The original Saturn save header, record size, field mapping, and load
+consumer are not identified. The available empty backup-RAM containers do not
+provide a played save and cannot be used as substitute data. Saturn save
+import therefore remains capture-gated.

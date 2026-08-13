@@ -869,7 +869,7 @@ Nexus_SaveResult nexus_v1_save_full_to_path_with_runtime(
      * and the data section size covers ONLY champion + world (not
      * the trailing NGLT). The NGLT blob is appended after the world
      * data and the loader learns about it by re-reading past the
-     * champion + world regions. This keeps the FNXS v2 header
+     * champion + world regions. This keeps the FNXS header
      * invariant intact so legacy loaders (do_load / do_save) still
      * work on the champion + world section. */
     Nexus_V1_SaveHeader hdr;
@@ -879,7 +879,7 @@ Nexus_SaveResult nexus_v1_save_full_to_path_with_runtime(
     hdr.champion_data_size = (uint32_t)champ_size;
     hdr.world_data_size = (uint32_t)world_size;
     /* CRC covers only the champion + world data sections (the
-     * documented v2 contract). The NGLT tail has its own magic
+     * documented FNXS contract). The NGLT tail has its own magic
      * + length and is integrity-checked by the runtime's deserialize
      * path. */
     uint32_t crc = crc32_update(0, (const uint8_t *)champ_buf, champ_size);

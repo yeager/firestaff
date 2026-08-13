@@ -854,12 +854,12 @@ Source: `docs/NEXUS_FILE_CLASSIFICATION.md`
 Nexus V1 Phase 6 implements **save/load via a Firestaff-native binary format**.
 The original Saturn memory card format is undocumented — no import path exists.
 
-Format: `NEXUS_SAVE_MAGIC = 'FNXS'`, little-endian, version 2.
+Format: `NEXUS_SAVE_MAGIC = 'FNXS'`, little-endian, current version 3.
 
 **Header** (`include/nexus_v1_save.h`):
 ```c
 #define NEXUS_SAVE_MAGIC   0x53584E46U  /* 'FNXS' */
-#define NEXUS_SAVE_VERSION 2
+#define NEXUS_SAVE_VERSION 3
 
 typedef struct {
     uint32_t magic;

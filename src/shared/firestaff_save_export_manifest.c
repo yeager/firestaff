@@ -53,7 +53,7 @@
 
 #define VERSION_DM1_V1    1   /* DM1_SAVE_FORMAT_VERSION */
 #define VERSION_CSB_V1    1   /* SaveGameHeader_Compat.formatVersion */
-#define VERSION_NEXUS_V1  2   /* NEXUS_SAVE_VERSION */
+#define VERSION_NEXUS_V1  3   /* NEXUS_SAVE_VERSION */
 #define VERSION_THERON_V1 1   /* theron .tqsv format version */
 
 /* DM2 slot-magic tokens. The DM2 slot layout uses 0xBEEF /
