@@ -375,8 +375,15 @@ VDP1/VDP2 presentation, original Saturn save import, audio dispatch, and a
 played level remain open capture/source gates. Synthetic fixtures in this
 document are test scaffolding only and are never production game data.
 
-> **2026-05-27 hash lock:** The historical 138-file SHA256 manifest was computed
-> from a live Sega Saturn extraction. Hash manifest:
-> `scripts/fixtures/nexus_v1_disc_file_hashes.py`. Sizes in
-> `scripts/fixtures/nexus_v1_asset_sizes.py`. Disc-image-level SHA256 pending `.cue/.bin`
-> acquisition; individual file hashes are real and locked.
+> **Historical 2026-05-27 hash lock:** The older 138-file SHA256 manifest was
+> computed from a live Sega Saturn extraction. The current authenticated
+> English retail corpus contains 137 ISO members; six of those are retained as
+> virtual ISO-only entries in the local mixed root. Individual file hashes and
+> sizes remain locked by `scripts/fixtures/nexus_v1_disc_file_hashes.py` and
+> `scripts/fixtures/nexus_v1_asset_sizes.py`.
+>
+> **Current disc lock (2026-08-13):** English ISO SHA256
+> `16786e6165d8cbf7f6394dd9bc7171fbb561c1ba40b77ad7cba3c275fde2804e`
+> (123011072 bytes); matching CUE SHA256
+> `b96f01e2f8ce3ab9c8e4a33d5a0c7076cdc1bfd247a85a1454e6c36c8a616f33`.
+> The ISO is read in place; Firestaff does not unpack the original game data.
