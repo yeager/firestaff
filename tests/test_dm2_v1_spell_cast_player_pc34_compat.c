@@ -8,6 +8,7 @@
 
 #include "dm2_v1_spell_cast_player.h"
 #include "dm2_v1_spell_timer_handlers_pc34_compat.h"
+#include "dm2_v1_projectile_pc34_compat.h"
 #include "dm2_v1_timeline.h"
 
 #include "dm2_v1_caii_alloc_pc34_compat.h"
@@ -160,9 +161,19 @@ static void test_cast_success_branches(void)
     DM2_V1_ExtendedSpellsReceipt ext;
     DM2_V1_SpellCastPlayerReceipt r;
     const uint8_t light[] = {DM2_RUNE_YA, DM2_RUNE_FUL, 0};
+    const uint8_t long_light[] = {DM2_RUNE_YA, DM2_RUNE_OH, DM2_RUNE_IR,
+                                  DM2_RUNE_RA, 0};
+    /* Fixed table stores DES IR SAR as the tail; YA is the live power rune. */
+    const uint8_t darkness[] = {DM2_RUNE_YA, DM2_RUNE_DES, DM2_RUNE_IR,
+                                DM2_RUNE_SAR, 0};
     const uint8_t fireball[] = {DM2_RUNE_YA, DM2_RUNE_FUL, DM2_RUNE_IR, 0};
     const uint8_t str_potion[] = {DM2_RUNE_YA, DM2_RUNE_FUL, DM2_RUNE_BRO, DM2_RUNE_KU, 0};
     const uint8_t attack_minion[] = {DM2_RUNE_YA, DM2_RUNE_ZO, DM2_RUNE_EW, DM2_RUNE_KU, 0};
+    const uint8_t reflector[] = {DM2_RUNE_YA, DM2_RUNE_ZO, DM2_RUNE_BRO, DM2_RUNE_ROS, 0};
+    const uint8_t poison_cloud[] = {DM2_RUNE_YA, DM2_RUNE_OH, DM2_RUNE_VEN, 0};
+    const uint8_t aura_speed[] = {DM2_RUNE_YA, DM2_RUNE_OH, DM2_RUNE_IR,
+                                  DM2_RUNE_ROS, 0};
+    const uint8_t open_door[] = {DM2_RUNE_YA, DM2_RUNE_ZO, 0};
 
     memset(&ext, 0, sizeof(ext));
     dm2_v1_spell_cast_player_build_table(&ext, &table);
@@ -176,7 +187,38 @@ static void test_cast_success_branches(void)
     expect_true(r.timer_kind == DM2_V1_SPELL_TIMER_LIGHT,
                 "Light requests a light timer");
     expect_true(r.timer_duration > 0, "Light has positive duration");
+    expect_true(r.timer_value_a <= 0 && r.timer_value_a >= -15,
+                "Light carries bounded non-positive source timer-A");
     expect_true(r.cooldown_ticks > 0, "Light applies cooldown");
+
+    /* Long Light uses the source bright-light delay and the same signed 0x46
+     * countdown family, but is a distinct fixed-table spell (index 0). */
+    r = dm2_v1_spell_cast_player(&table, long_light, 30, 100, 0);
+    expect_true(r.valid && r.found && r.spell_index == 0 && r.cast_success,
+                "Long Light resolves fixed spell index 0");
+    expect_true(r.timer_kind == DM2_V1_SPELL_TIMER_LIGHT &&
+                    r.timer_duration >= 10000 &&
+                    r.timer_value_a <= 0 && r.timer_value_a >= -15,
+                "Long Light carries source bright-light 0x46 payload");
+
+    /* Darkness (DES IR SAR, fixed source index 1) shares the source 0x46
+     * light-timer family; the timer payload supplies its polarity. */
+    r = dm2_v1_spell_cast_player(&table, darkness, 30, 100, 0);
+    expect_true(r.valid && r.found && r.spell_index == 1,
+                "Darkness lookup resolves fixed spell index 1");
+    expect_true(r.cast_success && r.execution_class == DM2_V1_SPELL_EXEC_GENERAL,
+                "Darkness follows the GENERAL source branch");
+    expect_true(r.timer_kind == DM2_V1_SPELL_TIMER_LIGHT && r.timer_duration > 0,
+                "Darkness requests the source light timer family");
+    expect_true(r.timer_value_a > 0 && r.timer_value_a < 16,
+                "Darkness carries bounded positive source timer-A");
+
+    r = dm2_v1_spell_cast_player(&table, open_door, 30, 100, 0);
+    expect_true(r.cast_success && r.spell_index == 20 &&
+                    r.execution_class == DM2_V1_SPELL_EXEC_MISSILE &&
+                    r.timer_kind == DM2_V1_SPELL_TIMER_PROJECTILE &&
+                    r.object_effect == DM2_OBJECT_EFFECT_OPEN_DOOR,
+                "Open/Close Door follows source MISSILE class and effect 4");
 
     /* Fireball (MISSILE) */
     r = dm2_v1_spell_cast_player(&table, fireball, 30, 100, 0);
@@ -186,7 +228,59 @@ static void test_cast_success_branches(void)
     expect_true(r.timer_kind == DM2_V1_SPELL_TIMER_PROJECTILE,
                 "Fireball requests projectile");
     expect_true(r.object_effect == DM2_OBJECT_EFFECT_NONE,
-                "Fireball does not invent a DB object-effect identifier");
+                "Fireball preserves source object-effect value 0");
+    expect_true(dm2_v1_spell_resolves_object_effect(14, 0) ==
+                    DM2_OBJECT_EFFECT_POISON_CLOUD &&
+                dm2_v1_spell_resolves_object_effect(15, 0) ==
+                    DM2_OBJECT_EFFECT_LIGHTNING &&
+                dm2_v1_spell_resolves_object_effect(19, 0) ==
+                    DM2_OBJECT_EFFECT_POISON_BOLT,
+                "fixed spell table decodes source missile/cloud effects");
+    expect_true(dm2_v1_spell_resolves_object_effect(29, 0) ==
+                    DM2_OBJECT_EFFECT_SUMMON_ATTACK_MINION &&
+                dm2_v1_spell_resolves_object_effect(30, 0) ==
+                    DM2_OBJECT_EFFECT_SUMMON_GUARD_MINION &&
+                dm2_v1_spell_resolves_object_effect(31, 0) ==
+                    DM2_OBJECT_EFFECT_SUMMON_UHAUL_MINION,
+                "fixed spell table decodes source summon selectors");
+    expect_true(dm2_v1_spell_resolves_object_effect(34, 0) ==
+                    DM2_OBJECT_EFFECT_UNAVAILABLE,
+                "out-of-range spell effect remains unavailable");
+    expect_true(dm2_v1_spell_timer_object_effect_to_projectile_subtype(
+                    DM2_OBJECT_EFFECT_FIREBALL) ==
+                    DM2_PROJ_SUBTYPE_MAGICAL_FIREBALL &&
+                dm2_v1_spell_timer_object_effect_to_projectile_subtype(
+                    DM2_OBJECT_EFFECT_LIGHTNING) ==
+                    DM2_PROJ_SUBTYPE_MAGICAL_LIGHTNING &&
+                dm2_v1_spell_timer_object_effect_to_projectile_subtype(
+                    DM2_OBJECT_EFFECT_POISON_BOLT) ==
+                    DM2_PROJ_SUBTYPE_MAGICAL_POISON_BOLT &&
+                dm2_v1_spell_timer_object_effect_to_projectile_subtype(
+                    DM2_OBJECT_EFFECT_POISON_CLOUD) ==
+                    DM2_PROJ_SUBTYPE_MAGICAL_POISON_CLOUD,
+                "source object effects map to matching projectile subtypes");
+
+    r = dm2_v1_spell_cast_player(&table, reflector, 60, 200, 0);
+    expect_true(r.cast_success && r.spell_index == 12 &&
+                    r.timer_kind == DM2_V1_SPELL_TIMER_CLOUD &&
+                    r.object_effect == 0x0e && r.timer_duration > 0,
+                "Spell Reflector follows source reflector-cloud creation");
+    r = dm2_v1_spell_cast_player(&table, poison_cloud, 60, 200, 0);
+    expect_true(r.cast_success && r.spell_index == 14 &&
+                    r.timer_kind == DM2_V1_SPELL_TIMER_PROJECTILE &&
+                    r.object_effect == DM2_OBJECT_EFFECT_POISON_CLOUD,
+                "Poison Cloud preserves source MISSILE class and effect 7");
+
+    /* Aura of Speed is GENERAL spell 11, but its consumer is the global
+     * savegames1.b_04 byte rather than c_hero::ench_aura.  Keep lookup and
+     * classification source-correct while leaving the owner gate explicit. */
+    r = dm2_v1_spell_cast_player(&table, aura_speed, 60, 200, 0);
+    expect_true(r.cast_success && r.spell_index == 11 &&
+                    r.execution_class == DM2_V1_SPELL_EXEC_GENERAL &&
+                    r.timer_kind == DM2_V1_SPELL_TIMER_AURA,
+                "Aura of Speed resolves as source GENERAL spell 11");
+    expect_true(r.timer_value_a == r.cast_power && r.timer_duration > 0,
+                "Aura of Speed retains source cast payload for owner gate");
 
     /* STR Potion (POTION) with flask */
     r = dm2_v1_spell_cast_player(&table, str_potion, 30, 100, 1);
@@ -332,13 +426,15 @@ static void test_apply_success_light(void)
     expect_true(dm2_v1_source_timer_peek_ticket(&queue, a.timer_ticket, &t),
                 "Light timer ticket is live");
     expect_true(t.type == 0x46, "Light timer type is 0x46");
+    expect_true(t.value_a == r.timer_value_a,
+                "Light timer-A uses source step, not due duration");
     expect_true(t.actor == 2, "Light timer actor is champion index");
     expect_true((t.ticks_and_map & DM2_V1_SOURCE_TIMER_TICK_MASK) ==
                     (uint32_t)(100 + r.timer_duration),
                 "Light timer due tick matches duration");
 }
 
-static void test_apply_success_fireball(void)
+static void test_apply_fireball_remains_atomic_without_db14_owner(void)
 {
     DM2_V1_RuntimeSpellTable table;
     DM2_V1_ExtendedSpellsReceipt ext;
@@ -346,7 +442,6 @@ static void test_apply_success_fireball(void)
     DM2_V1_SpellCastApplyReceipt a;
     DM2_ChampionRecord champ;
     DM2_V1_SourceTimerQueue queue;
-    DM2_V1_SourceTimer t;
     const uint8_t fireball[] = {DM2_RUNE_YA, DM2_RUNE_FUL, DM2_RUNE_IR, 0};
 
     memset(&ext, 0, sizeof(ext));
@@ -358,20 +453,118 @@ static void test_apply_success_fireball(void)
     a = dm2_v1_spell_cast_player_apply(&r, &champ, 1, NULL, &queue,
                                        200u, 1, 20, 21, 3);
 
-    expect_true(a.valid && a.applied, "Fireball apply valid");
-    expect_true(a.mana_consumed > 0 && a.mana_after < 100,
-                "Fireball consumes mana");
-    expect_true(champ.hand_cooldown[1] == (uint16_t)r.cooldown_ticks,
-                "Fireball sets hand 1 cooldown");
-    expect_true(a.timer_enqueued && a.timer_kind == DM2_V1_SPELL_TIMER_PROJECTILE,
-                "Fireball enqueues projectile timer");
+    expect_true(!a.valid && !a.applied && !a.timer_enqueued,
+                "Fireball remains closed without a DB14 owner");
+    expect_true(a.mana_after == 100 && champ.mana == 100,
+                "Fireball rejection does not consume mana");
+    expect_true(champ.hand_cooldown[1] == 0u && queue.count == 0u,
+                "Fireball rejection leaves cooldown and timer queue unchanged");
+}
+
+static void test_apply_aura_speed_remains_atomic_without_savegames1_owner(void)
+{
+    DM2_V1_RuntimeSpellTable table;
+    DM2_V1_ExtendedSpellsReceipt ext;
+    DM2_V1_SpellCastPlayerReceipt r;
+    DM2_V1_SpellCastApplyReceipt a;
+    DM2_ChampionRecord champ;
+    DM2_V1_SourceTimerQueue queue;
+    const uint8_t aura_speed[] = {
+        DM2_RUNE_YA, DM2_RUNE_OH, DM2_RUNE_IR, DM2_RUNE_ROS, 0};
+
+    memset(&ext, 0, sizeof(ext));
+    dm2_v1_spell_cast_player_build_table(&ext, &table);
+    init_champion_for_apply(&champ);
+    dm2_v1_source_timer_queue_init(&queue);
+
+    r = dm2_v1_spell_cast_player(&table, aura_speed, 60, 100, 0);
+    a = dm2_v1_spell_cast_player_apply(&r, &champ, 0, NULL, &queue,
+                                       250u, 1, 20, 21, 0);
+
+    expect_true(!a.valid && !a.applied && !a.timer_enqueued,
+                "Aura of Speed remains closed without savegames1.b_04 owner");
+    expect_true(a.mana_after == 100 && champ.mana == 100,
+                "Aura of Speed rejection does not consume mana");
+    expect_true(champ.hand_cooldown[0] == 0u && queue.count == 0u,
+                "Aura of Speed rejection leaves cooldown and timer queue unchanged");
+}
+
+static void test_apply_success_summon_payload(void)
+{
+    DM2_V1_RuntimeSpellTable table;
+    DM2_V1_ExtendedSpellsReceipt ext;
+    DM2_V1_SpellCastPlayerReceipt r;
+    DM2_V1_SpellCastApplyReceipt a;
+    DM2_ChampionRecord champ;
+    DM2_V1_SourceTimerQueue queue;
+    DM2_V1_SourceTimer t;
+    const uint8_t attack_minion[] = {
+        DM2_RUNE_YA, DM2_RUNE_ZO, DM2_RUNE_EW, DM2_RUNE_KU, 0};
+
+    memset(&ext, 0, sizeof(ext));
+    dm2_v1_spell_cast_player_build_table(&ext, &table);
+    init_champion_for_apply(&champ);
+    dm2_v1_source_timer_queue_init(&queue);
+
+    r = dm2_v1_spell_cast_player(&table, attack_minion, 60, 200, 0);
+    a = dm2_v1_spell_cast_player_apply(&r, &champ, 0, NULL, &queue,
+                                       300u, 2, 0x1e, 0x1f, 0);
+
+    expect_true(a.valid && a.timer_enqueued,
+                "summon apply enqueues a source 0x5e timer");
     expect_true(dm2_v1_source_timer_peek_ticket(&queue, a.timer_ticket, &t),
-                "Fireball timer ticket live");
-    expect_true(t.type == 0x1e, "Fireball timer type is 0x1e");
-    expect_true(t.reserved == DM2_OBJECT_EFFECT_NONE,
-                "Fireball timer keeps unbound object effect unavailable");
-    expect_true((t.ticks_and_map & DM2_V1_SOURCE_TIMER_TICK_MASK) == 201u,
-                "Fireball timer due on next tick (duration 0)");
+                "summon timer ticket is live");
+    expect_true(t.type == DM2_V1_TIMER_ALLOC_NEW_CREATURE &&
+                    (uint16_t)t.value_a == (uint16_t)(0x1e | (0x1fu << 8)) &&
+                    t.value_b == DM2_OBJECT_EFFECT_SUMMON_ATTACK_MINION &&
+                    t.reserved == 0,
+                "summon timer uses packed cell and source creature type");
+}
+
+static void test_apply_summon_queue_failure_is_atomic(void)
+{
+    DM2_V1_RuntimeSpellTable table;
+    DM2_V1_ExtendedSpellsReceipt ext;
+    DM2_V1_SpellCastPlayerReceipt r;
+    DM2_V1_SpellCastApplyReceipt a;
+    DM2_ChampionRecord champ;
+    DM2_ChampionRecord before;
+    DM2_V1_SourceTimerQueue queue;
+    DM2_V1_SourceTimer filler;
+    const uint8_t attack_minion[] = {
+        DM2_RUNE_YA, DM2_RUNE_ZO, DM2_RUNE_EW, DM2_RUNE_KU, 0};
+    size_t i;
+
+    memset(&ext, 0, sizeof(ext));
+    dm2_v1_spell_cast_player_build_table(&ext, &table);
+    init_champion_for_apply(&champ);
+    champ.mana = 200u;
+    champ.hand_cooldown[0] = 3u;
+    champ.runes_count = 4u;
+    memcpy(champ.spelled_runes, attack_minion, 4u);
+    before = champ;
+    dm2_v1_source_timer_queue_init(&queue);
+    memset(&filler, 0, sizeof(filler));
+    filler.type = DM2_V1_TIMER_LIGHT;
+    filler.ticks_and_map = 0x01000000u;
+    for (i = 0u; i < DM2_V1_SOURCE_TIMER_MAX; ++i) {
+        if (dm2_v1_source_timer_enqueue(&queue, &filler, (uint16_t)i) !=
+            DM2_V1_SOURCE_TIMER_OK) {
+            expect_true(0, "fixture fills the source timer queue");
+            return;
+        }
+    }
+
+    r = dm2_v1_spell_cast_player(&table, attack_minion, 60, 200, 0);
+    a = dm2_v1_spell_cast_player_apply(&r, &champ, 0, NULL, &queue,
+                                       300u, 2, 0x1e, 0x1f, 0);
+
+    expect_true(!a.valid && !a.applied && !a.timer_enqueued,
+                "full source timer queue rejects summon admission");
+    expect_true(memcmp(&champ, &before, sizeof(champ)) == 0,
+                "failed summon admission restores champion resources and runes");
+    expect_true(queue.count == DM2_V1_SOURCE_TIMER_MAX,
+                "failed summon admission leaves the full timer queue intact");
 }
 
 static void test_apply_success_potion(void)
@@ -669,7 +862,8 @@ static void test_spell_timer_cloud_fail_closed(void)
     dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
 
     t = make_spell_timer_ex(1u, 0, DM2_V1_TIMER_PROCESS_CLOUD, 0,
-                            7, 9, DM2_OBJECT_EFFECT_POISON_CLOUD);
+                            (int16_t)((7 & 0xff) | ((9 & 0xff) << 8)),
+                            0x3c12, 0);
     dm2_v1_source_timer_enqueue(&queue, &t, 0);
 
     dm2_v1_proceed_timers(&queue, 1u, &dispatcher, &receipt);
@@ -680,8 +874,10 @@ static void test_spell_timer_cloud_fail_closed(void)
                 "cloud origin x recorded");
     expect_true(ctx.receipt.cloud_origin_y == 9,
                 "cloud origin y recorded");
-    expect_true(ctx.receipt.cloud_object_effect == DM2_OBJECT_EFFECT_POISON_CLOUD,
-                "cloud object effect recorded");
+    expect_true(ctx.receipt.cloud_record_handle == (int16_t)0x3c12,
+                "cloud timer B records DB15 handle");
+    expect_true(ctx.receipt.cloud_object_effect == -1,
+                "cloud object effect remains record-owned");
     expect_true(ctx.receipt.cloud_record_creation_failed == 1,
                 "cloud fails closed without DB14 owner");
     expect_true(receipt.dispatched_count == 1,
@@ -703,7 +899,9 @@ static void test_spell_timer_projectile_fireball(void)
     dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
 
     t = make_spell_timer_ex(1u, 0, DM2_V1_TIMER_STEP_MISSILE, 0,
-                            12, 14, DM2_OBJECT_EFFECT_FIREBALL);
+                            (int16_t)0x3815,
+                            (int16_t)((12 & 0x1f) | ((14 & 0x1f) << 5) |
+                                      (3u << 12)), 0);
     dm2_v1_source_timer_enqueue(&queue, &t, 0);
 
     dm2_v1_proceed_timers(&queue, 1u, &dispatcher, &receipt);
@@ -714,13 +912,36 @@ static void test_spell_timer_projectile_fireball(void)
                 "missile origin x recorded");
     expect_true(ctx.receipt.missile_origin_y == 14,
                 "missile origin y recorded");
-    expect_true(ctx.receipt.missile_object_effect == DM2_OBJECT_EFFECT_FIREBALL,
-                "missile object effect recorded");
+    expect_true(ctx.receipt.missile_record_handle == (int16_t)0x3815,
+                "missile timer A records DB14 handle");
+    expect_true(ctx.receipt.missile_object_effect == -1,
+                "missile object identity remains record-owned");
     expect_true(ctx.receipt.missile_projectile_accepted == 0 &&
                 ctx.receipt.missile_projectile_slot < 0,
                 "fireball rejects cache projectile without source owner state");
     expect_true(receipt.dispatched_count == 1,
                 "missile timer consumed");
+}
+
+static void test_spell_timer_projectile_alt_code(void)
+{
+    DM2_V1_SpellTimerHandlerContext ctx;
+    DM2_V1_TimerDispatcher dispatcher;
+    DM2_V1_SourceTimerQueue queue;
+    DM2_V1_SourceTimer t;
+    DM2_V1_ProceedTimersReceipt receipt;
+
+    dm2_v1_source_timer_queue_init(&queue);
+    dm2_v1_spell_timer_handler_context_init(&ctx, NULL, 0, &queue, 1u, 0);
+    memset(&dispatcher, 0, sizeof(dispatcher));
+    dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
+    t = make_spell_timer_ex(1u, 0, DM2_V1_TIMER_STEP_MISSILE_ALT, 0,
+                            0x27, 0x1234, DM2_OBJECT_EFFECT_FIREBALL);
+    memset(&receipt, 0, sizeof(receipt));
+    expect_true(dispatcher.handlers[DM2_V1_TIMER_STEP_MISSILE_ALT] != NULL,
+                "spell adapter wires alternate STEP_MISSILE code");
+    expect_true(dm2_v1_spell_timer_dispatch(&ctx, &t, 0u, &receipt) == 1,
+                "alternate STEP_MISSILE reaches same spell handler");
 }
 
 static void test_spell_timer_projectile_reject_unknown(void)
@@ -766,7 +987,8 @@ static void test_spell_timer_summon_fail_closed(void)
     dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
 
     t = make_spell_timer_ex(1u, 0, DM2_V1_TIMER_ALLOC_NEW_CREATURE, 0,
-                            3, 4, DM2_OBJECT_EFFECT_SUMMON_ATTACK_MINION);
+                            (int16_t)((3 & 0xff) | ((4 & 0xff) << 8)),
+                            DM2_OBJECT_EFFECT_SUMMON_ATTACK_MINION, 0);
     dm2_v1_source_timer_enqueue(&queue, &t, 0);
 
     dm2_v1_proceed_timers(&queue, 1u, &dispatcher, &receipt);
@@ -777,6 +999,9 @@ static void test_spell_timer_summon_fail_closed(void)
                 "summon origin x recorded");
     expect_true(ctx.receipt.summon_origin_y == 4,
                 "summon origin y recorded");
+    expect_true(ctx.receipt.summon_object_effect ==
+                    DM2_OBJECT_EFFECT_SUMMON_ATTACK_MINION,
+                "summon value B preserves source creature type");
     expect_true(ctx.receipt.summon_failed_no_data == 1,
                 "summon fails closed without real DB4/CAII data");
     expect_true(receipt.dispatched_count == 1,
@@ -976,7 +1201,7 @@ static void test_spell_timer_summon_real_data(void)
     dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
 
     t = make_spell_timer_ex(1u, 0, DM2_V1_TIMER_ALLOC_NEW_CREATURE, 0,
-                            0, 0, DM2_OBJECT_EFFECT_SUMMON_ATTACK_MINION);
+                            0, DM2_OBJECT_EFFECT_SUMMON_ATTACK_MINION, 0);
     dm2_v1_source_timer_enqueue(&queue, &t, 0);
 
     dm2_v1_proceed_timers(&queue, 1u, &dispatcher, &receipt);
@@ -1007,7 +1232,10 @@ int main(void)
     test_resource_spending();
     test_extended_cast();
     test_apply_success_light();
-    test_apply_success_fireball();
+    test_apply_fireball_remains_atomic_without_db14_owner();
+    test_apply_aura_speed_remains_atomic_without_savegames1_owner();
+    test_apply_success_summon_payload();
+    test_apply_summon_queue_failure_is_atomic();
     test_apply_success_potion();
     test_apply_failure_skill();
     test_apply_failure_flask();
@@ -1020,6 +1248,7 @@ int main(void)
     test_spell_timer_cloud_fail_closed();
     test_spell_timer_cloud_real_data();
     test_spell_timer_projectile_fireball();
+    test_spell_timer_projectile_alt_code();
     test_spell_timer_projectile_reject_unknown();
     test_spell_timer_projectile_real_data();
     test_spell_timer_summon_fail_closed();

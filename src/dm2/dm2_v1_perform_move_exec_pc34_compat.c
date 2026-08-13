@@ -228,17 +228,21 @@ int dm2_v1_perform_move_exec(
 
         if (pool_set && dungeon && queue) {
             DM2_V1_MoveRecordToReceipt mr_receipt;
-            dm2_v1_move_record_to(pool_set, dungeon, queue,
-                                  (int16_t)0xFFFF,
-                                  (int16_t)plan->from_x,
-                                  (int16_t)plan->from_y,
-                                  (int16_t)plan->to_x,
-                                  (int16_t)plan->to_y,
-                                  (int16_t)plan->to_dir,
-                                  plan->current_level,
-                                  request->game_tick,
-                                  &mr_receipt);
-            receipt->record_moved = mr_receipt.valid;
+            if (!dm2_v1_move_record_to(
+                    pool_set, dungeon, queue, (int16_t)0xFFFF,
+                    (int16_t)plan->from_x, (int16_t)plan->from_y,
+                    (int16_t)plan->to_x, (int16_t)plan->to_y,
+                    (int16_t)plan->to_dir, plan->current_level,
+                    request->game_tick, &mr_receipt) ||
+                !mr_receipt.valid || mr_receipt.fail_closed) {
+                /* c_moverec is part of the movement transaction. A failed
+                 * cut/append or map admission must not leave the caller with
+                 * a receipt that says the party moved. */
+                receipt->position_updated = 0;
+                receipt->fail_closed = 1;
+                break;
+            }
+            receipt->record_moved = 1;
         }
         break;
 

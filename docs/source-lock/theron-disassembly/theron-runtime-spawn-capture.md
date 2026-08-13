@@ -1009,6 +1009,23 @@ It does not authorize a dungeon level, square-to-tile mapping, HUD/object
 owner, creature, T700 or T900 consumer. No README screenshot is promoted from
 this capture.
 
+## 2026-08-13 — CUE/state screen-space replay retained
+
+The existing patched Mednafen capture producer replayed the authentic retail
+US `TQUS.cue` with its hash-locked MODE1/2048 Track 02
+(`ceb02343868f80cec899e9b239aff2da`), the local System Card
+(`ff1a674273fe3540ccef576376407d1d`), and the operator's matching Mednafen
+state. Its clean shutdown wrote a 65,536-byte VDC snapshot with FNV-1a
+`8165c4d4` and a 1,024-byte VCE snapshot with FNV-1a `ea83f117`.
+
+The raw files remain on the external disk and are not game data committed to
+Git. The production allow-list admits this exact VDC/VCE pair only as a
+screen-space tile and palette replay. The real-capture regression verified
+1,057 BAT tiles, 50,455 non-zero preview pixels and 38,167 presented pixels.
+It does not establish the original bitmap loader, VDC transfer provenance,
+HUD ownership, a dungeon map/object interpretation, or any combat/spawn
+consumer; those semantic routes remain closed.
+
 ## 2026-08-11 — MODE1/2048 CD→RAM transport witness
 
 En ny, avgränsad körning använde den autentiserade US-distributionens riktiga
@@ -1076,3 +1093,48 @@ Capturens kompletta screen-space-snapshot är däremot nu separat admissible:
 VDC-VRAM FNV-1a `411960eb` och VCE FNV-1a `6fb303b5`. Det paret går via den
 source-bound VDC/VCE-presentern, men får inte tolkas som square-, objekt-, HUD-
 eller monsterdata och används inte som README-screenshot.
+
+## 2026-08-12 — bounded `$B0E5` reserve rejects the active state’s non-spawn calls
+
+The reproducible capture patch reserves at most 256 register rows for logical
+`$B0E5` after its ordinary register budget is exhausted. This avoids dense
+`$C3A0`/`$CAxx` execution windows hiding every later `$B0E5` observation while
+keeping the trace bounded. The 12-second isolated replay of the operator-owned
+US CUE state recorded 164 retained `$B0E5` address hits in a 595 KiB register
+sidecar.
+
+Every retained entry had `A=$80` or `A=$85`; neither is in the source-locked
+regular-spawn dispatch domain `0..3`. The same run had
+`transition=missing` and zero authenticated CD-to-RAM receipts. It therefore
+remains negative evidence only, even though its state image contains one exact
+copy of the source-lock caller and `$B0E5` byte spans. The presence of source
+bytes in a Mednafen state does not establish that a particular runtime call
+uses the regular-spawn contract.
+
+No RNG return ownership, creature spawn, AI, attack/damage, loot, generator
+timing, T700 or T900 rule is published from this capture. The next positive
+witness must still show A=`0..3` together with the caller/helper return path,
+a source-owned target write and a live creature record in one execution.
+
+## 2026-08-13 — side-effect-free HuC6280→VDC port witness
+
+The existing patched PCE Mednafen route now has an optional bounded
+`FIRESTAFF_THERON_VDC_IO_TRACE` observer. It records each original VDC-port
+write before the normal VCE/VDC path receives it, with its HuC6280 logical and
+MPR-derived physical program counter, timestamp, port address, value and A/X/Y
+register values. The observer changes no VDC state and is capped at 65,536
+records.
+
+The isolated 12-second US CUE/System Card/state replay produced 65,536
+newline-delimited records. Its primary game-code writers were physical PCs in
+`$0E1Axx` and `$0E1Bxx`; the port stream included the normal MAWR/VWR select
+and data sequence. This proves that the original runtime, rather than
+Firestaff, drove the captured VDC destination.
+
+It is deliberately not a source-to-VRAM admission by itself: the same replay
+still had zero authenticated CD-to-main-RAM receipts and no live level
+transition. In particular, a writer PC and a VDC address do not identify the
+retail byte span that supplied a tile, nor assign square, object, HUD, portrait
+or text semantics. Those presentation routes remain fail-closed until one
+capture joins original CD/RAM data consumption and the VDC transfer in the
+same execution.

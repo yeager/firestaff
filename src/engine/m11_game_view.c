@@ -61,6 +61,7 @@
 #include "csb_v2_runtime.h"
 #include "csb_v2_smooth_movement.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_game_load_world_owner.h"
 #include "dm2_v1_boot_startup_view_model.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_new_game.h"
@@ -76,6 +77,7 @@
 #include "dm2_v1_inventory_panel.h"
 #include "dm2_v1_mac_movie_decoder.h"
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
+#include "dm2_v1_gdat_hud_m11_command.h"
 #include "theron/theron_v1_asset_loader.h"
 
 #include "asset_status_m12.h"
@@ -1115,6 +1117,7 @@ static void m11_sync_dm2_state_from_runtime(M11_GameViewState *state)
     state->dm2State.party_dir = receipt.party_dir;
     state->dm2State.tick_count = receipt.tick_count;
     state->dm2State.leader_hand_object = receipt.leader_hand_object;
+    state->world.party.championCount = dm2_v1_runtime_get_champion_count();
     if (dm2_v1_runtime_get_session_snapshot(&session)) {
         m11_dm2_mirror_session_party(state, &session);
     }
@@ -1255,6 +1258,20 @@ static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
 
     if (!state || !launch || !save_path || !save_path[0]) {
         return 0;
+    }
+    /* Original DOS/Amiga/FM Towns/Mac SKSave files must enter through the
+     * source GAME_LOAD owner.  This path restores the save-owned map/record
+     * graph, binds the current DUNGEON.DAT layout and performs the source
+     * RESET_CAII -> FILL_ORPHAN_CAII order before publication. */
+    if (dm2_v1_boot_prepare_sksave_resume_path(launch, save_path)) {
+        if (!dm2_v1_boot_commit_sksave_resume_session(launch->profile)) {
+            return 0;
+        }
+        state->dm2State.leader_hand_object = 0u;
+        state->dm2State.startup_menu_active = 0;
+        state->dm2State.level_loaded = 1;
+        m11_sync_dm2_state_from_runtime(state);
+        return 1;
     }
     if (!dm2_v1_boot_startup_execute_launch_save_path_with_host_receipt(
             launch,
@@ -1503,29 +1520,19 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
                 !new_dungeon.synthetic_party_created && prepare_ok &&
                 dm2_v1_boot_prepared_new_game_world_readonly(profile) != NULL &&
                 m11_dm2_clear_new_game_party_state(state)) {
-                /* FM Towns STARTEND performs the first authenticated
+                /* STARTEND performs the first authenticated
                  * DM2_SELECT_CHAMPION transition while GAME_LOAD is still
-                 * completing.  Its retained candidate already owns the real
-                 * hero, record pools, CAII, timers and sound queue; publish
-                 * that source transaction now so CHTW reaches the live M11
-                 * command loop.  DOS keeps the stricter preselection gate
-                 * until its source mirror input owner is bound.
-                 * Source: SKProject startend.cpp::DM2_2f3f_0789 and
+                 * completing on every admitted platform profile.  That
+                 * first hero is a private predecessor for the mirror UI, not
+                 * the completed runtime session: the source still owns the
+                 * next mirror click before GAME_LOAD may publish the party,
+                 * timers, CAII and sound queue.  Keep SHOW_MENU_SCREEN's
+                 * outer input boundary active until that source event is
+                 * admitted by m11_dm2_preselection_mirror_pointer().
+                 * Source: SKProject startend.cpp::DM2_2f3f_0789,
+                 * c_hero.cpp::DM2_SELECT_CHAMPION and
                  * sksvgame.cpp::DM2_GAME_LOAD. */
-                if (m11_dm2_is_fmtowns_profile(profile) ||
-                    (profile && profile->platform == DM2_PLATFORM_MAC_EN)) {
-                    DM2_V1_BootRuntimeReceipt runtime_receipt;
-                    memset(&runtime_receipt, 0, sizeof(runtime_receipt));
-                    if (dm2_v1_boot_commit_new_game_session(profile) &&
-                        dm2_v1_boot_runtime_capture(profile,
-                                                    &runtime_receipt) &&
-                        runtime_receipt.runtime_ready) {
-                        state->dm2State.startup_menu_active = 0;
-                        state->dm2State.level_loaded = 1;
-                        m11_sync_dm2_state_from_runtime(state);
-                        return M11_GAME_INPUT_REDRAW;
-                    }
-                }
+                return M11_GAME_INPUT_REDRAW;
             }
             state->dm2State.startup_menu_active = 1;
             if (route->status) {
@@ -2514,7 +2521,8 @@ static int m11_dm2_apply_boot_runtime_receipt(
      * Clear it at the original startup boundary, independently of later
      * DUNGEON.DAT reload support for this platform.  This creates no party
      * or session: only a complete GAME_LOAD owner may publish either. */
-    if (!m11_dm2_clear_new_game_party_state(state)) {
+    if (!receipt->profile->source_game_load_session_ready &&
+        !m11_dm2_clear_new_game_party_state(state)) {
         return 0;
     }
     /* READ_DUNGEON_STRUCTURE has mounted verified source data at this point,
@@ -2524,7 +2532,15 @@ static int m11_dm2_apply_boot_runtime_receipt(
      * level_loaded to decide whether gameplay input, HUD state and saves are
      * admissible.  SKProject SKWINSPX SkWinCore.cpp::GAME_LOAD reaches
      * SELECT_CHAMPION only after this startup-menu boundary. */
-    state->dm2State.level_loaded = 0;
+    state->dm2State.level_loaded =
+        receipt->profile->source_game_load_session_ready ? 1 : 0;
+    /* Resume reaches this handoff without passing through the NEW GAME
+     * pointer route.  Once GAME_LOAD has published the source session,
+     * mirror c_hero into M11's presentation party so native panels (spell,
+     * inventory and champion selection) see the authenticated leader. */
+    if (state->dm2State.level_loaded) {
+        m11_sync_dm2_state_from_runtime(state);
+    }
     /* The M12 launch handoff is the live presentation owner.  Direct M11
      * boot probes deliberately exercise SKULL's static startup boundary and
      * do not own an event loop or a monotonic presentation clock; starting
@@ -2796,6 +2812,154 @@ static int m11_dm2_preselection_input_active(const M11_GameViewState *state)
         return 0;
     }
     return dm2_v1_boot_prepared_new_game_world_readonly(profile) != NULL;
+}
+
+static M11_GameInputResult m11_dm2_preselection_mirror_pointer(
+    M11_GameViewState *state, int x, int y)
+{
+    DM2_V1_BootProfile *profile;
+    DM2_V1_BootRuntimeReceipt runtime_receipt;
+
+    if (!state || !m11_dm2_preselection_input_active(state) ||
+        !(profile = (DM2_V1_BootProfile *)state->dm2BootProfile) ||
+        !dm2_v1_boot_select_prepared_new_game_champion_at_viewport(
+            profile, x, y)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    /* The click transaction owns the selected hero and refreshed candidate.
+     * Only after the candidate passes the normal runtime handoff may M11
+     * leave SHOW_MENU_SCREEN and expose level/party/tick state. */
+    memset(&runtime_receipt, 0, sizeof(runtime_receipt));
+    if (!dm2_v1_boot_commit_new_game_session(profile) ||
+        !dm2_v1_boot_runtime_capture(profile, &runtime_receipt) ||
+        !runtime_receipt.runtime_ready) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    state->dm2State.startup_menu_active = 0;
+    state->dm2State.level_loaded = 1;
+    m11_sync_dm2_state_from_runtime(state);
+    return M11_GAME_INPUT_REDRAW;
+}
+
+/* GAME_LOAD owns a real entrance viewport before it owns c_hero.  Keep that
+ * distinction visible in M11: the title menu is no longer the surface after
+ * NEW GAME, but the runtime party is still private until the mirror event.
+ * The owner already contains the authenticated G1 projection, GRAPHICSSET
+ * scene/light receipts and local map graphics, so use the normal DM2 renderer
+ * with those exact materials rather than drawing a host preview.  Source:
+ * SKProject sksvgame.cpp::DM2_GAME_LOAD and c_gui_vp.cpp::DM2_DISPLAY_VIEWPORT.
+ */
+static int m11_dm2_render_preselection_view(
+    M11_GameViewState *state, uint8_t *framebuffer,
+    int framebufferWidth, int framebufferHeight)
+{
+    DM2_V1_BootProfile *profile;
+    DM2_V1_GameLoadWorldOwner *owner;
+    DM2_V1_ViewportState viewport;
+    DM2_V1_GdatSceneM11CommandPlan scene_plan;
+    DM2_V1_GdatWallM11CommandPlan wall_plan;
+    DM2_V1_GdatHudM11CommandPlan hud_plan;
+    DM2_V1_CLightM11Receipt c_light;
+    uint32_t map_token;
+    int graphicsset;
+    int outdoor;
+    int ok = 0;
+
+    (void)framebufferHeight;
+    if (!state || !framebuffer || framebufferWidth < DM2_VP_WIDTH ||
+        !m11_dm2_preselection_input_active(state) ||
+        !(profile = (DM2_V1_BootProfile *)state->dm2BootProfile) ||
+        !(owner = (DM2_V1_GameLoadWorldOwner *)
+                     dm2_v1_boot_new_game_world_readonly(profile)) ||
+        !owner->preselection_viewport.valid ||
+        !owner->preselection_scene_materialized) {
+        return 0;
+    }
+    graphicsset = owner->preselection_light.graphicsset;
+    outdoor = dm2_v1_dungeon_is_outdoor(&owner->dungeon,
+                                         owner->source_party_map);
+    if (outdoor) {
+        /* The New Game entrance is an indoor source map.  Refuse rather than
+         * borrowing the outdoor T600 path if a malformed medium says otherwise. */
+        return 0;
+    }
+    memset(&scene_plan, 0, sizeof(scene_plan));
+    memset(&wall_plan, 0, sizeof(wall_plan));
+    memset(&hud_plan, 0, sizeof(hud_plan));
+    c_light = owner->preselection_c_light;
+    if (!dm2_v1_boot_gdat_scene_m11_command_plan(
+            profile, graphicsset, &scene_plan) || !scene_plan.valid ||
+        !dm2_v1_boot_gdat_wall_m11_command_plan(
+            profile, graphicsset, &wall_plan) || !wall_plan.valid ||
+        !dm2_v1_boot_gdat_hud_static_m11_command_plan(
+            profile, 0, &hud_plan) || !hud_plan.valid) {
+        goto done;
+    }
+    map_token = dm2_v1_runtime_g1_scene_map_token(
+        owner->source_party_map, graphicsset, 0);
+    if (!map_token || scene_plan.command_hash == 0u ||
+        !dm2_v1_c_light_m11_receipt_build_for_map(
+            &owner->preselection_scene_light,
+            &owner->preselection_light.map_descriptor,
+            &(DM2_V1_CLightSourceState){
+                1, 0, 1, owner->preselection_light.v1e0978,
+                owner->preselection_light.source_state_hash},
+            &c_light) || !c_light.valid) {
+        goto done;
+    }
+    dm2_v1_viewport_init(&viewport, framebuffer, framebufferWidth);
+    dm2_v1_viewport_set_asset_loader(
+        &viewport, dm2_v1_boot_asset_loader(profile));
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_party(&viewport, owner->source_party_direction,
+                              owner->source_party_x, owner->source_party_y);
+    dm2_v1_viewport_set_level(&viewport, owner->source_party_map);
+    dm2_v1_viewport_set_outdoor(&viewport, 0);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, graphicsset, scene_plan.command_hash,
+        scene_plan.scene_colorkey, scene_plan.scene_flags,
+        scene_plan.ambient_light, scene_plan.highest_light_level, 0, 0, 0,
+        0, 0, scene_plan.ambient_darkness);
+    dm2_v1_viewport_set_scene_map_load_token(&viewport, map_token);
+    if (!dm2_v1_viewport_bind_static_graphicsset_scene_record(
+            &viewport, map_token, scene_plan.command_hash) ||
+        !dm2_v1_viewport_bind_static_scene_light_control(
+            &viewport, map_token, scene_plan.command_hash) ||
+        !dm2_v1_viewport_bind_static_scene_ambient_light_control(
+            &viewport, map_token, scene_plan.command_hash) ||
+        !dm2_v1_viewport_bind_static_scene_ambient_darkness_control(
+            &viewport, map_token, scene_plan.command_hash) ||
+        !dm2_v1_viewport_bind_static_scene_flags_control(
+            &viewport, map_token, scene_plan.command_hash) ||
+        !dm2_v1_viewport_bind_static_scene_colorkey_control(
+            &viewport, map_token, scene_plan.command_hash) ||
+        !dm2_v1_viewport_bind_static_scene_floor_material(
+            &viewport, map_token, scene_plan.command_hash) ||
+        !dm2_v1_viewport_bind_static_scene_ceiling_material(
+            &viewport, map_token, scene_plan.command_hash) ||
+        !dm2_v1_viewport_bind_static_scene_all_wall_materials(
+            &viewport, map_token, scene_plan.command_hash) ||
+        !dm2_v1_viewport_bind_static_scene_door_frame_material(
+            &viewport, map_token, scene_plan.command_hash) ||
+        !dm2_v1_viewport_bind_static_scene_door_frame_d1c_material(
+            &viewport, map_token, scene_plan.command_hash) ||
+        !dm2_v1_viewport_bind_static_scene_door_frame_d2c_material(
+            &viewport, map_token, scene_plan.command_hash)) {
+        goto done;
+    }
+    dm2_v1_viewport_set_c_light_receipt(&viewport, &c_light);
+    dm2_v1_viewport_set_gdat_scene_material_plan(&viewport, &scene_plan);
+    dm2_v1_viewport_set_gdat_wall_material_plan(&viewport, &wall_plan);
+    dm2_v1_viewport_set_gdat_hud_material_plan(&viewport, &hud_plan);
+    memcpy(viewport.squares, owner->preselection_viewport.squares,
+           sizeof(viewport.squares));
+    dm2_v1_viewport_render(&viewport);
+    ok = 1;
+done:
+    dm2_v1_gdat_wall_m11_command_plan_free(&wall_plan);
+    dm2_v1_gdat_scene_m11_command_plan_free(&scene_plan);
+    dm2_v1_gdat_hud_m11_command_plan_free(&hud_plan);
+    return ok;
 }
 
 static M11_GameInputResult m11_dm2_handle_preselection_input(
@@ -18660,7 +18824,8 @@ m11_handle_dm1_spell_area_pointer(M11_GameViewState* state, int x, int y)
                    : M11_GAME_INPUT_IGNORED;
     }
     if (zone.commandId == DM1_V1_CPSAO_CMD_CAST_PC34) {
-        if (state->spellBuffer.runeCount < 2) {
+        if (state->sourceKind != M11_GAME_SOURCE_DM2_BOOT &&
+            state->spellBuffer.runeCount < 2) {
             return M11_GAME_INPUT_IGNORED;
         }
         (void)M11_GameView_CastSpell(state);
@@ -18923,7 +19088,8 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     if (!dm1_v1_spell_panel_command_allowed_pc34(&panel)) {
         return 0;
     }
-    if (state->spellBuffer.runeCount < 2) {
+    if (state->sourceKind != M11_GAME_SOURCE_DM2_BOOT &&
+        state->spellBuffer.runeCount < 2) {
         m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: NEED AT LEAST 2 RUNES",
                       (unsigned int)state->world.gameTick);
         m11_set_status(state, "CAST", "NOT ENOUGH RUNES");
@@ -18941,6 +19107,49 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
          * mutate the world through DM1's F0750--F0754 route. */
         m11_set_status(state, "CAST", "CSB CAST OWNER UNAVAILABLE");
         return 0;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        DM2_V1_RuntimeSpellCastReceipt dm2_receipt;
+        uint8_t dm2_runes[4];
+        int dm2_ui_caster = m11_dm1_spell_caster_index(state);
+        int dm2_caster = dm2_v1_runtime_get_active_champion_index();
+        int dm2_hand = dm2_v1_runtime_get_active_hand();
+        DM2_V1_RuntimeSourceHeroStateReceipt dm2_ui_hero;
+        memset(&dm2_ui_hero, 0, sizeof(dm2_ui_hero));
+        if (dm2_ui_caster >= 0 && dm2_ui_caster < DM2_MAX_HEROES &&
+            dm2_v1_runtime_get_source_hero_state(
+                (uint8_t)dm2_ui_caster, &dm2_ui_hero) &&
+            dm2_ui_hero.cur_hp > 0 && dm2_hand >= 0 &&
+            dm2_v1_runtime_activate_action_hand(dm2_ui_caster, dm2_hand)) {
+            dm2_caster = dm2_v1_runtime_get_active_champion_index();
+        }
+        if (dm2_caster < 0)
+            dm2_caster = dm2_ui_caster;
+        memset(&dm2_receipt, 0, sizeof(dm2_receipt));
+        memset(dm2_runes, 0, sizeof(dm2_runes));
+        for (int i = 0; i < state->spellBuffer.runeCount && i < 4; ++i)
+            dm2_runes[i] = (uint8_t)state->spellBuffer.runes[i];
+        if (dm2_caster < 0 || dm2_caster >= DM2_MAX_HEROES ||
+            state->spellBuffer.runeCount < 1 ||
+            state->spellBuffer.runeCount > 4 ||
+            dm2_hand < 0 ||
+            !dm2_v1_runtime_set_spell_runes(
+                dm2_caster, dm2_runes,
+                state->spellBuffer.runeCount) ||
+            !dm2_v1_runtime_cast_spell_player(
+                dm2_caster, dm2_hand,
+                &dm2_receipt)) {
+            m11_set_status(state, "CAST", "DM2 CAST OWNER UNAVAILABLE");
+            return 0;
+        }
+        if (!dm2_receipt.applied) {
+            m11_set_status(state, "CAST", "DM2 SPELL FAILED");
+            return 0;
+        }
+        M11_GameView_ClearSpell(state);
+        state->spellPanelOpen = 0;
+        m11_set_status(state, "CAST", "SPELL CAST");
+        return 1;
     }
     casterIndex = m11_dm1_spell_caster_index(state);
     if (casterIndex < 0 || casterIndex >= CHAMPION_MAX_PARTY) {
@@ -23884,7 +24093,8 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
          * configured intent save cannot override the user's selected
          * MINI.DAT/CSBGAME slot.  Other games retain their existing
          * entrance-resume behavior. */
-        if (strcmp(entry->gameId, "csb") == 0) {
+        if (strcmp(entry->gameId, "csb") == 0 ||
+            strcmp(entry->gameId, "dm2") == 0) {
             spec.savePath = menuState->quickResumeSavePath;
         } else {
             spec.entranceResumeSavePath = menuState->quickResumeSavePath;
@@ -26907,36 +27117,18 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     if (campaignMedia && campaignPlan && !srmCampaignReplay &&
         !srmLaunchDiscovery && !launchTraceIdentity && !traceBundle &&
         !sectorRecordCorpus && (!captureManifestPath || !captureManifestPath[0])) {
-        /* Raw MODE1/2352 Track 02 media can run the full startup launch path
-         * directly from the verified payload; this mirrors the direct-launch
-         * test path and avoids the no-draw capture-required gate for ordinary
-         * raw BIN files that have no CUE pair.  Keep the capture-required
-         * path for MODE1/2048 ISO media and for any case where captures are
-         * actually present. */
-        int can_launch_from_raw_track02 =
-            campaignMedia->direct_media.mode1_2352 != 0;
-        if (!can_launch_from_raw_track02) {
-            savedDebugHUD = state->showDebugHUD;
-            M11_GameView_Shutdown(state);
-            M11_GameView_Init(state);
-            state->showDebugHUD = savedDebugHUD;
-            if (!M11_GameView_TheronBindTrack02StartupCaptureRequired(
-                    state, campaignMedia, campaignPlan, campaignMediaScanEpoch)) {
-                return 0;
-            }
-            snprintf(state->bootAssetMd5, sizeof(state->bootAssetMd5), "%s", verifiedMd5);
-            snprintf(state->title, sizeof(state->title), "%s", "THERON'S QUEST");
-            snprintf(state->sourceId,
-                     sizeof(state->sourceId),
-                     "%s",
-                     launcherSourceId && launcherSourceId[0]
-                         ? launcherSourceId
-                         : "theron");
-            snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s", verifiedPath);
-            return 1;
-        }
-        /* fall through to the full Track 02 startup launch below */
-        raw_track02_bypass = 1;
+        /* Both hash-verified Track 02 layouts own the title/startup route.
+         * MODE1/2048 CUE media has no raw IPL receipt, but it now has the
+         * same complete, source-backed ISO bitmap anchors as the raw BIN
+         * route.  Sending it to "CAPTURE REQUIRED" here made a valid retail
+         * CUE unusable from the start menu before the verified startup
+         * loader could run.
+         *
+         * Retain the raw-only convenience below: only MODE1/2352 supplies
+         * the separately verified initial-level path, so ISO continues at
+         * the title/stage-select boundary.  It neither auto-loads a dungeon
+         * nor promotes any level, object, AI, T700, or T900 semantics. */
+        raw_track02_bypass = campaignMedia->direct_media.mode1_2352 != 0;
     }
     memset(&launch, 0, sizeof(launch));
     savedDebugHUD = state->showDebugHUD;
@@ -31794,19 +31986,22 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         }
         if (input >= M12_MENU_INPUT_CHAMPION_1_INVENTORY &&
             input <= M12_MENU_INPUT_CHAMPION_4_INVENTORY) {
+            /* Refresh the presentation mirror before resolving a native Mac
+             * champion command; NEW GAME may have committed the runtime just
+             * before the first keyboard event. */
+            m11_sync_dm2_state_from_runtime(state);
+        }
+        if (input >= M12_MENU_INPUT_CHAMPION_1_INVENTORY &&
+            input <= M12_MENU_INPUT_CHAMPION_4_INVENTORY) {
             const DM2_V1_BootProfile *profile =
                 (const DM2_V1_BootProfile *)state->dm2BootProfile;
             const int champion_index =
                 (int)(input - M12_MENU_INPUT_CHAMPION_1_INVENTORY);
             const int same_open = state->inventoryPanelActive &&
                 state->world.party.activeChampionIndex == champion_index;
-            /* The English Mac table maps F1-F4 to the original champion
-             * inventory command. Do not send it through the DM1 champion
-             * panel: the Mac CHARSHEET frame is the admitted owner here,
-             * and this presentation selection does not mutate the runtime
-             * action-hero field. */
-            if (!m11_dm2_is_mac_profile(profile) ||
-                champion_index < 0 ||
+            /* The Mac source F1-F4 commands select CHARSHEET owners; they
+             * must not fall through to the DM1 HUD geometry. */
+            if (!m11_dm2_is_mac_profile(profile) || champion_index < 0 ||
                 champion_index >= state->world.party.championCount ||
                 !state->world.party.champions[champion_index].present) {
                 return M11_GAME_INPUT_IGNORED;
@@ -31872,16 +32067,18 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 memset(&material, 0, sizeof(material));
                 /* The host control is admitted only when the original
                  * CHARSHEET frame is present in the selected platform's
-                 * GRAPHICS.DAT. Mac and FM Towns use separate authenticated
-                 * media, but this static frame owner is the same source
-                 * CHARSHEET/RAW4 contract; it is not a replacement DM1
-                 * panel. */
+                 * GRAPHICS.DAT. Amiga uses the authentic 16-colour U4 route;
+                 * FM Towns uses its 255-colour route. This is a source-
+                 * material gate, not a replacement DM1 panel. */
                 if ((!m11_dm2_is_fmtowns_profile(profile) &&
+                     !m11_dm2_is_amiga_profile(profile) &&
                      !m11_dm2_is_mac_profile(profile)) || !loader ||
                     !dm2_v1_query_gdat_summary_image_receipt(
                         loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0, 1,
                         &summary) || !summary.accepted ||
-                    (summary.colors != 16u && summary.colors != 255u) ||
+                    summary.colors != (m11_dm2_is_amiga_profile(profile) ||
+                                       m11_dm2_is_mac_profile(profile)
+                                           ? 16u : 255u) ||
                     !dm2_v1_gdat_image_raw_material_receipt(
                         loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0, 1,
                         &material) || !material.accepted ||
@@ -31890,7 +32087,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                           loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0, 1,
                           &frame_width, &frame_height, &frame_format)) ||
                     frame_width <= 0 || frame_height <= 0 ||
-                    (frame_format != DM2_IMG_FMT_IMG3 &&
+                    (m11_dm2_is_fmtowns_profile(profile) &&
+                     frame_format != DM2_IMG_FMT_IMG3 &&
+                     frame_format != DM2_IMG_FMT_U4) ||
+                    (m11_dm2_is_amiga_profile(profile) &&
+                     frame_format != DM2_IMG_FMT_IMG3 &&
+                     frame_format != DM2_IMG_FMT_U4) ||
+                    (m11_dm2_is_mac_profile(profile) &&
+                     frame_format != DM2_IMG_FMT_IMG3 &&
                      frame_format != DM2_IMG_FMT_U4)) {
                     dm2_v1_asset_free_pixels(frame_pixels);
                     state->inventoryPanelActive = 0;
@@ -32362,7 +32566,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_IGNORED;
         }
         case M12_MENU_INPUT_SPELL_CAST:
-            if (state->spellPanelOpen && state->spellBuffer.runeCount >= 2) {
+            if (state->spellPanelOpen &&
+                ((state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+                  state->spellBuffer.runeCount >= 1) ||
+                 state->spellBuffer.runeCount >= 2)) {
                 M11_GameView_CastSpell(state);
                 return M11_GAME_INPUT_REDRAW;
             }
@@ -32814,10 +33021,13 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
      * secondary press must not be reinterpreted as NEW or RESUME here.
      * Source: SKProject c_tmouse.cpp::command_interpreter and
      * SkWinCore.cpp::SHOW_MENU_SCREEN/HANDLE_UI_EVENT. */
-    if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0 &&
-        !(state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
-          (buttonMask & DM1_V1_MOUSE_MASK_RIGHT_PC34))) {
+    if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
         return M11_GAME_INPUT_IGNORED;
+    }
+    if (m11_dm2_preselection_input_active(state)) {
+        M11_GameInputResult result = m11_dm2_preselection_mirror_pointer(
+            state, x, y);
+        if (result != M11_GAME_INPUT_IGNORED) return result;
     }
     if (!m11_dm2_boot_runtime_startup_pointer(
             state, x, y, &execution, &action_receipt)) {
@@ -37881,18 +38091,15 @@ static M11_GameInputResult m11_process_dm2_v1_c080_click(
         !receipt.accepted) {
         return M11_GAME_INPUT_IGNORED;
     }
-    /* The Macintosh c_rwbb owner dispatches the exact rendered wall-button
-     * target. Do not collapse a native target into a left/centre/right
-     * column: CODE(3) carries the dynamic action byte and the target's
-     * ObjectID/DB3 chain is the ownership boundary. Other target kinds still
-     * have no recovered Mac action owner and remain fail-closed. */
+    /* Mac c_rwbb wall targets retain the source view-cell identity. Route
+     * that exact target to the authenticated wall-mechanism owner; other
+     * viewport target kinds remain closed until their source callback exists. */
     if (m11_dm2_is_mac_profile(
             (const DM2_V1_BootProfile *)state->dm2BootProfile) &&
         receipt.target_kind == 4 && receipt.rect.w > 0) {
         DM2_V1_RuntimeMacWallButtonReceipt wall_receipt;
-        if (dm2_v1_runtime_activate_mac_wall_target(receipt.target_index,
-                                                     &wall_receipt) &&
-            wall_receipt.accepted) {
+        if (dm2_v1_runtime_activate_mac_wall_target(
+                receipt.target_index, &wall_receipt) && wall_receipt.accepted) {
             m11_sync_dm2_state_from_runtime(state);
             return M11_GAME_INPUT_REDRAW;
         }
@@ -61310,7 +61517,7 @@ void M11_GameView_DrawFpsOverlay(const M11_GameViewState* state,
                   7, 6, text, &style);
 }
 
-static int m11_draw_dm2_inventory_panel(
+static int m11_draw_dm2_source_inventory_panel(
     const M11_GameViewState *state,
     unsigned char *framebuffer,
     int framebuffer_width,
@@ -61326,13 +61533,21 @@ static int m11_draw_dm2_inventory_panel(
     int height = 0;
     DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
     int row;
+    int is_fmtowns;
+    int is_amiga;
+    int is_mac;
+    uint16_t required_colors;
 
+    is_fmtowns = state && m11_dm2_is_fmtowns_profile(
+        (const DM2_V1_BootProfile *)state->dm2BootProfile);
+    is_amiga = state && m11_dm2_is_amiga_profile(
+        (const DM2_V1_BootProfile *)state->dm2BootProfile);
+    is_mac = state && m11_dm2_is_mac_profile(
+        (const DM2_V1_BootProfile *)state->dm2BootProfile);
+    required_colors = (is_amiga || is_mac) ? 16u : 255u;
     if (!state || !framebuffer || framebuffer_width <= 0 ||
         framebuffer_height <= 0 ||
-        (!m11_dm2_is_fmtowns_profile(
-             (const DM2_V1_BootProfile *)state->dm2BootProfile) &&
-         !m11_dm2_is_mac_profile(
-            (const DM2_V1_BootProfile *)state->dm2BootProfile))) {
+        (!is_fmtowns && !is_amiga && !is_mac)) {
         return 0;
     }
     profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
@@ -61344,8 +61559,7 @@ static int m11_draw_dm2_inventory_panel(
         !dm2_v1_query_gdat_summary_image_receipt(
             loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0, 1,
             &summary) ||
-        !summary.accepted ||
-        (summary.colors != 16u && summary.colors != 255u) ||
+        !summary.accepted || summary.colors != required_colors ||
         !dm2_v1_gdat_image_raw_material_receipt(
             loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0, 1,
             &material) ||
@@ -61355,7 +61569,12 @@ static int m11_draw_dm2_inventory_panel(
               loader, DM2_GDAT_CATEGORY_INTERFACE_CHARSHEET, 0, 1,
               &width, &height, &format)) ||
         width <= 0 || height <= 0 ||
-        (format != DM2_IMG_FMT_IMG3 && format != DM2_IMG_FMT_U4) ||
+        (is_fmtowns && format != DM2_IMG_FMT_IMG3 &&
+         format != DM2_IMG_FMT_U4) ||
+        (is_amiga && format != DM2_IMG_FMT_IMG3 &&
+         format != DM2_IMG_FMT_U4) ||
+        (is_mac && format != DM2_IMG_FMT_IMG3 &&
+         format != DM2_IMG_FMT_U4) ||
         !dm2_v1_gdat_door_overlay_query_raw4_blit_placement(
             loader, DM2_V1_INVENTORY_SURVEY_PREVIEW_RECT, width, height,
             &placement) ||
@@ -61973,7 +62192,14 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           0, 0, framebufferWidth, framebufferHeight,
                           M11_COLOR_BLACK);
-            if (((M11_GameViewState *)state)->dm2MacMovieActive) {
+            if (m11_dm2_preselection_input_active((M11_GameViewState *)state) &&
+                m11_dm2_render_preselection_view(
+                    (M11_GameViewState *)state, framebuffer,
+                    framebufferWidth, framebufferHeight)) {
+                /* Source GAME_LOAD preselection owns the viewport while the
+                 * mirror/c_hero event is still private. */
+                startup_menu_drawn = 1;
+            } else if (((M11_GameViewState *)state)->dm2MacMovieActive) {
                 /* Macintosh SHOW_MENU_SCREEN is preceded by the authentic
                  * Title.MooV.  Its decoded frame owns the surface until the
                  * movie reaches EOF; the static SKULL menu cannot appear
@@ -62077,12 +62303,12 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                           M11_COLOR_BLACK);
         }
         if (state->inventoryPanelActive) {
-            /* FM Towns CHANGE_VIEWPORT_TO_INVENTORY replaces the dungeon
-             * page with the source CHARSHEET frame.  Consume only the
-             * authenticated RECT_1EE material and its RAW4 placement; a
-             * missing frame must not leave the live dungeon visible behind
-             * an asserted inventory state. */
-            if (!m11_draw_dm2_inventory_panel(
+            /* DM2 CHANGE_VIEWPORT_TO_INVENTORY replaces the dungeon page
+             * with the source CHARSHEET frame.  Consume only the
+             * authenticated platform palette/format, RECT_1EE material and
+             * RAW4 placement; a missing frame must not leave the live dungeon
+             * visible behind an asserted inventory state. */
+            if (!m11_draw_dm2_source_inventory_panel(
                     state, framebuffer, framebufferWidth, framebufferHeight)) {
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                               0, 0, framebufferWidth, framebufferHeight,

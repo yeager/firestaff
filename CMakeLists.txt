@@ -4406,11 +4406,6 @@ list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_save_export_import_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_utility_save_transaction_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_save_import_path_pc34_compat.c"
-    # This bounded DM2 study has its own explicit regression target.  Its
-    # partial record deletion cannot be a generic M10 mutation facility:
-    # original c_map/3CE7D/DB allocation/CAII/timer ownership is still
-    # missing from both GAME_LOAD and SKSAVE.
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_delete_creature_full_pc34_compat.c"
     # This legacy PERFORM_MOVE executor classifies caller-authored plan,
     # creature and door inputs.  No GAME_LOAD session owns the c_map,
     # c_hero, c_tim and moverec transaction it would need in product.
@@ -7963,6 +7958,7 @@ set_tests_properties(dm2_v2_phase2_asset_pipeline_probe PROPERTIES
 # source evidence, null-config safety, V1-locked by default.
 add_executable(firestaff_dm2_v2_phase3_hud_overlay_probe
     probes/firestaff_dm2_v2_phase3_hud_overlay_probe.c
+    src/dm2/dm2_v2_runtime.c
     src/dm2/dm2_v2_hud_overlay.c
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v2_runtime.c
@@ -11506,43 +11502,18 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_media_real.c")
     add_test(NAME dm2_v1_mac_media_real COMMAND test_dm2_v1_mac_media_real)
 endif()
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_japanese_media_real.c")
-    add_executable(test_dm2_v1_mac_japanese_media_real
-        tests/test_dm2_v1_mac_japanese_media_real.c
-        src/dm2/dm2_v1_mac_media.c)
-    target_include_directories(test_dm2_v1_mac_japanese_media_real PRIVATE
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_four_platform_catalog_real_media.c")
+    add_executable(test_dm2_v1_four_platform_catalog_real_media
+        tests/test_dm2_v1_four_platform_catalog_real_media.c)
+    target_include_directories(test_dm2_v1_four_platform_catalog_real_media PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    target_link_libraries(test_dm2_v1_mac_japanese_media_real PRIVATE
-        firestaff_zip_extract firestaff_zlib)
-    add_test(NAME dm2_v1_mac_japanese_media_real
-        COMMAND test_dm2_v1_mac_japanese_media_real)
-endif()
-
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_midi_real.c")
-    add_executable(test_dm2_v1_mac_midi_real
-        tests/test_dm2_v1_mac_midi_real.c)
-    target_include_directories(test_dm2_v1_mac_midi_real PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    target_link_libraries(test_dm2_v1_mac_midi_real PRIVATE
-        firestaff_dm2 firestaff_m10 firestaff_zip_extract firestaff_zlib m)
+    target_link_libraries(test_dm2_v1_four_platform_catalog_real_media PRIVATE
+        firestaff_m12 firestaff_m10)
     if(NOT MSVC)
-        target_compile_options(test_dm2_v1_mac_midi_real PRIVATE -Wall -Wextra -Werror -O2)
+        target_compile_options(test_dm2_v1_four_platform_catalog_real_media PRIVATE -Wall -Wextra -O2)
     endif()
-    add_test(NAME dm2_v1_mac_midi_real COMMAND test_dm2_v1_mac_midi_real)
-endif()
-
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_mac_asset_status_real.c")
-    add_executable(test_dm2_mac_asset_status_real
-        tests/test_dm2_mac_asset_status_real.c)
-    target_include_directories(test_dm2_mac_asset_status_real PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    target_link_libraries(test_dm2_mac_asset_status_real PRIVATE
-        firestaff_m12)
-    if(NOT MSVC)
-        target_compile_options(test_dm2_mac_asset_status_real PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(NAME dm2_mac_asset_status_real
-        COMMAND test_dm2_mac_asset_status_real)
+    add_test(NAME dm2_v1_four_platform_catalog_real_media
+        COMMAND test_dm2_v1_four_platform_catalog_real_media)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_movie_view_real.c")
@@ -18742,6 +18713,7 @@ endif()
         tests/test_dm2_v1_timer_dispatch_wiring_pc34_compat.c
         src/dm2/dm2_v1_timer_dispatch_wiring_pc34_compat.c
         src/dm2/dm2_v1_timer_ops_pc34_compat.c
+        src/dm2/dm2_v1_cloud_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_timer_dispatch_wiring PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -26254,6 +26226,22 @@ endif()
         NAME m12_quick_resume_gate
         COMMAND test_m12_quick_resume_gate
     )
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_m12_quick_resume_real_data.c")
+        add_executable(test_dm2_v1_m12_quick_resume_real_data
+            tests/test_dm2_v1_m12_quick_resume_real_data.c)
+        target_include_directories(test_dm2_v1_m12_quick_resume_real_data PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        target_link_libraries(test_dm2_v1_m12_quick_resume_real_data PRIVATE
+            firestaff_m12)
+        if(NOT MSVC)
+            target_compile_options(test_dm2_v1_m12_quick_resume_real_data PRIVATE
+                -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME dm2_v1_m12_quick_resume_real_data
+            COMMAND test_dm2_v1_m12_quick_resume_real_data)
+    endif()
 
     add_executable(test_m12_launcher_options_runtime_handoff
         tests/test_m12_launcher_options_runtime_handoff.c
@@ -57635,6 +57623,42 @@ if(NOT MSVC)
 endif()
 add_test(NAME test_dm2_v1_amiga_boot_real_media COMMAND test_dm2_v1_amiga_boot_real_media)
 
+add_executable(test_dm2_v1_amiga_new_game_real_media
+    tests/test_dm2_v1_amiga_new_game_real_media.c)
+target_include_directories(test_dm2_v1_amiga_new_game_real_media PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm2_v1_amiga_new_game_real_media PRIVATE firestaff_dm2)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_amiga_new_game_real_media PRIVATE -Wall -Wextra -Werror -O2)
+endif()
+add_test(NAME test_dm2_v1_amiga_new_game_real_media
+    COMMAND test_dm2_v1_amiga_new_game_real_media)
+
+add_executable(test_dm2_v1_dos_pit_runtime_real_media
+    tests/test_dm2_v1_dos_pit_runtime_real_media.c)
+target_include_directories(test_dm2_v1_dos_pit_runtime_real_media PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm2_v1_dos_pit_runtime_real_media PRIVATE firestaff_dm2)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_dos_pit_runtime_real_media PRIVATE
+        -Wall -Wextra -Werror -O2)
+endif()
+add_test(NAME test_dm2_v1_dos_pit_runtime_real_media
+    COMMAND test_dm2_v1_dos_pit_runtime_real_media)
+
+add_executable(test_dm2_v1_dos_sksave1_wield_drop_real_media
+    tests/test_dm2_v1_dos_sksave1_wield_drop_real_media.c)
+target_include_directories(test_dm2_v1_dos_sksave1_wield_drop_real_media PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm2_v1_dos_sksave1_wield_drop_real_media PRIVATE
+    firestaff_dm2)
+if (CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(test_dm2_v1_dos_sksave1_wield_drop_real_media PRIVATE
+        -Wall -Wextra -Werror -O2)
+endif()
+add_test(NAME test_dm2_v1_dos_sksave1_wield_drop_real_media
+    COMMAND test_dm2_v1_dos_sksave1_wield_drop_real_media)
+
 add_executable(test_dm2_v1_mac_boot_real_media
     tests/test_dm2_v1_mac_boot_real_media.c)
 target_include_directories(test_dm2_v1_mac_boot_real_media PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -57644,30 +57668,51 @@ if(NOT MSVC)
 endif()
 add_test(NAME test_dm2_v1_mac_boot_real_media COMMAND test_dm2_v1_mac_boot_real_media)
 
-add_executable(test_dm2_v1_mac_demo_new_game_real
-    tests/test_dm2_v1_mac_demo_new_game_real.c)
-target_include_directories(test_dm2_v1_mac_demo_new_game_real PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(test_dm2_v1_mac_demo_new_game_real PRIVATE firestaff_dm2)
-if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
-    target_compile_options(test_dm2_v1_mac_demo_new_game_real PRIVATE -Wall -Wextra -Werror -O2)
+add_executable(test_dm2_v1_mac_new_game_real_media
+    tests/test_dm2_v1_mac_new_game_real_media.c)
+target_include_directories(test_dm2_v1_mac_new_game_real_media PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm2_v1_mac_new_game_real_media PRIVATE firestaff_dm2)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_mac_new_game_real_media PRIVATE -Wall -Wextra -Werror -O2)
 endif()
-add_test(NAME test_dm2_v1_mac_demo_new_game_real COMMAND test_dm2_v1_mac_demo_new_game_real)
+add_test(NAME test_dm2_v1_mac_new_game_real_media
+    COMMAND test_dm2_v1_mac_new_game_real_media)
 
-add_executable(test_dm2_v1_mac_demo_m11_new_game_real
-    tests/test_dm2_v1_mac_demo_m11_new_game_real.c)
-target_include_directories(test_dm2_v1_mac_demo_m11_new_game_real PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(test_dm2_v1_mac_demo_m11_new_game_real PRIVATE firestaff_m11)
-if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
-    target_compile_options(test_dm2_v1_mac_demo_m11_new_game_real PRIVATE -Wall -Wextra -Werror -O2)
+add_executable(test_dm2_v1_mac_m11_new_game_real_media
+    tests/test_dm2_v1_mac_m11_new_game_real_media.c)
+target_include_directories(test_dm2_v1_mac_m11_new_game_real_media PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm2_v1_mac_m11_new_game_real_media PRIVATE
+    firestaff_m11 firestaff_m12 firestaff_v2 firestaff_m10 SDL3::SDL3 m)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_mac_m11_new_game_real_media PRIVATE -Wall -Wextra -Werror -O2)
 endif()
-add_test(NAME test_dm2_v1_mac_demo_m11_new_game_real COMMAND test_dm2_v1_mac_demo_m11_new_game_real)
+add_test(NAME test_dm2_v1_mac_m11_new_game_real_media
+    COMMAND test_dm2_v1_mac_m11_new_game_real_media)
+
+add_executable(test_dm2_v1_dos_m11_spell_cast_real_media
+    tests/test_dm2_v1_dos_m11_spell_cast_real_media.c)
+target_include_directories(test_dm2_v1_dos_m11_spell_cast_real_media PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm2_v1_dos_m11_spell_cast_real_media PRIVATE
+    firestaff_m11 firestaff_m12 firestaff_v2 firestaff_m10 SDL3::SDL3 m)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_dos_m11_spell_cast_real_media PRIVATE
+        -Wall -Wextra -Werror -O2)
+endif()
+add_test(NAME test_dm2_v1_dos_m11_spell_cast_real_media
+    COMMAND test_dm2_v1_dos_m11_spell_cast_real_media)
 
 add_executable(test_dm2_v1_mac_wall_source_census_real
     tests/test_dm2_v1_mac_wall_source_census_real.c)
-target_include_directories(test_dm2_v1_mac_wall_source_census_real PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(test_dm2_v1_mac_wall_source_census_real PRIVATE firestaff_m11)
-if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(test_dm2_v1_mac_wall_source_census_real PRIVATE -Wall -Wextra -Werror -O2)
+target_include_directories(test_dm2_v1_mac_wall_source_census_real PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm2_v1_mac_wall_source_census_real PRIVATE
+    firestaff_m11 firestaff_m12 firestaff_v2 firestaff_m10 SDL3::SDL3 m)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_mac_wall_source_census_real PRIVATE
+        -Wall -Wextra -Werror -O2)
 endif()
 add_test(NAME test_dm2_v1_mac_wall_source_census_real
     COMMAND test_dm2_v1_mac_wall_source_census_real)

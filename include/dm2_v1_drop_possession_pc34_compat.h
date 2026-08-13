@@ -35,7 +35,8 @@
  *                           DB 0x0e records are deallocated
  *                           (DM2_DEALLOC_RECORD, c_record.cpp:1205-1208).
  *
- * Fail-closed contract: the drop cell must carry a ground-stack slot
+ * `map` is the caller's authenticated current c_map; the slice never
+ * substitutes map 0. Fail-closed contract: the drop cell must carry a ground-stack slot
  * (the 0x10 object flag — setting it on a flag-less cell would grow the
  * map tables, which stays unproven), every chain walk is budgeted
  * against the declared record count, unresolved AI flags stop the walk
@@ -66,6 +67,10 @@ typedef struct {
                                  ground-stack slot */
     int drops_placed;         /* items placed by the generated loop */
     int drops_iterations;     /* per-item iterations executed */
+    int generated_drop_alloc_failures; /* OBJECT_NULL before placement */
+    uint16_t generated_drop_first_itemspec;
+    int generated_drop_first_db;
+    int generated_drop_alloc_free_records;
     int possession_walk_ran;  /* the word@2 chain walk ran */
     int possession_items;     /* chain records visited */
     int possession_dropped;   /* DB != 0x0e: appended to the tile */
@@ -88,6 +93,8 @@ typedef struct {
  * dm2_v1_creature_ai_spec_flags (dm2_v1_creature.h). */
 typedef int (*DM2_V1_DropPossessionAiFlagsFn)(int creature_type,
                                               uint16_t *out_flags);
+typedef int (*DM2_V1_DropPossessionAiFlagsContextFn)(
+    void *context, int creature_type, uint16_t *out_flags);
 
 /* DM2_DROP_CREATURE_POSSESSION bounded slice.  `dungeon` is mutable
  * because the ground-stack head writes land in the dungeon data exactly
@@ -104,8 +111,30 @@ typedef int (*DM2_V1_DropPossessionAiFlagsFn)(int creature_type,
 int dm2_v1_drop_creature_possession(
     DM2_V1_RecordPoolSet *pool_set,
     DM2_V1_DungeonData *dungeon,
+    int map,
     DM2_V1_DropRng *rng,
     DM2_V1_DropPossessionAiFlagsFn ai_flags_fn,
+    int16_t creature_record,
+    int x, int y,
+    int mode,
+    int noise_arg,
+    int party_x, int party_y, int party_dir,
+    const uint16_t drop_slots[DM2_DROP_SLOT_COUNT],
+    DM2_V1_DropPlacedItem *out_items,
+    int max_items,
+    DM2_V1_DropPossessionReceipt *receipt);
+
+/* Same source slice with an explicit owner context.  This is the candidate
+ * GAME_LOAD boundary: it prevents a private CAII/GDAT owner from borrowing
+ * the process-global creature callback while the recycler transaction is
+ * still staged. */
+int dm2_v1_drop_creature_possession_with_context(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_DungeonData *dungeon,
+    int map,
+    DM2_V1_DropRng *rng,
+    DM2_V1_DropPossessionAiFlagsContextFn ai_flags_fn,
+    void *ai_flags_context,
     int16_t creature_record,
     int x, int y,
     int mode,

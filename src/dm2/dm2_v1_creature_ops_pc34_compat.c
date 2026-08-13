@@ -25,7 +25,7 @@ int16_t dm2_v1_apply_creature_poison_resistance(
     return (int16_t)(numerator / denominator);
 }
 
-void dm2_v1_rotate_creature(
+void dm2_v1_creature_ops_rotate_creature(
     uint16_t creature_record, int mode, int direction,
     const DM2_V1_CreatureRotateCallbacks *cb, void *ctx)
 {
@@ -182,7 +182,7 @@ int dm2_v1_creature_shoot_item(
     return 0;
 }
 
-uint8_t dm2_v1_attack_party(
+uint8_t dm2_v1_creature_ops_attack_party(
     int16_t total_damage, int body_parts, int wound_type,
     const DM2_V1_AttackPartyCallbacks *cb, void *ctx)
 {

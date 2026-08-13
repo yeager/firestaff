@@ -590,6 +590,11 @@ typedef struct {
      * the admitted File_header world and is destroyed before this profile's
      * media.  It never implies source_game_load_session_ready. */
     void   *game_load_world_owner;
+    /* Borrowed source owner for a SKSAVE Resume candidate. The candidate owns
+     * all mutable state; this pointer is provenance only and is never freed
+     * by the boot profile. */
+    void   *sksave_game_load_source;
+    int     sksave_game_load_source_owned;
     /* Opaque, RAM-only clone of the fully materialized New Game predecessor.
      * It is retained only after the source-owned private GAME_LOAD work is
      * complete. It is a staging owner, never a live runtime session. */
@@ -608,6 +613,21 @@ typedef struct {
  * gameplay publication and leaves source_game_load_session_ready clear. */
 int dm2_v1_boot_retain_new_game_world(DM2_V1_BootProfile *profile,
     const DM2_V1_BootNewGamePartySelection *selections, int selection_count);
+
+/* Retain a source-complete SKSAVE as a private GAME_LOAD-shaped candidate.
+ * The save owner remains borrowed provenance; no runtime state is published. */
+struct DM2_V1_SksaveGameLoadOwner;
+struct DM2_V1_BootStartupLaunch;
+int dm2_v1_boot_retain_sksave_resume_candidate(
+    DM2_V1_BootProfile *profile,
+    const struct DM2_V1_SksaveGameLoadOwner *source);
+int dm2_v1_boot_prepare_sksave_resume_path(
+    struct DM2_V1_BootStartupLaunch *launch, const char *save_path);
+
+/* Atomically publish the retained SKSAVE candidate into the live runtime.
+ * The source owner remains provenance-only; failure leaves runtime state and
+ * the candidate untouched. */
+int dm2_v1_boot_commit_sksave_resume_session(DM2_V1_BootProfile *profile);
 
 /* Retain the selection-free part of GAME_LOAD.  The caller must still route
  * real mirror clicks through the source selector; this function never picks
@@ -647,6 +667,13 @@ int dm2_v1_boot_select_new_game_champion(DM2_V1_BootProfile *profile,
  */
 int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
     DM2_V1_BootProfile *profile, uint16_t mirror_object_id);
+
+/* Resolve the source front viewport cell to its authenticated mirror and
+ * perform one DM2_SELECT_CHAMPION transaction.  The viewport coordinates are
+ * only an input-zone admission; the selected object, map and position still
+ * come from the private File_header/GAME_LOAD owner. */
+int dm2_v1_boot_select_prepared_new_game_champion_at_viewport(
+    DM2_V1_BootProfile *profile, int viewport_x, int viewport_y);
 
 /* Publish the retained source GAME_LOAD candidate as the live runtime.  This
  * is deliberately explicit: preparing or selecting a private candidate does
@@ -709,7 +736,7 @@ typedef enum {
     DM2_V1_BOOT_STARTUP_PREPARE_RUNTIME_BIND_FAILED
 } DM2_V1_BootStartupPrepareResult;
 
-typedef struct {
+typedef struct DM2_V1_BootStartupLaunch {
     DM2_V1_BootProfile *profile;
     DM2_V1_BootStartupPrepareResult prepare_result;
     const char *failure_status_scope;

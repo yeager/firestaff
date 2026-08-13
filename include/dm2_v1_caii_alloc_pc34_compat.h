@@ -13,9 +13,12 @@
  * (DM2_ATTACK_CREATURE c_creature.cpp:318-386 resolves the record via
  * DM2_GET_CREATURE_AT when its record argument is -1, then allocs;
  * c_moverec.cpp:983, c_tim_proc.cpp:2887, c_1c9a.cpp:9982 call the
- * allocator directly).  There is NO map-load CAII loop in the source:
- * activation is event-driven, so this module binds the allocator itself
- * and leaves the event sites as future wiring.
+ * allocator directly).  The source also has an all-map activation pass
+ * (`RESET_CAII` followed by `FILL_ORPHAN_CAII`); this module binds the
+ * allocator itself while the GAME_LOAD owner must provide that transaction.
+ * A saved DB4 byte@5 is therefore not a live CAII slot by itself: the source
+ * resets those markers before the fill pass and schedules each activation's
+ * first think timer.
  *
  * Observable slice (c_1c9a.cpp:5779-5893):
  *   - record byte@5 != 0xff  -> source early return (already has a slot);
@@ -84,6 +87,32 @@ typedef int (*DM2_V1_CaiiWordValueFn)(int creature_type,
 void dm2_v1_caii_set_ai_base_hp_fn(DM2_V1_CaiiWordValueFn fn);
 void dm2_v1_caii_set_gdat_word1_fn(DM2_V1_CaiiWordValueFn fn);
 
+/* Explicit ATTACK_CREATURE owner context.  Runtime may leave these hooks
+ * NULL and use the legacy source timer queue/providers; private GAME_LOAD
+ * candidates must provide all three timer hooks and all three data hooks so
+ * the attack body cannot borrow process-global AI/GDAT state. */
+typedef struct DM2_V1_CaiiArray DM2_V1_CaiiArray;
+typedef int (*DM2_V1_CaiiAttackValueHook)(
+    void *ctx, int creature_type, uint16_t *out_value);
+
+typedef int (*DM2_V1_CaiiAttackTimerHook)(
+    void *ctx, DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon, DM2_V1_CaiiArray *caii,
+    int16_t record_handle, int map_id, unsigned long game_tick,
+    int x, int y);
+typedef struct {
+    void *ctx;
+    DM2_V1_CaiiAiSpecFlagsFn ai_spec_flags;
+    DM2_V1_CaiiWordValueFn ai_base_hp;
+    DM2_V1_CaiiWordValueFn gdat_word1;
+    DM2_V1_CaiiAttackValueHook ai_spec_flags_context;
+    DM2_V1_CaiiAttackValueHook ai_base_hp_context;
+    DM2_V1_CaiiAttackValueHook gdat_word1_context;
+    DM2_V1_CaiiAttackTimerHook allocate;
+    DM2_V1_CaiiAttackTimerHook delete_timer;
+    DM2_V1_CaiiAttackTimerHook schedule;
+} DM2_V1_CaiiAttackContext;
+
 /* Read-only accessors over the module-owned providers and the verbatim
  * table1d607e copy, for composed slices living in their own translation
  * unit (the full DM2_DELETE_CREATURE_RECORD composition).
@@ -93,12 +122,12 @@ DM2_V1_CaiiAiSpecFlagsFn dm2_v1_caii_get_ai_spec_flags_fn(void);
 DM2_V1_CaiiWordValueFn dm2_v1_caii_get_gdat_word1_fn(void);
 int dm2_v1_caii_table1d607e_uc0(int w1);
 
-typedef struct {
-  uint8_t *slots;    /* capacity * DM2_V1_CAII_SLOT_SIZE bytes, owned */
-  int capacity;      /* caller-owned stand-in for ddat.v1e08a0 */
-  int alloc_count;   /* session stand-in for ddat.v1d4020 */
-  int valid;
-} DM2_V1_CaiiArray;
+struct DM2_V1_CaiiArray {
+    uint8_t *slots;    /* capacity * DM2_V1_CAII_SLOT_SIZE bytes, owned */
+    int capacity;      /* caller-owned stand-in for ddat.v1e08a0 */
+    int alloc_count;   /* session stand-in for ddat.v1d4020 */
+    int valid;
+};
 
 /* Allocates the slot array and marks every slot free (word@0 = -1).
  * capacity <= 0 fails closed (valid == 0). */
@@ -442,6 +471,8 @@ typedef struct {
   int denied_static_no_slot; /* byte@5 == 0xff && vl_18 == 0 early return */
   int alloc_performed;       /* DM2_ALLOC_CAII_TO_CREATURE ran (bound) */
   int alloc_failed;
+  int hp_applied;            /* source HP word@0x14 was updated before a
+                                legitimate early return */
   int16_t record_handle;     /* resolved DB4 handle (direction bits kept) */
   int creature_type;         /* record byte@4 */
   int hp_word_after;         /* slot word@0x14 after the add (int16) */
@@ -570,6 +601,23 @@ int dm2_v1_caii_attack_creature(
     uint32_t attack_word,
     int16_t attack_strength,
     int32_t hp_delta,
+    DM2_V1_CaiiAttackReceipt *receipt);
+
+int dm2_v1_caii_attack_creature_context(
+    DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    DM2_V1_DropRng *rng,
+    int map_id,
+    unsigned long game_tick,
+    int16_t record_handle,
+    int x, int y,
+    int target_x, int target_y,
+    uint32_t attack_word,
+    int16_t attack_strength,
+    int32_t hp_delta,
+    const DM2_V1_CaiiAttackContext *context,
     DM2_V1_CaiiAttackReceipt *receipt);
 
 typedef struct {

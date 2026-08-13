@@ -19,7 +19,7 @@
 int dm2_v1_post_load_global_effects(
     const uint8_t *timer_array, int num_timers,
     int hero_count,
-    const DM2_V1_GlobalEffectCallbacks *cb,
+    const DM2_V1_SaveGlobalEffectCallbacks *cb,
     DM2_V1_GlobalEffectReceipt *receipt)
 {
     DM2_V1_GlobalEffectReceipt local;

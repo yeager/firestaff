@@ -1,120 +1,760 @@
-# CSB Hint Oracle: authentic Atari R1 start routes (2026-08-12)
+# DM2: active-runtime verification across supplied editions (2026-08-12)
 
-# CSBWin C017 inventory: authored empty-slot atlas parity (2026-08-12)
+## DM2 M12 source-owner catalog and FM Towns archive launch (2026-08-13)
 
-# CSB: DOS/PC request fails closed before platform selection (2026-08-12)
+- ✅ M12 väljer rätt source-owner från den gemensamma DM2-roten för DOS,
+  Amiga, FM Towns och Mac. DOS kan vara den autentiserade `data`-symlinken;
+  övriga editioner behåller sina originalarkiv.
+- ✅ FM Towns M12 accepterar originaldiscens ZIP, läser MODE1/2352-media i
+  RAM, verifierar AUTOEXEC/TWANIM/TITLE/SKULL/END och binder English-texten
+  från det uttryckliga DOS-companionarkivet utan extraktion till disk.
 
-- ✅ CSB has no original DOS/PC release. The CLI now reports that fact for
-  `--game csb --platform pc` and names the supported original routes rather
-  than selecting a same-hash Atari ST package or stale asset cache. CTest
-  `csb_v1_pc_platform_rejected` checks the nonzero result, exact boundary
-  message, absence of `CSB READY`, and absence of `csb-st`/`csb-pc` runtime
-  cache selection. CSBWin remains a source/disassembly reference only and is
-  not represented as DOS support or a Firestaff PC runtime.
+## FM Towns M11 champion handoff (2026-08-13)
 
-- ✅ Atari ST/CSBWin-inventariet använder nu originalets C232- och
-  C042–C048-ägda tomslottsikoner, inklusive skadad hand-/klädslottsvariant och
-  den valda vapenhandens kist-/skrollregel. Den äkta C017-bildrutan verifieras
-  mot samtliga 30 källatlasskärningar; inga PC3.4- eller värdfallbackar ritas.
-- 🔒 Attackhandens C035-lager kräver fortfarande en autentiserad live-receipt
-  för `AttackingCharacterOrdinal`. Se
-  `parity-evidence/csbwin_inventory_icon_atlas_20260812.md`.
+- ✅ FM Towns NEW GAME når nu aktiv M11-runtime genom nästa autentiska
+  `STARTEND`/mirror-rosterpost efter den privata första hjälten. Den tidigare
+  dubblett-admissionen är borta; real-media verifierar source-session,
+  inventory, rörelse, pit, trappa, DB1 och aktiv DB4/THINK_CREATURE-runtime.
 
-- ✅ `csb_v1_atari_mini_menu_resume_archive` now exercises the ordinary M12
-  Continue row with only extracted original Atari ST files. It persists the
-  native `MINI.DAT` path in an isolated launcher profile, navigates from the
-  selected CSB row to Continue, and proves that M12 hands the exact path to
-  F0435 (`CSB READY … route=f0435-resume`) without using CLI `--save`.
+## DM2 public NEW GAME handoff (2026-08-13)
 
-- ✅ `CSB UTILITY DISK — HINT ORACLE` är nu en separat M12-post och
-  `--csb-hint-oracle --data-dir <root>` är dess CLI-motsvarighet. Båda går
-  genom samma M11-runtime, använder den
-  ursprungliga 320×200-ytan och accepterar endast den hashverifierade Atari R1
-  `HCSB.HTC`/`HCSB.DAT`-kombinationen plus en dekoderverifierad nativ
-  `MINI.DAT`. Den sammanhängande trion kan materialiseras från ett stött
-  arkiv; `--save <MINI.DAT>` väljer i stället en explicit nativ sparfil.
-  Det är inte CSB:s vanliga spelstart eller FM Towns-verktyget.
-  Originalets musklicksrutor styr LOAD/LAST/NEXT/DONE/EXIT/OK; ingen ny
-  tangentmappning har hittats på.
+- ✅ M11:s autentiska title→NEW GAME-pointer går nu genom source GAME_LOAD-
+  preparation och lämnar första champion/mirror-state privat tills nästa
+  source-owned mirror-event. Runtime commit sker först efter komplett
+  mirror-handoff; den breda M11-startprofilgaten passerar.
+- ✅ Den privata GAME_LOAD-fasen renderar nu sin autentiserade entrance-
+  viewport genom DM2:s vanliga scene/wall-renderare. G1-projektionen och
+  GRAPHICSSET-materialen visas före mirror-commit utan att skapa en live party
+  eller runtime-tick.
+- ✅ DOS, Amiga, FM Towns och Mac real-media boot/NEW GAME/runtime-gater samt
+  DOS spell-cast passerar efter handoff-ändringen.
 
-- ✅ The R1 runtime now renders every source state on the decoded 320×200
-  HCSB.DAT surface: the LOAD/EXIT prompt, selected source-order hint rows plus
-  DONE, the no-clue/OK acknowledgement and page-specific LAST/NEXT/DONE.
-  Text is the decoded Utility Disk font and `HINTTEXT.C` box algorithm; state
-  strings and rectangles come directly from `HINTDATA.C`, `HINTMAIN.C` and
-  `HINTHINT.C`. The real-media regression renders each state and rejects an
-  unloaded or closed state. This is still a runtime surface, not an M11/M12
-  launcher or a pixel-parity claim.
+## DM2 projectile impact owner (2026-08-13)
 
-- ✅ Added `CSB_HintOracleAtariRuntime`, which atomically admits the known
-  Atari ST 2.0/2.1 R1 HCSB.HTC/HCSB.DAT pair, consumes the checked native
-  MINI.DAT coordinate receipt, runs the recovered source selection/page state
-  and renders a selected page using only the original 320×200 art/font/palette.
-- ✅ `test_csb_hint_oracle_atari_runtime` fails closed without admitted assets
-  and has an opt-in original-media receipt. Against the staged R1 triplet it
-  decodes map 4 / x 22 / y 18, selects two authored hints and renders page 1.
-  No game files or generated graphics are committed.
+- ✅ DB14 Fireball-payloaden följer nu SKProject: cast-power till byte@4,
+  `0x5A` till byte@5 och mana-justerad accuracy till timersteg.
+- ✅ `DM2_move_075f_06bd` beräknar träffens attackvärde från kvarvarande
+  projektilenergi och källans GDAT/RNG-data; attacken går via CAII med
+  `0x200D/100`, före den senare nollskade-reaktionen `0x2006`.
+- ⏳ Positiv DOSBox-träff med verifierad HP/death/drop-kedja saknas ännu.
 
-# CSB Hint Oracle: authenticated Atari save-coordinate bridge (2026-08-12)
+## DM2 positive Fireball CAII impact (2026-08-13)
 
-- ✅ `CSB_HintOracleAtariSaveSession` connects the existing checked
-  `CSB_V1_AtariSaveInfo` GAMEBLOCK2 receipt to the recovered Oracle session.
-  It copies only `party_map_index`, `party_x` and `party_y` after range checks;
-  CSBWin/general runtime coordinates and a second save parser are deliberately
-  outside this boundary.
-- ✅ The Oracle session test confirms that the authentic-receipt shaped input
-  selects the source-order seven-row list and that an invalid signed pose is
-  rejected before it can reach the HTC lookup.
+- ✅ Mac M11-real-media verifierar positiv `DM2_move_075f_06bd`-attack,
+  CAII `word@0x14` och DB14-konsumtion via den riktiga spell-/timerkedjan.
+- ✅ Kvittot skiljer nu attackvärde, CAII-skrivning och senare
+  `0x2006`-reaktion; en nollskade-reaktion kan inte längre rapporteras som
+  projektilträff.
+- ✅ Creature-timern återplaneras nu mot den autentiserade aktuella kartan
+  efter positiv projektilskada. Mac M11-real-media verifierar därmed
+  `THINK_CREATURE`→`WOUND_CREATURE`, konkret `HP 30→25` med skada `5`.
+- ⏳ Lethal/death/drop i real media och positiv DOSBox-pit-träff återstår.
 
-# CSB Hint Oracle: HINTHINT.C selection and page session (2026-08-12)
+## DM2_THINK_CREATURE: CAII damage handoff (2026-08-13)
 
-- ✅ Added `CSB_HintOracleSession`, a deliberately I/O-free recovery of the
-  original Utility Disk's selection state. It preserves `C09_SELECT_HINTS`'
-  authored location-record order, exact-or-wildcard matching and the hard
-  seven-row limit; it also preserves `F1940_CPSX`'s one-based first page and
-  non-wrapping LAST/NEXT boundaries.
-- ✅ The regression builds an HTC fixture with eight eligible locations and
-  proves that only the first seven source-order hints can appear, then covers
-  page boundaries, DONE transitions, no-clue and close. The caller remains
-  responsible for passing coordinates from an authenticated CSB Atari
-  save/runtime handoff.
+- ✅ `ATTACK_CREATURE` behåller nu spelarens positiva skada i CAII
+  `word@0x14`; den gamla runtimevägen tolkar inte längre detta som direkt
+  creature-HP.
+- ✅ Due `THINK_CREATURE` flyttar ackumulatorn till DB4 `record+6` och följer
+  source `WOUND_CREATURE`: icke-dödlig HP-minskning, lethal HP=1, dying-mode
+  utan kill-flagga och `DELETE_CREATURE_RECORD` med drop-owner när kill-flaggan
+  och autentiserade dropdata finns.
+- ⏳ En positiv DOSBox pit-save med faktisk träff/skada återstår; den nuvarande
+  real-media-fixturen visar aktiva WIELD-kollisioner men ingen verifierad
+  CAII→WOUND-kvittoövergång.
+- ✅ Mac M11-real-media visar nu en verifierad positiv
+  `CAII→THINK_CREATURE→WOUND_CREATURE`-övergång (`30→25`, skada `5`).
+- ✅ Mac-real-media verifierar även source lethal/WOUND för Lightning:
+  `25→3→1`, lethal-kvittot och korrekt kvarvarande dying-mode på den
+  autentiska type25-creaturen. 96 efterföljande source-ticks ger ingen
+  fabricerad delete/drop när kill-flaggan saknas.
 
-# CSB Hint Oracle: original C26 font-colour substitution (2026-08-12)
+## DM2_WIELD: source miss semantics (2026-08-13)
 
-- ✅ The HCSB renderer now consumes the actual segment-0 C26 control pair
-  before any title or hint page is drawn. ReDMCSB `HINTTEXT.C` stores the
-  target as `target * 10`; `F0129_VIDEO_BlitShrinkWithPaletteChanges` reduces
-  that table value back to an indexed colour. For the authenticated ST 2.0/2.1
-  HCSB.DAT this proves the exact source mapping `9 → 1`, not a host-selected
-  font colour.
-- ✅ `test_csb_hint_oracle_text_render` covers the C26 mapping and has an
-  opt-in real-media receipt for MD5 `708e113c869ab922633e885aa72a3c77`.
-  Source font index 12 stays transparent.
-- 🔒 Oracle page selection/input, M11/M12 ownership and original-frame pixel
-  parity remain open; consuming C26 does not make the Utility Disk UI live.
+- ✅ WIELD använder nu CMDSTR-fälten och tile-owned DB4-handtaget hela vägen
+  till source combat/CAII.
+- ✅ En autentisk DOS-start-fixture visar att hög rustning ger en riktig
+  source-miss; den misslyckade collisionen rapporteras inte längre som en
+  träff eller som applicerad creature-skada.
+- ⏳ Positiv WIELD-skada och efterföljande WOUND/death/drop kräver fortfarande
+  en autentisk save-position där vapnets källstyrka övervinner creature-
+  rustningen.
 
-# CSB: V2.2 avvisar genererad artpack-cache (2026-08-12)
+## DM2_STEP_MISSILE: dynamisk DB14-passage (2026-08-13)
 
-- ✅ CSB:s produktionsväg öppnar inte längre `v22_inplace_cache.bin`, som
-  skapas av host-PNG-filer och inte är originalspeldata. Arkivimporten
-  extraherar därför inte heller cachen.
-- ✅ V2.2:s F0128-ingång är no-draw och lämnar den autentiserade V1-bilden
-  byte för byte intakt. När V2.2 efterfrågas återgår M11 till V2.1.
-- 🔒 En framtida CSB V2.2-väg kräver en original-dataavkodare, källpalett,
-  källstyrd placering och pixelparitetsbevis innan den kan rita något.
+- ✅ Source-owned `DM2_STEP_MISSILE` kan nu flytta en nyallokerad DB14 mellan
+  passageceller även när världen saknar en separat rå DB14-post. Poolkedjan
+  driver tile-root, länkar och rollback; befintliga råa poster speglas med
+  rätt edition-byteordning.
+- ✅ Creature-hit/despawn använder samma pool-authoritative unlink, och
+  DB14:s objektord läses med editionens autentiserade byteordning.
+- ✅ DOSBox- och Mac-real-media-cast-fixtures når faktiskt timer 0x1E efter
+  Fireball-cast; den fokuserade 20-testsviten är grön.
+- ⏳ Positiv death/drop-verifiering efter `WOUND_CREATURE`, reflection, full
+  teleporter-/map-transition och avancerade CCM-effekter återstår som egna
+  source-owners; `DM2_STEP_MISSILE`-träffen verifieras med källans
+  nollskade-`ATTACK_CREATURE`.
 
-# CSB F31: explicit user save has CLI/start-menu parity (2026-08-12)
+## DM2_STEP_MISSILE: destination-cell creature hit (2026-08-13)
 
-- ✅ An explicit language-matched original F0435 `CSBGAME.DAT` now binds to
-  M12 before the direct-launch/menu split. `--menu --game csb --save …` then
-  retains that exact path when Enter opens the selected F31 row.
-- ✅ The opt-in native real-media test proves both direct CLI resume and
-  start-menu → Enter → F0435 resume with the same external user save. The
-  successful launcher marker distinguishes `route=f0435-resume` from an
-  ordinary title/startup handoff.
-- 🔒 The source-owned F0435 reader remains the byte authority: mismatched,
-  malformed or non-F31 saves stay rejected, and no Atari/CSBWin importer is
-  used as a fallback.
+- ✅ `DM2_STEP_MISSILE` kontrollerar nu destinationens autentiserade DB4 innan
+  ordinary passage fortsätter och använder samma source-owned CAII/
+  `ATTACK_CREATURE`-kedja.
+- ✅ Vid träff tas DB14-posten bort från den verkliga tile-kedjan med
+  pool-authoritative `CUT_RECORD_FROM`; inga koordinatbaserade ersättnings-
+  projektiler används.
+- ✅ Mac-real-media placerar party framför en autentisk creature, kastar
+  Fireball genom M11 och verifierar destination-hit, källans
+  nollskade-`ATTACK_CREATURE` och att den träffade projektilen försvinner.
+  `WOUND_CREATURE`/HP/drop är medvetet inte attribuerad till denna timer-
+  owner.
+
+## SKSAVE Resume-kandidat (2026-08-13)
+
+- ✅ Den riktiga DOSBox-savevägen passerar nu atomiskt `clone → retain →
+  commit` för alla fyra savefiler i `/Users/bosse/Downloads/dm2`.
+- ✅ Resume-klonen äger sin autentiserade c_map-dungeonreceipt; en intern
+  pekare till den kompakta save-state-deskriptorn kan inte längre ge nollade
+  kartdimensioner efter kloning.
+- ✅ `RESET_CAII` körs före CAII-fill och återställs transaktionellt vid fel.
+  Dynamiska DB4-poster med lazy CAII-aktivering materialiseras därför i den
+  privata kandidatens CAII- och think-timer-state.
+- ✅ Real-data-korpustestet passerar 437 kontroller utan fel. Den samlade
+  DM2-regressionen passerar 10/10 tester, inklusive DOS, Amiga och Mac-
+  real-media-gates.
+- ✅ Occupancy- och ISO-cache-regressionerna är sanerade; virtual paths och
+  macOS:s `/private`-alias jämförs nu korrekt.
+- ⚠️ Ett äldre M11-startprofiltest förväntar dynamisk CAII i fel source-fas.
+  Det påverkar inte launch eller de fokuserade real-media-gatesen.
+
+- ✅ M11:s riktiga CLI-Resume är verifierad mot alla fyra primära DOSBox-saves
+  i `/Users/bosse/Downloads/dm2`: `sksave0.dat`–`sksave3.dat` når
+  `dm2-runtime`, återställer respektive map/party-position, fyra champions och
+  tickar efter handoff. Detta kompletterar den tidigare read-only
+  CAII-korpusproben med faktisk savePath→GAME_LOAD→runtime-evidens.
+- ✅ Samma fyra Resume-sessioner har körts genom en längre M11-scriptsekvens:
+  32 boot frames, fem input-events och 192 efterföljande script frames per
+  save. Alla behåller `dm2-runtime`, fyra champions och tick 384 utan statefel;
+  den direkta boot-proben verifierar också respektive map/pose.
+
+- ✅ Aktiv FM Towns M11 verifierar nu en autentisk DB4→CREATURES/type/F9
+  creature-rendering med source-owned materialreceipt och utan fallback.
+  Creature-admissionen är per-root: saknad F9/AI-data blockerar bara den
+  enskilda roten. Rect14:s FB/FC/FD-övertagande gäller inte längre vanliga
+  DB4/F9-roots, utan endast verifierade V5/live-CCM-rutter.
+- ✅ DOSBox och Amiga verifierar nu samma aktiva DB4→CREATURES/type/F9-
+  rendering med respektive originaldata; alla tre editionerna passerar utan
+  fallback. CCM/AI/death är fortfarande separat fail-closed.
+- ✅ Creature-schedulern använder nu den autentiserade aktuella kartan i
+  `DM2_GET_CREATURE_AT`. FM Towns når därmed en riktig karta-3 DB4→0x22→
+  `THINK_CREATURE`-dispatch; CCM-bodyt rapporteras fortfarande fail-closed.
+- ✅ CCM:s source-statiska `DM2_14cd_09e2` goal-gren är nu kopplad till
+  autentiserad AI/table-data. `WALK_NOW` går nu via källsäkrad kontroll av
+  angränsande golv/karta/ockupation och köar den befintliga 0x3c-
+  `MOVE_RECORD_TO`-ägaren. Dynamisk pathfinding, target-val och övrig full
+  `PROCEED_CCM` är fortsatt fail-closed.
+- ✅ CCM:s autentiserade melee-gren väljer nu source `ATTACKS_PARTY` (0x08)
+  vid AI-godkänt avstånd 1 och går genom de source-portade
+  `CREATURE_ATTACKS_PARTY`/`CREATURE_ATTACKS_PLAYER`-rutinerna. Hjälteskadan
+  lämnas till den befintliga `damagesuffered`- och hjälteflag-owner; övriga
+  CCM-handlers och döds-/dropföljder är fortsatt fail-closed.
+
+- ✅ Productionens bounded `FIND_WALK_PATH`-admission använder nu den
+  editionsmedvetna passage/solid-boundaryn för både byte- och tvåbyteskartor.
+  Creature-ticken läser fortsatt party-målet från den aktiva GameState-ägaren,
+  men söker nu till en autentiserad angränsande golvruta i stället för att
+  försöka gå in på partiets cell. Första vägen går till source
+  `WALK_NOW`/`MOVE_RECORD_TO`; dörr-, moln-, teleporter- och full A*-semantik
+  är fortsatt fail-closed.
+- ✅ Normal party-rörelse skriver inte längre över en autentiserad DB4-creature
+  cell. Den aktiva handens source-CMDSTR/DBSPEC och creature-AI kan nu passera
+  `CALC_PLAYER_ATTACK_DAMAGE`, och en verifierad träff går genom den befintliga
+  `CAII_ATTACK_CREATURE`-ägaren före positionscommit. Missar blockerar steget
+  fortsatt; push, kast, death/drop och full `skmove.cpp`-encounterklassning är
+  fortfarande fail-closed.
+- ✅ Action-panelens val skrivs nu tillbaka till source `hero->handcmd` och
+  runtime accepterar både CMDSTR melee-action 1 och cast/missile-action 2.
+  Creature-kollisionen kan därför läsa samma autentiserade handkommando som
+  UI:t valde; missile- och dödsföljder är fortsatt separata owners.
+- ✅ Real-media runtime probes now require and observe dynamic path admission
+  on all four supplied editions: DOS, Amiga, FM Towns and Mac. The current
+  witnesses admitted 27, 6, 28 and 7 paths respectively; the counts are
+  diagnostics, while the tests require a non-zero source admission.
+- ✅ The same four probes now require the source `WALK_NOW` boundary to queue
+  the normal 0x3c `MOVE_RECORD_TO` transaction. The current witnesses queued
+  27, 6, 28 and 7 moves respectively; no host-side coordinate write is used.
+- ✅ The four probes now also dispatch the queued 0x3c timer through the
+  production timer matrix (27, 6, 28 and 7 consumptions). All four editions
+  now commit authenticated same-map DB4 `MOVE_RECORD_TO` transactions; the
+  Amiga/Mac big-endian ground-stack path and FM Towns extension path use the
+  source byte order and source-owned WALK_NOW cell. Optional CAII AI-flag
+  tails remain fail-closed when an edition does not authenticate that data.
+- ✅ The raw `CUT_RECORD_FROM`/`APPEND_RECORD_TO` owner now honors authenticated
+  big-endian Mac/Amiga record words and carries the source-owned `WALK_NOW`
+  cell across the original 0x3c payload boundary. This closes same-map DB4
+  commits for all four supplied media families.
+- ✅ Movementens tile-normalisering är nu formatmedveten. Byte-square maps
+  använder source-klasserna wall/floor/pit/stairs/door/teleporter, medan
+  2-byte maps behåller sin redan normaliserade enum. Detta korrigerar den
+  tidigare pit↔door- och pit↔teleporter-förväxlingen utan att ändra den
+  source-owned actuator-dispatchen. Fyra plattforms-/runtime-regressioner
+  samt Mac real-media-census passerar.
+- ✅ Normal party-rörelse använder nu source-owned stairs/level-location:
+  kartornas autentiska world-offsets och dimensioner byggs till
+  `DM2_V1_SkprojectMapDescriptor`, source-locatorn väljer destinationen och
+  map/pose uppdateras atomiskt. Mac real media verifierar map 8 `(11,18)` →
+  map 1 `(8,11)`; tvetydiga/out-of-bounds mål förblir fail-closed.
+- ✅ Mac-censusen räknar nu autentiska specialrutor över hela korpusen:
+  24 trappor, 562 gropar och 214 teleporter-rutor. Censusen skriver även ut
+  source-locatorns verifierade trappdestinationer för fortsatt
+  DOS/Amiga/FM Towns-paritet.
+- ✅ Öppna pit-rutor kan nu använda source-locatorn som en verklig
+  party-transition. `DM2_PERFORM_MOVE` skiljer en verifierad pit-transition
+  från vanlig pit-blockering; Mac, Amiga och FM Towns verifierar autentiska
+  fall (bland annat Mac map 4 `(7,1)` → map 1 `(4,0)`).
+- ✅ Pit-landningar på vägg eller inaccessible tile avvisas innan map/pose
+  ändras. DOSBox verifierar dessutom en autentisk transition map 4 `(6,4)`
+  → map 1 `(4,4)` genom den aktiva runtime-sessionen.
+- ✅ DOS och Amiga real-media-tester verifierar autentiska DB1-transitioner
+  med source-kodad rotationsordning. Loaderns nya record-word accessor
+  bevarar LE för DOS och BE för Mac/Amiga, vilket gjorde Amiga-route map 38
+  `(15,17)` → map 38 `(16,4)` möjlig utan specialfall i runtimeägaren.
+- ✅ Mac och FM Towns real-media verifierar DB1-transition efter samma
+  endian-korrigering; FM Towns-route:n är map 38 `(16,3)` → map 38 `(16,4)`
+  med source-rotation.
+- ✅ FM Towns M11 renderar en verifierad frame efter DB1-handoff; testet
+  kontrollerar både map/pose/rotation och post-transition materialisering.
+- ✅ Mac real-media-censusen har inventerat map 0:s specialrutor och DB3-
+  aktorer. Klass 5/record `cc10` finns på `(6,1)` och `(5,7)` med
+  endian-korrekt `w2=057e,w4=1084,w6=1160`; recordformen klarar inte DB1:s
+  party-gate och lämnas därför korrekt som local-action/legacy-form tills
+  source-ägaren är identifierad.
+- ✅ Macens pointer-owner behåller nu exakt `c_rwbb`-target-index från den
+  autentiserade rendererade frame:n genom DB3-aktiveringen; tangentbordets
+  kolumnväg är separat. Lokal switch-rotation bevarar samtidigt hela tile-
+  kedjan, inklusive interleaved item/text-poster. `record_ops` och Mac-census
+  passerar; positiv pointer-klickning kräver fortfarande en nådd position med
+  synlig DB3-mekanism.
+- ✅ Mac-censusen bekräftar varför positiv klick-evidens ännu inte kan köras
+  från NEW GAME: retail-starten är map 0 `(1,8)`, medan de första autentiska
+  lokala DB3-switcharna ligger på map 2. Testet försöker inte teleportera eller
+  fabricera en map-transition.
+- ✅ Den normala DM2-rörelsen använder nu source-gated `DM2_move_2fcf_0434`
+  för DB1-teleporters efter att party:t gått in på tile:n. Record graph,
+  aktiveringsbit, party-scope och destination granskas före map/pose-mutation;
+  `test_dm2_v1_move_2fcf_0434` passerar 11/11.
+- ✅ Den source-owned DB1-transitionen ligger nu direkt efter en godkänd
+  party-step i runtime och uppdaterar även riktning/outdoor/map-context från
+  teleporterpayloaden. Positiv Mac map 0→2-evidens saknas fortfarande eftersom
+  retail-starten inte innehåller en nåbar map 0-teleporter i den verifierade
+  startsessionen.
+- ✅ Mac-real-media-censusen kör nu en autentisk positiv runtime-fixture:
+  DB1 från map 11 `(0,0)` till map 1 `(2,3)` nås från en angränsande passabel
+  tile och committen verifieras genom `dm2_v1_runtime_move` + runtime-capture.
+  Det bevisar den generiska transition-ownern utan att fabricera payload eller
+  destination.
+- ✅ `dm2_v1_runtime_door_action` lämnar inte längre dörrinput som en
+  koordinatstub: en autentiserad klass-4 tile köar source `0x04
+  ACTUATE_TILE` med toggle-payload, varefter befintlig DB0/`0x01`-handler äger
+  själva dörrstegen. Oadmitterad map/record-state avvisas fortfarande.
+- ✅ Mac real-media-censusen verifierar dessutom hela den bounded dörrkedjan
+  på autentisk klass-4/DB0-data (map 2, x19, y1): party står på en angränsande
+  passabel ruta, `0x04` köas, `0x01` stegas i source-ordning och dörrstate går
+  från 4 till 0 genom runtime-tickarna.
+- ✅ Den gemensamma katalogregressionen passerar med den faktiska roten
+  `.firestaff/data/dm2`: DOS, Amiga, FM Towns och Mac behåller varsin
+  autentiserad mediaägare.
+- ✅ Verifierad aktiv NEW GAME/runtime: DOS bootprofil `113/0`, DOSBox-
+  SKSAVE-korpus `436/0`, Amiga NEW GAME, FM Towns M11 gameplay och Mac M11
+  NEW GAME med rörelse samt CHARSHEET inventory open/draw/close.
+- ✅ Mac retail verifierar nu dessutom en aktiv autentisk DB4/F9-creature i
+  karta 2 `(14,14)`, type 5, med `0x22` THINK_CREATURE-dispatch och
+  konsumerad CCM-body. Därmed finns samma aktiva creature-bevis för DOS,
+  Amiga, FM Towns och Mac.
+- ✅ M12 Quick Resume validerar `Downloads/dm2/sksave*.dat` och lämnar den
+  exakta originalvägen till DM2:s startup-handoff. FM Towns-media används
+  inte som save-root.
+- ⏳ Macens native wall-button-händelser är fortfarande delvis source-låsta:
+  `c_rwbb`-träffarna och event `0x50` är identifierade. Den verifierade
+  DB3-kedjan för push-button och lokala switchar går nu via rätt wall-cell;
+  okända/inkompletta kedjor förblir fail-closed.
+- ✅ Mac real-media-census passerar med autentisk retaildata och verifierar
+  CHARSHEET, F1-itemtransaktion, source actuator census (`0x18`) samt att
+  wall-targeten bär sin originala view-cell/DB3-ägare.
+
+# DM2: shared four-platform data-root ownership (2026-08-12)
+
+- ✅ En verklig scan av `/Users/bosse/.firestaff/data/dm2` hittar och kan
+  välja `pc-en` (DOS), `amiga-en`, `fmtowns-ja` och `mac-en-retail` samtidigt.
+- ✅ Runtime-resolvern behåller rätt originalägare per edition: lösa DOS-filer,
+  Amigas `DM2_archive.LZX`, FM Towns-CD:n och Macs HFS-CD. Plattformarnas
+  `GRAPHICS.DAT`/`DUNGEON.DAT` blandas inte mellan varandra.
+- ✅ Detta är täckt av `test_dm2_v1_four_platform_catalog_real_media` med den
+  faktiska användardatan.
+
+# DM2: inventory-pointer source boundary and four-platform regression (2026-08-12)
+
+- ✅ Den autentiska FM Towns-ägaren för inventory/status/dungeon-context är
+  fortsatt den enda verifierade musrutten; item-swap är begränsad till de sju
+  källbundna equipment-slotsen. Gemensamma rectangle-ID:n får inte bli
+  globala hitboxar.
+- ✅ Mac/Amiga har verifierad source-owned NEW GAME, movement och
+  CHARSHEET-rendering, men ingen lokal autentiserad Mac/Amiga-MOUSE_INPUT-ägare
+  hittades. Därför är deras item-pointerrutter fortsatt fail-closed i stället
+  för att använda gissade PC-zoner.
+- ✅ Real-media-regression passerar för Mac input, DOS dungeon input, Amiga
+  M11, FM Towns M11, Mac M11 och DOS GDAT-inventory.
+
+# DM2: Amiga title → source GAME_LOAD handoff (2026-08-12)
+
+- ✅ Amigas autentiska ZIP→ADF→LZX-titelregression passerar nu hela vägen från
+  SWSH/TITL till originalets NEW GAME-rect och source-owned GAME_LOAD.
+- ✅ Testen verifierar aktiv runtime med en autentisk champion och
+  `OBJECT_NULL` (`0xffff`) i leader-hand; ingen syntetisk party skapas.
+- ✅ Amigas autentiska 16-färgade `INTERFACE_CHARSHEET/0/1` och `RECT_1EE`
+  öppnar, ritar och stänger inventorypanelen genom samma source-owned M11-
+  boundary; verifierad destination är 99,55 med 119×70 crop.
+
+# DM2: SKSAVE raw section-order receipt (2026-08-12)
+
+- ✅ Real DOSBox SKSAVE tests now verify the complete contiguous prefix order:
+  44-byte File_header, 16-byte map descriptors, column index, ground-stack,
+  text, all 16 source-sized DB pools, map data, then the shared SUPPRESS
+  boundary. Pool offsets are checked against `table_recordsizes[]`; no local
+  cursor guess can silently shift later state.
+- ✅ The real corpus regression now passes `388/0`. This closes the raw byte
+  boundary audit only; champion activation and positive CAII/Resume ownership
+  remain fail-closed as documented in the phase-4 blocker.
+
+# DM2: SKSAVE Resume map-owner binding (2026-08-12)
+
+- ✅ Resume-kandidatens lokala `LOAD_LOCALLEVEL_DYN`-preflight går nu mot en
+  separat klon av SKSAVE:s muterade c_map-ground-stack och tile-root-tabeller.
+  Den läser inte längre record-links ur pristine `DUNGEON.DAT`, vilket annars
+  blandade save-state-poolen med File_header-kedjan.
+- ✅ Kandidatens map-owner frigörs tillsammans med övriga staging-allokeringar.
+  Den riktiga DOSBox-korpusen är fortsatt fail-closed där CAII-slot/think-
+  timer-bindningen saknas och passerar `371/0`.
+
+# DM2: SKSAVE CAII admission census (2026-08-12)
+
+- ✅ En read-only admission räknar levande DB4-records från den muterade
+  SKSAVE-c_map-kedjan och jämför dynamiska records mot sparade 0x21/0x22-
+  think-timers med source map, actor/type och packed A-koordinat.
+- ✅ De åtta DOSBox-saven ger 14 dynamiska records, 0 matchningar, 14 saknade
+  och 0 tvetydiga ägare. Ingen 34-byte CAII-slot fabriceras; Resume förblir
+  fail-closed tills en positiv save-fixture eller full lazy-activation-owner
+  finns.
+- ✅ Receipten följer dessutom SkProjects `FILL_CAII_CUR_MAP`-villkor för
+  static-flaggan och skiljer lazy-fill-kandidater (`byte@5 == 0xff`) från
+  råa sparade slotmarkörer, utan att mutera DB4 eller fabricera en slot.
+  Källgränsen är nu uttrycklig: `RESET_CAII` nollställer live-DB4-markörerna
+  före `FILL_ORPHAN_CAII`; sparfilens byte@5 bevisar inte en live CAII-slot.
+- ✅ En separat read-only reset/fill-preview räknar nu den källordnade
+  post-reset-aktiveringen och kräver en första think-timer per DB4-aktivering.
+  Den muterar inte DB4, CAII-arrayen eller timerkön. Korpustestet passerar
+  `396/0`; den faktiska all-karts-mutationen är fortfarande Resume-gated.
+- ✅ SKSAVE-ownern exponerar nu en direct DB4-handle-positionreceipt som
+  binder handle till den muterade c_map-kedjans map/x/y. Hela DOSBox-testet
+  passerar `404/0`; detta förhindrar att nästa think-timer-owner återgår till
+  pristine DUNGEON.DAT.
+- ✅ En owner-bunden think-timer-scheduler köar nu `0x21`/`0x22` med source
+  group-link, actor, map, koordinater och `gametick+1` mot den privata
+  SKSAVE-timerkön. Den fulla DOSBox-kön (`120/120`) förblir fail-closed;
+  positiv enqueue är verifierad på en separat timer-shadow. Korpustestet är
+  `412/0`.
+
+# DM2: source `savegames1.b_04` runtime owner (2026-08-12)
+
+- ✅ En färsk GAME_LOAD-session binder nu den globala source-byte:n
+  `savegames1.b_04` som en separat skrivbar runtime-owner. Aura of Speed
+  (spell 11) uppdaterar den med source-formeln `min(8 * power + old, 255)`;
+  mana, cooldown och runor publiceras först efter owner-skrivningen.
+- ✅ Source-tick förbrukar en enhet per uppdatering, i linje med
+  `SKULLWIN/startend.cpp`. Receipten och en read-only accessor exponerar
+  före/efter-värdet. SKSAVE Resume kopplar ännu inte sin sexbytes-snapshot
+  till denna owner och är därför fortsatt stängd.
+- ✅ GAME_LOAD-kandidaten bär nu hela det sexbyte stora source-blocket
+  `savegames1`, inte bara Aura of Speed-fältet. SKSAVE-ownern kan exportera
+  sin oföränderliga snapshot till en framtida atomisk Resume-commit utan att
+  exponera den muterbara post-load-arbetskopian.
+- ✅ Resume-committen kräver nu byte-identitet mellan SKSAVE-snapshoten och
+  kandidatens `savegames1` före första runtime-överlåtelsen. Själva positiva
+  DOSBox-committen är fortsatt stängd av den separata CAII-gaten.
+- ✅ Runtime:s två tidigare `b_02`-kopior (attack-counter och 0x47-
+  hero-flag-countdown) synkas nu tillbaka till samma `savegames1`-byte vid
+  GAME_LOAD, attackkö och timer-expiry. De kan inte längre driva olika global
+  state-värden.
+
+# DM2: SKSAVE runtime-candidate admission boundary (2026-08-12)
+
+- ✅ SKSAVE-ownern rapporterar nu en source-locked kandidat-admission för
+  party, map, record-pool, timer och hela `savegames1`-blocket.
+- ✅ Record-poolens RAM-ägare rapporteras separat från den ännu ofullständiga
+  record-graphen. CAII-array och sound-owner rapporteras också som saknade;
+  därför kan `runtime_candidate_ready` inte bli sann och Resume öppnas inte
+  av denna receipt.
+- ✅ SKSAVE-ownern materialiserar nu CAII-kapaciteten från autentiserade DB4-
+  records och AI-flaggor med source-formeln från `DM2_1c9a_3c30`.
+  Mutable 34-byte slots, positioner och think-timer-backlinks är fortfarande
+  separata blockers och öppnar inte CAII- eller Resume-ägarskap.
+
+# DM2: runtime actuator rollback boundary (2026-08-12)
+
+- ✅ Runtime `0x04` wall/floor-mecha räknas nu bara som dispatchad när den
+  source-bundna actuator-receipten är giltig och inte `fail_closed`.
+- ✅ Pool, rå dungeon och timerkö snapshotas före mecha-walkern och återställs
+  gemensamt vid saknad CAII/ornament-owner eller annan avvisning. Fulla
+  actuator-, ljud-, creature- och party-följder är fortsatt fail-closed.
+
+# DM2: Darkness source classification (2026-08-12)
+
+- ✅ Fasta spell-index 1 (`DES IR SAR`, Darkness) klassas nu som source
+  GENERAL med 0x46 light-timerfamilj. Regressionen täcker lookup, branch och
+  timerbegäran; full signerad timerpayload/production-owner är fortsatt gated.
+
+# DM2: source 0x46 spell timer payload (2026-08-12)
+
+- ✅ Spell-cast receipt separerar nu 0x46:s signerade timer-A från dess
+  första due-tick. Long Light, Darkness och Light följer c_light:s delay- och
+  table1d6702-stegmodell; regressionen verifierar bounded polarity och att
+  queue-payloaden inte längre använder duration som timer-A.
+
+# DM2: source 0x48 enchantment timer classification (2026-08-12)
+
+- ✅ Aura/Enchantment-cast skickar nu source 0x48 med self-target-mask och
+  separat powervärde. Den tidigare 0x47-mappningen var fel: 0x47 är source
+  hero-flag-countdown, medan `DM2_PROCEED_ENCHANTMENT_SELF` köar 0x48.
+
+
+# DM2: 0x04 actuator tile-class representation gate (2026-08-12)
+
+- ✅ Runtime-dispatchern fail-closedar nu generisk `0x04 ACTUATE_TILE` på
+  2-byte/Towns-kartor. Den source-formade `c_tim_proc`-klassen kommer från
+  bytekartans `mapdat.map[x][y] >> 5`; 2-byte-kartans normaliserade lågbitar
+  kan annars välja fel DB3/DB14-actuator. Bytekartor och den fulla
+  DB3/DB14-transaktionen är fortsatt separata ägare.
+
+# DM2: source object-effect decode for fixed spell table (2026-08-12)
+
+- ✅ `dm2_v1_spell_resolves_object_effect()` läser nu `w6[9:4]` ur den
+  source-låsta 34-poststabellen i stället för att alltid returnera `NONE`.
+  Regressionen verifierar missile/cloud-effekterna och summon-selektorerna
+  `0x31/0x34/0x35`; custom/ogiltiga spellindex får `UNAVAILABLE` och kan inte
+  falla tillbaka till Fireball. Exekvering kräver fortfarande separata
+  DB14-/DB4-/CAII-owners.
+
+# DM2: source-shaped summon timer payload (2026-08-12)
+
+- ✅ `0x5e ALLOC_NEW_CREATURE` från spell-cast packar nu målcell i `value_a`
+  och creature type i `value_b`, i linje med runtime/GAME_LOAD-owner:n.
+  Spell-timerns receipt avkodar samma form och regressionen verifierar
+  `0x31`-typen. Den autentiserade DB4/CAII-allokeringen förutsätter fortfarande
+  runtime-sessionens kompletta asset- och poolägare.
+
+# DM2: admit verified summon timer from production spell apply (2026-08-12)
+
+- ✅ Produktionsgrenen av `dm2_v1_spell_cast_player_apply()` köar nu en
+  sourceformad `0x5e` endast för `0x31/0x34/0x35`. Runtimeens befintliga
+  DB4/CAII-owner får därmed den riktiga summon-requesten och kan själv
+  fail-closeda saknad asset/pool-owner. Spellprojektiler och clouds förblir
+  stängda tills deras DB14-allokering är komplett.
+
+# DM2: Spell Reflector timer classification (2026-08-12)
+
+- ✅ Spell Reflector (fixed index 12) klassificeras nu som hero-enchantment
+  med source-effekt `0x0e`, inte som DB15-cloud. Regressionen verifierar även
+  Poison Cloud index 14 mot dess fasta `w6`-klass `MISSILE` och effekt `7`.
+
+# DM2: cloud parameter receipt and candidate snapshot cleanup (2026-08-12)
+
+- ✅ Kandidatens `0x19`-receipt exponerar DB15 `word@2` högbyte som separat
+  `cloud_strength_before/after`; låg 7-bit är fortsatt cloud-subtype.
+- ✅ M11 verifierar parametrarnas decay för poison (`0x08→0x05`) och `0x28`
+  (`0x38→0x10`), separat från timer-handle och `adddata(5)`.
+- ✅ Lyckade `0x28`- och `0x65`-cloudvägar frigör nu CAII-snapshoten efter
+  commit, så kandidatens rollback-buffer inte läcker vid normal lifecycle.
+
+# DM2: GAME_LOAD PROCESS_CLOUD candidate CAII context boundary (2026-08-12)
+
+- ✅ Kandidatens `0x19`-owner kan nu anropa den source-formade CAII-attacken
+  med privata AI/GDAT-callbacks och kandidatens egna CAII-/timerhooks.
+- ✅ CAII-slots, pool, timerheap, RNG och cloud-lifecycle snapshotas i samma
+  rollback-gräns. M11 verifierar positiv type-7 poison-cloud damage/decay,
+  private think-timer och cloud-continuation utan runtime-globals.
+
+# DM2: GAME_LOAD PROCESS_CLOUD party damage owner (2026-08-12)
+
+- ✅ Kandidatens `0x19`-owner använder nu source-parametern i DB15 word@2
+  för vanlig party-cloud: kandidatens privata RNG räknar skadan och
+  `DM2_ATTACK_PARTY` skriver pending `damagesuffered` samt `HERO_FLAG_0800`.
+- ✅ Party och RNG snapshotas före cloud-transaktionen och återställs vid
+  senare kö-/kedjefel. M11 har en positiv autentiserad party-cell-regression;
+  creature- och door-effekter är fortsatt fail-closed.
+
+# DM2: GAME_LOAD PROCESS_CLOUD door damage owner (2026-08-12)
+
+- ✅ Kandidatens `0x19`-owner använder nu DB0-recordets source-dörrtyp och
+  DB15-cloudens styrka/RNG för vanlig dörrskada. När source-destruktionsgaten
+  passerar skrivs `DESTROYED` i kandidatens råa tile-state.
+- ✅ Pool, timer, råkarta och cloudens lifecycle hålls i samma rollback;
+  M11 har en positiv autentiserad dörrcell-regression. Creature-effekter och
+  actuator-tail är fortsatt fail-closed.
+
+# DM2: runtime PROCESS_TIMER_3D cross-map owner bounded (2026-08-12)
+
+- ✅ Runtime-ownern har nu samma spegelverifierade plain-floor DB4-cross-map-
+  shape som GAME_LOAD-kandidaten: pool-/råkedja, destination, kartbyte,
+  CAII-think-timer, GEN1-ljud och rollback hålls samman.
+- 🔒 M11-fixturen innehåller ingen positiv runtime-flyttbar DB4 på annan karta.
+  Runtime-vägen är därför inte öppnad som positiv verifiering ännu; wake/sleep
+  och actuator-följder förblir fail-closed.
+- ✅ Bygg, riktad DM2-svit och riktiga DOSBox-savegames passerar.
+
+# DM2: GAME_LOAD PROCESS_TIMER_3D cross-map DB4-undergren (2026-08-12)
+
+- ✅ Kandidatens `0x3C/0x3D`-owner kan nu flytta ett autentiserat DB4 mellan
+  kartor när source/destination är rena golvrutor utan DB3-actuator-tail.
+- ✅ Pool- och rå dungeon-spegeln förwalkas link-för-link före mutation.
+  Cut och append använder separata lokala roots och publiceras tillsammans
+  med CAII-think-timer, GEN1-ljud och övrig kandidatstate i samma rollback.
+- ✅ M11 har en positiv cross-map-regression på verklig GAME_LOAD-data.
+  Runtime-cross-map, wake/sleep och actuator-följder är fortsatt fail-closed.
+
+# DM2: synkroniserad kvarvarande verifiering för 0x5E (2026-08-12)
+
+- ✅ `TODO.md` beskriver nu den faktiska `0x5E`-ägaren: direkt free-slot och
+  privat full-pool-recycling med context-bound possession-drop, invoke,
+  CAII/timer, tile-rooted delete/dealloc och gemensam rollback.
+- ✅ Den kvarvarande begränsningen är evidensbaserad: de åtta DOSBox-savesen i
+  `Downloads/dm2` innehåller inga `0x5E`-timers, så positiv retail-spawn/
+  recycling är fortsatt fail-closed.
+- ✅ DM2-regressionen passerar `66/66` tester och `git diff --cached --check`
+  är ren.
+
+# DM2: runtime PROCESS_CLOUD verifierar hela tile-chain (2026-08-12)
+
+- ✅ Runtime `0x19` gör nu en komplett read-only prewalk från tile-root till
+  `OBJECT_END` innan cloudens party-, creature- eller dörrskada och innan
+  requeue/dealloc. Ett `OBJECT_NULL`, saknat record eller cykliskt/avklippt
+  tail kan därför inte lämna en delvis muterad runtime-cloud.
+- ✅ Runtime-fixens bygg-, M11- och riktiga `Downloads/dm2`-save-load-
+  regressioner passerar: `PASSED: 275`, `FAILED: 0`.
+
+# DM2: creature-AI owner och cloud-dispatch regression (2026-08-12)
+
+- ✅ AI-loadern räknar nu endast en autentiserad `CREATURES word@5` som
+  creature→AIDefinition-owner. Animation-/andra CREATURES-entrys kan inte
+  längre råka binda en typ utan AI-row till rad 0; `aidef_unknown` förblir
+  därmed source-korrekt fail-closed.
+- ✅ Cloud-owner-dispatchens regression använder nu hela den nödvändiga
+  PROCESS_CLOUD-ägaren: tile-link, door/cut/dealloc, timer och GEN2-noise.
+  Den positiva poison-decay/requeue-vägen passerar tillsammans med övriga
+  66 valda DM2-tester.
+
+# DM2: GAME_LOAD DB0-recycler commit publicerar map och pool atomiskt (2026-08-12)
+
+- ✅ DB0:s `ALLOC_NEW_RECORD`-commit arbetar nu på en klonad c_map-owner och
+  en klonad record-pool. Tile-chain-cut, predecessor-unlink och record-clear
+  publiceras därför tillsammans; en live map kan inte längre peka på ett
+  cleared record medan den publicerade poolklonen behåller den gamla länken.
+- ✅ Regressionen placerar DB0 bakom en statisk DB4-föregångare och verifierar
+  både map-head, predecessor-länk och cleared DB0 efter commit. M11 samt den
+  riktiga `Downloads/dm2`-korpusen passerar med `PASSED: 275`, `FAILED: 0`.
+
+# DM2: GAME_LOAD kandidat STEP_MISSILE ordinary passage (2026-08-12)
+
+- ✅ Privat kandidatdispatch stöder nu source `0x1E` när timer-A pekar på en
+  autentiserad DB14, timer-slotten matchar DB14 byte `@6/@7`, och recordet
+  finns i den kompletta tile-rooted pool- och raw-kedjan.
+- ✅ Creature-fri FLOOR/PIT/STAIRS-passage drar source-energi, flyttar både
+  pool- och raw-mirror-länkar och köar continuation med nytt timerägarskap.
+  När energin tar slut kapas länken och DB14 markeras `OBJECT_END` i båda
+  ägarna.
+- ✅ Kandidatens pool, dungeon, timerheap och map-context rullas tillbaka vid
+  kedjefel, invalid timerägare, köfel eller otillåten tile/collision.
+- ✅ M11 startup/profile och PC-DOS-sviten är gröna: `PASSED: 275`, `FAILED: 0`.
+  Korpusen saknar `0x1E`, så retail-positiv missile-körning är ännu inte
+  verifierad.
+- ✅ M11 har dessutom en negativ `0x1E`-regression: en DB14/timer utan
+  autentiserat record-ägarskap lämnas kvar i kandidatens heap och ändrar inte
+  kandidatstate.
+
+# DM2: GAME_LOAD recycler använder privat timerheap (2026-08-12)
+
+- ✅ `ALLOC_NEW_CREATURE (0x5E)` kopplar nu den autentiserade DB4-censusen till
+  den transaktionella `DELETE_CREATURE_RECORD`-kompositionen när en kandidat har
+  komplett tile-chain, CAII-match, AI/GDAT-data och drop-slots.
+- ✅ Delete-owner använder kandidatens privata `DM2_TimerQueue` via en explicit
+  invoke-callback. Source-korrekt 12-byte `0x04`-timer och ticket skapas i den
+  riktiga heapen; en inkompatibel parallell `SourceTimerQueue` används endast
+  som rollback-shadow.
+- ✅ Efter lyckad delete/dealloc försöker `ALLOC_NEW_CREATURE` allokera DB4 på
+  nytt. GAME_LOAD:s yttre pool-, dungeon-, timer-, CAII-, RNG- och sound-
+  rollback återställer hela kandidaten vid varje senare fel.
+- ✅ Verifierat: delete-fokustest, M11 startup/profile gate och PC-DOS
+  `Downloads/dm2`-sviten (`PASSED: 275`, `FAILED: 0`).
+
+# DM2: context-bound possession AI owner (2026-08-12)
+
+- ✅ `DM2_DROP_CREATURE_POSSESSION` now exposes an explicit callback-context
+  variant. A private GAME_LOAD CAII/GDAT owner can drive the source AI-flags
+  gate without borrowing process-global creature state; the focused regression
+  exercises the private context path.
+
+# DM2: DROP_CREATURE_POSSESSION possession preflight (2026-08-12)
+
+- ✅ The bounded possession-drop owner now budgets authenticated extension
+  spans, rejects `OBJECT_NULL` as a possession-chain terminator, and validates
+  the complete possession graph before generated drops or RNG consumption.
+  A malformed tail cannot leave a partially mutated drop cell; the regression
+  confirms that RNG, ground head, and free drop slots remain untouched.
+
+# DM2: STEP_MISSILE teleporter full-source-chain admission (2026-08-12)
+
+- ✅ The direct DB14 teleporter move now validates the complete departure
+  tile chain, including links after the missile record, before cutting or
+  appending. Raw predecessor rewrites also require an authenticated record
+  size, so a malformed tail cannot be treated as a coordinate-only move.
+
+# DM2: SKSAVE recycler chain preflight (2026-08-12)
+
+- ✅ The SKSAVE recycler scan now budgets authenticated PC G1 extension spans
+  and rejects `OBJECT_NULL` as a tile-chain terminator. Dynamic-record detach
+  performs a complete read-only prewalk before mutating any ground chain, so a
+  malformed later tile cannot leave an earlier unlink partially applied. The
+  prewalk deduplicates already verified ObjectID chains to keep real retail
+  maps within the M11 watchdog budget.
+
+# DM2: recycler census CAII ownership gate (2026-08-12)
+
+- ✅ `0x5E` recycler census readiness now requires an existing DB4 creature's
+  CAII slot to point back to the same bare ObjectID. A mismatched slot cannot
+  be treated as verified delete input for future recycling.
+
+# DM2: DELETE_CREATURE_RECORD complete-chain admission (2026-08-12)
+
+- ✅ The bounded source composition now validates the complete tile-rooted
+  chain before invoking, cutting, dropping possession, or deallocating a
+  creature. Its budget includes authenticated PC G1 extension spans, and a
+  mid-chain `OBJECT_NULL` fails closed. The regression confirms that the
+  queue, tile root, and DB4 record remain unchanged.
+
+# DM2: ALLOC_NEW_CREATURE recycler census corruption gate (2026-08-12)
+
+- ✅ The private `0x5E` recycler census now fails closed when a tile-rooted
+  DB chain has a missing record/link, a mid-chain `OBJECT_NULL`, or remains
+  unverified after the bounded pool census. It clears any earlier candidate
+  instead of allowing destructive reuse based on a partial walk.
+
+# DM2: poison-resistance C-symbol collision cleanup (2026-08-12)
+
+- ✅ The combat module's callback-shaped poison helper now has a distinct C
+  symbol; the source-sized creature-ops helper remains the runtime export.
+  This removes the duplicate-symbol link failure when M11 and M10 are built
+  together.
+
+# DM2: ALLOC_NEW_CREATURE recycler extension census (2026-08-12)
+
+- ✅ The private `0x5E` recycler census now budgets both primary DB pools and
+  authenticated PC G1 extension spans, preserving read-only candidate
+  discovery beyond the primary ObjectID boundary.
+
+# DM2: CREATE_CLOUD DB15 word@2 byte ownership (2026-08-12)
+
+- ✅ `DM2_CREATE_CLOUD` no longer ORs strength into DB15 word@2's low byte.
+  The source layout keeps the cloud subtype/omnidirectional bit in the low
+  byte and stores the strength in the high byte consumed by
+  `DM2_CALC_CLOUD_DAMAGE` and `PROCESS_CLOUD`. New regressions cover both
+  `0xff81` and the spreading `0xff80` cloud. Cloud tests: `38 passed`.
+
+# DM2: cloud actuator OBJECT_NULL admission (2026-08-12)
+
+- ✅ `DM2_075f_0182` now rejects a source `OBJECT_NULL` tile chain and missing
+  cloud callbacks before reading a DB3 record. `OBJECT_END` remains the only
+  valid empty-chain terminator. The cloud suite covers the boundary: `39
+  passed`.
+
+# DM2: cloud actuator prewalk transaction boundary (2026-08-12)
+
+- ✅ The DB3 cloud-actuator scan now validates the complete source chain before
+  invoking any actuator. Cycles, mid-chain `OBJECT_NULL`, and a missing invoke
+  owner fail closed without partial mutation. Cloud tests: `40 passed`.
+
+# DM2: cloud combat callback admission (2026-08-12)
+
+- ✅ `DM2_CALC_CLOUD_DAMAGE` now rejects missing DB0 target records, creature
+  AI/GDAT owners, and random callback state before invoking damage or
+  resistance callbacks. Cloud tests: `41 passed`.
+
+# DM2: runtime PROCESS_CLOUD tile-chain admission (2026-08-12)
+
+- ✅ Runtime `0x19` now requires the authenticated DB15 pool record to be
+  present in the tile-rooted chain before any lifecycle mutation. When a
+  separate raw record mirror exists its subtype must match; dynamic DB15 slots
+  may correctly use pool bytes plus the shared raw link.
+
+# DM2: runtime PROCESS_TIMER_3D party-sentinel underbranch (2026-08-12)
+
+- ✅ Runtime `0x3C/0x3D` accepterar nu source-sentinel `0xFFFF` på aktuell
+  karta när destinationen är en autentiserad vanlig golvruta utan creature.
+  Party-position, timer, source-pose och GEN1-ljud ligger i samma rollback-
+  transaktion. Cross-map, specialrutor, actuator- och wake/sleep-följder är
+  fortsatt fail-closed.
+
+# DM2: GAME_LOAD candidate PROCESS_TIMER_3D party-sentinel (2026-08-12)
+
+- ✅ Den privata GAME_LOAD-kandidaten stöder nu samma source-sentinel `0xFFFF`
+  på autentiserad vanlig golvruta utan creature. Kandidatens party-pose,
+  timer, mapdisplay och sound-owner återställs gemensamt vid fel; static
+  allocation, cross-map, wake/sleep och actuator-tail är fortsatt stängda.
+
+# DM2: runtime cloud party-effect underbranch (2026-08-12)
+
+- ✅ Runtime `0x19` kan nu träffa den autentiserade source-`c_party` när en
+  vanlig cloud ligger på party-rutan. Skadan räknas med DB15-parametern och
+  source-RNG:n och går genom `DM2_ATTACK_PARTY` till varje levande hjältes
+  `damagesuffered`/`HERO_FLAG_0800`; party, RNG och övrig cloudtransaktion
+  återställs gemensamt vid fel. Saknad party-owner förblir fail-closed.
+
+# DM2: runtime cloud creature-effect underbranch (2026-08-12)
+
+- ✅ Runtime `0x19` kan nu träffa en autentiserad DB4-creature utan party på
+  rutan. Cloud-parametern räknas med creature-typens AI/GDAT-ägare och den
+  befintliga source-bundna CAII/`DM2_ATTACK_CREATURE`-transaktionen används
+  med HP, think-timer, RNG och rollback. Dörr + creature på samma ruta hålls
+  i samma transaktion.
+
+# DM2: runtime cloud door-effect underbranch (2026-08-12)
+
+- ✅ Runtime `0x19` kan nu behandla en vanlig source-cloud på en autentiserad
+  DB0-dörr när rutan saknar party och creature: DB15-skadan räknas med den
+  bundna source-RNG:n, DB0:s `destroyable_by_fireball`-bit och dörrens state
+  valideras, och förstörd dörr skrivs i samma rollback-transaktion som cloudens
+  decay/requeue eller chain-cut. Party-/creature-celler använder nu separata
+  source-bundna owners.
+
+# DM2: cloud-owner fail-closed boundary (2026-08-12)
+
+- ✅ `DM2_CALC_CLOUD_DAMAGE` och `DM2_PROCESS_CLOUD` avvisar nu saknad eller
+  ofullständig callback-owner innan de läser recorddata eller muterar cloudens
+  tile-/timerstate. Regressionen täcker både NULL-owner och en tom owner.
+
+# DM2: cloud creature-parameter owner (2026-08-12)
+
+- ✅ `DM2_CALC_CLOUD_DAMAGE` skickar nu target creature-recordets byte@4 som
+  creature-typ till AI-, flagg- och poison-resistance-callbacks. Den tidigare
+  vägen skickade DB4-handtaget (`0x1000 | index`) som typparameter.
+- ✅ Cloud-regressionen verifierar både poison-grenen och parametern `0x2A`.
+
+# DM2: candidate CAII timer-owner adapter (2026-08-12)
+
+- ✅ Kandidatens CAII-slot+2 är nu verifierad som ett index i den privata
+  `DM2_V1_TimerQueue`. Den nya rollback-säkra detach-adaptern avbokar endast
+  den autentiserade think-timern och lämnar DB4/CAII-ägarskapet orört.
+- 🔒 Adaptern öppnar inte DB4-recycling: source-ordnad possession-drop,
+  invoke-gate, tile-rooted delete samt dballoc/dealloc saknar fortfarande en
+  gemensam kandidat-owner.
 
 # CSB: direct original Atari save launch retains selected media ownership (2026-08-11)
 
@@ -128,6 +768,334 @@
   classifier; other save-slot names retain the compatible fallback order.
 - ✅ The focused recovery and CSBWin corpus regressions pass. No original game
   files, caches or synthetic runtime media are committed.
+
+# DM2: audit source owner for PROCESS_TIMER_3D (2026-08-11)
+
+- ✅ Runtime binds now the authenticated DB4 underbranch for `0x3C/0x3D`:
+  it discovers the real source ground-chain, requires the current-map
+  destination, performs `MOVE_RECORD_TO`, updates the existing CAII think
+  timer and queues GEN1 `(3,0,0x89,0x61,0x80)` in one rollback transaction.
+  Party-sentinel, cross-map, actuator tails and `0x5D` remain fail-closed.
+
+- ✅ Den generiska `0x3C/0x3D`-wiringen använder nu source-layouten korrekt:
+  timer-A är `(x,y)` och timer-B är record-handle. Båda timerkoderna är
+  registrerade, och regressionen verifierar source-anropet samt skillnaden
+  mellan flyttens lyckade/misslyckade ljudvillkor. Runtime-owner omfattar
+  endast den autentiserade DB4-undergrenen; full party-/cross-map-owner finns
+  fortfarande inte.
+
+# DM2: runtime ALLOC_NEW_CREATURE direct owner (2026-08-11)
+
+- ✅ Runtime `0x5E` använder nu source-formad direkt-allokering när den
+  autentiserade AI/GDAT-owner finns: multiplier `7`, source-RNG/vector-dir,
+  DB4-initiering, ground-chain-append, CAII/think-timer, `0a48` och GEN1-
+  ljud ligger i samma rollback-transaktion.
+- ✅ Saknad AI/GDAT-owner, full DB4-pool, recycler, cross-map och övriga
+  placementbranches avvisas utan mutation. M11:s regression verifierar att
+  en avvisad due-timer konsumeras utan dispatcher-loop.
+
+- ✅ GAME_LOAD-kandidaten binder nu en positiv DB4-undergren för samma
+  moverec-timers. En autentiserad real-map creature flyttas från sin
+  ground-chain till destinationen, dess befintliga CAII-think-timer flyttas
+  in-place och source-GEN1-ljudet kvitteras under rollback. M11 regressionen
+  passerar; övriga DB3/party/static/post-dispatch-rutter är fortsatt stängda.
+
+# DM2: correct generic MOVE_RECORD_ROTATE admission (2026-08-11)
+
+- ✅ `0x5D` läser nu timer-map från source `ticks_and_map`, skickar
+  party-sentinel `0xffff` med source-koordinater och kräver en faktisk
+  rotationsägare innan dispatch. En regression täcker map-mismatch,
+  payload-dekodning och callback-ordning. Full party-/moverec-transaktion är
+  fortfarande fail-closed.
+
+# DM2: source-correct PROCESS_CLOUD payload and decay (2026-08-11)
+
+- ✅ `0x19` dispatchar nu timer-B som DB15-cloud-record; timer-A förblir
+  source-packad x/y. `word@2` används som subtype/lifetime i stället för
+  record-byte 4.
+- ✅ Source-trösklarna för subtype `0x07`, `0x28` och `0x64` är bundna med
+  korrekt requeue/terminal cut. `0x64` köar dessutom GEN2 med
+  `(0x0d, subtype, 0x81, 0xfe, x, y, 1, 0x6c, 0xc8)`.
+- ✅ Dörrgrenen använder tile-record som cloud-damage-target och mode `1`;
+  en regression täcker word@2-decay, requeue och ljudpayload.
+- ✅ Timer-dispatchen använder nu den befintliga kompletta
+  `DM2_V1_CloudCallbacks`-ownern när den är bunden, så source-formeln för
+  `DM2_CALC_CLOUD_DAMAGE`, creature poison-resistance, combat och viewport-
+  dirty kan användas utan en parallell syntetisk implementation. Den smala
+  adapterfunktionen är namnrymd till `_tile`; wiring-regressionen verifierar
+  full-owner-vägen.
+- ✅ Korrigerade `DM2_CALC_CLOUD_DAMAGE`: den tidigare implementationen
+  förväxlade cloud-subtype med target-recordtyp och gjorde poison-grenen
+  ouppnåelig. Source-kontrollen för subtype `0x02`, `0x03` och `0x07` samt
+  DB4 poison-resistance är nu bunden och verifierad med cloud-testsviten.
+
+# DM2: source-shaped CREATE_CLOUD spread and DB3 actuator regression (2026-08-11)
+
+- ✅ En positiv `0xff80`-regression täcker source-spridningens party-hit,
+  damage-formel och viewport-dirty på ursprungstilen.
+- ✅ Samma cloud-origin scan går nu mot en positiv DB3-record med universal
+  actuator-type `0x26`; regressionen verifierar source-action och nollvärde.
+- ✅ Kandidatens `0x0D yB==2` har nu en positiv, autentiserad narrow owner för
+  type `0x26`: source `w2/w4`-matchning, action `0/1/2` och once-only-bitens
+  mutation körs atomiskt tillsammans med DB15-cloud, timer och ljud. Övriga
+  actuator-effekter och full runtime-DB3-owner är fortfarande stängda.
+
+# DM2: narrow source gate for resurrection cloud actuators (2026-08-11)
+
+- ✅ `0x0D yB==2` inspekterar nu origin-chainens DB3-records enligt
+  `DM2_075f_0182`: endast type `0x26` med matchande cloud-spell och aktiva
+  `w4`-gates blockeras utan invoke-owner. Orelaterade DB3-records lämnas
+  till cloud-creation i stället för att ge falskt fail-closed.
+- ✅ Den smala positiva invoke-grenen för type `0x26` är nu bunden: source
+  action `0/1/2` uppdaterar actuatorns `once-only`-bit atomiskt i kandidatens
+  cloud-transaktion. Shooter, generator och övriga actuator-effekter är
+  fortfarande stängda tills sina separata owners finns.
+
+# DM2: census source 0x5E ALLOC_NEW_CREATURE (2026-08-11)
+
+- ✅ PC-DOS-save-regressionen räknar nu `0x5E` direkt ur den autentiserade
+  source-sized c_tim-streamen. Alla åtta saves innehåller noll sådana timers;
+  testet använder därför inte syntetisk retail-evidens för att öppna summon.
+- 🔒 Positiv DB4-spawn och source-recycling kräver fortfarande en komplett
+  delete/unlink-, CAII- och timer-owner.
+
+# DM2: close unsupported empty-creature DB4 recycler claim (2026-08-11)
+
+- ✅ Den tidigare empty-possession-proben är borttagen från GAME_LOAD-
+  kandidaten. Source-censusen kräver `word@2 != 0xffff` före
+  `DELETE_CREATURE_RECORD`, så den gamla grenen var oåtkomlig och kunde inte
+  vara en giltig recycler-owner.
+- 🔒 Full DB4-delete/recycling kräver fortfarande source-ordnad possession-
+  drop, invoke-gate, CAII-/timerstädning och allokerarens kompletta
+  transaktion. DOSBox-korpusen innehåller ingen positiv `0x5E`-timer.
+
+# DM2: map-bind DROP_CREATURE_POSSESSION (2026-08-11)
+
+- ✅ `DM2_DROP_CREATURE_POSSESSION` tar nu emot callerns autentiserade
+  `c_map` och använder den för ground-stack-läsning och båda append-/head-
+  skrivningarna. Den tidigare hårdkodade karta 0-vägen är borta.
+- ✅ En tvåkartors regression verifierar att possession/drop på karta 1
+  ändrar karta 1:s ground-stack och lämnar karta 0:s identiska cell orörd.
+- 🔒 Den sammansatta `DM2_DELETE_CREATURE_RECORD`-proben är fortfarande inte
+  en live GAME_LOAD/SKSAVE-owner; CAII-/timerstädning, 3CE7D och DB-allokering
+  kräver fortsatt en gemensam source-transaktion.
+
+# DM2: close reduced runtime ALLOC_NEW_CREATURE delegate (2026-08-11)
+
+- ✅ Runtime-dispatchen kopplar inte längre `0x5E` till den reducerade
+  spell-timerdelegaten. En verklig summon-timer kan därför inte kvitteras som
+  om den hade en effektägare när runtime endast saknar DB4/CAII/sound-owner.
+- ✅ M11-regressionen köar en source-formad `0x5E` efter GAME_LOAD-commit och
+  verifierar timer-type tally samt `fail_closed_count` utan runtime-mutation.
+- 🔒 Kandidatens privata free-slot-transaktion är fortsatt separat och måste
+  bindas mot den överförda runtime-state:n innan summon kan öppnas efter
+  GAME_LOAD-commit.
+
+# DM2: source-correct generic RESURRECTION payload (2026-08-11)
+
+- ✅ `0x0D`-slicen följer nu SKProjects `c_tim_proc.cpp:39-124`: unsigned
+  record handles (inklusive DB2) går inte förlorade genom legacy `int16_t`,
+  timer-`xB` väljer rätt record-pool, och `ADD_ITEM_CHARGE(record, 0)`
+  jämförs med actor innan altar-recordet kapas.
+- ✅ Cloud-anropet är nu `(0xffe4, 0, xA, yA, xB)` och nästa `yB` skickas
+  explicit till queue-callbacken. `adddata(5)` förblir en separat timerdata-
+  uppdatering; en regression verifierar både altarfasen och cloudfasen.
+
+- ✅ SKProject-kedjan är fastställd för `0x3C/0x3D`: `xA/yA` är destination,
+  `B` är record-handtag och `MOVE_RECORD_TO(record, -3, 0, x, y)` måste äga
+  hela moverec-transaktionen. GEN1-ljud använder source-trippeln `(3,0,0x89)`
+  och körs efter lyckad flytt eller alltid för exakt `0x3D`.
+- 🔒 `0x3E` är inte en separat timergren i den verifierade `c_tim`-källan.
+  DOSBox-korpusen saknar `0x3C/0x3D`-poster, och Firestaffs äldre direkta
+  adapter förblir därför oansluten tills link/wake/sleep, map-gate och
+  ljudägarskap kan kvitteras atomiskt.
+- ✅ Realdatatestet räknar nu 0x3D och 0x5D över alla åtta PC-DOS-saves och
+  låser den verifierade nollförekomsten som regression.
+
+# DM2: bind source-shaped DB14 creature-hit owner (2026-08-11)
+
+- ✅ Vanlig `STEP_MISSILE`-träff följer nu SKProjects kedja från
+  `DM2_move_075f_06bd` till `DM2_ATTACK_CREATURE` med attackord `0x200D`.
+  Projektilens DB14-record löses genom autentiserad cls1/cls2/GDAT-data,
+  source-RNG och CAII-HP-ägaren; pool, dungeon, timerkö, CAII och RNG
+  återställs om kedjan inte kan slutföras.
+- 🔒 `NONMATERIAL` och full `DM2_MOVE_RECORD_TO` är fortsatt fail-closed.
+  `TURNS_MISSILE` använder nu samma source-hit-owner och behåller source-
+  fallet utan riktningsflip. `ABSORBS_MISSILE` och `REFLECTOR` behåller sin
+  separata terminala DB14-owner.
+
+# DM2: bind DB14 passage-cell relocation (2026-08-11)
+
+- ✅ Efter source-energiavdrag flyttas en creature-fri passagecell nu enligt
+  timer-riktningen. Runtime-poolens länkar, dungeonens råa predecessor/root,
+  DB14-record och nästa timerpayload uppdateras i samma rollback-transaktion.
+- ✅ Passageadmissionen följer SKWIN:s tileklasser och släpper bara igenom
+  FLOOR/PIT/STAIRS. Dörr, teleporter, trick wall och map exit går inte genom
+  den förenklade flyttägaren.
+- 🔒 Vägg, actuator, creature-kollisionens moverec-följder och övrig full
+  `DM2_MOVE_RECORD_TO`-semantik är fortsatt stängda. Den direkta
+  teleporter-undergrenen är nu bunden separat nedan.
+
+# DM2: audit DB14 teleporter owner (2026-08-11)
+
+- ✅ Sourcegrenen är verifierad: `DM2_STEP_MISSILE` kör först
+  `DM2_move_075f_0af9` och sedan `DM2_MOVE_RECORD_TO`. Teleporter-detaljen
+  (`DM2_GET_TELEPORTER_DETAIL`) är bara en destination-/sensorprobe; själva
+  mapbytet och record-/timerkedjan ligger i `DM2_map_3BF83`/moverec.
+- 🔒 DB14-projektiler går inte in i den befintliga party-ownern eller i en
+  förenklad koordinatflytt. Creature/actuator-följder och övrig moverec
+  förblir fail-closed tills sina separata owners är verifierade.
+- ✅ Regressionerna `test_dm2_v1_skproject_core`,
+  `test_dm2_v1_move_record_to_pc34_compat` och M11-profiltestet passerar;
+  de verifierar destination/map-planen, teleporterklassificeringen och att
+  ingen projektiltransaktion öppnas utan den saknade map-/kedjeägaren.
+
+# DM2: bind DB14 direct teleporter relocation (2026-08-11)
+
+- ✅ Runtime har nu en separat source-formad undergren för en direkt
+  teleporter med source-formad riktningsändring. Den autentiserar
+  `GET_TELEPORTER_DETAIL` och `DM2_map_3BF83`, flyttar DB14 mellan source- och
+  destinationens råa ground-stack-kedjor samt runtime-poolen och uppdaterar
+  continuation-timerns karta/position i samma rollback-transaktion.
+- 🔒 Creature/actuator-följder och övrig full `MOVE_RECORD_TO`-semantik är
+  fortsatt fail-closed. DOSBox-korpusen har
+  ingen positiv DB14-timer; M11 och real-save-sviten passerar utan mutation.
+
+# DM2: preserve candidate class-3 ACTUATE_TILE no-op (2026-08-11)
+
+- ✅ Kandidatens privata `0x04`-dispatcher konsumerar nu source-klass-3:s
+  avsiktliga tomma gren efter due-pop och autentiserad map/cell. Den gör
+  ingen syntetisk actuator- eller kartmutation och lämnar ingen timer kvar.
+- ✅ M11-regressionen kör den riktiga privata timerheapen och verifierar
+  `valid`, `consumed`, `source_noop`, klass 3 och tom heap.
+
+# DM2: bind candidate PROCESS_TIMER_0E item owner (2026-08-11)
+
+- ✅ Den privata kandidaten konsumerar nu `0x0E` i sourceordning. Timer A:s
+  DB-typ löser den autentiserade direktrötterecorden, timer B används som
+  temporär itemtype, source `PROCESS_ITEM_BONUS` appliceras mot c_hero och
+  itemrecordet återställs byte för byte efteråt.
+- ✅ Timerheap, party, kartcontext och itemrecord återställs atomiskt när
+  record-, GDAT- eller heroägaren inte kan slutföra operationen. M11:s
+  positiva direct-root-regression passerar.
+
+# DM2: bind candidate PROCESS_SOUND delayed-slot owner (2026-08-11)
+
+- ✅ Kandidatens privata `0x15` läser timer A som delayed-slot-index, följer
+  source map-gate och kör `DM2_QUEUE_NOISE_GEN1` över GAME_LOAD:s autentiserade
+  soundtabell. Saknad sample-/sound-binding återställer timerheap och sound-
+  state; positiv M11-regression verifierar slot- och timerkonsumtion.
+
+# DM2: audit source owner for ALLOC_NEW_CREATURE (2026-08-11)
+
+- ✅ SKProject-kedjan är fastställd: timer `0x5E` läser `xA/yA` som
+  koordinater och `yB` som creature-typ, väljer source-riktning, anropar
+  `ALLOC_NEW_CREATURE(type, 7, dir, x, y)` och kräver därefter DB4-placement,
+  CAII och timerägarskap.
+- 🔒 Den befintliga Firestaff-CAII-bryggan aktiverar bara redan materialiserade
+  DB4-poster. Ingen partiell summon-effekt har öppnats.
+- ✅ Kandidaten har därefter fått en source-formad direkt free-slot-väg med
+  DB4-initiering, source HP/RNG, tile-chain, CAII och första think-timer i
+  samma rollback-transaktion. `0a48`-ljudets GEN1-owner snapshotas nu i
+  samma transaktion med source-klasserna `(0x0f, creature_type,
+  animation_index, 0x46, 0x80)`. DOSBox-regressionen visar korrekt
+  fail-closed när retail-poolen är full; full recycling och positiv spawn är
+  fortfarande spärrade. Full-pool-fallet lämnar samtidigt en read-only
+  source-census av DB4-record som skulle kräva delete-owner.
+
+# DM2: source-census för full DB4-pool (2026-08-11)
+
+- ✅ `0x5E` skiljer nu mellan en full DB4-pool och en saknad source-kandidat:
+  den läsande censusen följer autentiserade tile-kedjor på icke-partykartor
+  och räknar DB4-record med sourcevillkoren possession-root och byte@`0x0f`
+  bit 2 clear. När en kandidat hittas kvitterar receipten även dess DB4-
+  handle samt map/cell. Receipten visar även record byte@5, CAII-slotmatchning,
+  pending timer-slot, possession-root, AI-flaggor, GDAT:s 11 drop-slots och
+  `CREATURES` word@1 för invoke-gaten när sådan provenance finns.
+  `delete_inputs_ready` är endast read-only indata-provenance.
+- ✅ Word@1 och drop-slotstatus i samma receipt läses nu direkt ur kandidatens
+  autentiserade GRAPHICS.DAT-owner. Censusen lånar inte global creature-state
+  för delete-admission.
+- 🔒 Censusen muterar ingenting. `DELETE_CREATURE_RECORD`, possession-drop,
+  CAII-/invoke-/timerstädning och full map-owner saknas fortfarande för en
+  säker återvinning.
+
+# DM2: map-aware DB4-delete probe (2026-08-11)
+
+- ✅ Den bounded `DM2_DELETE_CREATURE_RECORD`-proben använder nu den
+  caller-supplied aktuella kartan för `GET_CREATURE_AT`, tile-chain membership
+  och ground-stack cut. En tvåkartors regression verifierar att map 1 rensas
+  utan att map 0 påverkas.
+- 🔒 Proben är fortfarande inte live GAME_LOAD/SKSAVE-recycling: full
+  multi-map c_map, 3CE7D, DB-allocation cleanup samt CAII-/timertransaktion
+  krävs innan delete kan publiceras.
+
+# DM2: audit source owner for MOVE_RECORD_ROTATE (2026-08-11)
+
+- ✅ SKProject visar att `0x5D` inte är en fristående partyrotation: den
+  kräver mapmatchning, packad riktning, party-sentinel `0xFFFF` genom
+  `MOVE_RECORD_TO` och rotation efter lyckad flytt.
+- 🔒 Ingen av de åtta DOSBox-saves innehåller `0x5D`; den positiva runtime-
+  dispatchen är därför verifierad mot M11:s source-formade party-owner, inte
+  mot en verklig retail-timer. Cross-map och actuator-följder förblir stängda.
+- ✅ Den privata timer-slicen följer nu SKProjects y-dekodning `(A << 6) >> 11`
+  och regressionen verifierar x, y, party-map-gate och rotationsriktning.
+
+# DM2: runtime MOVE_RECORD_ROTATE party owner (2026-08-12)
+
+- ✅ Runtime `0x5D` använder source-packad destination/riktning, skickar
+  `0xFFFF` genom `DM2_MOVE_RECORD_TO` och uppdaterar samma-karta party samt
+  heroernas partypos/absdir efter godkänd flytt på vanliga golvrutor.
+- ✅ M11 startup/profile gate verifierar den positiva timerdispatchen och
+  den resulterande party-positionen/rotationen.
+- ✅ Teleporter, pit, stairs, dörr och andra specialrutor avvisas tills deras
+  egna `MOVE_RECORD_TO`-/actuator-följder har autentiserade owners.
+- 🔒 Cross-map, actuator-följder och full övrig `MOVE_RECORD_TO`-semantik är
+  fortsatt fail-closed. DOSBox-korpusen saknar fortfarande positiva `0x5D`
+  witness-timers.
+
+# DM2: bind source-shaped DB14 STEP_MISSILE energy/delete owner (2026-08-11)
+
+- ✅ Runtime `0x1D/0x1E` läser nu SKProjects verkliga timerkontrakt: `A` är
+  DB14-handtaget och `B` packar tilekoordinater samt energisteg. Recordets
+  source timerindex och placering i tile-kedjan verifieras före mutation.
+- ✅ No-creature-grenen utför source-formad energi-decrement, requeue eller
+  terminal cut/dealloc med pool-, dungeon- och timerrollback. Creature-hit,
+  `NONMATERIAL`, `TURNS_MISSILE` och full moverec ligger kvar fail-closed tills
+  deras ägare är komplett bundna. `ABSORBS_MISSILE` och `REFLECTOR` använder
+  nu den verifierade terminala DB14-grenen.
+- ✅ M11-startprofil, DOSBox save/load-korpus och tidslinjeregression passerar.
+
+# DM2: GAME_LOAD commit binds candidate to its source transaction (2026-08-11)
+
+- ✅ Runtime jämför kandidatens `source_transaction_hash` med den privata
+  `GameLoadWorldOwner` som skapade den innan någon owner flyttas eller frigörs.
+- ✅ M11-regressionen tamprar hashvärdet och verifierar att kandidaten behålls
+  orörd och att `source_game_load_session_ready` inte publiceras. DM2-testsviten
+  passerar fortsatt mot DOSBox-sparningarna.
+- ✅ Samma kontroll gäller nu den tidigare read-only handoffen; en kandidat från
+  en annan GAME_LOAD-transaktion flyttas inte ens till runtime.
+
+# DM2: DB14 recycler admission gate (2026-08-11)
+
+- ✅ DB14-kandidater får endast passera source-admission om den autentiserade
+  tile-kedjan saknar DB4-creature. Den syntetiska fixturen verifierar både
+  positiv no-creature-admission och avvisning när DB4 finns på rutan.
+- ✅ DOSBox-regressionen passerar fortsatt `273/273`; full DB14
+  missile-delete/DEALLOC-commit återstår och hålls fail-closed.
+
+# DM2: source-ordered DB5/DB6/DB8/DB10 cut-only recycling (2026-08-11)
+
+- ✅ DB5, DB6, DB8 och DB10 följer source-byte-guard och
+  `MOVE_RECORD_TO(..., -1, ...)`; DB9 behåller sin separata direkt-return.
+- ✅ DOSBox-korpusen passerar DB5/DB6/DB8/DB9/DB10; DB13/DB14/DB15 och
+  ogiltiga poolreferenser förblir fail-closed.
+
+# DM2: source-ordered direct DB9 allocation (2026-08-11)
+
+- ✅ DB9 går source-ordnat till direkt-return efter de gemensamma barriärerna,
+  utan påhittat bytefilter eller tile-cut; `ALLOC_NEW_RECORD` rensar posten.
+- ✅ Alla åtta DOSBox-saves passerar DB9-gränsen.
 
 # Theron: preserve source-object ownership through save/load (2026-08-11)
 
@@ -3244,6 +4212,27 @@ rendering remain blocked.
 - ✅ Realdatatestet använder den lokala PC-DOS-dungeonfilen med 44 kartor och
   kontrollerar entrépositionen, poolägarskapet och att inget runtime-tick
   eller sessionsläge öppnas. Inga speldata skapades.
+
+# DM2 SKSAVE delar source-owned SOUND9-materialisering (2026-08-12)
+
+- ✅ DYN4 → SOUND9-materialiseringen är nu en gemensam source-owner-funktion
+  för New Game och SKSAVE. Den kräver hashadmitterad GRAPHICS.DAT, den exakta
+  selectorlistan och redan materialiserade DYN4-block; den gissar inte fram
+  ljudposter eller PCM-data.
+- ✅ SKSAVE-ownern härleder nu selector-ID:n från den aktuella savekartans
+  muterade DB3-kedjor med subtype `0x7e`, materialiserar motsvarande DYN4-block
+  och binder SOUND9-kön/sample-bindingarna till sitt privata owner-objekt.
+  `source_sound_ready` förblir stängd tills denna bindning faktiskt är gjord.
+- ✅ `firestaff_dm2` och `dm2_v1_save_load_real_data` bygger och passerar efter
+  ändringen. Återstående steg är att klona denna ljudägare i den atomära
+  Resume/runtime-candidate-committen.
+- ✅ SKSAVE materialiserar nu också en separat skrivbar `DM2_V1_TimerQueue`
+  från de autentiserade save-timerposterna. Konverteringen behåller source-
+  gametick, map/tick, A/B-payload, heapindex och free-chain; ingen timer
+  förbrukas före runtime-committen.
+- ✅ En read-only `0x1e`-dispatchkandidat verifierar nu due-timer, DB14-
+  handle, timer-backlink, packad map/koordinat, tile-kedja och frånvaro av
+  creature-kollision innan en framtida runtime-dispatch kan tillåtas.
 
 # DM2 SOUND1–9 uteslutna från produktbinären (2026-08-08)
 
@@ -14041,20 +15030,44 @@ and production source-combat tests.
 - ✅ The native F7052/F0433 writer now uses that same `8 + 20`-byte F31
   identity layout and the source direction/cell byte order. A real-media
   F7052 → F0435 round trip proves no title truncation or pose-field swap.
+# DM2: bind candidate PROCESS_SOUND delayed-slot owner (2026-08-11)
 
-# CSB FM Towns F31J C06: source and save-medium receipt (2026-08-12)
+`PROCESS_SOUND (0x15)` är nu kopplad till kandidatens privata delayed-sound-
+slots och dynamiska SOUND9-owner. Timer A väljer slotten, source map-gate
+respekteras, `DM2_QUEUE_NOISE_GEN1` körs med kandidatens sound-state, och
+ofullständiga sound-bindings återställer både timerheap och sound-state.
+M11 har en positiv regression för slot- och timerkonsumtion.
 
-- ✅ F31J authenticates its own C06 game-source and game-save-medium string
-  groups from `UTILJ.EXP`'s Phar Lap P3 image at virtual offsets `0x118a0`,
-  `0x1194c`, `0x11bb8` and `0x118fe`. The four retained spans are individually
-  hash-bound as Shift-JIS data; no F31E ASCII pool is accepted.
-- ✅ The real-media M11 handoff regression asserts the language-owned offsets
-  and leading Shift-JIS bytes. F31E/F31J CLI real-media boot tests remain
-  green.
-- 🔒 This authenticates data for the later F31J C06 flow only. Its native
-  640×400 follow-up-dialog geometry and interaction still require an original
-  Tsugaru capture, so no English renderer or guessed click rectangles are
-  enabled.
+# DM2: source-correct positive ORNATE_ANIMATOR candidate (2026-08-11)
+
+- ✅ GAME_LOAD-kandidatens `0x55 CONTINUE_ORNATE_ANIMATOR` läser nu endast
+  source-rätt DB3-handle (`getA()`/`xA+yA`) och animationsläge (`getBlong()`/
+  `wvalueB`); den felaktiga tilekoordinatkontrollen är borttagen.
+- ✅ En positiv M11-fixtur använder en riktig DB3-record, recordets övre
+  ornamentindex och autentiserad GDAT-ornamentlängd och verifierar frame-step
+  samt `+1`-requeue.
+- ✅ Runtime-post-commit är nu verifierad: GAME_LOAD:s DB3-record överförs,
+  aktiv 0x55 dispatchas efter commit och source `+1`-continuationen körs i
+  nästa tick utan fail-closed-avslag.
+
+# DM2: positive ORNATE_NOISE runtime admission (2026-08-11)
+
+- ✅ En aktiv source-`0x5A CONTINUE_ORNATE_NOISE` dispatchas efter GAME_LOAD-
+  commit med koordinat från den autentiserade commit-kartan, DB3-record och
+  runtime sound-owner. En separat DB3-record verifierar även source-
+  animationstakts-continuationen utan 0x55-ägarkollision.
+- ✅ Korrigerade GEN2:s fjärde sourceklass från den felaktiga `0xFF` till
+   SKProject-värdet `0xFE` i både GAME_LOAD-kandidat och runtime.
+
+# DM2: DB14 NONMATERIAL pass-through (2026-08-11)
+
+- ✅ Runtime `0x1D/0x1E STEP_MISSILE` släpper nu en autentiserad
+  `NONMATERIAL`-creature utan skada och fortsätter genom den verifierade
+  passage-/teleportergrenen. DB14 flyttas i både runtime-pool och rå
+  dungeonkedja innan continuation-timern köas.
+- ✅ Övriga creature-/actuator- och bredare `MOVE_RECORD_TO`-följder är
+  fortfarande fail-closed; rollback gäller om continuationen inte kan köas.
+- ✅ M11-startprofil, record-ops och 275 riktiga DOSBox-save-load-fall passerar.
 
 # CSB Atari ST: original blank Save Disk MSA boundary (2026-08-11)
 
@@ -14102,27 +15115,704 @@ and production source-combat tests.
   `MINI.DAT`-runtime och `--menu` → Enter passerar för båda språk. Sex
   närliggande verkliga F31-handoff-, spar- och arkivregressioner passerar
   också. Ingen speldata checkades in.
-# CSB Hint Oracle: original HCSB.DAT archive boundary is verified (2026-08-12)
+# DM2: candidate cloud chain admission (2026-08-12)
 
-- ✅ Added a strict, read-only parser for the original Utility Disk graphics
-  archive, derived from ReDMCSB `HINTGRAP.C` `F1872_LoadGraphics()`. It
-  validates the duplicated 16-bit size table and exact four-byte-per-entry
-  header shape before a segment can be accessed.
-- ✅ The data-free contract test and opt-in real-data probe pass against the
-  external original ST 2.0/2.1 `HCSB.DAT`: four exact segments, 100/29146/
-  1497/32 bytes. No original asset was committed.
-- 🔒 This is not a graphics decoder or rendered UI. ReDMCSB's expansion path
-  and original-frame capture are still required for any graphical parity.
+`dm2_v1_game_load_runtime_session_candidate_proceed_cloud_timer()` kräver nu
+att timer-ägda DB15-clouden faktiskt finns i en komplett tile-rooted chain
+innan den privata `0x64→0x65`-övergången eller den slutliga `0x65`-cutten får
+mutera state. En malformed `OBJECT_NULL`-tail rullar tillbaka före mutation;
+M11-regressionen täcker både rejection och efterföljande positiv cut.
+# DM2: moverec rollback boundary before party sentinel (2026-08-12)
 
-# CSB Hint Oracle: original HCSB.DAT font raster is owned (2026-08-12)
+Runtime `0x3C/0x3D PROCESS_TIMER_3D` skapar nu pool-, dungeon-, timer-, CAII-
+och sound-backup före `MOVE_RECORD_TO`, även för `0xFFFF` party-sentinel.
+Tidigare låg backupen efter party-flytten; en senare sound-/owner-rejektion
+kunde därför lämna pose eller tilegraph delvis muterad. Den source-gated
+movement-ownern och M11-regressionen passerar fortsatt; cross-map, wake/sleep
+och actuator-svansar är fortsatt fail-closed.
+# DM2: atomic MOVE_RECORD_ROTATE owner (2026-08-12)
 
-- ✅ `CSB_HintOracleGraphicsSurface` now decodes and retains HCSB.DAT segment
-  2 beside the Oracle bitmap and palette. The opt-in real-data CTest verifies
-  the original ST 2.0/2.1 raster is 256×27 indexed pixels, sourced from the
-  same hash-admitted archive (`708e113c869ab922633e885aa72a3c77`).
-- ✅ The dimensions and glyph source are locked to ReDMCSB `HINTTEXT.C`:
-  8×9 glyph rectangles are selected from a 256-pixel-wide source raster.
-  No host font, generated glyph bitmap or game-data payload was added.
-- 🔒 This does not yet draw a Hint Oracle page. Segment-0 control data,
-  original text layout, M11/M12 routing and original-frame pixel comparison
-  remain capture/source-consumer work.
+Runtime `0x5D MOVE_RECORD_ROTATE` har nu samma rollbackdisciplin som
+`0x3C/0x3D`: före party-sentinelens `MOVE_RECORD_TO(0xFFFF)` klonas recordpool,
+rå dungeon och timerkö. Ogiltig source-pose eller hero-count avvisas före
+mutation; misslyckad moverec återställer party, pose, karta och timerstate.
+Cross-map-, actuator- och övrig full `MOVE_RECORD_TO`-semantik är fortsatt
+fail-closed.
+# DM2: context-bound creature delete owner (2026-08-12)
+
+`DM2_DELETE_CREATURE_RECORD`-kompositionen erbjuder nu en explicit
+context-variant för AI-flaggor och `CREATURES word@1`. Context-ägaren följer
+även med genom possession-drop; den äldre processglobala wrappern finns kvar
+för standalone-prober. Detta förbereder DB4-recycling utan callback-korsning,
+men kompositionen är fortfarande probe-only tills CAII-, timer- och
+allokerartransaktionen är komplett.
+# DM2: transactional DB4 delete composition (2026-08-12)
+
+The bounded `DM2_DELETE_CREATURE_RECORD` composition now snapshots record
+pool, raw dungeon, source timer queue, CAII slots, and RNG before its first
+mutation. Invoke, tile cut, possession drop, and deallocation therefore form
+one rollback boundary; a post-cut drop failure restores the original tile and
+timer owners. The focused regression covers this failure path.
+# DM2: admit the source 0x1D missile timer alias (2026-08-12)
+
+- ✅ `DM2_PROCEED_TIMERS` recognizes the runtime's already-bound `0x1D`
+  `STEP_MISSILE` alias alongside `0x1E`; a regression locks the source-order
+  membership. No unsupported missile collision or map behavior is opened.
+
+- ✅ The reusable timer wiring now registers the same missile adapter for both
+  `0x1D` and `0x1E`, increasing the verified wiring count from 27 to 28.
+- DM2 runtime: corrected the CCM message-loop handoff so skproject
+  `v1e0238` receives the session-owned `source_sleeping` flag rather than
+  the party view direction. The full `DM2_PROCEED_CCM` production callback
+  remains explicitly fail-closed until its record/CAII owner is complete.
+- DM2-007: wired the spell-timer adapter's alternate `0x1D STEP_MISSILE`
+  code to the same source-shaped projectile handler as `0x1E`; added a
+  regression through both install and explicit dispatch paths.
+# DM2: atomic spell summon admission (2026-08-12)
+
+- ✅ `DM2_CAST_SPELL_PLAYER` now snapshots champion, flask and source-timer
+  state before the production `0x5E ALLOC_NEW_CREATURE` enqueue. A full or
+  rejected queue restores mana, hand cooldown, runes, flask state and queue
+  contents instead of publishing a partial cast.
+- ✅ The focused spell regression fills the source timer queue and verifies
+  both rejection and byte-for-byte champion/queue preservation. Projectile
+  and cloud creation remain closed behind their DB14/DB15 owners.
+# DM2: fail-closed unsupported production spell timers (2026-08-12)
+
+- ✅ Production spell application now rejects successful Light/Aura/
+  Enchantment/Cloud/Projectile receipts before mana, cooldown or rune
+  writeback when their source timer owner is absent.
+- ✅ The verified summon path requires a real source timer queue and a known
+  creature selector. The production regression now proves an unsupported
+  Light cast leaves champion and queue state untouched.
+
+# DM2: source-owned light spell cast transaction (2026-08-12)
+
+- ✅ Runtime now exposes a production `DM2_CAST_SPELL_PLAYER` owner for Long
+  Light, Darkness and Light. It consumes the committed source `c_hero` rune
+  tail and wizard skill, invokes the source `DM2_PROCEED_LIGHT` delay/step
+  model, and queues the resulting type `0x46` timer through the live source
+  timer queue.
+- ✅ Mana, hand cooldown and rune-tail clearing happen only after timer
+  admission. A failed queue restores the source hero, timer queue and light
+  scalar atomically; the old `DM2_ChampionRecord` compatibility adapter is
+  not used by this runtime path.
+- 🔒 Aura/enchantment, cloud, projectile and summon casts still require their
+  respective source callers/object owners and remain fail-closed.
+
+# DM2: correct Spell Reflector cloud classification (2026-08-12)
+
+- ✅ Fixed spell index 12 to follow `SkWinCore.cpp:17762`: Spell Reflector
+  emits the reflector-cloud selector `0x0e`, not a hero `0x48` enchantment.
+- ✅ The focused spell regression now locks the cloud timer classification;
+  the DB15/cloud runtime owner remains fail-closed until its full creation
+  chain is available.
+
+# DM2: source-owned shield enchantment casts (2026-08-12)
+
+- ✅ Runtime now admits the three source-identified shield spells through the
+  committed `c_hero` party: party Spell Shield uses aura `2` and mask `0x0f`,
+  Magical/Spell Shield uses aura `1` on the casting hero, and Fire Shield
+  uses aura `0` on that hero.
+- ✅ The source `0x48` timer is queued only after aura/power mutation has a
+  valid timer owner. Existing affected `0x48` masks are narrowed or removed
+  on aura replacement, and the full party plus timer queue roll back on
+  enqueue failure.
+- 🔒 Invisibility/global effects, Aura of Speed, reflector cloud, projectile,
+  summon and item-creation spell callers remain fail-closed.
+
+# DM2: source-owned attribute aura casts (2026-08-12)
+
+- ✅ Runtime now admits Aura of Wisdom/Dexterity/Vitality/Strength through
+  the source `ench_aura - 2` ability mapping (`5/4/6/3` respectively), with
+  party mask `0x0f` and source `0x48` power decay.
+- 🔒 Aura of Speed remains closed because its source consumer is the global
+  `savegames1.b_04` state, not `c_hero::ench_aura`; Invisibility and the
+  remaining cloud/projectile/summon/item branches remain separately gated.
+
+# DM2: source-owned player Poison Cloud creation (2026-08-12)
+
+- ✅ Runtime now admits Poison Cloud through the source
+  DB15 record path: the cloud subtype/strength is written to the DB15 record,
+  the record is appended to the party tile chain, and a ticketed `0x19`
+  PROCESS_CLOUD timer is queued at the source due tick.
+- ✅ Cloud creation snapshots the record pool, raw dungeon mirror, timer queue
+  and sound queue. Any allocation, chain, sound or timer failure restores the
+  complete pre-cast state before mana, hand cooldown and runes are consumed.
+- 🔒 Spell Reflector classification is source-correct, but its `0x0e` cloud
+  lifecycle and incoming spell-hit bounce consumer are not yet bound. DB14
+  projectile creation and the remaining custom/item spell branches remain
+  fail-closed.
+
+# DM2: close reflector cloud lifecycle at runtime boundary (2026-08-12)
+
+- ✅ Runtime `0x19 PROCESS_CLOUD` now rejects reflector subtype `0x0e` as
+  well as production creation. It cannot enter the ordinary poison-cloud
+  decay/requeue path until the source incoming-spell/bounce owner is bound.
+- ✅ Rebuilt `firestaff_m11`, ran the M11 startup/profile regression, and
+  ran all 403 `dm2_v1_` tests successfully.
+
+# DM2: cloud creation requires source GEN2 sound admission (2026-08-12)
+
+- ✅ Runtime Poison Cloud publicerar inte längre DB15-record eller `0x19`
+  PROCESS_CLOUD-timer om `DM2_QUEUE_NOISE_GEN2` avvisar ljudet eller saknar
+  giltig receipt. Den befintliga pool-/råkarts-/timer-/ljud-rollbacken används
+  nu även för detta fel.
+- ✅ Byggde `firestaff_m11`, körde `git diff --check` och hela DM2-sviten:
+  403/403 tester passerade.
+
+# DM2: source payload for spell missile/cloud timer receipts (2026-08-12)
+
+- ✅ `0x19` receipts avkodar nu timer A som packad x/y och timer B som
+  DB15-recordhandle.
+- ✅ `0x1D/0x1E` receipts avkodar timer A som DB14-recordhandle och timer B
+  som packad x/y/energi. Objektidentitet lämnas recordägd i stället för att
+  hämtas från timer-reserver.
+- ✅ Spell-cast-sviten passerar 169/169 kontroller; full DM2-svit körs efter
+  denna ändring.
+
+# DM2: fail-closed moverec execution receipt (2026-08-12)
+
+- ✅ `dm2_v1_perform_move_exec` publicerar inte längre en accepterad
+  open-tile-flytt när `DM2_MOVE_RECORD_TO` misslyckas eller kvitterar
+  `fail_closed`; `position_updated` och `record_moved` sätts först efter en
+  giltig moverec-kvittens.
+- ✅ Den fokuserade moverec-testen och hela DM2-sviten passerar: 403/403.
+
+# DM2: audit of player `SHOOT_ITEM` DB14 ownership (2026-08-12)
+
+- ✅ `DM2_V1_ShootItemCallbacks` verifierades som source-rätt parametergräns:
+  item, position, direction, damage, kinetic energy och spell power går vidare
+  till projektilägaren.
+- 🔒 Ingen verifierad runtime-owner fyller ännu DB14-recordens objektord,
+  energibytes och bytes 6–7 med det autentiserade timer-slotindexet. Därför
+  öppnas inte player-spellprojektiler på basis av en syntetisk record.
+
+# DM2: remove synthetic player projectile timer (2026-08-12)
+
+- ✅ Den generiska spell-apply-adaptern returnerar inte längre en falsk `0x1e`
+  med koordinater i timer A/B. Saknad DB14-owner gör att mana, cooldown,
+  runor och timerkö återställs atomiskt.
+- ✅ Den riktade spell-sviten passerar 164/164 kontroller.
+
+# DM2: Aura of Speed owner gate (2026-08-12)
+
+- ✅ Spell 11 (`OH IR ROS`) täcks som source GENERAL/Aura och behåller
+  cast-power samt duration-payload.
+- ✅ Apply är atomiskt fail-closed: utan skrivbar global `savegames1.b_04`
+  publiceras ingen mana-, cooldown-, rune- eller timerändring.
+- 🔒 GAME_LOAD-kandidaten överför fortfarande `savegames1.b_02` och
+  ljusackumulatorn, men inte den `b_04`-byte som Aura of Speed konsumerar.
+
+# DM2: source-owned wall/floor mecha dispatch (2026-08-12)
+
+- ✅ Runtime `0x04` klass 0 och 1 går nu via de befintliga kompletta
+  `ACTUATE_WALL_MECHA`/`ACTUATE_FLOOR_MECHA`-ägarna med source-payloadens
+  karta, koordinat, riktning och action.
+- 🔒 Pitfall, teleporter, trick-wall och övriga actuator-klasser är fortsatt
+  fail-closed; dörren har nu en separat source-owner enligt nästa avsnitt.
+
+# DM2: source-owned door actuator dispatch (2026-08-12)
+
+- ✅ Runtime `0x04` klass 4 kräver nu riktig klass-4-tile, direkt DB0-dörr,
+  komplett record-kedja och köar source-0x01:s nästa dörrsteg efter GAME_LOAD.
+- ✅ Dörrrecordens attributmutation och timerkö återställs atomiskt om
+  source-timern inte kan köas.
+- 🔒 En positiv DOSBox/savegame-fixture för verklig dörrkedja återstår; övriga
+  actuator-klasser är fortsatt fail-closed.
+
+# DM2: runtime actuator receipt accounting and DOSBox corpus audit (2026-08-12)
+
+- ✅ Runtime receiptens totala `0x04`-tally räknar nu alla source-klasser,
+  inklusive klass 3:s avsiktliga no-op; dörrreceiptens mutationsräknare
+  räknar bara verkliga DB0-attributändringar.
+- ✅ `/Users/bosse/Downloads/dm2` kördes explicit mot den riktiga PC-DOS-
+  korpusen: 275/275 kontroller passerar för de åtta savefilerna.
+- 🔒 Korpusen saknar fortfarande `0x04`, `0x3D/0x5D`, `0x5E` och
+  resurrectionstimers; den ger därför negativ evidens, inte positiv
+  door-/spawn-/moverec-runtime-evidens.
+
+# DM2: DOSBox SKSAVE phase-4 blocker audit (2026-08-12)
+
+- ✅ De åtta DOSBox-savesen når samma source-gräns: autentiserade hero-roots,
+  timerstream och map-chain-restoration går igenom före `READ_SKSAVE_DUNGEON`.
+- 🔒 Phase 4 stoppar vid source `DM2_ALLOC_NEW_RECORD` när den begärda DB-poolen
+  saknar `OBJECT_NULL`-slot och den fulla recycler-transaktionen inte är bunden.
+  Inspektionsägaren förblir därför icke-spelbar; ingen record återanvänds och
+  ingen fri slot uppfinns.
+- 🔒 `savegames1.b_04` läses i den råa save-state-ägaren men överförs ännu inte
+  till en skrivbar runtime-owner. Aura of Speed förblir därför korrekt stängd.
+- ✅ Phase-4-testen visar nu också poolgränsen per save: de flesta stopp kräver
+  dynamisk DB14/DB15-allokering på tom tile-root trots att DB0 har 38–45 fria
+  slots; dessa pooler får inte blandas ihop. En save når i stället resident-
+  root-validering och två når source missing-record-grenen.
+
+# DM2: SKSAVE SUPPRESS failure provenance (2026-08-12)
+
+- ✅ Alla bit-/SUPPRESS-läsfel i `READ_RECORD_CHECKCODE` sätter nu explicit
+  `DM2_READ_RECORD_FAILURE_INPUT`; phase-4-utskriften skiljer därmed
+  bitströmsgräns från allokeringsgräns.
+- 🔒 DB14/DB15-saven når i praktiken recordtyp 14/15 men inte
+  `ALLOC_NEW_RECORD`-callbacken (`recycle_status=0`). Ingen dynamisk pool eller
+-  godtycklig DB0-slot har därför skapats. SKSAVE-poolägaren materialiserar nu
+  dessutom source-reserven från `table_1d281c` (DB14 +0x3c, DB15 +0x32), så
+  nästa blockerare är verifierat bitströmsinnehåll och inte en fabricerad
+  kapacitet.
+
+# DM2: SKSAVE object-list bit gate (2026-08-12)
+
+- ✅ `READ_SKSAVE_DUNGEON` konsumerar nu record-kedja endast när tile-byte
+  bit 4 anger en faktisk objektlista, enligt DMWebs saved-game-format.
+- ✅ Alla åtta DOSBox-saves når 44/44 maps och återställer 12 254 tile-bytes;
+  den tidigare EOF/DB14-diagnosen var överkonsumtion från objektlösa rutor.
+- 🔒 Full Resume-owner är fortfarande stängd vid strikt
+  `CREATURES[type].word@5 → AIDefinition`-bindning för vissa DB4-typer.
+
+# DM2: SKSAVE source-owned AI och DB0-recycler (2026-08-12)
+
+- ✅ SKSAVE-ägaren materialiserar nu en privat CAII/AI-tabell från den
+  autentiserade asset-loadern och den materialiserade DB4-poolen. Den hålls
+  som privat provenance utan att Resume-admissionen öppnas före full map-
+  owner-verifiering.
+- ✅ DB0-recyclern använder den kompletta `state.dungeon`-receipten i stället
+  för map-owner-vyns ofullständiga pekare. `OBJECT_NULL` på tomma tile-rötter
+  hoppas över som tom kedja; verkliga record-kedjor traverseras fortfarande
+  strikt och utan mutation före commit.
+- ✅ DOSBox-korpusen `/Users/bosse/Downloads/dm2` passerar nu 272/272
+  kontroller och full DM2-regression passerar 403/403.
+- 🔒 Detta öppnar inte ännu en spelbar Resume-session: skrivbara CAII-,
+  timer-, party- och runtime-owners återstår.
+
+# DM2: SKSAVE map 0 owner-livstid (2026-08-12)
+
+- ✅ Map 0:s tidigare bredd 0 kom från en stale self-pointer: map-ownern
+  pekade efter kandidatens atomiska value-copy på stackkandidatens receipt.
+  Den binds nu om till `owner->state.dungeon` efter överföringen.
+- ✅ Alla åtta DOSBox-saves materialiserar nu en privat pre-session owner;
+  fokustestet verifierar map-walk, source-CAII och savegames1-snapshot.
+- 🔒 Spelbar Resume kräver fortfarande DB14-delete med timer/CAII samt övriga
+  skrivbara runtime-owners.
+
+# DM2: SKSAVE DB14 missile timer admission (2026-08-12)
+
+- ✅ Den privata SKSAVE-ownern kan nu bevisa DB14-missile-delete utan mutation:
+  no-creature tile, DB14-record, recordets timer-slot och aktiv `0x1e`-timer
+  måste vara samma source-objekt.
+- ✅ Regressionen visar att `timer_indices` är heapens sorteringsordning och
+  inte får användas som slot-identitet.
+- 🔒 DB14-cut/clear är nu bunden i den privata pre-session-ownern, men full
+  Resume-publicering förblir stängd tills committen kopplas till skrivbar
+  timer/CAII-state.
+
+# DM2: SKSAVE DB14 private delete commit (2026-08-12)
+
+- ✅ Den privata pre-session-ownern commitrar nu en source-admitterad
+  no-creature DB14-delete atomiskt: tile-chain, record bytes, c_tim-slot och
+  timerlistans free-chain ändras tillsammans.
+- ✅ Positiv regression verifierar att `source_game_load_session_ready` förblir
+  noll och att rå-SKSAVE-källan inte används som skrivbar arbetsyta.
+- 🔒 Full Resume kräver fortfarande koppling till den skrivbara CAII-ownern och
+  den fortsatta `0x1E`-timerdispatchen; staging-committen publiceras inte till
+  runtime.
+
+# DM2: SKSAVE source savegames1 snapshot (2026-08-12)
+
+- ✅ SKSAVE-ägaren sparar nu de exakta sex sourcebytesen från
+  `c_wbbb/ddat.savegames1` i en separat snapshot innan post-load-globaler
+  härleds. Arbetskopian får muteras utan att originalets `b_04` eller övriga
+  bytes förloras.
+- ✅ DOSBox-korpusens owner-regression verifierar snapshotens giltighet och
+  den autentiserade `save_state_hash`; fokustestet passerar 283/283.
+- 🔒 Snapshoten är ännu inte kopplad till en skrivbar Resume-global-owner eller
+  Aura of Speed-expiry consumer.
+
+# DM2: SKSAVE DB0 recycler transaction boundary (2026-08-12)
+
+- ✅ TODO-gränsen är nu uppdelad korrekt: DB0:s source-ordnade
+  `ALLOC_NEW_RECORD`-commit är bunden och testad atomiskt; nästa öppna
+  recycler-owner är DB14:s missile-delete med tillhörande timer/CAII-state.
+- 🔒 DB14 får inte clearas fristående. Utan den kopplade delete-/timerägaren
+  skulle en apparent Resume-fix kunna lämna en levande timer eller CAII-slot
+  pekande på ett borttaget DB14-record.
+
+# DM2: CAII moverec no-slot timer receipt (2026-08-12)
+
+- ✅ När `DM2_ALLOC_CAII_TO_CREATURE` allokerar en saknad CAII-slot och köar
+  den första `0x21/0x22`-think-timern markerar receipten nu även
+  `timer_updated`. Den högre moverec-transaktionen kan därmed skilja den
+  source-giltiga allokeringen från en mutation utan timerägare.
+- ✅ Fokustest 4/4, DOSBox-korpus 283/283 och full DM2-regression 403/403
+  passerar efter ändringen. Resume-gaten förblir oförändrad.
+
+# DM2: SKSAVE CAII source-slot reconstruction (2026-08-12)
+
+- ✅ SKSAVE försöker nu rekonstruera CAII-slotar från den verifierade
+  trevägslänken DB4 → tile-chain → c_tim 0x21/0x22. Ambiguitet eller saknad
+  länk lämnar CAII-owner invalid och öppnar inte Resume.
+- ✅ CAII-arrayens 34-byte layout, record-index, timer-index och packade
+  map-position materialiseras atomiskt; owner-free frigör även slotminnet.
+- ✅ DOSBox-korpusen passerar 299/299, full DM2-regression 403/403 och
+  `git diff --check` är ren. Skrivbar CAII-/0x1E-dispatch är fortfarande
+  Resume-blockerare.
+
+# DM2: SKSAVE complete record-graph handoff (2026-08-12)
+
+- ✅ När den source-ordnade SKSAVE-preflighten faktiskt slutför specialtimer-,
+  44-map- och possession-streamen markeras den överförda poolägaren som
+  `record_graph_complete`. Den råa före-laddningsbaslinjen och DB0/DB2-
+  recycler-boundaries lämnas fortsatt ofullständiga.
+- ✅ DOSBox-korpus `299/299`, full DM2-regression `403/403` och
+  `git diff --check` passerar. Detta förbättrar admission-receipten men
+  publicerar ännu ingen Resume-session.
+
+# DM2: SKSAVE authenticated DUNGEON.DAT layout binding (2026-08-12)
+
+- ✅ SKSAVE-ownern kan nu ta emot en separat autentiserad PC-DOS `dungeon.dat`,
+  kopiera den till privat ägarskap och kräva exakt kartantal samt alla
+  kartdimensioner från savefilens receipt.
+- ✅ Alla åtta DOSBox-savevarianter passerar den nya bindningen. Fokustestet
+  är `307/307`; full DM2-regression är `403/403` och `git diff --check` är ren.
+- 🔒 Bindningen är ett layout-underlag för runtime-adaptern, inte en Resume-
+  publicering. Skrivbar CAII-/timer-/ljudkoppling återstår.
+- ✅ Fältcensus över alla åtta saves visar stabil tile-typ i bits 5..7 och
+  variation endast i bits 0..4. Bindningen kvitterar därför den source-stabila
+  typen och behandlar lågbitarna som SKSAVE:s muterade runtimefält.
+
+# DM2: SKSAVE deep runtime-underlay staging clone (2026-08-12)
+
+- ✅ En komplett SKSAVE staging-klon kopierar nu de muterbara map-arrayerna,
+  recordpoolerna, CAII-slotarna, den GAME_LOAD-formade c_tim-heapen och
+  SOUND9 queue/sample-arrayerna till separata allocationer. Source- och
+  staging-state har samma mutable hash men inga delade muterbara pekare.
+- ✅ Klonens pekar- och hashregression är verifierad på en source-complete
+  staging-owner; de åtta aktuella savesen stoppas korrekt före kloningen när
+  CAII-länken inte kan autentiseras.
+- 🔒 Klonen är fortfarande en privat underlay; den atomära publiceringen till
+  live GAME_LOAD/runtime och `DM2_PROCEED_TIMER_1E` kräver en positiv CAII-
+  fixture.
+
+# DM2: SKSAVE Resume candidate handoff boundary (2026-08-12)
+
+- ✅ SKSAVE-underlayen kan nu materialiseras som en GAME_LOAD-formad kandidat
+  med source transaction hash, party, map-context, timerheap, CAII, SOUND9
+  och `savegames1` i samma privata owner när CAII-admissionen är komplett.
+- ✅ Bootprofilen har separata `retain_sksave_resume_candidate`- och
+  `commit_sksave_resume_session`-anrop. Runtimecommitten accepterar SKSAVE
+  endast när source-owner, asset-loader och transaction hash matchar; New Game
+  och Resume delar inte provenance-gate.
+- 🔒 En positiv live DOSBox save/load-loop och verifierad `0x1e`-dispatch efter
+  publicering återstår. Kandidaten öppnas inte på indirekt New Game-evidens.
+
+# DM2: SKSAVE fixed DYN4 sound fallback and CAII negative corpus evidence (2026-08-12)
+
+- ✅ Sound-owner-bindningen använder nu aktuell-map DB3 subtype `0x7e` när
+  den finns och faller source-rätt tillbaka på den fasta DYN4-prefixen som
+  `LOAD_LOCALLEVEL_DYN` markerar. Inga host- eller syntetiska selectors läggs
+  till.
+- ✅ Riktiga `/Users/bosse/Downloads/dm2`-saves passerar 371/371 kontroller.
+- ✅ Samma korpus visar uttryckligen att Resume ska stängas när DB4-record,
+  tile-chain och matchande `0x21/0x22`-think-timer inte kan bindas till en
+  entydig CAII-slot; ingen kandidat publiceras i det läget.
+- ✅ CAII-walkern ignorerar nu DB4-rader som bara överlevt före
+  `READ_SKSAVE_DUNGEON`-rensningen; endast återställda, c_map-nåbara DB4-rader
+  kan påverka admission. Korpusen förblir korrekt stängd när lazy CAII- och
+  think-timer-bindningen inte kan bevisas.
+
+# DM2: SKSAVE timer-owner capacity receipt (2026-08-12)
+
+- ✅ Den privata timer-ownern skiljer nu source-ordnad aktiv `num_timers` från
+  `num_indices`-spannet som `DM2_REARRANGE_TIMERLIST` räknar fram. Därmed kan
+  ett indexspann på 120 samexistera med en kortare aktiv c_tim-lista och en
+  giltig fri-lista.
+- ✅ Runtime-candidate-receiptens `timer_count` räknas från den faktiska
+  aktiva c_tim-listan efter GAME_LOAD:s specialtimerkedjor; det interna
+  indexspannet blandas inte längre in i Resume-admissionens publika receipt.
+- ✅ Den temporära `vsgame[120]`-arrayen nollställs före SKSAVE:s
+  SUPPRESS-dekodning. DOSBox-korpusen kan därför inte längre få fabricerade
+  timers eller falsk full-kö-status från oinitierade tail-bytes.
+- ✅ Think-timer-schemaläggaren har en positiv isolerad shadow-owner-regression:
+  en befintlig timerpost frigörs lokalt, därefter köas rätt `0x21/0x22`-typ
+  med DB4-recordets actor och c_map-position. Source-owner och rå-SKSAVE
+  förblir oförändrade.
+- ✅ Saves utan aktiva c_tim-poster godkänns som ett source-rätt no-op;
+  ingen syntetisk think-timer skapas för att få regressionen grön.
+- ✅ En separat SKSAVE-owner implementerar nu den statiska `09db`-delen med
+  DB4 byte@5-reset, source-animeringsmerge och RNG-/DB4-rollback. Sex av åtta
+  DOSBox-saves passerar positivt; två stoppas korrekt vid saknad
+  animationsproveniens.
+- 🔒 Passagen är ännu inte kopplad till Resume-initieringen. Den dynamiska
+  `0a48`-/CAII-/think-timer-transaktionen återstår fortfarande.
+- ✅ DOSBox-fokustestet passerar `436/436`; `git diff --check` är ren.
+- 🔒 Resume är fortsatt stängt tills en positiv save-fixture bevisar den
+  fulla DB4 → c_map → CAII → think-timer-bindningen.
+
+# DM2 platform data/runtime matrix (2026-08-12)
+
+- ✅ DOS/PC-DOS är fortsatt referensprofil med verifierad DUNGEON.DAT,
+  GRAPHICS.DAT, SONGLIST.DAT och DOSBox-SKSAVE-korpus.
+- ✅ Amiga, FM Towns och Mac har separata autentiserade media-/bootägare och
+  plattformsspecifika dungeon-/musik-/animationsvägar. Befintliga opt-in
+  boot- och gameplay-gater använder originaldata och lånar inte DOS-media.
+- 🔒 Detta är ännu inte liktydigt med full spelruntime på alla fyra profiler:
+  skrivbar CAII/0a48/think-timer och Resume saknar positiv cross-platform
+  fixture.
+
+# DM2 runtime source-callback walk admission (2026-08-12)
+
+- ✅ The production DM2 creature tick now has a source-owned bounded walk
+  admission for one-byte File_header maps. It reads the committed party
+  target, validates map dimensions and floor/ornate-floor cells against the
+  loaded dungeon, rejects occupied creature cells, and passes the first
+  direction into the existing `WALK_NOW` → `MOVE_RECORD_TO` transaction.
+  Two-byte Mac/FMTowns maps and the remaining door/cloud/teleporter branches
+  remain explicitly fail-closed.
+
+# DM2 SKSAVE dynamic CAII bridge (2026-08-12)
+
+- ✅ SKSAVE kan nu använda den source-bundna GAME_LOAD-dynamiktransaktionen som
+  privat brygga. DB4, CAII, c_tim, RNG och SOUND9 återställs atomiskt när
+  `0a48`-proveniens saknas.
+- ✅ DOSBox-fokustestet passerar `436/436`; aktuell corpus har ingen positiv
+  dynamisk `0a48`-receipt och bryggan öppnar därför inte Resume.
+- 🔒 Live Resume kräver fortfarande en positiv fixture för hela
+  DB4 → c_map → CAII → think-timer → runtime-dispatch-kedjan.
+
+# DM2 DOS NEW GAME runtime handoff (2026-08-12)
+
+- ✅ M11:s riktiga DOS NEW GAME lämnar nu inte längre menyn efter den
+  source-ägda `SELECT_CHAMPION`-transaktionen. Den befintliga atomiska
+  GAME_LOAD-committen används för DOS, Amiga, FM Towns och Mac i stället för
+  en plattformsspecifik specialväg.
+- ✅ Lokal boot-probe mot `/Users/bosse/Downloads/dm2` når
+  `dm2-runtime` med `levelLoaded=1`, `champions=1`, karta 0, position 1,8 och
+  aktiv runtime-tick. Fem fokuserade CTest-fall passerar.
+- ✅ Samma probe med `enter,up` flyttar source-partyn från `1,8` till `1,7`
+  och tickar till 2; detta verifierar att resultatet är spelruntime och inte
+  bara en statisk boot-receipt.
+- 🔒 Cross-platform gameplay är ännu inte slutverifierad eftersom autentiska
+  Amiga-, FM Towns- och Mac-korpusar inte finns i den lokala arbetsmiljön.
+# DM2: explicit platform archive ownership (2026-08-12)
+
+# DM2: source-owned DOSBox SKSAVE Resume handoff (2026-08-12)
+
+- ✅ `--save` går genom DM2:s source-owned `GAME_LOAD` i stället för den
+  generiska snabbresume-vägen. Handoff-kedjan binder save-header, AI-tabell,
+  DUNGEON.DAT-layout, SOUND9, timerheap, CAII och runtime-kandidat atomiskt.
+- ✅ Static-only DOSBox-saves accepterar en tom `LOAD_LOCALLEVEL_DYN`-
+  selector-kö utan att fabricera selectorer eller think-timers; cross-map-
+  actuator-fakta bevaras i kandidatens source-receipt.
+- ✅ Alla fyra primära DOSBox-saves (`sksave0.dat`–`sksave3.dat`) når
+  `startupActive=0`, `levelLoaded=1`, fyra champions och `runtimeTick=1`,
+  med respektive source-party-position.
+- ✅ En `up`-inputprobe driver runtime-ticken efter Resume-handoff.
+- ✅ Regressioner: DOSBox-SKSAVE `436/436`, DOS-manifest `30/30`, autentisk
+  Amiga-boot, FM Towns HUD/media och Mac retail-boot passerar.
+- 🔒 Separata native save-fixtures och full längre input-/skrivregression för
+  Amiga, FM Towns och Mac återstår.
+- ✅ Mac retail har dessutom verifierad HFS/MooV, 44-map big-endian dungeon
+  och 13 autentiska champion-mirror-rötter; full Mac GAME_LOAD är fortsatt
+  stängd vid den gemensamma CAII/record-pool-adaptern.
+
+- ✅ Ett uttryckligt val av Amiga-, Macintosh- eller FM Towns-arkiv vinner nu
+  över sibling-arkiv i samma `.firestaff/data/dm2`-rot. Tidigare kunde den
+  generiska FM Towns-sökningen kapa ett valt Amiga-startval.
+- ✅ Riktig Amiga-installer verifieras från ZIP→ADF→LZX i RAM och passerar
+  `test_dm2_v1_amiga_boot_real_media`, `dm2_amiga_m11_title_real_media` och
+  `dm2_amiga_m12_real_media`.
+- ✅ Riktig Mac retail (`Dungeon-Master-II-Skullkeep_Mac_EN (1).zip`) passerar
+  Mac-bootens endian-, File_header- och movie/resource-gater.
+- ✅ Riktig FM Towns-media med DOS English companion passerar
+  `test_dm2_fmtowns_m12_real_media`, `dm2_fmtowns_m11_title_real_media` och
+  `dm2_fmtowns_m11_gameplay_real_media`.
+
+# DM2: Amiga/Mac NEW GAME runtime handoff (2026-08-12)
+
+- ✅ Amiga samlar nu champion-mirror-rötter från den autentiska big-endian
+  dungeon-grafen och passerar source-owned NEW GAME, runtime-commit och
+  rörelse i `test_dm2_v1_amiga_new_game_real_media`.
+- ✅ Mac-GDAT:s hjältemallar läses med korrekt big-endian-fältordning. Mac
+  passerar samma hela kedja i `test_dm2_v1_mac_new_game_real_media`.
+- ✅ Den privata Local-DYN-scanen bevarar byte-square-kartor utan w0-kedjor
+  och undviker dubbelräkning där flera autentiska rötter delar records.
+- ✅ `dm2_v1_record_pool_next_link()` följer source-poolens byteordning, medan
+  DOS/SKSAVE fortsatt använder little-endian.
+- ✅ Verifiering med lokala originaldata: Amiga/Mac NEW GAME-runtime,
+  FM Towns M11 gameplay samt Mac media/movie/sound/boot passerar.
+- ✅ Mac M11 kör nu den riktiga Title.MooV-starten, använder den autentiska
+  NEW GAME-rektangeln och når aktiv source-owned runtime med turn/movement i
+  `test_dm2_v1_mac_m11_new_game_real_media`.
+
+# DM2: full build och fokuserad cross-platform regression (2026-08-12)
+
+- ✅ Fullprojektbyggningen passerar igen. M12:s production-only Amiga/Mac-
+  arkivadmission refereras inte längre från `FIRESTAFF_ASSET_STATUS_TESTING`-
+  mål, där dessa symboler med rätta inte kompileras.
+- ✅ Save/global-effect-regressionen använder det kanoniska
+  `DM2_V1_SaveGlobalEffectCallbacks`-namnet och bygger tillsammans med övriga
+  DM2-save-test.
+- ✅ Tolv fokuserade tester passerar med lokala originalmedia och DOSBox-data:
+  DOS save/load/recordpool/global effects, Amiga boot/NEW GAME, FM Towns M11
+  gameplay samt Mac boot/media/movie/sound/NEW GAME/M11 runtime.
+- 🔒 Full Resume-save för native Amiga, FM Towns och Mac samt den bredare
+  inventory/action-UI:n är fortfarande inte verifierad och förblir stängd.
+
+# DM2: production placeholder boundary synced (2026-08-12)
+
+- ✅ Placeholder-verifieraren följer nu den source-owned runtime-dispatchen för
+  dörr, vägg/golv-mecha, generator, ornate-timers och moverec-rotation.
+  Dessa handlers flaggas inte längre felaktigt som teststudier.
+- ✅ `dm2_v1_delete_creature_full_pc34_compat.c` räknas nu som source-owned
+  genom den gemensamma M10-recycler-länken; verifieraren kräver att den finns
+  i produktkedjan, medan DM2_SOURCES får återanvända M10-objektet utan
+  dubbla symboler.
+  `dm2_production_placeholder_boundary` passerar.
+# DM2: Mac big-endian RAW4 placement and inventory (2026-08-12)
+
+- Mac GDAT RAW4 records are now decoded according to the mounted asset's
+  endianness. This fixes the previous little-endian-only parser for the
+  Macintosh GDAT v5 table while preserving the DOS/FM Towns path.
+- `test_dm2_v1_mac_new_game_real_media` now verifies a real Mac CHARSHEET
+  image plus a source-owned big-endian RAW4 placement. After the endian fix,
+  Mac `RECT_1EE` resolves to the authenticated 119×70 crop at 99,55.
+- `test_dm2_v1_mac_m11_new_game_real_media` now verifies Mac inventory
+  open/draw/close through that native CHARSHEET route.
+- The same real-media gate now verifies all four Mac hand-action images and
+  their native `RECT_46..4D` RAW4 chains.
+
+## DM2: DOSBox-save root discovery (2026-08-12)
+
+- ✅ DM2:s bootprofil upptäcker nu `~/Downloads/dm2` när den innehåller
+  autentiska `sksave*.dat/.bak`-headers från DOSBox. Ett explicit
+  `FIRESTAFF_DM2_SAVE_ROOT` går före upptäckten.
+- ✅ Save-root väljs först efter samma source-formade SKSave-headergate som
+  corpus-scannern använder. FM Towns-media och övriga editionsägare påverkas
+  inte.
+- ✅ `test_dm2_v1_boot_profile_smoke` och den verkliga DOSBox-korpusen bygger
+  och passerar; den kompletta Resume-gaten förblir stängd när CAII/record-
+  owners saknas.
+
+## DM2: M12 Quick Resume handoff (2026-08-12)
+
+- ✅ M12 accepterar nu DM2:s source-formade `SKSave.dat` och
+  `sksaveN.dat` som Quick Resume-kandidater via den gemensamma
+  root-/header-/slot-gaten.
+- ✅ När DM2-data är vald kan M12 hitta första primära DOSBox-slotten i
+  `~/Downloads/dm2`; en `.bak` används inte som global Quick Resume-identitet.
+- ✅ Handoffen lämnar exakt save-sökväg till M11:s DM2-resume-rutt och blandar
+  inte in FM Towns eller andra spel.
+
+## DM2: source-owned party attack bridge (2026-08-13)
+
+- ✅ Party→DB4-kollisionen lämnar nu det autentiserade CMDSTR/DBSPEC-underlaget
+  till combat-ägaren, som kör damage receipt och CAII-attacken i samma source-
+  bundna steg. Runtime-källan exporterar därmed inte den caller-authored
+  damage-seamen direkt.
+- ✅ `dm2_production_placeholder_boundary`, combat-regressionen, CCM-runtime-
+  testet samt DOS/Amiga/FM Towns/Mac-real-media-gater passerar efter bryggan.
+- ⚠️ Den breda historiska sviten har fortfarande tre separata miljö-/fixture-
+  fel utöver den nu lösta policyträffen: occupancy-sortering, M11
+  startup/profile-gate och ISO-cache-gate. CAII-allocator-fixturen är nu
+  korrigerad för sin kartbundna map 0 och passerar. Frame-testets tidigare
+  saknade byggmål är nu byggt och passerar. De tre återstående reproduceras
+  även när de körs ensamma och ligger utanför denna attackändring.
+- ✅ CAII-receipten skiljer nu på `completed` och en source-giltig `hp_applied`
+  före tidig retur. Runtime hindrar därför inte en autentiserad melee-attack
+  när c_creature.cpp stannar vid exempelvis reschedule-/tabellgränsen.
+- ✅ HP≤0 går nu vidare till runtime-ägd `DELETE_CREATURE_RECORD` med den
+  autentiserade DB4-cellen och GAME_LOAD:s dropord. Vid ofullständig admission
+  förblir cellen blockerad, så partypositionen kan inte skrivas över ett
+  kvarvarande creature-record.
+
+## DM2: source-owned WIELD action (2026-08-13)
+
+- ✅ `DM2_ENGAGE_COMMAND` exekverar WIELD via en typed source-callback.
+- ✅ Runtime action 8 löser monterad CMDSTR-data, facing-cell och DB4-creature
+  och återanvänder source-owned combat→CAII med fail-closed tile checks.
+- ✅ Bygge samt production-boundary, CAII-attack, CCM-runtime och DOS-real-media
+  passerar: 4/4.
+- ✅ DOS-real-media har nu ett autentiskt vapen/creature-par där WIELD går
+  genom combat/CAII; missar lämnar DB4-cellen orörd. En positiv save-fixture
+  med CAII-HP-uppdatering, drop och `DELETE_CREATURE_RECORD` är fortfarande
+  öppen.
+- ✅ Runtime skickar nu den source-beräknade attackförstyrkan vidare till
+  `get_stamina_adj`, enligt `skproject/SKULLWIN/c_querydb.cpp:2237-2378`.
+  Den tidigare runtime-bindningen använde rå ability och kunde därför ge
+  felaktigt nollskada för autentiska save-vapen.
+
+## DM2: source-owned DOS door action (2026-08-13)
+
+- ✅ DOSBox-real-media verifierar en autentisk DB0-dörr på map 2 `(19,10)`.
+- ✅ Den riktiga `0x04`-actuatorn köar och konsumerar source `0x01`-steget;
+  dörrens state går från `4` (stängd) till `0` (öppen).
+- ✅ Runtime exponerar nu separat receipt för WIELD-dödens materialiserade
+  drop-count och deallocation, så nästa drop-fixture kan verifiera båda
+  utan att läsa presentationens render-cache.
+- ✅ Drop-ägaren försöker nu source-korrekt `RECYCLE_A_RECORD_FROM_THE_WORLD`
+  över autentiska c_map-kedjor när DB5/6/8/10-poolen är full.
+- ✅ Samma source-walk når nu även DB4-creaturernas possession-kedjor och
+  kan unlinka en icke-viktig DB5/6/8/10-post med editionens recordord.
+- ✅ World-walkern respekterar source actuator-/Text-extension-barriärer före
+  kandidatvalet och behåller byteordningen för DB2-word-testet.
+- ✅ `SET_ITEMTYPE` skriver nu DB5/6/8/10 med den autentiserade record-poolens
+  byteordning. Ett separat big-endian-prov täcker Mac/FMTowns-fallet; DOS,
+  Amiga, FM Towns och Mac real-media-regressionerna passerar fortsatt.
+- ⚠️ DOS-real-media visar fortfarande inget godkänt icke-viktigt
+  återvinningsobjekt i den valda WIELD-fixturen; drop-loopen når ett
+  iterationssteg men materialiserar därför ännu inget item.
+- ⚠️ Den valda creature-typen gav inga RNG-genererade possessions i körningen;
+  faktisk drop-materialisering behöver fortfarande en separat autentisk typ.
+# DM2: source-owned player spell missile launch (2026-08-13)
+
+- ✅ Implementerade den saknade runtime-ägaren från SKProject
+  `CAST_CHAMPION_MISSILE_SPELL`/`DM2_SHOOT_ITEM`: specialobjektet
+  `0xff80 + SpellCastIndex()` skrivs i DB14, DB14 bytes 4–5 får source damage
+  och spell-energy, recordet länkas till partyrutan och ett 0x1E-timerrecord
+  publiceras atomiskt.
+- ✅ Timerkö-, DB14-pool- och ground-chain-ändringar rullas tillbaka om någon
+  del av transaktionen misslyckas. Runtime-receiptet exponerar record, objekt,
+  damage och energy för verifiering.
+- ✅ `test_dm2_v1_spell_cast_player_pc34_compat` 169/169 och production-gate
+  passerar; real DOS/save-kastfixture och fulla projektilkollisioner återstår.
+
+# DM2: M11 spell-panel runtime handoff (2026-08-13)
+
+- ✅ M11:s DM2-castväg överför nu den synliga rune-bufferten till live
+  `c_hero` och anropar `CAST_SPELL_PLAYER` med source-owned hand/hero-state.
+  DM2 missilspells kan därför triggas från riktig spell-panel-input; de
+  använder DB14/0x1E-owner:n ovan och faller inte tillbaka till DM1:s
+  spell-executor.
+- ✅ Bygge och real-media-regressioner för Amiga NEW GAME, DOS pit-runtime
+  och Mac M11 NEW GAME passerar.
+- Mac M11-real-media kastar nu Fireball efter source-owned rörelse. DB14:s
+  big-endian recordord/länkar och `APPEND_RECORD_TO`-motsvarighetens
+  empty-tile ground-stack-insert är atomiskt bundna till 0x1E-timern.
+- DOSBox `sksave0.dat` når nu samma source-owned Fireball genom M11 efter
+  autentiserad Resume. M11 väljer en levande source-hjälte när savefilens
+  gamla `curacthero` pekar på en död hjälte.
+
+# DM2: source-owned DOS stairs transition (2026-08-13)
+
+- ✅ DOSBox-real-media verifierar nu en autentisk klass-3-trappa genom normal
+  party-rörelse: map 8 `(12,1)` → map 2 `(12,1)`.
+- ✅ Regressionen kör source-owned `DM2_LOCATE_OTHER_LEVEL`-semantik och
+  avvisar fortsatt oupplösta eller oåtkomliga mål utan testteleport.
+- ℹ️ Den positiva cross-platform-evidensen är kompletterad i den efterföljande
+  `cross-platform stairs runtime`-posten med autentiska Amiga-, FM Towns- och
+  Mac-media.
+
+# DM2: cross-platform stairs runtime (2026-08-13)
+
+- ✅ Amiga verifierar map 8 `(11,17)` → map 1 `(8,11)` genom normal rörelse.
+- ✅ FM Towns verifierar map 8 `(12,1)` → map 2 `(12,1)` efter att M11 fått
+  den autentiska HME-242-profilen och den verifierade PC-English
+  `graphics.dat`-kompanjonen.
+- ✅ Mac retail verifierar map 8 `(11,17)` → map 1 `(8,11)` genom M11.
+- ✅ DOS, Amiga, FM Towns och Mac använder därmed samma source-owned
+  trappägare; inga koordinatteleporter eller hostkartor används.
+
+# DM2: FM Towns English companion archive handoff (2026-08-13)
+
+- ✅ FM Towns-launchern accepterar nu den autentiska PC-English companion-ZIP:n
+  direkt och väljer endast `data/graphics.dat` i RAM. ZIP:ens provenance och
+  canonical content hash behålls; ingen lös sibling-fil eller extraktion öppnar
+  språkoverlayn.

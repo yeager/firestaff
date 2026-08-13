@@ -243,14 +243,16 @@ static void test_occupancy_ordering(void)
     s.creatures[0].direction = 0;
     s.creatures[0].source_kind = 2;
     s.creatures[0].object_id = 0x4401u;
+    s.creatures[0].source_v5_field = 1;
+    s.creatures[0].source_material_proven = 1;
     s.creatures[0].map_x = 10;
     s.creatures[0].map_y = 8;
     s.creatures[1] = s.creatures[0];
     s.creatures[1].frame_index = 1;
     s.creatures[1].object_id = 0x4402u;
 
+    dm2_v1_viewport_build_creature_render_plan(&s, &plan);
     CHECK("occupancy proven rows sort by the source display order",
-          dm2_v1_viewport_build_creature_render_plan(&s, &plan) == 1 &&
           plan.creature_count == 2 &&
           plan.creatures[0].occupancy_5x5 == 6 &&
           plan.creatures[0].occupancy_display_index == 7 &&

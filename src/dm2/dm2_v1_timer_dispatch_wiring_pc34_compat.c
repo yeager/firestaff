@@ -61,16 +61,16 @@ static int handle_process_3d(void *context, const DM2_V1_SourceTimer *timer,
                               DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
 {
     DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
-    if (!w->move_record_to)
+    if (!w->move_record_to || !w->queue_noise)
         return 0;
     DM2_V1_Timer3DCallbacks cb = {
         .move_record_to = w->move_record_to,
         .queue_noise = w->queue_noise
     };
     dm2_v1_process_timer_3d_tile(
-        (uint16_t)timer->value_a,
-        (uint8_t)(timer->value_b & 0xFF),
-        (uint8_t)((timer->value_b >> 8) & 0xFF),
+        (uint16_t)timer->value_b,
+        (uint8_t)(timer->value_a & 0xFF),
+        (uint8_t)((timer->value_a >> 8) & 0xFF),
         timer->type, &cb, context);
     return 1;
 }
@@ -292,11 +292,23 @@ static int handle_process_cloud(void *context, const DM2_V1_SourceTimer *timer,
                                 DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
 {
     DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (w->cloud_owner) {
+        DM2_V1_CloudTimer cloud_timer = {
+            .ticks_and_map = timer->ticks_and_map,
+            .type = timer->type,
+            .actor = timer->actor,
+            .value_a = timer->value_a,
+            .value_b = timer->value_b
+        };
+        (void)dm2_v1_process_cloud(w->cloud_owner, &cloud_timer);
+        return 1;
+    }
     if (!w->get_record_address)
         return 0;
     DM2_V1_ProcessCloudCallbacks cb = {
         .get_record_address = w->get_record_address,
         .get_tile_value = w->get_tile_value,
+        .get_tile_record_link = w->get_tile_record_link,
         .calc_cloud_damage = w->calc_cloud_damage,
         .attack_door = w->attack_door,
         .attack_party = w->attack_party,
@@ -314,10 +326,11 @@ static int handle_process_cloud(void *context, const DM2_V1_SourceTimer *timer,
     };
     uint8_t xA = (uint8_t)(timer->value_a & 0xff);
     uint8_t yA = (uint8_t)((timer->value_a >> 8) & 0xff);
-    return dm2_v1_process_cloud((uint16_t)timer->value_a, xA, yA, &cb, context);
+    /* c_cloud.cpp:604: the DB15 cloud record is timer.B; timer.A packs x/y. */
+    return dm2_v1_process_cloud_tile((uint16_t)timer->value_b, xA, yA, &cb, context);
 }
 
-/* Adapter: STEP_MISSILE (0x1E) */
+/* Adapter: STEP_MISSILE (0x1D/0x1E) */
 static int handle_step_missile(void *context, const DM2_V1_SourceTimer *timer,
                                uint16_t source_index __attribute__((unused)),
                                DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
@@ -505,7 +518,7 @@ static int handle_move_record_rotate(void *context, const DM2_V1_SourceTimer *ti
                                      DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
 {
     DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
-    if (!w->move_record_to)
+    if (!w->move_record_to || !w->party_rotate)
         return 0;
     DM2_V1_MoveRecordRotateCallbacks cb = {
         .move_record_to = w->move_record_to,
@@ -513,7 +526,9 @@ static int handle_move_record_rotate(void *context, const DM2_V1_SourceTimer *ti
         .party_map = w->party_map
     };
     dm2_v1_process_timer_move_record_rotate(
-        (uint16_t)timer->value_a, w->current_map, w->party_x, w->party_y, &cb, context);
+        (uint16_t)timer->value_a,
+        (int16_t)((timer->ticks_and_map >> 24) & 0xffu),
+        w->party_x, w->party_y, &cb, context);
     return 1;
 }
 
@@ -564,7 +579,7 @@ static int handle_actuate_floor_mecha(void *context, const DM2_V1_SourceTimer *t
         timer, source_index, receipt);
 }
 
-#define WIRED_COUNT 26
+#define WIRED_COUNT 28
 
 void dm2_v1_timer_dispatch_wiring_init(
     DM2_V1_TimerDispatcher *dispatcher,
@@ -584,9 +599,11 @@ void dm2_v1_timer_dispatch_wiring_init(
     dispatcher->handlers[DM2_V1_TIMER_PROCESS_0E] = handle_process_0e;
     dispatcher->handlers[DM2_V1_TIMER_PROCESS_SOUND] = handle_process_sound;
     dispatcher->handlers[DM2_V1_TIMER_PROCESS_CLOUD] = handle_process_cloud;
+    dispatcher->handlers[DM2_V1_TIMER_STEP_MISSILE_ALT] = handle_step_missile;
     dispatcher->handlers[DM2_V1_TIMER_STEP_MISSILE] = handle_step_missile;
     dispatcher->handlers[DM2_V1_TIMER_THINK_CREATURE_A] = handle_think_creature;
     dispatcher->handlers[DM2_V1_TIMER_THINK_CREATURE_B] = handle_think_creature;
+    dispatcher->handlers[DM2_V1_TIMER_PROCESS_3C] = handle_process_3d;
     dispatcher->handlers[DM2_V1_TIMER_PROCESS_3D] = handle_process_3d;
     dispatcher->handlers[DM2_V1_TIMER_LIGHT] = handle_light;
     dispatcher->handlers[DM2_V1_TIMER_HERO_ENCH_FLAG] = handle_hero_ench_flag;

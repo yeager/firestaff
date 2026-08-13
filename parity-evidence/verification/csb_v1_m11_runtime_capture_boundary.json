@@ -1,8 +1,8 @@
 {
   "schema": "firestaff.csb_v1_m11_runtime_capture_boundary.v2",
-  "pass": true,
+  "pass": false,
   "scope": "CSB V1 M11 runtime/capture boundary retirement; positive CSB launch handoff and PC boot/tick evidence.",
-  "blocker_retired": true,
+  "blocker_retired": false,
   "positive_boundary": {
     "menu_guard": "M12 supports CSB launch intent when hash-matched assets are available.",
     "m11_handoff": "M11 recognizes gameId=csb and hands off to the FS_GAME_CSB loop instead of the DM1 dungeon loader.",
@@ -80,7 +80,7 @@
     {
       "id": "firestaff_m12_supports_csb_launch_intent",
       "role": "firestaff_positive",
-      "path": "/Volumes/Extern-disk/firestaff-dm1-agent-audit-20260806202550/src/ui/menu_startup_m12.c",
+      "path": "/Volumes/Extern-disk/firestaff/src/ui/menu_startup_m12.c",
       "lines": "5050-5080",
       "needles": [
         "All five catalogued games now have runtime launch boundaries",
@@ -92,7 +92,7 @@
     {
       "id": "firestaff_m12_launch_intent_uses_supported_game_and_assets",
       "role": "firestaff_positive",
-      "path": "/Volumes/Extern-disk/firestaff-dm1-agent-audit-20260806202550/src/ui/menu_startup_m12.c",
+      "path": "/Volumes/Extern-disk/firestaff/src/ui/menu_startup_m12.c",
       "lines": "12787-12910",
       "needles": [
         "M12_StartupMenu_GetLaunchIntent",
@@ -105,20 +105,24 @@
     {
       "id": "firestaff_m11_csb_handoff_bypasses_dm1_loader",
       "role": "firestaff_positive",
-      "path": "/Volumes/Extern-disk/firestaff-dm1-agent-audit-20260806202550/src/engine/m11_game_view.c",
-      "lines": "22441-22502",
+      "path": "/Volumes/Extern-disk/firestaff/src/engine/m11_game_view.c",
+      "lines": "22165-22240",
       "needles": [
         "CSB V1: bypass DM1 dungeon loader",
         "m11_csb_apply_boot_runtime_receipt",
         "CSB READY: gameId=csb dataDir=%s"
       ],
-      "missing": [],
-      "ok": true
+      "missing": [
+        "CSB V1: bypass DM1 dungeon loader",
+        "m11_csb_apply_boot_runtime_receipt",
+        "CSB READY: gameId=csb dataDir=%s"
+      ],
+      "ok": false
     },
     {
       "id": "firestaff_game_loop_csb_boots_profile",
       "role": "firestaff_positive",
-      "path": "/Volumes/Extern-disk/firestaff-dm1-agent-audit-20260806202550/src/engine/firestaff_game_loop.c",
+      "path": "/Volumes/Extern-disk/firestaff/src/engine/firestaff_game_loop.c",
       "lines": "230-290",
       "needles": [
         "FS_GAME_CSB",
@@ -132,7 +136,7 @@
     {
       "id": "firestaff_pc_real_asset_probe_ticks_csb",
       "role": "firestaff_positive",
-      "path": "/Volumes/Extern-disk/firestaff-dm1-agent-audit-20260806202550/probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c",
+      "path": "/Volumes/Extern-disk/firestaff/probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c",
       "lines": "1-960",
       "needles": [
         "PC-first CSB V1 real-data launch gate",
@@ -149,5 +153,7 @@
     "This gate does not claim Atari ST or Amiga emulator boot parity.",
     "CSB V1 rendering/gameplay parity still requires focused CSB evidence gates."
   ],
-  "failures": []
+  "failures": [
+    "firestaff_m11_csb_handoff_bypasses_dm1_loader missing ['CSB V1: bypass DM1 dungeon loader', 'm11_csb_apply_boot_runtime_receipt', 'CSB READY: gameId=csb dataDir=%s'] path_exists=True"
+  ]
 }

@@ -188,14 +188,14 @@ static int dm2_v1_spell_timer_handle_cloud(
     if (!ctx || !timer) return 0;
 
     ctx->receipt.cloud_dispatched++;
-    ctx->receipt.cloud_origin_x = (int)timer->value_a;
-    ctx->receipt.cloud_origin_y = (int)timer->value_b;
-    ctx->receipt.cloud_object_effect = (int)timer->reserved;
-    /* DM2_PROCESS_TIMER_19 advances a pre-existing DB14 record.  The timer
-     * carries its record handle and the source reads the actual DB14 layout;
-     * this Firestaff timer contract carries only a coordinate/effect tuple.
-     * Never invent duration or effect bytes from that incomplete payload.
-     * Source: SKProject SKULLWIN/c_tim_proc.cpp:4195-4213. */
+    ctx->receipt.cloud_origin_x = (int)(int8_t)((uint16_t)timer->value_a & 0xffu);
+    ctx->receipt.cloud_origin_y = (int)(int8_t)(((uint16_t)timer->value_a >> 8) & 0xffu);
+    ctx->receipt.cloud_record_handle = timer->value_b;
+    ctx->receipt.cloud_object_effect = -1;
+    /* DM2_PROCESS_TIMER_19 advances a pre-existing DB15 record.  Source
+     * timer A packs x/y; timer B is the DB15 handle, whose word@2 owns the
+     * subtype and lifetime. Never reinterpret B as a second coordinate or
+     * reserved as an object effect. Source: c_tim_proc.cpp:4195-4213. */
     ctx->receipt.cloud_record_creation_failed = 1;
     return 1;
 }
@@ -212,12 +212,10 @@ int dm2_v1_spell_timer_object_effect_to_projectile_subtype(int object_effect)
         return DM2_PROJ_SUBTYPE_MAGICAL_LIGHTNING;
     case DM2_OBJECT_EFFECT_DISPELL:
         return DM2_PROJ_SUBTYPE_MAGICAL_DISPELL;
-    case DM2_OBJECT_EFFECT_POISON_CLOUD:
-        return DM2_PROJ_SUBTYPE_MAGICAL_POISON_CLOUD;
     case DM2_OBJECT_EFFECT_POISON_BOLT:
         return DM2_PROJ_SUBTYPE_MAGICAL_POISON_BOLT;
-    case DM2_OBJECT_EFFECT_POISON_BLOB:
-        return DM2_PROJ_SUBTYPE_MAGICAL_POISON_BLOB;
+    case DM2_OBJECT_EFFECT_POISON_CLOUD:
+        return DM2_PROJ_SUBTYPE_MAGICAL_POISON_CLOUD;
     default:
         return -1;
     }
@@ -242,10 +240,16 @@ static int dm2_v1_spell_timer_handle_projectile(
     if (!ctx || !timer) return 0;
 
     ctx->receipt.missile_dispatched++;
-    ctx->receipt.missile_origin_x = (int)timer->value_a;
-    ctx->receipt.missile_origin_y = (int)timer->value_b;
-    ctx->receipt.missile_object_effect = (int)timer->reserved;
+    ctx->receipt.missile_record_handle = timer->value_a;
+    {
+        const uint16_t packed = (uint16_t)timer->value_b;
+        ctx->receipt.missile_origin_x = (int)(packed & 0x1fu);
+        ctx->receipt.missile_origin_y = (int)((packed >> 5) & 0x1fu);
+    }
+    ctx->receipt.missile_object_effect = -1;
     ctx->receipt.missile_projectile_slot = -1;
+    /* c_tim::A is the DB14 handle. c_tim::B packs x/y, direction and the
+     * source energy step; the DB14 record supplies object identity. */
     return 1;
 }
 
@@ -267,9 +271,14 @@ static int dm2_v1_spell_timer_handle_summon(
     if (!ctx || !timer) return 0;
 
     ctx->receipt.summon_dispatched++;
-    ctx->receipt.summon_origin_x = (int)timer->value_a;
-    ctx->receipt.summon_origin_y = (int)timer->value_b;
-    ctx->receipt.summon_object_effect = (int)timer->reserved;
+    /* c_tim_proc.cpp:4268-4280 reads the packed target cell from value A
+     * and the creature type from value B.  Do not reinterpret value B as a
+     * second coordinate; that was the old reduced spell envelope. */
+    ctx->receipt.summon_origin_x =
+        (int)(int8_t)((uint16_t)timer->value_a & 0xffu);
+    ctx->receipt.summon_origin_y =
+        (int)(int8_t)(((uint16_t)timer->value_a >> 8) & 0xffu);
+    ctx->receipt.summon_object_effect = (int)timer->value_b;
     ctx->receipt.summon_failed_no_data = 1;
     return 1;
 }
@@ -332,6 +341,8 @@ void dm2_v1_spell_timer_handlers_install(
         dm2_v1_spell_timer_handle_cloud;
     dispatcher->handlers[DM2_V1_TIMER_STEP_MISSILE] =
         dm2_v1_spell_timer_handle_projectile;
+    dispatcher->handlers[DM2_V1_TIMER_STEP_MISSILE_ALT] =
+        dm2_v1_spell_timer_handle_projectile;
     dispatcher->handlers[DM2_V1_TIMER_ALLOC_NEW_CREATURE] =
         dm2_v1_spell_timer_handle_summon;
 }
@@ -359,6 +370,7 @@ int dm2_v1_spell_timer_dispatch(
         return dm2_v1_spell_timer_handle_cloud(
             ctx, timer, source_index, receipt);
     case DM2_V1_TIMER_STEP_MISSILE:
+    case DM2_V1_TIMER_STEP_MISSILE_ALT:
         return dm2_v1_spell_timer_handle_projectile(
             ctx, timer, source_index, receipt);
     case DM2_V1_TIMER_ALLOC_NEW_CREATURE:

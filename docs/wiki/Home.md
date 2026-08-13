@@ -1,10 +1,9 @@
 # Firestaff Wiki
 
-> **Status reviewed 2026-08-12.** Firestaff has five active game targets.
-> DM1 PC DOS 3.4 V1 is the only fully playable route. CSB has verified native
-> routes; DM2 has verified DOS/FM Towns slices and two bounded English Mac
-> routes; Nexus and Theron remain real-data bring-up work. See [Project status](https://github.com/yeager/firestaff/blob/main/docs/PROJECT_STATUS.md),
-> [platform status](https://github.com/yeager/firestaff/blob/main/docs/PLATFORM_STATUS.md),
+> **Status reviewed 2026-08-13.** Firestaff has five active game targets.
+> DM1 V1 and DM2 now have playable source-owned routes; CSB, Nexus and Theron
+> remain documented as source-locked or real-data bring-up work where their
+> end-to-end boundaries are still open. See [Project status](https://github.com/yeager/firestaff/blob/main/docs/PROJECT_STATUS.md),
 > [preservation status](../PRESERVATION_STATUS_2026-08-11.md) and the
 > [documentation index](../DOCUMENTATION_INDEX.md) for the canonical matrix.
 
@@ -16,7 +15,7 @@ Firestaff reimplements five classic Dungeon Master game engines with source-leve
 |------|----------|-----------------|------------|
 | [Dungeon Master (DM1)](DM1-Technical-Reference) | PC DOS 3.4, Atari ST, Amiga and FM Towns data paths | ReDMCSB | [Technical Reference](DM1-Technical-Reference), [PC34 Internals](DM1-PC34-Internals), [FM Towns guide](DM1-FMTowns-Guide), [RE Documentation](DM1-Reverse-Engineering) |
 | [Chaos Strikes Back (CSB)](CSB-Technical-Reference) | Amiga default; Atari ST and FM Towns native paths; PC-shaped reference data | ReDMCSB and CSBWin | [Technical Reference](CSB-Technical-Reference), [FM Towns guide](CSB-FMTowns-Guide), [DSA and Save Internals](CSB-DSA-and-Save-Internals), [RE Documentation](CSB-Reverse-Engineering) |
-| [Dungeon Master II (DM2)](DM2-Technical-Reference) | DOS, Amiga data path, FM Towns, Macintosh retail and First Chapter demo | skproject | [Technical Reference](DM2-Technical-Reference), [GDAT Internals](DM2-GDAT-Internals), [RE Documentation](DM2-Reverse-Engineering), [Platform status](../PLATFORM_STATUS.md) |
+| [Dungeon Master II (DM2)](DM2-Technical-Reference) | DOS, Amiga, FM Towns and Macintosh real-media routes | skproject, DMWeb and disassembly | [Technical Reference](DM2-Technical-Reference), [FM Towns guide](DM2-FMTowns-Guide), [GDAT Internals](DM2-GDAT-Internals), [RE Documentation](DM2-Reverse-Engineering) |
 | [Theron's Quest](Therons-Quest-Technical-Reference) | PC Engine CD | PC Engine disassembly and CD analysis | [Technical Reference](Therons-Quest-Technical-Reference), [Track 02 Internals](Therons-Quest-Track02-Internals), [RE Documentation](Therons-Quest-Reverse-Engineering) |
 | [DM Nexus](Nexus-Technical-Reference) | Sega Saturn | Saturn SH-2 disassembly and retail media analysis | [Technical Reference](Nexus-Technical-Reference), [DGN/PRS3 Internals](Nexus-DGN-and-PRS3-Internals), [SAL/MAP Internals](Nexus-SAL-MAP-Internals), [RE Documentation](Nexus-Reverse-Engineering) |
 

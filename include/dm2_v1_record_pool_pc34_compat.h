@@ -63,6 +63,7 @@ typedef struct DM2_V1_RecordPoolSet {
     int words_big_endian;       /* retained from the authenticated dungeon */
     int valid;                  /* 1 only after a validated G1 population */
     int record_graph_complete;  /* mirrors the loader's graph state */
+    int source_words_big_endian;
 } DM2_V1_RecordPoolSet;
 
 /* Clone a mutable pool owner exactly as it stands now.  This copies every
@@ -122,8 +123,8 @@ typedef struct {
     uint8_t resume_map;         /* prospective source cursor; not committed */
     /* One means that the requested DB's source eligibility rule was applied.
      * DB2/Text is a source chain barrier, not a recycler candidate. DB0,
-     * DB4 and DB14 still require their source creature, missile and
-     * relocation owners. */
+     * DB4 and creature-bearing DB14 tiles still require their source
+     * creature, missile and relocation owners. */
     int eligibility_ported;
 } DM2_V1_SksaveRecycleScanReceipt;
 
@@ -216,6 +217,15 @@ int dm2_v1_sksave_map_owner_detach_dynamic_records(
     DM2_V1_SksaveMapOwner *owner,
     DM2_V1_RecordPoolSet *set,
     uint32_t *out_detached_count);
+
+/* Remove one source-selected direct tile-chain record without touching a
+ * possession chain.  The DB0 recycler uses this immediately before
+ * ALLOC_NEW_RECORD clears the selected record; static-creature possessions
+ * remain gated until their source delete owner is retained. */
+int dm2_v1_sksave_map_owner_cut_tile_record(
+    DM2_V1_SksaveMapOwner *owner,
+    DM2_V1_RecordPoolSet *set,
+    int map, int x, int y, uint16_t record_link);
 
 /* Restore the source SUPPRESS fields of one already resident DB0..DB3 tile
  * chain. The caller obtains `root_link` from DM2_V1_SksaveMapOwner; no
@@ -398,6 +408,20 @@ int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
     void *query_creature_ai_flags_ctx,
     DM2_V1_SksaveDirectRootReceipt *out_receipt);
 
+/* Same source phase with the already-owned c_map available to
+ * ALLOC_NEW_RECORD's DB0 recycler.  The raw-body helper above intentionally
+ * remains map-free for pre-link diagnostics; GAME_LOAD must use this variant
+ * after its private map owner has been detached/cleared in source order. */
+int dm2_v1_record_pool_restore_raw_sksave_direct_roots_with_map_owner(
+    DM2_V1_RecordPoolSet *set,
+    DM2_V1_SksaveMapOwner *map_owner,
+    const uint8_t *raw_body,
+    size_t raw_body_size,
+    const DM2_V1_OriginalRawSaveStateReceipt *state_receipt,
+    DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
+    void *query_creature_ai_flags_ctx,
+    DM2_V1_SksaveDirectRootReceipt *out_receipt);
+
 typedef enum {
     DM2_V1_SKSAVE_PREFLIGHT_FAILURE_NONE = 0,
     DM2_V1_SKSAVE_PREFLIGHT_FAILURE_PREPARE,
@@ -408,6 +432,22 @@ typedef enum {
     DM2_V1_SKSAVE_PREFLIGHT_FAILURE_TIMER_REBUILD
 } DM2_V1_SksavePreflightFailureStage;
 
+typedef enum {
+    DM2_V1_SKSAVE_PREPARE_FAILURE_NONE = 0,
+    DM2_V1_SKSAVE_PREPARE_FAILURE_INPUT,
+    DM2_V1_SKSAVE_PREPARE_FAILURE_HEROES,
+    DM2_V1_SKSAVE_PREPARE_FAILURE_POOLS,
+    DM2_V1_SKSAVE_PREPARE_FAILURE_MAP_OWNER,
+    DM2_V1_SKSAVE_PREPARE_FAILURE_PARTY_POSITION,
+    DM2_V1_SKSAVE_PREPARE_FAILURE_DETACH_DYNAMIC,
+    DM2_V1_SKSAVE_PREPARE_FAILURE_CLEAR_DYNAMIC,
+    DM2_V1_SKSAVE_PREPARE_FAILURE_DIRECT_ROOTS,
+    DM2_V1_SKSAVE_PREPARE_FAILURE_APPLY_ROOTS,
+    DM2_V1_SKSAVE_PREPARE_FAILURE_TIMER_STREAM,
+    DM2_V1_SKSAVE_PREPARE_FAILURE_TIMER_RECEIPT,
+    DM2_V1_SKSAVE_PREPARE_FAILURE_TIMER_HASH
+} DM2_V1_SksavePrepareFailure;
+
 /* Source-order preflight through DM2_2066_197c.  It owns a temporary raw
  * c_record pool and therefore never publishes a partial runtime session.
  * The caller supplies c_hex2a.w_00 (`savegamew7`) from the same verified
@@ -415,6 +455,7 @@ typedef enum {
 typedef struct {
     int valid;
     DM2_V1_SksavePreflightFailureStage failure_stage;
+    DM2_V1_SksavePrepareFailure prepare_failure;
     uint16_t hero_count;
     uint16_t timer_count;
     uint16_t special_chain_count;
@@ -428,9 +469,15 @@ typedef struct {
     uint16_t map_failure_root_link;
     int16_t map_failure_record_type;
     int16_t map_failure_record_reason;
+    size_t map_failure_stream_offset;
+    uint8_t map_failure_stream_bits_remaining;
     int16_t recycle_required_db;
-    /* Reserved source field. DB2/Text is a recycler chain barrier, so this
-     * remains zero; it never admits a partial owner as a Resume session. */
+    uint8_t recycle_status;
+    /* Number of OBJECT_NULL slots observed in the requested pool when the
+     * source allocator reached its failure boundary. */
+    uint16_t recycle_free_slot_count;
+    /* Number of source-ordered direct DB2 records recycled before a later
+     * map boundary, if any. Protected Text records are never counted. */
     uint16_t recycle_db2_count;
     uint32_t possession_link_count;
     uint32_t possession_continuation_count;

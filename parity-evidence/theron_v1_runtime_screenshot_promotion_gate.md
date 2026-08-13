@@ -28,14 +28,14 @@ returned for rows whose data directory is missing on this host.
 
 | Case | Classification | Source sha256 | Probe summary | Notes |
 |---|---|---|---|---|
-| canonical_pcengine_root | `README_ELIGIBLE` | `94ac0999e56d4f5a33b8e929d11bf31b62c368c518837339f072cd37726acb40` | sourceId=theron launchedEver=1 gameTick=0 mapIndex=0 lastOutcome='THERON RUNTIME (TRACK 02 DUNGEON)' | — |
+| canonical_pcengine_root | `README_INELIGIBLE` | `a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f` | sourceId=theron launchedEver=1 gameTick=0 mapIndex=0 lastOutcome='THERON RUNTIME (TRACK 02 DUNGEON)' | readiness row status is 'FAIL', not PASS; presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels) |
 | jp_extras_track02_bin | `SKIPPED_NO_DATA` | `—` | sourceId=None launchedEver=None gameTick=None mapIndex=None lastOutcome=None | data directory missing; row skipped, not promoted |
 | us_extras_track02_bin | `SKIPPED_NO_DATA` | `—` | sourceId=None launchedEver=None gameTick=None mapIndex=None lastOutcome=None | data directory missing; row skipped, not promoted |
 
 ## Aggregate
 
-- Eligible rows: **1**
-- Ineligible rows: **0**
+- Eligible rows: **0**
+- Ineligible rows: **1**
 - Skipped rows (no data on this host): **2**
 - Unique-source-sha256 findings: **0**
 - Contract-drift findings: **0**

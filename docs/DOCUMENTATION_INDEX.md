@@ -14,7 +14,7 @@ original-media playability or pixel parity.
 |---|---|---|
 | Dungeon Master (DM1) | Playable PC 3.4 V1 runtime with source-locked startup, HUD, viewport, combat, saves and original-data gates | Continued original-route captures and V2 visual polish |
 | Chaos Strikes Back (CSB) | Source-locked engine slices, startup/entrance, dungeon model, DSA, mechanics, utility/import and rendering contracts | End-to-end real-data runtime proof |
-| Dungeon Master II: Skullkeep | DOS/FM Towns runtime slices; both English Macintosh editions boot from authentic ZIPs and pass bounded New Game/media/input gates | Complete V1 parity; Mac GAME_LOAD/Resume and native dynamic pointer/drag ownership |
+| Dungeon Master II: Skullkeep | Playable source-owned runtime from DOS, Amiga, FM Towns and Macintosh real media; M12 owner selection and M11 handoff verified | Native non-DOS saves, positive DOS WIELD/death-drop evidence and broader V1 parity |
 | DM Nexus | Saturn DMDF/DGN, world, save, mechanics, V2 presentation, MNS/SAL/MAP and bounded PRS3 evidence | Positive real-asset runtime handoff, visible material rendering and full playability |
 | Theron's Quest | JP/US Track 02 identity, startup records, descriptor/level framing, parser, mechanics, progression, save boundary and capture instrumentation | Game-owned Track 02 dungeon handoff, object/level semantics, bitmap/palette binding and app capture |
 

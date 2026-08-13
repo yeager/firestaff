@@ -319,10 +319,9 @@ int dm2_v1_rotate_actuator_list(
     int last_match = -1;
     int match_count = 0;
 
-    /* Keep every chain member.  The original implementation rewired only
-     * actuator handles and could detach text/items interleaved on the same
-     * tile.  Source list rotation moves the selected actuator within the
-     * complete chain, so all other links must survive unchanged. */
+    /* Preserve every chain member.  Source list rotation moves the selected
+     * actuator within the complete chain; it must not detach interleaved
+     * items, text, or other non-actuator records. */
     while ((uint16_t)rec != OBJECT_END_WORD &&
            (uint16_t)rec != OBJECT_NULL_WORD) {
         uint16_t w = (uint16_t)rec;
@@ -341,12 +340,12 @@ int dm2_v1_rotate_actuator_list(
         next = cb->get_next_record_link(ctx, w);
         rec = next;
     }
+
     if (match_count < 2 || first_match < 0 || last_match < 0)
         return 0;
 
     /* Move the last matching actuator immediately before the first matching
-     * actuator.  This is equivalent to [A,B,C] -> [C,A,B], while retaining
-     * any non-actuator records between those nodes. */
+     * actuator: [A,B,C] becomes [C,A,B], while interleaved records survive. */
     {
         int out = 0;
         int i;
@@ -365,5 +364,6 @@ int dm2_v1_rotate_actuator_list(
             cb->set_tile_record_link(ctx, map_x, map_y,
                                      (int16_t)reordered[0]);
     }
+
     return 1;
 }

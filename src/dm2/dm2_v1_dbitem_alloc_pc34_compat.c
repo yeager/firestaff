@@ -15,6 +15,7 @@
  */
 
 #include "dm2_v1_dbitem_alloc_pc34_compat.h"
+#include "dm2_v1_data_tables_pc34_compat.h"
 #include "dm2_v1_record_ops_pc34_compat.h"
 
 #include <string.h>
@@ -37,6 +38,26 @@ static void dm2_v1_wr16(uint8_t *p, int16_t v)
     uint16_t u = (uint16_t)v;
     p[0] = (uint8_t)(u & 0xffu);
     p[1] = (uint8_t)((u >> 8) & 0xffu);
+}
+
+static int16_t dm2_v1_pool_rd16(const DM2_V1_RecordPoolSet *set,
+                                const uint8_t *p)
+{
+    if (set && set->source_words_big_endian)
+        return (int16_t)(((uint16_t)p[0] << 8) | p[1]);
+    return dm2_v1_rd16(p);
+}
+
+static void dm2_v1_pool_wr16(const DM2_V1_RecordPoolSet *set,
+                             uint8_t *p, int16_t v)
+{
+    uint16_t u = (uint16_t)v;
+    if (set && set->source_words_big_endian) {
+        p[0] = (uint8_t)(u >> 8);
+        p[1] = (uint8_t)u;
+    } else {
+        dm2_v1_wr16(p, v);
+    }
 }
 
 int16_t dm2_v1_record_pool_alloc_new_record(DM2_V1_RecordPoolSet *set,
@@ -80,15 +101,15 @@ int16_t dm2_v1_record_pool_alloc_new_record(DM2_V1_RecordPoolSet *set,
     for (index = 0; index < scan_count; ++index) {
         uint8_t *addr =
             pool->bytes + (size_t)index * (size_t)pool->record_size;
-        if (dm2_v1_rd16(addr) != DM2_V1_RECORD_HANDLE_NULL) {
+        if (dm2_v1_pool_rd16(set, addr) != DM2_V1_RECORD_HANDLE_NULL) {
             continue;
         }
         /* c_record.cpp:1131-1139 — zero the slot, terminate its own link;
          * dbContainer also terminates its content link (w2). */
         memset(addr, 0, (size_t)pool->record_size);
-        dm2_v1_wr16(addr, DM2_V1_RECORD_HANDLE_END);
+        dm2_v1_pool_wr16(set, addr, DM2_V1_RECORD_HANDLE_END);
         if (db == DM2_V1_DB_CONTAINER) {
-            dm2_v1_wr16(addr + 2, DM2_V1_RECORD_HANDLE_END);
+            dm2_v1_pool_wr16(set, addr + 2, DM2_V1_RECORD_HANDLE_END);
         }
         return (int16_t)((db << 10) | (index & 0x3ff));
     }
@@ -129,9 +150,9 @@ int dm2_v1_record_pool_set_itemtype(DM2_V1_RecordPoolSet *set,
         case 6:
             addr[2] &= 0x80u;
             {
-                uint16_t w = (uint16_t)dm2_v1_rd16(addr + 2);
+                uint16_t w = (uint16_t)dm2_v1_pool_rd16(set, addr + 2);
                 w |= (uint16_t)(itemtype & 0x7fu);
-                dm2_v1_wr16(addr + 2, (int16_t)w);
+                dm2_v1_pool_wr16(set, addr + 2, (int16_t)w);
             }
             return 1;
         case 3: /* db7 Scroll: source returns without a write */
@@ -139,24 +160,25 @@ int dm2_v1_record_pool_set_itemtype(DM2_V1_RecordPoolSet *set,
         case 4: /* db8 Potion: word@2 high 7 bits (byte@3) */
             addr[3] &= 0x80u;
             {
-                uint16_t w = (uint16_t)dm2_v1_rd16(addr + 2);
+                uint16_t w = (uint16_t)dm2_v1_pool_rd16(set, addr + 2);
                 w |= (uint16_t)((itemtype & 0x7fu) << 8);
-                dm2_v1_wr16(addr + 2, (int16_t)w);
+                dm2_v1_pool_wr16(set, addr + 2, (int16_t)w);
             }
             return 1;
         case 5: /* db9 Container: charge split over word@4
                  * (c_record.cpp:325-341) */
             {
-                uint16_t w = (uint16_t)dm2_v1_rd16(addr + 4);
+                uint16_t w = (uint16_t)dm2_v1_pool_rd16(set, addr + 4);
                 addr[4] &= 0xf9u;
-                w = (uint16_t)dm2_v1_rd16(addr + 4);
+                w = (uint16_t)dm2_v1_pool_rd16(set, addr + 4);
                 w |= (uint16_t)(((itemtype / 8u) & 3u) << 1);
                 addr[5] &= 0x1fu;
                 w = (uint16_t)((w & 0x1fffu) |
                                ((uint16_t)(itemtype & 7u) << 13));
-                dm2_v1_wr16(addr + 4, (int16_t)w);
+                dm2_v1_pool_wr16(set, addr + 4, (int16_t)w);
                 if ((w & 0x6u) == 2u) {
-                    dm2_v1_wr16(addr + 6, DM2_V1_RECORD_HANDLE_NULL);
+                    dm2_v1_pool_wr16(set, addr + 6,
+                                      DM2_V1_RECORD_HANDLE_NULL);
                 }
             }
             return 1;
@@ -191,8 +213,129 @@ int16_t dm2_v1_alloc_new_dbitem(DM2_V1_RecordPoolSet *set,
     return record;
 }
 
+int16_t dm2_v1_alloc_new_dbitem_from_world(
+    DM2_V1_RecordPoolSet *set, DM2_V1_DungeonData *dungeon,
+    int current_map, uint16_t itemspec)
+{
+    int db = dm2_v1_get_itemdb_of_itemspec_actuator(itemspec);
+    if (!set || !set->valid || !dungeon || current_map < 0 ||
+        current_map >= dungeon->level_count ||
+        (db != DM2_V1_DB_WEAPON && db != DM2_V1_DB_CLOTH &&
+         db != DM2_V1_DB_POTION && db != DM2_V1_DB_MISC))
+        return DM2_V1_RECORD_HANDLE_NULL;
+    for (int map = 0; map < dungeon->level_count; ++map) {
+        if (map == current_map) continue;
+        for (int x = 0; x < dungeon->level_widths[map]; ++x) {
+            for (int y = 0; y < dungeon->level_heights[map]; ++y) {
+                int16_t head = (int16_t)dm2_v1_dungeon_get_first_thing(
+                    dungeon, map, x, y);
+                int16_t cursor = head;
+                int steps = 0;
+                while (cursor != DM2_V1_RECORD_HANDLE_END) {
+                    int16_t next;
+                    uint8_t *record;
+                    if (cursor == DM2_V1_RECORD_HANDLE_NULL ||
+                        ++steps > DM2_V1_SKSAVE_RECYCLE_MAX_STEPS ||
+                        dm2_v1_record_handle_pool(cursor) < 0 ||
+                        !dm2_v1_record_pool_next_link(set, cursor, &next) ||
+                        !(record = dm2_v1_record_pool_address_mut(set, cursor)))
+                        break;
+                    {
+                        int pool = dm2_v1_record_handle_pool(cursor);
+                        uint16_t word2 = set->source_words_big_endian
+                            ? (uint16_t)(((uint16_t)record[2] << 8) | record[3])
+                            : (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+                        /* c_record.cpp:DA34-DAF1 — actuator and Text
+                         * extension barriers terminate the tile scan before
+                         * a later record can become a recycle candidate. */
+                        uint16_t record_word2 = dm2_v1_pool_rd16(set, record + 2);
+                        if (pool == 3 && (record_word2 & 0x7fu) < 44u &&
+                            dm2_v1_table_1d324c[record_word2 & 0x7fu] != 0)
+                            break;
+                        if (pool == 2 && (word2 & 0x0006u) == 0x0002u &&
+                            ((word2 >> 11) & 0x001fu) == 4u)
+                            break;
+                    }
+                    if (dm2_v1_record_handle_pool(cursor) == db &&
+                        (dm2_v1_pool_rd16(set, record + 2) & 0x0080u) == 0u) {
+                        int16_t new_head = head;
+                        if (dm2_v1_record_pool_cut_from_list(
+                                set, &new_head, cursor) == 1 &&
+                            dm2_v1_dungeon_set_first_thing(
+                                dungeon, map, x, y, (uint16_t)new_head) == 0) {
+                            memset(record, 0,
+                                   (size_t)set->pools[db].record_size);
+                            dm2_v1_pool_wr16(set, record,
+                                              DM2_V1_RECORD_HANDLE_END);
+                            (void)dm2_v1_record_pool_set_itemtype(
+                                set, cursor,
+                                (uint8_t)dm2_v1_get_itemtype_of_itemspec_actuator(
+                                    itemspec));
+                            return cursor;
+                        }
+                    }
+                    cursor = next;
+                }
+            }
+        }
+    }
+
+    /* c_record.cpp::RECYCLE_A_RECORD_FROM_THE_WORLD also reaches records
+     * held by a creature before declaring a DB pool exhausted.  Generated
+     * creature drops commonly request DB10, while those records are not
+     * necessarily rooted in a ground stack.  Walk the authenticated DB4
+     * possession heads and recycle only a non-important candidate. */
+    if (db == DM2_V1_DB_WEAPON || db == DM2_V1_DB_CLOTH ||
+        db == DM2_V1_DB_POTION || db == DM2_V1_DB_MISC) {
+        const DM2_V1_RecordPool *creatures = &set->pools[DM2_V1_DB_CREATURE];
+        const int creature_count = creatures->record_count +
+            creatures->extension_count;
+        for (int creature_index = 0;
+             creature_index < creature_count; ++creature_index) {
+            int16_t creature_handle = (int16_t)(
+                (DM2_V1_DB_CREATURE << 10) | (creature_index & 0x3ff));
+            uint8_t *creature = dm2_v1_record_pool_address_mut(
+                set, creature_handle);
+            if (!creature) continue;
+            int16_t head = dm2_v1_pool_rd16(set, creature + 2);
+            int steps = 0;
+            int budget = creatures->record_count + creatures->extension_count + 1;
+            while (head != DM2_V1_RECORD_HANDLE_END &&
+                   head != DM2_V1_RECORD_HANDLE_NULL && steps++ < budget) {
+                int16_t next;
+                uint8_t *candidate = dm2_v1_record_pool_address_mut(set, head);
+                if (!candidate || !dm2_v1_record_pool_next_link(set, head,
+                                                                  &next))
+                    break;
+                if (dm2_v1_record_handle_pool(head) == db &&
+                    set->pools[db].record_size >= 4 &&
+                    (dm2_v1_pool_rd16(set, candidate + 2) & 0x0080u) == 0u) {
+                    int16_t new_head = (int16_t)dm2_v1_pool_rd16(set, creature + 2);
+                    if (dm2_v1_record_pool_cut_from_list(set, &new_head, head)) {
+                        dm2_v1_pool_wr16(set, creature + 2, new_head);
+                        memset(candidate, 0,
+                               (size_t)set->pools[db].record_size);
+                        dm2_v1_pool_wr16(set, candidate,
+                                         DM2_V1_RECORD_HANDLE_END);
+                        (void)dm2_v1_record_pool_set_itemtype(
+                            set, head,
+                            (uint8_t)dm2_v1_get_itemtype_of_itemspec_actuator(
+                                itemspec));
+                        return head;
+                    }
+                    break;
+                }
+                head = next;
+            }
+        }
+    }
+    return DM2_V1_RECORD_HANDLE_NULL;
+}
+
 int dm2_v1_drops_place_source_slots(
     DM2_V1_RecordPoolSet *set,
+    DM2_V1_DungeonData *dungeon,
+    int map,
     const uint16_t slot_words[DM2_DROP_SLOT_COUNT],
     DM2_V1_DropRng *rng,
     int party_x, int party_y, int party_dir,
@@ -244,8 +387,8 @@ int dm2_v1_drops_place_source_slots(
             item.slot_field = DM2_DROP_SLOT_FIRST + slot;
             item.item_ordinal = ordinal;
             item.itemspec = itemspec;
-            item.item_db = -1;
-            item.item_type = -1;
+            item.item_db = dm2_v1_get_itemdb_of_itemspec_actuator(itemspec);
+            item.item_type = dm2_v1_get_itemtype_of_itemspec_actuator(itemspec);
             item.record = DM2_V1_RECORD_HANDLE_NULL;
             item.at_party_cell = at_party;
             item.direction_rand = -1;
@@ -254,8 +397,25 @@ int dm2_v1_drops_place_source_slots(
             /* c_record.cpp:1603-1608 — ALLOC_NEW_DBITEM; OBJECT_NULL
              * breaks the slot loop BEFORE the direction draw. */
             record = dm2_v1_alloc_new_dbitem(set, itemspec);
+            if (record == DM2_V1_RECORD_HANDLE_NULL)
+                record = dm2_v1_alloc_new_dbitem_from_world(
+                    set, dungeon, map, itemspec);
             if (record == DM2_V1_RECORD_HANDLE_NULL) {
                 item.alloc_failed = 1;
+                if (item.item_db >= 0 && item.item_db < DM2_V1_RECORD_POOL_COUNT) {
+                    const DM2_V1_RecordPool *pool = &set->pools[item.item_db];
+                    int scan_count = pool->record_count;
+                    if (item.item_db == DM2_V1_DB_MISC)
+                        scan_count -= 3;
+                    for (int free_index = 0; free_index < scan_count;
+                         ++free_index) {
+                        const uint8_t *free_record = pool->bytes +
+                            (size_t)free_index * (size_t)pool->record_size;
+                        if (dm2_v1_pool_rd16(set, free_record) ==
+                            DM2_V1_RECORD_HANDLE_NULL)
+                            ++item.alloc_free_records;
+                    }
+                }
                 if (out_items != NULL && iterations < max_items) {
                     out_items[iterations] = item;
                 }

@@ -134,6 +134,15 @@ static int flags_bit0_set(int creature_type, uint16_t *out_flags)
     return 1;
 }
 
+static int flags_from_context(void *context, int creature_type,
+                              uint16_t *out_flags)
+{
+    (void)creature_type;
+    if (!context || !out_flags) return 0;
+    *out_flags = *(const uint16_t *)context;
+    return 1;
+}
+
 /* Slot 0: (w & 0xf) = 1 -> base 2 items, no extra roll; itemspec
  * w >> 7 = 5 -> dbWeapon type 5.  All other slots empty. */
 static const uint16_t k_drop_slots[DM2_DROP_SLOT_COUNT] = {
@@ -157,7 +166,7 @@ int main(void)
         memset(&rc, 0, sizeof(rc));
         memset(items, 0, sizeof(items));
         CHECK(dm2_v1_drop_creature_possession(
-                  &set, &dungeon, &rng, flags_bit0_clear,
+                  &set, &dungeon, 0, &rng, flags_bit0_clear,
                   mk_handle(4, 0), 0, 0, 0, 0, 0, 0, 1,
                   k_drop_slots, items, 4, &rc) == 1,
               "full drop runs to the source end");
@@ -210,6 +219,78 @@ int main(void)
     }
     dm2_v1_record_pool_set_free(&set);
 
+    /* ── private AI-owner context does not use the global callback ───── */
+    build_dungeon(&dungeon, raw);
+    build_pools(&set);
+    dm2_v1_drops_rng_init(&rng);
+    {
+        const uint16_t private_flags = 0x0001u;
+        DM2_V1_DropPossessionReceipt rc;
+        memset(&rc, 0, sizeof(rc));
+        CHECK(dm2_v1_drop_creature_possession_with_context(
+                  &set, &dungeon, 0, &rng, flags_from_context,
+                  (void *)&private_flags, mk_handle(4, 0), 0, 0, 1, -1,
+                  5, 5, 0, NULL, NULL, 0, &rc) == 1 &&
+                  rc.ai_flags_known == 1 && rc.dir_draws == 0,
+              "context-bound AI flags owner drives possession walk");
+    }
+    dm2_v1_record_pool_set_free(&set);
+
+    /* ── malformed possession tail: preflight before generated drops ─── */
+    build_dungeon(&dungeon, raw);
+    build_pools(&set);
+    wr16(set.pools[5].bytes + 4u, DM2_V1_RECORD_HANDLE_NULL);
+    dm2_v1_drops_rng_init(&rng);
+    {
+        DM2_V1_DropRng rng_before = rng;
+        DM2_V1_DropPossessionReceipt rc;
+        memset(&rc, 0, sizeof(rc));
+        CHECK(dm2_v1_drop_creature_possession(
+                  &set, &dungeon, 0, &rng, flags_bit0_clear,
+                  mk_handle(4, 0), 0, 0, 0, 0, 0, 0, 1,
+                  k_drop_slots, NULL, 0, &rc) == 0 &&
+                  rc.walk_corrupt == 1 &&
+                  rc.generated_drops_ran == 0,
+              "malformed possession tail fails before generated drops");
+        CHECK(rng.random == rng_before.random &&
+                  dm2_v1_dungeon_get_first_thing(&dungeon, 0, 0, 0) ==
+                      mk_handle(5, 0) &&
+                  rd16(set.pools[5].bytes + 8u) ==
+                      DM2_V1_RECORD_HANDLE_NULL,
+              "malformed possession tail leaves RNG, ground and pools intact");
+    }
+    dm2_v1_record_pool_set_free(&set);
+
+    /* ── authenticated non-zero map: never fall back to map 0 ───── */
+    build_dungeon(&dungeon, raw);
+    build_pools(&set);
+    dungeon.level_count = 2;
+    dungeon.level_widths[1] = 2;
+    dungeon.level_heights[1] = 2;
+    dungeon.level_offsets[1] = 4;
+    dungeon.square_first_thing_count = 4;
+    raw[MAP_BASE + 4] = 0x10;
+    raw[MAP_BASE + 5] = 0x10;
+    wr16(raw + COLUMN_BASE + 4, 2);
+    wr16(raw + COLUMN_BASE + 6, 4);
+    wr16(raw + GROUND_BASE + 4, DM2_V1_RECORD_HANDLE_END);
+    wr16(raw + GROUND_BASE + 6, DM2_V1_RECORD_HANDLE_END);
+    dm2_v1_drops_rng_init(&rng);
+    {
+        DM2_V1_DropPossessionReceipt rc;
+        memset(&rc, 0, sizeof(rc));
+        CHECK(dm2_v1_drop_creature_possession(
+                  &set, &dungeon, 1, &rng, flags_bit0_set,
+                  mk_handle(4, 0), 0, 0, 0, -1, 5, 5, 0,
+                  NULL, NULL, 0, &rc) == 1 &&
+                  dm2_v1_dungeon_get_first_thing(&dungeon, 1, 0, 0) !=
+                      mk_handle(5, 0) &&
+                  dm2_v1_dungeon_get_first_thing(&dungeon, 0, 0, 0) ==
+                      mk_handle(5, 0),
+              "drop possession writes the authenticated non-zero map only");
+    }
+    dm2_v1_record_pool_set_free(&set);
+
     /* ── AI bit0 set: no direction draws ─────────────────────────── */
     build_dungeon(&dungeon, raw);
     build_pools(&set);
@@ -218,7 +299,7 @@ int main(void)
         DM2_V1_DropPossessionReceipt rc;
         memset(&rc, 0, sizeof(rc));
         CHECK(dm2_v1_drop_creature_possession(
-                  &set, &dungeon, &rng, flags_bit0_set,
+                  &set, &dungeon, 0, &rng, flags_bit0_set,
                   mk_handle(4, 0), 0, 0, 0, -1, 5, 5, 0,
                   NULL, NULL, 0, &rc) == 1,
               "bit0-set walk runs without draws");
@@ -245,7 +326,7 @@ int main(void)
         DM2_V1_DropPossessionReceipt rc;
         memset(&rc, 0, sizeof(rc));
         CHECK(dm2_v1_drop_creature_possession(
-                  &set, &dungeon, &rng, flags_bit0_clear,
+                  &set, &dungeon, 0, &rng, flags_bit0_clear,
                   mk_handle(4, 0), 0, 1, 0, 0, 9, 9, 2,
                   k_drop_slots, NULL, 0, &rc) == 1,
               "generated drops onto an empty cell chain complete");
@@ -267,7 +348,7 @@ int main(void)
         DM2_V1_DropPossessionReceipt rc;
         memset(&rc, 0, sizeof(rc));
         CHECK(dm2_v1_drop_creature_possession(
-                  &set, &dungeon, NULL, NULL,
+                  &set, &dungeon, 0, NULL, NULL,
                   mk_handle(4, 0), 0, 0, 2, 0, 0, 0, 0,
                   k_drop_slots, NULL, 0, &rc) == 1,
               "mode 2 returns immediately");
@@ -286,7 +367,7 @@ int main(void)
         DM2_V1_DropPossessionReceipt rc;
         memset(&rc, 0, sizeof(rc));
         CHECK(dm2_v1_drop_creature_possession(
-                  &set, &dungeon, &rng, flags_bit0_clear,
+                  &set, &dungeon, 0, &rng, flags_bit0_clear,
                   mk_handle(4, 0), 1, 1, 0, 0, 0, 0, 0,
                   k_drop_slots, NULL, 0, &rc) == 0,
               "flag-less drop cell fails closed");
@@ -294,7 +375,7 @@ int main(void)
 
         memset(&rc, 0, sizeof(rc));
         CHECK(dm2_v1_drop_creature_possession(
-                  &set, &dungeon, NULL, flags_bit0_clear,
+                  &set, &dungeon, 0, NULL, flags_bit0_clear,
                   mk_handle(4, 0), 0, 0, 0, 0, 0, 0, 0,
                   k_drop_slots, NULL, 0, &rc) == 0,
               "NULL rng fails closed before any mutation");
@@ -303,7 +384,7 @@ int main(void)
         memset(&rc, 0, sizeof(rc));
         dm2_v1_drops_rng_init(&rng);
         CHECK(dm2_v1_drop_creature_possession(
-                  &set, &dungeon, &rng, NULL,
+                  &set, &dungeon, 0, &rng, NULL,
                   mk_handle(4, 0), 0, 0, 1, 0, 0, 0, 0,
                   NULL, NULL, 0, &rc) == 0,
               "unwired AI flags fail closed before the first draw");

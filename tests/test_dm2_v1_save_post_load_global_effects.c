@@ -59,9 +59,9 @@ static void reset_mocks(void)
     g_0e_count = 0;
 }
 
-static DM2_V1_GlobalEffectCallbacks make_cb(void)
+static DM2_V1_SaveGlobalEffectCallbacks make_cb(void)
 {
-    DM2_V1_GlobalEffectCallbacks cb;
+    DM2_V1_SaveGlobalEffectCallbacks cb;
     memset(&cb, 0, sizeof(cb));
     cb.process_timer_0e = mock_process_0e;
     cb.add_hero_ench_power = mock_add_ench;
@@ -89,7 +89,7 @@ static void test_null_safety(void)
 
 static void test_no_timers(void)
 {
-    DM2_V1_GlobalEffectCallbacks cb = make_cb();
+    DM2_V1_SaveGlobalEffectCallbacks cb = make_cb();
     DM2_V1_GlobalEffectReceipt r;
     assert(dm2_v1_post_load_global_effects(NULL, 0, 2, &cb, &r) == 0);
     assert(r.valid == 1);
@@ -102,7 +102,7 @@ static void test_light_positive(void)
     reset_mocks();
     uint8_t timers[TIMER_SIZE];
     set_timer(timers, 0x46, 0, 3);
-    DM2_V1_GlobalEffectCallbacks cb = make_cb();
+    DM2_V1_SaveGlobalEffectCallbacks cb = make_cb();
     DM2_V1_GlobalEffectReceipt r;
     assert(dm2_v1_post_load_global_effects(timers, 1, 0, &cb, &r) == 0);
     assert(r.light_accumulator == -112);
@@ -114,7 +114,7 @@ static void test_light_negative(void)
     reset_mocks();
     uint8_t timers[TIMER_SIZE];
     set_timer(timers, 0x46, 0, -2);
-    DM2_V1_GlobalEffectCallbacks cb = make_cb();
+    DM2_V1_SaveGlobalEffectCallbacks cb = make_cb();
     DM2_V1_GlobalEffectReceipt r;
     assert(dm2_v1_post_load_global_effects(timers, 1, 0, &cb, &r) == 0);
     assert(r.light_accumulator == 24);
@@ -128,7 +128,7 @@ static void test_attack_count(void)
     set_timer(timers + 0 * TIMER_SIZE, 0x47, 0, 0);
     set_timer(timers + 1 * TIMER_SIZE, 0x47, 0, 0);
     set_timer(timers + 2 * TIMER_SIZE, 0x00, 0, 0);
-    DM2_V1_GlobalEffectCallbacks cb = make_cb();
+    DM2_V1_SaveGlobalEffectCallbacks cb = make_cb();
     DM2_V1_GlobalEffectReceipt r;
     assert(dm2_v1_post_load_global_effects(timers, 3, 0, &cb, &r) == 0);
     assert(r.attack_count == 2);
@@ -141,7 +141,7 @@ static void test_ench_power_bitmask(void)
     g_alive[0] = 1; g_alive[1] = 1; g_alive[2] = 0; g_alive[3] = 1;
     uint8_t timers[TIMER_SIZE];
     set_timer(timers, 0x48, 0x0B, 5);
-    DM2_V1_GlobalEffectCallbacks cb = make_cb();
+    DM2_V1_SaveGlobalEffectCallbacks cb = make_cb();
     DM2_V1_GlobalEffectReceipt r;
     assert(dm2_v1_post_load_global_effects(timers, 1, 4, &cb, &r) == 0);
     assert(g_ench_power[0] == 5);
@@ -158,7 +158,7 @@ static void test_poison(void)
     g_alive[2] = 1;
     uint8_t timers[TIMER_SIZE];
     set_timer(timers, 0x4B, 2, 10);
-    DM2_V1_GlobalEffectCallbacks cb = make_cb();
+    DM2_V1_SaveGlobalEffectCallbacks cb = make_cb();
     DM2_V1_GlobalEffectReceipt r;
     assert(dm2_v1_post_load_global_effects(timers, 1, 4, &cb, &r) == 0);
     assert(g_poison[2] == 10);
@@ -172,7 +172,7 @@ static void test_timer_0e(void)
     reset_mocks();
     uint8_t timers[TIMER_SIZE];
     set_timer(timers, 0x0E, 0, 0);
-    DM2_V1_GlobalEffectCallbacks cb = make_cb();
+    DM2_V1_SaveGlobalEffectCallbacks cb = make_cb();
     DM2_V1_GlobalEffectReceipt r;
     assert(dm2_v1_post_load_global_effects(timers, 1, 0, &cb, &r) == 0);
     assert(r.timer_0e_processed == 1);
@@ -186,7 +186,7 @@ static void test_dead_hero_poisoned(void)
     g_alive[1] = 0;
     uint8_t timers[TIMER_SIZE];
     set_timer(timers, 0x4B, 1, 5);
-    DM2_V1_GlobalEffectCallbacks cb = make_cb();
+    DM2_V1_SaveGlobalEffectCallbacks cb = make_cb();
     DM2_V1_GlobalEffectReceipt r;
     assert(dm2_v1_post_load_global_effects(timers, 1, 4, &cb, &r) == 0);
     assert(g_poison[1] == 5);
@@ -198,7 +198,7 @@ static void test_dead_hero_poisoned(void)
 static void test_light_outside_source_range_ignored(void)
 {
     uint8_t timers[TIMER_SIZE];
-    DM2_V1_GlobalEffectCallbacks cb = make_cb();
+    DM2_V1_SaveGlobalEffectCallbacks cb = make_cb();
     DM2_V1_GlobalEffectReceipt r;
     set_timer(timers, 0x46, 0, 16);
     assert(dm2_v1_post_load_global_effects(timers, 1, 0, &cb, &r) == 0);

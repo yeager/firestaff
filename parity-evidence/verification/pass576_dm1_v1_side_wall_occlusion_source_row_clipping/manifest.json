@@ -102,7 +102,7 @@
       "id": "firestaff_side_wall_metadata_has_returning_side_lanes_only",
       "lines": "1-9999",
       "missing": [],
-      "path": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "path": "/Volumes/Extern-disk/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "fa73242177ef31335a4d70d6cbdb0b48856ca81310c37a38ea751e758d3e7543",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -151,7 +151,7 @@
       "id": "firestaff_wall_clip_gate_retains_source_offsets_and_occlusion",
       "lines": "1-9999",
       "missing": [],
-      "path": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "path": "/Volumes/Extern-disk/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "fa73242177ef31335a4d70d6cbdb0b48856ca81310c37a38ea751e758d3e7543",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -208,7 +208,7 @@
       "id": "firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows",
       "lines": "1-9999",
       "missing": [],
-      "path": "/Volumes/Extern-disk/firestaff-claude/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "path": "/Volumes/Extern-disk/firestaff/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "bba3b4fc454fcb43c1ea97f26fc46531072a86f7457283fb9fc58ad2c2e87d2f",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -253,7 +253,7 @@
       "id": "firestaff_clip_row_runtime_assertions_are_registered",
       "lines": "1-9999",
       "missing": [],
-      "path": "/Volumes/Extern-disk/firestaff-claude/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "path": "/Volumes/Extern-disk/firestaff/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "bba3b4fc454fcb43c1ea97f26fc46531072a86f7457283fb9fc58ad2c2e87d2f",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"

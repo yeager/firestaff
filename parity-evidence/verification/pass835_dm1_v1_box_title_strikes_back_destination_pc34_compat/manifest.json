@@ -91,11 +91,11 @@
     }
   ],
   "status": "PASS835_DM1_V1_BOX_TITLE_STRIKES_BACK_DESTINATION_LOCKED",
-  "timestampUtc": "2026-08-11T06:50:27.054018+00:00",
+  "timestampUtc": "2026-08-12T01:40:13.418744+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_box_title_strikes_back_destination_pc34_compat"
+        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_box_title_strikes_back_destination_pc34_compat"
       ],
       "outputTail": "dm1_v1_box_title_strikes_back_destination: 53/53 assertions passed",
       "passed": true,

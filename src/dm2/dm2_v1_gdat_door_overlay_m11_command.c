@@ -29,29 +29,31 @@ typedef struct {
     int h;
 } DM2_V1_DoorRawRect;
 
-static uint16_t read_le16(const uint8_t *bytes)
+static uint16_t read_u16(const uint8_t *bytes, int big_endian)
 {
-    return (uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8);
+    return big_endian
+        ? (uint16_t)(((uint16_t)bytes[0] << 8) | bytes[1])
+        : (uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8);
 }
 
-static int16_t read_le16s(const uint8_t *bytes)
+static int16_t read_s16(const uint8_t *bytes, int big_endian)
 {
-    return (int16_t)read_le16(bytes);
+    return (int16_t)read_u16(bytes, big_endian);
 }
 
 static const uint8_t *find_raw4_row(const uint8_t *table, size_t table_size,
-                                    uint16_t rect_number)
+                                    uint16_t rect_number, int big_endian)
 {
     uint16_t groups;
     size_t offset;
 
-    if (!table || table_size < 4u || read_le16(table) != 0xfc0du) return NULL;
-    groups = read_le16(table + 2u);
+    if (!table || table_size < 4u || read_u16(table, big_endian) != 0xfc0du) return NULL;
+    groups = read_u16(table + 2u, big_endian);
     if (groups == 0u || (size_t)groups > (table_size - 4u) / 4u) return NULL;
     offset = 4u + (size_t)groups * 4u;
     for (uint16_t group = 0u; group < groups; ++group) {
-        uint16_t first = read_le16(table + 4u + (size_t)group * 4u);
-        uint16_t last = read_le16(table + 6u + (size_t)group * 4u);
+        uint16_t first = read_u16(table + 4u + (size_t)group * 4u, big_endian);
+        uint16_t last = read_u16(table + 6u + (size_t)group * 4u, big_endian);
         size_t count = last >= first ? (size_t)(last - first + 1u) : 0u;
 
         if (count == 0u || count > (table_size - offset) / 8u) return NULL;
@@ -66,50 +68,53 @@ static const uint8_t *find_raw4_row(const uint8_t *table, size_t table_size,
 /* c_xrect.cpp::DM2_QUERY_RECT materializes a compressed raw4 row as a
  * c_rinfo.  Keep the table parsing local to this source-owned M11 command. */
 static int decode_raw4_rect(const uint8_t *table, size_t table_size,
-                            uint16_t rect_number, DM2_V1_DoorRawRect *out)
+                            uint16_t rect_number, int big_endian,
+                            DM2_V1_DoorRawRect *out)
 {
     const uint8_t *row;
     uint16_t groups;
     size_t offset;
     uint8_t mask = 0x1fu;
 
-    if (!out || !table || table_size < 4u || read_le16(table) != 0xfc0du) return 0;
-    row = find_raw4_row(table, table_size, rect_number);
+    if (!out || !table || table_size < 4u || read_u16(table, big_endian) != 0xfc0du) return 0;
+    row = find_raw4_row(table, table_size, rect_number, big_endian);
     if (!row) return 0;
-    groups = read_le16(table + 2u);
+    groups = read_u16(table + 2u, big_endian);
     offset = 4u + (size_t)groups * 4u;
     for (uint16_t group = 0u; group < groups; ++group) {
-        uint16_t first = read_le16(table + 4u + (size_t)group * 4u);
-        uint16_t last = read_le16(table + 6u + (size_t)group * 4u);
+        uint16_t first = read_u16(table + 4u + (size_t)group * 4u, big_endian);
+        uint16_t last = read_u16(table + 6u + (size_t)group * 4u, big_endian);
         size_t count = last >= first ? (size_t)(last - first + 1u) : 0u;
         if (count == 0u || count > (table_size - offset) / 8u) return 0;
         if (rect_number >= first && rect_number <= last) {
-            uint16_t x0 = read_le16(table + offset);
-            uint16_t y0 = read_le16(table + offset + 2u);
+            uint16_t x0 = read_u16(table + offset, big_endian);
+            uint16_t y0 = read_u16(table + offset + 2u, big_endian);
             for (size_t i = 0u; i < count; ++i) {
                 const uint8_t *candidate = table + offset + i * 8u;
-                int16_t width = read_le16s(candidate + 4u);
-                int16_t height = read_le16s(candidate + 6u);
-                if (read_le16(candidate) != x0) mask &= (uint8_t)~0x02u;
-                if (read_le16(candidate + 2u) != y0) mask &= (uint8_t)~0x01u;
-                if (read_le16(candidate + 2u) > 0xffu) mask &= (uint8_t)~0x04u;
+                int16_t width = read_s16(candidate + 4u, big_endian);
+                int16_t height = read_s16(candidate + 6u, big_endian);
+                if (read_u16(candidate, big_endian) != x0) mask &= (uint8_t)~0x02u;
+                if (read_u16(candidate + 2u, big_endian) != y0) mask &= (uint8_t)~0x01u;
+                if (read_u16(candidate + 2u, big_endian) > 0xffu) mask &= (uint8_t)~0x04u;
                 if (width < 0 || width > 0xff || height < 0 || height > 0xff)
                     mask &= (uint8_t)~0x10u;
                 if (width < -128 || width > 127 || height < -128 || height > 127)
                     mask &= (uint8_t)~0x08u;
             }
             if (mask & 0x03u) mask &= (uint8_t)~0x04u;
-            out->x = (mask & 0x04u) ? (int)row[0] :
-                ((mask & 0x02u) ? (int)(uint8_t)x0 : (int)read_le16s(row));
-            out->y = (mask & 0x04u) ? (int)row[2] :
-                ((mask & 0x01u) ? (int)(int16_t)y0 : (int)read_le16s(row + 2u));
+            out->x = (mask & 0x04u) ? (int)(big_endian ? row[1] : row[0]) :
+                ((mask & 0x02u) ? (int)(uint8_t)x0 : (int)read_s16(row, big_endian));
+            out->y = (mask & 0x04u) ? (int)(big_endian ? row[3] : row[2]) :
+                ((mask & 0x01u) ? (int)(int16_t)y0 : (int)read_s16(row + 2u, big_endian));
             if (mask & 0x08u) {
-                out->w = (int)(int8_t)row[4]; out->h = (int)(int8_t)row[6];
+                out->w = (int)(int8_t)(big_endian ? row[5] : row[4]);
+                out->h = (int)(int8_t)(big_endian ? row[7] : row[6]);
             } else if (mask & 0x10u) {
-                out->w = (int)row[4]; out->h = (int)row[6];
+                out->w = (int)(big_endian ? row[5] : row[4]);
+                out->h = (int)(big_endian ? row[7] : row[6]);
             } else {
-                out->w = (int)read_le16s(row + 4u);
-                out->h = (int)read_le16s(row + 6u);
+                out->w = (int)read_s16(row + 4u, big_endian);
+                out->h = (int)read_s16(row + 6u, big_endian);
             }
             return 1;
         }
@@ -144,6 +149,7 @@ static int query_raw4_blit_rect(const uint8_t *table, size_t table_size,
                                 uint16_t rect_number, int width, int height,
                                 int query_offset_x, int query_offset_y,
                                 int signed_rect, int override_mode,
+                                int big_endian,
                                 DM2_V1_DoorRawRect *out,
                                 int *out_source_x, int *out_source_y)
 {
@@ -152,7 +158,7 @@ static int query_raw4_blit_rect(const uint8_t *table, size_t table_size,
     int x0, y0, mode, pending_anchor = 0;
 
     if (!out || width <= 0 || height <= 0 ||
-        !decode_raw4_rect(table, table_size, rect_number, &current) ||
+        !decode_raw4_rect(table, table_size, rect_number, big_endian, &current) ||
         current.x == 9 || current.x < 0 || current.x > 18) return 0;
     mode = override_mode >= 0 ? override_mode : current.x;
     if (override_mode >= 0) current.x = (int16_t)override_mode;
@@ -167,7 +173,7 @@ static int query_raw4_blit_rect(const uint8_t *table, size_t table_size,
     }
     for (int guard = 0; current.y != 0 && guard < 64; ++guard) {
         DM2_V1_DoorRawRect next;
-        if (!decode_raw4_rect(table, table_size, (uint16_t)current.y, &next)) return 0;
+        if (!decode_raw4_rect(table, table_size, (uint16_t)current.y, big_endian, &next)) return 0;
         if (current.x >= 10 && current.x <= 18) {
             /* The canonical closed-door roots do not use c_xrect's nested
              * clipping grammar. Keep an unproven branch fail-closed. */
@@ -240,7 +246,7 @@ int dm2_v1_gdat_door_overlay_query_raw4_blit_placement(
     if (!table || !table_size ||
         !query_raw4_blit_rect(table, table_size, rect_number,
                               image_width, image_height,
-                              0, 0, 0, -1, &rect,
+                              0, 0, 0, -1, loader->big_endian, &rect,
                               &out_placement->source_x,
                               &out_placement->source_y) ||
         rect.x < 0 || rect.y < 0 || rect.w <= 0 || rect.h <= 0) {
@@ -355,11 +361,13 @@ static int bind_door_panel_geometry(
     table = dm2_v1_asset_load_typed_sized(
         loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
         DM2_GDAT_ENTRY_TYPE_RAW4, 0, &table_size);
-    row = find_raw4_row(table, table_size, command->rect_number);
+    row = find_raw4_row(table, table_size, command->rect_number,
+                        loader->big_endian);
     if (!table || !table_size || !row ||
         !query_raw4_blit_rect(table, table_size, command->rect_number,
                              command->source_width, command->source_height,
-                             0, 0, 0, -1, &rect, NULL, NULL) ||
+                             0, 0, 0, -1, loader->big_endian,
+                             &rect, NULL, NULL) ||
         rect.x > INT16_MAX || rect.y > INT16_MAX ||
         rect.w > UINT16_MAX || rect.h > UINT16_MAX) {
         return 0;
@@ -434,13 +442,15 @@ static int bind_door_side_frame_geometry(
     table = dm2_v1_asset_load_typed_sized(
         loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
         DM2_GDAT_ENTRY_TYPE_RAW4, 0, &table_size);
-    row = find_raw4_row(table, table_size, command->rect_number);
+    row = find_raw4_row(table, table_size, command->rect_number,
+                        loader->big_endian);
     if (!table || !table_size || !row ||
         !query_raw4_blit_rect(table, table_size, command->rect_number,
                               command->source_width, command->source_height,
                               offset_x, offset_y,
                               offset_x != 0 || offset_y != 0,
-                              side == 0 ? 4 : 3, &rect, NULL, NULL) ||
+                              side == 0 ? 4 : 3, loader->big_endian,
+                              &rect, NULL, NULL) ||
         rect.x > INT16_MAX || rect.y > INT16_MAX ||
         rect.w > UINT16_MAX || rect.h > UINT16_MAX) {
         return 0;

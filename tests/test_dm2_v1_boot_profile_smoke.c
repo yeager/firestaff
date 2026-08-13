@@ -870,7 +870,10 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
         dm2_v1_boot_complete_support_receipt_from_runtime_state(
               launch.profile,
               1,
-              launch.profile->save_root,
+              /* Keep this gate test hermetic.  The real-user DOSBox corpus
+               * may be auto-discovered by the boot profile, but this case
+               * specifically proves the empty-root rejection contract. */
+              "/tmp/firestaff-dm2-profile-smoke-empty",
               1,
               1u,
               0,

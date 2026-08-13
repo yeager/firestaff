@@ -108,6 +108,7 @@ typedef struct {
     /* Timer-effect request (host-owned timer creation) */
     int timer_kind;                   /* DM2_V1_SPELL_TIMER_* */
     int timer_duration;               /* source-derived duration in ticks */
+    int timer_value_a;                /* source timer A (e.g. signed 0x46 step) */
     int object_effect;                /* DM2_OBJECT_EFFECT_* for missiles/clouds */
 
     /* Failure classification (DM2_PROCEED_SPELL_FAILURE) */

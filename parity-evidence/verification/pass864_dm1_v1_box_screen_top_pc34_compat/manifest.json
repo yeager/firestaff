@@ -71,11 +71,11 @@
     }
   ],
   "status": "PASS864_DM1_V1_BOX_SCREEN_TOP_LOCKED",
-  "timestampUtc": "2026-08-11T06:50:28.630691+00:00",
+  "timestampUtc": "2026-08-12T01:40:14.436715+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_box_screen_top_pc34_compat"
+        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_box_screen_top_pc34_compat"
       ],
       "outputTail": "dm1_v1_box_screen_top: 32/32 assertions passed",
       "passed": true,

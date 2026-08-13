@@ -62,3 +62,20 @@ consumer/handoff gate therefore stays closed for forcefield-to-dungeon entry.
 The operator replay used the instrumented Mednafen build with SDL 2.32.70
 through `sdl2-compat` and a dummy video driver; it is authentic emulator
 memory state, but not native Quartz/SDL2 capture evidence.
+
+## Full US ISO transport equivalence (2026-08-13)
+
+The hash-authenticated full US Track 02 ISO
+`ceb02343868f80cec899e9b239aff2da` has three descriptor/span anchor pairs at
+ISO offsets `0x207000`, `0x378000`, and `0x5b8000`. Local read-only comparison
+against the authenticated raw US BIN `f23601102138f87c33025877767ebf76` shows
+that each ISO anchor holds the same 2,048-byte user-data window as each of the
+three raw-BIN anchor windows. The catalog consequently applies its existing
+bounded raw-BIN sampling plan to the full ISO transport, yielding 60 real
+4bpp sample receipts across the four existing route classifications.
+
+This corrects a transport-profile mismatch: the production catalog previously
+ran the extended ISO plan only for the older synthetic one-anchor fixture and
+left the actual three-anchor ISO at 20 samples. It does not change the
+evidence boundary above. In particular, this equivalence does not prove any
+route's screen ownership, CD-loader consumer, VRAM destination, or palette.

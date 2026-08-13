@@ -98,9 +98,17 @@ int dm2_v1_load_extra_dungeon_data(
                         local.failed_map = map_idx; local.failed_x = x; local.failed_y = y;
                         goto done;
                     }
+                    tile = tile_data;
                 }
 
                 local.tiles_loaded++;
+
+                /* DMWeb's saved-game map definition calls bit 4 the
+                 * object-list flag. A tile without that bit has no c_map
+                 * ground-stack entry and contributes no record chain. */
+                if ((tile & 0x10u) == 0u) {
+                    skip_record_chain = 1;
+                }
 
                 /* SKProject sksvgame.cpp:1320-1399 distinguishes resident
                  * DB0..DB3 chains from an empty tile.  Only an empty tile
@@ -131,6 +139,10 @@ int dm2_v1_load_extra_dungeon_data(
                             local.failed_root_link = root_link;
                             local.failed_record_type = session->last_record_type;
                             local.failed_record_reason = session->failure_reason;
+                            local.failed_stream_offset =
+                                session->failure_stream_offset;
+                            local.failed_stream_bits_remaining =
+                                session->failure_stream_bits_remaining;
                             goto done;
                         }
                     } else if (!dung_cb->restore_existing_tile_record_chain ||

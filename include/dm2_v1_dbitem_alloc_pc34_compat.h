@@ -25,7 +25,9 @@
  *                          index.  The source's
  *                          DM2_RECYCLE_A_RECORD_FROM_THE_WORLD fallback is
  *                          a full world walk and stays unproven: an
- *                          exhausted pool returns OBJECT_NULL fail-closed.
+ *                          exhausted pool returns OBJECT_NULL; the generated
+ *                          drop owner may then enter its source world-recycle
+ *                          walk for DB5/6/8/10.
  *   c_record.cpp:284-345   DM2_SET_ITEMTYPE: per-DB itemtype write
  *                          (db5/6/10 word@2 low 7 bits, db8 word@2 high
  *                          7 bits, db9 container charge split over word@4,
@@ -77,6 +79,10 @@ int dm2_v1_record_pool_set_itemtype(DM2_V1_RecordPoolSet *set,
 int16_t dm2_v1_alloc_new_dbitem(DM2_V1_RecordPoolSet *set,
                                 uint16_t itemspec);
 
+int16_t dm2_v1_alloc_new_dbitem_from_world(
+    DM2_V1_RecordPoolSet *set, DM2_V1_DungeonData *dungeon,
+    int current_map, uint16_t itemspec);
+
 typedef struct {
     int slot_field;       /* GDAT field 0x0A..0x14 */
     int item_ordinal;     /* 0-based within the slot's count loop */
@@ -85,6 +91,7 @@ typedef struct {
     int item_type;        /* resolved item type, -1 when unresolvable */
     int16_t record;       /* allocated handle incl. direction bits, -1 fail */
     int alloc_failed;     /* OBJECT_NULL: source breaks the slot loop */
+    int alloc_free_records; /* free OBJECT_NULL slots observed on failure */
     int at_party_cell;    /* drop cell == party cell */
     int direction_rand;   /* raw RANDBIT/RANDDIR draw, -1 when not drawn */
     int direction;        /* final direction 0..3, -1 when not drawn */
@@ -107,6 +114,8 @@ typedef struct {
  * the RNG stream stays source-exact. */
 int dm2_v1_drops_place_source_slots(
     DM2_V1_RecordPoolSet *set,
+    DM2_V1_DungeonData *dungeon,
+    int map,
     const uint16_t slot_words[DM2_DROP_SLOT_COUNT],
     DM2_V1_DropRng *rng,
     int party_x, int party_y, int party_dir,

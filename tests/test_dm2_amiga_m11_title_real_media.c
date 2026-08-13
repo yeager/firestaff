@@ -125,14 +125,29 @@ int main(void)
                        action_receipt.host_menu_route.valid,
                    "the Amiga New Game rectangle resolves the original 0xD7 event");
         }
-    input_result = M11_GameView_HandlePointer(
+        input_result = M11_GameView_HandlePointer(
             &view, layout.new_game.x + layout.new_game.w / 2,
             layout.new_game.y + layout.new_game.h / 2, 1);
         expect(input_result == M11_GAME_INPUT_REDRAW &&
-                   view.dm2State.startup_menu_active &&
-                   view.world.party.championCount == 0 &&
-                   view.dm2State.leader_hand_object == 0u,
-                "Amiga title completion permits only the source New Game route, without a fake party");
+                   !view.dm2State.startup_menu_active &&
+                   view.dm2State.level_loaded &&
+                   view.world.party.championCount > 0 &&
+                   view.dm2State.leader_hand_object == 0xffffu,
+                "Amiga title New Game hands off to the source runtime without a synthetic party");
+        {
+            M11_GameInputResult inventory_result = M11_GameView_HandleInput(
+                &view, M12_MENU_INPUT_INVENTORY_TOGGLE);
+            expect(inventory_result ==
+                   M11_GAME_INPUT_REDRAW && view.inventoryPanelActive == 1,
+               "Amiga opens the authenticated CHARSHEET inventory frame");
+        }
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+        expect(nonzero_pixels(framebuffer, sizeof(framebuffer)) != 0u,
+               "Amiga inventory draw consumes original 16-colour CHARSHEET pixels");
+        expect(M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK) ==
+                   M11_GAME_INPUT_REDRAW && !view.inventoryPanelActive,
+               "Amiga closes inventory through the source panel boundary");
     }
     M11_GameView_Shutdown(&view);
     if (failures) return 1;

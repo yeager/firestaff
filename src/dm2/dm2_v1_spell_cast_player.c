@@ -30,19 +30,55 @@
 #define DM2_SPELL_SKILL_DECAY_ON_FAIL 1
 
 /* Source duration model for bounded timer-effect requests.
- * Light duration: Long Light / Light scale with power in the source;
- * this bounded slice uses the source-visible power factor directly.
+ * Light duration: Long Light / Darkness / Light use the source c_light delay
+ * model; timer-A is kept separately as the signed 0x46 table step.
  * Aura/Enchantment duration: derived from spell value and power.
  * Summon duration: source uses (RAND02 + skill*2) * power / 6; we emit a
  * deterministic lower bound scaled by power.
  * Cloud duration: source uses BETWEEN_VALUE(21, ((skill<<1)+4)*(power+2), 255). */
-#define DM2_SPELL_LIGHT_DURATION(power)      ((power + 1) * 120)
 #define DM2_SPELL_AURA_DURATION(power)       ((power + 1) * 180)
 #define DM2_SPELL_ENCHANTMENT_DURATION(power) ((power + 1) * 200)
 #define DM2_SPELL_SUMMON_DURATION(skill, power) \
     (((skill + 1) * (power + 1) * 30) / 6)
 #define DM2_SPELL_CLOUD_DURATION(skill, power) \
     (((((skill) << 1) + 4) * ((power) + 2)) + 21)
+
+/* Source c_light.cpp:134-181 / c_tim_proc.cpp:918-959.  Light spell
+ * duration and timer-A are separate source values: duration controls the
+ * first due tick, while timer-A is the bounded signed table1d6702 step. */
+static void dm2_cast_player_light_payload(
+    int spell_index, int cast_power, int *out_duration, int *out_value_a)
+{
+    int intensity = cast_power + 1;
+    int step;
+    int r2;
+    int duration;
+
+    if (!out_duration || !out_value_a) return;
+    if (intensity < 32) intensity = 32;
+    if (intensity > 256) intensity = 256;
+    step = intensity / 8;
+    if (step < 8) step = 8;
+    r2 = step - 8;
+
+    if (spell_index == 1) {
+        /* Darkness: source light_type 0x06, positive timer-A. */
+        duration = 16 * r2 + 16;
+        *out_value_a = step;
+    } else if (spell_index == 0) {
+        /* Long Light: source bright-light type 0x27. */
+        duration = (r2 << 9) + 10000;
+        step = (step >> 1) - 1;
+        *out_value_a = -step;
+    } else {
+        /* Light: source torch-class type 0x26. */
+        duration = ((step - 3) << 7) + 2000;
+        step = (step >> 2) + 1;
+        step = (step >> 1) - 1;
+        *out_value_a = -step;
+    }
+    *out_duration = duration;
+}
 
 /* Fixed-table entries already carry a rune_count derived from the first 0xFF
  * terminator; for runtime lookup we pack the first rune as the POWER rune and
@@ -192,7 +228,8 @@ static void dm2_cast_player_classify_timer(
 
     r->timer_kind = DM2_V1_SPELL_TIMER_NONE;
     r->timer_duration = 0;
-    r->object_effect = DM2_OBJECT_EFFECT_NONE;
+    r->timer_value_a = 0;
+    r->object_effect = DM2_OBJECT_EFFECT_UNAVAILABLE;
 
     if (!rec) return;
     spell_index = rec->source ? -1 : rec->index;
@@ -218,24 +255,34 @@ static void dm2_cast_player_classify_timer(
     case DM2_V1_SPELL_EXEC_GENERAL:
     default:
         /* GENERAL spells: light, auras, enchantments, clouds, item creation. */
-        if (spell_index == 0 || spell_index == 5) {
+        if (spell_index == 0 || spell_index == 1 || spell_index == 5) {
+            /* Source dSpellsTable index 1 is DES IR SAR (Darkness).
+             * c_light/proceed_light routes Darkness through the same 0x46
+             * timer family as Long Light and Light; its polarity belongs to
+             * the source timer payload, not this request kind. */
             r->timer_kind = DM2_V1_SPELL_TIMER_LIGHT;
-            r->timer_duration = DM2_SPELL_LIGHT_DURATION(cast_power);
+            dm2_cast_player_light_payload(spell_index, cast_power,
+                                           &r->timer_duration,
+                                           &r->timer_value_a);
         } else if (spell_index >= 6 && spell_index <= 11) {
             r->timer_kind = DM2_V1_SPELL_TIMER_AURA;
             r->timer_duration = DM2_SPELL_AURA_DURATION(cast_power);
-        } else if (spell_index == 2 || spell_index == 3 || spell_index == 8) {
+            r->timer_value_a = cast_power;
+        } else if (spell_index == 2 || spell_index == 3 ||
+                   spell_index == 4 || spell_index == 8) {
             r->timer_kind = DM2_V1_SPELL_TIMER_ENCHANTMENT;
             r->timer_duration = DM2_SPELL_ENCHANTMENT_DURATION(cast_power);
+            r->timer_value_a = cast_power;
+            r->object_effect = dm2_v1_spell_resolves_object_effect(spell_index, 0);
         } else if (spell_index == 12 || spell_index == 14) {
+            /* Source SkWinCore.cpp:17762 handles Spell Reflector (12) as
+             * OBJECT_EFFECT_REFLECTOR cloud creation; it does not pass
+             * through DM2_PROCEED_ENCHANTMENT_SELF. */
             r->timer_kind = DM2_V1_SPELL_TIMER_CLOUD;
             r->timer_duration = DM2_SPELL_CLOUD_DURATION(wizard_skill, cast_power);
             r->object_effect = dm2_v1_spell_resolves_object_effect(spell_index, 0);
         } else if (spell_index == 13) {
             /* Magical Marker — item creation, no bounded timer. */
-            r->timer_kind = DM2_V1_SPELL_TIMER_NONE;
-        } else if (spell_index == 20) {
-            /* Open/Close Door — no bounded timer effect in this slice. */
             r->timer_kind = DM2_V1_SPELL_TIMER_NONE;
         }
         break;
@@ -378,7 +425,6 @@ DM2_V1_SpellCastPlayerReceipt dm2_v1_spell_cast_player(
 /* Build a DM2-owned source timer from a successful cast receipt.
  * This is a bounded request payload: the actual handler bodies
  * (light/aura/cloud/summon/projectile) remain host-owned until proven. */
-#ifdef FIRESTAFF_DM2_SPELL_CAST_TESTING
 static DM2_V1_SourceTimer dm2_cast_player_build_timer(
     const DM2_V1_SpellCastPlayerReceipt *cast,
     int champion_index,
@@ -402,15 +448,17 @@ static DM2_V1_SourceTimer dm2_cast_player_build_timer(
     case DM2_V1_SPELL_TIMER_LIGHT:
         /* Source: c_tim_proc.cpp DM2_PROCESS_TIMER_LIGHT (0x46). */
         t.type = 0x46;
-        t.value_a = (int16_t)cast->timer_duration;
+        t.value_a = (int16_t)cast->timer_value_a;
         break;
     case DM2_V1_SPELL_TIMER_AURA:
     case DM2_V1_SPELL_TIMER_ENCHANTMENT:
-        /* Source: c_tim_proc.cpp hero enchantment flag (0x47).  value_a holds
-         * the duration, value_b the object-effect selector. */
-        t.type = 0x47;
-        t.value_a = (int16_t)cast->timer_duration;
-        t.value_b = (int16_t)cast->object_effect;
+        /* Source: c_hero.cpp DM2_PROCEED_ENCHANTMENT_SELF queues the
+         * per-hero enchantment-power decay as 0x48.  Actor is the source
+         * self-target mask; value_a is power, while due_tick carries the
+         * duration.  The 0x47 hero-flag countdown is a separate source path. */
+        t.type = 0x48;
+        t.actor = 0x0f;
+        t.value_a = (int16_t)cast->timer_value_a;
         break;
     case DM2_V1_SPELL_TIMER_CLOUD:
         /* Source: c_tim_proc.cpp DM2_PROCESS_TIMER_19 (0x19) cloud step.
@@ -422,27 +470,53 @@ static DM2_V1_SourceTimer dm2_cast_player_build_timer(
         break;
     case DM2_V1_SPELL_TIMER_SUMMON:
         /* Source: c_tim_proc.cpp DM2_ALLOC_NEW_CREATURE (0x5e).
-         * value_a/value_b carry the target cell; reserved carries the
-         * source-named object effect that selects the minion creature type. */
+         * value_a packs the target cell and value_b carries the source
+         * creature type (the 0x31/0x34/0x35 selectors are also the DM2
+         * creature IDs). */
         t.type = 0x5e;
-        t.value_a = (int16_t)party_x;
-        t.value_b = (int16_t)party_y;
-        t.reserved = (int16_t)cast->object_effect;
+        t.value_a = (int16_t)((party_x & 0xff) |
+                              ((party_y & 0xff) << 8));
+        t.value_b = (int16_t)cast->object_effect;
         break;
     case DM2_V1_SPELL_TIMER_PROJECTILE:
-        /* Source: c_tim_proc.cpp DM2_STEP_MISSILE (0x1e).  value_a/value_b
-         * carry the origin cell; reserved carries the object effect. */
-        t.type = 0x1e;
-        t.value_a = (int16_t)party_x;
-        t.value_b = (int16_t)party_y;
-        t.reserved = (int16_t)cast->object_effect;
+        /* Source: c_tim_proc.cpp DM2_STEP_MISSILE (0x1e).  A is the
+         * allocated DB14 handle and B packs x/y/direction/energy; the
+         * object identity comes from DB14::w2.  This generic apply layer
+         * has none of those source-owned facts, so it must not manufacture
+         * a coordinate timer from the spell receipt. */
+        (void)party_x;
+        (void)party_y;
         break;
     default:
         break;
     }
     return t;
 }
-#endif
+
+static void dm2_cast_player_restore_apply_state(
+    DM2_ChampionRecord *champion,
+    const DM2_ChampionRecord *champion_before,
+    DM2_LeaderPossession *flask,
+    const DM2_LeaderPossession *flask_before,
+    DM2_V1_SourceTimerQueue *queue,
+    const DM2_V1_SourceTimerQueue *queue_before,
+    DM2_V1_SpellCastApplyReceipt *apply)
+{
+    if (champion && champion_before) *champion = *champion_before;
+    if (flask && flask_before) *flask = *flask_before;
+    if (queue && queue_before) *queue = *queue_before;
+    if (apply) {
+        apply->valid = 0;
+        apply->applied = 0;
+        apply->timer_enqueued = 0;
+        apply->timer_ticket = 0;
+        apply->mana_after = apply->mana_before;
+        apply->cooldown_after = apply->cooldown_before;
+        apply->mana_consumed = 0;
+        apply->runes_cleared = 0;
+        apply->flask_consumed = 0;
+    }
+}
 
 DM2_V1_SpellCastApplyReceipt dm2_v1_spell_cast_player_apply(
     const DM2_V1_SpellCastPlayerReceipt *cast,
@@ -457,6 +531,9 @@ DM2_V1_SpellCastApplyReceipt dm2_v1_spell_cast_player_apply(
     int champion_index)
 {
     DM2_V1_SpellCastApplyReceipt a;
+    DM2_ChampionRecord champion_before;
+    DM2_LeaderPossession flask_before;
+    DM2_V1_SourceTimerQueue queue_before;
 
     memset(&a, 0, sizeof(a));
     a.valid = 1;
@@ -471,6 +548,47 @@ DM2_V1_SpellCastApplyReceipt dm2_v1_spell_cast_player_apply(
         a.valid = 0;
         return a;
     }
+
+    /* Aura of Speed is not a hero enchantment: source consumes the global
+     * savegames1.b_04 byte.  Keep this owner gate active in test builds too;
+     * the testing switch may expose otherwise-proven timer fixtures, but it
+     * must not turn this missing global owner into a fake 0x48 effect. */
+    if (cast->cast_success &&
+        cast->timer_kind == DM2_V1_SPELL_TIMER_AURA &&
+        cast->spell_index == 11) {
+        a.mana_before = (int)champion->mana;
+        a.mana_after = a.mana_before;
+        a.cooldown_before = champion->hand_cooldown[hand_index];
+        a.cooldown_after = a.cooldown_before;
+        a.valid = 0;
+        a.timer_kind = cast->timer_kind;
+        return a;
+    }
+
+#ifndef FIRESTAFF_DM2_SPELL_CAST_TESTING
+    /* Production must not consume resources for an effect whose source timer
+     * owner is not present.  In particular, a non-NULL queue is not enough
+     * to make the reduced DB14/DB15 payload source-valid. */
+    if (cast->cast_success && cast->timer_kind != DM2_V1_SPELL_TIMER_NONE) {
+        int summon = cast->timer_kind == DM2_V1_SPELL_TIMER_SUMMON &&
+            (cast->object_effect == DM2_OBJECT_EFFECT_SUMMON_ATTACK_MINION ||
+             cast->object_effect == DM2_OBJECT_EFFECT_SUMMON_GUARD_MINION ||
+             cast->object_effect == DM2_OBJECT_EFFECT_SUMMON_UHAUL_MINION);
+        if (!summon || !queue) {
+            a.valid = 0;
+            a.timer_kind = cast->timer_kind;
+            return a;
+        }
+    }
+#endif
+
+    /* DM2_CAST_SPELL_PLAYER commits the resource writeback together with the
+     * timer admission.  Keep a complete local snapshot so a source timer
+     * allocation failure cannot consume mana, cooldown or rune state without
+     * the corresponding 0x5e continuation. */
+    champion_before = *champion;
+    if (flask) flask_before = *flask;
+    if (queue) queue_before = *queue;
 
     a.mana_before = (int)champion->mana;
     a.cooldown_before = champion->hand_cooldown[hand_index];
@@ -518,12 +636,11 @@ DM2_V1_SpellCastApplyReceipt dm2_v1_spell_cast_player_apply(
         a.runes_cleared = 1;
         a.applied = 1;
 
-        /* A complete source timer owns more than the reduced cast receipt:
-         * DB14/DB4 record identity, actor state, direction and source timing.
-         * Do not let a caller-provided queue promote our reduced payload into
-         * a live timer.  Focused source-shape tests compile this legacy
-         * envelope explicitly; ordinary Firestaff builds retain the cast
-         * receipt but perform no timer mutation. */
+        /* A complete projectile/cloud timer owns more than the reduced cast
+         * receipt: DB14 record identity, actor state, direction and source
+         * timing.  Summon 0x5e is different: its source payload is complete
+         * here (packed target cell + known creature type), and the runtime
+         * owner performs the remaining DB4/CAII admission atomically. */
 #ifdef FIRESTAFF_DM2_SPELL_CAST_TESTING
         if (queue && cast->timer_kind != DM2_V1_SPELL_TIMER_NONE) {
             DM2_V1_SourceTimer t = dm2_cast_player_build_timer(
@@ -535,16 +652,37 @@ DM2_V1_SpellCastApplyReceipt dm2_v1_spell_cast_player_apply(
                 if (a.timer_ticket != 0u) {
                     a.timer_enqueued = 1;
                     a.applied = 1;
+                } else {
+                    dm2_cast_player_restore_apply_state(
+                        champion, &champion_before, flask,
+                        flask ? &flask_before : NULL, queue, &queue_before,
+                        &a);
                 }
+            } else {
+                dm2_cast_player_restore_apply_state(
+                    champion, &champion_before, flask,
+                    flask ? &flask_before : NULL, queue, &queue_before, &a);
             }
         }
 #else
-        (void)queue;
-        (void)game_tick;
-        (void)map_id;
-        (void)party_x;
-        (void)party_y;
-        (void)champion_index;
+        if (queue && cast->timer_kind == DM2_V1_SPELL_TIMER_SUMMON &&
+            (cast->object_effect == DM2_OBJECT_EFFECT_SUMMON_ATTACK_MINION ||
+             cast->object_effect == DM2_OBJECT_EFFECT_SUMMON_GUARD_MINION ||
+             cast->object_effect == DM2_OBJECT_EFFECT_SUMMON_UHAUL_MINION)) {
+            DM2_V1_SourceTimer t = dm2_cast_player_build_timer(
+                cast, champion_index, game_tick, map_id, party_x, party_y);
+            DM2_V1_SourceTimerResult r;
+            a.timer_ticket = dm2_v1_source_timer_enqueue_ticketed(
+                queue, &t, 0, &r);
+            if (a.timer_ticket != 0u) {
+                a.timer_enqueued = 1;
+                a.applied = 1;
+            } else {
+                dm2_cast_player_restore_apply_state(
+                    champion, &champion_before, flask,
+                    flask ? &flask_before : NULL, queue, &queue_before, &a);
+            }
+        }
 #endif
     } else {
         /* Failure path: DM2_TRY_CAST_SPELL clears the rune tail for every

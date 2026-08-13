@@ -647,6 +647,27 @@ TEST(find_walk_path_stub) {
     assert(receipt.path_found == false);
 }
 
+TEST(find_walk_path_source_callbacks) {
+    DM2_V1_1c9aCallbacks cb = make_callbacks();
+    DM2_V1_1c9aPathfindReceipt receipt;
+    uint8_t path[32];
+    int32_t r;
+
+    memset(mock_tiles, 0, sizeof(mock_tiles));
+    memset(path, 0xff, sizeof(path));
+    mock_party_x = 3;
+    mock_party_y = 4;
+    mock_party_map = 0;
+    r = dm2_v1_1c9a_find_walk_path(&cb, NULL, 7, 1, 1, 0,
+                                   path, NULL, &receipt);
+    assert(r == 5);
+    assert(receipt.path_found);
+    assert(receipt.path_length == 5);
+    /* Deterministic source direction order is N, E, S, W. */
+    assert(path[0] == 1 && path[1] == 1 && path[2] == 2 &&
+           path[3] == 2 && path[4] == 2);
+}
+
 TEST(damage_stub) {
     DM2_V1_1c9aCallbacks cb = make_callbacks();
     DM2_V1_1c9aDamageReceipt receipt;
@@ -854,6 +875,7 @@ int main(void) {
     RUN(creature_go_there_stub);
     RUN(create_minion_stub);
     RUN(find_walk_path_stub);
+    RUN(find_walk_path_source_callbacks);
     RUN(damage_stub);
     RUN(heal_stub);
     RUN(381c_stub);

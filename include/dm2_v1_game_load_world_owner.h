@@ -20,6 +20,7 @@
 #include "dm2_v1_eventqueue_pc34_compat.h"
 #include "dm2_v1_init_game_ui_owner.h"
 #include "dm2_v1_gdat_scene_m11_command.h"
+#include "dm2_v1_game_load_sound_owner.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_loadlevel_pc34_compat.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
@@ -32,12 +33,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef struct {
-    uint16_t raw_index;
-    uint16_t raw_length;
-    uint32_t source_payload_hash;
-} DM2_V1_GameLoadSoundSampleBinding;
 
 /* Immutable transition receipt for the actual mirror clicks.  The final hero
  * count alone cannot prove that an eventual input owner preserved the click
@@ -60,45 +55,26 @@ typedef struct {
  * then DM2_LOAD_DYN4 adds only marked triples and DM2_482b_0684 binds their
  * already materialised raw samples.  This is a durable private equivalent.
  * It deliberately has no mixer, PCM conversion or process-global binding. */
+/* GEN2 bridge over the dynamic GAME_LOAD sound owner.  This copies only the
+ * fixed c_sfx queues into the compatibility algorithm; xsndptr2 remains the
+ * authenticated dynamic SOUND9 span and is never replaced by the old array. */
 typedef struct {
     int valid;
-    DM2_V1_DballocSoundCensusReceipt allocation;
-    DM2_V1_SoundSsoundEntry *queue_entries;
-    uint16_t queue_capacity;
-    uint16_t queue_entry_count;
-    DM2_V1_GameLoadSoundSampleBinding *sample_bindings;
-    uint16_t sample_capacity;
-    uint16_t sample_binding_count;
-    uint32_t materialized_raw_hash;
-    uint32_t receipt_hash;
-    /* The s_ssound table above is dynamically sized from c_dballoc.  The
-     * remaining c_sound/c_sfx runtime state has fixed source capacities and
-     * is retained privately for later QUEUE_NOISE_GEN1.  Do not substitute
-     * DM2_V1_SoundQueueState here: its legacy 64-entry ssound array cannot
-     * represent the admitted GAME_LOAD table. */
-    DM2_V1_SoundSfx positional[DM2_V1_SOUND_POSITIONAL_CAP];
-    uint16_t positional_count;
-    DM2_V1_SoundSfx immediate[DM2_V1_SOUND_IMMEDIATE_CAP];
-    uint16_t immediate_count;
-    DM2_V1_SoundDelayedSlot delayed[DM2_V1_SOUND_DELAYED_SLOT_COUNT];
-    int32_t sample_slots[DM2_V1_SOUND_SAMPLE_SLOT_COUNT];
-    int sound_enabled;
-    int master_sfx_volume;
-    int runtime_queue_initialized;
-    /* c_map.cpp::DM2_CHANGE_CURRENT_MAP_TO and c_sfx.cpp's positional
-     * branch. These values are extracted from File_header Map_definitions,
-     * not inferred from host coordinates. They remain unusable while the
-     * c_light walk-path buffers are pending. */
-    int spatial_context_valid;
-    int16_t spatial_current_map;
-    int16_t spatial_audible_map;
-    int16_t spatial_alternate_map;
-    uint8_t spatial_current_origin_x;
-    uint8_t spatial_current_origin_y;
-    uint8_t spatial_audible_origin_x;
-    uint8_t spatial_audible_origin_y;
-    uint32_t spatial_context_hash;
-} DM2_V1_GameLoadSoundOwner;
+    int blocked_owner;
+    int blocked_queue;
+    int blocked_sample;
+    int queued_positional;
+    uint16_t queue_index;
+    int16_t sample_id;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadSoundNoiseReceipt;
+
+int dm2_v1_game_load_sound_owner_queue_noise_gen2(
+    DM2_V1_GameLoadSoundOwner *owner,
+    int8_t cls1, int8_t cls2, int8_t cls3, int8_t cls_alt,
+    int16_t x, int16_t y, int16_t ecxw, int16_t volume, int16_t delay_mode,
+    const DM2_V1_SoundQueueEnv *env,
+    DM2_V1_GameLoadSoundNoiseReceipt *out_receipt);
 
 /* Source-shaped DM2_QUERY_SND_ENTRY_INDEX over the private GAME_LOAD
  * xsndptr2 owner.  Unlike the legacy fixed queue, this may only return an
@@ -107,10 +83,6 @@ typedef struct {
  * original 1-based SOUND9 index, or zero when absent/unadmitted.
  * Source: SKProject SKULLWIN/c_sound.cpp::DM2_QUERY_SND_ENTRY_INDEX
  * (650-673), c_gdatfile.cpp::DM2_482b_0684 (932-975). */
-uint16_t dm2_v1_game_load_sound_owner_query_entry(
-    const DM2_V1_GameLoadSoundOwner *owner,
-    int8_t cls1, int8_t cls2, int8_t cls3);
-
 /* Private result of the three writes in DM2_LOAD_NEW_DUNGEON immediately
  * before DM2_READ_DUNGEON_STRUCTURE(1). The selected medium itself remains
  * owned by BootProfile; this is deliberately not a host file-open shim.
@@ -322,6 +294,12 @@ typedef struct {
 typedef struct {
     int valid;
     int blocked_unowned_0a48;
+    int16_t failed_record_handle;
+    uint8_t failed_creature_type;
+    int16_t failed_map;
+    uint8_t failed_x;
+    uint8_t failed_y;
+    int failed_0a48_result;
     uint16_t dynamic_candidate_count;
     uint16_t allocated_slot_count;
     uint16_t think_timer_count;
@@ -699,6 +677,9 @@ typedef struct {
     uint32_t candidate_hash;
     DM2_V1_DungeonData dungeon;
     DM2_V1_RecordPoolSet record_pools;
+    /* c_dballoc capacities retained by GAME_LOAD for pools that are empty in
+     * the static dungeon but allocated by later source effects (DB14/DB15). */
+    uint16_t record_capacities[DM2_V1_RECORD_POOL_COUNT];
     DM2_V1_Party party;
     int16_t leader_hand_record;
     DM2_V1_GameLoadMovementState movement;
@@ -708,6 +689,9 @@ typedef struct {
      * session owner exists. */
     DM2_V1_EventQueue event_queue;
     int16_t source_event_hero_index;
+    /* Private source owner for ddat.v1e0288.  PROCESS_POISON excludes the
+     * hero whose one-based index equals this value. */
+    int16_t source_next_champion_number;
     /* Deep copy of the source's pre-champion DM2_1031_0541(5) state. It
      * owns copies of the mutable UI tables and remains unpublished until the
      * following LOAD_NEWMAP/CAII transaction is source-complete. */
@@ -724,6 +708,16 @@ typedef struct {
     int16_t *timer_indices;
     DM2_V1_TimerQueue timer_queue;
     uint16_t timer_capacity;
+    /* ddat.savegames1.b_02 and v1e0976, retained only for the private
+     * source-ordered 0x47 timer owner. */
+    uint8_t source_hero_ench_countdown;
+    int16_t source_hero_ench_target;
+    /* Exact c_wbbb/ddat.savegames1 source block. Fresh GAME_LOAD starts
+     * zeroed; SKSAVE Resume must transfer the authenticated six bytes before
+     * this candidate can become playable. */
+    uint8_t source_savegames1[DM2_V1_ORIGINAL_SAVEGAMES1_SIZE];
+    int source_savegames1_valid;
+    int16_t source_light_level;
     DM2_V1_CaiiArray caii_slots;
     /* Deep clone of the exact AI-definition table that admitted this
      * candidate.  It is deliberately separate from the mutable DB4 pool:
@@ -736,6 +730,14 @@ typedef struct {
      * it is required by c_querydb's real dtRaw7/0xfd creature-position path. */
     const DM2_V1_AssetLoader *asset_loader;
     DM2_V1_GameLoadSoundOwner sound_owner;
+    /* Private immutable descriptor backing the cloned SKSAVE c_map view. */
+    DM2_V1_OriginalRawDungeonReceipt sksave_dungeon_receipt;
+    /* SKSAVE Resume retains the mutable c_map ground-stack owner separately
+     * from the authenticated DUNGEON.DAT descriptor. LOAD_LOCALLEVEL_DYN
+     * must walk this owner after READ_SKSAVE_DUNGEON; using the pristine
+     * File_header roots would bind records from a different transaction. */
+    DM2_V1_SksaveMapOwner sksave_map_owner;
+    int sksave_map_owner_valid;
     /* The candidate owns c_map's selected descriptor/tile/column view plus
      * the global first-thing record-root table, separately from party
      * coordinates.  It is initialized through the
@@ -832,6 +834,716 @@ typedef struct {
     uint32_t chain_hash;
 } DM2_V1_GameLoadMoverecSquareReceipt;
 
+/* Private tile-rooted DM2_MOVE_RECORD_TO result.  This is the bounded
+ * cut-then-append branch for authenticated source/destination squares,
+ * including the mirror-verified plain-floor cross-map DB4 form.  The
+ * candidate timer owner separately admits a no-chain same-tile party-
+ * sentinel case; creature-level, wake/sleep and actuator tails remain gated. */
+typedef struct {
+    int valid;
+    int mutated;
+    int rolled_back;
+    int blocked_invalid_candidate;
+    int blocked_map_or_square;
+    int blocked_source_chain;
+    int blocked_destination_chain;
+    int map;
+    int16_t record;
+    int16_t source_x;
+    int16_t source_y;
+    int16_t destination_x;
+    int16_t destination_y;
+    uint16_t source_head_before;
+    uint16_t source_head_after;
+    uint16_t destination_head_before;
+    uint16_t destination_head_after;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadRecordMoveReceipt;
+
+/* Read-only post-move audit for DM2_moverec_3CE7D.  The generic dispatcher
+ * remains callback-owned; this receipt admits only the source call shape and
+ * never publishes a timer, actuator or CAII mutation. */
+typedef struct {
+    int valid;
+    int dispatched;
+    int blocked_invalid_candidate;
+    int blocked_record;
+    int map;
+    int16_t record;
+    int16_t x;
+    int16_t y;
+    int32_t kind;
+    int32_t flags;
+    uint8_t db_type;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadMoverecDispatchReceipt;
+
+/* Source c_moverec.cpp:966-978: update an already-owned creature think
+ * timer in place when a record reaches a new square.  The candidate uses its
+ * cloned c_tim slot heap; no new CAII slot or timer is fabricated here. */
+typedef struct {
+    int valid;
+    int timer_updated;
+    int blocked_invalid_candidate;
+    int blocked_record;
+    int blocked_no_slot;
+    int blocked_no_pending_timer;
+    int blocked_unbound_allocation;
+    int blocked_ai_flags;
+    int ai_flags_known;
+    int ai_bit0_clear;
+    int allocation_performed;
+    int timer_scheduled;
+    uint8_t timer_type;
+    uint32_t due_tick;
+    int map;
+    int16_t record;
+    int16_t x;
+    int16_t y;
+    int16_t caii_slot;
+    int16_t timer_slot;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadMoverecCaiiReceipt;
+
+/* Candidate-side adapter for the c_creature CAII timer word.  The candidate
+ * stores a fixed c_tim slot index at CAII slot+2 (the source session stores a
+ * stable ticket), so cancellation must use the candidate heap owner and may
+ * not call the SourceTimerQueue compatibility helper.  This operation only
+ * detaches the pending timer; record/CAII ownership remains untouched until
+ * the complete DELETE_CREATURE_RECORD tail is bound. */
+typedef struct {
+    int valid;
+    int detached;
+    int blocked_invalid_candidate;
+    int blocked_record;
+    int blocked_caii;
+    int blocked_timer;
+    int16_t record;
+    int16_t caii_slot;
+    int16_t timer_slot;
+    uint8_t timer_type;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadCandidateCaiiTimerDetachReceipt;
+
+/* Private source-shaped c_tim 0x3C/0x3D owner.  This admits an existing DB4
+ * creature with an already-owned CAII think timer, a mirror-verified
+ * plain-floor cross-map form, and a same-map plain-floor party-sentinel
+ * no-chain case.  The source MOVE_RECORD_TO cut/append, CAII timer relocation
+ * and GEN1 noise are one candidate transaction; creature-level, wake/sleep,
+ * static allocation and post-move actuator/collision routes remain outside
+ * this owner. */
+typedef struct {
+    int valid;
+    int consumed;
+    int moved;
+    int noise_queued;
+    int noise_map_gate_noop;
+    int blocked_invalid_candidate;
+    int blocked_no_due_timer;
+    int blocked_unsupported_type;
+    int blocked_map;
+    int blocked_record;
+    int blocked_source_chain;
+    int blocked_destination_chain;
+    int blocked_caii;
+    int blocked_sound;
+    int map;
+    int source_map;
+    int16_t record;
+    int16_t source_x;
+    int16_t source_y;
+    int16_t x;
+    int16_t y;
+    uint8_t timer_type;
+    uint32_t game_tick;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadMoverecTimerReceipt;
+
+/* Bounded c_tim dispatch for source THINK_CREATURE (0x21/0x22).  The timer
+ * is consumed in source order and the per-cell creature lookup is performed;
+ * the CCM/AI body remains explicitly unbound. */
+typedef struct {
+    int valid;
+    int consumed;
+    int blocked_invalid_candidate;
+    int blocked_no_due_timer;
+    int blocked_unsupported_type;
+    int blocked_map;
+    int body_unbound;
+    int no_creature_at_cell;
+    int map_switch;
+    int map;
+    int16_t x;
+    int16_t y;
+    int16_t creature_record;
+    uint8_t timer_type;
+    uint32_t game_tick;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadThinkTimerReceipt;
+
+/* Bounded c_tim 0x0E PROCESS_TIMER_0E dispatch.  The source temporarily
+ * changes the authenticated root item's type, applies PROCESS_ITEM_BONUS to
+ * the source hero, and restores the item record before consuming the timer. */
+typedef struct {
+    int valid;
+    int consumed;
+    int bonus_applied;
+    int blocked_invalid_candidate;
+    int blocked_no_due_timer;
+    int blocked_unsupported_type;
+    int blocked_map;
+    int blocked_actor;
+    int blocked_record;
+    int blocked_item_bonus;
+    int map_switch;
+    int map;
+    uint8_t timer_type;
+    uint8_t actor;
+    uint16_t record_db_type;
+    uint16_t record;
+    uint16_t value2;
+    int16_t bonus_value;
+    uint32_t game_tick;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadProcess0eTimerReceipt;
+
+/* Bounded c_tim 0x48 ENCH_POWER dispatch.  The actor byte is the source
+ * hero-mask and wvalueA (timer bytes 6..7) is the signed decrement. */
+typedef struct {
+    int valid;
+    int consumed;
+    int blocked_invalid_candidate;
+    int blocked_no_due_timer;
+    int blocked_unsupported_type;
+    int blocked_party;
+    int blocked_map;
+    int map;
+    int map_switch;
+    uint8_t timer_type;
+    uint8_t actor_mask;
+    int16_t amount;
+    int heroes_seen;
+    int heroes_mutated;
+    int heroes_skipped_dead;
+    uint32_t game_tick;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadEnchPowerTimerReceipt;
+
+/* Bounded c_tim 0x4B POISON dispatch.  The timer's signed wvalueA is first
+ * removed from c_hero::poison; PROCESS_POISON then applies one pending wound
+ * and requeues the remaining poison counters at source delay 0x24. */
+typedef struct {
+    int valid;
+    int consumed;
+    int requeued;
+    int blocked_invalid_candidate;
+    int blocked_no_due_timer;
+    int blocked_unsupported_type;
+    int blocked_party;
+    int blocked_map;
+    int blocked_actor;
+    int blocked_last_hero_owner;
+    uint8_t timer_type;
+    int map;
+    int map_switch;
+    int16_t actor;
+    int16_t amount;
+    int16_t poison_before;
+    int16_t poison_after;
+    int16_t poisoned_before;
+    int16_t poisoned_after;
+    int16_t wound_amount;
+    int16_t cur_hp_before;
+    int16_t cur_hp_after;
+    uint16_t hero_flags_before;
+    uint16_t hero_flags_after;
+    uint32_t game_tick;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadPoisonTimerReceipt;
+
+/* Bounded c_tim 0x47 HERO_ENCH_FLAG dispatch.  The source-owned countdown
+ * is private session state; the hero target is the 1-based v1e0976 slot. */
+typedef struct {
+    int valid;
+    int consumed;
+    int blocked_invalid_candidate;
+    int blocked_no_due_timer;
+    int blocked_unsupported_type;
+    int blocked_party;
+    int blocked_map;
+    int countdown_decremented;
+    int countdown_expired;
+    int hero_flag_set;
+    int hero_skipped_dead;
+    int map;
+    int map_switch;
+    int16_t target_slot;
+    uint8_t countdown_before;
+    uint8_t countdown_after;
+    uint16_t hero_flags_before;
+    uint16_t hero_flags_after;
+    uint8_t timer_type;
+    uint32_t game_tick;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadHeroEnchFlagTimerReceipt;
+
+/* Bounded c_tim 0x46 LIGHT dispatch. */
+typedef struct {
+    int valid;
+    int consumed;
+    int requeued;
+    int blocked_invalid_candidate;
+    int blocked_no_due_timer;
+    int blocked_unsupported_type;
+    int blocked_map;
+    int blocked_value;
+    int map;
+    int map_switch;
+    int16_t amount;
+    int16_t light_before;
+    int16_t light_after;
+    int16_t remaining;
+    uint8_t timer_type;
+    uint32_t game_tick;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadLightTimerReceipt;
+
+/* Source-bound c_tim 0x5A ORNATE_NOISE.  The inactive arm clears only the
+ * frame high byte; the active arm resolves decoration/GDAT and requeues the
+ * timer while treating GEN2 sound as the source's best-effort side effect. */
+typedef struct {
+    int valid;
+    int consumed;
+    int requeued;
+    int sound_queued;
+    int frame_cleared;
+    int blocked_invalid_candidate;
+    int blocked_no_due_timer;
+    int blocked_unsupported_type;
+    int blocked_map;
+    int blocked_record;
+    int blocked_active_ornament;
+    int map;
+    int map_switch;
+    int16_t record;
+    uint16_t animation_length;
+    uint8_t decoration;
+    uint8_t category;
+    uint16_t word2_before;
+    uint16_t word2_after;
+    uint8_t timer_type;
+    uint32_t game_tick;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadOrnateNoiseTimerReceipt;
+
+/* Source-bound c_tim 0x55 CONTINUE_ORNATE_ANIMATOR.  getA()/xA+yA carry the
+ * DB3 actuator handle, wvalueB/getBlong() carries the animation mode, and
+ * the original timer is requeued at +1 tick after the frame step. */
+typedef struct {
+    int valid;
+    int consumed;
+    int requeued;
+    int frame_advanced;
+    int blocked_invalid_candidate;
+    int blocked_no_due_timer;
+    int blocked_unsupported_type;
+    int blocked_map;
+    int blocked_record;
+    int blocked_asset;
+    int map;
+    int16_t record;
+    uint16_t word2_before;
+    uint16_t word2_after;
+    uint16_t frame_before;
+    uint16_t frame_after;
+    uint16_t animation_length;
+    uint8_t animation_mode;
+    uint8_t decoration;
+    uint8_t timer_type;
+    uint32_t game_tick;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadOrnateAnimatorTimerReceipt;
+
+/* Bounded c_tim 0x02 DESTROY_DOOR dispatch. */
+typedef struct {
+    int valid;
+    int consumed;
+    int tile_mutated;
+    int blocked_invalid_candidate;
+    int blocked_no_due_timer;
+    int blocked_unsupported_type;
+    int blocked_map;
+    int map;
+    int map_switch;
+    int16_t x;
+    int16_t y;
+    uint16_t tile_before;
+    uint16_t tile_after;
+    uint8_t timer_type;
+    uint32_t game_tick;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadDestroyDoorTimerReceipt;
+
+/* Bounded c_tim 0x0C PROCESS_TIMER_0C dispatch. */
+typedef struct {
+    int valid;
+    int consumed;
+    int hero_mutated;
+    int blocked_invalid_candidate;
+    int blocked_no_due_timer;
+    int blocked_unsupported_type;
+    int blocked_map;
+    int blocked_actor;
+    int map;
+    int map_switch;
+    int16_t hero_index;
+    int16_t timer_index_before;
+    int16_t timer_index_after;
+    uint16_t hero_flags_before;
+    uint16_t hero_flags_after;
+    uint8_t timer_type;
+    uint32_t game_tick;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadProcess0cTimerReceipt;
+
+/* Bounded final phase of c_tim 0x0D RESURRECTION (yB == 0). */
+typedef struct {
+    int valid;
+    int consumed;
+    int champion_revived;
+    int blocked_invalid_candidate;
+    int blocked_no_due_timer;
+    int blocked_unsupported_type;
+    int blocked_map;
+    int blocked_actor;
+    int blocked_phase;
+    int blocked_chain;
+    int blocked_cloud_owner;
+    int blocked_cloud_actuator;
+    int cloud_created;
+    int cloud_timer_queued;
+    int cloud_sound_queued;
+    int record_removed;
+    int map;
+    int map_switch;
+    int16_t hero_index;
+    int16_t altar_record;
+    int16_t cloud_record;
+    uint8_t phase;
+    int16_t max_hp_before;
+    int16_t max_hp_after;
+    int16_t cur_hp_after;
+    uint16_t hero_flags_before;
+    uint16_t hero_flags_after;
+    uint8_t timer_type;
+    uint32_t game_tick;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadResurrectionTimerReceipt;
+
+/* Bounded c_tim 0x19 PROCESS_CLOUD arm.  The source's type-0x64 step
+ * advances the cloud to 0x65, emits GEN2 noise and requeues one tick later.
+ * Ordinary party, direct DB0-door damage and candidate-context creature
+ * damage are owned against the candidate's source-sized state; spread and
+ * actuator tails remain outside this owner. */
+typedef struct {
+    int valid;
+    int consumed;
+    int requeued;
+    int deallocated;
+    int sound_queued;
+    int blocked_invalid_candidate;
+    int blocked_no_due_timer;
+    int blocked_unsupported_type;
+    int blocked_map;
+    int blocked_record;
+    int map;
+    int16_t cloud_record;
+    int16_t party_damage;
+    int party_wounded_mask;
+    int16_t creature_damage;
+    int creature_attacked;
+    int16_t door_damage;
+    int door_destroyed;
+    uint8_t cloud_type_before;
+    uint8_t cloud_type_after;
+    /* DB15 word@2: low 7 bits are the subtype; the high byte is the
+     * source cloud strength/lifetime parameter. */
+    uint8_t cloud_strength_before;
+    uint8_t cloud_strength_after;
+    uint8_t timer_type;
+    uint32_t game_tick;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadCloudTimerReceipt;
+
+/* Private c_tim 0x04 actuator boundary.  Source class 3 has an intentional
+ * empty branch in DM2_PROCEED_TIMERS; consuming that message needs no wall,
+ * floor, party or CAII owner.  All other tile classes remain fail-closed. */
+typedef struct {
+    int valid;
+    int consumed;
+    int source_noop;
+    int blocked_invalid_candidate;
+    int blocked_no_due_timer;
+    int blocked_unsupported_type;
+    int blocked_map;
+    int blocked_unowned_class;
+    int map_switch;
+    int map;
+    int16_t x;
+    int16_t y;
+    uint8_t timer_type;
+    uint8_t tile_class;
+    uint8_t raw_tile;
+    uint8_t direction;
+    uint8_t action;
+    int push_button_actuators_seen;
+    int push_button_doors_mutated;
+    uint32_t private_push_button_hash;
+    int counter_actuators_seen;
+    int counter_records_mutated;
+    int counter_messages_queued;
+    uint32_t private_counter_hash;
+    int relay_actuators_seen;
+    int relay_messages_queued;
+    uint32_t private_relay_hash;
+    int cross_map_actuators_seen;
+    int cross_map_messages_queued;
+    uint32_t private_cross_map_hash;
+    int finite_relay_actuators_seen;
+    int finite_relay_records_mutated;
+    int finite_relay_messages_queued;
+    uint32_t private_finite_relay_hash;
+    int text_records_seen;
+    int text_records_toggled;
+    int blocked_non_text_chain;
+    int blocked_hint_delivery;
+    int blocked_unowned_tile_advance;
+    int pit_tele_tile_mutated;
+    uint8_t tile_state_before;
+    uint8_t tile_state_after;
+    uint32_t private_text_visibility_hash;
+    int door_actuator_timer_queued;
+    int door_actuator_source_noop_destroyed;
+    int16_t door_actuator_record;
+    uint8_t door_actuator_direction;
+    uint16_t door_record_attributes_before;
+    uint16_t door_record_attributes_after;
+    int door_record_state_mutated;
+    uint32_t game_tick;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadCandidateActuateReceipt;
+
+/* Private source 0x1E STEP_MISSILE atom.  This owner covers the authenticated
+ * creature-free ordinary passage and terminal energy/dealloc branch. Impact,
+ * reflection, moverec and cross-map teleporter effects remain separate
+ * source owners and therefore fail closed here. */
+typedef struct {
+    int valid;
+    int consumed;
+    int deallocated;
+    int moved;
+    int requeued;
+    int blocked_invalid_candidate;
+    int blocked_no_due_timer;
+    int blocked_unsupported_type;
+    int blocked_map;
+    int blocked_record;
+    int blocked_timer_owner;
+    int blocked_incomplete_chain;
+    int blocked_creature_collision;
+    int blocked_teleporter;
+    int blocked_unowned_impact;
+    int map_switch;
+    int map;
+    int16_t x;
+    int16_t y;
+    int16_t next_x;
+    int16_t next_y;
+    int16_t missile_record;
+    uint8_t timer_type;
+    uint8_t energy_before;
+    uint8_t energy_after;
+    uint16_t energy_step;
+    uint8_t direction;
+    uint32_t game_tick;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadCandidateMissileReceipt;
+
+/* Private source 0x01 DM2_STEP_DOOR atom.  It admits only a direct DB0 door
+ * whose tile chain has no party or creature collision; the next animation
+ * step stays in the candidate timer heap. */
+typedef struct {
+    int valid;
+    int consumed;
+    int source_noop_destroyed;
+    int door_state_mutated;
+    int requeued;
+    int blocked_invalid_candidate;
+    int blocked_no_due_timer;
+    int blocked_unsupported_type;
+    int blocked_map;
+    int blocked_record;
+    int blocked_party_collision;
+    int blocked_creature_collision;
+    int blocked_incomplete_chain;
+    int map_switch;
+    int map;
+    int16_t x;
+    int16_t y;
+    int16_t door_record_link;
+    uint8_t timer_type;
+    uint8_t direction;
+    uint8_t state_before;
+    uint8_t state_after;
+    uint16_t door_record_attributes_before;
+    uint16_t door_record_attributes_after;
+    int door_record_state_mutated;
+    uint32_t game_tick;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadCandidateDoorStepReceipt;
+
+typedef struct {
+    int valid;
+    int actuator_invoked;
+    int message_queued;
+    int requeued;
+    int active_flag_cleared;
+    int16_t record_link;
+    uint8_t action;
+    uint8_t target_x;
+    uint8_t target_y;
+    uint8_t target_direction;
+} DM2_V1_GameLoadCandidateTickGeneratorReceipt;
+
+/* Source timer 0x58/0x59/0x5B/0x5C record-flag tails.  Payload A is the
+ * record handle except for 0x59, which uses payload B; the timer is consumed
+ * only after the private record address is admitted. */
+typedef struct {
+    int valid;
+    int consumed;
+    int blocked_invalid_candidate;
+    int blocked_no_due_timer;
+    int blocked_unsupported_type;
+    int blocked_map;
+    int blocked_record;
+    int guard_skipped;
+    int redraw_unbound;
+    int map_switch;
+    int map;
+    int16_t record;
+    uint8_t timer_type;
+    uint8_t byte_offset;
+    uint8_t value_before;
+    uint8_t value_after;
+    uint32_t game_tick;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadRecordFlagTimerReceipt;
+
+/* Private PROCESS_SOUND (0x15) owner. The timer A payload selects one of
+ * c_sfx's eight delayed slots; the slot is cleared after source-shaped GEN1
+ * replay, including the source map-gate no-op. */
+typedef struct {
+    int valid;
+    int consumed;
+    int blocked_invalid_candidate;
+    int blocked_no_due_timer;
+    int blocked_unsupported_type;
+    int blocked_slot;
+    int blocked_sound;
+    int map_gate_noop;
+    int sound_queued;
+    uint8_t timer_type;
+    uint8_t slot;
+    int map;
+    int16_t x;
+    int16_t y;
+    int16_t ecxw;
+    int16_t volume;
+    uint32_t game_tick;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadProcessSoundTimerReceipt;
+
+/* Private ALLOC_NEW_CREATURE (0x5E) owner. This receipt is only valid after
+ * the new DB4 root, tile chain, CAII slot and first think timer share one
+ * transaction. */
+typedef struct {
+    int valid;
+    int consumed;
+    int blocked_invalid_candidate;
+    int blocked_no_due_timer;
+    int blocked_unsupported_type;
+    int blocked_map;
+    int blocked_record;
+    int blocked_tile;
+    int blocked_ai;
+    int blocked_caii;
+    int blocked_sound;
+    uint16_t recycler_candidates_examined;
+    int recycler_candidate_found;
+    int16_t recycler_candidate_record;
+    int16_t recycler_candidate_map;
+    int16_t recycler_candidate_x;
+    int16_t recycler_candidate_y;
+    int16_t recycler_candidate_caii_slot;
+    int recycler_candidate_caii_match;
+    uint16_t recycler_candidate_timer_slot;
+    int recycler_candidate_pending_timer;
+    int16_t recycler_candidate_possession_root;
+    uint16_t recycler_candidate_ai_flags;
+    int recycler_candidate_ai_flags_known;
+    uint16_t recycler_candidate_gdat_word1;
+    int recycler_candidate_gdat_word1_known;
+    int recycler_candidate_drop_slots_loaded;
+    int recycler_candidate_delete_inputs_ready;
+    int sound_queued;
+    uint8_t sound_index;
+    uint8_t timer_type;
+    uint8_t creature_type;
+    uint8_t direction;
+    int16_t record;
+    int16_t x;
+    int16_t y;
+    uint16_t health_multiplier;
+    uint16_t hit_points;
+    int16_t caii_slot;
+    int16_t think_timer_slot;
+    uint32_t game_tick;
+    uint32_t transaction_hash;
+} DM2_V1_GameLoadAllocCreatureTimerReceipt;
+
+/* Source-ordered private candidate timer boundary.  The dispatcher peeks the
+ * due heap head and delegates only to timer families whose complete private
+ * adapter already exists. */
+typedef struct {
+    int valid;
+    int consumed;
+    int blocked_invalid_candidate;
+    int blocked_no_due_timer;
+    int blocked_unsupported_type;
+    uint8_t timer_type;
+    uint32_t game_tick;
+    DM2_V1_GameLoadThinkTimerReceipt think;
+    DM2_V1_GameLoadProcess0eTimerReceipt process_0e;
+    DM2_V1_GameLoadProcessSoundTimerReceipt process_sound;
+    DM2_V1_GameLoadAllocCreatureTimerReceipt alloc_creature;
+    DM2_V1_GameLoadOrnateAnimatorTimerReceipt ornate_animator;
+    DM2_V1_GameLoadLightTimerReceipt light;
+    DM2_V1_GameLoadOrnateNoiseTimerReceipt ornate_noise;
+    DM2_V1_GameLoadDestroyDoorTimerReceipt destroy_door;
+    DM2_V1_GameLoadProcess0cTimerReceipt process_0c;
+    DM2_V1_GameLoadResurrectionTimerReceipt resurrection;
+    DM2_V1_GameLoadCloudTimerReceipt cloud;
+    DM2_V1_GameLoadHeroEnchFlagTimerReceipt hero_ench_flag;
+    DM2_V1_GameLoadEnchPowerTimerReceipt ench_power;
+    DM2_V1_GameLoadPoisonTimerReceipt poison;
+    DM2_V1_GameLoadCandidateTickGeneratorReceipt tick_generator;
+    DM2_V1_GameLoadCandidateActuateReceipt actuate;
+    DM2_V1_GameLoadCandidateMissileReceipt missile;
+    DM2_V1_GameLoadCandidateDoorStepReceipt door_step;
+    DM2_V1_GameLoadRecordFlagTimerReceipt record_flag;
+    DM2_V1_GameLoadMoverecTimerReceipt moverec;
+} DM2_V1_GameLoadCandidateTimerProcessReceipt;
+
 /* Clone every already-owned mutable GAME_LOAD predecessor atomically, but
  * only after the complete CAII transaction has been materialized. An already
  * initialized `out` is replaced only after the new clone succeeds;
@@ -842,8 +1554,14 @@ typedef struct {
 int dm2_v1_game_load_runtime_session_candidate_init(
     DM2_V1_GameLoadRuntimeSessionCandidate *out,
     const DM2_V1_GameLoadWorldOwner *source);
+struct DM2_V1_SksaveGameLoadOwner;
+int dm2_v1_game_load_runtime_session_candidate_init_from_sksave(
+    DM2_V1_GameLoadRuntimeSessionCandidate *out,
+    const struct DM2_V1_SksaveGameLoadOwner *source);
 void dm2_v1_game_load_runtime_session_candidate_free(
     DM2_V1_GameLoadRuntimeSessionCandidate *candidate);
+int dm2_v1_game_load_runtime_session_candidate_is_valid(
+    const DM2_V1_GameLoadRuntimeSessionCandidate *candidate);
 
 /* Private c_map.cpp::DM2_CHANGE_CURRENT_MAP_TO transition over the cloned
  * File_header world.  This only retargets the candidate's map descriptor,
@@ -873,6 +1591,112 @@ int dm2_v1_game_load_runtime_session_candidate_classify_move(
 int dm2_v1_game_load_runtime_session_candidate_census_moverec_square(
     const DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
     int16_t x, int16_t y, DM2_V1_GameLoadMoverecSquareReceipt *out_receipt);
+
+/* Execute only the source tile-rooted cut/append branch of
+ * DM2_MOVE_RECORD_TO. The candidate and its mutable File_header image are
+ * restored byte-for-byte if either half fails. */
+int dm2_v1_game_load_runtime_session_candidate_move_record_to(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    int16_t record, int16_t source_x, int16_t source_y,
+    int16_t destination_x, int16_t destination_y,
+    DM2_V1_GameLoadRecordMoveReceipt *out_receipt);
+
+/* Audit the source post-move dispatcher over a retained record.  This is a
+ * private no-side-effect boundary until the candidate owns the timer/CAII
+ * transaction required by c_moverec.cpp:960-985. */
+int dm2_v1_game_load_runtime_session_candidate_dispatch_moverec(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    int16_t record, int16_t x, int16_t y, int32_t kind, int32_t flags,
+    DM2_V1_GameLoadMoverecDispatchReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_activate_moverec_caii(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    int16_t record, int16_t x, int16_t y,
+    DM2_V1_GameLoadMoverecCaiiReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_detach_caii_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    int16_t record,
+    DM2_V1_GameLoadCandidateCaiiTimerDetachReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_proceed_moverec_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadMoverecTimerReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_proceed_think_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick, DM2_V1_GameLoadThinkTimerReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_proceed_process_0e_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick, DM2_V1_GameLoadProcess0eTimerReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_proceed_process_sound_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadProcessSoundTimerReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_proceed_alloc_creature_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadAllocCreatureTimerReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_proceed_ench_power_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadEnchPowerTimerReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_proceed_poison_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadPoisonTimerReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_proceed_hero_ench_flag_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadHeroEnchFlagTimerReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_proceed_light_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadLightTimerReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_proceed_ornate_noise_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadOrnateNoiseTimerReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_proceed_ornate_animator_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadOrnateAnimatorTimerReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_proceed_destroy_door_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadDestroyDoorTimerReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_proceed_process_0c_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadProcess0cTimerReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_proceed_resurrection_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadResurrectionTimerReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_proceed_cloud_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadCloudTimerReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_proceed_actuate_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadCandidateActuateReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_proceed_missile_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadCandidateMissileReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadCandidateDoorStepReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_proceed_tick_generator_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadCandidateTickGeneratorReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadCandidateTimerProcessReceipt *out_receipt);
+int dm2_v1_game_load_runtime_session_candidate_proceed_record_flag_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick, DM2_V1_GameLoadRecordFlagTimerReceipt *out_receipt);
 
 /* Build the source-owned GAME_LOAD predecessor without selecting a champion.
  * It replaces an already initialized owner only after the new owner is
@@ -1129,6 +1953,9 @@ typedef struct {
     int16_t door_record_link;
     uint8_t state_before;
     uint8_t state_after;
+    uint16_t door_record_attributes_before;
+    uint16_t door_record_attributes_after;
+    int door_record_state_mutated;
     uint32_t private_animation_hash;
 } DM2_V1_GameLoadDoorStepReceipt;
 

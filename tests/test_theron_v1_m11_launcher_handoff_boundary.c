@@ -30,6 +30,7 @@
 #include "theron_v1_boot.h"
 #include "theron_v1_startup_media.h"
 #include "theron_v1_startup_flow.h"
+#include "theron_v1_track02_raw_media_intake.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -523,20 +524,83 @@ static void run_real_launcher_handoff_if_available(void) {
 static void run_explicit_real_cue_campaign_if_available(void) {
     const char *cue_path = getenv("FIRESTAFF_THERON_CUE");
     M12_AssetStatus status;
+    M12_StartupMenuState menu;
+    M11_GameViewState view;
     const Theron_V1Track02CampaignMediaDiscoveryReceipt *media;
+    Theron_V1Track02RawMediaIntakeReceipt intake;
+    int opened;
 
     if (!cue_path || !cue_path[0]) {
         expect_skip("FIRESTAFF_THERON_CUE is unset");
         return;
     }
+    memset(&intake, 0, sizeof(intake));
+    expect_true(theron_v1_track02_raw_media_intake_discover(cue_path,
+                                                             &intake) == 1 &&
+                    intake.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY &&
+                    intake.cue_consumed && intake.track02_md5[0] != '\0',
+                "explicit authentic Theron CUE resolves one verified Track 02 payload");
+    if (intake.status != THERON_V1_TRACK02_MEDIA_INTAKE_READY ||
+        !intake.cue_consumed || !intake.track02_md5[0]) {
+        return;
+    }
     expect_true(M12_AssetStatus_ScanTheronCampaignMedia(
-                    &status, cue_path, THERON_TRACK02_MD5_US_BIN, NULL) == 1,
+                    &status, cue_path, intake.track02_md5, NULL) == 1,
                 "explicit authentic Theron CUE enters campaign media admission");
     media = M12_AssetStatus_GetTheronCampaignMedia(&status);
     expect_true(media && media->source == THERON_V1_TRACK02_CAMPAIGN_MEDIA_SOURCE_CUE &&
                     media->launchable_direct_media && media->direct_media.cue_consumed &&
+                    strcmp(media->track02_md5, intake.track02_md5) == 0 &&
                     strcmp(media->direct_media.media_path, cue_path) == 0,
                 "explicit authentic Theron CUE retains CUE-backed raw Track 02 provenance");
+    if (!media || !media->launchable_direct_media ||
+        strcmp(media->track02_md5, intake.track02_md5) != 0) {
+        return;
+    }
+
+    /* Regression for MODE1/2048 retail media: its verified CUE must reach
+     * the same bounded title route as raw Track 02 instead of being replaced
+     * by the obsolete capture-required page.  This asserts the real M12→M11
+     * handoff, not just the lower-level media scanner. */
+    init_menu_without_gallery(&menu, cue_path, "theron");
+    dismiss_initial_message(&menu);
+    menu.selectedIndex = 4;
+    menu.activatedIndex = 4;
+    menu.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    menu.view = M12_MENU_VIEW_GAME_OPTIONS;
+    menu.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
+    M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+    M11_GameView_Init(&view);
+    opened = M11_GameView_OpenSelectedMenuEntry(&view, &menu);
+    expect_true(opened == 1 && view.active &&
+                    view.sourceKind == M11_GAME_SOURCE_THERON_TRACK02 &&
+                    !view.theronState.dungeon_capture_required &&
+                    view.theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
+                    view.theronState.startup_media_ready,
+                "explicit authentic MODE1/2048 CUE opens the source-backed Theron title gate");
+    if (opened == 1 && !view.theronState.dungeon_capture_required) {
+        int i;
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        view.theronState.startup_phase ==
+                            THERON_STARTUP_PHASE_STAGE_SELECT,
+                    "explicit authentic MODE1/2048 CUE advances from title to stage select");
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        view.theronState.startup_phase ==
+                            THERON_STARTUP_PHASE_SOUL_ROOM,
+                    "explicit authentic MODE1/2048 CUE advances from stage select to Soul Room");
+        for (i = 0; i < THERON_STARTUP_HERO_MIRROR_COUNT; ++i) {
+            (void)M11_GameView_HandleInput(&view, M12_MENU_INPUT_RIGHT);
+        }
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
+                        M11_GAME_INPUT_RETURN_TO_MENU &&
+                        view.theronState.startup_phase ==
+                            THERON_STARTUP_PHASE_IN_DUNGEON &&
+                        view.theronState.level_loaded == 1,
+                    "explicit authentic MODE1/2048 CUE reaches the verified initial level");
+    }
+    M11_GameView_Shutdown(&view);
 }
 
 static void run_production_forcefield_transition_without_roster(void) {

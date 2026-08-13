@@ -96,6 +96,22 @@ int main(void)
     assert(dispatched == 1U && capture.call_count == 1U &&
            capture.types[0] == 1U && capture.source_indices[0] == 9U);
 
+    /* DB14 bytes 6-7 refer to the source timerarray slot, not the additive
+     * queue ticket.  A unique source index can be cancelled; an ambiguous
+     * index must remain untouched. */
+    dm2_v1_source_timer_queue_init(&queue);
+    assert(enqueue_timer(&queue, 6U, 0x1eU, 0U, 12U) ==
+           DM2_V1_SOURCE_TIMER_OK);
+    assert(enqueue_timer(&queue, 7U, 0x1dU, 0U, 13U) ==
+           DM2_V1_SOURCE_TIMER_OK);
+    assert(dm2_v1_source_timer_cancel_source_index(&queue, 12U) == 1);
+    assert(queue.count == 1U && queue.source_indices[0] == 13U);
+    assert(dm2_v1_source_timer_cancel_source_index(&queue, 12U) == 0);
+    assert(enqueue_timer(&queue, 8U, 0x1eU, 0U, 13U) ==
+           DM2_V1_SOURCE_TIMER_OK);
+    assert(dm2_v1_source_timer_cancel_source_index(&queue, 13U) == 0);
+    assert(queue.count == 2U);
+
     dm2_v1_source_timer_queue_init(&queue);
     capture.reject_type = 2;
     assert(enqueue_timer(&queue, 5U, 2U, 0U, 1U) ==

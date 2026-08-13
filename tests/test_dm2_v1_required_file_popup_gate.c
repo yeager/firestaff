@@ -156,7 +156,10 @@ static void check_dm2_missing_required_popup(int graphicsMatched,
           strstr(state.messageLine1, "Dungeon Master II") != NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, expectedMissing) != NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, expectedAbsent) == NULL);
-    CHECK(state.messageLine3 && strstr(state.messageLine3, "DATA DIR:") != NULL);
+    /* The label is localized; assert the data-dir field shape and the
+     * configured path rather than an English-only translation. */
+    CHECK(state.messageLine3 && strchr(state.messageLine3, ':') != NULL);
+    CHECK(state.messageLine3 && strstr(state.messageLine3, kDm2Root) != NULL);
 
     intent = M12_StartupMenu_GetLaunchIntent(&state);
     CHECK(intent.valid == 0);

@@ -81,7 +81,7 @@ typedef struct {
     int cloud_dispatched;
     int cloud_origin_x;
     int cloud_origin_y;
-    int cloud_object_effect;
+    int cloud_object_effect;         /* -1 until DB15 word@2 is owned */
     int cloud_record_creation_failed; /* 1 when DB record owner absent */
     int cloud_record_created;         /* 1 when a DB14 cloud record was allocated */
     int16_t cloud_record_handle;      /* DB14 handle of the stepped record */
@@ -92,7 +92,7 @@ typedef struct {
     int missile_dispatched;
     int missile_projectile_accepted;
     int missile_projectile_slot;
-    int missile_object_effect;
+    int missile_object_effect;       /* -1 until DB14 word@2 is owned */
     int missile_origin_x;
     int missile_origin_y;
     int missile_record_created;       /* 1 when a DB14 flying-item record was allocated */
@@ -108,7 +108,7 @@ typedef struct {
     int summon_timer_scheduled;
     int summon_record_index;
     int summon_creature_type;
-    int summon_object_effect;
+    int summon_object_effect;        /* value_b source creature type */
     int summon_origin_x;
     int summon_origin_y;
     int summon_failed_no_data; /* 1 when no real DB4/cell data available */

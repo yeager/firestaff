@@ -29,6 +29,7 @@
 #include "dm2_v1_creature_animation_gdat.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_game_load_world_owner.h"
+#include "dm2_v1_sksave_game_load_owner.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_random_pc34_compat.h"
@@ -62,6 +63,17 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
                                               int *out_field);
 static void dm2_md5_bytes_hex(const uint8_t *bytes, size_t size,
                               char out_hex[33]);
+
+static int dm2_v1_boot_query_creature_ai_flags(
+    void *context, uint16_t record_link, uint8_t creature_type,
+    uint16_t *out_flags)
+{
+    (void)context;
+    (void)record_link;
+    return dm2_v1_creature_ai_spec_flags(creature_type, out_flags) == 1
+               ? 0
+               : -1;
+}
 
 static int dm2_v1_boot_load_mac_zip(DM2_V1_BootProfile *profile,
                                     const char *base) {
@@ -633,6 +645,7 @@ static void dm2_md5_body(DM2_Md5Ctx *ctx, const unsigned char *data) {
     unsigned int c = ctx->state[2], d = ctx->state[3];
     unsigned int X[16];
     int i;
+
     for (i = 0; i < 16; i++) {
         X[i] = (unsigned int)data[i*4] |
                ((unsigned int)data[i*4+1] << 8) |
@@ -1789,10 +1802,6 @@ int dm2_v1_boot_champion_selection_census(
             &out_census->candidates[i];
         uint8_t hero_type = mirrors.mirrors[i].dynamic_hero_type;
 
-        /* Macintosh retail contains distinct source mirror ObjectIDs that
-         * legitimately resolve to the same hero type.  The source selects
-         * by the DB3 mirror root, not by a globally unique hero-type byte;
-         * keep the per-mirror ObjectID/GDAT admission as the identity gate. */
         if (hero_type > 15u ||
             !dm2_v1_boot_champion_selection_candidate(
                 profile, mirrors.mirrors[i].map, mirrors.mirrors[i].x,
@@ -2212,12 +2221,7 @@ int dm2_v1_boot_file_header_actuator_generator_receipt(
                 candidate.candidate_hash, actuator->target_word);
         }
     }
-    /* The authentic Macintosh First Chapter image contains ordinary
-     * actuators but no members of the tick-generator type family.  A
-     * zero-generator receipt is still a valid source projection: the
-     * original loop simply has no generator work to perform. */
-    if (candidate.actuator_count <= 0 ||
-        candidate.control_bit2_set_count + candidate.control_bit2_clear_count !=
+    if (candidate.control_bit2_set_count + candidate.control_bit2_clear_count !=
             candidate.tick_generator_candidate_count ||
         candidate.candidate_hash == 0u) {
         return 0;
@@ -3291,9 +3295,9 @@ static int dm2_v1_boot_load_amiga_installer_from_zip(
     for (candidate_index = 0u; candidate_index < 2u; ++candidate_index) {
         DM2_V1_AmigaLzxPart parts[DM2_V1_AMIGA_LZX_PART_COUNT] = {{0}};
         DM2_V1_AmigaLzxArchive archive = {0};
-        const DM2_V1_AmigaLzxEntry *graphics_entry;
-        const DM2_V1_AmigaLzxEntry *dungeon_entry;
-        const DM2_V1_AmigaLzxEntry *music_entry;
+        const DM2_V1_AmigaLzxEntry *graphics_entry = NULL;
+        const DM2_V1_AmigaLzxEntry *dungeon_entry = NULL;
+        const DM2_V1_AmigaLzxEntry *music_entry = NULL;
         uint8_t *joined = NULL;
         size_t joined_size = 0u;
         uint8_t *graphics = NULL;
@@ -3461,8 +3465,13 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
                             const char *data_dir) {
     char path[512];
     char save_root[sizeof(profile->save_root)];
+    int explicit_amiga_archive;
     (void)path;
     const char *base = data_dir ? data_dir : ".";
+
+    explicit_amiga_archive = strstr(base,
+                                    "Dungeon-Master-II-Skullkeep_Amiga_EN.zip") != NULL &&
+        FSP_FileExists(base);
 
     if (!profile) return -1;
     /* A rescan selects a new user-owned medium.  No parsed world, mounted
@@ -3510,6 +3519,14 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
                      "%s", sibling);
             profile->dungeon_size = file_size(sibling);
         }
+    }
+
+    /* An explicitly selected Amiga installer must win before the generic
+     * sibling-archive probes. Otherwise a nearby FM Towns ZIP can hijack the
+     * launch and make the caller appear to have selected the wrong platform. */
+    if (explicit_amiga_archive &&
+        (!profile->graphics_path[0] || !profile->dungeon_path[0])) {
+        (void)dm2_v1_boot_load_amiga_installer_from_zip(profile, base);
     }
 
     /* A selected Macintosh ZIP also has a CUE sheet.  Probe its HFS owner
@@ -3947,8 +3964,45 @@ int dm2_v1_boot_probe_available(const char *data_dir) {
 
 /* ── Save root ───────────────────────────────────────────────────────── */
 
+static int dm2_v1_boot_discover_dosbox_save_root(
+    char *out_root, size_t out_root_size)
+{
+    const char *configured = getenv("FIRESTAFF_DM2_SAVE_ROOT");
+    const char *home = getenv("HOME");
+    char candidate[1024];
+    DM2_SKSaveCorpusReceipt corpus;
+
+    if (!out_root || out_root_size == 0u) return 0;
+    out_root[0] = '\0';
+
+    /* An explicit root is useful for DOSBox mounts and CI fixtures.  Accept
+     * it only after the original SKSave header gate; a path alone must not
+     * redirect an edition to an unrelated directory. */
+    if (configured && configured[0] &&
+        dm2_v1_sksave_corpus_scan(configured, &corpus) &&
+        (corpus.has_last_session || corpus.has_last_session_backup ||
+         corpus.valid_slot_mask != 0u)) {
+        snprintf(out_root, out_root_size, "%s", configured);
+        return 1;
+    }
+
+    /* DOSBox's user-facing DM2 save location on macOS.  This is discovered
+     * from HOME, never hard-coded to a developer account, and only selected
+     * when the directory contains source-shaped SKSave files. */
+    if (!home || !home[0]) return 0;
+    snprintf(candidate, sizeof(candidate), "%s/Downloads/dm2", home);
+    if (!dm2_v1_sksave_corpus_scan(candidate, &corpus) ||
+        (!corpus.has_last_session && !corpus.has_last_session_backup &&
+         corpus.valid_slot_mask == 0u)) {
+        return 0;
+    }
+    snprintf(out_root, out_root_size, "%s", candidate);
+    return 1;
+}
+
 void dm2_v1_boot_set_save_root(DM2_V1_BootProfile *profile,
                                 const char *save_dir) {
+    char discovered_root[1024];
     if (!profile) return;
     if (save_dir && save_dir[0]) {
         strncpy(profile->save_root, save_dir, sizeof(profile->save_root) - 1);
@@ -3958,6 +4012,11 @@ void dm2_v1_boot_set_save_root(DM2_V1_BootProfile *profile,
                  "%s%c..%csaves%cdm2",
                  profile->asset_root[0] ? profile->asset_root : ".",
                  DM2_PATH_SEP, DM2_PATH_SEP, DM2_PATH_SEP);
+        if (dm2_v1_boot_discover_dosbox_save_root(
+                discovered_root, sizeof(discovered_root))) {
+            snprintf(profile->save_root, sizeof(profile->save_root), "%s",
+                     discovered_root);
+        }
     }
 }
 
@@ -4130,6 +4189,7 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
         DM2_V1_BootGraphicsDat *gfx =
             (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
         if (profile->platform == DM2_PLATFORM_FMTOWNS_JA ||
+            profile->platform == DM2_PLATFORM_AMIGA_EN ||
             profile->platform == DM2_PLATFORM_PC_EN ||
             profile->platform == DM2_PLATFORM_PC_FR ||
             profile->platform == DM2_PLATFORM_PC_JEWEL ||
@@ -9164,7 +9224,12 @@ static int dm2_v1_boot_bind_g1_creature_animation_0958(
         (void)record_index;
         ai = dm2_v1_creature_ai_spec(material->creature_type);
         if (!record || record_size <= 0 || !ai) {
-            return 0;
+            /* The DB4/F9 map chip remains a valid source-owned static
+             * material even when this edition has no admitted AI row for the
+             * creature.  Preserve the explicit animation/CCM block on this
+             * material; do not discard unrelated DB4 roots from the map. */
+            material->animation_0958_blocked_caii = 1u;
+            continue;
         }
         memset(&animation, 0, sizeof(animation));
         result = dm2_v1_creature_animation_gdat_query_0958_record(
@@ -9183,7 +9248,7 @@ static int dm2_v1_boot_bind_g1_creature_animation_0958(
          * missing CAII owner is retained as an explicit block. */
         if ((ai->w0AIFlags & DM2_AIFLAG_STATIC) != 0u &&
             (!result || !animation.valid || !animation.cursor_static_owner)) {
-            return 0;
+            material->animation_0958_blocked_caii = 1u;
         }
     }
     return 1;
@@ -12805,6 +12870,23 @@ static int dm2_v1_boot_read_english_companion(
         }
         return 1;
     }
+    /* The launcher may pass the authenticated PC-English companion as the
+     * archive path itself. Preserve the archive as the provenance owner and
+     * select only the source member; do not unpack beside the FM Towns tree
+     * or fall back to a sibling GRAPHICS.DAT. */
+    {
+        size_t path_len = strlen(path);
+        if (path_len >= 4u &&
+            strcasecmp(path + path_len - 4u, ".zip") == 0) {
+            char virtual_path[1200];
+            if (snprintf(virtual_path, sizeof(virtual_path),
+                         "%s::data/graphics.dat", path) <= 0 ||
+                strlen(virtual_path) >= sizeof(virtual_path))
+                return 0;
+            return dm2_v1_boot_read_english_companion(
+                virtual_path, out_bytes, out_size);
+        }
+    }
     if (!asset_file_matches_md5(path, expected_md5) ||
         !dm2_v1_boot_read_asset_bytes(path, 64L * 1024L * 1024L,
                                       out_bytes, out_size) ||
@@ -14037,6 +14119,15 @@ static void dm2_v1_boot_free_runtime_session_candidate(
     dm2_v1_game_load_runtime_session_candidate_free(candidate);
     free(candidate);
     profile->game_load_runtime_session_candidate = NULL;
+    if (profile->sksave_game_load_source_owned &&
+        profile->sksave_game_load_source) {
+        DM2_V1_SksaveGameLoadOwner *source =
+            (DM2_V1_SksaveGameLoadOwner *)profile->sksave_game_load_source;
+        dm2_v1_sksave_game_load_owner_free(source);
+        free(source);
+    }
+    profile->sksave_game_load_source = NULL;
+    profile->sksave_game_load_source_owned = 0;
 }
 
 /* Retain a distinct RAM clone only after every source-owned mutable
@@ -14069,6 +14160,90 @@ static int dm2_v1_boot_retain_runtime_session_candidate(
     dm2_v1_boot_free_runtime_session_candidate(profile);
     profile->game_load_runtime_session_candidate = candidate;
     return 1;
+}
+
+int dm2_v1_boot_retain_sksave_resume_candidate(
+    DM2_V1_BootProfile *profile,
+    const struct DM2_V1_SksaveGameLoadOwner *source)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate;
+
+    if (!profile || !source || profile->source_game_load_session_ready ||
+        profile->game_load_runtime_session_candidate) return 0;
+    candidate = calloc(1, sizeof(*candidate));
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_init_from_sksave(
+            candidate, source)) {
+        if (candidate) {
+            dm2_v1_game_load_runtime_session_candidate_free(candidate);
+            free(candidate);
+        }
+        return 0;
+    }
+    profile->game_load_runtime_session_candidate = candidate;
+    profile->sksave_game_load_source = (void *)source;
+    return 1;
+}
+
+int dm2_v1_boot_prepare_sksave_resume_path(
+    DM2_V1_BootStartupLaunch *launch, const char *save_path)
+{
+    DM2_V1_BootProfile *profile;
+    DM2_V1_DungeonData *dungeon = NULL;
+    DM2_V1_SksaveGameLoadOwner *source = NULL;
+    FILE *file = NULL;
+    uint8_t *bytes = NULL;
+    long end;
+    size_t size;
+    int ok = 0;
+
+    if (!launch || !(profile = launch->profile) || !save_path ||
+        !save_path[0] || profile->source_game_load_session_ready ||
+        profile->game_load_runtime_session_candidate ||
+        !(dungeon = (DM2_V1_DungeonData *)profile->dungeon_data) ||
+        !dungeon->raw_data || dungeon->raw_size <= 0 ||
+        !dm2_v1_boot_asset_loader(profile)) {
+        return 0;
+    }
+    file = fopen(save_path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (end = ftell(file)) <= 42L || fseek(file, 0, SEEK_SET) != 0)
+        goto done;
+    size = (size_t)end;
+    bytes = (uint8_t *)malloc(size);
+    if (!bytes || fread(bytes, 1u, size, file) != size ||
+        dm2_v1_save_detect_game_version(bytes) != DM2V1_VERSION_DM2) {
+        goto done;
+    }
+    source = (DM2_V1_SksaveGameLoadOwner *)calloc(1, sizeof(*source));
+    if (!source || !dm2_v1_sksave_game_load_owner_init(
+            source, bytes + 42u, size - 42u,
+            (uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8),
+            dm2_v1_boot_asset_loader(profile),
+            dm2_v1_boot_query_creature_ai_flags, NULL)) {
+        goto done;
+    }
+    source->owned_raw_file = bytes;
+    source->owned_raw_file_size = size;
+    bytes = NULL;
+    if (!dm2_v1_sksave_game_load_owner_bind_dungeon_layout(
+            source, dungeon->raw_data, (size_t)dungeon->raw_size)) goto done;
+    if (!dm2_v1_sksave_game_load_owner_bind_current_map_sound(
+            source, dm2_v1_boot_asset_loader(profile))) goto done;
+    if (!dm2_v1_sksave_game_load_owner_materialize_timer_owner(source)) goto done;
+    if (!dm2_v1_sksave_game_load_owner_materialize_runtime_caii(source, NULL)) goto done;
+    if (!dm2_v1_boot_retain_sksave_resume_candidate(profile, source)) goto done;
+    profile->sksave_game_load_source = source;
+    profile->sksave_game_load_source_owned = 1;
+    source = NULL;
+    ok = 1;
+done:
+    if (file) fclose(file);
+    free(bytes);
+    if (source) {
+        dm2_v1_sksave_game_load_owner_free(source);
+        free(source);
+    }
+    return ok;
 }
 
 int dm2_v1_boot_retain_new_game_world(
@@ -14141,27 +14316,27 @@ int dm2_v1_boot_prepare_new_game_world(DM2_V1_BootProfile *profile)
         return 0;
     }
     candidate = (DM2_V1_GameLoadWorldOwner *)calloc(1, sizeof(*candidate));
-    if (!candidate ||
-        !DM2_PREPARE_DEBUG_STEP("owner", dm2_v1_game_load_world_owner_prepare_new_game(candidate, profile)) ||
-        !DM2_PREPARE_DEBUG_STEP("ui", dm2_v1_game_load_world_owner_materialize_preselection_init_game_ui(candidate)) ||
-        !DM2_PREPARE_DEBUG_STEP("ticks", dm2_v1_game_load_world_owner_process_actuator_tick_generators(candidate, NULL)) ||
-        !DM2_PREPARE_DEBUG_STEP("map-context", dm2_v1_game_load_world_owner_materialize_source_map_context(candidate)) ||
-        !DM2_PREPARE_DEBUG_STEP("graphics", dm2_v1_game_load_world_owner_materialize_preselection_local_graphics(candidate)) ||
-        !DM2_PREPARE_DEBUG_STEP("sound", dm2_v1_game_load_world_owner_materialize_preselection_sound_spatial(candidate)) ||
-        !DM2_PREPARE_DEBUG_STEP("static-caii", dm2_v1_game_load_world_owner_materialize_static_caii(candidate)) ||
-        !DM2_PREPARE_DEBUG_STEP("caii-context", dm2_v1_game_load_world_owner_materialize_caii_local_context(candidate)) ||
-        !DM2_PREPARE_DEBUG_STEP("dynamic-caii", dm2_v1_game_load_world_owner_materialize_dynamic_caii(candidate, NULL)) ||
-        !DM2_PREPARE_DEBUG_STEP("doors", dm2_v1_game_load_world_owner_materialize_preselection_map_doors(candidate)) ||
-        !DM2_PREPARE_DEBUG_STEP("objects", dm2_v1_game_load_world_owner_materialize_preselection_map_objects(candidate)) ||
-        !DM2_PREPARE_DEBUG_STEP("texts", dm2_v1_game_load_world_owner_materialize_preselection_map_texts(candidate)) ||
-        !DM2_PREPARE_DEBUG_STEP("teleporters", dm2_v1_game_load_world_owner_materialize_preselection_map_teleporters(candidate)) ||
-        !DM2_PREPARE_DEBUG_STEP("actuators", dm2_v1_game_load_world_owner_materialize_preselection_map_actuators(candidate)) ||
-        !DM2_PREPARE_DEBUG_STEP("creatures", dm2_v1_game_load_world_owner_materialize_preselection_map_creatures(candidate)) ||
-        !DM2_PREPARE_DEBUG_STEP("possessions", dm2_v1_game_load_world_owner_materialize_preselection_creature_possessions(candidate)) ||
-        !DM2_PREPARE_DEBUG_STEP("light", dm2_v1_game_load_world_owner_materialize_preselection_light(candidate)) ||
-        !DM2_PREPARE_DEBUG_STEP("scene", dm2_v1_game_load_world_owner_materialize_preselection_scene(candidate)) ||
-        !DM2_PREPARE_DEBUG_STEP("view", dm2_v1_game_load_world_owner_materialize_preselection_view(candidate)) ||
-        !DM2_PREPARE_DEBUG_STEP("viewport", dm2_v1_game_load_world_owner_materialize_preselection_viewport(candidate))) {
+    if (!candidate || !dm2_v1_game_load_world_owner_prepare_new_game(
+            candidate, profile) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_init_game_ui(candidate) ||
+        !dm2_v1_game_load_world_owner_process_actuator_tick_generators(candidate, NULL) ||
+        !dm2_v1_game_load_world_owner_materialize_source_map_context(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_local_graphics(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_sound_spatial(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_static_caii(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_caii_local_context(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_dynamic_caii(candidate, NULL) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_map_doors(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_map_objects(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_map_texts(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_map_teleporters(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_map_actuators(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_map_creatures(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_creature_possessions(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_light(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_scene(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_view(candidate) ||
+        !dm2_v1_game_load_world_owner_materialize_preselection_viewport(candidate)) {
         if (candidate) {
             dm2_v1_game_load_world_owner_free(candidate);
             free(candidate);
@@ -14238,7 +14413,9 @@ static int dm2_v1_boot_startend_first_mirror_from_file_header(
         }
         if (type == 3) {
             if (record_size < 8) return 0;
-            w2 = dm2_v1_boot_read_le16(record + 2);
+            w2 = owner->dungeon.source_words_big_endian
+                ? (uint16_t)(((uint16_t)record[2] << 8) | record[3])
+                : dm2_v1_boot_read_le16(record + 2);
             if ((w2 & 0x007fu) == 0x007eu) {
                 *out_object_id = (uint16_t)thing;
                 return 1;
@@ -14294,50 +14471,13 @@ int dm2_v1_boot_materialize_startend_first_champion(
      * File_header image. Verify the actual (0,0) chain first, then admit
      * only its matching roster marker.
      * SKProject: SKULLWIN/startend.cpp:1138-1167; c_hero.cpp:1052-1157. */
-    first_map = owner->current_map;
-    first_x = 0;
-    first_y = 0;
-    source_first_mirror_object = 0u;
-    if (profile->platform == DM2_PLATFORM_MAC_EN &&
-        strcmp(profile->version_id, "mac-en-demo") == 0) {
-        /* The authentic First Chapter image retains the original
-         * STARTEND mirror at map 0,0,0 while its File_header party pose is
-         * map 0,1,8.  This is different from the large retail Macintosh
-         * image, whose first mirror is at the party entrance.  Resolve the
-         * demo's actual roster entry instead of moving either source pose. */
-        first_map = 0;
-        first_x = 0;
-        first_y = 0;
+    if (owner->dungeon.source_words_big_endian) {
+        source_first_mirror_object = 0u;
         for (i = 0; i < owner->preselection_mirror_roster.candidate_count; ++i) {
-            const DM2_V1_BootChampionSelectionCandidate *candidate =
-                &owner->preselection_mirror_roster.candidates[i];
-            if (candidate->valid && candidate->mirror.map == first_map &&
-                candidate->mirror.x == first_x && candidate->mirror.y == first_y) {
-                source_first_mirror_object = candidate->mirror.object_id;
+            if (owner->preselection_mirror_roster.candidates[i].valid) {
+                source_first_mirror_object = owner->preselection_mirror_roster.candidates[i].mirror.object_id;
                 break;
             }
-        }
-        if (source_first_mirror_object == 0u) return 0;
-    } else if (profile->platform == DM2_PLATFORM_MAC_EN) {
-        /* The authenticated Macintosh File_header places the first
-         * STARTEND mirror at the party entrance square, not at (0,0).
-         * Retain the roster's source traversal order and do not invent a
-         * mirror coordinate or hero record. */
-        for (i = 0; i < owner->preselection_mirror_roster.candidate_count; ++i) {
-            const DM2_V1_BootChampionSelectionCandidate *candidate =
-                &owner->preselection_mirror_roster.candidates[i];
-            if (candidate->valid && candidate->mirror.map == owner->source_party_map &&
-                candidate->mirror.x == owner->source_party_x &&
-                candidate->mirror.y == owner->source_party_y) {
-                first_map = candidate->mirror.map;
-                first_x = candidate->mirror.x;
-                first_y = candidate->mirror.y;
-                source_first_mirror_object = candidate->mirror.object_id;
-                break;
-            }
-        }
-        if (source_first_mirror_object == 0u) {
-            return 0;
         }
     } else if (!dm2_v1_boot_startend_first_mirror_from_file_header(
                    owner, &source_first_mirror_object)) {
@@ -14347,8 +14487,8 @@ int dm2_v1_boot_materialize_startend_first_champion(
         const DM2_V1_BootChampionSelectionCandidate *candidate =
             &owner->preselection_mirror_roster.candidates[i];
         if (!candidate->valid || candidate->mirror.map != owner->current_map ||
-            candidate->mirror.x != first_x || candidate->mirror.y != first_y ||
-            candidate->mirror.map != first_map ||
+            (!owner->dungeon.source_words_big_endian &&
+             (candidate->mirror.x != 0 || candidate->mirror.y != 0)) ||
             candidate->mirror.object_id != source_first_mirror_object) {
             continue;
         }
@@ -14365,14 +14505,12 @@ int dm2_v1_boot_materialize_startend_first_champion(
     selection.y = first->mirror.y;
     selection.direction = first->mirror.direction;
     selection.mirror_object_id = first->mirror.object_id;
-    {
-        int select_ok;
-        record = dm2_v1_record_pool_address_mut(
+    record = dm2_v1_record_pool_address_mut(
             &owner->record_pools, (int16_t)first->mirror.object_id);
-        select_ok = record != NULL &&
-            dm2_v1_boot_select_new_game_champion(profile, &selection);
-        if (!select_ok || owner->selected_party.heros_in_party != 1 ||
-            owner->source_next_champion_number != 1) {
+    if (!record ||
+        !dm2_v1_boot_select_new_game_champion(profile, &selection) ||
+        owner->selected_party.heros_in_party != 1 ||
+        owner->source_next_champion_number != 1) {
         return 0;
         }
     }
@@ -14471,6 +14609,13 @@ int dm2_v1_boot_commit_new_game_session(DM2_V1_BootProfile *profile)
     return dm2_v1_runtime_commit_source_game_load(profile);
 }
 
+int dm2_v1_boot_commit_sksave_resume_session(DM2_V1_BootProfile *profile)
+{
+    if (!profile || !profile->sksave_game_load_source ||
+        profile->game_load_world_owner) return 0;
+    return dm2_v1_runtime_commit_source_game_load(profile);
+}
+
 int dm2_v1_boot_prepared_new_game_input(
     DM2_V1_BootProfile *profile, int source_event)
 {
@@ -14508,7 +14653,10 @@ int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
     DM2_V1_BootChampionSelectionCandidate resolved;
     DM2_V1_BootNewGamePartySelection selection;
     const DM2_V1_GameLoadPreselectionViewCell *front = NULL;
+    const int fmtowns_startend =
+        profile && profile->platform == DM2_PLATFORM_FMTOWNS_JA;
     int i;
+
 
     if (!profile || mirror_object_id == 0u ||
         profile->source_game_load_session_ready ||
@@ -14529,7 +14677,12 @@ int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
             break;
         }
     }
-    if (!front) return 0;
+    /* The 68k retail start stores the first visible mirror on the entrance
+     * cell itself.  Unlike the PC-DOS title projection, that source event is
+     * not represented by the forward D0C cell; retain the authenticated
+     * current-cell root as the edition-native fallback. */
+    if (!front && !owner->dungeon.source_words_big_endian &&
+        !fmtowns_startend) return 0;
 
     for (i = 0; i < roster.candidate_count; ++i) {
         const DM2_V1_BootChampionSelectionCandidate *candidate =
@@ -14544,17 +14697,41 @@ int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
          * live movement owner exists, this is the exact File_header pose
          * retained by DM2_move_2fcf_0b8b, not a host-panel direction.
          * SKProject: skevents.cpp around 3C7E5; skhero.cpp:1054-1101. */
-        if (candidate->mirror.map != owner->source_party_map ||
-            candidate->mirror.x != front->map_x ||
-            candidate->mirror.y != front->map_y ||
-            candidate->mirror.direction !=
-                ((owner->source_party_direction + 2u) & 3u)) {
+        {
+            const int at_front = front &&
+                candidate->mirror.map == owner->source_party_map &&
+                candidate->mirror.x == front->map_x &&
+                candidate->mirror.y == front->map_y;
+            const int at_current = owner->dungeon.source_words_big_endian &&
+                candidate->mirror.map == owner->source_party_map &&
+                candidate->mirror.x == owner->source_party_x &&
+                candidate->mirror.y == owner->source_party_y;
+            const int at_fmtowns_startend = fmtowns_startend &&
+                i == (int)owner->selected_mirror_count &&
+                candidate->mirror.map == owner->current_map &&
+                candidate->mirror.object_id != 0u;
+            if ((!at_front && !at_current && !at_fmtowns_startend) ||
+            (!owner->dungeon.source_words_big_endian &&
+             !fmtowns_startend &&
+             candidate->mirror.direction !=
+                 ((owner->source_party_direction + 2u) & 3u))) {
+            /* PC-DOS stores the mirror-facing direction in the little-endian
+             * DB3 handle as the opposite-facing root used by the original
+             * title viewport. The 68k editions retain the same source root
+             * but their big-endian File_header loader exposes the native
+             * actor direction; the mirror event is still identified by the
+             * authenticated map/x/y/object chain, not a DOS-only direction
+             * literal. */
             return 0;
+            }
         }
         memset(&resolved, 0, sizeof(resolved));
         if (!dm2_v1_boot_champion_selection_candidate(
                 profile, candidate->mirror.map, candidate->mirror.x,
-                candidate->mirror.y, owner->source_party_direction,
+                candidate->mirror.y,
+                (owner->dungeon.source_words_big_endian || fmtowns_startend)
+                    ? candidate->mirror.direction
+                    : owner->source_party_direction,
                 &resolved) ||
             !resolved.valid || !resolved.incomplete_game_load ||
             resolved.mirror.object_id != candidate->mirror.object_id ||
@@ -14572,6 +14749,71 @@ int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
         selection.direction = resolved.selection_direction;
         selection.mirror_object_id = resolved.mirror.object_id;
         return dm2_v1_boot_select_new_game_champion(profile, &selection);
+    }
+    return 0;
+}
+
+int dm2_v1_boot_select_prepared_new_game_champion_at_viewport(
+    DM2_V1_BootProfile *profile, int viewport_x, int viewport_y)
+{
+    DM2_V1_GameLoadWorldOwner *owner;
+    DM2_V1_BootChampionSelectionCensus roster;
+    const DM2_V1_GameLoadPreselectionViewCell *front = NULL;
+    const int fmtowns_startend =
+        profile && profile->platform == DM2_PLATFORM_FMTOWNS_JA;
+    int i;
+
+    /* The source C080 viewport command does not use host-authored pixel
+     * rectangles to identify a mirror.  It resolves the current D0C cell,
+     * then walks that cell's authenticated record chain.  Keep the host
+     * coordinates as a zone check only; object identity remains source-owned.
+     * The 224x136 rectangle is the original DM2/DM1 viewport on the 320x200
+     * framebuffer. */
+    if (!profile || viewport_x < 0 || viewport_x >= 224 ||
+        viewport_y < 33 || viewport_y >= 169 ||
+        profile->source_game_load_session_ready ||
+        !(owner = (DM2_V1_GameLoadWorldOwner *)profile->game_load_world_owner) ||
+        !dm2_v1_game_load_world_owner_is_prepared(owner) ||
+        !owner->source_preselection_ready || !owner->preselection_view.valid ||
+        !dm2_v1_boot_prepared_new_game_mirror_roster(profile, &roster)) {
+        return 0;
+    }
+    for (i = 0; i < owner->preselection_view.cell_count; ++i) {
+        const DM2_V1_GameLoadPreselectionViewCell *cell =
+            &owner->preselection_view.cells[i];
+        if (cell->view_square == DM2_SQ_D0C && cell->source_available) {
+            front = cell;
+            break;
+        }
+    }
+    if (!front && !owner->dungeon.source_words_big_endian &&
+        !fmtowns_startend) return 0;
+    for (i = 0; i < roster.candidate_count; ++i) {
+        const DM2_V1_BootChampionSelectionCandidate *candidate =
+            &roster.candidates[i];
+        {
+        const int at_front = front && candidate->valid &&
+            candidate->mirror.map == owner->source_party_map &&
+            candidate->mirror.x == front->map_x &&
+            candidate->mirror.y == front->map_y;
+        const int at_current = owner->dungeon.source_words_big_endian &&
+            candidate->valid && candidate->mirror.map == owner->source_party_map &&
+            candidate->mirror.x == owner->source_party_x &&
+            candidate->mirror.y == owner->source_party_y;
+        const int at_fmtowns_startend = fmtowns_startend &&
+            i == (int)owner->selected_mirror_count &&
+            candidate->valid && candidate->mirror.map == owner->current_map &&
+            candidate->mirror.object_id != 0u;
+        if ((!at_front && !at_current && !at_fmtowns_startend) ||
+            (!owner->dungeon.source_words_big_endian &&
+             !fmtowns_startend &&
+             candidate->mirror.direction !=
+                 ((owner->source_party_direction + 2u) & 3u))) {
+            continue;
+        }
+        return dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
+            profile, candidate->mirror.object_id);
+        }
     }
     return 0;
 }

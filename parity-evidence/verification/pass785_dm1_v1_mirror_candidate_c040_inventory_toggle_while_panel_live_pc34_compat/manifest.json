@@ -92,11 +92,11 @@
     }
   ],
   "status": "PASS785_DM1_V1_MIRROR_CANDIDATE_C040_INVENTORY_TOGGLE_WHILE_PANEL_LIVE_LOCKED",
-  "timestampUtc": "2026-08-11T06:50:24.517606+00:00",
+  "timestampUtc": "2026-08-12T01:40:10.567081+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat"
+        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat"
       ],
       "outputTail": "dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live: 44/44 assertions passed",
       "passed": true,

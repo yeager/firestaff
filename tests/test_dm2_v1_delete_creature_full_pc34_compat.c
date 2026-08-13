@@ -31,6 +31,20 @@
 
 static int g_failures = 0;
 
+static int context_ai_flags(void *context, int creature_type,
+                            uint16_t *out_flags)
+{
+    (void)context;
+    return dm2_v1_creature_ai_spec_flags(creature_type, out_flags);
+}
+
+static int context_gdat_word1(void *context, int creature_type,
+                              uint16_t *out_word)
+{
+    (void)context;
+    return dm2_v1_creature_gdat_word1(creature_type, out_word);
+}
+
 #define CHECK(cond, msg)                                              \
     do {                                                              \
         if (!(cond)) {                                                \
@@ -66,31 +80,40 @@ static int16_t rd16(const uint8_t *p)
     return (int16_t)(p[0] | ((uint16_t)p[1] << 8));
 }
 
-/* 2x2 byte-square map.  Flagged: (0,0) -> ground idx 0, (0,1) -> idx 1.
- * (1,1) carries no object flag. */
+/* Two 2x2 byte-square maps.  Map 0 keeps the original fixture roots; map 1
+ * is used by the map-aware delete regression below. */
 static void build_dungeon(DM2_V1_DungeonData *d, uint8_t *raw)
 {
     memset(d, 0, sizeof(*d));
     memset(raw, 0, RAW_SIZE);
-    d->level_count = 1;
+    d->level_count = 2;
     d->level_widths[0] = 2;
     d->level_heights[0] = 2;
     d->level_offsets[0] = 0;
+    d->level_widths[1] = 2;
+    d->level_heights[1] = 2;
+    d->level_offsets[1] = 4;
     d->square_bytes = 1;
     d->raw_map_data_base = MAP_BASE;
     d->column_index_base = COLUMN_BASE;
     d->square_first_thing_base = GROUND_BASE;
-    d->square_first_thing_count = 2;
+    d->square_first_thing_count = 4;
     d->raw_data = raw;
     d->raw_size = RAW_SIZE;
 
     raw[MAP_BASE + 0] = 0x10; /* (0,0) */
     raw[MAP_BASE + 1] = 0x10; /* (0,1) */
+    raw[MAP_BASE + 4] = 0x10; /* map 1 (0,0) */
+    raw[MAP_BASE + 5] = 0x10; /* map 1 (0,1) */
     wr16(raw + COLUMN_BASE + 0, 0);
     wr16(raw + COLUMN_BASE + 2, 2);
+    wr16(raw + COLUMN_BASE + 4, 2);
+    wr16(raw + COLUMN_BASE + 6, 3);
 
     wr16(raw + GROUND_BASE + 0, DM2_V1_RECORD_HANDLE_END);
     wr16(raw + GROUND_BASE + 2, DM2_V1_RECORD_HANDLE_END);
+    wr16(raw + GROUND_BASE + 4, DM2_V1_RECORD_HANDLE_END);
+    wr16(raw + GROUND_BASE + 6, DM2_V1_RECORD_HANDLE_END);
 }
 
 /* DB4 creature records (16 bytes), link words set per case:
@@ -358,6 +381,36 @@ int main(void)
     dm2_v1_caii_array_free(&caii);
     dm2_v1_record_pool_set_free(&set);
 
+    /* ── (A2) current c_map is honored for lookup and tile cut ─────── */
+    build_dungeon(&dungeon, raw);
+    build_pools(&set);
+    wr16(raw + GROUND_BASE + 4, mk_handle(4, 1));
+    dm2_v1_source_timer_queue_init(&queue);
+    dm2_v1_drops_rng_init(&rng);
+    {
+        DM2_V1_DeleteCreatureFullReceipt rc;
+        memset(&rc, 0, sizeof(rc));
+        {
+            int result = dm2_v1_delete_creature_record_full(
+                  &set, &dungeon, NULL, &queue, &rng,
+                  1, 1500ul, 0, 0, 0, -1, 0, 0, 0,
+                  NULL, &rc);
+            CHECK(result == 1, "map 1 delete reaches a source return");
+            CHECK(rc.valid == 1 && rc.record_handle == mk_handle(4, 1) &&
+                      rc.creature_type == TYPE_NO_INVOKE,
+                  "map 1 lookup resolves the DB4 creature");
+            CHECK(rc.cut_performed == 1 && rc.dealloc_performed == 1,
+                  "map 1 delete cuts and deallocates the creature");
+            CHECK(dm2_v1_dungeon_get_first_thing(&dungeon, 1, 0, 0) ==
+                      (uint16_t)DM2_V1_RECORD_HANDLE_END,
+                  "map 1 ground root is cut");
+            CHECK(dm2_v1_dungeon_get_first_thing(&dungeon, 0, 0, 0) ==
+                      (uint16_t)DM2_V1_RECORD_HANDLE_END,
+                  "map 1 delete leaves map 0 untouched");
+        }
+    }
+    dm2_v1_record_pool_set_free(&set);
+
     /* ── (B) table1d607e &4 set: the invoke branch is skipped ───────── */
     build_dungeon(&dungeon, raw);
     build_pools(&set);
@@ -479,10 +532,66 @@ int main(void)
         CHECK(rd16(set.pools[4].bytes + 0) != DM2_V1_RECORD_HANDLE_NULL,
               "no free marker on the fail-closed path");
         CHECK(rc.cut_performed == 1 && rc.invoke_message_queued == 1,
-              "source-ordered effects before the drop still applied");
+              "source-ordered effects reached the drop before rollback");
+        CHECK(rc.transaction_rolled_back == 1 && queue.count == 0 &&
+                  dm2_v1_dungeon_get_first_thing(&dungeon, 0, 0, 0) ==
+                      (uint16_t)mk_handle(4, 0),
+              "post-cut drop failure restores timer and tile owners atomically");
     }
     dm2_v1_caii_array_free(&caii);
     dm2_v1_record_pool_set_free(&set);
+
+    /* ── (F2) a malformed tail is rejected before any delete mutation ── */
+    build_dungeon(&dungeon, raw);
+    build_pools(&set);
+    wr16(raw + GROUND_BASE + 0, mk_handle(4, 0));
+    wr16(set.pools[4].bytes + 0, mk_handle(5, 0));
+    wr16(set.pools[5].bytes + 0, DM2_V1_RECORD_HANDLE_NULL);
+    dm2_v1_source_timer_queue_init(&queue);
+    {
+        DM2_V1_DeleteCreatureFullReceipt rc;
+        memset(&rc, 0, sizeof(rc));
+        CHECK(dm2_v1_delete_creature_record_full(
+                  &set, &dungeon, NULL, &queue, &rng,
+                  0, 6500ul, 0, 0, 0, 0, 0, 0, 0,
+                  NULL, &rc) == 0 &&
+                  rc.cut_miss == 1 && rc.invoke_message_queued == 0 &&
+                  rc.cut_performed == 0 && rc.dealloc_performed == 0,
+              "malformed tile-chain tail fails before delete mutation");
+        CHECK(queue.count == 0 &&
+                  dm2_v1_dungeon_get_first_thing(&dungeon, 0, 0, 0) ==
+                      (uint16_t)mk_handle(4, 0) &&
+                  rd16(set.pools[4].bytes + 0) !=
+                      DM2_V1_RECORD_HANDLE_NULL,
+              "malformed tail leaves queue, root and creature intact");
+    }
+    dm2_v1_record_pool_set_free(&set);
+
+    /* ── (A2) explicit candidate owner: no process-global AI/GDAT ──── */
+    build_dungeon(&dungeon, raw);
+    build_pools(&set);
+    wr16(raw + GROUND_BASE + 0, mk_handle(4, 1));
+    dm2_v1_caii_array_init(&caii, 1);
+    dm2_v1_source_timer_queue_init(&queue);
+    dm2_v1_drops_rng_init(&rng);
+    dm2_v1_caii_set_ai_spec_flags_fn(NULL);
+    dm2_v1_caii_set_gdat_word1_fn(NULL);
+    {
+        DM2_V1_DeleteCreatureFullReceipt rc;
+        memset(&rc, 0, sizeof(rc));
+        CHECK(dm2_v1_delete_creature_record_full_with_context(
+                  &set, &dungeon, &caii, &queue, &rng,
+                  0, 1000ul, 0, 0, 0, 0, 0, 0, 1,
+                  k_drop_slots, context_ai_flags, NULL,
+                  context_gdat_word1, NULL, &rc) == 1 &&
+                  rc.valid == 1 && rc.completed == 1 &&
+                  rc.ai_flags_known == 1 && rc.gdat_w1_unknown == 0 &&
+                  rc.dealloc_performed == 1,
+              "context-bound AI/GDAT owner runs delete without globals");
+    }
+    dm2_v1_record_pool_set_free(&set);
+    dm2_v1_caii_set_ai_spec_flags_fn(dm2_v1_creature_ai_spec_flags);
+    dm2_v1_caii_set_gdat_word1_fn(dm2_v1_creature_gdat_word1);
 
     /* ── (G) invalid input ──────────────────────────────────────────── */
     build_dungeon(&dungeon, raw);

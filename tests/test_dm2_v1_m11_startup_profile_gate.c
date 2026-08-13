@@ -611,7 +611,6 @@ static int dm2_test_caii_map_candidates_match_owner(
             !dm2_v1_caii_source_owner_ai_spec_def(&owner->caii_source,
                                                    record[4], &ai) || !ai ||
             candidate->static_ai != (uint8_t)((ai->w0AIFlags & 1u) != 0u) ||
-            (candidate->static_ai && candidate->static_animation_frame == 0xffffu) ||
             (!candidate->static_ai && candidate->static_animation_frame != 0xffffu)) {
             return 0;
         }
@@ -658,7 +657,11 @@ static int dm2_test_owner_static_gaf_uses_private_ai(
         uint16_t adj_base;
         int16_t frame_word;
 
-        if (!candidate->static_ai) continue;
+        if (!candidate->static_ai || candidate->static_animation_frame == 0xffffu)
+            continue;
+        /* A source static CAII row may legitimately have no 0x11 GAF
+         * attribution.  GAME_LOAD retains that row with frame 0xffff; use a
+         * later animated row for this positive GAF-consumer check. */
         record = dm2_v1_record_pool_address(&owner->record_pools,
                                             candidate->record_handle);
         if (!record ||
@@ -703,15 +706,17 @@ static int dm2_test_static_caii_materialization(
     if (!db4->bytes || db4->record_size < 14 || db4->record_count != 299)
         return 0;
     for (index = 0; index < db4->record_count; ++index) {
-        if (db4->bytes[(size_t)index * (size_t)db4->record_size + 5u] != 0xffu)
+        if (db4->bytes[(size_t)index * (size_t)db4->record_size + 5u] != 0xffu) {
             return 0;
+        }
     }
     for (index = 0; index < owner->caii_map_receipt.candidate_count; ++index) {
         const DM2_V1_GameLoadCaiiMapCandidate *candidate =
             &owner->caii_map_candidates[index];
         const uint8_t *record;
         uint16_t expected;
-        if (!candidate->static_ai) continue;
+        if (!candidate->static_ai || candidate->static_animation_frame == 0xffffu)
+            continue;
         record = dm2_v1_record_pool_address(&owner->record_pools,
                                             candidate->record_handle);
         if (!record) return 0;
@@ -719,8 +724,9 @@ static int dm2_test_static_caii_materialization(
         expected |= (uint16_t)((candidate->record_word_a ^ expected) & 0x0060u);
         if ((candidate->record_word_a & 0x803fu) == 0x8001u)
             expected = (uint16_t)((expected & 0x7fc0u) | 0x8001u);
-        if (((uint16_t)record[10] | ((uint16_t)record[11] << 8)) != expected)
+        if (((uint16_t)record[10] | ((uint16_t)record[11] << 8)) != expected) {
             return 0;
+        }
     }
     return 1;
 }
@@ -879,7 +885,9 @@ static int dm2_test_dynamic_caii_materialization(
         receipt.source_hash == 0u ||
         owner->caii_slots.alloc_count != (int)receipt.dynamic_candidate_count ||
         owner->timer_queue.num_timers != (int16_t)receipt.think_timer_count ||
-        owner->sound_owner.positional_count != receipt.noise_queue_count) return 0;
+        owner->sound_owner.positional_count != receipt.noise_queue_count) {
+        return 0;
+    }
     for (int index = 0; index < owner->caii_map_receipt.candidate_count;
          ++index) {
         const DM2_V1_GameLoadCaiiMapCandidate *candidate =
@@ -899,7 +907,9 @@ static int dm2_test_dynamic_caii_materialization(
                 ((uint16_t)candidate->record_handle & 0x03ffu) ||
             (record[11] & 0x80u) == 0u || (record[11] & 0x40u) != 0u ||
             slot[0x12] != 0xffu || slot[0x16] != 0xffu ||
-            slot[0x17] != 0xffu) return 0;
+            slot[0x17] != 0xffu) {
+            return 0;
+        }
         timer_slot = (int16_t)((uint16_t)slot[2] | ((uint16_t)slot[3] << 8));
         if (timer_slot < 0 || timer_slot >= owner->timer_capacity) return 0;
         timer = &owner->timer_entries[timer_slot];
@@ -909,8 +919,9 @@ static int dm2_test_dynamic_caii_materialization(
             timer->xA != (int8_t)candidate->x ||
             timer->yA != (int8_t)candidate->y ||
             dm2_v1_timer_get_map(timer) != candidate->map ||
-            dm2_v1_timer_get_ticks(timer) != owner->timer_queue.gametick + 1)
+            dm2_v1_timer_get_ticks(timer) != owner->timer_queue.gametick + 1) {
             return 0;
+        }
         ++dynamic_index;
     }
     return dynamic_index == receipt.dynamic_candidate_count;
@@ -941,6 +952,115 @@ static int dm2_test_find_file_header_tile_class(const DM2_V1_DungeonData *d,
                     return 1;
                 }
             }
+        }
+    }
+    return 0;
+}
+
+static int dm2_test_find_source_record(const DM2_V1_DungeonData *d,
+                                       int *out_map,
+                                       uint16_t *out_record)
+{
+    int map;
+    if (!d || !out_map || !out_record || !d->record_graph_complete) return 0;
+    for (map = 0; map < d->level_count; ++map) {
+        int x;
+        for (x = 0; x < d->level_widths[map]; ++x) {
+            int y;
+            for (y = 0; y < d->level_heights[map]; ++y) {
+                int thing = dm2_v1_dungeon_get_first_thing(d, map, x, y);
+                int type = -1;
+                int size = 0;
+                if (thing < 0 || thing == DM2_V1_RECORD_HANDLE_END ||
+                    thing == DM2_V1_RECORD_HANDLE_NULL ||
+                    !dm2_v1_dungeon_get_thing_record(
+                        d, (uint16_t)thing, &type, NULL, &size) || size < 3) {
+                    continue;
+                }
+                *out_map = map;
+                *out_record = (uint16_t)thing;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+static int dm2_test_find_source_door(const DM2_V1_DungeonData *d,
+                                     int *out_map,
+                                     int *out_x,
+                                     int *out_y,
+                                     uint16_t *out_record)
+{
+    int map;
+    if (!d || !out_map || !out_x || !out_y || !out_record ||
+        !d->record_graph_complete) return 0;
+    for (map = 0; map < d->level_count; ++map) {
+        int x;
+        for (x = 0; x < d->level_widths[map]; ++x) {
+            int y;
+            for (y = 0; y < d->level_heights[map]; ++y) {
+                int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
+                int link = dm2_v1_dungeon_get_first_thing(d, map, x, y);
+                int type = -1;
+                int size = 0;
+                if (raw < 0 || ((raw >> 5) & 7) != 4 || link < 0 ||
+                    link == DM2_V1_RECORD_HANDLE_END ||
+                    link == DM2_V1_RECORD_HANDLE_NULL ||
+                    dm2_v1_dungeon_get_thing_record(
+                        d, (uint16_t)link, &type, NULL, &size) == NULL ||
+                    type != 0 || size < 4 ||
+                    dm2_v1_dungeon_find_thing_of_type(
+                        d, (uint16_t)link, 4, 64) >= 0 ||
+                    (raw & 7) == DM2_DOOR_STATE_DESTROYED) continue;
+                *out_map = map;
+                *out_x = x;
+                *out_y = y;
+                *out_record = (uint16_t)link;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+static int dm2_test_cloud_origin_cell_is_usable(
+    const DM2_V1_DungeonData *d, int map, int x, int y) {
+    int head;
+    int16_t source_head;
+    if (!d || map < 0 || map >= d->level_count || x < 0 || y < 0 ||
+        x >= d->level_widths[map] || y >= d->level_heights[map])
+        return 0;
+    head = dm2_v1_dungeon_get_first_thing(d, map, x, y);
+    source_head = (int16_t)head;
+    if (source_head == DM2_V1_RECORD_HANDLE_NULL || head < -2)
+        return 0;
+    if (source_head != DM2_V1_RECORD_HANDLE_END &&
+        dm2_v1_dungeon_find_thing_of_type(
+            d, (uint16_t)source_head, 3, 64) >= 0)
+        return 0;
+    return 1;
+}
+
+static int dm2_test_find_cloud_origin_cell(const DM2_V1_DungeonData *d,
+                                          int map, int preferred_x,
+                                          int preferred_y, int *out_x,
+                                          int *out_y) {
+    if (!d || !out_x || !out_y || map < 0 || map >= d->level_count)
+        return 0;
+    if (dm2_test_cloud_origin_cell_is_usable(
+            d, map, preferred_x, preferred_y)) {
+        *out_x = preferred_x;
+        *out_y = preferred_y;
+        return 1;
+    }
+    for (int x = 0; x < d->level_widths[map]; ++x) {
+        for (int y = 0; y < d->level_heights[map]; ++y) {
+            if (!dm2_test_cloud_origin_cell_is_usable(d, map, x, y))
+                continue;
+            *out_x = x;
+            *out_y = y;
+            return 1;
         }
     }
     return 0;
@@ -2650,6 +2770,9 @@ int main(void) {
     DM2_V1_GameLoadWorldOwner tampered_new_game_world_owner;
     DM2_V1_GameLoadWorldOwner timer_process_world_owner;
     DM2_V1_GameLoadRuntimeSessionCandidate runtime_session_candidate;
+    DM2_V1_GameLoadRuntimeSessionCandidate door_actuator_candidate;
+    DM2_V1_GameLoadRuntimeSessionCandidate ench_power_candidate;
+    DM2_V1_GameLoadRuntimeSessionCandidate poison_candidate;
     DM2_V1_SkprojectChangeCurrentMapReceipt runtime_candidate_map_context_before;
     const DM2_V1_GameLoadWorldOwner *profile_new_game_owner;
     const DM2_V1_GameLoadRuntimeSessionCandidate *profile_runtime_candidate;
@@ -2659,6 +2782,8 @@ int main(void) {
     DM2_V1_TimerEntry new_game_actuate_timer;
     DM2_V1_GameLoadDoorStepReceipt new_game_door_step;
     DM2_V1_GameLoadTimerProcessReceipt new_game_timer_process;
+    DM2_V1_GameLoadCandidateTimerProcessReceipt ench_power_timer_receipt;
+    DM2_V1_GameLoadCandidateTimerProcessReceipt poison_timer_receipt;
     DM2_V1_TimerEntry new_game_door_step_timer;
     uint32_t runtime_candidate_source_hash_before;
     uint8_t runtime_candidate_db4_byte_before = 0u;
@@ -2679,6 +2804,14 @@ int main(void) {
     DM2_V1_GameLoadSpatialQueryReceipt runtime_candidate_spatial_query;
     DM2_V1_GameLoadMoveClassificationReceipt runtime_candidate_move_query;
     DM2_V1_GameLoadMoverecSquareReceipt runtime_candidate_moverec_square;
+    DM2_V1_RuntimeGameLoadCandidateHandoffReceipt runtime_candidate_handoff;
+    DM2_V1_RuntimeGameLoadCandidateViewReceipt runtime_candidate_view;
+    int runtime_candidate_first_timer_valid = 0;
+    uint8_t runtime_candidate_first_timer_type = 0u;
+    uint8_t runtime_candidate_first_timer_actor = 0u;
+    int16_t runtime_candidate_first_timer_value_a = 0;
+    int16_t runtime_candidate_first_timer_value_b = 0;
+    int16_t runtime_candidate_first_timer_reserved = 0;
     int runtime_candidate_spatial_candidate_index = -1;
     int16_t runtime_candidate_spatial_x = -1;
     int16_t runtime_candidate_spatial_y = -1;
@@ -2767,6 +2900,7 @@ int main(void) {
     DM2_V1_FileHeaderRuntimeSceneCensus file_header_census;
     DM2_V1_FileHeaderRuntimeTileCensus file_header_tiles;
     unsigned char framebuffer[320 * 200];
+    unsigned char title_framebuffer[320 * 200];
     unsigned char framebuffer_without_hand[320 * 200] __attribute__((unused));
     char direct_save_root[512] __attribute__((unused)) = {0};
     char direct_save_path[512] __attribute__((unused)) = {0};
@@ -3167,6 +3301,8 @@ int main(void) {
     memset(&tampered_new_game_world_owner, 0,
            sizeof(tampered_new_game_world_owner));
     memset(&timer_process_world_owner, 0, sizeof(timer_process_world_owner));
+    memset(&door_actuator_candidate, 0, sizeof(door_actuator_candidate));
+    memset(&ench_power_candidate, 0, sizeof(ench_power_candidate));
     if (profile && profile->dungeon_data) {
         const DM2_V1_DungeonData *source_dungeon =
             (const DM2_V1_DungeonData *)profile->dungeon_data;
@@ -3267,10 +3403,17 @@ int main(void) {
     if (new_game_owner_initialized &&
         new_game_world_owner.sound_owner.valid &&
         new_game_world_owner.sound_owner.sample_binding_count > 0u) {
-        source_sound_bytes_before_owner = dm2_v1_load_gdat_raw_data(
-            dm2_v1_boot_asset_loader(profile),
-            new_game_world_owner.sound_owner.sample_bindings[0].raw_index,
-            &source_sound_size_before_owner);
+        const DM2_V1_SoundSsoundEntry *first_sound =
+            new_game_world_owner.sound_owner.queue_entry_count > 0u
+                ? &new_game_world_owner.sound_owner.queue_entries[0] : NULL;
+        const uint16_t first_binding = first_sound && first_sound->w_00 >= 0
+            ? (uint16_t)first_sound->w_00 : UINT16_MAX;
+        if (first_binding < new_game_world_owner.sound_owner.sample_binding_count) {
+            source_sound_bytes_before_owner = dm2_v1_load_gdat_raw_data(
+                dm2_v1_boot_asset_loader(profile),
+                new_game_world_owner.sound_owner.sample_bindings[first_binding].raw_index,
+                &source_sound_size_before_owner);
+        }
     }
     if (new_game_owner_initialized &&
         new_game_world_owner.sound_owner.valid &&
@@ -3415,31 +3558,39 @@ int main(void) {
                     "DM2 private GAME_LOAD SOUND9 query rejects a broken 482b binding");
         entry->w_05 = saved_raw_index;
     }
-    expect_true(profile &&
-                    dm2_v1_game_load_world_owner_prepare_new_game(
-                        &static_caii_world_owner, profile) &&
-                    dm2_v1_game_load_world_owner_process_actuator_tick_generators(
-                        &static_caii_world_owner, NULL) &&
-                    dm2_v1_game_load_world_owner_materialize_source_map_context(
-                        &static_caii_world_owner) &&
-                    dm2_v1_game_load_world_owner_materialize_preselection_sound_spatial(
-                        &static_caii_world_owner) &&
-                    dm2_v1_game_load_world_owner_materialize_static_caii(
-                        &static_caii_world_owner) &&
-                    dm2_test_static_caii_materialization(
-                        &static_caii_world_owner) &&
-                    dm2_v1_game_load_world_owner_materialize_caii_local_context(
-                        &static_caii_world_owner) &&
-                    dm2_test_caii_local_contexts(
-                        &static_caii_world_owner) &&
-                    dm2_test_caii_0cf7_uses_owner_timer_heap(
-                        &static_caii_world_owner) &&
-                    dm2_test_dynamic_caii_materialization(
-                        &static_caii_world_owner) &&
-                    !static_caii_world_owner.committed &&
-                    !profile->source_game_load_session_ready &&
-                    dm2_v1_runtime_get_tick_count() == 0,
-                "DM2 materializes all authentic dynamic CAII slots, 0cf7 timers and admitted map-gated 0a48 sound state privately");
+    {
+        int s_prepare = profile &&
+            dm2_v1_game_load_world_owner_prepare_new_game(
+                &static_caii_world_owner, profile);
+        int s_generators = s_prepare &&
+            dm2_v1_game_load_world_owner_process_actuator_tick_generators(
+                &static_caii_world_owner, NULL);
+        int s_map = s_generators &&
+            dm2_v1_game_load_world_owner_materialize_source_map_context(
+                &static_caii_world_owner);
+        int s_spatial = s_map &&
+            dm2_v1_game_load_world_owner_materialize_preselection_sound_spatial(
+                &static_caii_world_owner);
+        int s_static = s_spatial &&
+            dm2_v1_game_load_world_owner_materialize_static_caii(
+                &static_caii_world_owner);
+        int s_static_check = s_static &&
+            dm2_test_static_caii_materialization(&static_caii_world_owner);
+        int s_local = s_static_check &&
+            dm2_v1_game_load_world_owner_materialize_caii_local_context(
+                &static_caii_world_owner);
+        int s_local_check = s_local &&
+            dm2_test_caii_local_contexts(&static_caii_world_owner);
+        int s_timer = s_local_check &&
+            dm2_test_caii_0cf7_uses_owner_timer_heap(
+                &static_caii_world_owner);
+        int s_dynamic = s_timer &&
+            dm2_test_dynamic_caii_materialization(&static_caii_world_owner);
+        expect_true(s_dynamic && !static_caii_world_owner.committed &&
+                        !profile->source_game_load_session_ready &&
+                        dm2_v1_runtime_get_tick_count() == 0,
+                    "DM2 materializes all authentic dynamic CAII slots, 0cf7 timers and admitted map-gated 0a48 sound state privately");
+    }
     dm2_v1_game_load_world_owner_free(&static_caii_world_owner);
     memset(&new_game_generators, 0, sizeof(new_game_generators));
     new_game_generators_result = profile &&
@@ -4348,6 +4499,9 @@ int main(void) {
                     "M11 DM2 obtains the NEW GAME click rectangle from verified GDAT");
         source_x = pointer_layout.new_game.x + pointer_layout.new_game.w / 2;
         source_y = pointer_layout.new_game.y + pointer_layout.new_game.h / 2;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        memcpy(title_framebuffer, framebuffer, sizeof(title_framebuffer));
         expect_true(M11_GameView_HandlePointerButton(
                         &view, source_x, source_y,
                         DM1_V1_MOUSE_MASK_RIGHT_PC34) ==
@@ -5363,6 +5517,1484 @@ int main(void) {
         expect_true(dm2_test_local_dyn_record_effects_match_source(
                         profile_runtime_candidate),
             "DM2 LOAD_LOCALLEVEL_DYN retains source DB2 scratch marks and DB3 mirror selectors");
+        if (profile_runtime_candidate->timer_queue.num_timers > 0 &&
+            profile_runtime_candidate->timer_queue.indices &&
+            profile_runtime_candidate->timer_queue.entries) {
+            int16_t first_slot = profile_runtime_candidate->timer_queue.indices[0];
+            if (first_slot >= 0 && first_slot < profile_runtime_candidate->timer_capacity) {
+                const DM2_V1_TimerEntry *first_timer =
+                    &profile_runtime_candidate->timer_entries[first_slot];
+                runtime_candidate_first_timer_valid = first_timer->ttype != 0u;
+                runtime_candidate_first_timer_type = first_timer->ttype;
+                runtime_candidate_first_timer_actor = first_timer->actor;
+                runtime_candidate_first_timer_value_a = (int16_t)(
+                    (uint8_t)first_timer->xA |
+                    ((uint16_t)(uint8_t)first_timer->yA << 8));
+                runtime_candidate_first_timer_value_b = first_timer->wvalueB;
+                runtime_candidate_first_timer_reserved = first_timer->dummya;
+            }
+        }
+        memset(&runtime_candidate_handoff, 0, sizeof(runtime_candidate_handoff));
+        memset(&runtime_candidate_view, 0, sizeof(runtime_candidate_view));
+        if (profile && profile_runtime_candidate) {
+            DM2_V1_GameLoadRuntimeSessionCandidate *tampered_candidate =
+                (DM2_V1_GameLoadRuntimeSessionCandidate *)(uintptr_t)
+                    profile_runtime_candidate;
+            const uint32_t source_hash =
+                tampered_candidate->source_transaction_hash;
+            tampered_candidate->source_transaction_hash ^= 1u;
+            expect_true(dm2_v1_runtime_handoff_game_load_candidate(
+                            profile, &runtime_candidate_handoff) == 0 &&
+                            profile->game_load_runtime_session_candidate ==
+                                tampered_candidate &&
+                            !profile->source_game_load_session_ready,
+                        "DM2 rejects a cross-transaction candidate handoff atomically");
+            tampered_candidate->source_transaction_hash = source_hash;
+        }
+        expect_true(profile &&
+                        dm2_v1_runtime_handoff_game_load_candidate(
+                            profile, &runtime_candidate_handoff) == 1 &&
+                        runtime_candidate_handoff.valid &&
+                        runtime_candidate_handoff.source_game_load_session_ready == 0 &&
+                        runtime_candidate_handoff.candidate_hash ==
+                            profile_runtime_candidate->candidate_hash &&
+                        profile->game_load_runtime_session_candidate == NULL &&
+                        dm2_v1_runtime_game_load_candidate_view(
+                            &runtime_candidate_view) == 1 &&
+                        runtime_candidate_view.valid &&
+                        runtime_candidate_view.candidate_hash ==
+                            runtime_candidate_handoff.candidate_hash &&
+                        runtime_candidate_view.current_map ==
+                            profile_runtime_candidate->current_map &&
+                        runtime_candidate_view.party_count ==
+                            profile_runtime_candidate->party.heros_in_party &&
+                        runtime_candidate_view.first_timer_valid ==
+                            runtime_candidate_first_timer_valid &&
+                        runtime_candidate_view.first_timer_type ==
+                            runtime_candidate_first_timer_type &&
+                        runtime_candidate_view.first_timer_actor ==
+                            runtime_candidate_first_timer_actor &&
+                        runtime_candidate_view.first_timer_value_a ==
+                            runtime_candidate_first_timer_value_a &&
+                        runtime_candidate_view.first_timer_value_b ==
+                            runtime_candidate_first_timer_value_b &&
+                        runtime_candidate_view.first_timer_reserved ==
+                            runtime_candidate_first_timer_reserved &&
+                        !profile->source_game_load_session_ready &&
+                        view.world.party.championCount == 0,
+                    "DM2 transfers the complete private GAME_LOAD candidate into runtime without publishing playability");
+        int runtime_candidate_spatial_found = 0;
+        for (int probe_y = 0;
+             probe_y < profile_runtime_candidate->map_context.height &&
+                 !runtime_candidate_spatial_found; ++probe_y) {
+            for (int probe_x = 0;
+                 probe_x < profile_runtime_candidate->map_context.width;
+                 ++probe_x) {
+                runtime_candidate_spatial_x = (int16_t)probe_x;
+                runtime_candidate_spatial_y = (int16_t)probe_y;
+                memset(&runtime_candidate_spatial_query, 0,
+                       sizeof(runtime_candidate_spatial_query));
+                if (dm2_v1_runtime_game_load_candidate_query_nearest_creature(
+                        &runtime_candidate_spatial_x,
+                        &runtime_candidate_spatial_y, 0xffu,
+                        &runtime_candidate_spatial_handle,
+                        &runtime_candidate_spatial_query) == 1 &&
+                    !runtime_candidate_spatial_query.blocked_missing_owner &&
+                    runtime_candidate_spatial_query.input_x >= 0 &&
+                    runtime_candidate_spatial_query.input_y >= 0) {
+                    runtime_candidate_spatial_found = 1;
+                    break;
+                }
+            }
+        }
+        expect_true(runtime_candidate_spatial_found,
+                    "DM2 runtime candidate view routes c_querydb spatial lookup to the private owner");
+        memset(&runtime_candidate_move_query, 0,
+               sizeof(runtime_candidate_move_query));
+        expect_true(dm2_v1_runtime_game_load_candidate_classify_move(
+                        0u, profile_runtime_candidate->source_party_x,
+                        profile_runtime_candidate->source_party_y,
+                        profile_runtime_candidate->source_party_x,
+                        profile_runtime_candidate->source_party_y,
+                        &runtime_candidate_move_query) == 1 &&
+                        runtime_candidate_move_query.valid &&
+                        !runtime_candidate_move_query.blocked_missing_owner,
+                    "DM2 runtime candidate view routes 12b4_0881 classification to the private owner");
+        memset(&runtime_candidate_moverec_square, 0,
+               sizeof(runtime_candidate_moverec_square));
+        expect_true(dm2_v1_runtime_game_load_candidate_census_moverec_square(
+                        profile_runtime_candidate->source_party_x,
+                        profile_runtime_candidate->source_party_y,
+                        &runtime_candidate_moverec_square) == 1 &&
+                        runtime_candidate_moverec_square.valid &&
+                        runtime_candidate_moverec_square.map ==
+                        profile_runtime_candidate->current_map,
+                    "DM2 runtime candidate view routes c_moverec census to the private record graph");
+        /* Use a fresh clone with an empty private heap so the real door
+         * actuator admission is tested independently of unrelated due
+         * creature timers. */
+        if (profile_new_game_owner && new_game_door_found &&
+            dm2_v1_game_load_runtime_session_candidate_init(
+                &door_actuator_candidate, profile_new_game_owner)) {
+            DM2_V1_TimerEntry actuator_timer;
+            DM2_V1_GameLoadCandidateActuateReceipt actuator_receipt;
+            DM2_V1_GameLoadCandidateDoorStepReceipt candidate_step_receipt;
+            const uint8_t *door_after;
+            const int16_t door_slot = new_game_door_link;
+            const uint8_t *door_before = dm2_v1_record_pool_address(
+                &door_actuator_candidate.record_pools, door_slot);
+            const uint16_t attributes_before = door_before ?
+                (uint16_t)door_before[2] | ((uint16_t)door_before[3] << 8) : 0u;
+            dm2_v1_timer_queue_init(&door_actuator_candidate.timer_queue,
+                door_actuator_candidate.timer_entries,
+                door_actuator_candidate.timer_indices,
+                door_actuator_candidate.timer_capacity);
+            dm2_v1_timer_entry_init(&actuator_timer);
+            dm2_v1_timer_set_mticks(&actuator_timer,
+                (int16_t)new_game_door_map,
+                door_actuator_candidate.timer_queue.gametick);
+            actuator_timer.ttype = 0x04u;
+            actuator_timer.actor = 1u;
+            actuator_timer.xA = (int8_t)new_game_door_x;
+            actuator_timer.yA = (int8_t)new_game_door_y;
+            actuator_timer.wvalueB = 0;
+            memset(&actuator_receipt, 0, sizeof(actuator_receipt));
+            expect_true(dm2_v1_timer_queue(&door_actuator_candidate.timer_queue,
+                                &actuator_timer) >= 0 &&
+                            dm2_v1_game_load_runtime_session_candidate_proceed_actuate_timer(
+                                &door_actuator_candidate, 0u, &actuator_receipt) == 1 &&
+                            actuator_receipt.valid && actuator_receipt.consumed &&
+                            actuator_receipt.door_actuator_timer_queued &&
+                            actuator_receipt.door_actuator_record == door_slot &&
+                            actuator_receipt.door_actuator_direction == 0u &&
+                            actuator_receipt.door_record_attributes_before ==
+                                attributes_before &&
+                            actuator_receipt.door_record_attributes_after ==
+                                (uint16_t)((attributes_before & ~(uint16_t)0x1e00u) |
+                                           0x1400u) &&
+                            door_actuator_candidate.timer_queue.num_timers == 1 &&
+                            door_actuator_candidate.timer_entries[
+                                door_actuator_candidate.timer_queue.indices[0]].ttype == 0x01u &&
+                            door_actuator_candidate.timer_entries[
+                                door_actuator_candidate.timer_queue.indices[0]].actor == 0u &&
+                            door_actuator_candidate.timer_entries[
+                                door_actuator_candidate.timer_queue.indices[0]].wvalueB == door_slot &&
+                            !profile->source_game_load_session_ready,
+                        "DM2 queues a private source 0x01 door step from a real class-4 0x04 actuator");
+            memset(&candidate_step_receipt, 0, sizeof(candidate_step_receipt));
+            door_after = dm2_v1_record_pool_address(
+                &door_actuator_candidate.record_pools, door_slot);
+            expect_true(
+                dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
+                    &door_actuator_candidate, 0u, &candidate_step_receipt) == 1 &&
+                candidate_step_receipt.valid &&
+                candidate_step_receipt.consumed &&
+                candidate_step_receipt.door_record_link == door_slot &&
+                !candidate_step_receipt.blocked_party_collision &&
+                !candidate_step_receipt.blocked_creature_collision &&
+                !candidate_step_receipt.blocked_incomplete_chain &&
+                door_actuator_candidate.timer_queue.num_timers >= 0 &&
+                door_actuator_candidate.timer_queue.num_timers <= 1 &&
+                door_after != NULL &&
+                ((uint16_t)door_after[2] |
+                 ((uint16_t)door_after[3] << 8)) ==
+                    candidate_step_receipt.door_record_attributes_after,
+                "DM2 consumes the queued private 0x01 door step in the same candidate transaction");
+            dm2_v1_game_load_runtime_session_candidate_free(&door_actuator_candidate);
+            memset(&door_actuator_candidate, 0, sizeof(door_actuator_candidate));
+        }
+        /* The runtime candidate must preserve the same source class-3 empty
+         * branch as the pre-commit owner: pop 0x04, authenticate map/cell,
+         * consume without a synthetic actuator mutation. */
+        if (profile_new_game_owner && new_game_noop_map >= 0) {
+            DM2_V1_GameLoadRuntimeSessionCandidate class3_candidate;
+            DM2_V1_GameLoadCandidateTimerProcessReceipt class3_receipt;
+            DM2_V1_TimerEntry class3_timer;
+            memset(&class3_candidate, 0, sizeof(class3_candidate));
+            memset(&class3_receipt, 0, sizeof(class3_receipt));
+            dm2_v1_timer_entry_init(&class3_timer);
+            expect_true(
+                dm2_v1_game_load_runtime_session_candidate_init(
+                    &class3_candidate, profile_new_game_owner) &&
+                (dm2_v1_timer_queue_init(&class3_candidate.timer_queue,
+                    class3_candidate.timer_entries,
+                    class3_candidate.timer_indices,
+                    class3_candidate.timer_capacity), 1) &&
+                (dm2_v1_timer_set_mticks(&class3_timer,
+                    (int16_t)new_game_noop_map,
+                    class3_candidate.timer_queue.gametick), 1) &&
+                ((class3_timer.ttype = 0x04u), 1) &&
+                ((class3_timer.actor = 1u), 1) &&
+                ((class3_timer.xA = (int8_t)new_game_noop_x), 1) &&
+                ((class3_timer.yA = (int8_t)new_game_noop_y), 1) &&
+                dm2_v1_timer_queue(&class3_candidate.timer_queue,
+                    &class3_timer) >= 0 &&
+                dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                    &class3_candidate, 0u, &class3_receipt) == 1 &&
+                class3_receipt.valid && class3_receipt.consumed &&
+                class3_receipt.actuate.valid &&
+                class3_receipt.actuate.source_noop &&
+                class3_receipt.actuate.tile_class == 3u &&
+                class3_candidate.timer_queue.num_timers == 0 &&
+                !profile->source_game_load_session_ready,
+                "DM2 candidate dispatcher consumes a source class-3 0x04 no-op");
+            dm2_v1_game_load_runtime_session_candidate_free(&class3_candidate);
+        }
+        /* PROCESS_TIMER_0E uses the source A/B contract: DB type in A and
+         * temporary item type in B.  Build the same direct-root shape used by
+         * the runtime commit test, then prove record restoration and hero
+         * mutation through the candidate dispatcher. */
+        if (profile_new_game_owner) {
+            DM2_V1_GameLoadRuntimeSessionCandidate item_candidate;
+            DM2_V1_GameLoadCandidateTimerProcessReceipt item_receipt;
+            DM2_V1_TimerEntry item_timer;
+            int item_ready = 0;
+            memset(&item_candidate, 0, sizeof(item_candidate));
+            memset(&item_receipt, 0, sizeof(item_receipt));
+            dm2_v1_timer_entry_init(&item_timer);
+            if (dm2_v1_game_load_runtime_session_candidate_init(
+                    &item_candidate, profile_new_game_owner)) {
+                dm2_v1_timer_queue_init(&item_candidate.timer_queue,
+                    item_candidate.timer_entries,
+                    item_candidate.timer_indices,
+                    item_candidate.timer_capacity);
+                for (int item_hero = 0;
+                     item_hero < item_candidate.party.heros_in_party &&
+                     !item_ready; ++item_hero) {
+                    for (int item_slot = 0; item_slot < DM2_NUM_ITEMS;
+                         ++item_slot) {
+                        uint16_t source_item = (uint16_t)
+                            item_candidate.party.hero[item_hero].item[item_slot];
+                        uint16_t db = (uint16_t)((source_item >> 10) & 0x0fu);
+                        uint16_t direct = (uint16_t)(db << 10);
+                        const uint8_t *src = dm2_v1_record_pool_address(
+                            &item_candidate.record_pools, (int16_t)source_item);
+                        uint8_t *dst = dm2_v1_record_pool_address_mut(
+                            &item_candidate.record_pools, (int16_t)direct);
+                        int size = dm2_v1_record_pool_record_size((int)db);
+                        if (source_item == 0xffffu || source_item == 0xfffeu ||
+                            (db != 5u && db != 6u && db != 10u) || !src ||
+                            !dst || size <= 0)
+                            continue;
+                        memcpy(dst, src, (size_t)size);
+                        item_candidate.party.hero[0].item[0] = (int16_t)direct;
+                        item_timer.xA = (int8_t)db;
+                        item_timer.wvalueB = (int16_t)(
+                            (uint16_t)dm2_test_read_le16(src + 2) & 0x7fu);
+                        item_timer.ttype = 0x0eu;
+                        item_timer.actor = 0u;
+                        item_ready = dm2_v1_timer_queue(
+                            &item_candidate.timer_queue, &item_timer) >= 0;
+                        break;
+                    }
+                }
+                if (item_ready) {
+                    const uint8_t *before_record =
+                        dm2_v1_record_pool_address(&item_candidate.record_pools,
+                                                   (int16_t)item_timer.xA << 10);
+                    uint8_t record_before[16] = {0};
+                    int record_size = dm2_v1_record_pool_record_size(
+                        (int)(uint8_t)item_timer.xA);
+                    if (before_record && record_size > 0 && record_size <= 16) {
+                        memcpy(record_before, before_record, (size_t)record_size);
+                        expect_true(
+                            dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                &item_candidate, 0u, &item_receipt) == 1 &&
+                            item_receipt.valid && item_receipt.consumed &&
+                            item_receipt.process_0e.valid &&
+                            item_receipt.process_0e.bonus_applied &&
+                            item_candidate.timer_queue.num_timers == 0 &&
+                            memcmp(record_before,
+                                   dm2_v1_record_pool_address(
+                                       &item_candidate.record_pools,
+                                       (int16_t)((uint8_t)item_timer.xA << 10)),
+                                   (size_t)record_size) == 0 &&
+                            item_receipt.process_0e.bonus_applied,
+                            "DM2 candidate dispatcher applies and restores source PROCESS_TIMER_0E");
+                    }
+                }
+            }
+            dm2_v1_game_load_runtime_session_candidate_free(&item_candidate);
+        }
+        /* 0x02 DESTROY_DOOR owns only the tile word: it clears the low
+         * state bits to the source destroyed-door state and consumes the
+         * message only after map/cell admission. */
+        if (profile_new_game_owner) {
+            DM2_V1_GameLoadRuntimeSessionCandidate destroy_door_candidate;
+            DM2_V1_GameLoadCandidateTimerProcessReceipt destroy_door_receipt;
+            DM2_V1_TimerEntry destroy_door_timer;
+            const int destroy_door_map = profile_new_game_owner->current_map;
+            const int destroy_door_x = 0;
+            const int destroy_door_y = 0;
+            const int destroy_door_before = dm2_v1_dungeon_get_tile_raw(
+                &profile_new_game_owner->dungeon, destroy_door_map,
+                destroy_door_x, destroy_door_y);
+            memset(&destroy_door_candidate, 0, sizeof(destroy_door_candidate));
+            if (destroy_door_before >= 0 &&
+                dm2_v1_game_load_runtime_session_candidate_init(
+                    &destroy_door_candidate, profile_new_game_owner)) {
+                dm2_v1_timer_queue_init(&destroy_door_candidate.timer_queue,
+                    destroy_door_candidate.timer_entries,
+                    destroy_door_candidate.timer_indices,
+                    destroy_door_candidate.timer_capacity);
+                dm2_v1_dungeon_set_tile_raw(&destroy_door_candidate.dungeon,
+                    destroy_door_map, destroy_door_x, destroy_door_y,
+                    (uint16_t)((destroy_door_before & 0xfff8) | 0x0003));
+                dm2_v1_timer_entry_init(&destroy_door_timer);
+                dm2_v1_timer_set_mticks(&destroy_door_timer,
+                    (int16_t)destroy_door_map,
+                    destroy_door_candidate.timer_queue.gametick);
+                destroy_door_timer.ttype = 0x02u;
+                destroy_door_timer.xA = (int8_t)destroy_door_x;
+                destroy_door_timer.yA = (int8_t)destroy_door_y;
+                memset(&destroy_door_receipt, 0, sizeof(destroy_door_receipt));
+                expect_true(dm2_v1_timer_queue(
+                                &destroy_door_candidate.timer_queue,
+                                &destroy_door_timer) >= 0 &&
+                            dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                &destroy_door_candidate, 0u,
+                                &destroy_door_receipt) == 1 &&
+                            destroy_door_receipt.valid &&
+                            destroy_door_receipt.destroy_door.tile_mutated &&
+                            destroy_door_receipt.destroy_door.tile_after ==
+                                (uint16_t)((destroy_door_before & 0xfff8) | 0x0005) &&
+                            destroy_door_candidate.timer_queue.num_timers == 0 &&
+                            (dm2_v1_dungeon_get_tile_raw(&destroy_door_candidate.dungeon,
+                                destroy_door_map, destroy_door_x, destroy_door_y) & 7) == 5 &&
+                            !profile->source_game_load_session_ready,
+                        "DM2 consumes a private 0x02 DESTROY_DOOR tile mutation");
+                dm2_v1_timer_entry_init(&destroy_door_timer);
+                dm2_v1_timer_set_mticks(&destroy_door_timer,
+                    (int16_t)destroy_door_map,
+                    destroy_door_candidate.timer_queue.gametick);
+                destroy_door_timer.ttype = 0x02u;
+                destroy_door_timer.xA = -1;
+                destroy_door_timer.yA = -1;
+                dm2_v1_timer_queue(&destroy_door_candidate.timer_queue,
+                    &destroy_door_timer);
+                memset(&destroy_door_receipt, 0, sizeof(destroy_door_receipt));
+                expect_true(!dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                &destroy_door_candidate, 0u,
+                                &destroy_door_receipt) &&
+                            destroy_door_receipt.destroy_door.blocked_map &&
+                            destroy_door_candidate.timer_queue.num_timers == 1,
+                        "DM2 keeps an out-of-bounds private 0x02 timer queued");
+                dm2_v1_game_load_runtime_session_candidate_free(
+                    &destroy_door_candidate);
+            }
+        }
+        /* 0x0C PROCESS_TIMER_0C is the bounded hero timer owner: clear the
+         * source hero timer index and set the live-hero ready flag. */
+        if (profile_new_game_owner) {
+            DM2_V1_GameLoadRuntimeSessionCandidate process_0c_candidate;
+            DM2_V1_GameLoadCandidateTimerProcessReceipt process_0c_receipt;
+            DM2_V1_TimerEntry process_0c_timer;
+            const int process_0c_map = profile_new_game_owner->current_map;
+            memset(&process_0c_candidate, 0, sizeof(process_0c_candidate));
+            if (dm2_v1_game_load_runtime_session_candidate_init(
+                    &process_0c_candidate, profile_new_game_owner)) {
+                dm2_v1_timer_queue_init(&process_0c_candidate.timer_queue,
+                    process_0c_candidate.timer_entries,
+                    process_0c_candidate.timer_indices,
+                    process_0c_candidate.timer_capacity);
+                process_0c_candidate.party.heros_in_party = 1;
+                process_0c_candidate.party.hero[0].curHP = 40;
+                process_0c_candidate.party.hero[0].timeridx = 19;
+                process_0c_candidate.party.hero[0].heroflag = 0x0001;
+                dm2_v1_timer_entry_init(&process_0c_timer);
+                dm2_v1_timer_set_mticks(&process_0c_timer,
+                    (int16_t)process_0c_map,
+                    process_0c_candidate.timer_queue.gametick);
+                process_0c_timer.ttype = 0x0cu;
+                process_0c_timer.actor = 0u;
+                memset(&process_0c_receipt, 0, sizeof(process_0c_receipt));
+                expect_true(dm2_v1_timer_queue(&process_0c_candidate.timer_queue,
+                                &process_0c_timer) >= 0 &&
+                            dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                &process_0c_candidate, 0u,
+                                &process_0c_receipt) == 1 &&
+                            process_0c_receipt.valid &&
+                            process_0c_receipt.process_0c.hero_mutated &&
+                            process_0c_receipt.process_0c.timer_index_before == 19 &&
+                            process_0c_receipt.process_0c.timer_index_after == -1 &&
+                            process_0c_receipt.process_0c.hero_flags_after == 0x0801 &&
+                            process_0c_candidate.timer_queue.num_timers == 0 &&
+                            !profile->source_game_load_session_ready,
+                        "DM2 consumes a private 0x0C hero timer and sets the live ready flag");
+                dm2_v1_timer_entry_init(&process_0c_timer);
+                dm2_v1_timer_set_mticks(&process_0c_timer,
+                    (int16_t)process_0c_map,
+                    process_0c_candidate.timer_queue.gametick);
+                process_0c_timer.ttype = 0x0cu;
+                process_0c_timer.actor = 1u;
+                dm2_v1_timer_queue(&process_0c_candidate.timer_queue,
+                    &process_0c_timer);
+                memset(&process_0c_receipt, 0, sizeof(process_0c_receipt));
+                expect_true(!dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                &process_0c_candidate, 0u,
+                                &process_0c_receipt) &&
+                            process_0c_receipt.process_0c.blocked_actor &&
+                            process_0c_candidate.timer_queue.num_timers == 1,
+                        "DM2 keeps an invalid-actor private 0x0C timer queued");
+                dm2_v1_game_load_runtime_session_candidate_free(&process_0c_candidate);
+            }
+        }
+        /* 0x0D RESURRECTION phase zero is the complete local final phase:
+         * apply BRING_CHAMPION_TO_LIFE to the real packed hero and consume
+         * the timer. Altar/cloud phases remain separately gated. */
+        if (profile_new_game_owner) {
+            DM2_V1_GameLoadRuntimeSessionCandidate resurrection_candidate;
+            DM2_V1_GameLoadCandidateTimerProcessReceipt resurrection_receipt;
+            DM2_V1_TimerEntry resurrection_timer;
+            const int resurrection_map = profile_new_game_owner->current_map;
+            memset(&resurrection_candidate, 0, sizeof(resurrection_candidate));
+            if (dm2_v1_game_load_runtime_session_candidate_init(
+                    &resurrection_candidate, profile_new_game_owner)) {
+                dm2_v1_timer_queue_init(&resurrection_candidate.timer_queue,
+                    resurrection_candidate.timer_entries,
+                    resurrection_candidate.timer_indices,
+                    resurrection_candidate.timer_capacity);
+                resurrection_candidate.party.heros_in_party = 1;
+                resurrection_candidate.party.hero[0].curHP = 0;
+                resurrection_candidate.party.hero[0].maxHP = 100;
+                resurrection_candidate.party.hero[0].heroflag = 0x0001;
+                resurrection_candidate.party.hero[0].ench_aura = 3;
+                resurrection_candidate.party.hero[0].ench_power = 7;
+                resurrection_candidate.party.hero[0].item[0] = 42;
+                dm2_v1_timer_entry_init(&resurrection_timer);
+                dm2_v1_timer_set_mticks(&resurrection_timer,
+                    (int16_t)resurrection_map,
+                    resurrection_candidate.timer_queue.gametick);
+                resurrection_timer.ttype = 0x0du;
+                resurrection_timer.actor = 0u;
+                resurrection_timer.wvalueB = 0;
+                memset(&resurrection_receipt, 0, sizeof(resurrection_receipt));
+                expect_true(dm2_v1_timer_queue(
+                                &resurrection_candidate.timer_queue,
+                                &resurrection_timer) >= 0 &&
+                            dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                &resurrection_candidate, 0u,
+                                &resurrection_receipt) == 1 &&
+                            resurrection_receipt.valid &&
+                            resurrection_receipt.resurrection.champion_revived &&
+                            resurrection_receipt.resurrection.max_hp_after == 98 &&
+                            resurrection_receipt.resurrection.cur_hp_after == 49 &&
+                            resurrection_candidate.party.hero[0].curHP == 49 &&
+                            resurrection_candidate.party.hero[0].heroflag == 0x4001 &&
+                            resurrection_candidate.party.hero[0].item[0] == -1 &&
+                            resurrection_candidate.party.hero[0].ench_aura == 0 &&
+                            resurrection_candidate.party.hero[0].ench_power == 0 &&
+                            resurrection_candidate.timer_queue.num_timers == 0 &&
+                            !profile->source_game_load_session_ready,
+                        "DM2 consumes private 0x0D resurrection phase zero");
+                {
+                    int altar_x = -1;
+                    int altar_y = -1;
+                    int altar_first = -1;
+                    int found_altar_cell = 0;
+                    const int altar_record_handle = (10 << 10);
+                    uint8_t *altar_record = dm2_v1_record_pool_address_mut(
+                        &resurrection_candidate.record_pools,
+                        (int16_t)altar_record_handle);
+                    for (int probe_x = 0;
+                         probe_x < resurrection_candidate.map_context.width &&
+                         !found_altar_cell; ++probe_x) {
+                        for (int probe_y = 0;
+                             probe_y < resurrection_candidate.map_context.height;
+                             ++probe_y) {
+                            int head = dm2_v1_dungeon_get_first_thing(
+                                &resurrection_candidate.dungeon,
+                                resurrection_candidate.current_map,
+                                probe_x, probe_y);
+                            if (head >= 0) {
+                                altar_x = probe_x;
+                                altar_y = probe_y;
+                                altar_first = head;
+                                found_altar_cell = 1;
+                                break;
+                            }
+                            {
+                                DM2_V1_GameLoadCandidateTimerProcessReceipt door_cloud_process;
+                                int door_x = -1;
+                                int door_y = -1;
+                                int16_t door_link = DM2_V1_RECORD_HANDLE_NULL;
+                                int door_found = 0;
+                                int door_map = resurrection_candidate.current_map;
+                                for (int probe_x = 0;
+                                     probe_x < resurrection_candidate.map_context.width &&
+                                     !door_found; ++probe_x) {
+                                    for (int probe_y = 0;
+                                         probe_y < resurrection_candidate.map_context.height;
+                                         ++probe_y) {
+                                        int raw = dm2_v1_dungeon_get_tile_raw(
+                                            &resurrection_candidate.dungeon,
+                                            door_map, probe_x, probe_y);
+                                        int16_t head = (int16_t)
+                                            dm2_v1_dungeon_get_first_thing(
+                                                &resurrection_candidate.dungeon,
+                                                door_map, probe_x, probe_y);
+                                        if (raw < 0 || ((raw >> 5) & 7) != 4 ||
+                                            head < 0 || head == DM2_V1_RECORD_HANDLE_END ||
+                                            dm2_v1_record_handle_pool(head) != 0 ||
+                                            dm2_v1_record_pool_address(
+                                                &resurrection_candidate.record_pools, head) == NULL ||
+                                            dm2_v1_dungeon_find_thing_of_type(
+                                                &resurrection_candidate.dungeon, (uint16_t)head,
+                                                3, 64) >= 0 ||
+                                            dm2_v1_get_creature_at(
+                                                &resurrection_candidate.record_pools,
+                                                &resurrection_candidate.dungeon, door_map,
+                                                probe_x, probe_y) != DM2_V1_RECORD_HANDLE_NULL)
+                                            continue;
+                                        door_x = probe_x;
+                                        door_y = probe_y;
+                                        door_link = head;
+                                        door_found = 1;
+                                        break;
+                                    }
+                                }
+                                int16_t door_cloud = door_found
+                                    ? dm2_v1_record_pool_alloc_new_record(
+                                        &resurrection_candidate.record_pools, 15u)
+                                    : DM2_V1_RECORD_HANDLE_NULL;
+                                uint8_t *door_cloud_bytes = door_found
+                                    ? dm2_v1_record_pool_address_mut(
+                                        &resurrection_candidate.record_pools, door_cloud)
+                                    : NULL;
+                                int16_t door_state_before = door_found
+                                    ? (int16_t)(dm2_v1_dungeon_get_tile_raw(
+                                        &resurrection_candidate.dungeon, door_map,
+                                        door_x, door_y) & 7)
+                                    : -1;
+                                expect_true(door_found && door_cloud_bytes != NULL,
+                                    "DM2 finds a private door cell without DB3/DB4 effect owners");
+                                if (door_found && door_cloud_bytes) {
+                                    int16_t door_head = door_link;
+                                    door_cloud_bytes[0] = (uint8_t)(DM2_V1_RECORD_HANDLE_END & 0xff);
+                                    door_cloud_bytes[1] = (uint8_t)((DM2_V1_RECORD_HANDLE_END >> 8) & 0xff);
+                                    door_cloud_bytes[2] = 0x01u;
+                                    door_cloud_bytes[3] = 0xffu;
+                                    expect_true(dm2_v1_record_pool_append_to_list(
+                                        &resurrection_candidate.record_pools,
+                                        &door_head, door_cloud) == 1 &&
+                                        dm2_v1_dungeon_get_first_thing(
+                                            &resurrection_candidate.dungeon, door_map,
+                                            door_x, door_y) == door_link,
+                                        "DM2 attaches a source-shaped cloud behind the private door record");
+                                    dm2_v1_timer_entry_init(&resurrection_timer);
+                                    dm2_v1_timer_set_mticks(&resurrection_timer,
+                                        door_map, resurrection_candidate.timer_queue.gametick);
+                                    resurrection_timer.ttype = 0x19u;
+                                    resurrection_timer.xA = (int8_t)door_x;
+                                    resurrection_timer.yA = (int8_t)door_y;
+                                    resurrection_timer.wvalueB = door_cloud;
+                                    dm2_v1_timer_queue(&resurrection_candidate.timer_queue,
+                                        &resurrection_timer);
+                                    memset(&door_cloud_process, 0, sizeof(door_cloud_process));
+                                    expect_true(
+                                        dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                            &resurrection_candidate,
+                                            resurrection_candidate.timer_queue.gametick,
+                                            &door_cloud_process) == 1 &&
+                                        door_cloud_process.cloud.valid &&
+                                        door_cloud_process.cloud.door_damage > 0 &&
+                                        door_cloud_process.cloud.door_destroyed &&
+                                        (dm2_v1_dungeon_get_tile_raw(
+                                            &resurrection_candidate.dungeon, door_map,
+                                            door_x, door_y) & 7) == DM2_DOOR_STATE_DESTROYED &&
+                                        door_state_before != DM2_DOOR_STATE_DESTROYED,
+                                        "DM2 candidate applies ordinary cloud damage to a door owner");
+                                }
+                            }
+                        }
+                    }
+                    expect_true(found_altar_cell && altar_record != NULL,
+                        "DM2 finds a real private tile-chain cell for resurrection altar admission");
+                    if (found_altar_cell && altar_record) {
+                        altar_record[0] = (uint8_t)(altar_first & 0xff);
+                        altar_record[1] = (uint8_t)((altar_first >> 8) & 0xff);
+                        altar_record[2] = 0;
+                        altar_record[3] = 0;
+                        expect_true(dm2_v1_dungeon_set_first_thing(
+                                        &resurrection_candidate.dungeon,
+                                        resurrection_candidate.current_map,
+                                        altar_x, altar_y,
+                                        (uint16_t)altar_record_handle) == 0,
+                            "DM2 installs a source-shaped DB10 hero-bones record in the private chain");
+                        dm2_v1_timer_entry_init(&resurrection_timer);
+                        dm2_v1_timer_set_mticks(&resurrection_timer,
+                            (int16_t)resurrection_candidate.current_map,
+                            resurrection_candidate.timer_queue.gametick);
+                        resurrection_timer.ttype = 0x0du;
+                        resurrection_timer.actor = 0u;
+                        resurrection_timer.xA = (int8_t)altar_x;
+                        resurrection_timer.yA = (int8_t)altar_y;
+                        resurrection_timer.wvalueB = (int16_t)0x0100;
+                        dm2_v1_timer_queue(&resurrection_candidate.timer_queue,
+                            &resurrection_timer);
+                        memset(&resurrection_receipt, 0, sizeof(resurrection_receipt));
+                        expect_true(dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                        &resurrection_candidate, 0u,
+                                        &resurrection_receipt) == 1 &&
+                                    resurrection_receipt.resurrection.valid &&
+                                    resurrection_receipt.resurrection.record_removed &&
+                                    resurrection_receipt.resurrection.altar_record ==
+                                        (int16_t)altar_record_handle &&
+                                    dm2_v1_dungeon_get_first_thing(
+                                        &resurrection_candidate.dungeon,
+                                        resurrection_candidate.current_map,
+                                        altar_x, altar_y) == altar_first &&
+                                    dm2_v1_record_pool_address(
+                                        &resurrection_candidate.record_pools,
+                                        (int16_t)altar_record_handle)[0] == 0xffu &&
+                                    resurrection_candidate.timer_queue.num_timers == 0,
+                            "DM2 consumes private 0x0D altar phase and deallocates its DB10 record");
+                    }
+                }
+                {
+                    int cloud_x = -1;
+                    int cloud_y = -1;
+                    int cloud_cell_found = 0;
+                    for (int probe_x = 0;
+                         probe_x < resurrection_candidate.map_context.width &&
+                         !cloud_cell_found; ++probe_x) {
+                        for (int probe_y = 0;
+                             probe_y < resurrection_candidate.map_context.height;
+                             ++probe_y) {
+                            int16_t chain = (int16_t)dm2_v1_dungeon_get_first_thing(
+                                &resurrection_candidate.dungeon,
+                                resurrection_candidate.current_map,
+                                probe_x, probe_y);
+                            int safe = 0;
+                            int has_db3 = 0;
+                            while (chain != DM2_V1_RECORD_HANDLE_END &&
+                                   chain != DM2_V1_RECORD_HANDLE_NULL &&
+                                   safe++ < 4096) {
+                                int16_t next;
+                                if (dm2_v1_record_handle_pool(chain) == 3)
+                                    has_db3 = 1;
+                                if (!dm2_v1_record_pool_next_link(
+                                        &resurrection_candidate.record_pools,
+                                        chain, &next)) {
+                                    has_db3 = 1;
+                                    break;
+                                }
+                                chain = next;
+                            }
+                            if (chain == DM2_V1_RECORD_HANDLE_NULL || safe >= 4096)
+                                has_db3 = 1;
+                            if ((dm2_v1_dungeon_get_tile_raw(
+                                    &resurrection_candidate.dungeon,
+                                    resurrection_candidate.current_map,
+                                    probe_x, probe_y) & 0x10) != 0 &&
+                                safe > 0 && !has_db3 &&
+                                !(probe_x == resurrection_candidate.source_party_x &&
+                                  probe_y == resurrection_candidate.source_party_y) &&
+                                dm2_v1_get_creature_at(
+                                    &resurrection_candidate.record_pools,
+                                    &resurrection_candidate.dungeon,
+                                    resurrection_candidate.current_map,
+                                    probe_x, probe_y) ==
+                                    DM2_V1_RECORD_HANDLE_NULL) {
+                                cloud_x = probe_x;
+                                cloud_y = probe_y;
+                                cloud_cell_found = 1;
+                                break;
+                            }
+                        }
+                    }
+                    expect_true(cloud_cell_found,
+                        "DM2 finds a source tile chain without DB3 actuator ownership for cloud creation");
+                    {
+                        int16_t cloud_actuator =
+                            dm2_v1_record_pool_alloc_new_record(
+                                &resurrection_candidate.record_pools, 3u);
+                        uint8_t *actuator =
+                            dm2_v1_record_pool_address_mut(
+                                &resurrection_candidate.record_pools,
+                                cloud_actuator);
+                        int actuator_installed = 0;
+                        if (cloud_cell_found && actuator) {
+                            actuator[0] = (uint8_t)(
+                                dm2_v1_dungeon_get_first_thing(
+                                    &resurrection_candidate.dungeon,
+                                    resurrection_candidate.current_map,
+                                    cloud_x, cloud_y) & 0xff);
+                            actuator[1] = (uint8_t)(
+                                (dm2_v1_dungeon_get_first_thing(
+                                    &resurrection_candidate.dungeon,
+                                    resurrection_candidate.current_map,
+                                    cloud_x, cloud_y) >> 8) & 0xff);
+                            actuator[2] = 0xa6; /* w2=0xffa6: universal 0x26 */
+                            actuator[3] = 0xff;
+                            actuator[4] = 0x00; /* action 0, once-only clear */
+                            actuator[5] = 0x00;
+                            if (dm2_v1_dungeon_set_first_thing(
+                                    &resurrection_candidate.dungeon,
+                                    resurrection_candidate.current_map,
+                                    cloud_x, cloud_y,
+                                    (uint16_t)cloud_actuator) == 0)
+                                actuator_installed = 1;
+                        }
+                        expect_true(actuator_installed,
+                            "DM2 installs a source-shaped matching DB3 cloud actuator");
+                        dm2_v1_timer_entry_init(&resurrection_timer);
+                        dm2_v1_timer_set_mticks(&resurrection_timer,
+                            (int16_t)resurrection_map,
+                            resurrection_candidate.timer_queue.gametick);
+                        resurrection_timer.ttype = 0x0du;
+                        resurrection_timer.actor = 0u;
+                        resurrection_timer.xA = (int8_t)cloud_x;
+                        resurrection_timer.yA = (int8_t)cloud_y;
+                        resurrection_timer.wvalueB = (int16_t)0x0200;
+                        dm2_v1_timer_queue(&resurrection_candidate.timer_queue,
+                            &resurrection_timer);
+                        memset(&resurrection_receipt, 0, sizeof(resurrection_receipt));
+                        {
+                            int cloud_ok =
+                                dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                    &resurrection_candidate, 0u,
+                                    &resurrection_receipt);
+                            expect_true(cloud_ok == 1 &&
+                                    resurrection_receipt.resurrection.cloud_created &&
+                                    actuator[4] == 0x04,
+                                "DM2 invokes matching DB3 type-0x26 and toggles once-only state");
+                        }
+                    }
+                    {
+                        DM2_V1_GameLoadCandidateTimerProcessReceipt cloud_process;
+                        uint32_t cloud_tick =
+                            (uint32_t)resurrection_candidate.timer_queue.gametick + 5u;
+                        memset(&cloud_process, 0, sizeof(cloud_process));
+                        expect_true(
+                            dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                &resurrection_candidate, cloud_tick, &cloud_process) == 1 &&
+                            cloud_process.valid &&
+                            cloud_process.valid &&
+                            cloud_process.valid && cloud_process.consumed &&
+                            cloud_process.timer_type == 0x19u &&
+                            cloud_process.cloud.valid && cloud_process.cloud.requeued &&
+                            cloud_process.cloud.cloud_type_before == 0x64u &&
+                            cloud_process.cloud.cloud_type_after == 0x65u &&
+                            resurrection_candidate.timer_queue.num_timers == 1,
+                            "DM2 processes the source 0x64 cloud step and requeues it");
+                        {
+                            uint8_t *cloud_record_bytes =
+                                dm2_v1_record_pool_address_mut(
+                                    &resurrection_candidate.record_pools,
+                                    cloud_process.cloud.cloud_record);
+                            uint8_t saved_cloud_next[2];
+                            saved_cloud_next[0] = cloud_record_bytes[0];
+                            saved_cloud_next[1] = cloud_record_bytes[1];
+                            cloud_record_bytes[0] = 0xffu;
+                            cloud_record_bytes[1] = 0xffu;
+                            memset(&cloud_process, 0, sizeof(cloud_process));
+                            expect_true(
+                                dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                    &resurrection_candidate, cloud_tick + 1u,
+                                    &cloud_process) == 0 &&
+                                cloud_process.cloud.blocked_record &&
+                                resurrection_candidate.timer_queue.num_timers == 1 &&
+                                dm2_v1_record_pool_address(
+                                    &resurrection_candidate.record_pools,
+                                    cloud_process.cloud.cloud_record)[0] == 0xffu,
+                                "DM2 rejects a malformed cloud tail before the 0x65 cut");
+                            cloud_record_bytes = dm2_v1_record_pool_address_mut(
+                                &resurrection_candidate.record_pools,
+                                cloud_process.cloud.cloud_record);
+                            cloud_record_bytes[0] = saved_cloud_next[0];
+                            cloud_record_bytes[1] = saved_cloud_next[1];
+                            /* Reuse the authenticated empty-floor DB15 for
+                             * source ordinary lifecycle witnesses. */
+                            cloud_record_bytes[2] = 0x07u;
+                            cloud_record_bytes[3] = 0x08u;
+                            memset(&cloud_process, 0, sizeof(cloud_process));
+                            expect_true(
+                                dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                    &resurrection_candidate, cloud_tick + 1u,
+                                    &cloud_process) == 1 &&
+                                cloud_process.valid && cloud_process.consumed &&
+                            cloud_process.cloud.requeued &&
+                            cloud_process.cloud.cloud_type_before == 0x07u &&
+                            cloud_process.cloud.cloud_type_after == 0x07u &&
+                            cloud_process.cloud.cloud_strength_before == 0x08u &&
+                            cloud_process.cloud.cloud_strength_after == 0x05u &&
+                            cloud_record_bytes[3] == 0x05u &&
+                                resurrection_candidate.timer_queue.num_timers == 1,
+                                "DM2 candidate requeues source poison cloud with -3 decay");
+                            cloud_record_bytes[2] = 0x28u;
+                            cloud_record_bytes[3] = 0x38u;
+                            memset(&cloud_process, 0, sizeof(cloud_process));
+                            expect_true(
+                                dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                    &resurrection_candidate, cloud_tick + 2u,
+                                    &cloud_process) == 1 &&
+                                cloud_process.valid && cloud_process.consumed &&
+                                cloud_process.cloud.requeued &&
+                            cloud_process.cloud.cloud_type_before == 0x28u &&
+                            cloud_process.cloud.cloud_type_after == 0x28u &&
+                            cloud_process.cloud.cloud_strength_before == 0x38u &&
+                            cloud_process.cloud.cloud_strength_after == 0x10u &&
+                            cloud_record_bytes[3] == 0x10u &&
+                                resurrection_candidate.timer_queue.num_timers == 1,
+                                "DM2 candidate requeues source 0x28 cloud without 0x64 sound");
+                            cloud_record_bytes[3] = 0x10u;
+                            memset(&cloud_process, 0, sizeof(cloud_process));
+                            expect_true(
+                                dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                    &resurrection_candidate, cloud_tick + 3u,
+                                    &cloud_process) == 1 &&
+                                cloud_process.valid && cloud_process.consumed &&
+                                cloud_process.cloud.deallocated &&
+                                resurrection_candidate.timer_queue.num_timers == 0,
+                                "DM2 candidate cuts a weak source 0x28 cloud");
+                            {
+                                int party_x = resurrection_candidate.source_party_x;
+                                int party_y = resurrection_candidate.source_party_y;
+                                int16_t party_head = (int16_t)
+                                    dm2_v1_dungeon_get_first_thing(
+                                        &resurrection_candidate.dungeon,
+                                        resurrection_candidate.source_party_map,
+                                        party_x, party_y);
+                                int16_t party_cloud =
+                                    dm2_v1_record_pool_alloc_new_record(
+                                        &resurrection_candidate.record_pools, 15u);
+                                uint8_t *party_cloud_bytes =
+                                    dm2_v1_record_pool_address_mut(
+                                        &resurrection_candidate.record_pools,
+                                        party_cloud);
+                                int16_t damage_before =
+                                    resurrection_candidate.party.hero[0].damagesuffered;
+                                int party_fixture_ready =
+                                    party_cloud >= 0 && party_cloud_bytes != NULL &&
+                                    party_head != DM2_V1_RECORD_HANDLE_NULL &&
+                                    dm2_v1_get_creature_at(
+                                        &resurrection_candidate.record_pools,
+                                        &resurrection_candidate.dungeon,
+                                        resurrection_candidate.source_party_map,
+                                        party_x, party_y) ==
+                                        DM2_V1_RECORD_HANDLE_NULL;
+                                if (party_fixture_ready) {
+                                    party_cloud_bytes[0] = (uint8_t)(party_head & 0xff);
+                                    party_cloud_bytes[1] = (uint8_t)((party_head >> 8) & 0xff);
+                                    party_cloud_bytes[2] = 0x01u;
+                                    party_cloud_bytes[3] = 0x14u;
+                                    expect_true(dm2_v1_dungeon_set_first_thing(
+                                        &resurrection_candidate.dungeon,
+                                        resurrection_candidate.source_party_map,
+                                        party_x, party_y,
+                                        (uint16_t)party_cloud) == 0,
+                                        "DM2 installs a source-shaped ordinary cloud on the party cell");
+                                    dm2_v1_timer_entry_init(&resurrection_timer);
+                                    dm2_v1_timer_set_mticks(&resurrection_timer,
+                                        resurrection_candidate.source_party_map,
+                                        resurrection_candidate.timer_queue.gametick);
+                                    resurrection_timer.ttype = 0x19u;
+                                    resurrection_timer.xA = (int8_t)party_x;
+                                    resurrection_timer.yA = (int8_t)party_y;
+                                    resurrection_timer.wvalueB = party_cloud;
+                                    dm2_v1_timer_queue(&resurrection_candidate.timer_queue,
+                                        &resurrection_timer);
+                                    memset(&cloud_process, 0, sizeof(cloud_process));
+                                    expect_true(
+                                        dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                            &resurrection_candidate,
+                                            resurrection_candidate.timer_queue.gametick,
+                                            &cloud_process) == 1 &&
+                                        cloud_process.cloud.valid &&
+                                        cloud_process.cloud.deallocated &&
+                                        cloud_process.cloud.party_damage > 0 &&
+                                        cloud_process.cloud.party_wounded_mask != 0 &&
+                                        resurrection_candidate.party.hero[0].damagesuffered >
+                                            damage_before &&
+                                        (resurrection_candidate.party.hero[0].heroflag &
+                                            0x0800u) != 0,
+                                        "DM2 candidate applies ordinary cloud strength to the party owner");
+                                } else {
+                                    expect_true(0,
+                                        "DM2 has an authenticated creature-free party-cell cloud fixture");
+                                }
+                            }
+                            {
+                                int creature_map = -1;
+                                int creature_x = -1;
+                                int creature_y = -1;
+                                int16_t creature_head = DM2_V1_RECORD_HANDLE_NULL;
+                                int16_t creature_cloud = DM2_V1_RECORD_HANDLE_NULL;
+                                uint8_t *creature_cloud_bytes = NULL;
+                                int creature_fixture_ready = 0;
+                                for (int probe_map = 0;
+                                     probe_map < resurrection_candidate.dungeon.level_count &&
+                                     !creature_fixture_ready; ++probe_map) {
+                                    for (int probe_y = 0;
+                                         probe_y < resurrection_candidate.dungeon.level_heights[probe_map] &&
+                                         !creature_fixture_ready; ++probe_y) {
+                                        for (int probe_x = 0;
+                                             probe_x < resurrection_candidate.dungeon.level_widths[probe_map];
+                                             ++probe_x) {
+                                            int16_t found = dm2_v1_get_creature_at(
+                                                &resurrection_candidate.record_pools,
+                                                &resurrection_candidate.dungeon,
+                                                probe_map, probe_x, probe_y);
+                                            const uint8_t *found_record =
+                                                found != DM2_V1_RECORD_HANDLE_NULL
+                                                    ? dm2_v1_record_pool_address(
+                                                        &resurrection_candidate.record_pools,
+                                                        found) : NULL;
+                                            const DM2_AIDefinition *found_ai = NULL;
+                                            int poison_immune = found_record &&
+                                                dm2_v1_caii_source_owner_ai_spec_def(
+                                                    &resurrection_candidate.caii_source,
+                                                    found_record[4], &found_ai) &&
+                                                found_ai &&
+                                                (((found_ai->w24 >> 8) & 0x0fu) == 0x0fu);
+                                            if (found != DM2_V1_RECORD_HANDLE_NULL &&
+                                                !poison_immune) {
+                                                creature_map = probe_map;
+                                                creature_x = probe_x;
+                                                creature_y = probe_y;
+                                                creature_head = (int16_t)
+                                                    dm2_v1_dungeon_get_first_thing(
+                                                        &resurrection_candidate.dungeon,
+                                                        probe_map, probe_x, probe_y);
+                                                creature_fixture_ready = 1;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                creature_cloud = creature_fixture_ready
+                                    ? dm2_v1_record_pool_alloc_new_record(
+                                        &resurrection_candidate.record_pools, 15u)
+                                    : DM2_V1_RECORD_HANDLE_NULL;
+                                creature_cloud_bytes = creature_cloud >= 0
+                                    ? dm2_v1_record_pool_address_mut(
+                                        &resurrection_candidate.record_pools,
+                                        creature_cloud)
+                                    : NULL;
+                                creature_fixture_ready = creature_fixture_ready &&
+                                    creature_cloud_bytes != NULL &&
+                                    creature_head != DM2_V1_RECORD_HANDLE_NULL;
+                                expect_true(creature_fixture_ready,
+                                    "DM2 finds an authenticated creature-cell cloud fixture");
+                                if (creature_fixture_ready) {
+                                    int16_t old_head = creature_head;
+                                    creature_cloud_bytes[0] = (uint8_t)(creature_head & 0xff);
+                                    creature_cloud_bytes[1] = (uint8_t)((creature_head >> 8) & 0xff);
+                                    creature_cloud_bytes[2] = 0x07u;
+                                    creature_cloud_bytes[3] = 0xffu;
+                                    expect_true(dm2_v1_dungeon_set_first_thing(
+                                        &resurrection_candidate.dungeon,
+                                        creature_map, creature_x, creature_y,
+                                        (uint16_t)creature_cloud) == 0,
+                                        "DM2 installs a source-shaped cloud ahead of the creature");
+                                    dm2_v1_timer_entry_init(&resurrection_timer);
+                                    dm2_v1_timer_set_mticks(&resurrection_timer,
+                                        creature_map,
+                                        resurrection_candidate.timer_queue.gametick);
+                                    resurrection_timer.ttype = 0x19u;
+                                    resurrection_timer.xA = (int8_t)creature_x;
+                                    resurrection_timer.yA = (int8_t)creature_y;
+                                    resurrection_timer.wvalueB = creature_cloud;
+                                    expect_true(dm2_v1_timer_queue(
+                                        &resurrection_candidate.timer_queue,
+                                        &resurrection_timer) >= 0,
+                                        "DM2 queues the creature-cell cloud timer");
+                                    memset(&cloud_process, 0, sizeof(cloud_process));
+                                    int creature_cloud_result =
+                                        dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                            &resurrection_candidate,
+                                            resurrection_candidate.timer_queue.gametick,
+                                            &cloud_process);
+                                    expect_true(
+                                        creature_cloud_result == 1 &&
+                                        cloud_process.cloud.valid &&
+                                        cloud_process.cloud.requeued &&
+                                        cloud_process.cloud.creature_damage > 0 &&
+                                        cloud_process.cloud.creature_attacked &&
+                                        resurrection_candidate.timer_queue.num_timers >= 2 &&
+                                        dm2_v1_dungeon_get_first_thing(
+                                            &resurrection_candidate.dungeon,
+                                            creature_map, creature_x, creature_y) ==
+                                            (uint16_t)creature_cloud &&
+                                        dm2_v1_record_pool_address(
+                                            &resurrection_candidate.record_pools,
+                                            creature_cloud)[0] ==
+                                            (uint8_t)(old_head & 0xff),
+                                        "DM2 applies creature cloud damage through candidate CAII context");
+                                }
+                            }
+                        }
+                    }
+                }
+                dm2_v1_game_load_runtime_session_candidate_free(
+                    &resurrection_candidate);
+            }
+        }
+        /* 0x48 is a source-global hero timer: actor is a hero bitmask and
+         * wvalueA is the signed enchantment-power decrement.  Use the real
+         * candidate clone for ownership/heap admission, then seed only the
+         * source-shaped hero fields needed to exercise the bounded consumer. */
+        if (profile_new_game_owner &&
+            dm2_v1_game_load_runtime_session_candidate_init(
+                &ench_power_candidate, profile_new_game_owner)) {
+            DM2_V1_TimerEntry ench_power_timer;
+            dm2_v1_timer_queue_init(&ench_power_candidate.timer_queue,
+                ench_power_candidate.timer_entries,
+                ench_power_candidate.timer_indices,
+                ench_power_candidate.timer_capacity);
+            ench_power_candidate.party.heros_in_party = 2;
+            ench_power_candidate.party.hero[0].curHP = 100;
+            ench_power_candidate.party.hero[0].ench_power = 5;
+            ench_power_candidate.party.hero[1].curHP = 0;
+            ench_power_candidate.party.hero[1].ench_power = 7;
+            dm2_v1_timer_entry_init(&ench_power_timer);
+            dm2_v1_timer_set_mticks(&ench_power_timer,
+                (int16_t)ench_power_candidate.current_map,
+                ench_power_candidate.timer_queue.gametick);
+            ench_power_timer.ttype = 0x48u;
+            ench_power_timer.actor = 0x03u;
+            ench_power_timer.xA = 3;
+            ench_power_timer.yA = 0;
+            memset(&ench_power_timer_receipt, 0,
+                   sizeof(ench_power_timer_receipt));
+            expect_true(dm2_v1_timer_queue(&ench_power_candidate.timer_queue,
+                                &ench_power_timer) >= 0 &&
+                            dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                &ench_power_candidate, 0u,
+                                &ench_power_timer_receipt) == 1 &&
+                            ench_power_timer_receipt.valid &&
+                            ench_power_timer_receipt.consumed &&
+                            ench_power_timer_receipt.timer_type == 0x48u &&
+                            ench_power_timer_receipt.ench_power.valid &&
+                            ench_power_timer_receipt.ench_power.actor_mask == 0x03u &&
+                            ench_power_timer_receipt.ench_power.amount == 3 &&
+                            ench_power_timer_receipt.ench_power.heroes_seen == 2 &&
+                            ench_power_timer_receipt.ench_power.heroes_mutated == 1 &&
+                            ench_power_timer_receipt.ench_power.heroes_skipped_dead == 1 &&
+                            ench_power_candidate.party.hero[0].ench_power == 2 &&
+                            ench_power_candidate.party.hero[1].ench_power == 7 &&
+                            ench_power_candidate.timer_queue.num_timers == 0 &&
+                            !profile->source_game_load_session_ready,
+                        "DM2 consumes a private source 0x48 ENCH_POWER timer against the cloned party");
+            dm2_v1_game_load_runtime_session_candidate_free(&ench_power_candidate);
+            memset(&ench_power_candidate, 0, sizeof(ench_power_candidate));
+        }
+        /* 0x4B is source c_tim poison: the signed counter is consumed by
+         * c_hero::poison, one pending wound is accumulated, and remaining
+         * counters are requeued at source delay 0x24. */
+        if (profile_new_game_owner &&
+            dm2_v1_game_load_runtime_session_candidate_init(
+                &poison_candidate, profile_new_game_owner)) {
+            DM2_V1_TimerEntry poison_timer;
+            dm2_v1_timer_queue_init(&poison_candidate.timer_queue,
+                poison_candidate.timer_entries,
+                poison_candidate.timer_indices,
+                poison_candidate.timer_capacity);
+            poison_candidate.party.heros_in_party = 2;
+            poison_candidate.source_next_champion_number = 2;
+            poison_candidate.party.hero[0].curHP = 100;
+            poison_candidate.party.hero[0].poison = 50;
+            poison_candidate.party.hero[0].poisoned = 2;
+            dm2_v1_timer_entry_init(&poison_timer);
+            dm2_v1_timer_set_mticks(&poison_timer,
+                (int16_t)poison_candidate.current_map,
+                poison_candidate.timer_queue.gametick);
+            poison_timer.ttype = 0x4bu;
+            poison_timer.actor = 0u;
+            poison_timer.xA = 10;
+            poison_timer.yA = 0;
+            memset(&poison_timer_receipt, 0, sizeof(poison_timer_receipt));
+            expect_true(dm2_v1_timer_queue(&poison_candidate.timer_queue,
+                                &poison_timer) >= 0 &&
+                            dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                &poison_candidate, 0u,
+                                &poison_timer_receipt) == 1 &&
+                            poison_timer_receipt.valid &&
+                            poison_timer_receipt.consumed &&
+                            poison_timer_receipt.timer_type == 0x4bu &&
+                            poison_timer_receipt.poison.valid &&
+                            poison_timer_receipt.poison.actor == 0 &&
+                            poison_timer_receipt.poison.amount == 10 &&
+                            poison_timer_receipt.poison.wound_amount == 1 &&
+                            poison_timer_receipt.poison.poison_before == 50 &&
+                            poison_timer_receipt.poison.poison_after == 49 &&
+                            poison_timer_receipt.poison.poisoned_before == 2 &&
+                            poison_timer_receipt.poison.poisoned_after == 2 &&
+                            poison_timer_receipt.poison.requeued &&
+                            poison_candidate.party.hero[0].damagesuffered == 1 &&
+                            (poison_candidate.party.hero[0].heroflag & 0x2800) == 0x2800 &&
+                            poison_candidate.timer_queue.num_timers == 1 &&
+                            !profile->source_game_load_session_ready,
+                        "DM2 consumes a private source 0x4B POISON timer against the cloned party");
+            dm2_v1_game_load_runtime_session_candidate_free(&poison_candidate);
+            memset(&poison_candidate, 0, sizeof(poison_candidate));
+        }
+        if (profile_new_game_owner &&
+            dm2_v1_game_load_runtime_session_candidate_init(
+                &poison_candidate, profile_new_game_owner)) {
+            DM2_V1_TimerEntry poison_timer;
+            dm2_v1_timer_queue_init(&poison_candidate.timer_queue,
+                poison_candidate.timer_entries,
+                poison_candidate.timer_indices,
+                poison_candidate.timer_capacity);
+            poison_candidate.party.heros_in_party = 1;
+            poison_candidate.party.hero[0].curHP = 100;
+            poison_candidate.party.hero[0].poison = 20;
+            poison_candidate.party.hero[0].poisoned = 1;
+            dm2_v1_timer_entry_init(&poison_timer);
+            dm2_v1_timer_set_mticks(&poison_timer,
+                (int16_t)poison_candidate.current_map,
+                poison_candidate.timer_queue.gametick);
+            poison_timer.ttype = 0x4bu;
+            poison_timer.actor = 0u;
+            poison_timer.xA = 1;
+            poison_timer.yA = 0;
+            memset(&poison_timer_receipt, 0, sizeof(poison_timer_receipt));
+            expect_true(dm2_v1_timer_queue(&poison_candidate.timer_queue,
+                                &poison_timer) >= 0 &&
+                            !dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                &poison_candidate, 0u,
+                                &poison_timer_receipt) &&
+                            poison_timer_receipt.poison.blocked_last_hero_owner &&
+                            poison_candidate.party.hero[0].poison == 20 &&
+                            poison_candidate.party.hero[0].poisoned == 1 &&
+                            poison_candidate.timer_queue.num_timers == 1,
+                        "DM2 keeps 0x4B fail-closed without the source last-hero owner");
+            dm2_v1_game_load_runtime_session_candidate_free(&poison_candidate);
+            memset(&poison_candidate, 0, sizeof(poison_candidate));
+        }
+        /* 0x47 is the source hero-enchantment flag countdown.  It owns the
+         * private savegames1.b_02/v1e0976 pair, then sets heroflag 0x4000
+         * only when the countdown expires and the selected hero is alive. */
+        if (profile_new_game_owner &&
+            dm2_v1_game_load_runtime_session_candidate_init(
+                &ench_power_candidate, profile_new_game_owner)) {
+            DM2_V1_TimerEntry hero_ench_flag_timer;
+            dm2_v1_timer_queue_init(&ench_power_candidate.timer_queue,
+                ench_power_candidate.timer_entries,
+                ench_power_candidate.timer_indices,
+                ench_power_candidate.timer_capacity);
+            ench_power_candidate.party.heros_in_party = 1;
+            ench_power_candidate.party.hero[0].curHP = 100;
+            ench_power_candidate.party.hero[0].heroflag = 0x0001;
+            ench_power_candidate.source_hero_ench_countdown = 1u;
+            ench_power_candidate.source_hero_ench_target = 1;
+            dm2_v1_timer_entry_init(&hero_ench_flag_timer);
+            dm2_v1_timer_set_mticks(&hero_ench_flag_timer,
+                (int16_t)ench_power_candidate.current_map,
+                ench_power_candidate.timer_queue.gametick);
+            hero_ench_flag_timer.ttype = 0x47u;
+            memset(&ench_power_timer_receipt, 0,
+                   sizeof(ench_power_timer_receipt));
+            expect_true(dm2_v1_timer_queue(&ench_power_candidate.timer_queue,
+                                &hero_ench_flag_timer) >= 0 &&
+                            dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                &ench_power_candidate, 0u,
+                                &ench_power_timer_receipt) == 1 &&
+                            ench_power_timer_receipt.valid &&
+                            ench_power_timer_receipt.consumed &&
+                            ench_power_timer_receipt.timer_type == 0x47u &&
+                            ench_power_timer_receipt.hero_ench_flag.valid &&
+                            ench_power_timer_receipt.hero_ench_flag.countdown_before == 1u &&
+                            ench_power_timer_receipt.hero_ench_flag.countdown_after == 0u &&
+                            ench_power_timer_receipt.hero_ench_flag.countdown_expired &&
+                            ench_power_timer_receipt.hero_ench_flag.hero_flag_set &&
+                            ench_power_candidate.party.hero[0].heroflag == (int16_t)0x4001 &&
+                            ench_power_candidate.timer_queue.num_timers == 0 &&
+                            !profile->source_game_load_session_ready,
+                        "DM2 consumes a private source 0x47 HERO_ENCH_FLAG timer atomically");
+            dm2_v1_game_load_runtime_session_candidate_free(&ench_power_candidate);
+            memset(&ench_power_candidate, 0, sizeof(ench_power_candidate));
+        }
+        if (profile_new_game_owner &&
+            dm2_v1_game_load_runtime_session_candidate_init(
+                &ench_power_candidate, profile_new_game_owner)) {
+            DM2_V1_TimerEntry hero_ench_flag_timer;
+            dm2_v1_timer_queue_init(&ench_power_candidate.timer_queue,
+                ench_power_candidate.timer_entries,
+                ench_power_candidate.timer_indices,
+                ench_power_candidate.timer_capacity);
+            ench_power_candidate.party.heros_in_party = 1;
+            ench_power_candidate.source_hero_ench_countdown = 4u;
+            ench_power_candidate.source_hero_ench_target = 2;
+            dm2_v1_timer_entry_init(&hero_ench_flag_timer);
+            dm2_v1_timer_set_mticks(&hero_ench_flag_timer,
+                (int16_t)ench_power_candidate.current_map,
+                ench_power_candidate.timer_queue.gametick);
+            hero_ench_flag_timer.ttype = 0x47u;
+            memset(&ench_power_timer_receipt, 0,
+                   sizeof(ench_power_timer_receipt));
+            expect_true(dm2_v1_timer_queue(&ench_power_candidate.timer_queue,
+                                &hero_ench_flag_timer) >= 0 &&
+                            dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                &ench_power_candidate, 0u,
+                                &ench_power_timer_receipt) == 0 &&
+                            ench_power_timer_receipt.hero_ench_flag.blocked_party &&
+                            ench_power_candidate.source_hero_ench_countdown == 4u &&
+                            ench_power_candidate.timer_queue.num_timers == 1,
+                        "DM2 rolls back a private 0x47 HERO_ENCH_FLAG timer for an invalid target");
+            dm2_v1_game_load_runtime_session_candidate_free(&ench_power_candidate);
+            memset(&ench_power_candidate, 0, sizeof(ench_power_candidate));
+        }
+        /* 0x46 is the source light table delta and +8-tick continuation. */
+        if (profile_new_game_owner &&
+            dm2_v1_game_load_runtime_session_candidate_init(
+                &ench_power_candidate, profile_new_game_owner)) {
+            DM2_V1_TimerEntry light_timer;
+            dm2_v1_timer_queue_init(&ench_power_candidate.timer_queue,
+                ench_power_candidate.timer_entries,
+                ench_power_candidate.timer_indices,
+                ench_power_candidate.timer_capacity);
+            ench_power_candidate.source_light_level = 100;
+            dm2_v1_timer_entry_init(&light_timer);
+            dm2_v1_timer_set_mticks(&light_timer,
+                (int16_t)ench_power_candidate.current_map,
+                ench_power_candidate.timer_queue.gametick);
+            light_timer.ttype = 0x46u;
+            light_timer.xA = 2;
+            light_timer.yA = 0;
+            memset(&ench_power_timer_receipt, 0,
+                   sizeof(ench_power_timer_receipt));
+            expect_true(dm2_v1_timer_queue(&ench_power_candidate.timer_queue,
+                                &light_timer) >= 0 &&
+                            dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                &ench_power_candidate, 0u,
+                                &ench_power_timer_receipt) == 1 &&
+                            ench_power_timer_receipt.valid &&
+                            ench_power_timer_receipt.consumed &&
+                            ench_power_timer_receipt.timer_type == 0x46u &&
+                            ench_power_timer_receipt.light.valid &&
+                            ench_power_timer_receipt.light.light_before == 100 &&
+                            ench_power_timer_receipt.light.light_after == 114 &&
+                            ench_power_timer_receipt.light.remaining == 1 &&
+                            ench_power_timer_receipt.light.requeued &&
+                            ench_power_candidate.timer_queue.num_timers == 1 &&
+                            dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                &ench_power_candidate, 8u,
+                                &ench_power_timer_receipt) == 1 &&
+                            ench_power_timer_receipt.light.light_before == 114 &&
+                            ench_power_timer_receipt.light.light_after == 124 &&
+                            !ench_power_timer_receipt.light.requeued &&
+                            ench_power_candidate.source_light_level == 124 &&
+                            ench_power_candidate.timer_queue.num_timers == 0,
+                        "DM2 consumes and requeues the private source 0x46 LIGHT timer");
+            dm2_v1_game_load_runtime_session_candidate_free(&ench_power_candidate);
+            memset(&ench_power_candidate, 0, sizeof(ench_power_candidate));
+        }
+        /* 0x5A inactive arm: clear only the ornate frame high byte.  The
+         * active decoration/GDAT/noise arm remains explicitly fail-closed. */
+        if (profile_new_game_owner &&
+            dm2_v1_game_load_runtime_session_candidate_init(
+                &ench_power_candidate, profile_new_game_owner)) {
+            DM2_V1_TimerEntry ornate_noise_timer;
+            int16_t ornate_record = DM2_V1_RECORD_HANDLE_NULL;
+            uint8_t *ornate_bytes = NULL;
+            for (int db = 0; db < 8 && ornate_record < 0; ++db) {
+                const DM2_V1_RecordPool *pool =
+                    &ench_power_candidate.record_pools.pools[db];
+                if (pool->record_count > 0 && pool->record_size >= 5)
+                    ornate_record = (int16_t)(db << 10);
+            }
+            if (ornate_record >= 0)
+                ornate_bytes = dm2_v1_record_pool_address_mut(
+                    &ench_power_candidate.record_pools, ornate_record);
+            dm2_v1_timer_queue_init(&ench_power_candidate.timer_queue,
+                ench_power_candidate.timer_entries,
+                ench_power_candidate.timer_indices,
+                ench_power_candidate.timer_capacity);
+            if (ornate_bytes) {
+                ornate_bytes[2] = 0x34;
+                ornate_bytes[3] = 0xab;
+                ornate_bytes[4] &= (uint8_t)~1u;
+                dm2_v1_timer_entry_init(&ornate_noise_timer);
+                dm2_v1_timer_set_mticks(&ornate_noise_timer,
+                    (int16_t)ench_power_candidate.current_map,
+                    ench_power_candidate.timer_queue.gametick);
+                ornate_noise_timer.ttype = 0x5au;
+                ornate_noise_timer.xA = 0;
+                ornate_noise_timer.yA = 0;
+                ornate_noise_timer.wvalueB = ornate_record;
+                memset(&ench_power_timer_receipt, 0,
+                       sizeof(ench_power_timer_receipt));
+                expect_true(dm2_v1_timer_queue(
+                                &ench_power_candidate.timer_queue,
+                                &ornate_noise_timer) >= 0 &&
+                            dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                &ench_power_candidate, 0u,
+                                &ench_power_timer_receipt) == 1 &&
+                            ench_power_timer_receipt.ornate_noise.valid &&
+                            ench_power_timer_receipt.ornate_noise.frame_cleared &&
+                            ench_power_timer_receipt.ornate_noise.word2_before == 0xab34u &&
+                            ench_power_timer_receipt.ornate_noise.word2_after == 0x0034u &&
+                            ornate_bytes[2] == 0x34 && ornate_bytes[3] == 0 &&
+                            ench_power_candidate.timer_queue.num_timers == 0,
+                        "DM2 consumes the private inactive 0x5A ORNATE_NOISE arm");
+                ornate_bytes[4] = 1u;
+                ornate_bytes[5] = 0u;
+                dm2_v1_timer_entry_init(&ornate_noise_timer);
+                dm2_v1_timer_set_mticks(&ornate_noise_timer,
+                    (int16_t)ench_power_candidate.current_map,
+                    ench_power_candidate.timer_queue.gametick);
+                ornate_noise_timer.ttype = 0x5au;
+                ornate_noise_timer.xA = 0;
+                ornate_noise_timer.yA = 0;
+                ornate_noise_timer.wvalueB = ornate_record;
+                memset(&ench_power_timer_receipt, 0,
+                       sizeof(ench_power_timer_receipt));
+                expect_true(dm2_v1_timer_queue(
+                                &ench_power_candidate.timer_queue,
+                                &ornate_noise_timer) >= 0 &&
+                            dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                &ench_power_candidate, 0u,
+                                &ench_power_timer_receipt) == 0 &&
+                            ench_power_timer_receipt.ornate_noise.blocked_record &&
+                            ench_power_candidate.timer_queue.num_timers == 1,
+                        "DM2 rejects the active 0x5A ORNATE_NOISE arm with invalid decoration");
+            }
+            dm2_v1_game_load_runtime_session_candidate_free(&ench_power_candidate);
+            memset(&ench_power_candidate, 0, sizeof(ench_power_candidate));
+            if (profile_new_game_owner &&
+                dm2_v1_game_load_runtime_session_candidate_init(
+                    &ench_power_candidate, profile_new_game_owner)) {
+                DM2_V1_TimerEntry active_noise_timer;
+                int16_t active_record = (int16_t)(3 << 10);
+                uint8_t *active_bytes = dm2_v1_record_pool_address_mut(
+                    &ench_power_candidate.record_pools, active_record);
+                int active_tile = dm2_v1_dungeon_get_tile_raw(
+                    &ench_power_candidate.dungeon,
+                    ench_power_candidate.current_map, 0, 0);
+                int active_wall = active_tile >= 0 && ((active_tile >> 5) & 7) == 0;
+                int active_category = active_wall ? 0x09 : 0x0a;
+                const uint8_t *active_gfx = active_wall
+                    ? ench_power_candidate.local_level_graphics.wall_gfx
+                    : ench_power_candidate.local_level_graphics.floor_gfx;
+                uint8_t active_gfx_count = active_wall
+                    ? ench_power_candidate.local_level_graphics.wall_count
+                    : ench_power_candidate.local_level_graphics.floor_count;
+                int active_index = -1;
+                uint16_t active_anim_len = 0;
+                for (int i = 0; i < active_gfx_count && active_index < 0; ++i) {
+                    DM2_V1_GetOrnateAnimLenReceipt anim;
+                    if (dm2_v1_get_ornate_anim_len_receipt(
+                            ench_power_candidate.asset_loader, active_category,
+                            active_gfx[i], 0, &anim) && anim.accepted && anim.length > 0) {
+                        active_index = i + 1;
+                        active_anim_len = anim.length;
+                    }
+                }
+                if (active_bytes && active_index > 0) {
+                    active_bytes[2] = 0;
+                    active_bytes[3] = 0;
+                    active_bytes[4] = 1u;
+                    active_bytes[5] = (uint8_t)(active_index << 4);
+                    dm2_v1_timer_queue_init(&ench_power_candidate.timer_queue,
+                        ench_power_candidate.timer_entries,
+                        ench_power_candidate.timer_indices,
+                        ench_power_candidate.timer_capacity);
+                    dm2_v1_timer_entry_init(&active_noise_timer);
+                    dm2_v1_timer_set_mticks(&active_noise_timer,
+                        (int16_t)ench_power_candidate.current_map, 0);
+                    active_noise_timer.ttype = 0x5au;
+                    active_noise_timer.xA = 0;
+                    active_noise_timer.yA = 0;
+                    active_noise_timer.wvalueB = active_record;
+                    memset(&ench_power_timer_receipt, 0,
+                           sizeof(ench_power_timer_receipt));
+                    expect_true(dm2_v1_timer_queue(
+                                    &ench_power_candidate.timer_queue,
+                                    &active_noise_timer) >= 0 &&
+                                dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                    &ench_power_candidate, 0u,
+                                    &ench_power_timer_receipt) == 1 &&
+                                ench_power_timer_receipt.ornate_noise.valid &&
+                                ench_power_timer_receipt.ornate_noise.requeued &&
+                                ench_power_timer_receipt.ornate_noise.animation_length ==
+                                    active_anim_len &&
+                                ench_power_candidate.timer_queue.num_timers == 1,
+                            "DM2 consumes and requeues the active 0x5A ORNATE_NOISE arm");
+                }
+            }
+            dm2_v1_game_load_runtime_session_candidate_free(&ench_power_candidate);
+            memset(&ench_power_candidate, 0, sizeof(ench_power_candidate));
+        }
+        /* 0x55 source payload: xA/yA are only the DB3 record handle and
+         * wvalueB is the animation mode.  A positive fixture must therefore
+         * work without treating the handle bytes as a tile coordinate. */
+        if (profile_new_game_owner &&
+            dm2_v1_game_load_runtime_session_candidate_init(
+                &ench_power_candidate, profile_new_game_owner)) {
+            DM2_V1_TimerEntry ornate_animator_timer;
+            int16_t ornate_record = (int16_t)(3 << 10);
+            uint8_t *ornate_bytes = dm2_v1_record_pool_address_mut(
+                &ench_power_candidate.record_pools, ornate_record);
+            int ornate_index = -1;
+            uint16_t ornate_anim_len = 0;
+            if (ornate_bytes && ench_power_candidate.record_pools.pools[3].record_size >= 6) {
+                for (int i = 0; i < ench_power_candidate.local_level_graphics.wall_count; ++i) {
+                    DM2_V1_GetOrnateAnimLenReceipt anim;
+                    if (dm2_v1_get_ornate_anim_len_receipt(
+                            ench_power_candidate.asset_loader, 0x09,
+                            ench_power_candidate.local_level_graphics.wall_gfx[i],
+                            0, &anim) && anim.accepted && anim.length > 0) {
+                        ornate_index = i + 1;
+                        ornate_anim_len = anim.length;
+                        break;
+                    }
+                }
+            }
+            if (ornate_bytes && ornate_index > 0) {
+                ornate_bytes[2] = 0;
+                ornate_bytes[3] = 0;
+                ornate_bytes[4] = 0;
+                ornate_bytes[5] = (uint8_t)(ornate_index << 4);
+                dm2_v1_timer_queue_init(&ench_power_candidate.timer_queue,
+                    ench_power_candidate.timer_entries,
+                    ench_power_candidate.timer_indices,
+                    ench_power_candidate.timer_capacity);
+                dm2_v1_timer_entry_init(&ornate_animator_timer);
+                dm2_v1_timer_set_mticks(&ornate_animator_timer,
+                    (int16_t)ench_power_candidate.current_map, 0);
+                ornate_animator_timer.ttype = 0x55u;
+                ornate_animator_timer.xA = (int8_t)(ornate_record & 0xff);
+                ornate_animator_timer.yA = (int8_t)((ornate_record >> 8) & 0xff);
+                ornate_animator_timer.wvalueB = 1;
+                memset(&ench_power_timer_receipt, 0,
+                       sizeof(ench_power_timer_receipt));
+                expect_true(dm2_v1_timer_queue(
+                                &ench_power_candidate.timer_queue,
+                                &ornate_animator_timer) >= 0 &&
+                            dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                &ench_power_candidate, 0u,
+                                &ench_power_timer_receipt) == 1 &&
+                            ench_power_timer_receipt.ornate_animator.valid &&
+                            ench_power_timer_receipt.ornate_animator.consumed &&
+                            ench_power_timer_receipt.ornate_animator.frame_advanced &&
+                            ench_power_timer_receipt.ornate_animator.frame_before == 0 &&
+                            ench_power_timer_receipt.ornate_animator.frame_after == 1 &&
+                            ench_power_timer_receipt.ornate_animator.animation_length ==
+                                ornate_anim_len &&
+                            ench_power_timer_receipt.ornate_animator.requeued &&
+                            ench_power_candidate.timer_queue.num_timers == 1,
+                        "DM2 consumes and requeues a positive source 0x55 ORNATE_ANIMATOR timer");
+            }
+            dm2_v1_game_load_runtime_session_candidate_free(&ench_power_candidate);
+            memset(&ench_power_candidate, 0, sizeof(ench_power_candidate));
+        }
+        {
+            DM2_V1_GameLoadMoverecDispatchReceipt dispatch_receipt;
+            memset(&dispatch_receipt, 0, sizeof(dispatch_receipt));
+            expect_true(dm2_v1_runtime_game_load_candidate_dispatch_moverec(
+                            (int16_t)runtime_candidate_spatial_handle,
+                            runtime_candidate_spatial_x,
+                            runtime_candidate_spatial_y,
+                            0, 0, &dispatch_receipt) == 1 &&
+                            dispatch_receipt.valid &&
+                            dispatch_receipt.dispatched &&
+                            dispatch_receipt.transaction_hash != 0u &&
+                            !profile->source_game_load_session_ready,
+                        "DM2 runtime candidate admits the private moverec_3CE7D post-move boundary without publishing readiness");
+        }
     }
     memset(&runtime_session_candidate, 0, sizeof(runtime_session_candidate));
     runtime_candidate_source_hash_before = profile_new_game_owner &&
@@ -5534,6 +7166,706 @@ int main(void) {
                         !profile->source_game_load_session_ready &&
                         view.world.party.championCount == 0,
                     "DM2 c_moverec census reads the cloned dynamic DB4 chain without mutation");
+        {
+            const DM2_V1_GameLoadCaiiMapCandidate *probe =
+                &profile_new_game_owner->caii_map_candidates[
+                    runtime_candidate_spatial_candidate_index];
+            DM2_V1_GameLoadMoverecCaiiReceipt caii_receipt;
+            DM2_V1_GameLoadCandidateCaiiTimerDetachReceipt detach_receipt;
+            DM2_V1_TimerEntry timer_before;
+            DM2_V1_TimerEntry *timer_snapshot = NULL;
+            int16_t *index_snapshot = NULL;
+            uint8_t slot_snapshot[DM2_V1_CAII_SLOT_SIZE];
+            DM2_V1_TimerQueue queue_snapshot;
+            uint8_t *candidate_slot;
+            int16_t timer_slot = (int16_t)(
+                dm2_v1_record_pool_address(&runtime_session_candidate.record_pools,
+                                            probe->record_handle)[5]);
+            memset(&caii_receipt, 0, sizeof(caii_receipt));
+            timer_before = runtime_session_candidate.timer_entries[timer_slot];
+            expect_true(dm2_v1_game_load_runtime_session_candidate_activate_moverec_caii(
+                            &runtime_session_candidate, probe->record_handle,
+                            probe->x, probe->y, &caii_receipt) == 1 &&
+                            caii_receipt.valid && caii_receipt.timer_updated &&
+                            caii_receipt.caii_slot >= 0 &&
+                            caii_receipt.timer_slot == timer_slot &&
+                            runtime_session_candidate.timer_entries[timer_slot].xA ==
+                                (int8_t)probe->x &&
+                            runtime_session_candidate.timer_entries[timer_slot].yA ==
+                                (int8_t)probe->y &&
+                            dm2_v1_timer_get_ticks(&timer_before) != 0 &&
+                            !profile->source_game_load_session_ready &&
+                            view.world.party.championCount == 0,
+                        "DM2 binds moverec CAII's existing c_tim slot update without allocating or publishing a session");
+            candidate_slot = caii_receipt.caii_slot >= 0 &&
+                    caii_receipt.caii_slot < runtime_session_candidate.caii_slots.capacity
+                ? runtime_session_candidate.caii_slots.slots +
+                    (size_t)caii_receipt.caii_slot * DM2_V1_CAII_SLOT_SIZE
+                : NULL;
+            timer_snapshot = malloc((size_t)runtime_session_candidate.timer_capacity *
+                                    sizeof(*timer_snapshot));
+            index_snapshot = malloc((size_t)runtime_session_candidate.timer_capacity *
+                                    sizeof(*index_snapshot));
+            if (candidate_slot && timer_snapshot && index_snapshot &&
+                caii_receipt.valid) {
+                memcpy(slot_snapshot, candidate_slot, sizeof(slot_snapshot));
+                memcpy(timer_snapshot, runtime_session_candidate.timer_entries,
+                       (size_t)runtime_session_candidate.timer_capacity *
+                       sizeof(*timer_snapshot));
+                memcpy(index_snapshot, runtime_session_candidate.timer_indices,
+                       (size_t)runtime_session_candidate.timer_capacity *
+                       sizeof(*index_snapshot));
+                queue_snapshot = runtime_session_candidate.timer_queue;
+                memset(&detach_receipt, 0, sizeof(detach_receipt));
+                expect_true(dm2_v1_game_load_runtime_session_candidate_detach_caii_timer(
+                                &runtime_session_candidate, probe->record_handle,
+                                &detach_receipt) == 1 && detach_receipt.valid &&
+                                detach_receipt.detached &&
+                                detach_receipt.timer_slot == caii_receipt.timer_slot &&
+                                runtime_session_candidate.timer_entries[
+                                    detach_receipt.timer_slot].ttype == 0u &&
+                                ((uint16_t)candidate_slot[2] |
+                                 ((uint16_t)candidate_slot[3] << 8)) == 0xffffu &&
+                                runtime_session_candidate.timer_queue.num_timers ==
+                                    queue_snapshot.num_timers - 1,
+                            "DM2 binds candidate CAII timer detach to the candidate heap index and leaves record ownership intact");
+                memcpy(candidate_slot, slot_snapshot, sizeof(slot_snapshot));
+                memcpy(runtime_session_candidate.timer_entries, timer_snapshot,
+                       (size_t)runtime_session_candidate.timer_capacity *
+                       sizeof(*timer_snapshot));
+                memcpy(runtime_session_candidate.timer_indices, index_snapshot,
+                       (size_t)runtime_session_candidate.timer_capacity *
+                       sizeof(*index_snapshot));
+                runtime_session_candidate.timer_queue = queue_snapshot;
+            } else {
+                expect_true(0, "DM2 allocates candidate CAII timer-detach regression buffers");
+            }
+            free(index_snapshot);
+            free(timer_snapshot);
+        }
+        {
+            const DM2_V1_GameLoadCaiiMapCandidate *static_probe = NULL;
+            DM2_V1_GameLoadMoverecCaiiReceipt alloc_receipt;
+            for (int index = 0;
+                 index < profile_new_game_owner->caii_map_receipt.candidate_count;
+                 ++index) {
+                const DM2_V1_GameLoadCaiiMapCandidate *probe =
+                    &profile_new_game_owner->caii_map_candidates[index];
+                const uint8_t *source_record = dm2_v1_record_pool_address(
+                    &runtime_session_candidate.record_pools, probe->record_handle);
+                if (probe->static_ai && source_record && source_record[5] == 0xffu) {
+                    static_probe = probe;
+                    break;
+                }
+            }
+            memset(&alloc_receipt, 0, sizeof(alloc_receipt));
+            expect_true(static_probe != NULL &&
+                            dm2_v1_game_load_runtime_session_candidate_change_current_map_to(
+                                &runtime_session_candidate, static_probe->map) &&
+                            dm2_v1_game_load_runtime_session_candidate_activate_moverec_caii(
+                                &runtime_session_candidate, static_probe->record_handle,
+                                static_probe->x, static_probe->y, &alloc_receipt) == 0 &&
+                            alloc_receipt.ai_flags_known &&
+                            !alloc_receipt.ai_bit0_clear &&
+                            !alloc_receipt.allocation_performed &&
+                            !profile->source_game_load_session_ready &&
+                            view.world.party.championCount == 0,
+                        "DM2 keeps moverec CAII allocation fail-closed for a real static no-slot DB4 record");
+        }
+        {
+            DM2_V1_GameLoadRuntimeSessionCandidate moverec_candidate;
+            DM2_V1_TimerEntry moverec_timer;
+            DM2_V1_GameLoadCandidateTimerProcessReceipt moverec_process;
+            const DM2_V1_GameLoadCaiiMapCandidate *moverec_probe = NULL;
+            int destination_map = -1;
+            int destination_x = -1;
+            int destination_y = -1;
+            int16_t destination_link = DM2_V1_RECORD_HANDLE_NULL;
+            uint32_t moverec_due;
+            int moverec_queue_result = -1;
+            int moverec_result = 0;
+            int moverec_destination_contains = 0;
+            memset(&moverec_candidate, 0, sizeof(moverec_candidate));
+            memset(&moverec_process, 0, sizeof(moverec_process));
+            if (profile_new_game_owner &&
+                dm2_test_find_private_db2_floor(
+                    profile_new_game_owner, 1, &destination_map,
+                    &destination_x, &destination_y, &destination_link)) {
+                for (int probe_index = 0;
+                     probe_index < profile_new_game_owner->caii_map_receipt.candidate_count;
+                     ++probe_index) {
+                    const DM2_V1_GameLoadCaiiMapCandidate *probe =
+                        &profile_new_game_owner->caii_map_candidates[probe_index];
+                    const uint8_t *probe_record = dm2_v1_record_pool_address(
+                        &profile_new_game_owner->record_pools, probe->record_handle);
+                    if (!probe->static_ai && probe->map == destination_map &&
+                        probe->x != destination_x && probe_record &&
+                        probe_record[5] != 0xffu) {
+                        moverec_probe = probe;
+                        break;
+                    }
+                }
+            }
+            if (moverec_probe &&
+                dm2_v1_game_load_runtime_session_candidate_init(
+                    &moverec_candidate, profile_new_game_owner)) {
+                /* Isolate the due synthetic moverec while preserving the
+                 * probe's already-owned CAII think timer. */
+                for (uint16_t timer_index = 0;
+                     timer_index < moverec_candidate.timer_capacity;
+                     ++timer_index) {
+                    if (moverec_candidate.timer_entries[timer_index].ttype != 0u)
+                        dm2_v1_timer_set_mticks(
+                            &moverec_candidate.timer_entries[timer_index],
+                            (int16_t)destination_map, 0x00ffff00u);
+                }
+                moverec_candidate.timer_queue.gametick = 0;
+                dm2_v1_timer_entry_init(&moverec_timer);
+                dm2_v1_timer_set_mticks(&moverec_timer,
+                    (int16_t)destination_map, 0u);
+                moverec_timer.ttype = 0x3cu;
+                moverec_timer.xA = (int8_t)destination_x;
+                moverec_timer.yA = (int8_t)destination_y;
+                moverec_timer.wvalueB = moverec_probe->record_handle;
+                moverec_due = (uint32_t)dm2_v1_timer_get_ticks(&moverec_timer);
+                moverec_queue_result = dm2_v1_timer_queue(
+                    &moverec_candidate.timer_queue, &moverec_timer);
+                moverec_result =
+                    dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                        &moverec_candidate, moverec_due, &moverec_process);
+            }
+            if (moverec_probe && moverec_candidate.lifecycle_tag != 0u) {
+                int16_t link = (int16_t)dm2_v1_dungeon_get_first_thing(
+                    &moverec_candidate.dungeon, destination_map,
+                    destination_x, destination_y);
+                for (int step = 0; step < 10000 &&
+                     link != DM2_V1_RECORD_HANDLE_END &&
+                     link != DM2_V1_RECORD_HANDLE_NULL; ++step) {
+                    int16_t next = DM2_V1_RECORD_HANDLE_NULL;
+                    if (link == moverec_probe->record_handle) {
+                        moverec_destination_contains = 1;
+                        break;
+                    }
+                    if (!dm2_v1_record_pool_next_link(
+                            &moverec_candidate.record_pools, link, &next)) break;
+                    link = next;
+                }
+            }
+            expect_true(moverec_probe != NULL && moverec_queue_result >= 0 &&
+                            moverec_result == 1 && moverec_process.valid &&
+                            moverec_process.consumed &&
+                            moverec_process.timer_type == 0x3cu &&
+                            moverec_process.moverec.valid &&
+                            moverec_process.moverec.moved &&
+                            moverec_process.moverec.record ==
+                                moverec_probe->record_handle &&
+                            moverec_process.moverec.x == destination_x &&
+                            moverec_process.moverec.y == destination_y &&
+                            moverec_destination_contains &&
+                            !profile->source_game_load_session_ready &&
+                            view.world.party.championCount == 0,
+                        "DM2 privately moves an owned DB4 through source 0x3C");
+            if (moverec_candidate.lifecycle_tag != 0u)
+                dm2_v1_game_load_runtime_session_candidate_free(&moverec_candidate);
+        }
+        {
+            /* Cross-map companion: use a real CAII-owned DB4 from one map
+             * and a plain floor on another map.  The owner must move both
+             * authenticated mirrors or leave the candidate untouched. */
+            DM2_V1_GameLoadRuntimeSessionCandidate cross_candidate;
+            DM2_V1_TimerEntry cross_timer;
+            DM2_V1_GameLoadCandidateTimerProcessReceipt cross_process;
+            const DM2_V1_GameLoadCaiiMapCandidate *cross_probe = NULL;
+            int cross_destination_map = -1;
+            int cross_destination_x = -1;
+            int cross_destination_y = -1;
+            int cross_available = 0;
+            memset(&cross_candidate, 0, sizeof(cross_candidate));
+            memset(&cross_process, 0, sizeof(cross_process));
+            for (int probe_index = 0;
+                 profile_new_game_owner &&
+                 probe_index < profile_new_game_owner->caii_map_receipt.candidate_count;
+                 ++probe_index) {
+                const DM2_V1_GameLoadCaiiMapCandidate *probe =
+                    &profile_new_game_owner->caii_map_candidates[probe_index];
+                const uint8_t *probe_record = dm2_v1_record_pool_address(
+                    &profile_new_game_owner->record_pools, probe->record_handle);
+                if (!probe->static_ai && probe_record && probe_record[5] != 0xffu) {
+                    int source_clean = 1;
+                    int16_t source_link = (int16_t)dm2_v1_dungeon_get_first_thing(
+                        &profile_new_game_owner->dungeon, probe->map,
+                        probe->x, probe->y);
+                    for (int source_step = 0;
+                         source_link != DM2_V1_RECORD_HANDLE_END &&
+                         source_link != DM2_V1_RECORD_HANDLE_NULL &&
+                         source_step < 10000; ++source_step) {
+                        int16_t source_next = DM2_V1_RECORD_HANDLE_NULL;
+                        if (dm2_v1_record_handle_pool(source_link) == 3)
+                            source_clean = 0;
+                        if (!dm2_v1_record_pool_next_link(
+                                &profile_new_game_owner->record_pools,
+                                source_link, &source_next)) {
+                            source_clean = 0;
+                            break;
+                        }
+                        source_link = source_next;
+                    }
+                    if (!source_clean) continue;
+                    for (int scan_map = 0;
+                         scan_map < profile_new_game_owner->dungeon.level_count &&
+                         !cross_probe; ++scan_map) {
+                        if (scan_map == probe->map) continue;
+                        for (int scan_x = 0;
+                             scan_x < profile_new_game_owner->dungeon.level_widths[scan_map] &&
+                             !cross_probe; ++scan_x) {
+                            for (int scan_y = 0;
+                                 scan_y < profile_new_game_owner->dungeon.level_heights[scan_map];
+                                 ++scan_y) {
+                                int tile_class = dm2_v1_dungeon_get_square_type(
+                                    &profile_new_game_owner->dungeon,
+                                    scan_map, scan_x, scan_y);
+                                int square = tile_class < 0 ? -1 :
+                                    dm2_v1_viewport_g1_tile_class_to_square_type(
+                                        (uint8_t)tile_class);
+                                if (square == DM2_SQUARE_FLOOR ||
+                                    square == DM2_SQUARE_FLOOR_ORNATE) {
+                                    int clean_destination = 1;
+                                    int16_t destination_link =
+                                        (int16_t)dm2_v1_dungeon_get_first_thing(
+                                            &profile_new_game_owner->dungeon,
+                                            scan_map, scan_x, scan_y);
+                                    if (destination_link != DM2_V1_RECORD_HANDLE_END)
+                                        continue;
+                                    for (int destination_step = 0;
+                                         destination_link != DM2_V1_RECORD_HANDLE_END &&
+                                         destination_link != DM2_V1_RECORD_HANDLE_NULL &&
+                                         destination_step < 10000; ++destination_step) {
+                                        int16_t destination_next = DM2_V1_RECORD_HANDLE_NULL;
+                                        if (dm2_v1_record_handle_pool(destination_link) == 3)
+                                            clean_destination = 0;
+                                        if (!dm2_v1_record_pool_next_link(
+                                                &profile_new_game_owner->record_pools,
+                                                destination_link, &destination_next)) {
+                                            clean_destination = 0;
+                                            break;
+                                        }
+                                        destination_link = destination_next;
+                                    }
+                                    if (!clean_destination ||
+                                        dm2_v1_get_creature_at(
+                                            &profile_new_game_owner->record_pools,
+                                            &profile_new_game_owner->dungeon,
+                                            scan_map, scan_x, scan_y) !=
+                                            DM2_V1_RECORD_HANDLE_NULL)
+                                        continue;
+                                    cross_probe = probe;
+                                    cross_destination_map = scan_map;
+                                    cross_destination_x = scan_x;
+                                    cross_destination_y = scan_y;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (cross_probe &&
+                dm2_v1_game_load_runtime_session_candidate_init(
+                    &cross_candidate, profile_new_game_owner)) {
+                cross_available = 1;
+                for (uint16_t timer_index = 0;
+                     timer_index < cross_candidate.timer_capacity; ++timer_index) {
+                    if (cross_candidate.timer_entries[timer_index].ttype != 0u)
+                        dm2_v1_timer_set_mticks(
+                            &cross_candidate.timer_entries[timer_index],
+                            (int16_t)cross_destination_map, 0x00ffff00u);
+                }
+                cross_candidate.timer_queue.gametick = 0;
+                dm2_v1_timer_entry_init(&cross_timer);
+                dm2_v1_timer_set_mticks(&cross_timer,
+                    (int16_t)cross_destination_map, 0u);
+                cross_timer.ttype = 0x3cu;
+                cross_timer.xA = (int8_t)cross_destination_x;
+                cross_timer.yA = (int8_t)cross_destination_y;
+                cross_timer.wvalueB = cross_probe->record_handle;
+                if (dm2_v1_timer_queue(&cross_candidate.timer_queue,
+                                       &cross_timer) >= 0) {
+                    uint32_t due = (uint32_t)dm2_v1_timer_get_ticks(&cross_timer);
+                    (void)dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                        &cross_candidate, due, &cross_process);
+                }
+            }
+            expect_true(!cross_available ||
+                            (cross_process.valid && cross_process.consumed &&
+                             cross_process.moverec.valid &&
+                             cross_process.moverec.moved &&
+                             cross_process.moverec.source_map == cross_probe->map &&
+                             cross_process.moverec.map == cross_destination_map &&
+                             cross_process.moverec.source_x >= 0 &&
+                             cross_process.moverec.x == cross_destination_x &&
+                             cross_process.moverec.y == cross_destination_y),
+                        "DM2 cross-map PROCESS_TIMER_3D keeps pool/raw mirrors and CAII transaction-bound");
+            if (cross_candidate.lifecycle_tag != 0u)
+                dm2_v1_game_load_runtime_session_candidate_free(&cross_candidate);
+        }
+        {
+            DM2_V1_GameLoadRuntimeSessionCandidate party_moverec_candidate;
+            DM2_V1_TimerEntry party_moverec_timer;
+            DM2_V1_GameLoadCandidateTimerProcessReceipt party_moverec_process;
+            int party_fixture_x = -1;
+            int party_fixture_y = -1;
+            int party_fixture_map = -1;
+            int party_queue_result = -1;
+            int party_result = 0;
+            memset(&party_moverec_candidate, 0,
+                   sizeof(party_moverec_candidate));
+            memset(&party_moverec_process, 0,
+                   sizeof(party_moverec_process));
+            if (dm2_v1_game_load_runtime_session_candidate_init(
+                    &party_moverec_candidate, profile_new_game_owner)) {
+                party_fixture_map = party_moverec_candidate.source_party_map;
+                for (int fx = 0;
+                     fx < party_moverec_candidate.dungeon.level_widths[
+                         party_fixture_map] && party_fixture_x < 0; ++fx) {
+                    for (int fy = 0;
+                         fy < party_moverec_candidate.dungeon.level_heights[
+                             party_fixture_map]; ++fy) {
+                        int raw = dm2_v1_dungeon_get_tile_raw(
+                            &party_moverec_candidate.dungeon,
+                            party_fixture_map, fx, fy);
+                        int tile_class = dm2_v1_dungeon_get_square_type(
+                            &party_moverec_candidate.dungeon,
+                            party_fixture_map, fx, fy);
+                        int square_type = tile_class < 0 ? -1 :
+                            dm2_v1_viewport_g1_tile_class_to_square_type(
+                                (uint8_t)tile_class);
+                        if (raw >= 0 && square_type == DM2_SQUARE_FLOOR &&
+                            dm2_v1_dungeon_get_first_thing(
+                                &party_moverec_candidate.dungeon,
+                                party_fixture_map, fx, fy) ==
+                                DM2_V1_RECORD_HANDLE_END &&
+                            dm2_v1_get_creature_at(
+                                &party_moverec_candidate.record_pools,
+                                &party_moverec_candidate.dungeon,
+                                party_fixture_map, fx, fy) ==
+                                DM2_V1_RECORD_HANDLE_NULL) {
+                            party_fixture_x = fx;
+                            party_fixture_y = fy;
+                            break;
+                        }
+                    }
+                }
+                if (party_fixture_x < 0 &&
+                    party_moverec_candidate.source_party_map >= 0) {
+                    int fx = party_moverec_candidate.source_party_x;
+                    int fy = party_moverec_candidate.source_party_y;
+                    int raw = dm2_v1_dungeon_get_tile_raw(
+                        &party_moverec_candidate.dungeon,
+                        party_fixture_map, fx, fy);
+                    int tile_class = dm2_v1_dungeon_get_square_type(
+                        &party_moverec_candidate.dungeon,
+                        party_fixture_map, fx, fy);
+                    int square_type = tile_class < 0 ? -1 :
+                        dm2_v1_viewport_g1_tile_class_to_square_type(
+                            (uint8_t)tile_class);
+                    if (raw >= 0 && square_type == DM2_SQUARE_FLOOR &&
+                        dm2_v1_get_creature_at(
+                            &party_moverec_candidate.record_pools,
+                            &party_moverec_candidate.dungeon,
+                            party_fixture_map, fx, fy) ==
+                            DM2_V1_RECORD_HANDLE_NULL) {
+                        party_fixture_x = fx;
+                        party_fixture_y = fy;
+                    }
+                }
+                if (party_fixture_x >= 0) {
+                    party_moverec_candidate.source_party_x =
+                        (uint8_t)party_fixture_x;
+                    party_moverec_candidate.source_party_y =
+                        (uint8_t)party_fixture_y;
+                    party_moverec_candidate.current_map = party_fixture_map;
+                    for (uint16_t timer_index = 0;
+                         timer_index < party_moverec_candidate.timer_capacity;
+                         ++timer_index) {
+                        if (party_moverec_candidate.timer_entries[
+                                timer_index].ttype != 0u)
+                            dm2_v1_timer_set_mticks(
+                                &party_moverec_candidate.timer_entries[
+                                    timer_index],
+                                (int16_t)party_fixture_map, 0x00ffff00u);
+                    }
+                    party_moverec_candidate.timer_queue.gametick = 0;
+                    dm2_v1_timer_entry_init(&party_moverec_timer);
+                    dm2_v1_timer_set_mticks(&party_moverec_timer,
+                        (int16_t)party_fixture_map, 0u);
+                    party_moverec_timer.ttype = 0x3du;
+                    party_moverec_timer.xA = (int8_t)party_fixture_x;
+                    party_moverec_timer.yA = (int8_t)party_fixture_y;
+                    party_moverec_timer.wvalueB = (int16_t)0xffff;
+                    party_queue_result = dm2_v1_timer_queue(
+                        &party_moverec_candidate.timer_queue,
+                        &party_moverec_timer);
+                    party_result =
+                        dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                            &party_moverec_candidate, 0u,
+                            &party_moverec_process);
+                }
+            }
+            expect_true(party_fixture_x >= 0 && party_queue_result >= 0 &&
+                            party_result == 1 && party_moverec_process.valid &&
+                            party_moverec_process.consumed &&
+                            party_moverec_process.timer_type == 0x3du &&
+                            party_moverec_process.moverec.valid &&
+                            party_moverec_process.moverec.moved &&
+                            party_moverec_process.moverec.record ==
+                                (int16_t)0xffff &&
+                            party_moverec_process.moverec.source_x ==
+                                party_fixture_x &&
+                            party_moverec_process.moverec.source_y ==
+                                party_fixture_y,
+                        "DM2 privately executes PROCESS_TIMER_3D through the same-map party sentinel owner");
+            if (party_moverec_candidate.lifecycle_tag != 0u)
+                dm2_v1_game_load_runtime_session_candidate_free(
+                    &party_moverec_candidate);
+        }
+        {
+            DM2_V1_GameLoadRuntimeSessionCandidate missile_candidate;
+            DM2_V1_TimerEntry missile_timer;
+            DM2_V1_GameLoadCandidateTimerProcessReceipt missile_process;
+            int missile_result = 0;
+            memset(&missile_candidate, 0, sizeof(missile_candidate));
+            memset(&missile_process, 0, sizeof(missile_process));
+            if (profile_new_game_owner &&
+                dm2_v1_game_load_runtime_session_candidate_init(
+                    &missile_candidate, profile_new_game_owner)) {
+                dm2_v1_timer_queue_init(&missile_candidate.timer_queue,
+                    missile_candidate.timer_entries,
+                    missile_candidate.timer_indices,
+                    missile_candidate.timer_capacity);
+                dm2_v1_timer_entry_init(&missile_timer);
+                dm2_v1_timer_set_mticks(&missile_timer,
+                    (int16_t)missile_candidate.current_map, 0u);
+                missile_timer.ttype = 0x1eu;
+                missile_timer.xA = (int8_t)0xffu;
+                missile_timer.yA = (int8_t)0xffu;
+                missile_timer.wvalueB = 0;
+                missile_result =
+                    dm2_v1_timer_queue(&missile_candidate.timer_queue,
+                                       &missile_timer) >= 0 &&
+                    dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                        &missile_candidate, 0u, &missile_process) == 0;
+            }
+            expect_true(missile_result && !missile_process.valid &&
+                            missile_process.timer_type == 0x1eu &&
+                            missile_process.missile.blocked_record &&
+                            missile_candidate.timer_queue.num_timers == 1 &&
+                            !profile->source_game_load_session_ready,
+                        "DM2 keeps an unowned STEP_MISSILE timer queued without mutating the candidate");
+            if (missile_candidate.lifecycle_tag != 0u)
+                dm2_v1_game_load_runtime_session_candidate_free(
+                    &missile_candidate);
+        }
+        {
+            DM2_V1_GameLoadCandidateTimerProcessReceipt timer_receipt;
+            uint32_t due_tick = 0u;
+            int timers_before = runtime_session_candidate.timer_queue.num_timers;
+            if (timers_before > 0) {
+                const int16_t head = runtime_session_candidate.timer_queue.indices[0];
+                due_tick = (uint32_t)dm2_v1_timer_get_ticks(
+                    &runtime_session_candidate.timer_entries[head]);
+            }
+            memset(&timer_receipt, 0, sizeof(timer_receipt));
+        expect_true(timers_before > 0 &&
+                            dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                &runtime_session_candidate, due_tick,
+                                &timer_receipt) == 1 &&
+                            timer_receipt.valid && timer_receipt.consumed &&
+                            (timer_receipt.timer_type == 0x21u ||
+                             timer_receipt.timer_type == 0x22u) &&
+                            (timer_receipt.think.body_unbound ||
+                             timer_receipt.think.no_creature_at_cell) &&
+                            runtime_session_candidate.timer_queue.num_timers ==
+                                timers_before - 1 &&
+                            !profile->source_game_load_session_ready &&
+                            view.world.party.championCount == 0,
+                        "DM2 consumes one source-ordered THINK_CREATURE timer privately while keeping the CCM body closed");
+        }
+        {
+            DM2_V1_GameLoadRuntimeSessionCandidate sound_candidate;
+            DM2_V1_TimerEntry sound_timer;
+            DM2_V1_GameLoadCandidateTimerProcessReceipt sound_process;
+            DM2_V1_SoundDelayedSlot *delayed;
+            uint32_t sound_due;
+            memset(&sound_candidate, 0, sizeof(sound_candidate));
+            memset(&sound_process, 0, sizeof(sound_process));
+            if (dm2_v1_game_load_runtime_session_candidate_init(
+                    &sound_candidate, profile_new_game_owner)) {
+                dm2_v1_timer_queue_init(&sound_candidate.timer_queue,
+                    sound_candidate.timer_entries,
+                    sound_candidate.timer_indices,
+                    sound_candidate.timer_capacity);
+                delayed = &sound_candidate.sound_owner.delayed[0];
+                memset(delayed, 0, sizeof(*delayed));
+                delayed->l_00 = 1;
+                delayed->barr_04[0] = sound_candidate.sound_owner.queue_entries[0].b_02;
+                delayed->barr_04[1] = sound_candidate.sound_owner.queue_entries[0].b_03;
+                delayed->barr_04[2] = sound_candidate.sound_owner.queue_entries[0].b_04;
+                delayed->barr_04[3] = (uint8_t)sound_candidate.current_map;
+                delayed->barr_04[4] = (uint8_t)sound_candidate.source_party_x;
+                delayed->barr_04[5] = (uint8_t)sound_candidate.source_party_y;
+                delayed->w_0a = 1;
+                delayed->w_0c = 1;
+                dm2_v1_timer_entry_init(&sound_timer);
+                dm2_v1_timer_set_mticks(&sound_timer,
+                    (int16_t)sound_candidate.current_map,
+                    sound_candidate.timer_queue.gametick);
+                sound_timer.ttype = 0x15u;
+                sound_timer.xA = 0;
+                sound_timer.yA = 0;
+                sound_due = (uint32_t)dm2_v1_timer_get_ticks(&sound_timer);
+                expect_true(dm2_v1_timer_queue(&sound_candidate.timer_queue,
+                                    &sound_timer) >= 0 &&
+                                dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                                    &sound_candidate, sound_due, &sound_process) == 1 &&
+                                sound_process.valid && sound_process.consumed &&
+                                sound_process.timer_type == 0x15u &&
+                                sound_process.process_sound.valid &&
+                                sound_candidate.sound_owner.delayed[0].l_00 == 0 &&
+                                sound_candidate.timer_queue.num_timers == 0 &&
+                                !profile->source_game_load_session_ready,
+                            "DM2 consumes a source PROCESS_SOUND delayed slot privately");
+                dm2_v1_game_load_runtime_session_candidate_free(&sound_candidate);
+            } else {
+                expect_true(0, "DM2 creates a candidate for PROCESS_SOUND regression");
+            }
+        }
+        {
+            DM2_V1_GameLoadRuntimeSessionCandidate summon_candidate;
+            DM2_V1_TimerEntry summon_timer;
+            DM2_V1_GameLoadCandidateTimerProcessReceipt summon_process;
+            const DM2_V1_GameLoadCaiiMapCandidate *spawn_probe = NULL;
+            int spawn_map = -1;
+            int spawn_x = -1;
+            int spawn_y = -1;
+            int16_t spawn_link = DM2_V1_RECORD_HANDLE_NULL;
+            uint32_t summon_due;
+            int summon_queue_result;
+            int summon_process_result;
+            memset(&summon_candidate, 0, sizeof(summon_candidate));
+            memset(&summon_process, 0, sizeof(summon_process));
+            for (int probe_index = 0;
+                 profile_new_game_owner &&
+                 probe_index < profile_new_game_owner->caii_map_receipt.candidate_count;
+                 ++probe_index) {
+                const DM2_V1_GameLoadCaiiMapCandidate *probe =
+                    &profile_new_game_owner->caii_map_candidates[probe_index];
+                if (!probe->static_ai) {
+                    spawn_probe = probe;
+                    break;
+                }
+            }
+            if (profile_new_game_owner && spawn_probe &&
+                dm2_test_find_private_db2_floor(profile_new_game_owner, 1,
+                    &spawn_map, &spawn_x, &spawn_y, &spawn_link) &&
+                dm2_v1_game_load_runtime_session_candidate_init(
+                    &summon_candidate, profile_new_game_owner)) {
+                dm2_v1_timer_queue_init(&summon_candidate.timer_queue,
+                    summon_candidate.timer_entries,
+                    summon_candidate.timer_indices,
+                    summon_candidate.timer_capacity);
+                dm2_v1_timer_entry_init(&summon_timer);
+                dm2_v1_timer_set_mticks(&summon_timer, (int16_t)spawn_map,
+                    summon_candidate.timer_queue.gametick);
+                summon_timer.ttype = 0x5eu;
+                summon_timer.xA = (int8_t)spawn_x;
+                summon_timer.yA = (int8_t)spawn_y;
+                summon_timer.wvalueB = (int16_t)spawn_probe->creature_type;
+                summon_due = (uint32_t)dm2_v1_timer_get_ticks(&summon_timer);
+                summon_queue_result = dm2_v1_timer_queue(
+                    &summon_candidate.timer_queue, &summon_timer);
+                summon_process_result =
+                    dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                        &summon_candidate, summon_due, &summon_process);
+                expect_true(summon_queue_result >= 0 &&
+                                summon_process_result == 0 &&
+                                !summon_process.valid &&
+                                summon_process.alloc_creature.blocked_record &&
+                                summon_process.alloc_creature.recycler_candidates_examined > 0 &&
+                                ((!summon_process.alloc_creature.recycler_candidate_found &&
+                                  summon_process.alloc_creature.recycler_candidate_record ==
+                                      DM2_V1_RECORD_HANDLE_NULL &&
+                                  summon_process.alloc_creature.recycler_candidate_map == -1 &&
+                                  summon_process.alloc_creature.recycler_candidate_x == -1 &&
+                                  summon_process.alloc_creature.recycler_candidate_y == -1) ||
+                                 (summon_process.alloc_creature.recycler_candidate_found &&
+                                  dm2_v1_record_handle_pool(
+                                      summon_process.alloc_creature.recycler_candidate_record) == 4 &&
+                                  summon_process.alloc_creature.recycler_candidate_map >= 0 &&
+                                  summon_process.alloc_creature.recycler_candidate_x >= 0 &&
+                                  summon_process.alloc_creature.recycler_candidate_y >= 0)) &&
+                                ((!summon_process.alloc_creature.recycler_candidate_found &&
+                                  summon_process.alloc_creature.recycler_candidate_caii_slot == -1 &&
+                                  summon_process.alloc_creature.recycler_candidate_caii_match == 0 &&
+                                  summon_process.alloc_creature.recycler_candidate_timer_slot == 0xffffu &&
+                                  summon_process.alloc_creature.recycler_candidate_pending_timer == 0 &&
+                                  summon_process.alloc_creature.recycler_candidate_possession_root ==
+                                      DM2_V1_RECORD_HANDLE_END &&
+                                  summon_process.alloc_creature.recycler_candidate_ai_flags == 0u &&
+                                  summon_process.alloc_creature.recycler_candidate_ai_flags_known == 0 &&
+                                  summon_process.alloc_creature.recycler_candidate_gdat_word1 == 0u &&
+                                  summon_process.alloc_creature.recycler_candidate_gdat_word1_known == 0 &&
+                                  summon_process.alloc_creature.recycler_candidate_drop_slots_loaded == 0 &&
+                                  summon_process.alloc_creature.recycler_candidate_delete_inputs_ready == 0) ||
+                                 (summon_process.alloc_creature.recycler_candidate_found &&
+                                  summon_process.alloc_creature.recycler_candidate_caii_slot >= -1 &&
+                                  summon_process.alloc_creature.recycler_candidate_caii_match >= 0 &&
+                                  summon_process.alloc_creature.recycler_candidate_caii_match <= 1 &&
+                                  summon_process.alloc_creature.recycler_candidate_pending_timer >= 0 &&
+                                  summon_process.alloc_creature.recycler_candidate_pending_timer <= 1 &&
+                                  summon_process.alloc_creature.recycler_candidate_ai_flags_known >= 0 &&
+                                  summon_process.alloc_creature.recycler_candidate_ai_flags_known <= 1 &&
+                                  summon_process.alloc_creature.recycler_candidate_gdat_word1_known >= 0 &&
+                                  summon_process.alloc_creature.recycler_candidate_gdat_word1_known <= 1 &&
+                                  summon_process.alloc_creature.recycler_candidate_drop_slots_loaded >= 0 &&
+                                  summon_process.alloc_creature.recycler_candidate_drop_slots_loaded <= 1 &&
+                                  summon_process.alloc_creature.recycler_candidate_delete_inputs_ready >= 0 &&
+                                  summon_process.alloc_creature.recycler_candidate_delete_inputs_ready <= 1)) &&
+                                summon_candidate.timer_queue.num_timers == 1 &&
+                                !profile->source_game_load_session_ready,
+                            "DM2 keeps ALLOC_NEW_CREATURE fail-closed when the source DB4 allocator has no free slot");
+                dm2_v1_game_load_runtime_session_candidate_change_current_map_to(
+                    &summon_candidate, summon_candidate.source_party_map);
+                dm2_v1_timer_queue_init(&summon_candidate.timer_queue,
+                    summon_candidate.timer_entries,
+                    summon_candidate.timer_indices,
+                    summon_candidate.timer_capacity);
+                dm2_v1_timer_entry_init(&summon_timer);
+                dm2_v1_timer_set_mticks(&summon_timer,
+                    (int16_t)summon_candidate.source_party_map,
+                    summon_candidate.timer_queue.gametick);
+                summon_timer.ttype = 0x5eu;
+                summon_timer.xA = (int8_t)summon_candidate.source_party_x;
+                summon_timer.yA = (int8_t)summon_candidate.source_party_y;
+                summon_timer.wvalueB = (int16_t)spawn_probe->creature_type;
+                summon_due = (uint32_t)dm2_v1_timer_get_ticks(&summon_timer);
+                summon_queue_result = dm2_v1_timer_queue(
+                    &summon_candidate.timer_queue, &summon_timer);
+                memset(&summon_process, 0, sizeof(summon_process));
+                summon_process_result =
+                    dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+                        &summon_candidate, summon_due, &summon_process);
+                expect_true(summon_queue_result >= 0 &&
+                                summon_process_result == 0 &&
+                                !summon_process.valid &&
+                                summon_process.alloc_creature.blocked_tile &&
+                                summon_candidate.timer_queue.num_timers == 1 &&
+                                !profile->source_game_load_session_ready,
+                            "DM2 rejects ALLOC_NEW_CREATURE on the authenticated party cell before mutation");
+                dm2_v1_game_load_runtime_session_candidate_free(&summon_candidate);
+            } else {
+                expect_true(0, "DM2 finds real dynamic AI and floor cell for ALLOC_NEW_CREATURE regression");
+            }
+        }
         /* Not every genuine DB4 resides on a walkable target square.  Scan
          * the admitted dynamic map rows for one where the source's complete
          * 12b4 classifier actually reaches its direct-creature branch. */
@@ -6487,6 +8819,11 @@ int main(void) {
                     "M11 DM2 startup NEW pointer keeps GAME_LOAD behind title menu");
         expect_true(strstr(view.lastOutcome, "DM2 GAME_LOAD") != NULL,
                     "M11 DM2 startup NEW pointer keeps GAME_LOAD source-owned");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(memcmp(title_framebuffer, framebuffer,
+                           sizeof(title_framebuffer)) != 0,
+                    "M11 DM2 NEW GAME replaces the title surface with the private source preselection viewport");
     }
     M11_GameView_Shutdown(&view);
 
@@ -6910,6 +9247,914 @@ int main(void) {
     M11_GameView_Shutdown(&view);
     remove_temp_save_root(save_root);
 
+    {
+        M11_GameViewState commit_view;
+        DM2_V1_BootProfile *commit_profile = NULL;
+        const DM2_V1_GameLoadRuntimeSessionCandidate *commit_candidate = NULL;
+        uint16_t commit_party_count = 0u;
+        int commit_x = -1;
+        int commit_y = -1;
+        int commit_map = -1;
+        uint8_t commit_dir = 0u;
+        uint8_t commit_framebuffer[320 * 200];
+        DM2_V1_ProceedTimersReceipt commit_tick_receipt;
+        DM2_V1_BootRuntimeRenderReceipt commit_render_receipt;
+        DM2_V1_ViewportM11FrameReceipt commit_frame_receipt;
+        DM2_V1_SourceTimer destroy_door_timer;
+        DM2_V1_SourceTimer record_flag_timer;
+        int record_flag_map = -1;
+        uint16_t record_flag_record = 0u;
+        DM2_V1_SourceTimer door_step_timer;
+        DM2_V1_SourceTimer process_0c_timer;
+        DM2_V1_SourceTimer resurrection_timer;
+        DM2_V1_SourceTimer resurrection_altar_rejected_timer;
+        int door_map = -1;
+        int door_x = -1;
+        int door_y = -1;
+        uint16_t door_record = 0u;
+        int16_t process_0c_timeridx = 0;
+        uint16_t process_0c_flags = 0u;
+        int16_t process_0c_hp = 0;
+        DM2_V1_RuntimeSourceHeroStateReceipt resurrection_before;
+        DM2_V1_RuntimeSourceHeroStateReceipt resurrection_after;
+        DM2_V1_RuntimeSourceHeroStateReceipt item_timer_before;
+        DM2_V1_RuntimeSourceHeroStateReceipt item_timer_after;
+        int altar_fixture_x = -1;
+        int altar_fixture_y = -1;
+        int altar_fixture_first = -1;
+        int altar_fixture_ready = 0;
+        int cloud_fixture_x = -1;
+        int cloud_fixture_y = -1;
+        int item_timer_fixture_ready = 0;
+        uint16_t item_timer_record = 0xffffu;
+        uint16_t item_timer_itemtype = 0u;
+        uint16_t item_timer_db = 0u;
+        DM2_V1_SourceTimer tick_generator_timer;
+        int tick_generator_fixture_ready = 0;
+        DM2_V1_SourceTimer ench_power_timer;
+        DM2_V1_RuntimeSourceHeroStateReceipt ench_power_before;
+        DM2_V1_RuntimeSourceHeroStateReceipt ench_power_after;
+        DM2_V1_SourceTimer poison_timer;
+        DM2_V1_RuntimeSourceHeroStateReceipt poison_before;
+        DM2_V1_RuntimeSourceHeroStateReceipt poison_after;
+        int poison_actor = 0;
+        DM2_V1_SourceTimer ench_flag_timer;
+        DM2_V1_RuntimeSourceHeroStateReceipt ench_flag_after;
+        DM2_V1_SourceTimer light_timer;
+        DM2_V1_SourceTimer ornate_animator_timer;
+        uint16_t ornate_animator_record = 0xffffu;
+        uint16_t ornate_animator_length = 0u;
+        int ornate_animator_fixture_ready = 0;
+        DM2_V1_SourceTimer ornate_noise_timer;
+        int ornate_noise_x = -1;
+        int ornate_noise_y = -1;
+        uint8_t ornate_noise_mode = 0u;
+        uint16_t ornate_noise_record = 0xffffu;
+        uint16_t ornate_noise_length = 0u;
+        int ornate_noise_fixture_ready = 0;
+
+        fill_dm2_launch_spec(&spec, data_dir);
+        spec.savePath = NULL;
+        M11_GameView_Init(&commit_view);
+        expect_true(M11_GameView_Start(&commit_view, &spec) == 1,
+                    "DM2 starts a fresh profile for the source GAME_LOAD commit gate");
+        commit_profile = (DM2_V1_BootProfile *)commit_view.dm2BootProfile;
+        expect_true(commit_profile &&
+                        M11_GameView_HandlePointer(&commit_view, 100, 60, 1) ==
+                            M11_GAME_INPUT_REDRAW,
+                    "DM2 fresh profile reaches the source GAME_LOAD commit boundary");
+        if (commit_profile) {
+            commit_candidate = (const DM2_V1_GameLoadRuntimeSessionCandidate *)
+                dm2_v1_boot_new_game_runtime_candidate_readonly(commit_profile);
+            if (!commit_candidate)
+                expect_true(dm2_v1_boot_prepare_new_game_world(commit_profile) == 1,
+                            "DM2 materializes a complete private candidate for commit");
+            commit_candidate = (const DM2_V1_GameLoadRuntimeSessionCandidate *)
+                dm2_v1_boot_new_game_runtime_candidate_readonly(commit_profile);
+            if (commit_candidate) {
+                commit_party_count = (uint16_t)commit_candidate->party.heros_in_party;
+                commit_map = commit_candidate->source_party_map;
+                commit_x = commit_candidate->source_party_x;
+                commit_y = commit_candidate->source_party_y;
+                commit_dir = commit_candidate->source_party_direction;
+                {
+                    DM2_V1_GameLoadRuntimeSessionCandidate *fixture =
+                        (DM2_V1_GameLoadRuntimeSessionCandidate *)
+                            (uintptr_t)commit_candidate;
+                    for (int item_hero = 0;
+                         item_hero < fixture->party.heros_in_party &&
+                         !item_timer_fixture_ready; ++item_hero) {
+                        for (int item_slot = 0; item_slot < DM2_NUM_ITEMS;
+                             ++item_slot) {
+                            uint16_t source_item =
+                                (uint16_t)fixture->party.hero[item_hero].item[item_slot];
+                            uint16_t db = (uint16_t)((source_item >> 10) & 0x0fu);
+                            uint16_t destination;
+                            const uint8_t *source_bytes;
+                            uint8_t *destination_bytes;
+                            if (source_item == 0xffffu || source_item == 0xfffeu ||
+                                (db != 5u && db != 6u && db != 10u) ||
+                                fixture->record_pools.pools[db].record_count == 0 ||
+                                fixture->record_pools.pools[db].record_size == 0)
+                                continue;
+                            source_bytes = dm2_v1_record_pool_address(
+                                &fixture->record_pools, (int16_t)source_item);
+                            destination = (uint16_t)(db << 10);
+                            destination_bytes = dm2_v1_record_pool_address_mut(
+                                &fixture->record_pools, (int16_t)destination);
+                            if (!source_bytes || !destination_bytes)
+                                continue;
+                            item_timer_itemtype = db == 5u || db == 6u || db == 10u
+                                ? (uint16_t)(dm2_test_read_le16(source_bytes + 2) & 0x7fu)
+                                : 0u;
+                            memcpy(destination_bytes, source_bytes,
+                                   fixture->record_pools.pools[db].record_size);
+                            fixture->party.hero[0].item[0] = (int16_t)destination;
+                            item_timer_record = destination;
+                            item_timer_db = db;
+                            item_timer_fixture_ready = 1;
+                            break;
+                        }
+                    }
+                    expect_true(item_timer_fixture_ready,
+                                "DM2 installs a real source item root for PROCESS_TIMER_0E");
+                    /* Source-shaped poison timer fixture: preserve the
+                     * selected hero and all other source bytes, but seed one
+                     * authenticated c_hero poison counter for a positive
+                     * post-commit 0x4B wound/requeue assertion. */
+                    if (fixture->source_next_champion_number <= 0)
+                        fixture->source_next_champion_number = 2;
+                    poison_actor = fixture->source_next_champion_number == 1 &&
+                        fixture->party.heros_in_party > 1 ? 1 : 0;
+                    fixture->source_hero_ench_countdown = 1u;
+                    fixture->source_hero_ench_target = (int16_t)(poison_actor + 1);
+                    fixture->party.hero[poison_actor].poisoned = 1;
+                    fixture->party.hero[poison_actor].poison = 64;
+                    fixture->party.hero[poison_actor].damagesuffered = 0;
+                    memset(&tick_generator_timer, 0, sizeof(tick_generator_timer));
+                    {
+                        const uint16_t generator_word = (uint16_t)(3u << 10);
+                        uint8_t *generator = dm2_v1_record_pool_address_mut(
+                            &fixture->record_pools, (int16_t)generator_word);
+                        if (generator) {
+                            /* Source-shaped DB3 fixture: subtype 0x1e,
+                             * period 1, control bit 2 set.  Coordinates and
+                             * direction remain the real record's w6 bytes. */
+                            generator[2] = 0x9eu;
+                            generator[3] = 0x00u;
+                            generator[4] = 0x04u;
+                            generator[5] = 0x00u;
+                            tick_generator_timer.type = DM2_V1_TIMER_TICK_GENERATOR;
+                            tick_generator_timer.value_a = (int16_t)generator_word;
+                            tick_generator_timer.value_b = 1;
+                            tick_generator_fixture_ready = 1;
+                        }
+                    }
+                    expect_true(tick_generator_fixture_ready,
+                                "DM2 retains a source tick-generator timer for the committed runtime");
+                    {
+                        uint8_t *ornate = dm2_v1_record_pool_address_mut(
+                            &fixture->record_pools, (int16_t)(3u << 10));
+                        uint8_t *noise_ornate = dm2_v1_record_pool_address_mut(
+                            &fixture->record_pools, (int16_t)((3u << 10) | 1u));
+                        int ornate_index = -1;
+                        if (ornate && noise_ornate &&
+                            fixture->record_pools.pools[3].record_size >= 6) {
+                            for (int ox = 0; ox < fixture->dungeon.level_widths[commit_map] &&
+                                 !ornate_noise_fixture_ready; ++ox) {
+                                for (int oy = 0; oy < fixture->dungeon.level_heights[commit_map];
+                                     ++oy) {
+                                    int raw_tile = dm2_v1_dungeon_get_tile_raw(
+                                        &fixture->dungeon, commit_map, ox, oy);
+                                    int wall = raw_tile >= 0 && ((raw_tile >> 5) & 7) == 0;
+                                    int category = wall ? 0x09 : 0x0a;
+                                    int count = wall
+                                        ? fixture->local_level_graphics.wall_count
+                                        : fixture->local_level_graphics.floor_count;
+                                    const uint8_t *gfx = wall
+                                        ? fixture->local_level_graphics.wall_gfx
+                                        : fixture->local_level_graphics.floor_gfx;
+                                    for (int oi = 0; oi < count; ++oi) {
+                                        DM2_V1_GetOrnateAnimLenReceipt anim;
+                                        if (dm2_v1_get_ornate_anim_len_receipt(
+                                                fixture->asset_loader, category, gfx[oi],
+                                                0, &anim) && anim.accepted && anim.length > 0) {
+                                            ornate_index = oi + 1;
+                                            ornate_animator_length = anim.length;
+                                            ornate_noise_x = ox;
+                                            ornate_noise_y = oy;
+                                            ornate_noise_mode = (uint8_t)(wall ? 1u : 0u);
+                                            ornate_noise_length = anim.length;
+                                            ornate_noise_fixture_ready = 1;
+                                            break;
+                                        }
+                                    }
+                                    if (ornate_noise_fixture_ready) break;
+                                }
+                            }
+                        }
+                        if (ornate && noise_ornate && ornate_index > 0) {
+                            ornate[2] = 0x01u;
+                            ornate[3] = 0u;
+                            ornate[4] = 0x03u;
+                            ornate[5] = (uint8_t)(ornate_index << 4);
+                            noise_ornate[2] = 0x01u;
+                            noise_ornate[3] = 0u;
+                            noise_ornate[4] = 0x03u;
+                            noise_ornate[5] = (uint8_t)(ornate_index << 4);
+                            ornate_animator_record = (uint16_t)(3u << 10);
+                            ornate_noise_record = (uint16_t)((3u << 10) | 1u);
+                            ornate_animator_fixture_ready = 1;
+                        }
+                    }
+                    expect_true(ornate_animator_fixture_ready,
+                                "DM2 installs a real source DB3 ornament for runtime 0x55");
+                    expect_true(ornate_noise_fixture_ready,
+                                "DM2 selects a real source map cell for runtime 0x5A");
+                    uint8_t *altar = dm2_v1_record_pool_address_mut(
+                        &fixture->record_pools, (int16_t)(10 << 10));
+                    for (int fx = 0; fx < fixture->dungeon.level_widths[commit_map] &&
+                         !altar_fixture_ready; ++fx) {
+                        for (int fy = 0; fy < fixture->dungeon.level_heights[commit_map]; ++fy) {
+                            int head = dm2_v1_dungeon_get_first_thing(
+                                &fixture->dungeon, commit_map, fx, fy);
+                            if (head >= 0 && altar) {
+                                altar_fixture_x = fx;
+                                altar_fixture_y = fy;
+                                altar_fixture_first = head;
+                                altar[0] = (uint8_t)head;
+                                altar[1] = (uint8_t)((uint16_t)head >> 8);
+                                altar[2] = 0u;
+                                altar[3] = 0u;
+                                altar_fixture_ready =
+                                    dm2_v1_dungeon_set_first_thing(
+                                        &fixture->dungeon, commit_map, fx, fy,
+                                        (uint16_t)(10 << 10)) == 0;
+                                if (altar_fixture_ready) break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (commit_candidate) {
+                DM2_V1_GameLoadRuntimeSessionCandidate *tampered_candidate =
+                    (DM2_V1_GameLoadRuntimeSessionCandidate *)(uintptr_t)
+                        commit_candidate;
+                const uint32_t source_hash =
+                    tampered_candidate->source_transaction_hash;
+                tampered_candidate->source_transaction_hash ^= 1u;
+                expect_true(dm2_v1_runtime_commit_source_game_load(
+                                commit_profile) == 0 &&
+                                commit_profile->game_load_runtime_session_candidate ==
+                                    tampered_candidate &&
+                                !commit_profile->source_game_load_session_ready,
+                            "DM2 rejects a tampered GAME_LOAD transaction atomically");
+                tampered_candidate->source_transaction_hash = source_hash;
+            }
+            expect_true(commit_candidate && commit_party_count > 0u &&
+                            dm2_v1_runtime_commit_source_game_load(commit_profile) == 1 &&
+                            commit_profile->source_game_load_session_ready == 1 &&
+                            dm2_v1_runtime_get_party_x() == commit_x &&
+                            dm2_v1_runtime_get_party_y() == commit_y &&
+                            dm2_v1_runtime_get_party_dir() == commit_dir,
+                        "DM2 commits the source GAME_LOAD party/map into runtime only after complete owner admission");
+            memset(&commit_tick_receipt, 0, sizeof(commit_tick_receipt));
+            dm2_v1_runtime_tick();
+            expect_true(dm2_v1_runtime_get_tick_count() == 1 &&
+                            dm2_v1_runtime_last_proceed_timers_receipt(
+                                &commit_tick_receipt) == 1 &&
+                            commit_tick_receipt.valid &&
+                            commit_tick_receipt.game_tick == 1u,
+                        "DM2 advances the first source-ordered runtime tick after GAME_LOAD commit");
+            {
+                DM2_V1_SourceTimer summon_runtime_timer;
+                memset(&summon_runtime_timer, 0, sizeof(summon_runtime_timer));
+                summon_runtime_timer.ticks_and_map = 2u |
+                    ((uint32_t)(uint8_t)commit_map << 24);
+                summon_runtime_timer.type = DM2_V1_TIMER_ALLOC_NEW_CREATURE;
+                summon_runtime_timer.value_a = (int16_t)(
+                    (uint8_t)commit_x | ((uint16_t)(uint8_t)commit_y << 8));
+                summon_runtime_timer.value_b = 1;
+                expect_true(dm2_v1_runtime_enqueue_source_timer(
+                                &summon_runtime_timer, 0u) ==
+                                DM2_V1_SOURCE_TIMER_OK,
+                            "DM2 admits a source-shaped runtime ALLOC_NEW_CREATURE timer for the fail-closed gate");
+                dm2_v1_runtime_tick();
+                memset(&commit_tick_receipt, 0, sizeof(commit_tick_receipt));
+                expect_true(dm2_v1_runtime_last_proceed_timers_receipt(
+                                &commit_tick_receipt) == 1 &&
+                                commit_tick_receipt.type_tally[
+                                    DM2_V1_TIMER_ALLOC_NEW_CREATURE] > 0 &&
+                                commit_tick_receipt.handler_rejected_count > 0 &&
+                                commit_tick_receipt.fail_closed_count == 0,
+                            "DM2 rejects runtime ALLOC_NEW_CREATURE when its transferred AI/GDAT owner is absent");
+            }
+            {
+                const DM2_V1_GameLoadCaiiMapCandidate *runtime_cross_probe = NULL;
+                int runtime_cross_map = -1;
+                int runtime_cross_x = -1;
+                int runtime_cross_y = -1;
+                int runtime_cross_available = 0;
+                if (commit_candidate) {
+                    for (int probe_index = 0;
+                         profile_new_game_owner &&
+                         probe_index < profile_new_game_owner->caii_map_receipt.candidate_count &&
+                         !runtime_cross_probe; ++probe_index) {
+                        const DM2_V1_GameLoadCaiiMapCandidate *probe =
+                            &profile_new_game_owner->caii_map_candidates[probe_index];
+                        const uint8_t *record = dm2_v1_record_pool_address(
+                            &profile_new_game_owner->record_pools, probe->record_handle);
+                        if (probe->static_ai ||
+                            !record || record[5] == 0xffu)
+                            continue;
+                        for (int destination_map = 0;
+                             destination_map < profile_new_game_owner->dungeon.level_count &&
+                             !runtime_cross_probe; ++destination_map) {
+                            if (destination_map == probe->map) continue;
+                            for (int dx = 0;
+                                 dx < profile_new_game_owner->dungeon.level_widths[destination_map] &&
+                                 !runtime_cross_probe; ++dx) {
+                                for (int dy = 0;
+                                     dy < profile_new_game_owner->dungeon.level_heights[destination_map];
+                                    ++dy) {
+                                    int tile_class = dm2_v1_dungeon_get_square_type(
+                                        &profile_new_game_owner->dungeon, destination_map, dx, dy);
+                                    int square = tile_class < 0 ? -1 :
+                                        dm2_v1_viewport_g1_tile_class_to_square_type(
+                                            (uint8_t)tile_class);
+                                    if ((square == DM2_SQUARE_FLOOR ||
+                                         square == DM2_SQUARE_FLOOR_ORNATE) &&
+                                        dm2_v1_dungeon_get_first_thing(
+                                            &profile_new_game_owner->dungeon, destination_map,
+                                            dx, dy) == DM2_V1_RECORD_HANDLE_END &&
+                                        dm2_v1_get_creature_at(
+                                            &profile_new_game_owner->record_pools,
+                                            &profile_new_game_owner->dungeon, destination_map,
+                                            dx, dy) == DM2_V1_RECORD_HANDLE_NULL) {
+                                        runtime_cross_probe = probe;
+                                        runtime_cross_map = destination_map;
+                                        runtime_cross_x = dx;
+                                        runtime_cross_y = dy;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (runtime_cross_probe) {
+                    DM2_V1_SourceTimer cross_timer;
+                    memset(&cross_timer, 0, sizeof(cross_timer));
+                    cross_timer.ticks_and_map = 4u |
+                        ((uint32_t)(uint8_t)runtime_cross_map << 24);
+                    cross_timer.type = DM2_V1_TIMER_PROCESS_3C;
+                    cross_timer.value_a = (int16_t)((uint8_t)runtime_cross_x |
+                        ((uint16_t)(uint8_t)runtime_cross_y << 8));
+                    cross_timer.value_b = runtime_cross_probe->record_handle;
+                    runtime_cross_available =
+                        dm2_v1_runtime_enqueue_source_timer(&cross_timer, 0u) ==
+                        DM2_V1_SOURCE_TIMER_OK;
+                    if (runtime_cross_available)
+                        dm2_v1_runtime_tick();
+                    memset(&commit_tick_receipt, 0, sizeof(commit_tick_receipt));
+                    (void)dm2_v1_runtime_last_proceed_timers_receipt(
+                        &commit_tick_receipt);
+                }
+                expect_true(!runtime_cross_probe ||
+                                (runtime_cross_available &&
+                                 commit_tick_receipt.type_tally[
+                                     DM2_V1_TIMER_PROCESS_3C] > 0 &&
+                                 commit_tick_receipt.fail_closed_count == 0 &&
+                                 dm2_v1_dungeon_get_first_thing(
+                                     (const DM2_V1_DungeonData *)commit_profile->dungeon_data,
+                                     runtime_cross_map, runtime_cross_x,
+                                     runtime_cross_y) ==
+                                     runtime_cross_probe->record_handle &&
+                                 dm2_v1_dungeon_get_first_thing(
+                                     (const DM2_V1_DungeonData *)commit_profile->dungeon_data,
+                                     runtime_cross_probe->map,
+                                     runtime_cross_probe->x,
+                                     runtime_cross_probe->y) ==
+                                     DM2_V1_RECORD_HANDLE_END),
+                            "DM2 runtime PROCESS_TIMER_3D admits the mirror-verified cross-map DB4 owner");
+            }
+            {
+                DM2_V1_SourceTimer party_summon_timer;
+                memset(&party_summon_timer, 0, sizeof(party_summon_timer));
+                party_summon_timer.ticks_and_map = 3u |
+                    ((uint32_t)(uint8_t)commit_map << 24);
+                party_summon_timer.type = DM2_V1_TIMER_ALLOC_NEW_CREATURE;
+                party_summon_timer.value_a = (int16_t)(
+                    (uint8_t)dm2_v1_runtime_get_party_x() |
+                    ((uint16_t)(uint8_t)dm2_v1_runtime_get_party_y() << 8));
+                party_summon_timer.value_b = 1;
+                expect_true(dm2_v1_runtime_enqueue_source_timer(
+                                &party_summon_timer, 0u) ==
+                                DM2_V1_SOURCE_TIMER_OK,
+                            "DM2 admits a source-shaped runtime summon at the party cell for collision testing");
+                dm2_v1_runtime_tick();
+                expect_true(dm2_v1_runtime_last_proceed_timers_receipt(
+                                &commit_tick_receipt) == 1 &&
+                                commit_tick_receipt.type_tally[
+                                    DM2_V1_TIMER_ALLOC_NEW_CREATURE] > 0 &&
+                                commit_tick_receipt.handler_rejected_count > 0 &&
+                                commit_tick_receipt.fail_closed_count == 0,
+                            "DM2 rejects runtime ALLOC_NEW_CREATURE on party collision before mutation");
+            }
+            {
+                DM2_V1_SourceTimer party_rotate_timer;
+                memset(&party_rotate_timer, 0, sizeof(party_rotate_timer));
+                party_rotate_timer.ticks_and_map = 3u |
+                    ((uint32_t)(uint8_t)commit_map << 24);
+                party_rotate_timer.type = DM2_V1_TIMER_MOVE_RECORD_ROTATE;
+                party_rotate_timer.value_a = (int16_t)(
+                    ((uint16_t)commit_x & 0x1fu) |
+                    (((uint16_t)commit_y & 0x1fu) << 5) |
+                    (2u << 10));
+                party_rotate_timer.value_b = (int16_t)0xffff;
+                expect_true(dm2_v1_runtime_enqueue_source_timer(
+                                &party_rotate_timer, 0u) ==
+                                DM2_V1_SOURCE_TIMER_OK,
+                            "DM2 admits a source-shaped runtime MOVE_RECORD_ROTATE timer for the party-owner gate");
+                dm2_v1_runtime_tick();
+                (void)dm2_v1_runtime_last_proceed_timers_receipt(
+                    &commit_tick_receipt);
+            expect_true(commit_tick_receipt.valid &&
+                                commit_tick_receipt.type_tally[
+                                    DM2_V1_TIMER_MOVE_RECORD_ROTATE] > 0 &&
+                                commit_tick_receipt.fail_closed_count == 0 &&
+                                dm2_v1_runtime_get_party_x() == commit_x &&
+                                dm2_v1_runtime_get_party_y() == commit_y &&
+                                dm2_v1_runtime_get_party_dir() == 2,
+                            "DM2 executes source-packed same-map MOVE_RECORD_ROTATE through the party sentinel owner");
+            }
+            {
+                DM2_V1_SourceTimer party_moverec_timer;
+                memset(&party_moverec_timer, 0, sizeof(party_moverec_timer));
+                party_moverec_timer.ticks_and_map = 4u |
+                    ((uint32_t)(uint8_t)commit_map << 24);
+                party_moverec_timer.type = DM2_V1_TIMER_PROCESS_3D;
+                party_moverec_timer.value_a = (int16_t)(
+                    (uint8_t)commit_x | ((uint16_t)(uint8_t)commit_y << 8));
+                party_moverec_timer.value_b = (int16_t)0xffff;
+                expect_true(dm2_v1_runtime_enqueue_source_timer(
+                                &party_moverec_timer, 0u) ==
+                                DM2_V1_SOURCE_TIMER_OK,
+                            "DM2 admits a source-shaped PROCESS_TIMER_3D party sentinel");
+                dm2_v1_runtime_tick();
+                (void)dm2_v1_runtime_last_proceed_timers_receipt(
+                    &commit_tick_receipt);
+                expect_true(commit_tick_receipt.valid &&
+                                commit_tick_receipt.type_tally[
+                                    DM2_V1_TIMER_PROCESS_3D] > 0 &&
+                                commit_tick_receipt.fail_closed_count == 0 &&
+                                dm2_v1_runtime_get_party_x() == commit_x &&
+                                dm2_v1_runtime_get_party_y() == commit_y &&
+                                dm2_v1_runtime_get_party_dir() == 2,
+                            "DM2 executes same-map PROCESS_TIMER_3D through the party sentinel owner");
+            }
+            memset(&destroy_door_timer, 0, sizeof(destroy_door_timer));
+            destroy_door_timer.ticks_and_map = 2u |
+                ((uint32_t)(uint8_t)commit_map << 24);
+            destroy_door_timer.type = DM2_V1_TIMER_DESTROY_DOOR;
+            destroy_door_timer.value_a = (int16_t)(
+                (uint8_t)commit_x | ((uint16_t)(uint8_t)commit_y << 8));
+            expect_true(dm2_v1_runtime_enqueue_source_timer(
+                            &destroy_door_timer, 0u) ==
+                            DM2_V1_SOURCE_TIMER_OK,
+                        "DM2 admits a source-owned DESTROY_DOOR timer after GAME_LOAD commit");
+            dm2_v1_runtime_tick();
+            (void)dm2_v1_runtime_last_proceed_timers_receipt(&commit_tick_receipt);
+            (void)dm2_v1_runtime_get_source_hero_state(
+                (uint8_t)poison_actor, &poison_after);
+            expect_true(dm2_v1_runtime_last_proceed_timers_receipt(
+                                &commit_tick_receipt) == 1 &&
+                            commit_tick_receipt.type_tally[
+                                DM2_V1_TIMER_DESTROY_DOOR] > 0 &&
+                            dm2_v1_dungeon_get_tile_raw(
+                                (const DM2_V1_DungeonData *)commit_profile->dungeon_data,
+                                commit_map, commit_x, commit_y) >= 0 &&
+                            (dm2_v1_dungeon_get_tile_raw(
+                                (const DM2_V1_DungeonData *)commit_profile->dungeon_data,
+                                commit_map, commit_x, commit_y) & 7) == 5,
+                        "DM2 applies DESTROY_DOOR to the timer-owned map cell in source order");
+            memset(&ornate_animator_timer, 0, sizeof(ornate_animator_timer));
+            ornate_animator_timer.ticks_and_map = 3u |
+                ((uint32_t)(uint8_t)commit_map << 24);
+            ornate_animator_timer.type = DM2_V1_TIMER_ORNATE_ANIMATOR;
+            ornate_animator_timer.value_a = (int16_t)ornate_animator_record;
+            ornate_animator_timer.value_b = ornate_noise_mode;
+            expect_true(ornate_animator_fixture_ready &&
+                            dm2_v1_runtime_enqueue_source_timer(
+                                &ornate_animator_timer, 2u) ==
+                                DM2_V1_SOURCE_TIMER_OK,
+                        "DM2 admits a source-owned ORNATE_ANIMATOR timer after GAME_LOAD commit");
+            dm2_v1_runtime_tick();
+            expect_true(dm2_v1_runtime_last_proceed_timers_receipt(
+                            &commit_tick_receipt) == 1 &&
+                            commit_tick_receipt.type_tally[
+                                DM2_V1_TIMER_ORNATE_ANIMATOR] > 0 &&
+                            commit_tick_receipt.fail_closed_count == 0,
+                        "DM2 advances and requeues an active ORNATE_ANIMATOR after runtime commit");
+            dm2_v1_runtime_tick();
+            expect_true(dm2_v1_runtime_last_proceed_timers_receipt(
+                            &commit_tick_receipt) == 1 &&
+                            commit_tick_receipt.type_tally[
+                                DM2_V1_TIMER_ORNATE_ANIMATOR] > 0 &&
+                            ornate_animator_length > 0u,
+                        "DM2 processes the source +1 ORNATE_ANIMATOR continuation");
+            memset(&ornate_noise_timer, 0, sizeof(ornate_noise_timer));
+            ornate_noise_timer.ticks_and_map = 5u |
+                ((uint32_t)(uint8_t)commit_map << 24);
+            ornate_noise_timer.type = DM2_V1_TIMER_ORNATE_NOISE;
+            ornate_noise_timer.value_a = (int16_t)(
+                (uint8_t)ornate_noise_x |
+                ((uint16_t)(uint8_t)ornate_noise_y << 8));
+            ornate_noise_timer.value_b = (int16_t)ornate_noise_record;
+            expect_true(ornate_noise_fixture_ready &&
+                            dm2_v1_runtime_enqueue_source_timer(
+                                &ornate_noise_timer, 3u) ==
+                                DM2_V1_SOURCE_TIMER_OK,
+                        "DM2 admits a source-owned ORNATE_NOISE timer after GAME_LOAD commit");
+            dm2_v1_runtime_tick();
+            expect_true(dm2_v1_runtime_last_proceed_timers_receipt(
+                            &commit_tick_receipt) == 1 &&
+                            commit_tick_receipt.type_tally[
+                                DM2_V1_TIMER_ORNATE_NOISE] > 0 &&
+                            commit_tick_receipt.dispatched_count > 0 &&
+                            commit_tick_receipt.handler_rejected_count == 0 &&
+                            commit_tick_receipt.fail_closed_count == 0,
+                        "DM2 processes an active ORNATE_NOISE after runtime commit");
+            int ornate_noise_continuation_seen = 0;
+            for (uint16_t noise_step = 1u;
+                 noise_step <= ornate_noise_length;
+                 ++noise_step) {
+                dm2_v1_runtime_tick();
+                if (dm2_v1_runtime_last_proceed_timers_receipt(
+                        &commit_tick_receipt) == 1) {
+                    if (commit_tick_receipt.type_tally[DM2_V1_TIMER_ORNATE_NOISE] > 0)
+                        ornate_noise_continuation_seen = 1;
+                }
+            }
+            expect_true(ornate_noise_continuation_seen,
+                        "DM2 processes the source ORNATE_NOISE continuation");
+            expect_true(dm2_test_find_source_record(
+                            (const DM2_V1_DungeonData *)commit_profile->dungeon_data,
+                            &record_flag_map, &record_flag_record),
+                        "DM2 finds an authenticated record for the runtime flag-timer regression");
+            memset(&record_flag_timer, 0, sizeof(record_flag_timer));
+            record_flag_timer.ticks_and_map = 3u |
+                ((uint32_t)(uint8_t)record_flag_map << 24);
+            record_flag_timer.type = DM2_V1_TIMER_5C_RECORD_SET;
+            record_flag_timer.value_a = (int16_t)record_flag_record;
+            expect_true(dm2_v1_runtime_enqueue_source_timer(
+                            &record_flag_timer, 1u) ==
+                            DM2_V1_SOURCE_TIMER_OK,
+                        "DM2 admits a source-owned record-flag timer after GAME_LOAD commit");
+            dm2_v1_runtime_tick();
+            {
+                int record_type = -1;
+                int record_size = 0;
+                const uint8_t *record = dm2_v1_dungeon_get_thing_record(
+                    (const DM2_V1_DungeonData *)commit_profile->dungeon_data,
+                    record_flag_record, &record_type, NULL, &record_size);
+                expect_true(dm2_v1_runtime_last_proceed_timers_receipt(
+                                &commit_tick_receipt) == 1 &&
+                                commit_tick_receipt.type_tally[
+                                    DM2_V1_TIMER_5C_RECORD_SET] > 0 &&
+                                record && record_size >= 3 &&
+                                (record[2] & 0x01u) != 0u,
+                            "DM2 applies the source 0x5C record flag in runtime timer order");
+            }
+            expect_true(dm2_test_find_source_door(
+                            (const DM2_V1_DungeonData *)commit_profile->dungeon_data,
+                            &door_map, &door_x, &door_y, &door_record),
+                        "DM2 finds an authenticated direct DB0 door for STEP_DOOR");
+            memset(&door_step_timer, 0, sizeof(door_step_timer));
+            door_step_timer.ticks_and_map = 4u |
+                ((uint32_t)(uint8_t)door_map << 24);
+            door_step_timer.type = DM2_V1_TIMER_STEP_DOOR;
+            door_step_timer.actor = 0u;
+            door_step_timer.value_a = (int16_t)(
+                (uint8_t)door_x | ((uint16_t)(uint8_t)door_y << 8));
+            door_step_timer.value_b = (int16_t)door_record;
+            expect_true(dm2_v1_runtime_enqueue_source_timer(
+                            &door_step_timer, 2u) ==
+                            DM2_V1_SOURCE_TIMER_OK,
+                        "DM2 admits a source-owned STEP_DOOR timer after GAME_LOAD commit");
+            dm2_v1_runtime_tick();
+            expect_true(dm2_v1_runtime_last_proceed_timers_receipt(
+                            &commit_tick_receipt) == 1 &&
+                            commit_tick_receipt.type_tally[
+                                DM2_V1_TIMER_STEP_DOOR] > 0,
+                        "DM2 dispatches STEP_DOOR through the source timer owner");
+            expect_true(dm2_v1_runtime_get_source_hero_timer_state(
+                            0u, &process_0c_timeridx, &process_0c_flags,
+                            &process_0c_hp) == 1,
+                        "DM2 exposes the committed source c_hero timer owner");
+            memset(&process_0c_timer, 0, sizeof(process_0c_timer));
+            process_0c_timer.ticks_and_map = 5u |
+                ((uint32_t)(uint8_t)commit_map << 24);
+            process_0c_timer.type = DM2_V1_TIMER_PROCESS_0C;
+            process_0c_timer.actor = 0u;
+            expect_true(dm2_v1_runtime_enqueue_source_timer(
+                            &process_0c_timer, 3u) ==
+                            DM2_V1_SOURCE_TIMER_OK,
+                        "DM2 admits a source-owned 0x0C timer after GAME_LOAD commit");
+            dm2_v1_runtime_tick();
+            {
+                int16_t timeridx_after = 0;
+                uint16_t flags_after = 0u;
+                int16_t hp_after = 0;
+                expect_true(dm2_v1_runtime_last_proceed_timers_receipt(
+                                &commit_tick_receipt) == 1 &&
+                                commit_tick_receipt.type_tally[
+                                    DM2_V1_TIMER_PROCESS_0C] > 0 &&
+                                dm2_v1_runtime_get_source_hero_timer_state(
+                                    0u, &timeridx_after, &flags_after,
+                                    &hp_after) == 1 &&
+                                timeridx_after == -1 &&
+                                (hp_after == 0 || (flags_after & 0x0800u) != 0u),
+                            "DM2 applies source 0x0C timeridx/heroflag semantics to c_hero");
+            }
+            expect_true(item_timer_fixture_ready &&
+                            dm2_v1_runtime_get_source_hero_state(
+                                0u, &item_timer_before) == 1,
+                        "DM2 exposes the real c_hero before PROCESS_TIMER_0E");
+            memset(&process_0c_timer, 0, sizeof(process_0c_timer));
+            process_0c_timer.ticks_and_map = 6u |
+                ((uint32_t)(uint8_t)commit_map << 24);
+            process_0c_timer.type = DM2_V1_TIMER_PROCESS_0E;
+            process_0c_timer.actor = 0u;
+            process_0c_timer.value_a = (int16_t)item_timer_db;
+            process_0c_timer.value_b = (int16_t)item_timer_itemtype;
+            expect_true(item_timer_fixture_ready &&
+                            dm2_v1_runtime_enqueue_source_timer(
+                                &process_0c_timer, 6u) ==
+                                DM2_V1_SOURCE_TIMER_OK,
+                        "DM2 admits PROCESS_TIMER_0E for a real source item root");
+            dm2_v1_runtime_tick();
+            expect_true(dm2_v1_runtime_last_proceed_timers_receipt(
+                            &commit_tick_receipt) == 1 &&
+                            commit_tick_receipt.type_tally[
+                                DM2_V1_TIMER_PROCESS_0E] > 0 &&
+                            commit_tick_receipt.handler_rejected_count == 0 &&
+                            dm2_v1_runtime_get_source_hero_state(
+                                0u, &item_timer_after) == 1 &&
+                            item_timer_after.first_item == (int16_t)item_timer_record,
+                        "DM2 restores the real item record after source PROCESS_TIMER_0E");
+            expect_true(dm2_v1_runtime_get_source_hero_state(
+                            0u, &resurrection_before) == 1 &&
+                            resurrection_before.max_hp > 0,
+                        "DM2 exposes the committed source c_hero for resurrection");
+            memset(&resurrection_timer, 0, sizeof(resurrection_timer));
+            resurrection_timer.ticks_and_map = 7u |
+                ((uint32_t)(uint8_t)commit_map << 24);
+            resurrection_timer.type = DM2_V1_TIMER_RESURRECTION;
+            resurrection_timer.actor = 0u;
+            resurrection_timer.value_b = 0;
+            expect_true(dm2_v1_runtime_enqueue_source_timer(
+                            &resurrection_timer, 4u) ==
+                            DM2_V1_SOURCE_TIMER_OK,
+                        "DM2 admits source 0x0D resurrection phase zero after GAME_LOAD commit");
+            dm2_v1_runtime_tick();
+            expect_true(dm2_v1_runtime_last_proceed_timers_receipt(
+                            &commit_tick_receipt) == 1 &&
+                            commit_tick_receipt.type_tally[
+                                DM2_V1_TIMER_RESURRECTION] > 0 &&
+                            dm2_v1_runtime_get_source_hero_state(
+                                0u, &resurrection_after) == 1 &&
+                            resurrection_after.max_hp ==
+                                (resurrection_before.max_hp -
+                                 resurrection_before.max_hp / 64 - 1 < 25
+                                     ? 25
+                                     : resurrection_before.max_hp -
+                                           resurrection_before.max_hp / 64 - 1) &&
+                            resurrection_after.cur_hp ==
+                                resurrection_after.max_hp / 2 &&
+                            resurrection_after.weight == 0 &&
+                            resurrection_after.first_item == -1 &&
+                            resurrection_after.ench_aura == 0 &&
+                            resurrection_after.ench_power == 0 &&
+                            (resurrection_after.heroflag & 0x4000u) != 0u,
+                        "DM2 applies source 0x0D phase-zero resurrection semantics to c_hero");
+            expect_true(altar_fixture_ready,
+                        "DM2 installs a source-shaped DB10 altar fixture before runtime commit");
+            if (altar_fixture_ready) {
+                DM2_V1_DungeonData *runtime_dungeon =
+                    (DM2_V1_DungeonData *)commit_profile->dungeon_data;
+                uint8_t *runtime_altar = (uint8_t *)(uintptr_t)
+                    dm2_v1_dungeon_get_thing_record(
+                        runtime_dungeon, (uint16_t)(10 << 10), NULL, NULL, NULL);
+                if (runtime_altar) {
+                    runtime_altar[0] = (uint8_t)altar_fixture_first;
+                    runtime_altar[1] =
+                        (uint8_t)((uint16_t)altar_fixture_first >> 8);
+                    runtime_altar[2] = 0u;
+                    runtime_altar[3] = 0u;
+                    expect_true(dm2_v1_dungeon_set_first_thing(
+                                    runtime_dungeon, commit_map,
+                                    altar_fixture_x, altar_fixture_y,
+                                    (uint16_t)(10 << 10)) == 0,
+                                "DM2 mirrors the source-shaped altar in the committed dungeon owner");
+                }
+                memset(&resurrection_timer, 0, sizeof(resurrection_timer));
+                resurrection_timer.ticks_and_map = 8u |
+                    ((uint32_t)(uint8_t)commit_map << 24);
+                resurrection_timer.type = DM2_V1_TIMER_RESURRECTION;
+                resurrection_timer.actor = 0u;
+                resurrection_timer.value_a = (int16_t)(
+                    (uint8_t)altar_fixture_x |
+                    ((uint16_t)(uint8_t)altar_fixture_y << 8));
+                resurrection_timer.value_b = (int16_t)0x0100u;
+                expect_true(dm2_v1_runtime_enqueue_source_timer(
+                                &resurrection_timer, 4u) ==
+                                DM2_V1_SOURCE_TIMER_OK,
+                            "DM2 admits source 0x0D altar phase one after GAME_LOAD commit");
+                dm2_v1_runtime_tick();
+                {
+                    const uint8_t *altar_after = dm2_v1_dungeon_get_thing_record(
+                        (const DM2_V1_DungeonData *)commit_profile->dungeon_data,
+                        (uint16_t)(10 << 10), NULL, NULL, NULL);
+                    expect_true(dm2_v1_runtime_last_proceed_timers_receipt(
+                                    &commit_tick_receipt) == 1 &&
+                                    commit_tick_receipt.type_tally[
+                                        DM2_V1_TIMER_RESURRECTION] > 0 &&
+                                    commit_tick_receipt.handler_rejected_count == 0 &&
+                                    dm2_v1_dungeon_get_first_thing(
+                                        (const DM2_V1_DungeonData *)commit_profile->dungeon_data,
+                                        commit_map, altar_fixture_x,
+                                        altar_fixture_y) == altar_fixture_first &&
+                                    altar_after && altar_after[0] == 0xffu &&
+                                    altar_after[1] == 0xffu,
+                                "DM2 cuts the source DB10 altar record atomically in runtime order");
+                }
+            }
+                        expect_true(dm2_test_find_cloud_origin_cell(
+                            (const DM2_V1_DungeonData *)commit_profile->dungeon_data,
+                            commit_map, commit_x, commit_y,
+                            &cloud_fixture_x, &cloud_fixture_y),
+                        "DM2 finds a source-compatible no-DB3 cloud origin cell");
+            expect_true(cloud_fixture_x == commit_x &&
+                            cloud_fixture_y == commit_y,
+                        "DM2 uses the authenticated party cell for the runtime cloud lifecycle witness");
+            if (cloud_fixture_x >= 0) {
+                memset(&resurrection_timer, 0, sizeof(resurrection_timer));
+                resurrection_timer.ticks_and_map = 9u |
+                    ((uint32_t)(uint8_t)commit_map << 24);
+                resurrection_timer.type = DM2_V1_TIMER_RESURRECTION;
+                resurrection_timer.actor = 0u;
+                resurrection_timer.value_a = (int16_t)(
+                    (uint8_t)cloud_fixture_x |
+                    ((uint16_t)(uint8_t)cloud_fixture_y << 8));
+                resurrection_timer.value_b = (int16_t)0x02ffu;
+                expect_true(dm2_v1_runtime_enqueue_source_timer(
+                                &resurrection_timer, 6u) ==
+                                DM2_V1_SOURCE_TIMER_OK,
+                            "DM2 admits source 0x0D cloud phase two after GAME_LOAD commit");
+                dm2_v1_runtime_tick();
+                expect_true(dm2_v1_runtime_last_proceed_timers_receipt(
+                                &commit_tick_receipt) == 1 &&
+                                commit_tick_receipt.type_tally[
+                                    DM2_V1_TIMER_RESURRECTION] > 0 &&
+                                commit_tick_receipt.handler_rejected_count == 0,
+                            "DM2 creates the source DB15 cloud and queues its 0x19 timer");
+            }
+            memset(&resurrection_altar_rejected_timer, 0,
+                   sizeof(resurrection_altar_rejected_timer));
+            resurrection_altar_rejected_timer.ticks_and_map = 10u |
+                ((uint32_t)(uint8_t)commit_map << 24);
+            resurrection_altar_rejected_timer.type = DM2_V1_TIMER_RESURRECTION;
+            resurrection_altar_rejected_timer.actor = 0u;
+            resurrection_altar_rejected_timer.value_a = (int16_t)0xffffu;
+            resurrection_altar_rejected_timer.value_b = (int16_t)0x0100u;
+            expect_true(dm2_v1_runtime_enqueue_source_timer(
+                            &resurrection_altar_rejected_timer, 5u) ==
+                            DM2_V1_SOURCE_TIMER_OK,
+                        "DM2 admits an altar-phase timer for source validation");
+            dm2_v1_runtime_tick();
+            expect_true(dm2_v1_runtime_last_proceed_timers_receipt(
+                            &commit_tick_receipt) == 1 &&
+                            commit_tick_receipt.type_tally[
+                                DM2_V1_TIMER_RESURRECTION] > 0 &&
+                            commit_tick_receipt.handler_rejected_count > 0,
+                        "DM2 keeps invalid 0x0D altar lookup fail-closed in runtime");
+            if (tick_generator_fixture_ready) {
+                tick_generator_timer.ticks_and_map = 11u |
+                    ((uint32_t)(uint8_t)commit_map << 24);
+                expect_true(dm2_v1_runtime_enqueue_source_timer(
+                                &tick_generator_timer, 7u) ==
+                                DM2_V1_SOURCE_TIMER_OK,
+                            "DM2 admits the source tick-generator timer after GAME_LOAD commit");
+                dm2_v1_runtime_tick();
+                expect_true(dm2_v1_runtime_last_proceed_timers_receipt(
+                                &commit_tick_receipt) == 1 &&
+                                commit_tick_receipt.type_tally[
+                                    DM2_V1_TIMER_TICK_GENERATOR] > 0 &&
+                                commit_tick_receipt.handler_rejected_count == 0,
+                            "DM2 continues the source tick generator atomically in runtime order");
+            }
+            memset(&ench_power_timer, 0, sizeof(ench_power_timer));
+            ench_power_timer.ticks_and_map = 12u |
+                ((uint32_t)(uint8_t)commit_map << 24);
+            ench_power_timer.type = DM2_V1_TIMER_ENCH_POWER;
+            ench_power_timer.actor = 0x01u;
+            ench_power_timer.value_a = -1;
+            expect_true(dm2_v1_runtime_get_source_hero_state(
+                            0u, &ench_power_before) == 1 &&
+                            dm2_v1_runtime_enqueue_source_timer(
+                                &ench_power_timer, 8u) ==
+                                DM2_V1_SOURCE_TIMER_OK,
+                        "DM2 admits source 0x48 ENCH_POWER after GAME_LOAD commit");
+            dm2_v1_runtime_tick();
+            expect_true(dm2_v1_runtime_last_proceed_timers_receipt(
+                            &commit_tick_receipt) == 1 &&
+                            commit_tick_receipt.type_tally[
+                                DM2_V1_TIMER_ENCH_POWER] > 0 &&
+                            commit_tick_receipt.handler_rejected_count == 0 &&
+                            dm2_v1_runtime_get_source_hero_state(
+                                0u, &ench_power_after) == 1 &&
+                            ench_power_after.ench_power ==
+                                ench_power_before.ench_power + 1,
+                        "DM2 applies source 0x48 ENCH_POWER to the committed c_hero");
+            memset(&poison_timer, 0, sizeof(poison_timer));
+            poison_timer.ticks_and_map = 13u |
+                ((uint32_t)(uint8_t)commit_map << 24);
+            poison_timer.type = DM2_V1_TIMER_POISON;
+            poison_timer.actor = (uint8_t)poison_actor;
+            poison_timer.value_a = 64;
+            expect_true(dm2_v1_runtime_get_source_hero_state(
+                            (uint8_t)poison_actor, &poison_before) == 1 &&
+                            dm2_v1_runtime_enqueue_source_timer(
+                                &poison_timer, 9u) ==
+                                DM2_V1_SOURCE_TIMER_OK,
+                        "DM2 admits source 0x4B POISON after GAME_LOAD commit");
+            dm2_v1_runtime_tick();
+            expect_true(dm2_v1_runtime_last_proceed_timers_receipt(
+                            &commit_tick_receipt) == 1 &&
+                            commit_tick_receipt.type_tally[
+                                DM2_V1_TIMER_POISON] > 0 &&
+                            commit_tick_receipt.handler_rejected_count == 0 &&
+                            dm2_v1_runtime_get_source_hero_state(
+                                (uint8_t)poison_actor, &poison_after) == 1 &&
+                            poison_after.cur_hp == poison_before.cur_hp &&
+                            poison_after.heroflag ==
+                                (uint16_t)(poison_before.heroflag | 0x2800u),
+                        "DM2 applies source 0x4B POISON wound semantics to the committed c_hero");
+            memset(&ench_flag_timer, 0, sizeof(ench_flag_timer));
+            ench_flag_timer.ticks_and_map = 14u |
+                ((uint32_t)(uint8_t)commit_map << 24);
+            ench_flag_timer.type = DM2_V1_TIMER_HERO_ENCH_FLAG;
+            expect_true(dm2_v1_runtime_enqueue_source_timer(
+                            &ench_flag_timer, 10u) ==
+                            DM2_V1_SOURCE_TIMER_OK,
+                        "DM2 admits source 0x47 HERO_ENCH_FLAG after GAME_LOAD commit");
+            dm2_v1_runtime_tick();
+            expect_true(dm2_v1_runtime_last_proceed_timers_receipt(
+                            &commit_tick_receipt) == 1 &&
+                            commit_tick_receipt.type_tally[
+                                DM2_V1_TIMER_HERO_ENCH_FLAG] > 0 &&
+                            commit_tick_receipt.handler_rejected_count == 0 &&
+                            dm2_v1_runtime_get_source_hero_state(
+                                (uint8_t)poison_actor, &ench_flag_after) == 1 &&
+                            (ench_flag_after.heroflag & 0x4000u) != 0u,
+                        "DM2 applies source 0x47 HERO_ENCH_FLAG to the committed c_hero");
+            for (int cloud_tick = 0; cloud_tick < 1; ++cloud_tick)
+                dm2_v1_runtime_tick();
+            expect_true(dm2_v1_runtime_last_proceed_timers_receipt(
+                            &commit_tick_receipt) == 1 &&
+                            commit_tick_receipt.type_tally[
+                                DM2_V1_TIMER_PROCESS_CLOUD] > 0,
+                        "DM2 advances the queued DB15 cloud through 0x19 source order");
+            memset(&light_timer, 0, sizeof(light_timer));
+            light_timer.ticks_and_map = 16u |
+                ((uint32_t)(uint8_t)commit_map << 24);
+            light_timer.type = DM2_V1_TIMER_LIGHT;
+            light_timer.value_a = 1;
+            expect_true(dm2_v1_runtime_enqueue_source_timer(
+                            &light_timer, 11u) == DM2_V1_SOURCE_TIMER_OK,
+                        "DM2 admits source 0x46 LIGHT after GAME_LOAD commit");
+            dm2_v1_runtime_tick();
+            expect_true(dm2_v1_runtime_last_proceed_timers_receipt(
+                            &commit_tick_receipt) == 1 &&
+                            commit_tick_receipt.type_tally[
+                                DM2_V1_TIMER_LIGHT] > 0 &&
+                            commit_tick_receipt.handler_rejected_count == 0,
+                        "DM2 advances source 0x46 LIGHT and owns its requeue");
+            memset(commit_framebuffer, 0, sizeof(commit_framebuffer));
+            memset(&commit_render_receipt, 0, sizeof(commit_render_receipt));
+            memset(&commit_frame_receipt, 0, sizeof(commit_frame_receipt));
+            expect_true(dm2_v1_boot_runtime_render_frame(
+                            commit_profile, commit_framebuffer, 320, 320, 200,
+                            NULL, NULL, &commit_render_receipt) == 1 &&
+                            commit_render_receipt.render_result == 0 &&
+                            dm2_v1_runtime_last_m11_frame_receipt(
+                                &commit_frame_receipt) == 1 &&
+                            commit_frame_receipt.valid &&
+                            commit_frame_receipt.m11_consume_frame,
+                        "DM2 produces the first source-owned runtime frame after the committed tick");
+        }
+        M11_GameView_Shutdown(&commit_view);
+    }
     {
         DM2_V1_SpellCastApplyReceipt spell_failure;
         DM2_V1_BootProfile spell_profile;

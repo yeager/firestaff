@@ -109,11 +109,11 @@
     }
   ],
   "status": "PASS800_DM1_V1_SLOT_BOXES_LOCKED",
-  "timestampUtc": "2026-08-11T06:50:24.580265+00:00",
+  "timestampUtc": "2026-08-12T01:40:49.847089+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_slot_boxes_pc34_compat"
+        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_slot_boxes_pc34_compat"
       ],
       "outputTail": "dm1_v1_slot_boxes: 565/565 assertions passed",
       "passed": true,

@@ -4,7 +4,7 @@
       "cmd": [
         "cmake",
         "--build",
-        "/Volumes/Extern-disk/firestaff-claude/build",
+        "/Volumes/Extern-disk/firestaff/build",
         "--target",
         "test_dm1_v1_input_command_queue_pc34_compat",
         "test_dm1_v1_movement_command_core_pc34_compat",
@@ -15,26 +15,26 @@
         "-j2"
       ],
       "outputTail": [
-        "[1675/1697] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/csb/csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.c.o",
-        "[1676/1697] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c.o",
-        "[1677/1697] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/csb/csb_v1_monster_pc34_compat.c.o",
-        "[1678/1697] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/csb/csb_v1_save_load_pc34_compat.c.o",
-        "[1679/1697] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/csb/csb_v1_character_pc34_compat.c.o",
-        "[1680/1697] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_champion_stats_pc34_compat.c.o",
-        "[1681/1697] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_inventory_pc34_compat.c.o",
-        "[1682/1697] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_stairs_level_pc34_compat.c.o",
-        "[1683/1697] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_spell_casting_pc34_compat.c.o",
-        "[1684/1697] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_text_message_pc34_compat.c.o",
-        "[1685/1697] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o",
-        "[1686/1697] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_teleporter_pit_pc34_compat.c.o",
-        "[1687/1697] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_light_pc34_compat.c.o",
-        "[1688/1697] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/shared/fs_portable_compat.c.o",
-        "[1689/1697] Linking C executable test_dm1_v1_input_command_queue_pc34_compat",
-        "[1690/1697] Linking C executable test_dm1_v1_movement_core_pc34_compat",
-        "[1691/1697] Linking C executable test_dm1_v1_movement_command_core_pc34_compat",
-        "[1692/1697] Linking C executable test_dm1_v1_turning_presentation_pc34_compat",
-        "[1693/1697] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat",
-        "[1694/1697] Linking C executable test_dm1_v1_movement_pipeline_pc34_compat"
+        "[100%] Built target firestaff_m10",
+        "[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "Built target firestaff_zlib",
+        "Built target firestaff_fmtowns_disc",
+        "Built target firestaff_zip_extract",
+        "Built target firestaff_dm2",
+        "[ 81%] Built target firestaff_m10",
+        "[ 81%] Built target test_dm1_v1_movement_core_pc34_compat",
+        "Built target firestaff_fmtowns_disc",
+        "Built target firestaff_zlib",
+        "Built target firestaff_zip_extract",
+        "Built target firestaff_dm2",
+        "[ 90%] Built target firestaff_m10",
+        "[100%] Built target test_dm1_v1_turning_presentation_pc34_compat",
+        "Built target firestaff_fmtowns_disc",
+        "Built target firestaff_zlib",
+        "Built target firestaff_zip_extract",
+        "Built target firestaff_dm2",
+        "Built target firestaff_m10",
+        "Built target test_dm1_v1_movement_pipeline_pc34_compat"
       ],
       "passed": true,
       "returncode": 0
@@ -87,7 +87,7 @@
       "expectedStatus": null,
       "id": "pass423_input_command_movement_pipeline_source_lock",
       "outputTail": [
-        "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED manifest=/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass423_dm1_v1_input_command_movement_pipeline_source_lock/manifest.json"
+        "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED manifest=/Volumes/Extern-disk/firestaff/parity-evidence/verification/pass423_dm1_v1_input_command_movement_pipeline_source_lock/manifest.json"
       ],
       "passed": true,
       "returncode": 0,
@@ -157,7 +157,7 @@
       "outputTail": [
         "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED",
         "- ReDMCSB: GAMELOOP.C:35-219; COMMAND.C:2045-2829; DUNVIEW.C:8318-8618; DRAWVIEW.C:709-722",
-        "- Firestaff: m11_game_view.c:26229-26444; main_loop_m11.c:6774-6791; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
+        "- Firestaff: m11_game_view.c:27255-27470; main_loop_m11.c:7056-7073; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
         "- report: parity-evidence/pass406_dm1_v1_game_loop_redraw_cadence.md",
         "- manifest: parity-evidence/verification/pass406_dm1_v1_game_loop_redraw_cadence/manifest.json"
       ],
@@ -256,8 +256,8 @@
       "id": "viewport_field_zone_aspect_clip_gate",
       "outputTail": [
         "V1 viewport field zone/aspect clip gate passed",
-        "- Firestaff field rows/zones (DM1-owned): /Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c:19",
-        "- Firestaff source viewport draw order: /Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c:53102",
+        "- Firestaff field rows/zones (DM1-owned): /Volumes/Extern-disk/firestaff/src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c:19",
+        "- Firestaff source viewport draw order: /Volumes/Extern-disk/firestaff/src/engine/m11_game_view.c:54401",
         "- ReDMCSB DUNVIEW.C:377 char G2035_ac_ViewSquareIndexToFieldAspectIndex[23] = { 13, 14, 15, 10, 11, 12, 7, 8, 9, 5, 6, 2, 3, 4, 0, 1, -1, -1, -1, -1, -1, -1, -1 };",
         "- ReDMCSB DUNVIEW.C:465 unsigned char G0188_aauc_Graphic558_FieldAspects[12][8];",
         "- ReDMCSB DUNVIEW.C:6219 F0113_DUNGEONVIEW_DrawField(L0198_auc_FieldAspect, C702_ZONE_WALL_D3L2 + L2482_i_FieldAspectIndex);",
@@ -284,8 +284,8 @@
       "id": "viewport_palette_source_lock_gate",
       "outputTail": [
         "V1 viewport palette source-lock gate passed",
-        "- Firestaff palette compute: /Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c:17835",
-        "- Firestaff palette apply: /Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c:36515",
+        "- Firestaff palette compute: /Volumes/Extern-disk/firestaff/src/engine/m11_game_view.c:18721",
+        "- Firestaff palette apply: /Volumes/Extern-disk/firestaff/src/engine/m11_game_view.c:37814",
         "- ReDMCSB F0337: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C:329",
         "- ReDMCSB light tables: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C:45",
         "- ReDMCSB DRAWVIEW palette install: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C:768"
@@ -417,5 +417,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-08-11T06:45:35.293292+00:00"
+  "timestampUtc": "2026-08-12T01:37:36.506378+00:00"
 }

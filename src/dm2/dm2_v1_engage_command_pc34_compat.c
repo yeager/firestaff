@@ -43,6 +43,15 @@
 
 #include <string.h>
 
+typedef struct {
+    int (*get_creature_at)(void *ctx, int16_t x, int16_t y);
+    int (*get_player_at_position)(void *ctx, int position);
+    int (*creature_ai_throw_only)(void *ctx, int creature_idx);
+    int16_t (*calc_attack_damage)(void *ctx, int hero_idx, int creature_idx,
+                                  int16_t action_strength, int32_t skill_id);
+    void (*set_pending_combat_damage)(void *ctx, int16_t damage);
+} DM2_RuntimeWieldCallbacks;
+
 int dm2_v1_engage_command(
     const DM2_V1_EngageCommandRequest *request,
     DM2_V1_EngageCommandReceipt *receipt)
@@ -126,12 +135,39 @@ int dm2_v1_engage_command(
     case 7: /* WIELD_WEAPON (variant) */
         receipt->weapon_wielded = 1;
         if (request->wield_cb) {
+            const DM2_RuntimeWieldCallbacks *wield_cb =
+                (const DM2_RuntimeWieldCallbacks *)request->wield_cb;
             int tile_type = (request->tile_value >> 5) & 0xff;
             int tile_sub = request->tile_value & 0x7;
             if (tile_type == 4 && tile_sub == 4) {
                 receipt->door_attacked = 1;
             } else if (request->creature_at_target != -1) {
-                receipt->creature_attacked = 1;
+                int dir = request->party_dir & 3;
+                static const int dx[4] = { 0, 1, 0, -1 };
+                static const int dy[4] = { -1, 0, 1, 0 };
+                int target_x = request->party_x + dx[dir];
+                int target_y = request->party_y + dy[dir];
+                int wielded = wield_cb->get_creature_at &&
+                    wield_cb->get_creature_at(request->wield_ctx,
+                                              (int16_t)target_x,
+                                              (int16_t)target_y) ==
+                        request->creature_at_target;
+                if (wielded && action_case == 7 &&
+                    wield_cb->creature_ai_throw_only &&
+                    wield_cb->creature_ai_throw_only(
+                        request->wield_ctx, request->creature_at_target))
+                    wielded = 0;
+                if (wielded && wield_cb->calc_attack_damage) {
+                    int16_t damage = wield_cb->calc_attack_damage(
+                        request->wield_ctx, request->hero_index,
+                        request->creature_at_target, request->wield_strength, 0);
+                    if (wield_cb->set_pending_combat_damage)
+                        wield_cb->set_pending_combat_damage(
+                            request->wield_ctx, damage);
+                    if (damage == 0) wielded = 0;
+                }
+                receipt->creature_attacked = wielded != 0;
+                if (!wielded) receipt->success = 0;
             } else {
                 receipt->success = 0;
             }

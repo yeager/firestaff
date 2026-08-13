@@ -5548,6 +5548,59 @@ static void test_track02_startup_bitmap_decode_iso_receipt(void) {
     free(track02);
 }
 
+static void test_track02_startup_bitmap_decode_retail_iso_receipt(void) {
+    static const uint8_t descriptor[18] = {
+        0x20, 0x00, 0x20, 0x04, 0x20, 0x08, 0x20, 0x0c, 0x20, 0x10,
+        0x20, 0x14, 0x20, 0x18, 0x20, 0x1c, 0x20, 0x20
+    };
+    static const uint8_t post_boundary_span[44] = {
+        0xbe, 0x80, 0xfe, 0x80, 0x34, 0x81, 0x76, 0x81,
+        0xd0, 0x81, 0x2a, 0x80, 0x2b, 0x80, 0x38, 0x80,
+        0x45, 0x80, 0x52, 0x80, 0x5f, 0x80, 0x6c, 0x80,
+        0x79, 0x80, 0x86, 0x80, 0xa0, 0x80, 0xa5, 0x80,
+        0xaa, 0x80, 0xaf, 0x80, 0xb4, 0x80, 0xb9, 0x80,
+        0x93, 0x80, 0x00, 0x3f
+    };
+    static const size_t descriptor_offsets[3] = {
+        0x5b2406u, 0x5b4406u, 0x5b6584u
+    };
+    static const size_t span_offsets[3] = {
+        0x207000u, 0x378000u, 0x5b8000u
+    };
+    const size_t track02_size = 0x5b8000u + 2048u;
+    uint8_t *track02 = (uint8_t *)calloc(track02_size, 1u);
+    Theron_Track02StartupBitmapCatalog catalog;
+    Theron_Track02StartupBitmapAtlas atlas;
+
+    expect_true(track02 != NULL,
+                "Track02 full retail ISO bitmap fixture allocates");
+    if (!track02) return;
+    for (size_t anchor = 0u; anchor < 3u; ++anchor) {
+        memcpy(track02 + descriptor_offsets[anchor], descriptor,
+               sizeof(descriptor));
+        memcpy(track02 + span_offsets[anchor], post_boundary_span,
+               sizeof(post_boundary_span));
+        for (size_t i = sizeof(post_boundary_span); i < 2048u; ++i) {
+            track02[span_offsets[anchor] + i] =
+                (uint8_t)(0x21u + ((i * 13u) % 0xdeu));
+        }
+    }
+
+    expect_true(theron_v1_track02_catalog_startup_bitmap_samples(
+                    track02, track02_size, THERON_TRACK02_MD5_US_ISO,
+                    &catalog) == THERON_TRACK02_SIGNAL_OK &&
+                    catalog.sample_count == 60u &&
+                    catalog.overflow_count == 0u &&
+                    catalog.samples[0].raw_offset == 0x207000u &&
+                    catalog.samples[4].raw_offset == 0x378000u &&
+                    catalog.samples[12].raw_offset == 0x5b8000u &&
+                    theron_v1_track02_build_startup_bitmap_atlas(
+                        &catalog, &atlas) == THERON_TRACK02_SIGNAL_OK &&
+                    atlas.route_count == 4u && atlas.total_tile_count == 60u,
+                "Track02 full retail ISO reuses the verified three-anchor bitmap sample chain");
+    free(track02);
+}
+
 static void test_startup_receipt_bitmap_art_gate(void) {
     Theron_V1_StartupReceipt receipt;
     Theron_StartupMediaStateReceipt media_receipt;
@@ -6173,6 +6226,7 @@ int main(void) {
     test_track02_startup_bitmap_atlas_overflow_breadth();
     test_track02_all_dungeon_runtime_capture_receipt();
     test_track02_startup_bitmap_decode_iso_receipt();
+    test_track02_startup_bitmap_decode_retail_iso_receipt();
     test_startup_receipt_bitmap_art_gate();
     test_track02_bitmap_span_apply_receipts();
 

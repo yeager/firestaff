@@ -5,7 +5,7 @@
 
 static void test_wiring_count(void)
 {
-    assert(dm2_v1_timer_dispatch_wiring_count() == 26);
+    assert(dm2_v1_timer_dispatch_wiring_count() == 28);
     printf("test_wiring_count OK\n");
 }
 
@@ -18,8 +18,8 @@ static void test_init_populates_handlers(void)
     dm2_v1_timer_dispatch_wiring_init(&dispatcher, &wctx);
 
     static const int wired_types[] = {
-        0x01, 0x02, 0x0C, 0x0D, 0x0E, 0x15, 0x19, 0x1E, 0x21, 0x22,
-        0x3D, 0x46, 0x47, 0x48, 0x4B, 0x54, 0x55, 0x56, 0x58, 0x59,
+        0x01, 0x02, 0x0C, 0x0D, 0x0E, 0x15, 0x19, 0x1D, 0x1E, 0x21, 0x22,
+        0x3C, 0x3D, 0x46, 0x47, 0x48, 0x4B, 0x54, 0x55, 0x56, 0x58, 0x59,
         0x5A, 0x5B, 0x5C, 0x5D, 0x5E
     };
     for (size_t i = 0; i < sizeof(wired_types) / sizeof(wired_types[0]); i++) {
@@ -164,6 +164,148 @@ static void test_release_door_button_fires(void)
     printf("test_release_door_button_fires OK\n");
 }
 
+static int process_3d_move_result;
+static int process_3d_move_calls;
+static uint16_t process_3d_record;
+static int16_t process_3d_level;
+static int16_t process_3d_unused;
+static int16_t process_3d_x;
+static int16_t process_3d_y;
+static int process_3d_noise_calls;
+static int16_t process_3d_noise_x;
+static int16_t process_3d_noise_y;
+
+static int fake_process_3d_move(
+    void *ctx __attribute__((unused)), uint16_t record,
+    int16_t level, int16_t unused, int16_t x, int16_t y)
+{
+    ++process_3d_move_calls;
+    process_3d_record = record;
+    process_3d_level = level;
+    process_3d_unused = unused;
+    process_3d_x = x;
+    process_3d_y = y;
+    return process_3d_move_result;
+}
+
+static void fake_process_3d_noise(
+    void *ctx __attribute__((unused)), int16_t x, int16_t y)
+{
+    ++process_3d_noise_calls;
+    process_3d_noise_x = x;
+    process_3d_noise_y = y;
+}
+
+static void test_process_3d_payload_and_noise_contract(void)
+{
+    DM2_V1_TimerDispatcher dispatcher;
+    DM2_V1_TimerDispatchWiringContext wctx;
+    DM2_V1_SourceTimer timer;
+    DM2_V1_ProceedTimersReceipt receipt;
+
+    memset(&wctx, 0, sizeof(wctx));
+    wctx.move_record_to = fake_process_3d_move;
+    wctx.queue_noise = fake_process_3d_noise;
+    dm2_v1_timer_dispatch_wiring_init(&dispatcher, &wctx);
+
+    process_3d_move_result = 1;
+    process_3d_move_calls = 0;
+    process_3d_noise_calls = 0;
+    memset(&timer, 0, sizeof(timer));
+    timer.type = 0x3c;
+    timer.value_a = (int16_t)0x2a19; /* source setxyA: x=0x19, y=0x2a */
+    timer.value_b = (int16_t)0x4c21; /* source setxyB/B: record handle */
+    memset(&receipt, 0, sizeof(receipt));
+    assert(dispatcher.handlers[0x3d] != NULL);
+    assert(dispatcher.handlers[0x3c] == dispatcher.handlers[0x3d]);
+    assert(dispatcher.handlers[0x3c](&wctx, &timer, 0, &receipt) == 1);
+    assert(process_3d_move_calls == 1 &&
+           process_3d_record == 0x4c21u && process_3d_level == -3 &&
+           process_3d_unused == 0 && process_3d_x == 0x19 &&
+           process_3d_y == 0x2a && process_3d_noise_calls == 1 &&
+           process_3d_noise_x == 0x19 && process_3d_noise_y == 0x2a);
+
+    process_3d_move_result = -1;
+    process_3d_move_calls = 0;
+    process_3d_noise_calls = 0;
+    timer.type = 0x3d;
+    memset(&receipt, 0, sizeof(receipt));
+    assert(dispatcher.handlers[0x3d](&wctx, &timer, 0, &receipt) == 1);
+    assert(process_3d_move_calls == 1 && process_3d_record == 0x4c21u &&
+           process_3d_x == 0x19 && process_3d_y == 0x2a &&
+           process_3d_noise_calls == 1);
+
+    printf("test_process_3d_payload_and_noise_contract OK\n");
+}
+
+static int rotate_move_calls;
+static uint16_t rotate_move_record;
+static int16_t rotate_move_level;
+static int16_t rotate_move_unused;
+static int16_t rotate_move_x;
+static int16_t rotate_move_y;
+static int rotate_party_calls;
+static int16_t rotate_party_direction;
+
+static int fake_rotate_move(
+    void *ctx __attribute__((unused)), uint16_t record,
+    int16_t level, int16_t unused, int16_t x, int16_t y)
+{
+    ++rotate_move_calls;
+    rotate_move_record = record;
+    rotate_move_level = level;
+    rotate_move_unused = unused;
+    rotate_move_x = x;
+    rotate_move_y = y;
+    return 1;
+}
+
+static void fake_party_rotate(
+    void *ctx __attribute__((unused)), int16_t direction)
+{
+    ++rotate_party_calls;
+    rotate_party_direction = direction;
+}
+
+static void test_move_record_rotate_source_map_and_party_owner(void)
+{
+    DM2_V1_TimerDispatcher dispatcher;
+    DM2_V1_TimerDispatchWiringContext wctx;
+    DM2_V1_SourceTimer timer;
+    DM2_V1_ProceedTimersReceipt receipt;
+
+    memset(&wctx, 0, sizeof(wctx));
+    wctx.current_map = 1; /* must not override the timer's source map */
+    wctx.party_map = 5;
+    wctx.party_x = 7;
+    wctx.party_y = 8;
+    wctx.move_record_to = fake_rotate_move;
+    wctx.party_rotate = fake_party_rotate;
+    dm2_v1_timer_dispatch_wiring_init(&dispatcher, &wctx);
+
+    memset(&timer, 0, sizeof(timer));
+    timer.type = 0x5d;
+    timer.ticks_and_map = (5u << 24) | 100u;
+    timer.value_a = (int16_t)0x0123;
+    rotate_move_calls = 0;
+    rotate_party_calls = 0;
+    memset(&receipt, 0, sizeof(receipt));
+    assert(dispatcher.handlers[0x5d](&wctx, &timer, 0, &receipt) == 1);
+    assert(rotate_move_calls == 1 && rotate_move_record == 0xffffu &&
+           rotate_move_level == 7 && rotate_move_unused == 8 &&
+           rotate_move_x == (0x0123 & 0x1f) &&
+           rotate_move_y == ((0x0123 << 6) >> 11) &&
+           rotate_party_calls == 1 &&
+           rotate_party_direction == ((0x0123 << 4) >> 14));
+
+    memset(&wctx, 0, sizeof(wctx));
+    wctx.party_map = 5;
+    wctx.party_rotate = fake_party_rotate;
+    dm2_v1_timer_dispatch_wiring_init(&dispatcher, &wctx);
+    assert(dispatcher.handlers[0x5d](&wctx, &timer, 0, &receipt) == 0);
+    printf("test_move_record_rotate_source_map_and_party_owner OK\n");
+}
+
 /* ---- Newly wired: RESURRECTION, PROCESS_CLOUD, STEP_MISSILE,
  * THINK_CREATURE_A/B, ORNATE_NOISE ---- */
 
@@ -196,14 +338,65 @@ static void test_resurrection_final_phase_fires(void)
 }
 
 static uint8_t cloud_record[8];
-static uint8_t *mock_get_cloud_record(void *ctx __attribute__((unused)), uint16_t rw __attribute__((unused)))
+static uint16_t cloud_record_handle;
+static int cloud_owner_queued;
+static uint8_t *mock_get_cloud_record(void *ctx __attribute__((unused)), uint16_t rw)
 {
+    cloud_record_handle = rw;
     return cloud_record;
 }
 static uint8_t mock_tile_open(void *ctx __attribute__((unused)), int16_t x __attribute__((unused)),
                               int16_t y __attribute__((unused)))
 {
     return 0x40; /* class 2: not a wall, not a door */
+}
+
+static int16_t mock_cloud_creature_none(void *ctx __attribute__((unused)),
+                                        int16_t x __attribute__((unused)),
+                                        int16_t y __attribute__((unused)))
+{
+    return -1;
+}
+static uint16_t mock_cloud_tile_record_link(void *ctx __attribute__((unused)),
+                                            int16_t x __attribute__((unused)),
+                                            int16_t y __attribute__((unused)))
+{
+    return 0xFFFEu;
+}
+static void mock_cloud_owner_attack_door(void *ctx __attribute__((unused)),
+                                         int16_t x __attribute__((unused)),
+                                         int16_t y __attribute__((unused)),
+                                         int16_t damage __attribute__((unused)),
+                                         int16_t mode __attribute__((unused)),
+                                         int16_t extra __attribute__((unused)))
+{
+}
+static void mock_cloud_owner_cut(void *ctx __attribute__((unused)),
+                                 uint16_t record __attribute__((unused)),
+                                 int16_t x __attribute__((unused)),
+                                 int16_t y __attribute__((unused)))
+{
+}
+static void mock_cloud_owner_dealloc(void *ctx __attribute__((unused)),
+                                     uint16_t record __attribute__((unused)))
+{
+}
+static void mock_cloud_owner_noise(void *ctx __attribute__((unused)),
+                                   uint8_t type __attribute__((unused)),
+                                   uint8_t cloud_type __attribute__((unused)),
+                                   uint8_t a __attribute__((unused)),
+                                   uint8_t b __attribute__((unused)),
+                                   int16_t x __attribute__((unused)),
+                                   int16_t y __attribute__((unused)),
+                                   int16_t c __attribute__((unused)),
+                                   int16_t d __attribute__((unused)),
+                                   int16_t intensity __attribute__((unused)))
+{
+}
+static void mock_cloud_owner_queue(void *ctx __attribute__((unused)),
+                                   DM2_V1_CloudTimer *timer __attribute__((unused)))
+{
+    cloud_owner_queued = 1;
 }
 
 static void test_process_cloud_decays_and_deallocs(void)
@@ -223,12 +416,54 @@ static void test_process_cloud_decays_and_deallocs(void)
     memset(&timer, 0, sizeof(timer));
     timer.type = 0x19;
     timer.value_a = 0x0000;
+    timer.value_b = 0x2c01;
     DM2_V1_ProceedTimersReceipt receipt;
     memset(&receipt, 0, sizeof(receipt));
 
     int result = dispatcher.handlers[0x19](&wctx, &timer, 0, &receipt);
     assert(result == 1);
+    assert(cloud_record_handle == 0x2c01);
     printf("test_process_cloud_decays_and_deallocs OK\n");
+}
+
+static void test_process_cloud_full_owner_wiring(void)
+{
+    DM2_V1_TimerDispatcher dispatcher;
+    DM2_V1_TimerDispatchWiringContext wctx;
+    DM2_V1_CloudCallbacks owner;
+    memset(&wctx, 0, sizeof(wctx));
+    memset(&owner, 0, sizeof(owner));
+    owner.get_address_of_record = mock_get_cloud_record;
+    owner.get_tile_value = mock_tile_open;
+    owner.get_tile_record_link = mock_cloud_tile_record_link;
+    owner.attack_door = mock_cloud_owner_attack_door;
+    owner.get_creature_at = mock_cloud_creature_none;
+    owner.cut_record_from = mock_cloud_owner_cut;
+    owner.dealloc_record = mock_cloud_owner_dealloc;
+    owner.queue_timer = mock_cloud_owner_queue;
+    owner.queue_noise_gen2 = mock_cloud_owner_noise;
+    owner.current_map = 1;
+    owner.party_map = 2;
+    wctx.cloud_owner = &owner;
+    dm2_v1_timer_dispatch_wiring_init(&dispatcher, &wctx);
+
+    memset(cloud_record, 0, sizeof(cloud_record));
+    cloud_record[2] = 0x07;
+    cloud_record[3] = 0x06;
+    cloud_owner_queued = 0;
+    DM2_V1_SourceTimer timer;
+    memset(&timer, 0, sizeof(timer));
+    timer.type = 0x19;
+    timer.value_a = 0x0403;
+    timer.value_b = 0x2c01;
+    DM2_V1_ProceedTimersReceipt receipt;
+    memset(&receipt, 0, sizeof(receipt));
+
+    assert(dispatcher.handlers[0x19](&wctx, &timer, 0, &receipt) == 1);
+    assert(cloud_record_handle == 0x2c01);
+    assert(cloud_owner_queued == 1);
+    assert((uint16_t)(cloud_record[2] | (cloud_record[3] << 8)) == 0x0307);
+    printf("test_process_cloud_full_owner_wiring OK\n");
 }
 
 static uint8_t missile_record[8];
@@ -423,8 +658,11 @@ int main(void)
     test_null_safety();
     test_handler_rejects_missing_callbacks();
     test_release_door_button_fires();
+    test_process_3d_payload_and_noise_contract();
+    test_move_record_rotate_source_map_and_party_owner();
     test_resurrection_final_phase_fires();
     test_process_cloud_decays_and_deallocs();
+    test_process_cloud_full_owner_wiring();
     test_step_missile_bounces_off_wall();
     test_think_creature_delegates_to_bound_handler();
     test_ornate_noise_clears_frame_when_inactive();

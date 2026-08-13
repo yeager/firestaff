@@ -2,7 +2,7 @@ diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 index 347482c4..61d4758e 100644
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -40,3 +40,1269 @@
+@@ -40,3 +40,1277 @@
 +static std::unique_ptr<FileStream> TheronIrq2Trace;
 +static bool TheronIrq2TraceSeen[768];
 +static unsigned TheronIrq2TraceCallbackCount;
@@ -141,6 +141,10 @@ index 347482c4..61d4758e 100644
 +static FILE *TheronIrq2TraceSpawnRegisters;
 +static unsigned TheronIrq2TraceSpawnRegisterSamples;
 +static unsigned TheronIrq2TraceSpawnRegisterSampleLimit = 2048;
++/* Keep a separate small reserve for $B0E5.  Busy $C3A0/$CAxx windows must
++ * not consume every register sample before the regular-spawn entry occurs. */
++static unsigned TheronIrq2TraceSpawnEntryB0E5Samples;
++static const unsigned TheronIrq2TraceSpawnEntryB0E5SampleLimit = 256;
 +
 +static void FlushTheronIrq2Trace(void)
 +{
@@ -169,7 +173,9 @@ index 347482c4..61d4758e 100644
 +     (logical_pc >= 0xccf0 && logical_pc <= 0xcd13) ||
 +     logical_pc == 0xb0e5 ||
 +     (logical_pc >= 0xb07d && logical_pc <= 0xb0e4)) &&
-+    TheronIrq2TraceSpawnRegisterSamples < TheronIrq2TraceSpawnRegisterSampleLimit)
++    (TheronIrq2TraceSpawnRegisterSamples < TheronIrq2TraceSpawnRegisterSampleLimit ||
++     (logical_pc == 0xb0e5 &&
++      TheronIrq2TraceSpawnEntryB0E5Samples < TheronIrq2TraceSpawnEntryB0E5SampleLimit)))
 + {
 +  const uint32 reg_a = trace_regs->GetRegister(trace_regs->Regs[1].id, NULL, 0) & 0xff;
 +  const uint32 reg_x = trace_regs->GetRegister(trace_regs->Regs[2].id, NULL, 0) & 0xff;
@@ -205,6 +211,8 @@ index 347482c4..61d4758e 100644
 +     logical_pc == 0x4667, logical_pc == 0xb0e5,
 +     logical_pc >= 0xb07d && logical_pc <= 0xb0e4,
 +     logical_pc >= 0xc3a0 && logical_pc <= 0xc429);
++   if(logical_pc == 0xb0e5)
++    TheronIrq2TraceSpawnEntryB0E5Samples++;
 +   fflush(TheronIrq2TraceSpawnRegisters);
 +  }
 + }

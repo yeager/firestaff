@@ -87,6 +87,7 @@ int main(void)
     CHECK(dm2_v1_timer_type_is_known(DM2_V1_TIMER_STEP_DOOR), "0x01 known");
     CHECK(dm2_v1_timer_type_is_known(DM2_V1_TIMER_ACTUATE_TILE), "0x04 known");
     CHECK(dm2_v1_timer_type_is_known(DM2_V1_TIMER_STEP_MISSILE), "0x1e known");
+    CHECK(dm2_v1_timer_type_is_known(DM2_V1_TIMER_STEP_MISSILE_ALT), "0x1d known");
     CHECK(dm2_v1_timer_type_is_known(DM2_V1_TIMER_THINK_CREATURE_A),
           "0x21 known");
     CHECK(dm2_v1_timer_type_is_known(DM2_V1_TIMER_THINK_CREATURE_B),
@@ -114,7 +115,7 @@ int main(void)
     {
         DM2_V1_SourceTimer a = mk_timer(10, 1, DM2_V1_TIMER_STEP_DOOR, 1);
         DM2_V1_SourceTimer b = mk_timer(5, 2, DM2_V1_TIMER_UPDATE_WEATHER, 1);
-        DM2_V1_SourceTimer c = mk_timer(5, 3, DM2_V1_TIMER_STEP_MISSILE, 1);
+        DM2_V1_SourceTimer c = mk_timer(5, 3, DM2_V1_TIMER_STEP_MISSILE_ALT, 1);
         DM2_V1_SourceTimer d = mk_timer(5, 4, DM2_V1_TIMER_STEP_MISSILE, 9);
         DM2_V1_SourceTimer e = mk_timer(50, 5, DM2_V1_TIMER_PROCESS_SOUND, 1);
         (void)dm2_v1_source_timer_enqueue(&queue, &a, 0);
@@ -131,13 +132,13 @@ int main(void)
     CHECK(receipt.skipped_unknown_type == 0, "no unknown types");
     CHECK(receipt.fail_closed_count == 0, "no fail-closed types");
     CHECK(receipt.map_switches == 4, "one map switch per popped timer");
-    /* Order at tick 5: UPDATE_WEATHER (0x54) before STEP_MISSILE (0x1e)
-     * because DM2_cmp_timers orders type descending within equal ticks;
-     * within equal type, actor descending (9 before 1). */
+    /* Order at tick 5: UPDATE_WEATHER (0x54) before the two source
+     * STEP_MISSILE codes because DM2_cmp_timers orders type descending within
+     * equal ticks; within equal type, actor descending (9 before 1). */
     CHECK(log.count == 4, "handler saw four timers");
     CHECK(log.types[0] == DM2_V1_TIMER_UPDATE_WEATHER &&
           log.types[1] == DM2_V1_TIMER_STEP_MISSILE &&
-          log.types[2] == DM2_V1_TIMER_STEP_MISSILE &&
+          log.types[2] == DM2_V1_TIMER_STEP_MISSILE_ALT &&
           log.types[3] == DM2_V1_TIMER_STEP_DOOR,
           "source order: tick asc, type desc");
     CHECK(receipt.last_map == 1, "last popped timer map switches current map");

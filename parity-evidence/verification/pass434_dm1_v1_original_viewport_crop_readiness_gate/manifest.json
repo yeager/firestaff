@@ -131,14 +131,14 @@
     ],
     "rows_all_224x136": true
   },
-  "head": "7a012851039b329da45f3c93c6d522d423c4317a",
+  "head": "59bea8fb521afbd68e1ccd0ee03e9c01c1b6a4a9",
   "not_claimed": [
     "DOSBox/live original runtime capture",
     "semantic original route promotion",
     "original-vs-Firestaff pixel parity",
     "HUD/overlay parity"
   ],
-  "repo": "/Volumes/Extern-disk/Documents/Firestaff/yeager-firestaff",
+  "repo": "/Volumes/Extern-disk/firestaff",
   "schema": "pass434_dm1_v1_original_viewport_crop_readiness_gate.v1",
   "source_audit": [
     {
@@ -201,7 +201,7 @@
   ],
   "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS",
-  "timestamp_utc": "2026-08-09T13:30:46.563220+00:00",
+  "timestamp_utc": "2026-08-12T01:38:15.548838+00:00",
   "tooling": {
     "capture_script_crop_lock": {
       "has_imagemagick_crop": true,

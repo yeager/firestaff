@@ -133,7 +133,7 @@ int main(void)
     /* ── (a) ungrouped creature: slot init + 0x21 timer ────────────── */
     memset(&rc, 0, sizeof(rc));
     CHECK(dm2_v1_caii_alloc_to_creature(&set, &dungeon, &caii, &queue,
-                                        2, 100ul, rec_handle(0),
+                                        0, 100ul, rec_handle(0),
                                         0, 0, &rc) == 1,
           "ungrouped creature allocates a CAII slot");
     CHECK(rc.valid == 1 && rc.allocated == 1 && rc.slot_index == 0,
@@ -159,7 +159,7 @@ int main(void)
           "slot byte@6 = (gametick >> 2) - 1");
     CHECK(slot[4] == (uint8_t)(100ul - 0x7ful),
           "slot byte@4 = gametick - 0x7f");
-    CHECK(rd16(slot + 0xc) == (uint16_t)(0 | (0 << 5) | (2 << 10)),
+    CHECK(rd16(slot + 0xc) == (uint16_t)(0 | (0 << 5) | (0 << 10)),
           "slot word@0xc packs x | y<<5 | map<<10");
     CHECK(slot[0x16] == 0xFF && slot[0x17] == 0xFF && slot[7] == 0,
           "slot bytes 0x16/0x17 = -1, byte@7 = 0");
@@ -172,7 +172,7 @@ int main(void)
     /* ── (b) second alloc for the same record: source early return ── */
     memset(&rc, 0, sizeof(rc));
     CHECK(dm2_v1_caii_alloc_to_creature(&set, &dungeon, &caii, &queue,
-                                        2, 101ul, rec_handle(0),
+                                        0, 101ul, rec_handle(0),
                                         0, 0, &rc) == 0,
           "record with a slot takes the source early return");
     CHECK(rc.already_allocated == 1 && rc.allocated == 0,

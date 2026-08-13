@@ -87,8 +87,8 @@ data files.
 | PC | 1.0 | DE | 🔵 | `c_dm2_pc_de/` | — | DMWeb PC page: Germany CD and Bestseller CD lines, redump BIN/CUE and CD-content archive coverage |
 | PC | 1.0 | FR | 🔵 | `c_dm2_pc_fr/` | — | DMWeb PC page: France floppy/CD/Bestseller lines and CD-content archives |
 | PC | 1.0 | Demo | 🔵 | `c_dm2_pc_demo/` | — | DMWeb PC page: five known 1995 demo builds; earliest `FIRE.EXE`/LZ91 build has no music or save/load, later `SKULL.EXE`/Watcom builds vary sound, logo, title, and order assets; 3332 items in Greatstone row |
-| Amiga | 1.0 | EN/FR/GE | 🔵 | `c_dm2_amiga/` | — | DMWeb Amiga edition page: Europe-only release with Germany/UK edition pages, six ADF/IPF floppy images but hard-disk install required, MOD music keyed by `CD.DAT`, WinUAE/Smacker video captures, 68020+ with OCS/ECS support, and Ctrl-S / Del-Help / keypad wall-ornate input table; 4630 items, 16-color |
-| Macintosh | 1.0 | EN | 🟣 | `c_dm2_mac/` | local ZIP | Authentic large English retail ZIP is read in RAM; bounded boot, media, movie, sound, MIDI, input and New Game gates pass. Complete Mac GAME_LOAD/Resume and native dynamic pointer/drag ownership remain open |
+| Amiga | 1.0 | EN/FR/GE | ✅ | `c_dm2_amiga/` | yes | Original installer archive is admitted in memory; source-owned big-endian New Game/runtime, movement, pit/stairs/DB1 and creature gates pass for English media |
+| Macintosh | 1.0 | EN | ✅ | `c_dm2_mac/` | yes | Authentic retail English ZIP is admitted through HFS/resource-fork media; source-owned big-endian New Game/runtime, movement, stairs/DB1 and combat/creature gates pass |
 | Macintosh | 1.0 | JP | 🔵 | `c_dm2_mac_jp/` | — | DMWeb edition page: Japan redump BIN/CUE CD image plus DMFiles archive; older 16-color graphics; intro animation also present on Sega CD; CD-audio tracks; `Skullkeep` resource-fork protection notes |
 | Macintosh | 1.0 | EN (demo) | 🟣 | `c_dm2_mac_demo/` | local ZIP | Authentic small First Chapter demo ZIP is read in RAM; its StuffIt DMFiles, truncated dungeon, 16-entry roster, static startup, input and New Game gates pass. The authoritative ZIP has no application fork, so dynamic Mac ownership and Resume remain open |
 | PC-9801 | 1.0 | JP | ❌ | `c_dm2_pc98/` | — | Preservation only. No DM2 scanner selection, startup, game-view or input route; four FDI disk images and the no-music/input facts remain documented. |
@@ -96,7 +96,7 @@ data files.
 | IBM PS/V | 1.0 | JP | 🔵 | `c_dm2_ibmpsv/` | — | DMWeb edition page: Victor JP v1.0 three-floppy/WinImage media; no music; IBM PS/V keypad / Alt-S / Shift-arrow input table; LZEXE `FIRE.EXE` protection notes |
 | Sega CD / Mega CD | 1.0 | EN | 🔵 | `c_dm2_segacd_en/` | — | DMWeb edition page: Europe + USA redump BIN/CUE CD images; USA also has DMFiles CD-content archive plus split data-track ISO and audio-track MP3 archives |
 | Sega CD / Mega CD | 1.0 | JP | 🔵 | `c_dm2_segacd_jp/` | — | DMWeb edition page: Japan redump BIN/CUE CD image plus DMFiles CD-content archive; same CD.DAT trigger table, but track 7 is a 15-second silent track |
-| FM-Towns | 1.0 | EN/JP | 🔵 | `c_dm2_fmtowns/` | — | DMWeb JP edition page: redump BIN/CUE CD image; 3407 items, signature 8004h; CD-audio variant with quieter tracks 2-6, silent track 8, and Ctrl-Shift-S disk menu |
+| FM-Towns | 1.0 | EN/JP | ✅ | `c_dm2_fmtowns/` | yes | Original HME-242 ZIP/disc image; M12 verifies disc, AUTOEXEC/TWANIM/TITLE/SKULL/END and the explicit PC-English text companion; M11 New Game/runtime, inventory, movement, pit/stairs/DB1 and creature gates pass |
 
 **Notes:** The PC English version is the only one that uses
 Interplay MVE animations and 256-color graphics. All other

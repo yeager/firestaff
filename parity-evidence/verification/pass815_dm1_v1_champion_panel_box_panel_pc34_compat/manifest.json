@@ -117,11 +117,11 @@
     }
   ],
   "status": "PASS815_DM1_V1_CHAMPION_PANEL_BOX_PANEL_LOCKED",
-  "timestampUtc": "2026-08-11T06:50:22.950760+00:00",
+  "timestampUtc": "2026-08-12T01:40:12.912277+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_champion_panel_box_panel_pc34_compat"
+        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_champion_panel_box_panel_pc34_compat"
       ],
       "outputTail": "dm1_v1_champion_panel_box_panel: 52/52 assertions passed",
       "passed": true,

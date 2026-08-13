@@ -494,6 +494,12 @@ instrumenterade Mednafen-binären. Gränsen är explicit och valideras till
 diagnostik med `THERON_CAPTURE_SPAWN_REGISTER_SAMPLE_LIMIT`, medan patchens
 råa standardgräns fortfarande är 2048.
 
+En separat reserv på högst 256 `$B0E5`-registerprover finns också. Den
+bevarar den exakta reguljära-spawn-ingången även när de täta
+`$C3A0`/`$CAxx`-fönstren har fyllt det vanliga fångstfönstret. Reserveringen
+är endast diagnostik och får aldrig ensamt aktivera spawn-, RNG- eller
+AI-semantik.
+
 Den senaste rena US-boot-körningen använde Track 02 MD5
 `f23601102138f87c33025877767ebf76` och System Card MD5
 `ff1a674273fe3540ccef576376407d1d`. Den verifierade 161 råa sektorspann,

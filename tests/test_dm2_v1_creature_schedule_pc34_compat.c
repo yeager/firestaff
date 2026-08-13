@@ -127,7 +127,7 @@ int main(void)
     /* ── (a) ungrouped creature: 0x21 timer, due gametick + 1 ──────── */
     memset(&rc, 0, sizeof(rc));
     CHECK(dm2_v1_creature_schedule_at(&set, &dungeon, &queue,
-                                      2, 100ul, 0, 0, &rc) == 1,
+                                      0, 100ul, 0, 0, &rc) == 1,
           "ungrouped creature cell schedules");
     CHECK(rc.valid == 1 && rc.resolved == 1 && rc.enqueued == 1,
           "receipt valid/resolved/enqueued");
@@ -136,7 +136,7 @@ int main(void)
           "word@8 == 0xffff yields a 0x21 timer");
     CHECK(rc.creature_type == 0x0C,
           "owner is the record creature-type byte@4");
-    CHECK(rc.due_tick == 101ul && rc.map_id == 2,
+    CHECK(rc.due_tick == 101ul && rc.map_id == 0,
           "due = gametick + 1 with the caller-owned map");
     CHECK(rc.replaced_existing == 0,
           "CAII slot delete stays host-owned (receipted, not simulated)");
@@ -154,7 +154,7 @@ int main(void)
               popped.actor == 0x0C,
           "queued timer carries the source type and owner");
     CHECK(popped.ticks_and_map ==
-              ((UINT32_C(2) << 24) | UINT32_C(101)),
+              UINT32_C(101),
           "queued timer carries map<<24 | due tick");
     CHECK(popped.value_a == 0,
           "setxyA payload for cell (0,0)");

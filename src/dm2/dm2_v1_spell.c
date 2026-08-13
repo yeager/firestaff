@@ -81,11 +81,18 @@ int dm2_v1_spell_type(int spell_index) {
 }
 
 int dm2_v1_spell_resolves_object_effect(int spell_index, int effect_id) {
-    (void)spell_index;
     (void)effect_id;
-    /* The old index-to-effect map was authored in Firestaff, not decoded
-     * from the DB object definitions used by CAST_SPELL_PLAYER. */
-    return DM2_OBJECT_EFFECT_NONE;
+    if (spell_index < 0 || spell_index >= DM2_MAX_SPELL_ORIGINAL) {
+        /* Extended SPELL_DEF records need their source object owner; a fixed
+         * table fallback would silently turn a custom spell into Fireball. */
+        return DM2_OBJECT_EFFECT_UNAVAILABLE;
+    }
+    /* c_events.cpp:2288-2290 / SkWinCore.cpp:27038-27096: the source spell
+     * object-effect selector is the six-bit value in w6 bits 4..9.  Keep the
+     * raw selector, including Fireball's legitimate value 0 and the summon
+     * selectors 0x31/0x34/0x35; downstream owners may still reject it when
+     * their DB14/DB4 state is unavailable. */
+    return (int)((g_spell_table[spell_index].w6 >> 4) & 0x3fu);
 }
 
 const char *dm2_v1_spell_name(int spell_index) {
@@ -108,6 +115,7 @@ const char *dm2_v1_spell_source_evidence(void) {
         "Source: skproject/SKWIN/SkWinCore.cpp:17521-17670 (CAST_SPELL_PLAYER: cast chance, cooldown)\n"
         "Source: skproject/SKWIN/SkWinCore.cpp:18159-18174 (ADD_RUNE_TO_TAIL: per-rune mana cost)\n"
         "Source: skproject/SKWIN/SkWinCore.cpp:27038-27096 (spell→OBJECT_EFFECT mapping)\n"
+        "Source field: fixed dSpellsTable w6 bits 4-9 are the object-effect selector\n"
         "DM2-new spells (not in DM1): Spell Reflector(12), AttackMinion(29), GuardMinion(30), U-HaulMinion(31), Push(32), Pull(33)\n"
         "DM2-spells removed from DM1: MagicFootprints, Petrify, RestoreHealth, SeeThroughWalls, ZoKathRa\n";
 }

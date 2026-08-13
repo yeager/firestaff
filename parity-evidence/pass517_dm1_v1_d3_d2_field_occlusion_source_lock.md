@@ -1,6 +1,6 @@
 # Pass517 DM1 V1 D3/D2 field occlusion source lock
 
-Status: passed
+Status: failed
 
 ## Primary ReDMCSB Evidence
 
@@ -47,7 +47,7 @@ Status: passed
 
 ## Verification
 
-- /Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Volumes/Extern-disk/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=1
 ~~~
 PASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c
@@ -58,7 +58,7 @@ PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c
-PASS dm1_v1_viewport_3d_source_lock
+FAIL dm1_v1_viewport_3d_source_lock failures=2
 ~~~
 
 ## Non-Claims

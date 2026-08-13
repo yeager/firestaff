@@ -71,11 +71,11 @@
     }
   ],
   "status": "PASS923_DM1_V1_G0492_LOCKED",
-  "timestampUtc": "2026-08-11T06:50:25.432500+00:00",
+  "timestampUtc": "2026-08-12T01:40:49.279465+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_graphic560_action_damage_factor_pc34_compat"
+        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_graphic560_action_damage_factor_pc34_compat"
       ],
       "outputTail": "dm1_v1_graphic560_action_damage_factor: 151/151 assertions passed",
       "passed": true,

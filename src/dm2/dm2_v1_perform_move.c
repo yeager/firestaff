@@ -38,6 +38,8 @@ int dm2_v1_DM2_PERFORM_MOVE_plan(
     out->target_square_type = request->target_square_type;
     out->target_is_door = request->target_is_door ? 1 : 0;
     out->target_door_state = request->target_door_state;
+    out->target_pit_transition_admitted =
+        request->target_pit_transition_admitted ? 1 : 0;
 
     if (!request->runtime_ready) {
         out->blocked = 1;
@@ -54,7 +56,8 @@ int dm2_v1_DM2_PERFORM_MOVE_plan(
                 request->target_square_type == DM2_SQUARE_FAKE_WALL)) {
         out->blocked = 1;
         out->block_reason = DM2_V1_PERFORM_MOVE_BLOCK_WALL;
-    } else if (!out->outdoor && request->target_square_type == 5) {
+    } else if (!out->outdoor && request->target_square_type == 5 &&
+               !out->target_pit_transition_admitted) {
         out->blocked = 1;
         out->block_reason = DM2_V1_PERFORM_MOVE_BLOCK_PIT;
     } else if (!out->outdoor && request->target_square_type == 11) {
@@ -85,6 +88,8 @@ int dm2_v1_DM2_PERFORM_MOVE_plan(
     hash = dm2_perform_move_hash_step(hash, (uint32_t)out->target_square_type);
     hash = dm2_perform_move_hash_step(hash, (uint32_t)out->target_is_door);
     hash = dm2_perform_move_hash_step(hash, (uint32_t)out->target_door_state);
+    hash = dm2_perform_move_hash_step(
+        hash, (uint32_t)out->target_pit_transition_admitted);
     hash = dm2_perform_move_hash_step(hash, (uint32_t)out->block_reason);
     hash = dm2_perform_move_hash_step(hash, (uint32_t)out->accepted);
     if (hash == 0u) {

@@ -44,6 +44,7 @@ game_owned_origin_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_ga
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
 capture_script=$repo/scripts/capture_theron_mednafen_live_trace.sh
 rng_consumer_patch_file=$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch
+vdc_io_patch_file=$repo/scripts/mednafen_1.32.1_theron_vdc_io_trace.patch
 
 if ! grep -Fq 'i:29) printf' "$capture_script" ||
    ! grep -Fq 'ii:27) printf' "$capture_script" ||
@@ -381,4 +382,11 @@ patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_consumer_rendered"
 patch -d "$scratch/source" -p1 --batch --forward <"$fifo_origin_v2_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$adpcm_fifo_ram_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$adpcm_fifo_direct_read_patch_file"
+vdc_io_rendered="$scratch/theron-vdc-io-trace.rendered.patch"
+sed \
+    -e 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
+    -e $'s/^FIRESTAFF_PATCH_VDC_WRITE_CONTEXT$/ \t       vce->WriteVDC(A \\& 0x80001FFF, V);/' \
+    -e $'s/^FIRESTAFF_PATCH_VDC_BREAK_CONTEXT$/ \t       break;/' \
+    "$vdc_io_patch_file" >"$vdc_io_rendered"
+patch -d "$scratch/source" -p1 --batch --forward <"$vdc_io_rendered"
 printf 'PASS: active Mednafen capture patches dry-run with controller, replay/host input, PCECD, main-RAM loader, FIFO-origin, and bounded e009 evidence\n'

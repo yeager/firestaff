@@ -1,10 +1,10 @@
 {
-  "binary_path": "/Volumes/Extern-disk/firestaff-claude/build/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe",
+  "binary_path": "/Volumes/Extern-disk/firestaff/build/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe",
   "claim_parity": false,
   "data_dir": "/Users/bosse/.firestaff/data/dm1",
   "data_dir_exists": true,
   "detail": "Probe exercised full4 HUD, single1 status panel, two-/three-champion intermediate cases, and all transitions against real Firestaff V1 assets.",
-  "generated_at": "2026-08-11T06:46:52.878306+00:00",
+  "generated_at": "2026-08-12T01:36:47.554558+00:00",
   "parity_claim": "none",
   "pass": "pass_dm1_v1_full_party_hud_runtime_pairing_gate",
   "pass1071_report": "parity-evidence/pass1071_dm1_v1_champion_panel_pairing_readiness.md",

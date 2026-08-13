@@ -8,7 +8,7 @@
       "id": "dm1_v1_command_movement_sensor_timing_source_lock",
       "returncode": 0,
       "summary": [
-        "dm1_v1_command_movement_sensor_timing_source_lock=pass citations=38 output=/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/dm1_v1_command_movement_sensor_timing_source_lock.json"
+        "dm1_v1_command_movement_sensor_timing_source_lock=pass citations=38 output=/Volumes/Extern-disk/firestaff/parity-evidence/verification/dm1_v1_command_movement_sensor_timing_source_lock.json"
       ]
     },
     {
@@ -19,7 +19,7 @@
       "id": "dm1_v1_party_movement_sensor_order_source_lock",
       "returncode": 0,
       "summary": [
-        "dm1_v1_party_movement_sensor_order_source_lock=pass citations=9 output=/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/dm1_v1_party_movement_sensor_order_source_lock.json"
+        "dm1_v1_party_movement_sensor_order_source_lock=pass citations=9 output=/Volumes/Extern-disk/firestaff/parity-evidence/verification/dm1_v1_party_movement_sensor_order_source_lock.json"
       ]
     },
     {
@@ -93,7 +93,7 @@
       "source": "tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c"
     }
   ],
-  "generatedAt": "2026-08-11T06:49:39.047466+00:00",
+  "generatedAt": "2026-08-12T01:38:23.525788+00:00",
   "lane": "Lane A movement/stairs/group-collision/timing only; no viewport/pass435 dependency",
   "redmcsbEvidence": [
     {

@@ -93,6 +93,14 @@ git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_vram_vce_snapshot.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_write_trace_v3.patch"
+vdc_io_patch="$repo/scripts/mednafen_1.32.1_theron_vdc_io_trace.patch"
+vdc_io_rendered="$build_root/theron-vdc-io-trace.rendered.patch"
+sed \
+    -e 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' \
+    -e $'s/^FIRESTAFF_PATCH_VDC_WRITE_CONTEXT$/ \t       vce->WriteVDC(A \\& 0x80001FFF, V);/' \
+    -e $'s/^FIRESTAFF_PATCH_VDC_BREAK_CONTEXT$/ \t       break;/' \
+    "$vdc_io_patch" > "$vdc_io_rendered"
+patch -d "$build_root/source" -p1 --batch --forward < "$vdc_io_rendered"
 
 # The FIFO-origin extension is capture-only. It carries raw LBA/offset/FIFO
 # provenance into the CD-transfer receipt; it does not assign level, object,

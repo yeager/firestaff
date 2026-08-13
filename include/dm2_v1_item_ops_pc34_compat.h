@@ -15,6 +15,7 @@
 #include <stdint.h>
 
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_champion_hud_helpers.h"
 #include "dm2_v1_party.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
 
@@ -211,6 +212,18 @@ int dm2_v1_new_game_apply_source_item_bonuses(
     DM2_V1_Party *party, const DM2_V1_RecordPoolSet *pools,
     const DM2_V1_AssetLoader *loader,
     DM2_V1_SksaveItemBonusReceipt *out_receipt);
+
+/* Source-owned PROCESS_ITEM_BONUS for a timer-owned hero/item pair.
+ * This is the c_tim_proc.cpp PROCESS_TIMER_0E bridge: the caller has already
+ * applied the temporary record type and restores it after this call.  The
+ * hero mutation and its source inventory-weight recomputation are atomic;
+ * missing record/GDAT ownership or an unowned light mutation rejects the
+ * operation. */
+int dm2_v1_process_source_item_bonus_for_timer(
+    DM2_V1_Hero *hero, int16_t hero_index, uint16_t item_ref, int16_t slot,
+    int16_t mode, const DM2_V1_RecordPoolSet *pools,
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_ProcessItemBonusReceipt *out_receipt);
 
 #ifdef __cplusplus
 }

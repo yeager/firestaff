@@ -1,6 +1,6 @@
 # Pass1071 DM1 V1 champion-panel pairing readiness
 
-Status: `BLOCKED_ORIGINAL_FOUR_CHAMPION_HUD_AND_SINGLE_STATUS_PANEL_CAPTURE_MISSING`
+Status: `FAIL_FINGERPRINT_DRIFT`
 
 This verifier fingerprints the already-tracked pass1053 original
 champion-candidate panel artifacts and the existing Firestaff V1 HUD PPMs.
@@ -17,15 +17,15 @@ It is a readiness/blocker record only and explicitly makes no parity claim.
 - pass1053 manifest status OK: `True`
 - pass1053 frame files OK: `True`
 - pass1053 crop files OK: `True`
-- Firestaff V1 HUD PPMs OK: `True`
-- Overall fingerprint OK: `True`
+- Firestaff V1 HUD PPMs OK: `False`
+- Overall fingerprint OK: `False`
 
 ## Firestaff PPMs
 
 | File | Dimensions | SHA256 | Status |
 |---|---:|---|---|
-| `verification-m11/lane3-inventory-followup-20260428-0914/party_hud_four_champions_vga.ppm` | `[320, 200]` | `d995c4991e5b973ea98c7eedd2d13bdca0e624061983da99131ea5110ddd17a9` | OK |
-| `verification-m11/lane3-inventory-followup-20260428-0914/party_hud_statusbox_gfx_vga.ppm` | `[320, 200]` | `860bc022785b2567eedfa552a99e103d02c573b432446c679a273d96d0a18363` | OK |
+| `verification-m11/lane3-inventory-followup-20260428-0914/party_hud_four_champions_vga.ppm` | `None` | `None` | FAIL |
+| `verification-m11/lane3-inventory-followup-20260428-0914/party_hud_statusbox_gfx_vga.ppm` | `None` | `None` | FAIL |
 
 ## Original Frames
 

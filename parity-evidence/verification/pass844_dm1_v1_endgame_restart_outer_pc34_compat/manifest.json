@@ -33,11 +33,11 @@
     }
   ],
   "status": "PASS844_DM1_V1_ENDGAME_RESTART_OUTER_LOCKED",
-  "timestampUtc": "2026-08-11T06:50:29.487490+00:00",
+  "timestampUtc": "2026-08-12T01:40:13.746870+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_endgame_restart_outer_pc34_compat"
+        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_endgame_restart_outer_pc34_compat"
       ],
       "outputTail": "dm1_v1_endgame_restart_outer: 53/53 assertions passed",
       "passed": true,

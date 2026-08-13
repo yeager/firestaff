@@ -33,6 +33,9 @@ typedef struct {
     int target_square_type;
     int target_is_door;
     int target_door_state;
+    /* Source-owned open pit transition has resolved a destination through
+     * DM2_LOCATE_OTHER_LEVEL; it is not ordinary pit passability. */
+    int target_pit_transition_admitted;
 } DM2_V1_PerformMoveRequest;
 
 typedef struct {
@@ -53,6 +56,7 @@ typedef struct {
     int target_square_type;
     int target_is_door;
     int target_door_state;
+    int target_pit_transition_admitted;
     uint32_t movement_hash;
 } DM2_V1_PerformMoveReceipt;
 

@@ -35,6 +35,236 @@ static int is_loose_fmtowns_root(const char *root)
 
 static int failures;
 
+static int exercise_authentic_active_creature(
+    DM2_V1_BootProfile *profile, const DM2_V1_DungeonData *dungeon,
+    uint8_t *framebuffer)
+{
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
+    if (!profile || !dungeon || !framebuffer) return 0;
+    for (int map = 0; map < dungeon->level_count; ++map) {
+        DM2_V1_G1CreatureMapChipRuntimeReceipt materials;
+        int base_x = dungeon->level_widths[map] > 1 ? 1 : 0;
+        int base_y = dungeon->level_heights[map] > 1 ? 1 : 0;
+        dm2_v1_runtime_set_outdoor(dm2_v1_dungeon_is_outdoor(dungeon, map));
+        dm2_v1_runtime_set_position(map, base_x, base_y, 0);
+        memset(&materials, 0, sizeof(materials));
+        if (!dm2_v1_runtime_g1_creature_map_chip_receipt(&materials) ||
+            !materials.valid)
+            continue;
+        for (int i = 0; i < materials.material_count; ++i) {
+            const DM2_V1_G1CreatureMapChipMaterial *material =
+                &materials.materials[i];
+            for (int dir = 0; dir < 4; ++dir) {
+                int px = material->x - dx[dir];
+                int py = material->y - dy[dir];
+                    DM2_V1_BootRuntimeRenderReceipt render;
+                    DM2_V1_RuntimeCreatureRenderReceipt creature;
+                    if (px < 0 || py < 0 ||
+                        px >= dungeon->level_widths[map] ||
+                        py >= dungeon->level_heights[map])
+                        continue;
+                    dm2_v1_runtime_set_outdoor(
+                        dm2_v1_dungeon_is_outdoor(dungeon, map));
+                    dm2_v1_runtime_set_position(map, px, py, dir);
+                    memset(framebuffer, 0, M11_FB_BYTES);
+                    memset(&render, 0, sizeof(render));
+                    memset(&creature, 0, sizeof(creature));
+                    (void)dm2_v1_boot_runtime_render_frame(
+                        profile, framebuffer, M11_FB_WIDTH, M11_FB_WIDTH,
+                        M11_FB_HEIGHT, NULL, NULL, &render);
+                    if (!dm2_v1_runtime_last_creature_render_receipt(
+                                &creature))
+                        continue;
+                    if (render.render_result == 0 && render.v1_succeeded &&
+                        creature.valid && creature.source_kind == 2 &&
+                        creature.thing_handle == material->object_id &&
+                        creature.asset_blit_ready && !creature.fallback_drawn &&
+                        creature.gdat_index != 0) {
+                        DM2_V1_CreatureScheduleReceipt schedule;
+                        DM2_V1_ThinkCreatureReceipt think;
+                        memset(&schedule, 0, sizeof(schedule));
+                        memset(&think, 0, sizeof(think));
+                        if (!dm2_v1_runtime_schedule_creature_at(
+                                    map, material->x, material->y, &schedule) ||
+                            !schedule.valid) {
+                            continue;
+                        }
+                        dm2_v1_runtime_tick();
+                    if (!dm2_v1_runtime_think_creature_receipt(&think) ||
+                            !think.valid || !think.resolved) {
+                            continue;
+                        }
+                        printf("  active FM Towns creature DB4/F9 map %d,%d,%d type %d GDAT %d\n",
+                               map, material->x, material->y,
+                               creature.creature_type, creature.gdat_index);
+                        printf("  active FM Towns creature think timer %02x resolved record %d body %s\n",
+                               schedule.timer_type, think.last_record,
+                               think.body_consumed ? "consumed" : "fail-closed");
+                        printf("  FM Towns dynamic path attempts %d admissions %d\n",
+                               dm2_v1_runtime_dynamic_path_attempts(),
+                               dm2_v1_runtime_dynamic_path_admissions());
+                        printf("  FM Towns dynamic path last failure %d\n",
+                               dm2_v1_runtime_dynamic_path_last_failure());
+                        printf("  FM Towns dynamic move queues %d\n",
+                               dm2_v1_runtime_dynamic_move_queue_admissions());
+                        for (int tick = 0; tick < 4; ++tick)
+                            dm2_v1_runtime_tick();
+                        printf("  FM Towns dynamic move timers %d successes %d\n",
+                               dm2_v1_runtime_dynamic_move_timer_consumptions(),
+                               dm2_v1_runtime_dynamic_move_successes());
+                        return dm2_v1_runtime_dynamic_path_admissions() > 0 &&
+                               dm2_v1_runtime_dynamic_move_queue_admissions() > 0 &&
+                               dm2_v1_runtime_dynamic_move_timer_consumptions() > 0 &&
+                               dm2_v1_runtime_dynamic_move_successes() > 0;
+                    }
+            }
+        }
+    }
+    return 0;
+}
+
+static int exercise_authentic_db1(
+    DM2_V1_BootProfile *profile, const DM2_V1_DungeonData *dungeon)
+{
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
+    if (!profile || !dungeon || !dungeon->record_graph_complete) return 0;
+    for (int map = 0; map < dungeon->level_count; ++map) {
+        for (int y = 0; y < dungeon->level_heights[map]; ++y) {
+            for (int x = 0; x < dungeon->level_widths[map]; ++x) {
+                int raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+                int first, type = -1;
+                const uint8_t *record;
+                int w2, w4, dest_map, dest_x, dest_y, rotation, rotation_type;
+                if (raw < 0 || dm2_v1_dungeon_get_square_type(dungeon, map, x, y) != 5 ||
+                    (raw & 0x08) == 0)
+                    continue;
+                first = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+                if (first < 0 || (((unsigned)first >> 10) & 0xfu) != 1u)
+                    continue;
+                record = dm2_v1_dungeon_get_thing_record(
+                    dungeon, (uint16_t)first, &type, NULL, NULL);
+                if (!record || type != 1) continue;
+                w2 = dm2_v1_dungeon_read_record_u16(dungeon, record + 2);
+                w4 = dm2_v1_dungeon_read_record_u16(dungeon, record + 4);
+                dest_x = w2 & 0x1f; dest_y = (w2 >> 5) & 0x1f;
+                dest_map = (w4 >> 8) & 0xff;
+                rotation = (w2 >> 10) & 3; rotation_type = (w2 >> 12) & 1;
+                if (dest_map < 0 || dest_map >= dungeon->level_count ||
+                    dest_x >= dungeon->level_widths[dest_map] ||
+                    dest_y >= dungeon->level_heights[dest_map] ||
+                    (w2 & 0x6000) != 0x4000)
+                    continue;
+                for (int dir = 0; dir < 4; ++dir) {
+                    int px = x - dx[dir], py = y - dy[dir];
+                    DM2_V1_BootRuntimeReceipt receipt;
+                    if (px < 0 || py < 0 || px >= dungeon->level_widths[map] ||
+                        py >= dungeon->level_heights[map] ||
+                        dm2_v1_dungeon_get_square_type(dungeon, map, px, py) == 0)
+                        continue;
+                    dm2_v1_runtime_set_position(map, px, py, dir);
+                    dm2_v1_runtime_set_outdoor(dm2_v1_dungeon_is_outdoor(dungeon, map));
+                    dm2_v1_runtime_tick();
+                    memset(&receipt, 0, sizeof(receipt));
+                    if (dm2_v1_runtime_move(dir) != 0 ||
+                        !dm2_v1_boot_runtime_capture(profile, &receipt)) continue;
+                    if (receipt.current_level == dest_map && receipt.party_x == dest_x &&
+                        receipt.party_y == dest_y && receipt.party_dir ==
+                            (rotation_type ? rotation : ((dir + rotation) & 3))) {
+                        printf("  authentic FM Towns DB1 transition map %d,%d,%d -> %d,%d,%d\n",
+                               map, x, y, dest_map, dest_x, dest_y);
+                        return 1;
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+static int exercise_authentic_pit(
+    DM2_V1_BootProfile *profile, const DM2_V1_DungeonData *dungeon)
+{
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
+    if (!profile || !dungeon || !dungeon->record_graph_complete) return 0;
+    for (int map = 0; map < dungeon->level_count; ++map) {
+        for (int y = 0; y < dungeon->level_heights[map]; ++y) {
+            for (int x = 0; x < dungeon->level_widths[map]; ++x) {
+                int raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+                if (raw < 0 || dm2_v1_dungeon_get_square_type(dungeon, map, x, y) != 2 ||
+                    (raw & 0x08) == 0 || (raw & 0x01) != 0)
+                    continue;
+                for (int dir = 0; dir < 4; ++dir) {
+                    int px = x - dx[dir];
+                    int py = y - dy[dir];
+                    DM2_V1_BootRuntimeReceipt receipt;
+                    if (px < 0 || py < 0 || px >= dungeon->level_widths[map] ||
+                        py >= dungeon->level_heights[map] ||
+                        dm2_v1_dungeon_get_square_type(dungeon, map, px, py) == 0)
+                        continue;
+                    dm2_v1_runtime_set_position(map, px, py, dir);
+                    dm2_v1_runtime_set_outdoor(
+                        dm2_v1_dungeon_is_outdoor(dungeon, map));
+                    dm2_v1_runtime_tick();
+                    if (dm2_v1_runtime_move(dir) != 0 ||
+                        !dm2_v1_boot_runtime_capture(profile, &receipt) ||
+                        receipt.current_level == map)
+                        continue;
+                    printf("  authentic FM Towns pit transition map %d,%d,%d -> %d,%d,%d\n",
+                           map, px, py, receipt.current_level,
+                           receipt.party_x, receipt.party_y);
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+static int exercise_authentic_stairs(
+    DM2_V1_BootProfile *profile, const DM2_V1_DungeonData *dungeon)
+{
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
+    if (!profile || !dungeon || !dungeon->record_graph_complete) return 0;
+    for (int map = 0; map < dungeon->level_count; ++map) {
+        for (int y = 0; y < dungeon->level_heights[map]; ++y) {
+            for (int x = 0; x < dungeon->level_widths[map]; ++x) {
+                int raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+                if (raw < 0 || dm2_v1_dungeon_get_square_type(
+                        dungeon, map, x, y) != 3)
+                    continue;
+                for (int dir = 0; dir < 4; ++dir) {
+                    int px = x - dx[dir], py = y - dy[dir];
+                    DM2_V1_BootRuntimeReceipt receipt;
+                    if (px < 0 || py < 0 ||
+                        px >= dungeon->level_widths[map] ||
+                        py >= dungeon->level_heights[map] ||
+                        dm2_v1_dungeon_get_square_type(
+                            dungeon, map, px, py) == 0)
+                        continue;
+                    dm2_v1_runtime_set_position(map, px, py, dir);
+                    dm2_v1_runtime_set_outdoor(
+                        dm2_v1_dungeon_is_outdoor(dungeon, map));
+                    dm2_v1_runtime_tick();
+                    memset(&receipt, 0, sizeof(receipt));
+                    if (dm2_v1_runtime_move(dir) == 0 &&
+                        dm2_v1_boot_runtime_capture(profile, &receipt) &&
+                        receipt.current_level != map) {
+                        printf("  authentic FM Towns stairs transition map %d,%d,%d -> %d,%d,%d\n",
+                               map, x, y, receipt.current_level,
+                               receipt.party_x, receipt.party_y);
+                        return 1;
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 static void check(int condition, const char *message)
 {
     if (!condition) {
@@ -124,6 +354,7 @@ int main(void)
     check(view.dm2FmtownsTitleFinished && view.dm2State.startup_menu_active,
           "FM Towns title reaches the source SKULL menu boundary");
     memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_AdvanceIdleTick(&view);
     M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
 
     memset(&layout, 0, sizeof(layout));
@@ -143,6 +374,12 @@ int main(void)
               &view, x, y, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
               M11_GAME_INPUT_REDRAW,
           "FM Towns NEW GAME dispatches through the source pointer route");
+    check(view.dm2State.startup_menu_active && !view.dm2State.level_loaded,
+          "FM Towns NEW GAME enters source GAME_LOAD preselection");
+    check(M11_GameView_HandlePointerButton(
+              &view, 100, 60, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+              M11_GAME_INPUT_REDRAW,
+          "FM Towns source mirror pointer confirms the prepared champion");
     check(!view.dm2State.startup_menu_active && view.dm2State.level_loaded,
           "FM Towns NEW GAME closes the menu only after GAME_LOAD commit");
     memset(&runtime_receipt, 0, sizeof(runtime_receipt));
@@ -659,6 +896,45 @@ int main(void)
                   "DM2 viewport C080 does not fall through to DM1 interaction");
         }
     }
+    check(exercise_authentic_pit(
+              (DM2_V1_BootProfile *)view.dm2BootProfile,
+              (const DM2_V1_DungeonData *)
+                  ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data),
+          "FM Towns commits an authentic open-pit transition");
+    check(exercise_authentic_stairs(
+              (DM2_V1_BootProfile *)view.dm2BootProfile,
+              (const DM2_V1_DungeonData *)
+                  ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data),
+          "FM Towns commits an authentic stairs transition");
+    check(exercise_authentic_db1(
+              (DM2_V1_BootProfile *)view.dm2BootProfile,
+              (const DM2_V1_DungeonData *)
+                  ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data),
+          "FM Towns commits an authentic DB1 transition with rotation");
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+    {
+        size_t post_teleport_pixels = 0u;
+        DM2_V1_BootRuntimeRenderReceipt post_render;
+        memset(&post_render, 0, sizeof(post_render));
+        (void)dm2_v1_boot_runtime_render_frame(
+            (DM2_V1_BootProfile *)view.dm2BootProfile, framebuffer,
+            M11_FB_WIDTH, M11_FB_WIDTH, M11_FB_HEIGHT, NULL, NULL,
+            &post_render);
+        if (post_render.render_result != 0 || !post_render.v1_succeeded)
+            fprintf(stderr, "  FM post-teleport render result=%d v1=%d\n",
+                    post_render.render_result, post_render.v1_succeeded);
+        for (size_t i = 0u; i < sizeof(framebuffer); ++i)
+            if (framebuffer[i] != 0u) ++post_teleport_pixels;
+        check(post_teleport_pixels > 0u,
+              "FM Towns renders a source-owned frame after DB1 map handoff");
+    }
+    check(exercise_authentic_active_creature(
+              (DM2_V1_BootProfile *)view.dm2BootProfile,
+              (const DM2_V1_DungeonData *)
+                  ((DM2_V1_BootProfile *)view.dm2BootProfile)->dungeon_data,
+              framebuffer),
+          "FM Towns active M11 consumes an authentic DB4/F9 creature");
     M11_GameView_Shutdown(&view);
     if (failures) return 1;
     puts("PASS: DM2 FM Towns M11 NEW GAME reaches the source runtime");

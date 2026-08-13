@@ -100,11 +100,11 @@
     }
   ],
   "status": "PASS834_DM1_V1_INDIRECT_STOP_EXPIRING_EVENT_LOCKED",
-  "timestampUtc": "2026-08-11T06:50:23.904842+00:00",
+  "timestampUtc": "2026-08-12T01:40:13.349631+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_indirect_stop_expiring_event_pc34_compat"
+        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_indirect_stop_expiring_event_pc34_compat"
       ],
       "outputTail": "dm1_v1_indirect_stop_expiring_event: 13/13 assertions passed",
       "passed": true,

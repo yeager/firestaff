@@ -73,15 +73,15 @@
     }
   ],
   "completionImpact": "DM1 V1 verified completion increases from 56/100 to 57/100 by crediting one additional viewport_ui_render point for pass375's ReDMCSB F0115 after-all-packed-cells deferred explosion pass.",
-  "head": "69530d9527f27f558fa4c71e443b64cbb41570e5",
+  "head": "59bea8fb521afbd68e1ccd0ee03e9c01c1b6a4a9",
   "notClaimed": [
     "pixel-perfect viewport parity",
     "representative original overlay regression",
     "full object/creature/projectile gameplay parity",
     "original DOS runtime explosion overlay comparison"
   ],
-  "repo": "/Volumes/Extern-disk/firestaff-claude",
+  "repo": "/Volumes/Extern-disk/firestaff",
   "schema": "pass376_dm1_v1_completion_deferred_explosion_credit.v1",
   "status": "PASS376_DM1_V1_DEFERRED_EXPLOSION_COMPLETION_CREDIT_PROVED",
-  "timestampUtc": "2026-08-11T06:49:41.010271+00:00"
+  "timestampUtc": "2026-08-12T01:36:46.713432+00:00"
 }

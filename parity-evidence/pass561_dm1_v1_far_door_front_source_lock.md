@@ -1,6 +1,6 @@
 # Pass561 DM1 V1 far door-front source lock
 
-Status: passed
+Status: failed
 
 Claim: D3L2 and mirrored D3R2 front-door branches use ReDMCSB's two-pass far door-front order: rear F0115 pass, far F0111 door, then front F0115 pass.
 
@@ -41,7 +41,7 @@ Claim: D3L2 and mirrored D3R2 front-door branches use ReDMCSB's two-pass far doo
 
 ## Verification
 
-- /Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Volumes/Extern-disk/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=1
 ~~~
 PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -56,10 +56,10 @@ PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c
-PASS dm1_v1_viewport_3d_source_lock
+FAIL dm1_v1_viewport_3d_source_lock failures=2
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-claude/tools/verify_pass561_dm1_v1_far_door_front_source_lock.py --check-only: rc=0
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff/tools/verify_pass561_dm1_v1_far_door_front_source_lock.py --check-only: rc=0
 ~~~
 PASS pass561 check-only
 ~~~

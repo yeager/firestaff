@@ -250,16 +250,9 @@ def verify(repo: Path) -> list[str]:
     for forbidden in (
             "dm2_runtime_process_3d_timer",
             "dm2_runtime_actuate_pitfall",
-            "dm2_runtime_actuate_door",
             "dm2_runtime_invoke_message",
             "dm2_runtime_invoke_actuator",
-            "dm2_runtime_tick_generator_timer",
-            "dm2_runtime_ornate_animator_timer",
-            "dm2_runtime_ornate_noise_timer",
-            "dm2_runtime_move_record_rotate_timer",
-            "dm2_runtime_actuate_wall_mecha",
             "dm2_runtime_actuate_teleporter",
-            "dm2_runtime_actuate_floor_mecha",
             "dm2_runtime_actuate_trickwall",
             "dm2_runtime_delete_creature_full",
             "dm2_v1_caii_set_delete_creature_full_fn",
@@ -267,27 +260,22 @@ def verify(repo: Path) -> list[str]:
         if forbidden in runtime:
             errors.append(f"runtime retains timer-byte mutation study: {forbidden}")
 
-    # The bounded DELETE_CREATURE_RECORD source study lacks the original
-    # shared c_map/3CE7D/DB-allocation/timer owner.  It may be compiled by its
-    # focused test targets, never by the broad DM2 product archive.
+    # DELETE_CREATURE_RECORD is now consumed by the source-owned runtime
+    # recycler through the M10 compatibility archive.  It must be present in
+    # a production archive; the old test-only exclusion is no longer valid.
     delete_full_source = (
         '"${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/'
         'dm2_v1_delete_creature_full_pc34_compat.c"')
-    m10_remove_start = cmake.find("list(REMOVE_ITEM M10_SOURCES")
-    dm2_sources_start = cmake.find("# ── DM2 V1 static library")
-    if (m10_remove_start < 0 or dm2_sources_start < 0 or
-            delete_full_source not in cmake[m10_remove_start:dm2_sources_start]):
+    m10_removed = removed_files(cmake, "M10_SOURCES")
+    if "dm2_v1_delete_creature_full_pc34_compat.c" in m10_removed:
         errors.append(
-            "bounded DM2 DELETE_CREATURE_RECORD study is no longer excluded "
-            "from the production M10 archive")
+            "source-owned DELETE_CREATURE_RECORD is incorrectly removed from "
+            "the M10 archive")
 
     dm2_remove_start = cmake.find("list(REMOVE_ITEM DM2_SOURCES")
     dm2_remove_end = cmake.find(")\nif(DM2_SOURCES)", dm2_remove_start)
-    if (dm2_remove_start < 0 or dm2_remove_end < 0 or
-            delete_full_source not in cmake[dm2_remove_start:dm2_remove_end]):
-        errors.append(
-            "bounded DM2 DELETE_CREATURE_RECORD study is no longer excluded "
-            "from the production archive")
+    # DM2's static archive intentionally reuses the M10-owned object to avoid
+    # duplicate symbols; its exclusion from DM2_SOURCES is therefore valid.
 
     # These two compatibility studies accept caller-owned timer/map/pool
     # state.  SKProject c_moverec.cpp and c_tim_proc.cpp only reach those

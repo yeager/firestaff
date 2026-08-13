@@ -21,6 +21,7 @@
 #include "dm2_v1_creature.h"
 #include "dm2_v1_data_tables_pc34_compat.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_record_pool_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,6 +53,12 @@ typedef struct {
 int dm2_v1_caii_source_owner_init(DM2_V1_CaiiSourceOwner *owner,
                                   const DM2_V1_AssetLoader *loader,
                                   const DM2_V1_DungeonData *dungeon);
+/* Equivalent admission when SKSAVE has already materialized its private
+ * mutable DB4 pool. This keeps the AI table source-owned without rebuilding
+ * a File_header DungeonData object from a raw-save receipt. */
+int dm2_v1_caii_source_owner_init_from_record_pool(
+    DM2_V1_CaiiSourceOwner *owner, const DM2_V1_AssetLoader *loader,
+    const DM2_V1_RecordPool *db4);
 /* Clone the retained, source-derived AI table and DB4 identity arrays.  This
  * is for a private GAME_LOAD candidate: its mutable DB4 pool may no longer
  * be reconstructed from DUNGEON.DAT after RESET_CAII/FILL_CAII have run.

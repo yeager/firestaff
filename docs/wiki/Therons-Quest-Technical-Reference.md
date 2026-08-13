@@ -1,6 +1,6 @@
 # Theron's Quest Technical Reference
 
-> **Status reviewed 2026-08-08.** JP/US Track 02 identity and several loader
+> **Status reviewed 2026-08-12.** JP/US Track 02 identity and several loader
 > receipts are real-data verified. Game-owned dungeon handoff, object/level
 > semantics and bitmap/palette binding remain open. The verified startup
 > boundary does not establish the Firestaff `$2600` consumer or gameplay
@@ -84,6 +84,17 @@ FIRESTAFF_THERON_TRACK02_JP_BIN="/path/to/jp-track02.bin" \
 
 Open technical work remains semantic binding for later loader records, object
 tables, non-startup levels, original SRM bodies, and packaged-app capture.
+
+## Dungeon Text Boundary
+
+The seven US Track 02 dungeon-text spans are retained directly from the real
+disc data. Firestaff verifies their source word counts and diagnostic
+terminator counts in a release-build-safe regression, but publishes none as
+world or UI text: every span has unresolved five-bit control glyphs. A
+cross-check against DMBuilder's source confirms the same offsets and sizes,
+not the PC Engine renderer or its control-code semantics. A future text
+route requires an executing HuC6280 consumer plus a source payload join; host
+text and guessed scroll markup are deliberately excluded.
 
 For strict CUE/record handling and Stage 2/3 receipts, see [Theron's Quest
 Track 02 Internals](Therons-Quest-Track02-Internals).

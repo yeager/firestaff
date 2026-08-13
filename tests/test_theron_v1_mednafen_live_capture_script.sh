@@ -89,6 +89,13 @@ if ! grep -Fq 'mednafen_1.32.1_theron_vram_vce_snapshot.patch' "$build_script" |
     printf 'FAIL: live capture must retain authentic VDC VRAM and VCE palette snapshots\n' >&2
     exit 1
 fi
+if ! grep -Fq 'mednafen_1.32.1_theron_vdc_io_trace.patch' "$build_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_VDC_IO_TRACE="$vdc_io_trace"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_VDC_IO_TRACE_V1' "$script" ||
+   ! grep -Fq 'writer_physical_pc=%06x' "$repo/scripts/mednafen_1.32.1_theron_vdc_io_trace.patch"; then
+    printf 'FAIL: live capture must retain the side-effect-free VDC I/O writer trace\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'mednafen_1.32.1_theron_main_ram_e009_register_trace.patch' "$build_script" ||
    ! grep -Fq 'main_ram_e009_register_writes=%s' "$script"; then
     printf 'FAIL: capture must retain bounded main-RAM e009 register-write provenance\n' >&2
@@ -272,6 +279,8 @@ if ! grep -Fq 'spawn_consumer_read sequence=%u logical_address=%04x physical_add
     exit 1
 fi
 if ! grep -Fq 'spawn_consumer_registers sequence=%u pc=%04x physical_pc=%08x' "$irq2_patch" ||
+   ! grep -Fq 'TheronIrq2TraceSpawnEntryB0E5SampleLimit = 256' "$irq2_patch" ||
+   ! grep -Fq 'logical_pc == 0xb0e5 &&' "$irq2_patch" ||
    ! grep -Fq 'FIRESTAFF_THERON_SPAWN_REGISTER_TRACE="$spawn_register_trace"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_SPAWN_REGISTER_SAMPLE_LIMIT=' "$script" ||
    ! grep -Fq 'spawn_register_samples=%s' "$script"; then

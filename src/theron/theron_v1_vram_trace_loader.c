@@ -179,7 +179,12 @@ int theron_v1_vram_trace_load_known_capture_files(
          * this run is intentionally negative, so this pair authorizes only
          * the complete source VDC/VCE screen route, not level or gameplay
          * ownership. */
-        {0xa449538au, 0xea83f117u}
+        {0xa449538au, 0xea83f117u},
+        /* 2026-08-13 authenticated CUE/state replay through the patched
+         * Mednafen capture producer.  This is a distinct live VRAM image
+         * paired with the already admitted source VCE bank; it remains a
+         * screen-space-only route. */
+        {0x8165c4d4u, 0xea83f117u}
     };
 
     if (!vp || !vram_path || !vce_path) return -1;

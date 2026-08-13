@@ -22,6 +22,9 @@
 
 #include <stdint.h>
 
+#include "dm2_v1_caii_alloc_pc34_compat.h"
+#include "dm2_v1_dungeon_loader.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -132,6 +135,22 @@ typedef struct {
 int dm2_v1_calc_player_attack_damage_receipt(
     const DM2_V1_CalcAttackDamageRequest *request,
     DM2_V1_CalcAttackDamageReceipt *receipt);
+
+/* Source-owned bridge for the live party→creature route.  Keeping the
+ * caller-authored damage receipt and the CAII mutation in this module lets
+ * the runtime bind only the authenticated request, not the fixture seam. */
+int dm2_v1_combat_attack_creature_source(
+    const DM2_V1_CalcAttackDamageRequest *request,
+    DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    DM2_V1_DropRng *rng,
+    int map_id,
+    unsigned long game_tick,
+    int x, int y,
+    int target_x, int target_y,
+    DM2_V1_CaiiAttackReceipt *receipt);
 
 int dm2_v1_wound_player_receipt(
     const DM2_V1_WoundPlayerRequest *request,

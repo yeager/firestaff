@@ -57,7 +57,12 @@ static void build_synthetic(DM2_V1_RecordPoolSet *set)
     set->pools[4].record_count = 1;
     set->pools[4].source_base = 44;
     set->pools[4].bytes = calloc(1, 16);
+    set->pools[14].record_size = 8;
+    set->pools[14].record_count = 1;
+    set->pools[14].source_base = 60;
+    set->pools[14].bytes = calloc(1, 8);
     set->valid = 1;
+    set->record_graph_complete = 1;
 }
 
 static int16_t mk_handle(int pool, int index)
@@ -171,6 +176,16 @@ static void test_recycle_scan_traversal(void)
           link == (uint16_t)DM2_V1_RECORD_HANDLE_END,
           "DB2 recycler preserves source-protected map text");
 
+    /* OBJECT_NULL is not an empty-chain terminator.  The read-only scan must
+     * reject a malformed tail before it can report any recycler state. */
+    wr16(set.pools[2].bytes + 0u, (int16_t)DM2_V1_RECORD_HANDLE_NULL);
+    owner.recycle_scan_map[2] = 0;
+    rc = dm2_v1_sksave_map_owner_recycle_scan(&owner, &set, 2, -1,
+                                              &receipt, &link);
+    CHECK(rc == 0 && receipt.valid == 0 &&
+              link == (uint16_t)DM2_V1_RECORD_HANDLE_END,
+          "recycle scan rejects a mid-chain OBJECT_NULL tail");
+
     dm2_v1_record_pool_set_free(&set);
     printf("  recycle scan traversal OK\n");
 }
@@ -186,13 +201,26 @@ static void test_private_db0_recycler_candidate(void)
     DM2_V1_SksaveGameLoadOwner game_owner;
     DM2_V1_RecordPoolSet set;
     DM2_V1_SksaveDb0RecyclerCandidate candidate;
-    uint16_t ground[4];
-    uint16_t columns[4] = { 0u, 1u, 2u, 3u };
-    uint8_t tiles[4] = { 0x10u, 0x10u, 0x10u, 0x10u };
+    uint16_t *ground = calloc(4u, sizeof(*ground));
+    uint16_t *columns = calloc(4u, sizeof(*columns));
+    uint8_t *tiles = calloc(4u, sizeof(*tiles));
     uint8_t cursors_before[18];
     uint16_t ground_before[4];
 
     build_synthetic(&set);
+    CHECK(ground != NULL && columns != NULL && tiles != NULL,
+          "private recycler fixture allocates map-owner storage");
+    if (!ground || !columns || !tiles) {
+        dm2_v1_record_pool_set_free(&set);
+        free(ground);
+        free(columns);
+        free(tiles);
+        return;
+    }
+    for (int i = 0; i < 4; ++i) {
+        columns[i] = (uint16_t)i;
+        tiles[i] = 0x10u;
+    }
     memset(&dungeon, 0, sizeof(dungeon));
     dungeon.valid = 1;
     dungeon.map_count = 4;
@@ -217,7 +245,8 @@ static void test_private_db0_recycler_candidate(void)
     memset(&game_owner, 0, sizeof(game_owner));
     game_owner.valid = 1;
     game_owner.map_owner = map_owner;
-    game_owner.record_pools = set;
+    CHECK(dm2_v1_record_pool_set_clone(&game_owner.record_pools, &set),
+          "private recycler fixture clones its source pool owner");
     game_owner.recycler_context.valid = 1;
     game_owner.recycler_context.map_count = 4u;
     game_owner.recycler_context.current_map = 1u;
@@ -258,11 +287,11 @@ static void test_private_db0_recycler_candidate(void)
 
     /* DB3 table1d324c stops the tile chain before its following DB0 link. */
     ground[0] = (uint16_t)mk_handle(3, 0);
-    wr16(set.pools[3].bytes, mk_handle(0, 1));
-    wr16(set.pools[3].bytes + 2u, 1); /* table1d324c subtype 1 blocks */
-    wr16(set.pools[0].bytes + 4u, (int16_t)DM2_V1_RECORD_HANDLE_END);
+    wr16(game_owner.record_pools.pools[3].bytes, mk_handle(0, 1));
+    wr16(game_owner.record_pools.pools[3].bytes + 2u, 1); /* table1d324c subtype 1 blocks */
+    wr16(game_owner.record_pools.pools[0].bytes + 4u, (int16_t)DM2_V1_RECORD_HANDLE_END);
     ground[2] = (uint16_t)mk_handle(0, 2);
-    wr16(set.pools[0].bytes + 8u, (int16_t)DM2_V1_RECORD_HANDLE_END);
+    wr16(game_owner.record_pools.pools[0].bytes + 8u, (int16_t)DM2_V1_RECORD_HANDLE_END);
     memset(&candidate, 0, sizeof(candidate));
     CHECK(dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
               &game_owner, &candidate) && candidate.found &&
@@ -272,8 +301,8 @@ static void test_private_db0_recycler_candidate(void)
 
     /* Protected map text similarly ends its tile chain before DB0. */
     ground[0] = (uint16_t)mk_handle(2, 0);
-    wr16(set.pools[2].bytes, mk_handle(0, 1));
-    wr16(set.pools[2].bytes + 2u, (int16_t)(0x0002u | (4u << 11)));
+    wr16(game_owner.record_pools.pools[2].bytes, mk_handle(0, 1));
+    wr16(game_owner.record_pools.pools[2].bytes + 2u, (int16_t)(0x0002u | (4u << 11)));
     memset(&candidate, 0, sizeof(candidate));
     CHECK(dm2_v1_sksave_game_load_owner_db0_recycler_candidate(
               &game_owner, &candidate) && candidate.found &&
@@ -285,8 +314,8 @@ static void test_private_db0_recycler_candidate(void)
      * the runtime owns DELETE_CREATURE_RECORD. */
     ground[0] = (uint16_t)mk_handle(4, 0);
     ground[2] = (uint16_t)DM2_V1_RECORD_HANDLE_END;
-    wr16(set.pools[4].bytes, mk_handle(0, 1));
-    set.pools[4].bytes[4] = 0x42u;
+    wr16(game_owner.record_pools.pools[4].bytes, mk_handle(0, 1));
+    game_owner.record_pools.pools[4].bytes[4] = 0x42u;
     game_owner.retained_creature_ai_valid[0x42u] = 1u;
     game_owner.retained_creature_ai_flags[0x42u] = 1u;
     memset(&candidate, 0, sizeof(candidate));
@@ -296,6 +325,92 @@ static void test_private_db0_recycler_candidate(void)
               candidate.static_possession_descents == 1u,
           "private DB0 recycler descends only retained static creature possessions");
 
+    /* DB0's source direct-return path is now committed only inside a cloned
+     * private owner: the selected record is cleared and the source cursor is
+     * advanced, while Resume remains blocked. */
+    /* Keep the selected DB0 behind a retained static DB4 predecessor. This
+     * is the case that catches publishing an uncut pool clone: the live
+     * c_map cut must be committed with the same pool graph. */
+    ground[0] = (uint16_t)mk_handle(4, 0);
+    ground[2] = (uint16_t)DM2_V1_RECORD_HANDLE_END;
+    wr16(game_owner.record_pools.pools[4].bytes, mk_handle(0, 0));
+    game_owner.record_pools.pools[4].bytes[4] = 0x42u;
+    game_owner.retained_creature_ai_valid[0x42u] = 1u;
+    game_owner.retained_creature_ai_flags[0x42u] = 1u;
+    wr16(game_owner.record_pools.pools[0].bytes, (int16_t)DM2_V1_RECORD_HANDLE_END);
+    game_owner.record_pools.pools[0].bytes[2] = 0x7au;
+    game_owner.recycler_context.map_cursors[0] = 0u;
+    uint16_t committed = (uint16_t)DM2_V1_RECORD_HANDLE_END;
+    CHECK(dm2_v1_sksave_game_load_owner_commit_db0_recycler(
+              &game_owner, &committed) && committed == (uint16_t)mk_handle(0, 0) &&
+              game_owner.record_pools.pools[0].bytes[0] == 0xfeu &&
+              game_owner.record_pools.pools[0].bytes[1] == 0xffu &&
+              game_owner.record_pools.pools[0].bytes[2] == 0u &&
+              game_owner.map_owner.ground_stack_links[0] ==
+                  (uint16_t)mk_handle(4, 0) &&
+              ((uint16_t)game_owner.record_pools.pools[4].bytes[0] |
+               ((uint16_t)game_owner.record_pools.pools[4].bytes[1] << 8)) ==
+                  (uint16_t)DM2_V1_RECORD_HANDLE_END &&
+              game_owner.recycler_context.map_cursors[0] == 0u &&
+              !game_owner.source_game_load_session_ready,
+          "private DB0 recycler commit unlinks and clears the selected source record atomically");
+    ground = game_owner.map_owner.ground_stack_links;
+
+    /* c_record.cpp:1427 DELETE_MISSILE_RECORD first queries the creature at
+     * the missile tile when its owner argument is NULL. The SKSAVE adapter
+     * admits only the no-creature cut/dealloc shape; a DB4 on that tile must
+     * remain blocked until the full creature/timer side effects are owned. */
+    for (int i = 0; i < 4; ++i)
+        ground[i] = (uint16_t)DM2_V1_RECORD_HANDLE_END;
+    ground[0] = (uint16_t)mk_handle(14, 0);
+    wr16(game_owner.record_pools.pools[14].bytes,
+         (int16_t)DM2_V1_RECORD_HANDLE_END);
+    game_owner.recycler_context.map_cursors[14] = 0u;
+    memset(&candidate, 0, sizeof(candidate));
+    CHECK(dm2_v1_sksave_game_load_owner_recycler_candidate(
+              &game_owner, 14u, &candidate) && candidate.valid &&
+              candidate.found && candidate.selected_link ==
+                  (uint16_t)mk_handle(14, 0),
+          "private DB14 recycler admits a no-creature tile for missile delete");
+
+    game_owner.state.timer_count = 1u;
+    game_owner.timers[0].bytes[4] = 0x1eu;
+    game_owner.timers[0].bytes[6] = (uint8_t)mk_handle(14, 0);
+    game_owner.timers[0].bytes[7] = (uint8_t)(mk_handle(14, 0) >> 8);
+    game_owner.timer_indices[0] = 3; /* sorted heap order is not slot identity */
+    DM2_V1_SksaveDb14MissileDeleteCandidate missile_candidate;
+    memset(&missile_candidate, 0, sizeof(missile_candidate));
+    CHECK(dm2_v1_sksave_game_load_owner_db14_missile_delete_candidate(
+              &game_owner, &missile_candidate) && missile_candidate.valid &&
+              missile_candidate.missile_record == (uint16_t)mk_handle(14, 0) &&
+              missile_candidate.timer_index == 0,
+          "private DB14 delete binds the direct 0x1e timer slot, not heap order");
+    uint16_t deleted_missile = DM2_V1_RECORD_HANDLE_END;
+    CHECK(dm2_v1_sksave_game_load_owner_commit_db14_missile_delete(
+              &game_owner, &deleted_missile) &&
+              deleted_missile == (uint16_t)mk_handle(14, 0) &&
+              game_owner.record_pools.pools[14].bytes[0] == 0xffu &&
+              game_owner.record_pools.pools[14].bytes[1] == 0xffu &&
+              game_owner.map_owner.ground_stack_links[0] ==
+                  (uint16_t)DM2_V1_RECORD_HANDLE_END &&
+              game_owner.timers[0].bytes[4] == 0u &&
+              game_owner.timer_queue_count == 0 &&
+              !game_owner.source_game_load_session_ready,
+          "private DB14 delete commits map, record and timer atomically");
+
+    ground[0] = (uint16_t)mk_handle(4, 0);
+    wr16(game_owner.record_pools.pools[4].bytes,
+         (int16_t)mk_handle(14, 0));
+    game_owner.record_pools.pools[4].bytes[4] = 0x42u;
+    game_owner.retained_creature_ai_valid[0x42u] = 1u;
+    game_owner.retained_creature_ai_flags[0x42u] = 0u;
+    memset(&candidate, 0, sizeof(candidate));
+    CHECK(dm2_v1_sksave_game_load_owner_recycler_candidate(
+              &game_owner, 14u, &candidate) && candidate.valid &&
+              !candidate.found,
+          "private DB14 recycler blocks a tile with a DB4 creature owner");
+
+    dm2_v1_sksave_game_load_owner_free(&game_owner);
     dm2_v1_record_pool_set_free(&set);
 }
 

@@ -277,7 +277,8 @@ typedef struct {
     void (*dealloc_record)(void *ctx, uint16_t record);
     int16_t (*create_cloud)(void *ctx, int16_t type, int16_t param,
                             int16_t x, int16_t y, int16_t cls);
-    void (*queue_timer)(void *ctx);
+    /* Queue the same source timer with its decremented yB phase. */
+    void (*queue_timer)(void *ctx, uint8_t next_yB);
 } DM2_V1_ResurrectionCallbacks;
 
 /* Named _tile to avoid an ABI-incompatible symbol collision with the
@@ -293,6 +294,7 @@ int dm2_v1_process_timer_resurrection_tile(
 typedef struct {
     uint8_t *(*get_record_address)(void *ctx, uint16_t rw);
     uint8_t (*get_tile_value)(void *ctx, int16_t x, int16_t y);
+    int16_t (*get_tile_record_link)(void *ctx, int16_t x, int16_t y);
     int16_t (*calc_cloud_damage)(void *ctx, uint16_t cloud_rw, int16_t target);
     void (*attack_door)(void *ctx, int16_t x, int16_t y, int16_t damage,
                         int16_t mode, int16_t param);
@@ -313,7 +315,9 @@ typedef struct {
     int16_t party_y;
 } DM2_V1_ProcessCloudCallbacks;
 
-int dm2_v1_process_cloud(
+/* Named _tile to avoid collision with the full DM2_V1_CloudCallbacks owner
+ * declared in dm2_v1_cloud_pc34_compat.h. */
+int dm2_v1_process_cloud_tile(
     uint16_t record_word, uint8_t xA, uint8_t yA,
     const DM2_V1_ProcessCloudCallbacks *cb, void *ctx);
 

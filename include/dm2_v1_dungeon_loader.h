@@ -1527,6 +1527,12 @@ int dm2_v1_dungeon_get_first_thing(const DM2_V1_DungeonData *d, int level, int x
  * (absent data, out-of-bounds cell, no object flag, word-square maps
  * whose head is inline and has no table slot). */
 int dm2_v1_dungeon_set_first_thing(DM2_V1_DungeonData *d, int level, int x, int y, uint16_t first);
+/* Source c_map::APPEND_RECORD_TO empty-square route.  Reserve the next
+ * authenticated ground-stack word, mark the byte-square as object-bearing,
+ * and advance following column indices.  The caller owns the record link and
+ * must still publish its record-chain bytes atomically. */
+int dm2_v1_dungeon_insert_first_thing_empty_tile(
+    DM2_V1_DungeonData *d, int level, int x, int y, uint16_t first);
 int dm2_v1_skproject_get_tile_value(
     const DM2_V1_DungeonData *d,
     int level,
@@ -1664,6 +1670,12 @@ const uint8_t *dm2_v1_dungeon_get_thing_record(
     int *out_type,
     int *out_index,
     int *out_size);
+
+/* Read a source-format 16-bit word from a record returned by
+ * dm2_v1_dungeon_get_thing_record().  Mac/Amiga records remain in their
+ * authenticated big-endian byte order; callers must not assume DOS LE. */
+uint16_t dm2_v1_dungeon_read_record_u16(
+    const DM2_V1_DungeonData *dungeon, const uint8_t *record_offset);
 int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level);
 /* Validate the source-shaped map -> ground-stack -> DB-record graph.
  * Returns 1 only when every declared direct c_record link and every
