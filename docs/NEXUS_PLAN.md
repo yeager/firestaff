@@ -1,15 +1,27 @@
 # DM Nexus — Implementation Plan
 
+> Status correction — 2026-08-13: This is a historical implementation plan,
+> not the current completion state. ISO/Track-1 reading, real-file hashing,
+> DGN/DMDF/MNS/S2D/FACE/SMAP parsing, PRS3 decoding, host mechanics, save
+> round-trips, and bounded VDP1/VDP2 capture replay are implemented and
+> externally verified. See [`NEXUS_COMPLETION.md`](NEXUS_COMPLETION.md) and
+> [`NEXUS_RUNTIME_CAPTURE.md`](NEXUS_RUNTIME_CAPTURE.md) for authoritative
+> status. Do not use the old phase estimates or release target below as a
+> completion claim.
+
 ## Background
 
-Dungeon Master Nexus (1998) is the fourth and final game in the DM series. Exclusive to Sega Saturn, Japanese only. A 3D polygon remake of DM1.
+Dungeon Master Nexus (1998) is the fourth and final game in the DM series. It
+is a Sega Saturn 3D polygon remake of DM1.
 
 ## Available Data
 
-- Sega Saturn CD image (CUE/BIN), Japanese version
+- Sega Saturn CD image (CUE/BIN), with authentic Japanese and English/Merged
+  operator captures available outside the repository
 - Track 1 (133 MB): MODE1/2352 — game data (Saturn filesystem, ISO 9660)
 - Track 2-9 (~95 MB): AUDIO — CD music (Red Book Audio)
-- No source code, no disassembly, no ReDMCSB equivalent
+- No original source code or ReDMCSB equivalent. DMWeb, Greatstone, static
+  disassembly, and instrumented Saturn captures are the reference evidence.
 
 ## Challenges
 
@@ -24,16 +36,16 @@ Dungeon Master Nexus (1998) is the fourth and final game in the DM series. Exclu
 
 ## Phase 1: Data Extraction (1-2 days)
 
-### 1.1 Saturn ISO parser
+### 1.1 Saturn ISO parser — implemented
 - Read Track 1 as ISO 9660 with Saturn header
 - Tool: bchunk or custom MODE1/2352 parser
 - Output: directory structure + file listing
 
-### 1.2 File classification
+### 1.2 File classification — implemented
 - Identify types: graphics, models, textures, sound, dungeon, text
 - Compare with DM1/DM2 naming conventions
 
-### 1.3 CD audio extraction
+### 1.3 CD audio extraction — capture-gated
 - Track 2-9 AUDIO to WAV/FLAC
 - Map tracks to game situations
 
@@ -44,20 +56,20 @@ Dungeon Master Nexus (1998) is the fourth and final game in the DM series. Exclu
 
 ## Phase 2: Asset Parsing (2-3 days)
 
-### 2.1 Texture format
+### 2.1 Texture format — substantially implemented
 - Saturn VDP1/VDP2: 4bpp/8bpp paletted, 15-bit RGB
 - SH2 big-endian byte order
 - CLUT identification
 
-### 2.2 3D model format
+### 2.2 3D model format — parser/provenance implemented; runtime transform/culling remains capture-gated
 - Saturn VDP1 quads: 4-vertex textured polygons
 - Extract vertices, faces, texture references
 
-### 2.3 Dungeon data
+### 2.3 Dungeon data — implemented for the verified real corpus
 - Likely extended DM1 dungeon.dat format
 - Square types, thing lists, creature placement
 
-### 2.4 Text extraction
+### 2.4 Text extraction — source parsing implemented; Saturn text consumer remains capture-gated
 - Shift-JIS to UTF-8
 - Champion names, monster names, spells, UI, inscriptions
 
@@ -69,13 +81,13 @@ Dungeon Master Nexus (1998) is the fourth and final game in the DM series. Exclu
 
 ## Phase 3: Rendering (3-5 days)
 
-### 3.1 Software 3D renderer
+### 3.1 Software 3D renderer — bounded host/capture adapters exist; retail production rasterization remains blocked
 - VDP1-like quad renderer in software
 - Perspective-correct texture mapping
 - Z-buffer or painter's algorithm
 - 320x224 native, then EPX upscale
 
-### 3.2 V1: Saturn faithful
+### 3.2 V1: Saturn faithful — requires a source-owned Saturn scene witness
 - Original 320x224 resolution
 - Saturn 15-bit RGB palette
 - Original frame rate
@@ -94,17 +106,17 @@ Dungeon Master Nexus (1998) is the fourth and final game in the DM series. Exclu
 
 ## Phase 4: Game Logic (2-3 days)
 
-### 4.1 DM1-based logic
+### 4.1 DM1-based logic — real Nexus mechanics and multi-level playability are implemented
 - Nexus IS DM1 underneath — same dungeon, monsters, spells
 - Reuse DM1 V1 modules: combat, spells, inventory, creature AI
 - Test: load DM1 dungeon.dat, render with Nexus 3D renderer
 
-### 4.2 Nexus-specific
+### 4.2 Nexus-specific — real level corpus and source-bound state are implemented; Saturn pose/save consumer remains open
 - Possible different creature stats
 - Japanese champion names
 - Saturn save format
 
-### 4.3 CD music
+### 4.3 CD music — disc layout is verified; level selector and playback remain capture-gated
 - Map levels to audio tracks
 - SDL_mixer for playback
 - Fade on level change
@@ -126,11 +138,12 @@ Dungeon Master Nexus (1998) is the fourth and final game in the DM series. Exclu
 
 ## Phase 6: Integration + Test (1-2 days)
 
-- CLI: `firestaff nexus --v21 --lang en`
-- Start menu: DM Nexus active
-- Save/load
-- Tests: ISO parser, textures, dungeon
-- Release v0.7.0
+- CLI and start-menu integration exist.
+- The external-data Nexus CTest selection completed 304/304 tests; capture-only
+  tests remain skip-safe when their authenticated witness is absent.
+- Native Firestaff save/load round-trips exist; Saturn backup-RAM import is not
+  authenticated.
+- No release is implied by this document.
 
 ## Time Estimate
 
@@ -142,7 +155,7 @@ Dungeon Master Nexus (1998) is the fourth and final game in the DM series. Exclu
 | 4 | Game logic | 2-3 days |
 | 5 | Japanese text + translation | 1-2 days |
 | 6 | Integration + test | 1-2 days |
-| **Total** | | **10-17 days** |
+| **Total** | | **Historical estimate only; not a current schedule** |
 
 ## Risks
 
