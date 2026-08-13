@@ -36,9 +36,15 @@ int nexus_v1_sjis_to_utf8(const uint8_t *sjis, int sjis_len,
         } else if ((b >= 0x81 && b <= 0x9F) || (b >= 0xE0 && b <= 0xEF)) {
             /* JIS X 0208 ownership is not proven by this small converter.
              * Fail closed rather than inventing a replacement character. */
+            utf8_out[0] = 0;
             return -1;
         } else {
-            si++;
+            /* A byte outside the authenticated ASCII, half-width-kana and
+             * SJIS-lead ranges is not safe to discard: doing so could turn a
+             * corrupt or unsupported source string into a plausible partial
+             * string. Keep the conversion fail-closed. */
+            utf8_out[0] = 0;
+            return -1;
         }
     }
     utf8_out[ui] = 0;

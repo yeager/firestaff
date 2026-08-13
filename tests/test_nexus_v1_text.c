@@ -48,10 +48,23 @@ static void test_extracted_strings_do_not_alias(void)
           "second extracted string is correct");
 }
 
+static void test_unsupported_bytes_fail_closed(void)
+{
+    static const uint8_t unsupported[] = {'A', 0x80, 'B'};
+    char output[8] = {'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x'};
+
+    CHECK(nexus_v1_sjis_to_utf8(unsupported, (int)sizeof(unsupported),
+                                output, (int)sizeof(output)) == -1,
+          "unsupported source bytes are rejected");
+    CHECK(output[0] == '\0',
+          "unsupported source bytes do not expose a partial string");
+}
+
 int main(void)
 {
     test_small_output_buffers();
     test_extracted_strings_do_not_alias();
+    test_unsupported_bytes_fail_closed();
     if (failures) {
         fprintf(stderr, "test_nexus_v1_text: %d failure(s)\n", failures);
         return 1;
