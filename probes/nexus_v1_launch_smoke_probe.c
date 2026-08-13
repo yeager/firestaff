@@ -173,7 +173,7 @@ int main(int argc, char **argv) {
         PROBE_ASSERT(engine.supplemental_iso_valid == 1,
                      "supplemental retail ISO admitted for mixed root");
         PROBE_ASSERT(metadata != NULL && metadata_size == 210,
-                     "ISO-only DMN_ABS.TXT read via extracted-source fallback"
+                     "ISO-only DMN_ABS.TXT read via supplemental ISO"
                      " (size %d)", metadata_size);
         free(metadata);
     }

@@ -1347,3 +1347,7 @@ värden ensamma räcker inte för text- eller menyadmission.
 - 2026-08-13: En sista Nexus-sökning efter `TODO: pending disc image` i aktiva
   Nexus-prober ger nu inga kvarvarande träffar. Historiska DONE-/audittexter
   lämnas orörda; de är inte aktiva runtimekällor.
+- 2026-08-13: Launch-smoke-probens ISO-only assertion beskrev felaktigt den
+  autentiska `DMN_ABS.TXT`-läsningen som en extracted-source fallback. Texten
+  är korrigerad till `supplemental ISO`, vilket motsvarar engine-koden och
+  bekräftar att originalmedlemmen läses från skivan utan materialisering.
