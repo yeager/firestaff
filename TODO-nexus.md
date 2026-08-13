@@ -1314,3 +1314,7 @@ värden ensamma räcker inte för text- eller menyadmission.
   ljudhändelse. Den avbröts efter att hela framefönstret skrivits och har
   därför `capture_exit_status=143`; den är endast observation och får inte
   användas som presentation-, gameplay- eller playback-bevis.
+- 2026-08-13: Saturn-råcapture-launchern är korrigerad så att den validerar
+  den begärda framekorpusen före den tolkar emulatorns timeout/SIGTERM-status.
+  En komplett råcapture kan därför avslutas rent efter timeout och få status
+  `0`; en trunkerad eller felaktig capture förblir underkänd.

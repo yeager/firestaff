@@ -504,15 +504,25 @@ capture_timeout_pid=
 capture_child_pid=
 capture_process_group_pid=
 trap - INT TERM EXIT
-# Mednafen's signal handler can return success after SIGTERM even when the
-# capture hook never reached its first complete frame. The raw witness is
-# the authoritative completion condition; never publish success without it.
-if ((capture_status == 0)) && [[ ! -s "$trace" ]]; then
-  capture_status=1
+# `frame_limit` stops the capture hook, not necessarily the emulator. The
+# operator timeout therefore commonly ends Mednafen with SIGTERM (143) after
+# the requested frame window has already been flushed. Validate the raw
+# witness before turning that expected process status into a failure. A
+# truncated witness still fails the validator and retains the real status.
+[[ -s "$trace" ]] || {
+  finalize_capture_manifest "$capture_status"
+  exit "${capture_status:-1}"
+}
+set +e
+run_validator "$trace" --require-frames "$frame_limit"
+validator_status=$?
+set -e
+if ((validator_status == 0)); then
+  capture_status=0
+else
+  capture_status=${capture_status:-1}
 fi
 finalize_capture_manifest "$capture_status"
 ((capture_status == 0)) || exit "$capture_status"
-[[ -s "$trace" ]] || exit 1
-run_validator "$trace" --require-frames "$frame_limit"
 raw_bytes=$(wc -c < "$trace" | tr -d '[:space:]')
 printf 'raw_sha256=%s\nraw_bytes=%s\n' "$(lower "$(hash_file "$trace")")" "$raw_bytes" >> "$manifest"
