@@ -70,11 +70,11 @@
     }
   ],
   "status": "PASS888_DM1_V1_ANIMTOWN_COLOR_SWOOSH2_LOCKED",
-  "timestampUtc": "2026-08-11T06:50:26.672848+00:00",
+  "timestampUtc": "2026-08-12T01:40:49.574832+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_animtown_color_swoosh2_pc34_compat"
+        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_animtown_color_swoosh2_pc34_compat"
       ],
       "outputTail": "dm1_v1_animtown_color_swoosh2: 44/44 assertions passed",
       "passed": true,

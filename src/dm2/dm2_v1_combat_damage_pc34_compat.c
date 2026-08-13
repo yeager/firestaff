@@ -38,6 +38,34 @@
 
 #include <string.h>
 
+int dm2_v1_combat_attack_creature_source(
+    const DM2_V1_CalcAttackDamageRequest *request,
+    DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    DM2_V1_DropRng *rng,
+    int map_id,
+    unsigned long game_tick,
+    int x, int y,
+    int target_x, int target_y,
+    DM2_V1_CaiiAttackReceipt *receipt)
+{
+    DM2_V1_CalcAttackDamageReceipt damage;
+
+    if (!request || !receipt) return 0;
+    memset(&damage, 0, sizeof(damage));
+    if (!dm2_v1_calc_player_attack_damage_receipt(request, &damage) ||
+        !damage.valid || damage.fail_closed || !damage.hit)
+    {
+        return damage.valid && !damage.fail_closed;
+    }
+    return dm2_v1_caii_attack_creature(
+        pool_set, dungeon, caii, queue, rng, map_id, game_tick,
+        request->creature_record, x, y, target_x, target_y, 0x200du,
+        request->power_base, damage.final_damage, receipt);
+}
+
 int dm2_v1_calc_player_attack_damage_receipt(
     const DM2_V1_CalcAttackDamageRequest *request,
     DM2_V1_CalcAttackDamageReceipt *receipt)

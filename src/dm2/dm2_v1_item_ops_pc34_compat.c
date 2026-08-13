@@ -270,6 +270,22 @@ static uint16_t dm2_v1_sksave_item_bonus_query_dbspec(
     uint16_t value = 0u;
 
     if (record_word == OBJECT_NULL_WORD) return 0u;
+    if (!context || !context->pools ||
+        !dm2_v1_record_pool_address(context->pools,
+                                     (int16_t)record_word)) {
+        if (context) context->invalid = 1;
+        return 0u;
+    }
+    /* c_item.cpp::PROCESS_ITEM_BONUS is a void source walk. A restored
+     * non-item object can reach it through an inventory root; the original
+     * DBSPEC query returns zero and the bonus walk becomes a no-op. Keep
+     * strict DB5..DB10 ownership for actual item queries, but do not turn a
+     * valid DB0..DB4/DB14/DB15 record into a synthetic item. */
+    {
+        const int record_type = dm2_v1_record_handle_pool(
+            (int16_t)record_word);
+        if (record_type < 5 || record_type > 10) return 0u;
+    }
     if (!dm2_v1_sksave_item_bonus_classify(context, record_word,
                                             &cls1, &cls2)) {
         return 0u;
@@ -681,6 +697,100 @@ int dm2_v1_new_game_apply_source_item_bonuses(
     }
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_process_source_item_bonus_for_timer(
+    DM2_V1_Hero *hero, int16_t hero_index, uint16_t item_ref, int16_t slot,
+    int16_t mode, const DM2_V1_RecordPoolSet *pools,
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_ProcessItemBonusReceipt *out_receipt)
+{
+    DM2_V1_SksaveItemBonusContext context;
+    DM2_V1_ProcessItemBonusCallbacks callbacks;
+    DM2_V1_ProcessItemBonusInput input;
+    DM2_V1_ProcessItemBonusReceipt bonus;
+    DM2_V1_Hero backup;
+    int slot_index;
+    int32_t total_weight = 0;
+
+    memset(&context, 0, sizeof(context));
+    memset(&callbacks, 0, sizeof(callbacks));
+    memset(&input, 0, sizeof(input));
+    memset(&bonus, 0, sizeof(bonus));
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!hero || hero_index < 0 || item_ref == OBJECT_NULL_WORD ||
+        item_ref == OBJECT_END_WORD || !pools || !pools->valid || !loader) {
+        if (out_receipt) out_receipt->blocked = 1;
+        return 0;
+    }
+
+    context.pools = pools;
+    context.loader = loader;
+    if (!dm2_v1_sksave_item_bonus_classify(&context, item_ref, NULL, NULL)) {
+        if (out_receipt) out_receipt->blocked = 1;
+        return 0;
+    }
+    callbacks.query_dbspec_word = dm2_v1_sksave_item_bonus_query_dbspec;
+    callbacks.is_item_fit_for_equip = dm2_v1_sksave_item_bonus_fit;
+    callbacks.retrieve_item_bonus = dm2_v1_sksave_item_bonus_retrieve;
+    callbacks.query_cls2_from_record = dm2_v1_sksave_item_bonus_query_cls2;
+    callbacks.ctx = &context;
+    input.hero_index = hero_index;
+    input.item_ref = item_ref;
+    input.slot = slot;
+    input.mode = mode;
+    dm2_v1_PROCESS_ITEM_BONUS(&input, &callbacks, &bonus);
+    if (context.invalid || !bonus.valid || bonus.blocked ||
+        bonus.light_bonus_dirty) {
+        if (out_receipt) *out_receipt = bonus;
+        return 0;
+    }
+
+    backup = *hero;
+    hero->maxMP = (int16_t)(hero->maxMP + bonus.max_mp_delta);
+    if (bonus.cur_mp_set) {
+        int cur_mp = hero->curMP + bonus.cur_mp_value;
+        if (cur_mp < 0) cur_mp = 0;
+        if (cur_mp > 999) cur_mp = 999;
+        hero->curMP = (int16_t)cur_mp;
+    }
+    for (slot_index = 0; slot_index < DM2_V1_NUM_ABILITIES; ++slot_index) {
+        hero->eability[slot_index] = (int8_t)(hero->eability[slot_index] +
+            bonus.eability_delta[slot_index]);
+        if (bonus.ability_use_adjust[slot_index])
+            dm2_v1_hero_2c1d_0300(hero, (int16_t)slot_index,
+                                   bonus.ability_adjust[slot_index]);
+    }
+    for (slot_index = 0; slot_index < DM2_V1_NUM_SKILL_SLOTS; ++slot_index)
+        hero->sbonus[slot_index / 4][slot_index % 4] =
+            (int8_t)(hero->sbonus[slot_index / 4][slot_index % 4] +
+                     bonus.sbonus_delta[slot_index]);
+    hero->walkspeed = (int8_t)(hero->walkspeed + bonus.walkspeed_delta);
+    hero->heroflag = (int16_t)((uint16_t)hero->heroflag |
+                               (uint16_t)bonus.heroflag_or);
+
+    if (bonus.weight_recalc) {
+        for (slot_index = 0; slot_index < DM2_NUM_ITEMS; ++slot_index) {
+            DM2_V1_SourceItemWeightReceipt weight;
+            uint16_t root = (uint16_t)hero->item[slot_index];
+            if (root == OBJECT_NULL_WORD) continue;
+            if (root == OBJECT_END_WORD ||
+                !dm2_v1_query_source_item_weight(root, pools, loader,
+                                                 &weight) ||
+                !weight.valid || weight.blocked) {
+                *hero = backup;
+                if (out_receipt) {
+                    *out_receipt = bonus;
+                    out_receipt->blocked = 1;
+                }
+                return 0;
+            }
+            total_weight += weight.final_weight;
+        }
+        hero->weight = (int16_t)total_weight;
+    }
+    if (out_receipt) *out_receipt = bonus;
     return 1;
 }
 

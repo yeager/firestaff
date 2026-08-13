@@ -418,7 +418,9 @@ int dm2_v1_caii_schedule_creature_at(
     return 0;
   }
 
-  handle = dm2_v1_get_creature_at(pool_set, dungeon, 0, x, y);
+  /* ddat.v1d3248 is the active map at this source boundary; using map 0
+   * here loses the creature timer on every non-zero DM2 level. */
+  handle = dm2_v1_get_creature_at(pool_set, dungeon, map_id, x, y);
   if (handle == DM2_V1_RECORD_HANDLE_NULL) {
     return 0;
   }
@@ -834,7 +836,7 @@ int dm2_v1_caii_attack_guard_allows_alloc(
   return (ai_flags & 0x1u) != 0u ? 1 : 0;
 }
 
-int dm2_v1_caii_attack_creature(
+int dm2_v1_caii_attack_creature_context(
     DM2_V1_RecordPoolSet *pool_set,
     const DM2_V1_DungeonData *dungeon,
     DM2_V1_CaiiArray *caii,
@@ -848,8 +850,10 @@ int dm2_v1_caii_attack_creature(
     uint32_t attack_word,
     int16_t attack_strength,
     int32_t hp_delta,
+    const DM2_V1_CaiiAttackContext *context,
     DM2_V1_CaiiAttackReceipt *receipt) {
   DM2_V1_CaiiAttackReceipt local;
+  DM2_V1_CaiiAttackContext legacy_context;
   uint32_t vol;
   uint8_t *record;
   uint8_t *slot;
@@ -887,8 +891,18 @@ int dm2_v1_caii_attack_creature(
     *receipt = local;
   }
 
+  if (context == NULL) {
+    memset(&legacy_context, 0, sizeof(legacy_context));
+    legacy_context.ai_spec_flags = g_ai_spec_flags_fn;
+    legacy_context.ai_base_hp = g_ai_base_hp_fn;
+    legacy_context.gdat_word1 = g_gdat_word1_fn;
+    context = &legacy_context;
+  }
+
   if (pool_set == NULL || dungeon == NULL || caii == NULL ||
-      !caii->valid || queue == NULL ||
+      !caii->valid ||
+      ((queue == NULL) && (!context->allocate || !context->delete_timer ||
+                           !context->schedule)) ||
       x < 0 || y < 0 || x > 0xff || y > 0xff ||
       target_x < 0 || target_y < 0 || target_x > 0xff || target_y > 0xff) {
     return 0;
@@ -936,8 +950,12 @@ int dm2_v1_caii_attack_creature(
   /* vl_18 = AIDefinition word@0 & 1 (c_creature.cpp:374-378),
    * data-backed through the wired provider; the source never lacks the
    * table, so unknown provenance fails the whole body closed. */
-  if (g_ai_spec_flags_fn == 0 ||
-      g_ai_spec_flags_fn((int)record[4], &ai_flags) != 1) {
+  if ((context->ai_spec_flags_context != NULL
+           ? context->ai_spec_flags_context(context->ctx, (int)record[4],
+                                            &ai_flags)
+           : context->ai_spec_flags != NULL
+                 ? context->ai_spec_flags((int)record[4], &ai_flags)
+                 : 0) != 1) {
     receipt->ai_flags_unknown = 1;
     return 0;
   }
@@ -952,9 +970,12 @@ int dm2_v1_caii_attack_creature(
     {
       DM2_V1_CaiiAllocReceipt alloc_rc;
       memset(&alloc_rc, 0, sizeof(alloc_rc));
-      if (dm2_v1_caii_alloc_to_creature(pool_set, dungeon, caii, queue,
-                                        map_id, game_tick, handle,
-                                        x, y, &alloc_rc) != 1) {
+      if ((context->allocate != NULL
+              ? context->allocate(context->ctx, pool_set, dungeon, caii,
+                                  handle, map_id, game_tick, x, y)
+              : dm2_v1_caii_alloc_to_creature(pool_set, dungeon, caii, queue,
+                                              map_id, game_tick, handle,
+                                              x, y, &alloc_rc)) != 1) {
         receipt->alloc_failed = 1;
         return 0;
       }
@@ -969,6 +990,7 @@ int dm2_v1_caii_attack_creature(
                            (uint16_t)(int16_t)hp_delta);
   dm2_v1_write_u16le(slot + 0x14, (uint16_t)(int16_t)hp_word);
   receipt->hp_word_after = hp_word;
+  receipt->hp_applied = 1;
 
   /* c_creature.cpp:394-435: the aggro block. */
   w0a = dm2_v1_read_u16le(record + 0xa);
@@ -993,8 +1015,12 @@ int dm2_v1_caii_attack_creature(
     if (set == -2) {
       /* c_creature.cpp:420-423: 100*hp / aidef word@4 > 0xf. */
       uint16_t base_hp = 0;
-      if (g_ai_base_hp_fn == 0 ||
-          g_ai_base_hp_fn((int)record[4], &base_hp) != 1 ||
+      if ((context->ai_base_hp_context != NULL
+               ? context->ai_base_hp_context(context->ctx, (int)record[4],
+                                             &base_hp)
+               : context->ai_base_hp != NULL
+                     ? context->ai_base_hp((int)record[4], &base_hp)
+                     : 0) != 1 ||
           base_hp == 0u) {
         /* No provenance — or the source would divide by zero. */
         receipt->aggro_undecided = 1;
@@ -1025,8 +1051,11 @@ int dm2_v1_caii_attack_creature(
     int gate = -1;
     uint16_t w1 = 0;
     receipt->ai_turn_unbound = 1;
-    if (g_gdat_word1_fn != 0 &&
-        g_gdat_word1_fn((int)record[4], &w1) == 1) {
+    if ((context->gdat_word1_context != NULL
+             ? context->gdat_word1_context(context->ctx, (int)record[4], &w1)
+             : context->gdat_word1 != NULL
+                   ? context->gdat_word1((int)record[4], &w1)
+                   : 0) == 1) {
       if (w1 < 0x2fu) {
         gate = (dm2_v1_table1d607e[w1][0] & 0x80u) == 0u ? 1 : 0;
       } else {
@@ -1177,8 +1206,12 @@ int dm2_v1_caii_attack_creature(
       } else {
         uint16_t w1 = 0;
         uint32_t t6;
-        if (g_gdat_word1_fn == 0 ||
-            g_gdat_word1_fn((int)record[4], &w1) != 1) {
+        if ((context->gdat_word1_context != NULL
+                 ? context->gdat_word1_context(context->ctx, (int)record[4],
+                                               &w1)
+                 : context->gdat_word1 != NULL
+                       ? context->gdat_word1((int)record[4], &w1)
+                       : 0) != 1) {
           receipt->gdat_w1_unknown = 1;
           return 0;
         }
@@ -1217,14 +1250,20 @@ int dm2_v1_caii_attack_creature(
     DM2_V1_CaiiDeleteTimerReceipt del;
     DM2_V1_CreatureScheduleReceipt sched;
     memset(&del, 0, sizeof(del));
-    if (dm2_v1_caii_delete_timer(pool_set, caii, queue, handle,
-                                 &del) == 1) {
+    if ((context->delete_timer != NULL
+             ? context->delete_timer(context->ctx, pool_set, dungeon, caii,
+                                     handle, map_id, game_tick, x, y)
+             : dm2_v1_caii_delete_timer(pool_set, caii, queue, handle,
+                                        &del)) == 1) {
       receipt->timer_cancelled = 1;
     }
     memset(&sched, 0, sizeof(sched));
-    if (dm2_v1_caii_schedule_creature_at(pool_set, dungeon, caii, queue,
-                                         map_id, game_tick, x, y,
-                                         &sched) != 1) {
+    if ((context->schedule != NULL
+             ? context->schedule(context->ctx, pool_set, dungeon, caii,
+                                 handle, map_id, game_tick, x, y)
+             : dm2_v1_caii_schedule_creature_at(pool_set, dungeon, caii,
+                                                queue, map_id, game_tick,
+                                                x, y, &sched)) != 1) {
       return 0;
     }
     receipt->rescheduled = 1;
@@ -1234,6 +1273,27 @@ int dm2_v1_caii_attack_creature(
   receipt->completed = 1;
   receipt->valid = 1;
   return 1;
+}
+
+int dm2_v1_caii_attack_creature(
+    DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    DM2_V1_DropRng *rng,
+    int map_id,
+    unsigned long game_tick,
+    int16_t record_handle,
+    int x, int y,
+    int target_x, int target_y,
+    uint32_t attack_word,
+    int16_t attack_strength,
+    int32_t hp_delta,
+    DM2_V1_CaiiAttackReceipt *receipt) {
+  return dm2_v1_caii_attack_creature_context(
+      pool_set, dungeon, caii, queue, rng, map_id, game_tick,
+      record_handle, x, y, target_x, target_y, attack_word,
+      attack_strength, hp_delta, NULL, receipt);
 }
 
 int dm2_v1_caii_ai_13e4_0360(
@@ -1593,6 +1653,7 @@ int dm2_v1_caii_moverec_activation(
     if (word2 == 0xffffu || word2 == 0u) {
       /* Slot word@2 == -1: the source does nothing (c_moverec.cpp:972-974). */
       receipt->no_pending_timer = 1;
+      receipt->valid = 1;
       return 0;
     }
     if (dm2_v1_source_timer_update_payload(queue, (uint32_t)word2,

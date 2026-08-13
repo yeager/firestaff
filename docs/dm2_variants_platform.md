@@ -1,5 +1,18 @@
 # DM2 V1 — Platform Variants
 
+## Current Firestaff support
+
+Firestaff's DM2 runtime is playable from authenticated DOS, Amiga, FM Towns
+and Macintosh source data. The shared M12 data root keeps those editions
+separate: DOS may resolve through its verified `data` symlink, while Amiga,
+FM Towns and Mac retain their original archive owners. Focused M11 real-media
+regressions verify New Game and active runtime paths for all four families.
+
+The remaining items in this page are parity boundaries, not a requirement to
+substitute one edition's files for another: native non-DOS saves, positive DOS
+WIELD/death-drop evidence and broader platform-specific UI/audio owners remain
+tracked in `TODO-dm2.md`.
+
 ## DOS Version
 - Publisher: Interplay
 - Platform: DOS, 3.5" floppy disks (6 disks)
@@ -206,7 +219,5 @@ X68000 is not part of the DM2 support matrix.
 
 ## Conclusion
 Amiga, DOS, FM Towns and Macintosh are separate original DM2 media/runtime
-families in Firestaff's support matrix. The current runtime gates are
-edition-specific: verified DOS and FM Towns paths are furthest along, while
-Amiga and Macintosh require their remaining native runtime owners. X68000 and
-PlayStation are outside the supported matrix.
+families in Firestaff's support matrix, and all four now reach a playable
+source-owned runtime. X68000 and PlayStation are outside the supported matrix.

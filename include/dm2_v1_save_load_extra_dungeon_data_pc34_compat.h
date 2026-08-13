@@ -71,6 +71,8 @@ typedef struct {
     uint16_t failed_root_link;
     int failed_record_type;
     int failed_record_reason;
+    size_t failed_stream_offset;
+    uint8_t failed_stream_bits_remaining;
 } DM2_V1_LoadExtraDungeonReceipt;
 
 /* Load dungeon data from a SUPPRESS stream.

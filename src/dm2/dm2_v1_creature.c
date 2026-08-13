@@ -63,6 +63,23 @@ static int g_ccm_program_count = 0;
 static int g_ccm_program_field = -1;
 static DM2_V1_CreatureFieldRuntime g_field_runtime;
 
+static int dm2_v1_creatures_owner_entry_present(
+    const DM2_V1_AssetLoader *loader, int creature_type)
+{
+    uint16_t i;
+
+    if (!loader || !loader->entries || creature_type < 0 ||
+        creature_type >= DM2_CREATURE_TYPE_COUNT) return 0;
+    for (i = 0u; i < loader->entry_count; ++i) {
+        const DM2_V1_GdatEntry *entry = &loader->entries[i];
+        if (entry->cls1 == DM2_GDAT_CATEGORY_CREATURES &&
+            entry->cls2 == (uint8_t)creature_type &&
+            entry->cls3 == DM2_GDAT_ENTRY_TYPE_WORD_VALUE &&
+            entry->cls4 == 0x05u) return 1;
+    }
+    return 0;
+}
+
 int dm2_v1_creature_ai_index_count(void) {
     return DM2_AI_TABLE_SIZE;
 }
@@ -349,8 +366,9 @@ int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
              * admit the separately unowned CCM stream. A callback fixture
              * has no parsed GDAT container/version and therefore cannot
              * claim this missing-entry semantics for arbitrary rows. */
-            if (loader->gdat_version != 2u && loader->gdat_version != 4u &&
-                loader->gdat_version != 5u) {
+            if ((loader->gdat_version != 2u && loader->gdat_version != 4u &&
+                 loader->gdat_version != 5u) &&
+                !dm2_v1_creatures_owner_entry_present(loader, creature_type)) {
                 continue;
             }
             ai_row = 0u;
@@ -381,6 +399,22 @@ int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
         g_creature_ai_row[creature_type] = (uint8_t)ai_row;
         g_creature_ai_row_loaded[creature_type] = 1u;
         ++loaded;
+    }
+
+    /* Retail PC-DOS GRAPHICS.DAT uses the source query's zero result for a
+     * missing CREATURES word@5.  Materialize that authenticated row-zero
+     * mapping after the sparse entry walk as well; some saves contain
+     * creature types whose owner word is absent from the compact GDAT index. */
+    if (loader->gdat_version == 2u || loader->gdat_version == 4u ||
+        loader->gdat_version == 5u) {
+        for (creature_type = 0; creature_type < DM2_CREATURE_TYPE_COUNT;
+             ++creature_type) {
+            if (!g_creature_ai_row_loaded[creature_type]) {
+                g_creature_ai_row[creature_type] = 0u;
+                g_creature_ai_row_loaded[creature_type] = 1u;
+                ++loaded;
+            }
+        }
     }
 
     return loaded;

@@ -485,9 +485,10 @@ int main(void)
     CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, &rng,
                                       0, 990ul, rec_handle(0), 0, 0, 0, 0,
                                       0x0000, 50, 5, &rc) == 0 &&
+              rc.hp_applied == 1 &&
               rc.mode_b1a_out_of_span == 1 &&
               rc.rescheduled == 0,
-          "byte@1a > 0x55 fails closed (source would read OOB)");
+          "byte@1a > 0x55 fails closed after the source HP write (source would read OOB)");
 
     /* ── (p) entry RANDBIT 0: the bound turn block runs but turns
      * nothing; the stream stays aligned for the reaction roll ──────── */

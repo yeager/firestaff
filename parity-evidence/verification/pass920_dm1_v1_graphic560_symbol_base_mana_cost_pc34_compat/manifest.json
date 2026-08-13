@@ -71,11 +71,11 @@
     }
   ],
   "status": "PASS920_DM1_V1_G0485_LOCKED",
-  "timestampUtc": "2026-08-11T06:50:27.311126+00:00",
+  "timestampUtc": "2026-08-12T01:40:49.230774+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_graphic560_symbol_base_mana_cost_pc34_compat"
+        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_graphic560_symbol_base_mana_cost_pc34_compat"
       ],
       "outputTail": "dm1_v1_graphic560_symbol_base_mana_cost: 135/135 assertions passed",
       "passed": true,

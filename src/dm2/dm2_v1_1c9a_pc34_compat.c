@@ -998,9 +998,18 @@ int32_t dm2_v1_1c9a_1b16(
 }
 
 /* ========================================================================
- * DM2_FIND_WALK_PATH — A*-style pathfinding
+ * DM2_FIND_WALK_PATH — bounded source-callback path owner
  * skproject c_1c9a.cpp:6439-9668
- * Stub: returns -1 (no path)
+ *
+ * The original routine is a large A*-style walker.  This compatibility
+ * owner keeps its important runtime boundary intact: the target comes from
+ * the source party owner, every cell is admitted through DM2_1BAAD, and
+ * occupied creature cells are not traversed.  The fixed File_header maps
+ * are at most 32x32, so a bounded breadth-first frontier is sufficient for
+ * the live callback contract and cannot escape the authenticated map.
+ * `path_buffer` receives one source direction byte per step (0=N, 1=E,
+ * 2=S, 3=W), which is the representation consumed by the walk-path
+ * successor.  Missing source callbacks remain fail-closed.
  * ======================================================================== */
 
 int32_t dm2_v1_1c9a_find_walk_path(
@@ -1009,14 +1018,108 @@ int32_t dm2_v1_1c9a_find_walk_path(
     int16_t flags, uint8_t *path_buffer, void *button,
     DM2_V1_1c9aPathfindReceipt *receipt)
 {
-    (void)cb; (void)ctx;
-    (void)creature_index; (void)start_x; (void)start_y;
-    (void)flags; (void)path_buffer; (void)button;
+    int16_t width;
+    int16_t height;
+    int16_t target_x;
+    int16_t target_y;
+    int16_t target_map;
+    int16_t current_map;
+    uint16_t queue[32u * 32u];
+    int16_t parent[32u * 32u];
+    uint8_t parent_dir[32u * 32u];
+    uint8_t seen[32u * 32u];
+    int head = 0;
+    int tail = 0;
+    int target_index;
+    int path_len = 0;
+    int i;
+
+    (void)flags;
+    (void)button;
     if (receipt) {
         receipt->path_found = false;
         receipt->path_length = -1;
     }
-    return -1;
+    if (!cb || !path_buffer || creature_index < 0 ||
+        !cb->get_map_width || !cb->get_map_height ||
+        !cb->get_current_map || !cb->get_ddat_party_x ||
+        !cb->get_ddat_party_y || !cb->get_ddat_party_map ||
+        !cb->get_tile_value) {
+        return -1;
+    }
+
+    width = cb->get_map_width(ctx);
+    height = cb->get_map_height(ctx);
+    current_map = cb->get_current_map(ctx);
+    target_map = cb->get_ddat_party_map(ctx);
+    target_x = cb->get_ddat_party_x(ctx);
+    target_y = cb->get_ddat_party_y(ctx);
+    if (width <= 0 || width > 32 || height <= 0 || height > 32 ||
+        current_map != target_map || start_x < 0 || start_y < 0 ||
+        start_x >= width || start_y >= height || target_x < 0 ||
+        target_y < 0 || target_x >= width || target_y >= height) {
+        return -1;
+    }
+
+    memset(parent, 0xff, sizeof(parent));
+    memset(parent_dir, 0, sizeof(parent_dir));
+    memset(seen, 0, sizeof(seen));
+    target_index = target_y * width + target_x;
+    queue[tail++] = (uint16_t)(start_y * width + start_x);
+    seen[queue[0]] = 1u;
+
+    while (head < tail) {
+        int index = queue[head++];
+        int x = index % width;
+        int y = index / width;
+        if (index == target_index)
+            break;
+        for (i = 0; i < 4; ++i) {
+            int nx = x + dm2_v1_1c9a_dir_dx[i];
+            int ny = y + dm2_v1_1c9a_dir_dy[i];
+            int next_index;
+            int16_t occupant;
+            if (nx < 0 || ny < 0 || nx >= width || ny >= height)
+                continue;
+            next_index = ny * width + nx;
+            if (seen[next_index])
+                continue;
+            if (nx != target_x || ny != target_y) {
+                occupant = cb->get_creature_at
+                    ? cb->get_creature_at(ctx, (int16_t)nx, (int16_t)ny)
+                    : -1;
+                if (occupant >= 0 && occupant != creature_index)
+                    continue;
+            }
+            if (!dm2_v1_1c9a_1baad(cb, ctx, nx, ny, NULL))
+                continue;
+            seen[next_index] = 1u;
+            parent[next_index] = (int16_t)index;
+            parent_dir[next_index] = (uint8_t)i;
+            if (tail >= (int)(sizeof(queue) / sizeof(queue[0])))
+                continue;
+            queue[tail++] = (uint16_t)next_index;
+        }
+    }
+
+    if (!seen[target_index])
+        return -1;
+    for (i = target_index; i != (int)(start_y * width + start_x);
+         i = parent[i]) {
+        if (path_len >= 255)
+            return -1;
+        path_buffer[path_len++] = parent_dir[i];
+    }
+    for (i = 0; i < path_len / 2; ++i) {
+        uint8_t temp = path_buffer[i];
+        path_buffer[i] = path_buffer[path_len - 1 - i];
+        path_buffer[path_len - 1 - i] = temp;
+    }
+    if (receipt) {
+        receipt->path_found = true;
+        receipt->path_length = path_len;
+    }
+    return path_len;
 }
 
 /* ========================================================================

@@ -84,7 +84,7 @@ static void test_attack_party(void)
 {
     g_wounded_mask = 0;
     DM2_V1_AttackPartyCallbacks cb = { 4, mock_rand16, mock_alive, mock_wound };
-    uint8_t result = dm2_v1_attack_party(100, 0x1F, 0, &cb, NULL);
+    uint8_t result = dm2_v1_creature_ops_attack_party(100, 0x1F, 0, &cb, NULL);
     /* SKProject wounds all heroes in party unconditionally */
     assert((result & 0x0F) == 0x0F);
     printf("  PASS: attack_party\n");

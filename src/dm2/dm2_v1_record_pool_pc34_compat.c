@@ -63,7 +63,27 @@ static void dm2_v1_wr16(const DM2_V1_RecordPoolSet *set, uint8_t *p, int16_t v)
     }
 }
 
-static uint16_t dm2_v1_raw_rd16(const uint8_t *p, int words_big_endian)
+static int16_t dm2_v1_pool_rd16(const DM2_V1_RecordPoolSet *set,
+                                const uint8_t *p)
+{
+    if (set && set->source_words_big_endian)
+        return (int16_t)(((uint16_t)p[0] << 8) | p[1]);
+    return dm2_v1_rd16(p);
+}
+
+static void dm2_v1_pool_wr16(const DM2_V1_RecordPoolSet *set,
+                             uint8_t *p, int16_t v)
+{
+    uint16_t u = (uint16_t)v;
+    if (set && set->source_words_big_endian) {
+        p[0] = (uint8_t)(u >> 8);
+        p[1] = (uint8_t)u;
+    } else {
+        dm2_v1_wr16(p, v);
+    }
+}
+
+static uint16_t dm2_v1_raw_rd16(const uint8_t *p)
 {
     return words_big_endian
         ? (uint16_t)(((uint16_t)p[0] << 8) | p[1])
@@ -525,6 +545,90 @@ int dm2_v1_sksave_map_owner_tile_record_link(
     return 1;
 }
 
+int dm2_v1_sksave_map_owner_cut_tile_record(
+    DM2_V1_SksaveMapOwner *owner,
+    DM2_V1_RecordPoolSet *set,
+    int map, int x, int y, uint16_t record_link)
+{
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon;
+    size_t column_base = 0u;
+    size_t index;
+    uint16_t head;
+    int16_t current;
+    int steps = 0;
+
+    if (!owner || !owner->valid || !set || !set->valid ||
+        record_link == 0xfffeu || record_link == 0xffffu ||
+        dm2_v1_record_handle_pool((int16_t)record_link) < 0 ||
+        dm2_v1_record_handle_pool((int16_t)record_link) >=
+            DM2_V1_RECORD_POOL_COUNT ||
+        dm2_v1_sksave_map_owner_ground_index(owner, map, x, y, &index) != 1) {
+        return 0;
+    }
+    dungeon = owner->dungeon;
+    if (index >= owner->ground_stack_count) return 0;
+    head = owner->ground_stack_links[index];
+    if ((head & 0x3fffu) == (record_link & 0x3fffu)) {
+        int16_t successor;
+        if (!dm2_v1_record_pool_next_link(set, (int16_t)record_link,
+                                          &successor)) return 0;
+        /* c_record.cpp:114-160: cutting the sole root clears the tile's
+         * ground-stack bit and compacts c_map's ground-stack array. */
+        if (successor == DM2_V1_RECORD_HANDLE_END ||
+            successor == DM2_V1_RECORD_HANDLE_NULL) {
+            uint8_t *tile = owner->map_tiles +
+                (size_t)owner->map_tile_offsets[map] +
+                (size_t)x * dungeon->map_heights[map] + (size_t)y;
+            size_t i;
+            for (i = 0u; i < (size_t)map; ++i)
+                column_base += dungeon->map_widths[i];
+            if (!tile || (*tile & 0x10u) == 0u ||
+                column_base + (size_t)x >= owner->column_index_count)
+                return 0;
+            for (i = column_base + (size_t)x + 1u;
+                 i < owner->column_index_count; ++i) {
+                /* The DOS routine uses a 16-bit cumulative index directly;
+                 * preserve that exact wrap behavior for malformed-but-
+                 * authenticated map columns instead of adding a host-side
+                 * range rejection. */
+                --owner->column_indices[i];
+            }
+            memmove(owner->ground_stack_links + index,
+                    owner->ground_stack_links + index + 1u,
+                    (owner->ground_stack_count - index - 1u) *
+                        sizeof(*owner->ground_stack_links));
+            --owner->ground_stack_count;
+            *tile &= (uint8_t)~0x10u;
+        } else {
+            owner->ground_stack_links[index] = (uint16_t)successor;
+        }
+        dm2_v1_pool_wr16(set, dm2_v1_record_pool_address_mut(
+                              set, (int16_t)record_link),
+                          DM2_V1_RECORD_HANDLE_END);
+        return 1;
+    }
+    current = (int16_t)head;
+    while (current != (int16_t)DM2_V1_RECORD_HANDLE_END &&
+           current != (int16_t)DM2_V1_RECORD_HANDLE_NULL &&
+           steps++ < DM2_V1_SKSAVE_RECYCLE_MAX_STEPS) {
+        uint8_t *record = dm2_v1_record_pool_address_mut(set, current);
+        int16_t next;
+        int16_t successor;
+        if (!record) return 0;
+        next = dm2_v1_pool_rd16(set, record);
+        if (((uint16_t)next & 0x3fffu) == (record_link & 0x3fffu)) {
+            if (!dm2_v1_record_pool_next_link(set, next, &successor))
+                return 0;
+            dm2_v1_pool_wr16(set, record, successor);
+            dm2_v1_pool_wr16(set, dm2_v1_record_pool_address_mut(set, next),
+                              DM2_V1_RECORD_HANDLE_END);
+            return 1;
+        }
+        current = next;
+    }
+    return 0;
+}
+
 /* c_record.cpp::DM2_RECYCLE_A_RECORD_FROM_THE_WORLD, map/tile traversal and
  * its DB2/Text chain barrier (source lines 577-1072).
  *
@@ -544,13 +648,15 @@ int dm2_v1_sksave_map_owner_tile_record_link(
  * DM2_ALLOC_NEW_RECORD.
  *
  * DB0 returns a selected record to DM2_ALLOC_NEW_RECORD, which zeroes it only
- * after the recycler returns. DB4 and DB14 have creature/missile deletion
- * tails; other DBs may relocate a linked record.  DB0 nevertheless remains
+ * after the recycler returns. DB4 and creature-bearing DB14 have
+ * creature/missile deletion tails; other DBs may relocate a linked record.
+ * DB0 nevertheless remains
  * blocked here because source selection has a second map pass and can descend
  * into static-creature possessions, neither of which this diagnostic walker
  * owns.
  *
- * Returns zero: the full mutating DB0/DB4/DB14 paths are not owned here.
+ * Returns zero: the full mutating DB0/DB4/DB14 paths are not owned here;
+ * the GAME_LOAD callback owns only the separately gated no-creature DB14 cut.
  * c_record.cpp:779/:1072 write the cursor only as part of that completed
  * recycler transaction. This diagnostic, fail-closed walker reports the
  * prospective cursor but must not mutate a retained GAME_LOAD owner. */
@@ -599,6 +705,7 @@ int dm2_v1_sksave_map_owner_recycle_scan(
                     if (rc < 0) continue;   /* tile carries no ground stack */
                     if (rc == 0) return 0;  /* malformed owner */
                     current = (int16_t)owner->ground_stack_links[ground_index];
+                    if (current == DM2_V1_RECORD_HANDLE_NULL) return 0;
                     while (current != DM2_V1_RECORD_HANDLE_END &&
                            current != DM2_V1_RECORD_HANDLE_NULL) {
                         int16_t next;
@@ -613,6 +720,7 @@ int dm2_v1_sksave_map_owner_recycle_scan(
                         if (out_receipt) ++out_receipt->records_examined;
                         record = dm2_v1_record_pool_address(set, current);
                         if (!record) return 0;
+                        if (next == DM2_V1_RECORD_HANDLE_NULL) return 0;
                         /* c_record.cpp:823-832: an actuator with a nonzero
                          * table1d324c subtype rejects this whole tile chain,
                          * including a following DB2 candidate. */
@@ -650,6 +758,96 @@ int dm2_v1_sksave_map_owner_recycle_scan(
     return 0;
 }
 
+/* Validate every retained ground chain before the mutating detach pass.  The
+ * source's CUT_RECORD_FROM path is transactional at the caller boundary;
+ * this private owner must not sever earlier dynamic records and only then
+ * discover a malformed tail on another tile. */
+static int dm2_v1_sksave_map_owner_validate_ground_chains(
+    const DM2_V1_SksaveMapOwner *owner, const DM2_V1_RecordPoolSet *set)
+{
+    size_t budget = 1u;
+    uint8_t *seen = NULL;
+    uint16_t *path_stamp = NULL;
+    uint16_t stamp = 0u;
+    int map;
+    int pool;
+
+    if (!owner || !owner->valid || !set || !set->valid || !owner->dungeon)
+        return 0;
+    for (pool = 0; pool < DM2_V1_RECORD_POOL_COUNT; ++pool) {
+        if (set->pools[pool].record_count > 0)
+            budget += (size_t)set->pools[pool].record_count;
+        if (set->pools[pool].extension_count > 0)
+            budget += (size_t)set->pools[pool].extension_count;
+    }
+    /* ObjectID indexes are 10-bit in the source handle.  Deduplicating the
+     * read-only walk keeps large real maps linear even when several roots
+     * expose the same malformed/shared tail. */
+    seen = (uint8_t *)calloc((size_t)DM2_V1_RECORD_POOL_COUNT * 1024u, 1u);
+    path_stamp = (uint16_t *)calloc(
+        (size_t)DM2_V1_RECORD_POOL_COUNT * 1024u, sizeof(*path_stamp));
+    if (!seen || !path_stamp) {
+        free(seen);
+        free(path_stamp);
+        return 0;
+    }
+    for (map = 0; map < (int)owner->dungeon->map_count; ++map) {
+        int x;
+        for (x = 0; x < (int)owner->dungeon->map_widths[map]; ++x) {
+            int y;
+            for (y = 0; y < (int)owner->dungeon->map_heights[map]; ++y) {
+                size_t ground_index;
+                size_t steps = 0u;
+                int rc = dm2_v1_sksave_map_owner_ground_index(
+                    owner, map, x, y, &ground_index);
+                int16_t current;
+                if (++stamp == 0u) {
+                    memset(path_stamp, 0,
+                           (size_t)DM2_V1_RECORD_POOL_COUNT * 1024u *
+                               sizeof(*path_stamp));
+                    stamp = 1u;
+                }
+                if (rc < 0) continue;
+                if (rc == 0) goto validate_fail;
+                current = (int16_t)owner->ground_stack_links[ground_index];
+                if (current == DM2_V1_RECORD_HANDLE_NULL) goto validate_fail;
+                while (current != DM2_V1_RECORD_HANDLE_END) {
+                    int16_t next;
+                    int pool = dm2_v1_record_handle_pool(current);
+                    size_t seen_index;
+                    if (++steps > budget || pool < 0 ||
+                        pool >= DM2_V1_RECORD_POOL_COUNT ||
+                        dm2_v1_record_handle_index(current) < 0)
+                        goto validate_fail;
+                    seen_index = (size_t)pool * 1024u +
+                        (size_t)dm2_v1_record_handle_index(current);
+                    if (path_stamp[seen_index] == stamp)
+                        goto validate_fail;
+                    path_stamp[seen_index] = stamp;
+                    /* A shared suffix is legal in the authenticated map
+                     * representation once it has been validated in full.
+                     * Only repetition within this path is a cycle. */
+                    if (seen[seen_index]) break;
+                    seen[seen_index] = 1u;
+                    if (!dm2_v1_record_pool_address(set, current) ||
+                        !dm2_v1_record_pool_next_link(set, current, &next) ||
+                        next == DM2_V1_RECORD_HANDLE_NULL)
+                        goto validate_fail;
+                    current = next;
+                }
+            }
+        }
+    }
+    free(path_stamp);
+    free(seen);
+    return 1;
+
+validate_fail:
+    free(path_stamp);
+    free(seen);
+    return 0;
+}
+
 int dm2_v1_sksave_map_owner_detach_dynamic_records(
     DM2_V1_SksaveMapOwner *owner, DM2_V1_RecordPoolSet *set,
     uint32_t *out_detached_count)
@@ -665,7 +863,10 @@ int dm2_v1_sksave_map_owner_detach_dynamic_records(
     for (pool = 0; pool < DM2_V1_RECORD_POOL_COUNT; ++pool) {
         if (set->pools[pool].record_count > 0)
             budget += (size_t)set->pools[pool].record_count;
+        if (set->pools[pool].extension_count > 0)
+            budget += (size_t)set->pools[pool].extension_count;
     }
+    if (!dm2_v1_sksave_map_owner_validate_ground_chains(owner, set)) return 0;
     for (map = 0; map < (int)owner->dungeon->map_count; ++map) {
         int x;
         for (x = 0; x < (int)owner->dungeon->map_widths[map]; ++x) {
@@ -680,6 +881,7 @@ int dm2_v1_sksave_map_owner_detach_dynamic_records(
                 if (rc < 0) continue;
                 if (rc == 0) return 0;
                 current = (int16_t)owner->ground_stack_links[ground_index];
+                if (current == DM2_V1_RECORD_HANDLE_NULL) return 0;
                 while (current != DM2_V1_RECORD_HANDLE_END &&
                        current != DM2_V1_RECORD_HANDLE_NULL) {
                     uint8_t *record;
@@ -688,7 +890,8 @@ int dm2_v1_sksave_map_owner_detach_dynamic_records(
                     if (++steps > budget || current_pool < 0 ||
                         current_pool >= DM2_V1_RECORD_POOL_COUNT ||
                         !(record = dm2_v1_record_pool_address_mut(set, current)) ||
-                        !dm2_v1_record_pool_next_link(set, current, &next)) return 0;
+                        !dm2_v1_record_pool_next_link(set, current, &next) ||
+                        next == DM2_V1_RECORD_HANDLE_NULL) return 0;
                     if (current_pool >= 4) {
                         /* sksvgame.cpp:1138-1150: sever the dynamic record
                          * before CUT_RECORD_FROM rewires its real tile owner. */
@@ -784,9 +987,36 @@ typedef struct {
     uint32_t continuation_hash;
     DM2_ReadRecordCreatureAiFlagsFn ai_fn;
     void *ai_ctx;
+    int party_map;
+    int party_x;
+    int party_y;
     int16_t recycle_required_db;
     uint16_t recycle_db2_count;
+    uint16_t recycle_free_slot_count;
+    uint8_t recycle_status;
 } DM2_V1_SksavePoolRestoreContext;
+
+/* The source clears DB4+ record w0 only after it has detached the dynamic
+ * map records.  Preserve the AI owner while those source records are still
+ * live; a boundary inspection must not try to reconstruct it from the
+ * deliberately stale post-clear bytes. */
+static void dm2_v1_sksave_retain_live_creature_ai(
+    DM2_V1_SksaveGameLoadOwner *owner, const DM2_V1_RecordPool *pool,
+    DM2_ReadRecordCreatureAiFlagsFn query, void *query_ctx)
+{
+    if (!owner || !pool || !pool->bytes || pool->record_size < 5 || !query)
+        return;
+    for (int i = 0; i < pool->record_count; ++i) {
+        const uint8_t *record = pool->bytes +
+            (size_t)i * (size_t)pool->record_size;
+        uint16_t flags = 0u;
+        if (query(query_ctx, (uint16_t)(0x1000u | (uint16_t)i), record[4],
+                   &flags) == 0) {
+            owner->retained_creature_ai_flags[record[4]] = flags;
+            owner->retained_creature_ai_valid[record[4]] = 1u;
+        }
+    }
+}
 
 static uint32_t dm2_v1_sksave_hash_bytes(uint32_t hash,
                                          const uint8_t *bytes, size_t size)
@@ -840,6 +1070,88 @@ int dm2_v1_sksave_apply_direct_roots_to_heroes(
     return 1;
 }
 
+/* Bridge the source recycler to READ_RECORD_CHECKCODE's allocator while the
+ * complete private GAME_LOAD transaction is still local to this module. The
+ * public owner walker supplies the source map-ring and Text-barrier rules;
+ * DB0 and admitted no-creature DB14 additionally cut the selected tile link,
+ * while the source allocator clears the returned record. */
+static uint16_t dm2_v1_sksave_pool_recycle_direct(
+    DM2_V1_SksavePoolRestoreContext *ctx, uint8_t requested_db)
+{
+    DM2_V1_SksaveGameLoadOwner view;
+    DM2_V1_SksaveRecyclerCandidate candidate;
+    DM2_V1_RecordPool *pool;
+    uint8_t *record;
+    size_t i;
+
+    if (ctx) ctx->recycle_status = 1u;
+    if (!ctx || !ctx->set || !ctx->map_owner ||
+        !ctx->map_owner->valid || !ctx->map_owner->dungeon ||
+        !ctx->set->valid || !ctx->ai_fn ||
+        ctx->map_owner->current_map < 0) return 0xfffeu;
+    memset(&view, 0, sizeof(view));
+    view.valid = 1;
+    view.map_owner = *ctx->map_owner;
+    view.record_pools = *ctx->set;
+    view.recycler_context.valid = 1;
+    view.recycler_context.map_count = view.map_owner.dungeon->map_count;
+    view.recycler_context.current_map = (uint16_t)view.map_owner.current_map;
+    /* The callback runs during DM2_READ_SKSAVE_DUNGEON, before the alternate
+     * teleporter map is discovered, so the source has no protected map. */
+    view.recycler_context.protected_map_active = 0;
+    view.recycler_context.protected_map = -1;
+    view.recycler_context.party_map = (uint16_t)ctx->party_map;
+    view.recycler_context.party_x = (uint16_t)ctx->party_x;
+    view.recycler_context.party_y = (uint16_t)ctx->party_y;
+    for (i = 0u; i < sizeof(view.recycler_context.map_cursors); ++i)
+        view.recycler_context.map_cursors[i] =
+            ctx->map_owner->recycle_scan_map[i];
+    pool = &view.record_pools.pools[4];
+    for (i = 0u; i < (size_t)pool->record_count; ++i) {
+        const uint8_t *creature = pool->bytes + i * pool->record_size;
+        uint16_t flags = 0u;
+        if (ctx->ai_fn(ctx->ai_ctx, (uint16_t)(0x1000u | i), creature[4],
+                       &flags) != 0) {
+            /* The source recycler queries CREATURE_AI only when its map walk
+             * descends through this creature's static possession tail. An
+             * unrelated DB4 row must not reject the candidate pre-scan;
+             * recycler_scan_tile remains fail-closed if that row is visited. */
+            continue;
+        }
+        view.retained_creature_ai_valid[creature[4]] = 1u;
+        view.retained_creature_ai_flags[creature[4]] = flags;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    if (!dm2_v1_sksave_game_load_owner_recycler_candidate(
+            &view, requested_db, &candidate) || !candidate.valid ||
+        !candidate.found || candidate.requested_db != requested_db) {
+        ctx->recycle_status = 2u;
+        return 0xfffeu;
+    }
+    ctx->recycle_status = 3u;
+    record = dm2_v1_record_pool_address_mut(ctx->set,
+                                             (int16_t)candidate.selected_link);
+    if (!record || dm2_v1_record_handle_pool(
+                       (int16_t)candidate.selected_link) != (int)requested_db ||
+        ((requested_db == 0u || requested_db == 5u || requested_db == 6u ||
+          requested_db == 8u || requested_db == 10u || requested_db == 14u) &&
+         !dm2_v1_sksave_map_owner_cut_tile_record(
+             ctx->map_owner, ctx->set, candidate.selected_map,
+             candidate.selected_x, candidate.selected_y,
+             candidate.selected_link))) {
+        ctx->recycle_status = 4u;
+        return 0xfffeu;
+    }
+    pool = &ctx->set->pools[requested_db];
+    memset(record, 0, (size_t)pool->record_size);
+    dm2_v1_wr16(record, DM2_V1_RECORD_HANDLE_END);
+    if (requested_db == 2u && ctx->recycle_db2_count != UINT16_MAX)
+        ++ctx->recycle_db2_count;
+    ctx->map_owner->recycle_scan_map[requested_db] = candidate.cursor_after;
+    ctx->recycle_status = 5u;
+    return candidate.selected_link;
+}
+
 static uint16_t dm2_v1_sksave_pool_alloc(void *context, int record_type)
 {
     DM2_V1_SksavePoolRestoreContext *ctx =
@@ -853,26 +1165,55 @@ static uint16_t dm2_v1_sksave_pool_alloc(void *context, int record_type)
      * the resident DB0..DB3 chains were not globally cleared beforehand.
      * Do not invent a side pool: allocate only an authenticated vacant
      * source slot. A full pool remains a load failure until its complete
-     * source-owned deletion/relocation path is retained. DB2/Text is a
-     * chain barrier in the original recycler, not a recyclable source slot. */
+     * source-owned deletion/relocation path is retained. DB2/Text records
+     * behind the source barrier remain protected; an admissible direct DB2
+     * record is returned only through the source recycler walk. */
     if (!ctx || !ctx->set || record_type < 0 || record_type >= 16) {
         return 0xfffeu;
     }
+    ctx->recycle_status = 0u;
+    ctx->recycle_required_db = (int16_t)record_type;
     pool = &ctx->set->pools[record_type];
-    if (pool->record_size <= 0 || !pool->bytes) return 0xfffeu;
-    for (index = 0; index < pool->record_count; ++index) {
-        uint8_t *record = pool->bytes +
-            (size_t)index * (size_t)pool->record_size;
-        if (dm2_v1_rd16(ctx->set, record) == DM2_V1_RECORD_HANDLE_NULL) {
-            return (uint16_t)(((uint16_t)record_type << 10) | (uint16_t)index);
+    /* A zero-count DB14/DB15 pool is not an authenticated free list.  The
+     * source dballoc path may create one, but its reserve/capacity owner is
+     * not present in this SKSAVE baseline; distinguish that boundary from a
+     * full, already-materialised pool so the caller cannot mistake it for a
+     * recyclable DB0 slot. */
+    if (pool->record_size <= 0 || !pool->bytes) {
+        ctx->recycle_status = 6u; /* source dynamic-pool owner missing */
+        return 0xfffeu;
+    }
+    {
+        int first_free = -1;
+        uint16_t free_count = 0u;
+        for (index = 0; index < pool->record_count; ++index) {
+            uint8_t *record = pool->bytes +
+                (size_t)index * (size_t)pool->record_size;
+            if (dm2_v1_rd16(record) == DM2_V1_RECORD_HANDLE_NULL) {
+                if (first_free < 0) first_free = index;
+                if (free_count != UINT16_MAX) ++free_count;
+            }
         }
+        ctx->recycle_free_slot_count = free_count;
+        if (first_free >= 0) {
+            return (uint16_t)(((uint16_t)record_type << 10) |
+                              (uint16_t)first_free);
+        }
+    }
+    if ((record_type == 0 || record_type == 2 || record_type == 3 ||
+         record_type == 5 || record_type == 6 || record_type == 7 ||
+         record_type == 8 || record_type == 9 || record_type == 10 ||
+         record_type == 14) &&
+        ctx->map_owner) {
+        const uint16_t recycled = dm2_v1_sksave_pool_recycle_direct(
+            ctx, (uint8_t)record_type);
+        if (recycled != 0xfffeu) return recycled;
     }
     /* SKProject SKWINDOS/dm2byg.cpp::SKW_RECYCLE_A_RECORD_FROM_THE_WORLD
      * 0CEE:10EC-112A takes DB2 through its TextMode/SimpleTextExtUsage
      * barrier, then advances the chain. Never promote a text record to an
      * allocator fallback just because the full DB0/DB4/DB14 paths are not
      * retained. */
-    ctx->recycle_required_db = (int16_t)record_type;
     return 0xfffeu;
 }
 
@@ -1104,7 +1445,9 @@ int dm2_v1_record_pool_next_link(const DM2_V1_RecordPoolSet *set,
     }
     /* c_record.cpp:56 — DM2_GET_NEXT_RECORD_LINK reads the record's first
      * word. */
-    *out_next = dm2_v1_rd16(set, addr);
+    *out_next = set->source_words_big_endian
+        ? (int16_t)(((uint16_t)addr[0] << 8) | addr[1])
+        : dm2_v1_rd16(addr);
     return 1;
 }
 
@@ -1129,7 +1472,7 @@ int dm2_v1_record_pool_append_to_list(DM2_V1_RecordPoolSet *set,
     }
     /* c_record.cpp:71 — *dest = OBJECT_END_MARKER terminates the appended
      * record's own link before chaining. */
-    dm2_v1_wr16(set, record_addr, DM2_V1_RECORD_HANDLE_END);
+    dm2_v1_pool_wr16(set, record_addr, DM2_V1_RECORD_HANDLE_END);
 
     /* c_record.cpp:75-79 (x < 0 path) — walk to the last link slot and
      * store the appended record there. */
@@ -1147,9 +1490,9 @@ int dm2_v1_record_pool_append_to_list(DM2_V1_RecordPoolSet *set,
         if (cursor_addr == NULL) {
             return 0; /* unresolvable chain: fail-closed, no mutation */
         }
-        next = dm2_v1_rd16(set, cursor_addr);
+        next = dm2_v1_pool_rd16(set, cursor_addr);
         if (next == DM2_V1_RECORD_HANDLE_END) {
-            dm2_v1_wr16(set, cursor_addr, record);
+            dm2_v1_pool_wr16(set, cursor_addr, record);
             return 1;
         }
         if (next == DM2_V1_RECORD_HANDLE_NULL) {
@@ -1182,7 +1525,7 @@ int dm2_v1_record_pool_cut_from_list(DM2_V1_RecordPoolSet *set,
         if (cursor_addr == NULL) {
             return 0;
         }
-        next = dm2_v1_rd16(set, cursor_addr);
+        next = dm2_v1_pool_rd16(set, cursor_addr);
         if (cursor == record) {
             /* c_record.cpp:122+ list path — splice the successor into the
              * predecessor's link slot (or the list head). */
@@ -1194,7 +1537,7 @@ int dm2_v1_record_pool_cut_from_list(DM2_V1_RecordPoolSet *set,
                 if (prev_addr == NULL) {
                     return 0;
                 }
-                dm2_v1_wr16(set, prev_addr, next);
+                dm2_v1_pool_wr16(set, prev_addr, next);
             }
             return 1;
         }
@@ -1219,14 +1562,28 @@ int dm2_v1_record_pool_cut_from_tile(DM2_V1_RecordPoolSet *set,
     }
     first = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
     if (first < 0) {
+        int raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+        /* Big-endian byte-square media may expose the empty root sentinel as
+         * a negative int16_t while retaining the tile's object flag.  A
+         * dynamically allocated DB14 can nevertheless be the authenticated
+         * root of that stack; remove that root transactionally instead of
+         * rejecting the projectile merely because the sentinel is signed. */
+        if (raw >= 0 && (raw & 0x10) != 0 &&
+            dm2_v1_record_handle_pool(record) == 14 &&
+            dm2_v1_record_pool_address(set, record) != NULL) {
+            if (dm2_v1_dungeon_set_first_thing(
+                    dungeon, map, x, y, DM2_THING_END_MARKER) != 0)
+                return 0;
+            return 1;
+        }
         return 0;
     }
     head = (int16_t)first;
     if (!dm2_v1_record_pool_cut_from_list(set, &head, record)) {
         return 0;
     }
-    dm2_v1_dungeon_set_first_thing(dungeon, map, x, y, (uint16_t)head);
-    return 1;
+    return dm2_v1_dungeon_set_first_thing(
+        dungeon, map, x, y, (uint16_t)head) == 0;
 }
 
 int dm2_v1_record_pool_relocate(DM2_V1_RecordPoolSet *set,
@@ -1262,6 +1619,7 @@ int dm2_v1_record_pool_set_init_from_dungeon(DM2_V1_RecordPoolSet *set,
     if (d == NULL || d->raw_data == NULL || !d->record_graph_complete) {
         return 0;
     }
+    set->source_words_big_endian = d->words_big_endian != 0;
 
     /* The original PC retail member has a 44-map File_header and no G1
      * extension. Its DB spans are already proven by
@@ -1364,6 +1722,7 @@ int dm2_v1_record_pool_set_init_from_raw_sksave(
         dungeon_receipt->suppress_state_offset > raw_body_size) {
         return 0;
     }
+    set->source_words_big_endian = 0;
 
     /* READ_DUNGEON_STRUCTURE has already laid out every DB pool before
      * DM2_GAME_LOAD starts the one shared SUPPRESS stream.  Do not derive
@@ -1467,6 +1826,48 @@ int dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
         }
     }
 
+    /* c_savegame.cpp lays out the dynamic pools from the source reserve
+     * table before sksvgame.cpp:1151-1164 clears their OBJECT_NULL heads.
+     * The raw SKSAVE prefix contains only the static File_header counts, so
+     * a zero-count DB14/DB15 must be expanded here from the authenticated
+     * source reserve rather than treated as an absent pool.  This is the same
+     * table_1d281c capacity calculation used by GAME_LOAD's candidate owner:
+     * DB14 + 0x3c and DB15 + 0x32, bounded by the source 0x400/0x300 index
+     * limits.  No capacity is inferred from DB0 free slots or save bytes.
+     */
+    for (pool = 14; pool <= 15; ++pool) {
+        DM2_V1_RecordPool *target = &set->pools[pool];
+        const int reserve = (int)dm2_v1_table_1d281c[pool];
+        const int hard_limit = pool == 15 ? 0x300 : 0x400;
+        int capacity = target->record_count + reserve;
+        size_t old_bytes;
+        size_t new_bytes;
+        uint8_t *bytes;
+
+        if (target->record_count < 0 || reserve <= 0 ||
+            target->record_count > hard_limit || capacity < target->record_count ||
+            capacity > hard_limit || target->extension_count != 0 ||
+            target->extension_bytes != NULL || target->record_size <= 0) {
+            return 0;
+        }
+        if (target->record_count == capacity) continue;
+        old_bytes = (size_t)target->record_count *
+            (size_t)target->record_size;
+        new_bytes = (size_t)capacity * (size_t)target->record_size;
+        bytes = (uint8_t *)calloc(1u, new_bytes);
+        if (!bytes) return 0;
+        if (old_bytes != 0u) {
+            if (!target->bytes) {
+                free(bytes);
+                return 0;
+            }
+            memcpy(bytes, target->bytes, old_bytes);
+        }
+        free(target->bytes);
+        target->bytes = bytes;
+        target->record_count = capacity;
+    }
+
     /* SKProject sksvgame.cpp:1151-1164.  DB0..DB3 remain resident because
      * their tile-chain ownership was retained during the preceding map walk.
      * The dynamic pools are made available to c_record::ALLOC_NEW_RECORD by
@@ -1486,8 +1887,9 @@ int dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
     return 1;
 }
 
-int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
+int dm2_v1_record_pool_restore_raw_sksave_direct_roots_with_map_owner(
     DM2_V1_RecordPoolSet *set,
+    DM2_V1_SksaveMapOwner *map_owner,
     const uint8_t *raw_body,
     size_t raw_body_size,
     const DM2_V1_OriginalRawSaveStateReceipt *state_receipt,
@@ -1528,6 +1930,10 @@ int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
     context.record_hash = 2166136261u;
     context.ai_fn = query_creature_ai_flags;
     context.ai_ctx = query_creature_ai_flags_ctx;
+    context.map_owner = map_owner;
+    context.party_map = state_receipt->party_map;
+    context.party_x = state_receipt->party_x;
+    context.party_y = state_receipt->party_y;
     memset(&callbacks, 0, sizeof(callbacks));
     callbacks.alloc_record = dm2_v1_sksave_pool_alloc;
     callbacks.set_data = dm2_v1_sksave_pool_set_data;
@@ -1590,6 +1996,20 @@ int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
     }
 #undef DM2_V1_SKSAVE_ROOT_ABORT
     return 1;
+}
+
+int dm2_v1_record_pool_restore_raw_sksave_direct_roots(
+    DM2_V1_RecordPoolSet *set,
+    const uint8_t *raw_body,
+    size_t raw_body_size,
+    const DM2_V1_OriginalRawSaveStateReceipt *state_receipt,
+    DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags,
+    void *query_creature_ai_flags_ctx,
+    DM2_V1_SksaveDirectRootReceipt *out_receipt)
+{
+    return dm2_v1_record_pool_restore_raw_sksave_direct_roots_with_map_owner(
+        set, NULL, raw_body, raw_body_size, state_receipt,
+        query_creature_ai_flags, query_creature_ai_flags_ctx, out_receipt);
 }
 
 typedef struct {
@@ -1695,6 +2115,12 @@ static int dm2_v1_record_pool_walk_raw_sksave_special_timer_chains(
     memset(&roots, 0, sizeof(roots));
     memset(&item_bonus, 0, sizeof(item_bonus));
     memset(heroes, 0, sizeof(heroes));
+    /* c_savegame.cpp clears the tail [num_timers, vsgame[120]) before
+     * sorting/rearranging.  The local transaction must do the same; leaving
+     * the tail indeterminate can manufacture active timer slots and a false
+     * full free-list at the owner handoff. */
+    memset(timers, 0, sizeof(timers));
+    memset(timer_indices, 0xff, sizeof(timer_indices));
     memset(&timer_stream, 0, sizeof(timer_stream));
     memset(&rebuild_context, 0, sizeof(rebuild_context));
     memset(&rebuild_callbacks, 0, sizeof(rebuild_callbacks));
@@ -1713,35 +2139,83 @@ static int dm2_v1_record_pool_walk_raw_sksave_special_timer_chains(
      * shared SUPPRESS reader; a malformed source body cannot consume a later
      * map/possession bit as a special-timer record. */
     if (!raw_body || !state_receipt || !state_receipt->valid || !savegamew7 ||
-        !asset_loader ||
-        !query_creature_ai_flags ||
-        state_receipt->timer_count > DM2_V1_SAVE_TIMER_MAX ||
-        !dm2_v1_original_raw_sksave_materialize_heroes(
-            raw_body, raw_body_size, state_receipt, heroes, DM2_MAX_HEROES) ||
-        !dm2_v1_record_pool_set_init_from_raw_sksave(
-            &pools, raw_body, raw_body_size, &state_receipt->dungeon) ||
-        !dm2_v1_sksave_map_owner_init(
-            &map_owner, raw_body, raw_body_size, &state_receipt->dungeon) ||
-        state_receipt->party_map >= state_receipt->dungeon.map_count ||
+        !asset_loader || !query_creature_ai_flags ||
+        state_receipt->timer_count > DM2_V1_SAVE_TIMER_MAX) {
+        if (out_receipt) out_receipt->prepare_failure =
+            DM2_V1_SKSAVE_PREPARE_FAILURE_INPUT;
+        goto done;
+    }
+    if (!dm2_v1_original_raw_sksave_materialize_heroes(
+            raw_body, raw_body_size, state_receipt, heroes, DM2_MAX_HEROES)) {
+        if (out_receipt) out_receipt->prepare_failure =
+            DM2_V1_SKSAVE_PREPARE_FAILURE_HEROES;
+        goto done;
+    }
+    if (!dm2_v1_record_pool_set_init_from_raw_sksave(
+            &pools, raw_body, raw_body_size, &state_receipt->dungeon)) {
+        if (out_receipt) out_receipt->prepare_failure =
+            DM2_V1_SKSAVE_PREPARE_FAILURE_POOLS;
+        goto done;
+    }
+    if (!dm2_v1_sksave_map_owner_init(
+            &map_owner, raw_body, raw_body_size, &state_receipt->dungeon)) {
+        if (out_receipt) out_receipt->prepare_failure =
+            DM2_V1_SKSAVE_PREPARE_FAILURE_MAP_OWNER;
+        goto done;
+    }
+    if (state_receipt->party_map >= state_receipt->dungeon.map_count ||
         state_receipt->party_x >=
             state_receipt->dungeon.map_widths[state_receipt->party_map] ||
         state_receipt->party_y >=
-            state_receipt->dungeon.map_heights[state_receipt->party_map] ||
-        !dm2_v1_sksave_map_owner_detach_dynamic_records(
-            &map_owner, &pools, NULL) ||
-        !dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
-            &pools, &state_receipt->dungeon) ||
-        !dm2_v1_record_pool_restore_raw_sksave_direct_roots(
-            &pools, raw_body, raw_body_size, state_receipt,
-            query_creature_ai_flags, query_creature_ai_flags_ctx, &roots) ||
-        !dm2_v1_sksave_apply_direct_roots_to_heroes(
+            state_receipt->dungeon.map_heights[state_receipt->party_map]) {
+        if (out_receipt) out_receipt->prepare_failure =
+            DM2_V1_SKSAVE_PREPARE_FAILURE_PARTY_POSITION;
+        goto done;
+    }
+    dm2_v1_sksave_retain_live_creature_ai(
+        retain_owner, &pools.pools[4], query_creature_ai_flags,
+        query_creature_ai_flags_ctx);
+    if (!dm2_v1_sksave_map_owner_detach_dynamic_records(
+            &map_owner, &pools, NULL)) {
+        if (out_receipt) out_receipt->prepare_failure =
+            DM2_V1_SKSAVE_PREPARE_FAILURE_DETACH_DYNAMIC;
+        goto done;
+    }
+    if (!dm2_v1_record_pool_clear_raw_sksave_dynamic_records(
+            &pools, &state_receipt->dungeon)) {
+        if (out_receipt) out_receipt->prepare_failure =
+            DM2_V1_SKSAVE_PREPARE_FAILURE_CLEAR_DYNAMIC;
+        goto done;
+    }
+    if (!dm2_v1_record_pool_restore_raw_sksave_direct_roots_with_map_owner(
+            &pools, &map_owner, raw_body, raw_body_size, state_receipt,
+            query_creature_ai_flags, query_creature_ai_flags_ctx, &roots)) {
+        if (out_receipt) out_receipt->prepare_failure =
+            DM2_V1_SKSAVE_PREPARE_FAILURE_DIRECT_ROOTS;
+        goto done;
+    }
+    if (!dm2_v1_sksave_apply_direct_roots_to_heroes(
             heroes, DM2_MAX_HEROES, state_receipt->champion_count, &roots,
-            &leader_hand_root, &direct_root_hash) ||
-        !dm2_v1_original_raw_sksave_decode_timer_stream(
+            &leader_hand_root, &direct_root_hash)) {
+        if (out_receipt) out_receipt->prepare_failure =
+            DM2_V1_SKSAVE_PREPARE_FAILURE_APPLY_ROOTS;
+        goto done;
+    }
+    if (!dm2_v1_original_raw_sksave_decode_timer_stream(
             raw_body, raw_body_size, state_receipt, (uint8_t *)timers,
-            DM2_V1_SAVE_TIMER_MAX, &timer_stream) ||
-        !timer_stream.valid ||
-        timer_stream.raw_hash != state_receipt->timers_hash) {
+            DM2_V1_SAVE_TIMER_MAX, &timer_stream)) {
+        if (out_receipt) out_receipt->prepare_failure =
+            DM2_V1_SKSAVE_PREPARE_FAILURE_TIMER_STREAM;
+        goto done;
+    }
+    if (!timer_stream.valid) {
+        if (out_receipt) out_receipt->prepare_failure =
+            DM2_V1_SKSAVE_PREPARE_FAILURE_TIMER_RECEIPT;
+        goto done;
+    }
+    if (timer_stream.raw_hash != state_receipt->timers_hash) {
+        if (out_receipt) out_receipt->prepare_failure =
+            DM2_V1_SKSAVE_PREPARE_FAILURE_TIMER_HASH;
         goto done;
     }
     if (state_receipt->dungeon.words_big_endian) {
@@ -1774,6 +2248,9 @@ static int dm2_v1_record_pool_walk_raw_sksave_special_timer_chains(
     context.record_hash = roots.record_hash;
     context.ai_fn = query_creature_ai_flags;
     context.ai_ctx = query_creature_ai_flags_ctx;
+    context.party_map = state_receipt->party_map;
+    context.party_x = state_receipt->party_x;
+    context.party_y = state_receipt->party_y;
     context.possession_link_count = roots.possession_link_count;
     if (roots.possession_link_count != 0u) {
         memcpy(context.possession_links, roots.possession_links,
@@ -1836,8 +2313,14 @@ static int dm2_v1_record_pool_walk_raw_sksave_special_timer_chains(
                 (int16_t)dungeon_receipt.failed_record_type;
         out_receipt->map_failure_record_reason =
                 (int16_t)dungeon_receipt.failed_record_reason;
+        out_receipt->map_failure_stream_offset =
+            dungeon_receipt.failed_stream_offset;
+        out_receipt->map_failure_stream_bits_remaining =
+            dungeon_receipt.failed_stream_bits_remaining;
         out_receipt->recycle_required_db = context.recycle_required_db;
+        out_receipt->recycle_free_slot_count = context.recycle_free_slot_count;
         out_receipt->recycle_db2_count = context.recycle_db2_count;
+        out_receipt->recycle_status = context.recycle_status;
         }
         failure_stage = DM2_V1_SKSAVE_PREFLIGHT_FAILURE_MAPS;
         goto done;
@@ -1918,7 +2401,13 @@ static int dm2_v1_record_pool_walk_raw_sksave_special_timer_chains(
             (int16_t)dungeon_receipt.failed_record_type;
         out_receipt->map_failure_record_reason =
             (int16_t)dungeon_receipt.failed_record_reason;
+        out_receipt->map_failure_stream_offset =
+            dungeon_receipt.failed_stream_offset;
+        out_receipt->map_failure_stream_bits_remaining =
+            dungeon_receipt.failed_stream_bits_remaining;
         out_receipt->recycle_required_db = context.recycle_required_db;
+        out_receipt->recycle_free_slot_count = context.recycle_free_slot_count;
+        out_receipt->recycle_status = context.recycle_status;
         out_receipt->recycle_db2_count = context.recycle_db2_count;
         out_receipt->possession_link_count = context.possession_link_count;
         out_receipt->possession_continuation_count =
@@ -1957,6 +2446,12 @@ done:
                 DM2_READ_RECORD_FAILURE_ALLOC)) && retain_owner) {
         retain_owner->map_owner = map_owner;
         retain_owner->record_pools = pools;
+        /* The raw SKSAVE baseline intentionally carries an incomplete graph.
+         * Once the source-ordered special timers, all 44 map chains and
+         * possession continuations have completed, this transferred owner
+         * is the other side of that boundary and may advertise the graph.
+         * Recycler-boundary retention remains explicitly incomplete. */
+        retain_owner->record_pools.record_graph_complete = ok ? 1 : 0;
         memcpy(retain_owner->heroes, heroes, sizeof(heroes));
         memcpy(retain_owner->timers, timers, sizeof(timers));
         memcpy(retain_owner->timer_indices, timer_indices,
@@ -1970,13 +2465,21 @@ done:
     dm2_v1_sksave_map_owner_free(&map_owner);
     dm2_v1_record_pool_set_free(&pools);
     if (!ok && out_receipt) {
+        const DM2_V1_SksavePrepareFailure prepare_failure =
+            out_receipt->prepare_failure;
         const int16_t failed_map = out_receipt->map_failure_map;
         const int16_t failed_x = out_receipt->map_failure_x;
         const int16_t failed_y = out_receipt->map_failure_y;
         const uint16_t failed_root_link = out_receipt->map_failure_root_link;
         const int16_t failed_record_type = out_receipt->map_failure_record_type;
         const int16_t failed_record_reason = out_receipt->map_failure_record_reason;
+        const size_t failed_stream_offset =
+            out_receipt->map_failure_stream_offset;
+        const uint8_t failed_stream_bits_remaining =
+            out_receipt->map_failure_stream_bits_remaining;
         const int16_t recycle_required_db = context.recycle_required_db;
+        const uint16_t recycle_free_slot_count = context.recycle_free_slot_count;
+        const uint8_t recycle_status = context.recycle_status;
         const uint16_t recycle_db2_count = context.recycle_db2_count;
         const int16_t retained_item_bonus_failure_hero_index =
             item_bonus_failure_hero_index;
@@ -1988,13 +2491,19 @@ done:
         const uint32_t retained_direct_root_hash = direct_root_hash;
         memset(out_receipt, 0, sizeof(*out_receipt));
         out_receipt->failure_stage = failure_stage;
+        out_receipt->prepare_failure = prepare_failure;
         out_receipt->map_failure_map = failed_map;
         out_receipt->map_failure_x = failed_x;
         out_receipt->map_failure_y = failed_y;
         out_receipt->map_failure_root_link = failed_root_link;
         out_receipt->map_failure_record_type = failed_record_type;
         out_receipt->map_failure_record_reason = failed_record_reason;
+        out_receipt->map_failure_stream_offset = failed_stream_offset;
+        out_receipt->map_failure_stream_bits_remaining =
+            failed_stream_bits_remaining;
         out_receipt->recycle_required_db = recycle_required_db;
+        out_receipt->recycle_free_slot_count = recycle_free_slot_count;
+        out_receipt->recycle_status = recycle_status;
         out_receipt->recycle_db2_count = recycle_db2_count;
         out_receipt->item_bonus_failure_hero_index =
             retained_item_bonus_failure_hero_index;
@@ -2107,7 +2616,7 @@ int dm2_v1_record_pool_set_clone(DM2_V1_RecordPoolSet *out,
     }
     candidate.valid = 1;
     candidate.record_graph_complete = 1;
-    candidate.words_big_endian = source->words_big_endian;
+    candidate.source_words_big_endian = source->source_words_big_endian;
     *out = candidate;
     return 1;
 

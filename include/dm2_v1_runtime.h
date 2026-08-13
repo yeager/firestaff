@@ -34,6 +34,7 @@
 #include "dm2_v1_think_creature_pc34_compat.h"
 #include "dm2_v1_creature_schedule_pc34_compat.h"
 #include "dm2_v1_caii_alloc_pc34_compat.h"
+#include "dm2_v1_ccm_loop_pc34_compat.h"
 #include "dm2_v1_dbitem_alloc_pc34_compat.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_perform_move.h"
@@ -45,6 +46,53 @@
 #include "dm2_v1_weather_gdat.h"
 #include "dm2_v1_weather.h"
 #include "dm2_v1_engage_command_pc34_compat.h"
+#include "dm2_v1_game_load_world_owner.h"
+
+/* Ownership receipt for the private GAME_LOAD candidate handoff.  A valid
+ * receipt proves that the candidate is now owned by runtime, not that it is
+ * yet a playable session. */
+typedef struct {
+    int valid;
+    int source_game_load_session_ready;
+    uint32_t candidate_hash;
+    uint32_t source_transaction_hash;
+} DM2_V1_RuntimeGameLoadCandidateHandoffReceipt;
+
+/* Read-only runtime view of the transferred candidate.  The counts and
+ * hashes describe source-owned state; they do not grant input, ticking or
+ * publication rights. */
+typedef struct {
+    int valid;
+    int source_game_load_session_ready;
+    uint32_t candidate_hash;
+    uint32_t source_transaction_hash;
+    int current_map;
+    int party_count;
+    int active_hero;
+    int record_graph_complete;
+    int caii_capacity;
+    int caii_alloc_count;
+    uint16_t timer_capacity;
+    uint16_t timer_count;
+    int first_timer_valid;
+    uint8_t first_timer_type;
+    uint8_t first_timer_actor;
+    int16_t first_timer_value_a;
+    int16_t first_timer_value_b;
+    int16_t first_timer_reserved;
+    uint16_t sound_queue_entry_count;
+    uint16_t sound_sample_binding_count;
+} DM2_V1_RuntimeGameLoadCandidateViewReceipt;
+
+typedef struct {
+    int16_t max_hp;
+    int16_t cur_hp;
+    int16_t weight;
+    int16_t ench_power;
+    int8_t ench_aura;
+    int16_t first_item;
+    uint16_t heroflag;
+} DM2_V1_RuntimeSourceHeroStateReceipt;
 
 /* Runtime-visible proof that the M11-owned frame consumed DM2 GDAT pixels.
  * This is deliberately aggregate: it proves ownership and real consumption
@@ -189,6 +237,34 @@ typedef struct {
     uint8_t unresolved_record_timer_count;
     uint8_t other_timer_count;
 } DM2_V1_RuntimeTimerPostLoadReceipt;
+
+/* Source-owned DM2_CAST_SPELL_PLAYER light/shield transaction. This receipt
+ * uses committed c_hero, c_light/enchantment owners and the source timer
+ * queue; it is not the older DM2_ChampionRecord compatibility adapter. */
+typedef struct {
+    int valid;
+    int applied;
+    int source_owner_available;
+    int timer_enqueued;
+    uint32_t timer_ticket;
+    int light_before;
+    int light_after;
+    int mana_before;
+    int mana_after;
+    uint8_t aura_of_speed_before;
+    uint8_t aura_of_speed_after;
+    /* Source DM2_SHOOT_ITEM admission for missile spells. */
+    int missile_record;
+    uint16_t missile_object;
+    uint8_t missile_damage;
+    uint8_t missile_energy;
+    /* Non-zero only when a missile owner rejects before commit; this keeps
+     * source-pool/tile/timer admission failures observable without exposing
+     * mutable runtime state. */
+    int missile_failure_stage;
+    int hand_index;
+    DM2_V1_SpellCastPlayerReceipt cast;
+} DM2_V1_RuntimeSpellCastReceipt;
 #include "dm2_v1_weather.h"
 
 #ifdef __cplusplus
@@ -209,6 +285,63 @@ int  dm2_v1_runtime_bind_boot_profile(DM2_V1_BootProfile *boot_profile);
  * must first complete the source mirror/input transition. */
 int  dm2_v1_runtime_commit_source_game_load(
     DM2_V1_BootProfile *boot_profile);
+/* Execute source-owned Long Light/Darkness/Light, fixed shields and the
+ * four attribute-aura branches of DM2_CAST_SPELL_PLAYER for the selected
+ * c_hero. The existing rune tail is the input; rune-entry mana has already
+ * been charged by c_events. Other successful branches remain fail-closed. */
+int dm2_v1_runtime_cast_spell_player(
+    int hero_index, int hand_index,
+    DM2_V1_RuntimeSpellCastReceipt *out_receipt);
+/* Copy the currently visible source rune line into the live c_hero owner.
+ * M11 owns the panel buffer; DM2 owns the cast transaction. */
+int dm2_v1_runtime_set_spell_runes(int hero_index,
+                                   const uint8_t *runes, int rune_count);
+
+/* Transfer an already retained, source-complete private candidate from the
+ * boot profile to the bound runtime. On failure the profile keeps ownership.
+ * This never publishes party, timers or gameplay and never sets readiness. */
+int dm2_v1_runtime_handoff_game_load_candidate(
+    DM2_V1_BootProfile *boot_profile,
+    DM2_V1_RuntimeGameLoadCandidateHandoffReceipt *out_receipt);
+int dm2_v1_runtime_game_load_candidate_view(
+    DM2_V1_RuntimeGameLoadCandidateViewReceipt *out_receipt);
+int dm2_v1_runtime_game_load_candidate_query_nearest_creature(
+    int16_t *io_x, int16_t *io_y, uint16_t direction,
+    uint32_t *out_handle, DM2_V1_GameLoadSpatialQueryReceipt *out_receipt);
+int dm2_v1_runtime_game_load_candidate_classify_move(
+    uint8_t move_command, int16_t source_x, int16_t source_y,
+    int16_t target_x, int16_t target_y,
+    DM2_V1_GameLoadMoveClassificationReceipt *out_receipt);
+int dm2_v1_runtime_game_load_candidate_census_moverec_square(
+    int16_t x, int16_t y, DM2_V1_GameLoadMoverecSquareReceipt *out_receipt);
+int dm2_v1_runtime_game_load_candidate_move_record_to(
+    int16_t record, int16_t source_x, int16_t source_y,
+    int16_t destination_x, int16_t destination_y,
+    DM2_V1_GameLoadRecordMoveReceipt *out_receipt);
+int dm2_v1_runtime_game_load_candidate_dispatch_moverec(
+    int16_t record, int16_t x, int16_t y, int32_t kind, int32_t flags,
+    DM2_V1_GameLoadMoverecDispatchReceipt *out_receipt);
+int dm2_v1_runtime_game_load_candidate_activate_moverec_caii(
+    int16_t record, int16_t x, int16_t y,
+    DM2_V1_GameLoadMoverecCaiiReceipt *out_receipt);
+int dm2_v1_runtime_game_load_candidate_proceed_think_timer(
+    uint32_t game_tick, DM2_V1_GameLoadThinkTimerReceipt *out_receipt);
+int dm2_v1_runtime_game_load_candidate_proceed_actuate_timer(
+    uint32_t game_tick,
+    DM2_V1_GameLoadCandidateActuateReceipt *out_receipt);
+int dm2_v1_runtime_game_load_candidate_proceed_door_step_timer(
+    uint32_t game_tick,
+    DM2_V1_GameLoadCandidateDoorStepReceipt *out_receipt);
+int dm2_v1_runtime_game_load_candidate_proceed_tick_generator_timer(
+    uint32_t game_tick,
+    DM2_V1_GameLoadCandidateTickGeneratorReceipt *out_receipt);
+int dm2_v1_runtime_game_load_candidate_process_next_due_timer(
+    uint32_t game_tick,
+    DM2_V1_GameLoadCandidateTimerProcessReceipt *out_receipt);
+int dm2_v1_runtime_game_load_candidate_proceed_record_flag_timer(
+    uint32_t game_tick,
+    DM2_V1_GameLoadRecordFlagTimerReceipt *out_receipt);
+int dm2_v1_runtime_game_load_candidate_change_current_map(int new_map);
 /* Returns the map-0 bounded receipt when a canonical G1 partial world was
  * consumed. Only source-defined direct DB1 teleporter fields are available;
  * no generic object or link traversal is exposed through this API. */
@@ -341,23 +474,15 @@ typedef struct DM2_V1_RuntimeMacWallButtonReceipt {
     int source_actuator_type;
     int source_local_action;
     int blocked_unsupported_source_type;
-    int blocked_item_admission;
-    int remote_message_queued;
     int local_actuator_list_rotated;
     uint32_t source_receipt_hash;
 } DM2_V1_RuntimeMacWallButtonReceipt;
 
 /* Consume a native Mac left/centre/right wall-button action only when the
  * last authenticated viewport frame supplied the matching c_rwbb target and
- * the source-owned wall chain admits the corresponding Mac action.  Local
- * DB3 actions retain the source's list-rotation semantics. Keyholes use the
- * source 19f0_2723 item-admission predicate before rotating or queueing a
- * message; unsupported target owners remain fail-closed. */
+ * the source-owned wall chain admits the corresponding Mac action. */
 int dm2_v1_runtime_activate_mac_wall_button(
     int column, DM2_V1_RuntimeMacWallButtonReceipt *out_receipt);
-/* Dispatch the exact renderer-published c_rwbb target selected by a native
- * Macintosh pointer hit.  The column wrapper above remains for the
- * source-keyboard wall actions; pointer input must retain target identity. */
 int dm2_v1_runtime_activate_mac_wall_target(
     int target_index, DM2_V1_RuntimeMacWallButtonReceipt *out_receipt);
 uint32_t dm2_v1_runtime_frame_presentation_state_hash(
@@ -612,6 +737,14 @@ int dm2_v1_runtime_last_asset_creature_count(void);
 int dm2_v1_runtime_last_fallback_creature_count(void);
 int dm2_v1_runtime_last_asset_creature_possession_item_count(void);
 int dm2_v1_runtime_last_fallback_creature_possession_item_count(void);
+/* Source-owned WIELD death/drop receipt for the last live attack route. */
+int dm2_v1_runtime_last_wield_death_drop_count(void);
+int dm2_v1_runtime_last_wield_death_drop_iterations(void);
+int dm2_v1_runtime_last_wield_death_drop_alloc_failures(void);
+int dm2_v1_runtime_last_wield_death_drop_first_itemspec(void);
+int dm2_v1_runtime_last_wield_death_drop_first_db(void);
+int dm2_v1_runtime_last_wield_death_drop_alloc_free_records(void);
+int dm2_v1_runtime_last_wield_death_deallocated(void);
 int dm2_v1_runtime_last_asset_projectile_count(void);
 int dm2_v1_runtime_last_fallback_projectile_count(void);
 typedef struct DM2_V1_RuntimeProjectileRenderReceipt {
@@ -650,6 +783,27 @@ typedef struct DM2_V1_RuntimeProjectileRenderReceipt {
 } DM2_V1_RuntimeProjectileRenderReceipt;
 int dm2_v1_runtime_last_projectile_render_receipt(
     DM2_V1_RuntimeProjectileRenderReceipt *out_receipt);
+
+/* Source-owned DB14 -> DB4 impact receipt.  This is gameplay evidence, not
+ * renderer state: it is set only after the authenticated STEP_MISSILE owner
+ * resolves a destination creature and runs ATTACK_CREATURE. */
+typedef struct DM2_V1_RuntimeMissileImpactReceipt {
+    int valid;
+    int destination_hit;
+    int attack_completed;
+    int hp_applied;
+    int hp_after;
+    int16_t missile_record;
+    int16_t creature_record;
+    int creature_type;
+    int missile_consumed;
+    int damage_amount;
+    int damage_attack_completed;
+    int damage_hp_word_after;
+    int damage_rescheduled;
+} DM2_V1_RuntimeMissileImpactReceipt;
+int dm2_v1_runtime_last_missile_impact_receipt(
+    DM2_V1_RuntimeMissileImpactReceipt *out_receipt);
 
 typedef struct {
     int valid;
@@ -1111,6 +1265,59 @@ int dm2_v1_runtime_record_pools_valid(void);
  * returns 0 when the binding is not ready or `out` is NULL. */
 int dm2_v1_runtime_think_creature_receipt(
     DM2_V1_ThinkCreatureReceipt *out);
+/* Source-owned DM2_THINK_CREATURE damage handoff: CAII word@0x14 is
+ * transferred to the DB4 HP word before WOUND_CREATURE/death handling. */
+typedef struct DM2_V1_RuntimeCreatureDamageReceipt {
+    int valid;
+    int16_t creature_record;
+    int creature_type;
+    int pending_damage;
+    int hp_before;
+    int hp_after;
+    int wound_applied;
+    int lethal;
+    int deallocated;
+    int drops_placed;
+} DM2_V1_RuntimeCreatureDamageReceipt;
+/* Read-only DB4 provenance used by real-media combat fixtures and the live
+ * inspector.  It exposes source words without granting mutation rights. */
+typedef struct DM2_V1_RuntimeCreatureRecordReceipt {
+    int valid;
+    int16_t record_handle;
+    int creature_type;
+    uint16_t record_word;
+    uint16_t possession_head;
+    uint16_t hp;
+    uint16_t base_hp;
+    uint8_t caii_slot;
+    uint16_t pending_damage;
+    int kill_flag;
+    int drop_slots_loaded;
+} DM2_V1_RuntimeCreatureRecordReceipt;
+int dm2_v1_runtime_creature_record_receipt(
+    int16_t record_handle, DM2_V1_RuntimeCreatureRecordReceipt *out);
+int dm2_v1_runtime_last_creature_damage_receipt(
+    DM2_V1_RuntimeCreatureDamageReceipt *out);
+/* Copies the most recent source CCM loop receipt for the active creature. */
+int dm2_v1_runtime_last_ccm_receipt(DM2_V1_CcmLoopReceipt *out);
+/* Source-observable dynamic path boundary counters.  These are diagnostics:
+ * they count only calls that reached the authenticated dynamic strategy
+ * callback and successful path admissions, never host-side movement. */
+int dm2_v1_runtime_dynamic_path_attempts(void);
+int dm2_v1_runtime_dynamic_path_admissions(void);
+/* Number of source WALK_NOW callbacks that successfully queued the normal
+ * 0x3c MOVE_RECORD_TO transaction. */
+int dm2_v1_runtime_dynamic_move_queue_admissions(void);
+/* Number of dispatched dynamic 0x3c/0x3d timers and successful MOVE_RECORD_TO
+ * transactions observed by the production runtime. */
+int dm2_v1_runtime_dynamic_move_timer_consumptions(void);
+int dm2_v1_runtime_dynamic_move_successes(void);
+/* Failure stage of the last dispatched moverec transaction; 0 means the
+ * last transaction committed. */
+int dm2_v1_runtime_dynamic_move_last_failure(void);
+/* 0 = last path admitted; 1 = missing owner; 2 = invalid map/party state;
+ * 3 = no traversable path; 4 = path exceeded the bounded buffer. */
+int dm2_v1_runtime_dynamic_path_last_failure(void);
 /* DM2-003 follow-up: DM2-owned creature-scheduling producer boundary
  * (skproject/SKULLWIN/c_1c9a.cpp:5695-5728 DM2_1c9a_0cf7).  Schedules one
  * 0x21/0x22 source timer for the creature record at cell (x, y) into the
@@ -1209,10 +1416,12 @@ int dm2_v1_runtime_door_step_receipt(DM2_V1_RuntimeDoorStepReceipt *out);
  * and subdispatches 0..6.  This receipt aggregates the bounded handlers:
  *   class 0 wall mecha  — consumed, CCM tail unbound (fail-closed counter)
  *   class 1 floor mecha — CAII animate activation (round 23)
- *   class 2 pitfall     — bounded floor<->pit square-type toggle
+ *   class 2 pitfall     — fail-closed until the floor-mecha/advance owner
+ *                         is complete
  *   class 3             — source no-op
  *   class 4 door        — bounded one-step door toggle
- *   class 5 teleporter  — consumed, CCM tail unbound (fail-closed counter)
+ *   class 5 teleporter  — fail-closed until the floor-mecha/teleport owner
+ *                         is complete
  *   class 6 trickwall   — consumed, CCM tail unbound (fail-closed counter)
  *
  * Source: skproject/SKULLWIN/c_tim_proc.cpp:4214-4230 (0x04 class dispatch)
@@ -1228,9 +1437,9 @@ typedef struct {
     int timers;               /* total 0x04 timers consumed */
     int wall_mecha;           /* class 0 consumed */
     int floor_mecha;          /* class 1 consumed / CAII activations */
-    int pitfall;              /* class 2 consumed / pit toggles */
+    int pitfall;              /* class 2 consumed when a future owner binds */
     int door;                 /* class 4 consumed / door mutations */
-    int teleporter;           /* class 5 consumed */
+    int teleporter;           /* class 5 consumed when a future owner binds */
     int trickwall;            /* class 6 consumed */
     int unbound_fail_closed;  /* classes 0/5/6 + unavailable state */
     int pitfall_rejected;     /* class 2 toggle rejected */
@@ -1281,10 +1490,12 @@ int dm2_v1_runtime_activate_action_hand(int hero_index, int hand);
 /* Read the source party.curacthero owner as a zero-based champion index.
  * Returns -1 until an authenticated GAME_LOAD party is live. */
 int dm2_v1_runtime_get_active_champion_index(void);
-/* Copy the authenticated GAME_LOAD party snapshot for presentation owners.
- * This is a read-only handoff; it never constructs a hero or fills missing
- * inventory records. */
+int dm2_v1_runtime_get_active_hand(void);
+/* Copy the authenticated GAME_LOAD party snapshot for presentation owners;
+ * this never creates heroes or fills missing inventory records. */
 int dm2_v1_runtime_get_session_snapshot(DM2_V1_SessionState *out_session);
+/* Read-only count from the authenticated GAME_LOAD party snapshot. */
+int dm2_v1_runtime_get_champion_count(void);
 /* Source c_events.cpp:1846 (DM2_CLICK_INVENTORY_EYE).  The eye selects
  * v1e0976 for the authenticated eventqueue.event_heroidx without changing
  * party.curacthero. No host champion index is accepted. */
@@ -1300,6 +1511,16 @@ void dm2_v1_runtime_clear_new_game_party_state(void);
 int dm2_v1_runtime_new_game_party_state_is_clear(void);
 uint32_t dm2_v1_runtime_get_champion_inventory_object(uint8_t champion,
                                                       uint8_t slot);
+/* Read-only receipt for the source-owned c_hero timer fields.  This exposes
+ * no host surrogate and is used to verify narrow source timer consumers. */
+int dm2_v1_runtime_get_source_hero_timer_state(uint8_t champion,
+                                               int16_t *out_timeridx,
+                                               uint16_t *out_heroflag,
+                                               int16_t *out_cur_hp);
+int dm2_v1_runtime_get_source_hero_state(
+    uint8_t champion, DM2_V1_RuntimeSourceHeroStateReceipt *out_state);
+/* Read-only owner receipt for savegames1.b_04 (Aura of Speed). */
+int dm2_v1_runtime_get_source_aura_of_speed(uint8_t *out_value);
 /* Returns -1 without mutation: c_hero item links require the original DB
  * record-chain allocator and may not be supplied as 32-bit host handles. */
 int dm2_v1_runtime_set_champion_inventory_object(uint8_t champion,

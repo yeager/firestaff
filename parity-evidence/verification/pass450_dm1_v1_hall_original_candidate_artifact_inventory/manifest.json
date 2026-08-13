@@ -1,10 +1,10 @@
 {
   "schema": "pass450_dm1_v1_hall_original_candidate_artifact_inventory.v1",
-  "timestampUtc": "2026-08-09T13:31:00.993086+00:00",
+  "timestampUtc": "2026-08-12T01:36:41.258365+00:00",
   "status": "PASS_PASS450_CORRECTED_TERMINAL_ORIGINAL_FRAMES_INVENTORIED",
-  "repo": "/Volumes/Extern-disk/Documents/Firestaff/yeager-firestaff",
+  "repo": "/Volumes/Extern-disk/firestaff",
   "branch": "main",
-  "head": "7a012851039b329da45f3c93c6d522d423c4317a",
+  "head": "59bea8fb521afbd68e1ccd0ee03e9c01c1b6a4a9",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "dataHashLock": [
     {
@@ -3708,7 +3708,7 @@
     "localHostCaptureReady": true,
     "platform": "Darwin",
     "machine": "arm64",
-    "path": "/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Library/Apple/usr/bin:/opt/homebrew/bin:/Users/bosse/.codex/tmp/arg0/codex-arg07iaTF8:/Users/bosse/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/bosse/bin:/Users/bosse/.local/bin:/Users/bosse/.cargo/bin:/Users/bosse/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/Applications/ChatGPT.app/Contents/Resources",
+    "path": "/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Library/Apple/usr/bin:/opt/homebrew/bin:/Users/bosse/.codex/tmp/arg0/codex-arg0Y5URYp:/Users/bosse/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override:/Users/bosse/bin:/Users/bosse/.local/bin:/Users/bosse/.cargo/bin:/Users/bosse/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback:/Applications/ChatGPT.app/Contents/Resources",
     "display": null,
     "dosboxCandidates": [
       {

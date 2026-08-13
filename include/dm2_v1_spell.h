@@ -80,21 +80,19 @@ typedef struct {
  * Source: skproject/SKWIN/SkWinCore.cpp:27038-27096
  * Used by creature AI attack resolution and champion spell casting */
 
-#define DM2_OBJECT_EFFECT_NONE         0
-#define DM2_OBJECT_EFFECT_FIREBALL      1   /* high AoE damage */
+#define DM2_OBJECT_EFFECT_UNAVAILABLE (-1) /* no source object-effect owner */
+#define DM2_OBJECT_EFFECT_NONE          0   /* source value 0: Fireball */
+#define DM2_OBJECT_EFFECT_FIREBALL      0   /* high AoE damage */
 #define DM2_OBJECT_EFFECT_LIGHTNING     2   /* single-target electric */
-#define DM2_OBJECT_EFFECT_DISPELL       3   /* remove enchantments */
-#define DM2_OBJECT_EFFECT_PUSH_SPELL    4   /* telekinetic push */
-#define DM2_OBJECT_EFFECT_PULL_SPELL    5   /* telekinetic pull */
-#define DM2_OBJECT_EFFECT_POISON_CLOUD  6   /* AoE poison */
-#define DM2_OBJECT_EFFECT_POISON_BOLT   7   /* single-target poison */
-#define DM2_OBJECT_EFFECT_POISON_BLOB   8   /* contact poison */
-#define DM2_OBJECT_EFFECT_STEAL         9   /* item theft */
-#define DM2_OBJECT_EFFECT_SHOOT        10   /* ranged projectile */
-#define DM2_OBJECT_EFFECT_PUSHBACK     11   /* knockback */
-#define DM2_OBJECT_EFFECT_SUMMON_ATTACK_MINION 12 /* ATTACK MINION ally */
-#define DM2_OBJECT_EFFECT_SUMMON_GUARD_MINION  13 /* GUARD MINION ally */
-#define DM2_OBJECT_EFFECT_SUMMON_UHAUL_MINION  14 /* U-HAUL MINION ally */
+#define DM2_OBJECT_EFFECT_DISPELL       3   /* source value: antimatter/dispell */
+#define DM2_OBJECT_EFFECT_OPEN_DOOR     4   /* Open/Close Door */
+#define DM2_OBJECT_EFFECT_POISON_BOLT   6   /* single-target poison */
+#define DM2_OBJECT_EFFECT_POISON_CLOUD  7   /* AoE poison */
+#define DM2_OBJECT_EFFECT_PUSH_SPELL    9   /* telekinetic push */
+#define DM2_OBJECT_EFFECT_PULL_SPELL   10   /* telekinetic pull */
+#define DM2_OBJECT_EFFECT_SUMMON_ATTACK_MINION 0x31 /* ATTACK MINION ally */
+#define DM2_OBJECT_EFFECT_SUMMON_GUARD_MINION  0x34 /* GUARD MINION ally */
+#define DM2_OBJECT_EFFECT_SUMMON_UHAUL_MINION  0x35 /* U-HAUL MINION ally */
 
 /* ── Full 34-spell table ─────────────────────────────────────────────────
  * Source: skproject/SKWIN/SkGlobal.cpp:966-1011 (dSpellsTable)

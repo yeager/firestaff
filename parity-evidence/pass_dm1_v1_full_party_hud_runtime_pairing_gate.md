@@ -7,7 +7,7 @@ Detail: Probe exercised full4 HUD, single1 status panel, two-/three-champion int
 ## Probe
 
 - Source: `probes/m11/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe.c`
-- Binary: `/Volumes/Extern-disk/firestaff-claude/build/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe`
+- Binary: `/Volumes/Extern-disk/firestaff/build/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe`
 - Data dir: `/Users/bosse/.firestaff/data/dm1`
 - Return code: `0`
 - Pass count: `276`

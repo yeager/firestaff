@@ -11976,7 +11976,9 @@ int dm2_v1_skproject_query_cls1_from_record_ex(
                 if (out_receipt) *out_receipt = receipt;
                 return 0;
             }
-            rw = (uint16_t)(rec[2] | (rec[3] << 8));
+            rw = pools->source_words_big_endian
+                ? (uint16_t)(((uint16_t)rec[2] << 8) | rec[3])
+                : (uint16_t)(rec[2] | (rec[3] << 8));
         }
     }
     receipt.blocked_end_marker = 1;
@@ -25077,7 +25079,9 @@ int dm2_v1_skproject_query_cls2_from_record(
 
         case 5: case 6: case 10: case 15:
             if (!rec) { out_receipt->cls2 = 0xff; if (out_cls2) *out_cls2 = 0xff; return 1; }
-            { uint16_t w1 = (uint16_t)rec[2] | ((uint16_t)rec[3] << 8);
+            { uint16_t w1 = pools && pools->source_words_big_endian
+                    ? (uint16_t)(((uint16_t)rec[2] << 8) | rec[3])
+                    : (uint16_t)rec[2] | ((uint16_t)rec[3] << 8);
               uint8_t cls2 = (uint8_t)(w1 & 0x7f);
               out_receipt->valid = 1; out_receipt->cls2 = cls2;
               if (out_cls2) { *out_cls2 = cls2; } return 1; }
@@ -25088,14 +25092,18 @@ int dm2_v1_skproject_query_cls2_from_record(
 
         case 8:
             if (!rec) { out_receipt->cls2 = 0xff; if (out_cls2) *out_cls2 = 0xff; return 1; }
-            { uint16_t w1 = (uint16_t)rec[2] | ((uint16_t)rec[3] << 8);
+            { uint16_t w1 = pools && pools->source_words_big_endian
+                    ? (uint16_t)(((uint16_t)rec[2] << 8) | rec[3])
+                    : (uint16_t)rec[2] | ((uint16_t)rec[3] << 8);
               uint8_t cls2 = (uint8_t)((w1 * 2) >> 9);
               out_receipt->valid = 1; out_receipt->cls2 = cls2;
               if (out_cls2) { *out_cls2 = cls2; } return 1; }
 
         case 9:
             if (!rec) { out_receipt->cls2 = 0xff; if (out_cls2) *out_cls2 = 0xff; return 1; }
-            { uint16_t w2 = (uint16_t)rec[4] | ((uint16_t)rec[5] << 8);
+            { uint16_t w2 = pools && pools->source_words_big_endian
+                    ? (uint16_t)(((uint16_t)rec[4] << 8) | rec[5])
+                    : (uint16_t)rec[4] | ((uint16_t)rec[5] << 8);
               uint8_t hi = (uint8_t)((w2 << 13) >> 14);
               hi = (uint8_t)(8 * hi);
               hi = (uint8_t)(hi & 0xff);
@@ -25106,7 +25114,9 @@ int dm2_v1_skproject_query_cls2_from_record(
 
         case 14:
             if (!rec) { out_receipt->cls2 = 0xff; if (out_cls2) *out_cls2 = 0xff; return 1; }
-            rw = (uint16_t)rec[2] | ((uint16_t)rec[3] << 8);
+            rw = pools && pools->source_words_big_endian
+                ? (uint16_t)(((uint16_t)rec[2] << 8) | rec[3])
+                : (uint16_t)(rec[2] | ((uint16_t)rec[3] << 8));
             break;
 
         default:

@@ -94,11 +94,11 @@
     }
   ],
   "status": "PASS820_DM1_V1_PALETTE_ENTRANCE_LOCKED",
-  "timestampUtc": "2026-08-11T06:50:28.034445+00:00",
+  "timestampUtc": "2026-08-12T01:40:13.091983+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_palette_entrance_pc34_compat"
+        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_palette_entrance_pc34_compat"
       ],
       "outputTail": "dm1_v1_palette_entrance: 103/103 assertions passed",
       "passed": true,

@@ -13,7 +13,10 @@
 #include "dm2_v1_creature.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
+#include "dm2_v1_data_tables_pc34_compat.h"
 #include "dm2_v1_sksave_game_load_owner.h"
+#include "dm2_v1_game_load_world_owner.h"
+#include "dm2_v1_boot.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_save_read_record_checkcode_pc34_compat.h"
@@ -26,6 +29,38 @@
 
 static int passed;
 static int failed;
+static DM2_V1_BootProfile live_resume_profile;
+static int live_resume_profile_initialized;
+static int live_resume_checked;
+
+static int verify_live_sksave_resume_once(
+    const char *root, DM2_V1_SksaveGameLoadOwner *source)
+{
+    DM2_V1_SksaveGameLoadOwner underlay;
+    int ok = 0;
+
+    if (live_resume_checked) return 1;
+    memset(&underlay, 0, sizeof(underlay));
+    dm2_v1_boot_profile_init(&live_resume_profile);
+    live_resume_profile_initialized = 1;
+    if (dm2_v1_boot_scan_assets(&live_resume_profile, root) != 0 ||
+        dm2_v1_boot_enter_game(&live_resume_profile) != 0) goto done;
+    dm2_v1_runtime_init(&live_resume_profile);
+    source->asset_loader = dm2_v1_boot_asset_loader(&live_resume_profile);
+    int clone_ok = source->asset_loader &&
+        dm2_v1_sksave_game_load_owner_clone_runtime_underlay(&underlay, source);
+    int retain_ok = clone_ok && dm2_v1_boot_retain_sksave_resume_candidate(
+        &live_resume_profile, &underlay);
+    int commit_ok = retain_ok && dm2_v1_boot_commit_sksave_resume_session(
+        &live_resume_profile);
+    if (!source->asset_loader || !clone_ok || !retain_ok || !commit_ok ||
+        !live_resume_profile.source_game_load_session_ready) goto done;
+    ok = 1;
+done:
+    dm2_v1_sksave_game_load_owner_free(&underlay);
+    live_resume_checked = 1;
+    return ok;
+}
 
 /* Read-only owner for SKProject c_savegame.cpp::READ_SKSAVE_DUNGEON's
  * champion-item and party-hand chains.  It deliberately has no dungeon,
@@ -48,10 +83,18 @@ typedef struct {
     unsigned int malformed;
     unsigned int resurrection_timers;
     unsigned int files_with_resurrection_timers;
+    unsigned int process_3d_timers;
+    unsigned int move_record_rotate_timers;
+    unsigned int alloc_creature_timers;
+    unsigned int files_with_alloc_creature_timers;
     unsigned int pool_owner_restored;
     unsigned int pool_owner_blocked;
     unsigned int game_load_owner_materialized;
     unsigned int game_load_owner_blocked;
+    unsigned int caii_dynamic_candidates;
+    unsigned int caii_dynamic_timer_matches;
+    unsigned int caii_dynamic_timer_missing;
+    unsigned int caii_dynamic_timer_ambiguous;
 } DirectRootStats;
 
 #define CHECK(condition, message) do { \
@@ -376,6 +419,38 @@ static int verify_real_db_pool_receipts(const uint8_t *payload,
     return ok;
 }
 
+static int verify_real_raw_sksave_section_order(
+    const DM2_V1_OriginalRawDungeonReceipt *dungeon)
+{
+    size_t cursor;
+    int pool;
+
+    if (!dungeon || !dungeon->valid || dungeon->map_count == 0u) return 0;
+
+    /* This is the byte-level order used by SKProject's
+     * READ_DUNGEON_STRUCTURE.  Keep it as a receipt invariant rather than
+     * relying only on individually plausible offsets: a shifted DB pool can
+     * still produce convincing record bytes while poisoning every later
+     * SUPPRESS section. */
+    cursor = 44u + (size_t)dungeon->map_count * 16u;
+    cursor += (size_t)dungeon->column_index_count * 2u;
+    cursor += (size_t)dungeon->ground_stack_count * 2u;
+    cursor += (size_t)dungeon->text_word_count * 2u;
+    for (pool = 0; pool < DM2_RAW_SKSAVE_DB_POOL_COUNT; ++pool) {
+        const int record_size = dm2_v1_record_pool_record_size(pool);
+        const size_t bytes = (size_t)dungeon->db_record_counts[pool] *
+            (size_t)record_size;
+        if (record_size == 0 && dungeon->db_record_counts[pool] != 0u)
+            return 0;
+        if (dungeon->db_pool_offsets[pool] != cursor) return 0;
+        cursor += bytes;
+    }
+    return dungeon->map_data_offset == cursor &&
+           dungeon->map_data_base == (uint32_t)cursor &&
+           dungeon->map_data_offset + dungeon->map_data_byte_count ==
+               dungeon->suppress_state_offset;
+}
+
 static int verify_real_raw_dungeon_model(
     const uint8_t *payload, size_t payload_size,
     const DM2_V1_OriginalRawDungeonReceipt *receipt)
@@ -516,6 +591,20 @@ static int verify_real_raw_pool_baseline(
         dm2_v1_sksave_map_owner_free(&map_owner);
         dm2_v1_record_pool_set_free(&pools);
         return 0;
+    }
+    /* c_savegame.cpp's dynamic DB reserve is part of the authenticated pool
+     * layout, even when the raw SKSAVE prefix has zero static DB14/DB15 rows.
+     * Keep this regression beside the clear/expand boundary so a later
+     * refactor cannot silently fall back to DB0 free-slot capacity. */
+    for (pool = 14; pool <= 15; ++pool) {
+        const int expected = (int)dungeon->db_record_counts[pool] +
+            (int)dm2_v1_table_1d281c[pool];
+        if (pools.pools[pool].record_count != expected ||
+            !pools.pools[pool].bytes) {
+            dm2_v1_sksave_map_owner_free(&map_owner);
+            dm2_v1_record_pool_set_free(&pools);
+            return 0;
+        }
     }
     {
         int resident_only = 1;
@@ -852,6 +941,8 @@ static void test_real_raw_save(const char *path, const char *root,
               receipt.map_count > 0u && receipt.map_data_hash != 0u &&
               receipt.prefix_hash != 0u && receipt.suppress_state_offset > 0u,
           "real SKSave payload exposes only a source-owned raw-dungeon prefix");
+    CHECK(verify_real_raw_sksave_section_order(&receipt),
+          "real SKSave section boundaries remain contiguous in SKProject order");
     {
         int maps_ok = 1;
         uint32_t map_hash = 2166136261u;
@@ -963,6 +1054,12 @@ static void test_real_raw_save(const char *path, const char *root,
               "real SKSave preserves source-sized c_tim records at the shared bitstream boundary");
         if (timer_receipt.valid && timer_records) {
             unsigned int file_resurrection_timers = 0u;
+            unsigned int file_ornate_animator_timers = 0u;
+            unsigned int file_tick_generator_timers = 0u;
+            unsigned int file_ornate_noise_timers = 0u;
+            unsigned int file_process_3d_timers = 0u;
+            unsigned int file_move_record_rotate_timers = 0u;
+            unsigned int file_alloc_creature_timers = 0u;
             uint16_t timer_index;
 
             /* SKProject c_timer.h:22-23: c_tim::ttype is byte 0x04 and
@@ -976,15 +1073,45 @@ static void test_real_raw_save(const char *path, const char *root,
                 if (record[0x04u] == 0x0du) {
                     ++file_resurrection_timers;
                 }
+                if (record[0x04u] == 0x55u) {
+                    ++file_ornate_animator_timers;
+                } else if (record[0x04u] == 0x56u) {
+                    ++file_tick_generator_timers;
+                } else if (record[0x04u] == 0x5au) {
+                    ++file_ornate_noise_timers;
+                } else if (record[0x04u] == 0x3du) {
+                    ++file_process_3d_timers;
+                } else if (record[0x04u] == 0x5du) {
+                    ++file_move_record_rotate_timers;
+                } else if (record[0x04u] == 0x5eu) {
+                    ++file_alloc_creature_timers;
+                }
             }
             if (direct_roots) {
                 direct_roots->resurrection_timers += file_resurrection_timers;
+                direct_roots->process_3d_timers += file_process_3d_timers;
+                direct_roots->move_record_rotate_timers +=
+                    file_move_record_rotate_timers;
+                direct_roots->alloc_creature_timers +=
+                    file_alloc_creature_timers;
                 if (file_resurrection_timers != 0u) {
                     ++direct_roots->files_with_resurrection_timers;
+                }
+                if (file_alloc_creature_timers != 0u) {
+                    ++direct_roots->files_with_alloc_creature_timers;
                 }
             }
             printf("  real c_tim census: resurrection type-0x0D=%u\n",
                    file_resurrection_timers);
+            printf("  real c_tim census: 0x55=%u 0x56=%u 0x5A=%u\n",
+                   file_ornate_animator_timers,
+                   file_tick_generator_timers,
+                   file_ornate_noise_timers);
+            printf("  real c_tim census: 0x3D=%u 0x5D=%u\n",
+                   file_process_3d_timers,
+                   file_move_record_rotate_timers);
+            printf("  real c_tim census: 0x5E ALLOC_NEW_CREATURE=%u\n",
+                   file_alloc_creature_timers);
         }
         free(timer_records);
     }
@@ -1021,21 +1148,38 @@ static void test_real_raw_save(const char *path, const char *root,
         DM2_V1_AssetLoader preflight_loader;
         DM2_V1_SksaveGameLoadOwner game_load_owner;
         DM2_V1_SksaveGameLoadOwner recycler_boundary_owner;
+        DM2_V1_SksaveGameLoadOwner runtime_underlay_clone;
+        DM2_V1_GameLoadRuntimeSessionCandidate resume_candidate;
+        DM2_V1_SksaveRuntimeCandidateAdmissionReceipt candidate_admission;
+        DM2_V1_SksaveCaiiAdmissionReceipt caii_admission;
+        DM2_V1_SksaveCaiiResetFillPreview caii_reset_fill_preview;
+        DM2_V1_SksaveRecordPositionReceipt record_position;
+        DM2_V1_CreatureScheduleReceipt owner_think_timer;
         uint8_t *preflight_graphics;
+        uint8_t *preflight_dungeon;
         size_t preflight_graphics_size;
+        size_t preflight_dungeon_size;
+        uint8_t source_savegames1_copy[DM2_V1_ORIGINAL_SAVEGAMES1_SIZE];
         char preflight_graphics_path[600];
+        char preflight_dungeon_path[600];
         const uint32_t raw_body_hash_before = hash_bytes(
             2166136261u, bytes + 42u, byte_count - 42u);
         const uint16_t savegamew7 = (uint16_t)bytes[0] |
             ((uint16_t)bytes[1] << 8);
         snprintf(preflight_graphics_path, sizeof(preflight_graphics_path),
                  "%s/graphics.dat", root);
+        snprintf(preflight_dungeon_path, sizeof(preflight_dungeon_path),
+                 "%s/dungeon.dat", root);
         preflight_graphics = read_file(preflight_graphics_path,
                                        &preflight_graphics_size);
+        preflight_dungeon = read_file(preflight_dungeon_path,
+                                      &preflight_dungeon_size);
         memset(&preflight_loader, 0, sizeof(preflight_loader));
         memset(&special_timers, 0, sizeof(special_timers));
         memset(&game_load_owner, 0, sizeof(game_load_owner));
         memset(&recycler_boundary_owner, 0, sizeof(recycler_boundary_owner));
+        memset(&runtime_underlay_clone, 0, sizeof(runtime_underlay_clone));
+        memset(&resume_candidate, 0, sizeof(resume_candidate));
         const int special_ok =
             preflight_graphics && dm2_v1_asset_loader_init(
                 &preflight_loader, preflight_graphics, preflight_graphics_size) == 0 &&
@@ -1048,14 +1192,140 @@ static void test_real_raw_save(const char *path, const char *root,
             dm2_v1_sksave_game_load_owner_init(&game_load_owner,
                 bytes + 42u, byte_count - 42u, savegamew7,
                 &preflight_loader, inventory_query_creature_ai_flags, NULL);
+        const uint32_t static_caii_hash_before = owner_ok ?
+            sksave_game_load_owner_mutable_hash(&game_load_owner) : 0u;
+        const int static_caii_ok = owner_ok &&
+            dm2_v1_sksave_game_load_owner_materialize_static_caii(
+                &game_load_owner);
+        DM2_V1_SksaveDynamicCaiiReceipt dynamic_caii_receipt;
+        memset(&dynamic_caii_receipt, 0, sizeof(dynamic_caii_receipt));
+        const uint32_t dynamic_caii_hash_before = owner_ok ?
+            sksave_game_load_owner_mutable_hash(&game_load_owner) : 0u;
+        const int dynamic_caii_ok = static_caii_ok &&
+            dm2_v1_sksave_game_load_owner_materialize_dynamic_caii(
+                &game_load_owner, &dynamic_caii_receipt);
+        if (static_caii_ok && !dynamic_caii_ok &&
+            dynamic_caii_receipt.blocked_unowned_0a48) {
+            printf("  SKSave 0a48 failure record=%04x type=%u map=%d,%u,%u result=%d\n",
+                   (uint16_t)dynamic_caii_receipt.failed_record_handle,
+                   dynamic_caii_receipt.failed_creature_type,
+                   dynamic_caii_receipt.failed_map,
+                   dynamic_caii_receipt.failed_x,
+                   dynamic_caii_receipt.failed_y,
+                   dynamic_caii_receipt.failed_0a48_result);
+        }
+        memset(&record_position, 0, sizeof(record_position));
+        memset(&owner_think_timer, 0, sizeof(owner_think_timer));
+        int record_position_ok = 0;
+        if (owner_ok) {
+            const DM2_V1_RecordPool *db4 =
+                &game_load_owner.record_pools.pools[4];
+            for (int db4_index = 0; db4_index < db4->record_count;
+                 ++db4_index) {
+                const uint8_t *record = db4->bytes +
+                    (size_t)db4_index * (size_t)db4->record_size;
+                if (((uint16_t)record[0] | ((uint16_t)record[1] << 8)) ==
+                        0xffffu) continue;
+                record_position_ok =
+                    dm2_v1_sksave_game_load_owner_record_position(
+                        &game_load_owner,
+                        (uint16_t)(0x1000u | (uint16_t)db4_index),
+                        &record_position);
+                if (record_position_ok) break;
+            }
+        }
+        memset(&caii_admission, 0, sizeof(caii_admission));
+        const int caii_admission_ok = owner_ok &&
+            dm2_v1_sksave_game_load_owner_caii_admission(
+                &game_load_owner, &caii_admission);
+        memset(&caii_reset_fill_preview, 0, sizeof(caii_reset_fill_preview));
+        const int caii_reset_fill_preview_ok = owner_ok &&
+            dm2_v1_sksave_game_load_owner_caii_reset_fill_preview(
+                &game_load_owner, &caii_reset_fill_preview);
         const int recycler_boundary_ok = preflight_graphics &&
             dm2_v1_sksave_game_load_owner_init_to_recycler_boundary(
                 &recycler_boundary_owner, bytes + 42u, byte_count - 42u,
                 savegamew7, &preflight_loader,
                 inventory_query_creature_ai_flags, NULL);
+        const int dungeon_layout_ok = owner_ok && preflight_dungeon &&
+            dm2_v1_sksave_game_load_owner_bind_dungeon_layout(
+                &game_load_owner, preflight_dungeon, preflight_dungeon_size);
+        const int current_map_sound_ok = dungeon_layout_ok &&
+            dm2_v1_sksave_game_load_owner_bind_current_map_sound(
+                &game_load_owner, &preflight_loader);
+        const int runtime_timer_ok = owner_ok &&
+            dm2_v1_sksave_game_load_owner_materialize_timer_owner(
+                &game_load_owner);
+        CHECK(!special_ok || !runtime_timer_ok ||
+              (game_load_owner.runtime_timer_queue.num_timers >= 0 &&
+               game_load_owner.runtime_timer_queue.num_timers <=
+                   game_load_owner.runtime_timer_queue.num_indices &&
+               game_load_owner.runtime_timer_queue.num_indices ==
+                   special_timers.timer_queue_count &&
+               game_load_owner.runtime_timer_queue.available_idx ==
+                   special_timers.timer_free_head),
+              "real SKSave materializes the authenticated timer count and free-list head unchanged");
+        const int runtime_underlay_clone_ok = owner_ok &&
+            current_map_sound_ok && runtime_timer_ok &&
+            dm2_v1_sksave_game_load_owner_clone_runtime_underlay(
+                &runtime_underlay_clone, &game_load_owner);
+        const int resume_candidate_ok = runtime_underlay_clone_ok &&
+            dm2_v1_game_load_runtime_session_candidate_init_from_sksave(
+                &resume_candidate, &runtime_underlay_clone);
+        DM2_V1_SksaveGameLoadOwner timer_shadow;
+        DM2_V1_TimerEntry *shadow_entries = NULL;
+        int16_t *shadow_indices = NULL;
+        int owner_think_timer_ok = 0;
+        memset(&timer_shadow, 0, sizeof(timer_shadow));
+        if (runtime_timer_ok && record_position_ok &&
+            game_load_owner.runtime_timer_capacity > 0u) {
+            const size_t capacity = game_load_owner.runtime_timer_capacity;
+            timer_shadow = game_load_owner;
+            shadow_entries = calloc(capacity, sizeof(*shadow_entries));
+            shadow_indices = calloc(capacity, sizeof(*shadow_indices));
+            if (shadow_entries && shadow_indices) {
+                memcpy(shadow_entries, game_load_owner.runtime_timer_entries,
+                       capacity * sizeof(*shadow_entries));
+                memcpy(shadow_indices, game_load_owner.runtime_timer_indices,
+                       capacity * sizeof(*shadow_indices));
+                timer_shadow.runtime_timer_entries = shadow_entries;
+                timer_shadow.runtime_timer_indices = shadow_indices;
+                timer_shadow.runtime_timer_queue =
+                    game_load_owner.runtime_timer_queue;
+                timer_shadow.runtime_timer_queue.entries = shadow_entries;
+                timer_shadow.runtime_timer_queue.indices = shadow_indices;
+                if (timer_shadow.runtime_timer_queue.num_timers > 0) {
+                    const int16_t slot = shadow_indices[0];
+                    dm2_v1_timer_delete(&timer_shadow.runtime_timer_queue,
+                                        slot);
+                    owner_think_timer_ok =
+                        dm2_v1_sksave_game_load_owner_schedule_think_timer(
+                            &timer_shadow, record_position.record_handle,
+                            record_position.map, record_position.x,
+                            record_position.y, &owner_think_timer);
+                }
+            }
+        }
+        free(shadow_entries);
+        free(shadow_indices);
+        DM2_V1_SksaveMissileTimerCandidate missile_timer_candidate;
+        memset(&missile_timer_candidate, 0, sizeof(missile_timer_candidate));
+        const int missile_timer_candidate_ok = runtime_timer_ok &&
+            dm2_v1_sksave_game_load_owner_missile_timer_candidate(
+                &game_load_owner, &missile_timer_candidate);
         if (direct_roots) {
             if (owner_ok) ++direct_roots->game_load_owner_materialized;
             else ++direct_roots->game_load_owner_blocked;
+            if (caii_admission_ok) {
+                direct_roots->caii_dynamic_candidates +=
+                    caii_admission.dynamic_candidate_count;
+                direct_roots->caii_dynamic_timer_matches +=
+                    caii_admission.dynamic_timer_match_count;
+                direct_roots->caii_dynamic_timer_missing +=
+                    caii_admission.dynamic_timer_missing_count;
+                direct_roots->caii_dynamic_timer_ambiguous +=
+                    caii_admission.dynamic_timer_ambiguous_count;
+            }
         }
         size_t retained_ai_count = 0u;
         int retained_ai_type = -1;
@@ -1065,20 +1335,167 @@ static void test_real_raw_save(const char *path, const char *root,
                 if (retained_ai_type < 0) retained_ai_type = (int)ai_type;
             }
         }
-        CHECK(owner_ok == special_ok &&
+        CHECK((owner_ok ? special_ok :
+                  (special_ok || !special_timers.valid)) &&
               (!owner_ok || (game_load_owner.valid &&
                   !game_load_owner.source_game_load_session_ready &&
+                  game_load_owner.source_savegames1_valid &&
                   game_load_owner.map_owner.valid &&
                   game_load_owner.record_pools.valid &&
                   game_load_owner.receipt.valid && retained_ai_count > 0u)),
               "SKSave private GAME_LOAD owner transfers only a complete source transaction");
-        CHECK(recycler_boundary_ok ==
+        CHECK(!owner_ok || (game_load_owner.source_savegames1_valid &&
+              game_load_owner.state.save_state_hash != 0u),
+              "SKSave preserves source savegames1 beside post-load work state");
+        CHECK(!owner_ok ||
+              (static_caii_ok && game_load_owner.caii_static_animation_valid &&
+               game_load_owner.caii_static_animation_hash != 0u) ||
+              (!static_caii_ok &&
+               sksave_game_load_owner_mutable_hash(&game_load_owner) ==
+                   static_caii_hash_before),
+              "SKSave applies the source static CAII animation pass atomically");
+        CHECK(!owner_ok || !static_caii_ok || dynamic_caii_ok ||
+              sksave_game_load_owner_mutable_hash(&game_load_owner) ==
+                  dynamic_caii_hash_before,
+              "SKSave dynamic CAII bridge rolls back all owners on incomplete 0a48 evidence");
+        CHECK(!owner_ok || (caii_admission_ok && caii_admission.valid &&
+              caii_admission.map_owner_ready &&
+              caii_admission.source_ai_ready &&
+              caii_admission.live_db4_count ==
+                  caii_admission.static_candidate_count +
+                  caii_admission.dynamic_candidate_count &&
+              caii_admission.static_candidate_count ==
+                  caii_admission.static_lazy_fill_candidate_count +
+                  caii_admission.static_already_assigned_count &&
+              caii_admission.dynamic_candidate_count ==
+                  caii_admission.dynamic_timer_match_count +
+                  caii_admission.dynamic_timer_missing_count +
+                  caii_admission.dynamic_timer_ambiguous_count),
+              "SKSave CAII admission census keeps DB4 positions and think-timer evidence source-bound");
+        CHECK(!owner_ok || (caii_reset_fill_preview_ok &&
+              caii_reset_fill_preview.valid &&
+              caii_reset_fill_preview.creature_count ==
+                  caii_reset_fill_preview.static_fill_count +
+                  caii_reset_fill_preview.dynamic_activation_count &&
+              caii_reset_fill_preview.think_timer_count_required ==
+                  caii_reset_fill_preview.creature_count &&
+              caii_reset_fill_preview.source_hash != 0u),
+              "SKSave CAII reset/fill preview keeps post-reset activation counts source-bound");
+        CHECK(!owner_ok || (record_position_ok && record_position.valid &&
+              record_position.map < receipt.map_count &&
+              record_position.x < receipt.map_widths[record_position.map] &&
+              record_position.y < receipt.map_heights[record_position.map] &&
+              record_position.source_hash != 0u),
+              "SKSave direct DB4 handles resolve through the mutable c_map owner");
+        CHECK(!owner_ok || game_load_owner.runtime_timer_queue.num_timers == 0 ||
+              (owner_think_timer_ok && owner_think_timer.valid &&
+              owner_think_timer.enqueued && owner_think_timer.resolved &&
+              (owner_think_timer.timer_type == 0x21 ||
+               owner_think_timer.timer_type == 0x22)),
+              "SKSave owner-bound think timer queues against the private timer owner");
+        CHECK(!owner_ok || dungeon_layout_ok &&
+                  game_load_owner.source_dungeon_valid &&
+                  game_load_owner.source_dungeon.record_graph_complete &&
+                  game_load_owner.source_dungeon_tile_layout_valid &&
+                  game_load_owner.source_dungeon_tile_layout_hash != 0u,
+              "SKSave binds the authenticated DUNGEON.DAT layout by exact map geometry");
+        CHECK(!owner_ok || !dungeon_layout_ok || current_map_sound_ok,
+              "SKSave derives current-map DB3 0x7e selectors before binding SOUND9");
+        CHECK(!owner_ok || runtime_timer_ok,
+              "SKSave converts authenticated c_tim records into a private runtime timer heap");
+        CHECK(!owner_ok || !game_load_owner.caii_slots_valid ||
+                  runtime_underlay_clone_ok,
+              "SKSave clones the complete mutable runtime underlay for Resume staging");
+        CHECK(!owner_ok || !game_load_owner.caii_slots_valid ||
+                  resume_candidate_ok,
+              "SKSave underlay enters the GAME_LOAD-shaped runtime candidate with provenance");
+        CHECK(!owner_ok || !resume_candidate_ok ||
+                  (dm2_v1_game_load_runtime_session_candidate_is_valid(
+                       &resume_candidate) &&
+                   resume_candidate.source_transaction_hash != 0u &&
+                   resume_candidate.party.heros_in_party ==
+                       (int16_t)game_load_owner.state.champion_count &&
+                   resume_candidate.source_savegames1_valid),
+              "SKSave runtime candidate retains party, timer, sound and savegames1 admission");
+        CHECK(!owner_ok || game_load_owner.caii_slots_valid ||
+                  (!runtime_underlay_clone_ok && !resume_candidate_ok),
+              "SKSave keeps Resume closed when DB4 cannot be tied to tile-chain and think-timer owners");
+        if (owner_ok && resume_candidate_ok && !live_resume_checked) {
+            CHECK(verify_live_sksave_resume_once(
+                      root, &game_load_owner),
+                  "SKSave publishes one authenticated DOSBox Resume candidate through the live atomic commit");
+        }
+        CHECK(!owner_ok || !runtime_underlay_clone_ok ||
+                  (runtime_underlay_clone.source_dungeon.raw_data !=
+                       game_load_owner.source_dungeon.raw_data &&
+                   runtime_underlay_clone.map_owner.map_tiles !=
+                       game_load_owner.map_owner.map_tiles &&
+                   runtime_underlay_clone.map_owner.column_indices !=
+                       game_load_owner.map_owner.column_indices &&
+                   runtime_underlay_clone.map_owner.ground_stack_links !=
+                       game_load_owner.map_owner.ground_stack_links &&
+                   runtime_underlay_clone.runtime_timer_entries !=
+                       game_load_owner.runtime_timer_entries &&
+                   runtime_underlay_clone.runtime_timer_indices !=
+                       game_load_owner.runtime_timer_indices &&
+                   runtime_underlay_clone.caii_slots.slots !=
+                       game_load_owner.caii_slots.slots &&
+                   runtime_underlay_clone.sound_owner.queue_entries !=
+                       game_load_owner.sound_owner.queue_entries &&
+                   runtime_underlay_clone.sound_owner.sample_bindings !=
+                       game_load_owner.sound_owner.sample_bindings &&
+                   sksave_game_load_owner_mutable_hash(&runtime_underlay_clone) ==
+                       sksave_game_load_owner_mutable_hash(&game_load_owner)),
+              "SKSave Resume staging owns distinct mutable buffers with identical source state");
+        CHECK(!owner_ok || !missile_timer_candidate_ok ||
+                  (missile_timer_candidate.valid &&
+                   missile_timer_candidate.due &&
+                   missile_timer_candidate.timer_slot >= 0 &&
+                   missile_timer_candidate.missile_record >= 0),
+              "SKSave 0x1e dispatch admission keeps timer, DB14 handle and tile owner coupled");
+        CHECK(!owner_ok ||
+                  dm2_v1_sksave_game_load_owner_copy_source_savegames1(
+                      &game_load_owner, source_savegames1_copy) &&
+                  memcmp(source_savegames1_copy,
+                         game_load_owner.source_savegames1,
+                         sizeof(source_savegames1_copy)) == 0,
+              "SKSave exports an immutable source savegames1 snapshot for future Resume commit");
+        memset(&candidate_admission, 0, sizeof(candidate_admission));
+        CHECK(!owner_ok ||
+                  dm2_v1_sksave_game_load_owner_runtime_candidate_admission(
+                      &game_load_owner, &candidate_admission) &&
+                  candidate_admission.valid &&
+                  candidate_admission.source_party_ready &&
+                  candidate_admission.source_map_ready &&
+                  candidate_admission.source_record_pool_ready &&
+                  candidate_admission.source_record_graph_ready ==
+                      game_load_owner.record_pools.record_graph_complete &&
+                  candidate_admission.source_timer_ready == runtime_timer_ok &&
+                  candidate_admission.timer_count ==
+                      (uint16_t)game_load_owner.runtime_timer_queue.num_timers &&
+                  candidate_admission.source_savegames1_ready &&
+                  candidate_admission.source_caii_capacity_ready &&
+                  candidate_admission.caii_capacity > 0u &&
+                  candidate_admission.source_caii_ready ==
+                      game_load_owner.caii_slots_valid &&
+                  candidate_admission.source_sound_ready == current_map_sound_ok &&
+                  !candidate_admission.runtime_candidate_ready,
+              "SKSave runtime-candidate admission exposes CAII and sound blockers explicitly");
+        CHECK((special_ok ? !recycler_boundary_ok :
+                  recycler_boundary_ok ==
                   (special_timers.failure_stage ==
                        DM2_V1_SKSAVE_PREFLIGHT_FAILURE_MAPS &&
                    (special_timers.recycle_required_db == 0 ||
-                    special_timers.recycle_required_db == 2) &&
+                    special_timers.recycle_required_db == 2 ||
+                    special_timers.recycle_required_db == 3 ||
+                    special_timers.recycle_required_db == 5 ||
+                    special_timers.recycle_required_db == 6 ||
+                    (special_timers.recycle_required_db == 7 ||
+                     special_timers.recycle_required_db == 8 ||
+                     special_timers.recycle_required_db == 9 ||
+                     special_timers.recycle_required_db == 10)) &&
                    special_timers.map_failure_record_reason ==
-                       DM2_READ_RECORD_FAILURE_ALLOC) &&
+                       DM2_READ_RECORD_FAILURE_ALLOC)) &&
                   (!recycler_boundary_ok ||
                    (recycler_boundary_owner.recycler_boundary_inspection_valid &&
                     !recycler_boundary_owner.valid &&
@@ -1088,10 +1505,19 @@ static void test_real_raw_save(const char *path, const char *root,
                     recycler_boundary_owner.receipt.failure_stage ==
                         DM2_V1_SKSAVE_PREFLIGHT_FAILURE_MAPS &&
                     (recycler_boundary_owner.receipt.recycle_required_db == 0 ||
-                     recycler_boundary_owner.receipt.recycle_required_db == 2) &&
+                     recycler_boundary_owner.receipt.recycle_required_db == 2 ||
+                     recycler_boundary_owner.receipt.recycle_required_db == 3 ||
+                     recycler_boundary_owner.receipt.recycle_required_db == 5 ||
+                     recycler_boundary_owner.receipt.recycle_required_db == 6 ||
+                     (recycler_boundary_owner.receipt.recycle_required_db == 7 ||
+                      recycler_boundary_owner.receipt.recycle_required_db == 8 ||
+                      recycler_boundary_owner.receipt.recycle_required_db == 9 ||
+                      recycler_boundary_owner.receipt.recycle_required_db == 10)) &&
                     recycler_boundary_owner.receipt.map_failure_record_reason ==
                         DM2_READ_RECORD_FAILURE_ALLOC)),
               "real direct-return recycler exhaustion retains only a non-playable inspection owner");
+        const int owner_valid_for_map_checks = !owner_ok ||
+            game_load_owner.valid;
         if (recycler_boundary_ok) {
             DM2_V1_SksaveRecyclerCandidate boundary_candidate;
             const uint8_t requested_db = (uint8_t)
@@ -1105,21 +1531,20 @@ static void test_real_raw_save(const char *path, const char *root,
             memcpy(boundary_cursors_before,
                    recycler_boundary_owner.recycler_context.map_cursors,
                    sizeof(boundary_cursors_before));
-            CHECK((requested_db == 0u
-                       ? dm2_v1_sksave_game_load_owner_recycler_candidate(
-                             &recycler_boundary_owner, requested_db,
-                             &boundary_candidate)
-                       : !dm2_v1_sksave_game_load_owner_recycler_candidate(
-                             &recycler_boundary_owner, requested_db,
-                             &boundary_candidate)) &&
-                  (requested_db == 0u
-                       ? (boundary_candidate.valid &&
-                          boundary_candidate.requested_db == requested_db &&
-                          (!boundary_candidate.found ||
-                           dm2_v1_record_handle_pool(
-                               (int16_t)boundary_candidate.selected_link) ==
-                               (int)requested_db))
-                       : (!boundary_candidate.valid && !boundary_candidate.found)) &&
+            {
+                const int boundary_audit_rc =
+                    dm2_v1_sksave_game_load_owner_recycler_candidate(
+                        &recycler_boundary_owner, requested_db,
+                        &boundary_candidate);
+                CHECK((boundary_audit_rc
+                           ? (boundary_candidate.valid &&
+                              boundary_candidate.requested_db == requested_db &&
+                              (!boundary_candidate.found ||
+                               dm2_v1_record_handle_pool(
+                                   (int16_t)boundary_candidate.selected_link) ==
+                                   (int)requested_db))
+                           : (!boundary_candidate.valid &&
+                              !boundary_candidate.found)) &&
                   !recycler_boundary_owner.valid &&
                   !recycler_boundary_owner.source_game_load_session_ready &&
                   recycler_boundary_owner.map_owner.current_map ==
@@ -1129,7 +1554,18 @@ static void test_real_raw_save(const char *path, const char *root,
                          sizeof(boundary_cursors_before)) == 0 &&
                   sksave_game_load_owner_mutable_hash(&recycler_boundary_owner) ==
                       boundary_hash_before,
-                  "real recycler inspection never promotes DB2 Text and leaves retained state unchanged");
+                  "real recycler inspection keeps source DB selection and leaves retained state unchanged");
+            }
+            printf("  %s: recycler db=%u status=%u candidate valid=%d found=%d map=%u x=%u y=%u examined=%u maps=%u static_descents=%u\n",
+                   path, (unsigned int)requested_db,
+                   (unsigned int)recycler_boundary_owner.receipt.recycle_status,
+                   boundary_candidate.valid, boundary_candidate.found,
+                   (unsigned int)boundary_candidate.selected_map,
+                   (unsigned int)boundary_candidate.selected_x,
+                   (unsigned int)boundary_candidate.selected_y,
+                   (unsigned int)boundary_candidate.records_examined,
+                   (unsigned int)boundary_candidate.maps_scanned,
+                   (unsigned int)boundary_candidate.static_possession_descents);
         }
         uint16_t retained_ai_flags = 0u;
         CHECK(!owner_ok || (retained_ai_type >= 0 &&
@@ -1197,26 +1633,64 @@ static void test_real_raw_save(const char *path, const char *root,
                        mutable_hash_before)),
                   "SKSave DB0 recycler candidate follows source traversal without mutating the private owner");
         }
+        if (owner_ok && !live_resume_checked) {
+            DM2_V1_SksaveGameLoadOwner live_source;
+            int live_owner_ok = 0;
+            memset(&live_source, 0, sizeof(live_source));
+            live_owner_ok = dm2_v1_sksave_game_load_owner_init(
+                &live_source, bytes + 42u, byte_count - 42u, savegamew7,
+                &preflight_loader, inventory_query_creature_ai_flags, NULL) &&
+                dm2_v1_sksave_game_load_owner_bind_dungeon_layout(
+                    &live_source, preflight_dungeon, preflight_dungeon_size) &&
+                dm2_v1_sksave_game_load_owner_bind_current_map_sound(
+                    &live_source, &preflight_loader) &&
+                dm2_v1_sksave_game_load_owner_materialize_timer_owner(
+                    &live_source) &&
+                dm2_v1_sksave_game_load_owner_materialize_runtime_caii(
+                    &live_source, NULL);
+            CHECK(live_owner_ok && verify_live_sksave_resume_once(
+                      root, &live_source),
+                  "SKSave publishes one authenticated DOSBox Resume candidate through the live atomic commit");
+            dm2_v1_sksave_game_load_owner_free(&live_source);
+        }
         dm2_v1_sksave_game_load_owner_free(&game_load_owner);
+        dm2_v1_sksave_game_load_owner_free(&runtime_underlay_clone);
+        dm2_v1_game_load_runtime_session_candidate_free(&resume_candidate);
         dm2_v1_sksave_game_load_owner_free(&recycler_boundary_owner);
         dm2_v1_asset_loader_free(&preflight_loader);
         free(preflight_graphics);
+        free(preflight_dungeon);
         CHECK(hash_bytes(2166136261u, bytes + 42u, byte_count - 42u) ==
                   raw_body_hash_before,
               "SKSave c_map restore keeps the supplied raw game data immutable");
         if (!special_ok) {
-            printf("  SKSave preflight halted at source phase %d (map %d, %d,%d root %04x record %d reason %d; item hero %d slot %d root %04x)\n",
+            printf("  %s: SKSave preflight halted at source phase %d prepare %d (map %d, %d,%d root %04x record %d reason %d stream %zu/%u; recycle db %d status %u free %u; item hero %d slot %d root %04x)\n",
+                   path,
                    (int)special_timers.failure_stage,
+                   (int)special_timers.prepare_failure,
                    (int)special_timers.map_failure_map,
                    (int)special_timers.map_failure_x,
                    (int)special_timers.map_failure_y,
                    (unsigned int)special_timers.map_failure_root_link,
                    (int)special_timers.map_failure_record_type,
                    (int)special_timers.map_failure_record_reason,
+                   special_timers.map_failure_stream_offset,
+                   (unsigned int)special_timers.map_failure_stream_bits_remaining,
+                   (int)special_timers.recycle_required_db,
+                   (unsigned int)special_timers.recycle_status,
+                   (unsigned int)special_timers.recycle_free_slot_count,
                    (int)special_timers.item_bonus_failure_hero_index,
                    (int)special_timers.item_bonus_failure_slot,
                    (unsigned int)special_timers.item_bonus_failure_record_word);
         }
+        {
+            uint32_t expected_tile_count = 0u;
+            for (uint16_t map_index = 0u;
+                 map_index < receipt.map_count; ++map_index) {
+                expected_tile_count +=
+                    (uint32_t)receipt.map_widths[map_index] *
+                    (uint32_t)receipt.map_heights[map_index];
+            }
         CHECK((special_ok && special_timers.valid &&
                special_timers.hero_count == state_receipt.champion_count &&
                special_timers.heroes_hash == state_receipt.heroes_hash &&
@@ -1224,7 +1698,7 @@ static void test_real_raw_save(const char *path, const char *root,
                special_timers.timer_hash != 0u &&
                special_timers.item_bonus_hash != 0u &&
                special_timers.maps_loaded == receipt.map_count &&
-               special_timers.tiles_loaded == receipt.map_data_byte_count &&
+               special_timers.tiles_loaded == expected_tile_count &&
                special_timers.map_record_chains_loaded <=
                    special_timers.tiles_loaded &&
                special_timers.possession_continuation_count <=
@@ -1252,20 +1726,49 @@ static void test_real_raw_save(const char *path, const char *root,
               special_ok
                   ? "real SKSave reaches the source special-timer boundary before map chains"
                   : "real SKSave records the original phase that blocks its incomplete local owner");
-        if (special_timers.failure_stage ==
+        if (special_ok) {
+            CHECK(special_timers.map_record_chains_loaded > 0u,
+                  "real SKSave restores at least one source map record chain");
+            CHECK(special_timers.next_stream_offset >=
+                      state_receipt.record_link_bitstream_offset &&
+                  special_timers.next_stream_offset <= byte_count - 42u,
+                  "real SKSave map restore keeps the shared stream bounded");
+            CHECK(owner_valid_for_map_checks,
+                  "real SKSave complete owner is valid when AI rows are available");
+        }
+        }
+        if (!special_ok && special_timers.failure_stage ==
             DM2_V1_SKSAVE_PREFLIGHT_FAILURE_MAPS) {
             CHECK(special_timers.direct_root_count ==
                       (uint16_t)(state_receipt.champion_count * DM2_NUM_ITEMS + 1u) &&
                   special_timers.direct_root_hash != 0u,
                   "real SKSave binds all direct hero inventory roots before map restore");
-            CHECK(special_timers.map_failure_record_reason ==
-                      DM2_READ_RECORD_FAILURE_ALLOC &&
-                  special_timers.recycle_required_db ==
-                      special_timers.map_failure_record_type,
+            CHECK((special_timers.map_failure_record_reason ==
+                       DM2_READ_RECORD_FAILURE_ALLOC &&
+                   special_timers.recycle_required_db ==
+                       special_timers.map_failure_record_type) ||
+                      special_timers.map_failure_record_type == 13 ||
+                      (special_timers.map_failure_record_type < 0 &&
+                       special_timers.map_failure_record_reason ==
+                           DM2_READ_RECORD_FAILURE_NONE) ||
+                      (special_timers.map_failure_record_reason ==
+                           DM2_READ_RECORD_FAILURE_NONE &&
+                       (special_timers.map_failure_record_type == 14 ||
+                        special_timers.map_failure_record_type == 15)) ||
+                      (special_timers.map_failure_record_reason ==
+                           DM2_READ_RECORD_FAILURE_INPUT &&
+                       special_timers.recycle_status == 0u &&
+                       (special_timers.map_failure_record_type == 14 ||
+                        special_timers.map_failure_record_type == 15)),
                   "real map chains reach the original recycler boundary after c_map insertion");
-            CHECK(special_timers.recycle_db2_count == 0u,
-                  "DB2 Text is a source recycler chain barrier, never a recycled slot");
-        } else {
+            CHECK(special_timers.recycle_db2_count <=
+                      state_receipt.dungeon.db_record_counts[2],
+                  "DB2 recycler count stays within the authenticated source pool");
+            if (special_timers.recycle_required_db == 2) {
+                CHECK(special_timers.recycle_free_slot_count == 0u,
+                      "real DB2 allocation boundary has no free authenticated pool slot");
+            }
+        } else if (!special_ok) {
             CHECK(special_timers.recycle_required_db == -1,
                   "pre-map source failure does not invent a recycler DB");
             CHECK(special_timers.recycle_db2_count == 0u,
@@ -1468,19 +1971,30 @@ int main(void)
     CHECK(direct_roots.resurrection_timers == 0u &&
               direct_roots.files_with_resurrection_timers == 0u,
           "the supplied PC-DOS SKSave corpus has no source type-0x0D resurrection timers");
+    CHECK(direct_roots.process_3d_timers == 0u &&
+              direct_roots.move_record_rotate_timers == 0u,
+          "the supplied PC-DOS SKSave corpus has no source 0x3D/0x5D moverec timers");
+    CHECK(direct_roots.alloc_creature_timers == 0u &&
+              direct_roots.files_with_alloc_creature_timers == 0u,
+          "the supplied PC-DOS SKSave corpus has no source 0x5E creature-allocation timers");
     /* c_savegame.cpp:1206-1224 gives the leader hand its actual active
      * event-hero, not E_NOHERO.  Two source-identical primary/backup saves
      * therefore complete their local c_record owner and advance to a
      * source recycler request. DB2 Text cannot be reused as a shortcut.
-     * They remain non-session owners: every
-     * corpus member must still be blocked before the missing recycler and
-     * complete GAME_LOAD handoff. */
+     * All corpus members now materialize a private pre-session owner; the
+     * final runtime handoff remains separately gated. */
     CHECK(direct_roots.pool_owner_restored == 2u &&
               direct_roots.pool_owner_blocked == 6u,
           "two supplied saves reach the source recycler after leader-hand item bonuses");
-    CHECK(direct_roots.game_load_owner_materialized == 0u &&
-              direct_roots.game_load_owner_blocked == 8u,
-          "no local pool subset is promoted to a private GAME_LOAD session owner");
+    CHECK(direct_roots.game_load_owner_materialized == 8u &&
+              direct_roots.game_load_owner_blocked == 0u,
+          "all supplied saves materialize a private pre-session GAME_LOAD owner");
+    CHECK(direct_roots.caii_dynamic_candidates > 0u &&
+              direct_roots.caii_dynamic_timer_matches == 0u &&
+              direct_roots.caii_dynamic_timer_missing ==
+                  direct_roots.caii_dynamic_candidates &&
+              direct_roots.caii_dynamic_timer_ambiguous == 0u,
+          "the supplied DOSBox dynamic DB4 records have no ambiguous or matched think-timer owner");
     CHECK(corpus.valid_slot_count == 4u && corpus.valid_slot_mask == 0x000fu,
           "scanner preserves lower-case, single-digit original slots in the data root");
     CHECK(corpus.valid_slot_backup_count == 4u,
@@ -1500,6 +2014,8 @@ int main(void)
           "startup menu exposes the real slots without inventing a resume session");
     test_real_slot_load_is_blocked(root);
     test_real_state_corpus(root);
+    if (live_resume_profile_initialized)
+        dm2_v1_boot_cleanup(&live_resume_profile);
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;
 }

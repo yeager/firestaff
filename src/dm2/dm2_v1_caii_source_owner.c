@@ -153,6 +153,52 @@ fail:
     return 0;
 }
 
+int dm2_v1_caii_source_owner_init_from_record_pool(
+    DM2_V1_CaiiSourceOwner *owner, const DM2_V1_AssetLoader *loader,
+    const DM2_V1_RecordPool *db4)
+{
+    DM2_V1_CaiiSourceOwner candidate;
+    uint32_t hash = 2166136261u;
+    int index;
+
+    if (!owner) return 0;
+    memset(owner, 0, sizeof(*owner));
+    memset(&candidate, 0, sizeof(candidate));
+    if (!loader || !loader->loaded || !db4 || !db4->bytes ||
+        db4->record_size < 5 || db4->record_count <= 0 ||
+        db4->record_count > UINT16_MAX || !import_ai_bindings(&candidate, loader))
+        goto fail;
+    candidate.db4_indices = (uint16_t *)calloc((size_t)db4->record_count,
+                                                sizeof(*candidate.db4_indices));
+    candidate.db4_creature_types = (uint8_t *)calloc(
+        (size_t)db4->record_count, sizeof(*candidate.db4_creature_types));
+    if (!candidate.db4_indices || !candidate.db4_creature_types) goto fail;
+    candidate.db4_record_count = (uint16_t)db4->record_count;
+    for (index = 0; index < db4->record_count; ++index) {
+        const uint8_t *record = db4->bytes +
+            (size_t)index * (size_t)db4->record_size;
+        candidate.db4_indices[index] = (uint16_t)index;
+        candidate.db4_creature_types[index] = record[4];
+        hash = hash_step(hash, (uint32_t)index);
+        hash = hash_step(hash, record[4]);
+    }
+    hash = hash_bytes(hash, (const uint8_t *)candidate.ai_rows,
+                      sizeof(candidate.ai_rows));
+    hash = hash_bytes(hash, candidate.creature_ai_row,
+                      sizeof(candidate.creature_ai_row));
+    hash = hash_bytes(hash, candidate.creature_ai_row_loaded,
+                      sizeof(candidate.creature_ai_row_loaded));
+    if (!hash) goto fail;
+    candidate.source_hash = hash;
+    candidate.slots_unowned = 1;
+    candidate.valid = 1;
+    *owner = candidate;
+    return 1;
+fail:
+    dm2_v1_caii_source_owner_free(&candidate);
+    return 0;
+}
+
 int dm2_v1_caii_source_owner_clone(DM2_V1_CaiiSourceOwner *out,
                                    const DM2_V1_CaiiSourceOwner *source)
 {

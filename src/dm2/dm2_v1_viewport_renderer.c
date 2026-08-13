@@ -4540,6 +4540,12 @@ int dm2_v1_viewport_build_creature_render_plan(
         row->source_pass = -1;
         if (src->source_kind != 0 &&
             (src->source_kind != 1 || src->source_material_proven) &&
+            /* DB4 map creatures own CREATURES/type/F9.  Rect14's
+             * QUERY_CREATURE_PICST field belongs to the separately admitted
+             * V5/live-CCM path; applying it to a DB4 root changes the GDAT
+             * identity without changing the material owner and blocks the
+             * otherwise valid F9 draw. */
+            (src->source_kind != 2 || src->source_v5_field) &&
             s->gdat_interface_rect14_rows &&
             src->frame_index < s->gdat_interface_rect14_row_count) {
             const uint8_t *rect14 = s->gdat_interface_rect14_rows +

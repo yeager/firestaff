@@ -4,11 +4,12 @@ Firestaff is a clean-room engine for the Dungeon Master games. It reads the
 original files you own, identifies each edition by its content hash and keeps
 that data separate from the program.
 
-Dungeon Master for PC DOS 3.4 is the current fully playable route. The other
-games have separate, edition-specific routes at different levels of readiness.
-Firestaff never borrows data from another platform to make an incomplete route
-look playable. The complete game/platform matrix is in
-[Platform status](docs/PLATFORM_STATUS.md).
+Dungeon Master for PC DOS 3.4 and Dungeon Master II: Skullkeep are the current
+playable routes when matching original media is supplied. DM1 also recognises
+its native Atari ST container. Chaos Strikes Back starts from verified native
+Amiga editions by default; Atari ST and FM Towns have their own native data
+paths. CSB campaign, save and presentation parity, plus Nexus and Theron's
+Quest runtime work, are still under active development.
 
 [![CI](https://github.com/yeager/firestaff/actions/workflows/verify.yml/badge.svg)](https://github.com/yeager/firestaff/actions/workflows/verify.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -22,11 +23,9 @@ look playable. The complete game/platform matrix is in
 Dungeon Master for PC DOS 3.4 is the most complete route: startup, menus,
 dungeon view, HUD, controls, combat and save handling use original data.
 
-The other games are active development routes. Firestaff detects their real
-media and exposes only paths with a verified handoff; it never borrows data
-from another edition to fill a gap. The detailed status is kept in the
-[project status](docs/PROJECT_STATUS.md) and the per-platform matrix in
-[Platform status](docs/PLATFORM_STATUS.md). The published documentation is
+Firestaff detects real media and exposes only paths with a verified handoff; it
+never borrows data from another edition to fill a gap. The detailed status is kept in
+[project status](docs/PROJECT_STATUS.md). The published documentation is
 available at [yeager.github.io/firestaff](https://yeager.github.io/firestaff/).
 The [preservation status](docs/PRESERVATION_STATUS_2026-08-11.md), reviewed
 2026-08-12,
@@ -35,10 +34,31 @@ separates source/disassembly evidence, real-media receipts and open routes.
 | Game | Current scope |
 |---|---|
 | Dungeon Master | Playable PC DOS 3.4 route. Atari ST media has its own native graphics decoder and launch path; further parity work continues. |
-| Chaos Strikes Back | Native Amiga is the default route when verified media is available. Atari ST and FM Towns have their own native data and startup paths. CSBWin is used only as source/disassembly evidence; it is not a Firestaff game route. The Atari C017 inventory uses its original C232/C042–C048 icon atlas, including empty-slot symbols; the transient attacking-hand overlay and campaign parity remain open. |
-| Dungeon Master II: Skullkeep | DOS and FM Towns have verified runtime slices. Amiga is a separate data path. Both authentic English Mac versions boot and pass bounded New Game/media/input tests; full Mac Resume and native drag/drop remain closed. |
-| DM Nexus | Japanese Saturn real-data route reaches bounded phase launch; full playability and visible material/audio parity remain open. |
-| Theron's Quest | Japanese and US Track 02 media/parser routes are admitted and source-checked; game-owned dungeon handoff and full playability remain open. |
+| Chaos Strikes Back | Native Amiga is the default route when verified media is available. Atari ST and FM Towns have their own native data and startup paths. Campaign parity is still being completed. |
+| Dungeon Master II: Skullkeep | Playable source-owned runtime from DOS, Amiga, FM Towns and Macintosh data. Advanced parity work, native non-DOS saves and some combat/UI owners continue. |
+| DM Nexus | Saturn real-data bring-up in progress. |
+| Theron's Quest | PC Engine real-media bring-up in progress. |
+
+### Dungeon Master II: Skullkeep
+
+DM2 is playable in Firestaff from four authenticated source families:
+
+| Edition | Accepted source data | Verified runtime scope |
+|---|---|---|
+| DOSBox / PC English | `GRAPHICS.DAT` + `DUNGEON.DAT`; DOSBox saves in `Downloads/dm2` are optional resume data | New Game, active runtime, movement, pit/stairs/DB1 routes, creatures and spell handoff |
+| Amiga English | Original installer archive, read and verified in memory | New Game, active big-endian runtime, movement, pit/stairs/DB1 routes and creatures |
+| FM Towns Japanese | Original HME-242 ZIP/disc image; English text additionally uses the verified PC-English `GRAPHICS.DAT` companion | M12 archive launch, AUTOEXEC animation order, source title streams, New Game, inventory, movement, pit/stairs/DB1 routes and creatures |
+| Macintosh English | Authentic retail or demo ZIP/HFS media | New Game, active big-endian runtime, movement, stairs/DB1 routes and source-owned combat/creature handoff |
+
+The shared DM2 data root may contain all four editions. M12 resolves each
+selected version to its own source owner: the DOS `data` tree or symlink,
+Amiga installer, FM Towns disc archive, or Mac archive. Original archives are
+kept intact and archive members are read into bounded memory; Firestaff does
+not use a sibling edition as a fallback.
+
+Focused real-media checks are documented in [TODO-dm2.md](TODO-dm2.md),
+[DONE.md](DONE.md), [DM2 platform variants](docs/dm2_variants_platform.md)
+and the [DM2 FM Towns wiki guide](docs/wiki/DM2-FMTowns-Guide.md).
 
 Theron's Quest uses ordinary desktop controls in Firestaff: Up/W moves
 forward, Down/S moves backward, and Left/A and Right/D turn while held.

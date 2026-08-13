@@ -38,8 +38,41 @@ int32_t dm2_v1_cloud_actuator_scan(const DM2_V1_CloudCallbacks *cb,
                                    int16_t tile_x, int16_t tile_y,
                                    int16_t intensity)
 {
-    uint16_t rec = record_to_word(
-        cb->get_tile_record_link(cb->ctx, tile_x, tile_y));
+    uint16_t rec;
+
+    /* OBJECT_END (0xfffe) terminates a valid source chain.  OBJECT_NULL
+     * (0xffff), a missing callback, or a missing record accessor is an
+     * incomplete owner and must not be dereferenced as a DB3 record. */
+    if (!cb || !cb->get_tile_record_link ||
+        !cb->get_address_of_record || !cb->get_next_record_link ||
+        !cb->invoke_actuator) {
+        return (int32_t)0xffffu;
+    }
+    rec = record_to_word(cb->get_tile_record_link(cb->ctx, tile_x, tile_y));
+    if (rec == 0xffffu)
+        return (int32_t)rec;
+
+    /* Validate the complete chain before the first invoke.  The source walk
+     * has a bounded record universe; the bound here prevents a malformed
+     * cycle or a mid-chain OBJECT_NULL from producing a partial actuator
+     * mutation in the compatibility owner. */
+    {
+        uint16_t probe = rec;
+        int steps = 0;
+        while (probe != 0xfffeu) {
+            uint8_t *probe_record;
+            int16_t next;
+            if (probe == 0xffffu || ++steps > 4096)
+                return (int32_t)0xffffu;
+            probe_record = cb->get_address_of_record(cb->ctx, probe);
+            if (!probe_record)
+                return (int32_t)0xffffu;
+            next = cb->get_next_record_link(cb->ctx, probe);
+            if ((uint16_t)next == 0xffffu)
+                return (int32_t)0xffffu;
+            probe = (uint16_t)next;
+        }
+    }
 
     while (rec != 0xFFFE) {
         uint16_t cur = rec;
@@ -91,9 +124,9 @@ int32_t dm2_v1_cloud_actuator_scan(const DM2_V1_CloudCallbacks *cb,
                     match = (match == 0) ? 1 : 0;
                 } else {
                     if (match != 0) {
-                        /* Extract action from w4 bits 14..12 */
-                        int32_t action = (int32_t)((w4 << 11) >> 14);
-                        action = (int32_t)(uint16_t)action;
+                        /* Actuator action is w4 bits 4..3, as consumed by
+                         * TOGGLE_ACTUATOR_MESSAGE in skevent.cpp. */
+                        int32_t action = (int32_t)((w4 >> 3) & 0x3u);
                         cb->invoke_actuator(cb->ctx, rp, action, 0);
                     }
                     goto next_record;
@@ -166,15 +199,10 @@ DM2_V1_CreateCloudReceipt dm2_v1_create_cloud(const DM2_V1_CloudCallbacks *cb,
     rp[2] &= 0x80;
     rp[2] |= (uint8_t)spell_offset;
 
-    /* Store strength in w2 high byte + w3 */
-    uint8_t str_lo = (uint8_t)(strength & 0xFF);
-    rp[3] = (uint8_t)((strength >> 8) & 0xFF);
-    rp[2] |= (uint8_t)((uint16_t)str_lo << 8 >> 8);
-    /* Actually: w2 high byte = str_lo, encoded via shift */
-    uint16_t w2 = (uint16_t)(rp[2] | (rp[3] << 8));
-    w2 = (w2 & 0x00FF) | ((uint16_t)str_lo << 8);
-    rp[2] = (uint8_t)(w2 & 0xFF);
-    rp[3] = (uint8_t)(w2 >> 8);
+    /* Store strength in word@2's high byte.  The low seven bits of word@2
+     * are the cloud subtype; strength must never be ORed into that byte.
+     * c_cloud.cpp subsequently reads RG2W>>8 for damage and lifetime. */
+    rp[3] = (uint8_t)(strength & 0xFF);
 
     /* Calculate initial intensity for noise */
     int16_t noise_intensity;
@@ -394,7 +422,16 @@ DM2_V1_CalcCloudDamageReceipt dm2_v1_calc_cloud_damage(
     DM2_V1_CalcCloudDamageReceipt receipt;
     receipt.damage = 0;
 
+    /* A partially assembled GAME_LOAD cloud owner must never turn a missing
+     * record callback into a host crash.  The source has all of these
+     * addresses available from c_record/c_map; Firestaff admits the effect
+     * only when the corresponding owner is present. */
+    if (!cb || !cb->get_address_of_record)
+        return receipt;
+
     uint8_t *rp = cb->get_address_of_record(cb->ctx, cloud_record);
+    if (!rp)
+        return receipt;
     uint16_t w2 = (uint16_t)(rp[2] | (rp[3] << 8));
     uint16_t cloud_type = w2 & 0x7F;
 
@@ -407,6 +444,7 @@ DM2_V1_CalcCloudDamageReceipt dm2_v1_calc_cloud_damage(
 
     int16_t target_rtype;  /* record type of target */
     uint8_t *target_rp = NULL;
+    uint8_t target_creature_type = 0u;
 
     if ((int16_t)target_record == -1) {
         /* Party target: check bit 2 */
@@ -423,10 +461,17 @@ DM2_V1_CalcCloudDamageReceipt dm2_v1_calc_cloud_damage(
             }
             target_rp = cb->get_address_of_record(cb->ctx,
                 (uint16_t)target_record);
+            if (!target_rp)
+                return receipt;
         } else if (target_rtype == 4) {
             /* Creature record: check bit 3 */
             if ((type_flags & 0x08) == 0)
                 return receipt;
+            target_rp = cb->get_address_of_record(cb->ctx,
+                                                   (uint16_t)target_record);
+            if (!target_rp)
+                return receipt;
+            target_creature_type = target_rp[4];
         } else {
             return receipt;
         }
@@ -437,8 +482,12 @@ DM2_V1_CalcCloudDamageReceipt dm2_v1_calc_cloud_damage(
 
     /* Creature-specific resistance */
     if (target_rtype == 4) {
+        if (!cb->query_creature_ai_spec_from_type)
+            return receipt;
         uint8_t *ai = cb->query_creature_ai_spec_from_type(cb->ctx,
-            (uint16_t)target_record);
+            target_creature_type);
+        if (!ai)
+            return receipt;
         if (ai[0x19] & 0x10) {
             if (cloud_type != 0)
                 damage >>= 2;
@@ -447,49 +496,56 @@ DM2_V1_CalcCloudDamageReceipt dm2_v1_calc_cloud_damage(
 
     /* Random bonus damage (bit 0) */
     if (type_flags & 0x01) {
+        if (!cb->rand16)
+            return receipt;
         int16_t base = (int16_t)(w2 >> 8);
         int16_t half = (int16_t)((uint16_t)base >> 1) + 1;
         int16_t bonus = cb->rand16(cb->ctx, half) + 1;
         damage += bonus;
     }
 
-    /* Target-type-specific adjustments */
-    if ((uint16_t)target_rtype < 2) {
-        /* Type 0 or 1 */
-        if (target_rtype == 1) {
-            /* Halve damage */
-            damage >>= 1;
-        } else if (target_rtype == 0 && target_rp != NULL) {
-            /* Check record bit 7 of w2 */
-            if (!(target_rp[2] & 0x80))
-                damage = 0;
+    /* c_cloud.cpp:526-584 branches on cloud_type (RG2W), not on the
+     * target record type (RG62W).  The former implementation inverted
+     * these dimensions, making the poison cloud branch unreachable. */
+    if (cloud_type < 2) {
+        if (cloud_type != 0)
+            return (DM2_V1_CalcCloudDamageReceipt){ .damage = damage };
+    } else {
+        if (cloud_type > 2) {
+            if (cloud_type <= 3) {
+                int16_t flags = cb->query_creature_ai_spec_flags
+                    ? cb->query_creature_ai_spec_flags(cb->ctx,
+                                                       target_creature_type)
+                    : 0;
+                return (DM2_V1_CalcCloudDamageReceipt){
+                    .damage = (flags & 0x20) ? damage : 0
+                };
+            }
+            if (cloud_type != 7)
+                return (DM2_V1_CalcCloudDamageReceipt){ .damage = damage };
+
+            /* Poison subtype: min(strength >> 5, 4) plus RANDBIT, clamped
+             * to one; creature targets then use source poison resistance. */
+            int16_t base = (int16_t)(w2 >> 8);
+            int16_t val = (int16_t)((uint16_t)base >> 5);
+            int16_t capped = cb->min16 ? cb->min16(val, 4) : val;
+            int16_t bonus = (cb->randbit && cb->randbit(cb->ctx) ? 1 : 0) + capped;
+            int16_t final_val = cb->max16 ? cb->max16(1, bonus) :
+                                (bonus < 1 ? 1 : bonus);
+            if (target_rtype == 4 && cb->apply_creature_poison_resistance)
+                final_val = cb->apply_creature_poison_resistance(
+                    cb->ctx, target_creature_type, (uint16_t)final_val);
+            return (DM2_V1_CalcCloudDamageReceipt){ .damage = final_val };
         }
-        /* Type 0 with non-null rp: return damage if bit set */
-        return (DM2_V1_CalcCloudDamageReceipt){ .damage = damage };
-    } else if (target_rtype == 2 || target_rtype == 3) {
-        /* Check creature AI spec flags bit 5 */
-        int16_t flags = cb->query_creature_ai_spec_flags(cb->ctx,
-            (uint16_t)target_record);
-        receipt.damage = (flags & 0x20) ? damage : 0;
-        return receipt;
-    } else if (target_rtype == 7) {
-        /* Poison cloud: special damage calc */
-        int16_t base = (int16_t)(w2 >> 8);
-        int16_t val = (int16_t)((uint16_t)base >> 5);
-        int16_t capped = cb->min16(val, 4);
-        int16_t bonus = (cb->randbit(cb->ctx) ? 1 : 0) + capped;
-        int16_t final_val = cb->max16(1, bonus);
-        if (target_rtype == 4) {
-            receipt.damage = cb->apply_creature_poison_resistance(cb->ctx,
-                (uint16_t)target_record, (uint16_t)final_val);
-        } else {
-            receipt.damage = final_val;
-        }
-        return receipt;
+        /* Cloud subtype 2 is party-only and halves the base damage. */
+        damage >>= 1;
     }
 
-    receipt.damage = damage;
-    return receipt;
+    if (target_rtype != 0)
+        return (DM2_V1_CalcCloudDamageReceipt){ .damage = damage };
+    return (DM2_V1_CalcCloudDamageReceipt){
+        .damage = (target_rp && (target_rp[2] & 0x80)) ? damage : 0
+    };
 }
 
 /* ── DM2_PROCESS_CLOUD — timer-driven cloud processing ───────────── */
@@ -502,11 +558,24 @@ DM2_V1_ProcessCloudReceipt dm2_v1_process_cloud(const DM2_V1_CloudCallbacks *cb,
     receipt.requeued = false;
     receipt.deallocated = false;
 
+    /* PROCESS_CLOUD is a mutating source transaction.  Do not enter it with
+     * an incomplete owner: the source resolves the cloud record, tile link,
+     * damage target and lifecycle callbacks before it can safely touch any
+     * of those objects. */
+    if (!cb || !timer || !cb->get_address_of_record ||
+        !cb->get_tile_value || !cb->get_tile_record_link ||
+        !cb->attack_door || !cb->cut_record_from ||
+        !cb->dealloc_record || !cb->queue_timer ||
+        !cb->queue_noise_gen2)
+        return receipt;
+
     int16_t tile_x = (int16_t)((uint8_t)(timer->value_a & 0xFF));
     int16_t tile_y = (int16_t)((uint8_t)((timer->value_a >> 8) & 0xFF));
     uint16_t cloud_rec = (uint16_t)timer->value_b;
 
     uint8_t *rp = cb->get_address_of_record(cb->ctx, cloud_rec);
+    if (!rp)
+        return receipt;
 
     /* Check if tile is a door (type 4) and apply door damage */
     uint8_t tv = cb->get_tile_value(cb->ctx, tile_x, tile_y);

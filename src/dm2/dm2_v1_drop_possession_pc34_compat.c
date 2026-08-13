@@ -4,6 +4,7 @@
  */
 
 #include "dm2_v1_drop_possession_pc34_compat.h"
+#include "dm2_v1_record_ops_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -18,6 +19,7 @@ static long walk_budget_total(const DM2_V1_RecordPoolSet *set)
     long budget = 1;
     for (int i = 0; i < DM2_V1_RECORD_POOL_COUNT; ++i) {
         budget += set->pools[i].record_count;
+        budget += set->pools[i].extension_count;
     }
     return budget;
 }
@@ -29,6 +31,8 @@ static int chain_terminates(const DM2_V1_RecordPoolSet *set, int16_t head)
     long budget = walk_budget_total(set);
     int16_t cursor = head;
 
+    if (cursor == DM2_V1_RECORD_HANDLE_NULL) return 0;
+
     while (cursor != DM2_V1_RECORD_HANDLE_END &&
            cursor != DM2_V1_RECORD_HANDLE_NULL) {
         int16_t next;
@@ -39,6 +43,7 @@ static int chain_terminates(const DM2_V1_RecordPoolSet *set, int16_t head)
         if (!dm2_v1_record_pool_next_link(set, cursor, &next)) {
             return 0;
         }
+        if (next == DM2_V1_RECORD_HANDLE_NULL) return 0;
         cursor = next;
     }
     return 1;
@@ -58,11 +63,14 @@ static int draw_direction(DM2_V1_DropRng *rng,
     return (int)(dm2_v1_drops_randdir(rng) & 0x3u);
 }
 
-int dm2_v1_drop_creature_possession(
+static int dm2_v1_drop_creature_possession_impl(
     DM2_V1_RecordPoolSet *pool_set,
     DM2_V1_DungeonData *dungeon,
+    int map,
     DM2_V1_DropRng *rng,
     DM2_V1_DropPossessionAiFlagsFn ai_flags_fn,
+    DM2_V1_DropPossessionAiFlagsContextFn ai_flags_context_fn,
+    void *ai_flags_context,
     int16_t creature_record,
     int x, int y,
     int mode,
@@ -80,8 +88,10 @@ int dm2_v1_drop_creature_possession(
     int16_t cursor;
     long budget;
     uint16_t ai_flags = 0;
+    DM2_V1_DropPlacedItem generated_items[DM2_DROP_SLOT_COUNT];
 
     memset(&local, 0, sizeof(local));
+    memset(generated_items, 0, sizeof(generated_items));
     snprintf(local.source_evidence, sizeof(local.source_evidence),
              "skproject c_record.cpp:1537-1752 "
              "DM2_DROP_CREATURE_POSSESSION (mode gates 1562-1567, "
@@ -95,6 +105,7 @@ int dm2_v1_drop_creature_possession(
     }
 
     if (pool_set == NULL || !pool_set->valid || dungeon == NULL ||
+        map < 0 || map >= dungeon->level_count ||
         x < 0 || y < 0 || x > 0xff || y > 0xff) {
         return 0;
     }
@@ -113,12 +124,21 @@ int dm2_v1_drop_creature_possession(
 
     /* The drop cell must carry a ground-stack slot; growing the map
      * tables for a flag-less cell stays unproven (fail-closed). */
-    first = dm2_v1_dungeon_get_first_thing(dungeon, 0, x, y);
+    first = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
     if (first < 0) {
         receipt->drops_cell_unrooted = 1;
         return 0;
     }
     head = (int16_t)first;
+    cursor = (int16_t)rd16(record + 2);
+    /* Validate the possession graph before generated drops can append or
+     * consume RNG.  The source delete transaction owns both walks; a
+     * malformed possession tail must leave the drop cell untouched. */
+    if (cursor != DM2_V1_RECORD_HANDLE_END &&
+        !chain_terminates(pool_set, cursor)) {
+        receipt->walk_corrupt = 1;
+        return 0;
+    }
 
     /* c_record.cpp:1568-1634: the generated-drops loop (mode == 0),
      * delegated to the proven slots binding with the destination head
@@ -138,12 +158,33 @@ int dm2_v1_drop_creature_possession(
                 return 0;
             }
             receipt->drops_placed = dm2_v1_drops_place_source_slots(
-                pool_set, drop_slots, rng, party_x, party_y, party_dir,
-                x, y, &gen_head, out_items, max_items,
+                pool_set, dungeon, map, drop_slots, rng,
+                party_x, party_y, party_dir,
+                x, y, &gen_head, generated_items,
+                DM2_DROP_SLOT_COUNT,
                 &receipt->drops_iterations);
+            for (int i = 0; i < receipt->drops_iterations &&
+                         i < DM2_DROP_SLOT_COUNT; ++i) {
+                if (i == 0) {
+                    receipt->generated_drop_first_itemspec =
+                        generated_items[i].itemspec;
+                    receipt->generated_drop_first_db =
+                        generated_items[i].item_db >= 0
+                            ? generated_items[i].item_db
+                            : dm2_v1_get_itemdb_of_itemspec_actuator(
+                                  generated_items[i].itemspec);
+                }
+                if (generated_items[i].alloc_failed)
+                    ++receipt->generated_drop_alloc_failures;
+                if (i == 0)
+                    receipt->generated_drop_alloc_free_records =
+                        generated_items[i].alloc_free_records;
+                if (out_items && i < max_items)
+                    out_items[i] = generated_items[i];
+            }
             if (gen_head != head) {
                 if (dm2_v1_dungeon_set_first_thing(
-                        dungeon, 0, x, y, (uint16_t)gen_head) != 0) {
+                        dungeon, map, x, y, (uint16_t)gen_head) != 0) {
                     return 0;
                 }
                 head = gen_head;
@@ -153,7 +194,6 @@ int dm2_v1_drop_creature_possession(
     }
 
     /* c_record.cpp:1682-1751: the possession chain walk. */
-    cursor = (int16_t)rd16(record + 2);
     if (cursor == DM2_V1_RECORD_HANDLE_END) {
         receipt->valid = 1;
         return 1;
@@ -162,8 +202,11 @@ int dm2_v1_drop_creature_possession(
     /* The direction-randomization gate reads the creature's AI flags
      * (c_record.cpp:1689-1690); unresolved flags stop the walk BEFORE
      * its first RNG draw (fail-closed, no stream divergence). */
-    if (ai_flags_fn == NULL ||
-        !ai_flags_fn((int)record[4], &ai_flags)) {
+    if ((ai_flags_context_fn == NULL && ai_flags_fn == NULL) ||
+        (ai_flags_context_fn != NULL
+             ? !ai_flags_context_fn(ai_flags_context, (int)record[4],
+                                    &ai_flags)
+             : !ai_flags_fn((int)record[4], &ai_flags))) {
         receipt->ai_flags_unknown = 1;
         return 0;
     }
@@ -218,7 +261,7 @@ int dm2_v1_drop_creature_possession(
             }
             if (new_head != head) {
                 if (dm2_v1_dungeon_set_first_thing(
-                        dungeon, 0, x, y, (uint16_t)new_head) != 0) {
+                        dungeon, map, x, y, (uint16_t)new_head) != 0) {
                     return 0;
                 }
                 head = new_head;
@@ -248,6 +291,52 @@ int dm2_v1_drop_creature_possession(
 
     receipt->valid = 1;
     return 1;
+}
+
+int dm2_v1_drop_creature_possession(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_DungeonData *dungeon,
+    int map,
+    DM2_V1_DropRng *rng,
+    DM2_V1_DropPossessionAiFlagsFn ai_flags_fn,
+    int16_t creature_record,
+    int x, int y,
+    int mode,
+    int noise_arg,
+    int party_x, int party_y, int party_dir,
+    const uint16_t drop_slots[DM2_DROP_SLOT_COUNT],
+    DM2_V1_DropPlacedItem *out_items,
+    int max_items,
+    DM2_V1_DropPossessionReceipt *receipt)
+{
+    return dm2_v1_drop_creature_possession_impl(
+        pool_set, dungeon, map, rng, ai_flags_fn, NULL, NULL,
+        creature_record, x, y, mode, noise_arg, party_x, party_y, party_dir,
+        drop_slots, out_items, max_items, receipt);
+}
+
+int dm2_v1_drop_creature_possession_with_context(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_DungeonData *dungeon,
+    int map,
+    DM2_V1_DropRng *rng,
+    DM2_V1_DropPossessionAiFlagsContextFn ai_flags_fn,
+    void *ai_flags_context,
+    int16_t creature_record,
+    int x, int y,
+    int mode,
+    int noise_arg,
+    int party_x, int party_y, int party_dir,
+    const uint16_t drop_slots[DM2_DROP_SLOT_COUNT],
+    DM2_V1_DropPlacedItem *out_items,
+    int max_items,
+    DM2_V1_DropPossessionReceipt *receipt)
+{
+    if (!ai_flags_fn) return 0;
+    return dm2_v1_drop_creature_possession_impl(
+        pool_set, dungeon, map, rng, NULL, ai_flags_fn, ai_flags_context,
+        creature_record, x, y, mode, noise_arg, party_x, party_y, party_dir,
+        drop_slots, out_items, max_items, receipt);
 }
 
 const char *dm2_v1_drop_possession_source_evidence(void)

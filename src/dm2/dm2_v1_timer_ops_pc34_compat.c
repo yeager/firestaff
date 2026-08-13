@@ -328,7 +328,10 @@ void dm2_v1_process_timer_move_record_rotate(
     uint16_t record = (value_a << 6) >> 11;
     (void)record;
     int16_t x = (int16_t)(value_a & 0x1f);
-    cb->move_record_to(ctx, 0xFFFF, party_x, party_y, x, 0);
+    /* c_tim_proc.cpp:4234-4245: the destination y is the source's
+     * unsigned (A << 6) >> 11 decode, not a host-side zero surrogate. */
+    int16_t y = (int16_t)((value_a << 6) >> 11);
+    cb->move_record_to(ctx, 0xFFFF, party_x, party_y, x, y);
     int16_t dir = (int16_t)((value_a << 4) >> 14);
     if (cb->party_rotate)
         cb->party_rotate(ctx, dir);
@@ -365,20 +368,28 @@ int dm2_v1_process_timer_resurrection_tile(
             ? cb->get_tile_record_link(ctx, (int16_t)xA, (int16_t)yA) : -1;
         int found = 0;
         int guard = 0;
-        while (rec >= 0 && !found && guard < 4096) {
-            int16_t cls1 = cb->query_cls1_from_record
-                ? cb->query_cls1_from_record(ctx, rec) : -1;
-            int16_t cls2 = cb->query_cls2_from_record
-                ? cb->query_cls2_from_record(ctx, rec) : -1;
-            if (cls1 == 0x15 && cls2 == 0) {
-                if (cb->add_item_charge)
-                    cb->add_item_charge(ctx, rec, 1);
-                if (rec == actor) {
-                    if (cb->cut_record_from)
-                        cb->cut_record_from(ctx, (uint16_t)rec, (int16_t)xA, (int16_t)yA);
-                    if (cb->dealloc_record)
-                        cb->dealloc_record(ctx, (uint16_t)rec);
-                    found = 1;
+        /* Record handles are unsigned 16-bit words; DB2+ handles therefore
+         * appear negative through this legacy int16_t callback ABI.  Only
+         * the source NULL/END sentinels terminate the walk. */
+        while (rec != (int16_t)-1 && rec != (int16_t)-2 &&
+               !found && guard < 4096) {
+            /* c_tim_proc.cpp:80-102 first admits only the DB selected by
+             * timer.xB (record word >> 14), then tests the class pair. */
+            if ((((uint16_t)rec >> 14) & 0x3u) == (uint16_t)xB) {
+                int16_t cls1 = cb->query_cls1_from_record
+                    ? cb->query_cls1_from_record(ctx, rec) : -1;
+                int16_t cls2 = cb->query_cls2_from_record
+                    ? cb->query_cls2_from_record(ctx, rec) : -1;
+                if (cls1 == 0x15 && cls2 == 0) {
+                    int16_t charge = cb->add_item_charge
+                        ? cb->add_item_charge(ctx, rec, 0) : -1;
+                    if (charge == actor) {
+                        if (cb->cut_record_from)
+                            cb->cut_record_from(ctx, (uint16_t)rec, (int16_t)xA, (int16_t)yA);
+                        if (cb->dealloc_record)
+                            cb->dealloc_record(ctx, (uint16_t)rec);
+                        found = 1;
+                    }
                 }
             }
             if (!cb->get_next_record_link)
@@ -388,18 +399,20 @@ int dm2_v1_process_timer_resurrection_tile(
         }
         new_yb = 0;
     } else { /* yB >= 2: create cloud phase */
+        /* c_tim_proc.cpp:116-121: DM2_CREATE_CLOUD(0xffe4, 0,
+         * xA, yA, xB), followed by timer->adddata(5). */
         if (cb->create_cloud)
-            cb->create_cloud(ctx, 0x28, 5, (int16_t)xB, (int16_t)yB, 0);
+            cb->create_cloud(ctx, (int16_t)0xffe4, 0,
+                             (int16_t)xA, (int16_t)yA, (int16_t)xB);
         new_yb = (int16_t)(yB - 1);
     }
 
     if (cb->queue_timer)
-        cb->queue_timer(ctx);
-    (void)new_yb;
+        cb->queue_timer(ctx, (uint8_t)new_yb);
     return 1;
 }
 
-int dm2_v1_process_cloud(
+int dm2_v1_process_cloud_tile(
     uint16_t record_word, uint8_t xA, uint8_t yA,
     const DM2_V1_ProcessCloudCallbacks *cb, void *ctx)
 {
@@ -409,43 +422,67 @@ int dm2_v1_process_cloud(
     if (!rec)
         return 0;
 
-    uint8_t cloud_type = rec[4];
     uint16_t w2 = (uint16_t)(rec[2] | (rec[3] << 8));
-    int16_t decay = (int16_t)(w2 & 0x7F);
+    uint8_t cloud_type = (uint8_t)(w2 & 0x7Fu);
 
     uint8_t tile = cb->get_tile_value ? cb->get_tile_value(ctx, (int16_t)xA, (int16_t)yA) : 0;
-    if (((tile >> 5) & 0x7) == 4 && cb->attack_door)
-        cb->attack_door(ctx, (int16_t)xA, (int16_t)yA, decay, cloud_type, 0);
+    if (((tile >> 5) & 0x7) == 4 && cb->attack_door) {
+        int16_t target = cb->get_tile_record_link
+            ? cb->get_tile_record_link(ctx, (int16_t)xA, (int16_t)yA) : -1;
+        int16_t damage = cb->calc_cloud_damage
+            ? cb->calc_cloud_damage(ctx, record_word, (uint16_t)target) : 0;
+        if (damage != 0)
+            cb->attack_door(ctx, (int16_t)xA, (int16_t)yA, damage, 1, 0);
+    }
 
-    int16_t damage = cb->calc_cloud_damage ? cb->calc_cloud_damage(ctx, record_word, 0) : decay;
+    /* c_cloud.cpp:650-704: subtype 0x0e, zero and two do not affect
+     * party/creatures, although their lifetime handling still runs below. */
+    if (cloud_type != 0x0e && cloud_type != 0 && cloud_type != 2) {
+        if ((int16_t)xA == cb->party_x && (int16_t)yA == cb->party_y &&
+            cb->attack_party) {
+            int16_t damage = cb->calc_cloud_damage
+                ? cb->calc_cloud_damage(ctx, record_word, 0xffffu) : 0;
+            if (damage != 0)
+                cb->attack_party(ctx, damage, 0, 0);
+        }
 
-    if ((int16_t)xA == cb->party_x && (int16_t)yA == cb->party_y && cb->attack_party)
-        cb->attack_party(ctx, damage, cloud_type, 0);
-
-    if (cb->get_creature_at) {
+        if (cb->get_creature_at) {
         int16_t creature = cb->get_creature_at(ctx, (int16_t)xA, (int16_t)yA);
         if (creature >= 0 &&
             (!cb->is_creature_immune || !cb->is_creature_immune(ctx, creature)) &&
             cb->attack_creature) {
-            cb->attack_creature(ctx, creature, (int16_t)xA, (int16_t)yA, cloud_type, decay, damage);
+                int16_t damage = cb->calc_cloud_damage
+                    ? cb->calc_cloud_damage(ctx, record_word, creature) : 0;
+                if (damage != 0)
+                    cb->attack_creature(ctx, creature, (int16_t)xA,
+                                        (int16_t)yA, 0x200d, 0x64, damage);
+            }
         }
     }
 
-    int decayed = 0;
+    int should_requeue = 0;
     if (cloud_type == 7) {
-        decay -= 1;
-        decayed = 1;
+        if (w2 >= 0x0600u) {
+            w2 = (uint16_t)((w2 & 0x00ffu) |
+                            (uint16_t)(((w2 >> 8) - 3u) << 8));
+            should_requeue = 1;
+        }
     } else if (cloud_type == 0x28) {
-        decay -= 5;
-        decayed = 1;
+        if (w2 > 0x3700u) {
+            w2 = (uint16_t)((w2 & 0x00ffu) |
+                            (uint16_t)(((w2 >> 8) - 0x28u) << 8));
+            should_requeue = 1;
+        }
     } else if (cloud_type == 0x64) {
-        decay -= 1;
-        decayed = 1;
+        uint8_t next = (uint8_t)((cloud_type + 1u) & 0x7fu);
+        w2 = (uint16_t)((w2 & 0xff80u) | next);
+        should_requeue = 1;
         if (cb->queue_noise_gen2 && cb->current_map == cb->party_map)
-            cb->queue_noise_gen2(ctx, 4, 0, 0x40, 0x40, (int16_t)xA, (int16_t)yA, 0, 0, 0);
+            cb->queue_noise_gen2(ctx, 0x0d, cloud_type, 0x81, 0xfe,
+                                 (int16_t)xA, (int16_t)yA, 1, 0x6c, 0xc8);
     }
 
-    if (decayed && decay <= 0) {
+    if (!should_requeue) {
         if (cb->cut_record_from)
             cb->cut_record_from(ctx, record_word, (int16_t)xA, (int16_t)yA);
         if (cb->dealloc_record)
@@ -453,11 +490,8 @@ int dm2_v1_process_cloud(
         return 1;
     }
 
-    if (decayed) {
-        w2 = (uint16_t)((w2 & 0xFF80) | ((uint16_t)decay & 0x7F));
-        rec[2] = (uint8_t)(w2 & 0xFF);
-        rec[3] = (uint8_t)(w2 >> 8);
-    }
+    rec[2] = (uint8_t)(w2 & 0xffu);
+    rec[3] = (uint8_t)(w2 >> 8);
 
     if (cb->queue_timer)
         cb->queue_timer(ctx);

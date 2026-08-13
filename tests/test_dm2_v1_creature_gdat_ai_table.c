@@ -32,6 +32,17 @@ static void put16(uint8_t *p, uint16_t v) {
     p[1] = (uint8_t)(v >> 8);
 }
 
+static void set_word_entry(DM2_V1_GdatEntry *entry,
+                           int category, int index, int field,
+                           uint16_t value) {
+    memset(entry, 0, sizeof(*entry));
+    entry->cls1 = (uint8_t)category;
+    entry->cls2 = (uint8_t)index;
+    entry->cls3 = (uint8_t)DM2_GDAT_ENTRY_TYPE_WORD_VALUE;
+    entry->cls4 = (uint8_t)field;
+    entry->data_index = value;
+}
+
 static void make_ai_raw(uint8_t out[36],
                         uint16_t flags,
                         uint8_t armor,
@@ -62,6 +73,12 @@ int main(void) {
     uint32_t raw_sizes[3] = { 36, 36, 36 };
     DM2_V1_GdatEntry entries[3];
     DM2_V1_AssetLoader loader;
+    DM2_V1_GdatEntry mapping_entry;
+    DM2_V1_AssetLoader mapping_loader;
+    uint8_t mapping_data = 0;
+    uint32_t mapping_offset = 0;
+    uint32_t mapping_size = 0;
+    uint16_t hp = 0;
 
     make_ai_raw(raw_data,
                 DM2_AIFLAG_WORM_GLOP,
@@ -147,6 +164,24 @@ int main(void) {
     CHECK(dm2_v1_creature_ai_spec(DM2_AI_THORN_DEMON) == NULL &&
               dm2_v1_creature_ai_spec(DM2_AI_CAVE_BAT) == NULL,
           "reset clears live creature owner bindings");
+
+    /* SKProject c_record.cpp masks the source creature key to one byte;
+     * type 200 must still resolve CREATURES[type].word@5.  The retail
+     * executable-owned AI row is valid without a CREATURE_AI override. */
+    set_word_entry(&mapping_entry, DM2_GDAT_CATEGORY_CREATURES,
+                   200, 0x05, DM2_AI_THORN_DEMON);
+    memset(&mapping_loader, 0, sizeof(mapping_loader));
+    mapping_loader.data = &mapping_data;
+    mapping_loader.data_size = 1;
+    mapping_loader.loaded = 1;
+    mapping_loader.raw_data_count = 1;
+    mapping_loader.raw_offsets = &mapping_offset;
+    mapping_loader.raw_sizes = &mapping_size;
+    mapping_loader.entries = &mapping_entry;
+    mapping_loader.entry_count = 1;
+    CHECK(dm2_v1_creature_load_ai_table_from_gdat(&mapping_loader) == 1 &&
+              dm2_v1_creature_ai_base_hp(200, &hp) == 1 && hp == 400,
+          "8-bit CREATURES key resolves the genuine AI row without override");
 
     printf("DM2 V1 creature GDAT AI table: %d/%d passed\n",
            tests_passed,

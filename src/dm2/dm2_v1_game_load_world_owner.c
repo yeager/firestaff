@@ -1,14 +1,23 @@
 /* Source-owned File_header world materialisation for DM2 New Game. */
 
 #include "dm2_v1_game_load_world_owner.h"
+#include "dm2_v1_sksave_game_load_owner.h"
 #include "dm2_v1_creature_animation_gdat.h"
 #include "dm2_v1_fmtowns_graphics_dat.h"
 #include "dm2_v1_actuator_event_pc34_compat.h"
 #include "dm2_v1_data_tables_pc34_compat.h"
+#include "dm2_v1_dbitem_alloc_pc34_compat.h"
 #include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_creature_something_pc34_compat.h"
+#include "dm2_v1_creature.h"
+#include "dm2_v1_creature_ops_pc34_compat.h"
+#include "dm2_v1_delete_creature_full_pc34_compat.h"
+#include "dm2_v1_cloud_pc34_compat.h"
+#include "dm2_v1_hero_ops_pc34_compat.h"
 #include "dm2_v1_skproject_core.h"
 #include "dm2_v1_sound_queue_pc34_compat.h"
+#include "dm2_v1_think_creature_pc34_compat.h"
+#include "dm2_v1_timer_ops_pc34_compat.h"
 
 #include <limits.h>
 #include <stdlib.h>
@@ -240,6 +249,11 @@ static int dm2_v1_game_load_owner_static_caii_animation_frame(
         if (command == 0xffffu || command == 0x0011u) break;
     }
     if (row * 4u + 3u >= attribution_size) return 0;
+    if ((uint16_t)attribution[row * 4u] != 0x0011u) {
+        /* The source's terminator is a legitimate no-animation result for
+         * static objects without a 0x11 attribution row. */
+        return 1;
+    }
     base = (uint16_t)attribution[row * 4u + 2u] |
         ((uint16_t)attribution[row * 4u + 3u] << 8);
     info = dm2_v1_asset_load_typed_sized(loader,
@@ -306,23 +320,40 @@ static int dm2_v1_game_load_owner_materialize_caii_map_candidates(
                 if (((uint16_t)raw & 0x10u) == 0u) continue;
                 link = (int16_t)dm2_v1_dungeon_get_first_thing(
                     &owner->dungeon, map, x, y);
-                /* File_header keeps an object-bearing square with a real
-                 * NULL root when no creature chain is present.  CAII has no
-                 * candidate to materialize there; preserve the source null
-                 * instead of treating it as a malformed chain. */
-                if (link == DM2_V1_RECORD_HANDLE_NULL) continue;
+                /* Authenticated Mac File_header ground stacks use
+                 * OBJECT_NULL for some object-bearing squares. They are
+                 * empty chains, not malformed CAII roots. */
+                if (link == DM2_V1_RECORD_HANDLE_NULL)
+                    continue;
                 while (link != DM2_V1_RECORD_HANDLE_END) {
                     uint8_t *record = NULL;
                     const DM2_AIDefinition *ai = NULL;
-                    if (chain_count++ >= capacity ||
-                        !dm2_v1_record_pool_next_link(&owner->record_pools,
-                                                      link, &next)) {
+                    if (link == DM2_V1_RECORD_HANDLE_NULL ||
+                        chain_count++ >= capacity) goto fail;
+                    if (owner->dungeon.source_words_big_endian) {
+                        const uint8_t *link_record =
+                            dm2_v1_record_pool_address(&owner->record_pools, link);
+                        if (!link_record) goto fail;
+                        next = (int16_t)(((uint16_t)link_record[0] << 8) |
+                                         (uint16_t)link_record[1]);
+                    } else if (!dm2_v1_record_pool_next_link(
+                                   &owner->record_pools, link, &next)) {
                         goto fail;
                     }
                     if (dm2_v1_record_handle_pool(link) == 4) {
                         DM2_V1_GameLoadCaiiMapCandidate *candidate;
                         int duplicate = 0;
                         int prior;
+                        for (prior = 0; prior < count; ++prior) {
+                            if (candidates[prior].record_handle == link) {
+                                duplicate = 1;
+                                break;
+                            }
+                        }
+                        if (duplicate) {
+                            link = next;
+                            continue;
+                        }
                         if (count >= capacity ||
                             !(record = dm2_v1_record_pool_address_mut(
                                 &owner->record_pools, link)) ||
@@ -347,12 +378,12 @@ static int dm2_v1_game_load_owner_materialize_caii_map_candidates(
                         candidate->record_handle = link;
                         candidate->creature_type = record[4];
                         candidate->static_ai = (uint8_t)((ai->w0AIFlags & 1u) != 0u);
-                        candidate->record_word_a =
-                            dm2_v1_game_load_owner_read_record_u16(owner,
-                                                                    record + 10u);
-                        candidate->packed_position =
-                            dm2_v1_game_load_owner_read_record_u16(owner,
-                                                                    record + 12u);
+                        candidate->record_word_a = owner->dungeon.source_words_big_endian
+                            ? (uint16_t)(((uint16_t)record[10] << 8) | record[11])
+                            : (uint16_t)record[10] | ((uint16_t)record[11] << 8);
+                        candidate->packed_position = owner->dungeon.source_words_big_endian
+                            ? (uint16_t)(((uint16_t)record[12] << 8) | record[13])
+                            : (uint16_t)record[12] | ((uint16_t)record[13] << 8);
                         candidate->static_animation_frame = 0xffffu;
                         if (candidate->static_ai) {
                             if (!dm2_v1_game_load_owner_static_caii_animation_frame(
@@ -398,10 +429,8 @@ static int dm2_v1_game_load_owner_materialize_caii_map_candidates(
     receipt.map_count = (uint16_t)owner->dungeon.level_count;
     receipt.candidate_count = (uint16_t)count;
     if (receipt.candidate_count == 0u ||
-        receipt.candidate_count != receipt.static_candidate_count +
-            receipt.dynamic_candidate_count) {
-        goto fail;
-    }
+            receipt.candidate_count != receipt.static_candidate_count +
+            receipt.dynamic_candidate_count) goto fail;
     hash = dm2_v1_game_load_owner_hash_step(hash, receipt.map_count);
     hash = dm2_v1_game_load_owner_hash_step(hash, receipt.candidate_count);
     hash = dm2_v1_game_load_owner_hash_step(hash, receipt.static_candidate_count);
@@ -501,10 +530,13 @@ int dm2_v1_game_load_world_owner_materialize_static_caii(
             !ai || (ai->w0AIFlags & 1u) == 0u) {
             goto rollback;
         }
-        old_word = dm2_v1_game_load_owner_read_record_u16(owner, record + 10u);
+        old_word = owner->dungeon.source_words_big_endian
+            ? (uint16_t)(((uint16_t)record[10] << 8) | record[11])
+            : (uint16_t)record[10] | ((uint16_t)record[11] << 8);
         if (old_word != candidate->record_word_a) goto rollback;
-        adjacent_base = dm2_v1_game_load_owner_read_record_u16(owner,
-                                                                record + 8u);
+        adjacent_base = owner->dungeon.source_words_big_endian
+            ? (uint16_t)(((uint16_t)record[8] << 8) | record[9])
+            : (uint16_t)record[8] | ((uint16_t)record[9] << 8);
         animation_word = (int16_t)old_word;
         memset(&frame_receipt, 0, sizeof(frame_receipt));
         if (owner->dungeon.words_big_endian) {
@@ -521,6 +553,8 @@ int dm2_v1_game_load_world_owner_materialize_static_caii(
             if (candidate->static_animation_frame == 0xffffu) continue;
             animation_word = (int16_t)candidate->static_animation_frame;
         } else {
+            if (candidate->static_animation_frame == 0xffffu)
+                continue;
             if (dm2_v1_creature_get_animation_frame_with_ai_spec(
                     owner->asset_loader, &owner->caii_rng, ai, record[4], 0x11,
                     &adjacent_base, &animation_word, &animation,
@@ -572,7 +606,7 @@ int dm2_v1_game_load_world_owner_schedule_caii_think(
 {
     DM2_V1_GameLoadCaiiThinkReceipt receipt;
     DM2_V1_RecordPool *db4;
-    uint8_t *record;
+    uint8_t *record = NULL;
     uint8_t *slot;
     uint8_t slot_backup[DM2_V1_CAII_SLOT_SIZE];
     DM2_V1_TimerEntry *timer_backup = NULL;
@@ -716,12 +750,16 @@ int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
     int index;
 
     memset(&receipt, 0, sizeof(receipt));
+    receipt.failed_record_handle = -1;
+    receipt.failed_map = -1;
     if (out_receipt) *out_receipt = receipt;
     if (!dm2_v1_game_load_world_owner_is_prepared(owner) ||
         !owner->caii_static_animation.valid || !owner->caii_slots.valid ||
         !owner->caii_rng_initialized || !owner->caii_map_candidates ||
         !owner->timer_entries || !owner->timer_indices ||
-        owner->caii_dynamic.valid) return 0;
+        owner->caii_dynamic.valid) {
+        return 0;
+    }
 
     receipt.valid = 1;
 
@@ -801,24 +839,34 @@ int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
         DM2_V1_GameLoadCaiiThinkReceipt think;
         DM2_V1_CreatureSomethingReceipt something;
 
+
         if (candidate->static_ai) continue;
-        ++receipt.dynamic_candidate_count;
         record = dm2_v1_record_pool_address_mut(&owner->record_pools,
                                                 candidate->record_handle);
-        if (!record || record[4] != candidate->creature_type ||
-            record[5] != 0xffu ||
+        if (!record) {
+            goto rollback;
+        }
+        /* FILL_ORPHAN_CAII visits map roots, but the same DB4 object may be
+         * reachable from more than one authenticated ground stack. Once its
+         * owner byte is assigned, the source skips that duplicate rather
+         * than allocating a second CAII slot. */
+        if (record[5] != 0xffu) continue;
+        if (record[4] != candidate->creature_type ||
             !dm2_v1_caii_source_owner_ai_spec_def(&owner->caii_source,
                                                    record[4], &ai) || !ai ||
             (ai->w0AIFlags & 1u) != 0u) {
             goto rollback;
         }
+        ++receipt.dynamic_candidate_count;
         for (slot_index = 0; slot_index < owner->caii_slots.capacity;
              ++slot_index) {
             slot = owner->caii_slots.slots +
                 (size_t)slot_index * DM2_V1_CAII_SLOT_SIZE;
             if ((int16_t)dm2_v1_game_load_owner_read_u16le(slot) < 0) break;
         }
-        if (slot_index >= owner->caii_slots.capacity) goto rollback;
+        if (slot_index >= owner->caii_slots.capacity) {
+            goto rollback;
+        }
         memset(slot, 0, DM2_V1_CAII_SLOT_SIZE);
         dm2_v1_game_load_owner_write_u16le(slot,
             (uint16_t)candidate->record_handle & 0x03ffu);
@@ -853,37 +901,24 @@ int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
         adj[0] = (int16_t)dm2_v1_game_load_owner_read_u16le(slot + 8u);
         adj[1] = (int16_t)dm2_v1_game_load_owner_read_u16le(slot + 10u);
         memset(&something, 0, sizeof(something));
-        /* The authenticated Macintosh Graphics.dat carries the same
-         * source-owned FB/FC/FD creature animation tables as the other
-         * admitted DM2 editions.  Endianness belongs to the dungeon/record
-         * owner, not to the GAF table lookup; do not turn a valid Mac GAF row
-         * into a synthetic zero-delta creature merely because its records
-         * are big-endian. */
-        if (dm2_v1_creature_something_1c9a_0a48_with_ai_spec(
-                       &owner->record_pools, &owner->caii_slots,
-                       owner->asset_loader, ai, &owner->caii_rng,
-                       candidate->record_handle, adj, &animation,
-                       candidate->map, owner->preselection_entrance.map,
-                       0, 0, 0, candidate->x, candidate->y,
-                       (unsigned long)owner->timer_queue.gametick,
-                       &something) < 0 || !something.valid) {
-            /* The small First Chapter image has a smaller authenticated
-             * creature/animation corpus.  Preserve its source creature and
-             * timer owner, but keep the original fail-closed no-animation
-             * result for a missing source row; never borrow the retail table
-             * or create a replacement frame. */
-            /* Only the two authenticated English Macintosh dungeon images
-             * are allowed to take this source-defined no-animation branch.
-             * Do not let a broad endian check hide a mismatch in another
-             * big-endian platform or an unadmitted Mac image. */
-            if (!owner->dungeon.words_big_endian ||
-                (owner->dungeon.raw_size != 6535u &&
-                 owner->dungeon.raw_size != 39411u)) {
+        {
+            int something_result =
+                dm2_v1_creature_something_1c9a_0a48_with_ai_spec(
+            &owner->record_pools, &owner->caii_slots, owner->asset_loader,
+            ai, &owner->caii_rng, candidate->record_handle, adj,
+            &animation, candidate->map, owner->preselection_entrance.map,
+            candidate->record_word_a & 0x003fu, 0, 0,
+            candidate->x, candidate->y,
+                (unsigned long)owner->timer_queue.gametick, &something);
+            if (something_result < 0 || !something.valid) {
+                receipt.failed_record_handle = candidate->record_handle;
+                receipt.failed_creature_type = candidate->creature_type;
+                receipt.failed_map = candidate->map;
+                receipt.failed_x = candidate->x;
+                receipt.failed_y = candidate->y;
+                receipt.failed_0a48_result = something_result;
                 goto rollback;
             }
-            memset(&something, 0, sizeof(something));
-            something.valid = 1;
-            something.delta = 0;
         }
         dm2_v1_game_load_owner_write_u16le(slot + 8u, (uint16_t)adj[0]);
         dm2_v1_game_load_owner_write_u16le(slot + 10u, (uint16_t)adj[1]);
@@ -921,7 +956,9 @@ int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
                                                  (uint16_t)something.delta);
     }
     if (receipt.dynamic_candidate_count !=
-        owner->caii_map_receipt.dynamic_candidate_count) goto rollback;
+        owner->caii_map_receipt.dynamic_candidate_count) {
+        goto rollback;
+    }
     owner->sound_owner.positional_count = sound_state.positional_count;
     owner->sound_owner.immediate_count = sound_state.immediate_count;
     memcpy(owner->sound_owner.positional, sound_state.positional,
@@ -936,7 +973,9 @@ int dm2_v1_game_load_world_owner_materialize_dynamic_caii(
         (int)receipt.dynamic_candidate_count ||
         receipt.allocated_slot_count != receipt.dynamic_candidate_count ||
         receipt.think_timer_count != receipt.dynamic_candidate_count ||
-        hash == 0u) goto rollback;
+        hash == 0u) {
+        goto rollback;
+    }
     receipt.source_hash = dm2_v1_game_load_owner_hash_step(
         hash, receipt.noise_queue_count);
     if (receipt.source_hash == 0u) goto rollback;
@@ -1030,12 +1069,16 @@ int dm2_v1_game_load_world_owner_materialize_caii_local_context(
         context->y = candidate->y;
         context->creature_type = record[4];
         context->ai_flags = ai->w0AIFlags;
-        context->record_word_a = dm2_v1_game_load_owner_read_record_u16(owner,
-                                                                         record + 10u);
-        context->packed_position = dm2_v1_game_load_owner_read_record_u16(owner,
-                                                                           record + 12u);
+        context->record_word_a = owner->dungeon.source_words_big_endian
+            ? (uint16_t)(((uint16_t)record[10] << 8) | record[11])
+            : dm2_v1_game_load_owner_read_u16le(record + 10u);
+        context->packed_position = owner->dungeon.source_words_big_endian
+            ? (uint16_t)(((uint16_t)record[12] << 8) | record[13])
+            : dm2_v1_game_load_owner_read_u16le(record + 12u);
         context->initial_timer_type =
-            dm2_v1_game_load_owner_read_record_u16(owner, record + 8u) == 0xffffu ?
+            (owner->dungeon.source_words_big_endian
+                ? (uint16_t)(((uint16_t)record[8] << 8) | record[9])
+                : dm2_v1_game_load_owner_read_u16le(record + 8u)) == 0xffffu ?
                 0x21u : 0x22u;
         context->home_map = (int16_t)home_map;
         /* DM2_query_1c9a_02c3 identifies the two-word c_creature sequence
@@ -1299,15 +1342,16 @@ static uint32_t dm2_v1_game_load_owner_hash_bytes(const uint8_t *bytes,
     return hash;
 }
 
-static int dm2_v1_game_load_owner_dyn4_has_raw(
-    const DM2_V1_GameLoadWorldOwner *owner, uint16_t raw_index)
+static int dm2_v1_game_load_owner_dyn4_has_raw_selection(
+    const DM2_V1_GdatDyn4MaterializedSelection *selections,
+    uint16_t selection_count, uint16_t raw_index)
 {
     uint16_t selector;
 
-    if (!owner || !owner->dyn4_materialized) return 0;
-    for (selector = 0u; selector < owner->dyn4_selector_count; ++selector) {
+    if (!selections || selection_count == 0u) return 0;
+    for (selector = 0u; selector < selection_count; ++selector) {
         const DM2_V1_GdatDyn4MaterializedSelection *selection =
-            &owner->dyn4_selections[selector];
+            &selections[selector];
         uint16_t block;
         if (!selection->valid || !selection->raw_indices) return 0;
         for (block = 0u; block < selection->block_count; ++block) {
@@ -1332,7 +1376,7 @@ static int dm2_v1_game_load_owner_dyn4_matches_selector(
            (field == 0xffu || entry->cls4 == field);
 }
 
-static void dm2_v1_game_load_owner_sound_free(
+void dm2_v1_game_load_sound_owner_free(
     DM2_V1_GameLoadSoundOwner *sound)
 {
     if (!sound) return;
@@ -1382,6 +1426,117 @@ uint16_t dm2_v1_game_load_sound_owner_query_entry(
     return 0u;
 }
 
+int dm2_v1_game_load_sound_owner_queue_noise_gen2(
+    DM2_V1_GameLoadSoundOwner *owner,
+    int8_t cls1, int8_t cls2, int8_t cls3, int8_t cls_alt,
+    int16_t x, int16_t y, int16_t ecxw, int16_t volume, int16_t delay_mode,
+    const DM2_V1_SoundQueueEnv *env,
+    DM2_V1_GameLoadSoundNoiseReceipt *out_receipt)
+{
+    DM2_V1_GameLoadSoundNoiseReceipt receipt;
+    DM2_V1_SoundQueueReceipt noise;
+    DM2_V1_SoundQueueState state;
+    DM2_V1_SoundSfx positional[DM2_V1_SOUND_POSITIONAL_CAP];
+    DM2_V1_SoundSfx immediate[DM2_V1_SOUND_IMMEDIATE_CAP];
+    DM2_V1_SoundDelayedSlot delayed[DM2_V1_SOUND_DELAYED_SLOT_COUNT];
+    int32_t sample_slots[DM2_V1_SOUND_SAMPLE_SLOT_COUNT];
+    uint16_t positional_count;
+    uint16_t immediate_count;
+    int queued;
+
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&noise, 0, sizeof(noise));
+    if (out_receipt) *out_receipt = receipt;
+    if (!owner || !owner->valid || !owner->runtime_queue_initialized) {
+        receipt.blocked_owner = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!owner->queue_entries || owner->queue_entry_count == 0u ||
+        owner->queue_entry_count > owner->queue_capacity ||
+        !owner->sample_bindings || owner->sample_binding_count == 0u ||
+        owner->sample_binding_count > owner->sample_capacity) {
+        receipt.blocked_queue = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    /* Adapt only the fixed c_sfx state.  GAME_LOAD's authenticated dynamic
+     * xsndptr2 span remains bound as the compatibility state's backing. */
+    dm2_v1_sound_queue_state_init(&state, 0u);
+    if (!dm2_v1_sound_queue_bind_entries(&state, owner->queue_entries,
+                                         owner->queue_entry_count,
+                                         owner->queue_capacity)) {
+        receipt.blocked_queue = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    positional_count = owner->positional_count;
+    immediate_count = owner->immediate_count;
+    memcpy(positional, owner->positional, sizeof(positional));
+    memcpy(immediate, owner->immediate, sizeof(immediate));
+    memcpy(delayed, owner->delayed, sizeof(delayed));
+    memcpy(sample_slots, owner->sample_slots,
+           sizeof(sample_slots));
+    state.positional_count = positional_count;
+    state.immediate_count = immediate_count;
+    state.sound_enabled = owner->sound_enabled;
+    state.master_sfx_volume = owner->master_sfx_volume;
+    memcpy(state.positional, positional, sizeof(positional));
+    memcpy(state.immediate, immediate, sizeof(immediate));
+    memcpy(state.delayed, delayed, sizeof(delayed));
+    memcpy(state.sample_slots, sample_slots, sizeof(sample_slots));
+
+    queued = dm2_v1_sound_queue_noise_gen2(
+        &state, cls1, cls2, cls3, cls_alt, x, y, ecxw, volume, delay_mode,
+        env, &noise);
+    if (!queued) {
+        receipt.blocked_queue = noise.rejected_positional_full ||
+            noise.rejected_immediate_full || noise.rejected_delayed_full ||
+            noise.rejected_map_gate || noise.rejected_facing_unproven ||
+            noise.rejected_occlusion_unavailable ||
+            noise.rejected_occlusion_blocked;
+        receipt.blocked_sample = noise.rejected_query_miss ||
+            noise.rejected_sample_unresolved;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    owner->positional_count = state.positional_count;
+    owner->immediate_count = state.immediate_count;
+    memcpy(owner->positional, state.positional, sizeof(owner->positional));
+    memcpy(owner->immediate, state.immediate, sizeof(owner->immediate));
+    memcpy(owner->delayed, state.delayed, sizeof(owner->delayed));
+    memcpy(owner->sample_slots, state.sample_slots,
+           sizeof(owner->sample_slots));
+    receipt.valid = noise.valid;
+    receipt.queued_positional = noise.queued_positional;
+    receipt.queue_index = noise.queue_index;
+    receipt.sample_id = noise.sample_id;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        owner->receipt_hash,
+        (uint32_t)(uint16_t)cls1 ^ ((uint32_t)(uint16_t)cls2 << 8) ^
+        ((uint32_t)(uint16_t)cls3 << 16) ^ ((uint32_t)(uint16_t)cls_alt << 24));
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        receipt.transaction_hash,
+        (uint32_t)(uint16_t)x ^ ((uint32_t)(uint16_t)y << 16));
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        receipt.transaction_hash,
+        (uint32_t)(uint16_t)ecxw ^ ((uint32_t)(uint16_t)volume << 16) ^
+        (uint32_t)(uint16_t)delay_mode ^ noise.queue_index);
+    if (receipt.transaction_hash == 0u) receipt.valid = 0;
+    if (!receipt.valid) {
+        owner->positional_count = positional_count;
+        owner->immediate_count = immediate_count;
+        memcpy(owner->positional, positional, sizeof(positional));
+        memcpy(owner->immediate, immediate, sizeof(immediate));
+        memcpy(owner->delayed, delayed, sizeof(delayed));
+        memcpy(owner->sample_slots, sample_slots,
+               sizeof(sample_slots));
+    }
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.valid;
+}
+
 static void dm2_v1_game_load_owner_light_visibility_free(
     DM2_V1_GameLoadLightVisibilityOwner *visibility)
 {
@@ -1428,14 +1583,26 @@ static int dm2_v1_game_load_owner_sound_init_runtime_state(
 static int dm2_v1_game_load_owner_materialize_sound(
     DM2_V1_GameLoadWorldOwner *owner)
 {
+    if (!owner) return 0;
+    return dm2_v1_game_load_sound_owner_materialize_from_dyn4(
+        owner->asset_loader, owner->dyn4_selector_count,
+        owner->dyn4_selector_ids, owner->dyn4_selections,
+        &owner->sound_owner);
+}
+
+int dm2_v1_game_load_sound_owner_materialize_from_dyn4(
+    const DM2_V1_AssetLoader *loader, uint16_t selector_count,
+    const uint32_t *selector_ids,
+    const DM2_V1_GdatDyn4MaterializedSelection *selections,
+    DM2_V1_GameLoadSoundOwner *out_owner)
+{
     DM2_V1_GameLoadSoundOwner candidate;
-    const DM2_V1_AssetLoader *loader;
-    const int fmtowns = owner && owner->asset_loader &&
-        owner->asset_loader->gdat_version == DM2_FMTOWNS_GDAT_VERSION;
+    const int fmtowns = loader &&
+        loader->gdat_version == DM2_FMTOWNS_GDAT_VERSION;
     uint16_t selector;
 
-    if (!owner || !(loader = owner->asset_loader) || !owner->dyn4_materialized ||
-        owner->dyn4_selector_count == 0u) return 0;
+    if (!loader || !out_owner || !selector_ids || !selections ||
+        !loader->loaded || selector_count == 0u) return 0;
     memset(&candidate, 0, sizeof(candidate));
     if (!dm2_v1_dballoc_3e74_24b8_receipt(loader, &candidate.allocation) ||
         !candidate.allocation.accepted ||
@@ -1454,9 +1621,9 @@ static int dm2_v1_game_load_owner_materialize_sound(
     /* This is the second DM2_LOAD_DYN4 descriptor pass.  It calls SOUND9 in
      * GDAT table order and permits only rows whose raw block was marked and
      * materialised by one of the real selectors. */
-    for (selector = 0u; selector < owner->dyn4_selector_count; ++selector) {
+    for (selector = 0u; selector < selector_count; ++selector) {
         uint16_t ordinal;
-        const uint32_t selector_id = owner->dyn4_selector_ids[selector];
+        const uint32_t selector_id = selector_ids[selector];
         if (selector_id == 0u) goto fail;
         for (ordinal = 0u; ordinal < loader->entry_count; ++ordinal) {
             const DM2_V1_GdatEntry *entry = &loader->entries[ordinal];
@@ -1471,7 +1638,8 @@ static int dm2_v1_game_load_owner_materialize_sound(
             }
             raw_index = fmtowns ? (uint16_t)(entry->data_index & 0x7fffu) :
                                   entry->data_index;
-            if (!fmtowns && !dm2_v1_game_load_owner_dyn4_has_raw(owner, raw_index)) {
+            if (!fmtowns && !dm2_v1_game_load_owner_dyn4_has_raw_selection(
+                    selections, selector_count, raw_index)) {
                 continue;
             }
             for (existing = 0u; existing < candidate.queue_entry_count;
@@ -1513,8 +1681,8 @@ static int dm2_v1_game_load_owner_materialize_sound(
         if (!dm2_v1_gdat_sound_entry_receipt(loader, (uint8_t)entry->b_02,
                 (uint8_t)entry->b_03, (uint8_t)entry->b_04, 0, 0,
                 &source) || !source.accepted ||
-            (!fmtowns && !dm2_v1_game_load_owner_dyn4_has_raw(owner,
-                                                               source.raw_index))) {
+            (!fmtowns && !dm2_v1_game_load_owner_dyn4_has_raw_selection(
+                selections, selector_count, source.raw_index))) {
             goto fail;
         }
         for (binding = 0u; binding < candidate.sample_binding_count;
@@ -1556,12 +1724,14 @@ static int dm2_v1_game_load_owner_materialize_sound(
         candidate.receipt_hash, candidate.materialized_raw_hash);
     candidate.valid = candidate.receipt_hash != 0u;
     if (!candidate.valid ||
-        !dm2_v1_game_load_owner_sound_init_runtime_state(&candidate)) goto fail;
-    owner->sound_owner = candidate;
+        !dm2_v1_game_load_owner_sound_init_runtime_state(&candidate)) {
+        goto fail;
+    }
+    *out_owner = candidate;
     return 1;
 
 fail:
-    dm2_v1_game_load_owner_sound_free(&candidate);
+    dm2_v1_game_load_sound_owner_free(&candidate);
     return 0;
 }
 
@@ -1770,7 +1940,7 @@ void dm2_v1_game_load_world_owner_free(DM2_V1_GameLoadWorldOwner *owner)
     dm2_v1_gdat_scene_m11_command_plan_free(&owner->preselection_scene_plan);
     dm2_v1_game_load_owner_light_visibility_free(
         &owner->preselection_light_visibility);
-    dm2_v1_game_load_owner_sound_free(&owner->sound_owner);
+    dm2_v1_game_load_sound_owner_free(&owner->sound_owner);
     dm2_v1_caii_array_free(&owner->caii_slots);
     dm2_v1_caii_source_owner_free(&owner->caii_source);
     free(owner->caii_map_candidates);
@@ -1785,13 +1955,88 @@ void dm2_v1_game_load_world_owner_free(DM2_V1_GameLoadWorldOwner *owner)
 static void dm2_v1_game_load_runtime_candidate_sound_free(
     DM2_V1_GameLoadSoundOwner *sound)
 {
-    if (!sound) return;
-    free(sound->queue_entries);
-    free(sound->sample_bindings);
-    memset(sound, 0, sizeof(*sound));
+    dm2_v1_game_load_sound_owner_free(sound);
+}
+
+/* c_dballoc allocates the source reserve after the static File_header pools
+ * have been copied.  DB14/DB15 are therefore allowed to have zero static
+ * records while still owning a source-sized runtime span. */
+static int dm2_v1_game_load_runtime_candidate_materialize_dynamic_pools(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    const DM2_V1_GameLoadWorldOwner *source)
+{
+    for (int type = 14; type <= 15; ++type) {
+        DM2_V1_RecordPool *pool = &candidate->record_pools.pools[type];
+        uint16_t capacity = source->record_capacities[type];
+        uint8_t *bytes;
+        size_t old_bytes;
+        size_t new_bytes;
+
+        if (capacity == 0u || pool->record_size <= 0 ||
+            pool->record_count < 0 || pool->record_count > (int)capacity ||
+            pool->extension_count != 0) return 0;
+        if (pool->record_count == (int)capacity) continue;
+        old_bytes = (size_t)pool->record_count * (size_t)pool->record_size;
+        new_bytes = (size_t)capacity * (size_t)pool->record_size;
+        bytes = calloc(1u, new_bytes);
+        if (!bytes) return 0;
+        if (old_bytes > 0u && !pool->bytes) {
+            free(bytes);
+            return 0;
+        }
+        if (old_bytes > 0u) memcpy(bytes, pool->bytes, old_bytes);
+        for (int index = pool->record_count; index < (int)capacity; ++index) {
+            bytes[(size_t)index * (size_t)pool->record_size] = 0xffu;
+            bytes[(size_t)index * (size_t)pool->record_size + 1u] = 0xffu;
+        }
+        free(pool->bytes);
+        pool->bytes = bytes;
+        pool->record_count = (int)capacity;
+    }
+    return 1;
 }
 
 static int dm2_v1_game_load_runtime_candidate_sound_clone(
+    DM2_V1_GameLoadSoundOwner *out, const DM2_V1_GameLoadSoundOwner *source)
+{
+    return dm2_v1_game_load_sound_owner_clone(out, source);
+}
+
+static int dm2_v1_game_load_runtime_candidate_sksave_map_clone(
+    DM2_V1_SksaveMapOwner *out, const DM2_V1_SksaveMapOwner *source)
+{
+    DM2_V1_SksaveMapOwner candidate;
+
+    if (!out || !source || !source->valid || !source->dungeon ||
+        source->column_index_count == 0u || !source->column_indices ||
+        source->ground_stack_count == 0u || !source->ground_stack_links ||
+        source->map_tiles_size == 0u || !source->map_tiles) return 0;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate = *source;
+    candidate.column_indices = NULL;
+    candidate.ground_stack_links = NULL;
+    candidate.map_tiles = NULL;
+    candidate.column_indices = malloc(source->column_index_count *
+                                      sizeof(*candidate.column_indices));
+    candidate.ground_stack_links = malloc(source->ground_stack_count *
+                                          sizeof(*candidate.ground_stack_links));
+    candidate.map_tiles = malloc(source->map_tiles_size);
+    if (!candidate.column_indices || !candidate.ground_stack_links ||
+        !candidate.map_tiles) {
+        dm2_v1_sksave_map_owner_free(&candidate);
+        return 0;
+    }
+    memcpy(candidate.column_indices, source->column_indices,
+           source->column_index_count * sizeof(*candidate.column_indices));
+    memcpy(candidate.ground_stack_links, source->ground_stack_links,
+           source->ground_stack_count * sizeof(*candidate.ground_stack_links));
+    memcpy(candidate.map_tiles, source->map_tiles, source->map_tiles_size);
+    dm2_v1_sksave_map_owner_free(out);
+    *out = candidate;
+    return 1;
+}
+
+int dm2_v1_game_load_sound_owner_clone(
     DM2_V1_GameLoadSoundOwner *out, const DM2_V1_GameLoadSoundOwner *source)
 {
     DM2_V1_GameLoadSoundOwner candidate;
@@ -1822,7 +2067,7 @@ static int dm2_v1_game_load_runtime_candidate_sound_clone(
     *out = candidate;
     return 1;
 fail:
-    dm2_v1_game_load_runtime_candidate_sound_free(&candidate);
+    dm2_v1_game_load_sound_owner_free(&candidate);
     return 0;
 }
 
@@ -1835,6 +2080,8 @@ void dm2_v1_game_load_runtime_session_candidate_free(
         return;
     }
     dm2_v1_game_load_runtime_candidate_sound_free(&candidate->sound_owner);
+    dm2_v1_sksave_map_owner_free(&candidate->sksave_map_owner);
+    candidate->sksave_map_owner_valid = 0;
     dm2_v1_caii_array_free(&candidate->caii_slots);
     dm2_v1_caii_source_owner_free(&candidate->caii_source);
     free(candidate->timer_indices);
@@ -1843,6 +2090,41 @@ void dm2_v1_game_load_runtime_session_candidate_free(
     dm2_v1_record_pool_set_free(&candidate->record_pools);
     dm2_v1_dungeon_free(&candidate->dungeon);
     memset(candidate, 0, sizeof(*candidate));
+}
+
+int dm2_v1_game_load_runtime_session_candidate_is_valid(
+    const DM2_V1_GameLoadRuntimeSessionCandidate *candidate)
+{
+    if (!dm2_v1_game_load_runtime_candidate_is_initialized(candidate) ||
+        !candidate->valid || candidate->candidate_hash == 0u ||
+        candidate->source_transaction_hash == 0u ||
+        !candidate->dungeon.raw_data || candidate->dungeon.raw_size <= 0 ||
+        !candidate->dungeon.record_graph_complete ||
+        !candidate->record_pools.valid ||
+        !candidate->record_pools.record_graph_complete ||
+        !candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u ||
+        candidate->timer_queue.entries != candidate->timer_entries ||
+        candidate->timer_queue.indices != candidate->timer_indices ||
+        candidate->timer_queue.max_timers !=
+            (int16_t)candidate->timer_capacity ||
+        !candidate->caii_slots.valid || candidate->caii_slots.capacity <= 0 ||
+        !candidate->caii_slots.slots || !candidate->caii_source.valid ||
+        !candidate->asset_loader || !candidate->asset_loader->loaded ||
+        !candidate->sound_owner.valid ||
+        !candidate->sound_owner.runtime_queue_initialized ||
+        !candidate->map_context.valid || candidate->party.heros_in_party <= 0 ||
+        candidate->party.heros_in_party > DM2_MAX_HEROES ||
+        candidate->source_event_hero_index < 0 ||
+        candidate->source_event_hero_index >= candidate->party.heros_in_party ||
+        candidate->event_queue.entries != 0 ||
+        candidate->event_queue.idx != 0 || candidate->event_queue.out_idx != 0 ||
+        candidate->event_queue.fetch_busy ||
+        candidate->event_queue.singleevent_available ||
+        candidate->event_queue.button0x2) {
+        return 0;
+    }
+    return 1;
 }
 
 typedef struct {
@@ -2358,6 +2640,240 @@ int dm2_v1_game_load_runtime_session_candidate_census_moverec_square(
     return 1;
 }
 
+static int dm2_v1_game_load_record_chain_is_bounded(
+    const DM2_V1_RecordPoolSet *set, int16_t head, int16_t needle,
+    int *out_contains)
+{
+    int max_links = 1;
+    int16_t cursor = head;
+
+    if (out_contains) *out_contains = 0;
+    if (!set || !set->valid) return 0;
+    for (int pool = 0; pool < DM2_V1_RECORD_POOL_COUNT; ++pool) {
+        max_links += set->pools[pool].record_count;
+        max_links += set->pools[pool].extension_count;
+    }
+    if (cursor == DM2_V1_RECORD_HANDLE_END ||
+        cursor == DM2_V1_RECORD_HANDLE_NULL) return 1;
+    for (int step = 0; step < max_links; ++step) {
+        int16_t next;
+        if (cursor == needle && out_contains) *out_contains = 1;
+        if (!dm2_v1_record_pool_next_link(set, cursor, &next)) return 0;
+        if (next == DM2_V1_RECORD_HANDLE_END) return 1;
+        if (next == DM2_V1_RECORD_HANDLE_NULL) return 0;
+        cursor = next;
+    }
+    return 0;
+}
+
+/* Cross-map MOVE_RECORD_TO needs both representations of c_map to agree.
+ * The pool mirror is the mutable runtime owner while the raw dungeon image
+ * is the source save/load owner; accepting either one alone would make a
+ * later map traversal observe a different chain. */
+static int dm2_v1_game_load_record_chain_mirrors_complete(
+    const DM2_V1_RecordPoolSet *set, const DM2_V1_DungeonData *dungeon,
+    int map, int x, int y, int16_t needle, int *out_contains,
+    int *out_has_actuator)
+{
+    int budget = 1;
+    int16_t pool_cursor;
+    int16_t raw_cursor;
+    if (out_contains) *out_contains = 0;
+    if (out_has_actuator) *out_has_actuator = 0;
+    if (!set || !set->valid || !dungeon || !dungeon->raw_data ||
+        map < 0 || map >= dungeon->level_count || x < 0 || y < 0 ||
+        x >= dungeon->level_widths[map] || y >= dungeon->level_heights[map])
+        return 0;
+    for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        if (set->pools[db].record_count < 0 ||
+            set->pools[db].extension_count < 0 ||
+            budget > INT_MAX - set->pools[db].record_count -
+                set->pools[db].extension_count)
+            return 0;
+        budget += set->pools[db].record_count +
+                  set->pools[db].extension_count;
+    }
+    pool_cursor = (int16_t)dm2_v1_dungeon_get_first_thing(
+        dungeon, map, x, y);
+    raw_cursor = pool_cursor;
+    for (int step = 0; step < budget; ++step) {
+        int raw_type = -1;
+        int raw_size = 0;
+        const uint8_t *pool_record;
+        const uint8_t *raw_record;
+        int16_t pool_next;
+        int16_t raw_next;
+        if (pool_cursor != raw_cursor ||
+            pool_cursor == DM2_V1_RECORD_HANDLE_NULL ||
+            raw_cursor == DM2_V1_RECORD_HANDLE_NULL)
+            return 0;
+        if (pool_cursor == DM2_V1_RECORD_HANDLE_END)
+            return 1;
+        pool_record = dm2_v1_record_pool_address(set, pool_cursor);
+        raw_record = (const uint8_t *)dm2_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)raw_cursor, &raw_type, NULL, &raw_size);
+        if (!pool_record || !raw_record || raw_size < 2 ||
+            !dm2_v1_record_pool_next_link(set, pool_cursor, &pool_next))
+            return 0;
+        raw_next = (int16_t)((uint16_t)raw_record[0] |
+                             ((uint16_t)raw_record[1] << 8));
+        if (pool_next != raw_next)
+            return 0;
+        if (pool_cursor == needle && out_contains) *out_contains = 1;
+        if (dm2_v1_record_handle_pool(pool_cursor) == 3 && out_has_actuator)
+            *out_has_actuator = 1;
+        if (pool_next == DM2_V1_RECORD_HANDLE_NULL ||
+            raw_next == DM2_V1_RECORD_HANDLE_NULL)
+            return 0;
+        pool_cursor = pool_next;
+        raw_cursor = raw_next;
+    }
+    return 0;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_move_record_to(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    int16_t record, int16_t source_x, int16_t source_y,
+    int16_t destination_x, int16_t destination_y,
+    DM2_V1_GameLoadRecordMoveReceipt *out_receipt)
+{
+    DM2_V1_GameLoadRecordMoveReceipt receipt;
+    DM2_V1_RecordPoolSet pool_backup;
+    uint8_t *raw_backup = NULL;
+    size_t raw_size;
+    int source_head;
+    int destination_head;
+    int16_t source_head_io;
+    int16_t destination_head_io;
+    int source_contains = 0;
+    int destination_contains = 0;
+    int source_chain_ok;
+    int destination_chain_ok;
+    uint32_t hash;
+
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&pool_backup, 0, sizeof(pool_backup));
+    receipt.map = -1;
+    receipt.record = record;
+    receipt.source_x = source_x;
+    receipt.source_y = source_y;
+    receipt.destination_x = destination_x;
+    receipt.destination_y = destination_y;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(
+            candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.map = candidate->current_map;
+    if (record == DM2_V1_RECORD_HANDLE_NULL ||
+        record == DM2_V1_RECORD_HANDLE_END || source_x < 0 || source_y < 0 ||
+        destination_x < 0 || destination_y < 0 ||
+        source_x >= candidate->map_context.width ||
+        source_y >= candidate->map_context.height ||
+        destination_x >= candidate->map_context.width ||
+        destination_y >= candidate->map_context.height ||
+        (source_x == destination_x && source_y == destination_y)) {
+        receipt.blocked_map_or_square = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    source_head = dm2_v1_dungeon_get_first_thing(
+        &candidate->dungeon, candidate->current_map, source_x, source_y);
+    destination_head = dm2_v1_dungeon_get_first_thing(
+        &candidate->dungeon, candidate->current_map, destination_x,
+        destination_y);
+    if (source_head < 0 || destination_head < 0) {
+        receipt.blocked_source_chain = source_head < 0;
+        receipt.blocked_destination_chain = destination_head < 0;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.source_head_before = (uint16_t)source_head;
+    receipt.destination_head_before = (uint16_t)destination_head;
+    source_chain_ok = dm2_v1_game_load_record_chain_is_bounded(
+            &candidate->record_pools, (int16_t)source_head, record,
+            &source_contains);
+    destination_chain_ok = dm2_v1_game_load_record_chain_is_bounded(
+            &candidate->record_pools, (int16_t)destination_head, record,
+            &destination_contains);
+    if (!source_chain_ok || !destination_chain_ok || !source_contains) {
+        receipt.blocked_source_chain = !source_chain_ok || !source_contains;
+        receipt.blocked_destination_chain = !destination_chain_ok;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (destination_contains) {
+        receipt.blocked_destination_chain = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!dm2_v1_record_pool_set_clone(&pool_backup,
+                                      &candidate->record_pools)) {
+        receipt.blocked_source_chain = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    raw_size = (size_t)candidate->dungeon.raw_size;
+    raw_backup = malloc(raw_size);
+    if (!raw_backup) {
+        dm2_v1_record_pool_set_free(&pool_backup);
+        receipt.blocked_source_chain = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    memcpy(raw_backup, candidate->dungeon.raw_data, raw_size);
+    source_head_io = (int16_t)source_head;
+    destination_head_io = (int16_t)destination_head;
+    if (!dm2_v1_record_pool_cut_from_tile(
+            &candidate->record_pools, &candidate->dungeon,
+            candidate->current_map, source_x, source_y, record)) {
+        receipt.blocked_source_chain = 1;
+        goto rollback;
+    }
+    source_head_io = (int16_t)dm2_v1_dungeon_get_first_thing(
+        &candidate->dungeon, candidate->current_map, source_x, source_y);
+    if (!dm2_v1_record_pool_append_to_list(
+            &candidate->record_pools, &destination_head_io, record) ||
+        dm2_v1_dungeon_set_first_thing(
+            &candidate->dungeon, candidate->current_map, destination_x,
+            destination_y, (uint16_t)destination_head_io) != 0) {
+        receipt.blocked_destination_chain = 1;
+        goto rollback;
+    }
+    receipt.source_head_after = (uint16_t)source_head_io;
+    receipt.destination_head_after = (uint16_t)destination_head_io;
+    hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash, (uint16_t)record);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+                                             (uint16_t)source_head_io);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+                                             (uint16_t)destination_head_io);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+                                             (uint16_t)source_x << 8 |
+                                             (uint16_t)source_y);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+                                             (uint16_t)destination_x << 8 |
+                                             (uint16_t)destination_y);
+    receipt.transaction_hash = hash;
+    receipt.valid = 1;
+    receipt.mutated = 1;
+    dm2_v1_record_pool_set_free(&pool_backup);
+    free(raw_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+rollback:
+    memcpy(candidate->dungeon.raw_data, raw_backup, raw_size);
+    dm2_v1_record_pool_set_free(&candidate->record_pools);
+    candidate->record_pools = pool_backup;
+    memset(&pool_backup, 0, sizeof(pool_backup));
+    receipt.rolled_back = 1;
+    free(raw_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
 /* c_map.cpp::DM2_CHANGE_CURRENT_MAP_TO has no party movement side effect.
  * Keep that narrow source operation private over the already-cloned world:
  * mapdat.map/v1e03c0/v1e03f4 become raw offsets in map_context, while
@@ -2411,6 +2927,6230 @@ static int dm2_v1_game_load_runtime_candidate_change_current_map(
         candidate->source_runtime_display_direction = candidate->source_party_direction;
     }
     return 1;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_dispatch_moverec(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    int16_t record, int16_t x, int16_t y, int32_t kind, int32_t flags,
+    DM2_V1_GameLoadMoverecDispatchReceipt *out_receipt)
+{
+    DM2_V1_GameLoadMoverecDispatchReceipt receipt;
+    uint8_t *record_bytes;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.map = candidate ? candidate->current_map : -1;
+    receipt.record = record;
+    receipt.x = x;
+    receipt.y = y;
+    receipt.kind = kind;
+    receipt.flags = flags;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (candidate->current_map < 0 || candidate->current_map >= candidate->dungeon.level_count ||
+        x < 0 || y < 0 || x >= candidate->map_context.width ||
+        y >= candidate->map_context.height) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (record == (int16_t)-1) {
+        /* c_moverec.cpp keeps 0xffff as the party/self sentinel; it has no
+         * RecordPool address but is still a valid dispatcher input. */
+        receipt.db_type = 0xffu;
+    } else {
+        record_bytes = dm2_v1_record_pool_address_mut(&candidate->record_pools,
+                                                       (uint16_t)record);
+        if (!record_bytes) {
+            receipt.blocked_record = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        receipt.db_type = (uint8_t)(((uint16_t)record >> 10) & 0x0fu);
+    }
+    /* Source c_moverec.cpp:1147 enters the post-move dispatcher here. The
+     * dispatcher itself remains callback-owned; admitting this call shape is
+     * therefore the only safe candidate-side effect at this boundary. */
+    receipt.dispatched = 1;
+    receipt.valid = 1;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash ^ candidate->candidate_hash,
+        (uint32_t)(uint16_t)record ^ ((uint32_t)(uint16_t)x << 16) ^
+        (uint32_t)(uint16_t)y ^ (uint32_t)kind ^ (uint32_t)flags);
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.valid;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_activate_moverec_caii(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    int16_t record, int16_t x, int16_t y,
+    DM2_V1_GameLoadMoverecCaiiReceipt *out_receipt)
+{
+    DM2_V1_GameLoadMoverecCaiiReceipt receipt;
+    DM2_V1_RecordPool *db4;
+    uint8_t *record_bytes;
+    uint8_t *slot;
+    uint8_t *record_backup = NULL;
+    uint8_t *slot_backup = NULL;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    DM2_V1_TimerQueue queue_backup;
+    int caii_alloc_count_backup;
+    size_t record_size;
+    uint16_t timer_word;
+    DM2_V1_TimerEntry *timer;
+    DM2_V1_TimerEntry new_timer;
+    uint16_t ai_flags = 0u;
+    int slot_index = -1;
+    int queued_timer;
+    int i;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.map = candidate ? candidate->current_map : -1;
+    receipt.record = record;
+    receipt.x = x;
+    receipt.y = y;
+    receipt.caii_slot = -1;
+    receipt.timer_slot = -1;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (candidate->current_map < 0 || candidate->current_map >= candidate->dungeon.level_count ||
+        x < 0 || y < 0 || x >= candidate->map_context.width ||
+        y >= candidate->map_context.height) {
+        receipt.blocked_record = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (dm2_v1_record_handle_pool(record) != 4) {
+        receipt.blocked_record = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    record_bytes = dm2_v1_record_pool_address_mut(&candidate->record_pools,
+                                                   (uint16_t)record);
+    if (!record_bytes) {
+        receipt.blocked_record = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (record_bytes[5] == 0xffu) {
+        /* c_moverec.cpp:980-984: flags bit0 CLEAR admits the source
+         * allocator. Unknown AI provenance remains fail-closed. */
+        {
+            const DM2_AIDefinition *definition = NULL;
+            if (!dm2_v1_caii_source_owner_ai_spec_def(
+                    &candidate->caii_source, (int)record_bytes[4],
+                    &definition) || !definition) {
+                receipt.blocked_ai_flags = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            ai_flags = definition->w0AIFlags;
+            receipt.ai_flags_known = 1;
+        }
+        receipt.ai_bit0_clear = (ai_flags & 1u) == 0u ? 1 : 0;
+        if (!receipt.ai_bit0_clear) {
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        if (!candidate->caii_slots.valid || !candidate->caii_slots.slots) {
+            receipt.blocked_no_slot = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        for (i = 0; i < candidate->caii_slots.capacity; ++i) {
+            const uint8_t *candidate_slot = candidate->caii_slots.slots +
+                (size_t)i * DM2_V1_CAII_SLOT_SIZE;
+            if ((int16_t)dm2_v1_game_load_owner_read_u16le(candidate_slot) < 0) {
+                slot_index = i;
+                break;
+            }
+        }
+        if (slot_index < 0) {
+            receipt.blocked_no_slot = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        db4 = &candidate->record_pools.pools[4];
+        record_size = db4->record_size;
+        if (!db4->bytes || record_size < 16u ||
+            candidate->timer_capacity == 0u || !candidate->timer_entries ||
+            !candidate->timer_indices) {
+            receipt.blocked_unbound_allocation = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        record_backup = (uint8_t *)malloc(record_size);
+        slot_backup = (uint8_t *)malloc(DM2_V1_CAII_SLOT_SIZE);
+        timer_backup = (DM2_V1_TimerEntry *)malloc(
+            (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        index_backup = (int16_t *)malloc(
+            (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        if (!record_backup || !slot_backup || !timer_backup || !index_backup) {
+            receipt.blocked_unbound_allocation = 1;
+            goto allocation_rollback;
+        }
+        memcpy(record_backup, record_bytes, record_size);
+        slot = candidate->caii_slots.slots +
+               (size_t)slot_index * DM2_V1_CAII_SLOT_SIZE;
+        memcpy(slot_backup, slot, DM2_V1_CAII_SLOT_SIZE);
+        memcpy(timer_backup, candidate->timer_entries,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(index_backup, candidate->timer_indices,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        queue_backup = candidate->timer_queue;
+        caii_alloc_count_backup = candidate->caii_slots.alloc_count;
+
+        /* c_1c9a.cpp:5809-5866, source order. */
+        memset(slot, 0, DM2_V1_CAII_SLOT_SIZE);
+        dm2_v1_game_load_owner_write_u16le(slot,
+                                           (uint16_t)record & 0x03ffu);
+        dm2_v1_game_load_owner_write_u16le(slot + 2u, 0xffffu);
+        slot[0x1a] = 0xffu;
+        slot[6] = (uint8_t)((candidate->timer_queue.gametick >> 2) - 1u);
+        slot[4] = (uint8_t)(candidate->timer_queue.gametick - 0x7fu);
+        dm2_v1_game_load_owner_write_u16le(
+            slot + 0x0cu, (uint16_t)((x & 0x1f) | ((y & 0x1f) << 5) |
+                                     ((candidate->current_map & 0x3f) << 10)));
+        slot[0x16] = 0xffu;
+        slot[0x17] = 0xffu;
+        slot[7] = 0u;
+        record_bytes[5] = (uint8_t)slot_index;
+        record_bytes[0x0f] |= 0x04u;
+        candidate->caii_slots.alloc_count++;
+
+        dm2_v1_timer_entry_init(&new_timer);
+        timer = &new_timer;
+        dm2_v1_timer_set_mticks(timer, (int16_t)candidate->current_map,
+                                candidate->timer_queue.gametick + 1);
+        timer->ttype = dm2_v1_game_load_owner_read_u16le(record_bytes + 8u) !=
+                       0xffffu ? 0x22u : 0x21u;
+        timer->actor = record_bytes[4];
+        timer->xA = (int8_t)x;
+        timer->yA = (int8_t)y;
+        queued_timer = dm2_v1_timer_queue(&candidate->timer_queue, &new_timer);
+        if (queued_timer < 0) goto allocation_rollback;
+        dm2_v1_game_load_owner_write_u16le(slot + 2u,
+                                           (uint16_t)queued_timer);
+        slot[0x1a] = dm2_v1_game_load_owner_read_u16le(record_bytes + 8u) !=
+                     0xffffu ? 0x00u : 0x11u;
+        receipt.caii_slot = (int16_t)slot_index;
+        receipt.timer_slot = (int16_t)queued_timer;
+        receipt.timer_type = timer->ttype;
+        receipt.due_tick = (uint32_t)dm2_v1_timer_get_ticks(timer);
+        receipt.allocation_performed = 1;
+        receipt.timer_scheduled = 1;
+        /* The newly allocated CAII slot now owns the queued c_tim slot just
+         * as surely as the existing-slot branch below updates one in place.
+         * c_moverec's caller uses this bit to admit the whole transaction;
+         * leaving it clear falsely rejects the source-valid no-slot path. */
+        receipt.timer_updated = 1;
+        receipt.valid = 1;
+        receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+            candidate->source_transaction_hash ^ candidate->candidate_hash,
+            (uint32_t)(uint16_t)record ^ ((uint32_t)(uint16_t)x << 16) ^
+            (uint32_t)(uint16_t)y ^ (uint32_t)queued_timer);
+        free(index_backup);
+        free(timer_backup);
+        free(slot_backup);
+        free(record_backup);
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+
+allocation_rollback:
+        if (record_backup && slot_backup && timer_backup && index_backup) {
+            memcpy(record_bytes, record_backup, record_size);
+            memcpy(slot, slot_backup, DM2_V1_CAII_SLOT_SIZE);
+            memcpy(candidate->timer_entries, timer_backup,
+                   (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+            memcpy(candidate->timer_indices, index_backup,
+                   (size_t)candidate->timer_capacity * sizeof(*index_backup));
+            candidate->timer_queue = queue_backup;
+            candidate->caii_slots.alloc_count = caii_alloc_count_backup;
+        }
+        free(index_backup);
+        free(timer_backup);
+        free(slot_backup);
+        free(record_backup);
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.caii_slot = (int16_t)record_bytes[5];
+    if (!candidate->caii_slots.valid ||
+        receipt.caii_slot < 0 || receipt.caii_slot >= candidate->caii_slots.capacity) {
+        receipt.blocked_no_slot = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    slot = candidate->caii_slots.slots +
+           (size_t)receipt.caii_slot * DM2_V1_CAII_SLOT_SIZE;
+    timer_word = dm2_v1_game_load_owner_read_u16le(slot + 2u);
+    if (timer_word == 0xffffu || timer_word >= (uint16_t)candidate->timer_capacity ||
+        !candidate->timer_entries || candidate->timer_entries[timer_word].ttype == 0u) {
+        receipt.blocked_no_pending_timer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    timer = &candidate->timer_entries[timer_word];
+    /* Source setxyA + setmticks: mutate the fixed c_tim slot in place and
+     * leave the heap ordering/index array untouched. */
+    timer->xA = (int8_t)x;
+    timer->yA = (int8_t)y;
+    dm2_v1_timer_set_mticks(timer, (int16_t)candidate->current_map,
+                            candidate->timer_queue.gametick);
+    receipt.timer_slot = (int16_t)timer_word;
+    receipt.timer_updated = 1;
+    receipt.valid = 1;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash ^ candidate->candidate_hash,
+        (uint32_t)(uint16_t)record ^ ((uint32_t)(uint16_t)x << 16) ^
+        (uint32_t)(uint16_t)y ^ (uint32_t)timer_word);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_detach_caii_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    int16_t record,
+    DM2_V1_GameLoadCandidateCaiiTimerDetachReceipt *out_receipt)
+{
+    DM2_V1_GameLoadCandidateCaiiTimerDetachReceipt receipt;
+    uint8_t *record_bytes;
+    uint8_t *slot;
+    uint16_t timer_word;
+    uint16_t stored_record;
+    DM2_V1_TimerEntry *timer;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.record = record;
+    receipt.caii_slot = -1;
+    receipt.timer_slot = -1;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (dm2_v1_record_handle_pool(record) != 4 ||
+        !(record_bytes = dm2_v1_record_pool_address_mut(
+              &candidate->record_pools, (uint16_t)record)) ||
+        record_bytes[5] == 0xffu) {
+        receipt.blocked_record = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.caii_slot = (int16_t)record_bytes[5];
+    if (!candidate->caii_slots.valid || !candidate->caii_slots.slots ||
+        receipt.caii_slot < 0 ||
+        receipt.caii_slot >= candidate->caii_slots.capacity) {
+        receipt.blocked_caii = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    slot = candidate->caii_slots.slots +
+           (size_t)receipt.caii_slot * DM2_V1_CAII_SLOT_SIZE;
+    stored_record = dm2_v1_game_load_owner_read_u16le(slot) &
+                    DM2_V1_RECORD_INDEX_MASK;
+    if (stored_record != ((uint16_t)record & DM2_V1_RECORD_INDEX_MASK)) {
+        receipt.blocked_caii = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    timer_word = dm2_v1_game_load_owner_read_u16le(slot + 2u);
+    if (timer_word >= (uint16_t)candidate->timer_capacity ||
+        !candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_queue.num_timers <= 0 ||
+        dm2_v1_timer_get_heap_index(&candidate->timer_queue,
+                                    (int16_t)timer_word) < 0 ||
+        candidate->timer_entries[timer_word].ttype == 0u) {
+        receipt.blocked_timer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    timer = &candidate->timer_entries[timer_word];
+    if (timer->actor != record_bytes[4]) {
+        receipt.blocked_timer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.timer_slot = (int16_t)timer_word;
+    receipt.timer_type = timer->ttype;
+    /* Candidate CAII slot+2 is a c_tim array index, not a source timer
+     * ticket.  Delete through the candidate heap owner and clear only that
+     * back-reference; the DB4 and CAII slot remain owned for the eventual
+     * full delete transaction. */
+    dm2_v1_timer_delete(&candidate->timer_queue, receipt.timer_slot);
+    dm2_v1_game_load_owner_write_u16le(slot + 2u, 0xffffu);
+    receipt.detached = 1;
+    receipt.valid = 1;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash ^ candidate->candidate_hash,
+        (uint32_t)(uint16_t)record ^
+        ((uint32_t)(uint16_t)receipt.caii_slot << 16) ^
+        (uint32_t)(uint16_t)receipt.timer_slot);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_proceed_moverec_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadMoverecTimerReceipt *out_receipt)
+{
+    DM2_V1_GameLoadMoverecTimerReceipt receipt;
+    DM2_V1_TimerEntry timer_entry;
+    DM2_V1_TimerQueue queue_backup;
+    DM2_V1_RecordPoolSet pool_backup;
+    DM2_V1_GameLoadSoundOwner sound_backup;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    uint8_t *dungeon_backup = NULL;
+    uint8_t *caii_backup = NULL;
+    size_t caii_bytes = 0u;
+    int caii_alloc_count_backup = 0;
+    int old_map = -1;
+    uint8_t old_party_x = 0u;
+    uint8_t old_party_y = 0u;
+    int16_t old_display_map = -1;
+    int16_t old_runtime_display_x = 0;
+    int16_t old_runtime_display_y = 0;
+    uint8_t old_runtime_display_direction = 0u;
+    int old_runtime_display_uses_alternate = 0;
+    int16_t timer_slot;
+    int map;
+    int x;
+    int y;
+    int source_x = -1;
+    int source_y = -1;
+    int source_head;
+    int destination_head;
+    int contains = 0;
+    int found = 0;
+    int party_move = 0;
+    int cross_map_move = 0;
+    int16_t record_handle;
+    uint8_t *record_bytes;
+    DM2_V1_GameLoadRecordMoveReceipt move_receipt;
+    DM2_V1_GameLoadMoverecCaiiReceipt caii_receipt;
+    DM2_V1_SoundQueueState sound_state;
+    DM2_V1_SoundQueueEnv sound_env;
+    DM2_V1_SoundQueueReceipt sound_receipt;
+
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&pool_backup, 0, sizeof(pool_backup));
+    memset(&sound_backup, 0, sizeof(sound_backup));
+    memset(&move_receipt, 0, sizeof(move_receipt));
+    memset(&caii_receipt, 0, sizeof(caii_receipt));
+    memset(&sound_state, 0, sizeof(sound_state));
+    memset(&sound_env, 0, sizeof(sound_env));
+    memset(&sound_receipt, 0, sizeof(sound_receipt));
+    receipt.game_tick = game_tick;
+    receipt.map = -1;
+    receipt.source_map = -1;
+    receipt.record = DM2_V1_RECORD_HANDLE_NULL;
+
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        goto moverec_fail;
+    }
+    if (!candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0 ||
+        !candidate->caii_slots.valid || !candidate->caii_slots.slots ||
+        !candidate->sound_owner.valid ||
+        !candidate->sound_owner.runtime_queue_initialized ||
+        !candidate->sound_owner.spatial_context_valid) {
+        receipt.blocked_no_due_timer = 1;
+        goto moverec_fail;
+    }
+    old_map = candidate->current_map;
+    old_party_x = candidate->source_party_x;
+    old_party_y = candidate->source_party_y;
+    old_display_map = candidate->source_display_map;
+    old_runtime_display_x = candidate->source_runtime_display_x;
+    old_runtime_display_y = candidate->source_runtime_display_y;
+    old_runtime_display_direction = candidate->source_runtime_display_direction;
+    old_runtime_display_uses_alternate =
+        candidate->source_runtime_display_uses_alternate;
+    queue_backup = candidate->timer_queue;
+    caii_alloc_count_backup = candidate->caii_slots.alloc_count;
+    caii_bytes = (size_t)candidate->caii_slots.capacity * DM2_V1_CAII_SLOT_SIZE;
+    timer_backup = malloc((size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = malloc((size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (candidate->dungeon.raw_size == 0u || !candidate->dungeon.raw_data ||
+        !timer_backup || !index_backup ||
+        (caii_bytes != 0u && !(caii_backup = malloc(caii_bytes))) ||
+        !dm2_v1_record_pool_set_clone(&pool_backup, &candidate->record_pools) ||
+        !dm2_v1_game_load_runtime_candidate_sound_clone(
+            &sound_backup, &candidate->sound_owner))
+        goto moverec_rollback;
+    dungeon_backup = malloc((size_t)candidate->dungeon.raw_size);
+    if (!dungeon_backup) goto moverec_rollback;
+    memcpy(dungeon_backup, candidate->dungeon.raw_data,
+           (size_t)candidate->dungeon.raw_size);
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (caii_bytes != 0u)
+        memcpy(caii_backup, candidate->caii_slots.slots, caii_bytes);
+
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&candidate->timer_queue)) {
+        receipt.blocked_no_due_timer = 1;
+        goto moverec_rollback;
+    }
+    timer_slot = candidate->timer_queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity) {
+        receipt.blocked_no_due_timer = 1;
+        goto moverec_rollback;
+    }
+    receipt.timer_type = candidate->timer_entries[timer_slot].ttype;
+    if (receipt.timer_type != 0x3cu && receipt.timer_type != 0x3du) {
+        receipt.blocked_unsupported_type = 1;
+        goto moverec_rollback;
+    }
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+    map = dm2_v1_timer_get_map(&timer_entry);
+    x = (int)(int8_t)timer_entry.xA;
+    y = (int)(int8_t)timer_entry.yA;
+    receipt.map = map;
+    receipt.x = (int16_t)x;
+    receipt.y = (int16_t)y;
+    receipt.source_map = map;
+    record_handle = timer_entry.wvalueB;
+    receipt.record = record_handle;
+    if (map < 0 || map >= candidate->dungeon.level_count ||
+        x < 0 || y < 0 || x >= candidate->dungeon.level_widths[map] ||
+        y >= candidate->dungeon.level_heights[map] ||
+        (record_handle != (int16_t)0xffff &&
+         dm2_v1_record_handle_pool(record_handle) != 4) ||
+        !dm2_v1_game_load_runtime_candidate_change_current_map(candidate, map, 0)) {
+        receipt.blocked_map = 1;
+        goto moverec_rollback;
+    }
+    if (record_handle == (int16_t)0xffff) {
+        int source_raw;
+        int destination_raw = dm2_v1_dungeon_get_tile_raw(
+            &candidate->dungeon, map, x, y);
+        int destination_tile_class = dm2_v1_dungeon_get_square_type(
+            &candidate->dungeon, map, x, y);
+        int destination_square_type = destination_tile_class < 0 ? -1 :
+            dm2_v1_viewport_g1_tile_class_to_square_type(
+                (uint8_t)destination_tile_class);
+        int source_head = dm2_v1_dungeon_get_first_thing(
+            &candidate->dungeon, map, candidate->source_party_x,
+            candidate->source_party_y);
+        int destination_head = dm2_v1_dungeon_get_first_thing(
+            &candidate->dungeon, map, x, y);
+        int same_party_tile = candidate->source_party_x == (uint8_t)x &&
+            candidate->source_party_y == (uint8_t)y;
+        if (map != candidate->current_map || map != candidate->source_party_map ||
+            candidate->source_party_x >= candidate->dungeon.level_widths[map] ||
+            candidate->source_party_y >= candidate->dungeon.level_heights[map] ||
+            (!same_party_tile &&
+             (source_head != DM2_V1_RECORD_HANDLE_END ||
+              destination_head != DM2_V1_RECORD_HANDLE_END)) ||
+            destination_raw < 0 || destination_square_type != DM2_SQUARE_FLOOR ||
+            dm2_v1_get_creature_at(&candidate->record_pools, &candidate->dungeon,
+                                   map, x, y) != DM2_V1_RECORD_HANDLE_NULL) {
+            receipt.blocked_record = 1;
+            goto moverec_rollback;
+        }
+        source_raw = dm2_v1_dungeon_get_tile_raw(
+            &candidate->dungeon, map, candidate->source_party_x,
+            candidate->source_party_y);
+        {
+            int source_tile_class = dm2_v1_dungeon_get_square_type(
+                &candidate->dungeon, map, candidate->source_party_x,
+                candidate->source_party_y);
+            int source_square_type = source_tile_class < 0 ? -1 :
+                dm2_v1_viewport_g1_tile_class_to_square_type(
+                    (uint8_t)source_tile_class);
+            if (source_raw < 0 || source_square_type != DM2_SQUARE_FLOOR) {
+                receipt.blocked_record = 1;
+                goto moverec_rollback;
+            }
+        }
+        party_move = 1;
+        receipt.source_x = (int16_t)candidate->source_party_x;
+        receipt.source_y = (int16_t)candidate->source_party_y;
+        candidate->source_party_x = (uint8_t)x;
+        candidate->source_party_y = (uint8_t)y;
+        candidate->source_display_map = (int16_t)map;
+        candidate->source_runtime_display_x = (int16_t)x;
+        candidate->source_runtime_display_y = (int16_t)y;
+        candidate->source_runtime_display_direction =
+            candidate->source_party_direction;
+        candidate->source_runtime_display_uses_alternate = 0;
+    } else {
+        record_bytes = dm2_v1_record_pool_address_mut(
+            &candidate->record_pools, record_handle);
+        if (!record_bytes || record_bytes[5] == 0xffu) {
+            receipt.blocked_record = 1;
+            goto moverec_rollback;
+        }
+    }
+
+    /* c_moverec changes c_map before a cross-map append.  Admit only the
+     * source-shaped plain-floor DB4 form here: the mutable pool mirror and
+     * raw save mirror must agree link-for-link, and neither tile may carry a
+     * DB3 actuator tail.  Creature level restrictions, wake/sleep and full
+     * actuator consequences remain fail-closed until their owners are bound. */
+    if (record_handle != (int16_t)0xffff) {
+        int source_map = -1;
+        int source_cell_x = -1;
+        int source_cell_y = -1;
+        for (int scan_map = 0; scan_map < candidate->dungeon.level_count &&
+             source_map < 0; ++scan_map) {
+            if (scan_map == map) continue;
+            for (int scan_x = 0; scan_x < candidate->dungeon.level_widths[scan_map] &&
+                 source_map < 0; ++scan_x) {
+                for (int scan_y = 0;
+                     scan_y < candidate->dungeon.level_heights[scan_map];
+                     ++scan_y) {
+                    int chain_contains = 0;
+                    int has_actuator = 0;
+                    if (!dm2_v1_game_load_record_chain_mirrors_complete(
+                            &candidate->record_pools, &candidate->dungeon,
+                            scan_map, scan_x, scan_y, record_handle,
+                            &chain_contains, &has_actuator))
+                        continue;
+                    if (chain_contains) {
+                        if (has_actuator) {
+                            source_map = -2;
+                            break;
+                        }
+                        source_map = scan_map;
+                        source_cell_x = scan_x;
+                        source_cell_y = scan_y;
+                        break;
+                    }
+                }
+            }
+        }
+        if (source_map == -2) {
+            receipt.blocked_source_chain = 1;
+            goto moverec_rollback;
+        }
+        if (source_map >= 0) {
+            receipt.source_map = source_map;
+            if (source_map != map) {
+                int source_class = dm2_v1_dungeon_get_square_type(
+                    &candidate->dungeon, source_map, source_cell_x,
+                    source_cell_y);
+                int destination_class = dm2_v1_dungeon_get_square_type(
+                    &candidate->dungeon, map, x, y);
+                int source_square = source_class < 0 ? -1 :
+                    dm2_v1_viewport_g1_tile_class_to_square_type(
+                        (uint8_t)source_class);
+                int destination_square = destination_class < 0 ? -1 :
+                    dm2_v1_viewport_g1_tile_class_to_square_type(
+                        (uint8_t)destination_class);
+                int destination_contains = 0;
+                int destination_actuator = 0;
+                DM2_V1_SkprojectCutRecordReceipt cut_receipt;
+                DM2_V1_SkprojectAppendRecordReceipt append_receipt;
+                int16_t source_pool_head;
+                int16_t source_raw_head;
+                int16_t destination_pool_head;
+                int16_t destination_raw_head;
+                memset(&cut_receipt, 0, sizeof(cut_receipt));
+                memset(&append_receipt, 0, sizeof(append_receipt));
+                source_pool_head = (int16_t)dm2_v1_dungeon_get_first_thing(
+                    &candidate->dungeon, source_map, source_cell_x,
+                    source_cell_y);
+                source_raw_head = source_pool_head;
+                destination_pool_head = (int16_t)
+                    dm2_v1_dungeon_get_first_thing(
+                        &candidate->dungeon, map, x, y);
+                destination_raw_head = destination_pool_head;
+                if ((source_square != DM2_SQUARE_FLOOR &&
+                     source_square != DM2_SQUARE_FLOOR_ORNATE) ||
+                    (destination_square != DM2_SQUARE_FLOOR &&
+                     destination_square != DM2_SQUARE_FLOOR_ORNATE) ||
+                    dm2_v1_get_creature_at(&candidate->record_pools,
+                                           &candidate->dungeon, map, x, y) !=
+                        DM2_V1_RECORD_HANDLE_NULL ||
+                    !dm2_v1_game_load_record_chain_mirrors_complete(
+                        &candidate->record_pools, &candidate->dungeon, map,
+                        x, y, record_handle, &destination_contains,
+                        &destination_actuator) || destination_contains ||
+                    destination_actuator) {
+                    receipt.blocked_source_chain = 1;
+                    goto moverec_rollback;
+                }
+                {
+                    int pool_cut_ok = dm2_v1_record_pool_cut_from_list(
+                        &candidate->record_pools, &source_pool_head,
+                        record_handle);
+                    int raw_cut_ok = pool_cut_ok &&
+                        dm2_v1_skproject_cut_record_from(
+                            &candidate->dungeon, (uint16_t)record_handle,
+                            (uint16_t *)&source_raw_head,
+                            -1, -1, -1, &cut_receipt);
+                    if (!pool_cut_ok || !raw_cut_ok || !cut_receipt.valid) {
+                        receipt.blocked_source_chain = 1;
+                        goto moverec_rollback;
+                    }
+                }
+                if (dm2_v1_dungeon_set_first_thing(
+                        &candidate->dungeon, source_map, source_cell_x,
+                        source_cell_y, (uint16_t)source_pool_head) != 0 ||
+                    dm2_v1_dungeon_set_first_thing(
+                        &candidate->dungeon, source_map, source_cell_x,
+                        source_cell_y, (uint16_t)source_raw_head) != 0)
+                    goto moverec_rollback;
+                if (!dm2_v1_record_pool_append_to_list(
+                        &candidate->record_pools, &destination_pool_head,
+                        record_handle) ||
+                    !dm2_v1_skproject_append_record_to(
+                        &candidate->dungeon, (uint16_t)record_handle,
+                        (uint16_t *)&destination_raw_head, -1, -1, -1,
+                        &append_receipt) ||
+                    !append_receipt.valid ||
+                    dm2_v1_dungeon_set_first_thing(
+                        &candidate->dungeon, map, x, y,
+                        (uint16_t)destination_pool_head) != 0 ||
+                    dm2_v1_dungeon_set_first_thing(
+                        &candidate->dungeon, map, x, y,
+                        (uint16_t)destination_raw_head) != 0) {
+                    receipt.blocked_destination_chain = 1;
+                    goto moverec_rollback;
+                }
+                source_x = source_cell_x;
+                source_y = source_cell_y;
+                found = 1;
+                cross_map_move = 1;
+            }
+        }
+    }
+    /* The source B record must already be rooted on this c_map.  Locate the
+     * source square by bounded ground-chain scans; no coordinate is guessed
+     * from the record payload. */
+    for (int sy = 0; !party_move && !cross_map_move &&
+         sy < candidate->dungeon.level_heights[map] && !found; ++sy) {
+        for (int sx = 0; sx < candidate->dungeon.level_widths[map]; ++sx) {
+            int chain_contains = 0;
+            source_head = dm2_v1_dungeon_get_first_thing(
+                &candidate->dungeon, map, sx, sy);
+            if (source_head < 0) continue;
+            if (!dm2_v1_game_load_record_chain_is_bounded(
+                    &candidate->record_pools, (int16_t)source_head,
+                    record_handle, &chain_contains))
+                continue;
+            if (chain_contains) {
+                source_x = sx;
+                source_y = sy;
+                found = 1;
+            }
+        }
+    }
+    if (!party_move && (!found || (source_x == x && source_y == y))) {
+        receipt.blocked_source_chain = 1;
+        goto moverec_rollback;
+    }
+    destination_head = dm2_v1_dungeon_get_first_thing(
+        &candidate->dungeon, map, x, y);
+    if (!party_move && !cross_map_move && (destination_head < 0 ||
+        !dm2_v1_game_load_record_chain_is_bounded(
+            &candidate->record_pools, (int16_t)destination_head,
+            record_handle, &contains))) {
+        receipt.blocked_destination_chain = 1;
+        goto moverec_rollback;
+    }
+    if (!party_move && !cross_map_move && contains) {
+        receipt.blocked_destination_chain = 1;
+        goto moverec_rollback;
+    }
+    if (!party_move) {
+        receipt.source_x = (int16_t)source_x;
+        receipt.source_y = (int16_t)source_y;
+    }
+    if (!party_move && !cross_map_move &&
+        (!dm2_v1_game_load_runtime_session_candidate_move_record_to(
+             candidate, record_handle, (int16_t)source_x, (int16_t)source_y,
+             (int16_t)x, (int16_t)y, &move_receipt) || !move_receipt.valid)) {
+        receipt.blocked_source_chain = move_receipt.blocked_source_chain;
+        receipt.blocked_destination_chain = move_receipt.blocked_destination_chain;
+        goto moverec_rollback;
+    }
+    if (!party_move && (!dm2_v1_game_load_runtime_session_candidate_activate_moverec_caii(
+            candidate, record_handle, (int16_t)x, (int16_t)y, &caii_receipt) ||
+        !caii_receipt.valid || !caii_receipt.timer_updated)) {
+        receipt.blocked_caii = 1;
+        goto moverec_rollback;
+    }
+    dm2_v1_sound_queue_state_init(&sound_state, 0u);
+    if (!dm2_v1_sound_queue_bind_entries(
+            &sound_state, candidate->sound_owner.queue_entries,
+            candidate->sound_owner.queue_entry_count,
+            candidate->sound_owner.queue_capacity)) {
+        receipt.blocked_sound = 1;
+        goto moverec_rollback;
+    }
+    sound_state.positional_count = candidate->sound_owner.positional_count;
+    sound_state.immediate_count = candidate->sound_owner.immediate_count;
+    sound_state.sound_enabled = candidate->sound_owner.sound_enabled;
+    sound_state.master_sfx_volume = candidate->sound_owner.master_sfx_volume;
+    memcpy(sound_state.positional, candidate->sound_owner.positional,
+           sizeof(sound_state.positional));
+    memcpy(sound_state.immediate, candidate->sound_owner.immediate,
+           sizeof(sound_state.immediate));
+    memcpy(sound_state.delayed, candidate->sound_owner.delayed,
+           sizeof(sound_state.delayed));
+    memcpy(sound_state.sample_slots, candidate->sound_owner.sample_slots,
+           sizeof(sound_state.sample_slots));
+    sound_env.current_map = (int16_t)map;
+    sound_env.gate_map_a = candidate->sound_owner.spatial_audible_map;
+    sound_env.gate_map_b = candidate->sound_owner.spatial_alternate_map;
+    sound_env.facing = candidate->source_party_direction;
+    sound_env.party_x = candidate->source_party_x;
+    sound_env.party_y = candidate->source_party_y;
+    sound_env.gametick = (int32_t)game_tick;
+    if (!party_move && !dm2_v1_sound_queue_noise_gen1(
+            &sound_state, 3, 0, (int8_t)0x89, 0x61, 0x80,
+            (int16_t)x, (int16_t)y, 1, &sound_env, &sound_receipt)) {
+        if (!sound_receipt.rejected_map_gate) {
+            receipt.blocked_sound = 1;
+            goto moverec_rollback;
+        }
+        receipt.noise_map_gate_noop = 1;
+    } else if (party_move) {
+        /* c_tim's party-sentinel path has no creature movement sound
+         * record.  Preserve the source no-op while keeping the sound owner
+         * inside the rollback boundary. */
+        receipt.noise_map_gate_noop = 1;
+    } else {
+        receipt.noise_queued = 1;
+    }
+    candidate->sound_owner.positional_count = sound_state.positional_count;
+    candidate->sound_owner.immediate_count = sound_state.immediate_count;
+    memcpy(candidate->sound_owner.positional, sound_state.positional,
+           sizeof(candidate->sound_owner.positional));
+    memcpy(candidate->sound_owner.immediate, sound_state.immediate,
+           sizeof(candidate->sound_owner.immediate));
+    memcpy(candidate->sound_owner.delayed, sound_state.delayed,
+           sizeof(candidate->sound_owner.delayed));
+    memcpy(candidate->sound_owner.sample_slots, sound_state.sample_slots,
+           sizeof(candidate->sound_owner.sample_slots));
+    receipt.moved = 1;
+    receipt.valid = 1;
+    receipt.consumed = 1;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash ^ candidate->candidate_hash,
+        (uint32_t)(uint16_t)record_handle ^ ((uint32_t)(uint16_t)x << 16) ^
+        (uint32_t)(uint16_t)y ^ ((uint32_t)receipt.timer_type << 24));
+    dm2_v1_record_pool_set_free(&pool_backup);
+    dm2_v1_game_load_runtime_candidate_sound_free(&sound_backup);
+    free(dungeon_backup); free(caii_backup);
+    free(index_backup); free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+moverec_rollback:
+    if (timer_backup && index_backup) {
+        memcpy(candidate->timer_entries, timer_backup,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(candidate->timer_indices, index_backup,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        candidate->timer_queue = queue_backup;
+    }
+    if (caii_backup && candidate->caii_slots.slots)
+        memcpy(candidate->caii_slots.slots, caii_backup, caii_bytes);
+    candidate->caii_slots.alloc_count = caii_alloc_count_backup;
+    if (dungeon_backup && candidate->dungeon.raw_data)
+        memcpy(candidate->dungeon.raw_data, dungeon_backup,
+               (size_t)candidate->dungeon.raw_size);
+    if (pool_backup.valid) {
+        dm2_v1_record_pool_set_free(&candidate->record_pools);
+        candidate->record_pools = pool_backup;
+        memset(&pool_backup, 0, sizeof(pool_backup));
+    }
+    if (sound_backup.valid) {
+        dm2_v1_game_load_runtime_candidate_sound_free(&candidate->sound_owner);
+        candidate->sound_owner = sound_backup;
+        memset(&sound_backup, 0, sizeof(sound_backup));
+    }
+    candidate->source_party_x = old_party_x;
+    candidate->source_party_y = old_party_y;
+    candidate->source_display_map = old_display_map;
+    candidate->source_runtime_display_x = old_runtime_display_x;
+    candidate->source_runtime_display_y = old_runtime_display_y;
+    candidate->source_runtime_display_direction = old_runtime_display_direction;
+    candidate->source_runtime_display_uses_alternate =
+        old_runtime_display_uses_alternate;
+    if (candidate->current_map != old_map && old_map >= 0)
+        (void)dm2_v1_game_load_runtime_candidate_change_current_map(
+            candidate, old_map, 0);
+    goto moverec_fail;
+
+moverec_fail:
+    dm2_v1_record_pool_set_free(&pool_backup);
+    dm2_v1_game_load_runtime_candidate_sound_free(&sound_backup);
+    free(dungeon_backup); free(caii_backup);
+    free(index_backup); free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_proceed_think_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick, DM2_V1_GameLoadThinkTimerReceipt *out_receipt)
+{
+    DM2_V1_GameLoadThinkTimerReceipt receipt;
+    DM2_V1_TimerEntry timer_entry;
+    DM2_V1_SourceTimer source_timer;
+    DM2_V1_ThinkCreatureBinding binding;
+    DM2_V1_TimerQueue queue_backup;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    int16_t timer_slot;
+    int old_map;
+    int map;
+    int x;
+    int y;
+    int16_t creature;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.creature_record = DM2_V1_RECORD_HANDLE_NULL;
+    receipt.game_tick = game_tick;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0) {
+        receipt.blocked_no_due_timer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    old_map = candidate->current_map;
+    queue_backup = candidate->timer_queue;
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto think_rollback;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&candidate->timer_queue)) {
+        receipt.blocked_no_due_timer = 1;
+        goto think_rollback;
+    }
+    timer_slot = candidate->timer_queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity) {
+        receipt.blocked_no_due_timer = 1;
+        goto think_rollback;
+    }
+    receipt.timer_type = candidate->timer_entries[timer_slot].ttype;
+    if (receipt.timer_type != 0x21u && receipt.timer_type != 0x22u) {
+        receipt.blocked_unsupported_type = 1;
+        goto think_rollback;
+    }
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+    map = dm2_v1_timer_get_map(&timer_entry);
+    x = (int)(int8_t)timer_entry.xA;
+    y = (int)(int8_t)timer_entry.yA;
+    receipt.map = map;
+    receipt.x = (int16_t)x;
+    receipt.y = (int16_t)y;
+    if (map < 0 || map >= candidate->dungeon.level_count || x < 0 || y < 0 ||
+        x >= candidate->dungeon.level_widths[map] ||
+        y >= candidate->dungeon.level_heights[map] ||
+        !dm2_v1_game_load_runtime_candidate_change_current_map(
+            candidate, map, 0)) {
+        receipt.blocked_map = 1;
+        goto think_rollback;
+    }
+    receipt.map_switch = old_map != map;
+    source_timer.ticks_and_map = (uint32_t)timer_entry.l_00;
+    source_timer.type = timer_entry.ttype;
+    source_timer.actor = timer_entry.actor;
+    source_timer.value_a = (int16_t)((uint8_t)x | ((uint16_t)(uint8_t)y << 8));
+    source_timer.value_b = timer_entry.wvalueB;
+    source_timer.reserved = timer_entry.dummya;
+    dm2_v1_think_creature_binding_init(&binding,
+                                       &candidate->record_pools,
+                                       &candidate->dungeon);
+    if (!dm2_v1_think_creature_timer_handler(&binding, &source_timer,
+                                             (uint16_t)timer_slot, NULL)) {
+        receipt.blocked_map = 1;
+        goto think_rollback;
+    }
+    creature = binding.receipt.last_record;
+    receipt.creature_record = creature;
+    receipt.no_creature_at_cell = binding.receipt.no_creature_at_cell != 0;
+    receipt.body_unbound = binding.receipt.body_unbound != 0;
+    receipt.consumed = 1;
+    receipt.valid = 1;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash ^ candidate->candidate_hash,
+        (uint32_t)timer_entry.l_00 ^ ((uint32_t)timer_entry.ttype << 24) ^
+        (uint32_t)(uint16_t)x ^ ((uint32_t)(uint16_t)y << 16));
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+think_rollback:
+    if (timer_backup && index_backup) {
+        memcpy(candidate->timer_entries, timer_backup,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(candidate->timer_indices, index_backup,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        candidate->timer_queue = queue_backup;
+        if (candidate->current_map != old_map) {
+            (void)dm2_v1_game_load_runtime_candidate_change_current_map(
+                candidate, old_map, 0);
+        }
+    }
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+static int dm2_v1_game_load_candidate_dispatch_counter_chain(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate, int map, int x, int y,
+    uint8_t direction, uint8_t incoming_action,
+    DM2_V1_GameLoadCandidateActuateReceipt *receipt)
+{
+    int limit = 0, count = 0, steps = 0;
+    int16_t link;
+    int16_t *links = NULL;
+    uint16_t *new_data = NULL;
+    DM2_V1_TimerEntry *messages = NULL;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    DM2_V1_TimerQueue queue_backup;
+    uint32_t hash = 0x434e5452u; /* "CNTR" */
+    int result = 0;
+
+    if (!candidate || !receipt || incoming_action > 2u || map < 0 ||
+        map >= candidate->dungeon.level_count) return -1;
+    for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        const DM2_V1_RecordPool *pool = &candidate->record_pools.pools[db];
+        if (pool->record_count < 0 || pool->extension_count < 0 ||
+            limit > INT_MAX - pool->record_count - pool->extension_count)
+            return -1;
+        limit += pool->record_count + pool->extension_count;
+    }
+    if (limit <= 0) return -1;
+    link = (int16_t)dm2_v1_dungeon_get_first_thing(&candidate->dungeon, map, x, y);
+    if (link == DM2_V1_RECORD_HANDLE_END || link == DM2_V1_RECORD_HANDLE_NULL)
+        return 0;
+    links = (int16_t *)calloc((size_t)limit, sizeof(*links));
+    new_data = (uint16_t *)calloc((size_t)limit, sizeof(*new_data));
+    messages = (DM2_V1_TimerEntry *)calloc((size_t)limit, sizeof(*messages));
+    if (!links || !new_data || !messages) goto done;
+    while (link != DM2_V1_RECORD_HANDLE_END) {
+        const uint8_t *record;
+        int16_t next;
+        uint16_t old_data, data_after;
+        int before_active, after_active, action_to_queue = -1;
+        if (link == DM2_V1_RECORD_HANDLE_NULL || steps >= limit ||
+            dm2_v1_record_handle_pool(link) != DM2_DB_ACTUATOR ||
+            !(record = dm2_v1_record_pool_address(&candidate->record_pools, link)) ||
+            !dm2_v1_record_pool_next_link(&candidate->record_pools, link, &next)) {
+            result = count > 0 ? -1 : 0;
+            goto done;
+        }
+        if ((uint8_t)(link & 3) != direction) {
+            ++steps;
+            link = next;
+            continue;
+        }
+        if (dm2_actu_type(record) != DM2_ACTU_COUNTER) {
+            result = count > 0 ? -1 : 0;
+            goto done;
+        }
+        old_data = dm2_actu_data(record);
+        data_after = old_data;
+        before_active = old_data == 0u || (old_data & 0x0100u) != 0u;
+        if (incoming_action == 1u) data_after = (uint16_t)(old_data + 1u);
+        else if (incoming_action == 0u &&
+                 (!dm2_actu_once_only(record) || old_data != 0u))
+            data_after = (uint16_t)(old_data - 1u);
+        after_active = data_after == 0u || (data_after & 0x0100u) != 0u;
+        if (after_active != before_active) {
+            const uint8_t configured_action = dm2_actu_action_type(record);
+            if (configured_action == 3u)
+                action_to_queue = dm2_actu_revert_effect(record) == after_active ? 1 : 0;
+            else if (after_active) action_to_queue = configured_action;
+            if (action_to_queue < 0 || action_to_queue > 2 ||
+                dm2_actu_xcoord(record) >= candidate->dungeon.level_widths[map] ||
+                dm2_actu_ycoord(record) >= candidate->dungeon.level_heights[map]) {
+                result = -1;
+                goto done;
+            }
+        }
+        if (!dm2_v1_record_pool_address_mut(&candidate->record_pools, link)) {
+            result = -1;
+            goto done;
+        }
+        links[count] = link;
+        new_data[count] = data_after;
+        if (action_to_queue >= 0) {
+            DM2_V1_TimerEntry *message = &messages[count];
+            dm2_v1_timer_entry_init(message);
+            dm2_v1_timer_set_mticks(message, (int16_t)map,
+                                    candidate->timer_queue.gametick);
+            message->ttype = 0x04u;
+            message->actor = action_to_queue == 0 ? 1u :
+                             (action_to_queue == 1 ? 3u : 2u);
+            message->xA = (int8_t)dm2_actu_xcoord(record);
+            message->yA = (int8_t)dm2_actu_ycoord(record);
+            message->wvalueB = (int16_t)((uint16_t)dm2_actu_direction(record) |
+                ((uint16_t)action_to_queue << 8));
+        }
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)link);
+        hash = dm2_v1_game_load_owner_hash_step(hash, old_data);
+        hash = dm2_v1_game_load_owner_hash_step(hash, data_after);
+        hash = dm2_v1_game_load_owner_hash_step(hash,
+                                                (uint32_t)(action_to_queue + 1));
+        ++count;
+        ++steps;
+        link = next;
+    }
+    if (count == 0 || hash == 0u) goto done;
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto done;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    queue_backup = candidate->timer_queue;
+    for (int i = 0; i < count; ++i) {
+        if (messages[i].ttype != 0u &&
+            dm2_v1_timer_queue(&candidate->timer_queue, &messages[i]) < 0) {
+            memcpy(candidate->timer_entries, timer_backup,
+                   (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+            memcpy(candidate->timer_indices, index_backup,
+                   (size_t)candidate->timer_capacity * sizeof(*index_backup));
+            candidate->timer_queue = queue_backup;
+            goto done;
+        }
+    }
+    for (int i = 0; i < count; ++i) {
+        uint8_t *record = dm2_v1_record_pool_address_mut(
+            &candidate->record_pools, links[i]);
+        if (!record) goto done;
+        if (dm2_actu_data(record) != new_data[i]) {
+            dm2_actu_set_data(record, new_data[i]);
+            ++receipt->counter_records_mutated;
+        }
+        if (messages[i].ttype != 0u) ++receipt->counter_messages_queued;
+    }
+    receipt->counter_actuators_seen = count;
+    receipt->private_counter_hash = hash;
+    result = 1;
+done:
+    free(index_backup);
+    free(timer_backup);
+    free(messages);
+    free(new_data);
+    free(links);
+    return result;
+}
+
+static int dm2_v1_game_load_candidate_dispatch_door(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate, int map, int x, int y,
+    uint8_t action, int raw_tile,
+    DM2_V1_GameLoadCandidateActuateReceipt *receipt)
+{
+    int chain_limit = 0;
+    int chain_count = 0;
+    int16_t link;
+    int16_t door_link;
+    int direction;
+    uint8_t *door_record;
+    uint16_t attributes_before;
+    uint16_t attributes_after;
+    DM2_V1_TimerEntry message;
+
+    if (!candidate || !receipt || map < 0 || map >= candidate->dungeon.level_count ||
+        ((unsigned int)raw_tile >> 5) != 4u || action > 2u)
+        return -1;
+    link = (int16_t)dm2_v1_dungeon_get_first_thing(
+        &candidate->dungeon, map, x, y);
+    if (link == DM2_V1_RECORD_HANDLE_NULL || link == DM2_V1_RECORD_HANDLE_END ||
+        dm2_v1_record_handle_pool(link) != DM2_DB_DOOR ||
+        !dm2_v1_record_pool_address(&candidate->record_pools, link))
+        return -1;
+    door_link = link;
+    for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        const DM2_V1_RecordPool *pool = &candidate->record_pools.pools[db];
+        if (pool->record_count < 0 || pool->extension_count < 0 ||
+            chain_limit > INT_MAX - pool->record_count - pool->extension_count)
+            return -1;
+        chain_limit += pool->record_count + pool->extension_count;
+    }
+    if (chain_limit <= 0) return -1;
+    while (link != DM2_V1_RECORD_HANDLE_END) {
+        int16_t next;
+        if (link == DM2_V1_RECORD_HANDLE_NULL || chain_count++ >= chain_limit ||
+            !dm2_v1_record_pool_address(&candidate->record_pools, link) ||
+            !dm2_v1_record_pool_next_link(&candidate->record_pools, link, &next))
+            return -1;
+        if (dm2_v1_record_handle_pool(link) == DM2_DB_CREATURE)
+            return -1;
+        link = next;
+    }
+    door_record = dm2_v1_record_pool_address_mut(&candidate->record_pools,
+                                                  door_link);
+    if (!door_record) return -1;
+    attributes_before = (uint16_t)door_record[2] |
+                        ((uint16_t)door_record[3] << 8);
+    receipt->door_record_attributes_before = attributes_before;
+    if (dm2_door_get_state((uint16_t)raw_tile) == DM2_DOOR_STATE_DESTROYED) {
+        receipt->door_actuator_source_noop_destroyed = 1;
+        receipt->door_actuator_record =
+            door_link;
+        receipt->valid = 1;
+        receipt->consumed = 1;
+        receipt->source_noop = 1;
+        return 1;
+    }
+    direction = action == 0u ? 0 : action == 1u ? 1 :
+        (dm2_door_get_state((uint16_t)raw_tile) == DM2_DOOR_STATE_OPEN ? 1 : 0);
+    dm2_v1_timer_entry_init(&message);
+    dm2_v1_timer_set_mticks(&message, (int16_t)map,
+                             candidate->timer_queue.gametick);
+    message.ttype = 0x01u;
+    message.actor = (uint8_t)direction;
+    message.xA = (int8_t)x;
+    message.yA = (int8_t)y;
+    message.wvalueB = door_link;
+    if (dm2_v1_timer_queue(&candidate->timer_queue, &message) < 0)
+        return -1;
+    /* DME.h::Door runtime bits and skevent.cpp::ACTUATE_DOOR: preserve the
+     * static low nine bits, publish the requested animation direction, and
+     * mark the private next-step timer as live. */
+    attributes_after = (uint16_t)((attributes_before & ~(uint16_t)0x1e00u) |
+                                   ((uint16_t)direction << 9) |
+                                   0x1400u);
+    door_record[2] = (uint8_t)attributes_after;
+    door_record[3] = (uint8_t)(attributes_after >> 8);
+    receipt->door_actuator_timer_queued = 1;
+    receipt->door_actuator_record = door_link;
+    receipt->door_actuator_direction = (uint8_t)direction;
+    receipt->door_record_attributes_after = attributes_after;
+    receipt->door_record_state_mutated = attributes_after != attributes_before;
+    receipt->valid = 1;
+    receipt->consumed = 1;
+    return 1;
+}
+
+static int dm2_v1_game_load_candidate_dispatch_floor_text(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate, int map, int x, int y,
+    uint8_t tile_class, uint8_t action,
+    int raw_tile, DM2_V1_GameLoadCandidateActuateReceipt *receipt)
+{
+    int16_t root, link;
+    int max_links, link_count = 0;
+    int16_t *links = NULL;
+    uint8_t *visibility = NULL;
+    uint32_t hash = 2166136261u;
+    uint16_t deferred_tile_raw = 0u;
+    int deferred_pit_tele_close = 0;
+    int success = 0;
+
+    if (!candidate || !receipt || map < 0 || map >= candidate->dungeon.level_count)
+        return -1;
+    if (tile_class == 2u || tile_class == 5u) {
+        uint8_t current_open = (uint8_t)(((unsigned int)raw_tile >> 3) & 1u);
+        uint8_t requested_action = action;
+        receipt->tile_state_before = current_open;
+        if (requested_action == 2u) requested_action = current_open;
+        if (requested_action == 0u) {
+            receipt->blocked_unowned_tile_advance = 1;
+            return -1;
+        }
+        deferred_tile_raw = (uint16_t)((unsigned int)raw_tile & ~0x08u);
+        deferred_pit_tele_close = 1;
+        receipt->tile_state_after = 0u;
+    }
+    root = (int16_t)dm2_v1_dungeon_get_first_thing(
+        &candidate->dungeon, map, x, y);
+    if (root == DM2_V1_RECORD_HANDLE_END || root == DM2_V1_RECORD_HANDLE_NULL ||
+        candidate->record_pools.pools[2].record_size != 4 ||
+        candidate->record_pools.pools[2].record_count < 0 ||
+        candidate->record_pools.pools[2].extension_count < 0)
+        return -1;
+    max_links = candidate->record_pools.pools[2].record_count +
+                candidate->record_pools.pools[2].extension_count;
+    if (max_links <= 0) return -1;
+    links = (int16_t *)calloc((size_t)max_links, sizeof(*links));
+    visibility = (uint8_t *)calloc((size_t)max_links, sizeof(*visibility));
+    if (!links || !visibility) goto done;
+    link = root;
+    while (link != DM2_V1_RECORD_HANDLE_END) {
+        const uint8_t *record;
+        uint16_t w2, text_index;
+        uint8_t mode, ext_usage, complex_usage;
+        uint8_t old_visibility, new_visibility;
+        int16_t next;
+        if (link == DM2_V1_RECORD_HANDLE_NULL || link_count >= max_links ||
+            dm2_v1_record_handle_pool(link) != DM2_DB_TEXT) {
+            receipt->blocked_non_text_chain = 1;
+            goto done;
+        }
+        record = dm2_v1_record_pool_address(&candidate->record_pools, link);
+        if (!record || !dm2_v1_record_pool_next_link(
+                &candidate->record_pools, link, &next))
+            goto done;
+        w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+        mode = (uint8_t)((w2 >> 1) & 3u);
+        text_index = (uint16_t)((w2 >> 3) & 0x1fffu);
+        ext_usage = (uint8_t)((text_index >> 8) & 0x1fu);
+        complex_usage = (uint8_t)((text_index >> 9) & 0x0fu);
+        old_visibility = (uint8_t)(w2 & 1u);
+        if (mode != 0u && !(mode == 1u && ext_usage == 5u) &&
+            !(mode == 2u && complex_usage == 2u)) {
+            new_visibility = old_visibility;
+        } else {
+            new_visibility = action == 2u ? (uint8_t)!old_visibility :
+                (action == 0u ? 1u : 0u);
+            if (mode == 0u && old_visibility == 0u && new_visibility != 0u &&
+                map == candidate->source_party_map &&
+                x == (int)candidate->source_party_x &&
+                y == (int)candidate->source_party_y) {
+                receipt->blocked_hint_delivery = 1;
+                goto done;
+            }
+        }
+        links[link_count] = link;
+        visibility[link_count] = new_visibility;
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)link);
+        hash = dm2_v1_game_load_owner_hash_step(hash, w2);
+        hash = dm2_v1_game_load_owner_hash_step(hash, new_visibility);
+        ++link_count;
+        link = next;
+    }
+    if (link_count == 0) goto done;
+    for (int i = 0; i < link_count; ++i)
+        if (!dm2_v1_record_pool_address_mut(&candidate->record_pools, links[i]))
+            goto done;
+    if (deferred_pit_tele_close && dm2_v1_dungeon_set_tile_raw(
+            &candidate->dungeon, map, x, y, deferred_tile_raw) != 0)
+        goto done;
+    for (int i = 0; i < link_count; ++i) {
+        uint8_t *record = dm2_v1_record_pool_address_mut(
+            &candidate->record_pools, links[i]);
+        uint16_t w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+        if ((uint8_t)(w2 & 1u) != visibility[i]) {
+            w2 = (uint16_t)((w2 & ~1u) | visibility[i]);
+            record[2] = (uint8_t)w2;
+            record[3] = (uint8_t)(w2 >> 8);
+            ++receipt->text_records_toggled;
+        }
+    }
+    receipt->text_records_seen = link_count;
+    receipt->pit_tele_tile_mutated = deferred_pit_tele_close &&
+                                     (((unsigned int)raw_tile & 0x08u) != 0u);
+    receipt->private_text_visibility_hash = hash;
+    if (deferred_pit_tele_close)
+        receipt->private_text_visibility_hash = dm2_v1_game_load_owner_hash_step(
+            receipt->private_text_visibility_hash, deferred_tile_raw);
+    receipt->valid = hash != 0u;
+    success = receipt->valid ? 1 : 0;
+done:
+    free(visibility);
+    free(links);
+    return success;
+}
+
+static int dm2_v1_game_load_candidate_dispatch_finite_relay_chain(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate, int map, int x, int y,
+    uint8_t direction, uint8_t incoming_action,
+    DM2_V1_GameLoadCandidateActuateReceipt *receipt)
+{
+    int limit = 0, count = 0, message_count = 0, steps = 0;
+    int16_t link;
+    int16_t *links = NULL;
+    uint16_t *new_data = NULL;
+    DM2_V1_TimerEntry *messages = NULL;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    DM2_V1_TimerQueue queue_backup;
+    uint32_t hash = 0x464e524cu; /* "FNRL" */
+    int result = 0;
+
+    if (!candidate || !receipt || incoming_action > 2u || map < 0 ||
+        map >= candidate->dungeon.level_count) return -1;
+    for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        const DM2_V1_RecordPool *pool = &candidate->record_pools.pools[db];
+        if (pool->record_count < 0 || pool->extension_count < 0 ||
+            limit > INT_MAX - pool->record_count - pool->extension_count)
+            return -1;
+        limit += pool->record_count + pool->extension_count;
+    }
+    if (limit <= 0) return -1;
+    link = (int16_t)dm2_v1_dungeon_get_first_thing(&candidate->dungeon, map, x, y);
+    if (link == DM2_V1_RECORD_HANDLE_END || link == DM2_V1_RECORD_HANDLE_NULL)
+        return 0;
+    links = (int16_t *)calloc((size_t)limit, sizeof(*links));
+    new_data = (uint16_t *)calloc((size_t)limit, sizeof(*new_data));
+    messages = (DM2_V1_TimerEntry *)calloc((size_t)limit, sizeof(*messages));
+    if (!links || !new_data || !messages) goto done;
+    while (link != DM2_V1_RECORD_HANDLE_END) {
+        const uint8_t *record;
+        int16_t next;
+        uint16_t data;
+        if (link == DM2_V1_RECORD_HANDLE_NULL || steps >= limit ||
+            dm2_v1_record_handle_pool(link) != DM2_DB_ACTUATOR ||
+            !(record = dm2_v1_record_pool_address(&candidate->record_pools, link)) ||
+            !dm2_v1_record_pool_next_link(&candidate->record_pools, link, &next)) {
+            result = count > 0 ? -1 : 0;
+            goto done;
+        }
+        if ((uint8_t)(link & 3) != direction) {
+            ++steps;
+            link = next;
+            continue;
+        }
+        if (dm2_actu_type(record) != DM2_ACTU_FINITE_RELAY) {
+            result = count > 0 ? -1 : 0;
+            goto done;
+        }
+        data = dm2_actu_data(record);
+        if (data > 400u) {
+            result = -1;
+            goto done;
+        }
+        if (data != 0u) {
+            if (dm2_actu_xcoord(record) >= candidate->dungeon.level_widths[map] ||
+                dm2_actu_ycoord(record) >= candidate->dungeon.level_heights[map] ||
+                !dm2_v1_record_pool_address_mut(&candidate->record_pools, link)) {
+                result = -1;
+                goto done;
+            }
+            dm2_v1_timer_entry_init(&messages[message_count]);
+            dm2_v1_timer_set_mticks(&messages[message_count], (int16_t)map,
+                                    candidate->timer_queue.gametick);
+            messages[message_count].ttype = 0x04u;
+            messages[message_count].actor = incoming_action == 0u ? 1u :
+                (incoming_action == 1u ? 3u : 2u);
+            messages[message_count].xA = (int8_t)dm2_actu_xcoord(record);
+            messages[message_count].yA = (int8_t)dm2_actu_ycoord(record);
+            messages[message_count].wvalueB = (int16_t)((uint16_t)
+                dm2_actu_direction(record) | ((uint16_t)incoming_action << 8));
+            ++message_count;
+        }
+        links[count] = link;
+        new_data[count] = data == 0u ? 0u : (uint16_t)(data - 1u);
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)link);
+        hash = dm2_v1_game_load_owner_hash_step(hash, data);
+        ++count;
+        ++steps;
+        link = next;
+    }
+    if (count == 0 || hash == 0u) goto done;
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto done;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    queue_backup = candidate->timer_queue;
+    for (int i = 0; i < message_count; ++i) {
+        if (dm2_v1_timer_queue(&candidate->timer_queue, &messages[i]) < 0) {
+            memcpy(candidate->timer_entries, timer_backup,
+                   (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+            memcpy(candidate->timer_indices, index_backup,
+                   (size_t)candidate->timer_capacity * sizeof(*index_backup));
+            candidate->timer_queue = queue_backup;
+            goto done;
+        }
+    }
+    for (int i = 0; i < count; ++i) {
+        uint8_t *record = dm2_v1_record_pool_address_mut(
+            &candidate->record_pools, links[i]);
+        if (!record) goto done;
+        if (dm2_actu_data(record) != new_data[i]) {
+            dm2_actu_set_data(record, new_data[i]);
+            ++receipt->finite_relay_records_mutated;
+        }
+        if (messages[i].ttype != 0u) ++receipt->finite_relay_messages_queued;
+    }
+    receipt->finite_relay_actuators_seen = count;
+    receipt->private_finite_relay_hash = hash;
+    receipt->valid = 1;
+    result = 1;
+done:
+    free(index_backup);
+    free(timer_backup);
+    free(messages);
+    free(new_data);
+    free(links);
+    return result;
+}
+
+static int dm2_v1_game_load_candidate_dispatch_cross_map_wall(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate, int map, int x, int y,
+    uint8_t direction, uint8_t action,
+    DM2_V1_GameLoadCandidateActuateReceipt *receipt)
+{
+    int limit = 0, count = 0, steps = 0;
+    int16_t link;
+    DM2_V1_TimerEntry *messages = NULL;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    DM2_V1_TimerQueue queue_backup;
+    uint32_t hash = 0x43524d50u; /* "CRMP" */
+    int result = 0;
+
+    if (!candidate || !receipt || direction > 3u || action > 2u ||
+        map < 0 || map >= candidate->dungeon.level_count) return -1;
+    for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        const DM2_V1_RecordPool *pool = &candidate->record_pools.pools[db];
+        if (pool->record_count < 0 || pool->extension_count < 0 ||
+            limit > INT_MAX - pool->record_count - pool->extension_count)
+            return -1;
+        limit += pool->record_count + pool->extension_count;
+    }
+    if (limit <= 0) return -1;
+    link = (int16_t)dm2_v1_dungeon_get_first_thing(&candidate->dungeon, map, x, y);
+    if (link == DM2_V1_RECORD_HANDLE_END || link == DM2_V1_RECORD_HANDLE_NULL)
+        return 0;
+    messages = (DM2_V1_TimerEntry *)calloc((size_t)limit, sizeof(*messages));
+    if (!messages) return -1;
+    while (link != DM2_V1_RECORD_HANDLE_END) {
+        const uint8_t *record;
+        int16_t next;
+        uint16_t data;
+        int target_map, target_x, target_y;
+        uint8_t target_direction;
+        if (link == DM2_V1_RECORD_HANDLE_NULL || steps >= limit ||
+            dm2_v1_record_handle_pool(link) != DM2_DB_ACTUATOR ||
+            !(record = dm2_v1_record_pool_address(&candidate->record_pools, link)) ||
+            !dm2_v1_record_pool_next_link(&candidate->record_pools, link, &next)) {
+            result = count > 0 ? -1 : 0;
+            goto done;
+        }
+        if ((uint8_t)(link & 3) != direction) {
+            ++steps;
+            link = next;
+            continue;
+        }
+        if (dm2_actu_type(record) != DM2_ACTU_CROSS_MAP) {
+            result = count > 0 ? -1 : 0;
+            goto done;
+        }
+        data = dm2_actu_data(record);
+        target_map = (int)(data & 0x003fu);
+        target_x = (int)dm2_actu_xcoord(record);
+        target_y = (int)dm2_actu_ycoord(record);
+        target_direction = (uint8_t)((data >> 6) & 3u);
+        if (target_map < 0 || target_map >= candidate->dungeon.level_count ||
+            target_x < 0 || target_y < 0 ||
+            target_x >= candidate->dungeon.level_widths[target_map] ||
+            target_y >= candidate->dungeon.level_heights[target_map]) {
+            result = -1;
+            goto done;
+        }
+        dm2_v1_timer_entry_init(&messages[count]);
+        dm2_v1_timer_set_mticks(&messages[count], (int16_t)target_map,
+                                candidate->timer_queue.gametick);
+        messages[count].ttype = 0x04u;
+        messages[count].actor = action == 0u ? 1u : (action == 1u ? 3u : 2u);
+        messages[count].xA = (int8_t)target_x;
+        messages[count].yA = (int8_t)target_y;
+        messages[count].wvalueB = (int16_t)((uint16_t)target_direction |
+                                            ((uint16_t)action << 8));
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)link);
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)target_map);
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)target_x);
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint32_t)target_y);
+        hash = dm2_v1_game_load_owner_hash_step(hash, target_direction);
+        ++count;
+        ++steps;
+        link = next;
+    }
+    if (count == 0 || hash == 0u) goto done;
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto done;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    queue_backup = candidate->timer_queue;
+    for (int i = 0; i < count; ++i) {
+        if (dm2_v1_timer_queue(&candidate->timer_queue, &messages[i]) < 0) {
+            memcpy(candidate->timer_entries, timer_backup,
+                   (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+            memcpy(candidate->timer_indices, index_backup,
+                   (size_t)candidate->timer_capacity * sizeof(*index_backup));
+            candidate->timer_queue = queue_backup;
+            goto done;
+        }
+    }
+    receipt->cross_map_actuators_seen = count;
+    receipt->cross_map_messages_queued = count;
+    receipt->private_cross_map_hash = hash;
+    receipt->valid = 1;
+    result = 1;
+done:
+    free(index_backup);
+    free(timer_backup);
+    free(messages);
+    return result;
+}
+
+static int dm2_v1_game_load_candidate_dispatch_relay_chain(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate, int map, int x, int y,
+    uint8_t direction, uint8_t incoming_action,
+    DM2_V1_GameLoadCandidateActuateReceipt *receipt)
+{
+    int limit = 0, count = 0, message_count = 0, steps = 0;
+    int16_t link;
+    DM2_V1_TimerEntry *messages = NULL;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    DM2_V1_TimerQueue queue_backup;
+    uint32_t hash = 0x524c5931u; /* "RLY1" */
+    int result = 0;
+
+    if (!candidate || !receipt || incoming_action > 2u || map < 0 ||
+        map >= candidate->dungeon.level_count) return -1;
+    for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        const DM2_V1_RecordPool *pool = &candidate->record_pools.pools[db];
+        if (pool->record_count < 0 || pool->extension_count < 0 ||
+            limit > INT_MAX - pool->record_count - pool->extension_count)
+            return -1;
+        limit += pool->record_count + pool->extension_count;
+    }
+    if (limit <= 0) return -1;
+    link = (int16_t)dm2_v1_dungeon_get_first_thing(&candidate->dungeon, map, x, y);
+    if (link == DM2_V1_RECORD_HANDLE_END || link == DM2_V1_RECORD_HANDLE_NULL)
+        return 0;
+    messages = (DM2_V1_TimerEntry *)calloc((size_t)limit, sizeof(*messages));
+    if (!messages) return -1;
+    while (link != DM2_V1_RECORD_HANDLE_END) {
+        const uint8_t *record;
+        int16_t next;
+        uint8_t type, action;
+        uint32_t fire_tick;
+        int blocked_by_source_gate = 0;
+        if (link == DM2_V1_RECORD_HANDLE_NULL || steps >= limit ||
+            dm2_v1_record_handle_pool(link) != DM2_DB_ACTUATOR ||
+            !(record = dm2_v1_record_pool_address(&candidate->record_pools, link)) ||
+            !dm2_v1_record_pool_next_link(&candidate->record_pools, link, &next)) {
+            result = count > 0 ? -1 : 0;
+            goto done;
+        }
+        if ((uint8_t)(link & 3) != direction) {
+            ++steps;
+            link = next;
+            continue;
+        }
+        type = dm2_actu_type(record);
+        if (type != DM2_ACTU_RELAY_1 && type != DM2_ACTU_RELAY_3) {
+            result = count > 0 ? -1 : 0;
+            goto done;
+        }
+        if (dm2_actu_once_only(record) != 0u &&
+            (dm2_actu_revert_effect(record) != 0u || incoming_action != 0u) &&
+            (dm2_actu_revert_effect(record) == 0u || incoming_action != 1u))
+            blocked_by_source_gate = 1;
+        action = dm2_actu_once_only(record) != 0u ?
+            dm2_actu_action_type(record) : incoming_action;
+        if (!blocked_by_source_gate) {
+            if (action > 2u ||
+                dm2_actu_xcoord(record) >= candidate->dungeon.level_widths[map] ||
+                dm2_actu_ycoord(record) >= candidate->dungeon.level_heights[map]) {
+                result = -1;
+                goto done;
+            }
+            fire_tick = candidate->timer_queue.gametick +
+                (type == DM2_ACTU_RELAY_3 ?
+                    ((uint32_t)dm2_actu_data(record) << dm2_actu_delay(record)) :
+                    (uint32_t)dm2_actu_data(record) + dm2_actu_delay(record));
+            dm2_v1_timer_entry_init(&messages[message_count]);
+            dm2_v1_timer_set_mticks(&messages[message_count], (int16_t)map,
+                                    fire_tick);
+            messages[message_count].ttype = 0x04u;
+            messages[message_count].actor = action == 0u ? 1u :
+                (action == 1u ? 3u : 2u);
+            messages[message_count].xA = (int8_t)dm2_actu_xcoord(record);
+            messages[message_count].yA = (int8_t)dm2_actu_ycoord(record);
+            messages[message_count].wvalueB = (int16_t)((uint16_t)
+                dm2_actu_direction(record) | ((uint16_t)action << 8));
+            ++message_count;
+        }
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)link);
+        hash = dm2_v1_game_load_owner_hash_step(hash, dm2_actu_data(record));
+        hash = dm2_v1_game_load_owner_hash_step(hash, type);
+        hash = dm2_v1_game_load_owner_hash_step(hash, blocked_by_source_gate);
+        ++count;
+        ++steps;
+        link = next;
+    }
+    if (count == 0 || hash == 0u) goto done;
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto done;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    queue_backup = candidate->timer_queue;
+    for (int i = 0; i < message_count; ++i) {
+        if (dm2_v1_timer_queue(&candidate->timer_queue, &messages[i]) < 0) {
+            memcpy(candidate->timer_entries, timer_backup,
+                   (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+            memcpy(candidate->timer_indices, index_backup,
+                   (size_t)candidate->timer_capacity * sizeof(*index_backup));
+            candidate->timer_queue = queue_backup;
+            goto done;
+        }
+    }
+    receipt->relay_actuators_seen = count;
+    receipt->relay_messages_queued = message_count;
+    receipt->private_relay_hash = hash;
+    receipt->valid = 1;
+    result = 1;
+done:
+    free(index_backup);
+    free(timer_backup);
+    free(messages);
+    return result;
+}
+
+static int dm2_v1_game_load_candidate_dispatch_push_button_floor(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate, int map, int x, int y,
+    uint8_t action, DM2_V1_GameLoadCandidateActuateReceipt *receipt)
+{
+    int limit = 0;
+    int count = 0;
+    int16_t link;
+    int16_t *targets = NULL;
+    uint8_t *next_bits = NULL;
+    uint32_t hash = 0x50425357u; /* "PBSW" */
+
+    if (!candidate || !receipt || action > 2u || map < 0 ||
+        map >= candidate->dungeon.level_count) return -1;
+    for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        const DM2_V1_RecordPool *pool = &candidate->record_pools.pools[db];
+        if (pool->record_count < 0 || pool->extension_count < 0 ||
+            limit > INT_MAX - pool->record_count - pool->extension_count)
+            return -1;
+        limit += pool->record_count + pool->extension_count;
+    }
+    if (limit <= 0) return -1;
+    link = (int16_t)dm2_v1_dungeon_get_first_thing(&candidate->dungeon,
+                                                    map, x, y);
+    if (link == DM2_V1_RECORD_HANDLE_END || link == DM2_V1_RECORD_HANDLE_NULL)
+        return 0;
+    targets = (int16_t *)calloc((size_t)limit, sizeof(*targets));
+    next_bits = (uint8_t *)calloc((size_t)limit, sizeof(*next_bits));
+    if (!targets || !next_bits) goto fail;
+    while (link != DM2_V1_RECORD_HANDLE_END) {
+        const uint8_t *actuator;
+        const uint8_t *door;
+        int16_t next;
+        int16_t target;
+        int target_x, target_y;
+        uint8_t old_bit;
+        if (link == DM2_V1_RECORD_HANDLE_NULL || count >= limit ||
+            dm2_v1_record_handle_pool(link) != DM2_DB_ACTUATOR ||
+            !(actuator = dm2_v1_record_pool_address(&candidate->record_pools,
+                                                     link)) ||
+            dm2_actu_type(actuator) != DM2_ACTU_PUSH_BUTTON_SWITCH ||
+            !dm2_v1_record_pool_next_link(&candidate->record_pools, link, &next))
+            goto mixed_chain;
+        target_x = (int)dm2_actu_xcoord(actuator);
+        target_y = (int)dm2_actu_ycoord(actuator);
+        if (target_x < 0 || target_y < 0 ||
+            target_x >= candidate->dungeon.level_widths[map] ||
+            target_y >= candidate->dungeon.level_heights[map])
+            goto fail;
+        target = (int16_t)dm2_v1_dungeon_get_first_thing(
+            &candidate->dungeon, map, target_x, target_y);
+        if (target == DM2_V1_RECORD_HANDLE_NULL ||
+            target == DM2_V1_RECORD_HANDLE_END ||
+            dm2_v1_record_handle_pool(target) != DM2_DB_DOOR ||
+            !(door = dm2_v1_record_pool_address(&candidate->record_pools, target)) ||
+            !dm2_v1_record_pool_address_mut(&candidate->record_pools, target))
+            goto fail;
+        old_bit = dm2_door_bit13(door);
+        for (int prior = 0; prior < count; ++prior)
+            if (targets[prior] == target) old_bit = next_bits[prior];
+        targets[count] = target;
+        next_bits[count] = action == DM2_ACTMSG_TOGGLE ?
+            (uint8_t)!old_bit : (action == DM2_ACTMSG_OPEN_SET ? 1u : 0u);
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)link);
+        hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)target);
+        hash = dm2_v1_game_load_owner_hash_step(hash, next_bits[count]);
+        ++count;
+        link = next;
+    }
+    if (count == 0 || hash == 0u) goto fail;
+    for (int i = 0; i < count; ++i) {
+        uint8_t *door = dm2_v1_record_pool_address_mut(
+            &candidate->record_pools, targets[i]);
+        if (!door) goto fail;
+        if (dm2_door_bit13(door) != next_bits[i]) {
+            dm2_door_set_bit13(door, next_bits[i]);
+            ++receipt->push_button_doors_mutated;
+        }
+    }
+    receipt->push_button_actuators_seen = count;
+    receipt->private_push_button_hash = hash;
+    receipt->valid = 1;
+    free(next_bits);
+    free(targets);
+    return 1;
+
+mixed_chain:
+    /* A chain that started as a push-button family but diverged is an
+     * authenticated contradiction, not an absent candidate. */
+fail:
+    free(next_bits);
+    free(targets);
+    return count == 0 ? 0 : -1;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_proceed_actuate_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadCandidateActuateReceipt *out_receipt)
+{
+    DM2_V1_GameLoadCandidateActuateReceipt receipt;
+    DM2_V1_TimerEntry timer_entry;
+    DM2_V1_TimerQueue queue_backup;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    int16_t timer_slot;
+    int old_map;
+    int map, x, y, raw_tile;
+    uint16_t payload;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.game_tick = game_tick;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0) {
+        receipt.blocked_no_due_timer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    old_map = candidate->current_map;
+    queue_backup = candidate->timer_queue;
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto actuate_rollback;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&candidate->timer_queue)) {
+        receipt.blocked_no_due_timer = 1;
+        goto actuate_rollback;
+    }
+    timer_slot = candidate->timer_queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity) {
+        receipt.blocked_no_due_timer = 1;
+        goto actuate_rollback;
+    }
+    receipt.timer_type = candidate->timer_entries[timer_slot].ttype;
+    if (receipt.timer_type != 0x04u) {
+        receipt.blocked_unsupported_type = 1;
+        goto actuate_rollback;
+    }
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+    map = dm2_v1_timer_get_map(&timer_entry);
+    x = (int)(int8_t)timer_entry.xA;
+    y = (int)(int8_t)timer_entry.yA;
+    receipt.map = map;
+    receipt.x = (int16_t)x;
+    receipt.y = (int16_t)y;
+    payload = (uint16_t)timer_entry.wvalueB;
+    receipt.direction = (uint8_t)(payload & 0xffu);
+    receipt.action = (uint8_t)(payload >> 8);
+    if (map < 0 || map >= candidate->dungeon.level_count || x < 0 || y < 0 ||
+        x >= candidate->dungeon.level_widths[map] ||
+        y >= candidate->dungeon.level_heights[map] ||
+        receipt.direction > 3u || receipt.action > 2u ||
+        (receipt.action == 0u && timer_entry.actor != 1u) ||
+        (receipt.action == 1u && timer_entry.actor != 3u) ||
+        (receipt.action == 2u && timer_entry.actor != 2u) ||
+        !dm2_v1_game_load_runtime_candidate_change_current_map(candidate, map, 0)) {
+        receipt.blocked_map = 1;
+        goto actuate_rollback;
+    }
+    receipt.map_switch = old_map != map;
+    raw_tile = dm2_v1_dungeon_get_tile_raw(&candidate->dungeon, map, x, y);
+    if (raw_tile < 0) {
+        receipt.blocked_map = 1;
+        goto actuate_rollback;
+    }
+    receipt.raw_tile = (uint8_t)raw_tile;
+    receipt.tile_class = (uint8_t)((unsigned int)raw_tile >> 5);
+    /* SKProject sktimprc.cpp::DM2_PROCEED_TIMERS: class 3 has an intentional
+     * empty 0x04 branch.  The timer has already been popped and the map
+     * context authenticated, so consume it as a source no-op instead of
+     * falling through to the unowned-class rollback below. */
+    if (receipt.tile_class == 3u) {
+        receipt.valid = 1;
+        receipt.consumed = 1;
+        receipt.source_noop = 1;
+        receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+            candidate->source_transaction_hash ^ candidate->candidate_hash,
+            (uint32_t)timer_entry.l_00 ^
+            ((uint32_t)receipt.tile_class << 24) ^
+            (uint32_t)(uint16_t)x ^ ((uint32_t)(uint16_t)y << 16));
+        free(index_backup);
+        free(timer_backup);
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+    if (receipt.tile_class != 3u) {
+        if (receipt.tile_class == 0u || receipt.tile_class == 1u) {
+            if (receipt.tile_class == 0u) {
+                const int cross_map = dm2_v1_game_load_candidate_dispatch_cross_map_wall(
+                    candidate, map, x, y, receipt.direction, receipt.action,
+                    &receipt);
+                if (cross_map > 0) {
+                    receipt.valid = 1;
+                    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+                        candidate->source_transaction_hash ^ candidate->candidate_hash,
+                        receipt.private_cross_map_hash ^
+                        (uint32_t)(uint16_t)x ^ ((uint32_t)(uint16_t)y << 16));
+                    free(index_backup);
+                    free(timer_backup);
+                    if (out_receipt) *out_receipt = receipt;
+                    return 1;
+                }
+                if (cross_map < 0) {
+                    receipt.blocked_unowned_class = 1;
+                    goto actuate_rollback;
+                }
+            }
+            const int push_button =
+                dm2_v1_game_load_candidate_dispatch_push_button_floor(
+                    candidate, map, x, y, receipt.action, &receipt);
+            if (push_button > 0) {
+                receipt.valid = 1;
+                receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+                    candidate->source_transaction_hash ^ candidate->candidate_hash,
+                    receipt.private_push_button_hash ^
+                    (uint32_t)(uint16_t)x ^ ((uint32_t)(uint16_t)y << 16));
+                free(index_backup);
+                free(timer_backup);
+                if (out_receipt) *out_receipt = receipt;
+                return 1;
+            }
+            if (push_button < 0) {
+                receipt.blocked_unowned_class = 1;
+                goto actuate_rollback;
+            }
+            {
+                const int counter = dm2_v1_game_load_candidate_dispatch_counter_chain(
+                    candidate, map, x, y, receipt.direction, receipt.action,
+                    &receipt);
+                if (counter > 0) {
+                    receipt.valid = 1;
+                    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+                        candidate->source_transaction_hash ^ candidate->candidate_hash,
+                        receipt.private_counter_hash ^
+                        (uint32_t)(uint16_t)x ^ ((uint32_t)(uint16_t)y << 16));
+                    free(index_backup);
+                    free(timer_backup);
+                    if (out_receipt) *out_receipt = receipt;
+                    return 1;
+                }
+                if (counter < 0) {
+                    receipt.blocked_unowned_class = 1;
+                    goto actuate_rollback;
+                }
+                {
+                    const int relay = dm2_v1_game_load_candidate_dispatch_relay_chain(
+                        candidate, map, x, y, receipt.direction, receipt.action,
+                        &receipt);
+                    if (relay > 0) {
+                        receipt.valid = 1;
+                        receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+                            candidate->source_transaction_hash ^ candidate->candidate_hash,
+                            receipt.private_relay_hash ^
+                            (uint32_t)(uint16_t)x ^ ((uint32_t)(uint16_t)y << 16));
+                        free(index_backup);
+                        free(timer_backup);
+                        if (out_receipt) *out_receipt = receipt;
+                        return 1;
+                    }
+                    if (relay < 0) {
+                        receipt.blocked_unowned_class = 1;
+                        goto actuate_rollback;
+                    }
+                    {
+                        const int finite_relay =
+                            dm2_v1_game_load_candidate_dispatch_finite_relay_chain(
+                                candidate, map, x, y, receipt.direction,
+                                receipt.action, &receipt);
+                        if (finite_relay > 0) {
+                            receipt.valid = 1;
+                            receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+                                candidate->source_transaction_hash ^ candidate->candidate_hash,
+                                receipt.private_finite_relay_hash ^
+                                (uint32_t)(uint16_t)x ^ ((uint32_t)(uint16_t)y << 16));
+                            free(index_backup);
+                            free(timer_backup);
+                            if (out_receipt) *out_receipt = receipt;
+                            return 1;
+                        }
+                        if (finite_relay < 0) {
+                            receipt.blocked_unowned_class = 1;
+                            goto actuate_rollback;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (receipt.tile_class == 4u) {
+        const int door = dm2_v1_game_load_candidate_dispatch_door(
+            candidate, map, x, y, receipt.action, raw_tile, &receipt);
+        if (door > 0) {
+            receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+                candidate->source_transaction_hash ^ candidate->candidate_hash,
+                (uint32_t)(uint16_t)receipt.door_actuator_record ^
+                ((uint32_t)receipt.door_actuator_direction << 16) ^
+                ((uint32_t)(uint16_t)x << 1) ^ ((uint32_t)(uint16_t)y << 17));
+            free(index_backup);
+            free(timer_backup);
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        receipt.blocked_unowned_class = 1;
+        goto actuate_rollback;
+    }
+    if (receipt.tile_class == 1u || receipt.tile_class == 2u ||
+        receipt.tile_class == 5u) {
+        const int floor_text = dm2_v1_game_load_candidate_dispatch_floor_text(
+            candidate, map, x, y, receipt.tile_class, receipt.action,
+            raw_tile, &receipt);
+        if (floor_text > 0) {
+            receipt.valid = 1;
+            receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+                candidate->source_transaction_hash ^ candidate->candidate_hash,
+                receipt.private_text_visibility_hash ^
+                (uint32_t)(uint16_t)x ^ ((uint32_t)(uint16_t)y << 16));
+            free(index_backup);
+            free(timer_backup);
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        if (floor_text < 0 && receipt.blocked_unowned_tile_advance == 0)
+            receipt.blocked_unowned_class = 1;
+        goto actuate_rollback;
+    }
+    receipt.blocked_unowned_class = 1;
+    goto actuate_rollback;
+actuate_rollback:
+    if (timer_backup && index_backup) {
+        memcpy(candidate->timer_entries, timer_backup,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(candidate->timer_indices, index_backup,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        candidate->timer_queue = queue_backup;
+        if (candidate->current_map != old_map)
+            (void)dm2_v1_game_load_runtime_candidate_change_current_map(
+                candidate, old_map, 0);
+    }
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_proceed_tick_generator_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadCandidateTickGeneratorReceipt *out_receipt)
+{
+    DM2_V1_GameLoadCandidateTickGeneratorReceipt receipt;
+    DM2_V1_TimerEntry timer_entry;
+    DM2_V1_TimerEntry message;
+    DM2_V1_TimerEntry continuation;
+    DM2_V1_TimerQueue queue_backup;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    uint8_t *record = NULL;
+    uint8_t record_byte4 = 0u;
+    int16_t timer_slot;
+    int old_map;
+    int map;
+    int16_t record_link;
+    uint16_t w2, w4;
+    int control_bit2, alternating, remaining, should_invoke;
+    uint8_t action, alternating_toggle = 0u;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.record_link = DM2_V1_RECORD_HANDLE_NULL;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    old_map = candidate->current_map;
+    queue_backup = candidate->timer_queue;
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto generator_rollback;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&candidate->timer_queue)) goto generator_rollback;
+    timer_slot = candidate->timer_queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity ||
+        candidate->timer_entries[timer_slot].ttype != 0x56u)
+        goto generator_rollback;
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+    map = dm2_v1_timer_get_map(&timer_entry);
+    record_link = (int16_t)((uint16_t)(uint8_t)timer_entry.xA |
+                            ((uint16_t)(uint8_t)timer_entry.yA << 8));
+    receipt.record_link = record_link;
+    if (map < 0 || map >= candidate->dungeon.level_count ||
+        dm2_v1_record_handle_pool(record_link) != 3 ||
+        !dm2_v1_game_load_runtime_candidate_change_current_map(candidate, map, 0) ||
+        !(record = dm2_v1_record_pool_address_mut(&candidate->record_pools,
+                                                   record_link)))
+        goto generator_rollback;
+    receipt.action = 0u;
+    record_byte4 = record[4];
+    w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+    w4 = (uint16_t)record[4] | ((uint16_t)record[5] << 8);
+    control_bit2 = (w4 & 0x0004u) != 0u;
+    alternating = (w4 & 0x0018u) == 0x0018u;
+    if (alternating) {
+        alternating_toggle = (uint8_t)(((uint16_t)timer_entry.wvalueB >> 8) & 1u) ^ 1u;
+        action = alternating_toggle == 0u ? 1u : 0u;
+        remaining = control_bit2 || alternating_toggle != 0u;
+        should_invoke = 1;
+    } else {
+        action = (uint8_t)((w4 >> 3) & 3u);
+        remaining = control_bit2;
+        should_invoke = control_bit2;
+    }
+    receipt.action = action;
+    receipt.target_x = dm2_actu_xcoord(record);
+    receipt.target_y = dm2_actu_ycoord(record);
+    receipt.target_direction = dm2_actu_direction(record);
+    if (should_invoke) {
+        dm2_v1_timer_entry_init(&message);
+        dm2_v1_timer_set_mticks(&message, (int16_t)map,
+            candidate->timer_queue.gametick + ((w4 >> 7) & 0x007fu));
+        message.ttype = 0x04u;
+        if (action == 0u) message.actor = 1u;
+        else if (action == 1u) message.actor = 3u;
+        else if (action == 2u) message.actor = 2u;
+        message.xA = (int8_t)receipt.target_x;
+        message.yA = (int8_t)receipt.target_y;
+        message.wvalueB = (int16_t)((uint16_t)receipt.target_direction |
+                                    ((uint16_t)action << 8));
+        if (dm2_v1_timer_queue(&candidate->timer_queue, &message) < 0)
+            goto generator_rollback;
+        receipt.actuator_invoked = 1;
+        receipt.message_queued = 1;
+    }
+    if (remaining) {
+        const int multiplier = dm2_v1_game_load_owner_tick_multiplier(
+            (uint8_t)(w2 & 0x007fu));
+        const uint16_t period = w2 >> 7;
+        if (multiplier == 0 || period == 0u ||
+            (uint8_t)timer_entry.wvalueB != (uint8_t)multiplier)
+            goto generator_rollback;
+        continuation = timer_entry;
+        if (alternating)
+            continuation.wvalueB = (int16_t)((uint16_t)(uint8_t)timer_entry.wvalueB |
+                                             ((uint16_t)alternating_toggle << 8));
+        continuation.l_00 += (int32_t)((uint32_t)period * (uint32_t)multiplier);
+        if (dm2_v1_timer_queue(&candidate->timer_queue, &continuation) < 0)
+            goto generator_rollback;
+        receipt.requeued = 1;
+    } else {
+        record[4] &= (uint8_t)~0x01u;
+        receipt.active_flag_cleared = 1;
+    }
+    receipt.valid = 1;
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+generator_rollback:
+    if (timer_backup && index_backup) {
+        memcpy(candidate->timer_entries, timer_backup,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(candidate->timer_indices, index_backup,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        candidate->timer_queue = queue_backup;
+        if (candidate->current_map != old_map)
+            (void)dm2_v1_game_load_runtime_candidate_change_current_map(
+                candidate, old_map, 0);
+    }
+    if (record) record[4] = record_byte4;
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadCandidateDoorStepReceipt *out_receipt)
+{
+    DM2_V1_GameLoadCandidateDoorStepReceipt receipt;
+    DM2_V1_TimerEntry timer_entry;
+    DM2_V1_TimerEntry next_timer;
+    DM2_V1_TimerQueue queue_backup;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    int16_t timer_slot;
+    int old_map;
+    int map, x, y, raw_tile, old_state, new_state;
+    int16_t link, chain_link;
+    int chain_limit = 0;
+    int chain_count = 0;
+    int queued = 0;
+    uint8_t *door_record = NULL;
+    uint8_t door_record_backup[4] = { 0u, 0u, 0u, 0u };
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.game_tick = game_tick;
+    receipt.door_record_link = DM2_V1_RECORD_HANDLE_NULL;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0) {
+        receipt.blocked_no_due_timer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    old_map = candidate->current_map;
+    queue_backup = candidate->timer_queue;
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto door_rollback;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&candidate->timer_queue)) {
+        receipt.blocked_no_due_timer = 1;
+        goto door_rollback;
+    }
+    timer_slot = candidate->timer_queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity) {
+        receipt.blocked_no_due_timer = 1;
+        goto door_rollback;
+    }
+    receipt.timer_type = candidate->timer_entries[timer_slot].ttype;
+    if (receipt.timer_type != 0x01u) {
+        receipt.blocked_unsupported_type = 1;
+        goto door_rollback;
+    }
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+    map = dm2_v1_timer_get_map(&timer_entry);
+    x = (int)(int8_t)timer_entry.xA;
+    y = (int)(int8_t)timer_entry.yA;
+    receipt.map = map;
+    receipt.x = (int16_t)x;
+    receipt.y = (int16_t)y;
+    receipt.direction = timer_entry.actor;
+    link = timer_entry.wvalueB;
+    receipt.door_record_link = link;
+    if (map < 0 || map >= candidate->dungeon.level_count || x < 0 || y < 0 ||
+        x >= candidate->dungeon.level_widths[map] ||
+        y >= candidate->dungeon.level_heights[map] ||
+        receipt.direction > 1u || link == DM2_V1_RECORD_HANDLE_NULL ||
+        link == DM2_V1_RECORD_HANDLE_END ||
+        dm2_v1_record_handle_pool(link) != 0 ||
+        !dm2_v1_game_load_runtime_candidate_change_current_map(candidate, map, 0)) {
+        receipt.blocked_map = 1;
+        goto door_rollback;
+    }
+    receipt.map_switch = old_map != map;
+    raw_tile = dm2_v1_dungeon_get_tile_raw(&candidate->dungeon, map, x, y);
+    if (raw_tile < 0 || ((unsigned int)raw_tile >> 5) != 4u ||
+        dm2_v1_dungeon_get_first_thing(&candidate->dungeon, map, x, y) != link ||
+        !(door_record = dm2_v1_record_pool_address_mut(
+            &candidate->record_pools, link))) {
+        receipt.blocked_record = 1;
+        goto door_rollback;
+    }
+    memcpy(door_record_backup, door_record, sizeof(door_record_backup));
+    receipt.door_record_attributes_before =
+        (uint16_t)door_record[2] | ((uint16_t)door_record[3] << 8);
+    for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        const DM2_V1_RecordPool *pool = &candidate->record_pools.pools[db];
+        if (pool->record_count < 0 || pool->extension_count < 0 ||
+            chain_limit > INT_MAX - pool->record_count - pool->extension_count) {
+            receipt.blocked_incomplete_chain = 1;
+            goto door_rollback;
+        }
+        chain_limit += pool->record_count + pool->extension_count;
+    }
+    if (chain_limit <= 0) {
+        receipt.blocked_incomplete_chain = 1;
+        goto door_rollback;
+    }
+    chain_link = link;
+    while (chain_link != DM2_V1_RECORD_HANDLE_END) {
+        int16_t next;
+        if (chain_link == DM2_V1_RECORD_HANDLE_NULL ||
+            chain_count++ >= chain_limit ||
+            !dm2_v1_record_pool_address(&candidate->record_pools, chain_link) ||
+            !dm2_v1_record_pool_next_link(&candidate->record_pools, chain_link, &next)) {
+            receipt.blocked_incomplete_chain = 1;
+            goto door_rollback;
+        }
+        if (dm2_v1_record_handle_pool(chain_link) == 4) {
+            receipt.blocked_creature_collision = 1;
+            goto door_rollback;
+        }
+        chain_link = next;
+    }
+    if (map == candidate->source_party_map && x == (int)candidate->source_party_x &&
+        y == (int)candidate->source_party_y) {
+        receipt.blocked_party_collision = 1;
+        goto door_rollback;
+    }
+    old_state = dm2_door_get_state((uint16_t)raw_tile);
+    receipt.state_before = (uint8_t)old_state;
+    if (old_state == DM2_DOOR_STATE_DESTROYED) {
+        receipt.state_after = (uint8_t)old_state;
+        receipt.source_noop_destroyed = 1;
+    } else {
+        new_state = dm2_door_apply_toggle_step(old_state, receipt.direction);
+        if (new_state < DM2_DOOR_STATE_OPEN || new_state > DM2_DOOR_STATE_CLOSED)
+            goto door_rollback;
+        receipt.state_after = (uint8_t)new_state;
+        if ((receipt.direction == 0u && new_state != DM2_DOOR_STATE_OPEN) ||
+            (receipt.direction == 1u && new_state != DM2_DOOR_STATE_CLOSED)) {
+            next_timer = timer_entry;
+            next_timer.l_00 += 1;
+            if (dm2_v1_timer_queue(&candidate->timer_queue, &next_timer) < 0)
+                goto door_rollback;
+            queued = 1;
+        }
+        if (new_state != old_state && dm2_v1_dungeon_set_tile_raw(
+                &candidate->dungeon, map, x, y,
+                dm2_door_set_state((uint16_t)raw_tile, new_state)) != 0)
+            goto door_rollback;
+        receipt.door_state_mutated = new_state != old_state;
+        {
+            uint16_t attributes = receipt.door_record_attributes_before;
+            uint16_t next_attributes = (uint16_t)(
+                attributes & ~(uint16_t)0x1e00u);
+            next_attributes = (uint16_t)(next_attributes |
+                ((uint16_t)receipt.direction << 9));
+            if (queued) next_attributes = (uint16_t)(next_attributes | 0x1400u);
+            door_record[2] = (uint8_t)next_attributes;
+            door_record[3] = (uint8_t)(next_attributes >> 8);
+            receipt.door_record_attributes_after = next_attributes;
+            receipt.door_record_state_mutated =
+                next_attributes != receipt.door_record_attributes_before;
+        }
+    }
+    receipt.valid = 1;
+    receipt.consumed = 1;
+    receipt.requeued = queued;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash ^ candidate->candidate_hash,
+        (uint32_t)timer_entry.l_00 ^ ((uint32_t)old_state << 8) ^
+        ((uint32_t)receipt.state_after << 16) ^ (uint32_t)(uint16_t)link);
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+door_rollback:
+    if (timer_backup && index_backup) {
+        memcpy(candidate->timer_entries, timer_backup,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(candidate->timer_indices, index_backup,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        candidate->timer_queue = queue_backup;
+        if (candidate->current_map != old_map)
+            (void)dm2_v1_game_load_runtime_candidate_change_current_map(
+                candidate, old_map, 0);
+    }
+    if (door_record)
+        memcpy(door_record, door_record_backup, sizeof(door_record_backup));
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_proceed_process_0e_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick, DM2_V1_GameLoadProcess0eTimerReceipt *out_receipt)
+{
+    DM2_V1_GameLoadProcess0eTimerReceipt receipt;
+    DM2_V1_TimerEntry timer_entry;
+    DM2_V1_TimerQueue queue_backup;
+    DM2_V1_Party party_backup;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    uint8_t *record_backup = NULL;
+    uint8_t *record;
+    int16_t timer_slot;
+    int old_map;
+    int map;
+    int record_size;
+    uint16_t db_type;
+    uint16_t record_handle;
+    uint8_t actor;
+    DM2_V1_ProcessItemBonusReceipt bonus;
+
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&bonus, 0, sizeof(bonus));
+    receipt.game_tick = game_tick;
+    receipt.timer_type = 0x0eu;
+    receipt.record = DM2_V1_RECORD_HANDLE_NULL;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        goto process_0e_fail;
+    }
+    if (!candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0) {
+        receipt.blocked_no_due_timer = 1;
+        goto process_0e_fail;
+    }
+    old_map = candidate->current_map;
+    queue_backup = candidate->timer_queue;
+    party_backup = candidate->party;
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto process_0e_rollback;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&candidate->timer_queue)) {
+        receipt.blocked_no_due_timer = 1;
+        goto process_0e_rollback;
+    }
+    timer_slot = candidate->timer_queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity) {
+        receipt.blocked_no_due_timer = 1;
+        goto process_0e_rollback;
+    }
+    if (candidate->timer_entries[timer_slot].ttype != 0x0eu) {
+        receipt.blocked_unsupported_type = 1;
+        goto process_0e_rollback;
+    }
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+    map = dm2_v1_timer_get_map(&timer_entry);
+    receipt.map = map;
+    receipt.map_switch = old_map != map;
+    actor = timer_entry.actor;
+    db_type = (uint16_t)(uint8_t)timer_entry.xA & 0x03ffu;
+    record_handle = (uint16_t)(db_type << 10);
+    receipt.actor = actor;
+    receipt.record_db_type = db_type;
+    receipt.record = record_handle;
+    receipt.value2 = (uint16_t)timer_entry.wvalueB;
+    receipt.bonus_value = (int16_t)0xfffe;
+    if (map < 0 || map >= candidate->dungeon.level_count ||
+        actor >= (uint8_t)candidate->party.heros_in_party ||
+        actor >= DM2_MAX_HEROES || !candidate->asset_loader ||
+        !candidate->asset_loader->loaded ||
+        !dm2_v1_game_load_runtime_candidate_change_current_map(
+            candidate, map, 0)) {
+        receipt.blocked_map = map < 0 || map >= candidate->dungeon.level_count;
+        receipt.blocked_actor = actor >= (uint8_t)candidate->party.heros_in_party ||
+                                actor >= DM2_MAX_HEROES;
+        goto process_0e_rollback;
+    }
+    record_size = dm2_v1_record_pool_record_size((int)db_type);
+    record = dm2_v1_record_pool_address_mut(&candidate->record_pools,
+                                             (int16_t)record_handle);
+    if (record_size <= 0 || !record) {
+        receipt.blocked_record = 1;
+        goto process_0e_rollback;
+    }
+    record_backup = (uint8_t *)malloc((size_t)record_size);
+    if (!record_backup) goto process_0e_rollback;
+    memcpy(record_backup, record, (size_t)record_size);
+    if (!dm2_v1_record_pool_set_itemtype(&candidate->record_pools,
+                                         (int16_t)record_handle,
+                                         receipt.value2) ||
+        !dm2_v1_process_source_item_bonus_for_timer(
+            &candidate->party.hero[actor], (int16_t)actor, record_handle,
+            -1, (int16_t)0xfffe, &candidate->record_pools,
+            candidate->asset_loader, &bonus)) {
+        receipt.blocked_item_bonus = 1;
+        goto process_0e_rollback;
+    }
+    memcpy(record, record_backup, (size_t)record_size);
+    receipt.bonus_applied = 1;
+    receipt.valid = 1;
+    receipt.consumed = 1;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash ^ candidate->candidate_hash,
+        (uint32_t)record_handle ^ ((uint32_t)receipt.value2 << 16) ^
+        (uint32_t)(uint16_t)candidate->party.hero[actor].curMP);
+    free(record_backup);
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+process_0e_rollback:
+    if (record_backup && record)
+        memcpy(record, record_backup, (size_t)record_size);
+    if (timer_backup && index_backup) {
+        memcpy(candidate->timer_entries, timer_backup,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(candidate->timer_indices, index_backup,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        candidate->timer_queue = queue_backup;
+        candidate->party = party_backup;
+        if (candidate->current_map != old_map)
+            (void)dm2_v1_game_load_runtime_candidate_change_current_map(
+                candidate, old_map, 0);
+    }
+    free(record_backup);
+    free(index_backup);
+    free(timer_backup);
+process_0e_fail:
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_proceed_process_sound_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick, DM2_V1_GameLoadProcessSoundTimerReceipt *out_receipt)
+{
+    DM2_V1_GameLoadProcessSoundTimerReceipt receipt;
+    DM2_V1_GameLoadSoundOwner sound_backup;
+    DM2_V1_TimerEntry timer_entry;
+    DM2_V1_TimerQueue queue_backup;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    DM2_V1_SoundQueueState state;
+    DM2_V1_SoundQueueEnv env;
+    DM2_V1_SoundQueueReceipt snd;
+    DM2_V1_SoundDelayedSlot *slot;
+    int16_t timer_slot;
+    uint8_t slot_index;
+    int map;
+
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&sound_backup, 0, sizeof(sound_backup));
+    receipt.game_tick = game_tick;
+    receipt.timer_type = 0x15u;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        goto process_sound_fail;
+    }
+    if (!candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0) {
+        receipt.blocked_no_due_timer = 1;
+        goto process_sound_fail;
+    }
+    queue_backup = candidate->timer_queue;
+    timer_backup = malloc((size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = malloc((size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup ||
+        !dm2_v1_game_load_runtime_candidate_sound_clone(&sound_backup,
+                                                        &candidate->sound_owner))
+        goto process_sound_rollback;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&candidate->timer_queue)) {
+        receipt.blocked_no_due_timer = 1;
+        goto process_sound_rollback;
+    }
+    timer_slot = candidate->timer_queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity ||
+        candidate->timer_entries[timer_slot].ttype != 0x15u) {
+        receipt.blocked_unsupported_type = 1;
+        goto process_sound_rollback;
+    }
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+    slot_index = (uint8_t)timer_entry.xA;
+    receipt.slot = slot_index;
+    if (slot_index >= DM2_V1_SOUND_DELAYED_SLOT_COUNT) {
+        receipt.blocked_slot = 1;
+        goto process_sound_rollback;
+    }
+    slot = &candidate->sound_owner.delayed[slot_index];
+    if (slot->l_00 == 0) {
+        receipt.blocked_slot = 1;
+        goto process_sound_rollback;
+    }
+    map = (int)(int8_t)slot->barr_04[3];
+    receipt.map = map;
+    receipt.x = (int16_t)(int8_t)slot->barr_04[4];
+    receipt.y = (int16_t)(int8_t)slot->barr_04[5];
+    receipt.ecxw = slot->w_0a;
+    receipt.volume = slot->w_0c;
+    if (map != candidate->current_map &&
+        map != candidate->sound_owner.spatial_audible_map &&
+        map != candidate->sound_owner.spatial_alternate_map) {
+        receipt.map_gate_noop = 1;
+        slot->l_00 = 0;
+    } else {
+        if (!candidate->sound_owner.spatial_context_valid ||
+            !candidate->sound_owner.queue_entries ||
+            candidate->sound_owner.queue_entry_count == 0u ||
+            !candidate->sound_owner.sample_bindings ||
+            candidate->sound_owner.sample_binding_count == 0u) {
+            receipt.blocked_sound = 1;
+            goto process_sound_rollback;
+        }
+        dm2_v1_sound_queue_state_init(&state, 0u);
+        if (!dm2_v1_sound_queue_bind_entries(
+                &state, candidate->sound_owner.queue_entries,
+                candidate->sound_owner.queue_entry_count,
+                candidate->sound_owner.queue_capacity)) {
+            receipt.blocked_sound = 1;
+            goto process_sound_rollback;
+        }
+        state.positional_count = candidate->sound_owner.positional_count;
+        state.immediate_count = candidate->sound_owner.immediate_count;
+        state.sound_enabled = candidate->sound_owner.sound_enabled;
+        state.master_sfx_volume = candidate->sound_owner.master_sfx_volume;
+        memcpy(state.positional, candidate->sound_owner.positional, sizeof(state.positional));
+        memcpy(state.immediate, candidate->sound_owner.immediate, sizeof(state.immediate));
+        memcpy(state.delayed, candidate->sound_owner.delayed, sizeof(state.delayed));
+        memcpy(state.sample_slots, candidate->sound_owner.sample_slots, sizeof(state.sample_slots));
+        memset(&env, 0, sizeof(env));
+        env.current_map = (int16_t)candidate->current_map;
+        env.gate_map_a = candidate->sound_owner.spatial_audible_map;
+        env.gate_map_b = candidate->sound_owner.spatial_alternate_map;
+        env.facing = candidate->source_party_direction;
+        env.party_x = candidate->source_party_x;
+        env.party_y = candidate->source_party_y;
+        env.gametick = (int32_t)game_tick;
+        memset(&snd, 0, sizeof(snd));
+        if (!dm2_v1_sound_queue_noise_gen1(
+                &state, (int8_t)slot->barr_04[0], (int8_t)slot->barr_04[1],
+                (int8_t)slot->barr_04[2], slot->w_0a, slot->w_0c,
+                receipt.x, receipt.y, 1, &env, &snd)) {
+            receipt.blocked_sound = 1;
+            goto process_sound_rollback;
+        }
+        candidate->sound_owner.positional_count = state.positional_count;
+        candidate->sound_owner.immediate_count = state.immediate_count;
+        memcpy(candidate->sound_owner.positional, state.positional, sizeof(candidate->sound_owner.positional));
+        memcpy(candidate->sound_owner.immediate, state.immediate, sizeof(candidate->sound_owner.immediate));
+        memcpy(candidate->sound_owner.delayed, state.delayed, sizeof(candidate->sound_owner.delayed));
+        memcpy(candidate->sound_owner.sample_slots, state.sample_slots, sizeof(candidate->sound_owner.sample_slots));
+        slot->l_00 = 0;
+        receipt.sound_queued = 1;
+    }
+    receipt.valid = 1;
+    receipt.consumed = 1;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash ^ candidate->candidate_hash,
+        (uint32_t)slot_index ^ ((uint32_t)(uint16_t)receipt.ecxw << 8) ^
+        ((uint32_t)(uint16_t)receipt.volume << 24) ^ (uint32_t)(uint16_t)map);
+    dm2_v1_game_load_runtime_candidate_sound_free(&sound_backup);
+    free(index_backup); free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+process_sound_rollback:
+    if (timer_backup && index_backup) {
+        memcpy(candidate->timer_entries, timer_backup,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(candidate->timer_indices, index_backup,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        candidate->timer_queue = queue_backup;
+    }
+    if (sound_backup.valid) {
+        dm2_v1_game_load_runtime_candidate_sound_free(&candidate->sound_owner);
+        candidate->sound_owner = sound_backup;
+        memset(&sound_backup, 0, sizeof(sound_backup));
+    }
+    free(index_backup); free(timer_backup);
+process_sound_fail:
+    dm2_v1_game_load_runtime_candidate_sound_free(&sound_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+static int dm2_v1_game_load_candidate_delete_ai_flags(
+    void *context, int creature_type, uint16_t *out_flags)
+{
+    const DM2_V1_GameLoadRuntimeSessionCandidate *candidate = context;
+    const DM2_AIDefinition *definition = NULL;
+    if (out_flags) *out_flags = 0u;
+    if (!candidate || !out_flags || creature_type < 0 ||
+        !dm2_v1_caii_source_owner_ai_spec_def(
+            &candidate->caii_source, creature_type, &definition) || !definition)
+        return 0;
+    *out_flags = definition->w0AIFlags;
+    return 1;
+}
+
+static int dm2_v1_game_load_candidate_delete_gdat_word1(
+    void *context, int creature_type, uint16_t *out_word)
+{
+    const DM2_V1_GameLoadRuntimeSessionCandidate *candidate = context;
+    if (out_word) *out_word = 0u;
+    if (!candidate || !candidate->asset_loader || !out_word || creature_type < 0)
+        return 0;
+    return dm2_v1_asset_load_word_value(
+        candidate->asset_loader, DM2_GDAT_CATEGORY_CREATURES,
+        creature_type, 0x01, out_word);
+}
+
+static int dm2_v1_game_load_candidate_delete_invoke(
+    void *context, int map, int xa, int ya, int xb, int sel,
+    int32_t tick, uint32_t *out_ticket)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate = context;
+    DM2_V1_TimerEntry timer;
+    int16_t slot;
+    uint16_t sel_uw;
+    if (out_ticket) *out_ticket = 0u;
+    if (!candidate || !candidate->timer_entries ||
+        candidate->timer_capacity == 0u || map < 0 || map > 0xff ||
+        xa < 0 || ya < 0 || xb < 0 || sel < 0 || tick < 0)
+        return 0;
+    memset(&timer, 0, sizeof(timer));
+    dm2_v1_timer_set_mticks(&timer, (int16_t)map, tick);
+    timer.ttype = 0x04u;
+    sel_uw = (uint16_t)sel;
+    timer.actor = sel_uw == 0u ? 1u : (sel_uw == 1u ? 3u :
+                    (sel_uw == 2u ? 2u : 0u));
+    timer.xA = (int8_t)(xa & 0xff);
+    timer.yA = (int8_t)(ya & 0xff);
+    timer.wvalueB = (int16_t)((xb & 0xff) | ((sel & 0xff) << 8));
+    slot = dm2_v1_timer_queue(&candidate->timer_queue, &timer);
+    if (slot < 0) return 0;
+    if (out_ticket) *out_ticket = (uint32_t)(uint16_t)slot + 1u;
+    return 1;
+}
+
+/* c_record.cpp:544-1074 — read-only DB4 branch of
+ * RECYCLE_A_RECORD_FROM_THE_WORLD.  The source can only recycle a creature
+ * after DELETE_CREATURE_RECORD owns its possession chain, CAII mode, invoke
+ * message and tile-rooted cut.  Keep this census separate from allocation:
+ * it explains a full DB4 pool without claiming that a candidate is safe to
+ * delete. */
+static void dm2_v1_game_load_candidate_recycler_census(
+    const DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint16_t *out_examined, int *out_found,
+    int16_t *out_record, int16_t *out_map,
+    int16_t *out_x, int16_t *out_y,
+    int16_t *out_caii_slot, int *out_caii_match,
+    uint16_t *out_timer_slot, int *out_pending_timer,
+    int16_t *out_possession_root, uint16_t *out_ai_flags,
+    int *out_ai_flags_known, uint16_t *out_gdat_word1,
+    int *out_gdat_word1_known, int *out_drop_slots_loaded,
+    int *out_delete_inputs_ready)
+{
+    uint16_t examined = 0u;
+    int found = 0;
+    int16_t found_record = DM2_V1_RECORD_HANDLE_NULL;
+    int16_t found_map = -1;
+    int16_t found_x = -1;
+    int16_t found_y = -1;
+    int16_t found_caii_slot = -1;
+    int found_caii_match = 0;
+    uint16_t found_timer_slot = 0xffffu;
+    int found_pending_timer = 0;
+    int16_t found_possession_root = DM2_V1_RECORD_HANDLE_END;
+    uint16_t found_ai_flags = 0u;
+    int found_ai_flags_known = 0;
+    uint16_t found_gdat_word1 = 0u;
+    int found_gdat_word1_known = 0;
+    int found_drop_slots_loaded = 0;
+    int found_delete_inputs_ready = 0;
+    int chain_corrupt = 0;
+    int map;
+
+    if (out_examined) *out_examined = 0u;
+    if (out_found) *out_found = 0;
+    if (out_record) *out_record = DM2_V1_RECORD_HANDLE_NULL;
+    if (out_map) *out_map = -1;
+    if (out_x) *out_x = -1;
+    if (out_y) *out_y = -1;
+    if (out_caii_slot) *out_caii_slot = -1;
+    if (out_caii_match) *out_caii_match = 0;
+    if (out_timer_slot) *out_timer_slot = 0xffffu;
+    if (out_pending_timer) *out_pending_timer = 0;
+    if (out_possession_root) *out_possession_root = DM2_V1_RECORD_HANDLE_END;
+    if (out_ai_flags) *out_ai_flags = 0u;
+    if (out_ai_flags_known) *out_ai_flags_known = 0;
+    if (out_gdat_word1) *out_gdat_word1 = 0u;
+    if (out_gdat_word1_known) *out_gdat_word1_known = 0;
+    if (out_drop_slots_loaded) *out_drop_slots_loaded = 0;
+    if (out_delete_inputs_ready) *out_delete_inputs_ready = 0;
+    if (!candidate || !candidate->record_pools.valid ||
+        !candidate->dungeon.raw_data) return;
+    for (map = 0; map < candidate->dungeon.level_count; ++map) {
+        int x;
+        if (map == candidate->current_map || map == candidate->source_party_map)
+            continue;
+        for (x = 0; x < candidate->dungeon.level_widths[map]; ++x) {
+            int y;
+            for (y = 0; y < candidate->dungeon.level_heights[map]; ++y) {
+                int16_t cursor = (int16_t)dm2_v1_dungeon_get_first_thing(
+                    &candidate->dungeon, map, x, y);
+                size_t budget = 0u;
+                int db;
+
+                for (db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+                    const DM2_V1_RecordPool *pool =
+                        &candidate->record_pools.pools[db];
+                    /* PC G1 continuation records share the source ObjectID
+                     * index space; the census must budget both the primary
+                     * and extension spans or it can stop before a DB4
+                     * recycler candidate past the primary pool. */
+                    if (pool->record_count > 0)
+                        budget += (size_t)pool->record_count;
+                    if (pool->extension_count > 0)
+                        budget += (size_t)pool->extension_count;
+                }
+                while (cursor != DM2_V1_RECORD_HANDLE_END &&
+                       cursor != DM2_V1_RECORD_HANDLE_NULL && budget-- != 0u) {
+                    const uint8_t *record = dm2_v1_record_pool_address(
+                        &candidate->record_pools, cursor);
+                    int16_t next;
+                    if (!record || !dm2_v1_record_pool_next_link(
+                            &candidate->record_pools, cursor, &next)) {
+                        chain_corrupt = 1;
+                        break;
+                    }
+                    if (next == DM2_V1_RECORD_HANDLE_NULL) {
+                        chain_corrupt = 1;
+                    }
+                    if (dm2_v1_record_handle_pool(cursor) == 4) {
+                        if (examined != UINT16_MAX) ++examined;
+                        /* Source DB4 recycler admission at c_record.cpp:
+                         * record word@2 != OBJECT_END and byte@0xf bit 2 is
+                         * clear before DELETE_CREATURE_RECORD is called. */
+                        if (dm2_v1_game_load_owner_read_u16le(record + 2) !=
+                                (uint16_t)DM2_V1_RECORD_HANDLE_END &&
+                            (record[15] & 0x04u) == 0u)
+                            {
+                                found = 1;
+                                if (found_record == DM2_V1_RECORD_HANDLE_NULL) {
+                                    found_record = cursor;
+                                    found_map = (int16_t)map;
+                                    found_x = (int16_t)x;
+                                    found_y = (int16_t)y;
+                                    found_possession_root =
+                                        (int16_t)dm2_v1_game_load_owner_read_u16le(
+                                            record + 2);
+                                    if (candidate->asset_loader &&
+                                        candidate->asset_loader->loaded) {
+                                        uint16_t word;
+                                        int slot;
+                                        found_gdat_word1_known =
+                                            dm2_v1_asset_load_word_value(
+                                                candidate->asset_loader,
+                                                DM2_GDAT_CATEGORY_CREATURES,
+                                                record[4], 0x01u,
+                                                &found_gdat_word1);
+                                        found_drop_slots_loaded = 1;
+                                        for (slot = 0;
+                                             slot < DM2_DROP_SLOT_COUNT; ++slot) {
+                                            if (!dm2_v1_asset_load_word_value(
+                                                    candidate->asset_loader,
+                                                    DM2_GDAT_CATEGORY_CREATURES,
+                                                    record[4],
+                                                    DM2_DROP_SLOT_FIRST + slot,
+                                                    &word)) {
+                                                found_drop_slots_loaded = 0;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    {
+                                        const DM2_AIDefinition *definition = NULL;
+                                        if (dm2_v1_caii_source_owner_ai_spec_def(
+                                                &candidate->caii_source, record[4],
+                                                &definition) && definition) {
+                                            found_ai_flags = definition->w0AIFlags;
+                                        found_ai_flags_known = 1;
+                                        }
+                                    }
+                                    found_caii_slot = (int16_t)record[5];
+                                    if (candidate->caii_slots.valid &&
+                                        candidate->caii_slots.slots &&
+                                        found_caii_slot >= 0 &&
+                                        found_caii_slot < candidate->caii_slots.capacity) {
+                                        const uint8_t *slot = candidate->caii_slots.slots +
+                                            (size_t)found_caii_slot * DM2_V1_CAII_SLOT_SIZE;
+                                        found_caii_match =
+                                            dm2_v1_game_load_owner_read_u16le(slot) ==
+                                                (uint16_t)(cursor & 0x03ff) ? 1 : 0;
+                                        found_timer_slot =
+                                            dm2_v1_game_load_owner_read_u16le(slot + 2);
+                                        found_pending_timer = found_timer_slot != 0xffffu &&
+                                            found_timer_slot != 0u;
+                                    }
+                                    found_delete_inputs_ready =
+                                        found_ai_flags_known &&
+                                        found_drop_slots_loaded &&
+                                        (!found_pending_timer) &&
+                                        (record[5] == 0xffu ||
+                                         found_caii_match) &&
+                                        (((found_ai_flags & 1u) != 0u) ||
+                                         found_gdat_word1_known);
+                                }
+                            }
+                    }
+                    cursor = next;
+                    if (chain_corrupt) break;
+                }
+                if (cursor != DM2_V1_RECORD_HANDLE_END &&
+                    cursor != DM2_V1_RECORD_HANDLE_NULL && budget == 0u)
+                    chain_corrupt = 1;
+                if (chain_corrupt) break;
+            }
+            if (chain_corrupt) break;
+        }
+        if (chain_corrupt) break;
+    }
+    if (chain_corrupt) {
+        /* A census that cannot verify every traversed tile chain must not
+         * leave an earlier DB4 candidate admissible for destructive reuse. */
+        found = 0;
+        found_record = DM2_V1_RECORD_HANDLE_NULL;
+        found_map = -1;
+        found_x = -1;
+        found_y = -1;
+        found_caii_slot = -1;
+        found_caii_match = 0;
+        found_timer_slot = 0xffffu;
+        found_pending_timer = 0;
+        found_possession_root = DM2_V1_RECORD_HANDLE_END;
+        found_ai_flags = 0u;
+        found_ai_flags_known = 0;
+        found_gdat_word1 = 0u;
+        found_gdat_word1_known = 0;
+        found_drop_slots_loaded = 0;
+        found_delete_inputs_ready = 0;
+    }
+    if (out_examined) *out_examined = examined;
+    if (out_found) *out_found = found;
+    if (out_record) *out_record = found_record;
+    if (out_map) *out_map = found_map;
+    if (out_x) *out_x = found_x;
+    if (out_y) *out_y = found_y;
+    if (out_caii_slot) *out_caii_slot = found_caii_slot;
+    if (out_caii_match) *out_caii_match = found_caii_match;
+    if (out_timer_slot) *out_timer_slot = found_timer_slot;
+    if (out_pending_timer) *out_pending_timer = found_pending_timer;
+    if (out_possession_root) *out_possession_root = found_possession_root;
+    if (out_ai_flags) *out_ai_flags = found_ai_flags;
+    if (out_ai_flags_known) *out_ai_flags_known = found_ai_flags_known;
+    if (out_gdat_word1) *out_gdat_word1 = found_gdat_word1;
+    if (out_gdat_word1_known) *out_gdat_word1_known = found_gdat_word1_known;
+    if (out_drop_slots_loaded) *out_drop_slots_loaded = found_drop_slots_loaded;
+    if (out_delete_inputs_ready) *out_delete_inputs_ready = found_delete_inputs_ready;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_proceed_alloc_creature_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadAllocCreatureTimerReceipt *out_receipt)
+{
+    DM2_V1_GameLoadAllocCreatureTimerReceipt receipt;
+    DM2_V1_RecordPoolSet pool_backup;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    uint8_t *dungeon_backup = NULL;
+    uint8_t *caii_backup = NULL;
+    DM2_V1_GameLoadSoundOwner sound_backup;
+    DM2_V1_TimerQueue queue_backup;
+    DM2_V1_DropRng rng_backup;
+    DM2_V1_TimerEntry timer_entry;
+    DM2_V1_SourceTimerQueue delete_timer_shadow;
+    DM2_V1_DeleteCreatureFullReceipt delete_receipt;
+    DM2_V1_GameLoadMoverecCaiiReceipt caii_receipt;
+    DM2_V1_CreatureSomethingReceipt something;
+    const uint8_t *animation = NULL;
+    const DM2_AIDefinition *ai = NULL;
+    uint8_t *record = NULL;
+    DM2_V1_SoundQueueState sound_state;
+    DM2_V1_SoundQueueEnv sound_env;
+    DM2_V1_SoundQueueReceipt sound_receipt;
+    int16_t timer_slot;
+    int16_t record_handle;
+    int16_t head;
+    int16_t adj[2] = {0, 0};
+    int map;
+    int x;
+    int y;
+    int dir;
+    int base_hp;
+    int hp;
+    int rand_dir;
+    int dx;
+    int dy;
+    int adx;
+    int ady;
+    int old_map;
+    int caii_alloc_count_backup;
+    size_t caii_bytes;
+    uint16_t delete_drop_slots[DM2_DROP_SLOT_COUNT];
+
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&sound_backup, 0, sizeof(sound_backup));
+    memset(&pool_backup, 0, sizeof(pool_backup));
+    memset(&caii_receipt, 0, sizeof(caii_receipt));
+    memset(&something, 0, sizeof(something));
+    memset(&delete_receipt, 0, sizeof(delete_receipt));
+    dm2_v1_source_timer_queue_init(&delete_timer_shadow);
+    memset(delete_drop_slots, 0, sizeof(delete_drop_slots));
+    receipt.game_tick = game_tick;
+    receipt.timer_type = 0x5eu;
+    receipt.caii_slot = -1;
+    receipt.think_timer_slot = -1;
+    receipt.recycler_candidate_record = DM2_V1_RECORD_HANDLE_NULL;
+    receipt.recycler_candidate_map = -1;
+    receipt.recycler_candidate_x = -1;
+    receipt.recycler_candidate_y = -1;
+    receipt.recycler_candidate_caii_slot = -1;
+    receipt.recycler_candidate_timer_slot = 0xffffu;
+    receipt.recycler_candidate_possession_root = DM2_V1_RECORD_HANDLE_END;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        goto alloc_creature_fail;
+    }
+    if (!candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0) {
+        receipt.blocked_no_due_timer = 1;
+        goto alloc_creature_fail;
+    }
+    old_map = candidate->current_map;
+    queue_backup = candidate->timer_queue;
+    rng_backup = candidate->caii_rng;
+    caii_alloc_count_backup = candidate->caii_slots.alloc_count;
+    if (!dm2_v1_record_pool_set_clone(&pool_backup, &candidate->record_pools) ||
+        candidate->dungeon.raw_size == 0u || !candidate->dungeon.raw_data)
+        goto alloc_creature_rollback;
+    dungeon_backup = malloc((size_t)candidate->dungeon.raw_size);
+    timer_backup = malloc((size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = malloc((size_t)candidate->timer_capacity * sizeof(*index_backup));
+    caii_bytes = (size_t)candidate->caii_slots.capacity * DM2_V1_CAII_SLOT_SIZE;
+    if (caii_bytes != 0u) caii_backup = malloc(caii_bytes);
+    if (!dungeon_backup || !timer_backup || !index_backup ||
+        (caii_bytes != 0u && !caii_backup) ||
+        !candidate->caii_slots.valid || !candidate->caii_slots.slots ||
+        !dm2_v1_game_load_runtime_candidate_sound_clone(
+            &sound_backup, &candidate->sound_owner))
+        goto alloc_creature_rollback;
+    memcpy(dungeon_backup, candidate->dungeon.raw_data,
+           (size_t)candidate->dungeon.raw_size);
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (caii_bytes != 0u)
+        memcpy(caii_backup, candidate->caii_slots.slots, caii_bytes);
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&candidate->timer_queue)) {
+        receipt.blocked_no_due_timer = 1;
+        goto alloc_creature_rollback;
+    }
+    timer_slot = candidate->timer_queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity ||
+        candidate->timer_entries[timer_slot].ttype != 0x5eu) {
+        receipt.blocked_unsupported_type = 1;
+        goto alloc_creature_rollback;
+    }
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+    map = dm2_v1_timer_get_map(&timer_entry);
+    x = (int)(int8_t)timer_entry.xA;
+    y = (int)(int8_t)timer_entry.yA;
+    receipt.x = (int16_t)x;
+    receipt.y = (int16_t)y;
+    receipt.creature_type = (uint8_t)timer_entry.wvalueB;
+    receipt.health_multiplier = 7u;
+    if (map < 0 || map >= candidate->dungeon.level_count ||
+        x < 0 || y < 0 || x >= candidate->dungeon.level_widths[map] ||
+        y >= candidate->dungeon.level_heights[map] ||
+        !dm2_v1_game_load_runtime_candidate_change_current_map(candidate, map, 0)) {
+        receipt.blocked_map = 1;
+        goto alloc_creature_rollback;
+    }
+    if (dm2_v1_get_creature_at(&candidate->record_pools, &candidate->dungeon,
+                               map, x, y) != DM2_V1_RECORD_HANDLE_NULL) {
+        receipt.blocked_tile = 1;
+        goto alloc_creature_rollback;
+    }
+    if (map == candidate->source_party_map &&
+        x == candidate->source_party_x && y == candidate->source_party_y) {
+        receipt.blocked_tile = 1;
+        goto alloc_creature_rollback;
+    }
+    if (!dm2_v1_caii_source_owner_ai_spec_def(
+            &candidate->caii_source, receipt.creature_type, &ai) || !ai ||
+        ai->BaseHP == 0u) {
+        receipt.blocked_ai = 1;
+        goto alloc_creature_rollback;
+    }
+    rand_dir = (int)dm2_v1_drops_randdir(&candidate->caii_rng);
+    if (rand_dir == 0) {
+        dir = (int)dm2_v1_drops_randdir(&candidate->caii_rng);
+    } else {
+        dx = x - (int)candidate->source_party_x;
+        dy = y - (int)candidate->source_party_y;
+        adx = dx < 0 ? -dx : dx;
+        ady = dy < 0 ? -dy : dy;
+        if (adx == ady) {
+            if (dm2_v1_drops_randbit(&candidate->caii_rng) == 0u) ++ady;
+            else ++adx;
+        }
+        dir = adx >= ady ? (dx <= 0 ? 1 : 3) : (dy <= 0 ? 2 : 0);
+    }
+    dir &= 3;
+    receipt.direction = (uint8_t)dir;
+    record_handle = dm2_v1_record_pool_alloc_new_record(
+        &candidate->record_pools, 4u);
+    record = dm2_v1_record_pool_address_mut(&candidate->record_pools,
+                                             record_handle);
+    if (record_handle < 0 || !record ||
+        candidate->record_pools.pools[4].record_size < 16) {
+        receipt.blocked_record = 1;
+        dm2_v1_game_load_candidate_recycler_census(
+            candidate, &receipt.recycler_candidates_examined,
+            &receipt.recycler_candidate_found,
+            &receipt.recycler_candidate_record,
+            &receipt.recycler_candidate_map,
+            &receipt.recycler_candidate_x,
+            &receipt.recycler_candidate_y,
+            &receipt.recycler_candidate_caii_slot,
+            &receipt.recycler_candidate_caii_match,
+            &receipt.recycler_candidate_timer_slot,
+            &receipt.recycler_candidate_pending_timer,
+            &receipt.recycler_candidate_possession_root,
+            &receipt.recycler_candidate_ai_flags,
+            &receipt.recycler_candidate_ai_flags_known,
+            &receipt.recycler_candidate_gdat_word1,
+            &receipt.recycler_candidate_gdat_word1_known,
+            &receipt.recycler_candidate_drop_slots_loaded,
+            &receipt.recycler_candidate_delete_inputs_ready);
+        if (receipt.recycler_candidate_found &&
+            receipt.recycler_candidate_delete_inputs_ready) {
+            const uint8_t *candidate_record = dm2_v1_record_pool_address(
+                &candidate->record_pools, receipt.recycler_candidate_record);
+            int slot;
+            int restored_map = 0;
+            if (!candidate_record || !candidate->asset_loader ||
+                !dm2_v1_game_load_runtime_candidate_change_current_map(
+                    candidate, receipt.recycler_candidate_map, 0))
+                goto alloc_creature_rollback;
+            for (slot = 0; slot < DM2_DROP_SLOT_COUNT; ++slot) {
+                if (!dm2_v1_asset_load_word_value(
+                        candidate->asset_loader, DM2_GDAT_CATEGORY_CREATURES,
+                        candidate_record[4], DM2_DROP_SLOT_FIRST + slot,
+                        &delete_drop_slots[slot]))
+                    goto alloc_creature_rollback;
+            }
+            restored_map = dm2_v1_delete_creature_record_full_with_context_and_invoke(
+                &candidate->record_pools, &candidate->dungeon,
+                &candidate->caii_slots, &delete_timer_shadow,
+                &candidate->caii_rng, receipt.recycler_candidate_map,
+                (unsigned long)game_tick, receipt.recycler_candidate_x,
+                receipt.recycler_candidate_y, 0, 0,
+                candidate->source_party_x, candidate->source_party_y,
+                candidate->source_party_direction, delete_drop_slots,
+                dm2_v1_game_load_candidate_delete_ai_flags, candidate,
+                dm2_v1_game_load_candidate_delete_gdat_word1, candidate,
+                dm2_v1_game_load_candidate_delete_invoke, candidate,
+                &delete_receipt);
+            if (!restored_map || !delete_receipt.valid ||
+                !delete_receipt.dealloc_performed ||
+                !dm2_v1_game_load_runtime_candidate_change_current_map(
+                    candidate, old_map, 0))
+                goto alloc_creature_rollback;
+            record_handle = dm2_v1_record_pool_alloc_new_record(
+                &candidate->record_pools, 4u);
+            record = dm2_v1_record_pool_address_mut(
+                &candidate->record_pools, record_handle);
+        }
+        if (record_handle < 0 || !record ||
+            candidate->record_pools.pools[4].record_size < 16)
+            goto alloc_creature_rollback;
+    }
+    base_hp = ((int)receipt.health_multiplier * (int)ai->BaseHP) >> 3;
+    hp = base_hp + (int)dm2_v1_drops_rand16(
+        &candidate->caii_rng, (uint16_t)((base_hp >> 3) + 1));
+    if (hp <= 0 || hp > 0xffff) {
+        receipt.blocked_ai = 1;
+        goto alloc_creature_rollback;
+    }
+    record[2] = 0xfeu; record[3] = 0xffu;
+    record[4] = receipt.creature_type;
+    record[5] = 0xffu;
+    record[6] = (uint8_t)hp; record[7] = (uint8_t)(hp >> 8);
+    record[8] = 0xffu; record[9] = 0xffu;
+    record[10] = 0u; record[11] = 0u;
+    record[12] = 0u; record[13] = 0u;
+    record[14] = 0u;
+    record[15] = (uint8_t)(0xf8u | (uint8_t)dir);
+    head = (int16_t)dm2_v1_dungeon_get_first_thing(&candidate->dungeon,
+                                                    map, x, y);
+    if (!dm2_v1_record_pool_append_to_list(&candidate->record_pools, &head,
+                                           record_handle) ||
+        dm2_v1_dungeon_set_first_thing(&candidate->dungeon, map, x, y,
+                                       (uint16_t)head) != 0) {
+        receipt.blocked_tile = 1;
+        goto alloc_creature_rollback;
+    }
+    if (!dm2_v1_game_load_runtime_session_candidate_activate_moverec_caii(
+            candidate, record_handle, (int16_t)x, (int16_t)y,
+            &caii_receipt) || !caii_receipt.valid) {
+        receipt.blocked_caii = 1;
+        goto alloc_creature_rollback;
+    }
+    receipt.caii_slot = caii_receipt.caii_slot;
+    receipt.think_timer_slot = caii_receipt.timer_slot;
+    adj[0] = (int16_t)dm2_v1_game_load_owner_read_u16le(
+        candidate->caii_slots.slots + (size_t)caii_receipt.caii_slot *
+        DM2_V1_CAII_SLOT_SIZE + 8u);
+    adj[1] = (int16_t)dm2_v1_game_load_owner_read_u16le(
+        candidate->caii_slots.slots + (size_t)caii_receipt.caii_slot *
+        DM2_V1_CAII_SLOT_SIZE + 10u);
+    if (dm2_v1_creature_something_1c9a_0a48_with_ai_spec(
+            &candidate->record_pools, &candidate->caii_slots,
+            candidate->asset_loader, ai, &candidate->caii_rng, record_handle,
+            adj, &animation, map, candidate->source_party_map, 0, 0, 0, x, y,
+            (unsigned long)game_tick, &something) < 0 || !something.valid) {
+        receipt.blocked_caii = 1;
+        goto alloc_creature_rollback;
+    }
+    /* c_1c9a.cpp:5539-5545 — 0a48 requests GEN1 with the creature's
+     * animation index. Keep the sound owner in this same transaction; a
+     * missing sample/map binding rolls back the summon rather than dropping
+     * the source side effect. */
+    if (something.noise_would_queue) {
+        if (!candidate->sound_owner.valid ||
+            !candidate->sound_owner.spatial_context_valid ||
+            !candidate->sound_owner.queue_entries ||
+            candidate->sound_owner.queue_entry_count == 0u ||
+            !candidate->sound_owner.sample_bindings ||
+            candidate->sound_owner.sample_binding_count == 0u) {
+            receipt.blocked_sound = 1;
+            goto alloc_creature_rollback;
+        }
+        dm2_v1_sound_queue_state_init(&sound_state, 0u);
+        if (!dm2_v1_sound_queue_bind_entries(
+                &sound_state, candidate->sound_owner.queue_entries,
+                candidate->sound_owner.queue_entry_count,
+                candidate->sound_owner.queue_capacity)) {
+            receipt.blocked_sound = 1;
+            goto alloc_creature_rollback;
+        }
+        sound_state.positional_count = candidate->sound_owner.positional_count;
+        sound_state.immediate_count = candidate->sound_owner.immediate_count;
+        sound_state.sound_enabled = candidate->sound_owner.sound_enabled;
+        sound_state.master_sfx_volume = candidate->sound_owner.master_sfx_volume;
+        memcpy(sound_state.positional, candidate->sound_owner.positional,
+               sizeof(sound_state.positional));
+        memcpy(sound_state.immediate, candidate->sound_owner.immediate,
+               sizeof(sound_state.immediate));
+        memcpy(sound_state.delayed, candidate->sound_owner.delayed,
+               sizeof(sound_state.delayed));
+        memcpy(sound_state.sample_slots, candidate->sound_owner.sample_slots,
+               sizeof(sound_state.sample_slots));
+        memset(&sound_env, 0, sizeof(sound_env));
+        sound_env.current_map = (int16_t)candidate->current_map;
+        sound_env.gate_map_a = candidate->sound_owner.spatial_audible_map;
+        sound_env.gate_map_b = candidate->sound_owner.spatial_alternate_map;
+        sound_env.facing = candidate->source_party_direction;
+        sound_env.party_x = candidate->source_party_x;
+        sound_env.party_y = candidate->source_party_y;
+        sound_env.gametick = (int32_t)game_tick;
+        memset(&sound_receipt, 0, sizeof(sound_receipt));
+        if (!dm2_v1_sound_queue_noise_gen1(
+                &sound_state, 0x0f, (int8_t)receipt.creature_type,
+                (int8_t)something.noise_index, 0x46, 0x80,
+                receipt.x, receipt.y, 1, &sound_env, &sound_receipt)) {
+            receipt.blocked_sound = 1;
+            goto alloc_creature_rollback;
+        }
+        candidate->sound_owner.positional_count = sound_state.positional_count;
+        candidate->sound_owner.immediate_count = sound_state.immediate_count;
+        memcpy(candidate->sound_owner.positional, sound_state.positional,
+               sizeof(candidate->sound_owner.positional));
+        memcpy(candidate->sound_owner.immediate, sound_state.immediate,
+               sizeof(candidate->sound_owner.immediate));
+        memcpy(candidate->sound_owner.delayed, sound_state.delayed,
+               sizeof(candidate->sound_owner.delayed));
+        memcpy(candidate->sound_owner.sample_slots, sound_state.sample_slots,
+               sizeof(candidate->sound_owner.sample_slots));
+        receipt.sound_queued = 1;
+        receipt.sound_index = (uint8_t)something.noise_index;
+    }
+    receipt.hit_points = (uint16_t)hp;
+    receipt.record = record_handle;
+    receipt.valid = 1;
+    receipt.consumed = 1;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash ^ candidate->candidate_hash,
+        (uint32_t)(uint16_t)record_handle ^ ((uint32_t)(uint16_t)x << 16) ^
+        (uint32_t)(uint16_t)y ^ ((uint32_t)receipt.creature_type << 24) ^
+        ((uint32_t)receipt.sound_index << 8));
+    dm2_v1_record_pool_set_free(&pool_backup);
+    dm2_v1_game_load_runtime_candidate_sound_free(&sound_backup);
+    free(dungeon_backup); free(caii_backup);
+    free(index_backup); free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+alloc_creature_rollback:
+    if (pool_backup.valid) {
+        dm2_v1_record_pool_set_free(&candidate->record_pools);
+        candidate->record_pools = pool_backup;
+        memset(&pool_backup, 0, sizeof(pool_backup));
+    }
+    if (sound_backup.valid) {
+        dm2_v1_game_load_runtime_candidate_sound_free(&candidate->sound_owner);
+        candidate->sound_owner = sound_backup;
+        memset(&sound_backup, 0, sizeof(sound_backup));
+    }
+    if (dungeon_backup && candidate && candidate->dungeon.raw_data)
+        memcpy(candidate->dungeon.raw_data, dungeon_backup,
+               (size_t)candidate->dungeon.raw_size);
+    if (timer_backup && index_backup) {
+        memcpy(candidate->timer_entries, timer_backup,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(candidate->timer_indices, index_backup,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        candidate->timer_queue = queue_backup;
+    }
+    if (caii_backup && candidate->caii_slots.slots)
+        memcpy(candidate->caii_slots.slots, caii_backup, caii_bytes);
+    candidate->caii_slots.alloc_count = caii_alloc_count_backup;
+    candidate->caii_rng = rng_backup;
+    if (candidate && candidate->current_map != old_map)
+        (void)dm2_v1_game_load_runtime_candidate_change_current_map(
+            candidate, old_map, 0);
+    free(dungeon_backup); free(caii_backup);
+    free(index_backup); free(timer_backup);
+alloc_creature_fail:
+    dm2_v1_game_load_runtime_candidate_sound_free(&sound_backup);
+    dm2_v1_record_pool_set_free(&pool_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_proceed_ench_power_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadEnchPowerTimerReceipt *out_receipt)
+{
+    DM2_V1_GameLoadEnchPowerTimerReceipt receipt;
+    DM2_V1_TimerEntry timer_entry;
+    DM2_V1_TimerQueue queue_backup;
+    DM2_V1_Party party_backup;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    int16_t timer_slot;
+    int old_map;
+    int map;
+    int16_t amount;
+    uint8_t actor_mask;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.game_tick = game_tick;
+    receipt.timer_type = 0x48u;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0) {
+        receipt.blocked_no_due_timer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    old_map = candidate->current_map;
+    queue_backup = candidate->timer_queue;
+    party_backup = candidate->party;
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto ench_power_rollback;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&candidate->timer_queue)) {
+        receipt.blocked_no_due_timer = 1;
+        goto ench_power_rollback;
+    }
+    timer_slot = candidate->timer_queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity) {
+        receipt.blocked_no_due_timer = 1;
+        goto ench_power_rollback;
+    }
+    if (candidate->timer_entries[timer_slot].ttype != 0x48u) {
+        receipt.blocked_unsupported_type = 1;
+        goto ench_power_rollback;
+    }
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+    map = dm2_v1_timer_get_map(&timer_entry);
+    receipt.map = map;
+    receipt.map_switch = old_map != map;
+    if (map < 0 || map >= candidate->dungeon.level_count ||
+        !dm2_v1_game_load_runtime_candidate_change_current_map(
+            candidate, map, 0)) {
+        receipt.blocked_map = 1;
+        goto ench_power_rollback;
+    }
+    if (candidate->party.heros_in_party < 0 ||
+        candidate->party.heros_in_party > DM2_MAX_HEROES) {
+        receipt.blocked_party = 1;
+        goto ench_power_rollback;
+    }
+    actor_mask = timer_entry.actor;
+    amount = (int16_t)((uint16_t)(uint8_t)timer_entry.xA |
+                       ((uint16_t)(uint8_t)timer_entry.yA << 8));
+    receipt.actor_mask = actor_mask;
+    receipt.amount = amount;
+    receipt.heroes_seen = candidate->party.heros_in_party;
+    for (int hero_index = 0;
+         hero_index < candidate->party.heros_in_party; ++hero_index) {
+        DM2_V1_Hero *hero = &candidate->party.hero[hero_index];
+        if ((actor_mask & (uint8_t)(1u << hero_index)) == 0u)
+            continue;
+        if (hero->curHP == 0) {
+            ++receipt.heroes_skipped_dead;
+            continue;
+        }
+        {
+            int32_t next = (int32_t)hero->ench_power - amount;
+            if (next < 0) next = 0;
+            hero->ench_power = (int16_t)next;
+        }
+        ++receipt.heroes_mutated;
+    }
+    receipt.valid = 1;
+    receipt.consumed = 1;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        dm2_v1_game_load_owner_hash_step(0x454e4838u, actor_mask),
+        (uint16_t)amount);
+    for (int hero_index = 0;
+         hero_index < candidate->party.heros_in_party; ++hero_index) {
+        receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+            receipt.transaction_hash,
+            (uint16_t)candidate->party.hero[hero_index].ench_power);
+    }
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+ench_power_rollback:
+    if (timer_backup && index_backup) {
+        memcpy(candidate->timer_entries, timer_backup,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(candidate->timer_indices, index_backup,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        candidate->timer_queue = queue_backup;
+        candidate->party = party_backup;
+        if (candidate->current_map != old_map)
+            (void)dm2_v1_game_load_runtime_candidate_change_current_map(
+                candidate, old_map, 0);
+    }
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_proceed_poison_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadPoisonTimerReceipt *out_receipt)
+{
+    DM2_V1_GameLoadPoisonTimerReceipt receipt;
+    DM2_V1_TimerEntry timer_entry;
+    DM2_V1_TimerEntry next_timer;
+    DM2_V1_TimerQueue queue_backup;
+    DM2_V1_Party party_backup;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    int16_t timer_slot;
+    int old_map;
+    int map;
+    int actor;
+    int16_t counters;
+    int32_t wound;
+    int32_t next_poison;
+    DM2_V1_Hero *hero;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.timer_type = 0x4bu;
+    receipt.game_tick = game_tick;
+    receipt.actor = -1;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0) {
+        receipt.blocked_no_due_timer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    old_map = candidate->current_map;
+    queue_backup = candidate->timer_queue;
+    party_backup = candidate->party;
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto poison_rollback;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&candidate->timer_queue)) {
+        receipt.blocked_no_due_timer = 1;
+        goto poison_rollback;
+    }
+    timer_slot = candidate->timer_queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity ||
+        candidate->timer_entries[timer_slot].ttype != 0x4bu) {
+        receipt.blocked_unsupported_type = 1;
+        goto poison_rollback;
+    }
+    map = dm2_v1_timer_get_map(&candidate->timer_entries[timer_slot]);
+    actor = (int)(int8_t)candidate->timer_entries[timer_slot].actor;
+    receipt.map = map;
+    receipt.actor = (int16_t)actor;
+    receipt.map_switch = old_map != map;
+    if (map < 0 || map >= candidate->dungeon.level_count ||
+        !dm2_v1_game_load_runtime_candidate_change_current_map(
+            candidate, map, 0)) {
+        receipt.blocked_map = 1;
+        goto poison_rollback;
+    }
+    if (candidate->party.heros_in_party <= 0 ||
+        candidate->party.heros_in_party > DM2_MAX_HEROES) {
+        receipt.blocked_party = 1;
+        goto poison_rollback;
+    }
+    if (actor < 0 || actor >= candidate->party.heros_in_party) {
+        receipt.blocked_actor = 1;
+        goto poison_rollback;
+    }
+    /* c_startend.cpp retains ddat.v1e0288 as the next champion number.  The
+     * source excludes only the hero whose one-based index matches that
+     * authenticated value; do not substitute party count or a host index. */
+    if (candidate->source_next_champion_number <= 0 ||
+        candidate->source_next_champion_number > DM2_MAX_HEROES) {
+        receipt.blocked_last_hero_owner = 1;
+        goto poison_rollback;
+    }
+    if (actor + 1 == candidate->source_next_champion_number) {
+        receipt.blocked_last_hero_owner = 1;
+        goto poison_rollback;
+    }
+    hero = &candidate->party.hero[actor];
+    receipt.poison_before = hero->poison;
+    receipt.poisoned_before = hero->poisoned;
+    receipt.cur_hp_before = hero->curHP;
+    receipt.hero_flags_before = (uint16_t)hero->heroflag;
+    counters = (int16_t)((uint16_t)(uint8_t)
+        candidate->timer_entries[timer_slot].xA |
+        ((uint16_t)(uint8_t)candidate->timer_entries[timer_slot].yA << 8));
+    receipt.amount = counters;
+    if (hero->poisoned <= 0) {
+        receipt.blocked_actor = 1;
+        goto poison_rollback;
+    }
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+
+    /* c_tim_proc.cpp:4165-4178: remove the timer's poison contribution,
+     * then enter c_hero.cpp:3397 DM2_PROCESS_POISON. */
+    hero->poisoned = (int8_t)(hero->poisoned - 1);
+    hero->poison = (int16_t)(hero->poison - counters);
+    wound = ((int32_t)counters + 0x1e) >> 6;
+    if (wound < 1) wound = 1;
+    receipt.wound_amount = (int16_t)(wound > INT16_MAX ? INT16_MAX : wound);
+    if (hero->curHP != 0) {
+        int32_t pending = (int32_t)hero->damagesuffered + wound;
+        if (pending > INT16_MAX) pending = INT16_MAX;
+        hero->damagesuffered = (int16_t)pending;
+    }
+    hero->heroflag = (int16_t)((uint16_t)hero->heroflag | 0x2800u);
+    counters = (int16_t)(counters - 1);
+    if (counters > 0) {
+        next_poison = (int32_t)hero->poison + counters;
+        if (next_poison > 0x0c00) {
+            counters = (int16_t)(0x0c00 - hero->poison);
+            if (counters < 0) counters = 0;
+        }
+        if (counters > 0) {
+            hero->poison = (int16_t)(hero->poison + counters);
+            hero->poisoned = (int8_t)(hero->poisoned + 1);
+            dm2_v1_timer_entry_init(&next_timer);
+            dm2_v1_timer_set_mticks(&next_timer, (int16_t)map,
+                                     game_tick + 0x24u);
+            next_timer.ttype = 0x4bu;
+            next_timer.actor = (uint8_t)actor;
+            next_timer.xA = (int8_t)(uint8_t)counters;
+            next_timer.yA = (int8_t)((uint16_t)counters >> 8);
+            if (dm2_v1_timer_queue(&candidate->timer_queue, &next_timer) < 0)
+                goto poison_rollback;
+            receipt.requeued = 1;
+        }
+    }
+    receipt.poison_after = hero->poison;
+    receipt.poisoned_after = hero->poisoned;
+    receipt.cur_hp_after = hero->curHP;
+    receipt.hero_flags_after = (uint16_t)hero->heroflag;
+    receipt.consumed = 1;
+    receipt.valid = 1;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash ^ candidate->candidate_hash,
+        (uint32_t)(uint16_t)actor ^ ((uint32_t)(uint16_t)receipt.poison_after << 16));
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+poison_rollback:
+    if (timer_backup && index_backup) {
+        memcpy(candidate->timer_entries, timer_backup,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(candidate->timer_indices, index_backup,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        candidate->timer_queue = queue_backup;
+        candidate->party = party_backup;
+        if (candidate->current_map != old_map)
+            (void)dm2_v1_game_load_runtime_candidate_change_current_map(
+                candidate, old_map, 0);
+    }
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_proceed_light_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadLightTimerReceipt *out_receipt)
+{
+    static const int16_t light_steps[16] = {
+        0, 5, 12, 24, 33, 40, 46, 51,
+        59, 68, 76, 82, 89, 94, 97, 100
+    };
+    DM2_V1_GameLoadLightTimerReceipt receipt;
+    DM2_V1_TimerEntry timer_entry;
+    DM2_V1_TimerEntry next_timer;
+    DM2_V1_TimerQueue queue_backup;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    int16_t timer_slot;
+    int old_map;
+    int map;
+    int16_t amount;
+    int abs_amount;
+    int16_t remaining;
+    int delta;
+    int16_t light_backup;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.timer_type = 0x46u;
+    receipt.game_tick = game_tick;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0) {
+        receipt.blocked_no_due_timer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    old_map = candidate->current_map;
+    light_backup = candidate->source_light_level;
+    queue_backup = candidate->timer_queue;
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto light_rollback;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&candidate->timer_queue)) {
+        receipt.blocked_no_due_timer = 1;
+        goto light_rollback;
+    }
+    timer_slot = candidate->timer_queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity) {
+        receipt.blocked_no_due_timer = 1;
+        goto light_rollback;
+    }
+    if (candidate->timer_entries[timer_slot].ttype != 0x46u) {
+        receipt.blocked_unsupported_type = 1;
+        goto light_rollback;
+    }
+    amount = (int16_t)((uint16_t)(uint8_t)candidate->timer_entries[timer_slot].xA |
+                       ((uint16_t)(uint8_t)candidate->timer_entries[timer_slot].yA << 8));
+    abs_amount = amount < 0 ? -(int)amount : (int)amount;
+    receipt.amount = amount;
+    if (abs_amount >= 16) {
+        receipt.blocked_value = 1;
+        goto light_rollback;
+    }
+    map = dm2_v1_timer_get_map(&candidate->timer_entries[timer_slot]);
+    receipt.map = map;
+    if (map < 0 || map >= candidate->dungeon.level_count ||
+        !dm2_v1_game_load_runtime_candidate_change_current_map(candidate, map, 0)) {
+        receipt.blocked_map = 1;
+        goto light_rollback;
+    }
+    receipt.map_switch = old_map != map;
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+    receipt.light_before = candidate->source_light_level;
+    if (amount == 0) {
+        delta = 0;
+        remaining = 0;
+    } else {
+        delta = light_steps[abs_amount] - light_steps[abs_amount - 1];
+        if (amount > 0) delta *= 2;
+        else delta = -delta;
+        remaining = (int16_t)(amount < 0 ? -(abs_amount - 1) : abs_amount - 1);
+    }
+    candidate->source_light_level = (int16_t)(candidate->source_light_level + delta);
+    receipt.light_after = candidate->source_light_level;
+    receipt.remaining = remaining;
+    if (remaining != 0) {
+        dm2_v1_timer_entry_init(&next_timer);
+        dm2_v1_timer_set_mticks(&next_timer, (int16_t)map, game_tick + 8u);
+        next_timer.ttype = 0x46u;
+        next_timer.actor = 0u;
+        next_timer.xA = (int8_t)(uint8_t)remaining;
+        next_timer.yA = (int8_t)(uint8_t)((uint16_t)remaining >> 8);
+        if (dm2_v1_timer_queue(&candidate->timer_queue, &next_timer) < 0)
+            goto light_rollback;
+        receipt.requeued = 1;
+    }
+    receipt.consumed = 1;
+    receipt.valid = 1;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash ^ candidate->candidate_hash,
+        (uint32_t)(uint16_t)amount ^ ((uint32_t)(uint16_t)candidate->source_light_level << 16));
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+light_rollback:
+    if (timer_backup && index_backup) {
+        memcpy(candidate->timer_entries, timer_backup,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(candidate->timer_indices, index_backup,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        candidate->timer_queue = queue_backup;
+        candidate->source_light_level = light_backup;
+        if (candidate->current_map != old_map)
+            (void)dm2_v1_game_load_runtime_candidate_change_current_map(
+                candidate, old_map, 0);
+    }
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_proceed_ornate_noise_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadOrnateNoiseTimerReceipt *out_receipt)
+{
+    DM2_V1_GameLoadOrnateNoiseTimerReceipt receipt;
+    DM2_V1_TimerEntry timer_entry;
+    DM2_V1_TimerEntry next_timer;
+    DM2_V1_GameLoadSoundOwner sound_backup;
+    DM2_V1_SoundQueueEnv sound_env;
+    DM2_V1_GameLoadSoundNoiseReceipt sound_receipt;
+    DM2_V1_TimerQueue queue_backup;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    uint8_t record_backup[16];
+    uint8_t *record;
+    int16_t timer_slot;
+    int16_t record_handle;
+    int old_map;
+    int map;
+    int x;
+    int y;
+    int pool;
+    int record_size = 0;
+    int raw_tile;
+    int wall;
+    int category;
+    uint8_t graphic_index;
+    uint8_t decoration;
+    uint16_t actuator_word;
+    uint16_t animation_length;
+    int active;
+
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&sound_backup, 0, sizeof(sound_backup));
+    memset(&sound_env, 0, sizeof(sound_env));
+    memset(&sound_receipt, 0, sizeof(sound_receipt));
+    receipt.record = DM2_V1_RECORD_HANDLE_NULL;
+    receipt.timer_type = 0x5au;
+    receipt.game_tick = game_tick;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0) {
+        receipt.blocked_no_due_timer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    old_map = candidate->current_map;
+    queue_backup = candidate->timer_queue;
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto ornate_noise_rollback;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&candidate->timer_queue)) {
+        receipt.blocked_no_due_timer = 1;
+        goto ornate_noise_rollback;
+    }
+    timer_slot = candidate->timer_queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity ||
+        candidate->timer_entries[timer_slot].ttype != 0x5au) {
+        receipt.blocked_unsupported_type = 1;
+        goto ornate_noise_rollback;
+    }
+    record_handle = candidate->timer_entries[timer_slot].wvalueB;
+    pool = dm2_v1_record_handle_pool(record_handle);
+    record_size = (pool >= 0 && pool < DM2_V1_RECORD_POOL_COUNT)
+        ? candidate->record_pools.pools[pool].record_size : 0;
+    record = dm2_v1_record_pool_address_mut(&candidate->record_pools,
+                                             record_handle);
+    if (!record || record_size <= 0 || record_size > (int)sizeof(record_backup)) {
+        receipt.blocked_record = 1;
+        goto ornate_noise_rollback;
+    }
+    memcpy(record_backup, record, (size_t)record_size);
+    receipt.record = record_handle;
+    map = dm2_v1_timer_get_map(&candidate->timer_entries[timer_slot]);
+    x = (int)(int8_t)candidate->timer_entries[timer_slot].xA;
+    y = (int)(int8_t)candidate->timer_entries[timer_slot].yA;
+    receipt.map = map;
+    if (map < 0 || map >= candidate->dungeon.level_count || x < 0 || y < 0 ||
+        x >= candidate->dungeon.level_widths[map] ||
+        y >= candidate->dungeon.level_heights[map] ||
+        !dm2_v1_game_load_runtime_candidate_change_current_map(candidate, map, 0)) {
+        receipt.blocked_map = 1;
+        goto ornate_noise_rollback;
+    }
+    receipt.map_switch = old_map != map;
+    receipt.word2_before = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+    active = (record[4] & 0x01u) != 0;
+    if (active) {
+        raw_tile = dm2_v1_dungeon_get_tile_raw(&candidate->dungeon, map, x, y);
+        if (raw_tile < 0 || map != candidate->local_level_graphics.map) {
+            receipt.blocked_map = 1;
+            goto ornate_noise_rollback;
+        }
+        wall = ((raw_tile >> 5) & 7) == 0;
+        category = wall ? 0x09 : 0x0a;
+        actuator_word = (uint16_t)record[4] | ((uint16_t)record[5] << 8);
+        graphic_index = (uint8_t)((actuator_word >> 12) & 0x0fu);
+        decoration = 0xffu;
+        if (wall) {
+            if (graphic_index > 0u &&
+                graphic_index <= candidate->local_level_graphics.wall_count)
+                decoration = candidate->local_level_graphics.wall_gfx[graphic_index - 1u];
+        } else if (graphic_index > 0u &&
+                   graphic_index <= candidate->local_level_graphics.floor_count) {
+            decoration = candidate->local_level_graphics.floor_gfx[graphic_index - 1u];
+        }
+        if (!candidate->asset_loader || decoration == 0xffu) {
+            receipt.blocked_record = 1;
+            goto ornate_noise_rollback;
+        }
+        {
+            DM2_V1_GetOrnateAnimLenReceipt anim;
+            if (!dm2_v1_get_ornate_anim_len_receipt(
+                    candidate->asset_loader, category, decoration, 0, &anim) ||
+                !anim.accepted || anim.length == 0u) {
+                receipt.blocked_record = 1;
+                goto ornate_noise_rollback;
+            }
+            animation_length = anim.length;
+        }
+        receipt.category = (uint8_t)category;
+        receipt.decoration = decoration;
+        receipt.animation_length = animation_length;
+        /* The source continues the timer path when the optional sound queue
+         * rejects a sample/map gate. Clone it when possible so a later timer
+         * queue failure still restores the complete candidate. */
+        (void)dm2_v1_game_load_runtime_candidate_sound_clone(
+            &sound_backup, &candidate->sound_owner);
+    }
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+    if (!active) {
+        record[2] = (uint8_t)(receipt.word2_before & 0xffu);
+        record[3] = 0u;
+        receipt.word2_after = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+        receipt.frame_cleared = 1;
+    } else {
+        sound_env.current_map = (int16_t)map;
+        sound_env.gate_map_a = candidate->sound_owner.spatial_audible_map;
+        sound_env.gate_map_b = candidate->sound_owner.spatial_alternate_map;
+        sound_env.facing = candidate->source_party_direction;
+        sound_env.party_x = candidate->source_party_x;
+        sound_env.party_y = candidate->source_party_y;
+        sound_env.gametick = (int32_t)game_tick;
+        next_timer = timer_entry;
+        dm2_v1_timer_set_mticks(&next_timer, (int16_t)map,
+            (uint32_t)dm2_v1_timer_get_ticks(&timer_entry) + animation_length);
+        if (candidate->sound_owner.valid &&
+            dm2_v1_game_load_sound_owner_queue_noise_gen2(
+                &candidate->sound_owner, (int8_t)category, (int8_t)decoration,
+                (int8_t)0x88, (int8_t)0xfe, (int16_t)x, (int16_t)y, 1,
+                (int16_t)0x8c, (int16_t)0x80, &sound_env, &sound_receipt))
+            receipt.sound_queued = 1;
+        if (dm2_v1_timer_queue(&candidate->timer_queue, &next_timer) < 0)
+            goto ornate_noise_rollback;
+        receipt.requeued = 1;
+    }
+    receipt.consumed = 1;
+    receipt.valid = 1;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash ^ candidate->candidate_hash,
+        (uint32_t)(uint16_t)record_handle ^ ((uint32_t)receipt.word2_after << 16));
+    free(index_backup);
+    free(timer_backup);
+    dm2_v1_game_load_runtime_candidate_sound_free(&sound_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+ornate_noise_rollback:
+    if (timer_backup && index_backup) {
+        memcpy(candidate->timer_entries, timer_backup,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(candidate->timer_indices, index_backup,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        candidate->timer_queue = queue_backup;
+        if (record && record_size > 0 && record_size <= (int)sizeof(record_backup))
+            memcpy(record, record_backup, (size_t)record_size);
+        if (candidate->current_map != old_map)
+            (void)dm2_v1_game_load_runtime_candidate_change_current_map(
+                candidate, old_map, 0);
+    }
+    if (sound_backup.valid) {
+        dm2_v1_game_load_runtime_candidate_sound_free(&candidate->sound_owner);
+        candidate->sound_owner = sound_backup;
+        memset(&sound_backup, 0, sizeof(sound_backup));
+    }
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_proceed_ornate_animator_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadOrnateAnimatorTimerReceipt *out_receipt)
+{
+    DM2_V1_GameLoadOrnateAnimatorTimerReceipt receipt;
+    DM2_V1_TimerEntry timer_entry;
+    DM2_V1_TimerEntry next_timer;
+    DM2_V1_TimerQueue queue_backup;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    uint8_t record_backup[16];
+    uint8_t *record = NULL;
+    int16_t timer_slot;
+    int16_t record_handle;
+    int old_map;
+    int map;
+    int wall;
+    int category;
+    int record_size;
+    uint8_t decoration;
+    uint16_t word2;
+    uint16_t frame;
+    uint16_t word4;
+    uint8_t graphic_index;
+    DM2_V1_GetOrnateAnimLenReceipt anim;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.record = DM2_V1_RECORD_HANDLE_NULL;
+    receipt.timer_type = 0x55u;
+    receipt.game_tick = game_tick;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        goto ornate_animator_rollback;
+    }
+    if (!candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0) {
+        receipt.blocked_no_due_timer = 1;
+        goto ornate_animator_rollback;
+    }
+    old_map = candidate->current_map;
+    queue_backup = candidate->timer_queue;
+    timer_backup = malloc((size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = malloc((size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto ornate_animator_rollback;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&candidate->timer_queue)) {
+        receipt.blocked_no_due_timer = 1;
+        goto ornate_animator_rollback;
+    }
+    timer_slot = candidate->timer_queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity ||
+        candidate->timer_entries[timer_slot].ttype != 0x55u) {
+        receipt.blocked_unsupported_type = 1;
+        goto ornate_animator_rollback;
+    }
+    timer_entry = candidate->timer_entries[timer_slot];
+    record_handle = (int16_t)((uint8_t)timer_entry.xA |
+                              ((uint16_t)(uint8_t)timer_entry.yA << 8));
+    receipt.record = record_handle;
+    if (dm2_v1_record_handle_pool(record_handle) != 3) {
+        receipt.blocked_record = 1;
+        goto ornate_animator_rollback;
+    }
+    record = dm2_v1_record_pool_address_mut(&candidate->record_pools, record_handle);
+    record_size = candidate->record_pools.pools[3].record_size;
+    if (!record || record_size <= 0 || record_size > (int)sizeof(record_backup)) {
+        receipt.blocked_record = 1;
+        goto ornate_animator_rollback;
+    }
+    memcpy(record_backup, record, (size_t)record_size);
+    map = dm2_v1_timer_get_map(&timer_entry);
+    receipt.map = map;
+    if (map != candidate->local_level_graphics.map ||
+        map < 0 || map >= candidate->dungeon.level_count ||
+        !dm2_v1_game_load_runtime_candidate_change_current_map(candidate, map, 0)) {
+        receipt.blocked_map = 1;
+        goto ornate_animator_rollback;
+    }
+    receipt.animation_mode = (uint8_t)(timer_entry.wvalueB & 0xff);
+    /* c_tim_proc.cpp passes the wall/floor selector as the timer's mode;
+     * unlike 0x5A, 0x55 must not infer the GDAT category from the tile. */
+    wall = (timer_entry.wvalueB & 1) != 0;
+    category = wall ? 0x09 : 0x0a;
+    word4 = (uint16_t)record[4] | ((uint16_t)record[5] << 8);
+    graphic_index = (uint8_t)((word4 >> 12) & 0x0fu);
+    decoration = 0xffu;
+    if (wall) {
+        if (graphic_index > 0u && graphic_index <= candidate->local_level_graphics.wall_count)
+            decoration = candidate->local_level_graphics.wall_gfx[graphic_index - 1u];
+    } else if (graphic_index > 0u && graphic_index <= candidate->local_level_graphics.floor_count) {
+        decoration = candidate->local_level_graphics.floor_gfx[graphic_index - 1u];
+    }
+    if (!candidate->asset_loader || decoration == 0xffu ||
+        !dm2_v1_get_ornate_anim_len_receipt(candidate->asset_loader, category,
+                                             decoration, 0, &anim) ||
+        !anim.accepted || anim.length == 0u) {
+        receipt.blocked_asset = 1;
+        goto ornate_animator_rollback;
+    }
+    receipt.decoration = decoration;
+    receipt.animation_length = anim.length;
+    word2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+    frame = (uint16_t)((word2 >> 7) & 0x1ffu);
+    receipt.word2_before = word2;
+    receipt.frame_before = frame;
+    frame = (uint16_t)((frame + 1u) & 0x1ffu);
+    word2 = (uint16_t)((word2 & 0x007fu) | (frame << 7));
+    record[2] = (uint8_t)word2;
+    record[3] = (uint8_t)(word2 >> 8);
+    receipt.frame_after = frame;
+    receipt.word2_after = word2;
+    receipt.frame_advanced = 1;
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+    next_timer = timer_entry;
+    dm2_v1_timer_set_mticks(&next_timer, (int16_t)map,
+                             (uint32_t)dm2_v1_timer_get_ticks(&timer_entry) + 1u);
+    if (dm2_v1_timer_queue(&candidate->timer_queue, &next_timer) < 0)
+        goto ornate_animator_rollback;
+    receipt.requeued = 1;
+    receipt.consumed = 1;
+    receipt.valid = 1;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash ^ candidate->candidate_hash,
+        (uint32_t)(uint16_t)record_handle ^ ((uint32_t)word2 << 16));
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+ornate_animator_rollback:
+    if (timer_backup && index_backup) {
+        memcpy(candidate->timer_entries, timer_backup,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(candidate->timer_indices, index_backup,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        candidate->timer_queue = queue_backup;
+        if (record && record_size > 0 && record_size <= (int)sizeof(record_backup))
+            memcpy(record, record_backup, (size_t)record_size);
+        if (candidate->current_map != old_map)
+            (void)dm2_v1_game_load_runtime_candidate_change_current_map(candidate, old_map, 0);
+    }
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_proceed_hero_ench_flag_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadHeroEnchFlagTimerReceipt *out_receipt)
+{
+    DM2_V1_GameLoadHeroEnchFlagTimerReceipt receipt;
+    DM2_V1_TimerEntry timer_entry;
+    DM2_V1_TimerQueue queue_backup;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    DM2_V1_Party party_backup;
+    uint8_t countdown_backup;
+    int16_t target_backup;
+    int16_t timer_slot;
+    int old_map;
+    int map;
+    int target;
+    int hero_index;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.target_slot = -1;
+    receipt.timer_type = 0x47u;
+    receipt.game_tick = game_tick;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0) {
+        receipt.blocked_no_due_timer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    old_map = candidate->current_map;
+    queue_backup = candidate->timer_queue;
+    party_backup = candidate->party;
+    countdown_backup = candidate->source_hero_ench_countdown;
+    target_backup = candidate->source_hero_ench_target;
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto hero_ench_flag_rollback;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&candidate->timer_queue)) {
+        receipt.blocked_no_due_timer = 1;
+        goto hero_ench_flag_rollback;
+    }
+    timer_slot = candidate->timer_queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity) {
+        receipt.blocked_no_due_timer = 1;
+        goto hero_ench_flag_rollback;
+    }
+    if (candidate->timer_entries[timer_slot].ttype != 0x47u) {
+        receipt.blocked_unsupported_type = 1;
+        goto hero_ench_flag_rollback;
+    }
+    target = candidate->source_hero_ench_target;
+    if (target < 0 || target > DM2_MAX_HEROES ||
+        (target != 0 && target > candidate->party.heros_in_party)) {
+        receipt.blocked_party = 1;
+        goto hero_ench_flag_rollback;
+    }
+    map = dm2_v1_timer_get_map(&candidate->timer_entries[timer_slot]);
+    receipt.map = map;
+    receipt.target_slot = (int16_t)(target == 0 ? -1 : target - 1);
+    if (map < 0 || map >= candidate->dungeon.level_count ||
+        !dm2_v1_game_load_runtime_candidate_change_current_map(candidate, map, 0)) {
+        receipt.blocked_map = 1;
+        goto hero_ench_flag_rollback;
+    }
+    receipt.map_switch = old_map != map;
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+    receipt.countdown_before = candidate->source_hero_ench_countdown;
+    candidate->source_hero_ench_countdown--;
+    receipt.countdown_after = candidate->source_hero_ench_countdown;
+    receipt.countdown_decremented = 1;
+    receipt.countdown_expired = candidate->source_hero_ench_countdown == 0u;
+    if (receipt.countdown_expired && target != 0) {
+        hero_index = target - 1;
+        receipt.hero_flags_before = (uint16_t)candidate->party.hero[hero_index].heroflag;
+        if (candidate->party.hero[hero_index].curHP != 0) {
+            candidate->party.hero[hero_index].heroflag |= (int16_t)0x4000;
+            receipt.hero_flag_set = 1;
+        } else {
+            receipt.hero_skipped_dead = 1;
+        }
+        receipt.hero_flags_after = (uint16_t)candidate->party.hero[hero_index].heroflag;
+    }
+    receipt.consumed = 1;
+    receipt.valid = 1;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash ^ candidate->candidate_hash,
+        (uint32_t)timer_entry.l_00 ^
+        ((uint32_t)candidate->source_hero_ench_countdown << 16) ^
+        (uint32_t)(uint16_t)receipt.target_slot);
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+hero_ench_flag_rollback:
+    if (timer_backup && index_backup) {
+        memcpy(candidate->timer_entries, timer_backup,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(candidate->timer_indices, index_backup,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        candidate->timer_queue = queue_backup;
+        candidate->party = party_backup;
+        candidate->source_hero_ench_countdown = countdown_backup;
+        candidate->source_hero_ench_target = target_backup;
+        if (candidate->current_map != old_map)
+            (void)dm2_v1_game_load_runtime_candidate_change_current_map(
+                candidate, old_map, 0);
+    }
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+/* c_cloud.cpp::DM2_075f_0182 admission for the bounded resurrection cloud.
+ * The origin scan does not treat every DB3 as a cloud actuator: only DB3
+ * type 0x26 records whose spell match survives the w4 gates are invoked.
+ * The candidate has no authenticated invoke-owner for that positive branch,
+ * so callers reject only that exact case and may still create a cloud on a
+ * chain containing unrelated DB3 records. */
+static int dm2_v1_resurrection_cloud_has_matching_actuator(
+    const DM2_V1_RecordPoolSet *pools, int16_t head, int16_t cloud_spell,
+    int16_t intensity, int chain_limit, int apply)
+{
+    int steps = 0;
+    int16_t link = head;
+    while (link != DM2_V1_RECORD_HANDLE_END) {
+        const uint8_t *record;
+        uint8_t *record_mut = NULL;
+        int16_t next;
+        if (link == DM2_V1_RECORD_HANDLE_NULL || steps++ >= chain_limit ||
+            !(record = dm2_v1_record_pool_address(pools, link)) ||
+            !dm2_v1_record_pool_next_link(pools, link, &next))
+            return -1;
+        if (apply) {
+            record_mut = dm2_v1_record_pool_address_mut(
+                (DM2_V1_RecordPoolSet *)pools, link);
+            if (!record_mut) return -1;
+        }
+        if (dm2_v1_record_handle_pool(link) == DM2_DB_ACTUATOR) {
+            uint16_t w2;
+            uint16_t w4;
+            int match;
+            if (pools->pools[DM2_DB_ACTUATOR].record_size < 6)
+                return -1;
+            w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+            if ((w2 & 0x7fu) == 0x26u) {
+                match = (w2 & 0xff80u) == 0xff80u ||
+                    (uint16_t)(w2 >> 7) ==
+                        (uint16_t)((cloud_spell - (int16_t)0xff80) & 0x7f);
+                w4 = (uint16_t)record[4] | ((uint16_t)record[5] << 8);
+                match ^= (int)((w4 >> 5) & 1u);
+                if ((w4 & 0x0004u) != 0u &&
+                    intensity < ((uint16_t)cloud_spell == 0xff82u ? 0x7f : 0xff))
+                    match = 0;
+                if ((w4 & 0x0018u) == 0x0018u)
+                    match = !match;
+                if (match) {
+                    if (apply) {
+                        uint8_t action = (uint8_t)((w4 >> 3) & 3u);
+                        uint8_t once = (uint8_t)((w4 >> 2) & 1u);
+                        uint8_t next_once;
+                        if (action == 0u) next_once = 1u;
+                        else if (action == 1u) next_once = 0u;
+                        else if (action == 2u) next_once = (uint8_t)(once ^ 1u);
+                        else next_once = once; /* source default: unchanged */
+                        w4 = (uint16_t)((w4 & (uint16_t)~0x0004u) |
+                                        ((uint16_t)next_once << 2));
+                        record_mut[4] = (uint8_t)w4;
+                        record_mut[5] = (uint8_t)(w4 >> 8);
+                    }
+                    if (!apply) return 1;
+                }
+            }
+        }
+        link = next;
+    }
+    return 0;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_proceed_resurrection_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadResurrectionTimerReceipt *out_receipt)
+{
+    DM2_V1_GameLoadResurrectionTimerReceipt receipt;
+    DM2_V1_TimerEntry timer_entry;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    DM2_V1_RecordPoolSet pool_backup;
+    uint8_t *raw_backup = NULL;
+    DM2_V1_TimerQueue queue_backup;
+    DM2_V1_Party party_backup;
+    int16_t timer_slot;
+    int old_map;
+    int map;
+    int hero_index;
+    uint8_t phase;
+    int16_t new_max;
+    int x;
+    int y;
+    int16_t cursor;
+    int16_t next;
+    int found_record = DM2_V1_RECORD_HANDLE_NULL;
+
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&pool_backup, 0, sizeof(pool_backup));
+    receipt.timer_type = 0x0du;
+    receipt.game_tick = game_tick;
+    receipt.hero_index = -1;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0) {
+        receipt.blocked_no_due_timer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    old_map = candidate->current_map;
+    queue_backup = candidate->timer_queue;
+    party_backup = candidate->party;
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto resurrection_rollback;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&candidate->timer_queue)) {
+        receipt.blocked_no_due_timer = 1;
+        goto resurrection_rollback;
+    }
+    timer_slot = candidate->timer_queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity ||
+        candidate->timer_entries[timer_slot].ttype != 0x0du) {
+        receipt.blocked_unsupported_type = 1;
+        goto resurrection_rollback;
+    }
+    map = dm2_v1_timer_get_map(&candidate->timer_entries[timer_slot]);
+    hero_index = candidate->timer_entries[timer_slot].actor;
+    phase = (uint8_t)((uint16_t)candidate->timer_entries[timer_slot].wvalueB >> 8);
+    receipt.map = map;
+    receipt.hero_index = (int16_t)hero_index;
+    receipt.phase = phase;
+    if (map < 0 || map >= candidate->dungeon.level_count) {
+        receipt.blocked_map = 1;
+        goto resurrection_rollback;
+    }
+    if (hero_index < 0 || hero_index >= candidate->party.heros_in_party ||
+        hero_index >= DM2_MAX_HEROES) {
+        receipt.blocked_actor = 1;
+        goto resurrection_rollback;
+    }
+    if (phase != 0u) {
+        if (phase == 2u) {
+            DM2_V1_TimerEntry cloud_timer;
+            DM2_V1_SoundQueueEnv sound_env;
+            DM2_V1_GameLoadSoundNoiseReceipt sound_receipt;
+            int16_t head;
+            int16_t cloud_record;
+            int chain_limit = 0;
+            int direction;
+            uint8_t *cloud;
+            int matching_actuator;
+
+            x = (int)(int8_t)candidate->timer_entries[timer_slot].xA;
+            y = (int)(int8_t)candidate->timer_entries[timer_slot].yA;
+            direction = (int)(int8_t)(uint8_t)
+                ((uint16_t)candidate->timer_entries[timer_slot].wvalueB & 0xffu);
+            if (x < 0 || y < 0 || map < 0 ||
+                map >= candidate->dungeon.level_count ||
+                x >= candidate->dungeon.level_widths[map] ||
+                y >= candidate->dungeon.level_heights[map] ||
+                !candidate->sound_owner.valid ||
+                !candidate->sound_owner.runtime_queue_initialized ||
+                !candidate->sound_owner.queue_entries ||
+                !candidate->sound_owner.sample_bindings) {
+                receipt.blocked_cloud_owner = 1;
+                goto resurrection_rollback;
+            }
+            /* c_cloud.cpp scans the origin chain for matching DB3 type-0x26
+             * actuators after creating the DB15 record.  Unrelated DB3
+             * records are not part of this cloud owner and must not block it;
+             * a matching actuator remains fail-closed until its invoke-owner
+             * is authenticated. */
+            head = (int16_t)dm2_v1_dungeon_get_first_thing(
+                &candidate->dungeon, map, x, y);
+            for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+                const DM2_V1_RecordPool *pool =
+                    &candidate->record_pools.pools[db];
+                if (pool->record_count < 0 || pool->extension_count < 0 ||
+                    chain_limit > INT_MAX - pool->record_count -
+                        pool->extension_count) {
+                    receipt.blocked_cloud_actuator = 1;
+                    goto resurrection_rollback;
+                }
+                chain_limit += pool->record_count + pool->extension_count;
+            }
+            if (chain_limit <= 0) {
+                receipt.blocked_cloud_actuator = 1;
+                goto resurrection_rollback;
+            }
+            {
+                matching_actuator =
+                    dm2_v1_resurrection_cloud_has_matching_actuator(
+                        &candidate->record_pools, head, 0xffe4, 0,
+                        chain_limit, 0);
+                if (matching_actuator < 0) {
+                    receipt.blocked_cloud_actuator = 1;
+                    goto resurrection_rollback;
+                }
+            }
+            if (!dm2_v1_record_pool_set_clone(&pool_backup,
+                    &candidate->record_pools) || candidate->dungeon.raw_size <= 0) {
+                receipt.blocked_cloud_owner = 1;
+                goto resurrection_rollback;
+            }
+            raw_backup = (uint8_t *)malloc((size_t)candidate->dungeon.raw_size);
+            if (!raw_backup) goto resurrection_rollback;
+            memcpy(raw_backup, candidate->dungeon.raw_data,
+                   (size_t)candidate->dungeon.raw_size);
+            cloud_record = dm2_v1_record_pool_alloc_new_record(
+                &candidate->record_pools, 15u);
+            cloud = dm2_v1_record_pool_address_mut(
+                &candidate->record_pools, cloud_record);
+            if (cloud_record < 0 || !cloud ||
+                candidate->record_pools.pools[15].record_size < 4) {
+                receipt.blocked_cloud_owner = 1;
+                goto resurrection_rollback;
+            }
+            /* DM2_CREATE_CLOUD(0xffe4, 0, xA, yA, xB): cloud type is
+             * (0xffe4 - 0xff80) & 0x7f == 0x64, strength is zero, and the
+             * low direction byte selects directional versus omnidirectional
+             * mode through bit 7 of DB15 word 2. */
+            cloud[0] = 0xfeu;
+            cloud[1] = 0xffu;
+            cloud[2] = (uint8_t)(0x64u | (direction == 0xff ? 0x80u : 0u));
+            cloud[3] = 0u;
+            {
+                int append_ok = dm2_v1_record_pool_append_to_list(
+                    &candidate->record_pools, &head, cloud_record);
+                int tile_ok = dm2_v1_dungeon_set_first_thing(
+                    &candidate->dungeon, map, x, y, (uint16_t)head);
+                if (!append_ok || tile_ok != 0) {
+                    receipt.blocked_cloud_owner = 1;
+                    goto resurrection_rollback;
+                }
+            }
+            if (matching_actuator != 0 &&
+                dm2_v1_resurrection_cloud_has_matching_actuator(
+                    &candidate->record_pools, head, 0xffe4, 0,
+                    chain_limit, 1) < 0) {
+                receipt.blocked_cloud_actuator = 1;
+                goto resurrection_rollback;
+            }
+            memset(&sound_env, 0, sizeof(sound_env));
+            sound_env.current_map = (int16_t)map;
+            sound_env.gate_map_a = candidate->sound_owner.spatial_audible_map;
+            sound_env.gate_map_b = candidate->sound_owner.spatial_alternate_map;
+            sound_env.facing = candidate->source_party_direction;
+            sound_env.party_x = candidate->source_party_x;
+            sound_env.party_y = candidate->source_party_y;
+            sound_env.gametick = (int32_t)game_tick;
+            memset(&sound_receipt, 0, sizeof(sound_receipt));
+            if (candidate->sound_owner.spatial_context_valid &&
+                dm2_v1_game_load_sound_owner_queue_noise_gen2(
+                    &candidate->sound_owner, 0x0d, 0x64, (int8_t)0x81,
+                    (int8_t)0xfe, (int16_t)x, (int16_t)y, 1, 0x6c, 1,
+                    &sound_env, &sound_receipt)) {
+                receipt.cloud_sound_queued = 1;
+            }
+            dm2_v1_timer_entry_init(&cloud_timer);
+            dm2_v1_timer_set_mticks(&cloud_timer, (int16_t)map,
+                                     game_tick + 5u);
+            cloud_timer.ttype = 0x19u;
+            cloud_timer.actor = 0u;
+            cloud_timer.xA = (int8_t)(uint8_t)x;
+            cloud_timer.yA = (int8_t)(uint8_t)y;
+            cloud_timer.wvalueB = cloud_record;
+            if (dm2_v1_timer_queue(&candidate->timer_queue, &cloud_timer) < 0)
+                goto resurrection_rollback;
+            dm2_v1_timer_get_and_delete_next(&candidate->timer_queue,
+                                             &timer_entry);
+            receipt.cloud_record = cloud_record;
+            receipt.cloud_created = 1;
+            receipt.cloud_timer_queued = 1;
+            receipt.consumed = 1;
+            receipt.valid = 1;
+            receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+                candidate->source_transaction_hash ^ candidate->candidate_hash,
+                (uint32_t)(uint16_t)cloud_record ^
+                    ((uint32_t)map << 16) ^ ((uint32_t)x << 8) ^
+                    (uint32_t)y);
+            dm2_v1_record_pool_set_free(&pool_backup);
+            free(raw_backup);
+            free(index_backup);
+            free(timer_backup);
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        if (phase != 1u) {
+            receipt.blocked_phase = 1;
+            goto resurrection_rollback;
+        }
+        x = (int)(int8_t)candidate->timer_entries[timer_slot].xA;
+        y = (int)(int8_t)candidate->timer_entries[timer_slot].yA;
+        if (x < 0 || y < 0 || x >= candidate->map_context.width ||
+            y >= candidate->map_context.height) {
+            receipt.blocked_chain = 1;
+            goto resurrection_rollback;
+        }
+        cursor = (int16_t)dm2_v1_dungeon_get_first_thing(
+            &candidate->dungeon, map, x, y);
+        for (int step = 0; cursor >= 0 && cursor != DM2_V1_RECORD_HANDLE_END &&
+             step < 65536; ++step) {
+            const uint8_t *record = dm2_v1_record_pool_address(
+                &candidate->record_pools, cursor);
+            if (!record || !dm2_v1_record_pool_next_link(
+                    &candidate->record_pools, cursor, &next)) {
+                receipt.blocked_chain = 1;
+                goto resurrection_rollback;
+            }
+            if (dm2_v1_record_handle_pool(cursor) == 10 &&
+                dm2_v1_record_handle_index(cursor) == 0 &&
+                (((uint16_t)record[2] |
+                  ((uint16_t)record[3] << 8)) >> 14) ==
+                    (uint16_t)hero_index) {
+                found_record = cursor;
+                break;
+            }
+            cursor = next;
+        }
+        if (found_record < 0) {
+            receipt.blocked_chain = 1;
+            goto resurrection_rollback;
+        }
+        if (!dm2_v1_record_pool_set_clone(&pool_backup,
+                &candidate->record_pools) || candidate->dungeon.raw_size <= 0) {
+            receipt.blocked_chain = 1;
+            goto resurrection_rollback;
+        }
+        raw_backup = (uint8_t *)malloc((size_t)candidate->dungeon.raw_size);
+        if (!raw_backup) goto resurrection_rollback;
+        memcpy(raw_backup, candidate->dungeon.raw_data,
+               (size_t)candidate->dungeon.raw_size);
+        if (!dm2_v1_record_pool_cut_from_tile(&candidate->record_pools,
+                &candidate->dungeon, map, x, y, found_record)) {
+            receipt.blocked_chain = 1;
+            goto resurrection_rollback;
+        }
+        {
+            uint8_t *record = dm2_v1_record_pool_address_mut(
+                &candidate->record_pools, found_record);
+            if (!record) goto resurrection_rollback;
+            record[0] = 0xffu;
+            record[1] = 0xffu;
+        }
+        dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+        receipt.altar_record = found_record;
+        receipt.record_removed = 1;
+        receipt.consumed = 1;
+        receipt.valid = 1;
+        receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+            candidate->source_transaction_hash ^ candidate->candidate_hash,
+            (uint32_t)(uint16_t)found_record ^ ((uint32_t)map << 16));
+        dm2_v1_record_pool_set_free(&pool_backup);
+        free(raw_backup);
+        free(index_backup);
+        free(timer_backup);
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+    if (candidate->current_map != map &&
+        !dm2_v1_game_load_runtime_candidate_change_current_map(candidate, map, 0))
+        goto resurrection_rollback;
+    receipt.map_switch = old_map != map;
+    receipt.max_hp_before = candidate->party.hero[hero_index].maxHP;
+    if (receipt.max_hp_before <= 0)
+        goto resurrection_rollback;
+    new_max = (int16_t)(receipt.max_hp_before - receipt.max_hp_before / 64 - 1);
+    if (new_max < 25) new_max = 25;
+    receipt.hero_flags_before = (uint16_t)candidate->party.hero[hero_index].heroflag;
+    candidate->party.hero[hero_index].weight = 0;
+    for (int i = 0; i < DM2_NUM_ITEMS; ++i)
+        candidate->party.hero[hero_index].item[i] = -1;
+    candidate->party.hero[hero_index].maxHP = new_max;
+    candidate->party.hero[hero_index].curHP = (int16_t)(new_max / 2);
+    candidate->party.hero[hero_index].heroflag |= 0x4000;
+    candidate->party.hero[hero_index].ench_aura = 0;
+    candidate->party.hero[hero_index].ench_power = 0;
+    receipt.max_hp_after = new_max;
+    receipt.cur_hp_after = candidate->party.hero[hero_index].curHP;
+    receipt.hero_flags_after = (uint16_t)candidate->party.hero[hero_index].heroflag;
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+    receipt.champion_revived = 1;
+    receipt.consumed = 1;
+    receipt.valid = 1;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash ^ candidate->candidate_hash,
+        (uint32_t)(uint16_t)hero_index ^
+            ((uint32_t)receipt.hero_flags_after << 16));
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+resurrection_rollback:
+    if (timer_backup && index_backup) {
+        memcpy(candidate->timer_entries, timer_backup,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(candidate->timer_indices, index_backup,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        candidate->timer_queue = queue_backup;
+        candidate->party = party_backup;
+        if (raw_backup) {
+            memcpy(candidate->dungeon.raw_data, raw_backup,
+                   (size_t)candidate->dungeon.raw_size);
+            dm2_v1_record_pool_set_free(&candidate->record_pools);
+            candidate->record_pools = pool_backup;
+            memset(&pool_backup, 0, sizeof(pool_backup));
+        }
+        if (candidate->current_map != old_map)
+            (void)dm2_v1_game_load_runtime_candidate_change_current_map(
+                candidate, old_map, 0);
+    }
+    free(index_backup);
+    free(timer_backup);
+    dm2_v1_record_pool_set_free(&pool_backup);
+    free(raw_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_proceed_process_0c_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadProcess0cTimerReceipt *out_receipt)
+{
+    DM2_V1_GameLoadProcess0cTimerReceipt receipt;
+    DM2_V1_TimerEntry timer_entry;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    DM2_V1_TimerQueue queue_backup;
+    DM2_V1_Party party_backup;
+    int16_t timer_slot;
+    int old_map;
+    int map;
+    int hero_index;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.timer_type = 0x0cu;
+    receipt.game_tick = game_tick;
+    receipt.hero_index = -1;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0) {
+        receipt.blocked_no_due_timer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    old_map = candidate->current_map;
+    queue_backup = candidate->timer_queue;
+    party_backup = candidate->party;
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto process_0c_rollback;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&candidate->timer_queue)) {
+        receipt.blocked_no_due_timer = 1;
+        goto process_0c_rollback;
+    }
+    timer_slot = candidate->timer_queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity ||
+        candidate->timer_entries[timer_slot].ttype != 0x0cu) {
+        receipt.blocked_unsupported_type = 1;
+        goto process_0c_rollback;
+    }
+    map = dm2_v1_timer_get_map(&candidate->timer_entries[timer_slot]);
+    hero_index = candidate->timer_entries[timer_slot].actor;
+    receipt.map = map;
+    receipt.hero_index = (int16_t)hero_index;
+    if (map < 0 || map >= candidate->dungeon.level_count) {
+        receipt.blocked_map = 1;
+        goto process_0c_rollback;
+    }
+    if (hero_index < 0 || hero_index >= candidate->party.heros_in_party ||
+        hero_index >= DM2_MAX_HEROES) {
+        receipt.blocked_actor = 1;
+        goto process_0c_rollback;
+    }
+    if (candidate->current_map != map &&
+        !dm2_v1_game_load_runtime_candidate_change_current_map(candidate, map, 0))
+        goto process_0c_rollback;
+    receipt.map_switch = old_map != map;
+    receipt.timer_index_before = candidate->party.hero[hero_index].timeridx;
+    receipt.hero_flags_before = (uint16_t)candidate->party.hero[hero_index].heroflag;
+    candidate->party.hero[hero_index].timeridx = -1;
+    if (candidate->party.hero[hero_index].curHP != 0)
+        candidate->party.hero[hero_index].heroflag |= 0x0800;
+    receipt.timer_index_after = candidate->party.hero[hero_index].timeridx;
+    receipt.hero_flags_after = (uint16_t)candidate->party.hero[hero_index].heroflag;
+    receipt.hero_mutated = receipt.timer_index_before != receipt.timer_index_after ||
+        receipt.hero_flags_before != receipt.hero_flags_after;
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+    receipt.consumed = 1;
+    receipt.valid = 1;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash ^ candidate->candidate_hash,
+        (uint32_t)(uint16_t)hero_index ^
+            ((uint32_t)receipt.hero_flags_after << 16));
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+process_0c_rollback:
+    if (timer_backup && index_backup) {
+        memcpy(candidate->timer_entries, timer_backup,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(candidate->timer_indices, index_backup,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        candidate->timer_queue = queue_backup;
+        candidate->party = party_backup;
+        if (candidate->current_map != old_map)
+            (void)dm2_v1_game_load_runtime_candidate_change_current_map(
+                candidate, old_map, 0);
+    }
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_proceed_destroy_door_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadDestroyDoorTimerReceipt *out_receipt)
+{
+    DM2_V1_GameLoadDestroyDoorTimerReceipt receipt;
+    DM2_V1_TimerEntry timer_entry;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    DM2_V1_TimerQueue queue_backup;
+    int16_t timer_slot;
+    int old_map;
+    int map;
+    int x;
+    int y;
+    int raw;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.timer_type = 0x02u;
+    receipt.game_tick = game_tick;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0) {
+        receipt.blocked_no_due_timer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    old_map = candidate->current_map;
+    queue_backup = candidate->timer_queue;
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto destroy_door_rollback;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&candidate->timer_queue)) {
+        receipt.blocked_no_due_timer = 1;
+        goto destroy_door_rollback;
+    }
+    timer_slot = candidate->timer_queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity ||
+        candidate->timer_entries[timer_slot].ttype != 0x02u) {
+        receipt.blocked_unsupported_type = 1;
+        goto destroy_door_rollback;
+    }
+    map = dm2_v1_timer_get_map(&candidate->timer_entries[timer_slot]);
+    x = (int)(int8_t)candidate->timer_entries[timer_slot].xA;
+    y = (int)(int8_t)candidate->timer_entries[timer_slot].yA;
+    receipt.map = map;
+    receipt.x = (int16_t)x;
+    receipt.y = (int16_t)y;
+    if (map < 0 || dm2_v1_dungeon_get_tile_raw(&candidate->dungeon, map, x, y) < 0) {
+        receipt.blocked_map = 1;
+        goto destroy_door_rollback;
+    }
+    if (candidate->current_map != map &&
+        !dm2_v1_game_load_runtime_candidate_change_current_map(candidate, map, 0))
+        goto destroy_door_rollback;
+    receipt.map_switch = old_map != map;
+    raw = dm2_v1_dungeon_get_tile_raw(&candidate->dungeon, map, x, y);
+    if (raw < 0 || dm2_v1_dungeon_set_tile_raw(
+            &candidate->dungeon, map, x, y, (uint16_t)((raw & 0xfff8) | 0x0005)) < 0)
+        goto destroy_door_rollback;
+    receipt.tile_before = (uint16_t)raw;
+    receipt.tile_after = (uint16_t)((raw & 0xfff8) | 0x0005);
+    receipt.tile_mutated = receipt.tile_before != receipt.tile_after;
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+    receipt.consumed = 1;
+    receipt.valid = 1;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash ^ candidate->candidate_hash,
+        (uint32_t)receipt.tile_after ^ ((uint32_t)(uint16_t)map << 16));
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+destroy_door_rollback:
+    if (timer_backup && index_backup) {
+        memcpy(candidate->timer_entries, timer_backup,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(candidate->timer_indices, index_backup,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        candidate->timer_queue = queue_backup;
+        if (candidate->current_map != old_map)
+            (void)dm2_v1_game_load_runtime_candidate_change_current_map(
+                candidate, old_map, 0);
+    }
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+static uint8_t *dm2_game_load_candidate_cloud_get_record(
+    void *ctx, uint16_t record)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate = ctx;
+
+    if (!candidate || !candidate->record_pools.valid)
+        return NULL;
+    return dm2_v1_record_pool_address_mut(&candidate->record_pools,
+                                          (int16_t)record);
+}
+
+static int16_t dm2_game_load_candidate_cloud_rand16(void *ctx, int16_t n)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate = ctx;
+
+    if (!candidate || n <= 0 || !candidate->caii_rng_initialized)
+        return 0;
+    return (int16_t)dm2_v1_drops_rand16(&candidate->caii_rng,
+                                        (uint16_t)n);
+}
+
+static bool dm2_game_load_candidate_cloud_randbit(void *ctx)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate = ctx;
+
+    return candidate && candidate->caii_rng_initialized &&
+           dm2_v1_drops_randbit(&candidate->caii_rng) != 0u;
+}
+
+static int16_t dm2_game_load_candidate_cloud_min16(int16_t a, int16_t b)
+{
+    return a < b ? a : b;
+}
+
+static int16_t dm2_game_load_candidate_cloud_max16(int16_t a, int16_t b)
+{
+    return a > b ? a : b;
+}
+
+static int16_t dm2_game_load_candidate_cloud_max16_ctx(
+    void *ctx, int16_t a, int16_t b)
+{
+    (void)ctx;
+    return dm2_game_load_candidate_cloud_max16(a, b);
+}
+
+static int dm2_game_load_candidate_attack_ai_flags(
+    void *ctx, int creature_type, uint16_t *out_flags)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate = ctx;
+    const DM2_AIDefinition *definition = NULL;
+    if (out_flags) *out_flags = 0u;
+    if (!candidate || !out_flags ||
+        !dm2_v1_caii_source_owner_ai_spec_def(&candidate->caii_source,
+                                               creature_type, &definition) ||
+        !definition)
+        return 0;
+    *out_flags = definition->w0AIFlags;
+    return 1;
+}
+
+static int dm2_game_load_candidate_attack_base_hp(
+    void *ctx, int creature_type, uint16_t *out_value)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate = ctx;
+    const DM2_AIDefinition *definition = NULL;
+    if (out_value) *out_value = 0u;
+    if (!candidate || !out_value ||
+        !dm2_v1_caii_source_owner_ai_spec_def(&candidate->caii_source,
+                                               creature_type, &definition) ||
+        !definition)
+        return 0;
+    *out_value = definition->BaseHP;
+    return 1;
+}
+
+static int dm2_game_load_candidate_attack_gdat_word1(
+    void *ctx, int creature_type, uint16_t *out_value)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate = ctx;
+    if (out_value) *out_value = 0u;
+    if (!candidate || !candidate->asset_loader || !out_value)
+        return 0;
+    return dm2_v1_asset_load_word_value(
+        candidate->asset_loader, DM2_GDAT_CATEGORY_CREATURES,
+        creature_type, 0x01u, out_value);
+}
+
+static const uint8_t *dm2_game_load_candidate_cloud_ai_spec_from_type_const(
+    void *ctx, uint16_t creature_type)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate = ctx;
+    const DM2_AIDefinition *definition = NULL;
+    if (!candidate || !dm2_v1_caii_source_owner_ai_spec_def(
+            &candidate->caii_source, (int)creature_type, &definition) ||
+        !definition)
+        return NULL;
+    return (uint8_t *)(uintptr_t)definition;
+}
+
+static uint8_t *dm2_game_load_candidate_cloud_ai_spec_from_type(
+    void *ctx, uint16_t creature_type)
+{
+    return (uint8_t *)(uintptr_t)
+        dm2_game_load_candidate_cloud_ai_spec_from_type_const(
+            ctx, creature_type);
+}
+
+static int16_t dm2_game_load_candidate_cloud_ai_flags(
+    void *ctx, uint16_t creature_type)
+{
+    uint16_t flags = 0u;
+    return dm2_game_load_candidate_attack_ai_flags(
+        ctx, (int)creature_type, &flags) ? (int16_t)flags : 0;
+}
+
+static uint16_t dm2_game_load_candidate_cloud_randdir(void *ctx)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate = ctx;
+    return candidate && candidate->caii_rng_initialized
+        ? dm2_v1_drops_randdir(&candidate->caii_rng) : 0u;
+}
+
+static int16_t dm2_game_load_candidate_cloud_poison_resistance(
+    void *ctx, uint16_t creature_type, uint16_t damage)
+{
+    DM2_V1_CreaturePoisonCallbacks poison_cb;
+    poison_cb.query_ai_spec =
+        dm2_game_load_candidate_cloud_ai_spec_from_type_const;
+    poison_cb.rand_dir = dm2_game_load_candidate_cloud_randdir;
+    return dm2_v1_apply_creature_poison_resistance(
+        creature_type, (int16_t)damage, &poison_cb, ctx);
+}
+
+static int dm2_game_load_candidate_attack_allocate(
+    void *ctx, DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon, DM2_V1_CaiiArray *caii,
+    int16_t record_handle, int map_id, unsigned long game_tick,
+    int x, int y)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate = ctx;
+    DM2_V1_GameLoadMoverecCaiiReceipt receipt;
+    (void)pool_set; (void)dungeon; (void)caii; (void)game_tick;
+    if (!candidate || candidate->current_map != map_id)
+        return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    return dm2_v1_game_load_runtime_session_candidate_activate_moverec_caii(
+        candidate, record_handle, (int16_t)x, (int16_t)y, &receipt) &&
+        receipt.valid;
+}
+
+static int dm2_game_load_candidate_attack_delete_timer(
+    void *ctx, DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon, DM2_V1_CaiiArray *caii,
+    int16_t record_handle, int map_id, unsigned long game_tick,
+    int x, int y)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate = ctx;
+    uint8_t *record;
+    uint8_t *slot;
+    uint16_t timer_slot;
+    (void)pool_set; (void)dungeon; (void)caii;
+    (void)map_id; (void)game_tick; (void)x; (void)y;
+    if (!candidate || dm2_v1_record_handle_pool(record_handle) != 4 ||
+        !(record = dm2_v1_record_pool_address_mut(&candidate->record_pools,
+                                                   record_handle)) ||
+        record[5] == 0xffu || record[5] >= candidate->caii_slots.capacity)
+        return 0;
+    slot = candidate->caii_slots.slots +
+        (size_t)record[5] * DM2_V1_CAII_SLOT_SIZE;
+    timer_slot = dm2_v1_game_load_owner_read_u16le(slot + 2u);
+    if (timer_slot == 0xffffu || timer_slot >= candidate->timer_capacity ||
+        !candidate->timer_entries ||
+        candidate->timer_entries[timer_slot].ttype == 0u)
+        return 0;
+    dm2_v1_timer_delete(&candidate->timer_queue, (int16_t)timer_slot);
+    dm2_v1_game_load_owner_write_u16le(slot + 2u, 0xffffu);
+    return 1;
+}
+
+static int dm2_game_load_candidate_attack_schedule(
+    void *ctx, DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon, DM2_V1_CaiiArray *caii,
+    int16_t record_handle, int map_id, unsigned long game_tick,
+    int x, int y)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate = ctx;
+    uint8_t *record;
+    uint8_t *slot;
+    DM2_V1_TimerEntry timer;
+    int16_t timer_slot;
+    (void)pool_set; (void)dungeon; (void)caii;
+    if (!candidate || candidate->current_map != map_id ||
+        dm2_v1_record_handle_pool(record_handle) != 4 ||
+        !(record = dm2_v1_record_pool_address_mut(&candidate->record_pools,
+                                                   record_handle)) ||
+        record[5] == 0xffu || record[5] >= candidate->caii_slots.capacity)
+        return 0;
+    slot = candidate->caii_slots.slots +
+        (size_t)record[5] * DM2_V1_CAII_SLOT_SIZE;
+    dm2_v1_timer_entry_init(&timer);
+    dm2_v1_timer_set_mticks(&timer, (int16_t)map_id, (int32_t)game_tick + 1);
+    timer.ttype = dm2_v1_game_load_owner_read_u16le(record + 8u) != 0xffffu
+        ? 0x22u : 0x21u;
+    timer.actor = record[4];
+    timer.xA = (int8_t)x;
+    timer.yA = (int8_t)y;
+    timer_slot = dm2_v1_timer_queue(&candidate->timer_queue, &timer);
+    if (timer_slot < 0)
+        return 0;
+    dm2_v1_game_load_owner_write_u16le(slot + 2u, (uint16_t)timer_slot);
+    return 1;
+}
+
+static int16_t dm2_game_load_candidate_cloud_wound_party(
+    void *ctx, int hero_idx, int16_t damage, int body_parts,
+    int damage_type)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate = ctx;
+    DM2_V1_Hero *hero;
+    int32_t pending;
+
+    (void)body_parts;
+    (void)damage_type;
+    if (!candidate || hero_idx < 0 ||
+        hero_idx >= candidate->party.heros_in_party || damage <= 0)
+        return 0;
+    hero = &candidate->party.hero[hero_idx];
+    if (hero->curHP == 0)
+        return 0;
+    pending = (int32_t)hero->damagesuffered + damage;
+    if (pending > INT16_MAX)
+        pending = INT16_MAX;
+    hero->damagesuffered = (int16_t)pending;
+    hero->heroflag = (int16_t)((uint16_t)hero->heroflag |
+                               DM2_V1_HERO_FLAG_0800);
+    return damage;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_proceed_cloud_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadCloudTimerReceipt *out_receipt)
+{
+    DM2_V1_GameLoadCloudTimerReceipt receipt;
+    DM2_V1_TimerEntry timer_entry;
+    DM2_V1_TimerEntry next_timer;
+    DM2_V1_TimerQueue queue_backup;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    DM2_V1_RecordPoolSet pool_backup;
+    DM2_V1_GameLoadSoundOwner sound_backup;
+    DM2_V1_Party party_backup;
+    DM2_V1_DropRng rng_backup;
+    uint8_t *caii_backup = NULL;
+    size_t caii_bytes = 0u;
+    int party_backed_up = 0;
+    int rng_backed_up = 0;
+    DM2_V1_SoundQueueEnv sound_env;
+    DM2_V1_GameLoadSoundNoiseReceipt sound_receipt;
+    uint8_t *cloud = NULL;
+    int16_t timer_slot;
+    int16_t cloud_record;
+    int16_t cloud_head;
+    int cloud_in_chain = 0;
+    int old_map;
+    int map;
+    int x;
+    int y;
+    int raw_before = -1;
+    int raw_mutated = 0;
+    uint16_t w2;
+
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&pool_backup, 0, sizeof(pool_backup));
+    memset(&sound_backup, 0, sizeof(sound_backup));
+    receipt.cloud_record = DM2_V1_RECORD_HANDLE_NULL;
+    receipt.timer_type = 0x19u;
+    receipt.game_tick = game_tick;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0) {
+        receipt.blocked_no_due_timer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    old_map = candidate->current_map;
+    party_backup = candidate->party;
+    rng_backup = candidate->caii_rng;
+    party_backed_up = 1;
+    rng_backed_up = candidate->caii_rng_initialized;
+    queue_backup = candidate->timer_queue;
+    caii_bytes = (size_t)candidate->caii_slots.capacity *
+        DM2_V1_CAII_SLOT_SIZE;
+    if (caii_bytes != 0u)
+        caii_backup = malloc(caii_bytes);
+    timer_backup = malloc((size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = malloc((size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup ||
+        (caii_bytes != 0u && !caii_backup) ||
+        !dm2_v1_record_pool_set_clone(&pool_backup, &candidate->record_pools) ||
+        !dm2_v1_game_load_runtime_candidate_sound_clone(
+            &sound_backup, &candidate->sound_owner))
+        goto cloud_rollback;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (caii_bytes != 0u)
+        memcpy(caii_backup, candidate->caii_slots.slots, caii_bytes);
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&candidate->timer_queue)) {
+        receipt.blocked_no_due_timer = 1;
+        goto cloud_rollback;
+    }
+    timer_slot = candidate->timer_queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity) {
+        receipt.blocked_no_due_timer = 1;
+        goto cloud_rollback;
+    }
+    if (candidate->timer_entries[timer_slot].ttype != 0x19u) {
+        receipt.blocked_unsupported_type = 1;
+        goto cloud_rollback;
+    }
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+    map = dm2_v1_timer_get_map(&timer_entry);
+    x = (int)(int8_t)timer_entry.xA;
+    y = (int)(int8_t)timer_entry.yA;
+    receipt.map = map;
+    cloud_record = timer_entry.wvalueB;
+    receipt.cloud_record = cloud_record;
+    if (map < 0 || map >= candidate->dungeon.level_count || x < 0 || y < 0 ||
+        x >= candidate->dungeon.level_widths[map] ||
+        y >= candidate->dungeon.level_heights[map] ||
+        dm2_v1_record_handle_pool(cloud_record) != 15 ||
+        !(cloud = dm2_v1_record_pool_address_mut(
+            &candidate->record_pools, cloud_record)) ||
+        !dm2_v1_game_load_runtime_candidate_change_current_map(candidate, map, 0)) {
+        receipt.blocked_map = 1;
+        goto cloud_rollback;
+    }
+    w2 = (uint16_t)cloud[2] | ((uint16_t)cloud[3] << 8);
+    receipt.cloud_type_before = (uint8_t)(w2 & 0x7fu);
+    receipt.cloud_strength_before = (uint8_t)(w2 >> 8);
+    if ((receipt.cloud_type_before >= 8u &&
+         receipt.cloud_type_before != 0x28u &&
+         receipt.cloud_type_before != 0x64u &&
+         receipt.cloud_type_before != 0x65u)) {
+        receipt.blocked_unsupported_type = 1;
+        goto cloud_rollback;
+    }
+    /* The source timer names a DB15 record, but the authoritative owner is
+     * the tile-rooted chain.  Preflight the complete chain before either the
+     * 0x64->0x65 write or the final 0x65 cut; a malformed tail must leave the
+     * candidate's timer, pool and map state untouched. */
+    cloud_head = (int16_t)dm2_v1_dungeon_get_first_thing(
+        &candidate->dungeon, map, x, y);
+    if (!dm2_v1_game_load_record_chain_is_bounded(
+            &candidate->record_pools, cloud_head, cloud_record,
+            &cloud_in_chain) || !cloud_in_chain) {
+        receipt.blocked_record = 1;
+        goto cloud_rollback;
+    }
+    /* The candidate owns the source-sized party and RNG state, so the
+     * ordinary party target can use the same damage/hero owners as runtime.
+     * Creature and door targets remain fail-closed until their candidate
+     * attack owners are complete.  Types 0 and 2 are source no-effect cases
+     * and may also expire on a populated cell. */
+    if (receipt.cloud_type_before < 8u ||
+        receipt.cloud_type_before == 0x28u) {
+        int raw_tile = dm2_v1_dungeon_get_tile_raw(
+            &candidate->dungeon, map, x, y);
+        int party_here = map == candidate->source_party_map &&
+            x == candidate->source_party_x && y == candidate->source_party_y;
+        int16_t creature_here = dm2_v1_get_creature_at(
+            &candidate->record_pools, &candidate->dungeon, map, x, y);
+        int door_here = raw_tile >= 0 && (((unsigned int)raw_tile >> 5) & 7u) == 4u;
+        raw_before = raw_tile;
+        if (door_here) {
+            int16_t door_link = (int16_t)dm2_v1_dungeon_get_first_thing(
+                &candidate->dungeon, map, x, y);
+            uint8_t *door_record;
+            DM2_V1_CloudCallbacks damage_cb;
+            DM2_V1_CalcCloudDamageReceipt damage_receipt;
+            uint16_t old_raw = (uint16_t)raw_tile;
+            int door_state = dm2_door_get_state(old_raw);
+            int door_type;
+
+            if (door_link == DM2_V1_RECORD_HANDLE_NULL ||
+                door_link == DM2_V1_RECORD_HANDLE_END ||
+                dm2_v1_record_handle_pool(door_link) != DM2_DB_DOOR ||
+                !(door_record = dm2_v1_record_pool_address_mut(
+                    &candidate->record_pools, door_link)))
+                goto cloud_rollback;
+            memset(&damage_cb, 0, sizeof(damage_cb));
+            damage_cb.ctx = candidate;
+            damage_cb.get_address_of_record =
+                dm2_game_load_candidate_cloud_get_record;
+            damage_cb.rand16 = dm2_game_load_candidate_cloud_rand16;
+            damage_cb.randbit = dm2_game_load_candidate_cloud_randbit;
+            damage_cb.min16 = dm2_game_load_candidate_cloud_min16;
+            damage_cb.max16 = dm2_game_load_candidate_cloud_max16;
+            damage_cb.query_creature_ai_spec_from_type =
+                dm2_game_load_candidate_cloud_ai_spec_from_type;
+            damage_cb.query_creature_ai_spec_flags =
+                dm2_game_load_candidate_cloud_ai_flags;
+            damage_cb.apply_creature_poison_resistance =
+                dm2_game_load_candidate_cloud_poison_resistance;
+            damage_receipt = dm2_v1_calc_cloud_damage(
+                &damage_cb, (uint16_t)cloud_record, door_link);
+            receipt.door_damage = damage_receipt.damage;
+            door_type = (int)((uint16_t)door_record[2] & 0x0001u);
+            if (damage_receipt.damage > 0 &&
+                dm2_door_check_destruction(
+                    door_type, door_state, damage_receipt.damage, 1,
+                    door_record[2]) == DM2_DOOR_DESTROYED_YES) {
+                if (dm2_v1_dungeon_set_tile_raw(
+                        &candidate->dungeon, map, x, y,
+                        dm2_door_set_state(old_raw,
+                                           DM2_DOOR_STATE_DESTROYED)) != 0) {
+                    raw_mutated = 1;
+                    receipt.door_destroyed = 1;
+                } else {
+                    goto cloud_rollback;
+                }
+            }
+        }
+        if (creature_here != DM2_V1_RECORD_HANDLE_NULL &&
+            receipt.cloud_type_before != 0u &&
+            receipt.cloud_type_before != 2u) {
+            DM2_V1_CloudCallbacks damage_cb;
+            DM2_V1_CalcCloudDamageReceipt damage_receipt;
+            DM2_V1_CaiiAttackContext attack_context;
+            DM2_V1_CaiiAttackReceipt attack_receipt;
+            memset(&damage_cb, 0, sizeof(damage_cb));
+            damage_cb.ctx = candidate;
+            damage_cb.get_address_of_record =
+                dm2_game_load_candidate_cloud_get_record;
+            damage_cb.rand16 = dm2_game_load_candidate_cloud_rand16;
+            damage_cb.randbit = dm2_game_load_candidate_cloud_randbit;
+            damage_cb.min16 = dm2_game_load_candidate_cloud_min16;
+            damage_cb.max16 = dm2_game_load_candidate_cloud_max16;
+            damage_cb.query_creature_ai_spec_from_type =
+                dm2_game_load_candidate_cloud_ai_spec_from_type;
+            damage_cb.query_creature_ai_spec_flags =
+                dm2_game_load_candidate_cloud_ai_flags;
+            damage_cb.apply_creature_poison_resistance =
+                dm2_game_load_candidate_cloud_poison_resistance;
+            damage_receipt = dm2_v1_calc_cloud_damage(
+                &damage_cb, (uint16_t)cloud_record, creature_here);
+            memset(&attack_context, 0, sizeof(attack_context));
+            attack_context.ctx = candidate;
+            attack_context.ai_spec_flags_context =
+                dm2_game_load_candidate_attack_ai_flags;
+            attack_context.ai_base_hp_context =
+                dm2_game_load_candidate_attack_base_hp;
+            attack_context.gdat_word1_context =
+                dm2_game_load_candidate_attack_gdat_word1;
+            attack_context.allocate = dm2_game_load_candidate_attack_allocate;
+            attack_context.delete_timer =
+                dm2_game_load_candidate_attack_delete_timer;
+            attack_context.schedule = dm2_game_load_candidate_attack_schedule;
+            if (damage_receipt.damage > 0 &&
+                !dm2_v1_caii_attack_creature_context(
+                    &candidate->record_pools, &candidate->dungeon,
+                    &candidate->caii_slots, NULL, &candidate->caii_rng,
+                    map, (unsigned long)game_tick, creature_here, x, y,
+                    x, y, 0x200du, 0x64, damage_receipt.damage,
+                    &attack_context, &attack_receipt)) {
+                receipt.blocked_unsupported_type = 1;
+                goto cloud_rollback;
+            }
+            receipt.creature_damage = damage_receipt.damage;
+            receipt.creature_attacked = damage_receipt.damage > 0;
+        }
+        if (party_here && receipt.cloud_type_before != 0u &&
+            receipt.cloud_type_before != 2u) {
+            DM2_V1_CloudCallbacks damage_cb;
+            DM2_V1_HeroAttackPartyCallbacks party_cb;
+            DM2_V1_CalcCloudDamageReceipt damage_receipt;
+
+            memset(&damage_cb, 0, sizeof(damage_cb));
+            damage_cb.ctx = candidate;
+            damage_cb.get_address_of_record =
+                dm2_game_load_candidate_cloud_get_record;
+            damage_cb.rand16 = dm2_game_load_candidate_cloud_rand16;
+            damage_cb.randbit = dm2_game_load_candidate_cloud_randbit;
+            damage_cb.min16 = dm2_game_load_candidate_cloud_min16;
+            damage_cb.max16 = dm2_game_load_candidate_cloud_max16;
+            damage_receipt = dm2_v1_calc_cloud_damage(
+                &damage_cb, (uint16_t)cloud_record, -1);
+            if (damage_receipt.damage > 0) {
+                memset(&party_cb, 0, sizeof(party_cb));
+                party_cb.hero_count = candidate->party.heros_in_party;
+                party_cb.wound_player =
+                    dm2_game_load_candidate_cloud_wound_party;
+                party_cb.rand16 = dm2_game_load_candidate_cloud_rand16;
+                party_cb.max16 = dm2_game_load_candidate_cloud_max16_ctx;
+                receipt.party_damage = damage_receipt.damage;
+                receipt.party_wounded_mask = dm2_v1_hero_attack_party(
+                    damage_receipt.damage, 0, 0, &party_cb, candidate);
+            }
+        }
+        if (receipt.cloud_type_before == 7u && (w2 >> 8) >= 6u) {
+            w2 = (uint16_t)((w2 & 0x00ffu) |
+                (uint16_t)(((w2 >> 8) - 3u) << 8));
+            cloud[2] = (uint8_t)w2;
+            cloud[3] = (uint8_t)(w2 >> 8);
+            receipt.cloud_strength_after = (uint8_t)(w2 >> 8);
+            next_timer = timer_entry;
+            next_timer.l_00 += 1;
+            if (dm2_v1_timer_queue(&candidate->timer_queue, &next_timer) < 0)
+                goto cloud_rollback;
+            receipt.cloud_type_after = 7u;
+            receipt.requeued = 1;
+            receipt.consumed = 1;
+            receipt.valid = 1;
+            receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+                candidate->source_transaction_hash ^ candidate->candidate_hash,
+                (uint32_t)(uint16_t)cloud_record ^ 0x070000u);
+            dm2_v1_record_pool_set_free(&pool_backup);
+            dm2_v1_game_load_runtime_candidate_sound_free(&sound_backup);
+            free(index_backup);
+            free(timer_backup);
+            free(caii_backup);
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        if (receipt.cloud_type_before == 0x28u && (w2 >> 8) > 0x37u) {
+            w2 = (uint16_t)((w2 & 0x00ffu) |
+                (uint16_t)(((w2 >> 8) - 0x28u) << 8));
+            cloud[2] = (uint8_t)w2;
+            cloud[3] = (uint8_t)(w2 >> 8);
+            receipt.cloud_strength_after = (uint8_t)(w2 >> 8);
+            next_timer = timer_entry;
+            next_timer.l_00 += 1;
+            if (dm2_v1_timer_queue(&candidate->timer_queue, &next_timer) < 0)
+                goto cloud_rollback;
+            receipt.cloud_type_after = 0x28u;
+            receipt.requeued = 1;
+            receipt.consumed = 1;
+            receipt.valid = 1;
+            receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+                candidate->source_transaction_hash ^ candidate->candidate_hash,
+                (uint32_t)(uint16_t)cloud_record ^ 0x280000u);
+            dm2_v1_record_pool_set_free(&pool_backup);
+            dm2_v1_game_load_runtime_candidate_sound_free(&sound_backup);
+            free(index_backup);
+            free(timer_backup);
+            free(caii_backup);
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        w2 = (uint16_t)((w2 & 0xff80u) | 0x65u);
+        cloud[2] = (uint8_t)w2;
+        cloud[3] = (uint8_t)(w2 >> 8);
+        receipt.cloud_strength_after = (uint8_t)(w2 >> 8);
+        receipt.cloud_type_after = 0x65u;
+    }
+    if (receipt.cloud_type_before == 0x65u ||
+        receipt.cloud_type_before < 8u ||
+        receipt.cloud_type_before == 0x28u) {
+        if (!dm2_v1_record_pool_cut_from_tile(
+                &candidate->record_pools, &candidate->dungeon,
+                map, x, y, cloud_record)) {
+            receipt.blocked_record = 1;
+            goto cloud_rollback;
+        }
+        cloud[0] = 0xffu;
+        cloud[1] = 0xffu;
+        receipt.cloud_strength_after = (uint8_t)(w2 >> 8);
+        receipt.cloud_type_after = 0x65u;
+        receipt.deallocated = 1;
+        receipt.consumed = 1;
+        receipt.valid = 1;
+        receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+            candidate->source_transaction_hash ^ candidate->candidate_hash,
+            (uint32_t)(uint16_t)cloud_record ^ 0x650000u);
+        dm2_v1_record_pool_set_free(&pool_backup);
+        dm2_v1_game_load_runtime_candidate_sound_free(&sound_backup);
+        free(index_backup);
+        free(timer_backup);
+        free(caii_backup);
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+    w2 = (uint16_t)((w2 & 0xff80u) | 0x65u);
+    cloud[2] = (uint8_t)w2;
+    cloud[3] = (uint8_t)(w2 >> 8);
+    receipt.cloud_strength_after = (uint8_t)(w2 >> 8);
+    receipt.cloud_type_after = 0x65u;
+    memset(&sound_env, 0, sizeof(sound_env));
+    sound_env.current_map = (int16_t)map;
+    sound_env.gate_map_a = candidate->sound_owner.spatial_audible_map;
+    sound_env.gate_map_b = candidate->sound_owner.spatial_alternate_map;
+    sound_env.facing = candidate->source_party_direction;
+    sound_env.party_x = candidate->source_party_x;
+    sound_env.party_y = candidate->source_party_y;
+    sound_env.gametick = (int32_t)game_tick;
+    memset(&sound_receipt, 0, sizeof(sound_receipt));
+    if (candidate->sound_owner.spatial_context_valid &&
+        dm2_v1_game_load_sound_owner_queue_noise_gen2(
+            &candidate->sound_owner, 0x0d, 0x64, (int8_t)0x81,
+            (int8_t)0xfe, (int16_t)x, (int16_t)y, 1, 0x6c, 0xc8,
+            &sound_env, &sound_receipt))
+        receipt.sound_queued = 1;
+    next_timer = timer_entry;
+    next_timer.l_00 += 1;
+    if (dm2_v1_timer_queue(&candidate->timer_queue, &next_timer) < 0)
+        goto cloud_rollback;
+    receipt.requeued = 1;
+    receipt.consumed = 1;
+    receipt.valid = 1;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash ^ candidate->candidate_hash,
+        (uint32_t)(uint16_t)cloud_record ^
+            ((uint32_t)receipt.cloud_type_before << 8) ^
+            ((uint32_t)receipt.cloud_type_after << 16));
+    dm2_v1_record_pool_set_free(&pool_backup);
+    dm2_v1_game_load_runtime_candidate_sound_free(&sound_backup);
+    free(index_backup);
+    free(timer_backup);
+    free(caii_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+cloud_rollback:
+    if (caii_backup && candidate->caii_slots.slots)
+        memcpy(candidate->caii_slots.slots, caii_backup, caii_bytes);
+    free(caii_backup);
+    if (raw_mutated && raw_before >= 0)
+        (void)dm2_v1_dungeon_set_tile_raw(
+            &candidate->dungeon, map, x, y, (uint16_t)raw_before);
+    if (timer_backup && index_backup) {
+        memcpy(candidate->timer_entries, timer_backup,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(candidate->timer_indices, index_backup,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        candidate->timer_queue = queue_backup;
+    }
+    if (pool_backup.valid) {
+        dm2_v1_record_pool_set_free(&candidate->record_pools);
+        candidate->record_pools = pool_backup;
+        memset(&pool_backup, 0, sizeof(pool_backup));
+    }
+    if (sound_backup.valid) {
+        dm2_v1_game_load_runtime_candidate_sound_free(&candidate->sound_owner);
+        candidate->sound_owner = sound_backup;
+        memset(&sound_backup, 0, sizeof(sound_backup));
+    }
+    if (party_backed_up)
+        candidate->party = party_backup;
+    if (rng_backed_up)
+        candidate->caii_rng = rng_backup;
+    if (candidate->current_map != old_map)
+        (void)dm2_v1_game_load_runtime_candidate_change_current_map(
+            candidate, old_map, 0);
+    dm2_v1_record_pool_set_free(&pool_backup);
+    dm2_v1_game_load_runtime_candidate_sound_free(&sound_backup);
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_proceed_missile_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadCandidateMissileReceipt *out_receipt)
+{
+    DM2_V1_GameLoadCandidateMissileReceipt receipt;
+    DM2_V1_RecordPoolSet pool_backup;
+    DM2_V1_TimerQueue queue_backup;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    uint8_t *raw_backup = NULL;
+    DM2_V1_TimerEntry timer_entry;
+    int16_t timer_slot;
+    int16_t missile;
+    int16_t cursor;
+    int16_t source_prev = DM2_V1_RECORD_HANDLE_NULL;
+    int16_t source_next = DM2_V1_RECORD_HANDLE_END;
+    int16_t destination_prev = DM2_V1_RECORD_HANDLE_NULL;
+    int old_map;
+    int map;
+    int x;
+    int y;
+    int next_x;
+    int next_y;
+    int raw_size = 0;
+    int raw_type = -1;
+    int budget = 0;
+    int steps;
+    int found = 0;
+    int16_t continuation_slot;
+    uint16_t packed_b;
+    uint16_t energy_step;
+    uint8_t *record;
+    uint8_t *raw_missile;
+    uint8_t *raw_source_prev = NULL;
+    uint8_t *raw_destination_prev = NULL;
+    uint8_t *raw_cursor;
+    int raw_chain_steps;
+    int raw_found = 0;
+
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&pool_backup, 0, sizeof(pool_backup));
+    receipt.timer_type = 0x1eu;
+    receipt.game_tick = game_tick;
+    receipt.missile_record = DM2_V1_RECORD_HANDLE_NULL;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        goto missile_fail;
+    }
+    if (!candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0) {
+        receipt.blocked_no_due_timer = 1;
+        goto missile_fail;
+    }
+    old_map = candidate->current_map;
+    queue_backup = candidate->timer_queue;
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup || candidate->dungeon.raw_size <= 0 ||
+        !candidate->dungeon.raw_data ||
+        !dm2_v1_record_pool_set_clone(&pool_backup, &candidate->record_pools) ||
+        !(raw_backup = (uint8_t *)malloc((size_t)candidate->dungeon.raw_size)))
+        goto missile_rollback;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    memcpy(raw_backup, candidate->dungeon.raw_data,
+           (size_t)candidate->dungeon.raw_size);
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&candidate->timer_queue)) {
+        receipt.blocked_no_due_timer = 1;
+        goto missile_rollback;
+    }
+    timer_slot = candidate->timer_queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity ||
+        candidate->timer_entries[timer_slot].ttype != 0x1eu) {
+        receipt.blocked_unsupported_type = 1;
+        goto missile_rollback;
+    }
+    timer_entry = candidate->timer_entries[timer_slot];
+    missile = (int16_t)((uint16_t)(uint8_t)timer_entry.xA |
+                        ((uint16_t)(uint8_t)timer_entry.yA << 8));
+    packed_b = (uint16_t)timer_entry.wvalueB;
+    map = dm2_v1_timer_get_map(&timer_entry);
+    x = (int)(packed_b & 0x1fu);
+    y = (int)((packed_b >> 5) & 0x1fu);
+    receipt.map = map;
+    receipt.x = (int16_t)x;
+    receipt.y = (int16_t)y;
+    receipt.missile_record = missile;
+    receipt.energy_step = (uint16_t)(packed_b >> 12);
+    receipt.direction = (uint8_t)((packed_b >> 10) & 3u);
+    if (map < 0 || map >= candidate->dungeon.level_count || x < 0 || y < 0 ||
+        x >= candidate->dungeon.level_widths[map] ||
+        y >= candidate->dungeon.level_heights[map] ||
+        dm2_v1_record_handle_pool(missile) != 14 ||
+        !(record = dm2_v1_record_pool_address_mut(
+            &candidate->record_pools, missile)) ||
+        candidate->record_pools.pools[14].record_size < 8 ||
+        ((uint16_t)record[6] | ((uint16_t)record[7] << 8)) !=
+            (uint16_t)timer_slot) {
+        receipt.blocked_record = 1;
+        goto missile_rollback;
+    }
+    raw_missile = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+        &candidate->dungeon, (uint16_t)missile, &raw_type, NULL, &raw_size);
+    if (!raw_missile || raw_size < 8 ||
+        ((uint16_t)raw_missile[6] | ((uint16_t)raw_missile[7] << 8)) !=
+            (uint16_t)timer_slot) {
+        receipt.blocked_timer_owner = 1;
+        goto missile_rollback;
+    }
+    for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        const DM2_V1_RecordPool *pool = &candidate->record_pools.pools[db];
+        if (pool->record_count < 0 || pool->extension_count < 0 ||
+            budget > INT_MAX - pool->record_count - pool->extension_count)
+            goto missile_chain_fail;
+        budget += pool->record_count + pool->extension_count;
+    }
+    cursor = (int16_t)dm2_v1_dungeon_get_first_thing(
+        &candidate->dungeon, map, x, y);
+    for (steps = 0; cursor != DM2_V1_RECORD_HANDLE_END; ++steps) {
+        int16_t next;
+        if (cursor == DM2_V1_RECORD_HANDLE_NULL || steps >= budget ||
+            !dm2_v1_record_pool_address(&candidate->record_pools, cursor) ||
+            !dm2_v1_record_pool_next_link(
+                &candidate->record_pools, cursor, &next))
+            goto missile_chain_fail;
+        if (cursor == missile) found = 1;
+        cursor = next;
+    }
+    if (!found) goto missile_chain_fail;
+    if (dm2_v1_get_creature_at(&candidate->record_pools,
+                               &candidate->dungeon, map, x, y) !=
+        DM2_V1_RECORD_HANDLE_NULL) {
+        receipt.blocked_creature_collision = 1;
+        goto missile_rollback;
+    }
+    /* The raw mirror must be admitted before either terminal dealloc or
+     * relocation; the pool helper owns only the pool-side link words. */
+    raw_chain_steps = 0;
+    {
+        int16_t raw_link = (int16_t)dm2_v1_dungeon_get_first_thing(
+            &candidate->dungeon, map, x, y);
+        while (raw_link != DM2_V1_RECORD_HANDLE_END &&
+               raw_link != DM2_V1_RECORD_HANDLE_NULL &&
+               raw_chain_steps++ < budget) {
+            raw_cursor = (uint8_t *)(uintptr_t)
+                dm2_v1_dungeon_get_thing_record(
+                    &candidate->dungeon, (uint16_t)raw_link,
+                    NULL, NULL, NULL);
+            if (!raw_cursor) goto missile_chain_fail;
+            if (raw_link == missile) {
+                source_next = (int16_t)((uint16_t)raw_cursor[0] |
+                                        ((uint16_t)raw_cursor[1] << 8));
+                raw_found = 1;
+                break;
+            }
+            source_prev = raw_link;
+            raw_link = (int16_t)((uint16_t)raw_cursor[0] |
+                                 ((uint16_t)raw_cursor[1] << 8));
+        }
+    }
+    if (!raw_found) goto missile_chain_fail;
+    if (source_prev != DM2_V1_RECORD_HANDLE_NULL) {
+        raw_source_prev = (uint8_t *)(uintptr_t)
+            dm2_v1_dungeon_get_thing_record(
+                &candidate->dungeon, (uint16_t)source_prev,
+                NULL, NULL, NULL);
+        if (!raw_source_prev) goto missile_chain_fail;
+    }
+    {
+        int16_t raw_tail = source_next;
+        while (raw_tail != DM2_V1_RECORD_HANDLE_END &&
+               raw_tail != DM2_V1_RECORD_HANDLE_NULL &&
+               raw_chain_steps++ < budget) {
+            raw_cursor = (uint8_t *)(uintptr_t)
+                dm2_v1_dungeon_get_thing_record(
+                    &candidate->dungeon, (uint16_t)raw_tail,
+                    NULL, NULL, NULL);
+            if (!raw_cursor) goto missile_chain_fail;
+            raw_tail = (int16_t)((uint16_t)raw_cursor[0] |
+                                 ((uint16_t)raw_cursor[1] << 8));
+        }
+        if (raw_tail != DM2_V1_RECORD_HANDLE_END) goto missile_chain_fail;
+    }
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+    receipt.energy_before = record[4];
+    energy_step = receipt.energy_step;
+    if ((uint16_t)record[4] <= energy_step) {
+        if (!dm2_v1_record_pool_cut_from_tile(
+                &candidate->record_pools, &candidate->dungeon,
+                map, x, y, missile)) goto missile_rollback;
+        if (source_prev == DM2_V1_RECORD_HANDLE_NULL) {
+            if (dm2_v1_dungeon_set_first_thing(
+                    &candidate->dungeon, map, x, y,
+                    (uint16_t)source_next) != 0) goto missile_rollback;
+        } else {
+            raw_source_prev[0] = (uint8_t)source_next;
+            raw_source_prev[1] = (uint8_t)((uint16_t)source_next >> 8);
+        }
+        record = dm2_v1_record_pool_address_mut(&candidate->record_pools, missile);
+        if (!record) goto missile_rollback;
+        record[0] = 0xffu; record[1] = 0xffu;
+        raw_missile[0] = 0xffu; raw_missile[1] = 0xffu;
+        receipt.energy_after = 0u;
+        receipt.deallocated = 1;
+        receipt.consumed = 1;
+        receipt.valid = 1;
+        receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+            candidate->source_transaction_hash ^ candidate->candidate_hash,
+            (uint32_t)(uint16_t)missile ^ ((uint32_t)map << 16) ^
+            ((uint32_t)x << 8) ^ (uint32_t)y);
+        goto missile_success;
+    }
+    next_x = x + ((int[]){0, 1, 0, -1})[receipt.direction];
+    next_y = y + ((int[]){-1, 0, 1, 0})[receipt.direction];
+    if (next_x < 0 || next_y < 0 ||
+        next_x >= candidate->dungeon.level_widths[map] ||
+        next_y >= candidate->dungeon.level_heights[map] ||
+        !dm2_v1_dungeon_c_map_is_tile_passage(
+            &candidate->dungeon, map, next_x, next_y)) {
+        receipt.blocked_teleporter = 1;
+        goto missile_rollback;
+    }
+    {
+        const int raw_tile = dm2_v1_dungeon_get_tile_raw(
+            &candidate->dungeon, map, next_x, next_y);
+        const int tile_type = candidate->dungeon.square_bytes == 1
+            ? ((unsigned int)raw_tile >> 5) & 7
+            : raw_tile & 0x1f;
+        if (raw_tile < 0 || tile_type < 1 || tile_type > 3) {
+            receipt.blocked_teleporter = 1;
+            goto missile_rollback;
+        }
+    }
+    if (dm2_v1_get_creature_at(&candidate->record_pools,
+                               &candidate->dungeon, map, next_x, next_y) !=
+        DM2_V1_RECORD_HANDLE_NULL) {
+        receipt.blocked_creature_collision = 1;
+        goto missile_rollback;
+    }
+    /* Read-only raw destination-chain admission. */
+    raw_cursor = NULL;
+    raw_chain_steps = 0;
+    {
+        int16_t raw_link = (int16_t)dm2_v1_dungeon_get_first_thing(
+            &candidate->dungeon, map, next_x, next_y);
+        while (raw_link != DM2_V1_RECORD_HANDLE_END &&
+               raw_link != DM2_V1_RECORD_HANDLE_NULL &&
+               raw_chain_steps++ < budget) {
+            raw_cursor = (uint8_t *)(uintptr_t)
+                dm2_v1_dungeon_get_thing_record(
+                    &candidate->dungeon, (uint16_t)raw_link,
+                    NULL, NULL, NULL);
+            if (!raw_cursor) goto missile_chain_fail;
+            destination_prev = raw_link;
+            raw_link = (int16_t)((uint16_t)raw_cursor[0] |
+                                 ((uint16_t)raw_cursor[1] << 8));
+        }
+        if (raw_link != DM2_V1_RECORD_HANDLE_END) goto missile_chain_fail;
+    }
+    if (!dm2_v1_record_pool_cut_from_tile(
+            &candidate->record_pools, &candidate->dungeon, map, x, y, missile))
+        goto missile_rollback;
+    if (source_prev == DM2_V1_RECORD_HANDLE_NULL) {
+        if (dm2_v1_dungeon_set_first_thing(
+                &candidate->dungeon, map, x, y, (uint16_t)source_next) != 0)
+            goto missile_rollback;
+    } else {
+        raw_source_prev = (uint8_t *)(uintptr_t)
+            dm2_v1_dungeon_get_thing_record(&candidate->dungeon,
+                                             (uint16_t)source_prev,
+                                             NULL, NULL, NULL);
+        if (!raw_source_prev) goto missile_rollback;
+        raw_source_prev[0] = (uint8_t)source_next;
+        raw_source_prev[1] = (uint8_t)((uint16_t)source_next >> 8);
+    }
+    if (!dm2_v1_record_pool_append_to_list(
+            &candidate->record_pools, &cursor, missile)) goto missile_rollback;
+    if (destination_prev == DM2_V1_RECORD_HANDLE_NULL) {
+        if (dm2_v1_dungeon_set_first_thing(
+                &candidate->dungeon, map, next_x, next_y,
+                (uint16_t)missile) != 0) goto missile_rollback;
+    } else {
+        raw_destination_prev = (uint8_t *)(uintptr_t)
+            dm2_v1_dungeon_get_thing_record(&candidate->dungeon,
+                                             (uint16_t)destination_prev,
+                                             NULL, NULL, NULL);
+        if (!raw_destination_prev) goto missile_rollback;
+        raw_destination_prev[0] = (uint8_t)missile;
+        raw_destination_prev[1] = (uint8_t)((uint16_t)missile >> 8);
+    }
+    record = dm2_v1_record_pool_address_mut(&candidate->record_pools, missile);
+    if (!record) goto missile_rollback;
+    record[4] = (uint8_t)(record[4] - (uint8_t)energy_step);
+    record[5] = record[5] >= (uint8_t)energy_step
+        ? (uint8_t)(record[5] - (uint8_t)energy_step) : 0u;
+    raw_missile[4] = record[4]; raw_missile[5] = record[5];
+    dm2_v1_timer_set_mticks(&timer_entry, (int16_t)map, game_tick + 1u);
+    timer_entry.xA = (int8_t)(uint8_t)missile;
+    timer_entry.yA = (int8_t)((uint16_t)missile >> 8);
+    timer_entry.wvalueB = (int16_t)((uint16_t)next_x |
+                                    ((uint16_t)next_y << 5) |
+                                    ((uint16_t)receipt.direction << 10) |
+                                    ((uint16_t)energy_step << 12));
+    continuation_slot = dm2_v1_timer_queue(&candidate->timer_queue,
+                                             &timer_entry);
+    if (continuation_slot < 0) goto missile_rollback;
+    record[6] = (uint8_t)continuation_slot;
+    record[7] = (uint8_t)((uint16_t)continuation_slot >> 8);
+    raw_missile[6] = record[6]; raw_missile[7] = record[7];
+    receipt.next_x = (int16_t)next_x;
+    receipt.next_y = (int16_t)next_y;
+    receipt.energy_after = record[4];
+    receipt.moved = 1;
+    receipt.requeued = 1;
+    receipt.consumed = 1;
+    receipt.valid = 1;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash ^ candidate->candidate_hash,
+        (uint32_t)(uint16_t)missile ^ ((uint32_t)map << 16) ^
+        ((uint32_t)next_x << 8) ^ (uint32_t)next_y);
+    goto missile_success;
+
+missile_chain_fail:
+    receipt.blocked_incomplete_chain = 1;
+missile_rollback:
+    if (candidate && raw_backup && candidate->dungeon.raw_data)
+        memcpy(candidate->dungeon.raw_data, raw_backup,
+               (size_t)candidate->dungeon.raw_size);
+    if (candidate && timer_backup && index_backup) {
+        memcpy(candidate->timer_entries, timer_backup,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(candidate->timer_indices, index_backup,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        candidate->timer_queue = queue_backup;
+    }
+    if (candidate && pool_backup.valid) {
+        dm2_v1_record_pool_set_free(&candidate->record_pools);
+        candidate->record_pools = pool_backup;
+        memset(&pool_backup, 0, sizeof(pool_backup));
+    }
+    if (candidate && candidate->current_map != old_map)
+        (void)dm2_v1_game_load_runtime_candidate_change_current_map(
+            candidate, old_map, 0);
+    receipt.valid = 0;
+    goto missile_fail_cleanup;
+
+missile_success:
+    dm2_v1_record_pool_set_free(&pool_backup);
+missile_fail_cleanup:
+    free(raw_backup);
+    free(index_backup);
+    free(timer_backup);
+missile_fail:
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.valid;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick,
+    DM2_V1_GameLoadCandidateTimerProcessReceipt *out_receipt)
+{
+    DM2_V1_GameLoadCandidateTimerProcessReceipt receipt;
+    DM2_V1_TimerQueue queue;
+    int16_t timer_slot;
+    uint8_t timer_type;
+    int result;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.game_tick = game_tick;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0) {
+        receipt.blocked_no_due_timer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    queue = candidate->timer_queue;
+    queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&queue)) {
+        receipt.blocked_no_due_timer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    timer_slot = queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity) {
+        receipt.blocked_no_due_timer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    timer_type = candidate->timer_entries[timer_slot].ttype;
+    receipt.timer_type = timer_type;
+    if (timer_type == 0x21u || timer_type == 0x22u) {
+        result = dm2_v1_game_load_runtime_session_candidate_proceed_think_timer(
+            candidate, game_tick, &receipt.think);
+        receipt.valid = result && receipt.think.valid;
+        receipt.consumed = result && receipt.think.consumed;
+    } else if (timer_type == 0x0eu) {
+        result = dm2_v1_game_load_runtime_session_candidate_proceed_process_0e_timer(
+            candidate, game_tick, &receipt.process_0e);
+        receipt.valid = result && receipt.process_0e.valid;
+        receipt.consumed = result && receipt.process_0e.consumed;
+    } else if (timer_type == 0x15u) {
+        result = dm2_v1_game_load_runtime_session_candidate_proceed_process_sound_timer(
+            candidate, game_tick, &receipt.process_sound);
+        receipt.valid = result && receipt.process_sound.valid;
+        receipt.consumed = result && receipt.process_sound.consumed;
+    } else if (timer_type == 0x5eu) {
+        result = dm2_v1_game_load_runtime_session_candidate_proceed_alloc_creature_timer(
+            candidate, game_tick, &receipt.alloc_creature);
+        receipt.valid = result && receipt.alloc_creature.valid;
+        receipt.consumed = result && receipt.alloc_creature.consumed;
+    } else if (timer_type == 0x46u) {
+        result = dm2_v1_game_load_runtime_session_candidate_proceed_light_timer(
+            candidate, game_tick, &receipt.light);
+        receipt.valid = result && receipt.light.valid;
+        receipt.consumed = result && receipt.light.consumed;
+    } else if (timer_type == 0x5au) {
+        result = dm2_v1_game_load_runtime_session_candidate_proceed_ornate_noise_timer(
+            candidate, game_tick, &receipt.ornate_noise);
+        receipt.valid = result && receipt.ornate_noise.valid;
+        receipt.consumed = result && receipt.ornate_noise.consumed;
+    } else if (timer_type == 0x0du) {
+        result = dm2_v1_game_load_runtime_session_candidate_proceed_resurrection_timer(
+            candidate, game_tick, &receipt.resurrection);
+        receipt.valid = result && receipt.resurrection.valid;
+        receipt.consumed = result && receipt.resurrection.consumed;
+    } else if (timer_type == 0x0cu) {
+        result = dm2_v1_game_load_runtime_session_candidate_proceed_process_0c_timer(
+            candidate, game_tick, &receipt.process_0c);
+        receipt.valid = result && receipt.process_0c.valid;
+        receipt.consumed = result && receipt.process_0c.consumed;
+    } else if (timer_type == 0x02u) {
+        result = dm2_v1_game_load_runtime_session_candidate_proceed_destroy_door_timer(
+            candidate, game_tick, &receipt.destroy_door);
+        receipt.valid = result && receipt.destroy_door.valid;
+        receipt.consumed = result && receipt.destroy_door.consumed;
+    } else if (timer_type == 0x47u) {
+        result = dm2_v1_game_load_runtime_session_candidate_proceed_hero_ench_flag_timer(
+            candidate, game_tick, &receipt.hero_ench_flag);
+        receipt.valid = result && receipt.hero_ench_flag.valid;
+        receipt.consumed = result && receipt.hero_ench_flag.consumed;
+    } else if (timer_type == 0x48u) {
+        result = dm2_v1_game_load_runtime_session_candidate_proceed_ench_power_timer(
+            candidate, game_tick, &receipt.ench_power);
+        receipt.valid = result && receipt.ench_power.valid;
+        receipt.consumed = result && receipt.ench_power.consumed;
+    } else if (timer_type == 0x4bu) {
+        result = dm2_v1_game_load_runtime_session_candidate_proceed_poison_timer(
+            candidate, game_tick, &receipt.poison);
+        receipt.valid = result && receipt.poison.valid;
+        receipt.consumed = result && receipt.poison.consumed;
+    } else if (timer_type == 0x55u) {
+        result = dm2_v1_game_load_runtime_session_candidate_proceed_ornate_animator_timer(
+            candidate, game_tick, &receipt.ornate_animator);
+        receipt.valid = result && receipt.ornate_animator.valid;
+        receipt.consumed = result && receipt.ornate_animator.consumed;
+    } else if (timer_type == 0x56u) {
+        result = dm2_v1_game_load_runtime_session_candidate_proceed_tick_generator_timer(
+            candidate, game_tick, &receipt.tick_generator);
+        receipt.valid = result && receipt.tick_generator.valid;
+        receipt.consumed = result && receipt.tick_generator.valid;
+    } else if (timer_type == 0x04u) {
+        result = dm2_v1_game_load_runtime_session_candidate_proceed_actuate_timer(
+            candidate, game_tick, &receipt.actuate);
+        receipt.valid = result && receipt.actuate.valid;
+        receipt.consumed = result && receipt.actuate.consumed;
+    } else if (timer_type == 0x1eu) {
+        result = dm2_v1_game_load_runtime_session_candidate_proceed_missile_timer(
+            candidate, game_tick, &receipt.missile);
+        receipt.valid = result && receipt.missile.valid;
+        receipt.consumed = result && receipt.missile.consumed;
+    } else if (timer_type == 0x01u) {
+        result = dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
+            candidate, game_tick, &receipt.door_step);
+        receipt.valid = result && receipt.door_step.valid;
+        receipt.consumed = result && receipt.door_step.consumed;
+    } else if (timer_type == 0x58u || timer_type == 0x59u ||
+               timer_type == 0x5bu || timer_type == 0x5cu) {
+        result = dm2_v1_game_load_runtime_session_candidate_proceed_record_flag_timer(
+            candidate, game_tick, &receipt.record_flag);
+        receipt.valid = result && receipt.record_flag.valid;
+        receipt.consumed = result && receipt.record_flag.consumed;
+    } else if (timer_type == 0x19u) {
+        result = dm2_v1_game_load_runtime_session_candidate_proceed_cloud_timer(
+            candidate, game_tick, &receipt.cloud);
+        receipt.valid = result && receipt.cloud.valid;
+        receipt.consumed = result && receipt.cloud.consumed;
+    } else if (timer_type == 0x3cu || timer_type == 0x3du) {
+        result = dm2_v1_game_load_runtime_session_candidate_proceed_moverec_timer(
+            candidate, game_tick, &receipt.moverec);
+        receipt.valid = result && receipt.moverec.valid;
+        receipt.consumed = result && receipt.moverec.consumed;
+    } else {
+        receipt.blocked_unsupported_type = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.valid;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_proceed_record_flag_timer(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    uint32_t game_tick, DM2_V1_GameLoadRecordFlagTimerReceipt *out_receipt)
+{
+    DM2_V1_GameLoadRecordFlagTimerReceipt receipt;
+    DM2_V1_TimerEntry timer_entry;
+    DM2_V1_TimerQueue queue_backup;
+    DM2_V1_TimerEntry *timer_backup = NULL;
+    int16_t *index_backup = NULL;
+    uint8_t *record;
+    int16_t timer_slot;
+    int16_t record_handle;
+    int old_map;
+    int map;
+    uint8_t before;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.record = DM2_V1_RECORD_HANDLE_NULL;
+    receipt.game_tick = game_tick;
+    if (!candidate || !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        receipt.blocked_invalid_candidate = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!candidate->timer_entries || !candidate->timer_indices ||
+        candidate->timer_capacity == 0u || candidate->timer_queue.num_timers <= 0) {
+        receipt.blocked_no_due_timer = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    old_map = candidate->current_map;
+    queue_backup = candidate->timer_queue;
+    timer_backup = (DM2_V1_TimerEntry *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    index_backup = (int16_t *)malloc(
+        (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    if (!timer_backup || !index_backup) goto record_flag_rollback;
+    memcpy(timer_backup, candidate->timer_entries,
+           (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+    memcpy(index_backup, candidate->timer_indices,
+           (size_t)candidate->timer_capacity * sizeof(*index_backup));
+    candidate->timer_queue.gametick = (int32_t)game_tick;
+    if (!dm2_v1_timer_is_due(&candidate->timer_queue)) {
+        receipt.blocked_no_due_timer = 1;
+        goto record_flag_rollback;
+    }
+    timer_slot = candidate->timer_queue.indices[0];
+    if (timer_slot < 0 || timer_slot >= candidate->timer_capacity) {
+        receipt.blocked_no_due_timer = 1;
+        goto record_flag_rollback;
+    }
+    receipt.timer_type = candidate->timer_entries[timer_slot].ttype;
+    if (receipt.timer_type != 0x58u && receipt.timer_type != 0x59u &&
+        receipt.timer_type != 0x5bu && receipt.timer_type != 0x5cu) {
+        receipt.blocked_unsupported_type = 1;
+        goto record_flag_rollback;
+    }
+    /* Source c_timer::getA is the packed xA/yA word (payload A). */
+    if (receipt.timer_type == 0x59u) {
+        record_handle = candidate->timer_entries[timer_slot].wvalueB;
+    } else {
+        record_handle = (int16_t)((uint8_t)candidate->timer_entries[timer_slot].xA |
+                                  ((uint16_t)(uint8_t)candidate->timer_entries[timer_slot].yA << 8));
+    }
+    record = dm2_v1_record_pool_address_mut(&candidate->record_pools,
+                                             (uint16_t)record_handle);
+    if (!record) {
+        receipt.blocked_record = 1;
+        goto record_flag_rollback;
+    }
+    dm2_v1_timer_get_and_delete_next(&candidate->timer_queue, &timer_entry);
+    map = dm2_v1_timer_get_map(&timer_entry);
+    receipt.record = record_handle;
+    receipt.map = map;
+    if (map < 0 || map >= candidate->dungeon.level_count ||
+        !dm2_v1_game_load_runtime_candidate_change_current_map(
+            candidate, map, 0)) {
+        receipt.blocked_map = 1;
+        goto record_flag_rollback;
+    }
+    receipt.map_switch = old_map != map;
+    if (receipt.timer_type == 0x58u) {
+        receipt.byte_offset = 3u;
+        before = record[3];
+        record[3] &= (uint8_t)~0x08u;
+    } else if (receipt.timer_type == 0x59u) {
+        receipt.byte_offset = 4u;
+        before = record[4];
+        receipt.redraw_unbound = map == candidate->source_party_map;
+        if (record[4] & 0x04u) {
+            receipt.guard_skipped = 1;
+        } else {
+            record[4] &= (uint8_t)~0x01u;
+        }
+    } else if (receipt.timer_type == 0x5bu) {
+        receipt.byte_offset = 4u;
+        before = record[4];
+        record[4] &= (uint8_t)~0x01u;
+    } else {
+        receipt.byte_offset = 2u;
+        before = record[2];
+        record[2] |= 0x01u;
+    }
+    receipt.value_before = before;
+    receipt.value_after = record[receipt.byte_offset];
+    receipt.consumed = 1;
+    receipt.valid = 1;
+    receipt.transaction_hash = dm2_v1_game_load_owner_hash_step(
+        candidate->source_transaction_hash ^ candidate->candidate_hash,
+        (uint32_t)(uint16_t)record_handle ^
+        ((uint32_t)receipt.timer_type << 24) ^ receipt.value_after);
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+record_flag_rollback:
+    if (timer_backup && index_backup) {
+        memcpy(candidate->timer_entries, timer_backup,
+               (size_t)candidate->timer_capacity * sizeof(*timer_backup));
+        memcpy(candidate->timer_indices, index_backup,
+               (size_t)candidate->timer_capacity * sizeof(*index_backup));
+        candidate->timer_queue = queue_backup;
+        if (candidate->current_map != old_map) {
+            (void)dm2_v1_game_load_runtime_candidate_change_current_map(
+                candidate, old_map, 0);
+        }
+    }
+    free(index_backup);
+    free(timer_backup);
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
 }
 
 int dm2_v1_game_load_runtime_session_candidate_change_current_map_to(
@@ -2474,6 +9214,45 @@ static uint32_t dm2_v1_game_load_local_dyn_hash(const DM2_V1_DynLoadState *queue
     return hash;
 }
 
+static int dm2_v1_game_load_candidate_tile_raw(
+    const DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    int map, int x, int y)
+{
+    if (!candidate) return -1;
+    if (candidate->sksave_map_owner_valid) {
+        const DM2_V1_SksaveMapOwner *map_owner =
+            &candidate->sksave_map_owner;
+        const DM2_V1_OriginalRawDungeonReceipt *dungeon = map_owner->dungeon;
+        size_t offset;
+        if (!dungeon || map < 0 || map >= dungeon->map_count ||
+            x < 0 || y < 0 || x >= dungeon->map_widths[map] ||
+            y >= dungeon->map_heights[map] ||
+            map_owner->map_tile_offsets[map] >= map_owner->map_tiles_size)
+        {
+            return -1;
+        }
+        offset = (size_t)map_owner->map_tile_offsets[map] +
+            (size_t)x * (size_t)dungeon->map_heights[map] + (size_t)y;
+        if (offset >= map_owner->map_tiles_size) return -1;
+        return map_owner->map_tiles[offset];
+    }
+    return dm2_v1_dungeon_get_tile_raw(&candidate->dungeon, map, x, y);
+}
+
+static int dm2_v1_game_load_candidate_first_thing(
+    const DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    int map, int x, int y)
+{
+    if (!candidate) return -1;
+    if (candidate->sksave_map_owner_valid) {
+        uint16_t link;
+        if (!dm2_v1_sksave_map_owner_tile_record_link(
+                &candidate->sksave_map_owner, map, x, y, &link)) return -1;
+        return (int)(int16_t)link;
+    }
+    return dm2_v1_dungeon_get_first_thing(&candidate->dungeon, map, x, y);
+}
+
 /* c_loadlevel.cpp::DM2_LOAD_LOCALLEVEL_DYN (518-626) first walks the
  * current map x-major/y-minor and follows every marked-square chain. Keep a
  * lossless trace over the candidate's *mutable* RecordPoolSet so the later
@@ -2498,7 +9277,7 @@ static int dm2_v1_game_load_local_dyn_map_scan_init(
     memset(out, 0, sizeof(*out));
     memset(&map_receipt, 0, sizeof(map_receipt));
     if (!dm2_v1_dungeon_validate_file_header_runtime_map(
-            &candidate->dungeon, candidate->current_map, &map_receipt) ||
+        &candidate->dungeon, candidate->current_map, &map_receipt) ||
         !map_receipt.committed || map_receipt.width <= 0 ||
         map_receipt.height <= 0 || map_receipt.record_count <= 0 ||
         map_receipt.record_count > UINT16_MAX) {
@@ -2525,31 +9304,30 @@ static int dm2_v1_game_load_local_dyn_map_scan_init(
     hash = dm2_v1_game_load_owner_hash_step(hash, scan.height);
     for (x = 0; x < map_receipt.width; ++x) {
         for (y = 0; y < map_receipt.height; ++y) {
-            int raw = dm2_v1_dungeon_get_tile_raw(&candidate->dungeon,
-                                                   candidate->current_map,
-                                                   x, y);
+            int raw = dm2_v1_game_load_candidate_tile_raw(
+                candidate, candidate->current_map, x, y);
             int16_t link;
 
-            if (raw < 0) goto fail;
+            if (raw < 0) {
+                goto fail;
+            }
             hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)x);
             hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)y);
             hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)raw);
             if ((raw & 0x10) == 0) continue;
             ++scan.marked_tile_count;
-            link = (int16_t)dm2_v1_dungeon_get_first_thing(
-                &candidate->dungeon, candidate->current_map, x, y);
-            /* Macintosh retail marks empty cells in the same tile bitmap as
-             * object-bearing cells.  The original GET_TILE_RECORD_LINK
-             * returns NULL for those cells; that is an empty chain, not a
-             * corrupt map. */
-            if (link == DM2_V1_RECORD_HANDLE_NULL) continue;
+            link = (int16_t)dm2_v1_game_load_candidate_first_thing(
+                candidate, candidate->current_map, x, y);
+            if (link == DM2_V1_RECORD_HANDLE_NULL) {
+                goto fail;
+            }
             hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)link);
             if (link == DM2_V1_RECORD_HANDLE_END) continue;
             ++scan.root_count;
             while (link != DM2_V1_RECORD_HANDLE_END) {
                 DM2_V1_GameLoadLocalDynRecordVisit *visit;
                 const DM2_V1_RecordPool *pool;
-                const uint8_t *record;
+                const uint8_t *record = NULL;
                 int16_t next;
                 int type = -1;
                 int byte;
@@ -2576,17 +9354,21 @@ static int dm2_v1_game_load_local_dyn_map_scan_init(
                 /* GenericRecord::w0/w2 are both read below; a shorter pool
                  * cannot be a source-valid LOAD_LOCALLEVEL_DYN visit. */
                 if (pool->record_size < 4 || pool->record_size > UINT8_MAX ||
-                    !dm2_v1_record_pool_next_link(&candidate->record_pools,
-                                                   link, &next)) {
+                    (!candidate->dungeon.g1_w0_chains_disabled &&
+                     !dm2_v1_record_pool_next_link(&candidate->record_pools,
+                                                   link, &next))) {
                     goto fail;
                 }
+                if (candidate->dungeon.g1_w0_chains_disabled)
+                    next = DM2_V1_RECORD_HANDLE_END;
                 visit = &scan.records[scan.record_count++];
                 visit->x = (int16_t)x;
                 visit->y = (int16_t)y;
                 visit->object_id = (uint16_t)link;
                 visit->next_object_id = (uint16_t)next;
-                visit->word2 = (uint16_t)record[2] |
-                               ((uint16_t)record[3] << 8);
+                visit->word2 = candidate->dungeon.source_words_big_endian
+                    ? (uint16_t)(((uint16_t)record[2] << 8) | record[3])
+                    : (uint16_t)record[2] | ((uint16_t)record[3] << 8);
                 visit->type = (uint8_t)type;
                 visit->record_size = (uint8_t)pool->record_size;
                 for (byte = 0; byte < pool->record_size; ++byte) {
@@ -2608,7 +9390,9 @@ static int dm2_v1_game_load_local_dyn_map_scan_init(
             }
         }
     }
-    if (scan.record_count < (uint16_t)map_receipt.record_count ||
+    if ((!candidate->sksave_map_owner_valid &&
+         scan.record_count != (uint16_t)map_receipt.record_count) ||
+        scan.record_count > (uint16_t)map_receipt.record_count ||
         scan.root_count == 0u || scan.marked_tile_count == 0u || hash == 0u) {
         goto fail;
     }
@@ -2641,7 +9425,8 @@ static int dm2_v1_game_load_local_dyn_record_effects_init(
         !candidate->local_dyn_map_scan.valid ||
         candidate->local_dyn_map_scan.map != candidate->current_map ||
         candidate->local_dyn_prelude.source_map != candidate->current_map ||
-        candidate->local_dyn_prelude.queue.count <= 0 ||
+        (candidate->local_dyn_prelude.queue.count <= 0 &&
+         !candidate->sksave_map_owner_valid) ||
         candidate->local_dyn_prelude.queue.count >
             DM2_V1_LOADLEVEL_MAX_DYN_ENTRIES) {
         return 0;
@@ -2664,9 +9449,8 @@ static int dm2_v1_game_load_local_dyn_record_effects_init(
             visit->y < 0 || visit->y >= (int16_t)scan->height) {
             return 0;
         }
-        raw = dm2_v1_dungeon_get_tile_raw(&candidate->dungeon,
-                                          candidate->current_map,
-                                          visit->x, visit->y);
+        raw = dm2_v1_game_load_candidate_tile_raw(
+            candidate, candidate->current_map, visit->x, visit->y);
         if (raw < 0 || (raw & 0x10) == 0) return 0;
         tile_class = (uint8_t)((unsigned int)raw >> 5);
         hash = dm2_v1_game_load_owner_hash_step(hash, visit->object_id);
@@ -2730,8 +9514,10 @@ static int dm2_v1_game_load_local_dyn_record_effects_init(
     }
     /* The source's 0x27 branch is a real dependency.  Do not allow a later
      * DYN4 consumer to mistake the partial RG51p table for the final table. */
-    if (effects.cross_map_actuator_count != 0u ||
-        effects.selector_queue.count <= 0 ||
+    if ((effects.cross_map_actuator_count != 0u &&
+         !candidate->sksave_map_owner_valid) ||
+        (effects.selector_queue.count <= 0 &&
+         !candidate->sksave_map_owner_valid) ||
         effects.selector_queue.count > DM2_V1_LOADLEVEL_MAX_DYN_ENTRIES) {
         return 0;
     }
@@ -2912,7 +9698,11 @@ int dm2_v1_game_load_runtime_session_candidate_init(
         !dm2_v1_record_pool_set_clone(&candidate.record_pools,
                                       &source->record_pools) ||
         !candidate.record_pools.valid ||
-        !candidate.record_pools.record_graph_complete) goto fail;
+        !candidate.record_pools.record_graph_complete ||
+        !dm2_v1_game_load_runtime_candidate_materialize_dynamic_pools(
+            &candidate, source)) goto fail;
+    memcpy(candidate.record_capacities, source->record_capacities,
+           sizeof(candidate.record_capacities));
     candidate.timer_entries = calloc(source->timer_capacity,
                                      sizeof(*candidate.timer_entries));
     candidate.timer_indices = calloc(source->timer_capacity,
@@ -2942,6 +9732,7 @@ int dm2_v1_game_load_runtime_session_candidate_init(
     candidate.moverec = source->source_moverec;
     candidate.event_queue = source->source_event_queue;
     candidate.source_event_hero_index = source->source_event_hero_index;
+    candidate.source_next_champion_number = source->source_next_champion_number;
     /* DM2__INIT_GAME enters DM2_1031_0541(5) before DM2_2f3f_0789 selects
      * the first champion. Clone that already-materialised empty-party state;
      * rebuilding it from candidate.party here would change predicate inputs
@@ -2999,6 +9790,14 @@ int dm2_v1_game_load_runtime_session_candidate_init(
     hash = dm2_v1_game_load_owner_hash_step(hash, source->caii_source.source_hash);
     hash = dm2_v1_game_load_owner_hash_step(hash, candidate.timer_capacity);
     hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)candidate.party.heros_in_party);
+    /* Fresh GAME_LOAD owns the source c_wbbb block from zero. Keep the
+     * complete block in the candidate even though its b_04 consumer is the
+     * first runtime effect currently admitted. */
+    memset(candidate.source_savegames1, 0,
+           sizeof(candidate.source_savegames1));
+    candidate.source_savegames1_valid = 1;
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        candidate.source_savegames1_valid);
     if (hash == 0u) goto fail;
     candidate.candidate_hash = hash;
     candidate.valid = 1;
@@ -3008,6 +9807,140 @@ int dm2_v1_game_load_runtime_session_candidate_init(
 fail:
     dm2_v1_game_load_runtime_session_candidate_free(&candidate);
     if (!out_was_initialized) memset(out, 0, sizeof(*out));
+    return 0;
+}
+
+int dm2_v1_game_load_runtime_session_candidate_init_from_sksave(
+    DM2_V1_GameLoadRuntimeSessionCandidate *out,
+    const DM2_V1_SksaveGameLoadOwner *source)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate candidate;
+    uint32_t hash = 0x52534b53u; /* "RSKS" */
+    int i;
+
+    if (!out || !source || !source->valid ||
+        !source->source_dungeon_valid || !source->source_dungeon.raw_data ||
+        source->source_dungeon.raw_size <= 0 ||
+        !source->record_pools.valid || !source->record_pools.record_graph_complete ||
+        !source->caii_slots_valid || !source->caii_slots.valid ||
+        !source->caii_source.valid || !source->asset_loader ||
+        !source->asset_loader->loaded || !source->source_timer_owner_ready ||
+        !source->runtime_timer_entries || !source->runtime_timer_indices ||
+        source->runtime_timer_capacity == 0u || !source->source_sound_materialized ||
+        !source->sound_owner.valid || !source->source_savegames1_valid ||
+        source->state.champion_count == 0u ||
+        source->state.champion_count > DM2_MAX_HEROES ||
+        source->state.leader_index >= source->state.champion_count) return 0;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.lifecycle_tag =
+        DM2_V1_GAME_LOAD_RUNTIME_CANDIDATE_LIFECYCLE_TAG;
+    if (dm2_v1_dungeon_load(&candidate.dungeon,
+                            source->source_dungeon.raw_data,
+                            source->source_dungeon.raw_size) != 0) goto fail;
+    if (!candidate.dungeon.record_graph_complete) goto fail;
+    if (!dm2_v1_record_pool_set_clone(&candidate.record_pools,
+                                      &source->record_pools)) goto fail;
+    if (!dm2_v1_caii_source_owner_clone(&candidate.caii_source,
+                                         &source->caii_source)) goto fail;
+    if (!dm2_v1_game_load_sound_owner_clone(&candidate.sound_owner,
+                                             &source->sound_owner)) goto fail;
+    if (!dm2_v1_game_load_runtime_candidate_sksave_map_clone(
+            &candidate.sksave_map_owner, &source->map_owner)) goto fail;
+    if (!source->map_owner.dungeon) goto fail;
+    candidate.sksave_dungeon_receipt = *source->map_owner.dungeon;
+    candidate.sksave_map_owner.dungeon = &candidate.sksave_dungeon_receipt;
+    candidate.sksave_map_owner_valid = 1;
+    candidate.timer_capacity = source->runtime_timer_capacity;
+    candidate.timer_entries = calloc(candidate.timer_capacity,
+                                     sizeof(*candidate.timer_entries));
+    candidate.timer_indices = calloc(candidate.timer_capacity,
+                                     sizeof(*candidate.timer_indices));
+    if (!candidate.timer_entries || !candidate.timer_indices) goto fail;
+    memcpy(candidate.timer_entries, source->runtime_timer_entries,
+           (size_t)candidate.timer_capacity * sizeof(*candidate.timer_entries));
+    memcpy(candidate.timer_indices, source->runtime_timer_indices,
+           (size_t)candidate.timer_capacity * sizeof(*candidate.timer_indices));
+    candidate.timer_queue = source->runtime_timer_queue;
+    candidate.timer_queue.entries = candidate.timer_entries;
+    candidate.timer_queue.indices = candidate.timer_indices;
+    dm2_v1_caii_array_init(&candidate.caii_slots,
+                           source->caii_slots.capacity);
+    if (!candidate.caii_slots.valid) goto fail;
+    memcpy(candidate.caii_slots.slots, source->caii_slots.slots,
+           (size_t)source->caii_slots.capacity * DM2_V1_CAII_SLOT_SIZE);
+    candidate.caii_slots.alloc_count = source->caii_slots.alloc_count;
+    candidate.asset_loader = source->asset_loader;
+    candidate.party.heros_in_party = (int16_t)source->state.champion_count;
+    candidate.party.absdir = (int16_t)source->state.party_direction;
+    candidate.party.curactevhero = (DM2_HeroIndex)source->state.leader_index;
+    candidate.party.curacthero = (int16_t)source->state.leader_index;
+    for (i = 0; i < (int)source->state.champion_count; ++i)
+        candidate.party.hero[i] = source->heroes[i];
+    candidate.leader_hand_record = (int16_t)source->leader_hand_root;
+    if (candidate.leader_hand_record == DM2_V1_RECORD_HANDLE_END ||
+        candidate.leader_hand_record == DM2_V1_RECORD_HANDLE_NULL) {
+        int leader = (int)source->state.leader_index;
+        if (leader >= 0 && leader < (int)source->state.champion_count) {
+            uint16_t object = (uint16_t)source->heroes[leader].item[0];
+            if (object != 0xffffu)
+                candidate.leader_hand_record = (int16_t)object;
+        }
+    }
+    candidate.source_event_hero_index = (int16_t)source->state.leader_index;
+    candidate.source_next_champion_number = 0;
+    candidate.source_party_map = (int)source->state.party_map;
+    candidate.source_party_x = (uint8_t)source->state.party_x;
+    candidate.source_party_y = (uint8_t)source->state.party_y;
+    candidate.source_party_direction = (uint8_t)source->state.party_direction;
+    candidate.source_party_absdir = candidate.source_party_direction;
+    candidate.source_teleporter_map = -1;
+    candidate.source_display_pose_valid = 1;
+    candidate.source_display_map = (int16_t)source->state.party_map;
+    candidate.source_display_x = (int16_t)source->state.party_x;
+    candidate.source_display_y = (int16_t)source->state.party_y;
+    candidate.source_runtime_display_direction = candidate.source_party_direction;
+    candidate.source_hero_ench_countdown = source->source_savegames1[2];
+    candidate.source_hero_ench_target = -1;
+    memcpy(candidate.source_savegames1, source->source_savegames1,
+           sizeof(candidate.source_savegames1));
+    candidate.source_savegames1_valid = 1;
+    dm2_v1_game_load_moverec_state_init(&candidate.moverec,
+                                        (int16_t)source->state.party_map);
+    {
+        int map_ok = dm2_v1_game_load_runtime_candidate_change_current_map(
+            &candidate, (int)source->state.party_map, 1);
+        int prelude_ok = map_ok && dm2_v1_game_load_local_dyn_prelude_init(
+            &candidate.local_dyn_prelude, &candidate);
+        int scan_ok = prelude_ok && dm2_v1_game_load_local_dyn_map_scan_init(
+            &candidate.local_dyn_map_scan, &candidate);
+        int effects_ok = scan_ok && dm2_v1_game_load_local_dyn_record_effects_init(
+            &candidate.local_dyn_record_effects, &candidate);
+        if (!map_ok || !prelude_ok || !scan_ok || !effects_ok) {
+            goto fail;
+        }
+    }
+    candidate.source_transaction_hash = source->state.fixed_sections_hash ^
+        source->state.timers_hash ^ source->state.dungeon.prefix_hash;
+    if (candidate.source_transaction_hash == 0u) goto fail;
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        candidate.source_transaction_hash);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        source->sound_owner.receipt_hash);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        source->caii_source.source_hash);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        candidate.timer_capacity);
+    hash = dm2_v1_game_load_owner_hash_step(hash,
+        (uint32_t)candidate.party.heros_in_party);
+    if (hash == 0u) goto fail;
+    candidate.candidate_hash = hash;
+    candidate.valid = 1;
+    dm2_v1_game_load_runtime_session_candidate_free(out);
+    *out = candidate;
+    out->sksave_map_owner.dungeon = &out->sksave_dungeon_receipt;
+    return 1;
+fail:
+    dm2_v1_game_load_runtime_session_candidate_free(&candidate);
     return 0;
 }
 
@@ -4518,7 +11451,10 @@ int dm2_v1_game_load_world_owner_process_actuator_tick_generators(
                  * the tile-record flag. c_map walks only the corresponding
                  * ground-stack roots, so there is no chain to follow here. */
                 if (raw_link < 0) continue;
-                if ((uint16_t)raw_link == DM2_THING_NULL_MARKER) continue;
+                if ((uint16_t)raw_link == DM2_THING_NULL_MARKER) {
+                    if (owner->dungeon.source_words_big_endian) continue;
+                    goto fail;
+                }
                 link = (int16_t)(uint16_t)raw_link;
                 /* Dungeon roots carry 0xfffe, while c_record returns the
                  * same terminal link as signed int16_t -2. Keep the walk in
@@ -4527,9 +11463,15 @@ int dm2_v1_game_load_world_owner_process_actuator_tick_generators(
                 while (link != DM2_V1_RECORD_HANDLE_END) {
                     int16_t next;
                     const int pool = dm2_v1_record_handle_pool(link);
-                    if (++steps > max_chain_steps ||
-                        !dm2_v1_record_pool_next_link(&owner->record_pools,
-                            link, &next)) {
+                    if (++steps > max_chain_steps) goto fail;
+                    if (owner->dungeon.source_words_big_endian) {
+                        const uint8_t *link_record =
+                            dm2_v1_record_pool_address(&owner->record_pools, link);
+                        if (!link_record) goto fail;
+                        next = (int16_t)(((uint16_t)link_record[0] << 8) |
+                                         (uint16_t)link_record[1]);
+                    } else if (!dm2_v1_record_pool_next_link(
+                                   &owner->record_pools, link, &next)) {
                         goto fail;
                     }
                     if (pool == 3) {
@@ -4539,8 +11481,10 @@ int dm2_v1_game_load_world_owner_process_actuator_tick_generators(
                         uint8_t subtype;
                         int multiplier;
                         if (!record) goto fail;
-                        attributes = dm2_v1_game_load_owner_read_record_u16(
-                            owner, record + 2u);
+                        attributes = owner->dungeon.source_words_big_endian
+                            ? (uint16_t)(((uint16_t)record[2] << 8) | record[3])
+                            : (uint16_t)record[2] |
+                                ((uint16_t)record[3] << 8);
                         subtype = (uint8_t)(attributes & 0x7fu);
                         multiplier = dm2_v1_game_load_owner_tick_multiplier(subtype);
                         if (multiplier != 0) {

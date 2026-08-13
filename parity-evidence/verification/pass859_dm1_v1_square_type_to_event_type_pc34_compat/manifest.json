@@ -89,11 +89,11 @@
     }
   ],
   "status": "PASS859_DM1_V1_SQUARE_TYPE_TO_EVENT_TYPE_LOCKED",
-  "timestampUtc": "2026-08-11T06:50:25.766331+00:00",
+  "timestampUtc": "2026-08-12T01:40:14.247037+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_square_type_to_event_type_pc34_compat"
+        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_square_type_to_event_type_pc34_compat"
       ],
       "outputTail": "dm1_v1_square_type_to_event_type: 50/50 assertions passed",
       "passed": true,

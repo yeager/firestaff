@@ -26,6 +26,8 @@
 #include "entrance_frontend_pc34_compat.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_save_load.h"
+#include "dm2_v1_save_load.h"
+#include "dm2_v1_startup_menu.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "nexus_v1_launcher.h"
 #include "nexus_v1_save.h"
@@ -62,6 +64,7 @@
 void m12_update_game_availability(const FS_GameAvailability *avail);
 static int m12_data_directory_dialog_token_is_placeholder(const char* path);
 static const char* m12_translate_for_locale(int localeIndex, const char* english);
+static int m12_ascii_equal_ci(const char* a, const char* b);
 
 typedef struct M12_DataDirScanJob {
     SDL_Thread* thread;
@@ -3241,9 +3244,28 @@ static int m12_is_valid_theron_quick_resume_path(const char* path) {
     return theron_v1_save_verify_slot(saveRoot, slot) ? 1 : 0;
 }
 
+static int m12_is_valid_dm2_quick_resume_path(const char* path) {
+    DM2_SKSaveCorpusReceipt corpus;
+    char root[512];
+    uint8_t slot = 0u;
+    int last_session = 0;
+
+    if (!path || !dm2_v1_startup_save_path_to_root_slot(
+            path, root, (int)sizeof(root), &slot, &last_session) ||
+        !dm2_v1_sksave_corpus_scan(root, &corpus)) {
+        return 0;
+    }
+    if (last_session) {
+        return corpus.has_last_session || corpus.has_last_session_backup;
+    }
+    return slot < DM2_SLOT_MAX &&
+           (corpus.valid_slot_mask & (uint16_t)(1u << slot)) != 0u;
+}
+
 static int m12_is_quick_resume_game_supported(const char* gameId) {
     return gameId && (strcmp(gameId, "dm1") == 0 ||
                       strcmp(gameId, "csb") == 0 ||
+                      strcmp(gameId, "dm2") == 0 ||
                       strcmp(gameId, "nexus") == 0 ||
                       strcmp(gameId, "theron") == 0);
 }
@@ -3258,6 +3280,9 @@ static int m12_is_valid_quick_resume_path_for_game(const char* gameId,
     }
     if (strcmp(gameId, "csb") == 0) {
         return m12_is_valid_csb_quick_resume_path(path);
+    }
+    if (strcmp(gameId, "dm2") == 0) {
+        return m12_is_valid_dm2_quick_resume_path(path);
     }
     if (strcmp(gameId, "nexus") == 0) {
         return m12_is_valid_nexus_quick_resume_path(path);
@@ -3459,11 +3484,56 @@ static int m12_infer_quick_resume_game_id(const char* path,
     if (m12_try_quick_resume_candidate("csb", path, outId, outSize)) {
         return 1;
     }
+    if (m12_try_quick_resume_candidate("dm2", path, outId, outSize)) {
+        return 1;
+    }
     return m12_try_quick_resume_candidate("nexus", path, outId, outSize);
+}
+
+static int m12_discover_dm2_download_save(
+    const M12_StartupMenuState* state, char* out_path, size_t out_size) {
+    const char* home = getenv("HOME");
+    const char* data_dir;
+    char dm2_data_dir[512];
+    char root[512];
+    DM2_SKSaveCorpusReceipt corpus;
+
+    if (!state || !out_path || out_size == 0u || !home || !home[0]) {
+        return 0;
+    }
+    /* Keep the global launcher probe tied to a real DM2 data selection. */
+    data_dir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+    if (!data_dir || !data_dir[0]) return 0;
+    snprintf(dm2_data_dir, sizeof(dm2_data_dir), "%s/dm2", data_dir);
+    if (!FSP_DirExists(dm2_data_dir) &&
+        !(strlen(data_dir) >= 4u &&
+          m12_ascii_equal_ci(data_dir + strlen(data_dir) - 4u, "/dm2"))) {
+        return 0;
+    }
+    snprintf(root, sizeof(root), "%s/Downloads/dm2", home);
+    if (!dm2_v1_sksave_corpus_scan(root, &corpus)) {
+        return 0;
+    }
+    /* M12's Continue handoff must carry a primary .dat path.  A .bak is
+     * still available to the DM2 startup menu's own fallback policy, but it
+     * is not a stable quick-resume identity for this global launcher slot. */
+    for (uint8_t i = 0u; i < corpus.candidate_receipt_count; ++i) {
+        const char* candidate = corpus.candidate_receipts[i].path;
+        size_t length;
+        if (!candidate || !candidate[0]) continue;
+        length = strlen(candidate);
+        if (length < 4u ||
+            !m12_ascii_equal_ci(candidate + length - 4u, ".dat")) continue;
+        if (!m12_is_valid_dm2_quick_resume_path(candidate)) continue;
+        snprintf(out_path, out_size, "%s", candidate);
+        return 1;
+    }
+    return 0;
 }
 
 static void m12_probe_quick_resume(M12_StartupMenuState* state) {
     M12_Config config;
+    char discovered_dm2_path[512];
     if (!state) {
         return;
     }
@@ -3485,9 +3555,18 @@ static void m12_probe_quick_resume(M12_StartupMenuState* state) {
     }
 
     if (!m12_infer_quick_resume_game_id(config.lastSavePath,
-                                        state->quickResumeGameId,
-                                        (int)sizeof(state->quickResumeGameId))) {
-        return;
+                                       state->quickResumeGameId,
+                                       (int)sizeof(state->quickResumeGameId))) {
+        if (!m12_discover_dm2_download_save(
+                state,
+                discovered_dm2_path, sizeof(discovered_dm2_path)) ||
+            !m12_infer_quick_resume_game_id(
+                discovered_dm2_path, state->quickResumeGameId,
+                (int)sizeof(state->quickResumeGameId))) {
+            return;
+        }
+        snprintf(config.lastSavePath, sizeof(config.lastSavePath), "%s",
+                 discovered_dm2_path);
     }
 
     state->quickResumeAvailable = 1;

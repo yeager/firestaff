@@ -49,6 +49,18 @@ static void wr16(uint8_t *p, int16_t v)
     p[1] = (uint8_t)((u >> 8) & 0xffu);
 }
 
+static int16_t rd16be(const uint8_t *p)
+{
+    return (int16_t)(((uint16_t)p[0] << 8) | p[1]);
+}
+
+static void wr16be(uint8_t *p, int16_t v)
+{
+    uint16_t u = (uint16_t)v;
+    p[0] = (uint8_t)(u >> 8);
+    p[1] = (uint8_t)u;
+}
+
 /* Reference copy of the source LCG (c_random.cpp:13-47) for cross-checking
  * the consumed draw sequence. */
 static uint32_t ref_rand(uint32_t *state)
@@ -185,6 +197,41 @@ int main(void)
         dm2_v1_record_pool_set_free(&set);
     }
 
+    /* ── RECYCLE_A_RECORD_FROM_THE_WORLD possession route ───────── */
+    {
+        DM2_V1_RecordPoolSet set;
+        DM2_V1_DungeonData dungeon;
+        uint8_t raw[8];
+        int16_t recycled;
+
+        memset(&set, 0, sizeof(set));
+        memset(&dungeon, 0, sizeof(dungeon));
+        memset(raw, 0, sizeof(raw));
+        add_pool(&set, 4, 16, 1, 0);
+        add_pool(&set, 10, 4, 1, 0);
+        set.valid = 1;
+        /* DB4 word@2 owns a DB10 possession; DB10 word@2 is a
+         * non-important item type and therefore recyclable. */
+        wr16(set.pools[4].bytes + 2, mk_handle(10, 0));
+        wr16(set.pools[10].bytes + 0, DM2_V1_RECORD_HANDLE_END);
+        wr16(set.pools[10].bytes + 2, 2);
+        dungeon.level_count = 1;
+        dungeon.level_widths[0] = 1;
+        dungeon.level_heights[0] = 1;
+        dungeon.raw_data = raw;
+        dungeon.raw_size = (int)sizeof(raw);
+        recycled = dm2_v1_alloc_new_dbitem_from_world(
+            &set, &dungeon, 0, 0x0102u);
+        CHECK(recycled == mk_handle(10, 0),
+              "recycler finds a non-important DB10 possession");
+        CHECK(rd16(set.pools[4].bytes + 2) == DM2_V1_RECORD_HANDLE_END,
+              "recycler unlinks the possession from DB4");
+        CHECK(rd16(set.pools[10].bytes + 0) == DM2_V1_RECORD_HANDLE_END &&
+                  rd16(set.pools[10].bytes + 2) == 2,
+              "recycled possession is reset and receives itemtype");
+        dm2_v1_record_pool_set_free(&set);
+    }
+
     /* ── SET_ITEMTYPE (c_record.cpp:284-345) ─────────────────────── */
     {
         DM2_V1_RecordPoolSet set;
@@ -259,6 +306,34 @@ int main(void)
         dm2_v1_record_pool_set_free(&set);
     }
 
+    /* The same SET_ITEMTYPE owner must preserve source word order for Mac
+     * and FM Towns record pools. */
+    {
+        DM2_V1_RecordPoolSet set;
+        int16_t rec;
+
+        memset(&set, 0, sizeof(set));
+        add_pool(&set, 5, 4, 1, 1);
+        add_pool(&set, 8, 4, 1, 1);
+        set.source_words_big_endian = 1;
+        set.valid = 1;
+
+        rec = mk_handle(5, 0);
+        wr16be(set.pools[5].bytes + 2, (int16_t)0x8000);
+        CHECK(dm2_v1_record_pool_set_itemtype(&set, rec, 0x45) == 1,
+              "big-endian weapon type write runs");
+        CHECK(rd16be(set.pools[5].bytes + 2) == (int16_t)0x8045,
+              "big-endian weapon type preserves source word order");
+
+        rec = mk_handle(8, 0);
+        wr16be(set.pools[8].bytes + 2, (int16_t)0x8000);
+        CHECK(dm2_v1_record_pool_set_itemtype(&set, rec, 0x10) == 1,
+              "big-endian potion type write runs");
+        CHECK(rd16be(set.pools[8].bytes + 2) == (int16_t)0x9000,
+              "big-endian potion type preserves source word order");
+        dm2_v1_record_pool_set_free(&set);
+    }
+
     /* ── ALLOC_NEW_DBITEM (c_record.cpp:1142-1165) ───────────────── */
     {
         DM2_V1_RecordPoolSet set;
@@ -308,7 +383,7 @@ int main(void)
         ground = DM2_V1_RECORD_HANDLE_END;
         dm2_v1_drops_rng_init(&rng);
         placed = dm2_v1_drops_place_source_slots(
-            &set, slot_words, &rng,
+            &set, NULL, 0, slot_words, &rng,
             9, 9, 2,   /* party pose */
             3, 4,      /* drop cell (away from party) */
             &ground, items, 8, &iterations);
@@ -387,7 +462,7 @@ int main(void)
             (void)ref_rand(&ref); /* extra roll (slot word reused) */
             draw = ref_rand(&ref); /* RANDBIT */
             placed = dm2_v1_drops_place_source_slots(
-                &set2, slot_words, &rng2,
+                &set2, NULL, 0, slot_words, &rng2,
                 3, 4, 1,   /* party on the drop cell, dir 1 */
                 3, 4,
                 &ground2, one, 1, &it2);
@@ -414,7 +489,7 @@ int main(void)
             set3.valid = 1;
             dm2_v1_drops_rng_init(&rng3);
             placed = dm2_v1_drops_place_source_slots(
-                &set3, slot_words, &rng3,
+                &set3, NULL, 0, slot_words, &rng3,
                 9, 9, 2,
                 3, 4,
                 &ground3, ex, 4, &it3);

@@ -1,32 +1,15 @@
 # Dungeon Master II: Skullkeep Technical Reference
 
-> **Status reviewed 2026-08-12.** DM2 has verified DOS and FM Towns runtime
-> slices. Both authentic English Macintosh editions boot from their original
-> ZIPs in RAM and pass bounded New Game/media/input gates. Full V1 parity,
-> Mac GAME_LOAD/Resume and native Mac pointer/drag ownership remain open.
+> **Status reviewed 2026-08-13.** DM2 has a playable source-owned runtime
+> from DOS, Amiga, FM Towns and Macintosh real media. Advanced V1 parity,
+> native non-DOS saves and some combat/UI owners remain active work.
 
 ## Scope
 
-DM2 V1 follows skproject. It is independent from the DM1/CSB compatibility
-path. DOS uses the paired PC `GRAPHICS.DAT` plus `DUNGEON.DAT` hashes; the
-Towns and Macintosh routes keep their original platform containers, byte
-order and resource ownership separate.
-
-## Macintosh editions
-
-Firestaff currently admits two English Macintosh editions independently:
-
-| Edition | Verified | Still closed |
-|---|---|---|
-| Large retail | Authentic ZIP/BIN, HFS, big-endian dungeon, title/MooV, sound, MIDI, input, New Game and bounded wall interaction | Complete GAME_LOAD/Resume, native dynamic Control/Event pointer owner, CoreMIDI timing and full parity |
-| Small First Chapter demo | Authentic ZIP, in-memory StuffIt `DMFiles`, truncated big-endian dungeon, 16-entry roster, static startup, input and New Game | The authoritative ZIP has no application fork; dynamic pointer/drag ownership and Resume cannot be claimed |
-
-Production never extracts these game files to a Firestaff data directory and
-never borrows the retail application fork for the demo. The DOSBox saves in
-`Downloads/dm2` are DOS saves and are not valid evidence for Macintosh Resume.
-The [platform status matrix](../PLATFORM_STATUS.md) is the current summary;
-the [Mac source-lock note](../source-lock/dm2-mac-editor-preservation-note.md)
-records the application/resource evidence and its limits.
+DM2 V1 follows skproject, DMWeb format notes and the retained disassembly
+evidence. It is independent from the DM1/CSB compatibility path. Each
+edition requires its own authenticated data pair; FM Towns English text may
+add the verified PC-English `GRAPHICS.DAT` as a text-only companion.
 
 ## Boot and GDAT
 

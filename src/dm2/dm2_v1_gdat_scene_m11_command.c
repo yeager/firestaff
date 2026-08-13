@@ -34,33 +34,18 @@ static int scene_source_raw_index(const DM2_V1_AssetLoader *loader,
     return 0;
 }
 
-static uint16_t read16(const uint8_t *bytes, int big_endian)
+static uint16_t read_word(const DM2_V1_AssetLoader *loader,
+                          const uint8_t *bytes)
 {
-    return big_endian ? (uint16_t)(((uint16_t)bytes[0] << 8) | bytes[1]) :
-        (uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8);
+    return loader && loader->big_endian
+        ? (uint16_t)(((uint16_t)bytes[0] << 8) | bytes[1])
+        : (uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8);
 }
 
-static int16_t read16s(const uint8_t *bytes, int big_endian)
+static int16_t read_words(const DM2_V1_AssetLoader *loader,
+                          const uint8_t *bytes)
 {
-    return (int16_t)read16(bytes, big_endian);
-}
-
-static int scene_rect_pair_valid(uint16_t floor_rect, uint16_t ceiling_rect)
-{
-    return floor_rect == DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER &&
-           ceiling_rect == DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER;
-}
-
-static uint16_t scene_floor_rect(const DM2_V1_AssetLoader *loader)
-{
-    (void)loader;
-    return DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER;
-}
-
-static uint16_t scene_ceiling_rect(const DM2_V1_AssetLoader *loader)
-{
-    (void)loader;
-    return DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER;
+    return (int16_t)read_word(loader, bytes);
 }
 
 static int dm2_v1_gdat_scene_image_local_palette(
@@ -285,7 +270,8 @@ uint32_t dm2_v1_gdat_scene_query_blit_rect_hash(
                       sizeof(receipt->ceiling_row_hash));
 }
 
-static const uint8_t *find_compressed_rect_row(const uint8_t *table,
+static const uint8_t *find_compressed_rect_row(const DM2_V1_AssetLoader *loader,
+                                                const uint8_t *table,
                                                 size_t table_size,
                                                 uint16_t rect_number,
                                                 int big_endian)
@@ -293,15 +279,15 @@ static const uint8_t *find_compressed_rect_row(const uint8_t *table,
     uint16_t group_count;
     size_t rows_offset;
 
-    if (!table || table_size < 4u || read16(table, big_endian) != 0xfc0du) return NULL;
-    group_count = read16(table + 2u, big_endian);
+    if (!table || table_size < 4u || read_word(loader, table) != 0xfc0du) return NULL;
+    group_count = read_word(loader, table + 2u);
     if (group_count == 0u || (size_t)group_count > (table_size - 4u) / 4u) {
         return NULL;
     }
     rows_offset = 4u + (size_t)group_count * 4u;
     for (uint16_t group = 0u; group < group_count; ++group) {
-        uint16_t first = read16(table + 4u + (size_t)group * 4u, big_endian);
-        uint16_t last = read16(table + 6u + (size_t)group * 4u, big_endian);
+        uint16_t first = read_word(loader, table + 4u + (size_t)group * 4u);
+        uint16_t last = read_word(loader, table + 6u + (size_t)group * 4u);
         size_t count = last >= first ? (size_t)(last - first + 1u) : 0u;
 
         if (count == 0u || count > (table_size - rows_offset) / 8u) {
@@ -315,7 +301,8 @@ static const uint8_t *find_compressed_rect_row(const uint8_t *table,
     return NULL;
 }
 
-static int decode_viewport_root_rect(const uint8_t *table, size_t table_size,
+static int decode_viewport_root_rect(const DM2_V1_AssetLoader *loader,
+                                     const uint8_t *table, size_t table_size,
                                      const uint8_t *row, uint16_t rect_number,
                                      uint16_t width, uint16_t height,
                                      int big_endian,
@@ -330,31 +317,44 @@ static int decode_viewport_root_rect(const uint8_t *table, size_t table_size,
      * no adjustment, and record 3 clips only to (0,0,224,136). No alternate
      * anchor, source crop, or nested clip is admitted here. */
     if (!table || !row || !out_rect || width == 0u || height == 0u ||
-        (read16s(row, big_endian) != 11 && read16s(row, big_endian) != 14) ||
-        read16s(row + 4u, big_endian) != 0 ||
-        read16s(row + 6u, big_endian) != 0) {
+        (loader && loader->big_endian &&
+         (width > DM2_V1_GDAT_SCENE_VIEWPORT_WIDTH ||
+          height > DM2_V1_GDAT_SCENE_VIEWPORT_HEIGHT)) ||
+        ((!loader || !loader->big_endian) &&
+         ((read_words(loader, row) != 11 && read_words(loader, row) != 14) ||
+          read_words(loader, row + 4u) != 0 ||
+          read_words(loader, row + 6u) != 0))) {
         return 0;
     }
-    reference = find_compressed_rect_row(table, table_size,
-                                         read16(row + 2u, big_endian), big_endian);
-    if (!reference || read16s(reference, big_endian) != 1 ||
-        read16s(reference + 4u, big_endian) != 0 ||
-        read16s(reference + 6u, big_endian) != 0) {
+    /* Macintosh GRAPHICS.DAT retains the same authenticated rect table but
+     * its scene rows are native Mac compositor records, not the PC 11/14
+     * root indirections.  The source viewport draws these floor/ceiling
+     * images at the viewport origin; keep the native table receipt and bind
+     * that direct geometry without inventing a PC reference chain. */
+    if (loader && loader->big_endian) {
+        out_rect->rect_number = rect_number;
+        out_rect->x = 0;
+        out_rect->y = 0;
+        out_rect->width = width;
+        out_rect->height = height;
+        return 1;
+    }
+    reference = find_compressed_rect_row(loader, table, table_size, read_word(loader, row + 2u));
+    if (!reference || read_words(loader, reference) != 1 ||
+        read_words(loader, reference + 4u) != 0 || read_words(loader, reference + 6u) != 0) {
         return 0;
     }
-    clip = find_compressed_rect_row(table, table_size,
-                                    read16(reference + 2u, big_endian), big_endian);
-    if (!clip || read16s(clip, big_endian) != 9 ||
-        read16s(clip + 2u, big_endian) != 0 ||
-        read16s(clip + 4u, big_endian) != DM2_V1_GDAT_SCENE_VIEWPORT_WIDTH ||
-        read16s(clip + 6u, big_endian) != DM2_V1_GDAT_SCENE_VIEWPORT_HEIGHT ||
+    clip = find_compressed_rect_row(loader, table, table_size, read_word(loader, reference + 2u));
+    if (!clip || read_words(loader, clip) != 9 || read_words(loader, clip + 2u) != 0 ||
+        read_words(loader, clip + 4u) != DM2_V1_GDAT_SCENE_VIEWPORT_WIDTH ||
+        read_words(loader, clip + 6u) != DM2_V1_GDAT_SCENE_VIEWPORT_HEIGHT ||
         width > DM2_V1_GDAT_SCENE_VIEWPORT_WIDTH ||
         height > DM2_V1_GDAT_SCENE_VIEWPORT_HEIGHT) {
         return 0;
     }
     out_rect->rect_number = rect_number;
     out_rect->x = 0;
-    out_rect->y = read16s(row, big_endian) == 11 ? 0 :
+    out_rect->y = read_words(loader, row) == 11 ? 0 :
         (int16_t)(DM2_V1_GDAT_SCENE_VIEWPORT_HEIGHT - height);
     out_rect->width = width;
     out_rect->height = height;
@@ -622,8 +622,8 @@ int dm2_v1_gdat_scene_m11_command_plan_build(
             DM2_GDAT_ENTRY_TYPE_RAW4, 0, &table_size);
         for (int i = 0; i < 2; ++i) {
             const uint8_t *row = find_compressed_rect_row(
-                table, table_size, rect_numbers[i], loader->big_endian);
-            if (!decode_viewport_root_rect(table, table_size, row, rect_numbers[i],
+                loader, table, table_size, rect_numbers[i]);
+            if (!decode_viewport_root_rect(loader, table, table_size, row, rect_numbers[i],
                                          candidate.commands[i].width,
                                          candidate.commands[i].height,
                                          loader->big_endian,
@@ -698,11 +698,9 @@ int dm2_v1_gdat_scene_query_blit_rect_receipt(
         DM2_GDAT_ENTRY_TYPE_RAW4, 0, &table_size);
     if (!table || table_size == 0u) return 0;
     floor_row = find_compressed_rect_row(
-        table, table_size, scene_floor_rect(loader),
-        loader->big_endian);
+        loader, table, table_size, DM2_V1_GDAT_SCENE_FLOOR_RECT_NUMBER);
     ceiling_row = find_compressed_rect_row(
-        table, table_size, scene_ceiling_rect(loader),
-        loader->big_endian);
+        loader, table, table_size, DM2_V1_GDAT_SCENE_CEILING_RECT_NUMBER);
     if (!floor_row || !ceiling_row) return 0;
 
     memset(&candidate, 0, sizeof(candidate));

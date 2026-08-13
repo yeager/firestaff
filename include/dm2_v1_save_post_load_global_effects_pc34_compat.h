@@ -37,7 +37,7 @@ typedef struct {
     void (*add_hero_poison)(void *ctx, int hero_idx, int16_t amount);
     /* Check if hero is alive.  Returns nonzero if curHP != 0. */
     int (*hero_is_alive)(void *ctx, int hero_idx);
-} DM2_V1_GlobalEffectCallbacks;
+} DM2_V1_SaveGlobalEffectCallbacks;
 
 typedef struct {
     int valid;
@@ -57,7 +57,7 @@ typedef struct {
 int dm2_v1_post_load_global_effects(
     const uint8_t *timer_array, int num_timers,
     int hero_count,
-    const DM2_V1_GlobalEffectCallbacks *cb,
+    const DM2_V1_SaveGlobalEffectCallbacks *cb,
     DM2_V1_GlobalEffectReceipt *receipt);
 
 #ifdef __cplusplus

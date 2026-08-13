@@ -1,6 +1,6 @@
 # Pass508 - DM1 V1 movement remaining gap after pass373/pass374
 
-Status: BLOCKED_PASS508_DM1_V1_MOVEMENT_REMAINING_ORIGINAL_OVERLAY_GAP_PROVED
+Status: FAIL_PASS508_DM1_V1_MOVEMENT_REMAINING_GAP_AUDIT
 
 Scope: movement/forflyttning evidence only. This pass consumes pass373/pass374 and proves the next remaining gap; it does not promote pixel parity.
 
@@ -14,8 +14,8 @@ Scope: movement/forflyttning evidence only. This pass consumes pass373/pass374 a
 
 ## Current completion evidence consumed
 
-- PASS pass373-live-route-wall-redraw-green
-- PASS pass374-completion-credit-green
+- FAIL pass373-live-route-wall-redraw-green
+- FAIL pass374-completion-credit-green
 - PASS completion-matrix-current-after-pass374
 - PASS completion-notes-name-next-gap
 - PASS docs-carry-narrowed-nonclaim

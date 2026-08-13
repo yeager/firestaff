@@ -83,7 +83,6 @@ int main(void)
     size_t dungeon_size;
 
     if (!test_legacy_load_shim_cannot_claim_success()) return 1;
-
     dungeon_size = build_pc_g1_fixture(dungeon, sizeof(dungeon));
     if (dungeon_size == 0) return 1;
     snprintf(path, sizeof(path), "/tmp/firestaff-dm2-load-new-%ld.dat",

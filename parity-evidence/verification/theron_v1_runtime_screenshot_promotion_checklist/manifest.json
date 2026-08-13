@@ -1,14 +1,14 @@
 {
   "aggregate": {
     "contract_drift": [],
-    "decision": "REVIEW_CHECKLIST_MACHINE_ELIGIBLE_AWAITING_REVIEWER",
-    "ineligible_count": 0,
-    "machine_eligible_count": 1,
+    "decision": "REVIEW_CHECKLIST_NO_ROW_PROMOTED",
+    "ineligible_count": 1,
+    "machine_eligible_count": 0,
     "reviewer_promoted_count": 0,
     "reviewer_state_path": "/Volumes/Extern-disk/FirestaffUserData/data/theron/promotion_review_state.json",
     "reviewer_state_present": false,
     "skipped_count": 2,
-    "status": "REVIEW_CHECKLIST_MACHINE_ELIGIBLE_AWAITING_REVIEWER",
+    "status": "REVIEW_CHECKLIST_NO_ROW_PROMOTED",
     "uniqueness_findings": []
   },
   "checklistItems": [
@@ -41,7 +41,7 @@
       "label": "operator-local reviewer sign-off file reports reviewed=true for this row with a non-empty reviewer and review_date"
     }
   ],
-  "decision": "REVIEW_CHECKLIST_MACHINE_ELIGIBLE_AWAITING_REVIEWER",
+  "decision": "REVIEW_CHECKLIST_NO_ROW_PROMOTED",
   "eligibilityCriteria": [
     "real Firestaff Theron launch (probe.sourceId=='theron', launchedEver==1)",
     "launch output does not contain 'deterministic fallback assets'",
@@ -51,7 +51,7 @@
     "presented BMP is a valid 320x200 24-bit BMP with >200 non-black pixels",
     "operator-local reviewer sign-off reports reviewed=true with non-empty reviewer and review_date"
   ],
-  "generated_at": "2026-08-10T10:43:41.743128+00:00",
+  "generated_at": "2026-08-12T01:35:15.265831+00:00",
   "nonClaims": [
     "No Theron screenshot is promoted into README, verification-screens/, or docs/compare/ by this checklist.",
     "No generated, illustrated, or mock Theron image is created or copied.",
@@ -95,14 +95,14 @@
         {
           "key": "unique_source_bmp",
           "label": "source BMP sha256 is unique across all rows (duplicate sha256s indicate a shared placeholder fixture)",
-          "note": "source sha256 94ac0999e56d4f5a33b8e929d11bf31b62c368c518837339f072cd37726acb40 unique",
+          "note": "source sha256 a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f unique",
           "verdict": "PASS"
         },
         {
           "key": "presented_bmp_geometry",
           "label": "presented BMP is a valid 320x200 24-bit BMP with more than 200 non-black pixels",
-          "note": "presented BMP geometry/non-black checks pass",
-          "verdict": "PASS"
+          "note": "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
+          "verdict": "FAIL"
         },
         {
           "key": "reviewer_signoff",
@@ -111,10 +111,10 @@
           "verdict": "PENDING_REVIEWER"
         }
       ],
-      "classification": "MACHINE_ELIGIBLE_AWAITING_REVIEWER",
+      "classification": "REVIEW_CHECKLIST_INELIGIBLE",
       "label": "Theron canonical PC Engine root",
-      "machine_eligible": true,
-      "presented_sha256": "a08fcfc5dad419902bf9681036329373b14ee9ada69392006d3c48a4dcaaf9d4",
+      "machine_eligible": false,
+      "presented_sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f",
       "probe_summary": {
         "gameTick": 0,
         "lastOutcome": "THERON RUNTIME (TRACK 02 DUNGEON)",
@@ -124,7 +124,7 @@
       },
       "reviewer_signed_off": false,
       "reviewer_signoff_record": null,
-      "source_sha256": "94ac0999e56d4f5a33b8e929d11bf31b62c368c518837339f072cd37726acb40"
+      "source_sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f"
     },
     {
       "case_id": "jp_extras_track02_bin",
@@ -156,7 +156,7 @@
     }
   ],
   "schema": "firestaff.parity.theron_v1_runtime_screenshot_promotion_checklist.v1",
-  "status": "REVIEW_CHECKLIST_MACHINE_ELIGIBLE_AWAITING_REVIEWER",
+  "status": "REVIEW_CHECKLIST_NO_ROW_PROMOTED",
   "upstreamGate": {
     "currentDecision": "NO_README_PROMOTION_PERMITTED",
     "nonPromotionStatus": "LOCKED_NO_ROW_README_ELIGIBLE",

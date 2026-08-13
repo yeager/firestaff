@@ -12,43 +12,43 @@
       "missing": [],
       "positions": [
         {
-          "line": 53220,
+          "line": 54519,
           "marker": "m11_draw_viewport_background(state"
         },
         {
-          "line": 53239,
+          "line": 54538,
           "marker": "m11_draw_dm1_floor_pits(state"
         },
         {
-          "line": 53247,
+          "line": 54546,
           "marker": "m11_draw_dm1_side_walls(state"
         },
         {
-          "line": 53251,
+          "line": 54550,
           "marker": "m11_draw_dm1_front_walls(state"
         },
         {
-          "line": 53261,
+          "line": 54560,
           "marker": "m11_draw_dm1_wall_ornaments(state"
         },
         {
-          "line": 53276,
+          "line": 54575,
           "marker": "m11_draw_dm1_center_doors(state"
         },
         {
-          "line": 53291,
+          "line": 54590,
           "marker": "visibility.nearest_blocking_center_depth_index"
         },
         {
-          "line": 53385,
+          "line": 54684,
           "marker": "m11_draw_dm1_side_contents_at_depth("
         },
         {
-          "line": 53436,
+          "line": 54735,
           "marker": "m11_draw_dm1_deferred_explosion_pass(state"
         },
         {
-          "line": 53496,
+          "line": 54795,
           "marker": "if (state->showDebugHUD)"
         }
       ],
@@ -61,27 +61,27 @@
       "missing": [],
       "positions": [
         {
-          "line": 37709,
+          "line": 39008,
           "marker": "static void m11_draw_dm1_alcove_wall_items"
         },
         {
-          "line": 37730,
+          "line": 39029,
           "marker": "C0x0000_CELL_ORDER_ALCOVE"
         },
         {
-          "line": 37730,
+          "line": 39029,
           "marker": "C04_VIEW_CELL_ALCOVE"
         },
         {
-          "line": 37731,
+          "line": 39030,
           "marker": "M018_OPPOSITE(direction)"
         },
         {
-          "line": 37738,
+          "line": 39037,
           "marker": "cell->floorItemCells[ii] != alcoveCellRelativeToParty"
         },
         {
-          "line": 37772,
+          "line": 39071,
           "marker": "m11_draw_item_sprite_material("
         }
       ],
@@ -95,7 +95,7 @@
         "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_v1_viewport_alcove_wall_item_gate.py"
       ],
-      "outputTail": "- ReDMCSB DUNVIEW.C:7843 F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0218_ai_SquareAspect[M550_FIRST_THING], P0171_i_Direction, P0172_i_MapX, P0173_i_MapY, M606_VIEW_SQUARE_D1C, C0x0000_CELL_ORDER_ALCOVE);\n- Firestaff dm1_v1_random_ornament_pc34_compat.c:5 F0149 map-list alcove classification\n- Firestaff dm1_v1_wall_ornament_pc34_compat.c:187 F0174 current-map alcove list wiring (G0267 from DUNGEON.DAT table + G0192)\n- Firestaff dm1_v1_wall_ornament_pc34_compat.c:231 F0174-wired global classifier (fail-closed when unwired, no synthetic hardcode)\n- Firestaff m11_game_view.c:33805 m11 F0174 alcove list wiring helper\n- Firestaff m11_game_view.c:36160 alcove wall-item draw pass\n- Firestaff m11_game_view.c:38621 ornament draw then alcove item pass\n- scope: alcove classification is live from loaded DUNGEON.DAT map data via the F0174 wiring; this gate locks structure, not pixel output",
+      "outputTail": "- ReDMCSB DUNVIEW.C:7843 F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0218_ai_SquareAspect[M550_FIRST_THING], P0171_i_Direction, P0172_i_MapX, P0173_i_MapY, M606_VIEW_SQUARE_D1C, C0x0000_CELL_ORDER_ALCOVE);\n- Firestaff dm1_v1_random_ornament_pc34_compat.c:5 F0149 map-list alcove classification\n- Firestaff dm1_v1_wall_ornament_pc34_compat.c:187 F0174 current-map alcove list wiring (G0267 from DUNGEON.DAT table + G0192)\n- Firestaff dm1_v1_wall_ornament_pc34_compat.c:231 F0174-wired global classifier (fail-closed when unwired, no synthetic hardcode)\n- Firestaff m11_game_view.c:35081 m11 F0174 alcove list wiring helper\n- Firestaff m11_game_view.c:37459 alcove wall-item draw pass\n- Firestaff m11_game_view.c:39920 ornament draw then alcove item pass\n- scope: alcove classification is live from loaded DUNGEON.DAT map data via the F0174 wiring; this gate locks structure, not pixel output",
       "passed": true,
       "returncode": 0
     },
@@ -104,7 +104,7 @@
         "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_v1_viewport_d1c_doorpass_source_lock_gate.py"
       ],
-      "outputTail": "- Firestaff viewport side doors batch: line 53270\n- Firestaff viewport center doors batch: line 53276\n- Firestaff viewport center door ornaments batch: line 53277\n- Firestaff viewport center door buttons batch: line 53280\n- Firestaff viewport source gap warning: line 53286\n- Firestaff viewport near-side replay guard: line 53291\n- invariant: D1C front door draws floor ornament + doorpass1 contents before frame/button/slab, then doorpass2 contents via shared F0115 label\n- gap_guard: Firestaff is still protected as batched-with-replay, not full per-square DUNVIEW parity",
+      "outputTail": "- Firestaff viewport side doors batch: line 54569\n- Firestaff viewport center doors batch: line 54575\n- Firestaff viewport center door ornaments batch: line 54576\n- Firestaff viewport center door buttons batch: line 54579\n- Firestaff viewport source gap warning: line 54585\n- Firestaff viewport near-side replay guard: line 54590\n- invariant: D1C front door draws floor ornament + doorpass1 contents before frame/button/slab, then doorpass2 contents via shared F0115 label\n- gap_guard: Firestaff is still protected as batched-with-replay, not full per-square DUNVIEW parity",
       "passed": true,
       "returncode": 0
     },

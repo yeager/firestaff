@@ -42,9 +42,11 @@ int dm2_v1_creature_schedule_at(
     return 0;
   }
 
-  /* DM2_GET_CREATURE_AT(x, y), c_1c9a.cpp:5698.  The dungeon session is
-   * single-map in this runtime, so the resolved map index is 0. */
-  handle = dm2_v1_get_creature_at(pool_set, dungeon, 0, x, y);
+  /* DM2_GET_CREATURE_AT(x, y), c_1c9a.cpp:5698, runs after the source has
+   * switched to ddat.v1d3248. The public runtime boundary carries that map
+   * explicitly; resolving against map 0 would miss creatures on other
+   * authentic dungeon levels. */
+  handle = dm2_v1_get_creature_at(pool_set, dungeon, map_id, x, y);
   if (handle == DM2_V1_RECORD_HANDLE_NULL) {
     return 0;
   }

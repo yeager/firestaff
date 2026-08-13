@@ -94,6 +94,14 @@ uint32_t dm2_v1_source_timer_enqueue_ticketed(
 int dm2_v1_source_timer_cancel(
     DM2_V1_SourceTimerQueue *queue,
     uint32_t ticket);
+/* Cancel the unique live timer carrying a source timerarray slot index.
+ * DB14 bytes 6-7 store this source index (c_record.cpp:1438), while the
+ * runtime queue also has additive tickets for newly-created timers.  The
+ * operation rejects an ambiguous index and therefore never guesses which
+ * timer a missile record owns. */
+int dm2_v1_source_timer_cancel_source_index(
+    DM2_V1_SourceTimerQueue *queue,
+    uint16_t source_index);
 /* Read-only lookup of the timer carrying `ticket` (source timerarray
  * slot read, e.g. c_1c9a.cpp:5943-5944 reading the xA/yA payload bytes
  * before DM2_DELETE_TIMER runs).  Copies the queued timer to

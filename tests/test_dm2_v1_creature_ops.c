@@ -105,7 +105,7 @@ static void test_null_safety(void)
 {
     assert(dm2_v1_apply_creature_poison_resistance(0, 5, NULL, NULL) == 0);
     assert(dm2_v1_confuse_creature_simple(10, 0, 0, 0, NULL, NULL) == 0);
-    dm2_v1_rotate_creature(0, 0, 0, NULL, NULL);
+    dm2_v1_creature_ops_rotate_creature(0, 0, 0, NULL, NULL);
     printf("  PASS: null_safety\n");
 }
 

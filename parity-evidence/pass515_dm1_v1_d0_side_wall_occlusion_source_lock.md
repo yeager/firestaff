@@ -1,6 +1,6 @@
 # Pass515 DM1 V1 D0 side wall occlusion source lock
 
-Status: passed
+Status: failed
 
 ## Claim
 
@@ -57,8 +57,8 @@ ReDMCSB draws D0L and D0R before D0C. If either side lane is a wall, it draws it
 
 ## Verification
 
-- command: /Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_viewport_3d_pc34_compat
-  - returncode: 0
+- command: /Volumes/Extern-disk/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat
+  - returncode: 1
   - output tail:
 ~~~
 PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -72,10 +72,10 @@ PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c
-PASS dm1_v1_viewport_3d_source_lock
+FAIL dm1_v1_viewport_3d_source_lock failures=2
 ~~~
 
-- command: /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-claude/tools/verify_pass515_dm1_v1_d0_side_wall_occlusion_source_lock.py --check-only
+- command: /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff/tools/verify_pass515_dm1_v1_d0_side_wall_occlusion_source_lock.py --check-only
   - returncode: 0
   - output tail:
 ~~~

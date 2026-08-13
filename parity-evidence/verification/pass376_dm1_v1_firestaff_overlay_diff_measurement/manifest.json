@@ -16,7 +16,7 @@
   "plan_path": "parity-evidence/overlays/pass376_firestaff_pairing/plan.json",
   "plan_present": true,
   "redmcsb_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "repo": "/Volumes/Extern-disk/firestaff-claude",
+  "repo": "/Volumes/Extern-disk/firestaff",
   "scenes": [
     {
       "delta_percent": 72.7055,
@@ -218,7 +218,7 @@
     }
   ],
   "status": "PASS376_FIRESTAFF_OVERLAY_DIFF_MEASUREMENT_REPRODUCIBLE",
-  "timestamp_utc": "2026-08-11T06:50:30.618298+00:00",
+  "timestamp_utc": "2026-08-12T01:36:46.860113+00:00",
   "viewport_xywh": [
     0,
     0,

@@ -20,9 +20,7 @@
       "sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
     }
   ],
-  "errors": [
-    "missing Firestaff marker in tests/test_dm1_v2_movement_viewport_pc34.c: _canonical/dm1/DUNGEON.DAT"
-  ],
+  "errors": [],
   "firestaffChecks": {
     "checkedFiles": [
       "include/dm1_v2_viewport_renderer_pc34.h",
@@ -155,5 +153,5 @@
   ],
   "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "DM1 V2 Phase 2 graphics pipeline source isolation",
-  "status": "failed"
+  "status": "passed"
 }

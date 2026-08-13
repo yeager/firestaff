@@ -9,13 +9,13 @@
  * to the uniform DM2_V1_TimerTypeHandler signature used by the timer
  * dispatcher (dm2_v1_proceed_timers_pc34_compat.h).
  *
- * Currently wired timer types: 0x01..0x5E (26 of 26, fully implemented)
+ * Currently wired timer types: 0x01..0x5E (28 source timer entries)
  *   0x01 STEP_DOOR                0x02 DESTROY_DOOR
  *   0x04 ACTUATE_TILE             0x0C PROCESS_0C
  *   0x0D RESURRECTION             0x0E PROCESS_0E
  *   0x15 PROCESS_SOUND            0x19 PROCESS_CLOUD
- *   0x1E STEP_MISSILE             0x21 THINK_CREATURE_A
- *   0x22 THINK_CREATURE_B         0x3D PROCESS_3D
+ *   0x1D/0x1E STEP_MISSILE        0x21 THINK_CREATURE_A
+ *   0x22 THINK_CREATURE_B         0x3C/0x3D PROCESS_3D
  *   0x46 LIGHT                    0x47 HERO_ENCH_FLAG
  *   0x48 ENCH_POWER               0x4B POISON
  *   0x54 UPDATE_WEATHER           0x55 ORNATE_ANIMATOR
@@ -29,6 +29,7 @@
 
 #include "dm2_v1_proceed_timers_pc34_compat.h"
 #include "dm2_v1_runtime_parity_pc34_compat.h"
+#include "dm2_v1_cloud_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -144,12 +145,15 @@ typedef struct {
     void (*dealloc_record)(void *ctx, uint16_t record);
     int16_t (*create_cloud)(void *ctx, int16_t type, int16_t param,
                             int16_t x, int16_t y, int16_t cls);
-    void (*queue_resurrection_timer)(void *ctx);
+    void (*queue_resurrection_timer)(void *ctx, uint8_t next_yB);
 
     /* Shared tile-value accessor (PROCESS_CLOUD, STEP_MISSILE, ORNATE_NOISE) */
     uint8_t (*get_tile_value)(void *ctx, int16_t x, int16_t y);
 
     /* PROCESS_CLOUD (0x19) */
+    /* Optional complete source owner; when present it supersedes the
+     * narrow callback slice below and supplies CALC_CLOUD_DAMAGE/combat. */
+    DM2_V1_CloudCallbacks *cloud_owner;
     int16_t (*calc_cloud_damage)(void *ctx, uint16_t cloud_rw, int16_t target);
     void (*attack_door)(void *ctx, int16_t x, int16_t y, int16_t damage,
                         int16_t mode, int16_t param);
@@ -165,7 +169,7 @@ typedef struct {
     int16_t party_x_cloud;
     int16_t party_y_cloud;
 
-    /* STEP_MISSILE (0x1E) */
+    /* STEP_MISSILE (0x1D/0x1E) */
     int16_t (*query_creature_ai_spec_flags)(void *ctx, int16_t creature);
     int (*move_record)(void *ctx, int16_t level, int16_t x, int16_t y,
                        int16_t dir, uint16_t record);

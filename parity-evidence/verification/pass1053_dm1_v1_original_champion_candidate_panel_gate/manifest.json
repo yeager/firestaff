@@ -1,27 +1,21 @@
 {
   "firestaff_side": [
     {
-      "dims": [
-        320,
-        200
-      ],
-      "exists": true,
-      "ok": true,
+      "dims": null,
+      "exists": false,
+      "ok": false,
       "path": "verification-m11/lane3-inventory-followup-20260428-0914/party_hud_four_champions_vga.ppm",
-      "sha256": "d995c4991e5b973ea98c7eedd2d13bdca0e624061983da99131ea5110ddd17a9"
+      "sha256": null
     },
     {
-      "dims": [
-        320,
-        200
-      ],
-      "exists": true,
-      "ok": true,
+      "dims": null,
+      "exists": false,
+      "ok": false,
       "path": "verification-m11/lane3-inventory-followup-20260428-0914/party_hud_statusbox_gfx_vga.ppm",
-      "sha256": "860bc022785b2567eedfa552a99e103d02c573b432446c679a273d96d0a18363"
+      "sha256": null
     }
   ],
-  "generated_at": "2026-08-11T06:50:31.616827+00:00",
+  "generated_at": "2026-08-12T01:36:46.929741+00:00",
   "honesty": "Artifact gate only; no Firestaff-vs-original pixel parity is claimed.",
   "manifest_status": "PASS1053_ORIGINAL_CHAMPION_CANDIDATE_PANEL_EVIDENCE_TRACKED",
   "non_claim_boundary_ok": true,
@@ -327,5 +321,5 @@
       "ok": true
     }
   ],
-  "status": "PASS1053_ORIGINAL_CHAMPION_CANDIDATE_PANEL_GATE"
+  "status": "FAIL"
 }

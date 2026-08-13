@@ -1,110 +1,157 @@
 # Firestaff TODO - Open Work
 
-# Theron: `$B0E5` capture reserve confirms non-spawn overlays (2026-08-12)
+DM2 cloud creature-target har nu en privat CAII/GDAT/timer-context-bound
+attackväg med gemensam rollback. M11 verifierar positiv type-7 poison-cloud
+damage/decay och kandidatens think-timer; spread och actuator-tail är fortsatt
+fail-closed.
 
-- ✅ The reproducible external Mednafen capture now retains a separate,
-  bounded 256-sample `$B0E5` reserve after the ordinary spawn-register
-  window is full. A 12-second replay of the operator-owned US CUE save state
-  recorded 164 `$B0E5` address hits while remaining bounded to 595 KiB.
-- 🔒 Every retained hit had A=`$80` or `$85`, not the disassembly's regular
-  spawn categories `0..3`; the run also lacked a transition and authenticated
-  CD→RAM receipt. Treat this as negative evidence only: RNG ownership, spawn,
-  creature AI/combat/loot, generator timing, T700 and T900 stay fail-closed.
+Cloud-receipten visar dessutom DB15 `word@2` högbyte som separat
+`cloud_strength_before/after`; subtype och cloud-parametern blandas inte ihop
+med timer-handle eller resurrectionens `adddata(5)`.
 
-# Nexus: startup status no longer reports a false green state (2026-08-12)
+# DM2: kvarvarande verifiering
 
-- ✅ `M11_GameView_StartNexus` now distinguishes a title/assets boot from a
-  playable start. It reports `status=blocked`, `levelLoaded=0` and the
-  source-owned blocker when the Saturn start pose or menu consumer is still
-  capture-gated. The old unconditional `NEXUS STARTUP RECEIPT READY` message
-  was misleading and has been removed.
-- 🔒 This is a reporting correction, not a start-pose implementation. The
-  real Nexus corpus still lacks an authenticated startup→menu→LEV00 handoff;
-  no coordinate, pixels or menu text were invented.
+- 🔒 Övriga återstående timerfamiljer saknar fortfarande komplett
+  source-owner för kandidatens positiva effekt; håll dem fail-closed.
+  `DESTROY_DOOR` är nu undantaget: dess timerägda map/cell är bunden i
+  runtime med fail-closed-admission. De rena record-flaggtimerna `0x58`,
+  `0x59`, `0x5B` och `0x5C` är nu också runtime-bundna efter samma
+  GAME_LOAD-admission. `STEP_DOOR` är nu runtime-bunden för direkt DB0-root,
+  komplett recordgraph, source-riktning och utan party/DB4-kollision; ljud och
+  full moverec-semantik är fortfarande stängda. `PROCESS_TIMER_0C` är nu
+  runtime-bunden mot den överförda source-sized c_party/c_hero-ägaren.
+  `RESURRECTION` phase zero, DB10-altar-cut-fasen och DB15 cloud/`0x19`-kedjan
+  är också runtime-bundna mot samma owner; runtime-lifecycle är nu bunden för
+  source-typerna `0..7`, `0x28` och `0x64→0x65`, medan full effektverifiering
+  fortfarande kräver autentiserade positiva party/creature/door-fixtures.
+  GAME_LOAD-kandidaten äger nu samma lifecycle för tomma golvceller och den
+  vanliga party-targeten: DB15-styrka, kandidatens RNG, pending damage och
+  HERO_FLAG_0800 ligger i samma rollback. Den vanliga DB0-dörrtargeten kan nu
+  också få source-skada och DESTROYED-state i samma råkarts-/pooltransaktion.
+  Creature-effekter och spread är fortsatt fail-closed tills deras
+  kandidatägare är kompletta.
+- ✅ `0x5E ALLOC_NEW_CREATURE` har en source-formad direkt free-slot-owner:
+  spawnens koordinat/typ/multiplier, riktning, DB4-allokering, tile-chain,
+  CAII-initiering, think-timer och `0a48`-ljud ligger i en rollback-
+  transaktion. Full-pool-vägen gör en autentiserad census och kan, när alla
+  source-indata är kända, köra context-bound possession-drop, invoke-gate,
+  tile-rooted delete/dealloc och ny DB4-allokering i samma transaktion.
+- ✅ Både runtime- och kandidat-ownern kräver nu creature-fri spawncell före
+  RNG och allokering; en befintlig DB4 lämnas orörd och fail-closed.
+- ✅ Partycellen är också explicit spärrad som `0x5E`-destination före RNG,
+  DB4-, CAII- och timer-mutation.
+- ✅ Runtime-regressionen når denna collisiongate med en autentiserad AI-owner;
+  den tidigare saknad-owner-gaten är inte den enda evidensen.
+- ✅ Runtime-`0x04` wall/floor-mecha lämnar nu inte längre en delvis muterad
+  pool, råkarta eller timerkö när den source-bundna actuator-walkern saknar
+  owner (exempelvis CAII/ornamentdata). Dispatchen rollbackar före avvisning;
+  full actuatorfamilj, ljud och creature-/party-följder är fortfarande gated.
+- 🔒 En positiv retail-spawn/recycling-körning är fortfarande inte verifierad:
+  de åtta DOSBox-savesen i `Downloads/dm2` innehåller inga `0x5E`-timers.
+  Source-censusen kräver dessutom `word@2 != 0xffff`, komplett tile-chain,
+  matchande CAII-slot, autentiserade AI/GDAT/drop-owners och ingen aktiv
+  think-timer. Saknad eller korrupt indata lämnas fail-closed.
+- ✅ DB4-delete-ägaren använder kandidatens privata map-, CAII-, timer- och
+  GRAPHICS.DAT-owners. Tile-prewalk, PC G1-extension spans, possession-drop,
+  invoke, cut, dealloc och allokerarens rollback är bundna i samma GAME_LOAD-
+  transaktion; den äldre map-aware proben är inte längre den enda vägen.
+- ✅ `0x5E`-fullpool-censusen kvitterar nu, när en source-berättigad DB4
+  hittas, dess handle samt map/cell i samma receipt. Receiptens läsande
+  provenance omfattar nu även record byte@5, CAII-slotmatchning och pending
+  timer-slot, possession-root, AI-flaggor och om GDAT:s 11 drop-slots är
+  bundna, plus `CREATURES` word@1 för source invoke-gaten. Alla dessa läses
+  från kandidatens autentiserade GRAPHICS.DAT-owner, inte global creature-state.
+  `delete_inputs_ready` betyder bara att dessa indata är kända;
+  delete/unlink/possession/CAII/timer-transaktionen är fortsatt stängd.
+  Readiness kräver nu dessutom att en befintlig CAII-slot matchar DB4-
+  recordets bare ObjectID; en felkopplad slot kan inte öppna framtida
+  recycling.
+- ✅ DOSBox-regressionen räknar nu även autentiserade `0x5E`-
+  `ALLOC_NEW_CREATURE`-timers. De åtta PC-DOS-savesen innehåller noll sådana
+  poster; detta styrker endast att positiv retail-spawn saknar corpus-evidens
+  och öppnar inte en syntetisk summon.
+- ✅ Kandidatens source-`0x55 CONTINUE_ORNATE_ANIMATOR` har nu en positiv
+  DB3/ornamentlängd-regression: handle ligger i `xA/yA`, mode i `wvalueB`,
+  ornamentindexet läses från recordets övre nibble och frame/requeue sker
+  utan falsk tilekoordinat-admission.
+- ✅ Runtime-committen har nu en positiv 0x55-regression: GAME_LOAD:s DB3-
+  ornamentrecord överförs, en source-timer dispatchas efter commit och dess
+  `+1`-continuation körs i nästa tick utan fail-closed-avslag.
+- ✅ Runtime-committen har också en positiv aktiv 0x5A-regression: source-
+  koordinat från den riktiga kartan, DB3-record och sound-owner passerar den
+  aktiva ORNATE_NOISE-grenen utan fail-closed-avslag, och en separat DB3-
+  record requeueas och dispatchas igen enligt source-animationstakten.
+- ✅ 0x5A:s GEN2-ljudpayload är nu source-exakt: `cls3=0x88` och fjärde
+  klassen `0xFE` i både kandidatens och runtime-ownerens dispatch.
+- 🔧 `0x5D MOVE_RECORD_ROTATE` har nu en same-map party-sentinel-owner för
+  autentiserade vanliga golvrutor: `MOVE_RECORD_TO(0xFFFF)` och hero-/party-
+  poseuppdatering sker atomiskt. Full cross-map-, actuator- och övrig
+  `MOVE_RECORD_TO`-semantik är fortsatt stängd. Ingen av de åtta DOSBox-
+  saves innehåller timern, så ägaren är verifierad genom source-formad M11-
+  regression, inte retail-timerdata. Ägaren tar nu pool-, karta- och
+  timer-backup före flytten och avvisar ogiltig gammal party-poses/hero-count
+  innan source-rotationen. Den avvisar också en autentiserad DB4 på
+  destinationen före någon mutation.
+- 🔒 `0x3C/0x3D PROCESS_TIMER_3D` är source-auditerad mot
+  `SKULLWIN/c_tim_proc.cpp`: `xA/yA` är destination, `B` är record-handtag
+  och full `MOVE_RECORD_TO(record, -3, 0, x, y)` måste äga flytten. En privat
+  GAME_LOAD-kandidat-owner är positiv för autentiserade DB4-records med
+  befintlig CAII-think-timer och äger nu även en spegelverifierad plain-floor
+  cross-map-flytt i samma rollback-transaktion. Runtime/party-ownerens fulla
+  kandidatägaren har även runtime-kod för samma mirror-verifierade plain-floor
+  cross-map-shape, men den positiva runtime-fixturen saknas ännu i M11-kartan.
+  Runtime-cross-map är därför fortsatt fail-closed i verifieringsgaten;
+  `0x3E` är
+  inte en separat timergren och DOSBox-korpusen saknar familjen. Runtime-
+  ownerns rollback-gräns ligger nu före även party-sentinelens
+  `MOVE_RECORD_TO`; senare sound-/owner-fel kan därför inte läcka en halv
+  party-/kartflytt. Full cross-map-, wake/sleep- och actuatorsemantik är
+  fortfarande stängd.
 
-# Nexus: reproducible Saturn debug-input capture (2026-08-12)
+- ✅ GAME_LOAD-kandidaten kan nu commitas till runtime efter timer-/sound-
+  preflight och positiv owner-regression. Första source-ordnade tick och
+  första source-owned frame är verifierade i M11; full input-publicering och
+  övriga återstående timerfamiljer är fortfarande separat gated.
 
-- ✅ The external Mednafen build now accepts authenticated multi-button input
-  windows through `FIRESTAFF_NEXUS_TRACE_PRESS_SEQUENCE` as
-  `frame:length:mask,...`. The 13-bit mask preserves the Saturn right shoulder
-  bit required by the original Nexus debug sequence.
-- ✅ The injection now honours the Saturn bus's active-low semantics: selected
-  bits are cleared only for the requested interval and released afterward.
-- ✅ Patch application was checked against a clean Mednafen 1.32.1 source tree;
-  the Firestaff target still builds, the input patch applies after the capture
-  patches, and a J/J raw-capture smoke run produced two valid frames.
-- 🔒 A J-BIOS/J-retail run still did not produce a startup→menu witness within
-  the bounded capture window. The original debug sequence is therefore an
-  investigation aid, not a start-pose receipt or a production unlock.
+- ✅ GAME_LOAD-committen jämför nu kandidatens `source_transaction_hash` med
+  den privata `GameLoadWorldOwner` som skapade kandidaten. En tamprad eller
+  korsad kandidat lämnas kvar helt orörd och `source_game_load_session_ready`
+  förblir noll.
 
-# CSB PC/DOS request is a closed platform boundary (2026-08-12)
+- ✅ Samma source-hashkontroll gäller nu vid den tidigare runtime-handoff som
+  överför kandidaten till read-only runtime-vy; en korsad kandidat kan inte
+  ens flyttas över före committen.
 
-- ✅ CSB has no original DOS release. `--game csb --platform pc` now fails
-  before media selection with an explicit native-platform list, and the
-  data-independent `csb_v1_pc_platform_rejected` regression proves it cannot
-  emit `CSB READY` or select a stale `csb-st`/`csb-pc` cache. CSBWin remains a
-  source/disassembly reference only, never a relabelled DOS edition or a
-  Firestaff PC route.
-
-# CSB Hint Oracle: Atari R1 original-media start routes are live; capture parity remains open (2026-08-12)
-
-- ✅ The real Utility Disk `HCSB.DAT` container now has a strict source-cited
-  index: its duplicate big-endian size tables must agree and its segments must
-  account for the entire file. The real ST 2.0/2.1 archive proves four spans:
-  100, 29146, 1497 and 32 bytes.
-- ✅ The authenticated Oracle bitmap (segment 1) now goes through the
-  source-owned IMG2 expansion contract from ReDMCSB `EXPAND.C`; segment 3
-  uses `HINT001.C`'s exact Atari RGB3-to-RGB4 palette conversion. The owned
-  `CSB_HintOracleGraphicsSurface` therefore exposes the original 320×200
-  indexed pixels and 16-colour palette without generating replacement art.
-- ✅ Segment 2 is now decoded through that same source-owned IMG2 path as the
-  original ST 2.0/2.1 256×27 indexed font raster. `HINTTEXT.C` selects its
-  8×9 glyphs from this exact raster; no host font or synthetic glyph sheet is
-  admitted.
-- ✅ The HTC reader now exposes every authored page by the original one-based
-  page number used by `HINTHINT.C`, not only a hint's first page. The
-  real-data probe checks that all selected pages have bounded slices and
-  that every non-empty page decompresses successfully. Empty page records are
-  retained as authored rather than rejected or replaced.
-- ✅ HCSB.DAT segment 0 is retained as its exact 50 big-endian control words,
-  including the ST archive's verified leading `0x0002/0x0620/0x0001/0x0770`
-  sequence. `HINTSCR.C`/`HINT001.C` feed control words 5 and 4 into
-  `HINTTEXT.C`'s initial `C26_SET_FONT_COLOR` call; `F0129` resolves the
-  source's `9 → 1` font-index substitution. The original-data regression
-  also verifies that transparent index 12 remains unchanged.
-- ✅ `CSB_HintOracleSession` now implements `HINTHINT.C`'s C09/F1940 state
-  contract: location records are consumed in authored order, exact and
-  `(255,255)` entries are accepted, the list ends after seven rows, the first
-  page is one-based, and LAST/NEXT do not wrap. It takes coordinates only from
-  its caller; it does not invent or parse a save format.
-- ✅ `CSB_HintOracleAtariSaveSession` accepts only the checked native
-  `CSB_V1_AtariSaveInfo` receipt from the Atari MINI.DAT path and maps its
-  `party_map_index/party_x/party_y` directly into the Oracle selector. Invalid
-  signed poses are rejected before the unsigned HTC lookup.
-- ✅ `CSB_HintOracleAtariRuntime` now owns the complete documented Atari R1
-  triplet: exact `HCSB.HTC` and `HCSB.DAT` hashes plus the authenticated
-  MINI.DAT receipt. It selects the original hints and renders the selected
-  one-based page into the original 320×200 indexed surface without a host
-  frame, font or palette fallback. The real-data regression decodes the
-  staged MINI.DAT (currently map 4, x 22, y 18), finds two hints and renders
-  its first page.
-- ✅ Atari R1-runtimeens pointerdispatcher använder nu HINTDATA.C:s LOAD,
-  LAST, NEXT, DONE/EXIT, OK och sju hint-rad-rektanglar direkt mot
-  HINTMAIN.C:s sessionövergångar; LOAD tar fortfarande endast en kontrollerad
-  MINI.DAT-receipt.
-- ✅ Samma R1-runtime renderar nu alla fyra källägen ovanpå den avkodade
-  HCSB.DAT-ytan: LOAD/EXIT-prompten, den källordnade hintlistan/DONE,
-  no-clue/OK och en sida med LAST/NEXT/DONE efter sidgränserna. Strängar,
-  rutor och den ursprungliga fonten kommer från HINTDATA.C, HINTMAIN.C,
-  HINTHINT.C och HINTTEXT.C. Originalmediaregressionen täcker varje läge.
-- ✅ Den synliga posten `CSB UTILITY DISK — HINT ORACLE` startar samma
-  källägd R1-runtime som CLI:t `--csb-hint-oracle --data-dir <root>`.
-  Båda vägar materialiserar den hashverifierade Atari R1-trion
-  `HCSB.HTC`/`HCSB.DAT`/`MINI.DAT` direkt från lösa filer eller ett stött
-  arkiv och avvisar en icke-nativ `MINI.DAT` innan originalets LOAD-ruta får
-  använda dess position. `--save <MINI.DAT>` är fortfarande ett explicit,
-  separat val av nativ sparfil.
-- 🔒 Originalets händelsekadens samt fångad originalframe-pixelparitet återstår.
+- ✅ Runtime `0x1D/0x1E STEP_MISSILE` använder nu source-payloadens DB14-
+  handtag i `timer.A` och packade x/y/energisteg i `timer.B`. En autentiserad
+  no-creature-post förbrukar energi, requeueas eller kapas/deallokeras
+  atomiskt. `ABSORBS_MISSILE` och `REFLECTOR` kan nu också kapa/deallokera
+  samma autentiserade DB14. Vanlig creature-hit räknar nu source-formad
+  impact attack och applicerar den via CAII; `NONMATERIAL` och full moverec
+  är fortsatt fail-closed. `TURNS_MISSILE` använder samma träffägare och
+  behåller source-fallet utan riktningsflip. Vanlig creature-fri passage
+  flyttar nu DB14 atomiskt i både pool och rå dungeon-kedja före requeue.
+- 🔧 DB14:s direkta teleporter-undergren är nu bunden: source-verifierad
+  `GET_TELEPORTER_DETAIL`/`map_3BF83`, pool- och råkedjeflytt,
+  riktningsrotation och continuation-timer sker atomiskt med rollback.
+  Teleporterflytten verifierar nu hela avresans tile-chain, även länkar efter
+  DB14-missilen, före någon cut/append; en skadad tail kan inte längre passera
+  som en koordinatflytt.
+  Creature/actuator-följder och övrig full `DM2_MOVE_RECORD_TO`-semantik är
+  fortfarande fail-closed; party-ownern återanvänds inte för projektiler.
+- ✅ Den privata GAME_LOAD-kandidatens `0x04`-dispatcher följer nu source
+  klass-3:s avsiktliga tomma gren: due-pop, map/cell-admission och konsumtion
+  sker utan påhittad actuator-effekt. Verifierat via den privata timerheapen.
+- ✅ Kandidatens `0x0E PROCESS_TIMER_0E` följer nu source A/B-payloaden och
+  kör den autentiserade item-bonusägaren med temporär itemtype och byteexakt
+  record-restore. Fel i record/GDAT/hero-owner lämnar kandidatens timer,
+  party och map oförändrade.
+- ✅ Kandidatens privata `0x15 PROCESS_SOUND` använder timer A som delayed-slot,
+  source map-gate och den dynamiskt materialiserade sound-ownern. GEN1-kö,
+  slotkvittering och timerpop är rollback-säkra och verifierade i M11.
+- ✅ Timerkön kan avboka ett unikt source timerarray-index, vilket behövs när
+  DB14:s bytes 6–7 kopplas till source-timern utan att förväxlas med en
+  runtime-biljett.
 
 # Nexus: bind verified SH-2 transform to an authenticated Saturn consumer (2026-08-11)
 
@@ -114,6 +161,57 @@
 - 🔒 It is not yet bound to the captured PRS3 source, CLUT owner, VDP1 command
   list, VDP2 tilemap, startup menu, HUD or viewport. Do not present it as a
   complete Nexus renderer or Mednafen PR.
+# DM2: nästa GAME_LOAD-steg efter kandidat-handoff (2026-08-11)
+
+- 🔒 Runtime kan nu ta över ägarskapet för den privata GAME_LOAD-kandidaten,
+  men den är fortfarande inte spelbar. Nästa steg är att överföra kandidatens
+  party-, record pool-, CAII-, timer-, ljud- och kartstate till runtime i en
+  enda rollback-säker commit.
+- 🔒 `source_game_load_session_ready` får inte sättas förrän alla dessa delar
+  har samma source transaction hash och post-load-kedjan är verifierad.
+- 🔧 Nästa implementation ska exponera kandidatens källägda state genom en
+  runtime-lokal, rollback-säker vy eller clone. Den får inte återgå till den
+  gamla lata recordpoolinitieringen eller skapa en separat host-party.
+- 🔒 Den nya kandidatvyn är ännu read-only. Nästa steg är att binda dess
+  kart-/recordfrågor till samma privata `c_map`/moverec-ägare innan någon
+  muterande runtimegren får använda den.
+- 🔒 Read-only-bryggan är nu bunden till kandidatens c_querydb-,
+  12b4_0881- och c_moverec-frågor. Nästa steg är den rollback-säkra muterande
+  `DM2_MOVE_RECORD_TO`-/timerdispatchkedjan; ingen movement eller tick får
+  öppnas före den committen.
+- 🔒 Tile-rooted recordflytt är nu privat och rollback-säker. Kvar är
+  den fulla creature/party-semantiken, `moverec_3CE7D`-följderna och den
+  source-ordnade timerdispatchen innan vanlig movement kan öppnas. En privat
+  `moverec_3CE7D`-receipt finns nu och den befintliga CAII-slotens c_tim-payload
+  kan uppdateras privat. No-slot-allokering har nu en rollbackbar privat väg
+  med source AI-gate och första think-timer; positiv retail-corpusdata för den
+  grenen saknas fortfarande. Kvar är actuatorer och den source-ordnade
+  timerdispatchen. En privat bounded `0x21/0x22`-dispatch konsumerar nu due-
+  timers och gör källans DB4-celluppslag, men CCM/AI-kroppen och övriga
+  timer-typer är ännu inte bundna. `0x58/0x59/0x5B/0x5C` är nu bundna med
+  source payload/guard och atomisk privat mutation; positiv retaildata för
+  dessa timerposter saknas fortfarande. c_tim `0x04` har nu en privat
+  class-3-fall-through som konsumerar timern med rollback; övriga tileklasser
+  är fortfarande stängda tillsammans med redraw och övriga timer-typer. En
+  kandidatdispatcher väljer nu source-ordnat mellan de redan bundna familjerna,
+  inklusive en privat, kollisionssäker `0x01` door-step med privat requeue,
+  samt `0x56` generatorns privata DB3/`0x04`-kedja, men den kan ännu inte göra
+  en komplett post-load/tick-commit. `PUSH_BUTTON_SWITCH` är nu bunden för
+  rena DB3→DB0-kedjor, `COUNTER`, `RELAY_1/RELAY_3` och `CROSS_MAP` för rena
+  riktning-matchade DB3-kedjor; `FINITE_RELAY` är bunden för den deterministiska
+  `Data <= 400`-armen, medan random-grenen och övriga wall/floor-, door-, pitfall-,
+  teleporter- och trickwallkedjor kräver fortfarande sina fulla ägare. PITFALL/
+  TELEPORTER-close är nu bunden för rena DB2-Text-kedjor; öppning och party-hint
+  är fortsatt spärrade. Class-4 door-admission är nu bunden för en direkt DB0-
+  dörr: `0x04` köar privat `0x01` med source action/direction och uppdaterar
+  DB0-recordens verifierade runtimebitar för riktning, moving och queued.
+  Door-step-ägaren fortsätter stegningen med rollback; party/DB4-kollision,
+  ljud och övrig door-semantik är fortfarande stängda. Destroyed-door är ett
+  explicit source-no-op. Kvar är den fulla source semanticskedjan och övriga
+  actuatorfamiljer. Kandidatgaten verifierar nu även att det köade `0x01`
+  konsumeras av samma privata record-/timertransaktion. En privat `0x48`
+  ENCH_POWER-gren konsumerar nu hero-masken och signed `wvalueA` på klonad
+  c_party; `0x4B` och övriga timerfamiljer återstår.
 
 # Theron: authenticated SDL2 SRAM replay reaches transport, not spawn semantics (2026-08-11)
 
@@ -1238,9 +1336,13 @@
   timerögonblick som en separat, icke-spelbar inspektionsägare. Den kan bara
   göra samma läsande recyclerurval; den är inte giltig import, skriver ingen
   cursor och kan inte öppna Resume. Själva
-  `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` är fortsatt delvis spärrad: DB0
-  behöver fortfarande atomär cursor-, nollställnings-, append- och
-  checkcode-commit. DB2 är endast en textgrind och kan inte återvinnas;
+  `DM2_RECYCLE_A_RECORD_FROM_THE_WORLD` är fortsatt delvis spärrad: den
+  privata ägaren kan nu atomärt klona poolen, nollställa den valda DB0-posten,
+  skriva dess source-cursor och låta `READ_RECORD_CHECKCODE` fortsätta genom
+  den befintliga c_map-append-callbacken. Den fullständiga GAME_LOAD-committen
+  behöver fortfarande verifiera hela c_map-/checkcode-resultatet och
+  efterföljande sessionägare atomärt. DB2 är endast en textgrind och kan inte
+  återvinnas;
   DB4 och DB14 kräver därtill källtrogna delete/move-
   callbacks för creature-, missile- och objectkedjor.
   Övriga avbrutna faser rapporterar uttryckligen att recycler saknas (`-1`)
@@ -5580,3 +5682,9 @@ record boundary. Dynamic RNG/AI/T700/T900 behavior remains capture-gated.
 - 🔒 Capture a source-owned ADPCM-RAM CPU read/channel-start event and join it
   to a real gameplay event before enabling `theron_v1_play_sound()`.
 - 🔒 Keep CDDA track availability separate from in-game sound-effect ownership.
+# DM2: kandidatens PROCESS_SOUND (0x15) (2026-08-11)
+
+Den privata GAME_LOAD-kandidaten har nu en source-formad `PROCESS_SOUND`-
+adapter: timer A pekar på delayed-slotten, map-gate och `GEN1`-kö följer den
+materialiserade sound-owner, och fel återställer timer/sound-state. En positiv
+M11-regression verifierar att delayed-slotten och timerposten konsumeras.

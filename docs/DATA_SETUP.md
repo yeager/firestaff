@@ -60,11 +60,21 @@ graphics and dungeon pair.
 
 ### Dungeon Master II: Skullkeep
 
+DM2 is playable from the authenticated DOS, Amiga, FM Towns and Macintosh
+source families. M12 keeps the selected edition's owner when several versions
+are present below one root; a DOS `data` symlink is valid when it resolves to
+the verified DOS files.
+
 PC music is stored in the original GDAT data. FM Towns presentation media,
-including its animation streams and the original Japanese text, belongs with
-the CD and is optional to the core pair. To use Firestaff's English FM Towns
-text route, also provide a verified PC English `GRAPHICS.DAT`; it is an
-English companion, not a replacement for the Japanese FM Towns disc.
+including `AUTOEXEC.BAT`, `TWANIM.EXP`, `SWOOSH`, `TITLE`, `SKULL.EXP` and
+`END`, belongs with the original disc archive. Firestaff reads the MODE1/2352
+disc image and animation streams in memory. For English FM Towns text, also
+provide the verified PC English `GRAPHICS.DAT` companion; it localises text
+only and never replaces the Japanese FM Towns dungeon or presentation owner.
+
+The Amiga installer archive is read as the original in-memory LZX source. The
+Mac retail/demo ZIP keeps its HFS/resource-fork owner and big-endian dungeon
+records. Do not mix `GRAPHICS.DAT` and `DUNGEON.DAT` across editions.
 
 The Amiga edition's `CD.DAT` and `SK00.MOD` through `SK09.MOD` are its
 original map-music data. Keep them with the six-disk installer archive for

@@ -24,7 +24,7 @@
 
 ## Verification
 
-- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_box_action_area_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff/build/test_dm1_v1_box_action_area_pc34_compat`: rc=0
 
 ## TODO
 

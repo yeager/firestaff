@@ -102,6 +102,16 @@ static int path_has_virtual_entry(const char* path,
            strstr(path, entryName);
 }
 
+static int same_path(const char* a, const char* b) {
+#ifndef _WIN32
+    char ra[M12_ASSET_DATA_DIR_CAPACITY];
+    char rb[M12_ASSET_DATA_DIR_CAPACITY];
+    if (a && b && realpath(a, ra) && realpath(b, rb))
+        return strcmp(ra, rb) == 0;
+#endif
+    return a && b && strcmp(a, b) == 0;
+}
+
 static int write_iso_dir_record(unsigned char* dir,
                                 int offset,
                                 unsigned int lba,
@@ -327,7 +337,7 @@ static void scan_iso_fixture_case(int blockCache) {
 
     M12_AssetStatus_Scan(&status, dataRoot);
 
-    version = M12_AssetStatus_GetVersion(&status, "dm2", 0U);
+    version = M12_AssetStatus_GetFirstMatchedVersion(&status, "dm2");
     check_int(version && version->matched &&
               path_has_virtual_entry(version->matchedPath, "dm2-required.iso",
                                      "GRAPHICS.DAT"),
@@ -341,8 +351,8 @@ static void scan_iso_fixture_case(int blockCache) {
               path_has_virtual_entry(required->matchedPath,
                                      "dm2-required.iso", "GRAPHICS.DAT"),
               "DM2 diagnostics retain the source virtual GRAPHICS path");
-    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
-                     dataRoot) == 0,
+    check_int(same_path(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
+                        dataRoot),
               "DM2 archive routing must not advertise asset-cache as runtime data");
     check_int(FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) &&
               FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userDataDir,

@@ -17,11 +17,18 @@ static int16_t mock_attack_party_damage;
 static int mock_attack_creature_called;
 static int16_t mock_attack_creature_damage;
 static int mock_attack_door_called;
+static uint16_t mock_ai_query_type;
+static uint16_t mock_ai_flags_type;
+static uint16_t mock_poison_type;
 static int mock_timer_queued;
 static int mock_noise_queued;
 static int mock_dealloc_called;
 static uint16_t mock_dealloc_record;
 static int mock_cut_called;
+static uint16_t mock_actuator_tile_head;
+static int mock_actuator_called;
+static int16_t mock_actuator_action;
+static int16_t mock_actuator_value;
 
 static void reset_mocks(void)
 {
@@ -32,11 +39,18 @@ static void reset_mocks(void)
     mock_attack_creature_called = 0;
     mock_attack_creature_damage = 0;
     mock_attack_door_called = 0;
+    mock_ai_query_type = 0xffffu;
+    mock_ai_flags_type = 0xffffu;
+    mock_poison_type = 0xffffu;
     mock_timer_queued = 0;
     mock_noise_queued = 0;
     mock_dealloc_called = 0;
     mock_dealloc_record = 0;
     mock_cut_called = 0;
+    mock_actuator_tile_head = 0xFFFE;
+    mock_actuator_called = 0;
+    mock_actuator_action = 0;
+    mock_actuator_value = 0;
 }
 
 /* ── Mock callbacks ───────────────────────────────────────────────── */
@@ -70,7 +84,7 @@ static void mock_dealloc(void *ctx, uint16_t rec)
 static uint16_t mock_tile_record_link(void *ctx, int16_t x, int16_t y)
 {
     (void)ctx; (void)x; (void)y;
-    return 0xFFFE;
+    return mock_actuator_tile_head;
 }
 
 static uint8_t mock_tile_value(void *ctx, int16_t x, int16_t y)
@@ -145,25 +159,31 @@ static uint8_t *mock_ai_from_record(void *ctx, uint8_t type)
 
 static uint8_t *mock_ai_from_type(void *ctx, uint16_t type)
 {
-    (void)ctx; (void)type;
+    (void)ctx;
+    mock_ai_query_type = type;
     return mock_ai_spec;
 }
 
 static int16_t mock_ai_flags(void *ctx, uint16_t type)
 {
-    (void)ctx; (void)type;
+    (void)ctx;
+    mock_ai_flags_type = type;
     return 0;
 }
 
 static int16_t mock_poison_resist(void *ctx, uint16_t type, uint16_t damage)
 {
-    (void)ctx; (void)type;
+    (void)ctx;
+    mock_poison_type = type;
     return (int16_t)damage; /* no resistance */
 }
 
 static void mock_invoke_actuator(void *ctx, uint8_t *rec, int16_t action, int16_t value)
 {
-    (void)ctx; (void)rec; (void)action; (void)value;
+    (void)ctx; (void)rec;
+    mock_actuator_called++;
+    mock_actuator_action = action;
+    mock_actuator_value = value;
 }
 
 static void mock_invoke_message(void *ctx, int16_t x, int16_t y, int16_t dir,
@@ -271,6 +291,50 @@ static void test_calc_cloud_damage_no_effect(void)
     CHECK(r.damage == 0, "cloud type 0 deals no damage");
 }
 
+static void test_cloud_damage_missing_owner_fails_closed(void)
+{
+    printf("test_cloud_damage_missing_owner_fails_closed\n");
+    DM2_V1_CalcCloudDamageReceipt r;
+    DM2_V1_CloudCallbacks cb;
+
+    memset(&cb, 0, sizeof(cb));
+    r = dm2_v1_calc_cloud_damage(NULL, 0, 0xffff);
+    CHECK(r.damage == 0, "NULL cloud owner produces no damage");
+    r = dm2_v1_calc_cloud_damage(&cb, 0, 0xffff);
+    CHECK(r.damage == 0, "cloud owner without record lookup produces no damage");
+}
+
+static void test_calc_cloud_damage_missing_combat_owner_fails_closed(void)
+{
+    printf("test_calc_cloud_damage_missing_combat_owner_fails_closed\n");
+    reset_mocks();
+    DM2_V1_CloudCallbacks cb = make_callbacks();
+    mock_records[0][2] = 0x07;
+    mock_records[0][3] = 0xA0;
+    mock_records[1][4] = 0x2A;
+    cb.query_creature_ai_spec_from_type = NULL;
+
+    CHECK(dm2_v1_calc_cloud_damage(&cb, 0, 0x1001).damage == 0,
+          "creature cloud without AI owner fails closed");
+}
+
+static void test_process_cloud_missing_owner_fails_closed(void)
+{
+    printf("test_process_cloud_missing_owner_fails_closed\n");
+    DM2_V1_CloudTimer timer;
+    DM2_V1_ProcessCloudReceipt r;
+    DM2_V1_CloudCallbacks cb;
+
+    memset(&timer, 0, sizeof(timer));
+    memset(&cb, 0, sizeof(cb));
+    r = dm2_v1_process_cloud(NULL, &timer);
+    CHECK(!r.requeued && !r.deallocated,
+          "NULL cloud owner is consumed without mutation");
+    r = dm2_v1_process_cloud(&cb, &timer);
+    CHECK(!r.requeued && !r.deallocated,
+          "incomplete cloud owner is consumed without mutation");
+}
+
 static void test_calc_cloud_damage_party_type2(void)
 {
     printf("test_calc_cloud_damage_party_type2\n");
@@ -283,7 +347,25 @@ static void test_calc_cloud_damage_party_type2(void)
     rp[3] = 0x20; /* strength = 0x20 */
 
     DM2_V1_CalcCloudDamageReceipt r = dm2_v1_calc_cloud_damage(&cb, 0, 0xFFFF);
-    CHECK(r.damage == 0x20, "cloud type 2 damages party with base strength");
+    CHECK(r.damage == 0x10, "cloud type 2 halves party damage");
+}
+
+static void test_calc_cloud_damage_poison_subtype(void)
+{
+    printf("test_calc_cloud_damage_poison_subtype\n");
+    reset_mocks();
+    DM2_V1_CloudCallbacks cb = make_callbacks();
+
+    /* DB4 target handle 0x1001; cloud subtype 7, strength 0xA0. */
+    mock_records[0][2] = 0x07;
+    mock_records[0][3] = 0xA0;
+    mock_records[1][4] = 0x2A; /* target creature type, not the DB4 handle */
+    mock_ai_spec[0x19] = 0;
+    DM2_V1_CalcCloudDamageReceipt r = dm2_v1_calc_cloud_damage(
+        &cb, 0, 0x1001);
+    CHECK(r.damage == 4, "cloud subtype 7 uses poison damage branch");
+    CHECK(mock_ai_query_type == 0x2A && mock_poison_type == 0x2A,
+          "cloud creature callbacks receive the target creature type parameter");
 }
 
 static void test_calc_cloud_damage_out_of_range(void)
@@ -311,6 +393,8 @@ static void test_create_cloud_basic(void)
                                                        3, 4, 0xFF);
     CHECK(r.created == true, "cloud created successfully");
     CHECK(r.record_index == 0, "record index is 0");
+    CHECK(mock_records[0][2] == 0x81 && mock_records[0][3] == 0x10,
+          "cloud subtype stays in word@2 low byte and strength in high byte");
     CHECK(mock_timer_queued == 1, "timer was queued");
     CHECK(mock_noise_queued == 1, "noise was queued");
 }
@@ -326,6 +410,31 @@ static void test_create_cloud_alloc_fail(void)
                                                        3, 4, 0xFF);
     CHECK(r.created == false, "creation fails when pool exhausted");
     CHECK(r.record_index == -1, "record index is -1");
+}
+
+static void test_create_cloud_spread_and_actuator(void)
+{
+    printf("test_create_cloud_spread_and_actuator\n");
+    reset_mocks();
+    DM2_V1_CloudCallbacks cb = make_callbacks();
+
+    /* DB3 actuator: type 0x26, universal cloud match, action 0. */
+    mock_actuator_tile_head = 0x0C01; /* record type 3, pool index 1 */
+    mock_records[1][2] = 0xA6;        /* w2 = 0xFFA6 */
+    mock_records[1][3] = 0xFF;
+    mock_records[1][4] = 0x08;        /* source action 1 in w4 bits 4..3 */
+
+    DM2_V1_CreateCloudReceipt r = dm2_v1_create_cloud(
+        &cb, 0xFF80, 0x10, 5, 5, 0xFF);
+    CHECK(r.created == true, "spread cloud was created");
+    CHECK(mock_records[0][2] == 0x80 && mock_records[0][3] == 0x10,
+          "FF80 cloud keeps subtype zero plus omnidirectional bit");
+    CHECK(mock_attack_party_called == 1, "FF80 spread attacks party on origin tile");
+    CHECK(mock_attack_party_damage == 10, "FF80 spread uses source damage formula");
+    CHECK((mock_vp_dirty & 1) != 0, "spread marks viewed map dirty");
+    CHECK(mock_actuator_called == 1, "spread scans and invokes matching DB3 actuator");
+    CHECK(mock_actuator_action == 1 && mock_actuator_value == 0,
+          "DB3 actuator receives source action 1 and zero value");
 }
 
 static void test_process_cloud_dealloc(void)
@@ -417,6 +526,32 @@ static void test_actuator_scan_empty_tile(void)
     CHECK(result == (int32_t)0xFFFE, "scan returns end-of-list on empty tile");
 }
 
+static void test_actuator_scan_null_tile_fails_closed(void)
+{
+    printf("test_actuator_scan_null_tile_fails_closed\n");
+    reset_mocks();
+    mock_actuator_tile_head = 0xFFFF;
+    DM2_V1_CloudCallbacks cb = make_callbacks();
+
+    int32_t result = dm2_v1_cloud_actuator_scan(&cb, 0xFF80, 3, 4, 0x10);
+    CHECK(result == (int32_t)0xFFFF,
+          "OBJECT_NULL tile chain is rejected before record dereference");
+}
+
+static void test_actuator_scan_missing_invoke_owner_fails_closed(void)
+{
+    printf("test_actuator_scan_missing_invoke_owner_fails_closed\n");
+    reset_mocks();
+    mock_actuator_tile_head = 0x0C00;
+    mock_records[0][2] = 0xA6;
+    mock_records[0][3] = 0xFF;
+    DM2_V1_CloudCallbacks cb = make_callbacks();
+    cb.invoke_actuator = NULL;
+
+    CHECK(dm2_v1_cloud_actuator_scan(&cb, 0xFF80, 3, 4, 0x10) == 0xFFFF,
+          "missing actuator invoke owner fails closed before mutation");
+}
+
 /* ── Main ─────────────────────────────────────────────────────────── */
 
 int main(void)
@@ -424,15 +559,22 @@ int main(void)
     printf("=== DM2 Cloud System Tests ===\n\n");
 
     test_calc_cloud_damage_no_effect();
+    test_cloud_damage_missing_owner_fails_closed();
+    test_calc_cloud_damage_missing_combat_owner_fails_closed();
+    test_process_cloud_missing_owner_fails_closed();
     test_calc_cloud_damage_party_type2();
+    test_calc_cloud_damage_poison_subtype();
     test_calc_cloud_damage_out_of_range();
     test_create_cloud_basic();
     test_create_cloud_alloc_fail();
+    test_create_cloud_spread_and_actuator();
     test_process_cloud_dealloc();
     test_process_cloud_poison_decay();
     test_process_cloud_poison_expire();
     test_cloud_type_table();
     test_actuator_scan_empty_tile();
+    test_actuator_scan_null_tile_fails_closed();
+    test_actuator_scan_missing_invoke_owner_fails_closed();
 
     printf("\n=== Results: %d passed, %d failed ===\n", pass_count, fail_count);
     return fail_count > 0 ? 1 : 0;

@@ -4517,18 +4517,11 @@ static void m12_normalize_dm2_runtime_owner(M12_AssetStatus* status,
         m12_path_is_virtual_asset(status->runtimeDataDirs[gameIndex])) {
         return;
     }
-    /* Preserve the authenticated logical owner when it still exists.  The
-     * DM2 boot profile accepts that path and resolves the symlink only when
-     * the logical directory is unavailable.  Resolving it unconditionally
-     * made M12 hand M11 a different string from the boot owner's asset_root
-     * for the normal ~/.firestaff symlinked data tree. */
-    if (FSP_FileExists(status->runtimeDataDirs[gameIndex])) {
-        return;
-    }
     /* Cache admission compares the original logical matched paths first.
-     * Only after that check may the launch handoff collapse user symlinks.
-     * This keeps M12 and dm2_v1_boot on the one hash-selected physical DATA
-     * directory without copying, unpacking or substituting game data. */
+     * The launch handoff must then use the same physical DATA directory as
+     * dm2_v1_boot_scan_assets(), which resolves the user's data symlink before
+     * publishing its boot profile.  This keeps M12 and M11 on one
+     * hash-selected owner without copying, unpacking or substituting data. */
     if (FSP_ResolvePhysicalPath(physicalAssetDir, sizeof(physicalAssetDir),
                                 status->runtimeDataDirs[gameIndex])) {
         m12_copy_string(status->runtimeDataDirs[gameIndex],
@@ -6066,6 +6059,7 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         if (!m12_materialize_runtime_cache_for_game(status, i)) {
             m12_apply_required_game_availability(status, i, 0);
         }
+        m12_prefer_dm2_loose_graphics_runtime_dir(status, i);
         m12_normalize_dm2_runtime_owner(status, i);
     }
     if (!m12_scan_progress_update(&progressCtx,
@@ -6168,6 +6162,9 @@ void M12_AssetStatus_ScanGameWithOptions(
     int dataDirResolvedToMatchedRoot = 0;
     int csbFmtownsAdmitted = 0;
     int dm1FmtownsAdmitted = 0;
+    int dm2ExplicitAmiga = 0;
+    int dm2ExplicitMac = 0;
+    int dm2ExplicitFmtowns = 0;
     int reqMatch;
     int i;
     if (!status) {
@@ -6262,15 +6259,52 @@ void M12_AssetStatus_ScanGameWithOptions(
         /* m12_fill_game_versions retains the verified nested-CD rows, so a
          * direct CSB scan does not reopen the selected multi-hundred-megabyte
          * archive only to restore them. */
-        if (strcmp(g_games[gameIndex].gameId, "dm2") == 0) {
-            (void)m12_admit_dm2_fmtowns_archive(status, gameIndex,
-                                                 roots, rootCount,
-                                                 requestedDataDir);
+    if (strcmp(g_games[gameIndex].gameId, "dm2") == 0) {
+            dm2ExplicitAmiga = requestedDataDir && requestedDataDir[0] &&
+                strstr(requestedDataDir,
+                       "Dungeon-Master-II-Skullkeep_Amiga_EN.zip") != NULL &&
+                FSP_FileExists(requestedDataDir);
+            dm2ExplicitMac = requestedDataDir && requestedDataDir[0] &&
+                strstr(requestedDataDir, "Dungeon-Master-II-Skullkeep_Mac_EN") != NULL &&
+                FSP_FileExists(requestedDataDir);
+            dm2ExplicitFmtowns = requestedDataDir && requestedDataDir[0] &&
+                strstr(requestedDataDir,
+                       "Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip") != NULL &&
+                FSP_FileExists(requestedDataDir);
+            /* A direct edition archive is a user selection.  Admit that
+             * edition before sibling-archive discovery; otherwise a shared
+             * DM2 root can let the Towns archive win an explicitly selected
+             * Amiga/Mac launch. */
+            /* Nested Amiga/Mac archive admission is intentionally absent from
+             * FIRESTAFF_ASSET_STATUS_TESTING builds; those tests use the
+             * lightweight status corpus and must not reference the production
+             * archive owner symbols. */
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
-            (void)m12_admit_dm2_amiga_archive(status, gameIndex,
-                                              roots, rootCount, requestedDataDir);
-            (void)m12_admit_dm2_mac_archive(status, gameIndex, roots, rootCount,
-                                             requestedDataDir);
+            if (dm2ExplicitAmiga) {
+                (void)m12_admit_dm2_amiga_archive(status, gameIndex,
+                                                   roots, rootCount,
+                                                   requestedDataDir);
+            } else if (dm2ExplicitMac) {
+                (void)m12_admit_dm2_mac_archive(status, gameIndex, roots,
+                                                rootCount, requestedDataDir);
+            } else
+#endif
+            if (dm2ExplicitFmtowns) {
+                (void)m12_admit_dm2_fmtowns_archive(status, gameIndex,
+                                                    roots, rootCount,
+                                                    requestedDataDir);
+            } else {
+                (void)m12_admit_dm2_fmtowns_archive(status, gameIndex,
+                                                    roots, rootCount,
+                                                    requestedDataDir);
+            }
+#ifndef FIRESTAFF_ASSET_STATUS_TESTING
+            if (!dm2ExplicitAmiga)
+                (void)m12_admit_dm2_amiga_archive(status, gameIndex,
+                                                  roots, rootCount, requestedDataDir);
+            if (!dm2ExplicitMac && !dm2ExplicitAmiga)
+                (void)m12_admit_dm2_mac_archive(status, gameIndex, roots, rootCount,
+                                                 requestedDataDir);
 #endif
         }
     }
@@ -6337,6 +6371,7 @@ void M12_AssetStatus_ScanGameWithOptions(
     if (!m12_materialize_runtime_cache_for_game(status, gameIndex)) {
         m12_apply_required_game_availability(status, gameIndex, 0);
     }
+    m12_prefer_dm2_loose_graphics_runtime_dir(status, gameIndex);
     m12_normalize_dm2_runtime_owner(status, gameIndex);
     if (strcmp(gameId, "theron") == 0) {
         m12_refresh_theron_media_status(status, roots, rootCount);

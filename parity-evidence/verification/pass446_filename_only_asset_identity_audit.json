@@ -51,7 +51,11 @@
       "variant": "DM PC 3.4 Multilanguage / EUDATA; same dungeon payload as English"
     }
   ],
-  "errors": [],
+  "errors": [
+    "docs/design/CSB_V1_BOOTSTRAP_SCOUT.md missing required text: catalogue/status evidence, not CSB runtime identity",
+    "docs/design/CSB_V1_BOOTSTRAP_SCOUT.md missing required text: filename-only match, should remain insufficient",
+    "docs/design/CSB_V1_BOOTSTRAP_SCOUT.md missing required text: MD5 registry entries may be cited only as cross-reference/provenance"
+  ],
   "redmcsbAnchors": [
     {
       "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/FILENAME.C",
@@ -152,5 +156,5 @@
   ],
   "rule": "filenames are loader paths only; parity/runtime evidence needs exact variant + SHA-256",
   "schema": "pass446_filename_only_asset_identity_audit.v1",
-  "status": "PASS"
+  "status": "FAIL"
 }

@@ -103,11 +103,11 @@
     }
   ],
   "status": "PASS831_DM1_V1_BOX_ACTION_AREA_LOCKED",
-  "timestampUtc": "2026-08-11T06:50:28.327553+00:00",
+  "timestampUtc": "2026-08-12T01:40:13.266307+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_box_action_area_pc34_compat"
+        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_box_action_area_pc34_compat"
       ],
       "outputTail": "dm1_v1_box_action_area: 168/168 assertions passed",
       "passed": true,

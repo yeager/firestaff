@@ -25,23 +25,18 @@
     },
     {
       "marker": "m11_apply_dungeon_palette_level(framebuffer, framebufferWidth, framebufferHeight,",
-      "offset": 25189
+      "offset": 25677
     },
     {
       "marker": "if (state->presentationMode == M12_PRESENTATION_V22_MODERN)",
-      "offset": 25748
+      "offset": 26236
     },
     {
       "marker": "(void)m11_v22_inplace_render_pass(framebuffer,",
-      "offset": 26114
+      "offset": 26602
     }
   ],
-  "errors": [
-    "m11_v22_render_overlay_pc34.c missing marker: m11_v22_shape_cache_get(depth + 1, lateral);",
-    "m11_v22_render_overlay_pc34.c missing marker: if (!r || !r->active) continue;",
-    "m11_v22_render_overlay_pc34.c missing marker: m11_v22_cell_rect(depth + 1, lateral);",
-    "m11_v22_render_overlay_pc34.c missing marker: M11_V22_OVERLAY_PLACEHOLDER_INDEX"
-  ],
+  "errors": [],
   "firestaffAnchors": {
     "boot": "src/dm1v2/dm1_v2_boot_pc34.c",
     "cellRects": "src/dm1v2/m11_v22_cell_rects_pc34.c",
@@ -57,5 +52,5 @@
   ],
   "redmcsbAnchor": "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
   "scope": "DM1 V2.2 M11 in-place modern-art handoff source-lock",
-  "status": "failed"
+  "status": "passed"
 }

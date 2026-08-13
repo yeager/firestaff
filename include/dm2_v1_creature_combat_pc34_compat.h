@@ -79,7 +79,7 @@ typedef struct {
     const uint8_t *(*query_ai_spec_from_type)(void *ctx, uint16_t record);
 } DM2_V1_PoisonResistCallbacks;
 
-int16_t dm2_v1_apply_creature_poison_resistance(
+int16_t dm2_v1_creature_combat_apply_poison_resistance(
     uint16_t creature_record, int16_t poison_amount,
     const DM2_V1_PoisonResistCallbacks *cb, void *ctx);
 

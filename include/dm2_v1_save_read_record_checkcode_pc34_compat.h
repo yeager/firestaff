@@ -110,6 +110,11 @@ typedef struct {
     /* Transient failure provenance for the one original SUPPRESS stream. */
     int failure_reason;
     int last_record_type;
+    /* Reader position at the first input-boundary failure.  `position` is the
+     * next raw byte and `bits_remaining` is the unconsumed tail of the
+     * current byte, matching DM2_SuppressReader's source order. */
+    size_t failure_stream_offset;
+    uint8_t failure_stream_bits_remaining;
 } DM2_ReadRecordSession;
 
 typedef enum {

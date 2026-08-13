@@ -128,6 +128,41 @@ int dm2_v1_source_timer_cancel(
     return 0;
 }
 
+int dm2_v1_source_timer_cancel_source_index(
+    DM2_V1_SourceTimerQueue *queue,
+    uint16_t source_index)
+{
+    size_t i;
+    size_t match = 0U;
+    int found = 0;
+
+    if (queue == NULL)
+        return 0;
+    for (i = 0U; i < queue->count; ++i) {
+        if (queue->source_indices[i] == source_index) {
+            match = i;
+            if (found)
+                return 0; /* fail closed on a non-unique source owner */
+            found = 1;
+        }
+    }
+    if (!found)
+        return 0;
+
+    if (match + 1U < queue->count) {
+        memmove(&queue->timers[match], &queue->timers[match + 1U],
+                (queue->count - 1U - match) * sizeof(queue->timers[0]));
+        memmove(&queue->source_indices[match],
+                &queue->source_indices[match + 1U],
+                (queue->count - 1U - match) *
+                    sizeof(queue->source_indices[0]));
+        memmove(&queue->tickets[match], &queue->tickets[match + 1U],
+                (queue->count - 1U - match) * sizeof(queue->tickets[0]));
+    }
+    --queue->count;
+    return 1;
+}
+
 int dm2_v1_source_timer_peek_ticket(
     const DM2_V1_SourceTimerQueue *queue,
     uint32_t ticket,

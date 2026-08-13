@@ -1,5 +1,18 @@
 # Dungeon Master II Skullkeep FM Towns — technical guide
 
+## Current Firestaff status
+
+The authentic FM Towns route is playable in Firestaff. M12 can select the
+original HME-242 ZIP from a shared DM2 data root, read its disc image and
+retain the archive as the source owner. The FM Towns M11 route reaches active
+runtime through source-owned New Game, inventory, movement, pit, stairs, DB1
+and creature/THINK_CREATURE checks.
+
+For English text, pass the verified PC-English DOS `GRAPHICS.DAT` as an
+explicit companion. The companion is read into RAM and supplies text only;
+the Japanese FM Towns disc remains the owner of dungeon, graphics, title and
+animation media. No archive member is unpacked as a substitute runtime tree.
+
 DM2's FM Towns port sits alongside DM1 and CSB in the Fujitsu HMA-240
 Phar Lap family. Read this together with the DM1 and CSB FM Towns
 guides plus `docs/fmtowns/CROSS_GAME_COVERAGE.md`.

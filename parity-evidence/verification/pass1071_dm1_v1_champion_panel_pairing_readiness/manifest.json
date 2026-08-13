@@ -4,43 +4,37 @@
     "original single-status-panel capture"
   ],
   "claim_parity": false,
-  "fingerprints_ok": true,
+  "fingerprints_ok": false,
   "firestaff_ppms": [
     {
-      "dims": [
-        320,
-        200
-      ],
-      "exists": true,
+      "dims": null,
+      "exists": false,
       "expected_dims": [
         320,
         200
       ],
       "expected_sha256": "d995c4991e5b973ea98c7eedd2d13bdca0e624061983da99131ea5110ddd17a9",
       "name": "party_hud_four_champions_vga.ppm",
-      "ok": true,
+      "ok": false,
       "path": "verification-m11/lane3-inventory-followup-20260428-0914/party_hud_four_champions_vga.ppm",
-      "sha256": "d995c4991e5b973ea98c7eedd2d13bdca0e624061983da99131ea5110ddd17a9"
+      "sha256": null
     },
     {
-      "dims": [
-        320,
-        200
-      ],
-      "exists": true,
+      "dims": null,
+      "exists": false,
       "expected_dims": [
         320,
         200
       ],
       "expected_sha256": "860bc022785b2567eedfa552a99e103d02c573b432446c679a273d96d0a18363",
       "name": "party_hud_statusbox_gfx_vga.ppm",
-      "ok": true,
+      "ok": false,
       "path": "verification-m11/lane3-inventory-followup-20260428-0914/party_hud_statusbox_gfx_vga.ppm",
-      "sha256": "860bc022785b2567eedfa552a99e103d02c573b432446c679a273d96d0a18363"
+      "sha256": null
     }
   ],
-  "firestaff_ppms_ok": true,
-  "generated_at": "2026-08-11T06:50:32.619940+00:00",
+  "firestaff_ppms_ok": false,
+  "generated_at": "2026-08-12T01:36:47.031793+00:00",
   "original_crops": [
     {
       "dims": [
@@ -351,5 +345,5 @@
   },
   "schema": "firestaff.parity.pass1071_dm1_v1_champion_panel_pairing_readiness.v1",
   "scope": "Readiness fingerprint for existing pass1053 original candidate-panel artifacts and existing Firestaff V1 champion HUD PPMs only.",
-  "status": "BLOCKED_ORIGINAL_FOUR_CHAMPION_HUD_AND_SINGLE_STATUS_PANEL_CAPTURE_MISSING"
+  "status": "FAIL_FINGERPRINT_DRIFT"
 }

@@ -119,11 +119,11 @@
     }
   ],
   "status": "PASS849_DM1_V1_FUZZY_SECTOR_ANALYZED_LOCKED",
-  "timestampUtc": "2026-08-11T06:50:27.685520+00:00",
+  "timestampUtc": "2026-08-12T01:40:13.882304+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_fuzzy_sector_analyzed_pc34_compat"
+        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_fuzzy_sector_analyzed_pc34_compat"
       ],
       "outputTail": "dm1_v1_fuzzy_sector_analyzed: 13/13 assertions passed",
       "passed": true,

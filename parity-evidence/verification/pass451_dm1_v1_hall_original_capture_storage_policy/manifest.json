@@ -1,10 +1,10 @@
 {
   "schema": "pass451_dm1_v1_hall_original_capture_storage_policy.v1",
-  "timestampUtc": "2026-08-09T13:31:01.613816+00:00",
+  "timestampUtc": "2026-08-12T01:36:41.399524+00:00",
   "status": "PASS_PASS451_EXTERNAL_CAPTURE_STORAGE_POLICY_READY",
-  "repo": "/Volumes/Extern-disk/Documents/Firestaff/yeager-firestaff",
+  "repo": "/Volumes/Extern-disk/firestaff",
   "branch": "main",
-  "head": "7a012851039b329da45f3c93c6d522d423c4317a",
+  "head": "59bea8fb521afbd68e1ccd0ee03e9c01c1b6a4a9",
   "target": "tools/pass173_source_portrait_route_gate_probe.py",
   "externalArtifactRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe",
   "externalParentExists": true,
@@ -75,7 +75,7 @@
       "python3",
       "-m",
       "py_compile",
-      "/Volumes/Extern-disk/Documents/Firestaff/yeager-firestaff/tools/pass173_source_portrait_route_gate_probe.py"
+      "/Volumes/Extern-disk/firestaff/tools/pass173_source_portrait_route_gate_probe.py"
     ],
     "returncode": 0,
     "outputTail": ""

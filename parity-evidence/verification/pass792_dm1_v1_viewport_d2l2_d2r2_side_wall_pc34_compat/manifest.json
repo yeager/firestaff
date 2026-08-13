@@ -166,11 +166,11 @@
     }
   ],
   "status": "PASS792_DM1_V1_VIEWPORT_D2L2_D2R2_SIDE_WALL_LOCKED",
-  "timestampUtc": "2026-08-11T06:49:38.358321+00:00",
+  "timestampUtc": "2026-08-12T01:38:15.951704+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_viewport_d2l2_d2r2_side_wall_pc34_compat"
+        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_viewport_d2l2_d2r2_side_wall_pc34_compat"
       ],
       "outputTail": "assertions=225 failures=0 hash=0xb1fce2ad",
       "passed": true,

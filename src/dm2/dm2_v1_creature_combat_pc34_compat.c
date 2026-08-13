@@ -153,7 +153,7 @@ int32_t dm2_v1_confuse_creature(
 }
 
 /* c_creature.cpp:34-56 — DM2_APPLY_CREATURE_POISON_RESISTANCE */
-int16_t dm2_v1_apply_creature_poison_resistance(
+int16_t dm2_v1_creature_combat_apply_poison_resistance(
     uint16_t creature_record, int16_t poison_amount,
     const DM2_V1_PoisonResistCallbacks *cb, void *ctx)
 {

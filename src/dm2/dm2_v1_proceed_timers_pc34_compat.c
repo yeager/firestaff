@@ -36,9 +36,11 @@ int dm2_v1_timer_type_is_known(uint8_t type)
         case DM2_V1_TIMER_PROCESS_0E:
         case DM2_V1_TIMER_PROCESS_SOUND:
         case DM2_V1_TIMER_PROCESS_CLOUD:
+        case DM2_V1_TIMER_STEP_MISSILE_ALT:
         case DM2_V1_TIMER_STEP_MISSILE:
         case DM2_V1_TIMER_THINK_CREATURE_A:
         case DM2_V1_TIMER_THINK_CREATURE_B:
+        case DM2_V1_TIMER_PROCESS_3C:
         case DM2_V1_TIMER_PROCESS_3D:
         case DM2_V1_TIMER_LIGHT:
         case DM2_V1_TIMER_HERO_ENCH_FLAG:

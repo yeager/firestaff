@@ -69,6 +69,17 @@ static int read_suppress_preserving(DM2_ReadRecordSession *s,
     return 0;
 }
 
+static int read_input_failure(DM2_ReadRecordSession *session)
+{
+    if (session) {
+        session->failure_reason = DM2_READ_RECORD_FAILURE_INPUT;
+        session->failure_stream_offset = session->reader.position;
+        session->failure_stream_bits_remaining =
+            session->reader.bits_remaining;
+    }
+    return 1;
+}
+
 int dm2_v1_read_possession_continuations(
     DM2_SuppressReader *reader,
     const uint16_t *record_links,
@@ -174,8 +185,7 @@ int dm2_v1_read_record_checkcode(
 
         /* Read continuation bit. 0 = end of chain. */
         if (read_bit(session, &bit)) {
-            session->failure_reason = DM2_READ_RECORD_FAILURE_INPUT;
-            return 1;
+            return read_input_failure(session);
         }
         if (bit == 0) return 0;
 
@@ -185,8 +195,7 @@ int dm2_v1_read_record_checkcode(
             uint8_t type_byte = 0;
             uint8_t type_mask = 0x0f;
             if (read_suppress(session, &type_byte, &type_mask, 1)) {
-                session->failure_reason = DM2_READ_RECORD_FAILURE_INPUT;
-                return 1;
+                return read_input_failure(session);
             }
             record_type = type_byte & 0x0f;
             session->last_record_type = record_type;
@@ -200,7 +209,9 @@ int dm2_v1_read_record_checkcode(
         } else {
             uint8_t sub_byte = 0;
             uint8_t sub_mask = 3;
-            if (read_suppress(session, &sub_byte, &sub_mask, 1)) return 1;
+            if (read_suppress(session, &sub_byte, &sub_mask, 1)) {
+                return read_input_failure(session);
+            }
             /* sksvgame.cpp:857/864: this two-bit placement is carried in
              * the returned record link, not discarded as reader metadata. */
             sub_chain_bits = (uint16_t)((sub_byte & 3u) << 14);
@@ -211,7 +222,9 @@ int dm2_v1_read_record_checkcode(
         if (record_type == 0xf && session->nested_type_0e) {
             uint8_t link_bytes[2] = {0, 0};
             uint8_t link_mask[2] = {0x7f, 0x00};
-            if (read_suppress(session, link_bytes, link_mask, 2)) return 1;
+            if (read_suppress(session, link_bytes, link_mask, 2)) {
+                return read_input_failure(session);
+            }
             if (owner_link) {
                 *owner_link = (uint16_t)(link_bytes[0] | 0xff80u);
             }
@@ -270,7 +283,9 @@ int dm2_v1_read_record_checkcode(
             uint8_t b04 = 0;
             uint16_t ai_flags = 0u;
             uint8_t b04_mask = 0x7f;
-            if (read_suppress(session, &b04, &b04_mask, 1)) return 1;
+            if (read_suppress(session, &b04, &b04_mask, 1)) {
+                return read_input_failure(session);
+            }
             rec_data[4] = b04;
             /* SKProject SKULLWIN/c_savegame.cpp::DM2_READ_RECORD_CHECKCODE
              * lines 876-881 obtains this from
@@ -296,7 +311,9 @@ int dm2_v1_read_record_checkcode(
              * before selecting the body mask. */
             uint8_t cont_byte = 0;
             uint8_t cont_mask = 3;
-            if (read_suppress(session, &cont_byte, &cont_mask, 1)) return 1;
+            if (read_suppress(session, &cont_byte, &cont_mask, 1)) {
+                return read_input_failure(session);
+            }
             /* The writer stores bits 1..2 of word_04 as a 2-bit field
              * ((word_04 << 13) >> 14), so restoring them means shifting the
              * 2-bit value back up by one: (cont_byte & 3) << 1, giving
@@ -326,7 +343,9 @@ int dm2_v1_read_record_checkcode(
             size_t rec_size = sizes[record_type];
             if (rec_size > 0 && rec_size <= sizeof(rec_data)) {
                 if (read_suppress_preserving(session, rec_data, mask,
-                                             rec_size)) return 1;
+                                             rec_size)) {
+                    return read_input_failure(session);
+                }
             }
         }
 
@@ -384,7 +403,9 @@ int dm2_v1_read_record_checkcode(
             } else {
                 /* Map container: read 1-bit has-contents. */
                 int has = 0;
-                if (read_bit(session, &has)) return 1;
+                if (read_bit(session, &has)) {
+                    return read_input_failure(session);
+                }
                 if (has) {
                     if (cb->add_possession_index) {
                         cb->add_possession_index(cb->ctx, record_link);
@@ -431,11 +452,15 @@ int dm2_v1_read_record_checkcode(
         } else if (record_type == 0xf) {
             /* Type 0xF: read timer match bit. */
             int found = 0;
-            if (read_bit(session, &found)) return 1;
+            if (read_bit(session, &found)) {
+                return read_input_failure(session);
+            }
                 if (found) {
                     uint8_t idx_bytes[2] = {0, 0};
                     uint8_t idx_mask[2] = {0xff, 0x03};
-                    if (read_suppress(session, idx_bytes, idx_mask, 2)) return 1;
+                    if (read_suppress(session, idx_bytes, idx_mask, 2)) {
+                        return read_input_failure(session);
+                    }
                     if (cb->bind_timer_record) {
                         uint16_t timer_index = (uint16_t)(idx_bytes[0] |
                             ((uint16_t)idx_bytes[1] << 8));

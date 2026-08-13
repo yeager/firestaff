@@ -21,6 +21,7 @@
 #include "dm2_v1_game.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_game_load_world_owner.h"
+#include "dm2_v1_sksave_game_load_owner.h"
 #include "dm2_v1_creature.h"
 #include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_dungeon_loader.h"
@@ -33,8 +34,9 @@
 #include "dm2_v1_skproject_core.h"
 #include "dm2_v1_actuator_event_pc34_compat.h"
 #include "dm2_v1_proceed_timers_pc34_compat.h"
-#include "dm2_v1_spell_timer_handlers_pc34_compat.h"
 #include "dm2_v1_think_creature_pc34_compat.h"
+#include "dm2_v1_caii_alloc_pc34_compat.h"
+#include "dm2_v1_delete_creature_full_pc34_compat.h"
 #include "dm2_v1_creature_schedule_pc34_compat.h"
 #include "dm2_v1_champion_stat_bridge.h"
 #include "dm2_v1_update_weather_pc34_compat.h"
@@ -42,27 +44,67 @@
 #include "dm2_v1_sound.h"
 #include "dm2_v1_trigger.h"
 #include "dm2_v1_world_model.h"
+#include "dm2_v1_game_load_world_owner.h"
 #include "dm2_v1_i18n.h"
 #include "dm2_v1_move_record_to_pc34_compat.h"
+#include "dm2_v1_projectile_impact_attack.h"
+#include "dm2_v1_move_2fcf_0434.h"
 #include "dm2_v1_record_ops_pc34_compat.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_sound_queue_pc34_compat.h"
 #include "dm2_v1_timer_ops_pc34_compat.h"
+#include "dm2_v1_cloud_pc34_compat.h"
+#include "dm2_v1_hero_ops_pc34_compat.h"
 #include "dm2_v1_engage_command_pc34_compat.h"
 #include "dm2_v1_light_ops_pc34_compat.h"
+#include "dm2_v1_item_ops_pc34_compat.h"
 #include "dm2_v1_creature_ops_pc34_compat.h"
+#include "dm2_v1_creature_attacks_party_pc34_compat.h"
+#include "dm2_v1_creature_attacks_player_pc34_compat.h"
+#include "dm2_v1_combat_damage_pc34_compat.h"
 #include "dm2_v1_ccm_loop_pc34_compat.h"
+#include "dm2_v1_creature_ai_loop_pc34_compat.h"
 #include "fs_portable_compat.h"
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+static int dm2_runtime_projectile_query_word(
+    int record_link, int word_index, void *userdata);
+static int dm2_runtime_projectile_query_weight(
+    int record_link, void *userdata);
+static int dm2_runtime_projectile_rand_mask(int mask, void *userdata);
+
+typedef struct {
+    int (*get_creature_at)(void *ctx, int16_t x, int16_t y);
+    int (*get_player_at_position)(void *ctx, int position);
+    int (*creature_ai_throw_only)(void *ctx, int creature_idx);
+    int16_t (*calc_attack_damage)(void *ctx, int hero_idx, int creature_idx,
+                                  int16_t action_strength, int32_t skill_id);
+    void (*set_pending_combat_damage)(void *ctx, int16_t damage);
+} DM2_RuntimeWieldCallbacks;
+extern int dm2_v1_wield_weapon(
+    int hero_idx, int16_t x, int16_t y, int hero_partypos, int hero_absdir,
+    int16_t action_strength, int require_melee,
+    const DM2_RuntimeWieldCallbacks *cb, void *ctx);
 #include <string.h>
 
 static void dm2_v1_runtime_append_mac_wall_targets(
     const DM2_V1_DungeonData *dungeon, const DM2_V1_GameState *game);
+typedef struct DM2_V1_RuntimeState DM2_V1_RuntimeState;
+static void dm2_runtime_refresh_map_transition_context(
+    DM2_V1_RuntimeState *rt);
+static int dm2_runtime_attack_creature_at(
+    DM2_V1_RuntimeState *rt, DM2_V1_DungeonData *dungeon,
+    int map, int x, int y, int target_x, int target_y,
+    int16_t creature_record, int allow_wield_action);
+
+static void dm2_runtime_apply_entered_db1_teleporter(
+    DM2_V1_RuntimeState *rt, DM2_V1_GameState *gs, int level, int x, int y);
 
 /* ── DM2 V1 Runtime State ─────────────────────────────────────────── */
 
-typedef struct {
+struct DM2_V1_RuntimeState {
     DM2_V1_BootProfile *boot;
     int outdoor;              /* 1=outdoor mode, 0=dungeon mode */
     int tick_count;
@@ -87,6 +129,18 @@ typedef struct {
      * mutations. */
     DM2_V1_Party source_party;
     int source_party_valid;
+    /* c_startend.cpp/ddat.v1e0288: the one-based hero number excluded by
+     * PROCESS_POISON.  This is transferred with the GAME_LOAD party owner. */
+    int16_t source_next_champion_number;
+    /* c_tim_proc.cpp 0x47 source globals: savegames1.b_02 and v1e0976. */
+    uint8_t source_hero_ench_countdown;
+    int16_t source_hero_ench_target;
+    uint8_t source_savegames1[DM2_V1_ORIGINAL_SAVEGAMES1_SIZE];
+    /* c_events.cpp/startend.cpp savegames1.b_04: Aura of Speed. */
+    uint8_t source_aura_of_speed;
+    int source_aura_of_speed_valid;
+    /* c_tim 0x46 owner: source light value used by PROCESS_TIMER_LIGHT. */
+    int16_t source_light_level;
     /* Source-owned selection state used by
      * SkWinCore::DISPLAY_RIGHT_PANEL_SQUAD_HANDS.  Zero means that the
      * original runtime has not selected a champion; do not promote it to a
@@ -248,12 +302,26 @@ typedef struct {
      * per-cell DM2_THINK_CREATURE binding (skproject c_querydb.cpp:1486-1507
      * DM2_GET_CREATURE_AT + c_tim_proc.cpp:4079-4088 payload decode).  The
      * pools are populated lazily from the boot dungeon data once its G1
-     * candidate evidence validates; the think body stays unbound (receipted
-     * fail-closed) until the CCM stream owner/grammar is proven. */
+     * candidate evidence validates; movement and adjacent melee are bounded
+     * CCM owners, while unsupported stream branches stay receipted
+     * fail-closed. */
     DM2_V1_RecordPoolSet record_pools;
     int record_pools_valid;
     DM2_V1_ThinkCreatureBinding think_binding;
     int think_binding_ready;
+    DM2_V1_CcmLoopReceipt last_ccm_receipt;
+    int ccm_receipt_valid;
+    int dynamic_path_attempts;
+    int dynamic_path_admissions;
+    int dynamic_move_queue_admissions;
+    int dynamic_move_timer_consumptions;
+    int dynamic_move_successes;
+    int dynamic_move_last_failure;
+    int dynamic_move_pending_source_map;
+    int dynamic_move_pending_source_x;
+    int dynamic_move_pending_source_y;
+    int16_t dynamic_move_pending_record;
+    int dynamic_path_last_failure;
     /* DM2-003/005 follow-up: session-owned CAII creature array for the
      * bounded DM2_ALLOC_CAII_TO_CREATURE slice (c_1c9a.cpp:5772-5894);
      * capacity is caller-owned until DM2_1c9a_3c30 (DM2_INIT) is proven. */
@@ -293,8 +361,6 @@ typedef struct {
     const char *last_spell_status;
     int last_spell_failure_class;
     DM2_V1_RuntimeSpellFailureGdatReceipt last_spell_failure_gdat;
-    DM2_V1_SpellTimerHandlerContext spell_timer_ctx;
-    int spell_timer_ctx_ready;
     DM2_V1_I18nContext i18n;
     int i18n_ready;
     /* Reserved only for a future complete GAME_LOAD sound handoff.  It must
@@ -306,11 +372,17 @@ typedef struct {
     DM2_V1_SoundSsoundEntry *source_sound_entries;
     DM2_V1_GameLoadSoundSampleBinding *source_sound_bindings;
     uint16_t source_sound_binding_count;
+    /* Private GAME_LOAD candidate transferred from BootProfile.  This is
+     * ownership only: the candidate remains non-playable until the complete
+     * source session publication transaction is implemented. */
+    DM2_V1_GameLoadRuntimeSessionCandidate *game_load_candidate;
+    uint32_t game_load_candidate_hash;
+    uint32_t game_load_candidate_source_hash;
     /* CDDA playback callback — set by M11 host to push PCM to SDL3 */
     void (*cdda_play_cb)(void *ctx, const uint8_t *pcm, size_t size, int loop);
     void (*cdda_stop_cb)(void *ctx);
     void *cdda_cb_ctx;
-} DM2_V1_RuntimeState;
+};
 
 static const uint8_t *dm2_runtime_mac_record_accessor(
     uint16_t handle, uint16_t *out_size, void *user)
@@ -356,6 +428,184 @@ static int32_t dm2_runtime_mac_key_can_handle(
 }
 
 static DM2_V1_RuntimeState g_dm2_runtime;
+
+static void dm2_runtime_apply_entered_db1_teleporter(
+    DM2_V1_RuntimeState *rt, DM2_V1_GameState *gs, int level, int x, int y)
+{
+    DM2_V1_DungeonData *dungeon;
+    int raw;
+    int square_type;
+    int first;
+    int record_type = -1;
+    const uint8_t *record;
+    DM2_V1_Move2fcf0434Receipt gate;
+    int destination_map;
+    int destination_x;
+    int destination_y;
+    int scope;
+    int rotation;
+    int rotation_type;
+
+    if (!rt || !gs || !rt->boot || !rt->boot->dungeon_data)
+        return;
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, level, x, y);
+    square_type = dm2_v1_dungeon_get_square_type(dungeon, level, x, y);
+    if (raw < 0 || square_type != 5 || (raw & 0x08) == 0)
+        return;
+    first = dm2_v1_dungeon_get_first_thing(dungeon, level, x, y);
+    if (first < 0 || (((unsigned)first >> 10) & 0x0fu) != 1u)
+        return;
+    record = dm2_v1_dungeon_get_thing_record(
+        dungeon, (uint16_t)first, &record_type, NULL, NULL);
+    if (!record || record_type != 1)
+        return;
+    {
+        uint16_t w2 = dm2_v1_dungeon_read_record_u16(dungeon, record + 2);
+        uint16_t w4 = dm2_v1_dungeon_read_record_u16(dungeon, record + 4);
+        destination_x = (int)(w2 & 0x1fu);
+        destination_y = (int)((w2 >> 5) & 0x1fu);
+        scope = (int)((w2 >> 13) & 3u);
+        rotation = (int)((w2 >> 10) & 3u);
+        rotation_type = (int)((w2 >> 12) & 1u);
+        destination_map = (int)(w4 >> 8);
+    }
+    if (!dm2_v1_DM2_move_2fcf_0434_teleporter_gate(
+            dungeon, level, x, y, record_type, first,
+            dungeon->record_graph_complete, scope, destination_map,
+            destination_x, destination_y, &gate) || !gate.admitted)
+        return;
+    gs->current_level = destination_map;
+    gs->party_x = destination_x;
+    gs->party_y = destination_y;
+    gs->party_dir = rotation_type ? rotation : ((gs->party_dir + rotation) & 3);
+    gs->outdoor = dm2_v1_dungeon_is_outdoor(dungeon, destination_map);
+    rt->dungeon_level = destination_map;
+    rt->view_dir = gs->party_dir;
+    rt->outdoor = gs->outdoor;
+    dm2_runtime_refresh_map_transition_context(rt);
+}
+
+/* SKProject's stair query resolves a map by shared world coordinates rather
+ * than by a made-up level +/- 1 rule.  Keep the descriptor/cursor ownership
+ * local to the move so every edition uses the authenticated DUNGEON.DAT
+ * offsets and dimensions. */
+static int dm2_runtime_resolve_entered_stairs(
+    DM2_V1_DungeonData *dungeon, int source_map, int source_x, int source_y,
+    int *out_map, int *out_x, int *out_y)
+{
+    DM2_V1_SkprojectMapDescriptor maps[DM2_V1_MAX_LEVELS];
+    uint8_t cursor[DM2_V1_MAX_LEVELS];
+    int raw;
+    int16_t x;
+    int16_t y;
+    int delta;
+    int target;
+
+    if (out_map) *out_map = -1;
+    if (out_x) *out_x = -1;
+    if (out_y) *out_y = -1;
+    if (!dungeon || source_map < 0 || source_map >= dungeon->level_count ||
+        dungeon->level_count > DM2_V1_MAX_LEVELS)
+        return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, source_map, source_x, source_y);
+    if (raw < 0 || dm2_v1_dungeon_get_square_type(
+            dungeon, source_map, source_x, source_y) != 3)
+        return 0;
+
+    memset(maps, 0, sizeof(maps));
+    for (int map = 0; map < dungeon->level_count; ++map) {
+        maps[map].map_id = (uint8_t)map;
+        maps[map].world_x = (int16_t)dungeon->map_offset_x[map];
+        maps[map].world_y = (int16_t)dungeon->map_offset_y[map];
+        maps[map].width = (int16_t)dungeon->level_widths[map];
+        maps[map].height = (int16_t)dungeon->level_heights[map];
+        /* The locator only needs this field to reject a known teleporter
+         * target. The actual destination tile is revalidated below. */
+        maps[map].tile_type_at_local = 0;
+        cursor[map] = (uint8_t)map;
+    }
+    /* A stair must leave its source map. Keep the source out of the scan; the
+     * source routine otherwise legitimately returns the same map when the
+     * world-coordinate rectangle overlaps itself. */
+    cursor[source_map] = 0xffu;
+    delta = (raw & 0x04) ? -1 : 1;
+    x = (int16_t)source_x;
+    y = (int16_t)source_y;
+    target = dm2_v1_skproject_locate_other_level(
+        maps, (uint16_t)dungeon->level_count, (int16_t)source_map,
+        (int16_t)delta, &x, &y, cursor, (uint16_t)dungeon->level_count,
+        0, NULL, NULL);
+    if (target < 0 || target == source_map || x < 0 || y < 0 ||
+        x >= dungeon->level_widths[target] ||
+        y >= dungeon->level_heights[target])
+        return -1;
+    if (out_map) *out_map = target;
+    if (out_x) *out_x = x;
+    if (out_y) *out_y = y;
+    return 1;
+}
+
+static int dm2_runtime_resolve_entered_pit(
+    DM2_V1_DungeonData *dungeon, int source_map, int source_x, int source_y,
+    int *out_map, int *out_x, int *out_y)
+{
+    DM2_V1_SkprojectMapDescriptor maps[DM2_V1_MAX_LEVELS];
+    uint8_t cursor[DM2_V1_MAX_LEVELS];
+    int raw;
+    int16_t x;
+    int16_t y;
+    int target;
+
+    if (out_map) *out_map = -1;
+    if (out_x) *out_x = -1;
+    if (out_y) *out_y = -1;
+    if (!dungeon || source_map < 0 || source_map >= dungeon->level_count ||
+        dungeon->level_count > DM2_V1_MAX_LEVELS)
+        return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, source_map, source_x, source_y);
+    if (raw < 0 || dm2_v1_dungeon_get_square_type(
+            dungeon, source_map, source_x, source_y) != 2 ||
+        (raw & 0x08) == 0 || (raw & 0x01) != 0)
+        return 0;
+    memset(maps, 0, sizeof(maps));
+    for (int map = 0; map < dungeon->level_count; ++map) {
+        maps[map].map_id = (uint8_t)map;
+        maps[map].world_x = (int16_t)dungeon->map_offset_x[map];
+        maps[map].world_y = (int16_t)dungeon->map_offset_y[map];
+        maps[map].width = (int16_t)dungeon->level_widths[map];
+        maps[map].height = (int16_t)dungeon->level_heights[map];
+        maps[map].tile_type_at_local = 0;
+        cursor[map] = (uint8_t)map;
+    }
+    cursor[source_map] = 0xffu;
+    x = (int16_t)source_x;
+    y = (int16_t)source_y;
+    /* DM2_query_19f0_124b's open-pit branch uses direction=1 and
+     * flags=0x8; the locator delta is the same source level step. */
+    target = dm2_v1_skproject_locate_other_level(
+        maps, (uint16_t)dungeon->level_count, (int16_t)source_map, 1,
+        &x, &y, cursor, (uint16_t)dungeon->level_count, 0, NULL, NULL);
+    if (target < 0 || target == source_map || x < 0 || y < 0 ||
+        x >= dungeon->level_widths[target] ||
+        y >= dungeon->level_heights[target])
+        return -1;
+    /* c_move's destination owner still rejects a wall/inaccessible landing;
+     * a pit route is not allowed to manufacture a safe landing tile. */
+    {
+        int target_type = dm2_v1_dungeon_get_square_type(dungeon, target, x, y);
+        if (target_type == 0 || target_type == 13)
+            return -1;
+    }
+    if (out_map) *out_map = target;
+    if (out_x) *out_x = x;
+    if (out_y) *out_y = y;
+    return 1;
+}
+/* M11 input is serialized.  This transient selector lets the pointer path
+ * preserve the exact authenticated c_rwbb target while reusing the existing
+ * column-oriented keyboard owner. */
+static int g_dm2_mac_wall_requested_target = -1;
 static int g_dm2_last_asset_floor_ceiling_count = 0;
 static int g_dm2_last_fallback_floor_ceiling_count = 0;
 static int g_dm2_last_asset_wall_count = 0;
@@ -375,16 +625,93 @@ static int g_dm2_last_asset_item_count = 0;
 static int g_dm2_last_fallback_item_count = 0;
 static int g_dm2_last_asset_creature_possession_item_count = 0;
 static int g_dm2_last_fallback_creature_possession_item_count = 0;
+static int g_dm2_last_wield_death_drop_count = 0;
+static int g_dm2_last_wield_death_drop_iterations = 0;
+static int g_dm2_last_wield_death_drop_alloc_failures = 0;
+static int g_dm2_last_wield_death_drop_first_itemspec = 0;
+static int g_dm2_last_wield_death_drop_first_db = -1;
+static int g_dm2_last_wield_death_drop_alloc_free_records = 0;
+static int g_dm2_last_wield_death_deallocated = 0;
 static int g_dm2_last_asset_carried_item_count = 0;
 static int g_dm2_last_fallback_carried_item_count = 0;
 static int g_dm2_last_asset_projectile_count = 0;
 static int g_dm2_last_fallback_projectile_count = 0;
 static DM2_V1_RuntimeProjectileRenderReceipt g_dm2_last_projectile_render;
+static DM2_V1_RuntimeMissileImpactReceipt g_dm2_last_missile_impact;
+static DM2_V1_RuntimeCreatureDamageReceipt g_dm2_last_creature_damage;
 static int g_dm2_last_asset_hud_portrait_count = 0;
 static int g_dm2_last_fallback_hud_portrait_count = 0;
 static DM2_V1_PerformMoveReceipt g_dm2_last_perform_move;
 static DM2_V1_RuntimeFrameOwnershipReceipt g_dm2_frame_ownership;
 static DM2_V1_ViewportM11FrameReceipt g_dm2_last_m11_frame;
+
+typedef struct {
+    DM2_V1_RuntimeState *runtime;
+    uint32_t timer_ticket;
+    int failed;
+} DM2_V1_RuntimeSpellLightContext;
+
+static void dm2_runtime_spell_queue_light_timer(
+    void *context, int16_t value, uint32_t fire_tick)
+{
+    DM2_V1_RuntimeSpellLightContext *ctx =
+        (DM2_V1_RuntimeSpellLightContext *)context;
+    DM2_V1_SourceTimer timer;
+    DM2_V1_SourceTimerResult result;
+
+    if (!ctx || !ctx->runtime || ctx->runtime->dungeon_level < 0 ||
+        ctx->runtime->dungeon_level > 0xff) {
+        if (ctx) ctx->failed = 1;
+        return;
+    }
+    memset(&timer, 0, sizeof(timer));
+    timer.ticks_and_map = ((uint32_t)ctx->runtime->dungeon_level << 24) |
+                          (fire_tick & DM2_V1_SOURCE_TIMER_TICK_MASK);
+    timer.type = DM2_V1_TIMER_LIGHT;
+    timer.value_a = value;
+    ctx->timer_ticket = dm2_v1_source_timer_enqueue_ticketed(
+        &ctx->runtime->timer_queue, &timer, 0u, &result);
+    if (result != DM2_V1_SOURCE_TIMER_OK || ctx->timer_ticket == 0u)
+        ctx->failed = 1;
+}
+
+static void dm2_runtime_spell_recalc_light(void *context)
+{
+    /* DM2_PROCEED_LIGHT's source callback reaches the c_light recalculation
+     * owner. Runtime light-map recalculation is still a separate viewport
+     * consumer; the source light scalar and 0x46 timer are the complete
+     * gameplay mutation owned by this cast transaction. */
+    (void)context;
+}
+
+static void dm2_runtime_remove_enchant_timer_mask(
+    DM2_V1_SourceTimerQueue *queue, uint8_t mask)
+{
+    size_t i = 0;
+
+    if (!queue || mask == 0u) return;
+    while (i < queue->count) {
+        DM2_V1_SourceTimer *timer = &queue->timers[i];
+        if (timer->type != 0x48 || (timer->actor & mask) == 0u) {
+            ++i;
+            continue;
+        }
+        timer->actor = (uint8_t)(timer->actor & (uint8_t)~mask);
+        if (timer->actor != 0u) {
+            ++i;
+            continue;
+        }
+        if (i + 1u < queue->count) {
+            memmove(&queue->timers[i], &queue->timers[i + 1u],
+                    (queue->count - i - 1u) * sizeof(queue->timers[0]));
+            memmove(&queue->source_indices[i], &queue->source_indices[i + 1u],
+                    (queue->count - i - 1u) * sizeof(queue->source_indices[0]));
+            memmove(&queue->tickets[i], &queue->tickets[i + 1u],
+                    (queue->count - i - 1u) * sizeof(queue->tickets[0]));
+        }
+        --queue->count;
+    }
+}
 
 static uint32_t dm2_v1_runtime_raw_sksave_hash(const uint8_t *data,
                                                 size_t size);
@@ -593,16 +920,25 @@ static int dm2_runtime_square_type_at(const DM2_V1_DungeonData *dd,
     return raw & DM2_SQUARE_TYPE_MASK;
 }
 
-/* Convert a raw DM1/DM2 tile type (or G1 byte-square class) into the
- * DM2_SquareType enum used by movement/planning consumers.
- *
- * The original PC tile encoding places wall at raw 0 and floor at raw 1
- * (ReDMCSB DEFS.H:385-390, HASHBUCKET.C), while the DM2_SquareType enum
- * swaps those two values.  All other types (door, pit, teleporter, etc.)
- * are identical, so only wall and floor need remapping.
- *
- * Source: ReDMCSB DEFS.H:385-390; skproject/SKWIN/DME.h tileTypeIndex. */
-static int dm2_runtime_normalize_square_type(int raw_type) {
+/* Convert the loader's source tile class into the common movement enum.
+ * Byte-square maps use c_tim_proc's classes (0 wall, 1 floor, 2 pit, 3
+ * stairs, 4 door, 5 teleporter, 6 trick-wall). Two-byte maps already store
+ * the DM2_SquareType values in their low five bits. */
+static int dm2_runtime_normalize_square_type_for_dungeon(
+    const DM2_V1_DungeonData *dungeon, int raw_type, int raw_tile) {
+    if (dungeon && dungeon->square_bytes == 1) {
+        switch (raw_type & 0x1f) {
+            case 0: return DM2_SQUARE_WALL;
+            case 1: return DM2_SQUARE_FLOOR;
+            case 2: return DM2_SQUARE_PIT;
+            case 3: return (raw_tile & 0x04) != 0
+                        ? DM2_SQUARE_STAIRS_DOWN : DM2_SQUARE_STAIRS_UP;
+            case 4: return DM2_SQUARE_DOOR;
+            case 5: return DM2_SQUARE_TELEPORTER;
+            case 6: return DM2_SQUARE_SECRET_DOOR;
+            default: return raw_type & 0x1f;
+        }
+    }
     switch (raw_type & 0x1f) {
         case 0: return DM2_SQUARE_WALL;
         case 1: return DM2_SQUARE_FLOOR;
@@ -643,9 +979,13 @@ static int dm2_runtime_is_door_at(const DM2_V1_DungeonData *dd,
                                   int y,
                                   int raw) {
     int square_type = dm2_runtime_square_type_at(dd, level, x, y, raw);
+    square_type = dm2_runtime_normalize_square_type_for_dungeon(dd,
+                                                                square_type,
+                                                                raw);
     return square_type == DM2_SQUARE_DOOR ||
            dm2_runtime_has_door_record_at(dd, level, x, y) ||
-           dm2_runtime_raw_is_door_square((uint16_t)raw);
+           (dd && dd->square_bytes != 1 &&
+            dm2_runtime_raw_is_door_square((uint16_t)raw));
 }
 
 static void dm2_runtime_apply_door_record_metadata(
@@ -1815,7 +2155,7 @@ static void dm2_runtime_refresh_g1_map0_teleporter_transition(
     DM2_V1_RuntimeState *rt, int level, int x, int y)
 {
     DM2_V1_G1TeleporterTransitionReceipt candidate;
-    DM2_V1_DungeonData *dungeon;
+    DM2_V1_DungeonData *dungeon = NULL;
     DM2_V1_GameState *state;
     int raw;
 
@@ -1929,6 +2269,11 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
         &g_dm2_runtime.gdat_wall_material_plan);
     dm2_v1_gdat_door_overlay_m11_command_plan_free(
         &g_dm2_runtime.gdat_door_material_plan);
+    if (g_dm2_runtime.game_load_candidate) {
+        dm2_v1_game_load_runtime_session_candidate_free(
+            g_dm2_runtime.game_load_candidate);
+        free(g_dm2_runtime.game_load_candidate);
+    }
     if (g_dm2_runtime.record_pools_valid) {
         dm2_v1_record_pool_set_free(&g_dm2_runtime.record_pools);
     }
@@ -1942,6 +2287,10 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     }
     memset(&g_dm2_runtime, 0, sizeof(g_dm2_runtime));
     memset(&g_dm2_frame_ownership, 0, sizeof(g_dm2_frame_ownership));
+    memset(&g_dm2_last_missile_impact, 0,
+           sizeof(g_dm2_last_missile_impact));
+    memset(&g_dm2_last_creature_damage, 0,
+           sizeof(g_dm2_last_creature_damage));
     /* A NULL profile is the explicit runtime-release path.  In particular,
      * startup may reject a selected FM Towns companion after the runtime has
      * borrowed the native GDAT loader; do not retain pointers into the
@@ -2194,6 +2543,599 @@ int dm2_v1_runtime_bind_boot_profile(DM2_V1_BootProfile *boot_profile) {
     return 1;
 }
 
+/* Source-owned DM2_CREATE_CLOUD admission for the player Poison Cloud spell.
+ * The ordinary DB15/0x19 lifecycle is present in the runtime. Reflector
+ * subtype 0x0e is deliberately not admitted here: its timer lifecycle and
+ * incoming spell-bounce consumer are separate source owners. */
+static int dm2_runtime_spell_create_cloud(
+    DM2_V1_RuntimeState *rt, int spell_index, int cast_power,
+    int *out_record, uint32_t *out_ticket)
+{
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_RecordPoolSet pool_before;
+    DM2_V1_SourceTimerQueue queue_before;
+    DM2_V1_SoundQueueState sound_before;
+    uint8_t *raw_before = NULL;
+    DM2_V1_SourceTimer timer;
+    DM2_V1_SourceTimerResult result;
+    DM2_V1_SoundQueueEnv sound_env;
+    DM2_V1_SoundQueueReceipt sound_receipt;
+    int map, x, y, strength, cloud_spell;
+    int16_t head, record_handle;
+    uint8_t *record = NULL;
+
+    if (out_record) *out_record = -1;
+    if (out_ticket) *out_ticket = 0u;
+    memset(&pool_before, 0, sizeof(pool_before));
+    if (rt) queue_before = rt->timer_queue;
+    if (!rt || !rt->boot || !rt->boot->dungeon_data ||
+        !rt->record_pools_valid || !rt->sound_queue_ready ||
+        rt->timer_queue.count >= DM2_V1_SOURCE_TIMER_MAX) {
+        return 0;
+    }
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    map = rt->dungeon_level;
+    x = dm2_v1_runtime_get_party_x();
+    y = dm2_v1_runtime_get_party_y();
+    if (spell_index == 14) {
+        cloud_spell = (int)(int16_t)0xff87;
+        strength = cast_power;
+        if (strength < 1) strength = 1;
+        if (strength > 255) strength = 255;
+    } else {
+        return 0;
+    }
+    if (map < 0 || map >= dungeon->level_count || x < 0 || y < 0 ||
+        x >= dungeon->level_widths[map] || y >= dungeon->level_heights[map] ||
+        !dungeon->raw_data || dungeon->raw_size <= 0) {
+        return 0;
+    }
+    if (!dm2_v1_record_pool_set_clone(&pool_before, &rt->record_pools) ||
+        !(raw_before = (uint8_t *)malloc((size_t)dungeon->raw_size))) {
+        dm2_v1_record_pool_set_free(&pool_before);
+        free(raw_before);
+        return 0;
+    }
+    memcpy(raw_before, dungeon->raw_data, (size_t)dungeon->raw_size);
+    queue_before = rt->timer_queue;
+    sound_before = rt->sound_queue;
+
+    record_handle = dm2_v1_record_pool_alloc_new_record(
+        &rt->record_pools, 15u);
+    record = dm2_v1_record_pool_address_mut(&rt->record_pools, record_handle);
+    if (record_handle < 0 || !record ||
+        rt->record_pools.pools[15].record_size < 4) goto cloud_cast_rollback;
+    record[0] = 0xfeu; record[1] = 0xffu;
+    record[2] = (uint8_t)(((cloud_spell - (int)(int16_t)0xff80) & 0x7f) | 0x80u);
+    record[3] = (uint8_t)strength;
+    head = (int16_t)dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+    if (!dm2_v1_record_pool_append_to_list(&rt->record_pools, &head,
+                                           record_handle) ||
+        dm2_v1_dungeon_set_first_thing(dungeon, map, x, y,
+                                       (uint16_t)head) != 0)
+        goto cloud_cast_rollback;
+
+    memset(&sound_env, 0, sizeof(sound_env));
+    sound_env = rt->sound_env;
+    sound_env.current_map = (int16_t)map;
+    sound_env.party_x = (int16_t)x;
+    sound_env.party_y = (int16_t)y;
+    sound_env.facing = (uint16_t)rt->view_dir;
+    sound_env.gametick = (int32_t)rt->tick_count;
+    memset(&sound_receipt, 0, sizeof(sound_receipt));
+    if (!dm2_v1_sound_queue_noise_gen2(
+        &rt->sound_queue, 0x0d, (uint8_t)(record[2] & 0x7f),
+        (int8_t)0x81, (int8_t)0xfe, (int16_t)x, (int16_t)y,
+        1, 0x6c, 0xff, &sound_env, &sound_receipt) ||
+        !sound_receipt.valid) {
+        /* c_sfx.cpp::DM2_QUEUE_NOISE_GEN2 is part of the cloud creation
+         * transaction. A rejected/missing source sound owner must not leave
+         * a DB15 record and PROCESS_CLOUD timer published without its paired
+         * source event. */
+        goto cloud_cast_rollback;
+    }
+
+    memset(&timer, 0, sizeof(timer));
+    timer.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
+        ((uint32_t)(rt->tick_count + 1u) & DM2_V1_SOURCE_TIMER_TICK_MASK);
+    timer.type = DM2_V1_TIMER_PROCESS_CLOUD;
+    timer.value_a = (int16_t)((x & 0xff) | ((y & 0xff) << 8));
+    timer.value_b = record_handle;
+    *out_ticket = dm2_v1_source_timer_enqueue_ticketed(
+        &rt->timer_queue, &timer, 0u, &result);
+    if (result != DM2_V1_SOURCE_TIMER_OK || *out_ticket == 0u)
+        goto cloud_cast_rollback;
+    if (out_record) *out_record = record_handle;
+    dm2_v1_record_pool_set_free(&pool_before);
+    free(raw_before);
+    return 1;
+
+cloud_cast_rollback:
+    memcpy(dungeon->raw_data, raw_before, (size_t)dungeon->raw_size);
+    dm2_v1_record_pool_set_free(&rt->record_pools);
+    rt->record_pools = pool_before;
+    memset(&pool_before, 0, sizeof(pool_before));
+    rt->timer_queue = queue_before;
+    rt->sound_queue = sound_before;
+    free(raw_before);
+    if (out_ticket) *out_ticket = 0u;
+    return 0;
+}
+
+static void dm2_runtime_record_wr16(const DM2_V1_RuntimeState *rt,
+                                    uint8_t *p, uint16_t value)
+{
+    if (rt && rt->record_pools.source_words_big_endian) {
+        p[0] = (uint8_t)(value >> 8);
+        p[1] = (uint8_t)value;
+    } else {
+        p[0] = (uint8_t)value;
+        p[1] = (uint8_t)(value >> 8);
+    }
+}
+
+/* Source: SkWinCore.cpp:17301-17325 CAST/SHOOT_CHAMPION_MISSILE and
+ * SKULLWIN/c_item.cpp:1043-1138 DM2_SHOOT_ITEM.  A spell missile is not a
+ * timer-only effect: the source first owns a special missile object id and a
+ * DB14 record, then publishes the matching step timer. */
+static int dm2_runtime_spell_create_missile(
+    DM2_V1_RuntimeState *rt, const DM2_V1_SpellCastPlayerReceipt *cast,
+    const DM2_V1_Hero *hero, int *out_record, uint16_t *out_object,
+    uint8_t *out_damage, uint8_t *out_energy, uint32_t *out_ticket,
+    int *out_failure_stage)
+{
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_RecordPoolSet pool_before;
+    DM2_V1_SourceTimerQueue queue_before;
+    uint8_t *raw_before = NULL;
+    DM2_V1_SourceTimer timer;
+    DM2_V1_SourceTimerResult result;
+    int16_t head, record_handle;
+    int tile_raw;
+    uint8_t *record;
+    int map, x, y, dir, timer_step, damage, kinetic_energy, effect;
+    int mana_after, mp_bonus, accuracy;
+    uint16_t object;
+
+    if (out_record) *out_record = -1;
+    if (out_object) *out_object = 0u;
+    if (out_damage) *out_damage = 0u;
+    if (out_energy) *out_energy = 0u;
+    if (out_ticket) *out_ticket = 0u;
+    if (out_failure_stage) *out_failure_stage = 0;
+    memset(&pool_before, 0, sizeof(pool_before));
+    if (rt) queue_before = rt->timer_queue;
+    if (!rt || !cast || !hero || !rt->boot || !rt->boot->dungeon_data ||
+        !rt->record_pools_valid || rt->timer_queue.count >=
+            DM2_V1_SOURCE_TIMER_MAX) return 0;
+    effect = cast->object_effect;
+    if (effect < 0 || effect > 0x3f) return 0;
+    object = (uint16_t)(0xff80u + (uint16_t)effect);
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    map = rt->dungeon_level;
+    x = dm2_v1_runtime_get_party_x();
+    y = dm2_v1_runtime_get_party_y();
+    dir = rt->view_dir & 3;
+    if (map < 0 || map >= dungeon->level_count || x < 0 || y < 0 ||
+        x >= dungeon->level_widths[map] || y >= dungeon->level_heights[map] ||
+        !dungeon->raw_data || dungeon->raw_size <= 0) return 0;
+
+    /* Source c_hero.cpp:3840-3874 first spends mana, then passes the
+     * command power as argb1, 0x5a as argb2, and the derived accuracy as
+     * argb3 to SHOOT_CHAMPION_MISSILE.  bitem.cpp:1043-1138 stores those
+     * bytes verbatim in the DB14 record and timer word. */
+    mana_after = hero->curMP - cast->mana_cost;
+    if (mana_after < 0) mana_after = 0;
+    mp_bonus = mana_after >> 5;
+    if (mp_bonus > 6) mp_bonus = 6;
+    accuracy = 10 - mp_bonus;
+    damage = cast->cast_power;
+    if (damage < (accuracy << 2)) {
+        damage += 4;
+        accuracy = damage / 4;
+    }
+    if (damage < 0) damage = 0;
+    if (damage > 255) damage = 255;
+    timer_step = accuracy & 0xf;
+    kinetic_energy = 0x5a;
+
+    if (!dm2_v1_record_pool_set_clone(&pool_before, &rt->record_pools)) {
+        if (out_failure_stage) *out_failure_stage = 1;
+        goto missile_cast_rollback;
+    }
+    if (!(raw_before = (uint8_t *)malloc((size_t)dungeon->raw_size))) {
+        if (out_failure_stage) *out_failure_stage = 2;
+        goto missile_cast_rollback;
+    }
+    memcpy(raw_before, dungeon->raw_data, (size_t)dungeon->raw_size);
+    queue_before = rt->timer_queue;
+    record_handle = dm2_v1_record_pool_alloc_new_record(&rt->record_pools, 14u);
+    record = dm2_v1_record_pool_address_mut(&rt->record_pools, record_handle);
+    if (record_handle < 0) {
+        if (out_failure_stage) *out_failure_stage = 3;
+        goto missile_cast_rollback;
+    }
+    if (!record || rt->record_pools.pools[14].record_size < 8) {
+        if (out_failure_stage) *out_failure_stage = 4;
+        goto missile_cast_rollback;
+    }
+    dm2_runtime_record_wr16(rt, record, 0xfffeu);
+    dm2_runtime_record_wr16(rt, record + 2, object);
+    record[4] = (uint8_t)damage;
+    record[5] = (uint8_t)kinetic_energy;
+    dm2_runtime_record_wr16(rt, record + 6, 0u);
+    tile_raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+    head = (int16_t)dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+    /* Mac/Amiga byte-square maps can retain the source object flag while
+     * exposing an empty ground-stack head as the sign-extended 0xFEFF
+     * sentinel.  That is an existing stack root, not a request to insert a
+     * new object-index entry.  Preserve the source distinction: only a
+     * genuinely unmarked cell takes APPEND_RECORD_TO's empty-tile route. */
+    if (head < 0 && (tile_raw < 0 || (tile_raw & 0x10) == 0)) {
+        if (dm2_v1_dungeon_insert_first_thing_empty_tile(
+                dungeon, map, x, y, (uint16_t)record_handle) != 0) {
+            if (out_failure_stage) *out_failure_stage = 6;
+            goto missile_cast_rollback;
+        }
+    } else if (head < 0) {
+        if (dm2_v1_dungeon_set_first_thing(
+                dungeon, map, x, y, (uint16_t)record_handle) != 0) {
+            if (out_failure_stage) *out_failure_stage = 6;
+            goto missile_cast_rollback;
+        }
+    } else {
+        if (!dm2_v1_record_pool_append_to_list(&rt->record_pools, &head,
+                                               record_handle)) {
+            if (out_failure_stage) *out_failure_stage = 5;
+            goto missile_cast_rollback;
+        }
+        if (dm2_v1_dungeon_set_first_thing(dungeon, map, x, y,
+                                           (uint16_t)head) != 0) {
+            if (out_failure_stage) *out_failure_stage = 6;
+            goto missile_cast_rollback;
+        }
+    }
+    memset(&timer, 0, sizeof(timer));
+    timer.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
+        ((rt->tick_count + 1u) & DM2_V1_SOURCE_TIMER_TICK_MASK);
+    timer.type = 0x1eu;
+    timer.actor = 0u;
+    timer.value_a = record_handle;
+    timer.value_b = (int16_t)((x & 0x1f) | ((y & 0x1f) << 5) |
+                              ((dir & 3) << 10) | ((timer_step & 0xf) << 12));
+    *out_ticket = dm2_v1_source_timer_enqueue_ticketed(
+        &rt->timer_queue, &timer, 0u, &result);
+    if (result != DM2_V1_SOURCE_TIMER_OK || *out_ticket == 0u) {
+        if (out_failure_stage) *out_failure_stage = 7;
+        goto missile_cast_rollback;
+    }
+    /* Newly-created runtime timers use source index zero, matching the
+     * queue's source-index contract and the STEP_MISSILE owner check. */
+    dm2_runtime_record_wr16(rt, record + 6, 0u);
+    if (out_record) *out_record = record_handle;
+    if (out_object) *out_object = object;
+    if (out_damage) *out_damage = (uint8_t)damage;
+    if (out_energy) *out_energy = (uint8_t)kinetic_energy;
+    dm2_v1_record_pool_set_free(&pool_before);
+    free(raw_before);
+    return 1;
+
+missile_cast_rollback:
+    if (raw_before) memcpy(dungeon->raw_data, raw_before,
+                           (size_t)dungeon->raw_size);
+    if (pool_before.valid) {
+        dm2_v1_record_pool_set_free(&rt->record_pools);
+        rt->record_pools = pool_before;
+        memset(&pool_before, 0, sizeof(pool_before));
+    }
+    rt->timer_queue = queue_before;
+    free(raw_before);
+    if (out_ticket) *out_ticket = 0u;
+    return 0;
+}
+
+int dm2_v1_runtime_set_spell_runes(int hero_index,
+                                   const uint8_t *runes, int rune_count)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_Hero *hero;
+    if (!runes || rune_count < 1 || rune_count > 4 ||
+        !rt->source_party_valid ||
+        hero_index < 0 || hero_index >= rt->source_party.heros_in_party ||
+        hero_index >= DM2_MAX_HEROES) return 0;
+    hero = &rt->source_party.hero[hero_index];
+    if (hero->curHP <= 0) return 0;
+    memset(hero->rune, 0, sizeof(hero->rune));
+    memcpy(hero->rune, runes, (size_t)rune_count);
+    hero->nrunes = (int8_t)rune_count;
+    return 1;
+}
+
+int dm2_v1_runtime_cast_spell_player(
+    int hero_index, int hand_index,
+    DM2_V1_RuntimeSpellCastReceipt *out_receipt)
+{
+    static const int16_t light_table[16] = {
+        0, 5, 12, 24, 33, 40, 46, 51,
+        59, 68, 76, 82, 89, 94, 97, 100
+    };
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_Hero *hero;
+    DM2_V1_RuntimeSpellTable table;
+    DM2_V1_ExtendedSpellsReceipt extended;
+    DM2_V1_RuntimeSpellCastReceipt receipt;
+    DM2_V1_RuntimeSpellLightContext light_ctx;
+    DM2_V1_ProceedLightCallbacks light_callbacks;
+    DM2_V1_Hero hero_before;
+    DM2_V1_Party party_before;
+    DM2_V1_SourceTimerQueue queue_before;
+    int16_t light_before;
+    int light_type;
+    int enchant_type;
+    uint8_t enchant_mask;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.hand_index = hand_index;
+    if (out_receipt) *out_receipt = receipt;
+
+    if (!rt->boot || !rt->source_party_valid ||
+        !rt->boot->source_game_load_session_ready ||
+        rt->source_party.heros_in_party <= 0 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES ||
+        hero_index < 0 || hero_index >= rt->source_party.heros_in_party ||
+        hand_index < 0 || hand_index > 1 || rt->dungeon_level < 0 ||
+        rt->dungeon_level > 0xff) {
+        return 0;
+    }
+    hero = &rt->source_party.hero[hero_index];
+    if (hero->curHP <= 0 || hero->nrunes <= 0 ||
+        hero->nrunes > 4) {
+        return 0;
+    }
+    memset(&extended, 0, sizeof(extended));
+    /* The boot receipt intentionally exposes only the authenticated custom
+     * family hash/count, not the raw SPELL_DEF records. Fixed records remain
+     * the only admissible runtime table until those records are transferred
+     * as a source-owned table rather than reconstructed from a hash. */
+    dm2_v1_spell_cast_player_build_table(&extended, &table);
+    receipt.cast = dm2_v1_spell_cast_player(
+        &table, (const uint8_t *)hero->rune,
+        hero->ability[DM2_ABILITY_WIZARDRY][0], hero->curMP, 0);
+    receipt.valid = receipt.cast.valid;
+    receipt.source_owner_available = 0;
+    receipt.mana_before = hero->curMP;
+    receipt.mana_after = hero->curMP;
+    receipt.light_before = rt->source_light_level;
+    receipt.light_after = rt->source_light_level;
+    if (!receipt.cast.valid || !receipt.cast.cast_success) {
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+    if (receipt.cast.timer_kind == DM2_V1_SPELL_TIMER_CLOUD &&
+        receipt.cast.spell_index == 14) {
+        uint32_t cloud_ticket = 0u;
+        int cloud_record = -1;
+        if (!dm2_runtime_spell_create_cloud(
+                rt, receipt.cast.spell_index, receipt.cast.cast_power,
+                &cloud_record, &cloud_ticket)) {
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
+        hero->handcooldown[hand_index] = (int8_t)receipt.cast.cooldown_ticks;
+        memset(hero->rune, 0, sizeof(hero->rune));
+        hero->nrunes = 0;
+        receipt.source_owner_available = 1;
+        receipt.applied = 1;
+        receipt.timer_enqueued = 1;
+        receipt.timer_ticket = cloud_ticket;
+        receipt.mana_after = hero->curMP;
+        (void)cloud_record;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+    if (receipt.cast.timer_kind == DM2_V1_SPELL_TIMER_PROJECTILE) {
+        uint32_t missile_ticket = 0u;
+        int missile_record = -1;
+        uint16_t missile_object = 0u;
+        uint8_t missile_damage = 0u, missile_energy = 0u;
+        if (!dm2_runtime_spell_create_missile(
+                rt, &receipt.cast, hero, &missile_record, &missile_object,
+                &missile_damage, &missile_energy, &missile_ticket,
+                &receipt.missile_failure_stage)) {
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
+        hero->handcooldown[hand_index] = (int8_t)receipt.cast.cooldown_ticks;
+        memset(hero->rune, 0, sizeof(hero->rune));
+        hero->nrunes = 0;
+        receipt.source_owner_available = 1;
+        receipt.applied = 1;
+        receipt.timer_enqueued = 1;
+        receipt.timer_ticket = missile_ticket;
+        receipt.missile_record = missile_record;
+        receipt.missile_object = missile_object;
+        receipt.missile_damage = missile_damage;
+        receipt.missile_energy = missile_energy;
+        receipt.mana_after = hero->curMP;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+    if (receipt.cast.timer_kind != DM2_V1_SPELL_TIMER_LIGHT ||
+        (receipt.cast.spell_index != 0 && receipt.cast.spell_index != 1 &&
+         receipt.cast.spell_index != 5)) {
+        /* Fixed shields and the four attribute auras have a source mapping
+         * in c_hero::get_adj_ability1 / SkWinCore.cpp:42426/42544. They are
+         * handled below; all other successful branches stay fail-closed. */
+        if (receipt.cast.spell_index == 11) {
+            int32_t next;
+            if (!rt->source_aura_of_speed_valid) {
+                if (out_receipt) *out_receipt = receipt;
+                return 1;
+            }
+            receipt.aura_of_speed_before = rt->source_aura_of_speed;
+            next = (int32_t)rt->source_aura_of_speed +
+                ((int32_t)receipt.cast.cast_power << 3);
+            if (next > 0xff) next = 0xff;
+            rt->source_aura_of_speed = (uint8_t)next;
+            hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
+            hero->handcooldown[hand_index] = (int8_t)receipt.cast.cooldown_ticks;
+            memset(hero->rune, 0, sizeof(hero->rune));
+            hero->nrunes = 0;
+            receipt.aura_of_speed_after = rt->source_aura_of_speed;
+            receipt.source_owner_available = 1;
+            receipt.applied = 1;
+            receipt.timer_enqueued = 0;
+            receipt.mana_after = hero->curMP;
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        if ((receipt.cast.timer_kind != DM2_V1_SPELL_TIMER_ENCHANTMENT &&
+             receipt.cast.timer_kind != DM2_V1_SPELL_TIMER_AURA) ||
+            (receipt.cast.spell_index != 2 &&
+             receipt.cast.spell_index != 4 &&
+             receipt.cast.spell_index != 6 &&
+             receipt.cast.spell_index != 7 &&
+             receipt.cast.spell_index != 8 &&
+             receipt.cast.spell_index != 9 &&
+             receipt.cast.spell_index != 10)) {
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        if (receipt.cast.spell_index == 2) {
+            enchant_type = 2; /* ENCHANTMENT_PARTY_SHIELD */
+            enchant_mask = (uint8_t)((1u << rt->source_party.heros_in_party) - 1u);
+        } else if (receipt.cast.spell_index == 4) {
+            enchant_type = 1; /* ENCHANTMENT_SPELL_SHIELD */
+            enchant_mask = (uint8_t)(1u << hero_index);
+        } else {
+            /* c_hero::get_adj_ability1 uses (ench_aura - 2) as the
+             * source ability index. DM2 ability 1/2/3/4 are respectively
+             * Strength/Dexterity/Wizardry/Vitality. */
+            static const int aura_by_spell[11] = {
+                0, 0, 0, 0, 0, 0, 5, 4, 0, 6, 3
+            };
+            enchant_type = aura_by_spell[receipt.cast.spell_index];
+            if (receipt.cast.spell_index == 8)
+                enchant_type = 0; /* ENCHANTMENT_FIRE_SHIELD */
+            enchant_mask = (uint8_t)((1u << rt->source_party.heros_in_party) - 1u);
+        }
+        for (int i = 0; i < rt->source_party.heros_in_party; ++i) {
+            if (rt->source_party.hero[i].curHP <= 0)
+                enchant_mask = (uint8_t)(enchant_mask &
+                                         (uint8_t)~(1u << i));
+        }
+        if (enchant_mask == 0u || receipt.cast.timer_value_a <= 0) {
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        party_before = rt->source_party;
+        queue_before = rt->timer_queue;
+        {
+            int replace = 0;
+            for (int i = 0; i < rt->source_party.heros_in_party; ++i) {
+                if ((enchant_mask & (uint8_t)(1u << i)) != 0u &&
+                    rt->source_party.hero[i].ench_aura != enchant_type) {
+                    replace = 1;
+                    break;
+                }
+            }
+            if (replace)
+                dm2_runtime_remove_enchant_timer_mask(
+                    &rt->timer_queue, enchant_mask);
+            for (int i = 0; i < rt->source_party.heros_in_party; ++i) {
+                DM2_V1_Hero *target = &rt->source_party.hero[i];
+                int32_t next;
+                if ((enchant_mask & (uint8_t)(1u << i)) == 0u ||
+                    target->curHP <= 0)
+                    continue;
+                target->ench_aura = (int8_t)enchant_type;
+                next = (int32_t)target->ench_power +
+                       receipt.cast.timer_value_a;
+                if (next > INT16_MAX) next = INT16_MAX;
+                target->ench_power = (int16_t)next;
+            }
+        }
+        {
+            DM2_V1_SourceTimer timer;
+            DM2_V1_SourceTimerResult result;
+            memset(&timer, 0, sizeof(timer));
+            timer.ticks_and_map = ((uint32_t)rt->dungeon_level << 24) |
+                ((uint32_t)(rt->tick_count +
+                    (receipt.cast.timer_duration > 0 ?
+                        receipt.cast.timer_duration : 1)) &
+                 DM2_V1_SOURCE_TIMER_TICK_MASK);
+            timer.type = 0x48;
+            timer.actor = enchant_mask;
+            timer.value_a = (int16_t)receipt.cast.timer_value_a;
+            receipt.timer_ticket = dm2_v1_source_timer_enqueue_ticketed(
+                &rt->timer_queue, &timer, 0u, &result);
+            if (result != DM2_V1_SOURCE_TIMER_OK ||
+                receipt.timer_ticket == 0u) {
+                rt->source_party = party_before;
+                rt->timer_queue = queue_before;
+                if (out_receipt) *out_receipt = receipt;
+                return 1;
+            }
+        }
+        hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
+        hero->handcooldown[hand_index] = (int8_t)receipt.cast.cooldown_ticks;
+        memset(hero->rune, 0, sizeof(hero->rune));
+        hero->nrunes = 0;
+        receipt.source_owner_available = 1;
+        receipt.applied = 1;
+        receipt.timer_enqueued = 1;
+        receipt.mana_after = hero->curMP;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    if (receipt.cast.spell_index == 1)
+        light_type = 0x06;       /* Darkness */
+    else if (receipt.cast.spell_index == 0)
+        light_type = 0x27;       /* Long Light */
+    else
+        light_type = 0x26;       /* Light */
+
+    hero_before = *hero;
+    queue_before = rt->timer_queue;
+    light_before = rt->source_light_level;
+    memset(&light_ctx, 0, sizeof(light_ctx));
+    light_ctx.runtime = rt;
+    memset(&light_callbacks, 0, sizeof(light_callbacks));
+    light_callbacks.global_light = &rt->source_light_level;
+    light_callbacks.light_table = light_table;
+    light_callbacks.light_table_size = (int)(sizeof(light_table) /
+                                              sizeof(light_table[0]));
+    light_callbacks.game_tick = (uint32_t)rt->tick_count;
+    light_callbacks.queue_light_timer = dm2_runtime_spell_queue_light_timer;
+    light_callbacks.recalc_light = dm2_runtime_spell_recalc_light;
+    dm2_v1_proceed_light((uint16_t)light_type, receipt.cast.cast_power,
+                         &light_callbacks, &light_ctx);
+    if (light_ctx.failed) {
+        *hero = hero_before;
+        rt->timer_queue = queue_before;
+        rt->source_light_level = light_before;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    hero->curMP = (int16_t)(hero->curMP - receipt.cast.mana_cost);
+    hero->handcooldown[hand_index] = (int8_t)receipt.cast.cooldown_ticks;
+    memset(hero->rune, 0, sizeof(hero->rune));
+    hero->nrunes = 0;
+    receipt.source_owner_available = 1;
+    receipt.applied = 1;
+    receipt.timer_enqueued = 1;
+    receipt.timer_ticket = light_ctx.timer_ticket;
+    receipt.light_before = light_before;
+    receipt.light_after = rt->source_light_level;
+    receipt.mana_after = hero->curMP;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 static void dm2_runtime_copy_source_hero_to_snapshot(
     DM2_V1_SessionState *session, int slot, const DM2_V1_Hero *hero)
 {
@@ -2230,9 +3172,13 @@ static void dm2_runtime_copy_source_hero_to_snapshot(
 int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
 {
     DM2_V1_GameLoadRuntimeSessionCandidate *candidate;
+    const DM2_V1_GameLoadWorldOwner *world_owner;
+    const DM2_V1_SksaveGameLoadOwner *sksave_source;
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_GameState *game;
     DM2_V1_TimerQueue *source_timers;
+    DM2_V1_SourceTimerQueue timer_preflight;
+    DM2_V1_SoundQueueState sound_preflight;
     int active_timers = 0;
     int i;
 
@@ -2240,12 +3186,40 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
         boot_profile->source_game_load_session_ready ||
         !boot_profile->dm2_state ||
         !boot_profile->game_load_runtime_session_candidate ||
-        !boot_profile->game_load_world_owner) {
+        (!boot_profile->game_load_world_owner &&
+         !boot_profile->sksave_game_load_source)) {
         return 0;
     }
     candidate = (DM2_V1_GameLoadRuntimeSessionCandidate *)
         boot_profile->game_load_runtime_session_candidate;
-    if (!candidate->valid || candidate->source_party_map < 0 ||
+    world_owner = (const DM2_V1_GameLoadWorldOwner *)
+        boot_profile->game_load_world_owner;
+    sksave_source = (const DM2_V1_SksaveGameLoadOwner *)
+        boot_profile->sksave_game_load_source;
+    /* GAME_LOAD stages the candidate from this exact private world owner.
+     * Do not publish a candidate merely because its local fields look
+     * complete: a stale or cross-transaction clone must fail before any
+     * runtime allocation is released or transferred. */
+    if ((!world_owner && !sksave_source) ||
+        (world_owner && (!world_owner->prepared || world_owner->committed ||
+                         world_owner->source_transaction_hash == 0u)) ||
+        (sksave_source && (!sksave_source->valid ||
+                           sksave_source->source_game_load_session_ready ||
+                           !sksave_source->asset_loader ||
+                           sksave_source->asset_loader != candidate->asset_loader ||
+                           !sksave_source->source_savegames1_valid ||
+                           !candidate->source_savegames1_valid ||
+                           memcmp(sksave_source->source_savegames1,
+                                  candidate->source_savegames1,
+                                  sizeof(candidate->source_savegames1)) != 0 ||
+                           (sksave_source->state.fixed_sections_hash ^
+                            sksave_source->state.timers_hash ^
+                            sksave_source->state.dungeon.prefix_hash) !=
+                               candidate->source_transaction_hash)) ||
+        (world_owner && candidate->source_transaction_hash !=
+            world_owner->source_transaction_hash) ||
+        !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate) ||
+        !candidate->valid || candidate->source_party_map < 0 ||
         candidate->source_party_x > 63u || candidate->source_party_y > 63u ||
         candidate->source_party_direction > 3u ||
         candidate->party.heros_in_party <= 0 ||
@@ -2269,7 +3243,40 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
     for (i = 0; i < source_timers->max_timers; ++i) {
         if (source_timers->entries[i].ttype != 0u) ++active_timers;
     }
-    if (active_timers > (int)DM2_V1_SOURCE_TIMER_MAX) return 0;
+    if (active_timers > (int)DM2_V1_SOURCE_TIMER_MAX) {
+        return 0;
+    }
+
+    /* Prove every fallible conversion while the boot profile still owns all
+     * candidate state.  The commit below only copies these already-admitted
+     * queues, so a later capacity/binding failure cannot strand a half-moved
+     * record pool or CAII owner. */
+    dm2_v1_source_timer_queue_init(&timer_preflight);
+    for (i = 0; i < source_timers->max_timers; ++i) {
+        const DM2_V1_TimerEntry *src = &source_timers->entries[i];
+        DM2_V1_SourceTimer timer;
+        if (src->ttype == 0u) continue;
+        memset(&timer, 0, sizeof(timer));
+        timer.ticks_and_map = (uint32_t)src->l_00;
+        timer.type = src->ttype;
+        timer.actor = src->actor;
+        timer.value_a = (int16_t)((uint8_t)src->xA |
+                                  ((uint16_t)(uint8_t)src->yA << 8));
+        timer.value_b = src->wvalueB;
+        timer.reserved = src->dummya;
+        if (dm2_v1_source_timer_enqueue(&timer_preflight, &timer,
+                                        (uint16_t)i) != DM2_V1_SOURCE_TIMER_OK) {
+            return 0;
+        }
+    }
+    dm2_v1_sound_queue_state_init(&sound_preflight,
+                                  candidate->sound_owner.queue_capacity);
+    if (!dm2_v1_sound_queue_bind_entries(
+        &sound_preflight, candidate->sound_owner.queue_entries,
+        candidate->sound_owner.queue_entry_count,
+        candidate->sound_owner.queue_capacity)) {
+        return 0;
+    }
 
     /* All validation above is read-only.  From this point the candidate's
      * owned allocations are transferred into the singleton and zeroed in the
@@ -2295,26 +3302,7 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
     memset(&candidate->caii_slots, 0, sizeof(candidate->caii_slots));
     rt->caii_ready = 1;
 
-    dm2_v1_source_timer_queue_init(&rt->timer_queue);
-    for (i = 0; i < source_timers->max_timers; ++i) {
-        DM2_V1_TimerEntry *src = &source_timers->entries[i];
-        DM2_V1_SourceTimer timer;
-        if (src->ttype == 0u) continue;
-        memset(&timer, 0, sizeof(timer));
-        timer.ticks_and_map = (uint32_t)src->l_00;
-        timer.type = src->ttype;
-        timer.actor = src->actor;
-        timer.value_a = src->xA;
-        timer.value_b = src->yA;
-        timer.reserved = src->wvalueB;
-        if (dm2_v1_source_timer_enqueue(&rt->timer_queue, &timer,
-                                        (uint16_t)i) != DM2_V1_SOURCE_TIMER_OK) {
-            /* This should be unreachable after the count gate, but retain
-             * fail-closed behaviour if queue ordering or capacity changes. */
-            dm2_v1_runtime_init(boot_profile);
-            return 0;
-        }
-    }
+    rt->timer_queue = timer_preflight;
 
     rt->source_sound_entries = candidate->sound_owner.queue_entries;
     candidate->sound_owner.queue_entries = NULL;
@@ -2322,20 +3310,19 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
     candidate->sound_owner.sample_bindings = NULL;
     rt->source_sound_binding_count =
         candidate->sound_owner.sample_binding_count;
-    dm2_v1_sound_queue_state_init(&rt->sound_queue,
-                                  candidate->sound_owner.queue_capacity);
-    if (!dm2_v1_sound_queue_bind_entries(
-            &rt->sound_queue, rt->source_sound_entries,
-            candidate->sound_owner.queue_entry_count,
-            candidate->sound_owner.queue_capacity)) {
-        dm2_v1_runtime_init(boot_profile);
-        return 0;
-    }
+    rt->sound_queue = sound_preflight;
     rt->sound_queue.ssound_count = candidate->sound_owner.queue_entry_count;
     rt->sound_queue.sample_binding_count =
         candidate->sound_owner.sample_binding_count;
     rt->sound_queue_ready = 1;
     dm2_v1_sound_bind_runtime_queue(&rt->sound_queue);
+    memset(&rt->sound_env, 0, sizeof(rt->sound_env));
+    rt->sound_env.current_map = candidate->sound_owner.spatial_current_map;
+    rt->sound_env.gate_map_a = candidate->sound_owner.spatial_audible_map;
+    rt->sound_env.gate_map_b = candidate->sound_owner.spatial_alternate_map;
+    rt->sound_env.facing = candidate->source_party_direction;
+    rt->sound_env.party_x = candidate->source_party_x;
+    rt->sound_env.party_y = candidate->source_party_y;
 
     game = (DM2_V1_GameState *)boot_profile->dm2_state;
     game->party_x = candidate->source_party_x;
@@ -2358,7 +3345,24 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
     memset(&rt->session_snapshot, 0, sizeof(rt->session_snapshot));
     rt->source_party = candidate->party;
     rt->source_party_valid = 1;
-    rt->source_attack_counter = 0u;
+    rt->source_next_champion_number = candidate->source_next_champion_number;
+    rt->source_hero_ench_countdown = candidate->source_savegames1_valid &&
+        candidate->source_savegames1[2] != 0u
+        ? candidate->source_savegames1[2]
+        : candidate->source_hero_ench_countdown;
+    rt->source_hero_ench_target = candidate->source_hero_ench_target;
+    memcpy(rt->source_savegames1, candidate->source_savegames1,
+           sizeof(rt->source_savegames1));
+    /* For a fresh GAME_LOAD this block was initialized from source-zero.
+     * For SKSAVE Resume the preflight above proved byte identity with the
+     * immutable source snapshot before any ownership moved; this copy is the
+     * single writable runtime global-state owner. */
+    rt->source_aura_of_speed = candidate->source_savegames1_valid
+        ? candidate->source_savegames1[4] : 0u;
+    rt->source_aura_of_speed_valid = candidate->source_savegames1_valid;
+    rt->source_light_level = candidate->source_light_level;
+    rt->source_attack_counter = rt->source_hero_ench_countdown;
+    rt->source_savegames1[2] = rt->source_attack_counter;
     rt->session_snapshot.champion_count =
         (uint8_t)candidate->party.heros_in_party;
     rt->session_snapshot.leader_index = candidate->party.curactevhero >= 0 &&
@@ -2383,6 +3387,274 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
 
     boot_profile->source_game_load_session_ready = 1;
     return 1;
+}
+
+int dm2_v1_runtime_handoff_game_load_candidate(
+    DM2_V1_BootProfile *boot_profile,
+    DM2_V1_RuntimeGameLoadCandidateHandoffReceipt *out_receipt)
+{
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate;
+    const DM2_V1_GameLoadWorldOwner *world_owner;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!boot_profile || g_dm2_runtime.boot != boot_profile ||
+        boot_profile->source_game_load_session_ready ||
+        g_dm2_runtime.game_load_candidate ||
+        !boot_profile->game_load_runtime_session_candidate) {
+        return 0;
+    }
+    candidate = (DM2_V1_GameLoadRuntimeSessionCandidate *)
+        boot_profile->game_load_runtime_session_candidate;
+    world_owner = (const DM2_V1_GameLoadWorldOwner *)
+        boot_profile->game_load_world_owner;
+    if (!world_owner || !world_owner->prepared || world_owner->committed ||
+        world_owner->source_transaction_hash == 0u ||
+        !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate) ||
+        candidate->source_transaction_hash !=
+            world_owner->source_transaction_hash) {
+        return 0;
+    }
+    g_dm2_runtime.game_load_candidate = candidate;
+    g_dm2_runtime.game_load_candidate_hash = candidate->candidate_hash;
+    g_dm2_runtime.game_load_candidate_source_hash =
+        candidate->source_transaction_hash;
+    boot_profile->game_load_runtime_session_candidate = NULL;
+    if (out_receipt) {
+        out_receipt->valid = 1;
+        out_receipt->source_game_load_session_ready =
+            boot_profile->source_game_load_session_ready;
+        out_receipt->candidate_hash = candidate->candidate_hash;
+        out_receipt->source_transaction_hash =
+            candidate->source_transaction_hash;
+    }
+    return 1;
+}
+
+int dm2_v1_runtime_game_load_candidate_view(
+    DM2_V1_RuntimeGameLoadCandidateViewReceipt *out_receipt)
+{
+    const DM2_V1_GameLoadRuntimeSessionCandidate *candidate =
+        g_dm2_runtime.game_load_candidate;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt || !candidate ||
+        !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate)) {
+        return 0;
+    }
+    out_receipt->valid = 1;
+    out_receipt->source_game_load_session_ready =
+        g_dm2_runtime.boot ? g_dm2_runtime.boot->source_game_load_session_ready : 0;
+    out_receipt->candidate_hash = candidate->candidate_hash;
+    out_receipt->source_transaction_hash = candidate->source_transaction_hash;
+    out_receipt->current_map = candidate->current_map;
+    out_receipt->party_count = candidate->party.heros_in_party;
+    out_receipt->active_hero = candidate->party.curactevhero;
+    out_receipt->record_graph_complete =
+        candidate->record_pools.record_graph_complete;
+    out_receipt->caii_capacity = candidate->caii_slots.capacity;
+    out_receipt->caii_alloc_count = candidate->caii_slots.alloc_count;
+    out_receipt->timer_capacity = candidate->timer_capacity;
+    out_receipt->timer_count = candidate->timer_queue.num_timers > 0 ?
+        (uint16_t)candidate->timer_queue.num_timers : 0u;
+    if (candidate->timer_queue.num_timers > 0 &&
+        candidate->timer_queue.indices && candidate->timer_queue.entries) {
+        int16_t slot = candidate->timer_queue.indices[0];
+        if (slot >= 0 && slot < candidate->timer_capacity) {
+            const DM2_V1_TimerEntry *timer = &candidate->timer_entries[slot];
+            out_receipt->first_timer_valid = timer->ttype != 0u;
+            out_receipt->first_timer_type = timer->ttype;
+            out_receipt->first_timer_actor = timer->actor;
+            out_receipt->first_timer_value_a = (int16_t)(
+                (uint8_t)timer->xA |
+                ((uint16_t)(uint8_t)timer->yA << 8));
+            out_receipt->first_timer_value_b = timer->wvalueB;
+            out_receipt->first_timer_reserved = timer->dummya;
+        }
+    }
+    out_receipt->sound_queue_entry_count = candidate->sound_owner.queue_entry_count;
+    out_receipt->sound_sample_binding_count =
+        candidate->sound_owner.sample_binding_count;
+    return 1;
+}
+
+int dm2_v1_runtime_game_load_candidate_query_nearest_creature(
+    int16_t *io_x, int16_t *io_y, uint16_t direction,
+    uint32_t *out_handle, DM2_V1_GameLoadSpatialQueryReceipt *out_receipt)
+{
+    if (!g_dm2_runtime.game_load_candidate ||
+        !dm2_v1_game_load_runtime_session_candidate_is_valid(
+            g_dm2_runtime.game_load_candidate)) {
+        return 0;
+    }
+    return dm2_v1_game_load_runtime_session_candidate_query_nearest_creature(
+        g_dm2_runtime.game_load_candidate, io_x, io_y, direction,
+        out_handle, out_receipt);
+}
+
+int dm2_v1_runtime_game_load_candidate_classify_move(
+    uint8_t move_command, int16_t source_x, int16_t source_y,
+    int16_t target_x, int16_t target_y,
+    DM2_V1_GameLoadMoveClassificationReceipt *out_receipt)
+{
+    if (!g_dm2_runtime.game_load_candidate ||
+        !dm2_v1_game_load_runtime_session_candidate_is_valid(
+            g_dm2_runtime.game_load_candidate)) {
+        return 0;
+    }
+    return dm2_v1_game_load_runtime_session_candidate_classify_move(
+        g_dm2_runtime.game_load_candidate, move_command, source_x, source_y,
+        target_x, target_y, out_receipt);
+}
+
+int dm2_v1_runtime_game_load_candidate_census_moverec_square(
+    int16_t x, int16_t y, DM2_V1_GameLoadMoverecSquareReceipt *out_receipt)
+{
+    if (!g_dm2_runtime.game_load_candidate ||
+        !dm2_v1_game_load_runtime_session_candidate_is_valid(
+            g_dm2_runtime.game_load_candidate)) {
+        return 0;
+    }
+    return dm2_v1_game_load_runtime_session_candidate_census_moverec_square(
+        g_dm2_runtime.game_load_candidate, x, y, out_receipt);
+}
+
+int dm2_v1_runtime_game_load_candidate_move_record_to(
+    int16_t record, int16_t source_x, int16_t source_y,
+    int16_t destination_x, int16_t destination_y,
+    DM2_V1_GameLoadRecordMoveReceipt *out_receipt)
+{
+    if (!g_dm2_runtime.game_load_candidate ||
+        !dm2_v1_game_load_runtime_session_candidate_is_valid(
+            g_dm2_runtime.game_load_candidate)) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return dm2_v1_game_load_runtime_session_candidate_move_record_to(
+        g_dm2_runtime.game_load_candidate, record, source_x, source_y,
+        destination_x, destination_y, out_receipt);
+}
+
+int dm2_v1_runtime_game_load_candidate_dispatch_moverec(
+    int16_t record, int16_t x, int16_t y, int32_t kind, int32_t flags,
+    DM2_V1_GameLoadMoverecDispatchReceipt *out_receipt)
+{
+    if (!g_dm2_runtime.game_load_candidate ||
+        !dm2_v1_game_load_runtime_session_candidate_is_valid(
+            g_dm2_runtime.game_load_candidate)) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return dm2_v1_game_load_runtime_session_candidate_dispatch_moverec(
+        g_dm2_runtime.game_load_candidate, record, x, y, kind, flags,
+        out_receipt);
+}
+
+int dm2_v1_runtime_game_load_candidate_activate_moverec_caii(
+    int16_t record, int16_t x, int16_t y,
+    DM2_V1_GameLoadMoverecCaiiReceipt *out_receipt)
+{
+    if (!g_dm2_runtime.game_load_candidate ||
+        !dm2_v1_game_load_runtime_session_candidate_is_valid(
+            g_dm2_runtime.game_load_candidate)) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return dm2_v1_game_load_runtime_session_candidate_activate_moverec_caii(
+        g_dm2_runtime.game_load_candidate, record, x, y, out_receipt);
+}
+
+int dm2_v1_runtime_game_load_candidate_proceed_think_timer(
+    uint32_t game_tick, DM2_V1_GameLoadThinkTimerReceipt *out_receipt)
+{
+    if (!g_dm2_runtime.game_load_candidate ||
+        !dm2_v1_game_load_runtime_session_candidate_is_valid(
+            g_dm2_runtime.game_load_candidate)) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return dm2_v1_game_load_runtime_session_candidate_proceed_think_timer(
+        g_dm2_runtime.game_load_candidate, game_tick, out_receipt);
+}
+
+int dm2_v1_runtime_game_load_candidate_proceed_actuate_timer(
+    uint32_t game_tick,
+    DM2_V1_GameLoadCandidateActuateReceipt *out_receipt)
+{
+    if (!g_dm2_runtime.game_load_candidate ||
+        !dm2_v1_game_load_runtime_session_candidate_is_valid(
+            g_dm2_runtime.game_load_candidate)) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return dm2_v1_game_load_runtime_session_candidate_proceed_actuate_timer(
+        g_dm2_runtime.game_load_candidate, game_tick, out_receipt);
+}
+
+int dm2_v1_runtime_game_load_candidate_process_next_due_timer(
+    uint32_t game_tick,
+    DM2_V1_GameLoadCandidateTimerProcessReceipt *out_receipt)
+{
+    if (!g_dm2_runtime.game_load_candidate ||
+        !dm2_v1_game_load_runtime_session_candidate_is_valid(
+            g_dm2_runtime.game_load_candidate)) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return dm2_v1_game_load_runtime_session_candidate_process_next_due_timer(
+        g_dm2_runtime.game_load_candidate, game_tick, out_receipt);
+}
+
+int dm2_v1_runtime_game_load_candidate_proceed_door_step_timer(
+    uint32_t game_tick,
+    DM2_V1_GameLoadCandidateDoorStepReceipt *out_receipt)
+{
+    if (!g_dm2_runtime.game_load_candidate ||
+        !dm2_v1_game_load_runtime_session_candidate_is_valid(
+            g_dm2_runtime.game_load_candidate)) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return dm2_v1_game_load_runtime_session_candidate_proceed_door_step_timer(
+        g_dm2_runtime.game_load_candidate, game_tick, out_receipt);
+}
+
+int dm2_v1_runtime_game_load_candidate_proceed_tick_generator_timer(
+    uint32_t game_tick,
+    DM2_V1_GameLoadCandidateTickGeneratorReceipt *out_receipt)
+{
+    if (!g_dm2_runtime.game_load_candidate ||
+        !dm2_v1_game_load_runtime_session_candidate_is_valid(
+            g_dm2_runtime.game_load_candidate)) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return dm2_v1_game_load_runtime_session_candidate_proceed_tick_generator_timer(
+        g_dm2_runtime.game_load_candidate, game_tick, out_receipt);
+}
+
+int dm2_v1_runtime_game_load_candidate_proceed_record_flag_timer(
+    uint32_t game_tick,
+    DM2_V1_GameLoadRecordFlagTimerReceipt *out_receipt)
+{
+    if (!g_dm2_runtime.game_load_candidate ||
+        !dm2_v1_game_load_runtime_session_candidate_is_valid(
+            g_dm2_runtime.game_load_candidate)) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return dm2_v1_game_load_runtime_session_candidate_proceed_record_flag_timer(
+        g_dm2_runtime.game_load_candidate, game_tick, out_receipt);
+}
+
+int dm2_v1_runtime_game_load_candidate_change_current_map(int new_map)
+{
+    if (!g_dm2_runtime.game_load_candidate ||
+        !dm2_v1_game_load_runtime_session_candidate_is_valid(
+            g_dm2_runtime.game_load_candidate)) {
+        return 0;
+    }
+    return dm2_v1_game_load_runtime_session_candidate_change_current_map_to(
+        g_dm2_runtime.game_load_candidate, new_map);
 }
 
 int dm2_v1_runtime_bind_boot_profile_with_receipt(
@@ -3916,6 +5188,704 @@ static void dm2_runtime_populate_creature_possession_items(
  * without validated evidence the binding stays unready and 0x21/0x22
  * timers are acknowledged fail-closed by the dispatcher, never simulated.
  */
+typedef struct {
+    DM2_V1_RuntimeState *runtime;
+    int16_t record_handle;
+    int map;
+    int x;
+    int y;
+    unsigned long game_tick;
+} DM2_RuntimeCcmGoalContext;
+
+static int32_t dm2_runtime_ccm_proceed_walking(
+    void *context, uint8_t command, uint16_t creature_type,
+    uint8_t *slot, uint16_t adj0, uint16_t adj1,
+    unsigned long game_tick);
+
+/* c_1c9a.cpp FIND_WALK_PATH adapters.  These callbacks deliberately expose
+ * only the currently committed GAME_LOAD map and party owners.  Tile
+ * admission is delegated to the dungeon-loader's editions-aware
+ * source-symbol adapters rather than interpreting raw map words here. */
+static DM2_V1_DungeonData *dm2_runtime_goal_dungeon(
+    DM2_RuntimeCcmGoalContext *goal)
+{
+    if (!goal || !goal->runtime || !goal->runtime->boot)
+        return NULL;
+    return (DM2_V1_DungeonData *)goal->runtime->boot->dungeon_data;
+}
+
+static int16_t dm2_runtime_1c9a_map_width(void *user)
+{
+    DM2_RuntimeCcmGoalContext *goal = (DM2_RuntimeCcmGoalContext *)user;
+    DM2_V1_DungeonData *dungeon = dm2_runtime_goal_dungeon(goal);
+    return dungeon && goal && goal->map >= 0 &&
+        goal->map < dungeon->level_count ?
+        (int16_t)dungeon->level_widths[goal->map] : 0;
+}
+
+static int16_t dm2_runtime_1c9a_map_height(void *user)
+{
+    DM2_RuntimeCcmGoalContext *goal = (DM2_RuntimeCcmGoalContext *)user;
+    DM2_V1_DungeonData *dungeon = dm2_runtime_goal_dungeon(goal);
+    return dungeon && goal && goal->map >= 0 &&
+        goal->map < dungeon->level_count ?
+        (int16_t)dungeon->level_heights[goal->map] : 0;
+}
+
+static int16_t dm2_runtime_1c9a_creature_at(void *user, int16_t x, int16_t y)
+{
+    DM2_RuntimeCcmGoalContext *goal = (DM2_RuntimeCcmGoalContext *)user;
+    DM2_V1_DungeonData *dungeon = dm2_runtime_goal_dungeon(goal);
+    if (!goal || !goal->runtime || !dungeon ||
+        !goal->runtime->record_pools_valid)
+        return -1;
+    return dm2_v1_get_creature_at(&goal->runtime->record_pools, dungeon,
+                                  goal->map, x, y);
+}
+
+static int dm2_runtime_source_path_passable(
+    DM2_RuntimeCcmGoalContext *goal, int x, int y)
+{
+    DM2_V1_DungeonData *dungeon = dm2_runtime_goal_dungeon(goal);
+    DM2_V1_SkprojectTilePassageReceipt passage;
+    DM2_V1_SkprojectTileSolidReceipt solid;
+    int raw;
+    int square;
+
+    if (!dungeon || !goal ||
+        (raw = dm2_v1_dungeon_get_tile_raw(dungeon, goal->map, x, y)) < 0)
+        return 0;
+    /* The byte-map owner has an authenticated square-type normalizer which
+     * preserves DOS/Amiga floor and ornate-floor encodings.  The loader's
+     * passage/solid receipts are the corresponding owner for 16-bit maps. */
+    if (dungeon->square_bytes == 1) {
+        square = dm2_runtime_normalize_square_type_for_dungeon(
+            dungeon, dm2_runtime_square_type_at(dungeon, goal->map, x, y,
+                                                raw), raw);
+        return square == DM2_SQUARE_FLOOR ||
+               square == DM2_SQUARE_FLOOR_ORNATE;
+    }
+    if (
+        !dm2_v1_skproject_is_tile_passage(dungeon, goal->map, x, y,
+                                          &passage) ||
+        !dm2_v1_skproject_is_tile_solid(dungeon, goal->map, x, y, &solid))
+        return 0;
+    return passage.is_passage != 0 && solid.is_solid == 0;
+}
+
+static int dm2_runtime_source_find_walk_path(
+    DM2_RuntimeCcmGoalContext *goal, int start_x, int start_y,
+    uint8_t *path, int path_capacity)
+{
+    DM2_V1_GameState *game;
+    int width;
+    int height;
+    int target = -1;
+    uint8_t target_cells[32u * 32u];
+    uint16_t queue[32u * 32u];
+    int16_t parent[32u * 32u];
+    uint8_t direction[32u * 32u];
+    uint8_t seen[32u * 32u];
+    int head = 0;
+    int tail = 0;
+    int current;
+    int i;
+    static const int dx[4] = {0, 1, 0, -1};
+    static const int dy[4] = {-1, 0, 1, 0};
+
+    if (!goal || !goal->runtime || !goal->runtime->boot || !path ||
+        path_capacity <= 0) {
+        if (goal && goal->runtime)
+            goal->runtime->dynamic_path_last_failure = 1;
+        return -1;
+    }
+    game = (DM2_V1_GameState *)goal->runtime->boot->dm2_state;
+    width = dm2_runtime_1c9a_map_width(goal);
+    height = dm2_runtime_1c9a_map_height(goal);
+    if (!game || width <= 0 || width > 32 || height <= 0 || height > 32 ||
+        start_x < 0 || start_y < 0 ||
+        start_x >= width || start_y >= height || game->party_x < 0 ||
+        game->party_y < 0 || game->party_x >= width ||
+        game->party_y >= height) {
+        goal->runtime->dynamic_path_last_failure = 2;
+        return -1;
+    }
+    memset(target_cells, 0, sizeof(target_cells));
+    /* CREATURE_GO_THERE approaches the party; it does not path onto the
+     * party's occupied square.  The source attack transition is selected
+     * once the creature is on an adjacent square. */
+    for (i = 0; i < 4; ++i) {
+        int x = game->party_x + dx[i];
+        int y = game->party_y + dy[i];
+        int candidate;
+        if (x < 0 || y < 0 || x >= width || y >= height ||
+            !dm2_runtime_source_path_passable(goal, x, y))
+            continue;
+        candidate = y * width + x;
+        if (candidate != start_y * width + start_x &&
+            dm2_runtime_1c9a_creature_at(
+                goal, (int16_t)x, (int16_t)y) >= 0)
+            continue;
+        target_cells[candidate] = 1u;
+        if (target < 0)
+            target = candidate;
+    }
+    if (target < 0) {
+        goal->runtime->dynamic_path_last_failure = 3;
+        return -1;
+    }
+    current = start_y * width + start_x;
+    if (target_cells[current])
+        return 0;
+    memset(parent, 0xff, sizeof(parent));
+    memset(direction, 0, sizeof(direction));
+    memset(seen, 0, sizeof(seen));
+    seen[current] = 1u;
+    queue[tail++] = (uint16_t)current;
+    while (head < tail) {
+        current = queue[head++];
+        for (i = 0; i < 4; ++i) {
+            int x = (current % width) + dx[i];
+            int y = (current / width) + dy[i];
+            int next;
+            if (x < 0 || y < 0 || x >= width || y >= height)
+                continue;
+            next = y * width + x;
+            if (seen[next] || !dm2_runtime_source_path_passable(goal, x, y))
+                continue;
+            if (!target_cells[next] && dm2_runtime_1c9a_creature_at(
+                    goal, (int16_t)x, (int16_t)y) >= 0)
+                continue;
+            seen[next] = 1u;
+            parent[next] = (int16_t)current;
+            direction[next] = (uint8_t)i;
+            if (target_cells[next]) {
+                target = next;
+                head = tail;
+                break;
+            }
+            if (tail < (int)(sizeof(queue) / sizeof(queue[0])))
+                queue[tail++] = (uint16_t)next;
+        }
+    }
+    if (target < 0 || !seen[target]) {
+        goal->runtime->dynamic_path_last_failure = 3;
+        return -1;
+    }
+    current = target;
+    i = 0;
+    while (current != start_y * width + start_x) {
+        if (i >= path_capacity || parent[current] < 0) {
+            goal->runtime->dynamic_path_last_failure = 4;
+            return -1;
+        }
+        path[i++] = direction[current];
+        current = parent[current];
+    }
+    for (int left = 0; left < i / 2; ++left) {
+        uint8_t swap = path[left];
+        path[left] = path[i - 1 - left];
+        path[i - 1 - left] = swap;
+    }
+    goal->runtime->dynamic_path_last_failure = 0;
+    return i;
+}
+
+static int16_t dm2_runtime_ccm_abs16(int16_t value)
+{
+    return value < 0 ? (int16_t)-value : value;
+}
+
+static int16_t dm2_runtime_ccm_vector_dir(void *context,
+    int16_t x1, int16_t y1, int16_t x2, int16_t y2)
+{
+    (void)context;
+    if (x2 > x1) return 1;
+    if (x2 < x1) return 3;
+    if (y2 > y1) return 2;
+    return 0;
+}
+
+static int16_t dm2_runtime_ccm_rand16(void *context, int16_t max)
+{
+    DM2_RuntimeCcmGoalContext *goal = (DM2_RuntimeCcmGoalContext *)context;
+    if (!goal || !goal->runtime || max <= 0) return 0;
+    return (int16_t)dm2_v1_drops_rand16(&goal->runtime->drop_rng,
+                                        (uint16_t)max);
+}
+
+static int16_t dm2_runtime_ccm_randdir(void *context)
+{
+    DM2_RuntimeCcmGoalContext *goal = (DM2_RuntimeCcmGoalContext *)context;
+    return goal && goal->runtime
+        ? (int16_t)dm2_v1_drops_randdir(&goal->runtime->drop_rng) : 0;
+}
+
+static int dm2_runtime_ccm_randbit(void *context)
+{
+    DM2_RuntimeCcmGoalContext *goal = (DM2_RuntimeCcmGoalContext *)context;
+    return goal && goal->runtime
+        ? (int)dm2_v1_drops_randbit(&goal->runtime->drop_rng) : 0;
+}
+
+static int16_t dm2_runtime_ccm_rand_full(void *context)
+{
+    return dm2_runtime_ccm_rand16(context, 0x7fffu);
+}
+
+static int16_t dm2_runtime_ccm_min16(int16_t a, int16_t b)
+{
+    return a < b ? a : b;
+}
+
+static int16_t dm2_runtime_ccm_get_player_at_position(void *context,
+    uint8_t party_position)
+{
+    DM2_RuntimeCcmGoalContext *goal = (DM2_RuntimeCcmGoalContext *)context;
+    DM2_V1_Party *party;
+    if (!goal || !goal->runtime || !goal->runtime->source_party_valid)
+        return -1;
+    party = &goal->runtime->source_party;
+    for (int i = 0; i < party->heros_in_party && i < DM2_MAX_HEROES; ++i) {
+        if (party->hero[i].partypos == (int8_t)party_position &&
+            party->hero[i].curHP > 0)
+            return (int16_t)i;
+    }
+    return -1;
+}
+
+static int16_t dm2_runtime_ccm_find_hero_at(void *context,
+    uint16_t x, uint16_t y, int16_t filter)
+{
+    DM2_RuntimeCcmGoalContext *goal = (DM2_RuntimeCcmGoalContext *)context;
+    DM2_V1_GameState *game;
+    if (!goal || !goal->runtime || !goal->runtime->source_party_valid ||
+        filter != 0xff)
+        return -1;
+    game = goal->runtime->boot && goal->runtime->boot->dm2_state
+        ? (DM2_V1_GameState *)goal->runtime->boot->dm2_state : NULL;
+    if (!game || x != (uint16_t)game->party_x || y != (uint16_t)game->party_y)
+        return -1;
+    for (int i = 0; i < goal->runtime->source_party.heros_in_party &&
+                    i < DM2_MAX_HEROES; ++i) {
+        if (goal->runtime->source_party.hero[i].curHP > 0)
+            return (int16_t)i;
+    }
+    return -1;
+}
+
+static int16_t dm2_runtime_ccm_wound_player(void *context, int16_t hero_idx,
+    int16_t damage, int16_t wound_type, int16_t attack_type)
+{
+    DM2_RuntimeCcmGoalContext *goal = (DM2_RuntimeCcmGoalContext *)context;
+    DM2_V1_Hero *hero;
+    int32_t pending;
+    (void)wound_type;
+    (void)attack_type;
+    if (!goal || !goal->runtime || !goal->runtime->source_party_valid ||
+        hero_idx < 0 || hero_idx >= goal->runtime->source_party.heros_in_party ||
+        hero_idx >= DM2_MAX_HEROES || damage <= 0)
+        return 0;
+    hero = &goal->runtime->source_party.hero[hero_idx];
+    if (hero->curHP <= 0) return 0;
+    pending = (int32_t)hero->damagesuffered + damage;
+    if (pending > INT16_MAX) pending = INT16_MAX;
+    hero->damagesuffered = (int16_t)pending;
+    hero->heroflag = (int16_t)((uint16_t)hero->heroflag |
+                               DM2_V1_HERO_FLAG_0800);
+    return damage;
+}
+
+static const uint8_t *dm2_runtime_ccm_ai_spec(void *context,
+    uint8_t creature_type)
+{
+    const DM2_AIDefinition *spec = NULL;
+    (void)context;
+    return dm2_v1_creature_ai_spec_def((int)creature_type, &spec) && spec
+        ? (const uint8_t *)spec : NULL;
+}
+
+static int16_t dm2_runtime_ccm_creature_attacks_player(void *context,
+    uint16_t creature_record, int16_t hero_idx)
+{
+    DM2_RuntimeCcmGoalContext *goal = (DM2_RuntimeCcmGoalContext *)context;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_GameState *game;
+    DM2_V1_CreatureAttacksPlayerState state;
+    DM2_V1_CreatureAttacksPlayerReceiptCallbacks callbacks;
+    DM2_V1_CreatureAttacksPlayerReceipt receipt;
+    const uint8_t *record;
+    if (!goal || !goal->runtime || !goal->runtime->source_party_valid ||
+        !goal->runtime->boot || !goal->runtime->boot->dm2_state ||
+        hero_idx < 0 || hero_idx >= goal->runtime->source_party.heros_in_party)
+        return 0;
+    dungeon = (DM2_V1_DungeonData *)goal->runtime->boot->dungeon_data;
+    game = (DM2_V1_GameState *)goal->runtime->boot->dm2_state;
+    record = dm2_v1_record_pool_address(&goal->runtime->record_pools,
+                                        (int16_t)creature_record);
+    if (!dungeon || !record) return 0;
+    memset(&state, 0, sizeof(state));
+    state.hero_idx = hero_idx;
+    state.heros_in_party = goal->runtime->source_party.heros_in_party;
+    state.hero_cur_hp = goal->runtime->source_party.hero[hero_idx].curHP;
+    state.hero_type = (uint8_t)goal->runtime->source_party.hero[hero_idx].herotype;
+    state.creature_record = record;
+    state.creature_data = record;
+    state.party_x = (int16_t)game->party_x;
+    state.party_y = (int16_t)game->party_y;
+    state.v1e0238 = (int16_t)goal->runtime->source_sleeping;
+    state.savegames1_b02 = goal->runtime->source_savegames1[2];
+    memset(&callbacks, 0, sizeof(callbacks));
+    callbacks.rand_fn = dm2_runtime_ccm_rand_full;
+    callbacks.rand16 = dm2_runtime_ccm_rand16;
+    callbacks.randdir = dm2_runtime_ccm_randdir;
+    callbacks.randbit = dm2_runtime_ccm_randbit;
+    callbacks.min_fn = dm2_runtime_ccm_min16;
+    callbacks.query_ai_spec = dm2_runtime_ccm_ai_spec;
+    callbacks.wound_player = dm2_runtime_ccm_wound_player;
+    memset(&receipt, 0, sizeof(receipt));
+    (void)dm2_v1_creature_attacks_player_receipt(
+        &state, &callbacks, goal, &receipt);
+    return receipt.valid && !receipt.fail_closed
+        ? receipt.damage_dealt : 0;
+}
+
+static int32_t dm2_runtime_ccm_attack_party(
+    DM2_RuntimeCcmGoalContext *goal, uint8_t command, uint16_t creature_type)
+{
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_GameState *game;
+    const uint8_t *record;
+    DM2_V1_CreatureAttacksPartyState state;
+    DM2_V1_CreatureAttacksPartyCallbacks callbacks;
+    DM2_V1_CreatureAttacksPartyReceipt receipt;
+    int distance;
+    if (!goal || !goal->runtime || (command != 0x08u && command != 0x26u) ||
+        !goal->runtime->source_party_valid || !goal->runtime->boot ||
+        !goal->runtime->boot->dm2_state)
+        return 0;
+    dungeon = (DM2_V1_DungeonData *)goal->runtime->boot->dungeon_data;
+    game = (DM2_V1_GameState *)goal->runtime->boot->dm2_state;
+    record = dm2_v1_record_pool_address(&goal->runtime->record_pools,
+                                        goal->record_handle);
+    if (!dungeon || !record || goal->map != game->current_level) return 0;
+    distance = abs(goal->x - game->party_x) + abs(goal->y - game->party_y);
+    if (!dm2_v1_creature_attacks_party((int)creature_type, distance)) return 0;
+    memset(&state, 0, sizeof(state));
+    state.spx_word_0e = (uint16_t)record[0x0e] |
+        ((uint16_t)record[0x0f] << 8);
+    state.creature_x = (int16_t)goal->x;
+    state.creature_y = (int16_t)goal->y;
+    state.creature_b_20 = record[0x20];
+    state.creature_b_1a = command;
+    state.creature_b_1c = record[0x1c];
+    state.creature_record = (uint16_t)goal->record_handle;
+    state.ai_spec = dm2_runtime_ccm_ai_spec(NULL, (uint8_t)creature_type);
+    state.party_x = (int16_t)game->party_x;
+    state.party_y = (int16_t)game->party_y;
+    state.party_map = (int16_t)game->current_level;
+    state.current_map = (int16_t)goal->map;
+    state.heros_in_party = goal->runtime->source_party.heros_in_party;
+    for (int i = 0; i < DM2_MAX_HEROES; ++i) {
+        state.hero_hp[i] = goal->runtime->source_party.hero[i].curHP;
+        state.hero_partypos[i] = (uint8_t)goal->runtime->source_party.hero[i].partypos;
+    }
+    memset(&callbacks, 0, sizeof(callbacks));
+    callbacks.abs_fn = dm2_runtime_ccm_abs16;
+    callbacks.calc_vector_dir = dm2_runtime_ccm_vector_dir;
+    callbacks.rand16 = dm2_runtime_ccm_rand16;
+    callbacks.randdir = dm2_runtime_ccm_randdir;
+    callbacks.randbit = dm2_runtime_ccm_randbit;
+    callbacks.rand_full = dm2_runtime_ccm_rand_full;
+    callbacks.min_fn = dm2_runtime_ccm_min16;
+    callbacks.get_player_at_position = dm2_runtime_ccm_get_player_at_position;
+    callbacks.find_hero_at = dm2_runtime_ccm_find_hero_at;
+    callbacks.creature_attacks_player = dm2_runtime_ccm_creature_attacks_player;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm2_v1_creature_attacks_party_full(&state, &callbacks, goal,
+                                            &receipt) || receipt.fail_closed)
+        return 0;
+    return 1;
+}
+
+static int dm2_runtime_ccm_go_there(void *context, uint8_t *slot,
+    uint16_t creature_type, int mode, int x, int y, int dir,
+    int16_t *parw00, int16_t *parw01)
+{
+    DM2_RuntimeCcmGoalContext *goal = (DM2_RuntimeCcmGoalContext *)context;
+    uint8_t path[32u * 32u];
+    int32_t path_length;
+
+    (void)creature_type;
+    (void)dir;
+    if (goal && goal->runtime)
+        ++goal->runtime->dynamic_path_attempts;
+    if (!goal || !slot || !parw00 || !parw01 || (mode != 4 && mode != 5))
+        return 0;
+    path_length = dm2_runtime_source_find_walk_path(
+        goal, x, y, path, (int)sizeof(path));
+    if (path_length <= 0)
+        return 0;
+    ++goal->runtime->dynamic_path_admissions;
+    slot[0x1d] = (uint8_t)(path[0] & 3u);
+    slot[0x1a] = 0x01u; /* source WALK_NOW command */
+    *parw00 = (int16_t)path[0];
+    *parw01 = (int16_t)(path_length - 1);
+    /* CREATURE_GO_THERE owns the source WALK_NOW handoff.  The CCM message
+     * loop may later stop at an unbound animation row, so queue the normal
+     * source MOVE_RECORD_TO transaction at this exact source boundary. */
+    if (dm2_runtime_ccm_proceed_walking(
+            goal, 0x01u, creature_type, slot, 0u, 0u,
+            goal->game_tick) != -2)
+        return 0;
+    return 1;
+}
+
+/* c_creature.cpp WALK_NOW owner.  The source handler schedules the
+ * MOVE_RECORD_TO path; it does not authorize a host-side position write.
+ * Keep the same boundary here: validate the adjacent source-owned floor and
+ * enqueue the normal 0x3c moverec timer, which is later consumed by the
+ * authenticated runtime moverec owner. */
+static int32_t dm2_runtime_ccm_proceed_walking(
+    void *context, uint8_t command, uint16_t creature_type,
+    uint8_t *slot, uint16_t adj0, uint16_t adj1,
+    unsigned long game_tick)
+{
+    DM2_RuntimeCcmGoalContext *goal = (DM2_RuntimeCcmGoalContext *)context;
+    DM2_V1_RuntimeState *rt;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_SourceTimer timer;
+    int dir;
+    int nx;
+    int ny;
+    int raw;
+    int square;
+    DM2_V1_SourceTimerResult enqueue_result;
+
+    (void)adj0;
+    (void)adj1;
+    if (!goal || !goal->runtime)
+        return 0;
+    if (command == 0x08u || command == 0x26u)
+        return dm2_runtime_ccm_attack_party(goal, command, creature_type);
+    (void)slot;
+    if (command != 0x01u && command != 0x02u && command != 0x09u)
+        return 0;
+    rt = goal->runtime;
+    dungeon = rt->boot ? (DM2_V1_DungeonData *)rt->boot->dungeon_data : NULL;
+    if (!dungeon || !dungeon->record_graph_complete ||
+        goal->map < 0 || goal->map >= dungeon->level_count ||
+        goal->x < 0 || goal->y < 0 ||
+        goal->x >= dungeon->level_widths[goal->map] ||
+        goal->y >= dungeon->level_heights[goal->map])
+        return 0;
+
+    /* byte@0x1d is the source-facing field used by WALK_NOW. */
+    dir = slot ? (slot[0x1d] & 3) : -1;
+    if (dir < 0) return 0;
+    nx = goal->x + dm2_v1_dir_dx[dir];
+    ny = goal->y + dm2_v1_dir_dy[dir];
+    if (nx < 0 || ny < 0 || nx >= dungeon->level_widths[goal->map] ||
+        ny >= dungeon->level_heights[goal->map])
+        return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, goal->map, nx, ny);
+    square = raw < 0 ? -1 : dm2_runtime_normalize_square_type_for_dungeon(
+        dungeon, dm2_runtime_square_type_at(dungeon, goal->map, nx, ny, raw), raw);
+    if (square != DM2_SQUARE_FLOOR && square != DM2_SQUARE_FLOOR_ORNATE)
+        return 0;
+    if (dm2_v1_get_creature_at(&rt->record_pools, dungeon, goal->map, nx, ny) !=
+        DM2_V1_RECORD_HANDLE_NULL)
+        return 0;
+
+    memset(&timer, 0, sizeof(timer));
+    timer.ticks_and_map = ((uint32_t)goal->map << 24) |
+        (((uint32_t)game_tick + 1u) & DM2_V1_SOURCE_TIMER_TICK_MASK);
+    timer.type = 0x3c;
+    timer.actor = (uint8_t)dir;
+    timer.value_a = (int16_t)((nx & 0xff) | ((ny & 0xff) << 8));
+    timer.value_b = goal->record_handle;
+    enqueue_result = dm2_v1_source_timer_enqueue(&rt->timer_queue, &timer, 0);
+    if (enqueue_result == DM2_V1_SOURCE_TIMER_OK) {
+        ++rt->dynamic_move_queue_admissions;
+        rt->dynamic_move_pending_source_map = goal->map;
+        rt->dynamic_move_pending_source_x = goal->x;
+        rt->dynamic_move_pending_source_y = goal->y;
+        rt->dynamic_move_pending_record = goal->record_handle;
+    }
+    return enqueue_result == DM2_V1_SOURCE_TIMER_OK ? -2 : 0;
+}
+
+/* Bind the authenticated goal branches of DM2_14cd_09e2.  Melee range uses
+ * the source ATTACKS_PARTY command; otherwise the strategy selector owns its
+ * GDAT word@1/table1d607e admission and the bounded dynamic path callback
+ * writes the source WALK_NOW command. */
+static int dm2_runtime_ccm_ai_goal(
+    void *context, uint8_t *slot, uint16_t creature_type,
+    unsigned long game_tick)
+{
+    DM2_RuntimeCcmGoalContext *goal = (DM2_RuntimeCcmGoalContext *)context;
+    DM2_V1_CreatureStrategyReceipt strategy;
+
+    if (!goal || !goal->runtime || !slot) return 0;
+    {
+        DM2_V1_GameState *game = goal->runtime->boot &&
+            goal->runtime->boot->dm2_state
+            ? (DM2_V1_GameState *)goal->runtime->boot->dm2_state : NULL;
+        int distance = game ? abs(goal->x - game->party_x) +
+            abs(goal->y - game->party_y) : INT_MAX;
+        /* c_creature.cpp's ATTACKS_PARTY fallback is selected at melee
+         * distance only when the authenticated AI row owns melee. */
+        if (game && goal->map == game->current_level &&
+            dm2_v1_creature_attacks_party((int)creature_type, distance)) {
+            slot[0x1a] = DM2_CCM_CREATURE_ATTACKS_PARTY;
+            return 1;
+        }
+    }
+    memset(&strategy, 0, sizeof(strategy));
+    if (!dm2_v1_creature_strategy_select(
+            &goal->runtime->record_pools, &goal->runtime->caii,
+            goal->record_handle, creature_type, goal->x, goal->y,
+            game_tick, dm2_runtime_ccm_go_there, goal, NULL, NULL,
+            &strategy) ||
+        !strategy.valid || strategy.is_static != 1 ||
+        strategy.final_command < 0) {
+        return 0;
+    }
+    slot[0x1a] = (uint8_t)strategy.final_command;
+    return 1;
+}
+
+/* Defined with the DB14 owner below; this endian-aware record reader is also
+ * the shared source-word reader for the think/death boundary above. */
+static uint16_t dm2_runtime_missile_rd16(
+    const DM2_V1_RecordPoolSet *pools, const uint8_t *p);
+
+/* c_ai.cpp:5679-5747 — the source transfers the CAII accumulated attack
+ * amount (creature-local word@0x14) to the DB4 HP word at offset 6 at the
+ * beginning of DM2_THINK_CREATURE, clears the accumulator, and enters
+ * WOUND_CREATURE.  ATTACK_CREATURE itself is only the accumulator owner;
+ * treating its positive argument as an HP write makes a hit heal or bypass
+ * the source death/drop transaction. */
+static int dm2_runtime_apply_pending_creature_damage(
+    DM2_V1_RuntimeState *rt, DM2_V1_DungeonData *dungeon,
+    int map, int x, int y, int16_t creature_record)
+{
+    uint8_t *record;
+    uint8_t *slot;
+    const DM2_AIDefinition *ai = NULL;
+    DM2_V1_GameState *game;
+    uint16_t pending;
+    uint16_t hp;
+
+    if (!rt || !dungeon || !rt->record_pools_valid || !rt->caii_ready ||
+        !rt->caii.valid || dm2_v1_record_handle_pool(creature_record) != 4)
+        return 0;
+    record = dm2_v1_record_pool_address_mut(&rt->record_pools,
+                                             creature_record);
+    if (!record || record[5] == 0xffu || record[5] >= rt->caii.capacity)
+        return 0;
+    if (!dm2_v1_creature_ai_spec_def((int)record[4], &ai) || !ai)
+        return 0;
+    /* c_creature.cpp:176-177 — byte@2 == 0xff has no woundable defense. */
+    if (ai->ArmorClass == 0xffu)
+        return 1;
+    slot = rt->caii.slots + (size_t)record[5] * DM2_V1_CAII_SLOT_SIZE;
+    pending = (uint16_t)(slot[0x14] | ((uint16_t)slot[0x15] << 8));
+    if (pending == 0u)
+        return 1;
+    /* Preserve the last meaningful source damage receipt across the many
+     * think timers that have no pending ATTACK_CREATURE amount. */
+    memset(&g_dm2_last_creature_damage, 0,
+           sizeof(g_dm2_last_creature_damage));
+    g_dm2_last_creature_damage.valid = 1;
+    g_dm2_last_creature_damage.creature_record = creature_record;
+    g_dm2_last_creature_damage.creature_type = (int)record[4];
+    g_dm2_last_creature_damage.pending_damage = pending;
+
+    /* c_ai.cpp:5681-5687 — a zero HP record is initialized from the
+     * accumulator before the accumulator is consumed.  Real loaded DB4
+     * records normally already carry their source HP. */
+    hp = dm2_runtime_missile_rd16(&rt->record_pools, record + 6);
+    g_dm2_last_creature_damage.hp_before = hp;
+    if (hp == 0u) {
+        hp = 1u;
+        dm2_runtime_record_wr16(rt, record + 6, hp);
+    }
+    slot[0x14] = 0u;
+    slot[0x15] = 0u;
+
+    if (pending < hp) {
+        dm2_runtime_record_wr16(rt, record + 6,
+                                (uint16_t)(hp - pending));
+        g_dm2_last_creature_damage.hp_after = (int)(hp - pending);
+        g_dm2_last_creature_damage.wound_applied = 1;
+        return 1;
+    }
+
+    /* c_creature.cpp:207-227 — lethal WOUND_CREATURE first writes HP=1;
+     * kill-flag records then enter DELETE_CREATURE_RECORD, while the
+     * non-deleting branch enters the source dying mode. */
+    dm2_runtime_record_wr16(rt, record + 6, 1u);
+    g_dm2_last_creature_damage.hp_after = 1;
+    g_dm2_last_creature_damage.wound_applied = 1;
+    g_dm2_last_creature_damage.lethal = 1;
+    if ((dm2_runtime_missile_rd16(&rt->record_pools, record) & 1u) == 0u) {
+        slot[0x1a] = 0x13u;
+        return 1;
+    }
+    if (!dm2_v1_creature_drop_slots_loaded((int)record[4])) {
+        /* The source delete owner was not admitted: roll back the handoff so
+         * a later authenticated think can retry it without losing damage. */
+        dm2_runtime_record_wr16(rt, record + 6, g_dm2_last_creature_damage.hp_before);
+        slot[0x14] = (uint8_t)(pending & 0xffu);
+        slot[0x15] = (uint8_t)(pending >> 8);
+        return 0;
+    }
+    game = rt->boot && rt->boot->dm2_state
+        ? (DM2_V1_GameState *)rt->boot->dm2_state : NULL;
+    if (!game) {
+        dm2_runtime_record_wr16(rt, record + 6, g_dm2_last_creature_damage.hp_before);
+        slot[0x14] = (uint8_t)(pending & 0xffu);
+        slot[0x15] = (uint8_t)(pending >> 8);
+        return 0;
+    }
+    {
+        uint16_t drop_slots[DM2_DROP_SLOT_COUNT];
+        DM2_V1_DeleteCreatureFullReceipt death;
+        memset(drop_slots, 0, sizeof(drop_slots));
+        for (int i = 0; i < DM2_DROP_SLOT_COUNT; ++i)
+            drop_slots[i] = dm2_v1_creature_drop_slot_word(
+                (int)record[4], i);
+        memset(&death, 0, sizeof(death));
+        if (!dm2_v1_delete_creature_record_full(
+            &rt->record_pools, dungeon, &rt->caii, &rt->timer_queue,
+            &rt->drop_rng, map, (unsigned long)rt->tick_count,
+            x, y, 0, 0, game->party_x, game->party_y,
+            game->party_dir, drop_slots, &death))
+        {
+            dm2_runtime_record_wr16(rt, record + 6,
+                                    g_dm2_last_creature_damage.hp_before);
+            slot[0x14] = (uint8_t)(pending & 0xffu);
+            slot[0x15] = (uint8_t)(pending >> 8);
+            return 0;
+        }
+        g_dm2_last_wield_death_drop_count = death.drop.drops_placed;
+        g_dm2_last_wield_death_drop_iterations = death.drop.drops_iterations;
+        g_dm2_last_wield_death_drop_alloc_failures =
+            death.drop.generated_drop_alloc_failures;
+        g_dm2_last_wield_death_drop_first_itemspec =
+            (int)death.drop.generated_drop_first_itemspec;
+        g_dm2_last_wield_death_drop_first_db =
+            death.drop.generated_drop_first_db;
+        g_dm2_last_wield_death_drop_alloc_free_records =
+            death.drop.generated_drop_alloc_free_records;
+        g_dm2_last_wield_death_deallocated = death.dealloc_performed;
+        g_dm2_last_creature_damage.deallocated = death.dealloc_performed;
+        g_dm2_last_creature_damage.drops_placed = death.drop.drops_placed;
+    }
+    return 2;
+}
+
 /*
  * dm2_runtime_think_body — creature AI body with CCM loop invocation.
  * Source: c_ai.cpp:5649-5999 DM2_THINK_CREATURE.
@@ -3934,17 +5904,25 @@ static int dm2_runtime_think_body(
 {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
     const DM2_V1_AssetLoader *loader;
+    int damage_result;
 
-    if (!rt || !timer) return 0;
-    (void)x;
-    (void)y;
+    if (!rt || !timer || !rt->boot || !rt->boot->dungeon_data) return 0;
     (void)think_type;
+
+    damage_result = dm2_runtime_apply_pending_creature_damage(
+        rt, (DM2_V1_DungeonData *)rt->boot->dungeon_data,
+        map, x, y, creature_record);
+    if (damage_result == 0)
+        return 0;
+    if (damage_result == 2)
+        return 1;
 
     loader = rt->boot ? dm2_v1_boot_asset_loader(rt->boot) : NULL;
 
     /* Try the CCM message loop when all prerequisites are available. */
     if (loader && rt->caii_ready && rt->record_pools_valid) {
         DM2_V1_CcmLoopReceipt ccm_receipt;
+        DM2_RuntimeCcmGoalContext goal_context;
         DM2_V1_SourceTimer timer_copy = *timer;
         int16_t adj[2] = {0, 0};
         const uint8_t *anim_row = NULL;
@@ -3956,6 +5934,13 @@ static int dm2_runtime_think_body(
                                               creature_record);
         if (rec && rec[5] != 0xffu &&
             (int)rec[5] < rt->caii.capacity) {
+            memset(&goal_context, 0, sizeof(goal_context));
+            goal_context.runtime = rt;
+            goal_context.record_handle = creature_record;
+            goal_context.map = map;
+            goal_context.x = x;
+            goal_context.y = y;
+            goal_context.game_tick = rt->tick_count;
             slot = rt->caii.slots +
                    (size_t)rec[5] * DM2_V1_CAII_SLOT_SIZE;
             /* Extract adj pair from CAII slot at offset 0x0e-0x11 */
@@ -3965,7 +5950,8 @@ static int dm2_runtime_think_body(
                                ((uint16_t)slot[0x11] << 8));
 
             memset(&ccm_receipt, 0, sizeof(ccm_receipt));
-            if (dm2_v1_ccm_message_loop(
+            {
+                int ccm_result = dm2_v1_ccm_message_loop(
                     &rt->record_pools,
                     &rt->caii,
                     &rt->timer_queue,
@@ -3982,10 +5968,20 @@ static int dm2_runtime_think_body(
                     0,
                     rt->dungeon_level,
                     rt->dungeon_level,
-                    (int32_t)rt->view_dir,
+                    /* c_ai.cpp's v1e0238 is the global sleep/wake lock,
+                     * not the party-facing direction.  Passing view_dir
+                     * here made the CCM pre-check depend on orientation and
+                     * could admit a creature body while the source party
+                     * was asleep. */
+                    (int32_t)rt->source_sleeping,
                     (unsigned long)rt->tick_count,
-                    NULL, NULL, NULL, NULL, NULL, NULL,
-                    &ccm_receipt) == 1 && ccm_receipt.valid) {
+                    dm2_runtime_ccm_ai_goal, &goal_context,
+                    NULL, NULL,
+                    dm2_runtime_ccm_proceed_walking, &goal_context,
+                    &ccm_receipt);
+                rt->last_ccm_receipt = ccm_receipt;
+                rt->ccm_receipt_valid = 1;
+                if (ccm_result == 1 && ccm_receipt.valid) {
                 /* CCM loop handled the creature — it re-queued the
                  * timer internally via ccm_requeue_tail. Write back
                  * the updated adj pair to the CAII slot. */
@@ -3994,6 +5990,7 @@ static int dm2_runtime_think_body(
                 slot[0x10] = (uint8_t)(adj[1] & 0xff);
                 slot[0x11] = (uint8_t)((uint16_t)adj[1] >> 8);
                 return 1;
+                }
             }
         }
     }
@@ -4051,9 +6048,10 @@ static void dm2_runtime_ensure_think_binding(DM2_V1_RuntimeState *rt) {
  * the creature record AT THE TIMER CELL via DM2_GET_CREATURE_AT
  * (c_querydb.cpp:1486-1507) over the DM2-002 record pool.  The former
  * unconditional CCM-instance step is retired: per-cell resolution now
- * runs against the session-owned record pools, and the think body stays
- * unbound (receipted fail-closed) until the CCM stream owner/grammar is
- * proven.  The timer is consumed exactly like the source's early return
+ * runs against the session-owned record pools. The CCM stream has bounded
+ * source owners for movement and adjacent melee; unsupported animation and
+ * action branches remain receipted fail-closed. The timer is consumed exactly
+ * like the source's early return
  * when the cell holds no creature.
  *
  * Source: skproject/SKULLWIN/c_tim_proc.cpp:4079-4088 (0x21/0x22 dispatch)
@@ -4069,8 +6067,10 @@ static void dm2_runtime_ensure_think_binding(DM2_V1_RuntimeState *rt) {
  * masking byte with 0xf8 | 0x05.  Also checks if current map matches
  * ddat.v1e0266 to set ddat.v1e0390.l_00 = 3 (viewport redraw flag).
  *
- * Bounded slice: reads the tile byte, applies the bit mutation, writes
- * back.  The viewport redraw flag is tracked as a counter.
+ * Bounded slice: reads the source timer's encoded map and tile byte, applies
+ * the bit mutation, and writes back only when the authenticated map/cell
+ * exists. A missing map/cell is acknowledged fail-closed rather than
+ * mutating the current party map by accident.
  */
 static int dm2_runtime_destroy_door_timer(void *user,
                                           const DM2_V1_SourceTimer *timer,
@@ -4078,24 +6078,49 @@ static int dm2_runtime_destroy_door_timer(void *user,
                                           DM2_V1_ProceedTimersReceipt *receipt) {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
     DM2_V1_DungeonData *dungeon;
-    int x, y;
-    uint16_t raw;
+    int map, x, y, raw;
     (void)source_index;
     (void)receipt;
 
-    if (!timer || !rt->boot || !rt->boot->dungeon_data)
+    if (!timer || !rt || !rt->boot || !rt->boot->dungeon_data)
         return 1;
     dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
 
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
     x = (int)(int8_t)(timer->value_a & 0xff);
     y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
-
-    raw = (uint16_t)dm2_v1_dungeon_get_tile_raw(
-        dungeon, rt->dungeon_level, x, y);
-    raw = (raw & 0xfff8u) | 0x0005u;
-    (void)dm2_v1_dungeon_set_tile_raw(
-        dungeon, rt->dungeon_level, x, y, raw);
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+    if (map < 0 || map >= dungeon->level_count || raw < 0)
+        return 0;
+    raw = (raw & 0xfff8) | 0x0005;
+    if (dm2_v1_dungeon_set_tile_raw(dungeon, map, x, y,
+                                    (uint16_t)raw) < 0)
+        return 0;
     return 1;
+}
+
+static uint8_t *dm2_runtime_source_record_for_timer(
+    DM2_V1_RuntimeState *rt,
+    const DM2_V1_SourceTimer *timer,
+    uint16_t record_id,
+    int *out_type,
+    int *out_size)
+{
+    const DM2_V1_DungeonData *dungeon;
+    int map;
+
+    if (!rt || !timer || !rt->record_pools_valid || !rt->boot ||
+        !rt->boot->dungeon_data) {
+        return NULL;
+    }
+    dungeon = (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    if (!dungeon->record_graph_complete || map < 0 ||
+        map >= dungeon->level_count) {
+        return NULL;
+    }
+    return (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+        dungeon, record_id, out_type, NULL, out_size);
 }
 
 /*
@@ -4121,16 +6146,11 @@ static int dm2_runtime_release_door_button_timer(
     (void)source_index;
     (void)receipt;
 
-    if (!timer || !rt->record_pools_valid || !rt->boot ||
-        !rt->boot->dungeon_data)
-        return 1;
-
+    if (!timer) return 0;
     record_id = (uint16_t)(timer->value_a & 0xffffu);
-    record = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
-        (const DM2_V1_DungeonData *)rt->boot->dungeon_data,
-        record_id, &type, NULL, &size);
-    if (!record || size < 4)
-        return 1;
+    record = dm2_runtime_source_record_for_timer(rt, timer, record_id,
+                                                 &type, &size);
+    if (!record || size < 4) return 0;
 
     record[3] &= (uint8_t)~0x08u;
     return 1;
@@ -4159,22 +6179,909 @@ static int dm2_runtime_process_timer_59(
     (void)source_index;
     (void)receipt;
 
-    if (!timer || !rt->record_pools_valid || !rt->boot ||
-        !rt->boot->dungeon_data)
-        return 1;
-
+    if (!timer) return 0;
     record_id = (uint16_t)(timer->value_b & 0xffffu);
-    record = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
-        (const DM2_V1_DungeonData *)rt->boot->dungeon_data,
-        record_id, &type, NULL, &size);
-    if (!record || size < 5)
-        return 1;
+    record = dm2_runtime_source_record_for_timer(rt, timer, record_id,
+                                                 &type, &size);
+    if (!record || size < 5) return 0;
 
     if (record[4] & 0x04u)
         return 1;
 
     record[4] &= (uint8_t)~0x01u;
     return 1;
+}
+
+/* Runtime cross-map moverec admission.  The pool and raw dungeon mirrors
+ * share ObjectIDs but are separate owners; both must be complete and agree
+ * before a DB4 is cut from one map and appended to another. */
+static int dm2_runtime_record_chain_mirrors_complete(
+    const DM2_V1_RuntimeState *rt, const DM2_V1_DungeonData *dungeon,
+    int map, int x, int y, int16_t needle, int *out_contains,
+    int *out_has_actuator)
+{
+    int budget = 1;
+    int16_t pool_cursor;
+    int16_t raw_cursor;
+    if (out_contains) *out_contains = 0;
+    if (out_has_actuator) *out_has_actuator = 0;
+    if (!rt || !dungeon || !dungeon->raw_data ||
+        map < 0 || map >= dungeon->level_count || x < 0 || y < 0 ||
+        x >= dungeon->level_widths[map] || y >= dungeon->level_heights[map])
+        return 0;
+    for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        if (rt->record_pools.pools[db].record_count < 0 ||
+            rt->record_pools.pools[db].extension_count < 0 ||
+            budget > INT_MAX - rt->record_pools.pools[db].record_count -
+                rt->record_pools.pools[db].extension_count)
+            return 0;
+        budget += rt->record_pools.pools[db].record_count +
+                  rt->record_pools.pools[db].extension_count;
+    }
+    pool_cursor = (int16_t)dm2_v1_dungeon_get_first_thing(
+        dungeon, map, x, y);
+    raw_cursor = pool_cursor;
+    for (int step = 0; step < budget; ++step) {
+        const uint8_t *pool_record;
+        const uint8_t *raw_record;
+        int raw_size = 0;
+        int raw_type = -1;
+        int16_t pool_next;
+        int16_t raw_next;
+        if (pool_cursor != raw_cursor ||
+            pool_cursor == DM2_V1_RECORD_HANDLE_NULL ||
+            raw_cursor == DM2_V1_RECORD_HANDLE_NULL)
+            return 0;
+        if (pool_cursor == DM2_V1_RECORD_HANDLE_END)
+            return 1;
+        pool_record = dm2_v1_record_pool_address(&rt->record_pools,
+                                                  pool_cursor);
+        raw_record = (const uint8_t *)dm2_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)raw_cursor, &raw_type, NULL, &raw_size);
+        if (!pool_record || !raw_record || raw_size < 2 ||
+            !dm2_v1_record_pool_next_link(&rt->record_pools, pool_cursor,
+                                          &pool_next))
+            return 0;
+        raw_next = (int16_t)((uint16_t)raw_record[0] |
+                             ((uint16_t)raw_record[1] << 8));
+        if (pool_next != raw_next)
+            return 0;
+        if (pool_cursor == needle && out_contains) *out_contains = 1;
+        if (dm2_v1_record_handle_pool(pool_cursor) == 3 && out_has_actuator)
+            *out_has_actuator = 1;
+        if (pool_next == DM2_V1_RECORD_HANDLE_NULL ||
+            raw_next == DM2_V1_RECORD_HANDLE_NULL)
+            return 0;
+        pool_cursor = pool_next;
+        raw_cursor = raw_next;
+    }
+    return 0;
+}
+
+static int dm2_runtime_moverec_move_between_maps(
+    DM2_V1_RuntimeState *rt, DM2_V1_DungeonData *dungeon,
+    int source_map, int source_x, int source_y,
+    int destination_map, int destination_x, int destination_y,
+    int16_t record_handle)
+{
+    int16_t source_pool_head;
+    int16_t source_raw_head;
+    int16_t destination_pool_head;
+    int16_t destination_raw_head;
+    DM2_V1_SkprojectCutRecordReceipt cut_receipt;
+    DM2_V1_SkprojectAppendRecordReceipt append_receipt;
+    int contains = 0;
+    int actuator = 0;
+    memset(&cut_receipt, 0, sizeof(cut_receipt));
+    memset(&append_receipt, 0, sizeof(append_receipt));
+    if (!rt || !dungeon || record_handle == DM2_V1_RECORD_HANDLE_NULL ||
+        record_handle == DM2_V1_RECORD_HANDLE_END ||
+        !dm2_runtime_record_chain_mirrors_complete(
+            rt, dungeon, source_map, source_x, source_y, record_handle,
+            &contains, &actuator) || !contains || actuator ||
+        !dm2_runtime_record_chain_mirrors_complete(
+            rt, dungeon, destination_map, destination_x, destination_y,
+            record_handle, &contains, &actuator) || contains || actuator)
+        return 0;
+    source_pool_head = (int16_t)dm2_v1_dungeon_get_first_thing(
+        dungeon, source_map, source_x, source_y);
+    source_raw_head = source_pool_head;
+    destination_pool_head = (int16_t)dm2_v1_dungeon_get_first_thing(
+        dungeon, destination_map, destination_x, destination_y);
+    destination_raw_head = destination_pool_head;
+    if (!dm2_v1_record_pool_cut_from_list(
+            &rt->record_pools, &source_pool_head, record_handle) ||
+        !dm2_v1_skproject_cut_record_from(
+            dungeon, (uint16_t)record_handle,
+            (uint16_t *)&source_raw_head, -1, -1, -1, &cut_receipt) ||
+        !cut_receipt.valid ||
+        dm2_v1_dungeon_set_first_thing(
+            dungeon, source_map, source_x, source_y,
+            (uint16_t)source_pool_head) != 0 ||
+        dm2_v1_dungeon_set_first_thing(
+            dungeon, source_map, source_x, source_y,
+            (uint16_t)source_raw_head) != 0 ||
+        !dm2_v1_record_pool_append_to_list(
+            &rt->record_pools, &destination_pool_head, record_handle) ||
+        !dm2_v1_skproject_append_record_to(
+            dungeon, (uint16_t)record_handle,
+            (uint16_t *)&destination_raw_head, -1, -1, -1,
+            &append_receipt) || !append_receipt.valid ||
+        dm2_v1_dungeon_set_first_thing(
+            dungeon, destination_map, destination_x, destination_y,
+            (uint16_t)destination_pool_head) != 0 ||
+        dm2_v1_dungeon_set_first_thing(
+            dungeon, destination_map, destination_x, destination_y,
+            (uint16_t)destination_raw_head) != 0)
+        return 0;
+    return 1;
+}
+
+/*
+ * dm2_runtime_process_moverec_timer — runtime owner for c_tim 0x3C/0x3D.
+ *
+ * c_tim_proc.cpp decodes A as the destination, B as the DB4 handle, deletes
+ * the due timer, then calls MOVE_RECORD_TO(record, -3, 0, x, y).  The
+ * source helper discovers the record's actual ground-chain source; the
+ * runtime therefore performs the same discovery instead of trusting timer
+ * coordinates as a source.  The party-sentinel is admitted only on an
+ * authenticated same-map plain floor without a creature; the cross-map
+ * shape has a bounded mirror/map owner but remains behind its positive
+ * verification gate, while wake/sleep and actuator tails remain fail-closed.
+ */
+static int dm2_runtime_process_moverec_timer(
+    void *user,
+    const DM2_V1_SourceTimer *timer,
+    uint16_t source_index,
+    DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_SourceTimerQueue queue_backup;
+    DM2_V1_RecordPoolSet pool_backup;
+    DM2_V1_SoundQueueState sound_backup;
+    DM2_V1_SoundQueueEnv sound_env;
+    DM2_V1_SoundQueueReceipt sound_receipt;
+    DM2_V1_MoveRecordToReceipt move_receipt;
+    DM2_V1_CaiiMoverecActivationReceipt caii_receipt;
+    uint8_t *dungeon_backup = NULL;
+    uint8_t *caii_backup = NULL;
+    uint8_t *record;
+    int16_t record_handle;
+    int map;
+    int x;
+    int y;
+    int source_x = -1;
+    int source_y = -1;
+    int found = 0;
+    int cross_map_move = 0;
+    size_t caii_bytes;
+    int queue_backup_ready = 0;
+    int sound_backup_ready = 0;
+    int party_move = 0;
+    int party_backup_ready = 0;
+    int moverec_failure_stage = 0;
+    int old_party_x = -1;
+    int old_party_y = -1;
+    int old_party_dir = -1;
+    int old_runtime_map = -1;
+    int runtime_map_changed = 0;
+    DM2_V1_Party party_backup;
+
+    (void)source_index;
+    if (receipt) receipt->handler_rejected_count++;
+    memset(&pool_backup, 0, sizeof(pool_backup));
+    memset(&sound_backup, 0, sizeof(sound_backup));
+    memset(&move_receipt, 0, sizeof(move_receipt));
+    memset(&caii_receipt, 0, sizeof(caii_receipt));
+    memset(&sound_receipt, 0, sizeof(sound_receipt));
+
+    if (!rt || !timer) {
+        return 0;
+    }
+    if (timer->type == 0x3cu || timer->type == 0x3du)
+        ++rt->dynamic_move_timer_consumptions;
+    if (!rt->boot || !rt->boot->dungeon_data ||
+        !rt->record_pools_valid || !rt->caii_ready ||
+        !rt->sound_queue_ready ||
+        (timer->type != 0x3cu && timer->type != 0x3du)) {
+        moverec_failure_stage = 1;
+        goto moverec_rollback;
+    }
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    x = (int)(int8_t)(timer->value_a & 0xff);
+    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
+    record_handle = timer->value_b;
+
+    if (map < 0 || map >= dungeon->level_count ||
+        x < 0 || y < 0 || x >= dungeon->level_widths[map] ||
+        y >= dungeon->level_heights[map] ||
+        !dungeon->record_graph_complete ||
+        (record_handle != (int16_t)0xffff &&
+         dm2_v1_record_handle_pool(record_handle) != 4) ||
+        (record_handle == (int16_t)0xffff &&
+         (map != rt->dungeon_level || !rt->source_party_valid ||
+          !rt->boot->dm2_state ||
+          dm2_runtime_normalize_square_type_for_dungeon(
+              dungeon,
+              dm2_runtime_square_type_at(
+                  dungeon, map, x, y,
+                  dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y)),
+              dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y)) !=
+              DM2_SQUARE_FLOOR ||
+          dm2_v1_get_creature_at(&rt->record_pools, dungeon, map, x, y) !=
+              DM2_V1_RECORD_HANDLE_NULL)) ||
+        (record_handle != (int16_t)0xffff &&
+         (!(record = dm2_v1_record_pool_address_mut(
+                &rt->record_pools, record_handle)) || record[5] == 0xffu))) {
+        goto moverec_rollback;
+    }
+
+    /* MOVE_RECORD_TO also mutates the party-sentinel path.  Establish the
+     * complete rollback boundary before entering either party or creature
+     * movement; otherwise a later sound/owner rejection could leave the
+     * party pose and tile graph half-committed. */
+    old_runtime_map = rt->dungeon_level;
+    queue_backup = rt->timer_queue;
+    queue_backup_ready = 1;
+    caii_bytes = (size_t)rt->caii.capacity * DM2_V1_CAII_SLOT_SIZE;
+    if (!dm2_v1_record_pool_set_clone(&pool_backup, &rt->record_pools) ||
+        dungeon->raw_size <= 0 || !dungeon->raw_data ||
+        !(dungeon_backup = (uint8_t *)malloc((size_t)dungeon->raw_size)) ||
+        (caii_bytes != 0u &&
+         !(caii_backup = (uint8_t *)malloc(caii_bytes)))) {
+        moverec_failure_stage = 2;
+        goto moverec_rollback;
+    }
+    memcpy(dungeon_backup, dungeon->raw_data, (size_t)dungeon->raw_size);
+    if (caii_bytes != 0u) memcpy(caii_backup, rt->caii.slots, caii_bytes);
+    sound_backup = rt->sound_queue;
+    sound_backup_ready = 1;
+
+    if (record_handle != (int16_t)0xffff) {
+        int candidate_source_map = -1;
+        int candidate_source_x = -1;
+        int candidate_source_y = -1;
+        for (int scan_map = 0; scan_map < dungeon->level_count &&
+             candidate_source_map < 0; ++scan_map) {
+            if (scan_map == map) continue;
+            for (int scan_x = 0; scan_x < dungeon->level_widths[scan_map] &&
+                 candidate_source_map < 0; ++scan_x) {
+                for (int scan_y = 0; scan_y < dungeon->level_heights[scan_map];
+                     ++scan_y) {
+                    int contains = 0;
+                    int actuator = 0;
+                    if (dm2_runtime_record_chain_mirrors_complete(
+                            rt, dungeon, scan_map, scan_x, scan_y,
+                            record_handle, &contains, &actuator) &&
+                        contains && !actuator) {
+                        candidate_source_map = scan_map;
+                        candidate_source_x = scan_x;
+                        candidate_source_y = scan_y;
+                        break;
+                    }
+                }
+            }
+        }
+        if (candidate_source_map >= 0) {
+            int source_raw = dm2_v1_dungeon_get_tile_raw(
+                dungeon, candidate_source_map, candidate_source_x,
+                candidate_source_y);
+            int destination_raw = dm2_v1_dungeon_get_tile_raw(
+                dungeon, map, x, y);
+            int source_square = source_raw < 0 ? -1 :
+                dm2_runtime_normalize_square_type_for_dungeon(
+                    dungeon,
+                    dm2_runtime_square_type_at(
+                        dungeon, candidate_source_map, candidate_source_x,
+                        candidate_source_y, source_raw), source_raw);
+            int destination_square = destination_raw < 0 ? -1 :
+                dm2_runtime_normalize_square_type_for_dungeon(
+                    dungeon,
+                    dm2_runtime_square_type_at(
+                        dungeon, map, x, y, destination_raw), destination_raw);
+            int destination_contains = 0;
+            int destination_actuator = 0;
+            if ((source_square != DM2_SQUARE_FLOOR &&
+                 source_square != DM2_SQUARE_FLOOR_ORNATE) ||
+                (destination_square != DM2_SQUARE_FLOOR &&
+                 destination_square != DM2_SQUARE_FLOOR_ORNATE) ||
+                dm2_v1_get_creature_at(&rt->record_pools, dungeon, map, x, y) !=
+                    DM2_V1_RECORD_HANDLE_NULL ||
+                !dm2_runtime_record_chain_mirrors_complete(
+                    rt, dungeon, map, x, y, record_handle,
+                    &destination_contains, &destination_actuator) ||
+                destination_contains || destination_actuator ||
+                !dm2_runtime_moverec_move_between_maps(
+                    rt, dungeon, candidate_source_map, candidate_source_x,
+                    candidate_source_y, map, x, y, record_handle))
+                moverec_failure_stage = 3;
+                goto moverec_rollback;
+            source_x = candidate_source_x;
+            source_y = candidate_source_y;
+            found = 1;
+            cross_map_move = 1;
+            if (map != rt->dungeon_level) {
+                DM2_V1_GameState *game =
+                    (DM2_V1_GameState *)rt->boot->dm2_state;
+                if (!game) goto moverec_rollback;
+                game->current_level = map;
+                game->outdoor = dm2_v1_dungeon_is_outdoor(dungeon, map);
+                rt->dungeon_level = map;
+                rt->outdoor = game->outdoor;
+                dm2_runtime_refresh_map_transition_context(rt);
+                runtime_map_changed = 1;
+            }
+        }
+    }
+
+    if (record_handle == (int16_t)0xffff) {
+        DM2_V1_GameState *game = (DM2_V1_GameState *)rt->boot->dm2_state;
+        old_party_x = game->party_x;
+        old_party_y = game->party_y;
+        old_party_dir = game->party_dir;
+        if (old_party_x < 0 || old_party_y < 0 ||
+            old_party_x >= dungeon->level_widths[map] ||
+            old_party_y >= dungeon->level_heights[map])
+            goto moverec_rollback;
+        party_backup = rt->source_party;
+        party_backup_ready = 1;
+        party_move = 1;
+        if (!dm2_v1_move_record_to(
+                &rt->record_pools, dungeon, &rt->timer_queue,
+                (int16_t)0xffff, (int16_t)old_party_x,
+                (int16_t)old_party_y, (int16_t)x, (int16_t)y, 0, map,
+                (uint32_t)rt->tick_count, &move_receipt) ||
+            !move_receipt.valid || !move_receipt.is_party_move ||
+            move_receipt.fail_closed)
+        {
+            moverec_failure_stage = 4;
+            goto moverec_rollback;
+        }
+        game->party_x = x;
+        game->party_y = y;
+        rt->view_dir = game->party_dir & 3;
+        dm2_runtime_refresh_map_transition_context(rt);
+    }
+
+    /* WALK_NOW already supplied an authenticated source cell.  Preserve that
+     * source across the timer boundary; 0x3c itself intentionally carries
+     * only destination A and DB4 handle B in SKProject. */
+    if (!party_move && !cross_map_move &&
+        rt->dynamic_move_pending_record == record_handle &&
+        rt->dynamic_move_pending_source_map == map &&
+        rt->dynamic_move_pending_source_x >= 0 &&
+        rt->dynamic_move_pending_source_y >= 0) {
+        source_x = rt->dynamic_move_pending_source_x;
+        source_y = rt->dynamic_move_pending_source_y;
+        found = 1;
+    }
+
+    /* Locate the source by the dungeon's raw ground-chain first.  The
+     * MOVE_RECORD_TO primitive cuts that chain; the session pool mirror is a
+     * fallback only because some editions expose a differently masked pool
+     * link during boot. */
+    for (int sy = 0; !party_move && !cross_map_move &&
+         sy < dungeon->level_heights[map] && !found; ++sy) {
+        for (int sx = 0; sx < dungeon->level_widths[map]; ++sx) {
+            uint16_t cursor = (uint16_t)dm2_v1_dungeon_get_first_thing(
+                dungeon, map, sx, sy);
+            int steps = 0;
+            while (cursor != DM2_THING_END_MARKER &&
+                   cursor != DM2_THING_NULL_MARKER &&
+                   steps++ < DM2_V1_SKSAVE_RECYCLE_MAX_STEPS) {
+                int record_type = -1;
+                const uint8_t *raw_record =
+                    dm2_v1_dungeon_get_thing_record(
+                        dungeon, cursor, &record_type, NULL, NULL);
+                if (!raw_record) break;
+                if ((cursor & 0x3fffu) ==
+                    ((uint16_t)record_handle & 0x3fffu)) {
+                    source_x = sx;
+                    source_y = sy;
+                    found = 1;
+                    break;
+                }
+                cursor = dm2_v1_dungeon_read_record_u16(dungeon, raw_record);
+            }
+        }
+    }
+
+    /* Locate the source by bounded authenticated pool-chain walks when the
+     * raw graph did not expose the edition's masked handle. */
+    for (int sy = 0; !party_move && !cross_map_move &&
+         sy < dungeon->level_heights[map] && !found; ++sy) {
+        for (int sx = 0; sx < dungeon->level_widths[map]; ++sx) {
+            int16_t cursor = (int16_t)dm2_v1_dungeon_get_first_thing(
+                dungeon, map, sx, sy);
+            int steps = 0;
+            int contains = 0;
+            while (cursor != DM2_V1_RECORD_HANDLE_END &&
+                   cursor != DM2_V1_RECORD_HANDLE_NULL &&
+                   steps++ < DM2_V1_SKSAVE_RECYCLE_MAX_STEPS) {
+                int16_t next;
+                if (!dm2_v1_record_pool_address(&rt->record_pools, cursor) ||
+                    !dm2_v1_record_pool_next_link(&rt->record_pools, cursor,
+                                                   &next)) {
+                    break;
+                }
+                if (cursor == record_handle) {
+                    contains = 1;
+                    break;
+                }
+                cursor = next;
+            }
+            if (contains) {
+                source_x = sx;
+                source_y = sy;
+                found = 1;
+            }
+        }
+    }
+    if (!party_move && (!found || (source_x == x && source_y == y)))
+    {
+        moverec_failure_stage = 5;
+        goto moverec_rollback;
+    }
+
+    /* A creature may move onto an empty floor.  MOVE_RECORD_TO owns creating
+     * the destination ground-chain root; only the authenticated no-creature
+     * occupancy proof above is required here. */
+
+    if (!party_move && !cross_map_move &&
+        (!dm2_v1_move_record_to(&rt->record_pools, dungeon,
+                               &rt->timer_queue, record_handle,
+                               (int16_t)source_x, (int16_t)source_y,
+                               (int16_t)x, (int16_t)y, 0, map,
+                               (uint32_t)rt->tick_count, &move_receipt) ||
+        !move_receipt.valid || move_receipt.fail_closed ||
+        !move_receipt.record_cut || !move_receipt.record_appended)) {
+        moverec_failure_stage = !move_receipt.record_cut ? 71 : 72;
+        goto moverec_rollback;
+    }
+    if (!party_move) {
+        /* The source commits the record relocation before the optional CAII
+         * activation tail.  Unknown edition AI flags therefore suppress only
+         * that tail; they must not roll back an already-authenticated move. */
+        (void)dm2_v1_caii_moverec_activation(
+            &rt->record_pools, dungeon, &rt->caii, &rt->timer_queue,
+            map, (unsigned long)rt->tick_count, record_handle, x, y,
+            &caii_receipt);
+    }
+
+    memset(&sound_env, 0, sizeof(sound_env));
+    sound_env.current_map = (int16_t)map;
+    sound_env.gate_map_a = rt->sound_env.gate_map_a;
+    sound_env.gate_map_b = rt->sound_env.gate_map_b;
+    sound_env.facing = (uint16_t)rt->view_dir;
+    sound_env.party_x = (int16_t)dm2_v1_runtime_get_party_x();
+    sound_env.party_y = (int16_t)dm2_v1_runtime_get_party_y();
+    sound_env.gametick = rt->tick_count;
+    if (!dm2_v1_sound_queue_noise_gen1(
+            &rt->sound_queue, 3, 0, (int8_t)0x89, 0x61, 0x80,
+            (int16_t)x, (int16_t)y, 1, &sound_env, &sound_receipt) &&
+        !sound_receipt.rejected_map_gate) {
+        moverec_failure_stage = 9;
+        goto moverec_rollback;
+    }
+
+    dm2_v1_record_pool_set_free(&pool_backup);
+    free(dungeon_backup);
+    free(caii_backup);
+    ++rt->dynamic_move_successes;
+    rt->dynamic_move_last_failure = 0;
+    if (rt->dynamic_move_pending_record == record_handle)
+        rt->dynamic_move_pending_record = DM2_V1_RECORD_HANDLE_NULL;
+    if (receipt && receipt->handler_rejected_count > 0)
+        receipt->handler_rejected_count--;
+    return 1;
+
+moverec_rollback:
+    if (rt && moverec_failure_stage > 0)
+        rt->dynamic_move_last_failure = moverec_failure_stage;
+    if (queue_backup_ready) rt->timer_queue = queue_backup;
+    if (caii_backup && rt->caii.slots) memcpy(rt->caii.slots, caii_backup,
+                                              caii_bytes);
+    if (dungeon_backup && dungeon->raw_data)
+        memcpy(dungeon->raw_data, dungeon_backup, (size_t)dungeon->raw_size);
+    if (pool_backup.valid) {
+        dm2_v1_record_pool_set_free(&rt->record_pools);
+        rt->record_pools = pool_backup;
+        memset(&pool_backup, 0, sizeof(pool_backup));
+    }
+    if (sound_backup_ready) rt->sound_queue = sound_backup;
+    if (runtime_map_changed && rt->boot && rt->boot->dm2_state &&
+        old_runtime_map >= 0) {
+        DM2_V1_GameState *game = (DM2_V1_GameState *)rt->boot->dm2_state;
+        game->current_level = old_runtime_map;
+        game->outdoor = dm2_v1_dungeon_is_outdoor(dungeon, old_runtime_map);
+        rt->dungeon_level = old_runtime_map;
+        rt->outdoor = game->outdoor;
+        dm2_runtime_refresh_map_transition_context(rt);
+    }
+    if (party_backup_ready && rt->boot && rt->boot->dm2_state) {
+        DM2_V1_GameState *game = (DM2_V1_GameState *)rt->boot->dm2_state;
+        rt->source_party = party_backup;
+        game->party_x = old_party_x;
+        game->party_y = old_party_y;
+        game->party_dir = old_party_dir;
+        rt->view_dir = old_party_dir & 3;
+        dm2_runtime_refresh_map_transition_context(rt);
+    }
+    free(dungeon_backup);
+    free(caii_backup);
+    return 0;
+}
+
+/*
+ * dm2_runtime_move_record_rotate_timer — bounded party-sentinel owner for
+ * c_tim 0x5D (c_tim_proc.cpp:4230-4248).
+ *
+ * The source passes 0xFFFF through DM2_MOVE_RECORD_TO, then rotates the
+ * party only after the move returns.  The shared moverec primitive already
+ * owns the party-sentinel no-chain case; this handler supplies the runtime
+ * party/map owner and keeps cross-map and actuator tails closed.
+ */
+static int dm2_runtime_move_record_rotate_timer(
+    void *user, const DM2_V1_SourceTimer *timer,
+    uint16_t source_index, DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_GameState *game;
+    DM2_V1_MoveRecordToReceipt move_receipt;
+    uint16_t packed;
+    int map, x, y, dir, raw, tile_class, old_dir, turns;
+    int old_x, old_y, old_view_dir;
+    DM2_V1_Party party_backup;
+    DM2_V1_SourceTimerQueue queue_backup;
+    DM2_V1_RecordPoolSet pool_backup;
+    uint8_t *dungeon_backup = NULL;
+    int backup_ready = 0;
+
+    (void)source_index;
+    memset(&pool_backup, 0, sizeof(pool_backup));
+    if (receipt) receipt->handler_rejected_count++;
+    if (!rt || !timer || !rt->boot || !rt->boot->dungeon_data ||
+        !rt->boot->dm2_state || !rt->source_party_valid ||
+        !rt->record_pools_valid || timer->type != 0x5du)
+        return 0;
+
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    game = (DM2_V1_GameState *)rt->boot->dm2_state;
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    packed = (uint16_t)timer->value_a;
+    x = (int)(packed & 0x1fu);
+    y = (int)((packed >> 5) & 0x1fu);
+    dir = (int)((packed >> 10) & 0x3u);
+    if (map != rt->dungeon_level || map != game->current_level ||
+        map < 0 || map >= dungeon->level_count ||
+        x < 0 || y < 0 || x >= dungeon->level_widths[map] ||
+        y >= dungeon->level_heights[map])
+        return 0;
+
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+    tile_class = raw < 0 ? -1 :
+        dm2_runtime_normalize_square_type_for_dungeon(
+            dungeon, dm2_runtime_square_type_at(dungeon, map, x, y, raw), raw);
+    /* Special squares have their own MOVE_RECORD_TO/actuator owners.  Do not
+     * move the party onto one and silently skip its source consequence. */
+    if (raw < 0 || (tile_class != DM2_SQUARE_FLOOR &&
+                    tile_class != DM2_SQUARE_FLOOR_ORNATE))
+        return 0;
+    /* c_moverec's party sentinel is still a movement onto the decoded
+     * destination.  A live DB4 there is a source collision, not an empty
+     * party cell; reject it before cloning or mutating either mirror. */
+    if (dm2_v1_get_creature_at(&rt->record_pools, dungeon, map, x, y) !=
+        DM2_V1_RECORD_HANDLE_NULL)
+        return 0;
+
+    old_x = game->party_x;
+    old_y = game->party_y;
+    old_dir = game->party_dir & 3;
+    old_view_dir = rt->view_dir;
+    if (old_x < 0 || old_y < 0 ||
+        old_x >= dungeon->level_widths[map] ||
+        old_y >= dungeon->level_heights[map] ||
+        rt->source_party.heros_in_party < 0 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES)
+        return 0;
+    party_backup = rt->source_party;
+    queue_backup = rt->timer_queue;
+    if (!dm2_v1_record_pool_set_clone(&pool_backup, &rt->record_pools) ||
+        dungeon->raw_size <= 0 || !dungeon->raw_data ||
+        !(dungeon_backup = (uint8_t *)malloc((size_t)dungeon->raw_size)))
+        goto rotate_rollback;
+    memcpy(dungeon_backup, dungeon->raw_data, (size_t)dungeon->raw_size);
+    backup_ready = 1;
+    memset(&move_receipt, 0, sizeof(move_receipt));
+    if (!dm2_v1_move_record_to(
+            &rt->record_pools, dungeon, &rt->timer_queue,
+            (int16_t)0xffff, (int16_t)old_x, (int16_t)old_y,
+            (int16_t)x, (int16_t)y, (int16_t)dir, map,
+            (uint32_t)rt->tick_count, &move_receipt) ||
+        !move_receipt.valid || !move_receipt.is_party_move ||
+        move_receipt.fail_closed) {
+        goto rotate_rollback;
+    }
+
+    turns = (dir - old_dir) & 3;
+    for (int i = 0; i < rt->source_party.heros_in_party; ++i) {
+        rt->source_party.hero[i].partypos = (int8_t)(
+            (rt->source_party.hero[i].partypos + turns) & 3);
+        rt->source_party.hero[i].absdir = (int8_t)(
+            (rt->source_party.hero[i].absdir + turns) & 3);
+    }
+    rt->source_party.absdir = (int16_t)dir;
+    game->party_x = x;
+    game->party_y = y;
+    game->party_dir = dir;
+    rt->view_dir = dir;
+    dm2_runtime_refresh_map_transition_context(rt);
+    dm2_v1_record_pool_set_free(&pool_backup);
+    free(dungeon_backup);
+    if (receipt && receipt->handler_rejected_count > 0)
+        receipt->handler_rejected_count--;
+    return 1;
+
+rotate_rollback:
+    if (backup_ready) {
+        rt->timer_queue = queue_backup;
+        if (dungeon_backup && dungeon->raw_data)
+            memcpy(dungeon->raw_data, dungeon_backup,
+                   (size_t)dungeon->raw_size);
+        if (pool_backup.valid) {
+            dm2_v1_record_pool_set_free(&rt->record_pools);
+            rt->record_pools = pool_backup;
+            memset(&pool_backup, 0, sizeof(pool_backup));
+        }
+        rt->source_party = party_backup;
+        game->party_x = old_x;
+        game->party_y = old_y;
+        game->party_dir = old_dir;
+        rt->view_dir = old_view_dir;
+    }
+    dm2_v1_record_pool_set_free(&pool_backup);
+    free(dungeon_backup);
+    return 0;
+}
+
+/*
+ * dm2_runtime_alloc_new_creature_timer — runtime owner for c_tim 0x5E.
+ *
+ * This is the source-shaped direct free-slot path from c_tim_proc.cpp:
+ * xA/yA are the spawn tile, B is the creature type, health uses multiplier
+ * seven, direction follows RANDDIR/CALC_VECTOR_DIR, and the new DB4 is
+ * appended before CAII/0a48 initialisation.  The runtime deliberately does
+ * not open the source recycler, cross-map placement or a missing AI/GDAT
+ * owner.
+ */
+static int dm2_runtime_alloc_new_creature_timer(
+    void *user,
+    const DM2_V1_SourceTimer *timer,
+    uint16_t source_index,
+    DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    const DM2_V1_GameLoadRuntimeSessionCandidate *source;
+    const DM2_AIDefinition *ai = NULL;
+    const DM2_V1_AssetLoader *asset_loader = NULL;
+    DM2_V1_DungeonData *dungeon = NULL;
+    DM2_V1_SourceTimerQueue queue_backup;
+    DM2_V1_RecordPoolSet pool_backup;
+    DM2_V1_SoundQueueState sound_backup;
+    DM2_V1_SoundQueueState sound_state;
+    DM2_V1_SoundQueueEnv sound_env;
+    DM2_V1_SoundQueueReceipt sound_receipt;
+    DM2_V1_CaiiMoverecActivationReceipt caii_receipt;
+    DM2_V1_CreatureSomethingReceipt something;
+    DM2_V1_DropRng rng_backup;
+    uint8_t *dungeon_backup = NULL;
+    uint8_t *caii_backup = NULL;
+    uint8_t *record;
+    const uint8_t *animation = NULL;
+    int16_t adj[2] = {0, 0};
+    int16_t record_handle;
+    int16_t head;
+    int map;
+    int x;
+    int y;
+    int type;
+    int dir;
+    int dx;
+    int dy;
+    int adx;
+    int ady;
+    int base_hp;
+    int hp;
+    int queue_backup_ready = 0;
+    int sound_backup_ready = 0;
+    size_t caii_bytes;
+
+    (void)source_index;
+    if (receipt) receipt->handler_rejected_count++;
+    memset(&pool_backup, 0, sizeof(pool_backup));
+    memset(&sound_backup, 0, sizeof(sound_backup));
+    memset(&sound_state, 0, sizeof(sound_state));
+    memset(&sound_receipt, 0, sizeof(sound_receipt));
+    memset(&caii_receipt, 0, sizeof(caii_receipt));
+    memset(&something, 0, sizeof(something));
+
+    if (!rt || !timer) return 0;
+    rng_backup = rt->drop_rng;
+
+    source = rt->game_load_candidate;
+    dungeon = rt->boot ? (DM2_V1_DungeonData *)rt->boot->dungeon_data : NULL;
+    asset_loader = source && source->asset_loader
+        ? source->asset_loader
+        : (rt->boot ? dm2_v1_boot_asset_loader(rt->boot) : NULL);
+    if (!rt->boot || !dungeon || !rt->record_pools_valid ||
+        !rt->caii_ready || !rt->sound_queue_ready || timer->type != 0x5eu ||
+        !asset_loader ||
+        (source && source->asset_loader &&
+         !dm2_v1_caii_source_owner_ai_spec_def(
+             &source->caii_source, (int)(uint8_t)timer->value_b, &ai)) ||
+        (!ai && !dm2_v1_creature_ai_spec_def(
+            (int)(uint8_t)timer->value_b, &ai)) ||
+        !ai || ai->BaseHP == 0u) {
+        goto alloc_creature_rollback;
+    }
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    x = (int)(int8_t)(timer->value_a & 0xff);
+    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
+    type = (int)(uint8_t)timer->value_b;
+    if (map != rt->dungeon_level || map < 0 || map >= dungeon->level_count ||
+        x < 0 || y < 0 || x >= dungeon->level_widths[map] ||
+        y >= dungeon->level_heights[map]) {
+        goto alloc_creature_rollback;
+    }
+    /* ALLOC_NEW_CREATURE places a new DB4 on the requested cell.  A live
+     * creature already rooted there is a source collision; reject before the
+     * RNG, pool clone or any CAII/timer mutation can become observable. */
+    if (dm2_v1_get_creature_at(&rt->record_pools, dungeon, map, x, y) !=
+        DM2_V1_RECORD_HANDLE_NULL)
+        goto alloc_creature_rollback;
+    if (map == rt->dungeon_level &&
+        x == dm2_v1_runtime_get_party_x() &&
+        y == dm2_v1_runtime_get_party_y())
+        goto alloc_creature_rollback;
+
+    queue_backup = rt->timer_queue;
+    queue_backup_ready = 1;
+    caii_bytes = (size_t)rt->caii.capacity * DM2_V1_CAII_SLOT_SIZE;
+    if (!dm2_v1_record_pool_set_clone(&pool_backup, &rt->record_pools) ||
+        dungeon->raw_size <= 0 || !dungeon->raw_data ||
+        !(dungeon_backup = (uint8_t *)malloc((size_t)dungeon->raw_size)) ||
+        (caii_bytes != 0u &&
+         !(caii_backup = (uint8_t *)malloc(caii_bytes)))) {
+        goto alloc_creature_rollback;
+    }
+    memcpy(dungeon_backup, dungeon->raw_data, (size_t)dungeon->raw_size);
+    if (caii_bytes != 0u) memcpy(caii_backup, rt->caii.slots, caii_bytes);
+    sound_backup = rt->sound_queue;
+    sound_backup_ready = 1;
+
+    /* c_tim_proc.cpp:4253-4268 — RANDDIR, then vector direction. */
+    dir = (int)dm2_v1_drops_randdir(&rt->drop_rng);
+    if (dir == 0) {
+        dir = (int)dm2_v1_drops_randdir(&rt->drop_rng);
+    } else {
+        dx = x - dm2_v1_runtime_get_party_x();
+        dy = y - dm2_v1_runtime_get_party_y();
+        adx = dx < 0 ? -dx : dx;
+        ady = dy < 0 ? -dy : dy;
+        if (adx == ady) {
+            if (dm2_v1_drops_randbit(&rt->drop_rng) == 0u) ++ady;
+            else ++adx;
+        }
+        dir = adx >= ady ? (dx <= 0 ? 1 : 3) : (dy <= 0 ? 2 : 0);
+    }
+    dir &= 3;
+    base_hp = (7 * (int)ai->BaseHP) >> 3;
+    hp = base_hp + (int)dm2_v1_drops_rand16(
+        &rt->drop_rng, (uint16_t)((base_hp >> 3) + 1));
+    if (hp <= 0 || hp > 0xffff) goto alloc_creature_rollback;
+
+    record_handle = dm2_v1_record_pool_alloc_new_record(
+        &rt->record_pools, 4u);
+    record = dm2_v1_record_pool_address_mut(&rt->record_pools,
+                                             record_handle);
+    if (record_handle < 0 || !record ||
+        rt->record_pools.pools[4].record_size < 16) {
+        /* Source recycler is deliberately not inferred from a failed slot. */
+        goto alloc_creature_rollback;
+    }
+    record[2] = 0xfeu; record[3] = 0xffu;
+    record[4] = (uint8_t)type;
+    record[5] = 0xffu;
+    record[6] = (uint8_t)hp; record[7] = (uint8_t)(hp >> 8);
+    record[8] = 0xffu; record[9] = 0xffu;
+    record[10] = 0u; record[11] = 0u;
+    record[12] = 0u; record[13] = 0u;
+    record[14] = 0u;
+    record[15] = (uint8_t)(0xf8u | (uint8_t)dir);
+    head = (int16_t)dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+    if (!dm2_v1_record_pool_append_to_list(&rt->record_pools, &head,
+                                           record_handle) ||
+        dm2_v1_dungeon_set_first_thing(dungeon, map, x, y,
+                                       (uint16_t)head) != 0) {
+        goto alloc_creature_rollback;
+    }
+    if (!dm2_v1_caii_moverec_activation(
+            &rt->record_pools, dungeon, &rt->caii, &rt->timer_queue,
+            map, (unsigned long)rt->tick_count, record_handle, x, y,
+            &caii_receipt) || !caii_receipt.valid) {
+        goto alloc_creature_rollback;
+    }
+    if (record[5] != 0xffu && (int)record[5] < rt->caii.capacity) {
+        uint8_t *slot = rt->caii.slots +
+            (size_t)record[5] * DM2_V1_CAII_SLOT_SIZE;
+        adj[0] = (int16_t)((uint16_t)slot[8] | ((uint16_t)slot[9] << 8));
+        adj[1] = (int16_t)((uint16_t)slot[10] | ((uint16_t)slot[11] << 8));
+    }
+    if (dm2_v1_creature_something_1c9a_0a48_with_ai_spec(
+            &rt->record_pools, &rt->caii, asset_loader, ai,
+            &rt->drop_rng, record_handle, adj, &animation, map,
+            source ? source->source_party_map : map, 0, 0, 0, x, y,
+            (unsigned long)rt->tick_count, &something) < 0 ||
+        !something.valid) {
+        goto alloc_creature_rollback;
+    }
+    if (something.noise_would_queue) {
+        dm2_v1_sound_queue_state_init(&sound_state, 0u);
+        if (!dm2_v1_sound_queue_bind_entries(
+                &sound_state, rt->source_sound_entries,
+                rt->sound_queue.ssound_count,
+                rt->sound_queue.ssound_capacity)) {
+            goto alloc_creature_rollback;
+        }
+        sound_state.positional_count = rt->sound_queue.positional_count;
+        sound_state.immediate_count = rt->sound_queue.immediate_count;
+        sound_state.sound_enabled = rt->sound_queue.sound_enabled;
+        sound_state.master_sfx_volume = rt->sound_queue.master_sfx_volume;
+        memcpy(sound_state.positional, rt->sound_queue.positional,
+               sizeof(sound_state.positional));
+        memcpy(sound_state.immediate, rt->sound_queue.immediate,
+               sizeof(sound_state.immediate));
+        memcpy(sound_state.delayed, rt->sound_queue.delayed,
+               sizeof(sound_state.delayed));
+        memcpy(sound_state.sample_slots, rt->sound_queue.sample_slots,
+               sizeof(sound_state.sample_slots));
+        sound_env = rt->sound_env;
+        sound_env.current_map = (int16_t)map;
+        sound_env.gametick = rt->tick_count;
+        if (!dm2_v1_sound_queue_noise_gen1(
+                &sound_state, 0x0f, (int8_t)type,
+                (int8_t)something.noise_index, 0x46, 0x80,
+                (int16_t)x, (int16_t)y, 1, &sound_env, &sound_receipt))
+            goto alloc_creature_rollback;
+        rt->sound_queue = sound_state;
+    }
+
+    dm2_v1_record_pool_set_free(&pool_backup);
+    free(dungeon_backup);
+    free(caii_backup);
+    if (receipt && receipt->handler_rejected_count > 0)
+        receipt->handler_rejected_count--;
+    return 1;
+
+alloc_creature_rollback:
+    if (queue_backup_ready) rt->timer_queue = queue_backup;
+    if (caii_backup && rt->caii.slots)
+        memcpy(rt->caii.slots, caii_backup, caii_bytes);
+    if (dungeon_backup && dungeon && dungeon->raw_data)
+        memcpy(dungeon->raw_data, dungeon_backup, (size_t)dungeon->raw_size);
+    if (pool_backup.valid) {
+        dm2_v1_record_pool_set_free(&rt->record_pools);
+        rt->record_pools = pool_backup;
+        memset(&pool_backup, 0, sizeof(pool_backup));
+    }
+    if (sound_backup_ready) rt->sound_queue = sound_backup;
+    rt->drop_rng = rng_backup;
+    free(dungeon_backup);
+    free(caii_backup);
+    return 0;
 }
 
 /*
@@ -4195,16 +7102,11 @@ static int dm2_runtime_5b_record_clear(
     (void)source_index;
     (void)receipt;
 
-    if (!timer || !rt->record_pools_valid || !rt->boot ||
-        !rt->boot->dungeon_data)
-        return 1;
-
+    if (!timer) return 0;
     record_id = (uint16_t)(timer->value_a & 0xffffu);
-    record = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
-        (const DM2_V1_DungeonData *)rt->boot->dungeon_data,
-        record_id, &type, NULL, &size);
-    if (!record || size < 5)
-        return 1;
+    record = dm2_runtime_source_record_for_timer(rt, timer, record_id,
+                                                 &type, &size);
+    if (!record || size < 5) return 0;
 
     record[4] &= (uint8_t)~0x01u;
     return 1;
@@ -4228,16 +7130,11 @@ static int dm2_runtime_5c_record_set(
     (void)source_index;
     (void)receipt;
 
-    if (!timer || !rt->record_pools_valid || !rt->boot ||
-        !rt->boot->dungeon_data)
-        return 1;
-
+    if (!timer) return 0;
     record_id = (uint16_t)(timer->value_a & 0xffffu);
-    record = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
-        (const DM2_V1_DungeonData *)rt->boot->dungeon_data,
-        record_id, &type, NULL, &size);
-    if (!record || size < 3)
-        return 1;
+    record = dm2_runtime_source_record_for_timer(rt, timer, record_id,
+                                                 &type, &size);
+    if (!record || size < 3) return 0;
 
     record[2] |= 0x01u;
     return 1;
@@ -4361,12 +7258,17 @@ static int dm2_runtime_door_step_timer(void *user,
     int direction;
     int new_state;
     int reached_target;
+    int link_type = -1;
+    int link_size = 0;
+    uint8_t *door_record;
+    uint16_t door_attributes;
 
     rt->door_step_timers++;
 
     /* The source loop consumes the timer even when the map state is
      * unavailable. */
-    if (timer == NULL || rt->boot == NULL || rt->boot->dungeon_data == NULL) {
+    if (timer == NULL || rt == NULL || rt->boot == NULL ||
+        rt->boot->dungeon_data == NULL || !rt->record_pools_valid) {
         if (receipt != NULL) {
             receipt->handler_rejected_count++;
         }
@@ -4382,8 +7284,7 @@ static int dm2_runtime_door_step_timer(void *user,
 
     /* The source reads mapdat.map[x][y] to get both the square class and
      * the door state (lower 3 bits).  Fail closed on missing data. */
-    square_class = dm2_v1_dungeon_get_square_type(
-        dungeon, rt->dungeon_level, x, y);
+    square_class = dm2_v1_dungeon_get_square_type(dungeon, map, x, y);
     if (square_class != DM2_V1_SQUARE_CLASS_DOOR) {
         if (receipt != NULL) {
             receipt->handler_rejected_count++;
@@ -4391,8 +7292,21 @@ static int dm2_runtime_door_step_timer(void *user,
         return 1;
     }
 
-    raw = (uint16_t)dm2_v1_dungeon_get_tile_raw(
-        dungeon, rt->dungeon_level, x, y);
+    raw = (uint16_t)dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+    door_record = dm2_runtime_source_record_for_timer(
+        rt, timer, (uint16_t)timer->value_b, &link_type, &link_size);
+    if (!dungeon->record_graph_complete || link_type != 0 || link_size < 4 ||
+        dm2_v1_record_handle_pool((int16_t)(uint16_t)timer->value_b) != 0 ||
+        dm2_v1_dungeon_get_first_thing(dungeon, map, x, y) !=
+            (int)(uint16_t)timer->value_b ||
+        dm2_v1_dungeon_find_thing_of_type(
+            dungeon, (uint16_t)timer->value_b, 4, 64) >= 0 ||
+        (map == rt->dungeon_level &&
+         x == dm2_v1_runtime_get_party_x() &&
+         y == dm2_v1_runtime_get_party_y())) {
+        if (receipt != NULL) receipt->handler_rejected_count++;
+        return 1;
+    }
     current_state = dm2_door_get_state(raw);
 
     /* TIMELINE.C:750 — DESTROYED is sticky; the source returns immediately. */
@@ -4400,12 +7314,15 @@ static int dm2_runtime_door_step_timer(void *user,
         return 1;
     }
 
-    /* Bounded wiring slice: direction is carried in value_b.  The full
-     * source DM2_ACTUATE_DOOR/DM2_STEP_DOOR encode direction in door-record
-     * word[2] bits 9/10 and byte[3] bit 0x4; decoding those from the thing
-     * record is left for a follow-up once the record-pool door grammar is
-     * proven. */
-    direction = (int)(timer->value_b & 0x1);
+    /* c_tim_proc::DM2_STEP_DOOR receives the original direction in actor;
+     * valueB is the direct DB0 door handle.  Keep both source fields
+     * separate: treating the handle's low bit as direction was a host-side
+     * shortcut. */
+    direction = (int)timer->actor;
+    if (direction > 1) {
+        if (receipt != NULL) receipt->handler_rejected_count++;
+        return 1;
+    }
 
     new_state = dm2_door_apply_toggle_step(current_state, direction);
 
@@ -4413,22 +7330,30 @@ static int dm2_runtime_door_step_timer(void *user,
      * change the lower 3-bit state. */
     raw = dm2_door_set_state(raw, new_state);
     if (dm2_v1_dungeon_set_tile_raw(
-            dungeon, rt->dungeon_level, x, y, raw) != 0) {
+            dungeon, map, x, y, raw) != 0) {
         if (receipt != NULL) {
             receipt->handler_rejected_count++;
         }
         return 1;
     }
+    reached_target = (direction == DM2_DOOR_TOGGLE_DIR_OPEN &&
+                      new_state == DM2_DOOR_STATE_OPEN) ||
+                     (direction == DM2_DOOR_TOGGLE_DIR_CLOSE &&
+                      new_state == DM2_DOOR_STATE_CLOSED);
+    door_attributes = (uint16_t)door_record[2] |
+        ((uint16_t)door_record[3] << 8);
+    door_attributes = (uint16_t)(door_attributes & ~(uint16_t)0x1e00u);
+    door_attributes = (uint16_t)(door_attributes |
+        ((uint16_t)direction << 9));
+    if (!reached_target) door_attributes = (uint16_t)(door_attributes | 0x1400u);
+    door_record[2] = (uint8_t)door_attributes;
+    door_record[3] = (uint8_t)(door_attributes >> 8);
     rt->door_step_mutations++;
 
     /* Re-queue the next step timer if we have not reached the target state.
      * The source DM2_STEP_DOOR does this via DM2_QUEUE_TIMER after
      * incrementing its data word; we schedule one tick later using
      * receipt->game_tick. */
-    reached_target = (direction == DM2_DOOR_TOGGLE_DIR_OPEN &&
-                      new_state == DM2_DOOR_STATE_OPEN) ||
-                     (direction == DM2_DOOR_TOGGLE_DIR_CLOSE &&
-                      new_state == DM2_DOOR_STATE_CLOSED);
     if (!reached_target && receipt != NULL) {
         DM2_V1_SourceTimer next;
         next = *timer;
@@ -4443,23 +7368,324 @@ static int dm2_runtime_door_step_timer(void *user,
 }
 
 /*
+ * dm2_runtime_tile_class_at — square-class provider for the source
+ * 0x04 actuator dispatch (c_tim_proc.cpp:4283-4287: mapdat.map[x][y]
+ * byte >> 5).  Bound over the boot dungeon's raw square byte through
+ * dm2_v1_dungeon_get_square_type; unavailable map state fails closed
+ * (-1) exactly like the dispatcher's contract.
+ */
+static int dm2_runtime_tile_class_at(void *user, int map, int x, int y) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+
+    if (!rt->boot || !rt->boot->dungeon_data) {
+        return -1;
+    }
+    /* The source c_tim_proc actuator index is the byte-map class
+     * (mapdat.map[x][y] >> 5).  Towns/2-byte dungeon words use a different
+     * normalized tile encoding; treating their low five bits as an actuator
+     * class can dispatch the wrong DB3/DB14 handler.  Keep this boundary
+     * fail-closed until a source-owned 2-byte map-class adapter exists. */
+    if (((const DM2_V1_DungeonData *)rt->boot->dungeon_data)->square_bytes != 1) {
+        return -1;
+    }
+    return dm2_v1_dungeon_get_square_type(
+        (const DM2_V1_DungeonData *)rt->boot->dungeon_data, map, x, y);
+}
+
+/* Source-owned 0x04 wall/floor mecha boundaries.
+ * c_tim_proc.cpp dispatches by target square class and passes Value2 and
+ * ActionType into ACTUATE_*_MECHA. The complete source walkers own the
+ * record-chain admission and mutations; this adapter only supplies the live
+ * session owners and decodes the timer fields. */
+static int dm2_runtime_actuate_wall_mecha_timer(
+    void *user, const DM2_V1_SourceTimer *timer, uint16_t source_index,
+    DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_ActuatorEventReceipt event;
+    DM2_V1_RecordPoolSet pool_backup;
+    DM2_V1_SourceTimerQueue queue_backup;
+    uint8_t *raw_backup = NULL;
+    int backup_ready = 0;
+    int map, x, y, action, direction;
+
+    (void)source_index;
+    (void)receipt;
+    if (!rt || !timer || !rt->boot || !rt->boot->dungeon_data ||
+        !rt->record_pools_valid) {
+        return 1;
+    }
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    x = (int)(int8_t)(timer->value_a & 0xff);
+    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
+    direction = (int)(uint8_t)(timer->value_b & 0xff);
+    action = (int)(uint8_t)((timer->value_b >> 8) & 0xff);
+    memset(&pool_backup, 0, sizeof(pool_backup));
+    queue_backup = rt->timer_queue;
+    if (!dm2_v1_record_pool_set_clone(&pool_backup, &rt->record_pools) ||
+        !rt->boot->dungeon_data ||
+        ((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_size <= 0 ||
+        !((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_data ||
+        !(raw_backup = (uint8_t *)malloc(
+            (size_t)((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_size)))
+        goto wall_mecha_reject;
+    memcpy(raw_backup, ((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_data,
+           (size_t)((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_size);
+    backup_ready = 1;
+    memset(&event, 0, sizeof(event));
+    (void)dm2_v1_actuate_wall_mecha(
+        &rt->record_pools, (DM2_V1_DungeonData *)rt->boot->dungeon_data,
+        rt->caii_ready ? &rt->caii : NULL, &rt->timer_queue,
+        map, x, y, action, direction, rt->tick_count,
+        NULL, 0, NULL, NULL, &event);
+    if (!event.valid || event.fail_closed != 0) {
+        goto wall_mecha_reject;
+    }
+    dm2_v1_record_pool_set_free(&pool_backup);
+    free(raw_backup);
+    rt->actuator_tile_wall_mecha++;
+    return 1;
+
+wall_mecha_reject:
+    if (backup_ready) {
+        rt->timer_queue = queue_backup;
+        memcpy(((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_data,
+               raw_backup, (size_t)((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_size);
+        dm2_v1_record_pool_set_free(&rt->record_pools);
+        rt->record_pools = pool_backup;
+        memset(&pool_backup, 0, sizeof(pool_backup));
+    }
+    dm2_v1_record_pool_set_free(&pool_backup);
+    free(raw_backup);
+    return 0;
+}
+
+static int dm2_runtime_actuate_floor_mecha_timer(
+    void *user, const DM2_V1_SourceTimer *timer, uint16_t source_index,
+    DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_ActuatorEventReceipt event;
+    DM2_V1_RecordPoolSet pool_backup;
+    DM2_V1_SourceTimerQueue queue_backup;
+    uint8_t *raw_backup = NULL;
+    int backup_ready = 0;
+    int map, x, y, action, direction;
+
+    (void)source_index;
+    (void)receipt;
+    if (!rt || !timer || !rt->boot || !rt->boot->dungeon_data ||
+        !rt->record_pools_valid) {
+        return 1;
+    }
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    x = (int)(int8_t)(timer->value_a & 0xff);
+    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
+    direction = (int)(uint8_t)(timer->value_b & 0xff);
+    action = (int)(uint8_t)((timer->value_b >> 8) & 0xff);
+    memset(&pool_backup, 0, sizeof(pool_backup));
+    queue_backup = rt->timer_queue;
+    if (!dm2_v1_record_pool_set_clone(&pool_backup, &rt->record_pools) ||
+        !rt->boot->dungeon_data ||
+        ((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_size <= 0 ||
+        !((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_data ||
+        !(raw_backup = (uint8_t *)malloc(
+            (size_t)((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_size)))
+        goto floor_mecha_reject;
+    memcpy(raw_backup, ((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_data,
+           (size_t)((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_size);
+    backup_ready = 1;
+    memset(&event, 0, sizeof(event));
+    (void)dm2_v1_actuate_floor_mecha(
+        &rt->record_pools, (DM2_V1_DungeonData *)rt->boot->dungeon_data,
+        rt->caii_ready ? &rt->caii : NULL, &rt->timer_queue,
+        map, x, y, action, direction, rt->tick_count,
+        NULL, 0, NULL, NULL, &event);
+    if (!event.valid || event.fail_closed != 0) {
+        goto floor_mecha_reject;
+    }
+    dm2_v1_record_pool_set_free(&pool_backup);
+    free(raw_backup);
+    rt->floor_mecha_timers++;
+    return 1;
+
+floor_mecha_reject:
+    if (backup_ready) {
+        rt->timer_queue = queue_backup;
+        memcpy(((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_data,
+               raw_backup, (size_t)((DM2_V1_DungeonData *)rt->boot->dungeon_data)->raw_size);
+        dm2_v1_record_pool_set_free(&rt->record_pools);
+        rt->record_pools = pool_backup;
+        memset(&pool_backup, 0, sizeof(pool_backup));
+    }
+    dm2_v1_record_pool_set_free(&pool_backup);
+    free(raw_backup);
+    rt->actuator_tile_pitfall_rejected++;
+    return 0;
+}
+
+/* Source-owned class-4 door actuator.  This is the post-GAME_LOAD analogue
+ * of the candidate owner in dm2_v1_game_load_world_owner.c: admission is by
+ * the direct DB0 root and the complete ground-stack chain, then the source
+ * 0x01 animation step is queued.  A coordinate-only door toggle is not a
+ * valid substitute for this transaction. */
+static int dm2_runtime_actuate_door_mecha_timer(
+    void *user, const DM2_V1_SourceTimer *timer, uint16_t source_index,
+    DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_SourceTimer next;
+    DM2_V1_SourceTimerQueue queue_before;
+    uint8_t *door_record;
+    int map, x, y, raw_tile, action, direction;
+    int16_t link, door_link, next_link;
+    int chain_limit = 0, chain_count = 0;
+    uint16_t attributes_before, attributes_after;
+
+    (void)receipt;
+    if (!rt) {
+        return 1;
+    }
+    if (!timer || !rt->record_pools_valid || !rt->boot ||
+        !rt->boot->dungeon_data || !rt->record_pools.valid ||
+        !rt->record_pools.record_graph_complete) {
+        rt->actuator_tile_door_rejected++;
+        return 1;
+    }
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    x = (int)(int8_t)(timer->value_a & 0xff);
+    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
+    action = (int)(uint8_t)((timer->value_b >> 8) & 0xff);
+    if (map < 0 || map >= dungeon->level_count || action > 2 ||
+        (raw_tile = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y)) < 0 ||
+        ((unsigned int)raw_tile >> 5) != 4u) {
+        rt->actuator_tile_door_rejected++;
+        return 1;
+    }
+    link = (int16_t)dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+    if (link == DM2_V1_RECORD_HANDLE_NULL || link == DM2_V1_RECORD_HANDLE_END ||
+        dm2_v1_record_handle_pool(link) != DM2_DB_DOOR ||
+        !dm2_v1_record_pool_address(&rt->record_pools, link)) {
+        rt->actuator_tile_door_rejected++;
+        return 1;
+    }
+    door_link = link;
+    for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        const DM2_V1_RecordPool *pool = &rt->record_pools.pools[db];
+        if (pool->record_count < 0 || pool->extension_count < 0 ||
+            chain_limit > INT_MAX - pool->record_count - pool->extension_count) {
+            rt->actuator_tile_door_rejected++;
+            return 1;
+        }
+        chain_limit += pool->record_count + pool->extension_count;
+    }
+    if (chain_limit <= 0) {
+        rt->actuator_tile_door_rejected++;
+        return 1;
+    }
+    while (link != DM2_V1_RECORD_HANDLE_END) {
+        if (link == DM2_V1_RECORD_HANDLE_NULL || chain_count++ >= chain_limit ||
+            !dm2_v1_record_pool_address(&rt->record_pools, link) ||
+            !dm2_v1_record_pool_next_link(&rt->record_pools, link, &next_link) ||
+            dm2_v1_record_handle_pool(link) == DM2_DB_CREATURE) {
+            rt->actuator_tile_door_rejected++;
+            return 1;
+        }
+        link = next_link;
+    }
+    door_record = dm2_v1_record_pool_address_mut(&rt->record_pools, door_link);
+    if (!door_record) {
+        rt->actuator_tile_door_rejected++;
+        return 1;
+    }
+    attributes_before = (uint16_t)door_record[2] |
+                        ((uint16_t)door_record[3] << 8);
+    if (dm2_door_get_state((uint16_t)raw_tile) == DM2_DOOR_STATE_DESTROYED) {
+        rt->actuator_tile_door++;
+        return 1; /* source-consumed no-op */
+    }
+    direction = action == 0 ? 0 : action == 1 ? 1 :
+        (dm2_door_get_state((uint16_t)raw_tile) == DM2_DOOR_STATE_OPEN ? 1 : 0);
+    memset(&next, 0, sizeof(next));
+    next.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
+                         (dm2_v1_source_timer_tick(timer) &
+                          DM2_V1_SOURCE_TIMER_TICK_MASK);
+    next.type = 0x01u;
+    next.actor = (uint8_t)direction;
+    next.value_a = (int16_t)((uint8_t)x | ((uint16_t)(uint8_t)y << 8));
+    next.value_b = door_link;
+    queue_before = rt->timer_queue;
+    if (dm2_v1_source_timer_enqueue(&rt->timer_queue, &next, source_index) !=
+        DM2_V1_SOURCE_TIMER_OK) {
+        rt->timer_queue = queue_before;
+        rt->actuator_tile_door_rejected++;
+        return 1;
+    }
+    attributes_after = (uint16_t)((attributes_before & ~(uint16_t)0x1e00u) |
+                                   ((uint16_t)direction << 9) | 0x1400u);
+    door_record[2] = (uint8_t)attributes_after;
+    door_record[3] = (uint8_t)(attributes_after >> 8);
+    rt->actuator_tile_door++;
+    if (attributes_after != attributes_before) {
+        rt->actuator_tile_door_mutations++;
+    }
+    return 1;
+}
+
+/*
  * dm2_runtime_process_0c_timer — 0x0C timer handler.
  * Source: SKProject/SKULLWIN/c_tim_proc.cpp:25-31 DM2_PROCESS_TIMER_0C.
  *
- * The original clears a 16-bit c_hero::timeridx and, for a living hero,
- * sets the distinct 16-bit c_hero::heroflag bit 0x0800. The bounded session
- * surrogate has byte-sized timer_index/hero_flag fields, so its former 0x08
- * write was not a truncation-safe implementation of the source operation.
- * Keep ordered dispatch but make no state change until c_hero is imported.
+ * The GAME_LOAD commit now owns the source-sized c_party/c_hero copy in
+ * rt->source_party.  This narrow operation can therefore use the original
+ * 16-bit fields without touching the byte-sized presentation snapshot.
  */
 static int dm2_runtime_process_0c_timer(void *user,
                                         const DM2_V1_SourceTimer *timer,
                                         uint16_t source_index,
                                         DM2_V1_ProceedTimersReceipt *receipt) {
-    (void)user;
-    (void)timer;
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_GameState *game;
+    DM2_V1_Hero *hero;
+    int map;
+    int hero_index;
+
     (void)source_index;
-    (void)receipt;
+
+    if (!rt || !timer || !rt->source_party_valid || !rt->boot ||
+        !rt->boot->dungeon_data || !rt->boot->dm2_state) {
+        if (receipt) receipt->handler_rejected_count++;
+        return 1;
+    }
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    hero_index = (int)timer->actor;
+    if (map < 0 || map >= dungeon->level_count ||
+        hero_index < 0 || hero_index >= rt->source_party.heros_in_party ||
+        hero_index >= DM2_MAX_HEROES) {
+        if (receipt) receipt->handler_rejected_count++;
+        return 1;
+    }
+
+    /* DM2_PROCEED_TIMERS performs DM2_CHANGE_CURRENT_MAP_TO before the
+     * type dispatch. Keep the runtime's active map and its source material
+     * context aligned with that source transition. */
+    game = (DM2_V1_GameState *)rt->boot->dm2_state;
+    if (rt->dungeon_level != map) {
+        game->current_level = map;
+        game->outdoor = dm2_v1_dungeon_is_outdoor(dungeon, map);
+        rt->dungeon_level = map;
+        rt->outdoor = game->outdoor;
+        dm2_runtime_refresh_map_transition_context(rt);
+    }
+
+    hero = &rt->source_party.hero[hero_index];
+    hero->timeridx = -1;
+    if (hero->curHP != 0)
+        hero->heroflag = (int16_t)((uint16_t)hero->heroflag | 0x0800u);
 
     return 1;
 }
@@ -4467,19 +7693,9 @@ static int dm2_runtime_process_0c_timer(void *user,
 /*
  * dm2_runtime_resurrection_timer — 0x0D timer handler.
  * Source: c_tim_proc.cpp:39-124 DM2_PROCESS_TIMER_RESURRECTION.
- * Three phases (yB countdown):
- *   yB==2: create cloud effect at position (fail-closed: needs CREATE_CLOUD)
- *   yB==1: walk tile records, dealloc tombstone (fail-closed: needs record walk)
- *   yB==0: final phase — call BRING_CHAMPION_TO_LIFE(actor).
- *
- * The bounded session record is not SKProject's c_hero: its 261-byte
- * persistence surrogate has a byte-sized hero_flag and 32-bit inventory
- * handles, whereas c_hero is 263 bytes and owns 16-bit hero flags and item
- * records.  It also has no source-bound tombstone chain or CREATE_CLOUD
- * owner for phases 1 and 2.  Do not apply just the final formula to that
- * surrogate: that would create a champion without the preceding source
- * state transitions.  Consume the timer in source order until the complete
- * c_hero/tile-record implementation is available.
+ * Phase zero is bound to the transferred source-sized c_hero. Phases one
+ * and two remain rejected until their altar-record cut and DB15 cloud
+ * transaction can be committed atomically with the runtime owners.
  *
  * Source: SKProject/SKULLWIN/c_tim_proc.cpp:39-124
  *         SKProject/SKULLWIN/c_hero.h:40-130, 916-953
@@ -4488,10 +7704,875 @@ static int dm2_runtime_resurrection_timer(void *user,
                                           const DM2_V1_SourceTimer *timer,
                                           uint16_t source_index,
                                           DM2_V1_ProceedTimersReceipt *receipt) {
-    (void)user;
-    (void)timer;
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_GameState *game;
+    DM2_V1_Hero *hero;
+    int map;
+    int hero_index;
+    uint8_t phase;
+    int16_t new_max;
+    int x;
+    int y;
+    int16_t cursor;
+    int16_t next;
+    int16_t found_record = DM2_V1_RECORD_HANDLE_NULL;
+    int16_t dungeon_next = DM2_V1_RECORD_HANDLE_END;
+    DM2_V1_RecordPoolSet pool_backup;
+    DM2_V1_SoundQueueState sound_backup;
+    uint8_t *raw_backup = NULL;
+    int pool_cloned = 0;
+    int sound_backed_up = 0;
+    DM2_V1_SourceTimer cloud_timer;
+
+    memset(&pool_backup, 0, sizeof(pool_backup));
+    memset(&sound_backup, 0, sizeof(sound_backup));
+
     (void)source_index;
-    (void)receipt;
+
+    if (!rt || !timer || !rt->source_party_valid || !rt->boot ||
+        !rt->boot->dungeon_data || !rt->boot->dm2_state) {
+        if (receipt) receipt->handler_rejected_count++;
+        return 1;
+    }
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    hero_index = (int)timer->actor;
+    phase = (uint8_t)((uint16_t)timer->value_b >> 8);
+    if (map < 0 || map >= dungeon->level_count ||
+        hero_index < 0 || hero_index >= rt->source_party.heros_in_party ||
+        hero_index >= DM2_MAX_HEROES || phase > 2u) {
+        if (receipt) receipt->handler_rejected_count++;
+        return 1;
+    }
+
+    /* DM2_PROCEED_TIMERS changes to the timer's map before entering any
+     * resurrection phase, including the altar-record phase. */
+    game = (DM2_V1_GameState *)rt->boot->dm2_state;
+    if (rt->dungeon_level != map) {
+        game->current_level = map;
+        game->outdoor = dm2_v1_dungeon_is_outdoor(dungeon, map);
+        rt->dungeon_level = map;
+        rt->outdoor = game->outdoor;
+        dm2_runtime_refresh_map_transition_context(rt);
+    }
+
+    if (phase == 2u) {
+        int direction;
+        int16_t head;
+        int16_t chain_link;
+        int16_t next_link;
+        int16_t cloud_record;
+        int16_t dungeon_last = DM2_V1_RECORD_HANDLE_NULL;
+        int chain_limit = 0;
+        int chain_count = 0;
+        int x = (int)(int8_t)(timer->value_a & 0xff);
+        int y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
+        uint8_t *cloud;
+        uint8_t *dungeon_cloud;
+        DM2_V1_SoundQueueEnv sound_env;
+        DM2_V1_SoundQueueReceipt sound_receipt;
+        uint32_t phase_game_tick = receipt ? receipt->game_tick :
+            (uint32_t)rt->tick_count;
+
+        direction = (int)(int8_t)(uint8_t)((uint16_t)timer->value_b & 0xffu);
+        if (!rt->record_pools_valid || !rt->sound_queue_ready ||
+            !dungeon->record_graph_complete || !dungeon->raw_data ||
+            dungeon->raw_size <= 0 || x < 0 || y < 0 ||
+            x >= dungeon->level_widths[map] || y >= dungeon->level_heights[map])
+            goto resurrection_phase2_reject;
+        head = (int16_t)dm2_v1_dungeon_get_first_thing(
+            dungeon, map, x, y);
+        for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+            const DM2_V1_RecordPool *pool = &rt->record_pools.pools[db];
+            if (pool->record_count < 0 || pool->extension_count < 0 ||
+                chain_limit > INT_MAX - pool->record_count -
+                    pool->extension_count)
+                goto resurrection_phase2_reject;
+            chain_limit += pool->record_count + pool->extension_count;
+        }
+        if (chain_limit <= 0) goto resurrection_phase2_reject;
+        chain_link = head;
+        while (chain_link != DM2_V1_RECORD_HANDLE_END) {
+            const uint8_t *record;
+            if (chain_link == DM2_V1_RECORD_HANDLE_NULL ||
+                chain_count++ >= chain_limit ||
+                !(record = dm2_v1_record_pool_address(
+                    &rt->record_pools, chain_link)) ||
+                !dm2_v1_record_pool_next_link(
+                    &rt->record_pools, chain_link, &next_link))
+                goto resurrection_phase2_reject;
+            if (dm2_v1_record_handle_pool(chain_link) == 3)
+                goto resurrection_phase2_reject;
+            (void)record;
+            dungeon_last = chain_link;
+            chain_link = next_link;
+        }
+        if (!dm2_v1_record_pool_set_clone(&pool_backup,
+                &rt->record_pools))
+            goto resurrection_phase2_reject;
+        pool_cloned = 1;
+        sound_backup = rt->sound_queue;
+        sound_backed_up = 1;
+        raw_backup = (uint8_t *)malloc((size_t)dungeon->raw_size);
+        if (!raw_backup) goto resurrection_phase2_rollback;
+        memcpy(raw_backup, dungeon->raw_data, (size_t)dungeon->raw_size);
+        cloud_record = dm2_v1_record_pool_alloc_new_record(
+            &rt->record_pools, 15u);
+        cloud = dm2_v1_record_pool_address_mut(
+            &rt->record_pools, cloud_record);
+        dungeon_cloud = (uint8_t *)(uintptr_t)
+            dm2_v1_dungeon_get_thing_record(
+                dungeon, (uint16_t)cloud_record, NULL, NULL, NULL);
+        if (cloud_record < 0 || !cloud ||
+            rt->record_pools.pools[15].record_size < 4)
+            goto resurrection_phase2_rollback;
+        cloud[0] = 0xfeu; cloud[1] = 0xffu;
+        cloud[2] = (uint8_t)(0x64u | (direction == 0xff ? 0x80u : 0u));
+        cloud[3] = 0u;
+        if (dungeon_cloud) {
+            dungeon_cloud[0] = cloud[0]; dungeon_cloud[1] = cloud[1];
+            dungeon_cloud[2] = cloud[2]; dungeon_cloud[3] = cloud[3];
+        }
+        if (!dm2_v1_record_pool_append_to_list(
+                &rt->record_pools, &head, cloud_record))
+            goto resurrection_phase2_rollback;
+        if (dungeon_last < 0) {
+            if (dm2_v1_dungeon_set_first_thing(
+                    dungeon, map, x, y, (uint16_t)cloud_record) != 0)
+                goto resurrection_phase2_rollback;
+        } else {
+            uint8_t *last = (uint8_t *)(uintptr_t)
+                dm2_v1_dungeon_get_thing_record(
+                    dungeon, (uint16_t)dungeon_last, NULL, NULL, NULL);
+            if (!last) goto resurrection_phase2_rollback;
+            last[0] = (uint8_t)cloud_record;
+            last[1] = (uint8_t)((uint16_t)cloud_record >> 8);
+        }
+        memset(&sound_env, 0, sizeof(sound_env));
+        sound_env.current_map = (int16_t)map;
+        sound_env.gate_map_a = rt->sound_env.gate_map_a;
+        sound_env.gate_map_b = rt->sound_env.gate_map_b;
+        sound_env.facing = (uint16_t)rt->view_dir;
+        sound_env.party_x = (int16_t)dm2_v1_runtime_get_party_x();
+        sound_env.party_y = (int16_t)dm2_v1_runtime_get_party_y();
+        sound_env.gametick = (int32_t)phase_game_tick;
+        memset(&sound_receipt, 0, sizeof(sound_receipt));
+        (void)dm2_v1_sound_queue_noise_gen2(
+            &rt->sound_queue, 0x0d, 0x64, (int8_t)0x81, (int8_t)0xfe,
+            (int16_t)x, (int16_t)y, 1, 0x6c, 1, &sound_env,
+            &sound_receipt);
+        memset(&cloud_timer, 0, sizeof(cloud_timer));
+        cloud_timer.ticks_and_map =
+            ((uint32_t)(map & 0xff) << 24) |
+            ((phase_game_tick + 5u) & DM2_V1_SOURCE_TIMER_TICK_MASK);
+        cloud_timer.type = DM2_V1_TIMER_PROCESS_CLOUD;
+        cloud_timer.value_a = timer->value_a;
+        cloud_timer.value_b = cloud_record;
+        if (dm2_v1_source_timer_enqueue(
+                &rt->timer_queue, &cloud_timer, source_index) !=
+            DM2_V1_SOURCE_TIMER_OK)
+            goto resurrection_phase2_rollback;
+        dm2_v1_record_pool_set_free(&pool_backup);
+        free(raw_backup);
+        return 1;
+
+resurrection_phase2_rollback:
+        if (raw_backup)
+            memcpy(dungeon->raw_data, raw_backup, (size_t)dungeon->raw_size);
+        if (pool_cloned) {
+            dm2_v1_record_pool_set_free(&rt->record_pools);
+            rt->record_pools = pool_backup;
+            memset(&pool_backup, 0, sizeof(pool_backup));
+        }
+        if (sound_backed_up) rt->sound_queue = sound_backup;
+        free(raw_backup);
+        if (receipt) receipt->handler_rejected_count++;
+        return 1;
+
+resurrection_phase2_reject:
+        if (receipt) receipt->handler_rejected_count++;
+        return 1;
+    }
+
+    if (phase == 1u) {
+        const uint8_t *dungeon_record;
+        int record_type;
+        int record_size;
+        int dcursor;
+        int dprevious = -1;
+        int dsteps;
+
+        x = (int)(int8_t)(timer->value_a & 0xff);
+        y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
+        if (!rt->record_pools_valid || !dungeon->record_graph_complete ||
+            !dungeon->raw_data || dungeon->raw_size <= 0 ||
+            x < 0 || y < 0 || x >= dungeon->level_widths[map] ||
+            y >= dungeon->level_heights[map]) {
+            if (receipt) receipt->handler_rejected_count++;
+            return 1;
+        }
+
+        /* Validate the source pool chain before taking ownership of any
+         * mutable bytes.  DB10 index zero is the hero-bones/altar record;
+         * its word[2] high two bits select the actor. */
+        cursor = (int16_t)dm2_v1_dungeon_get_first_thing(
+            dungeon, map, x, y);
+        for (int step = 0; cursor >= 0 &&
+             cursor != DM2_V1_RECORD_HANDLE_END && step < 65536; ++step) {
+            const uint8_t *record = dm2_v1_record_pool_address(
+                &rt->record_pools, cursor);
+            if (!record || !dm2_v1_record_pool_next_link(
+                    &rt->record_pools, cursor, &next)) {
+                if (receipt) receipt->handler_rejected_count++;
+                return 1;
+            }
+            if (dm2_v1_record_handle_pool(cursor) == 10 &&
+                dm2_v1_record_handle_index(cursor) == 0 &&
+                (((uint16_t)record[2] | ((uint16_t)record[3] << 8)) >> 14) ==
+                    (uint16_t)hero_index) {
+                found_record = cursor;
+                break;
+            }
+            cursor = next;
+        }
+        if (found_record < 0) {
+            if (receipt) receipt->handler_rejected_count++;
+            return 1;
+        }
+
+        /* The boot dungeon retains its own authenticated record bytes for
+         * rendering/queries. Verify the same chain there before mutating the
+         * pool owner, otherwise the two source views could diverge. */
+        dcursor = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+        for (dsteps = 0; dcursor >= 0 &&
+             dcursor != DM2_V1_RECORD_HANDLE_END && dsteps < 65536;
+             ++dsteps) {
+            dungeon_record = dm2_v1_dungeon_get_thing_record(
+                dungeon, (uint16_t)dcursor, &record_type, NULL, &record_size);
+            if (!dungeon_record || record_size < 2) break;
+            if (dcursor == found_record) {
+                dungeon_next = (int16_t)((uint16_t)dungeon_record[0] |
+                                         ((uint16_t)dungeon_record[1] << 8));
+                break;
+            }
+            dprevious = dcursor;
+            dcursor = (int16_t)((uint16_t)dungeon_record[0] |
+                                ((uint16_t)dungeon_record[1] << 8));
+        }
+        if (dcursor != found_record) {
+            if (receipt) receipt->handler_rejected_count++;
+            return 1;
+        }
+
+        if (!dm2_v1_record_pool_set_clone(&pool_backup,
+                &rt->record_pools)) {
+            if (receipt) receipt->handler_rejected_count++;
+            return 1;
+        }
+        pool_cloned = 1;
+        raw_backup = (uint8_t *)malloc((size_t)dungeon->raw_size);
+        if (!raw_backup) goto resurrection_phase1_rollback;
+        memcpy(raw_backup, dungeon->raw_data, (size_t)dungeon->raw_size);
+        if (!dm2_v1_record_pool_cut_from_tile(
+                &rt->record_pools, dungeon, map, x, y, found_record))
+            goto resurrection_phase1_rollback;
+        if (dprevious < 0) {
+            if (dm2_v1_dungeon_set_first_thing(
+                    dungeon, map, x, y, (uint16_t)dungeon_next) != 0)
+                goto resurrection_phase1_rollback;
+        } else {
+            uint8_t *previous_record = (uint8_t *)(uintptr_t)
+                dm2_v1_dungeon_get_thing_record(
+                    dungeon, (uint16_t)dprevious, NULL, NULL, NULL);
+            if (!previous_record) goto resurrection_phase1_rollback;
+            previous_record[0] = (uint8_t)dungeon_next;
+            previous_record[1] = (uint8_t)((uint16_t)dungeon_next >> 8);
+        }
+        dungeon_record = (const uint8_t *)dm2_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)found_record, NULL, NULL, NULL);
+        if (!dungeon_record) goto resurrection_phase1_rollback;
+        ((uint8_t *)(uintptr_t)dungeon_record)[0] = 0xffu;
+        ((uint8_t *)(uintptr_t)dungeon_record)[1] = 0xffu;
+        {
+            uint8_t *pool_record = dm2_v1_record_pool_address_mut(
+                &rt->record_pools, found_record);
+            if (!pool_record) goto resurrection_phase1_rollback;
+            pool_record[0] = 0xffu;
+            pool_record[1] = 0xffu;
+        }
+        dm2_v1_record_pool_set_free(&pool_backup);
+        free(raw_backup);
+        return 1;
+
+resurrection_phase1_rollback:
+        if (raw_backup) {
+            memcpy(dungeon->raw_data, raw_backup, (size_t)dungeon->raw_size);
+        }
+        if (pool_cloned) {
+            dm2_v1_record_pool_set_free(&rt->record_pools);
+            rt->record_pools = pool_backup;
+            memset(&pool_backup, 0, sizeof(pool_backup));
+        }
+        free(raw_backup);
+        if (receipt) receipt->handler_rejected_count++;
+        return 1;
+    }
+
+    hero = &rt->source_party.hero[hero_index];
+    if (hero->maxHP <= 0) {
+        if (receipt) receipt->handler_rejected_count++;
+        return 1;
+    }
+    new_max = (int16_t)(hero->maxHP - hero->maxHP / 64 - 1);
+    if (new_max < 25) new_max = 25;
+    hero->weight = 0;
+    for (int i = 0; i < DM2_NUM_ITEMS; ++i)
+        hero->item[i] = -1;
+    hero->maxHP = new_max;
+    hero->curHP = (int16_t)(new_max / 2);
+    hero->heroflag = (int16_t)((uint16_t)hero->heroflag | 0x4000u);
+    hero->ench_aura = 0;
+    hero->ench_power = 0;
+
+    return 1;
+}
+
+static uint8_t *dm2_runtime_cloud_get_record(void *ctx, uint16_t record)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)ctx;
+    if (!rt || !rt->record_pools_valid)
+        return NULL;
+    return dm2_v1_record_pool_address_mut(&rt->record_pools,
+                                          (int16_t)record);
+}
+
+static int16_t dm2_runtime_cloud_rand16(void *ctx, int16_t n)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)ctx;
+    if (!rt || n <= 0)
+        return 0;
+    return (int16_t)dm2_v1_drops_rand16(&rt->drop_rng, (uint16_t)n);
+}
+
+static bool dm2_runtime_cloud_randbit(void *ctx)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)ctx;
+    return rt ? dm2_v1_drops_randbit(&rt->drop_rng) != 0u : false;
+}
+
+static uint16_t dm2_runtime_cloud_randdir(void *ctx)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)ctx;
+    return rt ? dm2_v1_drops_randdir(&rt->drop_rng) : 0u;
+}
+
+static uint8_t *dm2_runtime_cloud_ai_spec_from_type(
+    void *ctx, uint16_t creature_type)
+{
+    const DM2_AIDefinition *spec = NULL;
+    (void)ctx;
+    return dm2_v1_creature_ai_spec_def((int)creature_type, &spec) && spec
+        ? (uint8_t *)(uintptr_t)spec : NULL;
+}
+
+static const uint8_t *dm2_runtime_cloud_ai_spec_from_type_const(
+    void *ctx, uint16_t creature_type)
+{
+    return dm2_runtime_cloud_ai_spec_from_type(ctx, creature_type);
+}
+
+static int16_t dm2_runtime_cloud_ai_spec_flags(
+    void *ctx, uint16_t creature_type)
+{
+    uint16_t flags = 0u;
+    (void)ctx;
+    return dm2_v1_creature_ai_spec_flags((int)creature_type, &flags)
+        ? (int16_t)flags : 0;
+}
+
+static int16_t dm2_runtime_cloud_poison_resistance(
+    void *ctx, uint16_t creature_type, uint16_t damage)
+{
+    DM2_V1_CreaturePoisonCallbacks poison_cb;
+    poison_cb.rand_dir = dm2_runtime_cloud_randdir;
+    poison_cb.query_ai_spec = dm2_runtime_cloud_ai_spec_from_type_const;
+    return dm2_v1_apply_creature_poison_resistance(
+        creature_type, (int16_t)damage, &poison_cb, ctx);
+}
+
+static int16_t dm2_runtime_cloud_min16(int16_t a, int16_t b)
+{
+    return a < b ? a : b;
+}
+
+static int16_t dm2_runtime_cloud_max16(int16_t a, int16_t b)
+{
+    return a > b ? a : b;
+}
+
+static int16_t dm2_runtime_cloud_max16_ctx(
+    void *ctx, int16_t a, int16_t b)
+{
+    (void)ctx;
+    return dm2_runtime_cloud_max16(a, b);
+}
+
+static int16_t dm2_runtime_cloud_wound_party(
+    void *ctx, int hero_idx, int16_t damage, int body_parts,
+    int damage_type)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)ctx;
+    DM2_V1_Hero *hero;
+    int32_t pending;
+
+    (void)body_parts;
+    (void)damage_type;
+    if (!rt || !rt->source_party_valid ||
+        rt->source_party.heros_in_party < 0 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES ||
+        hero_idx < 0 || hero_idx >= rt->source_party.heros_in_party ||
+        damage <= 0)
+        return 0;
+    hero = &rt->source_party.hero[hero_idx];
+    if (hero->curHP == 0)
+        return 0;
+    pending = (int32_t)hero->damagesuffered + damage;
+    if (pending > INT16_MAX)
+        pending = INT16_MAX;
+    hero->damagesuffered = (int16_t)pending;
+    hero->heroflag = (int16_t)((uint16_t)hero->heroflag |
+                               DM2_V1_HERO_FLAG_0800);
+    return damage;
+}
+
+/* DM2_PROCESS_CLOUD (0x19): advance an authenticated DB15 cloud.
+ * The runtime keeps the source pool and dungeon bytes in lockstep; ordinary
+ * types use their source lifecycle (including 0x07/0x28 decay), type 0x64
+ * becomes 0x65 and requeues once, while terminal 0x65 is cut/deallocated.
+ * Reflector subtype 0x0e is deliberately excluded: its incoming-spell/
+ * bounce owner is not the ordinary PROCESS_CLOUD lifecycle. */
+static int dm2_runtime_process_cloud_timer(
+    void *user, const DM2_V1_SourceTimer *timer, uint16_t source_index,
+    DM2_V1_ProceedTimersReceipt *receipt) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_RecordPoolSet pool_backup;
+    DM2_V1_SoundQueueState sound_backup;
+    uint8_t *raw_backup = NULL;
+    uint8_t *pool_record;
+    uint8_t *dungeon_record;
+    int map;
+    int x;
+    int y;
+    int16_t cloud_record;
+    int type_dungeon;
+    int size_dungeon;
+    uint16_t cloud_word;
+    int16_t cursor;
+    int16_t previous = DM2_V1_RECORD_HANDLE_NULL;
+    int16_t next = DM2_V1_RECORD_HANDLE_END;
+    int steps;
+    int cloned = 0;
+    int sound_backed_up = 0;
+    int cloud_link_found = 0;
+    uint8_t cloud_type;
+    DM2_V1_DropRng rng_backup;
+    int rng_backed_up = 0;
+    DM2_V1_Party party_backup;
+    int party_backed_up = 0;
+    DM2_V1_SourceTimerQueue timer_queue_backup;
+    uint8_t *caii_backup = NULL;
+    size_t caii_backup_bytes = 0u;
+    int caii_backed_up = 0;
+    int timer_queue_backed_up = 0;
+
+    (void)source_index;
+    memset(&pool_backup, 0, sizeof(pool_backup));
+    if (!rt || !timer || !rt->record_pools_valid || !rt->sound_queue_ready ||
+        !rt->boot || !rt->boot->dungeon_data) {
+        if (receipt) receipt->handler_rejected_count++;
+        return 1;
+    }
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    x = (int)(int8_t)(timer->value_a & 0xff);
+    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
+    cloud_record = timer->value_b;
+    if (map < 0 || map >= dungeon->level_count || x < 0 || y < 0 ||
+        x >= dungeon->level_widths[map] || y >= dungeon->level_heights[map] ||
+        dm2_v1_record_handle_pool(cloud_record) != 15)
+        goto cloud_runtime_reject;
+    pool_record = dm2_v1_record_pool_address_mut(
+        &rt->record_pools, cloud_record);
+    dungeon_record = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+        dungeon, (uint16_t)cloud_record, &type_dungeon, NULL, &size_dungeon);
+    /* Dynamic DB15 slots may have pool bytes without a separate raw-record
+     * mirror.  The authoritative shared boundary is the tile-rooted chain;
+     * require membership there before accepting the timer. */
+    if (!pool_record || (dungeon_record && size_dungeon < 4))
+        goto cloud_runtime_reject;
+    cloud_word = (uint16_t)pool_record[2] |
+        ((uint16_t)pool_record[3] << 8);
+    cloud_type = (uint8_t)(cloud_word & 0x7fu);
+    if ((cloud_type >= 8u && cloud_type != 0x28u &&
+         cloud_type != 0x64u && cloud_type != 0x65u))
+        goto cloud_runtime_reject;
+    if (dungeon_record && ((((uint16_t)dungeon_record[2] |
+          ((uint16_t)dungeon_record[3] << 8)) & 0x7fu) !=
+        (cloud_word & 0x7fu)))
+        goto cloud_runtime_reject;
+
+    /* The source effect owns the complete tile-rooted chain, not merely the
+     * prefix through the DB15 cloud.  A malformed tail must be rejected
+     * before party/creature/door damage or a cloud requeue can mutate state;
+     * the candidate GAME_LOAD owner already follows this same prewalk. */
+    cursor = (int16_t)dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+    for (steps = 0; cursor >= 0 &&
+         cursor != DM2_V1_RECORD_HANDLE_END &&
+         cursor != DM2_V1_RECORD_HANDLE_NULL && steps < 65536; ++steps) {
+        const uint8_t *record = dm2_v1_record_pool_address(
+            &rt->record_pools, cursor);
+        if (!record || !dm2_v1_record_pool_next_link(
+                &rt->record_pools, cursor, &next))
+            goto cloud_runtime_reject;
+        if (cursor == cloud_record) {
+            cloud_link_found = 1;
+        }
+        if (next == DM2_V1_RECORD_HANDLE_NULL)
+            goto cloud_runtime_reject;
+        cursor = next;
+    }
+    if (!cloud_link_found || cursor != DM2_V1_RECORD_HANDLE_END ||
+        steps >= 65536)
+        goto cloud_runtime_reject;
+
+    if (!dm2_v1_record_pool_set_clone(&pool_backup, &rt->record_pools))
+        goto cloud_runtime_reject;
+    cloned = 1;
+    sound_backup = rt->sound_queue;
+    sound_backed_up = 1;
+    rng_backup = rt->drop_rng;
+    rng_backed_up = 1;
+    party_backup = rt->source_party;
+    party_backed_up = rt->source_party_valid;
+    if (!dungeon->raw_data || dungeon->raw_size <= 0) goto cloud_runtime_rollback;
+    raw_backup = (uint8_t *)malloc((size_t)dungeon->raw_size);
+    if (!raw_backup) goto cloud_runtime_rollback;
+    memcpy(raw_backup, dungeon->raw_data, (size_t)dungeon->raw_size);
+
+    /* Regular source clouds (types 0..7) are admitted only when every target
+     * effect that can occur on the cell is owned by this transaction. Party
+     * damage uses the source ATTACK_PARTY pending-damage owner; a creature
+     * cell uses the same CAII attack owner as STEP_MISSILE, and a door cell
+     * uses the DB0 fireball gate below. */
+    if ((cloud_word & 0x7fu) < 8u) {
+        uint8_t cloud_type = (uint8_t)(cloud_word & 0x7fu);
+        int raw_tile = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+        int party_here = map == rt->dungeon_level &&
+            x == dm2_v1_runtime_get_party_x() &&
+            y == dm2_v1_runtime_get_party_y();
+        int16_t creature_here = dm2_v1_get_creature_at(
+            &rt->record_pools, dungeon, map, x, y);
+
+        /* Source c_cloud.cpp gives types 0 and 2 an immediate no-effect
+         * path after the door pass.  Other ordinary cloud types may also
+         * expire on an empty floor; a floor is not an invalid target merely
+         * because no party, creature or door is present. */
+        if (cloud_type != 0u && cloud_type != 2u) {
+            if ((party_here && creature_here != DM2_V1_RECORD_HANDLE_NULL) ||
+                (party_here && (!rt->source_party_valid ||
+                    rt->source_party.heros_in_party < 0 ||
+                    rt->source_party.heros_in_party > DM2_MAX_HEROES)) ||
+                (party_here && (dm2_cloud_type_table[cloud_type] & 0x04u) == 0u) ||
+                (creature_here != DM2_V1_RECORD_HANDLE_NULL &&
+                 (dm2_cloud_type_table[cloud_type] & 0x08u) == 0u))
+                goto cloud_runtime_rollback;
+        }
+
+        if (creature_here != DM2_V1_RECORD_HANDLE_NULL) {
+            if (!rt->caii_ready || !rt->caii.valid || !rt->caii.slots ||
+                rt->caii.capacity <= 0 || rt->caii.capacity > INT_MAX /
+                    DM2_V1_CAII_SLOT_SIZE)
+                goto cloud_runtime_rollback;
+            caii_backup_bytes = rt->caii.capacity * DM2_V1_CAII_SLOT_SIZE;
+            caii_backup = (uint8_t *)malloc(caii_backup_bytes);
+            if (!caii_backup) goto cloud_runtime_rollback;
+            memcpy(caii_backup, rt->caii.slots, caii_backup_bytes);
+            caii_backed_up = 1;
+            timer_queue_backup = rt->timer_queue;
+            timer_queue_backed_up = 1;
+        }
+
+        if (party_here) {
+            DM2_V1_HeroAttackPartyCallbacks party_cb;
+            DM2_V1_CloudCallbacks damage_cb;
+            DM2_V1_CalcCloudDamageReceipt damage_receipt;
+
+            memset(&damage_cb, 0, sizeof(damage_cb));
+            damage_cb.ctx = rt;
+            damage_cb.get_address_of_record = dm2_runtime_cloud_get_record;
+            damage_cb.rand16 = dm2_runtime_cloud_rand16;
+            damage_cb.randbit = dm2_runtime_cloud_randbit;
+            damage_cb.min16 = dm2_runtime_cloud_min16;
+            damage_cb.max16 = dm2_runtime_cloud_max16;
+            damage_cb.query_creature_ai_spec_from_type =
+                dm2_runtime_cloud_ai_spec_from_type;
+            damage_cb.query_creature_ai_spec_flags =
+                dm2_runtime_cloud_ai_spec_flags;
+            damage_cb.apply_creature_poison_resistance =
+                dm2_runtime_cloud_poison_resistance;
+            damage_receipt = dm2_v1_calc_cloud_damage(
+                &damage_cb, (uint16_t)cloud_record, -1);
+            if (damage_receipt.damage > 0) {
+                memset(&party_cb, 0, sizeof(party_cb));
+                party_cb.hero_count = rt->source_party.heros_in_party;
+                party_cb.wound_player = dm2_runtime_cloud_wound_party;
+                party_cb.rand16 = dm2_runtime_cloud_rand16;
+                party_cb.max16 = dm2_runtime_cloud_max16_ctx;
+                (void)dm2_v1_hero_attack_party(
+                    damage_receipt.damage, 0, 0, &party_cb, rt);
+            }
+        }
+
+        if ((dm2_cloud_type_table[cloud_type] & 0x02u) != 0u &&
+            raw_tile >= 0 && (((unsigned int)raw_tile >> 5) & 0x7u) == 4u) {
+            int16_t door_link = (int16_t)dm2_v1_dungeon_get_first_thing(
+                dungeon, map, x, y);
+            uint8_t *door_record;
+            DM2_V1_CloudCallbacks damage_cb;
+            DM2_V1_CalcCloudDamageReceipt damage_receipt;
+            uint16_t old_raw = (uint16_t)raw_tile;
+            int door_state = dm2_door_get_state(old_raw);
+            int door_type;
+
+            if (door_link == DM2_V1_RECORD_HANDLE_NULL ||
+                door_link == DM2_V1_RECORD_HANDLE_END ||
+                dm2_v1_record_handle_pool(door_link) != 0 ||
+                !(door_record = dm2_v1_record_pool_address_mut(
+                    &rt->record_pools, door_link))) {
+                goto cloud_runtime_rollback;
+            }
+            memset(&damage_cb, 0, sizeof(damage_cb));
+            damage_cb.ctx = rt;
+            damage_cb.get_address_of_record = dm2_runtime_cloud_get_record;
+            damage_cb.rand16 = dm2_runtime_cloud_rand16;
+            damage_cb.randbit = dm2_runtime_cloud_randbit;
+            damage_cb.min16 = dm2_runtime_cloud_min16;
+            damage_cb.max16 = dm2_runtime_cloud_max16;
+            damage_cb.query_creature_ai_spec_from_type =
+                dm2_runtime_cloud_ai_spec_from_type;
+            damage_cb.query_creature_ai_spec_flags =
+                dm2_runtime_cloud_ai_spec_flags;
+            damage_cb.apply_creature_poison_resistance =
+                dm2_runtime_cloud_poison_resistance;
+            damage_receipt = dm2_v1_calc_cloud_damage(
+                &damage_cb, (uint16_t)cloud_record, door_link);
+            door_type = (int)((uint16_t)door_record[2] & 0x0001u);
+            if (damage_receipt.damage > 0 &&
+                dm2_door_check_destruction(
+                    door_type, door_state, damage_receipt.damage, 1,
+                    door_record[2]) == DM2_DOOR_DESTROYED_YES &&
+                dm2_v1_dungeon_set_tile_raw(
+                    dungeon, map, x, y,
+                    dm2_door_set_state(old_raw, DM2_DOOR_STATE_DESTROYED)) != 0)
+                goto cloud_runtime_rollback;
+        }
+
+        if (creature_here != DM2_V1_RECORD_HANDLE_NULL) {
+            DM2_V1_CaiiAttackReceipt attack_receipt;
+            DM2_V1_CloudCallbacks damage_cb;
+            DM2_V1_CalcCloudDamageReceipt damage_receipt;
+            memset(&damage_cb, 0, sizeof(damage_cb));
+            damage_cb.ctx = rt;
+            damage_cb.get_address_of_record = dm2_runtime_cloud_get_record;
+            damage_cb.rand16 = dm2_runtime_cloud_rand16;
+            damage_cb.randbit = dm2_runtime_cloud_randbit;
+            damage_cb.min16 = dm2_runtime_cloud_min16;
+            damage_cb.max16 = dm2_runtime_cloud_max16;
+            damage_cb.query_creature_ai_spec_from_type =
+                dm2_runtime_cloud_ai_spec_from_type;
+            damage_cb.query_creature_ai_spec_flags =
+                dm2_runtime_cloud_ai_spec_flags;
+            damage_cb.apply_creature_poison_resistance =
+                dm2_runtime_cloud_poison_resistance;
+            damage_receipt = dm2_v1_calc_cloud_damage(
+                &damage_cb, (uint16_t)cloud_record, creature_here);
+            if (damage_receipt.damage > 0 &&
+                !dm2_v1_caii_attack_creature(
+                    &rt->record_pools, dungeon, &rt->caii,
+                    &rt->timer_queue, &rt->drop_rng, map,
+                    (unsigned long)rt->tick_count,
+                    creature_here, x, y, x, y, 0x200du, 0x64,
+                    damage_receipt.damage, &attack_receipt))
+                goto cloud_runtime_rollback;
+        }
+
+        if (cloud_type == 7u && (cloud_word >> 8) >= 6u) {
+            cloud_word = (uint16_t)((cloud_word & 0x00ffu) |
+                (uint16_t)(((cloud_word >> 8) - 3u) << 8));
+            pool_record[2] = (uint8_t)cloud_word;
+            pool_record[3] = (uint8_t)(cloud_word >> 8);
+            if (dungeon_record) {
+                dungeon_record[2] = pool_record[2];
+                dungeon_record[3] = pool_record[3];
+            }
+            {
+                DM2_V1_SourceTimer next_timer = *timer;
+                uint32_t tick = receipt ? receipt->game_tick :
+                    (uint32_t)rt->tick_count;
+                next_timer.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
+                    ((tick + 1u) & DM2_V1_SOURCE_TIMER_TICK_MASK);
+                if (dm2_v1_source_timer_enqueue(
+                        &rt->timer_queue, &next_timer, source_index) !=
+                    DM2_V1_SOURCE_TIMER_OK)
+                    goto cloud_runtime_rollback;
+            }
+            dm2_v1_record_pool_set_free(&pool_backup);
+            free(caii_backup);
+            free(raw_backup);
+            return 1;
+        }
+
+        /* Types other than the decaying poison cloud expire after the
+         * source door pass.  Reuse the authenticated type-0x65 cut path
+         * below rather than creating a second unlink implementation. */
+        cloud_word = (uint16_t)((cloud_word & 0xff80u) | 0x65u);
+        pool_record[2] = (uint8_t)cloud_word;
+        pool_record[3] = (uint8_t)(cloud_word >> 8);
+        if (dungeon_record) {
+            dungeon_record[2] = pool_record[2];
+            dungeon_record[3] = pool_record[3];
+        }
+    }
+
+    /* c_cloud.cpp::PROCESS_CLOUD also owns subtype 0x28.  It decays the
+     * high byte by 0x28 while strength is above 0x37, without the 0x64
+     * transition sound; a weak 0x28 cloud expires through the cut path. */
+    if (cloud_type == 0x28u) {
+        if ((cloud_word >> 8) > 0x37u) {
+            cloud_word = (uint16_t)((cloud_word & 0x00ffu) |
+                (uint16_t)(((cloud_word >> 8) - 0x28u) << 8));
+            pool_record[2] = (uint8_t)cloud_word;
+            pool_record[3] = (uint8_t)(cloud_word >> 8);
+            if (dungeon_record) {
+                dungeon_record[2] = pool_record[2];
+                dungeon_record[3] = pool_record[3];
+            }
+            {
+                DM2_V1_SourceTimer next_timer = *timer;
+                uint32_t tick = receipt ? receipt->game_tick :
+                    (uint32_t)rt->tick_count;
+                next_timer.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
+                    ((tick + 1u) & DM2_V1_SOURCE_TIMER_TICK_MASK);
+                if (dm2_v1_source_timer_enqueue(
+                        &rt->timer_queue, &next_timer, source_index) !=
+                    DM2_V1_SOURCE_TIMER_OK)
+                    goto cloud_runtime_rollback;
+            }
+            dm2_v1_record_pool_set_free(&pool_backup);
+            free(caii_backup);
+            free(raw_backup);
+            return 1;
+        }
+        cloud_word = (uint16_t)((cloud_word & 0xff80u) | 0x65u);
+        pool_record[2] = (uint8_t)cloud_word;
+        pool_record[3] = (uint8_t)(cloud_word >> 8);
+        if (dungeon_record) {
+            dungeon_record[2] = pool_record[2];
+            dungeon_record[3] = pool_record[3];
+        }
+    }
+
+    if ((cloud_word & 0x7fu) == 0x65u) {
+        cursor = (int16_t)dm2_v1_dungeon_get_first_thing(
+            dungeon, map, x, y);
+        for (steps = 0; cursor >= 0 &&
+             cursor != DM2_V1_RECORD_HANDLE_END && steps < 65536; ++steps) {
+            const uint8_t *record = dm2_v1_record_pool_address(
+                &rt->record_pools, cursor);
+            if (!record || !dm2_v1_record_pool_next_link(
+                    &rt->record_pools, cursor, &next))
+                goto cloud_runtime_rollback;
+            if (cursor == cloud_record) break;
+            previous = cursor;
+            cursor = next;
+        }
+        if (cursor != cloud_record) goto cloud_runtime_rollback;
+        if (!dm2_v1_record_pool_cut_from_tile(
+                &rt->record_pools, dungeon, map, x, y, cloud_record))
+            goto cloud_runtime_rollback;
+        if (previous < 0) {
+            if (dm2_v1_dungeon_set_first_thing(
+                    dungeon, map, x, y, (uint16_t)next) != 0)
+                goto cloud_runtime_rollback;
+        } else {
+            uint8_t *prior = (uint8_t *)(uintptr_t)
+                dm2_v1_dungeon_get_thing_record(
+                    dungeon, (uint16_t)previous, NULL, NULL, NULL);
+            if (!prior) goto cloud_runtime_rollback;
+            prior[0] = (uint8_t)next;
+            prior[1] = (uint8_t)((uint16_t)next >> 8);
+        }
+        pool_record[0] = 0xffu; pool_record[1] = 0xffu;
+        if (dungeon_record) {
+            dungeon_record[0] = 0xffu; dungeon_record[1] = 0xffu;
+        }
+    } else {
+        pool_record[2] = (uint8_t)((cloud_word & 0xff80u) | 0x65u);
+        pool_record[3] = (uint8_t)(cloud_word >> 8);
+        if (dungeon_record) {
+            dungeon_record[2] = pool_record[2];
+            dungeon_record[3] = pool_record[3];
+        }
+        {
+            DM2_V1_SoundQueueEnv env = rt->sound_env;
+            DM2_V1_SoundQueueReceipt sound_receipt;
+            env.current_map = (int16_t)map;
+            env.party_x = (int16_t)dm2_v1_runtime_get_party_x();
+            env.party_y = (int16_t)dm2_v1_runtime_get_party_y();
+            env.facing = (uint16_t)rt->view_dir;
+            env.gametick = receipt ? (int32_t)receipt->game_tick : rt->tick_count;
+            memset(&sound_receipt, 0, sizeof(sound_receipt));
+            (void)dm2_v1_sound_queue_noise_gen2(
+                &rt->sound_queue, 0x0d, 0x64, (int8_t)0x81, (int8_t)0xfe,
+                (int16_t)x, (int16_t)y, 1, 0x6c, 0xc8, &env,
+                &sound_receipt);
+        }
+        {
+            DM2_V1_SourceTimer next_timer = *timer;
+            uint32_t tick = receipt ? receipt->game_tick : (uint32_t)rt->tick_count;
+            next_timer.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
+                ((tick + 1u) & DM2_V1_SOURCE_TIMER_TICK_MASK);
+            if (dm2_v1_source_timer_enqueue(
+                    &rt->timer_queue, &next_timer, source_index) !=
+                DM2_V1_SOURCE_TIMER_OK)
+                goto cloud_runtime_rollback;
+        }
+    }
+    dm2_v1_record_pool_set_free(&pool_backup);
+    free(caii_backup);
+    free(raw_backup);
+    return 1;
+
+cloud_runtime_rollback:
+    if (raw_backup)
+        memcpy(dungeon->raw_data, raw_backup, (size_t)dungeon->raw_size);
+    if (cloned) {
+        dm2_v1_record_pool_set_free(&rt->record_pools);
+        rt->record_pools = pool_backup;
+        memset(&pool_backup, 0, sizeof(pool_backup));
+    }
+    if (sound_backed_up) rt->sound_queue = sound_backup;
+    if (rng_backed_up) rt->drop_rng = rng_backup;
+    if (party_backed_up) rt->source_party = party_backup;
+    if (timer_queue_backed_up) rt->timer_queue = timer_queue_backup;
+    if (caii_backed_up && caii_backup && rt->caii.slots)
+        memcpy(rt->caii.slots, caii_backup, caii_backup_bytes);
+    free(caii_backup);
+    free(raw_backup);
+cloud_runtime_reject:
+    if (receipt) receipt->handler_rejected_count++;
     return 1;
 }
 
@@ -4523,10 +8604,461 @@ static void dm2_0e_set_itemtype(void *ctx, uint16_t record, uint16_t new_type) {
 static void dm2_0e_process_item_bonus(void *ctx, uint8_t actor,
                                        uint16_t record, int mode,
                                        uint16_t value) {
-    (void)ctx; (void)actor; (void)record; (void)mode; (void)value;
-    /* PROCESS_ITEM_BONUS requires the full champion stat system.
-     * Fail-closed: the item type is still morphed and restored
-     * correctly; only the bonus application is skipped. */
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)ctx;
+    DM2_V1_ProcessItemBonusReceipt receipt;
+    (void)mode;
+    if (!rt || !rt->source_party_valid || !rt->boot ||
+        !rt->record_pools_valid || actor >= rt->source_party.heros_in_party)
+        return;
+    /* PROCESS_TIMER_0E passes the source actor and the temporary record
+     * handle into c_item::PROCESS_ITEM_BONUS with mode -1.  The callback is
+     * deliberately void in the source ABI; the wrapper itself is atomic and
+     * leaves the hero untouched when any source owner is missing. */
+    (void)dm2_v1_process_source_item_bonus_for_timer(
+        &rt->source_party.hero[actor], (int16_t)actor, record, -1,
+        (int16_t)(int16_t)value, &rt->record_pools,
+        dm2_v1_boot_asset_loader(rt->boot), &receipt);
+}
+
+/*
+ * DM2_CONTINUE_TICK_GENERATOR (c_tim_proc.cpp) runtime bridge.
+ *
+ * The source operation publishes an ACTUATE_TILE timer before its next
+ * generator timer.  Keep both publications on the source timer queue and
+ * roll back the complete pair, plus the generator active bit, on failure.
+ * The generic coordinate-only actuator entry point must not be used here:
+ * the generator record itself owns the target coordinates and direction.
+ */
+typedef struct {
+    DM2_V1_RuntimeState *runtime;
+    const DM2_V1_SourceTimer *source_timer;
+    DM2_V1_TickGenTimerState *timer_state;
+    int callback_failed;
+} DM2_V1_RuntimeTickGeneratorContext;
+
+static uint8_t *dm2_runtime_tick_generator_record(void *ctx,
+                                                   uint16_t record_word) {
+    DM2_V1_RuntimeTickGeneratorContext *generator =
+        (DM2_V1_RuntimeTickGeneratorContext *)ctx;
+    if (!generator || !generator->runtime ||
+        !generator->runtime->record_pools_valid)
+        return NULL;
+    return dm2_v1_record_pool_address_mut(&generator->runtime->record_pools,
+                                           (int16_t)record_word);
+}
+
+static void dm2_runtime_tick_generator_invoke(void *ctx, uint8_t *record,
+                                               uint16_t action,
+                                               uint16_t param) {
+    DM2_V1_RuntimeTickGeneratorContext *generator =
+        (DM2_V1_RuntimeTickGeneratorContext *)ctx;
+    DM2_V1_RuntimeState *rt = generator ? generator->runtime : NULL;
+    DM2_V1_SourceTimer message;
+    int map;
+
+    if (!generator || !rt || !record || !generator->source_timer) {
+        if (generator) generator->callback_failed = 1;
+        return;
+    }
+    map = (int)((generator->source_timer->ticks_and_map >> 24) & 0xffu);
+    memset(&message, 0, sizeof(message));
+    message.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
+        (((uint32_t)rt->tick_count +
+          (((uint32_t)record[4] | ((uint32_t)record[5] << 8)) >> 7 & 0x7fu)) &
+         DM2_V1_SOURCE_TIMER_TICK_MASK);
+    message.type = DM2_V1_TIMER_ACTUATE_TILE;
+    if (action == 0u) message.actor = 1u;
+    else if (action == 1u) message.actor = 3u;
+    else if (action == 2u) message.actor = 2u;
+    message.value_a = (int16_t)((uint16_t)dm2_actu_xcoord(record) |
+                                ((uint16_t)dm2_actu_ycoord(record) << 8));
+    message.value_b = (int16_t)((uint16_t)dm2_actu_direction(record) |
+                                (action << 8));
+    if (dm2_v1_source_timer_enqueue(&rt->timer_queue, &message, 0u) !=
+        DM2_V1_SOURCE_TIMER_OK)
+        generator->callback_failed = 1;
+    (void)param;
+}
+
+static void dm2_runtime_tick_generator_requeue(void *ctx, uint16_t delay_base,
+                                                uint8_t multiplier) {
+    DM2_V1_RuntimeTickGeneratorContext *generator =
+        (DM2_V1_RuntimeTickGeneratorContext *)ctx;
+    DM2_V1_RuntimeState *rt = generator ? generator->runtime : NULL;
+    DM2_V1_SourceTimer continuation;
+    uint32_t tick;
+    int map;
+
+    if (!generator || !rt || !generator->source_timer ||
+        !generator->timer_state) {
+        if (generator) generator->callback_failed = 1;
+        return;
+    }
+    continuation = *generator->source_timer;
+    map = (int)((continuation.ticks_and_map >> 24) & 0xffu);
+    tick = (uint32_t)rt->tick_count +
+        (uint32_t)delay_base * (uint32_t)multiplier;
+    continuation.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
+        (tick & DM2_V1_SOURCE_TIMER_TICK_MASK);
+    continuation.value_b = (int16_t)((uint16_t)multiplier |
+        ((uint16_t)generator->timer_state->timer_b_bit8 << 8));
+    if (dm2_v1_source_timer_enqueue(&rt->timer_queue, &continuation, 0u) !=
+        DM2_V1_SOURCE_TIMER_OK)
+        generator->callback_failed = 1;
+}
+
+static int dm2_runtime_tick_generator_timer(
+    void *context, const DM2_V1_SourceTimer *timer,
+    uint16_t source_index __attribute__((unused)),
+    DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused))) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
+    DM2_V1_TickGenTimerState timer_state;
+    DM2_V1_RuntimeTickGeneratorContext generator;
+    DM2_V1_TickGenCallbacks callbacks;
+    DM2_V1_SourceTimerQueue queue_backup;
+    uint8_t *record;
+    uint8_t record_byte4;
+    int map;
+    int result;
+
+    if (!rt || !timer || !rt->boot || !rt->boot->dungeon_data ||
+        !rt->record_pools_valid)
+        return 0;
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    if (map < 0 || map >= ((DM2_V1_DungeonData *)rt->boot->dungeon_data)->level_count ||
+        dm2_v1_record_handle_pool((int16_t)timer->value_a) != 3)
+        return 0;
+    record = dm2_v1_record_pool_address_mut(&rt->record_pools,
+                                             timer->value_a);
+    if (!record) return 0;
+
+    queue_backup = rt->timer_queue;
+    record_byte4 = record[4];
+    timer_state.timer_yb = (uint8_t)(timer->value_b & 0xff);
+    timer_state.timer_b_bit8 = (uint8_t)((timer->value_b >> 8) & 0x01);
+    memset(&generator, 0, sizeof(generator));
+    generator.runtime = rt;
+    generator.source_timer = timer;
+    generator.timer_state = &timer_state;
+    callbacks.get_record_address = dm2_runtime_tick_generator_record;
+    callbacks.invoke_actuator = dm2_runtime_tick_generator_invoke;
+    callbacks.requeue_timer = dm2_runtime_tick_generator_requeue;
+    result = dm2_v1_continue_tick_generator((uint16_t)timer->value_a,
+                                             &timer_state, &callbacks,
+                                             &generator);
+    if (generator.callback_failed) {
+        rt->timer_queue = queue_backup;
+        record[4] = record_byte4;
+        return 0;
+    }
+    return result || (record[4] != record_byte4);
+}
+
+/*
+ * DM2_PROCESS_TIMER_0x48 (c_tim_proc.cpp:4129-4163).
+ *
+ * The committed GAME_LOAD owner now contains the source-sized c_party and
+ * c_hero records, so use those records directly.  The older spell-timer
+ * compatibility context uses DM2_ChampionRecord and is intentionally not a
+ * runtime substitute for this path.
+ */
+static int dm2_runtime_ench_power_timer(
+    void *context, const DM2_V1_SourceTimer *timer,
+    uint16_t source_index __attribute__((unused)),
+    DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused))) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
+    uint8_t actor_mask;
+    int16_t amount;
+    int map;
+
+    if (!rt || !timer || !rt->source_party_valid || !rt->boot ||
+        !rt->boot->dungeon_data ||
+        rt->source_party.heros_in_party < 0 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES)
+        return 0;
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    if (map < 0 || map >= ((DM2_V1_DungeonData *)rt->boot->dungeon_data)->level_count ||
+        map != rt->dungeon_level)
+        return 0;
+
+    actor_mask = timer->actor;
+    amount = timer->value_a;
+    for (int hero_index = 0;
+         hero_index < rt->source_party.heros_in_party; ++hero_index) {
+        DM2_V1_Hero *hero = &rt->source_party.hero[hero_index];
+        int32_t next;
+        if ((actor_mask & (uint8_t)(1u << hero_index)) == 0u ||
+            hero->curHP == 0)
+            continue;
+        next = (int32_t)hero->ench_power - amount;
+        if (next < 0) next = 0;
+        if (next > INT16_MAX) next = INT16_MAX;
+        hero->ench_power = (int16_t)next;
+    }
+    return 1;
+}
+
+/*
+ * DM2_PROCESS_TIMER_0x4B / DM2_PROCESS_POISON
+ * (c_tim_proc.cpp:4164-4178, c_hero.cpp:3397).
+ *
+ * The timer's signed counter is removed first, one wound is applied, and the
+ * remaining counter is restored with the source 0x24-tick continuation.  The
+ * source global v1e0288 is carried by source_next_champion_number; it is not
+ * interchangeable with the party count or a host-selected active hero.
+ */
+static int dm2_runtime_poison_timer(
+    void *context, const DM2_V1_SourceTimer *timer,
+    uint16_t source_index __attribute__((unused)),
+    DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused))) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
+    DM2_V1_Hero *hero;
+    DM2_V1_Hero hero_backup;
+    DM2_V1_SourceTimerQueue queue_backup;
+    DM2_V1_SourceTimer continuation;
+    int map;
+    int actor;
+    int16_t counters;
+    int32_t wound;
+
+    if (!rt || !timer || !rt->source_party_valid || !rt->boot ||
+        !rt->boot->dungeon_data ||
+        rt->source_party.heros_in_party <= 0 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES)
+        return 0;
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    actor = (int)(int8_t)timer->actor;
+    if (map < 0 ||
+        map >= ((DM2_V1_DungeonData *)rt->boot->dungeon_data)->level_count ||
+        map != rt->dungeon_level || actor < 0 ||
+        actor >= rt->source_party.heros_in_party ||
+        rt->source_next_champion_number <= 0 ||
+        rt->source_next_champion_number > DM2_MAX_HEROES ||
+        actor + 1 == rt->source_next_champion_number)
+        return 0;
+    hero = &rt->source_party.hero[actor];
+    if (hero->poisoned <= 0)
+        return 0;
+
+    hero_backup = *hero;
+    queue_backup = rt->timer_queue;
+    counters = timer->value_a;
+    hero->poisoned = (int8_t)(hero->poisoned - 1);
+    hero->poison = (int16_t)(hero->poison - counters);
+    wound = ((int32_t)counters + 0x1e) >> 6;
+    if (wound < 1) wound = 1;
+    if (hero->curHP != 0) {
+        int32_t pending = (int32_t)hero->damagesuffered + wound;
+        if (pending > INT16_MAX) pending = INT16_MAX;
+        hero->damagesuffered = (int16_t)pending;
+    }
+    hero->heroflag = (int16_t)((uint16_t)hero->heroflag | 0x2800u);
+    counters = (int16_t)(counters - 1);
+    if (counters > 0) {
+        int32_t next_poison = (int32_t)hero->poison + counters;
+        if (next_poison > 0x0c00) {
+            counters = (int16_t)(0x0c00 - hero->poison);
+            if (counters < 0) counters = 0;
+        }
+        if (counters > 0) {
+            hero->poison = (int16_t)(hero->poison + counters);
+            hero->poisoned = (int8_t)(hero->poisoned + 1);
+            memset(&continuation, 0, sizeof(continuation));
+            continuation.ticks_and_map =
+                ((uint32_t)(map & 0xff) << 24) |
+                (((uint32_t)rt->tick_count + 0x24u) &
+                 DM2_V1_SOURCE_TIMER_TICK_MASK);
+            continuation.type = DM2_V1_TIMER_POISON;
+            continuation.actor = (uint8_t)actor;
+            continuation.value_a = counters;
+            if (dm2_v1_source_timer_enqueue(&rt->timer_queue,
+                                            &continuation, 0u) !=
+                DM2_V1_SOURCE_TIMER_OK) {
+                rt->timer_queue = queue_backup;
+                *hero = hero_backup;
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
+/* DM2_PROCESS_TIMER_0x47 (c_tim_proc.cpp:4112-4123).  The countdown and
+ * target are GAME_LOAD source globals, while the flag mutation belongs to
+ * the transferred c_hero record. */
+static int dm2_runtime_hero_ench_flag_timer(
+    void *context, const DM2_V1_SourceTimer *timer,
+    uint16_t source_index __attribute__((unused)),
+    DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused))) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
+    int map;
+    int target;
+
+    if (!rt || !timer || !rt->source_party_valid || !rt->boot ||
+        !rt->boot->dungeon_data ||
+        rt->source_party.heros_in_party <= 0 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES)
+        return 0;
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    target = rt->source_hero_ench_target;
+    if (map < 0 ||
+        map >= ((DM2_V1_DungeonData *)rt->boot->dungeon_data)->level_count ||
+        map != rt->dungeon_level || target < 0 ||
+        target > rt->source_party.heros_in_party)
+        return 0;
+
+    rt->source_hero_ench_countdown--;
+    rt->source_attack_counter = rt->source_hero_ench_countdown;
+    rt->source_savegames1[2] = rt->source_hero_ench_countdown;
+    if (rt->source_hero_ench_countdown == 0u && target != 0) {
+        DM2_V1_Hero *hero = &rt->source_party.hero[target - 1];
+        if (hero->curHP != 0)
+            hero->heroflag = (int16_t)((uint16_t)hero->heroflag | 0x4000u);
+    }
+    return 1;
+}
+
+/* DM2_PROCESS_TIMER_LIGHT (c_tim_proc.cpp:918-959), using the source
+ * c_light/savegames owner transferred by GAME_LOAD. */
+static int dm2_runtime_light_timer(
+    void *context, const DM2_V1_SourceTimer *timer,
+    uint16_t source_index __attribute__((unused)),
+    DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused))) {
+    static const int16_t light_steps[16] = {
+        0, 5, 12, 24, 33, 40, 46, 51,
+        59, 68, 76, 82, 89, 94, 97, 100
+    };
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
+    DM2_V1_SourceTimerQueue queue_backup;
+    DM2_V1_SourceTimer continuation;
+    int map;
+    int16_t amount;
+    int abs_amount;
+    int16_t remaining;
+    int delta;
+
+    if (!rt || !timer || !rt->source_party_valid || !rt->boot ||
+        !rt->boot->dungeon_data)
+        return 0;
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    amount = timer->value_a;
+    abs_amount = amount < 0 ? -(int)amount : (int)amount;
+    if (map < 0 ||
+        map >= ((DM2_V1_DungeonData *)rt->boot->dungeon_data)->level_count ||
+        map != rt->dungeon_level || abs_amount >= 16)
+        return 0;
+
+    queue_backup = rt->timer_queue;
+    if (amount == 0) {
+        delta = 0;
+        remaining = 0;
+    } else {
+        delta = light_steps[abs_amount] - light_steps[abs_amount - 1];
+        if (amount > 0) delta *= 2;
+        else delta = -delta;
+        remaining = (int16_t)(amount < 0 ? -(abs_amount - 1) :
+                                             abs_amount - 1);
+    }
+    rt->source_light_level = (int16_t)(rt->source_light_level + delta);
+    if (remaining != 0) {
+        memset(&continuation, 0, sizeof(continuation));
+        continuation.ticks_and_map =
+            ((uint32_t)(map & 0xff) << 24) |
+            (((uint32_t)rt->tick_count + 8u) &
+             DM2_V1_SOURCE_TIMER_TICK_MASK);
+        continuation.type = DM2_V1_TIMER_LIGHT;
+        continuation.value_a = remaining;
+        if (dm2_v1_source_timer_enqueue(&rt->timer_queue, &continuation,
+                                        0u) != DM2_V1_SOURCE_TIMER_OK) {
+            rt->timer_queue = queue_backup;
+            return 0;
+        }
+    }
+    return 1;
+}
+
+/* DM2_CONTINUE_ORNATE_ANIMATOR (c_tim_proc.cpp:~1080).  The timer payload
+ * carries the DB3 actuator handle in value_a and the wall/floor mode in
+ * value_b; the live map and GDAT owner determine the animation length. */
+static int dm2_runtime_ornate_animator_timer(
+    void *context, const DM2_V1_SourceTimer *timer,
+    uint16_t source_index __attribute__((unused)),
+    DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused))) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_SourceTimerQueue queue_backup;
+    DM2_V1_SourceTimer continuation;
+    uint8_t record_backup[16];
+    uint8_t *record;
+    int map;
+    int wall;
+    int category;
+    int gfx_count;
+    uint8_t gfx_index;
+    uint8_t decoration;
+    uint16_t word2;
+    uint16_t frame;
+    DM2_V1_GetOrnateAnimLenReceipt anim;
+
+    if (!rt || !timer || !rt->source_party_valid || !rt->boot ||
+        !rt->boot->dungeon_data || !rt->record_pools_valid)
+        return 0;
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    if (map < 0 || map >= dungeon->level_count || map != rt->dungeon_level)
+        return 0;
+    record = dm2_v1_record_pool_address_mut(&rt->record_pools,
+                                             timer->value_a);
+    if (!record || dm2_v1_record_handle_pool(timer->value_a) != 3 ||
+        rt->record_pools.pools[3].record_size > (int)sizeof(record_backup))
+        return 0;
+    /* c_tim_proc.cpp supplies the wall/floor selector in value_b for 0x55;
+     * this handler has no x/y payload: getA() is the DB3 record handle and
+     * getBlong() is passed directly to DM2_GET_ORNATE_ANIM_LEN. */
+    wall = (timer->value_b & 1) != 0;
+    category = wall ? 0x09 : 0x0a;
+    word2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+    gfx_index = (uint8_t)(((uint16_t)record[4] |
+                           ((uint16_t)record[5] << 8)) >> 12);
+    decoration = 0xffu;
+    if (wall) {
+        gfx_count = rt->map_wall_gfx_count;
+        if (gfx_index > 0u && gfx_index <= (uint8_t)gfx_count)
+            decoration = rt->map_wall_gfx_list[gfx_index - 1u];
+    } else {
+        gfx_count = rt->map_floor_gfx_count;
+        if (gfx_index > 0u && gfx_index <= (uint8_t)gfx_count)
+            decoration = rt->map_floor_gfx_list[gfx_index - 1u];
+    }
+    memset(&anim, 0, sizeof(anim));
+    if (decoration == 0xffu || !dm2_v1_boot_asset_loader(rt->boot) ||
+        !dm2_v1_get_ornate_anim_len_receipt(
+            dm2_v1_boot_asset_loader(rt->boot), category,
+                                             decoration, 0, &anim) ||
+        !anim.accepted || anim.length == 0u)
+        return 0;
+    memcpy(record_backup, record,
+           rt->record_pools.pools[3].record_size);
+    frame = (uint16_t)((word2 >> 7) & 0x1ffu);
+    frame = (uint16_t)((frame + 1u) & 0x1ffu);
+    word2 = (uint16_t)((word2 & 0x007fu) | (frame << 7));
+    record[2] = (uint8_t)word2;
+    record[3] = (uint8_t)(word2 >> 8);
+    queue_backup = rt->timer_queue;
+    if ((frame % (uint16_t)anim.length) == 0u) {
+        record[4] &= (uint8_t)~0x01u;
+        return 1;
+    }
+    continuation = *timer;
+    continuation.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
+        (((uint32_t)rt->tick_count + 1u) & DM2_V1_SOURCE_TIMER_TICK_MASK);
+    if (dm2_v1_source_timer_enqueue(&rt->timer_queue, &continuation, 0u) !=
+        DM2_V1_SOURCE_TIMER_OK) {
+        rt->timer_queue = queue_backup;
+        memcpy(record, record_backup, rt->record_pools.pools[3].record_size);
+        return 0;
+    }
+    return 1;
 }
 static void dm2_0e_copy_memory(void *dst, const void *src, int32_t size) {
     if (size > 0) memcpy(dst, src, (size_t)size);
@@ -4563,6 +9095,122 @@ static int dm2_runtime_process_0e_timer(void *user,
         &cb, rt);
 
     return 1;
+}
+
+/* DM2_CONTINUE_ORNATE_NOISE (c_tim_proc.cpp:~1120).  0x5A carries the
+ * actuator record in value_b and the source x/y pair in value_a.  The
+ * inactive arm clears only the frame high byte; the active arm resolves the
+ * wall/floor decoration from the mounted map and requeues at the source
+ * animation cadence.  GEN2 is best-effort, but a failed timer enqueue must
+ * roll back both the record and the sound queue. */
+static int dm2_runtime_ornate_noise_timer(
+    void *context, const DM2_V1_SourceTimer *timer,
+    uint16_t source_index,
+    DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused))) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_SourceTimerQueue queue_backup;
+    DM2_V1_SoundQueueState sound_backup;
+    uint8_t record_backup[16];
+    uint8_t *record;
+    DM2_V1_GetOrnateAnimLenReceipt anim;
+    DM2_V1_SoundQueueEnv sound_env;
+    DM2_V1_SoundQueueReceipt sound_receipt;
+    int map;
+    int x;
+    int y;
+    int raw_tile;
+    int wall;
+    int category;
+    int gfx_count;
+    uint8_t gfx_index;
+    uint8_t decoration;
+    int record_size;
+    int active;
+
+    if (!rt || !timer || !rt->source_party_valid || !rt->boot ||
+        !rt->boot->dungeon_data || !rt->record_pools_valid ||
+        !rt->sound_queue_ready)
+        return 0;
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    if (map < 0 || map >= dungeon->level_count || map != rt->dungeon_level)
+        return 0;
+    if (dm2_v1_record_handle_pool(timer->value_b) != 3)
+        return 0;
+    record_size = rt->record_pools.pools[3].record_size;
+    if (record_size <= 0 || record_size > (int)sizeof(record_backup))
+        return 0;
+    record = dm2_v1_record_pool_address_mut(&rt->record_pools,
+                                             timer->value_b);
+    if (!record)
+        return 0;
+    x = (int)(int8_t)(timer->value_a & 0xff);
+    y = (int)(int8_t)(((uint16_t)timer->value_a >> 8) & 0xff);
+    if (x < 0 || y < 0 || x >= dungeon->level_widths[map] ||
+        y >= dungeon->level_heights[map])
+        return 0;
+
+    memcpy(record_backup, record, (size_t)record_size);
+    queue_backup = rt->timer_queue;
+    sound_backup = rt->sound_queue;
+    active = (record[4] & 0x01u) != 0;
+    if (!active) {
+        record[3] = 0u;
+        return 1;
+    }
+
+    raw_tile = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+    if (raw_tile < 0)
+        goto ornate_noise_runtime_rollback;
+    wall = ((raw_tile >> 5) & 7) == 0;
+    category = wall ? 0x09 : 0x0a;
+    gfx_count = wall ? rt->map_wall_gfx_count : rt->map_floor_gfx_count;
+    gfx_index = (uint8_t)(((uint16_t)record[4] |
+                           ((uint16_t)record[5] << 8)) >> 12);
+    decoration = 0xffu;
+    if (gfx_index > 0u && gfx_index <= (uint8_t)gfx_count) {
+        decoration = wall ? rt->map_wall_gfx_list[gfx_index - 1u]
+                          : rt->map_floor_gfx_list[gfx_index - 1u];
+    }
+    memset(&anim, 0, sizeof(anim));
+    if (decoration == 0xffu || !dm2_v1_boot_asset_loader(rt->boot) ||
+        !dm2_v1_get_ornate_anim_len_receipt(
+            dm2_v1_boot_asset_loader(rt->boot), category, decoration, 0,
+            &anim) || !anim.accepted || anim.length == 0u)
+        goto ornate_noise_runtime_rollback;
+
+    memset(&sound_env, 0, sizeof(sound_env));
+    sound_env.current_map = (int16_t)map;
+    sound_env.gate_map_a = rt->sound_env.gate_map_a;
+    sound_env.gate_map_b = rt->sound_env.gate_map_b;
+    sound_env.facing = (uint16_t)rt->view_dir;
+    sound_env.party_x = (int16_t)dm2_v1_runtime_get_party_x();
+    sound_env.party_y = (int16_t)dm2_v1_runtime_get_party_y();
+    sound_env.gametick = (int32_t)rt->tick_count;
+    memset(&sound_receipt, 0, sizeof(sound_receipt));
+    (void)dm2_v1_sound_queue_noise_gen2(
+        &rt->sound_queue, (int8_t)category, (int8_t)decoration,
+        (int8_t)0x88, (int8_t)0xfe, (int16_t)x, (int16_t)y,
+        1, (int16_t)0x8c, (int16_t)0x80, &sound_env, &sound_receipt);
+
+    {
+        DM2_V1_SourceTimer next_timer = *timer;
+        next_timer.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
+            (((uint32_t)rt->tick_count + (uint32_t)anim.length) &
+             DM2_V1_SOURCE_TIMER_TICK_MASK);
+        if (dm2_v1_source_timer_enqueue(&rt->timer_queue, &next_timer,
+                                        source_index) !=
+            DM2_V1_SOURCE_TIMER_OK)
+            goto ornate_noise_runtime_rollback;
+    }
+    return 1;
+
+ornate_noise_runtime_rollback:
+    memcpy(record, record_backup, (size_t)record_size);
+    rt->timer_queue = queue_backup;
+    rt->sound_queue = sound_backup;
+    return 0;
 }
 
 /*
@@ -4619,32 +9267,825 @@ static int dm2_runtime_process_sound_timer(void *user,
     return 1;
 }
 
-/*
- * dm2_runtime_spell_timer_delegate — shared handler for timer types that have
- * proven implementations in dm2_v1_spell_timer_handlers_pc34_compat.c.
- * Forwards to dm2_v1_spell_timer_dispatch() which routes by timer->type.
- * Types handled: 0x46 light, 0x47 hero ench flag, 0x48 ench power,
- * 0x4B poison, 0x19 cloud, 0x1E missile, 0x5E summon.
- */
-static int dm2_runtime_spell_timer_delegate(void *user,
-                                            const DM2_V1_SourceTimer *timer,
-                                            uint16_t source_index,
-                                            DM2_V1_ProceedTimersReceipt *receipt) {
-    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
-    if (!rt || !rt->spell_timer_ctx_ready)
-        return 1;
-    return dm2_v1_spell_timer_dispatch(&rt->spell_timer_ctx, timer,
-                                       source_index, receipt);
+static int dm2_runtime_missile_is_plain_passage(
+    const DM2_V1_DungeonData *dungeon, int map, int x, int y)
+{
+    int raw;
+    int tile_type;
+
+    if (!dungeon || !dm2_v1_dungeon_c_map_is_tile_passage(
+            dungeon, map, x, y))
+        return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+    if (raw < 0) return 0;
+    /* SKWIN DME.h:877-885: only FLOOR/PIT/STAIRS are admitted here.
+     * DOOR, TELEPORTER, TRICK_WALL and MAP_EXIT each enter a different
+     * c_move/c_moverec owner and must not be treated as a plain step. */
+    tile_type = dungeon->square_bytes == 1
+        ? (((unsigned int)raw >> 5) & 0x7)
+        : (raw & 0x1f);
+    return tile_type >= 1 && tile_type <= 3;
 }
 
-/* 0x19 cloud and 0x1D/0x1E missile — delegated to spell timer handlers via
- * dm2_runtime_spell_timer_delegate. */
+/* Move one authenticated DB14 between two raw c_map ground chains.  This is
+ * deliberately separate from the ordinary same-map step: the source
+ * teleporter path changes c_map, performs MOVE_RECORD_TO, and only then
+ * publishes the continuation timer.  The caller owns the outer pool/raw/
+ * timer rollback transaction. */
+static int dm2_runtime_missile_move_between_tiles(
+    DM2_V1_RecordPoolSet *pools, DM2_V1_DungeonData *dungeon,
+    int source_map, int source_x, int source_y,
+    int destination_map, int destination_x, int destination_y,
+    int16_t missile, int16_t destination_missile)
+{
+    int budget = 0;
+    int16_t cursor;
+    int16_t source_previous = DM2_V1_RECORD_HANDLE_NULL;
+    int16_t source_next = DM2_V1_RECORD_HANDLE_END;
+    int16_t destination_previous = DM2_V1_RECORD_HANDLE_NULL;
+    int source_found = 0;
+    int raw_type = -1;
+    int raw_size = 0;
+    uint8_t *raw_cursor;
+    uint8_t *raw_previous;
+    uint8_t *raw_missile;
 
-/* 0x46 light, 0x47 hero ench flag, 0x48 ench power, 0x4B poison —
- * delegated to spell timer handlers via dm2_runtime_spell_timer_delegate. */
+    if (!pools || !dungeon || source_map < 0 || destination_map < 0 ||
+        source_map >= dungeon->level_count ||
+        destination_map >= dungeon->level_count ||
+        source_x < 0 || source_y < 0 || destination_x < 0 || destination_y < 0 ||
+        source_x >= dungeon->level_widths[source_map] ||
+        source_y >= dungeon->level_heights[source_map] ||
+        destination_x >= dungeon->level_widths[destination_map] ||
+        destination_y >= dungeon->level_heights[destination_map] ||
+        missile == DM2_V1_RECORD_HANDLE_NULL ||
+        missile == DM2_V1_RECORD_HANDLE_END) {
+        return 0;
+    }
+    for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db) {
+        if (pools->pools[db].record_count < 0 ||
+            pools->pools[db].extension_count < 0 ||
+            budget > INT_MAX - pools->pools[db].record_count -
+                pools->pools[db].extension_count) {
+            return 0;
+        }
+        budget += pools->pools[db].record_count +
+            pools->pools[db].extension_count;
+    }
+    if (budget <= 0) return 0;
 
-/* 0x5E alloc new creature — delegated to spell timer handlers via
- * dm2_runtime_spell_timer_delegate. */
+    cursor = (int16_t)dm2_v1_dungeon_get_first_thing(
+        dungeon, source_map, source_x, source_y);
+    for (int steps = 0; cursor != DM2_V1_RECORD_HANDLE_END &&
+                          cursor != DM2_V1_RECORD_HANDLE_NULL &&
+                          steps < budget; ++steps) {
+        int16_t next;
+        raw_cursor = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)cursor, &raw_type, NULL, &raw_size);
+        if (!raw_cursor || raw_size < 2 ||
+            !dm2_v1_record_pool_next_link(pools, cursor, &next)) {
+            return 0;
+        }
+        if (cursor == missile) {
+            source_next = next;
+            source_found = 1;
+        } else if (!source_found) {
+            source_previous = cursor;
+        }
+        cursor = next;
+    }
+    /* MOVE_RECORD_TO must own the complete source chain, not merely the
+     * prefix through the missile.  A malformed tail after the DB14 would
+     * otherwise be silently detached by the teleporter branch. */
+    if (!source_found || cursor != DM2_V1_RECORD_HANDLE_END ||
+        source_next == DM2_V1_RECORD_HANDLE_NULL)
+        return 0;
+
+    cursor = (int16_t)dm2_v1_dungeon_get_first_thing(
+        dungeon, destination_map, destination_x, destination_y);
+    for (int steps = 0; cursor != DM2_V1_RECORD_HANDLE_END &&
+                          cursor != DM2_V1_RECORD_HANDLE_NULL &&
+                          steps < budget; ++steps) {
+        int16_t next;
+        raw_cursor = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)cursor, &raw_type, NULL, &raw_size);
+        if (!raw_cursor || raw_size < 2 ||
+            !dm2_v1_record_pool_next_link(pools, cursor, &next)) {
+            return 0;
+        }
+        destination_previous = cursor;
+        cursor = next;
+    }
+    if (cursor != DM2_V1_RECORD_HANDLE_END) return 0;
+
+    if (!dm2_v1_record_pool_cut_from_tile(
+            pools, dungeon, source_map, source_x, source_y, missile))
+        return 0;
+    if (source_previous == DM2_V1_RECORD_HANDLE_NULL) {
+        /* cut_from_tile already rewrote the source root. */
+    } else {
+        raw_previous = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)source_previous, &raw_type, NULL, &raw_size);
+        if (!raw_previous || raw_size < 2) return 0;
+        raw_previous[0] = (uint8_t)source_next;
+        raw_previous[1] = (uint8_t)((uint16_t)source_next >> 8);
+    }
+
+    {
+        int16_t destination_head = (int16_t)dm2_v1_dungeon_get_first_thing(
+            dungeon, destination_map, destination_x, destination_y);
+        if (!dm2_v1_record_pool_append_to_list(
+                pools, &destination_head, destination_missile))
+            return 0;
+        if (destination_previous == DM2_V1_RECORD_HANDLE_NULL) {
+            if (dm2_v1_dungeon_set_first_thing(
+                    dungeon, destination_map, destination_x, destination_y,
+                    (uint16_t)destination_missile) != 0)
+                return 0;
+        } else {
+            raw_previous = (uint8_t *)(uintptr_t)
+                dm2_v1_dungeon_get_thing_record(
+                    dungeon, (uint16_t)destination_previous,
+                    &raw_type, NULL, &raw_size);
+            if (!raw_previous || raw_size < 2) return 0;
+            raw_previous[0] = (uint8_t)destination_missile;
+            raw_previous[1] = (uint8_t)((uint16_t)destination_missile >> 8);
+        }
+    }
+    raw_missile = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+        dungeon, (uint16_t)missile, NULL, NULL, NULL);
+    if (!raw_missile) return 0;
+    raw_missile[0] = 0xfeu;
+    raw_missile[1] = 0xffu;
+    return 1;
+}
+
+/* Resolve the direct teleporter subbranch.  The destination probe and
+ * map_3BF83 bounds are source-owned; the DB14 handle and continuation
+ * direction are rotated with the same source delta used by the party pose
+ * owner. */
+static int dm2_runtime_missile_resolve_teleporter(
+    const DM2_V1_RecordPoolSet *pools, const DM2_V1_DungeonData *dungeon,
+    int map, int x, int y, int16_t missile,
+    int *out_map, int *out_x, int *out_y, int16_t *out_missile)
+{
+    const uint8_t *source_tiles;
+    const uint8_t *destination_tiles;
+    DM2_V1_SkprojectTeleporterDetail detail;
+    DM2_V1_SkprojectGetTeleporterDetailReceipt detail_receipt;
+    DM2_V1_SkprojectMap3BF83Receipt map_receipt;
+    int16_t source_width, source_height;
+    int16_t destination_width, destination_height;
+    int raw;
+
+    if (out_map) *out_map = -1;
+    if (out_x) *out_x = -1;
+    if (out_y) *out_y = -1;
+    if (out_missile) *out_missile = missile;
+    if (!pools || !dungeon || map < 0 || map >= dungeon->level_count ||
+        x < 0 || y < 0 || x >= dungeon->level_widths[map] ||
+        y >= dungeon->level_heights[map]) return 0;
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, map, x, y);
+    if (raw < 0 || dm2_v1_dungeon_get_square_type(dungeon, map, x, y) != 5)
+        return 0;
+    source_tiles = dm2_v1_dungeon_level_tile_data(
+        dungeon, map, &source_width, &source_height);
+    if (!source_tiles) return -1;
+    memset(&detail, 0, sizeof(detail));
+    memset(&detail_receipt, 0, sizeof(detail_receipt));
+    /* The destination map is encoded by the origin record; the helper below
+     * needs its tile plane, so first read the origin record's word@4. */
+    {
+        const int first = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+        const uint8_t *origin = first >= 0
+            ? dm2_v1_record_pool_address(pools, (int16_t)first) : NULL;
+        const uint16_t word4 = origin
+            ? (uint16_t)(origin[4] | ((uint16_t)origin[5] << 8)) : 0u;
+        const int destination_map = (int)(word4 >> 8);
+        if (!origin || destination_map < 0 ||
+            destination_map >= dungeon->level_count) return -1;
+        destination_tiles = dm2_v1_dungeon_level_tile_data(
+            dungeon, destination_map, &destination_width, &destination_height);
+        if (!destination_tiles ||
+            !dm2_v1_skproject_get_teleporter_detail(
+                (int16_t)x, (int16_t)y, source_tiles, source_width,
+                source_height, pools, (uint8_t)map, destination_tiles,
+                destination_width, destination_height, &detail,
+                &detail_receipt) || !detail_receipt.valid ||
+            detail.b_04 != (uint8_t)destination_map ||
+            dm2_v1_get_creature_at(pools, dungeon, destination_map,
+                                   detail.b_02, detail.b_03) !=
+                DM2_V1_RECORD_HANDLE_NULL) return -1;
+        {
+            const uint8_t stored_dir = (uint8_t)(((uint16_t)missile >> 14) & 3u);
+            const uint8_t destination_dir = (uint8_t)(
+                (detail.b_01 - detail.b_00 + stored_dir) & 3u);
+            const int16_t rotated_missile = (int16_t)(
+                ((uint16_t)missile & 0x3fffu) |
+                ((uint16_t)destination_dir << 14));
+            if (out_missile) *out_missile = rotated_missile;
+        }
+        if (!dm2_v1_skproject_map_3bf83(
+                detail.b_02, detail.b_03, detail.b_04,
+                (int16_t)(((detail.b_01 - detail.b_00 +
+                            (((uint16_t)missile >> 14) & 3u)) & 3u)),
+                map, x, y,
+                destination_width, destination_height, &map_receipt) ||
+            !map_receipt.valid || !map_receipt.in_bounds) return -1;
+        if (out_map) *out_map = destination_map;
+        if (out_x) *out_x = detail.b_02;
+        if (out_y) *out_y = detail.b_03;
+    }
+    return 1;
+}
+
+static uint16_t dm2_runtime_missile_rd16(
+    const DM2_V1_RecordPoolSet *pools, const uint8_t *p)
+{
+    return pools && pools->source_words_big_endian
+        ? (uint16_t)(((uint16_t)p[0] << 8) | p[1])
+        : (uint16_t)(p[0] | ((uint16_t)p[1] << 8));
+}
+
+static void dm2_runtime_missile_wr16(
+    const DM2_V1_RecordPoolSet *pools, uint8_t *p, uint16_t value)
+{
+    if (pools && pools->source_words_big_endian) {
+        p[0] = (uint8_t)(value >> 8);
+        p[1] = (uint8_t)value;
+    } else {
+        p[0] = (uint8_t)value;
+        p[1] = (uint8_t)(value >> 8);
+    }
+}
+
+/* Dynamic DB14 records are source-owned pool records; many authentic worlds
+ * have no raw dungeon record for a newly allocated projectile. Keep the pool
+ * chain authoritative and mirror raw links only where a raw record exists. */
+static int dm2_runtime_missile_move_pool_between_tiles(
+    DM2_V1_RecordPoolSet *pools, DM2_V1_DungeonData *dungeon,
+    int source_map, int source_x, int source_y,
+    int destination_map, int destination_x, int destination_y,
+    int16_t missile)
+{
+    int budget = 0;
+    int16_t cursor, source_prev = DM2_V1_RECORD_HANDLE_NULL;
+    int16_t source_next = DM2_V1_RECORD_HANDLE_END;
+    int16_t destination_prev = DM2_V1_RECORD_HANDLE_NULL;
+    int same_tile;
+    uint8_t *raw;
+
+    if (!pools || !dungeon || missile < 0) return 0;
+    same_tile = source_map == destination_map && source_x == destination_x &&
+        source_y == destination_y;
+    for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db)
+        budget += pools->pools[db].record_count +
+            pools->pools[db].extension_count;
+    if (budget <= 0) return 0;
+
+    cursor = (int16_t)dm2_v1_dungeon_get_first_thing(
+        dungeon, source_map, source_x, source_y);
+    for (int steps = 0; cursor >= 0 &&
+             cursor != DM2_V1_RECORD_HANDLE_END && steps++ < budget;) {
+        int16_t next;
+        if (!dm2_v1_record_pool_next_link(pools, cursor, &next)) return 0;
+        if (cursor == missile) {
+            source_next = next;
+            break;
+        }
+        source_prev = cursor;
+        cursor = next;
+    }
+    if (cursor != missile || source_next == DM2_V1_RECORD_HANDLE_NULL)
+        return 0;
+
+    cursor = (int16_t)dm2_v1_dungeon_get_first_thing(
+        dungeon, destination_map, destination_x, destination_y);
+    for (int steps = 0; cursor >= 0 &&
+             cursor != DM2_V1_RECORD_HANDLE_END && steps++ < budget;) {
+        int16_t next;
+        if (!dm2_v1_record_pool_next_link(pools, cursor, &next)) return 0;
+        destination_prev = cursor;
+        cursor = next;
+    }
+    if (cursor != DM2_V1_RECORD_HANDLE_END) return 0;
+
+    if (source_prev == DM2_V1_RECORD_HANDLE_NULL) {
+        if (dm2_v1_dungeon_set_first_thing(dungeon, source_map, source_x,
+                                           source_y, (uint16_t)source_next))
+            return 0;
+    } else {
+        uint8_t *prev = dm2_v1_record_pool_address_mut(pools, source_prev);
+        if (!prev) return 0;
+        dm2_runtime_missile_wr16(pools, prev, (uint16_t)source_next);
+        raw = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)source_prev, NULL, NULL, NULL);
+        if (raw) dm2_runtime_missile_wr16(pools, raw, (uint16_t)source_next);
+    }
+    {
+        uint8_t *projectile = dm2_v1_record_pool_address_mut(pools, missile);
+        if (!projectile) return 0;
+        dm2_runtime_missile_wr16(pools, projectile,
+                                 DM2_V1_RECORD_HANDLE_END);
+        raw = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)missile, NULL, NULL, NULL);
+        if (raw) dm2_runtime_missile_wr16(pools, raw,
+                                          DM2_V1_RECORD_HANDLE_END);
+    }
+    if (same_tile) return 1;
+    {
+        int16_t destination_head = (int16_t)dm2_v1_dungeon_get_first_thing(
+            dungeon, destination_map, destination_x, destination_y);
+        if (!dm2_v1_record_pool_append_to_list(
+                pools, &destination_head, missile)) return 0;
+        if (destination_prev == DM2_V1_RECORD_HANDLE_NULL) {
+            if (dm2_v1_dungeon_set_first_thing(
+                    dungeon, destination_map, destination_x, destination_y,
+                    (uint16_t)missile)) return 0;
+        } else {
+            raw = dm2_v1_record_pool_address_mut(pools, destination_prev);
+            if (!raw) return 0;
+            dm2_runtime_missile_wr16(pools, raw, (uint16_t)missile);
+            raw = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+                dungeon, (uint16_t)destination_prev, NULL, NULL, NULL);
+            if (raw) dm2_runtime_missile_wr16(pools, raw, (uint16_t)missile);
+        }
+    }
+    return 1;
+}
+
+/* Resolve the live source position of a DB4 handle after an attack owner has
+ * run.  THINK_CREATURE is intentionally coordinate-based in c_ai.cpp, so a
+ * partial ATTACK_CREATURE tail must reissue the source timer at the record's
+ * current tile rather than at the projectile's old destination. */
+static int dm2_runtime_find_creature_tile(
+    const DM2_V1_RecordPoolSet *pools, const DM2_V1_DungeonData *dungeon,
+    int map, int16_t creature, int *out_x, int *out_y)
+{
+    if (!pools || !dungeon || creature < 0 || !out_x || !out_y ||
+        map < 0 || map >= dungeon->level_count) return 0;
+    for (int y = 0; y < dungeon->level_heights[map]; ++y) {
+        for (int x = 0; x < dungeon->level_widths[map]; ++x) {
+            if (dm2_v1_get_creature_at(pools, dungeon, map, x, y) == creature) {
+                *out_x = x;
+                *out_y = y;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+/*
+ * dm2_runtime_step_missile_timer — source-shaped DB14 half of
+ * DM2_STEP_MISSILE (c_tim_proc.cpp:432-877).
+ *
+ * c_tim::A is the DB14 record handle.  c_tim::B packs x in bits 0..4, y in
+ * bits 5..9 and the source energy step in bits 12..15.  The old reduced
+ * spell delegate treated A/B as two coordinates, which could never bind the
+ * saved missile record.  This handler admits only a DB14 whose record bytes
+ * 6..7 point back to the dispatching source timer slot and whose chain really
+ * contains the record on the encoded tile.
+ *
+ * The complete source path still owns actuator and broader
+ * DM2_MOVE_RECORD_TO side effects.  In particular, c_tim_proc.cpp calls
+ * DM2_move_075f_0af9 first and then enters DM2_MOVE_RECORD_TO; this handler
+ * binds the bounded ordinary passage and teleporter/map-transition branches
+ * for creature-free cells and NONMATERIAL creature pass-through. Other
+ * creature outcomes remain fail-closed; all mutations are rolled back if the
+ * continuation timer cannot be queued.
+ */
+static int dm2_runtime_step_missile_timer(
+    void *user, const DM2_V1_SourceTimer *timer, uint16_t source_index,
+    DM2_V1_ProceedTimersReceipt *receipt) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_RecordPoolSet pool_backup;
+    DM2_V1_SourceTimerQueue queue_backup;
+    uint8_t *caii_backup = NULL;
+    int caii_backup_bytes = 0;
+    DM2_V1_DropRng rng_backup = {0};
+    uint8_t *raw_backup = NULL;
+    uint8_t *record;
+    uint8_t *dungeon_record;
+    int map, x, y, size_dungeon = 0;
+    int16_t missile;
+    int16_t creature;
+    int impact_x;
+    int impact_y;
+    int nonmaterial_pass_through = 0;
+    uint16_t packed_b, energy_step;
+    uint8_t record_energy;
+    int move_dir;
+    int next_x, next_y;
+    int cloned = 0;
+    int caii_cloned = 0;
+    int rng_cloned = 0;
+
+    memset(&pool_backup, 0, sizeof(pool_backup));
+    if (!rt || !timer || !rt->record_pools_valid || !rt->boot ||
+        !rt->boot->dungeon_data || !rt->boot->dm2_state) {
+        if (receipt) receipt->handler_rejected_count++;
+        return 1;
+    }
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    missile = (int16_t)(uint16_t)timer->value_a;
+    packed_b = (uint16_t)timer->value_b;
+    x = (int)(packed_b & 0x1fu);
+    y = (int)((packed_b >> 5) & 0x1fu);
+    impact_x = x;
+    impact_y = y;
+    energy_step = (uint16_t)(packed_b >> 12);
+    if (map < 0 || map >= dungeon->level_count ||
+        x < 0 || y < 0 || x >= dungeon->level_widths[map] ||
+        y >= dungeon->level_heights[map] ||
+        dm2_v1_record_handle_pool(missile) != 14 ||
+        !(record = dm2_v1_record_pool_address_mut(
+              &rt->record_pools, missile)) ||
+        rt->record_pools.pools[14].record_size < 8 ||
+        (dm2_runtime_missile_rd16(&rt->record_pools, record + 6) !=
+         source_index)) {
+        goto missile_reject;
+    }
+
+    dungeon_record = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+        dungeon, (uint16_t)missile, NULL, NULL, &size_dungeon);
+    if (dungeon_record && (size_dungeon < 8 ||
+        dm2_runtime_missile_rd16(&rt->record_pools, dungeon_record + 6) !=
+            source_index)) {
+        goto missile_reject;
+    }
+    creature = dm2_v1_get_creature_at(&rt->record_pools, dungeon, map, x, y);
+    /* c_tim_proc.cpp:753-813 checks the destination cell after the
+     * source moverec has selected the next direction.  A spell fired from
+     * the party cell therefore has no creature at (x,y), but must still
+     * enter the same ATTACK_CREATURE owner when the next cell contains a
+     * DB4 creature. */
+    if (creature == DM2_V1_RECORD_HANDLE_NULL && timer->type != 0x1du) {
+        static const int missile_dx[4] = { 0, 1, 0, -1 };
+        static const int missile_dy[4] = { -1, 0, 1, 0 };
+        int next_dir = (int)((packed_b >> 10) & 0x3u);
+        int candidate_x = x + missile_dx[next_dir];
+        int candidate_y = y + missile_dy[next_dir];
+        if (candidate_x >= 0 && candidate_y >= 0 &&
+            candidate_x < dungeon->level_widths[map] &&
+            candidate_y < dungeon->level_heights[map]) {
+            creature = dm2_v1_get_creature_at(
+                &rt->record_pools, dungeon, map, candidate_x, candidate_y);
+            if (creature != DM2_V1_RECORD_HANDLE_NULL) {
+                impact_x = candidate_x;
+                impact_y = candidate_y;
+            }
+        }
+    }
+    if (creature != DM2_V1_RECORD_HANDLE_NULL) {
+        const uint8_t *creature_record = dm2_v1_record_pool_address(
+            &rt->record_pools, creature);
+        uint16_t ai_flags = 0u;
+        DM2_V1_CaiiAiSpecFlagsFn flags_fn =
+            dm2_v1_caii_get_ai_spec_flags_fn();
+        /* The source deletes an absorbed/reflected projectile, but its HIT
+         * and TURNS_MISSILE branches need the still-unbound damage and
+         * target-rotation owners.  Unknown AI provenance therefore keeps the
+         * timer live instead of guessing a collision outcome. */
+        if (!creature_record || !flags_fn ||
+            flags_fn((int)creature_record[4], &ai_flags) != 1)
+            goto missile_requeue;
+        if ((ai_flags & (DM2_AIFLAG_ABSORBS_MISSILE |
+                         DM2_AIFLAG_REFLECTOR)) == 0u) {
+            /* NONMATERIAL passes through the creature-side moverec path;
+             * its map continuation is still unbound.  The w30
+             * TURNS_MISSILE bit only suppresses the pre-hit direction flip
+             * in c_move.cpp:52090-52114; the hit itself still uses the same
+             * impact/ATTACK_CREATURE owner below. */
+            if ((ai_flags & DM2_AIFLAG_NONMATERIAL) != 0u)
+                nonmaterial_pass_through = 1;
+            else {
+            DM2_V1_CaiiAttackReceipt attack_receipt;
+            DM2_V1_CaiiAttackReceipt impact_attack_receipt;
+            DM2_V1_ImpactAttackRequest impact_request;
+            DM2_V1_ImpactAttackReceipt impact_receipt;
+            int attack_completed;
+            int impact_attack_completed = 1;
+            memset(&impact_attack_receipt, 0, sizeof(impact_attack_receipt));
+            /* c_tim_proc.cpp:795-802: after DM2_MOVE_RECORD_TO has moved
+             * the missile, the source probes the destination creature and
+             * invokes DM2_ATTACK_CREATURE with attack word 0x2006 and a
+             * zero damage argument.  This is the creature reaction path,
+             * not the projectile's WOUND_CREATURE damage owner. */
+            if (!rt->caii_ready || !rt->caii.valid ||
+                rt->caii.capacity <= 0 || rt->caii.capacity > INT_MAX /
+                    DM2_V1_CAII_SLOT_SIZE)
+                goto missile_requeue;
+
+            if (!dm2_v1_record_pool_set_clone(&pool_backup,
+                                              &rt->record_pools)) {
+                goto missile_reject;
+            }
+            cloned = 1;
+            queue_backup = rt->timer_queue;
+            rng_backup = rt->drop_rng;
+            rng_cloned = 1;
+            if (rt->caii.slots == NULL)
+                goto missile_rollback;
+            caii_backup_bytes = rt->caii.capacity * DM2_V1_CAII_SLOT_SIZE;
+            caii_backup = malloc((size_t)caii_backup_bytes);
+            if (!caii_backup) goto missile_rollback;
+            memcpy(caii_backup, rt->caii.slots, (size_t)caii_backup_bytes);
+            caii_cloned = 1;
+            if (!dungeon->raw_data || dungeon->raw_size <= 0)
+                goto missile_rollback;
+            raw_backup = malloc((size_t)dungeon->raw_size);
+            if (!raw_backup) goto missile_rollback;
+            memcpy(raw_backup, dungeon->raw_data, (size_t)dungeon->raw_size);
+            memset(&impact_request, 0, sizeof(impact_request));
+            impact_request.recordLink = dm2_runtime_missile_rd16(
+                &rt->record_pools, record + 2);
+            impact_request.dbType = (impact_request.recordLink & 0x3c00) >> 10;
+            impact_request.missileEnergyRemaining = record[4];
+            impact_request.missileEnergyRemaining2 = record[5];
+            impact_request.missilePowerNibble = (int)energy_step;
+            impact_request.queryWord = dm2_runtime_projectile_query_word;
+            impact_request.queryWeight = dm2_runtime_projectile_query_weight;
+            impact_request.randMask = dm2_runtime_projectile_rand_mask;
+            impact_request.userdata = rt;
+            memset(&impact_receipt, 0, sizeof(impact_receipt));
+            if (!dm2_v1_DM2_move_075f_06bd_projectile_get_impact_attack(
+                    &impact_request, &impact_receipt) || !impact_receipt.valid)
+                goto missile_rollback;
+            if (impact_receipt.impactAttack > 0) {
+                /* c_move.cpp:1738-1770: MOVE_075F applies the projectile
+                 * attack as 0x200D/100 before STEP_MISSILE's later 0x2006
+                 * creature reaction.  Keep both calls in CAII so
+                 * THINK_CREATURE remains the HP/death/drop owner. */
+                impact_attack_completed = dm2_v1_caii_attack_creature(
+                    &rt->record_pools, dungeon, &rt->caii,
+                    &rt->timer_queue, &rt->drop_rng, map,
+                    (unsigned long)rt->tick_count,
+                    creature, impact_x, impact_y, impact_x, impact_y,
+                    0x200du, 100, impact_receipt.impactAttack,
+                    &impact_attack_receipt);
+                if (!impact_attack_completed &&
+                    impact_attack_receipt.ai_flags_unknown)
+                    goto missile_rollback;
+            }
+            attack_completed = dm2_v1_caii_attack_creature(
+                &rt->record_pools, dungeon, &rt->caii,
+                    &rt->timer_queue, &rt->drop_rng, map,
+                    receipt ? receipt->game_tick : (unsigned long)rt->tick_count,
+                    creature, impact_x, impact_y, impact_x, impact_y,
+                    0x2006u, 0, 0, &attack_receipt);
+            if (impact_attack_receipt.hp_applied &&
+                !impact_attack_receipt.rescheduled) {
+                int creature_x = -1;
+                int creature_y = -1;
+                DM2_V1_CreatureScheduleReceipt schedule;
+                memset(&schedule, 0, sizeof(schedule));
+                if (dm2_runtime_find_creature_tile(
+                        &rt->record_pools, dungeon, map, creature,
+                        &creature_x, &creature_y) &&
+                    dm2_v1_caii_schedule_creature_at(
+                        &rt->record_pools, dungeon, &rt->caii,
+                        &rt->timer_queue, map,
+                        (unsigned long)rt->tick_count,
+                        creature_x, creature_y, &schedule) &&
+                    schedule.valid) {
+                    impact_attack_receipt.rescheduled = 1;
+                }
+            }
+            memset(&g_dm2_last_missile_impact, 0,
+                   sizeof(g_dm2_last_missile_impact));
+            g_dm2_last_missile_impact.valid = 1;
+            g_dm2_last_missile_impact.destination_hit =
+                impact_x != x || impact_y != y;
+            g_dm2_last_missile_impact.attack_completed = attack_completed;
+            g_dm2_last_missile_impact.hp_applied =
+                impact_attack_receipt.hp_applied;
+            g_dm2_last_missile_impact.hp_after =
+                impact_attack_receipt.hp_word_after;
+            g_dm2_last_missile_impact.damage_amount =
+                impact_receipt.impactAttack;
+            g_dm2_last_missile_impact.damage_attack_completed =
+                impact_attack_completed;
+            g_dm2_last_missile_impact.damage_hp_word_after =
+                impact_attack_receipt.hp_word_after;
+            g_dm2_last_missile_impact.damage_rescheduled =
+                impact_attack_receipt.rescheduled;
+            g_dm2_last_missile_impact.missile_record = missile;
+            g_dm2_last_missile_impact.creature_record = creature;
+            g_dm2_last_missile_impact.creature_type =
+                attack_receipt.creature_type;
+            /* The source continues into the moverec result after this
+             * reaction call.  A fail-closed reaction tail must not invent a
+             * creature wound, so only the bounded call's own state is
+             * committed here. */
+            if (!attack_completed && attack_receipt.ai_flags_unknown)
+                goto missile_rollback;
+            if (!dm2_v1_record_pool_cut_from_tile(
+                    &rt->record_pools, dungeon, map, x, y, missile))
+                goto missile_rollback;
+            record = dm2_v1_record_pool_address_mut(&rt->record_pools, missile);
+            if (!record) goto missile_rollback;
+            record[0] = 0xffu; record[1] = 0xffu;
+            if (dungeon_record) {
+                dungeon_record[0] = 0xffu; dungeon_record[1] = 0xffu;
+            }
+            g_dm2_last_missile_impact.missile_consumed = 1;
+            dm2_v1_record_pool_set_free(&pool_backup);
+            free(caii_backup);
+            free(raw_backup);
+            return 1;
+            }
+        }
+    }
+
+    /* Validate that the source handle is on the encoded tile before any
+     * record or map byte changes. */
+    {
+        int16_t cursor = (int16_t)dm2_v1_dungeon_get_first_thing(
+            dungeon, map, x, y);
+        int found = 0;
+        int steps = 0;
+        int budget = 0;
+        for (int db = 0; db < DM2_V1_RECORD_POOL_COUNT; ++db)
+            budget += rt->record_pools.pools[db].record_count +
+                rt->record_pools.pools[db].extension_count;
+        while (cursor != DM2_V1_RECORD_HANDLE_END && cursor >= 0 &&
+               steps++ < budget) {
+            int16_t next;
+            if (cursor == missile) found = 1;
+            if (!dm2_v1_record_pool_next_link(&rt->record_pools, cursor,
+                                               &next)) {
+                goto missile_reject;
+            }
+            cursor = next;
+        }
+        if (!found || cursor != DM2_V1_RECORD_HANDLE_END) {
+            goto missile_reject;
+        }
+    }
+
+    if (!dm2_v1_record_pool_set_clone(&pool_backup, &rt->record_pools)) {
+        goto missile_reject;
+    }
+    cloned = 1;
+    queue_backup = rt->timer_queue;
+    if (!dungeon->raw_data || dungeon->raw_size <= 0)
+        goto missile_rollback;
+    raw_backup = (uint8_t *)malloc((size_t)dungeon->raw_size);
+    if (!raw_backup) goto missile_rollback;
+    memcpy(raw_backup, dungeon->raw_data, (size_t)dungeon->raw_size);
+
+    record_energy = record[4];
+    if ((uint16_t)record_energy <= energy_step) {
+        if (!dm2_runtime_missile_move_pool_between_tiles(
+                &rt->record_pools, dungeon, map, x, y,
+                map, x, y, missile))
+            goto missile_rollback;
+        record = dm2_v1_record_pool_address_mut(&rt->record_pools, missile);
+        if (!record) goto missile_rollback;
+        record[0] = 0xffu; record[1] = 0xffu;
+        if (dungeon_record) {
+            dungeon_record[0] = 0xffu; dungeon_record[1] = 0xffu;
+        }
+    } else {
+        record[4] = (uint8_t)(record[4] - (uint8_t)energy_step);
+        record[5] = record[5] >= (uint8_t)energy_step
+            ? (uint8_t)(record[5] - (uint8_t)energy_step) : 0u;
+        if (dungeon_record) {
+            dungeon_record[4] = record[4];
+            dungeon_record[5] = record[5];
+        }
+        {
+            /* c_tim_proc.cpp:568-753: after the energy write, a normal
+             * passage advances the DB14 record to the direction-selected
+             * tile before the continuation timer is queued.  The source
+             * pool copy and c_map raw chain are separate owners, so admit
+             * only a bounded, creature-free passage and update both views. */
+            static const int move_dx[4] = {0, 1, 0, -1};
+            static const int move_dy[4] = {-1, 0, 1, 0};
+            move_dir = (int)((packed_b >> 10) & 0x3u);
+            next_x = x + move_dx[move_dir];
+            next_y = y + move_dy[move_dir];
+            {
+                int teleporter_map = -1;
+                int teleporter_x = -1;
+                int teleporter_y = -1;
+                int16_t teleporter_missile = missile;
+                int teleporter_route = 0;
+                if (next_x >= 0 && next_y >= 0 &&
+                    next_x < dungeon->level_widths[map] &&
+                    next_y < dungeon->level_heights[map]) {
+                    teleporter_route = dm2_runtime_missile_resolve_teleporter(
+                        &rt->record_pools, dungeon, map, next_x, next_y,
+                        missile, &teleporter_map, &teleporter_x,
+                        &teleporter_y, &teleporter_missile);
+                }
+                if (teleporter_route < 0)
+                    goto missile_rollback;
+                if (teleporter_route > 0) {
+                    /* This is the source's map_3BF83/MOVE_RECORD_TO handoff,
+                     * not a coordinate-only teleport: both raw chains and
+                     * the pool chain are moved before the timer payload is
+                     * retargeted. */
+                    if (!dm2_runtime_missile_move_between_tiles(
+                            &rt->record_pools, dungeon, map, x, y,
+                            teleporter_map, teleporter_x, teleporter_y,
+                            missile, teleporter_missile))
+                        goto missile_rollback;
+                    map = teleporter_map;
+                    next_x = teleporter_x;
+                    next_y = teleporter_y;
+                    missile = teleporter_missile;
+                    move_dir = (int)(((uint16_t)missile >> 14) & 3u);
+                    packed_b = (uint16_t)((packed_b & ~0x3ffu) |
+                        (uint16_t)next_x | ((uint16_t)next_y << 5) |
+                        (uint16_t)(move_dir << 10));
+                } else if (next_x >= 0 && next_y >= 0 &&
+                           next_x < dungeon->level_widths[map] &&
+                           next_y < dungeon->level_heights[map] &&
+                           dm2_runtime_missile_is_plain_passage(
+                               dungeon, map, next_x, next_y) &&
+                           (nonmaterial_pass_through ||
+                            dm2_v1_get_creature_at(
+                                &rt->record_pools, dungeon, map, next_x, next_y) ==
+                                DM2_V1_RECORD_HANDLE_NULL)) {
+                if (!dm2_runtime_missile_move_pool_between_tiles(
+                        &rt->record_pools, dungeon, map, x, y,
+                        map, next_x, next_y, missile))
+                    goto missile_rollback;
+                packed_b = (uint16_t)((packed_b & ~0x3ffu) |
+                    (uint16_t)next_x | ((uint16_t)next_y << 5));
+                }
+            }
+            DM2_V1_SourceTimer continuation = *timer;
+            uint32_t tick = receipt ? receipt->game_tick :
+                (uint32_t)rt->tick_count;
+            continuation.value_b = (int16_t)packed_b;
+            continuation.value_a = missile;
+            continuation.type = 0x1eu;
+            continuation.ticks_and_map =
+                ((uint32_t)(map & 0xff) << 24) |
+                ((tick + 1u) & DM2_V1_SOURCE_TIMER_TICK_MASK);
+            if (dm2_v1_source_timer_enqueue(
+                    &rt->timer_queue, &continuation, source_index) !=
+                DM2_V1_SOURCE_TIMER_OK)
+                goto missile_rollback;
+        }
+    }
+    dm2_v1_record_pool_set_free(&pool_backup);
+    free(raw_backup);
+    return 1;
+
+missile_requeue:
+    /* Collision/reflection and moverec remain source-owned. Preserve the
+     * timer rather than consuming it as if the projectile had disappeared. */
+    {
+        DM2_V1_SourceTimer continuation = *timer;
+        uint32_t tick = receipt ? receipt->game_tick : (uint32_t)rt->tick_count;
+        continuation.type = 0x1eu;
+        continuation.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
+            ((tick + 1u) & DM2_V1_SOURCE_TIMER_TICK_MASK);
+        if (dm2_v1_source_timer_enqueue(
+                &rt->timer_queue, &continuation, source_index) ==
+            DM2_V1_SOURCE_TIMER_OK)
+            return 1;
+    }
+missile_reject:
+    if (receipt) receipt->handler_rejected_count++;
+    return 1;
+
+missile_rollback:
+    if (raw_backup)
+        memcpy(dungeon->raw_data, raw_backup, (size_t)dungeon->raw_size);
+    rt->timer_queue = queue_backup;
+    if (rng_cloned)
+        rt->drop_rng = rng_backup;
+    if (caii_cloned && caii_backup && rt->caii.slots)
+        memcpy(rt->caii.slots, caii_backup, (size_t)caii_backup_bytes);
+    if (cloned) {
+        dm2_v1_record_pool_set_free(&rt->record_pools);
+        rt->record_pools = pool_backup;
+        memset(&pool_backup, 0, sizeof(pool_backup));
+    }
+    free(raw_backup);
+    free(caii_backup);
+    if (receipt) receipt->handler_rejected_count++;
+    return 1;
+}
+
+/* 0x19 cloud remains delegated to the source-owned runtime cloud handler;
+ * 0x1D/0x1E now use the authenticated DB14 handler above. */
+
+/* 0x46 light, 0x47 hero ench flag and 0x4B poison are delegated to the
+ * compatibility spell handlers.  Runtime 0x48 uses the source-sized c_hero
+ * owner directly above. */
+
+/* 0x5E alloc new creature is bound to the source-shaped direct free-slot
+ * owner above when the transferred runtime still has authenticated AI/GDAT,
+ * DB4, CAII, timer and sound state.  The source recycler, cross-map placement
+ * and missing-owner branches remain fail-closed. */
 
 /*
  * dm2_v1_runtime_tick — advance DM2 game state by one V1 tick.
@@ -4664,6 +10105,7 @@ static int dm2_runtime_spell_timer_delegate(void *user,
 void dm2_v1_runtime_tick(void) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
 
+
     /* GAME_LOAD owns gametick, the timer heap and the v1e14xx weather
      * globals as one restored session (SKProject c_savegame.cpp::DM2_GAME_LOAD
      * followed by c_tim_proc.cpp::DM2_PROCEED_TIMERS). A boot-mounted
@@ -4673,6 +10115,12 @@ void dm2_v1_runtime_tick(void) {
         return;
     }
     rt->tick_count++;
+
+    /* SKULLWIN/startend.cpp consumes one savegames1.b_04 unit per source
+     * update.  Keep this separate from the timer heap: Aura of Speed is a
+     * global source byte, not a hero enchantment timer. */
+    if (rt->source_aura_of_speed_valid && rt->source_aura_of_speed != 0u)
+        rt->source_aura_of_speed--;
 
     /* skweathr.cpp derives environmental time from its source globals and
      * tick schedule. The former fixed 1,092-tick minute was invented, so do
@@ -4719,80 +10167,94 @@ void dm2_v1_runtime_tick(void) {
             dispatcher.handlers[DM2_V1_TIMER_THINK_CREATURE_B] =
                 dm2_runtime_think_creature_timer;
         }
-        /* c_tim_proc's 0x04 dispatch is record-owned.  GAME_LOAD has not
-         * restored its DB3/DB14/DB0 transaction as an atomic session owner,
-         * so no wall/floor actuator handler is registered here.  The shared
-         * dispatcher consumes the timer fail-closed instead of deriving a
-         * mutable target from raw timer bytes. */
+        /* c_tim_proc's 0x04 dispatch is record-owned. Wall/floor classes now
+         * enter the complete source actuator chain walkers. Other classes
+         * remain fail-closed; no value_b-only terrain mutation is allowed. */
+        dispatcher.tile_class_at = dm2_runtime_tile_class_at;
+        dispatcher.actuator_tile[0] = dm2_runtime_actuate_wall_mecha_timer;
+        dispatcher.actuator_tile[1] = dm2_runtime_actuate_floor_mecha_timer;
+        dispatcher.actuator_tile[4] = dm2_runtime_actuate_door_mecha_timer;
         dispatcher.handlers[DM2_V1_TIMER_UPDATE_WEATHER] =
             dm2_runtime_update_weather_timer;
-        /* STEP/DESTROY_DOOR likewise need the decoded DB0 direction,
-         * collision, sound and queue state.  The old bit-only handlers are
-         * intentionally not registered in a real-data runtime. */
-        (void)dm2_runtime_door_step_timer;
-        (void)dm2_runtime_destroy_door_timer;
-        /* 0x58/0x59/0x5b/0x5c alter DB records. GAME_LOAD has not restored
-         * their original timer queue and record transaction as one unit, so
-         * do not treat a boot-time raw record pool as mutable live state. */
-        (void)dm2_runtime_release_door_button_timer;
-        (void)dm2_runtime_process_timer_59;
-        (void)dm2_runtime_5b_record_clear;
-        (void)dm2_runtime_5c_record_set;
+        /* STEP_DOOR now requires the direct DB0 root at the timer cell, a
+         * complete record graph, source actor direction and no party/DB4
+         * collision. Its sound and full moverec follow-up remain separate. */
+        dispatcher.handlers[DM2_V1_TIMER_STEP_DOOR] =
+            dm2_runtime_door_step_timer;
+        dispatcher.handlers[DM2_V1_TIMER_DESTROY_DOOR] =
+            dm2_runtime_destroy_door_timer;
+        /* These four tails are source-global record-byte operations.  The
+         * committed GAME_LOAD graph now supplies the authenticated map
+         * owner and record lookup; invalid map/record admission returns a
+         * rejected handler result without a host fallback mutation. */
+        dispatcher.handlers[DM2_V1_TIMER_RELEASE_DOOR_BUTTON] =
+            dm2_runtime_release_door_button_timer;
+        dispatcher.handlers[DM2_V1_TIMER_PROCESS_59] =
+            dm2_runtime_process_timer_59;
+        dispatcher.handlers[DM2_V1_TIMER_5B_RECORD_CLEAR] =
+            dm2_runtime_5b_record_clear;
+        dispatcher.handlers[DM2_V1_TIMER_5C_RECORD_SET] =
+            dm2_runtime_5c_record_set;
         dispatcher.handlers[DM2_V1_TIMER_PROCESS_0C] =
             dm2_runtime_process_0c_timer;
         dispatcher.handlers[DM2_V1_TIMER_RESURRECTION] =
             dm2_runtime_resurrection_timer;
-        /* PROCESS_0E temporarily changes an item record and must restore it
-         * through the same c_hero/inventory owner.  The local pool address
-         * alone is not that owner, so do not mutate it in production. */
-        (void)dm2_runtime_process_0e_timer;
+        /* PROCESS_0E temporarily changes an item record and runs the
+         * source-owned c_item::PROCESS_ITEM_BONUS against c_hero. */
+        dispatcher.handlers[DM2_V1_TIMER_PROCESS_0E] =
+            dm2_runtime_process_0e_timer;
+        /* TICK_GENERATOR publishes the source-owned 0x04 message and its
+         * continuation from the live DB3 actuator record.  The 0x04
+         * consumer remains fail-closed until its complete DB3/DB14 owner is
+         * admitted separately. */
+        dispatcher.handlers[DM2_V1_TIMER_TICK_GENERATOR] =
+            dm2_runtime_tick_generator_timer;
+        dispatcher.handlers[DM2_V1_TIMER_ENCH_POWER] =
+            dm2_runtime_ench_power_timer;
+        dispatcher.handlers[DM2_V1_TIMER_POISON] =
+            dm2_runtime_poison_timer;
+        dispatcher.handlers[DM2_V1_TIMER_HERO_ENCH_FLAG] =
+            dm2_runtime_hero_ench_flag_timer;
+        dispatcher.handlers[DM2_V1_TIMER_LIGHT] =
+            dm2_runtime_light_timer;
+        dispatcher.handlers[DM2_V1_TIMER_ORNATE_ANIMATOR] =
+            dm2_runtime_ornate_animator_timer;
+        dispatcher.handlers[DM2_V1_TIMER_ORNATE_NOISE] =
+            dm2_runtime_ornate_noise_timer;
         dispatcher.handlers[DM2_V1_TIMER_PROCESS_SOUND] =
             dm2_runtime_process_sound_timer;
-        /* PROCESS_3D and MOVE_RECORD_ROTATE require MOVE_RECORD_TO's full
-         * link, wake/sleep and party transaction.  Their old direct writes
-         * could relocate original records or the party from timer bytes
-         * alone, so both stay unbound until that source owner is present. */
-        /* Spell-effect timer delegation: 0x46 light, 0x47 hero ench flag,
-         * 0x48 ench power, 0x4B poison, 0x19 cloud, 0x1E missile, 0x5E summon.
-         * 0x47/0x48/0x4B consume in source order but are deliberately
-         * non-mutating: session champion records are not SKProject c_hero.
-         * Do not copy that surrogate merely to make an effect appear live. */
-        if (rt->session_snapshot_valid &&
-            rt->session_snapshot.champion_count > 0 &&
-            rt->session_snapshot.champion_count <= 4) {
-            int sc = rt->session_snapshot.champion_count;
-            dm2_v1_spell_timer_handler_context_init_ex(
-                &rt->spell_timer_ctx,
-                NULL, sc,
-                &rt->timer_queue,
-                (uint32_t)rt->tick_count,
-                rt->session_snapshot.party_level,
-                rt->record_pools_valid ? &rt->record_pools : NULL,
-                rt->boot ? (struct DM2_V1_DungeonData *)rt->boot->dungeon_data : NULL,
-                rt->caii_ready ? &rt->caii : NULL);
-            rt->spell_timer_ctx_ready = 1;
-        } else {
-            rt->spell_timer_ctx_ready = 0;
-        }
-        dispatcher.handlers[DM2_V1_TIMER_LIGHT] =
-            dm2_runtime_spell_timer_delegate;
-        dispatcher.handlers[DM2_V1_TIMER_HERO_ENCH_FLAG] =
-            dm2_runtime_spell_timer_delegate;
-        dispatcher.handlers[DM2_V1_TIMER_ENCH_POWER] =
-            dm2_runtime_spell_timer_delegate;
-        dispatcher.handlers[DM2_V1_TIMER_POISON] =
-            dm2_runtime_spell_timer_delegate;
+        /* PROCESS_3D owns authenticated DB4 moverec.  MOVE_RECORD_ROTATE
+         * owns the same-map party-sentinel path; the bounded cross-map shape
+         * remains behind positive verification, and actuator tails remain
+         * fail-closed. */
+        dispatcher.handlers[DM2_V1_TIMER_PROCESS_3C] =
+            dm2_runtime_process_moverec_timer;
+        dispatcher.handlers[DM2_V1_TIMER_PROCESS_3D] =
+            dm2_runtime_process_moverec_timer;
+        dispatcher.handlers[DM2_V1_TIMER_MOVE_RECORD_ROTATE] =
+            dm2_runtime_move_record_rotate_timer;
         dispatcher.handlers[DM2_V1_TIMER_PROCESS_CLOUD] =
-            dm2_runtime_spell_timer_delegate;
+            dm2_runtime_process_cloud_timer;
         dispatcher.handlers[DM2_V1_TIMER_STEP_MISSILE] =
-            dm2_runtime_spell_timer_delegate;
+            dm2_runtime_step_missile_timer;
+        dispatcher.handlers[0x1d] = dm2_runtime_step_missile_timer;
+        /* 0x5E direct free-slot spawn is bound only when the transferred
+         * candidate still supplies the authenticated AI/GDAT owner.  The
+         * source recycler and cross-map placement remain closed. */
         dispatcher.handlers[DM2_V1_TIMER_ALLOC_NEW_CREATURE] =
-            dm2_runtime_spell_timer_delegate;
+            dm2_runtime_alloc_new_creature_timer;
         (void)dm2_v1_proceed_timers(&rt->timer_queue,
                                     (uint32_t)rt->tick_count,
                                     &dispatcher,
                                     &rt->proceed_timers);
-        rt->spell_timer_ctx_ready = 0;
+        /* Keep the runtime receipt tied to the dispatcher’s source-order
+         * tally.  Actuator handlers own their family-specific counters, but
+         * this aggregate must include the class-3 source no-op as well. */
+        for (int tile_class = 0;
+             tile_class < DM2_V1_TIMER_ACTUATOR_TILE_CLASSES; ++tile_class) {
+            rt->actuator_tile_timers +=
+                rt->proceed_timers.actuator_tile_tally[tile_class];
+        }
     }
 
     /* Drain sound queue — DM2_SOUND8 (c_sound.cpp:633-647).
@@ -5194,6 +10656,7 @@ int dm2_v1_runtime_record_pools_valid(void)
     return g_dm2_runtime.record_pools_valid;
 }
 
+
 int dm2_v1_runtime_think_creature_receipt(DM2_V1_ThinkCreatureReceipt *out)
 {
     if (!out || !g_dm2_runtime.think_binding_ready) {
@@ -5201,6 +10664,49 @@ int dm2_v1_runtime_think_creature_receipt(DM2_V1_ThinkCreatureReceipt *out)
     }
     *out = g_dm2_runtime.think_binding.receipt;
     return 1;
+}
+
+int dm2_v1_runtime_last_ccm_receipt(DM2_V1_CcmLoopReceipt *out)
+{
+    if (!out || !g_dm2_runtime.ccm_receipt_valid)
+        return 0;
+    *out = g_dm2_runtime.last_ccm_receipt;
+    return 1;
+}
+
+int dm2_v1_runtime_dynamic_path_attempts(void)
+{
+    return g_dm2_runtime.dynamic_path_attempts;
+}
+
+int dm2_v1_runtime_dynamic_path_admissions(void)
+{
+    return g_dm2_runtime.dynamic_path_admissions;
+}
+
+int dm2_v1_runtime_dynamic_move_queue_admissions(void)
+{
+    return g_dm2_runtime.dynamic_move_queue_admissions;
+}
+
+int dm2_v1_runtime_dynamic_move_timer_consumptions(void)
+{
+    return g_dm2_runtime.dynamic_move_timer_consumptions;
+}
+
+int dm2_v1_runtime_dynamic_move_successes(void)
+{
+    return g_dm2_runtime.dynamic_move_successes;
+}
+
+int dm2_v1_runtime_dynamic_move_last_failure(void)
+{
+    return g_dm2_runtime.dynamic_move_last_failure;
+}
+
+int dm2_v1_runtime_dynamic_path_last_failure(void)
+{
+    return g_dm2_runtime.dynamic_path_last_failure;
 }
 
 int dm2_v1_runtime_floor_mecha_receipt(DM2_V1_RuntimeFloorMechaReceipt *out)
@@ -7149,49 +12655,6 @@ int dm2_v1_runtime_route_viewport_click(
     return 0;
 }
 
-typedef struct {
-    DM2_V1_DungeonData *dungeon;
-    DM2_V1_RecordPoolSet *pools;
-    int level;
-} DM2_V1_MacWallRotateContext;
-
-static int16_t dm2_v1_mac_wall_get_tile_link(void *ctx, int16_t x, int16_t y)
-{
-    DM2_V1_MacWallRotateContext *c = (DM2_V1_MacWallRotateContext *)ctx;
-    if (!c || !c->dungeon) return DM2_V1_RECORD_HANDLE_END;
-    return (int16_t)dm2_v1_dungeon_get_first_thing(c->dungeon, c->level, x, y);
-}
-
-static int16_t dm2_v1_mac_wall_get_next_link(void *ctx, uint16_t rw)
-{
-    DM2_V1_MacWallRotateContext *c = (DM2_V1_MacWallRotateContext *)ctx;
-    int16_t next = DM2_V1_RECORD_HANDLE_END;
-    if (!c || !c->pools || !dm2_v1_record_pool_next_link(c->pools,
-                                                          (int16_t)rw, &next))
-        return DM2_V1_RECORD_HANDLE_END;
-    return next;
-}
-
-static void dm2_v1_mac_wall_set_next_link(void *ctx, uint16_t rw, int16_t next)
-{
-    DM2_V1_MacWallRotateContext *c = (DM2_V1_MacWallRotateContext *)ctx;
-    uint8_t *record;
-    if (!c || !c->pools) return;
-    record = dm2_v1_record_pool_address_mut(c->pools, (int16_t)rw);
-    if (!record) return;
-    record[0] = (uint8_t)((uint16_t)next & 0xffu);
-    record[1] = (uint8_t)(((uint16_t)next >> 8) & 0xffu);
-}
-
-static void dm2_v1_mac_wall_set_tile_link(void *ctx, int16_t x, int16_t y,
-                                           int16_t rw)
-{
-    DM2_V1_MacWallRotateContext *c = (DM2_V1_MacWallRotateContext *)ctx;
-    if (!c || !c->dungeon) return;
-    (void)dm2_v1_dungeon_set_first_thing(c->dungeon, c->level, x, y,
-                                         (uint16_t)rw);
-}
-
 static int dm2_v1_runtime_mac_wall_target_exists(int view_slot)
 {
     for (int i = 0; i < (int)g_dm2_runtime.source_click_target_count; ++i) {
@@ -7203,9 +12666,9 @@ static int dm2_v1_runtime_mac_wall_target_exists(int view_slot)
     return 0;
 }
 
-/* Mac wall controls can be standalone DB3 records rather than door buttons.
- * Publish a source-shaped target only after the live map and record graph
- * prove that the visible wall cell owns a real interactive mechanism. */
+/* Some Macintosh wall controls are standalone DB3 mechanisms rather than
+ * door overlays. Publish a clickable source target only after the live map
+ * and record graph prove that the visible wall cell owns one. */
 static void dm2_v1_runtime_append_mac_wall_targets(
     const DM2_V1_DungeonData *dungeon, const DM2_V1_GameState *game)
 {
@@ -7220,6 +12683,7 @@ static void dm2_v1_runtime_append_mac_wall_targets(
     };
 
     if (!dungeon || !game || dungeon->level_count <= 0 ||
+        !g_dm2_runtime.record_pools_valid ||
         g_dm2_runtime.source_click_target_count >=
             DM2_V1_VIEWPORT_CLICK_TARGET_COUNT) return;
     for (size_t i = 0; i < sizeof(cells) / sizeof(cells[0]); ++i) {
@@ -7236,7 +12700,9 @@ static void dm2_v1_runtime_append_mac_wall_targets(
             dy[game->party_dir & 3] * cells[i].lateral;
         y = game->party_y + dy[game->party_dir & 3] * cells[i].forward +
             dx[game->party_dir & 3] * cells[i].lateral;
-        if (dm2_v1_dungeon_get_square_type(
+        if (x < 0 || y < 0 || x >= dungeon->level_widths[g_dm2_runtime.dungeon_level] ||
+            y >= dungeon->level_heights[g_dm2_runtime.dungeon_level] ||
+            dm2_v1_dungeon_get_square_type(
                 dungeon, g_dm2_runtime.dungeon_level, x, y) != 0) continue;
         walk = (int16_t)dm2_v1_dungeon_get_first_thing(
             dungeon, g_dm2_runtime.dungeon_level, x, y);
@@ -7254,8 +12720,8 @@ static void dm2_v1_runtime_append_mac_wall_targets(
                     break;
                 }
             }
-            if (!dm2_v1_record_pool_next_link(&g_dm2_runtime.record_pools,
-                                              walk, &next)) break;
+            if (!dm2_v1_record_pool_next_link(
+                    &g_dm2_runtime.record_pools, walk, &next)) break;
             walk = next;
         }
         if ((uint16_t)source == (uint16_t)DM2_V1_RECORD_HANDLE_NULL) continue;
@@ -7276,13 +12742,56 @@ static void dm2_v1_runtime_append_mac_wall_targets(
     }
 }
 
-static int dm2_v1_runtime_activate_mac_wall_target_for_target(
-    int target_index, int column,
-    DM2_V1_RuntimeMacWallButtonReceipt *out_receipt)
+typedef struct {
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_RecordPoolSet *pools;
+    int level;
+} DM2_V1_MacWallRotateContext;
+
+static int16_t dm2_v1_mac_wall_get_tile_link(void *ctx, int16_t x, int16_t y)
+{
+    DM2_V1_MacWallRotateContext *c = (DM2_V1_MacWallRotateContext *)ctx;
+    if (!c || !c->dungeon) return DM2_V1_RECORD_HANDLE_END;
+    return (int16_t)dm2_v1_dungeon_get_first_thing(c->dungeon, c->level, x, y);
+}
+
+static int16_t dm2_v1_mac_wall_get_next_link(void *ctx, uint16_t rw)
+{
+    DM2_V1_MacWallRotateContext *c = (DM2_V1_MacWallRotateContext *)ctx;
+    int16_t next = DM2_V1_RECORD_HANDLE_END;
+    if (!c || !c->pools || !dm2_v1_record_pool_next_link(
+            c->pools, (int16_t)rw, &next)) return DM2_V1_RECORD_HANDLE_END;
+    return next;
+}
+
+static void dm2_v1_mac_wall_set_next_link(void *ctx, uint16_t rw,
+                                           int16_t next)
+{
+    DM2_V1_MacWallRotateContext *c = (DM2_V1_MacWallRotateContext *)ctx;
+    uint8_t *record;
+    if (!c || !c->pools) return;
+    record = dm2_v1_record_pool_address_mut(c->pools, (int16_t)rw);
+    if (!record) return;
+    record[0] = (uint8_t)((uint16_t)next & 0xffu);
+    record[1] = (uint8_t)(((uint16_t)next >> 8) & 0xffu);
+}
+
+static void dm2_v1_mac_wall_set_tile_link(void *ctx, int16_t x, int16_t y,
+                                           int16_t rw)
+{
+    DM2_V1_MacWallRotateContext *c = (DM2_V1_MacWallRotateContext *)ctx;
+    if (!c || !c->dungeon) return;
+    (void)dm2_v1_dungeon_set_first_thing(c->dungeon, c->level, x, y,
+                                         (uint16_t)rw);
+}
+
+int dm2_v1_runtime_activate_mac_wall_button(
+    int column, DM2_V1_RuntimeMacWallButtonReceipt *out_receipt)
 {
     DM2_V1_RuntimeMacWallButtonReceipt receipt;
     const DM2_V1_DungeonData *dungeon;
     const DM2_V1_GameState *game;
+    int target_index = -1;
     int target_slot = -1;
     int target_x = -1;
     int target_y = -1;
@@ -7303,9 +12812,7 @@ static int dm2_v1_runtime_activate_mac_wall_target_for_target(
     receipt.map = -1;
     receipt.x = -1;
     receipt.y = -1;
-    if (column < 0 || column > 2 || target_index < 0 ||
-        target_index >= (int)g_dm2_runtime.source_click_target_count ||
-        !g_dm2_runtime.boot ||
+    if (column < 0 || column > 2 || !g_dm2_runtime.boot ||
         !g_dm2_runtime.boot->source_game_load_session_ready ||
         !g_dm2_last_m11_frame.valid || !g_dm2_runtime.source_party_valid ||
         !g_dm2_runtime.record_pools_valid ||
@@ -7314,11 +12821,26 @@ static int dm2_v1_runtime_activate_mac_wall_target_for_target(
         if (out_receipt) *out_receipt = receipt;
         return 0;
     }
-    if (g_dm2_runtime.source_click_targets[target_index].target_kind != 4u) {
+    for (int i = 0; i < (int)g_dm2_runtime.source_click_target_count; ++i) {
+        const DM2_V1_ViewportClickTarget *target =
+            &g_dm2_runtime.source_click_targets[i];
+        const int centre_x = target->x + target->w / 2;
+        const int target_column = centre_x < DM2_VP_WIDTH / 3 ? 0 :
+            (centre_x < (DM2_VP_WIDTH * 2) / 3 ? 1 : 2);
+        if (target->target_kind == 4u &&
+            ((g_dm2_mac_wall_requested_target >= 0 &&
+              i == g_dm2_mac_wall_requested_target) ||
+             (g_dm2_mac_wall_requested_target < 0 &&
+              target_column == column))) {
+            target_index = i;
+            target_slot = target->view_slot;
+            break;
+        }
+    }
+    if (target_index < 0) {
         if (out_receipt) *out_receipt = receipt;
         return 0;
     }
-    target_slot = g_dm2_runtime.source_click_targets[target_index].view_slot;
     for (size_t i = 0; i < sizeof(cells) / sizeof(cells[0]); ++i) {
         if (cells[i].square != target_slot) continue;
         target_x = game->party_x +
@@ -7343,15 +12865,13 @@ static int dm2_v1_runtime_activate_mac_wall_target_for_target(
         uint16_t source_handle = (uint16_t)DM2_V1_RECORD_HANDLE_NULL;
         uint8_t source_type = 0xffu;
         uint8_t source_local = 0u;
-        const uint8_t *source_record = NULL;
         int16_t walk;
         int walk_steps = 0;
         DM2_V1_ActuatorEventReceipt event;
         uint32_t hash = 2166136261u;
 
-        /* Resolve the exact source object in the live tile chain.  A Mac
-         * column alone is insufficient: the original c_rwbb target owns the
-         * wall mechanism and its DB3 record. */
+        /* Resolve the source actuator in the live tile chain. A column alone
+         * is insufficient: c_rwbb owns the mechanism's DB3 record. */
         walk = (int16_t)dm2_v1_dungeon_get_first_thing(
             dungeon, g_dm2_runtime.dungeon_level, target_x, target_y);
         while ((uint16_t)walk != (uint16_t)DM2_V1_RECORD_HANDLE_END &&
@@ -7369,8 +12889,8 @@ static int dm2_v1_runtime_activate_mac_wall_target_for_target(
                 source_local = (uint8_t)((dm2_actu_w4(record) >> 11) & 1u);
                 if ((uint16_t)walk == source_object) break;
             }
-            if (!dm2_v1_record_pool_next_link(&g_dm2_runtime.record_pools,
-                                              walk, &next)) break;
+            if (!dm2_v1_record_pool_next_link(
+                    &g_dm2_runtime.record_pools, walk, &next)) break;
             walk = next;
         }
         if ((uint16_t)source_handle ==
@@ -7378,94 +12898,42 @@ static int dm2_v1_runtime_activate_mac_wall_target_for_target(
             if (out_receipt) *out_receipt = receipt;
             return 0;
         }
-        source_record = dm2_v1_record_pool_address(
-            &g_dm2_runtime.record_pools, (int16_t)source_handle);
-        if (!source_record) {
-            if (out_receipt) *out_receipt = receipt;
-            return 0;
-        }
         receipt.source_actuator_type = source_type;
         receipt.source_local_action = source_local;
 
-        /* c_events.cpp::PLAYER_TESTING_WALL -> KEY_HOLE uses the source
-         * 19f0_2723 item-admission predicate.  The actuator Data word is
-         * the distinctive item type (not a host item id); resolve the held
-         * record through the live DB pool before any keyhole mutation. */
-        if (source_type == DM2_ACTU_KEY_HOLE) {
-            DM2_V1_Skproject19f02723Receipt admission;
-            int16_t arg1 = (dm2_actu_w4(source_record) & 0x4u)
-                ? 2 : 1;
-            memset(&admission, 0, sizeof(admission));
-            if (!dm2_v1_skproject_19f0_2723(
-                    source_handle, arg1,
-                    (int16_t)dm2_actu_data(source_record), 0,
-                    dm2_runtime_mac_record_accessor,
-                    dm2_runtime_mac_key_can_handle,
-                    &g_dm2_runtime, &admission) || !admission.result) {
-                receipt.blocked_item_admission = 1;
-                if (out_receipt) *out_receipt = receipt;
-                return 0;
-            }
+        if (source_type != DM2_ACTU_PUSH_BUTTON_SWITCH && source_local &&
+            (source_type == DM2_ACTU_2_STATE_SWITCH ||
+             source_type == DM2_ACTU_WALL_SWITCH ||
+             source_type == DM2_ACTU_KEY_HOLE)) {
+            memset(&rotate_cb, 0, sizeof(rotate_cb));
+            rotate_ctx.dungeon = (DM2_V1_DungeonData *)dungeon;
+            rotate_ctx.pools = &g_dm2_runtime.record_pools;
+            rotate_ctx.level = g_dm2_runtime.dungeon_level;
+            rotate_cb.get_tile_record_link = dm2_v1_mac_wall_get_tile_link;
+            rotate_cb.get_next_record_link = dm2_v1_mac_wall_get_next_link;
+            rotate_cb.set_next_record_link = dm2_v1_mac_wall_set_next_link;
+            rotate_cb.set_tile_record_link = dm2_v1_mac_wall_set_tile_link;
+            receipt.local_actuator_list_rotated = dm2_v1_rotate_actuator_list(
+                target_x, target_y,
+                (uint8_t)(((uint16_t)source_handle >> 14) & 3u),
+                &rotate_cb, &rotate_ctx);
+            hash ^= (uint32_t)target_index; hash *= 16777619u;
+            hash ^= (uint32_t)source_handle; hash *= 16777619u;
+            hash ^= (uint32_t)source_type; hash *= 16777619u;
+            hash ^= (uint32_t)receipt.local_actuator_list_rotated;
+            receipt.valid = 1;
+            receipt.accepted = 1;
+            receipt.source_target_index = target_index;
+            receipt.view_slot = target_slot;
+            receipt.map = g_dm2_runtime.dungeon_level;
+            receipt.x = target_x;
+            receipt.y = target_y;
+            receipt.actuators_seen = 1;
+            receipt.source_receipt_hash = hash;
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
         }
-
         if (source_type != DM2_ACTU_PUSH_BUTTON_SWITCH) {
-            if (source_local && (source_type == DM2_ACTU_2_STATE_SWITCH ||
-                                 source_type == DM2_ACTU_WALL_SWITCH ||
-                                 source_type == DM2_ACTU_KEY_HOLE)) {
-                memset(&rotate_cb, 0, sizeof(rotate_cb));
-                rotate_ctx.dungeon = (DM2_V1_DungeonData *)dungeon;
-                rotate_ctx.pools = &g_dm2_runtime.record_pools;
-                rotate_ctx.level = g_dm2_runtime.dungeon_level;
-                rotate_cb.get_tile_record_link = dm2_v1_mac_wall_get_tile_link;
-                rotate_cb.get_next_record_link = dm2_v1_mac_wall_get_next_link;
-                rotate_cb.set_next_record_link = dm2_v1_mac_wall_set_next_link;
-                rotate_cb.set_tile_record_link = dm2_v1_mac_wall_set_tile_link;
-                receipt.local_actuator_list_rotated =
-                    dm2_v1_rotate_actuator_list(
-                        target_x, target_y,
-                        (uint8_t)(((uint16_t)source_handle >> 14) & 3u),
-                        &rotate_cb, &rotate_ctx);
-                hash ^= (uint32_t)target_index; hash *= 16777619u;
-                hash ^= (uint32_t)source_handle; hash *= 16777619u;
-                hash ^= (uint32_t)source_type; hash *= 16777619u;
-                hash ^= (uint32_t)receipt.local_actuator_list_rotated;
-                receipt.valid = 1;
-                receipt.accepted = 1;
-                receipt.source_target_index = target_index;
-                receipt.view_slot = target_slot;
-                receipt.map = g_dm2_runtime.dungeon_level;
-                receipt.x = target_x;
-                receipt.y = target_y;
-                receipt.actuators_seen = 1;
-                receipt.source_receipt_hash = hash;
-                if (out_receipt) *out_receipt = receipt;
-                return 1;
-            }
-            if (!source_local && (source_type == DM2_ACTU_2_STATE_SWITCH ||
-                                  source_type == DM2_ACTU_WALL_SWITCH ||
-                                  source_type == DM2_ACTU_KEY_HOLE)) {
-                const uint8_t action = source_type == DM2_ACTU_KEY_HOLE
-                    ? DM2_ACTMSG_OPEN_SET : DM2_ACTMSG_TOGGLE;
-                if (source_record && dm2_v1_invoke_actuator(
-                        &g_dm2_runtime.timer_queue, source_record, action, 0,
-                        g_dm2_runtime.dungeon_level,
-                        (uint32_t)g_dm2_runtime.tick_count)) {
-                    receipt.remote_message_queued = 1;
-                    receipt.valid = 1;
-                    receipt.accepted = 1;
-                    receipt.source_target_index = target_index;
-                    receipt.view_slot = target_slot;
-                    receipt.map = g_dm2_runtime.dungeon_level;
-                    receipt.x = target_x;
-                    receipt.y = target_y;
-                    receipt.actuators_seen = 1;
-                    hash ^= (uint32_t)source_handle; hash *= 16777619u;
-                    hash ^= (uint32_t)action; hash *= 16777619u;
-                    receipt.source_receipt_hash = hash;
-                    if (out_receipt) *out_receipt = receipt;
-                    return 1;
-                }
-            }
             receipt.blocked_unsupported_source_type = 1;
             if (out_receipt) *out_receipt = receipt;
             return 0;
@@ -7501,37 +12969,28 @@ static int dm2_v1_runtime_activate_mac_wall_target_for_target(
 int dm2_v1_runtime_activate_mac_wall_target(
     int target_index, DM2_V1_RuntimeMacWallButtonReceipt *out_receipt)
 {
-    int column;
     const DM2_V1_ViewportClickTarget *target;
+    int centre_x;
+    int column;
+    int result;
 
     if (target_index < 0 ||
         target_index >= (int)g_dm2_runtime.source_click_target_count) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
         return 0;
     }
     target = &g_dm2_runtime.source_click_targets[target_index];
-    if (target->target_kind != 4u || target->w <= 0) return 0;
-    column = (target->x + target->w / 2) < DM2_VP_WIDTH / 3 ? 0 :
-        ((target->x + target->w / 2) < (DM2_VP_WIDTH * 2) / 3 ? 1 : 2);
-    return dm2_v1_runtime_activate_mac_wall_target_for_target(
-        target_index, column, out_receipt);
-}
-
-int dm2_v1_runtime_activate_mac_wall_button(
-    int column, DM2_V1_RuntimeMacWallButtonReceipt *out_receipt)
-{
-    if (column < 0 || column > 2) return 0;
-    for (int i = 0; i < (int)g_dm2_runtime.source_click_target_count; ++i) {
-        const DM2_V1_ViewportClickTarget *target =
-            &g_dm2_runtime.source_click_targets[i];
-        const int centre_x = target->x + target->w / 2;
-        const int target_column = centre_x < DM2_VP_WIDTH / 3 ? 0 :
-            (centre_x < (DM2_VP_WIDTH * 2) / 3 ? 1 : 2);
-        if (target->target_kind == 4u && target_column == column) {
-            return dm2_v1_runtime_activate_mac_wall_target_for_target(
-                i, column, out_receipt);
-        }
+    if (target->target_kind != 4u || target->w <= 0 || target->h <= 0) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
     }
-    return 0;
+    centre_x = target->x + target->w / 2;
+    column = centre_x < DM2_VP_WIDTH / 3 ? 0 :
+        (centre_x < (DM2_VP_WIDTH * 2) / 3 ? 1 : 2);
+    g_dm2_mac_wall_requested_target = target_index;
+    result = dm2_v1_runtime_activate_mac_wall_button(column, out_receipt);
+    g_dm2_mac_wall_requested_target = -1;
+    return result;
 }
 
 int dm2_v1_runtime_last_raw_sksave_handoff_receipt(
@@ -7704,6 +13163,34 @@ int dm2_v1_runtime_last_fallback_creature_count(void) {
     return g_dm2_last_fallback_creature_count;
 }
 
+int dm2_v1_runtime_last_wield_death_drop_count(void) {
+    return g_dm2_last_wield_death_drop_count;
+}
+
+int dm2_v1_runtime_last_wield_death_drop_iterations(void) {
+    return g_dm2_last_wield_death_drop_iterations;
+}
+
+int dm2_v1_runtime_last_wield_death_drop_alloc_failures(void) {
+    return g_dm2_last_wield_death_drop_alloc_failures;
+}
+
+int dm2_v1_runtime_last_wield_death_drop_first_itemspec(void) {
+    return g_dm2_last_wield_death_drop_first_itemspec;
+}
+
+int dm2_v1_runtime_last_wield_death_drop_first_db(void) {
+    return g_dm2_last_wield_death_drop_first_db;
+}
+
+int dm2_v1_runtime_last_wield_death_drop_alloc_free_records(void) {
+    return g_dm2_last_wield_death_drop_alloc_free_records;
+}
+
+int dm2_v1_runtime_last_wield_death_deallocated(void) {
+    return g_dm2_last_wield_death_deallocated;
+}
+
 int dm2_v1_runtime_last_asset_creature_possession_item_count(void) {
     return g_dm2_last_asset_creature_possession_item_count;
 }
@@ -7727,6 +13214,65 @@ int dm2_v1_runtime_last_projectile_render_receipt(
         return 0;
     }
     *out_receipt = g_dm2_last_projectile_render;
+    return 1;
+}
+
+int dm2_v1_runtime_last_missile_impact_receipt(
+    DM2_V1_RuntimeMissileImpactReceipt *out_receipt) {
+    if (!out_receipt || !g_dm2_last_missile_impact.valid) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    *out_receipt = g_dm2_last_missile_impact;
+    return 1;
+}
+
+int dm2_v1_runtime_last_creature_damage_receipt(
+    DM2_V1_RuntimeCreatureDamageReceipt *out) {
+    if (!out || !g_dm2_last_creature_damage.valid) {
+        if (out) memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    *out = g_dm2_last_creature_damage;
+    return 1;
+}
+
+int dm2_v1_runtime_creature_record_receipt(
+    int16_t record_handle, DM2_V1_RuntimeCreatureRecordReceipt *out)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    const uint8_t *record;
+    const DM2_AIDefinition *ai = NULL;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!rt->record_pools_valid ||
+        dm2_v1_record_handle_pool(record_handle) != 4)
+        return 0;
+    record = dm2_v1_record_pool_address(&rt->record_pools, record_handle);
+    if (!record || rt->record_pools.pools[4].record_size < 8)
+        return 0;
+    if (!dm2_v1_creature_ai_spec_def((int)record[4], &ai) || !ai)
+        return 0;
+    out->valid = 1;
+    out->record_handle = record_handle;
+    out->creature_type = record[4];
+    out->record_word = dm2_runtime_missile_rd16(&rt->record_pools, record);
+    out->possession_head = dm2_runtime_missile_rd16(
+        &rt->record_pools, record + 2);
+    out->hp = dm2_runtime_missile_rd16(&rt->record_pools, record + 6);
+    out->base_hp = (uint16_t)ai->BaseHP;
+    out->caii_slot = record[5];
+    if (record[5] != 0xffu && record[5] < rt->caii.capacity &&
+        rt->caii.slots) {
+        const uint8_t *slot = rt->caii.slots +
+            (size_t)record[5] * DM2_V1_CAII_SLOT_SIZE;
+        out->pending_damage = (uint16_t)(slot[0x14] |
+            ((uint16_t)slot[0x15] << 8));
+    }
+    out->kill_flag = (out->record_word & 1u) != 0u;
+    out->drop_slots_loaded = dm2_v1_creature_drop_slots_loaded(
+        out->creature_type);
     return 1;
 }
 
@@ -8327,6 +13873,15 @@ int dm2_v1_runtime_move(int dir) {
     int dy[] = {-1, 0, 1, 0};
     int nx, ny;
     int blocked = 0;
+    int entered_stairs = 0;
+    int stair_map = -1;
+    int stair_x = -1;
+    int stair_y = -1;
+    int entered_pit = 0;
+    int pit_map = -1;
+    int pit_x = -1;
+    int pit_y = -1;
+    int pit_status = 0;
 
     if (!dm2_runtime_gameplay_source_ready(rt) || !rt->boot->dm2_state) {
         return -1;
@@ -8386,14 +13941,22 @@ int dm2_v1_runtime_move(int dir) {
         } else {
             int raw_tile_type = dm2_runtime_square_type_at(
                 dd, rt->dungeon_level, nx, ny, raw);
-            int tile_type = dm2_runtime_normalize_square_type(raw_tile_type);
+            int tile_type = dm2_runtime_normalize_square_type_for_dungeon(
+                dd, raw_tile_type, raw);
             move_request.target_raw_valid = 1;
             move_request.target_raw = raw;
             move_request.target_square_type = tile_type;
+            if (tile_type == DM2_SQUARE_PIT) {
+                pit_status = dm2_runtime_resolve_entered_pit(
+                    dd, rt->dungeon_level, nx, ny,
+                    &pit_map, &pit_x, &pit_y);
+                if (pit_status > 0)
+                    move_request.target_pit_transition_admitted = 1;
+            }
             /* Impassable tile types: wall, pit, lava, inaccessible.
              * Normalized to DM2_SquareType enum before comparison. */
             if (tile_type == DM2_SQUARE_WALL ||
-                tile_type == DM2_SQUARE_PIT ||
+                (tile_type == DM2_SQUARE_PIT && pit_status <= 0) ||
                 tile_type == DM2_SQUARE_LAVA ||
                 tile_type == DM2_SQUARE_INACCESSIBLE) {
                 blocked = 1;
@@ -8410,6 +13973,22 @@ int dm2_v1_runtime_move(int dir) {
                     blocked = 1;
                 }
             }
+            /* skmove.cpp:477-543 classifies a creature target before the
+             * normal MOVE_RECORD_TO commit. The party must never be written
+             * onto a live DB4 cell while that push/attack owner is absent. */
+            if (!blocked && rt->record_pools_valid) {
+                int16_t creature = dm2_v1_get_creature_at(
+                    &rt->record_pools, dd, rt->dungeon_level, nx, ny);
+                if (creature != DM2_V1_RECORD_HANDLE_NULL) {
+                    /* A source attack consumes the move attempt.  A miss is
+                     * still a blocked step; only the creature-side owner is
+                     * allowed to change DB4/CAII state. */
+                    (void)dm2_runtime_attack_creature_at(
+                        rt, dd, rt->dungeon_level, old_x, old_y,
+                        nx, ny, creature, 0);
+                    blocked = 1;
+                }
+            }
             /* All other tile types (1=floor, 3=floor_ornate,
              * 8=teleporter, 10=water, etc.) are passable. */
         }
@@ -8421,14 +14000,31 @@ int dm2_v1_runtime_move(int dir) {
         memset(&g_dm2_last_perform_move, 0, sizeof(g_dm2_last_perform_move));
         return -1;
     }
-    g_dm2_last_perform_move = move_receipt;
     blocked = move_receipt.blocked;
+    if (!blocked && pit_status > 0)
+        entered_pit = 1;
+
+    if (!blocked && !entered_pit && !rt->outdoor && rt->boot->dungeon_data) {
+        int stair_status = dm2_runtime_resolve_entered_stairs(
+            (DM2_V1_DungeonData *)rt->boot->dungeon_data,
+            rt->dungeon_level, nx, ny, &stair_map, &stair_x, &stair_y);
+        if (stair_status < 0) {
+            /* Source movement does not leave the party stranded on an
+             * unresolved ladder. Reject the step until the source-owned
+             * destination can be proven from the loaded map corpus. */
+            blocked = 1;
+            move_receipt.blocked = 1;
+        } else if (stair_status > 0) {
+            entered_stairs = 1;
+        }
+    }
+    g_dm2_last_perform_move = move_receipt;
 
     if (!blocked) {
         /* Fire smooth movement callback before updating state.
          * This gives the V2 layer the from/to positions for interpolation.
          * Source: Phase 5 runtime binding */
-        if (rt->move_callback) {
+        if (!entered_stairs && !entered_pit && rt->move_callback) {
             rt->move_callback(old_x, old_y, nx, ny);
         }
         /* SKProject keeps the old pose and its glbIsPlayerMoving countdown
@@ -8436,8 +14032,33 @@ int dm2_v1_runtime_move(int dir) {
          * source hero/inventory inputs needed for CALC_PLAYER_WALK_DELAY nor
          * that delayed pose owner, so it must not invent a one-frame 700/701
          * viewport offset after an immediate move. */
-        gs->party_x = nx;
-        gs->party_y = ny;
+        gs->party_x = entered_stairs ? stair_x :
+                      (entered_pit ? pit_x : nx);
+        gs->party_y = entered_stairs ? stair_y :
+                      (entered_pit ? pit_y : ny);
+        if (entered_stairs || entered_pit) {
+            int special_map = entered_stairs ? stair_map : pit_map;
+            int special_x = entered_stairs ? stair_x : pit_x;
+            int special_y = entered_stairs ? stair_y : pit_y;
+            gs->current_level = special_map;
+            gs->outdoor = dm2_v1_dungeon_is_outdoor(
+                (DM2_V1_DungeonData *)rt->boot->dungeon_data, special_map);
+            rt->dungeon_level = special_map;
+            rt->outdoor = gs->outdoor;
+            rt->view_dir = gs->party_dir;
+            dm2_runtime_refresh_map_transition_context(rt);
+            if (rt->stairs_callback) {
+                rt->stairs_callback(old_x, old_y, special_x, special_y,
+                                    (float)(special_map - move_request.current_level));
+            }
+        }
+        /* c_moverec.cpp resolves an enabled DB1 teleporter after the party
+         * enters its source tile. Keep the transition behind the complete
+         * source-owned 2fcf gate; ordinary movement remains unchanged. */
+        dm2_runtime_apply_entered_db1_teleporter(
+            rt, gs, rt->dungeon_level,
+            entered_stairs ? stair_x : (entered_pit ? pit_x : nx),
+            entered_stairs ? stair_y : (entered_pit ? pit_y : ny));
         /* CD.DAT's trigger keys include the party's exact square. Re-evaluate
          * only CDDA after a committed step; PC HMP map music remains a
          * level-transition concern. */
@@ -8451,8 +14072,10 @@ int dm2_v1_runtime_move(int dir) {
                 dm2_v1_trigger_get_builtin(i);
             if (trigger &&
                 trigger->kind == DM2_TRIGGER_KIND_SQUARE_ENTERED &&
-                trigger->arg_map_x == nx &&
-                trigger->arg_map_y == ny &&
+                trigger->arg_map_x == (entered_stairs ? stair_x :
+                                      (entered_pit ? pit_x : nx)) &&
+                trigger->arg_map_y == (entered_stairs ? stair_y :
+                                      (entered_pit ? pit_y : ny)) &&
                 trigger->arg_map_level == rt->dungeon_level &&
                 dm2_v1_trigger_fire(trigger->trigger_id) ==
                     (int)DM2_TRIGGER_RESULT_OK &&
@@ -8460,12 +14083,18 @@ int dm2_v1_runtime_move(int dir) {
                 dm2_runtime_apply_trigger_event(rt, &event);
             }
         }
-        dm2_v1_plate_set_party_position(nx, ny, rt->dungeon_level);
+        dm2_v1_plate_set_party_position(
+            entered_stairs ? stair_x : (entered_pit ? pit_x : nx),
+            entered_stairs ? stair_y : (entered_pit ? pit_y : ny),
+            rt->dungeon_level);
         for (int i = 1; i <= dm2_v1_plate_get_builtin_count(); ++i) {
             DM2_V1_PlateEvent event;
             const DM2_V1_PressurePlate *plate =
                 dm2_v1_plate_get_builtin(i);
-            if (plate && plate->map_x == nx && plate->map_y == ny &&
+            if (plate && plate->map_x == (entered_stairs ? stair_x :
+                                          (entered_pit ? pit_x : nx)) &&
+                plate->map_y == (entered_stairs ? stair_y :
+                                 (entered_pit ? pit_y : ny)) &&
                 plate->map_level == rt->dungeon_level &&
                 dm2_v1_plate_check(i, rt->tick_count) ==
                     (int)DM2_PLATE_RESULT_OK &&
@@ -8474,7 +14103,9 @@ int dm2_v1_runtime_move(int dir) {
             }
         }
         (void)dm2_v1_runtime_invoke_square_actuators(
-            rt->dungeon_level, nx, ny);
+            rt->dungeon_level,
+            entered_stairs ? stair_x : (entered_pit ? pit_x : nx),
+            entered_stairs ? stair_y : (entered_pit ? pit_y : ny));
     }
 
     /* Fire smooth turn callback when facing changes.
@@ -8823,6 +14454,14 @@ uint32_t dm2_v1_runtime_get_leader_hand_object(void) {
     return 0u;
 }
 
+int dm2_v1_runtime_get_session_snapshot(DM2_V1_SessionState *out_session)
+{
+    if (!out_session || !g_dm2_runtime.source_party_valid ||
+        !g_dm2_runtime.session_snapshot_valid) return 0;
+    *out_session = g_dm2_runtime.session_snapshot;
+    return 1;
+}
+
 int dm2_v1_runtime_set_leader_hand_object(uint32_t object) {
     if (!g_dm2_runtime.session_snapshot_valid) return -1;
     if (g_dm2_runtime.source_party_valid) {
@@ -8834,6 +14473,21 @@ int dm2_v1_runtime_set_leader_hand_object(uint32_t object) {
         }
     }
     g_dm2_runtime.leader_hand_object = object;
+    if (g_dm2_runtime.source_party_valid &&
+        g_dm2_runtime.source_party.curacthero > 0 &&
+        g_dm2_runtime.source_party.curacthero <=
+            g_dm2_runtime.source_party.heros_in_party &&
+        g_dm2_runtime.source_party.curactmode >= 0 &&
+        g_dm2_runtime.source_party.curactmode < 2) {
+        DM2_V1_Hero *hero = &g_dm2_runtime.source_party.hero[
+            g_dm2_runtime.source_party.curacthero - 1];
+        hero->item[g_dm2_runtime.source_party.curactmode] =
+            object == 0u || object == 0xffffu
+                ? (int16_t)-1 : (int16_t)(uint16_t)object;
+        dm2_runtime_copy_source_hero_to_snapshot(
+            &g_dm2_runtime.session_snapshot,
+            g_dm2_runtime.source_party.curacthero - 1, hero);
+    }
     return 0;
 }
 
@@ -8899,7 +14553,7 @@ int dm2_v1_runtime_activate_action_hand(int hero_index, int hand) {
         return 0;
     }
     hero = &rt->source_party.hero[hero_index];
-    if (hero->curHP <= 0 || hero->heroflag == 0) return 0;
+    if (hero->curHP <= 0) return 0;
     rt->source_curacthero = (int16_t)(hero_index + 1);
     rt->source_curactmode = (int16_t)hand;
     rt->source_party.curacthero = rt->source_curacthero;
@@ -8918,14 +14572,22 @@ int dm2_v1_runtime_get_active_champion_index(void) {
     return rt->source_party.curacthero - 1;
 }
 
-int dm2_v1_runtime_get_session_snapshot(DM2_V1_SessionState *out_session)
+int dm2_v1_runtime_get_active_hand(void)
 {
-    if (!out_session || !g_dm2_runtime.source_party_valid ||
-        !g_dm2_runtime.session_snapshot_valid) {
+    const DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    if (!rt->source_party_valid || rt->source_party.curactmode < 0 ||
+        rt->source_party.curactmode > 1) return -1;
+    return rt->source_party.curactmode;
+}
+
+int dm2_v1_runtime_get_champion_count(void) {
+    const DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    if (!rt->source_party_valid || !rt->session_snapshot_valid ||
+        rt->source_party.heros_in_party < 0 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES) {
         return 0;
     }
-    *out_session = g_dm2_runtime.session_snapshot;
-    return 1;
+    return rt->source_party.heros_in_party;
 }
 
 int dm2_v1_runtime_click_inventory_eye(void) {
@@ -8982,7 +14644,39 @@ void dm2_v1_runtime_clear_new_game_party_state(void) {
     memset(&g_dm2_runtime.source_party, 0,
            sizeof(g_dm2_runtime.source_party));
     g_dm2_runtime.source_party_valid = 0;
+    g_dm2_last_wield_death_drop_count = 0;
+    g_dm2_last_wield_death_drop_iterations = 0;
+    g_dm2_last_wield_death_drop_alloc_failures = 0;
+    g_dm2_last_wield_death_drop_first_itemspec = 0;
+    g_dm2_last_wield_death_drop_first_db = -1;
+    g_dm2_last_wield_death_drop_alloc_free_records = 0;
+    g_dm2_last_wield_death_deallocated = 0;
     g_dm2_runtime.source_attack_counter = 0u;
+    g_dm2_runtime.source_hero_ench_countdown = 0u;
+    memset(g_dm2_runtime.source_savegames1, 0,
+           sizeof(g_dm2_runtime.source_savegames1));
+    g_dm2_runtime.source_aura_of_speed = 0u;
+    g_dm2_runtime.source_aura_of_speed_valid = 0;
+
+    /* skproject c_savegame.cpp::DM2_GAME_LOAD reaches the new-dungeon path
+     * with a fresh timer clock. A previous session must not leak timers,
+     * weather events, or its tick into the source-owned G1 entrance. The
+     * actuator tick-generator walk remains unavailable until its record
+     * owner is bound, so this reset establishes the correct empty base. */
+    dm2_v1_source_timer_queue_init(&g_dm2_runtime.timer_queue);
+    g_dm2_runtime.tick_count = 0;
+    g_dm2_runtime.move_cooldown_ticks = 0;
+    g_dm2_runtime.weather_source_timer_pending = 0;
+    g_dm2_runtime.weather_chain_started = 0;
+    dm2_v1_weather_init(&g_dm2_runtime.weather);
+    memset(&g_dm2_runtime.weather_chain, 0,
+           sizeof(g_dm2_runtime.weather_chain));
+    memset(&g_dm2_runtime.weather_rng, 0,
+           sizeof(g_dm2_runtime.weather_rng));
+    memset(&g_dm2_runtime.timer_post_load, 0,
+           sizeof(g_dm2_runtime.timer_post_load));
+    memset(&g_dm2_runtime.proceed_timers, 0,
+           sizeof(g_dm2_runtime.proceed_timers));
 }
 
 int dm2_v1_runtime_new_game_party_state_is_clear(void) {
@@ -9029,6 +14723,48 @@ uint32_t dm2_v1_runtime_get_champion_inventory_object(uint8_t champion,
             ->inventory[slot];
     }
     return 0u;
+}
+
+int dm2_v1_runtime_get_source_hero_timer_state(uint8_t champion,
+                                               int16_t *out_timeridx,
+                                               uint16_t *out_heroflag,
+                                               int16_t *out_cur_hp) {
+    const DM2_V1_Hero *hero;
+
+    if (champion >= DM2_MAX_HEROES || !g_dm2_runtime.source_party_valid ||
+        champion >= (uint8_t)g_dm2_runtime.source_party.heros_in_party)
+        return 0;
+    hero = &g_dm2_runtime.source_party.hero[champion];
+    if (out_timeridx) *out_timeridx = hero->timeridx;
+    if (out_heroflag) *out_heroflag = (uint16_t)hero->heroflag;
+    if (out_cur_hp) *out_cur_hp = hero->curHP;
+    return 1;
+}
+
+int dm2_v1_runtime_get_source_hero_state(
+    uint8_t champion, DM2_V1_RuntimeSourceHeroStateReceipt *out_state) {
+    const DM2_V1_Hero *hero;
+
+    if (!out_state || champion >= DM2_MAX_HEROES ||
+        !g_dm2_runtime.source_party_valid ||
+        champion >= (uint8_t)g_dm2_runtime.source_party.heros_in_party)
+        return 0;
+    hero = &g_dm2_runtime.source_party.hero[champion];
+    out_state->max_hp = hero->maxHP;
+    out_state->cur_hp = hero->curHP;
+    out_state->weight = hero->weight;
+    out_state->ench_power = hero->ench_power;
+    out_state->ench_aura = hero->ench_aura;
+    out_state->first_item = hero->item[0];
+    out_state->heroflag = (uint16_t)hero->heroflag;
+    return 1;
+}
+
+int dm2_v1_runtime_get_source_aura_of_speed(uint8_t *out_value) {
+    if (!out_value || !g_dm2_runtime.source_aura_of_speed_valid)
+        return 0;
+    *out_value = g_dm2_runtime.source_aura_of_speed;
+    return 1;
 }
 
 int dm2_v1_runtime_set_champion_inventory_object(uint8_t champion,
@@ -9324,16 +15060,31 @@ int dm2_v1_runtime_door_action(int level,
                                int y,
                                int facing_dir,
                                int action) {
-    (void)level;
-    (void)x;
-    (void)y;
-    (void)facing_dir;
-    (void)action;
-    /* SKProject's c_tim_proc.cpp::DM2_ACTUATE_DOOR resolves a live DB0
-     * record and actuator/timer context before it writes map state, handles
-     * party collision and queues the next door step. A coordinate plus tile
-     * bits cannot substitute for that transaction. */
-    return -1;
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_SourceTimer timer;
+    DM2_V1_SourceTimerResult result;
+    int raw;
+
+    if (!rt->boot || !rt->boot->source_game_load_session_ready ||
+        !rt->boot->dungeon_data || !rt->record_pools_valid ||
+        !rt->record_pools.record_graph_complete || level != rt->dungeon_level)
+        return -1;
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, level, x, y);
+    if (raw < 0 || ((unsigned)raw >> 5) != 4u ||
+        dm2_v1_dungeon_get_first_thing(dungeon, level, x, y) < 0)
+        return -1;
+    memset(&timer, 0, sizeof(timer));
+    timer.ticks_and_map = ((uint32_t)(level & 0xff) << 24) |
+        ((dm2_v1_runtime_get_tick_count() + 1u) &
+         DM2_V1_SOURCE_TIMER_TICK_MASK);
+    timer.type = DM2_V1_TIMER_ACTUATE_TILE;
+    timer.value_a = (int16_t)((uint8_t)x | ((uint16_t)(uint8_t)y << 8));
+    timer.value_b = (int16_t)((uint8_t)(facing_dir & 3) |
+                              ((uint16_t)(action == 0 ? 2 : action) << 8));
+    result = dm2_v1_runtime_enqueue_source_timer(&timer, 0u);
+    return result == DM2_V1_SOURCE_TIMER_OK ? 0 : -1;
 }
 
 int dm2_v1_runtime_get_door_state(int level, int x, int y) {
@@ -9641,6 +15392,10 @@ static int dm2_runtime_queue_attack_timer(
             queue->runtime->source_curacthero - 1].heroflag |= 0x4000;
     }
     queue->runtime->source_attack_counter++;
+    queue->runtime->source_hero_ench_countdown =
+        queue->runtime->source_attack_counter;
+    queue->runtime->source_savegames1[2] =
+        queue->runtime->source_attack_counter;
     queue->queued = 1;
     (void)queue->hero_index;
     return 1;
@@ -9661,6 +15416,355 @@ static int dm2_runtime_query_cmd_field(
     *out = (int16_t)value.value;
     return 1;
 }
+
+static uint8_t dm2_runtime_attack_cls1(void *ctx, uint16_t record);
+static uint8_t dm2_runtime_attack_cls2(void *ctx, uint16_t record);
+static int16_t dm2_runtime_attack_dbspec_index(
+    void *ctx, uint8_t cls1, uint8_t cls2, uint8_t entry_type,
+    uint8_t field);
+
+static int dm2_runtime_projectile_query_word(
+    int record_link, int word_index, void *userdata)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)userdata;
+    DM2_V1_GdatDbspecCallbacks callbacks;
+    if (!rt || record_link < 0 || record_link > 0xffff ||
+        word_index < 0 || word_index > 0xff) return 0;
+    callbacks.query_cls1_from_record = dm2_runtime_attack_cls1;
+    callbacks.query_cls2_from_record = dm2_runtime_attack_cls2;
+    callbacks.query_gdat_entry_data_index = dm2_runtime_attack_dbspec_index;
+    return dm2_v1_query_gdat_dbspec_word_value(
+        (uint16_t)record_link, (uint8_t)word_index, &callbacks, rt);
+}
+
+static int dm2_runtime_projectile_query_weight(
+    int record_link, void *userdata)
+{
+    return dm2_runtime_projectile_query_word(record_link, 1, userdata);
+}
+
+static int dm2_runtime_projectile_rand_mask(int mask, void *userdata)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)userdata;
+    if (!rt || mask < 0) return 0;
+    if (mask >= 0x7fff) mask = 0x7fff;
+    return (int)dm2_v1_drops_rand16(&rt->drop_rng, (uint16_t)mask + 1u);
+}
+
+static uint8_t dm2_runtime_attack_cls1(void *ctx, uint16_t record)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)ctx;
+    uint8_t cls1 = 0xffu;
+    DM2_V1_SkprojectQueryCls1Receipt receipt;
+    return rt && dm2_v1_skproject_query_cls1_from_record_ex(
+        record, &rt->record_pools, &cls1, &receipt) ? cls1 : 0xffu;
+}
+
+static uint8_t dm2_runtime_attack_cls2(void *ctx, uint16_t record)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)ctx;
+    uint8_t cls2 = 0xffu;
+    DM2_V1_SkprojectQueryCls2Receipt receipt;
+    return rt && dm2_v1_skproject_query_cls2_from_record(
+        record, &rt->record_pools, &cls2, &receipt) ? cls2 : 0xffu;
+}
+
+static int16_t dm2_runtime_attack_dbspec_index(
+    void *ctx, uint8_t cls1, uint8_t cls2, uint8_t entry_type,
+    uint8_t field)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)ctx;
+    const DM2_V1_AssetLoader *loader;
+    uint16_t value = 0;
+    if (!rt || !rt->boot || entry_type != DM2_GDAT_ENTRY_TYPE_WORD_VALUE)
+        return -1;
+    loader = dm2_v1_boot_asset_loader(rt->boot);
+    return loader && dm2_v1_query_gdat_entry_data_index(
+        loader, cls1, cls2, entry_type, field, &value) ? (int16_t)value : -1;
+}
+
+/* skengage.cpp/c_hero.cpp: the party attacks the creature occupying the
+ * facing square.  This is deliberately called before MOVE_RECORD_TO, so a
+ * failed or unverifiable attack can never put the party on a DB4 cell. */
+static int dm2_runtime_attack_creature_at(
+    DM2_V1_RuntimeState *rt, DM2_V1_DungeonData *dungeon,
+    int map, int x, int y, int target_x, int target_y,
+    int16_t creature_record, int allow_wield_action)
+{
+    DM2_V1_GameState *game;
+    DM2_V1_Hero *hero;
+    const DM2_V1_AssetLoader *loader;
+    const DM2_AIDefinition *ai = NULL;
+    DM2_V1_GdatDbspecCallbacks dbspec;
+    DM2_V1_CalcAttackDamageRequest request;
+    DM2_V1_CaiiAttackReceipt attack;
+    uint8_t *record;
+    uint16_t item;
+    int hand;
+    int slot;
+    int16_t field;
+    uint16_t dbspec_word[10] = {0};
+    int skill;
+    int have_wield_power;
+    int have_wield_flags;
+    int have_wield_variant;
+
+    if (!rt || !dungeon || !rt->source_party_valid ||
+        !rt->record_pools_valid || !rt->boot || !rt->boot->dm2_state ||
+        !rt->caii_ready || !rt->caii.valid ||
+        map != rt->dungeon_level || !rt->source_party.curacthero ||
+        rt->source_party.curacthero > rt->source_party.heros_in_party)
+        return 0;
+    game = (DM2_V1_GameState *)rt->boot->dm2_state;
+    if (game->current_level != map) return 0;
+    hand = rt->source_party.curactmode;
+    if (hand < 0 || hand > 1) return 0;
+    hero = &rt->source_party.hero[rt->source_party.curacthero - 1];
+    if (hero->curHP <= 0) return 0;
+    item = (uint16_t)hero->item[hand];
+    if (item == 0xffffu) return 0;
+    record = dm2_v1_record_pool_address_mut(&rt->record_pools,
+                                             creature_record);
+    if (!record || dm2_v1_record_handle_pool(creature_record) != 4)
+        return 0;
+    if (!dm2_v1_creature_ai_spec_def((int)record[4], &ai) || !ai)
+        return 0;
+    loader = dm2_v1_boot_asset_loader(rt->boot);
+    if (!loader) return 0;
+    slot = hero->handcmd[hand];
+    if (slot < 0 || slot > 2) return 0;
+    memset(&request, 0, sizeof(request));
+    request.hero_index = rt->source_party.curacthero - 1;
+    request.hero_hp = hero->curHP;
+    request.hero_dexterity = hero->ability[DM2_ABILITY_DEXTERITY][DM2_CUR];
+    request.hero_strength = hero->ability[DM2_ABILITY_STRENGTH][DM2_CUR];
+    /* c_hero.cpp passes the adjusted strength ability separately to
+     * COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH; leaving it zero makes every
+     * otherwise valid weapon attack collapse to zero damage. */
+    request.hero_ability = (uint8_t)request.hero_strength;
+    request.hero_luck = hero->ability[DM2_ABILITY_LUCK][DM2_CUR];
+    request.hand = (int16_t)hand;
+    request.item_handle = (int16_t)item;
+    request.creature_record = creature_record;
+    request.creature_defense = ai->Defense;
+    request.creature_armor = ai->ArmorClass;
+    request.creature_poison_resist = ai->w24;
+    request.target_x = (int16_t)target_x;
+    request.target_y = (int16_t)target_y;
+    memset(&dbspec, 0, sizeof(dbspec));
+    dbspec.query_cls1_from_record = dm2_runtime_attack_cls1;
+    dbspec.query_cls2_from_record = dm2_runtime_attack_cls2;
+    dbspec.query_gdat_entry_data_index = dm2_runtime_attack_dbspec_index;
+    /* The item command is the source CMDSTR entry selected by the hand. */
+    if (!dm2_runtime_query_cmd_field(loader,
+                                     dm2_runtime_attack_cls1(rt, item),
+                                     dm2_runtime_attack_cls2(rt, item),
+                                     8 + slot, 2, &field) ||
+        (field != 1 && (!allow_wield_action || field != 8)) ||
+        !dm2_runtime_query_cmd_field(loader,
+                                     dm2_runtime_attack_cls1(rt, item),
+                                     dm2_runtime_attack_cls2(rt, item),
+                                     8 + slot, 0, &request.skill_type) ||
+        !dm2_runtime_query_cmd_field(loader,
+                                     dm2_runtime_attack_cls1(rt, item),
+                                     dm2_runtime_attack_cls2(rt, item),
+                                     8 + slot, 3, &request.power_base) ||
+        !dm2_runtime_query_cmd_field(loader,
+                                     dm2_runtime_attack_cls1(rt, item),
+                                     dm2_runtime_attack_cls2(rt, item),
+                                     8 + slot, 4, &request.power_random) ||
+        (!allow_wield_action && !dm2_runtime_query_cmd_field(loader,
+                                     dm2_runtime_attack_cls1(rt, item),
+                                     dm2_runtime_attack_cls2(rt, item),
+                                     8 + slot, 0x10, &request.damage_type)))
+        return 0;
+    if (allow_wield_action &&
+        !dm2_runtime_query_cmd_field(loader,
+                                     dm2_runtime_attack_cls1(rt, item),
+                                     dm2_runtime_attack_cls2(rt, item),
+                                     8 + slot, 0x10, &request.damage_type))
+        request.damage_type = 0;
+    /* c_hero.cpp:2064-2158 DM2_WIELD_WEAPON does not pass CMDSTR fields
+     * 3/4 to CALC_PLAYER_ATTACK_DAMAGE. It passes field 11 as argw2 and
+     * derives argl1 from fields 10/15; field 3 belongs to the generic
+     * command dispatcher (healing/other actions). */
+    have_wield_power = dm2_runtime_query_cmd_field(
+        loader, dm2_runtime_attack_cls1(rt, item),
+        dm2_runtime_attack_cls2(rt, item), 8 + slot, 11,
+        &request.power_base);
+    have_wield_flags = dm2_runtime_query_cmd_field(
+        loader, dm2_runtime_attack_cls1(rt, item),
+        dm2_runtime_attack_cls2(rt, item), 8 + slot, 10,
+        &request.power_random);
+    have_wield_variant = dm2_runtime_query_cmd_field(
+        loader, dm2_runtime_attack_cls1(rt, item),
+        dm2_runtime_attack_cls2(rt, item), 8 + slot, 15, &field);
+    if (!have_wield_variant)
+        field = 0;
+    if (!have_wield_power || !have_wield_flags) {
+        return 0;
+    }
+    /* CMDSTR stores the full twenty-entry skill id.  The live hero record
+     * stores the sixteen learned entries in groups 1..4; the aggregate row
+     * is not the level source for attack-strength calculation. */
+    if (request.skill_type < 0 || request.skill_type >= 20) return 0;
+    skill = request.skill_type / 4 + 1;
+    /* COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH consumes only the source
+     * weapon words 1, 5, 8 and 9.  Other DB5 weapon words are optional
+     * payloads for unrelated actions and must not reject a valid WIELD. */
+    for (int i = 0; i < 4; ++i) {
+        static const int required_words[4] = { 1, 5, 8, 9 };
+        int word = required_words[i];
+        int16_t value = dm2_v1_query_gdat_dbspec_word_value(
+            item, (uint8_t)word, &dbspec, rt);
+        if (value < 0) {
+            if (word == 1) return 0;
+            value = 0;
+        }
+        dbspec_word[word] = (uint16_t)value;
+    }
+    /* c_hero.cpp indexes the sixteen learned skills as group 1..4, then
+     * stores each level as 0x40 << level.  CMDSTR field 0 is that flat
+     * learned-skill index; the aggregate skill[0] row is only for UI and
+     * must not be passed as a level. */
+    {
+        int32_t encoded = hero->skill[skill][request.skill_type % 4];
+        int level = 0;
+        while (encoded >= 0x40 && level < 31) {
+            encoded >>= 1;
+            ++level;
+        }
+        request.hero_skill_level = (int16_t)level;
+    }
+    request.bodyflag = (uint8_t)hero->bodyflag;
+    request.item_weight = dbspec_word[1];
+    request.dbspec_word5 = dbspec_word[5];
+    request.dbspec_word8 = dbspec_word[8];
+    request.dbspec_word9 = dbspec_word[9];
+    request.hero_max_load = (uint16_t)dm2_v1_hero_get_max_load_raw(hero, 0);
+    /* c_querydb.cpp:2237-2378 first builds RG3 (ability + load + skill and
+     * DBSPEC bonuses), then passes that value to c_hero::get_stamina_adj.
+     * Passing the raw ability here silently discarded every weapon/skill
+     * contribution and made authentic WIELD damage collapse to zero. */
+    {
+        int32_t pre_strength = (int32_t)request.hero_ability +
+                               (int32_t)request.item_weight - 12;
+        uint16_t quarter_load = (uint16_t)(request.hero_max_load >> 4);
+        if (request.item_weight > quarter_load) {
+            uint16_t excess = (uint16_t)(request.item_weight - quarter_load);
+            uint16_t threshold = (uint16_t)(((quarter_load - 12u) / 2u) +
+                                            quarter_load);
+            pre_strength -= (int32_t)(excess / 2u);
+            if (request.item_weight > threshold)
+                pre_strength -= 2 * (int32_t)(request.item_weight - threshold);
+        }
+        if (request.skill_type >= 0) {
+            pre_strength += 2 * (int32_t)request.hero_skill_level;
+            if (request.skill_type == 0 ||
+                (request.skill_type >= 4 && request.skill_type <= 7) ||
+                request.skill_type == 9)
+                pre_strength += (int32_t)request.dbspec_word8;
+            else if (request.skill_type == 1 ||
+                     (request.skill_type >= 10 && request.skill_type <= 11)) {
+                uint16_t bonus = request.dbspec_word9;
+                if (bonus != 0) {
+                    int word5_8000 = (request.dbspec_word5 & 0x8000u) != 0;
+                    if ((!word5_8000 && request.skill_type == 11) ||
+                        (word5_8000 && request.skill_type != 11))
+                        bonus = 0;
+                }
+                pre_strength += (int32_t)bonus;
+            }
+        }
+        if (pre_strength > INT16_MAX) pre_strength = INT16_MAX;
+        if (pre_strength < INT16_MIN) pre_strength = INT16_MIN;
+        request.stamina_adj = dm2_v1_hero_get_stamina_adj_raw(
+            hero, (int16_t)pre_strength);
+    }
+    request.creature_armor_mult = ai->ArmorClass;
+    request.party_level = (int16_t)map;
+    request.rand_hit = dm2_v1_drops_rand16(&rt->drop_rng, 0x100u);
+    request.rand_defense = dm2_v1_drops_rand16(&rt->drop_rng, 0x100u);
+    request.rand_armor = dm2_v1_drops_rand16(&rt->drop_rng, 0x100u);
+    request.rand_poison = dm2_v1_drops_rand16(&rt->drop_rng, 0x100u);
+    memset(&attack, 0, sizeof(attack));
+    if (!dm2_v1_combat_attack_creature_source(
+        &request, &rt->record_pools, dungeon, &rt->caii, &rt->timer_queue,
+        &rt->drop_rng, map, (unsigned long)rt->tick_count, x, y,
+        target_x, target_y, &attack) && !attack.hp_applied)
+        return 0;
+    /* A valid source miss does not enter ATTACK_CREATURE and therefore does
+     * not apply HP.  It must remain a blocked collision: callers use this
+     * result to prevent the party from treating a failed WIELD as a hit. */
+    if (!attack.hp_applied)
+        return 0;
+
+    /* Keep an accumulator receipt even when the due creature timer has not
+     * run yet.  This distinguishes a real source hit from a WIELD command
+     * that merely reached the facing-cell collision owner. */
+    memset(&g_dm2_last_creature_damage, 0,
+           sizeof(g_dm2_last_creature_damage));
+    g_dm2_last_creature_damage.valid = 1;
+    g_dm2_last_creature_damage.creature_record = creature_record;
+    g_dm2_last_creature_damage.creature_type = (int)record[4];
+    g_dm2_last_creature_damage.pending_damage = attack.hp_word_after;
+
+    /* ATTACK_CREATURE only accumulates damage in CAII word@0x14.  The
+     * source think timer owns HP transfer, WOUND_CREATURE and death/drop. */
+    return 1;
+}
+
+typedef struct {
+    DM2_V1_RuntimeState *runtime;
+    DM2_V1_DungeonData *dungeon;
+    int map;
+    int target_x;
+    int target_y;
+    int16_t creature;
+    int attack_succeeded;
+} DM2_RuntimeWieldContext;
+
+static int dm2_runtime_wield_get_creature(void *ctx, int16_t x, int16_t y)
+{
+    DM2_RuntimeWieldContext *w = (DM2_RuntimeWieldContext *)ctx;
+    if (!w || !w->runtime || !w->dungeon || x != w->target_x || y != w->target_y)
+        return -1;
+    return w->creature;
+}
+
+static int16_t dm2_runtime_wield_calc_damage(
+    void *ctx, int hero_idx, int creature_idx,
+    int16_t action_strength, int32_t skill_id)
+{
+    DM2_RuntimeWieldContext *w = (DM2_RuntimeWieldContext *)ctx;
+    (void)hero_idx;
+    (void)creature_idx;
+    (void)action_strength;
+    (void)skill_id;
+    if (!w || !w->runtime || !w->dungeon) return 0;
+    w->attack_succeeded = dm2_runtime_attack_creature_at(
+        w->runtime, w->dungeon, w->map,
+        w->runtime->boot->dm2_state ?
+            ((DM2_V1_GameState *)w->runtime->boot->dm2_state)->party_x : 0,
+        w->runtime->boot->dm2_state ?
+            ((DM2_V1_GameState *)w->runtime->boot->dm2_state)->party_y : 0,
+        w->target_x, w->target_y, w->creature, 1);
+    return w->attack_succeeded ? 1 : 0;
+}
+
+static void dm2_runtime_wield_set_pending(void *ctx, int16_t damage)
+{
+    (void)ctx;
+    (void)damage;
+}
+
+static const DM2_RuntimeWieldCallbacks dm2_runtime_wield_callbacks = {
+    dm2_runtime_wield_get_creature,
+    NULL,
+    NULL,
+    dm2_runtime_wield_calc_damage,
+    dm2_runtime_wield_set_pending
+};
 
 int dm2_v1_runtime_engage_command(
     const DM2_V1_EngageCommandRequest *request,
@@ -9701,12 +15805,14 @@ int dm2_v1_runtime_proceed_hand_command(
     DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
     DM2_V1_EngageCommandRequest request;
     DM2_RuntimeAttackQueueContext queue;
+    DM2_RuntimeWieldContext wield;
     uint16_t item;
     uint8_t cls1 = 0xffu;
     uint8_t cls2 = 0xffu;
     int16_t where;
     int entry;
     int result;
+    int is_wield_action;
 
     if (receipt) memset(receipt, 0, sizeof(*receipt));
     if (slot_index < 0 || slot_index > 2 || !rt->source_party_valid ||
@@ -9750,28 +15856,45 @@ int dm2_v1_runtime_proceed_hand_command(
     memset(&cls2_receipt, 0, sizeof(cls2_receipt));
     memset(&request, 0, sizeof(request));
     memset(&queue, 0, sizeof(queue));
-    if (!dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 17, &where) ||
-        (where != 0 && where != 1 && where - 1 != rt->source_party.curactmode) ||
-        !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 2,
-                                     &request.cmd.action_id) ||
-        request.cmd.action_id != 2 ||
+    memset(&wield, 0, sizeof(wield));
+    if (!dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 2,
+                                     &request.cmd.action_id)) {
+        if (receipt) receipt->fail_closed = 1;
+        return 0;
+    }
+    is_wield_action = request.cmd.action_id == (DM2_ENGAGE_WIELD_WEAPON + 1) ||
+                      request.cmd.action_id == 8;
+    if ((!is_wield_action &&
+         (!dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 17, &where) ||
+          (where != 0 && where != 1 && where - 1 != rt->source_party.curactmode))) ||
+        (request.cmd.action_id != (DM2_ENGAGE_ATTACK + 1) &&
+         request.cmd.action_id != (DM2_ENGAGE_CAST_MISSILE + 1) &&
+         request.cmd.action_id != (DM2_ENGAGE_WIELD_WEAPON + 1) &&
+         request.cmd.action_id != 8) ||
         !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 0,
                                      &request.cmd.skill_type) ||
         !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 3,
                                      &request.cmd.power_base) ||
         !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 4,
                                      &request.cmd.power_random) ||
-        !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 5,
-                                     &request.cmd.delay) ||
+        ((!dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 5,
+                                       &request.cmd.delay)) &&
+         request.cmd.action_id != 8) ||
         !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 7,
                                      &request.cmd.defense_class) ||
         !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 9,
                                      &request.cmd.skill_exp) ||
-        !dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 0x10,
-                                     &request.cmd.damage_type)) {
+        ((!dm2_runtime_query_cmd_field(loader, cls1, cls2, entry, 0x10,
+                                       &request.cmd.damage_type)) &&
+         request.cmd.action_id != 8)) {
         if (receipt) receipt->fail_closed = 1;
         return 0;
     }
+    /* c_engage.cpp writes the raw command selector to
+     * hero->handcmd[curactmode] before resolving CMDSTR.  Keep that source
+     * owner live so a subsequent party/creature collision can resolve the
+     * same authenticated action rather than guessing from the UI slot. */
+    hero->handcmd[rt->source_party.curactmode] = (int8_t)slot_index;
     game = (DM2_V1_GameState *)rt->boot->dm2_state;
     request.hero_index = rt->source_party.curacthero - 1;
     request.hand = rt->source_party.curactmode;
@@ -9788,6 +15911,30 @@ int dm2_v1_runtime_proceed_hand_command(
     request.party_map = game->current_level;
     request.creature_at_target = -1;
     request.tile_value = 0;
+    request.wield_strength = request.cmd.power_base;
+    if ((request.cmd.action_id == (DM2_ENGAGE_WIELD_WEAPON + 1) ||
+         request.cmd.action_id == 8) && rt->boot->dungeon_data) {
+        DM2_V1_DungeonData *dungeon =
+            (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+        static const int dx[4] = { 0, 1, 0, -1 };
+        static const int dy[4] = { -1, 0, 1, 0 };
+        int dir = game->party_dir & 3;
+        int tx = game->party_x + dx[dir];
+        int ty = game->party_y + dy[dir];
+        int raw = dm2_v1_dungeon_get_tile_raw(dungeon, game->current_level,
+                                               tx, ty);
+        wield.runtime = rt;
+        wield.dungeon = dungeon;
+        wield.map = game->current_level;
+        wield.target_x = tx;
+        wield.target_y = ty;
+        wield.creature = dm2_v1_get_creature_at(
+            &rt->record_pools, dungeon, game->current_level, tx, ty);
+        request.creature_at_target = wield.creature;
+        request.tile_value = raw >= 0 ? (int16_t)raw : 0;
+        request.wield_cb = &dm2_runtime_wield_callbacks;
+        request.wield_ctx = &wield;
+    }
     request.game_tick = (uint32_t)rt->tick_count;
     request.queue_timer_cb = dm2_runtime_queue_attack_timer;
     request.queue_timer_ctx = &queue;
@@ -9795,7 +15942,9 @@ int dm2_v1_runtime_proceed_hand_command(
     request.attack_hero_flag = rt->source_party.curacthero;
     hero->heroflag |= 0x0800;
     result = dm2_v1_runtime_engage_command(&request, receipt);
-    if (!queue.queued || !result) {
+    if (!result || (is_wield_action
+                        ? (!receipt || !receipt->creature_attacked)
+                        : !queue.queued)) {
         hero->heroflag &= (int16_t)~0x0800;
         if (receipt) receipt->fail_closed = 1;
         return 0;

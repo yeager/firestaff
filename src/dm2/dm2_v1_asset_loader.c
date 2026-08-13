@@ -1120,6 +1120,10 @@ int dm2_v1_asset_champion_revive_data(
     DM2_V1_GdatNameReceipt name;
     int i;
 
+#define DM2_GDAT_REVIVE_RD16(p) \
+    (loader->big_endian ? ((uint16_t)(p)[0] << 8) | (uint16_t)(p)[1] : \
+                         (uint16_t)(p)[0] | ((uint16_t)(p)[1] << 8))
+
     if (!out_receipt) return 0;
     memset(out_receipt, 0, sizeof(*out_receipt));
     /* c_hero.cpp::DM2_REVIVE_PLAYER queries exactly 26 i16s through
@@ -1155,28 +1159,16 @@ int dm2_v1_asset_champion_revive_data(
         }
         memcpy(candidate.name2, name.text + name2_offset, name2_length);
     }
-    candidate.hit_points_base = loader->big_endian ?
-        ((uint16_t)raw[0] << 8) | raw[1] :
-        (uint16_t)raw[0] | ((uint16_t)raw[1] << 8);
-    candidate.stamina_base = loader->big_endian ?
-        ((uint16_t)raw[2] << 8) | raw[3] :
-        (uint16_t)raw[2] | ((uint16_t)raw[3] << 8);
-    candidate.mana_base = loader->big_endian ?
-        ((uint16_t)raw[4] << 8) | raw[5] :
-        (uint16_t)raw[4] | ((uint16_t)raw[5] << 8);
+    candidate.hit_points_base = DM2_GDAT_REVIVE_RD16(raw + 0);
+    candidate.stamina_base = DM2_GDAT_REVIVE_RD16(raw + 2);
+    candidate.mana_base = DM2_GDAT_REVIVE_RD16(raw + 4);
     for (i = 0; i < 7; ++i) {
-        size_t offset = (size_t)(3 + i) * 2u;
-        uint16_t value = loader->big_endian ?
-            ((uint16_t)raw[offset] << 8) | raw[offset + 1u] :
-            (uint16_t)raw[offset] | ((uint16_t)raw[offset + 1u] << 8);
+        uint16_t value = DM2_GDAT_REVIVE_RD16(raw + (3 + i) * 2);
         /* c_hero.cpp applies DM2_MAX in word precision and then CUTX8. */
         candidate.ability_base[i] = (uint8_t)(value < 30u ? 30u : value);
     }
     for (i = 0; i < 16; ++i) {
-        size_t offset = (size_t)(10 + i) * 2u;
-        uint16_t value = loader->big_endian ?
-            ((uint16_t)raw[offset] << 8) | raw[offset + 1u] :
-            (uint16_t)raw[offset] | ((uint16_t)raw[offset + 1u] << 8);
+        uint16_t value = DM2_GDAT_REVIVE_RD16(raw + (10 + i) * 2);
         /* The source shifts by CUTX8(value); retain only the same byte that
          * can influence the resulting c_hero skill word. */
         candidate.skill_level[i] = (uint8_t)value;
@@ -1191,6 +1183,7 @@ int dm2_v1_asset_champion_revive_data(
     }
     candidate.valid = 1;
     *out_receipt = candidate;
+#undef DM2_GDAT_REVIVE_RD16
     return 1;
 }
 

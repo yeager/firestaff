@@ -10,11 +10,11 @@
  * branch, the tile-rooted cut (previously dm2_v1_caii_delete_creature_record_tail),
  * and the bound DM2_DROP_CREATURE_POSSESSION in one source-ordered flow.
  *
- * This is test/probe-only.  It is not a live GAME_LOAD or SKSAVE deletion
- * owner: the complete original operation also requires shared multi-map
- * c_map state, 3CE7D effects, DB-allocation cleanup, CAII ownership and the
- * source timer transaction.  Production must keep the entire branch closed
- * until those owners commit atomically.
+ * This bounded composition is used by the private GAME_LOAD candidate only
+ * after that owner has admitted its multi-map c_map, CAII, DB allocation and
+ * timer transaction.  It is not a generic process-global runtime route, and
+ * the 3CE7D side effects plus tagged dballoc cache remain explicitly
+ * receipted host-owned.  The standalone entry point remains a focused probe.
  *
  * Source order (c_record.cpp:1377-1424):
  *
@@ -39,10 +39,9 @@
  *              DM2_CHANGE_CURRENT_MAP_TO(map),
  *              DM2_INVOKE_MESSAGE(x, y, 0, 0, gametick + 1) BOUND
  *              (dm2_v1_invoke_message), DM2_CHANGE_CURRENT_MAP_TO(vw_10).
- *              The session is single-map: the swap is receipted
- *              (map_swap_receipted) and the queued timer carries the
- *              decoded map byte exactly like the source's post-swap
- *              ddat.v1d3248 read;
+ *              The swap is receipted (map_swap_receipted) and the queued
+ *              timer carries the decoded map byte exactly like the source's
+ *              post-swap ddat.v1d3248 read;
  *   1408-1413  record byte@5 != 0xff clears the owning CAII slot's
  *              byte@1a (bound when `caii` is non-NULL; receipted
  *              slot_mode_clear_unbound otherwise);
@@ -102,7 +101,7 @@ typedef struct {
   int invoke_message_queued; /* BOUND: the map-swap/DM2_INVOKE_MESSAGE
                                 branch ran (c_record.cpp:1389-1406) */
   int map_swap_receipted;    /* CHANGE_CURRENT_MAP_TO swap + restore
-                                receipted (single-map session) */
+                                receipted by the caller's map owner */
   uint32_t invoke_ticket;    /* the queued type-0x4 timer's ticket */
   int invoke_queue_rejected; /* fail-closed: DM2_QUEUE_TIMER rejected */
   int slot_mode_cleared;     /* record byte@5 != 0xff -> slot byte@1a = 0
@@ -120,6 +119,7 @@ typedef struct {
   int drop_ran;              /* BOUND DM2_DROP_CREATURE_POSSESSION ran to
                                 a source return (c_record.cpp:1422) */
   int drop_failed;           /* fail-closed drop: the dealloc is skipped */
+  int transaction_rolled_back; /* any post-admission failure restored all owners */
   int dballoc_cleanup_unbound;/* DM2_1c9a_0247 host-owned preserved-GFX
                                 cache cleanup (c_record.cpp:1423) */
   int dealloc_performed;     /* BOUND: DM2_DEALLOC_RECORD free marker
@@ -128,9 +128,21 @@ typedef struct {
   char source_evidence[512];
 } DM2_V1_DeleteCreatureFullReceipt;
 
+/* Candidate-owned alternatives to the historical process-global CAII/GDAT
+ * providers.  A delete transaction must read the same private owner that
+ * admitted the DB4 record; it may not silently consult another session. */
+typedef int (*DM2_V1_DeleteAiFlagsContextFn)(
+    void *context, int creature_type, uint16_t *out_flags);
+typedef int (*DM2_V1_DeleteGdatWord1ContextFn)(
+    void *context, int creature_type, uint16_t *out_word);
+typedef int (*DM2_V1_DeleteInvokeContextFn)(
+    void *context, int map, int xa, int ya, int xb, int sel,
+    int32_t tick, uint32_t *out_ticket);
+
 /*
  * The bounded test/probe DM2_DELETE_CREATURE_RECORD composition.  `map_current`
- * stands in for ddat.v1d3248 and `game_tick` for timdat.gametick (both
+ * stands in for ddat.v1d3248 and selects the dungeon map for creature lookup
+ * and tile-chain mutation; `game_tick` stands in for timdat.gametick (both
  * caller-owned); `x`/`y` are the payload coordinates (vql_0c/vql_08),
  * `mode` is vw_04 and `noise_arg` is parw02 (vql_00) exactly like the
  * source's DROP_CREATURE_POSSESSION arguments; `party_x`/`party_y`/
@@ -157,6 +169,52 @@ int dm2_v1_delete_creature_record_full(
     int noise_arg,
     int party_x, int party_y, int party_dir,
     const uint16_t drop_slots[DM2_DROP_SLOT_COUNT],
+    DM2_V1_DeleteCreatureFullReceipt *receipt);
+
+/* Explicit context-bound GAME_LOAD boundary.  The old entry point remains
+ * available for standalone probes, but candidate/recycler callers should
+ * use this form so AI flags and CREATURES word@1 cannot cross sessions. */
+int dm2_v1_delete_creature_record_full_with_context(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_DungeonData *dungeon,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    DM2_V1_DropRng *rng,
+    int map_current,
+    unsigned long game_tick,
+    int x, int y,
+    int mode,
+    int noise_arg,
+    int party_x, int party_y, int party_dir,
+    const uint16_t drop_slots[DM2_DROP_SLOT_COUNT],
+    DM2_V1_DeleteAiFlagsContextFn ai_flags_fn,
+    void *ai_flags_context,
+    DM2_V1_DeleteGdatWord1ContextFn gdat_word1_fn,
+    void *gdat_word1_context,
+    DM2_V1_DeleteCreatureFullReceipt *receipt);
+
+/* Candidate-owned timer variant.  The source-timer queue argument remains a
+ * private rollback shadow; the invoke callback is the authoritative queue
+ * owner for GAME_LOAD candidates. */
+int dm2_v1_delete_creature_record_full_with_context_and_invoke(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_DungeonData *dungeon,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    DM2_V1_DropRng *rng,
+    int map_current,
+    unsigned long game_tick,
+    int x, int y,
+    int mode,
+    int noise_arg,
+    int party_x, int party_y, int party_dir,
+    const uint16_t drop_slots[DM2_DROP_SLOT_COUNT],
+    DM2_V1_DeleteAiFlagsContextFn ai_flags_fn,
+    void *ai_flags_context,
+    DM2_V1_DeleteGdatWord1ContextFn gdat_word1_fn,
+    void *gdat_word1_context,
+    DM2_V1_DeleteInvokeContextFn invoke_fn,
+    void *invoke_context,
     DM2_V1_DeleteCreatureFullReceipt *receipt);
 
 const char *dm2_v1_delete_creature_full_source_evidence(void);

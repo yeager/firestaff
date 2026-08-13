@@ -54,12 +54,18 @@ static uint16_t rd16(const uint8_t *p)
     return (uint16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
 }
 
-static uint16_t rd16_record(const DM2_V1_RecordPoolSet *pool_set,
+static uint16_t record_rd16(const DM2_V1_RecordPoolSet *pool_set,
                             const uint8_t *p)
 {
-    if (pool_set && pool_set->words_big_endian)
-        return (uint16_t)(((uint16_t)p[0] << 8) | p[1]);
-    return rd16(p);
+    return pool_set && pool_set->source_words_big_endian
+        ? (uint16_t)(((uint16_t)p[0] << 8) | p[1]) : rd16(p);
+}
+
+static uint16_t asset_rd16(const DM2_V1_AssetLoader *loader,
+                           const uint8_t *p)
+{
+    return loader && loader->big_endian
+        ? (uint16_t)(((uint16_t)p[0] << 8) | p[1]) : rd16(p);
 }
 
 /* DM2_4FCC frame walk (skproject/SKULLWIN/c_creature.cpp:3285-3378) over
@@ -258,7 +264,7 @@ int dm2_v1_creature_get_animation_frame_with_ai_spec(
 
     /* c_creature.cpp:3242-3248 — scan for the command row / terminator. */
     for (row = 0u; row * 4u + 1u < attribution_size; ++row) {
-        uint16_t row_command = rd16(attribution + row * 4u);
+        uint16_t row_command = asset_rd16(loader, attribution + row * 4u);
         if (row_command == 0xffffu || row_command == (uint16_t)command) {
             break;
         }
@@ -269,7 +275,7 @@ int dm2_v1_creature_get_animation_frame_with_ai_spec(
         return 0;
     }
     rc.attribution_found = 1;
-    base = rd16(attribution + row * 4u + 2u);
+    base = asset_rd16(loader, attribution + row * 4u + 2u);
     rc.attribution_base = base;
     *io_adj_base = base; /* c_creature.cpp:3252 mov16(RG7p, word@2) */
 
@@ -389,7 +395,7 @@ int32_t dm2_v1_creature_something_1c9a_0a48_with_ai_spec(
     unsigned long game_tick,
     DM2_V1_CreatureSomethingReceipt *receipt)
 {
-    static const uint8_t zero_row[4] = { 0, 0, 0, 0 };
+static const uint8_t zero_row[4] = { 0, 0, 0, 0 };
     uint8_t *rec;
     uint8_t *slot;
     const uint8_t *anim;
@@ -465,7 +471,7 @@ int32_t dm2_v1_creature_something_1c9a_0a48_with_ai_spec(
             /* c_1c9a.cpp:5462-5477 — fetch through GAF. */
             int32_t parl01 =
                 (ai_spec->w0AIFlags & 0x1u) ?
-                    (int32_t)rd16_record(pool_set, rec + 0xc) : 0;
+                    (int32_t)record_rd16(pool_set, rec + 0xc) : 0;
             uint16_t adj_base = vw_04;
             int16_t frame_word = (int16_t)vw_08;
             DM2_V1_CreatureAnimFrameReceipt grc;
@@ -557,7 +563,7 @@ int32_t dm2_v1_creature_something_1c9a_0a48_with_ai_spec(
 
     /* c_1c9a.cpp:5547-5667 — the delta arithmetic, verbatim branches. */
     {
-        uint16_t flags = rd16_record(pool_set, rec + 0xa);
+        uint16_t flags = record_rd16(pool_set, rec + 0xa);
         if ((flags & 0x40u) == 0u) {
             int32_t d = (int32_t)((anim[3] & 0x0cu) >> 2);
             int skip00533 = 1;
