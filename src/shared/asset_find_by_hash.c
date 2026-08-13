@@ -112,7 +112,7 @@ static void md5_final(AssetMd5Ctx *ctx, char outHex[33]) {
         for (int j = 0; j < 4; j++)
             digest[i*4+j] = (unsigned char)(ctx->state[i] >> (j * 8));
     for (int i = 0; i < 16; i++)
-        sprintf(&outHex[i*2], "%02x", digest[i]);
+        snprintf(&outHex[i*2], 3, "%02x", digest[i]);
     outHex[32] = 0;
 }
 

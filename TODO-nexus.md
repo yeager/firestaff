@@ -2,6 +2,10 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: `asset_find_by_hash.c` använder nu begränsad `snprintf` i stället
+för macOS-deprecierad `sprintf`. Detta behövdes för att Nexus real-data-targets
+skulle bygga med ASan/UBSan och `-Werror`; hashresultatet är oförändrat.
+
 2026-08-13: Den senaste pose-auditen gav ingen tillåten LEV01-startpose.
 I de externa spåren `run-nexus-lev01-pose-followup-20260813` och
 `run-pose-bind-20260813v` observerades tio skrivningar vardera till den
