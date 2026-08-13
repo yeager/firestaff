@@ -2,6 +2,17 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — längre replay når source-owned spawnförkonsument
+
+- ✅ Den autentiserade replayen parseras nu som en positiv execution-window:
+  `$CC4C`-konsumenten, 48 `$4644`-förkonsumentprover och 160 `$4667`-helper-
+  prover finns i samma sidecar. Testet kräver dessa edges och skyddar samtidigt
+  att ingen giltig `$B0E5`-kategori eller RAM-laddad helpergren har observerats.
+- 🔒 `$B3=$FF` vid samtliga `$4667`-prover innebär att den särskilda
+  `$B3 & 7 == 4`-grenen inte nås. Utan `$B0E5` med A=`0..3`, returägarskap,
+  source-owned target-write och live creature-record öppnas inte spawn, RNG,
+  AI, combat, loot, generator, T700 eller T900.
+
 ## 2026-08-13 — autentiserad CD→RAM-transport från replay är nu verifierad
 
 - ✅ Replayens transition-receipt (`theron-capture-20260813/replay`) är

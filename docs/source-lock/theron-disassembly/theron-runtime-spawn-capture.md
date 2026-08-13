@@ -1003,6 +1003,13 @@ length. This proves transport and dispatch provenance only: its 512 `$2600`
 reads are `$CB22` zero-readback traffic, so no level/object or presentation
 semantics are promoted.
 
+The same replay now passes the execution-window parser with the source-owned
+`$CC4C` path, 48 `$4644` preconsumer samples and 160 `$4667` helper samples.
+Every `$4667` sample has `$B3=$FF`, so the source's `$B3 & 7 == 4` RAM-loaded
+helper branch is absent; there is also no valid `$B0E5` category. This is a
+stronger negative handoff, not a spawn/RNG publication: the return owner,
+target write and live creature record are still unjoined.
+
 The receipt now separates the observed `$CB22` init/readback helper from
 non-init target reads and counts the byte-locked `$C3A0-$C429` caller shape
 independently (including non-zero and distinct reader-PC counts). This is a

@@ -304,7 +304,12 @@ static int parse_spawn_register_trace_file(
         expected_sequence++;
     }
     fclose(file);
-    if (!saw_record || !out->c96b_window_seen || !out->cc4c_window_seen ||
+    /* A strict semantic candidate needs both source windows.  The looser
+     * execution-window receipt is also useful when a real run reaches the
+     * game-owned $CC4C consumer without visiting $C96B in the same budget. */
+    if (!saw_record || !out->cc4c_window_seen ||
+        (require_runtime_edges &&
+         !out->c96b_window_seen) ||
         (require_runtime_edges &&
          (!out->spawn_entry_b0e5_seen ||
           !out->preconsumer_4644_seen || !out->helper_4667_seen))) {

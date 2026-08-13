@@ -219,7 +219,14 @@ int main(void) {
              * parser must validate the full sequence without baking one
              * run's sample limit into the source test. */
             assert(registers.sample_count > 0u);
-            assert(registers.c96b_window_seen && registers.cc4c_window_seen);
+            assert(!registers.c96b_window_seen && registers.cc4c_window_seen);
+            /* The longer replay reaches the source-owned preconsumer and
+             * helper, but still never enters a valid regular-spawn category
+             * or the RAM-loaded helper branch. */
+            assert(registers.preconsumer_4644_seen &&
+                   registers.helper_4667_seen);
+            assert(!registers.spawn_entry_b0e5_seen &&
+                   !registers.helper_4667_special_branch_seen);
             /* A real session may legitimately observe the RNG preconsumer
              * and helper before it fails to reach a valid regular-spawn
              * publication.  Their presence is provenance, not semantic
