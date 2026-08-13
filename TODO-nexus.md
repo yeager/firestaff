@@ -2,6 +2,19 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-14: A second authenticated interactive run at
+`/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-interactive-title-to-menu-20260814/`
+confirmed the real Nexus title progression after START: `Now Loading` at
+12 seconds, the Nexus Master logo at 24/36 seconds, and the full English
+title with `PRESS START BUTTON` at 48 seconds. The corresponding PNG SHA-256
+receipts are `dd87756a158d478f542ab6c7748920b6b6c073e8bb3f3b4d9359b053e710bf0d`,
+`0547fcce6c30cdd88573e10780460ebf4439136f61c8168d45c14318c0bf6160`,
+`e5cc012b59f7c820ab5c0dd0d3191603f7537908247e5b7d8b01c76eeeae7222`,
+`4fbb132798f89ea6d49d883ae43e49aa5a9a07c5becfa6d4bdc47fd46ee90853`, and
+`d5d38734ebcc76a2f5f6b7a5deb3055a612e5d4a6166486f5ee130b1910fb216`.
+This proves additional authentic visual startup parity only; the subsequent
+menu, LEV01, and played-save gates remain closed.
+
 2026-08-14: A focused Mednafen run with the authenticated J BIOS and English
 merged disc produced real visual startup witnesses on the external disk at
 `/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-interactive-input-20260814/`.
