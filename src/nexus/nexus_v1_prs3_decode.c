@@ -1,4 +1,5 @@
 #include "nexus_v1_prs3_decode.h"
+#include <limits.h>
 #include <string.h>
 
 /* DMWeb DMNDataFileDecoder.vbs DecodePRS3 (the MENU.BPK decoder) defines
@@ -21,7 +22,9 @@ int nexus_v1_prs3_parse_header(const uint8_t *data, int data_size,
     out->version = read_be32(data + 4);
     out->uncompressed_size = read_be32(data + 8);
     out->compressed_size = read_be32(data + 12);
-    if (out->version != 1) return 0;
+    if (out->version != 1 || out->uncompressed_size == 0U ||
+        out->compressed_size == 0U ||
+        out->uncompressed_size > (uint32_t)INT_MAX) return 0;
     /* Keep the source-bound check in unsigned space; a malformed retail
      * header must not wrap the old int addition on large inputs. */
     if (out->compressed_size > (uint32_t)(data_size - 16)) return 0;

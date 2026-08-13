@@ -2,6 +2,12 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: PRS3-headern avvisar nu nollstor stream och
+`uncompressed_size` som inte ryms i dekoder-API:ts `int`-kontrakt. Detta
+förhindrar att en skadad header passerar framing och senare wrap:ar vid
+FACE/MENU-dekodning. Literal-, back-reference- och autentisk FACE.BIN-kedja
+passerar fortsatt.
+
 2026-08-13: DGN-basparsern kräver nu att Structure1:s deklarerade span
 innehåller fasta fält och att Structure1B-grid, dörrar, Structure1C och
 Structure1F ligger inom samma deklarerade span och filens verkliga gräns.

@@ -31,6 +31,14 @@ static void test_header_parse(void) {
     check(hdr.uncompressed_size == 8, "uncompressed_size");
     check(hdr.compressed_size == 4, "compressed_size");
     check(hdr.stream == valid + 16, "stream pointer");
+
+    valid[15] = 0; /* compressed size = 0 */
+    check(nexus_v1_prs3_parse_header(valid, 20, &hdr) == 0,
+          "zero-length stream rejected");
+    valid[15] = 4;
+    valid[8] = 0x80; valid[9] = 0x00; valid[10] = 0x00; valid[11] = 0x00;
+    check(nexus_v1_prs3_parse_header(valid, 20, &hdr) == 0,
+          "uncompressed size outside int API range rejected");
 }
 
 static void test_decompress_literal_run(void) {
