@@ -2,6 +2,13 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — source-bound pits no longer use fixture damage
+
+- ✅ Source-bound pit query, movement and the public pit handler now remain
+  fail-closed while the T700 consumer is unresolved.
+- ✅ The hardening probe verifies unchanged position, HP and stamina.
+- 🔒 Fixture levels retain their existing ReDMCSB-based probe behavior.
+
 ## 2026-08-13 — incomplete dungeon exits no longer report success
 
 - ✅ Exit query and movement share the `dungeon_complete` guard and propagate

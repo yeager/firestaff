@@ -383,6 +383,8 @@ Theron_MoveResult theron_v1_get_move_result(const Theron_V1_World *world, int di
         return THERON_MOVE_SPECIAL;
     }
     if (tile == THERON_SQUARE_PIT) {
+        if (theron_v1_source_level_needs_stat_consumer(world))
+            return THERON_MOVE_BLOCKED;
         /* Phase 5 pit logic: fall through */
         return THERON_MOVE_PIT_FALL;
     }
@@ -488,6 +490,10 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
 
     /* ── Special squares: pit ── */
     if (tile == THERON_SQUARE_PIT) {
+        /* The fixture pit damage path is not the authenticated T700
+         * consumer.  Do not let a source-bound pit fall through as floor. */
+        if (theron_v1_source_level_needs_stat_consumer(world))
+            return THERON_MOVE_BLOCKED;
         bool fell = theron_v1_pit_check_and_trigger(world, nx, ny);
         if (fell) {
             theron_v1_apply_post_move_effects(world);
@@ -675,6 +681,8 @@ bool theron_v1_pit_check_and_trigger(Theron_V1_World *world,
     if (!world) return false;
     uint8_t tile = theron_v1_world_get_square(world, x, y);
     if (tile != THERON_SQUARE_PIT) return false;
+    if (theron_v1_source_level_needs_stat_consumer(world))
+        return false;
 
     /* TQ pits always have OPEN bit set in the grid attribute byte.
      * For Phase 5, treat any PIT tile as active (no anti-pit flags in TQ grid). */

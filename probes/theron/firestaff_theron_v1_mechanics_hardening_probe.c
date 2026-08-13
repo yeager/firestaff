@@ -271,6 +271,35 @@ static void test_incomplete_exit_blocks(void) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+ * TEST: source-bound pit remains unresolved and blocks
+ * ═══════════════════════════════════════════════════════════════ */
+static void test_source_pit_blocks(void) {
+    printf("[test:source_pit_blocks]\n");
+
+    Theron_V1_World w;
+    make_world(&w);
+    w.levels[0][0].source_header_verified = 1;
+    w.levels[0][0].squares[8][9] = THERON_SQUARE_PIT;
+    w.party.leader_x = 8;
+    w.party.leader_y = 8;
+    w.party.champions[0].health = 50;
+    w.party.champions[0].stamina = 37;
+
+    CHECK_INT("source pit query blocks",
+              theron_v1_get_move_result(&w, THERON_DIR_EAST),
+              THERON_MOVE_BLOCKED);
+    CHECK_INT("source pit public handler remains unresolved",
+              theron_v1_pit_check_and_trigger(&w, 9, 8), 0);
+    CHECK_INT("source pit movement blocks",
+              theron_v1_move_party(&w, THERON_DIR_EAST),
+              THERON_MOVE_BLOCKED);
+    CHECK_INT("source pit keeps leader x", w.party.leader_x, 8);
+    CHECK_INT("source pit keeps leader y", w.party.leader_y, 8);
+    CHECK_INT("source pit keeps health", w.party.champions[0].health, 50);
+    CHECK_INT("source pit keeps stamina", w.party.champions[0].stamina, 37);
+}
+
+/* ═══════════════════════════════════════════════════════════════
  * TEST: click route — MOVE
  * ═══════════════════════════════════════════════════════════════ */
 static void test_click_route_move(void) {
@@ -730,6 +759,7 @@ int main(void) {
     test_unresolved_teleporter_blocks();
     test_unloaded_stairs_block();
     test_incomplete_exit_blocks();
+    test_source_pit_blocks();
     test_click_route_move();
     test_click_route_use_door();
     test_door_open_close();

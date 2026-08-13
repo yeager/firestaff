@@ -37,6 +37,13 @@ execution succeeds. Queries and movement both report `THERON_MOVE_BLOCKED`
 otherwise, without applying per-move effects. This keeps quest completion and
 next-dungeon source consumers behind their existing evidence gates.
 
+## Pit failure boundary
+
+On a source-authenticated level, a pit does not use the host fixture's damage
+or stamina rules. Query, movement and the public pit handler remain blocked
+until the original T700 pit consumer is joined to the source level/object
+receipt. Synthetic fixture levels retain the existing probe-only behavior.
+
 > **Status reviewed 2026-08-13.** JP/US Track 02 identity and several loader
 > receipts are real-data verified. Game-owned dungeon handoff, object/level
 > semantics and bitmap/palette binding remain open. The verified startup

@@ -8,6 +8,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — source-bound pit blockeras utan fixture-skada
+
+- ✅ Query, movement och den publika pit-handlern känner nu igen att T700-
+  konsumenten saknas på source-levels. Pit-rutan rapporteras som blocked i
+  stället för att använda hostens HP/stamina-skada eller falla igenom som golv.
+- ✅ Hardening-proben verifierar oförändrad position, HP och stamina.
+- 🔒 Detta öppnar inte originalets pit/fall/levitation-konsument; fixture-
+  nivåer behåller den tidigare ReDMCSB-baserade probe-semantiken.
+
 ## 2026-08-13 — ofullständig dungeon-exit blockeras fail-closed
 
 - ✅ Exit-query och movement använder nu samma `dungeon_complete`-grind och
