@@ -92,6 +92,43 @@ require_disc_container() {
   esac
 }
 
+validate_press_sequence() {
+  local sequence="${FIRESTAFF_NEXUS_TRACE_PRESS_SEQUENCE:-}"
+  local entry frame length mask extra mask_value end
+  local -a entries
+  [[ -z "$sequence" ]] && return 0
+  IFS=',' read -r -a entries <<< "$sequence"
+  ((${#entries[@]} <= 16)) || {
+    echo "ERROR: FIRESTAFF_NEXUS_TRACE_PRESS_SEQUENCE supports at most 16 entries" >&2
+    return 1
+  }
+  for entry in "${entries[@]}"; do
+    IFS=':' read -r frame length mask extra <<< "$entry"
+    [[ -n "$frame" && -n "$length" && -n "$mask" && -z "$extra" &&
+       "$frame" =~ ^[0-9]+$ && "$length" =~ ^[1-9][0-9]*$ &&
+       "$mask" =~ ^(0[xX])?[0-9a-fA-F]+$ ]] || {
+      echo "ERROR: invalid press sequence entry: $entry (expected frame:length:mask)" >&2
+      return 1
+    }
+    if [[ "$mask" =~ ^0[xX] ]]; then
+      mask_value=$((16#${mask:2}))
+    else
+      mask_value=$((10#$mask))
+    fi
+    ((mask_value >= 0 && mask_value <= 0x1fff)) || {
+      echo "ERROR: press sequence mask outside Saturn pad range: $entry" >&2
+      return 1
+    }
+    if ((require_input_window)); then
+      end=$((frame + length))
+      ((frame >= skip_frames && end <= skip_frames + frame_limit)) || {
+        echo "ERROR: press sequence entry outside the captured frame window: $entry" >&2
+        return 1
+      }
+    fi
+  done
+}
+
 run_validator() {
   case "$validator" in
     *.py) python3 "$validator" "$@" ;;
@@ -210,6 +247,7 @@ esac
    "$timeout_seconds" =~ ^[0-9]+$ &&
    "$press_start_frame" =~ ^[0-9]+$ && "$press_start_length" =~ ^[1-9][0-9]*$ &&
    "$press_button_mask" =~ ^(0[xX])?[0-9a-fA-F]+$ ]] || exit 1
+validate_press_sequence || exit 1
 if ((require_input_window)) && ((press_start_frame < skip_frames ||
     press_start_frame + press_start_length > skip_frames + frame_limit)); then
   echo "ERROR: requested input window is outside the captured frame window" >&2
