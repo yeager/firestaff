@@ -7,6 +7,35 @@ may be parsed and hash-verified from user-supplied data, but those facts do
 not identify the Saturn VDP1/VDP2 destination, CLUT owner, command order,
 runtime selector, or SH-2 consumer by themselves.
 
+## Verified external VDP1 sequence witness
+
+The authenticated operator capture
+`/Volumes/Extern-disk/nexus-saturn-capture/run-codex-menu-long-20260809f/runtime-vdp12.raw`
+contains the 900 frames declared by its external manifest. The bounded VDP1
+sequence verifier reports 390 complete command chains and 510 valid idle/END
+frames. With the real Nexus corpus at
+`/Volumes/Extern-disk/FirestaffUserData/data/nexus`, the DGN sequence join at
+frame 899 reports 204/204 source matches, 204/204 palette matches, and 175
+face-owner matches.
+
+Reproduction:
+
+```sh
+FIRESTAFF_NEXUS_RUNTIME_CAPTURE=/Volumes/Extern-disk/nexus-saturn-capture/run-codex-menu-long-20260809f/runtime-vdp12.raw \
+FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAMES=900 \
+bash tests/test_nexus_v1_vdp1_command_sequence.sh
+
+FIRESTAFF_NEXUS_DGN_SEQUENCE_CAPTURE=/Volumes/Extern-disk/nexus-saturn-capture/run-codex-menu-long-20260809f/runtime-vdp12.raw \
+FIRESTAFF_NEXUS_DGN_SEQUENCE_DATA_DIR=/Volumes/Extern-disk/FirestaffUserData/data/nexus \
+FIRESTAFF_NEXUS_DGN_SEQUENCE_CAPTURE_FRAMES=900 \
+FIRESTAFF_NEXUS_DGN_SEQUENCE_FRAME=899 \
+bash tests/test_nexus_v1_vdp1_dgn_command_sequence_join.sh
+```
+
+These are bounded capture/source-join witnesses only. They do not identify
+the retail scene owner or authorize the production renderer; transform,
+culling, VDP1/VDP2 consumer ownership and production admission remain closed.
+
 ## Required producer
 
 The capture launchers under `probes/nexus/` are operator-only. A capture-capable

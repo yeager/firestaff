@@ -2,6 +2,18 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: Den autentiska externa VDP1-råcapturen
+`/Volumes/Extern-disk/nexus-saturn-capture/run-codex-menu-long-20260809f/runtime-vdp12.raw`
+är nu verifierad med sin manifestdeklarerade längd på 900 frames. Analysen fann
+390 kompletta kommando-kedjor och 510 giltiga idle/END-frames; bounded command
+sequence-testet passerar. Samma capture tillsammans med den riktiga
+Nexus-korpusen `/Volumes/Extern-disk/FirestaffUserData/data/nexus` passerar
+också DGN-joinen för frame 899 med 204/204 source-matchningar,
+204/204 palette-matchningar och 175 face-owner-matchningar. Resultatet är
+capture-evidens, inte produktionsadmission: scenägare, Saturn-transform/culling
+och den autentiserade VDP1/VDP2-produktionskonsumenten är fortfarande öppna
+gates.
+
 2026-08-13: FNXS-läsaren validerar nu headerstorlek, champion/world-
 sektionsaritmetik och deklarerad filstorlek innan en save accepteras. Den
 vägrar också destinationbuffertar som är för små i stället för att göra en
