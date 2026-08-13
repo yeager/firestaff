@@ -78,7 +78,12 @@ ReDMCSB (WIP20210206) covers DM1/CSB/DM2 only — **no Saturn/Nexus code exists 
 
 **Total: 4,393,984 bytes (~4.2 MB).** DM1: ~33 KB for all 8 levels. Ratio: ~130×.
 
-**Provenance:** Extracted from DM Nexus Saturn ISO (disc hash not yet SHA256-locked — disc image absent).
+**Provenance:** Extracted from the operator-owned English Saturn ISO in
+`/Volumes/Extern-disk/FirestaffUserData/data/nexus`. The ISO SHA-256 is
+`16786e6165d8cbf7f6394dd9bc7171fbb561c1ba40b77ad7cba3c275fde2804e`; the
+matching CUE SHA-256 is
+`b96f01e2f8ce3ab9c8e4a33d5a0c7076cdc1bfd247a85a1454e6c36c8a616f33`.
+The media remains external and is not committed to Git.
 
 ### 1.2 File Structure — DMWeb correction
 

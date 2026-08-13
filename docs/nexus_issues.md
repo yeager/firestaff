@@ -161,23 +161,34 @@ V2 enhanced renderer exists but is not connected to game loop or viewport. V2.0 
 
 ## Unknown/Risk Issues
 
-### R1: No Source Disassembly Available
+### R1: No Full Source Disassembly Available
 
-**Severity:** HIGH
-**Status:** No ReDMCSB equivalent for Nexus
+**Severity:** MEDIUM
+**Status:** Partial retail disassembly available; no ReDMCSB-equivalent source tree
 
-DM1 has ReDMCSB (WIP20210206) disassembly providing exact source-lock reference. Nexus has no equivalent. All format reverse-engineering must be done from disc inspection alone.
+DM1 has ReDMCSB (WIP20210206) disassembly providing an extensive source-lock
+reference. Nexus has authenticated SH-2/68000 disassembly of `DM.BIN`,
+`0DMSTRT.BIN` and `SDDRVS.TSK`, plus DMWeb-bound format evidence, but no
+symbol-rich source tree equivalent to ReDMCSB. The remaining runtime ownership
+and consumer questions therefore still require original execution captures.
 
-**Risk:** Some formats may be impossible to reverse-engineer accurately without disassembly. Unknown dungeon data structure, champion data format, save file format may have opaque binary layouts.
+**Risk:** Some runtime formats may remain difficult to reverse-engineer without
+source-level names and call graphs. The Saturn save consumer and presentation
+owners are still opaque despite the available disassembly.
 
 ---
 
 ### R2: Region/Version Variants Unknown
 
 **Severity:** MEDIUM
-**Status:** Unknown if other Nexus releases exist
+**Status:** The external corpus covers a Japanese-region Saturn executable with
+English and French media variants; other regional/revision coverage is not
+complete.
 
-It is unknown if Dungeon Master Nexus was released in other regions (only Japanese known). No other versions confirmed. Disc used for implementation may not represent all releases.
+The authenticated capture work uses the J-region BIOS and the matching English
+merged disc. The French data-only variant is retained as a separate corpus
+line. Other revisions and regional releases remain unverified, so the current
+implementation must not generalise these results to them.
 
 **Risk:** Implementation may be specific to Japanese Sega Saturn release only.
 
