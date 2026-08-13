@@ -1,5 +1,13 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-13 — production state primitives remain separate from gameplay consumers
+
+The production Theron adapter now implements only the API-level state
+invariants for champion resource mutation (HP, stamina and mana clamped to
+their authenticated bounds) and champion death (`alive=0`, `health=0`). These
+operations do not assign attack, defense, AI, RNG, loot, sound, T700 or T900
+meaning and therefore do not weaken the capture gates below.
+
 ## 2026-08-13 — RAM/VDC-replayens VDC/VCE-pair är screen-space-admitted
 
 Den externa replayen `theron-vdc-ram.exXuQu` har en komplett 64 KiB VDC- och

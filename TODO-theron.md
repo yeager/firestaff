@@ -8,6 +8,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — source-runtime state invariants are no longer no-op
+
+- ✅ Produktionsadaptern klampar nu championens HP, stamina och mana till
+  respektive maxvärde och nollgräns. Champion-death nollställer dessutom
+  health och `alive` på samma rena state-livscykel som den redan source-bundna
+  creature-retire-rutinen.
+- 🔒 Detta öppnar inte attack, spell, AI, RNG, loot, ljud eller T700/T900;
+  deras originalkonsumenter är fortfarande fail-closed.
+
 ## 2026-08-13 — längre replay når source-owned spawnförkonsument
 
 - ✅ Den autentiserade replayen parseras nu som en positiv execution-window:

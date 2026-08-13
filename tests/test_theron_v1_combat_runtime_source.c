@@ -130,6 +130,25 @@ int main(void) {
     world.party.champions[0].water = 8;
     world.party.champions[0].stamina = 9;
     world.party.champions[0].max_stamina = 20;
+    world.party.champions[0].health = 50;
+    world.party.champions[0].max_health = 100;
+    world.party.champions[0].mana = 4;
+    world.party.champions[0].max_mana = 12;
+    CHECK(theron_v1_modify_champion_hp(&world.party.champions[0], 75) == 100 &&
+              theron_v1_modify_champion_hp(&world.party.champions[0], -150) == 0 &&
+              theron_v1_modify_champion_stamina(&world.party.champions[0], 99) == 20 &&
+              theron_v1_modify_champion_stamina(&world.party.champions[0], -99) == 0 &&
+              theron_v1_modify_champion_mana(&world.party.champions[0], 99) == 12 &&
+              theron_v1_modify_champion_mana(&world.party.champions[0], -99) == 0,
+          "source runtime keeps basic champion resources clamped");
+    world.party.champions[0].alive = 1;
+    world.party.champions[0].health = 25;
+    theron_v1_champion_die(&world, 0);
+    CHECK(world.party.champions[0].alive == 0 &&
+              world.party.champions[0].health == 0,
+          "source runtime preserves champion death lifecycle invariant");
+    world.party.champions[0].alive = 1;
+    world.party.champions[0].stamina = 9;
     world.object_count = 1;
     world.objects[0].type = THERON_OBJTYPE_POOL;
     world.objects[0].x = 3;

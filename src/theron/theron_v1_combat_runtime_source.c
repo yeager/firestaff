@@ -340,19 +340,42 @@ int theron_v1_calc_defense(const Theron_V1_Champion *defender,
 }
 
 int theron_v1_modify_champion_hp(Theron_V1_Champion *c, int delta) {
-    (void)c; (void)delta; return 0;
+    int value;
+    if (!c) return 0;
+    value = (int)c->health + delta;
+    if (value < 0) value = 0;
+    if (value > c->max_health) value = c->max_health;
+    c->health = (int16_t)value;
+    return c->health;
 }
 
 int theron_v1_modify_champion_stamina(Theron_V1_Champion *c, int delta) {
-    (void)c; (void)delta; return 0;
+    int value;
+    if (!c) return 0;
+    value = (int)c->stamina + delta;
+    if (value < 0) value = 0;
+    if (value > c->max_stamina) value = c->max_stamina;
+    c->stamina = (int16_t)value;
+    return c->stamina;
 }
 
 int theron_v1_modify_champion_mana(Theron_V1_Champion *c, int delta) {
-    (void)c; (void)delta; return 0;
+    int value;
+    if (!c) return 0;
+    value = (int)c->mana + delta;
+    if (value < 0) value = 0;
+    if (value > c->max_mana) value = c->max_mana;
+    c->mana = (int16_t)value;
+    return c->mana;
 }
 
 void theron_v1_champion_die(Theron_V1_World *world, int champ_slot) {
-    (void)world; (void)champ_slot;
+    Theron_V1_Champion *champion;
+    if (!world || champ_slot < 0 || champ_slot >= THERON_MAX_CHAMPIONS) return;
+    champion = theron_v1_party_getChampion(&world->party, champ_slot);
+    if (!champion) return;
+    champion->alive = 0;
+    champion->health = 0;
 }
 
 void theron_v1_creature_die(Theron_V1_World *world, int creature_id) {
