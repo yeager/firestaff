@@ -30,6 +30,7 @@
 #include "theron_v1_boot.h"
 #include "theron_v1_startup_media.h"
 #include "theron_v1_startup_flow.h"
+#include "theron_v1_track02_raw_media_intake.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -524,17 +525,29 @@ static void run_explicit_real_cue_campaign_if_available(void) {
     const char *cue_path = getenv("FIRESTAFF_THERON_CUE");
     M12_AssetStatus status;
     const Theron_V1Track02CampaignMediaDiscoveryReceipt *media;
+    Theron_V1Track02RawMediaIntakeReceipt intake;
 
     if (!cue_path || !cue_path[0]) {
         expect_skip("FIRESTAFF_THERON_CUE is unset");
         return;
     }
+    memset(&intake, 0, sizeof(intake));
+    expect_true(theron_v1_track02_raw_media_intake_discover(cue_path,
+                                                             &intake) == 1 &&
+                    intake.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY &&
+                    intake.cue_consumed && intake.track02_md5[0] != '\0',
+                "explicit authentic Theron CUE resolves one verified Track 02 payload");
+    if (intake.status != THERON_V1_TRACK02_MEDIA_INTAKE_READY ||
+        !intake.cue_consumed || !intake.track02_md5[0]) {
+        return;
+    }
     expect_true(M12_AssetStatus_ScanTheronCampaignMedia(
-                    &status, cue_path, THERON_TRACK02_MD5_US_BIN, NULL) == 1,
+                    &status, cue_path, intake.track02_md5, NULL) == 1,
                 "explicit authentic Theron CUE enters campaign media admission");
     media = M12_AssetStatus_GetTheronCampaignMedia(&status);
     expect_true(media && media->source == THERON_V1_TRACK02_CAMPAIGN_MEDIA_SOURCE_CUE &&
                     media->launchable_direct_media && media->direct_media.cue_consumed &&
+                    strcmp(media->track02_md5, intake.track02_md5) == 0 &&
                     strcmp(media->direct_media.media_path, cue_path) == 0,
                 "explicit authentic Theron CUE retains CUE-backed raw Track 02 provenance");
 }
