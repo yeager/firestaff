@@ -2,6 +2,17 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: The attached authentic J-BIOS 1.01 was extracted outside the
+repository and hash-verified as
+`dcfef4b99605f872b6c3b6d05c045385cdea3d1b702906a0ed930df7bcb7deac`. A new
+J-region run against the hash-verified English merged CUE at
+`/Volumes/Extern-disk/nexus-capture-20260813/run-attachment-j-20260813/`
+produced 1,200 validated raw frames and 1,156 active VDP1 observations. It
+still contains no source-owned LEV01 level/x/y/facing record; the capture is
+therefore negative runtime evidence only. `capture_exit_status=143` records
+that the emulator was stopped after the complete raw witness had been written.
+No start pose, save format, or presentation gate is opened by this run.
+
 2026-08-13: Direct `nexus_v1_load_level()` failures now clear the partial DGN,
 Structure2 source receipt, source path, pose, and `game_started` state after
 the loader has begun mutating the engine. The launcher and engine boundaries

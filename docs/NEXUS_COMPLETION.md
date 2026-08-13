@@ -9,6 +9,15 @@ regionmatchad Saturn-kedja.
 
 ## Current evidence correction — 2026-08-13
 
+The latest attached-media J-region run at
+`/Volumes/Extern-disk/nexus-capture-20260813/run-attachment-j-20260813/`
+used the hash-verified J BIOS 1.01 and English merged CUE, and produced 1,200
+validated raw frames with 1,156 active VDP1 observations. It still contains
+no source-owned LEV01 level/x/y/facing record. The raw witness is retained as
+negative transport evidence; `capture_exit_status=143` records that the
+emulator was stopped after the complete frame set had been written. It does
+not open the start-pose, save, HUD/viewport, or audio gates.
+
 The later J-BIOS/English-Merged run at
 `/Volumes/Extern-disk/nexus-capture-20260813/run-followup-20260813c5/`
 used the documented active-low debug sequence and produced a validator-clean
