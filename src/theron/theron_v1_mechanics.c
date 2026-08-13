@@ -402,6 +402,8 @@ Theron_MoveResult theron_v1_get_move_result(const Theron_V1_World *world, int di
         return THERON_MOVE_TELEPORT;
     }
     if (tile == THERON_SQUARE_EXIT) {
+        if (!world->dungeon_complete)
+            return THERON_MOVE_BLOCKED;
         return THERON_MOVE_EXIT;
     }
     if (tile == THERON_SQUARE_FLOOR || tile == THERON_SQUARE_ALARM ||
@@ -506,13 +508,12 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
 
     /* ── Special squares: exit ── */
     if (tile == THERON_SQUARE_EXIT) {
-        if (world->dungeon_complete) {
-            theron_v1_check_transition(world, nx, ny);
-            theron_v1_transition_execute(world);
-            theron_v1_apply_post_move_effects(world);
-            return THERON_MOVE_EXIT;
-        }
-        return THERON_MOVE_BLOCKED;
+        if (!world->dungeon_complete ||
+            theron_v1_check_transition(world, nx, ny) == 0 ||
+            theron_v1_transition_execute(world) < 0)
+            return THERON_MOVE_BLOCKED;
+        theron_v1_apply_post_move_effects(world);
+        return THERON_MOVE_EXIT;
     }
 
     /* ── Normal floor move ── */

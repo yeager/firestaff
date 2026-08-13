@@ -243,6 +243,34 @@ static void test_unloaded_stairs_block(void) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+ * TEST: incomplete dungeon exit fails closed
+ * ═══════════════════════════════════════════════════════════════ */
+static void test_incomplete_exit_blocks(void) {
+    printf("[test:incomplete_exit_blocks]\n");
+
+    Theron_V1_World w;
+    make_world(&w);
+    w.levels[0][0].squares[8][9] = THERON_SQUARE_EXIT;
+    w.party.leader_x = 8;
+    w.party.leader_y = 8;
+    w.party.champions[0].stamina = 37;
+    w.dungeon_complete = 0;
+
+    CHECK_INT("incomplete exit query blocks",
+              theron_v1_get_move_result(&w, THERON_DIR_EAST),
+              THERON_MOVE_BLOCKED);
+    CHECK_INT("incomplete exit movement blocks",
+              theron_v1_move_party(&w, THERON_DIR_EAST),
+              THERON_MOVE_BLOCKED);
+    CHECK_INT("incomplete exit keeps leader x", w.party.leader_x, 8);
+    CHECK_INT("incomplete exit keeps leader y", w.party.leader_y, 8);
+    CHECK_INT("incomplete exit keeps transition clear",
+              w.transition_pending, 0);
+    CHECK_INT("incomplete exit does not apply move effects",
+              w.party.champions[0].stamina, 37);
+}
+
+/* ═══════════════════════════════════════════════════════════════
  * TEST: click route — MOVE
  * ═══════════════════════════════════════════════════════════════ */
 static void test_click_route_move(void) {
@@ -701,6 +729,7 @@ int main(void) {
     test_pit_fall();
     test_unresolved_teleporter_blocks();
     test_unloaded_stairs_block();
+    test_incomplete_exit_blocks();
     test_click_route_move();
     test_click_route_use_door();
     test_door_open_close();

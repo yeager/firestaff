@@ -2,6 +2,14 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — incomplete dungeon exits no longer report success
+
+- ✅ Exit query and movement share the `dungeon_complete` guard and propagate
+  transition failure as `THERON_MOVE_BLOCKED`.
+- ✅ The hardening probe verifies that an incomplete exit leaves party position,
+  transition state and stamina unchanged.
+- 🔒 Quest completion and next-dungeon source consumers remain separate gates.
+
 ## 2026-08-13 — unloaded stairs no longer report success
 
 - ✅ Stairs query and movement now require a loaded destination level and

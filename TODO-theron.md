@@ -8,6 +8,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — ofullständig dungeon-exit blockeras fail-closed
+
+- ✅ Exit-query och movement använder nu samma `dungeon_complete`-grind och
+  kräver lyckad transition-exekvering. En ofullständig eller olösbar exit
+  rapporteras som `THERON_MOVE_BLOCKED` utan move-effects.
+- ✅ Hardening-proben verifierar att partyposition, transition-state och
+  stamina förblir oförändrade på en ofullständig exit.
+- 🔒 Detta öppnar inte quest-completion eller nästa dungeon; den source-owned
+  completion-consumern är fortfarande separat från movement-invarianten.
+
 ## 2026-08-13 — oladdade stairs blockeras fail-closed
 
 - ✅ Movement query och mutation kräver nu att stairs-målleveln faktiskt är

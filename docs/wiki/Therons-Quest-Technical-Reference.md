@@ -30,6 +30,13 @@ loaded. If transition setup or execution fails, the result is
 is published. This preserves the fail-closed boundary while dynamic
 source-owned level loading and the original stairs consumer remain unresolved.
 
+## Dungeon exit failure boundary
+
+An exit is actionable only when `dungeon_complete` is true and transition
+execution succeeds. Queries and movement both report `THERON_MOVE_BLOCKED`
+otherwise, without applying per-move effects. This keeps quest completion and
+next-dungeon source consumers behind their existing evidence gates.
+
 > **Status reviewed 2026-08-13.** JP/US Track 02 identity and several loader
 > receipts are real-data verified. Game-owned dungeon handoff, object/level
 > semantics and bitmap/palette binding remain open. The verified startup
