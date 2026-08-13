@@ -284,6 +284,25 @@ static void test_door_open_close(void) {
     CHECK_INT("door_is_locked true for locked door",
               theron_v1_door_is_locked(&w, 5, 5),
               1);
+
+    /* LOCKED is a sentinel, not an opening animation frame.  It must remain
+     * blocked in both the query and mutating movement paths. */
+    Theron_V1_World w3;
+    make_world(&w3);
+    memset(&d, 0, sizeof(d));
+    d.id = 3;
+    d.type = THERON_OBJTYPE_DOOR;
+    d.state = THERON_DOOR_STATE_LOCKED;
+    d.x = 8;
+    d.y = 7;
+    d.level = 0;
+    install_fixture_object(&w3, 0, d);
+    w3.object_count = 1;
+    w3.levels[0][0].squares[7][8] = THERON_SQUARE_DOOR;
+    CHECK_INT("locked sentinel is not open", theron_v1_door_is_open(&w3, 8, 7), 0);
+    CHECK_INT("locked sentinel blocks movement", theron_v1_get_move_result(&w3, THERON_DIR_NORTH),
+              THERON_MOVE_BLOCKED);
+    CHECK_INT("locked sentinel cannot open without key", theron_v1_door_open(&w3, 8, 7), -1);
 }
 
 /* ═══════════════════════════════════════════════════════════════

@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — locked door sentinel no longer passes as open
+
+- ✅ The Theron door state machine now treats `LOCKED=6` as a sentinel rather
+  than as a later opening frame. Movement query, movement mutation and
+  `door_open()` all share the bounded passability predicate.
+- ✅ The hardening probe covers the locked-state query, movement block and
+  failed open path. Source-authenticated key/object consumption remains
+  capture-gated.
+
 ## 2026-08-11 — extern RNG-edge capture klassificerad utan överclaim
 
 - ✅ `theron-capture-20260811-cocoa-save.trace.*` verifierades som autentiserad

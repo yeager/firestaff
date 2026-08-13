@@ -8,6 +8,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — låst dörr är åter en blockerande sentinel
+
+- ✅ Dörrmaskinen skiljer nu `LOCKED=6` från öppningsframerna
+  `QUARTER_OPEN..DESTROYED`. Query, movement och `door_open()` kan inte längre
+  råka behandla den numeriskt högre låsta sentinelstaten som passabel.
+- ✅ Mechanics-hardening-proben täcker låst sentinel i både query och muterande
+  öppningsväg. Detta är en lokal state-machine-korrigering; den öppnar inte
+  den fortfarande capture-gated T900 key/object-consumern för source-levels.
+
 ## 2026-08-13 — ny instrumenterad cold-start når bara CD-transport
 
 - ✅ En färsk extern-disk-körning mot hashverifierad US Track 02/System Card

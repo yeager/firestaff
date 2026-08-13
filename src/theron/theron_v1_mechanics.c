@@ -52,6 +52,15 @@ static int normalize_dir(int dir) {
     return ((dir % THERON_DIR_COUNT) + THERON_DIR_COUNT) % THERON_DIR_COUNT;
 }
 
+/* LOCKED is a sentinel state, not a later opening animation frame.  Keep
+ * this predicate centralized so movement queries and the mutating route do
+ * not accidentally treat state 6 as passable merely because it is numerically
+ * greater than OPEN (state 4). */
+static int theron_v1_door_state_is_passable(int state) {
+    return state >= THERON_DOOR_STATE_QUARTER_OPEN &&
+           state <= THERON_DOOR_STATE_DESTROYED;
+}
+
 /* T800 stores carried items as the compact item id, while the level object
  * record stores the source object class.  Keep this mapping limited to the
  * item classes whose ids are source-locked in theron_v1_champions.h; quest
@@ -368,7 +377,7 @@ Theron_MoveResult theron_v1_get_move_result(const Theron_V1_World *world, int di
                 break;
             }
         }
-        if (!door || door->state < THERON_DOOR_STATE_QUARTER_OPEN) {
+        if (!door || !theron_v1_door_state_is_passable(door->state)) {
             return THERON_MOVE_BLOCKED;
         }
         return THERON_MOVE_SPECIAL;
@@ -438,21 +447,17 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
                                 world, world->current_dungeon,
                                 world->current_level, nx, ny);
         if (d && d->type == THERON_OBJTYPE_DOOR) {
-            if (d->state == THERON_DOOR_STATE_CLOSED &&
-                (d->flags & THERON_DOOR_F_LOCKED)) {
-                return THERON_MOVE_BLOCKED;
-            }
-            if (d->state == THERON_DOOR_STATE_CLOSED) {
+            if (!theron_v1_door_state_is_passable(d->state)) {
                 /* Try auto-open */
                 theron_v1_door_open(world, nx, ny);
                 /* If auto-open failed (e.g. no key), block */
                 d = theron_v1_object_by_id(world, d->id);
-                if (!d || d->state == THERON_DOOR_STATE_CLOSED) {
+                if (!d || !theron_v1_door_state_is_passable(d->state)) {
                     return THERON_MOVE_BLOCKED;
                 }
             }
         }
-        if (d && d->state >= THERON_DOOR_STATE_QUARTER_OPEN) {
+        if (d && theron_v1_door_state_is_passable(d->state)) {
             tile = THERON_SQUARE_FLOOR; /* treat open door as floor */
         } else {
             return THERON_MOVE_BLOCKED;
@@ -559,7 +564,9 @@ int theron_v1_door_open(Theron_V1_World *world, int x, int y) {
     Theron_V1_Object *d = theron_v1_object_at_in_dungeon(
         world, world->current_dungeon, world->current_level, x, y);
     if (!d || d->type != THERON_OBJTYPE_DOOR) return -1;
-    if (d->state >= THERON_DOOR_STATE_OPEN) return 0; /* already open */
+    if (theron_v1_door_state_is_passable(d->state)) return 0;
+    if (d->state == THERON_DOOR_STATE_LOCKED)
+        d->flags |= THERON_DOOR_F_LOCKED;
     if (d->flags & THERON_DOOR_F_BROKEN) return -1;
 
     if (d->flags & THERON_DOOR_F_LOCKED) {
@@ -610,7 +617,7 @@ int theron_v1_door_is_open(const Theron_V1_World *world, int x, int y) {
                                        world->current_dungeon,
                                        world->current_level, x, y);
     if (!d || d->type != THERON_OBJTYPE_DOOR) return 0;
-    return d->state >= THERON_DOOR_STATE_QUARTER_OPEN;
+    return theron_v1_door_state_is_passable(d->state);
 }
 
 int theron_v1_door_is_locked(const Theron_V1_World *world, int x, int y) {
@@ -620,7 +627,8 @@ int theron_v1_door_is_locked(const Theron_V1_World *world, int x, int y) {
                                        world->current_dungeon,
                                        world->current_level, x, y);
     if (!d || d->type != THERON_OBJTYPE_DOOR) return 0;
-    return (d->flags & THERON_DOOR_F_LOCKED) != 0;
+    return d->state == THERON_DOOR_STATE_LOCKED ||
+           (d->flags & THERON_DOOR_F_LOCKED) != 0;
 }
 
 int theron_v1_door_unlock_with_key(Theron_V1_World *world,
