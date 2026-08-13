@@ -194,16 +194,19 @@ Path(sys.argv[1]).write_text(
     "\"$FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MAX\" > "
     "\"$FIRESTAFF_NEXUS_TRACE_OUTPUT\"\n"
     "printf 'memory-snapshot' > \"$FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT\"\n"
-    "printf 'ram-read' > \"$FIRESTAFF_NEXUS_TRACE_SH2_RAM_READS\"\n",
+    "printf 'ram-read' > \"$FIRESTAFF_NEXUS_TRACE_SH2_RAM_READS\"\n"
+    "printf 'ram-write' > \"$FIRESTAFF_NEXUS_TRACE_SH2_RAM_WRITES\"\n",
     encoding="utf-8",
 )
 os.chmod(sys.argv[1], 0o755)
 PY
 sh2_memory_snapshot="$tmp_dir/sh2-memory.snapshot"
 sh2_ram_reads="$tmp_dir/sh2-ram-reads.trace"
+sh2_ram_writes="$tmp_dir/sh2-ram-writes.trace"
 FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT="$sh2_memory_snapshot" \
 FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT_FRAMES=',12,13,' \
 FIRESTAFF_NEXUS_TRACE_SH2_RAM_READS="$sh2_ram_reads" \
+FIRESTAFF_NEXUS_TRACE_SH2_RAM_WRITES="$sh2_ram_writes" \
 FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MIN=0x06064500 \
 FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MAX=0x060646ff \
 FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_LIMIT=4000 \
@@ -217,6 +220,8 @@ grep -Fq "$sh2_memory_snapshot,,12,13,,$sh2_ram_reads,0x06064500,0x060646ff" \
 grep -Fq "FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT_sha256=$(shasum -a 256 "$sh2_memory_snapshot" | awk '{print $1}')" \
   "$tmp_dir/manifest-sh2-memory.txt"
 grep -Fq "FIRESTAFF_NEXUS_TRACE_SH2_RAM_READS_sha256=$(shasum -a 256 "$sh2_ram_reads" | awk '{print $1}')" \
+  "$tmp_dir/manifest-sh2-memory.txt"
+grep -Fq "FIRESTAFF_NEXUS_TRACE_SH2_RAM_WRITES_sha256=$(shasum -a 256 "$sh2_ram_writes" | awk '{print $1}')" \
   "$tmp_dir/manifest-sh2-memory.txt"
 dma_fake="$tmp_dir/fake-mednafen-dma"
 python3 - "$dma_fake" <<'PY'
