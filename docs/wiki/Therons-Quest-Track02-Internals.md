@@ -35,6 +35,11 @@ manifest receipt, then rejects a mismatched or mutated record before startup
 state can advance. This is intentionally transport evidence only. It does not
 name a manifest entry as a level, object, bitmap, palette, sound, or script.
 
+The current authenticated Main-RAM replay remains init-only: `$2600-$27FF`
+contains 512 zero-valued `$CB22` reads and no `$C3A0` reader. Firestaff keeps
+parser admission separate from the `$2c54-$2c69` execution-window receipt, so
+this transport evidence does not open level/object rendering semantics.
+
 ## Startup and Route Transactions
 
 M12 carries strict CUE/Track02 provenance into M11. Startup title, stage,

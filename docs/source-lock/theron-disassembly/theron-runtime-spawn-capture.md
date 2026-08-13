@@ -23,6 +23,13 @@ MPR-bundet extern-disk-spår (`mpr.trace.main-ram-consumer`, MD5
 Detta är fortfarande en adress-/körningsproveniens, inte en identifiering av
 recordtypen eller en öppning av object-, T700- eller T900-semantik.
 
+Den senaste längre replayen (`theron-capture-20260813/replay`) har samma
+gräns i den autentiserade sidecaren: 512 läsningar i `$2600-$27FF`, alla via
+`$CB22`, alla nollor och utan `$C3A0`-reader. Den ska därför verifieras med
+`THERON_MEDNAFEN_MAIN_RAM_CONSUMER_PARSE_ONLY=1`; den får inte behandlas som
+ett utfört `$2c54-$2c69`-kodfönster. Parser-beredskap och code-window-proof
+är separata receipts.
+
 ## 2026-08-13 — target-window receipt skiljer initiering från runtime
 
 Consumer-receipten behåller nu också antal target-läsningar, icke-nollvärden

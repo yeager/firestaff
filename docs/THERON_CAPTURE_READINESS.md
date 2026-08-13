@@ -82,6 +82,14 @@ The same normalization is applied to the Main-RAM consumer trace and its
 code-window verifier, so a transport-escaped sidecar cannot be accepted by
 the loader stage but rejected later by the consumer stage.
 
+The latest authenticated replay sidecar is parser-ready but remains
+initialisation-only: its `$2600-$27FF` window contains 512 `$CB22` reads, all
+zero-valued, with no `$C3A0` reader. Run that sidecar through the parser-only
+gate with `THERON_MEDNAFEN_MAIN_RAM_CONSUMER_PARSE_ONLY=1`; the code-window
+assertion remains a separate gate because this replay did not execute the
+`$2c54-$2c69` window. This prevents a transport receipt from being mistaken
+for a dynamic level/object consumer.
+
 An operator-supplied raw VDC/VCE pair is accepted only by the explicit capture
 tool when its exact FNV receipts are present. That path now feeds the
 production native 256×224 screen-space BAT consumer, not a README promotion:

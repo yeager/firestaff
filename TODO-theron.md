@@ -1,5 +1,11 @@
 # Firestaff TODO - THERON
 
+> **Latest capture boundary (2026-08-13):** The authenticated Main-RAM
+> consumer sidecar is parser-ready but still init-only: `$2600-$27FF` has 512
+> zero-valued `$CB22` reads, no `$C3A0` reader, and no dynamic level/object
+> consumer. Use `THERON_MEDNAFEN_MAIN_RAM_CONSUMER_PARSE_ONLY=1` for that
+> receipt; keep the `$2c54-$2c69` execution-window gate separate.
+
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
 ## 2026-08-13 — längre replay når source-owned spawnförkonsument
