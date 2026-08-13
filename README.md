@@ -189,6 +189,31 @@ CSB has no original DOS/PC edition: `--game csb --platform pc` is deliberately
 rejected and cannot reuse Atari ST material that happens to share a graphics
 hash. CSBWin is source/disassembly evidence only, not a substitute DOS release
 or a Firestaff data/runtime route.
+
+### Theron's Quest (PC Engine CD)
+
+Place the original US Track 02 BIN in `.firestaff/data/theron/` (or pass a
+data root that contains `theron/TQUS02.bin`) and start it normally:
+
+```bash
+./build/firestaff --game theron --data-dir "$HOME/.firestaff/data"
+```
+
+The title accepts Enter, followed by the stage and Soul Room selections. The
+runtime uses only the hash-verified Track 02 map/object records. For a
+headless, reproducible CLI receipt, the real-media regression uses:
+
+```bash
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy ./build/firestaff \
+  --game theron --data-dir "$HOME/.firestaff/data/theron" --boot-probe \
+  --script 'enter,enter,down,down,down,down,down,down,enter,down,enter' \
+  --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1
+```
+
+This confirms the source-backed runtime route, not a recovered PC Engine
+CD-runtime semantic handoff. Uncaptured creature AI, combat, generator,
+sound-effect and text-control semantics remain unavailable rather than being
+replaced with host behavior.
 `--csb-utility-disk` opens the separately preserved FM Towns C06 Utility Disk
 after the normal verified CSB F31 boot; it implies `--game csb --platform
 fm-towns` and fails closed if that package is unavailable. The start menu also

@@ -29,6 +29,12 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --boot-probe \
     --boot-probe-frames 0 \
     --script 'enter,enter,down,down,down,down,down,down,enter,down,enter' \
+    --boot-probe-expect-runtime \
+    --boot-probe-expect-level-loaded 1 \
+    --boot-probe-expect-party 1,0,0 \
+    --boot-probe-expect-champions 2 \
+    --boot-probe-expect-asset-md5 "$expected_md5" \
+    --boot-probe-expect-startup-active 0 \
     --duration 0 >"$output" 2>&1
 
 if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' "$output" ||
