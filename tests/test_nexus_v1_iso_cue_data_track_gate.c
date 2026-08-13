@@ -103,7 +103,8 @@ static int write_bad_directory_iso(const char *path)
                 fclose(file);
                 return 0;
             }
-            sector[25] = 2;
+            /* A short non-padding record must fail closed. */
+            sector[0] = 33;
         }
         if (fwrite(sector, 1U, sizeof(sector), file) != sizeof(sector)) {
             fclose(file);
@@ -155,12 +156,17 @@ int main(void)
           nexus_iso_is_nexus(&reader) && strstr(reader.path, "data.bin") != NULL);
     {
         const Nexus_ISOFile *dm_bin = nexus_iso_find(&reader, "DM.BIN");
+        Nexus_ISOFile oversized;
+        memset(&oversized, 0, sizeof(oversized));
+        oversized.size = UINT32_MAX;
         CHECK("chunk read rejects negative offset", dm_bin &&
               nexus_iso_read_file_chunk(&reader, dm_bin, -1, chunk, 1) == -1);
         CHECK("chunk read rejects overrun", dm_bin &&
               nexus_iso_read_file_chunk(&reader, dm_bin, 1, chunk, 1) == -1);
         CHECK("zero-length chunk is harmless", dm_bin &&
               nexus_iso_read_file_chunk(&reader, dm_bin, 1, chunk, 0) == 0);
+        CHECK("whole-file read rejects oversized uint32 length", dm_bin &&
+              nexus_iso_read_file(&reader, &oversized, chunk, (int)sizeof(chunk)) == -1);
     }
     nexus_iso_close(&reader);
     memset(&reader, 0, sizeof(reader));

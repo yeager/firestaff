@@ -2,6 +2,13 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: Nexus ISO-läsaren har härdats mot korrupta eller fientliga
+directory-poster. Poster kortare än ISO 9660:s 34-byte minimum, namn som
+överskrider sin egen post, uint32-storlekar som inte ryms i den publika
+int-bufferten och sektor-LBA-wrap avvisas nu fail-closed. Även beräkningen av
+antal directory-sektorer är overflow-säker. Regressionerna ligger i
+`nexus_v1_iso_cue_data_track_gate` och passerar mot autentiska CUE/ISO-flöden.
+
 2026-08-13: `nexus_sound_map_lookup_raw_selector()` avvisar nu tvetydiga
 selectors med mer än en DataID 0-post. Den tidigare implementationen valde
 den sista matchningen trots att ingen retail precedence-regel är verifierad.

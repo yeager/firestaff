@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <limits.h>
 #ifdef _WIN32
 #define strcasecmp _stricmp
 #endif
@@ -35,19 +36,20 @@ static int parse_dir_record(const uint8_t *data, int offset, int buf_size,
                             Nexus_ISOFile *out) {
     int rec_len, name_len, i;
     if (!data || !out) return 0;
-    if (offset + 34 > buf_size) return 0;
+    if (offset < 0 || offset > buf_size || buf_size - offset < 1) return 0;
     rec_len = data[offset];
     if (rec_len == 0) return 0;
-    if (offset + rec_len > buf_size) return 0;
+    /* A non-padding ISO 9660 record has a 33-byte fixed header and at
+     * least one byte of identifier. Treat shorter records as corruption,
+     * rather than allowing the identifier to consume the next record. */
+    if (rec_len < 34 || rec_len > buf_size - offset) return -1;
 
     out->lba = r32le(data + offset + 2);
     out->size = r32le(data + offset + 10);
     out->is_dir = (data[offset + 25] & 0x02) != 0;
 
     name_len = data[offset + 32];
-    if (offset + 33 + name_len > buf_size)
-        name_len = buf_size - offset - 33;
-    if (name_len < 0) name_len = 0;
+    if (name_len > rec_len - 33) return -1;
     memset(out->name, 0, sizeof(out->name));
     for (i = 0; i < name_len && i < 63; i++)
         out->name[i] = data[offset + 33 + i];
@@ -73,12 +75,14 @@ static int parse_directory_depth(FILE *fp, uint32_t dir_lba, uint32_t dir_size,
     Nexus_ISOFile *files, int *count, int max_files, int depth)
 {
     uint8_t sector_buf[NEXUS_ISO_DATA_SIZE];
-    int sectors = (dir_size + NEXUS_ISO_DATA_SIZE - 1) / NEXUS_ISO_DATA_SIZE;
+    int sectors = (int)(dir_size / NEXUS_ISO_DATA_SIZE) +
+                  (dir_size % NEXUS_ISO_DATA_SIZE != 0U ? 1 : 0);
     int s, offset;
 
     if (depth > NEXUS_ISO_MAX_DIR_DEPTH) return -1;
 
     for (s = 0; s < sectors; s++) {
+        if ((uint32_t)s > UINT32_MAX - dir_lba) return -1;
         uint32_t remaining = dir_size - (uint32_t)s * NEXUS_ISO_DATA_SIZE;
         int sector_bytes = remaining > NEXUS_ISO_DATA_SIZE
             ? NEXUS_ISO_DATA_SIZE : (int)remaining;
@@ -90,6 +94,7 @@ static int parse_directory_depth(FILE *fp, uint32_t dir_lba, uint32_t dir_size,
             Nexus_ISOFile entry;
             int rec_len = parse_dir_record(sector_buf, offset,
                                              sector_bytes, &entry);
+            if (rec_len < 0) return -1;
             if (rec_len == 0) break;
 
             if (entry.name[0] && entry.name[0] != 0 && entry.name[0] != 1) {
@@ -333,8 +338,9 @@ int nexus_iso_read_file(Nexus_ISOReader *reader, const Nexus_ISOFile *file,
     int remaining, offset = 0;
     uint32_t sector;
 
-    if (!reader || !reader->fp || !file || !buffer) return -1;
-    if ((int)file->size > buffer_size) return -1;
+    if (!reader || !reader->fp || !file || !buffer || buffer_size < 0) return -1;
+    if (file->size > (uint32_t)buffer_size || file->size > (uint32_t)INT_MAX)
+        return -1;
 
     remaining = (int)file->size;
     sector = file->lba;
@@ -346,6 +352,7 @@ int nexus_iso_read_file(Nexus_ISOReader *reader, const Nexus_ISOFile *file,
         memcpy(buffer + offset, sector_buf, chunk);
         offset += chunk;
         remaining -= chunk;
+        if (remaining > 0 && sector == UINT32_MAX) return -1;
         sector++;
     }
     return (int)file->size;
@@ -367,7 +374,9 @@ int nexus_iso_read_file_chunk(Nexus_ISOReader *reader, const Nexus_ISOFile *file
     }
     if (chunk_size == 0) return 0;
 
-    sector = file->lba + (file_offset / NEXUS_ISO_DATA_SIZE);
+    if ((uint32_t)(file_offset / NEXUS_ISO_DATA_SIZE) >
+        UINT32_MAX - file->lba) return -1;
+    sector = file->lba + (uint32_t)(file_offset / NEXUS_ISO_DATA_SIZE);
     sector_offset = file_offset % NEXUS_ISO_DATA_SIZE;
 
     while (read_total < chunk_size) {
@@ -379,6 +388,7 @@ int nexus_iso_read_file_chunk(Nexus_ISOReader *reader, const Nexus_ISOFile *file
         if (to_copy > avail) to_copy = avail;
         memcpy(buffer + read_total, sector_buf + sector_offset, to_copy);
         read_total += to_copy;
+        if (read_total < chunk_size && sector == UINT32_MAX) return -1;
         sector++;
         sector_offset = 0;
     }
