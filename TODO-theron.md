@@ -1091,6 +1091,13 @@ the remaining SRM blocker is still only original body-layout correlation.
     remains closed; details are in
     `docs/source-lock/theron-disassembly/theron-runtime-record-table-consumer-20260814.md`.
 
+  - 2026-08-14 bounded-receipt replay: the checked-in Mednafen receipt now
+    emits 4,096 runtime-table rows. The recurring raw row
+    `4080007098a8c8700020` also occurs byte-exactly at seven authenticated US
+    `TQUS02.bin` offsets. This strengthens raw source overlap only; the
+    savestate run has no same-session CD-origin receipt, so level/object and
+    gameplay semantics remain blocked.
+
 - 2026-08-06 update: the Track 02 thing-category enum is now source-bound to
   the retail order used by DMBUILDER6 (`4=monster`, `5=weapon`, `6=clothing`,
   `7=scroll`, `8=potion`, `9=chest`, `10=misc`, `14=missile`, `15=cloud`).

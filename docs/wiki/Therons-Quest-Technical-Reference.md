@@ -38,6 +38,13 @@ executing PC/bank state, table mutation, and a reproducible gameplay
 transaction. Full provenance is recorded in
 `docs/source-lock/theron-disassembly/theron-runtime-record-table-consumer-20260814.md`.
 
+The bounded receipt replay emits 4,096 rows. One recurring raw row,
+`4080007098a8c8700020`, occurs byte-exactly at seven offsets in authenticated
+US `TQUS02.bin`: `0x0b0eed`, `0x0faa0d`, `0x144a03`, `0x18da0d`, `0x1d7b7d`,
+`0x2206ed`, and `0x26a85c`. This is raw source-byte overlap only: the
+savestate replay has no same-session CD-origin receipt, so no level/object or
+gameplay semantics are admitted.
+
 ## Track 02 map-directory boundary
 
 The world handoff validates the complete authenticated Track 02 map directory

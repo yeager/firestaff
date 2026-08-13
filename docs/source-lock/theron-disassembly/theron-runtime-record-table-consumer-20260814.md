@@ -41,6 +41,28 @@ not yet prove whether those records are dungeon placements, creatures,
 inventory, or another runtime table. The `$4667` call is retained as a helper
 observation and is not promoted to RNG/object meaning by itself.
 
+## Bounded receipt replay and raw-byte overlap
+
+A second local replay used the checked-in bounded receipt against the same
+US savestate. It emitted 4,096 `theron_runtime_record_table` rows from the
+`$C9C2/$CA2A/$CB94/$CBCC/$CC0E/$CC27` execution points. The binary MD5 was
+`e81a3c8bef98062f8fc95268417a0756`; the savestate MD5 remained
+`d8ed74a33ac4d770b6cdebcf92b70344`.
+
+One recurring runtime record, `4080007098a8c8700020`, occurs byte-exactly at
+seven offsets in the authenticated US `TQUS02.bin`
+(`f23601102138f87c33025877767ebf76`):
+
+```text
+0x0b0eed  0x0faa0d  0x144a03  0x18da0d  0x1d7b7d  0x2206ed  0x26a85c
+```
+
+This is useful source-byte overlap, not a record-role binding. The replay
+autoloads the savestate and reports no CD-origin receipt in that same run, so
+it cannot establish that the runtime bytes were produced by those seven
+source locations during the captured session. No level, square, object,
+creature, inventory, or timer semantics are promoted from this overlap.
+
 ## Production boundary
 
 This receipt closes a useful instrumentation gap but leaves
@@ -58,4 +80,3 @@ Track 02 sector/user-data bytes
 Until that join is captured in one authenticated session, Firestaff must keep
 the source-bound raw thing data and all T900/level/object production gates
 fail-closed.
-
