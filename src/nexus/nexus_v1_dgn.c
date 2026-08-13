@@ -38,7 +38,8 @@ int nexus_v1_dgn_decode(const uint8_t *data, int data_size,
     s2_abs = (uint32_t)out->s2_block_offset * NEXUS_DGN_BLOCK_SIZE;
     s3_abs = (uint32_t)out->s3_block_offset * NEXUS_DGN_BLOCK_SIZE;
 
-    if ((uint64_t)s1_abs + out->s1_data_size > (uint64_t)data_size) return 0;
+    if (out->s1_data_size < 0x38U ||
+        (uint64_t)s1_abs + out->s1_data_size > (uint64_t)data_size) return 0;
     if ((uint64_t)s2_abs + out->s2_data_size > (uint64_t)data_size) return 0;
     if ((uint64_t)s3_abs + out->s3_data_size > (uint64_t)data_size) return 0;
 
@@ -53,8 +54,11 @@ int nexus_v1_dgn_decode(const uint8_t *data, int data_size,
     out->s1f_offset = read_be32(s1 + 0x34);
     out->s1g_offset = read_be32(s1 + 0x1C);
 
+    if ((uint64_t)out->s1b_offset + NEXUS_DGN_GRID_BYTES >
+        (uint64_t)out->s1_data_size ||
+        (uint64_t)s1_abs + out->s1b_offset + NEXUS_DGN_GRID_BYTES >
+            (uint64_t)data_size) return 0;
     s1b_abs = s1_abs + out->s1b_offset;
-    if ((int)(s1b_abs + NEXUS_DGN_GRID_BYTES) > data_size) return 0;
 
     fnv = 0x811C9DC5U;
     for (i = 0; i < NEXUS_DGN_GRID_CELLS; ++i) {
@@ -97,10 +101,14 @@ int nexus_v1_dgn_decode(const uint8_t *data, int data_size,
         out->s2_hash = s2fnv;
     }
 
-    if (out->s1e_offset && (uint64_t)s1_abs + out->s1e_offset + 16 <= (uint64_t)data_size) {
+    if (out->s1e_offset && (uint64_t)out->s1e_offset + 16U <= out->s1_data_size &&
+        (uint64_t)s1_abs + out->s1e_offset + 16U <= (uint64_t)data_size) {
         const uint8_t *doors = data + s1_abs + out->s1e_offset;
         int dc = 0;
-        for (i = 0; i < NEXUS_DGN_MAX_DOORS; ++i) {
+        uint32_t door_bytes = out->s1_data_size - out->s1e_offset;
+        int door_limit = (int)(door_bytes / 16U);
+        if (door_limit > NEXUS_DGN_MAX_DOORS) door_limit = NEXUS_DGN_MAX_DOORS;
+        for (i = 0; i < door_limit; ++i) {
             if (doors[i * 16] == 0xFF) break;
             dc++;
         }
@@ -110,7 +118,8 @@ int nexus_v1_dgn_decode(const uint8_t *data, int data_size,
     /* Structure1C: collision descriptors */
     if (out->s1c_offset) {
         uint32_t s1c_abs = s1_abs + out->s1c_offset;
-        if (s1c_abs + 4 <= (uint32_t)data_size) {
+        if ((uint64_t)out->s1c_offset + 4U <= out->s1_data_size &&
+            (uint64_t)s1c_abs + 4U <= (uint64_t)data_size) {
             int count_plus_1 = data[s1c_abs];
             out->collision_count = (count_plus_1 > 1) ? count_plus_1 - 1 : 0;
         }
@@ -119,7 +128,8 @@ int nexus_v1_dgn_decode(const uint8_t *data, int data_size,
     /* Structure1F: sub-structures (items, decorations, sensors, alcoves) */
     if (out->s1f_offset) {
         uint32_t s1f_abs = s1_abs + out->s1f_offset;
-        if (s1f_abs + 16 <= (uint32_t)data_size) {
+        if ((uint64_t)out->s1f_offset + 16U <= out->s1_data_size &&
+            (uint64_t)s1f_abs + 16U <= (uint64_t)data_size) {
             const uint8_t *s1f = data + s1f_abs;
             out->floor_item_count   = read_be16(s1f + 0x04);
             out->floor_decor_count  = read_be16(s1f + 0x06);

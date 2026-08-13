@@ -2,6 +2,13 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: DGN-basparsern kräver nu att Structure1:s deklarerade span
+innehåller fasta fält och att Structure1B-grid, dörrar, Structure1C och
+Structure1F ligger inom samma deklarerade span och filens verkliga gräns.
+Tidigare kunde vissa deloffsets wrap:a eller läsa vidare in i nästa sektion.
+Alla 16 autentiska LEV00–LEV15-filer passerar fortsatt, med regression för
+för kort Structure1.
+
 2026-08-13: FACE.BIN-headern validerar nu deklarerad filstorlek, tabellens
 minimala start, strikt stigande portrait-offsets och sista portraitens
 deklarerade filgräns. Portrait-dekodning använder den autentiska deklarerade

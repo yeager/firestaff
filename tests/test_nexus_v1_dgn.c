@@ -34,6 +34,20 @@ static int test_synthetic_rejection_fixture(void) {
     return 0;
 }
 
+static int test_synthetic_structure_bounds(void) {
+    Nexus_V1_DgnDecodeResult r;
+    uint8_t bad[NEXUS_DGN_BLOCK_SIZE * 2];
+    memset(bad, 0, sizeof(bad));
+    bad[0] = 0x01;
+    bad[0x0C] = 0x00;
+    bad[0x0D] = 0x01; /* Structure1 starts at block 1. */
+    bad[0x10] = 0x00;
+    bad[0x11] = 0x20; /* Too short for the fixed Structure1 fields. */
+    if (nexus_v1_dgn_decode(bad, (int)sizeof(bad), &r)) return 1;
+    printf("  PASS [fixture] Structure1 declared-size rejection\n");
+    return 0;
+}
+
 static int test_all_levels(void) {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
@@ -87,6 +101,7 @@ int main(void) {
     int fail = 0;
     printf("=== Nexus V1 DGN Dungeon Decoder ===\n");
     fail += test_synthetic_rejection_fixture();
+    fail += test_synthetic_structure_bounds();
     fail += test_all_levels();
     printf("summary: fail=%d\n", fail);
     return fail ? 1 : 0;
