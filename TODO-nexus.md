@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: A clean interactive Mednafen session was repeated with the
+verified non-instrumented Mednafen build, the authentic English merged CUE and
+the external J-BIOS configuration. The emulator reached Saturn video
+initialisation and produced real `.bcr`, `.bkr` and `.smpc` containers in
+`/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-clean-state-20260813d/`.
+No emulator state save was created because the title/menu transition was not
+reached. This is a valid runtime/data check, not evidence for the Nexus menu,
+LEV01, a played save or Firestaff presentation admission.
+
 2026-08-14: Fixed archive-only directory launch. The M12 asset scan now
 admits the authentic English ISO member from the supplied Nexus `.7z`, and
 Nexus directory discovery opens `.7z` through the same in-memory ISO reader as
