@@ -1082,6 +1082,15 @@ the remaining SRM blocker is still only original body-layout correlation.
   meanings. Next evidence is a capture that reaches the game-owned post-CD
   consumer and closes the VDC snapshot on clean exit.
 
+  - 2026-08-14 update: an authentic Mednafen savestate execution-window
+    capture now identifies a mutable 10-byte runtime record-table chain:
+    `$C9BD` derives a base from `$6000,X`, `$CB89` scans `$611D` records, and
+    `$CBCC` copies `$2935–$293E` into `$611D–$6126`. This is useful runtime
+    consumer evidence, but the savestate has no same-session CD-origin
+    receipt, source LBA, or proven level/object role. The production gate
+    remains closed; details are in
+    `docs/source-lock/theron-disassembly/theron-runtime-record-table-consumer-20260814.md`.
+
 - 2026-08-06 update: the Track 02 thing-category enum is now source-bound to
   the retail order used by DMBUILDER6 (`4=monster`, `5=weapon`, `6=clothing`,
   `7=scroll`, `8=potion`, `9=chest`, `10=misc`, `14=missile`, `15=cloud`).

@@ -22,6 +22,22 @@ this replay does not open square/tile/HUD/T700/T900 semantics or production
 dungeon admission. The raw sidecars and instrumented emulator remain local on
 the external disk.
 
+## Runtime record-table witness
+
+An authentic Mednafen savestate execution-window capture now identifies a
+mutable ten-byte runtime record table. `$C9BD` derives a table base from
+`$6000,X`; `$CB89` scans records at `$611D` in ten-byte steps; and `$CBCC`
+copies `$2935–$293E` into `$611D–$6126`. `$CC4C` also reaches the existing
+`$4667` helper during this path.
+
+This is runtime consumer evidence, not a level/object claim. The savestate
+does not contain a same-session CD-origin receipt, source LBA, or proven role
+for the table. The production level/object, VRAM, and HuC6280-RAM gates remain
+closed until one authenticated session joins Track 02 bytes, post-CD RAM,
+executing PC/bank state, table mutation, and a reproducible gameplay
+transaction. Full provenance is recorded in
+`docs/source-lock/theron-disassembly/theron-runtime-record-table-consumer-20260814.md`.
+
 ## Track 02 map-directory boundary
 
 The world handoff validates the complete authenticated Track 02 map directory
