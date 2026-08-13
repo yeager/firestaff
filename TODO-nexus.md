@@ -1119,12 +1119,15 @@ värden ensamma räcker inte för text- eller menyadmission.
   position, or facing. It must remain capture-only until a source-owned join
   supplies those fields.
 - 2026-08-13: En inventory av autentiska Mednafen-backupfiler på extern disk
-  (`*.bcr`/`*.bkr` under Nexus-capture-sessionerna) gav samma 524288-byte
-  backupbild i alla undersökta körningar. Innehållet är emulatorns tomma
-  `BackUpRam Format`-image; ingen körning innehåller en verifierad Nexus-save
-  med level/x/y/dir eller champion-state. `*.smpc` är input-/periferistate och
-  är inte en spel-save. Dessa filer får därför inte användas som savegame,
-  startpose eller genväg runt Saturns start-capture-gate.
+  (`*.bcr`/`*.bkr` under Nexus-capture-sessionerna) korrigerar en tidigare
+  felaktig storleksanteckning. De vanliga `.bcr`-filerna är gzip-behållare som
+  packar upp till 524288 byte; `.bkr`-filerna är Mednafen-format på 32768 byte.
+  Alla undersökta varianter innehåller bara den tomma `BackUpRam Format`-
+  bilden (512 icke-nollbyte efter uppackning i `.bcr`; ingen verifierad
+  Nexus-save med level/x/y/dir eller champion-state). `*.smpc` är
+  input-/periferistate och är inte en spel-save. Dessa filer får därför inte
+  användas som savegame, startpose eller genväg runt Saturns
+  start-capture-gate.
 - 2026-08-13: En ny direktkörning, `run-pose-bind-20260813m`, använde samma
   autentiska J-BIOS, engelska merged-disc och aktiva låg-nivå-inputsekvens.
   Råtransporten innehåller 240 frames och passerar VDP1-aktivitetskontrollen.
