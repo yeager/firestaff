@@ -1138,3 +1138,9 @@ retail byte span that supplied a tile, nor assign square, object, HUD, portrait
 or text semantics. Those presentation routes remain fail-closed until one
 capture joins original CD/RAM data consumption and the VDC transfer in the
 same execution.
+
+Firestaff now validates this sidecar through
+`theron_v1_mednafen_vdc_io_trace_parse_file()`: header, contiguous sequence,
+monotonic timestamps, bounded addresses/registers and writer coordinates are
+all checked. The parser remains provenance-only and does not change the
+negative semantic conclusion above.

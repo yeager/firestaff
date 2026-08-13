@@ -117,6 +117,11 @@ The strongest current proof is:
   load. This is a lossless handoff for the future HuC6280 consumer;
   `world_dungeon_text()` still publishes zero strings while control-code
   ownership and the destination renderer remain unresolved.
+- `theron_v1_mednafen_vdc_io_trace`: the optional Mednafen VDC-port sidecar
+  now has a strict receipt parser for its header, contiguous sequence,
+  monotonic timestamp, port/register bounds and HuC6280 writer coordinates.
+  It proves only an original CPU-to-VDC write witness; it does not join source
+  bytes to VRAM or open text, BAT, square, HUD or object semantics.
 - `theron_v1_level_descriptor`: reads all 53 six-byte descriptor records from
   authenticated US Track 02 user data at UD `0x619900` and rejects a bytewise
   mismatch against the source-locked table. This is a real-data receipt, not

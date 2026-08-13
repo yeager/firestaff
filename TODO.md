@@ -5595,6 +5595,9 @@ authenticated BPK). The remaining work is a Saturn executable or capture
 
 # Theron US text consumer
 
+- ✅ The optional Mednafen VDC-port sidecar now has a strict provenance
+  parser, so an original HuC6280-to-VDC writer witness can be validated
+  without promoting it to a text, BAT, square, HUD or object consumer.
 - ✅ The authenticated dungeon codon words now survive the real US/JP
   Track 02 dungeon load in live world state as a lossless source stream;
   this removes a transient-loader lifetime gap without publishing UI text.

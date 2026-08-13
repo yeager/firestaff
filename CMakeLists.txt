@@ -51173,6 +51173,24 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_spawn_consu
         LABELS "theron;capture;real_data;opaque")
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_vdc_io_trace.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_mednafen_vdc_io_trace.c")
+    add_executable(test_theron_v1_mednafen_vdc_io_trace
+        tests/test_theron_v1_mednafen_vdc_io_trace.c
+        src/theron/theron_v1_mednafen_vdc_io_trace.c)
+    target_include_directories(test_theron_v1_mednafen_vdc_io_trace PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_mednafen_vdc_io_trace PRIVATE
+            -Wall -Wextra -O2 -UNDEBUG)
+    else()
+        target_compile_options(test_theron_v1_mednafen_vdc_io_trace PRIVATE
+            /UNDEBUG)
+    endif()
+    add_test(NAME theron_v1_mednafen_vdc_io_trace
+        COMMAND test_theron_v1_mednafen_vdc_io_trace)
+endif()
+
 # Theron Mednafen CD-state sidecar receipt. This consumes the real app-capture
 # transport grammar only; it never admits level/object or visual semantics.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_cd_state_trace.c"
