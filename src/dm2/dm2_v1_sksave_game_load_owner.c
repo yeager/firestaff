@@ -1104,8 +1104,9 @@ int dm2_v1_sksave_game_load_owner_init_ordered(
     {
         const char *failure = NULL;
         if (!raw_body || !savegamew7 ||
-            !dm2_v1_original_raw_sksave_fixed_state_receipt(raw_body,
-                raw_body_size, &candidate.state) || !candidate.state.valid) {
+            !dm2_v1_original_raw_sksave_fixed_state_receipt_ordered(
+                raw_body, raw_body_size, words_big_endian,
+                &candidate.state) || !candidate.state.valid) {
             failure = "fixed-state";
         } else if (!dm2_v1_sksave_owner_decode_fixed(
                        &candidate, raw_body, raw_body_size)) {
