@@ -28,6 +28,15 @@ proprietary layout. The exact save-record header, record size, and fields are
 not source-locked in this codebase. The observed empty 512 KiB Mednafen
 container is only a container-size observation, not a decoded save format.
 
+The authentic `DM.BIN` does contain save-related diagnostic strings in the
+retail data image: `EV_SAVE`, `EV_SAVELOAD`, `Slot Operation Error`, and the
+`iwa\\loader.c` source label. Their file offsets are recorded as `0x36fec`,
+`0x36ff4`, `0x36c58`, and `0x36980` respectively (SH-2 address base
+`0x06010000`). These are string/provenance observations only. No verified
+pointer chain from those strings to a Saturn backup-RAM record, checksum,
+load destination, or playable level/position has been established, so they do
+not authorize a native Saturn save decoder.
+
 ## Boundary
 
 FNXS is a Firestaff interchange/resume format. Original Saturn save import

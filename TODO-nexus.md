@@ -9,6 +9,13 @@ skip; it no longer combines real DGN bytes with fabricated capture payloads.
 The production Structure1F/Structure3 renderer remains closed until a
 hash-bound Saturn runtime artifact exists.
 
+2026-08-13: Retail `DM.BIN` string inspection found `EV_SAVE`, `EV_SAVELOAD`,
+`Slot Operation Error`, and `iwa\\loader.c` at file offsets `0x36fec`,
+`0x36ff4`, `0x36c58`, and `0x36980` (SH-2 base `0x06010000`). This confirms
+save-related retail text, not the Saturn record layout or its load consumer;
+the save decoder gate remains closed until a played memory image is joined to
+those owners by disassembly and capture.
+
 2026-08-13: The authentic PLRD champion regression now receives
 `FIRESTAFF_NEXUS_DATA_DIR` from CTest instead of silently running its missing-
 data path. It verifies the real first/last resistance pairs (`35/40` and
