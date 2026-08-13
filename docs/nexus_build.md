@@ -126,7 +126,7 @@ cmake --build build
 
 ### Linking
 The `firestaff_nexus` library is linked by the Nexus CTest/probe targets. The
-current Nexus V1/V2/M11 selection contains 296 tests; use the external corpus
+current Nexus V1/V2/M11 selection contains 297 tests; use the external corpus
 path documented in `docs/nexus_testing.md` for real-data verification.
 The library is linked by the Nexus CTest/probe targets and the M11 handoff
 boundary; it is not an orphaned library.

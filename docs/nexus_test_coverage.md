@@ -2,7 +2,7 @@
 
 > Current report: the authenticated external Nexus corpus is available at
 > `/Volumes/Extern-disk/FirestaffUserData/data/nexus`. The Nexus V1/V2/M11
-> selection contains 296 tests and passes 296/296 on that corpus. The detailed
+> selection contains 297 tests and passes 297/297 on that corpus. The detailed
 > per-file table below is a historical snapshot and must not be read as the
 > current test inventory.
 

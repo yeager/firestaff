@@ -7,12 +7,21 @@
 #define strcasecmp _stricmp
 #endif
 
+static int seek_file(FILE *fp, int64_t offset)
+{
+#ifdef _WIN32
+    return _fseeki64(fp, offset, SEEK_SET);
+#else
+    return fseek(fp, (long)offset, SEEK_SET);
+#endif
+}
+
 static int read_sector_payload(FILE *fp, uint32_t sector, int sector_size,
                                int data_offset, uint8_t *buf) {
     int64_t offset = (int64_t)sector * sector_size + data_offset;
     size_t read_size;
     memset(buf, 0, NEXUS_ISO_DATA_SIZE);
-    if (fseek(fp, (long)offset, SEEK_SET) != 0) return -1;
+    if (seek_file(fp, offset) != 0) return -1;
     read_size = fread(buf, 1, NEXUS_ISO_DATA_SIZE, fp);
     return read_size == NEXUS_ISO_DATA_SIZE ? 0 : -1;
 }
@@ -67,17 +76,20 @@ static int parse_directory_depth(FILE *fp, uint32_t dir_lba, uint32_t dir_size,
     int sectors = (dir_size + NEXUS_ISO_DATA_SIZE - 1) / NEXUS_ISO_DATA_SIZE;
     int s, offset;
 
-    if (depth > NEXUS_ISO_MAX_DIR_DEPTH) return 0;
+    if (depth > NEXUS_ISO_MAX_DIR_DEPTH) return -1;
 
     for (s = 0; s < sectors; s++) {
+        uint32_t remaining = dir_size - (uint32_t)s * NEXUS_ISO_DATA_SIZE;
+        int sector_bytes = remaining > NEXUS_ISO_DATA_SIZE
+            ? NEXUS_ISO_DATA_SIZE : (int)remaining;
         if (read_sector_payload(fp, dir_lba + s, sector_size, data_offset,
                                 sector_buf) < 0) return -1;
 
         offset = 0;
-        while (offset < NEXUS_ISO_DATA_SIZE && *count < max_files) {
+        while (offset < sector_bytes && *count < max_files) {
             Nexus_ISOFile entry;
             int rec_len = parse_dir_record(sector_buf, offset,
-                                             NEXUS_ISO_DATA_SIZE, &entry);
+                                             sector_bytes, &entry);
             if (rec_len == 0) break;
 
             if (entry.name[0] && entry.name[0] != 0 && entry.name[0] != 1) {
@@ -88,9 +100,12 @@ static int parse_directory_depth(FILE *fp, uint32_t dir_lba, uint32_t dir_size,
                            strcmp(entry.name, "..") != 0 &&
                            entry.lba != dir_lba) {
                     /* Recurse into subdirectory */
-                    parse_directory_depth(fp, entry.lba, entry.size,
-                                          sector_size, data_offset,
-                                          files, count, max_files, depth + 1);
+                    if (parse_directory_depth(fp, entry.lba, entry.size,
+                                               sector_size, data_offset,
+                                               files, count, max_files,
+                                               depth + 1) < 0) {
+                        return -1;
+                    }
                 }
             }
             offset += rec_len;
@@ -142,9 +157,11 @@ int nexus_iso_open(Nexus_ISOReader *reader, const char *bin_path) {
 
     /* Parse file tree */
     reader->file_count = 0;
-    parse_directory(reader->fp, root_lba, root_size,
+    if (parse_directory(reader->fp, root_lba, root_size,
         reader->sector_size, reader->data_offset,
-        reader->files, &reader->file_count, NEXUS_ISO_MAX_FILES);
+        reader->files, &reader->file_count, NEXUS_ISO_MAX_FILES) < 0) {
+        goto fail;
+    }
 
     reader->valid = 1;
     return reader->file_count;

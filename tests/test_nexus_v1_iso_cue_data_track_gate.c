@@ -82,6 +82,37 @@ static int write_truncated_iso(const char *path)
     return fclose(file) == 0;
 }
 
+static int write_bad_directory_iso(const char *path)
+{
+    uint8_t sector[NEXUS_ISO_DATA_SIZE];
+    FILE *file = fopen(path, "wb");
+    if (!file) return 0;
+    for (int i = 0; i <= 20; ++i) {
+        memset(sector, 0, sizeof(sector));
+        if (i == 16) {
+            sector[0] = 1;
+            memcpy(sector + 1, "CD001", 5);
+            sector[156] = 34;
+            le32(sector + 158, 20);
+            le32(sector + 166, NEXUS_ISO_DATA_SIZE);
+            sector[181] = 2;
+            sector[188] = 1;
+        } else if (i == 20) {
+            int length = write_record(sector, 999, "BROKEN;1");
+            if (!length) {
+                fclose(file);
+                return 0;
+            }
+            sector[25] = 2;
+        }
+        if (fwrite(sector, 1U, sizeof(sector), file) != sizeof(sector)) {
+            fclose(file);
+            return 0;
+        }
+    }
+    return fclose(file) == 0;
+}
+
 static int write_text(const char *path, const char *text)
 {
     FILE *file = fopen(path, "wb");
@@ -95,7 +126,7 @@ static int write_text(const char *path, const char *text)
 
 int main(void)
 {
-    char root[256], audio[320], data[320], truncated[320], cue[320];
+    char root[256], audio[320], data[320], truncated[320], broken[320], cue[320];
     char nested[320], nested_data[384], nested_cue[320];
     char real_cue[768];
     const char *real_root;
@@ -109,11 +140,13 @@ int main(void)
     snprintf(audio, sizeof(audio), "%s/audio.bin", root);
     snprintf(data, sizeof(data), "%s/data.bin", root);
     snprintf(truncated, sizeof(truncated), "%s/truncated.bin", root);
+    snprintf(broken, sizeof(broken), "%s/broken-directory.bin", root);
     snprintf(cue, sizeof(cue), "%s/disc.cue", root);
     audio_file = fopen(audio, "wb");
     CHECK("audio decoy", audio_file && fputc(0, audio_file) != EOF && fclose(audio_file) == 0);
     CHECK("data ISO", write_nexus_iso(data));
     CHECK("truncated ISO fixture", write_truncated_iso(truncated));
+    CHECK("broken directory ISO fixture", write_bad_directory_iso(broken));
     CHECK("lowercase multi-file cue", write_text(cue,
           "file \"audio.bin\" binary\n  track 01 audio\n"
           "file \"data.bin\" binary\n  track 02 mode1/2048\n"));
@@ -132,6 +165,7 @@ int main(void)
     nexus_iso_close(&reader);
     memset(&reader, 0, sizeof(reader));
     CHECK("truncated ISO is rejected", nexus_iso_open(&reader, truncated) == -1);
+    CHECK("broken directory ISO is rejected", nexus_iso_open(&reader, broken) == -1);
     CHECK("complete CUE media receipt", nexus_iso_cue_media_receipt(cue, &media) == 0 &&
           media.valid && media.declared_file_count == 2 &&
           media.present_file_count == 2 && media.missing_file_count == 0);
@@ -165,7 +199,7 @@ int main(void)
     }
 
     remove(nested_cue); remove(nested_data); rmdir(nested);
-    remove(cue); remove(data); remove(truncated); remove(audio); rmdir(root);
+    remove(cue); remove(data); remove(truncated); remove(broken); remove(audio); rmdir(root);
     if (failures) return 1;
     puts("Nexus CUE data-track gate: PASS");
     return 0;

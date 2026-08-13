@@ -10,7 +10,7 @@
 ## Summary
 This page separates historical DM1 bug references from current Nexus gates.
 Nexus has an authenticated external corpus, a launcher/runtime boundary and a
-296/296 passing Nexus regression selection. The original Saturn executable is
+297/297 passing Nexus regression selection. The original Saturn executable is
 partly disassembled, but start pose, VDP1/VDP2 consumers, SLEV/SAL runtime
 ownership and Saturn saves remain unproven. No DM1 bug is automatically
 promoted to a Nexus bug.

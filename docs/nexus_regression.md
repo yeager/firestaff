@@ -8,7 +8,7 @@
 
 ## Current status
 
-The Nexus V1/V2/M11 CTest selection contains 296 tests and passes 296/296
+The Nexus V1/V2/M11 CTest selection contains 297 tests and passes 297/297
 against the authenticated external corpus. The remaining skipped tests require
 private Saturn captures or saves and are evidence gates, not implementation
 failures. This page keeps older issue history below for provenance; its old

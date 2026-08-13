@@ -47,6 +47,29 @@ static uint64_t nexus_v1_launcher_capture_fnv1a64(const uint8_t *bytes,
                                                    size_t byte_count);
 static int nexus_v1_launcher_sha256_text_valid(const char *text);
 
+static void nexus_v1_launcher_clear_failed_level_state(
+    Nexus_V1_Engine *engine)
+{
+    if (!engine) {
+        return;
+    }
+    free(engine->current_level_dgn_data);
+    free(engine->current_level_dgn_identity_data);
+    engine->current_level_dgn_data = NULL;
+    engine->current_level_dgn_identity_data = NULL;
+    engine->current_level_dgn_size = 0;
+    memset(&engine->current_level, 0, sizeof(engine->current_level));
+    memset(&engine->current_level_structure2_source, 0,
+           sizeof(engine->current_level_structure2_source));
+    engine->current_level_source_path[0] = '\0';
+    engine->level_loaded = 0;
+    engine->game.current_level = -1;
+    engine->game.party_x = -1;
+    engine->game.party_y = -1;
+    engine->game.party_dir = -1;
+    engine->game.game_started = 0;
+}
+
 /* ── Singleton ──────────────────────────────────────────────────────── */
 static Nexus_V1_Engine s_engine;
 static int s_initialized = 0;
@@ -160,6 +183,20 @@ int nexus_v1_launcher_load_level(int level) {
     int rc = nexus_v1_load_level(&s_engine, level);
     if (rc != 0) {
         printf("Nexus launcher: failed to load level %d\n", level);
+        return -1;
+    }
+    /* Bounds are not enough to establish a playable runtime position.  The
+     * caller's pose may still point at a wall or an unreferenced cell.  Do
+     * the same authenticated DGN cell admission used by native resume before
+     * exposing the level as loaded. */
+    if (!nexus_v1_level_move_allowed(&s_engine.current_level,
+                                     s_engine.game.party_x,
+                                     s_engine.game.party_y,
+                                     s_engine.game.party_x,
+                                     s_engine.game.party_y)) {
+        printf("Nexus launcher: pose %d,%d is not playable on level %d\n",
+               s_engine.game.party_x, s_engine.game.party_y, level);
+        nexus_v1_launcher_clear_failed_level_state(&s_engine);
         return -1;
     }
     printf("Nexus launcher: loaded level %d\n", level);
@@ -9306,6 +9343,7 @@ int nexus_v1_launcher_resume_from_save_path(
     engine->game.game_started = 1;
 
     if (nexus_v1_launcher_load_level(level) != 0) {
+        nexus_v1_launcher_clear_failed_level_state(engine);
         (void)nexus_v1_startup_resume_status_host_receipt(
             NEXUS_V1_STARTUP_RESUME_STATUS_LEVEL_ERROR,
             &out_receipt->host_receipt);
@@ -9313,6 +9351,24 @@ int nexus_v1_launcher_resume_from_save_path(
                  sizeof(out_receipt->diagnostic),
                  "level %d load failed",
                  level);
+        return 0;
+    }
+
+    /* Bounds alone are not enough for a native resume: a corrupt or hand
+     * edited FNXS file can point at a wall or an unreferenced cell. Validate
+     * the save-owned destination against the authenticated DGN that was just
+     * loaded before installing the remaining world/champion state. */
+    if (!nexus_v1_level_move_allowed(&engine->current_level,
+                                     world.party_x, world.party_y,
+                                     world.party_x, world.party_y)) {
+        nexus_v1_launcher_clear_failed_level_state(engine);
+        (void)nexus_v1_startup_resume_status_host_receipt(
+            NEXUS_V1_STARTUP_RESUME_STATUS_POSE_INVALID,
+            &out_receipt->host_receipt);
+        snprintf(out_receipt->diagnostic,
+                 sizeof(out_receipt->diagnostic),
+                 "pose %d,%d is not a playable cell on level %d",
+                 world.party_x, world.party_y, level);
         return 0;
     }
 

@@ -3638,6 +3638,28 @@ static void nexus_v1_clear_structure3_runtime_source(Nexus_V1_Engine *engine)
     engine->structure3_runtime_source.blocks_real_dgn_mesh_render = 0;
 }
 
+static void nexus_v1_clear_failed_level_load(Nexus_V1_Engine *engine)
+{
+    if (!engine) return;
+    nexus_v1_invalidate_dgn_material_plan(engine);
+    free(engine->current_level_dgn_data);
+    free(engine->current_level_dgn_identity_data);
+    engine->current_level_dgn_data = NULL;
+    engine->current_level_dgn_identity_data = NULL;
+    engine->current_level_dgn_size = 0;
+    memset(&engine->current_level, 0, sizeof(engine->current_level));
+    memset(&engine->current_level_structure2_source, 0,
+           sizeof(engine->current_level_structure2_source));
+    nexus_v1_clear_structure3_runtime_source(engine);
+    engine->current_level_source_path[0] = '\0';
+    engine->level_loaded = 0;
+    engine->game.current_level = -1;
+    engine->game.party_x = -1;
+    engine->game.party_y = -1;
+    engine->game.party_dir = -1;
+    engine->game.game_started = 0;
+}
+
 /* Keep the engine boundary independent of the launcher/importer receipt.
  * This repeats the capture reader's six length-prefixed FNV lanes before the
  * raw bytes enter engine-owned storage. It verifies transport identity only;
@@ -4606,6 +4628,7 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     int r = nexus_v1_level_load(&engine->current_level, data, size, level);
     if (r < 0) {
         free(data);
+        nexus_v1_clear_failed_level_load(engine);
         return -1;
     }
     engine->current_level_dgn_data = data;
@@ -4615,7 +4638,7 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
         free(data);
         engine->current_level_dgn_data = NULL;
         engine->current_level_dgn_size = 0;
-        engine->level_loaded = 0;
+        nexus_v1_clear_failed_level_load(engine);
         return -1;
     }
     memcpy(engine->current_level_dgn_identity_data, data, (size_t)size);
@@ -4635,11 +4658,10 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
         printf("Nexus: refusing unverified DGN source for %s\n", name);
         free(data);
         free(engine->current_level_dgn_identity_data);
-        memset(&engine->current_level, 0, sizeof(engine->current_level));
         engine->current_level_dgn_data = NULL;
         engine->current_level_dgn_identity_data = NULL;
         engine->current_level_dgn_size = 0;
-        engine->level_loaded = 0;
+        nexus_v1_clear_failed_level_load(engine);
         return -1;
     }
 
@@ -4657,16 +4679,7 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
         /* A blocked entrance must not leave a parsed but unusable level in
          * the runtime.  This is the same fail-closed boundary as the pose
          * receipt: dimensions, source bytes, and level ownership all reset. */
-        free(engine->current_level_dgn_data);
-        free(engine->current_level_dgn_identity_data);
-        engine->current_level_dgn_data = NULL;
-        engine->current_level_dgn_identity_data = NULL;
-        engine->current_level_dgn_size = 0;
-        memset(&engine->current_level, 0, sizeof(engine->current_level));
-        memset(&engine->current_level_structure2_source, 0,
-               sizeof(engine->current_level_structure2_source));
-        engine->current_level_source_path[0] = '\0';
-        engine->level_loaded = 0;
+        nexus_v1_clear_failed_level_load(engine);
         return -1;
     }
 

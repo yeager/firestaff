@@ -2,6 +2,54 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: Direct `nexus_v1_load_level()` failures now clear the partial DGN,
+Structure2 source receipt, source path, pose, and `game_started` state after
+the loader has begun mutating the engine. The launcher and engine boundaries
+therefore agree on fail-closed state after allocation or materialization
+failure; no Saturn capability gate is opened by this fix.
+
+2026-08-13: `nexus_v1_launcher_load_level()` now applies the authenticated
+DGN playable-cell check after loading. A bounded wall or unreferenced cell is
+rejected and the transient level/source state is cleared, matching native
+FNXS resume behavior. This closes a launcher state-integrity bug but does not
+invent or open the still-capture-gated Saturn LEV01 start pose.
+
+2026-08-13: Failed FNXS resume now clears the engine's transient level,
+source buffers, source path, pose, and `game_started` state on both level-load
+and playable-cell rejection. A failed resume can no longer leave a partially
+loaded DGN or seeded pose visible to the next operation. This is a
+state-integrity fix; it does not open the Saturn LEV01 start-pose gate.
+
+2026-08-13: Nexus ISO 9660 directory parsing now fails closed when a declared
+subdirectory cannot be read, exceeds the bounded hierarchy depth, or exposes
+records beyond its declared extent. Previously a failed recursive read could
+leave a partial file table marked valid. The regression is covered by
+`nexus_v1_iso_cue_data_track_gate`; the real Nexus corpus and the 297-test
+local Nexus selection pass. This hardens source validation but does not open
+the Saturn LEV01 start-pose, VDP1/VDP2, SLEV/SAL/SCSP, or save gates.
+
+2026-08-13: Nexus raw-sector seeks now use `_fseeki64` on Windows instead of
+casting the byte offset through 32-bit `long`. This preserves direct reading
+of large authentic Saturn images without changing the on-disc format or
+extracting game data. The ISO/CUE regression remains green on the local
+external corpus.
+
+2026-08-13: Native FNXS resume now validates the save-owned coordinate against
+ the authenticated LEV DGN after loading it. A bounded coordinate that is a
+ wall or has no valid collision reference is rejected as `POSE_INVALID` before
+ champion/world state is installed; resume no longer reports such a save as
+ playable. This is a source-data validation fix and does not invent a Saturn
+ start pose.
+
+2026-08-13: The complete authentic J-BIOS/English-Merged replay
+`run-followup-20260813c5` used the documented START plus diagnostic input
+sequence and produced a validator-clean 1,200-frame raw witness. Its bounded
+SH-2 trace is dominated by BIOS/runtime buffer writes and contains no
+disassembly-bound write to the `0x0606455c` pose pointer or its `+8/+10` fields.
+The changing VDP regions therefore remain transport evidence only; this run
+does not identify LEV01, party coordinates, facing, or a source-owned runtime
+consumer.
+
 2026-08-13: An authentic J-BIOS/English-Merged 300-frame capture with the
 SCSP and main-CPU trace hooks enabled timed out with `capture_exit_status=137`
 before a complete raw witness or either trace file was written
@@ -101,7 +149,7 @@ those owners by disassembly and capture.
 `FIRESTAFF_NEXUS_DATA_DIR` from CTest instead of silently running its missing-
 data path. It verifies the real first/last resistance pairs (`35/40` and
 `34/50`) and the fail-closed startup presentation contract. The complete
-Nexus/V2/M11 selection passes 296/296 with 14 explicit Saturn-capture skips.
+Nexus/V2/M11 selection passes 297/297 with 14 explicit Saturn-capture skips.
 
 2026-08-13: Documentation audit removed unsupported claims that Nexus has a
 verified SLEV script VM or source-bound door/teleport/spawn actions. `SLEV*.BIN`
@@ -993,7 +1041,7 @@ värden ensamma räcker inte för text- eller menyadmission.
   får inga påhittade samplebufferar och alla sample-counts hålls inom gräns.
   Detta öppnar inte Saturns selector-, SDDRVS/SCSP- eller playback-gate.
 - 2026-08-13: Efter ISO-only- och SAL-regressionerna passerar Nexus V1/V2/M11-
-  urvalet 296/296 körda tester mot extern-diskens autentiska korpus. Fjorton
+  urvalet 297/297 körda tester mot extern-diskens autentiska korpus. Fjorton
   privata Saturn-gater är fortfarande korrekt skip-safe: de kräver autentisk
   VDP1/VDP2-capture, SLEV/SAL/SCSP-trace eller Saturn-save som inte finns i
   den aktuella externa datakällan.
