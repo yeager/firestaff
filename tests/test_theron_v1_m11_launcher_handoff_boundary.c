@@ -578,6 +578,28 @@ static void run_explicit_real_cue_campaign_if_available(void) {
                     view.theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
                     view.theronState.startup_media_ready,
                 "explicit authentic MODE1/2048 CUE opens the source-backed Theron title gate");
+    if (opened == 1 && !view.theronState.dungeon_capture_required) {
+        int i;
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        view.theronState.startup_phase ==
+                            THERON_STARTUP_PHASE_STAGE_SELECT,
+                    "explicit authentic MODE1/2048 CUE advances from title to stage select");
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        view.theronState.startup_phase ==
+                            THERON_STARTUP_PHASE_SOUL_ROOM,
+                    "explicit authentic MODE1/2048 CUE advances from stage select to Soul Room");
+        for (i = 0; i < THERON_STARTUP_HERO_MIRROR_COUNT; ++i) {
+            (void)M11_GameView_HandleInput(&view, M12_MENU_INPUT_RIGHT);
+        }
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
+                        M11_GAME_INPUT_RETURN_TO_MENU &&
+                        view.theronState.startup_phase ==
+                            THERON_STARTUP_PHASE_IN_DUNGEON &&
+                        view.theronState.level_loaded == 1,
+                    "explicit authentic MODE1/2048 CUE reaches the verified initial level");
+    }
     M11_GameView_Shutdown(&view);
 }
 

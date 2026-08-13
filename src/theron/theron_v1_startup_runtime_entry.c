@@ -30,19 +30,21 @@ static int theron_v1_startup_runtime_load_raw_track02_source_level(
     const char *md5_hex, Theron_DungeonID dungeon_id,
     char *receipt, size_t receipt_cap) {
     Theron_Track02Variant variant;
+    Theron_Track02Variant dungeon_data_variant;
     Theron_DungeonLoadResult load_result;
     Theron_Track02SpawnSource spawn_source;
     uint8_t *user_data;
     size_t sectors, user_size, i;
+    int iso_pregap_normalized = 0;
     int loaded;
 
     if (!world || !track02 || !track02_size || !md5_hex ||
         dungeon_id < THERON_DUNGEON_1_AKUTUBA ||
-        dungeon_id > THERON_DUNGEON_COUNT ||
-        track02_size % THERON_TRACK02_RAW_SECTOR_BYTES != 0u) return 0;
+        dungeon_id > THERON_DUNGEON_COUNT) return 0;
     variant = theron_v1_track02_variant_for_md5(md5_hex);
     if (variant != THERON_TRACK02_VARIANT_JP_BIN &&
-        variant != THERON_TRACK02_VARIANT_US_BIN) return 0;
+        variant != THERON_TRACK02_VARIANT_US_BIN &&
+        variant != THERON_TRACK02_VARIANT_US_ISO) return 0;
     /* Bind the raw US spawn records before converting the BIN into a
      * user-data view.  This is the source-record -> live-world boundary;
      * RNG, AI, combat, generator, T700 and T900 consumers remain separate
@@ -50,6 +52,7 @@ static int theron_v1_startup_runtime_load_raw_track02_source_level(
      * unbound here. */
     memset(&spawn_source, 0, sizeof(spawn_source));
     if (variant == THERON_TRACK02_VARIANT_US_BIN) {
+        if (track02_size % THERON_TRACK02_RAW_SECTOR_BYTES != 0u) return 0;
         if (!theron_v1_track02_decode_spawn_source(
                 track02, track02_size,
                 THERON_V1_TRACK02_VARIANT_US_BIN, &spawn_source) ||
@@ -57,9 +60,24 @@ static int theron_v1_startup_runtime_load_raw_track02_source_level(
                 world, &spawn_source, (int)variant))
             return 0;
     } else {
-        /* Mark the JP layout without copying the US-offset record shape. */
-        (void)theron_v1_world_bind_track02_spawn_source(
-            world, NULL, (int)variant);
+        /* Retail US ISO is the byte-identical raw user-data stream after
+         * raw Track 02's 225-sector pregap.  The source dungeon decoders
+         * retain raw-user-data coordinates, so give them a zeroed address
+         * prefix and copy the authenticated ISO bytes unchanged after it.
+         * The prefix is never source content or a fallback; it is solely the
+         * absent physical pregap coordinate space.  Spawn-source decoding
+         * stays closed here because its physical-sector record has only been
+         * proven for raw MODE1/2352 media. */
+        const size_t pregap_bytes = 225u * THERON_TRACK02_RAW_USER_DATA_BYTES;
+        if (variant != THERON_TRACK02_VARIANT_US_ISO ||
+            track02_size > SIZE_MAX - pregap_bytes) return 0;
+        user_size = pregap_bytes + track02_size;
+        user_data = (uint8_t *)calloc(user_size, 1u);
+        if (!user_data) return 0;
+        memcpy(user_data + pregap_bytes, track02, track02_size);
+        dungeon_data_variant = THERON_TRACK02_VARIANT_US_BIN;
+        iso_pregap_normalized = 1;
+        goto load_dungeon;
     }
     sectors = track02_size / THERON_TRACK02_RAW_SECTOR_BYTES;
     if (!sectors || sectors > SIZE_MAX / THERON_TRACK02_RAW_USER_DATA_BYTES) return 0;
@@ -72,9 +90,13 @@ static int theron_v1_startup_runtime_load_raw_track02_source_level(
                    THERON_TRACK02_RAW_USER_DATA_OFFSET,
                THERON_TRACK02_RAW_USER_DATA_BYTES);
     }
+    dungeon_data_variant = variant;
+
+load_dungeon:
     memset(&load_result, 0, sizeof(load_result));
     loaded = theron_v1_track02_load_full_dungeon_for_variant(
-        world, (int)dungeon_id, user_data, user_size, variant, &load_result);
+        world, (int)dungeon_id, user_data, user_size, dungeon_data_variant,
+        &load_result);
     free(user_data);
     if (loaded != 0 || load_result.levels_loaded < 1) return 0;
     world->current_dungeon = (int)dungeon_id;
@@ -86,7 +108,8 @@ static int theron_v1_startup_runtime_load_raw_track02_source_level(
                           world->levels[(int)dungeon_id - 1][0].start_dir);
     if (receipt && receipt_cap > 0u) {
         snprintf(receipt, receipt_cap,
-                 "Track 02 raw source handoff: dungeon=%d maps=%d objects=%u; visual capture remains gated",
+                 "Track 02 %s source handoff: dungeon=%d maps=%d objects=%u; visual capture remains gated",
+                 iso_pregap_normalized ? "ISO user-data" : "raw",
                  (int)dungeon_id, load_result.levels_loaded,
                  world->source_object_count);
     }

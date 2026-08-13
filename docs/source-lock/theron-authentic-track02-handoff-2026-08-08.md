@@ -67,10 +67,15 @@ real-media launcher regression and by `firestaff --game theron --data-dir
 <cue-root> --boot-probe` against ISO MD5
 `ceb02343868f80cec899e9b239aff2da`.
 
-This is deliberately narrower than a gameplay admission: ISO launches at the
-title/stage-select boundary and does not auto-load a dungeon. The raw
-MODE1/2352 convenience path remains the only route with its separately
-verified initial-level load. No level/object, AI, T700 or T900 gate changed.
+This is deliberately narrower than a gameplay admission: ISO does not
+auto-load a dungeon, but the normal title → stage select → Soul Room →
+Forcefield interaction now reaches the verified AKUTUBA level-0 source route.
+The MODE1/2048 payload is byte-identical to raw Track 02 user data after its
+225-sector physical pregap; Firestaff normalizes only that absent coordinate
+prefix before using the already verified raw user-data decoder. The real CUE
+launcher regression and the CLI boot script both exercise that route. Physical
+raw-sector spawn decoding remains closed for ISO, and no AI, T700 or T900
+gate changed.
 
 ## Explicitly not proven
 
