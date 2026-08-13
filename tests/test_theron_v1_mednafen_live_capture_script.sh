@@ -134,6 +134,7 @@ fi
 if ! grep -Fq 'trace_files_are_line_delimited()' "$script" ||
    ! grep -Fq 'index($_, chr(92) . chr(92) . "n")' "$script" ||
    ! grep -Fq 'existing_trace_files' "$script" ||
+   ! grep -Fq '"$rng_code_trace" "$vdc_io_trace"' "$script" ||
    ! grep -Fq 'Mednafen emitted a literal backslash-n in a trace record' "$script"; then
     printf 'FAIL: capture script must reject merged literal-backslash-n trace rows\n' >&2
     exit 1
