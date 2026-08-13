@@ -2,6 +2,19 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: A clean, instrumented Mednafen build was verified against the
+authentic English-merged Saturn disc and EU BIOS. The external capture at
+`/Volumes/Extern-disk/nexus-capture-20260813/run-followup-20260813c4/`
+contains 1,200 validated raw frames, three 2 MiB SH-2 work-RAM snapshots at
+frames 600/900/1100 (`memory.snapshot`, SHA-256
+`2e9e5b3ea86eec48f8c6f8d931629f49614e62b23a9904788fb8e1a0522a765d`), and
+234 bounded non-zero writes in the `0x06064500..0x060646ff` range
+(`ram-writes.trace`, SHA-256
+`7cbbdac0e9640daa6fec874b230f12c75a4291f1a0dd33e75b55e2d18e669d95`). The
+raw witness is hash-bound and validator-clean, but the captured values still
+do not establish a source-owned LEV01 start-pose consumer or Saturn save
+format. No production gate is opened; the capture remains external-only.
+
 2026-08-13: Nexus text-helper hardening fixed two boundedness defects in the
 diagnostic SJIS/ASCII extractor: zero- and undersized output buffers are now
 terminated without an out-of-bounds write, and each returned extracted string

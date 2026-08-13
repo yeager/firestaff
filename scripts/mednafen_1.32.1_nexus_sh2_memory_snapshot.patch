@@ -1,0 +1,57 @@
+--- src/ss/ss.cpp
++++ src/ss/ss.cpp
+@@ -550,7 +550,54 @@
+  fprintf(file, "addr=0x%08x size=%u value=0x%08x source=0x%08x read_bus=%u pc0=0x%08x pc1=0x%08x\n",
+   (unsigned)address, size, (unsigned)value, (unsigned)source, read_bus,
+   (unsigned)FirestaffGetSH2PC(0), (unsigned)FirestaffGetSH2PC(1));
+  count++;
+  if((count & 0x3ffU) == 0) fflush(file);
+ }
++static bool FirestaffSH2MemorySnapshotFrameRequested(unsigned frame)
++{
++ const char *text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT_FRAMES");
++ const char *cursor = text;
++ if(!cursor || !*cursor) return false;
++ while(*cursor)
++ {
++  char *end;
++  unsigned long candidate;
++  while(*cursor == ',' || *cursor == ' ' || *cursor == '\t') cursor++;
++  if(!*cursor) break;
++  candidate = strtoul(cursor, &end, 10);
++  if(end == cursor) { while(*cursor && *cursor != ',') cursor++; continue; }
++  if(candidate == frame) return true;
++  cursor = end;
++  while(*cursor && *cursor != ',') cursor++;
++ }
++ return false;
++}
++
++static void FirestaffTraceSH2MemorySnapshot(unsigned frame)
++{
++ static FILE *file;
++ const char *path = getenv("FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT");
++ uint8 chunk[4096];
++ uint32 offset;
++ if(!path || !*path || !FirestaffSH2MemorySnapshotFrameRequested(frame)) return;
++ if(!file)
++ {
++  file = fopen(path, "wb");
++  if(!file) return;
++  fputs("FIRESTAFF_NEXUS_SH2_MEMORY_SNAPSHOT_V1\n", file);
++ }
++ fprintf(file, "frame=%u base=0x06000000 size=%u\n", frame,
++  (unsigned)sizeof(WorkRAMH) * 2U);
++ for(offset = 0; offset < (uint32)sizeof(WorkRAMH) * 2U; offset += sizeof(chunk))
++ {
++  unsigned length = (unsigned)sizeof(chunk);
++  if(offset + length > (uint32)sizeof(WorkRAMH) * 2U)
++   length = (unsigned)((uint32)sizeof(WorkRAMH) * 2U - offset);
++  for(unsigned i = 0; i < length; i++)
++   chunk[i] = ne16_rbo_be<uint8>(WorkRAMH, offset + i);
++  fwrite(chunk, 1, length, file);
++ }
++ fputc('\n', file);
++ fflush(file);
++}
+ //   1 during normal execution
