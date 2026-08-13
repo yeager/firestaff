@@ -2,6 +2,12 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-13: BPX/BPK:s stored-extraktion avvisar nu payloader över `INT_MAX`.
+API:t returnerar byteantal som `int`; tidigare kunde en stor men boundsmässigt
+godkänd `uint32`-storlek kopieras och sedan wrap:a till ett negativt returvärde.
+Regressionen ligger i `nexus_v1_bpk_surface_class` och real-data-testet för
+MENU.BPK passerar.
+
 2026-08-13: Nexus klickrutt korrigerad. Ett mål rakt bakom partyt köar nu två
 autentiska kvartssvängar i stället för en ofullständig sväng, och misslyckad
 inmatning till den fulla kommandokön rapporteras som blockerad. Regressionen

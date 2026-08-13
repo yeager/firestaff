@@ -2,6 +2,7 @@
 #include "nexus_v1_bpk_archive.h"
 
 #include <ctype.h>
+#include <limits.h>
 #include <string.h>
 
 static uint16_t rb16(const uint8_t *p) {
@@ -338,6 +339,12 @@ int nexus_v1_bpx_bpk_extract_stored(const uint8_t *archive_data,
         return NEXUS_V1_BPX_BPK_ERR_METHOD;
     }
     if (entry->packed_size != entry->unpacked_size) {
+        return NEXUS_V1_BPX_BPK_ERR_BOUNDS;
+    }
+    /* The public API returns the number of bytes as int. Do not copy a
+     * representable uint32 payload and then wrap its successful return value
+     * into a negative error code. */
+    if (entry->unpacked_size > (uint32_t)INT_MAX) {
         return NEXUS_V1_BPX_BPK_ERR_BOUNDS;
     }
     if ((size_t)entry->unpacked_size > out_size) {

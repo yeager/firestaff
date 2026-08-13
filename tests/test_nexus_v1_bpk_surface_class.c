@@ -3,6 +3,7 @@
 #include "nexus_v1_dmdf_model.h"
 
 #include <stdio.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -791,6 +792,20 @@ static void test_extract_stored_surface_bytes(void) {
            "stored extraction rejects directory trailer entry");
 }
 
+static void test_bpx_stored_extract_int_return_bound(void) {
+    Nexus_V1_BpxBpkEntry entry;
+    uint8_t out[8];
+
+    memset(&entry, 0, sizeof(entry));
+    entry.method = NEXUS_V1_BPX_BPK_METHOD_STORED;
+    entry.packed_size = (uint32_t)INT_MAX + 1U;
+    entry.unpacked_size = entry.packed_size;
+    expect(nexus_v1_bpx_bpk_extract_stored(
+               out, sizeof(out), &entry, out, sizeof(out)) ==
+               NEXUS_V1_BPX_BPK_ERR_BOUNDS,
+           "BPX stored extraction rejects payloads beyond int return range");
+}
+
 static void test_runtime_surface_handoff_blocks_prs3(void) {
     uint8_t data[256];
     Nexus_V1_BpkRuntimeSurfaceHandoff rows[4];
@@ -1426,6 +1441,7 @@ int main(int argc, char **argv) {
     test_runtime_render_receipt_ready_for_stored_surfaces();
     test_runtime_render_receipt_blocks_truncated_stored_surfaces();
     test_extract_stored_surface_bytes();
+    test_bpx_stored_extract_int_return_bound();
     test_prs3_surface_decode();
     test_prs3_candidate_evidence();
     test_prs3_material_import();
