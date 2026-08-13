@@ -2,6 +2,18 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-14: Repeated the Mednafen startup using the exact authentic English
+ISO from `/Volumes/Extern-disk/FirestaffUserData/data/nexus`, rather than the
+earlier external merged ISO. The ISO SHA-256 is
+`16786e6165d8cbf7f6394dd9bc7171fbb561c1ba40b77ad7cba3c275fde2804e` and the
+region-matched E BIOS SHA-256 is
+`96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`.
+Because the supplied CUE references absent audio-track files, the external
+run used a temporary track-1-only CUE; the ISO itself was not modified or
+unpacked. The run produced authentic intro/title/transition frames, but still
+did not prove the Nexus menu, LEV01, or a played save. Full image receipts are
+at `/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-authentic-data-iso-20260814/visual-receipts.txt`.
+
 2026-08-14: A longer authentic input sequence (six START/A pairs after the
 title-cycle wait) was run from
 `/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-input-sequence-20260814/`.
