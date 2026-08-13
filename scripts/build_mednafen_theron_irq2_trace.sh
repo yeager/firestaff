@@ -36,6 +36,8 @@ cp -R "$source_root/." "$build_root/source"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_post_stage2_execution_trace.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_rng_consumer_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pcecd_trace.patch"

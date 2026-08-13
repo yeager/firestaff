@@ -1,36 +1,54 @@
 diff --git a/src/drivers/debugger.cpp b/src/drivers/debugger.cpp
 --- a/src/drivers/debugger.cpp
 +++ b/src/drivers/debugger.cpp
-@@ -168,6 +168,9 @@ static uint32 TheronIrq2TraceLaterE009Record;
- static uint32 TheronIrq2TraceLaterE009Destination;
- static uint32 TheronIrq2TraceLaterE009DestinationMode;
+@@ -170,2 +170,6 @@
  static bool TheronIrq2TraceLaterE009PostReturnStepPending;
 +static bool TheronIrq2TracePostStage2ExecutionActive;
 +static bool TheronIrq2TracePostStage2PhysicalPageSeen[8192];
 +static unsigned TheronIrq2TracePostStage2PhysicalPageCount;
- 
- static void FlushTheronIrq2Trace(void)
- {
-@@ -198,6 +201,22 @@ static void DoTheronIrq2Trace(const uint32 PC)
-   FlushTheronIrq2Trace();
-  }
- 
++static unsigned TheronIrq2TraceRuntimeRecordSamples;
+ /* A copied game loader can execute from physical PCE main RAM. Retain only
+@@ -206,2 +206,43 @@ static void DoTheronIrq2Trace(const uint32 PC)
+  const uint32 trace_physical_pc = (trace_mpr << 13) | (logical_pc & 0x1fff);
 + if(logical_pc == 0x40d0 || logical_pc == 0x40a7)
 +  TheronIrq2TracePostStage2ExecutionActive = true;
 + if(TheronIrq2TracePostStage2ExecutionActive)
 + {
 +  const uint32 physical_page = (PC >> 8) & 0x1fff;
-+
 +  if(TheronIrq2TracePostStage2PhysicalPageCount < 128 &&
 +     !TheronIrq2TracePostStage2PhysicalPageSeen[physical_page])
 +  {
 +   TheronIrq2TracePostStage2PhysicalPageSeen[physical_page] = true;
 +   TheronIrq2TracePostStage2PhysicalPageCount++;
-+   TheronIrq2Trace->print_format("post_stage2_execution_page logical_pc=%04x physical_pc=%08x physical_page=%04x\\n", logical_pc, PC, physical_page);
++   TheronIrq2Trace->print_format("post_stage2_execution_page logical_pc=%04x physical_pc=%08x physical_page=%04x\n", logical_pc, PC, physical_page);
 +   FlushTheronIrq2Trace();
 +  }
 + }
-+
-  if(TheronIrq2TraceReturnTransferPending)
-  {
-   if(logical_pc < 0xcc00 || logical_pc >= 0xcd00)
++ /* Raw runtime-table receipt. These addresses are execution observations
++  * only: do not assign level, object, creature, inventory or timer meaning
++  * to the ten-byte records without a same-session Track 02 source join. */
++ if(TheronIrq2TracePostStage2ExecutionActive &&
++    (logical_pc == 0xc9c2 || logical_pc == 0xca2a ||
++     logical_pc == 0xcb94 || logical_pc == 0xcbcc ||
++     logical_pc == 0xcc0e || logical_pc == 0xcc27) &&
++    TheronIrq2TraceRuntimeRecordSamples < 4096)
++ {
++  const uint32 reg_x = trace_regs->GetRegister(
++   trace_regs->Regs[2].id, NULL, 0) & 0xff;
++  const uint32 reg_y = trace_regs->GetRegister(
++   trace_regs->Regs[3].id, NULL, 0) & 0xff;
++  const uint32 table_index = CurGame->Debugger->MemPeek(
++   0x6000 + reg_x, 1, true, true) & 0xff;
++  const uint32 record_address = 0x611d;
++  TheronIrq2Trace->print_format(
++   "theron_runtime_record_table sequence=%u logical_pc=%04x physical_pc=%08x x=%02x y=%02x table_index=%02x record_address=%04x record_bytes=",
++   TheronIrq2TraceRuntimeRecordSamples++, logical_pc, trace_physical_pc,
++   reg_x, reg_y, table_index, record_address);
++  for(unsigned record_offset = 0; record_offset < 10; ++record_offset)
++   TheronIrq2Trace->print_format(
++    "%02x", CurGame->Debugger->MemPeek(record_address + record_offset,
++                                        1, true, true) & 0xff);
++  TheronIrq2Trace->print_format("\n");
++  FlushTheronIrq2Trace();
++ }
+  if((logical_pc == 0x4644 || logical_pc == 0x4667 ||
