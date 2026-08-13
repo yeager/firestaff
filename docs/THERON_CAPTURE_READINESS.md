@@ -23,6 +23,16 @@ authenticated CD-to-RAM receipts and 32 game-main-RAM `$E009` dispatches. It
 still observed zero game-owned `$E009` data reads. This is a useful bounded
 result: the transport is real, while the dungeon handoff is not yet proven.
 
+**Fresh local replay, 2026-08-13:** using the same hash-verified US Track 02
+and `/Users/bosse/.mednafen/firmware/syscard3.pce`, an external-disk replay
+produced 161 raw sectors, 51 SCSI read commands, 25 CD IRQ callbacks, 161
+sector bindings, 47 byte-exact FIFO-to-RAM origin receipts, and 65,536 VDC I/O
+writes. `scripts/verify_theron_origin_ram_receipt.pl` passed for all 47
+receipts. The session still produced no game-owned FIFO-to-RAM receipt, no
+spawn-consumer reads, and no RNG windows; it remains transport evidence only.
+The raw local output is outside GitHub at
+`/Volumes/Extern-disk/theron-capture-20260813/replay/`.
+
 An additional authenticated GUI capture now proves the real BIOS Run-to-CD
 Track 02 startup handoff and supplies the original-media title/menu image in
 `verification-screens/theron-quest-us-main-menu.png`. This is a real original

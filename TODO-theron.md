@@ -1939,3 +1939,17 @@ required before semantic promotion.
   Card/capture inputs, and the semantic text, square/material, RNG/AI/loot and
   T700/T900 consumers remain closed until their source/runtime joins are
   proven.
+
+# 2026-08-13 — fresh System Card replay confirms transport-only boundary
+
+- Completed: a new local replay with hash-verified US Track 02
+  (`f23601102138f87c33025877767ebf76`), real System Card 3.0 and instrumented
+  Mednafen ran from the external disk. It produced 161 raw sectors, 51 SCSI
+  commands, 25 CD IRQ callbacks, 161 sector bindings, 47 byte-exact FIFO-to-RAM
+  receipts and 65,536 VDC-I/O writes. `verify_theron_origin_ram_receipt.pl`
+  passes all 47 receipts.
+- Remaining: the same session has no game-owned FIFO-to-RAM receipt, spawn-
+  consumer reads or RNG windows. It therefore does not open dungeon-consumer,
+  square/material, RNG, AI, loot, T700 or T900 semantics. Raw output remains
+  local at `/Volumes/Extern-disk/theron-capture-20260813/replay/` and is not
+  pushed.

@@ -74,6 +74,14 @@ transition receipt publishes `vdc_io_writes` and rejects a capture with no
 actual VDC write rows. This closes a provenance gap, but it does not identify
 which writes belong to text, BAT, square, HUD, object or gameplay consumers.
 
+**Fresh local replay (2026-08-13):** with the authenticated US Track 02 and
+System Card 3.0, the external-disk Mednafen replay produced 161 raw sectors,
+51 SCSI reads, 25 CD IRQ callbacks, 47 byte-exact FIFO-to-RAM receipts and
+65,536 VDC-I/O writes. The strict origin verifier passes all 47 receipts, but
+the same session has no game-owned FIFO-to-RAM receipt, spawn-consumer read or
+RNG window. This is transport provenance only; the raw capture remains local
+and is not a GitHub wiki artifact.
+
 ---
 
 ## 2. PC Engine CD Layout
