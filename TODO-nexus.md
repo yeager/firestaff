@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-14: A longer authentic input sequence (six START/A pairs after the
+title-cycle wait) was run from
+`/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-input-sequence-20260814/`.
+The post-sequence witness `03-after-sequence-35s.png` has SHA-256
+`1eb9884113732d7271730092bf6bbeb56654cf7799d82781d44e1a79fb31e34e`.
+The visible frame remained an original Nexus intro/attract frame; repeated
+input did not prove the menu or LEV01 and no played save was created. (The
+receipt image itself is retained externally; this entry records the negative
+result only.)
+
 2026-08-14: A separate authenticated run with the same real Saturn gamepad
 configuration tested A at the end of the title/attract sequence. The run is
 at `/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-a-at-title-20260814/`;
