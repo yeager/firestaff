@@ -548,8 +548,13 @@ trap - INT TERM EXIT
 # witness before turning that expected process status into a failure. A
 # truncated witness still fails the validator and retains the real status.
 [[ -s "$trace" ]] || {
+  # A clean emulator exit is not evidence that the requested witness was
+  # produced. Keep this gate fail-closed so an empty capture cannot pass.
+  if [[ "$capture_status" -eq 0 ]]; then
+    capture_status=1
+  fi
   finalize_capture_manifest "$capture_status"
-  exit "${capture_status:-1}"
+  exit 1
 }
 set +e
 run_validator "$trace" --require-frames "$frame_limit"
