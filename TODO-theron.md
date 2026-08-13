@@ -8,6 +8,17 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — olösbar teleportering blockeras fail-closed
+
+- ✅ Rörelsevägen respekterar nu `theron_v1_teleporter_resolve()`-returen:
+  saknad endpoint, cykel eller annan olösbar source-data rapporteras som
+  `THERON_MOVE_BLOCKED` och avancerar varken party, transition eller move-
+  effects.
+- ✅ Hardening-proben täcker en teleporter utan endpoint och verifierar att
+  position, transition-state och stamina förblir oförändrade.
+- 🔒 Detta öppnar inte nya teleporteringssemantiker. Endast redan verifierade
+  object-ID- och Track 02-koordinatlänkar får passera resolver-grinden.
+
 ## 2026-08-13 — låst dörr är åter en blockerande sentinel
 
 - ✅ Dörrmaskinen skiljer nu `LOCKED=6` från öppningsframerna

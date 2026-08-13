@@ -2,6 +2,15 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-13 — unresolved teleporter movement is fail-closed
+
+- ✅ Movement now checks the transactional teleporter resolver result instead
+  of reporting `THERON_MOVE_TELEPORT` after a failed source-data lookup.
+- ✅ The hardening probe verifies that a missing endpoint leaves party position,
+  transition state, spawn coordinates and stamina unchanged.
+- 🔒 This is an invariant fix, not a new teleporter semantic: only the already
+  authenticated object-ID and Track 02 coordinate routes can resolve.
+
 ## 2026-08-13 — locked door sentinel no longer passes as open
 
 - ✅ The Theron door state machine now treats `LOCKED=6` as a sentinel rather

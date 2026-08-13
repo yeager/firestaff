@@ -9,6 +9,19 @@ animation frame. The bounded passability range is
 passable through numeric state ordering. Source-authenticated key/object
 consumption remains capture-gated.
 
+## Teleporter failure boundary
+
+`theron_v1_teleporter_resolve()` is transactional: an absent endpoint, cyclic
+chain, unloaded destination or invalid coordinate returns `-1` without
+publishing party or transition state. Movement now propagates that failure as
+`THERON_MOVE_BLOCKED` and does not apply per-move effects. Only the verified
+object-ID and Track 02 coordinate routes may publish a teleport destination;
+this guard does not infer new dungeon semantics.
+
+> **Status reviewed 2026-08-13.** The missing-endpoint regression is covered by
+> the mechanics-hardening probe. Source-owned level/object consumers remain
+> capture-gated.
+
 > **Status reviewed 2026-08-13.** JP/US Track 02 identity and several loader
 > receipts are real-data verified. Game-owned dungeon handoff, object/level
 > semantics and bitmap/palette binding remain open. The verified startup

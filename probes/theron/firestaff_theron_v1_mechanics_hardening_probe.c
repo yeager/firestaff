@@ -173,6 +173,47 @@ static void test_pit_fall(void) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+ * TEST: unresolved teleporter must fail closed
+ * ═══════════════════════════════════════════════════════════════ */
+static void test_unresolved_teleporter_blocks(void) {
+    printf("[test:unresolved_teleporter_blocks]\n");
+
+    Theron_V1_World w;
+    make_world(&w);
+    w.levels[0][0].squares[8][9] = THERON_SQUARE_TELEPORTER;
+
+    Theron_V1_Object teleporter;
+    memset(&teleporter, 0, sizeof(teleporter));
+    teleporter.id = 1;
+    teleporter.type = THERON_OBJTYPE_TELEPORTER;
+    teleporter.x = 9;
+    teleporter.y = 8;
+    teleporter.level = 0;
+    teleporter.linked_id = 999; /* no endpoint in the authenticated object set */
+    install_fixture_object(&w, 0, teleporter);
+    w.object_count = 1;
+    w.party.leader_x = 8;
+    w.party.leader_y = 8;
+    w.party.leader_dir = THERON_DIR_EAST;
+    w.transition_pending = 0;
+    w.transition_spawn_x = 77;
+    w.transition_spawn_y = 66;
+    w.party.champions[0].stamina = 37;
+
+    CHECK_INT("unresolved teleporter blocks movement",
+              theron_v1_move_party(&w, THERON_DIR_EAST),
+              THERON_MOVE_BLOCKED);
+    CHECK_INT("unresolved teleporter keeps leader x", w.party.leader_x, 8);
+    CHECK_INT("unresolved teleporter keeps leader y", w.party.leader_y, 8);
+    CHECK_INT("unresolved teleporter keeps transition clear",
+              w.transition_pending, 0);
+    CHECK_INT("unresolved teleporter keeps spawn x", w.transition_spawn_x, 77);
+    CHECK_INT("unresolved teleporter keeps spawn y", w.transition_spawn_y, 66);
+    CHECK_INT("unresolved teleporter does not apply move effects",
+              w.party.champions[0].stamina, 37);
+}
+
+/* ═══════════════════════════════════════════════════════════════
  * TEST: click route — MOVE
  * ═══════════════════════════════════════════════════════════════ */
 static void test_click_route_move(void) {
@@ -629,6 +670,7 @@ int main(void) {
     test_wall_blocking();
     test_get_move_result();
     test_pit_fall();
+    test_unresolved_teleporter_blocks();
     test_click_route_move();
     test_click_route_use_door();
     test_door_open_close();

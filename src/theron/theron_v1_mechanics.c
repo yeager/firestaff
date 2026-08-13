@@ -466,7 +466,11 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
 
     /* ── Special squares: teleporter ── */
     if (tile == THERON_SQUARE_TELEPORTER) {
-        theron_v1_teleporter_resolve(world, nx, ny);
+        /* The resolver is transactional: an incomplete/cyclic destination
+         * leaves party and transition state untouched and returns -1.  Do
+         * not turn that failed source-data lookup into a successful move. */
+        if (theron_v1_teleporter_resolve(world, nx, ny) < 0)
+            return THERON_MOVE_BLOCKED;
         theron_v1_apply_post_move_effects(world);
         return THERON_MOVE_TELEPORT;
     }
