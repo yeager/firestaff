@@ -6329,6 +6329,14 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             return 5;
         }
         runtimeOptions.directLaunch = 1;
+        /* Boot probes are a receipt-producing CLI contract, not an
+         * interactive presentation run.  Make them deterministic on CI and
+         * on hosts without a window server when the caller did not already
+         * select an SDL video driver.  An explicit caller choice still wins;
+         * normal gameplay never enters this branch. */
+        if (!getenv("SDL_VIDEODRIVER")) {
+            (void)setenv("SDL_VIDEODRIVER", "dummy", 0);
+        }
     }
     m11_apply_persisted_window_size(&runtimeOptions);
     /* Enable the disk-backed automation manifest only on request. It writes
