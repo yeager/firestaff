@@ -21,6 +21,12 @@ typedef struct {
     int source_header_verified;
     int bank_coordinates_verified;
     int target_2600_bytes_present;
+    /* Narrow runtime-shape facts for the $2600-$27FF window.  These are
+     * provenance only: non-zero bytes or diverse readers do not identify a
+     * level, object, HUD, T700 or T900 record. */
+    uint32_t target_2600_read_count;
+    uint32_t target_2600_nonzero_read_count;
+    uint32_t target_2600_distinct_reader_pc_count;
     int semantic_publication_allowed;
     uint32_t read_count;
     uint32_t first_logical_address;

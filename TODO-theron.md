@@ -15,6 +15,16 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   object-, square-, HUD-, T700- eller T900-konsument. De semantiska grindarna
   förblir stängda.
 
+## 2026-08-13 — consumer-receipt skiljer initiering från runtime-läsning
+
+- ✅ Receipten behåller nu antal `$2600–$27FF`-läsningar, antal icke-nollvärden
+  och antal distinkta reader-PC:er.
+- ✅ Den externa combat-replayen (`live.trace.main-ram-consumer`, MD5
+  `4d9da34dd8a0042dc302449af78c54cc`) visar 19 target-läsningar, 3 icke-noll-
+  värden och 19 reader-PC:er. Det är starkare runtime-proveniens än
+  `$CB22`-initieringen, men replayen saknar CD/FIFO-join och får inte öppna
+  level/object, creature, combat, T700 eller T900-semantik.
+
 ## 2026-08-13 — game-owned `$2600`-fönster bevaras som proveniens
 
 - ✅ `theron_v1_mednafen_main_ram_consumer_trace_parse_file()` behåller nu

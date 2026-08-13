@@ -23,6 +23,18 @@ MPR-bundet extern-disk-spår (`mpr.trace.main-ram-consumer`, MD5
 Detta är fortfarande en adress-/körningsproveniens, inte en identifiering av
 recordtypen eller en öppning av object-, T700- eller T900-semantik.
 
+## 2026-08-13 — target-window receipt skiljer initiering från runtime
+
+Consumer-receipten behåller nu också antal target-läsningar, icke-nollvärden
+och distinkta reader-PC:er. Combat-replayens sidecar
+`live.trace.main-ram-consumer` (MD5 `4d9da34dd8a0042dc302449af78c54cc`)
+har 19 läsningar i `$271B–$279F`, tre icke-nollvärden och 19 reader-PC:er.
+
+Detta är en bättre kandidat för framtida source join än den rena `$CB22`-
+initieringen, men capturen startar från ett autoload-save, har inga CD/FIFO-
+receipts och saknar därför fortfarande bevis för level/object- eller
+T700/T900-ägarskap. Semantisk publicering förblir blockerad.
+
 ## 2026-08-11 — authentic user save reaches the source RNG consumer path
 
 The fresh Mednafen run using the operator's `TQUS...sav` (not a synthetic

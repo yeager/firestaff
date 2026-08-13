@@ -111,6 +111,8 @@ int theron_v1_mednafen_main_ram_consumer_trace_parse_file(
     char md5[33];
     long file_size;
     int first_line = 1;
+    uint16_t target_reader_pcs[128] = {0};
+    uint32_t target_reader_pc_count = 0u;
 
     if (!out) return 0;
     *out = receipt;
@@ -189,7 +191,27 @@ int theron_v1_mednafen_main_ram_consumer_trace_parse_file(
          * game code touched the RAM window; it does not classify the bytes
          * as an object, level, T700 or T900 record. */
         if (logical_address >= 0x2600u && logical_address <= 0x27ffu)
+        {
             receipt.target_2600_bytes_present = 1;
+            receipt.target_2600_read_count++;
+            if (value != 0u) receipt.target_2600_nonzero_read_count++;
+            if (target_reader_pc_count < 128u) {
+                uint32_t i;
+                int seen = 0;
+                for (i = 0u; i < target_reader_pc_count; ++i) {
+                    if (target_reader_pcs[i] == (uint16_t)reader_pc) {
+                        seen = 1;
+                        break;
+                    }
+                }
+                if (!seen) {
+                    target_reader_pcs[target_reader_pc_count++] =
+                        (uint16_t)reader_pc;
+                    receipt.target_2600_distinct_reader_pc_count =
+                        target_reader_pc_count;
+                }
+            }
+        }
         receipt.read_count++;
     }
     fclose(file);

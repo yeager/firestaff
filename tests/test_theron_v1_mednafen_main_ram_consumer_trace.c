@@ -93,7 +93,8 @@ static int test_target_window_provenance(void) {
     const char *trace =
         "source=mednafen-pce-instrumented-main-ram-consumer\n"
         "main_ram_consumer_read sequence=0 logical_address=25ff physical_address=1f05ff value=00 reader_pc=cb22 reader_physical_pc=002b22 a=01 x=ff y=00 sp=fa p=04\n"
-        "main_ram_consumer_read sequence=1 logical_address=2600 physical_address=1f0600 value=00 reader_pc=cb22 reader_physical_pc=002b22 a=01 x=ff y=00 sp=fa p=04\n";
+        "main_ram_consumer_read sequence=1 logical_address=2600 physical_address=1f0600 value=00 reader_pc=cb22 reader_physical_pc=002b22 a=01 x=ff y=00 sp=fa p=04\n"
+        "main_ram_consumer_read sequence=2 logical_address=271e physical_address=1f071e value=df reader_pc=c3f1 reader_physical_pc=0d23f1 a=a0 x=00 y=06 sp=f7 p=90\n";
     Theron_V1MednafenMainRamConsumerTraceReceipt receipt;
     if (!tmpdir || !tmpdir[0]) tmpdir = "/tmp";
     if (snprintf(path, sizeof(path), "%s/firestaff-theron-target-window-XXXXXX",
@@ -116,6 +117,9 @@ static int test_target_window_provenance(void) {
     result = theron_v1_mednafen_main_ram_consumer_trace_parse_file(path, &receipt) &&
              receipt.status == THERON_V1_MEDNAFEN_MAIN_RAM_CONSUMER_TRACE_READY &&
              receipt.target_2600_bytes_present &&
+             receipt.target_2600_read_count == 2u &&
+             receipt.target_2600_nonzero_read_count == 1u &&
+             receipt.target_2600_distinct_reader_pc_count == 2u &&
              !receipt.semantic_publication_allowed;
     unlink(path);
     return result;
@@ -158,12 +162,16 @@ int main(void) {
         return 1;
     }
     printf("PASS: md5=%s reads=%u first_physical=%x last_physical=%x "
-           "first_reader=%x last_reader=%x target_2600=%s "
+           "first_reader=%x last_reader=%x target_2600=%s target_reads=%u "
+           "target_nonzero=%u target_readers=%u "
            "semantic_publication=blocked\n",
            receipt.source_trace_md5, receipt.read_count,
            receipt.first_physical_address, receipt.last_physical_address,
            receipt.first_reader_physical_pc, receipt.last_reader_physical_pc,
-           receipt.target_2600_bytes_present ? "present" : "absent");
+           receipt.target_2600_bytes_present ? "present" : "absent",
+           receipt.target_2600_read_count,
+           receipt.target_2600_nonzero_read_count,
+           receipt.target_2600_distinct_reader_pc_count);
     if (getenv("THERON_MEDNAFEN_MAIN_RAM_CONSUMER_PARSE_ONLY")) {
         puts("PASS: parser-only capture admission; code-window semantics not requested");
         return 0;
