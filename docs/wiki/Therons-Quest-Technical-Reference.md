@@ -1,5 +1,14 @@
 # Theron's Quest Technical Reference
 
+## Door state boundary
+
+The runtime treats `LOCKED=6` as a sentinel state, not as a later opening
+animation frame. The bounded passability range is
+`QUARTER_OPEN..DESTROYED`; movement queries, movement mutation and
+`door_open()` share that predicate. This prevents a locked door from becoming
+passable through numeric state ordering. Source-authenticated key/object
+consumption remains capture-gated.
+
 > **Status reviewed 2026-08-13.** JP/US Track 02 identity and several loader
 > receipts are real-data verified. Game-owned dungeon handoff, object/level
 > semantics and bitmap/palette binding remain open. The verified startup
