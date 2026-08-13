@@ -15,6 +15,11 @@ source letterforms N/E/X/U/S and records their decoded pixel hashes in
 spans were not found in the authenticated Saturn VDP2 captures, so no title
 display or startup→menu gate is opened.
 
+2026-08-13: `nexus_v1_title_mapd_real` now pins FNV-1a64 receipts for all five
+decoded retail title pixel planes. This protects the authenticated
+TITLE.BIN/TITLE.CG tile join against silent regressions while keeping the
+Saturn display consumer capture-gated.
+
 2026-08-13: CLI boot probes now select SDL's dummy video driver by default
 when the caller has not selected a driver. This keeps the receipt-producing
 Nexus verification path deterministic on CI and display-less hosts while

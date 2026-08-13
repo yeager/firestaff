@@ -6,6 +6,17 @@
 
 static int failures;
 
+static unsigned long long fnv1a64(const unsigned char *data, size_t size)
+{
+    unsigned long long hash = 1469598103934665603ULL;
+    size_t i;
+    for (i = 0; i < size; ++i) {
+        hash ^= data[i];
+        hash *= 1099511628211ULL;
+    }
+    return hash;
+}
+
 static unsigned char *read_file(const char *root, const char *name,
                                 size_t *out_size)
 {
@@ -63,6 +74,13 @@ int main(void)
           title.decoded_map_source_bound == 1,
           "all five retail title maps are source-bound");
     for (map = 0; map < NEXUS_V1_TITLE_MAP_COUNT; ++map) {
+        static const unsigned long long expected_pixel_fnv[] = {
+            0x58181742b519fa49ULL,
+            0x9d2997248a8f998fULL,
+            0xd11379ef24d10f7eULL,
+            0x0311888616d3d656ULL,
+            0xe25c8744a702bfcdULL
+        };
         size_t i, nonzero = 0;
         check(title.decoded_map_source_offsets[map] ==
                   0x40U + (uint32_t)map * 0x1c04U &&
@@ -81,6 +99,11 @@ int main(void)
             if (title.decoded_map_pixels[map][i] != 0) ++nonzero;
         }
         check(nonzero > 0, "retail title map contains decoded tile pixels");
+        check(fnv1a64(title.decoded_map_pixels[map],
+                      (size_t)NEXUS_V1_TITLE_MAP_WIDTH *
+                          (size_t)NEXUS_V1_TITLE_MAP_HEIGHT) ==
+                  expected_pixel_fnv[map],
+              "retail title map pixel receipt is stable");
     }
     for (map = 0; map < 16; ++map)
         check(title.decoded_map_palette[map] != 0,
