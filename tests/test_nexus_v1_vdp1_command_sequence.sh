@@ -3,10 +3,15 @@ set -euo pipefail
 
 root=$(cd "$(dirname "$0")/.." && pwd)
 capture=${FIRESTAFF_NEXUS_RUNTIME_CAPTURE:-}
-frames=${FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAMES:-300}
+frames=${FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAMES:-}
 
 if [[ -z "$capture" || ! -f "$capture" ]]; then
   echo "nexus VDP1 command-sequence capture: SKIP (set FIRESTAFF_NEXUS_RUNTIME_CAPTURE)"
+  exit 77
+fi
+
+if [[ -z "$frames" ]]; then
+  echo "nexus VDP1 command-sequence capture: SKIP (set FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAMES to the manifest frame_limit)"
   exit 77
 fi
 
