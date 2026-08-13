@@ -12,7 +12,8 @@
 
 The former scaffolding blockers are no longer current: the external retail
 corpus is available, Nexus has a launcher/runtime boundary, and the selected
-Nexus suite passes 297/297 tests. The remaining issues below are retained as
+Nexus suite passes 304/304 executed tests. Fourteen private Saturn capture/save
+tests remain skip-safe evidence gates. The remaining issues below are retained as
 historical provenance unless explicitly marked open. Current open gates are the
 authentic Saturn LEV01 start pose, Saturn VDP1/VDP2 consumers, SLEV/SAL runtime
 ownership and Saturn memory-card save compatibility.

@@ -8,10 +8,10 @@
 
 ## Current status
 
-The Nexus V1/V2/M11 CTest selection contains 297 tests and passes 297/297
-against the authenticated external corpus. The remaining skipped tests require
-private Saturn captures or saves and are evidence gates, not implementation
-failures. This page keeps older issue history below for provenance; its old
+The Nexus V1/V2/M11 CTest selection contains 304 tests and passes 304/304
+executed tests against the authenticated external corpus. Fourteen skipped
+tests require private Saturn captures or saves and are evidence gates, not
+implementation failures. This page keeps older issue history below for provenance; its old
 "no tests" and "scaffolding only" statements are obsolete.
 
 A "regression" in this context means: behavior that has regressed relative to the original Sega Saturn game, or relative to the stated Nexus plan.

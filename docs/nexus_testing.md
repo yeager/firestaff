@@ -14,9 +14,10 @@
 Dungeon Master Nexus (1998) is a 3D polygon remake of DM1, exclusive to Sega Saturn, Japanese only.
 Testing Nexus parity = verifying the Firestaff Nexus V1 implementation matches the original Saturn disc behavior at each phase.
 
-The current CTest inventory contains 296 Nexus V1/V2/M11 tests. Against the
-authenticated external corpus, the full Nexus selection passes 297/297; tests
-requiring private Saturn captures are skip-safe and remain explicit open gates.
+The current CTest inventory contains 304 Nexus V1/V2/M11 tests. Against the
+authenticated external corpus, all 304 executed tests pass. Fourteen tests
+requiring private Saturn captures or saves are skip-safe and remain explicit
+open evidence gates.
 This guide is a test plan plus a statement of what is and is not admitted to
 production. A green parser test is not a Saturn presentation or gameplay
 parity claim.
@@ -175,7 +176,7 @@ and decoded.
 | World model | Host movement, actions, saves and deterministic mechanics are tested; Saturn start pose is not yet bound. |
 | Rendering | Source intake and no-draw receipts are tested; Saturn VDP1/VDP2 consumer and pixel parity remain open. |
 | Audio | Authentic SAL/MAP provenance and bounded DataID 0 PCM diagnostics are tested; original selector, SDDRVS/SCSP ownership and playback remain open. |
-| Verification | 297/297 selected Nexus tests pass against the external corpus; private capture gates are skip-safe. |
+| Verification | 304/304 executed Nexus tests pass against the external corpus; 14 private capture/save gates are skip-safe. |
 
 ---
 
