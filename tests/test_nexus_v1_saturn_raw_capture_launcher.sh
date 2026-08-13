@@ -401,4 +401,25 @@ if [[ "$rejected_status" -eq 0 ]]; then
 fi
 grep -Fq 'capture_exit_status=1' "$tmp_dir/manifest-rejected.txt"
 
+empty_fake="$tmp_dir/empty-mednafen"
+cat > "$empty_fake" <<'EOF'
+#!/bin/sh
+# FIRESTAFF_NEXUS_TRACE_OUTPUT is intentionally present for hook admission.
+exit 0
+EOF
+chmod +x "$empty_fake"
+set +e
+"$launcher" --operator-only --launch --mednafen "$empty_fake" \
+  --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
+  --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
+  --trace "$tmp_dir/trace-empty.raw" --validator /usr/bin/true \
+  --manifest "$tmp_dir/manifest-empty.txt" >/dev/null 2>&1
+empty_status=$?
+set -e
+if [[ "$empty_status" -eq 0 ]]; then
+  echo "empty raw capture must fail even when the emulator exits zero" >&2
+  exit 1
+fi
+grep -Fq 'capture_exit_status=1' "$tmp_dir/manifest-empty.txt"
+
 echo "nexus Saturn raw capture launcher: PASS"
