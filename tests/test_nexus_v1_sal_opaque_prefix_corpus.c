@@ -100,6 +100,13 @@ int main(void) {
             driver.command_dispatch_offset != 0x1c08U ||
             driver.command_jump_table_offset != 0x1c2aU ||
             driver.command_jump_table_count != 16U ||
+            !driver.command_jump_targets_bound ||
+            driver.command_jump_entry_kinds[0] != NEXUS_V1_SDDRVS_JUMP_PC_RELATIVE ||
+            driver.command_jump_entry_kinds[11] != NEXUS_V1_SDDRVS_JUMP_ABSOLUTE_LONG ||
+            driver.command_jump_target_offsets[0] != 0x1e6eU ||
+            driver.command_jump_target_offsets[4] != 0x1f0eU ||
+            driver.command_jump_target_offsets[11] != 0x1cbaU ||
+            driver.command_jump_target_offsets[15] != 0x1cbcU ||
             driver.command_handler_offset != 0x2220U ||
             driver.command_handler_runtime_pc != 0x3224U ||
             driver.command_handler_valid_command_limit != 0x12U ||

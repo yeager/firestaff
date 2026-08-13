@@ -1299,3 +1299,10 @@ värden ensamma räcker inte för text- eller menyadmission.
   framebuffer-/VDP2-registerförändringar, men ingen menyidentitet,
   LEV01-pose eller source-write-bindning uppstod. Resultatet förblir därför
   observation-only och öppnar ingen produktionsgate.
+- 2026-08-13: SDDRVS-verifieringen går nu igenom den autentiska 68k-
+  kommandotabellen på `0x1c2a` post för post. De fjorton PC-relativa och två
+  absoluta `JMP`-posterna får verifierade mål inom `SDDRVS.TSK`, bland annat
+  PCM-rutten `0x1f0e` och de gemensamma stubbarna `0x1cba/0x1cbc`. Detta är
+  endast disassembly-struktur; kommando-, event-, SAL-, SCSP- och playback-
+  semantiken är fortsatt spärrad tills en autentisk Saturn-körning binder
+  ägarskap och anrops-ABI.

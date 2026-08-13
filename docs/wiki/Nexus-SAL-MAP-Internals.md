@@ -25,6 +25,15 @@ regions. For the level-0 retail witness this is `0x540 + 0xAC0 + 0x10040 =
 entries. The later MAP region beginning at `0x1c040` is sample material and
 must not be used as the directory base.
 
+## SDDRVS command-table receipt
+
+The retail `SDDRVS.TSK` image has a sixteen-entry command table at `0x1c2a`.
+The verifier walks the authentic 68k instruction stream, accepts the observed
+`JMP (d16,PC)` and `JMP abs.l` forms, computes each target, and rejects targets
+outside the image. The receipt records the entry kind and target offset. This
+is a structural disassembly receipt, not a command ABI: no entry is assigned a
+game event, SAL selector, SCSP register meaning, or playback permission.
+
 ## Host-Side Event Dispatch (Still Unmapped)
 
 `nexus_sound_set_event_selector()` lets the host engine bind a

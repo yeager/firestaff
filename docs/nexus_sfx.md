@@ -33,6 +33,13 @@ The Nexus sound module parses real assets and emits runtime receipts, but does
 not claim that a raw MAP selector is a gameplay event. The event table defaults
 to unmapped and no production event calls playback.
 
+The authenticated `SDDRVS.TSK` receipt also decodes its sixteen-entry 68k
+command jump table at `0x1c2a`. Both observed `JMP (d16,PC)` and `JMP abs.l`
+entries are bounded to the driver image and retained with their computed
+targets. This proves executable table structure only; it does not identify
+command meanings, event ownership, SAL codec semantics, SCSP writes, or
+playback readiness.
+
 ### Audio Enable Flag
 
 The only audio infrastructure present:
@@ -82,6 +89,7 @@ from source or an authenticated Saturn trace, playback stays blocked.
 
 - `src/nexus/nexus_v1_sound.c` — bounded SAL/MAP decode and fail-closed dispatch
 - `src/nexus/nexus_v1_audio_receipt.c` — hash-bound audio package receipts
+- `SDDRVS.TSK` command-table receipt — bounded 68k target decoding at `0x1c2a`
 - `tests/test_nexus_v1_sound_runtime_receipt.c` — real-corpus runtime proof
 - `docs/wiki/Nexus-SAL-MAP-Internals.md` — field-level implementation boundary
 

@@ -265,6 +265,50 @@ static int sddrvs_bytes_match(const uint8_t *data, uint32_t size,
         memcmp(data + offset, pattern, pattern_size) == 0;
 }
 
+static int sddrvs_bind_command_jump_table(
+    const uint8_t *data,
+    uint32_t size,
+    uint32_t table_offset,
+    uint32_t count,
+    uint32_t *targets,
+    uint8_t *kinds)
+{
+    uint32_t cursor = table_offset;
+    uint32_t entry;
+
+    if (!data || !targets || !kinds || count == 0U) return 0;
+    for (entry = 0; entry < count; ++entry) {
+        uint16_t opcode;
+        uint32_t target;
+        uint32_t instruction_size;
+
+        if (cursor > size || size - cursor < 4U) return 0;
+        opcode = (uint16_t)(((uint16_t)data[cursor] << 8) |
+                            (uint16_t)data[cursor + 1U]);
+        if (opcode == 0x4efaU) {
+            int16_t displacement = (int16_t)(((uint16_t)data[cursor + 2U] << 8) |
+                                              (uint16_t)data[cursor + 3U]);
+            target = (uint32_t)((int32_t)(cursor + 4U) + displacement);
+            instruction_size = 4U;
+            kinds[entry] = NEXUS_V1_SDDRVS_JUMP_PC_RELATIVE;
+        } else if (opcode == 0x4ef9U) {
+            if (size - cursor < 6U) return 0;
+            target = ((uint32_t)data[cursor + 2U] << 24) |
+                     ((uint32_t)data[cursor + 3U] << 16) |
+                     ((uint32_t)data[cursor + 4U] << 8) |
+                     (uint32_t)data[cursor + 5U];
+            instruction_size = 6U;
+            kinds[entry] = NEXUS_V1_SDDRVS_JUMP_ABSOLUTE_LONG;
+        } else {
+            return 0;
+        }
+        if (target >= size) return 0;
+        targets[entry] = target;
+        cursor += instruction_size;
+    }
+    return 1;
+}
+
 int nexus_v1_audio_sddrvs_disassembly_receipt(
     const uint8_t *data,
     uint32_t size,
@@ -323,6 +367,12 @@ int nexus_v1_audio_sddrvs_disassembly_receipt(
     receipt.command_handler_scsp_register_offset = 0x17U;
     receipt.command_handler_return_offset = 0x223cU;
     receipt.pcm_voice_handler_offset = 0x1f0eU;
+    receipt.command_jump_targets_bound =
+        sddrvs_bind_command_jump_table(
+            data, size, receipt.command_jump_table_offset,
+            receipt.command_jump_table_count,
+            receipt.command_jump_target_offsets,
+            receipt.command_jump_entry_kinds);
     receipt.event_dispatch_proven = 0;
     receipt.playback_permitted = 0;
 
@@ -349,7 +399,8 @@ int nexus_v1_audio_sddrvs_disassembly_receipt(
         sddrvs_bytes_match(data, size, 0x1c08U, command_signature,
                            (uint32_t)sizeof(command_signature)) &&
         sddrvs_bytes_match(data, size, 0x1c2aU, jump_table_signature,
-                           (uint32_t)sizeof(jump_table_signature));
+                           (uint32_t)sizeof(jump_table_signature)) &&
+        receipt.command_jump_targets_bound;
     receipt.pcm_voice_register_route_proven =
         receipt.m68k_instruction_stream_proven &&
         sddrvs_bytes_match(data, size, 0x1f0eU, pcm_signature,

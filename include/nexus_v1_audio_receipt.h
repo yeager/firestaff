@@ -36,6 +36,11 @@ typedef enum {
     NEXUS_V1_AUDIO_ERR_BOUNDS = -5
 } Nexus_V1_AudioStatus;
 
+enum {
+    NEXUS_V1_SDDRVS_JUMP_PC_RELATIVE = 1,
+    NEXUS_V1_SDDRVS_JUMP_ABSOLUTE_LONG = 2
+};
+
 typedef struct {
     Nexus_V1_AudioKind kind;
     Nexus_V1_AudioReceiptClass receipt_class;
@@ -77,8 +82,11 @@ typedef struct {
     uint32_t command_handler_scsp_register_offset;
     uint32_t command_handler_return_offset;
     uint32_t pcm_voice_handler_offset;
+    uint32_t command_jump_target_offsets[NEXUS_V1_AUDIO_LEVEL_COUNT];
+    uint8_t command_jump_entry_kinds[NEXUS_V1_AUDIO_LEVEL_COUNT];
     int m68k_instruction_stream_proven;
     int command_dispatch_proven;
+    int command_jump_targets_bound;
     int command_handler_proven;
     int pcm_voice_register_route_proven;
     int event_dispatch_proven;
