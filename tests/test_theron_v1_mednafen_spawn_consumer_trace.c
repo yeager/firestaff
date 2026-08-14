@@ -32,7 +32,7 @@ static void write_register_fixture(const char *path, int bad_flags,
     fputs("spawn_consumer_registers sequence=1 pc=4667 physical_pc=114667 a=11 x=12 y=13 sp=fd p=05 mpr0=1f mpr_pc=8a b3=14 b4=21 b5=31 b6=41 b8=51 ba=61 bb=71 c96b_window=0 cc4c_window=0 preconsumer_4644=0 helper_4667=1 spawn_entry_b0e5=0\n", file);
     fputs("spawn_consumer_registers sequence=2 pc=c96b physical_pc=13496b a=21 x=22 y=23 sp=fc p=06 mpr0=1f mpr_pc=9a b3=12 b4=22 b5=32 b6=42 b8=52 ba=62 bb=72 c96b_window=1 cc4c_window=0 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=0\n", file);
     fputs("spawn_consumer_registers sequence=3 pc=cc4c physical_pc=134c4c a=31 x=32 y=33 sp=fb p=07 mpr0=1f mpr_pc=9a b3=13 b4=23 b5=33 b6=43 b8=53 ba=63 bb=73 c96b_window=0 cc4c_window=1 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=0\n", file);
-    fputs("spawn_consumer_registers sequence=4 pc=c3a0 physical_pc=1343a0 a=31 x=32 y=33 sp=fb p=07 mpr0=1f mpr_pc=9a b3=13 b4=23 b5=33 b6=43 b8=53 ba=63 bb=73 c96b_window=0 cc4c_window=0 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=0 record_c3a0_window=1\n", file);
+    fputs("spawn_consumer_registers sequence=4 pc=c3a0 physical_pc=1343a0 a=31 x=32 y=33 sp=fb p=07 mpr0=1f mpr_pc=9a b3=13 b4=23 b5=33 b6=43 b8=53 ba=63 bb=73 c96b_window=0 cc4c_window=0 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=0 record_c3a0_window=1 c3a0_a9=00 c3a0_ab=90 c3a0_ac=00 c3a0_2998=32 c3a0_299c=00\n", file);
     if (include_spawn_entry) {
         fprintf(file, "spawn_consumer_registers sequence=5 pc=b0e5 physical_pc=1130e5 a=%02x x=42 y=43 sp=fa p=08 mpr0=1f mpr_pc=89 b3=14 b4=24 b5=34 b6=44 b8=54 ba=64 bb=74 c96b_window=0 cc4c_window=0 preconsumer_4644=0 helper_4667=0 spawn_entry_b0e5=1\n", spawn_category);
     }

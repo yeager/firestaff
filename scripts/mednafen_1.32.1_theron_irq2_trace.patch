@@ -190,6 +190,11 @@ index 347482c4..61d4758e 100644
 +  const uint32 ram_b8 = CurGame->Debugger->MemPeek(0x00b8, 1, true, true) & 0xff;
 +  const uint32 ram_ba = CurGame->Debugger->MemPeek(0x00ba, 1, true, true) & 0xff;
 +  const uint32 ram_bb = CurGame->Debugger->MemPeek(0x00bb, 1, true, true) & 0xff;
++  const uint32 ram_a9 = CurGame->Debugger->MemPeek(0x00a9, 1, true, true) & 0xff;
++  const uint32 ram_ab = CurGame->Debugger->MemPeek(0x00ab, 1, true, true) & 0xff;
++  const uint32 ram_ac = CurGame->Debugger->MemPeek(0x00ac, 1, true, true) & 0xff;
++  const uint32 ram_2998 = CurGame->Debugger->MemPeek(0x2998, 1, true, true) & 0xff;
++  const uint32 ram_299c = CurGame->Debugger->MemPeek(0x299c, 1, true, true) & 0xff;
 +  if(!TheronIrq2TraceSpawnRegisters)
 +  {
 +   const char *path = getenv("FIRESTAFF_THERON_SPAWN_REGISTER_TRACE");
@@ -203,14 +208,15 @@ index 347482c4..61d4758e 100644
 +  }
 +  if(TheronIrq2TraceSpawnRegisters)
 +  {
-+   fprintf(TheronIrq2TraceSpawnRegisters, "spawn_consumer_registers sequence=%u pc=%04x physical_pc=%08x a=%02x x=%02x y=%02x sp=%02x p=%02x mpr0=%02x mpr_pc=%02x b3=%02x b4=%02x b5=%02x b6=%02x b8=%02x ba=%02x bb=%02x c96b_window=%u cc4c_window=%u preconsumer_4644=%u helper_4667=%u spawn_entry_b0e5=%u caller_b07d_window=%u record_c3a0_window=%u\n",
++   fprintf(TheronIrq2TraceSpawnRegisters, "spawn_consumer_registers sequence=%u pc=%04x physical_pc=%08x a=%02x x=%02x y=%02x sp=%02x p=%02x mpr0=%02x mpr_pc=%02x b3=%02x b4=%02x b5=%02x b6=%02x b8=%02x ba=%02x bb=%02x c96b_window=%u cc4c_window=%u preconsumer_4644=%u helper_4667=%u spawn_entry_b0e5=%u caller_b07d_window=%u record_c3a0_window=%u c3a0_a9=%02x c3a0_ab=%02x c3a0_ac=%02x c3a0_2998=%02x c3a0_299c=%02x\n",
 +     TheronIrq2TraceSpawnRegisterSamples++, logical_pc, trace_physical_pc, reg_a, reg_x,
 +     reg_y, reg_sp, reg_p, reg_mpr0, trace_mpr, ram_b3, ram_b4, ram_b5, ram_b6,
 +     ram_b8, ram_ba, ram_bb, logical_pc >= 0xc96b && logical_pc <= 0xca69,
 +     logical_pc >= 0xcc4c && logical_pc <= 0xcd13, logical_pc == 0x4644,
 +     logical_pc == 0x4667, logical_pc == 0xb0e5,
 +     logical_pc >= 0xb07d && logical_pc <= 0xb0e4,
-+     logical_pc >= 0xc3a0 && logical_pc <= 0xc429);
++     logical_pc >= 0xc3a0 && logical_pc <= 0xc429, ram_a9, ram_ab, ram_ac,
++     ram_2998, ram_299c);
 +   if(logical_pc == 0xb0e5)
 +    TheronIrq2TraceSpawnEntryB0E5Samples++;
 +   fflush(TheronIrq2TraceSpawnRegisters);

@@ -133,6 +133,11 @@ writer PC. The direct rows are the CD-origin path; `ram_provenance_copies=0`
 is therefore expected. The sidecars and raw capture remain local research
 artifacts on the external disk.
 
+The `$C3A0` register sidecar also records the raw values observed at `$A9`,
+`$AB/$AC`, and `$2998/$299C` at each caller-window sample. These fields are
+captured to preserve the source-locked table inputs for later analysis; their
+role is not inferred from the register values alone.
+
 The corresponding 64 KiB VDC and 1 KiB VCE pair is now hash-admitted by the
 production screen-space loader (`0xe08b571d` / `0x298f9642`). This authorizes
 the captured bitmap/tile/palette replay only; it does not authorize square,

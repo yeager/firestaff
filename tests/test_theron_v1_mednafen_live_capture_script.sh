@@ -449,8 +449,9 @@ if ! grep -Fq 'source=authentic-mednafen-transition-receipt' "$script" ||
 fi
 if ! grep -Fq 'record_c3a0_window=%u' "$irq2_patch" ||
    ! grep -Fq 'logical_pc >= 0xc3a0 && logical_pc <= 0xc429' "$irq2_patch" ||
+   ! grep -Fq 'c3a0_a9=%02x c3a0_ab=%02x c3a0_ac=%02x c3a0_2998=%02x c3a0_299c=%02x' "$irq2_patch" ||
    ! grep -Fq 'record_c3a0_window_seen' "$repo/src/theron/theron_v1_mednafen_spawn_consumer_trace.c"; then
-    printf 'FAIL: live capture must preserve the source-locked C3A0 caller window\n' >&2
+    printf 'FAIL: live capture must preserve the source-locked C3A0 caller window and table inputs\n' >&2
     exit 1
 fi
 if ! grep -Fq 'stage2_system_card_receipt="${trace}.stage2-system-card"' "$script" ||
