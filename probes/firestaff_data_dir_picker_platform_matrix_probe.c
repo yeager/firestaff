@@ -68,6 +68,7 @@
 #include <string.h>
 
 #ifdef _WIN32
+#include <direct.h>
 static int probe_mkdir(const char* path) {
     return _mkdir(path) == 0;
 }
