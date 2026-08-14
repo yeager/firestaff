@@ -32,6 +32,13 @@ no authenticated CD→RAM receipt and `transition=missing`. This is negative
 runtime evidence, not a source-owned spawn or level consumer. The capture
 sidecars remain local on the external disk.
 
+## JP screen-space replay check
+
+The authenticated JP snapshot pair (`VRAM 8ae1e419`, `VCE 4e48c361`) passes
+the production `theron_v1_vram_trace_real_capture` test. This admits only
+the captured BAT/tile/palette screen route; JP level/object publication and
+the HuC6280 consumer remain fail-closed.
+
 ## Scripted replay transport boundary
 
 The latest authenticated external-disk replay uses the US Track 02/System

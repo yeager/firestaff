@@ -25,6 +25,12 @@
 > samples, zero authenticated CD→RAM receipts and `transition=missing`.
 > The capture is negative runtime evidence only and remains outside GitHub.
 
+> **JP screen-space replay check (2026-08-14):** The authenticated JP
+> snapshot pair (`VRAM 8ae1e419`, `VCE 4e48c361`) is already allowlisted and
+> passed `theron_v1_vram_trace_real_capture` with the production viewport.
+> This verifies JP BAT/tile/palette screen replay only; it does not open JP
+> level/object publication or the HuC6280 consumer gate.
+
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
 ## 2026-08-14 — r26 state replay reaches the runtime `$2600` consumer window
