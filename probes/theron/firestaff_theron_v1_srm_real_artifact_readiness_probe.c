@@ -102,15 +102,18 @@
 #if defined(_WIN32) || defined(_WIN64)
 #define RPROBE_PATH_SEP '\\'
 #include <direct.h>
+#include <process.h>
 #define rprobe_mkdir(p) _mkdir(p)
 #define rprobe_rmdir(p) _rmdir(p)
 #define rprobe_unlink(p) remove(p)
+#define rprobe_getpid() _getpid()
 #else
 #define RPROBE_PATH_SEP '/'
 #include <unistd.h>
 #define rprobe_mkdir(p) mkdir((p), 0700)
 #define rprobe_rmdir(p) rmdir(p)
 #define rprobe_unlink(p) unlink(p)
+#define rprobe_getpid() getpid()
 #endif
 
 #define RPROBE_OUT_PAYLOAD_CAPACITY 2048u
@@ -180,7 +183,7 @@ static uint8_t *read_whole_file(const char *path, size_t *out_size) {
 
 static int make_temp_root(char out[THERON_V1_SRM_PATH_MAX]) {
 #if defined(_WIN32) || defined(_WIN64)
-    int pid = (int)getpid();
+    int pid = (int)rprobe_getpid();
     for (int i = 0; i < 32; i++) {
         int n = snprintf(out, THERON_V1_SRM_PATH_MAX,
                          "firestaff_theron_srm_real_%d_%d", pid, i);
