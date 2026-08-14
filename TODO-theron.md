@@ -1199,7 +1199,7 @@ the remaining SRM blocker is still only original body-layout correlation.
 
   - 2026-08-14 extended Cocoa gameplay attempt: a 120-second authenticated
     r25 run delivered 19 scheduled host inputs, 238 authenticated CD→RAM
-    receipts, 29,913 direct provenance rows and 7,100 `$C3A0` rows, but zero
+    receipts, 29,914 direct provenance rows and 7,100 `$C3A0` rows, but zero
     valid `$B0E5` category entries (`A=0..3`). The 256 `$B0E5` address hits
     were bank overlays only. This is stronger same-session negative evidence;
     it must not be merged with the separate `.mc0` run that reached a valid
