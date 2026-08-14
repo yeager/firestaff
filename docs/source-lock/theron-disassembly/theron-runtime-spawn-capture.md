@@ -1,5 +1,20 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-14 — autoloaded state reaches only a bank-overlay `$B0E5`
+
+The r26 instrumented binary was run with the external-disk Mednafen state
+`Dungeon Master - Theron's Quest (USA).bee0988239a817f20a64cd38fc8caeac.mc0`
+(state MD5 `f17f377df210b4a3ae904a13fb85a7f0`) and the authenticated US CUE
+and System Card. The run retained 65,756 register samples and 256 logical
+`$B0E5` address hits, but every hit had `A=$2C` or `A=$85`; there were zero
+source-defined category values `A=0..3`, zero CD-origin receipts and no
+source-owned target join. The physical PC was the overlay coordinate
+`$000E10E5`, so this is not the source-locked regular-spawn entry.
+
+This is negative evidence from one same-process state replay. It does not
+authorize RNG, spawn, creature, AI, combat, loot, generator, T700 or T900
+semantics, and the raw state/capture remain local on the external disk.
+
 ## 2026-08-13 — instrumenterad cold-start når endast CD-transport
 
 Den färska extern-disk-körningen `theron-capture-next/trace/theron2` använde

@@ -11,6 +11,18 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-14 — state replay rejects the `$B0E5` overlay
+
+- ✅ En r26-autoloadad Mednafen-state gav 65 756 registerprover och 256
+  logiska `$B0E5`-passager, men alla hade overlayvärdena `A=$2C/$85` vid
+  fysisk PC `$000E10E5`. Detta är inte den source-lockade regular-spawn-
+  entryn och ger noll giltiga kategorier, noll CD-origin och ingen target-
+  join.
+- 🔒 Nästa positiva witness måste fortfarande binda source-bankens riktiga
+  `$B0E5` med kategori `0..3`, föregående `$4644/$4667`-kedja, returägarskap
+  och samma-sessionens live creature-record. Overlayträffen får inte öppna
+  RNG, spawn, AI, combat, loot, generator, T700 eller T900.
+
 ## 2026-08-14 — bredare provenance-capture: record-table-join verifierad
 
 - ✅ Den korrigerade Mednafen-instrumenteringen separerar den bounded receipt-
