@@ -22,6 +22,16 @@ falls back to its built-in PCE palette; this warning is not evidence of a
 Track 02 graphics failure. VDC/VCE captures remain screen-space diagnostics
 until a source-owned consumer join is proven.
 
+## r31 scripted replay boundary
+
+The 2026-08-14 r31 replay used the authenticated US Track 02/System Card, the
+late Mednafen state and seven scripted PCE inputs. It retained 21,786
+spawn-register rows and 12 physical `$B0E5` overlay hits, all with
+`A=$2C/$85`; there were no valid `A=0..3` entries, no `$4644/$4667` samples,
+no authenticated CD→RAM receipt and `transition=missing`. This is negative
+runtime evidence, not a source-owned spawn or level consumer. The capture
+sidecars remain local on the external disk.
+
 ## Scripted replay transport boundary
 
 The latest authenticated external-disk replay uses the US Track 02/System

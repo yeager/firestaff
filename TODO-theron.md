@@ -17,6 +17,14 @@
 > `palettes/pce.pal`; it fell back to its built-in palette, so this warning is
 > not a Track 02 graphics proof.
 
+> **Latest scripted replay boundary (2026-08-14):** The external-disk r31
+> replay used the authenticated US CUE/System Card and the same late state
+> with seven scripted PCE inputs. It retained 21,786 spawn-register rows and
+> 12 physical `$B0E5` overlay hits, but every retained entry again had
+> `A=$2C/$85`; there were zero valid `A=0..3` entries, zero `$4644/$4667`
+> samples, zero authenticated CD→RAM receipts and `transition=missing`.
+> The capture is negative runtime evidence only and remains outside GitHub.
+
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
 ## 2026-08-14 — r26 state replay reaches the runtime `$2600` consumer window

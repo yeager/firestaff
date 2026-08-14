@@ -1364,6 +1364,25 @@ diagnostics only. The trace family is retained at
 The source-only Firestaff screen adapter now recognizes this pair by its
 verified FNV-1a identities: VRAM `ee9374fa`, VCE `c17c0a95`. This permits
 screen-space replay while leaving all level/object and gameplay gates closed.
+
+## 2026-08-14 — r31 scripted state replay repeats the rejected overlay
+
+The external-disk r31 replay used the same authenticated US CUE, System Card,
+instrumented Mednafen build and late state as r30, with the bounded scripted
+PCE plan `run@180:30,up@300:60,right@480:60,down@660:60,left@840:60,i@1020:30,ii@1140:30`.
+It produced 35,360 input transactions and seven scripted input events, but no
+host-key events. The receipt retained 21,786 spawn-register rows and 12
+physical-PC `$000E10E5` hits. Every retained hit had `A=$2C` or `A=$85`, so
+`spawn_entry_b0e5_samples=0` and no source-owned regular-spawn entry was
+observed.
+
+The same process recorded zero `$4644`/`$4667` samples, zero authenticated
+CD→RAM receipts, zero game-owned `$E009` dispatches and `transition=missing`.
+The 64 KiB VRAM and 1 KiB VCE snapshots are therefore screen-space
+diagnostics only; r31 does not open the live loader, JP level, HuC6280 RAM,
+spawn, RNG, AI, combat, loot, T700 or T900 gates. The capture family remains
+on `/Volumes/Extern-disk/theron-next-r31-20260814T090000Z/` and is not
+committed.
 ## 2026-08-13 — fresh dungeon savestate replay remains transport-negative
 
 A new local replay from the authenticated dungeon `.mc0` state was run against
