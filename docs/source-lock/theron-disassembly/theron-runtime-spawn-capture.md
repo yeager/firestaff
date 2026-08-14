@@ -1383,6 +1383,22 @@ diagnostics only; r31 does not open the live loader, JP level, HuC6280 RAM,
 spawn, RNG, AI, combat, loot, T700 or T900 gates. The capture family remains
 on `/Volumes/Extern-disk/theron-next-r31-20260814T090000Z/` and is not
 committed.
+
+## 2026-08-14 — JP ISO replay remains transport-negative
+
+A fresh authenticated JP ISO replay used the production capture script,
+System Card MD5 `ff1a674273fe3540ccef576376407d1d`, Track 02 ISO MD5
+`397039af02d50d15c70b74088eb8a1cb`, and the instrumented Mednafen binary
+`ab6dbf674c68ee4891a185b83cff3149`. The bounded scripted plan was
+`run@1:1,run@480:30,i@900:30`. The receipt retained 2 raw sector spans and
+25 CD IRQ callbacks, but zero authenticated CD→RAM receipts, zero game-owned
+`$E009` dispatches and `transition=missing`.
+
+The same process retained 65,536 main-RAM consumer rows, 512 `$2600–$27FF`
+target reads, 3,584 target writes and 4,096 spawn-consumer rows, but no
+`$B0E5` entry. The capture is negative JP transport evidence and remains at
+`/Volumes/Extern-disk/theron-next-jp-r32-20260814T100000Z/`; it is not
+committed and does not open JP level/object, HuC6280, spawn or gameplay gates.
 ## 2026-08-13 — fresh dungeon savestate replay remains transport-negative
 
 A new local replay from the authenticated dungeon `.mc0` state was run against

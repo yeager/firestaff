@@ -31,6 +31,13 @@
 > This verifies JP BAT/tile/palette screen replay only; it does not open JP
 > level/object publication or the HuC6280 consumer gate.
 
+> **JP runtime boundary (2026-08-14):** A fresh authenticated JP ISO replay
+> reached 2 raw Track 02 sector spans and 25 CD IRQ callbacks, but produced
+> zero authenticated CD→RAM receipts, zero `$E009` dispatches and
+> `transition=missing`. It retained 65,536 main-RAM consumer rows and 4,096
+> spawn-consumer rows, with no `$B0E5` entry. This is negative JP transport
+> evidence; it does not alter JP screen-space admission or open JP semantics.
+
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
 ## 2026-08-14 — r26 state replay reaches the runtime `$2600` consumer window
