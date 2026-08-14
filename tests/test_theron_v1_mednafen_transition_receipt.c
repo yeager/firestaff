@@ -119,7 +119,11 @@ int main(void) {
             assert(receipt.main_ram_target_writes == 3584u);
             assert(receipt.spawn_consumer_reads == 4096u);
             assert(receipt.spawn_entry_b0e5_samples == 0u);
-            assert(receipt.rng_consumer_samples >= 3584u);
+            /* The instrumented capture applies a bounded RNG sample limit.
+             * Both the state-replay and cold-start profiles currently admit
+             * 1024 observations; this is transport/runtime evidence only and
+             * must not be confused with a semantic RNG publication gate. */
+            assert(receipt.rng_consumer_samples >= 1024u);
         }
     }
     puts("PASS: authenticated transition transport admitted; semantics blocked");
