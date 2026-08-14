@@ -2,6 +2,18 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-14: A fresh clean Mednafen run used the known-good `input9` build,
+the authentic English merged CUE and the verified J-BIOS. At 20 seconds the
+window was captured before START, an emulator backup snapshot was requested,
+then START was sent and the immediate post-input window was captured. The
+artifacts are in
+`/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-authentic-title-state-20260814b/`.
+The post-input PNG SHA-256 is
+`266ecdc160017e1a480842ca05bdb5d9ba40525d6272609b36818f1b82248d98`.
+Mednafen produced `.smpc`, `.bkr` and `.bcr` files, but no native played
+Nexus save or Saturn emulator state file. They are retained as emulator
+backup artifacts only; no save or gameplay parity gate is opened.
+
 2026-08-14: A clean Mednafen re-entry run used the known-good `input9`
 Saturn build, the authentic English merged CUE and J-BIOS. START was sent at
 the measured 225-second title prompt, then again at 170, 210 and 250 seconds
