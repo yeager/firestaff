@@ -2246,3 +2246,18 @@ required before semantic promotion.
   square/material, RNG, AI, loot, T700 or T900 semantics. Raw output remains
   local at `/Volumes/Extern-disk/theron-capture-20260813/replay/` and is not
   pushed.
+
+# 2026-08-14 — RAM provenance probe remains negative
+
+- Completed: a capture-only provenance hook was built against the original
+  Mednafen 1.32.1 source and linked against the real SDL2 runtime. The hook
+  carries authenticated CD-origin bytes through CPU RAM reads/writes without
+  changing emulator or game behavior. The patch dry-run, shell checks and
+  runtime-linkage verifier pass.
+- Verified: the 120-second authentic US replay
+  (`run@8:60,i@480:30,i@900:30,i@1320:30,i@1800:30`) produced 166
+  CD→RAM-origin seeds and 0 provenance copies. No copy reached `$2935`,
+  `$293E` or `$611D`; the source→RAM→record mutation join is therefore still
+  absent. Keep `THERON-V1-TRACK02-LIVE-LOADER-CONSUMER`, gameplay, square,
+  material, RNG, AI, loot, T700 and T900 admission closed. The raw capture is
+  local and is not pushed.

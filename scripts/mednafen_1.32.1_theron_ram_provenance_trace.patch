@@ -1,0 +1,168 @@
+diff --git a/src/pce/huc6280.h b/src/pce/huc6280.h
+--- a/src/pce/huc6280.h
++++ b/src/pce/huc6280.h
+@@ -20,5 +20,13 @@
+                                           uint32 physical_address, uint8 value,
+                                           uint16 writer_pc, uint32 writer_physical_pc);
+ void TheronPCECDTraceMainRAMLoaderWrite(uint16 logical_destination, uint32 physical_destination, uint8 value, uint16 writer_pc, uint32 writer_physical_pc);
++void TheronPCECDTraceSeedMainRAMProvenance(uint32 physical_address, uint8 value,
++                                           uint32 source_lba, uint16 source_offset,
++                                           uint64 fifo_sequence);
++void TheronPCECDTraceMainRAMProvenanceRead(uint32 physical_address, uint8 value,
++                                           uint16 reader_pc, uint32 reader_physical_pc);
++void TheronPCECDTraceMainRAMProvenanceWrite(uint16 logical_address,
++                                            uint32 physical_address, uint8 value,
++                                            uint16 writer_pc, uint32 writer_physical_pc);
+FIRESTAFF_PATCH_BLANK_CONTEXT
+ class alignas(128) HuC6280
+@@ -420,8 +428,10 @@
+FIRESTAFF_PATCH_BLANK_CONTEXT
+ 	 const uint8 wmpr = MPR[address >> 13];
+ 	 const uint32 physical_address = (wmpr << 13) | (address & 0x1FFF);
++	 const uint16 reader_pc = GetRegister(GSREG_PC);
++	 const uint8 reader_mpr = MPR[reader_pc >> 13];
++	 TheronPCECDTraceMainRAMProvenanceRead(physical_address, ret, reader_pc,
++	                                      (reader_mpr << 13) | (reader_pc & 0x1FFF));
+ 	 if(physical_address >= 0x1f0000 && physical_address < 0x1f8000)
+ 	 {
+-	  const uint16 reader_pc = GetRegister(GSREG_PC);
+-	  const uint8 reader_mpr = MPR[reader_pc >> 13];
+ 	  const uint32 reader_physical_pc = (reader_mpr << 13) | (reader_pc & 0x1FFF);
+@@ -467,5 +477,9 @@
+ 	  TheronPCECDTraceMainRAMConsumerWrite(
+ 	   address, physical_address, V, writer_pc, writer_physical_pc);
+ 	 }
++	 TheronPCECDTraceMainRAMProvenanceWrite(address, physical_address, V,
++	                                       GetRegister(GSREG_PC),
++	                                       (MPR[GetRegister(GSREG_PC) >> 13] << 13) |
++	                                       (GetRegister(GSREG_PC) & 0x1FFF));
+ 	 WriteMap[wmpr]((wmpr << 13) | (address & 0x1FFF), V);
+ 	}
+@@ -480,8 +494,12 @@
+ 	  const uint8 writer_mpr = MPR[writer_pc >> 13];
+ 	  const uint32 writer_physical_pc =
+ 	   (writer_mpr << 13) | (writer_pc & 0x1FFF);
+ 	  TheronPCECDTraceMainRAMConsumerWrite(
+ 	   address & 0x1FFFu, address, data, writer_pc, writer_physical_pc);
+ 	 }
++	 TheronPCECDTraceMainRAMProvenanceWrite(address & 0x1FFFu, address, data,
++	                                        GetRegister(GSREG_PC),
++	                                        (MPR[GetRegister(GSREG_PC) >> 13] << 13) |
++	                                        (GetRegister(GSREG_PC) & 0x1FFF));
+ 	 WriteMap[(address >> 13) & 0xFF](address, data);
+ 	}
+diff --git a/src/pce/pce.cpp b/src/pce/pce.cpp
+--- a/src/pce/pce.cpp
++++ b/src/pce/pce.cpp
+@@ -163,6 +163,8 @@
+  if(!TheronPCECDTraceTakeDataRead(&reader_pc, &reader_physical_pc, &read_value,
+                                   &source_lba, &source_offset, &fifo_sequence) || trace_count >= 256)
+   return;
+ if(read_value != stored_value)
+  return;
++ TheronPCECDTraceSeedMainRAMProvenance(physical, stored_value, source_lba,
++                                       source_offset, fifo_sequence);
+ writer_pc = HuCPU.GetRegister(HuC6280::GSREG_PC);
+diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -116,6 +116,100 @@
+ static FILE *TheronPCECDMainRAMTargetTrace;
+ static unsigned TheronPCECDMainRAMTargetTraceCount;
+ static FILE *TheronPCECDMainRAMLoaderWriteTrace;
+ static unsigned TheronPCECDMainRAMLoaderWriteTraceCount;
++struct TheronPCECDMainRAMProvenance
++{
++ bool valid;
++ uint8 value;
++ uint32 source_lba;
++ uint16 source_offset;
++ uint64 fifo_sequence;
++};
++static TheronPCECDMainRAMProvenance TheronPCECDMainRAMProvenanceMap[0x8000];
++static TheronPCECDMainRAMProvenance TheronPCECDPendingRAMProvenance;
++static uint32 TheronPCECDPendingRAMSourcePhysical;
++static uint16 TheronPCECDPendingRAMReaderPC;
++static uint32 TheronPCECDPendingRAMReaderPhysicalPC;
++static FILE *TheronPCECDRAMProvenanceTrace;
++static unsigned TheronPCECDRAMProvenanceTraceCount;
++
++static FILE *TheronPCECDGetRAMProvenanceTrace(void)
++{
++ if(!TheronPCECDRAMProvenanceTrace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_RAM_PROVENANCE_TRACE");
++  if(!path || !*path)
++   return NULL;
++  TheronPCECDRAMProvenanceTrace = fopen(path, "w");
++  if(TheronPCECDRAMProvenanceTrace)
++   fputs("source=mednafen-pce-instrumented-ram-provenance\n", TheronPCECDRAMProvenanceTrace);
++ }
++ return TheronPCECDRAMProvenanceTrace;
++}
++
++void TheronPCECDTraceSeedMainRAMProvenance(uint32 physical_address, uint8 value,
++                                           uint32 source_lba, uint16 source_offset,
++                                           uint64 fifo_sequence)
++{
++ if(physical_address < 0x1f0000 || physical_address >= 0x1f8000)
++  return;
++ TheronPCECDMainRAMProvenance *entry = &TheronPCECDMainRAMProvenanceMap[physical_address - 0x1f0000];
++ entry->valid = true;
++ entry->value = value;
++ entry->source_lba = source_lba;
++ entry->source_offset = source_offset;
++ entry->fifo_sequence = fifo_sequence;
++ FILE *trace = TheronPCECDGetRAMProvenanceTrace();
++ if(trace && TheronPCECDRAMProvenanceTraceCount < 4096)
++ {
++  fprintf(trace, "theron_ram_provenance_seed sequence=%u source_lba=%u source_offset=%u fifo_sequence=%llu physical_address=%06x value=%02x\n",
++          TheronPCECDRAMProvenanceTraceCount++, source_lba, source_offset,
++          (unsigned long long)fifo_sequence, physical_address, value);
++  fflush(trace);
++ }
++}
++
++void TheronPCECDTraceMainRAMProvenanceRead(uint32 physical_address, uint8 value,
++                                           uint16 reader_pc, uint32 reader_physical_pc)
++{
++ TheronPCECDPendingRAMProvenance.valid = false;
++ if(physical_address < 0x1f0000 || physical_address >= 0x1f8000)
++  return;
++ TheronPCECDMainRAMProvenance *entry = &TheronPCECDMainRAMProvenanceMap[physical_address - 0x1f0000];
++ if(!entry->valid || entry->value != value)
++  return;
++ TheronPCECDPendingRAMProvenance = *entry;
++ TheronPCECDPendingRAMSourcePhysical = physical_address;
++ TheronPCECDPendingRAMReaderPC = reader_pc;
++ TheronPCECDPendingRAMReaderPhysicalPC = reader_physical_pc;
++}
++
++void TheronPCECDTraceMainRAMProvenanceWrite(uint16 logical_address,
++                                            uint32 physical_address, uint8 value,
++                                            uint16 writer_pc, uint32 writer_physical_pc)
++{
++ if(physical_address < 0x1f0000 || physical_address >= 0x1f8000)
++  return;
++ TheronPCECDMainRAMProvenance *entry = &TheronPCECDMainRAMProvenanceMap[physical_address - 0x1f0000];
++ bool copied = TheronPCECDPendingRAMProvenance.valid &&
++               TheronPCECDPendingRAMProvenance.value == value;
++ if(copied)
++ {
++  *entry = TheronPCECDPendingRAMProvenance;
++  FILE *trace = TheronPCECDGetRAMProvenanceTrace();
++  if(trace && TheronPCECDRAMProvenanceTraceCount < 4096)
++  {
++   fprintf(trace, "theron_ram_provenance_copy sequence=%u source_lba=%u source_offset=%u fifo_sequence=%llu source_physical=%06x destination_physical=%06x destination_logical=%04x reader_pc=%04x reader_physical_pc=%06x writer_pc=%04x writer_physical_pc=%06x value=%02x\n",
++           TheronPCECDRAMProvenanceTraceCount++, entry->source_lba, entry->source_offset,
++           (unsigned long long)entry->fifo_sequence, TheronPCECDPendingRAMSourcePhysical,
++           physical_address, logical_address, TheronPCECDPendingRAMReaderPC,
++           TheronPCECDPendingRAMReaderPhysicalPC, writer_pc, writer_physical_pc, value);
++   fflush(trace);
++  }
++ }
++ else if(!entry->valid || entry->value != value)
++  entry->valid = false;
++ TheronPCECDPendingRAMProvenance.valid = false;
++}
+ static FILE *TheronPCECDSpawnConsumerTrace;

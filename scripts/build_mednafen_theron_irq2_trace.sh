@@ -95,6 +95,12 @@ git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_vram_vce_snapshot.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_write_trace_v3.patch"
+ram_provenance_patch="$repo/scripts/mednafen_1.32.1_theron_ram_provenance_trace.patch"
+ram_provenance_rendered="$build_root/theron-ram-provenance.rendered.patch"
+sed 's/^FIRESTAFF_PATCH_BLANK_CONTEXT$/ /' "$ram_provenance_patch" \
+    > "$ram_provenance_rendered"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$ram_provenance_rendered"
 vdc_io_patch="$repo/scripts/mednafen_1.32.1_theron_vdc_io_trace.patch"
 vdc_io_rendered="$build_root/theron-vdc-io-trace.rendered.patch"
 sed \

@@ -24,6 +24,7 @@ main_ram_e009_critical_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_
 main_ram_e009_register_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_register_trace.patch
 main_ram_consumer_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch
 fifo_origin_v2_patch_file=$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_ram_consumer_v2.patch
+ram_provenance_patch_file=$repo/scripts/mednafen_1.32.1_theron_ram_provenance_trace.patch
 adpcm_fifo_ram_patch_file=$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_ram_trace.patch
 adpcm_fifo_direct_read_patch_file=$repo/scripts/mednafen_1.32.1_theron_adpcm_fifo_direct_read_origin_fix.patch
 main_ram_e009_dispatch_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_dispatch_trace.patch
@@ -340,6 +341,14 @@ if ! grep -Fq 'pce_cd_origin_main_ram_receipt sequence=%u generation=%u source_l
    ! grep -Fq 'TheronPCECDOriginRAMPending' "$game_owned_origin_ram_receipt_patch_file" ||
    ! grep -Fq 'physical_destination >= 0x1f0000 && physical_destination < 0x1f8000' "$game_owned_origin_ram_receipt_patch_file"; then
     printf 'FAIL: game-owned source-to-RAM receipt patch is missing exact writer provenance\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'theron_ram_provenance_seed sequence=%u source_lba=%u source_offset=%u' "$ram_provenance_patch_file" ||
+   ! grep -Fq 'theron_ram_provenance_copy sequence=%u source_lba=%u source_offset=%u' "$ram_provenance_patch_file" ||
+   ! grep -Fq 'TheronPCECDTraceMainRAMProvenanceRead' "$ram_provenance_patch_file" ||
+   ! grep -Fq 'ram_provenance_trace="${trace}.ram-provenance"' "$capture_script" ||
+   ! grep -Fq 'ram_provenance_trace.patch' "$build_script"; then
+    printf '%s\n' 'FAIL: RAM provenance chain capture is missing or not wired into the live trace' >&2
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_MEDNAFEN_SDL2_PREFIX' "$build_script" ||
