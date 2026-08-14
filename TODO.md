@@ -5637,6 +5637,11 @@ authenticated BPK). The remaining work is a Saturn executable or capture
   samtliga fem MAPD-kartor saknas. Få en och samma originalram med
   teckengenerator, karta, palett och aktiv lager-/displayägare innan
   titelrendering eller titelinput kan öppnas.
+- 🔒 Den 2 400-frame visuella startwitnessen från 2026-08-14 är nu helt
+  strömmande inventerad och innehåller noll `TITLE.CG`-, MAPD- eller
+  titelpalette-spann. Nästa capture måste nå den senare titel-/press-start-
+  sekvensen och dessutom binda aktiv VDP1/VDP2-konsument och input i samma
+  session; timeout-witnessen får inte återanvändas som titelbevis.
 
 # Nexus: native title/display parity
 

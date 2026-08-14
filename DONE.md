@@ -15866,3 +15866,11 @@ timer owners. The focused regression covers this failure path.
   Mednafen och den autentiska CUE:n finns. `--game nexus` följer samma väg;
   `--boot-probe` behåller native-diagnostiken. Homebrew-sökvägar och explicita
   miljövariabler kan användas utan att privata sökvägar sparas.
+
+# Nexus: strömmande titelspansinventering (2026-08-14)
+
+- ✅ Titel-VDP2-verifieraren läser nu flerframes-captures strömmande i stället
+  för att allokera hela råfilen. Den autentiska 2 400-frame visuella
+  startwitnessen är därmed inventerad med exakt samma TITLE.CG/MAPD/palett-
+  kriterier och ger ett rent negativt resultat. Ingen native
+  titel-/menyadmission har öppnats.

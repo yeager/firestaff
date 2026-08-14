@@ -106,6 +106,73 @@ def frame_regions(blob: bytes, required_frames: int) -> tuple[list[dict[str, byt
     return frames, states
 
 
+def _read_exact(handle, size: int, description: str) -> bytes:
+    data = handle.read(size)
+    if len(data) != size:
+        raise ValueError(f"truncated {description}")
+    return data
+
+
+def iter_frame_regions_file(path: Path, required_frames: int):
+    """Yield VDP2 regions from a raw capture without loading it into RAM.
+
+    Full Saturn captures are several GiB.  The ordinary ``frame_regions`` API
+    deliberately remains a simple in-memory fixture helper, while this
+    iterator validates the same producer framing incrementally.  It yields
+    only the VDP2 registers, VRAM and CRAM needed by source-span analyzers.
+    Transport validation is still strict: frame numbering, producer headers,
+    fixed payload lengths and EOF must all agree with ``required_frames``.
+    """
+    if required_frames <= 0:
+        raise ValueError("required frame count must be positive")
+    with path.open("rb") as handle:
+        prefix = handle.read(max(len(RUNTIME_MAGIC), len(MDFN_RUNTIME_MAGIC)))
+        runtime_magic = next(
+            (magic for magic in (RUNTIME_MAGIC, MDFN_RUNTIME_MAGIC)
+             if prefix.startswith(magic)), None)
+        if runtime_magic is None:
+            raise ValueError("missing runtime capture magic")
+        handle.seek(len(runtime_magic))
+        for frame_index in range(required_frames):
+            marker = _read_exact(handle, len(f"frame={frame_index}\n"),
+                                 f"frame {frame_index} marker")
+            if marker != f"frame={frame_index}\n".encode("ascii"):
+                raise ValueError(f"invalid frame marker at frame {frame_index}")
+            vdp1_magic = handle.readline()
+            if vdp1_magic not in (VDP1_MAGIC, VDP1_MAGIC_V2, VDP1_MAGIC_MDFN):
+                raise ValueError(f"missing VDP1 marker for frame {frame_index}")
+            if vdp1_magic == VDP1_MAGIC_V2:
+                state = handle.readline()
+                if not state.startswith(b"state="):
+                    raise ValueError(f"missing VDP1 state line for frame {frame_index}")
+            elif vdp1_magic == VDP1_MAGIC_MDFN:
+                state_offset = handle.tell()
+                state = handle.readline()
+                if not state.startswith(b"state="):
+                    handle.seek(state_offset)
+            _read_exact(handle, VDP1_PAYLOAD_BYTES, f"VDP1 payload for frame {frame_index}")
+            vdp2_offset = handle.tell()
+            vdp2_magic = _read_exact(handle, len(VDP2_MAGIC),
+                                     f"VDP2 marker for frame {frame_index}")
+            if vdp2_magic != VDP2_MAGIC:
+                handle.seek(vdp2_offset + 1)
+                vdp2_magic = _read_exact(handle, len(VDP2_MAGIC),
+                                         f"VDP2 marker for frame {frame_index}")
+                if vdp2_magic != VDP2_MAGIC:
+                    raise ValueError(f"missing VDP2 marker for frame {frame_index}")
+            vdp2 = _read_exact(handle, VDP2_PAYLOAD_BYTES,
+                               f"VDP2 payload for frame {frame_index}")
+            reg_bytes = VDP2_REGIONS[0][1]
+            vram_bytes = VDP2_REGIONS[1][1]
+            yield frame_index, {
+                "vdp2-regs": vdp2[:reg_bytes],
+                "vdp2-vram": vdp2[reg_bytes:reg_bytes + vram_bytes],
+                "vdp2-cram": vdp2[reg_bytes + vram_bytes:],
+            }
+        if handle.read(1):
+            raise ValueError("trailing bytes after final VDP2 frame")
+
+
 def frame_regions_vdp1(blob: bytes, required_frames: int) -> tuple[list[dict[str, bytes]], list[str]]:
     """Extract VDP1 regions from both legacy V1 and V2 raw witnesses.
 

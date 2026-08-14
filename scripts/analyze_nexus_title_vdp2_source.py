@@ -14,7 +14,7 @@ import argparse
 import hashlib
 from pathlib import Path
 
-from analyze_nexus_saturn_runtime_capture import frame_regions
+from analyze_nexus_saturn_runtime_capture import iter_frame_regions_file
 from nexus_vdp2_registers import detect_byte_order, read_u16
 
 
@@ -62,6 +62,12 @@ def find_span(haystack: bytes, source: bytes) -> tuple[int, int]:
     return haystack.find(source), haystack.find(wordswapped(source))
 
 
+def find_span_with_swapped(haystack: bytes, source: bytes,
+                           swapped_source: bytes) -> tuple[int, int]:
+    """Find a pre-normalized source span in one captured VDP2 region."""
+    return haystack.find(source), haystack.find(swapped_source)
+
+
 def describe_position(exact: int, swapped: int) -> str:
     return f"exact=0x{exact:x} word_swap=0x{swapped:x}"
 
@@ -79,7 +85,6 @@ def main() -> int:
         print("NEXUS_TITLE_VDP2_SOURCE_INVALID: invalid frame selection")
         return 1
     try:
-        frames, _ = frame_regions(args.capture.read_bytes(), args.capture_frames)
         title_cg, maps, palette = title_spans(
             (args.data_dir / "TITLE.BIN").read_bytes(),
             (args.data_dir / "TITLE.CG").read_bytes())
@@ -87,39 +92,51 @@ def main() -> int:
         print(f"NEXUS_TITLE_VDP2_SOURCE_INVALID: {error}")
         return 1
 
-    selected = [args.frame] if args.frame is not None else range(len(frames))
     cg_frames: list[int] = []
     map_frames: list[int] = []
     palette_frames: list[int] = []
-    for index in selected:
-        frame = frames[index]
-        cg_exact, cg_swapped = find_span(frame["vdp2-vram"], title_cg)
-        map_positions = [find_span(frame["vdp2-vram"], source) for source in maps]
-        palette_exact, palette_swapped = find_span(frame["vdp2-cram"], palette)
-        if cg_exact >= 0 or cg_swapped >= 0:
-            cg_frames.append(index)
-        if any(exact >= 0 or swapped >= 0 for exact, swapped in map_positions):
-            map_frames.append(index)
-        if palette_exact >= 0 or palette_swapped >= 0:
-            palette_frames.append(index)
-        if args.frame is not None or cg_exact >= 0 or cg_swapped >= 0 or \
-                index in map_frames or index in palette_frames:
-            registers = frame["vdp2-regs"]
-            byte_order = detect_byte_order(registers)
-            tvmd = read_u16(registers, 0x00, byte_order)
-            bgon = read_u16(registers, 0x20, byte_order)
-            chctla = read_u16(registers, 0x28, byte_order)
-            print(f"frame={index} register_byte_order={byte_order} "
-                  f"tvmd=0x{tvmd:04x} bgon=0x{bgon:04x} chctla=0x{chctla:04x}")
-            print("title_cg_vram_" + describe_position(cg_exact, cg_swapped) +
-                  f" bytes={len(title_cg)}")
-            for map_index, (exact, swapped) in enumerate(map_positions):
-                print(f"title_map_{map_index}_vram_" +
-                      describe_position(exact, swapped) +
-                      f" bytes={len(maps[map_index])}")
-            print("title_palette_cram_" +
-                  describe_position(palette_exact, palette_swapped) +
-                  f" bytes={len(palette)}")
+    title_cg_swapped = wordswapped(title_cg)
+    maps_swapped = [wordswapped(source) for source in maps]
+    palette_swapped = wordswapped(palette)
+    try:
+        frames = iter_frame_regions_file(args.capture, args.capture_frames)
+        for index, frame in frames:
+            if args.frame is not None and index != args.frame:
+                continue
+            cg_exact, cg_swapped = find_span_with_swapped(
+                frame["vdp2-vram"], title_cg, title_cg_swapped)
+            map_positions = [find_span_with_swapped(frame["vdp2-vram"], source,
+                                                    swapped)
+                             for source, swapped in zip(maps, maps_swapped)]
+            palette_exact, palette_swapped_position = find_span_with_swapped(
+                frame["vdp2-cram"], palette, palette_swapped)
+            if cg_exact >= 0 or cg_swapped >= 0:
+                cg_frames.append(index)
+            if any(exact >= 0 or swapped >= 0 for exact, swapped in map_positions):
+                map_frames.append(index)
+            if palette_exact >= 0 or palette_swapped_position >= 0:
+                palette_frames.append(index)
+            if args.frame is not None or cg_exact >= 0 or cg_swapped >= 0 or \
+                    index in map_frames or index in palette_frames:
+                registers = frame["vdp2-regs"]
+                byte_order = detect_byte_order(registers)
+                tvmd = read_u16(registers, 0x00, byte_order)
+                bgon = read_u16(registers, 0x20, byte_order)
+                chctla = read_u16(registers, 0x28, byte_order)
+                print(f"frame={index} register_byte_order={byte_order} "
+                      f"tvmd=0x{tvmd:04x} bgon=0x{bgon:04x} chctla=0x{chctla:04x}")
+                print("title_cg_vram_" + describe_position(cg_exact, cg_swapped) +
+                      f" bytes={len(title_cg)}")
+                for map_index, (exact, swapped) in enumerate(map_positions):
+                    print(f"title_map_{map_index}_vram_" +
+                          describe_position(exact, swapped) +
+                          f" bytes={len(maps[map_index])}")
+                print("title_palette_cram_" +
+                      describe_position(palette_exact, palette_swapped_position) +
+                      f" bytes={len(palette)}")
+    except (OSError, ValueError) as error:
+        print(f"NEXUS_TITLE_VDP2_SOURCE_INVALID: {error}")
+        return 1
 
     print("title_cg_vram_source_join=verified" if cg_frames
           else "title_cg_vram_source_join=unbound")

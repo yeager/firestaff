@@ -7,6 +7,7 @@ import hashlib
 import importlib.util
 from pathlib import Path
 import sys
+import tempfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,6 +48,9 @@ def main() -> int:
         assert palette == bytes(range(32))
         assert MODULE.wordswapped(b"\x12\x34\xab\xcd") == b"\x34\x12\xcd\xab"
         assert MODULE.find_span(b"xx" + MODULE.wordswapped(maps[2]) + b"yy", maps[2]) == (-1, 2)
+        swapped_map = MODULE.wordswapped(maps[2])
+        assert MODULE.find_span_with_swapped(b"xx" + swapped_map + b"yy",
+                                             maps[2], swapped_map) == (-1, 2)
         try:
             MODULE.wordswapped(b"\0")
         except ValueError:
@@ -59,6 +63,17 @@ def main() -> int:
             pass
         else:
             raise AssertionError("short TITLE.BIN must be rejected")
+        with tempfile.TemporaryDirectory() as temporary:
+            capture = Path(temporary) / "capture.raw"
+            vdp1 = bytes(0x100000)
+            vdp2 = bytes(0x200) + bytes(0x80000) + bytes(0x1000)
+            capture.write_bytes(
+                b"FIRESTAFF_NEXUS_SATURN_RUNTIME_CAPTURE_V1\n"
+                b"frame=0\nFIRESTAFF_NEXUS_SATURN_VDP1_RAW_V1\n" + vdp1 +
+                b"VDP2_RAW\n" + vdp2)
+            streamed = list(MODULE.iter_frame_regions_file(capture, 1))
+            assert len(streamed) == 1 and streamed[0][0] == 0
+            assert len(streamed[0][1]["vdp2-vram"]) == 0x80000
     finally:
         MODULE.TITLE_BIN_SHA256, MODULE.TITLE_CG_SHA256 = original_bin, original_cg
     print("nexus title VDP2 source analyser: PASS")

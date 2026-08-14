@@ -494,6 +494,16 @@ contains neither title character data nor any of the five title maps. This is
 negative evidence for that boot window only; it does not identify a later
 title owner or authorise a fallback renderer.
 
+The longer authentic visual-start witness from the same English CUE and
+Japanese BIOS (2,400 frames, SHA-256
+`7220f2fd6ace842dd7de1e269e533b6dc4a942db8e9d286eb93fcf493019e9c1`)
+was also scanned frame by frame. It contains none of the title character
+generator span, five MAPD cell maps, or title palette in VDP2. Its timeout
+termination does not weaken the raw transport validation, but the result is
+strictly negative for this recorded window. The analyzer now streams capture
+frames from disk so multi-gigabyte witnesses are checked without loading the
+whole raw file into memory.
+
 Conversely, the retained four-frame menu-window witness contains the complete
 word-swapped `TITLE.CG` payload at VDP2 VRAM `0x24020` and the word-swapped
 32-byte title palette at CRAM `0x400`, while all five title MAPD cell spans
