@@ -15,12 +15,12 @@
 #define THERON_V1_CONSUMER_LSTAT lstat
 #endif
 
-/* A bounded 65,536-sample authenticated capture is approximately 8.7 MiB
- * with the per-read provenance fields.  Keep a hard ceiling, but do not
- * reject that real bounded receipt before its code-window provenance can be
- * checked.  This remains an intake limit only; the parser never publishes
- * the bytes as level, object, tile, palette or HUD data. */
-#define THERON_V1_CONSUMER_TRACE_MAX_BYTES (16u * 1024u * 1024u)
+/* A bounded 1,048,576-sample authenticated capture is approximately 160 MiB
+ * with the per-read provenance fields. Keep a hard ceiling, but do not reject
+ * that real bounded receipt before its code-window provenance can be checked.
+ * This remains an intake limit only; the parser never publishes the bytes as
+ * level, object, tile, palette or HUD data. */
+#define THERON_V1_CONSUMER_TRACE_MAX_BYTES (256u * 1024u * 1024u)
 
 /* The consumed byte must be in the HuC6280's mapped main-RAM window, but the
  * instruction which consumed it may execute from any mapped 21-bit bank.

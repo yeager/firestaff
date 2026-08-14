@@ -1184,6 +1184,10 @@ the remaining SRM blocker is still only original body-layout correlation.
     observability but does not open the level/object or gameplay gates. The
     savestate replay separately confirms a `$C68C` read of `$611D` through
     `record-watch`, but has no same-session authenticated CD-origin receipt.
+    With a bounded 1,048,576-read state trace, parser-only admission reports
+    427 runtime reads in `$2600`, 147 non-zero values, and 84 `$C3A0` reads;
+    the full `$2C54` code-window check does not pass on this segmented state
+    trace, so these counts remain diagnostic evidence only.
 
   - 2026-08-14 same-session `$C3A0` consumer: the same direct capture contains
     7,100 `record_c3a0_window=1` register rows in `$C3A0–$C429`. Each row's
