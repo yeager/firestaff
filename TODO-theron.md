@@ -22,6 +22,9 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
 - 🔒 Provenance/exekveringskedjan är nu stängd, men recordens level/object/
   gameplay-roll är inte identifierad. Capture-sidecars och instrumenterad
   binär ligger lokalt på extern-disk.
+- ✅ Med autentiska US CUE/BIN, konverterad US ISO, JP CUE, r25 VDC/VCE-
+  snapshot och CD-sidecar är Theron-sviten 45/45 grön. Utan dessa lokala
+  externa inputs är fem av samma tester avsiktliga `SKIP`, inte failures.
 
 ## 2026-08-13 — scripted replay reaches authenticated transport, not gameplay
 

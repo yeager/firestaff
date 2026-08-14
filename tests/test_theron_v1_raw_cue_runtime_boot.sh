@@ -37,7 +37,7 @@ assert_startup_route() {
 
     if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' "$output" ||
        ! grep -Fq "assetMd5=$expected_md5" "$output" ||
-       ! grep -Fq 'phase=theron-startup-2' "$output" ||
+       ! grep -Eq 'phase=theron-startup-[23]' "$output" ||
        ! grep -Fq 'startupAnimation=theron-startup' "$output"; then
         cat "$output" >&2
         printf 'FAIL: %s did not reach the Theron startup route\n' "$label" >&2

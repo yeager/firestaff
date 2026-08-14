@@ -189,7 +189,11 @@ int theron_v1_vram_trace_load_known_capture_files(
          * complete source VDC/VCE pair, but its $2600 window is still an
          * initialization/readback loop and does not identify a level,
          * object, square, HUD or gameplay consumer. */
-        {0x087da136u, 0x5376a91bu}
+        {0x087da136u, 0x5376a91bu},
+        /* 2026-08-14 external-disk r25 direct-provenance capture.  Its
+         * source-LBA/$611D/$C3A0 join is admitted only as screen-space
+         * capture data; level/object/gameplay semantics remain closed. */
+        {0xe08b571du, 0x298f9642u}
     };
 
     if (!vp || !vram_path || !vce_path) return -1;

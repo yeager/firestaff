@@ -133,6 +133,11 @@ writer PC. The direct rows are the CD-origin path; `ram_provenance_copies=0`
 is therefore expected. The sidecars and raw capture remain local research
 artifacts on the external disk.
 
+The corresponding 64 KiB VDC and 1 KiB VCE pair is now hash-admitted by the
+production screen-space loader (`0xe08b571d` / `0x298f9642`). This authorizes
+the captured bitmap/tile/palette replay only; it does not authorize square,
+level, object, or gameplay semantics.
+
 Firestaff verifies this sidecar join, including the same-session caller
 witness, with:
 
