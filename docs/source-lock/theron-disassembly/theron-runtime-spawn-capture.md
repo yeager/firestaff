@@ -55,6 +55,29 @@ binary is `ab6dbf674c68ee4891a185b83cff3149` and the replay state is
 `82e151fa51aa3e7d578d0dfdb09eb55b`. These local artifacts remain on the
 external disk and are intentionally not repository inputs.
 
+## 2026-08-14 — extended state trace retains the wider runtime consumer window
+
+The bounded 1,048,576-row state trace was re-admitted by the current parser
+in parser-only mode:
+
+```text
+main-ram reads:             1048576
+target $2600-$27ff reads:        427
+target non-zero reads:           147
+target runtime reads:            427
+target $C3A0-$C429 reads:         84
+target $C3A0 non-zero:            24
+target reader PCs:                6
+semantic publication:              blocked
+```
+
+The main-RAM sidecar MD5 is `cae9aa15aef10bc9c88b7de891d34d8e`. The ordinary
+`$2c54-$2c69` code-window check still fails on this segmented state trace, and
+the state replay has no same-session CD-origin receipt. These counts are
+therefore stronger runtime-address evidence only; they do not open the
+level/object, VRAM/VCE or HuC6280-RAM semantic gates. The sidecar and state
+remain local on the external disk.
+
 ## 2026-08-14 — autoloaded state reaches only a bank-overlay `$B0E5`
 
 The r26 instrumented binary was run with the external-disk Mednafen state

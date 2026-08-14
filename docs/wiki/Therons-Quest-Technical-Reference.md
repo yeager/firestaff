@@ -46,6 +46,13 @@ and T900 publication remain fail-closed. The exact capture identity and
 boundary are recorded in
 `docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md`.
 
+The extended bounded state trace (1,048,576 main-RAM rows) independently
+retains 427 runtime `$2600-$27FF` reads, 147 non-zero values and 84
+`$C3A0-$C429` reads across six reader PCs. Its sidecar MD5 is
+`cae9aa15aef10bc9c88b7de891d34d8e`. The code-window check and same-session
+CD-origin join are still absent, so this remains diagnostic runtime-address
+evidence and does not authorize semantic publication.
+
 ## Runtime record-table witness
 
 An authentic Mednafen savestate execution-window capture now identifies a
