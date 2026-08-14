@@ -50,8 +50,9 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   movement step.
 - ✅ The first-room synthetic fixture marks the destination level resident
   before expecting a stair transition.
-- ✅ The full Theron suite is green; six media-dependent tests remain expected
-  skips when their external captures are absent.
+- ✅ The full Theron suite is 45/45 green when the authenticated external
+  media and captures are supplied; five media-dependent tests are expected
+  `SKIP` only when those local inputs are absent.
 
 ## 2026-08-13 — Track 02 map-directory envelope is fail-closed
 
@@ -1157,6 +1158,14 @@ the remaining SRM blocker is still only original body-layout correlation.
     execution witness is present. This proves the original runtime caller
     executes after the source-bound record writes; it still does not identify
     the record's semantic role or open level/object/gameplay publication.
+
+  - 2026-08-14 extended Cocoa gameplay attempt: a 120-second authenticated
+    r25 run delivered 19 scheduled host inputs, 238 authenticated CD→RAM
+    receipts, 29,913 direct provenance rows and 7,100 `$C3A0` rows, but zero
+    valid `$B0E5` category entries (`A=0..3`). The 256 `$B0E5` address hits
+    were bank overlays only. This is stronger same-session negative evidence;
+    it must not be merged with the separate `.mc0` run that reached a valid
+    entry without CD provenance.
 
 - 2026-08-06 update: the Track 02 thing-category enum is now source-bound to
   the retail order used by DMBUILDER6 (`4=monster`, `5=weapon`, `6=clothing`,

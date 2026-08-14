@@ -154,6 +154,13 @@ provenance boundary:
 Track 02 source LBA/offset -> game-owned RAM write -> $611D record mutation
 ```
 
+A separate 120-second real-Cocoa attempt with 19 scheduled inputs reproduced
+the same-session boundary (238 authenticated CD-to-RAM receipts, 29,913
+direct rows and 7,100 `$C3A0` rows) but produced zero valid `$B0E5` category
+entries. Its 256 `$B0E5` address hits were bank overlays. The run is retained
+as negative evidence and is not merged with the separate `.mc0` execution
+that reached `$B0E5` without CD provenance.
+
 It does not prove the record's level, square, object, creature, inventory, or
 gameplay role. The production level/object, VRAM, draw, and gameplay gates
 therefore remain fail-closed until an original semantic consumer and a
