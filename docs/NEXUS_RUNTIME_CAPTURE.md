@@ -516,8 +516,10 @@ residency is not a display-consumer or title-input proof, and the visual
 receipt shows a Saturn-composed 3D title sequence rather than a flat
 `TITLE.CG` framebuffer.  Firestaff must not substitute an inferred renderer.
 
-For an actual playable retail start, the CLI provides an explicit, separate
-Mednafen handoff:
+For an actual playable retail start, the CLI and start-menu entry provide an
+explicit, separate Mednafen handoff. Homebrew's `/opt/homebrew/bin/mednafen`
+and `/usr/local/bin/mednafen` are detected locally; an installed emulator and
+readable retail CUE make the menu entry launchable:
 
 ```sh
 firestaff --game nexus --data-dir "$HOME/.firestaff/data" \
@@ -530,7 +532,10 @@ The default disc is `nexus/Dungeon Master Nexus (English).cue` under
 Nexus directory).  `--nexus-disc` can select another readable CUE explicitly.
 The launcher passes exact argument vectors directly to Mednafen; it never
 uses a shell, extracts media, or treats emulator execution as a native
-Nexus-replay receipt.  It is intentionally incompatible with `--boot-probe`.
+Nexus-replay receipt.  `FIRESTAFF_NEXUS_MEDNAFEN`,
+`FIRESTAFF_NEXUS_DISC`, and `FIRESTAFF_NEXUS_BIOS` override the menu route
+without persisting private paths. The external route is intentionally
+incompatible with `--boot-probe`.
 
 Firestaff now has a C receipt for the emitted
 `FIRESTAFF_NEXUS_SCSP_WRITE_TRACE_V1` schema. It validates the raw trace hash,

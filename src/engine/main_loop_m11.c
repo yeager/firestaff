@@ -33,6 +33,7 @@
 #include "asset_status_m12.h"
 #include "m11_game_text_ttf_renderer_pc34_compat.h"
 #include "fs_portable_compat.h"
+#include "firestaff_nexus_mednafen.h"
 #include "dm1_v1_vblank_timing.h"
 #include "dm1_v1_fmtowns_startup.h"
 #include "dm1_v1_fmtowns_title.h"
@@ -3115,6 +3116,32 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     if (!M12_StartupMenu_PrepareSelectedGameLaunch(menuState)) {
         return 0;
     }
+    launchEntry = M12_StartupMenu_GetEntry(menuState, menuState->activatedIndex);
+    /* The menu's Nexus card is a genuine retail-emulator route, not an
+     * exception to the native capture gate.  Discover only local user media
+     * and a locally installed Mednafen binary; no game data is copied or
+     * interpreted here.  Returning to Firestaff after Mednafen exits keeps
+     * this separate process boundary visible to the user. */
+    if (!bootProbe && launchEntry && launchEntry->gameId &&
+        strcmp(launchEntry->gameId, "nexus") == 0) {
+        Firestaff_NexusMednafenLaunch nexus_launch;
+        if (!Firestaff_NexusMednafen_Discover(dataDir, NULL, NULL, NULL,
+                                              &nexus_launch)) {
+            m11_set_launch_failed_message(menuState);
+            return 0;
+        }
+        fprintf(stdout,
+                "FIRESTAFF NEXUS EXTERNAL LAUNCH: emulator=%s disc=%s bios=%s\n",
+                nexus_launch.emulator, nexus_launch.disc,
+                nexus_launch.hasBios ? nexus_launch.bios : "configured-by-mednafen");
+        fflush(stdout);
+        if (Firestaff_NexusMednafen_Launch(&nexus_launch) != 0) {
+            m11_set_launch_failed_message(menuState);
+            return 0;
+        }
+        menuState->launchRequested = 0;
+        return 1;
+    }
     memset(&dm1HandoffContext, 0, sizeof(dm1HandoffContext));
     memset(&dm1HandoffCallbacks, 0, sizeof(dm1HandoffCallbacks));
     memset(&dm1HostCallbacks, 0, sizeof(dm1HostCallbacks));
@@ -3161,7 +3188,6 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     dm1SelectedLaunchCallbacks.draw_opened = m11_dm1_selected_launch_draw_opened;
     dm1SelectedLaunchCallbacks.mark_launch_failed =
         m11_dm1_selected_launch_mark_failed;
-    launchEntry = M12_StartupMenu_GetEntry(menuState, menuState->activatedIndex);
     dm1RouteFacts.selected_game_id =
         m11_selected_dm1_is_fmtowns(menuState, launchEntry)
             ? "dm1-fmtowns"

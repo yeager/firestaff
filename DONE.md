@@ -15862,3 +15862,7 @@ timer owners. The focused regression covers this failure path.
   inga testmedia och påstår inte att den blockerade native-renderaren har
   parity. Datfri regression verifierar argumentvektorn och avvisar både fel
   spel och `--boot-probe`.
+- ✅ Nexus-kortet i startmenyn använder samma separata handoff när lokal
+  Mednafen och den autentiska CUE:n finns. `--game nexus` följer samma väg;
+  `--boot-probe` behåller native-diagnostiken. Homebrew-sökvägar och explicita
+  miljövariabler kan användas utan att privata sökvägar sparas.
