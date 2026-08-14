@@ -1133,6 +1133,18 @@ the remaining SRM blocker is still only original body-layout correlation.
     runtime witness only and does not open the production level/object or
     gameplay gates.
 
+  - 2026-08-14 direct source-to-record join: an external-disk r25 capture
+    against the authenticated US CUE produced 238 authenticated CD→RAM
+    receipts and four complete ten-byte records bound to source LBAs 4880,
+    4886, 4896 and 4901 (source offsets 301–310). The destinations are
+    `$0d/$0f` banked RAM at logical `$611D–$6126`; reader `$F406` and writer
+    `$F427` were observed, and all 40 bytes matched exactly one
+    `theron_record_watch` write. The join is reproducibly checked by
+    `scripts/verify_theron_record_table_provenance.py`. This closes the
+    source-LBA → RAM-write → record-table mutation instrumentation gap, but
+    not the original level/object/gameplay semantic consumer; those gates
+    remain fail-closed.
+
 - 2026-08-06 update: the Track 02 thing-category enum is now source-bound to
   the retail order used by DMBUILDER6 (`4=monster`, `5=weapon`, `6=clothing`,
   `7=scroll`, `8=potion`, `9=chest`, `10=misc`, `14=missile`, `15=cloud`).

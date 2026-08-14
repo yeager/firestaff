@@ -84,7 +84,7 @@ diff --git a/src/pce/pce.cpp b/src/pce/pce.cpp
 diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 --- a/src/pce/pcecd.cpp
 +++ b/src/pce/pcecd.cpp
-@@ -115,0 +116,146 @@
+@@ -115,0 +116,181 @@
 +struct TheronPCECDMainRAMProvenance
 +{
 + bool valid;
@@ -137,6 +137,9 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 + }
 +}
 +
++bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint32 *reader_physical_pc,
++                                  uint8 *value, uint32 *source_lba,
++                                  uint16 *source_offset, uint64 *fifo_sequence);
 +void TheronPCECDTraceMainRAMProvenanceRead(uint32 physical_address, uint8 value,
 +                                           uint16 reader_pc, uint32 reader_physical_pc)
 +{
@@ -156,6 +159,38 @@ diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 +                                            uint32 physical_address, uint8 value,
 +                                            uint16 writer_pc, uint32 writer_physical_pc)
 +{
++ static int direct_origin_enabled = -1;
++ if(direct_origin_enabled < 0)
++ {
++  const char *setting = getenv("FIRESTAFF_THERON_RAM_PROVENANCE_DIRECT");
++  direct_origin_enabled = setting && setting[0] == '1';
++ }
++ if(direct_origin_enabled && physical_address < 0x1f0000 &&
++    physical_address >= 0x0c0000)
++ {
++  uint16 reader_pc;
++  uint32 reader_physical_pc;
++  uint8 read_value;
++  uint32 source_lba;
++  uint16 source_offset;
++  uint64 fifo_sequence;
++  if(TheronPCECDTraceTakeDataRead(&reader_pc, &reader_physical_pc, &read_value,
++                                  &source_lba, &source_offset, &fifo_sequence) &&
++     read_value == value)
++  {
++   TheronPCECDTraceSeedMainRAMProvenance(physical_address, value, source_lba,
++                                         source_offset, fifo_sequence);
++   FILE *direct_trace = TheronPCECDGetRAMProvenanceTrace();
++   if(direct_trace)
++   {
++    fprintf(direct_trace, "theron_ram_provenance_direct source_lba=%u source_offset=%u fifo_sequence=%llu destination_physical=%06x destination_logical=%04x reader_pc=%04x reader_physical_pc=%06x writer_pc=%04x writer_physical_pc=%06x value=%02x\n",
++            source_lba, source_offset, (unsigned long long)fifo_sequence,
++            physical_address, logical_address, reader_pc, reader_physical_pc,
++            writer_pc, writer_physical_pc, value);
++    fflush(direct_trace);
++   }
++  }
++ }
 + if(physical_address < 0x0c0000 || physical_address >= 0x200000)
 +  return;
 + TheronPCECDMainRAMProvenance *entry = &TheronPCECDMainRAMProvenanceMap[physical_address];

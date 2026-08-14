@@ -2,10 +2,11 @@
 
 ## Status
 
-This is an authenticated execution-window observation from the real US
-Mednafen savestate. It is a runtime record-table witness, not a Track 02
-level/object promotion. The savestate is not a same-session CD-to-RAM capture,
-so no source LBA or Track 02 user-data offset is assigned to these records.
+This document contains two distinct witnesses. The original savestate
+observation remains a runtime record-table witness, not a Track 02
+level/object promotion. A later fresh real-SDL capture adds a direct
+source-LBA-to-record-table byte join, verified by
+`scripts/verify_theron_record_table_provenance.py`.
 
 ## Capture identity
 
@@ -82,9 +83,10 @@ receipt.
 
 ## Production boundary
 
-This receipt closes a useful instrumentation gap but leaves
-`THERON-V1-TRACK02-LIVE-LOADER-CONSUMER` and the associated level/object,
-VRAM, and HuC6280-RAM semantic gates open. The missing join is:
+The savestate receipt closed a useful execution-window gap but left
+`THERON-V1-TRACK02-LIVE-LOADER-CONSUMER` open. The later direct capture now
+closes the source-to-RAM-to-record instrumentation join. The remaining
+semantic boundary is:
 
 ```text
 Track 02 sector/user-data bytes
@@ -94,9 +96,9 @@ Track 02 sector/user-data bytes
   -> source record/LBA and a reproducible gameplay transaction
 ```
 
-Until that join is captured in one authenticated session, Firestaff must keep
-the source-bound raw thing data and all T900/level/object production gates
-fail-closed.
+Until an original semantic consumer and reproducible gameplay transaction are
+captured, Firestaff must keep the source-bound raw thing data and all
+T900/level/object, VRAM, and draw production gates fail-closed.
 
 ## Natural interactive replay receipt
 
@@ -109,3 +111,34 @@ same consumer without savestate autoload. Its sidecars contain 256
 This is a live execution witness after authentic CD activity, but it still has
 no `fifo_origin_main_ram_consumer` row and no source-LBA → RAM-write →
 `$6000`/`$611D` mutation join. The production gate therefore remains closed.
+
+## Direct source-to-record join
+
+On 2026-08-14, build r25 was run for 120 seconds against the authenticated US
+CUE, real System Card, and the external-disk Mednafen profile. The capture
+produced 238 authenticated CD-to-RAM receipts and four complete ten-byte
+records bound to the runtime table:
+
+| Source LBA | Source offsets | Destination physical | Destination logical | Reader PC | Writer PC |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 4880 | 301–310 | `0x0f811d–0x0f8126` | `$611d–$6126` | `$f406` | `$f427` |
+| 4886 | 301–310 | `0x0d011d–0x0d0126` | `$611d–$6126` | `$f406` | `$f427` |
+| 4896 | 301–310 | `0x0d011d–0x0d0126` | `$611d–$6126` | `$f406` | `$f427` |
+| 4901 | 301–310 | `0x0f811d–0x0f8126` | `$611d–$6126` | `$f406` | `$f427` |
+
+All 40 direct record-byte rows had exactly one matching
+`theron_record_watch` write on logical address, physical address, value, and
+writer PC. The direct rows are the CD-origin path; `ram_provenance_copies=0`
+is therefore expected. The sidecars and raw capture remain local research
+artifacts on the external disk.
+
+This closes the instrumentation/provenance boundary:
+
+```text
+Track 02 source LBA/offset -> game-owned RAM write -> $611D record mutation
+```
+
+It does not prove the record's level, square, object, creature, inventory, or
+gameplay role. The production level/object, VRAM, draw, and gameplay gates
+therefore remain fail-closed until an original semantic consumer and a
+reproducible gameplay transaction are bound.
