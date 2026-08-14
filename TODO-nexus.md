@@ -2,6 +2,21 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-14: A clean Mednafen re-entry run used the known-good `input9`
+Saturn build, the authentic English merged CUE and J-BIOS. START was sent at
+the measured 225-second title prompt, then again at 170, 210 and 250 seconds
+after that transition. The window-only run is
+`/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-menu-reentry-input9-20260814/`.
+It shows authentic Victor/title and Nexus FMV/entrance frames, then a return
+to the title transition; it never exposes the startup menu, LEV01 viewport or
+a played save. The repeated START presses are therefore a negative witness,
+not permission to synthesize a menu or pose. SHA-256 witnesses include
+`after-start-000s` `3182e090fde2c...`, `after-start-060s`
+`67445059fb0cc3...`, `after-start-190s`
+`b88ad8269707523...`, `after-start-250s`
+`f45655cf2577867...`, and `after-start-280s`
+`96081e77894104...`. The full hashes remain in the capture directory.
+
 2026-08-14: A follow-up clean Mednafen run sent the authentic Saturn A
 button at 60 and 120 seconds after START, then continued to 240 seconds.
 The window-only witnesses are in
