@@ -2,6 +2,36 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-14: A long clean Mednafen run used the authenticated English merged
+CUE, J-BIOS 1.01 and the known-good Saturn input build. START was sent at the
+measured title prompt (225 seconds); the original then displayed its FMV and
+`Now Loading` state before returning to title/entrance imagery. Additional A
+input at 250 and 280 seconds did not expose a menu or LEV01. Window-only
+captures are in
+`/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-title-return-input-a-20260814/`.
+The 220/240/250/260/280/300/320-second SHA-256 witnesses are respectively
+`96081e77894104f08e9e3c5c11a5db193791f2d86f7d5808e9b10d32b5263313`,
+`0e47974e764930e39923cbe82e053235e4ecc6f2acfb79a0e2a2d70b4186d063`,
+`246276ca24807a984a52d440cda31ba6dbc8a7583f506bb3ace40291de188a4d`,
+`f45655cf2577867349be955c2229057475db72fba0aad3b0596a8e40a93d6d4c`,
+`96081e77894104f08e9e3c5c11a5db193791f2d86f7d5808e9b10d32b5263313`,
+`fd3f9b77b30f6507744ebd755db3121b7b310b5deb50c694cbe2c01be36f2bf3`, and
+`5acf483307dac899d159141b7e908006b2c791c01bb8644895a7d83c01449f3b`.
+This confirms the authentic title-to-FMV/loading route, but does not prove a
+menu consumer, start pose or save; no production gate is opened.
+
+2026-08-14: A fresh clean Mednafen run used the known-good `input9` build,
+the authentic English merged CUE and the verified J-BIOS. At 20 seconds the
+window was captured before START, an emulator backup snapshot was requested,
+then START was sent and the immediate post-input window was captured. The
+artifacts are in
+`/Volumes/Extern-disk/nexus-saturn-capture/run-nexus-authentic-title-state-20260814b/`.
+The post-input PNG SHA-256 is
+`266ecdc160017e1a480842ca05bdb5d9ba40525d6272609b36818f1b82248d98`.
+Mednafen produced `.smpc`, `.bkr` and `.bcr` files, but no native played
+Nexus save or Saturn emulator state file. They are retained as emulator
+backup artifacts only; no save or gameplay parity gate is opened.
+
 2026-08-14: A clean Mednafen re-entry run used the known-good `input9`
 Saturn build, the authentic English merged CUE and J-BIOS. START was sent at
 the measured 225-second title prompt, then again at 170, 210 and 250 seconds
