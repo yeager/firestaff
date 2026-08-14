@@ -23,10 +23,17 @@ int main(void)
         perror("mkdtemp");
         return 1;
     }
+#if defined(_WIN32)
+    if (_putenv_s("HOME", home_template) != 0) {
+        fprintf(stderr, "_putenv_s HOME failed\n");
+        return 1;
+    }
+#else
     if (setenv("HOME", home_template, 1) != 0) {
         perror("setenv HOME");
         return 1;
     }
+#endif
     M12_Config_SetLastSavePath(save_path);
     M12_StartupMenu_InitWithDataDir(&state, data_root, "dm2");
     if (!state.quickResumeAvailable ||
