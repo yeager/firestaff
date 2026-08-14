@@ -97,3 +97,15 @@ Track 02 sector/user-data bytes
 Until that join is captured in one authenticated session, Firestaff must keep
 the source-bound raw thing data and all T900/level/object production gates
 fail-closed.
+
+## Natural interactive replay receipt
+
+A later fresh real-SDL process booted the authenticated US CUE and reached the
+same consumer without savestate autoload. Its sidecars contain 256
+`pce_cd_origin_ram_receipt` rows, 32 game-owned `$E009` dispatches and 4,096
+`theron_runtime_record_table` rows. The first runtime row contains the known
+`$611D` value `4080007098a8c8700020`.
+
+This is a live execution witness after authentic CD activity, but it still has
+no `fifo_origin_main_ram_consumer` row and no source-LBA → RAM-write →
+`$6000`/`$611D` mutation join. The production gate therefore remains closed.

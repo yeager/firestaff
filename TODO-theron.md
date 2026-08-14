@@ -1108,6 +1108,18 @@ the remaining SRM blocker is still only original body-layout correlation.
     not a level/object or gameplay semantic promotion. Capture binary MD5:
     `2d84469309f81c582ed59160493fa170`.
 
+  - 2026-08-14 natural interactive replay: a fresh real-SDL instrumented
+    process booted the authenticated US CUE and reached the same runtime
+    record-table consumer without savestate autoload. The capture contains
+    256 `pce_cd_origin_ram_receipt` rows, 32 `$E009` dispatches and 4,096
+    `theron_runtime_record_table` rows; the first runtime row is the known
+    `$611D` value `4080007098a8c8700020`. This confirms live execution of the
+    consumer after authentic CD activity, but the capture has no
+    `fifo_origin_main_ram_consumer` row and does not bind a Track 02 source
+    LBA to the later `$6000`/`$611D` mutation. It therefore strengthens the
+    runtime witness only and does not open the production level/object or
+    gameplay gates.
+
 - 2026-08-06 update: the Track 02 thing-category enum is now source-bound to
   the retail order used by DMBUILDER6 (`4=monster`, `5=weapon`, `6=clothing`,
   `7=scroll`, `8=potion`, `9=chest`, `10=misc`, `14=missile`, `15=cloud`).
