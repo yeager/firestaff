@@ -20,6 +20,17 @@
   originals use the existing path/mtime/size-invalidation cache instead of
   repeatedly unpacking archive contents.
 
+## Nexus: title VDP2 residency analyser (2026-08-14)
+
+- ✅ `analyze_nexus_title_vdp2_source.py` validates the authenticated English
+  TITLE.BIN/TITLE.CG pair and independently searches the character generator,
+  all five MAPD cell spans and the title palette in raw VDP2 state, including
+  Saturn word-swapped source order.
+- ✅ The regression fixture proves malformed source spans stay rejected. Real
+  early boot and retained menu-window captures confirm that resident title
+  bytes cannot be promoted to title presentation without a map and consumer
+  binding; semantic admission remains blocked.
+
 ## DM2 M12 source-owner catalog and FM Towns archive launch (2026-08-13)
 
 - ✅ M12 väljer rätt source-owner från den gemensamma DM2-roten för DOS,

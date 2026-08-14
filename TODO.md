@@ -5630,6 +5630,14 @@ authenticated BPK). The remaining work is a Saturn executable or capture
   med ett tidigare, verifierat input-/framefönster eller snävare destination.
   Inget menyägarskap får antas från timeout-spåren.
 
+# Nexus: title VDP2-konsument
+
+- 🔒 Den nya råspansanalysen skiljer tidig boot (ingen `TITLE.CG` eller MAPD)
+  från den senare witness där `TITLE.CG` och titelpaletten är residenta men
+  samtliga fem MAPD-kartor saknas. Få en och samma originalram med
+  teckengenerator, karta, palett och aktiv lager-/displayägare innan
+  titelrendering eller titelinput kan öppnas.
+
 # Nexus: binda stabil mode-5-startkälla
 
 - 🔒 Den autentiska 80-frame-witnessen har en komplett mode-5 direct-colour-

@@ -472,6 +472,34 @@ exact CRAM match for any of them; the previously checked MENU, TITLE and
 STABG palettes remain negative as well. This is a bounded CLUT-source result,
 not permission to select a palette bank or compose a layer.
 
+## Title-character data is not a title-screen binding
+
+`scripts/analyze_nexus_title_vdp2_source.py` checks the authenticated English
+`TITLE.BIN` and `TITLE.CG` pair against raw VDP2 frames. It retains the five
+DMWeb MAPD/TIBG 64×28 cell maps, the 32-byte title palette and the character
+generator payload as separate exact byte spans. Native and Saturn
+word-swapped positions are reported independently.
+
+The tool is intentionally stricter than a character-data search: a resident
+`TITLE.CG` payload does not identify a title screen unless a title map and
+palette also occur in the same observed VDP2 state. Even that source-level
+combination leaves display-list ownership, active layer selection and final
+composition unbound, so the tool always reports
+`title_consumer_identity=unbound` and `semantic_admission=blocked`.
+
+The authenticated English/Japanese-BIOS early boot witness captured on
+2026-08-14 (frames 0–199, SHA-256
+`1f1b63b7917ecc347eb2e931fefe2881d64faf96338e0fd04312c1e5887a2008`)
+contains neither title character data nor any of the five title maps. This is
+negative evidence for that boot window only; it does not identify a later
+title owner or authorise a fallback renderer.
+
+Conversely, the retained four-frame menu-window witness contains the complete
+word-swapped `TITLE.CG` payload at VDP2 VRAM `0x24020` and the word-swapped
+32-byte title palette at CRAM `0x400`, while all five title MAPD cell spans
+are absent. That is a source-residency receipt, not a title presentation
+receipt: the map/layer consumer remains unbound.
+
 Both VDP2 analyzers accept `--capture-frames N` and can now inspect any frame
 inside an authenticated multi-frame witness. The eight-frame European
 gameplay witness was rechecked at frame 7: it retains the same `NBG1` bitmap
