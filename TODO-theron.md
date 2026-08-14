@@ -1175,6 +1175,14 @@ the remaining SRM blocker is still only original body-layout correlation.
     not the original level/object/gameplay semantic consumer; those gates
     remain fail-closed.
 
+  - 2026-08-14 consumer-trace expansion: the capture-only HuC6280 hook now
+    retains reads from the entire disassembly-bound `$C96B–$CD13` consumer
+    window, including banked runtime addresses rather than only physical
+    bank `$1f`. A fresh bounded replay still reaches only the `$20F8/$20F9`
+    record-base pointer reads and has no authenticated CD-origin receipt or
+    `$611D` mutation in that session. This improves the next capture's
+    observability but does not open the level/object or gameplay gates.
+
   - 2026-08-14 same-session `$C3A0` consumer: the same direct capture contains
     7,100 `record_c3a0_window=1` register rows in `$C3A0–$C429`. Each row's
     physical PC matches the captured MPR-derived bank coordinate. The
