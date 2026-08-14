@@ -31,6 +31,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("ram_provenance")
     parser.add_argument("record_watch")
+    parser.add_argument("--spawn-registers")
     parser.add_argument("--minimum-records", type=int, default=1)
     args = parser.parse_args()
 
@@ -64,15 +65,34 @@ def main():
         if addresses == set(range(0x611D, 0x6127)) and len(offsets) == 10:
             complete.append((key, rows))
 
-    if failures or len(complete) < args.minimum_records:
+    c3a0_rows = []
+    if args.spawn_registers:
+        with open(args.spawn_registers, encoding="utf-8") as stream:
+            for line in stream:
+                if not line.startswith("spawn_consumer_registers "):
+                    continue
+                row = fields(line.rstrip("\n"))
+                if row.get("record_c3a0_window") != "1":
+                    continue
+                pc = number(row, "pc")
+                physical_pc = number(row, "physical_pc")
+                mpr_pc = int(row["mpr_pc"], 16)
+                if not 0xC3A0 <= pc <= 0xC429 or physical_pc != ((mpr_pc << 13) | (pc & 0x1FFF)):
+                    print("FAIL: invalid C3A0 register-sidecar coordinates", file=sys.stderr)
+                    return 1
+                c3a0_rows.append(row)
+
+    if failures or len(complete) < args.minimum_records or (args.spawn_registers and not c3a0_rows):
         print("FAIL: direct record-table provenance join", file=sys.stderr)
         print(f"direct_rows={len(direct)} complete_records={len(complete)} "
-              f"watch_mismatches={len(failures)}", file=sys.stderr)
+              f"watch_mismatches={len(failures)} c3a0_rows={len(c3a0_rows)}",
+              file=sys.stderr)
         return 1
 
     print(f"PASS: direct_rows={len(direct)} complete_records={len(complete)} "
           "record_watch_exact_matches=" +
-          str(sum(len(rows) for _, rows in complete)))
+          str(sum(len(rows) for _, rows in complete)) +
+          (f" c3a0_rows={len(c3a0_rows)}" if args.spawn_registers else ""))
     for (lba, physical), rows in sorted(complete):
         print(f"record source_lba={lba} destination_physical={physical} "
               f"source_offsets={min(row['source_offset'] for row in rows)}.."

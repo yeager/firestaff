@@ -1,25 +1,27 @@
 # Firestaff TODO - THERON
 
-> **Latest capture boundary (2026-08-13):** A scripted authenticated
-> Mednafen replay is parser-ready but still init-only: `$2600-$27FF` has 512
-> zero-valued `$CB22` reads, no `$C3A0` reader, and no dynamic level/object
-> consumer. Use `THERON_MEDNAFEN_MAIN_RAM_CONSUMER_PARSE_ONLY=1` for that
-> receipt; keep the `$2c54-$2c69` execution-window gate separate.
+> **Latest capture boundary (2026-08-14):** The authenticated external-disk
+> r25 capture contains a source-LBA→RAM→`$611D` record join and 7,100
+> verified `$C3A0-$C429` register-sidecar rows in the same process. This is
+> still provenance/execution evidence, not a semantic level/object claim.
+
+> **Historical capture boundary (2026-08-13):** The earlier scripted replay
+> was parser-ready but init-only. The current 2026-08-14 boundary is recorded
+> above and includes the source-record join plus the `$C3A0` execution window.
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
-## 2026-08-14 — bredare provenance-capture fortfarande utan record-table-join
+## 2026-08-14 — bredare provenance-capture: record-table-join verifierad
 
 - ✅ Den korrigerade Mednafen-instrumenteringen separerar den bounded receipt-
   räknaren från provenance-seedningen och bevakar `$6000`, `$611D–$6126` samt
   `$2935–$293E` i samma autentiska körning.
-- ✅ En ny 120-sekunders extern-disk-capture med hashverifierad US Track 02 och
-  System Card gav 336 CD→RAM-provenance-frön, 24 game-owned `$E009`-dispatchar
-  och 0 provenance-kopior in i `$611D`.
-- 🔒 Resultatet öppnar inte Track 02→main-RAM→executing consumer→record-table-
-  kedjan. `$611D`-mutationerna saknar fortfarande source LBA/offset-bindning,
-  så level/object/gameplay-semantik förblir stängd. Capture-sidecars och
-  instrumenterad binär ligger lokalt på extern-disk.
+- ✅ Den verifierade 120-sekunders r25-capturen gav 238 autentiserade CD→RAM-
+  kvitton, fyra kompletta source-LBA-bundna tio-byte-records och 7 100
+  `$C3A0–$C429`-registerrader i samma process.
+- 🔒 Provenance/exekveringskedjan är nu stängd, men recordens level/object/
+  gameplay-roll är inte identifierad. Capture-sidecars och instrumenterad
+  binär ligger lokalt på extern-disk.
 
 ## 2026-08-13 — scripted replay reaches authenticated transport, not gameplay
 
@@ -1144,6 +1146,14 @@ the remaining SRM blocker is still only original body-layout correlation.
     source-LBA → RAM-write → record-table mutation instrumentation gap, but
     not the original level/object/gameplay semantic consumer; those gates
     remain fail-closed.
+
+  - 2026-08-14 same-session `$C3A0` consumer: the same direct capture contains
+    7,100 `record_c3a0_window=1` register rows in `$C3A0–$C429`. Each row's
+    physical PC matches the captured MPR-derived bank coordinate. The
+    provenance verifier accepts `--spawn-registers` and fails unless this
+    execution witness is present. This proves the original runtime caller
+    executes after the source-bound record writes; it still does not identify
+    the record's semantic role or open level/object/gameplay publication.
 
 - 2026-08-06 update: the Track 02 thing-category enum is now source-bound to
   the retail order used by DMBUILDER6 (`4=monster`, `5=weapon`, `6=clothing`,

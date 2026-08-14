@@ -115,9 +115,10 @@ no `fifo_origin_main_ram_consumer` row and no source-LBA → RAM-write →
 ## Direct source-to-record join
 
 On 2026-08-14, build r25 was run for 120 seconds against the authenticated US
-CUE, real System Card, and the external-disk Mednafen profile. The capture
-produced 238 authenticated CD-to-RAM receipts and four complete ten-byte
-records bound to the runtime table:
+CUE, real System Card, and the external-disk Mednafen profile. The same
+capture produced 238 authenticated CD-to-RAM receipts, four complete
+ten-byte records bound to the runtime table, and 7,100
+`record_c3a0_window=1` register rows in the original `$C3A0–$C429` caller:
 
 | Source LBA | Source offsets | Destination physical | Destination logical | Reader PC | Writer PC |
 | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -132,7 +133,17 @@ writer PC. The direct rows are the CD-origin path; `ram_provenance_copies=0`
 is therefore expected. The sidecars and raw capture remain local research
 artifacts on the external disk.
 
-This closes the instrumentation/provenance boundary:
+Firestaff verifies this sidecar join, including the same-session caller
+witness, with:
+
+```bash
+python3 scripts/verify_theron_record_table_provenance.py \
+  <trace>.ram-provenance <trace>.record-watch \
+  --spawn-registers <trace>.spawn-registers --minimum-records 4
+```
+
+This closes the source-LBA → RAM-write → record-table → executing-$C3A0
+provenance boundary:
 
 ```text
 Track 02 source LBA/offset -> game-owned RAM write -> $611D record mutation
