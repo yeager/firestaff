@@ -94,7 +94,8 @@ static int test_target_window_provenance(void) {
         "source=mednafen-pce-instrumented-main-ram-consumer\n"
         "main_ram_consumer_read sequence=0 logical_address=25ff physical_address=1f05ff value=00 reader_pc=cb22 reader_physical_pc=002b22 a=01 x=ff y=00 sp=fa p=04\n"
         "main_ram_consumer_read sequence=1 logical_address=2600 physical_address=1f0600 value=00 reader_pc=cb22 reader_physical_pc=002b22 a=01 x=ff y=00 sp=fa p=04\n"
-        "main_ram_consumer_read sequence=2 logical_address=271e physical_address=1f071e value=df reader_pc=c3f1 reader_physical_pc=0d23f1 a=a0 x=00 y=06 sp=f7 p=90\n";
+        "main_ram_consumer_read sequence=2 logical_address=271e physical_address=1f071e value=df reader_pc=c3f1 reader_physical_pc=0d23f1 a=a0 x=00 y=06 sp=f7 p=90\n"
+        "main_ram_consumer_read sequence=3 logical_address=611d physical_address=0d011d value=a1 reader_pc=c96b reader_physical_pc=00296b a=13 x=08 y=00 sp=fb p=40\n";
     Theron_V1MednafenMainRamConsumerTraceReceipt receipt;
     if (!tmpdir || !tmpdir[0]) tmpdir = "/tmp";
     if (snprintf(path, sizeof(path), "%s/firestaff-theron-target-window-XXXXXX",
@@ -125,6 +126,7 @@ static int test_target_window_provenance(void) {
              receipt.target_2600_c3a0_read_count == 1u &&
              receipt.target_2600_c3a0_nonzero_read_count == 1u &&
              receipt.target_2600_c3a0_distinct_reader_pc_count == 1u &&
+             receipt.read_count == 4u &&
              !receipt.semantic_publication_allowed;
     unlink(path);
     return result;
