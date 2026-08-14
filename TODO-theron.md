@@ -8,6 +8,19 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-14 — bredare provenance-capture fortfarande utan record-table-join
+
+- ✅ Den korrigerade Mednafen-instrumenteringen separerar den bounded receipt-
+  räknaren från provenance-seedningen och bevakar `$6000`, `$611D–$6126` samt
+  `$2935–$293E` i samma autentiska körning.
+- ✅ En ny 120-sekunders extern-disk-capture med hashverifierad US Track 02 och
+  System Card gav 336 CD→RAM-provenance-frön, 24 game-owned `$E009`-dispatchar
+  och 0 provenance-kopior in i `$611D`.
+- 🔒 Resultatet öppnar inte Track 02→main-RAM→executing consumer→record-table-
+  kedjan. `$611D`-mutationerna saknar fortfarande source LBA/offset-bindning,
+  så level/object/gameplay-semantik förblir stängd. Capture-sidecars och
+  instrumenterad binär ligger lokalt på extern-disk.
+
 ## 2026-08-13 — scripted replay reaches authenticated transport, not gameplay
 
 - ✅ En extern-disk-körning med hashverifierad US Track 02 och System Card
