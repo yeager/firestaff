@@ -7297,6 +7297,7 @@ set(M12_SOURCES
     src/shared/asset_find_by_hash.c
     src/dm1/dm1_v1_atari_st_stx.c
     src/nexus/nexus_v1_bpk_archive.c
+    src/nexus/nexus_v1_iso_reader.c
     src/shared/firestaff_theron_media_classify.c
     src/shared/firestaff_mapfile.c
     src/shared/card_art_m12.c
@@ -25434,6 +25435,7 @@ endif()
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_prs3_decode.c
+        src/nexus/nexus_v1_iso_reader.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_track02_level_data_blocks.c
@@ -25481,6 +25483,7 @@ endif()
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_prs3_decode.c
+        src/nexus/nexus_v1_iso_reader.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_track02_level_data_blocks.c
@@ -25524,6 +25527,7 @@ endif()
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_prs3_decode.c
+        src/nexus/nexus_v1_iso_reader.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_track02_level_data_blocks.c
@@ -25571,6 +25575,7 @@ endif()
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_prs3_decode.c
+        src/nexus/nexus_v1_iso_reader.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_track02_level_data_blocks.c
@@ -25620,6 +25625,7 @@ endif()
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_prs3_decode.c
+        src/nexus/nexus_v1_iso_reader.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         # Theron world.c binds authenticated later-level receipts through
@@ -25669,6 +25675,7 @@ endif()
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_prs3_decode.c
+        src/nexus/nexus_v1_iso_reader.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_track02_level_data_blocks.c
@@ -25712,6 +25719,7 @@ endif()
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_prs3_decode.c
+        src/nexus/nexus_v1_iso_reader.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_track02_level_data_blocks.c
@@ -25746,6 +25754,7 @@ endif()
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_prs3_decode.c
+        src/nexus/nexus_v1_iso_reader.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_track02_level_data_blocks.c
@@ -25787,6 +25796,7 @@ endif()
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_prs3_decode.c
+        src/nexus/nexus_v1_iso_reader.c
         src/nexus/nexus_v1_boot_profile.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
@@ -41353,6 +41363,7 @@ if(BUILD_TESTING)
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_prs3_decode.c
+        src/nexus/nexus_v1_iso_reader.c
         src/shared/firestaff_theron_media_classify.c
         src/dm1v2/dm1_v2_modern_assets_pc34.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
@@ -41397,6 +41408,7 @@ if(BUILD_TESTING)
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_prs3_decode.c
+        src/nexus/nexus_v1_iso_reader.c
         src/shared/firestaff_theron_media_classify.c
         src/dm1v2/dm1_v2_modern_assets_pc34.c
         src/theron/theron_v1_track02_campaign_media_discovery.c

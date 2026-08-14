@@ -384,23 +384,6 @@ struct DM2_V1_RuntimeState {
     void *cdda_cb_ctx;
 };
 
-static const uint8_t * __attribute__((unused)) dm2_runtime_mac_record_accessor(
-    uint16_t handle, uint16_t *out_size, void *user)
-{
-    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
-    const uint8_t *record;
-    int pool;
-
-    if (out_size) *out_size = 0u;
-    if (!rt || !rt->record_pools_valid) return NULL;
-    record = dm2_v1_record_pool_address(&rt->record_pools, (int16_t)handle);
-    if (!record) return NULL;
-    pool = dm2_v1_record_handle_pool((int16_t)handle);
-    if (out_size) *out_size = (uint16_t)
-        dm2_v1_record_pool_record_size(pool);
-    return record;
-}
-
 static int32_t __attribute__((unused)) dm2_runtime_mac_key_can_handle(
     uint16_t actuator, int16_t expected_item_type, void *user)
 {
@@ -6495,9 +6478,10 @@ static int dm2_runtime_process_moverec_timer(
                 destination_contains || destination_actuator ||
                 !dm2_runtime_moverec_move_between_maps(
                     rt, dungeon, candidate_source_map, candidate_source_x,
-                    candidate_source_y, map, x, y, record_handle))
+                    candidate_source_y, map, x, y, record_handle)) {
                 moverec_failure_stage = 3;
                 goto moverec_rollback;
+            }
             source_x = candidate_source_x;
             source_y = candidate_source_y;
             found = 1;

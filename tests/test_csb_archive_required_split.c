@@ -489,7 +489,8 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
                                          "dungeon.dat"),
               "CSB DUNGEON hash should be found through an ISO virtual path");
 
-    M12_AssetStatus_TestSetCsbSyntheticHashes(kCsbGraphicsMd5, kCsbDungeonMd5);
+    M12_AssetStatus_TestSetCsbSyntheticHashes(NULL, kCsbDungeonMd5);
+    M12_AssetStatus_TestSetCsbPc34SyntheticHash(kCsbGraphicsMd5);
     M12_AssetStatus_Scan(&status, root);
 
     check_int(M12_AssetStatus_GameAvailable(&status, "csb") == 1,
@@ -733,7 +734,8 @@ static void check_csb_wrong_archive_graphics_blocks_launch(const char* root) {
                                          "archive/GRAPHICS.DAT"),
               "wrong GRAPHICS payload should still prove the archive was scanned");
 
-    M12_AssetStatus_TestSetCsbSyntheticHashes(kCsbGraphicsMd5, kCsbDungeonMd5);
+    M12_AssetStatus_TestSetCsbSyntheticHashes(NULL, kCsbDungeonMd5);
+    M12_AssetStatus_TestSetCsbPc34SyntheticHash(kCsbGraphicsMd5);
     M12_AssetStatus_Scan(&status, root);
 
     check_int(M12_AssetStatus_GameAvailable(&status, "csb") == 0,
