@@ -3,8 +3,10 @@
 
 This is a transport receipt, not a renderer.  It requires the runtime
 register witness, the source-buffer dump, and the same-session Saturn raw
-capture.  The only normalization performed is Saturn's captured 16-bit
-word byte order; no pixel, palette, command, or asset meaning is inferred.
+capture.  The raw capture is streamed all the way to EOF, so large retail
+witnesses do not need a second full-sized in-memory copy.  The only
+normalization performed is Saturn's captured 16-bit word byte order; no
+pixel, palette, command, or asset meaning is inferred.
 """
 
 from __future__ import annotations
@@ -13,7 +15,7 @@ import argparse
 import re
 from pathlib import Path
 
-from analyze_nexus_saturn_runtime_capture import frame_regions
+from analyze_nexus_saturn_runtime_capture import iter_frame_regions_file
 
 
 REG_LINE = re.compile(
@@ -72,6 +74,19 @@ def saturn_vram_bytes(source_words: bytes) -> bytes:
                      for index in range(0, len(source_words), 2))
 
 
+def vdp1_vram_at(capture: Path, capture_frames: int, frame: int) -> bytes:
+    """Return one VDP1 VRAM frame after strictly consuming the whole witness."""
+    if frame < 0 or frame >= capture_frames:
+        raise ValueError("requested frame is outside capture")
+    selected: bytes | None = None
+    for frame_index, regions in iter_frame_regions_file(capture, capture_frames):
+        if frame_index == frame:
+            selected = regions["vdp1-vram"]
+    if selected is None:
+        raise ValueError("requested frame is absent from capture")
+    return selected
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path)
@@ -105,10 +120,7 @@ def main() -> int:
             # the register is not the dump-size contract.
             if args.source_register == 0:
                 raise ValueError("source dump size does not match R5")
-        if args.frame >= args.capture_frames:
-            raise ValueError("requested frame is outside capture")
-        frames, _ = frame_regions(args.capture.read_bytes(), args.capture_frames)
-        vram = frames[args.frame]["vdp1-vram"]
+        vram = vdp1_vram_at(args.capture, args.capture_frames, args.frame)
         expected = saturn_vram_bytes(source_words)
         actual = vram[args.target:args.target + len(expected)]
         if len(actual) != len(expected) or actual != expected:

@@ -5187,6 +5187,15 @@ kopieringsriktningen för den autentiska direct-colour-bufferten: vid
 `scripts/analyze_nexus_vdp1_source_to_vram.py` passerar mot frame 350 i
 den externa 400-frame-capturen. Detta bevisar transport och byteordning,
 inte pixelkodning, CLUT/palett, kommando-typ eller produktionsrendering.
+
+# ✅ 2026-08-14 Nexus VDP1 source-to-VRAM strömverifiering
+
+Verifieraren för source-to-VRAM läser nu råfångster sekventiellt i stället
+för att lägga hela fångsten i minnet. Den går ändå till filslut och avvisar
+trunkerade eller påhängda data. En ny testkörning täcker en giltig vald
+bildruta, utanför intervallet och ett otillåtet efterhäng. Den externa
+400-bildrutorsfångsten vid frame 350 passerar fortsatt med källadress
+`0x06027874`, mål `0x10a00` och writer-PC `0x060135f4`.
 # ✅ 2026-08-10 Nexus VDP1 command-to-texture span
 
 Frame 350:s autentiska COPR-kedja `0x05280..0x05300` består av fyra

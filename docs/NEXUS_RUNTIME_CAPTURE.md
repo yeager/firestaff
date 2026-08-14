@@ -952,6 +952,16 @@ identity lanes. A manifest alone is not a capture; a source decoder alone is
 not a presentation or gameplay proof. Until the corresponding artifact is
 admitted, production routes remain no-draw or playback-gated.
 
+## Strömmande VDP1-källbuffertskontroll
+
+`scripts/analyze_nexus_vdp1_source_to_vram.py` läser en råfångst sekventiellt
+och kontrollerar hela framekuvertet till filslut. Det ger samma strikta
+transportbevis för den valda VDP1-kopian utan att en lång retailfångst hålls
+i minnet i sin helhet. Ett avklippt kuvert, felaktig bildruta eller data efter
+sista bildrutan avvisas. Kontrollen bevisar fortfarande bara källbuffert,
+writer-PC, VDP1-mål och Saturns byteordning. Den tilldelar inte pixelformat,
+palett, kommando- eller resurssemantik.
+
 ## Source references
 
 The byte-format baseline is the [DMWeb Nexus file-format documentation](http://dmweb.free.fr/community/documentation/dungeon-master-nexus/file-formats/),
