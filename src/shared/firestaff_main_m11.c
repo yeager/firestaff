@@ -23,6 +23,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if !defined(_WIN32)
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#endif
+
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
+
 /* IMG3 global state required by the GRAPHICS.DAT image decompressor */
 unsigned short G2157_;
 unsigned char* G2159_puc_Bitmap_Source;
@@ -38,6 +48,9 @@ static void usage(const char* prog) {
             "  --presentation-mode <v1|v20|v21|v22> Select game presentation without changing saved settings\n"
             "  --script <cmds>     Comma-separated input script: up,down,left,right,enter,action,esc\n"
             "  --data-dir <path>   Asset directory (default: FIRESTAFF_DATA env var)\n"
+            "  --nexus-mednafen <path>  Start the authentic Nexus Saturn disc in this Mednafen executable (requires --game nexus)\n"
+            "  --nexus-disc <path>      Nexus CUE sheet; defaults to Dungeon Master Nexus (English).cue below --data-dir\n"
+            "  --nexus-bios <path>      Japanese Saturn BIOS passed to Mednafen as -ss.bios_jp\n"
             "  --theron-authenticated-fallback  Run Theron from verified Track 02 records when the original CD runtime handoff is unavailable (non-parity)\n"
             "  --save <path>       Resume a validated save for --game\n"
             "  --csb-hint-oracle   Open Atari R1 CSB Utility Disk Hint Oracle (requires --data-dir; optional --save MINI.DAT)\n"
@@ -430,11 +443,142 @@ static int parse_architecture(const char* value, int* out_architecture) {
     return 1;
 }
 
+static int nexus_path_is_readable(const char* path) {
+#if defined(_WIN32)
+    return path && path[0] != '\0' && _access(path, 4) == 0;
+#else
+    return path && path[0] != '\0' && access(path, R_OK) == 0;
+#endif
+}
+
+static int nexus_path_is_executable(const char* path) {
+#if defined(_WIN32)
+    return path && path[0] != '\0' && _access(path, 0) == 0;
+#else
+    return path && path[0] != '\0' && access(path, X_OK) == 0;
+#endif
+}
+
+static int nexus_is_cue_path(const char* path) {
+    size_t length;
+    if (!path) return 0;
+    length = strlen(path);
+    return length >= 4U && strcmp(path + length - 4U, ".cue") == 0;
+}
+
+static int nexus_copy_path(char* out, size_t out_size, const char* path) {
+    int written;
+    if (!out || out_size == 0U || !path) return 0;
+    written = snprintf(out, out_size, "%s", path);
+    return written >= 0 && (size_t)written < out_size;
+}
+
+static int nexus_find_default_disc(const char* data_dir,
+                                   char* out,
+                                   size_t out_size) {
+    static const char cue_name[] = "Dungeon Master Nexus (English).cue";
+    const char* root = data_dir;
+    int written;
+
+    if (!root || root[0] == '\0') root = getenv("FIRESTAFF_DATA");
+    if (!root || root[0] == '\0') return 0;
+    if (nexus_is_cue_path(root) && nexus_path_is_readable(root)) {
+        return nexus_copy_path(out, out_size, root);
+    }
+    written = snprintf(out, out_size, "%s/%s", root, cue_name);
+    if (written >= 0 && (size_t)written < out_size &&
+        nexus_path_is_readable(out)) {
+        return 1;
+    }
+    written = snprintf(out, out_size, "%s/nexus/%s", root, cue_name);
+    return written >= 0 && (size_t)written < out_size &&
+           nexus_path_is_readable(out);
+}
+
+/* Nexus is kept fail-closed in the native runtime until a source-owned Saturn
+ * title/display consumer is captured.  This explicit route starts the user's
+ * unmodified retail CUE in Mednafen instead; it neither decodes nor claims a
+ * Firestaff-native title/menu.  No shell is involved, so paths with spaces
+ * (including the retail disc name) remain exact arguments. */
+static int launch_nexus_mednafen(const char* mednafen,
+                                 const char* bios,
+                                 const char* requested_disc,
+                                 const char* data_dir) {
+    char default_disc[PATH_MAX];
+    const char* disc = requested_disc;
+    char* child_argv[5];
+    int child_argc = 0;
+
+    if (!nexus_path_is_executable(mednafen)) {
+        fprintf(stderr, "firestaff: --nexus-mednafen must name an executable file\n");
+        return 2;
+    }
+    if (!disc || disc[0] == '\0') {
+        if (!nexus_find_default_disc(data_dir, default_disc, sizeof(default_disc))) {
+            fprintf(stderr,
+                    "firestaff: Nexus CUE not found; pass --nexus-disc or use --data-dir containing nexus/Dungeon Master Nexus (English).cue\n");
+            return 2;
+        }
+        disc = default_disc;
+    }
+    if (!nexus_is_cue_path(disc) || !nexus_path_is_readable(disc)) {
+        fprintf(stderr, "firestaff: --nexus-disc must name a readable .cue file\n");
+        return 2;
+    }
+    if (bios && bios[0] != '\0' && !nexus_path_is_readable(bios)) {
+        fprintf(stderr, "firestaff: --nexus-bios must name a readable BIOS file\n");
+        return 2;
+    }
+
+    child_argv[child_argc++] = (char*)mednafen;
+    if (bios && bios[0] != '\0') {
+        child_argv[child_argc++] = "-ss.bios_jp";
+        child_argv[child_argc++] = (char*)bios;
+    }
+    child_argv[child_argc++] = (char*)disc;
+    child_argv[child_argc] = NULL;
+
+    printf("FIRESTAFF NEXUS EXTERNAL LAUNCH: emulator=%s disc=%s bios=%s\n",
+           mednafen, disc, (bios && bios[0] != '\0') ? bios : "configured-by-mednafen");
+    fflush(stdout);
+
+#if defined(_WIN32)
+    (void)child_argv;
+    fprintf(stderr,
+            "firestaff: --nexus-mednafen is currently implemented for macOS and Linux only\n");
+    return 2;
+#else
+    {
+        pid_t child = fork();
+        int status;
+        if (child < 0) {
+            perror("firestaff: could not start Mednafen");
+            return 1;
+        }
+        if (child == 0) {
+            execv(mednafen, child_argv);
+            perror("firestaff: could not execute Mednafen");
+            _exit(127);
+        }
+        if (waitpid(child, &status, 0) < 0) {
+            perror("firestaff: could not wait for Mednafen");
+            return 1;
+        }
+        if (WIFEXITED(status)) return WEXITSTATUS(status);
+        fprintf(stderr, "firestaff: Mednafen ended unexpectedly\n");
+        return 1;
+    }
+#endif
+}
+
 int main(int argc, char** argv) {
     M11_PhaseA_Options opts;
     int scanData = 0;
     int verbose = 0;
     int theronAuthenticatedFallback = 0;
+    const char* nexusMednafen = NULL;
+    const char* nexusDisc = NULL;
+    const char* nexusBios = NULL;
     M11_PhaseA_SetDefaultOptions(&opts);
 
     for (int i = 1; i < argc; ++i) {
@@ -467,6 +611,18 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--data-dir") == 0 && i + 1 < argc) {
             opts.dataDir = argv[++i];
+            continue;
+        }
+        if (strcmp(a, "--nexus-mednafen") == 0 && i + 1 < argc) {
+            nexusMednafen = argv[++i];
+            continue;
+        }
+        if (strcmp(a, "--nexus-disc") == 0 && i + 1 < argc) {
+            nexusDisc = argv[++i];
+            continue;
+        }
+        if (strcmp(a, "--nexus-bios") == 0 && i + 1 < argc) {
+            nexusBios = argv[++i];
             continue;
         }
         if (strcmp(a, "--csb-hint-oracle") == 0) {
@@ -722,6 +878,26 @@ int main(int argc, char** argv) {
 
     if (scanData) {
         return run_data_scan(opts.dataDir, verbose);
+    }
+
+    if (nexusMednafen || nexusDisc || nexusBios) {
+        if (!nexusMednafen) {
+            fprintf(stderr,
+                    "firestaff: --nexus-disc and --nexus-bios require --nexus-mednafen\n");
+            return 2;
+        }
+        if (!opts.gameId || strcmp(opts.gameId, "nexus") != 0) {
+            fprintf(stderr,
+                    "firestaff: --nexus-mednafen requires --game nexus\n");
+            return 2;
+        }
+        if (opts.bootProbe) {
+            fprintf(stderr,
+                    "firestaff: --nexus-mednafen cannot be combined with --boot-probe\n");
+            return 2;
+        }
+        return launch_nexus_mednafen(nexusMednafen, nexusBios, nexusDisc,
+                                     opts.dataDir);
     }
 
     if (opts.bootProbe && !opts.gameId) {

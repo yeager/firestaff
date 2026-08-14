@@ -198,6 +198,21 @@ firestaff --game <dm1|csb|dm2|nexus|theron>
           --version
 ```
 
+Nexus remains deliberately fail-closed in Firestaff's native runtime until a
+real Saturn title/display-consumer capture exists.  To start the unmodified
+retail Saturn disc now, use the explicit Mednafen route; it passes the CUE to
+Mednafen and does not claim native Firestaff parity:
+
+```sh
+firestaff --game nexus --data-dir "$HOME/.firestaff/data" \
+  --nexus-mednafen /opt/homebrew/bin/mednafen \
+  --nexus-bios "/path/to/Sega Saturn BIOS (J).bin"
+```
+
+`--nexus-disc /path/to/game.cue` overrides the default CUE lookup.  Without
+`--nexus-bios`, Mednafen uses its own configured BIOS.  This mode never
+imports, copies or distributes game media.
+
 `--csb-fmtowns-ja` is an explicit CSB-only F31J request. It selects the
 hash-verified Japanese FM Towns package and fails if that original package is
 not present; it never guesses from the host language or falls back to F31E.

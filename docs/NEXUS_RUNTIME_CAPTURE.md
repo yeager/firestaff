@@ -509,6 +509,29 @@ does not turn a frame into menu, HUD or viewport evidence.
 
 The same producer has an independent SCSP trace patch for the audio lane.
 
+## Explicit retail launch while native parity remains closed
+
+The Firestaff native Nexus route remains blocked: the observed `TITLE.CG`
+residency is not a display-consumer or title-input proof, and the visual
+receipt shows a Saturn-composed 3D title sequence rather than a flat
+`TITLE.CG` framebuffer.  Firestaff must not substitute an inferred renderer.
+
+For an actual playable retail start, the CLI provides an explicit, separate
+Mednafen handoff:
+
+```sh
+firestaff --game nexus --data-dir "$HOME/.firestaff/data" \
+  --nexus-mednafen /opt/homebrew/bin/mednafen \
+  --nexus-bios "/path/to/Sega Saturn BIOS (J).bin"
+```
+
+The default disc is `nexus/Dungeon Master Nexus (English).cue` under
+`--data-dir` (or directly below it when the data directory is already the
+Nexus directory).  `--nexus-disc` can select another readable CUE explicitly.
+The launcher passes exact argument vectors directly to Mednafen; it never
+uses a shell, extracts media, or treats emulator execution as a native
+Nexus-replay receipt.  It is intentionally incompatible with `--boot-probe`.
+
 Firestaff now has a C receipt for the emitted
 `FIRESTAFF_NEXUS_SCSP_WRITE_TRACE_V1` schema. It validates the raw trace hash,
 mailbox writes, the `SDDRVS.TSK` command-handler PC `0x3224`, and the SCSP

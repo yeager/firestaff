@@ -5638,6 +5638,14 @@ authenticated BPK). The remaining work is a Saturn executable or capture
   teckengenerator, karta, palett och aktiv lager-/displayägare innan
   titelrendering eller titelinput kan öppnas.
 
+# Nexus: native title/display parity
+
+- 🔒 Den explicita Mednafen-startvägen gör den autentiska Saturn-utgåvan
+  spelbar från CLI utan att ersätta den blockerade native-vägen. Få en
+  originalcapture som binder titelns aktiva lager, displaykonsument och input
+  till samma session innan Firestaff-native titel, startmeny eller gameplay
+  kan markeras som klar.
+
 # Nexus: binda stabil mode-5-startkälla
 
 - 🔒 Den autentiska 80-frame-witnessen har en komplett mode-5 direct-colour-

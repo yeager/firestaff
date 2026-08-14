@@ -15853,3 +15853,12 @@ timer owners. The focused regression covers this failure path.
   `capture_termination=timeout` innan den avslutar Mednafen. Ett uteblivet
   råvittne kan därmed skiljas från saknad media eller en valideringsmiss i
   manifestet. Regressionstestet täcker den explicita timeout-receipten.
+
+# Nexus: explicit Mednafen-start från CLI (2026-08-14)
+
+- ✅ `firestaff --game nexus --nexus-mednafen <binär>` startar den verkliga
+  Nexus-CUE:n direkt i Mednafen, med valfri `--nexus-bios` och säker
+  standardsökväg under `--data-dir/nexus`. Handoffen använder ingen shell,
+  inga testmedia och påstår inte att den blockerade native-renderaren har
+  parity. Datfri regression verifierar argumentvektorn och avvisar både fel
+  spel och `--boot-probe`.

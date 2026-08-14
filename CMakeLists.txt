@@ -7421,6 +7421,14 @@ if(BUILD_TESTING AND NOT WIN32)
     set_tests_properties(firestaff_cli_game_option_forms PROPERTIES
         LABELS "cli;launcher;data_free"
         TIMEOUT 15)
+    add_test(
+        NAME firestaff_nexus_mednafen_cli
+        COMMAND ${CMAKE_COMMAND} -E env
+                "FIRESTAFF_BIN=$<TARGET_FILE:firestaff>"
+                sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_nexus_mednafen_cli.sh)
+    set_tests_properties(firestaff_nexus_mednafen_cli PROPERTIES
+        LABELS "cli;launcher;data_free;nexus"
+        TIMEOUT 15)
 endif()
 
 add_executable(firestaff_artpack_studio
