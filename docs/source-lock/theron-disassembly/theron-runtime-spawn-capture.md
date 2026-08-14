@@ -1361,6 +1361,9 @@ emulator continues with its built-in PCE palette; this warning is not a
 verified graphics failure and the VDC/VCE snapshots remain screen-space
 diagnostics only. The trace family is retained at
 `/Volumes/Extern-disk/theron-next-r30-20260814T080323Z.*` and is not committed.
+The source-only Firestaff screen adapter now recognizes this pair by its
+verified FNV-1a identities: VRAM `ee9374fa`, VCE `c17c0a95`. This permits
+screen-space replay while leaving all level/object and gameplay gates closed.
 ## 2026-08-13 — fresh dungeon savestate replay remains transport-negative
 
 A new local replay from the authenticated dungeon `.mc0` state was run against

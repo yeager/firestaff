@@ -193,7 +193,11 @@ int theron_v1_vram_trace_load_known_capture_files(
         /* 2026-08-14 external-disk r25 direct-provenance capture.  Its
          * source-LBA/$611D/$C3A0 join is admitted only as screen-space
          * capture data; level/object/gameplay semantics remain closed. */
-        {0xe08b571du, 0x298f9642u}
+        {0xe08b571du, 0x298f9642u},
+        /* 2026-08-14 r30 state replay.  The runtime spawn/level join is
+         * negative, but the complete VDC/VCE pair is still an authenticated
+         * screen-space frame and may be replayed without semantic promotion. */
+        {0xee9374fau, 0xc17c0a95u}
     };
 
     if (!vp || !vram_path || !vce_path) return -1;
