@@ -5658,6 +5658,10 @@ authenticated BPK). The remaining work is a Saturn executable or capture
   träff i den lokala Nexus-korpusen och engelska ISO:n, även efter Saturn-
   byteordningsnormalisering. Få source-buffer/CD-läsningsreceipt i samma
   session innan titel, meny, HUD eller viewport får publiceras.
+- 🔒 Den längre 2 400-frame-witnessen bekräftar samma oägda 33 280-byte
+  mode-5-intervall vid frames 1 250, 1 400 och 2 399, med olika dynamiska
+  payloadhashar men noll träffar i den autentiserade källkorpusen. Få en
+  samtidlig CD→RAM-/SH-2-source-receipt före VDP1-källan kan ges semantik.
 # Theron: bound category-4 source group materialization
 
 The static source-monster bridge now uses the authenticated four-health-word

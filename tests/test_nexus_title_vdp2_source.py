@@ -74,6 +74,8 @@ def main() -> int:
             streamed = list(MODULE.iter_frame_regions_file(capture, 1))
             assert len(streamed) == 1 and streamed[0][0] == 0
             assert len(streamed[0][1]["vdp2-vram"]) == 0x80000
+            assert len(streamed[0][1]["vdp1-vram"]) == 0x80000
+            assert streamed[0][1]["vdp1-state"] == "state=legacy-v1-unavailable"
     finally:
         MODULE.TITLE_BIN_SHA256, MODULE.TITLE_CG_SHA256 = original_bin, original_cg
     print("nexus title VDP2 source analyser: PASS")

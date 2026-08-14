@@ -119,7 +119,8 @@ def iter_frame_regions_file(path: Path, required_frames: int):
     Full Saturn captures are several GiB.  The ordinary ``frame_regions`` API
     deliberately remains a simple in-memory fixture helper, while this
     iterator validates the same producer framing incrementally.  It yields
-    only the VDP2 registers, VRAM and CRAM needed by source-span analyzers.
+    VDP1 VRAM plus VDP2 registers, VRAM and CRAM needed by source-span
+    analyzers.
     Transport validation is still strict: frame numbering, producer headers,
     fixed payload lengths and EOF must all agree with ``required_frames``.
     """
@@ -141,16 +142,21 @@ def iter_frame_regions_file(path: Path, required_frames: int):
             vdp1_magic = handle.readline()
             if vdp1_magic not in (VDP1_MAGIC, VDP1_MAGIC_V2, VDP1_MAGIC_MDFN):
                 raise ValueError(f"missing VDP1 marker for frame {frame_index}")
+            state_text = "state=legacy-v1-unavailable"
             if vdp1_magic == VDP1_MAGIC_V2:
                 state = handle.readline()
                 if not state.startswith(b"state="):
                     raise ValueError(f"missing VDP1 state line for frame {frame_index}")
+                state_text = state.rstrip(b"\n").decode("ascii")
             elif vdp1_magic == VDP1_MAGIC_MDFN:
                 state_offset = handle.tell()
                 state = handle.readline()
-                if not state.startswith(b"state="):
+                if state.startswith(b"state="):
+                    state_text = state.rstrip(b"\n").decode("ascii")
+                else:
                     handle.seek(state_offset)
-            _read_exact(handle, VDP1_PAYLOAD_BYTES, f"VDP1 payload for frame {frame_index}")
+            vdp1 = _read_exact(handle, VDP1_PAYLOAD_BYTES,
+                               f"VDP1 payload for frame {frame_index}")
             vdp2_offset = handle.tell()
             vdp2_magic = _read_exact(handle, len(VDP2_MAGIC),
                                      f"VDP2 marker for frame {frame_index}")
@@ -165,6 +171,8 @@ def iter_frame_regions_file(path: Path, required_frames: int):
             reg_bytes = VDP2_REGIONS[0][1]
             vram_bytes = VDP2_REGIONS[1][1]
             yield frame_index, {
+                "vdp1-state": state_text,
+                "vdp1-vram": vdp1[:VDP1_REGIONS[0][1]],
                 "vdp2-regs": vdp2[:reg_bytes],
                 "vdp2-vram": vdp2[reg_bytes:reg_bytes + vram_bytes],
                 "vdp2-cram": vdp2[reg_bytes + vram_bytes:],

@@ -16,7 +16,7 @@ import hashlib
 import struct
 from pathlib import Path
 
-from analyze_nexus_saturn_runtime_capture import frame_regions
+from analyze_nexus_saturn_runtime_capture import iter_frame_regions_file
 from analyze_nexus_vdp1_command_window import command_window
 from fixtures.nexus_v1_disc_file_hashes import DISC_HASH
 
@@ -171,10 +171,16 @@ def main() -> int:
         print("NEXUS_VDP1_SOURCE_JOIN_INVALID: negative frame")
         return 1
     try:
-        blob = args.capture.read_bytes()
         required = args.capture_frames or args.frame + 1
-        frames, states = frame_regions(blob, required)
-        commands = command_window(frames[args.frame]["vdp1-vram"], states[args.frame])
+        selected_frame = None
+        for frame_index, frame in iter_frame_regions_file(args.capture, required):
+            if frame_index == args.frame:
+                selected_frame = frame
+                break
+        if selected_frame is None:
+            raise ValueError("selected frame is absent from capture")
+        commands = command_window(selected_frame["vdp1-vram"],
+                                  selected_frame["vdp1-state"])
         mns = mns_surfaces(args.data_dir)
         dgn = dgn_structure2_surfaces(args.data_dir)
     except (OSError, ValueError, struct.error) as error:
@@ -182,7 +188,7 @@ def main() -> int:
         return 1
 
     draws: list[tuple[int, int, int, bytes]] = []
-    vram = frames[args.frame]["vdp1-vram"]
+    vram = selected_frame["vdp1-vram"]
     for offset, words in commands:
         control = words[0]
         command_type = control & 0x000F

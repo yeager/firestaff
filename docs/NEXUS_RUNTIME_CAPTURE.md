@@ -504,6 +504,16 @@ strictly negative for this recorded window. The analyzer now streams capture
 frames from disk so multi-gigabyte witnesses are checked without loading the
 whole raw file into memory.
 
+The same witness was sampled in VDP1 immediately before the scheduled Start
+input (frame 1,250), at the next input boundary (frame 1,400), and at its
+final frame (2,399). Each frame has one observed mode-5 draw reading
+`0x47c00..0x4fe00` (33,280 bytes). The bytes change between samples, but no
+exact or Saturn-word-swapped span matches the 126 hash-verified retail files,
+815 MNS surfaces, or 1,678 bounded Structure2 surfaces. This is a negative
+source-owner result for that interval; it neither identifies a title nor
+permits a texture fallback. The VDP1 source-join tool now streams the selected
+frame rather than allocating the complete multi-gigabyte witness.
+
 Conversely, the retained four-frame menu-window witness contains the complete
 word-swapped `TITLE.CG` payload at VDP2 VRAM `0x24020` and the word-swapped
 32-byte title palette at CRAM `0x400`, while all five title MAPD cell spans

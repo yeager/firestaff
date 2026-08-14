@@ -15874,3 +15874,11 @@ timer owners. The focused regression covers this failure path.
   startwitnessen är därmed inventerad med exakt samma TITLE.CG/MAPD/palett-
   kriterier och ger ett rent negativt resultat. Ingen native
   titel-/menyadmission har öppnats.
+
+# Nexus: strömmande VDP1-källinventering (2026-08-14)
+
+- ✅ VDP1 source-joinen använder nu samma strömmande råcapture-läsare och
+  kan därför kontrollera sena frames utan en multi-GiB-allokering. Tre
+  inputnära frames i den autentiska 2 400-frame-witnessen bekräftar den
+  oägda mode-5-källan men inte någon retail source owner; native admission
+  är fortsatt stängd.
