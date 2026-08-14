@@ -7,6 +7,21 @@ door-use route performs the state transition and key validation; this keeps
 source-bound Track 02 object state transactional and fail-closed. A stair
 query likewise returns `STAIRS` only when the destination level is resident.
 
+## r30 emulator/capture boundary
+
+The 2026-08-14 r30 state replay retained 65,756 spawn-register rows, 256
+`$B0E5` address hits, 2,213 RNG-window samples, 65,536 main-RAM consumer
+reads and 4,096 target-write rows. The `$B0E5` register values remained
+`A=$2C/$85`, so there were no valid `A=0..3` spawn entries; the same session
+had no authenticated CD→RAM receipt and `transition=missing`. It remains
+negative overlay evidence and does not open spawn, RNG, AI, combat or record
+semantics.
+
+Mednafen also logged a missing optional `palettes/pce.pal` file. The emulator
+falls back to its built-in PCE palette; this warning is not evidence of a
+Track 02 graphics failure. VDC/VCE captures remain screen-space diagnostics
+until a source-owned consumer join is proven.
+
 ## Scripted replay transport boundary
 
 The latest authenticated external-disk replay uses the US Track 02/System

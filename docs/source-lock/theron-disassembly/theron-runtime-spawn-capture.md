@@ -1339,6 +1339,28 @@ Firestaff now validates this sidecar through
 monotonic timestamps, bounded addresses/registers and writer coordinates are
 all checked. The parser remains provenance-only and does not change the
 negative semantic conclusion above.
+
+## 2026-08-14 — r30 state replay repeats the rejected `$B0E5` overlay
+
+The external-disk r30 replay used the authenticated US CUE/System Card and
+the existing late Mednafen state in one instrumented process. It retained
+65,756 spawn-register rows, 256 logical `$B0E5` address hits, 2,213 RNG-window
+samples, 65,536 main-RAM consumer reads and 4,096 target-write rows. Every
+retained `$B0E5` entry observed at physical PC `$000E10E5` had `A=$2C` or
+`A=$85`; the parser therefore reports `spawn_entry_b0e5_samples=0`.
+
+The same receipt has `authenticated_cd_ram_receipts=0`,
+`game_main_ram_e009_dispatches=0` and `transition=missing`. The 256 hits are
+the same rejected overlay class already seen in the prior state replays; they
+do not establish regular-spawn category, `$4644/$4667` ownership, RNG return,
+target publication or a live creature record. No spawn, AI, combat, generator,
+T700 or T900 semantics may be promoted from this run.
+
+Mednafen stdout contains a missing optional `palettes/pce.pal` warning. The
+emulator continues with its built-in PCE palette; this warning is not a
+verified graphics failure and the VDC/VCE snapshots remain screen-space
+diagnostics only. The trace family is retained at
+`/Volumes/Extern-disk/theron-next-r30-20260814T080323Z.*` and is not committed.
 ## 2026-08-13 — fresh dungeon savestate replay remains transport-negative
 
 A new local replay from the authenticated dungeon `.mc0` state was run against

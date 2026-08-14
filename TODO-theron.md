@@ -9,6 +9,14 @@
 > was parser-ready but init-only. The current 2026-08-14 boundary is recorded
 > above and includes the source-record join plus the `$C3A0` execution window.
 
+> **Latest runtime rejection (2026-08-14):** The r30 state replay retained
+> 256 `$B0E5` address hits and 65,756 register rows, but the observed A values
+> remain `$2C/$85`; it has zero valid `A=0..3` entries, zero authenticated
+> CD→RAM receipts and `transition=missing`. It is negative overlay evidence,
+> not a spawn witness. Mednafen also reported a missing optional
+> `palettes/pce.pal`; it fell back to its built-in palette, so this warning is
+> not a Track 02 graphics proof.
+
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
 ## 2026-08-14 — r26 state replay reaches the runtime `$2600` consumer window
