@@ -15836,3 +15836,9 @@ timer owners. The focused regression covers this failure path.
   direkt och väljer endast `data/graphics.dat` i RAM. ZIP:ens provenance och
   canonical content hash behålls; ingen lös sibling-fil eller extraktion öppnar
   språkoverlayn.
+# Nexus: tydlig timeout-orsak i Saturn-capture (2026-08-14)
+
+- ✅ Den externa Saturn-capture-launchern skriver nu
+  `capture_termination=timeout` innan den avslutar Mednafen. Ett uteblivet
+  råvittne kan därmed skiljas från saknad media eller en valideringsmiss i
+  manifestet. Regressionstestet täcker den explicita timeout-receipten.

@@ -147,9 +147,10 @@ Körningen sker i denna ordning. Sökvägarna pekar medvetet på extern disk.
 
 Varje receipt ska därför innehålla BIOS- och disc-hash, sessionsnamn,
 framefönster, rådumpens layout samt SHA-256 för varje faktiskt producerat
-register-, source- och VDP-skrivspår. Om processen timeoutar eller rådumpen
-inte får sitt capture-magic ska körningen kasseras som observationsförsök,
-även om enskilda tracefiler hann skrivas.
+register-, source- och VDP-skrivspår. Om processen timeoutar skrivs dessutom
+`capture_termination=timeout` i manifestet. Om processen timeoutar eller
+rådumpen inte får sitt capture-magic ska körningen kasseras som
+observationsförsök, även om enskilda tracefiler hann skrivas.
 
 ### Runtime-transformen före VDP1
 

@@ -377,6 +377,7 @@ if [[ -e "$tmp_dir/trace-timeout.raw" ]]; then
   exit 1
 fi
 grep -Fq 'capture_exit_status=1' "$tmp_dir/manifest-timeout.txt"
+grep -Fq 'capture_termination=timeout' "$tmp_dir/manifest-timeout.txt"
 
 reject_validator="$tmp_dir/reject-validator"
 python3 - "$reject_validator" <<'PY'

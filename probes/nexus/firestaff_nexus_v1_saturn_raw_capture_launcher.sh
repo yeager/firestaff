@@ -526,6 +526,12 @@ if ((timeout_seconds > 0)); then
       # Mednafen's signal handler flushes the capture but may not return
       # promptly. Give it a short grace period, then guarantee that the
       # operator launcher cannot remain attached to a dead capture session.
+      # The child normally exits with a generic non-zero status after SIGTERM.
+      # Record the actual cause before signalling it, so an incomplete late
+      # capture cannot be confused with missing media or a validator failure.
+      if ! grep -q '^capture_termination=timeout$' "$manifest"; then
+        printf 'capture_termination=timeout\n' >> "$manifest"
+      fi
       terminate_capture_process "$capture_child_pid"
     fi
   ) &
