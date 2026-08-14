@@ -2,6 +2,29 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-14: A clean development-only Mednafen run used the authentic Japanese
+retail Saturn CUE/track set from the supplied archive, J-BIOS 1.01, and one
+START press at the measured title prompt (225 seconds). No A/B/C or fast-forward
+input was sent. The original produced an orange transition at 300 seconds and
+intro-FMV frames at 420 and 540 seconds. The SHA-256 witnesses are
+`f398652cea899e28c442c5db7d1cb8cf74f782b0ddaa1658eed1fff77928460c`,
+`07a3c3e166474ec8baba67dea3da1e3d82ffa4607abde3d960c34e379f73c1ec`, and
+`a849419452636b2360d602e39262c58b267ee28f0009b63d82c5415842d46a31`.
+This is a verified original visual baseline for the START-to-FMV route, not a
+gameplay or save witness; no Nexus production gate is opened by it.
+
+2026-08-14: A development-only Mednafen comparison used the authentic
+Japanese Saturn release extracted to a temporary external-disk directory from
+the supplied archive, with J-BIOS 1.01 and the same verified input bindings.
+The Japanese title prompt and its START/A transition reproduce the same
+original FMV route as the English merged disc; a title capture hash is
+`b10a8f38734bdb6b5a639a6969f1ea0171a1a28f76a8107d0e9a2980260e539a`.
+This rules out the English translation title surface as the sole cause of the
+return-to-title observation. It still does not identify the Saturn menu,
+Hall-of-Champions start pose or save consumer, so no production route is
+opened. The temporary extracted files are outside the repository and are not
+runtime data.
+
 2026-08-14: A long clean Mednafen run used the authenticated English merged
 CUE, J-BIOS 1.01 and the known-good Saturn input build. START was sent at the
 measured title prompt (225 seconds); the original then displayed its FMV and

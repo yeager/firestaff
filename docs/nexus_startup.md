@@ -27,7 +27,7 @@ position och riktning har fångats och bundits till samma runtime-källa.
 | `FACE.BIN` | 20 verkliga PRS3-porträtt, 56×56, med källpaletter; VDP1-destination saknas |
 | `FONT256.S2D` | 242 CG-tiles behålls i produktionskällan; Saturns page/attribute/glyph-mapping saknas |
 | `MENU.BPK` | 162 PRS3-ytor avkodas till source-bound indexed bytes; menyordning, CLUT och VDP1/VDP2 saknas |
-| Mednafen visual baseline | Ren fönsterfångst visar autentisk Nexus-logotyp och titel-/entréanimation; meny/LEV01-identitet saknas fortfarande |
+| Mednafen visual baseline | Ren J-BIOS-fångst mot autentisk japansk retail visar titel/start, orange övergång och intro-FMV; meny/LEV01-identitet saknas fortfarande |
 
 ## Runtimegräns
 
