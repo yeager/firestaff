@@ -421,16 +421,21 @@ int main(int argc, char **argv) {
             char *text = (char *)malloc(fsz + 1);
             if (!text) { fclose(f); script_path = NULL; }
             else {
-                fread(text, 1, fsz, f);
-                text[fsz] = '\0';
+                size_t bytes_read = fread(text, 1, (size_t)fsz, f);
                 fclose(f);
 
-                JsonParser p = {text, 1};
-                TokenKind tok;
-                char buf[256];
+                if (bytes_read != (size_t)fsz) {
+                    free(text);
+                    script_path = NULL;
+                } else {
+                    text[fsz] = '\0';
 
-                /* Parse top-level object */
-                if (next_token(&p, &tok, buf, sizeof(buf)) == 0 && tok == TOKEN_LEFT_BRACE) {
+                    JsonParser p = {text, 1};
+                    TokenKind tok;
+                    char buf[256];
+
+                    /* Parse top-level object */
+                    if (next_token(&p, &tok, buf, sizeof(buf)) == 0 && tok == TOKEN_LEFT_BRACE) {
                     char name[64] = "", level_str[16] = "", seed_str[64] = "";
                     find_str(&p, "name", name, sizeof(name));
                     find_str(&p, "level", level_str, sizeof(level_str));
@@ -446,8 +451,9 @@ int main(int argc, char **argv) {
                         parse_steps(&p, acts, ticks_arr, expected, &n_steps);
                         printf("Steps: %d\n", n_steps);
                     }
+                    }
+                    free(text);
                 }
-                free(text);
             }
         }
     }
