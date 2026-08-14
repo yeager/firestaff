@@ -2050,9 +2050,14 @@ the remaining SRM blocker is still only original body-layout correlation.
   cycles; restore positive legacy links only when backed by an authenticated
   Track 02/T900 record corpus.
 
-- [ ] THERON-V1-TRACK02-JP-LEVEL-DATA: promote the authenticated Japanese
-  decompression and tile/map/object publication remain gated.
-  Decompression and tile/map/object publication remain gated.
+- [ ] THERON-V1-TRACK02-JP-LEVEL-DATA: the authenticated Japanese Track 02
+  framing and bounded HuC6280 resource admission are verified for all seven
+  level blocks, and the source-bound JP creature/object corpus is exercised
+  by the real-data level-loader tests. This does not promote the bytes to
+  original tile/map/object semantics: the stage-2 MPR destination, complete
+  decompression consumer, and the later runtime publication path remain
+  unbound. Keep JP tile/map/object publication fail-closed until an
+  authenticated JP runtime consumer capture identifies those destinations.
 
 - [ ] THERON-V1-TRACK02-VRAM-CONSUMER: bind the real VDC BAT/tile and VCE
   palette snapshot to the source-owned square/material/UI consumer. An
