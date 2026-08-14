@@ -22,6 +22,18 @@ this replay does not open square/tile/HUD/T700/T900 semantics or production
 dungeon admission. The raw sidecars and instrumented emulator remain local on
 the external disk.
 
+## r26 state-replay consumer boundary
+
+An authenticated r26 state replay now has a stronger main-RAM consumer
+witness: 65,536 reads, 311 reads in `$2600-$27FF`, 128 non-zero values, 311
+runtime reads, 47 `$C3A0-$C429` reads and six distinct reader PCs. The receipt
+still fails the `$2c54-$2c69` code-window check and its transition sidecar has
+no CD-origin receipts or game-owned `$E009` dispatches. It is therefore
+runtime-address evidence only; level/object, square/tile, VRAM/VCE, HUD, T700
+and T900 publication remain fail-closed. The exact capture identity and
+boundary are recorded in
+`docs/source-lock/theron-disassembly/theron-runtime-spawn-capture.md`.
+
 ## Runtime record-table witness
 
 An authentic Mednafen savestate execution-window capture now identifies a

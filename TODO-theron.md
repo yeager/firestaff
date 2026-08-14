@@ -11,6 +11,25 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-14 — r26 state replay reaches the runtime `$2600` consumer window
+
+- ✅ En aktuell r26-replay mot den hashverifierade US Track 02/System Card
+  accepterar den lokala `main-ram-consumer`-sidecaren i parser-only-läge:
+  `reads=65,536`, `$2600–$27ff` `target_reads=311`, `target_nonzero=128`,
+  `target_runtime=311`, `target_c3a0=47`, `target_c3a0_nonzero=13` och sex
+  distinkta `$C3A0–$C429`-reader-PC:er. Detta är nu verifierad runtime-
+  adress-/körningsproveniens, inte en semantisk level/object-publicering.
+- ❌ Samma sidecar verifierar inte det source-owned kodfönstret
+  `$2c54–$2c69`, och capturens transition receipt har noll CD-origin-
+  receipts, noll game-owned `$E009`-dispatchar och `transition=missing`.
+  State-replayen får därför inte öppna `THERON-V1-TRACK02-LIVE-LOADER-CONSUMER`,
+  JP-level-data, VRAM/VCE-semantik eller HuC6280-RAM-publicering.
+- 🔒 Capture identity: main-RAM sidecar MD5
+  `021efea135de2ac0b8ae241ffd63eaf6`, instrumenterad r26-binär MD5
+  `ab6dbf674c68ee4891a185b83cff3149`, state MD5
+  `82e151fa51aa3e7d578d0dfdb09eb55b`. Sidecars och binär ligger lokalt på
+  extern-disk och ska inte committas.
+
 ## 2026-08-14 — synthetic cross-route regression follows explicit door use
 
 - ✅ Cross-route-proben använder nu den verifierade mechanics-kontrakten:

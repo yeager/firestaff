@@ -1,5 +1,35 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-14 — r26 state replay proves runtime target reads but not the code window
+
+The current r26 instrumented replay against the authenticated US Track 02 and
+System Card was admitted in parser-only mode from
+`theron-capture-next-state-tqus.trace.main-ram-consumer`. The receipt reports:
+
+```text
+main-ram reads:             65536
+target $2600-$27ff reads:   311
+target non-zero reads:      128
+target runtime reads:       311
+target $C3A0 reads:         47
+target $C3A0 non-zero:      13
+target $C3A0 reader PCs:     6
+semantic publication:       blocked
+```
+
+This is stronger runtime-address evidence than the earlier `$CB22`-only
+initialization capture. The ordinary code-window verification still fails for
+`$2c54-$2c69`, and the same capture's transition receipt reports zero
+CD-origin receipts, zero game-owned `$E009` dispatches and
+`transition=missing`. It is therefore a state-replay consumer witness, not a
+source-LBA-to-RAM causal join and not proof of level, object, square, tile,
+HUD, T700 or T900 ownership.
+
+The sidecar MD5 is `021efea135de2ac0b8ae241ffd63eaf6`; the instrumented r26
+binary is `ab6dbf674c68ee4891a185b83cff3149` and the replay state is
+`82e151fa51aa3e7d578d0dfdb09eb55b`. These local artifacts remain on the
+external disk and are intentionally not repository inputs.
+
 ## 2026-08-14 — autoloaded state reaches only a bank-overlay `$B0E5`
 
 The r26 instrumented binary was run with the external-disk Mednafen state
