@@ -11,6 +11,18 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-14 — synthetic cross-route regression follows explicit door use
+
+- ✅ Cross-route-proben använder nu den verifierade mechanics-kontrakten:
+  `theron_v1_door_open()` körs explicit före rörelse över en stängd,
+  olåst fixture-dörr. Rörelse konsumerar inte implicit nyckel eller ändrar
+  dörrstate.
+- ✅ Hela Theron-regexen är grön efter korrigeringen: 45 Theron-labeltester
+  passerar; sex lokala capturetester skippar korrekt när råa externa sidecars
+  saknas.
+- 🔒 Detta ändrar inte source-level gates eller öppnar någon oidentifierad
+  T500/T600/T700/T900-konsument.
+
 ## 2026-08-14 — state replay rejects the `$B0E5` overlay
 
 - ✅ En r26-autoloadad Mednafen-state gav 65 756 registerprover och 256

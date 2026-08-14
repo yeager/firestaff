@@ -2,6 +2,16 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+## 2026-08-14 — cross-route-proben använder explicit dörrövergång
+
+- ✅ Den syntetiska cross-route-proben öppnar nu sin olåsta fixture-dörr via
+  `theron_v1_door_open()` innan den testar rörelse, i linje med den
+  source-boundary som förbjuder implicit dörr-/nyckelmutation.
+- ✅ Därefter passerar hela den deterministiska kedjan med pool, alarm,
+  trigger, teleporter, pit, post-move drain och TAKE.
+- ✅ Verifiering: fokuserad CTest 1/1 och hela Theron-regexen 45/45 gröna;
+  sex capturetester är förväntade skippar utan lokala sidecars.
+
 ## 2026-08-13 — source-bound pits no longer use fixture damage
 
 - ✅ Source-bound pit query, movement and the public pit handler now remain

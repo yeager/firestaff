@@ -111,7 +111,7 @@ The strongest current proof is:
 - `theron_v1_viewport_renderer` and `theron_v1_rendering`: the data-free
   Theron viewport, palette, UI chrome, and M11 blit contracts are covered.
 - `theron_v1_cross_route_mechanics`: synthetic runtime mechanics now cover a
-  bounded movement/interact route across doors, pools, alarms, triggers,
+  bounded movement/interact route across explicit door opening, pools, alarms, triggers,
   teleporters, pits, post-move drain, and click-route TAKE.
 - `theron_v1_runtime_screenshot_readiness`: when real Track 02 data is
   present, the verifier launches Firestaff under dummy video and records M11

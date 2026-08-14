@@ -4,7 +4,7 @@
  * Theron's Quest V1 cross-route mechanics runtime evidence.
  *
  * This is a data-free route probe: it builds a small synthetic dungeon and
- * walks a deterministic path through movement, door auto-open, pool recovery,
+ * walks a deterministic path through movement, explicit door opening, pool recovery,
  * alarm/spawner activation, trigger-linked object activation, teleporter
  * resolution, pit fall damage, post-move drain, and click-route TAKE.
  *
@@ -163,6 +163,10 @@ static RouteSummary run_route(void) {
     RouteSummary s;
     memset(&s, 0, sizeof(s));
 
+    /* Movement never consumes a key or mutates a closed door implicitly.
+     * The explicit door-use route owns that transition; this fixture has an
+     * unlocked door, so opening it is source-independent and deterministic. */
+    CHECK_INT("explicit fixture door open", theron_v1_door_open(&w, 9, 8), 0);
     s.rc_door = theron_v1_move_party(&w, THERON_DIR_EAST);
     s.rc_pool = theron_v1_move_party(&w, THERON_DIR_EAST);
     s.rc_alarm = theron_v1_move_party(&w, THERON_DIR_EAST);
@@ -195,7 +199,7 @@ static RouteSummary run_route(void) {
 }
 
 static void check_summary(const RouteSummary *s) {
-    CHECK_INT("closed door auto-opens and moves", s->rc_door, THERON_MOVE_OK);
+    CHECK_INT("explicitly opened door permits movement", s->rc_door, THERON_MOVE_OK);
     CHECK_INT("pool square moves", s->rc_pool, THERON_MOVE_OK);
     CHECK_INT("alarm square moves", s->rc_alarm, THERON_MOVE_OK);
     CHECK_INT("trigger square moves", s->rc_trigger, THERON_MOVE_OK);
