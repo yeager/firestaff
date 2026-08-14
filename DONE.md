@@ -1,5 +1,25 @@
 # DM2: active-runtime verification across supplied editions (2026-08-12)
 
+## Nexus: production semantic-boundary repair (2026-08-14)
+
+- ✅ `firestaff_nexus` no longer links the inferred DM1-/ReDMCSB-shaped
+  combat, magic, experience, rest/status, light, action-timer, door, trap or
+  projectile implementations. The linked ABI adapters preserve state and
+  reject those operations until a real Saturn dispatcher/writeback consumer
+  has been captured.
+- ✅ `test_nexus_v1_production_semantic_boundary` locks this at link/runtime
+  level. It verifies that no inferred RNG, combat damage, spell, XP, rest,
+  light, timer, door, trap or projectile result can leak through the retail
+  library.
+- ✅ The Nexus M11 startup gate plus Saturn runtime, VDP1 compositor and tile
+  transform regressions remain green with this boundary in place.
+- ✅ `--game nexus --data-dir ~/.firestaff/data --boot-probe` now scopes the
+  direct scan to `.firestaff/data/nexus`, prefers a verified loose Saturn
+  image over a neighbouring archival `.7z`, and exits after its receipt.
+  Whole-file MD5 checks now precede archive-member enumeration; unchanged
+  originals use the existing path/mtime/size-invalidation cache instead of
+  repeatedly unpacking archive contents.
+
 ## DM2 M12 source-owner catalog and FM Towns archive launch (2026-08-13)
 
 - ✅ M12 väljer rätt source-owner från den gemensamma DM2-roten för DOS,

@@ -5537,6 +5537,29 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
 
         if (S_ISREG(st.st_mode)) {
             int matchIndex;
+            /* A known whole-file image/archive is a complete match in its
+             * own right.  Check it before opening the container: otherwise
+             * a selected multi-disc archive is fully enumerated (and, for
+             * external formats, each candidate member streamed through an
+             * extractor) even though the archive's cached MD5 already
+             * identifies the requested original media. */
+            if ((st.st_size <= ASSET_SCAN_MAX_FILE_BYTES ||
+                 allowLargeWholeFile) &&
+                st.st_size >= 16 && file_md5(path, hex)) {
+                matchIndex = md5_list_match_index(hex, md5List, matched,
+                                                   md5Count);
+                if (matchIndex >= 0 &&
+                    copy_match_path(path, outPaths[matchIndex],
+                                    ASSET_PATH_MAX)) {
+                    matched[matchIndex] = 1;
+                    ++foundCount;
+                    if (foundCount >= md5Count) {
+                        closedir(d);
+                        return foundCount;
+                    }
+                    continue;
+                }
+            }
             if (is_supported_container_path(path)) {
                 if (!scanContainers) {
                     continue;
@@ -5598,11 +5621,6 @@ static int scan_dir(const char *dir, const char *expectedMd5,
         if (stat(path, &st) != 0) continue;
 
         if (S_ISREG(st.st_mode)) {
-            if (is_supported_container_path(path) &&
-                scan_container_by_md5(path, expectedMd5, outPath, outPathLen)) {
-                closedir(d);
-                return 1;
-            }
             if (st.st_size > ASSET_SCAN_MAX_FILE_BYTES &&
                 !is_known_large_whole_file_hash(expectedMd5)) {
                 continue;
@@ -5614,6 +5632,11 @@ static int scan_dir(const char *dir, const char *expectedMd5,
                     closedir(d);
                     return 0;
                 }
+                closedir(d);
+                return 1;
+            }
+            if (is_supported_container_path(path) &&
+                scan_container_by_md5(path, expectedMd5, outPath, outPathLen)) {
                 closedir(d);
                 return 1;
             }
@@ -5662,6 +5685,23 @@ static int scan_dir_by_md5_list(const char *dir, const char *const *md5List,
             int matchIndex;
             sz.LowPart = fd.nFileSizeLow;
             sz.HighPart = fd.nFileSizeHigh;
+            if (!((sz.QuadPart > ASSET_SCAN_MAX_FILE_BYTES &&
+                   !allowLargeWholeFile) || sz.QuadPart < 16) &&
+                file_md5(path, hex)) {
+                matchIndex = md5_list_match_index(hex, md5List, matched,
+                                                   md5Count);
+                if (matchIndex >= 0 &&
+                    copy_match_path(path, outPaths[matchIndex],
+                                    ASSET_PATH_MAX)) {
+                    matched[matchIndex] = 1;
+                    ++foundCount;
+                    if (foundCount >= md5Count) {
+                        FindClose(h);
+                        return foundCount;
+                    }
+                    continue;
+                }
+            }
             if (is_supported_container_path(path)) {
                 if (!scanContainers) {
                     continue;
@@ -5798,16 +5838,16 @@ int asset_find_by_md5(const char *searchDir, const char *expectedMd5,
         scan_cache_end();
         return 1;
     }
-    if (scan_container_by_md5(searchDir, normalizedMd5, outPath, outPathLen)) {
-        scan_cache_end();
-        return 1;
-    }
     /* Keep the normalized caller expectation separate from the root-file
      * digest.  Reusing normalizedMd5 here made every direct file search a
      * false positive after file_md5() overwrote the expected value. */
     if (file_md5(searchDir, actualMd5) &&
         strcmp(actualMd5, normalizedMd5) == 0 &&
         copy_match_path(searchDir, outPath, outPathLen)) {
+        scan_cache_end();
+        return 1;
+    }
+    if (scan_container_by_md5(searchDir, normalizedMd5, outPath, outPathLen)) {
         scan_cache_end();
         return 1;
     }
@@ -5876,10 +5916,10 @@ int asset_find_by_md5_list(const char *searchDir, const char *const *md5List,
                 return 1;
             }
         }
-        /* Keep direct archive selection equivalent to selecting its parent
-         * directory. This is needed for launcher-selected .7z/.zip images. */
-        (void)scan_container_by_md5_list(searchDir, normalizedPtrs,
-                                         normalizedCount, foundPaths, matched);
+        /* A directly selected archive may itself be the verified source.
+         * Hash it before inspecting its contents for the same reason the
+         * directory walker does: an unchanged whole-file match must not
+         * cause expensive external archive enumeration. */
         if (!matched[0]) {
             char directHex[33];
             int directIndex;
@@ -5893,6 +5933,10 @@ int asset_find_by_md5_list(const char *searchDir, const char *const *md5List,
                 }
             }
         }
+        /* Keep direct archive selection equivalent to selecting its parent
+         * directory when the archive itself was not the requested media. */
+        (void)scan_container_by_md5_list(searchDir, normalizedPtrs,
+                                         normalizedCount, foundPaths, matched);
         (void)scan_dir_by_md5_list(searchDir, normalizedPtrs, normalizedCount,
                                    foundPaths, matched, 0, maxDepth, 1);
         for (i = 0; i < normalizedCount; ++i) {

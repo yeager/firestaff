@@ -3613,6 +3613,8 @@ static int m12_try_match_direct_nexus_request(
     char runtimeRoot[M12_ASSET_DATA_DIR_CAPACITY],
     int* outVersionIndex) {
     char scanRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char fastRoots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY];
+    size_t matchedRootIndex;
     size_t i;
     if (outVersionIndex) {
         *outVersionIndex = -1;
@@ -3652,6 +3654,24 @@ static int m12_try_match_direct_nexus_request(
         m12_copy_string(scanRoot, sizeof(scanRoot), requestedDataDir);
     } else {
         return 0;
+    }
+    /* Prefer canonical loose Saturn images in the explicitly selected Nexus
+     * directory.  The same directory can retain an archival .7z alongside
+     * already extracted English/French ISOs; recursive matching must not
+     * inspect that solid archive before it reaches the ready-to-use image.
+     * Hashes still decide admission, and the shared cache invalidates when
+     * the file's mtime or size changes. */
+    memset(fastRoots, 0, sizeof(fastRoots));
+    m12_copy_string(fastRoots[0], sizeof(fastRoots[0]), scanRoot);
+    for (i = 3U; i < sizeof(g_nexusVersions) / sizeof(g_nexusVersions[0]); ++i) {
+        if (m12_try_match_version_fast_candidates(fastRoots, 1U,
+                                                  &g_nexusVersions[i],
+                                                  matchedPath, matchedMd5,
+                                                  &matchedRootIndex)) {
+            m12_copy_string(runtimeRoot, M12_ASSET_DATA_DIR_CAPACITY, scanRoot);
+            if (outVersionIndex) *outVersionIndex = (int)i;
+            return 1;
+        }
     }
     /* Prefer the exact fan-translation container before looking for the
      * shared inner DM.BIN marker.  The English/French discs intentionally
@@ -6323,7 +6343,18 @@ void M12_AssetStatus_ScanGameWithOptions(
         }
     }
     if (gameId && strcmp(gameId, "nexus") == 0) {
-        if (m12_scan_direct_nexus_request(status, requestedDataDir, NULL)) {
+        char nexusLeaf[M12_ASSET_DATA_DIR_CAPACITY];
+        const char* nexusRequestedDir = requestedDataDir;
+        /* The documented multi-game data root keeps each game below its ID.
+         * Scope only the explicit Nexus launch request to that leaf; the
+         * ordinary launcher inventory must remain a cross-game scan. */
+        if (requestedDataDir && requestedDataDir[0] != '\0' &&
+            FSP_JoinPath(nexusLeaf, sizeof(nexusLeaf), requestedDataDir,
+                         "nexus") && FSP_DirExists(nexusLeaf)) {
+            nexusRequestedDir = nexusLeaf;
+        }
+        if (m12_scan_direct_nexus_request(status, nexusRequestedDir,
+                                          requestedDataDir)) {
             return;
         }
     }

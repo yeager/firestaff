@@ -2640,7 +2640,9 @@ med timer-handle eller resurrectionens `adddata(5)`.
   wound, XP and RNG study is now excluded from `firestaff_nexus`; production
   uses a state-preserving fail-closed adapter. Keep the formula implementation
   test-only until Saturn action/stat/writeback and SLEV/SFX consumers are
-  captured.
+  captured. 2026-08-14: the build boundary is regression-locked by
+  `nexus_v1_production_semantic_boundary` alongside the equivalent magic,
+  experience, rest/status, light and action-world adapters.
 
 - **NEXUS-EXPERIENCE-PRODUCTION-BOUNDARY:** The DM.BIN-shaped XP award,
   level-up and class-table implementation is now excluded from

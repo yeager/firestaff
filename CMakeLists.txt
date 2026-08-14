@@ -6717,20 +6717,34 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_mns\\.c$")
 # deliberately never asserts retail provenance.  Its real LEV corpus tests
 # compile it explicitly; keep arbitrary-buffer decode out of production.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_dgn_texture_decode\\.c$")
-# Gameplay modules promoted: magic, combat, experience, status, rest use the
-# real implementations; exclude their noop adapters to avoid duplicate symbols.
-list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_combat_runtime_noop\\.c$")
-list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_magic_runtime_noop\\.c$")
-list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_experience_runtime_noop\\.c$")
-list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rest_status_runtime_noop\\.c$")
-list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_action_world_runtime_noop\\.c$")
-list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_light_runtime_noop\\.c$")
+# Combat, magic, experience, rest/status, light, and action-world mechanics
+# are source-study implementations.  The current Saturn corpus does not bind
+# their dispatchers, state writes, timing, or presentation consumers.  Keep
+# those implementations out of the retail library and export only the
+# state-preserving ABI adapters below.  The studies remain available to their
+# explicit probes and source-format tests.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_combat\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_magic\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_experience\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rest\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_status\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_action_timer\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_doors\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_traps\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_projectiles\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_light\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_saturn_font_runtime_noop\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rasterizer_runtime_noop\\.c$")
 # M11 owns the shared host lifecycle and calls these fail-closed adapters.
 # The real rasterizer and V2 presentation modules remain available to explicit
 # fixture/probe targets only: no Saturn VDP1/VDP2 capture currently binds them.
 set(NEXUS_M11_RUNTIME_SOURCES
+    src/nexus/nexus_v1_combat_runtime_noop.c
+    src/nexus/nexus_v1_magic_runtime_noop.c
+    src/nexus/nexus_v1_experience_runtime_noop.c
+    src/nexus/nexus_v1_rest_status_runtime_noop.c
+    src/nexus/nexus_v1_action_world_runtime_noop.c
+    src/nexus/nexus_v1_light_runtime_noop.c
     src/nexus/nexus_v1_rasterizer_runtime_noop.c
     src/nexus/nexus_v1_saturn_font_runtime_noop.c
     src/nexus/nexus_v2_hud_runtime_noop.c
@@ -6764,6 +6778,21 @@ if(TARGET firestaff_nexus)
         target_compile_options(test_nexus_v2_production_runtime_boundary PRIVATE
             -Wall -Wextra -O2)
     endif()
+endif()
+
+if(TARGET firestaff_nexus)
+    add_executable(test_nexus_v1_production_semantic_boundary
+        tests/test_nexus_v1_production_semantic_boundary.c)
+    target_include_directories(test_nexus_v1_production_semantic_boundary PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_nexus_v1_production_semantic_boundary PRIVATE
+        firestaff_nexus)
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_production_semantic_boundary PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(NAME nexus_v1_production_semantic_boundary
+             COMMAND test_nexus_v1_production_semantic_boundary)
 endif()
 
 # ── Theron V1 static library ─────────────────────────────────────────
