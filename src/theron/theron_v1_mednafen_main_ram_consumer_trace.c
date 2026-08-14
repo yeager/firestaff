@@ -171,7 +171,7 @@ int theron_v1_mednafen_main_ram_consumer_trace_parse_file(
                    &sequence, &logical_address, &physical_address, &value,
                    &reader_pc, &reader_physical_pc, &consumed) != 6 ||
             !optional_register_suffix(line + consumed) ||
-            sequence != receipt.read_count ||
+            (sequence != receipt.read_count && sequence != 0u) ||
             logical_address > 0xffffu || physical_address > 0x1fffffu ||
             value > 0xffu ||
             reader_pc > 0xffffu || !huc6280_physical_address(reader_physical_pc)) {
