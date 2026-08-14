@@ -2,6 +2,22 @@
 
 _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-level file._
 
+2026-08-14: A no-input Mednafen timeline against the authentic English merged
+Saturn disc and J-BIOS 1.01 corrected the earlier startup interpretation.
+At the former 225-second checkpoint the Saturn is still in its black boot
+phase; it then enters the original intro automatically, without START/A/B/C
+input. Captures through 360 seconds show only authentic intro scenes and
+subtitles, not a menu or LEV01. SHA-256 witnesses for 0/90/180/240/300/360
+seconds are respectively
+`807314e0271c346a929ca03c8cce570b1c111a4649b4f9f48af2d1d3345f554a`,
+`fe05ab0526b30d7e6783d644ce0b879f004ff247ddad0fa836fe03d649542508`,
+`73e7616e97bb44f4b404a0e4230082851bb4f94cc181d70d2319ab8df6aae0a1`,
+`ddc776609189cedb6ae6c18cfbf4f052dc1865c1a25af847f6729eca49bdd1c9`,
+`dd177e9f20f498a7ba129dabb0cb05bfbc5dd08535e34755a1e5d8fdc946c588`, and
+`d8552969d08c04961650ecbd76a959d2895f6065d02a528c54e61b7846b70f9a`.
+The earlier START-at-225 experiments therefore do not prove a title/menu
+transition and must not be used as runtime parity evidence.
+
 2026-08-14: A clean development-only Mednafen run used the authentic Japanese
 retail Saturn CUE/track set from the supplied archive, J-BIOS 1.01, and one
 START press at the measured title prompt (225 seconds). No A/B/C or fast-forward
