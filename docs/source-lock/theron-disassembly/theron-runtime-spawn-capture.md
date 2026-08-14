@@ -1,5 +1,30 @@
 # Theron runtime spawn-consumer capture
 
+## 2026-08-14 — r26 cold start proves same-session CD→RAM transport
+
+A fresh cold-start run with the authenticated US Track 02, System Card and
+instrumented r26 binary produced an observed transition receipt:
+
+```text
+raw_sector_spans:              161
+cd_irq_callbacks:               25
+authenticated_cd_ram_receipts:   2
+game_main_ram_e009_dispatches:  32
+main_ram_consumer_reads:    65536
+main_ram_target_reads:        512
+target_2600_values:              0 non-zero
+target_2600_reader:          $CB22 init-only
+transition:              observed
+```
+
+This closes the same-session authenticated CD→RAM transport boundary for this
+capture, but it does not reach the dynamic `$2600` consumer: there are no
+runtime or `$C3A0-$C429` reads. It therefore does not open the live loader,
+level/object, VRAM/VCE or HuC6280-RAM semantic gates. The main-RAM sidecar MD5
+is `21f771f92a35704cf0ea8be3a2adf199`; the transition sidecar MD5 is
+`c92f8d31269cdd1771464937f32d69bf`. Both, together with the instrumented
+binary, remain local on the external disk.
+
 ## 2026-08-14 — r26 state replay proves runtime target reads but not the code window
 
 The current r26 instrumented replay against the authenticated US Track 02 and

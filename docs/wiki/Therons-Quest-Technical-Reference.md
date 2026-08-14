@@ -22,6 +22,18 @@ this replay does not open square/tile/HUD/T700/T900 semantics or production
 dungeon admission. The raw sidecars and instrumented emulator remain local on
 the external disk.
 
+## r26 cold-start transport receipt
+
+A fresh cold-start run against the same authenticated US Track 02 and System
+Card produced 161 raw-sector spans, 25 CD IRQ callbacks, two authenticated
+CD→RAM receipts, 32 game-owned `$E009` dispatches and an observed transition.
+The 65,536-row main-RAM sidecar contains 512 reads in `$2600-$27FF`, all zero
+valued and owned by the `$CB22` initialization reader. This proves the
+same-session transport boundary, but not the dynamic level/object consumer;
+runtime `$2600` and `$C3A0` evidence comes only from the separate state-replay
+witness below. Capture sidecars and the instrumented binary remain on the
+external disk.
+
 ## r26 state-replay consumer boundary
 
 An authenticated r26 state replay now has a stronger main-RAM consumer

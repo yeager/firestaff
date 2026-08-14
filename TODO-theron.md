@@ -30,6 +30,22 @@ _Auto-split from top-level TODO/DONE. Cross-cutting items remain in the top-leve
   `82e151fa51aa3e7d578d0dfdb09eb55b`. Sidecars och binär ligger lokalt på
   extern-disk och ska inte committas.
 
+## 2026-08-14 — r26 cold start proves same-session CD→RAM transport
+
+- ✅ En ny kall autentisk körning med samma US Track 02/System Card gav
+  `raw_sector_spans=161`, `cd_irq_callbacks=25`, två byte-exakta och
+  autentiserade CD→RAM-kvitton samt 32 game-owned `$E009`-dispatchar.
+  `transition=observed` och `main_ram_consumer_reads=65536` är verifierade.
+- 🔒 Körningen når ännu inte den dynamiska `$2600`-konsumenten:
+  `target_reads=512`, alla värden är noll och läsningarna är initiering från
+  `$CB22`; `$C3A0`-läsningar saknas. Detta öppnar därför inte
+  `THERON-V1-TRACK02-LIVE-LOADER-CONSUMER`, JP-level-data, VRAM/VCE-semantik
+  eller HuC6280-RAM-publicering.
+- 🔒 Capture-identitet: main-RAM-sidecar MD5
+  `21f771f92a35704cf0ea8be3a2adf199`, transition-sidecar MD5
+  `c92f8d31269cdd1771464937f32d69bf`. Sidecars och binär ligger lokalt på
+  extern-disk och ska inte committas.
+
 ## 2026-08-14 — synthetic cross-route regression follows explicit door use
 
 - ✅ Cross-route-proben använder nu den verifierade mechanics-kontrakten:
