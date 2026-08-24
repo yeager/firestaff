@@ -560,10 +560,16 @@ static void run_real_data_handoff_if_available(void) {
             }
         } else if (strcmp(kCases[i].gameId, "nexus") == 0) {
             expect_true(receipt.startupAnimationActive == 1 &&
-                            receipt.startupTitleFrame == 0 &&
+                            receipt.startupTitleFrame >= 0 &&
+                            receipt.startupTitleFrame < 102 &&
                             receipt.startupTitleFrameMax == 102 &&
                             receipt.startupTitleReady == 0,
                         "Nexus receipt exposes active full boot title frame and ready boundary");
+        } else if (strcmp(kCases[i].gameId, "theron") == 0) {
+            expect_true(receipt.startupPhase[0] != '\0' &&
+                            receipt.startupTitleReady == 1 &&
+                            receipt.startupAnimationActive == 0,
+                        "Theron receipt exposes its verified native title boundary");
         } else {
             expect_true(receipt.startupAnimationActive == 1,
                         "direct launch boot receipt marks non-DM1 startup surface active");
@@ -660,18 +666,39 @@ static void run_real_data_handoff_if_available(void) {
                     test_setenv("APPDATA", appdata_dir);
                 }
                 opts.script = "wait120,enter,enter,action";
-                opts.bootProbeExpectPhase = "nexus-runtime";
-                opts.bootProbeExpectPartyX = 11;
-                opts.bootProbeExpectPartyY = 29;
-                opts.bootProbeExpectPartyDir = 0;
-                opts.bootProbeExpectChampionCount = 1;
+                /* Native title data is available, but untraced Saturn VDP
+                 * menu/gameplay ownership must remain closed.  Do not turn
+                 * a real-data launch test into permission to invent a party
+                 * or runtime handoff. */
+                opts.bootProbeExpectRuntime = 0;
+                opts.bootProbeExpectPhase = "nexus-title";
+                opts.bootProbeExpectParty = 0;
+                opts.bootProbeExpectChampions = 0;
+                opts.bootProbeExpectMap = 0;
+                opts.bootProbeExpectLevelLoaded = 0;
+                opts.bootProbeExpectRuntimeTickMin = -1;
+                opts.bootProbeExpectRuntimeTickMax = 0;
+                opts.bootProbeExpectStartupActive = 1;
+                opts.bootProbeExpectStartupAnimation = "nexus-title";
+                opts.bootProbeExpectStartupAnimationActive = 1;
+                opts.bootProbeExpectTitleFrameBoundary = 102;
+                opts.bootProbeExpectTitleReady = 1;
             } else if (strcmp(kCases[i].gameId, "theron") == 0) {
                 opts.script = "enter,enter,action";
-                opts.bootProbeExpectPhase = "theron-runtime";
-                opts.bootProbeExpectPartyX = 3;
-                opts.bootProbeExpectPartyY = 5;
-                opts.bootProbeExpectPartyDir = 0;
-                opts.bootProbeExpectChampionCount = 1;
+                /* Track 02 reaches the authentic source-owned startup-2
+                 * selection boundary.  Later level/object consumers have
+                 * not yet been captured, so remain fail-closed here. */
+                opts.bootProbeExpectRuntime = 0;
+                opts.bootProbeExpectPhase = "theron-startup-2";
+                opts.bootProbeExpectParty = 0;
+                opts.bootProbeExpectChampions = 0;
+                opts.bootProbeExpectMap = 0;
+                opts.bootProbeExpectLevelLoaded = 0;
+                opts.bootProbeExpectRuntimeTickMin = -1;
+                opts.bootProbeExpectRuntimeTickMax = 0;
+                opts.bootProbeExpectStartupActive = 1;
+                opts.bootProbeExpectStartupAnimation = "theron-startup";
+                opts.bootProbeExpectStartupAnimationActive = 1;
             } else {
                 opts.bootProbeExpectParty = 0;
                 opts.bootProbeExpectChampions = 0;
@@ -704,7 +731,7 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeExpectTitleFrameMin = 1;
                 opts.bootProbeExpectTitleFrameBoundary = 102;
                 opts.bootProbeExpectTitleReady = 0;
-                opts.bootProbeExpectLevelLoaded = 1;
+                opts.bootProbeExpectLevelLoaded = 0;
                 opts.bootProbeExpectRuntimeTickMax = 0;
                 expect_true(M11_PhaseA_Run(&opts) == 0,
                             "boot-probe proves CSB title startup progress while runtime is frozen");
@@ -754,10 +781,10 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeExpectTitleFrameMin = 1;
                 opts.bootProbeExpectTitleFrameBoundary = 102;
                 opts.bootProbeExpectTitleReady = 0;
-                opts.bootProbeExpectLevelLoaded = 1;
+                opts.bootProbeExpectLevelLoaded = 0;
                 opts.bootProbeExpectRuntimeTickMax = 0;
                 expect_true(M11_PhaseA_Run(&opts) == 0,
-                            "boot-probe proves Nexus title startup gates preloaded level before runtime");
+                            "boot-probe proves Nexus title startup remains fail-closed before runtime");
             }
             if (strcmp(kCases[i].gameId, "theron") == 0) {
                 M11_PhaseA_SetDefaultOptions(&opts);
@@ -769,10 +796,10 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeExpectPhase = "theron-startup-0";
                 opts.bootProbeExpectStartupActive = 1;
                 opts.bootProbeExpectStartupAnimation = "theron-title";
-                opts.bootProbeExpectStartupAnimationActive = 1;
+                opts.bootProbeExpectStartupAnimationActive = 0;
                 opts.bootProbeExpectTitleFrameMax = 0;
                 opts.bootProbeExpectTitleFrameBoundary = 0;
-                opts.bootProbeExpectTitleReady = 0;
+                opts.bootProbeExpectTitleReady = 1;
                 opts.bootProbeExpectLevelLoaded = 0;
                 opts.bootProbeExpectRuntimeTickMax = 0;
                 expect_true(M11_PhaseA_Run(&opts) == 0,
