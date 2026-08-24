@@ -1,6 +1,6 @@
 # Firestaff project status
 
-**Last reviewed: 2026-08-13.** This page is the concise status source for the
+**Last reviewed: 2026-08-24.** This page is the concise status source for the
 README and wiki. The full documentation map is in
 [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md).
 
@@ -14,6 +14,29 @@ source audits and capture receipts remain in the linked game documentation.
 | Dungeon Master II: Skullkeep | Playable across DOS, Amiga, FM Towns and Macintosh real media; active hardening continues | M12 source-owner selection, M11 New Game handoff, source-owned viewport/HUD, movement, pit/stairs/DB1, creatures and focused combat/spell routes | Native Amiga/FM Towns/Mac saves, positive DOS WIELD/death-drop fixture, broader source UI/audio/mechanics parity |
 | DM Nexus | Active real-data bring-up | Saturn DMDF/DGN data, world/render/save/mechanics slices and V2 presentation | Saturn runtime/frame capture, material semantics, event/audio playback and full playability |
 | Theron's Quest | Active real-media bring-up | JP/US Track 02 identity, parser, level framing, mechanics, progression and capture instrumentation | Full Track 02 handoff, save body semantics, bitmap/palette binding and JP capture |
+
+## Completion reporting
+
+Firestaff does not assign invented percentages to a game, version or platform.
+Completion is reported by the strongest evidence-backed status in the platform
+matrix: **Playable**, **Verified route**, **Data path**, **Preservation**, or
+**Unsupported**. A verified boot probe is therefore not reported as completed
+gameplay, and a parser or synthetic fixture never raises a row above its
+real-media evidence.
+
+| Game | Completion status | Platform source of truth |
+|---|---|---|
+| Dungeon Master 1 | Playable on PC DOS 3.4; other editions remain separately scoped. | [DM1 platform rows](PLATFORM_STATUS.md#dungeon-master) |
+| Chaos Strikes Back | Verified bounded routes on Atari ST, Amiga and FM Towns; no original DOS/PC release. | [CSB platform rows](PLATFORM_STATUS.md#chaos-strikes-back) |
+| Dungeon Master II: Skullkeep | Verified bounded routes on DOS, FM Towns and the listed Macintosh editions. | [DM2 platform rows](PLATFORM_STATUS.md#dungeon-master-ii-the-legend-of-skullkeep) |
+| DM Nexus | Verified bounded Japanese Saturn route, not production gameplay. The measured implementation coverage is documented separately. | [Nexus platform row](PLATFORM_STATUS.md#dm-nexus), [Nexus completion](NEXUS_COMPLETION.md) |
+| Theron's Quest | JP and US Track 02 are data paths; no end-to-end gameplay claim. | [Theron platform rows](PLATFORM_STATUS.md#therons-quest) |
+
+Nexus is the sole exception with an explicitly defined numeric measurement:
+44.0% implementation coverage across its six measured domains, 33.1% for its
+weighted startup-to-HUD chain, and 0% production grade. Those values describe
+only the documented Saturn capture model and must not be averaged with the
+status labels above.
 
 The dated [preservation status](PRESERVATION_STATUS_2026-08-11.md) records
 the current source, format and real-media boundary for every game.
