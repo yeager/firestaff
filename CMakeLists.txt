@@ -17193,6 +17193,15 @@ endif()
         LABELS "tier2;csb;atari;save;msa;real_data;archive;skip_safe"
     )
     add_test(
+        NAME csb_v1_atari_stx_native_cli_boot
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_stx_native_cli_boot.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(csb_v1_atari_stx_native_cli_boot PROPERTIES
+        LABELS "tier2;csb;atari;startup;cli;menu;real_data;skip_safe"
+        TIMEOUT 45
+    )
+    add_test(
         NAME csb_v1_amiga_native_cli_boot
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_amiga_native_cli_boot.sh"
             "$<TARGET_FILE:firestaff>"
