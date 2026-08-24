@@ -23895,6 +23895,7 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     int rendererBackend = M12_RENDERER_BACKEND_AUTO;
     int gameOptionSlot = -1;
     char selectedDm2RuntimeDataDir[FSP_PATH_MAX] = {0};
+    char selectedDm2EnglishCompanionPath[FSP_PATH_MAX] = {0};
     char selectedDm1RuntimeDataDir[FSP_PATH_MAX] = {0};
     if (!state || !menuState) {
         return 0;
@@ -23915,6 +23916,11 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
         return 0;
     }
     memset(&spec, 0, sizeof(spec));
+    /* A direct CLI launch has no M12 locale selection.  In particular the
+     * original DM2 FM Towns disc is Japanese; zero means an explicit English
+     * overlay request to its boot owner, which must fail without a separately
+     * verified PC-English GRAPHICS.DAT companion. */
+    spec.languageIndex = -1;
     M11_Audio_SetPreferredPlaybackDeviceName(menuState->settings.audioDeviceName);
     spec.rendererBackend = rendererBackend;
     spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
@@ -24066,6 +24072,37 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                 if (!spec.dm2EnglishCompanionPath && englishVersion && englishVersion->matched &&
                     englishVersion->matchedMd5[0] != '\0') {
                     spec.dm2EnglishCompanionPath = englishVersion->matchedPath;
+                }
+                /* Direct selection deliberately clears sibling game versions
+                 * so a Japanese Towns disc cannot accidentally become a DOS
+                 * launch.  Its text-only companion is different: the retail
+                 * DOS EN ZIP beside the selected disc supplies an explicitly
+                 * hash-checked overlay, while the Towns ZIP remains the only
+                 * boot/runtime owner.  Discover just that canonical sibling
+                 * when M12 could not retain the PC version row. */
+                if (!spec.dm2EnglishCompanionPath && spec.dataDir) {
+                    const char *slash = strrchr(spec.dataDir, '/');
+                    const char *backslash = strrchr(spec.dataDir, '\\');
+                    const char *separator = slash;
+                    if (backslash && (!separator || backslash > separator)) {
+                        separator = backslash;
+                    }
+                    if (separator) {
+                        size_t prefix = (size_t)(separator - spec.dataDir) + 1U;
+                        static const char companionName[] =
+                            "Dungeon-Master-II-Skullkeep_DOS_EN.zip";
+                        if (prefix + sizeof(companionName) <=
+                                sizeof(selectedDm2EnglishCompanionPath)) {
+                            memcpy(selectedDm2EnglishCompanionPath, spec.dataDir,
+                                   prefix);
+                            memcpy(selectedDm2EnglishCompanionPath + prefix,
+                                   companionName, sizeof(companionName));
+                            if (FSP_FileExists(selectedDm2EnglishCompanionPath)) {
+                                spec.dm2EnglishCompanionPath =
+                                    selectedDm2EnglishCompanionPath;
+                            }
+                        }
+                    }
                 }
             }
         } else {
