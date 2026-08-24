@@ -529,33 +529,18 @@ does not turn a frame into menu, HUD or viewport evidence.
 
 The same producer has an independent SCSP trace patch for the audio lane.
 
-## Explicit retail launch while native parity remains closed
+## Native-runtime boundary while capture remains incomplete
 
 The Firestaff native Nexus route remains blocked: the observed `TITLE.CG`
 residency is not a display-consumer or title-input proof, and the visual
 receipt shows a Saturn-composed 3D title sequence rather than a flat
 `TITLE.CG` framebuffer.  Firestaff must not substitute an inferred renderer.
 
-For an actual playable retail start, the CLI and start-menu entry provide an
-explicit, separate Mednafen handoff. Homebrew's `/opt/homebrew/bin/mednafen`
-and `/usr/local/bin/mednafen` are detected locally; an installed emulator and
-readable retail CUE make the menu entry launchable:
-
-```sh
-firestaff --game nexus --data-dir "$HOME/.firestaff/data" \
-  --nexus-mednafen /opt/homebrew/bin/mednafen \
-  --nexus-bios "/path/to/Sega Saturn BIOS (J).bin"
-```
-
-The default disc is `nexus/Dungeon Master Nexus (English).cue` under
-`--data-dir` (or directly below it when the data directory is already the
-Nexus directory).  `--nexus-disc` can select another readable CUE explicitly.
-The launcher passes exact argument vectors directly to Mednafen; it never
-uses a shell, extracts media, or treats emulator execution as a native
-Nexus-replay receipt.  `FIRESTAFF_NEXUS_MEDNAFEN`,
-`FIRESTAFF_NEXUS_DISC`, and `FIRESTAFF_NEXUS_BIOS` override the menu route
-without persisting private paths. The external route is intentionally
-incompatible with `--boot-probe`.
+The CLI and start menu remain blocked until native capture evidence proves the
+display consumer and title input contract.  Firestaff never opens a retail CUE
+in Mednafen as a fallback.  Mednafen may be instrumented outside Firestaff to
+produce read-only traces, but those traces must be imported and verified before
+they can unlock a native Nexus route.
 
 Firestaff now has a C receipt for the emitted
 `FIRESTAFF_NEXUS_SCSP_WRITE_TRACE_V1` schema. It validates the raw trace hash,

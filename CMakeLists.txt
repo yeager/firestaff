@@ -6959,7 +6959,6 @@ endif()
 # ── M11 static library ──────────────────────────────────────────────
 set(M11_SOURCES
     src/engine/main_loop_m11.c
-    src/shared/firestaff_nexus_mednafen.c
     src/engine/fs_gesture_navigation_gate.c
     src/engine/firestaff_accessibility.c
     src/engine/m11_game_view.c
@@ -7426,14 +7425,6 @@ if(BUILD_TESTING AND NOT WIN32)
                 sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_cli_game_option_forms.sh)
     set_tests_properties(firestaff_cli_game_option_forms PROPERTIES
         LABELS "cli;launcher;data_free"
-        TIMEOUT 15)
-    add_test(
-        NAME firestaff_nexus_mednafen_cli
-        COMMAND ${CMAKE_COMMAND} -E env
-                "FIRESTAFF_BIN=$<TARGET_FILE:firestaff>"
-                sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_nexus_mednafen_cli.sh)
-    set_tests_properties(firestaff_nexus_mednafen_cli PROPERTIES
-        LABELS "cli;launcher;data_free;nexus"
         TIMEOUT 15)
 endif()
 
@@ -26305,20 +26296,6 @@ endif()
         NAME m12_all_games_boot_readiness_receipt
         COMMAND test_m12_all_games_boot_readiness_receipt
     )
-
-    if(NOT WIN32)
-        add_executable(test_m12_nexus_mednafen_menu_gate
-            tests/test_m12_nexus_mednafen_menu_gate.c
-        )
-        target_link_libraries(test_m12_nexus_mednafen_menu_gate PRIVATE firestaff_m12)
-        if(NOT MSVC)
-            target_compile_options(test_m12_nexus_mednafen_menu_gate PRIVATE -Wall -Wextra -O2)
-        endif()
-        add_test(
-            NAME m12_nexus_mednafen_menu_gate
-            COMMAND test_m12_nexus_mednafen_menu_gate
-        )
-    endif()
 
     add_executable(test_m12_quick_resume_gate
         tests/test_m12_quick_resume_gate.c

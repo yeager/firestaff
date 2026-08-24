@@ -40,7 +40,6 @@
 #include "ambient_layer_m11.h"
 #include "m11_high_contrast_overlay_pc34_compat.h"
 #include "fs_portable_compat.h"
-#include "firestaff_nexus_mednafen.h"
 #include "menu_row_metrics_m12.h"
 #include "manual_docs_m12.h"
 #include "cloud_sync_m12.h"
@@ -8820,31 +8819,6 @@ int M12_StartupMenu_GetLaunchGate(
     gate.fullStartGraphicsReady = gate.boot.fullStartGraphicsReady;
     gate.startupContractReady = gate.boot.startupContractReady;
     gate.packagedCaptureReady = gate.boot.packagedCaptureReady;
-    /* Retail Nexus may be launched through the explicitly separate Mednafen
-     * process route.  This does not alter any native startup/render evidence:
-     * it only makes the menu card actionable when the local executable and
-     * original CUE are both present. */
-    if (entry->gameId && strcmp(entry->gameId, "nexus") == 0) {
-        Firestaff_NexusMednafenLaunch nexus_launch;
-        if (Firestaff_NexusMednafen_Discover(
-                M12_StartupMenu_AssetDataDir(state), NULL, NULL, NULL,
-                &nexus_launch)) {
-            gate.dataReady = 1;
-            gate.versionReady = 1;
-            gate.fullStartGraphicsReady = 1;
-            gate.startupContractReady = 1;
-            gate.packagedCaptureReady = 1;
-            gate.boot.dataReady = 1;
-            gate.boot.versionReady = 1;
-            gate.boot.fullStartGraphicsReady = 1;
-            gate.boot.startupContractReady = 1;
-            gate.boot.packagedCaptureReady = 1;
-            gate.boot.supported = 1;
-            gate.boot.statusLabel = "MEDNAFEN READY";
-            gate.boot.detailLabel = "AUTHENTIC SATURN CUE WILL OPEN IN MEDNAFEN";
-            gate.boot.activeProofLabel = "EXTERNAL RETAIL SATURN LAUNCH";
-        }
-    }
     if (!gate.versionReady && gate.dataReady && entry->gameId) {
         gate.autoSelectedVersionIndex =
             m12_first_matched_version_index_for_game(state, entry->gameId);
