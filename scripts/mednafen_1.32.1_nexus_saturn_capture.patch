@@ -49,8 +49,8 @@
 @@ -398,0 +405 @@
 +  FirestaffCaptureFrame();
 @@ -985,0 +993 @@
-+  FirestaffCaptureFrames = 0;
-@@ -1400,0 +1409,34 @@
++  if(!FirestaffCaptureConfigured) FirestaffCaptureFrames = 0;
+@@ -1400,0 +1409,35 @@
 +}
 +
 +static void FirestaffCaptureFrame(void)

@@ -6,7 +6,7 @@
 +++ src/ss/ss.cpp
 @@ -379,0 +380,1 @@
 + FirestaffTraceSlevSalCapture(A, DB);
-@@ -475,0 +476,94 @@
+@@ -472,0 +473,94 @@
 +static uint64 FirestaffSlevSalCaptureParseU64(const char *name)
 +{
 + const char *text = getenv(name);

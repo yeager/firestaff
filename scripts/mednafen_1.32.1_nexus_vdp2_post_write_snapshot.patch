@@ -1,8 +1,6 @@
 --- src/ss/vdp2.cpp
 +++ src/ss/vdp2.cpp
-@@ -189,3 +189,45 @@
- count++;
- }
+@@ -193,2 +193,44 @@
 +static void FirestaffTraceVdp2PostWriteSnapshot(const char *area, uint32 address)
 +{
 + const char *path = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT");
@@ -46,11 +44,13 @@
 +}
 +
  static void FirestaffTraceVdp2Write(const char *area, uint32 address,
-@@ -971,5 +971,6 @@
-    default:
+  unsigned size, uint16 value)
+@@ -930,6 +930,7 @@
+     default:
  	CRAM[((cri >> 1) & 0x3FF) | ((cri & 1) << 10)] = *DB;
  	break;
-   }
+    }
 +  FirestaffTraceVdp2PostWriteSnapshot("cram", A);
-  }
-  else
+   }
+   else
+   {
