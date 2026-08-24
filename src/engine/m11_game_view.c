@@ -1492,6 +1492,7 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
         if (route->status_scope &&
             strcmp(route->status_scope, "GAME_LOAD") == 0) {
             DM2_V1_BootNewDungeonReceipt new_dungeon;
+            DM2_V1_BootRuntimeReceipt runtime_receipt;
             int load_ok;
             int prepare_ok = 0;
             /* SKWINSPX SkWinCore.cpp::SHOW_MENU_SCREEN returns to INIT,
@@ -1520,19 +1521,22 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
                 !new_dungeon.synthetic_party_created && prepare_ok &&
                 dm2_v1_boot_prepared_new_game_world_readonly(profile) != NULL &&
                 m11_dm2_clear_new_game_party_state(state)) {
-                /* STARTEND performs the first authenticated
-                 * DM2_SELECT_CHAMPION transition while GAME_LOAD is still
-                 * completing on every admitted platform profile.  That
-                 * first hero is a private predecessor for the mirror UI, not
-                 * the completed runtime session: the source still owns the
-                 * next mirror click before GAME_LOAD may publish the party,
-                 * timers, CAII and sound queue.  Keep SHOW_MENU_SCREEN's
-                 * outer input boundary active until that source event is
-                 * admitted by m11_dm2_preselection_mirror_pointer().
-                 * Source: SKProject startend.cpp::DM2_2f3f_0789,
-                 * c_hero.cpp::DM2_SELECT_CHAMPION and
-                 * sksvgame.cpp::DM2_GAME_LOAD. */
-                return M11_GAME_INPUT_REDRAW;
+                /* STARTEND's first authenticated champion selection is part
+                 * of GAME_LOAD itself.  The retained candidate therefore
+                 * already owns the party, records, timers, CAII and sound
+                 * queue required by the native runtime commit.  Leaving the
+                 * title menu open here incorrectly demanded a second D0C
+                 * mirror click that the original DOS (0,0) chain does not
+                 * produce. */
+                memset(&runtime_receipt, 0, sizeof(runtime_receipt));
+                if (dm2_v1_boot_commit_new_game_session(profile) &&
+                    dm2_v1_boot_runtime_capture(profile, &runtime_receipt) &&
+                    runtime_receipt.runtime_ready) {
+                    state->dm2State.startup_menu_active = 0;
+                    state->dm2State.level_loaded = 1;
+                    m11_sync_dm2_state_from_runtime(state);
+                    return M11_GAME_INPUT_REDRAW;
+                }
             }
             state->dm2State.startup_menu_active = 1;
             if (route->status) {
@@ -3022,6 +3026,7 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
 {
     DM2_V1_StartupExecution execution;
     DM2_V1_StartupHostActionReceipt action_receipt;
+    DM2_V1_StartupMenuPointerLayout pointer_layout;
 
     if (!state || !state->dm2State.startup_menu_active) {
         return M11_GAME_INPUT_IGNORED;
@@ -3062,8 +3067,25 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
     if (input != M12_MENU_INPUT_ACCEPT || !state->dm2BootProfile) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!m11_dm2_boot_runtime_startup_input(
-            state, input, &execution, &action_receipt)) {
+    if (((const DM2_V1_BootProfile *)state->dm2BootProfile)->platform ==
+            DM2_PLATFORM_PC_EN) {
+        /* The PC-DOS title's Enter action is source event 0xd7.  Its selected
+         * row state is not a substitute for the GDAT action, so dispatch the
+         * verified source rectangle directly. */
+        memset(&pointer_layout, 0, sizeof(pointer_layout));
+        if (!dm2_v1_boot_startup_menu_pointer_layout(
+                (DM2_V1_BootProfile *)state->dm2BootProfile,
+                &pointer_layout) || !pointer_layout.valid ||
+            pointer_layout.new_game.w <= 0 || pointer_layout.new_game.h <= 0 ||
+            !m11_dm2_boot_runtime_startup_pointer(
+                state,
+                pointer_layout.new_game.x + pointer_layout.new_game.w / 2,
+                pointer_layout.new_game.y + pointer_layout.new_game.h / 2,
+                &execution, &action_receipt)) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+    } else if (!m11_dm2_boot_runtime_startup_input(
+                   state, input, &execution, &action_receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
     return m11_dm2_startup_apply_host_action_receipt(state, &action_receipt);
