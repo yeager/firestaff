@@ -165,7 +165,8 @@ static void hud_draw_letter(uint8_t *fb, int stride, int w, int h_res,
     if (ch >= 'A' && ch <= 'Z') letter = ch - 'A';
     else if (ch >= 'a' && ch <= 'z') letter = ch - 'a';
     if (letter < 0 || letter >= 26) return;
-    for (int row = 0; row < 5; row++) {
+    /* The compact glyph table contains exactly three byte rows. */
+    for (int row = 0; row < 3; row++) {
         uint8_t bits = g_letter_bits[(unsigned)letter][(unsigned)row];
         for (int col = 0; col < 3; col++) {
             if (bits & (0x80u >> col)) {
