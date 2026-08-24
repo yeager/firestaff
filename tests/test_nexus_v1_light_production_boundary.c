@@ -7,6 +7,10 @@ int main(void)
 {
     Nexus_LightState state;
 
+    /* The production adapter deliberately preserves caller-owned state.
+     * Start from a known value: reading an uninitialized stack object happened
+     * to pass on some platforms, but is not a test of the fail-closed API. */
+    memset(&state, 0, sizeof(state));
     nexus_v1_light_init(&state);
     nexus_v1_light_torch_on(&state, 100);
     if (state.torch_ticks != 0 || state.torch_active != 0) {

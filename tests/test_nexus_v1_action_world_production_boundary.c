@@ -23,6 +23,12 @@ int main(void)
         return 1;
     }
 
+    /* Production adapters deliberately preserve caller-owned state.  Give
+     * their no-mutation contract a deterministic baseline on every ABI. */
+    memset(&timers, 0, sizeof(timers));
+    memset(&doors, 0, sizeof(doors));
+    memset(&traps, 0, sizeof(traps));
+    memset(&projectiles, 0, sizeof(projectiles));
     nexus_v1_action_timers_init(&timers);
     nexus_v1_action_start_cooldown(&timers, 0, 24, NULL);
     nexus_v1_action_timers_tick(&timers);
