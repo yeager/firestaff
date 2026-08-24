@@ -1,8 +1,14 @@
 #include "dm1_v1_fmtowns_title.h"
 
-#include <assert.h>
 #include <stdio.h>
 #include <string.h>
+
+#define CHECK(condition) do { \
+    if (!(condition)) { \
+        fprintf(stderr, "FAIL: %s:%d: %s\n", __FILE__, __LINE__, #condition); \
+        return 1; \
+    } \
+} while (0)
 
 static DM1_V1_FmtownsStartupReceipt receipt(void)
 {
@@ -30,37 +36,37 @@ int main(void)
 
     for (i = 0u; i < sizeof(source); ++i)
         source[i] = (unsigned char)((i % 15u) + 1u);
-    assert(!dm1_v1_fmtowns_title_compose_frame(NULL, source, 320u, 200u,
-                                                0u, frame, sizeof(frame)));
-    assert(!dm1_v1_fmtowns_title_compose_frame(&startup, source, 319u, 200u,
-                                                0u, frame, sizeof(frame)));
-    assert(!dm1_v1_fmtowns_title_compose_frame(&startup, source, 320u, 200u,
-                                                20u, frame, sizeof(frame)));
+    CHECK(!dm1_v1_fmtowns_title_compose_frame(NULL, source, 320u, 200u,
+                                              0u, frame, sizeof(frame)));
+    CHECK(!dm1_v1_fmtowns_title_compose_frame(&startup, source, 319u, 200u,
+                                              0u, frame, sizeof(frame)));
+    CHECK(!dm1_v1_fmtowns_title_compose_frame(&startup, source, 320u, 200u,
+                                              20u, frame, sizeof(frame)));
 
-    assert(dm1_v1_fmtowns_title_compose_frame(&startup, source, 320u, 200u,
-                                               0u, frame, sizeof(frame)));
+    CHECK(dm1_v1_fmtowns_title_compose_frame(&startup, source, 320u, 200u,
+                                             0u, frame, sizeof(frame)));
     /* EDM first flips PRESENTS before it enters the reverse zoom loop. */
-    assert(frame[74u * 320u + 136u] == 0u);
-    assert(frame[90u * 320u] == source[137u * 320u]);
-    assert(frame[40u * 320u] == 0u);
+    CHECK(frame[74u * 320u + 136u] == 0u);
+    CHECK(frame[90u * 320u] == source[137u * 320u]);
+    CHECK(frame[40u * 320u] == 0u);
 
     /* First reverse-order zoom frame is 48x12, centred at (136,74). */
-    assert(dm1_v1_fmtowns_title_compose_frame(&startup, source, 320u, 200u,
-                                               1u, frame, sizeof(frame)));
-    assert(frame[74u * 320u + 136u] == source[0]);
+    CHECK(dm1_v1_fmtowns_title_compose_frame(&startup, source, 320u, 200u,
+                                             1u, frame, sizeof(frame)));
+    CHECK(frame[74u * 320u + 136u] == source[0]);
 
-    assert(dm1_v1_fmtowns_title_compose_frame(&startup, source, 320u, 200u,
-                                               17u, frame, sizeof(frame)));
-    assert(frame[119u * 320u] == 0u);
+    CHECK(dm1_v1_fmtowns_title_compose_frame(&startup, source, 320u, 200u,
+                                             17u, frame, sizeof(frame)));
+    CHECK(frame[119u * 320u] == 0u);
 
-    assert(dm1_v1_fmtowns_title_compose_frame(&startup, source, 320u, 200u,
-                                               18u, frame, sizeof(frame)));
-    assert(frame[40u * 320u] == source[0]);
+    CHECK(dm1_v1_fmtowns_title_compose_frame(&startup, source, 320u, 200u,
+                                             18u, frame, sizeof(frame)));
+    CHECK(frame[40u * 320u] == source[0]);
 
-    assert(dm1_v1_fmtowns_title_compose_frame(&startup, source, 320u, 200u,
-                                               19u, frame, sizeof(frame)));
-    assert(frame[118u * 320u] == source[80u * 320u]);
-    assert(frame[90u * 320u] == source[137u * 320u]);
+    CHECK(dm1_v1_fmtowns_title_compose_frame(&startup, source, 320u, 200u,
+                                             19u, frame, sizeof(frame)));
+    CHECK(frame[118u * 320u] == source[80u * 320u]);
+    CHECK(frame[90u * 320u] == source[137u * 320u]);
     puts("PASS: dm1_v1_fmtowns_title");
     return 0;
 }
