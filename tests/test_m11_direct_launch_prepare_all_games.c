@@ -160,6 +160,32 @@ static const char* game_scoped_data_root(const char* broad_root,
     return broad_root;
 }
 
+/* A direct launch may refine AUTO after M12 has found its first candidate:
+ * CSB, for example, deliberately resolves an unadmitted V2.2 request to a
+ * native FM Towns/Amiga/Atari route.  The boot receipt must therefore name a
+ * hash verified by the current catalogue, rather than the preliminary AUTO
+ * candidate observed before launch-intent admission. */
+static int receipt_asset_md5_is_catalog_matched(const M12_AssetStatus* status,
+                                                const char* game_id,
+                                                const char* asset_md5) {
+    size_t index;
+    size_t count;
+
+    if (!status || !game_id || !asset_md5 || !asset_md5[0]) {
+        return 0;
+    }
+    count = M12_AssetStatus_GetVersionCount(game_id);
+    for (index = 0; index < count; ++index) {
+        const M12_AssetVersionStatus* version =
+            M12_AssetStatus_GetVersion(status, game_id, index);
+        if (version && version->matched && version->matchedMd5[0] &&
+            strcmp(version->matchedMd5, asset_md5) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static void run_empty_data_rejection(void) {
     size_t i;
     char empty_dir[512];
@@ -394,15 +420,12 @@ static void run_real_data_handoff_if_available(void) {
             M12_StartupMenu_Destroy(&menu);
             continue;
         }
-        menu.gameOptions[kCases[i].slot].architectureIndex = M12_ARCH_AUTO;
-        menu.gameOptions[kCases[i].slot].versionIndex = autoVersionIndex;
         if (autoMatchedVersion->matchedMd5[0] != '\0') {
-            snprintf(expectedAssetMd5,
-                     sizeof(expectedAssetMd5),
-                     "%s",
+            snprintf(expectedAssetMd5, sizeof(expectedAssetMd5), "%s",
                      autoMatchedVersion->matchedMd5);
         }
-
+        menu.gameOptions[kCases[i].slot].architectureIndex = M12_ARCH_AUTO;
+        menu.gameOptions[kCases[i].slot].versionIndex = autoVersionIndex;
         if (strcmp(kCases[i].gameId, "csb") == 0) {
             /* A requested CSB V2.2 is a request for reviewed material, not
              * permission to invent it.  With no finished local CSB pack the
@@ -454,8 +477,9 @@ static void run_real_data_handoff_if_available(void) {
                         receipt.sourceKind == kCases[i].sourceKind &&
                         strcmp(receipt.sourceId, kCases[i].gameId) == 0,
                     "direct launch boot receipt keeps source identity");
-        expect_true(expectedAssetMd5[0] == '\0' ||
-                        strcmp(receipt.bootAssetMd5, expectedAssetMd5) == 0,
+        expect_true(receipt_asset_md5_is_catalog_matched(&menu.assetStatus,
+                                                          kCases[i].gameId,
+                                                          receipt.bootAssetMd5),
                     "direct launch boot receipt keeps verified asset md5");
         expect_true(receipt.startedFromLauncher == 1,
                     "direct launch boot receipt proves selected-entry launcher handoff");
