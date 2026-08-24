@@ -1,15 +1,25 @@
 --- src/ss/ss.h
 +++ src/ss/ss.h
-@@ -128,3 +128,4 @@
+@@ -129,6 +129,7 @@
+ 
   void FirestaffTraceSH2SourceRead(uint32 address, uint32 value);
   void FirestaffTraceSH2RAMSourceWrite(uint32 address, uint32 value);
 + uint16 FirestaffPeekSH2Memory(unsigned which, uint32 address);
   enum
+  {
+   SS_EVENT__SYNFIRST = 0,
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
-@@ -468,0 +477,5 @@
+@@ -474,6 +474,12 @@
+ {
+  return CPU[which & 1U].GetRegister(SH7095::GSREG_RPC, NULL, 0);
+ }
++
 +uint16 FirestaffPeekSH2Memory(unsigned which, uint32 address)
 +{
 + (void)which;
 + return ne16_rbo_be<uint16>(SH7095_FastMap[address >> SH7095_EXT_MAP_GRAN_BITS], address);
 +}
+ //   1 during normal execution
+ //
+ //  -1 when we need to temporarily break out of the execution loop to
