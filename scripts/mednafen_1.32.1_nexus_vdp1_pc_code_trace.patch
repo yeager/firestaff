@@ -51,13 +51,3 @@
 + fclose(file);
 + FirestaffVdp1SnapshotWritten = true;
 +}
-@@ -1290,7 +1324,9 @@
-  if(FirestaffVramWriteTraceMax <= FirestaffVramWriteTraceMin ||
-     value == 0 ||
-     address < FirestaffVramWriteTraceMin ||
-     address + size > FirestaffVramWriteTraceMax ||
-     FirestaffVramWriteTraceCount >= FirestaffVramWriteTraceLimit)
-  return;
-+ FirestaffTraceVramWriterCode(address);
-+ FirestaffTraceVdp1Snapshot(address);
- path = getenv("FIRESTAFF_NEXUS_TRACE_VDP1_WRITES");

@@ -5,13 +5,15 @@
 +#include <stdint.h>
 @@ -54,0 +57 @@
 +#include "sh7095.h"
-@@ -1241,0 +1245,42 @@
+@@ -1241,0 +1245,46 @@
 +static FILE *FirestaffVramWriteTraceFile;
 +static uint32 FirestaffVramWriteTraceMin;
 +static uint32 FirestaffVramWriteTraceMax;
 +static unsigned FirestaffVramWriteTraceLimit = 100000;
 +static unsigned FirestaffVramWriteTraceCount;
 +static bool FirestaffVramWriteTraceConfigured;
++static void FirestaffTraceVramWriterCode(uint32 address);
++static void FirestaffTraceVdp1Snapshot(uint32 address);
 +
 +static void FirestaffTraceVramWrite(uint32 address, unsigned size, uint16 value)
 +{
@@ -32,13 +34,15 @@
 +    address + size > FirestaffVramWriteTraceMax ||
 +    FirestaffVramWriteTraceCount >= FirestaffVramWriteTraceLimit)
 +  return;
++ FirestaffTraceVramWriterCode(address);
++ FirestaffTraceVdp1Snapshot(address);
 + path = getenv("FIRESTAFF_NEXUS_TRACE_VDP1_WRITES");
 + if(!path || !*path) return;
 + if(!FirestaffVramWriteTraceFile)
 + {
 +  FirestaffVramWriteTraceFile = fopen(path, "wb");
 +  if(!FirestaffVramWriteTraceFile) return;
-+  fputs("FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V1\n", FirestaffVramWriteTraceFile);
++  fputs("FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V2\n", FirestaffVramWriteTraceFile);
 + }
 + fprintf(FirestaffVramWriteTraceFile,
 +  "addr=0x%05x size=%u value=0x%04x pc0=0x%08x pc1=0x%08x\n",

@@ -77,6 +77,7 @@
 + if(!FirestaffCaptureFile) return;
 + if(FirestaffCaptureFrames == 0)
 +  fputs("FIRESTAFF_NEXUS_SATURN_RUNTIME_CAPTURE_V1\n", FirestaffCaptureFile);
++ VDP1::FirestaffTraceVramWriteFrame(FirestaffCaptureFrames);
 + fprintf(FirestaffCaptureFile, "frame=%u\n", FirestaffCaptureFrames);
 + VDP1::FirestaffCaptureRaw(FirestaffCaptureFile);
 + fputs("VDP2_RAW\n", FirestaffCaptureFile);

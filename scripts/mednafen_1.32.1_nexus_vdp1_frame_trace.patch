@@ -25,22 +25,3 @@
 +
 +static void FirestaffTraceVramWriterCode(uint32 address)
 +{
-@@ -1321,10 +1321,10 @@
-  FirestaffTraceVramWriterCode(address);
-  FirestaffTraceVdp1Snapshot(address);
-  path = getenv("FIRESTAFF_NEXUS_TRACE_VDP1_WRITES");
-  if(!path || !*path) return;
-  if(!FirestaffVramWriteTraceFile)
-  {
-   FirestaffVramWriteTraceFile = fopen(path, "wb");
-   if(!FirestaffVramWriteTraceFile) return;
--  fputs("FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V1\n", FirestaffVramWriteTraceFile);
-+  fputs("FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V2\n", FirestaffVramWriteTraceFile);
-  }
---- src/ss/vdp2.cpp
-+++ src/ss/vdp2.cpp
-@@ -1,3 +1,4 @@
-  if(FirestaffCaptureFrames == 0)
-   fputs("FIRESTAFF_NEXUS_SATURN_RUNTIME_CAPTURE_V1\n", FirestaffCaptureFile);
-+ VDP1::FirestaffTraceVramWriteFrame(FirestaffCaptureFrames);
-  fprintf(FirestaffCaptureFile, "frame=%u\n", FirestaffCaptureFrames);

@@ -1,19 +1,21 @@
 --- src/ss/smpc.cpp
 +++ src/ss/smpc.cpp
-@@ -238,0 +239,4 @@
+@@ -236,6 +236,10 @@
+ static uint64_t FirestaffInputFrame;
+ static uint64_t FirestaffCurrentFrame;
+ static uint64_t FirestaffPressStartFrame;
 +static uint64_t FirestaffPressSequenceFrame[16];
 +static uint64_t FirestaffPressSequenceLength[16];
 +static uint16_t FirestaffPressSequenceMask[16];
 +static unsigned FirestaffPressSequenceCount;
-@@ -700,16 +704,50 @@
+ static uint64_t FirestaffPressStartLength = 1;
+ static uint16_t FirestaffPressButtonMask = 0x10;
+ static bool FirestaffInputConfigured;
+@@ -700,17 +704,51 @@
    if(frame && *frame) FirestaffPressStartFrame = strtoull(frame, NULL, 10);
    if(length && *length) FirestaffPressStartLength = strtoull(length, NULL, 10);
    if(mask && *mask) FirestaffPressButtonMask = (uint16_t)strtoull(mask, NULL, 0);
 -  FirestaffPressButtonMask &= 0x0fffU;
--  if(!FirestaffPressStartLength) FirestaffPressStartLength = 1;
--  FirestaffInputConfigured = true;
-- }
-- if(VirtualPortsDPtr[0] && FirestaffPressStartFrame)
 +  FirestaffPressButtonMask &= 0x1fffU;
 +  const char *sequence = getenv("FIRESTAFF_NEXUS_TRACE_PRESS_SEQUENCE");
 +  if(sequence && *sequence)
@@ -39,9 +41,10 @@
 +   }
 +   free(copy);
 +  }
-+  if(!FirestaffPressStartLength) FirestaffPressStartLength = 1;
-+  FirestaffInputConfigured = true;
-+ }
+   if(!FirestaffPressStartLength) FirestaffPressStartLength = 1;
+   FirestaffInputConfigured = true;
+  }
+- if(VirtualPortsDPtr[0] && FirestaffPressStartFrame)
 + if(VirtualPortsDPtr[0])
   {
 -  const uint64_t end = FirestaffPressStartFrame + FirestaffPressStartLength;
@@ -66,3 +69,4 @@
 +  VirtualPortsDPtr[0][1] &= (uint8)~(mask >> 8);
   }
  }
+ int32 SMPC_StartFrame(EmulateSpecStruct* espec)
