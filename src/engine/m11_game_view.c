@@ -23894,7 +23894,6 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     int hasLaunchIntent = 0;
     int rendererBackend = M12_RENDERER_BACKEND_AUTO;
     int gameOptionSlot = -1;
-    char selectedCsbRuntimeDataDir[FSP_PATH_MAX] = {0};
     char selectedDm2RuntimeDataDir[FSP_PATH_MAX] = {0};
     char selectedDm1RuntimeDataDir[FSP_PATH_MAX] = {0};
     if (!state || !menuState) {
@@ -23983,15 +23982,14 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                  * distinct TITL.DAT/program family, so neither path may use
                  * the scanner's generic first-match directory.
                  * ReDMCSB COMPILE.H 199-243 separates these media families. */
-                if (version->versionId) {
-                    if (!M12_AssetStatus_PrepareCSBRuntimeVersion(
-                            &menuState->assetStatus, version->versionId,
-                            selectedCsbRuntimeDataDir,
-                            sizeof(selectedCsbRuntimeDataDir))) {
-                        return 0;
-                    }
-                    spec.dataDir = selectedCsbRuntimeDataDir;
-                }
+                /* m11_open_requested_launch has already called
+                 * M12_StartupMenu_PrepareSelectedGameLaunch().  That is the
+                 * sole cache-materialisation boundary and publishes the
+                 * edition-private runtime directory to spec.dataDir.  Do
+                 * not stage a 500 MiB FM Towns disc a second time here: a
+                 * second concurrent/serial archive extraction can invalidate
+                 * the selected launch despite the first verified cache being
+                 * complete. */
                 if (version->versionId &&
                     strcmp(version->versionId, "fmtowns-ja") == 0) {
                     spec.csbFmtownsJapanese = 1;

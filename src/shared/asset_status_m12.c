@@ -7103,6 +7103,53 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
     return 1;
 }
 
+static int m12_csb_fmtowns_cached_runtime_is_complete(
+    const M12_AssetVersionStatus *version, char *outPath, size_t outPathSize)
+{
+    const char *expectedDungeonMd5;
+    const char *expectedMiniMd5;
+    const char *dataDirectory;
+    char userDataDir[M12_ASSET_DATA_DIR_CAPACITY];
+    char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char cacheLeaf[64];
+    char dataPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char path[M12_ASSET_DATA_DIR_CAPACITY];
+    char md5[M12_ASSET_MD5_CAPACITY];
+
+    if (outPath && outPathSize) outPath[0] = '\0';
+    if (!version || !version->versionId || !version->matchedMd5[0] ||
+        !outPath || outPathSize == 0U ||
+        (strcmp(version->versionId, "fmtowns-en") != 0 &&
+         strcmp(version->versionId, "fmtowns-ja") != 0) ||
+        !FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) ||
+        !FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userDataDir,
+                      "asset-cache") ||
+        snprintf(cacheLeaf, sizeof(cacheLeaf), "csb-%s",
+                 version->versionId) < 0 ||
+        !FSP_JoinPath(outPath, outPathSize, cacheRoot, cacheLeaf)) {
+        return 0;
+    }
+    expectedDungeonMd5 = strcmp(version->versionId, "fmtowns-en") == 0
+        ? "83c56cf1b779e7460a55c9299ebeb04b"
+        : "7ca51c17ef8bd542ca5f0273672ec1a5";
+    expectedMiniMd5 = strcmp(version->versionId, "fmtowns-en") == 0
+        ? "a5a82d0bda4c6ac7d55f63a7b4ca3862"
+        : "dcac9931a5a1f1fd5fbb99ebb89e68d0";
+    dataDirectory = strcmp(version->versionId, "fmtowns-en") == 0
+        ? "CDATA" : "CJDATA";
+    if (!FSP_JoinPath(path, sizeof(path), outPath, "GRAPHICS.DAT") ||
+        !m12_file_md5_hex(path, md5) || strcmp(md5, version->matchedMd5) != 0 ||
+        !FSP_JoinPath(path, sizeof(path), outPath, "DUNGEON.DAT") ||
+        !m12_file_md5_hex(path, md5) || strcmp(md5, expectedDungeonMd5) != 0 ||
+        !FSP_JoinPath(dataPath, sizeof(dataPath), outPath, dataDirectory) ||
+        !FSP_JoinPath(path, sizeof(path), dataPath, "MINI.DAT") ||
+        !m12_file_md5_hex(path, md5) || strcmp(md5, expectedMiniMd5) != 0) {
+        outPath[0] = '\0';
+        return 0;
+    }
+    return 1;
+}
+
 int M12_AssetStatus_PrepareCSBRuntimeVersion(
     const M12_AssetStatus* status, const char* versionId,
     char* outPath, size_t outPathSize) {
@@ -7136,6 +7183,10 @@ int M12_AssetStatus_PrepareCSBRuntimeVersion(
      * into one another. */
     if (strcmp(versionId, "fmtowns-en") == 0 ||
         strcmp(versionId, "fmtowns-ja") == 0) {
+        if (m12_csb_fmtowns_cached_runtime_is_complete(version, outPath,
+                                                       outPathSize)) {
+            return 1;
+        }
         return M12_AssetStatus_MaterializeCSBRuntimeVersion(
             status, versionId, outPath, outPathSize);
     }

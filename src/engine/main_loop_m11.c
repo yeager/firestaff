@@ -260,11 +260,30 @@ static int M12_StartupMenu_PrepareSelectedGameLaunch(
     version = versionIndex >= 0
         ? M12_AssetStatus_GetVersion(&menuState->assetStatus, "csb",
                                      (size_t)versionIndex) : NULL;
-    if (!version || !version->matched || !version->versionId ||
-        !M12_AssetStatus_PrepareCSBRuntimeVersion(
+    if (!version || !version->matched || !version->versionId) {
+        return 0;
+    }
+    if (!M12_AssetStatus_PrepareCSBRuntimeVersion(
             &menuState->assetStatus, version->versionId, runtimeDir,
             sizeof(runtimeDir))) {
-        return 0;
+        const char *separator;
+        /* F31's in-process boot accepts the authenticated original archive
+         * directly.  Cache materialisation is an optimisation, not a
+         * launch prerequisite: keep a verified Japanese/English CD launch
+         * available when its private cache cannot be reconstructed. */
+        separator = (strcmp(version->versionId, "fmtowns-en") == 0 ||
+                     strcmp(version->versionId, "fmtowns-ja") == 0)
+            ? strstr(version->matchedPath, "::") : NULL;
+        if (!separator || (size_t)(separator - version->matchedPath) >=
+                              sizeof(runtimeDir)) {
+            return 0;
+        }
+        memcpy(runtimeDir, version->matchedPath,
+               (size_t)(separator - version->matchedPath));
+        runtimeDir[separator - version->matchedPath] = '\0';
+        if (!FSP_FileExists(runtimeDir)) {
+            return 0;
+        }
     }
     snprintf(menuState->assetStatus.runtimeDataDirs[1],
              sizeof(menuState->assetStatus.runtimeDataDirs[1]), "%s",
