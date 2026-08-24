@@ -6267,7 +6267,9 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
     AssetReadVirtualMatch match;
     int result = -1;
     char temporary_inner_zip[] = "/tmp/firestaff-inner-read-XXXXXX.zip";
+#ifndef _WIN32
     int temporary_inner_fd = -1;
+#endif
     int temporary_inner_created = 0;
     if (!virtualPath || !outBytes || !outSize) return 0;
     *outBytes = NULL;
