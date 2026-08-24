@@ -19,6 +19,7 @@ from nexus_vdp2_registers import detect_byte_order, read_u16
 
 
 TITLE_BIN_SHA256 = "a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44"
+TITLE_BIN_JP_SHA256 = "51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3"
 TITLE_CG_SHA256 = "fda4da4ca1f344c93a4ae8455dcd7d92bcae0510784e5e4fa40e2ffc9e4fb580"
 TITLE_MAPD_OFFSET = 0xE278
 TITLE_MAP_COUNT = 5
@@ -36,7 +37,8 @@ def wordswapped(data: bytes) -> bytes:
 
 def title_spans(title_bin: bytes, title_cg: bytes) -> tuple[bytes, list[bytes], bytes]:
     """Validate the documented MAPD/TIBG record and retain raw source spans."""
-    if hashlib.sha256(title_bin).hexdigest() != TITLE_BIN_SHA256:
+    if hashlib.sha256(title_bin).hexdigest() not in {
+            TITLE_BIN_SHA256, TITLE_BIN_JP_SHA256}:
         raise ValueError("TITLE.BIN hash mismatch")
     if hashlib.sha256(title_cg).hexdigest() != TITLE_CG_SHA256:
         raise ValueError("TITLE.CG hash mismatch")
