@@ -3178,9 +3178,14 @@ static int shell_tool_exists(const char *tool) {
 static void record_missing_tool(const char *mediaPath, const char *tools);
 
 static int chd_tool_available(void) {
-    /* Keep the test-only scanner override consistent for every host helper,
-     * including CHD, rather than making CI depend on its installed tools. */
-    if (getenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS") != NULL) {
+    /* Game startup is self-contained by default.  CHD conversion is a
+     * diagnostic/import convenience only, and therefore needs an explicit
+     * operator opt-in; a missing host tool must never become a runtime
+     * requirement.  Keep the test override for the no-tool diagnostic path
+     * deterministic on development machines. */
+    if (getenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS") != NULL ||
+        getenv("FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS") == NULL ||
+        strcmp(getenv("FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS"), "1") != 0) {
         return 0;
     }
     return shell_tool_exists("chdman");
@@ -4273,9 +4278,13 @@ static void record_missing_extractor(const char *archivePath) {
 }
 
 static int external_tool_available_for_path(const char *path) {
-    /* Test/CI escape hatch: force the "no extractor installed" branch so the
-     * diagnostic path is verifiable on hosts that have 7z/bsdtar. */
-    if (getenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS") != NULL) {
+    /* Firestaff must not require a host archive program to start a game.
+     * Its native readers own ZIP/ISO/CUE/TAR/GZIP/LHA/ADF/ST/STX/MSA media;
+     * unsupported containers fail closed unless an operator explicitly opts
+     * into an import/diagnostic scan. */
+    if (getenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS") != NULL ||
+        getenv("FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS") == NULL ||
+        strcmp(getenv("FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS"), "1") != 0) {
         (void)path;
         return 0;
     }
