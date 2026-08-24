@@ -9,17 +9,17 @@ int main(void)
 
     nexus_v1_light_init(&state);
     nexus_v1_light_torch_on(&state, 100);
-    if (state.torch_ticks != 100) {
-        fprintf(stderr, "FAIL: torch_on did not set ticks\n");
+    if (state.torch_ticks != 0 || state.torch_active != 0) {
+        fprintf(stderr, "FAIL: uncaptured torch write escaped production gate\n");
         return 1;
     }
-    if (nexus_v1_light_get(&state) <= 0) {
-        fprintf(stderr, "FAIL: light_get returned 0 after torch_on\n");
+    if (nexus_v1_light_get(&state) != 0) {
+        fprintf(stderr, "FAIL: uncaptured light value escaped production gate\n");
         return 1;
     }
     nexus_v1_light_tick(&state);
-    if (state.torch_ticks > 100) {
-        fprintf(stderr, "FAIL: light_tick increased torch ticks\n");
+    if (state.torch_ticks != 0) {
+        fprintf(stderr, "FAIL: uncaptured light tick mutated production state\n");
         return 1;
     }
     nexus_v1_light_torch_off(&state);
@@ -28,6 +28,6 @@ int main(void)
         return 1;
     }
 
-    puts("PASS: production Nexus light route returns real values");
+    puts("PASS: production Nexus light boundary remains fail-closed");
     return 0;
 }

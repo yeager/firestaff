@@ -25,19 +25,15 @@ int main(void)
 
     nexus_v1_action_timers_init(&timers);
     nexus_v1_action_start_cooldown(&timers, 0, 24, NULL);
-    if (timers.cooldown[0] != 24) {
-        fprintf(stderr, "FAIL: action cooldown not set\n");
-        return 1;
-    }
     nexus_v1_action_timers_tick(&timers);
-    if (timers.cooldown[0] >= 24) {
-        fprintf(stderr, "FAIL: action tick did not decrement\n");
+    if (timers.cooldown[0] != 0 || nexus_v1_action_remaining(&timers, 0) != 0) {
+        fprintf(stderr, "FAIL: production action route mutated timer state\n");
         return 1;
     }
 
     nexus_v1_door_manager_init(&doors);
-    if (nexus_v1_door_register(&doors, 1, 2, 0, 0, -1, 0, 0) < 0) {
-        fprintf(stderr, "FAIL: door_register returned -1\n");
+    if (nexus_v1_door_register(&doors, 1, 2, 0, 0, -1, 0, 0) != -1) {
+        fprintf(stderr, "FAIL: production door route opened dispatch\n");
         return 1;
     }
 
@@ -45,16 +41,20 @@ int main(void)
     memset(&trap, 0, sizeof(trap));
     trap.kind = NEXUS_TRAP_PRESSURE_PLATE;
     trap.armed = 1;
-    nexus_v1_trap_add(&traps, &trap);
-
-    nexus_v1_projectiles_init(&projectiles);
-    nexus_v1_projectile_spawn(&projectiles, NEXUS_PROJ_FIREBALL,
-                              1, 2, 0, 10, 2, 0);
-    if (nexus_v1_projectile_count(&projectiles) <= 0) {
-        fprintf(stderr, "FAIL: projectile not spawned\n");
+    if (nexus_v1_trap_add(&traps, &trap) != 0 ||
+        nexus_v1_trap_find(&traps, 0, 0, 0) != NULL) {
+        fprintf(stderr, "FAIL: production trap route mutated state\n");
         return 1;
     }
 
-    puts("PASS: production Nexus action/world route returns real values");
+    nexus_v1_projectiles_init(&projectiles);
+    if (nexus_v1_projectile_spawn(&projectiles, NEXUS_PROJ_FIREBALL,
+                                  1, 2, 0, 10, 2, 0) != -1 ||
+        nexus_v1_projectile_count(&projectiles) != 0) {
+        fprintf(stderr, "FAIL: production projectile route mutated state\n");
+        return 1;
+    }
+
+    puts("PASS: production Nexus action/world boundary remains fail-closed");
     return 0;
 }

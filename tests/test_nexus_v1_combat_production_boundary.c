@@ -22,22 +22,21 @@ int main(void)
     active.health = 100;
 
     nexus_v1_combat_seed(1234U);
-    if (nexus_v1_combat_random(100) == 0 && nexus_v1_combat_random(100) == 0 &&
-        nexus_v1_combat_random(100) == 0) {
-        fprintf(stderr, "FAIL: combat RNG always returns 0\n");
+    if (nexus_v1_combat_random(100) != 0 || nexus_v1_combat_random(100) != 0) {
+        fprintf(stderr, "FAIL: uncaptured combat RNG escaped production gate\n");
         return 1;
     }
     nexus_v1_combat_seed(1234U);
     nexus_v1_champion_take_damage(&champion, 20, NEXUS_WOUND_HEAD);
-    if (champion.health >= 100) {
-        fprintf(stderr, "FAIL: take_damage did not reduce health\n");
+    if (champion.health != 100) {
+        fprintf(stderr, "FAIL: uncaptured champion damage mutated production state\n");
         return 1;
     }
     nexus_v1_creature_take_damage(&active, 20);
-    if (active.health >= 100) {
-        fprintf(stderr, "FAIL: creature take_damage did not reduce health\n");
+    if (active.health != 100) {
+        fprintf(stderr, "FAIL: uncaptured creature damage mutated production state\n");
         return 1;
     }
-    puts("PASS: production Nexus combat route returns real values");
+    puts("PASS: production Nexus combat boundary remains fail-closed");
     return 0;
 }

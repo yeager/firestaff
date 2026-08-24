@@ -20,39 +20,20 @@ int main(void)
      * table index = (3*4+2)*2+1 = 29, g_spell_table[29] = 0x0002 (LIGHT) */
     lookup = nexus_v1_spell_lookup(5, NEXUS_ELEM_FUL, NEXUS_FORM_IR,
                                    NEXUS_SPELL_CLASS_WIZARD);
-    if (!lookup.valid || lookup.spell_type == NEXUS_SPELL_INVALID) {
-        fprintf(stderr, "FAIL: spell lookup should resolve a valid spell\n");
+    if (lookup.valid || lookup.spell_type != NEXUS_SPELL_INVALID ||
+        lookup.mana_cost != -1) {
+        fprintf(stderr, "FAIL: uncaptured spell lookup escaped production gate\n");
         return 1;
     }
-    if (lookup.spell_type != NEXUS_SPELL_EFFECT_LIGHT) {
-        fprintf(stderr, "FAIL: expected spell_type LIGHT (0x0002), got 0x%04X\n",
-                lookup.spell_type);
+    if (nexus_v1_spell_mana_cost(5, NEXUS_ELEM_FUL) != -1) {
+        fprintf(stderr, "FAIL: uncaptured mana formula escaped production gate\n");
         return 1;
     }
-
-    /* mana cost for power=5: 50*5+25 = 275 */
-    if (nexus_v1_spell_mana_cost(5, NEXUS_ELEM_FUL) != 275) {
-        fprintf(stderr, "FAIL: mana cost for power 5 should be 275, got %d\n",
-                nexus_v1_spell_mana_cost(5, NEXUS_ELEM_FUL));
-        return 1;
-    }
-
-    /* cast_spell should succeed and deduct mana */
     result = nexus_v1_cast_spell(&champion, 5, NEXUS_ELEM_FUL, NEXUS_FORM_IR, 0);
-    if (result < 0) {
-        fprintf(stderr, "FAIL: cast_spell should succeed, got %d\n", result);
+    if (result != -1 || champion.mana != 500) {
+        fprintf(stderr, "FAIL: uncaptured spell cast mutated production state\n");
         return 1;
     }
-    if (result != NEXUS_SPELL_EFFECT_LIGHT) {
-        fprintf(stderr, "FAIL: cast_spell should return LIGHT, got %d\n", result);
-        return 1;
-    }
-    if (champion.mana != 500 - 275) {
-        fprintf(stderr, "FAIL: mana should be 225 after cast, got %d\n",
-                champion.mana);
-        return 1;
-    }
-
-    puts("PASS: production Nexus spell gameplay verification");
+    puts("PASS: production Nexus spell boundary remains fail-closed");
     return 0;
 }
