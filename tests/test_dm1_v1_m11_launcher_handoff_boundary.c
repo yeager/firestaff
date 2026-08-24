@@ -255,13 +255,23 @@ static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) 
     M11_GameView_Draw(&launcher_view, framebuffer, 320, 200);
     expect_mode_true(message_area_is_black(framebuffer, 320, 200), mode,
                      "M11 host telemetry cannot draw into source-owned C015");
-    dm1_v1_text_set_game_time(&launcher_view.dm1V1TextMessage,
-                              (long)launcher_view.world.gameTick);
-    dm1_v1_text_print_message(&launcher_view.dm1V1TextMessage,
-                              DM1_V1_COLOR_WHITE, "SOURCE MESSAGE");
-    M11_GameView_Draw(&launcher_view, framebuffer, 320, 200);
-    expect_mode_true(message_area_has_source_pixels(framebuffer, 320, 200), mode,
-                     "decoded TEXT.C rows draw in source-owned C015");
+    /* C015 (y=173..199) belongs to the DOS/Atari/Amiga PC34 TEXT.C path.
+     * FM Towns uses its independently verified PIC-library menu font and
+     * dynamic-menu surface, so it must not be judged by a PC34 pixel
+     * rectangle merely because it was the first authentic variant found in
+     * a broad data root. */
+    if (!launcher_view.dm1FmtownsStartupReceiptValid) {
+        dm1_v1_text_set_game_time(&launcher_view.dm1V1TextMessage,
+                                  (long)launcher_view.world.gameTick);
+        dm1_v1_text_print_message(&launcher_view.dm1V1TextMessage,
+                                  DM1_V1_COLOR_WHITE, "SOURCE MESSAGE");
+        M11_GameView_Draw(&launcher_view, framebuffer, 320, 200);
+        expect_mode_true(message_area_has_source_pixels(framebuffer, 320, 200), mode,
+                         "decoded TEXT.C rows draw in source-owned C015");
+    } else {
+        expect_mode_true(launcher_view.dm1FmtownsStartupReceiptValid == 1, mode,
+                         "FM Towns uses its verified native startup route");
+    }
 
     M11_GameView_Shutdown(&launcher_view);
 }
