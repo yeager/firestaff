@@ -1141,6 +1141,48 @@ static void m12_publish_dm1_fmtowns_required_files(M12_AssetStatus* status,
 }
 
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
+/* A direct PC-DOS ZIP is an explicit medium selection.  The DM2 boot owner
+ * verifies its two original DAT members in RAM; M12 records that receipt so
+ * sibling archives cannot replace the selected source. */
+static int m12_admit_dm2_pc_dos_archive(M12_AssetStatus* status,
+                                        int gameIndex,
+                                        const char* archive) {
+    size_t i;
+    DM2_V1_BootProfile profile;
+    if (!status || !archive || !FSP_FileExists(archive) ||
+        !strstr(archive, "Dungeon-Master-II-Skullkeep_DOS_") ||
+        gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "dm2") != 0) return 0;
+    dm2_v1_boot_profile_init(&profile);
+    if (dm2_v1_boot_scan_assets(&profile, archive) != 0 ||
+        !profile.assets_verified || profile.platform != DM2_PLATFORM_PC_EN ||
+        strcmp(profile.graphics_md5, "25247ede4dabb6a71e5dabdfbcd5907d") != 0 ||
+        strcmp(profile.dungeon_md5, "6caccd7875009e82fe2e28e7f6d6adc0") != 0) {
+        dm2_v1_boot_cleanup(&profile);
+        return 0;
+    }
+    for (i = 0U; i < g_games[gameIndex].versionCount; ++i) {
+        M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
+        if (strcmp(version->versionId, "pc-en") == 0) {
+            version->matched = 1;
+            snprintf(version->matchedPath, sizeof(version->matchedPath), "%s",
+                     profile.graphics_path);
+            snprintf(version->matchedMd5, sizeof(version->matchedMd5), "%s",
+                     profile.graphics_md5);
+        } else {
+            memset(version, 0, sizeof(*version));
+            version->gameId = g_games[gameIndex].versions[i].gameId;
+            version->versionId = g_games[gameIndex].versions[i].versionId;
+            version->label = g_games[gameIndex].versions[i].label;
+            version->shortLabel = g_games[gameIndex].versions[i].shortLabel;
+        }
+    }
+    m12_copy_string(status->runtimeDataDirs[gameIndex],
+                    sizeof(status->runtimeDataDirs[gameIndex]), archive);
+    dm2_v1_boot_cleanup(&profile);
+    return 1;
+}
+
 /* The Amiga release is a nested installer, not a ZIP with visible DAT
  * members.  Let the DM2 boot owner perform its bounded RAM-only transport
  * read, then copy only the verified identity receipt into M12.  M12 must not
@@ -6382,6 +6424,7 @@ void M12_AssetStatus_ScanGameWithOptions(
     int dm2ExplicitAmiga = 0;
     int dm2ExplicitMac = 0;
     int dm2ExplicitFmtowns = 0;
+    int dm2ExplicitPcDos = 0;
     int nexusArchiveAdmitted = 0;
     int reqMatch;
     int i;
@@ -6495,6 +6538,10 @@ void M12_AssetStatus_ScanGameWithOptions(
          * direct CSB scan does not reopen the selected multi-hundred-megabyte
          * archive only to restore them. */
     if (strcmp(g_games[gameIndex].gameId, "dm2") == 0) {
+            dm2ExplicitPcDos = requestedDataDir && requestedDataDir[0] &&
+                strstr(requestedDataDir,
+                       "Dungeon-Master-II-Skullkeep_DOS_") != NULL &&
+                FSP_FileExists(requestedDataDir);
             dm2ExplicitAmiga = requestedDataDir && requestedDataDir[0] &&
                 strstr(requestedDataDir,
                        "Dungeon-Master-II-Skullkeep_Amiga_EN.zip") != NULL &&
@@ -6515,7 +6562,10 @@ void M12_AssetStatus_ScanGameWithOptions(
              * lightweight status corpus and must not reference the production
              * archive owner symbols. */
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
-            if (dm2ExplicitAmiga) {
+            if (dm2ExplicitPcDos) {
+                (void)m12_admit_dm2_pc_dos_archive(status, gameIndex,
+                                                    requestedDataDir);
+            } else if (dm2ExplicitAmiga) {
                 (void)m12_admit_dm2_amiga_archive(status, gameIndex,
                                                    roots, rootCount,
                                                    requestedDataDir);
