@@ -3461,16 +3461,80 @@ static int dm2_v1_boot_load_amiga_installer_from_zip(
 
 /* ── Scan and verify DM2 assets ─────────────────────────────────────── */
 
+/* The retail PC release is commonly preserved as one ZIP with its DATA
+ * directory intact.  It is a selected medium in its own right: read just
+ * the two authenticated runtime members into the profile, rather than
+ * unpacking them beside another edition or allowing a sibling CD to win the
+ * recursive scan. */
+static int dm2_v1_boot_load_pc_dos_archive(DM2_V1_BootProfile *profile,
+                                            const char *archive_path)
+{
+    static const char graphics_md5[] = "25247ede4dabb6a71e5dabdfbcd5907d";
+    static const char dungeon_md5[] = "6caccd7875009e82fe2e28e7f6d6adc0";
+    uint8_t *graphics = NULL;
+    uint8_t *dungeon = NULL;
+    size_t graphics_size = 0u;
+    size_t dungeon_size = 0u;
+    char actual_md5[33];
+
+    if (!profile || !archive_path || !FSP_FileExists(archive_path) ||
+        !strstr(archive_path, "Dungeon-Master-II-Skullkeep_DOS_")) {
+        return 0;
+    }
+    if (firestaff_zip_extract_by_name(archive_path, "graphics.dat",
+                                      &graphics, &graphics_size) != 0 ||
+        firestaff_zip_extract_by_name(archive_path, "dungeon.dat",
+                                      &dungeon, &dungeon_size) != 0 ||
+        !graphics || !dungeon || graphics_size == 0u || dungeon_size == 0u ||
+        graphics_size > 64u * 1024u * 1024u ||
+        dungeon_size > 10u * 1024u * 1024u) {
+        free(graphics);
+        free(dungeon);
+        return 0;
+    }
+    dm2_md5_bytes_hex(graphics, graphics_size, actual_md5);
+    if (!md5_matches(actual_md5, graphics_md5)) {
+        free(graphics);
+        free(dungeon);
+        return 0;
+    }
+    dm2_md5_bytes_hex(dungeon, dungeon_size, actual_md5);
+    if (!md5_matches(actual_md5, dungeon_md5)) {
+        free(graphics);
+        free(dungeon);
+        return 0;
+    }
+    profile->graphics_mem = graphics;
+    profile->graphics_mem_size = graphics_size;
+    profile->dungeon_mem = dungeon;
+    profile->dungeon_mem_size = dungeon_size;
+    profile->graphics_size = graphics_size;
+    profile->dungeon_size = dungeon_size;
+    snprintf(profile->graphics_md5, sizeof(profile->graphics_md5), "%s",
+             graphics_md5);
+    snprintf(profile->dungeon_md5, sizeof(profile->dungeon_md5), "%s",
+             dungeon_md5);
+    snprintf(profile->graphics_path, sizeof(profile->graphics_path),
+             "%s::data/graphics.dat", archive_path);
+    snprintf(profile->dungeon_path, sizeof(profile->dungeon_path),
+             "%s::data/dungeon.dat", archive_path);
+    return 1;
+}
+
 int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
                             const char *data_dir) {
     char path[512];
     char save_root[sizeof(profile->save_root)];
     int explicit_amiga_archive;
+    int explicit_pc_dos_archive;
     (void)path;
     const char *base = data_dir ? data_dir : ".";
 
     explicit_amiga_archive = strstr(base,
                                     "Dungeon-Master-II-Skullkeep_Amiga_EN.zip") != NULL &&
+        FSP_FileExists(base);
+    explicit_pc_dos_archive = strstr(base,
+                                     "Dungeon-Master-II-Skullkeep_DOS_") != NULL &&
         FSP_FileExists(base);
 
     if (!profile) return -1;
@@ -3487,13 +3551,19 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     /* Source-lock: SKULL.ASM T560 owns the DM2 data load. Firestaff
      * discovers user-supplied files by hash first so launch does not
      * depend on PC install names or directory layout. */
-    (void)dm2_scan_known_hash_assets(base,
-                                     profile->graphics_path,
-                                     &profile->graphics_size,
-                                     profile->graphics_md5,
-                                     profile->dungeon_path,
-                                     &profile->dungeon_size,
-                                     profile->dungeon_md5);
+    if (explicit_pc_dos_archive) {
+        (void)dm2_v1_boot_load_pc_dos_archive(profile, base);
+    } else if (explicit_amiga_archive) {
+        (void)dm2_v1_boot_load_amiga_installer_from_zip(profile, base);
+    } else {
+        (void)dm2_scan_known_hash_assets(base,
+                                         profile->graphics_path,
+                                         &profile->graphics_size,
+                                         profile->graphics_md5,
+                                         profile->dungeon_path,
+                                         &profile->dungeon_size,
+                                         profile->dungeon_md5);
+    }
 
     /* Some extracted FM Towns trees use an uppercase DATA directory and
      * mixed-case file names.  The recursive hash cache is intentionally
@@ -3524,11 +3594,6 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     /* An explicitly selected Amiga installer must win before the generic
      * sibling-archive probes. Otherwise a nearby FM Towns ZIP can hijack the
      * launch and make the caller appear to have selected the wrong platform. */
-    if (explicit_amiga_archive &&
-        (!profile->graphics_path[0] || !profile->dungeon_path[0])) {
-        (void)dm2_v1_boot_load_amiga_installer_from_zip(profile, base);
-    }
-
     /* A selected Macintosh ZIP also has a CUE sheet.  Probe its HFS owner
      * before the generic disc-image route, otherwise the MODE1 track can be
      * mistaken for FM Towns merely because the container carries a cue. */
@@ -3659,9 +3724,23 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     memset(&profile->dos_startup_media, 0, sizeof(profile->dos_startup_media));
     profile->dos_startup_media_verified = 0;
     if (profile->assets_verified && profile->platform == DM2_PLATFORM_PC_EN &&
-        profile->asset_root[0] && !strstr(profile->asset_root, "::")) {
+        profile->asset_root[0]) {
         char dos_install_root[sizeof(profile->asset_root)];
-        copy_parent_dir(dos_install_root, profile->asset_root);
+        const char *virtual_member = strstr(profile->asset_root, "::");
+        if (virtual_member) {
+            size_t archive_length = (size_t)(virtual_member - profile->asset_root);
+            if (archive_length == 0u || archive_length >= sizeof(dos_install_root)) {
+                return -1;
+            }
+            memcpy(dos_install_root, profile->asset_root, archive_length);
+            dos_install_root[archive_length] = '\0';
+        } else if (FSP_FileExists(profile->asset_root) &&
+                   strstr(profile->asset_root, ".zip") != NULL) {
+            snprintf(dos_install_root, sizeof(dos_install_root), "%s",
+                     profile->asset_root);
+        } else {
+            copy_parent_dir(dos_install_root, profile->asset_root);
+        }
         profile->dos_startup_media_verified =
             dm2_v1_dos_startup_media_probe(dos_install_root,
                                             &profile->dos_startup_media);
@@ -14718,7 +14797,9 @@ int dm2_v1_boot_select_prepared_new_game_champion_by_mirror(
              * actor direction; the mirror event is still identified by the
              * authenticated map/x/y/object chain, not a DOS-only direction
              * literal. */
-            return 0;
+            /* STARTEND's private (0,0) selection is retained first in the
+             * source roster. It is not the later D0C viewport target. */
+            continue;
             }
         }
         memset(&resolved, 0, sizeof(resolved));

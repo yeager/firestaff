@@ -2794,6 +2794,20 @@ static int m11_dm2_boot_runtime_startup_pointer(
         out_receipt);
 }
 
+static int m11_dm2_boot_runtime_startup_input(
+    M11_GameViewState *state,
+    M12_MenuInput input,
+    DM2_V1_StartupExecution *out_execution,
+    DM2_V1_StartupHostActionReceipt *out_receipt)
+{
+    DM2_V1_BootRuntimeStartupSnapshot snapshot;
+    if (!state || !out_execution || !out_receipt) return 0;
+    m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
+    return dm2_v1_boot_startup_execute_firestaff_input_from_snapshot(
+        &snapshot, (int)input, m11_dm2_startup_apply_session_callback,
+        state, out_execution, out_receipt);
+}
+
 /* After NEW GAME has retained File_header's selection-free GAME_LOAD world,
  * the title menu must no longer consume a movement key as another 0xd7
  * launch request.  uiinput.cpp sends 1/2 to DM2_PERFORM_TURN_SQUAD and 3..6
@@ -3006,7 +3020,6 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
     M11_GameViewState *state,
     M12_MenuInput input)
 {
-    DM2_V1_StartupMenuPointerLayout layout;
     DM2_V1_StartupExecution execution;
     DM2_V1_StartupHostActionReceipt action_receipt;
 
@@ -3049,16 +3062,8 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
     if (input != M12_MENU_INPUT_ACCEPT || !state->dm2BootProfile) {
         return M11_GAME_INPUT_IGNORED;
     }
-    memset(&layout, 0, sizeof(layout));
-    if (!dm2_v1_boot_startup_menu_pointer_layout(
-            (DM2_V1_BootProfile *)state->dm2BootProfile, &layout) ||
-        !layout.valid || layout.new_game.w <= 0 || layout.new_game.h <= 0 ||
-        !m11_dm2_boot_runtime_startup_pointer(
-            state,
-            layout.new_game.x + layout.new_game.w / 2,
-            layout.new_game.y + layout.new_game.h / 2,
-            &execution,
-            &action_receipt)) {
+    if (!m11_dm2_boot_runtime_startup_input(
+            state, input, &execution, &action_receipt)) {
         return M11_GAME_INPUT_IGNORED;
     }
     return m11_dm2_startup_apply_host_action_receipt(state, &action_receipt);
@@ -31981,9 +31986,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
              * unverified TITLE->SKULL source handoff, into another menu. */
             return M11_GAME_INPUT_IGNORED;
         }
-        if (!state->dm2World) {
-            return M11_GAME_INPUT_IGNORED;
+        if (state->dm2State.startup_menu_active) {
+            return m11_dm2_startup_handle_input(state, input);
         }
+        if (!state->dm2World) return M11_GAME_INPUT_IGNORED;
         if (input >= M12_MENU_INPUT_CHAMPION_1_INVENTORY &&
             input <= M12_MENU_INPUT_CHAMPION_4_INVENTORY) {
             /* Refresh the presentation mirror before resolving a native Mac
@@ -32024,9 +32030,6 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         }
         if (state->dm2GameFrozen) {
             return M11_GAME_INPUT_IGNORED;
-        }
-        if (state->dm2State.startup_menu_active) {
-            return m11_dm2_startup_handle_input(state, input);
         }
         if (state->dm2SaveDialoguePanelActive) {
             if (input == M12_MENU_INPUT_BACK) {

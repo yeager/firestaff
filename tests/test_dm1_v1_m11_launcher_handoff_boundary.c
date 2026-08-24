@@ -151,7 +151,11 @@ static void make_empty_data_dir(char out[512]) {
 }
 
 static const char* default_data_root(char fallback[512]) {
+    const char* configured = getenv("FIRESTAFF_DATA");
     const char* home = getenv("HOME");
+    if (configured && configured[0]) {
+        return configured;
+    }
     if (!home || !home[0]) {
         return NULL;
     }

@@ -9324,6 +9324,10 @@ static int dm2_v1_game_load_local_dyn_map_scan_init(
             hash = dm2_v1_game_load_owner_hash_step(hash, (uint16_t)link);
             if (link == DM2_V1_RECORD_HANDLE_END) continue;
             ++scan.root_count;
+            /* A File_header record may be reached from more than one marked
+             * tile. Only a repeat within the same chain is a cycle. */
+            {
+                uint16_t chain_start = scan.record_count;
             while (link != DM2_V1_RECORD_HANDLE_END) {
                 DM2_V1_GameLoadLocalDynRecordVisit *visit;
                 const DM2_V1_RecordPool *pool;
@@ -9334,7 +9338,8 @@ static int dm2_v1_game_load_local_dyn_map_scan_init(
                 uint32_t record_hash = 0x52454344u; /* "RECD" */
                 int seen = 0;
 
-                for (int prior = 0; prior < scan.record_count; ++prior) {
+                for (int prior = (int)chain_start;
+                     prior < scan.record_count; ++prior) {
                     if (scan.records[prior].object_id == (uint16_t)link) {
                         seen = 1;
                         break;
@@ -9387,6 +9392,7 @@ static int dm2_v1_game_load_local_dyn_map_scan_init(
                                                          visit->type);
                 hash = dm2_v1_game_load_owner_hash_step(hash, record_hash);
                 link = next;
+            }
             }
         }
     }

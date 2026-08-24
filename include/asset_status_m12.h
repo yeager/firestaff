@@ -191,6 +191,9 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
 int M12_AssetStatus_PrepareCSBRuntimeVersion(
     const M12_AssetStatus* status, const char* versionId,
     char* outPath, size_t outPathSize);
+int M12_AssetStatus_PrepareDM1RuntimeVersion(
+    const M12_AssetStatus* status, const char* versionId,
+    char* outPath, size_t outPathSize);
 /* Materialize the selected DM1 FM Towns language package from the original
  * BIN/CUE archive.  The cache contains the verified DATA/JDATA files and the
  * original FM Towns launcher/program siblings; it never substitutes PC34

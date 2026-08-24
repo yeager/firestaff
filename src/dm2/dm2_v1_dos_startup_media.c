@@ -1,5 +1,6 @@
 #include "dm2_v1_dos_startup_media.h"
 
+#include "asset_find_by_hash.h"
 #include "dm2_v1_dos_real_data_manifest.h"
 #include "dm2_v1_mve_stream.h"
 #include <stdio.h>
@@ -179,7 +180,34 @@ static int dm2_v1_dos_startup_read_verified(const char *root,
         return 0;
     }
     expected = dm2_v1_dos_file_fp_lookup_pc34(name);
-    if (!expected || snprintf(path, sizeof(path), "%s/%s", root, name) <= 0 ||
+    if (!expected) {
+        return 0;
+    }
+    if (strstr(root, ".zip") != NULL) {
+        uint8_t *bytes = NULL;
+        size_t byte_count = 0u;
+        DM2_V1_DosSha256Fast sha;
+        if (snprintf(path, sizeof(path), "%s::%s", root, name) <= 0 ||
+            strlen(path) >= sizeof(path) ||
+            !asset_read_virtual_path_alloc(path, &bytes, &byte_count) ||
+            !bytes || byte_count != expected->size_bytes) {
+            free(bytes);
+            return 0;
+        }
+        dm2_v1_dos_sha256_fast_init(&sha);
+        dm2_v1_dos_sha256_fast_update(&sha, bytes, byte_count);
+        dm2_v1_dos_sha256_fast_final(&sha, digest);
+        if (!dm2_v1_dos_file_fp_matches_pc34(name, byte_count, digest)) {
+            free(bytes);
+            return 0;
+        }
+        prefix_used = byte_count < prefix_capacity ? byte_count : prefix_capacity;
+        memcpy(prefix, bytes, prefix_used);
+        free(bytes);
+        if (out_size) *out_size = byte_count;
+        return 1;
+    }
+    if (snprintf(path, sizeof(path), "%s/%s", root, name) <= 0 ||
         strlen(path) >= sizeof(path)) {
         return 0;
     }
@@ -359,8 +387,27 @@ static int dm2_v1_dos_startup_load_verified_member(
     if (out_byte_count) *out_byte_count = 0u;
     if (!out_bytes || !out_byte_count || !install_root || !install_root[0] ||
         !name || !name[0] ||
-        !(expected = dm2_v1_dos_file_fp_lookup_pc34(name)) ||
-        snprintf(path, sizeof(path), "%s/%s", install_root, name) <= 0 ||
+        !(expected = dm2_v1_dos_file_fp_lookup_pc34(name))) {
+        return 0;
+    }
+    if (strstr(install_root, ".zip") != NULL) {
+        if (snprintf(path, sizeof(path), "%s::%s", install_root, name) <= 0 ||
+            strlen(path) >= sizeof(path) ||
+            !asset_read_virtual_path_alloc(path, &bytes, &read_total) ||
+            !bytes || read_total != expected->size_bytes) {
+            goto reject;
+        }
+        dm2_v1_dos_sha256_fast_init(&sha);
+        dm2_v1_dos_sha256_fast_update(&sha, bytes, read_total);
+        dm2_v1_dos_sha256_fast_final(&sha, digest);
+        if (!dm2_v1_dos_file_fp_matches_pc34(name, read_total, digest)) {
+            goto reject;
+        }
+        *out_bytes = bytes;
+        *out_byte_count = read_total;
+        return 1;
+    }
+    if (snprintf(path, sizeof(path), "%s/%s", install_root, name) <= 0 ||
         strlen(path) >= sizeof(path) ||
         !(bytes = (uint8_t *)malloc(expected->size_bytes))) {
         return 0;

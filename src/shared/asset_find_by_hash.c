@@ -6248,6 +6248,13 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
         }
         memcpy(container, virtualPath, containerLength);
         container[containerLength] = '\0';
+        if (asset_container_kind_for_path(container) == ASSET_CONTAINER_ZIP) {
+            uint8_t *member = zip_load_entry_bytes(container, first + 2,
+                                                   outSize);
+            if (!member) return 0;
+            *outBytes = member;
+            return 1;
+        }
         if (asset_container_kind_for_path(container) == ASSET_CONTAINER_EXTERNAL) {
 #ifdef _WIN32
             /* External archives use the host extractor, which is deliberately
