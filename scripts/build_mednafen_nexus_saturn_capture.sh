@@ -94,22 +94,26 @@ elif [[ "$(cat "$sh2_register_trace_marker" 2>/dev/null)" != "$sh2_register_trac
 fi
 sh2_ram_write_marker="$source_dir/.firestaff-nexus-sh2-ram-write-trace-patched"
 sh2_ram_write_patch_id='FIRESTAFF_NEXUS_SH2_RAM_WRITE_TRACE_V1_DMA_PROVENANCE'
-if [[ ! -f "$sh2_ram_write_marker" ]]; then
-  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_sh2_ram_write_trace.patch"
-  printf '%s\n' "$sh2_ram_write_patch_id" > "$sh2_ram_write_marker"
-elif [[ "$(cat "$sh2_ram_write_marker" 2>/dev/null)" != "$sh2_ram_write_patch_id" ]]; then
-  echo "ERROR: external Mednafen source has an older or unknown SH-2 RAM-write trace patch; use a fresh build directory" >&2
-  exit 2
+if [[ "${FIRESTAFF_NEXUS_ENABLE_SH2_RAM_TRACE:-0}" = 1 ]]; then
+  if [[ ! -f "$sh2_ram_write_marker" ]]; then
+    patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_sh2_ram_write_trace.patch"
+    printf '%s\n' "$sh2_ram_write_patch_id" > "$sh2_ram_write_marker"
+  elif [[ "$(cat "$sh2_ram_write_marker" 2>/dev/null)" != "$sh2_ram_write_patch_id" ]]; then
+    echo "ERROR: external Mednafen source has an older or unknown SH-2 RAM-write trace patch; use a fresh build directory" >&2
+    exit 2
+  fi
 fi
 sh2_memory_snapshot_marker="$source_dir/.firestaff-nexus-sh2-memory-snapshot-patched"
 sh2_memory_snapshot_patch_id='FIRESTAFF_NEXUS_SH2_MEMORY_SNAPSHOT_V1'
-if [[ ! -f "$sh2_memory_snapshot_marker" ]]; then
-  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_sh2_memory_snapshot.patch"
-  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_sh2_memory_snapshot_hook.patch"
-  printf '%s\n' "$sh2_memory_snapshot_patch_id" > "$sh2_memory_snapshot_marker"
-elif [[ "$(cat "$sh2_memory_snapshot_marker" 2>/dev/null)" != "$sh2_memory_snapshot_patch_id" ]]; then
-  echo "ERROR: external Mednafen source has an older or unknown SH-2 memory snapshot patch; use a fresh build directory" >&2
-  exit 2
+if [[ "${FIRESTAFF_NEXUS_ENABLE_SH2_MEMORY_SNAPSHOT:-0}" = 1 ]]; then
+  if [[ ! -f "$sh2_memory_snapshot_marker" ]]; then
+    patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_sh2_memory_snapshot.patch"
+    patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_sh2_memory_snapshot_hook.patch"
+    printf '%s\n' "$sh2_memory_snapshot_patch_id" > "$sh2_memory_snapshot_marker"
+  elif [[ "$(cat "$sh2_memory_snapshot_marker" 2>/dev/null)" != "$sh2_memory_snapshot_patch_id" ]]; then
+    echo "ERROR: external Mednafen source has an older or unknown SH-2 memory snapshot patch; use a fresh build directory" >&2
+    exit 2
+  fi
 fi
 vdp2_trace_marker="$source_dir/.firestaff-nexus-vdp2-write-trace-patched"
 vdp2_trace_patch_id='FIRESTAFF_NEXUS_VDP2_WRITE_TRACE_V8_FRAME_POST_SNAPSHOT_AFTER_CRAM_WRITE_SOURCE_R5_PC_FILTER'

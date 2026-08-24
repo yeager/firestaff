@@ -1,9 +1,7 @@
 --- src/ss/vdp2.cpp
 +++ src/ss/vdp2.cpp
-@@ -762,5 +762,6 @@
-   if(IsWrite)
-   {
-    const unsigned mask = (sizeof(T) == 2) ? 0xFFFF : (0xFF00 >> ((A & 1) << 3));
+@@ -819,3 +819,4 @@
 +   FirestaffTraceVdp2Write("vram", A, sizeof(T), *DB);
-   VRAM[vri] = (VRAM[vri] &~ mask) | (*DB & mask);
+    VRAM[vri] = (VRAM[vri] &~ mask) | (*DB & mask);
    }
+   else
