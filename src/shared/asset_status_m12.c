@@ -4137,7 +4137,9 @@ static void m12_admit_csb_amiga31_title_package(
         const char* titlePath = titlePaths[titleIndex];
         const char* separator;
         const char* nextSeparator;
-        size_t prefixLength;
+        /* Only virtual receipts use this length, but initialize it so the
+         * path builder remains trivially safe if the branch is refactored. */
+        size_t prefixLength = 0U;
         if (!titleMatched[titleIndex] || titlePath[0] == '\0') continue;
         if (m12_path_is_virtual_asset(titlePath)) {
             /* A nested ADF receipt is archive.7z::disk.adf::TITL.DAT.
