@@ -224,9 +224,27 @@ static int M12_StartupMenu_PrepareSelectedGameLaunch(
         return 0;
     }
     entry = M12_StartupMenu_GetEntry(menuState, menuState->activatedIndex);
-    if (!entry || !entry->gameId || strcmp(entry->gameId, "csb") != 0) {
+    if (!entry || !entry->gameId) {
         return 1;
     }
+    if (strcmp(entry->gameId, "dm1") == 0) {
+        intent = M12_StartupMenu_GetLaunchIntent(menuState);
+        versionIndex = intent.valid && intent.options.versionIndex >= 0
+            ? intent.options.versionIndex
+            : menuState->gameOptions[menuState->activatedIndex].versionIndex;
+        version = versionIndex >= 0
+            ? M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1",
+                                         (size_t)versionIndex) : NULL;
+        if (!version || !version->matched || !version->versionId ||
+            !M12_AssetStatus_PrepareDM1RuntimeVersion(
+                &menuState->assetStatus, version->versionId, runtimeDir,
+                sizeof(runtimeDir))) return 0;
+        snprintf(menuState->assetStatus.runtimeDataDirs[0],
+                 sizeof(menuState->assetStatus.runtimeDataDirs[0]), "%s",
+                 runtimeDir);
+        return 1;
+    }
+    if (strcmp(entry->gameId, "csb") != 0) return 1;
     /* The selected CSB edition owns this launch.  Archives/ADFs enter M11
      * through a hash-verified private cache; an already verified loose
      * package keeps its original directory and startup siblings. */

@@ -1042,6 +1042,63 @@ static int m12_admit_dm1_fmtowns_archive(
     return 0;
 }
 
+/* Retail-preservation Amiga chain: download ZIP -> preservation ZIP -> ADF.
+ * The inner names merely locate the original medium; GRAPHICS.DAT's verified
+ * fingerprint remains the sole admission criterion. */
+static int m12_admit_dm1_amiga20_nested_archive(
+    M12_AssetStatus* status, int gameIndex,
+    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t rootCount) {
+    static const char outerName[] = "Dungeon-Master_Amiga_EN_Version-20.zip";
+    static const char innerName[] = "Dungeon Master v2.0 (1988)(FTL).zip";
+    static const char adfName[] = "Dungeon Master v2.0 (1988)(FTL).adf";
+    size_t rootIndex;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "dm1") != 0) return 0;
+    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+        char candidates[2][M12_ASSET_DATA_DIR_CAPACITY];
+        size_t candidateCount = 0U, candidateIndex;
+        snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s/%s",
+                 roots[rootIndex], outerName);
+        snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s/dm1/%s",
+                 roots[rootIndex], outerName);
+        for (candidateIndex = 0U; candidateIndex < candidateCount; ++candidateIndex) {
+            char virtualGraphics[M12_ASSET_DATA_DIR_CAPACITY * 2U];
+            char temporary[M12_ASSET_DATA_DIR_CAPACITY];
+            char md5[M12_ASSET_MD5_CAPACITY];
+            size_t versionIndex;
+            if (!FSP_FileExists(candidates[candidateIndex]) ||
+                snprintf(virtualGraphics, sizeof(virtualGraphics),
+                         "%s::%s::%s::GRAPHICS.DAT", candidates[candidateIndex],
+                         innerName, adfName) >= (int)sizeof(virtualGraphics) ||
+                snprintf(temporary, sizeof(temporary),
+                         "/tmp/firestaff-dm1-amiga-%ld.dat", (long)getpid()) >=
+                    (int)sizeof(temporary) ||
+                !asset_extract_virtual_path(virtualGraphics, temporary) ||
+                !m12_file_md5_hex(temporary, md5)) {
+                (void)remove(temporary);
+                continue;
+            }
+            (void)remove(temporary);
+            for (versionIndex = 0U; versionIndex < g_games[gameIndex].versionCount;
+                 ++versionIndex) {
+                M12_AssetVersionStatus* version =
+                    &status->versions[gameIndex][versionIndex];
+                if (version->versionId && strcmp(version->versionId, "amiga20-en") == 0 &&
+                    strcmp(md5, g_games[gameIndex].versions[versionIndex].md5) == 0) {
+                    version->matched = 1;
+                    m12_copy_string(version->matchedPath,
+                                    sizeof(version->matchedPath), virtualGraphics);
+                    m12_copy_string(version->matchedMd5,
+                                    sizeof(version->matchedMd5), md5);
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 static void m12_publish_dm1_fmtowns_required_files(M12_AssetStatus* status,
                                                      int gameIndex) {
     const M12_AssetVersionStatus* version;
@@ -6083,6 +6140,8 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         if (strcmp(g_games[i].gameId, "dm1") == 0) {
             (void)m12_admit_dm1_fmtowns_archive(
                 status, i, roots, rootCount, requestedDataDir);
+            (void)m12_admit_dm1_amiga20_nested_archive(
+                status, i, roots, rootCount);
         }
         if (strcmp(g_games[i].gameId, "csb") == 0) {
             m12_admit_csb_amiga31_title_package(status, i, roots, rootCount);
@@ -6414,6 +6473,8 @@ void M12_AssetStatus_ScanGameWithOptions(
         if (strcmp(g_games[gameIndex].gameId, "dm1") == 0) {
             dm1FmtownsAdmitted = m12_admit_dm1_fmtowns_archive(
                 status, gameIndex, roots, rootCount, requestedDataDir);
+            (void)m12_admit_dm1_amiga20_nested_archive(
+                status, gameIndex, roots, rootCount);
         }
         if (strcmp(g_games[gameIndex].gameId, "csb") == 0) {
             m12_admit_csb_amiga31_title_package(status, gameIndex, roots,

@@ -6116,6 +6116,37 @@ int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath)
             }
             memcpy(disk_entry, entry, disk_length);
             disk_entry[disk_length] = '\0';
+            /* Some preserved Amiga releases are ZIP -> ZIP -> ADF.  Keep
+             * the chain native: extract only the inner archive to a private
+             * temporary file, then reuse the bounded ADF reader. */
+            if (has_case_suffix(disk_entry, ".zip")) {
+#ifndef _WIN32
+                uint8_t *inner_bytes;
+                size_t inner_size;
+                char inner_template[] = "/tmp/firestaff-inner-zip-XXXXXX.zip";
+                int inner_fd;
+                int ok = 0;
+                inner_bytes = zip_load_entry_bytes(container, disk_entry,
+                                                    &inner_size);
+                inner_fd = inner_bytes ? mkstemps(inner_template, 4) : -1;
+                if (inner_fd >= 0 && inner_size > 0U &&
+                    write(inner_fd, inner_bytes, inner_size) ==
+                        (ssize_t)inner_size && close(inner_fd) == 0) {
+                    char inner_virtual[ASSET_PATH_MAX * 2];
+                    if (snprintf(inner_virtual, sizeof(inner_virtual), "%s::%s",
+                                 inner_template, nested + 2) <
+                        (int)sizeof(inner_virtual)) {
+                        ok = asset_extract_virtual_path(inner_virtual,
+                                                        outFilePath);
+                    }
+                } else if (inner_fd >= 0) {
+                    (void)close(inner_fd);
+                }
+                free(inner_bytes);
+                if (inner_fd >= 0) (void)remove(inner_template);
+                if (ok) return 1;
+#endif
+            }
             if (zip_extract_nested_disk_entry_to_path(container, disk_entry,
                                                       nested + 2, outFilePath)) {
                 return 1;
@@ -6226,6 +6257,7 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
                                   size_t *outSize) {
     const char *first;
     const char *second;
+    const char *third;
     char container[ASSET_PATH_MAX];
     char disk[ASSET_PATH_MAX];
     size_t containerLength;
@@ -6234,6 +6266,9 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
     size_t imageSize = 0U;
     AssetReadVirtualMatch match;
     int result = -1;
+    char temporary_inner_zip[] = "/tmp/firestaff-inner-read-XXXXXX.zip";
+    int temporary_inner_fd = -1;
+    int temporary_inner_created = 0;
     if (!virtualPath || !outBytes || !outSize) return 0;
     *outBytes = NULL;
     *outSize = 0U;
@@ -6281,6 +6316,31 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
     container[containerLength] = '\0';
     memcpy(disk, first + 2, diskLength);
     disk[diskLength] = '\0';
+    third = strstr(second + 2, "::");
+    if (third && asset_container_kind_for_path(container) == ASSET_CONTAINER_ZIP &&
+        has_case_suffix(disk, ".zip") && third[2] != '\0') {
+#ifndef _WIN32
+        uint8_t *inner = zip_load_entry_bytes(container, disk, &imageSize);
+        size_t adfLength = (size_t)(third - (second + 2));
+        if (!inner || adfLength == 0U || adfLength >= sizeof(disk) ||
+            (temporary_inner_fd = mkstemps(temporary_inner_zip, 4)) < 0 ||
+            write(temporary_inner_fd, inner, imageSize) != (ssize_t)imageSize ||
+            close(temporary_inner_fd) != 0) {
+            if (temporary_inner_fd >= 0) (void)close(temporary_inner_fd);
+            free(inner);
+            return 0;
+        }
+        temporary_inner_fd = -1;
+        temporary_inner_created = 1;
+        free(inner);
+        memcpy(container, temporary_inner_zip, sizeof(temporary_inner_zip));
+        memcpy(disk, second + 2, adfLength);
+        disk[adfLength] = '\0';
+        second = third;
+#else
+        return 0;
+#endif
+    }
     if (asset_container_kind_for_path(container) == ASSET_CONTAINER_ZIP) {
         image = zip_load_entry_bytes(container, disk, &imageSize);
     } else if (asset_container_kind_for_path(container) == ASSET_CONTAINER_EXTERNAL) {
@@ -6311,6 +6371,7 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
         }
     }
     free(image);
+    if (temporary_inner_created) (void)remove(temporary_inner_zip);
     if (result < 0 || !match.bytes) return 0;
     *outBytes = match.bytes;
     *outSize = match.size;

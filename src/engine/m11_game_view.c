@@ -23060,6 +23060,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     size_t dm1VirtualDungeonSize = 0U;
     int dm1AtariDungeonFormat = 0;
     int dm1EndianDungeonFormat = 0;
+    int dm1VirtualGraphicsRequired = 0;
     if (!state || !spec || !spec->title) {
         return 0;
     }
@@ -23418,6 +23419,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         DM1_V1_StartupDungeonPathFacts_PC34 facts;
         DM1_V1_StartupDungeonPathReceipt_PC34 receipt;
         int dm1FmtownsPath = 0;
+        int dm1VirtualDiskPath = 0;
         memset(&facts, 0, sizeof(facts));
         memset(&receipt, 0, sizeof(receipt));
         facts.game_id = spec->gameId;
@@ -23455,17 +23457,38 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 facts.explicit_dungeon_path = dungeonPath;
             }
         }
-        if (!dm1FmtownsPath &&
+        /* Original Atari/Amiga editions use a virtual disk root.  Derive the
+         * sibling dungeon file from the verified graphics member so the
+         * native loader reads the original disk image directly. */
+        if (!spec->dm1Fmtowns && spec->verifiedAssetPath &&
+            strstr(spec->verifiedAssetPath, "::") != NULL &&
+            spec->dataDir && strstr(spec->dataDir, "::") != NULL) {
+            const char *last = NULL;
+            const char *sep = strstr(spec->verifiedAssetPath, "::");
+            size_t prefix;
+            while (sep) {
+                last = sep;
+                sep = strstr(sep + 2, "::");
+            }
+            if (!last) return 0;
+            prefix = (size_t)(last - spec->verifiedAssetPath) + 2u;
+            if (prefix + sizeof("DUNGEON.DAT") > sizeof(dungeonPath)) return 0;
+            memcpy(dungeonPath, spec->verifiedAssetPath, prefix);
+            memcpy(dungeonPath + prefix, "DUNGEON.DAT", sizeof("DUNGEON.DAT"));
+            dm1_dungeon_path_hash_resolved = 1;
+            dm1VirtualDiskPath = 1;
+        }
+        if (!dm1FmtownsPath && !dm1VirtualDiskPath &&
             (!dm1_v1_startup_dungeon_path_receipt_pc34(&facts, &receipt) ||
              !receipt.handled)) {
             return 0;
         }
-        if (!dm1FmtownsPath && receipt.use_explicit_path) {
+        if (!dm1FmtownsPath && !dm1VirtualDiskPath && receipt.use_explicit_path) {
             snprintf(dungeonPath,
                      sizeof(dungeonPath),
                      "%s",
                      receipt.explicit_dungeon_path);
-        } else if (!dm1FmtownsPath) {
+        } else if (!dm1FmtownsPath && !dm1VirtualDiskPath) {
             if (!receipt.resolve_builtin_path ||
                 !spec->dataDir || spec->dataDir[0] == '\0' ||
                 !m11_resolve_builtin_dungeon_path(dungeonPath,
@@ -23492,6 +23515,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     }
     if (spec->gameId && strcmp(spec->gameId, "dm1") == 0 &&
         !spec->dm1Fmtowns && spec->verifiedAssetPath &&
+        spec->dataDir && strstr(spec->dataDir, "::") != NULL &&
         strstr(spec->verifiedAssetPath, "::") != NULL) {
         const char *last = NULL;
         const char *sep = strstr(spec->verifiedAssetPath, "::");
@@ -23519,6 +23543,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                                            &dm1VirtualDungeonSize)) {
             return 0;
         }
+        dm1VirtualGraphicsRequired = 1;
         dm1AtariDungeonFormat =
             m11_dm1_graphics_is_atari_st(spec->verifiedAssetMd5) ||
             strstr(dungeonPath, ".stx::") != NULL ||
@@ -23584,8 +23609,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             }
         }
     }
-    if (dm1VirtualDungeonBytes &&
-        (dm1AtariDungeonFormat || dm1EndianDungeonFormat)) {
+    if (dm1VirtualDungeonBytes && dm1VirtualGraphicsRequired) {
         char graphicsVirtual[M11_GAME_VIEW_PATH_CAPACITY];
         const char *entryStart = strstr(dungeonPath, "::");
         const char *lastSeparator = entryStart;
@@ -23971,18 +23995,20 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
             if (entry->gameId && strcmp(entry->gameId, "dm1") == 0 &&
                 version->versionId &&
                 strcmp(version->versionId, "fmtowns-en") != 0 &&
-                strcmp(version->versionId, "fmtowns-ja") != 0 &&
-                M12_AssetStatus_ResolveRuntimeDataDirForVersion(
-                    &menuState->assetStatus, entry->gameId, version->versionId,
-                    selectedDm1RuntimeDataDir,
-                    sizeof(selectedDm1RuntimeDataDir))) {
+                strcmp(version->versionId, "fmtowns-ja") != 0) {
+                if (!M12_AssetStatus_PrepareDM1RuntimeVersion(
+                        &menuState->assetStatus, version->versionId,
+                        selectedDm1RuntimeDataDir,
+                        sizeof(selectedDm1RuntimeDataDir))) {
+                    return 0;
+                }
                 spec.dataDir = selectedDm1RuntimeDataDir;
             }
             if (entry->gameId && strcmp(entry->gameId, "dm1") == 0 &&
                 version->versionId &&
                 (strcmp(version->versionId, "fmtowns-en") == 0 ||
                  strcmp(version->versionId, "fmtowns-ja") == 0)) {
-                if (!M12_AssetStatus_MaterializeDM1FmtownsRuntimeVersion(
+                if (!M12_AssetStatus_PrepareDM1RuntimeVersion(
                         &menuState->assetStatus, version->versionId,
                         selectedDm1RuntimeDataDir,
                         sizeof(selectedDm1RuntimeDataDir))) {
