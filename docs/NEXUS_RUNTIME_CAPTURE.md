@@ -91,9 +91,13 @@ of `frame:length:mask` entries, for example
 manifest and is applied to the real SMPC input stream in one emulator session;
 the masks are the Saturn pad bits exposed by the instrumented SMPC hook; the
 hook clears those bits during each interval because the Saturn pad bus is
-active-low. The
-13-bit path includes the right-shoulder bit (`0x1000`), which is required for
-the documented Nexus debug sequence `L, R, X, Up, C, Left, L, Right`.
+active-low. They follow Mednafen 1.32.1's standard digital-pad layout:
+`Up=0x1`, `Down=0x2`, `Left=0x4`, `Right=0x8`, `Start=0x10`, `A=0x20`,
+`B=0x40`, `C=0x80`, `X=0x100`, `Y=0x200`, `Z=0x400`, `L=0x800`, and
+`R=0x1000`. The 13-bit path therefore includes the right-shoulder bit
+(`0x1000`). The documented Nexus debug sequence `L, R, X, Up, C, Left, L,
+Right` is `0x800,0x1000,0x100,0x1,0x80,0x4,0x800,0x8`; do not substitute
+the adjacent `B`, `Y`, or shoulder bits.
 This sequence is an emulator investigation aid and input-provenance record
 only. The resulting frame still requires an exact MENU.BPK/FONT256 or
 other source-consumer join before startup or menu presentation can open.
