@@ -1520,6 +1520,12 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
                 new_dungeon.source_leader_hand_reset_applied &&
                 !new_dungeon.synthetic_party_created && prepare_ok &&
                 dm2_v1_boot_prepared_new_game_world_readonly(profile) != NULL &&
+                /* The FM Towns STARTEND program keeps its first mirror
+                 * selection in the visible preselection viewport.  Unlike
+                 * the DOS (0,0) branch, GAME_LOAD must not commit that
+                 * retained candidate before the native mirror pointer event
+                 * has selected a champion. */
+                profile->platform != DM2_PLATFORM_FMTOWNS_JA &&
                 m11_dm2_clear_new_game_party_state(state)) {
                 /* STARTEND's first authenticated champion selection is part
                  * of GAME_LOAD itself.  The retained candidate therefore
