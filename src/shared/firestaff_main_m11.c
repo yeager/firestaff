@@ -18,7 +18,6 @@
 #include "firestaff_version.h"
 #include "fs_portable_compat.h"
 #include "render_sdl_m11.h"
-#include "firestaff_nexus_mednafen.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,9 +38,6 @@ static void usage(const char* prog) {
             "  --presentation-mode <v1|v20|v21|v22> Select game presentation without changing saved settings\n"
             "  --script <cmds>     Comma-separated input script: up,down,left,right,enter,action,esc\n"
             "  --data-dir <path>   Asset directory (default: FIRESTAFF_DATA env var)\n"
-            "  --nexus-mednafen <path>  Start the authentic Nexus Saturn disc in this Mednafen executable (requires --game nexus)\n"
-            "  --nexus-disc <path>      Nexus CUE sheet; defaults to Dungeon Master Nexus (English).cue below --data-dir\n"
-            "  --nexus-bios <path>      Japanese Saturn BIOS passed to Mednafen as -ss.bios_jp\n"
             "  --theron-authenticated-fallback  Run Theron from verified Track 02 records when the original CD runtime handoff is unavailable (non-parity)\n"
             "  --save <path>       Resume a validated save for --game\n"
             "  --csb-hint-oracle   Open Atari R1 CSB Utility Disk Hint Oracle (requires --data-dir; optional --save MINI.DAT)\n"
@@ -434,43 +430,11 @@ static int parse_architecture(const char* value, int* out_architecture) {
     return 1;
 }
 
-/* Nexus is kept fail-closed in the native runtime until a source-owned Saturn
- * title/display consumer is captured.  This explicit route starts the user's
- * unmodified retail CUE in Mednafen instead; it neither decodes nor claims a
- * Firestaff-native title/menu.  No shell is involved, so paths with spaces
- * (including the retail disc name) remain exact arguments. */
-static int launch_nexus_mednafen(const char* mednafen,
-                                 const char* bios,
-                                 const char* requested_disc,
-                                 const char* data_dir) {
-    Firestaff_NexusMednafenLaunch launch;
-    int rc;
-    if (!Firestaff_NexusMednafen_Discover(data_dir, mednafen, requested_disc,
-                                          bios, &launch)) {
-        fprintf(stderr,
-                "firestaff: Nexus Mednafen launch needs an executable, a readable .cue and (if supplied) a readable BIOS\n");
-        return 2;
-    }
-    printf("FIRESTAFF NEXUS EXTERNAL LAUNCH: emulator=%s disc=%s bios=%s\n",
-           launch.emulator, launch.disc,
-           launch.hasBios ? launch.bios : "configured-by-mednafen");
-    fflush(stdout);
-    rc = Firestaff_NexusMednafen_Launch(&launch);
-    if (rc < 0) {
-        fprintf(stderr, "firestaff: could not start Mednafen\n");
-        return 1;
-    }
-    return rc;
-}
-
 int main(int argc, char** argv) {
     M11_PhaseA_Options opts;
     int scanData = 0;
     int verbose = 0;
     int theronAuthenticatedFallback = 0;
-    const char* nexusMednafen = NULL;
-    const char* nexusDisc = NULL;
-    const char* nexusBios = NULL;
     M11_PhaseA_SetDefaultOptions(&opts);
 
     for (int i = 1; i < argc; ++i) {
@@ -503,18 +467,6 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--data-dir") == 0 && i + 1 < argc) {
             opts.dataDir = argv[++i];
-            continue;
-        }
-        if (strcmp(a, "--nexus-mednafen") == 0 && i + 1 < argc) {
-            nexusMednafen = argv[++i];
-            continue;
-        }
-        if (strcmp(a, "--nexus-disc") == 0 && i + 1 < argc) {
-            nexusDisc = argv[++i];
-            continue;
-        }
-        if (strcmp(a, "--nexus-bios") == 0 && i + 1 < argc) {
-            nexusBios = argv[++i];
             continue;
         }
         if (strcmp(a, "--csb-hint-oracle") == 0) {
@@ -770,26 +722,6 @@ int main(int argc, char** argv) {
 
     if (scanData) {
         return run_data_scan(opts.dataDir, verbose);
-    }
-
-    if (nexusMednafen || nexusDisc || nexusBios) {
-        if (!nexusMednafen) {
-            fprintf(stderr,
-                    "firestaff: --nexus-disc and --nexus-bios require --nexus-mednafen\n");
-            return 2;
-        }
-        if (!opts.gameId || strcmp(opts.gameId, "nexus") != 0) {
-            fprintf(stderr,
-                    "firestaff: --nexus-mednafen requires --game nexus\n");
-            return 2;
-        }
-        if (opts.bootProbe) {
-            fprintf(stderr,
-                    "firestaff: --nexus-mednafen cannot be combined with --boot-probe\n");
-            return 2;
-        }
-        return launch_nexus_mednafen(nexusMednafen, nexusBios, nexusDisc,
-                                     opts.dataDir);
     }
 
     if (opts.bootProbe && !opts.gameId) {
