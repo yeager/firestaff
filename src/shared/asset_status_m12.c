@@ -28,6 +28,23 @@
 #include <unistd.h>
 #endif
 
+static unsigned long m12_current_process_id(void) {
+#ifdef _WIN32
+    return (unsigned long)GetCurrentProcessId();
+#else
+    return (unsigned long)getpid();
+#endif
+}
+
+static const char* m12_temporary_directory(void) {
+#ifdef _WIN32
+    const char* value = getenv("TEMP");
+    return value && value[0] != '\0' ? value : ".";
+#else
+    return "/tmp";
+#endif
+}
+
 /* dm1_v2_modern_assets_pc34.h provides the V2.2 modern-assets pipeline
  * (manifest validation, shape-source fallback chain, missing-asset guard).
  * It is compiled into firestaff_v2 and linked via firestaff_m11 → firestaff_m12,
@@ -1072,7 +1089,8 @@ static int m12_admit_dm1_amiga20_nested_archive(
                          "%s::%s::%s::GRAPHICS.DAT", candidates[candidateIndex],
                          innerName, adfName) >= (int)sizeof(virtualGraphics) ||
                 snprintf(temporary, sizeof(temporary),
-                         "/tmp/firestaff-dm1-amiga-%ld.dat", (long)getpid()) >=
+                         "%s/firestaff-dm1-amiga-%lu.dat",
+                         m12_temporary_directory(), m12_current_process_id()) >=
                     (int)sizeof(temporary) ||
                 !asset_extract_virtual_path(virtualGraphics, temporary) ||
                 !m12_file_md5_hex(temporary, md5)) {
