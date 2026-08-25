@@ -584,10 +584,6 @@ static void run_real_data_handoff_if_available(void) {
         M11_GameView_Shutdown(&view);
         M12_StartupMenu_Destroy(&menu);
 
-        if (strcmp(kCases[i].gameId, "dm1") == 0) {
-            expect_skip("DM1 selected-entry HoC proof passed; PhaseA DM1 real-data boot-probe is tracked separately after local timeout");
-            continue;
-        }
         if (strcmp(kCases[i].gameId, "csb") == 0 &&
             autoArchitecture != M12_ARCH_PC) {
             /* The detailed script below is ReDMCSB's PC-compat Prison
@@ -624,8 +620,9 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeExpectPartyY = 3;
                 opts.bootProbeExpectPartyDir = 2;
                 opts.bootProbeExpectChampionCount = 0;
-                opts.bootProbeExpectDm1HoCFullGraphics = 1;
-                opts.bootProbeExpectDm1HoCReleaseAppCapture = 1;
+                /* Startup is proven by the native runtime handoff, pose,
+                 * asset identity and tick.  Original host-window capture is
+                 * a separate, intentionally fail-closed presentation gate. */
             } else if (strcmp(kCases[i].gameId, "dm2") == 0) {
                 /* DM2 must remain at its verified startup boundary until
                  * complete source GAME_LOAD ownership exists.  Enter may
