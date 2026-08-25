@@ -1,0 +1,64 @@
+--- src/ss/smpc.h
++++ src/ss/smpc.h
+@@ -68,6 +68,7 @@
+ sscpu_timestamp_t SMPC_Update(sscpu_timestamp_t timestamp);
+ void SMPC_ResetTS(void);
+ 
++uint64 SMPC_FirestaffCurrentFrame(void);
+ void SMPC_ProcessSlaveOffOn(void);
+ int32 SMPC_StartFrame(EmulateSpecStruct* espec);
+ void SMPC_EndFrame(EmulateSpecStruct* espec, sscpu_timestamp_t timestamp);
+--- src/ss/smpc.cpp
++++ src/ss/smpc.cpp
+@@ -751,6 +751,11 @@
+   VirtualPortsDPtr[0][1] &= (uint8)~(mask >> 8);
+  }
+ }
++uint64 SMPC_FirestaffCurrentFrame(void)
++{
++ return FirestaffCurrentFrame;
++}
++
+ int32 SMPC_StartFrame(EmulateSpecStruct* espec)
+ {
+  FirestaffCurrentFrame = FirestaffInputFrame++;
+--- src/ss/vdp2.cpp
++++ src/ss/vdp2.cpp
+@@ -147,7 +147,11 @@
+  static unsigned limit = 200000;
+  static uint32 requested_pc;
+  static bool configured;
++ static uint64 frame_min;
++ static uint64 frame_max = ~0ULL;
+  const char *limit_text;
++ const char *frame_min_text;
++ const char *frame_max_text;
+  const char *pc_text;
+  unsigned i;
+  if(!path || !*path || !pc) return;
+@@ -155,11 +159,16 @@
+  {
+   limit_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REG_LIMIT");
+   if(limit_text && *limit_text) limit = strtoul(limit_text, NULL, 10);
++  frame_min_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_FRAME_MIN");
++  frame_max_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_FRAME_MAX");
++  if(frame_min_text && *frame_min_text) frame_min = strtoull(frame_min_text, NULL, 0);
++  if(frame_max_text && *frame_max_text) frame_max = strtoull(frame_max_text, NULL, 0);
+   pc_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REG_PC");
+   if(pc_text && *pc_text) requested_pc = strtoul(pc_text, NULL, 0);
+   configured = true;
+  }
+  if(requested_pc && requested_pc != pc) return;
++ if(SMPC_FirestaffCurrentFrame() < frame_min || SMPC_FirestaffCurrentFrame() > frame_max) return;
+  if(count >= limit) return;
+  if(!file)
+  {
+@@ -167,7 +176,7 @@
+   if(!file) return;
+   fputs("FIRESTAFF_NEXUS_VDP2_WRITER_REGISTER_TRACE_V1\n", file);
+  }
+- fprintf(file, "frame=%u addr=0x%06x pc=0x%08x", FirestaffCaptureFrames, (unsigned)address, (unsigned)pc);
++ fprintf(file, "frame=%llu addr=0x%06x pc=0x%08x", (unsigned long long)SMPC_FirestaffCurrentFrame(), (unsigned)address, (unsigned)pc);
+  for(i = 0; i < 16; i++)
+   fprintf(file, " r%u=0x%08x", i,
+    (unsigned)CPU[0].GetRegister(SH7095::GSREG_R0 + i, NULL, 0));
