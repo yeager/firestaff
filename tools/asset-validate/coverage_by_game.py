@@ -177,7 +177,62 @@ def _local_has(data_dir: Path, game: str, filename: str) -> bool:
     return False
 
 
-def _local_has_extractable(data_dir: Path, game: str, filename: str) -> tuple[bool, str]:
+def _archive_matches_variant(name: str, platform: str, variant: str) -> bool:
+    """Conservatively avoid using one game's unrelated archive as evidence for
+    every platform row. This classifies archive filenames only; it does not
+    claim that their contents have been hash-verified or imported."""
+    lower = name.casefold()
+    platform_tokens = {
+        "pc": ("dos", "pc", "ftl"),
+        "atari st": ("atari", "stx", "_st"),
+        "amiga": ("amiga",),
+        "apple ii gs": ("apple", "iigs"),
+        "fm-towns": ("fm-towns", "fmtowns", "towns"),
+        "pc-98": ("pc-98", "pc98"),
+        "x68000": ("x68000", "sharp"),
+        "macintosh": ("mac",),
+        "sega cd": ("sega",),
+        # The canonical consumers use the MODE1 data tracks, not arbitrary
+        # sibling CDDA tracks in the same cue set.
+        "saturn": ("track 1",),
+        "pc engine": ("track 02",),
+        "utility": ("utility",),
+    }
+    tokens = platform_tokens.get(platform.casefold(), ())
+    if not any(token in lower for token in tokens):
+        return False
+    # A named Japanese/US route needs matching evidence; do not let the JP
+    # media stand in for the distinct US Theron variant, or vice versa.
+    if "jp " in variant.casefold() or "japanese" in variant.casefold():
+        return "japan" in lower or "jp" in lower
+    if "us " in variant.casefold() or "english (us)" in variant.casefold():
+        return "(us" in lower or "_us" in lower or " usa" in lower
+    # When preservation filenames include an explicit language tag, it must
+    # agree with the requested row. Untagged filenames remain ambiguous and
+    # are allowed only as archived (not ready) evidence.
+    tags = {
+        "en": any(token in lower for token in ("_en", "-en", " en", "(en")),
+        "fr": any(token in lower for token in ("_fr", "-fr", " fr", "(fr")),
+        "de": any(token in lower for token in ("_de", "-de", " de", "(de")),
+        "ja": any(token in lower for token in ("_ja", "-ja", " ja", "(ja", "japan")),
+    }
+    requested = None
+    variant_lower = variant.casefold()
+    if "french" in variant_lower:
+        requested = "fr"
+    elif "german" in variant_lower:
+        requested = "de"
+    elif "japanese" in variant_lower:
+        requested = "ja"
+    elif "english" in variant_lower and "multilingual" not in variant_lower:
+        requested = "en"
+    if requested and any(tags.values()) and not tags[requested]:
+        return False
+    return True
+
+
+def _local_has_extractable(data_dir: Path, game: str, filename: str,
+                           platform: str, variant: str) -> tuple[bool, str]:
     """Relaxed match: also count raw disk images that, once extracted,
     would yield `filename`. Returns (found, hint).
     """
@@ -185,7 +240,11 @@ def _local_has_extractable(data_dir: Path, game: str, filename: str) -> tuple[bo
         return True, ""
 
     # Look for known extraction-source extensions per game
-    raw_exts = (".raw", ".st", ".msa", ".adf", ".bin", ".iso", ".img")
+    # User-supplied originals commonly remain in their preservation container
+    # until a native importer consumes them.  They are evidence of archived
+    # media, never evidence that a loose runtime file is ready.
+    raw_exts = (".raw", ".st", ".stx", ".msa", ".adf", ".bin", ".iso",
+                ".img", ".zip", ".7z")
     for parent in (data_dir / game, data_dir / f"{game}-extras"):
         if not parent.is_dir():
             continue
@@ -193,7 +252,8 @@ def _local_has_extractable(data_dir: Path, game: str, filename: str) -> tuple[bo
             for child in parent.rglob("*"):
                 if not child.is_file():
                     continue
-                if child.suffix.lower() in raw_exts:
+                if (child.suffix.lower() in raw_exts and
+                        _archive_matches_variant(child.name, platform, variant)):
                     return True, f"raw extract needed ({child.name})"
         except OSError:
             pass
@@ -217,6 +277,7 @@ def build_coverage(registry: dict[tuple[str, str], RegistryEntry], data_dir: Pat
     for v in VARIANTS:
         have = 0
         reg_have = 0
+        archived_source = False
         notes: list[str] = []
         # Wildcards (e.g. "*.CMP" in CSB Utility Disk) — count as "any file present"
         for f in v.required_files:
@@ -241,17 +302,19 @@ def build_coverage(registry: dict[tuple[str, str], RegistryEntry], data_dir: Pat
                     reg_have += 1
             else:
                 # Maybe present as a raw disk image that needs extraction.
-                found, hint = _local_has_extractable(data_dir, v.game, f)
+                found, hint = _local_has_extractable(
+                    data_dir, v.game, f, v.platform, v.variant)
                 if found:
+                    archived_source = True
                     notes.append(f"{f} -> {hint}")
                 else:
                     notes.append(f"missing {f}")
         if have == len(v.required_files):
             status = "READY"
-        elif have == 0:
-            status = "MISSING"
-        else:
+        elif have > 0 or archived_source:
             status = "ARCHIVED"
+        else:
+            status = "MISSING"
         rows.append(CoverageRow(
             game=v.game,
             platform=v.platform,
