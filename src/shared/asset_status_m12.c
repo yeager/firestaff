@@ -76,9 +76,11 @@ static void m12_copy_string(char* out, size_t outSize, const char* value);
 static int m12_read_file_bytes(const char* path,
                                unsigned char** outData,
                                size_t* outSize);
+#if defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
 static int m12_read_csb_fmtowns_staged_image(const char* path,
                                              uint8_t** outData,
                                              size_t* outSize);
+#endif
 static void m12_init_version_metadata(M12_AssetStatus* status);
 static void m12_init_required_file_metadata(M12_AssetStatus* status,
                                             int gameIndex);
@@ -1572,10 +1574,12 @@ static int m12_csb_fmtowns_archive_read_image(
     CSB_V1_FmtownsCdLayout* layout) {
     uint8_t* image = NULL;
     size_t imageSize = 0U;
+#if defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
     char userDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char stagingDir[M12_ASSET_DATA_DIR_CAPACITY];
     char stagePath[M12_ASSET_DATA_DIR_CAPACITY] = {0};
+#endif
     if (!archivePath || !outImage || !outImageSize || !layout) return 0;
     *outImage = NULL;
     *outImageSize = 0U;
@@ -1583,6 +1587,13 @@ static int m12_csb_fmtowns_archive_read_image(
                                         &imageSize) != 0 &&
         firestaff_zip_extract_by_suffix(archivePath, ".bin", &image,
                                         &imageSize) != 0) {
+#if !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
+        /* An external RAR reader can only hand us a member through a host
+         * path.  Production must not turn the user's original disc into a
+         * transient game-data file: reject that format until it has an
+         * in-memory reader, just as other unsupported virtual media does. */
+        return 0;
+#else
         /* RAR needs the shared external extractor, whose path API writes a
          * file.  Keep that short-lived file under Firestaff's cache, then
          * return to the same bounded in-memory scanner used for ZIP. */
@@ -1600,6 +1611,7 @@ static int m12_csb_fmtowns_archive_read_image(
             return 0;
         }
         remove(stagePath);
+#endif
     }
     if (csb_v1_fmtowns_cd_parse(image, imageSize, layout) != 0) {
         free(image);
@@ -3186,6 +3198,7 @@ static int m12_read_file_bytes(const char* path,
  * written it to Firestaff-owned staging and the CD parser has accepted it.
  * Keep a separate explicit ceiling so that this exception cannot become an
  * unbounded general-purpose file loader. */
+#if defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
 static int m12_read_csb_fmtowns_staged_image(const char* path,
                                              uint8_t** outData,
                                              size_t* outSize) {
@@ -3218,6 +3231,7 @@ static int m12_read_csb_fmtowns_staged_image(const char* path,
     *outSize = (size_t)size;
     return 1;
 }
+#endif
 
 static int m12_find_nexus_menu_bpk(const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
                                    size_t rootCount,
