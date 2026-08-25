@@ -64,6 +64,11 @@ A typical pass document contains:
 
 Documents covering DSA opcode core, startup presentation, entrance/credits, HUD, viewport geometry, thing/sensor runtime, combat, saves, and media.
 
+The native Atari STX route additionally has a real-media M12→M11 proof for
+the 50 Hz `ANIMATE.SCR`/`ANIMATE.DAT` title cadence, FTLCODE handoff and first
+runtime HUD/viewport frame. This is bounded startup evidence, not a claim of
+full campaign parity.
+
 ### DM2
 
 Documents covering GDAT material families, G1 record graphs, creature occupancy, combat drops, sound decode.

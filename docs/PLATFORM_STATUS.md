@@ -30,7 +30,7 @@ parity gate is complete.
 
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
-| Atari ST | **Verified route** | Native STX title, runtime and start-menu CLI route are tested against supplied campaign media. | Explicit-STX M12 selection, broader campaign, HUD/viewport and pixel parity. |
+| Atari ST | **Verified route** | Native STX title, 50 Hz `ANIMATE.SCR`/`ANIMATE.DAT` title path, FTLCODE handoff, first runtime HUD/viewport frame and start-menu CLI route are tested against supplied campaign media. | Broader campaign and capture parity. |
 | Amiga | **Verified route** | Verified native Amiga family is the default CSB route; startup and bounded runtime slices pass with original data. | Full campaign, save and visual parity. |
 | FM Towns | **Verified route** | English/Japanese native packages have separate data, startup, Utility Disk and input paths. | Wider gameplay, Champion Editor and CD-audio parity. |
 | DOS / PC | **No original release** | CSB has no DOS/PC edition. `--platform pc` is closed before media selection; CSBWin is source/disassembly evidence only. | No PC runtime route is planned from CSBWin; it must not be presented as DOS support. |

@@ -98,10 +98,6 @@ som färdig Skullkeep-grafik.
 
 ### Saknad eller ofullständig funktionalitet
 
-- **Atari ST title/VBlank handoff:** explicit `.stx`-val behåller nu rätt
-  source-owner genom M12/M11 i en blandad katalog, men den fulla
-  `ANIMATE.SCR`/`ANIMATE.DAT`-cadensen och FTLCODE-handoff behöver fortsatt
-  original-data-evidens.
 - Djupare end-to-end gameplay parity och playability utan DM1-antaganden.
 - Fler DSA-timer-, generator-, teleporter- och sensortransaktioner med
   autentiska save/dungeon-par.

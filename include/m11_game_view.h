@@ -1677,6 +1677,10 @@ typedef struct {
     uint32_t csbAtariStAnimationVbl;
     uint32_t csbAtariStAnimationEndVbl;
     uint16_t csbAtariStAnimationVblRemainder;
+    /* The selected runtime cache has GRAPHICS.DAT/DUNGEON.DAT, while an
+     * authentic STX may retain ANIMATE.SCR/DAT only in its original media
+     * container.  Keep that hash-verified source root separate. */
+    char csbAtariStAnimationSourceRoot[512];
     int csbAtariStAnimationClockStarted;
     int csbAtariStAnimationFrameBound;
     int csbAtariStRuntimeHandoffComplete;
