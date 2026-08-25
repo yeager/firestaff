@@ -57843,6 +57843,11 @@ if(NOT MSVC)
     target_compile_options(test_dm2_v1_amiga_boot_real_media PRIVATE -Wall -Wextra -Werror -O2)
 endif()
 add_test(NAME test_dm2_v1_amiga_boot_real_media COMMAND test_dm2_v1_amiga_boot_real_media)
+set_tests_properties(test_dm2_v1_amiga_boot_real_media PROPERTIES
+    LABELS "dm2;amiga;real-media;native;boot"
+    ENVIRONMENT
+        "FIRESTAFF_DM2_AMIGA_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"
+)
 
 add_executable(test_dm2_v1_amiga_new_game_real_media
     tests/test_dm2_v1_amiga_new_game_real_media.c)
@@ -57888,6 +57893,11 @@ if(NOT MSVC)
     target_compile_options(test_dm2_v1_mac_boot_real_media PRIVATE -Wall -Wextra -Werror -O2)
 endif()
 add_test(NAME test_dm2_v1_mac_boot_real_media COMMAND test_dm2_v1_mac_boot_real_media)
+set_tests_properties(test_dm2_v1_mac_boot_real_media PROPERTIES
+    LABELS "dm2;macintosh;real-media;native;boot"
+    ENVIRONMENT
+        "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+)
 
 add_executable(test_dm2_v1_mac_new_game_real_media
     tests/test_dm2_v1_mac_new_game_real_media.c)
