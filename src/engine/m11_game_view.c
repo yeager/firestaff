@@ -21593,7 +21593,6 @@ static int m11_apply_source_potion_effect_pc34(
     if (!state || !champ || !outResult ||
         THING_GET_TYPE(leaderThing) != THING_TYPE_POTION ||
         !state->world.things || !state->world.things->potions ||
-        THING_GET_INDEX(leaderThing) < 0 ||
         (int)THING_GET_INDEX(leaderThing) >= state->world.things->potionCount) {
         return 0;
     }
