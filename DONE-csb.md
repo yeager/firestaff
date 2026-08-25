@@ -14,3 +14,9 @@ Reviewed 2026-08-25. Completed work only.
   media or cache selection, because no original DOS/PC release exists.
 - The Atari M12/M11 handoff regression now fails safely and precisely when a
   selected package cannot be opened, instead of cascading or crashing.
+- Amiga A31E and A31M original ZIP → ADF media are read entirely in RAM.  The
+  A31E direct C03 handoff verifies `APPB.FTL` and `BJELoad_R` through the same
+  selected ADF as `GRAPHICS.DAT`, reaches `csb-entrance-0` with the original
+  A31E hash, and does not create an asset-cache copy.  The focused real-media
+  regression uses those virtual source locators rather than the legacy
+  materialization API.
