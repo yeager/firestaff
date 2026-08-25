@@ -3798,9 +3798,18 @@ static int m12_try_match_direct_nexus_request(
         if (m12_file_md5_hex(requestedDataDir, md5)) {
             versionIndex = m12_nexus_version_index_for_md5(md5);
             if (versionIndex >= 0) {
-                if (!FSP_ParentDir(runtimeRoot,
-                                   M12_ASSET_DATA_DIR_CAPACITY,
-                                   requestedDataDir)) {
+                /* An explicitly selected Nexus ZIP is the media owner.  Do
+                 * not replace it with its parent directory: doing so lets a
+                 * nearby loose CUE/BIN win at runtime and breaks the promise
+                 * that archive-backed launch reads the original ZIP only. */
+                if (m12_path_tail_equals(requestedDataDir, ".zip") ||
+                    m12_path_tail_equals(requestedDataDir, ".ZIP")) {
+                    m12_copy_string(runtimeRoot,
+                                    M12_ASSET_DATA_DIR_CAPACITY,
+                                    requestedDataDir);
+                } else if (!FSP_ParentDir(runtimeRoot,
+                                          M12_ASSET_DATA_DIR_CAPACITY,
+                                          requestedDataDir)) {
                     m12_copy_string(runtimeRoot,
                                     M12_ASSET_DATA_DIR_CAPACITY,
                                     ".");

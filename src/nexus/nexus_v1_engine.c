@@ -13,6 +13,7 @@
 #include "nexus_v1_movement.h"
 #include "nexus_v1_font_s2d.h"
 #include "nexus_v1_face_bin.h"
+#include "firestaff_zip_extract.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -2491,8 +2492,11 @@ static uint8_t *nexus_v1_read_iso_file(Nexus_V1_Engine *engine,
 static int find_iso(const char *dir, char *disc_path, int max_len);
 
 /* Use the source-owned ISO reader for loose images and for the real ISO
- * member inside an external Nexus archive.  Directory discovery must not
- * pass a .7z filename to the raw ISO reader. */
+ * member inside an external Nexus archive.  A Saturn ZIP contains its CUE,
+ * data BIN and CDDA tracks together.  The first BIN is the MODE1 data track
+ * in the retail layout; it is expanded into reader-owned RAM, never to disk.
+ * Directory discovery must not pass an archive filename to the raw ISO
+ * reader. */
 static int nexus_open_disc_reader(Nexus_ISOReader *reader, const char *path) {
     if (!reader || !path || !path[0]) return -1;
     if (nexus_path_has_ext(path, ".cue"))
@@ -2509,6 +2513,23 @@ static int nexus_open_disc_reader(Nexus_ISOReader *reader, const char *path) {
                      "%s::Dungeon Master Nexus (English).iso", path) >=
                 (int)sizeof(virtual_path) ||
             !asset_read_path_alloc(virtual_path, &image, &image_size)) {
+            free(image);
+            return -1;
+        }
+        opened = nexus_iso_open_memory(reader, image, image_size, path);
+        return opened;
+    }
+    if (nexus_path_has_ext(path, ".zip")) {
+        uint8_t *image = NULL;
+        size_t image_size = 0U;
+        int opened;
+        /* ZIP central-directory order preserves the CUE's Track 01 first in
+         * the known retail dumps.  Nexus admission below still proves the
+         * result is the authentic game ISO (DM.BIN + LEV01.DGN), rather than
+         * accepting a filename as evidence. */
+        if (firestaff_zip_extract_by_suffix(path, ".bin", &image,
+                                            &image_size) != 0 ||
+            image_size == 0U) {
             free(image);
             return -1;
         }
@@ -2657,7 +2678,7 @@ static int nexus_try_open_disc_path(Nexus_V1_Engine *engine, const char *path) {
 /* Try to find ISO/CUE/BIN in data directory — cross-platform */
 #ifdef _WIN32
 static int find_iso(const char *dir, char *disc_path, int max_len) {
-    static const char* const patterns[] = {"*.cue", "*.bin", "*.iso", "*.7z", NULL};
+    static const char* const patterns[] = {"*.cue", "*.bin", "*.iso", "*.zip", "*.7z", NULL};
     WIN32_FIND_DATAA fd;
     HANDLE h = INVALID_HANDLE_VALUE;
     char pattern[512];
@@ -2688,7 +2709,7 @@ static int find_iso(const char *dir, char *disc_path, int max_len) {
 }
 #else
 static int find_iso(const char *dir, char *disc_path, int max_len) {
-    static const char* const exts[] = {".cue", ".bin", ".iso", ".7z", NULL};
+    static const char* const exts[] = {".cue", ".bin", ".iso", ".zip", ".7z", NULL};
     DIR *d = opendir(dir);
     struct dirent *ent;
     int ext_index;
