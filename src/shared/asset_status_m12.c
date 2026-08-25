@@ -792,6 +792,24 @@ static void m12_bytes_md5_hex(const uint8_t* bytes,
     m12_md5_final(&ctx, outHex);
 }
 
+/* Hash a source-owned member without materializing it.  Nested ADF/STX
+ * receipts are decoded by asset_read_virtual_path_alloc(), while ordinary
+ * files retain the streaming file reader above. */
+static int m12_path_md5_hex(const char* path, char outHex[33]) {
+    uint8_t* bytes = NULL;
+    size_t byteCount = 0U;
+    if (!path || !outHex) return 0;
+    if (!m12_path_is_virtual_asset(path)) return m12_file_md5_hex(path, outHex);
+    if (!asset_read_virtual_path_alloc(path, &bytes, &byteCount) ||
+        byteCount == 0U) {
+        free(bytes);
+        return 0;
+    }
+    m12_bytes_md5_hex(bytes, byteCount, outHex);
+    free(bytes);
+    return outHex[0] != '\0';
+}
+
 /* The HME-242 FM Towns release is distributed as a ZIP containing a raw
  * MODE1/2352 image.  Its GRAPHICS.DAT and DUNGEON.DAT are not ZIP members,
  * so the generic archive walker cannot see their hashes.  Probe only the
@@ -4238,7 +4256,6 @@ static void m12_admit_csb_amiga31_title_package(
             int nameIndex;
             for (nameIndex = 0; graphicsNames[nameIndex] != NULL; ++nameIndex) {
                 char graphicsPath[ASSET_PATH_MAX];
-                char stagePath[ASSET_PATH_MAX] = {0};
                 char md5[M12_ASSET_MD5_CAPACITY];
                 if (m12_path_is_virtual_asset(titlePath)) {
                     if (snprintf(graphicsPath, sizeof(graphicsPath), "%.*s%s",
@@ -4251,15 +4268,10 @@ static void m12_admit_csb_amiga31_title_package(
                         !FSP_JoinPath(graphicsPath, sizeof(graphicsPath), parent,
                                       graphicsNames[nameIndex])) continue;
                 }
-                if (!m12_csb_fmtowns_make_stage_path(stagePath, sizeof(stagePath)) ||
-                    !(m12_path_is_virtual_asset(graphicsPath)
-                          ? asset_extract_virtual_path(graphicsPath, stagePath)
-                          : m12_copy_file_to_path(graphicsPath, stagePath)) ||
-                    !m12_file_md5_hex(stagePath, md5) || strcmp(md5, graphicsMd5) != 0) {
-                    if (stagePath[0]) (void)remove(stagePath);
+                if (!m12_path_md5_hex(graphicsPath, md5) ||
+                    strcmp(md5, graphicsMd5) != 0) {
                     continue;
                 }
-                (void)remove(stagePath);
                 status->versions[gameIndex][versionIndex].matched = 1;
                 m12_copy_string(status->versions[gameIndex][versionIndex].matchedPath,
                                 sizeof(status->versions[gameIndex][versionIndex].matchedPath),
@@ -4288,7 +4300,6 @@ static int m12_csb_graphics_has_amiga31_title(const char* graphicsPath) {
     const char* const titleMd5 = "5b590ea3a6f5eed513b5678b01468ee4";
     char parent[M12_ASSET_DATA_DIR_CAPACITY];
     char titlePath[ASSET_PATH_MAX];
-    char stagePath[ASSET_PATH_MAX] = {0};
     char md5[M12_ASSET_MD5_CAPACITY];
     const char* separator;
     const char* nextSeparator;
@@ -4321,17 +4332,9 @@ static int m12_csb_graphics_has_amiga31_title(const char* graphicsPath) {
                                  titleNames[titleIndex])) {
             continue;
         }
-        if (!m12_csb_fmtowns_make_stage_path(stagePath, sizeof(stagePath)) ||
-            !(m12_path_is_virtual_asset(titlePath)
-                  ? asset_extract_virtual_path(titlePath, stagePath)
-                  : m12_copy_file_to_path(titlePath, stagePath)) ||
-            !m12_file_md5_hex(stagePath, md5)) {
-            if (stagePath[0] != '\0') {
-                (void)remove(stagePath);
-            }
+        if (!m12_path_md5_hex(titlePath, md5)) {
             continue;
         }
-        (void)remove(stagePath);
         if (strcmp(md5, titleMd5) == 0) {
             return 1;
         }
