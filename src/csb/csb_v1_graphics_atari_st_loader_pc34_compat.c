@@ -24,8 +24,16 @@ bool csb_atari_st_graphics_loader_open(CSB_AtariStLoader* state, const char* pat
     size_t offset = 0u;
     if (!state || !path) return false;
 
-    if (!asset_read_path_alloc(path, &state->dat_bytes,
-                               &state->dat_byte_count) ||
+    /* A preserved Atari package can be ZIP -> ZIP -> STX -> GRAPHICS.DAT.
+     * The simple path reader intentionally accepts only one archive member;
+     * use the native virtual-media reader for the full authenticated chain.
+     * Both routes keep source bytes in process memory and never extract a
+     * replacement GRAPHICS.DAT to disk. */
+    if (!(strstr(path, "::")
+              ? asset_read_virtual_path_alloc(path, &state->dat_bytes,
+                                               &state->dat_byte_count)
+              : asset_read_path_alloc(path, &state->dat_bytes,
+                                      &state->dat_byte_count)) ||
         state->dat_byte_count < 2u) return false;
 
     strncpy(state->dat_path, path, sizeof(state->dat_path) - 1);
