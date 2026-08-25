@@ -29,6 +29,7 @@ int main(void)
     input.capture_cram_size = sizeof(cram);
     input.vdp2_registers = regs;
     input.vdp2_registers_size = sizeof(regs);
+    input.register_byte_order = NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG;
     input.source_name_table = name_table;
     input.source_name_table_size = sizeof(name_table);
     input.source_character_generator = cg;
@@ -59,9 +60,28 @@ int main(void)
     regs[0x00] = 0x80; regs[0x01] = 0x00;
     regs[0x20] = 0x02; regs[0x21] = 0x00;
     input.original_saturn_capture_verified = 1;
+    input.register_byte_order = NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_LITTLE;
     if (!nexus_viewport_replay_vdp2_nbg1_tilemap_capture(
             &viewport, &input, &receipt) || !receipt.valid) {
         fprintf(stderr, "little-endian tilemap register replay rejected\n");
+        return 1;
+    }
+    /* A raw little-endian capture must retain the same word order for its
+     * name-table and CRAM bytes.  Reading this 0x001f BGR555 word as
+     * big-endian turns a source-red palette entry into a blue/green artefact.
+     */
+    memset(regs, 0, sizeof(regs));
+    regs[0x00] = 0x20; regs[0x01] = 0x80;
+    regs[0x20] = 0x02; regs[0x21] = 0x00;
+    regs[0x28] = 0x00; regs[0x29] = 0x00;
+    regs[0x32] = 0x00; regs[0x33] = 0x00;
+    regs[0xe4] = 0x00; regs[0xe5] = 0x00;
+    cram[2] = 0x1f; cram[3] = 0x00;
+    input.register_byte_order = NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_LITTLE;
+    if (!nexus_viewport_replay_vdp2_nbg1_tilemap_capture(
+            &viewport, &input, &receipt) || !receipt.valid ||
+        viewport.fb.palette[1] != UINT32_C(0xffff0000)) {
+        fprintf(stderr, "little-endian tilemap CRAM palette order changed\n");
         return 1;
     }
     /* Authentic post-render frames can have TVMD=0 while BGON remains
@@ -70,6 +90,7 @@ int main(void)
     memset(regs, 0, sizeof(regs));
     regs[0x20] = 0x02; regs[0x21] = 0x00;
     input.original_saturn_capture_verified = 1;
+    input.register_byte_order = NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_LITTLE;
     if (!nexus_viewport_replay_vdp2_nbg1_tilemap_capture(
             &viewport, &input, &receipt) || !receipt.valid) {
         fprintf(stderr, "TVMD-zero little-endian tilemap replay rejected\n");
@@ -81,6 +102,7 @@ int main(void)
     regs[0x00] = 0x00; regs[0x01] = 0x80;
     regs[0x20] = 0x00; regs[0x21] = 0x02;
     input.original_saturn_capture_verified = 1;
+    input.register_byte_order = NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG;
     if (!nexus_viewport_replay_vdp2_nbg1_tilemap_capture(
             &viewport, &input, &receipt) || !receipt.valid ||
         receipt.bits_per_pixel != 4) {

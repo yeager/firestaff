@@ -21,6 +21,10 @@ typedef struct {
     int capture_cram_size;
     const uint8_t *vdp2_registers;
     int vdp2_registers_size;
+    /* The raw capture producer's Saturn word serialization applies to the
+     * register, name-table and CRAM spans as one unit.  UNKNOWN preserves
+     * the old fixture scorer; a concrete capture must carry its receipt. */
+    Nexus_V1_SaturnVdp2RegisterByteOrder register_byte_order;
     const uint8_t *source_name_table;
     int source_name_table_size;
     const uint8_t *source_character_generator;

@@ -18,8 +18,8 @@ static uint16_t read_vram16_ordered(
     /* The Mednafen review candidate preserves Saturn bus order explicitly;
      * older Firestaff fixtures remain readable through the little-endian
      * compatibility branch selected by the register receipt. */
-    return byte_order == NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG
-        ? read_be16(p) : read_le16(p);
+    return byte_order == NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_LITTLE
+        ? read_le16(p) : read_be16(p);
 }
 
 static int vdp2_register_score(const uint8_t *registers, int little)
@@ -59,26 +59,28 @@ static uint16_t read_register16(const uint8_t *registers, size_t offset)
         ? read_le16(registers + offset) : read_be16(registers + offset);
 }
 
+static uint16_t read_register16_ordered(
+    const uint8_t *registers, size_t offset,
+    Nexus_V1_SaturnVdp2RegisterByteOrder order)
+{
+    if (order == NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG)
+        return read_be16(registers + offset);
+    if (order == NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_LITTLE)
+        return read_le16(registers + offset);
+    return read_register16(registers, offset);
+}
+
 static uint8_t expand5(uint16_t value, unsigned shift)
 {
     uint8_t result = (uint8_t)(((value >> shift) & 0x1fU) << 3U);
     return (uint8_t)(result | (result >> 5U));
 }
 
-static uint32_t cram_to_rgba(const uint8_t *entry)
-{
-    uint16_t value = read_be16(entry);
-    return UINT32_C(0xff000000) |
-        ((uint32_t)expand5(value, 0U) << 16U) |
-        ((uint32_t)expand5(value, 5U) << 8U) |
-        (uint32_t)expand5(value, 10U);
-}
-
 static uint32_t cram_to_rgba_ordered(
     const uint8_t *entry, Nexus_V1_SaturnVdp2RegisterByteOrder byte_order)
 {
-    uint16_t value = byte_order == NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG
-        ? read_be16(entry) : read_le16(entry);
+    uint16_t value = byte_order == NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_LITTLE
+        ? read_le16(entry) : read_be16(entry);
     return UINT32_C(0xff000000) |
         ((uint32_t)expand5(value, 0U) << 16U) |
         ((uint32_t)expand5(value, 5U) << 8U) |
@@ -126,14 +128,18 @@ int nexus_v1_vdp2_capture_composite_nbg1_tilemap(
     }
 
     map_bytes = input->map_columns * input->map_rows * 4;
-    bgon = read_register16(input->vdp2_registers,
-                           NEXUS_V1_VDP2_TILEMAP_BGON_OFFSET);
-    chctla = read_register16(input->vdp2_registers,
-                             NEXUS_V1_VDP2_TILEMAP_CHCTLA_OFFSET);
-    pncn1 = read_register16(input->vdp2_registers,
-                            NEXUS_V1_VDP2_TILEMAP_PNCN1_OFFSET);
-    craofa = read_register16(input->vdp2_registers,
-                             NEXUS_V1_VDP2_TILEMAP_CRAOFA_OFFSET);
+    bgon = read_register16_ordered(input->vdp2_registers,
+                                   NEXUS_V1_VDP2_TILEMAP_BGON_OFFSET,
+                                   input->register_byte_order);
+    chctla = read_register16_ordered(input->vdp2_registers,
+                                     NEXUS_V1_VDP2_TILEMAP_CHCTLA_OFFSET,
+                                     input->register_byte_order);
+    pncn1 = read_register16_ordered(input->vdp2_registers,
+                                    NEXUS_V1_VDP2_TILEMAP_PNCN1_OFFSET,
+                                    input->register_byte_order);
+    craofa = read_register16_ordered(input->vdp2_registers,
+                                     NEXUS_V1_VDP2_TILEMAP_CRAOFA_OFFSET,
+                                     input->register_byte_order);
     /* CHCTLA bit 9 is NBG1 bitmap enable; clear means tilemap. Bit 8 is
      * 8x8/16x16 character size; only 8x8 is admitted by this bounded lane. */
     bpp = ((chctla >> 12U) & 3U) == 0U ? 4 :
@@ -164,13 +170,18 @@ int nexus_v1_vdp2_capture_composite_nbg1_tilemap(
     receipt.map_columns = input->map_columns;
     receipt.map_rows = input->map_rows;
     for (x = 0; x < 256; ++x)
-        framebuffer->palette[x] = cram_to_rgba(input->source_cram + x * 2);
+        framebuffer->palette[x] = cram_to_rgba_ordered(
+            input->source_cram + x * 2, input->register_byte_order);
 
     for (y = 0; y < input->map_rows; ++y) {
         for (x = 0; x < input->map_columns; ++x) {
             int map_offset = (y * input->map_columns + x) * 4;
-            uint16_t attr = read_be16(input->source_name_table + map_offset);
-            uint16_t charno = read_be16(input->source_name_table + map_offset + 2);
+            uint16_t attr = read_vram16_ordered(
+                input->source_name_table + map_offset,
+                input->register_byte_order);
+            uint16_t charno = read_vram16_ordered(
+                input->source_name_table + map_offset + 2,
+                input->register_byte_order);
             int palno = attr & 0x7f;
             int hflip = (attr & 0x4000U) != 0U;
             int vflip = (attr & 0x8000U) != 0U;
@@ -263,6 +274,12 @@ int nexus_v1_vdp2_capture_replay_runtime_frame_nbg1_tilemap(
     input.capture_cram_size = (int)frame.vdp2_cram_size;
     input.vdp2_registers = frame.vdp2_registers;
     input.vdp2_registers_size = (int)frame.vdp2_register_size;
+    {
+        Nexus_V1_SaturnVdp2RegisterReceipt registers;
+        if (!nexus_v1_saturn_runtime_capture_vdp2_register_receipt(
+                &frame, &registers) || !registers.valid) return 0;
+        input.register_byte_order = registers.byte_order;
+    }
     input.source_name_table = binding->source_name_table;
     input.source_name_table_size = binding->source_name_table_size;
     input.source_character_generator = binding->source_character_generator;
@@ -336,11 +353,16 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_tilemap(
         if (out_register_receipt) *out_register_receipt = registers;
         return 0;
     }
-    pncn1 = read_register16(frame.vdp2_registers, 0x32U);
-    plsz = read_register16(frame.vdp2_registers, 0x3aU);
-    mpofn = read_register16(frame.vdp2_registers, 0x3cU);
-    map_a = read_register16(frame.vdp2_registers, 0x44U) & 0x3fU;
-    map_b = read_register16(frame.vdp2_registers, 0x46U) & 0x3fU;
+    pncn1 = read_register16_ordered(frame.vdp2_registers, 0x32U,
+                                    registers.byte_order);
+    plsz = read_register16_ordered(frame.vdp2_registers, 0x3aU,
+                                   registers.byte_order);
+    mpofn = read_register16_ordered(frame.vdp2_registers, 0x3cU,
+                                    registers.byte_order);
+    map_a = read_register16_ordered(frame.vdp2_registers, 0x44U,
+                                    registers.byte_order) & 0x3fU;
+    map_b = read_register16_ordered(frame.vdp2_registers, 0x46U,
+                                    registers.byte_order) & 0x3fU;
     bpp = registers.nbg1_colour_code == 0 ? 4 : 8;
     /* This is the smallest fully specified Mednafen TileFetcher lane:
      * PNDSize=0, CharSize=0, PlaneSize=0 and identical A/B maps. */
