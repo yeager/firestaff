@@ -1085,9 +1085,22 @@ static int m12_admit_dm1_amiga20_nested_archive(
     M12_AssetStatus* status, int gameIndex,
     const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
     size_t rootCount, const char* preferredArchive) {
-    static const char outerName[] = "Dungeon-Master_Amiga_EN_Version-20.zip";
-    static const char innerName[] = "Dungeon Master v2.0 (1988)(FTL).zip";
-    static const char adfName[] = "Dungeon Master v2.0 (1988)(FTL).adf";
+    typedef struct {
+        const char* outerName;
+        const char* innerName;
+        const char* adfName;
+    } M12_Dm1AmigaNestedPackage;
+    static const M12_Dm1AmigaNestedPackage packages[] = {
+        {"Dungeon-Master_Amiga_EN_Version-20.zip",
+         "Dungeon Master v2.0 (1988)(FTL).zip",
+         "Dungeon Master v2.0 (1988)(FTL).adf"},
+        /* The supplied HD preservation route is independently packaged but
+         * carries an original AmigaDOS ADF.  Admission remains based solely
+         * on GRAPHICS.DAT's retail hash, not on this filename. */
+        {"Dungeon-Master_Amiga_EN.zip",
+         "Dungeon Master (1988)(FTL)[HD].zip",
+         "Dungeon Master (1988)(FTL)[HD].adf"}
+    };
     size_t rootIndex;
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
         strcmp(g_games[gameIndex].gameId, "dm1") != 0) return 0;
@@ -1095,7 +1108,8 @@ static int m12_admit_dm1_amiga20_nested_archive(
                               (rootIndex == 0U && preferredArchive &&
                                preferredArchive[0] != '\0');
          ++rootIndex) {
-        char candidates[3][M12_ASSET_DATA_DIR_CAPACITY];
+        char candidates[1U + (sizeof(packages) / sizeof(packages[0])) * 2U]
+                       [M12_ASSET_DATA_DIR_CAPACITY];
         size_t candidateCount = 0U, candidateIndex;
         if (rootIndex == 0U && preferredArchive && preferredArchive[0] != '\0' &&
             FSP_FileExists(preferredArchive)) {
@@ -1103,33 +1117,78 @@ static int m12_admit_dm1_amiga20_nested_archive(
                             preferredArchive);
         }
         if (rootIndex >= rootCount) continue;
-        snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s/%s",
-                 roots[rootIndex], outerName);
-        snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s/dm1/%s",
-                 roots[rootIndex], outerName);
+        for (size_t packageIndex = 0U;
+             packageIndex < sizeof(packages) / sizeof(packages[0]);
+             ++packageIndex) {
+            snprintf(candidates[candidateCount++], sizeof(candidates[0]),
+                     "%s/%s", roots[rootIndex], packages[packageIndex].outerName);
+            snprintf(candidates[candidateCount++], sizeof(candidates[0]),
+                     "%s/dm1/%s", roots[rootIndex], packages[packageIndex].outerName);
+        }
         for (candidateIndex = 0U; candidateIndex < candidateCount; ++candidateIndex) {
             char virtualGraphics[M12_ASSET_DATA_DIR_CAPACITY * 2U];
+            char virtualDungeon[M12_ASSET_DATA_DIR_CAPACITY * 2U];
             char md5[M12_ASSET_MD5_CAPACITY];
+            char dungeonMd5[M12_ASSET_MD5_CAPACITY];
             uint8_t *graphics = NULL;
+            uint8_t *dungeon = NULL;
             size_t graphicsSize = 0U;
+            size_t dungeonSize = 0U;
             size_t versionIndex;
-            if (!FSP_FileExists(candidates[candidateIndex]) ||
-                snprintf(virtualGraphics, sizeof(virtualGraphics),
-                         "%s::%s::%s::GRAPHICS.DAT", candidates[candidateIndex],
-                         innerName, adfName) >= (int)sizeof(virtualGraphics) ||
-                !asset_read_virtual_path_alloc(virtualGraphics, &graphics,
-                                               &graphicsSize) ||
-                graphicsSize == 0U) {
-                free(graphics);
-                continue;
+            int packageMatched = 0;
+            for (size_t packageIndex = 0U;
+                 packageIndex < sizeof(packages) / sizeof(packages[0]);
+                 ++packageIndex) {
+                if (strstr(candidates[candidateIndex],
+                           packages[packageIndex].outerName) == NULL ||
+                    snprintf(virtualGraphics, sizeof(virtualGraphics),
+                             "%s::%s::%s::GRAPHICS.DAT",
+                             candidates[candidateIndex],
+                             packages[packageIndex].innerName,
+                             packages[packageIndex].adfName) >=
+                        (int)sizeof(virtualGraphics) ||
+                    !asset_read_virtual_path_alloc(virtualGraphics, &graphics,
+                                                   &graphicsSize) ||
+                    graphicsSize == 0U) {
+                    free(graphics);
+                    graphics = NULL;
+                    graphicsSize = 0U;
+                    continue;
+                }
+                packageMatched = 1;
+                break;
             }
+            if (!packageMatched) continue;
             m12_bytes_md5_hex(graphics, graphicsSize, md5);
             free(graphics);
+            m12_copy_string(virtualDungeon, sizeof(virtualDungeon),
+                            virtualGraphics);
+            {
+                char* leaf = NULL;
+                char* cursor = virtualDungeon;
+                while ((cursor = strstr(cursor, "GRAPHICS.DAT")) != NULL) {
+                    leaf = cursor;
+                    cursor += strlen("GRAPHICS.DAT");
+                }
+                if (!leaf) continue;
+                memcpy(leaf, "DUNGEON.DAT", sizeof("DUNGEON.DAT"));
+            }
+            if (!asset_read_virtual_path_alloc(virtualDungeon, &dungeon,
+                                               &dungeonSize) ||
+                dungeonSize == 0U) {
+                free(dungeon);
+                continue;
+            }
+            m12_bytes_md5_hex(dungeon, dungeonSize, dungeonMd5);
+            free(dungeon);
+            if (strstr(g_requiredFiles[1].md5, dungeonMd5) == NULL)
+                continue;
             for (versionIndex = 0U; versionIndex < g_games[gameIndex].versionCount;
                  ++versionIndex) {
                 M12_AssetVersionStatus* version =
                     &status->versions[gameIndex][versionIndex];
-                if (version->versionId && strcmp(version->versionId, "amiga20-en") == 0 &&
+                if (g_games[gameIndex].versions[versionIndex].architecture ==
+                        M12_ARCH_AMIGA &&
                     strcmp(md5, g_games[gameIndex].versions[versionIndex].md5) == 0) {
                     size_t requiredIndex;
                     version->matched = 1;
@@ -1160,6 +1219,30 @@ static int m12_admit_dm1_amiga20_nested_archive(
                             break;
                         }
                     }
+                    for (requiredIndex = 0U;
+                         requiredIndex < status->requiredFileCounts[gameIndex];
+                         ++requiredIndex) {
+                        M12_AssetRequiredFileStatus* required =
+                            &status->requiredFiles[gameIndex][requiredIndex];
+                        if (!required->roleId ||
+                            strcmp(required->roleId, "dungeon") != 0) continue;
+                        required->matched = 1;
+                        m12_copy_string(required->matchedPath,
+                                        sizeof(required->matchedPath),
+                                        virtualDungeon);
+                        m12_copy_string(required->sourcePath,
+                                        sizeof(required->sourcePath),
+                                        virtualDungeon);
+                        m12_copy_string(required->matchedHash,
+                                        sizeof(required->matchedHash), dungeonMd5);
+                        break;
+                    }
+                    /* The explicit ZIP -> ZIP -> ADF route runs after the
+                     * generic directory scan has computed availability.
+                     * Both required original members are now hash-verified
+                     * from this same in-memory medium, so publish its gate. */
+                    status->dm1Available = 1;
+                    status->originalFileCandidateFound = 1;
                     return 1;
                 }
             }
@@ -6985,6 +7068,13 @@ void M12_AssetStatus_ScanGameWithOptions(
                                        rootCount,
                                        (options && options->looseFilesOnly) ||
                                        csbFmtownsAdmitted || dm1FmtownsAdmitted);
+    /* Generic required-file discovery cannot enumerate ZIP -> ZIP -> ADF
+     * members. Re-publish the same hash-verified source receipts after it
+     * has reset the per-role rows. */
+    if (strcmp(g_games[gameIndex].gameId, "dm1") == 0) {
+        (void)m12_admit_dm1_amiga20_nested_archive(
+            status, gameIndex, roots, rootCount, requestedDataDir);
+    }
     if (nexusArchiveAdmitted) {
         size_t requiredIndex;
         reqMatch = 1;
