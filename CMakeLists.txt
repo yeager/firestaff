@@ -38692,6 +38692,7 @@ if(BUILD_TESTING)
     target_include_directories(test_nexus_v1_bpk_archive PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_nexus_v1_bpk_archive PRIVATE firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_nexus_v1_bpk_archive PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
     endif()
@@ -38811,6 +38812,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     target_include_directories(test_nexus_v1_bpk_prs3_payload_evidence PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_nexus_v1_bpk_prs3_payload_evidence PRIVATE firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_nexus_v1_bpk_prs3_payload_evidence PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
     endif()
@@ -38831,6 +38833,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     target_include_directories(test_nexus_v1_prs3_capture_trace_schema PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_nexus_v1_prs3_capture_trace_schema PRIVATE firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_nexus_v1_prs3_capture_trace_schema PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
     endif()
