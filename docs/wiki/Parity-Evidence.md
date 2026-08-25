@@ -73,6 +73,10 @@ full campaign parity.
 
 Documents covering GDAT material families, G1 record graphs, creature occupancy, combat drops, sound decode.
 
+The authentic Amiga archive route additionally verifies its source-clipped
+RAW4 CHARSHEET frame (121×72 to 119×70) through the native GDAT/palette path.
+This is bounded inventory evidence, not full Amiga campaign parity.
+
 ### Theron's Quest
 
 Documents covering Track 02 IPL/stage-two handoff, the authentic JP Rev 1

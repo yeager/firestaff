@@ -28,7 +28,7 @@ real-media evidence.
 |---|---|---|
 | Dungeon Master 1 | Playable on PC DOS 3.4; other editions remain separately scoped. | [DM1 platform rows](PLATFORM_STATUS.md#dungeon-master) |
 | Chaos Strikes Back | Verified bounded routes on Atari ST, Amiga and FM Towns; no original DOS/PC release. | [CSB platform rows](PLATFORM_STATUS.md#chaos-strikes-back) |
-| Dungeon Master II: Skullkeep | Verified bounded routes on DOS, FM Towns and the listed Macintosh editions. | [DM2 platform rows](PLATFORM_STATUS.md#dungeon-master-ii-the-legend-of-skullkeep) |
+| Dungeon Master II: Skullkeep | Verified bounded routes on DOS, Amiga, FM Towns and the listed Macintosh editions. | [DM2 platform rows](PLATFORM_STATUS.md#dungeon-master-ii-the-legend-of-skullkeep) |
 | DM Nexus | Verified bounded Japanese Saturn route, not production gameplay. The measured implementation coverage is documented separately. | [Nexus platform row](PLATFORM_STATUS.md#dm-nexus), [Nexus completion](NEXUS_COMPLETION.md) |
 | Theron's Quest | JP and US Track 02 are data paths; no end-to-end gameplay claim. | [Theron platform rows](PLATFORM_STATUS.md#therons-quest) |
 

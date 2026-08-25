@@ -42,7 +42,7 @@ parity gate is complete.
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
 | DOS | **Verified route** | Hash-verified PC data, GDAT/G1 loading, startup, runtime slices and sound tests. | Complete V1 renderer/mechanics parity and full SKSAVE ownership. |
-| Amiga | **Data path** | Original Amiga media and separate big-endian/archive rules are documented and kept distinct. | Native archive-to-runtime handoff and end-to-end gameplay proof. |
+| Amiga | **Verified route** | Original Amiga archive reaches title, New Game, bounded runtime and the clipped native CHARSHEET inventory frame through verified GDAT/RAW4 material. | Wider gameplay, save and full pixel/audio parity. |
 | FM Towns | **Verified route** | Authentic Towns data and platform-specific startup, input, CD-audio and gameplay slices are tested. | Complete native runtime ownership and full parity. |
 | Macintosh large retail | **Verified route** | Authentic English retail ZIP is read in RAM. HFS, big-endian dungeon data, title/movie/audio/MIDI resources, New Game and bounded wall input pass. | Complete Mac GAME_LOAD/Resume, native dynamic pointer/drag owner, CoreMIDI timing and full pixel/audio parity. No authentic Mac save is present. |
 | Macintosh small First Chapter demo | **Verified route** | Authentic demo ZIP is read in RAM. Its StuffIt `DMFiles`, truncated dungeon, 16-entry roster, static startup, New Game and source-locked input pass independently. | The authoritative ZIP has no application fork, so dynamic Mac Control/Event ownership and Resume remain closed. |
