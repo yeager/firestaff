@@ -21,7 +21,7 @@ parity gate is complete.
 |---|---|---|---|
 | PC DOS 3.4 | **Playable** | V1 startup, menus, viewport, HUD, input, combat and saves use matching original data. | Broader original-vs-Firestaff capture and V2 finished material. |
 | Atari ST | **Verified route** | Native ST/STX media is read in RAM. The supplied English 1.0a, English 1.2, German 1.2 and French 1.3 archive routes reach the bounded runtime through direct CLI and start menu; each selected `GRAPHICS.DAT` is hash-locked. | Complete gameplay parity and original-media capture. |
-| Amiga 2.0 English | **Verified route** | The supplied preservation ZIP → original ZIP → ADF is read in RAM, hash-locked at `GRAPHICS.DAT` MD5 `6a2f135b53c2220f0251fa103e2a6e7e`; direct CLI and start-menu handoff reach the bounded native runtime. | Broader gameplay, Amiga-specific presentation/input ownership, saves and capture parity. |
+| Amiga 2.0 English | **Verified route** | The supplied preservation ZIP → original ZIP → ADF is read in RAM, hash-locked at `GRAPHICS.DAT` MD5 `6a2f135b53c2220f0251fa103e2a6e7e`; both the original 2.0 package and the supplied HD package (`Dungeon Master (1988)(FTL)[HD].zip` → ADF) reach the bounded native runtime through direct CLI and start-menu handoff. | Broader gameplay, Amiga-specific presentation/input ownership, saves and capture parity. |
 | Other Amiga editions | **Data path** | Version fingerprints and media/protection references are classified. | Authentic media plus per-edition native runtime proof. |
 | FM Towns | **Verified route** | The supplied JA/EN original ZIP reaches `dm1-runtime` through direct CLI and start menu with the authenticated FM Towns graphics receipt. | Wider gameplay, executable/CD-audio parity and capture proof. |
 | PC-9801 | **Preservation** | Japanese floppy provenance is documented. | No Firestaff runtime route. |
@@ -31,7 +31,7 @@ parity gate is complete.
 
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
-| Atari ST | **Verified route** | Native STX title, 50 Hz `ANIMATE.SCR`/`ANIMATE.DAT` title path, FTLCODE handoff, first runtime HUD/viewport frame and start-menu CLI route are tested against supplied campaign media. | Broader campaign and capture parity. |
+| Atari ST | **Verified route** | Native STX title, 50 Hz `ANIMATE.SCR`/`ANIMATE.DAT` title path, FTLCODE handoff, first runtime HUD/viewport frame and start-menu CLI route are tested against supplied campaign media. The supplied nested retail archive is read directly as ZIP → ZIP → STX in memory; its `GRAPHICS.DAT` is hash-locked. | Broader campaign and capture parity. |
 | Amiga | **Verified route** | Native A31E and A31M ZIP → ADF routes read graphics, dungeon and required launcher/language programs in RAM. A31E verifies `APPB.FTL` / `BJELoad_R` and reaches `csb-entrance-0`; A31M reads `APPB.FTL`/`KAOS.FTL` from the selected ADF and reaches native runtime through CLI and start menu. | Full campaign, save and visual parity. |
 | FM Towns | **Verified route** | English/Japanese native packages have separate data, startup, Utility Disk and input paths. | Wider gameplay, Champion Editor and CD-audio parity. |
 | DOS / PC | **No original release** | CSB has no DOS/PC edition. `--platform pc` is closed before media selection; CSBWin is source/disassembly evidence only. | No PC runtime route is planned from CSBWin; it must not be presented as DOS support. |
