@@ -76,7 +76,7 @@ import sys
 from pathlib import Path
 
 Path(sys.argv[1]).write_text(
-    "#!/bin/sh\n"
+    "#!/bin/sh\n# FIRESTAFF_NEXUS_TRACE_OUTPUT\n"
     "printf '%s\\n' \"$@\" > \"$FIRESTAFF_NEXUS_TRACE_OUTPUT\"\n",
     encoding="utf-8",
 )
@@ -110,7 +110,7 @@ import sys
 from pathlib import Path
 
 Path(sys.argv[1]).write_text(
-    "#!/bin/sh\n"
+    "#!/bin/sh\n# FIRESTAFF_NEXUS_TRACE_OUTPUT\n"
     "printf 'authenticated-test-trace' > \"$FIRESTAFF_NEXUS_TRACE_OUTPUT\"\n",
     encoding="utf-8",
 )
@@ -130,7 +130,7 @@ import sys
 from pathlib import Path
 
 Path(sys.argv[1]).write_text(
-    "#!/bin/sh\n"
+    "#!/bin/sh\n# FIRESTAFF_NEXUS_TRACE_OUTPUT\n"
     "printf 'authenticated-test-trace' > \"$FIRESTAFF_NEXUS_TRACE_OUTPUT\"\n"
     "printf 'scsp-read-receipt' > \"$FIRESTAFF_NEXUS_TRACE_SCSP_READS\"\n",
     encoding="utf-8",
@@ -143,7 +143,7 @@ import sys
 from pathlib import Path
 
 Path(sys.argv[1]).write_text(
-    "#!/bin/sh\n"
+    "#!/bin/sh\n# FIRESTAFF_NEXUS_TRACE_OUTPUT\n"
     "printf '%s,%s,%s,%s' \"$FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_PC\" "
     "\"$FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_MIN\" "
     "\"$FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_MAX\" "
@@ -171,7 +171,7 @@ import sys
 from pathlib import Path
 
 Path(sys.argv[1]).write_text(
-    "#!/bin/sh\n"
+    "#!/bin/sh\n# FIRESTAFF_NEXUS_TRACE_OUTPUT\n"
     "printf '%s,%s,%s,%s,%s,%s' "
     "\"$FIRESTAFF_NEXUS_TRACE_VDP2_SOURCE_READS\" "
     "\"$FIRESTAFF_NEXUS_TRACE_VDP2_SOURCE_READ_MIN\" "
@@ -204,7 +204,7 @@ import sys
 from pathlib import Path
 
 Path(sys.argv[1]).write_text(
-    "#!/bin/sh\n"
+    "#!/bin/sh\n# FIRESTAFF_NEXUS_TRACE_OUTPUT\n"
     "printf '%s,%s,%s,%s,%s' "
     "\"$FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT\" "
     "\"$FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT_FRAMES\" "

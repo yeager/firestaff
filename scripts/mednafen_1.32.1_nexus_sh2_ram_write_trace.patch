@@ -1,6 +1,6 @@
 --- src/ss/ss.h
 +++ src/ss/ss.h
-@@ -162,0 +163,3 @@
+@@ -130,0 +131,3 @@
 + void FirestaffTraceSH2RAMWrite(uint32 address, unsigned size, uint32 value);
 + void FirestaffTraceSH2RAMDMAWrite(uint32 address, unsigned size, uint32 value,
 +  uint32 source, unsigned read_bus);
@@ -17,11 +17,7 @@
   if(IsWrite)
    FirestaffTraceSH2RAMSourceWrite(A, DB);
  }
-@@ -478,5 +480,77 @@
- uint32 FirestaffGetSH2PC(unsigned which)
- {
-  return CPU[which & 1U].GetRegister(SH7095::GSREG_RPC, NULL, 0);
- }
+@@ -483,0 +484,72 @@
 +void FirestaffTraceSH2RAMWrite(uint32 address, unsigned size, uint32 value)
 +{
 + static FILE *file;
@@ -94,7 +90,6 @@
 + count++;
 + if((count & 0x3ffU) == 0) fflush(file);
 +}
- //   1 during normal execution
 --- src/ss/sh7095.inc
 +++ src/ss/sh7095.inc
 @@ -563,0 +564,2 @@

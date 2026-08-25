@@ -405,7 +405,10 @@ if [[ -n "$mednafen_home" ]]; then
     launch_capture_process "${mednafen_command[@]}" \
       -filesys.untrusted_fip_check 0 "$bios_option" "$bios" "$disc" &
   capture_child_pid=$!
-  capture_process_group_pid="$(ps -o pgid= -p "$capture_child_pid" 2>/dev/null | tr -d ' ')"
+  # A short-lived test producer (or an early capture failure) can exit before
+  # `ps` observes it.  That race must not trigger `set -e` before we validate
+  # the trace and record its real exit status.
+  capture_process_group_pid="$(ps -o pgid= -p "$capture_child_pid" 2>/dev/null | tr -d ' ' || true)"
   [[ "$capture_process_group_pid" == "$capture_child_pid" ]] || capture_process_group_pid=
 else
   trap cleanup_capture_child INT TERM EXIT
@@ -516,7 +519,8 @@ else
     launch_capture_process "${mednafen_command[@]}" \
       -filesys.untrusted_fip_check 0 "$bios_option" "$bios" "$disc" &
   capture_child_pid=$!
-  capture_process_group_pid="$(ps -o pgid= -p "$capture_child_pid" 2>/dev/null | tr -d ' ')"
+  # See the HOME branch above: absence from `ps` is a normal race here.
+  capture_process_group_pid="$(ps -o pgid= -p "$capture_child_pid" 2>/dev/null | tr -d ' ' || true)"
   [[ "$capture_process_group_pid" == "$capture_child_pid" ]] || capture_process_group_pid=
 fi
 if ((timeout_seconds > 0)); then
