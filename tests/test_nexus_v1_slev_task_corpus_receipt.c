@@ -2,11 +2,36 @@
 
 #include "asset_find_by_hash.h"
 #include "nexus_v1_engine.h"
+#include "nexus_v1_iso_reader.h"
 #include "nexus_v1_script_vm.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+static int open_retail_iso_if_present(const char *directory,
+                                      Nexus_ISOReader *out_iso)
+{
+    static const char *const cue_names[] = {
+        "Dungeon Master Nexus (Japan).cue",
+        "Dungeon Master Nexus (English).cue",
+        NULL
+    };
+    char path[4096];
+    int index;
+
+    if (!directory || !directory[0] || !out_iso) return 0;
+    memset(out_iso, 0, sizeof(*out_iso));
+    if (strlen(directory) >= 4U &&
+        strcmp(directory + strlen(directory) - 4U, ".cue") == 0)
+        return nexus_iso_open_cue(out_iso, directory) > 0;
+    for (index = 0; cue_names[index]; ++index) {
+        snprintf(path, sizeof(path), "%s/%s", directory, cue_names[index]);
+        if (nexus_iso_open_cue(out_iso, path) > 0) return 1;
+    }
+    return 0;
+}
 
 static unsigned char *read_file(const char *path, size_t *out_size)
 {
@@ -34,6 +59,8 @@ static unsigned char *read_file(const char *path, size_t *out_size)
 int main(void)
 {
     const char *root = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    Nexus_ISOReader iso;
+    int iso_opened;
     char path[4096];
     int level;
 
@@ -46,6 +73,8 @@ int main(void)
         snprintf(path, sizeof(path), "%s/.firestaff/data/nexus", home);
         root = path;
     }
+    iso_opened = open_retail_iso_if_present(root, &iso);
+    asset_scan_cache_batch_begin();
 
     for (level = 0; level < 16; ++level) {
         char name[32];
@@ -58,11 +87,28 @@ int main(void)
 
         snprintf(name, sizeof(name), "SLEV%02d.BIN", level);
         expected_md5 = nexus_v1_known_file_md5(name);
-        if (!expected_md5 || snprintf(file_path, sizeof(file_path), "%s/%s",
-                                      root, name) >= (int)sizeof(file_path) ||
-            !asset_file_matches_md5(file_path, expected_md5) ||
+        if (!expected_md5 ||
+            !asset_find_by_md5(root, expected_md5, file_path,
+                               (int)sizeof(file_path), 8) ||
             !(data = read_file(file_path, &size))) {
+            const Nexus_ISOFile *member = iso_opened
+                ? nexus_iso_find(&iso, name) : NULL;
+            if (member && member->size > 0U && member->size <= (uint32_t)INT_MAX) {
+                data = (unsigned char *)malloc(member->size);
+                if (data && nexus_iso_read_file(&iso, member, data,
+                                                (int)member->size) ==
+                                (int)member->size) {
+                    size = member->size;
+                } else {
+                    free(data);
+                    data = NULL;
+                }
+            }
+        }
+        if (!data) {
             printf("SKIP: authenticated %s is unavailable\n", name);
+            asset_scan_cache_batch_end();
+            if (iso_opened) nexus_iso_close(&iso);
             return 77;
         }
 
@@ -83,11 +129,15 @@ int main(void)
             receipt.status != NEXUS_SCRIPT_RUNTIME_BLOCKED_UNSUPPORTED_FORMAT) {
             fprintf(stderr, "FAIL: retail %s task receipt is not bounded\n", name);
             free(data);
+            asset_scan_cache_batch_end();
+            if (iso_opened) nexus_iso_close(&iso);
             return 1;
         }
         free(data);
     }
 
+    asset_scan_cache_batch_end();
+    if (iso_opened) nexus_iso_close(&iso);
     puts("Nexus SLEV00-15 retail task corpus receipt: PASS");
     return 0;
 }
