@@ -34,6 +34,9 @@ jobs:
       - name: Verify release-notes policy regression cases
         run: python3 scripts/test_verify_release_notes.py
 
+      - name: Verify reproducible SPDX source SBOM
+        run: python3 tests/test_generate_spdx_sbom.py
+
   cmake-build:
     strategy:
       fail-fast: false

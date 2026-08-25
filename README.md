@@ -153,6 +153,10 @@ System Card, or external emulator. The only runtime input is your legally
 obtained game data in the local data directory; repository CI enforces this
 boundary.
 
+The reproducible source dependency inventory is available as
+[`sbom/firestaff.spdx.json`](sbom/firestaff.spdx.json) (SPDX 2.3). It excludes
+game media and every user-local input.
+
 ### Platform status at a glance
 
 | Game | Playable | Verified runtime routes | Data/preservation only | Unsupported |

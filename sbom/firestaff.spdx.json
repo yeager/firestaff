@@ -1,0 +1,113 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "comment": "Source SBOM only. It excludes user-owned game data, saves, BIOS/firmware, capture material, and local filesystem paths.",
+  "creationInfo": {
+    "created": "1970-01-01T00:00:00Z",
+    "creators": [
+      "Tool: tools/generate_spdx_sbom.py"
+    ],
+    "licenseListVersion": "3.25"
+  },
+  "dataLicense": "CC0-1.0",
+  "documentDescribes": [
+    "SPDXRef-Package-Firestaff"
+  ],
+  "documentNamespace": "https://github.com/yeager/firestaff/spdx/3.0.313",
+  "name": "Firestaff-3.0.313",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-Firestaff",
+      "comment": "Native engine source; original game media is not distributed.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://github.com/yeager/firestaff",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "name": "Firestaff",
+      "versionInfo": "3.0.313"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-miniz",
+      "comment": "Vendored, statically linked default ZIP/gzip provider.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://github.com/richgel999/miniz",
+      "filesAnalyzed": false,
+      "licenseConcluded": "MIT",
+      "licenseDeclared": "MIT",
+      "name": "miniz",
+      "versionInfo": "11.0.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-SDL",
+      "comment": "Required host window, input, audio, and rendering dependency (SDL3; SDL2 fallback is supported).",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://github.com/libsdl-org/SDL",
+      "filesAnalyzed": false,
+      "licenseConcluded": "Zlib",
+      "licenseDeclared": "Zlib",
+      "name": "SDL",
+      "versionInfo": "3.2.14"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-Python",
+      "comment": "Build-time interpreter for gettext and source-verification tools.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://www.python.org/",
+      "filesAnalyzed": false,
+      "licenseConcluded": "PSF-2.0",
+      "licenseDeclared": "PSF-2.0",
+      "name": "Python",
+      "versionInfo": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-libvorbisfile",
+      "comment": "Optional in-memory OGG decoder for original Theron Track 01 transcodes.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://xiph.org/vorbis/",
+      "filesAnalyzed": false,
+      "licenseConcluded": "BSD-3-Clause",
+      "licenseDeclared": "BSD-3-Clause",
+      "name": "libvorbisfile",
+      "versionInfo": "NOASSERTION"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-FFmpeg",
+      "comment": "Optional in-memory decoder for original Macintosh MooV media.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://ffmpeg.org/",
+      "filesAnalyzed": false,
+      "licenseConcluded": "LGPL-2.1-or-later",
+      "licenseDeclared": "LGPL-2.1-or-later",
+      "name": "FFmpeg",
+      "versionInfo": "NOASSERTION"
+    }
+  ],
+  "relationships": [
+    {
+      "relatedSpdxElement": "SPDXRef-Package-miniz",
+      "relationshipType": "CONTAINS",
+      "spdxElementId": "SPDXRef-Package-Firestaff"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-Package-SDL",
+      "relationshipType": "DYNAMIC_LINK",
+      "spdxElementId": "SPDXRef-Package-Firestaff"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-Package-Firestaff",
+      "relationshipType": "BUILD_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-Python"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-Package-Firestaff",
+      "relationshipType": "OPTIONAL_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-libvorbisfile"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-Package-Firestaff",
+      "relationshipType": "OPTIONAL_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-FFmpeg"
+    }
+  ],
+  "spdxVersion": "SPDX-2.3"
+}
