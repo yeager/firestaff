@@ -3542,6 +3542,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_loader_control_f
     target_include_directories(test_nexus_v1_prs3_loader_control_flow PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_nexus_v1_prs3_loader_control_flow PRIVATE firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_nexus_v1_prs3_loader_control_flow PRIVATE
             -Wall -Wextra -Werror -pedantic
@@ -3568,6 +3569,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_sh2_subset_trace
     target_include_directories(test_nexus_v1_prs3_sh2_subset_trace PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_nexus_v1_prs3_sh2_subset_trace PRIVATE firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_nexus_v1_prs3_sh2_subset_trace PRIVATE
             -Wall -Wextra -Werror -pedantic
@@ -3596,6 +3598,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_structure2_abi.c
     target_include_directories(test_nexus_v1_prs3_structure2_abi PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_nexus_v1_prs3_structure2_abi PRIVATE firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_nexus_v1_prs3_structure2_abi PRIVATE
             -Wall -Wextra -Werror -pedantic
