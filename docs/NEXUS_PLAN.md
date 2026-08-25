@@ -168,10 +168,17 @@ is a Sega Saturn 3D polygon remake of DM1.
 
 ## Dependencies
 
-- bchunk/cdrdao for ISO extraction
-- Yabause/Kronos source as VDP format reference
-- DM1 V1 modules for shared game logic
-- V2 animation timing system
+This historical list describes research/reference material, not Firestaff
+runtime dependencies. The shipped native Nexus route reads the supplied
+retail CUE/BIN/ISO/archive in memory and must not require a BIOS, firmware,
+emulator, `bchunk`, `cdrdao`, Yabause or Kronos.
+
+- DMWeb's documented Nexus formats and archived decoder rules are format
+  references for the in-tree ISO/DGN/DMDF/PRS3 readers.
+- Saturn emulator source may be consulted only as external reverse-engineering
+  evidence; it is never invoked by Firestaff at runtime.
+- DM1 V1 modules and the V2 timing layer are in-tree implementation inputs,
+  subject to per-feature original Nexus data/capture ownership gates.
 
 ## File Structure
 
