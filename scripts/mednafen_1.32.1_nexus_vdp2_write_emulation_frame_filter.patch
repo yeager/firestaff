@@ -1,0 +1,16 @@
+--- src/ss/vdp2.cpp
++++ src/ss/vdp2.cpp
+@@ -252,6 +252,13 @@
+   const char *pc_filter = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_WRITE_PC");
+   if(pc_filter && *pc_filter && strtoul(pc_filter, NULL, 0) != pc0) return;
+  }
++ {
++  const char *frame_min = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_WRITE_FRAME_MIN");
++  const char *frame_max = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_WRITE_FRAME_MAX");
++  const uint64 frame = SMPC_FirestaffCurrentFrame();
++  if((frame_min && *frame_min && frame < strtoull(frame_min, NULL, 0)) ||
++     (frame_max && *frame_max && frame > strtoull(frame_max, NULL, 0))) return;
++ }
+  if(!FirestaffVdp2WriteTraceConfigured)
+  {
+   const char *min_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_WRITE_MIN");

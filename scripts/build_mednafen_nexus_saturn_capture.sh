@@ -116,7 +116,7 @@ if [[ "${FIRESTAFF_NEXUS_ENABLE_SH2_MEMORY_SNAPSHOT:-0}" = 1 ]]; then
   fi
 fi
 vdp2_trace_marker="$source_dir/.firestaff-nexus-vdp2-write-trace-patched"
-vdp2_trace_patch_id='FIRESTAFF_NEXUS_VDP2_WRITE_TRACE_V9_EMULATION_FRAME_FILTER_AFTER_CRAM_WRITE_SOURCE_R5_PC_FILTER'
+vdp2_trace_patch_id='FIRESTAFF_NEXUS_VDP2_WRITE_TRACE_V10_EMULATION_FRAME_FILTERED_WRITES_AFTER_CRAM_WRITE_SOURCE_R5_PC_FILTER'
 if [[ ! -f "$vdp2_trace_marker" ]]; then
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_write_trace.patch"
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_vram_write_trace.patch"
@@ -131,6 +131,7 @@ if [[ ! -f "$vdp2_trace_marker" ]]; then
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_writer_register_pc_filter.patch"
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_write_pc_filter.patch"
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_emulation_frame_filter.patch"
+  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_write_emulation_frame_filter.patch"
   printf '%s\n' "$vdp2_trace_patch_id" > "$vdp2_trace_marker"
 elif [[ "$(cat "$vdp2_trace_marker" 2>/dev/null)" != "$vdp2_trace_patch_id" ]]; then
   echo "ERROR: external Mednafen source has an older or unknown VDP2-write trace patch; use a fresh build directory" >&2

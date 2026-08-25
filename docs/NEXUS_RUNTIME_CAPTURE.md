@@ -117,6 +117,14 @@ before a later input or menu sequence is reached. This is an external
 development witness only: it never changes Firestaff's runtime dependencies
 or admits a render path without an authenticated source-consumer join.
 
+The paired VDP2 write stream accepts the corresponding
+`FIRESTAFF_NEXUS_TRACE_VDP2_WRITE_FRAME_MIN` and
+`FIRESTAFF_NEXUS_TRACE_VDP2_WRITE_FRAME_MAX` bounds. Set both filter pairs
+when correlating a writer-register receipt with its VDP2 destination write;
+otherwise early boot writes can still consume the write-stream budget. The
+write stream records transport and source-register evidence only and remains
+semantically blocked until its bytes are joined to authenticated game media.
+
 The raw witness can be inspected with
 `scripts/analyze_nexus_saturn_runtime_capture.py`. It reports SHA-256 values
 for each captured VDP1/VDP2 region and can require a region to differ between
