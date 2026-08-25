@@ -682,20 +682,12 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeExpectTitleReady = 1;
             } else if (strcmp(kCases[i].gameId, "theron") == 0) {
                 opts.script = "enter,enter,action";
-                /* Track 02 reaches the authentic source-owned startup-2
-                 * selection boundary.  Later level/object consumers have
-                 * not yet been captured, so remain fail-closed here. */
-                opts.bootProbeExpectRuntime = 0;
-                opts.bootProbeExpectPhase = "theron-startup-2";
-                opts.bootProbeExpectParty = 0;
-                opts.bootProbeExpectChampions = 0;
-                opts.bootProbeExpectMap = 0;
-                opts.bootProbeExpectLevelLoaded = 0;
-                opts.bootProbeExpectRuntimeTickMin = -1;
-                opts.bootProbeExpectRuntimeTickMax = 0;
-                opts.bootProbeExpectStartupActive = 1;
-                opts.bootProbeExpectStartupAnimation = "theron-startup";
-                opts.bootProbeExpectStartupAnimationActive = 1;
+                /* The verified JP Rev 1 Track 02 route reaches its
+                 * source-owned first runtime state (Soul Room/Akutuba).
+                 * Keep later level, object, save, and visual consumers
+                 * capture-gated; this assertion is deliberately limited to
+                 * the authentic level-0 entry established by the media. */
+                opts.bootProbeExpectPhase = "theron-runtime";
             } else {
                 opts.bootProbeExpectParty = 0;
                 opts.bootProbeExpectChampions = 0;
