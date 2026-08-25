@@ -7,7 +7,17 @@ if [[ $# -ne 1 ]]; then
 fi
 
 app=$1
-cue=${FIRESTAFF_THERON_JP_CUE:-"$HOME/.firestaff/data/theron/TQJP.cue"}
+cue=${FIRESTAFF_THERON_JP_CUE:-}
+if [[ -z "$cue" ]]; then
+    for candidate in \
+        "$HOME/.firestaff/data/theron/TQJP.cue" \
+        "$HOME/.firestaff/data/theron/Dungeon Master - Theron's Quest (Japan) (Rev 1).cue"; do
+        if [[ -f "$candidate" ]]; then
+            cue=$candidate
+            break
+        fi
+    done
+fi
 expected_md5_raw=b7afb338ad31be1025b53f9aff12d73a
 expected_md5_iso=397039af02d50d15c70b74088eb8a1cb
 
