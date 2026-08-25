@@ -7,8 +7,7 @@ if [[ $# -ne 1 ]]; then
 fi
 
 app=$1
-archive=${FIRESTAFF_DM1_PC34_ARCHIVE:-
-"$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"}
+archive=${FIRESTAFF_DM1_PC34_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"}
 
 if [[ ! -x "$app" || ! -f "$archive" ]]; then
     printf '%s\n' 'SKIP: authentic DM1 PC-34 archive is not staged'

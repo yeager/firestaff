@@ -6,10 +6,8 @@ if [[ $# -ne 3 ]]; then
     exit 2
 fi
 
-fmtowns_archive=${FIRESTAFF_DM2_FMTOWNS_ARCHIVE:-
-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"}
-dos_archive=${FIRESTAFF_DM2_DOS_ARCHIVE:-
-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"}
+fmtowns_archive=${FIRESTAFF_DM2_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"}
+dos_archive=${FIRESTAFF_DM2_DOS_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"}
 
 if [[ ! -f "$fmtowns_archive" || ! -f "$dos_archive" ]]; then
     printf '%s\n' 'SKIP: authentic DM2 FM Towns and DOS archives are not both staged'
