@@ -3,7 +3,6 @@
 # This file is distributed under the same license as the Firestaff Studio package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: Firestaff Studio 1.0\n"

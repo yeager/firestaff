@@ -1,6 +1,21 @@
 cmake_minimum_required(VERSION 3.20)
 project(Firestaff VERSION 3.0.313 LANGUAGES C)
 
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+
+# .po/.pot are the sole tracked gettext sources.  Build .mo catalogs below
+# the binary tree for Python gettext consumers; never regenerate them in po/.
+add_custom_target(firestaff_gettext_catalogs ALL
+    COMMAND ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools/compile_gettext_catalogs.py
+        --source-dir ${CMAKE_CURRENT_SOURCE_DIR}/po
+        --output-dir ${CMAKE_CURRENT_BINARY_DIR}/po
+        --verify-template
+    DEPENDS
+        ${CMAKE_CURRENT_SOURCE_DIR}/tools/compile_gettext_catalogs.py
+        ${CMAKE_CURRENT_SOURCE_DIR}/po/firestaff_studio.pot
+    COMMENT "Compiling gettext catalogs from PO sources")
+
 # Resolve the canonical user-data root before any test or probe declaration
 # expands it into a CTest environment/command.  This must precede the large
 # target inventory below; defining it later leaves early Nexus real-data

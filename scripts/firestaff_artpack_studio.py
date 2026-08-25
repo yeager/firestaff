@@ -75,7 +75,9 @@ LANG_META = [
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     _LOCALE_DIR = Path(sys._MEIPASS) / "po" / "locale"
 else:
-    _LOCALE_DIR = Path(__file__).resolve().parent.parent / "po" / "locale"
+    _LOCALE_DIR = Path(os.environ.get(
+        "FIRESTAFF_LOCALE_DIR",
+        str(Path(__file__).resolve().parent.parent / "po" / "locale")))
 _current_lang = "en"
 
 def _detect_system_lang() -> str:

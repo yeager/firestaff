@@ -1,6 +1,9 @@
 # CMake build output
 /build/
 
+# Gettext binary catalogs are generated from tracked .po sources by CMake.
+*.mo
+
 # Ephemeral corpora emitted by DM1 PC34 capture tests.
 firestaff_dm1_pc34_corpus_*/
 
