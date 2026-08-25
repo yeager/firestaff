@@ -1,6 +1,8 @@
 #include "nexus_v1_sound.h"
+#include "nexus_v1_iso_reader.h"
 #include "asset_find_by_hash.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -70,6 +72,63 @@ static unsigned char *read_file(const char *path, int *out_size) {
     return data;
 }
 
+/* The retail Saturn release is normally staged as a CUE plus raw BIN
+ * tracks, not as a loose ISO tree.  Test the same bounded CUE/ISO reader as
+ * the product instead of silently treating an extracted copy as the only
+ * real-media layout.  Loose original files are still accepted for a
+ * preservation dump that already exposes them. */
+static unsigned char *read_retail_member(const char *data_dir,
+                                         Nexus_ISOReader *iso,
+                                         const char *member_name,
+                                         int *out_size) {
+    char path[1024];
+    const Nexus_ISOFile *member;
+    unsigned char *data;
+
+    if (out_size) *out_size = 0;
+    if (!data_dir || !member_name || !out_size) return NULL;
+    snprintf(path, sizeof(path), "%s/%s", data_dir, member_name);
+    data = read_file(path, out_size);
+    if (data) return data;
+
+    if (!iso || !iso->valid) return NULL;
+    member = nexus_iso_find(iso, member_name);
+    if (!member || member->size == 0U || member->size > (uint32_t)INT_MAX) {
+        return NULL;
+    }
+    data = (unsigned char *)malloc(member->size);
+    if (!data || nexus_iso_read_file(iso, member, data, (int)member->size) !=
+                     (int)member->size) {
+        free(data);
+        return NULL;
+    }
+    *out_size = (int)member->size;
+    return data;
+}
+
+static int open_retail_iso_if_present(const char *data_dir,
+                                      Nexus_ISOReader *out_iso) {
+    static const char *const cue_names[] = {
+        "Dungeon Master Nexus (Japan).cue",
+        "Dungeon Master Nexus (English).cue",
+        NULL
+    };
+    char path[1024];
+    int i;
+
+    if (!out_iso || !data_dir || !data_dir[0]) return 0;
+    memset(out_iso, 0, sizeof(*out_iso));
+    if (strlen(data_dir) >= 4U &&
+        strcmp(data_dir + strlen(data_dir) - 4U, ".cue") == 0) {
+        return nexus_iso_open_cue(out_iso, data_dir) > 0;
+    }
+    for (i = 0; cue_names[i]; ++i) {
+        snprintf(path, sizeof(path), "%s/%s", data_dir, cue_names[i]);
+        if (nexus_iso_open_cue(out_iso, path) > 0) return 1;
+    }
+    return 0;
+}
+
 static void test_retail_map_requires_ff_ff_terminator(void) {
     static const unsigned char sal_data[] = { 0 };
     unsigned char malformed_map[26];
@@ -127,6 +186,8 @@ static void test_minimal_retail_map_has_no_legacy_header_requirement(void) {
 
 int main(void) {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    Nexus_ISOReader iso;
+    int iso_opened;
     int level;
     int record_total = 0;
 
@@ -135,9 +196,10 @@ int main(void) {
         return 77;
     }
 
+    iso_opened = open_retail_iso_if_present(data_dir, &iso);
+    asset_scan_cache_batch_begin();
+
     for (level = 0; level < 16; ++level) {
-        char sal_path[1024];
-        char map_path[1024];
         unsigned char *sal_data;
         unsigned char *map_data;
         int sal_size;
@@ -146,12 +208,17 @@ int main(void) {
         Nexus_SoundEngine sound;
         Nexus_SfxRuntimeReceipt runtime_receipt;
 
-        snprintf(sal_path, sizeof(sal_path), "%s/SNDLEV%02d.SAL", data_dir,
-                 level);
-        snprintf(map_path, sizeof(map_path), "%s/SNDLEV%02d.MAP", data_dir,
-                 level);
-        sal_data = read_file(sal_path, &sal_size);
-        map_data = read_file(map_path, &map_size);
+        char sal_name[32];
+        char map_name[32];
+        char slev_name[32];
+        char ignored_path[ASSET_PATH_MAX];
+        snprintf(sal_name, sizeof(sal_name), "SNDLEV%02d.SAL", level);
+        snprintf(map_name, sizeof(map_name), "SNDLEV%02d.MAP", level);
+        snprintf(slev_name, sizeof(slev_name), "SLEV%02d.BIN", level);
+        sal_data = read_retail_member(data_dir, iso_opened ? &iso : NULL,
+                                      sal_name, &sal_size);
+        map_data = read_retail_member(data_dir, iso_opened ? &iso : NULL,
+                                      map_name, &map_size);
         CHECK(sal_data != NULL && map_data != NULL, "retail SAL/MAP pair opens");
         if (!sal_data || !map_data) {
             free(sal_data);
@@ -159,14 +226,14 @@ int main(void) {
             continue;
         }
 
-        CHECK(asset_file_matches_md5(sal_path, sal_md5[level]) &&
-                  asset_file_matches_md5(map_path, map_md5[level]),
+        CHECK(asset_find_by_md5(data_dir, sal_md5[level], ignored_path,
+                                (int)sizeof(ignored_path), 8) &&
+                  asset_find_by_md5(data_dir, map_md5[level], ignored_path,
+                                    (int)sizeof(ignored_path), 8),
               "retail SAL/MAP pair matches the authenticated level identity");
         {
-            char slev_path[1024];
-            snprintf(slev_path, sizeof(slev_path), "%s/SLEV%02d.BIN",
-                     data_dir, level);
-            CHECK(asset_file_matches_md5(slev_path, slev_md5[level]),
+            CHECK(asset_find_by_md5(data_dir, slev_md5[level], ignored_path,
+                                    (int)sizeof(ignored_path), 8),
                   "retail SLEV matches the authenticated level identity");
         }
 
@@ -248,6 +315,9 @@ int main(void) {
         free(sal_data);
         free(map_data);
     }
+
+    asset_scan_cache_batch_end();
+    if (iso_opened) nexus_iso_close(&iso);
 
     CHECK(record_total == 154,
           "retail SNDLEV00-15 MAP corpus exposes 154 bounded records");
