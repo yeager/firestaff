@@ -38151,6 +38151,7 @@ if(BUILD_TESTING)
         "SEPARATOR=,"
         "FINAL_SEPARATOR=)"
     )
+    target_link_libraries(test_v1_swsh_intro_pathfinder_pc34_compat PRIVATE firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_v1_swsh_intro_pathfinder_pc34_compat PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
     endif()
@@ -38176,6 +38177,7 @@ if(BUILD_TESTING)
         target_compile_options(test_v1_title_intro_pathfinder_pc34_compat PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
     endif()
     firestaff_link_zlib(test_v1_title_intro_pathfinder_pc34_compat PRIVATE)
+    target_link_libraries(test_v1_title_intro_pathfinder_pc34_compat PRIVATE firestaff_zip_extract)
     add_test(
         NAME v1_title_intro_pathfinder_pc34_compat
         COMMAND test_v1_title_intro_pathfinder_pc34_compat
