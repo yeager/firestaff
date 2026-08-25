@@ -55,7 +55,7 @@ parity gate is complete.
 
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
-| Sega Saturn Japanese | **Verified route** | Authentic Track 1/DM.BIN, CUE-declared CDDA Track 02–09 BIN ownership, STABG source consumption, NBG1 palette-bank/origin plus raw bitmap/CRAM capture decoding, DGN/DMDF/MNS/PRS3 parsing and bounded phase-launch tests. | Full gameplay, source-to-VDP material semantics, event/audio playback and public capture parity. |
+| Sega Saturn Japanese | **Source route (blocked)** | Authentic Track 1/DM.BIN, CUE-declared CDDA Track 02–09 BIN ownership, STABG source consumption, NBG1 palette-bank/origin plus raw bitmap/CRAM capture decoding, DGN/DMDF/MNS/PRS3 parsing and bounded phase-launch tests are native. The public title route remains fail-closed at `title-vdp-capture-required`. | A same-revision title-state capture must bind TITLE.CG, active MAPD span, palette, VDP register/layer state and title consumer/timing before any title/menu/gameplay claim. |
 | Saturn demo or fan translations | **Preservation** | Classified separately from the canonical Japanese retail route. | Independent media and runtime proof. |
 
 ## Theron's Quest
