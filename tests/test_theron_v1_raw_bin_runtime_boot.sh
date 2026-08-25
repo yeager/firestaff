@@ -20,10 +20,7 @@ if [[ ! -f "$track02" ]]; then
     exit 77
 fi
 
-output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-raw-bin.XXXXXX")
-trap 'rm -f "$output"' EXIT
-
-SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --game theron \
     --data-dir "$data_root" \
     --boot-probe \
@@ -33,7 +30,11 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --boot-probe-expect-level-loaded 0 \
     --boot-probe-expect-asset-md5 "$expected_md5" \
     --boot-probe-expect-startup-active 1 \
-    --duration 0 >"$output" 2>&1
+    --duration 0 2>&1) || {
+    printf '%s\n' "$output" >&2
+    printf '%s\n' 'FAIL: authentic Theron USA raw BIN did not reach the source-backed Soul Room route' >&2
+    exit 1
+}
 
 if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' "$output" ||
    ! grep -Fq "assetMd5=$expected_md5" "$output" ||
