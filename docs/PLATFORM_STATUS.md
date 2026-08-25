@@ -21,7 +21,8 @@ parity gate is complete.
 |---|---|---|---|
 | PC DOS 3.4 | **Playable** | V1 startup, menus, viewport, HUD, input, combat and saves use matching original data. | Broader original-vs-Firestaff capture and V2 finished material. |
 | Atari ST | **Verified route** | Native Atari graphics/data path and launch admission are source-locked. | Complete gameplay parity and original-media capture. |
-| Amiga | **Data path** | Amiga format and source references are documented. | Authenticated media, native runtime ownership and end-to-end proof. |
+| Amiga 2.0 English | **Verified route** | The supplied preservation ZIP → original ZIP → ADF is read in RAM, hash-locked at `GRAPHICS.DAT` MD5 `6a2f135b53c2220f0251fa103e2a6e7e`; direct CLI and start-menu handoff reach the bounded native runtime. | Broader gameplay, Amiga-specific presentation/input ownership, saves and capture parity. |
+| Other Amiga editions | **Data path** | Version fingerprints and media/protection references are classified. | Authentic media plus per-edition native runtime proof. |
 | FM Towns | **Data path** | CD layout and platform-specific input/audio boundaries are classified. | Authenticated runtime media, executable handoff and CD-audio gameplay proof. |
 | PC-9801 | **Preservation** | Japanese floppy provenance is documented. | No Firestaff runtime route. |
 | X68000 | **Unsupported** | Not part of the DM1 support matrix. | None planned in the current target. |
