@@ -13,8 +13,8 @@
  *   - known MD5 list is the only source of "what we accept"
  *   - asset_find_by_md5_list() does the recursive, virtual-aware
  *     discovery (it already handles ZIP/ISO entries)
- *   - asset_extract_virtual_path() materializes a virtual path
- *     into a real file when the caller provides a cache_dir
+ *   - asset_read_path_alloc() reads a virtual member directly into
+ *     the cache-owned RAM buffer; no game-data file is materialized
  *   - the parser in csb_hint_oracle_htc.c owns the format
  *     contract and remains the single source of truth for what
  *     the file's tables actually mean
@@ -26,7 +26,6 @@
 
 #include "csb_hint_oracle_htc_real_scan.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -132,113 +131,6 @@ static int copy_string(char *dst, size_t dst_size, const char *src)
     return 1;
 }
 
-static int is_virtual_path(const char *path)
-{
-    return path && strstr(path, "::") != NULL;
-}
-
-/* Read the entire file at `path` into a freshly-allocated buffer.
- * Returns 1 on success and writes the size through `out_size`. */
-static int read_whole_file(const char *path,
-                           uint8_t **out_buffer,
-                           size_t *out_size)
-{
-    FILE *fp;
-    long sz;
-    uint8_t *buf;
-    size_t got;
-
-    if (!path || !out_buffer || !out_size) {
-        return 0;
-    }
-    fp = fopen(path, "rb");
-    if (!fp) {
-        return 0;
-    }
-    if (fseek(fp, 0, SEEK_END) != 0) {
-        fclose(fp);
-        return 0;
-    }
-    sz = ftell(fp);
-    if (sz < 0) {
-        fclose(fp);
-        return 0;
-    }
-    rewind(fp);
-    buf = (uint8_t *)malloc((size_t)sz > 0u ? (size_t)sz : 1u);
-    if (!buf) {
-        fclose(fp);
-        return 0;
-    }
-    got = fread(buf, 1u, (size_t)sz, fp);
-    fclose(fp);
-    if (got != (size_t)sz) {
-        free(buf);
-        return 0;
-    }
-    *out_buffer = buf;
-    *out_size = (size_t)sz;
-    return 1;
-}
-
-/* Materialize a virtual container path into a concrete file under
- * `cache_dir` (or the FSP default user-data asset-cache/csbbin
- * subtree when no explicit cache_dir is given). Returns 1 on success
- * and writes the materialized path through `out_path`. */
-static int materialize_virtual(const char *virtual_path,
-                               const char *cache_dir,
-                               char *out_path,
-                               size_t out_path_size)
-{
-    char default_root[ASSET_PATH_MAX];
-    char hcsb_cache[ASSET_PATH_MAX];
-    char out_file[ASSET_PATH_MAX];
-    const char *use_dir;
-    size_t use_dir_len;
-
-    if (!virtual_path || !out_path || out_path_size == 0u) {
-        return 0;
-    }
-    if (cache_dir && cache_dir[0] != '\0') {
-        use_dir = cache_dir;
-    } else if (FSP_GetUserDataDir(default_root, sizeof(default_root)) &&
-               FSP_JoinPath(hcsb_cache, sizeof(hcsb_cache),
-                            default_root, "asset-cache/csbbin")) {
-        if (!FSP_CreateDirectoryRecursive(hcsb_cache)) {
-            return 0;
-        }
-        use_dir = hcsb_cache;
-    } else {
-        return 0;
-    }
-    use_dir_len = strlen(use_dir);
-    if (use_dir_len == 0u ||
-        use_dir_len + 16u >= sizeof(out_file)) {
-        return 0;
-    }
-    /* Append a deterministic suffix derived from the virtual path so
-     * repeated scans don't collide. The buffer uses the last 16 hex
-     * chars of a simple FNV-1a-style fold so we don't pull in a new
-     * hash dependency just for the cache filename. */
-    {
-        static const uint32_t FNV_OFFSET = 0x811c9dc5u;
-        static const uint32_t FNV_PRIME = 0x01000193u;
-        uint32_t hash = FNV_OFFSET;
-        const char *p;
-        for (p = virtual_path; *p; ++p) {
-            hash ^= (uint8_t)(*p);
-            hash *= FNV_PRIME;
-        }
-        snprintf(out_file, sizeof(out_file), "%s/%s-%08x.bin",
-                 use_dir, "HCSB", hash);
-    }
-
-    if (asset_extract_virtual_path(virtual_path, out_file)) {
-        return copy_string(out_path, out_path_size, out_file);
-    }
-    return 0;
-}
-
 /* ── Public scan + load ──────────────────────────────────────────── */
 
 static int csb_hint_oracle_htc_real_scan_and_load_internal(
@@ -249,12 +141,8 @@ static int csb_hint_oracle_htc_real_scan_and_load_internal(
     CSB_HintOracleHTC_RealCache *cache)
 {
     char resolved_data_dir[ASSET_PATH_MAX];
-    char resolved_cache_dir[ASSET_PATH_MAX];
     char match_path[ASSET_PATH_MAX];
     const char *search_root;
-    const char *materialize_root;
-    const char *read_path;
-    char materialized[ASSET_PATH_MAX];
     uint8_t *buf = NULL;
     size_t buf_size = 0u;
     int match_index = -1;
@@ -311,16 +199,7 @@ static int csb_hint_oracle_htc_real_scan_and_load_internal(
         return CSB_HINT_ORACLE_HTC_REAL_ERR_NO_DATA_DIR;
     }
 
-    /* Resolve cache_dir (only used to materialize virtual paths). */
-    if (cache_dir && cache_dir[0] != '\0') {
-        if (!copy_string(resolved_cache_dir, sizeof(resolved_cache_dir),
-                         cache_dir)) {
-            return CSB_HINT_ORACLE_HTC_REAL_ERR_ARGUMENT;
-        }
-        materialize_root = resolved_cache_dir;
-    } else {
-        materialize_root = NULL;
-    }
+    (void)cache_dir; /* Kept in the public API for source compatibility. */
 
     /* Hash-based recursive discovery. */
     if (!asset_find_by_md5_list(search_root, md5_list,
@@ -335,39 +214,14 @@ static int csb_hint_oracle_htc_real_scan_and_load_internal(
         return CSB_HINT_ORACLE_HTC_REAL_ERR_NOT_FOUND;
     }
 
-    if (is_virtual_path(match_path)) {
-        if (!materialize_virtual(match_path, materialize_root,
-                                 materialized, sizeof(materialized))) {
-            /* We still keep the discovery metadata, but we cannot
-             * read it without a cache dir. Return READ so callers
-             * can distinguish from a true "not found". */
-            copy_string(cache->original_path,
-                        sizeof(cache->original_path), match_path);
-            copy_string(cache->matched_md5,
-                        sizeof(cache->matched_md5),
-                        known[match_index].md5);
-            copy_string(cache->matched_label,
-                        sizeof(cache->matched_label),
-                        known[match_index].label);
-            return CSB_HINT_ORACLE_HTC_REAL_ERR_READ;
-        }
-        copy_string(cache->original_path,
-                    sizeof(cache->original_path), match_path);
-        copy_string(cache->resolved_path,
-                    sizeof(cache->resolved_path), materialized);
-    } else {
-        copy_string(cache->original_path,
-                    sizeof(cache->original_path), match_path);
-        copy_string(cache->resolved_path,
-                    sizeof(cache->resolved_path), match_path);
-    }
+    copy_string(cache->original_path, sizeof(cache->original_path), match_path);
+    copy_string(cache->resolved_path, sizeof(cache->resolved_path), match_path);
     copy_string(cache->matched_md5, sizeof(cache->matched_md5),
                 known[match_index].md5);
     copy_string(cache->matched_label, sizeof(cache->matched_label),
                 known[match_index].label);
 
-    read_path = cache->resolved_path;
-    if (!read_whole_file(read_path, &buf, &buf_size)) {
+    if (!asset_read_path_alloc(match_path, &buf, &buf_size)) {
         return CSB_HINT_ORACLE_HTC_REAL_ERR_READ;
     }
 

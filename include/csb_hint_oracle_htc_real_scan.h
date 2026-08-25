@@ -22,9 +22,8 @@
  *        files without vendoring their contents.
  *     2. If the matched path is a virtual container path
  *        ("archive.zip::HCSB.HTC" or "disc.iso::HCSB.HTC"),
- *        materialize it into a local cache directory using
- *        asset_extract_virtual_path() so the parser can read
- *        ordinary file I/O.
+ *        read it directly into the owned RAM buffer through
+ *        asset_read_path_alloc().
  *     3. Parse with csb_hint_oracle_htc_parse() and cache the
  *        parsed view + the resolved path + matched MD5 + the
  *        owned buffer (so callers don't need to manage file
@@ -130,11 +129,9 @@ typedef struct {
     /* Resolved path used for the load. May be:
      *   - ordinary path on disk (e.g.
      *     "/Users/.../csb-atari-st-2x/HCSB.HTC")
-     *   - virtual container path materialized through
-     *     asset_extract_virtual_path() (e.g.
-     *     "archive.zip::HCSB.HTC" — the parser reads the
-     *     materialized file but the cache keeps the original
- *     virtual descriptor for diagnostics).
+     *   - virtual container path (e.g. "archive.zip::HCSB.HTC"),
+     *     read directly into file_buffer; the descriptor remains
+     *     available for diagnostics.
      */
     char resolved_path[CSB_HINT_ORACLE_HTC_REAL_PATH_CAP];
     char original_path[CSB_HINT_ORACLE_HTC_REAL_PATH_CAP];
