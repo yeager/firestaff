@@ -266,7 +266,8 @@ static void theron_v1_startup_media_record_atlas_route(
         media->startup_bitmap_wide_atlas_tile_count += route->tile_count;
     }
     if ((media->track02_variant == (int)THERON_TRACK02_VARIANT_JP_BIN ||
-         media->track02_variant == (int)THERON_TRACK02_VARIANT_US_BIN) &&
+         media->track02_variant == (int)THERON_TRACK02_VARIANT_US_BIN ||
+         media->track02_variant == (int)THERON_TRACK02_VARIANT_US_CLONECD_RAW) &&
         (media->startup_bitmap_raw_route_mask & route->route_bit) == 0u) {
         media->startup_bitmap_raw_route_mask |= route->route_bit;
         ++media->startup_bitmap_raw_route_count;

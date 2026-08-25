@@ -41,6 +41,13 @@
 #define TQR_RAW_SECTOR_USER_DATA_OFFSET THERON_TRACK02_RAW_USER_DATA_OFFSET
 #define TQR_RAW_SECTOR_USER_DATA_BYTES THERON_TRACK02_RAW_USER_DATA_BYTES
 #define TQR_RAW_BIN_BANK_ANCHOR_COUNT 3u
+/* The CloneCD image begins Track 02 at INDEX 01.  The older CUE/BIN US
+ * dump includes its 225-sector pregap before that same data.  Keep the
+ * physical-layout adjustment explicit and hash-bound; do not manufacture a
+ * pregap or treat its absence as an image-content difference. */
+#define TQR_US_CLONECD_OMITTED_PREGAP_SECTORS 225u
+#define TQR_US_CLONECD_OMITTED_PREGAP_BYTES \
+    (TQR_US_CLONECD_OMITTED_PREGAP_SECTORS * TQR_RAW_SECTOR_BYTES)
 /* FALSE POSITIVE: these "initial level" values were misread from the level
  * descriptor table at UD 0x619900 with wrong alignment and endianness.
  * Retained only for backward compatibility with existing binding gates. */
@@ -90,6 +97,18 @@ static const size_t g_jp_bin_descriptor_offsets[TQR_RAW_BIN_BANK_ANCHOR_COUNT] =
 
 static const size_t g_us_bin_post_boundary_span_offsets[TQR_RAW_BIN_BANK_ANCHOR_COUNT] = {
     0x2d53e0u, 0x47d040u, 0x712840u
+};
+
+/* These are the three existing US raw-BIN anchors translated to the real
+ * CloneCD Track-02 slice.  Each was verified directly against the supplied
+ * IMG: descriptor bytes and the complete 44-byte span at each location are
+ * byte-identical to the original US raw-BIN evidence. */
+static const size_t g_us_clonecd_descriptor_offsets[TQR_RAW_BIN_BANK_ANCHOR_COUNT] = {
+    0x68aad6u, 0x68cf96u, 0x68f5d4u
+};
+
+static const size_t g_us_clonecd_post_boundary_span_offsets[TQR_RAW_BIN_BANK_ANCHOR_COUNT] = {
+    0x2540b0u, 0x3fbd10u, 0x691510u
 };
 
 static const size_t g_jp_bin_post_boundary_span_offsets[TQR_RAW_BIN_BANK_ANCHOR_COUNT] = {
@@ -250,6 +269,9 @@ Theron_Track02Variant theron_v1_track02_variant_for_md5(const char *md5_hex) {
     if (strcmp(md5_hex, THERON_TRACK02_MD5_US_BIN) == 0) {
         return THERON_TRACK02_VARIANT_US_BIN;
     }
+    if (strcmp(md5_hex, THERON_TRACK02_MD5_US_CLONECD_BIN) == 0) {
+        return THERON_TRACK02_VARIANT_US_CLONECD_RAW;
+    }
     if (strcmp(md5_hex, THERON_TRACK02_MD5_JP_BIN) == 0) {
         return THERON_TRACK02_VARIANT_JP_BIN;
     }
@@ -272,6 +294,7 @@ static int track_is_all_zero(const uint8_t *data, size_t size) {
 
 static int variant_is_raw_bin(Theron_Track02Variant variant) {
     return variant == THERON_TRACK02_VARIANT_US_BIN ||
+           variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW ||
            variant == THERON_TRACK02_VARIANT_JP_BIN;
 }
 
@@ -3047,6 +3070,11 @@ Theron_Track02SignalStatus theron_v1_track02_find_bank_signal(
                                         g_us_bin_descriptor_offsets,
                                         g_us_bin_post_boundary_span_offsets);
     }
+    if (variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW) {
+        return find_raw_bin_bank_signal(track02_data, track02_size, out_signal,
+                                        g_us_clonecd_descriptor_offsets,
+                                        g_us_clonecd_post_boundary_span_offsets);
+    }
     if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
         return find_raw_bin_bank_signal(track02_data,
                                         track02_size,
@@ -3200,6 +3228,8 @@ const char *theron_v1_track02_variant_name(Theron_Track02Variant variant) {
         return "jp-bin";
     case THERON_TRACK02_VARIANT_US_BIN:
         return "us-bin";
+    case THERON_TRACK02_VARIANT_US_CLONECD_RAW:
+        return "us-clonecd-raw";
     case THERON_TRACK02_VARIANT_JP_REV1_ISO:
         return "jp-rev1-iso";
     case THERON_TRACK02_VARIANT_US_ISO:
@@ -7790,8 +7820,10 @@ Theron_Track02SignalStatus theron_v1_track02_find_ipl_loader(
     if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
         index01_sector = THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR;
         executable_sector_count = TQR_IPL_JP_EXECUTABLE_SECTORS;
-    } else if (variant == THERON_TRACK02_VARIANT_US_BIN) {
-        index01_sector = THERON_TRACK02_IPL_US_INDEX01_RAW_SECTOR;
+    } else if (variant == THERON_TRACK02_VARIANT_US_BIN ||
+               variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW) {
+        index01_sector = variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW
+            ? 0u : THERON_TRACK02_IPL_US_INDEX01_RAW_SECTOR;
         executable_sector_count = TQR_IPL_US_EXECUTABLE_SECTORS;
     } else {
         return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;

@@ -429,6 +429,8 @@ static const char* const g_theronTrack02Names[] = {
 static const M12_VersionSpec g_theronVersions[] = {
     {"theron", "pce-en", "TurboGrafx-16 US (Track 02)", "TG16 US",
      g_theronTrack02Names, "f23601102138f87c33025877767ebf76", M12_ARCH_PCE},
+    {"theron", "pce-en-clonecd", "TurboGrafx-16 US (CloneCD Track 02)", "TG16 US CloneCD",
+     g_theronTrack02Names, "168bd6a63784e91885df8c47be62ab5a", M12_ARCH_PCE},
     {"theron", "pce-jp", "PC Engine JP (Track 02)", "PCE JP",
      g_theronTrack02Names, "b7afb338ad31be1025b53f9aff12d73a", M12_ARCH_PCE},
     {"theron", "pce-en-iso", "TurboGrafx-16 US (Track 02 ISO)", "TG16 US ISO",

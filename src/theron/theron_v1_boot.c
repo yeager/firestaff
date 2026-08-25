@@ -202,7 +202,8 @@ int theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
         profile->graphics_md5);
     initial_level = &profile->track02_initial_level_handoff;
     return (expected_variant == THERON_TRACK02_VARIANT_JP_BIN ||
-            expected_variant == THERON_TRACK02_VARIANT_US_BIN) &&
+            expected_variant == THERON_TRACK02_VARIANT_US_BIN ||
+            expected_variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW) &&
            theron_v1_boot_md5_is_canonical(
                profile->track02_runtime_system_card_md5) &&
            theron_v1_boot_md5_is_canonical(
@@ -338,6 +339,7 @@ static const char *const g_theron_track02_candidates[] = {
 static const char *const g_theron_known_md5s[] = {
     "b7afb338ad31be1025b53f9aff12d73a", /* JP Track 02 BIN */
     "f23601102138f87c33025877767ebf76", /* US Track 02 BIN */
+    "168bd6a63784e91885df8c47be62ab5a", /* US CloneCD Track 02 slice */
     "397039af02d50d15c70b74088eb8a1cb", /* JP Rev 1 ISO */
     "ceb02343868f80cec899e9b239aff2da", /* US ISO */
     NULL
@@ -667,6 +669,7 @@ int theron_v1_boot_scan_assets(Theron_V1_BootProfile *profile,
         if (m12_file_md5_hex(profile->graphics_path, md5hex)) {
             if (strcmp(md5hex, "b7afb338ad31be1025b53f9aff12d73a") == 0 ||
                 strcmp(md5hex, "f23601102138f87c33025877767ebf76") == 0 ||
+                strcmp(md5hex, "168bd6a63784e91885df8c47be62ab5a") == 0 ||
                 strcmp(md5hex, "397039af02d50d15c70b74088eb8a1cb") == 0 ||
                 strcmp(md5hex, "ceb02343868f80cec899e9b239aff2da") == 0) {
                 profile->assets_verified = 1;
@@ -1075,7 +1078,8 @@ int theron_v1_boot_startup_raw_media_graphics_receipt_from_loader_trace(
     out_receipt->raw_track02_verified =
         startup_media_receipt->startup_media_ready &&
                 (variant == THERON_TRACK02_VARIANT_JP_BIN ||
-                 variant == THERON_TRACK02_VARIANT_US_BIN)
+                 variant == THERON_TRACK02_VARIANT_US_BIN ||
+                 variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW)
             ? 1
             : 0;
     out_receipt->bitmap_route_mask =
@@ -1138,7 +1142,8 @@ int theron_v1_boot_validate_track02_loader_receipt(
     variant = theron_v1_track02_variant_for_md5(verified_md5);
     if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
         expected_dynamic_record = THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_JP;
-    } else if (variant == THERON_TRACK02_VARIANT_US_BIN) {
+    } else if (variant == THERON_TRACK02_VARIANT_US_BIN ||
+               variant == THERON_TRACK02_VARIANT_US_CLONECD_RAW) {
         expected_dynamic_record = THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_US;
     } else {
         /* The dynamic $4090 trace is proven only for raw JP/US media. */
@@ -3620,6 +3625,7 @@ static int theron_v1_boot_startup_media_has_required_atlas_routes(
     switch (media_receipt->track02_variant) {
     case THERON_TRACK02_VARIANT_JP_BIN:
     case THERON_TRACK02_VARIANT_US_BIN:
+    case THERON_TRACK02_VARIANT_US_CLONECD_RAW:
         return (media_receipt->startup_bitmap_raw_route_mask &
                 required_route_mask) == required_route_mask;
     case THERON_TRACK02_VARIANT_JP_REV1_ISO:
@@ -3656,6 +3662,7 @@ static void theron_v1_boot_startup_copy_package_bitmap_routes(
     switch (media_receipt->track02_variant) {
     case THERON_TRACK02_VARIANT_JP_BIN:
     case THERON_TRACK02_VARIANT_US_BIN:
+    case THERON_TRACK02_VARIANT_US_CLONECD_RAW:
         package_mask = receipt->raw_bitmap_route_mask;
         break;
     case THERON_TRACK02_VARIANT_JP_REV1_ISO:

@@ -1395,6 +1395,57 @@ int asset_read_path_alloc(const char *path, uint8_t **outBytes,
     *outSize = 0U;
     separator = strstr(path, "::");
     if (separator) {
+        const char *slice = strstr(separator + 2, "::slice@");
+        /* A CloneCD image keeps every physical track in one IMG member.
+         * Preserve the selected track as an explicit bounded virtual range:
+         *   archive.zip::disc.img::slice@<byte-offset>:<byte-count>
+         * This is deliberately a reader operation only.  The source IMG is
+         * decompressed into process memory by the existing ZIP reader and no
+         * game-data file is created on disk. */
+        if (slice && strstr(slice + strlen("::slice@"), "::") == NULL) {
+            char memberPath[ASSET_PATH_MAX];
+            char *end;
+            unsigned long long offset;
+            unsigned long long count;
+            uint8_t *memberBytes = NULL;
+            uint8_t *rangeBytes;
+            size_t memberSize = 0U;
+            size_t memberPathLength = (size_t)(slice - path);
+            const char *range = slice + strlen("::slice@");
+            const char *memberSeparator;
+            if (memberPathLength == 0U || memberPathLength >= sizeof(memberPath) ||
+                !range[0] || range[0] == '-' ||
+                (offset = strtoull(range, &end, 10), end == range || *end != ':') ||
+                end[1] == '\0' || end[1] == '-' ||
+                (count = strtoull(end + 1, &end, 10), *end != '\0') ||
+                count == 0U || offset > SIZE_MAX || count > SIZE_MAX) {
+                return 0;
+            }
+            memcpy(memberPath, path, memberPathLength);
+            memberPath[memberPathLength] = '\0';
+            memberSeparator = strstr(memberPath, "::");
+            if ((memberSeparator && strncmp(memberSeparator + 2, "@suffix=", 8U) == 0
+                     ? ((length = (size_t)(memberSeparator - memberPath)),
+                        length == 0U || length >= sizeof(container) ? -1 :
+                        (memcpy(container, memberPath, length), container[length] = '\0',
+                         firestaff_zip_extract_by_suffix(container, memberSeparator + 10,
+                                                         &memberBytes, &memberSize)))
+                     : !asset_read_path_alloc(memberPath, &memberBytes, &memberSize)) ||
+                (size_t)offset > memberSize || (size_t)count > memberSize - (size_t)offset) {
+                free(memberBytes);
+                return 0;
+            }
+            rangeBytes = (uint8_t *)malloc((size_t)count);
+            if (!rangeBytes) {
+                free(memberBytes);
+                return 0;
+            }
+            memcpy(rangeBytes, memberBytes + (size_t)offset, (size_t)count);
+            free(memberBytes);
+            *outBytes = rangeBytes;
+            *outSize = (size_t)count;
+            return 1;
+        }
         length = (size_t)(separator - path);
         if (length == 0U || length >= sizeof(container) ||
             separator[2] == '\0') return 0;

@@ -20,6 +20,9 @@
 
 #define THERON_TRACK02_MD5_JP_BIN      "b7afb338ad31be1025b53f9aff12d73a"
 #define THERON_TRACK02_MD5_US_BIN      "f23601102138f87c33025877767ebf76"
+/* CloneCD USA dump: exact MODE1/2352 Track 02 slice from the original IMG,
+ * bounded by CCD Point 02 LBA 3234 and Point 03 LBA 6605. */
+#define THERON_TRACK02_MD5_US_CLONECD_BIN "168bd6a63784e91885df8c47be62ab5a"
 #define THERON_TRACK02_MD5_JP_REV1_ISO "397039af02d50d15c70b74088eb8a1cb"
 /* MyAbandonware's US dump splits this exact ISO into TQUS19.iso followed by
  * TQUS02End.iso.  The latter is only the tail, never a standalone Track 02.
@@ -76,6 +79,9 @@ typedef enum {
     THERON_TRACK02_VARIANT_UNKNOWN = 0,
     THERON_TRACK02_VARIANT_JP_BIN,
     THERON_TRACK02_VARIANT_US_BIN,
+    /* Same US program/data sectors as US BIN, but CloneCD begins at Track 02
+     * INDEX 01 instead of retaining the CUE/BIN pregap. */
+    THERON_TRACK02_VARIANT_US_CLONECD_RAW,
     THERON_TRACK02_VARIANT_JP_REV1_ISO,
     THERON_TRACK02_VARIANT_US_ISO
 } Theron_Track02Variant;

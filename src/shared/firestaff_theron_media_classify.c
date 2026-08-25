@@ -17,6 +17,7 @@
 #define THERON_CUE_MAX_BYTES (1024UL * 1024UL)
 #define THERON_SCAN_MAX_DEPTH 3
 #define THERON_SCAN_MAX_FILES 160
+#define THERON_RAW_SECTOR_BYTES 2352UL
 
 static int th_char_lower(int c) {
     return (c >= 'A' && c <= 'Z') ? (c - 'A' + 'a') : c;
@@ -534,11 +535,79 @@ int FirestaffTheronMedia_ClassifyZip(const char* zip_path,
     char track02[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
     int rc;
 
-    if (!zip_path || !status || !th_has_ext(zip_path, ".zip") ||
-        firestaff_zip_extract_by_suffix(zip_path, ".cue", &cue, &cue_size) != 0 ||
-        !cue || cue_size == 0U) {
-        free(cue);
+    if (!zip_path || !status || !th_has_ext(zip_path, ".zip")) {
         return -1;
+    }
+    if (firestaff_zip_extract_by_suffix(zip_path, ".cue", &cue, &cue_size) != 0 ||
+        !cue || cue_size == 0U) {
+        /* CloneCD keeps the TOC in a .ccd sidecar and the physical sectors
+         * in one .img member.  It has no CUE to parse, but its Point 02/03
+         * entries define the exact Track 02 range. */
+        char* line;
+        unsigned long track02_lba = 0UL;
+        unsigned long track03_lba = 0UL;
+        unsigned long point = 0UL;
+        unsigned long control = 0UL;
+        uint8_t* ccd = NULL;
+        uint8_t* image = NULL;
+        char* ccd_text = NULL;
+        size_t ccd_size = 0U;
+        size_t image_size = 0U;
+        if (firestaff_zip_extract_by_suffix(zip_path, ".ccd", &ccd, &ccd_size) != 0 ||
+            !ccd || ccd_size == 0U || ccd_size > THERON_CUE_MAX_BYTES) {
+            free(ccd);
+            return -1;
+        }
+        ccd_text = (char*)malloc(ccd_size + 1U);
+        if (!ccd_text) {
+            free(ccd);
+            return -1;
+        }
+        memcpy(ccd_text, ccd, ccd_size);
+        ccd_text[ccd_size] = '\0';
+        line = strtok(ccd_text, "\r\n");
+        while (line) {
+            unsigned long value;
+            if (sscanf(line, "Point=0x%lx", &value) == 1) point = value;
+            else if (sscanf(line, "Control=0x%lx", &value) == 1) control = value;
+            else if (sscanf(line, "PLBA=%lu", &value) == 1) {
+                if (point == 2UL && control == 4UL) track02_lba = value;
+                else if (point == 3UL) track03_lba = value;
+            }
+            line = strtok(NULL, "\r\n");
+        }
+        free(ccd_text);
+        free(ccd);
+        if (track02_lba == 0UL || track03_lba <= track02_lba ||
+            track03_lba - track02_lba > SIZE_MAX / THERON_RAW_SECTOR_BYTES ||
+            firestaff_zip_extract_by_suffix(zip_path, ".img", &image, &image_size) != 0 ||
+            !image || track02_lba > image_size / THERON_RAW_SECTOR_BYTES ||
+            track03_lba - track02_lba >
+                image_size / THERON_RAW_SECTOR_BYTES - track02_lba) {
+            free(image);
+            return -1;
+        }
+        free(image);
+        FirestaffTheronMedia_Init(status);
+        status->layout = FIRESTAFF_THERON_MEDIA_LAYOUT_BIN_CUE;
+        status->has_cue = 1;
+        status->has_track02_data = 1;
+        status->data_track_number = 2;
+        status->track02_mode1_sector_bytes = (int)THERON_RAW_SECTOR_BYTES;
+        status->has_valid_track02_mode1 = 1;
+        status->launch_candidate = 1;
+        status->audio_track_count = 1;
+        status->has_track01_audio = 1;
+        status->paired_track01_track02 = 1;
+        snprintf(status->cue_path, sizeof(status->cue_path), "%s::@suffix=.ccd", zip_path);
+        snprintf(status->track01_path, sizeof(status->track01_path), "%s::@suffix=.img", zip_path);
+        snprintf(track02, sizeof(track02), "%s::@suffix=.img::slice@%lu:%lu",
+                 zip_path,
+                 track02_lba * THERON_RAW_SECTOR_BYTES,
+                 (track03_lba - track02_lba) * THERON_RAW_SECTOR_BYTES);
+        th_copy(status->track02_path, sizeof(status->track02_path), track02);
+        th_copy(status->candidate_path, sizeof(status->candidate_path), track02);
+        return 0;
     }
     rc = FirestaffTheronMedia_ParseCue((const char*)cue, cue_size, status);
     free(cue);

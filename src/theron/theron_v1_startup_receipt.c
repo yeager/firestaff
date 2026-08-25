@@ -64,6 +64,7 @@ static int startup_receipt_is_cue_path(const char *path) {
 static const char *const g_known_track02_md5s[] = {
     "b7afb338ad31be1025b53f9aff12d73a", /* JP Track 02 BIN              */
     "f23601102138f87c33025877767ebf76", /* US Track 02 BIN              */
+    THERON_TRACK02_MD5_US_CLONECD_BIN,  /* US CloneCD Track 02 slice     */
     "397039af02d50d15c70b74088eb8a1cb", /* JP Rev 1 Track 02 ISO        */
     "ceb02343868f80cec899e9b239aff2da", /* US Track 02 ISO              */
     NULL
