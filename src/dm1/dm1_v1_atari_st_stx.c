@@ -187,6 +187,8 @@ dm1_v1_atari_st_stx_extract_file(const DM1_V1_AtariStx *stx,
     uint8_t sector[SECTOR_SIZE];
     uint8_t fat[2048];
     uint32_t first_cluster = 0u, file_size = 0u;
+    uint32_t clusters_read = 0u;
+    uint32_t maximum_clusters = 0u;
     int found = 0;
     if (!stx || !name83 || !out || !out_size ||
         !dm1_v1_atari_st_stx_read_sector(stx, 5u, sector, sizeof(sector))) return 0;
@@ -206,11 +208,21 @@ dm1_v1_atari_st_stx_extract_file(const DM1_V1_AtariStx *stx,
         break;
     }
     if (!found || file_size > capacity) return 0;
+    /* The DM1 disks use two 512-byte sectors per allocation cluster.  Do
+     * not let a corrupt (or differently protected) FAT chain make the
+     * native reader re-walk tracks indefinitely: an authentic file cannot
+     * consume more clusters than its directory length permits, and the four
+     * resident FAT sectors cannot describe more than 1365 FAT12 entries.
+     * This is a parser bound, not a timeout or a media substitution. */
+    maximum_clusters = (file_size + (SECTOR_SIZE * 2u - 1u)) /
+                       (SECTOR_SIZE * 2u);
+    if (maximum_clusters == 0u || maximum_clusters > 1365u) return 0;
     for (uint32_t cluster = first_cluster; cluster >= 2u && cluster < 0xff8u;) {
         uint32_t base = 6u + (cluster - 2u) * 2u;
         uint8_t pair[SECTOR_SIZE * 2u];
         size_t before = *out_size;
-        if (!dm1_v1_atari_st_stx_read_sector(stx, base, pair, sizeof(pair)) ||
+        if (++clusters_read > maximum_clusters ||
+            !dm1_v1_atari_st_stx_read_sector(stx, base, pair, sizeof(pair)) ||
             !dm1_v1_atari_st_stx_read_sector(stx, base + 1u,
                                              pair + SECTOR_SIZE, sizeof(pair) - SECTOR_SIZE)) return 0;
         if (*out_size < file_size) {
