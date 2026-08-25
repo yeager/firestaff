@@ -218,7 +218,7 @@ target_include_directories(test_nexus_v1_hud_layout PRIVATE
 target_link_libraries(test_nexus_v1_hud_layout PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_hud_layout COMMAND test_nexus_v1_hud_layout)
 set_tests_properties(nexus_v1_hud_layout PROPERTIES
-    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus;FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue"
     LABELS "nexus;hud;tier4;real_data;skip_safe"
     SKIP_RETURN_CODE 77)
 
