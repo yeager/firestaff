@@ -18569,6 +18569,7 @@ endif()
         ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
     )
     firestaff_link_zlib(firestaff_dm2_v1_dungeon_loader_first_map_real_data_probe PRIVATE)
+    target_link_libraries(firestaff_dm2_v1_dungeon_loader_first_map_real_data_probe PRIVATE firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(firestaff_dm2_v1_dungeon_loader_first_map_real_data_probe PRIVATE -Wall -Wextra -O2)
     endif()
