@@ -39259,6 +39259,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     target_include_directories(test_nexus_v1_dgn_face_mesh_corpus PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_nexus_v1_dgn_face_mesh_corpus PRIVATE firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_nexus_v1_dgn_face_mesh_corpus PRIVATE
             -std=c99 -Wall -Wextra -pedantic -O2)
@@ -39696,6 +39697,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     target_include_directories(test_csb_v1_atari_st_dat_layout PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_csb_v1_atari_st_dat_layout PRIVATE firestaff_zip_extract)
     target_compile_definitions(test_csb_v1_atari_st_dat_layout PRIVATE
         CSB_V1_ATARI_ST_GRAPHICS_LOADER_CONTRACT_ONLY=1)
     if(NOT MSVC)
@@ -39724,6 +39726,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     target_include_directories(test_csb_v1_atari_st_animation_assets PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_csb_v1_atari_st_animation_assets PRIVATE firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_atari_st_animation_assets PRIVATE
             -std=c99 -Wall -Wextra -pedantic -O2)
