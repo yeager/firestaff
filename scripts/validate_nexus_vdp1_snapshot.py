@@ -10,11 +10,13 @@ from pathlib import Path
 
 SNAPSHOT_MAGIC = b"FIRESTAFF_NEXUS_VDP1_SNAPSHOT_V1\n"
 VDP1_MAGIC = b"FIRESTAFF_NEXUS_SATURN_VDP1_RAW_V2\n"
-VDP1_PAYLOAD_BYTES = 0x40000 * 2 + 0x20000 * 2 + 0x20000 * 2 + 1
+# The current producer emits VRAM plus both framebuffers.  Earlier V2
+# producers appended one redundant draw-buffer byte, so accept either shape.
+VDP1_PAYLOAD_BYTES = 0x40000 * 2 + 0x20000 * 2 + 0x20000 * 2
 STATE_RE = re.compile(
     rb"^state=tvmr:[0-9a-f]+,fbcr:[0-9a-f]+,ptmr:[0-9a-f]+,"
     rb"edsr:[0-9a-f]+,lopr:[0-9a-f]+,copr:[0-9a-f]+,"
-    rb"ret:[0-9a-f]+,fb:[01]$"
+    rb"ret:[0-9a-f]+,fb:[01](?:,sysclipx:[0-9a-f]+,sysclipy:[0-9a-f]+)?$"
 )
 
 
@@ -29,10 +31,11 @@ def validate(blob: bytes) -> None:
     if state_end < 0 or not STATE_RE.fullmatch(blob[offset:state_end]):
         raise ValueError("malformed VDP1 state line")
     offset = state_end + 1
-    if len(blob) - offset != VDP1_PAYLOAD_BYTES:
+    payload_size = len(blob) - offset
+    if payload_size not in (VDP1_PAYLOAD_BYTES, VDP1_PAYLOAD_BYTES + 1):
         raise ValueError(
-            f"expected {VDP1_PAYLOAD_BYTES} VDP1 payload bytes, "
-            f"found {len(blob) - offset}"
+            f"expected {VDP1_PAYLOAD_BYTES} or {VDP1_PAYLOAD_BYTES + 1} "
+            f"VDP1 payload bytes, found {payload_size}"
         )
     if not any(blob[offset:]):
         raise ValueError("VDP1 payload is empty")
