@@ -44518,6 +44518,26 @@ if(BUILD_TESTING AND THERON_SOURCES)
         SKIP_RETURN_CODE 77
         LABELS "theron;real-media;startup"
     )
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_jp_later_dungeon_runtime.c")
+        add_executable(test_theron_v1_jp_later_dungeon_runtime
+            tests/test_theron_v1_jp_later_dungeon_runtime.c)
+        target_link_libraries(test_theron_v1_jp_later_dungeon_runtime PRIVATE
+            firestaff_theron)
+        if(TARGET firestaff_m12)
+            target_link_libraries(test_theron_v1_jp_later_dungeon_runtime PRIVATE
+                firestaff_m12)
+        endif()
+        target_include_directories(test_theron_v1_jp_later_dungeon_runtime PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/include")
+        if(NOT MSVC)
+            target_compile_options(test_theron_v1_jp_later_dungeon_runtime PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(NAME theron_v1_jp_later_dungeon_runtime
+            COMMAND test_theron_v1_jp_later_dungeon_runtime)
+        set_tests_properties(theron_v1_jp_later_dungeon_runtime PROPERTIES
+            SKIP_RETURN_CODE 77
+            LABELS "theron;real-media;runtime;source-only")
+    endif()
 endif()
 
 # ── Theron V1 Phase 5 — Launcher Scan Reuse Test ──────────────────

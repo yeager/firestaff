@@ -25,7 +25,7 @@ typedef struct {
 /* Source-only handoff for interactive raw Track 02 forcefield entry. The
  * loader consumes authentic map/thing bytes; visual and host-item consumers
  * remain separate gates. */
-static int theron_v1_startup_runtime_load_raw_track02_source_level(
+int theron_v1_startup_runtime_load_source_dungeon(
     Theron_V1_World *world, const uint8_t *track02, size_t track02_size,
     const char *md5_hex, Theron_DungeonID dungeon_id,
     char *receipt, size_t receipt_cap) {
@@ -238,7 +238,7 @@ static int theron_v1_startup_runtime_level_load_callback(
     if (!ctx) {
         return 0;
     }
-    if (theron_v1_startup_runtime_load_raw_track02_source_level(
+    if (theron_v1_startup_runtime_load_source_dungeon(
             world, ctx->hucard_rom, ctx->hucard_rom_size, ctx->md5_hex,
             dungeon_id, receipt, receipt_cap)) return 1;
     return theron_v1_startup_runtime_load_initial_level(world,
@@ -2645,7 +2645,7 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
             }
         } else {
             candidate_world = *world;
-            if (!theron_v1_startup_runtime_load_raw_track02_source_level(
+            if (!theron_v1_startup_runtime_load_source_dungeon(
                     &candidate_world, hucard_rom, hucard_rom_size, md5_hex,
                     flow ? flow->selected_dungeon : 0, NULL, 0u)) {
                 if (out_result) {

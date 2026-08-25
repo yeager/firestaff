@@ -33,6 +33,21 @@ int theron_v1_startup_runtime_load_initial_level_verified_only(
     Theron_DungeonID dungeon_id,
     char *receipt,
     size_t receipt_cap);
+
+/* Source-only native Track 02 dungeon binding.  This is the bounded route
+ * for a later selected dungeon after its original raw MODE1/2352 bytes have
+ * been hash-verified.  It consumes the selected JP/US map, thing and item
+ * property records into a caller-owned world, but does not infer the
+ * original level-transition consumer, visual stream, AI, combat, or item
+ * action semantics.  Callers must keep those later runtime gates closed. */
+int theron_v1_startup_runtime_load_source_dungeon(
+    Theron_V1_World *world,
+    const uint8_t *track02,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_DungeonID dungeon_id,
+    char *receipt,
+    size_t receipt_cap);
 typedef struct {
     const uint8_t *hucard_rom;
     size_t hucard_rom_size;
