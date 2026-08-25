@@ -62,7 +62,7 @@ parity gate is complete.
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
 | PC Engine/TurboGrafx-16 Japanese | **Verified route** | Authentic Rev 1 CUE reaches native title, stage, Soul Room and Akutuba runtime (`party=1,0,0`). Its Track 02 source consumer binds all seven campaign dungeons (2,266 source objects; Drator: 8 maps/291 objects); identity and level framing are verified. | Captured transitions, bitmap/palette binding, saves and positive gameplay behavior. |
-| PC Engine/TurboGrafx-16 US | **Data path** | Authentic Track 02 identity and shared parser/runtime boundary. | US gameplay handoff and capture proof. |
+| PC Engine/TurboGrafx-16 US | **Verified startup route** | Authentic CloneCD ZIP (`.ccd` + bounded `.img` Track 02 slice) starts natively from memory through CLI and start menu; title and scripted Soul Room startup are verified. | US gameplay handoff, captures, saves and later-dungeon proof. |
 
 ## Data and preservation rules
 

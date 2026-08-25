@@ -20,6 +20,14 @@ Confirmed disc identities:
 | JP (1992-09-18, Hudson Soft) | `b7afb338ad31be1025b53f9aff12d73a` | `397039af02d50d15c70b74088eb8a1cb` (Rev 1) |
 | US (1993, Hudson Soft USA) | `f23601102138f87c33025877767ebf76` | `ceb02343868f80cec899e9b239aff2da` |
 
+**US CloneCD package (2026-08-25):** the supplied ZIP is consumed without
+extraction. Its `.ccd` declares Track 02 as an `.img` byte slice with MD5
+`168bd6a63784e91885df8c47be62ab5a`. This raw layout omits the 225-sector
+pregap present in the CUE/BIN representation, so it has a separate
+source-verified offset map. Native CLI and start-menu startup reach the title
+and the scripted Soul Room route (`theron-startup-2`); this does not establish
+US gameplay, save, audio, or presentation parity.
+
 Provenance gate: `docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md`.
 
 Platform: PC Engine / TurboGrafx-CD, HuC6280 CPU @ 7.16 MHz (65C02

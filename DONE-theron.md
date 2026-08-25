@@ -17,3 +17,9 @@ Reviewed 2026-08-25. Completed work only.
 - A CUE/BIN package in a ZIP archive starts natively through both direct CLI
   and the start menu. Firestaff hashes and reads the selected Track 02 member
   in memory (`archive.zip::member`) and never writes extracted game data.
+- The supplied US CloneCD ZIP starts natively through direct CLI and the
+  start menu. Its `.ccd` layout identifies Track 02 as an in-memory bounded
+  `.img` slice (MD5 `168bd6a63784e91885df8c47be62ab5a`); the verified
+  eleven-input startup route reaches `theron-startup-2`. CloneCD's missing
+  225-sector pregap has a separate, source-verified anchor map—no pregap or
+  game media is synthesized or written to disk.
