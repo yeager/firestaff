@@ -3393,6 +3393,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_face_material_ret
     target_include_directories(test_nexus_v1_dgn_face_material_retail_corpus PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_nexus_v1_dgn_face_material_retail_corpus PRIVATE firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_nexus_v1_dgn_face_material_retail_corpus PRIVATE
             -std=c99 -Wall -Wextra -Werror -pedantic
@@ -3470,6 +3471,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_structure2_intak
     target_include_directories(test_nexus_v1_prs3_structure2_intake PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_nexus_v1_prs3_structure2_intake PRIVATE firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_nexus_v1_prs3_structure2_intake PRIVATE
             -Wall -Wextra -Werror -pedantic
@@ -3514,6 +3516,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_decoder_admissio
     target_include_directories(test_nexus_v1_prs3_decoder_admission PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_nexus_v1_prs3_decoder_admission PRIVATE firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_nexus_v1_prs3_decoder_admission PRIVATE
             -Wall -Wextra -Werror -pedantic
