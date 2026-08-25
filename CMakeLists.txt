@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.312 LANGUAGES C)
+project(Firestaff VERSION 3.0.313 LANGUAGES C)
 
 # Resolve the canonical user-data root before any test or probe declaration
 # expands it into a CTest environment/command.  This must precede the large

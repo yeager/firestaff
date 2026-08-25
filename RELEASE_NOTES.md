@@ -1,3 +1,40 @@
+# Firestaff v3.0.313
+
+## Firestaff
+
+### Fixed
+
+- `Native archive startup`: Direct CLI startup now admits the selected
+  authenticated DM1 Amiga v2.0 nested archive as its own runtime source. The
+  loader reads it in memory and preserves the virtual source chain; it does
+  not extract a loose data tree or invoke an emulator.
+- `No external emulator/runtime tools`: Archive helper programs are disabled
+  by default. Firestaff uses its native bounded readers for supported game
+  media; optional external archive diagnostics require the explicit
+  `FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS=1` opt-in and are not a runtime
+  dependency.
+- `Real-data direct-launch gate`: The all-games launch test now includes the
+  native DM1 Phase-A runtime proof alongside authenticated DM1, CSB, DM2,
+  Nexus, and Theron's Quest startup boundaries.
+
+## DM1
+
+### Fixed
+
+- `Amiga v2.0 direct launch`: Updated native archive admission so the
+  explicitly selected original `Dungeon-Master_Amiga_EN_Version-20.zip` is
+  recognized through its nested ZIP/ADF chain and starts the native DM1 runtime
+  without borrowing files from another edition.
+
+## Nexus
+
+### Fixed
+
+- `Production boundary determinism`: Updated the native title/source-boundary
+  checks to initialize their caller-owned no-op state, making the intentional
+  fail-closed production boundary deterministic on macOS as well as Linux and
+  Windows. This is not a claim of complete Nexus gameplay.
+
 # Firestaff v3.0.312
 
 ## DM1
