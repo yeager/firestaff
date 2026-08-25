@@ -194,10 +194,9 @@ int M12_AssetStatus_PrepareCSBRuntimeVersion(
 int M12_AssetStatus_PrepareDM1RuntimeVersion(
     const M12_AssetStatus* status, const char* versionId,
     char* outPath, size_t outPathSize);
-/* Materialize the selected DM1 FM Towns language package from the original
- * BIN/CUE archive.  The cache contains the verified DATA/JDATA files and the
- * original FM Towns launcher/program siblings; it never substitutes PC34
- * TITLE/SWOOSH media. */
+/* Resolve the selected DM1 FM Towns language package to its original archive.
+ * The retained API name is compatible with older callers; M11 reads selected
+ * BIN/CUE members into RAM and never creates an extracted asset-cache copy. */
 int M12_AssetStatus_MaterializeDM1FmtownsRuntimeVersion(
     const M12_AssetStatus* status, const char* versionId,
     char* outPath, size_t outPathSize);

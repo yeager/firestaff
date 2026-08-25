@@ -5460,10 +5460,14 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
             (strcmp(selectedVersion->versionId, "fmtowns-en") == 0 ||
              strcmp(selectedVersion->versionId, "fmtowns-ja") == 0) &&
             m12_path_is_virtual_asset(selectedVersion->matchedPath)) {
-            if (!m12_materialize_dm1_fmtowns_runtime_cache(
-                    selectedVersion, gameCacheDir)) return 0;
-            m12_copy_string(status->runtimeDataDirs[gameIndex],
-                            sizeof(status->runtimeDataDirs[gameIndex]), cacheRoot);
+            /* M11 reads the selected ZIP/CD members into bounded RAM. Keep
+             * the original archive as the handoff owner; an asset-cache
+             * extraction both changes provenance and duplicates user media. */
+            if (!m12_source_runtime_root(selectedVersion->matchedPath,
+                                         status->runtimeDataDirs[gameIndex],
+                                         sizeof(status->runtimeDataDirs[gameIndex]))) {
+                return 0;
+            }
             return 1;
         }
         if (strcmp(gameId, "csb") == 0 && selectedVersion && selectedVersion->versionId &&
@@ -7324,31 +7328,16 @@ int M12_AssetStatus_MaterializeDM1FmtownsRuntimeVersion(
     int gameIndex = m12_game_index_from_id("dm1");
     int versionIndex;
     const M12_AssetVersionStatus* version;
-    char userDataDir[M12_ASSET_DATA_DIR_CAPACITY];
-    char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
-    char cacheLeaf[64];
     if (outPath && outPathSize) outPath[0] = '\0';
     if (!status || !versionId || !outPath || outPathSize == 0U || gameIndex < 0)
         return 0;
     versionIndex = M12_AssetStatus_FindVersionIndex("dm1", versionId);
     if (versionIndex < 0) return 0;
     version = &status->versions[gameIndex][versionIndex];
-#if !defined(FIRESTAFF_ASSET_STATUS_TESTING) && \
-    !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
+    /* API-compatible name: the native FM Towns route no longer
+     * materializes. M11 owns selected ZIP/CD reads and keeps members in RAM. */
     if (!version->matched ||
         !m12_source_runtime_root(version->matchedPath, outPath, outPathSize)) {
-        outPath[0] = '\0';
-        return 0;
-    }
-    return 1;
-#endif
-    if (!version->matched || !m12_path_is_virtual_asset(version->matchedPath) ||
-        !FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) ||
-        !FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userDataDir, "asset-cache") ||
-        snprintf(cacheLeaf, sizeof(cacheLeaf), "dm1-%s", versionId) < 0 ||
-        !FSP_JoinPath(outPath, outPathSize, cacheRoot, cacheLeaf) ||
-        !FSP_CreateDirectoryRecursive(outPath) ||
-        !m12_materialize_dm1_fmtowns_runtime_cache(version, outPath)) {
         outPath[0] = '\0';
         return 0;
     }
