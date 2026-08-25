@@ -90,6 +90,17 @@ static void csb_v1_boot_free_fmtowns_media(CSB_V1_BootProfile *profile)
     profile->fmtowns_portrait_count = 0u;
 }
 
+static void csb_v1_boot_free_native_media(CSB_V1_BootProfile *profile)
+{
+    if (!profile) return;
+    free(profile->media_graphics_bytes);
+    free(profile->media_dungeon_bytes);
+    profile->media_graphics_bytes = NULL;
+    profile->media_graphics_size = 0u;
+    profile->media_dungeon_bytes = NULL;
+    profile->media_dungeon_size = 0u;
+}
+
 /* M12 materializes an admitted A31M package under this exact leaf. The
  * A31M title sidecar is only a presentation discriminator after that
  * selected-package handoff: a shared or generic CSB directory can contain a
@@ -201,48 +212,8 @@ static int csb_v1_boot_path_is_virtual_asset_pc34(const char *path)
     return path && strstr(path, "::") != NULL;
 }
 
-static int csb_v1_boot_copy_file_pc34(const char *source, const char *target)
+static int csb_v1_boot_load_native_runtime_pair_pc34(CSB_V1_BootProfile *profile)
 {
-    unsigned char buffer[16384];
-    FILE *in;
-    FILE *out;
-    size_t count;
-    int failed;
-
-    if (!source || !target) return 0;
-    in = fopen(source, "rb");
-    if (!in) return 0;
-    out = fopen(target, "wb");
-    if (!out) {
-        fclose(in);
-        return 0;
-    }
-    while ((count = fread(buffer, 1u, sizeof(buffer), in)) != 0u) {
-        if (fwrite(buffer, 1u, count, out) != count) {
-            fclose(in);
-            fclose(out);
-            return 0;
-        }
-    }
-    /* Both handles must be closed unconditionally: putting fclose() inside a
-     * short-circuiting || chain meant a read error on `in` skipped both
-     * closes, and a failing fclose(in) skipped fclose(out) -- leaving the
-     * destination open and unflushed on every failed CSB launch. */
-    failed = ferror(in) != 0;
-    if (fclose(in) != 0) failed = 1;
-    if (fclose(out) != 0) failed = 1;
-    return failed ? 0 : 1;
-}
-
-static int csb_v1_boot_materialize_runtime_pair_pc34(CSB_V1_BootProfile *profile)
-{
-    char user_data[ASSET_PATH_MAX];
-    char cache_root[ASSET_PATH_MAX];
-    char cache_dir[ASSET_PATH_MAX];
-    char graphics_next[ASSET_PATH_MAX];
-    char dungeon_next[ASSET_PATH_MAX];
-    char graphics_path[ASSET_PATH_MAX];
-    char dungeon_path[ASSET_PATH_MAX];
     int graphics_virtual;
     int dungeon_virtual;
 
@@ -252,56 +223,26 @@ static int csb_v1_boot_materialize_runtime_pair_pc34(CSB_V1_BootProfile *profile
         profile->graphics_path);
     dungeon_virtual = csb_v1_boot_path_is_virtual_asset_pc34(
         profile->dungeon_path);
-#if !defined(FIRESTAFF_ASSET_STATUS_TESTING) && \
-    !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
-    /* A production boot must use the format-specific RAM reader.  Never
-     * materialize a virtual member into asset-cache as a substitute. */
-    if (graphics_virtual || dungeon_virtual) return 0;
-#endif
     if (!graphics_virtual && !dungeon_virtual) return 1;
-    if (!FSP_GetUserDataDir(user_data, sizeof(user_data)) ||
-        !FSP_JoinPath(cache_root, sizeof(cache_root), user_data, "asset-cache") ||
-        !FSP_JoinPath(cache_dir, sizeof(cache_dir), cache_root,
-                      "csb-boot-runtime") ||
-        !FSP_CreateDirectoryRecursive(cache_dir) ||
-        !FSP_JoinPath(graphics_next, sizeof(graphics_next), cache_dir,
-                      "GRAPHICS.DAT.next") ||
-        !FSP_JoinPath(dungeon_next, sizeof(dungeon_next), cache_dir,
-                      "DUNGEON.DAT.next") ||
-        !FSP_JoinPath(graphics_path, sizeof(graphics_path), cache_dir,
-                      "GRAPHICS.DAT") ||
-        !FSP_JoinPath(dungeon_path, sizeof(dungeon_path), cache_dir,
-                      "DUNGEON.DAT")) return 0;
-
-    (void)remove(graphics_next);
-    (void)remove(dungeon_next);
-    if (!(graphics_virtual
-              ? asset_extract_virtual_path(profile->graphics_path, graphics_next)
-              : csb_v1_boot_copy_file_pc34(profile->graphics_path,
-                                            graphics_next)) ||
-        !(dungeon_virtual
-              ? asset_extract_virtual_path(profile->dungeon_path, dungeon_next)
-              : csb_v1_boot_copy_file_pc34(profile->dungeon_path,
-                                            dungeon_next)) ||
-        !asset_file_matches_md5(graphics_next, profile->graphics_md5) ||
-        !asset_file_matches_md5(dungeon_next, profile->dungeon_md5)) {
-        (void)remove(graphics_next);
-        (void)remove(dungeon_next);
+    /* The scanner's matched paths are the ownership receipt.  Read virtual
+     * members through the container reader into process-owned RAM; retain
+     * their locators for the consumers that can read virtual paths directly.
+     * ReDMCSB LOADSAVE.C F0435 opens selected media, it does not create a
+     * replacement host package. */
+    csb_v1_boot_free_native_media(profile);
+    if ((graphics_virtual &&
+         !asset_read_virtual_path_alloc(profile->graphics_path,
+                                        &profile->media_graphics_bytes,
+                                        &profile->media_graphics_size)) ||
+        (dungeon_virtual &&
+         !asset_read_virtual_path_alloc(profile->dungeon_path,
+                                        &profile->media_dungeon_bytes,
+                                        &profile->media_dungeon_size)) ||
+        (graphics_virtual && profile->media_graphics_size == 0u) ||
+        (dungeon_virtual && profile->media_dungeon_size == 0u)) {
+        csb_v1_boot_free_native_media(profile);
         return 0;
     }
-    (void)remove(graphics_path);
-    (void)remove(dungeon_path);
-    if (rename(graphics_next, graphics_path) != 0 ||
-        rename(dungeon_next, dungeon_path) != 0) {
-        (void)remove(graphics_next);
-        (void)remove(dungeon_next);
-        return 0;
-    }
-    csb_v1_boot_copy(profile->asset_root, sizeof(profile->asset_root), cache_dir);
-    csb_v1_boot_copy(profile->graphics_path, sizeof(profile->graphics_path),
-                     graphics_path);
-    csb_v1_boot_copy(profile->dungeon_path, sizeof(profile->dungeon_path),
-                     dungeon_path);
     return 1;
 }
 
@@ -8965,6 +8906,7 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
     profile->dungeon_path[0] = '\0';
     profile->graphics_md5[0] = '\0';
     profile->dungeon_md5[0] = '\0';
+    csb_v1_boot_free_native_media(profile);
     free(profile->fmtowns_graphics_bytes);
     free(profile->fmtowns_dungeon_bytes);
     free(profile->fmtowns_executable_bytes);
@@ -9066,7 +9008,7 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
 
     profile->assets_verified = profile->graphics_verified && profile->dungeon_verified;
     if (profile->assets_verified &&
-        !csb_v1_boot_materialize_runtime_pair_pc34(profile)) {
+        !csb_v1_boot_load_native_runtime_pair_pc34(profile)) {
         profile->assets_verified = 0;
         profile->graphics_verified = 0;
         profile->dungeon_verified = 0;
@@ -9207,12 +9149,17 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
         CSB_V1_DungeonData *dungeon =
             (CSB_V1_DungeonData *)calloc(1, sizeof(CSB_V1_DungeonData));
         if (dungeon &&
-            ((profile->fmtowns_dungeon_bytes &&
+            (((profile->fmtowns_dungeon_bytes || profile->media_dungeon_bytes) &&
               profile->fmtowns_dungeon_size > 0u &&
               csb_v1_dungeon_load_source_bytes(
                   dungeon, profile->fmtowns_dungeon_bytes,
                   (int)profile->fmtowns_dungeon_size) == 0) ||
+             (profile->media_dungeon_bytes && profile->media_dungeon_size > 0u &&
+              csb_v1_dungeon_load_source_bytes(
+                  dungeon, profile->media_dungeon_bytes,
+                  (int)profile->media_dungeon_size) == 0) ||
              (!profile->fmtowns_dungeon_bytes &&
+              !profile->media_dungeon_bytes &&
               csb_v1_dungeon_load_from_file(dungeon,
                                             profile->dungeon_path) == 0)) &&
             dungeon->square_bytes == 1 &&
@@ -9268,6 +9215,7 @@ void csb_v1_boot_cleanup(CSB_V1_BootProfile *profile)
      * Source: ReDMCSB DUNGEON.C F0173/F0174 lines 2724-2755 */
     csb_v1_runtime_cleanup(&profile->runtime);
     csb_v1_boot_reset_csbgraphics(profile);
+    csb_v1_boot_free_native_media(profile);
     free(profile->fmtowns_graphics_bytes);
     free(profile->fmtowns_dungeon_bytes);
     free(profile->fmtowns_executable_bytes);
@@ -9524,14 +9472,16 @@ int csb_v1_boot_profile_m11_entry_gate(const CSB_V1_BootProfile *profile,
      * an earlier hash verdict and feed substitute pixels to the viewport. */
     current_graphics_md5[0] = '\0';
     current_dungeon_md5[0] = '\0';
-    if (!asset_file_md5_hex(profile->graphics_path, current_graphics_md5) ||
-        strcmp(current_graphics_md5, profile->graphics_md5) != 0) {
+    if (!profile->media_graphics_bytes &&
+        (!asset_file_md5_hex(profile->graphics_path, current_graphics_md5) ||
+         strcmp(current_graphics_md5, profile->graphics_md5) != 0)) {
         csb_v1_boot_gate_set_reason(reason, reason_size,
             "CSB M11 entry guard: GRAPHICS bytes changed after scan");
         return 0;
     }
-    if (!asset_file_md5_hex(profile->dungeon_path, current_dungeon_md5) ||
-        strcmp(current_dungeon_md5, profile->dungeon_md5) != 0) {
+    if (!profile->media_dungeon_bytes &&
+        (!asset_file_md5_hex(profile->dungeon_path, current_dungeon_md5) ||
+         strcmp(current_dungeon_md5, profile->dungeon_md5) != 0)) {
         csb_v1_boot_gate_set_reason(reason, reason_size,
             "CSB M11 entry guard: DUNGEON bytes changed after scan");
         return 0;

@@ -7305,11 +7305,10 @@ int M12_AssetStatus_PrepareCSBRuntimeVersion(
     version = &status->versions[gameIndex][versionIndex];
     if (!version->matched || version->matchedPath[0] == '\0') return 0;
 
-    /* A loose package was already verified in place.  Keeping its selected
-     * directory preserves all original startup siblings and lets direct CLI
-     * launches work even when the user-data cache is unavailable.  Archives
-     * and ADFs have no usable parent directory, so they still require the
-     * hash-verified, edition-private cache.
+    /* A loose package was already verified in place.  Packed media keeps its
+     * original container identity too: CSB's native boot reader opens its
+     * selected members in bounded RAM, so launcher handoff must not create a
+     * duplicate asset-cache tree for Atari STX, Amiga ZIP or FM Towns ZIP.
      *
      * F31 is the exception: its matched GRAPHICS.DAT lives below CDATA or
      * CJDATA, whereas AUTOEXEC/TITLE.ANM/SWITCHTW and the language program
@@ -7321,19 +7320,20 @@ int M12_AssetStatus_PrepareCSBRuntimeVersion(
      * into one another. */
     if (strcmp(versionId, "fmtowns-en") == 0 ||
         strcmp(versionId, "fmtowns-ja") == 0) {
-        if (m12_csb_fmtowns_cached_runtime_is_complete(version, outPath,
-                                                       outPathSize)) {
-            return 1;
+        if (m12_path_is_virtual_asset(version->matchedPath)) {
+            return m12_source_runtime_root(version->matchedPath, outPath,
+                                           outPathSize);
         }
-        return M12_AssetStatus_MaterializeCSBRuntimeVersion(
-            status, versionId, outPath, outPathSize);
+        /* Loose F31 GRAPHICS.DAT lives below CDATA/CJDATA; retain the disc
+         * root so AUTOEXEC/TITLE.ANM and CHTWE/CHTWJ remain source-owned. */
+        return FSP_ParentDir(outPath, outPathSize, version->matchedPath) &&
+            FSP_ParentDir(outPath, outPathSize, outPath);
     }
     if (!m12_path_is_virtual_asset(version->matchedPath)) {
         return M12_AssetStatus_ResolveRuntimeDataDirForVersion(
             status, "csb", versionId, outPath, outPathSize);
     }
-    return M12_AssetStatus_MaterializeCSBRuntimeVersion(
-        status, versionId, outPath, outPathSize);
+    return m12_source_runtime_root(version->matchedPath, outPath, outPathSize);
 }
 
 int M12_AssetStatus_MaterializeDM1FmtownsRuntimeVersion(

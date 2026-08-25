@@ -83,6 +83,15 @@ typedef struct CSB_V1_BootProfile {
     char graphics_md5[33];
     char dungeon_md5[33];
 
+    /* Archive/disk members are read once into bounded RAM and retain their
+     * source locators.  This is the common native-media path for Atari STX,
+     * Amiga archives and FM Towns images; it never manufactures a loose
+     * GRAPHICS.DAT/DUNGEON.DAT tree below asset-cache. */
+    uint8_t *media_graphics_bytes;
+    size_t media_graphics_size;
+    uint8_t *media_dungeon_bytes;
+    size_t media_dungeon_size;
+
     /* FM Towns packed media is owned by the original CD image.  These
      * buffers are bounded runtime views of CDATA/CJDATA members; they are
      * never written to asset-cache or back into the source archive. */
