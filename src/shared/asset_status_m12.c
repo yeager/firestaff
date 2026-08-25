@@ -1168,6 +1168,102 @@ static int m12_admit_dm1_amiga20_nested_archive(
     return 0;
 }
 
+/* The supplied Atari preservation collection contains several releases, but
+ * only its [!] member is the unmodified original disk.  Keep crack variants
+ * out of the launch path and inspect that ZIP -> ZIP -> STX chain in RAM.
+ * The final GRAPHICS.DAT digest still has to match an enumerated Atari
+ * release before this publishes anything to a launcher. */
+static int m12_admit_dm1_atari_st_nested_archive(
+    M12_AssetStatus* status, int gameIndex,
+    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t rootCount, const char* preferredArchive) {
+    static const char outerName[] = "Dungeon-Master_Atari-ST_EN.zip";
+    static const char innerName[] = "Dungeon Master (1987)(FTL)[!].zip";
+    static const char stxName[] = "Dungeon Master (1987)(FTL)[!].stx";
+    size_t rootIndex;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "dm1") != 0) return 0;
+    for (rootIndex = 0U; rootIndex < rootCount ||
+                              (rootIndex == 0U && preferredArchive &&
+                               preferredArchive[0] != '\0');
+         ++rootIndex) {
+        char candidates[3][M12_ASSET_DATA_DIR_CAPACITY];
+        size_t candidateCount = 0U, candidateIndex;
+        if (rootIndex == 0U && preferredArchive && preferredArchive[0] != '\0' &&
+            FSP_FileExists(preferredArchive)) {
+            m12_copy_string(candidates[candidateCount++], sizeof(candidates[0]),
+                            preferredArchive);
+        }
+        if (rootIndex >= rootCount) continue;
+        snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s/%s",
+                 roots[rootIndex], outerName);
+        snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s/dm1/%s",
+                 roots[rootIndex], outerName);
+        for (candidateIndex = 0U; candidateIndex < candidateCount;
+             ++candidateIndex) {
+            char virtualGraphics[M12_ASSET_DATA_DIR_CAPACITY * 2U];
+            char md5[M12_ASSET_MD5_CAPACITY];
+            uint8_t* graphics = NULL;
+            size_t graphicsSize = 0U, versionIndex;
+            if (!FSP_FileExists(candidates[candidateIndex]) ||
+                snprintf(virtualGraphics, sizeof(virtualGraphics),
+                         "%s::%s::%s::GRAPHICS.DAT",
+                         candidates[candidateIndex], innerName, stxName) >=
+                    (int)sizeof(virtualGraphics) ||
+                !asset_read_virtual_path_alloc(virtualGraphics, &graphics,
+                                               &graphicsSize) ||
+                graphicsSize == 0U) {
+                free(graphics);
+                continue;
+            }
+            m12_bytes_md5_hex(graphics, graphicsSize, md5);
+            free(graphics);
+            for (versionIndex = 0U;
+                 versionIndex < g_games[gameIndex].versionCount;
+                 ++versionIndex) {
+                M12_AssetVersionStatus* version =
+                    &status->versions[gameIndex][versionIndex];
+                if (g_games[gameIndex].versions[versionIndex].architecture !=
+                        M12_ARCH_ATARI_ST ||
+                    strcmp(md5, g_games[gameIndex].versions[versionIndex].md5) !=
+                        0) continue;
+                version->matched = 1;
+                m12_copy_string(version->matchedPath,
+                                sizeof(version->matchedPath), virtualGraphics);
+                m12_copy_string(version->matchedMd5,
+                                sizeof(version->matchedMd5), md5);
+                /* The source member was verified in the bounded nested STX
+                 * reader above.  Publish that same receipt for the required
+                 * file gate instead of asking it to rescan an opaque ZIP
+                 * passed as the direct launch root. */
+                {
+                    size_t requiredIndex;
+                    for (requiredIndex = 0U;
+                         requiredIndex < status->requiredFileCounts[gameIndex];
+                         ++requiredIndex) {
+                        M12_AssetRequiredFileStatus* required =
+                            &status->requiredFiles[gameIndex][requiredIndex];
+                        if (!required->roleId ||
+                            strcmp(required->roleId, "graphics") != 0) continue;
+                        required->matched = 1;
+                        m12_copy_string(required->matchedPath,
+                                        sizeof(required->matchedPath),
+                                        virtualGraphics);
+                        m12_copy_string(required->sourcePath,
+                                        sizeof(required->sourcePath),
+                                        virtualGraphics);
+                        m12_copy_string(required->matchedHash,
+                                        sizeof(required->matchedHash), md5);
+                        break;
+                    }
+                }
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 static void m12_publish_dm1_fmtowns_required_files(M12_AssetStatus* status,
                                                      int gameIndex) {
     const M12_AssetVersionStatus* version;
@@ -6388,6 +6484,8 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
                 status, i, roots, rootCount, requestedDataDir);
             (void)m12_admit_dm1_amiga20_nested_archive(
                 status, i, roots, rootCount, requestedDataDir);
+            (void)m12_admit_dm1_atari_st_nested_archive(
+                status, i, roots, rootCount, requestedDataDir);
         }
         if (strcmp(g_games[i].gameId, "csb") == 0) {
             m12_admit_csb_amiga31_title_package(status, i, roots, rootCount);
@@ -6672,8 +6770,10 @@ void M12_AssetStatus_ScanGameWithOptions(
           * give that reader the package's containing search root while the
           * explicit archive remains its selected runtime provenance. */
          (gameId && strcmp(gameId, "dm1") == 0 &&
-          strstr(requestedDataDir,
-                 "Dungeon-Master_Amiga_EN_Version-20.zip") != NULL)) &&
+          (strstr(requestedDataDir,
+                  "Dungeon-Master_Amiga_EN_Version-20.zip") != NULL ||
+           strstr(requestedDataDir,
+                  "Dungeon-Master_Atari-ST_EN.zip") != NULL))) &&
         FSP_ParentDir(containerParent, sizeof(containerParent), requestedDataDir)) {
         effectiveRequestedDataDir = containerParent;
     }
@@ -6732,6 +6832,8 @@ void M12_AssetStatus_ScanGameWithOptions(
             dm1FmtownsAdmitted = m12_admit_dm1_fmtowns_archive(
                 status, gameIndex, roots, rootCount, requestedDataDir);
             (void)m12_admit_dm1_amiga20_nested_archive(
+                status, gameIndex, roots, rootCount, requestedDataDir);
+            (void)m12_admit_dm1_atari_st_nested_archive(
                 status, gameIndex, roots, rootCount, requestedDataDir);
         }
         if (strcmp(g_games[gameIndex].gameId, "csb") == 0) {
