@@ -1,6 +1,6 @@
 --- src/ss/vdp1.cpp
 +++ src/ss/vdp1.cpp
-@@ -1293,0 +1294,25 @@
+@@ -1293,0 +1294,21 @@
 +static bool FirestaffVdp1RegisterTraceWritten;
 +static void FirestaffTraceVdp1WriterRegisters(uint32 address)
 +{
@@ -23,6 +23,6 @@
 +}
 +
  static bool FirestaffVdp1SnapshotWritten;
-@@ -1334,0 +1360 @@
+@@ -1334,0 +1360,1 @@
 + FirestaffTraceVdp1WriterRegisters(address);
   FirestaffTraceVramWriterCode(address);
