@@ -2601,18 +2601,34 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
                                  selected_version->versionId) > 0,
                     "M12 binds the available Atari ST version into its launch intent");
         M11_GameView_Init(&view);
-        expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
-                    "M11 opens the Atari ST CSB package through M12");
+        if (!M11_GameView_OpenSelectedMenuEntry(&view, &menu)) {
+            /* Do not turn a rejected native package into hundreds of
+             * renderer-cadence failures.  The failed open is the actual
+             * handoff defect; there is no M11 state to draw or inspect. */
+            expect_true(0, "M11 opens the Atari ST CSB package through M12");
+            M11_GameView_Shutdown(&view);
+            M12_StartupMenu_Destroy(&menu);
+            continue;
+        }
         {
             const CSB_V1_BootProfile *profile =
                 (const CSB_V1_BootProfile *)view.csbBootProfile;
-            expect_true(profile != NULL &&
-                            (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
-                             profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
-                            selected_version && selected_version->versionId &&
-                            strstr(profile->graphics_path,
-                                   selected_cache_marker) != NULL,
-                        "M11 uses the effective M12-selected Atari ST package cache");
+            if (!(profile != NULL &&
+                  (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+                   profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
+                  selected_version && selected_version->versionId &&
+                  strstr(profile->graphics_path,
+                         selected_cache_marker) != NULL)) {
+                /* A broad root can contain several authentic CSB editions.
+                 * Once M11 opens a sibling profile, stop here: subsequent
+                 * Atari VBlank/palette checks would only describe that wrong
+                 * platform and obscure the source-selection regression. */
+                expect_true(0,
+                            "M11 uses the effective M12-selected Atari ST package cache");
+                M11_GameView_Shutdown(&view);
+                M12_StartupMenu_Destroy(&menu);
+                continue;
+            }
         }
         for (tick = 0; tick < 800 && view.csbState.startup_title_active;
              ++tick) {
