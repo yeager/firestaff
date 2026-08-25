@@ -548,9 +548,11 @@ THERON_STARTUP_PHASE_TITLE, STAGE_SELECT, SOUL_ROOM, READY, IN_DUNGEON
 - `Theron_StartupLevelLoadFn` callback hands off into
   `theron_v1_track02_dungeon_loader.h`/`theron_v1_world.h` level loading.
 
-Level transitions/stairs proper are modeled in `theron_v1_dungeon_handoff.h`
-and `theron_v1_world.h` (not read in detail here); door/teleporter thing
-decoding is in `theron_v1_track02_door.h` (§3).
+Level-transition structures exist in `theron_v1_dungeon_handoff.h` and
+`theron_v1_world.h`, but the retail Track 02 analysis has not bound a stairs
+direction or destination consumer. Source-loaded stairs are consequently
+fail-closed; the legacy host `+/-1`/same-cell model is fixture-only. Door and
+teleporter thing decoding is in `theron_v1_track02_door.h` (§3).
 
 ---
 

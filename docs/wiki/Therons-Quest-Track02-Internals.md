@@ -132,11 +132,14 @@ kinds carry decoded state: `THERON_OBJTYPE_SOUND` (default
 `THERON_SOUND_AMBIENT_1` for the movement code) and `THERON_OBJTYPE_PIT`
 (pit records own their grid position).
 `theron_v1_world_apply_track02_object_table_for_dungeon()` routes decoded
-records to every loaded level of a dungeon, and
-`theron_v1_transition_execute()` implements stairs (validated target level),
-progression advance, `theron_v1_world_reset_for_dungeon()`, and quest-complete
-handling at the end of `move_party_internal()`. This remains real Track 02
-data decode, not synthesized object placement.
+records to every loaded level of a dungeon. Track 02 establishes a
+stairs-class tile but does not yet bind direction, target level or target
+coordinates to an original consumer; authenticated stairs are therefore
+blocked rather than using the former host `+/-1`/same-cell rule.
+`theron_v1_transition_execute()` retains fixture and separately proven
+teleporter/quest-complete mechanics, but must not promote an unbound stairs
+route. This remains real Track 02 data decode, not synthesized object
+placement.
 
 ## SRM Boundary
 
