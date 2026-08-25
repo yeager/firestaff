@@ -40332,6 +40332,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     target_include_directories(test_csb_hint_oracle_ui_runtime_binding PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_csb_hint_oracle_ui_runtime_binding PRIVATE firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_csb_hint_oracle_ui_runtime_binding PRIVATE
             -std=c99 -Wall -Wextra -pedantic -O2)
@@ -40357,6 +40358,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     target_include_directories(test_csb_hint_oracle_ui_panel PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_csb_hint_oracle_ui_panel PRIVATE firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_csb_hint_oracle_ui_panel PRIVATE
             -std=c99 -Wall -Wextra -pedantic -O2)
@@ -40385,6 +40387,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     target_include_directories(test_csb_hint_oracle_htc_variant PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_csb_hint_oracle_htc_variant PRIVATE firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_csb_hint_oracle_htc_variant PRIVATE
             -std=c99 -Wall -Wextra -pedantic -O2)
