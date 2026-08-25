@@ -222,19 +222,20 @@ data root that contains `theron/TQUS02.bin`) and start it normally:
 ```
 
 The title accepts Enter, followed by the stage and Soul Room selections. The
-startup path uses only hash-verified Track 02 media records. A native dungeon
-runtime remains fail-closed until the original PC Engine level/object consumer
-is authenticated. For a headless, reproducible CLI startup receipt, use:
+Japanese Rev 1 CUE then reaches the bounded native Akutuba runtime through
+hash-verified Track 02 records. For a headless, reproducible CLI receipt, use:
 
 ```bash
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy ./build/firestaff \
   --game theron --data-dir "$HOME/.firestaff/data/theron" --boot-probe \
-  --script 'enter,enter,down,down,down,down,down,down,enter,down,enter' \
-  --boot-probe-expect-phase theron-startup-2 --boot-probe-expect-level-loaded 0
+  --script 'enter,enter,action' \
+  --boot-probe-expect-phase theron-runtime --boot-probe-expect-runtime \
+  --boot-probe-expect-level-loaded 1 --boot-probe-expect-party 1,0,0 \
+  --boot-probe-expect-startup-active 0
 ```
 
-This confirms the source-backed title → stage → Soul Room route, not a
-recovered PC Engine CD-runtime semantic handoff. Uncaptured level/object
+This confirms the source-backed title → stage → Soul Room → initial runtime
+handoff, not broad PC Engine gameplay parity. Uncaptured later-level/object
 publication, creature AI, combat, generator, sound-effect and text-control
 semantics remain unavailable rather than being replaced with host behavior.
 `--csb-utility-disk` opens the separately preserved FM Towns C06 Utility Disk

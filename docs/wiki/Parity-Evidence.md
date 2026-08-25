@@ -75,7 +75,10 @@ Documents covering GDAT material families, G1 record graphs, creature occupancy,
 
 ### Theron's Quest
 
-Documents covering Track 02 IPL/stage-two handoff, level envelope, multi-level object tables.
+Documents covering Track 02 IPL/stage-two handoff, the authentic JP Rev 1
+MODE1/2352 initial Akutuba runtime handoff, level envelope and multi-level
+object tables. The JP runtime proof is bounded; it does not claim later-level
+or full gameplay parity.
 
 ### Nexus
 

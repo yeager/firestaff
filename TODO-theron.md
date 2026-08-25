@@ -2,8 +2,8 @@
 
 Reviewed 2026-08-25. Only open work is listed here.
 
-- Bind Track 02 level/object/champion/save records to authenticated PC Engine
-  execution consumers beyond the current title/stage/Soul Room startup route.
+- Extend authenticated Track 02 level/object/champion/save consumers beyond
+  the verified Japanese Rev 1 initial Akutuba runtime handoff.
 - Capture and decode original bitmap, palette, text and audio ownership for
   production presentation; fallback visuals remain disabled.
 - Verify JP and US runtime, save and later-dungeon behavior separately. Do

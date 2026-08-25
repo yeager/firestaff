@@ -159,9 +159,9 @@ Saturn-pixelbevis.
 
 ### Saknad eller ofullständig funktionalitet
 
-- **Startup är endast verifierad till Soul Room:** den autentiska JP Rev 1
-  CUE:n når native titel → stage → Soul Room, men nivå-/objekt-handoff är inte
-  färdig gameplay.
+- **JP Akutuba-runtime är begränsad:** den autentiska JP Rev 1 CUE:n når
+  native titel → stage → Soul Room → första source-dekodade leveln, men detta
+  är inte bred gameplay-parity.
 - Full source-owned semantik för senare nivåer, objekt, champion-data och
   save/load är inte klar.
 - Autentiska runtime traces behövs för dörrar, pits, teleporters, altar,

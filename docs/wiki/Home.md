@@ -1,8 +1,9 @@
 # Firestaff Wiki
 
 > **Status reviewed 2026-08-25.** Firestaff has five active game targets.
-> DM1 V1 and DM2 now have playable source-owned routes; CSB, Nexus and Theron
-> remain documented as source-locked or real-data bring-up work where their
+> DM1 V1 and DM2 now have playable source-owned routes; CSB has bounded native
+> real-media routes, Theron reaches a bounded JP Track 02 runtime, and Nexus
+> remains real-data bring-up work where its
 > end-to-end boundaries are still open. See [Project status](https://github.com/yeager/firestaff/blob/main/docs/PROJECT_STATUS.md),
 > [preservation status](../PRESERVATION_STATUS_2026-08-11.md) and the
 > [documentation index](../DOCUMENTATION_INDEX.md) for the canonical matrix.
