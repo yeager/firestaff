@@ -427,8 +427,33 @@ int asset_file_matches_md5(const char *path, const char *expectedMd5) {
 }
 
 int asset_file_md5_hex(const char *path, char outHex[33]) {
+    uint8_t *bytes = NULL;
+    size_t byte_count = 0U;
+    size_t offset = 0U;
+    AssetMd5Ctx ctx;
+
     if (!outHex) return 0;
     outHex[0] = '\0';
+    /* A virtual locator identifies an original archive/disk member, not a
+     * host path.  Hash its bytes in RAM so callers can keep using the same
+     * admission gate without materialising that member beside the archive. */
+    if (path && strstr(path, "::") != NULL) {
+        if (!asset_read_virtual_path_alloc(path, &bytes, &byte_count) ||
+            !bytes || byte_count == 0U) {
+            free(bytes);
+            return 0;
+        }
+        md5_init(&ctx);
+        while (offset < byte_count) {
+            size_t chunk = byte_count - offset;
+            if (chunk > 0xffffffffU) chunk = 0xffffffffU;
+            md5_update(&ctx, bytes + offset, (unsigned int)chunk);
+            offset += chunk;
+        }
+        md5_final(&ctx, outHex);
+        free(bytes);
+        return 1;
+    }
     return path && file_md5(path, outHex);
 }
 

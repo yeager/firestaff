@@ -5894,6 +5894,37 @@ static int m11_csb_render_amiga_runtime_viewport(const M11_GameViewState *state,
     return 1;
 }
 
+/* The admitted graphics locator is also the authoritative disk-image
+ * context for sibling Amiga programs.  For example,
+ * archive.zip::Disk 1.adf::Graphics.DAT must resolve APPB.FTL through that
+ * same ADF, rather than pretending that it was unpacked under asset_root. */
+static int m11_csb_amiga_program_locator(const CSB_V1_BootProfile *profile,
+                                         const char *program_name,
+                                         char *out, size_t out_size)
+{
+    const char *member;
+    size_t prefix_size;
+
+    if (!profile || !program_name || !out || out_size == 0U) return 0;
+    member = profile->graphics_path[0]
+        ? strstr(profile->graphics_path, "::") : NULL;
+    if (member) {
+        const char *next;
+        while ((next = strstr(member + 2, "::")) != NULL) member = next;
+    }
+    if (member) {
+        prefix_size = (size_t)(member - profile->graphics_path) + 2U;
+        if (prefix_size >= out_size ||
+            snprintf(out, out_size, "%.*s%s", (int)prefix_size,
+                     profile->graphics_path, program_name) <= 0 ||
+            strlen(out) >= out_size) return 0;
+        return 1;
+    }
+    return profile->asset_root[0] &&
+        snprintf(out, out_size, "%s/%s", profile->asset_root, program_name) > 0 &&
+        strlen(out) < out_size;
+}
+
 /* ReDMCSB COMPILE.H:274-280 assigns A35E APPB.FTL directly to C03_GAME;
  * BJELoad_R is its separate C02 launcher.  Unlike A31M/A35M there is no
  * C08 language page or C05 title program to emulate between those two
@@ -5918,9 +5949,10 @@ static int m11_csb_complete_amiga_a35e_direct_handoff(M11_GameViewState *state)
         !profile->runtime.dungeon_handle) return 0;
     for (index = 0u; index < sizeof(required_programs) /
              sizeof(required_programs[0]); ++index) {
-        if (snprintf(path, sizeof(path), "%s/%s", profile->asset_root,
-                     required_programs[index].name) <= 0 ||
-            strlen(path) >= sizeof(path) || !asset_file_md5_hex(path, md5) ||
+        if (!m11_csb_amiga_program_locator(profile,
+                                            required_programs[index].name,
+                                            path, sizeof(path)) ||
+            !asset_file_md5_hex(path, md5) ||
             strcmp(md5, required_programs[index].md5) != 0) return 0;
     }
     profile->amiga_language_index = 0u;
@@ -5961,9 +5993,10 @@ static int m11_csb_complete_amiga_a31e_direct_handoff(M11_GameViewState *state)
         !profile->runtime.dungeon_handle) return 0;
     for (index = 0u; index < sizeof(required_programs) /
              sizeof(required_programs[0]); ++index) {
-        if (snprintf(path, sizeof(path), "%s/%s", profile->asset_root,
-                     required_programs[index].name) <= 0 ||
-            strlen(path) >= sizeof(path) || !asset_file_md5_hex(path, md5) ||
+        if (!m11_csb_amiga_program_locator(profile,
+                                            required_programs[index].name,
+                                            path, sizeof(path)) ||
+            !asset_file_md5_hex(path, md5) ||
             strcmp(md5, required_programs[index].md5) != 0) return 0;
     }
     profile->amiga_language_index = 0u;

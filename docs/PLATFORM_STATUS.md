@@ -32,7 +32,7 @@ parity gate is complete.
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
 | Atari ST | **Verified route** | Native STX title, 50 Hz `ANIMATE.SCR`/`ANIMATE.DAT` title path, FTLCODE handoff, first runtime HUD/viewport frame and start-menu CLI route are tested against supplied campaign media. | Broader campaign and capture parity. |
-| Amiga | **Verified route** | Verified native Amiga family is the default CSB route; startup and bounded runtime slices pass with original data. | Full campaign, save and visual parity. |
+| Amiga | **Verified route** | Native A31E and A31M ZIP → ADF routes read graphics, dungeon and launcher-program members in RAM. A31E verifies its original `APPB.FTL` / `BJELoad_R` pair and reaches `csb-entrance-0`; A31M reaches its native title route. | Full campaign, save and visual parity. |
 | FM Towns | **Verified route** | English/Japanese native packages have separate data, startup, Utility Disk and input paths. | Wider gameplay, Champion Editor and CD-audio parity. |
 | DOS / PC | **No original release** | CSB has no DOS/PC edition. `--platform pc` is closed before media selection; CSBWin is source/disassembly evidence only. | No PC runtime route is planned from CSBWin; it must not be presented as DOS support. |
 | PC-9801 | **Unsupported** | Preservation reference only. | None. |

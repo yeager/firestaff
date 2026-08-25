@@ -20,9 +20,11 @@
 #include "dm1_v1_atari_st_graphics_dat.h"
 #include "csb_v1_amiga_graphics_dat.h"
 #include "csb_v1_fmtowns_graphics_dat.h"
+#include "asset_find_by_hash.h"
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <limits.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -227,28 +229,26 @@ int M11_AssetLoader_InitDm1AtariStFromFile(M11_AssetLoader* loader,
 
 int M11_AssetLoader_InitCsbAmigaFromFile(M11_AssetLoader* loader,
                                          const char *graphicsDatPath) {
-    FILE *file;
-    long size;
-    unsigned char *data;
+    uint8_t *data = NULL;
+    size_t byte_count = 0U;
     CSB_V1_AmigaGraphicsReceipt receipt;
 
     if (!loader || !graphicsDatPath || !graphicsDatPath[0] ||
-        !(file = fopen(graphicsDatPath, "rb"))) return 0;
-    if (fseek(file, 0L, SEEK_END) != 0 || (size = ftell(file)) <= 0L ||
-        fseek(file, 0L, SEEK_SET) != 0) { fclose(file); return 0; }
-    data = (unsigned char *)malloc((size_t)size);
-    if (!data || fread(data, 1u, (size_t)size, file) != (size_t)size) {
-        free(data); fclose(file); return 0;
+        !(strstr(graphicsDatPath, "::")
+              ? asset_read_virtual_path_alloc(graphicsDatPath, &data, &byte_count)
+              : asset_read_path_alloc(graphicsDatPath, &data, &byte_count)) ||
+        !data || byte_count == 0U || byte_count > (size_t)LONG_MAX) {
+        free(data);
+        return 0;
     }
-    fclose(file);
     memset(&receipt, 0, sizeof(receipt));
-    if (csb_v1_amiga_graphics_receipt(data, (size_t)size, &receipt) != 0 ||
+    if (csb_v1_amiga_graphics_receipt(data, byte_count, &receipt) != 0 ||
         !receipt.is_amiga || receipt.item_count == 0u) {
         free(data); return 0;
     }
     memset(loader, 0, sizeof(*loader));
     loader->csbAmigaData = data;
-    loader->csbAmigaDataSize = size;
+    loader->csbAmigaDataSize = (long)byte_count;
     loader->csbAmiga = 1;
     loader->graphicCount = receipt.item_count;
     loader->initialized = 1;
