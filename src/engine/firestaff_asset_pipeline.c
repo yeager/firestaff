@@ -10,14 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _WIN32
-#include <process.h>
-#define FIRESTAFF_PIPELINE_GETPID _getpid
-#else
-#include <unistd.h>
-#define FIRESTAFF_PIPELINE_GETPID getpid
-#endif
-
 static const char *const g_dm1_atari_st_stx_md5[] = {
     "58286fceb935b18a84413c760464a6ca",
     "3fd743a3aa08706cf1c52a87de37b860",
@@ -66,42 +58,35 @@ static int load_stx_file_or_virtual(const char *path,
                                     uint8_t **out,
                                     int *out_size)
 {
-    char temp[256];
-    int written;
-    int result;
+    size_t size = 0U;
     if (!path || !out || !out_size) return -1;
     if (!strstr(path, "::")) return load_file_alloc(path, out, out_size);
-    written = snprintf(temp, sizeof(temp), "/tmp/firestaff-dm1-stx-%ld.stx",
-                       (long)FIRESTAFF_PIPELINE_GETPID());
-    if (written <= 0 || (size_t)written >= sizeof(temp) ||
-        !asset_extract_virtual_path(path, temp)) {
+    if (!asset_read_path_alloc(path, out, &size) || size > (size_t)INT_MAX) {
+        free(*out);
+        *out = NULL;
         return -1;
     }
-    result = load_file_alloc(temp, out, out_size);
-    (void)remove(temp);
-    return result;
+    *out_size = (int)size;
+    return 0;
 }
 
 static int load_file(const char *path, uint8_t **out, int *out_size) {
     FILE *f;
     long size;
     size_t got;
-    char temp[256];
-    int written;
-    int result;
+    size_t virtual_size = 0U;
     if (!path || !out || !out_size) return -1;
     *out = NULL;
     *out_size = 0;
     if (strstr(path, "::") != NULL) {
-        written = snprintf(temp, sizeof(temp), "/tmp/firestaff-asset-%ld.bin",
-                           (long)FIRESTAFF_PIPELINE_GETPID());
-        if (written <= 0 || (size_t)written >= sizeof(temp) ||
-            !asset_extract_virtual_path(path, temp)) {
+        if (!asset_read_path_alloc(path, out, &virtual_size) ||
+            virtual_size > (size_t)INT_MAX) {
+            free(*out);
+            *out = NULL;
             return -1;
         }
-        result = load_file(temp, out, out_size);
-        (void)remove(temp);
-        return result;
+        *out_size = (int)virtual_size;
+        return 0;
     }
     f = fopen(path, "rb");
     if (!f || fseek(f, 0, SEEK_END) != 0) {
