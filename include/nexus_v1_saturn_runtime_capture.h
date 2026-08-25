@@ -94,6 +94,13 @@ typedef struct {
     uint16_t bmpna;
     uint16_t pncn1;
     uint16_t craofa;
+    /* Raw NBG1 scroll origin observed in the capture. These are register
+     * facts, not a screen-space position for any retail asset. */
+    uint16_t nbg1_scroll_x;
+    uint16_t nbg1_scroll_y;
+    /* BMPNA's NBG1 bitmap palette-number field. It identifies the observed
+     * hardware bank only; it does not identify a source CLUT owner. */
+    uint8_t nbg1_bitmap_palette_number;
     int nbg1_enabled;
     int nbg1_bitmap_mode;
     int nbg1_16x16_character_mode;

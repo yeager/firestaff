@@ -204,6 +204,8 @@ int main(void)
         size_t external_size = 0U;
         unsigned int frame = 0U;
         const char *frame_text = getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME");
+        const char *require_nbg1_bitmap =
+            getenv("FIRESTAFF_NEXUS_REQUIRE_NBG1_BITMAP");
         if (frame_text) frame = (unsigned int)strtoul(frame_text, NULL, 0);
         if (!read_external_capture(external, &external_data, &external_size) ||
             !nexus_v1_saturn_runtime_capture_frame(
@@ -216,15 +218,30 @@ int main(void)
             fprintf(stderr, "FAIL: external Saturn raw frame parser\n");
             return 1;
         }
+        if (require_nbg1_bitmap && require_nbg1_bitmap[0] &&
+            (!register_receipt.nbg1_enabled ||
+             !register_receipt.nbg1_bitmap_mode ||
+             register_receipt.nbg1_colour_code != 1 ||
+             register_receipt.nbg1_bitmap_palette_number != 0U ||
+             register_receipt.nbg1_scroll_x != 0U ||
+             register_receipt.nbg1_scroll_y != 0U)) {
+            free(external_data);
+            fprintf(stderr, "FAIL: external NBG1 bitmap palette/origin receipt\n");
+            return 1;
+        }
         printf("external_frame=%u state=%d active=%d copr=0x%x "
                "sysclip_present=%d sysclip=(%u,%u)\n", frame,
                receipt.vdp1_state_present, receipt.vdp1_execution_active,
                receipt.copr_word, receipt.vdp1_system_clip_state_present,
                receipt.system_clip_x, receipt.system_clip_y);
-        printf("external_vdp2_order=%d tvmd=0x%04x bgon=0x%04x nbg1=%d bitmap=%d\n",
+        printf("external_vdp2_order=%d tvmd=0x%04x bgon=0x%04x nbg1=%d bitmap=%d "
+               "bmpna=0x%04x palette=%u scroll=(%u,%u)\n",
                register_receipt.byte_order, register_receipt.tvmd,
                register_receipt.bgon, register_receipt.nbg1_enabled,
-               register_receipt.nbg1_bitmap_mode);
+               register_receipt.nbg1_bitmap_mode, register_receipt.bmpna,
+               (unsigned int)register_receipt.nbg1_bitmap_palette_number,
+               (unsigned int)register_receipt.nbg1_scroll_x,
+               (unsigned int)register_receipt.nbg1_scroll_y);
         free(external_data);
     }
     puts("test_nexus_v1_saturn_runtime_capture: PASS");
