@@ -1488,6 +1488,7 @@ static int csb_v1_boot_scan_required_paths(const char *root,
     int graphics_hash_count = 0;
     int hash_count = 0;
     int i;
+    int scan_depth;
     int graphics_verified;
     int dungeon_verified;
     if (!root || !graphics_path || !graphics_match ||
@@ -1499,6 +1500,45 @@ static int csb_v1_boot_scan_required_paths(const char *root,
     dungeon_path[0] = '\0';
     *graphics_match = -1;
     *dungeon_match = -1;
+    /* An explicitly selected ST/STX/MSA image is itself the scan root.
+     * The native disk reader accepts depth zero; asking it to recurse as a
+     * directory silently drops the image before the virtual-member receipt
+     * can be returned. */
+    scan_depth = FSP_FileExists(root) && !FSP_DirExists(root) ? 0 : 4;
+
+    /* Match M12's explicit-disk admission exactly.  The list walker is for
+     * directory roots; an STX selected on the command line has no children
+     * for that walker to recurse into, while asset_find_by_md5() dispatches
+     * directly to the native ST/STX/MSA member reader. */
+    if (scan_depth == 0) {
+        int graphics_index;
+        int dungeon_index;
+        for (graphics_index = 0;
+             g_csb_boot_graphics_hashes[graphics_index] != NULL;
+             ++graphics_index) {
+            if (asset_find_by_md5(root,
+                                  g_csb_boot_graphics_hashes[graphics_index],
+                                  graphics_path, (int)graphics_path_size, 0)) {
+                *graphics_match = graphics_index;
+                break;
+            }
+        }
+        for (dungeon_index = 0;
+             g_csb_boot_dungeon_hashes[dungeon_index] != NULL;
+             ++dungeon_index) {
+            if (asset_find_by_md5(root,
+                                  g_csb_boot_dungeon_hashes[dungeon_index],
+                                  dungeon_path, (int)dungeon_path_size, 0)) {
+                *dungeon_match = dungeon_index;
+                break;
+            }
+        }
+        if (*graphics_match >= 0 && *dungeon_match >= 0) return 1;
+        graphics_path[0] = '\0';
+        dungeon_path[0] = '\0';
+        *graphics_match = -1;
+        *dungeon_match = -1;
+    }
 
     /* A selected FM Towns runtime cache has its chosen CDATA or CJDATA pair
      * at its root, but preserves both original language directories as
@@ -1565,7 +1605,7 @@ static int csb_v1_boot_scan_required_paths(const char *root,
     memset(paths, 0, sizeof(paths));
     memset(matched, 0, sizeof(matched));
     (void)asset_find_all_files_by_md5_list(root, hashes, paths, matched,
-                                           hash_count, 4);
+                                           hash_count, scan_depth);
     for (i = 0; i < graphics_hash_count; ++i) {
         if (matched[i]) {
             csb_v1_boot_copy(graphics_path, graphics_path_size, paths[i]);
@@ -1591,11 +1631,11 @@ static int csb_v1_boot_scan_required_paths(const char *root,
     graphics_verified =
         asset_find_by_md5_list(root, g_csb_boot_graphics_hashes,
                                graphics_path, (int)graphics_path_size,
-                               graphics_match, 4);
+                               graphics_match, scan_depth);
     dungeon_verified =
         asset_find_by_md5_list(root, g_csb_boot_dungeon_hashes,
                                dungeon_path, (int)dungeon_path_size,
-                               dungeon_match, 4);
+                               dungeon_match, scan_depth);
     return graphics_verified && dungeon_verified;
 }
 

@@ -1374,6 +1374,11 @@ int asset_read_path_alloc(const char *path, uint8_t **outBytes,
             separator[2] == '\0') return 0;
         memcpy(container, path, length);
         container[length] = '\0';
+        if (strstr(separator + 2, "::") == NULL &&
+            (is_atari_stx_path(container) || is_atari_st_path(container) ||
+             is_atari_msa_path(container) || is_adf_path(container))) {
+            return asset_read_virtual_path_alloc(path, outBytes, outSize);
+        }
         /* Nested disk images have format-specific readers (FM Towns,
          * Amiga, Atari).  They must be admitted by those readers rather
          * than silently passed through a host extractor. */
@@ -6390,6 +6395,51 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
             *outBytes = member;
             return 1;
 #endif
+        }
+        /* A directly selected ST/STX/MSA disk has the same virtual member
+         * spelling as a disk nested in ZIP, but no outer archive separator.
+         * Read the user-owned image into bounded RAM and dispatch through the
+         * exact native file visitor rather than requiring a cache copy. */
+        if (is_atari_stx_path(container) || is_atari_st_path(container) ||
+            is_atari_msa_path(container) || is_adf_path(container)) {
+            uint8_t *diskImage = NULL;
+            size_t diskImageSize = 0U;
+            AssetReadVirtualMatch directMatch;
+            int directResult = -1;
+            if (!asset_read_path_alloc(container, &diskImage, &diskImageSize)) {
+                return 0;
+            }
+            memset(&directMatch, 0, sizeof(directMatch));
+            directMatch.wanted = first + 2;
+            if (is_adf_path(container)) {
+                directResult = firestaff_amiga_adf_visit_ofs_files(
+                    diskImage, diskImageSize, asset_read_virtual_visitor,
+                    &directMatch);
+            } else if (is_atari_stx_path(container)) {
+                directResult = atari_stx_visit_files(
+                    diskImage, diskImageSize, asset_read_virtual_visitor,
+                    &directMatch);
+            } else if (is_atari_st_path(container)) {
+                directResult = atari_st_visit_files(
+                    diskImage, diskImageSize, asset_read_virtual_visitor,
+                    &directMatch);
+            } else {
+                uint8_t *decoded;
+                size_t decodedSize;
+                decoded = atari_msa_decode_image(diskImage, diskImageSize,
+                                                 &decodedSize);
+                if (decoded) {
+                    directResult = atari_st_visit_files(
+                        decoded, decodedSize, asset_read_virtual_visitor,
+                        &directMatch);
+                    free(decoded);
+                }
+            }
+            free(diskImage);
+            if (directResult < 0 || !directMatch.bytes) return 0;
+            *outBytes = directMatch.bytes;
+            *outSize = directMatch.size;
+            return 1;
         }
         return 0;
     }

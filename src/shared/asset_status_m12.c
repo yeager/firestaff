@@ -7329,6 +7329,17 @@ int M12_AssetStatus_PrepareCSBRuntimeVersion(
         return FSP_ParentDir(outPath, outPathSize, version->matchedPath) &&
             FSP_ParentDir(outPath, outPathSize, outPath);
     }
+    /* A directly selected ST/STX/MSA image is a native filesystem object,
+     * not a loose DATA directory.  Retain the image itself so the CSB boot
+     * scanner can ask its Atari media reader for GRAPHICS/DUNGEON virtual
+     * members; resolving its parent would silently select unrelated media. */
+    if (M12_AssetStatus_GetVersionArchitecture("csb", (size_t)versionIndex) ==
+            M12_ARCH_ATARI_ST &&
+        FSP_FileExists(version->matchedPath) &&
+        !FSP_DirExists(version->matchedPath)) {
+        m12_copy_string(outPath, outPathSize, version->matchedPath);
+        return 1;
+    }
     if (!m12_path_is_virtual_asset(version->matchedPath)) {
         return M12_AssetStatus_ResolveRuntimeDataDirForVersion(
             status, "csb", versionId, outPath, outPathSize);
