@@ -23395,8 +23395,17 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
          * m11_resolve_builtin_dungeon_path; we use "CSB READY" here as
          * the canonical CSB-side marker (same string as the in-app status
          * line above so probe + UI stay in sync). */
-        fprintf(stderr, "CSB READY: gameId=csb dataDir=%s route=%s\n",
+        /* Keep the M12-authenticated Atari edition identity in the terminal
+         * receipt.  The direct STX route has no extracted wrapper path from
+         * which a later consumer could recover this fact; omitting it made a
+         * successful native Atari launch indistinguishable from an unbound
+         * generic CSB start to the CLI proof. */
+        fprintf(stderr, "CSB READY: gameId=csb dataDir=%s variant=%s route=%s\n",
                 spec->dataDir ? spec->dataDir : "(null)",
+                (requestedCsbVariant == CSB_V1_VARIANT_ST20_EN ||
+                 requestedCsbVariant == CSB_V1_VARIANT_ST21_EN)
+                    ? "csb-st20-21-en"
+                    : "source-verified",
                 (spec->savePath && spec->savePath[0] != '\0')
                     ? "f0435-resume" : "startup");
         return 1;
