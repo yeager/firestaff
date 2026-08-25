@@ -11,6 +11,10 @@ Reviewed 2026-08-25. Completed work only.
 - An authenticated Saturn capture verifies NBG1 hardware state: enabled
   bitmap mode, 256-colour code, BMPNA palette bank 0 and scroll origin
   `(0,0)`. It does not identify the bitmap/CLUT source or authorize drawing.
+- The same authentic frame's full 512×256 indexed NBG1 span and 256-entry
+  CRAM decode in native code using the capture's recorded Saturn byte order.
+  This is capture-only evidence: it does not identify an asset owner or
+  authorize production presentation.
 - The real Japanese CUE independently proves Track-1 `STABG.BIN` reaches the
   native STMP/DMWeb first-map consumer (320×168 with retained source palette);
   it remains `no_draw` without an exact VDP source join.

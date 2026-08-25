@@ -39002,6 +39002,17 @@ add_executable(test_nexus_v1_dgn_material_raster
         LABELS "nexus;saturn;real-capture;hardware"
         SKIP_RETURN_CODE 77
     )
+    # Decode the raw NBG1 512x256 indexed plane and CRAM from the same
+    # authentic capture. It remains an observation-only VDP2 consumer.
+    add_test(
+        NAME nexus_v1_vdp2_nbg1_bitmap_decode_real
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_vdp2_nbg1_bitmap_decode_real.sh
+            $<TARGET_FILE:test_nexus_v1_vdp2_capture_compositor>
+    )
+    set_tests_properties(nexus_v1_vdp2_nbg1_bitmap_decode_real PROPERTIES
+        LABELS "nexus;saturn;real-capture;vdp2;capture-only"
+        SKIP_RETURN_CODE 77
+    )
 
     # Bounded CMDLINK-chain framing. This extracts the captured local
     # coordinate/display origin and END boundary but never authorizes mesh

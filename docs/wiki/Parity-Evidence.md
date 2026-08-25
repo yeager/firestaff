@@ -98,6 +98,8 @@ CDDA evidence binds media only; native decoding/playback remains unproven.
 The captured NBG1 receipt proves an enabled 256-colour bitmap layer, BMPNA
 palette bank 0 and hardware scroll origin `(0,0)`. It is intentionally not a
 retail asset-to-VDP join; STABG stays no-draw until that separate proof exists.
+The full 512×256 indexed NBG1 span and its 256-entry CRAM are also decoded
+from that authentic capture in native code, but remain capture-only evidence.
 
 ## Naming Convention
 

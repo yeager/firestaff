@@ -467,6 +467,12 @@ colour code `1` and BMPNA palette bank `0`. It proves the observed VDP2 palette
 bank and hardware origin, not the screen-space placement of `STABG.BIN` or any
 other retail source asset.
 
+`nexus_v1_vdp2_nbg1_bitmap_decode_real` separately decodes the same
+authentic frame's full 512×256 indexed NBG1 bitmap and 256-entry CRAM lane in
+native code. It verifies the hardware pixel/palette span is readable with the
+producer's recorded byte order, but is explicitly capture-only: no retail
+asset ownership, placement or production renderer admission follows.
+
 `scripts/analyze_nexus_vdp2_bitmap_source.py` binds that geometry to the
 hash-verified local corpus and compares the 131072-byte NBG1 span against 162
 decoded `MENU.BPK` PRS3 surfaces, 242 real `FONT256.S2D` character-generator
