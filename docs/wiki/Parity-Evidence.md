@@ -82,7 +82,9 @@ or full gameplay parity.
 
 ### Nexus
 
-Documents covering DGN geometry, MNS materials, Structure2/3, PRS3 topology, SAL/MAP audio, SLEV scripts.
+Documents covering DGN geometry, MNS materials, Structure2/3, PRS3 topology,
+SAL/MAP audio, SLEV scripts and retail CUE→BIN CDDA source ownership. The
+CDDA evidence binds media only; native decoding/playback remains unproven.
 
 ## Naming Convention
 

@@ -53,7 +53,7 @@ parity gate is complete.
 
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
-| Sega Saturn Japanese | **Verified route** | Authentic Track 1/DM.BIN, DGN/DMDF/MNS/PRS3 parsing and bounded phase-launch tests. | Full gameplay, visible material semantics, event/audio playback and public capture parity. |
+| Sega Saturn Japanese | **Verified route** | Authentic Track 1/DM.BIN, CUE-declared CDDA Track 02–09 BIN ownership, DGN/DMDF/MNS/PRS3 parsing and bounded phase-launch tests. | Full gameplay, visible material semantics, event/audio playback and public capture parity. |
 | Saturn demo or fan translations | **Preservation** | Classified separately from the canonical Japanese retail route. | Independent media and runtime proof. |
 
 ## Theron's Quest

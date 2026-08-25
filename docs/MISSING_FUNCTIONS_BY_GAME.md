@@ -123,8 +123,9 @@ CSB:s riktiga dungeon-, save- eller viewportdata.
 - **Saturn runtime/capture:** äkta executable-/emulatortrace och frame capture
   krävs för pixelposition, mode, palette och timing. Statisk ISO-inspektion
   räcker inte.
-- **Audio:** source-backed Saturn dispatcher/audio-driver path och literal
-  sample/trigger-evidens saknas.
+- **Audio:** CUE-deklarerade retail-BIN-spår är nu source-bound; Saturns
+  dispatcher, native decoder, literal sample/trigger-evidens och playback
+  saknas fortfarande.
 - **Structure1F/VDP1:** flera material-, texture/palette- och replay-gates är
   fortfarande capture- eller host-route-beroende.
 
