@@ -319,6 +319,54 @@ int firestaff_zip_extract_memory_by_suffix(const uint8_t *zip_data,
     return -1;
 }
 
+int firestaff_zip_find_memory_member_by_suffix(const uint8_t *zip_data,
+                                               size_t zip_size,
+                                               const char *suffix,
+                                               char *out_name,
+                                               size_t out_name_size) {
+    size_t search_start, pos, cd_offset, cd_size;
+    uint16_t count, i;
+    if (out_name && out_name_size) out_name[0] = '\0';
+    if (!zip_data || !suffix || !out_name || out_name_size == 0U ||
+        zip_size < 22U) return -1;
+    search_start = zip_size > 65557U ? zip_size - 65557U : 0U;
+    for (pos = zip_size - 22U;; --pos) {
+        if (zr_u32le(zip_data + pos) == 0x06054b50U) break;
+        if (pos == search_start) return -1;
+    }
+    count = zr_u16le(zip_data + pos + 10U);
+    cd_size = zr_u32le(zip_data + pos + 12U);
+    cd_offset = zr_u32le(zip_data + pos + 16U);
+    if (cd_offset > zip_size || cd_size > zip_size - cd_offset) return -1;
+    pos = cd_offset;
+    for (i = 0U; i < count; ++i) {
+        const uint8_t *header;
+        uint16_t name_size, extra_size, comment_size;
+        char name[512];
+        if (pos > cd_offset + cd_size || cd_offset + cd_size - pos < 46U) return -1;
+        header = zip_data + pos;
+        if (zr_u32le(header) != 0x02014b50U) return -1;
+        name_size = zr_u16le(header + 28U);
+        extra_size = zr_u16le(header + 30U);
+        comment_size = zr_u16le(header + 32U);
+        if (name_size == 0U || name_size >= sizeof(name) ||
+            (size_t)name_size > cd_offset + cd_size - pos - 46U ||
+            (size_t)extra_size > cd_offset + cd_size - pos - 46U - name_size ||
+            (size_t)comment_size > cd_offset + cd_size - pos - 46U - name_size - extra_size)
+            return -1;
+        memcpy(name, header + 46U, name_size);
+        name[name_size] = '\0';
+        if (name[name_size - 1U] != '/' && str_iends_with(name, suffix)) {
+            if (name_size >= out_name_size) return -1;
+            memcpy(out_name, name, name_size);
+            out_name[name_size] = '\0';
+            return 0;
+        }
+        pos += 46U + name_size + extra_size + comment_size;
+    }
+    return -1;
+}
+
 int firestaff_zip_extract_by_suffix_to_path(const char *zip_path,
                                             const char *suffix,
                                             const char *out_path)

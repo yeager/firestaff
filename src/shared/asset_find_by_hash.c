@@ -12,6 +12,7 @@
  */
 
 #include "asset_find_by_hash.h"
+#include "firestaff_zip_extract.h"
 #include <stdint.h>
 #include <limits.h>
 #include <stdio.h>
@@ -3836,8 +3837,65 @@ static int scan_zip_nested_disk_by_md5_list(const char *zip_path,
             fread(name, 1U, name_len, fp) != name_len) break;
         name[name_len] = '\0';
         pos += 46U + name_len + extra_len + comment_len;
-        if (is_adf_path(name) || is_atari_st_path(name) || is_atari_stx_path(name) ||
-            is_atari_msa_path(name)) {
+        if (has_case_suffix(name, ".zip")) {
+            static const char *const disk_suffixes[] = { ".stx", ".st", ".msa" };
+            size_t inner_size = 0U;
+            uint8_t *inner = zip_load_entry_bytes(zip_path, name, &inner_size);
+            if (inner) {
+                for (size_t suffix_index = 0U;
+                     suffix_index < sizeof(disk_suffixes) / sizeof(disk_suffixes[0]);
+                     ++suffix_index) {
+                    char disk_name[ASSET_PATH_MAX];
+                    char nested_disk[ASSET_PATH_MAX];
+                    uint8_t *image;
+                    size_t disk_size = 0U;
+                    NestedDiskListMatch matches;
+                    int result = -1;
+                    if (firestaff_zip_find_memory_member_by_suffix(
+                            inner, inner_size, disk_suffixes[suffix_index],
+                            disk_name, sizeof(disk_name)) != 0 ||
+                        snprintf(nested_disk, sizeof(nested_disk), "%s::%s",
+                                 name, disk_name) >= (int)sizeof(nested_disk) ||
+                        firestaff_zip_extract_memory_by_suffix(
+                            inner, inner_size, disk_suffixes[suffix_index],
+                            &image, &disk_size) != 0) {
+                        continue;
+                    }
+                    memset(&matches, 0, sizeof(matches));
+                    matches.archive = zip_path;
+                    matches.disk = nested_disk;
+                    matches.md5_list = md5_list;
+                    matches.md5_count = md5_count;
+                    matches.out_paths = out_paths;
+                    matches.matched = matched;
+                    if (has_case_suffix(disk_name, ".stx")) {
+                        result = atari_stx_visit_files(image, disk_size,
+                                                       nested_disk_find_list_visitor,
+                                                       &matches);
+                    } else if (has_case_suffix(disk_name, ".st")) {
+                        result = atari_st_visit_files(image, disk_size,
+                                                      nested_disk_find_list_visitor,
+                                                      &matches);
+                    } else {
+                        uint8_t *decoded;
+                        size_t decoded_size;
+                        decoded = atari_msa_decode_image(image, disk_size,
+                                                         &decoded_size);
+                        if (decoded) {
+                            result = atari_st_visit_files(decoded, decoded_size,
+                                                          nested_disk_find_list_visitor,
+                                                          &matches);
+                            free(decoded);
+                        }
+                    }
+                    free(image);
+                    if (result >= 0) found_count += matches.found_count;
+                    if (found_count >= md5_count) break;
+                }
+                free(inner);
+            }
+        } else if (is_adf_path(name) || is_atari_st_path(name) || is_atari_stx_path(name) ||
+                   is_atari_msa_path(name)) {
             size_t image_size = 0U;
             uint8_t *image = zip_load_entry_bytes(zip_path, name, &image_size);
             NestedDiskListMatch matches;

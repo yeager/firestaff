@@ -37,6 +37,15 @@ int firestaff_zip_extract_memory_by_suffix(const uint8_t *zip_data,
                                            const char *suffix,
                                            uint8_t **out_data,
                                            size_t *out_size);
+
+/* Return the first non-directory member name ending in suffix from an
+ * already-resident ZIP.  This is intentionally metadata-only: callers use
+ * it to retain a nested media identity before reading the selected member. */
+int firestaff_zip_find_memory_member_by_suffix(const uint8_t *zip_data,
+                                               size_t zip_size,
+                                               const char *suffix,
+                                               char *out_name,
+                                               size_t out_name_size);
 /* Stream a suffix-matched entry directly to an ordinary file.  This is for
  * original disc images that are too large to materialize in one allocation. */
 int firestaff_zip_extract_by_suffix_to_path(const char *zip_path,
