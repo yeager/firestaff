@@ -619,6 +619,8 @@ add_executable(test_nexus_v1_multi_level_capture_campaign_launcher
     src/shared/asset_find_by_hash.c)
 target_include_directories(test_nexus_v1_multi_level_capture_campaign_launcher PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_multi_level_capture_campaign_launcher PRIVATE
+    firestaff_zip_extract)
 add_test(NAME nexus_v1_multi_level_capture_campaign_launcher
     COMMAND test_nexus_v1_multi_level_capture_campaign_launcher)
 
