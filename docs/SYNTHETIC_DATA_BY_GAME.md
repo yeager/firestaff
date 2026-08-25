@@ -16,10 +16,10 @@ inte marknadsföras eller verifieras med fixturdata.
 | Spel | Syntetiskt material som hittades | Autentisk källa finns | Rätt åtgärd |
 |---|---|---|---|
 | DM1 | V2/V2.2 modern-art placeholders, diagnostiska V2-modeller, test-fixtures och capture-fixtures | Ja: PC/DOS, FM Towns och flera originalarkiv under `~/.firestaff/data/dm1` | Behåll test-fixtures isolerade. V1 ska läsa originaldata eller ge no-draw. V2.2 får inte använda placeholder-art som riktig DM1-grafik. |
-| DM2 | V2/V2.2 HUD- och modern-art-fixtures, syntetisk dungeon/overlay-testning och bounded fallback-fixtures | Ja: DOS och FM Towns under `~/.firestaff/data/dm2` | Behåll endast i test/scratch. Produktion ska använda verifierad GDAT/DUNGEON-data eller fail-closed. |
-| CSB | Syntetisk dungeon-loader/world-fixture, experimentell launch-fixture och V2.2 procedural art | Ja: PC/Amiga/FM Towns under `~/.firestaff/data/csb` | Behåll negativa och parser-fixtures. Byt inte in procedural art; bind motsvarande originalposter innan någon V2.2-väg öppnas. |
-| Nexus | Genererade DGN/DMDF/save-fixtures och legacy synthetic fallback i äldre probes | Ja: Saturn ISO/CUE, DGN, SLEV och MNS under `~/.firestaff/data/nexus` | Använd originalfiler i real-data-prober. Behåll synthetic fallback endast explicit fixture/test och märk den inte som gameplay-bevis. |
-| Theron | Procedural/AI-genererat V2/V2.2-material, no-op/fixture-start och synthetic parser/runtime-fixtures | Ja: autentiska US/JP Track 02 BIN/ISO under `~/.firestaff/data/theron` | Låt produktion vara capture-gated. Bind bara autentiserade Track 02-poster; ersätt inte saknade semantiska rutter med genererade data. |
+| DM2 | V2/V2.2 HUD- och modern-art-fixtures, syntetisk dungeon/overlay-testning och bounded fallback-fixtures | Ja: DOS, Amiga, FM Towns och Macintosh under `~/.firestaff/data/dm2` | Behåll endast i test/scratch. Produktion ska använda verifierad GDAT/DUNGEON-data eller fail-closed. |
+| CSB | Syntetisk dungeon-loader/world-fixture, experimentell launch-fixture och V2.2 procedural art | Ja: Atari ST, Amiga och FM Towns under `~/.firestaff/data/csb` | Behåll negativa och parser-fixtures. Byt inte in procedural art; bind motsvarande originalposter innan någon V2.2-väg öppnas. |
+| Nexus | Genererade DGN/DMDF/save-fixtures och legacy synthetic fallback i äldre probes | Ja: Saturn CUE/BIN, DGN, SLEV och MNS under `~/.firestaff/data/nexus` | Använd originalfiler i real-data-prober. Behåll synthetic fallback endast explicit fixture/test och märk den inte som gameplay-bevis. |
+| Theron | Procedural/AI-genererat V2/V2.2-material, no-op/fixture-start och synthetic parser/runtime-fixtures | Ja: autentisk JP Track 02 BIN/CUE och US CloneCD-ZIP under `~/.firestaff/data/theron` | Låt produktion vara capture-gated. Bind bara autentiserade Track 02-poster; ersätt inte saknade semantiska rutter med genererade data. |
 
 ## DM1
 
@@ -47,8 +47,9 @@ inte marknadsföras eller verifieras med fixturdata.
   `~/.firestaff/saves/dm1/original-pc34/` och i användarens Downloads-korpus.
   De får inte ersättas med genererade saves; C13 måste fortfarande styrkas av
   en autentisk save som faktiskt innehåller C13-händelsen.
-- FM Towns-originalet finns i `~/.firestaff/data/dm1/fmtowns_iso/`, inklusive
-  `EDM.EXP`, `TBIOS.BIN` och diskbilden.
+- FM Towns-originalet finns som den direkta, originala
+  `Dungeon-Master_FM-Towns_JA-EN.zip`-behållaren under
+  `~/.firestaff/data/dm1/`; Firestaff läser dess `DATA/`-poster i minnet.
 
 ### Beslut
 
@@ -74,10 +75,10 @@ syntetiska saves eller skärmbilder.
 
 ### Riktig källa
 
-DM2-original finns under `~/.firestaff/data/dm2`, med DOS-extraktet och
-`fmtowns_iso/` som de viktigaste lokala källorna. Produktionsprober ska välja
-de verifierade GDAT/DUNGEON-filerna därifrån när de finns och ska inte främja
-syntetiska HUD- eller dungeonbytes till produktion.
+DM2-original finns som direkta DOS-, Amiga-, FM Towns- och Macintosh-arkiv
+under `~/.firestaff/data/dm2`. Produktionsprober ska välja den verifierade
+editionens GDAT/DUNGEON-poster direkt från behållaren när de finns och ska inte
+främja syntetiska HUD- eller dungeonbytes till produktion.
 
 ### Beslut
 
@@ -101,9 +102,9 @@ source-owned materialposter och en pixelverifiering finns.
 
 ### Riktig källa
 
-CSB-original finns under `~/.firestaff/data/csb`, inklusive PC/Amiga-arkiv och
-`fmtowns_iso/`. PC34 GRAPHICS.DAT/DUNGEON.DAT ska användas av real-data-
-proberna när de är tillgängliga.
+CSB-original finns under `~/.firestaff/data/csb`, inklusive Atari STX,
+Amiga-ADF och FM Towns-arkiv. CSB har ingen original DOS/PC-utgåva; realdata-
+prober ska använda den valda originalplattformens GRAPHICS.DAT/DUNGEON.DAT.
 
 ### Beslut
 
@@ -126,8 +127,8 @@ riktiga CSB-poster.
 
 ### Riktig källa
 
-Nexus-original finns under `~/.firestaff/data/nexus`, inklusive den engelska
-ISO/CUE-källan, `LEV*.DGN`, `SLEV*.BIN`, `SNDLEV*.SAL` och `*.MNS`.
+Nexus-original finns under `~/.firestaff/data/nexus`, inklusive den japanska
+retail-CUE/BIN-källan, `LEV*.DGN`, `SLEV*.BIN`, `SNDLEV*.SAL` och `*.MNS`.
 
 ### Beslut
 
@@ -150,8 +151,8 @@ runtime-capture-gater förblir öppna tills äkta capture finns.
 
 ### Riktig källa
 
-Autentiska US/JP Track 02-filer finns under `~/.firestaff/data/theron`, bland
-annat `TQUS02.bin`, `TQJP02.bin` och deras ISO-filer. De ska vara enda grund
+Autentisk JP Rev 1 Track 02 BIN/CUE och den amerikanska CloneCD-ZIP-behållaren
+finns under `~/.firestaff/data/theron`. Deras Track 02-payload är enda grund
 för produktionens level-, item-, champion- och bitmapclaims.
 
 ### Beslut
