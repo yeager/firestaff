@@ -37,9 +37,14 @@
  * pixel parity claim.
  */
 
+#ifndef _WIN32
+#define _XOPEN_SOURCE 700
+#endif
+
 #include "save_browser_m12.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <sys/stat.h>
@@ -146,7 +151,19 @@ static void teardown_three_entry_fixture(const char* root) {
 }
 
 int main(void) {
-    char tmpTemplate[] = "/tmp/firestaff-save-browser-input-delete-XXXXXX";
+#ifdef _WIN32
+    char tmpTemplate[] = ".\\firestaff-save-browser-input-delete-XXXXXX";
+#else
+    const char* tmpRoot = getenv("TMPDIR");
+    char tmpTemplate[512];
+    if (!tmpRoot || !tmpRoot[0]) tmpRoot = ".";
+    if (snprintf(tmpTemplate, sizeof(tmpTemplate),
+                 "%s/firestaff-save-browser-input-delete-XXXXXX", tmpRoot) >=
+        (int)sizeof(tmpTemplate)) {
+        fputs("FAIL save-browser temporary path is too long\n", stderr);
+        return 1;
+    }
+#endif
     M12_SaveBrowserState state;
     const M12_SaveBrowserEntry* selected;
 
