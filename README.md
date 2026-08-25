@@ -148,9 +148,10 @@ See [game-data setup](docs/DATA_SETUP.md) for the accepted media and the role
 of optional files for each game. The [game-data format reference](docs/GAME_DATA_FORMATS.md)
 explains the verified containers, record families and save boundaries.
 
-Original BIOS/firmware and game media are never bundled with Firestaff or
-stored in this repository. Supply your own legally obtained files through the
-local data directory; repository CI enforces this boundary.
+Firestaff never requires, searches for, reads, or bundles a BIOS, firmware,
+System Card, or external emulator. The only runtime input is your legally
+obtained game data in the local data directory; repository CI enforces this
+boundary.
 
 ### Platform status at a glance
 

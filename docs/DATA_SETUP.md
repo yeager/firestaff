@@ -4,6 +4,10 @@ Firestaff contains no game assets. Supply media from copies you own and point
 the launcher at the folder that contains them. The scanner identifies content
 by hash, so filenames and the surrounding folder layout are only suggestions.
 
+No BIOS, firmware, System Card, operating-system ROM, or external emulator is
+part of the setup or is consulted by the production launcher. Game data is the
+complete runtime input contract.
+
 Keep original archives and disc images intact. Firestaff can scan supported
 loose files, ZIP archives and disc-image containers directly; do not unpack
 your game collection just to make it visible to the launcher. A recognised

@@ -69,6 +69,14 @@ contract, but it cannot prove original-media parity. Screenshots in public
 documentation must be real runtime captures; generated or fallback art is not
 promoted as game evidence.
 
+## Runtime dependency boundary
+
+Production Firestaff starts only from user-supplied game media. It neither
+requires nor reads BIOS, firmware, or System Card files, and it never launches
+an external emulator. Historical capture and reverse-engineering material may
+refer to those tools as evidence provenance, but it is not a runtime input or
+installation requirement.
+
 ## Build and CI
 
 The canonical local build is documented in [`DATA_SETUP.md`](DATA_SETUP.md)
