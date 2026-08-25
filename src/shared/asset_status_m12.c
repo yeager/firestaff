@@ -4132,6 +4132,54 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
     }
 }
 
+/* An explicitly selected Atari disk image is a source owner in its own
+ * right. The ordinary selected-game scan uses the image's parent as a search
+ * root so it can find loose companions, but that loses the user's platform
+ * choice when another CSB edition is beside it. Query the native hash scanner
+ * against the image itself: it traverses ST/STX/MSA contents in RAM and
+ * returns a virtual member path, never an extracted replacement. */
+static int m12_admit_explicit_csb_atari_image(M12_AssetStatus* status,
+                                              int gameIndex,
+                                              const char* requestedPath) {
+    const char* extension;
+    size_t i;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        !requestedPath || !FSP_FileExists(requestedPath) ||
+        FSP_DirExists(requestedPath) ||
+        strcmp(g_games[gameIndex].gameId, "csb") != 0) {
+        return 0;
+    }
+    extension = strrchr(requestedPath, '.');
+    if (!extension ||
+        !(strcmp(extension, ".st") == 0 || strcmp(extension, ".ST") == 0 ||
+          strcmp(extension, ".stx") == 0 || strcmp(extension, ".STX") == 0 ||
+          strcmp(extension, ".msa") == 0 || strcmp(extension, ".MSA") == 0)) {
+        return 0;
+    }
+    for (i = 0U; i < g_games[gameIndex].versionCount; ++i) {
+        const M12_VersionSpec* spec = &g_games[gameIndex].versions[i];
+        M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
+        char matchedPath[M12_ASSET_DATA_DIR_CAPACITY];
+        if (spec->architecture != M12_ARCH_ATARI_ST ||
+            !spec->md5 || !spec->md5[0] ||
+            !asset_find_by_md5(requestedPath, spec->md5, matchedPath,
+                               (int)sizeof(matchedPath), 0)) {
+            continue;
+        }
+        version->matched = 1;
+        m12_copy_string(version->matchedPath, sizeof(version->matchedPath),
+                        matchedPath);
+        m12_copy_string(version->matchedMd5, sizeof(version->matchedMd5),
+                        spec->md5);
+        m12_copy_string(status->runtimeDataDirs[gameIndex],
+                        sizeof(status->runtimeDataDirs[gameIndex]),
+                        requestedPath);
+        status->csbAvailable = 1;
+        return 1;
+    }
+    return 0;
+}
+
 /* CSB Amiga 3.1 shares PC34's GRAPHICS.DAT bytes.  Greatstone's original
  * A31E disk catalogue instead identifies the executable presentation package
  * through TITL.DAT.  Require both source files from the same outer/inner
@@ -6569,6 +6617,10 @@ void M12_AssetStatus_ScanGameWithOptions(
                                (requestedDataDir && requestedDataDir[0] != '\0'),
                                (options && options->looseFilesOnly) ||
                                csbFmtownsAdmitted);
+        if (strcmp(g_games[gameIndex].gameId, "csb") == 0) {
+            (void)m12_admit_explicit_csb_atari_image(status, gameIndex,
+                                                      requestedDataDir);
+        }
         if (strcmp(g_games[gameIndex].gameId, "nexus") == 0) {
             nexusArchiveAdmitted = m12_admit_nexus_7z_directory_source(
                 status, gameIndex, roots, rootCount);

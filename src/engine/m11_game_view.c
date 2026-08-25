@@ -23277,6 +23277,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         CSB_V1_BootStartupLaunch_PC34 launch;
         CSB_V1_BootStartupRuntimeReceipt_PC34 runtime_receipt;
         int savedDebugHUD = state->showDebugHUD;
+        int requestedCsbVariant = CSB_V1_VARIANT_UNKNOWN;
         if (!dd || !dd[0]) {
             if (FSP_ResolveDataDir(resolvedDataDir,
                                    sizeof(resolvedDataDir),
@@ -23288,15 +23289,25 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         M11_GameView_Init(state);
         state->showDebugHUD = savedDebugHUD;
         m11_apply_launcher_options_handoff(state, spec);
+        if (spec->csbFmtownsJapanese) {
+            requestedCsbVariant = CSB_V1_VARIANT_FMTOWNS_JA;
+        } else if (spec->verifiedAssetMd5 &&
+                   (strcmp(spec->verifiedAssetMd5,
+                           "ebf6a57af3f27782e358c0490bfd2f2e") == 0 ||
+                    strcmp(spec->verifiedAssetMd5,
+                           "e0ce7ac5160ca5540e90cf09ab9fad49") == 0)) {
+            /* The M12 version picker has authenticated an Atari ST source
+             * member. Pass that identity through the M11 boot boundary so a
+             * direct STX file is not mistaken for an FM Towns archive. */
+            requestedCsbVariant = CSB_V1_VARIANT_ST21_EN;
+        }
         if (!csb_v1_boot_startup_launch_alloc_with_variant_pc34(
                 dd,
                 spec->csbUtilitySearchDir,
                 spec->savePath,
                 spec->csbImportDm1SavePath,
                 spec->entranceResumeSavePath,
-                spec->csbFmtownsJapanese
-                    ? CSB_V1_VARIANT_FMTOWNS_JA
-                    : CSB_V1_VARIANT_UNKNOWN,
+                requestedCsbVariant,
                 &launch)) {
             fprintf(stderr, "firestaff: CSB boot rejected: %s\n",
                     launch.failure_host_receipt.status
@@ -23897,6 +23908,7 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     char selectedDm2RuntimeDataDir[FSP_PATH_MAX] = {0};
     char selectedDm2EnglishCompanionPath[FSP_PATH_MAX] = {0};
     char selectedDm1RuntimeDataDir[FSP_PATH_MAX] = {0};
+    char selectedCsbRuntimeDataDir[FSP_PATH_MAX] = {0};
     if (!state || !menuState) {
         return 0;
     }
@@ -23981,6 +23993,19 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
              * its startup, HUD or title assets inherit the first-match cache.
              * ReDMCSB COMPILE.H 199-243 separates these program families. */
             if (entry->gameId && strcmp(entry->gameId, "csb") == 0) {
+                /* This public M11 entry point is also used by native
+                 * launcher integrations and tests that do not pass through
+                 * main_loop_m11's preparatory helper. Resolve the chosen
+                 * version here as well, so an explicit Atari STX cannot be
+                 * replaced by the generic FM Towns runtime directory. */
+                if (!version->versionId ||
+                    !M12_AssetStatus_PrepareCSBRuntimeVersion(
+                        &menuState->assetStatus, version->versionId,
+                        selectedCsbRuntimeDataDir,
+                        sizeof(selectedCsbRuntimeDataDir))) {
+                    return 0;
+                }
+                spec.dataDir = selectedCsbRuntimeDataDir;
                 /* An archive-selected package needs its own cache.  A loose
                  * package stays with the verified source directory, which
                  * retains all original startup siblings for direct CLI

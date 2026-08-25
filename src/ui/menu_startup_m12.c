@@ -455,6 +455,41 @@ int M12_GameOptions_SpeedHotkeysEnabled(const M12_GameOptions* opts) {
     return opts->cheatsEnabled ? 1 : 0;
 }
 
+/* A direct disk image is an explicit media choice, not an AUTO-platform
+ * inventory root.  In particular a CSB Atari ST image often sits beside an
+ * authentic FM Towns archive.  Scanning the image needs its parent directory
+ * for the native container reader, but retaining AUTO afterwards lets the
+ * cross-platform priority select that sibling archive and violates the
+ * user's selected source ownership. */
+static void m12_apply_explicit_media_architecture(M12_StartupMenuState* state,
+                                                  const char* dataDir,
+                                                  const char* gameId) {
+    const char* extension;
+    int versionIndex;
+    size_t i;
+    static const char* const atariExtensions[] = { ".st", ".stx", ".msa" };
+
+    if (!state || !dataDir || !gameId || strcmp(gameId, "csb") != 0 ||
+        !FSP_FileExists(dataDir) || FSP_DirExists(dataDir)) {
+        return;
+    }
+    extension = strrchr(dataDir, '.');
+    if (!extension) {
+        return;
+    }
+    for (i = 0U; i < sizeof(atariExtensions) / sizeof(atariExtensions[0]); ++i) {
+        if (SDL_strcasecmp(extension, atariExtensions[i]) == 0) {
+            versionIndex = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+                &state->assetStatus, "csb", M12_ARCH_ATARI_ST);
+            if (versionIndex >= 0) {
+                state->gameOptions[1].architectureIndex = M12_ARCH_ATARI_ST;
+                state->gameOptions[1].versionIndex = versionIndex;
+            }
+            return;
+        }
+    }
+}
+
 int M12_PresentationMode_AllowsResolutionChoice(int presentationMode) {
     /* V2.0 (filtered), V2.1 (upscaled) and V2.2 (modern) all
      * share the same 640x400..3840x2160 resolution selector.
@@ -4340,6 +4375,7 @@ void M12_StartupMenu_InitWithOptions(M12_StartupMenuState* state,
         }
     }
     m12_apply_loaded_config(state, dataDir, gameId, options);
+    m12_apply_explicit_media_architecture(state, dataDir, gameId);
     m12_sync_entries_from_assets(state);
     m12_apply_auto_platform_versions(state);
     {

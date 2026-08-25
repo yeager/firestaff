@@ -2,8 +2,10 @@
 
 Reviewed 2026-08-25. Only open work is listed here.
 
-- Fix M12 explicit Atari STX selection: an explicit `.stx` must remain the
-  selected source owner instead of allowing a sibling FM Towns package to win.
+- Complete the Atari ST title/VBlank-to-FTLCODE route with original
+  `ANIMATE.SCR`/`ANIMATE.DAT` evidence after the verified M12/M11 STX source
+  selection boundary. The graphics/dungeon source owner is correct; title
+  cadence, first runtime pixels and live post-title handoff are still open.
 - Obtain checksum-verified DSA-bearing saves and per-edition save corpora;
   use them to extend native gameplay, timer and transaction coverage.
 - Add original-data HUD, viewport, title, door and audio capture comparisons
