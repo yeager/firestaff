@@ -40872,6 +40872,7 @@ if(BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
     firestaff_link_zlib(test_nexus_v1_boot_profile_smoke PRIVATE)
+    target_link_libraries(test_nexus_v1_boot_profile_smoke PRIVATE firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_nexus_v1_boot_profile_smoke PRIVATE -Wall -Wextra -O2)
     endif()
