@@ -6345,39 +6345,29 @@ static int m11_csb_prepare_amiga_titl_handoff(M11_GameViewState *state)
     const CSB_V1_BootProfile *profile;
     char path[FSP_PATH_MAX];
     char md5[33];
-    FILE *file = NULL;
-    long length;
+    uint8_t *bytes = NULL;
+    size_t byte_count = 0U;
     CSB_V1_AmigaTitlSchedule schedule;
     CSB_V1_AmigaTitlPalette palette;
 
     if (!state || !state->csbBootProfile) return 0;
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
-    if (!m11_csb_is_amiga_a31_profile(profile) || !profile->asset_root[0] ||
-        snprintf(path, sizeof(path), "%s/TITL.DAT", profile->asset_root) <= 0 ||
-        strlen(path) >= sizeof(path) ||
+    if (!m11_csb_is_amiga_a31_profile(profile) ||
+        !m11_csb_amiga_program_locator(profile, "TITL.DAT", path, sizeof(path)) ||
         !asset_file_md5_hex(path, md5) ||
         strcmp(md5, "5b590ea3a6f5eed513b5678b01468ee4") != 0) {
         return 0;
     }
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0 ||
-        (length = ftell(file)) <= 0 || length > 1024L * 1024L ||
-        fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
+    if (!(strstr(path, "::")
+              ? asset_read_virtual_path_alloc(path, &bytes, &byte_count)
+              : asset_read_path_alloc(path, &bytes, &byte_count)) ||
+        !bytes || byte_count == 0U || byte_count > 1024U * 1024U) {
+        free(bytes);
         return 0;
     }
     free(state->csbAmigaTitlBytes);
-    state->csbAmigaTitlBytes = (uint8_t *)malloc((size_t)length);
-    if (!state->csbAmigaTitlBytes ||
-        fread(state->csbAmigaTitlBytes, 1u, (size_t)length, file) !=
-            (size_t)length) {
-        fclose(file);
-        free(state->csbAmigaTitlBytes);
-        state->csbAmigaTitlBytes = NULL;
-        return 0;
-    }
-    fclose(file);
-    state->csbAmigaTitlByteCount = (size_t)length;
+    state->csbAmigaTitlBytes = bytes;
+    state->csbAmigaTitlByteCount = byte_count;
     memset(&schedule, 0, sizeof(schedule));
     memset(&palette, 0, sizeof(palette));
     if (csb_v1_amiga_titl_dat_decode(state->csbAmigaTitlBytes,

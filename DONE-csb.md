@@ -18,7 +18,8 @@ Reviewed 2026-08-25. Completed work only.
   A31E direct C03 handoff verifies `APPB.FTL` and `BJELoad_R` through the same
   selected ADF as `GRAPHICS.DAT`, reaches `csb-entrance-0` with the original
   A31E hash, and does not create an asset-cache copy.  A31M's original
-  `APPB.FTL` language page and `KAOS.FTL` continuation now use the same
-  source locator and pass the real CLI and start-menu route into runtime. The
-  focused real-media regression uses virtual source locators rather than the
-  legacy materialization API.
+  `TITL.DAT`, `APPB.FTL` language page and `KAOS.FTL` continuation now use
+  the same source locator and pass the real CLI and start-menu route into
+  runtime after the old extracted cache is absent. The focused real-media
+  regression uses virtual source locators rather than the legacy
+  materialization API.
