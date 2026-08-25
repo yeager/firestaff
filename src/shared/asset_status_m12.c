@@ -4357,6 +4357,71 @@ static int m12_admit_explicit_csb_atari_image(M12_AssetStatus* status,
     return 0;
 }
 
+/* A selected DM1 Atari disk/image archive owns its launch provenance.  Do
+ * not let a broad parent scan replace that request with another edition:
+ * asset_find_by_md5() traverses ST/STX/MSA and ZIP-contained disk images in
+ * RAM, and the catalog digest remains the admission authority. */
+static int m12_admit_explicit_dm1_atari_image(M12_AssetStatus* status,
+                                              int gameIndex,
+                                              const char* requestedPath) {
+    const char* extension;
+    size_t i;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        !requestedPath || !FSP_FileExists(requestedPath) ||
+        FSP_DirExists(requestedPath) ||
+        strcmp(g_games[gameIndex].gameId, "dm1") != 0) {
+        return 0;
+    }
+    extension = strrchr(requestedPath, '.');
+    if (!extension ||
+        !(strcmp(extension, ".st") == 0 || strcmp(extension, ".ST") == 0 ||
+          strcmp(extension, ".stx") == 0 || strcmp(extension, ".STX") == 0 ||
+          strcmp(extension, ".msa") == 0 || strcmp(extension, ".MSA") == 0 ||
+          strcmp(extension, ".zip") == 0 || strcmp(extension, ".ZIP") == 0)) {
+        return 0;
+    }
+    for (i = 0U; i < g_games[gameIndex].versionCount; ++i) {
+        const M12_VersionSpec* spec = &g_games[gameIndex].versions[i];
+        M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
+        char matchedPath[M12_ASSET_DATA_DIR_CAPACITY];
+        size_t requiredIndex;
+        if (spec->architecture != M12_ARCH_ATARI_ST || !spec->md5 ||
+            !spec->md5[0] ||
+            !asset_find_by_md5(requestedPath, spec->md5, matchedPath,
+                               (int)sizeof(matchedPath), 0)) {
+            continue;
+        }
+        version->matched = 1;
+        m12_copy_string(version->matchedPath, sizeof(version->matchedPath),
+                        matchedPath);
+        m12_copy_string(version->matchedMd5, sizeof(version->matchedMd5),
+                        spec->md5);
+        m12_copy_string(status->runtimeDataDirs[gameIndex],
+                        sizeof(status->runtimeDataDirs[gameIndex]),
+                        requestedPath);
+        for (requiredIndex = 0U;
+             requiredIndex < status->requiredFileCounts[gameIndex];
+             ++requiredIndex) {
+            M12_AssetRequiredFileStatus* required =
+                &status->requiredFiles[gameIndex][requiredIndex];
+            if (!required->roleId || strcmp(required->roleId, "graphics") != 0) {
+                continue;
+            }
+            required->matched = 1;
+            m12_copy_string(required->matchedPath, sizeof(required->matchedPath),
+                            matchedPath);
+            m12_copy_string(required->sourcePath, sizeof(required->sourcePath),
+                            matchedPath);
+            m12_copy_string(required->matchedHash, sizeof(required->matchedHash),
+                            spec->md5);
+            break;
+        }
+        status->dm1Available = 1;
+        return 1;
+    }
+    return 0;
+}
+
 /* CSB Amiga 3.1 shares PC34's GRAPHICS.DAT bytes.  Greatstone's original
  * A31E disk catalogue instead identifies the executable presentation package
  * through TITL.DAT.  Require both source files from the same outer/inner
@@ -6484,6 +6549,8 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
                 status, i, roots, rootCount, requestedDataDir);
             (void)m12_admit_dm1_amiga20_nested_archive(
                 status, i, roots, rootCount, requestedDataDir);
+            (void)m12_admit_explicit_dm1_atari_image(status, i,
+                                                      requestedDataDir);
             (void)m12_admit_dm1_atari_st_nested_archive(
                 status, i, roots, rootCount, requestedDataDir);
         }
@@ -6833,6 +6900,8 @@ void M12_AssetStatus_ScanGameWithOptions(
                 status, gameIndex, roots, rootCount, requestedDataDir);
             (void)m12_admit_dm1_amiga20_nested_archive(
                 status, gameIndex, roots, rootCount, requestedDataDir);
+            (void)m12_admit_explicit_dm1_atari_image(status, gameIndex,
+                                                      requestedDataDir);
             (void)m12_admit_dm1_atari_st_nested_archive(
                 status, gameIndex, roots, rootCount, requestedDataDir);
         }
@@ -7173,6 +7242,12 @@ int M12_AssetStatus_PrepareDM1RuntimeVersion(
         if (!last || (size_t)(last - version->matchedPath) >= outPathSize) return 0;
         memcpy(outPath, version->matchedPath, (size_t)(last - version->matchedPath));
         outPath[last - version->matchedPath] = '\0';
+        return 1;
+    }
+    if (M12_AssetStatus_GetVersionArchitecture("dm1", (size_t)versionIndex) ==
+            M12_ARCH_ATARI_ST && FSP_FileExists(version->matchedPath) &&
+        !FSP_DirExists(version->matchedPath)) {
+        m12_copy_string(outPath, outPathSize, version->matchedPath);
         return 1;
     }
     if (!m12_path_is_virtual_asset(version->matchedPath)) {
