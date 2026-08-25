@@ -4203,6 +4203,17 @@ if(BUILD_TESTING)
         ENVIRONMENT "FIRESTAFF_DM1_ATARI_NESTED_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_EN.zip"
         TIMEOUT 45
     )
+    add_test(
+        NAME dm1_v1_atari_st_de_archive_cli_boot
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_atari_st_de_archive_cli_boot.sh
+            $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(dm1_v1_atari_st_de_archive_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;atari;real-media;native;cli;menu;startup;skip-safe;german"
+        ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_DE_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_DE_Version-12.zip"
+        TIMEOUT 45
+    )
 endif()
 if(NOT TARGET WORKSPACE_DATA_DIR)
     add_library(WORKSPACE_DATA_DIR INTERFACE IMPORTED GLOBAL)

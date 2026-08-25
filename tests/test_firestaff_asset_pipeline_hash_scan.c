@@ -1,4 +1,5 @@
 #include "asset_status_m12.h"
+#include "asset_find_by_hash.h"
 #include "firestaff_asset_pipeline.h"
 #include "fs_portable_compat.h"
 
@@ -160,12 +161,26 @@ static void check_optional_real_dm1_atari_stx(const char* root,
     char archive[FSP_PATH_MAX];
     const char* direct = getenv("FIRESTAFF_DM1_ATARI_STX");
     if (direct && direct[0] != '\0') {
+        char diskPath[ASSET_PATH_MAX];
+        char dungeonPath[ASSET_PATH_MAX];
+        char dungeonMd5[33];
         memset(&bundle, 0, sizeof(bundle));
         check_int(fs_assets_load_dm1_atari_st_stx(&bundle, direct) == 0,
                   "real DM1 Atari STX file loads by hash");
         if (bundle.loaded) {
             check_int(bundle.source_format == FS_ASSET_SOURCE_DM1_ATARI_ST_STX,
                       "real DM1 Atari STX file is source-tagged");
+            if (asset_find_by_md5(direct,
+                                  "0eff1c902ea155f19e4a177bb2ccac7d",
+                                  diskPath, (int)sizeof(diskPath), 0)) {
+                check_int(snprintf(dungeonPath, sizeof(dungeonPath),
+                                   "%s::DUNGEON.DAT", diskPath) <
+                              (int)sizeof(dungeonPath) &&
+                              asset_file_md5_hex(dungeonPath, dungeonMd5) &&
+                              strcmp(dungeonMd5,
+                                     "cea11d6e9f7e1698fc95329fe3fb0899") == 0,
+                          "German DM1 Atari STX virtual dungeon has its catalog hash");
+            }
             fs_assets_free(&bundle);
         }
         return;

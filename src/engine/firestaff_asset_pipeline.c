@@ -15,6 +15,10 @@ static const char *const g_dm1_atari_st_stx_md5[] = {
     "3fd743a3aa08706cf1c52a87de37b860",
     "5ee3f90245a1cc54fec84a12b450b4e4",
     "279e322b837e98ea258f0b16a736f9ca",
+    /* DM1 Atari ST 1.2 German retail STX.  This is the complete protected
+     * disk-image identity from the supplied original ZIP; GRAPHICS.DAT is
+     * separately catalogued as 2bdc5f431f84c0ece738f54dbd787c3b. */
+    "0eff1c902ea155f19e4a177bb2ccac7d",
     "97cc99bf5b594b8260f42d9d81320308",
     "933955a6a596081b4bc62655efeafde5",
     NULL
