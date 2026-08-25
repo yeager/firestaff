@@ -19,23 +19,9 @@ const char *csb_hint_oracle_dat_real_result_name(int r) { switch (r) { case 0: r
 static int csb_hint_oracle_dat_read_path(const char *path, uint8_t **out,
                                          size_t *out_size)
 {
-    char user_data[ASSET_PATH_MAX];
-    char cache_dir[ASSET_PATH_MAX];
-    char cache_path[ASSET_PATH_MAX];
-    unsigned long hash = 5381UL;
-    const unsigned char *cursor;
     if (!path || !out || !out_size) return 0;
     if (!strstr(path, "::")) return asset_read_path_alloc(path, out, out_size);
-    for (cursor = (const unsigned char *)path; *cursor; ++cursor)
-        hash = ((hash << 5) + hash) ^ *cursor;
-    if (!FSP_GetUserDataDir(user_data, sizeof(user_data)) ||
-        !FSP_JoinPath(cache_dir, sizeof(cache_dir), user_data,
-                      "asset-cache/csbbin") ||
-        !FSP_CreateDirectoryRecursive(cache_dir) ||
-        snprintf(cache_path, sizeof(cache_path), "%s/HCSBDAT-%08lx.bin",
-                 cache_dir, hash) >= (int)sizeof(cache_path) ||
-        !asset_extract_virtual_path(path, cache_path)) return 0;
-    return asset_read_path_alloc(cache_path, out, out_size);
+    return asset_read_virtual_path_alloc(path, out, out_size);
 }
 
 int csb_hint_oracle_dat_real_scan_and_load(const char *root, int depth, const char *expected, CSB_HintOracleDAT_RealCache *c) {
