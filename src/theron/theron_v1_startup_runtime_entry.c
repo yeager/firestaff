@@ -57,9 +57,8 @@ static int theron_v1_startup_runtime_load_raw_track02_source_level(
                 track02, track02_size,
                 THERON_V1_TRACK02_VARIANT_US_BIN, &spawn_source) ||
             !theron_v1_world_bind_track02_spawn_source(
-                world, &spawn_source, (int)variant))
-            return 0;
-    } else {
+                world, &spawn_source, (int)variant)) return 0;
+    } else if (variant == THERON_TRACK02_VARIANT_US_ISO) {
         /* Retail US ISO is the byte-identical raw user-data stream after
          * raw Track 02's 225-sector pregap.  The source dungeon decoders
          * retain raw-user-data coordinates, so give them a zeroed address
@@ -79,6 +78,11 @@ static int theron_v1_startup_runtime_load_raw_track02_source_level(
         iso_pregap_normalized = 1;
         goto load_dungeon;
     }
+    /* JP is an authenticated raw MODE1/2352 image.  It shares the sector
+     * extraction route below with US BIN, but intentionally does not bind
+     * the US-only spawn-record consumer above.  Routing it through the ISO
+     * branch would reject its verified raw bytes before the native map and
+     * thing decoder can see them. */
     sectors = track02_size / THERON_TRACK02_RAW_SECTOR_BYTES;
     if (!sectors || sectors > SIZE_MAX / THERON_TRACK02_RAW_USER_DATA_BYTES) return 0;
     user_size = sectors * THERON_TRACK02_RAW_USER_DATA_BYTES;
