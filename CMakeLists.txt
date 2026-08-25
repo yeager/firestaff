@@ -3650,6 +3650,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_vdp1_consumer_ev
     target_include_directories(test_nexus_v1_prs3_vdp1_consumer_evidence PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_nexus_v1_prs3_vdp1_consumer_evidence PRIVATE firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_nexus_v1_prs3_vdp1_consumer_evidence PRIVATE
             -Wall -Wextra -Werror -pedantic
