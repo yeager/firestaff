@@ -423,7 +423,7 @@ int asset_file_matches_md5(const char *path, const char *expectedMd5) {
     char actual[33];
 
     return path && expectedMd5 && strlen(expectedMd5) == 32U &&
-        file_md5(path, actual) && strcmp(actual, expectedMd5) == 0;
+        asset_file_md5_hex(path, actual) && strcmp(actual, expectedMd5) == 0;
 }
 
 int asset_file_md5_hex(const char *path, char outHex[33]) {

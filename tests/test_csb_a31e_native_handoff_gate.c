@@ -10,11 +10,25 @@
 #include <stdio.h>
 #include <string.h>
 
+static int amiga_program_locator(const char* graphics_path, const char* name,
+                                 char* out, size_t out_size) {
+    const char* member;
+    const char* next;
+    size_t prefix_size;
+    if (!graphics_path || !name || !out || out_size == 0U) return 0;
+    member = strstr(graphics_path, "::");
+    if (!member) return 0;
+    while ((next = strstr(member + 2, "::")) != NULL) member = next;
+    prefix_size = (size_t)(member - graphics_path) + 2U;
+    return prefix_size < out_size &&
+        snprintf(out, out_size, "%.*s%s", (int)prefix_size, graphics_path,
+                 name) > 0 && strlen(out) < out_size;
+}
+
 int main(void) {
     M12_AssetStatus status;
     const char* root = getenv("FIRESTAFF_CSB_A31E_DATA_DIR");
     const M12_AssetVersionStatus* a31e;
-    char runtime_dir[M12_ASSET_DATA_DIR_CAPACITY];
     char appb_path[M12_ASSET_DATA_DIR_CAPACITY];
     char launcher_path[M12_ASSET_DATA_DIR_CAPACITY];
     int a31eIndex;
@@ -38,12 +52,10 @@ int main(void) {
         return 77;
     }
     if (!M12_AssetStatus_GameAvailable(&status, "csb") ||
-        !M12_AssetStatus_MaterializeCSBRuntimeVersion(
-            &status, "amiga31-en", runtime_dir, sizeof(runtime_dir)) ||
-        snprintf(appb_path, sizeof(appb_path), "%s/APPB.FTL", runtime_dir) >=
-            (int)sizeof(appb_path) ||
-        snprintf(launcher_path, sizeof(launcher_path), "%s/BJELoad_R",
-                 runtime_dir) >= (int)sizeof(launcher_path) ||
+        !amiga_program_locator(a31e->matchedPath, "APPB.FTL", appb_path,
+                               sizeof(appb_path)) ||
+        !amiga_program_locator(a31e->matchedPath, "BJELoad_R", launcher_path,
+                               sizeof(launcher_path)) ||
         !asset_file_matches_md5(appb_path,
                                 "af50ff33c61c22e20784d74266d81d1e") ||
         !asset_file_matches_md5(launcher_path,
