@@ -461,6 +461,12 @@ this bitmap-mode frame. The remaining observed values are
 observation, not a retail asset join: the bitmap VRAM source, CLUT owner and
 text/menu/HUD meaning remain blocked.
 
+The reproducible NBG1 hardware receipt additionally reads the captured NBG1
+scroll registers and requires origin `(0,0)`, along with enabled bitmap mode,
+colour code `1` and BMPNA palette bank `0`. It proves the observed VDP2 palette
+bank and hardware origin, not the screen-space placement of `STABG.BIN` or any
+other retail source asset.
+
 `scripts/analyze_nexus_vdp2_bitmap_source.py` binds that geometry to the
 hash-verified local corpus and compares the 131072-byte NBG1 span against 162
 decoded `MENU.BPK` PRS3 surfaces, 242 real `FONT256.S2D` character-generator

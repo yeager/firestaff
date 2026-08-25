@@ -94,6 +94,10 @@ Documents covering DGN geometry, MNS materials, Structure2/3, PRS3 topology,
 SAL/MAP audio, SLEV scripts and retail CUE→BIN CDDA source ownership. The
 CDDA evidence binds media only; native decoding/playback remains unproven.
 
+The captured NBG1 receipt proves an enabled 256-colour bitmap layer, BMPNA
+palette bank 0 and hardware scroll origin `(0,0)`. It is intentionally not a
+retail asset-to-VDP join; STABG stays no-draw until that separate proof exists.
+
 ## Naming Convention
 
 ```

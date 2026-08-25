@@ -8,5 +8,11 @@ Reviewed 2026-08-25. Completed work only.
   their original BIN payloads and rejects host WAV/OGG/MP3/FLAC substitutes.
   This is source selection only; playback remains closed without a verified
   Saturn decoder and dispatcher.
+- An authenticated Saturn capture verifies NBG1 hardware state: enabled
+  bitmap mode, 256-colour code, BMPNA palette bank 0 and scroll origin
+  `(0,0)`. It does not identify the bitmap/CLUT source or authorize drawing.
+- The real Japanese CUE independently proves Track-1 `STABG.BIN` reaches the
+  native STMP/DMWeb first-map consumer (320×168 with retained source palette);
+  it remains `no_draw` without an exact VDP source join.
 - Development-only VDP tracing has deterministic emulation-frame filters and
   retains fail-closed source correlation for unbound rendering writes.
