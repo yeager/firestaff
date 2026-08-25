@@ -40714,6 +40714,8 @@ add_executable(test_nexus_v1_dgn_material_raster
     add_executable(test_firestaff_theron_media_classify
         tests/test_firestaff_theron_media_classify.c
         src/shared/firestaff_theron_media_classify.c
+        src/shared/asset_find_by_hash.c
+        src/shared/firestaff_zip_extract.c
         src/shared/fs_portable_compat.c
     )
     target_include_directories(test_firestaff_theron_media_classify PRIVATE
