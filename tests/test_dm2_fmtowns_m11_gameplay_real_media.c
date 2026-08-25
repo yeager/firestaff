@@ -343,8 +343,11 @@ int main(void)
           "DM2 champion cycling stays unavailable before source GAME_LOAD");
     check(dm2_v1_runtime_get_active_champion_index() == -1,
           "DM2 active champion stays unavailable before source GAME_LOAD");
-    check(M11_GameView_Start(&view, &spec) == 1,
-          "FM Towns DM2 starts through the M11 boot owner");
+    if (M11_GameView_Start(&view, &spec) != 1) {
+        check(0, "FM Towns DM2 starts through the M11 boot owner");
+        M11_GameView_Shutdown(&view);
+        return 1;
+    }
     for (step = 0; step < 20000 && view.dm2FmtownsSwooshActive; ++step) {
         (void)M11_GameView_AdvanceIdleTick(&view);
     }
