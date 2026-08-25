@@ -12856,6 +12856,7 @@ if(BUILD_TESTING)
             src/shared/fs_portable_compat.c
         )
         target_include_directories(test_firestaff_x68k_media_receipt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        target_link_libraries(test_firestaff_x68k_media_receipt PRIVATE firestaff_zip_extract)
         if(NOT MSVC)
             target_compile_options(test_firestaff_x68k_media_receipt PRIVATE -std=gnu11 -Wall -Wextra -O2)
         endif()
@@ -12872,6 +12873,7 @@ if(BUILD_TESTING)
             src/shared/asset_find_by_hash.c
             src/shared/fs_portable_compat.c
         )
+        target_link_libraries(firestaff_x68k_media_receipt_probe PRIVATE firestaff_zip_extract)
         target_include_directories(firestaff_x68k_media_receipt_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
         target_link_libraries(firestaff_x68k_media_receipt_probe PRIVATE firestaff_m10)
         if(NOT MSVC)
