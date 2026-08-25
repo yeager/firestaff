@@ -84,6 +84,10 @@ MODE1/2352 initial Akutuba runtime handoff, level envelope and multi-level
 object tables. The JP runtime proof is bounded; it does not claim later-level
 or full gameplay parity.
 
+The same real Track 02 is also bound by a source-only public consumer to
+Drator/dungeon 2 (eight maps and 291 objects). It deliberately does not infer
+the transition, presentation, AI, combat or item-action semantics.
+
 ### Nexus
 
 Documents covering DGN geometry, MNS materials, Structure2/3, PRS3 topology,

@@ -160,9 +160,9 @@ Saturn-pixelbevis.
 
 ### Saknad eller ofullständig funktionalitet
 
-- **JP Akutuba-runtime är begränsad:** den autentiska JP Rev 1 CUE:n når
-  native titel → stage → Soul Room → första source-dekodade leveln, men detta
-  är inte bred gameplay-parity.
+- **JP runtime är begränsad:** den autentiska JP Rev 1 CUE:n når native titel
+  → stage → Soul Room → Akutuba och kan source-binda Drator, men detta är inte
+  bred gameplay- eller övergångsparity.
 - Full source-owned semantik för senare nivåer, objekt, champion-data och
   save/load är inte klar.
 - Autentiska runtime traces behövs för dörrar, pits, teleporters, altar,

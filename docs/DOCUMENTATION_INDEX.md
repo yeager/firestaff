@@ -45,6 +45,11 @@ handoff is not proven.
 The checked-in pages under [`docs/wiki/`](wiki/) are the source for the GitHub
 wiki and are copied by `scripts/sync_wiki.sh` during release work.
 
+### CSB Atari ST provenance
+
+- [CSB Atari Mania reference](CSB_ATARIMANIA_REFERENCE.md) — local Atarimania
+  print-PDF provenance, stated product facts and strict evidence boundary.
+
 ### Per-game pages
 
 - **DM1:** [technical reference](wiki/DM1-Technical-Reference.md), [PC34 internals](wiki/DM1-PC34-Internals.md), [reverse engineering](wiki/DM1-Reverse-Engineering.md), [FM Towns guide](wiki/DM1-FMTowns-Guide.md)

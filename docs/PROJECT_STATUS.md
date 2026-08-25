@@ -13,7 +13,7 @@ source audits and capture receipts remain in the linked game documentation.
 | Chaos Strikes Back | Verified bounded real-media routes; active hardening | Atari STX 50 Hz title-to-FTLCODE/runtime route, start-menu CLI, Amiga and FM Towns bounded native routes | DSA/save corpus and wider campaign/capture evidence |
 | Dungeon Master II: Skullkeep | Verified bounded real-media routes; active hardening | M12 source-owner selection, FM Towns M11 title/gameplay corpus, source-owned viewport/HUD and focused mechanics | Full record/save ownership and broader source UI/audio/mechanics parity across editions |
 | DM Nexus | Active real-data bring-up | Saturn DMDF/DGN data, CUE-owned CDDA BIN selection, world/render/save/mechanics slices and V2 presentation | Saturn runtime/frame capture, material semantics, native event/audio playback and full playability |
-| Theron's Quest | Verified bounded JP runtime route; active real-media bring-up | JP Rev 1 title → stage → Soul Room → Akutuba runtime, JP/US Track 02 identity, parser and level framing | Later Track 02 handoff, save body semantics, bitmap/palette binding and gameplay capture |
+| Theron's Quest | Verified bounded JP runtime route; active real-media bring-up | JP Rev 1 title → stage → Soul Room → Akutuba runtime, source-only Drator binding, JP/US Track 02 identity, parser and level framing | Later transition handoff, save body semantics, bitmap/palette binding and gameplay capture |
 
 ## Completion reporting
 
