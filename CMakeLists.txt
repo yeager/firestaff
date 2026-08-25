@@ -39670,6 +39670,8 @@ add_executable(test_nexus_v1_dgn_material_raster
         tests/test_csb_v1_atari_st_dat_layout.c
         src/csb/csb_v1_graphics_atari_st_loader_pc34_compat.c
         src/csb/csb_v1_graphics_lzw_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
     )
     target_include_directories(test_csb_v1_atari_st_dat_layout PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

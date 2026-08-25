@@ -9,6 +9,7 @@
 #include "csb_v1_graphics_lzw_pc34_compat.h"
 #include "asset_find_by_hash.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
