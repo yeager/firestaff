@@ -26423,9 +26423,14 @@ endif()
         target_compile_options(test_m12_all_games_boot_readiness_receipt PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
-        NAME m12_all_games_boot_readiness_receipt
+        # This verifies receipt state-machine wiring with intentionally
+        # fabricated receipt fields. It is not a real-media launch claim;
+        # m11_direct_launch_prepare_all_games is the data-root-backed gate.
+        NAME m12_all_games_boot_readiness_contract_fixture
         COMMAND test_m12_all_games_boot_readiness_receipt
     )
+    set_tests_properties(m12_all_games_boot_readiness_contract_fixture PROPERTIES
+        LABELS "tier1;m12;startup;synthetic_fixture;contract_only")
 
     add_executable(test_m12_quick_resume_gate
         tests/test_m12_quick_resume_gate.c

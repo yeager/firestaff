@@ -1,3 +1,10 @@
+/*
+ * Contract fixture only. The values below deliberately model receipt states
+ * without game bytes, so this test must never be cited as a real-media boot
+ * or gameplay proof. Real data is covered by
+ * test_m11_direct_launch_prepare_all_games.c.
+ */
+
 #include "menu_startup_m12.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "nexus_v1_launcher.h"
