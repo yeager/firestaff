@@ -78,6 +78,27 @@ int theron_v1_track02_campaign_media_discover(
     receipt.track02_variant = variant;
     snprintf(receipt.track02_md5, sizeof(receipt.track02_md5), "%s",
              expected_track02_md5);
+    if (is_virtual_path(search_path)) {
+        /* M12 has already read and hash-pinned this ZIP member in memory.
+         * Preserve that source locator; do not route it through stat(), a
+         * temporary extraction, or an external CD runtime. */
+        receipt.candidate_count = 1;
+        receipt.virtual_container = 1;
+        receipt.no_media_extracted = 1;
+        receipt.source = THERON_V1_TRACK02_CAMPAIGN_MEDIA_SOURCE_CONTAINER;
+        receipt.exact_layout_bound = 1;
+        receipt.launchable_direct_media = 1;
+        receipt.direct_media.status = THERON_V1_TRACK02_MEDIA_INTAKE_READY;
+        receipt.direct_media.variant = variant;
+        snprintf(receipt.direct_media.payload_path,
+                 sizeof(receipt.direct_media.payload_path), "%s", search_path);
+        snprintf(receipt.direct_media.track02_md5,
+                 sizeof(receipt.direct_media.track02_md5), "%s", expected_track02_md5);
+        snprintf(receipt.candidate_path, sizeof(receipt.candidate_path), "%s", search_path);
+        receipt.status = THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY;
+        *out = receipt;
+        return 1;
+    }
     if (stat(search_path, &info) != 0) {
         if ((ieq(extension(search_path), ".iso") ||
              ieq(extension(search_path), ".bin")) &&

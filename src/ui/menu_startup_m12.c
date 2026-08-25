@@ -13070,6 +13070,13 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     if (intent.valid && intent.gameId && strcmp(intent.gameId, "theron") == 0) {
         const Theron_V1Track02CampaignMediaDiscoveryReceipt* media =
             M12_AssetStatus_GetTheronCampaignMedia(&state->assetStatus);
+        if (version && strstr(version->matchedPath, "::") != NULL) {
+            /* The normal campaign receipt is an optional later-route proof.
+             * A ZIP Track 02 is already admitted by the M12 hash receipt and
+             * can start through the native in-memory loader without a
+             * disk-materialized campaign package. */
+            return intent;
+        }
         if (!M12_AssetStatus_TheronCampaignMediaLaunchReady(&state->assetStatus) ||
             !m12_theron_campaign_media_identity_matches(media, media)) {
             intent.valid = 0;

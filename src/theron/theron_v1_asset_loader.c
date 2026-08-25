@@ -15,6 +15,7 @@
 
 #include "theron_v1_asset_loader.h"
 #include "theron_v1_track02.h"
+#include "asset_find_by_hash.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -108,8 +109,15 @@ TrAssetResult tr_asset_load(const char *file_path, TrAssetBundle *bundle) {
      * caller mistake an allocated/default state for a real HuC6260 route.
      * Only a captured, hash/offset-bound palette consumer may populate it. */
 
-    FILE *fp = fopen(file_path, "rb");
-    if (!fp) {
+    FILE *fp = NULL;
+    uint8_t *virtual_data = NULL;
+    size_t virtual_size = 0U;
+    if (strstr(file_path, "::") != NULL &&
+        !asset_read_path_alloc(file_path, &virtual_data, &virtual_size)) {
+        virtual_data = NULL;
+    }
+    if (!virtual_data) fp = fopen(file_path, "rb");
+    if (!fp && !virtual_data) {
         printf("[TQR] Could not open %s: no verified asset data\n",
                file_path);
         /* An empty palette/tile state is not a usable asset load.  Do not
@@ -118,27 +126,32 @@ TrAssetResult tr_asset_load(const char *file_path, TrAssetBundle *bundle) {
         return TR_ASSET_ERR_NO_DATA;
     }
 
-    /* Get file size */
-    fseek(fp, 0, SEEK_END);
-    long file_size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
+    /* ZIP members stay resident only for this native load; no media file is
+     * materialized beside the archive. */
+    long file_size = virtual_data ? (long)virtual_size : 0L;
+    if (fp) {
+        fseek(fp, 0, SEEK_END);
+        file_size = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
+    }
 
     /* A raw Track 02 container must at least have enough bytes for the
      * legacy region probe below.  Empty/truncated input is not a valid
      * source-backed container and must not reach data[0..3]. */
     if (file_size < 4 || file_size > 64 * 1024 * 1024) {
-        fclose(fp);
+        if (fp) fclose(fp);
+        free(virtual_data);
         return TR_ASSET_ERR_FILE;
     }
 
-    uint8_t *data = (uint8_t *)malloc((size_t)file_size);
+    uint8_t *data = virtual_data ? virtual_data : (uint8_t *)malloc((size_t)file_size);
     if (!data) {
-        fclose(fp);
+        if (fp) fclose(fp);
         return TR_ASSET_ERR_FILE;
     }
 
-    size_t bytes_read = fread(data, 1, (size_t)file_size, fp);
-    fclose(fp);
+    size_t bytes_read = virtual_data ? virtual_size : fread(data, 1, (size_t)file_size, fp);
+    if (fp) fclose(fp);
 
     if (bytes_read != (size_t)file_size) {
         free(data);

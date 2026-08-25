@@ -361,13 +361,27 @@ void theron_v1_boot_rescan_call_count_reset(void) {
 
 static int file_exists(const char *path) {
     struct stat st;
+    uint8_t *bytes = NULL;
+    size_t byte_count = 0U;
     g_theron_rescan_count++;
+    if (strstr(path ? path : "", "::") != NULL) {
+        int present = asset_read_path_alloc(path, &bytes, &byte_count) && byte_count > 0U;
+        free(bytes);
+        return present;
+    }
     return stat(path, &st) == 0 && st.st_size > 0;
 }
 
 static size_t file_size_of(const char *path) {
     struct stat st;
+    uint8_t *bytes = NULL;
+    size_t byte_count = 0U;
     g_theron_rescan_count++;
+    if (strstr(path ? path : "", "::") != NULL) {
+        if (!asset_read_path_alloc(path, &bytes, &byte_count)) return 0U;
+        free(bytes);
+        return byte_count;
+    }
     if (stat(path, &st) != 0) return 0;
     return (size_t)st.st_size;
 }

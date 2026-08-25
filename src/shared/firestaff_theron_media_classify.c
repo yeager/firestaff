@@ -1,4 +1,5 @@
 #include "firestaff_theron_media_classify.h"
+#include "firestaff_zip_extract.h"
 #include "fs_portable_compat.h"
 
 #include <stdio.h>
@@ -475,6 +476,9 @@ int FirestaffTheronMedia_ClassifyPath(const char* path,
         return -1;
     }
     FirestaffTheronMedia_Init(status);
+    if (th_has_ext(path, ".zip")) {
+        return FirestaffTheronMedia_ClassifyZip(path, status);
+    }
     if (th_has_ext(path, ".cue")) {
         char* cue = NULL;
         size_t cue_len = 0U;
@@ -518,6 +522,60 @@ int FirestaffTheronMedia_ClassifyPath(const char* path,
         return 0;
     }
     return -1;
+}
+
+int FirestaffTheronMedia_ClassifyZip(const char* zip_path,
+                                     FirestaffTheronMediaStatus* status) {
+    uint8_t* cue = NULL;
+    uint8_t* member = NULL;
+    size_t cue_size = 0U;
+    size_t member_size = 0U;
+    char track01[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+    char track02[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+    int rc;
+
+    if (!zip_path || !status || !th_has_ext(zip_path, ".zip") ||
+        firestaff_zip_extract_by_suffix(zip_path, ".cue", &cue, &cue_size) != 0 ||
+        !cue || cue_size == 0U) {
+        free(cue);
+        return -1;
+    }
+    rc = FirestaffTheronMedia_ParseCue((const char*)cue, cue_size, status);
+    free(cue);
+    if (rc != 0 || !status->has_valid_track02_mode1 ||
+        !status->track02_path[0]) {
+        return -1;
+    }
+    snprintf(track02, sizeof(track02), "%s::%s", zip_path,
+             th_basename(status->track02_path));
+    if (firestaff_zip_extract_by_name(zip_path, th_basename(status->track02_path),
+                                      &member, &member_size) != 0 ||
+        !member || member_size == 0U) {
+        free(member);
+        return -1;
+    }
+    free(member);
+    member = NULL;
+    th_copy(status->track02_path, sizeof(status->track02_path), track02);
+    th_copy(status->candidate_path, sizeof(status->candidate_path), track02);
+    /* The archive itself is the immutable package manifest.  The exact CUE
+     * member name is not required after parsing; keep a virtual provenance
+     * path while all payload reads target their explicit member. */
+    snprintf(status->cue_path, sizeof(status->cue_path), "%s::.cue", zip_path);
+    if (status->track01_path[0]) {
+        snprintf(track01, sizeof(track01), "%s::%s", zip_path,
+                 th_basename(status->track01_path));
+        if (firestaff_zip_extract_by_name(zip_path,
+                                          th_basename(status->track01_path),
+                                          &member, &member_size) == 0 &&
+            member && member_size > 0U) {
+            th_copy(status->track01_path, sizeof(status->track01_path), track01);
+        } else {
+            status->paired_track01_track02 = 0;
+        }
+        free(member);
+    }
+    return 0;
 }
 
 static int th_status_rank(const FirestaffTheronMediaStatus* status) {

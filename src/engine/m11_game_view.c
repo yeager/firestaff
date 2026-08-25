@@ -24165,7 +24165,10 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
         }
     }
     if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
-        if (!hasLaunchIntent ||
+        if (!hasLaunchIntent) {
+            return 0;
+        }
+        if (strstr(spec.verifiedAssetPath ? spec.verifiedAssetPath : "", "::") == NULL &&
             (!M12_StartupMenu_ValidateTheronCampaignLaunchIntent(menuState, &intent) &&
              !M12_StartupMenu_ValidateTheronCampaignCaptureRequiredIntent(
                  menuState, &intent))) {
@@ -24173,11 +24176,20 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
         }
         spec.theronTrack02LoaderReceipt =
             M12_AssetStatus_GetTheronTrack02LoaderReceipt(&menuState->assetStatus);
-        spec.verifiedAssetPath = intent.theronCampaignMedia.direct_media.payload_path;
-        spec.verifiedAssetMd5 = intent.theronCampaignMedia.track02_md5;
-        spec.theronCampaignMedia = &intent.theronCampaignMedia;
-        spec.theronCampaignMediaPlan = &intent.theronCampaignMediaPlan;
-        spec.theronCampaignMediaScanEpoch = intent.theronCampaignMediaScanEpoch;
+        if (strstr(spec.verifiedAssetPath ? spec.verifiedAssetPath : "", "::") == NULL) {
+            spec.verifiedAssetPath = intent.theronCampaignMedia.direct_media.payload_path;
+            spec.verifiedAssetMd5 = intent.theronCampaignMedia.track02_md5;
+            spec.theronCampaignMedia = &intent.theronCampaignMedia;
+            spec.theronCampaignMediaPlan = &intent.theronCampaignMediaPlan;
+            spec.theronCampaignMediaScanEpoch = intent.theronCampaignMediaScanEpoch;
+        } else {
+            /* The M12 source receipt is sufficient for native archive I/O.
+             * Campaign evidence is a separate raw-media contract and must
+             * not replace a verified ZIP member with an empty pseudo-file. */
+            spec.theronCampaignMedia = NULL;
+            spec.theronCampaignMediaPlan = NULL;
+            spec.theronCampaignMediaScanEpoch = 0u;
+        }
         spec.theronSrmCampaignReplay = intent.theronSrmCampaignReplayBound ?
             &intent.theronSrmCampaignReplay : NULL;
         spec.theronSrmLaunchDiscovery = intent.theronSrmLaunchDiscoveryBound ?

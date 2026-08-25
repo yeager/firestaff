@@ -56,6 +56,12 @@ int FirestaffTheronMedia_ParseCue(const char* cue_text,
 int FirestaffTheronMedia_ClassifyPath(const char* path,
                                       FirestaffTheronMediaStatus* status);
 
+/* Classify a CUE/BIN or CUE/ISO package stored in one ZIP archive.  Members
+ * are retained as archive::member virtual paths and are never extracted to
+ * disk. */
+int FirestaffTheronMedia_ClassifyZip(const char* zip_path,
+                                     FirestaffTheronMediaStatus* status);
+
 int FirestaffTheronMedia_ClassifyDirectory(const char* root,
                                            FirestaffTheronMediaStatus* status);
 

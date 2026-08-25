@@ -736,6 +736,20 @@ int m12_file_md5_hex(const char* path, char outHex[33]) {
     if (!path || path[0] == '\0' || !outHex) {
         return 0;
     }
+    if (m12_path_is_virtual_asset(path)) {
+        uint8_t* bytes = NULL;
+        size_t byteCount = 0U;
+        if (!asset_read_path_alloc(path, &bytes, &byteCount) || !bytes ||
+            byteCount == 0U) {
+            free(bytes);
+            return 0;
+        }
+        m12_md5_init(&ctx);
+        m12_md5_update(&ctx, bytes, byteCount);
+        m12_md5_final(&ctx, outHex);
+        free(bytes);
+        return 1;
+    }
     fp = fopen(path, "rb");
     if (!fp) {
         return 0;
@@ -2337,9 +2351,8 @@ static void m12_refresh_theron_media_status(
  * this is provenance, not a synthetic extracted Track 02 cache. */
 static void m12_refresh_theron_track02_loader_receipt(M12_AssetStatus* status) {
     const M12_AssetVersionStatus* version;
-    FILE* file;
     unsigned char* bytes;
-    long end;
+    size_t byteCount = 0U;
     size_t required;
     Theron_Track02StartupLoaderReceipt* receipt;
     int theronIndex = m12_game_index_from_id("theron");
@@ -2368,20 +2381,11 @@ static void m12_refresh_theron_track02_loader_receipt(M12_AssetStatus* status) {
                 (size_t)THERON_TRACK02_IPL_STAGE2_RECORD +
                 (size_t)THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT) *
                THERON_TRACK02_RAW_SECTOR_BYTES;
-    file = fopen(version->matchedPath, "rb");
-    if (!file || fseek(file, 0L, SEEK_END) != 0 ||
-        (end = ftell(file)) < 0 || (size_t)end < required ||
-        fseek(file, 0L, SEEK_SET) != 0) {
-        if (file) fclose(file);
-        return;
-    }
-    bytes = (unsigned char*)malloc(required);
-    if (!bytes || fread(bytes, 1U, required, file) != required) {
+    if (!asset_read_path_alloc(version->matchedPath, &bytes, &byteCount) ||
+        !bytes || byteCount < required) {
         free(bytes);
-        fclose(file);
         return;
     }
-    fclose(file);
     if (theron_v1_track02_find_ipl_loader(bytes, required,
                                            version->matchedMd5,
                                            &receipt->ipl_loader) ==
@@ -3681,12 +3685,15 @@ static int m12_try_match_direct_theron_request(
     }
     if (FSP_FileExists(requestedDataDir)) {
         const char* payloadPath = requestedDataDir;
+        const char* extension = strrchr(requestedDataDir, '.');
         FirestaffTheronMediaStatus cueMedia;
         Theron_V1Track02RawMediaIntakeReceipt intake;
         /* Raw intake owns CUE layout validation and the documented US split
          * ISO materialization.  Do this before the generic classifier, which
          * must never treat an End extent as a complete Track 02. */
-        if (theron_v1_track02_raw_media_intake_discover(requestedDataDir,
+        if (!(extension && (strcmp(extension, ".zip") == 0 ||
+                            strcmp(extension, ".ZIP") == 0)) &&
+            theron_v1_track02_raw_media_intake_discover(requestedDataDir,
                                                          &intake) &&
             intake.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY) {
             payloadPath = intake.payload_path;
@@ -3695,7 +3702,8 @@ static int m12_try_match_direct_theron_request(
             if (FirestaffTheronMedia_ClassifyPath(requestedDataDir, &cueMedia) == 0 &&
                 cueMedia.has_valid_track02_mode1 &&
                 cueMedia.track02_path[0] != '\0' &&
-                FSP_FileExists(cueMedia.track02_path)) {
+                (m12_path_is_virtual_asset(cueMedia.track02_path) ||
+                 FSP_FileExists(cueMedia.track02_path))) {
                 payloadPath = cueMedia.track02_path;
             }
             if (!m12_file_md5_hex(payloadPath, md5)) {
@@ -5747,8 +5755,18 @@ static int m12_publish_direct_theron_match(
             status->versions[theronIndex][versionIndex].matchedPath;
         char parent[M12_ASSET_DATA_DIR_CAPACITY];
         int paired = 0;
+        /* A selected archive is itself the CUE package owner.  Its Track 02
+         * path is virtual, so the directory-only CUE search below cannot
+         * discover it; classify the archive directly before trying loose
+         * sibling files. */
+        if (configuredDataDir && configuredDataDir[0] != '\0' &&
+            FirestaffTheronMedia_ClassifyPath(configuredDataDir,
+                                              &status->theronMedia) == 0 &&
+            strcmp(status->theronMedia.track02_path, payload) == 0) {
+            paired = 1;
+        }
         if (FSP_ParentDir(parent, sizeof(parent), payload)) {
-            paired = FirestaffTheronMedia_FindCuePairForTrack02(
+            paired = paired || FirestaffTheronMedia_FindCuePairForTrack02(
                          parent, payload, &status->theronMedia) == 0;
         }
         if (!paired && configuredDataDir && configuredDataDir[0] != '\0') {
@@ -6051,7 +6069,8 @@ static int m12_scan_theron_direct_launch_roots(M12_AssetStatus* status,
     if (!status) {
         return 0;
     }
-    if (m12_scan_direct_theron_request(status, requestedDataDir, NULL)) {
+    if (m12_scan_direct_theron_request(status, requestedDataDir,
+                                        requestedDataDir)) {
         return 1;
     }
     if (!requestedDataDir || requestedDataDir[0] == '\0' ||
@@ -6156,7 +6175,8 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         m12_scan_publish_cancelled_status(status, requestedDataDir, NULL);
         return 0;
     }
-    if (m12_scan_direct_theron_request(status, requestedDataDir, NULL)) {
+    if (m12_scan_direct_theron_request(status, requestedDataDir,
+                                        requestedDataDir)) {
         m12_scan_progress_finish(status, 1, 0);
         return 1;
     }
@@ -6518,7 +6538,7 @@ int M12_AssetStatus_ScanTheronCampaignMedia(
         effectivePlan = &defaultPlan;
     }
     launchReady = media.status == THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY &&
-        !media.ambiguous && !media.virtual_container && !media.no_media_extracted &&
+        !media.ambiguous &&
         media.launchable_direct_media && media.exact_layout_bound &&
         theron_v1_track02_campaign_media_bind_capture_plan(&media, effectivePlan);
     m12_publish_theron_campaign_media(status, requestedMediaPath, &media, effectivePlan, launchReady);
