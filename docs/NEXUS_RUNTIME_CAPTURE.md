@@ -107,6 +107,16 @@ For long operator-only scans, the capture patch also accepts the inherited
 no-wait scheduler path only; it does not alter the Saturn input, VDP or SCSP
 capture payload.
 
+For targeted VDP2 investigation, the external producer accepts
+`FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_FRAME_MIN` and
+`FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_FRAME_MAX` together with
+`FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REGS`. These bounds use the actual SMPC
+emulation frame number, rather than the optional raw-capture frame counter.
+They prevent reset and boot writes from exhausting the register-trace budget
+before a later input or menu sequence is reached. This is an external
+development witness only: it never changes Firestaff's runtime dependencies
+or admits a render path without an authenticated source-consumer join.
+
 The raw witness can be inspected with
 `scripts/analyze_nexus_saturn_runtime_capture.py`. It reports SHA-256 values
 for each captured VDP1/VDP2 region and can require a region to differ between
