@@ -54477,7 +54477,15 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_archive_launch_
     add_test(NAME csb_v1_fmtowns_archive_launch_real
              COMMAND test_csb_v1_fmtowns_archive_launch_real)
     set_tests_properties(csb_v1_fmtowns_archive_launch_real PROPERTIES
-        LABELS "csb;fmtowns;real_data;packed;ram")
+        LABELS "csb;fmtowns;english;real_data;packed;ram"
+        ENVIRONMENT
+            "FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=en")
+    add_test(NAME csb_v1_fmtowns_ja_archive_launch_real
+             COMMAND test_csb_v1_fmtowns_archive_launch_real)
+    set_tests_properties(csb_v1_fmtowns_ja_archive_launch_real PROPERTIES
+        LABELS "csb;fmtowns;japanese;real_data;packed;ram"
+        ENVIRONMENT
+            "FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=ja")
 
     add_executable(test_csb_v1_fmtowns_packed_m11_real
         tests/test_csb_v1_fmtowns_packed_m11_real.c)
