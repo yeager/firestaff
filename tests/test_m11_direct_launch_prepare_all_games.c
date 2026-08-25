@@ -688,6 +688,10 @@ static void run_real_data_handoff_if_available(void) {
                  * capture-gated; this assertion is deliberately limited to
                  * the authentic level-0 entry established by the media. */
                 opts.bootProbeExpectPhase = "theron-runtime";
+                opts.bootProbeExpectPartyX = 1;
+                opts.bootProbeExpectPartyY = 0;
+                opts.bootProbeExpectPartyDir = 0;
+                opts.bootProbeExpectChampionCount = 1;
             } else {
                 opts.bootProbeExpectParty = 0;
                 opts.bootProbeExpectChampions = 0;
