@@ -105,7 +105,8 @@ int main(void)
     if (!nexus_viewport_replay_vdp2_nbg1_capture(&viewport, &input,
                                                  &receipt) ||
         !receipt.valid || receipt.written_pixels != 16 ||
-        viewport.fb.color_buffer[50 * NEXUS_FB_W + 40] != 1U) {
+        viewport.fb.color_buffer[50 * NEXUS_FB_W + 40] != 1U ||
+        viewport.fb.palette[1] != UINT32_C(0xff080000)) {
         fprintf(stderr, "FAIL: authenticated VDP2 NBG1 replay\n");
         free(bitmap);
         free(cram);
@@ -135,12 +136,28 @@ int main(void)
         free(cram);
         return 1;
     }
+    /* UNKNOWN keeps the historical register scorer and must retain the
+     * historical big-endian CRAM decoding too. */
+    input.register_byte_order = NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_UNKNOWN;
+    memset(registers, 0, sizeof(registers));
+    wb16(registers + 0x20, 0x0002);
+    wb16(registers + 0x28, 0x1211);
+    wb16(registers + 0x2c, 0x0000);
+    if (!nexus_v1_vdp2_capture_composite_nbg1_bitmap(
+            &viewport.fb, &input, &receipt) || !receipt.valid ||
+        viewport.fb.palette[1] != UINT32_C(0xff080000)) {
+        fprintf(stderr, "FAIL: legacy VDP2 palette order changed\n");
+        free(bitmap);
+        free(cram);
+        return 1;
+    }
     memset(registers, 0, sizeof(registers));
     wb16(registers + 0x20, 0x0002);
     wb16(registers + 0x28, 0x1211);
     wb16(registers + 0x2c, 0x0000);
     wb16(registers + 0x2c, 0x0000);
     wb16(registers + NEXUS_V1_VDP2_CRAOFA_OFFSET, 0x0010);
+    input.register_byte_order = NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG;
     if (nexus_v1_vdp2_capture_composite_nbg1_bitmap(
             &viewport.fb, &input, &receipt) || receipt.renderer_permitted) {
         fprintf(stderr, "FAIL: unbound NBG1 CRAM offset was admitted\n");

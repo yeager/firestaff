@@ -66,10 +66,12 @@ static uint8_t expand5(uint16_t value, unsigned shift)
 static uint32_t cram_to_rgba_ordered(
     const uint8_t *entry, Nexus_V1_SaturnVdp2RegisterByteOrder byte_order)
 {
-    /* Match the producer's explicit Saturn bus order instead of assuming the
-     * host order used by the earliest local capture fixtures. */
-    uint16_t value = byte_order == NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_BIG
-        ? read_be16(entry) : read_le16(entry);
+    /* Match a raw producer's explicit Saturn bus order.  UNKNOWN is the
+     * legacy-fixture compatibility route and historically decoded CRAM as
+     * big-endian; defaulting it to little-endian here made the old register
+     * fallback render the same source bytes with swapped colour components. */
+    uint16_t value = byte_order == NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_LITTLE
+        ? read_le16(entry) : read_be16(entry);
     return UINT32_C(0xff000000) |
         ((uint32_t)expand5(value, 0U) << 16U) |
         ((uint32_t)expand5(value, 5U) << 8U) |
