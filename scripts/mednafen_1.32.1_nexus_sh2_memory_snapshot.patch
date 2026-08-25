@@ -1,12 +1,6 @@
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
-@@ -550,7 +550,54 @@
-  fprintf(file, "addr=0x%08x size=%u value=0x%08x source=0x%08x read_bus=%u pc0=0x%08x pc1=0x%08x\n",
-   (unsigned)address, size, (unsigned)value, (unsigned)source, read_bus,
-   (unsigned)FirestaffGetSH2PC(0), (unsigned)FirestaffGetSH2PC(1));
-  count++;
-  if((count & 0x3ffU) == 0) fflush(file);
- }
+@@ -557,0 +558,47 @@
 +static bool FirestaffSH2MemorySnapshotFrameRequested(unsigned frame)
 +{
 + const char *text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT_FRAMES");
@@ -54,4 +48,3 @@
 + fputc('\n', file);
 + fflush(file);
 +}
- //   1 during normal execution
