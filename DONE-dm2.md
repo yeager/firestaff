@@ -10,3 +10,6 @@ Reviewed 2026-08-25. Completed work only.
   runtime and a visible native CHARSHEET inventory frame. Its 121×72 RAW4
   source is clipped to the original 119×70 destination using verified GDAT
   pixels and palette, rather than a substitute surface.
+- The authentic PC-DOS ZIP now starts through both CLI and the start menu.
+  M12 retains its verified `data/GRAPHICS.DAT` and `data/DUNGEON.DAT` virtual
+  paths and the native DM2 boot owner reads them only in RAM.

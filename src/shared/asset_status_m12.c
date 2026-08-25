@@ -5332,16 +5332,15 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
     {
         const M12_AssetVersionStatus* version =
             m12_first_matched_version(status, gameIndex);
-        /* The PC DM2 loader still opens its paired files by their original
-         * loose-file names. It has no archive-backed reader yet, so a DOS
-         * ZIP member must remain recognised-but-unlaunchable instead of
-         * being copied into an asset cache. FM Towns, Amiga and Macintosh
-         * have native packed-media readers and must retain their virtual
-         * source roots. */
+        /* The PC-DOS archive reader verifies data/GRAPHICS.DAT and
+         * data/DUNGEON.DAT in RAM before publishing virtual paths. It has
+         * the same no-extraction runtime contract as FM Towns, Amiga and
+         * Macintosh; unknown virtual pairs remain closed below. */
         if (version && strcmp(g_games[gameIndex].gameId, "dm2") == 0 &&
             m12_path_is_virtual_asset(version->matchedPath)) {
             if (!version->versionId ||
-                (strcmp(version->versionId, "fmtowns-ja") != 0 &&
+                (strcmp(version->versionId, "pc-en") != 0 &&
+                 strcmp(version->versionId, "fmtowns-ja") != 0 &&
                  strcmp(version->versionId, "amiga-en") != 0 &&
                  strcmp(version->versionId, "mac-en-retail") != 0 &&
                  strcmp(version->versionId, "mac-en-demo") != 0)) {
