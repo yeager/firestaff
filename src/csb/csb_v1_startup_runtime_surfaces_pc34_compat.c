@@ -16,6 +16,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 #include <string.h>
 
 /* ReDMCSB TITLE.C F0437 lines 424-463 loads C001 once and uses C424-C426
@@ -293,6 +294,8 @@ int csb_v1_boot_decode_graphics_dat_asset_pc34(
     unsigned char *compressed = NULL;
     unsigned char *decompressed = NULL;
     unsigned char *pixels = NULL;
+    unsigned char *virtual_bytes = NULL;
+    size_t virtual_size = 0u;
     size_t pixel_count;
     size_t decompressed_size = 0u;
     int ok = 0;
@@ -313,9 +316,18 @@ int csb_v1_boot_decode_graphics_dat_asset_pc34(
     memset(&runtime_state, 0, sizeof(runtime_state));
     memset(&header, 0, sizeof(header));
     memset(&selection, 0, sizeof(selection));
-    if (!F0479_MEMORY_InitializeGraphicsDatState_Compat(
-            path, &file_state, &runtime_state) ||
-        !F0477_MEMORY_OpenGraphicsDat_CPSDF_Compat(path, &file_state)) goto done;
+    if (strstr(path, "::") != NULL) {
+        if (!asset_read_virtual_path_alloc(path, &virtual_bytes, &virtual_size) ||
+            virtual_size == 0u || virtual_size > LONG_MAX ||
+            !F0479_MEMORY_InitializeGraphicsDatState_FromBuffer_Compat(
+                virtual_bytes, (long)virtual_size, &file_state, &runtime_state) ||
+            !F0477_MEMORY_OpenGraphicsDat_FromBuffer_Compat(
+                virtual_bytes, (long)virtual_size, &file_state)) goto done;
+    } else if (!F0479_MEMORY_InitializeGraphicsDatState_Compat(
+                   path, &file_state, &runtime_state) ||
+               !F0477_MEMORY_OpenGraphicsDat_CPSDF_Compat(path, &file_state)) {
+        goto done;
+    }
     header.format = runtime_state.format;
     header.graphicCount = runtime_state.graphicCount;
     header.compressedByteCounts = runtime_state.compressedByteCounts;
@@ -375,6 +387,7 @@ done:
     free(pixels);
     free(decompressed);
     free(compressed);
+    free(virtual_bytes);
     F0478_MEMORY_CloseGraphicsDat_CPSDF_Compat(&file_state);
     F0479_MEMORY_FreeGraphicsDatState_Compat(&runtime_state);
     return ok;
