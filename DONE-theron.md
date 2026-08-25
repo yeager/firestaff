@@ -14,3 +14,6 @@ Reviewed 2026-08-25. Completed work only.
   remain independently gated.
 - Track 02 intake preserves original media identity and blocks uncaptured
   graphics/palette fallback from production presentation.
+- A CUE/BIN package in a ZIP archive starts natively through both direct CLI
+  and the start menu. Firestaff hashes and reads the selected Track 02 member
+  in memory (`archive.zip::member`) and never writes extracted game data.
