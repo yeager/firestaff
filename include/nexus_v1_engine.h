@@ -1354,6 +1354,27 @@ typedef struct {
     int canonical_hash_verified;
 } Nexus_V1_LevelAuxSourceReceipt;
 
+/* Source-to-consumer receipt for the stored STABG.BIN status background.
+ * It proves that a hash-verified Track 1 member reached the native STMP
+ * decoder retained by the engine.  Saturn VDP2 layer ownership, placement,
+ * palette-bank assignment and ordinary host rendering remain deliberately
+ * outside this receipt. */
+typedef struct {
+    Nexus_V1_LevelAuxSourceReceipt source;
+    int source_is_iso;
+    int source_member_bound;
+    int stmp_framing_bound;
+    int dmweb_first_map_bound;
+    int native_surface_consumer_bound;
+    uint32_t source_byte_count;
+    uint64_t source_bytes_fnv1a64;
+    int width;
+    int height;
+    int no_draw_only;
+    int renderer_permitted;
+    int fallback_visuals_permitted;
+} Nexus_V1_StabgSourceConsumerReceipt;
+
 /* Exact, source-owned PRS3 loader evidence available during boot. This joins
  * canonical DM.BIN code and MENU.BPK framing, but deliberately carries no
  * decoded pixels and never authorizes a draw. */
@@ -3260,6 +3281,11 @@ int nexus_v1_menu_bpk_source_receipt(
 int nexus_v1_warning_bin_source_receipt(
     Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxSourceReceipt *out_receipt);
+/* Returns the source-owned STABG Track 1 to native-STMP-consumer binding.
+ * This succeeds only for an ISO/CUE source and never promotes a draw route. */
+int nexus_v1_stabg_cue_source_consumer_receipt(
+    Nexus_V1_Engine *engine,
+    Nexus_V1_StabgSourceConsumerReceipt *out_receipt);
 /* Returns a source-bound DM.BIN/MENU.BPK loader receipt only. It never
  * supplies decoded pixels or opens a MENU.BPK render route. */
 int nexus_v1_menu_bpk_prs3_execution_evidence_receipt(

@@ -39059,6 +39059,25 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_nexus_v1_stabg_capture_compositor
     )
 
+    add_executable(test_nexus_v1_stabg_cue_source_consumer_real
+        tests/test_nexus_v1_stabg_cue_source_consumer_real.c
+    )
+    target_include_directories(test_nexus_v1_stabg_cue_source_consumer_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_nexus_v1_stabg_cue_source_consumer_real PRIVATE
+        firestaff_nexus
+    )
+    add_test(
+        NAME nexus_v1_stabg_cue_source_consumer_real
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_stabg_cue_source_consumer_real.sh
+            $<TARGET_FILE:test_nexus_v1_stabg_cue_source_consumer_real>
+    )
+    set_tests_properties(nexus_v1_stabg_cue_source_consumer_real PROPERTIES
+        LABELS "nexus;saturn;real-media;source-consumer"
+        SKIP_RETURN_CODE 77
+    )
+
     add_executable(test_nexus_v1_vdp2_capture_compositor
         tests/test_nexus_v1_vdp2_capture_compositor.c
         src/nexus/nexus_v1_vdp2_capture_compositor.c

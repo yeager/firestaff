@@ -385,6 +385,23 @@ static uint64_t nexus_v1_dgn_bytes_fnv1a64(const uint8_t *data, int size)
     return hash;
 }
 
+/* UI source receipts predate the DGN helper and use the canonical FNV-1a
+ * offset basis. Keep the STABG source-to-consumer comparison in that UI
+ * domain rather than comparing two otherwise identical byte streams hashed
+ * with incompatible seeds. */
+static uint64_t nexus_v1_ui_source_bytes_fnv1a64(const uint8_t *data, int size)
+{
+    uint64_t hash = UINT64_C(14695981039346656037);
+    int index;
+
+    if (!data || size <= 0) return 0U;
+    for (index = 0; index < size; ++index) {
+        hash ^= (uint64_t)data[index];
+        hash *= UINT64_C(1099511628211);
+    }
+    return hash;
+}
+
 static uint32_t nexus_v1_dgn_read_be32(const uint8_t *data)
 {
     return ((uint32_t)data[0] << 24) | ((uint32_t)data[1] << 16) |
@@ -498,6 +515,64 @@ int nexus_v1_warning_bin_source_receipt(
     Nexus_V1_Engine *engine, Nexus_V1_LevelAuxSourceReceipt *out_receipt)
 {
     return nexus_v1_level_aux_source_receipt(engine, "WARNING.BIN", out_receipt);
+}
+
+int nexus_v1_stabg_cue_source_consumer_receipt(
+    Nexus_V1_Engine *engine,
+    Nexus_V1_StabgSourceConsumerReceipt *out_receipt)
+{
+    Nexus_V1_StabgSourceConsumerReceipt receipt;
+    Nexus_UI_StabgStmpFraming framing;
+    Nexus_UI_StabgDmwebReceipt dmweb;
+    Nexus_UI_Surface *surface;
+    uint8_t *data;
+    int size = 0;
+
+    if (!out_receipt) return -1;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.no_draw_only = 1;
+    receipt.renderer_permitted = 0;
+    receipt.fallback_visuals_permitted = 0;
+    if (!engine || !engine->initialized || engine->source != NEXUS_SRC_ISO) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    (void)nexus_v1_level_aux_source_receipt(engine, "STABG.BIN",
+                                             &receipt.source);
+    receipt.source_is_iso = 1;
+    receipt.source_member_bound = receipt.source.exact_source_entry_observed &&
+        receipt.source.canonical_hash_verified;
+    data = nexus_v1_read_file(engine, "STABG.BIN", &size);
+    if (!data || size <= 0) {
+        free(data);
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.source_byte_count = (uint32_t)size;
+    receipt.source_bytes_fnv1a64 = nexus_v1_ui_source_bytes_fnv1a64(data, size);
+    memset(&framing, 0, sizeof(framing));
+    memset(&dmweb, 0, sizeof(dmweb));
+    receipt.stmp_framing_bound =
+        nexus_ui_stabg_stmp_framing_receipt(data, size, &framing) == 0 &&
+        framing.valid && framing.declared_size == (uint32_t)size;
+    receipt.dmweb_first_map_bound =
+        nexus_ui_stabg_dmweb_decode_receipt(data, size, &dmweb) == 0 &&
+        dmweb.valid && dmweb.first_map_width == 40 &&
+        dmweb.first_map_height == 21;
+    surface = &engine->ui.surfaces[NEXUS_SURFACE_STABG];
+    receipt.width = surface->w;
+    receipt.height = surface->h;
+    receipt.native_surface_consumer_bound = receipt.source_member_bound &&
+        receipt.stmp_framing_bound && receipt.dmweb_first_map_bound &&
+        surface->data != NULL && surface->source_bytes_size == (uint32_t)size &&
+        surface->source_bytes_fnv1a64 == receipt.source_bytes_fnv1a64 &&
+        surface->w == dmweb.first_map_width * 8 &&
+        surface->h == dmweb.first_map_height * 8 &&
+        surface->source_palette_loaded;
+    free(data);
+    *out_receipt = receipt;
+    return receipt.native_surface_consumer_bound ? 1 : 0;
 }
 
 static int nexus_v1_structure2_source_receipt(
