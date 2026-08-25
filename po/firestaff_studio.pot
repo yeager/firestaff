@@ -721,3 +721,471 @@ msgstr ""
 #: scripts/firestaff_artpack_studio.py:2263
 msgid "Import Firestaff artpack"
 msgstr ""
+
+msgid "AI Command Template"
+msgstr ""
+
+msgid "API Key"
+msgstr ""
+
+msgid "API Provider"
+msgstr ""
+
+msgid "Action Index"
+msgstr ""
+
+msgid "Active Group Count"
+msgstr ""
+
+msgid "Active creature/item groups in the dungeon. Variable size from GLOBAL_DATA @46."
+msgstr ""
+
+msgid "Actual"
+msgstr ""
+
+msgid "Air"
+msgstr ""
+
+msgid "All Files"
+msgstr ""
+
+msgid "All Savegames"
+msgstr ""
+
+msgid "Calming Scent"
+msgstr ""
+
+msgid "Calming influence active"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Champion records (4 x 319 bytes) + party info (128 bytes). HP, stats, skills, inventory."
+msgstr ""
+
+msgid "Champion {}"
+msgstr ""
+
+msgid "Champions"
+msgstr ""
+
+msgid "Checksum: ACTIVE_GROUP"
+msgstr ""
+
+msgid "Checksum: EVENTS"
+msgstr ""
+
+msgid "Checksum: GLOBAL_DATA"
+msgstr ""
+
+msgid "Checksum: PARTY"
+msgstr ""
+
+msgid "Checksum: TIMELINE"
+msgstr ""
+
+msgid "Checksums"
+msgstr ""
+
+msgid "Club"
+msgstr ""
+
+msgid "Combat & Vitals"
+msgstr ""
+
+msgid "Command"
+msgstr ""
+
+msgid "DM1 PC34 Save Parts (F0417/F0418)"
+msgstr ""
+
+msgid "Defend"
+msgstr ""
+
+msgid "Description"
+msgstr ""
+
+msgid "Direction"
+msgstr ""
+
+msgid "Dungeon"
+msgstr ""
+
+msgid "Dungeon ID"
+msgstr ""
+
+msgid "Dungeon event list: timers, triggers, sensors. Variable size from GLOBAL_DATA @28."
+msgstr ""
+
+msgid "Dungeon. 0=DM1, 1=CSB, 10=Theron"
+msgstr ""
+
+msgid "Earth"
+msgstr ""
+
+msgid "Event Count"
+msgstr ""
+
+msgid "Event Max Count"
+msgstr ""
+
+msgid "Expected"
+msgstr ""
+
+msgid "F0418 checksum for ACTIVE_GROUP validation"
+msgstr ""
+
+msgid "F0418 checksum for EVENTS validation"
+msgstr ""
+
+msgid "F0418 checksum for GLOBAL_DATA validation"
+msgstr ""
+
+msgid "F0418 checksum for PARTY validation"
+msgstr ""
+
+msgid "F0418 checksum for TIMELINE validation"
+msgstr ""
+
+msgid "Field"
+msgstr ""
+
+msgid "Fight"
+msgstr ""
+
+msgid "Fighter"
+msgstr ""
+
+msgid "File"
+msgstr ""
+
+msgid "File Information"
+msgstr ""
+
+msgid "File Overview"
+msgstr ""
+
+msgid "Fire"
+msgstr ""
+
+msgid "Fire Shield"
+msgstr ""
+
+msgid "Fire Shield strength"
+msgstr ""
+
+msgid "Firestaff Savegame Editor"
+msgstr ""
+
+msgid "First Unused Event"
+msgstr ""
+
+msgid "Food"
+msgstr ""
+
+msgid "Footprints"
+msgstr ""
+
+msgid "Footprints active (0/1)"
+msgstr ""
+
+msgid "Format"
+msgstr ""
+
+msgid "Format Version"
+msgstr ""
+
+msgid "Format/Platform/Dungeon"
+msgstr ""
+
+msgid "Freeze Life"
+msgstr ""
+
+msgid "Freeze Life active (0/1)"
+msgstr ""
+
+msgid "Game ID"
+msgstr ""
+
+msgid "Global Data"
+msgstr ""
+
+msgid "Global dungeon state: event counts, active group limits, RNG seed. Fixed 128 bytes."
+msgstr ""
+
+msgid "HP Current"
+msgstr ""
+
+msgid "HP Max"
+msgstr ""
+
+msgid "Header Fields"
+msgstr ""
+
+msgid "Header Words"
+msgstr ""
+
+msgid "Heal"
+msgstr ""
+
+msgid "Hex"
+msgstr ""
+
+msgid "Identifies which game created this save"
+msgstr ""
+
+msgid "Identify"
+msgstr ""
+
+msgid "Index of first free event slot"
+msgstr ""
+
+msgid "Influence"
+msgstr ""
+
+msgid "Key"
+msgstr ""
+
+msgid "Key: ACTIVE_GROUP"
+msgstr ""
+
+msgid "Key: EVENTS"
+msgstr ""
+
+msgid "Key: GLOBAL_DATA"
+msgstr ""
+
+msgid "Key: PARTY"
+msgstr ""
+
+msgid "Key: TIMELINE"
+msgstr ""
+
+msgid "Light spell intensity (0=dark)"
+msgstr ""
+
+msgid "Load"
+msgstr ""
+
+msgid "Loaded: {}"
+msgstr ""
+
+msgid "MISMATCH"
+msgstr ""
+
+msgid "Magical Light"
+msgstr ""
+
+msgid "Mana Current"
+msgstr ""
+
+msgid "Mana Max"
+msgstr ""
+
+msgid "Max Active Group Count"
+msgstr ""
+
+msgid "Max active groups (determines ACTIVE_GROUP size)"
+msgstr ""
+
+msgid "Max events (determines EVENTS part size)"
+msgstr ""
+
+msgid "Ninja"
+msgstr ""
+
+msgid "No champion data"
+msgstr ""
+
+msgid "No file loaded"
+msgstr ""
+
+msgid "No global data"
+msgstr ""
+
+msgid "No party info available"
+msgstr ""
+
+msgid "No savegame loaded"
+msgstr ""
+
+msgid "Number of active creature/item groups"
+msgstr ""
+
+msgid "Number of active events"
+msgstr ""
+
+msgid "Offset"
+msgstr ""
+
+msgid "Open"
+msgstr ""
+
+msgid "Open Savegame"
+msgstr ""
+
+msgid "Open..."
+msgstr ""
+
+msgid "Parry"
+msgstr ""
+
+msgid "Part"
+msgstr ""
+
+msgid "Part Keys"
+msgstr ""
+
+msgid "Party Info"
+msgstr ""
+
+msgid "Placeholders: {prompt_file} {output} {source} {game} {category} {asset_id} {width} {height}"
+msgstr ""
+
+msgid "Platform"
+msgstr ""
+
+msgid "Poison"
+msgstr ""
+
+msgid "Priest"
+msgstr ""
+
+msgid "Quit"
+msgstr ""
+
+msgid "Random Words"
+msgstr ""
+
+msgid "Random Words [0-148]"
+msgstr ""
+
+msgid "Raw Data"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Save As"
+msgstr ""
+
+msgid "Save Parts"
+msgstr ""
+
+msgid "Save format version. 5=PC 3.4, 4=PC 3.3, 3=Amiga 3.6"
+msgstr ""
+
+msgid "Saved as: {}"
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+msgid "Settings saved"
+msgstr ""
+
+msgid "Shield"
+msgstr ""
+
+msgid "Shield spell strength"
+msgstr ""
+
+msgid "Shoot"
+msgstr ""
+
+msgid "Skills"
+msgstr ""
+
+msgid "Spell Shield"
+msgstr ""
+
+msgid "Spell Shield (Antimagic) strength"
+msgstr ""
+
+msgid "Stamina Current"
+msgstr ""
+
+msgid "Stamina Max"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "Steal"
+msgstr ""
+
+msgid "Stored in ~/.firestaff/studio_settings.json"
+msgstr ""
+
+msgid "Stored securely in system keychain"
+msgstr ""
+
+msgid "Swing"
+msgstr ""
+
+msgid "Target platform. 1=PC, 2=Amiga, 9=PC Engine, etc."
+msgstr ""
+
+msgid "Thief's Eye"
+msgstr ""
+
+msgid "Thief's Eye active (0/1)"
+msgstr ""
+
+msgid "Throw"
+msgstr ""
+
+msgid "Thrust"
+msgstr ""
+
+msgid "Timeline/timer queue for scheduled events. Remainder of file after other parts."
+msgstr ""
+
+msgid "Title"
+msgstr ""
+
+msgid "Unknown"
+msgstr ""
+
+msgid "Unrecognized savegame format."
+msgstr ""
+
+msgid "VALID"
+msgstr ""
+
+msgid "Valid"
+msgstr ""
+
+msgid "Value"
+msgstr ""
+
+msgid "Warning"
+msgstr ""
+
+msgid "Water"
+msgstr ""
+
+msgid "Water (spell)"
+msgstr ""
+
+msgid "Wizard"
+msgstr ""
+
+msgid "XOR deobfuscation key for ACTIVE_GROUP"
+msgstr ""
+
+msgid "XOR deobfuscation key for EVENTS"
+msgstr ""
+
+msgid "XOR deobfuscation key for GLOBAL_DATA"
+msgstr ""
+
+msgid "XOR deobfuscation key for PARTY"
+msgstr ""
+
+msgid "XOR deobfuscation key for TIMELINE"
+msgstr ""
+
+msgid "XOR obfuscation pad — 149 random 16-bit words (298 bytes)"
+msgstr ""

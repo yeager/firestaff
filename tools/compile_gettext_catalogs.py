@@ -116,6 +116,26 @@ def write_mo(entries: dict[str, str], output: Path) -> None:
                        b"".join(translated_entries) + ids + strings)
 
 
+def studio_source_ids(template: Path) -> set[str]:
+    """Return literal gettext ids used by the shipped Studio applications."""
+    root = template.parent.parent
+    scripts = (
+        root / "scripts" / "firestaff_artpack_studio.py",
+        root / "scripts" / "firestaff_dungeon_studio.py",
+        root / "scripts" / "firestaff_savegame_editor.py",
+    )
+    ids: set[str] = set()
+    for script in scripts:
+        tree = ast.parse(script.read_text(encoding="utf-8"), filename=str(script))
+        for node in ast.walk(tree):
+            if (isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and
+                    node.func.id == "_" and node.args and
+                    isinstance(node.args[0], ast.Constant) and
+                    isinstance(node.args[0].value, str)):
+                ids.add(node.args[0].value)
+    return ids
+
+
 def verify_template(template: Path, english: Path) -> None:
     source = parse_po(english)
     template_entries = parse_po(template)
@@ -130,6 +150,12 @@ def verify_template(template: Path, english: Path) -> None:
                 if key and value]
     if nonempty:
         raise SystemExit(f"template has translated strings: {nonempty[:3]}")
+    source_ids = studio_source_ids(template)
+    if source_ids != template_ids:
+        missing = sorted(source_ids - template_ids)
+        extra = sorted(template_ids - source_ids)
+        raise SystemExit(
+            f"template source coverage mismatch: missing={missing[:3]} extra={extra[:3]}")
 
 
 def compile_catalogs(source_dir: Path, output_dir: Path) -> int:

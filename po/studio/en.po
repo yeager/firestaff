@@ -725,3 +725,471 @@ msgstr "Export failed"
 #: scripts/firestaff_artpack_studio.py:2263
 msgid "Import Firestaff artpack"
 msgstr "Import Firestaff artpack"
+
+msgid "AI Command Template"
+msgstr "AI Command Template"
+
+msgid "API Key"
+msgstr "API Key"
+
+msgid "API Provider"
+msgstr "API Provider"
+
+msgid "Action Index"
+msgstr "Action Index"
+
+msgid "Active Group Count"
+msgstr "Active Group Count"
+
+msgid "Active creature/item groups in the dungeon. Variable size from GLOBAL_DATA @46."
+msgstr "Active creature/item groups in the dungeon. Variable size from GLOBAL_DATA @46."
+
+msgid "Actual"
+msgstr "Actual"
+
+msgid "Air"
+msgstr "Air"
+
+msgid "All Files"
+msgstr "All Files"
+
+msgid "All Savegames"
+msgstr "All Savegames"
+
+msgid "Calming Scent"
+msgstr "Calming Scent"
+
+msgid "Calming influence active"
+msgstr "Calming influence active"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Champion records (4 x 319 bytes) + party info (128 bytes). HP, stats, skills, inventory."
+msgstr "Champion records (4 x 319 bytes) + party info (128 bytes). HP, stats, skills, inventory."
+
+msgid "Champion {}"
+msgstr "Champion {}"
+
+msgid "Champions"
+msgstr "Champions"
+
+msgid "Checksum: ACTIVE_GROUP"
+msgstr "Checksum: ACTIVE_GROUP"
+
+msgid "Checksum: EVENTS"
+msgstr "Checksum: EVENTS"
+
+msgid "Checksum: GLOBAL_DATA"
+msgstr "Checksum: GLOBAL_DATA"
+
+msgid "Checksum: PARTY"
+msgstr "Checksum: PARTY"
+
+msgid "Checksum: TIMELINE"
+msgstr "Checksum: TIMELINE"
+
+msgid "Checksums"
+msgstr "Checksums"
+
+msgid "Club"
+msgstr "Club"
+
+msgid "Combat & Vitals"
+msgstr "Combat & Vitals"
+
+msgid "Command"
+msgstr "Command"
+
+msgid "DM1 PC34 Save Parts (F0417/F0418)"
+msgstr "DM1 PC34 Save Parts (F0417/F0418)"
+
+msgid "Defend"
+msgstr "Defend"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Direction"
+msgstr "Direction"
+
+msgid "Dungeon"
+msgstr "Dungeon"
+
+msgid "Dungeon ID"
+msgstr "Dungeon ID"
+
+msgid "Dungeon event list: timers, triggers, sensors. Variable size from GLOBAL_DATA @28."
+msgstr "Dungeon event list: timers, triggers, sensors. Variable size from GLOBAL_DATA @28."
+
+msgid "Dungeon. 0=DM1, 1=CSB, 10=Theron"
+msgstr "Dungeon. 0=DM1, 1=CSB, 10=Theron"
+
+msgid "Earth"
+msgstr "Earth"
+
+msgid "Event Count"
+msgstr "Event Count"
+
+msgid "Event Max Count"
+msgstr "Event Max Count"
+
+msgid "Expected"
+msgstr "Expected"
+
+msgid "F0418 checksum for ACTIVE_GROUP validation"
+msgstr "F0418 checksum for ACTIVE_GROUP validation"
+
+msgid "F0418 checksum for EVENTS validation"
+msgstr "F0418 checksum for EVENTS validation"
+
+msgid "F0418 checksum for GLOBAL_DATA validation"
+msgstr "F0418 checksum for GLOBAL_DATA validation"
+
+msgid "F0418 checksum for PARTY validation"
+msgstr "F0418 checksum for PARTY validation"
+
+msgid "F0418 checksum for TIMELINE validation"
+msgstr "F0418 checksum for TIMELINE validation"
+
+msgid "Field"
+msgstr "Field"
+
+msgid "Fight"
+msgstr "Fight"
+
+msgid "Fighter"
+msgstr "Fighter"
+
+msgid "File"
+msgstr "File"
+
+msgid "File Information"
+msgstr "File Information"
+
+msgid "File Overview"
+msgstr "File Overview"
+
+msgid "Fire"
+msgstr "Fire"
+
+msgid "Fire Shield"
+msgstr "Fire Shield"
+
+msgid "Fire Shield strength"
+msgstr "Fire Shield strength"
+
+msgid "Firestaff Savegame Editor"
+msgstr "Firestaff Savegame Editor"
+
+msgid "First Unused Event"
+msgstr "First Unused Event"
+
+msgid "Food"
+msgstr "Food"
+
+msgid "Footprints"
+msgstr "Footprints"
+
+msgid "Footprints active (0/1)"
+msgstr "Footprints active (0/1)"
+
+msgid "Format"
+msgstr "Format"
+
+msgid "Format Version"
+msgstr "Format Version"
+
+msgid "Format/Platform/Dungeon"
+msgstr "Format/Platform/Dungeon"
+
+msgid "Freeze Life"
+msgstr "Freeze Life"
+
+msgid "Freeze Life active (0/1)"
+msgstr "Freeze Life active (0/1)"
+
+msgid "Game ID"
+msgstr "Game ID"
+
+msgid "Global Data"
+msgstr "Global Data"
+
+msgid "Global dungeon state: event counts, active group limits, RNG seed. Fixed 128 bytes."
+msgstr "Global dungeon state: event counts, active group limits, RNG seed. Fixed 128 bytes."
+
+msgid "HP Current"
+msgstr "HP Current"
+
+msgid "HP Max"
+msgstr "HP Max"
+
+msgid "Header Fields"
+msgstr "Header Fields"
+
+msgid "Header Words"
+msgstr "Header Words"
+
+msgid "Heal"
+msgstr "Heal"
+
+msgid "Hex"
+msgstr "Hex"
+
+msgid "Identifies which game created this save"
+msgstr "Identifies which game created this save"
+
+msgid "Identify"
+msgstr "Identify"
+
+msgid "Index of first free event slot"
+msgstr "Index of first free event slot"
+
+msgid "Influence"
+msgstr "Influence"
+
+msgid "Key"
+msgstr "Key"
+
+msgid "Key: ACTIVE_GROUP"
+msgstr "Key: ACTIVE_GROUP"
+
+msgid "Key: EVENTS"
+msgstr "Key: EVENTS"
+
+msgid "Key: GLOBAL_DATA"
+msgstr "Key: GLOBAL_DATA"
+
+msgid "Key: PARTY"
+msgstr "Key: PARTY"
+
+msgid "Key: TIMELINE"
+msgstr "Key: TIMELINE"
+
+msgid "Light spell intensity (0=dark)"
+msgstr "Light spell intensity (0=dark)"
+
+msgid "Load"
+msgstr "Load"
+
+msgid "Loaded: {}"
+msgstr "Loaded: {}"
+
+msgid "MISMATCH"
+msgstr "MISMATCH"
+
+msgid "Magical Light"
+msgstr "Magical Light"
+
+msgid "Mana Current"
+msgstr "Mana Current"
+
+msgid "Mana Max"
+msgstr "Mana Max"
+
+msgid "Max Active Group Count"
+msgstr "Max Active Group Count"
+
+msgid "Max active groups (determines ACTIVE_GROUP size)"
+msgstr "Max active groups (determines ACTIVE_GROUP size)"
+
+msgid "Max events (determines EVENTS part size)"
+msgstr "Max events (determines EVENTS part size)"
+
+msgid "Ninja"
+msgstr "Ninja"
+
+msgid "No champion data"
+msgstr "No champion data"
+
+msgid "No file loaded"
+msgstr "No file loaded"
+
+msgid "No global data"
+msgstr "No global data"
+
+msgid "No party info available"
+msgstr "No party info available"
+
+msgid "No savegame loaded"
+msgstr "No savegame loaded"
+
+msgid "Number of active creature/item groups"
+msgstr "Number of active creature/item groups"
+
+msgid "Number of active events"
+msgstr "Number of active events"
+
+msgid "Offset"
+msgstr "Offset"
+
+msgid "Open"
+msgstr "Open"
+
+msgid "Open Savegame"
+msgstr "Open Savegame"
+
+msgid "Open..."
+msgstr "Open..."
+
+msgid "Parry"
+msgstr "Parry"
+
+msgid "Part"
+msgstr "Part"
+
+msgid "Part Keys"
+msgstr "Part Keys"
+
+msgid "Party Info"
+msgstr "Party Info"
+
+msgid "Placeholders: {prompt_file} {output} {source} {game} {category} {asset_id} {width} {height}"
+msgstr "Placeholders: {prompt_file} {output} {source} {game} {category} {asset_id} {width} {height}"
+
+msgid "Platform"
+msgstr "Platform"
+
+msgid "Poison"
+msgstr "Poison"
+
+msgid "Priest"
+msgstr "Priest"
+
+msgid "Quit"
+msgstr "Quit"
+
+msgid "Random Words"
+msgstr "Random Words"
+
+msgid "Random Words [0-148]"
+msgstr "Random Words [0-148]"
+
+msgid "Raw Data"
+msgstr "Raw Data"
+
+msgid "Save"
+msgstr "Save"
+
+msgid "Save As"
+msgstr "Save As"
+
+msgid "Save Parts"
+msgstr "Save Parts"
+
+msgid "Save format version. 5=PC 3.4, 4=PC 3.3, 3=Amiga 3.6"
+msgstr "Save format version. 5=PC 3.4, 4=PC 3.3, 3=Amiga 3.6"
+
+msgid "Saved as: {}"
+msgstr "Saved as: {}"
+
+msgid "Settings"
+msgstr "Settings"
+
+msgid "Settings saved"
+msgstr "Settings saved"
+
+msgid "Shield"
+msgstr "Shield"
+
+msgid "Shield spell strength"
+msgstr "Shield spell strength"
+
+msgid "Shoot"
+msgstr "Shoot"
+
+msgid "Skills"
+msgstr "Skills"
+
+msgid "Spell Shield"
+msgstr "Spell Shield"
+
+msgid "Spell Shield (Antimagic) strength"
+msgstr "Spell Shield (Antimagic) strength"
+
+msgid "Stamina Current"
+msgstr "Stamina Current"
+
+msgid "Stamina Max"
+msgstr "Stamina Max"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Steal"
+msgstr "Steal"
+
+msgid "Stored in ~/.firestaff/studio_settings.json"
+msgstr "Stored in ~/.firestaff/studio_settings.json"
+
+msgid "Stored securely in system keychain"
+msgstr "Stored securely in system keychain"
+
+msgid "Swing"
+msgstr "Swing"
+
+msgid "Target platform. 1=PC, 2=Amiga, 9=PC Engine, etc."
+msgstr "Target platform. 1=PC, 2=Amiga, 9=PC Engine, etc."
+
+msgid "Thief's Eye"
+msgstr "Thief's Eye"
+
+msgid "Thief's Eye active (0/1)"
+msgstr "Thief's Eye active (0/1)"
+
+msgid "Throw"
+msgstr "Throw"
+
+msgid "Thrust"
+msgstr "Thrust"
+
+msgid "Timeline/timer queue for scheduled events. Remainder of file after other parts."
+msgstr "Timeline/timer queue for scheduled events. Remainder of file after other parts."
+
+msgid "Title"
+msgstr "Title"
+
+msgid "Unknown"
+msgstr "Unknown"
+
+msgid "Unrecognized savegame format."
+msgstr "Unrecognized savegame format."
+
+msgid "VALID"
+msgstr "VALID"
+
+msgid "Valid"
+msgstr "Valid"
+
+msgid "Value"
+msgstr "Value"
+
+msgid "Warning"
+msgstr "Warning"
+
+msgid "Water"
+msgstr "Water"
+
+msgid "Water (spell)"
+msgstr "Water (spell)"
+
+msgid "Wizard"
+msgstr "Wizard"
+
+msgid "XOR deobfuscation key for ACTIVE_GROUP"
+msgstr "XOR deobfuscation key for ACTIVE_GROUP"
+
+msgid "XOR deobfuscation key for EVENTS"
+msgstr "XOR deobfuscation key for EVENTS"
+
+msgid "XOR deobfuscation key for GLOBAL_DATA"
+msgstr "XOR deobfuscation key for GLOBAL_DATA"
+
+msgid "XOR deobfuscation key for PARTY"
+msgstr "XOR deobfuscation key for PARTY"
+
+msgid "XOR deobfuscation key for TIMELINE"
+msgstr "XOR deobfuscation key for TIMELINE"
+
+msgid "XOR obfuscation pad — 149 random 16-bit words (298 bytes)"
+msgstr "XOR obfuscation pad — 149 random 16-bit words (298 bytes)"
