@@ -28,23 +28,6 @@
 #include <unistd.h>
 #endif
 
-static unsigned long m12_current_process_id(void) {
-#ifdef _WIN32
-    return (unsigned long)GetCurrentProcessId();
-#else
-    return (unsigned long)getpid();
-#endif
-}
-
-static const char* m12_temporary_directory(void) {
-#ifdef _WIN32
-    const char* value = getenv("TEMP");
-    return value && value[0] != '\0' ? value : ".";
-#else
-    return "/tmp";
-#endif
-}
-
 /* dm1_v2_modern_assets_pc34.h provides the V2.2 modern-assets pipeline
  * (manifest validation, shape-source fallback chain, missing-asset guard).
  * It is compiled into firestaff_v2 and linked via firestaff_m11 → firestaff_m12,
@@ -1090,23 +1073,22 @@ static int m12_admit_dm1_amiga20_nested_archive(
                  roots[rootIndex], outerName);
         for (candidateIndex = 0U; candidateIndex < candidateCount; ++candidateIndex) {
             char virtualGraphics[M12_ASSET_DATA_DIR_CAPACITY * 2U];
-            char temporary[M12_ASSET_DATA_DIR_CAPACITY];
             char md5[M12_ASSET_MD5_CAPACITY];
+            uint8_t *graphics = NULL;
+            size_t graphicsSize = 0U;
             size_t versionIndex;
             if (!FSP_FileExists(candidates[candidateIndex]) ||
                 snprintf(virtualGraphics, sizeof(virtualGraphics),
                          "%s::%s::%s::GRAPHICS.DAT", candidates[candidateIndex],
                          innerName, adfName) >= (int)sizeof(virtualGraphics) ||
-                snprintf(temporary, sizeof(temporary),
-                         "%s/firestaff-dm1-amiga-%lu.dat",
-                         m12_temporary_directory(), m12_current_process_id()) >=
-                    (int)sizeof(temporary) ||
-                !asset_extract_virtual_path(virtualGraphics, temporary) ||
-                !m12_file_md5_hex(temporary, md5)) {
-                (void)remove(temporary);
+                !asset_read_virtual_path_alloc(virtualGraphics, &graphics,
+                                               &graphicsSize) ||
+                graphicsSize == 0U) {
+                free(graphics);
                 continue;
             }
-            (void)remove(temporary);
+            m12_bytes_md5_hex(graphics, graphicsSize, md5);
+            free(graphics);
             for (versionIndex = 0U; versionIndex < g_games[gameIndex].versionCount;
                  ++versionIndex) {
                 M12_AssetVersionStatus* version =

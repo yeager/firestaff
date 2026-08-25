@@ -1267,6 +1267,88 @@ static uint8_t *zip_load_entry_bytes(const char *zipPath, const char *entryName,
     return NULL;
 }
 
+/* The Amiga preservation package is ZIP -> ZIP -> ADF.  Keep the inner
+ * archive resident: writing it to /tmp changes the user's supplied media and
+ * defeats the virtual-media contract. */
+static uint8_t *zip_load_memory_entry_bytes(const uint8_t *zip,
+                                            size_t zipSize,
+                                            const char *entryName,
+                                            size_t *outSize) {
+    size_t start, pos, cdOffset, cdSize;
+    uint16_t count, i;
+    if (!zip || !entryName || !outSize || zipSize < 22U) return NULL;
+    start = zipSize > 65557U ? zipSize - 65557U : 0U;
+    for (pos = zipSize - 22U;; --pos) {
+        if (read_u32le(zip + pos) == 0x06054b50U) break;
+        if (pos == start) return NULL;
+    }
+    count = read_u16le(zip + pos + 10U);
+    cdSize = read_u32le(zip + pos + 12U);
+    cdOffset = read_u32le(zip + pos + 16U);
+    if (cdOffset > zipSize || cdSize > zipSize - cdOffset) return NULL;
+    pos = cdOffset;
+    for (i = 0U; i < count; ++i) {
+        const uint8_t *hdr;
+        uint16_t method, nameLen, extraLen, commentLen, localNameLen, localExtraLen;
+        uint32_t packed, unpacked, localOffset, dataOffset;
+        char name[256];
+        uint8_t *bytes;
+        if (pos > cdOffset + cdSize || cdOffset + cdSize - pos < 46U) return NULL;
+        hdr = zip + pos;
+        if (read_u32le(hdr) != 0x02014b50U) return NULL;
+        method = read_u16le(hdr + 10U);
+        packed = read_u32le(hdr + 20U);
+        unpacked = read_u32le(hdr + 24U);
+        nameLen = read_u16le(hdr + 28U);
+        extraLen = read_u16le(hdr + 30U);
+        commentLen = read_u16le(hdr + 32U);
+        localOffset = read_u32le(hdr + 42U);
+        if (nameLen == 0U || nameLen >= sizeof(name) ||
+            nameLen > cdOffset + cdSize - pos - 46U ||
+            extraLen > cdOffset + cdSize - pos - 46U - nameLen ||
+            commentLen > cdOffset + cdSize - pos - 46U - nameLen - extraLen)
+            return NULL;
+        memcpy(name, hdr + 46U, nameLen);
+        name[nameLen] = '\0';
+        pos += 46U + nameLen + extraLen + commentLen;
+        if (strcmp(name, entryName) != 0) continue;
+        if (localOffset > zipSize || zipSize - localOffset < 30U ||
+            read_u32le(zip + localOffset) != 0x04034b50U) return NULL;
+        localNameLen = read_u16le(zip + localOffset + 26U);
+        localExtraLen = read_u16le(zip + localOffset + 28U);
+        dataOffset = localOffset + 30U + localNameLen + localExtraLen;
+        if (dataOffset < localOffset || dataOffset > zipSize ||
+            packed > zipSize - dataOffset || unpacked == 0U) return NULL;
+        bytes = (uint8_t *)malloc(unpacked);
+        if (!bytes) return NULL;
+        if (method == 0U) {
+            if (packed != unpacked) { free(bytes); return NULL; }
+            memcpy(bytes, zip + dataOffset, unpacked);
+        } else if (method == 8U) {
+#ifdef FIRESTAFF_HAS_ZLIB
+            z_stream stream;
+            int result;
+            memset(&stream, 0, sizeof(stream));
+            stream.next_in = (Bytef *)(zip + dataOffset);
+            stream.avail_in = packed;
+            stream.next_out = bytes;
+            stream.avail_out = unpacked;
+            if (inflateInit2(&stream, -MAX_WBITS) != Z_OK) { free(bytes); return NULL; }
+            result = inflate(&stream, Z_FINISH);
+            inflateEnd(&stream);
+            if (result != Z_STREAM_END || stream.avail_in != 0U || stream.avail_out != 0U) {
+                free(bytes); return NULL;
+            }
+#else
+            free(bytes); return NULL;
+#endif
+        } else { free(bytes); return NULL; }
+        *outSize = unpacked;
+        return bytes;
+    }
+    return NULL;
+}
+
 #ifndef _WIN32
 static uint8_t *external_read_entry_bytes(const char *archivePath,
                                           const char *entryName,
@@ -6275,11 +6357,6 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
     size_t imageSize = 0U;
     AssetReadVirtualMatch match;
     int result = -1;
-    char temporary_inner_zip[] = "/tmp/firestaff-inner-read-XXXXXX.zip";
-#ifndef _WIN32
-    int temporary_inner_fd = -1;
-#endif
-    int temporary_inner_created = 0;
     if (!virtualPath || !outBytes || !outSize) return 0;
     *outBytes = NULL;
     *outSize = 0U;
@@ -6330,29 +6407,23 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
     third = strstr(second + 2, "::");
     if (third && asset_container_kind_for_path(container) == ASSET_CONTAINER_ZIP &&
         has_case_suffix(disk, ".zip") && third[2] != '\0') {
-#ifndef _WIN32
         uint8_t *inner = zip_load_entry_bytes(container, disk, &imageSize);
         size_t adfLength = (size_t)(third - (second + 2));
-        if (!inner || adfLength == 0U || adfLength >= sizeof(disk) ||
-            (temporary_inner_fd = mkstemps(temporary_inner_zip, 4)) < 0 ||
-            write(temporary_inner_fd, inner, imageSize) != (ssize_t)imageSize ||
-            close(temporary_inner_fd) != 0) {
-            if (temporary_inner_fd >= 0) (void)close(temporary_inner_fd);
+        char adfName[ASSET_PATH_MAX];
+        if (!inner || adfLength == 0U || adfLength >= sizeof(adfName)) {
             free(inner);
             return 0;
         }
-        temporary_inner_fd = -1;
-        temporary_inner_created = 1;
+        memcpy(adfName, second + 2, adfLength);
+        adfName[adfLength] = '\0';
+        image = zip_load_memory_entry_bytes(inner, imageSize, adfName, &imageSize);
         free(inner);
-        memcpy(container, temporary_inner_zip, sizeof(temporary_inner_zip));
+        if (!image) return 0;
         memcpy(disk, second + 2, adfLength);
         disk[adfLength] = '\0';
         second = third;
-#else
-        return 0;
-#endif
     }
-    if (asset_container_kind_for_path(container) == ASSET_CONTAINER_ZIP) {
+    if (!image && asset_container_kind_for_path(container) == ASSET_CONTAINER_ZIP) {
         image = zip_load_entry_bytes(container, disk, &imageSize);
     } else if (asset_container_kind_for_path(container) == ASSET_CONTAINER_EXTERNAL) {
 #ifndef _WIN32
@@ -6382,7 +6453,6 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
         }
     }
     free(image);
-    if (temporary_inner_created) (void)remove(temporary_inner_zip);
     if (result < 0 || !match.bytes) return 0;
     *outBytes = match.bytes;
     *outSize = match.size;
