@@ -37,6 +37,7 @@ probe_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
 
 case "$probe_output" in
     *"phase=csb-amiga-a31-titl"*"startupActive=1"*"startupAnimation=titl-dat"*"levelLoaded=0"*) ;;
+    *"phase=csb-title-1"*"startupActive=1"*"startupAnimation=csb-title"*"levelLoaded=1"*) ;;
     *"phase=csb-entrance-0"*"startupActive=1"*"startupAnimation=csb-entrance"*"levelLoaded=1"*) ;;
     *)
         echo "FAIL: native Amiga CSB CLI boot did not reach its source startup phase" >&2
@@ -80,8 +81,8 @@ echo "PASS: native CSB Amiga CLI title input reaches verified runtime movement"
 # well.  This is intentionally separate from --boot-probe: that flag enters
 # the direct-launch path and cannot prove Enter on the visible game row keeps
 # the A31 program/title owner.  A31M and A31E may take different title paths,
-# so only the selected cache identity and successful original launch are
-# asserted here.  ReDMCSB COMPILE.H:199-213, 246-269.
+# so only the selected original-media identity and successful native launch
+# are asserted here.  ReDMCSB COMPILE.H:199-213, 246-269.
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy "$firestaff_cli" \
     --menu --game csb --data-dir "$data_dir" --platform amiga \
@@ -91,7 +92,7 @@ menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 }
 
 case "$menu_output" in
-    *"CSB READY: gameId=csb"*"dataDir="*"csb-amiga"*"route=startup"*) ;;
+    *"CSB READY: gameId=csb"*"dataDir=$data_dir"*"route=startup"*) ;;
     *)
         echo "FAIL: CSB Amiga start-menu Enter did not retain native media" >&2
         printf '%s\n' "$menu_output" >&2

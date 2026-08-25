@@ -6459,36 +6459,31 @@ static int m11_csb_prepare_amiga_appb_selection(M11_GameViewState *state)
     CSB_V1_AmigaAppbSelectionReceipt selection;
     char path[FSP_PATH_MAX];
     char md5[33];
-    FILE *file = NULL;
-    long length;
     uint8_t *bytes = NULL;
+    size_t byte_count = 0U;
     int decoded = 0;
 
     if (!state || !state->csbBootProfile || state->csbAmigaAppbSelectionActive) {
         return state && state->csbAmigaAppbSelectionActive;
     }
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
-    if (!m11_csb_is_amiga_a31_profile(profile) || !profile->asset_root[0] ||
-        snprintf(path, sizeof(path), "%s/APPB.FTL", profile->asset_root) <= 0 ||
-        strlen(path) >= sizeof(path) || !asset_file_md5_hex(path, md5) ||
+    if (!m11_csb_is_amiga_a31_profile(profile) ||
+        !m11_csb_amiga_program_locator(profile, "APPB.FTL", path, sizeof(path)) ||
+        !asset_file_md5_hex(path, md5) ||
         strcmp(md5, "35987d3f0278c6036fcc24786d4a75d7") != 0) {
         return 0;
     }
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0 ||
-        (length = ftell(file)) <= 0 || length > 1024L * 1024L ||
-        fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
+    if (!(strstr(path, "::")
+              ? asset_read_virtual_path_alloc(path, &bytes, &byte_count)
+              : asset_read_path_alloc(path, &bytes, &byte_count)) ||
+        !bytes || byte_count == 0U || byte_count > 1024U * 1024U) {
+        free(bytes);
         return 0;
     }
-    bytes = (uint8_t *)malloc((size_t)length);
-    if (bytes && fread(bytes, 1u, (size_t)length, file) == (size_t)length) {
-        memset(&selection, 0, sizeof(selection));
-        decoded = csb_v1_amiga_appb_decode_language_selection(
-            bytes, (size_t)length, state->csbAmigaTitlPixels,
-            sizeof(state->csbAmigaTitlPixels), &selection);
-    }
-    fclose(file);
+    memset(&selection, 0, sizeof(selection));
+    decoded = csb_v1_amiga_appb_decode_language_selection(
+        bytes, byte_count, state->csbAmigaTitlPixels,
+        sizeof(state->csbAmigaTitlPixels), &selection);
     free(bytes);
     if (!decoded) return 0;
     memcpy(state->csbAmigaTitlPalette, selection.rgb4,
@@ -6506,36 +6501,31 @@ static int m11_csb_prepare_amiga_a35m_appb_selection(M11_GameViewState *state)
     CSB_V1_AmigaAppbSelectionReceipt selection;
     char path[FSP_PATH_MAX];
     char md5[33];
-    FILE *file = NULL;
-    long length;
     uint8_t *bytes = NULL;
+    size_t byte_count = 0U;
     int decoded = 0;
 
     if (!state || !state->csbBootProfile || state->csbAmigaAppbSelectionActive) {
         return state && state->csbAmigaAppbSelectionActive;
     }
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
-    if (!m11_csb_is_amiga_a35m_profile(profile) || !profile->asset_root[0] ||
-        snprintf(path, sizeof(path), "%s/APPB.FTL", profile->asset_root) <= 0 ||
-        strlen(path) >= sizeof(path) || !asset_file_md5_hex(path, md5) ||
+    if (!m11_csb_is_amiga_a35m_profile(profile) ||
+        !m11_csb_amiga_program_locator(profile, "APPB.FTL", path, sizeof(path)) ||
+        !asset_file_md5_hex(path, md5) ||
         strcmp(md5, "1533410beaeea4fa614ae0f0142e0861") != 0) {
         return 0;
     }
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0 ||
-        (length = ftell(file)) <= 0 || length > 1024L * 1024L ||
-        fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
+    if (!(strstr(path, "::")
+              ? asset_read_virtual_path_alloc(path, &bytes, &byte_count)
+              : asset_read_path_alloc(path, &bytes, &byte_count)) ||
+        !bytes || byte_count == 0U || byte_count > 1024U * 1024U) {
+        free(bytes);
         return 0;
     }
-    bytes = (uint8_t *)malloc((size_t)length);
-    if (bytes && fread(bytes, 1u, (size_t)length, file) == (size_t)length) {
-        memset(&selection, 0, sizeof(selection));
-        decoded = csb_v1_amiga_a35m_appb_decode_language_selection(
-            bytes, (size_t)length, state->csbAmigaTitlPixels,
-            sizeof(state->csbAmigaTitlPixels), &selection);
-    }
-    fclose(file);
+    memset(&selection, 0, sizeof(selection));
+    decoded = csb_v1_amiga_a35m_appb_decode_language_selection(
+        bytes, byte_count, state->csbAmigaTitlPixels,
+        sizeof(state->csbAmigaTitlPixels), &selection);
     free(bytes);
     if (!decoded) return 0;
     memcpy(state->csbAmigaTitlPalette, selection.rgb4,
@@ -6559,8 +6549,8 @@ static int m11_csb_complete_amiga_appb_language_handoff(M11_GameViewState *state
     if ((!m11_csb_is_amiga_a31_profile(profile) &&
          !m11_csb_is_amiga_a35m_profile(profile)) || !profile->asset_root[0] ||
         !profile->runtime.dungeon_handle ||
-        snprintf(path, sizeof(path), "%s/KAOS.FTL", profile->asset_root) <= 0 ||
-        strlen(path) >= sizeof(path) || !asset_file_md5_hex(path, md5) ||
+        !m11_csb_amiga_program_locator(profile, "KAOS.FTL", path, sizeof(path)) ||
+        !asset_file_md5_hex(path, md5) ||
         strcmp(md5, m11_csb_is_amiga_a35m_profile(profile)
                     ? "229d3253968d6e616f8b5171efdf04a5"
                     : "dbb79832c9cc3db82886ba8d3f72748a") != 0) {
