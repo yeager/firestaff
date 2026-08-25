@@ -1,5 +1,7 @@
 #include "nexus_v1_raw_bin.h"
+#include "nexus_v1_iso_reader.h"
 #include "nexus_v1_palette.h"
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,6 +24,50 @@ static uint8_t *load_file(const char *path, int *out_size) {
     return buf;
 }
 
+static uint8_t *load_retail_file(const char *root, const char *name,
+                                 int *out_size) {
+    static const char *const cue_names[] = {
+        "Dungeon Master Nexus (Japan).cue",
+        "Dungeon Master Nexus (English).cue",
+        NULL
+    };
+    Nexus_ISOReader iso;
+    const Nexus_ISOFile *member;
+    char path[1024];
+    int index;
+    uint8_t *data;
+
+    if (!root || !name || !out_size) return NULL;
+    snprintf(path, sizeof(path), "%s/%s", root, name);
+    data = load_file(path, out_size);
+    if (data) return data;
+    memset(&iso, 0, sizeof(iso));
+    if (strlen(root) >= 4U && strcmp(root + strlen(root) - 4U, ".cue") == 0) {
+        if (nexus_iso_open_cue(&iso, root) <= 0) return NULL;
+    } else {
+        for (index = 0; cue_names[index]; ++index) {
+            snprintf(path, sizeof(path), "%s/%s", root, cue_names[index]);
+            if (nexus_iso_open_cue(&iso, path) > 0) break;
+        }
+        if (!iso.valid) return NULL;
+    }
+    member = nexus_iso_find(&iso, name);
+    if (!member || member->size == 0U || member->size > (uint32_t)INT_MAX) {
+        nexus_iso_close(&iso);
+        return NULL;
+    }
+    data = (uint8_t *)malloc(member->size);
+    if (!data || nexus_iso_read_file(&iso, member, data, (int)member->size) !=
+                     (int)member->size) {
+        free(data);
+        data = NULL;
+    } else {
+        *out_size = (int)member->size;
+    }
+    nexus_iso_close(&iso);
+    return data;
+}
+
 static const char *type_name(int t) {
     switch (t) {
         case 1: return "VDP_DATA";
@@ -34,20 +80,20 @@ static const char *type_name(int t) {
 static int test_file(const char *name) {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
-    char path[512];
+    char root[512];
     uint8_t *data;
     int size = 0;
     Nexus_V1_RawBinDecodeResult r;
 
     if (data_dir && data_dir[0]) {
-        snprintf(path, sizeof(path), "%s/%s", data_dir, name);
+        snprintf(root, sizeof(root), "%s", data_dir);
     } else if (home && home[0]) {
-        snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/%s", home, name);
+        snprintf(root, sizeof(root), "%s/.firestaff/data/nexus", home);
     } else {
         printf("  SKIP %s (Nexus data root is unset)\n", name);
         return 0;
     }
-    data = load_file(path, &size);
+    data = load_retail_file(root, name, &size);
     if (!data) { printf("  SKIP %s (not found)\n", name); return 0; }
 
     if (!nexus_v1_raw_bin_decode(data, size, &r)) {
@@ -73,7 +119,7 @@ static int test_stone_pp(void)
 {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
-    char path[512];
+    char root[512];
     uint8_t *data;
     uint8_t packed[NEXUS_STONE_PP_PACKED_BYTES];
     uint16_t palette[NEXUS_STONE_PP_PALETTE_COUNT];
@@ -82,14 +128,14 @@ static int test_stone_pp(void)
     Nexus_StonePpRecordReceipt record;
 
     if (data_dir && data_dir[0]) {
-        snprintf(path, sizeof(path), "%s/STONE.BIN", data_dir);
+        snprintf(root, sizeof(root), "%s", data_dir);
     } else if (home && home[0]) {
-        snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/STONE.BIN", home);
+        snprintf(root, sizeof(root), "%s/.firestaff/data/nexus", home);
     } else {
         printf("  SKIP STONE pp (Nexus data root is unset)\n");
         return 0;
     }
-    data = load_file(path, &size);
+    data = load_retail_file(root, "STONE.BIN", &size);
     if (!data) { printf("  SKIP STONE pp (not found)\n"); return 0; }
     if (!nexus_palette_stone_pp_receipt(data, size, &receipt) ||
         !receipt.valid || receipt.record_count != 8 || receipt.width != 32 ||
