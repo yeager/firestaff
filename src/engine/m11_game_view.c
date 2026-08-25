@@ -31813,6 +31813,28 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         CSB_V1_BootStartupHostInputDispatchReceipt_PC34 dispatch_receipt;
         const CSB_V1_BootProfile *csb_profile =
             (const CSB_V1_BootProfile *)state->csbBootProfile;
+        /* The Atari ST direct-start path has already authenticated the
+         * ANIMATE/CHAOS/FTLCODE chain. ACCEPT is its explicit launcher handoff
+         * command: advance to the source script's final VBlank and cross the
+         * same verified ANIM.C -> FTLCODE boundary. Without this branch, an
+         * Enter delivered by the native CLI is silently routed through the
+         * unrelated PC34 startup dispatcher and the real ST route can never
+         * be started interactively. */
+        if (csb_profile &&
+            (csb_profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+             csb_profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
+            state->csbState.startup_title_active &&
+            !state->csbStartupRuntimeAssetSession &&
+            (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION)) {
+            if (state->csbAtariStAnimationEndVbl == 0u) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+            state->csbAtariStAnimationClockStarted = 1;
+            state->csbAtariStAnimationVbl = state->csbAtariStAnimationEndVbl;
+            state->csbAtariStAnimationVblRemainder = 0u;
+            return m11_csb_complete_atari_st_runtime_handoff(state)
+                ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
         /* ENTRANCE.C F0442 owns all input while its C005 page is visible.
          * The native Amiga route has no PC34 capture session, so consume the
          * dismissal here instead of allowing C080/C083 live commands behind

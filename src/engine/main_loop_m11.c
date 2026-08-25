@@ -6676,6 +6676,19 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
 
     /* Always present at least once so the window actually has content. */
     if (o->directLaunch && !o->csbHintOracle) {
+        /* Direct launch normally delegates platform selection to M12 so a
+         * selected original archive remains the only media owner. CSB is a
+         * special closed boundary: there was no retail DOS/PC edition, and a
+         * later generic "game unavailable" error hides that fact after the
+         * catalogue scan found no media. Reject before any fallback/cache
+         * selection can occur. */
+        if (o->gameId && strcmp(o->gameId, "csb") == 0 &&
+            o->architectureOverride == M12_ARCH_PC) {
+            fprintf(stderr,
+                    "firestaff: CSB has no original DOS/PC release; use --platform amiga, atari-st, or fm-towns\n");
+            runRc = 2;
+            goto cleanup;
+        }
         if (!M11_PrepareDirectLaunchForGame(&menuState, o->gameId)) {
             fprintf(stderr, "firestaff: game unavailable for --game: %s\n",
                     o->gameId ? o->gameId : "(null)");

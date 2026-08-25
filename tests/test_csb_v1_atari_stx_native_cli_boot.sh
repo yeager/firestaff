@@ -16,7 +16,10 @@ title_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     exit 1
 }
 case "$title_output" in
-    *sourceId=csb*assetMd5=ebf6a57af3f27782e358c0490bfd2f2e*phase=csb-title-2*startupAnimation=csb-title*levelLoaded=1*) ;;
+    # The original STX route first owns the retained ANIMATE.SCR title
+    # sequence. It must expose the real title as ready, but must not invent a
+    # loaded dungeon before the user accepts it.
+    *sourceId=csb*assetMd5=ebf6a57af3f27782e358c0490bfd2f2e*phase=csb-atari-st-animation*startupAnimation=animate-scr*titleReady=1*levelLoaded=0*) ;;
     *)
         echo "FAIL: native CSB Atari ST media did not reach its source title"
         printf '%s\n' "$title_output" >&2

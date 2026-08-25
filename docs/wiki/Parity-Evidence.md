@@ -69,6 +69,10 @@ the 50 Hz `ANIMATE.SCR`/`ANIMATE.DAT` title cadence, FTLCODE handoff and first
 runtime HUD/viewport frame. This is bounded startup evidence, not a claim of
 full campaign parity.
 
+Its native Enter/Accept command reaches that authenticated FTLCODE handoff;
+CSB `--platform pc` instead fails closed before selecting media, since no
+original DOS/PC edition exists.
+
 ### DM2
 
 Documents covering GDAT material families, G1 record graphs, creature occupancy, combat drops, sound decode.
