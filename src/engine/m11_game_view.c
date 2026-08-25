@@ -23306,8 +23306,19 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         M11_GameView_Init(state);
         state->showDebugHUD = savedDebugHUD;
         m11_apply_launcher_options_handoff(state, spec);
-        if (spec->csbFmtownsJapanese) {
+        if (spec->csbFmtownsJapanese ||
+            (spec->verifiedAssetMd5 &&
+             strcmp(spec->verifiedAssetMd5,
+                    "761d6fc588b31aeaaa9caf3725e111b9") == 0)) {
             requestedCsbVariant = CSB_V1_VARIANT_FMTOWNS_JA;
+        } else if (spec->verifiedAssetMd5 &&
+                   strcmp(spec->verifiedAssetMd5,
+                          "405b757038eea3c263e60f240854d6de") == 0) {
+            /* The M12 package chooser owns the selected F31E source.  Pass
+             * that identity explicitly: an English FM Towns launch has no
+             * language flag, and UNKNOWN would make boot scan the ZIP as a
+             * generic directory before it can enter the RAM CD path. */
+            requestedCsbVariant = CSB_V1_VARIANT_FMTOWNS_EN;
         } else if (spec->verifiedAssetMd5 &&
                    (strcmp(spec->verifiedAssetMd5,
                            "ebf6a57af3f27782e358c0490bfd2f2e") == 0 ||
