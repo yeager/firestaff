@@ -283,6 +283,11 @@ static void test_slot_resolve_allocates(void)
     assert(receipt.valid == 1);
     assert(receipt.slot_ptr != NULL);
     assert(receipt.allocated_new == 1);
+    {
+        uint8_t *stored = NULL;
+        memcpy(&stored, receipt.slot_ptr, sizeof(stored));
+        assert(stored == hexe_entry);
+    }
     printf("  PASS: slot_resolve_allocates\n");
 }
 

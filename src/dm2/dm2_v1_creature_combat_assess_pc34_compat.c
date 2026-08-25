@@ -445,7 +445,14 @@ int dm2_v1_ai_action_slot_resolve(
         }
 
         /* c_ai.cpp:1330-1341 — initialize new slot */
-        memcpy(free_slot, &request->hexe_entry, sizeof(uint8_t *));
+        /* Store the source-owned HEXE entry pointer itself.  Taking the
+         * address of the request field would instead retain a pointer into
+         * this transient request object, making the following lookup fail
+         * once the caller's stack frame changes. */
+        {
+            uint8_t *hexe_entry = request->hexe_entry;
+            memcpy(free_slot, &hexe_entry, sizeof(hexe_entry));
+        }
         free_slot[DM2_V1_AI_ACTION_SLOT_TYPE_OFF] =
             (uint8_t)(request->action_type & 0xFF);
         free_slot[DM2_V1_AI_ACTION_SLOT_TYPE_OFF + 1] = 0;
