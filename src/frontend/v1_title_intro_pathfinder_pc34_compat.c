@@ -45,6 +45,13 @@ static int v1_title_intro_cache_virtual_path(const char* virtualPath,
         strstr(virtualPath, "::") == NULL) {
         return 0;
     }
+#if !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
+    /* TITLE is optional presentation media. Do not create a loose game-data
+     * copy from a packed original just to satisfy this fallback; the normal
+     * GRAPHICS.DAT title route remains available. */
+    outPath[0] = '\0';
+    return 0;
+#endif
     if (!FSP_GetUserDataDir(userData, sizeof(userData)) ||
         !FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userData, "asset-cache") ||
         !FSP_JoinPath(gameCache, sizeof(gameCache), cacheRoot, "dm1") ||

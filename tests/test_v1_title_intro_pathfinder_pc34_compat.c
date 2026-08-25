@@ -285,12 +285,10 @@ int main(void)
     expect_true(V1_TitleIntro_FindTitleDatPath(NULL,
                                                 archive_root,
                                                 found,
-                                                sizeof(found)) == 1,
-                "TITLE hash scan finds canonical payload inside ZIP");
-    expect_true(strstr(found, "asset-cache") != NULL &&
-                    strstr(found, "dm1") != NULL &&
-                    V1_Title_IsCanonicalPc34Title(found, NULL, 0U),
-                "TITLE ZIP payload is materialized as canonical runtime file");
+                                                sizeof(found)) == 0,
+                "packed TITLE remains closed until the presentation consumer reads RAM");
+    expect_true(found[0] == '\0',
+                "packed TITLE fallback does not create an asset-cache game-data copy");
 
     if (g_failures) {
         return 1;
