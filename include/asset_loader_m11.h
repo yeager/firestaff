@@ -50,6 +50,9 @@ typedef struct {
     /* M10 GRAPHICS.DAT runtime and file state */
     void* fileState;     /* MemoryGraphicsDatState_Compat* */
     void* runtimeState;  /* MemoryGraphicsDatRuntimeState_Compat* */
+    /* Resident source for InitFromBuffer. The IMG3 file state keeps byte
+     * pointers into it, so archive-backed media must remain RAM-resident. */
+    unsigned char* ownedBuffer;
 
     unsigned short graphicCount; /* total graphics in file */
 
@@ -96,7 +99,7 @@ int M11_AssetLoader_InitDecodedOnly(M11_AssetLoader* loader,
                                     const char* sourcePath);
 
 /* Initialize the loader from an in-memory GRAPHICS.DAT buffer.
-   The buffer must remain valid for the loader's lifetime.
+   The loader retains an internal copy for its lifetime.
    Returns 1 on success, 0 on failure. */
 int M11_AssetLoader_InitFromBuffer(M11_AssetLoader* loader,
                                    const unsigned char *data, long size);

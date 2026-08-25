@@ -92,6 +92,7 @@ int M11_AssetLoader_InitFromBuffer(M11_AssetLoader* loader,
                                    const unsigned char *data, long size) {
     struct MemoryGraphicsDatState_Compat* fileState;
     struct MemoryGraphicsDatRuntimeState_Compat* runtimeState;
+    unsigned char *ownedBuffer;
 
     if (!loader || !data || size <= 0) {
         return 0;
@@ -109,16 +110,25 @@ int M11_AssetLoader_InitFromBuffer(M11_AssetLoader* loader,
         free(runtimeState);
         return 0;
     }
+    ownedBuffer = (unsigned char *)malloc((size_t)size);
+    if (!ownedBuffer) {
+        free(fileState);
+        free(runtimeState);
+        return 0;
+    }
+    memcpy(ownedBuffer, data, (size_t)size);
 
     if (!F0479_MEMORY_InitializeGraphicsDatState_FromBuffer_Compat(
-            data, size, fileState, runtimeState)) {
+            ownedBuffer, size, fileState, runtimeState)) {
+        free(ownedBuffer);
         free(fileState);
         free(runtimeState);
         return 0;
     }
 
-    if (!F0477_MEMORY_OpenGraphicsDat_FromBuffer_Compat(data, size, fileState)) {
+    if (!F0477_MEMORY_OpenGraphicsDat_FromBuffer_Compat(ownedBuffer, size, fileState)) {
         F0479_MEMORY_FreeGraphicsDatState_Compat(runtimeState);
+        free(ownedBuffer);
         free(fileState);
         free(runtimeState);
         return 0;
@@ -126,6 +136,7 @@ int M11_AssetLoader_InitFromBuffer(M11_AssetLoader* loader,
 
     loader->fileState = fileState;
     loader->runtimeState = runtimeState;
+    loader->ownedBuffer = ownedBuffer;
     loader->graphicCount = runtimeState->graphicCount;
     loader->initialized = 1;
     return 1;
@@ -284,6 +295,7 @@ void M11_AssetLoader_Shutdown(M11_AssetLoader* loader) {
         return;
     }
     free(loader->legacyData);
+    free(loader->ownedBuffer);
     free(loader->atariStData);
     free(loader->csbAmigaData);
     free(loader->csbFmtownsData);

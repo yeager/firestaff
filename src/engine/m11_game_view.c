@@ -6973,7 +6973,7 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
      * RAM.  The receipt still records the sibling GRAPHICS.DAT identity,
      * but must not reopen its virtual name through fopen(). */
     if (strstr(receipt->graphics_dat_path, "::") != NULL &&
-        (state->assetLoader.atariStDm1 || state->assetLoader.legacyDm1)) {
+        state->assetLoader.initialized) {
         state->assetsAvailable = 1;
         return 1;
     }
@@ -23722,7 +23722,9 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             ((dm1AtariDungeonFormat)
                  ? !M11_AssetLoader_InitDm1AtariStFromBuffer(
                        &state->assetLoader, graphicsBytes, (long)graphicsSize)
-                 : (!M11_AssetLoader_InitDm1LegacyFromBuffer(
+                 : (!M11_AssetLoader_InitFromBuffer(
+                       &state->assetLoader, graphicsBytes, (long)graphicsSize) &&
+                    !M11_AssetLoader_InitDm1LegacyFromBuffer(
                        &state->assetLoader, graphicsBytes, (long)graphicsSize, 0) &&
                     !M11_AssetLoader_InitDm1LegacyFromBuffer(
                        &state->assetLoader, graphicsBytes, (long)graphicsSize, 1)))) {
