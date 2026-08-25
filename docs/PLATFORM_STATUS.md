@@ -60,7 +60,7 @@ parity gate is complete.
 
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
-| PC Engine/TurboGrafx-16 Japanese | **Verified route** | Authentic Rev 1 CUE reaches native title, stage, Soul Room, Akutuba runtime (`party=1,0,0`) and a source-only Drator binding (8 maps/291 objects); Track 02 identity and level framing are verified. | Broader game-owned runtime, bitmap/palette binding, saves and positive gameplay capture. |
+| PC Engine/TurboGrafx-16 Japanese | **Verified route** | Authentic Rev 1 CUE reaches native title, stage, Soul Room and Akutuba runtime (`party=1,0,0`). Its Track 02 source consumer binds all seven campaign dungeons (2,266 source objects; Drator: 8 maps/291 objects); identity and level framing are verified. | Captured transitions, bitmap/palette binding, saves and positive gameplay behavior. |
 | PC Engine/TurboGrafx-16 US | **Data path** | Authentic Track 02 identity and shared parser/runtime boundary. | US gameplay handoff and capture proof. |
 
 ## Data and preservation rules

@@ -47,6 +47,8 @@ int main(void) {
     Theron_V1_World world;
     char receipt[256];
     char md5[33];
+    Theron_DungeonID dungeon_id;
+    unsigned int total_source_objects = 0u;
 
     if (!path) {
         puts("SKIP: authentic Theron JP Track 02 is not staged");
@@ -60,26 +62,33 @@ int main(void) {
         free(track02);
         return 1;
     }
-    theron_v1_world_init(&world);
-    memset(receipt, 0, sizeof(receipt));
-    if (!theron_v1_startup_runtime_load_source_dungeon(
-            &world, track02, track02_size, md5,
-            THERON_DUNGEON_2_DRATOR, receipt, sizeof(receipt)) ||
-        world.current_dungeon != THERON_DUNGEON_2_DRATOR ||
-        world.current_level != 0 || !world.level_loaded[1][0] ||
-        world.levels[1][0].width == 0 || world.levels[1][0].height == 0 ||
-        world.source_object_count == 0u ||
-        !strstr(receipt, "dungeon=2") || !strstr(receipt, "visual capture remains gated")) {
-        fprintf(stderr,
-                "FAIL: JP Track 02 Drator source-dungeon handoff: %s (dungeon=%d level=%d loaded=%d size=%dx%d objects=%u)\n",
-                receipt, world.current_dungeon, world.current_level,
-                world.level_loaded[1][0], world.levels[1][0].width,
-                world.levels[1][0].height, world.source_object_count);
-        free(track02);
-        return 1;
+    for (dungeon_id = THERON_DUNGEON_1_AKUTUBA;
+         dungeon_id <= THERON_DUNGEON_7_DEMON;
+         dungeon_id = (Theron_DungeonID)(dungeon_id + 1)) {
+        const int slot = (int)dungeon_id - 1;
+        theron_v1_world_init(&world);
+        memset(receipt, 0, sizeof(receipt));
+        if (!theron_v1_startup_runtime_load_source_dungeon(
+                &world, track02, track02_size, md5, dungeon_id,
+                receipt, sizeof(receipt)) ||
+            world.current_dungeon != (int)dungeon_id || world.current_level != 0 ||
+            !world.level_loaded[slot][0] ||
+            world.levels[slot][0].width == 0 ||
+            world.levels[slot][0].height == 0 ||
+            world.source_object_count == 0u ||
+            !strstr(receipt, "visual capture remains gated")) {
+            fprintf(stderr,
+                    "FAIL: JP Track 02 source-dungeon handoff: %s (dungeon=%d level=%d loaded=%d size=%dx%d objects=%u)\n",
+                    receipt, world.current_dungeon, world.current_level,
+                    world.level_loaded[slot][0], world.levels[slot][0].width,
+                    world.levels[slot][0].height, world.source_object_count);
+            free(track02);
+            return 1;
+        }
+        total_source_objects += world.source_object_count;
     }
-    printf("PASS: authentic JP Track 02 binds later Drator dungeon (%u source objects)\n",
-           world.source_object_count);
+    printf("PASS: authentic JP Track 02 binds all seven source dungeons (%u source objects)\n",
+           total_source_objects);
     free(track02);
     return 0;
 }
