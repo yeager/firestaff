@@ -370,8 +370,8 @@ int main(void) {
 
     M12_AssetStatus_Scan(&status, rawGraphicsPath);
 
-    check_int(!M12_AssetStatus_GameAvailable(&status, "dm2"),
-              "renamed loose DM2 files stay blocked rather than being copied");
+    check_int(M12_AssetStatus_GameAvailable(&status, "dm2"),
+              "renamed loose DM2 files retain their source-owned launch route");
     check_int(paths_equal_physical(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
                                    rawDir),
               "renamed loose DM2 files must retain their original directory");

@@ -2210,10 +2210,9 @@ static int m12_path_is_virtual_asset(const char* path) {
 /* Production must never turn a packed game file into a second game-data
  * tree.  Archive members remain the authenticated source locator; callers
  * that support the format read them through their bounded in-memory reader.
- * The test/development materializers are deliberately kept behind the
- * existing test build boundary. */
-#if !defined(FIRESTAFF_ASSET_STATUS_TESTING) && \
-    !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
+ * Disk materialization is available only in an explicitly opted-in
+ * development build; test fixtures must exercise the same no-copy contract. */
+#if !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
 static int m12_source_runtime_root(const char* matchedPath,
                                    char* outPath, size_t outPathSize) {
     const char* separator;
@@ -2234,8 +2233,7 @@ static int m12_source_runtime_root(const char* matchedPath,
 }
 #endif
 
-#if !defined(FIRESTAFF_ASSET_STATUS_TESTING) && \
-    !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
+#if !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
 static int m12_publish_source_runtime_root(M12_AssetStatus* status,
                                            int gameIndex) {
     const M12_AssetVersionStatus* version;
@@ -5319,12 +5317,23 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT) {
         return 1;
     }
-#if !defined(FIRESTAFF_ASSET_STATUS_TESTING) && \
-    !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
+#if !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
     /* Never unpack or copy game data during a normal Firestaff run.  Keep
      * the original directory/archive as the runtime owner.  A format whose
      * launcher has no native packed-reader must fail its launch gate rather
      * than silently receiving synthetic asset-cache files. */
+    {
+        const M12_AssetVersionStatus* version =
+            m12_first_matched_version(status, gameIndex);
+        /* The PC DM2 loader still opens its paired files by their original
+         * loose-file names. It has no archive-backed reader yet, so a ZIP
+         * member must remain a recognised-but-unlaunchable source rather
+         * than being copied into an asset cache. */
+        if (version && strcmp(g_games[gameIndex].gameId, "dm2") == 0 &&
+            m12_path_is_virtual_asset(version->matchedPath)) {
+            return 0;
+        }
+    }
     return m12_publish_source_runtime_root(status, gameIndex);
 #endif
     gameId = g_games[gameIndex].gameId;
