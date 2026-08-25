@@ -2714,14 +2714,10 @@ int csb_v1_boot_startup_launch_alloc_with_variant_pc34(
     CSB_V1_StartupHostReceipt_PC34 failure_receipt;
     int effective_variant = requested_variant;
 
-    /* An explicitly selected CSB FM Towns archive with no language bit uses
-     * the original English CDATA branch as AUTO.  The launcher sets the
-     * Japanese bit only for the selected CJDATA edition. */
-    if (data_dir && data_dir[0] && FSP_FileExists(data_dir) &&
-        !FSP_DirExists(data_dir) &&
-        effective_variant == CSB_V1_VARIANT_UNKNOWN) {
-        effective_variant = CSB_V1_VARIANT_FMTOWNS_EN;
-    }
+    /* A selected file is not necessarily an FM Towns archive: Amiga ZIP
+     * packages are also direct, native media.  Only M12's authenticated
+     * version selection may request an F31 language branch; guessing from a
+     * host file made an explicit Amiga ZIP enter the FM Towns reselector. */
 
     if (!out_launch) {
         return 0;
