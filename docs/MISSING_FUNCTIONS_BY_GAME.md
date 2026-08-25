@@ -1,6 +1,6 @@
 # Saknade funktioner och verifieringar per spel
 
-Status: 2026-08-08. Detta är en sammanställning av kvarvarande luckor i
+Status: 2026-08-25. Detta är en sammanställning av kvarvarande luckor i
 Firestaff, inte en lista över varje historiskt TODO- eller symbolnamn.
 
 Varje punkt klassificeras så här:
@@ -98,6 +98,9 @@ som färdig Skullkeep-grafik.
 
 ### Saknad eller ofullständig funktionalitet
 
+- **Explicit Atari STX-val:** M12 måste behålla en uttryckligen vald `.stx`
+  som source-owner i en blandad katalog; nuvarande handoff kan välja ett
+  syskon-FM-Towns-arkiv.
 - Djupare end-to-end gameplay parity och playability utan DM1-antaganden.
 - Fler DSA-timer-, generator-, teleporter- och sensortransaktioner med
   autentiska save/dungeon-par.
@@ -159,6 +162,9 @@ Saturn-pixelbevis.
 
 ### Saknad eller ofullständig funktionalitet
 
+- **Startup är endast verifierad till Soul Room:** den autentiska JP Rev 1
+  CUE:n når native titel → stage → Soul Room, men nivå-/objekt-handoff är inte
+  färdig gameplay.
 - Full source-owned semantik för senare nivåer, objekt, champion-data och
   save/load är inte klar.
 - Autentiska runtime traces behövs för dörrar, pits, teleporters, altar,
