@@ -1,6 +1,6 @@
 # Game and platform status
 
-**Reviewed 2026-08-24.** This is the operational status matrix. It separates
+**Reviewed 2026-08-25.** This is the operational status matrix. It separates
 media recognition, verified runtime slices and end-to-end playability. A row
 marked as supported does not mean that every menu, save format or visual
 parity gate is complete.
@@ -30,7 +30,7 @@ parity gate is complete.
 
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
-| Atari ST | **Verified route** | Native data path, source-locked startup and matching legacy-save route are tested. | Broader campaign, HUD/viewport and pixel parity. |
+| Atari ST | **Verified route** | Native STX title, runtime and start-menu CLI route are tested against supplied campaign media. | Explicit-STX M12 selection, broader campaign, HUD/viewport and pixel parity. |
 | Amiga | **Verified route** | Verified native Amiga family is the default CSB route; startup and bounded runtime slices pass with original data. | Full campaign, save and visual parity. |
 | FM Towns | **Verified route** | English/Japanese native packages have separate data, startup, Utility Disk and input paths. | Wider gameplay, Champion Editor and CD-audio parity. |
 | DOS / PC | **No original release** | CSB has no DOS/PC edition. `--platform pc` is closed before media selection; CSBWin is source/disassembly evidence only. | No PC runtime route is planned from CSBWin; it must not be presented as DOS support. |
@@ -60,7 +60,7 @@ parity gate is complete.
 
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
-| PC Engine/TurboGrafx-16 Japanese | **Data path** | Authentic Track 02 identity, sector reader, level framing and mechanics slices. | Game-owned Track 02 handoff, bitmap/palette binding, saves and positive gameplay capture. |
+| PC Engine/TurboGrafx-16 Japanese | **Verified route** | Authentic Rev 1 CUE reaches native title, stage and Soul Room startup; Track 02 identity and level framing are verified. | Game-owned runtime handoff, bitmap/palette binding, saves and positive gameplay capture. |
 | PC Engine/TurboGrafx-16 US | **Data path** | Authentic Track 02 identity and shared parser/runtime boundary. | US gameplay handoff and capture proof. |
 
 ## Data and preservation rules

@@ -1,4 +1,8 @@
-# Arkiverade TODO-poster (2026-08-08)
+# Historical mixed TODO/DONE archive (2026-08-08)
+
+This is an immutable historical work log retained for provenance. It is not an
+active TODO or DONE ledger; current open work is in `TODO*.md`, and completed
+work is in `DONE*.md`.
 
 - ✅ Theron: keep original-data presentation fail-closed until a runtime capture joins the HuC6280 dynamic level/palette consumers to source LBA/FIFO and VDC destinations. Static bank-$1f and VCE receipts do not prove a complete bitmap/palette/viewport mapping.
 - ✅ Theron: world snapshots now have endian-stable scalar envelopes, portable object/timer/creature records and bounds checks; progression/champion packing still needs a source-owned wire layout before claiming complete cross-host save parity.
@@ -7102,4 +7106,3 @@
   restore, and rejects any incomplete original-candidate census. Remaining
   work is byte-level ownership for the rebuilt dungeon DB regions;
   do not infer either from a header-valid save.
-

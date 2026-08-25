@@ -1,6 +1,6 @@
 # Parity Evidence
 
-> **Status reviewed 2026-08-06.** Evidence is cross-game and bounded. A green
+> **Status reviewed 2026-08-25.** Evidence is cross-game and bounded. A green
 > parser or fixture test is not automatically a real-media runtime claim.
 
 ## What Are Pass Documents?

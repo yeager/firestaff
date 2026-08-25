@@ -72,7 +72,10 @@ feature in backticks.
    generic release summaries. A release with no delta in a category must say
    `None.` explicitly. The release workflow rejects notes that do not meet this
    contract.
-3. **Update TODO.md and DONE.md** as needed.
+3. **Update active TODO and DONE ledgers** as needed: `TODO.md` for
+   cross-game work, `TODO-<game>.md` for active game work, and the matching
+   `DONE*.md` only after evidence-backed completion. Then run
+   `scripts/sync_wiki.sh` in the release workflow to publish `docs/wiki/`.
 4. **Commit** the version bump and documentation.
 5. **Tag** with `v` prefix only when a release is explicitly requested.
 6. **Push** the tag only for that release.

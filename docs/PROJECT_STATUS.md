@@ -1,6 +1,6 @@
 # Firestaff project status
 
-**Last reviewed: 2026-08-24.** This page is the concise status source for the
+**Last reviewed: 2026-08-25.** This page is the concise status source for the
 README and wiki. The full documentation map is in
 [`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md).
 
@@ -10,10 +10,10 @@ source audits and capture receipts remain in the linked game documentation.
 | Game | Current status | What is verified | Main open boundary |
 |---|---|---|---|
 | Dungeon Master 1 | Playable/source-locked V1; native macOS host smoke verified | PC 3.4 runtime, viewport, HUD, input, combat, saves, Apple Silicon macOS boot and original-data gates | C13 save corpus, broader original-vs-Firestaff capture and V2 material; the unreleased historical Macintosh prototype has no local authenticated data |
-| Chaos Strikes Back | Active hardening | Source-locked engine slices, dungeon model, mechanics, startup and utility/import paths | DSA/save corpus, wider real-data runtime, HUD/viewport and pixel evidence |
-| Dungeon Master II: Skullkeep | Playable across DOS, Amiga, FM Towns and Macintosh real media; active hardening continues | M12 source-owner selection, M11 New Game handoff, source-owned viewport/HUD, movement, pit/stairs/DB1, creatures and focused combat/spell routes | Native Amiga/FM Towns/Mac saves, positive DOS WIELD/death-drop fixture, broader source UI/audio/mechanics parity |
+| Chaos Strikes Back | Verified bounded real-media routes; active hardening | Atari STX title/runtime/start-menu CLI, Amiga and FM Towns bounded native routes | Explicit-STX M12 selection, DSA/save corpus, wider HUD/viewport and pixel evidence |
+| Dungeon Master II: Skullkeep | Verified bounded real-media routes; active hardening | M12 source-owner selection, FM Towns M11 title/gameplay corpus, source-owned viewport/HUD and focused mechanics | Full record/save ownership and broader source UI/audio/mechanics parity across editions |
 | DM Nexus | Active real-data bring-up | Saturn DMDF/DGN data, world/render/save/mechanics slices and V2 presentation | Saturn runtime/frame capture, material semantics, event/audio playback and full playability |
-| Theron's Quest | Active real-media bring-up | JP/US Track 02 identity, parser, level framing, mechanics, progression and capture instrumentation | Full Track 02 handoff, save body semantics, bitmap/palette binding and JP capture |
+| Theron's Quest | Verified JP startup route; active real-media bring-up | JP Rev 1 title → stage → Soul Room, JP/US Track 02 identity, parser and level framing | Full Track 02 handoff, save body semantics, bitmap/palette binding and gameplay capture |
 
 ## Completion reporting
 

@@ -56,8 +56,9 @@ Amiga installer, FM Towns disc archive, or Mac archive. Original archives are
 kept intact and archive members are read into bounded memory; Firestaff does
 not use a sibling edition as a fallback.
 
-Focused real-media checks are documented in [TODO-dm2.md](TODO-dm2.md),
-[DONE.md](DONE.md), [DM2 platform variants](docs/dm2_variants_platform.md)
+Focused real-media checks and their current boundaries are documented in
+[TODO-dm2.md](TODO-dm2.md), [DONE-dm2.md](DONE-dm2.md),
+[DM2 platform variants](docs/dm2_variants_platform.md)
 and the [DM2 FM Towns wiki guide](docs/wiki/DM2-FMTowns-Guide.md).
 
 Theron's Quest uses ordinary desktop controls in Firestaff: Up/W moves

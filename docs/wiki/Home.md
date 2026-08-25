@@ -1,6 +1,6 @@
 # Firestaff Wiki
 
-> **Status reviewed 2026-08-13.** Firestaff has five active game targets.
+> **Status reviewed 2026-08-25.** Firestaff has five active game targets.
 > DM1 V1 and DM2 now have playable source-owned routes; CSB, Nexus and Theron
 > remain documented as source-locked or real-data bring-up work where their
 > end-to-end boundaries are still open. See [Project status](https://github.com/yeager/firestaff/blob/main/docs/PROJECT_STATUS.md),
@@ -32,8 +32,9 @@ Firestaff reimplements five classic Dungeon Master game engines with source-leve
 - **Players:** start with the repository [README](../../README.md),
   [game-data setup](../DATA_SETUP.md) and [project status](../PROJECT_STATUS.md).
 - **Developers:** read [architecture](Architecture-Overview),
-  [building and installing](Building-and-Installing), the per-game TODO files
-  and [missing functions by game](../MISSING_FUNCTIONS_BY_GAME.md).
+  [building and installing](Building-and-Installing), the active per-game
+  TODO files, completed per-game DONE ledgers and
+  [missing functions by game](../MISSING_FUNCTIONS_BY_GAME.md).
 - **Reverse-engineering researchers:** use the [reverse-engineering index](Reverse-Engineering-Index),
   source-lock pages and [parity evidence](Parity-Evidence).
 - **Preservation researchers:** start with [preservation and provenance](Preservation),
