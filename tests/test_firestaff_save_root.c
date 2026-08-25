@@ -1,6 +1,9 @@
 #ifndef _WIN32
 #define _XOPEN_SOURCE 700
 #endif
+#ifdef __APPLE__
+#define _DARWIN_C_SOURCE
+#endif
 
 #include "firestaff_save.h"
 
