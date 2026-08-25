@@ -1,4 +1,5 @@
 #include "nexus_v1_sndlev_map_provenance.h"
+#include "nexus_v1_iso_reader.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,32 +17,78 @@ static uint64_t fnv1a64(const uint8_t *bytes, size_t count)
     return hash;
 }
 
+static int open_retail_iso_if_present(const char *directory,
+                                      Nexus_ISOReader *out_iso)
+{
+    static const char *const cue_names[] = {
+        "Dungeon Master Nexus (Japan).cue",
+        "Dungeon Master Nexus (English).cue",
+        NULL
+    };
+    char path[1024];
+    int index;
+
+    if (!directory || !directory[0] || !out_iso) return 0;
+    memset(out_iso, 0, sizeof(*out_iso));
+    if (strlen(directory) >= 4U &&
+        strcmp(directory + strlen(directory) - 4U, ".cue") == 0)
+        return nexus_iso_open_cue(out_iso, directory) > 0;
+    for (index = 0; cue_names[index]; ++index) {
+        snprintf(path, sizeof(path), "%s/%s", directory, cue_names[index]);
+        if (nexus_iso_open_cue(out_iso, path) > 0) return 1;
+    }
+    return 0;
+}
+
 static int verify_real_corpus(void)
 {
     const char *directory = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    Nexus_ISOReader iso;
+    int iso_opened;
     char path[1024];
+    char member_name[32];
     uint8_t bytes[128];
     unsigned level;
 
     /* Keep the focused unit test runnable without user-supplied game data. */
     if (!directory || !directory[0]) return 1;
+    iso_opened = open_retail_iso_if_present(directory, &iso);
     for (level = 0U; level < 16U; ++level) {
         FILE *file;
+        const Nexus_ISOFile *member = NULL;
         size_t size;
         Nexus_V1_SndlevMapProvenanceReceipt receipt;
+        snprintf(member_name, sizeof(member_name), "SNDLEV%02u.MAP", level);
         if (snprintf(path, sizeof(path), "%s/SNDLEV%02u.MAP", directory,
                      level) <= 0 ||
-            (file = fopen(path, "rb")) == NULL) return 0;
-        size = fread(bytes, 1U, sizeof(bytes), file);
-        if (ferror(file) || fclose(file) != 0 || size < 10U || size > 90U ||
+            (file = fopen(path, "rb")) == NULL) {
+            if (!iso_opened ||
+                (member = nexus_iso_find(&iso, member_name)) == NULL ||
+                member->size > sizeof(bytes) ||
+                nexus_iso_read_file(&iso, member, bytes,
+                                    (int)sizeof(bytes)) != (int)member->size) {
+                if (iso_opened) nexus_iso_close(&iso);
+                return 0;
+            }
+            size = member->size;
+        } else {
+            size = fread(bytes, 1U, sizeof(bytes), file);
+            if (ferror(file) || fclose(file) != 0) {
+                if (iso_opened) nexus_iso_close(&iso);
+                return 0;
+            }
+        }
+        if (size < 10U || size > 90U ||
             nexus_v1_sndlev_map_provenance_parse(
                 bytes, size, fnv1a64(bytes, size), &receipt) == 0 ||
             !receipt.valid || receipt.header_length != 0U ||
             receipt.table_offset != 0U || receipt.table_length != size - 2U ||
             receipt.terminator_offset != size - 2U || !receipt.record_count) {
+            if (iso_opened) nexus_iso_close(&iso);
             return 0;
         }
     }
+    if (iso_opened) nexus_iso_close(&iso);
     return 1;
 }
 
