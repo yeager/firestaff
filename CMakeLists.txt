@@ -4169,6 +4169,19 @@ endif()
 if(NOT DEFINED FIRESTAFF_DM1_WORKSPACE_DATA_DIR)
     set(FIRESTAFF_DM1_WORKSPACE_DATA_DIR "$ENV{HOME}/.firestaff/data/dm1")
 endif()
+
+if(BUILD_TESTING)
+    add_test(
+        NAME dm1_v1_pc34_native_cli_boot
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_pc34_native_cli_boot.sh
+            $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(dm1_v1_pc34_native_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;pc34;real-media;native;cli;startup;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
+    )
+endif()
 if(NOT TARGET WORKSPACE_DATA_DIR)
     add_library(WORKSPACE_DATA_DIR INTERFACE IMPORTED GLOBAL)
 endif()
