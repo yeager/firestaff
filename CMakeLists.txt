@@ -17209,6 +17209,7 @@ endif()
     )
     set_tests_properties(csb_v1_atari_stx_native_cli_boot PROPERTIES
         LABELS "tier2;csb;atari;startup;cli;menu;real_data;skip_safe"
+        ENVIRONMENT "FIRESTAFF_CSB_ATARI_STX=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx"
         TIMEOUT 45
     )
     add_test(

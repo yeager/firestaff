@@ -2,12 +2,8 @@
 set -eu
 
 firestaff_cli="${1:?Firestaff executable is required}"
-media_path="${FIRESTAFF_CSB_ATARI_STX:-}"
+media_path="${FIRESTAFF_CSB_ATARI_STX:-$HOME/.firestaff/data/csb/Chaos Strikes Back.stx}"
 
-if [ -z "$media_path" ]; then
-    echo "SKIP: set FIRESTAFF_CSB_ATARI_STX to original CSB Atari ST campaign media"
-    exit 0
-fi
 if [ ! -x "$firestaff_cli" ] || [ ! -e "$media_path" ]; then
     echo "SKIP: CSB Atari ST campaign media or Firestaff executable is unavailable"
     exit 0
