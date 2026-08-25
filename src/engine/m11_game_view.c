@@ -128,6 +128,7 @@
 #include "dm1_v2_camera_controller_pc34.h"
 #include "dm1_v2_boot_pc34.h"
 #include "dm1_v1_fmtowns_cd_audio.h"
+#include "dm1_v1_amiga_graphics_dat.h"
 #include "dm1_v1_fmtowns_dynamenu.h"
 #include "dm1_v1_fmtowns_dyna_buttons_ja.h"
 #include "dm1_v1_fmtowns_text_geometry.h"
@@ -23722,12 +23723,16 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             ((dm1AtariDungeonFormat)
                  ? !M11_AssetLoader_InitDm1AtariStFromBuffer(
                        &state->assetLoader, graphicsBytes, (long)graphicsSize)
-                 : (!M11_AssetLoader_InitFromBuffer(
-                       &state->assetLoader, graphicsBytes, (long)graphicsSize) &&
-                    !M11_AssetLoader_InitDm1LegacyFromBuffer(
-                       &state->assetLoader, graphicsBytes, (long)graphicsSize, 0) &&
-                    !M11_AssetLoader_InitDm1LegacyFromBuffer(
-                       &state->assetLoader, graphicsBytes, (long)graphicsSize, 1)))) {
+                 : (dm1_v1_amiga_graphics_probe(graphicsBytes, graphicsSize)
+                        ? !M11_AssetLoader_InitDm1LegacyFromBuffer(
+                              &state->assetLoader, graphicsBytes,
+                              (long)graphicsSize, 1)
+                        : (!M11_AssetLoader_InitFromBuffer(
+                               &state->assetLoader, graphicsBytes,
+                               (long)graphicsSize) &&
+                           !M11_AssetLoader_InitDm1LegacyFromBuffer(
+                               &state->assetLoader, graphicsBytes,
+                               (long)graphicsSize, 0))))) {
             free(graphicsBytes);
             free(dm1VirtualDungeonBytes);
             dm1VirtualDungeonBytes = NULL;
