@@ -16786,6 +16786,20 @@ if(BUILD_TESTING)
         COMMAND test_dm2_fmtowns_m11_title_real_media
     )
 
+    add_test(
+        NAME dm2_fmtowns_real_media_corpus
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_fmtowns_real_media_corpus.sh
+            $<TARGET_FILE:test_dm2_fmtowns_m12_real_media>
+            $<TARGET_FILE:test_dm2_fmtowns_m11_gameplay_real_media>
+            $<TARGET_FILE:test_dm2_fmtowns_m11_title_real_media>
+    )
+    set_tests_properties(dm2_fmtowns_real_media_corpus PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm2;fmtowns;real-media;native;skip-safe"
+        ENVIRONMENT
+            "FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip;FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+    )
+
     # Opt-in: advances the selected original Amiga SWSH/TITL streams in M11
     # and proves their native menu handoff does not inherit the FM Towns
     # SKULL.EXP gate.  The ZIP/ADF/LZX members stay RAM-only.
