@@ -7,6 +7,7 @@
 
 #include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
 #include "csb_v1_graphics_lzw_pc34_compat.h"
+#include "asset_find_by_hash.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -19,26 +20,26 @@ void csb_atari_st_graphics_loader_init(CSB_AtariStLoader* state)
 
 bool csb_atari_st_graphics_loader_open(CSB_AtariStLoader* state, const char* path)
 {
+    size_t offset = 0u;
     if (!state || !path) return false;
 
-    state->dat_file = fopen(path, "rb");
-    if (!state->dat_file) return false;
+    if (!asset_read_path_alloc(path, &state->dat_bytes,
+                               &state->dat_byte_count) ||
+        state->dat_byte_count < 2u) return false;
 
     strncpy(state->dat_path, path, sizeof(state->dat_path) - 1);
     state->dat_path[sizeof(state->dat_path) - 1] = '\0';
 
     /* Read count (u16 big-endian). */
-    uint16_t count_be;
-    if (fread(&count_be, 2, 1, state->dat_file) != 1) {
-        fclose(state->dat_file);
-        state->dat_file = NULL;
-        return false;
-    }
+    uint16_t count_be = (uint16_t)(((uint16_t)state->dat_bytes[offset] << 8) |
+                                   state->dat_bytes[offset + 1u]);
+    offset += 2u;
     /* Manual byte-swap to big-endian if the host is little-endian. */
-    uint16_t count = (uint16_t)((count_be << 8) | (count_be >> 8));
+    uint16_t count = count_be;
     if (count == 0 || count > CSB_ATARI_ST_GRAPHICS_MAX_ITEMS) {
-        fclose(state->dat_file);
-        state->dat_file = NULL;
+        free(state->dat_bytes);
+        state->dat_bytes = NULL;
+        state->dat_byte_count = 0u;
         return false;
     }
     state->item_count = count;
@@ -50,34 +51,44 @@ bool csb_atari_st_graphics_loader_open(CSB_AtariStLoader* state, const char* pat
      */
     for (uint16_t i = 0; i < count; ++i) {
         uint16_t comp_be;
-        if (fread(&comp_be, 2, 1, state->dat_file) != 1) {
-            fclose(state->dat_file);
-            state->dat_file = NULL;
+        if (offset + 2u > state->dat_byte_count) {
+            free(state->dat_bytes);
+            state->dat_bytes = NULL;
+            state->dat_byte_count = 0u;
             return false;
         }
-        uint16_t comp   = (uint16_t)((comp_be << 8)   | (comp_be >> 8));
+        comp_be = (uint16_t)(((uint16_t)state->dat_bytes[offset] << 8) |
+                             state->dat_bytes[offset + 1u]);
+        offset += 2u;
+        uint16_t comp = comp_be;
         state->items[i].compressed_size = comp;
     }
     for (uint16_t i = 0; i < count; ++i) {
         uint16_t decomp_be;
-        if (fread(&decomp_be, 2, 1, state->dat_file) != 1) {
-            fclose(state->dat_file);
-            state->dat_file = NULL;
+        if (offset + 2u > state->dat_byte_count) {
+            free(state->dat_bytes);
+            state->dat_bytes = NULL;
+            state->dat_byte_count = 0u;
             return false;
         }
-        state->items[i].decompressed_size =
-            (uint16_t)((decomp_be << 8) | (decomp_be >> 8));
+        decomp_be = (uint16_t)(((uint16_t)state->dat_bytes[offset] << 8) |
+                               state->dat_bytes[offset + 1u]);
+        offset += 2u;
+        state->items[i].decompressed_size = decomp_be;
     }
 
     /* The data section starts at the current file offset. */
-    state->data_section_offset = (uint32_t)ftell(state->dat_file);
+    state->data_section_offset = (uint32_t)offset;
     {
         uint32_t item_offset = state->data_section_offset;
         for (uint16_t i = 0; i < count; ++i) {
             state->items[i].data_offset = item_offset;
-            if (UINT32_MAX - item_offset < state->items[i].compressed_size) {
-                fclose(state->dat_file);
-                state->dat_file = NULL;
+            if (UINT32_MAX - item_offset < state->items[i].compressed_size ||
+                (size_t)item_offset + state->items[i].compressed_size >
+                    state->dat_byte_count) {
+                free(state->dat_bytes);
+                state->dat_bytes = NULL;
+                state->dat_byte_count = 0u;
                 return false;
             }
             item_offset += state->items[i].compressed_size;
@@ -92,7 +103,7 @@ int csb_atari_st_graphics_loader_read_item(const CSB_AtariStLoader* state,
                                             uint8_t* out_buf,
                                             size_t out_buf_size)
 {
-    if (!state || !state->loaded || !state->dat_file || !out_buf) return -1;
+    if (!state || !state->loaded || !state->dat_bytes || !out_buf) return -1;
     if (index >= state->item_count) return -1;
 
     const CSB_AtariStItem* item = &state->items[index];
@@ -106,15 +117,13 @@ int csb_atari_st_graphics_loader_read_item(const CSB_AtariStLoader* state,
     /* Read compressed bytes. */
     uint8_t* comp_buf = (uint8_t*)malloc(item->compressed_size);
     if (!comp_buf) return -1;
-    if (fseek(state->dat_file, (long)item->data_offset, SEEK_SET) != 0) {
+    if ((size_t)item->data_offset + item->compressed_size >
+        state->dat_byte_count) {
         free(comp_buf);
         return -1;
     }
-    if (fread(comp_buf, 1, item->compressed_size, state->dat_file) !=
-        item->compressed_size) {
-        free(comp_buf);
-        return -1;
-    }
+    memcpy(comp_buf, state->dat_bytes + item->data_offset,
+           item->compressed_size);
 
     /* Uncompressed DMCSB1 items are stored verbatim. */
     if (item->compressed_size == item->decompressed_size) {
@@ -140,10 +149,9 @@ int csb_atari_st_graphics_loader_read_item(const CSB_AtariStLoader* state,
 void csb_atari_st_graphics_loader_close(CSB_AtariStLoader* state)
 {
     if (!state) return;
-    if (state->dat_file) {
-        fclose(state->dat_file);
-        state->dat_file = NULL;
-    }
+    free(state->dat_bytes);
+    state->dat_bytes = NULL;
+    state->dat_byte_count = 0u;
     state->loaded = false;
     state->item_count = 0;
 }

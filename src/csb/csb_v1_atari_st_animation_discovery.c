@@ -1,6 +1,4 @@
 #include "csb_v1_atari_st_animation_discovery.h"
-#include "fs_portable_compat.h"
-
 #include <stdio.h>
 #include <string.h>
 
@@ -86,10 +84,6 @@ int csb_v1_atari_st_animation_materialize(
     const char *cache_root, char script_path[ASSET_PATH_MAX],
     char data_path[ASSET_PATH_MAX])
 {
-    char cache_dir[ASSET_PATH_MAX];
-    char cached_script[ASSET_PATH_MAX];
-    char cached_data[ASSET_PATH_MAX];
-
     if (!receipt || !receipt->valid || !script_path || !data_path) return 0;
     script_path[0] = '\0';
     data_path[0] = '\0';
@@ -102,22 +96,12 @@ int csb_v1_atari_st_animation_materialize(
         snprintf(data_path, ASSET_PATH_MAX, "%s", receipt->data_path);
         return 1;
     }
-    if (!cache_root || !cache_root[0] ||
-        !FSP_JoinPath(cache_dir, sizeof(cache_dir), cache_root,
-            "csb-atari-animation") ||
-        !FSP_CreateDirectoryRecursive(cache_dir) ||
-        !FSP_JoinPath(cached_script, sizeof(cached_script), cache_dir,
-            "ANIMATE.SCR") ||
-        !FSP_JoinPath(cached_data, sizeof(cached_data), cache_dir,
-            "ANIMATE.DAT") ||
-        !asset_extract_virtual_path(receipt->script_path, cached_script) ||
-        !asset_extract_virtual_path(receipt->data_path, cached_data) ||
-        !asset_file_matches_md5(cached_script, g_csb_atari_animation_hashes[0]) ||
-        !asset_file_matches_md5(cached_data, g_csb_atari_animation_hashes[1])) {
-        return 0;
-    }
-    snprintf(script_path, ASSET_PATH_MAX, "%s", cached_script);
-    snprintf(data_path, ASSET_PATH_MAX, "%s", cached_data);
+    /* Discovery already hash-verifies virtual members.  Return their source
+     * paths unchanged; the RAM readers consume them directly. cache_root is
+     * retained for ABI compatibility with older callers. */
+    (void)cache_root;
+    snprintf(script_path, ASSET_PATH_MAX, "%s", receipt->script_path);
+    snprintf(data_path, ASSET_PATH_MAX, "%s", receipt->data_path);
     return 1;
 }
 
@@ -165,13 +149,8 @@ int csb_v1_atari_st_animation_materialize_runtime_chain(
     const char *cache_root, char animate_ftl_path[ASSET_PATH_MAX],
     char chaos_ftl_path[ASSET_PATH_MAX], char ftlcode_path[ASSET_PATH_MAX])
 {
-    static const char *const leaf_names[] = {
-        "ANIMATE.FTL", "CHAOS.FTL", "FTLCODE"
-    };
     const char *source_paths[3];
     char *output_paths[3];
-    char cache_dir[ASSET_PATH_MAX];
-    char cached_paths[3][ASSET_PATH_MAX];
     int i;
 
     if (!receipt || !receipt->valid || !animate_ftl_path || !chaos_ftl_path ||
@@ -193,18 +172,9 @@ int csb_v1_atari_st_animation_materialize_runtime_chain(
         }
         return 1;
     }
-    if (!cache_root || !cache_root[0] ||
-        !FSP_JoinPath(cache_dir, sizeof(cache_dir), cache_root,
-            "csb-atari-animation") || !FSP_CreateDirectoryRecursive(cache_dir)) {
-        return 0;
-    }
+    (void)cache_root;
     for (i = 0; i < 3; ++i) {
-        if (!FSP_JoinPath(cached_paths[i], sizeof(cached_paths[i]), cache_dir,
-                leaf_names[i]) ||
-            !asset_extract_virtual_path(source_paths[i], cached_paths[i]) ||
-            !asset_file_matches_md5(cached_paths[i],
-                g_csb_atari_animation_runtime_chain_hashes[i])) return 0;
-        snprintf(output_paths[i], ASSET_PATH_MAX, "%s", cached_paths[i]);
+        snprintf(output_paths[i], ASSET_PATH_MAX, "%s", source_paths[i]);
     }
     return 1;
 }

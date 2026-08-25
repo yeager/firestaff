@@ -44,7 +44,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -59,7 +58,11 @@ typedef struct {
 } CSB_AtariStItem;
 
 typedef struct {
-    FILE*               dat_file;
+    /* The source can be an archive member ("container.zip::ANIMATE.DAT").
+     * Retain its verified bytes in RAM instead of materialising that member
+     * below the user cache. */
+    uint8_t*            dat_bytes;
+    size_t              dat_byte_count;
     char                dat_path[1024];
     uint16_t            item_count;
     CSB_AtariStItem     items[CSB_ATARI_ST_GRAPHICS_MAX_ITEMS];

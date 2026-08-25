@@ -1,11 +1,11 @@
 #include "csb_v1_atari_st_animation_assets.h"
 
 #include "csb_v1_atari_st_animation_discovery.h"
+#include "asset_find_by_hash.h"
 #include "csb_v1_animation_script.h"
 #include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
 #include "csb_v1_startup_img3_decode_pc34_compat.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -23,21 +23,10 @@ static int csb_v1_atari_st_animation_item_type_matches(
 static uint8_t *csb_v1_atari_st_animation_read_file(
     const char *path, size_t *out_size)
 {
-    FILE *fp;
-    long length;
     uint8_t *bytes = NULL;
 
-    if (!path || !out_size || !(fp = fopen(path, "rb"))) return NULL;
-    if (fseek(fp, 0L, SEEK_END) != 0 || (length = ftell(fp)) <= 0 ||
-        fseek(fp, 0L, SEEK_SET) != 0 ||
-        !(bytes = (uint8_t *)malloc((size_t)length)) ||
-        fread(bytes, 1u, (size_t)length, fp) != (size_t)length) {
-        fclose(fp);
-        free(bytes);
+    if (!path || !out_size || !asset_read_path_alloc(path, &bytes, out_size))
         return NULL;
-    }
-    fclose(fp);
-    *out_size = (size_t)length;
     return bytes;
 }
 
