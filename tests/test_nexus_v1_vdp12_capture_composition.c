@@ -177,9 +177,10 @@ int main(void)
     if (!nexus_viewport_replay_vdp12_capture_composition(
             &viewport, &composition, &receipt) || !receipt.valid ||
         !receipt.vdp2_source_stabg || !receipt.vdp2_over_vdp1 ||
-        !receipt.vdp2_verified || !receipt.vdp1_verified) {
+        !receipt.vdp2_verified || !receipt.vdp1_verified ||
+        receipt.renderer_permitted) {
         free(stabg);
-        fprintf(stderr, "FAIL: STABG HUD over viewport composition\n");
+        fprintf(stderr, "FAIL: capture-only STABG composition admission\n");
         return 1;
     }
     free(stabg);

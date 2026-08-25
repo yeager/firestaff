@@ -132,8 +132,11 @@ int nexus_v1_stabg_capture_composite(
         }
     }
     receipt.valid = 1;
-    receipt.renderer_permitted = 1;
+    /* A pixel/palette crop proves only that this source can reproduce that
+     * crop.  It does not identify the live VDP2 layer or its ordering, so it
+     * must never unlock the ordinary viewport renderer. */
     receipt.vdp2_layer_owner_proven = 0;
+    receipt.renderer_permitted = 0;
     *out_receipt = receipt;
     return 1;
 }

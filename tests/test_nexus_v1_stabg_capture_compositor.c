@@ -95,7 +95,8 @@ int main(void)
         !receipt.valid || !receipt.capture_only ||
         !receipt.dmweb_decode_verified || !receipt.pixel_join_verified ||
         !receipt.palette_join_verified || !receipt.explicit_placement_verified ||
-        receipt.vdp2_layer_owner_proven || receipt.written_pixels <= 0) {
+        receipt.vdp2_layer_owner_proven || receipt.renderer_permitted ||
+        receipt.written_pixels <= 0) {
         fprintf(stderr, "FAIL: exact STABG capture surface replay\n");
         free(stabg);
         return 1;

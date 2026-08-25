@@ -80,6 +80,7 @@ int main(void)
         !receipt.palt_cram_join_verified ||
         !receipt.explicit_placement_verified ||
         receipt.menu_semantics_proven || receipt.vdp2_layer_owner_proven ||
+        receipt.renderer_permitted ||
         receipt.written_pixels != 3 || framebuffer.color_buffer[5 * 320 + 4] != 1) {
         fprintf(stderr, "FAIL: exact BPK capture surface replay\n");
         return 1;

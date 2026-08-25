@@ -165,10 +165,11 @@ int nexus_v1_bpk_capture_surface(
     }
     free(decoded);
     receipt.valid = 1;
-    receipt.renderer_permitted = 1;
-    /* This adapter deliberately does not prove these higher-level owners. */
+    /* This adapter deliberately does not prove these higher-level owners.
+     * Consequently its capture crop is not a renderer admission. */
     receipt.menu_semantics_proven = 0;
     receipt.vdp2_layer_owner_proven = 0;
+    receipt.renderer_permitted = 0;
     *out_receipt = receipt;
     return 1;
 }
