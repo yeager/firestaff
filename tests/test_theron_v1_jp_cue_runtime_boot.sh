@@ -37,16 +37,22 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --game theron \
     --data-dir "$cue" \
     --boot-probe \
-    --boot-probe-frames 128 \
+    --boot-probe-frames 0 \
+    --script 'enter,enter,down,down,down,down,down,down,enter,down,enter' \
+    --boot-probe-expect-phase theron-startup-2 \
+    --boot-probe-expect-level-loaded 0 \
+    --boot-probe-expect-startup-active 1 \
     --duration 0 >"$output" 2>&1
 
 if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' "$output" ||
    ! grep -Fq 'sourceKind=4 sourceId=theron ' "$output" ||
    ! grep -Eq "assetMd5=($expected_md5_raw|$expected_md5_iso)" "$output" ||
-   ! grep -Fq 'phase=theron-startup-0' "$output"; then
+   ! grep -Fq 'phase=theron-startup-2' "$output" ||
+   ! grep -Fq 'levelLoaded=0' "$output" ||
+   ! grep -Fq 'startupActive=1' "$output"; then
     cat "$output" >&2
-    printf '%s\n' 'FAIL: authentic Theron JP CUE did not reach title startup' >&2
+    printf '%s\n' 'FAIL: authentic Theron JP CUE did not reach the source-backed Soul Room route' >&2
     exit 1
 fi
 
-printf '%s\n' 'PASS: authentic Theron JP CUE reaches title startup'
+printf '%s\n' 'PASS: authentic Theron JP CUE reaches the source-backed Soul Room route'
