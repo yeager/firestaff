@@ -9,3 +9,11 @@ Reviewed 2026-08-25. Completed work only.
 - DM1 Amiga 2.0 English supplied as ZIP → ZIP → ADF is hash-verified and
   read entirely in RAM. Both direct CLI launch and the startup-menu route
   reach the bounded native runtime without extracting game data to disk.
+- Atari ST original media is source-locked and read in RAM: the supplied
+  English 1.0a/1.2, German 1.2 and French 1.3 variants reach native runtime
+  through direct CLI and start menu. The German 1.2 protected STX uses the
+  verified image identity `0eff1c902ea155f19e4a177bb2ccac7d`, graphics hash
+  `2bdc5f431f84c0ece738f54dbd787c3b` and dungeon hash
+  `cea11d6e9f7e1698fc95329fe3fb0899`.
+- The supplied FM Towns JA/EN archive is verified through both direct CLI
+  and start menu, reaching `dm1-runtime` without media extraction.

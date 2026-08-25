@@ -20,10 +20,10 @@ parity gate is complete.
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
 | PC DOS 3.4 | **Playable** | V1 startup, menus, viewport, HUD, input, combat and saves use matching original data. | Broader original-vs-Firestaff capture and V2 finished material. |
-| Atari ST | **Verified route** | Native Atari graphics/data path and launch admission are source-locked. | Complete gameplay parity and original-media capture. |
+| Atari ST | **Verified route** | Native ST/STX media is read in RAM. The supplied English 1.0a, English 1.2, German 1.2 and French 1.3 archive routes reach the bounded runtime through direct CLI and start menu; each selected `GRAPHICS.DAT` is hash-locked. | Complete gameplay parity and original-media capture. |
 | Amiga 2.0 English | **Verified route** | The supplied preservation ZIP → original ZIP → ADF is read in RAM, hash-locked at `GRAPHICS.DAT` MD5 `6a2f135b53c2220f0251fa103e2a6e7e`; direct CLI and start-menu handoff reach the bounded native runtime. | Broader gameplay, Amiga-specific presentation/input ownership, saves and capture parity. |
 | Other Amiga editions | **Data path** | Version fingerprints and media/protection references are classified. | Authentic media plus per-edition native runtime proof. |
-| FM Towns | **Data path** | CD layout and platform-specific input/audio boundaries are classified. | Authenticated runtime media, executable handoff and CD-audio gameplay proof. |
+| FM Towns | **Verified route** | The supplied JA/EN original ZIP reaches `dm1-runtime` through direct CLI and start menu with the authenticated FM Towns graphics receipt. | Wider gameplay, executable/CD-audio parity and capture proof. |
 | PC-9801 | **Preservation** | Japanese floppy provenance is documented. | No Firestaff runtime route. |
 | X68000 | **Unsupported** | Not part of the DM1 support matrix. | None planned in the current target. |
 
