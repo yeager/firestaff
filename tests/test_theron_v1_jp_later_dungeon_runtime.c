@@ -8,11 +8,17 @@
 #include <string.h>
 
 static const char *find_jp_track02(void) {
+    const char *configured = getenv("FIRESTAFF_THERON_JP_TRACK02");
     static const char *const candidates[] = {
         "/home/yeager/.firestaff/data/theron/Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 02).bin",
         NULL
     };
     unsigned int i;
+    if (configured && configured[0]) {
+        FILE *f = fopen(configured, "rb");
+        if (f) { fclose(f); return configured; }
+        return NULL;
+    }
     for (i = 0u; candidates[i]; ++i) {
         FILE *f = fopen(candidates[i], "rb");
         if (f) { fclose(f); return candidates[i]; }

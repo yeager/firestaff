@@ -44556,6 +44556,8 @@ if(BUILD_TESTING AND THERON_SOURCES)
     set_tests_properties(theron_v1_jp_cue_runtime_boot PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "theron;real-media;startup"
+        ENVIRONMENT
+            "FIRESTAFF_THERON_JP_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/Dungeon Master - Theron's Quest (Japan) (Rev 1).cue"
     )
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_jp_later_dungeon_runtime.c")
         add_executable(test_theron_v1_jp_later_dungeon_runtime
@@ -44575,7 +44577,9 @@ if(BUILD_TESTING AND THERON_SOURCES)
             COMMAND test_theron_v1_jp_later_dungeon_runtime)
         set_tests_properties(theron_v1_jp_later_dungeon_runtime PROPERTIES
             SKIP_RETURN_CODE 77
-            LABELS "theron;real-media;runtime;source-only")
+            LABELS "theron;real-media;runtime;source-only"
+            ENVIRONMENT
+                "FIRESTAFF_THERON_JP_TRACK02=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 02).bin")
     endif()
 endif()
 
