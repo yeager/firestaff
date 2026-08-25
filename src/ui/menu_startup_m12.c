@@ -1960,6 +1960,37 @@ static void m12_format_missing_files_for_game(const M12_StartupMenuState* state,
         snprintf(out, outSize, "MISSING: GAME DATA");
         return;
     }
+    /* The supplied French DOS release is a ZIP containing a DOS SFX whose
+     * payload is RAR 2.0.  Firestaff deliberately has no decoder for that
+     * obsolete compression method yet: do not present this as a missing
+     * GRAPHICS/DUNGEON file, because the original package is present. */
+    if (strcmp(gameId, "dm1") == 0) {
+        const char* dataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+        const char* leaf = dataDir ? strrchr(dataDir, '/') : NULL;
+        const char* backslashLeaf = dataDir ? strrchr(dataDir, '\\') : NULL;
+        char candidate[M12_ASSET_DATA_DIR_CAPACITY];
+        const char* filename = "Dungeon-Master_DOS_FR.zip";
+        if (backslashLeaf && (!leaf || backslashLeaf > leaf)) {
+            leaf = backslashLeaf;
+        }
+        if (dataDir && FSP_FileExists(dataDir) && leaf &&
+            strcmp(leaf + 1, filename) == 0) {
+            snprintf(out, outSize, "RAR 2.0 NOT SUPPORTED: FRENCH DOS PACKAGE");
+            return;
+        }
+        if (dataDir && FSP_JoinPath(candidate, sizeof(candidate),
+                                    dataDir, filename) &&
+            FSP_FileExists(candidate)) {
+            snprintf(out, outSize, "RAR 2.0 NOT SUPPORTED: FRENCH DOS PACKAGE");
+            return;
+        }
+        if (dataDir && FSP_JoinPath(candidate, sizeof(candidate),
+                                    dataDir, "dm1/Dungeon-Master_DOS_FR.zip") &&
+            FSP_FileExists(candidate)) {
+            snprintf(out, outSize, "RAR 2.0 NOT SUPPORTED: FRENCH DOS PACKAGE");
+            return;
+        }
+    }
     if (strcmp(gameId, "theron") == 0) {
         snprintf(out, outSize, "MISSING: TRACK 02 JP/US .BIN/.ISO - DATA DIR BELOW");
         return;
