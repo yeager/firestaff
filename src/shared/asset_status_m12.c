@@ -5470,20 +5470,21 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
             (strcmp(selectedVersion->versionId, "fmtowns-en") == 0 ||
              strcmp(selectedVersion->versionId, "fmtowns-ja") == 0) &&
             m12_path_is_virtual_asset(selectedVersion->matchedPath)) {
-            /* Only take the FM Towns archive-staging path when the matched
-             * GRAPHICS.DAT still lives inside its original ZIP/RAR ("::" is
-             * the virtual-path marker).  If a prior run already extracted the
-             * ISO to a loose ...\/CDATA/GRAPHICS.DAT and ...\/CJDATA/... pair
-             * on disk, the hash still identifies the version but this
-             * materializer would fail on the missing "::" and nix
-             * csbAvailable.  Fall through to the ordinary per-required-file
-             * copy path below in that case -- it handles loose files
-             * directly. */
-            if (!m12_materialize_csb_fmtowns_runtime_cache(status, gameIndex,
-                                                            selectedVersion, gameCacheDir,
-                                                            1)) return 0;
-            m12_copy_string(status->runtimeDataDirs[gameIndex],
-                            sizeof(status->runtimeDataDirs[gameIndex]), cacheRoot);
+            const char* separator = strstr(selectedVersion->matchedPath, "::");
+            size_t archiveLength;
+            /* F31 retail ZIPs contain a roughly 500 MB compressed CD image.
+             * The native CSB boot owner reads it in RAM and retains just the
+             * verified runtime members.  Do not first expand that image into
+             * asset-cache: doing so defeats the source-bound path and writes
+             * a large transient copy of user media. */
+            if (!separator || (archiveLength = (size_t)(separator -
+                                                         selectedVersion->matchedPath)) == 0U ||
+                archiveLength >= sizeof(status->runtimeDataDirs[gameIndex])) {
+                return 0;
+            }
+            memcpy(status->runtimeDataDirs[gameIndex],
+                   selectedVersion->matchedPath, archiveLength);
+            status->runtimeDataDirs[gameIndex][archiveLength] = '\0';
             return 1;
         }
         if (strcmp(gameId, "csb") == 0 && selectedVersion &&
@@ -7098,6 +7099,22 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
         if (outPathSize) outPath[0] = '\0';
         return 0;
     }
+    if ((strcmp(versionId, "fmtowns-en") == 0 ||
+         strcmp(versionId, "fmtowns-ja") == 0) &&
+        m12_path_is_virtual_asset(version->matchedPath)) {
+        const char* separator = strstr(version->matchedPath, "::");
+        size_t archiveLength;
+        /* Keep the selected original archive as the runtime source.  The
+         * CSB FM Towns boot path inflates its IMG/BIN in RAM; materializing
+         * FMTOWNS.IMG here would create a needless half-gigabyte disk copy. */
+        if (!separator || (archiveLength = (size_t)(separator - version->matchedPath)) == 0U ||
+            archiveLength >= outPathSize) {
+            return 0;
+        }
+        memcpy(outPath, version->matchedPath, archiveLength);
+        outPath[archiveLength] = '\0';
+        return 1;
+    }
     if (
         !FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) ||
         !FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userDataDir,
@@ -7118,8 +7135,8 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
             }
             return 1;
         }
-        return m12_materialize_csb_fmtowns_runtime_cache(
-            (M12_AssetStatus*)status, gameIndex, version, outPath, 0);
+        /* Handled above so this branch only retains the loose-media path. */
+        return 0;
     }
 
     /* All non-FM-Towns CSB ports share the authenticated original dungeon

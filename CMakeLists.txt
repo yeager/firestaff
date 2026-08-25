@@ -6781,11 +6781,12 @@ set(NEXUS_M11_RUNTIME_SOURCES
 )
 if(NEXUS_SOURCES)
     add_library(firestaff_nexus STATIC ${NEXUS_SOURCES} ${NEXUS_M11_RUNTIME_SOURCES}
-        src/shared/asset_find_by_hash.c
-        src/shared/firestaff_zip_extract.c)
+        src/shared/asset_find_by_hash.c)
     target_include_directories(firestaff_nexus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_compile_definitions(firestaff_nexus PRIVATE FIRESTAFF_NEXUS_PRODUCTION=1)
-    target_link_libraries(firestaff_nexus PUBLIC m)
+    # Keep one ZIP implementation: the shared target carries zlib support
+    # for deflated original-media containers used by both Nexus and CSB.
+    target_link_libraries(firestaff_nexus PUBLIC m firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(firestaff_nexus PRIVATE -Wall -Wextra -O2)
     endif()
