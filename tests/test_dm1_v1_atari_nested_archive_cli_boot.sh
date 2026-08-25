@@ -7,8 +7,7 @@ if [[ $# -ne 1 ]]; then
 fi
 
 app=$1
-archive=${FIRESTAFF_DM1_ATARI_NESTED_ARCHIVE:-
-"$HOME/.firestaff/data/dm1/Dungeon-Master_Atari-ST_EN.zip"}
+archive=${FIRESTAFF_DM1_ATARI_NESTED_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_Atari-ST_EN.zip"}
 expected_md5=b3cfd84e44cdf07ce2eeba47e87f772b
 
 if [[ ! -x "$app" || ! -f "$archive" ]]; then
