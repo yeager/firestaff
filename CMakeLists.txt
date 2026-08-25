@@ -58386,6 +58386,7 @@ add_executable(test_dm2_v1_dos_real_data_manifest
     src/shared/asset_find_by_hash.c
 )
 target_include_directories(test_dm2_v1_dos_real_data_manifest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm2_v1_dos_real_data_manifest PRIVATE firestaff_zip_extract)
 add_test(NAME test_dm2_v1_dos_real_data_manifest COMMAND test_dm2_v1_dos_real_data_manifest)
 
 add_executable(test_dm2_v1_mve_presentation_owner
@@ -58400,6 +58401,7 @@ add_executable(test_dm2_v1_mve_presentation_owner
     src/shared/asset_find_by_hash.c
 )
 target_include_directories(test_dm2_v1_mve_presentation_owner PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm2_v1_mve_presentation_owner PRIVATE firestaff_zip_extract)
 add_test(NAME test_dm2_v1_mve_presentation_owner COMMAND test_dm2_v1_mve_presentation_owner)
 
 add_executable(test_dm2_v1_dos_intro_mve_boot_owner
@@ -58426,6 +58428,7 @@ add_executable(test_dm2_v1_mve_timeline
     src/shared/asset_find_by_hash.c
 )
 target_include_directories(test_dm2_v1_mve_timeline PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm2_v1_mve_timeline PRIVATE firestaff_zip_extract)
 add_test(NAME test_dm2_v1_mve_timeline COMMAND test_dm2_v1_mve_timeline)
 
 add_executable(test_dm2_v1_mve_audio_sdl_owner
@@ -58441,7 +58444,7 @@ add_executable(test_dm2_v1_mve_audio_sdl_owner
     src/shared/asset_find_by_hash.c
 )
 target_include_directories(test_dm2_v1_mve_audio_sdl_owner PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(test_dm2_v1_mve_audio_sdl_owner PRIVATE SDL3::SDL3)
+target_link_libraries(test_dm2_v1_mve_audio_sdl_owner PRIVATE SDL3::SDL3 firestaff_zip_extract)
 add_test(NAME test_dm2_v1_mve_audio_sdl_owner COMMAND test_dm2_v1_mve_audio_sdl_owner)
 set_tests_properties(test_dm2_v1_mve_audio_sdl_owner PROPERTIES
     ENVIRONMENT "SDL_AUDIODRIVER=dummy")
