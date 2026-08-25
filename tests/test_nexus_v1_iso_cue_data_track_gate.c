@@ -175,6 +175,14 @@ int main(void)
     CHECK("complete CUE media receipt", nexus_iso_cue_media_receipt(cue, &media) == 0 &&
           media.valid && media.declared_file_count == 2 &&
           media.present_file_count == 2 && media.missing_file_count == 0);
+    CHECK("CUE AUDIO track binds its declared payload",
+          nexus_iso_cue_audio_track_path(cue, 1, nested_data,
+                                         (int)sizeof(nested_data)) == 0 &&
+          strstr(nested_data, "audio.bin") != NULL);
+    CHECK("CUE data track is not promoted as audio",
+          nexus_iso_cue_audio_track_path(cue, 2, nested_data,
+                                         (int)sizeof(nested_data)) == -1 &&
+          nested_data[0] == '\0');
     remove(audio);
     CHECK("missing external CUE media is reported", nexus_iso_cue_media_receipt(cue, &media) == 1 &&
           !media.valid && media.declared_file_count == 2 &&

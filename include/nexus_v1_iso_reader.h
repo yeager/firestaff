@@ -55,6 +55,16 @@ int nexus_iso_open_cue(Nexus_ISOReader *reader, const char *cue_path);
 int nexus_iso_cue_media_receipt(const char *cue_path,
                                 Nexus_ISO_CueMediaReceipt *out);
 
+/* Resolve one declared Red Book AUDIO track to its original CUE payload.
+ * This is a source binding only: callers receive the referenced BIN path but
+ * no PCM decoder or host playback permission.  Returns 0 only when exactly
+ * one AUDIO declaration for `track_number` names a readable payload; -1
+ * covers malformed/missing/ambiguous tracks and bad arguments. */
+int nexus_iso_cue_audio_track_path(const char *cue_path,
+                                   int track_number,
+                                   char *out_path,
+                                   int out_path_size);
+
 /* Find a file by name (case-insensitive) */
 const Nexus_ISOFile *nexus_iso_find(const Nexus_ISOReader *reader, const char *name);
 

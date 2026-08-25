@@ -128,9 +128,10 @@ static void test_cd_track_rejects_host_audio_substitute(void) {
     dummy_cd_play_called = 0;
     expect(nexus_sound_cd_track(&eng, 2) == 0 &&
                eng.current_cd_track == 2 &&
-               eng.cd_track_path[0] != '\0' &&
-               eng.cd_playing == 1 && dummy_cd_play_called,
-           "host track file found and played for CD track 2");
+               eng.cd_track_path[0] == '\0' &&
+               eng.cd_source_path[0] == '\0' && !eng.cd_source_bound &&
+               eng.cd_playing == 0 && !dummy_cd_play_called,
+           "host audio substitute cannot stand in for original CUE media");
     remove(path);
     rmdir(root);
     nexus_sound_shutdown(&eng);

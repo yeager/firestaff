@@ -1,4 +1,5 @@
 #include "nexus_v1_sound.h"
+#include "nexus_v1_iso_reader.h"
 #include "nexus_v1_world.h"
 #include <stdlib.h>
 #include <string.h>
@@ -1161,19 +1162,17 @@ void nexus_sound_play_idx(Nexus_SoundEngine *eng, int sample_index) {
  * CD playback via host callback (set by M11 layer).
  * ═══════════════════════════════════════════════════════════════════ */
 
-static void nexus_cd_build_track_path(Nexus_SoundEngine *eng, int track_number) {
-    static const char *exts[] = {".wav", ".ogg", ".mp3", ".flac", NULL};
-    int i;
+static void nexus_cd_bind_source(Nexus_SoundEngine *eng, int track_number) {
     if (!eng) return;
     eng->cd_track_path[0] = '\0';
-    if (!eng->data_root[0]) return;
-    for (i = 0; exts[i]; i++) {
-        snprintf(eng->cd_track_path, sizeof(eng->cd_track_path),
-                 "%s/track%02d%s", eng->data_root, track_number, exts[i]);
-        FILE *f = fopen(eng->cd_track_path, "rb");
-        if (f) { fclose(f); return; }
+    eng->cd_source_path[0] = '\0';
+    eng->cd_source_bound = 0;
+    if (eng->cue_path[0] &&
+        nexus_iso_cue_audio_track_path(eng->cue_path, track_number,
+                                       eng->cd_source_path,
+                                       (int)sizeof(eng->cd_source_path)) == 0) {
+        eng->cd_source_bound = 1;
     }
-    eng->cd_track_path[0] = '\0';
 }
 
 int nexus_sound_cd_track(Nexus_SoundEngine *eng, int track_number) {
@@ -1181,7 +1180,7 @@ int nexus_sound_cd_track(Nexus_SoundEngine *eng, int track_number) {
     if (track_number < 2 || track_number > 9) return -1;
 
     eng->current_cd_track = track_number;
-    nexus_cd_build_track_path(eng, track_number);
+    nexus_cd_bind_source(eng, track_number);
 
     /* Do not hand an empty path to the host: raw Saturn Red Book audio has
      * not been materialized into a host file, so this route must remain a
@@ -1209,6 +1208,15 @@ void nexus_sound_set_data_root(Nexus_SoundEngine *eng, const char *data_root) {
         return;
     }
     snprintf(eng->data_root, sizeof(eng->data_root), "%s", data_root);
+}
+
+void nexus_sound_set_cue_path(Nexus_SoundEngine *eng, const char *cue_path) {
+    if (!eng) return;
+    if (!cue_path || !cue_path[0]) {
+        eng->cue_path[0] = '\0';
+        return;
+    }
+    snprintf(eng->cue_path, sizeof(eng->cue_path), "%s", cue_path);
 }
 
 int nexus_sound_cd_stop(Nexus_SoundEngine *eng) {

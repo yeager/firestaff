@@ -3094,7 +3094,6 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     /* Init game state */
     nexus_v1_game_init(&engine->game, data_dir);
     engine->audio_enabled = 1;
-    nexus_sound_set_data_root(&engine->audio, data_dir);
 
     /* DGN Structure1B references resolve through the retail environment
      * resources, not guessed FLOORS/WALLS BPK names.  SN_FLOOR.MNS and
@@ -3280,6 +3279,13 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
         nexus_viewport_init(engine->viewport);
     /* Init sound engine */
     nexus_sound_init(&engine->audio);
+    nexus_sound_set_data_root(&engine->audio, data_dir);
+    if (nexus_path_is_file(data_dir) && nexus_path_has_ext(data_dir, ".cue")) {
+        /* Keep original Red Book payload identity attached to this native
+         * CUE route.  The sound engine still has no PCM decoder/callback
+         * admission, so this cannot promote host playback. */
+        nexus_sound_set_cue_path(&engine->audio, data_dir);
+    }
     (void)nexus_v1_level_aux_source_receipt(
         engine, "SDDRVS.TSK", &engine->sound_driver_source);
     if (engine->sound_driver_source.canonical_hash_verified) {

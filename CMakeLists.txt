@@ -38700,6 +38700,26 @@ if(BUILD_TESTING)
         COMMAND test_nexus_v1_iso_cue_data_track_gate
     )
 
+    # Authentic Japanese disc only: binds each declared Red Book track to
+    # its original CUE/BIN payload without admitting a host audio substitute.
+    add_executable(test_nexus_v1_cue_audio_track_binding_real
+        tests/test_nexus_v1_cue_audio_track_binding_real.c
+    )
+    target_include_directories(test_nexus_v1_cue_audio_track_binding_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_cue_audio_track_binding_real PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    target_link_libraries(test_nexus_v1_cue_audio_track_binding_real PRIVATE
+        firestaff_nexus)
+    add_test(NAME nexus_v1_cue_audio_track_binding_real
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_cue_audio_track_binding_real.sh
+            $<TARGET_FILE:test_nexus_v1_cue_audio_track_binding_real>)
+    set_tests_properties(nexus_v1_cue_audio_track_binding_real PROPERTIES
+        SKIP_RETURN_CODE 77 LABELS "nexus;saturn;audio;real_data;skip_safe")
+
     # ── Nexus V1 BPK/BPX surface-class + directory-trailer contract ──
     # pass1083 follow-up: exercises the new nexus_v1_bpk_mode_to_surface_class
     # / _to_bpp lookup APIs, the per-entry surface_estimate walker, and the

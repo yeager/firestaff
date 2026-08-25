@@ -359,6 +359,70 @@ int nexus_iso_cue_media_receipt(const char *cue_path,
     return out->valid ? 0 : 1;
 }
 
+int nexus_iso_cue_audio_track_path(const char *cue_path,
+                                   int track_number,
+                                   char *out_path,
+                                   int out_path_size)
+{
+    FILE *cue;
+    char line[512];
+    char cue_dir[512];
+    char current_file[256];
+    char candidate[768];
+    char keyword[16];
+    char *last_slash;
+    int matches = 0;
+
+    if (!cue_path || !out_path || out_path_size <= 1 ||
+        track_number < 1 || track_number > 99) return -1;
+    out_path[0] = '\0';
+    cue = fopen(cue_path, "r");
+    if (!cue) return -1;
+    strncpy(cue_dir, cue_path, sizeof(cue_dir) - 1U);
+    cue_dir[sizeof(cue_dir) - 1U] = '\0';
+    last_slash = strrchr(cue_dir, '/');
+    if (!last_slash) last_slash = strrchr(cue_dir, '\\');
+    if (last_slash) last_slash[1] = '\0';
+    else cue_dir[0] = '\0';
+    current_file[0] = '\0';
+
+    while (fgets(line, sizeof(line), cue)) {
+        int declared_track;
+        char mode[32];
+        if (cue_file_name(line, current_file)) continue;
+        if (!current_file[0] ||
+            sscanf(line, " %15s %d %31s", keyword, &declared_track, mode) != 3 ||
+            strcasecmp(keyword, "TRACK") != 0) {
+            continue;
+        }
+        if (declared_track != track_number || strcasecmp(mode, "AUDIO") != 0)
+            continue;
+        if (snprintf(candidate, sizeof(candidate), "%s%s", cue_dir,
+                     current_file) <= 0 ||
+            strlen(candidate) >= sizeof(candidate)) {
+            fclose(cue);
+            return -1;
+        }
+        {
+            FILE *payload = fopen(candidate, "rb");
+            if (!payload) {
+                fclose(cue);
+                return -1;
+            }
+            fclose(payload);
+        }
+        if (++matches != 1 || (int)strlen(candidate) >= out_path_size) {
+            fclose(cue);
+            out_path[0] = '\0';
+            return -1;
+        }
+        memcpy(out_path, candidate, strlen(candidate) + 1U);
+    }
+    fclose(cue);
+    if (matches != 1) out_path[0] = '\0';
+    return matches == 1 ? 0 : -1;
+}
+
 const Nexus_ISOFile *nexus_iso_find(const Nexus_ISOReader *reader, const char *name) {
     int i;
     if (!reader || !name) return NULL;

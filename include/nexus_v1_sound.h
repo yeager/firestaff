@@ -89,6 +89,9 @@ typedef struct {
      * host decoder, must resolve relative to the active source root rather
      * than a HOME-relative placeholder. */
     char data_root[512];
+    /* Optional original CUE sheet.  When supplied, CD selection resolves an
+     * exact declared AUDIO BIN and retains it as source provenance. */
+    char cue_path[512];
     /* SAL/MAP data for current level */
     uint8_t *sal_data;
     int sal_size;
@@ -216,6 +219,8 @@ typedef struct {
     int cd_playing;
     int cd_paused;
     char cd_track_path[512];
+    char cd_source_path[768];
+    int cd_source_bound;
     /* CD audio callbacks (set by host layer, e.g. M11) */
     int (*cd_play_callback)(const char *path, void *userdata);
     void (*cd_stop_callback)(void *userdata);
@@ -371,6 +376,7 @@ void nexus_sound_play_idx(Nexus_SoundEngine *eng, int sample_index);
 /* CD audio track management */
 int nexus_sound_cd_track(Nexus_SoundEngine *eng, int track_number);
 void nexus_sound_set_data_root(Nexus_SoundEngine *eng, const char *data_root);
+void nexus_sound_set_cue_path(Nexus_SoundEngine *eng, const char *cue_path);
 int nexus_sound_cd_stop(Nexus_SoundEngine *eng);
 int nexus_sound_cd_pause(Nexus_SoundEngine *eng);
 int nexus_sound_cd_resume(Nexus_SoundEngine *eng);
