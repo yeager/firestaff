@@ -3469,13 +3469,13 @@ static int dm2_v1_boot_load_amiga_installer_from_zip(
 static int dm2_v1_boot_load_pc_dos_archive(DM2_V1_BootProfile *profile,
                                             const char *archive_path)
 {
-    static const char graphics_md5[] = "25247ede4dabb6a71e5dabdfbcd5907d";
     static const char dungeon_md5[] = "6caccd7875009e82fe2e28e7f6d6adc0";
     uint8_t *graphics = NULL;
     uint8_t *dungeon = NULL;
     size_t graphics_size = 0u;
     size_t dungeon_size = 0u;
     char actual_md5[33];
+    char graphics_actual_md5[33];
 
     if (!profile || !archive_path || !FSP_FileExists(archive_path) ||
         !strstr(archive_path, "Dungeon-Master-II-Skullkeep_DOS_")) {
@@ -3493,11 +3493,20 @@ static int dm2_v1_boot_load_pc_dos_archive(DM2_V1_BootProfile *profile,
         return 0;
     }
     dm2_md5_bytes_hex(graphics, graphics_size, actual_md5);
-    if (!md5_matches(actual_md5, graphics_md5)) {
+    /* The three DOS retail localisations share the same DUNGEON.DAT but
+     * carry language-specific GRAPHICS.DAT data.  Admit only one of the
+     * registered PC pairs; do not reduce a direct French/German ZIP to the
+     * English hash just because the archive transport is shared. */
+    if (!dm2_v1_boot_asset_hash_pair_supported(actual_md5, dungeon_md5) ||
+        (!md5_matches(actual_md5, "25247ede4dabb6a71e5dabdfbcd5907d") &&
+         !md5_matches(actual_md5, "b4d733576ea60c41737f79f212faf528") &&
+         !md5_matches(actual_md5, "e52ab5e01715042b16a4dcff02052e5d"))) {
         free(graphics);
         free(dungeon);
         return 0;
     }
+    snprintf(graphics_actual_md5, sizeof(graphics_actual_md5), "%s",
+             actual_md5);
     dm2_md5_bytes_hex(dungeon, dungeon_size, actual_md5);
     if (!md5_matches(actual_md5, dungeon_md5)) {
         free(graphics);
@@ -3511,7 +3520,7 @@ static int dm2_v1_boot_load_pc_dos_archive(DM2_V1_BootProfile *profile,
     profile->graphics_size = graphics_size;
     profile->dungeon_size = dungeon_size;
     snprintf(profile->graphics_md5, sizeof(profile->graphics_md5), "%s",
-             graphics_md5);
+             graphics_actual_md5);
     snprintf(profile->dungeon_md5, sizeof(profile->dungeon_md5), "%s",
              dungeon_md5);
     snprintf(profile->graphics_path, sizeof(profile->graphics_path),

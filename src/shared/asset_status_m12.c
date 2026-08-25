@@ -1222,15 +1222,20 @@ static int m12_admit_dm2_pc_dos_archive(M12_AssetStatus* status,
         strcmp(g_games[gameIndex].gameId, "dm2") != 0) return 0;
     dm2_v1_boot_profile_init(&profile);
     if (dm2_v1_boot_scan_assets(&profile, archive) != 0 ||
-        !profile.assets_verified || profile.platform != DM2_PLATFORM_PC_EN ||
-        strcmp(profile.graphics_md5, "25247ede4dabb6a71e5dabdfbcd5907d") != 0 ||
+        !profile.assets_verified ||
+        (profile.platform != DM2_PLATFORM_PC_EN &&
+         profile.platform != DM2_PLATFORM_PC_FR &&
+         profile.platform != DM2_PLATFORM_PC_JEWEL) ||
+        (strcmp(profile.graphics_md5, "25247ede4dabb6a71e5dabdfbcd5907d") != 0 &&
+         strcmp(profile.graphics_md5, "b4d733576ea60c41737f79f212faf528") != 0 &&
+         strcmp(profile.graphics_md5, "e52ab5e01715042b16a4dcff02052e5d") != 0) ||
         strcmp(profile.dungeon_md5, "6caccd7875009e82fe2e28e7f6d6adc0") != 0) {
         dm2_v1_boot_cleanup(&profile);
         return 0;
     }
     for (i = 0U; i < g_games[gameIndex].versionCount; ++i) {
         M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
-        if (strcmp(version->versionId, "pc-en") == 0) {
+        if (strcmp(version->versionId, profile.version_id) == 0) {
             version->matched = 1;
             snprintf(version->matchedPath, sizeof(version->matchedPath), "%s",
                      profile.graphics_path);
@@ -1461,6 +1466,51 @@ static void m12_publish_dm2_fmtowns_required_files(M12_AssetStatus* status,
         snprintf(required->matchedPath, sizeof(required->matchedPath),
                  "%.*s::%s", (int)archiveLength, version->matchedPath, member);
         snprintf(required->matchedHash, sizeof(required->matchedHash), "%s", md5);
+    }
+}
+
+/* The direct DOS archive reader owns these two members in RAM.  Publish the
+ * same selected ZIP paths as the required-file receipt so a verified French
+ * or JewelCase edition cannot be dropped after version discovery merely
+ * because its DAT files are not loose scan candidates. */
+static void m12_publish_dm2_pc_dos_required_files(M12_AssetStatus* status,
+                                                   int gameIndex) {
+    const M12_AssetVersionStatus* version;
+    const char* separator;
+    size_t archiveLength;
+    size_t i;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "dm2") != 0) {
+        return;
+    }
+    version = m12_first_matched_version(status, gameIndex);
+    if (!version || !version->versionId ||
+        (strcmp(version->versionId, "pc-en") != 0 &&
+         strcmp(version->versionId, "pc-fr") != 0 &&
+         strcmp(version->versionId, "pc-jewel") != 0)) {
+        return;
+    }
+    separator = strstr(version->matchedPath, "::");
+    if (!separator) return;
+    archiveLength = (size_t)(separator - version->matchedPath);
+    if (archiveLength == 0U) return;
+    for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
+        M12_AssetRequiredFileStatus* required =
+            &status->requiredFiles[gameIndex][i];
+        const char* member = NULL;
+        const char* hash = NULL;
+        if (strcmp(required->roleId, "graphics") == 0) {
+            member = "data/graphics.dat";
+            hash = version->matchedMd5;
+        } else if (strcmp(required->roleId, "dungeon") == 0) {
+            member = "data/dungeon.dat";
+            hash = "6caccd7875009e82fe2e28e7f6d6adc0";
+        }
+        if (!member) continue;
+        required->matched = 1;
+        snprintf(required->matchedPath, sizeof(required->matchedPath),
+                 "%.*s::%s", (int)archiveLength, version->matchedPath, member);
+        snprintf(required->matchedHash, sizeof(required->matchedHash), "%s", hash);
     }
 }
 
@@ -5349,6 +5399,8 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
             m12_path_is_virtual_asset(version->matchedPath)) {
             if (!version->versionId ||
                 (strcmp(version->versionId, "pc-en") != 0 &&
+                 strcmp(version->versionId, "pc-fr") != 0 &&
+                 strcmp(version->versionId, "pc-jewel") != 0 &&
                  strcmp(version->versionId, "fmtowns-ja") != 0 &&
                  strcmp(version->versionId, "amiga-en") != 0 &&
                  strcmp(version->versionId, "mac-en-retail") != 0 &&
@@ -6801,6 +6853,7 @@ void M12_AssetStatus_ScanGameWithOptions(
     }
     if (strcmp(g_games[gameIndex].gameId, "dm2") == 0) {
         size_t requiredIndex;
+        m12_publish_dm2_pc_dos_required_files(status, gameIndex);
         m12_publish_dm2_fmtowns_required_files(status, gameIndex);
         m12_publish_dm2_mac_required_files(status, gameIndex);
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
