@@ -1,6 +1,11 @@
+#ifndef _WIN32
+#define _XOPEN_SOURCE 700
+#endif
+
 #include "firestaff_save.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #ifdef _WIN32
 #include <direct.h>
@@ -37,7 +42,15 @@ int main(void) {
 #ifdef _WIN32
     char tmpTemplate[] = ".\\firestaff-save-root-XXXXXX";
 #else
-    char tmpTemplate[] = "/tmp/firestaff-save-root-XXXXXX";
+    const char *tmpRoot = getenv("TMPDIR");
+    char tmpTemplate[512];
+    if (!tmpRoot || tmpRoot[0] == '\0') tmpRoot = ".";
+    if (snprintf(tmpTemplate, sizeof(tmpTemplate),
+                 "%s/firestaff-save-root-XXXXXX", tmpRoot) >=
+        (int)sizeof(tmpTemplate)) {
+        fputs("FAIL: save-root temporary path is too long\n", stderr);
+        return 1;
+    }
 #endif
     char path[256];
     FS_GameState state;
