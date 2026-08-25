@@ -109,6 +109,9 @@ typedef struct CSB_V1_BootProfile {
     size_t fmtowns_mini_size;
     uint8_t *fmtowns_title_bytes;
     size_t fmtowns_title_size;
+    /* SWITCHTW.EXP follows TITLE.ANM on the same original CD image. */
+    uint8_t *fmtowns_switch_bytes;
+    size_t fmtowns_switch_size;
     /* Read-only C06 members from packed FM Towns media.  These buffers keep
      * UTILE/UTILJ and portrait CMP files available without materialising a loose
      * CD tree.  They are never written back to the source image. */

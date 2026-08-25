@@ -6,7 +6,7 @@ data_dir="${FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR:-}"
 language="${FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE:-en}"
 user_save="${FIRESTAFF_CSB_FMTOWNS_USER_SAVE:-}"
 edition_arg=""
-expected_cache="csb-fmtowns-en"
+expected_media="$data_dir"
 
 # This remains opt-in because the F31 CD image is licensed game material.
 # Do not infer a FM Towns package from a generic CSB root: the scanner must
@@ -25,7 +25,6 @@ if [ ! -e "$data_dir" ]; then
 fi
 if [ "$language" = "ja" ]; then
     edition_arg="--csb-fmtowns-ja"
-    expected_cache="csb-fmtowns-ja"
 elif [ "$language" != "en" ]; then
     echo "SKIP: FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE must be en or ja"
     exit 0
@@ -44,7 +43,7 @@ title_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
 }
 
 case "$title_output" in
-    *"dataDir="*"$expected_cache"*"phase=csb-fmtowns-title"*"startupActive=1"*"startupAnimation=title-anm"*"levelLoaded=0"*) ;;
+    *"dataDir="*"$expected_media"*"phase=csb-fmtowns-title"*"startupActive=1"*"startupAnimation=title-anm"*"levelLoaded=0"*) ;;
     *)
         echo "FAIL: native FM Towns CSB CLI boot did not reach TITLE.ANM" >&2
         printf '%s\n' "$title_output" >&2
@@ -132,7 +131,7 @@ menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 }
 
 case "$menu_output" in
-    *"CSB READY: gameId=csb"*"dataDir="*"$expected_cache"*) ;;
+    *"CSB READY: gameId=csb"*"dataDir="*"$expected_media"*) ;;
     *)
         echo "FAIL: CSB FM Towns start-menu Enter did not request native launch" >&2
         printf '%s\n' "$menu_output" >&2

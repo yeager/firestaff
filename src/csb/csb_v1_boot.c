@@ -72,6 +72,7 @@ static void csb_v1_boot_free_fmtowns_media(CSB_V1_BootProfile *profile)
     free(profile->fmtowns_executable_bytes);
     free(profile->fmtowns_mini_bytes);
     free(profile->fmtowns_title_bytes);
+    free(profile->fmtowns_switch_bytes);
     free(profile->fmtowns_utility_bytes);
     for (index = 0u; index < profile->fmtowns_portrait_count; ++index)
         free(profile->fmtowns_portrait_bytes[index]);
@@ -85,6 +86,8 @@ static void csb_v1_boot_free_fmtowns_media(CSB_V1_BootProfile *profile)
     profile->fmtowns_mini_size = 0u;
     profile->fmtowns_title_bytes = NULL;
     profile->fmtowns_title_size = 0u;
+    profile->fmtowns_switch_bytes = NULL;
+    profile->fmtowns_switch_size = 0u;
     profile->fmtowns_utility_bytes = NULL;
     profile->fmtowns_utility_size = 0u;
     profile->fmtowns_portrait_count = 0u;
@@ -2493,6 +2496,7 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
         const CSB_V1_FmtownsCdFile *executable_entry;
         const CSB_V1_FmtownsCdFile *mini_entry;
         const CSB_V1_FmtownsCdFile *title_entry;
+        const CSB_V1_FmtownsCdFile *switch_entry;
         const CSB_V1_FmtownsCdFile *utility_entry;
         const char *executable_name;
         const char *mini_name;
@@ -2526,6 +2530,7 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
                                                    executable_name);
         mini_entry = csb_v1_fmtowns_cd_find(&layout, directory, mini_name);
         title_entry = csb_v1_fmtowns_cd_find(&layout, NULL, "TITLE.ANM");
+        switch_entry = csb_v1_fmtowns_cd_find(&layout, NULL, "SWITCHTW.EXP");
         utility_entry = csb_v1_fmtowns_cd_find(
             &layout, NULL,
             requested_variant == CSB_V1_VARIANT_FMTOWNS_JA
@@ -2535,6 +2540,7 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
             executable_entry->is_directory || !mini_entry ||
             mini_entry->is_directory ||
             !title_entry || title_entry->is_directory ||
+            !switch_entry || switch_entry->is_directory ||
             !utility_entry || utility_entry->is_directory ||
             !(profile->fmtowns_graphics_bytes =
                   (uint8_t *)malloc(graphics_entry->size)) ||
@@ -2546,6 +2552,8 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
                   (uint8_t *)malloc(mini_entry->size)) ||
             !(profile->fmtowns_title_bytes =
                   (uint8_t *)malloc(title_entry->size)) ||
+            !(profile->fmtowns_switch_bytes =
+                  (uint8_t *)malloc(switch_entry->size)) ||
             !(profile->fmtowns_utility_bytes =
                   (uint8_t *)malloc(utility_entry->size)) ||
             csb_v1_fmtowns_cd_extract(image, image_size, graphics_entry,
@@ -2563,6 +2571,9 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
             csb_v1_fmtowns_cd_extract(image, image_size, title_entry,
                                       profile->fmtowns_title_bytes,
                                       title_entry->size) != 0 ||
+            csb_v1_fmtowns_cd_extract(image, image_size, switch_entry,
+                                      profile->fmtowns_switch_bytes,
+                                      switch_entry->size) != 0 ||
             csb_v1_fmtowns_cd_extract(image, image_size, utility_entry,
                                       profile->fmtowns_utility_bytes,
                                       utility_entry->size) != 0) {
@@ -2575,6 +2586,7 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
         profile->fmtowns_executable_size = executable_entry->size;
         profile->fmtowns_mini_size = mini_entry->size;
         profile->fmtowns_title_size = title_entry->size;
+        profile->fmtowns_switch_size = switch_entry->size;
         profile->fmtowns_utility_size = utility_entry->size;
         profile->fmtowns_portrait_count = 0u;
         {
@@ -8948,6 +8960,7 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
     free(profile->fmtowns_executable_bytes);
     free(profile->fmtowns_mini_bytes);
     free(profile->fmtowns_title_bytes);
+    free(profile->fmtowns_switch_bytes);
     free(profile->fmtowns_utility_bytes);
     {
         uint16_t cleanup_index;
@@ -8967,6 +8980,8 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
     profile->fmtowns_mini_size = 0u;
     profile->fmtowns_title_bytes = NULL;
     profile->fmtowns_title_size = 0u;
+    profile->fmtowns_switch_bytes = NULL;
+    profile->fmtowns_switch_size = 0u;
     profile->fmtowns_utility_bytes = NULL;
     profile->fmtowns_utility_size = 0u;
     profile->graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_NONE;
@@ -9257,6 +9272,7 @@ void csb_v1_boot_cleanup(CSB_V1_BootProfile *profile)
     free(profile->fmtowns_executable_bytes);
     free(profile->fmtowns_mini_bytes);
     free(profile->fmtowns_title_bytes);
+    free(profile->fmtowns_switch_bytes);
     free(profile->fmtowns_utility_bytes);
     {
         uint16_t cleanup_index;
@@ -9276,6 +9292,8 @@ void csb_v1_boot_cleanup(CSB_V1_BootProfile *profile)
     profile->fmtowns_mini_size = 0u;
     profile->fmtowns_title_bytes = NULL;
     profile->fmtowns_title_size = 0u;
+    profile->fmtowns_switch_bytes = NULL;
+    profile->fmtowns_switch_size = 0u;
     profile->fmtowns_utility_bytes = NULL;
     profile->fmtowns_utility_size = 0u;
     profile->state = CSB_V1_BOOT_STATE_PROFILE_READY;

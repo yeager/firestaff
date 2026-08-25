@@ -9987,9 +9987,13 @@ static int m11_csb_bind_fmtowns_switch(M11_GameViewState *state,
     FILE *file;
     long file_size;
     size_t bytes_read;
+    int packed_switch;
     if (!state || !state->csbBootProfile) return 0;
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
-    if (!m11_csb_is_fmtowns_profile(profile) || !profile->asset_root[0])
+    packed_switch = profile->fmtowns_switch_bytes &&
+        profile->fmtowns_switch_size != 0u;
+    if (!m11_csb_is_fmtowns_profile(profile) ||
+        (!profile->asset_root[0] && !packed_switch))
         return 0;
     state->csbFmtownsUtilityBound = 0;
     state->csbFmtownsUtilityJapaneseActive = 0;
@@ -10020,23 +10024,34 @@ static int m11_csb_bind_fmtowns_switch(M11_GameViewState *state,
     state->csbFmtownsUtilitySaveDialogActive = 0;
     state->csbFmtownsUtilityLoadDialogActive = 0;
     m11_csb_release_fmtowns_switch(state);
-    if (snprintf(path, sizeof(path), "%s/SWITCHTW.EXP", profile->asset_root) < 0 ||
-        strlen(path) >= sizeof(path)) return 0;
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0 ||
-        (file_size = ftell(file)) <= 0 || file_size > 4 * 1024 * 1024 ||
-        fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
-        return 0;
+    if (packed_switch) {
+        file = NULL;
+        file_size = (long)profile->fmtowns_switch_size;
+    } else {
+        if (snprintf(path, sizeof(path), "%s/SWITCHTW.EXP", profile->asset_root) < 0 ||
+            strlen(path) >= sizeof(path)) return 0;
+        file = fopen(path, "rb");
+        if (!file || fseek(file, 0, SEEK_END) != 0 ||
+            (file_size = ftell(file)) <= 0 || file_size > 4 * 1024 * 1024 ||
+            fseek(file, 0, SEEK_SET) != 0) {
+            if (file) fclose(file);
+            return 0;
+        }
     }
     state->csbFmtownsSwitchBytes = (uint8_t *)malloc((size_t)file_size);
     if (!state->csbFmtownsSwitchBytes) {
-        fclose(file);
+        if (file) fclose(file);
         return 0;
     }
-    bytes_read = fread(state->csbFmtownsSwitchBytes, 1u, (size_t)file_size,
-                       file);
-    fclose(file);
+    if (packed_switch) {
+        memcpy(state->csbFmtownsSwitchBytes, profile->fmtowns_switch_bytes,
+               profile->fmtowns_switch_size);
+        bytes_read = profile->fmtowns_switch_size;
+    } else {
+        bytes_read = fread(state->csbFmtownsSwitchBytes, 1u, (size_t)file_size,
+                           file);
+        fclose(file);
+    }
     if (bytes_read != (size_t)file_size ||
         !csb_v1_fmtowns_switch_parse(state->csbFmtownsSwitchBytes,
                                      (size_t)file_size,
