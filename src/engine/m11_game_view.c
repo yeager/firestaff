@@ -22806,7 +22806,8 @@ int M11_GameView_ResolveNexusRuntimeDataDir(const M11_GameLaunchSpec* spec,
         }
         if (m11_path_has_extension(candidate, ".cue") ||
             m11_path_has_extension(candidate, ".bin") ||
-            m11_path_has_extension(candidate, ".iso")) {
+            m11_path_has_extension(candidate, ".iso") ||
+            m11_path_has_extension(candidate, ".zip")) {
             snprintf(outPath, (size_t)outPathSize, "%s", candidate);
             return outPath[0] != '\0';
         }
