@@ -61723,34 +61723,38 @@ static int m11_draw_dm2_source_inventory_panel(
     }
     if (summary.colors == 16u) {
         DM2_V1_InventoryPanelSurveyFrameReceipt survey;
-        DM2_V1_InventoryPanelHudBlit blit;
-        DM2_V1_InventoryPanelHudSurface surface;
-        DM2_V1_InventoryPanelHudConsumptionReceipt consumed;
         memset(&survey, 0, sizeof(survey));
-        memset(&blit, 0, sizeof(blit));
-        memset(&surface, 0, sizeof(surface));
-        memset(&consumed, 0, sizeof(consumed));
         if (!dm2_v1_inventory_panel_survey_frame_receipt(loader, &survey) ||
             !survey.valid || survey.decoded_width != (uint16_t)width ||
-            survey.decoded_height != (uint16_t)height ||
-            placement.destination.w != (int)survey.decoded_width ||
-            placement.destination.h != (int)survey.decoded_height) {
+            survey.decoded_height != (uint16_t)height) {
             dm2_v1_asset_free_pixels(pixels);
             return 0;
         }
-        blit.rect_number = survey.expanded_rect_index;
-        blit.destination_x = placement.destination.x;
-        blit.destination_y = placement.destination.y;
-        blit.width = survey.decoded_width;
-        blit.height = survey.decoded_height;
-        blit.transparent_index = UINT8_MAX;
-        surface.pixels = framebuffer;
-        surface.width = framebuffer_width;
-        surface.height = framebuffer_height;
-        surface.stride = framebuffer_width;
+        /* The original Amiga RAW4 rectangle clips the 121x72 CHARSHEET
+         * source to its 119x70 destination.  The generic inventory helper
+         * intentionally accepts only whole-image blits, so use the verified
+         * RAW4 source offset here instead of rejecting the authentic frame
+         * (or replacing it with a host panel).  `survey` binds the exact
+         * GDAT image, palette and decoded identity before any pixels reach
+         * the framebuffer. */
+        for (row = 0; row < placement.destination.h; ++row) {
+            int column;
+            for (column = 0; column < placement.destination.w; ++column) {
+                uint8_t pixel = pixels[(size_t)(placement.source_y + row) *
+                                       (size_t)width +
+                                       (size_t)(placement.source_x + column)];
+                if (pixel >= 16u) {
+                    dm2_v1_asset_free_pixels(pixels);
+                    return 0;
+                }
+                framebuffer[(size_t)(placement.destination.y + row) *
+                            (size_t)framebuffer_width +
+                            (size_t)(placement.destination.x + column)] =
+                    survey.palette16[pixel];
+            }
+        }
         dm2_v1_asset_free_pixels(pixels);
-        return dm2_v1_inventory_panel_consume_survey_frame(
-            loader, &survey, &blit, &surface, &consumed) && consumed.valid;
+        return 1;
     }
     for (row = 0; row < placement.destination.h; ++row) {
         memcpy(framebuffer + (size_t)(placement.destination.y + row) *
