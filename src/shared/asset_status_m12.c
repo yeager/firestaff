@@ -6986,20 +6986,6 @@ int M12_AssetStatus_PrepareDM1RuntimeVersion(
     int gameIndex = m12_game_index_from_id("dm1");
     int versionIndex;
     const M12_AssetVersionStatus* version;
-    M12_AssetRequiredFileStatus graphics;
-    char userDataDir[M12_ASSET_DATA_DIR_CAPACITY];
-    char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
-    char cacheLeaf[64];
-    char dataDir[M12_ASSET_DATA_DIR_CAPACITY];
-    char graphicsPath[M12_ASSET_DATA_DIR_CAPACITY];
-    char dungeonPath[M12_ASSET_DATA_DIR_CAPACITY];
-    char copiedMd5[M12_ASSET_MD5_CAPACITY];
-    static const char* const packageFiles[] = {
-        "DATA/DUNGEON.DAT", "DATA/SONG.DAT", "ANIM", "DM.EXE", "EGA",
-        "END", "FIRES", "IBMIO", "INSTALL.EXE", "SELECTOR", "STATS.EXE",
-        "SWOOSH", "TANDY", "TITLE", "VGA", NULL
-    };
-    size_t i;
 
     if (outPath && outPathSize) outPath[0] = '\0';
     if (!status || !versionId || !outPath || outPathSize == 0U ||
@@ -7032,43 +7018,11 @@ int M12_AssetStatus_PrepareDM1RuntimeVersion(
         return M12_AssetStatus_ResolveRuntimeDataDirForVersion(
             status, "dm1", versionId, outPath, outPathSize);
     }
-    if (!FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) ||
-        !FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userDataDir, "asset-cache") ||
-        snprintf(cacheLeaf, sizeof(cacheLeaf), "dm1-%s", versionId) < 0 ||
-        !FSP_JoinPath(outPath, outPathSize, cacheRoot, cacheLeaf) ||
-        !FSP_CreateDirectoryRecursive(outPath) ||
-        !FSP_JoinPath(dataDir, sizeof(dataDir), outPath, "DATA") ||
-        !FSP_CreateDirectoryRecursive(dataDir) ||
-        !FSP_JoinPath(graphicsPath, sizeof(graphicsPath), dataDir, "GRAPHICS.DAT")) {
-        if (outPath && outPathSize) outPath[0] = '\0';
-        return 0;
-    }
-    memset(&graphics, 0, sizeof(graphics));
-    graphics.matched = 1;
-    m12_copy_string(graphics.matchedPath, sizeof(graphics.matchedPath),
-                    version->matchedPath);
-    if (!m12_materialize_required_file(&graphics, graphicsPath) ||
-        !m12_file_md5_hex(graphicsPath, copiedMd5) ||
-        strcmp(copiedMd5, version->matchedMd5) != 0 ||
-        !FSP_JoinPath(dungeonPath, sizeof(dungeonPath), dataDir, "DUNGEON.DAT") ||
-        !m12_materialize_optional_for_cache_seed(version->matchedPath,
-                                                 "DUNGEON.DAT", dungeonPath) ||
-        !m12_file_md5_hex(dungeonPath, copiedMd5) ||
-        strcmp(copiedMd5, "766450c940651fc021c92fe5d0d0b3a6") != 0) {
-        (void)remove(graphicsPath);
-        (void)remove(dungeonPath);
-        outPath[0] = '\0';
-        return 0;
-    }
-    for (i = 0U; packageFiles[i] != NULL; ++i) {
-        char filePath[M12_ASSET_DATA_DIR_CAPACITY];
-        if (!FSP_JoinPath(filePath, sizeof(filePath), outPath, packageFiles[i]) ||
-            !m12_materialize_optional_for_cache_seed(version->matchedPath,
-                                                     packageFiles[i], filePath)) {
-            outPath[0] = '\0';
-            return 0;
-        }
-    }
+    /* DOS ZIP members stay virtual. M11 derives the sibling DUNGEON.DAT
+     * from this verified GRAPHICS.DAT member and reads both into bounded RAM;
+     * never create an asset-cache copy of user-owned original media. */
+    if (strlen(version->matchedPath) >= outPathSize) return 0;
+    memcpy(outPath, version->matchedPath, strlen(version->matchedPath) + 1U);
     return 1;
 }
 
