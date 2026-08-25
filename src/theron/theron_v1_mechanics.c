@@ -497,6 +497,14 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
 
     /* ── Special squares: stairs ── */
     if (tile == THERON_SQUARE_STAIRS_UP || tile == THERON_SQUARE_STAIRS_DOWN) {
+        /* Track 02 currently establishes that this is a stairs-class tile,
+         * but not its direction, destination map, or destination position.
+         * The old host model inferred +/- one level and reused the source
+         * coordinates; that is not an admissible production fallback for an
+         * authenticated level.  Keep the real-media route fail-closed until
+         * an original transition consumer supplies those fields. */
+        if (theron_v1_source_level_requires_item_provenance(world))
+            return THERON_MOVE_BLOCKED;
         /* Teleporter-style result: queue transition but don't move */
         if (theron_v1_check_transition(world, nx, ny) == 0 ||
             theron_v1_transition_execute(world) < 0)

@@ -688,6 +688,25 @@ static void test_level_transition_stairs(void) {
     CHECK_INT("party y on new level", w.party.leader_y, 8);
 }
 
+static void test_source_stairs_require_transition_consumer(void) {
+    printf("[test:source_stairs_require_transition_consumer]\n");
+    Theron_V1_World w;
+
+    make_world(&w);
+    load_level_1(&w);
+    w.levels[0][0].source_header_verified = 1;
+    w.levels[0][0].squares[8][9] = THERON_SQUARE_STAIRS_DOWN;
+
+    CHECK_INT("unbound source stairs are fail-closed",
+              theron_v1_move_party(&w, THERON_DIR_EAST),
+              THERON_MOVE_BLOCKED);
+    CHECK_INT("unbound source stairs retain level", w.current_level, 0);
+    CHECK_INT("unbound source stairs retain party x", w.party.leader_x, 8);
+    CHECK_INT("unbound source stairs retain party y", w.party.leader_y, 8);
+    CHECK_INT("unbound source stairs do not queue transition",
+              w.transition_pending, 0);
+}
+
 static void test_between_dungeon_exit(void) {
     printf("[test:between_dungeon_exit]\n");
     Theron_V1_World w;
@@ -942,6 +961,7 @@ int main(void) {
     test_mechanics_sound_ids_valid();
     test_multi_level_object_table_apply();
     test_level_transition_stairs();
+    test_source_stairs_require_transition_consumer();
     test_between_dungeon_exit();
     test_decode_dungeon_level_object_table();
     test_spell_casting();
