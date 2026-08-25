@@ -43,6 +43,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_texture_decode.c"
         src/shared/asset_find_by_hash.c)
     target_include_directories(test_nexus_v1_dgn_texture_decode PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_nexus_v1_dgn_texture_decode PRIVATE
+        firestaff_zip_extract)
     add_test(NAME nexus_v1_dgn_texture_decode
         COMMAND test_nexus_v1_dgn_texture_decode)
 endif()
