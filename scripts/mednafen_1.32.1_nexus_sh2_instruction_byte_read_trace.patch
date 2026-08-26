@@ -1,0 +1,59 @@
+--- src/ss/ss.h
++++ src/ss/ss.h
+@@ -135,6 +135,8 @@
+  void FirestaffTraceSH2RAMRead(uint32 address, unsigned size, uint32 value);
+  void FirestaffTraceSH2CachedRAMRead(unsigned which, uint32 address, unsigned size,
+   uint32 value, uint32 pc);
++ void FirestaffTraceSH2InstructionByteRead(unsigned which, unsigned register_index,
++  uint32 address, uint8 value, uint32 pc);
+  void FirestaffTraceSH2RAMSourceWrite(uint32 address, unsigned size, uint32 value);
+  uint16 FirestaffPeekSH2Memory(unsigned which, uint32 address);
+  enum
+--- src/ss/ss.cpp
++++ src/ss/ss.cpp
+@@ -880,6 +880,34 @@
+  if((count & 0x3ffU) == 0) fflush(file);
+ }
+ 
++void FirestaffTraceSH2InstructionByteRead(unsigned which, unsigned register_index,
++ uint32 address, uint8 value, uint32 pc)
++{
++ static FILE *file;
++ static unsigned count;
++ static unsigned limit = 100000;
++ static bool configured;
++ const char *path = getenv("FIRESTAFF_NEXUS_TRACE_SH2_INSTRUCTION_BYTE_READS");
++ if(!configured)
++ {
++  const char *limit_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_LIMIT");
++  if(limit_text && *limit_text) limit = strtoul(limit_text, NULL, 10);
++  configured = true;
++ }
++ if(!path || !*path || count >= limit || which)
++  return;
++ if(!file)
++ {
++  file = fopen(path, "wb");
++  if(!file) return;
++  fputs("FIRESTAFF_NEXUS_SH2_INSTRUCTION_BYTE_READ_TRACE_V1\n", file);
++ }
++ fprintf(file, "addr=0x%08x value=0x%02x pc=0x%08x r=%u\n",
++  (unsigned)address, (unsigned)value, (unsigned)pc, register_index);
++ count++;
++ if((count & 0x3ffU) == 0) fflush(file);
++}
++
+ void FirestaffTraceSH2RAMSourceWrite(uint32 address, unsigned size, uint32 value)
+ {
+  static FILE *file;
+--- src/ss/sh7095_ops.inc
++++ src/ss/sh7095_ops.inc
+@@ -16,7 +16,7 @@
+ 
+  #define WB_EX_CHECK(r) { if(timestamp < WB_until[(r)]) timestamp = WB_until[(r)]; }
+  #define WB_WRITE(r, v) { R[(r)] = (v); WB_until[(r)] = MA_until + 1; }
+- #define WB_READ8(r, A) { uint8 memrv; MemRead8(A, memrv); WB_WRITE((r), (int8)memrv); }
++ #define WB_READ8(r, A) { uint8 memrv; uint32 firestaff_ea = (A); MemRead8(firestaff_ea, memrv); if(firestaff_ea >= 0x060ac2a6 && firestaff_ea < 0x060b3e27) FirestaffTraceSH2InstructionByteRead(which, (r), firestaff_ea, memrv, PC); WB_WRITE((r), (int8)memrv); }
+  #define WB_READ16(r, A) { uint16 memrv; MemRead16(A, memrv); WB_WRITE((r), (int16)memrv); }
+  #define WB_READ32(r, A) { uint32 memrv; MemRead32(A, memrv); WB_WRITE((r), memrv); }
+  #define WB_READ16_I(r, A) { uint16 memrv; MemRead16_I(A, memrv); WB_WRITE((r), (int16)memrv); }
