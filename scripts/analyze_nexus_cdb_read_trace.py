@@ -17,44 +17,57 @@ SECTOR_SIZE = 2048
 
 
 def read_iso_files(iso: Path) -> list[tuple[int, int, str]]:
-    with iso.open("rb") as stream:
-        stream.seek(16 * SECTOR_SIZE)
-        pvd = stream.read(SECTOR_SIZE)
-        root = pvd[156:]
-        if len(root) < 34:
-            raise ValueError("ISO9660 root record is truncated")
-        root_lba = int.from_bytes(root[2:6], "little")
-        root_size = int.from_bytes(root[10:14], "little")
-        files: list[tuple[int, int, str]] = []
+    """Read ISO9660 directory records from cooked or raw Track 1 in memory."""
+    image = iso.read_bytes()
+    sector_bytes = 2352 if len(image) % 2352 == 0 else SECTOR_SIZE
+    user_offset = 16 if sector_bytes == 2352 else 0
 
-        def walk(lba: int, size: int, prefix: str) -> None:
-            stream.seek(lba * SECTOR_SIZE)
-            data = stream.read(size)
-            offset = 0
-            while offset < len(data):
-                record_length = data[offset]
-                if record_length == 0:
-                    offset = ((offset // SECTOR_SIZE) + 1) * SECTOR_SIZE
-                    continue
-                record = data[offset : offset + record_length]
-                if len(record) < 34:
-                    raise ValueError("ISO9660 directory record is truncated")
-                child_lba = int.from_bytes(record[2:6], "little")
-                child_size = int.from_bytes(record[10:14], "little")
-                flags = record[25]
-                name_length = record[32]
-                name = record[33 : 33 + name_length].decode("ascii", "replace")
-                if name not in ("\x00", "\x01"):
-                    name = name.split(";", 1)[0].upper()
-                    child_path = f"{prefix}/{name}".strip("/")
-                    if flags & 2:
-                        walk(child_lba, child_size, child_path)
-                    else:
-                        files.append((child_lba, child_size, child_path))
-                offset += record_length
+    def sector(lba: int) -> bytes:
+        start = lba * sector_bytes + user_offset
+        end = start + SECTOR_SIZE
+        if start < 0 or end > len(image):
+            raise ValueError("ISO sector lies outside Track 1")
+        return image[start:end]
 
-        walk(root_lba, root_size, "")
-        return files
+    def extent(lba: int, size: int) -> bytes:
+        return b"".join(sector(lba + index)
+                        for index in range((size + SECTOR_SIZE - 1) // SECTOR_SIZE))[:size]
+
+    pvd = sector(16)
+    if pvd[1:6] != b"CD001":
+        raise ValueError("Track 1 has no ISO9660 primary volume descriptor")
+    root = pvd[156:]
+    if len(root) < 34:
+        raise ValueError("ISO9660 root record is truncated")
+    files: list[tuple[int, int, str]] = []
+
+    def walk(lba: int, size: int, prefix: str) -> None:
+        data = extent(lba, size)
+        offset = 0
+        while offset < len(data):
+            record_length = data[offset]
+            if record_length == 0:
+                offset = ((offset // SECTOR_SIZE) + 1) * SECTOR_SIZE
+                continue
+            record = data[offset : offset + record_length]
+            if len(record) < 34:
+                raise ValueError("ISO9660 directory record is truncated")
+            child_lba = int.from_bytes(record[2:6], "little")
+            child_size = int.from_bytes(record[10:14], "little")
+            flags = record[25]
+            name_length = record[32]
+            name = record[33 : 33 + name_length].decode("ascii", "replace")
+            if name not in ("\x00", "\x01"):
+                name = name.split(";", 1)[0].upper()
+                child_path = f"{prefix}/{name}".strip("/")
+                if flags & 2:
+                    walk(child_lba, child_size, child_path)
+                else:
+                    files.append((child_lba, child_size, child_path))
+            offset += record_length
+
+    walk(int.from_bytes(root[2:6], "little"), int.from_bytes(root[10:14], "little"), "")
+    return files
 
 
 def main() -> int:
