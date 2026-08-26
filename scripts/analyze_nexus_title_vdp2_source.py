@@ -16,6 +16,7 @@ import re
 from pathlib import Path
 
 from analyze_nexus_saturn_runtime_capture import iter_frame_regions_file
+from analyze_nexus_vdp2_composition import visible_character_spans
 from analyze_nexus_vdp2_write_trace import replay_vram_bus_writes
 from nexus_vdp2_registers import detect_byte_order, read_u16
 
@@ -315,6 +316,18 @@ def main() -> int:
                       f"tvmd=0x{tvmd:04x} bgon=0x{bgon:04x} chctla=0x{chctla:04x}")
                 print("title_cg_vram_" + describe_position(cg_exact, cg_swapped) +
                       f" bytes={len(title_cg)}")
+                try:
+                    _, nbg1_characters = visible_character_spans(
+                        frame["vdp2-vram"], registers, byte_order, 1)
+                    title_start = cg_swapped if cg_swapped >= 0 else cg_exact
+                    title_end = title_start + len(title_cg) if title_start >= 0 else -1
+                    overlap = sorted(address for address in nbg1_characters
+                                     if title_start <= address < title_end)
+                    print("title_cg_nbg1_visible_character_overlap=" +
+                          (",".join(f"0x{address:x}" for address in overlap)
+                           if overlap else "none"))
+                except ValueError as error:
+                    print(f"title_cg_nbg1_visible_character_overlap=unbound:{error}")
                 if trace_source_verified:
                     snapshot_position = frame["vdp2-vram"].find(title_cg_raw_swapped)
                     print(f"title_cg_trace_bus_position=0x{trace_source_position:x} "

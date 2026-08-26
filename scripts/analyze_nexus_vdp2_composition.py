@@ -88,6 +88,78 @@ def nbg_map_registers(registers: bytes, byte_order: str) -> list[tuple[int, int]
     return result
 
 
+def nbg_map_register_bytes(registers: bytes, byte_order: str,
+                           layer: int) -> tuple[int, int, int, int]:
+    """Return all four six-bit map numbers for one NBG layer."""
+    if layer not in range(4):
+        raise ValueError("invalid NBG layer")
+    first = read_u16(registers, 0x40 + layer * 4, byte_order)
+    second = read_u16(registers, 0x42 + layer * 4, byte_order)
+    return (first & 0x3F, (first >> 8) & 0x3F,
+            second & 0x3F, (second >> 8) & 0x3F)
+
+
+def visible_character_spans(vram: bytes, registers: bytes, byte_order: str,
+                            layer: int, width: int = 320,
+                            height: int = 224) -> tuple[set[int], set[int]]:
+    """Return observed NBG character name-table and character byte addresses.
+
+    This mirrors only the bounded address calculation used by the Saturn
+    VDP2 character fetcher for a normal 8x8 tile layer.  It deliberately
+    returns addresses rather than pixels: a name-table route is useful for
+    ruling an asset in or out as a consumer, but it does not prove palette,
+    priority, compositor output, or title semantics.
+    """
+    if layer not in (0, 1):
+        raise ValueError("only NBG0/NBG1 character layers are supported")
+    if len(vram) != 0x80000 or len(registers) < 0x92:
+        raise ValueError("VDP2 witness is truncated")
+    if width <= 0 or height <= 0:
+        raise ValueError("visible dimensions are invalid")
+    chctla = read_u16(registers, 0x28, byte_order)
+    pncn = read_u16(registers, 0x30 + layer * 2, byte_order)
+    plsz = read_u16(registers, 0x3A, byte_order)
+    map_words = nbg_map_register_bytes(registers, byte_order, layer)
+    char_size = (chctla >> (layer * 8)) & 1
+    if (chctla >> (1 + layer * 8)) & 1:
+        raise ValueError("layer is in bitmap mode")
+    pnd_size = (pncn >> 15) & 1
+    if pnd_size or char_size:
+        raise ValueError("only two-word 8x8 character PNDs are supported")
+    # The normal character route uses the layer's integer scroll registers:
+    # NBG0 at 0x70/0x78 and NBG1 at 0x80/0x88.
+    x_scroll = read_u16(registers, 0x70 + layer * 0x10, byte_order) & 0x7FF
+    y_scroll = read_u16(registers, 0x78 + layer * 0x10, byte_order) & 0x7FF
+    plane_size = (plsz >> (layer * 2)) & 0x3
+    map_offset = (read_u16(registers, 0x3C, byte_order) >> (layer * 4)) & 0x7
+    psshift = 13 - pnd_size - (char_size << 1)
+    name_addresses: set[int] = set()
+    character_addresses: set[int] = set()
+    for cell_y in range((height + 7) // 8):
+        iy = cell_y * 8 + y_scroll
+        for cell_x in range((width + 7) // 8):
+            ix = cell_x * 8 + x_scroll
+            map_index = ((ix >> (9 + bool(plane_size & 1))) & 1) | \
+                        ((iy >> (9 + bool(plane_size & 2) - 1)) & 2)
+            plane_index = ((ix >> 9) & plane_size & 1) | \
+                          ((iy >> 8) & plane_size & 2)
+            map_word = map_words[map_index]
+            map_base = ((map_offset << 6) + (map_word & ~plane_size)) << psshift
+            plane_offset = plane_index << psshift
+            page_offset = ((((ix >> 3) & 0x3F) >> char_size) +
+                           ((((iy >> 3) & 0x3F) >> char_size) <<
+                            (6 - char_size))) << (1 - pnd_size)
+            name_word = (map_base + plane_offset + page_offset) & 0x3FFFF
+            name_byte = name_word * 2
+            name_addresses.add(name_byte)
+            char_number = int.from_bytes(vram[name_byte + 2:name_byte + 4],
+                                          "little") & 0x7FFF
+            # VDP2's character address is a 16-bit-word address; return the
+            # raw-capture byte address used by all source-span analyzers.
+            character_addresses.add((char_number << 5) & 0x7FFFF)
+    return name_addresses, character_addresses
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path)
@@ -159,6 +231,16 @@ def main() -> int:
         "nbg_cram_offsets="
         + ",".join(f"NBG{index}={(values['CRAOFA'] >> (index * 4)) & 7}" for index in range(4))
     )
+    if nbg1_mode == "character":
+        try:
+            name_addresses, character_addresses = visible_character_spans(
+                frames[args.frame]["vdp2-vram"], registers, byte_order, 1)
+            print(f"NBG1_visible_name_table_address_range=0x{min(name_addresses):05x}-"
+                  f"0x{max(name_addresses):05x} count={len(name_addresses)}")
+            print(f"NBG1_visible_character_address_range=0x{min(character_addresses):05x}-"
+                  f"0x{max(character_addresses):05x} count={len(character_addresses)}")
+        except ValueError as error:
+            print(f"NBG1_visible_character_addresses=unbound:{error}")
     print("register_semantics=authentic_frame_observation")
     print("NBG0_map_registers_consumed=no_bitmap_mode" if nbg0_mode == "bitmap"
           else "NBG0_map_registers_consumed=character_mode")

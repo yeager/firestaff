@@ -24,6 +24,8 @@ assert WRITE_TRACE_SPEC and WRITE_TRACE_SPEC.loader
 WRITE_TRACE = importlib.util.module_from_spec(WRITE_TRACE_SPEC)
 WRITE_TRACE_SPEC.loader.exec_module(WRITE_TRACE)
 
+from analyze_nexus_vdp2_composition import visible_character_spans
+
 
 def source_fixture() -> tuple[bytes, bytes]:
     cg = bytes(32) + bytes((index * 17) & 0xFF for index in range(5249 * 32))
@@ -96,6 +98,14 @@ def main() -> int:
                 encoding="ascii")
             replay, writes = WRITE_TRACE.replay_vram_bus_writes(trace)
             assert writes == 3 and replay[0x20:0x24] == b"\xab\x22\x33\x44"
+            registers = bytearray(0x200)
+            registers[0x44:0x46] = (0x1717).to_bytes(2, "little")
+            vram = bytearray(0x80000)
+            vram[0x5C000:0x5C002] = (0).to_bytes(2, "little")
+            vram[0x5C002:0x5C004] = (0x1000).to_bytes(2, "little")
+            names, characters = visible_character_spans(bytes(vram), bytes(registers),
+                                                         "little", 1)
+            assert 0x5C000 in names and 0x20000 in characters
             capture = Path(temporary) / "capture.raw"
             vdp1 = bytes(0x100000)
             vdp2 = bytes(0x200) + bytes(0x80000) + bytes(0x1000)

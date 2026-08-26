@@ -115,8 +115,16 @@ representation. The final 32 member bytes were already resident or are
 otherwise outside this bounded trace, so the evidence is deliberately
 recorded as a producer-prefix join, not a claim that this interval wrote every
 byte. It establishes an authentic producer for the title character data, but
-still does not identify its display-list consumer, NBG1 map, NBG0 bitmap,
-placement, or timing.
+still does not identify its display-list consumer, NBG0 bitmap, placement, or
+timing.
+
+The same frame now excludes one tempting but incorrect consumer inference.
+NBG1 is a two-word, 8×8 character layer with its visible name-table cells at
+`0x5c000`–`0x5db9c`; every visible cell resolves to character data at
+`0x20000`. That range does not overlap the word-swapped `TITLE.CG` payload at
+`0x24020`. Thus NBG1 is active but is not the visible `TITLE.CG` character
+consumer in this witness. This is a negative hardware-route result, not a
+claim that NBG0 or VDP1 supplies the remaining title composition.
 
 The retained VDP2 writer trace also separates initialization from the missing
 producer: the only writer spanning the NBG0-range start (`0x06041fc0`,
