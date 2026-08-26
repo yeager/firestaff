@@ -1,5 +1,20 @@
 # Nexus: verifierad färdigställandegrad
 
+## Local Japanese retail-media verification — 2026-08-26
+
+The supplied Japanese retail corpus was opened directly both as its original
+nine-track CUE/BIN set and as the original ZIP container.  In both cases the
+native launch probe found the same 137 ISO members, loaded the real title,
+warning, game-over, STMP and LOGOBG surfaces, and completed five engine ticks
+without materializing game data.  The CUE binding check also verified the
+original raw BIN bindings for CD tracks 2–9.
+
+This is a media and native-launch result only.  It deliberately does **not**
+promote CDDA playback, the Saturn title/menu handoff, or a playable start:
+the real CDDA consumer and the source-owned LEV01 level/x/y/facing witness
+remain unbound.  `LEV00` remains a title-only asset and the engine therefore
+fails closed before it can invent a start pose.
+
 ## Current external-data verification — 2026-08-13
 
 ## Authentic archive-source verification — 2026-08-14
