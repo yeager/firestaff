@@ -5,7 +5,7 @@
 +#include <stdint.h>
 @@ -54,0 +57 @@
 +#include "sh7095.h"
-@@ -1241,0 +1245,46 @@
+@@ -1240,0 +1245,46 @@
 +static FILE *FirestaffVramWriteTraceFile;
 +static uint32 FirestaffVramWriteTraceMin;
 +static uint32 FirestaffVramWriteTraceMax;

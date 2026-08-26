@@ -1,6 +1,6 @@
 --- src/ss/vdp1.cpp
 +++ src/ss/vdp1.cpp
-@@ -1251,0 +1251,50 @@
+@@ -1288,0 +1289,50 @@
 +static FILE *FirestaffVramCodeTraceFile;
 +static bool FirestaffVramCodeTraceWritten;
 +

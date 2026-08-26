@@ -1,0 +1,4 @@
+--- src/ss/vdp1.cpp
++++ src/ss/vdp1.cpp
+@@ -1273,0 +1274,1 @@
++ FirestaffTraceVdp1WriterRegisters(address);
