@@ -5,7 +5,7 @@
 +  uint32 address, uint8 value, uint32 pc);
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
-@@ -880,6 +880,46 @@
+@@ -880,6 +880,54 @@
   if((count & 0x3ffU) == 0) fflush(file);
  }
  
