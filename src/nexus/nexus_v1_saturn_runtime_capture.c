@@ -337,8 +337,13 @@ int nexus_v1_saturn_runtime_capture_vdp2_register_receipt(
                                          receipt.byte_order) & 0x07ffU;
     receipt.nbg1_scroll_y = vdp2_read16(frame->vdp2_registers, 0x84U,
                                          receipt.byte_order) & 0x07ffU;
-    receipt.nbg1_bitmap_palette_number =
+    receipt.nbg0_bitmap_palette_number =
         (uint8_t)(receipt.bmpna & 0x0007U);
+    receipt.nbg1_bitmap_palette_number =
+        (uint8_t)((receipt.bmpna >> 8U) & 0x0007U);
+    receipt.nbg0_enabled = (receipt.bgon & 0x0001U) != 0U;
+    receipt.nbg0_bitmap_mode = (receipt.chctla & 0x0002U) != 0U;
+    receipt.nbg0_colour_code = (receipt.chctla >> 4U) & 3U;
     receipt.nbg1_enabled = (receipt.bgon & 0x0002U) != 0U;
     receipt.nbg1_bitmap_mode = (receipt.chctla & 0x0200U) != 0U;
     receipt.nbg1_16x16_character_mode = (receipt.chctla & 0x0100U) != 0U;

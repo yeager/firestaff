@@ -98,9 +98,13 @@ typedef struct {
      * facts, not a screen-space position for any retail asset. */
     uint16_t nbg1_scroll_x;
     uint16_t nbg1_scroll_y;
-    /* BMPNA's NBG1 bitmap palette-number field. It identifies the observed
-     * hardware bank only; it does not identify a source CLUT owner. */
+    /* BMPNA bitmap palette-number fields. They identify observed hardware
+     * banks only; they do not identify source CLUT owners. */
+    uint8_t nbg0_bitmap_palette_number;
     uint8_t nbg1_bitmap_palette_number;
+    int nbg0_enabled;
+    int nbg0_bitmap_mode;
+    int nbg0_colour_code;
     int nbg1_enabled;
     int nbg1_bitmap_mode;
     int nbg1_16x16_character_mode;

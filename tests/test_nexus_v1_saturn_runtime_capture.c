@@ -112,6 +112,9 @@ int main(void)
         blob[vdp2_register_offset + 0x01U] = 0x80U;
         blob[vdp2_register_offset + 0x20U] = 0x02U;
         blob[vdp2_register_offset + 0x21U] = 0x00U;
+        blob[vdp2_register_offset + 0x28U] = 0x13U;
+        blob[vdp2_register_offset + 0x29U] = 0x00U;
+        blob[vdp2_register_offset + 0x2cU] = 0x05U;
     }
     if (offset != blob_size ||
         !nexus_v1_saturn_runtime_capture_frame(blob, blob_size, 1U,
@@ -131,6 +134,9 @@ int main(void)
         register_receipt.byte_order !=
             NEXUS_V1_SATURN_VDP2_REGISTER_ORDER_LITTLE ||
         register_receipt.tvmd != 0x8000U || register_receipt.bgon != 0x0002U ||
+        register_receipt.nbg0_enabled || !register_receipt.nbg0_bitmap_mode ||
+        register_receipt.nbg0_colour_code != 1 ||
+        register_receipt.nbg0_bitmap_palette_number != 5 ||
         register_receipt.semantic_admission_blocked != 1 ||
         nexus_v1_saturn_runtime_capture_frame(blob, blob_size, 2U,
                                                &receipt)) {
