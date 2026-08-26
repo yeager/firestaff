@@ -1,9 +1,6 @@
 --- src/ss/vdp2.cpp
 +++ src/ss/vdp2.cpp
-@@ -109,3 +109,47 @@
- static uint32 FirestaffVdp2WriteTraceMax;
- static bool FirestaffVdp2WriteTraceConfigured;
-+
+@@ -109,0 +110,43 @@
 +static FILE *FirestaffVdp2WriterCodeTraceFile;
 +static uint32 FirestaffVdp2WriterCodeTracePCs[64];
 +static unsigned FirestaffVdp2WriterCodeTraceCount;
@@ -47,4 +44,3 @@
 + fputc('\n', FirestaffVdp2WriterCodeTraceFile);
 + fflush(FirestaffVdp2WriterCodeTraceFile);
 +}
- static void FirestaffTraceVdp2Write(const char *area, uint32 address,
