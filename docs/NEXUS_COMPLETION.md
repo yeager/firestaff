@@ -369,6 +369,19 @@ frame-envelope. J/J frame 500 passerar denna lane; spanen är helt transparent,
 vilket bevaras som `valid=1, written_pixels=0` i stället för att fabricera en
 menybild. API:t lämnar fortsatt produktionskonsument och asset-owner spärrade.
 
+Titellanen har en motsvarande, separat NBG0-konsument:
+`nexus_v1_vdp2_capture_decode_runtime_frame_nbg0_bitmap()`. Den accepterar
+endast den uppmätta 512×256/8bpp-lanen vid VRAM-offset noll samt BMPNA- och
+CRAOFA-bank noll, och producerar en capture-only RGBA-yta med
+`renderer_permitted=0`. En ny flyktig kontroll mot den ägda JP-CUE:n och
+JP-1.01-BIOS:en passerade den 2026-08-26 för titelramen: `TVMD=0x8000`,
+`BGON=0x0003`, `CHCTLA=0x0013`, `BMPNA=0x0000`; de första 131072
+VRAM-byten har SHA-256
+`ad10d99f00c3eecdf9577b15af1a7b86870a4ba83299dc50a09881dc569ad5e8`.
+Varken BIOS, capture eller extern producent är en Firestaff-runtimeberoende,
+och avkodaren fastställer inte VDP1-prioritet, title/menu-ägare, timing eller
+värdfönstrets placering.
+
 ### Frame 80: NBG1-ägare fortfarande obunden
 
 En separat bytejämförelse av den autentiserade långkörningens frame 80 visar

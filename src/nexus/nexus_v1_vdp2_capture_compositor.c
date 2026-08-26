@@ -267,3 +267,81 @@ int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_bitmap(
     if (out_receipt) *out_receipt = receipt;
     return receipt.valid;
 }
+
+int nexus_v1_vdp2_capture_decode_runtime_frame_nbg0_bitmap(
+    Nexus_V1_Vdp2BitmapCaptureFramebuffer *framebuffer,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    unsigned int frame_index,
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt *out_frame_receipt,
+    Nexus_V1_SaturnVdp2RegisterReceipt *out_register_receipt,
+    Nexus_V1_Vdp2BitmapCaptureReceipt *out_receipt)
+{
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt frame;
+    Nexus_V1_SaturnVdp2RegisterReceipt registers;
+    Nexus_V1_Vdp2BitmapCaptureReceipt receipt;
+    uint16_t bmpna;
+    uint16_t craofa;
+    int i;
+
+    memset(&frame, 0, sizeof(frame));
+    memset(&registers, 0, sizeof(registers));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.capture_only = 1;
+    if (out_frame_receipt) *out_frame_receipt = frame;
+    if (out_register_receipt) *out_register_receipt = registers;
+    if (out_receipt) *out_receipt = receipt;
+    if (!framebuffer || !capture_bytes ||
+        !nexus_v1_saturn_runtime_capture_frame(
+            capture_bytes, capture_byte_count, frame_index, &frame) ||
+        !frame.valid || !frame.vdp2_vram || !frame.vdp2_cram ||
+        !frame.vdp2_registers ||
+        frame.vdp2_vram_size != NEXUS_V1_SATURN_VDP2_VRAM_BYTES ||
+        frame.vdp2_cram_size != NEXUS_V1_SATURN_VDP2_CRAM_BYTES ||
+        !nexus_v1_saturn_runtime_capture_vdp2_register_receipt(
+            &frame, &registers) || !registers.valid ||
+        !registers.nbg0_enabled || !registers.nbg0_bitmap_mode ||
+        registers.nbg0_colour_code != 1) {
+        if (out_frame_receipt) *out_frame_receipt = frame;
+        if (out_register_receipt) *out_register_receipt = registers;
+        return 0;
+    }
+    bmpna = read_register16_ordered(frame.vdp2_registers, 0x2cU,
+                                    registers.byte_order);
+    craofa = read_register16_ordered(
+        frame.vdp2_registers, NEXUS_V1_VDP2_CRAOFA_OFFSET,
+        registers.byte_order);
+    /* The retail title witness has NBG0 at VRAM zero, a 512x256 8bpp plane,
+     * BMPNA bank zero and CRAOFA bank zero. Other address/palette variants
+     * require their own captured address proof. */
+    if ((bmpna & 7U) != 0U || (craofa & 7U) != 0U) {
+        if (out_frame_receipt) *out_frame_receipt = frame;
+        if (out_register_receipt) *out_register_receipt = registers;
+        return 0;
+    }
+    receipt.layer_registers_verified = 1;
+    receipt.nbg0_bitmap_mode = 1;
+    receipt.colour_code_256 = 1;
+    receipt.bitmap_span_framed = 1;
+    receipt.cram_span_framed = 1;
+    receipt.cram_word_order_verified = 1;
+    receipt.original_saturn_capture_verified = 1;
+    receipt.bitmap_vram_offset = 0U;
+    receipt.cram_offset = 0U;
+    for (i = 0; i < (int)(NEXUS_V1_VDP2_NBG0_BITMAP_WIDTH *
+                          NEXUS_V1_VDP2_NBG0_BITMAP_HEIGHT); ++i) {
+        uint8_t index = frame.vdp2_vram[i];
+        if (index == 0U) {
+            framebuffer->rgba_buffer[i] = 0U;
+            ++receipt.transparent_pixels;
+        } else {
+            framebuffer->rgba_buffer[i] = cram_to_rgba_ordered(
+                frame.vdp2_cram + (size_t)index * 2U, registers.byte_order);
+            ++receipt.written_pixels;
+        }
+    }
+    receipt.valid = 1;
+    if (out_frame_receipt) *out_frame_receipt = frame;
+    if (out_register_receipt) *out_register_receipt = registers;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}

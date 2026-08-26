@@ -10,6 +10,9 @@
 #define NEXUS_V1_VDP2_CRAOFA_OFFSET 0xe4U
 #define NEXUS_V1_VDP2_NBG1_BITMAP_WIDTH 512U
 #define NEXUS_V1_VDP2_NBG1_BITMAP_HEIGHT 256U
+#define NEXUS_V1_VDP2_NBG0_BITMAP_BYTES (512U * 256U)
+#define NEXUS_V1_VDP2_NBG0_BITMAP_WIDTH 512U
+#define NEXUS_V1_VDP2_NBG0_BITMAP_HEIGHT 256U
 
 /* One source-bound NBG1 bitmap plane. The source and capture spans must be
  * exact byte matches; placement is explicit because registers alone do not
@@ -44,6 +47,7 @@ typedef struct {
     int valid;
     int layer_registers_verified;
     int nbg1_bitmap_mode;
+    int nbg0_bitmap_mode;
     int colour_code_256;
     int bitmap_span_join_verified;
     int palette_span_join_verified;
@@ -73,6 +77,7 @@ typedef struct {
     int capture_only;
     int layer_registers_verified;
     int nbg1_bitmap_mode;
+    int nbg0_bitmap_mode;
     int colour_code_256;
     int bitmap_span_framed;
     int cram_span_framed;
@@ -95,6 +100,17 @@ int nexus_v1_vdp2_capture_composite_nbg1_bitmap(
 /* Decode one authenticated raw Saturn frame's NBG1 8bpp bitmap and CRAM.
  * Only the unambiguous 512x256/BMPNA-zero/CRAOFA-zero lane is admitted. */
 int nexus_v1_vdp2_capture_decode_runtime_frame_nbg1_bitmap(
+    Nexus_V1_Vdp2BitmapCaptureFramebuffer *framebuffer,
+    const uint8_t *capture_bytes, size_t capture_byte_count,
+    unsigned int frame_index,
+    Nexus_V1_SaturnRuntimeCaptureFrameReceipt *out_frame_receipt,
+    Nexus_V1_SaturnVdp2RegisterReceipt *out_register_receipt,
+    Nexus_V1_Vdp2BitmapCaptureReceipt *out_receipt);
+
+/* Decode an authenticated NBG0 8bpp bitmap capture. This is a bounded
+ * capture consumer only; it does not establish VDP1 priority, menu ownership
+ * or host presentation placement. */
+int nexus_v1_vdp2_capture_decode_runtime_frame_nbg0_bitmap(
     Nexus_V1_Vdp2BitmapCaptureFramebuffer *framebuffer,
     const uint8_t *capture_bytes, size_t capture_byte_count,
     unsigned int frame_index,

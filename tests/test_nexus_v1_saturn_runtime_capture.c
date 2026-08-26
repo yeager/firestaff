@@ -1,4 +1,5 @@
 #include "nexus_v1_saturn_runtime_capture.h"
+#include "nexus_v1_vdp2_capture_compositor.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -90,6 +91,8 @@ int main(void)
     uint8_t *blob = (uint8_t *)calloc(1U, blob_size);
     Nexus_V1_SaturnRuntimeCaptureFrameReceipt receipt;
     Nexus_V1_SaturnVdp2RegisterReceipt register_receipt;
+    Nexus_V1_Vdp2BitmapCaptureFramebuffer nbg0_framebuffer;
+    Nexus_V1_Vdp2BitmapCaptureReceipt nbg0_receipt;
     size_t offset;
     const char *external = getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE");
 
@@ -143,6 +146,39 @@ int main(void)
         free(blob);
         fprintf(stderr, "FAIL: synthetic Saturn raw frame parser\n");
         return 1;
+    }
+    /* This is a raw-capture schema fixture, not substitute game art. The
+     * retail title's NBG0 bytes are checked separately against real media. */
+    {
+        const size_t vdp2_register_offset =
+            (sizeof(NEXUS_V1_SATURN_RUNTIME_CAPTURE_MAGIC) - 1U) +
+            frame0_size + strlen("frame=1\n") +
+            (sizeof(NEXUS_V1_SATURN_VDP1_RAW_MAGIC_V2) - 1U) +
+            sizeof(test_state) - 1U + NEXUS_V1_SATURN_VDP1_PAYLOAD_BYTES +
+            (sizeof(NEXUS_V1_SATURN_VDP2_RAW_MAGIC) - 1U);
+        const size_t vdp2_vram_offset = vdp2_register_offset +
+            NEXUS_V1_SATURN_VDP2_REG_BYTES;
+        const size_t vdp2_cram_offset = vdp2_vram_offset +
+            NEXUS_V1_SATURN_VDP2_VRAM_BYTES;
+        blob[vdp2_register_offset + 0x20U] = 0x03U;
+        blob[vdp2_register_offset + 0x2cU] = 0x00U;
+        blob[vdp2_vram_offset] = 1U;
+        blob[vdp2_cram_offset + 2U] = 0x1fU;
+        blob[vdp2_cram_offset + 3U] = 0x80U;
+        memset(&nbg0_framebuffer, 0, sizeof(nbg0_framebuffer));
+        memset(&nbg0_receipt, 0, sizeof(nbg0_receipt));
+        if (!nexus_v1_vdp2_capture_decode_runtime_frame_nbg0_bitmap(
+                &nbg0_framebuffer, blob, blob_size, 1U, &receipt,
+                &register_receipt, &nbg0_receipt) || !nbg0_receipt.valid ||
+            !nbg0_receipt.capture_only || nbg0_receipt.renderer_permitted ||
+            !nbg0_receipt.nbg0_bitmap_mode || !nbg0_receipt.colour_code_256 ||
+            nbg0_receipt.bitmap_vram_offset != 0U ||
+            nbg0_receipt.cram_offset != 0U || nbg0_receipt.written_pixels != 1 ||
+            nbg0_framebuffer.rgba_buffer[0] == 0U) {
+            free(blob);
+            fprintf(stderr, "FAIL: NBG0 capture-only bitmap decoder\n");
+            return 1;
+        }
     }
     free(blob);
 
@@ -212,6 +248,8 @@ int main(void)
         const char *frame_text = getenv("FIRESTAFF_NEXUS_RUNTIME_CAPTURE_FRAME");
         const char *require_nbg1_bitmap =
             getenv("FIRESTAFF_NEXUS_REQUIRE_NBG1_BITMAP");
+        const char *require_nbg0_bitmap =
+            getenv("FIRESTAFF_NEXUS_REQUIRE_NBG0_BITMAP");
         if (frame_text) frame = (unsigned int)strtoul(frame_text, NULL, 0);
         if (!read_external_capture(external, &external_data, &external_size) ||
             !nexus_v1_saturn_runtime_capture_frame(
@@ -234,6 +272,24 @@ int main(void)
             free(external_data);
             fprintf(stderr, "FAIL: external NBG1 bitmap palette/origin receipt\n");
             return 1;
+        }
+        if (require_nbg0_bitmap && require_nbg0_bitmap[0]) {
+            memset(&nbg0_framebuffer, 0, sizeof(nbg0_framebuffer));
+            memset(&nbg0_receipt, 0, sizeof(nbg0_receipt));
+            if (!nexus_v1_vdp2_capture_decode_runtime_frame_nbg0_bitmap(
+                    &nbg0_framebuffer, external_data, external_size, frame,
+                    &receipt, &register_receipt, &nbg0_receipt) ||
+                !nbg0_receipt.valid || !nbg0_receipt.capture_only ||
+                nbg0_receipt.renderer_permitted ||
+                !nbg0_receipt.nbg0_bitmap_mode ||
+                !nbg0_receipt.colour_code_256 ||
+                !nbg0_receipt.original_saturn_capture_verified ||
+                nbg0_receipt.bitmap_vram_offset != 0U ||
+                nbg0_receipt.cram_offset != 0U) {
+                free(external_data);
+                fprintf(stderr, "FAIL: external NBG0 capture-only decoder\n");
+                return 1;
+            }
         }
         printf("external_frame=%u state=%d active=%d copr=0x%x "
                "sysclip_present=%d sysclip=(%u,%u)\n", frame,
