@@ -56,6 +56,15 @@ elif [[ "$(cat "$input_sequence_marker" 2>/dev/null)" != "$input_sequence_patch_
   echo "ERROR: external Mednafen source has an older or unknown input-sequence patch; use a fresh build directory" >&2
   exit 2
 fi
+input_trace_marker="$source_dir/.firestaff-nexus-input-trace-patched"
+input_trace_patch_id='FIRESTAFF_NEXUS_INPUT_TRACE_V1'
+if [[ ! -f "$input_trace_marker" ]]; then
+  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_input_trace.patch"
+  printf '%s\n' "$input_trace_patch_id" > "$input_trace_marker"
+elif [[ "$(cat "$input_trace_marker" 2>/dev/null)" != "$input_trace_patch_id" ]]; then
+  echo "ERROR: external Mednafen source has an older or unknown input trace patch; use a fresh build directory" >&2
+  exit 2
+fi
 cd_read_marker="$source_dir/.firestaff-nexus-cdb-read-trace-patched"
 cd_read_patch_id='FIRESTAFF_NEXUS_SATURN_CDB_READ_TRACE_V2_LBA_FILTER'
 if [[ ! -f "$cd_read_marker" ]]; then

@@ -1,0 +1,31 @@
+--- src/ss/smpc.cpp
++++ src/ss/smpc.cpp
+@@ -240,6 +240,7 @@
+ static uint64_t FirestaffPressSequenceLength[16];
+ static uint16_t FirestaffPressSequenceMask[16];
+ static unsigned FirestaffPressSequenceCount;
++static FILE *FirestaffInputTraceFile;
+ static uint64_t FirestaffPressStartLength = 1;
+ static uint16_t FirestaffPressButtonMask = 0x10;
+ static bool FirestaffInputConfigured;
+@@ -745,6 +746,20 @@
+    const uint64_t end = FirestaffPressSequenceFrame[i] + FirestaffPressSequenceLength[i];
+    if(FirestaffCurrentFrame >= FirestaffPressSequenceFrame[i] && FirestaffCurrentFrame < end) mask |= FirestaffPressSequenceMask[i];
+   }
++  if(mask)
++  {
++   const char *path = getenv("FIRESTAFF_NEXUS_TRACE_INPUT_EVENTS");
++   if(path && *path && !FirestaffInputTraceFile)
++   {
++    FirestaffInputTraceFile = fopen(path, "wb");
++    if(FirestaffInputTraceFile) fputs("FIRESTAFF_NEXUS_INPUT_TRACE_V1\n", FirestaffInputTraceFile);
++   }
++   if(FirestaffInputTraceFile)
++   {
++    fprintf(FirestaffInputTraceFile, "frame=%llu mask=0x%04x\n", (unsigned long long)FirestaffCurrentFrame, (unsigned)mask);
++    fflush(FirestaffInputTraceFile);
++   }
++  }
+   VirtualPortsDPtr[0][0] |= (uint8)0xFFU;
+   VirtualPortsDPtr[0][1] |= (uint8)0xFFU;
+   VirtualPortsDPtr[0][0] &= (uint8)~mask;
