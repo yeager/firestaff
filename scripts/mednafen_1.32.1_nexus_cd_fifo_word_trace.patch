@@ -1,0 +1,59 @@
+--- src/ss/cdb.cpp
++++ src/ss/cdb.cpp
+@@ -564,3 +564,35 @@
+  if((count & 0x3ffU) == 0) fflush(file);
+ }
+ 
++static void FirestaffTraceNexusCDFIFOWord(uint32 lba, uint32 word_offset,
++ uint16 value)
++{
++ static FILE *file;
++ static unsigned count;
++ static bool configured;
++ static unsigned limit = 100000;
++ static uint32 minimum_lba;
++ static uint32 maximum_lba = 0xFFFFFFFF;
++ const char *path = getenv("FIRESTAFF_NEXUS_TRACE_CD_FIFO_WORDS");
++ if(!configured)
++ {
++  const char *limit_text = getenv("FIRESTAFF_NEXUS_TRACE_CD_FIFO_WORD_LIMIT");
++  const char *min_text = getenv("FIRESTAFF_NEXUS_TRACE_CD_READ_MIN_LBA");
++  const char *max_text = getenv("FIRESTAFF_NEXUS_TRACE_CD_READ_MAX_LBA");
++  if(limit_text && *limit_text) limit = strtoul(limit_text, NULL, 10);
++  if(min_text && *min_text) minimum_lba = strtoul(min_text, NULL, 0);
++  if(max_text && *max_text) maximum_lba = strtoul(max_text, NULL, 0);
++  configured = true;
++ }
++ if(!path || !*path || lba < minimum_lba || lba > maximum_lba || count >= limit)
++  return;
++ if(!file)
++ {
++  file = fopen(path, "wb");
++  if(!file) return;
++  fputs("FIRESTAFF_NEXUS_CD_FIFO_WORD_TRACE_V1\n", file);
++ }
++ fprintf(file, "lba=%u word=%u value=0x%04x\n", (unsigned)lba,
++  (unsigned)word_offset, (unsigned)value);
++ count++;
++ if((count & 0x3ffU) == 0) fflush(file);
++}
++
+ struct CDB_Drive::SCSICD_Arg
+@@ -1422,3 +1454,4 @@
+ static void DT_ReadIntoFIFO(void)
+ {
+  uint16 tmp;
++ uint32 firestaff_lba = 0xFFFFFFFF;
+ 
+@@ -1428,2 +1461,3 @@
+  FirestaffLastFIFOReadLBA = AMSF_to_ABA(BCD_to_U8(data[12]),
+   BCD_to_U8(data[13]), BCD_to_U8(data[14])) - 150;
++  firestaff_lba = FirestaffLastFIFOReadLBA;
+  }
+@@ -1447,2 +1481,5 @@
+  tmp = MDFN_de16msb(&Buffers[DT.BufList[DT.CurBufIndex]].Data[DT.InBufOffs << 1]);
+ 
++ if(firestaff_lba != 0xFFFFFFFF)
++  FirestaffTraceNexusCDFIFOWord(firestaff_lba, DT.InBufOffs, tmp);
++
+  //printf("%02x %02x\n", DT.BufList[DT.CurBufIndex], DT.CurBufIndex);
