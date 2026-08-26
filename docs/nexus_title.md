@@ -104,6 +104,20 @@ an encoded, decompressed, transformed, or partial NBG0 source, but it rules
 out treating any other complete disc file as that bitmap without a producer
 trace.
 
+An authenticated producer trace narrows the `TITLE.CG` result further. In
+the retail JP transition interval after frame 12500, SH-2 PC `0x06041fa0`
+performs 167,935 of 167,936 VDP2 VRAM byte writes (the remaining write is at
+`0x06041fac`) across `0x24000`–`0x4cfff`. Replaying the VDP2 byte-lane mask
+from that trace yields a contiguous, exact 167,936-byte prefix of the real
+167,968-byte `TITLE.CG` ISO member at bus address `0x24000`; the captured
+post-write frame contains the complete member at that address in word-swapped
+representation. The final 32 member bytes were already resident or are
+otherwise outside this bounded trace, so the evidence is deliberately
+recorded as a producer-prefix join, not a claim that this interval wrote every
+byte. It establishes an authentic producer for the title character data, but
+still does not identify its display-list consumer, NBG1 map, NBG0 bitmap,
+placement, or timing.
+
 The retained VDP2 writer trace also separates initialization from the missing
 producer: the only writer spanning the NBG0-range start (`0x06041fc0`,
 `0x000000`–`0x0135cf`) emits `0x0000` for 79,303 of 79,312 writes; the three

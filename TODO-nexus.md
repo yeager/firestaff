@@ -3,11 +3,13 @@
 Reviewed 2026-08-25. Only open work is listed here.
 
 - Bind authentic Saturn CD reads to SH-2 consumers, VDP destinations and
-  decoded source assets before admitting title/menu rendering. In particular,
-  the verified title NBG0 bitmap is neither `TITLE.CG`/MAPD nor `LOGOBG.DG2`;
-  a full-disc resident-member scan finds no other complete source file.
-  Identify the real producer (including any decode/transform) before
-  admitting title composition.
+  decoded source assets before admitting title/menu rendering. The title
+  `TITLE.CG` producer-prefix is now captured at SH-2 PC `0x06041fa0`, but its
+  display-list consumer remains unbound. In particular, the active NBG0
+  bitmap is neither `TITLE.CG`/MAPD nor `LOGOBG.DG2`; a full-disc
+  resident-member scan finds no other complete source file. Identify that
+  producer (including any decode/transform), alongside the NBG1 map and
+  title timing, before admitting composition.
 - Calibrate the title/menu capture from post-composition frames after the
   Saturn BIOS and the unskippable opening movie. The verified JP title window
   at frames 13000–13039 is bit-identical with and without Start/A pulses, so

@@ -18,6 +18,12 @@ assert SPEC and SPEC.loader
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
+WRITE_TRACE_SPEC = importlib.util.spec_from_file_location(
+    "nexus_vdp2_write_trace", ROOT / "scripts" / "analyze_nexus_vdp2_write_trace.py")
+assert WRITE_TRACE_SPEC and WRITE_TRACE_SPEC.loader
+WRITE_TRACE = importlib.util.module_from_spec(WRITE_TRACE_SPEC)
+WRITE_TRACE_SPEC.loader.exec_module(WRITE_TRACE)
+
 
 def source_fixture() -> tuple[bytes, bytes]:
     cg = bytes(32) + bytes((index * 17) & 0xFF for index in range(5249 * 32))
@@ -81,6 +87,15 @@ def main() -> int:
         else:
             raise AssertionError("short TITLE.BIN must be rejected")
         with tempfile.TemporaryDirectory() as temporary:
+            trace = Path(temporary) / "writes.trace"
+            trace.write_text(
+                "FIRESTAFF_NEXUS_VDP2_WRITE_TRACE_V1\n"
+                "area=vram addr=0x000020 size=1 value=0xab11 pc0=0x1 pc1=0x2\n"
+                "area=vram addr=0x000021 size=1 value=0xcd22 pc0=0x1 pc1=0x2\n"
+                "area=vram addr=0x000022 size=2 value=0x3344 pc0=0x1 pc1=0x2\n",
+                encoding="ascii")
+            replay, writes = WRITE_TRACE.replay_vram_bus_writes(trace)
+            assert writes == 3 and replay[0x20:0x24] == b"\xab\x22\x33\x44"
             capture = Path(temporary) / "capture.raw"
             vdp1 = bytes(0x100000)
             vdp2 = bytes(0x200) + bytes(0x80000) + bytes(0x1000)

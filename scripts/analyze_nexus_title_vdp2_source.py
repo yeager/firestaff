@@ -16,6 +16,7 @@ import re
 from pathlib import Path
 
 from analyze_nexus_saturn_runtime_capture import iter_frame_regions_file
+from analyze_nexus_vdp2_write_trace import replay_vram_bus_writes
 from nexus_vdp2_registers import detect_byte_order, read_u16
 
 
@@ -227,6 +228,8 @@ def main() -> int:
                         help="inspect one zero-based frame instead of all frames")
     parser.add_argument("--scan-complete-disc-members", action="store_true",
                         help="with --cue, search complete retail members in VDP2 VRAM")
+    parser.add_argument("--vdp2-write-trace", type=Path,
+                        help="same-run producer trace; proves bus-byte source writes only")
     args = parser.parse_args()
     if args.capture_frames <= 0 or (args.frame is not None and
                                     (args.frame < 0 or args.frame >= args.capture_frames)):
@@ -251,9 +254,29 @@ def main() -> int:
     logobg_pixel_frames: list[int] = []
     logobg_palette_frames: list[int] = []
     title_cg_swapped = wordswapped(title_cg)
+    title_cg_raw_swapped = wordswapped(title_cg_raw)
     maps_swapped = [wordswapped(source) for source in maps]
     palette_swapped = wordswapped(palette)
     try:
+        trace_source_verified = False
+        trace_source_position = -1
+        trace_source_prefix_bytes = 0
+        if args.vdp2_write_trace is not None:
+            trace_vram, trace_writes = replay_vram_bus_writes(args.vdp2_write_trace)
+            # The authenticated title witness contains 167,936 one-byte
+            # writes while the retail member is 167,968 bytes.  Do not turn
+            # the already-resident final 32 bytes into a false claim that
+            # this interval wrote the entire member: prove precisely the
+            # contiguous prefix represented by the trace instead.
+            trace_source_prefix_bytes = min(trace_writes, len(title_cg_raw))
+            if trace_source_prefix_bytes >= 64:
+                trace_source_position = trace_vram.find(
+                    title_cg_raw[:trace_source_prefix_bytes])
+                trace_source_verified = trace_source_position >= 0
+            print(f"vdp2_write_trace_vram_writes={trace_writes}")
+            print(f"title_cg_trace_source_prefix_bytes={trace_source_prefix_bytes}")
+            print("title_cg_trace_source_prefix_join=verified" if trace_source_verified
+                  else "title_cg_trace_source_prefix_join=unbound")
         frames = iter_frame_regions_file(args.capture, args.capture_frames)
         for index, frame in frames:
             if args.frame is not None and index != args.frame:
@@ -292,6 +315,10 @@ def main() -> int:
                       f"tvmd=0x{tvmd:04x} bgon=0x{bgon:04x} chctla=0x{chctla:04x}")
                 print("title_cg_vram_" + describe_position(cg_exact, cg_swapped) +
                       f" bytes={len(title_cg)}")
+                if trace_source_verified:
+                    snapshot_position = frame["vdp2-vram"].find(title_cg_raw_swapped)
+                    print(f"title_cg_trace_bus_position=0x{trace_source_position:x} "
+                          f"snapshot_word_swap_position=0x{snapshot_position:x}")
                 for map_index, (exact, swapped) in enumerate(map_positions):
                     print(f"title_map_{map_index}_vram_" +
                           describe_position(exact, swapped) +
