@@ -15,7 +15,7 @@ HEADERS = {"FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V3",
            "FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V4"}
 LINE = re.compile(r"^addr=0x([0-9a-fA-F]+) size=([0-9]+) value=0x([0-9a-fA-F]+) "
                   r"source=0x([0-9a-fA-F]+) source_value=0x([0-9a-fA-F]+) "
-                  r"source_lba=0x([0-9a-fA-F]+)(?: source_word=0x[0-9a-fA-F]+)? "
+                  r"source_lba=0x([0-9a-fA-F]+)(?: source_word=0x([0-9a-fA-F]+))? "
                   r"pc0=0x([0-9a-fA-F]+) ")
 RAM_START, RAM_END = 0x060AC2A7, 0x060B3E27
 TITLE_BIN_LBA_START, TITLE_BIN_LBA_END = 6035, 6089
@@ -33,13 +33,22 @@ def main() -> int:
             match = LINE.match(line)
             if not match:
                 raise ValueError(f"malformed trace row {number}")
-            address, size, value, _source, source_value, lba, pc = (
-                int(field, 16) for field in match.groups())
+            address, size, value, source, source_value, lba, source_word_text, pc = match.groups()
+            address, size, value, source, source_value, lba, pc = (
+                int(field, 16) for field in
+                (address, size, value, source, source_value, lba, pc))
+            source_word = (int(source_word_text, 16)
+                           if source_word_text is not None else None)
             if not RAM_START <= address < RAM_END or size != 4:
                 raise ValueError("trace row lies outside bounded four-byte RAM lane")
             if TITLE_BIN_LBA_START <= lba <= TITLE_BIN_LBA_END:
                 if pc != 0x06090D04:
                     raise ValueError("TITLE.BIN source row has an unexpected SH-2 PC")
+                if source != 0x05818000:
+                    raise ValueError("TITLE.BIN source row is not the CDB data register")
+                if lines[0].endswith("V4") and (source_word is None or
+                                              not 8 <= source_word < 1032):
+                    raise ValueError("V4 source row lacks a CDB FIFO payload word")
                 title_rows.append((lba, address))
         lbas = {lba for lba, _ in title_rows}
         if lbas != set(range(6039, 6056)) or len(title_rows) != 7904:
