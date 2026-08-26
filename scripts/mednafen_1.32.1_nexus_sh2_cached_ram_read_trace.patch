@@ -1,0 +1,58 @@
+--- src/ss/ss.h
++++ src/ss/ss.h
+@@ -135,2 +135,4 @@
+  void FirestaffTraceSH2RAMRead(uint32 address, unsigned size, uint32 value);
++ void FirestaffTraceSH2CachedRAMRead(unsigned which, uint32 address, unsigned size,
++  uint32 value, uint32 pc);
+  void FirestaffTraceSH2RAMSourceWrite(uint32 address, unsigned size, uint32 value);
+--- src/ss/sh7095.inc
++++ src/ss/sh7095.inc
+@@ -2668,2 +2668,3 @@
+  	 retval = MDFN_densb<T, true>(&cent->Data[way_match][NE32ASU8_IDX_ADJ(T, A & 0x0F)]);			\
++  	 if(!IsInstr) FirestaffTraceSH2CachedRAMRead(which, A, sizeof(T), retval, PC);		\
+ 	 goto MemReturn;											\
+--- src/ss/ss.cpp
++++ src/ss/ss.cpp
+@@ -842,3 +842,42 @@
+ }
+ 
++void FirestaffTraceSH2CachedRAMRead(unsigned which, uint32 address, unsigned size,
++ uint32 value, uint32 pc)
++{
++ static FILE *file;
++ static unsigned count;
++ static unsigned limit = 100000;
++ static bool configured;
++ static uint32 minimum;
++ static uint32 maximum;
++ static uint32 required_pc;
++ const char *path = getenv("FIRESTAFF_NEXUS_TRACE_SH2_CACHED_RAM_READS");
++ if(!configured)
++ {
++  const char *min_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MIN");
++  const char *max_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_MAX");
++  const char *pc_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_PC");
++  const char *limit_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_LIMIT");
++  minimum = min_text && *min_text ? strtoul(min_text, NULL, 0) : 0;
++  maximum = max_text && *max_text ? strtoul(max_text, NULL, 0) : 0;
++  required_pc = pc_text && *pc_text ? strtoul(pc_text, NULL, 0) : 0;
++  if(limit_text && *limit_text) limit = strtoul(limit_text, NULL, 10);
++  configured = true;
++ }
++ if(!path || !*path || count >= limit || which ||
++    (maximum > minimum && (address < minimum || address >= maximum)) ||
++    (required_pc && pc != required_pc))
++  return;
++ if(!file)
++ {
++  file = fopen(path, "wb");
++  if(!file) return;
++  fputs("FIRESTAFF_NEXUS_SH2_CACHED_RAM_READ_TRACE_V1\n", file);
++ }
++ fprintf(file, "addr=0x%08x size=%u value=0x%08x pc=0x%08x\n",
++  (unsigned)address, size, (unsigned)value, (unsigned)pc);
++ count++;
++ if((count & 0x3ffU) == 0) fflush(file);
++}
++
+ void FirestaffTraceSH2RAMSourceWrite(uint32 address, unsigned size, uint32 value)
