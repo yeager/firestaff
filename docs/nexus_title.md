@@ -203,6 +203,15 @@ corridor. Because the callback sees the register after the byte load, and
 does not retain the pre-load value, this is deliberately a pointer-route and
 layout receipt, not a byte-value transform or direct `TITLE.BIN` upload claim.
 
+Two focused development traces ruled out treating Mednafen's ordinary WorkRAM
+read path as that missing receipt: neither the external bus hook nor the
+cache-hit/cache-bypass hooks observed a source-range read while the measured
+copy loop emitted the title frame. This is evidence about the emulator's
+execution path, not evidence that the retail routine performs no load. The
+remaining byte-value proof therefore needs an instruction-pipeline or hardware
+trace that records the load result before the VDP2 store; Firestaff must keep
+the transform unadmitted until then.
+
 The focused writer-code capture removes one further ambiguity without widening
 that semantic claim. Its 48-word windows at `0x060230ac`, `0x060856f0` and
 the title copier `0x0602312c` occur byte-for-byte in the authenticated

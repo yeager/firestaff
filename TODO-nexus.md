@@ -26,9 +26,11 @@ Reviewed 2026-08-25. Only open work is listed here.
   verified (`0x060230ac`, `0x0602312c`, LBAs 6039–6055). The latter PC is now
   byte-identical to retail `DM.BIN`, and its source/destination pointers prove
   a 104 × 304-byte route at a 512-byte VDP2 stride. The only remaining part of
-  this transform is the byte value at the SH-2 load before R5 post-increment;
-  capture that value in the same title session rather than repeating already
-  proven transport, code identity or pointer-layout traces.
+  this transform is the byte value at the SH-2 load before R5 post-increment.
+  The ordinary WorkRAM, cache-hit and cache-bypass read hooks do not observe
+  that load in the measured loop, so add an instruction-pipeline or hardware
+  trace that records the load result in the same title session rather than
+  repeating already proven transport, code identity or pointer-layout traces.
   The title-frame NBG1 route is captured
   and excludes `TITLE.CG` (it resolves to `0x20000`),
   so it must not be promoted as a title-map substitute.
