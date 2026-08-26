@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "asset_find_by_hash.h"
+#include "nexus_v1_iso_reader.h"
 
 static size_t count_be32(const uint8_t *data, size_t size, uint32_t value)
 {
@@ -77,37 +78,65 @@ static int check_sh2_mov_l_literal(const uint8_t *data, size_t size,
 int main(void)
 {
     const char *root = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    const char *cue = getenv("FIRESTAFF_NEXUS_CUE");
     char path[1024];
-    FILE *file;
+    FILE *file = NULL;
     long file_size;
     uint8_t *data;
+    Nexus_ISOReader iso;
+    const Nexus_ISOFile *disc_dm;
+    int loaded_from_cue = 0;
     const uint32_t base = UINT32_C(0x06010000);
 
     if (!root || !root[0]) {
         puts("SKIP: FIRESTAFF_NEXUS_DATA_DIR is not mounted");
         return 77;
     }
-    if (snprintf(path, sizeof(path), "%s/DM.BIN", root) >= (int)sizeof(path) ||
-        !(file = fopen(path, "rb")) || fseek(file, 0, SEEK_END) != 0 ||
-        (file_size = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
-        puts("SKIP: real DM.BIN is unavailable");
-        return 77;
-    }
-    data = (uint8_t *)malloc((size_t)file_size);
-    if (!data || fread(data, 1, (size_t)file_size, file) != (size_t)file_size) {
-        free(data);
+    if (snprintf(path, sizeof(path), "%s/DM.BIN", root) < (int)sizeof(path) &&
+        (file = fopen(path, "rb")) != NULL && fseek(file, 0, SEEK_END) == 0 &&
+        (file_size = ftell(file)) > 0 && fseek(file, 0, SEEK_SET) == 0) {
+        data = (uint8_t *)malloc((size_t)file_size);
+        if (!data || fread(data, 1, (size_t)file_size, file) != (size_t)file_size) {
+            free(data);
+            fclose(file);
+            puts("SKIP: real DM.BIN could not be read");
+            return 77;
+        }
         fclose(file);
-        puts("SKIP: real DM.BIN could not be read");
-        return 77;
-    }
-    fclose(file);
-
-    if (!asset_file_matches_md5(path,
-                                "e88d60859f65f08fa622e1992b02280f")) {
-        free(data);
-        fprintf(stderr, "FAIL: DM.BIN is not the authenticated European retail source\n");
-        return 1;
+        if (!asset_file_matches_md5(path,
+                                    "e88d60859f65f08fa622e1992b02280f")) {
+            free(data);
+            fprintf(stderr, "FAIL: DM.BIN is not the authenticated retail source\n");
+            return 1;
+        }
+    } else {
+        if (file) fclose(file);
+        memset(&iso, 0, sizeof(iso));
+        if (!cue || !cue[0] || nexus_iso_open_cue(&iso, cue) <= 0 ||
+            !(disc_dm = nexus_iso_find(&iso, "DM.BIN")) ||
+            disc_dm->size == 0U) {
+            nexus_iso_close(&iso);
+            puts("SKIP: real DM.BIN is unavailable as a file or CUE member");
+            return 77;
+        }
+        data = (uint8_t *)malloc(disc_dm->size);
+        if (!data || nexus_iso_read_file(&iso, disc_dm, data,
+                                         (int)disc_dm->size) != (int)disc_dm->size) {
+            free(data);
+            nexus_iso_close(&iso);
+            puts("SKIP: real CUE DM.BIN could not be read");
+            return 77;
+        }
+        file_size = (long)disc_dm->size;
+        loaded_from_cue = 1;
+        /* This is the same byte identity as the standalone authenticated
+         * DM.BIN, read through Firestaff's native CUE/ISO path. */
+        if (fnv1a64(data, (size_t)file_size) != UINT64_C(0x91d431c7eae4f9c9)) {
+            free(data);
+            nexus_iso_close(&iso);
+            fprintf(stderr, "FAIL: CUE DM.BIN is not the authenticated retail source\n");
+            return 1;
+        }
     }
 
     /* DM.BIN's adjacent strings are the retail startup/menu loader's own
@@ -224,10 +253,12 @@ int main(void)
         !check_sh2_mov_l_literal(data, (size_t)file_size, 0x18B88U, 4U,
             0x18C24U, UINT32_C(0x25E64000))) {
         free(data);
+        if (loaded_from_cue) nexus_iso_close(&iso);
         fprintf(stderr, "FAIL: DM.BIN startup/menu resource anchor mismatch\n");
         return 1;
     }
     free(data);
+    if (loaded_from_cue) nexus_iso_close(&iso);
     puts("PASS: real DM.BIN startup/menu resource anchors verified");
     return 0;
 }

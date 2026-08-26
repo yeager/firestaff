@@ -229,7 +229,7 @@ target_include_directories(test_nexus_v1_startup_menu_source PRIVATE
 target_link_libraries(test_nexus_v1_startup_menu_source PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_startup_menu_source COMMAND test_nexus_v1_startup_menu_source)
 set_tests_properties(nexus_v1_startup_menu_source PROPERTIES
-    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus;FIRESTAFF_NEXUS_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan).cue"
     LABELS "nexus;startup;menu;tier4;real_data;skip_safe"
     SKIP_RETURN_CODE 77)
 
