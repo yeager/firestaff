@@ -35,7 +35,9 @@ The Firestaff Nexus implementation handles Saturn-specific formats:
 - **Big-endian SH2** data encoding — all multi-byte values byte-swapped
 - **VDP1/VDP2 textures** — 4bpp/8bpp paletted, 15-bit RGB
 - **ISO 9660 CD-ROM** parsing — MODE1/2352 sector reading
-- **CUE/BIN disc image** support — for extracted disc access
+- **CUE/BIN/ISO disc image** support — reads the retail Track 1 directly
+- **ZIP/7z disc container** support — opens a retail Track 1 member in memory;
+  no member is unpacked to disk
 - **Dual SH2 memory model** — VDP1 framebuffer at fixed address ranges
 
 ### Sega Tools
@@ -95,13 +97,22 @@ Platform is detected at compile time via standard preprocessor macros:
 
 ## 4. Data Source Architecture
 
-Nexus V1 supports two data source modes (nexus_v1_engine.c):
-- **NEXUS_SRC_ISO**: Read directly from CUE/BIN disc image (ISO 9660, MODE1/2352)
+Nexus V1 supports two runtime source modes (nexus_v1_engine.c):
+- **NEXUS_SRC_ISO**: Read directly from CUE/BIN/ISO or a ZIP/7z-contained
+  Track 1 image (ISO 9660, MODE1/2352); archive members stay in memory
 - **NEXUS_SRC_EXTRACTED**: Read from extracted CD contents on disk
 
 Discovery priority:
-1. Search for .cue file in data directory → open .bin as ISO
-2. Otherwise check for extracted files (authenticated DM.BIN and LEV01.DGN)
+1. Search for `.cue`, `.bin`, `.iso`, `.zip`, then `.7z` in the data directory
+   and admit only a Track 1 image whose internal retail identity validates.
+2. Otherwise check for extracted files (authenticated `DM.BIN` and `LEV01.DGN`).
+
+The supplied Japanese archive `Dungeon-Master-Nexus_SEGA-Saturn_JA.zip`
+(SHA-256 `fbd91afd6d376729a1841a5fea2cd48ebcb0ae23d3a3cba6f7dd381295c94467`)
+was verified in a ZIP-only directory: Firestaff opened its Track 1 member,
+enumerated 137 retail ISO files and completed the native launch smoke receipt.
+The test directory contained only a symlink to the original archive; no game
+member was written to disk.
 
 Saturn disc image structure:
 - **Track 1**: MODE1/2352, ISO 9660 filesystem, game data (133 MB)

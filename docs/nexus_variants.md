@@ -79,9 +79,14 @@ Firestaff implements Nexus as a **cross-platform C library** that compiles on Wi
 This is a **reimplementation** from reverse-engineering, not a binary port. The Firestaff `firestaff_nexus` library has zero external dependencies (no SDL, no libm) — pure standard C.
 
 ### Data Source Modes
-The engine supports two data modes (from `nexus_v1_engine.c`):
-1. **NEXUS_SRC_ISO** — direct CUE/BIN disc image access (ISO 9660 MODE1/2352)
+The engine supports two runtime source modes (from `nexus_v1_engine.c`):
+
+1. **NEXUS_SRC_ISO** — direct CUE/BIN/ISO access, or Track 1 read in memory
+   from a ZIP/7z container (ISO 9660 MODE1/2352)
 2. **NEXUS_SRC_EXTRACTED** — extracted CD contents on filesystem
+
+ZIP support is not a pre-install step: the original archive remains the source
+of truth and Firestaff does not materialize its game-data members on disk.
 
 ---
 
