@@ -21,7 +21,7 @@
 +   BCD_to_U8(data[13]), BCD_to_U8(data[14])) - 150;
 + }
 +
-@@ -4175,0 +4184,5 @@
+@@ -4176,0 +4185,5 @@
 +uint32 FirestaffNexusCDBLastFIFOReadLBA(void)
 +{
 + return FirestaffLastFIFOReadLBA;

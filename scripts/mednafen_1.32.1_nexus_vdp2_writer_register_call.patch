@@ -1,0 +1,7 @@
+--- src/ss/vdp2.cpp
++++ src/ss/vdp2.cpp
+@@ -189,3 +189,4 @@
+  uint32 pc0 = CPU[0].GetRegister(SH7095::GSREG_RPC, NULL, 0);
+  FirestaffTraceVdp2WriterCode(pc0);
++ FirestaffTraceVdp2WriterRegisters(address, pc0);
+  if(!FirestaffVdp2WriteTraceConfigured)

@@ -32,6 +32,3 @@
 + fflush(file);
 + count++;
 +}
-
-@@ -159,0 +193,1 @@
-+ FirestaffTraceVdp2WriterRegisters(address, pc0);
