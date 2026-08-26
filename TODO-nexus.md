@@ -9,9 +9,10 @@ Reviewed 2026-08-25. Only open work is listed here.
   buffer at `0x0025daf0`. The terminal 32-byte CDB-register path remains
   unbound. The title VDP1 chain now byte-binds all 177 texture spans to
   `LEV00.DGN`; 173 also match their real Structure2 image and CLUT pair. The
-  four remaining draws (`0x00e60`, `0x00780`, `0x00880`, `0x01380`) share the
-  unbound captured CLUT at word `0xca00`. Geometry and final compositor
-  semantics remain unbound. In
+  remaining four draws (`0x00e60`, `0x00780`, `0x00880`, `0x01380`) share the
+  directly traced `LEV00.DGN` CLUT at word `0xca00`, though it has no exact
+  Structure2 palette-record identity. Geometry and final compositor semantics
+  remain unbound. In
   particular, the active NBG0
   bitmap is neither `TITLE.CG`/MAPD nor `LOGOBG.DG2`; a full-disc
   resident-member scan finds no other complete source file. Identify that

@@ -174,10 +174,14 @@ The earlier title/menu/font/executable negative scan remains useful, but
 matches both image bytes and the 16-colour CLUT for 173 of those 177 draws.
 The remaining four commands (`0x00e60`, `0x00780`, `0x00880`, and `0x01380`)
 share texture source `0x4e1a0` and CLUT word `0xca00`; that captured CLUT is
-not an exact existing Structure2 palette record. Its producer or transform is
-therefore still unbound. This is not native presentation permission: transformed
-geometry, VDP1 framebuffer composition, VDP2 priority and timing also remain
-unbound.
+not an exact existing Structure2 palette record. A PC-selective receipt binds
+it nonetheless: PC `0x06041fac` copies 32 bytes from RAM
+`0x0026f24c:0x0026f26c` to VDP1 `0x19400:0x19420`; those bytes are directly
+read from real `LEV00.DGN` LBA 480 and reproduce the CLUT under Saturn word
+byte order. All 177 title draws therefore have real LEV00 texture and palette
+byte ownership, though only 173 have the higher-level Structure2 material-pair
+identity. This is not native presentation permission: transformed geometry,
+VDP1 framebuffer composition, VDP2 priority and timing also remain unbound.
 
 A paired 40-frame JP capture makes the input boundary explicit: Start/A
 pulses at emulated frames 13000, 13010 and 13020 produce a valid input receipt
