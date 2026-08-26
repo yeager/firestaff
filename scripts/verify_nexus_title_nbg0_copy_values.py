@@ -16,8 +16,8 @@ from verify_nexus_title_nbg0_copy_routing import COPY_BYTES, LINE
 
 WRITE_HEADER = "FIRESTAFF_NEXUS_VDP2_WRITE_TRACE_V1"
 WRITE = re.compile(
-    r"^area=(?P<area>w+) addr=0x(?P<address>[0-9a-fA-F]+) "
-    r"size=(?P<size>d+) value=0x(?P<value>[0-9a-fA-F]+) "
+    r"^area=(?P<area>[A-Za-z]+) addr=0x(?P<address>[0-9a-fA-F]+) "
+    r"size=(?P<size>[0-9]+) value=0x(?P<value>[0-9a-fA-F]+) "
     r"pc0=0x(?P<pc0>[0-9a-fA-F]+) pc1=0x(?P<pc1>[0-9a-fA-F]+)$"
 )
 
