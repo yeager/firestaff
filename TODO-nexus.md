@@ -4,7 +4,8 @@ Reviewed 2026-08-25. Only open work is listed here.
 
 - Bind authentic Saturn CD reads to SH-2 consumers, VDP destinations and
   decoded source assets before admitting title/menu rendering. The full title
-  `TITLE.CG` SH-2→VDP2 copy plan is now captured at PC `0x06041fa0`, but its
+  `TITLE.CG` SH-2→VDP2 copy plan is now captured at PC `0x06041fa0`; a
+  matching CDB receipt covers every `TITLE.BIN` and `TITLE.CG` sector, but the
   earlier CD/RAM producer and display-list consumer remain unbound. In
   particular, the active NBG0
   bitmap is neither `TITLE.CG`/MAPD nor `LOGOBG.DG2`; a full-disc

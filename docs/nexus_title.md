@@ -128,6 +128,15 @@ This proves the observed SH-2 buffer-to-VDP2 copy plan and its sampled bytes;
 it does not claim that the buffer's earlier CD/RAM producer, every copy-loop
 iteration, or any display consumer has been identified.
 
+The same deterministic JP capture session has a matching post-capture raw
+hash (`e92834ba521d03ae34757669df823b283f961bc811f3efc1080aab6bae87830c`)
+and an authenticated CDB receipt. It observes every ISO sector of `TITLE.BIN`
+and `TITLE.CG` (and three sectors of `LOGOBG.DG2`) from the real 2352-byte
+Track 1, read in memory directly from the supplied CUE corpus. This binds both
+title members to the same retail title session, but the CDB trace has no
+per-write time or destination field: it does **not** yet prove the missing
+CD-RAM-to-`0x0025daf0` edge or promote `LOGOBG.DG2` to a display source.
+
 The same frame now excludes one tempting but incorrect consumer inference.
 NBG1 is a two-word, 8×8 character layer with its visible name-table cells at
 `0x5c000`–`0x5db9c`; every visible cell resolves to character data at

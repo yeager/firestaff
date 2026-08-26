@@ -75,6 +75,10 @@ def main() -> int:
     parser.add_argument("iso", type=Path)
     parser.add_argument("trace", type=Path)
     parser.add_argument("--require-member", action="append", default=[])
+    parser.add_argument(
+        "--require-complete-member", action="append", default=[],
+        help="require every sector of a named ISO9660 member to be observed",
+    )
     args = parser.parse_args()
     try:
         lines = args.trace.read_text(encoding="ascii").splitlines()
@@ -92,6 +96,7 @@ def main() -> int:
         return 1
 
     counts: collections.Counter[str] = collections.Counter()
+    observed_lbas = set(lbas)
     for lba in lbas:
         owner = "UNMAPPED"
         for start, size, name in files:
@@ -114,6 +119,24 @@ def main() -> int:
     if missing:
         print("required_members_missing=" + ",".join(missing))
         return 1
+    complete_required = {name.upper() for name in args.require_complete_member}
+    by_name = {name.rsplit("/", 1)[-1].upper(): (lba, size)
+               for lba, size, name in files}
+    complete_missing = []
+    for name in sorted(complete_required):
+        extent = by_name.get(name)
+        if extent is None:
+            complete_missing.append(name)
+            continue
+        start, size = extent
+        expected = set(range(start, start + (size + SECTOR_SIZE - 1) // SECTOR_SIZE))
+        if not expected.issubset(observed_lbas):
+            complete_missing.append(name)
+    if complete_missing:
+        print("required_complete_members_missing=" + ",".join(complete_missing))
+        return 1
+    for name in sorted(complete_required):
+        print(f"complete_member_read=verified:{name}")
     print("retail_lba_join=verified")
     print("semantic_admission=blocked")
     return 0
