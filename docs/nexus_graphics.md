@@ -71,6 +71,15 @@ The retail files contain polygon/texture candidates, and Firestaff has bounded
 parsers and host raster primitives. That is not proof that the host pipeline
 matches Saturn VDP1 or that the route is production-renderable.
 
+A development-only, same-session retail JP capture now also verifies one
+concrete VDP1 transport operation: SH-2 PC `0x060135e8` copies the 2 KiB RAM
+span `0x06027874..0x06028074` to VDP1 VRAM
+`0x10a00..0x11200`, with Saturn's 16-bit word byte order. The receipt is
+checked by `scripts/verify_nexus_vdp1_ram_to_vram_copy.py`. It is deliberately
+only a transport fact: the source buffer has no admitted ISO-file owner, and
+the command, palette, display layer, placement and title meaning are still
+unknown. It must not be used to enable the normal renderer.
+
 The admitted pipeline is instead:
 1. Load and hash-bind real DGN/MNS/DMDF bytes.
 2. Record bounded Structure2/Structure3/texture evidence.
