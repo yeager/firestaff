@@ -333,6 +333,10 @@ int nexus_v1_saturn_runtime_capture_vdp2_register_receipt(
                                 receipt.byte_order);
     receipt.craofa = vdp2_read16(frame->vdp2_registers, 0xe4U,
                                  receipt.byte_order);
+    receipt.prina = vdp2_read16(frame->vdp2_registers, 0xf8U,
+                                receipt.byte_order);
+    receipt.prinb = vdp2_read16(frame->vdp2_registers, 0xfaU,
+                                receipt.byte_order);
     receipt.nbg1_scroll_x = vdp2_read16(frame->vdp2_registers, 0x80U,
                                          receipt.byte_order) & 0x07ffU;
     receipt.nbg1_scroll_y = vdp2_read16(frame->vdp2_registers, 0x84U,
@@ -348,6 +352,8 @@ int nexus_v1_saturn_runtime_capture_vdp2_register_receipt(
     receipt.nbg1_bitmap_mode = (receipt.chctla & 0x0200U) != 0U;
     receipt.nbg1_16x16_character_mode = (receipt.chctla & 0x0100U) != 0U;
     receipt.nbg1_colour_code = (receipt.chctla >> 12U) & 3U;
+    receipt.nbg0_priority = (uint8_t)(receipt.prina & 0x0007U);
+    receipt.nbg1_priority = (uint8_t)((receipt.prina >> 8U) & 0x0007U);
     receipt.valid = 1;
     *out_receipt = receipt;
     return 1;

@@ -94,6 +94,8 @@ typedef struct {
     uint16_t bmpna;
     uint16_t pncn1;
     uint16_t craofa;
+    uint16_t prina;
+    uint16_t prinb;
     /* Raw NBG1 scroll origin observed in the capture. These are register
      * facts, not a screen-space position for any retail asset. */
     uint16_t nbg1_scroll_x;
@@ -109,6 +111,11 @@ typedef struct {
     int nbg1_bitmap_mode;
     int nbg1_16x16_character_mode;
     int nbg1_colour_code;
+    /* PRINA supplies the hardware priority numbers for NBG0/NBG1. They are
+     * ordering inputs only: VDP1 priority, colour calculation, windows and
+     * a retail display consumer still require their own receipts. */
+    uint8_t nbg0_priority;
+    uint8_t nbg1_priority;
     int semantic_admission_blocked;
 } Nexus_V1_SaturnVdp2RegisterReceipt;
 

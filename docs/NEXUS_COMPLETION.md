@@ -382,6 +382,12 @@ Varken BIOS, capture eller extern producent är en Firestaff-runtimeberoende,
 och avkodaren fastställer inte VDP1-prioritet, title/menu-ägare, timing eller
 värdfönstrets placering.
 
+Råframe-receiptet exporterar dessutom `PRINA`/`PRINB` och de avmaskade
+NBG0/NBG1-prioriteterna med samma verifierade registerbyteordning. Det gör
+den observerade VDP2-ordningen tillgänglig för nästa native-grind, men den är
+inte i sig ett bevis på VDP1-prioritet, fönsterlogik, färgberäkning eller
+slutlig sammansättning.
+
 ### Frame 80: NBG1-ägare fortfarande obunden
 
 En separat bytejämförelse av den autentiserade långkörningens frame 80 visar
