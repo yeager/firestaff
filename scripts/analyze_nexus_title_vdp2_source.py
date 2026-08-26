@@ -190,6 +190,27 @@ def complete_disc_member_hits(vram: bytes, members: dict[str, bytes]) -> list[tu
     return hits
 
 
+def map_row_hits(vram: bytes, maps: list[bytes]) -> list[tuple[int, int, int, int]]:
+    """Find non-empty complete MAPD rows in a VDP2 VRAM witness.
+
+    A title map may be placed or strided by retail code, so row residence is
+    reported separately from a complete-map or layer-consumer claim.  Empty
+    rows are excluded because cleared VRAM makes them non-probative.
+    """
+    hits: list[tuple[int, int, int, int]] = []
+    for map_index, map_bytes in enumerate(maps):
+        if len(map_bytes) != TITLE_MAP_BYTES:
+            raise ValueError("invalid MAPD plane length")
+        for row_index in range(28):
+            row = map_bytes[row_index * 256:(row_index + 1) * 256]
+            if not any(row):
+                continue
+            exact, swapped = find_span(vram, row)
+            if exact >= 0 or swapped >= 0:
+                hits.append((map_index, row_index, exact, swapped))
+    return hits
+
+
 def describe_position(exact: int, swapped: int) -> str:
     return f"exact=0x{exact:x} word_swap=0x{swapped:x}"
 
@@ -242,6 +263,7 @@ def main() -> int:
             map_positions = [find_span_with_swapped(frame["vdp2-vram"], source,
                                                     swapped)
                              for source, swapped in zip(maps, maps_swapped)]
+            row_positions = map_row_hits(frame["vdp2-vram"], maps)
             palette_exact, palette_swapped_position = find_span_with_swapped(
                 frame["vdp2-cram"], palette, palette_swapped)
             logobg_pixels_exact, logobg_pixels_swapped = find_span(
@@ -274,6 +296,11 @@ def main() -> int:
                     print(f"title_map_{map_index}_vram_" +
                           describe_position(exact, swapped) +
                           f" bytes={len(maps[map_index])}")
+                print("title_map_row_vram_hits=" +
+                      (",".join(f"map{map_index}:row{row_index}:" +
+                                describe_position(exact, swapped)
+                                for map_index, row_index, exact, swapped in row_positions)
+                       if row_positions else "none"))
                 print("title_palette_cram_" +
                       describe_position(palette_exact, palette_swapped_position) +
                       f" bytes={len(palette)}")

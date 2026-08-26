@@ -62,6 +62,9 @@ def main() -> int:
         swapped_map = MODULE.wordswapped(maps[2])
         assert MODULE.find_span_with_swapped(b"xx" + swapped_map + b"yy",
                                              maps[2], swapped_map) == (-1, 2)
+        row = maps[2][256:512]
+        assert (0, 1, -1, 24) in MODULE.map_row_hits(
+            b"x" * 24 + MODULE.wordswapped(row) + b"y" * 24, [maps[2]])
         assert MODULE.complete_disc_member_hits(
             b"x" * 32 + MODULE.wordswapped(maps[2]) + b"y" * 32,
             {"ODD": b"x", "MAP": maps[2]}) == [("MAP", -1, 32)]
