@@ -200,6 +200,12 @@ The native capture rasterizer also now keeps the Saturn quad UV order
 `A=(0,0), B=(1,0), C=(1,1), D=(0,1)` across both triangles. In particular,
 the second `A/C/D` triangle no longer mirrors the D edge onto U=1.
 
+VDP1 local-coordinate state is tracked at every record in the authenticated
+CMDLINK order. The title has a second update at `0x01720` after its textured
+draws, while gameplay chains may update the origin before a later draw; native
+single-command capture consumers therefore use that command's live origin,
+not an incorrectly retained first value.
+
 A paired 40-frame JP capture makes the input boundary explicit: Start/A
 pulses at emulated frames 13000, 13010 and 13020 produce a valid input receipt
 but every captured VDP1 and VDP2 region is bit-identical to an otherwise

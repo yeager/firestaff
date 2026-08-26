@@ -62,22 +62,33 @@ int main(void)
         puts("test_nexus_v1_vdp1_command_sequence: AUTHENTIC PASS");
         return 0;
     }
-    /* System clip -> local coordinate -> mode-1 draw -> END. */
+    /* System clip -> local coordinate -> mode-1 draw -> local coordinate
+     * update -> mode-1 draw -> END. */
     wl16(vram + start, 0x0009U);
     wl16(vram + start + 32U, 0x000aU);
     wl16(vram + start + 32U + 12U, 160U);
     wl16(vram + start + 32U + 14U, 112U);
     wl16(vram + start + 64U, 0x0002U);
-    wl16(vram + start + 96U, 0x8000U);
+    wl16(vram + start + 96U, 0x000aU);
+    wl16(vram + start + 96U + 12U, 12U);
+    wl16(vram + start + 96U + 14U, 24U);
+    wl16(vram + start + 128U, 0x0002U);
+    wl16(vram + start + 160U, 0x8000U);
     memset(&input, 0, sizeof(input));
     input.vdp1_vram = vram;
     input.vdp1_vram_size = NEXUS_V1_VDP1_VRAM_BYTES;
     input.copr_word = (start + 64U) >> 3U;
     if (!nexus_v1_vdp1_command_sequence_frame(&input, &receipt) ||
-        !receipt.valid || receipt.command_count != 4 ||
-        receipt.draw_count != 1 || receipt.system_clip_count != 1 ||
-        receipt.local_coordinate_count != 1 ||
+        !receipt.valid || receipt.command_count != 6 ||
+        receipt.draw_count != 2 || receipt.system_clip_count != 1 ||
+        receipt.local_coordinate_count != 2 ||
         receipt.display_origin_x != 160 || receipt.display_origin_y != 112 ||
+        !receipt.command_origin_verified[2] ||
+        receipt.command_origin_x[2] != 160 ||
+        receipt.command_origin_y[2] != 112 ||
+        !receipt.command_origin_verified[4] ||
+        receipt.command_origin_x[4] != 12 ||
+        receipt.command_origin_y[4] != 24 ||
         !receipt.semantic_admission_blocked) {
         fprintf(stderr, "FAIL: bounded VDP1 command sequence receipt\n");
         free(vram);
@@ -85,6 +96,7 @@ int main(void)
     }
     /* A chain without a local-coordinate record cannot invent an origin. */
     wl16(vram + start + 32U, 0x0002U);
+    wl16(vram + start + 96U, 0x0002U);
     if (nexus_v1_vdp1_command_sequence_frame(&input, &receipt) != 0 ||
         receipt.valid) {
         fprintf(stderr, "FAIL: VDP1 sequence invented display origin\n");

@@ -685,8 +685,12 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
         resolved->palette_state_size = 32;
         resolved->original_saturn_capture_verified = 1;
         resolved->capture_allow_zero_pixel_command = input->mode1_only_capture;
-        resolved->screen_origin_x = receipt.command_sequence.display_origin_x;
-        resolved->screen_origin_y = receipt.command_sequence.display_origin_y;
+        if (!receipt.command_sequence.command_origin_verified[i]) {
+            *out_receipt = receipt;
+            return 0;
+        }
+        resolved->screen_origin_x = receipt.command_sequence.command_origin_x[i];
+        resolved->screen_origin_y = receipt.command_sequence.command_origin_y[i];
         resolved->system_clip_state_verified = input->system_clip_state_present;
         resolved->system_clip_x = input->system_clip_state_present
             ? (int)input->system_clip_x : 0;
@@ -931,8 +935,9 @@ int nexus_v1_vdp1_capture_decode_direct_color_runtime_frame(
             command.texture_source_byte_offset;
         input.texture_span_size = (int)command.texture_byte_count;
         input.original_saturn_capture_verified = 1;
-        input.screen_origin_x = sequence.display_origin_x;
-        input.screen_origin_y = sequence.display_origin_y;
+        if (!sequence.command_origin_verified[i]) continue;
+        input.screen_origin_x = sequence.command_origin_x[i];
+        input.screen_origin_y = sequence.command_origin_y[i];
         input.system_clip_state_verified =
             frame.vdp1_system_clip_state_present;
         input.system_clip_x = (int)frame.system_clip_x;
@@ -1036,8 +1041,9 @@ int nexus_v1_vdp1_capture_replay_runtime_frame_mode1_material(
         input.palette_state = replay_vram + palette_offset;
         input.palette_state_size = 32;
         input.original_saturn_capture_verified = 1;
-        input.screen_origin_x = sequence.display_origin_x;
-        input.screen_origin_y = sequence.display_origin_y;
+        if (!sequence.command_origin_verified[i]) continue;
+        input.screen_origin_x = sequence.command_origin_x[i];
+        input.screen_origin_y = sequence.command_origin_y[i];
         input.system_clip_state_verified =
             frame.vdp1_system_clip_state_present;
         input.system_clip_x = (int)frame.system_clip_x;

@@ -182,19 +182,31 @@ int nexus_v1_vdp1_command_sequence_frame(
         (read_le16(input->vdp1_vram + receipt.end_byte_offset) & 0x8000U) != 0U;
     receipt.complete = receipt.command_order_verified && receipt.end_record_verified;
 
-    /* VDP1 Local Coordinate is display-space origin state.  Keep the first
-     * observed state as framing data; camera/mesh meaning remains blocked. */
+    /* VDP1 Local Coordinate is live display-space origin state. Record the
+     * effective value for every command so later LOCAL commands cannot cause
+     * a replay to reuse the first origin. Camera/mesh meaning remains
+     * deliberately blocked. */
     {
         int i;
+        int origin_x = 0;
+        int origin_y = 0;
+        int origin_verified = 0;
         for (i = 0; i < best_count; ++i) {
             const uint8_t *record = input->vdp1_vram + best[i];
             if ((read_le16(record) & 0x000fU) == 10U &&
                 !(read_le16(record) & 0x8000U)) {
-                receipt.display_origin_x = signed_11(read_le16(record + 12U));
-                receipt.display_origin_y = signed_11(read_le16(record + 14U));
-                receipt.display_origin_verified = 1;
-                break;
+                origin_x = signed_11(read_le16(record + 12U));
+                origin_y = signed_11(read_le16(record + 14U));
+                origin_verified = 1;
+                if (!receipt.display_origin_verified) {
+                    receipt.display_origin_x = origin_x;
+                    receipt.display_origin_y = origin_y;
+                    receipt.display_origin_verified = 1;
+                }
             }
+            receipt.command_origin_x[i] = origin_x;
+            receipt.command_origin_y[i] = origin_y;
+            receipt.command_origin_verified[i] = (uint8_t)origin_verified;
         }
         for (i = 0; i < best_count; ++i) {
             const uint8_t *record = input->vdp1_vram + best[i];

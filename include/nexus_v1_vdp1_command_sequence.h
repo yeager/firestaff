@@ -47,6 +47,12 @@ typedef struct {
     int user_clip_x1;
     int user_clip_y1;
     uint32_t command_byte_offsets[NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS];
+    /* Local-coordinate state effective at each record in command order.
+     * The corresponding verified flag stays clear until the first LOCAL
+     * command, so a consumer cannot manufacture an origin for earlier draws. */
+    int command_origin_x[NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS];
+    int command_origin_y[NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS];
+    uint8_t command_origin_verified[NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS];
 } Nexus_V1_Vdp1CommandSequenceReceipt;
 
 /* Returns 1 only for a bounded chain containing the captured COPR cursor,
