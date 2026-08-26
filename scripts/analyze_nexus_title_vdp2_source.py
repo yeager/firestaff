@@ -29,6 +29,14 @@ TITLE_MAP_COUNT = 5
 TITLE_MAP_BYTES = 64 * 28 * 4
 TITLE_PALETTE_OFFSET = 0x40 + TITLE_MAP_COUNT * 0x1C04
 LOGOBG_SHA256 = "431d97413f8b731db2709ad3c5a7b5f6ae2e2370b751e67e479c050f08ab14c1"
+WRITER_REGISTER_HEADER = "FIRESTAFF_NEXUS_VDP2_WRITER_REGISTER_TRACE_V1"
+WRITER_REGISTER_LINE = re.compile(
+    r"^frame=(?P<frame>[0-9]+) addr=0x(?P<address>[0-9a-fA-F]+) "
+    r"pc=0x(?P<pc>[0-9a-fA-F]+)(?P<registers>(?: r[0-9]+=0x[0-9a-fA-F]+)+)"
+    r"(?: .*)?$"
+)
+REGISTER_VALUE = re.compile(r" r(?P<register>[0-9]+)=0x(?P<value>[0-9a-fA-F]+)")
+TITLE_COPY_PC = 0x06041FA0
 
 
 def wordswapped(data: bytes) -> bytes:
@@ -213,6 +221,55 @@ def map_row_hits(vram: bytes, maps: list[bytes]) -> list[tuple[int, int, int, in
     return hits
 
 
+def title_sh2_copy_plan(path: Path, title_cg_raw: bytes) -> tuple[int, int, int, int]:
+    """Verify observed SH-2 copy-plan fields against the real title member.
+
+    The writer-register hook samples the retail byte copier after it loads a
+    source byte into r3.  This binds the observed source-buffer tail to the
+    exact title member and checks its complete planned length/destination.
+    It is still not a CD-read or VDP display-list ownership proof.
+    """
+    lines = path.read_text(encoding="ascii").splitlines()
+    if not lines or lines[0] != WRITER_REGISTER_HEADER:
+        raise ValueError("bad writer-register header")
+    rows: list[tuple[int, int, dict[int, int]]] = []
+    for line_number, line in enumerate(lines[1:], 2):
+        match = WRITER_REGISTER_LINE.fullmatch(line)
+        if not match:
+            raise ValueError(f"malformed writer-register line {line_number}")
+        if int(match["pc"], 16) != TITLE_COPY_PC:
+            continue
+        registers = {int(item["register"]): int(item["value"], 16)
+                     for item in REGISTER_VALUE.finditer(match["registers"])}
+        if not {0, 1, 3, 4, 6, 14}.issubset(registers):
+            raise ValueError(f"missing copier register at line {line_number}")
+        rows.append((int(match["frame"], 10), int(match["address"], 16), registers))
+    if len(rows) < 8:
+        raise ValueError("fewer than eight title copier samples")
+    frame, _, first = rows[0]
+    source_base = first[14]
+    destination_base = first[4]
+    length = first[6]
+    if length != len(title_cg_raw):
+        raise ValueError("copy-plan length does not equal TITLE.CG")
+    source_byte_rows = 0
+    for row_frame, address, registers in rows:
+        if (row_frame != frame or registers[14] != source_base or
+                registers[4] != destination_base or registers[6] != length):
+            raise ValueError("copy-plan registers are not stable")
+        offset = registers[0] - source_base
+        if not 0 <= offset < length:
+            raise ValueError("copier source address lies outside planned buffer")
+        if (registers[3] & 0xFF) != title_cg_raw[offset]:
+            raise ValueError("copier source byte does not equal TITLE.CG")
+        if (registers[1] & 0xFFFFF) != address:
+            raise ValueError("VDP2 bus address does not equal copier destination")
+        if registers[1] != destination_base + offset:
+            raise ValueError("copier destination/source offsets differ")
+        source_byte_rows += 1
+    return frame, source_base, destination_base, source_byte_rows
+
+
 def describe_position(exact: int, swapped: int) -> str:
     return f"exact=0x{exact:x} word_swap=0x{swapped:x}"
 
@@ -231,6 +288,8 @@ def main() -> int:
                         help="with --cue, search complete retail members in VDP2 VRAM")
     parser.add_argument("--vdp2-write-trace", type=Path,
                         help="same-run producer trace; proves bus-byte source writes only")
+    parser.add_argument("--vdp2-writer-registers", type=Path,
+                        help="same-run SH-2 copier-register trace for TITLE.CG")
     args = parser.parse_args()
     if args.capture_frames <= 0 or (args.frame is not None and
                                     (args.frame < 0 or args.frame >= args.capture_frames)):
@@ -278,6 +337,14 @@ def main() -> int:
             print(f"title_cg_trace_source_prefix_bytes={trace_source_prefix_bytes}")
             print("title_cg_trace_source_prefix_join=verified" if trace_source_verified
                   else "title_cg_trace_source_prefix_join=unbound")
+        if args.vdp2_writer_registers is not None:
+            copy_frame, copy_source, copy_destination, copy_rows = title_sh2_copy_plan(
+                args.vdp2_writer_registers, title_cg_raw)
+            print(f"title_cg_sh2_copy_frame={copy_frame}")
+            print(f"title_cg_sh2_copy_source_base=0x{copy_source:x}")
+            print(f"title_cg_sh2_copy_destination_base=0x{copy_destination:x}")
+            print(f"title_cg_sh2_source_byte_rows={copy_rows}")
+            print("title_cg_sh2_copy_plan=verified")
         frames = iter_frame_regions_file(args.capture, args.capture_frames)
         for index, frame in frames:
             if args.frame is not None and index != args.frame:

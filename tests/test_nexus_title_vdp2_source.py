@@ -98,6 +98,22 @@ def main() -> int:
                 encoding="ascii")
             replay, writes = WRITE_TRACE.replay_vram_bus_writes(trace)
             assert writes == 3 and replay[0x20:0x24] == b"\xab\x22\x33\x44"
+            writer_registers = Path(temporary) / "writer-registers.trace"
+            source_base = 0x00100000
+            destination_base = 0x25E24000
+            writer_rows = [MODULE.WRITER_REGISTER_HEADER]
+            for index in range(8):
+                offset = len(cg) - 1 - index
+                writer_rows.append(
+                    f"frame=12551 addr=0x{(destination_base + offset) & 0xfffff:06x} "
+                    f"pc=0x{MODULE.TITLE_COPY_PC:08x} "
+                    f"r0=0x{source_base + offset:08x} "
+                    f"r1=0x{destination_base + offset:08x} "
+                    f"r3=0x{cg[offset]:08x} r4=0x{destination_base:08x} "
+                    f"r6=0x{len(cg):08x} r14=0x{source_base:08x}")
+            writer_registers.write_text("\n".join(writer_rows) + "\n", encoding="ascii")
+            assert MODULE.title_sh2_copy_plan(writer_registers, cg) == (
+                12551, source_base, destination_base, 8)
             registers = bytearray(0x200)
             registers[0x44:0x46] = (0x1717).to_bytes(2, "little")
             vram = bytearray(0x80000)

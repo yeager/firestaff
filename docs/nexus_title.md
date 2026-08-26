@@ -118,6 +118,16 @@ byte. It establishes an authentic producer for the title character data, but
 still does not identify its display-list consumer, NBG0 bitmap, placement, or
 timing.
 
+A frame-filtered SH-2 register witness makes the producer boundary explicit.
+At retail frame 12551 the copier has source base `0x25daf0`, destination base
+`0x25e24000` (VDP2 bus address `0x24000`) and length `0x29020`, exactly the
+full 167,968-byte `TITLE.CG` member including its 32-byte prefix. All 128
+bounded r3 source-byte observations agree with their respective offsets in
+that real member, and their r1 destinations agree with the VDP2 bus address.
+This proves the observed SH-2 buffer-to-VDP2 copy plan and its sampled bytes;
+it does not claim that the buffer's earlier CD/RAM producer, every copy-loop
+iteration, or any display consumer has been identified.
+
 The same frame now excludes one tempting but incorrect consumer inference.
 NBG1 is a two-word, 8×8 character layer with its visible name-table cells at
 `0x5c000`–`0x5db9c`; every visible cell resolves to character data at
