@@ -194,6 +194,15 @@ CD-labelled RAM trace binds 7,904 four-byte writes in that range to
 The remaining unbound fact is the routine's RAM-to-VDP2 transform semantics;
 the evidence must not be simplified to a direct `TITLE.BIN` bitmap upload.
 
+The matching writer-register trace also proves the copy *route*: all 31,616
+rows at `0x0602312c` advance post-incremented SH-2 source
+`0x060ac2a7`–`0x060b3e26` one byte at a time, while VDP2 receives 104 rows of
+304 bytes at a 512-byte stride (`0x25e01008`–`0x25e0df37`).
+`scripts/verify_nexus_title_nbg0_copy_routing.py` validates that entire
+corridor. Because the callback sees the register after the byte load, and
+does not retain the pre-load value, this is deliberately a pointer-route and
+layout receipt, not a byte-value transform or direct `TITLE.BIN` upload claim.
+
 The focused writer-code capture removes one further ambiguity without widening
 that semantic claim. Its 48-word windows at `0x060230ac`, `0x060856f0` and
 the title copier `0x0602312c` occur byte-for-byte in the authenticated
