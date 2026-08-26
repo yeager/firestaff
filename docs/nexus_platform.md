@@ -37,6 +37,7 @@ The Firestaff Nexus implementation handles Saturn-specific formats:
 - **ISO 9660 CD-ROM** parsing — MODE1/2352 sector reading
 - **CUE/BIN/ISO disc image** support — reads the retail Track 1 directly
 - **ZIP/7z disc container** support — opens a retail Track 1 member in memory;
+  for ZIP, the embedded CUE selects `TRACK 01 MODE1` rather than archive order;
   no member is unpacked to disk
 - **Dual SH2 memory model** — VDP1 framebuffer at fixed address ranges
 

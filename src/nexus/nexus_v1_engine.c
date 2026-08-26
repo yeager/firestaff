@@ -17,12 +17,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <limits.h>
 #include <sys/stat.h>
 #ifdef _WIN32
 #include <io.h>
 #include <windows.h>
 #define strcasecmp _stricmp
+#define strncasecmp _strnicmp
 #else
 #include <dirent.h>
 #endif
@@ -2497,6 +2499,77 @@ static int find_iso(const char *dir, char *disc_path, int max_len);
  * in the retail layout; it is expanded into reader-owned RAM, never to disk.
  * Directory discovery must not pass an archive filename to the raw ISO
  * reader. */
+/* A Nexus ZIP may order its members independently of the original disc.  Use
+ * its own CUE declaration to select Track 01 rather than treating central
+ * directory order as media semantics.  This parser identifies a source path
+ * only; the archive reader retains ownership and no member reaches disk. */
+static int nexus_v1_zip_cue_data_track_name(const uint8_t *cue,
+                                             size_t cue_size,
+                                             char *out_name,
+                                             size_t out_name_size)
+{
+    char current_file[256];
+    size_t offset = 0U;
+
+    if (!cue || !cue_size || !out_name || out_name_size < 2U) return 0;
+    current_file[0] = '\0';
+    out_name[0] = '\0';
+    while (offset < cue_size) {
+        char line[512];
+        char *text;
+        size_t line_size = 0U;
+
+        while (offset + line_size < cue_size &&
+               cue[offset + line_size] != '\n' && line_size + 1U < sizeof(line)) {
+            ++line_size;
+        }
+        if (offset + line_size < cue_size && cue[offset + line_size] != '\n') {
+            while (offset < cue_size && cue[offset] != '\n') ++offset;
+            if (offset < cue_size) ++offset;
+            continue;
+        }
+        memcpy(line, cue + offset, line_size);
+        line[line_size] = '\0';
+        offset += line_size;
+        if (offset < cue_size && cue[offset] == '\n') ++offset;
+        text = line;
+        while (*text && isspace((unsigned char)*text)) ++text;
+
+        if (strncasecmp(text, "FILE", 4) == 0 &&
+            (text[4] == '\0' || isspace((unsigned char)text[4]))) {
+            char *name;
+            char *end;
+            text += 4;
+            while (*text && isspace((unsigned char)*text)) ++text;
+            if (*text == '"') {
+                name = ++text;
+                end = strchr(name, '"');
+            } else {
+                name = text;
+                end = name;
+                while (*end && !isspace((unsigned char)*end)) ++end;
+            }
+            if (end && end > name && (size_t)(end - name) < sizeof(current_file)) {
+                memcpy(current_file, name, (size_t)(end - name));
+                current_file[end - name] = '\0';
+            }
+            continue;
+        }
+        if (strncasecmp(text, "TRACK", 5) == 0 &&
+            (text[5] == '\0' || isspace((unsigned char)text[5]))) {
+            int track_number = 0;
+            char mode[32];
+            if (sscanf(text + 5, "%d %31s", &track_number, mode) == 2 &&
+                track_number == 1 && strncasecmp(mode, "MODE1", 5) == 0 &&
+                current_file[0] && strlen(current_file) < out_name_size) {
+                memcpy(out_name, current_file, strlen(current_file) + 1U);
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 static int nexus_open_disc_reader(Nexus_ISOReader *reader, const char *path) {
     if (!reader || !path || !path[0]) return -1;
     if (nexus_path_has_ext(path, ".cue"))
@@ -2520,16 +2593,32 @@ static int nexus_open_disc_reader(Nexus_ISOReader *reader, const char *path) {
         return opened;
     }
     if (nexus_path_has_ext(path, ".zip")) {
+        uint8_t *cue = NULL;
+        size_t cue_size = 0U;
         uint8_t *image = NULL;
         size_t image_size = 0U;
+        char data_track_name[256];
         int opened;
-        /* ZIP central-directory order preserves the CUE's Track 01 first in
-         * the known retail dumps.  Nexus admission below still proves the
-         * result is the authentic game ISO (DM.BIN + LEV01.DGN), rather than
-         * accepting a filename as evidence. */
-        if (firestaff_zip_extract_by_suffix(path, ".bin", &image,
-                                            &image_size) != 0 ||
-            image_size == 0U) {
+        /* A CUE-bearing ZIP must name its MODE1 Track 01 explicitly.  This
+         * accepts differently ordered archives while remaining fail-closed
+         * for an inconsistent CUE/member pair.  CUE-less raw-image ZIPs keep
+         * the legacy first-BIN path for their single-image layout. */
+        if (firestaff_zip_extract_by_suffix(path, ".cue", &cue,
+                                            &cue_size) == 0) {
+            int named = nexus_v1_zip_cue_data_track_name(
+                cue, cue_size, data_track_name, sizeof(data_track_name));
+            free(cue);
+            if (!named || firestaff_zip_extract_by_name(path, data_track_name,
+                                                         &image, &image_size) != 0) {
+                free(image);
+                return -1;
+            }
+        } else if (firestaff_zip_extract_by_suffix(path, ".bin", &image,
+                                                   &image_size) != 0) {
+            free(image);
+            return -1;
+        }
+        if (image_size == 0U) {
             free(image);
             return -1;
         }
