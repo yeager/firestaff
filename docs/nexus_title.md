@@ -198,6 +198,10 @@ The matching writer-register trace also proves the copy *route*: all 31,616
 rows at `0x0602312c` advance post-incremented SH-2 source
 `0x060ac2a7`–`0x060b3e26` one byte at a time, while VDP2 receives 104 rows of
 304 bytes at a 512-byte stride (`0x25e01008`–`0x25e0df37`).
+The paired same-session VDP2 trace records all 31,616 destination byte values;
+`scripts/verify_nexus_title_nbg0_copy_values.py` verifies the one-for-one
+pairing without claiming that the cached SH-2 source byte is the direct CD
+byte. This closes the destination-value witness only.
 `scripts/verify_nexus_title_nbg0_copy_routing.py` validates that entire
 corridor. Because the callback sees the register after the byte load, and
 does not retain the pre-load value, this is deliberately a pointer-route and

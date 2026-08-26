@@ -25,8 +25,10 @@ Reviewed 2026-08-25. Only open work is listed here.
   The later VDP2 clear/copy transport and its `TITLE.BIN` CD→RAM input are now
   verified (`0x060230ac`, `0x0602312c`, LBAs 6039–6055). The latter PC is now
   byte-identical to retail `DM.BIN`, and its source/destination pointers prove
-  a 104 × 304-byte route at a 512-byte VDP2 stride. The only remaining part of
-  this transform is the byte value at the SH-2 load before R5 post-increment.
+  a 104 × 304-byte route at a 512-byte VDP2 stride. The same-session VDP2
+  trace now records all 31,616 destination byte values. The only remaining
+  part of this transform is the byte value at the SH-2 load before R5
+  post-increment.
   The ordinary WorkRAM, cache-hit and cache-bypass read hooks do not observe
   that load in the measured loop, so add an instruction-pipeline or hardware
   trace that records the load result in the same title session rather than
