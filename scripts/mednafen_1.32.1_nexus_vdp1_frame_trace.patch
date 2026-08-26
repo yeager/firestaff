@@ -6,7 +6,7 @@
 +void FirestaffTraceVramWriteFrame(unsigned frame);
 --- src/ss/vdp1.cpp
 +++ src/ss/vdp1.cpp
-@@ -1292,2 +1292,16 @@
+@@ -1293,2 +1293,16 @@
 -static void FirestaffTraceVramWriterCode(uint32 address)
 -{
 +void FirestaffTraceVramWriteFrame(unsigned frame)

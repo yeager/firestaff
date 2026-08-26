@@ -45,5 +45,5 @@
 +
  static void FirestaffTraceVdp2Write(const char *area, uint32 address,
   unsigned size, uint16 value)
-@@ -998,0 +999,1 @@
+@@ -957,0 +958,1 @@
 +  FirestaffTraceVdp2PostWriteSnapshot("cram", A);
