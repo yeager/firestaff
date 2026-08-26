@@ -35,9 +35,11 @@ frame-12596 VDP2 trace contains exactly 32,850 clear writes at `0x060230ac`
 and 31,616 byte-lane copy writes at `0x0602312c`; replaying all 64,466 writes
 reconstructs the frame-6 NBG0 bytes and hash exactly.  A same-frame SH-2
 instruction trace records the 31,616 preceding WorkRAM byte loads in order;
-their values match the VDP2 byte lanes exactly.  The terminal CD/CDB-to-RAM
-provenance and the title/menu display consumer are still unbound, so this does
-not authorize a playable start.  Those gates remain closed.
+their values match the VDP2 byte lanes exactly.  The same JP session also
+captures the 17,408 CDB FIFO payload words for `TITLE.BIN` LBAs 6039--6055,
+checks every word against raw Track 1, and records the CDB data-port and FIFO
+word position for the WorkRAM receipt.  The title/menu display consumer is
+still unbound, so this does not authorize a playable start.
 
 ## Current external-data verification — 2026-08-13
 

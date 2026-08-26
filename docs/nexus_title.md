@@ -183,9 +183,9 @@ writes and PC `0x0602312c` performs 31,616 byte-lane writes. Replaying all
 under the documented VDP2 byte-lane rule and converting bus order to the raw
 capture's word order reproduces every byte of the measured NBG0 span and its
 SHA-256 exactly. `scripts/verify_nexus_title_nbg0_producer.py` reproduces
-this receipt. The source pointer/RAM producer and its CD provenance have not
-yet been captured for `0x0602312c`, so this is a VDP2 destination proof, not
-permission to present a native title composition.
+this receipt. The later same-session receipts bind the source pointer/RAM
+producer and its CDB provenance; the display consumer is still absent, so this
+is not permission to present a native title composition.
 
 That source boundary is now partially closed: the copy routine reads the
 bounded SH-2 range `0x060ac2a7`–`0x060b3e26`, and the same retail session's
@@ -195,8 +195,10 @@ CD-labelled RAM trace binds 7,904 four-byte writes in that range to
 The CDB FIFO witness goes one level earlier: all 17,408 16-bit words from
 those 17 LBAs match raw Track 1 byte-for-byte at their recorded sector-word
 offsets; `scripts/verify_nexus_title_cdb_fifo_words.py` checks that receipt.
-The CD-to-RAM terminal CDB register path remains unbound; the evidence must
-not be simplified to a direct `TITLE.BIN` bitmap upload.
+The V4 receipt additionally requires CDB data port `0x05818000` and a payload
+word position in each source row. This closes the observed CDB-register-to-RAM
+transport for this path, but does not simplify the transformed NBG0 bytes to a
+direct `TITLE.BIN` bitmap upload.
 
 The matching writer-register trace also proves the copy *route*: all 31,616
 rows at `0x0602312c` advance post-incremented SH-2 source

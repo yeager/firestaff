@@ -6,8 +6,9 @@ Reviewed 2026-08-25. Only open work is listed here.
   decoded source assets before admitting title/menu rendering. The full title
   `TITLE.CG` SH-2→VDP2 copy plan is now captured at PC `0x06041fa0`; a
   source-LBA-filtered receipt now reconstructs the complete real `TITLE.CG`
-  buffer at `0x0025daf0`. The terminal 32-byte CDB-register path remains
-  unbound. The title VDP1 chain now byte-binds all 177 texture spans to
+  buffer at `0x0025daf0`. Its terminal 32-byte CDB-register path remains
+  separate from the now closed `TITLE.BIN` NBG0 transport. The title VDP1
+  chain now byte-binds all 177 texture spans to
   `LEV00.DGN`; 173 also match their real Structure2 image and CLUT pair. The
   remaining four draws (`0x00e60`, `0x00780`, `0x00880`, `0x01380`) share the
   directly traced `LEV00.DGN` CLUT at word `0xca00`, though it has no exact
@@ -29,8 +30,9 @@ Reviewed 2026-08-25. Only open work is listed here.
   a 104 × 304-byte route at a 512-byte VDP2 stride. The same-session VDP2
   trace now records all 31,616 destination byte values, and a frame-12596
   instruction trace binds each preceding SH-2 WorkRAM load to its VDP2 byte
-  value in order. The terminal CD/CDB-to-RAM producer and the display consumer
-  are still required; do not turn this value receipt into a direct `TITLE.BIN`
+  value in order. The same session also binds CDB FIFO payload words, CDB data
+  port and FIFO word positions to this RAM corridor. The display consumer is
+  still required; do not turn this value receipt into a direct `TITLE.BIN`
   upload or native composition claim.
   The title-frame NBG1 route is captured
   and excludes `TITLE.CG` (it resolves to `0x20000`),
