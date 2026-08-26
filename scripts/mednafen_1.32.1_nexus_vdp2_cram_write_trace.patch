@@ -1,7 +1,4 @@
 --- src/ss/vdp2.cpp
 +++ src/ss/vdp2.cpp
-@@ -780,5 +780,6 @@
-   if(IsWrite)
-   {
+@@ -836,0 +837,1 @@
 +   FirestaffTraceVdp2Write("cram", A, sizeof(T), *DB);
-    switch(CRAM_Mode)

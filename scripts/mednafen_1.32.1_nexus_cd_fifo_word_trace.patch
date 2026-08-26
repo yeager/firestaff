@@ -1,9 +1,6 @@
 --- src/ss/cdb.cpp
 +++ src/ss/cdb.cpp
-@@ -566,6 +566,39 @@
-  if((count & 0x3ffU) == 0) fflush(file);
- }
- 
+@@ -567,0 +568,33 @@
 +static void FirestaffTraceNexusCDFIFOWord(uint32 lba, uint32 word_offset,
 + uint16 value)
 +{
@@ -40,27 +37,12 @@
  static CDInterface* Cur_CDIF;
  static CDUtility::TOC toc;
  static sscpu_timestamp_t lastts;
-@@ -1423,12 +1456,14 @@
- static void DT_ReadIntoFIFO(void)
- {
-  uint16 tmp;
-+ uint32 firestaff_lba = 0xFFFFFFFF;
- 
-  if(DT.BufList[DT.CurBufIndex] < 0xF0)
-  {
-   const uint8* const data = Buffers[DT.BufList[DT.CurBufIndex]].Data;
-   FirestaffLastFIFOReadLBA = AMSF_to_ABA(BCD_to_U8(data[12]),
-    BCD_to_U8(data[13]), BCD_to_U8(data[14])) - 150;
-+  firestaff_lba = FirestaffLastFIFOReadLBA;
-  }
- 
-  if(MDFN_UNLIKELY(DT.BufList[DT.CurBufIndex] >= 0xF0))
-@@ -1447,6 +1482,9 @@
+@@ -1447,6 +1480,9 @@
   else
    tmp = MDFN_de16msb(&Buffers[DT.BufList[DT.CurBufIndex]].Data[DT.InBufOffs << 1]);
  
-+ if(firestaff_lba != 0xFFFFFFFF)
-+  FirestaffTraceNexusCDFIFOWord(firestaff_lba, DT.InBufOffs, tmp);
++ if(DT.BufList[DT.CurBufIndex] < 0xF0)
++  FirestaffTraceNexusCDFIFOWord(FirestaffLastFIFOReadLBA, DT.InBufOffs, tmp);
 +
   //printf("%02x %02x\n", DT.BufList[DT.CurBufIndex], DT.CurBufIndex);
   DT.FIFO[DT.FIFO_WP] = tmp;

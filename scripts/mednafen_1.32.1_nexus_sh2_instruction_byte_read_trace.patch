@@ -1,14 +1,8 @@
 --- src/ss/ss.h
 +++ src/ss/ss.h
-@@ -135,6 +135,8 @@
-  void FirestaffTraceSH2RAMRead(uint32 address, unsigned size, uint32 value);
-  void FirestaffTraceSH2CachedRAMRead(unsigned which, uint32 address, unsigned size,
-   uint32 value, uint32 pc);
+@@ -133,0 +134,2 @@
 + void FirestaffTraceSH2InstructionByteRead(unsigned which, unsigned register_index,
 +  uint32 address, uint8 value, uint32 pc);
-  void FirestaffTraceSH2RAMSourceWrite(uint32 address, unsigned size, uint32 value);
-  uint16 FirestaffPeekSH2Memory(unsigned which, uint32 address);
-  enum
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
 @@ -880,6 +880,46 @@

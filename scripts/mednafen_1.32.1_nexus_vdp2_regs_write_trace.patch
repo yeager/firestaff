@@ -1,8 +1,4 @@
 --- src/ss/vdp2.cpp
 +++ src/ss/vdp2.cpp
-@@ -825,6 +825,7 @@
-  {
-   if(IsWrite)
-   {
+@@ -882,0 +883,1 @@
 +   FirestaffTraceVdp2Write("regs", A, sizeof(T), *DB);
-    if(sizeof(T) == 1)

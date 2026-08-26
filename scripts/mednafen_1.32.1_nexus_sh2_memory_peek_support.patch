@@ -1,13 +1,7 @@
 --- src/ss/ss.h
 +++ src/ss/ss.h
-@@ -129,6 +129,7 @@
- 
-  void FirestaffTraceSH2SourceRead(uint32 address, uint32 value);
-  void FirestaffTraceSH2RAMSourceWrite(uint32 address, uint32 value);
+@@ -136,0 +137,1 @@
 + uint16 FirestaffPeekSH2Memory(unsigned which, uint32 address);
-  enum
-  {
-   SS_EVENT__SYNFIRST = 0,
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
 @@ -474,6 +474,12 @@

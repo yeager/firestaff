@@ -74,15 +74,6 @@ elif [[ "$(cat "$cd_read_marker" 2>/dev/null)" != "$cd_read_patch_id" ]]; then
   echo "ERROR: external Mednafen source has an older or unknown CDB-read patch" >&2
   exit 2
 fi
-cd_fifo_word_marker="$source_dir/.firestaff-nexus-cdb-fifo-word-trace-patched"
-cd_fifo_word_patch_id='FIRESTAFF_NEXUS_CDB_FIFO_WORD_TRACE_V1'
-if [[ ! -f "$cd_fifo_word_marker" ]]; then
-  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_cd_fifo_word_trace.patch"
-  printf '%s\n' "$cd_fifo_word_patch_id" > "$cd_fifo_word_marker"
-elif [[ "$(cat "$cd_fifo_word_marker" 2>/dev/null)" != "$cd_fifo_word_patch_id" ]]; then
-  echo "ERROR: external Mednafen source has an older or unknown CDB FIFO-word trace patch" >&2
-  exit 2
-fi
 source_trace_marker="$source_dir/.firestaff-nexus-sh2-source-trace-patched"
 source_trace_patch_id='FIRESTAFF_NEXUS_SH2_SOURCE_TRACE_V6_CDB_FIFO_LBA_FILTER'
 if [[ ! -f "$source_trace_marker" ]]; then
@@ -90,6 +81,15 @@ if [[ ! -f "$source_trace_marker" ]]; then
   printf '%s\n' "$source_trace_patch_id" > "$source_trace_marker"
 elif [[ "$(cat "$source_trace_marker" 2>/dev/null)" != "$source_trace_patch_id" ]]; then
   echo "ERROR: external Mednafen source has an older or unknown SH-2 source-trace patch" >&2
+  exit 2
+fi
+cd_fifo_word_marker="$source_dir/.firestaff-nexus-cdb-fifo-word-trace-patched"
+cd_fifo_word_patch_id='FIRESTAFF_NEXUS_CDB_FIFO_WORD_TRACE_V2_COMPOSABLE'
+if [[ ! -f "$cd_fifo_word_marker" ]]; then
+  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_cd_fifo_word_trace.patch"
+  printf '%s\n' "$cd_fifo_word_patch_id" > "$cd_fifo_word_marker"
+elif [[ "$(cat "$cd_fifo_word_marker" 2>/dev/null)" != "$cd_fifo_word_patch_id" ]]; then
+  echo "ERROR: external Mednafen source has an older or unknown CDB FIFO-word trace patch; use a fresh build directory" >&2
   exit 2
 fi
 sh2_ram_read_marker="$source_dir/.firestaff-nexus-sh2-ram-read-trace-patched"
