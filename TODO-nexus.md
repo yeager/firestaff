@@ -18,8 +18,13 @@ Reviewed 2026-08-25. Only open work is listed here.
   bitmap is neither `TITLE.CG`/MAPD nor `LOGOBG.DG2`; a full-disc
   resident-member scan finds no other complete source file. Identify that
   producer (including any decode/transform), alongside the actual title
-  display consumer and timing, before admitting composition. The title-frame
-  NBG1 route is captured and excludes `TITLE.CG` (it resolves to `0x20000`),
+  display consumer and timing, before admitting composition. The measured
+  title NBG0 span is `0x00000`–`0x1ffff` (SHA-256
+  `ad10d99f00c3eecdf9577b15af1a7b86870a4ba83299dc50a09881dc569ad5e8`);
+  retained traces after frames 11900 and 12501 have no writes in that range.
+  Capture the later update with VDP2-range writes, writer registers and
+  same-frame SH-2 RAM/CD provenance. The title-frame NBG1 route is captured
+  and excludes `TITLE.CG` (it resolves to `0x20000`),
   so it must not be promoted as a title-map substitute.
 - Calibrate the title/menu capture from post-composition frames after the
   Saturn BIOS and the unskippable opening movie. The verified JP title window

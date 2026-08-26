@@ -164,6 +164,18 @@ producer: the only writer spanning the NBG0-range start (`0x06041fc0`,
 remaining writers emit only small fixed sets (`0`, `0x1000`, `0x3200`, or
 `0x0f00`). These are clear/setup observations, not title-bitmap ownership.
 
+The title-frame NBG0 target is now measured directly rather than described
+only by mode: `BMPNA=0` selects its 512×256, 8-bit bitmap at VDP2 VRAM
+`0x00000`–`0x1ffff`. That exact 131,072-byte span has 15,187 nonzero bytes
+and SHA-256 `ad10d99f00c3eecdf9577b15af1a7b86870a4ba83299dc50a09881dc569ad5e8`.
+Neither retained post-title interval (`11900`–`12010`, 2,048 writes) nor the
+`TITLE.CG` interval (`12501`–`12750`, 167,936 writes) writes a byte in this
+range, so neither may be represented as its producer. An earlier authentic
+RAM-to-NBG0 copier at PC `0x0601184c` is useful implementation evidence but
+has a different frame bitmap hash and is expressly not promoted to title
+ownership. The required next witness is a range-filtered trace of the later
+title NBG0 update plus same-frame SH-2 RAM and CD source provenance.
+
 The complete 190-record VDP1 chain contains 177 non-empty texture spans,
 including the bounded type-0 windows at VDP1 VRAM `0x4fba0` (448 bytes) and
 `0x4c580` (1,952 bytes). Every one is an exact span of the word-swapped real
