@@ -70,3 +70,12 @@
   }
  }
  int32 SMPC_StartFrame(EmulateSpecStruct* espec)
+@@ -783,7 +821,7 @@ void SMPC_UpdateInput(const int32 time_elapsed)
+  ResetButtonPhysStatus = (bool)(*MiscInputPtr & 0x1);
++ FirestaffUpdateCaptureInput();
+  for(unsigned vp = 0; vp < 12; vp++)
+  {
+   VirtualPorts[vp]->UpdateInput(VirtualPortsDPtr[vp], time_elapsed);
+  }
+- FirestaffUpdateCaptureInput();
+ }

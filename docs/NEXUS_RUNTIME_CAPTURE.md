@@ -77,6 +77,16 @@ VDP memory, host pixels, or a guessed menu. A resulting menu/HUD/viewport claim
 still requires the corresponding source identity and VDP1/VDP2 consumer
 artifact.
 
+An input-request log alone is not an input receipt: it can record a requested
+mask after the emulator has already sampled the gamepad. The producer applies
+its mask before the original `IODevice::UpdateInput` pass, and a valid capture
+must additionally show the changed SMPC output-register values at the same
+frame. In the bounded Japanese retail run at frames 1800--1803, START changes
+the SMPC return stream at master-SH-2 PCs `0x0601456e`, `0x06014584`,
+`0x06014596`, and `0x060145b2`; those PCs lie in the hash-verified `DM.BIN`
+load range. This proves controller delivery to retail code, not the semantic
+meaning of the subsequent game state or a host rendering admission.
+
 When the input must be observed inside the raw capture, pass
 `--require-input-window`. The launcher then rejects a plan unless the complete
 button interval lies between `skip_frames` and

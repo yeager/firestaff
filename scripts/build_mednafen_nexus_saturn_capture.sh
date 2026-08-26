@@ -48,7 +48,7 @@ elif [[ "$(cat "$marker" 2>/dev/null)" != "$patch_id" ]]; then
   exit 2
 fi
 input_sequence_marker="$source_dir/.firestaff-nexus-input-sequence-patched"
-input_sequence_patch_id='FIRESTAFF_NEXUS_INPUT_SEQUENCE_V1_13BIT'
+input_sequence_patch_id='FIRESTAFF_NEXUS_INPUT_SEQUENCE_V2_PRE_UPDATE'
 if [[ ! -f "$input_sequence_marker" ]]; then
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_input_sequence.patch"
   printf '%s\n' "$input_sequence_patch_id" > "$input_sequence_marker"
