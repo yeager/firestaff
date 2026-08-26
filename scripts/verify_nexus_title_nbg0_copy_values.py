@@ -50,7 +50,11 @@ def main() -> int:
                     int(write["pc0"], 16) != 0x0602312C or
                     int(write["address"], 16) != address):
                 raise ValueError("title route row is not its paired VDP2 byte write")
-            rows.append(int(write["value"], 16) & 0xFF)
+            # VDP2 receives a 16-bit bus value even for an 8-bit access.  The
+            # addressed byte lane is selected by A0 (see vdp2.cpp's mask), so
+            # the low byte alone is not the written byte at odd addresses.
+            bus_value = int(write["value"], 16)
+            rows.append((bus_value >> ((address & 1) * 8)) & 0xFF)
         if len(rows) != COPY_BYTES:
             raise ValueError(f"expected {COPY_BYTES} paired title bytes, got {len(rows)}")
         if not any(rows):
