@@ -95,6 +95,13 @@ NBG0 source: neither the 320×224 `LOGOBG.DG2` PP pixel payload nor its
 must therefore remain a source receipt rather than being substituted for the
 unbound NBG0 bitmap.
 
+A full-disc, in-memory scan of all complete even-sized ISO9660 members finds
+only the complete word-swapped `TITLE.CG` member in title-frame VDP2 VRAM, at
+`0x24000`; no other complete retail member is resident. This does not exclude
+an encoded, decompressed, transformed, or partial NBG0 source, but it rules
+out treating any other complete disc file as that bitmap without a producer
+trace.
+
 A paired 40-frame JP capture makes the input boundary explicit: Start/A
 pulses at emulated frames 13000, 13010 and 13020 produce a valid input receipt
 but every captured VDP1 and VDP2 region is bit-identical to an otherwise

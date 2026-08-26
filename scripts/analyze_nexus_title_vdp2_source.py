@@ -90,7 +90,7 @@ def cue_track1(cue: Path) -> Path:
     raise ValueError("CUE has no quoted track member")
 
 
-def iso_members_in_memory(track: Path, wanted: set[str]) -> dict[str, bytes]:
+def iso_members_in_memory(track: Path, wanted: set[str] | None) -> dict[str, bytes]:
     """Read named ISO9660 members from a 2048- or raw-2352-byte Track 1.
 
     The full disc image is read only as the caller's supplied game data; no
@@ -137,14 +137,14 @@ def iso_members_in_memory(track: Path, wanted: set[str]) -> dict[str, bytes]:
                 normalized = name.decode("ascii", "replace").split(";", 1)[0].upper()
                 if child[25] & 2:
                     walk(child)
-                elif normalized in wanted:
+                elif wanted is None or normalized in wanted:
                     lba = int.from_bytes(child[2:6], "little")
                     size = int.from_bytes(child[10:14], "little")
                     members[normalized] = read_extent(lba, size)
             offset += length
 
     walk(pvd[156:])
-    missing = wanted - members.keys()
+    missing = wanted - members.keys() if wanted is not None else set()
     if missing:
         raise ValueError("ISO9660 member missing: " + ",".join(sorted(missing)))
     return members
@@ -172,6 +172,24 @@ def find_span_with_swapped(haystack: bytes, source: bytes,
     return haystack.find(source), haystack.find(swapped_source)
 
 
+def complete_disc_member_hits(vram: bytes, members: dict[str, bytes]) -> list[tuple[str, int, int]]:
+    """Find complete, even-sized retail members resident in VDP2 VRAM.
+
+    This deliberately does not look for arbitrary slices: a hit identifies a
+    complete source member copied verbatim (or word-swapped) into a captured
+    VDP2 image.  It remains insufficient to identify layer ownership,
+    placement, decoding, or to admit host rendering.
+    """
+    hits: list[tuple[str, int, int]] = []
+    for name, source in sorted(members.items()):
+        if len(source) < 64 or len(source) % 2:
+            continue
+        exact, swapped = find_span(vram, source)
+        if exact >= 0 or swapped >= 0:
+            hits.append((name, exact, swapped))
+    return hits
+
+
 def describe_position(exact: int, swapped: int) -> str:
     return f"exact=0x{exact:x} word_swap=0x{swapped:x}"
 
@@ -186,15 +204,22 @@ def main() -> int:
     parser.add_argument("--capture-frames", type=int, required=True)
     parser.add_argument("--frame", type=int,
                         help="inspect one zero-based frame instead of all frames")
+    parser.add_argument("--scan-complete-disc-members", action="store_true",
+                        help="with --cue, search complete retail members in VDP2 VRAM")
     args = parser.parse_args()
     if args.capture_frames <= 0 or (args.frame is not None and
                                     (args.frame < 0 or args.frame >= args.capture_frames)):
         print("NEXUS_TITLE_VDP2_SOURCE_INVALID: invalid frame selection")
         return 1
+    if args.scan_complete_disc_members and args.cue is None:
+        print("NEXUS_TITLE_VDP2_SOURCE_INVALID: full-disc scan requires --cue")
+        return 1
     try:
         title_bin, title_cg_raw, logobg_raw = read_title_assets(args.data_dir, args.cue)
         title_cg, maps, palette = title_spans(title_bin, title_cg_raw)
         logobg_pixels, logobg_palette = logobg_spans(logobg_raw)
+        disc_members = (iso_members_in_memory(cue_track1(args.cue), None)
+                        if args.scan_complete_disc_members and args.cue else None)
     except (OSError, ValueError) as error:
         print(f"NEXUS_TITLE_VDP2_SOURCE_INVALID: {error}")
         return 1
@@ -258,6 +283,11 @@ def main() -> int:
                 print("logobg_palette_cram_" +
                       describe_position(logobg_palette_exact, logobg_palette_swapped) +
                       f" bytes={len(logobg_palette)}")
+                if disc_members is not None:
+                    hits = complete_disc_member_hits(frame["vdp2-vram"], disc_members)
+                    print("complete_disc_member_vram_hits=" +
+                          (",".join(f"{name}:exact=0x{exact:x}:word_swap=0x{swapped:x}"
+                                    for name, exact, swapped in hits) if hits else "none"))
     except (OSError, ValueError) as error:
         print(f"NEXUS_TITLE_VDP2_SOURCE_INVALID: {error}")
         return 1
