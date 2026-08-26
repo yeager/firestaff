@@ -32,6 +32,11 @@ records, but it does not yet prove the Saturn screen order, champion-selection
 consumer, or the VDP1/VDP2 composition of those assets. Those relationships
 remain capture-gated.
 
+`RLOWFIX.BIN` is a regional `RES*` container. Firestaff resolves `TEXT4` and
+`TABL` by their on-disc resource tag/index, rather than fixed European byte
+offsets; this binds the Japanese retail text and character-table receipts
+without authorising their untraced Saturn text consumer.
+
 ---
 
 ## 3. Required Menu States
