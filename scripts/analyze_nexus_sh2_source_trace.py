@@ -19,11 +19,13 @@ HEADERS = {
     "FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V1": False,
     "FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V2": True,
     "FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V3": True,
+    "FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V4": True,
 }
 LINE = re.compile(
     r"addr=0x(?P<addr>[0-9a-fA-F]+)(?: size=(?P<size>[0-9]+))? value=0x(?P<value>[0-9a-fA-F]+) "
     r"source=0x(?P<source>[0-9a-fA-F]+) source_value=0x(?P<source_value>[0-9a-fA-F]+)"
-    r"(?: source_lba=0x(?P<source_lba>[0-9a-fA-F]+))? "
+    r"(?: source_lba=0x(?P<source_lba>[0-9a-fA-F]+))?"
+    r"(?: source_word=0x(?P<source_word>[0-9a-fA-F]+))? "
     r"pc0=0x(?P<pc0>[0-9a-fA-F]+) pc1=0x(?P<pc1>[0-9a-fA-F]+)$"
 )
 SECTOR_SIZE = 2048

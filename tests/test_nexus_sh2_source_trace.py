@@ -51,3 +51,14 @@ def test_v3_retains_cdb_lba() -> None:
         "pc0=0x06090d04 pc1=0x0608d2f2\n"
     )
     assert rows[0][5] == 6090
+
+
+def test_v4_accepts_cdb_fifo_word_without_changing_row_contract() -> None:
+    rows = read_trace(
+        "FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V4\n"
+        "addr=0x0025daf0 size=2 value=0x00001234 source=0x05818000 "
+        "source_value=0x00001234 source_lba=0x000017ca source_word=0x00000008 "
+        "pc0=0x06090d04 pc1=0x0608d2f2\n"
+    )
+    assert rows[0] == (0x0025DAF0, 2, 0x1234, 0x05818000,
+                       0x1234, 6090, 0x06090D04, 0x0608D2F2)

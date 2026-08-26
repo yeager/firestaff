@@ -75,7 +75,7 @@ elif [[ "$(cat "$cd_read_marker" 2>/dev/null)" != "$cd_read_patch_id" ]]; then
   exit 2
 fi
 source_trace_marker="$source_dir/.firestaff-nexus-sh2-source-trace-patched"
-source_trace_patch_id='FIRESTAFF_NEXUS_SH2_SOURCE_TRACE_V6_CDB_FIFO_LBA_FILTER'
+source_trace_patch_id='FIRESTAFF_NEXUS_SH2_SOURCE_TRACE_V7_CDB_FIFO_WORD_BINDING'
 if [[ ! -f "$source_trace_marker" ]]; then
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_sh2_source_trace.patch"
   printf '%s\n' "$source_trace_patch_id" > "$source_trace_marker"

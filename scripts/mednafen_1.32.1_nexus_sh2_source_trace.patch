@@ -7,24 +7,32 @@
 + void FirestaffTraceSH2RAMSourceWrite(uint32 address, unsigned size, uint32 value);
 --- src/ss/cdb.h
 +++ src/ss/cdb.h
-@@ -33,0 +34,1 @@
+@@ -33,0 +34,2 @@
 +uint32 FirestaffNexusCDBLastFIFOReadLBA(void);
++uint32 FirestaffNexusCDBLastFIFOReadWord(void);
 --- src/ss/cdb.cpp
 +++ src/ss/cdb.cpp
-@@ -471,0 +472,1 @@
+@@ -471,0 +472,2 @@
 +static uint32 FirestaffLastFIFOReadLBA = 0xFFFFFFFF;
-@@ -1422,0 +1423,7 @@
++static uint32 FirestaffLastFIFOReadWord = 0xFFFFFFFF;
+@@ -1422,0 +1423,8 @@
 + if(DT.BufList[DT.CurBufIndex] < 0xF0)
 + {
 +  const uint8* const data = Buffers[DT.BufList[DT.CurBufIndex]].Data;
 +  FirestaffLastFIFOReadLBA = AMSF_to_ABA(BCD_to_U8(data[12]),
 +   BCD_to_U8(data[13]), BCD_to_U8(data[14])) - 150;
++  FirestaffLastFIFOReadWord = DT.InBufOffs;
 + }
 +
-@@ -4176,0 +4185,5 @@
+@@ -4176,0 +4185,10 @@
 +uint32 FirestaffNexusCDBLastFIFOReadLBA(void)
 +{
 + return FirestaffLastFIFOReadLBA;
++}
++
++uint32 FirestaffNexusCDBLastFIFOReadWord(void)
++{
++ return FirestaffLastFIFOReadWord;
 +}
 +
 --- src/ss/ss.cpp
@@ -44,10 +52,11 @@
 +{
 + return CPU[which & 1U].GetRegister(SH7095::GSREG_RPC, NULL, 0);
 +}
-@@ -554,0 +554,62 @@
+@@ -554,0 +554,65 @@
 +static uint32 FirestaffLastSH2ReadAddress;
 +static uint32 FirestaffLastSH2ReadValue;
 +static uint32 FirestaffLastSH2ReadLBA;
++static uint32 FirestaffLastSH2ReadWord;
 +static bool FirestaffLastSH2ReadValid;
 +
 +void FirestaffTraceSH2SourceRead(uint32 address, uint32 value)
@@ -57,6 +66,7 @@
 +  FirestaffLastSH2ReadAddress = address;
 +  FirestaffLastSH2ReadValue = value;
 +  FirestaffLastSH2ReadLBA = FirestaffNexusCDBLastFIFOReadLBA();
++  FirestaffLastSH2ReadWord = FirestaffNexusCDBLastFIFOReadWord();
 +  FirestaffLastSH2ReadValid = true;
 + }
 +}
@@ -90,6 +100,7 @@
 +      (address >= 0x06000000 && address < 0x08000000)) ||
 +    (maximum > minimum && (address < minimum || address >= maximum)) ||
 +    FirestaffLastSH2ReadLBA < source_lba_minimum || FirestaffLastSH2ReadLBA >= source_lba_maximum ||
++    FirestaffLastSH2ReadWord == 0xFFFFFFFF ||
 +    count >= limit)
 +  return;
 + limit_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_LIMIT");
@@ -98,11 +109,11 @@
 + {
 +  file = fopen(path, "wb");
 +  if(!file) return;
-+  fputs("FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V3\n", file);
++  fputs("FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V4\n", file);
 + }
-+ fprintf(file, "addr=0x%08x size=%u value=0x%08x source=0x%08x source_value=0x%08x source_lba=0x%08x pc0=0x%08x pc1=0x%08x\n",
++ fprintf(file, "addr=0x%08x size=%u value=0x%08x source=0x%08x source_value=0x%08x source_lba=0x%08x source_word=0x%08x pc0=0x%08x pc1=0x%08x\n",
 +  (unsigned)address, size, (unsigned)value,
-+  (unsigned)FirestaffLastSH2ReadAddress, (unsigned)FirestaffLastSH2ReadValue, (unsigned)FirestaffLastSH2ReadLBA,
++  (unsigned)FirestaffLastSH2ReadAddress, (unsigned)FirestaffLastSH2ReadValue, (unsigned)FirestaffLastSH2ReadLBA, (unsigned)FirestaffLastSH2ReadWord,
 +  (unsigned)FirestaffGetSH2PC(0), (unsigned)FirestaffGetSH2PC(1));
 + count++;
 + if((count & 0x3ffU) == 0) fflush(file);
