@@ -87,6 +87,16 @@ the SMPC return stream at master-SH-2 PCs `0x0601456e`, `0x06014584`,
 load range. This proves controller delivery to retail code, not the semantic
 meaning of the subsequent game state or a host rendering admission.
 
+The reproducible producer is the version-locked
+mednafen_1.32.1_nexus_smpc_read_trace.patch, applied by
+build_mednafen_nexus_saturn_capture.sh. Set
+FIRESTAFF_NEXUS_TRACE_SMPC_READS to an operator-owned output file; optional
+FIRESTAFF_NEXUS_TRACE_SMPC_READ_FRAME_MIN,
+FIRESTAFF_NEXUS_TRACE_SMPC_READ_FRAME_MAX, and
+FIRESTAFF_NEXUS_TRACE_SMPC_READ_LIMIT bound it. The text receipt records
+emulation frame, SMPC output register, value, and both SH-2 PCs. It never
+copies game data, extracts media, or becomes a Firestaff runtime dependency.
+
 When the input must be observed inside the raw capture, pass
 `--require-input-window`. The launcher then rejects a plan unless the complete
 button interval lies between `skip_frames` and

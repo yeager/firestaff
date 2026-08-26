@@ -1,0 +1,66 @@
+--- src/ss/ss.h
++++ src/ss/ss.h
+@@ -127,6 +127,7 @@
+ 
+  void FirestaffTraceSlevSalCapture(uint32 address, uint32 value);
+  uint32 FirestaffGetSH2PC(unsigned which);
++ void FirestaffTraceSMPCRead(uint32 address, uint32 value);
+ 
+  void FirestaffTraceSH2SourceRead(uint32 address, uint32 value);
+  void FirestaffTraceSH2RAMSourceWrite(uint32 address, uint32 value);
+--- src/ss/ss.cpp
++++ src/ss/ss.cpp
+@@ -260,7 +260,10 @@
+     SMPC_Write(SH7095_mem_timestamp, SMPC_A, DB);
+   }
+   else
++  {
+    DB = (DB & 0xFFFF0000) | 0xFF00 | SMPC_Read(SH7095_mem_timestamp, SMPC_A);
++   FirestaffTraceSMPCRead(SMPC_A, DB & 0xFF);
++  }
+ 
+   return;
+  }
+@@ -570,6 +573,42 @@
+  return CPU[which & 1U].GetRegister(SH7095::GSREG_RPC, NULL, 0);
+ }
+ 
++void FirestaffTraceSMPCRead(uint32 address, uint32 value)
++{
++ static FILE *file;
++ static unsigned count;
++ static unsigned limit = 65536;
++ static bool configured;
++ static uint64 minimum;
++ static uint64 maximum;
++ const char *path = getenv("FIRESTAFF_NEXUS_TRACE_SMPC_READS");
++ const uint64 frame = SMPC_FirestaffCurrentFrame();
++ if(!configured)
++ {
++  const char *limit_text = getenv("FIRESTAFF_NEXUS_TRACE_SMPC_READ_LIMIT");
++  const char *min_text = getenv("FIRESTAFF_NEXUS_TRACE_SMPC_READ_FRAME_MIN");
++  const char *max_text = getenv("FIRESTAFF_NEXUS_TRACE_SMPC_READ_FRAME_MAX");
++  if(limit_text && *limit_text) limit = strtoul(limit_text, NULL, 10);
++  if(min_text && *min_text) minimum = strtoull(min_text, NULL, 10);
++  if(max_text && *max_text) maximum = strtoull(max_text, NULL, 10);
++  configured = true;
++ }
++ if(!path || !*path || count >= limit || address < 0x10 || address > 0x2f ||
++    (maximum > minimum && (frame < minimum || frame > maximum)))
++  return;
++ if(!file)
++ {
++  file = fopen(path, "wb");
++  if(!file) return;
++  fputs("FIRESTAFF_NEXUS_SMPC_READ_TRACE_V1\n", file);
++ }
++ fprintf(file, "frame=%llu smpc=0x%02x value=0x%02x pc0=0x%08x pc1=0x%08x\n",
++  (unsigned long long)frame, (unsigned)address, (unsigned)value,
++  (unsigned)FirestaffGetSH2PC(0), (unsigned)FirestaffGetSH2PC(1));
++ count++;
++ if((count & 0x3ffU) == 0) fflush(file);
++}
++
+ uint16 FirestaffPeekSH2Memory(unsigned which, uint32 address)
+ {
+  (void)which;
