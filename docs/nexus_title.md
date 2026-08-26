@@ -89,6 +89,13 @@ character layer, so the visible title cannot be reconstructed from
 residence, not the NBG0 bitmap source, NBG1 tilemap transform, layer
 placement, timing, or final title composition.
 
+A paired 40-frame JP capture makes the input boundary explicit: Start/A
+pulses at emulated frames 13000, 13010 and 13020 produce a valid input receipt
+but every captured VDP1 and VDP2 region is bit-identical to an otherwise
+identical no-input run. This title-sequence window is therefore non-interactive
+animation, not the start menu. Firestaff must not infer a start-ready delay or
+a menu transition from it.
+
 ---
 
 ## 4. Title Screen vs Intro Movie

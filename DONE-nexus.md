@@ -29,3 +29,6 @@ Reviewed 2026-08-26. Completed work only.
   to word-swapped VDP2 VRAM `0x24020` and the MAPD palette to word-swapped
   CRAM `0x400`. The raw MAPD planes, tilemap transform, layer placement and
   timing remain unbound, so this does not authorize title rendering.
+- The post-intro input receipt is completed as a negative observation: title
+  frames 13000–13039 are bit-identical with and without verified Start/A
+  pulses, so that window is not an interactive start-menu transition.
