@@ -1,19 +1,28 @@
 --- src/ss/ss.h
 +++ src/ss/ss.h
-@@ -135,2 +135,4 @@
+@@ -129,6 +129,8 @@
+ 
+  void FirestaffTraceSH2SourceRead(uint32 address, uint32 value);
   void FirestaffTraceSH2RAMRead(uint32 address, unsigned size, uint32 value);
 + void FirestaffTraceSH2CachedRAMRead(unsigned which, uint32 address, unsigned size,
 +  uint32 value, uint32 pc);
   void FirestaffTraceSH2RAMSourceWrite(uint32 address, unsigned size, uint32 value);
+  enum
+  {
 --- src/ss/sh7095.inc
 +++ src/ss/sh7095.inc
-@@ -2668,2 +2668,3 @@
-  	 retval = MDFN_densb<T, true>(&cent->Data[way_match][NE32ASU8_IDX_ADJ(T, A & 0x0F)]);			\
+@@ -2658,6 +2658,7 @@
+ 	 }													\
+ 														\
+   	 retval = MDFN_densb<T, true>(&cent->Data[way_match][NE32ASU8_IDX_ADJ(T, A & 0x0F)]);			\
 +  	 if(!IsInstr) FirestaffTraceSH2CachedRAMRead(which, A, sizeof(T), retval, PC);		\
  	 goto MemReturn;											\
+ 	}													\
+ 	/* Fall-through, no break here */									\
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
-@@ -842,3 +842,42 @@
+@@ -620,6 +620,45 @@
+  if((count & 0x3ffU) == 0) fflush(file);
  }
  
 +void FirestaffTraceSH2CachedRAMRead(unsigned which, uint32 address, unsigned size,
@@ -56,3 +65,5 @@
 +}
 +
  void FirestaffTraceSH2RAMSourceWrite(uint32 address, unsigned size, uint32 value)
+ {
+  static FILE *file;
