@@ -3253,16 +3253,6 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
         if (rlowfix) {
             champions_bound = nexus_v1_champions_init_from_rlowfix(
                 &engine->champions, rlowfix, (size_t)rlowfix_size);
-            /* DMWeb DecodeRES/DecodeTEXT offsets for the authenticated
-             * European RLOWFIX corpus. Keep these as source receipts; the
-             * Saturn TEXT/FONT256 consumer remains capture-gated. */
-            engine->startup_menu_text_source_bound =
-                nexus_v1_rlowfix_text_parse(
-                    rlowfix, (size_t)rlowfix_size, UINT32_C(0xF270),
-                    &engine->startup_menu_text_source) &&
-                nexus_v1_rlowfix_tabl_parse(
-                    rlowfix, (size_t)rlowfix_size, UINT32_C(0x1232C),
-                    &engine->startup_menu_tabl_source);
             {
                 const uint32_t font_offsets[3] = {
                     UINT32_C(0xC0), UINT32_C(0x1C2C), UINT32_C(0x3F78)
@@ -3270,9 +3260,28 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
                 const uint32_t font_counts[3] = { 291U, 250U, 710U };
                 const uint32_t font_widths[3] = { 6U, 12U, 12U };
                 Nexus_V1_ResDecodeResult res;
+                const Nexus_V1_ResEntry *text4;
+                const Nexus_V1_ResEntry *tabl;
                 int font_index;
-                engine->startup_menu_font012_bound =
-                    nexus_v1_res_decode(rlowfix, rlowfix_size, &res);
+                /* TEXT4 and TABL move between authenticated regional
+                 * RLOWFIX revisions. Resolve them through the on-disc RES*
+                 * directory rather than treating the European offsets as a
+                 * portable file format. The receipts remain source-only;
+                 * Saturn text/FONT256 presentation is capture-gated. */
+                engine->startup_menu_text_source_bound = 0;
+                engine->startup_menu_font012_bound = 0;
+                if (nexus_v1_res_decode(rlowfix, rlowfix_size, &res)) {
+                    text4 = nexus_v1_res_find(&res, "TEXT", 4);
+                    tabl = nexus_v1_res_find(&res, "TABL", 0);
+                    engine->startup_menu_text_source_bound = text4 && tabl &&
+                        nexus_v1_rlowfix_text_parse(
+                            rlowfix, (size_t)rlowfix_size, text4->offset,
+                            &engine->startup_menu_text_source) &&
+                        nexus_v1_rlowfix_tabl_parse(
+                            rlowfix, (size_t)rlowfix_size, tabl->offset,
+                            &engine->startup_menu_tabl_source);
+                    engine->startup_menu_font012_bound = 1;
+                }
                 for (font_index = 0; font_index < 3 &&
                      engine->startup_menu_font012_bound; ++font_index) {
                     const Nexus_V1_ResEntry *entry =
