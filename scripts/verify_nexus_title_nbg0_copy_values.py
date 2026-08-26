@@ -35,26 +35,54 @@ def main() -> int:
             raise ValueError("bad writer-register trace header")
         if not writes or writes[0] != WRITE_HEADER:
             raise ValueError("bad VDP2 write trace header")
-        if len(registers) != len(writes):
-            raise ValueError("writer-register and VDP2 write trace lengths differ")
-        rows = []
-        for register_line, write_line in zip(registers[1:], writes[1:]):
+        # The VDP2 trace can deliberately contain earlier writes by this same
+        # SH-2 routine.  The writer-register trace is frame-gated to the title
+        # copy, so locate its contiguous destination sequence rather than
+        # assuming both trace files begin at the same event.
+        if len(writes) < len(registers):
+            raise ValueError("VDP2 write trace is shorter than writer-register trace")
+        routes = []
+        for register_line in registers[1:]:
             route = LINE.match(register_line)
             if not route:
-                continue
+                raise ValueError("malformed writer-register trace row")
+            routes.append(int(route["address"], 16))
+        if len(routes) != COPY_BYTES:
+            raise ValueError(f"expected {COPY_BYTES} title route rows, got {len(routes)}")
+
+        parsed_writes = []
+        for write_line in writes[1:]:
             write = WRITE.match(write_line)
             if not write:
-                raise ValueError("malformed paired VDP2 write row")
-            address = int(route["address"], 16)
-            if (write["area"] != "vram" or int(write["size"]) != 1 or
-                    int(write["pc0"], 16) != 0x0602312C or
-                    int(write["address"], 16) != address):
-                raise ValueError("title route row is not its paired VDP2 byte write")
+                raise ValueError("malformed VDP2 write row")
+            parsed_writes.append(write)
+
+        starts = [index for index, write in enumerate(parsed_writes)
+                  if (write["area"] == "vram" and int(write["size"]) == 1 and
+                      int(write["pc0"], 16) == 0x0602312C and
+                      int(write["address"], 16) == routes[0])]
+        if not starts:
+            raise ValueError("VDP2 write trace does not contain title-copy start")
+        start = None
+        for candidate in starts:
+            candidate_rows = parsed_writes[candidate:candidate + len(routes)]
+            if len(candidate_rows) != len(routes):
+                continue
+            if all(write["area"] == "vram" and int(write["size"]) == 1 and
+                   int(write["pc0"], 16) == 0x0602312C and
+                   int(write["address"], 16) == address
+                   for address, write in zip(routes, candidate_rows)):
+                start = candidate
+                break
+        if start is None:
+            raise ValueError("VDP2 write trace lacks contiguous title-copy destination sequence")
+        rows = []
+        for address, write in zip(routes, parsed_writes[start:start + len(routes)]):
             # VDP2 receives a 16-bit bus value even for an 8-bit access.  The
             # addressed byte lane is selected by A0 (see vdp2.cpp's mask), so
             # the low byte alone is not the written byte at odd addresses.
             bus_value = int(write["value"], 16)
-            rows.append((bus_value >> ((address & 1) * 8)) & 0xFF)
+            rows.append((bus_value >> (8 if (address & 1) == 0 else 0)) & 0xFF)
         if len(rows) != COPY_BYTES:
             raise ValueError(f"expected {COPY_BYTES} paired title bytes, got {len(rows)}")
         if not any(rows):
