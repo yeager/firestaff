@@ -186,6 +186,14 @@ this receipt. The source pointer/RAM producer and its CD provenance have not
 yet been captured for `0x0602312c`, so this is a VDP2 destination proof, not
 permission to present a native title composition.
 
+That source boundary is now partially closed: the copy routine reads the
+bounded SH-2 range `0x060ac2a7`–`0x060b3e26`, and the same retail session's
+CD-labelled RAM trace binds 7,904 four-byte writes in that range to
+`TITLE.BIN` LBAs 6039–6055 at PC `0x06090d04`. The companion verifier
+`scripts/verify_nexus_title_nbg0_ram_source.py` checks that exact receipt.
+The remaining unbound fact is the routine's RAM-to-VDP2 transform semantics;
+the evidence must not be simplified to a direct `TITLE.BIN` bitmap upload.
+
 The complete 190-record VDP1 chain contains 177 non-empty texture spans,
 including the bounded type-0 windows at VDP1 VRAM `0x4fba0` (448 bytes) and
 `0x4c580` (1,952 bytes). Every one is an exact span of the word-swapped real

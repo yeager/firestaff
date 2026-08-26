@@ -22,9 +22,10 @@ Reviewed 2026-08-25. Only open work is listed here.
   title NBG0 span is `0x00000`–`0x1ffff` (SHA-256
   `ad10d99f00c3eecdf9577b15af1a7b86870a4ba83299dc50a09881dc569ad5e8`);
   retained traces after frames 11900 and 12501 have no writes in that range.
-  The later VDP2 clear/copy transport is now verified (`0x060230ac` and
-  `0x0602312c`), so capture the latter's SH-2 RAM source and CD provenance
-  rather than repeating its destination trace. The title-frame NBG1 route is captured
+  The later VDP2 clear/copy transport and its `TITLE.BIN` CD→RAM input are now
+  verified (`0x060230ac`, `0x0602312c`, LBAs 6039–6055). Reverse the remaining
+  RAM→VDP2 transform semantics rather than repeating either transport trace.
+  The title-frame NBG1 route is captured
   and excludes `TITLE.CG` (it resolves to `0x20000`),
   so it must not be promoted as a title-map substitute.
 - Calibrate the title/menu capture from post-composition frames after the
