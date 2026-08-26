@@ -122,13 +122,19 @@ def main() -> int:
     }
     bgon = values["BGON"]
     layers = enabled_layers(bgon)
+    nbg0_mode, nbg0_colour, nbg0_size, _ = nbg_mode(values["CHCTLA"], 0)
     nbg1_mode, nbg1_colour, nbg1_size, _ = nbg_mode(values["CHCTLA"], 1)
+    nbg0_palette = values["BMPNA"] & 7
     nbg1_palette = (values["BMPNA"] >> 8) & 7
     map_registers = nbg_map_registers(registers, byte_order)
     print(f"frame={args.frame}")
     print(f"register_byte_order={byte_order}")
     print("registers=" + ",".join(f"{name}=0x{value:04x}" for name, value in values.items()))
     print("enabled_layers=" + (",".join(layers) if layers else "none"))
+    print(
+        f"NBG0_mode={nbg0_mode} colour_code={nbg0_colour} "
+        f"bitmap_size_code={nbg0_size} bitmap_palette={nbg0_palette}"
+    )
     print(
         f"NBG1_mode={nbg1_mode} colour_code={nbg1_colour} "
         f"bitmap_size_code={nbg1_size} bitmap_palette={nbg1_palette}"
@@ -154,7 +160,10 @@ def main() -> int:
         + ",".join(f"NBG{index}={(values['CRAOFA'] >> (index * 4)) & 7}" for index in range(4))
     )
     print("register_semantics=authentic_frame_observation")
-    print("NBG1_map_registers_consumed=no_bitmap_mode")
+    print("NBG0_map_registers_consumed=no_bitmap_mode" if nbg0_mode == "bitmap"
+          else "NBG0_map_registers_consumed=character_mode")
+    print("NBG1_map_registers_consumed=no_bitmap_mode" if nbg1_mode == "bitmap"
+          else "NBG1_map_registers_consumed=character_mode")
     print("asset_consumer_identity=unbound")
     print("host_composition_admission=blocked")
     missing = sorted(set(args.require_layer) - set(layers))

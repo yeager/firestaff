@@ -83,8 +83,11 @@ title sequence and binds two source spans without unpacking the CUE corpus:
 - VDP2 reports `TVMD=0x8000`, `BGON=0x0003`, and `CHCTLA=0x0013`.
 
 None of the five raw MAPD planes occurs as an exact VDP2 VRAM span in that
-frame. The receipt therefore proves source upload and palette residence, not
-the tilemap transform, layer placement, timing, or final title composition.
+frame. NBG0 is an active 8-bit bitmap layer while NBG1 remains an active
+character layer, so the visible title cannot be reconstructed from
+`TITLE.CG`/MAPD alone. The receipt therefore proves source upload and palette
+residence, not the NBG0 bitmap source, NBG1 tilemap transform, layer
+placement, timing, or final title composition.
 
 ---
 
