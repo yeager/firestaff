@@ -102,6 +102,12 @@ an encoded, decompressed, transformed, or partial NBG0 source, but it rules
 out treating any other complete disc file as that bitmap without a producer
 trace.
 
+The retained VDP2 writer trace also separates initialization from the missing
+producer: the only writer spanning the NBG0-range start (`0x06041fc0`,
+`0x000000`–`0x0135cf`) emits `0x0000` for 79,303 of 79,312 writes; the three
+remaining writers emit only small fixed sets (`0`, `0x1000`, `0x3200`, or
+`0x0f00`). These are clear/setup observations, not title-bitmap ownership.
+
 A paired 40-frame JP capture makes the input boundary explicit: Start/A
 pulses at emulated frames 13000, 13010 and 13020 produce a valid input receipt
 but every captured VDP1 and VDP2 region is bit-identical to an otherwise
