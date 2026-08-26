@@ -39,7 +39,7 @@
 +  if(limit_text && *limit_text) limit = strtoul(limit_text, NULL, 10);
 +  configured = true;
 + }
-+ if(!path || !*path || count >= limit || which ||
++ if(!path || !*path || count >= limit ||
 +    (required_pc && pc != required_pc) ||
 +    (has_required_register && register_index != required_register))
 +  return;
@@ -49,8 +49,8 @@
 +  if(!file) return;
 +  fputs("FIRESTAFF_NEXUS_SH2_INSTRUCTION_BYTE_READ_TRACE_V1\n", file);
 + }
-+ fprintf(file, "addr=0x%08x value=0x%02x pc=0x%08x r=%u\n",
-+  (unsigned)address, (unsigned)value, (unsigned)pc, register_index);
++ fprintf(file, "cpu=%u addr=0x%08x value=0x%02x pc=0x%08x r=%u\n",
++  which, (unsigned)address, (unsigned)value, (unsigned)pc, register_index);
 + count++;
 + if((count & 0x3ffU) == 0) fflush(file);
 +}
