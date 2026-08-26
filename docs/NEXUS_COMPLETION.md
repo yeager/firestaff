@@ -15,6 +15,25 @@ the real CDDA consumer and the source-owned LEV01 level/x/y/facing witness
 remain unbound.  `LEV00` remains a title-only asset and the engine therefore
 fails closed before it can invent a start pose.
 
+## Local Japanese post-render title witness — 2026-08-26
+
+A separate, temporary developer capture used the hash-verified Japanese
+Saturn 1.01 BIOS and the same original nine-track Japanese CUE/BIN set.  The
+capture producer is outside Firestaff's runtime and the BIOS, raw capture and
+its build artifacts were not retained in the repository.  Its ten
+post-render frames pass the Firestaff raw-layout validator; frames 6--9 have
+the measured active title NBG0 state exactly:
+
+- NBG0 VRAM `0x00000`--`0x1ffff` SHA-256
+  `ad10d99f00c3eecdf9577b15af1a7b86870a4ba83299dc50a09881dc569ad5e8`;
+- little-endian VDP2 registers `TVMD=0x8000`, `BGON=0x0003`,
+  `CHCTLA=0x0013`, `BMPNA=0x0000`.
+
+This is a region-matched post-render observation and confirms the title-frame
+boundary used by the fail-closed NBG0 tools.  It does **not** by itself bind a
+CD member or SH-2 transform to that bitmap, identify the title/menu display
+consumer, or authorize a playable start.  Those gates remain closed.
+
 ## Current external-data verification — 2026-08-13
 
 ## Authentic archive-source verification — 2026-08-14
