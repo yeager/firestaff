@@ -44,7 +44,7 @@
 +{
 + return CPU[which & 1U].GetRegister(SH7095::GSREG_RPC, NULL, 0);
 +}
-@@ -554,0 +554,52 @@
+@@ -554,0 +554,62 @@
 +static uint32 FirestaffLastSH2ReadAddress;
 +static uint32 FirestaffLastSH2ReadValue;
 +static uint32 FirestaffLastSH2ReadLBA;

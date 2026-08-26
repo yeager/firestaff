@@ -1,29 +1,28 @@
 --- src/ss/ss.h
 +++ src/ss/ss.h
-@@ -132,6 +132,7 @@
+@@ -128,6 +128,7 @@
+  uint32 FirestaffGetSH2PC(unsigned which);
+ 
   void FirestaffTraceSH2SourceRead(uint32 address, uint32 value);
-  void FirestaffTraceSH2RAMWrite(uint32 address, unsigned size, uint32 value);
-  void FirestaffTraceSH2RAMDMAWrite(uint32 address, unsigned size, uint32 value,
-   uint32 source, unsigned read_bus);
 + void FirestaffTraceSH2RAMRead(uint32 address, unsigned size, uint32 value);
   void FirestaffTraceSH2RAMSourceWrite(uint32 address, unsigned size, uint32 value);
-  uint16 FirestaffPeekSH2Memory(unsigned which, uint32 address);
   enum
+  {
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
-@@ -382,6 +382,8 @@ static INLINE void BusRW_DB_CS3(const uint32 A, uint32& DB, const bool BurstHax
-  if(IsWrite)
-   FirestaffTraceSH2RAMWrite(A, sizeof(T), DB);
-  FirestaffTraceSlevSalCapture(A, DB);
-+ if(!IsWrite)
-+  FirestaffTraceSH2RAMRead(A, sizeof(T), DB >> (((A & 3) ^ (4 - sizeof(T))) << 3));
+@@ -379,6 +379,8 @@
+   ne16_wbo_be<T>(WorkRAMH, A & 0xFFFFF, DB >> (((A & 3) ^ (4 - sizeof(T))) << 3));
   if(IsWrite)
    FirestaffTraceSH2RAMSourceWrite(A, sizeof(T), DB >> (((A & 3) ^ (4 - sizeof(T))) << 3));
++ if(!IsWrite)
++  FirestaffTraceSH2RAMRead(A, sizeof(T), DB >> (((A & 3) ^ (4 - sizeof(T))) << 3));
  }
-@@ -805,4 +807,43 @@ void FirestaffTraceSH2SourceRead(uint32 address, uint32 value)
+ 
+ //
+@@ -579,6 +581,45 @@
   }
  }
-+
+ 
 +void FirestaffTraceSH2RAMRead(uint32 address, unsigned size, uint32 value)
 +{
 + static FILE *file;
@@ -65,3 +64,4 @@
 +
  void FirestaffTraceSH2RAMSourceWrite(uint32 address, unsigned size, uint32 value)
  {
+  static FILE *file;
