@@ -23,7 +23,8 @@ Reviewed 2026-08-25. Only open work is listed here.
   `ad10d99f00c3eecdf9577b15af1a7b86870a4ba83299dc50a09881dc569ad5e8`);
   retained traces after frames 11900 and 12501 have no writes in that range.
   The later VDP2 clear/copy transport and its `TITLE.BIN` CD→RAM input are now
-  verified (`0x060230ac`, `0x0602312c`, LBAs 6039–6055). The latter PC is now
+  verified (`0x060230ac`, `0x0602312c`, LBAs 6039–6055); the CDB FIFO words
+  for those LBAs also match raw Track 1 byte-for-byte. The latter PC is now
   byte-identical to retail `DM.BIN`, and its source/destination pointers prove
   a 104 × 304-byte route at a 512-byte VDP2 stride. The same-session VDP2
   trace now records all 31,616 destination byte values. The only remaining

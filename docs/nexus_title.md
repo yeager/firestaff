@@ -191,6 +191,9 @@ bounded SH-2 range `0x060ac2a7`–`0x060b3e26`, and the same retail session's
 CD-labelled RAM trace binds 7,904 four-byte writes in that range to
 `TITLE.BIN` LBAs 6039–6055 at PC `0x06090d04`. The companion verifier
 `scripts/verify_nexus_title_nbg0_ram_source.py` checks that exact receipt.
+The CDB FIFO witness goes one level earlier: all 17,408 16-bit words from
+those 17 LBAs match raw Track 1 byte-for-byte at their recorded sector-word
+offsets; `scripts/verify_nexus_title_cdb_fifo_words.py` checks that receipt.
 The remaining unbound fact is the routine's RAM-to-VDP2 transform semantics;
 the evidence must not be simplified to a direct `TITLE.BIN` bitmap upload.
 
