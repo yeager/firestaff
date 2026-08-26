@@ -488,6 +488,13 @@ int nexus_v1_vdp1_capture_composite_mode1_sequence(
         *out_receipt = receipt;
         return 0;
     }
+    if ((input->command_origin_x || input->command_origin_y ||
+         input->command_origin_verified) &&
+        (!input->command_origin_x || !input->command_origin_y ||
+         !input->command_origin_verified)) {
+        *out_receipt = receipt;
+        return 0;
+    }
     working = (Nexus_Framebuffer *)malloc(sizeof(*working));
     if (!working) {
         *out_receipt = receipt;
@@ -522,8 +529,13 @@ int nexus_v1_vdp1_capture_composite_mode1_sequence(
             *out_receipt = receipt;
             return 0;
         }
-        if (input->commands[i].screen_origin_x != input->display_origin_x ||
-            input->commands[i].screen_origin_y != input->display_origin_y) {
+        if ((input->command_origin_verified &&
+             (!input->command_origin_verified[i] ||
+              input->commands[i].screen_origin_x != input->command_origin_x[i] ||
+              input->commands[i].screen_origin_y != input->command_origin_y[i])) ||
+            (!input->command_origin_verified &&
+             (input->commands[i].screen_origin_x != input->display_origin_x ||
+              input->commands[i].screen_origin_y != input->display_origin_y))) {
             if (input->commands[i].capture_allow_zero_pixel_command) {
                 ++receipt.capture_gap_commands;
                 continue;
@@ -578,6 +590,9 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
     Nexus_V1_Vdp1CaptureSequenceInput replay_input;
     Nexus_V1_Vdp1CaptureCompositeInput commands[
         NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS];
+    int command_origin_x[NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS];
+    int command_origin_y[NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS];
+    uint8_t command_origin_verified[NEXUS_V1_VDP1_SEQUENCE_MAX_COMMANDS];
     int i;
 
     if (!out_receipt) return 0;
@@ -585,6 +600,9 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
     receipt.semantic_admission_blocked = 1;
     memset(&replay_input, 0, sizeof(replay_input));
     memset(commands, 0, sizeof(commands));
+    memset(command_origin_x, 0, sizeof(command_origin_x));
+    memset(command_origin_y, 0, sizeof(command_origin_y));
+    memset(command_origin_verified, 0, sizeof(command_origin_verified));
     if (!framebuffer || !input || !input->vdp1_vram ||
         input->vdp1_vram_size != (int)NEXUS_V1_VDP1_VRAM_BYTES ||
         !input->original_saturn_capture_verified || !input->resolve_material ||
@@ -691,6 +709,11 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
         }
         resolved->screen_origin_x = receipt.command_sequence.command_origin_x[i];
         resolved->screen_origin_y = receipt.command_sequence.command_origin_y[i];
+        command_origin_x[receipt.draw_commands_resolved - 1] =
+            receipt.command_sequence.command_origin_x[i];
+        command_origin_y[receipt.draw_commands_resolved - 1] =
+            receipt.command_sequence.command_origin_y[i];
+        command_origin_verified[receipt.draw_commands_resolved - 1] = 1U;
         resolved->system_clip_state_verified = input->system_clip_state_present;
         resolved->system_clip_x = input->system_clip_state_present
             ? (int)input->system_clip_x : 0;
@@ -729,6 +752,9 @@ int nexus_v1_vdp1_capture_replay_vram_sequence(
         receipt.command_sequence.display_origin_verified;
     replay_input.display_origin_x = receipt.command_sequence.display_origin_x;
     replay_input.display_origin_y = receipt.command_sequence.display_origin_y;
+    replay_input.command_origin_x = command_origin_x;
+    replay_input.command_origin_y = command_origin_y;
+    replay_input.command_origin_verified = command_origin_verified;
     replay_input.command_order_verified =
         receipt.command_sequence.command_order_verified;
     replay_input.end_record_verified =

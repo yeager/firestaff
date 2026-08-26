@@ -106,6 +106,12 @@ typedef struct {
     int display_origin_state_verified;
     int display_origin_x;
     int display_origin_y;
+    /* Optional live local-coordinate state for each replayed draw. All three
+     * arrays must be supplied together; otherwise the legacy single-origin
+     * receipt is required for every command. */
+    const int *command_origin_x;
+    const int *command_origin_y;
+    const uint8_t *command_origin_verified;
     int command_order_verified;
     int end_record_verified;
     int system_clip_x;

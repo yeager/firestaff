@@ -252,6 +252,9 @@ int main(void)
     Nexus_V1_Vdp1DirectColorCaptureReceipt direct_receipt;
     Nexus_V1_Vdp1CaptureSequenceInput sequence_input;
     Nexus_V1_Vdp1CaptureSequenceReceipt sequence_receipt;
+    int sequence_origin_x[1] = {160};
+    int sequence_origin_y[1] = {112};
+    uint8_t sequence_origin_verified[1] = {1U};
     Nexus_V1_Vdp1CaptureVramSequenceInput vram_sequence_input;
     Nexus_V1_Vdp1CaptureVramSequenceReceipt vram_sequence_receipt;
     SequenceMaterialFixture material_fixture;
@@ -451,6 +454,20 @@ int main(void)
         fprintf(stderr, "FAIL: VDP1 sequence accepted mismatched origin\n");
         return 1;
     }
+    /* A complete CMDLINK replay supplies the live local-coordinate state per
+     * draw. That state intentionally overrides the receipt's first origin. */
+    sequence_input.command_origin_x = sequence_origin_x;
+    sequence_input.command_origin_y = sequence_origin_y;
+    sequence_input.command_origin_verified = sequence_origin_verified;
+    if (!nexus_v1_vdp1_capture_composite_mode1_sequence(
+            &framebuffer, &sequence_input, &sequence_receipt) ||
+        !sequence_receipt.valid) {
+        fprintf(stderr, "FAIL: VDP1 sequence rejected verified live origin\n");
+        return 1;
+    }
+    sequence_input.command_origin_x = NULL;
+    sequence_input.command_origin_y = NULL;
+    sequence_input.command_origin_verified = NULL;
     sequence_input.display_origin_x = 160;
     sequence_input.end_record_verified = 0;
     if (nexus_v1_vdp1_capture_composite_mode1_sequence(
