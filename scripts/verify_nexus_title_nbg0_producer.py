@@ -30,14 +30,28 @@ def word_swap(data: bytes) -> bytes:
                     for offset in range(0, len(data), 2))
 
 
+def capture_frame(capture: Path, capture_frames: int,
+                  frame_index: int) -> dict[str, bytes]:
+    """Return an explicitly selected frame from a validated raw witness."""
+    if capture_frames <= 0 or frame_index < 0 or frame_index >= capture_frames:
+        raise ValueError("title frame index is outside the capture window")
+    for index, regions in iter_frame_regions_file(capture, capture_frames):
+        if index == frame_index:
+            return regions
+    raise ValueError("selected title frame is absent from capture")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path)
     parser.add_argument("writes", type=Path)
+    parser.add_argument("--capture-frames", type=int, default=1,
+                        help="validated frame count in CAPTURE (default: 1)")
+    parser.add_argument("--frame", type=int, default=0,
+                        help="zero-based title frame within CAPTURE (default: 0)")
     args = parser.parse_args()
     try:
-        frame = next(regions for _, regions in
-                     iter_frame_regions_file(args.capture, 1))
+        frame = capture_frame(args.capture, args.capture_frames, args.frame)
         registers = frame["vdp2-regs"]
         order = detect_byte_order(registers)
         if (read_u16(registers, 0x00, order) != 0x8000 or
@@ -66,6 +80,7 @@ def main() -> int:
         return 1
 
     print("title_nbg0_mode=verified")
+    print(f"title_nbg0_capture_frame={args.frame}")
     print("title_nbg0_vram_range=0x00000-0x1ffff")
     print(f"title_nbg0_sha256={TITLE_NBG0_SHA256}")
     print(f"title_nbg0_vdp2_writes={writes}")

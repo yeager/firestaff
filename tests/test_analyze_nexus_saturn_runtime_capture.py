@@ -16,6 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import analyze_nexus_saturn_runtime_capture as capture  # noqa: E402
+import verify_nexus_title_nbg0_producer as producer  # noqa: E402
 from validate_nexus_saturn_runtime_capture import (  # noqa: E402
     RUNTIME_MAGIC,
     VDP1_MAGIC_V2,
@@ -25,12 +26,16 @@ from validate_nexus_saturn_runtime_capture import (  # noqa: E402
 )
 
 
-def witness(selector: int, trailing: bytes = b"") -> bytes:
-    return (RUNTIME_MAGIC + b"frame=0\n" + VDP1_MAGIC_V2 +
+def frame(index: int, selector: int, trailing: bytes = b"") -> bytes:
+    return (f"frame={index}\n".encode("ascii") + VDP1_MAGIC_V2 +
             b"state=tvmr:00,fbcr:03,ptmr:02,edsr:03,lopr:0000,copr:000000,ret:ffffffff,fb:"
             + str(selector).encode("ascii") + b",sysclipx:013f,sysclipy:00df\n" +
             bytes(VDP1_PAYLOAD_BYTES) + trailing + VDP2_MAGIC +
             bytes(VDP2_PAYLOAD_BYTES))
+
+
+def witness(selector: int, trailing: bytes = b"") -> bytes:
+    return RUNTIME_MAGIC + frame(0, selector, trailing)
 
 
 def main() -> int:
@@ -50,6 +55,16 @@ def main() -> int:
     path.write_bytes(current)
     streamed = list(capture.iter_frame_regions_file(path, 1))
     assert streamed[0][1]["vdp1-fb-draw-which"] == b"\x00"
+
+    window = stage / "window.raw"
+    window.write_bytes(RUNTIME_MAGIC + frame(0, 0) + frame(1, 1))
+    assert producer.capture_frame(window, 2, 1)["vdp1-fb-draw-which"] == b"\x01"
+    try:
+        producer.capture_frame(window, 2, 2)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("out-of-window title frame must be rejected")
 
     early = witness(0, b"\x01")
     early_frames, _ = capture.frame_regions(early, 1)
