@@ -17,7 +17,7 @@ import struct
 from pathlib import Path
 
 from analyze_nexus_saturn_runtime_capture import iter_frame_regions_file
-from analyze_nexus_vdp1_command_window import command_window
+from analyze_nexus_vdp1_command_sequence import find_chain, parse_copr
 from fixtures.nexus_v1_disc_file_hashes import DISC_HASH
 
 
@@ -179,8 +179,13 @@ def main() -> int:
                 break
         if selected_frame is None:
             raise ValueError("selected frame is absent from capture")
-        commands = command_window(selected_frame["vdp1-vram"],
-                                  selected_frame["vdp1-state"])
+        commands = [
+            (record.offset, record.words)
+            for record in find_chain(
+                selected_frame["vdp1-vram"],
+                parse_copr(selected_frame["vdp1-state"]),
+            )
+        ]
         mns = mns_surfaces(args.data_dir)
         dgn = dgn_structure2_surfaces(args.data_dir)
     except (OSError, ValueError, struct.error) as error:

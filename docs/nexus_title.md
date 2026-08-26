@@ -164,13 +164,15 @@ producer: the only writer spanning the NBG0-range start (`0x06041fc0`,
 remaining writers emit only small fixed sets (`0`, `0x1000`, `0x3200`, or
 `0x0f00`). These are clear/setup observations, not title-bitmap ownership.
 
-The same witness has two bounded VDP1 type-0, 4bpp sprite texture windows at
-VDP1 VRAM `0x4fba0` (448 bytes) and `0x4c580` (1,952 bytes). Neither window
-is an exact or word-swapped span of the real `TITLE.BIN`, `TITLE.CG`,
-`LOGOBG.DG2`, `MENU.BPK`, `STABG.BIN`, `FONT256.S2D`, `TM.BIN` or `DM.BIN`
-members read in memory from the supplied CUE. They remain VDP1 observations,
-not a title-owner or fallback-art route; the larger 3D command chain still
-requires a material/producer receipt.
+The complete 190-record VDP1 chain contains 177 non-empty texture spans,
+including the bounded type-0 windows at VDP1 VRAM `0x4fba0` (448 bytes) and
+`0x4c580` (1,952 bytes). Every one is an exact span of the word-swapped real
+`LEV00.DGN` member read in memory from the supplied CUE; the JP member receipt
+is SHA-256 `24e3b3cdf2496b53f489df456d822ba85593a67325f90dd414c6af26bf683d9a`.
+The earlier title/menu/font/executable negative scan remains useful, but
+`LEV00.DGN` is now the VDP1 byte owner. This is still not native presentation
+permission: Structure2 material/CLUT semantics, transformed geometry, VDP1
+framebuffer composition, VDP2 priority and timing remain unbound.
 
 A paired 40-frame JP capture makes the input boundary explicit: Start/A
 pulses at emulated frames 13000, 13010 and 13020 produce a valid input receipt

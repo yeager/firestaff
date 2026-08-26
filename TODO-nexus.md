@@ -6,8 +6,10 @@ Reviewed 2026-08-25. Only open work is listed here.
   decoded source assets before admitting title/menu rendering. The full title
   `TITLE.CG` SH-2→VDP2 copy plan is now captured at PC `0x06041fa0`; a
   source-LBA-filtered receipt now reconstructs the complete real `TITLE.CG`
-  buffer at `0x0025daf0`. The terminal 32-byte CDB-register path and the
-  display-list consumer remain unbound. In
+  buffer at `0x0025daf0`. The terminal 32-byte CDB-register path remains
+  unbound. The title VDP1 chain now byte-binds all 177 texture spans to
+  `LEV00.DGN`, but its material/CLUT/geometry and final compositor semantics
+  remain unbound. In
   particular, the active NBG0
   bitmap is neither `TITLE.CG`/MAPD nor `LOGOBG.DG2`; a full-disc
   resident-member scan finds no other complete source file. Identify that
