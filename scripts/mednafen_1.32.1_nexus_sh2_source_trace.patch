@@ -4,15 +4,18 @@
 + uint32 FirestaffGetSH2PC(unsigned which);
 +
 + void FirestaffTraceSH2SourceRead(uint32 address, uint32 value);
-+ void FirestaffTraceSH2RAMSourceWrite(uint32 address, uint32 value);
++ void FirestaffTraceSH2RAMSourceWrite(uint32 address, unsigned size, uint32 value);
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
+@@ -224,0 +225,2 @@
++ if(IsWrite)
++  FirestaffTraceSH2RAMSourceWrite(A, sizeof(T), DB >> (((A & 1) ^ (2 - sizeof(T))) << 3));
 @@ -361,0 +362,2 @@
 + if(!IsWrite)
 +  FirestaffTraceSH2SourceRead(A, DB);
 @@ -375,0 +378,2 @@
 + if(IsWrite)
-+  FirestaffTraceSH2RAMSourceWrite(A, DB);
++  FirestaffTraceSH2RAMSourceWrite(A, sizeof(T), DB >> (((A & 3) ^ (4 - sizeof(T))) << 3));
 @@ -467,0 +471,5 @@
 +
 +uint32 FirestaffGetSH2PC(unsigned which)
@@ -34,7 +37,7 @@
 + }
 +}
 +
-+void FirestaffTraceSH2RAMSourceWrite(uint32 address, uint32 value)
++void FirestaffTraceSH2RAMSourceWrite(uint32 address, unsigned size, uint32 value)
 +{
 + static FILE *file;
 + static unsigned count;
@@ -53,7 +56,8 @@
 +  configured = true;
 + }
 + if(!path || !*path || !FirestaffLastSH2ReadValid ||
-+    address < 0x06000000 || address >= 0x08000000 ||
++    !((address >= 0x00200000 && address < 0x00300000) ||
++      (address >= 0x06000000 && address < 0x08000000)) ||
 +    (maximum > minimum && (address < minimum || address >= maximum)) ||
 +    count >= limit)
 +  return;
@@ -63,10 +67,10 @@
 + {
 +  file = fopen(path, "wb");
 +  if(!file) return;
-+  fputs("FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V1\n", file);
++  fputs("FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V2\n", file);
 + }
-+ fprintf(file, "addr=0x%08x value=0x%08x source=0x%08x source_value=0x%08x pc0=0x%08x pc1=0x%08x\n",
-+  (unsigned)address, (unsigned)value,
++ fprintf(file, "addr=0x%08x size=%u value=0x%08x source=0x%08x source_value=0x%08x pc0=0x%08x pc1=0x%08x\n",
++  (unsigned)address, size, (unsigned)value,
 +  (unsigned)FirestaffLastSH2ReadAddress, (unsigned)FirestaffLastSH2ReadValue,
 +  (unsigned)FirestaffGetSH2PC(0), (unsigned)FirestaffGetSH2PC(1));
 + count++;

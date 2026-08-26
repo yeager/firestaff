@@ -15,9 +15,12 @@ import re
 from pathlib import Path
 
 
-HEADER = "FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V1"
+HEADERS = {
+    "FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V1": False,
+    "FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V2": True,
+}
 LINE = re.compile(
-    r"addr=0x(?P<addr>[0-9a-fA-F]+) value=0x(?P<value>[0-9a-fA-F]+) "
+    r"addr=0x(?P<addr>[0-9a-fA-F]+)(?: size=(?P<size>[0-9]+))? value=0x(?P<value>[0-9a-fA-F]+) "
     r"source=0x(?P<source>[0-9a-fA-F]+) source_value=0x(?P<source_value>[0-9a-fA-F]+) "
     r"pc0=0x(?P<pc0>[0-9a-fA-F]+) pc1=0x(?P<pc1>[0-9a-fA-F]+)$"
 )
@@ -65,23 +68,29 @@ def read_iso_files(iso: Path) -> list[tuple[int, int, str]]:
         return files
 
 
-def read_rows(trace: Path) -> list[tuple[int, int, int, int, int, int]]:
+def read_rows(trace: Path) -> list[tuple[int, int, int, int, int, int, int]]:
     lines = trace.read_text(encoding="ascii").splitlines()
-    if not lines or lines[0] != HEADER:
+    if not lines or lines[0] not in HEADERS:
         raise ValueError("bad source-trace header")
+    width_required = HEADERS[lines[0]]
     rows = []
     for line_number, line in enumerate(lines[1:], 2):
         match = LINE.fullmatch(line)
         if not match:
             raise ValueError(f"malformed source-trace line {line_number}")
-        rows.append(tuple(int(match[name], 16) for name in
-                          ("addr", "value", "source", "source_value", "pc0", "pc1")))
+        size = int(match["size"], 10) if match["size"] else 4
+        if width_required and match["size"] is None:
+            raise ValueError(f"missing V2 write size at line {line_number}")
+        if size not in (1, 2, 4):
+            raise ValueError(f"invalid write size at line {line_number}")
+        rows.append((int(match["addr"], 16), size, *(int(match[name], 16) for name in
+                    ("value", "source", "source_value", "pc0", "pc1"))))
     return rows
 
 
-def chunks(rows: list[tuple[int, int, int, int, int, int]]) -> list[list[tuple[int, int, int, int, int, int]]]:
-    result: list[list[tuple[int, int, int, int, int, int]]] = []
-    current: list[tuple[int, int, int, int, int, int]] = []
+def chunks(rows: list[tuple[int, int, int, int, int, int, int]]) -> list[list[tuple[int, int, int, int, int, int, int]]]:
+    result: list[list[tuple[int, int, int, int, int, int, int]]] = []
+    current: list[tuple[int, int, int, int, int, int, int]] = []
     previous_end: int | None = None
     for row in rows:
         if previous_end is None or row[0] == previous_end:
@@ -89,7 +98,7 @@ def chunks(rows: list[tuple[int, int, int, int, int, int]]) -> list[list[tuple[i
         else:
             result.append(current)
             current = [row]
-        previous_end = row[0] + 4
+        previous_end = row[0] + row[1]
     if current:
         result.append(current)
     return result
@@ -122,9 +131,9 @@ def main() -> int:
     matched: collections.Counter[str] = collections.Counter()
     exact_matches = 0
     required_chunk_verified = args.require_destination_range is None
-    equal_values = sum(row[1] == row[3] for row in rows)
+    equal_values = sum(row[2] == row[4] for row in rows)
     for index, chunk in enumerate(chunks(rows)):
-        blob = b"".join(row[1].to_bytes(4, "big") for row in chunk)
+        blob = b"".join(row[2].to_bytes(row[1], "big") for row in chunk)
         # Zero-filled RAM and disc padding are not a source-owner witness.
         # They can produce arbitrarily long byte matches at the end of an ISO
         # image, so reject them before searching the retail image.
@@ -147,9 +156,9 @@ def main() -> int:
         if args.require_destination_range is not None:
             required_start, required_end = args.require_destination_range
             chunk_start = chunk[0][0]
-            chunk_end = chunk[-1][0] + 4
+            chunk_end = chunk[-1][0] + chunk[-1][1]
             pc_matches = args.require_pc is None or all(
-                row[4] == args.require_pc for row in chunk
+                row[5] == args.require_pc for row in chunk
             )
             required_names = {name.upper() for name in args.require_member}
             owner_matches = (not required_names or
@@ -161,7 +170,7 @@ def main() -> int:
         exact_matches += 1
         print(
             f"chunk={index} bytes={len(blob)} dest=0x{chunk[0][0]:08x} "
-            f"pc0=0x{chunk[0][4]:08x} member={owner} "
+            f"pc0=0x{chunk[0][5]:08x} member={owner} "
             f"iso_offset=0x{offset:x} member_offset=0x{relative:x}"
         )
 
