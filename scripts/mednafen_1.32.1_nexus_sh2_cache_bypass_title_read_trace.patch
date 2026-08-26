@@ -1,0 +1,5 @@
+--- src/ss/sh7095.inc
++++ src/ss/sh7095.inc
+@@ -2662,1 +2662,2 @@
+          retval = ne16_rbo_be<T>(SH7095_FastMap[A >> SH7095_EXT_MAP_GRAN_BITS], A);				\
++          if(!IsInstr && PC == 0x0602312c) FirestaffTraceSH2CachedRAMRead(which, A, sizeof(T), retval, PC);\

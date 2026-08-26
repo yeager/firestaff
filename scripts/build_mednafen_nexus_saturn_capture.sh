@@ -110,6 +110,15 @@ elif [[ "$(cat "$sh2_cached_ram_read_filter_marker" 2>/dev/null)" != "$sh2_cache
   echo "ERROR: external Mednafen source has an older or unknown SH-2 cached-RAM-read title-PC filter patch; use a fresh build directory" >&2
   exit 2
 fi
+sh2_cache_bypass_read_marker="$source_dir/.firestaff-nexus-sh2-cache-bypass-title-read-trace-patched"
+sh2_cache_bypass_read_patch_id='FIRESTAFF_NEXUS_SH2_CACHE_BYPASS_TITLE_READ_TRACE_V1'
+if [[ ! -f "$sh2_cache_bypass_read_marker" ]]; then
+  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_sh2_cache_bypass_title_read_trace.patch"
+  printf '%s\n' "$sh2_cache_bypass_read_patch_id" > "$sh2_cache_bypass_read_marker"
+elif [[ "$(cat "$sh2_cache_bypass_read_marker" 2>/dev/null)" != "$sh2_cache_bypass_read_patch_id" ]]; then
+  echo "ERROR: external Mednafen source has an older or unknown SH-2 cache-bypass title-read trace patch; use a fresh build directory" >&2
+  exit 2
+fi
 sh2_memory_peek_marker="$source_dir/.firestaff-nexus-sh2-memory-peek-support-patched"
 sh2_memory_peek_patch_id='FIRESTAFF_NEXUS_SH2_MEMORY_PEEK_SUPPORT_V1_COMPOSABLE'
 if [[ ! -f "$sh2_memory_peek_marker" ]]; then
