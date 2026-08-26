@@ -256,6 +256,15 @@ int main(void)
     Nexus_V1_Vdp1CaptureVramSequenceReceipt vram_sequence_receipt;
     SequenceMaterialFixture material_fixture;
     Nexus_Framebuffer before_rejected_vram_replay;
+    Nexus_Framebuffer quad_framebuffer;
+    Nexus_V1_Vdp1CaptureCompositeInput quad_input;
+    Nexus_V1_Vdp1CaptureCompositeReceipt quad_receipt;
+    uint8_t quad_command[NEXUS_V1_VDP1_COMMAND_BYTES] = {0};
+    uint8_t quad_texture[8] = {0x11U, 0x11U, 0x11U, 0x11U,
+                               0x34U, 0x56U, 0x78U, 0x9aU};
+    uint8_t quad_dgn_image[8];
+    uint8_t quad_palette[32];
+    uint8_t quad_dgn_palette[32];
     uint8_t *vdp1_vram;
     Nexus_Framebuffer before_failed_replay;
     int i;
@@ -507,6 +516,50 @@ int main(void)
         vram_sequence_receipt.unresolved_draw_commands != 1) {
         free(vdp1_vram);
         fprintf(stderr, "FAIL: unresolved VDP1 draw was admitted\n");
+        return 1;
+    }
+    /* The second A/C/D triangle must retain D=(0,1). A distinct texel at
+     * row 1, column 1 exposes the former D=(1,1) host-raster bug. */
+    for (i = 0; i < (int)sizeof(quad_texture); i += 2) {
+        quad_dgn_image[i] = quad_texture[i + 1];
+        quad_dgn_image[i + 1] = quad_texture[i];
+    }
+    for (i = 0; i < 16; ++i) {
+        wl16(quad_palette + i * 2, (unsigned int)(0x8000U + i));
+        quad_dgn_palette[i * 2] = quad_palette[i * 2 + 1];
+        quad_dgn_palette[i * 2 + 1] = quad_palette[i * 2];
+    }
+    wl16(quad_command + 0, 2U);
+    wl16(quad_command + 4, 1U << 3);
+    wl16(quad_command + 10, 0x0201U);
+    wl16(quad_command + 16, 8U);
+    wl16(quad_command + 20, 8U);
+    wl16(quad_command + 22, 8U);
+    wl16(quad_command + 26, 8U);
+    memset(&quad_input, 0, sizeof(quad_input));
+    quad_input.command = quad_command;
+    quad_input.command_size = sizeof(quad_command);
+    quad_input.texture_span = quad_texture;
+    quad_input.texture_span_size = sizeof(quad_texture);
+    quad_input.palette_state = quad_palette;
+    quad_input.palette_state_size = sizeof(quad_palette);
+    quad_input.dgn_image = quad_dgn_image;
+    quad_input.dgn_image_size = sizeof(quad_dgn_image);
+    quad_input.dgn_palette = quad_dgn_palette;
+    quad_input.dgn_palette_size = sizeof(quad_dgn_palette);
+    quad_input.dgn_source_hash_verified = 1;
+    quad_input.original_saturn_capture_verified = 1;
+    quad_input.screen_origin_x = 160;
+    quad_input.screen_origin_y = 112;
+    quad_input.palette_slot_base = 32;
+    nexus_fb_init(&quad_framebuffer);
+    nexus_fb_clear(&quad_framebuffer);
+    memset(&quad_receipt, 0, sizeof(quad_receipt));
+    if (!nexus_v1_vdp1_capture_composite_mode1(
+            &quad_framebuffer, &quad_input, &quad_receipt) ||
+        quad_framebuffer.color_buffer[117 * NEXUS_FB_W + 161] != 36U) {
+        free(vdp1_vram);
+        fprintf(stderr, "FAIL: VDP1 second-triangle quad UV mapping\n");
         return 1;
     }
     free(vdp1_vram);

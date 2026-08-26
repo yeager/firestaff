@@ -68,6 +68,19 @@ static float edge(float ax, float ay, float bx, float by,
     return (px - ax) * (by - ay) - (py - ay) * (bx - ax);
 }
 
+/* VDP1 textured quads map their four command vertices in the fixed order
+ * A=(0,0), B=(1,0), C=(1,1), D=(0,1).  Both triangles must retain that
+ * mapping: the second A/C/D triangle must not treat D as U=1. */
+static float quad_u(int vertex)
+{
+    return (vertex == 1 || vertex == 2) ? 1.0f : 0.0f;
+}
+
+static float quad_v(int vertex)
+{
+    return vertex >= 2 ? 1.0f : 0.0f;
+}
+
 static uint8_t expand5(uint16_t word, unsigned shift)
 {
     uint8_t value = (uint8_t)(((word >> shift) & 0x1fU) << 3U);
@@ -84,7 +97,7 @@ static uint32_t bgr555_to_rgba(uint16_t word)
 }
 
 static int direct_color_triangle(
-    Nexus_V1_Vdp1DirectColorFramebuffer *fb, const float xy[4][2],
+    Nexus_V1_Vdp1DirectColorFramebuffer *fb, float xy[4][2],
     int ia, int ib, int ic, const uint8_t *tex, int width, int height,
     int system_clip_state_verified, int system_clip_x, int system_clip_y,
     uint16_t draw_mode, int *written, int *transparent)
@@ -136,12 +149,8 @@ static int direct_color_triangle(
             if (w0 < 0.0f || w1 < 0.0f || w2 < 0.0f) continue;
             if (system_clip_state_verified &&
                 (x > system_clip_x || y > system_clip_y)) continue;
-            u = w0 * (ia == 0 ? 0.0f : 1.0f) +
-                w1 * (ib == 0 ? 0.0f : 1.0f) +
-                w2 * (ic == 0 ? 0.0f : 1.0f);
-            v = w0 * (ia == 0 || ia == 1 ? 0.0f : 1.0f) +
-                w1 * (ib == 0 || ib == 1 ? 0.0f : 1.0f) +
-                w2 * (ic == 0 || ic == 1 ? 0.0f : 1.0f);
+            u = w0 * quad_u(ia) + w1 * quad_u(ib) + w2 * quad_u(ic);
+            v = w0 * quad_v(ia) + w1 * quad_v(ib) + w2 * quad_v(ic);
             tx = (int)(u * (float)width);
             ty = (int)(v * (float)height);
             if (tx < 0) tx = 0;
@@ -249,7 +258,7 @@ int nexus_v1_vdp1_capture_decode_direct_color(
 }
 
 static int composite_triangle(Nexus_Framebuffer *fb,
-                              const float xy[4][2],
+                              float xy[4][2],
                               int ia, int ib, int ic,
                               const uint8_t *tex, int width, int height,
                               int palette_base,
@@ -306,12 +315,8 @@ static int composite_triangle(Nexus_Framebuffer *fb,
             if (w0 < 0.0f || w1 < 0.0f || w2 < 0.0f) continue;
             if (system_clip_state_verified &&
                 (x > system_clip_x || y > system_clip_y)) continue;
-            u = w0 * (ia == 0 ? 0.0f : ia == 1 ? 1.0f : 1.0f) +
-                w1 * (ib == 0 ? 0.0f : ib == 1 ? 1.0f : 1.0f) +
-                w2 * (ic == 0 ? 0.0f : ic == 1 ? 1.0f : 1.0f);
-            v = w0 * (ia == 0 || ia == 1 ? 0.0f : 1.0f) +
-                w1 * (ib == 0 || ib == 1 ? 0.0f : 1.0f) +
-                w2 * (ic == 0 || ic == 1 ? 0.0f : 1.0f);
+            u = w0 * quad_u(ia) + w1 * quad_u(ib) + w2 * quad_u(ic);
+            v = w0 * quad_v(ia) + w1 * quad_v(ib) + w2 * quad_v(ic);
             tx = (int)(u * (float)width);
             ty = (int)(v * (float)height);
             if (tx < 0) tx = 0;

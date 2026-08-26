@@ -196,6 +196,10 @@ signed fields rather than host `int16` values. This corrects the native command
 geometry for the authenticated title quads; it does not by itself admit their
 raster output as production presentation.
 
+The native capture rasterizer also now keeps the Saturn quad UV order
+`A=(0,0), B=(1,0), C=(1,1), D=(0,1)` across both triangles. In particular,
+the second `A/C/D` triangle no longer mirrors the D edge onto U=1.
+
 A paired 40-frame JP capture makes the input boundary explicit: Start/A
 pulses at emulated frames 13000, 13010 and 13020 produce a valid input receipt
 but every captured VDP1 and VDP2 region is bit-identical to an otherwise
