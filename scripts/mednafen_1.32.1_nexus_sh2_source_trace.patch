@@ -5,6 +5,28 @@
 +
 + void FirestaffTraceSH2SourceRead(uint32 address, uint32 value);
 + void FirestaffTraceSH2RAMSourceWrite(uint32 address, unsigned size, uint32 value);
+--- src/ss/cdb.h
++++ src/ss/cdb.h
+@@ -33,0 +34,1 @@
++uint32 FirestaffNexusCDBLastFIFOReadLBA(void);
+--- src/ss/cdb.cpp
++++ src/ss/cdb.cpp
+@@ -471,0 +472,1 @@
++static uint32 FirestaffLastFIFOReadLBA = 0xFFFFFFFF;
+@@ -1422,0 +1423,7 @@
++ if(DT.BufList[DT.CurBufIndex] < 0xF0)
++ {
++  const uint8* const data = Buffers[DT.BufList[DT.CurBufIndex]].Data;
++  FirestaffLastFIFOReadLBA = AMSF_to_ABA(BCD_to_U8(data[12]),
++   BCD_to_U8(data[13]), BCD_to_U8(data[14])) - 150;
++ }
++
+@@ -4175,0 +4184,5 @@
++uint32 FirestaffNexusCDBLastFIFOReadLBA(void)
++{
++ return FirestaffLastFIFOReadLBA;
++}
++
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
 @@ -224,0 +225,2 @@
@@ -25,6 +47,7 @@
 @@ -554,0 +554,52 @@
 +static uint32 FirestaffLastSH2ReadAddress;
 +static uint32 FirestaffLastSH2ReadValue;
++static uint32 FirestaffLastSH2ReadLBA;
 +static bool FirestaffLastSH2ReadValid;
 +
 +void FirestaffTraceSH2SourceRead(uint32 address, uint32 value)
@@ -33,6 +56,7 @@
 + {
 +  FirestaffLastSH2ReadAddress = address;
 +  FirestaffLastSH2ReadValue = value;
++  FirestaffLastSH2ReadLBA = FirestaffNexusCDBLastFIFOReadLBA();
 +  FirestaffLastSH2ReadValid = true;
 + }
 +}
@@ -45,20 +69,27 @@
 + static bool configured;
 + static uint32 minimum;
 + static uint32 maximum;
++ static uint32 source_lba_minimum;
++ static uint32 source_lba_maximum = 0xFFFFFFFF;
 + const char *path = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITES");
 + const char *limit_text;
 + if(!configured)
 + {
 +  const char *min_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_MIN");
 +  const char *max_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_MAX");
++  const char *source_lba_min_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_LBA_MIN");
++  const char *source_lba_max_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_LBA_MAX");
 +  minimum = min_text && *min_text ? strtoul(min_text, NULL, 0) : 0;
 +  maximum = max_text && *max_text ? strtoul(max_text, NULL, 0) : 0;
++  source_lba_minimum = source_lba_min_text && *source_lba_min_text ? strtoul(source_lba_min_text, NULL, 0) : 0;
++  source_lba_maximum = source_lba_max_text && *source_lba_max_text ? strtoul(source_lba_max_text, NULL, 0) : 0xFFFFFFFF;
 +  configured = true;
 + }
 + if(!path || !*path || !FirestaffLastSH2ReadValid ||
 +    !((address >= 0x00200000 && address < 0x00300000) ||
 +      (address >= 0x06000000 && address < 0x08000000)) ||
 +    (maximum > minimum && (address < minimum || address >= maximum)) ||
++    FirestaffLastSH2ReadLBA < source_lba_minimum || FirestaffLastSH2ReadLBA >= source_lba_maximum ||
 +    count >= limit)
 +  return;
 + limit_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_LIMIT");
@@ -67,11 +98,11 @@
 + {
 +  file = fopen(path, "wb");
 +  if(!file) return;
-+  fputs("FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V2\n", file);
++  fputs("FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V3\n", file);
 + }
-+ fprintf(file, "addr=0x%08x size=%u value=0x%08x source=0x%08x source_value=0x%08x pc0=0x%08x pc1=0x%08x\n",
++ fprintf(file, "addr=0x%08x size=%u value=0x%08x source=0x%08x source_value=0x%08x source_lba=0x%08x pc0=0x%08x pc1=0x%08x\n",
 +  (unsigned)address, size, (unsigned)value,
-+  (unsigned)FirestaffLastSH2ReadAddress, (unsigned)FirestaffLastSH2ReadValue,
++  (unsigned)FirestaffLastSH2ReadAddress, (unsigned)FirestaffLastSH2ReadValue, (unsigned)FirestaffLastSH2ReadLBA,
 +  (unsigned)FirestaffGetSH2PC(0), (unsigned)FirestaffGetSH2PC(1));
 + count++;
 + if((count & 0x3ffU) == 0) fflush(file);

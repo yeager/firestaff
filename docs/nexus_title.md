@@ -137,6 +137,19 @@ title members to the same retail title session, but the CDB trace has no
 per-write time or destination field: it does **not** yet prove the missing
 CD-RAM-to-`0x0025daf0` edge or promote `LOGOBG.DG2` to a display source.
 
+A subsequent source-LBA-filtered low-RAM receipt completes the title-member
+copy boundary. It writes every address from `0x0025daf0` through `0x00286b0f`
+exactly once; reconstructing those writes gives SHA-256
+`fda4da4ca1f344c93a4ae8455dcd7d92bcae0510784e5e4fa40e2ffc9e4fb580`, the
+real `TITLE.CG` member hash. All 83 observed source LBAs are `6090`–`6172`,
+the complete `TITLE.CG` extent. Retail PC `0x06090d04` performs 83,968
+two-byte FIFO-to-low-RAM writes (167,936 bytes); the final 32 matching bytes
+are written through a different CDB register path and retain the current
+title-sector LBA but are not treated as a direct FIFO-read identity. This
+proves the full low-RAM title buffer contents and the primary CDB transform,
+while deliberately leaving that 32-byte terminal producer and all display
+consumer semantics outside the native presentation gate.
+
 The same frame now excludes one tempting but incorrect consumer inference.
 NBG1 is a two-word, 8×8 character layer with its visible name-table cells at
 `0x5c000`–`0x5db9c`; every visible cell resolves to character data at

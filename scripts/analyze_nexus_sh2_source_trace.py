@@ -18,10 +18,12 @@ from pathlib import Path
 HEADERS = {
     "FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V1": False,
     "FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V2": True,
+    "FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V3": True,
 }
 LINE = re.compile(
     r"addr=0x(?P<addr>[0-9a-fA-F]+)(?: size=(?P<size>[0-9]+))? value=0x(?P<value>[0-9a-fA-F]+) "
-    r"source=0x(?P<source>[0-9a-fA-F]+) source_value=0x(?P<source_value>[0-9a-fA-F]+) "
+    r"source=0x(?P<source>[0-9a-fA-F]+) source_value=0x(?P<source_value>[0-9a-fA-F]+)"
+    r"(?: source_lba=0x(?P<source_lba>[0-9a-fA-F]+))? "
     r"pc0=0x(?P<pc0>[0-9a-fA-F]+) pc1=0x(?P<pc1>[0-9a-fA-F]+)$"
 )
 SECTOR_SIZE = 2048
@@ -68,7 +70,7 @@ def read_iso_files(iso: Path) -> list[tuple[int, int, str]]:
         return files
 
 
-def read_rows(trace: Path) -> list[tuple[int, int, int, int, int, int, int]]:
+def read_rows(trace: Path) -> list[tuple[int, int, int, int, int, int, int, int]]:
     lines = trace.read_text(encoding="ascii").splitlines()
     if not lines or lines[0] not in HEADERS:
         raise ValueError("bad source-trace header")
@@ -83,14 +85,16 @@ def read_rows(trace: Path) -> list[tuple[int, int, int, int, int, int, int]]:
             raise ValueError(f"missing V2 write size at line {line_number}")
         if size not in (1, 2, 4):
             raise ValueError(f"invalid write size at line {line_number}")
+        source_lba = int(match["source_lba"], 16) if match["source_lba"] else -1
         rows.append((int(match["addr"], 16), size, *(int(match[name], 16) for name in
-                    ("value", "source", "source_value", "pc0", "pc1"))))
+                    ("value", "source", "source_value")), source_lba,
+                    *(int(match[name], 16) for name in ("pc0", "pc1"))))
     return rows
 
 
-def chunks(rows: list[tuple[int, int, int, int, int, int, int]]) -> list[list[tuple[int, int, int, int, int, int, int]]]:
-    result: list[list[tuple[int, int, int, int, int, int, int]]] = []
-    current: list[tuple[int, int, int, int, int, int, int]] = []
+def chunks(rows: list[tuple[int, int, int, int, int, int, int, int]]) -> list[list[tuple[int, int, int, int, int, int, int, int]]]:
+    result: list[list[tuple[int, int, int, int, int, int, int, int]]] = []
+    current: list[tuple[int, int, int, int, int, int, int, int]] = []
     previous_end: int | None = None
     for row in rows:
         if previous_end is None or row[0] == previous_end:
@@ -158,7 +162,7 @@ def main() -> int:
             chunk_start = chunk[0][0]
             chunk_end = chunk[-1][0] + chunk[-1][1]
             pc_matches = args.require_pc is None or all(
-                row[5] == args.require_pc for row in chunk
+                row[6] == args.require_pc for row in chunk
             )
             required_names = {name.upper() for name in args.require_member}
             owner_matches = (not required_names or
@@ -170,7 +174,7 @@ def main() -> int:
         exact_matches += 1
         print(
             f"chunk={index} bytes={len(blob)} dest=0x{chunk[0][0]:08x} "
-            f"pc0=0x{chunk[0][5]:08x} member={owner} "
+            f"pc0=0x{chunk[0][6]:08x} member={owner} "
             f"iso_offset=0x{offset:x} member_offset=0x{relative:x}"
         )
 
