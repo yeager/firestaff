@@ -137,6 +137,15 @@ elif [[ "$(cat "$vdp2_trace_marker" 2>/dev/null)" != "$vdp2_trace_patch_id" ]]; 
   echo "ERROR: external Mednafen source has an older or unknown VDP2-write trace patch; use a fresh build directory" >&2
   exit 2
 fi
+render_frame_marker="$source_dir/.firestaff-nexus-render-frame-trace-patched"
+render_frame_patch_id='FIRESTAFF_NEXUS_RENDER_FRAME_TRACE_V1_PPM'
+if [[ ! -f "$render_frame_marker" ]]; then
+  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_render_frame_trace.patch"
+  printf '%s\n' "$render_frame_patch_id" > "$render_frame_marker"
+elif [[ "$(cat "$render_frame_marker" 2>/dev/null)" != "$render_frame_patch_id" ]]; then
+  echo "ERROR: external Mednafen source has an older or unknown render-frame trace patch; use a fresh build directory" >&2
+  exit 2
+fi
 vdp1_trace_marker="$source_dir/.firestaff-nexus-vdp1-write-trace-patched"
 vdp1_trace_patch_id='FIRESTAFF_NEXUS_VDP1_WRITE_TRACE_V6_REGISTER_SOURCE_WITNESS'
 if [[ ! -f "$vdp1_trace_marker" ]]; then
@@ -197,5 +206,7 @@ strings "$capture_bin" | grep -F \
   'FIRESTAFF_NEXUS_TRACE_SESSION' >/dev/null
 strings "$capture_bin" | grep -F \
   'FIRESTAFF_NEXUS_TRACE_PRESS_SEQUENCE' >/dev/null
+strings "$capture_bin" | grep -F \
+  'FIRESTAFF_NEXUS_TRACE_RENDER_FRAMES' >/dev/null
 printf 'instrumented_mednafen=%s\n' "$capture_bin"
 printf 'source_patch=%s\n' "$repo_root/scripts/mednafen_1.32.1_nexus_saturn_capture.patch"

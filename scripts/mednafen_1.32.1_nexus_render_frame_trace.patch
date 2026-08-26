@@ -1,0 +1,69 @@
+--- src/ss/vdp2_render.cpp
++++ src/ss/vdp2_render.cpp
+@@ -32,6 +32,8 @@
+ #include "vdp2_render.h"
+ 
+ #include <atomic>
++#include <cstdio>
++#include <cstdlib>
+ 
+ namespace MDFN_IEN_SS
+ {
+@@ -39,6 +41,48 @@
+ //uint8 vdp2rend_prepad_bss
+ 
+ static EmulateSpecStruct* espec = NULL;
++static unsigned FirestaffRenderedFrame;
++
++static bool FirestaffRenderFrameRequested(unsigned frame)
++{
++ const char* text = getenv("FIRESTAFF_NEXUS_TRACE_RENDER_FRAMES");
++ const char* cursor = text;
++ if(!cursor || !*cursor) return false;
++ while(*cursor)
++ {
++  char* end;
++  unsigned long candidate;
++  while(*cursor == ',' || *cursor == ' ' || *cursor == '\t') cursor++;
++  if(!*cursor) break;
++  candidate = strtoul(cursor, &end, 10);
++  if(end == cursor) { while(*cursor && *cursor != ',') cursor++; continue; }
++  if(candidate == frame) return true;
++  cursor = end;
++  while(*cursor && *cursor != ',') cursor++;
++ }
++ return false;
++}
++
++static void FirestaffTraceRenderedFrame(void)
++{
++ const char* directory = getenv("FIRESTAFF_NEXUS_TRACE_RENDER_DIR");
++ char path[4096];
++ FILE* file;
++ if(!directory || !*directory || !espec || !FirestaffRenderFrameRequested(FirestaffRenderedFrame)) return;
++ if(snprintf(path, sizeof(path), "%s/frame-%06u.ppm", directory, FirestaffRenderedFrame) >= (int)sizeof(path)) return;
++ file = fopen(path, "wb");
++ if(!file) return;
++ fprintf(file, "P6\n%d %d\n255\n", espec->surface->w, espec->surface->h);
++ for(int y = 0; y < espec->surface->h; y++)
++  for(int x = 0; x < espec->surface->w; x++)
++  {
++   int r, g, b;
++   const uint32 pixel = espec->surface->pixels[y * espec->surface->pitchinpix + x];
++   espec->surface->DecodeColor(pixel, r, g, b);
++   fputc(r, file); fputc(g, file); fputc(b, file);
++  }
++ fclose(file);
++}
+ static bool PAL;
+ static bool CorrectAspect;
+ static bool ShowHOverscan;
+@@ -3449,6 +3493,8 @@
+   } while(++NextOutLine < VisibleLines);
+  }
+ 
++ FirestaffTraceRenderedFrame();
++ FirestaffRenderedFrame++;
+  espec = NULL;
+ }
+ 
