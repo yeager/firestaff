@@ -176,9 +176,10 @@ has a different frame bitmap hash and is expressly not promoted to title
 ownership. The required next witness is a range-filtered trace of the later
 title NBG0 update plus same-frame SH-2 RAM and CD source provenance.
 
-The later bounded JP witness now establishes the actual VDP2 transport. From
-frames 12595–12596, PC `0x060230ac` performs 36,000 NBG0 clear writes and PC
-`0x0602312c` performs 31,616 byte-lane writes. Replaying all 67,616 writes
+The later bounded JP witness now establishes the actual VDP2 transport. In
+the frame-12596 producer window, PC `0x060230ac` performs 32,850 NBG0 clear
+writes and PC `0x0602312c` performs 31,616 byte-lane writes. Replaying all
+64,466 writes
 under the documented VDP2 byte-lane rule and converting bus order to the raw
 capture's word order reproduces every byte of the measured NBG0 span and its
 SHA-256 exactly. `scripts/verify_nexus_title_nbg0_producer.py` reproduces

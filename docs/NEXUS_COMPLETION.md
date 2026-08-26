@@ -30,9 +30,13 @@ the measured active title NBG0 state exactly:
   `CHCTLA=0x0013`, `BMPNA=0x0000`.
 
 This is a region-matched post-render observation and confirms the title-frame
-boundary used by the fail-closed NBG0 tools.  It does **not** by itself bind a
-CD member or SH-2 transform to that bitmap, identify the title/menu display
-consumer, or authorize a playable start.  Those gates remain closed.
+boundary used by the fail-closed NBG0 tools.  The same capture session's
+frame-12596 VDP2 trace contains exactly 32,850 clear writes at `0x060230ac`
+and 31,616 byte-lane copy writes at `0x0602312c`; replaying all 64,466 writes
+reconstructs the frame-6 NBG0 bytes and hash exactly.  It does **not** by
+itself bind a CD member or SH-2 transform to that bitmap, identify the
+title/menu display consumer, or authorize a playable start.  Those gates
+remain closed.
 
 ## Current external-data verification — 2026-08-13
 

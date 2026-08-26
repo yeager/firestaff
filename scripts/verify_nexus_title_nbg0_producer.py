@@ -21,6 +21,9 @@ NBG0_BYTES = 0x20000
 TITLE_NBG0_SHA256 = "ad10d99f00c3eecdf9577b15af1a7b86870a4ba83299dc50a09881dc569ad5e8"
 CLEAR_PC = 0x060230AC
 COPY_PC = 0x0602312C
+CLEAR_WRITES = 32850
+COPY_WRITES = 31616
+TOTAL_WRITES = CLEAR_WRITES + COPY_WRITES
 
 
 def word_swap(data: bytes) -> bytes:
@@ -68,8 +71,18 @@ def main() -> int:
         if pcs != {CLEAR_PC, COPY_PC}:
             raise ValueError("NBG0 trace PC set is not the bounded clear/copy pair")
         image, writes = replay_vram_bus_writes(args.writes)
-        if writes != 67616:
-            raise ValueError(f"expected 67616 VDP2 writes, got {writes}")
+        clear_writes = sum(1 for area, address, _size, _value, pc0, _pc1 in records
+                           if area == "vram" and address < NBG0_BYTES and
+                           pc0 == CLEAR_PC)
+        copy_writes = sum(1 for area, address, _size, _value, pc0, _pc1 in records
+                          if area == "vram" and address < NBG0_BYTES and
+                          pc0 == COPY_PC)
+        if clear_writes != CLEAR_WRITES or copy_writes != COPY_WRITES:
+            raise ValueError(
+                f"expected {CLEAR_WRITES} clear and {COPY_WRITES} copy writes, got "
+                f"{clear_writes} and {copy_writes}")
+        if writes != TOTAL_WRITES:
+            raise ValueError(f"expected {TOTAL_WRITES} VDP2 writes, got {writes}")
         # The raw runtime dump is host word-swapped relative to VDP2 bus
         # order. Never compare it directly and silently lose byte lanes.
         reconstructed = word_swap(image[:NBG0_BYTES])
@@ -84,6 +97,8 @@ def main() -> int:
     print("title_nbg0_vram_range=0x00000-0x1ffff")
     print(f"title_nbg0_sha256={TITLE_NBG0_SHA256}")
     print(f"title_nbg0_vdp2_writes={writes}")
+    print(f"title_nbg0_clear_writes={CLEAR_WRITES}")
+    print(f"title_nbg0_copy_writes={COPY_WRITES}")
     print(f"title_nbg0_clear_pc=0x{CLEAR_PC:08x}")
     print(f"title_nbg0_copy_pc=0x{COPY_PC:08x}")
     print("title_nbg0_vdp2_transport=verified")
