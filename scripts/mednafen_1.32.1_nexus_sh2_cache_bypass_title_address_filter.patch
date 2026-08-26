@@ -1,0 +1,5 @@
+--- src/ss/sh7095.inc
++++ src/ss/sh7095.inc
+@@ -2665,1 +2665,1 @@
+-          if(!IsInstr && PC == 0x0602312c) FirestaffTraceSH2CachedRAMRead(which, A, sizeof(T), retval, PC);\
++          if(!IsInstr && A >= 0x060ac2a6 && A < 0x060b3e27) FirestaffTraceSH2CachedRAMRead(which, A, sizeof(T), retval, PC);\
