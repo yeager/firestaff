@@ -11,7 +11,7 @@
   enum
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
-@@ -880,6 +880,38 @@
+@@ -880,6 +880,46 @@
   if((count & 0x3ffU) == 0) fflush(file);
  }
  
@@ -23,17 +23,25 @@
 + static unsigned limit = 100000;
 + static bool configured;
 + static uint32 required_pc;
++ static bool has_required_register;
++ static unsigned required_register;
 + const char *path = getenv("FIRESTAFF_NEXUS_TRACE_SH2_INSTRUCTION_BYTE_READS");
 + if(!configured)
 + {
 +  const char *pc_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_PC");
++  const char *register_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_BYTE_READ_REGISTER");
 +  const char *limit_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_LIMIT");
 +  required_pc = pc_text && *pc_text ? strtoul(pc_text, NULL, 0) : 0;
++  if(register_text && *register_text) {
++   required_register = strtoul(register_text, NULL, 0);
++   has_required_register = true;
++  }
 +  if(limit_text && *limit_text) limit = strtoul(limit_text, NULL, 10);
 +  configured = true;
 + }
 + if(!path || !*path || count >= limit || which ||
-+    (required_pc && pc != required_pc))
++    (required_pc && pc != required_pc) ||
++    (has_required_register && register_index != required_register))
 +  return;
 + if(!file)
 + {
