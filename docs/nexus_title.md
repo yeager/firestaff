@@ -164,6 +164,14 @@ producer: the only writer spanning the NBG0-range start (`0x06041fc0`,
 remaining writers emit only small fixed sets (`0`, `0x1000`, `0x3200`, or
 `0x0f00`). These are clear/setup observations, not title-bitmap ownership.
 
+The same witness has two bounded VDP1 type-0, 4bpp sprite texture windows at
+VDP1 VRAM `0x4fba0` (448 bytes) and `0x4c580` (1,952 bytes). Neither window
+is an exact or word-swapped span of the real `TITLE.BIN`, `TITLE.CG`,
+`LOGOBG.DG2`, `MENU.BPK`, `STABG.BIN`, `FONT256.S2D`, `TM.BIN` or `DM.BIN`
+members read in memory from the supplied CUE. They remain VDP1 observations,
+not a title-owner or fallback-art route; the larger 3D command chain still
+requires a material/producer receipt.
+
 A paired 40-frame JP capture makes the input boundary explicit: Start/A
 pulses at emulated frames 13000, 13010 and 13020 produce a valid input receipt
 but every captured VDP1 and VDP2 region is bit-identical to an otherwise
