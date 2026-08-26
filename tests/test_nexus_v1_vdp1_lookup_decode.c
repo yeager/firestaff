@@ -64,6 +64,22 @@ int main(void) {
                decoded, 8U, expected, 8U),
            "high then low texture nibbles select exact VDP1 lookup words");
 
+    /* CMDX/CMDY are signed 13-bit fields, not signed 16-bit host words.
+     * The high three bits are ignored by the VDP1 coordinate decoder. */
+    wl16(command + 12, 0xf000U | 0x1f82U);
+    wl16(command + 14, 0xe000U | 0x0070U);
+    wl16(command + 16, 0xffffU);
+    wl16(command + 18, 0x1000U);
+    {
+        Nexus_V1_Vdp1TextureCommand parsed;
+        memset(&parsed, 0, sizeof(parsed));
+        expect(nexus_v1_vdp1_texture_command_parse(
+                   command, sizeof(command), &parsed) == 0 &&
+               parsed.xa == -126 && parsed.ya == 112 &&
+               parsed.xb == -1 && parsed.yb == -4096,
+               "VDP1 command coordinates use signed 13-bit fields");
+    }
+
     /* The live Nexus command uses COLR=0x3278. Mednafen reports the LUT in
      * VDP1 words at 0xc9e0; this byte-buffer API must therefore inspect
      * 0x193c0, not 0xc9e0. */

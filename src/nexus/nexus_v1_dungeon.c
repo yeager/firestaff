@@ -16,6 +16,11 @@ static uint32_t rb32(const uint8_t *p) {
 }
 static uint16_t rb16(const uint8_t *p) { return ((uint16_t)p[0]<<8)|p[1]; }
 static uint16_t rl16(const uint8_t *p) { return (uint16_t)p[0]|((uint16_t)p[1]<<8); }
+static int signed_13(uint16_t value)
+{
+    value &= 0x1fffU;
+    return (value & 0x1000U) != 0U ? (int)value - 0x2000 : (int)value;
+}
 
 static uint32_t nexus_v1_fnv1a32(const uint8_t *data, int size)
 {
@@ -6948,14 +6953,18 @@ int nexus_v1_vdp1_texture_command_parse(
     parsed.colour_control = rl16(command + 6);
     parsed.texture_source_word = rl16(command + 8);
     parsed.link_byte_offset = (uint32_t)parsed.link_word * 8U;
-    parsed.xa = (int16_t)rl16(command + 12);
-    parsed.ya = (int16_t)rl16(command + 14);
-    parsed.xb = (int16_t)rl16(command + 16);
-    parsed.yb = (int16_t)rl16(command + 18);
-    parsed.xc = (int16_t)rl16(command + 20);
-    parsed.yc = (int16_t)rl16(command + 22);
-    parsed.xd = (int16_t)rl16(command + 24);
-    parsed.yd = (int16_t)rl16(command + 26);
+    /* Saturn VDP1 CMDX/CMDY coordinates are signed 13-bit values.  The
+     * high three bits of each command word are not part of the position;
+     * treating the raw word as int16 moves real title quads thousands of
+     * pixels off-screen whenever bit 12 is set. */
+    parsed.xa = signed_13(rl16(command + 12));
+    parsed.ya = signed_13(rl16(command + 14));
+    parsed.xb = signed_13(rl16(command + 16));
+    parsed.yb = signed_13(rl16(command + 18));
+    parsed.xc = signed_13(rl16(command + 20));
+    parsed.yc = signed_13(rl16(command + 22));
+    parsed.xd = signed_13(rl16(command + 24));
+    parsed.yd = signed_13(rl16(command + 26));
     parsed.gouraud_table_word = rl16(command + 28);
     parsed.command_type = (uint8_t)(parsed.control & 0x000fU);
     parsed.colour_mode = (uint8_t)((parsed.draw_mode >> 3) & 0x0007U);

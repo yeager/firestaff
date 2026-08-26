@@ -191,6 +191,11 @@ the 13-bit signed command vertices yields bounds `(-357,-130)` through
 but not the VDP1 raster rules, draw-buffer result, VDP2 sprite priority or
 display timing required for native composition.
 
+Firestaff's VDP1 command parser now decodes `CMDX/CMDY` as those 13-bit
+signed fields rather than host `int16` values. This corrects the native command
+geometry for the authenticated title quads; it does not by itself admit their
+raster output as production presentation.
+
 A paired 40-frame JP capture makes the input boundary explicit: Start/A
 pulses at emulated frames 13000, 13010 and 13020 produce a valid input receipt
 but every captured VDP1 and VDP2 region is bit-identical to an otherwise
