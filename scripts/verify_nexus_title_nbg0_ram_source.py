@@ -11,10 +11,12 @@ import argparse
 import re
 from pathlib import Path
 
-HEADER = "FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V3"
+HEADERS = {"FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V3",
+           "FIRESTAFF_NEXUS_SH2_RAM_SOURCE_TRACE_V4"}
 LINE = re.compile(r"^addr=0x([0-9a-fA-F]+) size=([0-9]+) value=0x([0-9a-fA-F]+) "
                   r"source=0x([0-9a-fA-F]+) source_value=0x([0-9a-fA-F]+) "
-                  r"source_lba=0x([0-9a-fA-F]+) pc0=0x([0-9a-fA-F]+) ")
+                  r"source_lba=0x([0-9a-fA-F]+)(?: source_word=0x[0-9a-fA-F]+)? "
+                  r"pc0=0x([0-9a-fA-F]+) ")
 RAM_START, RAM_END = 0x060AC2A7, 0x060B3E27
 TITLE_BIN_LBA_START, TITLE_BIN_LBA_END = 6035, 6089
 
@@ -24,7 +26,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         lines = args.trace.read_text(encoding="ascii").splitlines()
-        if not lines or lines[0] != HEADER:
+        if not lines or lines[0] not in HEADERS:
             raise ValueError("bad source-write trace header")
         title_rows = []
         for number, line in enumerate(lines[1:], 2):
