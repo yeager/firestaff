@@ -4,8 +4,10 @@ set -euo pipefail
 repo_root=$(cd "$(dirname "$0")/.." && pwd)
 launcher="$repo_root/probes/nexus/firestaff_nexus_v1_saturn_raw_capture_launcher.sh"
 validator="$repo_root/scripts/validate_nexus_saturn_runtime_capture.py"
-tmp_dir=$(mktemp -d)
-trap 'rm -rf "$tmp_dir"' EXIT
+stage_root="${FIRESTAFF_TEST_STAGE_ROOT:-$repo_root/.build-tmp/test-stage}"
+mkdir -p "$stage_root"
+tmp_dir=$(mktemp -d "$stage_root/nexus-saturn-capture.XXXXXX")
+trap 'find "$tmp_dir" -depth -delete' EXIT
 
 dd if=/dev/zero of="$tmp_dir/bios.bin" bs=1 count=32 2>/dev/null
 dd if=/dev/zero of="$tmp_dir/disc.cue" bs=1 count=32 2>/dev/null
@@ -242,6 +244,37 @@ grep -Fq "FIRESTAFF_NEXUS_TRACE_SH2_RAM_READS_sha256=$(shasum -a 256 "$sh2_ram_r
   "$tmp_dir/manifest-sh2-memory.txt"
 grep -Fq "FIRESTAFF_NEXUS_TRACE_SH2_RAM_WRITES_sha256=$(shasum -a 256 "$sh2_ram_writes" | awk '{print $1}')" \
   "$tmp_dir/manifest-sh2-memory.txt"
+instruction_byte_fake="$tmp_dir/fake-mednafen-instruction-byte"
+python3 - "$instruction_byte_fake" <<'PY'
+import os
+import sys
+from pathlib import Path
+
+Path(sys.argv[1]).write_text(
+    "#!/bin/sh\n# FIRESTAFF_NEXUS_TRACE_OUTPUT\n"
+    "printf '%s,%s,%s' "
+    "\"$FIRESTAFF_NEXUS_TRACE_SH2_INSTRUCTION_BYTE_READS\" "
+    "\"$FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_PC\" "
+    "\"$FIRESTAFF_NEXUS_TRACE_SH2_BYTE_READ_REGISTER\" > "
+    "\"$FIRESTAFF_NEXUS_TRACE_OUTPUT\"\n"
+    "printf 'instruction-byte-read' > \"$FIRESTAFF_NEXUS_TRACE_SH2_INSTRUCTION_BYTE_READS\"\n",
+    encoding="utf-8",
+)
+os.chmod(sys.argv[1], 0o755)
+PY
+instruction_byte_trace="$tmp_dir/sh2-instruction-byte.trace"
+FIRESTAFF_NEXUS_TRACE_SH2_INSTRUCTION_BYTE_READS="$instruction_byte_trace" \
+FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_PC=0x0602312c \
+FIRESTAFF_NEXUS_TRACE_SH2_BYTE_READ_REGISTER=2 \
+"$launcher" --operator-only --launch --mednafen "$instruction_byte_fake" \
+  --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
+  --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
+  --trace "$tmp_dir/trace-instruction-byte.raw" --validator /usr/bin/true \
+  --manifest "$tmp_dir/manifest-instruction-byte.txt" >/dev/null
+grep -Fq "$instruction_byte_trace,0x0602312c,2" \
+  "$tmp_dir/trace-instruction-byte.raw"
+grep -Fq "FIRESTAFF_NEXUS_TRACE_SH2_INSTRUCTION_BYTE_READS_sha256=$(shasum -a 256 "$instruction_byte_trace" | awk '{print $1}')" \
+  "$tmp_dir/manifest-instruction-byte.txt"
 dma_fake="$tmp_dir/fake-mednafen-dma"
 python3 - "$dma_fake" <<'PY'
 import os
