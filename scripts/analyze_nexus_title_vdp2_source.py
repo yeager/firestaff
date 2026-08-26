@@ -26,6 +26,7 @@ TITLE_MAPD_OFFSET = 0xE278
 TITLE_MAP_COUNT = 5
 TITLE_MAP_BYTES = 64 * 28 * 4
 TITLE_PALETTE_OFFSET = 0x40 + TITLE_MAP_COUNT * 0x1C04
+LOGOBG_SHA256 = "431d97413f8b731db2709ad3c5a7b5f6ae2e2370b751e67e479c050f08ab14c1"
 
 
 def wordswapped(data: bytes) -> bytes:
@@ -59,6 +60,25 @@ def title_spans(title_bin: bytes, title_cg: bytes) -> tuple[bytes, list[bytes], 
     if len(title_cg) <= 32 or (len(title_cg) - 32) % 32:
         raise ValueError("TITLE.CG character-generator span is invalid")
     return title_cg[32:], maps, record[TITLE_PALETTE_OFFSET:TITLE_PALETTE_OFFSET + 32]
+
+
+def logobg_spans(logobg: bytes) -> tuple[bytes, bytes]:
+    """Validate the retail PP envelope and retain its pixel/CLUT spans.
+
+    These are deliberately kept separate from TITLE.CG: an exact VDP2 match
+    identifies bytes resident in a witness, not the layer consumer or host
+    placement that would be needed to render them in Firestaff.
+    """
+    if hashlib.sha256(logobg).hexdigest() != LOGOBG_SHA256:
+        raise ValueError("LOGOBG.DG2 hash mismatch")
+    if len(logobg) < 6 or logobg[:2] != b"PP":
+        raise ValueError("LOGOBG.DG2 PP header is missing")
+    width = int.from_bytes(logobg[2:4], "big")
+    height = int.from_bytes(logobg[4:6], "big")
+    pixel_offset = 6 + 256 * 2
+    if width != 320 or height != 224 or len(logobg) != pixel_offset + width * height:
+        raise ValueError("LOGOBG.DG2 geometry is invalid")
+    return logobg[pixel_offset:], logobg[6:pixel_offset]
 
 
 def cue_track1(cue: Path) -> Path:
@@ -130,13 +150,16 @@ def iso_members_in_memory(track: Path, wanted: set[str]) -> dict[str, bytes]:
     return members
 
 
-def read_title_assets(data_dir: Path | None, cue: Path | None) -> tuple[bytes, bytes]:
+def read_title_assets(data_dir: Path | None, cue: Path | None) -> tuple[bytes, bytes, bytes]:
     if cue is not None:
-        members = iso_members_in_memory(cue_track1(cue), {"TITLE.BIN", "TITLE.CG"})
-        return members["TITLE.BIN"], members["TITLE.CG"]
+        members = iso_members_in_memory(cue_track1(cue),
+                                        {"TITLE.BIN", "TITLE.CG", "LOGOBG.DG2"})
+        return members["TITLE.BIN"], members["TITLE.CG"], members["LOGOBG.DG2"]
     if data_dir is None:
         raise ValueError("either --data-dir or --cue is required")
-    return (data_dir / "TITLE.BIN").read_bytes(), (data_dir / "TITLE.CG").read_bytes()
+    return ((data_dir / "TITLE.BIN").read_bytes(),
+            (data_dir / "TITLE.CG").read_bytes(),
+            (data_dir / "LOGOBG.DG2").read_bytes())
 
 
 def find_span(haystack: bytes, source: bytes) -> tuple[int, int]:
@@ -169,8 +192,9 @@ def main() -> int:
         print("NEXUS_TITLE_VDP2_SOURCE_INVALID: invalid frame selection")
         return 1
     try:
-        title_bin, title_cg_raw = read_title_assets(args.data_dir, args.cue)
+        title_bin, title_cg_raw, logobg_raw = read_title_assets(args.data_dir, args.cue)
         title_cg, maps, palette = title_spans(title_bin, title_cg_raw)
+        logobg_pixels, logobg_palette = logobg_spans(logobg_raw)
     except (OSError, ValueError) as error:
         print(f"NEXUS_TITLE_VDP2_SOURCE_INVALID: {error}")
         return 1
@@ -178,6 +202,8 @@ def main() -> int:
     cg_frames: list[int] = []
     map_frames: list[int] = []
     palette_frames: list[int] = []
+    logobg_pixel_frames: list[int] = []
+    logobg_palette_frames: list[int] = []
     title_cg_swapped = wordswapped(title_cg)
     maps_swapped = [wordswapped(source) for source in maps]
     palette_swapped = wordswapped(palette)
@@ -193,14 +219,23 @@ def main() -> int:
                              for source, swapped in zip(maps, maps_swapped)]
             palette_exact, palette_swapped_position = find_span_with_swapped(
                 frame["vdp2-cram"], palette, palette_swapped)
+            logobg_pixels_exact, logobg_pixels_swapped = find_span(
+                frame["vdp2-vram"], logobg_pixels)
+            logobg_palette_exact, logobg_palette_swapped = find_span(
+                frame["vdp2-cram"], logobg_palette)
             if cg_exact >= 0 or cg_swapped >= 0:
                 cg_frames.append(index)
             if any(exact >= 0 or swapped >= 0 for exact, swapped in map_positions):
                 map_frames.append(index)
             if palette_exact >= 0 or palette_swapped_position >= 0:
                 palette_frames.append(index)
+            if logobg_pixels_exact >= 0 or logobg_pixels_swapped >= 0:
+                logobg_pixel_frames.append(index)
+            if logobg_palette_exact >= 0 or logobg_palette_swapped >= 0:
+                logobg_palette_frames.append(index)
             if args.frame is not None or cg_exact >= 0 or cg_swapped >= 0 or \
-                    index in map_frames or index in palette_frames:
+                    index in map_frames or index in palette_frames or \
+                    index in logobg_pixel_frames or index in logobg_palette_frames:
                 registers = frame["vdp2-regs"]
                 byte_order = detect_byte_order(registers)
                 tvmd = read_u16(registers, 0x00, byte_order)
@@ -217,6 +252,12 @@ def main() -> int:
                 print("title_palette_cram_" +
                       describe_position(palette_exact, palette_swapped_position) +
                       f" bytes={len(palette)}")
+                print("logobg_pixels_vram_" +
+                      describe_position(logobg_pixels_exact, logobg_pixels_swapped) +
+                      f" bytes={len(logobg_pixels)}")
+                print("logobg_palette_cram_" +
+                      describe_position(logobg_palette_exact, logobg_palette_swapped) +
+                      f" bytes={len(logobg_palette)}")
     except (OSError, ValueError) as error:
         print(f"NEXUS_TITLE_VDP2_SOURCE_INVALID: {error}")
         return 1
@@ -227,6 +268,10 @@ def main() -> int:
           else "title_map_vram_source_join=unbound")
     print("title_palette_cram_source_join=verified" if palette_frames
           else "title_palette_cram_source_join=unbound")
+    print("logobg_pixels_vram_source_join=verified" if logobg_pixel_frames
+          else "logobg_pixels_vram_source_join=unbound")
+    print("logobg_palette_cram_source_join=verified" if logobg_palette_frames
+          else "logobg_palette_cram_source_join=unbound")
     print("title_consumer_identity=unbound")
     print("semantic_admission=blocked")
     return 0

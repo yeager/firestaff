@@ -36,16 +36,27 @@ def source_fixture() -> tuple[bytes, bytes]:
     return bytes(title), cg
 
 
+def logobg_fixture() -> bytes:
+    return (b"PP" + (320).to_bytes(2, "big") + (224).to_bytes(2, "big") +
+            bytes((index * 3) & 0xFF for index in range(512 + 320 * 224)))
+
+
 def main() -> int:
     title, cg = source_fixture()
-    original_bin, original_cg = MODULE.TITLE_BIN_SHA256, MODULE.TITLE_CG_SHA256
+    logobg = logobg_fixture()
+    original_bin, original_cg, original_logobg = (MODULE.TITLE_BIN_SHA256,
+                                                   MODULE.TITLE_CG_SHA256,
+                                                   MODULE.LOGOBG_SHA256)
     MODULE.TITLE_BIN_SHA256 = hashlib.sha256(title).hexdigest()
     MODULE.TITLE_CG_SHA256 = hashlib.sha256(cg).hexdigest()
+    MODULE.LOGOBG_SHA256 = hashlib.sha256(logobg).hexdigest()
     try:
         payload, maps, palette = MODULE.title_spans(title, cg)
         assert payload == cg[32:]
         assert len(maps) == 5 and all(len(item) == MODULE.TITLE_MAP_BYTES for item in maps)
         assert palette == bytes(range(32))
+        logobg_pixels, logobg_palette = MODULE.logobg_spans(logobg)
+        assert len(logobg_pixels) == 320 * 224 and len(logobg_palette) == 512
         assert MODULE.wordswapped(b"\x12\x34\xab\xcd") == b"\x34\x12\xcd\xab"
         assert MODULE.find_span(b"xx" + MODULE.wordswapped(maps[2]) + b"yy", maps[2]) == (-1, 2)
         swapped_map = MODULE.wordswapped(maps[2])
@@ -77,7 +88,8 @@ def main() -> int:
             assert len(streamed[0][1]["vdp1-vram"]) == 0x80000
             assert streamed[0][1]["vdp1-state"] == "state=legacy-v1-unavailable"
     finally:
-        MODULE.TITLE_BIN_SHA256, MODULE.TITLE_CG_SHA256 = original_bin, original_cg
+        (MODULE.TITLE_BIN_SHA256, MODULE.TITLE_CG_SHA256,
+         MODULE.LOGOBG_SHA256) = original_bin, original_cg, original_logobg
     print("nexus title VDP2 source analyser: PASS")
     return 0
 

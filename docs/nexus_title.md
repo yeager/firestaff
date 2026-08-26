@@ -89,6 +89,12 @@ character layer, so the visible title cannot be reconstructed from
 residence, not the NBG0 bitmap source, NBG1 tilemap transform, layer
 placement, timing, or final title composition.
 
+The same in-memory CUE audit rejects the other known startup bitmap as the
+NBG0 source: neither the 320×224 `LOGOBG.DG2` PP pixel payload nor its
+256-word BGR555 palette occurs in the captured VDP2 VRAM/CRAM. `LOGOBG.DG2`
+must therefore remain a source receipt rather than being substituted for the
+unbound NBG0 bitmap.
+
 A paired 40-frame JP capture makes the input boundary explicit: Start/A
 pulses at emulated frames 13000, 13010 and 13020 produce a valid input receipt
 but every captured VDP1 and VDP2 region is bit-identical to an otherwise

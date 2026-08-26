@@ -3,7 +3,9 @@
 Reviewed 2026-08-25. Only open work is listed here.
 
 - Bind authentic Saturn CD reads to SH-2 consumers, VDP destinations and
-  decoded source assets before admitting title/menu rendering.
+  decoded source assets before admitting title/menu rendering. In particular,
+  the verified title NBG0 bitmap is neither `TITLE.CG`/MAPD nor `LOGOBG.DG2`;
+  identify its real source before admitting title composition.
 - Calibrate the title/menu capture from post-composition frames after the
   Saturn BIOS and the unskippable opening movie. The verified JP title window
   at frames 13000–13039 is bit-identical with and without Start/A pulses, so
