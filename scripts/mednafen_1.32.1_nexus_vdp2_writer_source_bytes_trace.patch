@@ -1,9 +1,6 @@
 --- src/ss/vdp2.cpp
 +++ src/ss/vdp2.cpp
-@@ -165,5 +165,12 @@
-  for(i = 0; i < 16; i++)
-   fprintf(file, " r%u=0x%08x", i,
-    (unsigned)CPU[0].GetRegister(SH7095::GSREG_R0 + i, NULL, 0));
+@@ -179,0 +180,7 @@
 + {
 +  uint32 source = CPU[0].GetRegister(SH7095::GSREG_R4, NULL, 0);
 +  fprintf(file, " src_r4=0x%08x src_words=", (unsigned)source);
@@ -11,5 +8,3 @@
 +   fprintf(file, "%04x%s", (unsigned)FirestaffPeekSH2Memory(0, source + i * 2U),
 +    i == 7 ? "" : ",");
 + }
-  fputc('\n', file);
-  fflush(file);
