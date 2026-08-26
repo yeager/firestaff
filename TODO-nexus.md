@@ -24,10 +24,13 @@ Reviewed 2026-08-25. Only open work is listed here.
   `ad10d99f00c3eecdf9577b15af1a7b86870a4ba83299dc50a09881dc569ad5e8`);
   retained traces after frames 11900 and 12501 have no writes in that range.
   The later VDP2 clear/copy transport and its `TITLE.BIN` CD→RAM input are now
-  verified (`0x060230ac`, `0x0602312c`, LBAs 6039–6055); the CDB FIFO words
-  for those LBAs also match raw Track 1 byte-for-byte. The latter PC is now
-  byte-identical to retail `DM.BIN`, and its source/destination pointers prove
-  a 104 × 304-byte route at a 512-byte VDP2 stride. The same-session VDP2
+  verified (PC tags `0x060230ac`, `0x0602312c`, LBAs 6039–6055); the CDB FIFO
+  words for those LBAs also match raw Track 1 byte-for-byte. The latter PC is
+  byte-identical to retail `DM.BIN`, but full SuperH disassembly starts it with
+  `mov.w @r4,r2`, not the observed byte store. It is therefore only an
+  execution-location tag until the store instruction and caller are traced.
+  Its source/destination pointer receipt proves a 104 × 304-byte route at a
+  512-byte VDP2 stride. The same-session VDP2
   trace now records all 31,616 destination byte values, and a frame-12596
   instruction trace binds each preceding SH-2 WorkRAM load to its VDP2 byte
   value in order. The same session also binds CDB FIFO payload words, CDB data

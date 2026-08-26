@@ -245,7 +245,7 @@ def title_sh2_copy_plan(path: Path, title_cg_raw: bytes) -> tuple[int, int, int,
             raise ValueError(f"missing copier register at line {line_number}")
         rows.append((int(match["frame"], 10), int(match["address"], 16), registers))
     if len(rows) < 8:
-        raise ValueError("fewer than eight title copier samples")
+        raise ValueError("fewer than eight title writer-register samples")
     frame, _, first = rows[0]
     source_base = first[14]
     destination_base = first[4]

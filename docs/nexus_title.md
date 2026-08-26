@@ -176,9 +176,9 @@ has a different frame bitmap hash and is expressly not promoted to title
 ownership. The required next witness is a range-filtered trace of the later
 title NBG0 update plus same-frame SH-2 RAM and CD source provenance.
 
-The later bounded JP witness now establishes the actual VDP2 transport. In
-the frame-12596 producer window, PC `0x060230ac` performs 32,850 NBG0 clear
-writes and PC `0x0602312c` performs 31,616 byte-lane writes. Replaying all
+The later bounded JP witness now establishes the observed VDP2 transport. In
+the frame-12596 producer window, 32,850 NBG0 clear writes carry PC tag
+`0x060230ac` and 31,616 byte-lane writes carry PC tag `0x0602312c`. Replaying all
 64,466 writes
 under the documented VDP2 byte-lane rule and converting bus order to the raw
 capture's word order reproduces every byte of the measured NBG0 span and its
@@ -187,7 +187,7 @@ this receipt. The later same-session receipts bind the source pointer/RAM
 producer and its CDB provenance; the display consumer is still absent, so this
 is not permission to present a native title composition.
 
-That source boundary is now partially closed: the copy routine reads the
+That source boundary is now partially closed: the PC-tagged observed route reads the
 bounded SH-2 range `0x060ac2a7`–`0x060b3e26`, and the same retail session's
 CD-labelled RAM trace binds 7,904 four-byte writes in that range to
 `TITLE.BIN` LBAs 6039–6055 at PC `0x06090d04`. The companion verifier
@@ -200,8 +200,8 @@ word position in each source row. This closes the observed CDB-register-to-RAM
 transport for this path, but does not simplify the transformed NBG0 bytes to a
 direct `TITLE.BIN` bitmap upload.
 
-The matching writer-register trace also proves the copy *route*: all 31,616
-rows at `0x0602312c` advance post-incremented SH-2 source
+The matching writer-register trace also proves the observed pointer *route*:
+all 31,616 rows tagged `0x0602312c` advance post-incremented SH-2 source
 `0x060ac2a7`–`0x060b3e26` one byte at a time, while VDP2 receives 104 rows of
 304 bytes at a 512-byte stride (`0x25e01008`–`0x25e0df37`).
 The paired same-session VDP2 trace records all 31,616 destination byte values;
@@ -226,15 +226,17 @@ ordered sequence rather than assuming a synthetic single-instruction loop.
 WorkRAM-to-VDP2 value receipt. It binds neither the earlier CDB/CD producer nor
 the display consumer, and therefore does not admit native composition.
 
-The focused writer-code capture removes one further ambiguity without widening
-that semantic claim. Its 48-word windows at `0x060230ac`, `0x060856f0` and
-the title copier `0x0602312c` occur byte-for-byte in the authenticated
+The focused writer-code capture establishes static code identity without
+widening that semantic claim. Its 48-word windows at `0x060230ac`,
+`0x060856f0` and the observed PC tag `0x0602312c` occur byte-for-byte in the authenticated
 `DM.BIN` CUE member at offsets `0x1306c`, `0x756b0` and `0x130ec` respectively.
 `scripts/analyze_nexus_vdp2_writer_code.py --cue <retail.cue>` reads those
-members in memory and checks their SHA-256 before reporting the match. Thus
-the title VDP2 writer is now a retail-code identity receipt as well as an
-execution receipt; it still does not prove the transform, palette selection,
-layer composition or public title presentation.
+members in memory and checks their SHA-256 before reporting the match. A full
+SuperH disassembly of the `0x0602312c` window begins with `mov.w @r4,r2`, not
+a byte load or VDP2 store. The PC is therefore an execution-location tag, not
+yet the identity of a title VDP2 writer; the actual store instruction, caller
+chain, transform, palette selection, layer composition and public title
+presentation remain unbound.
 
 The complete 190-record VDP1 chain contains 177 non-empty texture spans,
 including the bounded type-0 windows at VDP1 VRAM `0x4fba0` (448 bytes) and

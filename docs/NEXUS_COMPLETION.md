@@ -31,8 +31,9 @@ the measured active title NBG0 state exactly:
 
 This is a region-matched post-render observation and confirms the title-frame
 boundary used by the fail-closed NBG0 tools.  The same capture session's
-frame-12596 VDP2 trace contains exactly 32,850 clear writes at `0x060230ac`
-and 31,616 byte-lane copy writes at `0x0602312c`; replaying all 64,466 writes
+frame-12596 VDP2 trace contains exactly 32,850 clear writes tagged
+`0x060230ac` and 31,616 byte-lane writes tagged `0x0602312c`; replaying all
+64,466 writes
 reconstructs the frame-6 NBG0 bytes and hash exactly.  A same-frame SH-2
 instruction trace records the 31,616 preceding WorkRAM byte loads in order;
 their values match the VDP2 byte lanes exactly.  The same JP session also
@@ -40,6 +41,18 @@ captures the 17,408 CDB FIFO payload words for `TITLE.BIN` LBAs 6039--6055,
 checks every word against raw Track 1, and records the CDB data-port and FIFO
 word position for the WorkRAM receipt.  The title/menu display consumer is
 still unbound, so this does not authorize a playable start.
+
+## Static SH-2 disassembly correction — 2026-08-26
+
+The hash-verified retail `DM.BIN` was disassembled directly from the original
+CUE member in memory. At static address `0x0602312c` the first instruction is
+`mov.w @r4,r2`, followed by ordinary state/control-flow instructions; it is
+not itself a byte load or a VDP2 store. Thus the capture's PC field remains a
+valid execution-location tag for the observed writes, but it must not be
+presented as the identity of the byte-copy instruction or its complete call
+chain. Native title/menu admission remains closed until a full instruction
+and caller trace identifies the actual store path and the Saturn display
+consumer.
 
 ## Current external-data verification — 2026-08-13
 
