@@ -125,7 +125,7 @@ if [[ "${FIRESTAFF_NEXUS_ENABLE_SH2_MEMORY_SNAPSHOT:-0}" = 1 ]]; then
   fi
 fi
 vdp2_trace_marker="$source_dir/.firestaff-nexus-vdp2-write-trace-patched"
-vdp2_trace_patch_id='FIRESTAFF_NEXUS_VDP2_WRITE_TRACE_V10_EMULATION_FRAME_FILTERED_WRITES_AFTER_CRAM_WRITE_SOURCE_R5_PC_FILTER'
+vdp2_trace_patch_id='FIRESTAFF_NEXUS_VDP2_WRITE_TRACE_V11_TITLE_CODE_FRAME_FILTER_SOURCE_R8'
 if [[ ! -f "$vdp2_trace_marker" ]]; then
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_write_trace.patch"
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_vram_write_trace.patch"
@@ -135,6 +135,7 @@ if [[ ! -f "$vdp2_trace_marker" ]]; then
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_writer_register_trace.patch"
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_writer_source_bytes_trace.patch"
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_writer_source_r5_trace.patch"
+  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_writer_source_r8_trace.patch"
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_writer_frame_trace.patch"
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_post_write_snapshot.patch"
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_writer_register_pc_filter.patch"

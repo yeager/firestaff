@@ -1,6 +1,6 @@
 --- src/ss/vdp2.cpp
 +++ src/ss/vdp2.cpp
-@@ -109,3 +109,33 @@
+@@ -109,3 +109,47 @@
  static uint32 FirestaffVdp2WriteTraceMax;
  static bool FirestaffVdp2WriteTraceConfigured;
 +
@@ -13,7 +13,21 @@
 + const char *path = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_CODE");
 + unsigned i;
 + uint32 code_start;
++ static bool configured;
++ static uint64 frame_min;
++ static uint64 frame_max = ~0ULL;
++ const char *frame_min_text;
++ const char *frame_max_text;
 + if(!path || !*path || !pc || pc < 0x40) return;
++ if(!configured)
++ {
++  frame_min_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_CODE_FRAME_MIN");
++  frame_max_text = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_CODE_FRAME_MAX");
++  if(frame_min_text && *frame_min_text) frame_min = strtoull(frame_min_text, NULL, 0);
++  if(frame_max_text && *frame_max_text) frame_max = strtoull(frame_max_text, NULL, 0);
++  configured = true;
++ }
++ if(SMPC_FirestaffCurrentFrame() < frame_min || SMPC_FirestaffCurrentFrame() > frame_max) return;
 + for(i = 0; i < FirestaffVdp2WriterCodeTraceCount; i++)
 +  if(FirestaffVdp2WriterCodeTracePCs[i] == pc) return;
 + if(FirestaffVdp2WriterCodeTraceCount >= 64) return;
