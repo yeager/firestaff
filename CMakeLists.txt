@@ -43677,6 +43677,21 @@ set_tests_properties(nexus_v1_iso_only_launch PROPERTIES
     SKIP_RETURN_CODE 77
 )
 
+# The authentic retail ZIP remains the only game-data object in the staging
+# root.  The test proves direct in-memory Track 1 loading and deliberately
+# never materializes archive members on disk.
+add_test(
+    NAME nexus_v1_zip_only_launch
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_zip_only_launch.sh
+            $<TARGET_FILE:firestaff_nexus_v1_launch_smoke_probe>
+            ${CMAKE_BINARY_DIR}
+)
+set_tests_properties(nexus_v1_zip_only_launch PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    LABELS "tier1;nexus;launch;zip;real_data;no_extraction;skip_safe"
+    SKIP_RETURN_CODE 77
+)
+
 add_test(
     NAME nexus_v1_iso_only_asset_manifest
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_iso_only_asset_manifest.sh
