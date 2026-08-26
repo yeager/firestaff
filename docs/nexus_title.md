@@ -195,8 +195,8 @@ CD-labelled RAM trace binds 7,904 four-byte writes in that range to
 The CDB FIFO witness goes one level earlier: all 17,408 16-bit words from
 those 17 LBAs match raw Track 1 byte-for-byte at their recorded sector-word
 offsets; `scripts/verify_nexus_title_cdb_fifo_words.py` checks that receipt.
-The remaining unbound fact is the routine's RAM-to-VDP2 transform semantics;
-the evidence must not be simplified to a direct `TITLE.BIN` bitmap upload.
+The CD-to-RAM terminal CDB register path remains unbound; the evidence must
+not be simplified to a direct `TITLE.BIN` bitmap upload.
 
 The matching writer-register trace also proves the copy *route*: all 31,616
 rows at `0x0602312c` advance post-incremented SH-2 source
@@ -212,13 +212,17 @@ does not retain the pre-load value, this is deliberately a pointer-route and
 layout receipt, not a byte-value transform or direct `TITLE.BIN` upload claim.
 
 Two focused development traces ruled out treating Mednafen's ordinary WorkRAM
-read path as that missing receipt: neither the external bus hook nor the
-cache-hit/cache-bypass hooks observed a source-range read while the measured
-copy loop emitted the title frame. This is evidence about the emulator's
-execution path, not evidence that the retail routine performs no load. The
-remaining byte-value proof therefore needs an instruction-pipeline or hardware
-trace that records the load result before the VDP2 store; Firestaff must keep
-the transform unadmitted until then.
+read path as the byte-value receipt: neither the external bus hook nor the
+cache-hit/cache-bypass hooks observes the source-range load during the measured
+copy loop. An instruction-pipeline trace resolves that limitation. In the
+same frame-12596 retail session it records all 31,616 loads before their VDP2
+stores, in strictly increasing source order, on SH-2 CPU 0; every loaded byte
+equals the corresponding VDP2 byte lane. The trace can use more than one PC
+and destination register, so the verifier intentionally checks the complete
+ordered sequence rather than assuming a synthetic single-instruction loop.
+`scripts/verify_nexus_title_nbg0_instruction_byte_source.py` reproduces this
+WorkRAM-to-VDP2 value receipt. It binds neither the earlier CDB/CD producer nor
+the display consumer, and therefore does not admit native composition.
 
 The focused writer-code capture removes one further ambiguity without widening
 that semantic claim. Its 48-word windows at `0x060230ac`, `0x060856f0` and

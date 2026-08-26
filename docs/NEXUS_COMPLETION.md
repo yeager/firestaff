@@ -33,10 +33,11 @@ This is a region-matched post-render observation and confirms the title-frame
 boundary used by the fail-closed NBG0 tools.  The same capture session's
 frame-12596 VDP2 trace contains exactly 32,850 clear writes at `0x060230ac`
 and 31,616 byte-lane copy writes at `0x0602312c`; replaying all 64,466 writes
-reconstructs the frame-6 NBG0 bytes and hash exactly.  It does **not** by
-itself bind a CD member or SH-2 transform to that bitmap, identify the
-title/menu display consumer, or authorize a playable start.  Those gates
-remain closed.
+reconstructs the frame-6 NBG0 bytes and hash exactly.  A same-frame SH-2
+instruction trace records the 31,616 preceding WorkRAM byte loads in order;
+their values match the VDP2 byte lanes exactly.  The terminal CD/CDB-to-RAM
+provenance and the title/menu display consumer are still unbound, so this does
+not authorize a playable start.  Those gates remain closed.
 
 ## Current external-data verification — 2026-08-13
 
