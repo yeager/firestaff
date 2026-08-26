@@ -25,11 +25,17 @@ from verify_nexus_title_nbg0_copy_routing import (
 )
 
 
-HEADER = "FIRESTAFF_NEXUS_SH2_INSTRUCTION_BYTE_READ_TRACE_V1"
-LINE = re.compile(
+HEADER_V1 = "FIRESTAFF_NEXUS_SH2_INSTRUCTION_BYTE_READ_TRACE_V1"
+HEADER_V2 = "FIRESTAFF_NEXUS_SH2_INSTRUCTION_BYTE_READ_TRACE_V2"
+LINE_V1 = re.compile(
     r"^cpu=(?P<cpu>[0-9]+) addr=0x(?P<address>[0-9a-fA-F]+) "
     r"value=0x(?P<value>[0-9a-fA-F]{2}) pc=0x(?P<pc>[0-9a-fA-F]+) "
     r"r=(?P<register>[0-9]+)$"
+)
+LINE_V2 = re.compile(
+    r"^frame=(?P<frame>[0-9]+) cpu=(?P<cpu>[0-9]+) "
+    r"addr=0x(?P<address>[0-9a-fA-F]+) value=0x(?P<value>[0-9a-fA-F]{2}) "
+    r"pc=0x(?P<pc>[0-9a-fA-F]+) r=(?P<register>[0-9]+)$"
 )
 COPY_PC = 0x0602312C
 
@@ -39,18 +45,20 @@ def vdp2_byte(address: int, value: int) -> int:
     return (value >> 8) & 0xFF if (address & 1) == 0 else value & 0xFF
 
 
-def instruction_rows(path: Path, expected_pc: int,
-                     expected_register: int) -> list[tuple[int, int, int]]:
+def instruction_rows(path: Path, expected_pc: int | None,
+                     expected_register: int | None) -> list[tuple[int, int, int]]:
     lines = path.read_text(encoding="ascii").splitlines()
-    if not lines or lines[0] != HEADER:
+    if not lines or lines[0] not in (HEADER_V1, HEADER_V2):
         raise ValueError("bad instruction-byte trace header")
+    line_pattern = LINE_V2 if lines[0] == HEADER_V2 else LINE_V1
     rows: list[tuple[int, int, int]] = []
     for line_number, line in enumerate(lines[1:], 2):
-        match = LINE.fullmatch(line)
+        match = line_pattern.fullmatch(line)
         if not match:
             raise ValueError(f"malformed instruction-byte line {line_number}")
-        if (int(match["pc"], 16) == expected_pc and
-                int(match["register"], 10) == expected_register):
+        if ((expected_pc is None or int(match["pc"], 16) == expected_pc) and
+                (expected_register is None or
+                 int(match["register"], 10) == expected_register)):
             rows.append((int(match["cpu"], 10), int(match["address"], 16),
                          int(match["value"], 16)))
     return rows
@@ -79,8 +87,9 @@ def main() -> int:
     parser.add_argument("instruction_bytes", type=Path)
     parser.add_argument("vdp2_writes", type=Path)
     parser.add_argument("--instruction-pc", type=lambda value: int(value, 0),
-                        required=True)
-    parser.add_argument("--instruction-register", type=int, required=True)
+                        help="optional exact SH-2 PC filter")
+    parser.add_argument("--instruction-register", type=int,
+                        help="optional exact destination-register filter")
     args = parser.parse_args()
     try:
         reads = instruction_rows(args.instruction_bytes, args.instruction_pc,
@@ -106,8 +115,12 @@ def main() -> int:
         return 1
 
     print(f"title_nbg0_instruction_cpu={cpu}")
-    print(f"title_nbg0_instruction_pc=0x{args.instruction_pc:08x}")
-    print(f"title_nbg0_instruction_register={args.instruction_register}")
+    print("title_nbg0_instruction_pc=" +
+          (f"0x{args.instruction_pc:08x}" if args.instruction_pc is not None
+           else "frame-gated-multiple"))
+    print("title_nbg0_instruction_register=" +
+          (str(args.instruction_register) if args.instruction_register is not None
+           else "frame-gated-multiple"))
     print("title_nbg0_instruction_source_range=0x060ac2a6-0x060b3e25")
     print(f"title_nbg0_instruction_source_bytes={COPY_BYTES}")
     print("title_nbg0_instruction_to_vdp2_values=verified")

@@ -19,21 +19,29 @@
 + static uint32 required_pc;
 + static bool has_required_register;
 + static unsigned required_register;
++ static uint64 frame_min;
++ static uint64 frame_max = ~0ULL;
 + const char *path = getenv("FIRESTAFF_NEXUS_TRACE_SH2_INSTRUCTION_BYTE_READS");
 + if(!configured)
 + {
 +  const char *pc_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_PC");
 +  const char *register_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_BYTE_READ_REGISTER");
 +  const char *limit_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_LIMIT");
++  const char *frame_min_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_INSTRUCTION_BYTE_READ_FRAME_MIN");
++  const char *frame_max_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_INSTRUCTION_BYTE_READ_FRAME_MAX");
 +  required_pc = pc_text && *pc_text ? strtoul(pc_text, NULL, 0) : 0;
 +  if(register_text && *register_text) {
 +   required_register = strtoul(register_text, NULL, 0);
 +   has_required_register = true;
 +  }
 +  if(limit_text && *limit_text) limit = strtoul(limit_text, NULL, 10);
++  if(frame_min_text && *frame_min_text) frame_min = strtoull(frame_min_text, NULL, 0);
++  if(frame_max_text && *frame_max_text) frame_max = strtoull(frame_max_text, NULL, 0);
 +  configured = true;
 + }
 + if(!path || !*path || count >= limit ||
++    SMPC_FirestaffCurrentFrame() < frame_min ||
++    SMPC_FirestaffCurrentFrame() > frame_max ||
 +    (required_pc && pc != required_pc) ||
 +    (has_required_register && register_index != required_register))
 +  return;
@@ -41,10 +49,11 @@
 + {
 +  file = fopen(path, "wb");
 +  if(!file) return;
-+  fputs("FIRESTAFF_NEXUS_SH2_INSTRUCTION_BYTE_READ_TRACE_V1\n", file);
++  fputs("FIRESTAFF_NEXUS_SH2_INSTRUCTION_BYTE_READ_TRACE_V2\n", file);
 + }
-+ fprintf(file, "cpu=%u addr=0x%08x value=0x%02x pc=0x%08x r=%u\n",
-+  which, (unsigned)address, (unsigned)value, (unsigned)pc, register_index);
++ fprintf(file, "frame=%llu cpu=%u addr=0x%08x value=0x%02x pc=0x%08x r=%u\n",
++  (unsigned long long)SMPC_FirestaffCurrentFrame(), which, (unsigned)address,
++  (unsigned)value, (unsigned)pc, register_index);
 + count++;
 + if((count & 0x3ffU) == 0) fflush(file);
 +}

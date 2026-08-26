@@ -138,7 +138,7 @@ elif [[ "$(cat "$sh2_cache_bypass_address_marker" 2>/dev/null)" != "$sh2_cache_b
   exit 2
 fi
 sh2_instruction_byte_read_marker="$source_dir/.firestaff-nexus-sh2-instruction-byte-read-trace-patched"
-sh2_instruction_byte_read_patch_id='FIRESTAFF_NEXUS_SH2_INSTRUCTION_BYTE_READ_TRACE_V1'
+sh2_instruction_byte_read_patch_id='FIRESTAFF_NEXUS_SH2_INSTRUCTION_BYTE_READ_TRACE_V2_FRAME_FILTER'
 if [[ ! -f "$sh2_instruction_byte_read_marker" ]]; then
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_sh2_instruction_byte_read_trace.patch"
   printf '%s\n' "$sh2_instruction_byte_read_patch_id" > "$sh2_instruction_byte_read_marker"

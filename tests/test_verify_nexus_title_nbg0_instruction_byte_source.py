@@ -64,6 +64,14 @@ def main() -> int:
             encoding="ascii",
         )
         assert MODULE.main() == 1
+        instruction.write_text(
+            "FIRESTAFF_NEXUS_SH2_INSTRUCTION_BYTE_READ_TRACE_V2\n"
+            "frame=12596 cpu=0 addr=0x000000ff value=0x12 pc=0x00001234 r=2\n"
+            "frame=12596 cpu=0 addr=0x00000100 value=0x34 pc=0x00005678 r=6\n",
+            encoding="ascii",
+        )
+        sys.argv = [str(ROOT), str(instruction), str(writes)]
+        assert MODULE.main() == 0
     finally:
         sys.argv = old_argv
         (MODULE.COPY_BYTES, MODULE.ROW_BYTES, MODULE.ROW_STRIDE,

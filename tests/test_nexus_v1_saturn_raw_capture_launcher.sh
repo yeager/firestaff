@@ -252,10 +252,12 @@ from pathlib import Path
 
 Path(sys.argv[1]).write_text(
     "#!/bin/sh\n# FIRESTAFF_NEXUS_TRACE_OUTPUT\n"
-    "printf '%s,%s,%s' "
+    "printf '%s,%s,%s,%s,%s' "
     "\"$FIRESTAFF_NEXUS_TRACE_SH2_INSTRUCTION_BYTE_READS\" "
     "\"$FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_PC\" "
-    "\"$FIRESTAFF_NEXUS_TRACE_SH2_BYTE_READ_REGISTER\" > "
+    "\"$FIRESTAFF_NEXUS_TRACE_SH2_BYTE_READ_REGISTER\" "
+    "\"$FIRESTAFF_NEXUS_TRACE_SH2_INSTRUCTION_BYTE_READ_FRAME_MIN\" "
+    "\"$FIRESTAFF_NEXUS_TRACE_SH2_INSTRUCTION_BYTE_READ_FRAME_MAX\" > "
     "\"$FIRESTAFF_NEXUS_TRACE_OUTPUT\"\n"
     "printf 'instruction-byte-read' > \"$FIRESTAFF_NEXUS_TRACE_SH2_INSTRUCTION_BYTE_READS\"\n",
     encoding="utf-8",
@@ -266,12 +268,14 @@ instruction_byte_trace="$tmp_dir/sh2-instruction-byte.trace"
 FIRESTAFF_NEXUS_TRACE_SH2_INSTRUCTION_BYTE_READS="$instruction_byte_trace" \
 FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_PC=0x0602312c \
 FIRESTAFF_NEXUS_TRACE_SH2_BYTE_READ_REGISTER=2 \
+FIRESTAFF_NEXUS_TRACE_SH2_INSTRUCTION_BYTE_READ_FRAME_MIN=12596 \
+FIRESTAFF_NEXUS_TRACE_SH2_INSTRUCTION_BYTE_READ_FRAME_MAX=12596 \
 "$launcher" --operator-only --launch --mednafen "$instruction_byte_fake" \
   --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
   --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
   --trace "$tmp_dir/trace-instruction-byte.raw" --validator /usr/bin/true \
   --manifest "$tmp_dir/manifest-instruction-byte.txt" >/dev/null
-grep -Fq "$instruction_byte_trace,0x0602312c,2" \
+grep -Fq "$instruction_byte_trace,0x0602312c,2,12596,12596" \
   "$tmp_dir/trace-instruction-byte.raw"
 grep -Fq "FIRESTAFF_NEXUS_TRACE_SH2_INSTRUCTION_BYTE_READS_sha256=$(shasum -a 256 "$instruction_byte_trace" | awk '{print $1}')" \
   "$tmp_dir/manifest-instruction-byte.txt"
