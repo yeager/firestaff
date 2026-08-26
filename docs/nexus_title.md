@@ -71,6 +71,21 @@ These are preservation receipts derived from the real `TITLE.BIN` and
 contains no exact MAPD plane span in VDP2 VRAM, so the production title route
 remains capture-gated.
 
+### Japanese retail title VDP2 receipt
+
+A post-intro, same-session Japanese retail capture identifies the actual
+title sequence and binds two source spans without unpacking the CUE corpus:
+
+- the full `TITLE.CG` character-generator payload is in VDP2 VRAM at
+  `0x24020` in Saturn word-swapped order;
+- the 16-word `TITLE.BIN` MAPD palette is in CRAM at `0x400`, also
+  word-swapped;
+- VDP2 reports `TVMD=0x8000`, `BGON=0x0003`, and `CHCTLA=0x0013`.
+
+None of the five raw MAPD planes occurs as an exact VDP2 VRAM span in that
+frame. The receipt therefore proves source upload and palette residence, not
+the tilemap transform, layer placement, timing, or final title composition.
+
 ---
 
 ## 4. Title Screen vs Intro Movie
@@ -86,7 +101,8 @@ the title is a 3D animation or that a particular DMV file precedes it.
 
 ### Original Saturn
 - `TITLE.CG` is a source asset in the retail corpus
-- VDP1/VDP2 placement and palette upload order remain capture-gated
+- `TITLE.CG` VRAM and the MAPD palette CRAM upload are capture-proven; map
+  transform, placement and ordering remain capture-gated
 - FONT256/SLEV text ownership remains separate and unproven
 
 ### Firestaff PC

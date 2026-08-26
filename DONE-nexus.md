@@ -25,3 +25,7 @@ Reviewed 2026-08-26. Completed work only.
   VDP1 `0x10a00..0x11200` with Saturn word byte order. It is a completed
   transport observation, not an asset, palette, command or title-rendering
   admission.
+- A post-intro Japanese retail title receipt binds the full `TITLE.CG` payload
+  to word-swapped VDP2 VRAM `0x24020` and the MAPD palette to word-swapped
+  CRAM `0x400`. The raw MAPD planes, tilemap transform, layer placement and
+  timing remain unbound, so this does not authorize title rendering.

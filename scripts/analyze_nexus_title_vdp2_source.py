@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import re
 from pathlib import Path
 
 from analyze_nexus_saturn_runtime_capture import iter_frame_regions_file
@@ -60,6 +61,84 @@ def title_spans(title_bin: bytes, title_cg: bytes) -> tuple[bytes, list[bytes], 
     return title_cg[32:], maps, record[TITLE_PALETTE_OFFSET:TITLE_PALETTE_OFFSET + 32]
 
 
+def cue_track1(cue: Path) -> Path:
+    """Return the first CUE FILE member without unpacking it."""
+    for line in cue.read_text(encoding="utf-8", errors="replace").splitlines():
+        match = re.match(r'^\s*FILE\s+"([^"]+)"\s+\S+', line, re.IGNORECASE)
+        if match:
+            return cue.parent / match.group(1)
+    raise ValueError("CUE has no quoted track member")
+
+
+def iso_members_in_memory(track: Path, wanted: set[str]) -> dict[str, bytes]:
+    """Read named ISO9660 members from a 2048- or raw-2352-byte Track 1.
+
+    The full disc image is read only as the caller's supplied game data; no
+    member is materialized on disk.
+    """
+    image = track.read_bytes()
+    sector_bytes = 2352 if len(image) % 2352 == 0 else 2048
+    user_offset = 16 if sector_bytes == 2352 else 0
+
+    def sector(lba: int) -> bytes:
+        start = lba * sector_bytes + user_offset
+        end = start + 2048
+        if start < 0 or end > len(image):
+            raise ValueError("ISO sector lies outside Track 1")
+        return image[start:end]
+
+    pvd = sector(16)
+    if pvd[1:6] != b"CD001":
+        raise ValueError("Track 1 has no ISO9660 primary volume descriptor")
+    members: dict[str, bytes] = {}
+
+    def read_extent(lba: int, size: int) -> bytes:
+        return b"".join(sector(lba + index)
+                        for index in range((size + 2047) // 2048))[:size]
+
+    def walk(record: bytes) -> None:
+        if len(record) < 34:
+            raise ValueError("ISO9660 directory record is truncated")
+        directory_lba = int.from_bytes(record[2:6], "little")
+        directory_size = int.from_bytes(record[10:14], "little")
+        directory = read_extent(directory_lba, directory_size)
+        offset = 0
+        while offset < len(directory):
+            length = directory[offset]
+            if length == 0:
+                offset = ((offset // 2048) + 1) * 2048
+                continue
+            child = directory[offset:offset + length]
+            if len(child) < 34:
+                raise ValueError("ISO9660 child record is truncated")
+            name_length = child[32]
+            name = child[33:33 + name_length]
+            if name not in (b"\x00", b"\x01"):
+                normalized = name.decode("ascii", "replace").split(";", 1)[0].upper()
+                if child[25] & 2:
+                    walk(child)
+                elif normalized in wanted:
+                    lba = int.from_bytes(child[2:6], "little")
+                    size = int.from_bytes(child[10:14], "little")
+                    members[normalized] = read_extent(lba, size)
+            offset += length
+
+    walk(pvd[156:])
+    missing = wanted - members.keys()
+    if missing:
+        raise ValueError("ISO9660 member missing: " + ",".join(sorted(missing)))
+    return members
+
+
+def read_title_assets(data_dir: Path | None, cue: Path | None) -> tuple[bytes, bytes]:
+    if cue is not None:
+        members = iso_members_in_memory(cue_track1(cue), {"TITLE.BIN", "TITLE.CG"})
+        return members["TITLE.BIN"], members["TITLE.CG"]
+    if data_dir is None:
+        raise ValueError("either --data-dir or --cue is required")
+    return (data_dir / "TITLE.BIN").read_bytes(), (data_dir / "TITLE.CG").read_bytes()
+
+
 def find_span(haystack: bytes, source: bytes) -> tuple[int, int]:
     return haystack.find(source), haystack.find(wordswapped(source))
 
@@ -77,7 +156,10 @@ def describe_position(exact: int, swapped: int) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path)
-    parser.add_argument("--data-dir", type=Path, required=True)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--data-dir", type=Path)
+    source.add_argument("--cue", type=Path,
+                        help="read TITLE members from supplied CUE/Track 1 in memory")
     parser.add_argument("--capture-frames", type=int, required=True)
     parser.add_argument("--frame", type=int,
                         help="inspect one zero-based frame instead of all frames")
@@ -87,9 +169,8 @@ def main() -> int:
         print("NEXUS_TITLE_VDP2_SOURCE_INVALID: invalid frame selection")
         return 1
     try:
-        title_cg, maps, palette = title_spans(
-            (args.data_dir / "TITLE.BIN").read_bytes(),
-            (args.data_dir / "TITLE.CG").read_bytes())
+        title_bin, title_cg_raw = read_title_assets(args.data_dir, args.cue)
+        title_cg, maps, palette = title_spans(title_bin, title_cg_raw)
     except (OSError, ValueError) as error:
         print(f"NEXUS_TITLE_VDP2_SOURCE_INVALID: {error}")
         return 1
