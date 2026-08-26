@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import re
 from pathlib import Path
 
 from validate_nexus_saturn_runtime_capture import (
@@ -43,6 +44,18 @@ VDP2_REGIONS = (
     ("vdp2-vram", 0x40000 * 2),
     ("vdp2-cram", 0x800 * 2),
 )
+
+VDP1_DRAW_BUFFER_RE = re.compile(r"(?:^|,)fb:([01])(?:,|$)")
+
+
+def vdp1_draw_buffer(state_text: str, trailing: bytes = b"") -> bytes:
+    """Return an observed VDP1 draw-buffer selector, if the witness has one."""
+    if trailing:
+        if trailing[0] not in (0, 1):
+            raise ValueError("invalid trailing VDP1 draw-buffer selector")
+        return trailing[:1]
+    match = VDP1_DRAW_BUFFER_RE.search(state_text)
+    return bytes((int(match.group(1)),)) if match else b""
 
 
 def frame_regions(blob: bytes, required_frames: int) -> tuple[list[dict[str, bytes]], list[str]]:
@@ -84,8 +97,10 @@ def frame_regions(blob: bytes, required_frames: int) -> tuple[list[dict[str, byt
         # Early V2 captures appended the draw-buffer selector once after the
         # fixed VDP1 payload. It is metadata already represented in `state=`;
         # skip it before consuming the VDP2 marker.
+        selector = b""
         if not blob.startswith(VDP2_MAGIC, offset) and \
                 blob.startswith(VDP2_MAGIC, offset + 1):
+            selector = blob[offset:offset + 1]
             offset += 1
         if not blob.startswith(VDP2_MAGIC, offset):
             raise ValueError(f"missing VDP2 marker for frame {frame_index}")
@@ -95,9 +110,10 @@ def frame_regions(blob: bytes, required_frames: int) -> tuple[list[dict[str, byt
 
         regions: dict[str, bytes] = {}
         cursor = 0
-        for name, size in VDP1_REGIONS:
+        for name, size in VDP1_REGIONS[:3]:
             regions[name] = vdp1[cursor : cursor + size]
             cursor += size
+        regions["vdp1-fb-draw-which"] = vdp1_draw_buffer(states[-1], selector)
         cursor = 0
         for name, size in VDP2_REGIONS:
             regions[name] = vdp2[cursor : cursor + size]
@@ -158,9 +174,11 @@ def iter_frame_regions_file(path: Path, required_frames: int):
             vdp1 = _read_exact(handle, VDP1_PAYLOAD_BYTES,
                                f"VDP1 payload for frame {frame_index}")
             vdp2_offset = handle.tell()
+            selector = b""
             vdp2_magic = _read_exact(handle, len(VDP2_MAGIC),
                                      f"VDP2 marker for frame {frame_index}")
             if vdp2_magic != VDP2_MAGIC:
+                selector = vdp2_magic[:1]
                 handle.seek(vdp2_offset + 1)
                 vdp2_magic = _read_exact(handle, len(VDP2_MAGIC),
                                          f"VDP2 marker for frame {frame_index}")
@@ -173,6 +191,9 @@ def iter_frame_regions_file(path: Path, required_frames: int):
             yield frame_index, {
                 "vdp1-state": state_text,
                 "vdp1-vram": vdp1[:VDP1_REGIONS[0][1]],
+                "vdp1-fb0": vdp1[VDP1_REGIONS[0][1]:VDP1_REGIONS[0][1] + VDP1_REGIONS[1][1]],
+                "vdp1-fb1": vdp1[VDP1_REGIONS[0][1] + VDP1_REGIONS[1][1]:VDP1_REGIONS[0][1] + VDP1_REGIONS[1][1] + VDP1_REGIONS[2][1]],
+                "vdp1-fb-draw-which": vdp1_draw_buffer(state_text, selector),
                 "vdp2-regs": vdp2[:reg_bytes],
                 "vdp2-vram": vdp2[reg_bytes:reg_bytes + vram_bytes],
                 "vdp2-cram": vdp2[reg_bytes + vram_bytes:],
@@ -218,15 +239,18 @@ def frame_regions_vdp1(blob: bytes, required_frames: int) -> tuple[list[dict[str
         offset += VDP1_PAYLOAD_BYTES
         regions: dict[str, bytes] = {}
         cursor = 0
-        for name, size in VDP1_REGIONS:
+        for name, size in VDP1_REGIONS[:3]:
             regions[name] = vdp1[cursor:cursor + size]
             cursor += size
         # Early V2 captures carried the framebuffer selector as one trailing
         # byte after the fixed VDP1 payload. It is already represented by the
         # state line and is not part of the VDP1 VRAM/framebuffer regions.
+        selector = b""
         if not blob.startswith(VDP2_MAGIC, offset) and \
                 blob.startswith(VDP2_MAGIC, offset + 1):
+            selector = blob[offset:offset + 1]
             offset += 1
+        regions["vdp1-fb-draw-which"] = vdp1_draw_buffer(states[-1], selector)
         if blob.startswith(VDP2_MAGIC, offset):
             offset += len(VDP2_MAGIC) + VDP2_PAYLOAD_BYTES
             if offset > len(blob):
