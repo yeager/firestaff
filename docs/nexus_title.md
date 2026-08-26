@@ -76,18 +76,20 @@ remains capture-gated.
 A post-intro, same-session Japanese retail capture identifies the actual
 title sequence and binds two source spans without unpacking the CUE corpus:
 
-- the full `TITLE.CG` character-generator payload is in VDP2 VRAM at
-  `0x24020` in Saturn word-swapped order;
+- the complete `TITLE.CG` ISO member is in VDP2 VRAM at `0x24000` in
+  Saturn word-swapped order; its character-generator payload starts 32 bytes
+  later at `0x24020`, after the verified file prefix;
 - the 16-word `TITLE.BIN` MAPD palette is in CRAM at `0x400`, also
   word-swapped;
 - VDP2 reports `TVMD=0x8000`, `BGON=0x0003`, and `CHCTLA=0x0013`.
 
 None of the five raw MAPD planes occurs as an exact VDP2 VRAM span in that
-frame. NBG0 is an active 8-bit bitmap layer while NBG1 remains an active
-character layer, so the visible title cannot be reconstructed from
-`TITLE.CG`/MAPD alone. The receipt therefore proves source upload and palette
-residence, not the NBG0 bitmap source, NBG1 tilemap transform, layer
-placement, timing, or final title composition.
+frame. The authentic register image has NBG0 active as an 8-bit bitmap and
+NBG1 active as a character layer. This establishes the hardware modes, not
+which layer consumes the resident `TITLE.CG` bytes; the visible title cannot
+be reconstructed from `TITLE.CG`/MAPD alone. The receipt therefore proves
+source upload and palette residence, not the NBG0 bitmap source, NBG1 tilemap
+transform, layer placement, timing, or final title composition.
 
 The same in-memory CUE audit rejects the other known startup bitmap as the
 NBG0 source: neither the 320×224 `LOGOBG.DG2` PP pixel payload nor its
