@@ -11,8 +11,9 @@ Reviewed 2026-08-25. Only open work is listed here.
   `LEV00.DGN`; 173 also match their real Structure2 image and CLUT pair. The
   remaining four draws (`0x00e60`, `0x00780`, `0x00880`, `0x01380`) share the
   directly traced `LEV00.DGN` CLUT at word `0xca00`, though it has no exact
-  Structure2 palette-record identity. Geometry and final compositor semantics
-  remain unbound. In
+  Structure2 palette-record identity. The 175 distorted-sprite vertices and
+  their two local-coordinate transforms are captured; raster, clipping and
+  final compositor semantics remain unbound. In
   particular, the active NBG0
   bitmap is neither `TITLE.CG`/MAPD nor `LOGOBG.DG2`; a full-disc
   resident-member scan finds no other complete source file. Identify that

@@ -183,6 +183,14 @@ byte ownership, though only 173 have the higher-level Structure2 material-pair
 identity. This is not native presentation permission: transformed geometry,
 VDP1 framebuffer composition, VDP2 priority and timing also remain unbound.
 
+The full chain also supplies the source geometry rather than an inferred host
+layout. It contains 175 distorted-sprite commands; applying its two observed
+local-coordinate updates (`0x000e0` = `(160,112)`, `0x01720` = `(0,0)`) to
+the 13-bit signed command vertices yields bounds `(-357,-130)` through
+`(666,607)`. This captures the real pre-raster coordinates and clipping input,
+but not the VDP1 raster rules, draw-buffer result, VDP2 sprite priority or
+display timing required for native composition.
+
 A paired 40-frame JP capture makes the input boundary explicit: Start/A
 pulses at emulated frames 13000, 13010 and 13020 produce a valid input receipt
 but every captured VDP1 and VDP2 region is bit-identical to an otherwise
