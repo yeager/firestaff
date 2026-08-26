@@ -11,6 +11,13 @@
 +   fprintf(file, "%04x%s", (unsigned)FirestaffPeekSH2Memory(0, source + i * 2U),
 +    i == 7 ? "" : ",");
 + }
++ {
++  uint32 source = CPU[0].GetRegister(SH7095::GSREG_R5, NULL, 0) - 1U;
++  fprintf(file, " src_r5_pre=0x%08x src5_pre_words=", (unsigned)source);
++  for(i = 0; i < 8; i++)
++   fprintf(file, "%04x%s", (unsigned)FirestaffPeekSH2Memory(0, source + i * 2U),
++    i == 7 ? "" : ",");
++ }
   fputc('\n', file);
   fflush(file);
   count++;
