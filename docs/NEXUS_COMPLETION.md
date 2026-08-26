@@ -388,6 +388,14 @@ den observerade VDP2-ordningen tillgänglig för nästa native-grind, men den ä
 inte i sig ett bevis på VDP1-prioritet, fönsterlogik, färgberäkning eller
 slutlig sammansättning.
 
+En ny flyktig JP-titelcapture från samma 2026-08-26-revision gör även
+fönstergrinden konkret: `WCTLA–WCTLD=0x0000`, `SPCTL=0x1536`,
+`CCCTL=0x0043`, `PRINA=0x0404` och `PRINB=0x0000`. NBG0 och NBG1 har alltså
+samma observerade VDP2-prioritet (4) i denna ram, och de fyra VDP2-
+fönsterkontrollorden är nollställda. Det utesluter inte VDP1:s separata
+prioritet, colour-calculation-regler eller annan timing; dessa facts öppnar
+inte den native slutkompositorn.
+
 ### Frame 80: NBG1-ägare fortfarande obunden
 
 En separat bytejämförelse av den autentiserade långkörningens frame 80 visar

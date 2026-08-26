@@ -305,7 +305,7 @@ int nexus_v1_saturn_runtime_capture_vdp2_register_receipt(
     receipt.semantic_admission_blocked = 1;
     if (!out_receipt) return 0;
     if (!frame || !frame->valid || !frame->vdp2_registers ||
-        frame->vdp2_register_size < 0x2aU) {
+        frame->vdp2_register_size < 0xfcU) {
         *out_receipt = receipt;
         return 0;
     }
@@ -333,6 +333,18 @@ int nexus_v1_saturn_runtime_capture_vdp2_register_receipt(
                                 receipt.byte_order);
     receipt.craofa = vdp2_read16(frame->vdp2_registers, 0xe4U,
                                  receipt.byte_order);
+    receipt.spctl = vdp2_read16(frame->vdp2_registers, 0xe0U,
+                                receipt.byte_order);
+    receipt.wctla = vdp2_read16(frame->vdp2_registers, 0xd0U,
+                                receipt.byte_order);
+    receipt.wctlb = vdp2_read16(frame->vdp2_registers, 0xd2U,
+                                receipt.byte_order);
+    receipt.wctlc = vdp2_read16(frame->vdp2_registers, 0xd4U,
+                                receipt.byte_order);
+    receipt.wctld = vdp2_read16(frame->vdp2_registers, 0xd6U,
+                                receipt.byte_order);
+    receipt.ccctl = vdp2_read16(frame->vdp2_registers, 0xecU,
+                                receipt.byte_order);
     receipt.prina = vdp2_read16(frame->vdp2_registers, 0xf8U,
                                 receipt.byte_order);
     receipt.prinb = vdp2_read16(frame->vdp2_registers, 0xfaU,

@@ -120,6 +120,18 @@ int main(void)
         blob[vdp2_register_offset + 0x2cU] = 0x05U;
         blob[vdp2_register_offset + 0xf8U] = 0x05U;
         blob[vdp2_register_offset + 0xf9U] = 0x03U;
+        blob[vdp2_register_offset + 0xd0U] = 0x11U;
+        blob[vdp2_register_offset + 0xd1U] = 0x22U;
+        blob[vdp2_register_offset + 0xd2U] = 0x33U;
+        blob[vdp2_register_offset + 0xd3U] = 0x44U;
+        blob[vdp2_register_offset + 0xd4U] = 0x55U;
+        blob[vdp2_register_offset + 0xd5U] = 0x66U;
+        blob[vdp2_register_offset + 0xd6U] = 0x77U;
+        blob[vdp2_register_offset + 0xd7U] = 0x88U;
+        blob[vdp2_register_offset + 0xe0U] = 0x99U;
+        blob[vdp2_register_offset + 0xe1U] = 0xaaU;
+        blob[vdp2_register_offset + 0xecU] = 0xbbU;
+        blob[vdp2_register_offset + 0xedU] = 0xccU;
     }
     if (offset != blob_size ||
         !nexus_v1_saturn_runtime_capture_frame(blob, blob_size, 1U,
@@ -145,6 +157,12 @@ int main(void)
         register_receipt.prina != 0x0305U ||
         register_receipt.nbg0_priority != 5U ||
         register_receipt.nbg1_priority != 3U ||
+        register_receipt.wctla != 0x2211U ||
+        register_receipt.wctlb != 0x4433U ||
+        register_receipt.wctlc != 0x6655U ||
+        register_receipt.wctld != 0x8877U ||
+        register_receipt.spctl != 0xaa99U ||
+        register_receipt.ccctl != 0xccbbU ||
         register_receipt.semantic_admission_blocked != 1 ||
         nexus_v1_saturn_runtime_capture_frame(blob, blob_size, 2U,
                                                &receipt)) {
@@ -225,6 +243,10 @@ int main(void)
         generic[generic_offset + 0x21U] = 0x02U;
         generic[generic_offset + 0xf8U] = 0x03U;
         generic[generic_offset + 0xf9U] = 0x05U;
+        generic[generic_offset + 0xd0U] = 0x22U;
+        generic[generic_offset + 0xd1U] = 0x11U;
+        generic[generic_offset + 0xecU] = 0xccU;
+        generic[generic_offset + 0xedU] = 0xbbU;
         generic_offset += NEXUS_V1_SATURN_VDP2_PAYLOAD_BYTES;
         if (generic_offset != generic_size ||
             !nexus_v1_saturn_runtime_capture_frame(
@@ -243,7 +265,9 @@ int main(void)
             register_receipt.tvmd != 0x8000U || register_receipt.bgon != 0x0002U ||
             register_receipt.prina != 0x0305U ||
             register_receipt.nbg0_priority != 5U ||
-            register_receipt.nbg1_priority != 3U) {
+            register_receipt.nbg1_priority != 3U ||
+            register_receipt.wctla != 0x2211U ||
+            register_receipt.ccctl != 0xccbbU) {
             free(generic);
             fprintf(stderr, "FAIL: generic Mednafen raw frame parser\n");
             return 1;

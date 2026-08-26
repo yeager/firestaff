@@ -94,6 +94,12 @@ typedef struct {
     uint16_t bmpna;
     uint16_t pncn1;
     uint16_t craofa;
+    uint16_t spctl;
+    uint16_t wctla;
+    uint16_t wctlb;
+    uint16_t wctlc;
+    uint16_t wctld;
+    uint16_t ccctl;
     uint16_t prina;
     uint16_t prinb;
     /* Raw NBG1 scroll origin observed in the capture. These are register
@@ -116,6 +122,9 @@ typedef struct {
      * a retail display consumer still require their own receipts. */
     uint8_t nbg0_priority;
     uint8_t nbg1_priority;
+    /* Raw composition-control observations. These records make the active
+     * window and colour-calculation register words auditable, without
+     * interpreting their per-layer semantics or admitting host composition. */
     int semantic_admission_blocked;
 } Nexus_V1_SaturnVdp2RegisterReceipt;
 
