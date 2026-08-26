@@ -178,7 +178,10 @@ title NBG0 update plus same-frame SH-2 RAM and CD source provenance.
 
 The later bounded JP witness now establishes the observed VDP2 transport. In
 the frame-12596 producer window, 32,850 NBG0 clear writes carry PC tag
-`0x060230ac` and 31,616 byte-lane writes carry PC tag `0x0602312c`. Replaying all
+`0x060230ac` and 31,616 byte-lane writes carry PC tag `0x0602312c`. The
+full `DM.BIN` disassembly uses verified load base `0x06010040`: the latter tag
+is the checkpoint immediately after `mov.b @r5+,r1` at `0x06023120` and the
+VDP2 store `mov.b r1,@r4` at `0x06023128`. Replaying all
 64,466 writes
 under the documented VDP2 byte-lane rule and converting bus order to the raw
 capture's word order reproduces every byte of the measured NBG0 span and its
@@ -231,12 +234,12 @@ widening that semantic claim. Its 48-word windows at `0x060230ac`,
 `0x060856f0` and the observed PC tag `0x0602312c` occur byte-for-byte in the authenticated
 `DM.BIN` CUE member at offsets `0x1306c`, `0x756b0` and `0x130ec` respectively.
 `scripts/analyze_nexus_vdp2_writer_code.py --cue <retail.cue>` reads those
-members in memory and checks their SHA-256 before reporting the match. A full
-SuperH disassembly of the `0x0602312c` window begins with `mov.w @r4,r2`, not
-a byte load or VDP2 store. The PC is therefore an execution-location tag, not
-yet the identity of a title VDP2 writer; the actual store instruction, caller
-chain, transform, palette selection, layer composition and public title
-presentation remain unbound.
+members in memory and checks their SHA-256 before reporting the match. The
+full SuperH disassembly, with `DM.BIN` at load base `0x06010040`, resolves the
+tag as post-store loop control: source `mov.b @r5+,r1` is at `0x06023120`,
+store `mov.b r1,@r4` at `0x06023128`, and `cmp/pl r14` at `0x0602312c`.
+The caller chain, transform, palette selection, layer composition and public
+title presentation remain unbound.
 
 The complete 190-record VDP1 chain contains 177 non-empty texture spans,
 including the bounded type-0 windows at VDP1 VRAM `0x4fba0` (448 bytes) and
