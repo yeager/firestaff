@@ -13,6 +13,8 @@ import hashlib
 import re
 from pathlib import Path
 
+from analyze_nexus_title_vdp2_source import cue_track1, iso_members_in_memory
+
 
 HEADER = "FIRESTAFF_NEXUS_VDP2_WRITER_CODE_TRACE_V1"
 LINE = re.compile(
@@ -30,20 +32,43 @@ def read_asset(path: Path, expected: str) -> bytes:
     return data
 
 
+def read_retail_assets(data_dir: Path | None, cue: Path | None) -> dict[str, bytes]:
+    """Read the two retail executables without materialising CUE members.
+
+    ``--cue`` is the preferred form for player-supplied Saturn media.  Loose
+    files remain useful for a separately mounted, hash-verified research
+    corpus, but neither route writes a member to disk.
+    """
+    if cue is not None:
+        assets = iso_members_in_memory(cue_track1(cue), {"TM.BIN", "DM.BIN"})
+    elif data_dir is not None:
+        assets = {
+            "TM.BIN": (data_dir / "TM.BIN").read_bytes(),
+            "DM.BIN": (data_dir / "DM.BIN").read_bytes(),
+        }
+    else:
+        raise ValueError("either --data-dir or --cue is required")
+    for name, expected in (("TM.BIN", TM_SHA256), ("DM.BIN", DM_SHA256)):
+        if hashlib.sha256(assets[name]).hexdigest() != expected:
+            raise ValueError(f"{name} hash mismatch")
+    return assets
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("trace", type=Path)
-    parser.add_argument("--data-dir", type=Path, required=True)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--data-dir", type=Path,
+                        help="directory containing separately mounted retail members")
+    source.add_argument("--cue", type=Path,
+                        help="retail Saturn CUE; members are read in memory")
     parser.add_argument("--require-pc", action="append", type=lambda value: int(value, 0), default=[])
     args = parser.parse_args()
     try:
         lines = args.trace.read_text(encoding="ascii").splitlines()
         if not lines or lines[0] != HEADER:
             raise ValueError("bad header")
-        assets = {
-            "TM.BIN": read_asset(args.data_dir / "TM.BIN", TM_SHA256),
-            "DM.BIN": read_asset(args.data_dir / "DM.BIN", DM_SHA256),
-        }
+        assets = read_retail_assets(args.data_dir, args.cue)
     except (OSError, UnicodeError, ValueError) as error:
         print(f"NEXUS_VDP2_WRITER_CODE_INVALID: {error}")
         return 1

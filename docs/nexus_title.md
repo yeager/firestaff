@@ -194,6 +194,16 @@ CD-labelled RAM trace binds 7,904 four-byte writes in that range to
 The remaining unbound fact is the routine's RAM-to-VDP2 transform semantics;
 the evidence must not be simplified to a direct `TITLE.BIN` bitmap upload.
 
+The focused writer-code capture removes one further ambiguity without widening
+that semantic claim. Its 48-word windows at `0x060230ac`, `0x060856f0` and
+the title copier `0x0602312c` occur byte-for-byte in the authenticated
+`DM.BIN` CUE member at offsets `0x1306c`, `0x756b0` and `0x130ec` respectively.
+`scripts/analyze_nexus_vdp2_writer_code.py --cue <retail.cue>` reads those
+members in memory and checks their SHA-256 before reporting the match. Thus
+the title VDP2 writer is now a retail-code identity receipt as well as an
+execution receipt; it still does not prove the transform, palette selection,
+layer composition or public title presentation.
+
 The complete 190-record VDP1 chain contains 177 non-empty texture spans,
 including the bounded type-0 windows at VDP1 VRAM `0x4fba0` (448 bytes) and
 `0x4c580` (1,952 bytes). Every one is an exact span of the word-swapped real
