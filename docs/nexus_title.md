@@ -170,9 +170,14 @@ including the bounded type-0 windows at VDP1 VRAM `0x4fba0` (448 bytes) and
 `LEV00.DGN` member read in memory from the supplied CUE; the JP member receipt
 is SHA-256 `24e3b3cdf2496b53f489df456d822ba85593a67325f90dd414c6af26bf683d9a`.
 The earlier title/menu/font/executable negative scan remains useful, but
-`LEV00.DGN` is now the VDP1 byte owner. This is still not native presentation
-permission: Structure2 material/CLUT semantics, transformed geometry, VDP1
-framebuffer composition, VDP2 priority and timing remain unbound.
+`LEV00.DGN` is now the VDP1 byte owner. A paired Structure2 material join also
+matches both image bytes and the 16-colour CLUT for 173 of those 177 draws.
+The remaining four commands (`0x00e60`, `0x00780`, `0x00880`, and `0x01380`)
+share texture source `0x4e1a0` and CLUT word `0xca00`; that captured CLUT is
+not an exact existing Structure2 palette record. Its producer or transform is
+therefore still unbound. This is not native presentation permission: transformed
+geometry, VDP1 framebuffer composition, VDP2 priority and timing also remain
+unbound.
 
 A paired 40-frame JP capture makes the input boundary explicit: Start/A
 pulses at emulated frames 13000, 13010 and 13020 produce a valid input receipt
