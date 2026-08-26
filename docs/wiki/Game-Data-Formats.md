@@ -1,8 +1,10 @@
 # Game-data formats
 
 Firestaff identifies original media by verified content rather than by a
-particular folder or filename. This page is the wiki summary; the complete,
-maintained record catalogue is the
+particular folder or filename. It reads archive members directly from the
+player-supplied container into bounded process memory; it does not extract or
+persist game data to a Firestaff-owned directory. This page is the wiki
+summary; the complete, maintained record catalogue is the
 [game-data format reference](https://github.com/yeager/firestaff/blob/main/docs/GAME_DATA_FORMATS.md).
 
 ## Format status

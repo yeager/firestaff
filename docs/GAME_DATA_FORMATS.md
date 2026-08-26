@@ -21,10 +21,11 @@ saves and firmware stay outside the repository.
 ## Common media handling
 
 Loose files, ZIP archives and supported disc-image containers can be scanned
-without relying on their paths. Archive-backed data is materialised into the
-local asset cache only after its member hashes identify a coherent edition.
-For the DAT-based games, `GRAPHICS.DAT` and `DUNGEON.DAT` form an edition pair;
-a recognised graphics file never authorises a dungeon from another release.
+without relying on their paths. Archive members are read directly from the
+supplied container into bounded process memory; Firestaff does **not** unpack
+or persist game-data members in a Firestaff-owned directory. For the DAT-based
+games, `GRAPHICS.DAT` and `DUNGEON.DAT` form an edition pair; a recognised
+graphics file never authorises a dungeon from another release.
 
 ## Dungeon Master and Chaos Strikes Back
 
