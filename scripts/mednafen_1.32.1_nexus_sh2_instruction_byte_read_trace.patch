@@ -11,7 +11,7 @@
   enum
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
-@@ -880,6 +880,34 @@
+@@ -880,6 +880,38 @@
   if((count & 0x3ffU) == 0) fflush(file);
  }
  
@@ -22,14 +22,18 @@
 + static unsigned count;
 + static unsigned limit = 100000;
 + static bool configured;
++ static uint32 required_pc;
 + const char *path = getenv("FIRESTAFF_NEXUS_TRACE_SH2_INSTRUCTION_BYTE_READS");
 + if(!configured)
 + {
++  const char *pc_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_PC");
 +  const char *limit_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_READ_LIMIT");
++  required_pc = pc_text && *pc_text ? strtoul(pc_text, NULL, 0) : 0;
 +  if(limit_text && *limit_text) limit = strtoul(limit_text, NULL, 10);
 +  configured = true;
 + }
-+ if(!path || !*path || count >= limit || which)
++ if(!path || !*path || count >= limit || which ||
++    (required_pc && pc != required_pc))
 +  return;
 + if(!file)
 + {
