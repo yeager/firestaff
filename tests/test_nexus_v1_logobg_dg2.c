@@ -36,6 +36,7 @@ static int test_reject_invalid(void) {
 static int test_logobg(void) {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
+    const char *root;
     char path[512];
     uint8_t *data;
     int size = 0;
@@ -44,8 +45,12 @@ static int test_logobg(void) {
     Nexus_V1_LogobgDg2DecodeResult r;
 
     if (data_dir && data_dir[0]) {
+        root = data_dir;
         snprintf(path, sizeof(path), "%s/LOGOBG.DG2", data_dir);
     } else if (home && home[0]) {
+        static char home_root[512];
+        snprintf(home_root, sizeof(home_root), "%s/.firestaff/data/nexus", home);
+        root = home_root;
         snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/LOGOBG.DG2", home);
     } else {
         printf("  SKIP (Nexus data root is unset)\n");
@@ -57,7 +62,7 @@ static int test_logobg(void) {
     if (!data) {
         /* A CUE/BIN-only installation is a first-class retail source. Read
          * its member in memory through the native engine; never extract it. */
-        if (nexus_v1_init(&engine, data_dir && data_dir[0] ? data_dir : path) != 0 ||
+        if (nexus_v1_init(&engine, root) != 0 ||
             engine.source != NEXUS_SRC_ISO ||
             nexus_v1_named_asset_source_receipt(&engine, "LOGOBG.DG2", &receipt) != 0 ||
             !receipt.exact_source_entry_observed || !receipt.canonical_hash_verified) {
