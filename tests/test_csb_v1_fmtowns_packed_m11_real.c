@@ -21,6 +21,14 @@ int main(void)
     spec.gameId = "csb";
     spec.sourceId = "csb";
     spec.dataDir = archive;
+    /* The launcher passes M12's authenticated edition identity with the
+     * selected archive.  English F31 has no separate boolean flag, so omit
+     * neither this identity nor the Japanese switch: otherwise M11 must
+     * correctly reject an arbitrary direct CSB ZIP instead of guessing its
+     * platform. */
+    spec.verifiedAssetMd5 = japanese
+        ? "761d6fc588b31aeaaa9caf3725e111b9"
+        : "405b757038eea3c263e60f240854d6de";
     spec.csbFmtownsJapanese = japanese;
     spec.rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
     spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
