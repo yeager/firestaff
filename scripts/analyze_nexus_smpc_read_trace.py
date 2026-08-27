@@ -33,7 +33,7 @@ LINE_V2 = re.compile(
     r"pid=0x(?P<pid>[0-9a-fA-F]{4}) "
     r"pc_if=0x(?P<pc_if>[0-9a-fA-F]{8}) "
     r"pif=0x(?P<pif>[0-9a-fA-F]{4}) "
-    r"rpc=0x(?P<rpc>[0-9a-fA-F]{8})$")
+    r"rpc=0x(?P<rpc>[0-9a-fA-F]{8})(?: r0=0x(?P<r0>[0-9a-fA-F]{8}) r3=0x(?P<r3>[0-9a-fA-F]{8}))?$")
 DM_SHA256 = "3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124"
 DM_BASE = 0x06010040
 SNAPSHOT_HEADER = b"FIRESTAFF_NEXUS_SH2_MEMORY_SNAPSHOT_V1\n"

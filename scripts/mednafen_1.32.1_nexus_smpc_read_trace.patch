@@ -5,7 +5,7 @@
  
   uint32 FirestaffGetSH2PC(unsigned which);
 + void FirestaffTraceSMPCRead(unsigned which, uint32 pc_id, uint32 pid,
-+  uint32 pc_if, uint32 pif, uint32 rpc, uint32 address, uint32 value);
++  uint32 pc_if, uint32 pif, uint32 rpc, uint32 r0, uint32 r3, uint32 address, uint32 value);
  
   void FirestaffTraceSH2SourceRead(uint32 address, uint32 value);
   void FirestaffTraceSH2RAMSourceWrite(uint32 address, unsigned size, uint32 value);
@@ -17,7 +17,7 @@
  }
 +
 +void FirestaffTraceSMPCRead(unsigned which, uint32 pc_id, uint32 pid,
-+ uint32 pc_if, uint32 pif, uint32 rpc, uint32 address, uint32 value)
++ uint32 pc_if, uint32 pif, uint32 rpc, uint32 r0, uint32 r3, uint32 address, uint32 value)
 +{
 + static FILE *file;
 + static unsigned count;
@@ -46,10 +46,10 @@
 +  if(!file) return;
 +  fputs("FIRESTAFF_NEXUS_SMPC_READ_TRACE_V2\n", file);
 + }
-+ fprintf(file, "frame=%llu cpu=%u smpc=0x%02x value=0x%02x pc_id=0x%08x pid=0x%04x pc_if=0x%08x pif=0x%04x rpc=0x%08x\n",
++ fprintf(file, "frame=%llu cpu=%u smpc=0x%02x value=0x%02x pc_id=0x%08x pid=0x%04x pc_if=0x%08x pif=0x%04x rpc=0x%08x r0=0x%08x r3=0x%08x\n",
 +  (unsigned long long)frame, which & 1U, (unsigned)address, (unsigned)value,
 +  (unsigned)pc_id, (unsigned)(pid & 0xFFFF), (unsigned)pc_if,
-+  (unsigned)(pif & 0xFFFF), (unsigned)rpc);
++  (unsigned)(pif & 0xFFFF), (unsigned)rpc, (unsigned)r0, (unsigned)r3);
 + count++;
 + if((count & 0x3ffU) == 0) fflush(file);
 +}
@@ -66,7 +66,8 @@
 +  FirestaffTraceSMPCRead(this == &CPU[0] ? 0 : 1,
 +   GetRegister(GSREG_PC_ID, NULL, 0), GetRegister(GSREG_PID, NULL, 0),
 +   GetRegister(GSREG_PC_IF, NULL, 0), GetRegister(GSREG_PIF, NULL, 0),
-+   GetRegister(GSREG_RPC, NULL, 0), (A & 0x7F) >> 1, ret & 0xFF);
++   GetRegister(GSREG_RPC, NULL, 0), GetRegister(GSREG_R0, NULL, 0),
++   GetRegister(GSREG_R3, NULL, 0), (A & 0x7F) >> 1, ret & 0xFF);
 +
   return ret;
  }
