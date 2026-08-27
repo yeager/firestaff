@@ -157,28 +157,17 @@ enum { CSB_V1_RUNTIME_MAX_ORIGINAL_ATARI_SAVE_BYTES = 4 * 1024 * 1024 };
 static int csb_v1_runtime_read_original_atari_save_file(
     const char *path, uint8_t **out_bytes, size_t *out_size)
 {
-    FILE *fp;
-    long length;
     uint8_t *bytes;
+    size_t length = 0u;
 
     if (!path || !out_bytes || !out_size) return 0;
     *out_bytes = NULL;
     *out_size = 0u;
-    fp = fopen(path, "rb");
-    if (!fp) return 0;
-    if (fseek(fp, 0L, SEEK_END) != 0 || (length = ftell(fp)) <= 0 ||
-        (size_t)length > CSB_V1_RUNTIME_MAX_ORIGINAL_ATARI_SAVE_BYTES ||
-        fseek(fp, 0L, SEEK_SET) != 0) {
-        fclose(fp);
-        return 0;
-    }
-    bytes = (uint8_t *)malloc((size_t)length);
-    if (!bytes || fread(bytes, 1u, (size_t)length, fp) != (size_t)length) {
-        fclose(fp);
-        free(bytes);
-        return 0;
-    }
-    if (fclose(fp) != 0) {
+    /* MINI.DAT can be retained as archive::member.  The generic reader
+     * performs bounded in-memory decoding for both loose and virtual media,
+     * preserving the original save locator instead of staging a disk copy. */
+    if (!asset_read_path_alloc(path, &bytes, &length) || length == 0u ||
+        length > CSB_V1_RUNTIME_MAX_ORIGINAL_ATARI_SAVE_BYTES) {
         free(bytes);
         return 0;
     }

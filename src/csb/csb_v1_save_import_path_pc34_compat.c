@@ -12,10 +12,12 @@
  * the container layout.
  */
 #include "csb_v1_save_import_path_pc34_compat.h"
+#include "asset_find_by_hash.h"
 
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 
 /* ── Little-endian readers/writers ────────────────────────── */
 static unsigned int rd_u32(const unsigned char* p) {
@@ -252,29 +254,23 @@ int csb_v1_import_csb_save_buffer(CSB_V1_PartyState* party,
 /* ── File importer ────────────────────────────────────────── */
 int csb_v1_import_csb_save_file(CSB_V1_PartyState* party,
                                 const char* path) {
-    FILE* f;
     unsigned char* buf;
-    long size;
+    size_t size;
     int rc;
 
     if (!party || !path) return CSB_SAVE_IMPORT_ERR_NULL;
-    f = fopen(path, "rb");
-    if (!f) return CSB_SAVE_IMPORT_ERR_IO;
-
-    if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return CSB_SAVE_IMPORT_ERR_IO; }
-    size = ftell(f);
-    if (size < 0) { fclose(f); return CSB_SAVE_IMPORT_ERR_IO; }
-    if (fseek(f, 0, SEEK_SET) != 0) { fclose(f); return CSB_SAVE_IMPORT_ERR_IO; }
-
-    buf = (unsigned char*)malloc((size_t)(size > 0 ? size : 1));
-    if (!buf) { fclose(f); return CSB_SAVE_IMPORT_ERR_IO; }
-    if (fread(buf, 1, (size_t)size, f) != (size_t)size) {
-        free(buf); fclose(f);
+    /* A selected original save may be an archive member.  Read it through
+     * the common bounded media path so archive::member is decoded in RAM;
+     * no compatibility importer is allowed to create a loose game-data copy.
+     */
+    if (!asset_read_path_alloc(path, &buf, &size)) {
         return CSB_SAVE_IMPORT_ERR_IO;
     }
-    fclose(f);
-
-    rc = csb_v1_import_csb_save_buffer(party, buf, size);
+    if (size > (size_t)LONG_MAX) {
+        free(buf);
+        return CSB_SAVE_IMPORT_ERR_IO;
+    }
+    rc = csb_v1_import_csb_save_buffer(party, buf, (long)size);
     free(buf);
     return rc;
 }

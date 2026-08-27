@@ -376,6 +376,20 @@ int main(void) {
                   == CSB_SAVE_IMPORT_ERR_NULL, "NULL buf -> ERR_NULL");
     }
 
+    /* A real Atari STX member is deliberately not a CSBGAME roster, but it
+     * must still cross the virtual archive reader and reach content
+     * validation.  This opt-in check proves archive::member is no longer
+     * rejected by fopen before the source-format gate sees its bytes. */
+    {
+        const char *real_member = getenv("FIRESTAFF_CSB_REAL_VIRTUAL_MEMBER");
+        if (real_member && real_member[0]) {
+            CSB_V1_PartyState party;
+            CHECK(csb_v1_import_csb_save_file(&party, real_member)
+                      == CSB_SAVE_IMPORT_ERR_BAD_MAGIC,
+                  "real virtual Atari member reaches CSB format gate");
+        }
+    }
+
     printf("\n=== Summary: %d passed, %d failed ===\n", g_pass, g_fail);
     return g_fail == 0 ? 0 : 1;
 }
