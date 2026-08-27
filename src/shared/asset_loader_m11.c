@@ -42,6 +42,28 @@ int M11_AssetLoader_Init(M11_AssetLoader* loader, const char* graphicsDatPath) {
     if (!loader || !graphicsDatPath || graphicsDatPath[0] == '\0') {
         return 0;
     }
+    /* A scanner may hand us a verified archive member.  The legacy
+     * F0477 file-state path deliberately models a seekable FILE*, whereas
+     * the matching FromBuffer initialization path owns identical source
+     * bytes in RAM.  Use that path for virtual members; never extract an
+     * archive member to disk just to make it seekable. */
+    if (strstr(graphicsDatPath, "::")) {
+        uint8_t* data = NULL;
+        size_t byteCount = 0u;
+        int ok;
+        if (!asset_read_path_alloc(graphicsDatPath, &data, &byteCount) ||
+            !data || byteCount == 0u || byteCount > (size_t)LONG_MAX) {
+            free(data);
+            return 0;
+        }
+        ok = M11_AssetLoader_InitFromBuffer(loader, data, (long)byteCount);
+        free(data);
+        if (ok) {
+            snprintf(loader->graphicsDatPath, sizeof(loader->graphicsDatPath),
+                     "%s", graphicsDatPath);
+        }
+        return ok;
+    }
     memset(loader, 0, sizeof(*loader));
     snprintf(loader->graphicsDatPath, sizeof(loader->graphicsDatPath), "%s", graphicsDatPath);
 
