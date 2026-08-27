@@ -5,6 +5,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <limits.h>
+#ifdef _WIN32
+#define strcasecmp _stricmp
+#endif
 
 static void nexus_sound_free_decoded(Nexus_SoundEngine *eng);
 
@@ -1168,9 +1171,14 @@ static void nexus_cd_bind_source(Nexus_SoundEngine *eng, int track_number) {
     eng->cd_source_path[0] = '\0';
     eng->cd_source_bound = 0;
     if (eng->cue_path[0] &&
-        nexus_iso_cue_audio_track_path(eng->cue_path, track_number,
-                                       eng->cd_source_path,
-                                       (int)sizeof(eng->cd_source_path)) == 0) {
+        ((strlen(eng->cue_path) >= 4U &&
+          strcasecmp(eng->cue_path + strlen(eng->cue_path) - 4U, ".zip") == 0)
+             ? nexus_iso_zip_cue_audio_track_path(
+                   eng->cue_path, track_number, eng->cd_source_path,
+                   (int)sizeof(eng->cd_source_path))
+             : nexus_iso_cue_audio_track_path(
+                   eng->cue_path, track_number, eng->cd_source_path,
+                   (int)sizeof(eng->cd_source_path))) == 0) {
         eng->cd_source_bound = 1;
     }
 }
@@ -1197,7 +1205,7 @@ int nexus_sound_cd_track(Nexus_SoundEngine *eng, int track_number) {
         }
     }
     printf("Nexus music: CD track %d retained as selection-only; "
-           "Saturn CDDA handoff is not source-bound\n", track_number);
+           "native CDDA playback remains unadmitted\n", track_number);
     return 0;
 }
 

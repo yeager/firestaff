@@ -1,5 +1,6 @@
 
 #include "nexus_v1_iso_reader.h"
+#include "firestaff_zip_extract.h"
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -523,6 +524,83 @@ int nexus_iso_cue_audio_track_path(const char *cue_path,
     fclose(cue);
     if (matches != 1) out_path[0] = '\0';
     return matches == 1 ? 0 : -1;
+}
+
+static int nexus_iso_cue_audio_track_name(const uint8_t *cue,
+                                          size_t cue_size,
+                                          int track_number,
+                                          char out_name[256])
+{
+    size_t offset = 0U;
+    char current_file[256];
+    int matches = 0;
+
+    if (!cue || cue_size == 0U || !out_name || track_number < 1 ||
+        track_number > 99) return -1;
+    out_name[0] = '\0';
+    current_file[0] = '\0';
+    while (offset < cue_size) {
+        char line[512];
+        size_t line_size = 0U;
+        char keyword[16];
+        char mode[32];
+        int declared_track;
+
+        while (offset + line_size < cue_size && cue[offset + line_size] != '\n' &&
+               line_size + 1U < sizeof(line)) ++line_size;
+        if (offset + line_size < cue_size && cue[offset + line_size] != '\n') {
+            while (offset < cue_size && cue[offset] != '\n') ++offset;
+            if (offset < cue_size) ++offset;
+            continue;
+        }
+        memcpy(line, cue + offset, line_size);
+        line[line_size] = '\0';
+        offset += line_size;
+        if (offset < cue_size && cue[offset] == '\n') ++offset;
+        if (cue_file_name(line, current_file)) continue;
+        if (!current_file[0] ||
+            sscanf(line, " %15s %d %31s", keyword, &declared_track, mode) != 3 ||
+            strcasecmp(keyword, "TRACK") != 0 || declared_track != track_number ||
+            strcasecmp(mode, "AUDIO") != 0) continue;
+        if (++matches != 1) {
+            out_name[0] = '\0';
+            return -1;
+        }
+        memcpy(out_name, current_file, strlen(current_file) + 1U);
+    }
+    if (matches != 1) out_name[0] = '\0';
+    return matches == 1 ? 0 : -1;
+}
+
+int nexus_iso_zip_cue_audio_track_path(const char *zip_path,
+                                       int track_number,
+                                       char *out_path,
+                                       int out_path_size)
+{
+    uint8_t *cue = NULL;
+    uint8_t *payload = NULL;
+    size_t cue_size = 0U;
+    size_t payload_size = 0U;
+    char member_name[256];
+    int result = -1;
+
+    if (!zip_path || !zip_path[0] || !out_path || out_path_size <= 1) return -1;
+    out_path[0] = '\0';
+    if (firestaff_zip_extract_by_suffix(zip_path, ".cue", &cue, &cue_size) != 0 ||
+        nexus_iso_cue_audio_track_name(cue, cue_size, track_number,
+                                       member_name) != 0 ||
+        firestaff_zip_extract_by_name(zip_path, member_name, &payload,
+                                      &payload_size) != 0 || payload_size == 0U ||
+        snprintf(out_path, (size_t)out_path_size, "%s::%s", zip_path,
+                 member_name) >= out_path_size) {
+        goto done;
+    }
+    result = 0;
+done:
+    free(cue);
+    free(payload);
+    if (result != 0) out_path[0] = '\0';
+    return result;
 }
 
 const Nexus_ISOFile *nexus_iso_find(const Nexus_ISOReader *reader, const char *name) {

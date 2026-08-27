@@ -8,8 +8,12 @@ fi
 
 root="${FIRESTAFF_NEXUS_DATA_DIR:-$HOME/.firestaff/data/nexus}"
 cue="$root/Dungeon Master Nexus (Japan).cue"
+zip="$root/Dungeon-Master-Nexus_SEGA-Saturn_JA.zip"
 if [ ! -f "$cue" ]; then
     echo "SKIP: authentic Nexus Japanese CUE is unavailable" >&2
     exit 77
+fi
+if [ -f "$zip" ]; then
+    FIRESTAFF_NEXUS_DATA_DIR="$root" FIRESTAFF_NEXUS_ZIP="$zip" exec "$1"
 fi
 FIRESTAFF_NEXUS_DATA_DIR="$root" exec "$1"

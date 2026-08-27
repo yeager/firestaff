@@ -108,6 +108,12 @@ sheet opens that exact payload as its Nexus ISO track. The native engine then
 receives the CUE, preserving authored CDDA declarations without extraction.
 Zero or multiple owners fail closed rather than selecting a filename guess.
 
+The identical no-extraction provenance rule now covers the original ZIP:
+when its internal CUE declares Tracks 2--9, each selection resolves to an
+explicit `archive.zip::Track N.bin` member only after that member has been
+validated in the archive. This is a CDDA source receipt, not host playback or
+a replacement for the still-unbound Saturn CDDA selector/decoder.
+
 The external checkout was tested against
 `/Volumes/Extern-disk/FirestaffUserData/data/nexus`: all 304 registered Nexus
 CTest cases completed successfully. Fourteen tests remain intentionally

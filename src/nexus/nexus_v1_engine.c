@@ -3474,7 +3474,8 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     /* Init sound engine */
     nexus_sound_init(&engine->audio);
     nexus_sound_set_data_root(&engine->audio, data_dir);
-    if (nexus_path_is_file(data_dir) && nexus_path_has_ext(data_dir, ".cue")) {
+    if (nexus_path_is_file(data_dir) &&
+        (nexus_path_has_ext(data_dir, ".cue") || nexus_path_has_ext(data_dir, ".zip"))) {
         /* Keep original Red Book payload identity attached to this native
          * CUE route.  The sound engine still has no PCM decoder/callback
          * admission, so this cannot promote host playback. */

@@ -74,6 +74,14 @@ int nexus_iso_cue_audio_track_path(const char *cue_path,
                                    char *out_path,
                                    int out_path_size);
 
+/* Resolve a declared AUDIO track from a CUE stored inside its original ZIP.
+ * The returned ``archive.zip::member.bin`` is provenance only: it names the
+ * validated archive member and never materializes it to disk. */
+int nexus_iso_zip_cue_audio_track_path(const char *zip_path,
+                                       int track_number,
+                                       char *out_path,
+                                       int out_path_size);
+
 /* Find a file by name (case-insensitive) */
 const Nexus_ISOFile *nexus_iso_find(const Nexus_ISOReader *reader, const char *name);
 
