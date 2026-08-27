@@ -214,6 +214,16 @@ one-frame input schedule is not evidence of a title-to-menu/start transition;
 Firestaff keeps the title-input contract blocked rather than treating an
 injected button or a timeout as a successful start.
 
+A later Japanese session was also bounded at frames 18,000--18,179, where
+earlier European reference work had observed active gameplay. It contains 180
+non-idle VDP1 frames, 60 consecutive Start polls (`0x10`) followed by 60 A
+polls (`0x20`), and raw SHA-256
+`a35883ae4558f6cfcfbb90e818f3e0a1fe2f7ec9fff6008554c95803c9e1e44a`.
+The NBG0 bytes and VDP2 register signature remain identical in every captured
+frame. This is a real, region-matched negative result for that Start→A
+schedule, not evidence that Japanese and European timing are interchangeable
+or that a native transition can be inferred.
+
 That source boundary is now partially closed: the PC-tagged observed route reads the
 bounded SH-2 range `0x060ac2a7`–`0x060b3e26`, and the same retail session's
 CD-labelled RAM trace binds 7,904 four-byte writes in that range to
