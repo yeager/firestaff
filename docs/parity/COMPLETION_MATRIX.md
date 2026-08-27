@@ -18,10 +18,10 @@ number of hashes or presented as 41 separately verified ports.
 |---|---:|---:|---:|---|
 | DM1 | 2 | 16 | 64.5% | PC 3.4 is the source-locked playable route; other profiles are catalogued/admitted where their data gates pass. |
 | CSB | 2 | 9 | 38.5% | Shared CSB runtime slices; edition-specific launch/data boundaries are not full parity proof. |
-| DM2 | 2 | 7 | 26.0% | PC/FM Towns/Amiga/PC-98 profiles are recognised, but V1 live parity remains open. |
+| DM2 | 2 | 7 | 28.0% | PC/FM Towns/Amiga/PC-98 profiles are recognised; authentic DOS, Amiga, FM Towns and Mac V1 start paths are verified, but live parity remains open. |
 | DM Nexus | 2 | 5 | 28.5% | Saturn JP/extracted, V2, English fan and French fan profiles share the capture-gated Nexus route. |
 | Theron's Quest | 1 | 4 | 72.0% | JP/US Track 02 identities include BIN/ISO forms; positive full-media launch remains open. |
-| **Total** | **9** | **41** | **43.0%** | Unweighted mean of the 9 runtime targets: 387/900. |
+| **Total** | **9** | **41** | **43.4%** | Unweighted mean of the 9 runtime targets: 391/900. |
 
 The tempting alternative, 57.6%, is the version-weighted mean obtained by
 copying each family score onto every recognised profile. That number is not a
@@ -55,7 +55,7 @@ composition and SLEV/SAL/SDDRVS playback remain blocked.
 | DM1 V2 | 51% | 51/100 | `runtime_presentation_verified_partial` | V2.0/V2.1 runtime presentation smoke exists, but finished V2.2 real-art material/pixel gates and original-pairing evidence remain open. |
 | CSB V1 | 46% | 46/100 | `runtime_boundary_verified_partial` | CSB has authentic native startup/runtime/movement and start-menu evidence on Atari ST, Amiga and FM Towns, plus launch/profile, save, dungeon, command-chain, utility/import, and viewport source-slice gates. End-to-end gameplay/render capture proof is still being hardened. |
 | CSB V2 | 31% | 31/100 | `presentation_verified_partial` | CSB V2 HUD/filter/smooth-movement probes are wired, but real CSB V1 gameplay parity and modern-art per-cell material proof remain open. |
-| DM2 V1 | 36% | 36/100 | `runtime_slices_verified_partial` | Door/button, projectile, creature, minimap, weather/timer, save-adjacent slices, combat damage pipeline, and movement execution chain exist; V1 dungeon/render/mechanics parity and real-asset runtime proof remain active work. |
+| DM2 V1 | 40% | 40/100 | `runtime_slices_verified_partial` | Authentic DOS, Amiga, FM Towns and Mac startup/runtime evidence joins door/button, projectile, creature, minimap, weather/timer, save-adjacent slices, combat damage pipeline, and movement execution chain. V1 dungeon/render/mechanics parity remains active work. |
 | DM2 V2 | 16% | 16/100 | `presentation_scaffold_partial` | V2 presentation scaffolds exist, but V1 parity base and finished V2 proof are not complete. |
 | DM Nexus V1 | 37% | 37/100 | `runtime_slices_verified_partial` | DMDF/DGN/data, BPK/BPX, font, save, and mechanics slices exist; real-asset end-to-end handoff and screen capture proof remain active work. |
 | DM Nexus V2 | 20% | 20/100 | `presentation_scaffold_partial` | V2 lighting/touch/upscale/presentation probes exist, but real V1 runtime coverage and V2 material proof remain incomplete. |
@@ -71,7 +71,7 @@ This refresh incorporates the post-2026-05-09 work now present on `origin/main`,
 | DM1 V2 | Runtime presentation smoke for V2.0/V2.1; source-route and side-by-side seed gates; HUD overlay/interaction gates; lighting/effects/field projectile VFX gates; selected-resolution and 4K input mapping; per-mode material-signature and renderer readback probes. |
 | CSB V1 | Authentic native Atari STX and nested-ZIP, Amiga ADF-archive, and English/Japanese FM Towns-CD startup paths now prove title → runtime → first movement plus start-menu handoff; CSB save runtime boundary; command-chain/input/runtime tick slices; dungeon header/loader/world gates; utility/CMP import; DSA trigger; save import path; viewport source-lock slices and CustomBackgrounds coverage; hidden-code skip tables. |
 | CSB V2 | HUD overlay probe, smooth movement/runtime binding, phase-gate verification, filter config/chain/dispatch, texture upscale, V2.2 shape probes, and CTest registration of previously build-only probes. |
-| DM2 V1 | Door/button toggle boundary; minimap level-transition/save-load gate; weather/timer save round-trip; projectile-vs-creature collision; creature death/drop observer; pressure plate and trigger gates; focused combat/shop probes. |
+| DM2 V1 | Authentic DOS MVE → SKULL → New Game CLI, Amiga title/runtime, FM Towns title/New Game/champion/runtime, and Mac retail boot; door/button toggle boundary; minimap level-transition/save-load gate; weather/timer save round-trip; projectile-vs-creature collision; creature death/drop observer; pressure plate and trigger gates; focused combat/shop probes. |
 | Nexus V1 | DMDF palette/string bounds, DGN malformed actor guard, BPK/BPX archive boundaries, Saturn font parse/render determinism, save-slot round-trip, mechanics parity slices, and renderer/data loader probes. |
 | Theron V1 | Track 02 bank/object marker, save/progress round-trip, shop purchase edges, launcher scan reuse, mechanics/champion/progression probes, and runtime screenshot-readiness manifests. |
 | Cross-cutting | Nested ZIP deflate cache materialization, ISO/BIN case-insensitive duplicate-hash scanning, M12 no-data/data-dir cache gates, 19-language launcher and game-domain l10n layout validation, and Tier 1 strict boot coverage. |
@@ -136,7 +136,7 @@ This refresh incorporates the post-2026-05-09 work now present on `origin/main`,
 |---|---:|---|
 | `reference_inventory` | 8/10 | DM2 PC/French/German/Mac data inventories and SKULL.ASM/source references exist; no ReDMCSB C equivalent. |
 | `definition_matrix` | 4/10 | DM2 V1 does not yet have a complete parity matrix, but multiple scoped parity gates now define runtime boundaries. |
-| `launch_smoke` | 4/10 | Asset scanner/profile coverage and required-file launch gating exist; full runtime launch proof is still active work. |
+| `launch_smoke` | 8/10 | Authentic DOS MVE → SKULL → New Game CLI, Amiga title/runtime, FM Towns title/New Game/champion/runtime, and Mac retail boot run from in-memory user archives. Asset scanner/profile coverage and required-file launch gating remain covered; wider release/platform runtime proof is still open. |
 | `core_input_movement` | 3/15 | Movement plan/exec chain with door attack, creature push/classification, stair level change, and teleporter resolution implemented; core runtime wiring remains incomplete. |
 | `viewport_ui_render` | 3/20 | HUD/minimap/presentation-adjacent gates exist; V1 renderer parity remains open. |
 | `gameplay_systems` | 13/15 | Door/button, pressure/trigger, projectile, creature collision/death/drop, weather/timer save, world-state/minimap, shop/combat slices, save-adjacent gates, and skproject combat damage pipeline (CALC_PLAYER_ATTACK_DAMAGE, WOUND_PLAYER, ATTACK_PARTY) are covered. |

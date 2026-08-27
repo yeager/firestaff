@@ -94,6 +94,15 @@ spelsystemsparitet.
 gate-fixtures. De får inte ersätta den riktiga DM2-GDAT-källan eller presenteras
 som färdig Skullkeep-grafik.
 
+**Native startmatris (verifierad 2026-08-27):** autentiska DOS-, Amiga-, FM
+Towns- och Macintosh-ZIP:ar läses i minnet. DOS följer IBMIOP:s verkliga MVE
+till SKULL och New Game; Amiga följer sin TITLE-ström till runtime; FM Towns
+följer AUTOEXEC/TWANIM till GDAT:s New Game-rektangel och den källägda
+championsvalsklickningen; Mac startar den verifierade retailprofilen. DM2 DOS
+MVE kan dessutom verifieras headless med source-ordnade presentationsframes i
+`dm2_v1_dos_native_cli_boot`. Detta är start-/runtimebevis, inte full
+paritet för saves, rendering, AI eller audio.
+
 ## CSB
 
 ### Saknad originaldata eller evidens
