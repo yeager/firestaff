@@ -459,7 +459,9 @@ int csb_v1_fmtowns_cdda_extract(const uint8_t *bin_data, size_t bin_size,
 
     if (!bin_data || !track || !out_buf) return -1;
 
+    if ((size_t)track->start_sector > SIZE_MAX / RAW) return -1;
     start = (size_t)track->start_sector * RAW;
+    if (start >= bin_size) return -1;
     if (track->sector_count == 0u) {
         /* A CUE only gives each track's INDEX 01.  The final audio track has
          * no following index from which to derive its duration, so its
@@ -467,13 +469,15 @@ int csb_v1_fmtowns_cdda_extract(const uint8_t *bin_data, size_t bin_size,
          * CSB FM Towns image is one raw 2352-byte stream; for that final
          * record, the authentic end marker is the physical image end, not a
          * guessed duration or a dropped track. */
-        if (start >= bin_size || (bin_size % RAW) != 0u) return -1;
+        if ((bin_size % RAW) != 0u) return -1;
         length = bin_size - start;
     } else {
+        if ((size_t)track->sector_count > (bin_size - start) / RAW)
+            return -1;
         length = (size_t)track->sector_count * RAW;
     }
 
-    if (length == 0 || start + length > bin_size ||
+    if (length == 0 || start > bin_size || length > bin_size - start ||
         length > out_buf_size) return -1;
 
     memcpy(out_buf, bin_data + start, length);

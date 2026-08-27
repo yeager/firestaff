@@ -329,9 +329,16 @@ int dm2_v1_fmtowns_cdda_extract(const uint8_t *image, size_t image_size,
     *out_pcm_size = 0;
     if (!image || sector_count == 0) return -1;
 
+    if ((size_t)start_sector > SIZE_MAX / DM2_FMTOWNS_SECTOR_SIZE)
+        return -1;
     byte_offset = (size_t)start_sector * DM2_FMTOWNS_SECTOR_SIZE;
-    byte_count  = (size_t)sector_count * DM2_FMTOWNS_SECTOR_SIZE;
-    if (byte_offset + byte_count > image_size) return -1;
+    if (byte_offset > image_size ||
+        (size_t)sector_count >
+            (image_size - byte_offset) / DM2_FMTOWNS_SECTOR_SIZE)
+        return -1;
+    byte_count = (size_t)sector_count * DM2_FMTOWNS_SECTOR_SIZE;
+    if (byte_count == 0U || byte_count > image_size - byte_offset)
+        return -1;
 
     buf = malloc(byte_count);
     if (!buf) return -1;
