@@ -1,0 +1,40 @@
+#!/usr/bin/env sh
+set -eu
+
+app=${1:?usage: test_dm2_v1_dos_sksave_archive_menu_resume_matrix.sh <firestaff>}
+archive=${FIRESTAFF_DM2_DOS_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"}
+
+if [ ! -x "$app" ] || [ ! -f "$archive" ]; then
+    echo 'SKIP: authentic DM2 DOS archive is not staged'
+    exit 77
+fi
+
+# Original slots and backups are intentionally distinct evidence.  The values
+# below are observed source positions from the mounted retail archive, not a
+# generated save fixture.  Every iteration asks the normal menu to publish
+# archive::member through the source GAME_LOAD owner.
+while IFS='|' read -r member map party; do
+    [ -n "$member" ] || continue
+    save_path="$archive::$member"
+    output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --menu --game dm2 --platform pc --data-dir "$archive" --save "$save_path" \
+        --boot-probe --boot-probe-frames 5000 \
+        --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+        --boot-probe-expect-map "$map" --boot-probe-expect-party "$party" \
+        --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
+    case "$output" in
+        *'assetMd5=25247ede4dabb6a71e5dabdfbcd5907d'*'phase=dm2-runtime'*"map=$map"*"party=$party"*'startedFromLauncher=1'*) ;;
+        *) printf '%s\n' "$output" >&2; exit 1 ;;
+    esac
+done <<'EOF'
+data/sksave0.dat|11|15,2,3
+data/sksave0.bak|11|15,3,0
+data/sksave1.dat|11|15,10,2
+data/sksave1.bak|11|15,10,2
+data/sksave2.dat|24|4,3,1
+data/sksave2.bak|8|13,10,1
+data/sksave3.dat|8|8,21,0
+data/sksave3.bak|8|8,21,0
+EOF
+
+echo 'PASS: native DM2 DOS ZIP start menu resumes every archive::SKSAVE slot in memory'

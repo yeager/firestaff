@@ -73,6 +73,11 @@ the DOS menu receives `archive.zip::data/sksave1.dat`, retains it in RAM, and
 must publish its authenticated map 11 / party 15,10,2 session. It does not
 write or unpack the original archive.
 
+`dm2_v1_dos_sksave_archive_menu_resume_matrix` applies that same read-only
+menu route to all four supplied DOS slots and their backups. It asserts the
+distinct original map/position receipts for all eight members, preventing a
+fallback to one synthesized default save state.
+
 ## Remaining blockers to playable parity
 
 The following are deliberately unavailable rather than replaced with
