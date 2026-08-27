@@ -14,7 +14,7 @@ fi
 # GAME_LOAD owner all the way through the first input, rather than borrowing
 # an English startup path.
 output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --game dm2 --platform pc --data-dir "$archive" --boot-probe \
+    --menu --game dm2 --platform pc --data-dir "$archive" --boot-probe \
     --boot-probe-frames 5000 --script 'key:enter,up' \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
     --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
@@ -23,4 +23,4 @@ case "$output" in
     *'assetMd5=b4d733576ea60c41737f79f212faf528'*'phase=dm2-runtime'*'levelLoaded=1'*'party=1,7,0'*) ;;
     *) printf '%s\n' "$output" >&2; exit 1 ;;
 esac
-echo 'PASS: native DM2 French DOS ZIP reaches runtime and moves in memory'
+echo 'PASS: native DM2 French DOS ZIP start menu reaches runtime and moves in memory'
