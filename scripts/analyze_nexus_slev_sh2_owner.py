@@ -14,6 +14,8 @@ import hashlib
 import runpy
 from pathlib import Path
 
+from analyze_nexus_title_vdp2_source import cue_track1, iso_members_in_memory
+
 
 LEVEL_COUNT = 16
 HEADER_BYTES = 36
@@ -72,20 +74,36 @@ def scan(data: bytes) -> dict[str, object]:
     }
 
 
+def read_corpus(data_dir: Path | None, cue: Path | None) -> dict[str, bytes]:
+    """Read the authenticated SLEV corpus without extracting a retail disc."""
+    names = {f"SLEV{level:02d}.BIN" for level in range(LEVEL_COUNT)}
+    if cue is not None:
+        return iso_members_in_memory(cue_track1(cue), names)
+    if data_dir is None:
+        raise ValueError("either --data-dir or --cue is required")
+    return {name: (data_dir / name).read_bytes() for name in names}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("data_dir", type=Path)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--data-dir", type=Path)
+    source.add_argument("--cue", type=Path,
+                        help="retail CUE; requested ISO members stay in memory")
     args = parser.parse_args()
     fixture = Path(__file__).parent / "fixtures" / "nexus_v1_disc_file_hashes.py"
     expected = runpy.run_path(str(fixture))["DISC_HASH"]
+    try:
+        corpus = read_corpus(args.data_dir, args.cue)
+    except (OSError, ValueError) as exc:
+        raise SystemExit(f"SLEV_CORPUS_INVALID: {exc}") from exc
     total_bytes = 0
     total_rts = total_jsr = total_branches = total_stores = total_pc_loads = 0
     total_immediates = 0
     hardware_rows = 0
     for level in range(LEVEL_COUNT):
         name = f"SLEV{level:02d}.BIN"
-        path = args.data_dir / name
-        data = path.read_bytes()
+        data = corpus[name]
         digest = hashlib.sha256(data).hexdigest()
         if digest != expected[name]:
             raise SystemExit(f"{name}: SHA-256 mismatch: {digest}")

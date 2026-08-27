@@ -902,6 +902,15 @@ corridors. The scan is source evidence only; the task body remains opaque and
 cannot authorize event dispatch, selector order, callback writes or sound
 playback.
 
+It accepts the original Track 1 CUE directly as well as a loose corpus. For
+example, this reads all sixteen requested ISO members in memory, validates
+their recorded hashes, and never extracts them:
+
+```sh
+python3 scripts/analyze_nexus_slev_sh2_owner.py \
+  --cue "$HOME/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue"
+```
+
 When a later frame contains a texture command, the same tool reports its
 bounded `SRCa`-derived VRAM byte span and SHA-256. That span is the join key
 for a future source-owned capture; it is not permission to reinterpret the
