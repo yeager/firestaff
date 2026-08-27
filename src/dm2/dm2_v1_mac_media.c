@@ -1,4 +1,5 @@
 #include "dm2_v1_mac_media.h"
+#include "firestaff_fmtowns_disc.h"
 #include "firestaff_zip_extract.h"
 
 #include <stdlib.h>
@@ -461,8 +462,9 @@ static int read_demo_from_installer(const uint8_t *installer, size_t installer_s
 }
 
 int dm2_v1_mac_media_read_zip(const char *zip_path, DM2_V1_MacMedia *out) {
-    uint8_t *image = NULL, *cat = NULL;
-    size_t image_size = 0, cat_size;
+    uint8_t *image = NULL, *cat = NULL, *cue = NULL;
+    size_t image_size = 0, cue_size = 0, cat_size;
+    char image_member[512];
     MacDisk disk;
     uint32_t alloc_size, catalog_size, file_size;
     uint16_t alloc_start, cat_start;
@@ -471,7 +473,18 @@ int dm2_v1_mac_media_read_zip(const char *zip_path, DM2_V1_MacMedia *out) {
     int rc = -1;
     if (!zip_path || !out) return -1;
     memset(out, 0, sizeof(*out));
-    if (firestaff_zip_extract_by_suffix(zip_path, ".bin", &image, &image_size) != 0) return -1;
+    /* The original CUE owns the data-image name.  A multi-track archive can
+     * contain several BINs, so selecting the first suffix match would make
+     * the HFS reader depend on ZIP member order rather than source media. */
+    if (firestaff_zip_extract_by_suffix(zip_path, ".cue", &cue, &cue_size) != 0 ||
+        !fmtowns_cue_parse_image_member((const char *)cue, cue_size,
+                                        image_member, sizeof(image_member)) ||
+        firestaff_zip_extract_by_name(zip_path, image_member, &image,
+                                      &image_size) != 0) {
+        free(cue);
+        return -1;
+    }
+    free(cue);
     if (locate_hfs(image, image_size, &disk, &alloc_size, &alloc_start,
                    &catalog_size, &cat_start) != 0) goto done;
     cat_size = catalog_size;
