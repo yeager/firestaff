@@ -164,6 +164,11 @@ byte-for-byte at frames 2250, 2500, 2750, and 3000. The long intro window is
 therefore not a valid substitute for a title-menu receipt; the next capture
 must target a distinct input-ready state.
 
+The no-input timeline remains title-composed at frames 8000 and 10000, then
+becomes a completely black 704x480 PPM at frame 12000 (one RGB value across
+all 337,920 pixels). This observed blanking boundary is not a menu or gameplay
+transition, so it cannot supply a native startup route or a pose witness.
+
 ## Japanese retail start-pose disassembly audit — 2026-08-27
 
 The Japanese CUE data track was read in place and the authenticated `DM.BIN`
