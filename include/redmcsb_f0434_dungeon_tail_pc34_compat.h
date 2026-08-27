@@ -11,7 +11,8 @@
  *
  * F0434 reads the caller-admitted DUNGEON_HEADER, MAP, column, square-first-
  * thing, text, sixteen ThingData, and raw-map spans in F7063's fixed order.
- * F0421 adds each read byte to a signed 16-bit accumulator; F0434 then reads
+ * F0421 adds each unsigned source byte to a wrapping 16-bit accumulator;
+ * F0434 then reads
  * and compares the trailing checksum word. Struct layouts, allocations, map
  * counts, and runtime publication are deliberately outside this boundary. */
 
