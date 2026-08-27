@@ -1136,44 +1136,30 @@ int csb_v1_graphics_decode_raw_entry_pc34(const uint8_t *file_bytes,
 
 static int csb_v1_boot_load_object_names_m564(CSB_V1_BootProfile *profile)
 {
-    FILE *file;
-    long file_len;
     uint8_t *file_bytes = NULL;
     uint8_t *decoded = NULL;
-    size_t read_count;
+    size_t file_bytes_count = 0u;
     size_t decoded_size = 0u;
     int ok = 0;
 
     if (!profile || profile->graphics_path[0] == '\0') {
         return 0;
     }
-    file = fopen(profile->graphics_path, "rb");
-    if (!file) {
+    if (!asset_read_path_alloc(profile->graphics_path, &file_bytes,
+                               &file_bytes_count) ||
+        !file_bytes || file_bytes_count == 0u) {
+        free(file_bytes);
         return 0;
     }
-    if (fseek(file, 0, SEEK_END) != 0) {
-        fclose(file);
-        return 0;
-    }
-    file_len = ftell(file);
-    if (file_len <= 0 || fseek(file, 0, SEEK_SET) != 0) {
-        fclose(file);
-        return 0;
-    }
-    file_bytes = (uint8_t *)malloc((size_t)file_len);
     decoded = (uint8_t *)malloc(CSB_V1_GRAPHICS_OBJECT_NAMES_MAX_BYTES);
-    if (!file_bytes || !decoded) {
+    if (!decoded) {
         free(decoded);
         free(file_bytes);
-        fclose(file);
         return 0;
     }
-    read_count = fread(file_bytes, 1u, (size_t)file_len, file);
-    fclose(file);
-    if (read_count == (size_t)file_len &&
-        csb_v1_graphics_decode_raw_entry_pc34(
+    if (csb_v1_graphics_decode_raw_entry_pc34(
             file_bytes,
-            (size_t)file_len,
+            file_bytes_count,
             CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX,
             decoded,
             CSB_V1_GRAPHICS_OBJECT_NAMES_MAX_BYTES,
@@ -1192,36 +1178,29 @@ static int csb_v1_boot_load_object_names_m564(CSB_V1_BootProfile *profile)
 
 static int csb_v1_boot_load_action_names_c699(CSB_V1_BootProfile *profile)
 {
-    FILE *file;
-    long file_len;
     uint8_t *file_bytes = NULL;
     uint8_t *decoded = NULL;
-    size_t read_count;
+    size_t file_bytes_count = 0u;
     size_t decoded_size = 0u;
     int ok = 0;
 
     if (!profile || !profile->graphics_verified || !profile->graphics_path[0]) {
         return 0;
     }
-    file = fopen(profile->graphics_path, "rb");
-    if (!file || fseek(file, 0L, SEEK_END) != 0 ||
-        (file_len = ftell(file)) <= 0 || fseek(file, 0L, SEEK_SET) != 0) {
-        if (file) fclose(file);
+    if (!asset_read_path_alloc(profile->graphics_path, &file_bytes,
+                               &file_bytes_count) ||
+        !file_bytes || file_bytes_count == 0u) {
+        free(file_bytes);
         return 0;
     }
-    file_bytes = (uint8_t *)malloc((size_t)file_len);
     decoded = (uint8_t *)malloc(CSB_V1_GRAPHICS_OBJECT_NAMES_MAX_BYTES);
-    if (!file_bytes || !decoded) {
-        fclose(file);
+    if (!decoded) {
         free(decoded);
         free(file_bytes);
         return 0;
     }
-    read_count = fread(file_bytes, 1u, (size_t)file_len, file);
-    fclose(file);
-    if (read_count == (size_t)file_len &&
-        csb_v1_graphics_decode_raw_entry_pc34(
-            file_bytes, (size_t)file_len, CSB_V1_GRAPHICS_ACTION_NAMES_INDEX,
+    if (csb_v1_graphics_decode_raw_entry_pc34(
+            file_bytes, file_bytes_count, CSB_V1_GRAPHICS_ACTION_NAMES_INDEX,
             decoded, CSB_V1_GRAPHICS_OBJECT_NAMES_MAX_BYTES, &decoded_size) == 0) {
         ok = csb_v1_runtime_load_action_names_c699(&profile->runtime,
                                                     decoded, decoded_size);
