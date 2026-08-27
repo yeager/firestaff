@@ -54,6 +54,22 @@ pretending to have a retired-instruction identity. This is negative visual and
 instruction-binding evidence only. It does not authorize a Saturn menu,
 LEV01 load, party pose, or a synthetic substitute.
 
+## Japanese late START VDP comparison — 2026-08-27
+
+The same clean V2 producer then held START for sixty frames after 30,000 boot
+frames. The direct CUE/BIN run produced 60 validated VDP frames (SHA-256
+`2506793d61d50420c10f30cef4b01da976ca9d301ab157463118a09a8f6a574c`),
+120 injected-input rows (SHA-256
+`055f4e14e9a8880742768f8ae8dc85a0fd928c6454f855cff65cdd6cb823ab2f`), and
+525 SMPC reads over frames 30038--30065 (SHA-256
+`991d29494c20170c1463570d5216849179b76cb89b77fb9a8a0aece8a82dc4c1`).
+
+The first 60 raw frames are byte-identical to both the matching no-input
+control and a previously captured START/A/B/C sequence. Thus a real controller
+transport change still has no observed VDP consumer in this late title window.
+The result remains a fail-closed block on menu semantics, level selection and
+start pose; the raw receipts remain external to the repository.
+
 ## Japanese retail start-pose disassembly audit — 2026-08-27
 
 The Japanese CUE data track was read in place and the authenticated `DM.BIN`
