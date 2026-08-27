@@ -263,6 +263,12 @@ if ((launch)); then
     echo "ERROR: instrumented Mednafen hook is missing" >&2
     exit 78
   }
+  if [[ -n "${FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REGS:-}" ]]; then
+    strings "$mednafen" | grep -Fx 'FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REGS' >/dev/null || {
+      echo "ERROR: instrumented Mednafen VDP2 writer-register hook is missing" >&2
+      exit 78
+    }
+  fi
 fi
 
 manifest_tmp="$manifest.tmp.$$"

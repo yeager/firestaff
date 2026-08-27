@@ -65,7 +65,11 @@ Patchkedjan instrumenterar:
 6. en rå VDP2-snapshot direkt efter den faktiska CRAM-skrivningen.
 7. en frame-capture efter `VDP2REND_EndFrame()`, så att VDP2-register, VRAM
    och CRAM beskriver den frame som Mednafen faktiskt renderade.
-7. VDP1-VRAM-skrivningar med en framegräns vid samma capture-hook som VDP2.
+8. VDP1-VRAM-skrivningar med en framegräns vid samma capture-hook som VDP2.
+
+När `FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REGS` begärs vägrar launchern dessutom
+en binär som saknar just den hooken (exit 78). Det förhindrar att en äldre
+producent ger en trace utan `pr=`-fält och felaktigt används som call-chain-bevis.
 
 Alla producerade tracefiler är diagnostiska bevis. De får inte användas för
 semantic admission utan att asset-identitet, ordningsföljd och samma snapshot
