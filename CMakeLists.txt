@@ -4230,6 +4230,17 @@ if(BUILD_TESTING)
         TIMEOUT 45
     )
     add_test(
+        NAME dm1_v1_dos_fr_rar2_cli_diagnostic
+        COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_dos_fr_rar2_cli_diagnostic.sh
+            $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(dm1_v1_dos_fr_rar2_cli_diagnostic PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;dos;french;rar2;real-media;cli;diagnostic;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_DOS_FR_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_FR.zip"
+        TIMEOUT 45
+    )
+    add_test(
         NAME dm1_v1_atari_nested_archive_cli_boot
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_atari_nested_archive_cli_boot.sh
             $<TARGET_FILE:firestaff>

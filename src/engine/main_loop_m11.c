@@ -6690,8 +6690,19 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             goto cleanup;
         }
         if (!M11_PrepareDirectLaunchForGame(&menuState, o->gameId)) {
-            fprintf(stderr, "firestaff: game unavailable for --game: %s\n",
-                    o->gameId ? o->gameId : "(null)");
+            /* Keep direct CLI diagnostics aligned with the launcher's
+             * source-specific popup.  The supplied French DOS package is
+             * present, but its SFX payload is RAR 2.0; it is not missing
+             * game data and must never be reported as such. */
+            if (o->gameId && strcmp(o->gameId, "dm1") == 0 &&
+                o->dataDir && strstr(o->dataDir,
+                                     "Dungeon-Master_DOS_FR.zip") != NULL) {
+                fprintf(stderr,
+                        "firestaff: RAR 2.0 NOT SUPPORTED: FRENCH DOS PACKAGE\n");
+            } else {
+                fprintf(stderr, "firestaff: game unavailable for --game: %s\n",
+                        o->gameId ? o->gameId : "(null)");
+            }
             runRc = 2;
             goto cleanup;
         }
