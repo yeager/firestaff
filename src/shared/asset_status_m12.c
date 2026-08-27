@@ -2489,7 +2489,6 @@ static int m12_path_is_virtual_asset(const char* path) {
  * that support the format read them through their bounded in-memory reader.
  * Disk materialization is available only in an explicitly opted-in
  * development build; test fixtures must exercise the same no-copy contract. */
-#if !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
 static int m12_source_runtime_root(const char* matchedPath,
                                    char* outPath, size_t outPathSize) {
     const char* separator;
@@ -2508,7 +2507,6 @@ static int m12_source_runtime_root(const char* matchedPath,
     }
     return FSP_ParentDir(outPath, outPathSize, matchedPath);
 }
-#endif
 
 #if !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
 static int m12_publish_source_runtime_root(M12_AssetStatus* status,

@@ -4398,6 +4398,11 @@ endif()
 # disables the bundled provider.
 option(FIRESTAFF_WITH_ZLIB "Enable zlib-backed ZIP/gzip inflate support" ON)
 option(FIRESTAFF_WITH_BUNDLED_ZLIB "Use bundled miniz for zlib-compatible inflate support" ON)
+# Development-only compatibility switch for the retired on-disk media cache.
+# Normal Firestaff builds must retain original archives/images as runtime
+# sources and read their selected members in memory.
+option(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION
+    "Enable development-only game-media cache materialization" OFF)
 set(FIRESTAFF_ZLIB_TARGET "")
 set(FIRESTAFF_ZLIB_PROVIDER "")
 if(FIRESTAFF_WITH_ZLIB)
@@ -25818,12 +25823,13 @@ endif()
         COMMAND test_asset_status_dm1_zip_required_materialization
     )
 
-    # -- CSB required-file archive materialization gate -----------------
+    # -- CSB legacy archive-cache materialization gate ------------------
     # Synthetic CSB GRAPHICS.DAT in ZIP plus DUNGEON.DAT in ISO: both
     # archive-backed required rows must materialize to ordinary files
     # under <userDataDir>/asset-cache/csb before launch, while a wrong
     # graphics archive keeps CSB unavailable and leaves the ISO match
     # unmaterialized.
+    if(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
     add_executable(test_csb_archive_required_split
         tests/test_csb_archive_required_split.c
         src/shared/asset_status_m12.c
@@ -25861,7 +25867,9 @@ endif()
     )
     target_compile_definitions(test_csb_archive_required_split PRIVATE
         FIRESTAFF_ASSET_STATUS_TESTING=1
+        FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION=1
     )
+    firestaff_link_zlib(test_csb_archive_required_split PRIVATE)
     if(NOT MSVC)
         target_compile_options(test_csb_archive_required_split PRIVATE -Wall -Wextra -O2)
     endif()
@@ -25869,6 +25877,7 @@ endif()
         NAME csb_archive_required_materialize_cache_gate
         COMMAND test_csb_archive_required_split
     )
+    endif()
 
     # -- Asset scanner + cache: DM2 ISO required-file launch gate -------
     # Synthesizes an ISO 9660 image containing GRAPHICS.DAT + DUNGEON.DAT,
