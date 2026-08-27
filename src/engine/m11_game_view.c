@@ -6986,12 +6986,23 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
     if (!receipt->bind_graphics_dat) {
         return 1;
     }
-    /* The Atari ST path has already bound the authenticated STX member in
-     * RAM.  The receipt still records the sibling GRAPHICS.DAT identity,
-     * but must not reopen its virtual name through fopen(). */
+    /* The virtual path has already bound its authenticated member in RAM.
+     * Do not reopen it, but still bind every source-owned post-load surface
+     * from the retained virtual identity. */
     if (strstr(receipt->graphics_dat_path, "::") != NULL &&
         state->assetLoader.initialized) {
         state->assetsAvailable = 1;
+        (void)M11_Audio_BindOriginalSnd3Path(
+            &state->audioState, state->assetLoader.graphicsDatPath);
+        (void)m11_dm1_load_object_names_m564(state);
+        M11_Font_Init(&state->originalFont);
+        if (state->assetLoader.fileState && state->assetLoader.runtimeState &&
+            M11_Font_LoadFromGraphicsDat(
+                &state->originalFont,
+                state->assetLoader.fileState,
+                state->assetLoader.runtimeState)) {
+            state->originalFontAvailable = 1;
+        }
         return 1;
     }
     /* FM Towns and Amiga DM1 keep the original legacy IMAGE2 container;
@@ -23783,6 +23794,11 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             return 0;
         }
         free(graphicsBytes);
+        /* Keep archive provenance for source-owned audio, names and fonts
+         * applied after the dungeon handoff. */
+        snprintf(state->assetLoader.graphicsDatPath,
+                 sizeof(state->assetLoader.graphicsDatPath), "%s",
+                 graphicsVirtual);
         state->assetsAvailable = 1;
     }
     if (dm1VirtualDungeonBytes) {
