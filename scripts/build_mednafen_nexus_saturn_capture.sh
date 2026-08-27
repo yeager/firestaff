@@ -271,6 +271,15 @@ elif [[ "$(cat "$smpc_read_trace_marker" 2>/dev/null)" != "$smpc_read_trace_patc
   echo "ERROR: external Mednafen source has an older or unknown SMPC read-trace patch; use a fresh build directory" >&2
   exit 2
 fi
+smpc_debug_pipeline_marker="$source_dir/.firestaff-nexus-smpc-debug-pipeline-patched"
+smpc_debug_pipeline_patch_id='FIRESTAFF_NEXUS_SMPC_DEBUG_PIPELINE_V1'
+if [[ ! -f "$smpc_debug_pipeline_marker" ]]; then
+  patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_smpc_debug_pipeline.patch"
+  printf '%s\n' "$smpc_debug_pipeline_patch_id" > "$smpc_debug_pipeline_marker"
+elif [[ "$(cat "$smpc_debug_pipeline_marker" 2>/dev/null)" != "$smpc_debug_pipeline_patch_id" ]]; then
+  echo "ERROR: external Mednafen source has an older or unknown SMPC debug-pipeline patch; use a fresh build directory" >&2
+  exit 2
+fi
 scsp_trace_marker="$source_dir/.firestaff-nexus-slev-scsp-trace-patched"
 scsp_trace_patch_id='FIRESTAFF_NEXUS_SLEV_SCSP_TRACE_V2_MAIN_AND_SOUND_CPU_SESSION'
 if [[ ! -f "$scsp_trace_marker" ]]; then
@@ -281,7 +290,7 @@ elif [[ "$(cat "$scsp_trace_marker" 2>/dev/null)" != "$scsp_trace_patch_id" ]]; 
   exit 2
 fi
 profile_marker="$source_dir/.firestaff-nexus-saturn-only"
-profile_id='FIRESTAFF_NEXUS_MEDNAFEN_PROFILE_V2_SATURN_ONLY'
+profile_id='FIRESTAFF_NEXUS_MEDNAFEN_PROFILE_V3_SATURN_DEBUG_CAPTURE'
 if [[ ! -f "$profile_marker" || "$(cat "$profile_marker" 2>/dev/null)" != "$profile_id" ]]; then
   (cd "$source_dir" && ./configure --prefix="$prefix" \
     --enable-ss \
@@ -290,7 +299,7 @@ if [[ ! -f "$profile_marker" || "$(cat "$profile_marker" 2>/dev/null)" != "$prof
     --disable-pce-fast --disable-pcfx --disable-psx --disable-sasplay \
     --disable-sms --disable-snes --disable-snes-faust --disable-ssfplay \
     --disable-vb --disable-wswan --disable-cjk-fonts \
-    --disable-fancy-scalers --disable-debugger --disable-alsa --disable-jack)
+    --disable-fancy-scalers --enable-debugger --disable-alsa --disable-jack)
   printf '%s\n' "$profile_id" > "$profile_marker"
 fi
 if [[ ! -x "$source_dir/src/mednafen" ]]; then
@@ -312,6 +321,8 @@ strings "$capture_bin" | grep -F \
   'FIRESTAFF_NEXUS_TRACE_PRESS_SEQUENCE' >/dev/null
 strings "$capture_bin" | grep -F \
   'FIRESTAFF_NEXUS_TRACE_SMPC_READS' >/dev/null
+strings "$capture_bin" | grep -F \
+  'FIRESTAFF_NEXUS_TRACE_SMPC_PIPELINE_DEBUG' >/dev/null
 strings "$capture_bin" | grep -F \
   'FIRESTAFF_NEXUS_TRACE_RENDER_FRAMES' >/dev/null
 printf 'instrumented_mednafen=%s\n' "$capture_bin"

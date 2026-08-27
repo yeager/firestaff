@@ -1,0 +1,6 @@
+--- src/ss/ss.cpp
++++ src/ss/ss.cpp
+@@ -1307,1 +1307,2 @@
+- end_ts = rltab[NeedEmuICache][DBG_NeedCPUHooks()](espec);
++ end_ts = rltab[NeedEmuICache][DBG_NeedCPUHooks() ||
++  getenv("FIRESTAFF_NEXUS_TRACE_SMPC_PIPELINE_DEBUG") != NULL](espec);

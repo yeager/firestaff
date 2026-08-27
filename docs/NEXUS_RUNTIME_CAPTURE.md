@@ -112,6 +112,13 @@ byte-identical to the same no-input control in all eight captured VDP1/VDP2
 regions for the 80-frame window, so it admits neither a debug feature nor a
 menu/gameplay transition.
 
+For a diagnostic pass, `FIRESTAFF_NEXUS_TRACE_SMPC_PIPELINE_DEBUG=1` selects
+Mednafen's debugger CPU loop in the external capture build so `PC_ID` and
+`PC_IF` are populated. This is not an admission override: the analyzer still
+requires the captured pipeline opcode to match the authenticated `DM.BIN`
+word. The first JP smoke receipt populated nonzero PCs but failed that match,
+so it remains rejected rather than being reinterpreted as an input consumer.
+
 When the input must be observed inside the raw capture, pass
 `--require-input-window`. The launcher then rejects a plan unless the complete
 button interval lies between `skip_frames` and
