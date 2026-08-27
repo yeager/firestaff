@@ -1481,6 +1481,23 @@ int main(void) {
             fprintf(stderr, "nested ZIP/ADF filesystem lookup failed: %s\n", outPath);
             return 1;
         }
+        /* Discovery must publish a locator that the production in-memory
+         * reader can consume.  This is deliberately not an extraction test:
+         * ZIP -> ADF -> member stays entirely in process memory. */
+        {
+            static const char payload[] = "Firestaff hash identity fixture v1\n";
+            uint8_t *member = NULL;
+            size_t member_size = 0u;
+            if (!asset_read_path_alloc(outPath, &member, &member_size) ||
+                member_size != sizeof(payload) - 1u ||
+                !member || memcmp(member, payload, sizeof(payload) - 1u) != 0) {
+                free(member);
+                cleanup_fixture();
+                fprintf(stderr, "nested ZIP/ADF in-memory read failed: %s\n", outPath);
+                return 1;
+            }
+            free(member);
+        }
         if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
             !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
             cleanup_fixture();
