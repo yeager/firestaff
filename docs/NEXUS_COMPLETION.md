@@ -37,6 +37,23 @@ transport and source-range evidence only; it does not authorize a native
 menu/start consumer or substitute a start coordinate.  BIOS and capture
 artifacts remain outside the repository and Firestaff's runtime.
 
+## Japanese START/control VDP comparison — 2026-08-27
+
+A clean V2 producer build was run twice against the same JP BIOS and original
+CUE/BIN media over emulation frames 1800--1810: once with START held over the
+eight captured frames and once with no injected input. Both raw VDP1/VDP2
+captures pass the native V2 transport validator and have the identical SHA-256
+`995929ef9e06700bdf333f278979c30f9b59872c14d4060a8ef8f59dae95f45a`.
+The respective SMPC receipts differ (`11546931ede2b625b147fc41848830763de4fde388b522238265726c890bf8b0`
+with START; `1ae296ff7c420d61f143333608193f5face85867021626b6af6a645f2a8ee218`
+without), proving delivery changed while the observed VDP state did not.
+
+The V2 producer also exposes that its normal Mednafen path has no usable
+`PC_ID` value, so the analyzer reports `pipeline_unavailable` rather than
+pretending to have a retired-instruction identity. This is negative visual and
+instruction-binding evidence only. It does not authorize a Saturn menu,
+LEV01 load, party pose, or a synthetic substitute.
+
 ## Japanese retail start-pose disassembly audit — 2026-08-27
 
 The Japanese CUE data track was read in place and the authenticated `DM.BIN`
