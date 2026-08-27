@@ -18,7 +18,8 @@ Reviewed 2026-08-25. Only open work is listed here.
 - The manually unpacked French DOS `DMSAVE.DAT` and `DMSAVE.BAK` are both
   checksum-qualified PC 3.4 saves: all five encrypted save parts validate,
   but their remaining original save tail is not yet the documented PC 3.4
-  dungeon-tail layout. The tail starts at byte offset 11,274, is 37,287 bytes,
+  dungeon-tail layout. The tail starts at byte offset 11,264, is 37,297 bytes,
+  begins with the saved `DUNGEON_HEADER` (`63 00 fb 2f 0e 00 d5 06 61 08`),
   and is byte-identical between the supplied `.DAT` and `.BAK`; only bytes
   0–9,407 differ. Preserve the fail-closed import result and derive that tail
   layout from authentic French save/runtime traces before enabling resume.
