@@ -97,6 +97,20 @@ FIRESTAFF_NEXUS_TRACE_SMPC_READ_LIMIT bound it. The text receipt records
 emulation frame, SMPC output register, value, and both SH-2 PCs. It never
 copies game data, extracts media, or becomes a Firestaff runtime dependency.
 
+`scripts/analyze_nexus_smpc_read_trace.py` is the corresponding fail-closed
+consumer receipt. It reads `DM.BIN` directly from the supplied CUE in memory,
+requires its Japanese retail SHA-256
+`3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`, and
+rejects every master-SH-2 PC outside that member's load range. The external
+J-region debug-window capture at frames 30038--30079 has 819 SMPC reads across
+`0x10`--`0x17`; its observed master PCs map to eleven exact `DM.BIN` words,
+from `0x06014514` (member offset `0x0044d4`) through `0x06014a80` (offset
+`0x004a40`). This is a retail-code execution receipt, not a controller-action
+interpretation. Its deliberately broad L/R/X/Up/C/Left/L/Right sequence is
+byte-identical to the same no-input control in all eight captured VDP1/VDP2
+regions for the 80-frame window, so it admits neither a debug feature nor a
+menu/gameplay transition.
+
 When the input must be observed inside the raw capture, pass
 `--require-input-window`. The launcher then rejects a plan unless the complete
 button interval lies between `skip_frames` and
