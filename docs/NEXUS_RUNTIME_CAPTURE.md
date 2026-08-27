@@ -82,10 +82,10 @@ mask after the emulator has already sampled the gamepad. The producer applies
 its mask before the original `IODevice::UpdateInput` pass, and a valid capture
 must additionally show the changed SMPC output-register values at the same
 frame. A V2 receipt records the reading CPU plus its ID/IF pipeline PCs and
-opcodes. Its analyzer rejects a master row unless the captured ID opcode is
-the exact word at that PC in hash-verified retail `DM.BIN`. This proves a
-retail instruction consumed the bus read; it does not assign a menu action,
-game state, or host-rendering admission.
+opcodes. The analyzer only accepts an instruction identity when the producer
+exposes a nonzero ID PC and its captured opcode exactly matches hash-verified
+retail `DM.BIN`; otherwise it reports `pipeline_unavailable`. Neither case
+assigns a menu action, game state, or host-rendering admission.
 
 The reproducible producer is the version-locked
 mednafen_1.32.1_nexus_smpc_read_trace.patch, applied by
@@ -102,9 +102,10 @@ Firestaff runtime dependency.
 consumer receipt. It reads `DM.BIN` directly from the supplied CUE in memory,
 requires its Japanese retail SHA-256
 `3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`, and
-rejects every master-SH-2 V2 ID PC outside that member's load range or whose
-captured ID opcode differs from the corresponding retail word. V1 receipts
-remain source-PC snapshots only and therefore deliberately identify neither an
+rejects every available master-SH-2 V2 ID PC outside that member's load range
+or whose captured ID opcode differs from the corresponding retail word. When
+the normal producer has no ID-PC value, it reports `pipeline_unavailable`; V1
+receipts remain source-PC snapshots. Neither format alone identifies an
 instruction nor a controller action. Its deliberately broad
 L/R/X/Up/C/Left/L/Right sequence is
 byte-identical to the same no-input control in all eight captured VDP1/VDP2

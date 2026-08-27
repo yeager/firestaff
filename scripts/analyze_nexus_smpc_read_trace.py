@@ -78,26 +78,30 @@ def main() -> int:
                 continue
             if v2:
                 rows.append((frame, int(match["cpu"], 10), int(match["smpc"], 16),
-                             int(match["value"], 16), int(match["pc_id"], 16),
-                             int(match["pid"], 16)))
+                             int(match["value"], 16), int(match["rpc"], 16),
+                             int(match["pc_id"], 16), int(match["pid"], 16)))
             else:
                 rows.append((frame, 0, int(match["smpc"], 16), int(match["value"], 16),
-                             int(match["pc0"], 16), None))
+                             int(match["pc0"], 16), None, None))
         if not rows:
             raise ValueError("no rows remain inside requested frame bounds")
         master_rows = [row for row in rows if row[1] == 0]
         if not master_rows:
             raise ValueError("no master-SH-2 rows remain")
-        pc_words = {pc: dm_word(dm, pc) for _frame, _cpu, _smpc, _value, pc, _pid in master_rows}
-        if v2 and any(pid != dm_word(dm, pc)
-                      for _frame, _cpu, _smpc, _value, pc, pid in master_rows):
+        pc_words = {rpc: dm_word(dm, rpc)
+                    for _frame, _cpu, _smpc, _value, rpc, _pc_id, _pid in master_rows}
+        pipeline_bound = (v2 and all(pc_id != 0
+                                      for _frame, _cpu, _smpc, _value, _rpc, pc_id, _pid
+                                      in master_rows))
+        if pipeline_bound and any(pid != dm_word(dm, pc_id)
+                                for _frame, _cpu, _smpc, _value, _rpc, pc_id, pid in master_rows):
             raise ValueError("master SH-2 pipeline opcode does not match retail DM.BIN")
     except (KeyError, OSError, UnicodeError, ValueError) as error:
         print(f"NEXUS_SMPC_READ_TRACE_INVALID: {error}")
         return 1
 
-    addresses = Counter(smpc for _frame, _cpu, smpc, _value, _pc, _pid in rows)
-    values = Counter(value for _frame, _cpu, _smpc, value, _pc, _pid in rows)
+    addresses = Counter(smpc for _frame, _cpu, smpc, _value, _rpc, _pc_id, _pid in rows)
+    values = Counter(value for _frame, _cpu, _smpc, value, _rpc, _pc_id, _pid in rows)
     print(f"dm_bin_sha256={DM_SHA256}")
     print(f"rows={len(rows)}")
     print(f"frames={min(row[0] for row in rows)}-{max(row[0] for row in rows)}")
@@ -109,7 +113,10 @@ def main() -> int:
         print(f"master_pc=0x{pc:08x} dm_offset=0x{pc - DM_BASE:06x} "
               f"dm_word=0x{pc_words[pc]:04x}")
     print("master_sh2_pc_range=verified")
-    print("master_sh2_instruction_identity=" + ("verified" if v2 else "unproven"))
+    if v2 and not pipeline_bound:
+        print("master_sh2_instruction_identity=pipeline_unavailable")
+    else:
+        print("master_sh2_instruction_identity=" + ("verified" if v2 else "unproven"))
     print("input_consumer_semantics=unbound")
     print("semantic_admission=blocked")
     return 0
