@@ -30,10 +30,7 @@ if [[ ! -f "$cue" ]]; then
     exit 77
 fi
 
-output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-jp-cue.XXXXXX")
-trap 'rm -f "$output"' EXIT
-
-SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --game theron \
     --data-dir "$cue" \
     --boot-probe \
@@ -44,16 +41,19 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --boot-probe-expect-level-loaded 1 \
     --boot-probe-expect-party 1,0,0 \
     --boot-probe-expect-startup-active 0 \
-    --duration 0 >"$output" 2>&1
+    --duration 0 2>&1) || {
+    printf '%s\n' "$output" >&2
+    exit 1
+}
 
-if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' "$output" ||
-   ! grep -Fq 'sourceKind=4 sourceId=theron ' "$output" ||
-   ! grep -Eq "assetMd5=($expected_md5_raw|$expected_md5_iso)" "$output" ||
-   ! grep -Fq 'phase=theron-runtime' "$output" ||
-   ! grep -Fq 'levelLoaded=1' "$output" ||
-   ! grep -Fq 'party=1,0,0' "$output" ||
-   ! grep -Fq 'startupActive=0' "$output"; then
-    cat "$output" >&2
+if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' <<<"$output" ||
+   ! grep -Fq 'sourceKind=4 sourceId=theron ' <<<"$output" ||
+   ! grep -Eq "assetMd5=($expected_md5_raw|$expected_md5_iso)" <<<"$output" ||
+   ! grep -Fq 'phase=theron-runtime' <<<"$output" ||
+   ! grep -Fq 'levelLoaded=1' <<<"$output" ||
+   ! grep -Fq 'party=1,0,0' <<<"$output" ||
+   ! grep -Fq 'startupActive=0' <<<"$output"; then
+    printf '%s\n' "$output" >&2
     printf '%s\n' 'FAIL: authentic Theron JP CUE did not reach the native Track 02 Akutuba runtime route' >&2
     exit 1
 fi
