@@ -50,12 +50,15 @@ The frame-12596 PC tag `0x0602312c` is the loop checkpoint immediately after
 the relevant instructions: `mov.b @r5+,r1` at `0x06023120` and `mov.b r1,@r4`
 at `0x06023128`. The tag itself decodes as `cmp/pl r14`; its following branch
 and delay slot advance the destination pointer. This resolves the observed
-byte-copy instruction instead of guessing it from the PC tag. It statically
-identifies a direct `BSR` from `0x06022772` to copier entry `0x060230c0`, whose
-return address is `0x06022776`; a frame-12596 PR trace is still required to
-show that this is the observed runtime call edge. It does not identify the
-transform or Saturn display consumer, so native title/menu admission remains
-closed.
+byte-copy instruction instead of guessing it from the PC tag. A full-member
+scan also identifies an outer direct `BSR` from `0x06022772` to `0x060230c0`.
+The authenticated frame-12596 trace instead records the copy helper's live
+`PR=0x06023176` on all 31,616 rows. Those are not interchangeable: `PR` is a
+live SH-2 link register and may be replaced by nested work before the sampled
+store. The verifier reports the static edge and requires one consistent
+observed PR, without falsely attributing it to the outer BSR. It does not
+identify the transform or Saturn display consumer, so native title/menu
+admission remains closed.
 
 ## Current external-data verification — 2026-08-13
 

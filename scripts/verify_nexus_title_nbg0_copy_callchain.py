@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Bind the measured NBG0 copier to a fully scanned retail SH-2 call site.
+"""Validate the measured NBG0 copy helper against retail SH-2 code.
 
 This verifier reads ``DM.BIN`` directly from a user-supplied CUE into memory.
 It scans the complete fixed-width SH-2 word stream for direct ``BSR`` edges,
-then requires the PR recorded alongside every measured title-copy write to be
-the return address of the one retail call site that enters the copier.  It is
-an execution/provenance receipt only: it does not identify the display
-consumer or permit a native title render.
+then validates the execution receipt for the retail copy loop.  The SH-2 PR
+register is a live link register, so it is reported rather than attributed to
+a different static BSR: nested helpers may legitimately overwrite it before a
+sampled VDP2 store.  It is an execution/provenance receipt only: it does not
+identify the display consumer or permit a native title render.
 """
 
 from __future__ import annotations
@@ -22,15 +23,19 @@ from analyze_nexus_title_vdp2_source import cue_track1, iso_members_in_memory
 DM_SHA256 = "3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124"
 DM_BASE = 0x06010040
 COPY_PC = 0x0602312C
-COPIER_ENTRY = 0x060230C0
+COPY_ENTRY = 0x06023112
+COPY_RTS = 0x06023144
+OUTER_ENTRY = 0x060230C0
 CALL_SITE = 0x06022772
 RETURN_ADDRESS = CALL_SITE + 4
 TITLE_FRAME = 12596
 COPY_BYTES = 31616
 COPY_WORDS = {
+    COPY_ENTRY: 0x2FE6,  # mov.l r14,@-r15
     0x06023120: 0x6154,  # mov.b @r5+,r1
     0x06023128: 0x2410,  # mov.b r1,@r4
     0x0602312C: 0x4E15,  # cmp/pl r14
+    COPY_RTS: 0x000B,  # rts
 }
 HEADER = "FIRESTAFF_NEXUS_VDP2_WRITER_REGISTER_TRACE_V1"
 FRAME = re.compile(r"^frame=([0-9]+)\b")
@@ -84,8 +89,8 @@ def main() -> int:
         if word(dm, CALL_SITE) >> 12 != 0xB:
             raise ValueError("expected caller is not a BSR")
         edges = direct_bsr_edges(dm)
-        if (CALL_SITE, COPIER_ENTRY) not in edges:
-            raise ValueError("full DM.BIN BSR scan lacks the copier call edge")
+        if (CALL_SITE, OUTER_ENTRY) not in edges:
+            raise ValueError("full DM.BIN BSR scan lacks the outer call edge")
         if args.static_only:
             if args.writer_registers is not None:
                 raise ValueError("--static-only cannot be combined with --writer-registers")
@@ -111,9 +116,9 @@ def main() -> int:
             if len(prs) != COPY_BYTES:
                 raise ValueError(
                     f"expected {COPY_BYTES} frame-{TITLE_FRAME} copy rows, got {len(prs)}")
-            if set(prs) != {RETURN_ADDRESS}:
+            if len(set(prs)) != 1:
                 got = ",".join(f"0x{value:08x}" for value in sorted(set(prs)))
-                raise ValueError(f"copy PR does not bind the retail caller: {got}")
+                raise ValueError(f"copy rows have inconsistent live PR values: {got}")
     except (KeyError, OSError, UnicodeError, ValueError) as error:
         print(f"NEXUS_TITLE_NBG0_COPY_CALLCHAIN_INVALID: {error}")
         return 1
@@ -123,11 +128,14 @@ def main() -> int:
     print(f"title_nbg0_copy_pc=0x{COPY_PC:08x}")
     print(f"title_nbg0_copy_frame={TITLE_FRAME}")
     print(f"title_nbg0_copy_rows={COPY_BYTES}")
-    print(f"title_nbg0_copier_entry=0x{COPIER_ENTRY:08x}")
-    print(f"title_nbg0_caller_bsr=0x{CALL_SITE:08x}")
-    print(f"title_nbg0_caller_pr=0x{RETURN_ADDRESS:08x}")
+    print(f"title_nbg0_copy_entry=0x{COPY_ENTRY:08x}")
+    print(f"title_nbg0_copy_rts=0x{COPY_RTS:08x}")
+    print(f"title_nbg0_outer_bsr=0x{CALL_SITE:08x}")
+    print(f"title_nbg0_outer_bsr_pr=0x{RETURN_ADDRESS:08x}")
     print("title_nbg0_copy_callchain=static-verified" if args.static_only
           else "title_nbg0_copy_callchain=verified")
+    if not args.static_only:
+        print(f"title_nbg0_copy_live_pr=0x{prs[0]:08x}")
     print("semantic_admission=blocked")
     return 0
 

@@ -145,9 +145,11 @@ loop to its real caller. It is provenance only, not a rendering admission.
 hash-verified `DM.BIN` in memory for direct `BSR` call edges. It requires the
 measured `0x0602312c` loop
 to retain the real `mov.b @r5+,r1` / `mov.b r1,@r4` instructions and requires
-each captured PR to be the `0x06022772` direct-BSR return address
-`0x06022776`, which enters the copier at `0x060230c0`. A missing or different
-PR stays blocked; it is never filled in from static analysis. `--static-only`
+one complete, internally consistent live PR value across the captured copy
+rows. It separately reports the direct `0x06022772` BSR to `0x060230c0`; that
+outer return address is not imposed on a later helper loop because SH-2 PR is
+live state and can be replaced by nested work. A missing or inconsistent PR
+stays blocked; it is never filled in from static analysis. `--static-only`
 reports the static result separately and never promotes it to an observed call.
 
 The paired VDP2 write stream accepts the corresponding
