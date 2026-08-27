@@ -14288,10 +14288,8 @@ int dm2_v1_boot_prepare_sksave_resume_path(
     DM2_V1_BootProfile *profile;
     DM2_V1_DungeonData *dungeon = NULL;
     DM2_V1_SksaveGameLoadOwner *source = NULL;
-    FILE *file = NULL;
     uint8_t *bytes = NULL;
-    long end;
-    size_t size;
+    size_t size = 0U;
     int ok = 0;
 
     if (!launch || !(profile = launch->profile) || !save_path ||
@@ -14302,13 +14300,11 @@ int dm2_v1_boot_prepare_sksave_resume_path(
         !dm2_v1_boot_asset_loader(profile)) {
         return 0;
     }
-    file = fopen(save_path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0 ||
-        (end = ftell(file)) <= 42L || fseek(file, 0, SEEK_SET) != 0)
-        goto done;
-    size = (size_t)end;
-    bytes = (uint8_t *)malloc(size);
-    if (!bytes || fread(bytes, 1u, size, file) != size ||
+    /* Save data follows the same read-only virtual-media contract as the
+     * mounted game data.  In particular, a real DOS archive can be resumed
+     * through "game.zip::data/sksave1.dat" without creating a loose copy.
+     * asset_read_path_alloc() owns the returned RAM buffer on success. */
+    if (!asset_read_path_alloc(save_path, &bytes, &size) || size <= 42U ||
         dm2_v1_save_detect_game_version(bytes) != DM2V1_VERSION_DM2) {
         goto done;
     }
@@ -14335,7 +14331,6 @@ int dm2_v1_boot_prepare_sksave_resume_path(
     source = NULL;
     ok = 1;
 done:
-    if (file) fclose(file);
     free(bytes);
     if (source) {
         dm2_v1_sksave_game_load_owner_free(source);
