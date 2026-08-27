@@ -34717,6 +34717,15 @@ endif()
         TIMEOUT 120
     )
 
+    add_test(
+        NAME dm1_v1_dos_fr_original_save_tail_boundary
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_dos_fr_original_save_tail_boundary.sh"
+    )
+    set_tests_properties(dm1_v1_dos_fr_original_save_tail_boundary PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;dm1;save;french;real_data;tail;no-synthesis"
+    )
+
     add_executable(test_dm1_v1_original_save_pc34_portrait_receipt
         tests/test_dm1_v1_original_save_pc34_portrait_receipt.c
     )
