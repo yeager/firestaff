@@ -11,12 +11,12 @@ fi
 
 output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --game dm2 --platform pc --data-dir "$archive" --boot-probe \
-    --boot-probe-frames 5000 --script enter \
+    --boot-probe-frames 5000 --script 'key:enter,up' \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
     --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
 
 case "$output" in
-    *'assetMd5=25247ede4dabb6a71e5dabdfbcd5907d'*'phase=dm2-runtime'*'levelLoaded=1'*) ;;
+    *'assetMd5=25247ede4dabb6a71e5dabdfbcd5907d'*'phase=dm2-runtime'*'levelLoaded=1'*'party=1,7,0'*) ;;
     *) printf '%s\n' "$output" >&2; exit 1 ;;
 esac
-echo 'PASS: native DM2 DOS MVE -> SKULL -> New Game reaches runtime in memory'
+echo 'PASS: native DM2 DOS ZIP MVE -> SKULL -> New Game reaches runtime and moves in memory'
