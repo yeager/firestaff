@@ -159,6 +159,11 @@ therefore have negative evidence in this particular intro window. Further
 capture work must move to a distinct observed input-ready state rather than
 repeating the 1800--1860 interval.
 
+The later A-button hold at frame 3000 likewise matches the no-input control
+byte-for-byte at frames 2250, 2500, 2750, and 3000. The long intro window is
+therefore not a valid substitute for a title-menu receipt; the next capture
+must target a distinct input-ready state.
+
 ## Japanese retail start-pose disassembly audit — 2026-08-27
 
 The Japanese CUE data track was read in place and the authenticated `DM.BIN`
