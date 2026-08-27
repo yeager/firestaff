@@ -7,9 +7,11 @@
 
 #include "graphics_dat_snd3_loader_v1.h"
 
-#include <stdio.h>
+#include "asset_find_by_hash.h"
+
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 static const unsigned short kSnd3Indices[V1_GRAPHICS_DAT_SND3_COUNT] = {
     671, 672, 673, 674, 675,
@@ -94,23 +96,13 @@ static unsigned short be16(const unsigned char* p) {
     return (unsigned short)(((unsigned short)p[0] << 8) | p[1]);
 }
 
-static long file_size(FILE* f) {
-    long cur = ftell(f);
-    long end;
-    if (cur < 0) return -1;
-    if (fseek(f, 0, SEEK_END) != 0) return -1;
-    end = ftell(f);
-    if (fseek(f, cur, SEEK_SET) != 0) return -1;
-    return end;
-}
-
 int V1_GraphicsSnd3_ParseManifest(const char* graphicsDatPath,
                                   V1_GraphicsSnd3Manifest* outManifest,
                                   char* errMsg,
                                   size_t errMsgBytes) {
-    FILE* f;
-    long fileBytes;
-    unsigned char* hdr;
+    uint8_t* fileData;
+    size_t fileBytes;
+    const unsigned char* hdr;
     unsigned short signature;
     unsigned short itemCount;
     const unsigned char* pComp;
@@ -125,38 +117,25 @@ int V1_GraphicsSnd3_ParseManifest(const char* graphicsDatPath,
     }
     memset(outManifest, 0, sizeof(*outManifest));
 
-    f = fopen(graphicsDatPath, "rb");
-    if (!f) {
+    fileData = NULL;
+    fileBytes = 0u;
+    if (!asset_read_path_alloc(graphicsDatPath, &fileData, &fileBytes) ||
+        !fileData || fileBytes > (size_t)ULONG_MAX) {
         set_err(errMsg, errMsgBytes, "cannot open GRAPHICS.DAT");
         return 0;
     }
-
-    fileBytes = file_size(f);
-    if (fileBytes < (long)V1_GRAPHICS_DAT_HEADER_BYTES) {
-        fclose(f);
+    if (fileBytes < V1_GRAPHICS_DAT_HEADER_BYTES) {
+        free(fileData);
         set_err(errMsg, errMsgBytes, "file too small to be DM PC v3.4 GRAPHICS.DAT");
         return 0;
     }
 
-    hdr = (unsigned char*)malloc(V1_GRAPHICS_DAT_HEADER_BYTES);
-    if (!hdr) {
-        fclose(f);
-        set_err(errMsg, errMsgBytes, "out of memory (header)");
-        return 0;
-    }
-    if (fseek(f, 0, SEEK_SET) != 0 ||
-        fread(hdr, 1, V1_GRAPHICS_DAT_HEADER_BYTES, f) != V1_GRAPHICS_DAT_HEADER_BYTES) {
-        free(hdr);
-        fclose(f);
-        set_err(errMsg, errMsgBytes, "GRAPHICS.DAT header read failed");
-        return 0;
-    }
-    fclose(f);
+    hdr = fileData;
 
     signature = le16(hdr + 0);
     itemCount = le16(hdr + 2);
     if (signature != V1_GRAPHICS_DAT_SIGNATURE || itemCount != V1_GRAPHICS_DAT_ITEM_COUNT) {
-        free(hdr);
+        free(fileData);
         set_err(errMsg, errMsgBytes, "not DM PC v3.4 English GRAPHICS.DAT (signature/count mismatch)");
         return 0;
     }
@@ -177,7 +156,6 @@ int V1_GraphicsSnd3_ParseManifest(const char* graphicsDatPath,
         if (sndSlot >= 0) {
             V1_GraphicsSnd3Item* it = &outManifest->items[sndSlot];
             unsigned char first4[4];
-            FILE* body;
             it->itemIndex = i;
             it->soundOrdinal = (unsigned int)sndSlot;
             it->fileOffset = cur;
@@ -187,32 +165,25 @@ int V1_GraphicsSnd3_ParseManifest(const char* graphicsDatPath,
             it->attr1 = le16(pAttrs + 4u * i + 2);
 
             if (comp < 2 || cur + comp > (unsigned long)fileBytes) {
-                free(hdr);
+                free(fileData);
                 set_err(errMsg, errMsgBytes, "SND3 item has invalid size/offset");
                 return 0;
             }
-            body = fopen(graphicsDatPath, "rb");
-            if (!body) {
-                free(hdr);
-                set_err(errMsg, errMsgBytes, "cannot reopen GRAPHICS.DAT");
+            if (comp < 4u) {
+                free(fileData);
+                set_err(errMsg, errMsgBytes, "SND3 item prefix is truncated");
                 return 0;
             }
-            if (fseek(body, (long)cur, SEEK_SET) != 0 || fread(first4, 1, 4, body) != 4) {
-                fclose(body);
-                free(hdr);
-                set_err(errMsg, errMsgBytes, "SND3 item prefix read failed");
-                return 0;
-            }
-            fclose(body);
+            memcpy(first4, fileData + cur, sizeof(first4));
             it->declaredSampleCount = be16(first4);
             if (it->declaredSampleCount + 2u > it->itemBytes) {
-                free(hdr);
+                free(fileData);
                 set_err(errMsg, errMsgBytes, "SND3 sample count exceeds item size");
                 return 0;
             }
             it->trailingBytes = it->itemBytes - 2u - it->declaredSampleCount;
             if (it->trailingBytes > 3u) {
-                free(hdr);
+                free(fileData);
                 set_err(errMsg, errMsgBytes, "SND3 trailing byte count exceeds dmweb 0..3 bound");
                 return 0;
             }
@@ -221,12 +192,12 @@ int V1_GraphicsSnd3_ParseManifest(const char* graphicsDatPath,
     }
 
     if (cur != (unsigned long)fileBytes) {
-        free(hdr);
+        free(fileData);
         set_err(errMsg, errMsgBytes, "GRAPHICS.DAT item size sum does not match file size");
         return 0;
     }
 
-    free(hdr);
+    free(fileData);
     return 1;
 }
 
@@ -238,7 +209,8 @@ int V1_GraphicsSnd3_DecodeItem(const char* graphicsDatPath,
                                size_t errMsgBytes) {
     int slot;
     const V1_GraphicsSnd3Item* it;
-    FILE* f;
+    uint8_t* fileData = NULL;
+    size_t fileBytes = 0u;
 
     if (!graphicsDatPath || !manifest || !outBuffer) {
         set_err(errMsg, errMsgBytes, "null argument");
@@ -263,20 +235,18 @@ int V1_GraphicsSnd3_DecodeItem(const char* graphicsDatPath,
         return 0;
     }
 
-    f = fopen(graphicsDatPath, "rb");
-    if (!f) {
+    if (!asset_read_path_alloc(graphicsDatPath, &fileData, &fileBytes) ||
+        !fileData || it->fileOffset > fileBytes ||
+        fileBytes - it->fileOffset < 2u ||
+        it->declaredSampleCount > fileBytes - it->fileOffset - 2u) {
+        free(fileData);
         V1_GraphicsSnd3_FreeBuffer(outBuffer);
         set_err(errMsg, errMsgBytes, "cannot open GRAPHICS.DAT");
         return 0;
     }
-    if (fseek(f, (long)it->fileOffset + 2L, SEEK_SET) != 0 ||
-        fread(outBuffer->samples, 1, it->declaredSampleCount, f) != it->declaredSampleCount) {
-        fclose(f);
-        V1_GraphicsSnd3_FreeBuffer(outBuffer);
-        set_err(errMsg, errMsgBytes, "SND3 sample read failed");
-        return 0;
-    }
-    fclose(f);
+    memcpy(outBuffer->samples, fileData + it->fileOffset + 2u,
+           it->declaredSampleCount);
+    free(fileData);
 
     outBuffer->itemIndex = itemIndex;
     outBuffer->soundOrdinal = it->soundOrdinal;

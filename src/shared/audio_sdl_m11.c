@@ -707,6 +707,8 @@ static const char* m11_find_song_dat_path(char* homeBuf, size_t homeBufBytes) {
 }
 
 static const char* m11_find_graphics_dat_path(char* homeBuf, size_t homeBufBytes) {
+    static const char kDm1Pc34GraphicsDatMd5[] =
+        "fa6b1aa29e191418713bf2cda93d962e";
     const char* envPath = getenv("FIRESTAFF_GRAPHICS_DAT");
     const char* dm1DataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
     const char* dataRoot = getenv("FIRESTAFF_DATA");
@@ -733,6 +735,12 @@ static const char* m11_find_graphics_dat_path(char* homeBuf, size_t homeBufBytes
         if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
         n = snprintf(homeBuf, homeBufBytes, "%s/.firestaff/data/GRAPHICS.DAT", home);
         if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+        /* Keep original in-game SFX usable directly from a verified archive.
+         * asset_read_path_alloc() reads this one virtual member into RAM. */
+        n = snprintf(homeBuf, homeBufBytes, "%s/.firestaff/data/dm1", home);
+        if (n > 0 && (size_t)n < homeBufBytes &&
+            asset_find_by_md5(homeBuf, kDm1Pc34GraphicsDatMd5, homeBuf,
+                              (int)homeBufBytes, 3)) return homeBuf;
     }
     return NULL;
 }
