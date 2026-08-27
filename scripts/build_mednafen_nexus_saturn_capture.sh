@@ -20,10 +20,16 @@ while (($#)); do
 done
 : "${build_dir:?}" "${prefix:?}"
 
+# Mednafen's configure rejects a relative --prefix.  Accept the documented
+# CLI form either way, then retain absolute paths for the archive, temporary
+# directory and install step below.
+mkdir -p "$build_dir" "$prefix"
+build_dir=$(cd "$build_dir" && pwd)
+prefix=$(cd "$prefix" && pwd)
+
 repo_root=$(cd "$(dirname "$0")/.." && pwd)
 archive="$build_dir/mednafen-1.32.1.tar.xz"
 source_dir="$build_dir/mednafen-1.32.1"
-mkdir -p "$build_dir" "$prefix"
 export TMPDIR="$build_dir/tmp"
 mkdir -p "$TMPDIR"
 if [[ ! -f "$archive" ]]; then
@@ -36,6 +42,20 @@ if [[ ! -f "$source_dir/configure" ]]; then
   if [[ ! -f "$source_dir/configure" && -f "$build_dir/mednafen/configure" ]]; then
     mv "$build_dir/mednafen" "$source_dir"
   fi
+  # A previously interrupted extraction can leave the upstream archive root
+  # nested below our versioned working path.  Normalize that exact known
+  # layout before patching; never let `patch` prompt interactively against an
+  # accidental empty source directory.
+  if [[ ! -f "$source_dir/configure" &&
+        -f "$source_dir/mednafen/configure" ]]; then
+    mv "$source_dir/mednafen" "$build_dir/.mednafen-nexus-source-staging"
+    rmdir "$source_dir"
+    mv "$build_dir/.mednafen-nexus-source-staging" "$source_dir"
+  fi
+fi
+if [[ ! -f "$source_dir/configure" ]]; then
+  echo "ERROR: Mednafen source tree did not contain configure" >&2
+  exit 2
 fi
 marker="$source_dir/.firestaff-nexus-capture-patched"
 patch_id='FIRESTAFF_NEXUS_SATURN_CAPTURE_PATCH_V5_POST_RENDER_FRAME'

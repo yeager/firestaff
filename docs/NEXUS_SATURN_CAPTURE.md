@@ -60,8 +60,10 @@ Patchkedjan instrumenterar:
 2. SH-2-register vid writer-PC:n.
 3. källord från relevanta registerpekare.
 4. frame-id från Mednafen-capture-hooken.
-5. en rå VDP2-snapshot direkt efter den faktiska CRAM-skrivningen.
-6. en frame-capture efter `VDP2REND_EndFrame()`, så att VDP2-register, VRAM
+5. SH-2:s `PR`-register på varje VDP2-writer-rad, vilket låter den separata
+   call-chain-kontrollen binda en observerad returadress till en retail `BSR`.
+6. en rå VDP2-snapshot direkt efter den faktiska CRAM-skrivningen.
+7. en frame-capture efter `VDP2REND_EndFrame()`, så att VDP2-register, VRAM
    och CRAM beskriver den frame som Mednafen faktiskt renderade.
 7. VDP1-VRAM-skrivningar med en framegräns vid samma capture-hook som VDP2.
 
