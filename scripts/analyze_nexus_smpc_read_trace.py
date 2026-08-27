@@ -36,6 +36,9 @@ LINE_V2 = re.compile(
     r"rpc=0x(?P<rpc>[0-9a-fA-F]{8})$")
 DM_SHA256 = "3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124"
 DM_BASE = 0x06010040
+SNAPSHOT_HEADER = b"FIRESTAFF_NEXUS_SH2_MEMORY_SNAPSHOT_V1\n"
+SNAPSHOT_ROW = re.compile(
+    rb"frame=(?P<frame>[0-9]+) base=0x(?P<base>[0-9a-fA-F]+) size=(?P<size>[0-9]+)\n")
 
 
 def dm_word(dm: bytes, pc: int) -> int:
@@ -45,6 +48,44 @@ def dm_word(dm: bytes, pc: int) -> int:
     return int.from_bytes(dm[offset:offset + 2], "big")
 
 
+def snapshot_frames(path: Path) -> dict[int, tuple[int, bytes]]:
+    stream = path.read_bytes()
+    if not stream.startswith(SNAPSHOT_HEADER):
+        raise ValueError("invalid SH-2 snapshot header")
+    cursor = len(SNAPSHOT_HEADER)
+    frames = {}
+    while cursor < len(stream):
+        line_end = stream.find(b"\n", cursor)
+        if line_end < 0:
+            raise ValueError("truncated SH-2 snapshot frame header")
+        match = SNAPSHOT_ROW.fullmatch(stream[cursor:line_end + 1])
+        if not match:
+            raise ValueError("malformed SH-2 snapshot frame header")
+        frame = int(match["frame"])
+        base = int(match["base"], 16)
+        size = int(match["size"])
+        cursor = line_end + 1
+        payload = stream[cursor:cursor + size]
+        if (size != 0x100000 or len(payload) != size or cursor + size >= len(stream) or
+                stream[cursor + size] != 10 or frame in frames):
+            raise ValueError("invalid SH-2 snapshot payload")
+        frames[frame] = (base, payload)
+        cursor += size + 1
+    if not frames:
+        raise ValueError("SH-2 snapshot contains no frames")
+    return frames
+
+
+def snapshot_word(frames: dict[int, tuple[int, bytes]], frame: int, pc: int) -> int:
+    if frame not in frames:
+        raise ValueError(f"SH-2 snapshot frame is absent: {frame}")
+    base, payload = frames[frame]
+    offset = pc - base
+    if offset < 0 or offset + 2 > len(payload):
+        raise ValueError(f"pipeline PC lies outside SH-2 snapshot: 0x{pc:08x}")
+    return int.from_bytes(payload[offset:offset + 2], "big")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("trace", type=Path)
@@ -52,6 +93,8 @@ def main() -> int:
                         help="retail Nexus CUE; DM.BIN remains in memory")
     parser.add_argument("--frame-min", type=int)
     parser.add_argument("--frame-max", type=int)
+    parser.add_argument("--ram-snapshot", type=Path,
+                        help="same-session WorkRAMH snapshot for relocated pipeline opcodes")
     args = parser.parse_args()
     if ((args.frame_min is not None and args.frame_min < 0) or
             (args.frame_max is not None and args.frame_max < 0) or
@@ -88,14 +131,22 @@ def main() -> int:
         master_rows = [row for row in rows if row[1] == 0]
         if not master_rows:
             raise ValueError("no master-SH-2 rows remain")
-        pc_words = {rpc: dm_word(dm, rpc)
-                    for _frame, _cpu, _smpc, _value, rpc, _pc_id, _pid in master_rows}
         pipeline_bound = (v2 and all(pc_id != 0
                                       for _frame, _cpu, _smpc, _value, _rpc, pc_id, _pid
                                       in master_rows))
-        if pipeline_bound and any(pid != dm_word(dm, pc_id)
-                                for _frame, _cpu, _smpc, _value, _rpc, pc_id, pid in master_rows):
-            raise ValueError("master SH-2 pipeline opcode does not match retail DM.BIN")
+        relocated_pipeline = pipeline_bound and args.ram_snapshot is not None
+        pc_words = ({} if relocated_pipeline else
+                    {rpc: dm_word(dm, rpc)
+                     for _frame, _cpu, _smpc, _value, rpc, _pc_id, _pid in master_rows})
+        if pipeline_bound:
+            if relocated_pipeline:
+                ram = snapshot_frames(args.ram_snapshot)
+                if any(pid != snapshot_word(ram, frame, pc_id)
+                       for frame, _cpu, _smpc, _value, _rpc, pc_id, pid in master_rows):
+                    raise ValueError("master SH-2 pipeline opcode does not match WorkRAMH snapshot")
+            elif any(pid != dm_word(dm, pc_id)
+                     for _frame, _cpu, _smpc, _value, _rpc, pc_id, pid in master_rows):
+                raise ValueError("master SH-2 pipeline opcode does not match retail DM.BIN")
     except (KeyError, OSError, UnicodeError, ValueError) as error:
         print(f"NEXUS_SMPC_READ_TRACE_INVALID: {error}")
         return 1
@@ -115,6 +166,8 @@ def main() -> int:
     print("master_sh2_pc_range=verified")
     if v2 and not pipeline_bound:
         print("master_sh2_instruction_identity=pipeline_unavailable")
+    elif v2 and args.ram_snapshot is not None:
+        print("master_sh2_instruction_identity=runtime_snapshot_verified")
     else:
         print("master_sh2_instruction_identity=" + ("verified" if v2 else "unproven"))
     print("input_consumer_semantics=unbound")

@@ -24,7 +24,7 @@
 + static unsigned limit = 65536;
 + static bool configured;
 + static uint64 minimum;
-+ static uint64 maximum;
++ static uint64 maximum = UINT64_MAX;
 + const char *path = getenv("FIRESTAFF_NEXUS_TRACE_SMPC_READS");
 + const uint64 frame = SMPC_FirestaffCurrentFrame();
 + if(!configured)
@@ -38,7 +38,7 @@
 +  configured = true;
 + }
 + if(!path || !*path || count >= limit || address < 0x10 || address > 0x2f ||
-+    (maximum > minimum && (frame < minimum || frame > maximum)))
++    frame < minimum || frame > maximum)
 +  return;
 + if(!file)
 + {

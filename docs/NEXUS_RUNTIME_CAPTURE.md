@@ -102,11 +102,14 @@ Firestaff runtime dependency.
 consumer receipt. It reads `DM.BIN` directly from the supplied CUE in memory,
 requires its Japanese retail SHA-256
 `3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`, and
-rejects every available master-SH-2 V2 ID PC outside that member's load range
-or whose captured ID opcode differs from the corresponding retail word. When
-the normal producer has no ID-PC value, it reports `pipeline_unavailable`; V1
-receipts remain source-PC snapshots. Neither format alone identifies an
-instruction nor a controller action. Its deliberately broad
+rejects every available static master-SH-2 V2 ID PC outside that member's load
+range or whose captured ID opcode differs from the corresponding retail word.
+For code relocated into WorkRAMH, `--ram-snapshot` requires the exact 1 MiB
+snapshot for every traced frame and compares the ID opcode to that runtime
+word instead; malformed, absent, duplicate, or wrong-size snapshots fail.
+When the normal producer has no ID-PC value, it reports
+`pipeline_unavailable`; V1 receipts remain source-PC snapshots. Neither format
+alone identifies an instruction's input semantics or controller action. Its deliberately broad
 L/R/X/Up/C/Left/L/Right sequence is
 byte-identical to the same no-input control in all eight captured VDP1/VDP2
 regions for the 80-frame window, so it admits neither a debug feature nor a

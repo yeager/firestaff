@@ -95,6 +95,20 @@ and the first control.  This rules out the trace as an input attribution
 receipt.  In particular, `0x06014518`, `0x06014588`, and `0x0601459a` are
 observed writers, not proven title-menu or start-pose consumers.
 
+## Japanese SMPC relocated-instruction receipt — 2026-08-27
+
+A same-session JP capture over frames 1798--1802 pairs 105 master-SH-2 SMPC
+reads with five exact 1 MiB WorkRAMH images. The debug capture loop provides
+nonzero `PC_ID`/`PC_IF`; every captured `PID` word matches the corresponding
+address in its same-frame runtime snapshot. The verifier also reads and hashes
+the original `DM.BIN` in place, reporting
+`master_sh2_instruction_identity=runtime_snapshot_verified`.
+
+This resolves instruction identity after retail code has been relocated to
+WorkRAMH, not controller semantics. The receipt neither proves a menu action
+nor a new-game/`LEV01` transition, so native pose and title admission remain
+closed.
+
 ## Japanese retail start-pose disassembly audit — 2026-08-27
 
 The Japanese CUE data track was read in place and the authenticated `DM.BIN`
