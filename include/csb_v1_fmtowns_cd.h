@@ -120,6 +120,13 @@ int csb_v1_fmtowns_cdda_extract(const uint8_t *bin_data, size_t bin_size,
                                  const CSB_V1_FmtownsCddaTrack *track,
                                  uint8_t *out_buf, size_t out_buf_size);
 
+/* Memory-backed form of the CDDA reader.  It preserves the selected raw
+ * image as the source owner (including ZIP-inflated images) and returns only
+ * the requested Red Book span in caller-owned memory. */
+int csb_v1_fmtowns_cdda_read_alloc(const uint8_t *bin_data, size_t bin_size,
+                                   const CSB_V1_FmtownsCddaTrack *track,
+                                   uint8_t **out_data, size_t *out_size);
+
 /* File-backed CDDA extraction for raw MODE1/2352 images.  It streams the
  * selected original 44.1 kHz stereo PCM track directly to out_path, including
  * resolving the final track against the physical image end. */

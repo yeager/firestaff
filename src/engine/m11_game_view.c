@@ -9274,6 +9274,60 @@ static int m11_csb_is_fmtowns_profile(const CSB_V1_BootProfile *profile)
                        profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA);
 }
 
+static int m11_csb_read_fmtowns_cdda_media(const CSB_V1_BootProfile *profile,
+                                           uint8_t **out_cue,
+                                           size_t *out_cue_size,
+                                           uint8_t **out_image,
+                                           size_t *out_image_size)
+{
+    char cue_path[sizeof(profile->asset_root) + 16u];
+    char image_path[sizeof(profile->asset_root) + 16u];
+    int image_result;
+
+    if (!profile || !profile->asset_root[0] || !out_cue || !out_cue_size ||
+        !out_image || !out_image_size) return 0;
+    *out_cue = NULL;
+    *out_cue_size = 0U;
+    *out_image = NULL;
+    *out_image_size = 0U;
+    if (FSP_FileExists(profile->asset_root) &&
+        !FSP_DirExists(profile->asset_root)) {
+        image_result = firestaff_zip_extract_by_suffix(
+            profile->asset_root, ".img", out_image, out_image_size);
+        if (firestaff_zip_extract_by_suffix(profile->asset_root, ".cue",
+                                            out_cue, out_cue_size) != 0 ||
+            (image_result != 0 &&
+             firestaff_zip_extract_by_suffix(profile->asset_root, ".bin",
+                                             out_image, out_image_size) != 0)) {
+            free(*out_cue);
+            free(*out_image);
+            *out_cue = NULL;
+            *out_cue_size = 0U;
+            *out_image = NULL;
+            *out_image_size = 0U;
+            return 0;
+        }
+        return 1;
+    }
+    if (snprintf(cue_path, sizeof(cue_path), "%s/FMTOWNS.CUE",
+                 profile->asset_root) < 0 ||
+        strlen(cue_path) >= sizeof(cue_path) ||
+        snprintf(image_path, sizeof(image_path), "%s/FMTOWNS.IMG",
+                 profile->asset_root) < 0 ||
+        strlen(image_path) >= sizeof(image_path) ||
+        !asset_read_path_alloc(cue_path, out_cue, out_cue_size) ||
+        !asset_read_path_alloc(image_path, out_image, out_image_size)) {
+        free(*out_cue);
+        free(*out_image);
+        *out_cue = NULL;
+        *out_cue_size = 0U;
+        *out_image = NULL;
+        *out_image_size = 0U;
+        return 0;
+    }
+    return 1;
+}
+
 static int m11_csb_load_fmtowns_m653_font(const char *graphics_path,
                                           M11_FontState *font)
 {
@@ -9331,11 +9385,10 @@ static void m11_csb_dispatch_fmtowns_cdda_track(M11_GameViewState *state,
                                                 uint16_t source_track)
 {
     const CSB_V1_BootProfile *profile;
-    char cue_path[sizeof(((CSB_V1_BootProfile *)0)->asset_root) + 16u];
-    char image_path[sizeof(((CSB_V1_BootProfile *)0)->asset_root) + 16u];
-    FILE *cue_file = NULL;
-    long cue_size;
-    char *cue_bytes = NULL;
+    uint8_t *cue_bytes = NULL;
+    size_t cue_size = 0U;
+    uint8_t *image_bytes = NULL;
+    size_t image_size = 0U;
     uint8_t *pcm = NULL;
     size_t pcm_size = 0u;
     CSB_V1_FmtownsCddaLayout layout;
@@ -9346,16 +9399,7 @@ static void m11_csb_dispatch_fmtowns_cdda_track(M11_GameViewState *state,
         source_track > CSB_FMTOWNS_CD_CDDA_LAST_TRACK ||
         !state->csbBootProfile) return;
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
-    if (!m11_csb_is_fmtowns_profile(profile) || !profile->asset_root[0] ||
-        snprintf(cue_path, sizeof(cue_path), "%s/FMTOWNS.CUE",
-                 profile->asset_root) < 0 ||
-        strlen(cue_path) >= sizeof(cue_path) ||
-        /* M12's CSB materializer retains the original mixed-mode image as
-         * FMTOWNS.IMG. The CUE sheet owns its track layout; do not require a
-         * renamed/generated BIN sibling. */
-        snprintf(image_path, sizeof(image_path), "%s/FMTOWNS.IMG",
-                 profile->asset_root) < 0 ||
-        strlen(image_path) >= sizeof(image_path)) return;
+    if (!m11_csb_is_fmtowns_profile(profile)) return;
 
     /* ReDMCSB ANIM.C F2275 lines 2243-2248 turns TD/TR into
      * F0719_PlayMusicTrack. F0719 first pauses the old physical track, so a
@@ -9365,25 +9409,18 @@ static void m11_csb_dispatch_fmtowns_cdda_track(M11_GameViewState *state,
         state->csbFmtownsCddaPlaying = 0;
         state->csbFmtownsCddaPaused = 0;
     }
-    cue_file = fopen(cue_path, "rb");
-    if (!cue_file || fseek(cue_file, 0, SEEK_END) != 0 ||
-        (cue_size = ftell(cue_file)) <= 0 || cue_size > 64 * 1024 ||
-        fseek(cue_file, 0, SEEK_SET) != 0) {
-        if (cue_file) fclose(cue_file);
-        return;
-    }
-    cue_bytes = (char *)malloc((size_t)cue_size);
-    if (!cue_bytes || fread(cue_bytes, 1u, (size_t)cue_size, cue_file) !=
-                          (size_t)cue_size) {
+    if (!m11_csb_read_fmtowns_cdda_media(profile, &cue_bytes, &cue_size,
+                                         &image_bytes, &image_size) ||
+        cue_size == 0U || cue_size > 64U * 1024U || image_size == 0U) {
         free(cue_bytes);
-        fclose(cue_file);
+        free(image_bytes);
         return;
     }
-    fclose(cue_file);
-    if (csb_v1_fmtowns_cdda_parse_cue(cue_bytes, (size_t)cue_size, &layout) != 0 ||
+    if (csb_v1_fmtowns_cdda_parse_cue((const char *)cue_bytes, cue_size, &layout) != 0 ||
         !layout.valid ||
         layout.track_count != (int)CSB_FMTOWNS_CD_CDDA_TRACK_COUNT) {
         free(cue_bytes);
+        free(image_bytes);
         return;
     }
     free(cue_bytes);
@@ -9393,11 +9430,13 @@ static void m11_csb_dispatch_fmtowns_cdda_track(M11_GameViewState *state,
             break;
         }
     }
-    if (!track || csb_v1_fmtowns_cdda_read_file_alloc(image_path, track,
-                                                       &pcm, &pcm_size) != 0) {
+    if (!track || csb_v1_fmtowns_cdda_read_alloc(image_bytes, image_size,
+                                                  track, &pcm, &pcm_size) != 0) {
+        free(image_bytes);
         free(pcm);
         return;
     }
+    free(image_bytes);
     /* F0719's CD mtplay uses the next CUE track as the end boundary. It is
      * not a host loop; replay occurs only if a later source TR asks for it. */
     if (M11_Audio_PlayCdda(&state->audioState, pcm, pcm_size, 0)) {

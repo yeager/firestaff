@@ -480,6 +480,34 @@ int csb_v1_fmtowns_cdda_extract(const uint8_t *bin_data, size_t bin_size,
     return (int)length;
 }
 
+int csb_v1_fmtowns_cdda_read_alloc(const uint8_t *bin_data, size_t bin_size,
+                                   const CSB_V1_FmtownsCddaTrack *track,
+                                   uint8_t **out_data, size_t *out_size) {
+    size_t start, length;
+    uint8_t *data;
+
+    if (!out_data || !out_size) return -1;
+    *out_data = NULL;
+    *out_size = 0U;
+    if (!bin_data || !track || bin_size == 0U ||
+        bin_size % RAW != 0U ||
+        (size_t)track->start_sector > SIZE_MAX / RAW) return -1;
+    start = (size_t)track->start_sector * RAW;
+    if (start >= bin_size) return -1;
+    if (track->sector_count == 0U) {
+        length = bin_size - start;
+    } else {
+        if ((size_t)track->sector_count > (bin_size - start) / RAW) return -1;
+        length = (size_t)track->sector_count * RAW;
+    }
+    if (length == 0U || length > bin_size - start ||
+        !(data = (uint8_t *)malloc(length))) return -1;
+    memcpy(data, bin_data + start, length);
+    *out_data = data;
+    *out_size = length;
+    return 0;
+}
+
 int csb_v1_fmtowns_cdda_extract_file_to_path(
     const char *image_path, const CSB_V1_FmtownsCddaTrack *track,
     const char *out_path) {
