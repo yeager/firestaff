@@ -86,6 +86,15 @@ component, and the held/control difference cannot be attributed to START.
 The state owner and consumer remain capture-gated; Firestaff must not promote
 these bytes into synthetic gameplay state.
 
+A direct byte-write follow-up used a frame-windowed SH-2 WorkRAMH tracer for
+`0x0602c8f0`--`0x0602c91f` over frames 1798--1804.  The START run and two
+no-input runs have the same 154-write layout and the same producing PCs
+(`0x0601438e`--`0x06014ade`), but values vary across no-input sessions too:
+32 value differences occur between the two controls, versus 42 between START
+and the first control.  This rules out the trace as an input attribution
+receipt.  In particular, `0x06014518`, `0x06014588`, and `0x0601459a` are
+observed writers, not proven title-menu or start-pose consumers.
+
 ## Japanese retail start-pose disassembly audit — 2026-08-27
 
 The Japanese CUE data track was read in place and the authenticated `DM.BIN`
