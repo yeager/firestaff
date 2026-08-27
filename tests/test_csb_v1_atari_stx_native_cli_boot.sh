@@ -43,6 +43,22 @@ case "$runtime_output" in
         ;;
 esac
 
+movement_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+    --game csb --platform atari-st --data-dir "$media_path" \
+    --boot-probe --boot-probe-frames 800 --script 'key:enter,up' \
+    --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 --duration 0 2>&1)" || {
+    printf '%s\n' "$movement_output" >&2
+    exit 1
+}
+case "$movement_output" in
+    *phase=inactive*startupActive=0*levelLoaded=1*party=9,1,2*runtimeTick=*) ;;
+    *)
+        echo "FAIL: native CSB Atari ST title input did not consume first UP movement"
+        printf '%s\n' "$movement_output" >&2
+        exit 1
+        ;;
+esac
+
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --menu --game csb --platform atari-st --data-dir "$media_path" \
@@ -59,4 +75,4 @@ case "$menu_output" in
         ;;
 esac
 
-echo "PASS: native CSB Atari ST campaign title, runtime, and start-menu launch"
+echo "PASS: native CSB Atari ST campaign title, runtime movement, and start-menu launch"
