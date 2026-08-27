@@ -209,11 +209,23 @@ int Nexus_V1_BootProfile_ValidateAssets(const Nexus_V1_BootProfile *profile,
      * compatibility, but bind its readiness check to the real source.
      * Source: DMWeb Nexus resources; nexus_v1_champions.c and
      * nexus_v1_creatures.c consume RLOWFIX.BIN directly. */
-    (void)nexus_v1_boot_check_asset_hash_or_file(
-        dataDir, "RLOWFIX.BIN",
-        "14c3a7e6fed2dc9e53a727640d4c9348",
-        NEXUS_V1_DIAG_MISSING_CHAMPION_DATA,
-        diags, &diagCount, maxDiags);
+    {
+        char matched[ASSET_PATH_MAX];
+        /* Japanese retail uses a distinct, authenticated RLOWFIX revision:
+         * MD5 bb650a4e6f7b6374ba8aa86a61f8f523 (72,332 bytes).  Resolve it
+         * through the in-place CUE/BIN container scanner first, so that route
+         * never requires a loose extracted duplicate.  The existing
+         * hash-or-file path retains the English revision and its diagnostic. */
+        if (!asset_find_by_md5(dataDir,
+                               "bb650a4e6f7b6374ba8aa86a61f8f523",
+                               matched, (int)sizeof(matched), 8)) {
+            (void)nexus_v1_boot_check_asset_hash_or_file(
+                dataDir, "RLOWFIX.BIN",
+                "14c3a7e6fed2dc9e53a727640d4c9348",
+                NEXUS_V1_DIAG_MISSING_CHAMPION_DATA,
+                diags, &diagCount, maxDiags);
+        }
+    }
 
     return (int)diagCount;
 }
