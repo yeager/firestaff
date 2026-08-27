@@ -6521,10 +6521,20 @@ int nexus_v1_current_level_structure3_package_geometry_packet(
     out_packet->package_fnv1a64 = out_packet->source_bytes_fnv1a64;
     out_packet->descriptor_fnv1a64 = material_bound ?
         material_target.descriptor_target.descriptor_bytes_fnv1a64 : 0U;
-    out_packet->image_offset = material_bound ? material_target.image_payload_byte_offset : 0U;
+    out_packet->image_offset = material_bound ?
+        (uint32_t)material_target.image_payload_byte_offset : 0U;
     out_packet->image_length = material_bound ? material_target.image_payload_candidate_byte_count : 0U;
-    out_packet->palette_offset = material_bound ? material_target.palette_payload_byte_offset : 0U;
-    out_packet->palette_length = material_bound ? material_target.palette_payload_candidate_byte_count : 0U;
+    /* A zero descriptor palette offset means that this material deliberately
+     * has no separately-addressable palette payload.  Keep that absence
+     * represented as the canonical empty interval (0, 0): casting the
+     * capture target's -1 sentinel to uint32_t would otherwise manufacture
+     * an out-of-range palette address in the geometry packet. */
+    out_packet->palette_offset =
+        material_bound && material_target.palette_payload_anchor_bound ?
+            (uint32_t)material_target.palette_payload_byte_offset : 0U;
+    out_packet->palette_length =
+        material_bound && material_target.palette_payload_anchor_bound ?
+            material_target.palette_payload_candidate_byte_count : 0U;
     out_packet->face = *face;
     out_packet->vertex_slot_count = slot_count;
     out_packet->vertices[0] = vertices[face->vertex_indexes[0]];
