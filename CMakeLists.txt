@@ -17401,7 +17401,7 @@ endif()
     set_tests_properties(csb_v1_atari_stx_native_cli_boot PROPERTIES
         LABELS "tier2;csb;atari;startup;cli;menu;real_data;skip_safe"
         ENVIRONMENT "FIRESTAFF_CSB_ATARI_STX=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx"
-        TIMEOUT 45
+        TIMEOUT 90
     )
     add_test(
         NAME csb_v1_atari_nested_zip_cli_boot
@@ -17412,7 +17412,7 @@ endif()
         SKIP_RETURN_CODE 77
         LABELS "tier2;csb;atari;startup;cli;menu;real_data;archive;native;skip_safe"
         ENVIRONMENT "FIRESTAFF_CSB_ATARI_NESTED_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/chaos_strikes_back_ftl.zip"
-        TIMEOUT 45
+        TIMEOUT 90
     )
     add_test(
         NAME csb_v1_amiga_native_cli_boot

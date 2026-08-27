@@ -16,7 +16,9 @@ title_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     exit 1
 }
 case "$title_output" in
-    *sourceId=csb*assetMd5=ebf6a57af3f27782e358c0490bfd2f2e*phase=csb-title-1*startupAnimation=csb-title*levelLoaded=1*) ;;
+    # The nested ZIP preserves the same Atari ST ANIMATE.SCR title owner as
+    # the loose STX dump.  It is not a generic already-loaded CSB title.
+    *sourceId=csb*assetMd5=ebf6a57af3f27782e358c0490bfd2f2e*phase=csb-atari-st-animation*startupAnimation=animate-scr*titleReady=1*levelLoaded=0*) ;;
     *)
         echo "FAIL: nested CSB Atari archive did not reach the source title"
         printf '%s\n' "$title_output" >&2
@@ -41,8 +43,8 @@ case "$runtime_output" in
 esac
 
 movement_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
-    --game csb --platform atari-st --data-dir "$media_path" \
-    --boot-probe --boot-probe-frames 800 --script 'key:enter,up' \
+    --menu --game csb --platform atari-st --data-dir "$media_path" \
+    --boot-probe --boot-probe-frames 800 --script 'enter,key:enter,up' \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 --duration 0 2>&1)" || {
     printf '%s\n' "$movement_output" >&2
     exit 1
@@ -50,7 +52,7 @@ movement_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" 
 case "$movement_output" in
     *phase=inactive*startupActive=0*levelLoaded=1*party=9,1,2*runtimeTick=*) ;;
     *)
-        echo "FAIL: nested CSB Atari title input did not consume first UP movement"
+        echo "FAIL: nested CSB Atari start menu/title input did not consume first UP movement"
         printf '%s\n' "$movement_output" >&2
         exit 1
         ;;
