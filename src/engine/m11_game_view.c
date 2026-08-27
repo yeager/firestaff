@@ -14778,14 +14778,25 @@ static int m11_dm1_fmtowns_read_archive_member(
     uint8_t **out_bytes, size_t *out_size) {
     uint8_t *image = NULL;
     size_t image_size = 0U;
+    uint8_t *cue = NULL;
+    size_t cue_size = 0U;
+    char image_member[M11_GAME_VIEW_PATH_CAPACITY];
     FmtownsDiscProbeResult disc;
     const FmtownsIsoEntry *entry;
     int ok = 0;
     if (!archive_path || !member || !out_bytes || !out_size) return 0;
     *out_bytes = NULL;
     *out_size = 0U;
-    if (firestaff_zip_extract_by_suffix(archive_path, ".bin",
-                                        &image, &image_size) != 0 ||
+    /* A multi-track FM Towns ZIP can contain many BIN members.  The first
+     * suffix match is not a stable data-track selection and can be an audio
+     * track.  The original CUE owns the relationship to the ISO image, so
+     * retain that exact member binding for startup files too. */
+    if (firestaff_zip_extract_by_suffix(archive_path, ".cue",
+                                        &cue, &cue_size) != 0 ||
+        !fmtowns_cue_parse_image_member((const char *)cue, cue_size,
+                                        image_member, sizeof(image_member)) ||
+        firestaff_zip_extract_by_name(archive_path, image_member,
+                                      &image, &image_size) != 0 ||
         fmtowns_disc_probe(image, image_size, FMTOWNS_SECTOR_2048,
                            &disc) != 0) goto done;
     entry = fmtowns_disc_find(&disc, member);
@@ -14794,6 +14805,7 @@ static int m11_dm1_fmtowns_read_archive_member(
             out_bytes, out_size) != 0) goto done;
     ok = 1;
 done:
+    free(cue);
     free(image);
     if (!ok) {
         free(*out_bytes);
