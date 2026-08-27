@@ -12,7 +12,7 @@ fi
 # AUTOEXEC hands SWOOSH/TITLE to SKULL before the source New Game event.  The
 # viewport click is a source-space mirror selection, followed by normal Up.
 output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --game dm2 --platform fm-towns --data-dir "$archive" --boot-probe \
+    --menu --game dm2 --platform fm-towns --data-dir "$archive" --boot-probe \
     --boot-probe-frames 12000 --script 'key:enter,click:100:100,up' \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
     --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
@@ -21,4 +21,4 @@ case "$output" in
     *'assetMd5=027ff3b8ddc2c4c4cdda7ada0b0bc46c'*'phase=dm2-runtime'*'levelLoaded=1'*'party=1,7,0'*) ;;
     *) printf '%s\n' "$output" >&2; exit 1 ;;
 esac
-echo 'PASS: native DM2 FM Towns ZIP reaches runtime and moves in memory'
+echo 'PASS: native DM2 FM Towns ZIP start menu reaches runtime and moves in memory'

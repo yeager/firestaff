@@ -10,7 +10,7 @@ if [ ! -x "$app" ] || [ ! -f "$archive" ]; then
 fi
 
 output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --game dm2 --platform amiga --data-dir "$archive" --boot-probe \
+    --menu --game dm2 --platform amiga --data-dir "$archive" --boot-probe \
     --boot-probe-frames 2000 --script 'key:enter,up' \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
     --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
@@ -19,4 +19,4 @@ case "$output" in
     *'assetMd5=1c940ea95703eaea0ecdf84d17e954b9'*'phase=dm2-runtime'*'levelLoaded=1'*'party=1,7,0'*) ;;
     *) printf '%s\n' "$output" >&2; exit 1 ;;
 esac
-echo 'PASS: native DM2 Amiga ZIP reaches runtime and moves in memory'
+echo 'PASS: native DM2 Amiga ZIP start menu reaches runtime and moves in memory'

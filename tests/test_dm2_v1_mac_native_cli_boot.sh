@@ -14,7 +14,7 @@ fi
 # action.  The viewport click selects the File_header-backed mirror through
 # the native preselection owner, and Up is then normal runtime movement.
 output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --game dm2 --platform mac --data-dir "$archive" --boot-probe \
+    --menu --game dm2 --platform mac --data-dir "$archive" --boot-probe \
     --boot-probe-frames 2000 --script 'key:enter,key:enter,click:100:100,up' \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
     --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
@@ -23,4 +23,4 @@ case "$output" in
     *'assetMd5=5cab25f6b975957eae4a203174e7f2a6'*'phase=dm2-runtime'*'levelLoaded=1'*'party=1,7,0'*) ;;
     *) printf '%s\n' "$output" >&2; exit 1 ;;
 esac
-echo 'PASS: native DM2 Macintosh ZIP title, mirror selection, and movement run in memory'
+echo 'PASS: native DM2 Macintosh ZIP start menu, title, mirror selection, and movement run in memory'
