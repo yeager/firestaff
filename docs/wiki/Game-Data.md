@@ -15,9 +15,9 @@ technical companion to that guide. It covers the current implementations of:
 - DM1/CSB dungeon data, platform program media, campaign files and save
   families, including the distinct FM Towns and CSBWin boundaries;
 - DM2 GDAT, G1 dungeon records, GDAT PCM and platform media;
-- DM2 Macintosh retail and First Chapter media read directly from authentic
-  ZIP/BIN content in RAM, including HFS/StuffIt `DMFiles`, big-endian dungeon
-  data, QuickTime/MooV resources and the retail application's resource fork;
+- DM2 Macintosh retail media reads directly from authentic ZIP/BIN content in
+  RAM, including HFS `DMFiles`, big-endian dungeon data, QuickTime/MooV
+  resources and the retail application's resource fork;
   Mac Resume and dynamic pointer/drag ownership remain closed;
 - Nexus DGN/DMDF, MNS, PRS3, BGR555, SAL and MAP evidence; and
 - Theron's Quest raw MODE1/2352 Track 02, record framing and SRM saves.

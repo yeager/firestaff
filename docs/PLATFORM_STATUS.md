@@ -47,7 +47,6 @@ parity gate is complete.
 | Amiga | **Verified route** | Original Amiga archive reaches title, New Game, bounded runtime and the clipped native CHARSHEET inventory frame through verified GDAT/RAW4 material. | Wider gameplay, save and full pixel/audio parity. |
 | FM Towns | **Verified route** | Authentic Towns data and platform-specific startup, input, CD-audio and gameplay slices are tested. | Complete native runtime ownership and full parity. |
 | Macintosh large retail | **Verified route** | Authentic English retail ZIP is read in RAM. HFS, big-endian dungeon data, title/movie/audio/MIDI resources, New Game and bounded wall input pass. | Complete Mac GAME_LOAD/Resume, native dynamic pointer/drag owner, CoreMIDI timing and full pixel/audio parity. No authentic Mac save is present. |
-| Macintosh small First Chapter demo | **Partial source route** | Authentic demo ZIP is read in RAM. Its static source startup and New Game/GAME_LOAD preselection retain the truncated dungeon plus 16-entry mirror roster. | Native mirror-selection input still must commit that candidate before runtime; dynamic Mac Control/Event ownership and Resume remain closed because the authoritative ZIP has no application fork. |
 | Macintosh Japanese/French | **Preservation** | Authentic media is retained or classified as preservation input. | Separate graphics/dungeon/runtime ownership and language-specific proof. |
 | X68000 | **Unsupported** | Not part of the DM2 support matrix. | None planned in the current target. |
 

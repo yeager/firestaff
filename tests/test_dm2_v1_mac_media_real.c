@@ -5,8 +5,6 @@
 
 int main(void) {
     const char *zip = getenv("FIRESTAFF_DM2_MAC_EN_ZIP");
-    int demo = getenv("FIRESTAFF_DM2_MAC_EN_DEMO_ZIP") != NULL;
-    if (demo) zip = getenv("FIRESTAFF_DM2_MAC_EN_DEMO_ZIP");
     DM2_V1_MacMedia media;
     if (!zip || !zip[0]) {
         puts("SKIP: FIRESTAFF_DM2_MAC_EN_ZIP is not set");
@@ -16,25 +14,20 @@ int main(void) {
         fprintf(stderr, "authentic Mac ZIP could not be read: %s\n", zip);
         return 1;
     }
-    if ((!demo && (media.graphics_size != 8157169u || media.dungeon_size != 39411u ||
-                   media.music_map_size != 176u)) ||
-        (demo && (media.graphics_size != 3110116u || media.dungeon_size != 6535u ||
-                  media.demo != 1 || media.application_data ||
-                  media.application_resource ||
-                  media.application_data_size != 0u ||
-                  media.application_resource_size != 0u))) {
+    if (media.graphics_size != 8157169u || media.dungeon_size != 39411u ||
+        media.music_map_size != 176u || media.demo) {
         fprintf(stderr, "unexpected Mac fork sizes: graphics=%zu dungeon=%zu md=%zu\n",
                 media.graphics_size, media.dungeon_size, media.music_map_size);
         dm2_v1_mac_media_free(&media);
         return 1;
     }
-    if (!demo && (media.movie_present_mask &
+    if ((media.movie_present_mask &
                   ((uint32_t)1u << DM2_V1_MAC_MOVIE_TITLE)) == 0u) {
         fprintf(stderr, "authentic retail Mac Title.MooV was not read\n");
         dm2_v1_mac_media_free(&media);
         return 1;
     }
-    if (!demo &&
+    if (
         (((media.movie_resource_present_mask &
              ((uint32_t)1u << DM2_V1_MAC_MOVIE_TITLE)) == 0u) ||
          ((media.movie_moov_present_mask &
@@ -44,18 +37,18 @@ int main(void) {
         dm2_v1_mac_media_free(&media);
         return 1;
     }
-    if (!demo && (media.sound_resource_fork_present_mask != 0x7u ||
+    if (media.sound_resource_fork_present_mask != 0x7u ||
                   media.sound_resource_fork_size[DM2_V1_MAC_SOUND_MUSIC] != 662956u ||
                   media.sound_resource_fork_size[DM2_V1_MAC_SOUND_GENERAL] != 134562u ||
-                  media.sound_resource_fork_size[DM2_V1_MAC_SOUND_WEAPON] != 50651u)) {
+                  media.sound_resource_fork_size[DM2_V1_MAC_SOUND_WEAPON] != 50651u) {
         fprintf(stderr, "authentic Mac sound resource forks were not read\n");
         dm2_v1_mac_media_free(&media);
         return 1;
     }
-    if (!demo && (media.application_data_size != 484944u ||
+    if (media.application_data_size != 484944u ||
                   media.application_resource_size != 5046234u ||
                   !media.application_data || !media.application_resource ||
-                  memcmp(media.application_data, "Joy!", 4u) != 0)) {
+                  memcmp(media.application_data, "Joy!", 4u) != 0) {
         fprintf(stderr, "authentic Mac application forks were not retained: data=%zu resource=%zu ptr=%d/%d\n",
                 media.application_data_size, media.application_resource_size,
                 media.application_data != NULL, media.application_resource != NULL);
@@ -67,7 +60,7 @@ int main(void) {
         dm2_v1_mac_media_free(&media);
         return 1;
     }
-    if (!demo) {
+    {
         const uint8_t *midi = NULL;
         size_t midi_size = 0u;
         DM2_V1_MacResourceReceipt receipt;
@@ -118,7 +111,7 @@ int main(void) {
             }
         }
     }
-    if (!demo) {
+    {
         printf("retail movie mask=0x%08x resource=0x%08x moov=0x%08x sizes=%zu,%zu,%zu,%zu,%zu moov_size=%zu head=%02x%02x%02x%02x%02x%02x%02x%02x\n",
                media.movie_present_mask, media.movie_resource_present_mask,
                media.movie_moov_present_mask, media.movie_size[0],
@@ -128,7 +121,6 @@ int main(void) {
                media.movie[0][5], media.movie[0][6], media.movie[0][7]);
     }
     dm2_v1_mac_media_free(&media);
-    puts(demo ? "PASS: authentic DM2 Macintosh demo installer read in RAM"
-              : "PASS: authentic DM2 Macintosh retail HFS forks read in RAM");
+    puts("PASS: authentic DM2 Macintosh retail HFS forks read in RAM");
     return 0;
 }

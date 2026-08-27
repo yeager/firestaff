@@ -48,7 +48,7 @@ DM2 is playable in Firestaff from four authenticated source families:
 | DOSBox / PC English | `GRAPHICS.DAT` + `DUNGEON.DAT`; DOSBox saves in `Downloads/dm2` are optional resume data | New Game, active runtime, movement, pit/stairs/DB1 routes, creatures and spell handoff |
 | Amiga English | Original installer archive, read and verified in memory | New Game, active big-endian runtime, clipped source CHARSHEET inventory, movement, pit/stairs/DB1 routes and creatures |
 | FM Towns Japanese | Original HME-242 ZIP/disc image; English text additionally uses the verified PC-English `GRAPHICS.DAT` companion | M12 archive launch, AUTOEXEC animation order, source title streams, New Game, inventory, movement, pit/stairs/DB1 routes and creatures |
-| Macintosh English | Authentic retail or demo ZIP/HFS media | New Game, active big-endian runtime, movement, stairs/DB1 routes and source-owned combat/creature handoff |
+| Macintosh English | Authentic retail ZIP/HFS media | New Game, active big-endian runtime, movement, stairs/DB1 routes and source-owned combat/creature handoff |
 
 The shared DM2 data root may contain all four editions. M12 resolves each
 selected version to its own source owner: the DOS `data` tree or symlink,
@@ -163,7 +163,7 @@ game media and every user-local input.
 |---|---|---|---|---|
 | DM1 | PC DOS 3.4 | Atari ST | Amiga, FM Towns, PC-9801 preservation | X68000 |
 | CSB | — | Atari ST, Amiga, FM Towns | CSBWin source/disassembly reference | PC-9801, X68000 |
-| DM2 | — | DOS, FM Towns, Mac retail, Mac First Chapter demo | Amiga, Mac JP/FR | X68000 |
+| DM2 | — | DOS, FM Towns, Mac retail | Amiga, Mac JP/FR | X68000 |
 | Nexus | — | Saturn Japanese bounded phase launch | Saturn demo/fan translations | — |
 | Theron's Quest | — | — | PC Engine/TurboGrafx US and Japanese Track 02 routes | — |
 

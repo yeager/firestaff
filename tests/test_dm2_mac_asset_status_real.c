@@ -52,42 +52,32 @@ static int check_archive(const char *path, const char *version_id)
 
 int main(void)
 {
-    const char *demo = getenv("FIRESTAFF_DM2_MAC_EN_DEMO_ZIP");
     const char *retail = getenv("FIRESTAFF_DM2_MAC_EN_ZIP");
     const char *root = getenv("FIRESTAFF_DM2_MAC_DATA_ROOT");
     M12_AssetStatus combined;
-    const M12_AssetVersionStatus *demo_version;
     const M12_AssetVersionStatus *retail_version;
-    int demo_index;
     int retail_index;
 
-    if (!demo || !demo[0] || !retail || !retail[0]) {
+    if (!retail || !retail[0]) {
         puts("SKIP: DM2 Mac archive environment is not set");
         return 0;
     }
-    check_archive(demo, "mac-en-demo");
     check_archive(retail, "mac-en-retail");
     if (!root || !root[0]) {
         puts("SKIP: FIRESTAFF_DM2_MAC_DATA_ROOT is not set; combined-root check skipped");
     } else {
         memset(&combined, 0, sizeof(combined));
         M12_AssetStatus_ScanGame(&combined, root, "dm2");
-        demo_index = M12_AssetStatus_FindVersionIndex("dm2", "mac-en-demo");
         retail_index = M12_AssetStatus_FindVersionIndex("dm2", "mac-en-retail");
-        demo_version = demo_index >= 0
-            ? M12_AssetStatus_GetVersion(&combined, "dm2", (size_t)demo_index)
-            : NULL;
         retail_version = retail_index >= 0
             ? M12_AssetStatus_GetVersion(&combined, "dm2", (size_t)retail_index)
             : NULL;
-        expect(demo_version && demo_version->matched,
-               "a shared DM2 data root retains the authentic Mac demo edition");
         expect(retail_version && retail_version->matched,
                "a shared DM2 data root retains the authentic Mac retail edition");
     }
     if (failures != 0) {
         return 1;
     }
-    puts("PASS: DM2 Mac archive admission preserves both authentic editions");
+    puts("PASS: DM2 Mac archive admission preserves the supported retail edition");
     return 0;
 }

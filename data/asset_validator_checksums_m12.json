@@ -371,13 +371,6 @@
     },
     {
       "gameId": "dm2",
-      "description": "DMII Macintosh English Demo",
-      "filename": "GRAPHICS.DAT",
-      "md5": "4bf28b3d84e6799d7686c6aaf96cbf23",
-      "label": "DMII Macintosh English Demo GRAPHICS.DAT"
-    },
-    {
-      "gameId": "dm2",
       "description": "DMII Macintosh English",
       "filename": "GRAPHICS.DAT",
       "md5": "5cab25f6b975957eae4a203174e7f2a6",

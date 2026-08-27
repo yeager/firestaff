@@ -154,13 +154,11 @@ done:
 int main(void)
 {
     const char *retail = getenv("FIRESTAFF_DM2_MAC_EN_ZIP");
-    const char *demo = getenv("FIRESTAFF_DM2_MAC_EN_DEMO_ZIP");
     int ran = 0;
     int failed = 0;
     if (retail && retail[0]) { ran = 1; failed |= exercise_zip(retail); }
-    if (demo && demo[0]) { ran = 1; failed |= exercise_zip(demo); }
     if (!ran) {
-        puts("SKIP: DM2 Mac retail/demo ZIP environment is not set");
+        puts("SKIP: DM2 Mac retail ZIP environment is not set");
         return 0;
     }
     return failed ? 1 : 0;

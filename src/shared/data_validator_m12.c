@@ -209,7 +209,6 @@ static const M12_KnownChecksum g_knownChecksums[] = {
     {"dm2", "GRAPHICS.DAT", "1c940ea95703eaea0ecdf84d17e954b9", "DMII Amiga GRAPHICS.DAT"},
     {"dm2", "GRAPHICS.DAT", "027ff3b8ddc2c4c4cdda7ada0b0bc46c", "DMII FM-Towns Japanese GRAPHICS.DAT"},
     {"dm2", "GRAPHICS.DAT", "f926a7554bdfb5852105179e67b8a264", "DMII IBM PSV Japanese GRAPHICS.DAT"},
-    {"dm2", "GRAPHICS.DAT", "4bf28b3d84e6799d7686c6aaf96cbf23", "DMII Macintosh English Demo GRAPHICS.DAT"},
     {"dm2", "GRAPHICS.DAT", "5cab25f6b975957eae4a203174e7f2a6", "DMII Macintosh English GRAPHICS.DAT"},
     {"dm2", "GRAPHICS.DAT", "283d5456c4f676609489e200219605bb", "DMII Macintosh Japanese GRAPHICS.DAT"},
     {"dm2", "DMCOORD.DAT", "5dc5d15ae4a3ee85757b3d3622ed2221", "DMII PC 0.9 Beta English DMCOORD.DAT"},

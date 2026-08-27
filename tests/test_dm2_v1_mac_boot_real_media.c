@@ -6,11 +6,9 @@
 
 int main(void) {
     const char *zip = getenv("FIRESTAFF_DM2_MAC_EN_ZIP");
-    int demo = getenv("FIRESTAFF_DM2_MAC_EN_DEMO_ZIP") != NULL;
     DM2_V1_BootProfile profile;
     const DM2_V1_DungeonData *dungeon;
 
-    if (demo) zip = getenv("FIRESTAFF_DM2_MAC_EN_DEMO_ZIP");
     if (!zip || !zip[0]) {
         puts("SKIP: DM2 Mac ZIP environment is not set");
         return 0;
@@ -18,17 +16,16 @@ int main(void) {
     dm2_v1_boot_profile_init(&profile);
     if (dm2_v1_boot_scan_assets(&profile, zip) != 0 ||
         !profile.assets_verified || profile.platform != DM2_PLATFORM_MAC_EN ||
-        strcmp(profile.version_id, demo ? "mac-en-demo" : "mac-en-retail") != 0 ||
-        profile.graphics_mem_size != (demo ? 3110116u : 8157169u) ||
-        profile.dungeon_mem_size != (demo ? 6535u : 39411u) ||
-        (!demo && (!profile.music_map_verified ||
-                   profile.music_map_size != 176u)) ||
-        (!demo && (profile.mac_movie_present_mask != 0x1du ||
+        strcmp(profile.version_id, "mac-en-retail") != 0 ||
+        profile.graphics_mem_size != 8157169u ||
+        profile.dungeon_mem_size != 39411u ||
+        !profile.music_map_verified || profile.music_map_size != 176u ||
+        (profile.mac_movie_present_mask != 0x1du ||
                    profile.mac_movie_resource_present_mask != 0x1du ||
                    profile.mac_movie_moov_present_mask != 0x1du ||
                    profile.mac_movie_moov_size[DM2_V1_MAC_MOVIE_TITLE] !=
-                       3286u)) ||
-        (!demo && profile.mac_sound_resource_fork_present_mask != 0x7u) ||
+                       3286u) ||
+        profile.mac_sound_resource_fork_present_mask != 0x7u ||
         dm2_v1_boot_enter_game(&profile) != 0) {
         fprintf(stderr,
                 "DM2 Mac boot failed: platform=%d version=%s verified=%d g=%zu d=%zu\n",
@@ -47,7 +44,7 @@ int main(void) {
         dm2_v1_boot_cleanup(&profile);
         return 1;
     }
-    if (!demo) {
+    {
         if (!profile.mac_application_data ||
             profile.mac_application_data_size != 484944u ||
             !profile.mac_application_resource ||
@@ -74,7 +71,6 @@ int main(void) {
         }
     }
     dm2_v1_boot_cleanup(&profile);
-    puts(demo ? "PASS: DM2 Macintosh demo boots from the original ZIP in RAM"
-              : "PASS: DM2 Macintosh retail boots from the original ZIP in RAM");
+    puts("PASS: DM2 Macintosh retail boots from the original ZIP in RAM");
     return 0;
 }

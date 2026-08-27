@@ -53,36 +53,21 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
 - Macintosh is a separate 68k release family with its own big-endian data,
   resource-fork/container and menu/audio conventions. It is not a DOS or FM
   Towns data alias.
-- Firestaff admits both authentic US English ZIPs as separate versions:
-  `mac-en-retail` (the large retail disc) and `mac-en-demo` (the smaller First
-  Chapter demo). Both raw MODE1/2352 BINs are read in memory through the Apple
-  Partition Map and HFS catalogue; the demo additionally walks its genuine
-  StuffIt 2 `DMFiles` member in RAM. `DMFiles/Dungeon.dat`, `Graphics.dat`,
-  and `md.dat` remain owned by the original ZIP and are never unpacked to the
-  game-data directory.
-- A shared DM2 data-root scan admits both Mac versions in one pass. The first
-  matching archive no longer hides its sibling, so the launcher can present
-  the large retail and small demo entries together.
-- The small demo gate also requires that no Macintosh application data or
-  resource fork is present. Its launch path therefore cannot silently borrow
-  the large retail application's dynamic Control/Event owner.
-- The two versions have separate hash-paired boot receipts. Retail uses the
-  39,411-byte big-endian dungeon; the demo uses its 6,535-byte truncated
-  big-endian File_header/map data. The Japanese Mac multi-track archive is now
+- Firestaff admits the authentic US English retail ZIP as `mac-en-retail`.
+  Its raw MODE1/2352 BIN is read in memory through the Apple Partition Map and
+  HFS catalogue. `DMFiles/Dungeon.dat`, `Graphics.dat`, and `md.dat` remain
+  owned by the original ZIP and are never unpacked to the game-data directory.
+- The retail version has a hash-paired boot receipt and uses the 39,411-byte
+  big-endian dungeon. The Japanese Mac multi-track archive is now
   readable through its authentic late Apple_HFS partition and
   case-preserving catalogue as a media-only gate; it remains a preservation
   input, not a launchable variant, until its Japanese graphics/dungeon pair
   and runtime are source-locked. French Mac remains preservation-only.
 - The Mac dungeon reader keeps the ZIP/HFS source bytes intact and carries the
   68k word order through the authenticated column, ground-stack and record-link
-  accessors. Both English ZIPs now pass the source record-graph and start-pose
+  accessors. The retail ZIP passes the source record-graph and start-pose
   gates. Retail map-wide GAME_LOAD passes all 44 authentic maps using the
-  canonical File_header pool layout. The demo's authentic 16-entry champion
-  roster uses per-mirror DYN4 selectors, but its File_header contains no
-  tick-generator-family actuators; Firestaff records that as a valid
-  zero-generator source projection. Its STARTEND path uses the real mirror at
-  map 0,0,0 while retaining the source party pose at map 0,1,8. Both versions
-  now pass separate real-media New Game gates without extracting the ZIP data.
+  canonical File_header pool layout without extracting the ZIP data.
 - The English Macintosh input table is source-locked and tested for both
   versions: inventory keys, movement aliases, freeze/wake, Command-O/S/Q,
   entrance/credits Return, and the three wall-button columns. Actions
@@ -164,18 +149,11 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   retail decoder gate covers all four present movies. M11 now presents the
   authentic Title movie at Mac startup and opens authentic Credits from the
   authenticated Credits rectangle; Mac Return/Enter closes that movie through
-  the source input table. The demo has no Credits movie and remains on its
-  authenticated static route. M11 now holds each decoded frame for the
+  the source input table. M11 now holds each decoded frame for the
   positive duration carried by its authentic QuickTime frame record; the
   real-media gate rejects zero-duration or non-monotonic frame timing instead
   of inventing a host cadence. Exact original presentation ownership remains
   separate.
-- The small First Chapter demo is admitted to its static M11 startup surface
-  from the authentic ZIP. Its New Game action retains a source-owned
-  GAME_LOAD preselection from the truncated File_header and real 16-entry
-  mirror roster, without borrowing retail QuickTime or title pixels. The
-  subsequent native mirror-selection input and runtime commit remain open,
-  so this route is not promoted as a complete launch path.
 - The retail image also retains the complete authentic resource forks for
   `Music` (662,956 bytes), `General.sounds` (134,562), and `Weapon.sounds`
   (50,651). These are source-bound Mac resources, not DOS HMP substitutes;

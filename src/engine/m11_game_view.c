@@ -1513,25 +1513,13 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
              * are created only by SELECT_CHAMPION at a dungeon mirror. */
             memset(&new_dungeon, 0, sizeof(new_dungeon));
             profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
-            /* First Chapter has one admitted, truncated File_header source.
-             * Its verified NEW GAME sequence is scan -> enter -> prepare;
-             * there is no separate retail DUNGEON.DAT reload to perform.
-             * Re-running the retail reload path discarded that source-owned
-             * demo world before its authentic mirror preselection could be
-             * retained.  The later Mac mirror click remains required and no
-             * party is manufactured here. */
-            if (strcmp(profile->version_id, "mac-en-demo") == 0) {
-                load_ok = 1;
+            load_ok = dm2_v1_boot_load_new_dungeon(profile, &new_dungeon);
+            if (load_ok &&
+                new_dungeon.valid && new_dungeon.reloaded &&
+                new_dungeon.source_party_reset_applied &&
+                new_dungeon.source_leader_hand_reset_applied &&
+                !new_dungeon.synthetic_party_created) {
                 prepare_ok = dm2_v1_boot_prepare_new_game_world(profile);
-            } else {
-                load_ok = dm2_v1_boot_load_new_dungeon(profile, &new_dungeon);
-                if (load_ok &&
-                    new_dungeon.valid && new_dungeon.reloaded &&
-                    new_dungeon.source_party_reset_applied &&
-                    new_dungeon.source_leader_hand_reset_applied &&
-                    !new_dungeon.synthetic_party_created) {
-                    prepare_ok = dm2_v1_boot_prepare_new_game_world(profile);
-                }
             }
             if (load_ok && prepare_ok &&
                 dm2_v1_boot_prepared_new_game_world_readonly(profile) != NULL &&
@@ -33323,8 +33311,7 @@ static M11_GameInputResult m11_dm2_startup_enter_credits(
 
     if (!state || !(profile = (const DM2_V1_BootProfile *)state->dm2BootProfile))
         return M11_GAME_INPUT_IGNORED;
-    /* The retail Macintosh title menu owns Credits.MooV. The demo has no
-     * such movie and continues through its admitted static title asset. */
+    /* The Macintosh title menu owns Credits.MooV. */
     if (m11_dm2_is_mac_profile(profile) &&
         (profile->mac_movie_view_present_mask &
          (1u << DM2_V1_MAC_MOVIE_CREDITS)) != 0u) {

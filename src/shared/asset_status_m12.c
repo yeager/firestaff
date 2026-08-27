@@ -381,7 +381,6 @@ static const M12_VersionSpec g_dm2Versions[] = {
     {"dm2", "pc98-ja-demo", "PC-9801 Japanese Demo", "PC-98 Demo", g_dm2GraphicsNames, "a0277195099b2ace51d4e085f7eef835", M12_ARCH_PC98},
     {"dm2", "amiga-en", "Amiga AGA English", "Amiga EN", g_dm2GraphicsNames, "1c940ea95703eaea0ecdf84d17e954b9", M12_ARCH_AMIGA},
     {"dm2", "mac-en-retail", "Macintosh English retail", "Mac EN retail", g_dm2GraphicsNames, "5cab25f6b975957eae4a203174e7f2a6", M12_ARCH_MAC},
-    {"dm2", "mac-en-demo", "Macintosh English demo", "Mac EN demo", g_dm2GraphicsNames, "4bf28b3d84e6799d7686c6aaf96cbf23", M12_ARCH_MAC},
     /* DM2 boot profile / DMWeb-authenticated PC-9821 pair.  This is a
      * retail Japanese variant, not the separate PC-9801 demo above.
      * dm2_v1_boot.c admits GRAPHICS a80c555a... only with DUNGEON
@@ -1563,7 +1562,6 @@ static int m12_admit_dm2_mac_archive(M12_AssetStatus* status,
                                       size_t rootCount,
                                       const char* preferredArchive) {
     static const char *names[] = {
-        "Dungeon-Master-II-Skullkeep_Mac_EN (1).zip",
         "Dungeon-Master-II-Skullkeep_Mac_EN.zip"
     };
     size_t r, n, vi;
@@ -1585,9 +1583,7 @@ static int m12_admit_dm2_mac_archive(M12_AssetStatus* status,
             dm2_v1_boot_profile_init(&profile);
             if (dm2_v1_boot_scan_assets(&profile, candidate) == 0 &&
                 profile.assets_verified && profile.platform == DM2_PLATFORM_MAC_EN) {
-                const char *version_id =
-                    strcmp(profile.version_id, "mac-en-demo") == 0
-                        ? "mac-en-demo" : "mac-en-retail";
+                const char *version_id = "mac-en-retail";
                 for (vi = 0; vi < g_games[gameIndex].versionCount; ++vi) {
                     M12_AssetVersionStatus *v = &status->versions[gameIndex][vi];
                     if (strcmp(v->versionId, version_id) != 0) continue;
@@ -1601,11 +1597,8 @@ static int m12_admit_dm2_mac_archive(M12_AssetStatus* status,
                     admitted = 1;
                 }
                 dm2_v1_boot_cleanup(&profile);
-                /* Keep scanning the sibling candidates. A user data root may
-                 * legitimately contain both the large retail image and the
-                 * smaller First Chapter demo; the launcher must expose both
-                 * authenticated editions instead of making the first archive
-                 * hide the second one. */
+                /* Continue scanning in case another copy of the supported
+                 * retail archive is present under a sibling data root. */
                 continue;
             }
             dm2_v1_boot_cleanup(&profile);
@@ -1719,8 +1712,7 @@ static void m12_publish_dm2_mac_required_files(M12_AssetStatus* status,
     }
     version = m12_first_matched_version(status, gameIndex);
     if (!version || !version->versionId ||
-        (strcmp(version->versionId, "mac-en-demo") != 0 &&
-         strcmp(version->versionId, "mac-en-retail") != 0)) {
+        strcmp(version->versionId, "mac-en-retail") != 0) {
         return;
     }
     separator = strstr(version->matchedPath, "::");
@@ -1731,13 +1723,8 @@ static void m12_publish_dm2_mac_required_files(M12_AssetStatus* status,
     if (archive_length == 0U) {
         return;
     }
-    if (strcmp(version->versionId, "mac-en-demo") == 0) {
-        dungeon_member = "HFS/Install Dungeon MasterII Demo/DMFiles/Dungeon.dat";
-        dungeon_md5 = "c9c909cb8cc2ed68def20211b8c1caf6";
-    } else {
-        dungeon_member = "HFS/DMFiles/Dungeon.dat";
-        dungeon_md5 = "719ae78bc124027806c65491a256827d";
-    }
+    dungeon_member = "HFS/DMFiles/Dungeon.dat";
+    dungeon_md5 = "719ae78bc124027806c65491a256827d";
     for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
         M12_AssetRequiredFileStatus* required =
             &status->requiredFiles[gameIndex][i];
@@ -5667,8 +5654,7 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
                  strcmp(version->versionId, "pc-jewel") != 0 &&
                  strcmp(version->versionId, "fmtowns-ja") != 0 &&
                  strcmp(version->versionId, "amiga-en") != 0 &&
-                 strcmp(version->versionId, "mac-en-retail") != 0 &&
-                 strcmp(version->versionId, "mac-en-demo") != 0)) {
+                 strcmp(version->versionId, "mac-en-retail") != 0)) {
                 return 0;
             }
         }

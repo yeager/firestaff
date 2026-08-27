@@ -628,13 +628,10 @@ static int run_one(const char *zip, const char *source_id)
 int main(void)
 {
     const char *retail = getenv("FIRESTAFF_DM2_MAC_EN_ZIP");
-    const char *demo = getenv("FIRESTAFF_DM2_MAC_EN_DEMO_ZIP");
-    if (!retail && !demo) {
+    if (!retail) {
         puts("SKIP: authentic DM2 Mac ZIP environment is not set");
         return 0;
     }
-    if (demo && run_one(demo, "mac-en-demo") != 0)
-        return 1;
     if (retail && run_one(retail, "mac-en-retail") != 0)
         return 1;
     return 0;

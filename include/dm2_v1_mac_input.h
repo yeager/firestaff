@@ -77,7 +77,7 @@ typedef struct {
     int runtime_command;
 } DM2_V1_MacInputReceipt;
 
-/* Resolve the English Macintosh retail/demo keyboard table without guessing. */
+/* Resolve the English Macintosh retail keyboard table without guessing. */
 int dm2_v1_mac_input_resolve(uint32_t key,
                              uint32_t modifiers,
                              DM2_V1_MacInputPhase phase,

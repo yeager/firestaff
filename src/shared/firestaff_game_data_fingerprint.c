@@ -188,7 +188,6 @@ const FirestaffGameDataFingerprint firestaff_fingerprint_table[FIRESTAFF_FINGERP
     /* DM2 IBM PSV */
     {MD5(F9,26,A7,55,4B,DF,B5,85,21,05,17,9E,67,B8,A2,64), G_DM2, P_PSV, L_JP, F_GFX, NULL, "DMII IBM PSV Japanese GRAPHICS.DAT"},
     /* DM2 Macintosh */
-    {MD5(4B,F2,8B,3D,84,E6,79,9D,76,86,C6,AA,F9,6C,BF,23), G_DM2, P_MAC, L_EN, F_GFX, "Demo", "DMII Macintosh English Demo GRAPHICS.DAT"},
     {MD5(5C,AB,25,F6,B9,75,95,7E,AE,4A,20,31,74,E7,F2,A6), G_DM2, P_MAC, L_EN, F_GFX, NULL, "DMII Macintosh English GRAPHICS.DAT"},
     {MD5(28,3D,54,56,C4,F6,76,60,94,89,E2,00,21,96,05,BB), G_DM2, P_MAC, L_JP, F_GFX, NULL, "DMII Macintosh Japanese GRAPHICS.DAT"},
     /* DM2 PC */
