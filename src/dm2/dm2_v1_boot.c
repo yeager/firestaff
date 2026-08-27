@@ -97,10 +97,6 @@ static int dm2_v1_boot_load_mac_zip(DM2_V1_BootProfile *profile,
         DM2_V1_MacMedia media;
         if (!FSP_FileExists(candidates[c]) ||
             dm2_v1_mac_media_read_zip(candidates[c], &media) != 0) continue;
-        if (media.demo) {
-            dm2_v1_mac_media_free(&media);
-            continue;
-        }
         profile->graphics_mem = media.graphics;
         profile->graphics_mem_size = media.graphics_size;
         profile->dungeon_mem = media.dungeon;

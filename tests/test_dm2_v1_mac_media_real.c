@@ -15,7 +15,7 @@ int main(void) {
         return 1;
     }
     if (media.graphics_size != 8157169u || media.dungeon_size != 39411u ||
-        media.music_map_size != 176u || media.demo) {
+        media.music_map_size != 176u) {
         fprintf(stderr, "unexpected Mac fork sizes: graphics=%zu dungeon=%zu md=%zu\n",
                 media.graphics_size, media.dungeon_size, media.music_map_size);
         dm2_v1_mac_media_free(&media);

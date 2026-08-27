@@ -383,84 +383,6 @@ int dm2_v1_mac_resource_type_at(const uint8_t *fork, size_t fork_size,
     return 0;
 }
 
-static int copy_dmfiles_entry(const uint8_t *dmfiles, size_t dmfiles_size,
-                              const char *wanted, size_t expected_size,
-                              uint8_t **out, size_t *out_size) {
-    size_t off = 0;
-    size_t wanted_len = strlen(wanted);
-    if (!dmfiles || !wanted || !out || !out_size) return -1;
-    while (off + 112u <= dmfiles_size) {
-        const uint8_t *h = dmfiles + off;
-        size_t name_len = h[2];
-        uint32_t data_size = be32(h + 88u);
-        if (name_len == 0u || name_len > 31u ||
-            off + 112u > dmfiles_size ||
-            (size_t)name_len > dmfiles_size - off - 3u) return -1;
-        if (name_len == wanted_len && memcmp(h + 3u, wanted, name_len) == 0) {
-            if (data_size != expected_size ||
-                off + 112u + data_size > dmfiles_size) return -1;
-            *out = (uint8_t *)malloc(data_size);
-            if (!*out) return -1;
-            memcpy(*out, dmfiles + off + 112u, data_size);
-            *out_size = data_size;
-            return 0;
-        }
-        if (data_size == 0u || off + 112u + data_size > dmfiles_size) return -1;
-        off += 112u + data_size;
-    }
-    return -1;
-}
-
-static int read_demo_from_installer(const uint8_t *installer, size_t installer_size,
-                                    DM2_V1_MacMedia *out) {
-    const uint8_t *stuffit, *h, *dmfiles;
-    size_t stuffit_size, pos, resource_compressed, data_compressed;
-    uint8_t *demo_data = NULL;
-    size_t demo_data_size;
-    if (!installer || installer_size < 128u + 22u + 112u || !out) return -1;
-    /* HFS contains a MacBinary file.  Its data fork starts at byte 128 and
-     * is the authentic STi2 stream; the resource fork is not needed for the
-     * demo's game-data handoff. */
-    if (installer_size >= 4u && memcmp(installer, "STi2", 4u) == 0) {
-        stuffit = installer;
-        stuffit_size = installer_size;
-    } else {
-        stuffit = installer + 128u;
-        stuffit_size = installer_size - 128u;
-    }
-    if (memcmp(stuffit, "STi2", 4u) != 0) return -1;
-    pos = 22u;
-    while (pos + 112u <= stuffit_size) {
-        h = stuffit + pos;
-        if (h[2] == 0u || h[2] > 31u || pos + 112u > stuffit_size) return -1;
-        resource_compressed = be32(h + 92u);
-        data_compressed = be32(h + 96u);
-        if (resource_compressed > stuffit_size - pos - 112u ||
-            data_compressed > stuffit_size - pos - 112u - resource_compressed)
-            return -1;
-        if (h[2] == 7u && memcmp(h + 3u, "DMFiles", 7u) == 0) {
-            dmfiles = stuffit + pos + 112u + resource_compressed;
-            demo_data_size = data_compressed;
-            if (copy_dmfiles_entry(dmfiles, data_compressed, "Graphics.dat",
-                                   3110116u, &out->graphics,
-                                   &out->graphics_size) != 0) return -1;
-            if (copy_dmfiles_entry(dmfiles, data_compressed, "Dungeon.dat",
-                                   6535u, &demo_data, &demo_data_size) != 0) return -1;
-            /* The 6,535-byte demo member is the authentic Dungeon.dat.  Its
-             * leading 00 06 05 37 is the BE File_header (seed=6,
-             * mapDataSize=1335), not a DCL stream.  TTComp's byte signature
-             * is coincidental here; do not expand it. */
-            out->dungeon = demo_data;
-            out->dungeon_size = demo_data_size;
-            out->demo = 1;
-            return 0;
-        }
-        pos += 112u + resource_compressed + data_compressed;
-        if (pos >= stuffit_size) break;
-    }
-    return -1;
-}
-
 int dm2_v1_mac_media_read_zip(const char *zip_path, DM2_V1_MacMedia *out) {
     uint8_t *image = NULL, *cat = NULL, *cue = NULL;
     size_t image_size = 0, cue_size = 0, cat_size;
@@ -498,24 +420,11 @@ int dm2_v1_mac_media_read_zip(const char *zip_path, DM2_V1_MacMedia *out) {
         copy_fork(&disk, alloc_size, alloc_start, extents, file_size,
                   &out->dungeon, &out->dungeon_size) == 0) {
         /* Full retail Mac media exposes the game files directly. */
-    } else {
-        uint8_t *installer = NULL;
-        size_t installer_size = 0;
-        dm2_v1_mac_media_free(out);
-        if (find_file(cat, cat_size, "Install Dungeon MasterII Demo", extents,
-                      &file_size, resource_extents, &resource_size) != 0 ||
-            copy_fork(&disk, alloc_size, alloc_start, extents, file_size,
-                      &installer, &installer_size) != 0 ||
-            read_demo_from_installer(installer, installer_size, out) != 0) {
-            free(installer);
-            goto done;
-        }
-        free(installer);
-    }
+    } else goto done;
     if (find_file(cat, cat_size, "md.dat", extents, &file_size,
                   resource_extents, &resource_size) == 0)
         (void)copy_fork(&disk, alloc_size, alloc_start, extents, file_size, &out->music_map, &out->music_map_size);
-    if (!out->demo) {
+    {
         static const char *const sound_names[DM2_V1_MAC_SOUND_RESOURCE_COUNT] = {
             "Music", "General.sounds", "Weapon.sounds"
         };

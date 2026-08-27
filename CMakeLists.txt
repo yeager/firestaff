@@ -11785,20 +11785,6 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_four_platform_catalog_r
         COMMAND test_dm2_v1_four_platform_catalog_real_media)
 endif()
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_movie_view_real.c")
-    add_executable(test_dm2_v1_mac_movie_view_real
-        tests/test_dm2_v1_mac_movie_view_real.c)
-    target_include_directories(test_dm2_v1_mac_movie_view_real PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    target_link_libraries(test_dm2_v1_mac_movie_view_real PRIVATE
-        firestaff_dm2 firestaff_m10 m)
-    if(NOT MSVC)
-        target_compile_options(test_dm2_v1_mac_movie_view_real PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(NAME dm2_v1_mac_movie_view_real
-        COMMAND test_dm2_v1_mac_movie_view_real)
-endif()
-
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_movie_decoder_real.c")
     add_executable(test_dm2_v1_mac_movie_decoder_real
         tests/test_dm2_v1_mac_movie_decoder_real.c)

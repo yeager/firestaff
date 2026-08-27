@@ -77,7 +77,6 @@ typedef struct {
     size_t application_data_size;
     uint8_t *application_resource;
     size_t application_resource_size;
-    int demo;
 } DM2_V1_MacMedia;
 
 int dm2_v1_mac_media_read_zip(const char *zip_path, DM2_V1_MacMedia *out);
