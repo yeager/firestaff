@@ -1791,7 +1791,9 @@ static int m11_dm2_present_dos_intro(M11_GameViewState *state,
         return 0;
     }
     result = m11_dm2_mve_presenter_advance(
-        &state->dm2DosMvePresenter, SDL_GetTicksNS() / UINT64_C(1000));
+        &state->dm2DosMvePresenter,
+        state->bootProbeFastForward ? UINT64_MAX :
+            SDL_GetTicksNS() / UINT64_C(1000));
     if (result < 0) {
         /* A broken clock, queue or source order has no lawful GDAT fallback:
          * retain black rather than claiming that SKULL reached its menu. */
@@ -22208,6 +22210,11 @@ void M11_GameView_Init(M11_GameViewState* state) {
     state->camera_duration_ms = 96;
     /* Phase 5: zero the private camera controller */
     memset(&state->p5_camera, 0, sizeof(state->p5_camera));
+}
+
+void M11_GameView_SetBootProbeMode(M11_GameViewState* state, int enabled)
+{
+    if (state) state->bootProbeFastForward = enabled ? 1 : 0;
 }
 
 int M11_GameView_SetCsbEntranceF0128Raster(

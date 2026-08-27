@@ -6768,6 +6768,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
              * 1024x768 dummy window turn C407's (250,50) into (78,13).
              * Production event handling continues to use the live SDL size.
              * ReDMCSB COMMAND.C F0358 consumes the resulting 320x200 point. */
+            M11_GameView_SetBootProbeMode(&gameView, 1);
             if (SDL_GetCurrentVideoDriver() != NULL &&
                 strcmp(SDL_GetCurrentVideoDriver(), "dummy") == 0) {
                 (void)M11_Render_HandleResize(o->windowWidth, o->windowHeight);

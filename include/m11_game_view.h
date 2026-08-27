@@ -1842,6 +1842,9 @@ typedef struct {
     int dm2DosMveIntroActive;
     int dm2DosMveIntroRejected;
     int dm2DosMveIntroComplete;
+    /* Test-only timing control. It never changes source bytes or runtime
+     * playback; --boot-probe may drain one authenticated MVE page per draw. */
+    int bootProbeFastForward;
     DM2_V1_MacMovieDecoder dm2MacMovieDecoder;
     int dm2MacMovieIndex;
     int dm2MacMovieActive;
@@ -1940,6 +1943,7 @@ void M11_GameView_GetCameraOffset(const M11_GameViewState* state,
                                    int* outOffsetX, int* outOffsetY, int16_t* outFacingDir);
 
 void M11_GameView_Init(M11_GameViewState* state);
+void M11_GameView_SetBootProbeMode(M11_GameViewState* state, int enabled);
 void M11_GameView_Shutdown(M11_GameViewState* state);
 int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec);
 int M11_GameView_ResolveNexusRuntimeDataDir(const M11_GameLaunchSpec* spec,
