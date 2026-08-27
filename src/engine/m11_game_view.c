@@ -36595,7 +36595,8 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
     unsigned char metaBuf[128]; /* enough for all metadata bytes */
     int metaSize;
     int offset;
-    FILE* fp;
+    uint8_t* dungeonBytes = NULL;
+    size_t dungeonByteCount = 0u;
     int i;
     int totalColumns;
     long thingDataTotalBytes;
@@ -36629,20 +36630,16 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
         return;
     }
 
-    /* Use the verified dungeon path from launch. Older builds reconstructed
-     * DUNGEON.DAT beside GRAPHICS.DAT, which broke renamed/hash-resolved data. */
-    {
-        char datPath[512];
-        if (state->dungeonPath[0] == '\0') {
-            state->ornamentCacheLoaded[mapIndex] = 1;
-            return;
-        }
-        snprintf(datPath, sizeof(datPath), "%s", state->dungeonPath);
-        fp = fopen(datPath, "rb");
-        if (!fp) {
-            state->ornamentCacheLoaded[mapIndex] = 1;
-            return;
-        }
+    /* Use the verified dungeon path from launch.  This can be a nested
+     * archive member, so retain its bounded bytes in RAM rather than
+     * reopening a host pathname. */
+    if (state->dungeonPath[0] == '\0' ||
+        !asset_read_path_alloc(state->dungeonPath, &dungeonBytes,
+                               &dungeonByteCount) ||
+        !dungeonBytes) {
+        free(dungeonBytes);
+        state->ornamentCacheLoaded[mapIndex] = 1;
+        return;
     }
 
     /* Compute the raw data section offset with the same complete layout as
@@ -36666,19 +36663,18 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
                         thingDataTotalBytes;
     mapFileOffset = rawDataFileOffset + (long)m->rawMapDataByteOffset;
 
-    /* Seek past square data to the metadata area */
-    if (fseek(fp, mapFileOffset + (long)squareCount, SEEK_SET) != 0) {
-        fclose(fp);
+    /* Read only the source-owned metadata span after the map's squares. */
+    if (mapFileOffset < 0 || (unsigned long long)mapFileOffset > dungeonByteCount ||
+        (size_t)squareCount > dungeonByteCount - (size_t)mapFileOffset ||
+        (size_t)metaSize > dungeonByteCount - (size_t)mapFileOffset -
+                           (size_t)squareCount) {
+        free(dungeonBytes);
         state->ornamentCacheLoaded[mapIndex] = 1;
         return;
     }
-
-    if ((int)fread(metaBuf, 1, (size_t)metaSize, fp) != metaSize) {
-        fclose(fp);
-        state->ornamentCacheLoaded[mapIndex] = 1;
-        return;
-    }
-    fclose(fp);
+    memcpy(metaBuf, dungeonBytes + (size_t)mapFileOffset + (size_t)squareCount,
+           (size_t)metaSize);
+    free(dungeonBytes);
 
     /* Parse: skip creature type bytes, then read wall ornament indices.
      * Each byte is a global ornament index used by the rendering engine.
@@ -62571,34 +62567,6 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         g_activeOriginalFont = NULL;
         g_m11_font_scale_override = 0;
         return;
-    }
-    {
-        static int draw_logged = 0;
-        if (!draw_logged) {
-            FILE *dbg = fopen("/tmp/fs-party-pos.txt", "w");
-            if (dbg) {
-                fprintf(dbg, "mapIdx=%d pos=(%d,%d) dir=%d\n",
-                    state->world.party.mapIndex, state->world.party.mapX,
-                    state->world.party.mapY, state->world.party.direction);
-                /* Dump square types around party */
-                if (state->world.dungeon && state->world.dungeon->tilesLoaded &&
-                    state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount) {
-                    struct DungeonMapTiles_Compat *t = &state->world.dungeon->tiles[state->world.party.mapIndex];
-                    struct DungeonMapDesc_Compat *m = &state->world.dungeon->maps[state->world.party.mapIndex];
-                    fprintf(dbg, "map %d: %dx%d\n", state->world.party.mapIndex, m->width, m->height);
-                    for (int y = 0; y < (int)m->height && y < 10; y++) {
-                        fprintf(dbg, "y%02d:", y);
-                        for (int x = 0; x < (int)m->width; x++) {
-                            int sq = t->squareData[x * m->height + y];
-                            fprintf(dbg, " %d", sq >> 5);
-                        }
-                        fprintf(dbg, "\n");
-                    }
-                }
-                fclose(dbg);
-            }
-            draw_logged = 1;
-        }
     }
     memset(&currentCell, 0, sizeof(currentCell));
     memset(&aheadCell, 0, sizeof(aheadCell));
