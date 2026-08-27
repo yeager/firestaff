@@ -3276,6 +3276,12 @@ int nexus_v1_menu_bpk_decode_receipt_ready(const Nexus_V1_Engine *engine);
 int nexus_v1_menu_bpk_source_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxSourceReceipt *out_receipt);
+/* Return canonical source identity for one named Track 1 member.  This is
+ * valid for loose files and the native ISO/CUE route; it does not decode or
+ * present the member. */
+int nexus_v1_named_asset_source_receipt(
+    Nexus_V1_Engine *engine, const char *name,
+    Nexus_V1_LevelAuxSourceReceipt *out_receipt);
 /* Returns the hash-bound direct/virtual source identity for WARNING.BIN.
  * Callers still must revalidate the bytes they present. */
 int nexus_v1_warning_bin_source_receipt(

@@ -56,6 +56,7 @@ static const Nexus_V1_KnownFileHash g_nexus_known_boot_files[] = {
     {"WARNING.BIN", "eb246b67f7758f23310221ac9b9efe2d"},
     {"WARNING.BIN", "9002866163ad733a75346547a4c7e0b5"},
     {"GAMEOVER.BIN", "0426cb045a495c151a138fd2c77370e2"},
+    {"LOGOBG.DG2", "a1677f9abb3b25d88747ee7f82b86ec1"},
     {"STABG.BIN", "e77d4dd48dd280ec299cfc8ee8851114"},
     {"SMAP00.BIN", "6e8e582d6ceb4b482dc994e7faa448d6"},
     {"SMAP01.BIN", "7d8379ea25ef2c4f4f591c5b0fc96a47"},
@@ -518,6 +519,13 @@ int nexus_v1_warning_bin_source_receipt(
     Nexus_V1_Engine *engine, Nexus_V1_LevelAuxSourceReceipt *out_receipt)
 {
     return nexus_v1_level_aux_source_receipt(engine, "WARNING.BIN", out_receipt);
+}
+
+int nexus_v1_named_asset_source_receipt(
+    Nexus_V1_Engine *engine, const char *name,
+    Nexus_V1_LevelAuxSourceReceipt *out_receipt)
+{
+    return nexus_v1_level_aux_source_receipt(engine, name, out_receipt);
 }
 
 int nexus_v1_stabg_cue_source_consumer_receipt(

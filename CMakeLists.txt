@@ -39593,7 +39593,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/shared/asset_find_by_hash.c
     )
     target_link_libraries(test_nexus_v1_startup_media_gate PRIVATE
-        firestaff_nexus firestaff_m10
+        firestaff_nexus
     )
     target_include_directories(test_nexus_v1_startup_media_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

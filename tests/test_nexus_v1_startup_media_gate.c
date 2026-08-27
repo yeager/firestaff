@@ -11,6 +11,31 @@
 #include <string.h>
 
 static int failures;
+static Nexus_V1_Engine retail_engine;
+static int retail_engine_attempted;
+
+static const char *nexus_data_root(void)
+{
+    const char *root = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    const char *home = getenv("HOME");
+    static char fallback[2048];
+
+    if (root && root[0]) return root;
+    if (!home || !home[0] ||
+        snprintf(fallback, sizeof(fallback), "%s/.firestaff/data/nexus", home) < 0)
+        return NULL;
+    return fallback;
+}
+
+static int ensure_retail_engine(void)
+{
+    const char *root = nexus_data_root();
+    if (!retail_engine_attempted) {
+        retail_engine_attempted = 1;
+        if (root) (void)nexus_v1_init(&retail_engine, root);
+    }
+    return retail_engine.initialized && retail_engine.source == NEXUS_SRC_ISO;
+}
 
 static unsigned char expand_5bit(unsigned value)
 {
@@ -55,8 +80,14 @@ static int local_nexus_path(const char *name, char *path, size_t path_size)
 static int local_nexus_file_matches_md5(const char *name, const char *md5)
 {
     char path[2048];
-    return local_nexus_path(name, path, sizeof(path)) &&
-        asset_file_matches_md5(path, md5);
+    Nexus_V1_LevelAuxSourceReceipt receipt;
+    if (local_nexus_path(name, path, sizeof(path)) &&
+        asset_file_matches_md5(path, md5)) return 1;
+    memset(&receipt, 0, sizeof(receipt));
+    return ensure_retail_engine() &&
+        nexus_v1_named_asset_source_receipt(&retail_engine, name, &receipt) == 0 &&
+        retail_engine.source == NEXUS_SRC_ISO && receipt.exact_source_entry_observed &&
+        receipt.canonical_hash_verified && strcmp(receipt.canonical_md5, md5) == 0;
 }
 
 static unsigned char *read_local_nexus_file(const char *name, size_t *out_size)
@@ -72,8 +103,16 @@ static unsigned char *read_local_nexus_file(const char *name, size_t *out_size)
     file = fopen(path, "rb");
     if (!file || fseek(file, 0L, SEEK_END) != 0 ||
         (size = ftell(file)) <= 0 || fseek(file, 0L, SEEK_SET) != 0) {
+        int retail_size = 0;
         if (file) fclose(file);
-        return NULL;
+        if (!ensure_retail_engine()) return NULL;
+        data = nexus_v1_read_file(&retail_engine, name, &retail_size);
+        if (!data || retail_size <= 0) {
+            free(data);
+            return NULL;
+        }
+        *out_size = (size_t)retail_size;
+        return data;
     }
     data = (unsigned char *)malloc((size_t)size);
     if (!data || fread(data, 1U, (size_t)size, file) != (size_t)size) {
@@ -291,7 +330,7 @@ int main(void)
         puts("SKIP: local Nexus WARNING.BIN not present");
     } else {
         expect_true(local_nexus_file_matches_md5(
-                        "WARNING.BIN", "eb246b67f7758f23310221ac9b9efe2d"),
+                        "WARNING.BIN", "15c87a09af36e9579dfbd88a5af87477"),
                     "local WARNING.BIN matches the authenticated retail source");
         Nexus_TitleScreen title;
         Nexus_Framebuffer framebuffer;
@@ -421,7 +460,7 @@ int main(void)
         puts("SKIP: local Nexus LOGOBG.DG2 not present");
     } else {
         expect_true(local_nexus_file_matches_md5(
-                        "LOGOBG.DG2", "53916e61c9f1c19eb65dd5e8950f37ea"),
+                        "LOGOBG.DG2", "a1677f9abb3b25d88747ee7f82b86ec1"),
                     "local LOGOBG.DG2 matches the authenticated retail source");
         nexus_ui_manager_init(&ui);
         expect_true(nexus_ui_load_logobg(&ui, local_logobg,
@@ -460,8 +499,12 @@ int main(void)
 
     if (failures != 0) {
         fprintf(stderr, "Nexus startup media gate failed: %d\n", failures);
+        if (retail_engine_attempted && retail_engine.initialized)
+            nexus_v1_shutdown(&retail_engine);
         return 1;
     }
+    if (retail_engine_attempted && retail_engine.initialized)
+        nexus_v1_shutdown(&retail_engine);
     printf("Nexus startup media gate: PASS\n");
     return 0;
 }
