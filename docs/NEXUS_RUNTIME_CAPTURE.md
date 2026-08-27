@@ -128,6 +128,15 @@ button interval lies between `skip_frames` and
 `skip_frames + frame_limit`; this prevents a pre-input witness from being
 mistaken for a post-input menu capture.
 
+For an external SH-2 WorkRAMH-consumer diagnostic, the version-locked
+`mednafen_1.32.1_nexus_sh2_ram_read_trace.patch` records the frame, address,
+width, returned value, both SH-2 PCs, master-SH-2 `R0`--`R15`, and `PR`.
+`FIRESTAFF_NEXUS_TRACE_SH2_RAM_READS` enables it; address, PC, row-limit, and
+inclusive frame-window filters keep a receipt small. This is a producer-only
+inspection aid: register values identify an observed copy/normalization path,
+but do not assign controller semantics, mutate media, or add a Firestaff
+runtime dependency.
+
 For a multi-step Saturn startup route, the operator launcher also forwards the
 optional environment variable
 `FIRESTAFF_NEXUS_TRACE_PRESS_SEQUENCE`. Its format is a comma-separated list

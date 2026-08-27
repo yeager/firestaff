@@ -129,6 +129,14 @@ WorkRAMH destination remain the same. Other pad bytes differ across separate
 sessions, so only this explicitly injected bit is attributed to START. This
 is an input-transport receipt, not a title-menu or new-game receipt.
 
+The V3 WorkRAMH-reader receipt records the live master-SH-2 register bank for
+each bounded read. In the same JP START capture, `PC=0x06014388` reads the
+buffer through `R4=0x0602c908` and `R3=0x0602c8f8`; the next reader at
+`PC=0x0601439a` follows the linked words at `0x0602c90c` and `0x0602c910`.
+This establishes a real input-buffer consumer chain. It still does not expose
+the target's menu state or a level-load call, therefore it does not admit a
+native new-game pose.
+
 ## Japanese retail start-pose disassembly audit — 2026-08-27
 
 The Japanese CUE data track was read in place and the authenticated `DM.BIN`
