@@ -9937,6 +9937,7 @@ static int m11_dm1_fmtowns_read_cdda_media(const M11_GameViewState *state,
     char cue_path[M11_GAME_VIEW_PATH_CAPACITY];
     char bin_path[M11_GAME_VIEW_PATH_CAPACITY];
     char archive_path[M11_GAME_VIEW_PATH_CAPACITY];
+    char image_member[M11_GAME_VIEW_PATH_CAPACITY];
     size_t archive_length;
 
     if (!state || !out_cue || !out_cue_size || !out_image ||
@@ -9955,8 +9956,11 @@ static int m11_dm1_fmtowns_read_cdda_media(const M11_GameViewState *state,
         archive_path[archive_length] = '\0';
         if (firestaff_zip_extract_by_suffix(archive_path, ".cue", out_cue,
                                             out_cue_size) != 0 ||
-            firestaff_zip_extract_by_suffix(archive_path, ".bin", out_image,
-                                            out_image_size) != 0) {
+            !fmtowns_cue_parse_image_member((const char *)*out_cue,
+                                            *out_cue_size, image_member,
+                                            sizeof(image_member)) ||
+            firestaff_zip_extract_by_name(archive_path, image_member,
+                                          out_image, out_image_size) != 0) {
             free(*out_cue);
             free(*out_image);
             *out_cue = NULL;
