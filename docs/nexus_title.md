@@ -224,6 +224,20 @@ frame. This is a real, region-matched negative result for that Start→A
 schedule, not evidence that Japanese and European timing are interchangeable
 or that a native transition can be inferred.
 
+A later same-region JP/J capture tested a wider controller sequence at frames
+30,005--30,099: Start (`0x10`), A (`0x20`), B (`0x40`) and C (`0x80`) were
+each held for 20 emulated frames. The raw 120-frame witness is SHA-256
+`5d65e833c1ebd7eb48a33ed394543a4f487b43c802314a9a074e55a6ff693dd0` and
+contains active VDP1 state in every frame; its SMPC receipt records both poll
+edges, 40 rows for each mask. Frame 0 has `BGON=0x0007`, `CHCTLA=0x1013` and
+the independently verified word-swapped `TITLE.CG`/title-palette residency.
+The VDP2 mode later changes to `BGON=0x0201`, `CHCTLA=0x1112`, while the NBG0
+bytes retain the same captured baseline hash throughout. No MAPD span becomes
+resident in either endpoint. Because there is no no-input control for this
+later animation interval, that mode change cannot be attributed to any one
+button; this is controller-delivery and state-observation evidence only, not
+a title-menu transition or native start contract.
+
 That source boundary is now partially closed: the PC-tagged observed route reads the
 bounded SH-2 range `0x060ac2a7`–`0x060b3e26`, and the same retail session's
 CD-labelled RAM trace binds 7,904 four-byte writes in that range to
