@@ -109,6 +109,20 @@ WorkRAMH, not controller semantics. The receipt neither proves a menu action
 nor a new-game/`LEV01` transition, so native pose and title admission remain
 closed.
 
+## Japanese SMPC-to-WorkRAMH transport — 2026-08-27
+
+A one-frame debug receipt at frame 1798 records the seven initial pad-bus
+reads from `0x20100021` (SMPC byte registers `0x11`--`0x17`) with the live
+destination base `R3=0x0602c900`. The verified relocated loop at
+`0x06014510`--`0x06014518` reads each byte and stores it into that WorkRAMH
+buffer before incrementing its index. Subsequent reads of `0x20100021` through
+`0x20100025` feed nearby fields such as `0x0602c90c`, `0x0602c90e`, and
+`0x0602c940`; the runtime code masks and packs nibbles while doing so.
+
+This proves an authored controller transport and runtime buffering path. It
+does not name the fields, identify a title selection, or establish a gameplay
+action, so it is not a basis for an inferred START route or pose.
+
 ## Japanese retail start-pose disassembly audit — 2026-08-27
 
 The Japanese CUE data track was read in place and the authenticated `DM.BIN`
