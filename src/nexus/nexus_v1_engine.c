@@ -11672,7 +11672,6 @@ static int nexus_v1_engine_build_m11_structure2_face_descriptor_intake(
         structure1f->fallback_visuals_permitted ||
         !structure1f->blocks_real_dgn_mesh_render ||
         !engine->current_level_dgn_data || engine->current_level_dgn_size <= 0 ||
-        structure1f->structure3_model_index < 0 ||
         structure1f->structure3_model_index >=
             engine->current_level.structure3_directory.entry_count ||
         engine->current_level.structure3_payload.byte_offset < 0 ||
@@ -11720,7 +11719,7 @@ static int nexus_v1_engine_build_m11_structure2_face_descriptor_intake(
     if (nexus_v1_current_level_structure3_package_geometry_packet(
             engine, (uint32_t)structure1f->structure3_model_index,
             structure1f->face_ordinal, &geometry_packet) != 1 ||
-        !geometry_packet.valid || geometry_packet.face_offset < 0) {
+        !geometry_packet.valid) {
         *out_receipt = receipt;
         return 0;
     }
