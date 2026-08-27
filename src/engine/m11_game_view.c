@@ -15615,6 +15615,17 @@ static const char *m11_nexus_startup_render_blocker_message(
 {
     Nexus_V1_MenuBpkRendererHandoffReceipt handoff;
 
+    /* A title boot intentionally leaves the party unplaced until a retail
+     * Saturn start selector or save consumer supplies LEV01/x/y/facing.
+     * This is a stricter and more actionable blocker than the subsequent
+     * MENU.BPK/PRS3 presentation gate.  Do not describe it as an asset
+     * failure: the authenticated title assets may already be loaded. */
+    if (state && state->nexusEngine &&
+        state->nexusEngine->game.party_x < 0 &&
+        state->nexusEngine->game.party_y < 0 &&
+        state->nexusEngine->game.party_dir < 0) {
+        return "NEXUS SATURN START POSE REQUIRED";
+    }
     if (state && state->nexusEngine &&
         nexus_v1_menu_bpk_renderer_handoff_receipt(
             state->nexusEngine, &handoff) == 0 &&
@@ -32163,7 +32174,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 if (!state->nexusState.startup_prs3_blocker_consumed) {
                     state->nexusState.champion_select_active = 0;
                 }
-                m11_set_status(state, "ASSETS",
+                m11_set_status(state, "NEXUS STARTUP",
                                m11_nexus_startup_render_blocker_message(state));
                 return M11_GAME_INPUT_RETURN_TO_MENU;
             }
@@ -33156,7 +33167,7 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
             result = m11_nexus_apply_startup_action_receipt(state, &receipt);
             if (state->nexusState.startup_dgn_render_blocked ||
                 state->nexusState.startup_dgn_viewport_host_blocks_runtime) {
-                m11_set_status(state, "ASSETS",
+                m11_set_status(state, "NEXUS STARTUP",
                                m11_nexus_startup_render_blocker_message(state));
                 return M11_GAME_INPUT_RETURN_TO_MENU;
             }
@@ -33182,7 +33193,7 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
         if (execution.kind == NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON &&
             (state->nexusState.startup_dgn_render_blocked ||
              state->nexusState.startup_dgn_viewport_host_blocks_runtime)) {
-            m11_set_status(state, "ASSETS",
+            m11_set_status(state, "NEXUS STARTUP",
                            m11_nexus_startup_render_blocker_message(state));
             return M11_GAME_INPUT_RETURN_TO_MENU;
         }
