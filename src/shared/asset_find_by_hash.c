@@ -1457,9 +1457,11 @@ int asset_read_path_alloc(const char *path, uint8_t **outBytes,
             return asset_read_virtual_path_alloc(path, outBytes, outSize);
         }
         /* Nested disk images have format-specific readers (FM Towns,
-         * Amiga, Atari).  They must be admitted by those readers rather
-         * than silently passed through a host extractor. */
-        if (strstr(separator + 2, "::") != NULL) return 0;
+         * Amiga, Atari).  Dispatch to that in-memory visitor rather than
+         * reporting a path the runtime cannot consume. */
+        if (strstr(separator + 2, "::") != NULL) {
+            return asset_read_virtual_path_alloc(path, outBytes, outSize);
+        }
         if (asset_container_kind_for_path(container) == ASSET_CONTAINER_EXTERNAL) {
 #ifdef _WIN32
             return 0;

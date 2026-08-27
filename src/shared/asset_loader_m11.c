@@ -190,21 +190,22 @@ int M11_AssetLoader_InitDm1LegacyFromBuffer(M11_AssetLoader* loader,
 int M11_AssetLoader_InitDm1LegacyFromFile(M11_AssetLoader* loader,
                                            const char *graphicsDatPath,
                                            int big_endian) {
-    FILE *file;
-    long size;
-    unsigned char *data;
+    uint8_t *data = NULL;
+    size_t byte_count = 0u;
     int ok;
     if (!loader || !graphicsDatPath || !graphicsDatPath[0] ||
-        !(file = fopen(graphicsDatPath, "rb"))) return 0;
-    if (fseek(file, 0L, SEEK_END) != 0 || (size = ftell(file)) <= 0L ||
-        fseek(file, 0L, SEEK_SET) != 0) { fclose(file); return 0; }
-    data = (unsigned char *)malloc((size_t)size);
-    if (!data || fread(data, 1u, (size_t)size, file) != (size_t)size) {
-        free(data); fclose(file); return 0;
+        !asset_read_path_alloc(graphicsDatPath, &data, &byte_count) ||
+        !data || byte_count == 0u || byte_count > (size_t)LONG_MAX) {
+        free(data);
+        return 0;
     }
-    fclose(file);
-    ok = M11_AssetLoader_InitDm1LegacyFromBuffer(loader, data, size, big_endian);
+    ok = M11_AssetLoader_InitDm1LegacyFromBuffer(loader, data,
+                                                  (long)byte_count, big_endian);
     free(data);
+    if (ok) {
+        snprintf(loader->graphicsDatPath, sizeof(loader->graphicsDatPath),
+                 "%s", graphicsDatPath);
+    }
     return ok;
 }
 
@@ -231,21 +232,22 @@ int M11_AssetLoader_InitDm1AtariStFromBuffer(M11_AssetLoader* loader,
 
 int M11_AssetLoader_InitDm1AtariStFromFile(M11_AssetLoader* loader,
                                            const char *graphicsDatPath) {
-    FILE *file;
-    long size;
-    unsigned char *data;
+    uint8_t *data = NULL;
+    size_t byte_count = 0u;
     int ok;
     if (!loader || !graphicsDatPath || !graphicsDatPath[0] ||
-        !(file = fopen(graphicsDatPath, "rb"))) return 0;
-    if (fseek(file, 0L, SEEK_END) != 0 || (size = ftell(file)) <= 0L ||
-        fseek(file, 0L, SEEK_SET) != 0) { fclose(file); return 0; }
-    data = (unsigned char *)malloc((size_t)size);
-    if (!data || fread(data, 1u, (size_t)size, file) != (size_t)size) {
-        free(data); fclose(file); return 0;
+        !asset_read_path_alloc(graphicsDatPath, &data, &byte_count) ||
+        !data || byte_count == 0u || byte_count > (size_t)LONG_MAX) {
+        free(data);
+        return 0;
     }
-    fclose(file);
-    ok = M11_AssetLoader_InitDm1AtariStFromBuffer(loader, data, size);
+    ok = M11_AssetLoader_InitDm1AtariStFromBuffer(loader, data,
+                                                   (long)byte_count);
     free(data);
+    if (ok) {
+        snprintf(loader->graphicsDatPath, sizeof(loader->graphicsDatPath),
+                 "%s", graphicsDatPath);
+    }
     return ok;
 }
 
@@ -281,28 +283,24 @@ int M11_AssetLoader_InitCsbAmigaFromFile(M11_AssetLoader* loader,
 
 int M11_AssetLoader_InitCsbFmtownsFromFile(M11_AssetLoader* loader,
                                            const char *graphicsDatPath) {
-    FILE *file;
-    long size;
-    unsigned char *data;
+    uint8_t *data = NULL;
+    size_t byte_count = 0u;
     CSB_V1_FmtownsGraphicsReceipt receipt;
 
     if (!loader || !graphicsDatPath || !graphicsDatPath[0] ||
-        !(file = fopen(graphicsDatPath, "rb"))) return 0;
-    if (fseek(file, 0L, SEEK_END) != 0 || (size = ftell(file)) <= 0L ||
-        fseek(file, 0L, SEEK_SET) != 0) { fclose(file); return 0; }
-    data = (unsigned char *)malloc((size_t)size);
-    if (!data || fread(data, 1u, (size_t)size, file) != (size_t)size) {
-        free(data); fclose(file); return 0;
+        !asset_read_path_alloc(graphicsDatPath, &data, &byte_count) ||
+        !data || byte_count == 0u || byte_count > (size_t)LONG_MAX) {
+        free(data);
+        return 0;
     }
-    fclose(file);
     memset(&receipt, 0, sizeof(receipt));
-    if (csb_v1_fmtowns_graphics_receipt(data, (size_t)size, &receipt) != 0 ||
+    if (csb_v1_fmtowns_graphics_receipt(data, byte_count, &receipt) != 0 ||
         !receipt.is_fmtowns || receipt.item_count == 0u) {
         free(data); return 0;
     }
     memset(loader, 0, sizeof(*loader));
     loader->csbFmtownsData = data;
-    loader->csbFmtownsDataSize = size;
+    loader->csbFmtownsDataSize = (long)byte_count;
     loader->csbFmtowns = 1;
     loader->graphicCount = receipt.item_count;
     loader->initialized = 1;
