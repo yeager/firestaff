@@ -15,6 +15,26 @@ the real CDDA consumer and the source-owned LEV01 level/x/y/facing witness
 remain unbound.  `LEV00` remains a title-only asset and the engine therefore
 fails closed before it can invent a start pose.
 
+## Japanese retail start-pose disassembly audit — 2026-08-27
+
+The Japanese CUE data track was read in place and the authenticated `DM.BIN`
+member was statically disassembled in memory.  The resulting identities are:
+
+| Member | ISO LBA | Size | MD5 | SHA-256 |
+|---|---:|---:|---|---|
+| `DM.BIN` | 44 | 555,144 | `e88d60859f65f08fa622e1992b02280f` | `3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124` |
+| `LEV01.DGN` | 500 | 280,576 | `751e1442bf7dccbd41bf146b5be144ab` | `b359a89ffa344439b6d0d15de223f3211caa7725b13dfdb4461b579c48f06723` |
+
+`DM.BIN+0x366b8` and `+0x36990` contain the generic `LEV%02d.DGN`
+format; the nearby `+0x36744`/`+0x36788` strings identify debug level
+selection/loading, and `+0x36a18` names `SLEV%02d.BIN`.  There is no literal
+`LEV01` reference apart from unrelated `SNDLEV01` text, and no static table or
+call chain proves a new-game event, a `LEV01` consumer, or an `(x, y, facing)`
+tuple.  This is negative semantic evidence, not a reason to substitute a
+walkable cell or another inferred pose.  The native resolver therefore remains
+capture-gated until an authenticated execution trace or save-consumer record
+binds all four values.
+
 ## Local Japanese post-render title witness — 2026-08-26
 
 A separate, temporary developer capture used the hash-verified Japanese
