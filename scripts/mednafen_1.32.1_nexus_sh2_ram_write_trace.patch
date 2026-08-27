@@ -27,28 +27,35 @@
 + static uint32 maximum;
 + static unsigned limit = 100000;
 + static bool nonzero;
++ static uint64 frame_min;
++ static uint64 frame_max = UINT64_MAX;
 + const char *path = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_WRITES");
 + if(!configured)
 + {
 +  const char *min_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_WRITE_MIN");
 +  const char *max_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_WRITE_MAX");
 +  const char *limit_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_WRITE_LIMIT");
++  const char *frame_min_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_WRITE_FRAME_MIN");
++  const char *frame_max_text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_WRITE_FRAME_MAX");
 +  minimum = min_text && *min_text ? strtoul(min_text, NULL, 0) : 0;
 +  maximum = max_text && *max_text ? strtoul(max_text, NULL, 0) : 0;
 +  if(limit_text && *limit_text) limit = strtoul(limit_text, NULL, 10);
++  if(frame_min_text && *frame_min_text) frame_min = strtoull(frame_min_text, NULL, 0);
++  if(frame_max_text && *frame_max_text) frame_max = strtoull(frame_max_text, NULL, 0);
 +  nonzero = getenv("FIRESTAFF_NEXUS_TRACE_SH2_RAM_WRITE_NONZERO") != NULL;
 +  configured = true;
 + }
 + if(!path || !*path || maximum <= minimum || address < minimum ||
-+    address + size > maximum || count >= limit || (nonzero && value == 0)) return;
++    address + size > maximum || count >= limit || (nonzero && value == 0) ||
++    SMPC_FirestaffCurrentFrame() < frame_min || SMPC_FirestaffCurrentFrame() > frame_max) return;
 + if(!file)
 + {
 +  file = fopen(path, "wb");
 +  if(!file) return;
 +  fputs("FIRESTAFF_NEXUS_SH2_RAM_WRITE_TRACE_V1\n", file);
 + }
-+ fprintf(file, "addr=0x%08x size=%u value=0x%08x pc0=0x%08x pc1=0x%08x\n",
-+  (unsigned)address, size, (unsigned)value,
++ fprintf(file, "frame=%llu addr=0x%08x size=%u value=0x%08x pc0=0x%08x pc1=0x%08x\n",
++  (unsigned long long)SMPC_FirestaffCurrentFrame(), (unsigned)address, size, (unsigned)value,
 +  (unsigned)FirestaffGetSH2PC(0), (unsigned)FirestaffGetSH2PC(1));
 + count++;
 + if((count & 0x3ffU) == 0) fflush(file);
