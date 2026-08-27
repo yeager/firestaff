@@ -46,6 +46,27 @@ dungeon boundaries, the shared fixed SUPPRESS stream and first/final records
 of each non-empty DB pool. It deliberately does not publish a playable
 session.
 
+### Native CLI start and first-movement probes
+
+These skip-safe CTest entries use the selected original archive directly in
+memory.  Each proves a source-owned startup/menu sequence, a loaded runtime
+and the first real movement input; none claims broader save, combat or GUI
+parity.
+
+| Platform/media | CTest name | Authenticated GDAT MD5 |
+| --- | --- | --- |
+| DOS EN | `dm2_v1_dos_native_cli_boot` | `25247ede4dabb6a71e5dabdfbcd5907d` |
+| DOS FR | `dm2_v1_dos_fr_native_cli_boot` | `b4d733576ea60c41737f79f212faf528` |
+| Amiga EN installer ZIP | `dm2_v1_amiga_native_cli_boot` | `1c940ea95703eaea0ecdf84d17e954b9` |
+| Macintosh EN retail ZIP | `dm2_v1_mac_native_cli_boot` | `5cab25f6b975957eae4a203174e7f2a6` |
+| FM Towns HME-242 ZIP | `dm2_v1_fmtowns_native_cli_boot` | `027ff3b8ddc2c4c4cdda7ada0b0bc46c` |
+
+The Macintosh probe dismisses its retained title movie, dispatches the
+original New Game event and selects a source-owned viewport mirror.  The FM
+Towns probe preserves its AUTOEXEC/SWOOSH/TITLE/SKULL handoff before the
+source-space mirror selection.  Both routes refuse unrelated PC coordinates
+or extracted media.
+
 ## Remaining blockers to playable parity
 
 The following are deliberately unavailable rather than replaced with
