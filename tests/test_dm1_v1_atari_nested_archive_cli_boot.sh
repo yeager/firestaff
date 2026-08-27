@@ -51,8 +51,8 @@ probe --menu --game dm1 --platform atari-st --data-dir "$archive" \
     --script enter --boot-probe --boot-probe-frames 2 --duration 0
 
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --game dm1 --platform atari-st --data-dir "$archive" \
-    --boot-probe --boot-probe-frames 500 --script up --duration 0 2>&1) || {
+    --menu --game dm1 --platform atari-st --data-dir "$archive" \
+    --boot-probe --boot-probe-frames 500 --script enter,up --duration 0 2>&1) || {
     printf '%s\n' "$gameplay_output" >&2
     exit 1
 }

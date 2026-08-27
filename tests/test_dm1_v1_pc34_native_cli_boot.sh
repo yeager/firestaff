@@ -38,8 +38,8 @@ probe --menu --game dm1 --data-dir "$archive" --script enter \
 # `up` input advances to y=4; this proves the selected archive has reached
 # the actual M11 movement route rather than only a title/startup receipt.
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --game dm1 --data-dir "$archive" --boot-probe --boot-probe-frames 500 \
-    --script up --duration 0 2>&1) || {
+    --menu --game dm1 --data-dir "$archive" --boot-probe --boot-probe-frames 500 \
+    --script enter,up --duration 0 2>&1) || {
     printf '%s\n' "$gameplay_output" >&2
     exit 1
 }
