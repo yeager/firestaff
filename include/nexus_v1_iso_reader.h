@@ -49,6 +49,15 @@ int nexus_iso_open_memory(Nexus_ISOReader *reader, uint8_t *data,
 /* Open from CUE file (finds Track 1 BIN automatically) */
 int nexus_iso_open_cue(Nexus_ISOReader *reader, const char *cue_path);
 
+/* Recover the owning CUE for an already-selected Nexus data track.  The
+ * result is admitted only when exactly one sibling CUE opens that exact
+ * physical payload as its Nexus ISO track; a merely similarly named CUE is
+ * never substituted.  This preserves the original CDDA declarations when a
+ * launcher first matched Track 1 rather than the CUE itself. */
+int nexus_iso_find_cue_for_data_track(const char *data_track_path,
+                                      char *out_cue_path,
+                                      int out_cue_path_size);
+
 /* Check every FILE payload named by a CUE sheet. This is deliberately
  * separate from nexus_iso_open_cue(): a valid ISO data track does not prove
  * that external CDDA payloads are present. */

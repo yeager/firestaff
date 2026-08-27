@@ -5,7 +5,10 @@
 #include <ctype.h>
 #include <limits.h>
 #ifdef _WIN32
+#include <windows.h>
 #define strcasecmp _stricmp
+#else
+#include <dirent.h>
 #endif
 
 static int seek_file(FILE *fp, int64_t offset)
@@ -308,6 +311,105 @@ int nexus_iso_open_cue(Nexus_ISOReader *reader, const char *cue_path) {
     }
     fclose(cue);
     return matches == 1 ? reader->file_count : -1;
+}
+
+static int nexus_iso_path_equals(const char *left, const char *right)
+{
+    size_t i;
+    if (!left || !right) return 0;
+    for (i = 0; left[i] && right[i]; ++i) {
+        char a = left[i] == '\\' ? '/' : left[i];
+        char b = right[i] == '\\' ? '/' : right[i];
+#ifdef _WIN32
+        if (tolower((unsigned char)a) != tolower((unsigned char)b)) return 0;
+#else
+        if (a != b) return 0;
+#endif
+    }
+    return left[i] == '\0' && right[i] == '\0';
+}
+
+static int nexus_iso_path_has_cue_extension(const char *path)
+{
+    const char *dot = path ? strrchr(path, '.') : NULL;
+    return dot && strcasecmp(dot, ".cue") == 0;
+}
+
+static int nexus_iso_consider_owning_cue(const char *cue_path,
+                                         const char *data_track_path,
+                                         char *out_cue_path,
+                                         int out_cue_path_size,
+                                         int *matches)
+{
+    Nexus_ISOReader reader;
+    if (!cue_path || !data_track_path || !out_cue_path || !matches ||
+        nexus_iso_open_cue(&reader, cue_path) < 0) return 0;
+    if (nexus_iso_path_equals(reader.path, data_track_path)) {
+        ++*matches;
+        if (*matches == 1 && (int)strlen(cue_path) < out_cue_path_size) {
+            memcpy(out_cue_path, cue_path, strlen(cue_path) + 1U);
+        }
+    }
+    nexus_iso_close(&reader);
+    return 1;
+}
+
+int nexus_iso_find_cue_for_data_track(const char *data_track_path,
+                                      char *out_cue_path,
+                                      int out_cue_path_size)
+{
+    char directory[512];
+    char *separator;
+    int matches = 0;
+
+    if (!data_track_path || !data_track_path[0] || !out_cue_path ||
+        out_cue_path_size <= 1) return -1;
+    out_cue_path[0] = '\0';
+    if (strlen(data_track_path) >= sizeof(directory)) return -1;
+    memcpy(directory, data_track_path, strlen(data_track_path) + 1U);
+    separator = strrchr(directory, '/');
+    if (!separator) separator = strrchr(directory, '\\');
+    if (!separator) return -1;
+    separator[1] = '\0';
+
+#ifdef _WIN32
+    {
+        WIN32_FIND_DATAA entry;
+        HANDLE search;
+        char pattern[sizeof(directory) + 5U];
+        if (snprintf(pattern, sizeof(pattern), "%s*.cue", directory) <= 0 ||
+            strlen(pattern) >= sizeof(pattern)) return -1;
+        search = FindFirstFileA(pattern, &entry);
+        if (search == INVALID_HANDLE_VALUE) return -1;
+        do {
+            char cue_path[768];
+            if ((entry.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
+                !nexus_iso_path_has_cue_extension(entry.cFileName)) continue;
+            if (snprintf(cue_path, sizeof(cue_path), "%s%s", directory,
+                         entry.cFileName) <= 0 || strlen(cue_path) >= sizeof(cue_path)) continue;
+            nexus_iso_consider_owning_cue(cue_path, data_track_path,
+                                          out_cue_path, out_cue_path_size, &matches);
+        } while (FindNextFileA(search, &entry));
+        FindClose(search);
+    }
+#else
+    {
+        DIR *dir = opendir(directory);
+        struct dirent *entry;
+        if (!dir) return -1;
+        while ((entry = readdir(dir)) != NULL) {
+            char cue_path[768];
+            if (!nexus_iso_path_has_cue_extension(entry->d_name)) continue;
+            if (snprintf(cue_path, sizeof(cue_path), "%s%s", directory,
+                         entry->d_name) <= 0 || strlen(cue_path) >= sizeof(cue_path)) continue;
+            nexus_iso_consider_owning_cue(cue_path, data_track_path,
+                                          out_cue_path, out_cue_path_size, &matches);
+        }
+        closedir(dir);
+    }
+#endif
+    if (matches != 1) out_cue_path[0] = '\0';
+    return matches == 1 ? 0 : -1;
 }
 
 int nexus_iso_cue_media_receipt(const char *cue_path,

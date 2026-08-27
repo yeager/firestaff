@@ -8,6 +8,7 @@
 #include "dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
 #include "nexus_v1_engine.h"
+#include "nexus_v1_iso_reader.h"
 #include "nexus_v2_hud_runtime.h"
 #include "nexus_v2_lighting_runtime.h"
 #include "nexus_v2_smooth_movement_runtime.h"
@@ -22803,6 +22804,7 @@ int M11_GameView_ResolveNexusRuntimeDataDir(const M11_GameLaunchSpec* spec,
                                             char* outPath,
                                             int outPathSize) {
     char physicalPath[M11_GAME_VIEW_PATH_CAPACITY];
+    char owningCuePath[M11_GAME_VIEW_PATH_CAPACITY];
     const char* candidate;
     const char* virtualSep;
     if (!spec || !outPath || outPathSize <= 0) {
@@ -22831,6 +22833,13 @@ int M11_GameView_ResolveNexusRuntimeDataDir(const M11_GameLaunchSpec* spec,
                 outPath[0] != '\0') {
                 return 1;
             }
+        }
+        if ((m11_path_has_extension(candidate, ".bin") ||
+             m11_path_has_extension(candidate, ".iso")) &&
+            nexus_iso_find_cue_for_data_track(candidate, owningCuePath,
+                                              (int)sizeof(owningCuePath)) == 0) {
+            snprintf(outPath, (size_t)outPathSize, "%s", owningCuePath);
+            return outPath[0] != '\0';
         }
         if (m11_path_has_extension(candidate, ".cue") ||
             m11_path_has_extension(candidate, ".bin") ||

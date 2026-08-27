@@ -609,6 +609,12 @@ in Mednafen as a fallback.  Mednafen may be instrumented outside Firestaff to
 produce read-only traces, but those traces must be imported and verified before
 they can unlock a native Nexus route.
 
+When M12 has matched physical Track 1 instead of a CUE, M11 reopens sibling
+CUE sheets with the native ISO reader and retains one only if it resolves to
+that exact physical Nexus data track. The CUE remains the engine input, so its
+authored AUDIO declarations are retained for the future native consumer;
+ambiguous ownership deliberately remains blocked.
+
 Firestaff now has a C receipt for the emitted
 `FIRESTAFF_NEXUS_SCSP_WRITE_TRACE_V1` schema. It validates the raw trace hash,
 mailbox writes, the `SDDRVS.TSK` command-handler PC `0x3224`, and the SCSP

@@ -102,6 +102,12 @@ identity. A candidate is admitted only when its ISO tree contains the real
 place; it does not unpack or rewrite game data. The focused ISO/CUE, launch,
 manifest, and external-data tests pass.
 
+When discovery first identifies a physical Track 1 payload, launch resolves
+its CUE ownership strictly: a sibling CUE is accepted only when exactly one
+sheet opens that exact payload as its Nexus ISO track. The native engine then
+receives the CUE, preserving authored CDDA declarations without extraction.
+Zero or multiple owners fail closed rather than selecting a filename guess.
+
 The external checkout was tested against
 `/Volumes/Extern-disk/FirestaffUserData/data/nexus`: all 304 registered Nexus
 CTest cases completed successfully. Fourteen tests remain intentionally
