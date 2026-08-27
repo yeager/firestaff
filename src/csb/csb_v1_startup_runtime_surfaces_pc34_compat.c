@@ -11,6 +11,7 @@
 #include "csb_v1_fmtowns_graphics_dat.h"
 #include "csb_v1_startup_img3_decode_pc34_compat.h"
 #include "dm1_v1_legacy_graphics_dat.h"
+#include "asset_find_by_hash.h"
 #include "firestaff_x68k_media_receipt.h"
 #include "vga_palette_pc34_compat.h"
 
@@ -112,24 +113,19 @@ static int csb_v1_boot_decode_fmtowns_graphics_dat_asset_pc34(
     unsigned char **out_pixels, int *out_width, int *out_height,
     CSB_V1_StartupGraphicDecodeReceipt_PC34 *out_decode_receipt)
 {
-    FILE *file = NULL;
-    long file_size;
     unsigned char *data = NULL;
+    size_t data_size = 0u;
     int ok;
 
-    if (!path || !path[0] || !(file = fopen(path, "rb")) ||
-        fseek(file, 0L, SEEK_END) != 0 || (file_size = ftell(file)) <= 0 ||
-        fseek(file, 0L, SEEK_SET) != 0 ||
-        (size_t)file_size > CSB_FMTOWNS_GRAPHICS_MAX_SIZE ||
-        !(data = (unsigned char *)malloc((size_t)file_size))) {
-        if (file) fclose(file);
+    if (!path || !path[0] || !asset_read_path_alloc(path, &data, &data_size) ||
+        !data || data_size == 0u ||
+        data_size > CSB_FMTOWNS_GRAPHICS_MAX_SIZE) {
+        free(data);
         return 0;
     }
-    ok = fread(data, 1u, (size_t)file_size, file) == (size_t)file_size &&
-        csb_v1_boot_decode_fmtowns_graphics_dat_bytes_pc34(
-            data, (size_t)file_size, graphic_index, out_pixels, out_width,
-            out_height, out_decode_receipt);
-    fclose(file);
+    ok = csb_v1_boot_decode_fmtowns_graphics_dat_bytes_pc34(
+        data, data_size, graphic_index, out_pixels, out_width, out_height,
+        out_decode_receipt);
     free(data);
     return ok;
 }
