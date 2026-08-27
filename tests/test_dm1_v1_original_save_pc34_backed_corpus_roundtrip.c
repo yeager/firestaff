@@ -1,4 +1,5 @@
 #include "dm1_v1_original_save_classifier.h"
+#include "dm1_v1_original_save_pc34_handoff.h"
 #include "m11_game_view.h"
 
 #include <stdio.h>
@@ -85,15 +86,24 @@ static int roundtrip_backed_save(const char *save_path, const char *data_dir,
     int source_started = 0;
     int reloaded_started = 0;
     int ok = 0;
+    DM1OriginalSavePC34HandoffReport import_report;
+    const char *output_dir = getenv("FIRESTAFF_TEST_OUTPUT_DIR");
+
+    if (!output_dir || !output_dir[0]) output_dir = ".";
 
     memset(&source, 0, sizeof(source));
     memset(&reloaded, 0, sizeof(reloaded));
-    snprintf(quicksave_path, sizeof(quicksave_path),
-             "/tmp/firestaff-backed-pc34-%ld-%d.sav",
-             (long)dm1_test_getpid(), ordinal);
-    snprintf(exported_path, sizeof(exported_path),
-             "/tmp/firestaff-backed-pc34-%ld-%d.dat",
-             (long)dm1_test_getpid(), ordinal);
+    if (snprintf(quicksave_path, sizeof(quicksave_path),
+                 "%s/firestaff-backed-pc34-%ld-%d.sav", output_dir,
+                 (long)dm1_test_getpid(), ordinal) >=
+            (int)sizeof(quicksave_path) ||
+        snprintf(exported_path, sizeof(exported_path),
+                 "%s/firestaff-backed-pc34-%ld-%d.dat", output_dir,
+                 (long)dm1_test_getpid(), ordinal) >=
+            (int)sizeof(exported_path)) {
+        fprintf(stderr, "FAIL test output path too long\n");
+        return 0;
+    }
     snprintf(quicksave_tail_path, sizeof(quicksave_tail_path), "%s.pc34tail",
              quicksave_path);
 
@@ -114,9 +124,29 @@ static int roundtrip_backed_save(const char *save_path, const char *data_dir,
     source_started = 1;
     CHECK(M11_GameView_StartDm1(&source, data_dir),
           "start DM1 against original backing data");
-    CHECK(M11_GameView_LoadDm1OriginalPc34SaveBytes(
-              &source, source_bytes, source_size, save_path),
-          "F0435 imports corpus save against original DUNGEON.DAT");
+    memset(&import_report, 0, sizeof(import_report));
+    if (!M11_GameView_LoadDm1OriginalPc34SaveBytes(
+            &source, source_bytes, source_size, save_path)) {
+        struct GameWorld_Compat diagnostic_world;
+        int diagnostic_result;
+        memset(&diagnostic_world, 0, sizeof(diagnostic_world));
+        diagnostic_result =
+            dm1_v1_original_save_pc34_handoff_materialize_runtime_from_bytes(
+                source_bytes, source_size, &source.world, &diagnostic_world,
+                NULL, &import_report);
+        F0883_WORLD_Free_Compat(&diagnostic_world);
+        fprintf(stderr,
+                "FAIL F0435 imports corpus save against original DUNGEON.DAT: result=%d importer=%d stage=%d parts=%u,%u,%u,%u,%u checksums=%d\\n",
+                diagnostic_result, import_report.importer_result,
+                (int)import_report.runtime_stage,
+                import_report.part_byte_counts[0],
+                import_report.part_byte_counts[1],
+                import_report.part_byte_counts[2],
+                import_report.part_byte_counts[3],
+                import_report.part_byte_counts[4],
+                import_report.part_checksum_ok_count);
+        return 0;
+    }
     CHECK(source.world.dungeon && source.world.things && source.world.ownsDungeon,
           "F0435 retains an owned original-backed dungeon");
     CHECK(M11_GameView_QuickSave(&source),

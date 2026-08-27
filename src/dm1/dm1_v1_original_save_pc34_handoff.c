@@ -9068,6 +9068,7 @@ int dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
         /* Preserve the public transactional contract: a rejected candidate
          * never changes caller-visible runtime state or its prior receipt. */
         F0883_WORLD_Free_Compat(&candidate_world);
+        if (out_report) *out_report = candidate_report;
         return result;
     }
 
@@ -9218,6 +9219,7 @@ int dm1_v1_original_save_pc34_handoff_materialize_runtime_from_bytes(
         event_queue ? &candidate_queue : NULL, &candidate_report);
     if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         F0883_WORLD_Free_Compat(&candidate_world);
+        if (out_report) *out_report = candidate_report;
         return result;
     }
     if (!candidate_world.dungeon || !candidate_world.things) {

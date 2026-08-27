@@ -1,6 +1,7 @@
 #include "dm1_v1_original_save_classifier.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int g_pass = 0;
@@ -19,9 +20,19 @@ static void check_int(const char *label, int got, int want) {
 static void probe_default_root(void) {
     DM1OriginalSaveManifest manifest;
     char root[DM1_ORIGINAL_SAVE_PATH_MAX];
+    const char *configured_root = getenv("FIRESTAFF_DM1_PC34_SAVE_CORPUS");
 
-    check_int("default root resolves",
-              dm1_v1_original_save_default_root(root), 1);
+    if (configured_root && configured_root[0]) {
+        if (strlen(configured_root) >= sizeof(root)) {
+            printf("FAIL configured corpus path is too long\n");
+            g_fail++;
+            return;
+        }
+        memcpy(root, configured_root, strlen(configured_root) + 1u);
+    } else {
+        check_int("default root resolves",
+                  dm1_v1_original_save_default_root(root), 1);
+    }
     printf("DM1 original save classifier root: %s\n", root);
 
     check_int("default root classifies",
@@ -33,7 +44,7 @@ static void probe_default_root(void) {
     for (int i = 0; i < manifest.candidate_count; i++) {
         const DM1OriginalSaveClassifyResult *r = &manifest.results[i];
         printf("candidate[%d] path=%s shape=%s readiness=%s size=%llu "
-               "format=%u checksum_ok=%d blocked=%d reason=%s\n",
+               "format=%u checksum_ok=%d parts=%u payload=%u tail=%u blocked=%d reason=%s\n",
                i,
                manifest.paths[i],
                dm1_v1_original_save_shape_name(r->shape),
@@ -41,6 +52,9 @@ static void probe_default_root(void) {
                (unsigned long long)r->size_bytes,
                (unsigned)r->format_id,
                r->header_checksum_ok,
+               (unsigned)r->save_part_loader_envelope_ok_count,
+               (unsigned)r->save_part_loader_envelope_payload_bytes,
+               (unsigned)r->save_part_loader_trailing_byte_count,
                r->import_blocked_until_roundtrip,
                r->reason);
 
