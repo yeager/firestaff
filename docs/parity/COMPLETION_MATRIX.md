@@ -17,11 +17,11 @@ number of hashes or presented as 41 separately verified ports.
 | Game family | Runtime targets | Version profiles | Mean runtime evidence | Version-profile scope |
 |---|---:|---:|---:|---|
 | DM1 | 2 | 16 | 64.5% | PC 3.4 is the source-locked playable route; other profiles are catalogued/admitted where their data gates pass. |
-| CSB | 2 | 9 | 37.0% | Shared CSB runtime slices; edition-specific launch/data boundaries are not full parity proof. |
+| CSB | 2 | 9 | 38.5% | Shared CSB runtime slices; edition-specific launch/data boundaries are not full parity proof. |
 | DM2 | 2 | 7 | 26.0% | PC/FM Towns/Amiga/PC-98 profiles are recognised, but V1 live parity remains open. |
 | DM Nexus | 2 | 5 | 28.5% | Saturn JP/extracted, V2, English fan and French fan profiles share the capture-gated Nexus route. |
 | Theron's Quest | 1 | 4 | 72.0% | JP/US Track 02 identities include BIN/ISO forms; positive full-media launch remains open. |
-| **Total** | **9** | **41** | **42.7%** | Unweighted mean of the 9 runtime targets: 384/900. |
+| **Total** | **9** | **41** | **43.0%** | Unweighted mean of the 9 runtime targets: 387/900. |
 
 The tempting alternative, 57.6%, is the version-weighted mean obtained by
 copying each family score onto every recognised profile. That number is not a
@@ -53,7 +53,7 @@ composition and SLEV/SAL/SDDRVS playback remain blocked.
 |---|---:|---:|---|---|
 | DM1 V1 | 78% | 78/100 | `playable_verified_partial` | Representative original-vs-Firestaff overlay parity remains incomplete. Current DM1 blocker is the pass162 stock-original C080/F0377/F0275/F0280 live transcript gate: FIRES.MAP provides candidate addresses, DOSBox-debug break-start accepts the BP/BPM packet, and the HoC, movement-click, movement double-click, autolock, keyboard-capture, external `cliclick`, System Events, and direct `postToPid` live probes now record FIRES startup, DATA\DUNGEON.DAT load, mapped native macOS input, and 34 stock-original memory stops each, but no C080-chain code breakpoint fires. Pre-move, cursor-warp, first-click focus/capture, DOSBox-X autolock/mouse_emulation defaults, Ctrl-F10 capture toggling, replacing the Swift/CGEvent helper with `cliclick`, macOS Accessibility/System Events clicking, and direct CGEvent `postToPid` are now insufficient explanations. The mouse=debug logs show MOUSE/INT33 initialization but no route-click motion/button event, so next work is DOSBox-X SDL/Cocoa event ingestion or debugger event-pump work before pass435 six-shot promotion can continue. |
 | DM1 V2 | 51% | 51/100 | `runtime_presentation_verified_partial` | V2.0/V2.1 runtime presentation smoke exists, but finished V2.2 real-art material/pixel gates and original-pairing evidence remain open. |
-| CSB V1 | 43% | 43/100 | `runtime_boundary_verified_partial` | CSB has launch/profile, save, dungeon, command-chain, utility/import, and viewport source-slice gates, but end-to-end gameplay/render capture proof is still being hardened. |
+| CSB V1 | 46% | 46/100 | `runtime_boundary_verified_partial` | CSB has authentic native startup/runtime/movement and start-menu evidence on Atari ST, Amiga and FM Towns, plus launch/profile, save, dungeon, command-chain, utility/import, and viewport source-slice gates. End-to-end gameplay/render capture proof is still being hardened. |
 | CSB V2 | 31% | 31/100 | `presentation_verified_partial` | CSB V2 HUD/filter/smooth-movement probes are wired, but real CSB V1 gameplay parity and modern-art per-cell material proof remain open. |
 | DM2 V1 | 36% | 36/100 | `runtime_slices_verified_partial` | Door/button, projectile, creature, minimap, weather/timer, save-adjacent slices, combat damage pipeline, and movement execution chain exist; V1 dungeon/render/mechanics parity and real-asset runtime proof remain active work. |
 | DM2 V2 | 16% | 16/100 | `presentation_scaffold_partial` | V2 presentation scaffolds exist, but V1 parity base and finished V2 proof are not complete. |
@@ -69,7 +69,7 @@ This refresh incorporates the post-2026-05-09 work now present on `origin/main`,
 |---|---|
 | DM1 V1 | Hall of Champions mirror/portrait runtime probes across many ordinals and routes; resurrect survival/load regression; chest runtime matrix; food/water warning tick; door-bash sound/no-open; projectile grate/pass-through; spell-rune repeat input; champion-panel disabled icon and mana repaint gates; movement/data-root CTest hardening. |
 | DM1 V2 | Runtime presentation smoke for V2.0/V2.1; source-route and side-by-side seed gates; HUD overlay/interaction gates; lighting/effects/field projectile VFX gates; selected-resolution and 4K input mapping; per-mode material-signature and renderer readback probes. |
-| CSB V1 | Hash-matched launch intent boundary; CSB save runtime boundary; command-chain/input/runtime tick slices; dungeon header/loader/world gates; utility/CMP import; DSA trigger; save import path; viewport source-lock slices and CustomBackgrounds coverage; hidden-code skip tables. |
+| CSB V1 | Authentic native Atari STX and nested-ZIP, Amiga ADF-archive, and English/Japanese FM Towns-CD startup paths now prove title → runtime → first movement plus start-menu handoff; CSB save runtime boundary; command-chain/input/runtime tick slices; dungeon header/loader/world gates; utility/CMP import; DSA trigger; save import path; viewport source-lock slices and CustomBackgrounds coverage; hidden-code skip tables. |
 | CSB V2 | HUD overlay probe, smooth movement/runtime binding, phase-gate verification, filter config/chain/dispatch, texture upscale, V2.2 shape probes, and CTest registration of previously build-only probes. |
 | DM2 V1 | Door/button toggle boundary; minimap level-transition/save-load gate; weather/timer save round-trip; projectile-vs-creature collision; creature death/drop observer; pressure plate and trigger gates; focused combat/shop probes. |
 | Nexus V1 | DMDF palette/string bounds, DGN malformed actor guard, BPK/BPX archive boundaries, Saturn font parse/render determinism, save-slot round-trip, mechanics parity slices, and renderer/data loader probes. |
@@ -110,7 +110,7 @@ This refresh incorporates the post-2026-05-09 work now present on `origin/main`,
 |---|---:|---|
 | `reference_inventory` | 9/10 | CSB PC/Atari/Amiga references, source-lock manifests, archive/version inventories, and asset-pair manifests exist. |
 | `definition_matrix` | 10/10 | `docs/parity/PARITY_MATRIX_CSB_V1.md`, completion matrix, and parity surface matrix define the CSB V1 evidence boundary. |
-| `launch_smoke` | 6/10 | Hash-matched launch intent, blocked-launch UI, quickplay/load-route source locks, PC real-asset launch boundary, and CSB profile/diagnostic gates exist. |
+| `launch_smoke` | 9/10 | Authentic native Atari STX and nested-ZIP, Amiga ADF-archive, and English/Japanese FM Towns-CD paths pass title → runtime → first movement and a separate start-menu handoff. CSB's non-existent PC/DOS platform is fail-closed. Hash-matched launch intent, blocked-launch UI, quickplay/load-route source locks, and profile/diagnostic gates remain covered. |
 | `core_input_movement` | 5/15 | Command-chain, input-queue, movement step/rotation, runtime tick, queue overflow, reincarnation, and related gates exist, but end-to-end runtime proof is not complete. |
 | `viewport_ui_render` | 7/20 | CSB-specific viewport source slices, CustomBackgrounds, D1/D2/D3 wall/door/ornament lanes, hidden item skip tables, and portrait render handoff are covered; real pixel captures remain open. |
 | `gameplay_systems` | 4/15 | Dungeon loader/world, DSA trigger, save runtime boundary, utility/CMP import, Grey Lord/Zokathra/chaos slices exist; broad mechanics parity remains open. |

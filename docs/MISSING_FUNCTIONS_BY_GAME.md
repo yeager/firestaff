@@ -122,6 +122,16 @@ Syntetisk dungeon-loader/world-fixture och experimentella launch-fixtures får
 fortsätta testa livscykel och negativa grenar. De är inte ett substitut för
 CSB:s riktiga dungeon-, save- eller viewportdata.
 
+**Native startmatris (verifierad 2026-08-27):** Firestaff läser verkliga CSB-
+medier i minnet och genomför originalets title → runtime → första rörelse,
+samt startmenyns launch-handoff, för Atari ST (rå STX och kapslat ZIP), Amiga
+ADF-arkiv och FM Towns-CD-arkiv (engelska och japanska programkedjor).
+`csb_v1_{atari_stx,atari_nested_zip,amiga,fmtowns_{en,ja}}_native_cli_*`
+bevisar dessa vägar. CSB hade ingen DOS-utgåva; en begäran om `--platform pc`
+avvisas därför fail-closed och får inte återanvända Atari- eller CSBWin-data.
+Startbeviset ersätter inte de öppna originalcapture- och DSA/save-paritets-
+kraven ovan.
+
 ## Nexus
 
 ### Saknad kod eller ofullständig produktionsväg
