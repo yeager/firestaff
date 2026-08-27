@@ -520,6 +520,13 @@ word-swapped position in captured VDP2 CRAM. This is bounded negative evidence
 for the captured gameplay/intro state, not proof of another source owner.
 Dungeon bitmap and CLUT joins remain open.
 
+The analyser accepts either a hash-verified loose corpus (`--data-dir`) or a
+retail Track 1 CUE (`--cue`).  The CUE path reads just the requested ISO
+members into memory and validates their recorded hashes; it neither extracts
+game files nor makes a copy on disk.  This keeps capture/source investigation
+reproducible against the user's original media while preserving the native
+runtime's no-extraction contract.
+
 The source-side STABG work also has a separate capture-only join adapter.
 Given an explicitly identified Saturn crop, it compares the DMWeb first-map
 decode row by row and all 512 raw STABG palette bytes before writing the

@@ -15,6 +15,7 @@ import hashlib
 from pathlib import Path
 
 from analyze_nexus_saturn_runtime_capture import frame_regions
+from analyze_nexus_title_vdp2_source import cue_track1, iso_members_in_memory
 from fixtures.nexus_v1_disc_file_hashes import DISC_HASH
 from nexus_vdp2_registers import detect_byte_order, read_u16
 
@@ -35,21 +36,36 @@ MENU_BPK_SHA256 = frozenset({
 })
 
 
-def read_asset(data_dir: Path, name: str) -> bytes:
-    data = (data_dir / name).read_bytes()
+def verify_asset(data: bytes, name: str) -> bytes:
     digest = hashlib.sha256(data).hexdigest()
-    accepted = MENU_BPK_SHA256 if name == "MENU.BPK" else {ASSET_HASHES[name]}
+    if name == "MENU.BPK":
+        accepted = set(MENU_BPK_SHA256)
+        if name in DISC_HASH:
+            accepted.add(DISC_HASH[name])
+    elif name in ASSET_HASHES:
+        accepted = {ASSET_HASHES[name]}
+        if name in DISC_HASH:
+            accepted.add(DISC_HASH[name])
+    elif name in DISC_HASH:
+        accepted = {DISC_HASH[name]}
+    else:
+        raise ValueError(f"unexpected source asset: {name}")
     if digest not in accepted:
         raise ValueError(f"{name} hash mismatch")
     return data
 
 
-def read_optional_asset(data_dir: Path, name: str) -> bytes | None:
-    """Read an admitted comparison source when this retail extraction has it."""
-    try:
-        return read_asset(data_dir, name)
-    except FileNotFoundError:
-        return None
+def read_assets(data_dir: Path | None, cue: Path | None,
+                names: set[str]) -> dict[str, bytes]:
+    """Read admitted retail members without materialising CUE entries."""
+    if cue is not None:
+        members = iso_members_in_memory(cue_track1(cue), names)
+    elif data_dir is not None:
+        members = {name: (data_dir / name).read_bytes() for name in names
+                   if (data_dir / name).is_file()}
+    else:
+        raise ValueError("either --data-dir or --cue is required")
+    return {name: verify_asset(data, name) for name, data in members.items()}
 
 
 def decode_prs3(stream: bytes, target: int) -> bytes | None:
@@ -200,15 +216,12 @@ def stabg_first_map(data: bytes) -> tuple[bytes, bytes]:
     return bytes(pixels), data[part2:part2 + 512]
 
 
-def dgn_structure2_palettes(data_dir: Path) -> list[tuple[str, bytes]]:
+def dgn_structure2_palettes(assets: dict[str, bytes]) -> list[tuple[str, bytes]]:
     """Return only bounded nonzero 32-byte palette anchors from retail DGN."""
     palettes: list[tuple[str, bytes]] = []
     for level in range(16):
         name = f"LEV{level:02d}.DGN"
-        data = (data_dir / name).read_bytes()
-        expected = DISC_HASH.get(name)
-        if expected is None or hashlib.sha256(data).hexdigest() != expected:
-            raise ValueError(f"{name} hash mismatch")
+        data = assets[name]
         if len(data) < 0x1C:
             raise ValueError(f"{name} header is truncated")
         block = int.from_bytes(data[0x14:0x16], "big")
@@ -264,7 +277,10 @@ def longest_nonzero_match(source: bytes, target: bytes) -> tuple[int, int, int]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("capture", type=Path)
-    parser.add_argument("--data-dir", type=Path, required=True)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--data-dir", type=Path)
+    source.add_argument("--cue", type=Path,
+                        help="retail CUE; ISO members are retained in memory")
     parser.add_argument("--frame", type=int, default=0)
     parser.add_argument(
         "--capture-frames",
@@ -282,21 +298,31 @@ def main() -> int:
         return 1
     try:
         frames, _ = frame_regions(args.capture.read_bytes(), capture_frames)
-        menu = read_asset(args.data_dir, "MENU.BPK")
-        font = read_asset(args.data_dir, "FONT256.S2D")
-        title_bin = read_optional_asset(args.data_dir, "TITLE.BIN")
-        title_cg = read_optional_asset(args.data_dir, "TITLE.CG")
+        required = {"MENU.BPK", "FONT256.S2D"} | {
+            f"LEV{level:02d}.DGN" for level in range(16)
+        }
+        optional_names = {"TITLE.BIN", "TITLE.CG", "STABG.BIN"}
+        assets = read_assets(
+            args.data_dir, args.cue,
+            required | optional_names)
+        missing = sorted(required - set(assets))
+        if missing:
+            raise ValueError("required asset missing: " + ",".join(missing))
+        menu = assets["MENU.BPK"]
+        font = assets["FONT256.S2D"]
+        title_bin = assets.get("TITLE.BIN")
+        title_cg = assets.get("TITLE.CG")
         title = []
         title_palette = b""
         if title_bin is not None and title_cg is not None:
             title, title_palette = title_maps(title_bin, title_cg)
-        stabg = read_optional_asset(args.data_dir, "STABG.BIN")
+        stabg = assets.get("STABG.BIN")
         stabg_pixels = b""
         stabg_palette = b""
         if stabg is not None:
             stabg_pixels, stabg_palette = stabg_first_map(stabg)
         menu_sources, menu_palette = menu_surfaces(menu)
-        dgn_palettes = dgn_structure2_palettes(args.data_dir)
+        dgn_palettes = dgn_structure2_palettes(assets)
         sources = menu_sources + font_tiles(font) + title
         if stabg_pixels:
             sources.append(("STABG.BIN[map=0]", stabg_pixels))
@@ -369,7 +395,7 @@ def main() -> int:
            if dgn_word_swap_exact else "none"))
     print(f"dgn_structure2_palettes={len(dgn_palettes)}")
     print(f"decoded_sources={len(sources)}")
-    missing = [name for name in ("TITLE.CG",) if not (args.data_dir / name).is_file()]
+    missing = sorted(optional_names - set(assets))
     print("optional_source_assets_missing=" + ("|".join(missing) if missing else "none"))
     print(f"exact_source_matches={exact}")
     print("source_join=verified" if exact else "source_join=unbound")
