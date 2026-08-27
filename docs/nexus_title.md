@@ -233,10 +233,14 @@ edges, 40 rows for each mask. Frame 0 has `BGON=0x0007`, `CHCTLA=0x1013` and
 the independently verified word-swapped `TITLE.CG`/title-palette residency.
 The VDP2 mode later changes to `BGON=0x0201`, `CHCTLA=0x1112`, while the NBG0
 bytes retain the same captured baseline hash throughout. No MAPD span becomes
-resident in either endpoint. Because there is no no-input control for this
-later animation interval, that mode change cannot be attributed to any one
-button; this is controller-delivery and state-observation evidence only, not
-a title-menu transition or native start contract.
+resident in either endpoint. A same-region no-input control with the identical
+BIOS, CUE, frame range and raw SHA-256 is byte-identical in all eight observed
+VDP1/VDP2 regions for all 120 frames. The control therefore proves that the
+mode change is this title animation interval's own timeline, not a response to
+Start/A/B/C. `scripts/compare_nexus_saturn_runtime_captures.py` streams and
+checks that frame-by-frame comparison without materialising game data. This is
+controller-delivery and state-observation evidence only, not a title-menu
+transition or native start contract.
 
 That source boundary is now partially closed: the PC-tagged observed route reads the
 bounded SH-2 range `0x060ac2a7`–`0x060b3e26`, and the same retail session's
