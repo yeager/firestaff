@@ -8,6 +8,7 @@ usage() {
 }
 
 hash_file() { shasum -a 256 "$1" | awk '{print $1}'; }
+lower() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]'; }
 require_file_hash() {
   local path=$1 expected=$2 actual actual_lower expected_lower
   [[ -f "$path" && "$expected" =~ ^[[:xdigit:]]{64}$ ]] || return 1
@@ -64,6 +65,14 @@ case "$bios_region" in
   jp) bios_option=-ss.bios_jp ;;
   *) echo "ERROR: --bios-region must be us, eu, or jp" >&2; exit 1 ;;
 esac
+bios_sha256=$(lower "$bios_sha256")
+disc_sha256=$(lower "$disc_sha256")
+menu_bpk_sha256=$(lower "$menu_bpk_sha256")
+dm_bin_sha256=$(lower "$dm_bin_sha256")
+dgn_sha256=$(lower "$dgn_sha256")
+replay_trace_fnv=$(lower "$replay_trace_fnv")
+replay_dgn_fnv=$(lower "$replay_dgn_fnv")
+replay_bitmap_fnv=$(lower "$replay_bitmap_fnv")
 [[ ! -e "$trace" && ! -e "$manifest" && "$trace" != "$manifest" && \
    -d "$(dirname "$trace")" && -d "$(dirname "$manifest")" ]] || exit 1
 if ((launch)); then

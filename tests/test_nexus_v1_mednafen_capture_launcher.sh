@@ -24,7 +24,8 @@ grep -Fx 'FIRESTAFF_NEXUS_MEDNAFEN_PRS3_REPLAY_MANIFEST_V1' "$tmp/manifest.txt" 
 grep -Fx 'replay_epoch=1' "$tmp/manifest.txt" >/dev/null
 grep -Fx 'bios_region=jp' "$tmp/manifest.txt" >/dev/null
 if bash "$launcher" "${args[@]}"; then exit 1; fi
-bad=("${args[@]}"); bad[5]="${bios_hash/a/b}"; bad[11]="$tmp/reject.txt"; bad[25]="$tmp/reject-manifest.txt"; if bash "$launcher" "${bad[@]}"; then exit 1; fi
+upper=("${args[@]}"); upper[5]=$(tr '[:lower:]' '[:upper:]' <<<"$bios_hash"); upper[11]=$(tr '[:lower:]' '[:upper:]' <<<"$disc_hash"); upper[19]=$(tr '[:lower:]' '[:upper:]' <<<"$menu_hash"); upper[23]=$(tr '[:lower:]' '[:upper:]' <<<"$dm_hash"); upper[27]=$(tr '[:lower:]' '[:upper:]' <<<"$dgn_hash"); upper[29]="$tmp/upper-manifest.txt"; out=$(bash "$launcher" "${upper[@]}"); grep -Fx "bios_sha256=$bios_hash" "$tmp/upper-manifest.txt" >/dev/null; grep -Fx "disc_sha256=$disc_hash" "$tmp/upper-manifest.txt" >/dev/null
+bad=("${args[@]}"); bad[5]="${bios_hash/a/b}"; bad[13]="$tmp/reject.txt"; bad[29]="$tmp/reject-manifest.txt"; if bash "$launcher" "${bad[@]}"; then exit 1; fi
 bad_region=("${args[@]}"); bad_region[7]=xx; if bash "$launcher" "${bad_region[@]}"; then exit 1; fi
-launch_args=("${args[@]}"); launch_args[11]="$tmp/no-trace.txt"; launch_args[25]="$tmp/no-trace-manifest.txt"; if bash "$launcher" --launch "${launch_args[@]}"; then exit 1; fi
+launch_args=("${args[@]}"); launch_args[13]="$tmp/no-trace.txt"; launch_args[29]="$tmp/no-trace-manifest.txt"; if bash "$launcher" --launch "${launch_args[@]}"; then exit 1; fi
 echo "nexus mednafen capture launcher: PASS"
