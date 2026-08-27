@@ -34,4 +34,21 @@ probe --game dm1 --data-dir "$archive" --boot-probe --boot-probe-frames 120 \
 probe --menu --game dm1 --data-dir "$archive" --script enter \
     --boot-probe --boot-probe-frames 120 --duration 0
 
-printf '%s\n' 'PASS: authentic DM1 PC-34 archive reaches CLI and menu runtime'
+# The authentic PC-3.4 dungeon starts at (map=0,x=1,y=3,dir=2).  A native
+# `up` input advances to y=4; this proves the selected archive has reached
+# the actual M11 movement route rather than only a title/startup receipt.
+gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm1 --data-dir "$archive" --boot-probe --boot-probe-frames 500 \
+    --script up --duration 0 2>&1) || {
+    printf '%s\n' "$gameplay_output" >&2
+    exit 1
+}
+if ! grep -Fq 'phase=dm1-runtime' <<<"$gameplay_output" ||
+   ! grep -Fq 'levelLoaded=1' <<<"$gameplay_output" ||
+   ! grep -Fq 'map=0 party=1,4,2' <<<"$gameplay_output"; then
+    printf '%s\n' "$gameplay_output" >&2
+    printf '%s\n' 'FAIL: authentic DM1 PC-34 up input did not reach native movement' >&2
+    exit 1
+fi
+
+printf '%s\n' 'PASS: authentic DM1 PC-34 archive reaches CLI, menu, and native movement runtime'
