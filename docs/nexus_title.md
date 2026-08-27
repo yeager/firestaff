@@ -205,6 +205,15 @@ baseline. This independently verifies the observed copy delta without filling
 untraced bytes with a synthetic zero image. It remains a producer receipt;
 the VDP1/VDP2 display consumer, title input, and native renderer stay blocked.
 
+The same CUE/BIOS pair was then captured for 120 frames with the producer's
+documented `0x10` button mask asserted for frame 12,596. The input trace
+records that frame twice at the controller polling boundary; the raw witness
+SHA-256 is `7e00dc4a3512e21d3662a9f85db3f139db18113bd5f926ac8489be4acbb7d1a8`.
+Frames 6 through 119 retain the title NBG0 hash unchanged. Thus this exact
+one-frame input schedule is not evidence of a title-to-menu/start transition;
+Firestaff keeps the title-input contract blocked rather than treating an
+injected button or a timeout as a successful start.
+
 That source boundary is now partially closed: the PC-tagged observed route reads the
 bounded SH-2 range `0x060ac2a7`–`0x060b3e26`, and the same retail session's
 CD-labelled RAM trace binds 7,904 four-byte writes in that range to
