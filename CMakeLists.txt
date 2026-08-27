@@ -17435,6 +17435,17 @@ endif()
         ENVIRONMENT "FIRESTAFF_CSB_AMIGA31_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"
         TIMEOUT 45
     )
+    add_test(
+        NAME csb_v1_amiga_adf_archive_cli_boot
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_amiga_adf_archive_cli_boot.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(csb_v1_amiga_adf_archive_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;csb;amiga;startup;cli;menu;real_data;archive;native;skip_safe"
+        ENVIRONMENT "FIRESTAFF_CSB_AMIGA_ADF_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back (FTL).zip"
+        TIMEOUT 45
+    )
     # CSB has no original DOS release.  Keep the CLI from treating a shared
     # Atari ST graphics hash or stale cache as a PC compatibility launch.
     add_test(
