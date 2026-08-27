@@ -140,6 +140,15 @@ Each writer row carries `R0`--`R15` and, as of capture patch V14, `pr=` with
 the SH-2 procedure register. Retain `pr` when tracing the title corridor: it
 is the return-address witness needed to connect the disassembled byte-copy
 loop to its real caller. It is provenance only, not a rendering admission.
+`scripts/verify_nexus_title_nbg0_copy_callchain.py --cue <retail.cue>
+--writer-registers <receipt>` scans every aligned SH-2 word of the
+hash-verified `DM.BIN` in memory for direct `BSR` call edges. It requires the
+measured `0x0602312c` loop
+to retain the real `mov.b @r5+,r1` / `mov.b r1,@r4` instructions and requires
+each captured PR to be the `0x06022772` direct-BSR return address
+`0x06022776`, which enters the copier at `0x060230c0`. A missing or different
+PR stays blocked; it is never filled in from static analysis. `--static-only`
+reports the static result separately and never promotes it to an observed call.
 
 The paired VDP2 write stream accepts the corresponding
 `FIRESTAFF_NEXUS_TRACE_VDP2_WRITE_FRAME_MIN` and

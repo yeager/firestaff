@@ -238,8 +238,16 @@ members in memory and checks their SHA-256 before reporting the match. The
 full SuperH disassembly, with `DM.BIN` at load base `0x06010040`, resolves the
 tag as post-store loop control: source `mov.b @r5+,r1` is at `0x06023120`,
 store `mov.b r1,@r4` at `0x06023128`, and `cmp/pl r14` at `0x0602312c`.
-The caller chain, transform, palette selection, layer composition and public
-title presentation remain unbound.
+The reproducible full-member scan in
+`scripts/verify_nexus_title_nbg0_copy_callchain.py` additionally scans all
+277,572 aligned SH-2 words in this `DM.BIN` for direct `BSR` edges, rather
+than assuming a caller from the nearby window. It finds the direct `BSR` at
+`0x06022772` to copier
+entry `0x060230c0`, whose SH-2 PR return address is `0x06022776`. A V14
+writer-register receipt must carry exactly that PR on every `0x0602312c`
+copy row before the call edge is considered observed. No such receipt has yet
+been captured here. The transform, palette selection, layer composition and
+public title presentation remain unbound.
 
 The complete 190-record VDP1 chain contains 177 non-empty texture spans,
 including the bounded type-0 windows at VDP1 VRAM `0x4fba0` (448 bytes) and
