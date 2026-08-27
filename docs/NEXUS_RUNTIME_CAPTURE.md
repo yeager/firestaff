@@ -137,6 +137,14 @@ inspection aid: register values identify an observed copy/normalization path,
 but do not assign controller semantics, mutate media, or add a Firestaff
 runtime dependency.
 
+`scripts/analyze_nexus_sh2_ram_read_trace.py` validates a one-frame V3 receipt
+against the observed JP chain: linked buffer reads, SMPC-byte copy,
+nibble-normalization and the post-normalization table reader. It requires the
+complete live register bank on every row and rejects a slave-SH-2 or
+multi-frame receipt. Its only positive result is
+`workram_input_consumer_chain=verified`; it always keeps semantic admission
+blocked.
+
 For a multi-step Saturn startup route, the operator launcher also forwards the
 optional environment variable
 `FIRESTAFF_NEXUS_TRACE_PRESS_SEQUENCE`. Its format is a comma-separated list
