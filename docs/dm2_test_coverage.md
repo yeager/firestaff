@@ -68,6 +68,11 @@ viewport mirror. The FM Towns probe preserves its AUTOEXEC/SWOOSH/TITLE/SKULL
 handoff before the source-space mirror selection. All routes refuse unrelated
 PC coordinates or extracted media.
 
+`dm2_v1_dos_sksave_archive_menu_resume` adds the corresponding resume route:
+the DOS menu receives `archive.zip::data/sksave1.dat`, retains it in RAM, and
+must publish its authenticated map 11 / party 15,10,2 session. It does not
+write or unpack the original archive.
+
 ## Remaining blockers to playable parity
 
 The following are deliberately unavailable rather than replaced with
