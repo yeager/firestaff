@@ -160,7 +160,6 @@ int nexus_palette_load_surface(Nexus_PaletteState *pal,
      * bounds have been proven: any of those would manufacture Saturn
      * palette entries from an incomplete asset. */
     if (size < 0 || offset < 0 || count <= 0 ||
-        (int)pal_start >= NEXUS_PALETTE_SIZE ||
         count > NEXUS_PALETTE_SIZE - (int)pal_start ||
         offset > size || count > (size - offset) / 2) {
         printf("Nexus palette: incomplete/invalid surface span "
