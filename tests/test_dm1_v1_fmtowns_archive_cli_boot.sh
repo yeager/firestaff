@@ -27,4 +27,18 @@ probe --game dm1 --platform fm-towns --data-dir "$archive" \
 probe --menu --game dm1 --platform fm-towns --data-dir "$archive" \
     --script enter --boot-probe --boot-probe-frames 2 --duration 0
 
-printf '%s\n' 'PASS: authentic DM1 FM Towns ZIP reaches CLI and menu runtime in memory'
+gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm1 --platform fm-towns --data-dir "$archive" \
+    --boot-probe --boot-probe-frames 500 --script up --duration 0 2>&1) || {
+    printf '%s\n' "$gameplay_output" >&2
+    exit 1
+}
+if ! grep -Fq 'phase=dm1-runtime' <<<"$gameplay_output" ||
+   ! grep -Fq 'levelLoaded=1' <<<"$gameplay_output" ||
+   ! grep -Fq 'map=0 party=1,4,2' <<<"$gameplay_output"; then
+    printf '%s\n' "$gameplay_output" >&2
+    printf '%s\n' 'FAIL: authentic DM1 FM Towns up input did not reach native movement' >&2
+    exit 1
+fi
+
+printf '%s\n' 'PASS: authentic DM1 FM Towns ZIP reaches CLI, menu, and native movement runtime in memory'
