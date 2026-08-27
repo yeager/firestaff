@@ -58169,6 +58169,11 @@ if (CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
 endif()
 add_test(NAME test_dm2_v1_dos_sksave_archive_resume_real_media
     COMMAND test_dm2_v1_dos_sksave_archive_resume_real_media)
+set_tests_properties(test_dm2_v1_dos_sksave_archive_resume_real_media PROPERTIES
+    LABELS "tier2;dm2;dos;resume;real-media;native;runtime"
+    ENVIRONMENT
+        "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+)
 
 add_executable(test_dm2_v1_mac_boot_real_media
     tests/test_dm2_v1_mac_boot_real_media.c)

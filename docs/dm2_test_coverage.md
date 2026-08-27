@@ -78,6 +78,11 @@ menu route to all four supplied DOS slots and their backups. It asserts the
 distinct original map/position receipts for all eight members, preventing a
 fallback to one synthesized default save state.
 
+The companion CTest `test_dm2_v1_dos_sksave_archive_resume_real_media`
+commits `sksave1.dat` through the same archive reader and verifies the first
+source-runtime turn directly. This isolates live GAME_LOAD ownership from
+launcher-script timing; it does not claim a full interactive save campaign.
+
 ## Remaining blockers to playable parity
 
 The following are deliberately unavailable rather than replaced with

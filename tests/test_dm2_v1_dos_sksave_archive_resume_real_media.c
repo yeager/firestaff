@@ -14,6 +14,9 @@ int main(void)
     int launched;
     int prepared;
     int committed;
+    DM2_V1_BootRuntimeReceipt before_turn;
+    DM2_V1_BootRuntimeReceipt after_turn;
+    int turned;
 
     if (!archive || !archive[0]) {
         puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is required");
@@ -32,12 +35,19 @@ int main(void)
         dm2_v1_boot_prepare_sksave_resume_path(&launch, save_path);
     committed = prepared &&
         dm2_v1_boot_commit_sksave_resume_session(launch.profile);
+    memset(&before_turn, 0, sizeof(before_turn));
+    memset(&after_turn, 0, sizeof(after_turn));
+    turned = committed &&
+        dm2_v1_boot_runtime_capture(launch.profile, &before_turn) &&
+        dm2_v1_boot_runtime_turn(launch.profile, -1, &after_turn) &&
+        after_turn.operation_result == 0 &&
+        after_turn.party_dir == ((before_turn.party_dir + 3) & 3);
     dm2_v1_boot_startup_launch_cleanup(&launch);
-    if (!committed) {
-        printf("FAIL: archive SKSAVE resume launch=%d prepare=%d commit=%d\n",
-               launched, prepared, committed);
+    if (!turned) {
+        printf("FAIL: archive SKSAVE resume launch=%d prepare=%d commit=%d turn=%d\n",
+               launched, prepared, committed, turned);
         return 1;
     }
-    puts("PASS: authentic DM2 DOS archive::SKSAVE resumes in memory");
+    puts("PASS: authentic DM2 DOS archive::SKSAVE resumes and turns in memory");
     return 0;
 }
