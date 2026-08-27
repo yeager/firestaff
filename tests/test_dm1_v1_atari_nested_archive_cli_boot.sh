@@ -7,8 +7,15 @@ if [[ $# -ne 1 ]]; then
 fi
 
 app=$1
-archive=${FIRESTAFF_DM1_ATARI_NESTED_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_Atari-ST_EN.zip"}
-expected_md5=b3cfd84e44cdf07ce2eeba47e87f772b
+archive=${FIRESTAFF_DM1_ATARI_NESTED_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip"}
+# Both authenticated English Atari ST v1.2 media revisions are supported.
+# The nested image distributed as "Dungeon Master V1.2 (1987)(FTL)(en)[!]"
+# has the latter GRAPHICS.DAT identity; do not reject it merely because a
+# different preservation dump was used when this probe was first written.
+expected_md5s=(
+    b3cfd84e44cdf07ce2eeba47e87f772b
+    9ce2eaf7a9e78620e3f17594437caffa
+)
 
 if [[ ! -x "$app" || ! -f "$archive" ]]; then
     printf '%s\n' 'SKIP: authentic nested DM1 Atari ST archive is not staged'
@@ -17,12 +24,20 @@ fi
 
 probe() {
     local output
+    local matched=0
+    local expected_md5
     output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" "$@" 2>&1) || {
         printf '%s\n' "$output" >&2
         return 1
     }
+    for expected_md5 in "${expected_md5s[@]}"; do
+        if grep -Fq "assetMd5=$expected_md5" <<<"$output"; then
+            matched=1
+            break
+        fi
+    done
     if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' <<<"$output" ||
-       ! grep -Fq "assetMd5=$expected_md5" <<<"$output" ||
+       [[ $matched -ne 1 ]] ||
        ! grep -Fq 'phase=dm1-runtime' <<<"$output" ||
        ! grep -Fq 'levelLoaded=1' <<<"$output"; then
         printf '%s\n' "$output" >&2
