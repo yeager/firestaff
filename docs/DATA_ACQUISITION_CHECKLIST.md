@@ -244,9 +244,10 @@ coverage**, not registry correctness.
    data. The Macintosh `.moov` variant is the closest substitute for
    the animation side (QuickTime vs Sega CD raw) and we should acquire
    at least one of the two.
-3. **DM2 demo** (PC + Mac) — useful for regression baselines because
-   the demo has shorter level data and known-good Greatstone
-   extractions exist.
+3. **DM2 DOS demo** — useful for regression baselines because the demo has
+   shorter level data and known-good Greatstone extractions exist. The
+   Macintosh demo is deliberately unsupported and must not be acquired as a
+   Firestaff runtime target.
 
 ## Nexus — Dungeon Master Nexus (Sega Saturn)
 

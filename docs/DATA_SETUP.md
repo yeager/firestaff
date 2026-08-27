@@ -77,8 +77,10 @@ provide the verified PC English `GRAPHICS.DAT` companion; it localises text
 only and never replaces the Japanese FM Towns dungeon or presentation owner.
 
 The Amiga installer archive is read as the original in-memory LZX source. The
-Mac retail/demo ZIP keeps its HFS/resource-fork owner and big-endian dungeon
-records. Do not mix `GRAPHICS.DAT` and `DUNGEON.DAT` across editions.
+The supported Mac retail ZIP keeps its HFS/resource-fork owner and big-endian
+dungeon records. The Macintosh demo has no import, launch, fallback, or
+runtime route; it is rejected explicitly. Do not mix `GRAPHICS.DAT` and
+`DUNGEON.DAT` across editions.
 
 The Amiga edition's `CD.DAT` and `SK00.MOD` through `SK09.MOD` are its
 original map-music data. Keep them with the six-disk installer archive for
