@@ -145,6 +145,12 @@ multi-frame receipt. Its only positive result is
 `workram_input_consumer_chain=verified`; it always keeps semantic admission
 blocked.
 
+`scripts/compare_nexus_render_frames.py` compares specified external P6 PPM
+render receipts byte-for-byte. It rejects missing, malformed, or non-identical
+frames. An identical sequence proves only that the injected input has no
+observed renderer effect in that sampled interval; its successful result keeps
+input/menu semantics and native admission blocked.
+
 For a multi-step Saturn startup route, the operator launcher also forwards the
 optional environment variable
 `FIRESTAFF_NEXUS_TRACE_PRESS_SEQUENCE`. Its format is a comma-separated list

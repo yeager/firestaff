@@ -146,6 +146,13 @@ reader beginning at `0x06014620`. The 36-row receipt passes
 normalization instructions only: no observed branch target is identified as a
 title selection, save action, `LEV01` load, coordinate, or facing assignment.
 
+An independent 60-frame START hold at frame 1800 was compared against an
+otherwise identical no-input JP run. Render receipts at frames 1750, 1800,
+1850, 1900, 1950, and 2000 are byte-identical. This eliminates title-animation
+changes as a false positive and proves no observed presentation transition for
+that input interval. It does not prove that START is ignored globally, and it
+cannot authorize a menu or gameplay route.
+
 ## Japanese retail start-pose disassembly audit — 2026-08-27
 
 The Japanese CUE data track was read in place and the authenticated `DM.BIN`
