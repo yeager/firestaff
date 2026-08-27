@@ -1,6 +1,6 @@
 # Saknade funktioner och verifieringar per spel
 
-Status: 2026-08-25. Detta är en sammanställning av kvarvarande luckor i
+Status: 2026-08-27. Detta är en sammanställning av kvarvarande luckor i
 Firestaff, inte en lista över varje historiskt TODO- eller symbolnamn.
 
 Varje punkt klassificeras så här:
@@ -27,8 +27,9 @@ Källan för detaljer är respektive spel-TODO: [DM1](../TODO-dm1.md),
   körning.
 - **Original capture av C13/HoC/top-row/action-rutter:** capture-skript och
   source gates finns, men täckningen är inte komplett.
-- **FM Towns:** vissa TownsOS EGB-pixelsemantiker, mus/input-routing och
-  runtime-körning är fortfarande capture-/BIOS-beroende.
+- **FM Towns:** vissa TownsOS EGB-pixelsemantiker och mus/input-routing är
+  fortfarande capture-/BIOS-beroende. Detta gäller originalparitet, inte
+  Firestaffs native startväg: den äkta FM Towns-ZIP:en startar utan BIOS.
 
 ### Saknad eller ofullständig funktionalitet
 
@@ -46,6 +47,15 @@ DM1 V1:s normala PC34 viewport-, HUD-, inventory- och actionvägar har
 source-gates och fail-closed-beteende. Texten “synthetic” i receipts,
 negative probes eller ReDMCSB:s egna `synthetic wall`-begrepp betyder inte i
 sig att produktionskoden ritar syntetiska DM1-pixlar.
+
+**Native startmatris (verifierad 2026-08-27):** Firestaff läser den verkliga
+mediekopian direkt i minnet och når `dm1-runtime` med `levelLoaded=1` både
+från CLI och via startmenyn för DOS PC 3.4, fransk DOS (manuellt uppackad
+RAR2-media), Atari ST engelska och tyska arkiv, Amiga och FM Towns. Beviset
+är de sex fokuserade CTest-fallen `dm1_v1_*_cli_boot`; de kontrollerar den
+kanoniska tillgångens MD5 och använder aldrig en emulator eller BIOS vid
+runtime. Detta är startbevis, inte ett påstående om full original-pixel- eller
+spelsystemsparitet.
 
 ## DM2
 
