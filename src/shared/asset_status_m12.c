@@ -1837,6 +1837,9 @@ static int m12_csb_fmtowns_archive_read_image(
     CSB_V1_FmtownsCdLayout* layout) {
     uint8_t* image = NULL;
     size_t imageSize = 0U;
+    uint8_t* cue = NULL;
+    size_t cueSize = 0U;
+    char imageMember[M12_ASSET_DATA_DIR_CAPACITY];
 #if defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
     char userDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
@@ -1846,10 +1849,16 @@ static int m12_csb_fmtowns_archive_read_image(
     if (!archivePath || !outImage || !outImageSize || !layout) return 0;
     *outImage = NULL;
     *outImageSize = 0U;
-    if (firestaff_zip_extract_by_suffix(archivePath, ".img", &image,
-                                        &imageSize) != 0 &&
-        firestaff_zip_extract_by_suffix(archivePath, ".bin", &image,
-                                        &imageSize) != 0) {
+    /* The CUE selects the raw data image.  Do not accept the first IMG/BIN
+     * member: multi-track archives also carry CDDA files and archive order
+     * is not a source-owned boot contract. */
+    if (firestaff_zip_extract_by_suffix(archivePath, ".cue", &cue,
+                                        &cueSize) != 0 ||
+        !fmtowns_cue_parse_image_member((const char*)cue, cueSize,
+                                        imageMember, sizeof(imageMember)) ||
+        firestaff_zip_extract_by_name(archivePath, imageMember, &image,
+                                      &imageSize) != 0) {
+        free(cue);
 #if !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
         /* An external RAR reader can only hand us a member through a host
          * path.  Production must not turn the user's original disc into a
@@ -1876,6 +1885,7 @@ static int m12_csb_fmtowns_archive_read_image(
         remove(stagePath);
 #endif
     }
+    free(cue);
     if (csb_v1_fmtowns_cd_parse(image, imageSize, layout) != 0) {
         free(image);
         return 0;

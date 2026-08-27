@@ -17,6 +17,7 @@
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "firestaff/csb/v1/startup_entrance_pointer_pc34_compat.h"
 #include "fs_portable_compat.h"
+#include "firestaff_fmtowns_disc.h"
 #include "firestaff_zip_extract.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "vga_palette_pc34_compat.h"
@@ -2466,6 +2467,9 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
         !FSP_DirExists(data_dir)) {
         uint8_t *image = NULL;
         size_t image_size = 0u;
+        uint8_t *cue = NULL;
+        size_t cue_size = 0u;
+        char image_member[ASSET_PATH_MAX];
         CSB_V1_FmtownsCdLayout layout;
         const char *directory;
         const char *graphics_md5;
@@ -2481,14 +2485,19 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
         const char *mini_name;
         if ((requested_variant != CSB_V1_VARIANT_FMTOWNS_EN &&
              requested_variant != CSB_V1_VARIANT_FMTOWNS_JA) ||
-            (firestaff_zip_extract_by_suffix(data_dir, ".img", &image,
-                                              &image_size) != 0 &&
-             firestaff_zip_extract_by_suffix(data_dir, ".bin", &image,
-                                              &image_size) != 0) ||
+            firestaff_zip_extract_by_suffix(data_dir, ".cue", &cue,
+                                             &cue_size) != 0 ||
+            !fmtowns_cue_parse_image_member((const char *)cue, cue_size,
+                                            image_member,
+                                            sizeof(image_member)) ||
+            firestaff_zip_extract_by_name(data_dir, image_member, &image,
+                                          &image_size) != 0 ||
             csb_v1_fmtowns_cd_parse(image, image_size, &layout) != 0) {
+            free(cue);
             free(image);
             return 0;
         }
+        free(cue);
         directory = requested_variant == CSB_V1_VARIANT_FMTOWNS_JA
             ? "CJDATA" : "CDATA";
         graphics_md5 = requested_variant == CSB_V1_VARIANT_FMTOWNS_JA
