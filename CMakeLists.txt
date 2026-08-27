@@ -4285,6 +4285,16 @@ if(BUILD_TESTING)
         ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
     )
     add_test(
+        NAME dm1_v1_atari_st_outer_archive_no_fallback
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_atari_st_outer_archive_no_fallback.sh
+            $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(dm1_v1_atari_st_outer_archive_no_fallback PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;atari-st;real-media;archive;no-fallback;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_OUTER_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Atari-ST_EN.zip"
+    )
+    add_test(
         NAME dm1_v1_dos_fr_unpacked_cli_boot
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_dos_fr_unpacked_cli_boot.sh
             $<TARGET_FILE:firestaff>

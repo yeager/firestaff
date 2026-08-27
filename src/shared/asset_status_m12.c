@@ -1294,9 +1294,12 @@ static int m12_admit_dm1_atari_st_nested_archive(
         for (candidateIndex = 0U; candidateIndex < candidateCount;
              ++candidateIndex) {
             char virtualGraphics[M12_ASSET_DATA_DIR_CAPACITY * 2U];
+            char virtualDungeon[M12_ASSET_DATA_DIR_CAPACITY * 2U];
             char md5[M12_ASSET_MD5_CAPACITY];
+            char dungeonMd5[M12_ASSET_MD5_CAPACITY];
             uint8_t* graphics = NULL;
-            size_t graphicsSize = 0U, versionIndex;
+            uint8_t* dungeon = NULL;
+            size_t graphicsSize = 0U, dungeonSize = 0U, versionIndex;
             if (!FSP_FileExists(candidates[candidateIndex]) ||
                 snprintf(virtualGraphics, sizeof(virtualGraphics),
                          "%s::%s::%s::GRAPHICS.DAT",
@@ -1310,6 +1313,28 @@ static int m12_admit_dm1_atari_st_nested_archive(
             }
             m12_bytes_md5_hex(graphics, graphicsSize, md5);
             free(graphics);
+            m12_copy_string(virtualDungeon, sizeof(virtualDungeon),
+                            virtualGraphics);
+            {
+                char* leaf = NULL;
+                char* cursor = virtualDungeon;
+                while ((cursor = strstr(cursor, "GRAPHICS.DAT")) != NULL) {
+                    leaf = cursor;
+                    cursor += strlen("GRAPHICS.DAT");
+                }
+                if (!leaf) continue;
+                memcpy(leaf, "DUNGEON.DAT", sizeof("DUNGEON.DAT"));
+            }
+            if (!asset_read_virtual_path_alloc(virtualDungeon, &dungeon,
+                                               &dungeonSize) ||
+                dungeonSize == 0U) {
+                free(dungeon);
+                continue;
+            }
+            m12_bytes_md5_hex(dungeon, dungeonSize, dungeonMd5);
+            free(dungeon);
+            if (strstr(g_requiredFiles[1].md5, dungeonMd5) == NULL)
+                continue;
             for (versionIndex = 0U;
                  versionIndex < g_games[gameIndex].versionCount;
                  ++versionIndex) {
@@ -1324,10 +1349,9 @@ static int m12_admit_dm1_atari_st_nested_archive(
                                 sizeof(version->matchedPath), virtualGraphics);
                 m12_copy_string(version->matchedMd5,
                                 sizeof(version->matchedMd5), md5);
-                /* The source member was verified in the bounded nested STX
-                 * reader above.  Publish that same receipt for the required
-                 * file gate instead of asking it to rescan an opaque ZIP
-                 * passed as the direct launch root. */
+                /* Both original members were verified in the bounded nested
+                 * STX reader. Publish those same receipts instead of asking
+                 * a direct opaque ZIP launch to scan a sibling data root. */
                 {
                     size_t requiredIndex;
                     for (requiredIndex = 0U;
@@ -1335,20 +1359,33 @@ static int m12_admit_dm1_atari_st_nested_archive(
                          ++requiredIndex) {
                         M12_AssetRequiredFileStatus* required =
                             &status->requiredFiles[gameIndex][requiredIndex];
-                        if (!required->roleId ||
-                            strcmp(required->roleId, "graphics") != 0) continue;
+                        if (required->roleId &&
+                            strcmp(required->roleId, "graphics") == 0) {
+                            required->matched = 1;
+                            m12_copy_string(required->matchedPath,
+                                            sizeof(required->matchedPath),
+                                            virtualGraphics);
+                            m12_copy_string(required->sourcePath,
+                                            sizeof(required->sourcePath),
+                                            virtualGraphics);
+                            m12_copy_string(required->matchedHash,
+                                            sizeof(required->matchedHash), md5);
+                        } else if (required->roleId &&
+                                   strcmp(required->roleId, "dungeon") == 0) {
                         required->matched = 1;
                         m12_copy_string(required->matchedPath,
                                         sizeof(required->matchedPath),
-                                        virtualGraphics);
+                                        virtualDungeon);
                         m12_copy_string(required->sourcePath,
                                         sizeof(required->sourcePath),
-                                        virtualGraphics);
+                                        virtualDungeon);
                         m12_copy_string(required->matchedHash,
-                                        sizeof(required->matchedHash), md5);
-                        break;
+                                        sizeof(required->matchedHash), dungeonMd5);
                     }
                 }
+                }
+                status->dm1Available = 1;
+                status->originalFileCandidateFound = 1;
                 return 1;
             }
         }
@@ -6917,10 +6954,8 @@ void M12_AssetStatus_ScanGameWithOptions(
           * give that reader the package's containing search root while the
           * explicit archive remains its selected runtime provenance. */
          (gameId && strcmp(gameId, "dm1") == 0 &&
-          (strstr(requestedDataDir,
-                  "Dungeon-Master_Amiga_EN_Version-20.zip") != NULL ||
-           strstr(requestedDataDir,
-                  "Dungeon-Master_Atari-ST_EN.zip") != NULL))) &&
+          strstr(requestedDataDir,
+                 "Dungeon-Master_Amiga_EN_Version-20.zip") != NULL)) &&
         FSP_ParentDir(containerParent, sizeof(containerParent), requestedDataDir)) {
         effectiveRequestedDataDir = containerParent;
     }
