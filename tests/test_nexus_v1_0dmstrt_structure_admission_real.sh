@@ -13,7 +13,13 @@ asset="$root/0DMSTRT.BIN"
 expected_sha256="8a026f155af27cfd43a33b29f7da5b75ee7b09b2c4f016fc3be1ebb4787d20b6"
 
 if [ ! -f "$asset" ]; then
-    echo "SKIP: $asset not present"
+    cue="${FIRESTAFF_NEXUS_CUE:-$root/Dungeon Master Nexus (Japan).cue}"
+    if [ -f "$cue" ]; then
+        # The binary uses Firestaff's CUE/ISO reader and keeps the member in
+        # process memory.  No game-data extraction occurs in this real gate.
+        exec "$1" --cue "$cue"
+    fi
+    echo "SKIP: neither $asset nor $cue is present"
     exit 77
 fi
 

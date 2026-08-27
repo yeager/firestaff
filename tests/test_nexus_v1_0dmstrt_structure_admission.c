@@ -1,4 +1,5 @@
 #include "nexus_v1_0dmstrt_structure_admission.h"
+#include "nexus_v1_iso_reader.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,6 +51,37 @@ static uint8_t *read_file(const char *path, size_t *out_size)
     bytes = (uint8_t *)malloc((size_t)length);
     if (!bytes || fread(bytes, 1, (size_t)length, file) != (size_t)length) { free(bytes); fclose(file); return NULL; }
     fclose(file); *out_size = (size_t)length; return bytes;
+}
+
+/* Keep the real-data gate on the native CUE/ISO path when the user's media
+ * has not been unpacked.  The member exists only in this process buffer; no
+ * game-data file is materialized on disk. */
+static uint8_t *read_cue_member(const char *cue_path, size_t *out_size)
+{
+    Nexus_ISOReader iso;
+    const Nexus_ISOFile *member;
+    uint8_t *bytes = NULL;
+    uint32_t member_size;
+
+    *out_size = 0U;
+    memset(&iso, 0, sizeof(iso));
+    if (!cue_path || nexus_iso_open_cue(&iso, cue_path) <= 0 ||
+        !(member = nexus_iso_find(&iso, "0DMSTRT.BIN")) ||
+        member->size != NEXUS_V1_0DMSTRT_BYTES) {
+        nexus_iso_close(&iso);
+        return NULL;
+    }
+    member_size = member->size;
+    bytes = (uint8_t *)malloc(member_size);
+    if (!bytes || nexus_iso_read_file(&iso, member, bytes,
+                                      (int)member_size) != (int)member_size) {
+        free(bytes);
+        nexus_iso_close(&iso);
+        return NULL;
+    }
+    nexus_iso_close(&iso);
+    *out_size = member_size;
+    return bytes;
 }
 
 static void make_identity(const uint8_t *bytes, size_t size,
@@ -275,11 +307,20 @@ int main(int argc, char **argv)
 
     if (argc > 1) {
         size_t real_size = 0;
-        uint8_t *real = read_file(argv[1], &real_size);
+        int loaded_from_cue = argc == 3 && strcmp(argv[1], "--cue") == 0;
+        uint8_t *real = loaded_from_cue ? read_cue_member(argv[2], &real_size) :
+            (argc == 2 ? read_file(argv[1], &real_size) : NULL);
         if (!real) {
-            printf("SKIP: cannot read %s\n", argv[1]);
+            printf("SKIP: cannot read %s\n", loaded_from_cue ? argv[2] : argv[1]);
             free(synthetic);
             return 77;
+        }
+        if (loaded_from_cue && fnv1a64(real, real_size) !=
+                UINT64_C(0xf00bae379d7c2e54)) {
+            fprintf(stderr, "FAIL: CUE 0DMSTRT.BIN identity mismatch\n");
+            free(real);
+            free(synthetic);
+            return 1;
         }
         CHECK(real_size == (size_t)NEXUS_V1_0DMSTRT_BYTES);
         if (real_size == (size_t)NEXUS_V1_0DMSTRT_BYTES) {
