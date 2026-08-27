@@ -8,6 +8,7 @@
 #include "csb_v1_audio_runtime_pc34_compat.h"
 
 #include "csb_v1_amiga_graphics_dat.h"
+#include "asset_find_by_hash.h"
 
 #include "memory_graphics_dat_header_pc34_compat.h"
 #include "memory_graphics_dat_select_pc34_compat.h"
@@ -118,21 +119,18 @@ int csb_v1_audio_runtime_load_amiga_sound_payload(
 {
     const CsbV1AmigaSoundSpec* spec;
     CsbV1AmigaSoundPayloadView view;
-    FILE* file = NULL;
-    long fileSize;
     uint8_t* graphics = NULL;
+    size_t graphicsSize = 0u;
     int result = 0;
 
     if (!graphicsDatPath || !outPayload) return 0;
     memset(outPayload, 0, sizeof(*outPayload));
     spec = csb_v1_audio_runtime_amiga_sound_spec(soundIndex);
-    if (!spec || !(file = fopen(graphicsDatPath, "rb")) ||
-        fseek(file, 0, SEEK_END) != 0 || (fileSize = ftell(file)) <= 0 ||
-        fseek(file, 0, SEEK_SET) != 0) goto cleanup;
-    graphics = (uint8_t*)malloc((size_t)fileSize);
-    if (!graphics || fread(graphics, 1u, (size_t)fileSize, file) !=
-        (size_t)fileSize || !csb_v1_audio_runtime_amiga_graphics_sound_view(
-            graphics, (size_t)fileSize, spec->graphicIndex, &view)) goto cleanup;
+    if (!spec || !asset_read_path_alloc(graphicsDatPath, &graphics,
+                                        &graphicsSize) ||
+        !graphics || graphicsSize == 0u ||
+        !csb_v1_audio_runtime_amiga_graphics_sound_view(
+            graphics, graphicsSize, spec->graphicIndex, &view)) goto cleanup;
     outPayload->bytes = (uint8_t*)malloc(view.byteCount);
     if (!outPayload->bytes) goto cleanup;
     memcpy(outPayload->bytes, view.samples, view.byteCount);
@@ -140,7 +138,6 @@ int csb_v1_audio_runtime_load_amiga_sound_payload(
     outPayload->spec = *spec;
     result = 1;
 cleanup:
-    if (file) fclose(file);
     free(graphics);
     if (!result) csb_v1_audio_runtime_amiga_sound_payload_free(outPayload);
     return result;

@@ -9266,29 +9266,23 @@ static int m11_csb_is_fmtowns_profile(const CSB_V1_BootProfile *profile)
 static int m11_csb_load_fmtowns_m653_font(const char *graphics_path,
                                           M11_FontState *font)
 {
-    FILE *file = NULL;
-    long file_size;
     uint8_t *graphics = NULL;
+    size_t graphics_size = 0u;
     uint8_t raw_font[M11_FONT_BITMAP_BYTES];
     CSB_V1_FmtownsItemDecodeReceipt raw_receipt;
     int result = 0;
 
     if (!graphics_path || !graphics_path[0] || !font) return 0;
-    file = fopen(graphics_path, "rb");
-    if (!file || fseek(file, 0L, SEEK_END) != 0 ||
-        (file_size = ftell(file)) <= 0 || fseek(file, 0L, SEEK_SET) != 0 ||
-        (size_t)file_size > CSB_FMTOWNS_GRAPHICS_MAX_SIZE) goto done;
-    graphics = (uint8_t *)malloc((size_t)file_size);
-    if (!graphics || fread(graphics, 1u, (size_t)file_size, file) !=
-                         (size_t)file_size ||
+    if (!asset_read_path_alloc(graphics_path, &graphics, &graphics_size) ||
+        !graphics || graphics_size == 0u ||
+        graphics_size > CSB_FMTOWNS_GRAPHICS_MAX_SIZE ||
         !csb_v1_fmtowns_graphics_copy_raw_item(
-            graphics, (size_t)file_size, 695u, raw_font, sizeof(raw_font),
+            graphics, graphics_size, 695u, raw_font, sizeof(raw_font),
             &raw_receipt) || !raw_receipt.valid ||
         raw_receipt.stream_byte_count != M11_FONT_BITMAP_BYTES) goto done;
     result = M11_Font_LoadFromRawBitmap(font, 695, raw_font,
                                         sizeof(raw_font));
 done:
-    if (file) fclose(file);
     free(graphics);
     return result;
 }
