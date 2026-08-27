@@ -390,6 +390,11 @@ static int m11_csb_v22_materialize_artpack(const char *artpack_path,
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if defined(_WIN32)
+#include <windows.h>
+#else
+#include <dirent.h>
+#endif
 
 static void m11_csb_present_startup_raster(const unsigned char *source,
                                            unsigned char *framebuffer,
@@ -9274,14 +9279,115 @@ static int m11_csb_is_fmtowns_profile(const CSB_V1_BootProfile *profile)
                        profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA);
 }
 
+/* Return one and only one CUE file from an original loose-media directory.
+ * Ambiguity is deliberately a failure: archive order and guessed filenames
+ * are not source-owned media selection. */
+static int m11_find_single_cue_file(const char *directory,
+                                    char *out_path, size_t out_path_size)
+{
+    int found = 0;
+    if (!directory || !directory[0] || !out_path || out_path_size == 0U ||
+        !FSP_DirExists(directory)) return 0;
+    out_path[0] = '\0';
+#if defined(_WIN32)
+    {
+        WIN32_FIND_DATAA entry;
+        char pattern[M11_GAME_VIEW_PATH_CAPACITY];
+        HANDLE handle;
+        if (snprintf(pattern, sizeof(pattern), "%s\\*.cue", directory) < 0 ||
+            strlen(pattern) >= sizeof(pattern)) return 0;
+        handle = FindFirstFileA(pattern, &entry);
+        if (handle == INVALID_HANDLE_VALUE) return 0;
+        do {
+            char candidate[M11_GAME_VIEW_PATH_CAPACITY];
+            if ((entry.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0u ||
+                !FSP_JoinPath(candidate, sizeof(candidate), directory,
+                              entry.cFileName)) continue;
+            if (found || snprintf(out_path, out_path_size, "%s", candidate) < 0 ||
+                strlen(candidate) >= out_path_size) {
+                FindClose(handle);
+                out_path[0] = '\0';
+                return 0;
+            }
+            found = 1;
+        } while (FindNextFileA(handle, &entry) != 0);
+        FindClose(handle);
+    }
+#else
+    {
+        DIR *dir = opendir(directory);
+        struct dirent *entry;
+        if (!dir) return 0;
+        while ((entry = readdir(dir)) != NULL) {
+            char candidate[M11_GAME_VIEW_PATH_CAPACITY];
+            if (!m11_path_has_extension(entry->d_name, ".cue") ||
+                !FSP_JoinPath(candidate, sizeof(candidate), directory,
+                              entry->d_name) || !FSP_FileExists(candidate)) {
+                continue;
+            }
+            if (found || snprintf(out_path, out_path_size, "%s", candidate) < 0 ||
+                strlen(candidate) >= out_path_size) {
+                closedir(dir);
+                out_path[0] = '\0';
+                return 0;
+            }
+            found = 1;
+        }
+        closedir(dir);
+    }
+#endif
+    return found;
+}
+
+/* CUE is the source-owned image selector for loose FM Towns media as well
+ * as ZIP media.  The optional parent probe covers DATA/DUNGEON.DAT while the
+ * CUE and raw image remain at the authentic disc root. */
+static int m11_read_loose_fmtowns_cue_media(const char *directory,
+                                            int probe_parent,
+                                            uint8_t **out_cue,
+                                            size_t *out_cue_size,
+                                            uint8_t **out_image,
+                                            size_t *out_image_size)
+{
+    char cue_path[M11_GAME_VIEW_PATH_CAPACITY];
+    char cue_directory[M11_GAME_VIEW_PATH_CAPACITY];
+    char parent[M11_GAME_VIEW_PATH_CAPACITY];
+    char image_member[M11_GAME_VIEW_PATH_CAPACITY];
+    char image_path[M11_GAME_VIEW_PATH_CAPACITY];
+    if (!directory || !out_cue || !out_cue_size || !out_image ||
+        !out_image_size) return 0;
+    *out_cue = NULL;
+    *out_cue_size = 0U;
+    *out_image = NULL;
+    *out_image_size = 0U;
+    if (!m11_find_single_cue_file(directory, cue_path, sizeof(cue_path))) {
+        if (!probe_parent || !FSP_ParentDir(parent, sizeof(parent), directory) ||
+            !m11_find_single_cue_file(parent, cue_path, sizeof(cue_path))) {
+            return 0;
+        }
+    }
+    if (!FSP_ParentDir(cue_directory, sizeof(cue_directory), cue_path) ||
+        !asset_read_path_alloc(cue_path, out_cue, out_cue_size) ||
+        !fmtowns_cue_parse_image_member((const char *)*out_cue,
+                                        *out_cue_size, image_member,
+                                        sizeof(image_member)) ||
+        !FSP_JoinPath(image_path, sizeof(image_path), cue_directory,
+                      image_member) ||
+        !asset_read_path_alloc(image_path, out_image, out_image_size)) {
+        free(*out_cue); free(*out_image);
+        *out_cue = NULL; *out_image = NULL;
+        *out_cue_size = 0U; *out_image_size = 0U;
+        return 0;
+    }
+    return 1;
+}
+
 static int m11_csb_read_fmtowns_cdda_media(const CSB_V1_BootProfile *profile,
                                            uint8_t **out_cue,
                                            size_t *out_cue_size,
                                            uint8_t **out_image,
                                            size_t *out_image_size)
 {
-    char cue_path[sizeof(profile->asset_root) + 16u];
-    char image_path[sizeof(profile->asset_root) + 16u];
     char image_member[M11_GAME_VIEW_PATH_CAPACITY];
 
     if (!profile || !profile->asset_root[0] || !out_cue || !out_cue_size ||
@@ -9309,23 +9415,9 @@ static int m11_csb_read_fmtowns_cdda_media(const CSB_V1_BootProfile *profile,
         }
         return 1;
     }
-    if (snprintf(cue_path, sizeof(cue_path), "%s/FMTOWNS.CUE",
-                 profile->asset_root) < 0 ||
-        strlen(cue_path) >= sizeof(cue_path) ||
-        snprintf(image_path, sizeof(image_path), "%s/FMTOWNS.IMG",
-                 profile->asset_root) < 0 ||
-        strlen(image_path) >= sizeof(image_path) ||
-        !asset_read_path_alloc(cue_path, out_cue, out_cue_size) ||
-        !asset_read_path_alloc(image_path, out_image, out_image_size)) {
-        free(*out_cue);
-        free(*out_image);
-        *out_cue = NULL;
-        *out_cue_size = 0U;
-        *out_image = NULL;
-        *out_image_size = 0U;
-        return 0;
-    }
-    return 1;
+    return m11_read_loose_fmtowns_cue_media(profile->asset_root, 0,
+                                             out_cue, out_cue_size,
+                                             out_image, out_image_size);
 }
 
 static int m11_csb_load_fmtowns_m653_font(const char *graphics_path,
@@ -9934,8 +10026,6 @@ static int m11_dm1_fmtowns_read_cdda_media(const M11_GameViewState *state,
 {
     const char *separator;
     char data_dir[M11_GAME_VIEW_PATH_CAPACITY];
-    char cue_path[M11_GAME_VIEW_PATH_CAPACITY];
-    char bin_path[M11_GAME_VIEW_PATH_CAPACITY];
     char archive_path[M11_GAME_VIEW_PATH_CAPACITY];
     char image_member[M11_GAME_VIEW_PATH_CAPACITY];
     size_t archive_length;
@@ -9972,22 +10062,10 @@ static int m11_dm1_fmtowns_read_cdda_media(const M11_GameViewState *state,
         return 1;
     }
 
-    if (!m11_dm1_fmtowns_cdda_data_dir(state, data_dir, sizeof(data_dir)) ||
-        snprintf(cue_path, sizeof(cue_path), "%s/FMTOWNS.CUE", data_dir) < 0 ||
-        strlen(cue_path) >= sizeof(cue_path) ||
-        snprintf(bin_path, sizeof(bin_path), "%s/FMTOWNS.BIN", data_dir) < 0 ||
-        strlen(bin_path) >= sizeof(bin_path) ||
-        !asset_read_path_alloc(cue_path, out_cue, out_cue_size) ||
-        !asset_read_path_alloc(bin_path, out_image, out_image_size)) {
-        free(*out_cue);
-        free(*out_image);
-        *out_cue = NULL;
-        *out_cue_size = 0U;
-        *out_image = NULL;
-        *out_image_size = 0U;
-        return 0;
-    }
-    return 1;
+    return m11_dm1_fmtowns_cdda_data_dir(state, data_dir, sizeof(data_dir)) &&
+        m11_read_loose_fmtowns_cue_media(data_dir, 1, out_cue,
+                                         out_cue_size, out_image,
+                                         out_image_size);
 }
 
 static void m11_dm1_dispatch_fmtowns_cdda(M11_GameViewState *state,
