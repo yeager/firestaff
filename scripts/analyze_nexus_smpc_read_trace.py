@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Bind observed Nexus SMPC reads to hash-verified retail SH-2 code.
+"""Bind observed Nexus SMPC reads to the hash-verified retail SH-2 range.
 
 The receipt proves that a captured SMPC return byte was observed while the
-master SH-2 program counter addressed a specific retail DM.BIN word. It does
-not infer an input event meaning, menu action, or rendering consumer.
+master SH-2 PC snapshot lay at a specific word of retail DM.BIN. A snapshot
+does not identify the instruction being retired; it may point at a literal
+pool or be sampled asynchronously. The receipt therefore does not infer an
+instruction, input event meaning, menu action, or rendering consumer.
 """
 
 from __future__ import annotations
@@ -26,10 +28,10 @@ DM_SHA256 = "3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124"
 DM_BASE = 0x06010040
 
 
-def opcode(dm: bytes, pc: int) -> int:
+def dm_word(dm: bytes, pc: int) -> int:
     offset = pc - DM_BASE
     if offset < 0 or offset + 2 > len(dm):
-        raise ValueError(f"master SH-2 PC is outside retail DM.BIN: 0x{pc:08x}")
+        raise ValueError(f"master SH-2 PC snapshot is outside retail DM.BIN: 0x{pc:08x}")
     return int.from_bytes(dm[offset:offset + 2], "big")
 
 
@@ -67,7 +69,7 @@ def main() -> int:
                          int(match["pc0"], 16), int(match["pc1"], 16)))
         if not rows:
             raise ValueError("no rows remain inside requested frame bounds")
-        pc_words = {pc: opcode(dm, pc) for _frame, _smpc, _value, pc, _pc1 in rows}
+        pc_words = {pc: dm_word(dm, pc) for _frame, _smpc, _value, pc, _pc1 in rows}
     except (KeyError, OSError, UnicodeError, ValueError) as error:
         print(f"NEXUS_SMPC_READ_TRACE_INVALID: {error}")
         return 1
@@ -83,8 +85,9 @@ def main() -> int:
         f"0x{value:02x}:{values[value]}" for value in sorted(values)))
     for pc in sorted(pc_words):
         print(f"master_pc=0x{pc:08x} dm_offset=0x{pc - DM_BASE:06x} "
-              f"opcode=0x{pc_words[pc]:04x}")
-    print("master_sh2_retail_code=verified")
+              f"dm_word=0x{pc_words[pc]:04x}")
+    print("master_sh2_pc_range=verified")
+    print("master_sh2_instruction_identity=unproven")
     print("input_consumer_semantics=unbound")
     print("semantic_admission=blocked")
     return 0
