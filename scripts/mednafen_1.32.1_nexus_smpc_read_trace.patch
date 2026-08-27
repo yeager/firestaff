@@ -1,31 +1,23 @@
 --- src/ss/ss.h
 +++ src/ss/ss.h
-@@ -127,6 +127,7 @@
+@@ -126,6 +126,8 @@
+  void ForceEventUpdates(const sscpu_timestamp_t timestamp);
  
-  void FirestaffTraceSlevSalCapture(uint32 address, uint32 value);
   uint32 FirestaffGetSH2PC(unsigned which);
-+ void FirestaffTraceSMPCRead(uint32 address, uint32 value);
++ void FirestaffTraceSMPCRead(unsigned which, uint32 pc_id, uint32 pid,
++  uint32 pc_if, uint32 pif, uint32 rpc, uint32 address, uint32 value);
  
   void FirestaffTraceSH2SourceRead(uint32 address, uint32 value);
-  void FirestaffTraceSH2RAMSourceWrite(uint32 address, uint32 value);
+  void FirestaffTraceSH2RAMSourceWrite(uint32 address, unsigned size, uint32 value);
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
-@@ -260,7 +260,10 @@
-     SMPC_Write(SH7095_mem_timestamp, SMPC_A, DB);
-   }
-   else
-+  {
-    DB = (DB & 0xFFFF0000) | 0xFF00 | SMPC_Read(SH7095_mem_timestamp, SMPC_A);
-+   FirestaffTraceSMPCRead(SMPC_A, DB & 0xFF);
-+  }
- 
-   return;
-  }
-@@ -570,6 +573,42 @@
+@@ -476,6 +476,44 @@
+ {
   return CPU[which & 1U].GetRegister(SH7095::GSREG_RPC, NULL, 0);
  }
- 
-+void FirestaffTraceSMPCRead(uint32 address, uint32 value)
++
++void FirestaffTraceSMPCRead(unsigned which, uint32 pc_id, uint32 pid,
++ uint32 pc_if, uint32 pif, uint32 rpc, uint32 address, uint32 value)
 +{
 + static FILE *file;
 + static unsigned count;
@@ -52,15 +44,30 @@
 + {
 +  file = fopen(path, "wb");
 +  if(!file) return;
-+  fputs("FIRESTAFF_NEXUS_SMPC_READ_TRACE_V1\n", file);
++  fputs("FIRESTAFF_NEXUS_SMPC_READ_TRACE_V2\n", file);
 + }
-+ fprintf(file, "frame=%llu smpc=0x%02x value=0x%02x pc0=0x%08x pc1=0x%08x\n",
-+  (unsigned long long)frame, (unsigned)address, (unsigned)value,
-+  (unsigned)FirestaffGetSH2PC(0), (unsigned)FirestaffGetSH2PC(1));
++ fprintf(file, "frame=%llu cpu=%u smpc=0x%02x value=0x%02x pc_id=0x%08x pid=0x%04x pc_if=0x%08x pif=0x%04x rpc=0x%08x\n",
++  (unsigned long long)frame, which & 1U, (unsigned)address, (unsigned)value,
++  (unsigned)pc_id, (unsigned)(pid & 0xFFFF), (unsigned)pc_if,
++  (unsigned)(pif & 0xFFFF), (unsigned)rpc);
 + count++;
 + if((count & 0x3ffU) == 0) fflush(file);
 +}
+ //   1 during normal execution
+ //
+ //  -1 when we need to temporarily break out of the execution loop to
+--- src/ss/sh7095.inc
++++ src/ss/sh7095.inc
+@@ -2300,6 +2300,12 @@
+   BSC.last_mem_time = SH7095_mem_timestamp;
+  }
+ 
++ if(!SH2DMAHax && A >= 0x00100000 && A <= 0x0017FFFF)
++  FirestaffTraceSMPCRead(this == &CPU[0] ? 0 : 1,
++   GetRegister(GSREG_PC_ID, NULL, 0), GetRegister(GSREG_PID, NULL, 0),
++   GetRegister(GSREG_PC_IF, NULL, 0), GetRegister(GSREG_PIF, NULL, 0),
++   GetRegister(GSREG_RPC, NULL, 0), (A & 0x7F) >> 1, ret & 0xFF);
 +
- uint16 FirestaffPeekSH2Memory(unsigned which, uint32 address)
- {
-  (void)which;
+  return ret;
+ }
+ 

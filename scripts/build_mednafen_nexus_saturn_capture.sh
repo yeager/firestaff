@@ -263,7 +263,7 @@ elif [[ "$(cat "$slev_sal_capture_marker" 2>/dev/null)" != "$slev_sal_capture_pa
   exit 2
 fi
 smpc_read_trace_marker="$source_dir/.firestaff-nexus-smpc-read-trace-patched"
-smpc_read_trace_patch_id='FIRESTAFF_NEXUS_SMPC_READ_TRACE_V1'
+smpc_read_trace_patch_id='FIRESTAFF_NEXUS_SMPC_READ_TRACE_V2_INSTRUCTION_PIPELINE'
 if [[ ! -f "$smpc_read_trace_marker" ]]; then
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_smpc_read_trace.patch"
   printf '%s\n' "$smpc_read_trace_patch_id" > "$smpc_read_trace_marker"

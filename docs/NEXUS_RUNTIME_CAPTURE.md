@@ -81,11 +81,11 @@ An input-request log alone is not an input receipt: it can record a requested
 mask after the emulator has already sampled the gamepad. The producer applies
 its mask before the original `IODevice::UpdateInput` pass, and a valid capture
 must additionally show the changed SMPC output-register values at the same
-frame. In the bounded Japanese retail run at frames 1800--1803, START changes
-the SMPC return stream at master-SH-2 PCs `0x0601456e`, `0x06014584`,
-`0x06014596`, and `0x060145b2`; those PCs lie in the hash-verified `DM.BIN`
-load range. This proves controller delivery to retail code, not the semantic
-meaning of the subsequent game state or a host rendering admission.
+frame. A V2 receipt records the reading CPU plus its ID/IF pipeline PCs and
+opcodes. Its analyzer rejects a master row unless the captured ID opcode is
+the exact word at that PC in hash-verified retail `DM.BIN`. This proves a
+retail instruction consumed the bus read; it does not assign a menu action,
+game state, or host-rendering admission.
 
 The reproducible producer is the version-locked
 mednafen_1.32.1_nexus_smpc_read_trace.patch, applied by
@@ -93,21 +93,19 @@ build_mednafen_nexus_saturn_capture.sh. Set
 FIRESTAFF_NEXUS_TRACE_SMPC_READS to an operator-owned output file; optional
 FIRESTAFF_NEXUS_TRACE_SMPC_READ_FRAME_MIN,
 FIRESTAFF_NEXUS_TRACE_SMPC_READ_FRAME_MAX, and
-FIRESTAFF_NEXUS_TRACE_SMPC_READ_LIMIT bound it. The text receipt records
-emulation frame, SMPC output register, value, and both SH-2 PCs. It never
-copies game data, extracts media, or becomes a Firestaff runtime dependency.
+FIRESTAFF_NEXUS_TRACE_SMPC_READ_LIMIT bound it. V2 records emulation frame,
+reading CPU, SMPC output register and value, plus the SH-2 ID/IF pipeline PCs
+and opcodes. It never copies game data, extracts media, or becomes a
+Firestaff runtime dependency.
 
 `scripts/analyze_nexus_smpc_read_trace.py` is the corresponding fail-closed
 consumer receipt. It reads `DM.BIN` directly from the supplied CUE in memory,
 requires its Japanese retail SHA-256
 `3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124`, and
-rejects every master-SH-2 PC outside that member's load range. The external
-J-region debug-window capture at frames 30038--30079 has 819 SMPC reads across
-`0x10`--`0x17`; its observed master PCs map to eleven exact `DM.BIN` words,
-from `0x06014514` (member offset `0x0044d4`) through `0x06014a80` (offset
-`0x004a40`). They are PC snapshots, not retired-instruction records: several
-fall in a retail literal pool, so the receipt deliberately identifies neither
-an instruction nor a controller action. Its deliberately broad
+rejects every master-SH-2 V2 ID PC outside that member's load range or whose
+captured ID opcode differs from the corresponding retail word. V1 receipts
+remain source-PC snapshots only and therefore deliberately identify neither an
+instruction nor a controller action. Its deliberately broad
 L/R/X/Up/C/Left/L/Right sequence is
 byte-identical to the same no-input control in all eight captured VDP1/VDP2
 regions for the 80-frame window, so it admits neither a debug feature nor a

@@ -19,11 +19,21 @@ from pathlib import Path
 from analyze_nexus_title_vdp2_source import cue_track1, iso_members_in_memory
 
 
-HEADER = "FIRESTAFF_NEXUS_SMPC_READ_TRACE_V1"
-LINE = re.compile(
+HEADER_V1 = "FIRESTAFF_NEXUS_SMPC_READ_TRACE_V1"
+HEADER_V2 = "FIRESTAFF_NEXUS_SMPC_READ_TRACE_V2"
+LINE_V1 = re.compile(
     r"^frame=(?P<frame>[0-9]+) smpc=0x(?P<smpc>[0-9a-fA-F]{2}) "
     r"value=0x(?P<value>[0-9a-fA-F]{2}) pc0=0x(?P<pc0>[0-9a-fA-F]{8}) "
     r"pc1=0x(?P<pc1>[0-9a-fA-F]{8})$")
+LINE_V2 = re.compile(
+    r"^frame=(?P<frame>[0-9]+) cpu=(?P<cpu>[01]) "
+    r"smpc=0x(?P<smpc>[0-9a-fA-F]{2}) "
+    r"value=0x(?P<value>[0-9a-fA-F]{2}) "
+    r"pc_id=0x(?P<pc_id>[0-9a-fA-F]{8}) "
+    r"pid=0x(?P<pid>[0-9a-fA-F]{4}) "
+    r"pc_if=0x(?P<pc_if>[0-9a-fA-F]{8}) "
+    r"pif=0x(?P<pif>[0-9a-fA-F]{4}) "
+    r"rpc=0x(?P<rpc>[0-9a-fA-F]{8})$")
 DM_SHA256 = "3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124"
 DM_BASE = 0x06010040
 
@@ -51,31 +61,43 @@ def main() -> int:
         return 1
     try:
         lines = args.trace.read_text(encoding="ascii").splitlines()
-        if not lines or lines[0] != HEADER:
+        if not lines or lines[0] not in (HEADER_V1, HEADER_V2):
             raise ValueError("bad header")
         dm = iso_members_in_memory(cue_track1(args.cue), {"DM.BIN"})["DM.BIN"]
         if hashlib.sha256(dm).hexdigest() != DM_SHA256:
             raise ValueError("DM.BIN hash mismatch")
+        v2 = lines[0] == HEADER_V2
         rows = []
         for number, line in enumerate(lines[1:], 2):
-            match = LINE.fullmatch(line)
+            match = (LINE_V2 if v2 else LINE_V1).fullmatch(line)
             if not match:
                 raise ValueError(f"malformed row {number}")
             frame = int(match["frame"], 10)
             if ((args.frame_min is not None and frame < args.frame_min) or
                     (args.frame_max is not None and frame > args.frame_max)):
                 continue
-            rows.append((frame, int(match["smpc"], 16), int(match["value"], 16),
-                         int(match["pc0"], 16), int(match["pc1"], 16)))
+            if v2:
+                rows.append((frame, int(match["cpu"], 10), int(match["smpc"], 16),
+                             int(match["value"], 16), int(match["pc_id"], 16),
+                             int(match["pid"], 16)))
+            else:
+                rows.append((frame, 0, int(match["smpc"], 16), int(match["value"], 16),
+                             int(match["pc0"], 16), None))
         if not rows:
             raise ValueError("no rows remain inside requested frame bounds")
-        pc_words = {pc: dm_word(dm, pc) for _frame, _smpc, _value, pc, _pc1 in rows}
+        master_rows = [row for row in rows if row[1] == 0]
+        if not master_rows:
+            raise ValueError("no master-SH-2 rows remain")
+        pc_words = {pc: dm_word(dm, pc) for _frame, _cpu, _smpc, _value, pc, _pid in master_rows}
+        if v2 and any(pid != dm_word(dm, pc)
+                      for _frame, _cpu, _smpc, _value, pc, pid in master_rows):
+            raise ValueError("master SH-2 pipeline opcode does not match retail DM.BIN")
     except (KeyError, OSError, UnicodeError, ValueError) as error:
         print(f"NEXUS_SMPC_READ_TRACE_INVALID: {error}")
         return 1
 
-    addresses = Counter(smpc for _frame, smpc, _value, _pc0, _pc1 in rows)
-    values = Counter(value for _frame, _smpc, value, _pc0, _pc1 in rows)
+    addresses = Counter(smpc for _frame, _cpu, smpc, _value, _pc, _pid in rows)
+    values = Counter(value for _frame, _cpu, _smpc, value, _pc, _pid in rows)
     print(f"dm_bin_sha256={DM_SHA256}")
     print(f"rows={len(rows)}")
     print(f"frames={min(row[0] for row in rows)}-{max(row[0] for row in rows)}")
@@ -87,7 +109,7 @@ def main() -> int:
         print(f"master_pc=0x{pc:08x} dm_offset=0x{pc - DM_BASE:06x} "
               f"dm_word=0x{pc_words[pc]:04x}")
     print("master_sh2_pc_range=verified")
-    print("master_sh2_instruction_identity=unproven")
+    print("master_sh2_instruction_identity=" + ("verified" if v2 else "unproven"))
     print("input_consumer_semantics=unbound")
     print("semantic_admission=blocked")
     return 0
