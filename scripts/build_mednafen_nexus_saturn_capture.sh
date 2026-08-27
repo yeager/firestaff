@@ -185,7 +185,7 @@ elif [[ "$(cat "$sh2_register_trace_marker" 2>/dev/null)" != "$sh2_register_trac
   exit 2
 fi
 sh2_ram_write_marker="$source_dir/.firestaff-nexus-sh2-ram-write-trace-patched"
-sh2_ram_write_patch_id='FIRESTAFF_NEXUS_SH2_RAM_WRITE_TRACE_V1_DMA_PROVENANCE'
+sh2_ram_write_patch_id='FIRESTAFF_NEXUS_SH2_RAM_WRITE_TRACE_V2_COMPOSABLE_SOURCE'
 if [[ "${FIRESTAFF_NEXUS_ENABLE_SH2_RAM_TRACE:-0}" = 1 ]]; then
   if [[ ! -f "$sh2_ram_write_marker" ]]; then
     patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_sh2_ram_write_trace.patch"

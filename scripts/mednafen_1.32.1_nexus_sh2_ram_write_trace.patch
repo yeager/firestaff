@@ -1,23 +1,23 @@
 --- src/ss/ss.h
 +++ src/ss/ss.h
-@@ -130,0 +131,3 @@
+@@ -138,6 +138,9 @@
+  void FirestaffTraceSH2RAMSourceWrite(uint32 address, unsigned size, uint32 value);
+  uint16 FirestaffPeekSH2Memory(unsigned which, uint32 address);
 + void FirestaffTraceSH2RAMWrite(uint32 address, unsigned size, uint32 value);
 + void FirestaffTraceSH2RAMDMAWrite(uint32 address, unsigned size, uint32 value,
 +  uint32 source, unsigned read_bus);
+  enum
+  {
 
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
-@@ -374,7 +374,9 @@
-  if(!IsWrite || sizeof(T) == 4)
-   ne16_rwbo_be<uint32, IsWrite>(WorkRAMH, A & 0xFFFFC, &DB);
-  else
-   ne16_wbo_be<T>(WorkRAMH, A & 0xFFFFF, DB >> (((A & 3) ^ (4 - sizeof(T))) << 3));
+@@ -384,2 +384,4 @@
 + if(IsWrite)
 +  FirestaffTraceSH2RAMWrite(A, sizeof(T), DB);
   if(IsWrite)
-   FirestaffTraceSH2RAMSourceWrite(A, DB);
- }
-@@ -483,0 +484,72 @@
+   FirestaffTraceSH2RAMSourceWrite(A, sizeof(T), DB >> (((A & 3) ^ (4 - sizeof(T))) << 3));
+@@ -476,1 +476,73 @@
+ #include "sh7095.inc"
 +void FirestaffTraceSH2RAMWrite(uint32 address, unsigned size, uint32 value)
 +{
 + static FILE *file;
