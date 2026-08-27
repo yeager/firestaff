@@ -30,8 +30,15 @@ File: src/memory/memory_dungeon_dat_pc34_compat.c — F0508_DUNGEON_DecodeTextSt
 F0507_DUNGEON_DecodeTextAtOffset_Compat(), F0506_DUNGEON_DecodeTextTable_Compat(),
 F0509_DUNGEON_DecodeScrollText_Compat()
 
-3-code-per-word decoding, visible gating, separator handling: all ALIGNED.
-Escape 29/30: placeholders used instead of G0255/G0256/G0257 table lookups.
-G0255/G0256/G0257 are in GRAPHICS.DAT, not DUNGEON.DAT.
+3-code-per-word decoding, visible gating, separator handling and both escape
+banks are aligned. `memory_dungeon_dat_pc34_compat.c` binds the PC 3.4
+G0255/G0256/G0257 values directly: code 29 selects the symbol bank, while
+code 30 selects the message/scroll or inscription bank according to the
+source text type. Inscription values remain glyph codes for the original
+inscription-font consumer; they are not converted into a host substitute.
 
-STATUS: PARTIALLY ALIGNED — Core 3-code decoder correct. Escape expansion is placeholder. No corruption.
+The game data supplies the encoded text stream in `DUNGEON.DAT`; the
+escape-bank constants are program data from the original PC 3.4 branch, not
+fallback text extracted from a synthetic asset.
+
+STATUS: ALIGNED — no placeholder escape expansion remains in this decoder.
