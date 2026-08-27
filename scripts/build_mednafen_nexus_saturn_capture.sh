@@ -113,7 +113,7 @@ elif [[ "$(cat "$cd_fifo_word_marker" 2>/dev/null)" != "$cd_fifo_word_patch_id" 
   exit 2
 fi
 sh2_ram_read_marker="$source_dir/.firestaff-nexus-sh2-ram-read-trace-patched"
-sh2_ram_read_patch_id='FIRESTAFF_NEXUS_SH2_RAM_READ_TRACE_V1_PC_FILTER'
+sh2_ram_read_patch_id='FIRESTAFF_NEXUS_SH2_RAM_READ_TRACE_V2_FRAME_WINDOW'
 if [[ ! -f "$sh2_ram_read_marker" ]]; then
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_sh2_ram_read_trace.patch"
   printf '%s\n' "$sh2_ram_read_patch_id" > "$sh2_ram_read_marker"
