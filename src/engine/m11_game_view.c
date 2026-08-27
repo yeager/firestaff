@@ -9883,15 +9883,77 @@ static int m11_dm1_fmtowns_cdda_data_dir(const M11_GameViewState *state,
     return FSP_ParentDir(out, out_size, state->dungeonPath) && out[0] != '\0';
 }
 
-static void m11_dm1_dispatch_fmtowns_cdda(M11_GameViewState *state,
-                                           int track_number)
+/* The selected FM Towns member may live below a ZIP-owned virtual path such
+ * as archive.zip::DATA/DUNGEON.DAT.  CDDA is a sibling of that ISO member,
+ * not a generated FMTOWNS.BIN cache.  Read both source files into process
+ * memory and retain the archive's original member names. */
+static int m11_dm1_fmtowns_read_cdda_media(const M11_GameViewState *state,
+                                           uint8_t **out_cue,
+                                           size_t *out_cue_size,
+                                           uint8_t **out_image,
+                                           size_t *out_image_size)
 {
+    const char *separator;
     char data_dir[M11_GAME_VIEW_PATH_CAPACITY];
     char cue_path[M11_GAME_VIEW_PATH_CAPACITY];
     char bin_path[M11_GAME_VIEW_PATH_CAPACITY];
-    FILE *cue_file, *bin_file;
-    long cue_size, bin_size;
-    char *cue_bytes;
+    char archive_path[M11_GAME_VIEW_PATH_CAPACITY];
+    size_t archive_length;
+
+    if (!state || !out_cue || !out_cue_size || !out_image ||
+        !out_image_size) return 0;
+    *out_cue = NULL;
+    *out_cue_size = 0U;
+    *out_image = NULL;
+    *out_image_size = 0U;
+
+    separator = strstr(state->dungeonPath, "::");
+    if (separator) {
+        archive_length = (size_t)(separator - state->dungeonPath);
+        if (archive_length == 0U || archive_length >= sizeof(archive_path))
+            return 0;
+        memcpy(archive_path, state->dungeonPath, archive_length);
+        archive_path[archive_length] = '\0';
+        if (firestaff_zip_extract_by_suffix(archive_path, ".cue", out_cue,
+                                            out_cue_size) != 0 ||
+            firestaff_zip_extract_by_suffix(archive_path, ".bin", out_image,
+                                            out_image_size) != 0) {
+            free(*out_cue);
+            free(*out_image);
+            *out_cue = NULL;
+            *out_cue_size = 0U;
+            *out_image = NULL;
+            *out_image_size = 0U;
+            return 0;
+        }
+        return 1;
+    }
+
+    if (!m11_dm1_fmtowns_cdda_data_dir(state, data_dir, sizeof(data_dir)) ||
+        snprintf(cue_path, sizeof(cue_path), "%s/FMTOWNS.CUE", data_dir) < 0 ||
+        strlen(cue_path) >= sizeof(cue_path) ||
+        snprintf(bin_path, sizeof(bin_path), "%s/FMTOWNS.BIN", data_dir) < 0 ||
+        strlen(bin_path) >= sizeof(bin_path) ||
+        !asset_read_path_alloc(cue_path, out_cue, out_cue_size) ||
+        !asset_read_path_alloc(bin_path, out_image, out_image_size)) {
+        free(*out_cue);
+        free(*out_image);
+        *out_cue = NULL;
+        *out_cue_size = 0U;
+        *out_image = NULL;
+        *out_image_size = 0U;
+        return 0;
+    }
+    return 1;
+}
+
+static void m11_dm1_dispatch_fmtowns_cdda(M11_GameViewState *state,
+                                           int track_number)
+{
+    uint8_t *cue_bytes = NULL;
+    size_t cue_size = 0U;
+    uint8_t *bin_bytes = NULL;
+    size_t bin_size = 0U;
     uint32_t track_starts[24];
     int track_count;
     uint32_t data_track_end, this_start, next_start;
@@ -9900,13 +9962,6 @@ static void m11_dm1_dispatch_fmtowns_cdda(M11_GameViewState *state,
 
     if (!state || !state->dm1FmtownsStartupReceiptValid || track_number < 2)
         return;
-    if (!m11_dm1_fmtowns_cdda_data_dir(state, data_dir, sizeof(data_dir)))
-        return;
-    if (snprintf(cue_path, sizeof(cue_path), "%s/FMTOWNS.CUE", data_dir) < 0 ||
-        strlen(cue_path) >= sizeof(cue_path) ||
-        snprintf(bin_path, sizeof(bin_path), "%s/FMTOWNS.BIN", data_dir) < 0 ||
-        strlen(bin_path) >= sizeof(bin_path))
-        return;
 
     if (state->dm1FmtownsCddaPlaying) {
         (void)M11_Audio_StopCdda(&state->audioState);
@@ -9914,42 +9969,33 @@ static void m11_dm1_dispatch_fmtowns_cdda(M11_GameViewState *state,
         state->dm1FmtownsCddaCurrentTrack = 0;
     }
 
-    cue_file = fopen(cue_path, "rb");
-    if (!cue_file) return;
-    if (fseek(cue_file, 0, SEEK_END) != 0 ||
-        (cue_size = ftell(cue_file)) <= 0 || cue_size > 64 * 1024 ||
-        fseek(cue_file, 0, SEEK_SET) != 0) {
-        fclose(cue_file);
-        return;
-    }
-    cue_bytes = (char *)malloc((size_t)cue_size);
-    if (!cue_bytes ||
-        fread(cue_bytes, 1u, (size_t)cue_size, cue_file) != (size_t)cue_size) {
+    if (!m11_dm1_fmtowns_read_cdda_media(state, &cue_bytes, &cue_size,
+                                         &bin_bytes, &bin_size) ||
+        cue_size == 0U || cue_size > 64U * 1024U || bin_size == 0U) {
         free(cue_bytes);
-        fclose(cue_file);
+        free(bin_bytes);
         return;
     }
-    fclose(cue_file);
 
     memset(track_starts, 0, sizeof(track_starts));
-    track_count = fmtowns_cue_parse_track_starts(cue_bytes, (size_t)cue_size,
+    track_count = fmtowns_cue_parse_track_starts((const char *)cue_bytes, cue_size,
                                                   track_starts, 24);
     free(cue_bytes);
+    cue_bytes = NULL;
     if (track_count < 20 || track_number >= track_count ||
-        track_starts[track_number] == 0)
+        track_starts[track_number] == 0) {
+        free(bin_bytes);
         return;
+    }
 
     /* DM1 FM Towns BIN uses MODE1/2048 for the data track (track 1) and
      * raw 2352-byte sectors for audio tracks 2-20.  The first audio track's
      * sector offset marks the boundary between the two sector sizes. */
     data_track_end = track_starts[2];
     this_start = track_starts[track_number];
-
-    bin_file = fopen(bin_path, "rb");
-    if (!bin_file) return;
-    if (fseek(bin_file, 0, SEEK_END) != 0 ||
-        (bin_size = ftell(bin_file)) <= 0) {
-        fclose(bin_file);
+    if (this_start < data_track_end ||
+        (size_t)data_track_end > SIZE_MAX / 2048u) {
+        free(bin_bytes);
         return;
     }
 
@@ -9959,6 +10005,11 @@ static void m11_dm1_dispatch_fmtowns_cdda(M11_GameViewState *state,
         next_start = 0;
 
     data_byte_offset = (size_t)data_track_end * 2048u;
+    if ((size_t)(this_start - data_track_end) >
+        (SIZE_MAX - data_byte_offset) / FMTOWNS_CDDA_SECTOR_SIZE) {
+        free(bin_bytes);
+        return;
+    }
     audio_byte_offset = data_byte_offset +
         (size_t)(this_start - data_track_end) * FMTOWNS_CDDA_SECTOR_SIZE;
 
@@ -9967,23 +10018,19 @@ static void m11_dm1_dispatch_fmtowns_cdda(M11_GameViewState *state,
     else
         pcm_size = (size_t)bin_size - audio_byte_offset;
 
-    if (audio_byte_offset + pcm_size > (size_t)bin_size || pcm_size == 0) {
-        fclose(bin_file);
+    if (audio_byte_offset > bin_size || pcm_size == 0 ||
+        pcm_size > bin_size - audio_byte_offset) {
+        free(bin_bytes);
         return;
     }
 
     pcm = (uint8_t *)malloc(pcm_size);
     if (!pcm) {
-        fclose(bin_file);
+        free(bin_bytes);
         return;
     }
-    if (fseek(bin_file, (long)audio_byte_offset, SEEK_SET) != 0 ||
-        fread(pcm, 1u, pcm_size, bin_file) != pcm_size) {
-        free(pcm);
-        fclose(bin_file);
-        return;
-    }
-    fclose(bin_file);
+    memcpy(pcm, bin_bytes + audio_byte_offset, pcm_size);
+    free(bin_bytes);
 
     if (M11_Audio_PlayCdda(&state->audioState, pcm, pcm_size, 0)) {
         state->dm1FmtownsCddaPlaying = 1;
