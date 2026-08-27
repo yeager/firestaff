@@ -137,6 +137,15 @@ This establishes a real input-buffer consumer chain. It still does not expose
 the target's menu state or a level-load call, therefore it does not admit a
 native new-game pose.
 
+The same capture includes an exact frame-1798 1 MiB WorkRAMH snapshot. Runtime
+disassembly shows the SMPC copy loop at `0x06014500`--`0x0601451a`, followed by
+the nibble packing path at `0x06014568`--`0x060145c6` and the later branch/table
+reader beginning at `0x06014620`. The 36-row receipt passes
+`analyze_nexus_sh2_ram_read_trace.py` with
+`workram_input_consumer_chain=verified`. These are input transport and
+normalization instructions only: no observed branch target is identified as a
+title selection, save action, `LEV01` load, coordinate, or facing assignment.
+
 ## Japanese retail start-pose disassembly audit — 2026-08-27
 
 The Japanese CUE data track was read in place and the authenticated `DM.BIN`
