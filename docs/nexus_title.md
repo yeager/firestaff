@@ -190,6 +190,21 @@ this receipt. The later same-session receipts bind the source pointer/RAM
 producer and its CDB provenance; the display consumer is still absent, so this
 is not permission to present a native title composition.
 
+### Independent bounded copy-delta receipt — 2026-08-27
+
+The supplied Japanese CUE/BIN media and matching Japanese 1.01 BIOS were also
+used for a short external, read-only ten-frame capture. Frame 5 has the
+observed pre-title NBG0 hash
+`fa43239bcee7b97ca62f007cc68487560a39e19f74f3dde7486db3f98df8e471`; frame
+6 has the measured title hash above. The deliberately PC-filtered trace
+contains exactly the 31,616 byte writes tagged `0x0602312c`, rather than the
+earlier clear phase. `verify_nexus_title_nbg0_producer.py --baseline-frame 5`
+now replays those writes over the captured frame-5 VDP2 bus-order baseline and
+reproduces frame 6 byte-for-byte. It rejects a foreign, later, or same-frame
+baseline. This independently verifies the observed copy delta without filling
+untraced bytes with a synthetic zero image. It remains a producer receipt;
+the VDP1/VDP2 display consumer, title input, and native renderer stay blocked.
+
 That source boundary is now partially closed: the PC-tagged observed route reads the
 bounded SH-2 range `0x060ac2a7`–`0x060b3e26`, and the same retail session's
 CD-labelled RAM trace binds 7,904 four-byte writes in that range to

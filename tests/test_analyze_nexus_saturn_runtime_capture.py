@@ -66,6 +66,15 @@ def main() -> int:
     else:
         raise AssertionError("out-of-window title frame must be rejected")
 
+    # The delta helper receives an already observed VDP2 bus baseline.  Check
+    # its byte-lane semantics directly; this does not model game data.
+    delta, writes = producer.replay_vram_records(
+        bytes(0x80000),
+        [("vram", 0x10, 1, 0xab00, 0, 0),
+         ("vram", 0x11, 1, 0x00cd, 0, 0)],
+    )
+    assert writes == 2 and delta[0x10:0x12] == b"\xab\xcd"
+
     early = witness(0, b"\x01")
     early_frames, _ = capture.frame_regions(early, 1)
     assert early_frames[0]["vdp1-fb-draw-which"] == b"\x01"
