@@ -42505,7 +42505,11 @@ set_tests_properties(nexus_v1_title_cnfd_payload_admission_real PROPERTIES
     SKIP_RETURN_CODE 77 LABELS "nexus;saturn;title;real_data;skip_safe")
 add_executable(test_nexus_v1_0dmstrt_structure_admission
     tests/test_nexus_v1_0dmstrt_structure_admission.c
-    src/nexus/nexus_v1_0dmstrt_structure_admission.c)
+    src/nexus/nexus_v1_0dmstrt_structure_admission.c
+    # The real CUE member is SHA-256-attested in memory; this portable helper
+    # is data-only and does not add an emulator or runtime dependency.
+    src/shared/firestaff_x68k_media_receipt.c
+    src/shared/firestaff_x68k_media_classify.c)
 target_include_directories(test_nexus_v1_0dmstrt_structure_admission PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_0dmstrt_structure_admission PRIVATE firestaff_nexus)

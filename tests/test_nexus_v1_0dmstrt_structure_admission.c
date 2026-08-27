@@ -1,5 +1,6 @@
 #include "nexus_v1_0dmstrt_structure_admission.h"
 #include "nexus_v1_iso_reader.h"
+#include "firestaff_x68k_media_receipt.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -315,12 +316,17 @@ int main(int argc, char **argv)
             free(synthetic);
             return 77;
         }
-        if (loaded_from_cue && fnv1a64(real, real_size) !=
-                UINT64_C(0xf00bae379d7c2e54)) {
-            fprintf(stderr, "FAIL: CUE 0DMSTRT.BIN identity mismatch\n");
-            free(real);
-            free(synthetic);
-            return 1;
+        if (loaded_from_cue) {
+            char sha256[65];
+            if (firestaff_x68k_media_receipt_sha256_hex(
+                    real, real_size, sha256, sizeof(sha256)) != 0 ||
+                strcmp(sha256, NEXUS_V1_0DMSTRT_SHA256) != 0 ||
+                fnv1a64(real, real_size) != UINT64_C(0xf00bae379d7c2e54)) {
+                fprintf(stderr, "FAIL: CUE 0DMSTRT.BIN identity mismatch\n");
+                free(real);
+                free(synthetic);
+                return 1;
+            }
         }
         CHECK(real_size == (size_t)NEXUS_V1_0DMSTRT_BYTES);
         if (real_size == (size_t)NEXUS_V1_0DMSTRT_BYTES) {
