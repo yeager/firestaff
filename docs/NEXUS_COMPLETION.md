@@ -123,6 +123,12 @@ This proves an authored controller transport and runtime buffering path. It
 does not name the fields, identify a title selection, or establish a gameplay
 action, so it is not a basis for an inferred START route or pose.
 
+A one-frame START pulse at the same capture point changes SMPC register
+`0x10` from `0x00` to `0x10` in that verified read chain. The copy source and
+WorkRAMH destination remain the same. Other pad bytes differ across separate
+sessions, so only this explicitly injected bit is attributed to START. This
+is an input-transport receipt, not a title-menu or new-game receipt.
+
 ## Japanese retail start-pose disassembly audit — 2026-08-27
 
 The Japanese CUE data track was read in place and the authenticated `DM.BIN`
