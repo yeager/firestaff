@@ -30,7 +30,10 @@ Reviewed 2026-08-25. Only open work is listed here.
   `0x06010040` resolves it as the post-store checkpoint after
   `mov.b @r5+,r1` (`0x06023120`) and `mov.b r1,@r4` (`0x06023128`). Its
   source/destination pointer receipt proves a 104 × 304-byte route at a
-  512-byte VDP2 stride. The caller and display consumer still need tracing.
+  512-byte VDP2 stride. Static full-member disassembly identifies the direct
+  caller `0x06022772` to copier entry `0x060230c0`; a frame-12596 PR receipt
+  must still dynamically bind that edge. The display consumer still needs
+  tracing.
   The same-session VDP2
   trace now records all 31,616 destination byte values, and a frame-12596
   instruction trace binds each preceding SH-2 WorkRAM load to its VDP2 byte

@@ -25,12 +25,15 @@ COPY_PC = 0x0602312C
 COPIER_ENTRY = 0x060230C0
 CALL_SITE = 0x06022772
 RETURN_ADDRESS = CALL_SITE + 4
+TITLE_FRAME = 12596
+COPY_BYTES = 31616
 COPY_WORDS = {
     0x06023120: 0x6154,  # mov.b @r5+,r1
     0x06023128: 0x2410,  # mov.b r1,@r4
     0x0602312C: 0x4E15,  # cmp/pl r14
 }
 HEADER = "FIRESTAFF_NEXUS_VDP2_WRITER_REGISTER_TRACE_V1"
+FRAME = re.compile(r"^frame=([0-9]+)\b")
 PC = re.compile(r"\bpc=0x([0-9a-fA-F]+)\b")
 PR = re.compile(r"\bpr=0x([0-9a-fA-F]+)\b")
 
@@ -94,8 +97,10 @@ def main() -> int:
                 raise ValueError("bad writer-register trace header")
             prs = []
             for line in lines[1:]:
+                frame = FRAME.search(line)
                 pc = PC.search(line)
-                if not pc or int(pc.group(1), 16) != COPY_PC:
+                if (not frame or int(frame.group(1), 10) != TITLE_FRAME or
+                        not pc or int(pc.group(1), 16) != COPY_PC):
                     continue
                 pr = PR.search(line)
                 if not pr:
@@ -103,6 +108,9 @@ def main() -> int:
                 prs.append(int(pr.group(1), 16))
             if not prs:
                 raise ValueError("writer-register trace has no title-copy rows")
+            if len(prs) != COPY_BYTES:
+                raise ValueError(
+                    f"expected {COPY_BYTES} frame-{TITLE_FRAME} copy rows, got {len(prs)}")
             if set(prs) != {RETURN_ADDRESS}:
                 got = ",".join(f"0x{value:08x}" for value in sorted(set(prs)))
                 raise ValueError(f"copy PR does not bind the retail caller: {got}")
@@ -113,6 +121,8 @@ def main() -> int:
     print(f"dm_bin_sha256={DM_SHA256}")
     print(f"sh2_words_scanned={len(dm) // 2}")
     print(f"title_nbg0_copy_pc=0x{COPY_PC:08x}")
+    print(f"title_nbg0_copy_frame={TITLE_FRAME}")
+    print(f"title_nbg0_copy_rows={COPY_BYTES}")
     print(f"title_nbg0_copier_entry=0x{COPIER_ENTRY:08x}")
     print(f"title_nbg0_caller_bsr=0x{CALL_SITE:08x}")
     print(f"title_nbg0_caller_pr=0x{RETURN_ADDRESS:08x}")
