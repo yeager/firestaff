@@ -171,11 +171,11 @@ and the local archived copy in `docs/DMWEB_REFERENCE.md`.
   of inventing a host cadence. Exact original presentation ownership remains
   separate.
 - The small First Chapter demo is admitted to its static M11 startup surface
-  from the authentic ZIP, retaining the truncated File_header and 16-entry
-  mirror roster without borrowing retail QuickTime or title pixels. Its
-  source New Game/GAME_LOAD handoff remains open: a real-media M11 probe does
-  not yet publish a runtime session, so this route is not promoted as a
-  complete launch path.
+  from the authentic ZIP. Its New Game action retains a source-owned
+  GAME_LOAD preselection from the truncated File_header and real 16-entry
+  mirror roster, without borrowing retail QuickTime or title pixels. The
+  subsequent native mirror-selection input and runtime commit remain open,
+  so this route is not promoted as a complete launch path.
 - The retail image also retains the complete authentic resource forks for
   `Music` (662,956 bytes), `General.sounds` (134,562), and `Weapon.sounds`
   (50,651). These are source-bound Mac resources, not DOS HMP substitutes;

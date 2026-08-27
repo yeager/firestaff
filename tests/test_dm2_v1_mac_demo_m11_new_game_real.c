@@ -47,12 +47,13 @@ int main(void)
     M11_GameView_Draw(&state, framebuffer, 320, 200);
     if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_ACCEPT) ==
             M11_GAME_INPUT_IGNORED ||
-        state.dm2State.startup_menu_active ||
-        !state.dm2State.level_loaded ||
+        !state.dm2State.startup_menu_active || state.dm2State.level_loaded ||
+        !dm2_v1_boot_prepared_new_game_world_readonly(
+             (const DM2_V1_BootProfile *)state.dm2BootProfile) ||
         !((const DM2_V1_BootProfile *)state.dm2BootProfile)
-             ->source_game_load_session_ready) {
+             ->game_load_runtime_session_candidate) {
         fprintf(stderr,
-                "Mac demo M11 New Game did not publish authentic session: menu=%d level=%d ready=%d\n",
+                "Mac demo M11 New Game did not retain authentic preselection: menu=%d level=%d ready=%d\n",
                 state.dm2State.startup_menu_active,
                 state.dm2State.level_loaded,
                 ((const DM2_V1_BootProfile *)state.dm2BootProfile)
@@ -61,6 +62,6 @@ int main(void)
         return 1;
     }
     M11_GameView_Shutdown(&state);
-    puts("PASS: M11 starts the authentic DM2 Macintosh demo New Game from the original ZIP");
+    puts("PASS: M11 retains the authentic DM2 Macintosh demo New Game preselection from the original ZIP");
     return 0;
 }

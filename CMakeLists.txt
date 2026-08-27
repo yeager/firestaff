@@ -11808,6 +11808,24 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_m11_movie_runtime_r
         ENVIRONMENT "SDL_AUDIODRIVER=dummy")
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_demo_m11_new_game_real.c")
+    add_executable(test_dm2_v1_mac_demo_m11_new_game_real
+        tests/test_dm2_v1_mac_demo_m11_new_game_real.c)
+    target_include_directories(test_dm2_v1_mac_demo_m11_new_game_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_mac_demo_m11_new_game_real PRIVATE
+        firestaff_m11 firestaff_m12 firestaff_m10 SDL3::SDL3 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_mac_demo_m11_new_game_real PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm2_v1_mac_demo_m11_new_game_real
+        COMMAND test_dm2_v1_mac_demo_m11_new_game_real)
+    set_tests_properties(dm2_v1_mac_demo_m11_new_game_real PROPERTIES
+        LABELS "tier2;dm2;macintosh;demo;startup;new-game;real-media;native;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_DEMO_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip;SDL_AUDIODRIVER=dummy")
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_sound_real.c")
     add_executable(test_dm2_v1_mac_sound_real
         tests/test_dm2_v1_mac_sound_real.c
