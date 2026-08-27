@@ -1527,12 +1527,14 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
                 new_dungeon.source_leader_hand_reset_applied &&
                 !new_dungeon.synthetic_party_created && prepare_ok &&
                 dm2_v1_boot_prepared_new_game_world_readonly(profile) != NULL &&
-                /* DOS and Amiga own their first champion selection inside
-                 * the GAME_LOAD transaction.  Macintosh and FM Towns retain
+                /* DOS (English and French) and Amiga own their first
+                 * champion selection inside the GAME_LOAD transaction.
+                 * Macintosh and FM Towns retain
                  * the source mirror with no party until its native viewport
                  * event selects a champion; committing either one here skips
                  * that authentic boundary. */
                 (profile->platform == DM2_PLATFORM_PC_EN ||
+                 profile->platform == DM2_PLATFORM_PC_FR ||
                  profile->platform == DM2_PLATFORM_AMIGA_EN) &&
                 m11_dm2_clear_new_game_party_state(state)) {
                 /* STARTEND's first authenticated champion selection is part
