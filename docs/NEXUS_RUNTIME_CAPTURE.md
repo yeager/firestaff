@@ -851,11 +851,13 @@ decompression and runtime-code ownership unbound. It does not treat a short
 word overlap as a source join or unlock menu, DGN, HUD or viewport drawing.
 
 `scripts/analyze_nexus_tm_bin_vdp_owner.py` records a separate static source
-receipt. On the authenticated retail `TM.BIN`, its SH-2 PC-relative literal
-loads reach the VDP1 register window (`0x25d00000` through the observed
-register offsets) and VDP2 register space. This narrows code ownership, but a
-literal corridor is not an execution trace and does not join `TM.BIN` to any
-captured command or source span.
+receipt. It accepts a real CUE and reads the selected `DM.BIN` or `TM.BIN`
+member in memory, retaining its load base when reporting the SH-2 instruction
+and literal addresses. Both authenticated binaries have PC-relative literal
+loads reaching VDP2 register space; `TM.BIN` also reaches the VDP1 register
+window (`0x25d00000` through the observed register offsets). This narrows code
+ownership, but a literal corridor is not an execution trace and does not join
+either executable to a captured command or source span.
 
 The first positive runtime source join is retained outside the repository at
 `/Volumes/Extern-disk/nexus-saturn-capture/run-codex-vdp1-source-read-20260810`.
