@@ -1,6 +1,11 @@
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
-@@ -557,0 +558,47 @@
+@@ -475,7 +475,55 @@
+ uint32 FirestaffGetSH2PC(unsigned which)
+ {
+  return CPU[which & 1U].GetRegister(SH7095::GSREG_RPC, NULL, 0);
+ }
++
 +static bool FirestaffSH2MemorySnapshotFrameRequested(unsigned frame)
 +{
 + const char *text = getenv("FIRESTAFF_NEXUS_TRACE_SH2_MEMORY_SNAPSHOT_FRAMES");
@@ -35,12 +40,12 @@
 +  fputs("FIRESTAFF_NEXUS_SH2_MEMORY_SNAPSHOT_V1\n", file);
 + }
 + fprintf(file, "frame=%u base=0x06000000 size=%u\n", frame,
-+  (unsigned)sizeof(WorkRAMH) * 2U);
-+ for(offset = 0; offset < (uint32)sizeof(WorkRAMH) * 2U; offset += sizeof(chunk))
++  (unsigned)sizeof(WorkRAMH));
++ for(offset = 0; offset < (uint32)sizeof(WorkRAMH); offset += sizeof(chunk))
 + {
 +  unsigned length = (unsigned)sizeof(chunk);
-+  if(offset + length > (uint32)sizeof(WorkRAMH) * 2U)
-+   length = (unsigned)((uint32)sizeof(WorkRAMH) * 2U - offset);
++  if(offset + length > (uint32)sizeof(WorkRAMH))
++   length = (unsigned)((uint32)sizeof(WorkRAMH) - offset);
 +  for(unsigned i = 0; i < length; i++)
 +   chunk[i] = ne16_rbo_be<uint8>(WorkRAMH, offset + i);
 +  fwrite(chunk, 1, length, file);
@@ -48,3 +53,6 @@
 + fputc('\n', file);
 + fflush(file);
 +}
+ 
+ uint16 FirestaffPeekSH2Memory(unsigned which, uint32 address)
+ {

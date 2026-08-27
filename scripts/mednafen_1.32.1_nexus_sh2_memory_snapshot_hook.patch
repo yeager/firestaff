@@ -1,5 +1,10 @@
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
-@@ -1077,0 +1078,2 @@
-+ static unsigned firestaff_snapshot_frame;
-+ FirestaffTraceSH2MemorySnapshot(firestaff_snapshot_frame++);
+@@ -1255,6 +1255,7 @@
+  MDFNGameInfo->mouse_sensitivity = MDFN_GetSettingF("ss.input.mouse_sensitivity");
+ 
+  cur_clock_div = SMPC_StartFrame(espec);
++ FirestaffTraceSH2MemorySnapshot((unsigned)SMPC_FirestaffCurrentFrame());
+  UpdateSMPCInput(0);
+  VDP2::StartFrame(espec, cur_clock_div == 61);
+  SOUND_StartFrame(espec->SoundRate / espec->soundmultiplier, MDFN_GetSettingUI("ss.scsp.resamp_quality"));

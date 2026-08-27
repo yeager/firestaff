@@ -196,7 +196,7 @@ if [[ "${FIRESTAFF_NEXUS_ENABLE_SH2_RAM_TRACE:-0}" = 1 ]]; then
   fi
 fi
 sh2_memory_snapshot_marker="$source_dir/.firestaff-nexus-sh2-memory-snapshot-patched"
-sh2_memory_snapshot_patch_id='FIRESTAFF_NEXUS_SH2_MEMORY_SNAPSHOT_V1'
+sh2_memory_snapshot_patch_id='FIRESTAFF_NEXUS_SH2_MEMORY_SNAPSHOT_V2_FRAME_START'
 if [[ "${FIRESTAFF_NEXUS_ENABLE_SH2_MEMORY_SNAPSHOT:-0}" = 1 ]]; then
   if [[ ! -f "$sh2_memory_snapshot_marker" ]]; then
     patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_sh2_memory_snapshot.patch"
