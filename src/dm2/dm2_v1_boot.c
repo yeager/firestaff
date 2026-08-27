@@ -792,18 +792,18 @@ static int dm2_v1_boot_read_asset_bytes(const char *path,
         max_size <= 0) {
         return 0;
     }
-    /* A generic archive entry has no DM2 memory owner.  Do not extract it
-     * to /tmp merely to make fopen() work: original game data must never be
-     * unpacked onto disk.  The explicitly supported FM Towns and Amiga
-     * media readers place their authenticated GRAPHICS/DUNGEON buffers in
-     * BootProfile::{graphics,dungeon}_mem before this helper is reached.
-     * A PC ZIP/ISO remains launch-blocked until it receives an equivalent
-     * verified in-memory reader.
-     *
-     * Source ownership: SKProject's mounted-media read is the source owner;
-     * Firestaff's RAM receipt is its required equivalent. */
+    /* A scanner can select an authenticated archive member.  Load that one
+     * member into the runtime-owned RAM buffer; never unpack game data to
+     * disk just to satisfy a seekable FILE* path. */
     if (strstr(path, "::") != NULL) {
-        return 0;
+        if (!asset_read_path_alloc(path, &bytes, out_size) || !bytes ||
+            *out_size == 0u || *out_size > (size_t)max_size) {
+            free(bytes);
+            *out_size = 0u;
+            return 0;
+        }
+        *out_bytes = bytes;
+        return 1;
     }
     f = fopen(path, "rb");
     if (!f) {
@@ -2509,6 +2509,16 @@ int dm2_v1_boot_asset_hash_pair_supported(const char *graphics_md5,
 
 static size_t file_size(const char *path) {
     struct stat st;
+    uint8_t *bytes = NULL;
+    size_t byte_count = 0u;
+    if (path && strstr(path, "::") != NULL) {
+        if (!asset_read_path_alloc(path, &bytes, &byte_count)) {
+            free(bytes);
+            return 0u;
+        }
+        free(bytes);
+        return byte_count;
+    }
     if (stat(path, &st) != 0) return 0;
     return (size_t)st.st_size;
 }
