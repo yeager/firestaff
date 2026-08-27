@@ -1006,17 +1006,27 @@ static int m12_admit_dm1_fmtowns_archive(
              ++candidateIndex) {
             uint8_t* image = NULL;
             size_t imageSize = 0U;
+            uint8_t* cue = NULL;
+            size_t cueSize = 0U;
+            char imageMember[M12_ASSET_DATA_DIR_CAPACITY];
             FmtownsDiscProbeResult disc;
             int language;
             int accepted = 0;
             int anyAccepted = 0;
-            if (firestaff_zip_extract_by_suffix(candidate[candidateIndex], ".bin",
-                                                &image, &imageSize) != 0 ||
+            if (firestaff_zip_extract_by_suffix(candidate[candidateIndex], ".cue",
+                                                &cue, &cueSize) != 0 ||
+                !fmtowns_cue_parse_image_member((const char *)cue, cueSize,
+                                                imageMember, sizeof(imageMember)) ||
+                firestaff_zip_extract_by_name(candidate[candidateIndex],
+                                               imageMember, &image,
+                                               &imageSize) != 0 ||
                 fmtowns_disc_probe(image, imageSize, FMTOWNS_SECTOR_2048,
                                    &disc) != 0) {
+                free(cue);
                 free(image);
                 continue;
             }
+            free(cue);
             for (language = 0; language < 2; ++language) {
                 const char* directory = language == 0 ? "DATA" : "JDATA";
                 const FmtownsIsoEntry* graphics =
