@@ -1,4 +1,5 @@
 #include "nexus_v1_logobg_dg2.h"
+#include "nexus_v1_engine.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,6 +39,8 @@ static int test_logobg(void) {
     char path[512];
     uint8_t *data;
     int size = 0;
+    Nexus_V1_Engine engine;
+    Nexus_V1_LevelAuxSourceReceipt receipt;
     Nexus_V1_LogobgDg2DecodeResult r;
 
     if (data_dir && data_dir[0]) {
@@ -49,11 +52,27 @@ static int test_logobg(void) {
         return 0;
     }
     data = load_file(path, &size);
-    if (!data) { printf("  SKIP LOGOBG.DG2 (not found)\n"); return 0; }
+    memset(&engine, 0, sizeof(engine));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!data) {
+        /* A CUE/BIN-only installation is a first-class retail source. Read
+         * its member in memory through the native engine; never extract it. */
+        if (nexus_v1_init(&engine, data_dir && data_dir[0] ? data_dir : path) != 0 ||
+            engine.source != NEXUS_SRC_ISO ||
+            nexus_v1_named_asset_source_receipt(&engine, "LOGOBG.DG2", &receipt) != 0 ||
+            !receipt.exact_source_entry_observed || !receipt.canonical_hash_verified) {
+            nexus_v1_shutdown(&engine);
+            printf("  SKIP LOGOBG.DG2 (no authenticated native source)\n");
+            return 0;
+        }
+        data = nexus_v1_read_file(&engine, "LOGOBG.DG2", &size);
+    }
+    if (!data) { nexus_v1_shutdown(&engine); return 1; }
 
     if (!nexus_v1_logobg_dg2_decode(data, size, &r)) {
         printf("  FAIL LOGOBG.DG2 decode\n");
         free(data);
+        nexus_v1_shutdown(&engine);
         return 1;
     }
 
@@ -61,6 +80,7 @@ static int test_logobg(void) {
            r.width, r.height, r.format, r.palette_color_count,
            r.pixel_count, r.data_hash);
     free(data);
+    nexus_v1_shutdown(&engine);
     return 0;
 }
 
