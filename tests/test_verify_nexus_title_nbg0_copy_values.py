@@ -35,8 +35,8 @@ def main() -> int:
     writes = stage / "writes.trace"
     registers.write_text(
         "FIRESTAFF_NEXUS_VDP2_WRITER_REGISTER_TRACE_V1\n"
-        "frame=12596 addr=0x001008 pc=0x0602312c r4=0x25e01008 r5=0x060ac2a7\n"
-        "frame=12596 addr=0x001009 pc=0x0602312c r4=0x25e01009 r5=0x060ac2a8\n",
+        "frame=12596 addr=0x001008 pc=0x0602312c r4=0x25e01008 r5=0x060ac2a7 pr=0x06023182\n"
+        "frame=12596 addr=0x001009 pc=0x0602312c r4=0x25e01009 r5=0x060ac2a8 pr=0x06023182\n",
         encoding="ascii",
     )
     writes.write_text(

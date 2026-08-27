@@ -188,7 +188,7 @@ if [[ "${FIRESTAFF_NEXUS_ENABLE_SH2_MEMORY_SNAPSHOT:-0}" = 1 ]]; then
   fi
 fi
 vdp2_trace_marker="$source_dir/.firestaff-nexus-vdp2-write-trace-patched"
-vdp2_trace_patch_id='FIRESTAFF_NEXUS_VDP2_WRITE_TRACE_V13_REGISTER_CALL'
+vdp2_trace_patch_id='FIRESTAFF_NEXUS_VDP2_WRITE_TRACE_V14_REGISTER_PR'
 if [[ ! -f "$vdp2_trace_marker" ]]; then
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_write_trace.patch"
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_vdp2_vram_write_trace.patch"

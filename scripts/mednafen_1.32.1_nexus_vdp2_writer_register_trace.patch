@@ -1,6 +1,6 @@
 --- src/ss/vdp2.cpp
 +++ src/ss/vdp2.cpp
-@@ -152,0 +153,31 @@
+@@ -152,0 +153,33 @@
 +static void FirestaffTraceVdp2WriterRegisters(uint32 address, uint32 pc)
 +{
 + const char *path = getenv("FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REGS");
@@ -28,6 +28,8 @@
 + for(i = 0; i < 16; i++)
 +  fprintf(file, " r%u=0x%08x", i,
 +   (unsigned)CPU[0].GetRegister(SH7095::GSREG_R0 + i, NULL, 0));
++ fprintf(file, " pr=0x%08x", (unsigned)CPU[0].GetRegister(
++  SH7095::GSREG_PR, NULL, 0));
 + fputc('\n', file);
 + fflush(file);
 + count++;

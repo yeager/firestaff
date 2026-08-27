@@ -110,7 +110,8 @@ def main() -> int:
                     f"r0=0x{source_base + offset:08x} "
                     f"r1=0x{destination_base + offset:08x} "
                     f"r3=0x{cg[offset]:08x} r4=0x{destination_base:08x} "
-                    f"r6=0x{len(cg):08x} r14=0x{source_base:08x}")
+                    f"r6=0x{len(cg):08x} r14=0x{source_base:08x} "
+                    "pr=0x06023182")
             writer_registers.write_text("\n".join(writer_rows) + "\n", encoding="ascii")
             assert MODULE.title_sh2_copy_plan(writer_registers, cg) == (
                 12551, source_base, destination_base, 8)

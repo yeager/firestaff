@@ -136,6 +136,10 @@ They prevent reset and boot writes from exhausting the register-trace budget
 before a later input or menu sequence is reached. This is an external
 development witness only: it never changes Firestaff's runtime dependencies
 or admits a render path without an authenticated source-consumer join.
+Each writer row carries `R0`--`R15` and, as of capture patch V14, `pr=` with
+the SH-2 procedure register. Retain `pr` when tracing the title corridor: it
+is the return-address witness needed to connect the disassembled byte-copy
+loop to its real caller. It is provenance only, not a rendering admission.
 
 The paired VDP2 write stream accepts the corresponding
 `FIRESTAFF_NEXUS_TRACE_VDP2_WRITE_FRAME_MIN` and
