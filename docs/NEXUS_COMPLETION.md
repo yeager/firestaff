@@ -15,6 +15,28 @@ the real CDDA consumer and the source-owned LEV01 level/x/y/facing witness
 remain unbound.  `LEV00` remains a title-only asset and the engine therefore
 fails closed before it can invent a start pose.
 
+## Japanese held-START SMPC witness — 2026-08-27
+
+An external, instrumented Mednafen session used the same JP 1.01 BIOS and
+the hash-verified nine-track CUE/BIN disc.  `START` was held for all 90
+captured frames after 30,000 boot frames.  The producer wrote the current
+Firestaff V2 envelope, which the native transport validator now accepts:
+
+- raw VDP1/VDP2 capture: 90 frames, SHA-256
+  `163fcd0a39c6a408fd1e76b9818dc419e67f39ece1c7b65b5634a12f3092ce93`;
+- input receipt: 180 injected-frame rows, SHA-256
+  `9da3b51f01407a0872fa0e72d19506a2bfaf47a74c022acab9b967302d650f25`;
+- SMPC receipt: 1,029 source-PC-bound reads over capture frames 38--89,
+  SHA-256
+  `6d4c2369439b8a69cd91b5dd2119d05c7fba22bd0b471cc6f1b81455380f13ed`.
+
+The observed master SH-2 PCs all map into the authenticated `DM.BIN` range,
+but the trace does not bind a returned controller byte to a named menu action,
+new-game state transition, `LEV01` load, or party pose.  It is therefore
+transport and source-range evidence only; it does not authorize a native
+menu/start consumer or substitute a start coordinate.  BIOS and capture
+artifacts remain outside the repository and Firestaff's runtime.
+
 ## Japanese retail start-pose disassembly audit — 2026-08-27
 
 The Japanese CUE data track was read in place and the authenticated `DM.BIN`
