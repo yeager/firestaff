@@ -35,6 +35,19 @@ walkable cell or another inferred pose.  The native resolver therefore remains
 capture-gated until an authenticated execution trace or save-consumer record
 binds all four values.
 
+## LEV01 door and entrance-source boundaries — 2026-08-27
+
+DMWeb's Nexus DGN specification, checked against the hash-verified JP
+`LEV01.DGN`, identifies Structure1E as 16-byte door records.  It documents
+the grid coordinates, orientation, model index, initial closed/open state at
+byte `0x08`, and movable-wall type `0x04` at byte `0x0d`.  The same source
+identifies four LEV01 floor sensors: entrance face animation, entrance music,
+an exit-door pressure plate, and the stairs to level 2.  This is sufficient
+to preserve and validate the authored data records; it is not evidence of the
+Saturn input/trigger dispatcher, state-write timing, audio consumer, or VDP
+consumer.  Firestaff therefore must not enable the DM1-shaped door or sensor
+runtime merely from these fields.
+
 ## Local Japanese post-render title witness — 2026-08-26
 
 A separate, temporary developer capture used the hash-verified Japanese
