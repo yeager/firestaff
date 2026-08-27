@@ -16800,10 +16800,9 @@ static void m11_get_item_name(const struct DungeonThings_Compat* things,
 static int m11_dm1_load_object_names_m564(M11_GameViewState* state) {
     enum { M11_DM1_M564_PC34 = 694, M11_DM1_M564_LEGACY = 556,
            M11_DM1_OBJECT_NAME_COUNT = 199 };
-    FILE* file;
-    long fileLength;
     unsigned char* fileBytes = NULL;
     unsigned char* decoded = NULL;
+    size_t fileByteCount = 0u;
     size_t decodedSize = 0u;
     size_t offset = 0u;
     int nameIndex;
@@ -16812,29 +16811,25 @@ static int m11_dm1_load_object_names_m564(M11_GameViewState* state) {
     if (!state || !state->assetLoader.graphicsDatPath[0]) return 0;
     state->dm1ObjectNameTableValid = 0;
     memset(state->dm1ObjectNames, 0, sizeof(state->dm1ObjectNames));
-    file = fopen(state->assetLoader.graphicsDatPath, "rb");
-    if (!file || fseek(file, 0L, SEEK_END) != 0 ||
-        (fileLength = ftell(file)) <= 0 || fseek(file, 0L, SEEK_SET) != 0) {
-        if (file) fclose(file);
+    if (!asset_read_path_alloc(state->assetLoader.graphicsDatPath,
+                               &fileBytes, &fileByteCount) ||
+        !fileBytes || fileByteCount == 0u) {
+        free(fileBytes);
         return 0;
     }
-    fileBytes = (unsigned char*)malloc((size_t)fileLength);
     decoded = (unsigned char*)malloc(65535u);
-    if (!fileBytes || !decoded ||
-        fread(fileBytes, 1u, (size_t)fileLength, file) != (size_t)fileLength) {
-        fclose(file);
+    if (!decoded) {
         free(decoded);
         free(fileBytes);
         return 0;
     }
-    fclose(file);
     /* ReDMCSB's M564 number is media-dependent: current PC3.4 data uses
      * record 694, while older DM1 layouts use 556.  Admit only a complete
      * C199 stream, never a raster record that happens to decode. */
-    if (csb_v1_graphics_decode_raw_entry_pc34(fileBytes, (size_t)fileLength,
+    if (csb_v1_graphics_decode_raw_entry_pc34(fileBytes, fileByteCount,
                                                M11_DM1_M564_PC34, decoded, 65535u,
                                                &decodedSize) != 0) {
-        if (csb_v1_graphics_decode_raw_entry_pc34(fileBytes, (size_t)fileLength,
+        if (csb_v1_graphics_decode_raw_entry_pc34(fileBytes, fileByteCount,
                                                    M11_DM1_M564_LEGACY, decoded, 65535u,
                                                    &decodedSize) != 0) {
             free(decoded);
