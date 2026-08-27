@@ -1,56 +1,19 @@
 # Firestaff TODO — Nexus
 
-Reviewed 2026-08-25. Only open work is listed here.
+Reviewed 2026-08-27. Only open work is listed here; completed evidence belongs
+in the Nexus capture and reverse-engineering records.
 
-- Bind authentic Saturn CD reads to SH-2 consumers, VDP destinations and
-  decoded source assets before admitting title/menu rendering. The full title
-  `TITLE.CG` SH-2→VDP2 copy plan is now captured at PC `0x06041fa0`; a
-  source-LBA-filtered receipt now reconstructs the complete real `TITLE.CG`
-  buffer at `0x0025daf0`. Its terminal 32-byte CDB-register path remains
-  separate from the now closed `TITLE.BIN` NBG0 transport. The title VDP1
-  chain now byte-binds all 177 texture spans to
-  `LEV00.DGN`; 173 also match their real Structure2 image and CLUT pair. The
-  remaining four draws (`0x00e60`, `0x00780`, `0x00880`, `0x01380`) share the
-  directly traced `LEV00.DGN` CLUT at word `0xca00`, though it has no exact
-  Structure2 palette-record identity. The 175 distorted-sprite vertices and
-  their two local-coordinate transforms are captured; raster, clipping and
-  final compositor semantics remain unbound. In
-  particular, the active NBG0
-  bitmap is neither `TITLE.CG`/MAPD nor `LOGOBG.DG2`; a full-disc
-  resident-member scan finds no other complete source file. Identify that
-  producer (including any decode/transform), alongside the actual title
-  display consumer and timing, before admitting composition. The measured
-  title NBG0 span is `0x00000`–`0x1ffff` (SHA-256
-  `ad10d99f00c3eecdf9577b15af1a7b86870a4ba83299dc50a09881dc569ad5e8`);
-  retained traces after frames 11900 and 12501 have no writes in that range.
-  The later VDP2 clear/copy transport and its `TITLE.BIN` CD→RAM input are now
-  verified (PC tags `0x060230ac`, `0x0602312c`, LBAs 6039–6055); the CDB FIFO
-  words for those LBAs also match raw Track 1 byte-for-byte. The latter PC is
-  byte-identical to retail `DM.BIN`; full SuperH disassembly with load base
-  `0x06010040` resolves it as the post-store checkpoint after
-  `mov.b @r5+,r1` (`0x06023120`) and `mov.b r1,@r4` (`0x06023128`). Its
-  source/destination pointer receipt proves a 104 × 304-byte route at a
-  512-byte VDP2 stride. Static full-member disassembly identifies the direct
-  caller `0x06022772` to copier entry `0x060230c0`; a frame-12596 PR receipt
-  must still dynamically bind that edge. The display consumer still needs
-  tracing.
-  The same-session VDP2
-  trace now records all 31,616 destination byte values, and a frame-12596
-  instruction trace binds each preceding SH-2 WorkRAM load to its VDP2 byte
-  value in order. The same session also binds CDB FIFO payload words, CDB data
-  port and FIFO word positions to this RAM corridor. The display consumer is
-  still required; do not turn this value receipt into a direct `TITLE.BIN`
-  upload or native composition claim.
-  The title-frame NBG1 route is captured
-  and excludes `TITLE.CG` (it resolves to `0x20000`),
-  so it must not be promoted as a title-map substitute.
-- Calibrate the title/menu capture from post-composition frames after the
-  Saturn BIOS and the unskippable opening movie. The verified JP title window
-  at frames 13000–13039 is bit-identical with and without Start/A pulses, so
-  it is still non-interactive animation—not the title-menu transition that
-  native startup must implement.
-- Implement native Saturn runtime semantics only where a real dispatcher,
-  material, event, save or audio consumer has been captured and verified.
-- Resolve Structure2/VDP1 material, texture, palette, animation and timing
-  ownership with real captures; keep unbound bytes and generated fixtures
-  out of production gameplay.
+- Capture one same-revision, post-composition title/menu state that jointly
+  binds the active NBG0 source, CRAM palette, VDP1/VDP2 layers, priorities and
+  timing. The observed NBG0 span remains unowned; do not admit a native title
+  renderer or substitute inferred assets until this consumer is identified.
+- Capture the actual interactive title/menu transition and its input contract.
+  The JP window at frames 13000–13039 is bit-identical with and without
+  Start/A pulses, so it is non-interactive animation rather than the native
+  startup menu.
+- Resolve the remaining Structure2/VDP1 material, texture, CLUT, raster,
+  clipping, animation and composition ownership with real captures. Keep
+  unbound bytes and generated fixtures out of production gameplay.
+- Implement native Saturn runtime semantics only after each dispatcher,
+  material, event, save or audio consumer has a captured, hash-verified
+  contract.
