@@ -22149,11 +22149,6 @@ void M11_GameView_Init(M11_GameViewState* state) {
     dm1_v1_text_init(&state->dm1V1TextMessage);
     firestaff_ra_overlay_init(&state->retroAchievementsOverlay);
     (void)M11_Audio_Init(&state->audioState);
-    if (state->audioState.originalSongAvailable &&
-        state->audioState.originalSongDatPath[0]) {
-        state->dm1MusicSourceBound = dm1_v1_f0740_f0743_bind_song_dat_pc34(
-            state->audioState.originalSongDatPath, &state->dm1MusicSource);
-    }
     /* V1 presentation: debug HUD off by default, opt-in via env */
     {
         const char* dbg = getenv("FIRESTAFF_DEBUG_HUD");
@@ -22198,6 +22193,14 @@ void M11_GameView_Init(M11_GameViewState* state) {
     memset(&state->dm1MusicSource, 0, sizeof(state->dm1MusicSource));
     m11_dm1_f0740_bind_driver(state);
     state->dm1MusicSourceBound = 0;
+    /* M11_Audio_Init may have admitted a hash-verified loose SONG.DAT.
+     * Bind the F0740--F0743 owner only after its state has been initialised;
+     * doing it above this reset silently discarded a valid original source. */
+    if (state->audioState.originalSongAvailable &&
+        state->audioState.originalSongDatPath[0]) {
+        state->dm1MusicSourceBound = dm1_v1_f0740_f0743_bind_song_dat_pc34(
+            state->audioState.originalSongDatPath, &state->dm1MusicSource);
+    }
     /* Generate a random game ID (matches ReDMCSB G0525_l_GameID
      * = RANDOM(65536) * RANDOM(65536) in LOADSAVE.C F0435) */
     state->dm1GameID = ((uint32_t)(rand() & 0xFFFF) << 16) | (uint32_t)(rand() & 0xFFFF);
