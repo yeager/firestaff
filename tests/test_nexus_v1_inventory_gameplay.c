@@ -1,4 +1,5 @@
 #include "nexus_v1_inventory.h"
+#include "nexus_v1_champions.h"
 #include "nexus_v1_containers.h"
 #include "nexus_v1_dungeon.h"
 #include <stdio.h>
@@ -217,22 +218,64 @@ static void test_raw_item_declaration_does_not_infer_gameplay_flags(void) {
            "raw ITEM.IBS carry-location does not infer consumable gameplay");
 }
 
+static void test_champion_load_excludes_retail_empty_inventory_ordinal(void) {
+    Nexus_V1_Champion champion;
+    Nexus_ItemDef item;
+    int i;
+
+    /* 0xff is the actual empty PLRD/save inventory ordinal.  These local
+     * item definitions exercise only arithmetic; they are not game data. */
+    memset(&champion, 0, sizeof(champion));
+    memset(&item, 0, sizeof(item));
+    for (i = 0; i < NEXUS_INVENTORY_SLOTS; ++i) champion.inventory[i] = 0xffU;
+    for (i = 0; i < NEXUS_SLOT_COUNT; ++i) champion.slots[i] = -1;
+    nexus_itemdef_clear_ibs_declarations();
+    item.weight = 7;
+    nexus_itemdef_set(0, &item);
+    item.weight = 11;
+    nexus_itemdef_set(1, &item);
+
+    champion.inventory[0] = 0;
+    champion.slots[0] = 1;
+    nexus_champion_recalc_load(&champion);
+    expect(champion.load == 18,
+           "champion load includes only populated inventory and equipment slots");
+
+    champion.inventory[0] = 0xffU;
+    champion.slots[0] = -1;
+    nexus_champion_recalc_load(&champion);
+    expect(champion.load == 0,
+           "retail 0xff inventory sentinel does not become item 255 weight");
+    nexus_itemdef_clear_ibs_declarations();
+}
+
 int main(void) {
     Nexus_V1_ItemIbsBank bank;
     uint8_t *item_ibs;
     int item_ibs_size = 0;
 
+    /* These checks exercise the in-memory item ordinal contract and must not
+     * disappear merely because this host keeps authentic ITEM.IBS inside the
+     * original CUE/ZIP instead of as a loose file. */
+    test_raw_item_declaration_does_not_infer_gameplay_flags();
+    test_champion_load_excludes_retail_empty_inventory_ordinal();
+
     item_ibs = load_item_ibs(&item_ibs_size);
     if (!item_ibs ||
         nexus_v1_item_ibs_parse_verified(item_ibs, item_ibs_size, 1, &bank) != 0) {
         free(item_ibs);
-        puts("SKIP: verified Nexus ITEM.IBS is required for inventory gameplay");
-        return 77;
+        if (g_fail) {
+            fprintf(stderr, "test_nexus_v1_inventory_gameplay: %d failure(s)\n",
+                    g_fail);
+            return 1;
+        }
+        puts("ok: nexus_v1_inventory_gameplay self-contained checks "
+             "(loose verified ITEM.IBS unavailable)");
+        return 0;
     }
     nexus_itemdef_bind_ibs_bank(&bank, NEXUS_V1_ITEM_IBS_DECLARATION_COUNT);
     free(item_ibs);
 
-    test_raw_item_declaration_does_not_infer_gameplay_flags();
     nexus_itemdef_bind_ibs_bank(&bank, NEXUS_V1_ITEM_IBS_DECLARATION_COUNT);
     test_item_pickup_empty_slot();
     test_item_drop();

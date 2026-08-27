@@ -109,7 +109,10 @@ void nexus_champion_recalc_load(Nexus_V1_Champion *c) {
 
     /* Sum inventory weights */
     for (i = 0; i < 30; i++) {
-        if (c->inventory[i] >= 0) {
+        /* Inventory is an unsigned on-disc ordinal.  PLRD and persisted
+         * champion state use 0xff for an empty slot, so a signedness test
+         * (`>= 0`) would admit every empty slot as item 255. */
+        if (c->inventory[i] != 0xffU) {
             def = nexus_itemdef_get(c->inventory[i]);
             if (def) total += def->weight;
         }
