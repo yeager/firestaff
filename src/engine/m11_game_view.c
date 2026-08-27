@@ -9282,7 +9282,7 @@ static int m11_csb_read_fmtowns_cdda_media(const CSB_V1_BootProfile *profile,
 {
     char cue_path[sizeof(profile->asset_root) + 16u];
     char image_path[sizeof(profile->asset_root) + 16u];
-    int image_result;
+    char image_member[M11_GAME_VIEW_PATH_CAPACITY];
 
     if (!profile || !profile->asset_root[0] || !out_cue || !out_cue_size ||
         !out_image || !out_image_size) return 0;
@@ -9292,13 +9292,13 @@ static int m11_csb_read_fmtowns_cdda_media(const CSB_V1_BootProfile *profile,
     *out_image_size = 0U;
     if (FSP_FileExists(profile->asset_root) &&
         !FSP_DirExists(profile->asset_root)) {
-        image_result = firestaff_zip_extract_by_suffix(
-            profile->asset_root, ".img", out_image, out_image_size);
         if (firestaff_zip_extract_by_suffix(profile->asset_root, ".cue",
                                             out_cue, out_cue_size) != 0 ||
-            (image_result != 0 &&
-             firestaff_zip_extract_by_suffix(profile->asset_root, ".bin",
-                                             out_image, out_image_size) != 0)) {
+            !fmtowns_cue_parse_image_member((const char *)*out_cue,
+                                            *out_cue_size, image_member,
+                                            sizeof(image_member)) ||
+            firestaff_zip_extract_by_name(profile->asset_root, image_member,
+                                          out_image, out_image_size) != 0) {
             free(*out_cue);
             free(*out_image);
             *out_cue = NULL;
