@@ -5,9 +5,12 @@ boot image executable in Firestaff and does not provide a gameplay start pose.
 
 ## Authenticated input
 
-The observation uses the unmodified external-disk asset:
-
-`/Volumes/Extern-disk/FirestaffUserData/data/nexus/0DMSTRT.BIN`
+The original observation used a standalone, unmodified retail asset.  The
+same bytes were rechecked on 2026-08-27 through Firestaff's in-memory
+ISO9660 reader from the Japanese retail CUE in the configured Nexus data
+directory (`~/.firestaff/data/nexus/Dungeon Master Nexus (Japan).cue`).  The
+reader selected the CUE-declared data track and read `0DMSTRT.BIN` directly
+from the ISO member; it did not extract, rewrite, or retain a game-data copy.
 
 | Property | Value |
 |---|---|
@@ -19,6 +22,10 @@ The observation uses the unmodified external-disk asset:
 The image is admitted by `nexus_v1_0dmstrt_structure_admission`. That receipt
 binds the retail bytes and their partition tables; it intentionally does not
 claim code, relocation, load, execution, or presentation semantics.
+
+The Japanese CUE observation establishes byte identity only.  It does not
+make this boot image a new-game state record and does not bind a level,
+coordinate, or facing value.
 
 ## Bounded entry evidence
 
