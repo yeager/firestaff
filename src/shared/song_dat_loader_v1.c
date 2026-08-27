@@ -7,9 +7,12 @@
 
 #include "song_dat_loader_v1.h"
 
+#include "asset_find_by_hash.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 /* ── per-item canonical labels (Greatstone reference) ────────────── */
 
@@ -55,15 +58,6 @@ static unsigned short v1_be16(const unsigned char* p) {
     return (unsigned short)((p[0] << 8) | p[1]);
 }
 
-static long v1_file_size(FILE* f) {
-    long cur = ftell(f);
-    if (cur < 0) return -1;
-    if (fseek(f, 0, SEEK_END) != 0) return -1;
-    long end = ftell(f);
-    if (fseek(f, cur, SEEK_SET) != 0) return -1;
-    return end;
-}
-
 /* ── manifest ────────────────────────────────────────────────────── */
 
 int V1_Song_ParseManifest(const char* songDatPath,
@@ -76,19 +70,19 @@ int V1_Song_ParseManifest(const char* songDatPath,
     }
     memset(outManifest, 0, sizeof(*outManifest));
 
-    FILE* f = fopen(songDatPath, "rb");
-    if (!f) {
+    uint8_t *fileData = NULL;
+    size_t fileSize = 0u;
+    if (!asset_read_path_alloc(songDatPath, &fileData, &fileSize) ||
+        !fileData || fileSize > (size_t)ULONG_MAX) {
         v1_set_err(errMsg, errMsgBytes, "cannot open SONG.DAT");
         return 0;
     }
-
-    long fileBytes = v1_file_size(f);
-    if (fileBytes < 84) {
-        fclose(f);
+    if (fileSize < 84u) {
+        free(fileData);
         v1_set_err(errMsg, errMsgBytes, "file too small to be SONG.DAT");
         return 0;
     }
-    outManifest->fileBytes = (unsigned long)fileBytes;
+    outManifest->fileBytes = (unsigned long)fileSize;
 
     /* Header size for DM PC v3.4 SONG.DAT:
        2 (sig) + 2 (count) + 2*N (comp) + 2*N (decomp) + 4*N (attrs). */
@@ -98,15 +92,11 @@ int V1_Song_ParseManifest(const char* songDatPath,
 
     unsigned char hdr[84];
     if (headerBytes != sizeof(hdr)) {
-        fclose(f);
+        free(fileData);
         v1_set_err(errMsg, errMsgBytes, "unexpected N != 10");
         return 0;
     }
-    if (fread(hdr, 1, headerBytes, f) != headerBytes) {
-        fclose(f);
-        v1_set_err(errMsg, errMsgBytes, "header read failed");
-        return 0;
-    }
+    memcpy(hdr, fileData, headerBytes);
 
     /* Signature.  dmweb says 0x8001 "in big endian", but the real PC
        v3.4 file has 01 80 on disk — i.e. 0x8001 when read LE.
@@ -114,7 +104,7 @@ int V1_Song_ParseManifest(const char* songDatPath,
     unsigned short sigLE = v1_le16(hdr + 0);
     unsigned short sigBE = v1_be16(hdr + 0);
     if (sigLE != V1_SONG_DAT_SIGNATURE && sigBE != V1_SONG_DAT_SIGNATURE) {
-        fclose(f);
+        free(fileData);
         v1_set_err(errMsg, errMsgBytes, "bad DMCSB2 signature (not 0x8001)");
         return 0;
     }
@@ -122,7 +112,7 @@ int V1_Song_ParseManifest(const char* songDatPath,
 
     unsigned short itemCount = v1_le16(hdr + 2);
     if (itemCount != V1_SONG_DAT_ITEM_COUNT) {
-        fclose(f);
+        free(fileData);
         v1_set_err(errMsg, errMsgBytes, "unexpected item count (not 10)");
         return 0;
     }
@@ -146,13 +136,13 @@ int V1_Song_ParseManifest(const char* songDatPath,
     }
 
     if (cur != outManifest->fileBytes) {
-        fclose(f);
+        free(fileData);
         v1_set_err(errMsg, errMsgBytes,
                    "item offset sum does not match file size");
         return 0;
     }
 
-    fclose(f);
+    free(fileData);
     return 1;
 }
 
@@ -179,14 +169,13 @@ int V1_Song_DecodeSequence(const char* songDatPath,
         return 0;
     }
 
-    FILE* f = fopen(songDatPath, "rb");
-    if (!f) {
+    uint8_t *fileData = NULL;
+    size_t fileSize = 0u;
+    if (!asset_read_path_alloc(songDatPath, &fileData, &fileSize) ||
+        !fileData || seq->fileOffset > fileSize ||
+        seq->compressedBytes > fileSize - seq->fileOffset) {
+        free(fileData);
         v1_set_err(errMsg, errMsgBytes, "cannot open SONG.DAT");
-        return 0;
-    }
-    if (fseek(f, (long)seq->fileOffset, SEEK_SET) != 0) {
-        fclose(f);
-        v1_set_err(errMsg, errMsgBytes, "seek to SEQ2 failed");
         return 0;
     }
 
@@ -196,12 +185,7 @@ int V1_Song_DecodeSequence(const char* songDatPath,
     if (wordCount > cap) wordCount = cap;
 
     for (unsigned int i = 0; i < wordCount; ++i) {
-        unsigned char b[2];
-        if (fread(b, 1, 2, f) != 2) {
-            fclose(f);
-            v1_set_err(errMsg, errMsgBytes, "SEQ2 read failed");
-            return 0;
-        }
+        const unsigned char *b = fileData + seq->fileOffset + 2u * i;
         unsigned short w = v1_le16(b);
         outSequence->words[i] = w;
         outSequence->wordCount = i + 1;
@@ -211,7 +195,7 @@ int V1_Song_DecodeSequence(const char* songDatPath,
         }
     }
 
-    fclose(f);
+    free(fileData);
     return 1;
 }
 
@@ -251,30 +235,16 @@ int V1_Song_DecodeSnd8(const char* songDatPath,
         return 0;
     }
 
-    FILE* f = fopen(songDatPath, "rb");
-    if (!f) {
+    uint8_t *fileData = NULL;
+    size_t rawSize = 0u;
+    if (!asset_read_path_alloc(songDatPath, &fileData, &rawSize) || !fileData ||
+        it->fileOffset > rawSize ||
+        it->compressedBytes > rawSize - it->fileOffset) {
+        free(fileData);
         v1_set_err(errMsg, errMsgBytes, "cannot open SONG.DAT");
         return 0;
     }
-    if (fseek(f, (long)it->fileOffset, SEEK_SET) != 0) {
-        fclose(f);
-        v1_set_err(errMsg, errMsgBytes, "seek to SND8 failed");
-        return 0;
-    }
-
-    unsigned char* raw = (unsigned char*)malloc(it->compressedBytes);
-    if (!raw) {
-        fclose(f);
-        v1_set_err(errMsg, errMsgBytes, "out of memory (raw item)");
-        return 0;
-    }
-    if (fread(raw, 1, it->compressedBytes, f) != it->compressedBytes) {
-        free(raw);
-        fclose(f);
-        v1_set_err(errMsg, errMsgBytes, "SND8 body read failed");
-        return 0;
-    }
-    fclose(f);
+    const uint8_t *raw = fileData + it->fileOffset;
 
     /* SND8 header: big-endian u16 sample count. */
     unsigned int declared = v1_be16(raw);
@@ -285,13 +255,13 @@ int V1_Song_DecodeSnd8(const char* songDatPath,
     if (declared == 0) {
         outBuffer->samples = NULL;
         outBuffer->decodedSampleCount = 0;
-        free(raw);
+        free(fileData);
         return 1;
     }
 
     outBuffer->samples = (signed char*)malloc(declared);
     if (!outBuffer->samples) {
-        free(raw);
+        free(fileData);
         v1_set_err(errMsg, errMsgBytes, "out of memory (sample buffer)");
         return 0;
     }
@@ -335,7 +305,7 @@ int V1_Song_DecodeSnd8(const char* songDatPath,
     }
     outBuffer->decodedSampleCount = out;
 
-    free(raw);
+    free(fileData);
     return 1;
 }
 

@@ -1,4 +1,5 @@
 #include "audio_sdl_m11.h"
+#include "asset_find_by_hash.h"
 #include "graphics_dat_snd3_loader_v1.h"
 #include "song_dat_loader_v1.h"
 #include "sound_event_snd3_map_v1.h"
@@ -663,6 +664,8 @@ static int m11_sdl_queue_samples(M11_AudioState* state,
 #endif
 
 static const char* m11_find_song_dat_path(char* homeBuf, size_t homeBufBytes) {
+    static const char kDm1Pc34SongDatMd5[] =
+        "c20e5b8f756e360a631595cc9260f62d";
     const char* envPath = getenv("FIRESTAFF_SONG_DAT");
     const char* legacyEnvPath = getenv("SONG_DAT_PATH");
     const char* dm1DataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
@@ -693,6 +696,12 @@ static const char* m11_find_song_dat_path(char* homeBuf, size_t homeBufBytes) {
         if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
         n = snprintf(homeBuf, homeBufBytes, "%s/.firestaff/data/dm1-multilingual/SONG.DAT", home);
         if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+        /* Return an authenticated virtual ZIP member when no loose copy is
+         * present. The shared reader loads only that member into RAM. */
+        n = snprintf(homeBuf, homeBufBytes, "%s/.firestaff/data/dm1", home);
+        if (n > 0 && (size_t)n < homeBufBytes &&
+            asset_find_by_md5(homeBuf, kDm1Pc34SongDatMd5, homeBuf,
+                              (int)homeBufBytes, 3)) return homeBuf;
     }
     return NULL;
 }
