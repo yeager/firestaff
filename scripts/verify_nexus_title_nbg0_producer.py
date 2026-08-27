@@ -104,6 +104,11 @@ def main() -> int:
         if hashlib.sha256(bitmap).hexdigest() != TITLE_NBG0_SHA256:
             raise ValueError("capture NBG0 hash differs from the JP title witness")
         records = trace_records(args.writes)
+        outside_nbg0 = [address for area, address, _size, _value, _pc0, _pc1
+                         in records
+                         if area != "vram" or address < 0 or address >= NBG0_BYTES]
+        if outside_nbg0:
+            raise ValueError("title trace contains a write outside the NBG0 span")
         nbg0_records = [record for record in records
                          if record[0] == "vram" and record[1] < NBG0_BYTES]
         pcs = {pc0 for _area, _address, _size, _value, pc0, _pc1 in nbg0_records}
@@ -114,6 +119,9 @@ def main() -> int:
                           if area == "vram" and address < NBG0_BYTES and
                           pc0 == COPY_PC)
         if baseline is None:
+            if len(records) != TOTAL_WRITES:
+                raise ValueError(
+                    f"expected exactly {TOTAL_WRITES} NBG0 writes, got {len(records)}")
             if pcs != {CLEAR_PC, COPY_PC}:
                 raise ValueError("NBG0 trace PC set is not the bounded clear/copy pair")
             if clear_writes != CLEAR_WRITES or copy_writes != COPY_WRITES:
