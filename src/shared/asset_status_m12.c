@@ -5788,25 +5788,18 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
             }
             return 1;
         }
-        if (strcmp(gameId, "csb") == 0 && selectedVersion && selectedVersion->versionId &&
-            (strcmp(selectedVersion->versionId, "fmtowns-en") == 0 ||
-             strcmp(selectedVersion->versionId, "fmtowns-ja") == 0) &&
+        if (strcmp(gameId, "csb") == 0 && selectedVersion &&
             m12_path_is_virtual_asset(selectedVersion->matchedPath)) {
-            const char* separator = strstr(selectedVersion->matchedPath, "::");
-            size_t archiveLength;
-            /* F31 retail ZIPs contain a roughly 500 MB compressed CD image.
-             * The native CSB boot owner reads it in RAM and retains just the
-             * verified runtime members.  Do not first expand that image into
-             * asset-cache: doing so defeats the source-bound path and writes
-             * a large transient copy of user media. */
-            if (!separator || (archiveLength = (size_t)(separator -
-                                                         selectedVersion->matchedPath)) == 0U ||
-                archiveLength >= sizeof(status->runtimeDataDirs[gameIndex])) {
+            /* CSB's boot profile owns bounded virtual readers for the
+             * selected GRAPHICS/DUNGEON pair and archive-backed sidecars.
+             * Keep every authenticated Atari, Amiga and FM Towns container
+             * as the runtime root; do not manufacture a flattened cache
+             * tree merely because the original medium is nested. */
+            if (!m12_source_runtime_root(selectedVersion->matchedPath,
+                                         status->runtimeDataDirs[gameIndex],
+                                         sizeof(status->runtimeDataDirs[gameIndex]))) {
                 return 0;
             }
-            memcpy(status->runtimeDataDirs[gameIndex],
-                   selectedVersion->matchedPath, archiveLength);
-            status->runtimeDataDirs[gameIndex][archiveLength] = '\0';
             return 1;
         }
         if (strcmp(gameId, "csb") == 0 && selectedVersion &&
