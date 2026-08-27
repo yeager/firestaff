@@ -76,16 +76,15 @@ Two V2 high-RAM snapshots were taken from direct JP CUE/BIN sessions at the
 same frame 1810, one with START held from frame 1800 and one without input.
 Both contain the exact 1 MiB `0x06000000`--`0x060fffff` WorkRAMH image. Their
 payloads differ in six bytes: `0x0602c8f9`--`fa`, `0x0602c900`--`01`,
-`0x0602c90c`, and `0x0602c910`. The held values at the latter two are `0x10`
-where the control has `0x00`, establishing a real controller-associated state
-write even though VDP output remains unchanged.
+`0x0602c90c`, and `0x0602c910`; the latter two are `0x10` in the held run and
+`0x00` in that control.
 
-A second pair at frame 1820, after the 12-frame START hold has ended, still
-differs at `0x0602c8f9` and `0x0602c900` (`0x05` held versus `0x24` control).
-This proves persistence beyond the direct pad-bit window, but not a named
-menu variable, level selector, LEV01 load, or party pose. The state owner and
-consumer therefore remain capture-gated; Firestaff must not promote these
-bytes into synthetic gameplay state.
+This is not a state-owner receipt. A repeat no-input snapshot at frame 1900
+also differs from the first no-input run, including the same two long-lived
+addresses. Their values therefore have an uncontrolled timing or session
+component, and the held/control difference cannot be attributed to START.
+The state owner and consumer remain capture-gated; Firestaff must not promote
+these bytes into synthetic gameplay state.
 
 ## Japanese retail start-pose disassembly audit — 2026-08-27
 
