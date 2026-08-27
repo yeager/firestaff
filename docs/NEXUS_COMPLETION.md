@@ -153,6 +153,12 @@ changes as a false positive and proves no observed presentation transition for
 that input interval. It does not prove that START is ignored globally, and it
 cannot authorize a menu or gameplay route.
 
+The same bounded A-button (`0x20`) hold produces the same byte-identical six
+frame receipts against the no-input control. Both common confirmation inputs
+therefore have negative evidence in this particular intro window. Further
+capture work must move to a distinct observed input-ready state rather than
+repeating the 1800--1860 interval.
+
 ## Japanese retail start-pose disassembly audit — 2026-08-27
 
 The Japanese CUE data track was read in place and the authenticated `DM.BIN`
