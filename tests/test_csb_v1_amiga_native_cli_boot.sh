@@ -8,12 +8,7 @@ firestaff_cli="${1:?Firestaff executable is required}"
 # sufficient evidence for the A31 native startup route.  Do not infer an
 # A31 root merely because ~/.firestaff/data/csb exists; the caller must name
 # the curated original A31 directory explicitly.
-data_dir="${FIRESTAFF_CSB_AMIGA31_DATA_DIR:-}"
-
-if [ -z "$data_dir" ]; then
-    echo "SKIP: set FIRESTAFF_CSB_AMIGA31_DATA_DIR to curated original A31 media"
-    exit 0
-fi
+data_dir="${FIRESTAFF_CSB_AMIGA31_DATA_DIR:-$HOME/.firestaff/data/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip}"
 
 if [ ! -x "$firestaff_cli" ]; then
     echo "SKIP: Firestaff executable is unavailable"

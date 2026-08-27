@@ -2,7 +2,7 @@
 set -eu
 
 firestaff_cli="${1:?Firestaff executable is required}"
-data_dir="${FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR:-}"
+data_dir="${FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR:-$HOME/.firestaff/data/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip}"
 language="${FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE:-en}"
 user_save="${FIRESTAFF_CSB_FMTOWNS_USER_SAVE:-}"
 edition_arg=""
@@ -11,10 +11,6 @@ expected_media="$data_dir"
 # This remains opt-in because the F31 CD image is licensed game material.
 # Do not infer a FM Towns package from a generic CSB root: the scanner must
 # authenticate the selected original media itself.
-if [ -z "$data_dir" ]; then
-    echo "SKIP: set FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR to original F31 media"
-    exit 0
-fi
 if [ ! -x "$firestaff_cli" ]; then
     echo "SKIP: Firestaff executable is unavailable"
     exit 0
