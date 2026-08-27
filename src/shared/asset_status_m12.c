@@ -5774,13 +5774,13 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
             }
         }
         if (strcmp(gameId, "dm1") == 0 && selectedVersion &&
-            selectedVersion->versionId &&
-            (strcmp(selectedVersion->versionId, "fmtowns-en") == 0 ||
-             strcmp(selectedVersion->versionId, "fmtowns-ja") == 0) &&
             m12_path_is_virtual_asset(selectedVersion->matchedPath)) {
-            /* M11 reads the selected ZIP/CD members into bounded RAM. Keep
-             * the original archive as the handoff owner; an asset-cache
-             * extraction both changes provenance and duplicates user media. */
+            /* M11's DM1 readers consume PC, Atari, Amiga and FM Towns
+             * archive members through bounded RAM.  Keep the original
+             * container as the handoff owner for every authenticated DM1
+             * edition; copying only GRAPHICS/DUNGEON into asset-cache would
+             * both lose sibling provenance and violate no-extraction media
+             * handling. */
             if (!m12_source_runtime_root(selectedVersion->matchedPath,
                                          status->runtimeDataDirs[gameIndex],
                                          sizeof(status->runtimeDataDirs[gameIndex]))) {
