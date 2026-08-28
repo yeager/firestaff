@@ -4,6 +4,7 @@ set -euo pipefail
 app=${1:?usage: test_dm1_v1_fmtowns_archive_cli_boot.sh <firestaff-binary>}
 archive=${FIRESTAFF_DM1_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"}
 expected_md5=c10c512f63461ebe79b5ac365115b61b
+expected_edm_md5=c27e7b984df9753912c3375dc121919f
 
 if [[ ! -x "$app" || ! -f "$archive" ]]; then
     printf '%s\n' 'SKIP: authentic DM1 FM Towns archive is not staged'
@@ -18,6 +19,10 @@ probe() {
     }
     grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=dm1' <<<"$output" &&
     grep -Fq "assetMd5=$expected_md5" <<<"$output" &&
+    grep -Fq 'platformHandoff=fmtowns-tmenu-edm' <<<"$output" &&
+    grep -Fq 'fmtownsProgram=EDM.EXP' <<<"$output" &&
+    grep -Fq "fmtownsProgramMd5=$expected_edm_md5" <<<"$output" &&
+    grep -Fq 'fmtownsMenuSelectsProgram=1' <<<"$output" &&
     grep -Fq 'phase=dm1-runtime' <<<"$output" &&
     grep -Fq 'levelLoaded=1' <<<"$output"
 }
@@ -35,10 +40,14 @@ gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 }
 if ! grep -Fq 'phase=dm1-runtime' <<<"$gameplay_output" ||
    ! grep -Fq 'levelLoaded=1' <<<"$gameplay_output" ||
+   ! grep -Fq 'platformHandoff=fmtowns-tmenu-edm' <<<"$gameplay_output" ||
+   ! grep -Fq 'fmtownsProgram=EDM.EXP' <<<"$gameplay_output" ||
+   ! grep -Fq "fmtownsProgramMd5=$expected_edm_md5" <<<"$gameplay_output" ||
+   ! grep -Fq 'fmtownsMenuSelectsProgram=1' <<<"$gameplay_output" ||
    ! grep -Fq 'map=0 party=1,4,2' <<<"$gameplay_output"; then
     printf '%s\n' "$gameplay_output" >&2
     printf '%s\n' 'FAIL: authentic DM1 FM Towns up input did not reach native movement' >&2
     exit 1
 fi
 
-printf '%s\n' 'PASS: authentic DM1 FM Towns ZIP reaches CLI, menu, and native movement runtime in memory'
+printf '%s\n' 'PASS: authentic DM1 FM Towns ZIP reaches CLI, menu, TMENU/EDM handoff, and native movement runtime in memory'

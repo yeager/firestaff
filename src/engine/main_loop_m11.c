@@ -3856,6 +3856,10 @@ static void m11_phase_a_print_boot_probe_receipt(
     int scriptFrames) {
     M11_BootProbeReceipt receipt;
     const char* runtimeDir = "";
+    const char* platformHandoff = "none";
+    const char* fmtownsProgram = "";
+    const char* fmtownsProgramMd5 = "";
+    int fmtownsMenuSelectsProgram = 0;
     if (menuState && gameId && gameId[0] != '\0') {
         runtimeDir = M12_AssetStatus_GetRuntimeDataDir(&menuState->assetStatus,
                                                        gameId);
@@ -3875,6 +3879,19 @@ static void m11_phase_a_print_boot_probe_receipt(
                 scriptFrames);
         return;
     }
+    /* An FM Towns GRAPHICS.DAT hash and shared DM1 runtime phase do not prove
+     * the original Towns launcher route.  Expose the source-bound TMENU
+     * selection and selected EDM/JDM executable receipt so CLI verification
+     * cannot promote the common runtime path as platform-native by itself. */
+    if (gameView && gameView->dm1FmtownsStartupReceiptValid &&
+        dm1_v1_fmtowns_startup_receipt_is_native(
+            &gameView->dm1FmtownsStartupReceipt)) {
+        platformHandoff = "fmtowns-tmenu-edm";
+        fmtownsProgram = gameView->dm1FmtownsStartupReceipt.game_program_name;
+        fmtownsProgramMd5 = gameView->dm1FmtownsStartupReceipt.game_program_md5;
+        fmtownsMenuSelectsProgram =
+            gameView->dm1FmtownsStartupReceipt.menu_info_selects_game;
+    }
     {
         DM1_V1_StartupHoCBootProbeLogReceipt_PC34 dm1Log;
         memset(&dm1Log, 0, sizeof(dm1Log));
@@ -3882,7 +3899,7 @@ static void m11_phase_a_print_boot_probe_receipt(
             &receipt.dm1HoCBootSummary,
             &dm1Log);
     fprintf(stderr,
-            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d window=%dx%d windowMode=%d presentationMode=%d presentation=%dx%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm2FrameAccepted=%d dm2RealAssets=%d dm2NoCoreFallbacks=%d dm2FallbackDraws=%d csbViewportHash=%u csbV22CellsPainted=%d dm1WorldTick=%u startedFromLauncher=%d introBypassed=%d %s\n",
+            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d window=%dx%d windowMode=%d presentationMode=%d presentation=%dx%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm2FrameAccepted=%d dm2RealAssets=%d dm2NoCoreFallbacks=%d dm2FallbackDraws=%d csbViewportHash=%u csbV22CellsPainted=%d dm1WorldTick=%u startedFromLauncher=%d introBypassed=%d platformHandoff=%s fmtownsProgram=%s fmtownsProgramMd5=%s fmtownsMenuSelectsProgram=%d %s\n",
             gameId ? gameId : "",
             (int)receipt.sourceKind,
             receipt.sourceId,
@@ -3921,6 +3938,10 @@ static void m11_phase_a_print_boot_probe_receipt(
             (unsigned int)receipt.dm1WorldTick,
             receipt.startedFromLauncher,
             receipt.dm1StartupIntroBypassed,
+            platformHandoff,
+            fmtownsProgram,
+            fmtownsProgramMd5,
+            fmtownsMenuSelectsProgram,
             dm1Log.fields[0] ? dm1Log.fields : "dm1HoCBootSummary=missing");
     }
 }

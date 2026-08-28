@@ -20,4 +20,7 @@ Reviewed 2026-08-25. Completed work only.
   `2bdc5f431f84c0ece738f54dbd787c3b` and dungeon hash
   `cea11d6e9f7e1698fc95329fe3fb0899`.
 - The supplied FM Towns JA/EN archive is verified through both direct CLI
-  and start menu, reaching `dm1-runtime` without media extraction.
+  and start menu, reaching `dm1-runtime` without media extraction.  The
+  boot receipt requires the source-bound `TMENU.INF` selection and selected
+  `EDM.EXP`/`JDM.EXP` MD5, rather than promoting generic DM1 movement as a
+  native FM Towns handoff.
