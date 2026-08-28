@@ -34,7 +34,7 @@ source-anchored decoding and output chain is verified.
 
 - Original PC-DOS `GRAPHICS.DAT`, GDAT `MUSICS/<track>/dtHMP/0`.
 - Original PC-DOS `SONGLIST.DAT`.
-- SKProject `SKWINSPX/src/v5/sfxsnd.cpp::DM2_PLAY_MUSIC`, som kontrollerar
+- SKProject `SKWINSPX/src/v5/sfxsnd.cpp::DM2_PLAY_MUSIC`, which checks
   the GDAT record before music is requested.
 - SKProject `SKWIN/SkWinMIDI.cpp`, which shows that its MIDI support requires
   an external converted Standard MIDI file.

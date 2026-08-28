@@ -1,309 +1,303 @@
-# Nexus – strikt källtrogen inventering
+# Nexus – strict source-fidelity inventory
 
-Detta är en arbetsinventering för DM Nexus (Saturn). En verifierad filhash
-eller parserkännedom räcker inte som bevis för att en yta får renderas:
-pixelavkodning och runtime-handoff måste också vara verifierade.
+This is a working inventory for DM Nexus (Saturn). A verified file hash or
+parser knowledge is insufficient proof that a surface may be rendered: pixel
+decoding and runtime handoff must also be verified.
 
-## Uppstart
+## Startup
 
-| Källa/route | Status | Regel |
+| Source/route | Status | Rule |
 |---|---|---|
-| `TITLE.CG` + `TITLE.BIN` MAPD | DMWeb-dekodern dokumenterar 5 MAPD-bilder på 64×28 tiles, 8×8 pixels, med 4bpp `TITLE.CG`-tiles och 16-färgspalett från MAPD; Firestaff avkodar nu alla fem retail-frames och paletten från MAPD-offset `0x8c54` | 512×224-bildernas Saturn→Firestaff-presentationsbindning är fortfarande blockerad; M11 gör ingen implicit top-left-kopia till 320×224 |
-| `LOGOBG.DG2` | Retailens `PP`-header, 320×224 indexpixlar och 256 big-endian BGR555-palette avkodas till en valfri source-owned UI-surface med råbytesproveniens | VDP2-lager, palette-bank, timing och placering saknar capture; ingen host-presentering |
-| Kodbyggda titelkanter/prompt | Borttagna från `nexus_v1_title.c` | Ingen syntetisk grafik läggs ovanpå `TITLE.CG` |
-| Saknad/ej redo titelasset | Blockerad | Ingen syntetisk titelbild |
-| Startup-fallback | Isolerad status/diagnostik | Får inte materialiseras som spelgrafik |
-| `nexus_render_title_fallback` (äldre API) | Isolerad; ingen M11-produktionsanropsväg | Får inte återkopplas som Nexus-startbild |
-| Hårdkodad roster i `nexus_v1_champions.c` | Borttagen från produktionsbiblioteket; kvar endast i `tests/nexus_v1_champions_fixture.c` för äldre kompatibilitetstester | Namn, japanska namn och attribut kommer i produktion endast från verifierad RLOWFIX/PLRD; saknad eller felaktig källa lämnar roster tom och championpresentation fail-closed |
-| Saturns `FACE.BIN` | Verifierad 20-entry container; alla 20 verkliga PRS3-portraitrecords kan avkodas till 56×56 pixlar. Uppstartens loader bevarar nu varje frames 64-entry BGR555-källpalette och RGBA-expansion | Champion-index och VDP-placering saknar fortfarande verifiering; M11 laddar receipten men placerar inte portraitpixlar |
-| Hårdkodad creature-statstabell i `nexus_v1_creatures.c` | Bortkopplad från runtime | MNS bevisar modellcontainer, inte HP/attack/försvar/XP; creature-init lämnar typregistret tomt tills DGN/DM.BIN-statkälla är verifierad |
-| Creature→MNS-filnamn och AI-sentinel i `nexus_v1_creatures.c` | Retailfilnamn byteverifierade vid `DM.BIN+0x0385F0`; 30 AI/sentinel-poster byteverifierade vid `DM.BIN+0x0383A8`; engelska labels borttagna | Detta är källmetadata, inte en live-modellkonsument; CRET-stats kommer endast från retail `RLOWFIX.BIN`, och DGN/MNS-modellplacering kräver fortsatt bindning |
-| DM1-inherited itemkatalog i `nexus_v1_inventory.c` | Bortkopplad från runtime | Filen anger själv att Saturnspecifika stats, namn och use-semantik inte är bekräftade; item-ID:n resolvear nu inte till DM1-stand-ins |
-| Saturns `ITEM.IBS` | Verifierad 0x18800-byte visual/declaration-bank; real DGN Structure1Fa-referenser binds utan ersättningsbild; nivåladdningen behåller nu DGN:s deklarations-ID och råa attribut 1/2; floor-image-renderern följer DMWebs palette-ID-bundna `palette_offset == 0`-återanvändning | IBS bevisar ikon-/deklarationsdata och råa attribut, inte combat-, vikt-, namn- eller use-stats; item-use, pickup och attributtolkning i live mechanics är fortsatt no-op tills Saturns action-dispatcher är bunden |
-| Saturns `SMAP00-15.BIN` | Alla 16 verkliga LVMP-kartor avkodas till 640×608 med retail tilemap, 256-entry BGR555-palette och begränsade tile-index | Tilemap bit 0, palette bit 15 och VDP2/explored-state-ägare måste fortsätta vara källbundna; automap-pixlarna hålls no-draw |
-| Infererad DM1-drop-tabell i `nexus_v1_drops.c` | Bortkopplad från runtime | Tabellen är uttryckligen DM1-kompatibel och härledd från XP; drops returnerar nu tomt tills Nexus-källa finns |
-| DM1-inherited magiformel/stub i `nexus_v1_magic.c` | Bortkopplad från runtime | Rune-kombinationer och spell-effekter är inte verifierade; kostnad och cast returnerar nu blockerad route utan manaändring |
-| DM1-style combat/XP i `nexus_v1_combat.c` | Bortkopplad från runtime; mechanics/engine action-gate stängd | Attackformel, kritisk träff, stamina-kostnad, creature attacks, spells, projectile damage och XP är inte Nexus-verifierade; live-routes muterar inte state tills Saturnkällan finns |
+| `TITLE.CG` + `TITLE.BIN` MAPD | The DMWeb decoder documents 5 MAPD images of 64×28 tiles, 8×8 pixels, with 4bpp `TITLE.CG` tiles and a 16-colour palette from MAPD; Firestaff now decodes all five retail frames and the palette from MAPD offset `0x8c54` | The Saturn→Firestaff presentation binding for the 512×224 images remains blocked; M11 makes no implicit top-left copy to 320×224 |
+| `LOGOBG.DG2` | The retail `PP` header, 320×224 index pixels, and 256-entry big-endian BGR555 palette are decoded into an optional source-owned UI surface with raw-byte provenance | VDP2 layer, palette bank, timing, and placement lack capture; no host presentation |
+| Code-built title borders/prompt | Removed from `nexus_v1_title.c` | No synthetic graphics are placed over `TITLE.CG` |
+| Missing/not-ready title asset | Blocked | No synthetic title image |
+| Startup fallback | Isolated status/diagnostics | Must not materialize as game graphics |
+| `nexus_render_title_fallback` (older API) | Isolated; no M11 production call path | Must not be reconnected as a Nexus startup image |
+| Hard-coded roster in `nexus_v1_champions.c` | Removed from the production library; retained only in `tests/nexus_v1_champions_fixture.c` for legacy compatibility tests | Names, Japanese names, and attributes in production come only from verified RLOWFIX/PLRD; a missing or invalid source leaves the roster empty and champion presentation fail-closed |
+| Saturn `FACE.BIN` | Verified 20-entry container; all 20 real PRS3 portrait records can be decoded to 56×56 pixels. The startup loader now retains every frame's 64-entry BGR555 source palette and RGBA expansion | Champion index and VDP placement still lack verification; M11 loads the receipt but does not place portrait pixels |
+| Hard-coded creature stats table in `nexus_v1_creatures.c` | Disconnected from runtime | MNS proves a model container, not HP/attack/defense/XP; creature initialization leaves the type register empty until a DGN/DM.BIN stats source is verified |
+| Creature→MNS filenames and AI sentinel in `nexus_v1_creatures.c` | Retail filenames byte-verified at `DM.BIN+0x0385F0`; 30 AI/sentinel entries byte-verified at `DM.BIN+0x0383A8`; English labels removed | This is source metadata, not a live model consumer; CRET stats come only from retail `RLOWFIX.BIN`, and DGN/MNS model placement requires continued binding |
+| DM1-inherited item catalog in `nexus_v1_inventory.c` | Disconnected from runtime | The file itself states that Saturn-specific stats, names, and use semantics are unconfirmed; item IDs no longer resolve to DM1 stand-ins |
+| Saturn `ITEM.IBS` | Verified 0x18800-byte visual/declaration bank; real DGN Structure1Fa references bind without replacement images; level loading now retains DGN declaration IDs and raw attributes 1/2; the floor-image renderer follows DMWeb's palette-ID-bound `palette_offset == 0` reuse | IBS proves icon/declaration data and raw attributes, not combat, weight, name, or use stats; item use, pickup, and attribute interpretation in live mechanics remain no-op until Saturn's action dispatcher is bound |
+| Saturn `SMAP00-15.BIN` | All 16 real LVMP maps decode to 640×608 with retail tilemap, 256-entry BGR555 palette, and bounded tile indexes | Tilemap bit 0, palette bit 15, and VDP2/explored-state ownership must remain source-bound; automap pixels remain no-draw |
+| Inferred DM1 drop table in `nexus_v1_drops.c` | Disconnected from runtime | The table is explicitly DM1-compatible and derived from XP; drops now return empty until a Nexus source exists |
+| DM1-inherited magic formula/stub in `nexus_v1_magic.c` | Disconnected from runtime | Rune combinations and spell effects are unverified; cost and cast now return a blocked route without mana mutation |
+| DM1-style combat/XP in `nexus_v1_combat.c` | Disconnected from runtime; mechanics/engine action gate closed | Attack formula, critical hit, stamina cost, creature attacks, spells, projectile damage, and XP are not Nexus-verified; live routes do not mutate state until the Saturn source exists |
 
-## Meny
+## Menu
 
-| Källa/route | Status | Regel |
+| Source/route | Status | Rule |
 |---|---|---|
-| `MENU.BPK` | Finns lokalt och hash-/strukturverifierad; alla 162 PRS3-ytor identifieras som 8-bitars indexdata efter DMWeb-avkodning | PRS3:s prefix-mode är ett internt formatfält, inte hostens bytebredd/färgklass. Placering, CLUT/palettbindning och menysemantik är fortfarande separata gates |
-| `MENU.BPK` capture-surface join | En capture-only-adapter jämför en explicit PRS3-yta rad för rad mot en Saturn-capture och binder dess 256 råa PALT/CRAM-ord; receipten behåller alltid `renderer_permitted=0` | Detta öppnar inte menysemantik, VDP2-lagerägare eller normal launcher-rendering |
-| Startup/save/champion-text | Riktiga TEXT4/TABL/FONT012-receipts behålls i engine-state; produktionsbyggaren lämnar textfält tomma och behåller endast bounded no-op/geometry-slots | Hoststrängar får inte ersätta Saturns textkonsument eller VDP2-placering före capture |
-| DM.BIN startup/menu-resursankare | Den riktiga europeiska `DM.BIN`-korpusen binder `MENU.BPK`, `yam\\menu.c`, `FONT256.S2D` och `STABG.BIN` vid `0x373B4`–`0x373D8`; pointer-receipten är 1/10/1/1. SH-2-rutinen vid `0x18B60` och dess 0x90-byte literalpool har FNV-1a64 `0xF6D5CC046BAB98C7`, med `FONT256.S2D`-målet vid `0x18BF4`, meny-/STABG-adressmålen vid `0x18C00`/`0x18C20`; `TEXTTABL` finns vid `0x294C0` | Detta bevisar loaderns resursnamn, tabellmarkör och SH-2-adressreferenser, inte menyordning, textkonsument eller VDP1/VDP2-komposition |
-| Menytextkonsument | Engine-init behåller nu den verkliga europeiska RLOWFIX TEXT4-receipten (resource 4, 15 strängar), 216-entry TABL-receipt och FONT012 #0/#1/#2 (291/250/710 glyphs) tillsammans med PLRD. DM.BIN har dessutom en vardera av registerkonstanterna `0x25F00006` och `0x25F80000`, som byteverifieras | Hostens chrome-strängar är inte en Saturn textkonsument; `menu_text_consumer_bound` är 0 på riktiga engine-instanser och routes förblir stängda tills TEXT4/TABL/FONT012 samt register-/VDP2-användning är capture-bundna. FONT256 är separat champion/spell-bank och öppnar inte menyrouten |
-| `nexus_v1_prs3_decode.c` | DMWeb-reglerna är source-bound; alla 162 retail-ytor i MENU.BPK dekoderar korrekt till deklarerad storlek i real-corpus-testet. Runtime-receiptet markerar nu byte-dekodern som promoted och behåller en deterministisk pixelhash, utan att lämna ut pixlar till renderer. Ogiltiga backreferenser avvisas fail-closed. | Får användas för byteavkodning, men inte som bevis för Saturns palettbindning, VDP1-upload, VDP2-composition eller skärmplacering |
-| `SLEV00-15.BIN` task-entry-profil | Alla 16 verkliga filer passerar den gemensamma 36-byte SH-2-entry-spinen; bounded receipt bevarar setup-immediate, två PC-relativa literaladresser, RTS-gräns och opcode-form | Task-bodyns event-/actionägare är fortfarande okänd; ingen script-dispatch eller syntetisk regel aktiveras |
-| `SDDRVS.TSK` | Den autentiserade 26 610-byte sound-CPU-bilden är byteverifierad som 68000-kod: entry `0x1000`, basregisterkorridor vid `0x1080`, kommandomask/dispatch vid `0x1c08`/`0x1c2a` och PCM voice-register-rutin vid `0x1f0e` | Detta bevisar struktur och kodägarskap, inte event→MAP-selector, SAL-codec eller native playback; dessa förblir capture-gated |
-| SCSP-write trace | C-receipt validerar råtrace-schema/hash, mailbox `0x100400`, observerat värde `0x02`, SDDRVS-PC `0x3224` och SCSP-registerkorridor mot den externa tracen | Trace-strukturen bevisar inte vilken gameplayhändelse som skrev mailboxen, MAP-rad, SAL-codec eller playback; alla semantikgater är stängda |
-| Main SCSP producer trace | Separat C-receipt validerar `FIRESTAFF_NEXUS_MAIN_SCSP_WRITE_TRACE_V1` och kräver autentiska mailboxvärden `0x02` och `0x0200` | SH-2-producerobservationen binder inte event, MAP-rad, SAL-sample, SCSP-voice eller playback |
-| `FONT256.S2D` CG-font | DMWeb:s verifierade CG-region ger 242 verkliga 8×8/8-bit tiles; loadern exponerar nu endast dessa 242 bytefönster och fyller inte längre 14 okända glyphplatser med nollor. Den engelska retailrevisionens separata, opaka section-2-profil är dessutom bytebunden (`857` block, `68` runs, `0x00/0x03/0x0f/0xff = 8890/3498/3100/16) | SCR:s nominella 256 tecken, page/tilemap-kodning, Shift-JIS-mappning och Saturns textplacering är fortfarande obevisade; ingen produktionsrendering utan dessa källor |
-| ISO-only Nexus-korpus | Source-detektionen skiljer nu virtuella ISO-hashträffar (`disc.iso::LEV00.DGN`) från lösa extracted-filer; ISO-only-data går genom ISO-läsaren och materialiseras inte som en falsk host-path | DGN/VDP1-runtime är fortfarande capture-gated efter korrekt level-handoff |
-| Procedurbyggda save/champion-kommandon | Hostlogik och hit-testgeometri finns; M11-executorn lämnar text, fill-/outline-ramar och obevisad placering oritade. FACE laddas endast till en verifieringsreceipt; M11 placerar inga portraitpixlar | Får inte ersätta Saturn-menygrafik |
-| PRS3-fallbackgrafik | Blockerad | Ingen syntetisk ersättningsyta |
+| `MENU.BPK` | Exists locally and is hash-/structure-verified; all 162 PRS3 surfaces are identified as 8-bit index data after DMWeb decoding | PRS3's prefix mode is an internal format field, not host byte width/colour class. Placement, CLUT/palette binding, and menu semantics remain separate gates |
+| `MENU.BPK` capture-surface join | A capture-only adapter compares an explicit PRS3 surface row-by-row with a Saturn capture and binds its 256 raw PALT/CRAM words; the receipt always retains `renderer_permitted=0` | This does not open menu semantics, VDP2 layer ownership, or normal launcher rendering |
+| Startup/save/champion text | Real TEXT4/TABL/FONT012 receipts are retained in engine state; the production builder leaves text fields empty and retains only bounded no-op/geometry slots | Host strings must not replace Saturn's text consumer or VDP2 placement before capture |
+| DM.BIN startup/menu resource anchors | The real European `DM.BIN` corpus binds `MENU.BPK`, `yam\\menu.c`, `FONT256.S2D`, and `STABG.BIN` at `0x373B4`–`0x373D8`; the pointer receipt is 1/10/1/1. The SH-2 routine at `0x18B60` and its 0x90-byte literal pool have FNV-1a64 `0xF6D5CC046BAB98C7`, with the `FONT256.S2D` target at `0x18BF4`, menu/STABG address targets at `0x18C00`/`0x18C20`; `TEXTTABL` is at `0x294C0` | This proves loader resource names, table marker, and SH-2 address references, not menu ordering, text consumer, or VDP1/VDP2 composition |
+| Menu text consumer | Engine initialization now retains the real European RLOWFIX TEXT4 receipt (resource 4, 15 strings), 216-entry TABL receipt, and FONT012 #0/#1/#2 (291/250/710 glyphs) together with PLRD. DM.BIN also contains one byte-verified occurrence each of register constants `0x25F00006` and `0x25F80000` | Host chrome strings are not a Saturn text consumer; `menu_text_consumer_bound` is 0 in real engine instances and routes remain closed until TEXT4/TABL/FONT012 plus register/VDP2 use are capture-bound. FONT256 is a separate champion/spell bank and does not open the menu route |
+| `nexus_v1_prs3_decode.c` | The DMWeb rules are source-bound; all 162 retail MENU.BPK surfaces decode correctly to their declared size in the real-corpus test. The runtime receipt now marks the byte decoder as promoted and retains a deterministic pixel hash, without exposing pixels to the renderer. Invalid backreferences are rejected fail-closed. | May be used for byte decoding, but not as proof of Saturn palette binding, VDP1 upload, VDP2 composition, or screen placement |
+| `SLEV00-15.BIN` task-entry profile | All 16 real files pass the shared 36-byte SH-2 entry spine; the bounded receipt retains the setup immediate, two PC-relative literal addresses, RTS boundary, and opcode form | The task body's event/action owner remains unknown; no script dispatch or synthetic rule is enabled |
+| `SDDRVS.TSK` | The authenticated 26,610-byte sound-CPU image is byte-verified as 68000 code: entry `0x1000`, base-register corridor at `0x1080`, command mask/dispatch at `0x1c08`/`0x1c2a`, and PCM voice-register routine at `0x1f0e` | This proves structure and code ownership, not event→MAP selection, SAL codec, or native playback; these remain capture-gated |
+| SCSP-write trace | The C receipt validates the raw trace schema/hash, mailbox `0x100400`, observed value `0x02`, SDDRVS PC `0x3224`, and SCSP register corridor against the external trace | The trace structure does not prove which gameplay event wrote the mailbox, the MAP row, SAL codec, or playback; all semantic gates remain closed |
+| Main SCSP producer trace | A separate C receipt validates `FIRESTAFF_NEXUS_MAIN_SCSP_WRITE_TRACE_V1` and requires authentic mailbox values `0x02` and `0x0200` | The SH-2 producer observation does not bind an event, MAP row, SAL sample, SCSP voice, or playback |
+| `FONT256.S2D` CG font | DMWeb's verified CG region supplies 242 real 8×8/8-bit tiles; the loader now exposes only those 242 byte windows and no longer zero-fills 14 unknown glyph slots. The English retail revision's separate opaque section-2 profile is also byte-bound (`857` blocks, `68` runs, `0x00/0x03/0x0f/0xff = 8890/3498/3100/16`) | SCR's nominal 256 characters, page/tilemap encoding, Shift-JIS mapping, and Saturn text placement remain unproven; no production rendering without these sources |
+| ISO-only Nexus corpus | Source detection now distinguishes virtual ISO hash hits (`disc.iso::LEV00.DGN`) from loose extracted files; ISO-only data goes through the ISO reader and is not materialized as a false host path | DGN/VDP1 runtime remains capture-gated after correct level handoff |
+| Procedurally built save/champion commands | Host logic and hit-test geometry exist; the M11 executor leaves text, fill/outline frames, and unproven placement undrawn. FACE loads only into a verification receipt; M11 places no portrait pixels | Must not replace Saturn menu graphics |
+| PRS3 fallback graphics | Blocked | No synthetic replacement surface |
 
-## HUD över viewport
+## HUD over the viewport
 
-| Källa/route | Status | Regel |
+| Source/route | Status | Rule |
 |---|---|---|
-| Saturn HUD-yta från `STABG.BIN` | Finns lokalt; STMP-container, 11 kartor och DMWeb:s första 40×21-karta avkodad till 320×168 indexpixlar. `nexus_ui_load_stabg()` materialiserar nu den riktiga ytan och bevarar alla 256 paletteord/deriverad RGBA-palette i UI-managern. En capture-only-adapter jämför dessutom alla 320×168 pixlar och 512 råa palettebyte mot en explicit Saturn-crop och behåller alltid `renderer_permitted=0`. `DM.BIN+0x376D0` är dessutom bunden till `yam\\menuctrl.c`, 80-entry FNV-1a64 och sju SH-2-adressreferenser; den separata `yam\\vdp2.c`-markören vid `0x38CF4` har sex exakta adressliteral-slots (`0x28098`, `0x28640`, `0x28778`, `0x2887C`, `0x289E0`, `0x28E1C`) och nio verifierade SH-2 `MOV.L`-laddningar (`0x27FE6`, `0x28002`, `0x285C6`, `0x28710`, `0x287AA`, `0x2880A`, `0x2885A`, `0x288B2`, `0x28D76`) | Ingen VDP1/VDP2-presentering, lagerägare eller runtime-bindning förrän placeringen är verifierad; sträng-/literalreceipts och capture-only-join bevisar inte konsumentsemantik |
-| `nexus_v2_hud_overlay.c` / `nexus_v2_hud_runtime.c` | Syntetisk font, labels, ikoner och hårdkodad presentation | Inte längre länkade i `firestaff_nexus`; endast uttryckliga test/probe-targets |
-| Runtime-state (riktning, nivå, guld) | Delvis tillgängligt i engine-state, men ingen verifierad Saturn-HUD-bindning | Får inte målas in i syntetisk HUD |
-| Blockerad viewport/HUD-route | Tidigare diagnostisk text är borttagen ur M11-spelytan; capture-only-kompositorn kan nu förena VDP1-sekvens med STABG som VDP2-källa i explicit vald lagerordning | Blank fail-closed frame i normal runtime; capture-receiptet är inte en Saturn-witness och status hör till launcher/statuslager |
-| Structure3 textured mesh | DGN-face/texture-payload kan fortfarande inventeras och materialiseras som receipt | Host-rasterisering kräver nu uttryckligt bevis för transform samt pixel/palett/VDP1-semantik; format-/offsetbevis räcker inte |
+| Saturn HUD surface from `STABG.BIN` | Available locally; STMP container, 11 maps, and DMWeb's first 40×21 map decoded to 320×168 index pixels. `nexus_ui_load_stabg()` now materializes the real surface and retains all 256 palette words/derived RGBA palette in the UI manager. A capture-only adapter additionally compares all 320×168 pixels and 512 raw palette bytes against an explicit Saturn crop and always retains `renderer_permitted=0`. `DM.BIN+0x376D0` is also bound to `yam\\menuctrl.c`, 80-entry FNV-1a64, and seven SH-2 address references; the separate `yam\\vdp2.c` marker at `0x38CF4` has six exact address-literal slots (`0x28098`, `0x28640`, `0x28778`, `0x2887C`, `0x289E0`, `0x28E1C`) and nine verified SH-2 `MOV.L` loads (`0x27FE6`, `0x28002`, `0x285C6`, `0x28710`, `0x287AA`, `0x2880A`, `0x2885A`, `0x288B2`, `0x28D76`) | No VDP1/VDP2 presentation, layer owner, or runtime binding until placement is verified; string/literal receipts and the capture-only join do not prove consumer semantics |
+| `nexus_v2_hud_overlay.c` / `nexus_v2_hud_runtime.c` | Synthetic font, labels, icons, and hard-coded presentation | No longer linked into `firestaff_nexus`; only explicit test/probe targets |
+| Runtime state (direction, level, gold) | Partly available in engine state, but has no verified Saturn HUD binding | Must not be painted into a synthetic HUD |
+| Blocked viewport/HUD route | Former diagnostic text has been removed from the M11 game surface; the capture-only compositor can now join a VDP1 sequence with STABG as the VDP2 source in explicitly selected layer order | Blank fail-closed frame in normal runtime; the capture receipt is not a Saturn witness and status belongs to the launcher/status layer |
+| Structure3 textured mesh | DGN face/texture payload can still be inventoried and materialized as a receipt | Host rasterization now requires explicit proof of transform plus pixel/palette/VDP1 semantics; format/offset proof is insufficient |
 
 ## Saturn-referens
 
-En användartillhandahållen europeisk Saturn BIOS 1.00 används endast som lokal
-referens och har inte lagts in i Firestaff eller distribuerats med projektet.
-Den extraherade dumpens SHA-256 är
+A user-provided European Saturn BIOS 1.00 is used only as a local reference
+and has not been added to Firestaff or distributed with the project. The
+extracted dump's SHA-256 is
 `96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`.
-BIOS-dumpen kan stödja framtida boot-/VDP-capture, men bevisar inte ensam
-Nexus-menyns `MENU.BPK`-placering eller `STABG.BIN`-layout. Därför ändrar den
-inte de nuvarande produktionsgaterna.
+The BIOS dump may support future boot/VDP capture, but alone does not prove
+Nexus menu `MENU.BPK` placement or `STABG.BIN` layout. It therefore does not
+alter the current production gates.
 
-En lokal Mednafen-körning med samma europeiska BIOS och retail-CUE identifierade
-SGID `T-9111G`, SGNAME `DUNGEON MASTER NEXUS`, PAL-region (`0x4`) och 240
-visade scanlines. En 13,8228 sekunders operator-lokal videofångst visar en
-faktisk exekverad Saturn-titelsekvens.
-Detta är runtime-bevis för att den exekverbara titeln måste hållas åtskild från
-de avkodade `TITLE.BIN`-resurserna; utan VDP1/VDP2-register- eller VRAM-capture
-bevisar det inte en Firestaff-layout.
+A local Mednafen run with the same European BIOS and retail CUE identified
+SGID `T-9111G`, SGNAME `DUNGEON MASTER NEXUS`, PAL region (`0x4`), and 240
+displayed scanlines. A 13.8228-second operator-local video capture shows an
+actually executed Saturn title sequence. This is runtime evidence that the
+executable title must remain distinct from decoded `TITLE.BIN` resources; without
+VDP1/VDP2 register or VRAM capture, it does not prove a Firestaff layout.
 
-## Övriga syntetiska vägar
+## Other synthetic paths
 
-`nexus_v1_rasterizer.c` hade en inbyggd palett med handskrivna färger i
-`nexus_fb_init()`. Den är borttagen. En ny framebuffer börjar nu utan färgdata
-och kan bara få palett via verifierad TITLE-, STABG- eller VDP1-materialbinding.
+`nexus_v1_rasterizer.c` previously had an embedded palette with handwritten
+colours in `nexus_fb_init()`. It has been removed. A new framebuffer now starts
+without colour data and can receive a palette only through verified TITLE, STABG,
+or VDP1 material binding.
 
-Döda fallback-title-deklarationer och fallback-planvärden är också borttagna
-ur Nexus-headerkontraktet. Därmed finns ingen deklarerad API-väg tillbaka till
-syntetisk titelgrafik.
+Dead fallback-title declarations and fallback-plane values have also been removed
+from the Nexus header contract. There is therefore no declared API path back to
+synthetic title graphics.
 
-`nexus_v1_raster_triangle_tex()` renderar inte längre en flat-colour-triangel
-när textur eller palett saknas; den avstår från att rita tills ett verifierat
-material finns. `nexus_v1_drops.c` hittar inte längre på ett guld-drop för en
-okänd creature-typ. Nexus-ljudet loggar nu uttryckligen blockerad playback;
-SAL/MAP-filerna får användas som evidens men ingen syntetisk sample eller
-falskt "playing"-tillstånd produceras. Den äldre råa sample-index-vägen är
-dessutom diagnostisk även när SAL-dekodning lyckas; endast en källbunden
-event→MAP-selector från Saturn-trace får senare öppna playback. Oregistrerade
-trapp-/chutelänkar
-returnerar nu blockerad square-event i stället för en påhittad nivåförflyttning,
-och dörrtest utan källbunden inventory passerar inte som om nyckel fanns.
-Movement passerar inte heller en dörr som inte har en verifierad öppen status i
-dörrregistret. `nexus_try_move()` kräver dessutom registrerade länkar för
-trappor, teleporter och chutes innan den ändrar partypositionen.
-Den äldre projektilrutinen använde paletteindex och `rand()`-jitter för att
-fabricera spell-effekter. Den är nu helt spärrad tills en verifierad Saturn-
-effektström och VDP1-bindning finns. Inga host-genererade projektilpixlar får
-passera Nexus-rasterizern.
-Den äldre dörrritaren hade dessutom DM1-härledd gapgeometri och palettindex
-10/14. Den är nu uttryckligen no-draw även när en godtycklig host-textur
-skickas in; dörrarnas gameplay-tillstånd kvarstår, men Saturnmaterial,
-animationsramar och VDP1-destination måste bindas innan dörrpixlar får skrivas.
-Mekanikproben är uppdaterad till detta kontrakt och passerar 285/285; de
-Nexus-specifika itemrutterna är explicit blockerade tills en Saturn-katalog
-är verifierad.
+`nexus_v1_raster_triangle_tex()` no longer renders a flat-colour triangle when
+texture or palette is missing; it declines to draw until verified material exists.
+`nexus_v1_drops.c` no longer invents a gold drop for an unknown creature type.
+Nexus audio now explicitly logs blocked playback; SAL/MAP files may be used as
+evidence, but no synthetic sample or false "playing" state is produced. The older
+raw sample-index path is also diagnostic even when SAL decoding succeeds; only a
+source-bound event→MAP selector from a Saturn trace may later open playback.
+Unregistered stair/chute links now return a blocked square event instead of an
+invented level transition, and a door test without source-bound inventory does
+not pass as though a key existed. Movement likewise does not pass a door without
+verified open status in the door register. `nexus_try_move()` additionally
+requires registered links for stairs, teleporters, and chutes before changing
+party position.
 
-Det syntetiska BPX0/BPX3-kontraktet i `nexus_v1_bpx_bpk.c` är borttaget från
-`firestaff_nexus`-biblioteket. Det kompileras endast uttryckligen i de två
-arkivgränsproberna, så testformatet kan inte nå Nexus-produktionen via globbad
-källista.
+The older projectile routine used palette indices and `rand()` jitter to fabricate
+spell effects. It is now fully blocked until a verified Saturn effect stream and
+VDP1 binding exist. No host-generated projectile pixels may pass through the
+Nexus rasterizer. The older door renderer also used DM1-derived gap geometry and
+palette indices 10/14. It is now explicitly no-draw even when an arbitrary host
+texture is supplied; door gameplay state remains, but Saturn material, animation
+frames, and VDP1 destination must be bound before door pixels may be written.
+The mechanics probe has been updated to this contract and passes 285/285; the
+Nexus-specific item routes are explicitly blocked until a Saturn catalogue is
+verified.
 
-`nexus_v22_modern_assets_pc34.c` har ingen missing-asset-placeholder längre.
-V2.2-modern assetpipeline och in-place-väg är fortfarande isolerade test/probe-
-moduler; deras cell-till-asset-mappning returnerar NULL tills riktig Saturn-
-eller manifestbindning finns.
-Modulen är dessutom borttagen från `firestaff_nexus`-bibliotekets produktions-
-källista; den byggs endast där dess isolerade katalog-/assettester uttryckligen
-behöver den.
-V2-belysning, atmosfär, partiklar, mjuk rörelse och touch ligger inte längre i
-`firestaff_nexus` och initieras inte av M11. De kvarvarande implementationerna
-är endast isolerade test/probe-fixtures tills motsvarande Saturn-bevis finns.
+The synthetic BPX0/BPX3 contract in `nexus_v1_bpx_bpk.c` has been removed from
+the `firestaff_nexus` library. It is compiled explicitly only in the two archive
+boundary probes, so the test format cannot reach Nexus production through a
+globbed source list.
 
-M12-launchern visar Nexus som `V1 Only (V2 Source Blocked)` och dess
-`presentationReady`-gate avvisar Nexus V2.2-modernläge. Därmed kan den
-procedurbyggda presentationen inte väljas som en till synes färdig route.
+`nexus_v22_modern_assets_pc34.c` no longer has a missing-asset placeholder. The
+V2.2 modern asset pipeline and in-place path remain isolated test/probe modules;
+their cell-to-asset mapping returns NULL until real Saturn or manifest binding
+exists. The module has also been removed from the `firestaff_nexus` library's
+production source list; it builds only where its isolated catalogue/asset tests
+explicitly need it. V2 lighting, atmosphere, particles, smooth motion, and touch
+are no longer in `firestaff_nexus` and are not initialized by M11. The remaining
+implementations are only isolated test/probe fixtures until corresponding Saturn
+evidence exists.
 
-Den äldre ITEM.IBS-diagnostikdekodern återanvänder inte längre palette 0 för
-DMWebs `FF00`-associationer eller ogiltiga floor-palette-ID:n. Sådana poster
-förblir obevisade i receipten; den verifierade runtime-banken och dess
-VDP1-gate ändras inte.
+The M12 launcher displays Nexus as `V1 Only (V2 Source Blocked)` and its
+`presentationReady` gate rejects Nexus V2.2 modern mode. The procedurally built
+presentation therefore cannot be selected as an apparently finished route.
 
-## Ny verifiering av HUD-källan
+The older ITEM.IBS diagnostic decoder no longer reuses palette 0 for DMWeb
+`FF00` associations or invalid floor-palette IDs. Such records remain unproven
+in the receipt; the verified runtime bank and its VDP1 gate are unchanged.
 
-DMWebs `DMNDataFileDecoder.vbs`, `DecodeSTABGBIN`, är nu implementerad som
-en separat decode receipt. Retail-`STABG.BIN` verifieras mot dess tre delar:
-tilemap, 256-färgers palette och 791 8x8-indexerade tiles. Första kartan är
-40x21 celler och kan avkodas till 320x168 indexpixlar; paletteord läses
-little-endian enligt DMWebs uttryckliga `LoadSaturnPalette(...,
-LITTLE_ENDIAN)`-anrop. Retailfilen innehåller inga vertikala flip-bitar.
-Detta bevisar filens byte-/pixelkontrakt, men inte Saturn VDP-placering eller
-hur runtime-state binds till statusrutorna. Därför är `nexus_ui_load_stabg`
-fortsatt fail-closed och ingen syntetisk HUD-yta har aktiverats.
+## New verification of the HUD source
 
-Den tidigare handskrivna master-paletten i `src/nexus/nexus_v1_palette.c` är
-quarantänad och kompileras inte. Den var härledd från kommentarer/storlek, inte
-från retaildata. `nexus_palette_init_defaults()` lämnar därför palette-state
-tom. Den äldre globala `nexus_palette_load_stone()`-vägen är uttryckligen
-blockerad; `STONE.BIN` måste gå genom sin verifierade image-local `pp`-dekoder.
+DMWeb's `DMNDataFileDecoder.vbs`, `DecodeSTABGBIN`, is now implemented as a
+separate decode receipt. Retail `STABG.BIN` is verified against its three parts:
+tilemap, 256-colour palette, and 791 8x8 indexed tiles. The first map is 40x21
+cells and decodes to 320x168 index pixels; palette words are read little-endian
+according to DMWeb's explicit `LoadSaturnPalette(..., LITTLE_ENDIAN)` call. The
+retail file contains no vertical-flip bits. This proves the file's byte/pixel
+contract, but not Saturn VDP placement or how runtime state binds to the status
+boxes. `nexus_ui_load_stabg` therefore remains fail-closed and no synthetic HUD
+surface has been enabled.
 
-Retail-censusen visar dessutom att `STONE.BIN` är 4 400 byte = åtta 550-byte
-`pp`-poster. DMWebs `DecodeRawPPpp` läser varje post som 32×32 4bpp-bild med
-16-entry big-endian palette. Den tidigare globala 256-entry-loadern är därför
-spärrad; image-local palette-bank får inte slås ihop utan källbevis.
+The formerly handwritten master palette in `src/nexus/nexus_v1_palette.c` is
+quarantined and does not compile. It was derived from comments/size rather than
+retail data. `nexus_palette_init_defaults()` therefore leaves palette state empty.
+The older global `nexus_palette_load_stone()` path is explicitly blocked;
+`STONE.BIN` must use its verified image-local `pp` decoder.
 
-`nexus_palette_stone_pp_receipt()` verifierar nu exakt denna struktur mot
-retailfilen och rapporterar 8 poster, 32×32, 16 palette entries och 512
-packade pixelbyte per post. `nexus_palette_decode_stone_pp_record()` kan
-dessutom läsa en vald verklig post till separata indexerade texels och
-image-local palette utan global palette-sammanslagning. Detta är ett
-format-/bytesbevis, inte ännu ett bevis för VDP1:s slutliga material- eller
-skärmplacering.
+The retail census also shows that `STONE.BIN` is 4,400 bytes = eight 550-byte
+`pp` records. DMWeb's `DecodeRawPPpp` reads each record as a 32×32 4bpp image
+with a 16-entry big-endian palette. The former global 256-entry loader is
+therefore blocked; image-local palette banks must not be merged without source
+evidence.
 
-Startup-gaten accepterar inte längre en fil enbart för att den heter
-`DM.BIN`, `SN_FLOOR.MNS`, `SN_WALL.MNS` eller `LEV00.DGN`. Canonical paths
-måste matcha den förväntade hash-identiteten; annars söks en hashmatch eller
-gaten rapporterar mismatch. Boot-smoketestet passerar 26/26.
+`nexus_palette_stone_pp_receipt()` now verifies exactly this structure against
+the retail file and reports 8 records, 32×32, 16 palette entries, and 512 packed
+pixel bytes per record. `nexus_palette_decode_stone_pp_record()` can additionally
+read a selected real record into separate indexed texels and an image-local
+palette without global palette merging. This is format/byte proof, not yet proof
+of VDP1's final material or screen placement.
 
-Samlad regression efter ändringen: startup-media PASS, startup-menu PASS,
-DGN geometry PASS, audio 90/90 och mechanics parity 285/285. Ingen av dessa
-tester aktiverar obevisad VDP1-presentation eller syntetisk fallback.
+The startup gate no longer accepts a file only because it is named `DM.BIN`,
+`SN_FLOOR.MNS`, `SN_WALL.MNS`, or `LEV00.DGN`. Canonical paths must match the
+expected hash identity; otherwise a hash match is searched or the gate reports a
+mismatch. The boot smoke test passes 26/26.
 
-Runtime-läsaren `nexus_v1_read_extracted_file()` kräver nu samma kända MD5
-för canonical loose files som startup-gaten gör. Ett rätt filnamn kan därmed
-inte längre få fel `DM.BIN`, level eller UI-media att nå parser/renderkedjan.
-Kända assets får dessutom inte falla vidare till DMDF-family/name-heuristik när
-hashmatch saknas; sådana routes avvisas direkt.
-Level-loadern följer nu samma regel och har ingen name-only `LEV%02d.DGN`
-fallback. Hashscan-testet verifierar samtidigt att korrekt omdöpta levels
-fortfarande hittas och laddas via innehållsidentitet.
-För ISO-källor används den öppnade directory-entryn oförändrad och den
-befintliga ISO-entry/source-receipten äger hashadmissionen; extracted bytes får
-inte ersätta en disc-entry via filnamn.
+Aggregate regression after the change: startup media PASS, startup menu PASS,
+DGN geometry PASS, audio 90/90, and mechanics parity 285/285. None of these
+tests enables unproven VDP1 presentation or a synthetic fallback.
 
-## Kvarvarande källgap
+The runtime reader `nexus_v1_read_extracted_file()` now requires the same known
+MD5 for canonical loose files as the startup gate. A correct filename can thus
+no longer let an incorrect `DM.BIN`, level, or UI medium reach the parser/render
+chain. Known assets also may not fall through to DMDF family/name heuristics when
+a hash match is absent; such routes are rejected directly. The level loader now
+follows the same rule and has no name-only `LEV%02d.DGN` fallback. The hash-scan
+test simultaneously verifies that correctly renamed levels are still found and
+loaded through content identity. For ISO sources, the opened directory entry is
+used unchanged and the existing ISO entry/source receipt owns hash admission;
+extracted bytes must not replace a disc entry by filename.
 
-`CHAMPIONS.DAT` krävs inte längre av Nexus boot-profilen. Retail-listan från
-DMWeb innehåller inte den PC-liknande filen; Nexus identitet och rosterdata ska
-fortsatt komma från Saturn-källorna, bland annat `DM.BIN` och `FACE.BIN`.
-Detta tar bort ett syntetiskt filkrav utan att ersätta det med en namnbaserad
+## Remaining source gaps
+
+`CHAMPIONS.DAT` is no longer required by the Nexus boot profile. The DMWeb
+retail list does not contain the PC-like file; Nexus identity and roster data
+must continue to come from Saturn sources, including `DM.BIN` and `FACE.BIN`.
+This removes a synthetic file requirement without replacing it with a name-based
 fallback.
 
-Den lokala Nexus-katalogen innehåller 131 lösa spelresurser samt den
-hashverifierade Track 1-ISO:n. Sex entries är avsiktligt ISO-only:
-`DMN_ABS.TXT`, `DMN_BIB.TXT`, `DMN_CPY.TXT`, `DMV0.AVI`, `DMV1.AVI` och
-`DMV2.AVI`. De får läsas via ISO-entryn när en källbunden konsument finns,
-men ska inte materialiseras som lösa hostfiler eller ersättas med text-/video-
-placeholders. Återstående Nexus-gap gäller därför både dessa ännu okonsumerade
-ISO-medlemmar och byte-/pixelsemantik samt verifierad runtime-bindning.
+The local Nexus directory contains 131 loose game resources plus the
+hash-verified Track 1 ISO. Six entries are intentionally ISO-only:
+`DMN_ABS.TXT`, `DMN_BIB.TXT`, `DMN_CPY.TXT`, `DMV0.AVI`, `DMV1.AVI`, and
+`DMV2.AVI`. They may be read through the ISO entry when a source-bound consumer
+exists, but must not be materialized as loose host files or replaced with text/
+video placeholders. The remaining Nexus gaps therefore concern both these as-yet
+unconsumed ISO members and byte/pixel semantics plus verified runtime binding.
 
-1. Bind de fem verifierade `TITLE.BIN`/`TITLE.CG`-bilderna och `LOGOBG.DG2` till korrekt uppstartsroute utan obevisad 320×200-cropping. `test_nexus_v1_title_mapd_real` verifierar nu retailens fem MAPD/TIBG-kartor, tilepixlar och paletteord; endast displayplaceringen återstår.
-2. Bevisa `MENU.BPK`-ytornas Saturn-placering, palettbindning och betydelse i menyn.
-3. Bevisa Saturns VDP1/VDP2-placering för den nu verifierade `STABG.BIN`-dekodningen och bind HUD-ytan till verifierat runtime-state.
+1. Bind the five verified `TITLE.BIN`/`TITLE.CG` images and `LOGOBG.DG2` to the correct startup route without unproven 320×200 cropping. `test_nexus_v1_title_mapd_real` now verifies the retail five MAPD/TIBG maps, tile pixels, and palette words; only display placement remains.
+2. Prove the Saturn placement, palette binding, and menu meaning of `MENU.BPK` surfaces.
+3. Prove Saturn VDP1/VDP2 placement for the now-verified `STABG.BIN` decoding and bind the HUD surface to verified runtime state.
 
-Retail-census för `STABG.BIN` stärker strukturbeviset utan att upphöja en
-tolkning till grafikbevis: första kartan är 40×21 celler, filen har 11 kartor,
-CLUT-regionen är 512 byte och pixelregionen är 50 624 byte. Cellreferenserna
-ligger inom pixelregionen. DMWeb-dekodern verifierar 8x8-byte-indexerade tiles
-och little-endian 5-bitars RGB-palette; det återstår att bevisa Saturns
-VDP1-blitplacering och runtime-bindning från Saturn-körningen.
+The retail census for `STABG.BIN` strengthens structural proof without elevating
+an interpretation to graphics proof: the first map is 40×21 cells, the file has
+11 maps, the CLUT region is 512 bytes, and the pixel region is 50,624 bytes. Cell
+references lie within the pixel region. The DMWeb decoder verifies 8x8 byte-indexed
+tiles and a little-endian 5-bit RGB palette; Saturn VDP1 blit placement and
+runtime binding from a Saturn run still need proof.
 
-Källor: `src/nexus/nexus_v1_bpk_archive.c`,
+Sources: `src/nexus/nexus_v1_bpk_archive.c`,
 `src/nexus/nexus_v1_engine.c`, `src/nexus/nexus_v1_ui_surfaces.c`,
-`src/nexus/nexus_v1_startup_menu.c` och M11-handoff/rendering i
+`src/nexus/nexus_v1_startup_menu.c`, and M11 handoff/rendering in
 `src/engine/m11_game_view.c`.
 
-Runtime-captureprovenans och reproduktionsregel finns i
+Runtime capture provenance and the reproduction rule are in
 [`docs/NEXUS_RUNTIME_CAPTURE.md`](NEXUS_RUNTIME_CAPTURE.md).
 
-Den lokala Saturn-körbara `DM.BIN` innehåller dessutom retail-markörerna
-`PRS3`, `MENU.BPK`, `STABG.BIN`, `yam\\menu.c`, `yam\\menuctrl.c` och
-`yam\\vdp2.c`. Det bekräftar att arkiv-, meny- och VDP2-vägarna finns i det
-levererade mediet, men bevisar inte ensamt Saturns VDP-placering eller
-placeringsflöde. Därför förblir STMP-pixeltolkningen och meny-layouten
-evidens-only tills motsvarande byte-/pixelbevis är säkrade.
+The local Saturn executable `DM.BIN` also contains the retail markers `PRS3`,
+`MENU.BPK`, `STABG.BIN`, `yam\\menu.c`, `yam\\menuctrl.c`, and `yam\\vdp2.c`.
+This confirms that archive, menu, and VDP2 paths are present in the shipped
+medium, but does not alone prove Saturn VDP placement or placement flow. STMP
+pixel interpretation and menu layout therefore remain evidence-only until the
+corresponding byte/pixel proof is secured.
 
-Ytterligare palette-spans från ytor är nu fail-closed: negativa offsets,
-överskridna paletteintervall och för korta källor avvisas före läsning.
-Rutinen nollfyller inte längre saknade poster och en partiell yta kan inte
-ensam markera hela palette-state som renderbar. Det ändrar inte den öppna
-VDP1/VDP2-bindningen; den kräver fortfarande verklig Saturn-capture.
+Additional palette spans from surfaces are now fail-closed: negative offsets,
+out-of-range palette intervals, and sources that are too short are rejected
+before reading. The routine no longer zero-fills missing entries, and a partial
+surface cannot by itself mark the entire palette state as renderable. This does
+not change the open VDP1/VDP2 binding; it still requires a real Saturn capture.
 
-DM.BIN har dessutom en separat källbunden VDP1-register-/VRAM-state receipt:
-den verifierar den unika statiska registertabellen och SH-2-literalflödet till
-VDP1-registerfönstret och VDP1-VRAM-baskandidaten. Den bevisar inte en
-STABG-specifik kommandoemission, palette-lane eller slutlig skärmplacering.
+DM.BIN also has a separate source-bound VDP1 register/VRAM-state receipt: it
+verifies the unique static register table and the SH-2 literal flow to the VDP1
+register window and VDP1 VRAM base candidate. It does not prove a STABG-specific
+command emission, palette lane, or final screen placement.
 
-Startup/menu-korridoren vid filoffset `0x18B60` är nu dessutom verifierad som
-en SH-2-funktion med `STS.L PR,@-R15`, `RTS` och exakta PC-relativa
-`MOV.L`-referenser till retailens `yam\\menu.c`- och `STABG.BIN`-strängar samt
-ett kvarhållet hårdvaruliteral `0x25E64000`. Det stärker ägarskapet i
-disassemblyn, men är fortfarande inte ett bevis på att en viss VDP2-register-
-eller VRAM-skrivning exekveras. Menyplacering, FONT256-konsumtion och
-VDP1/VDP2-komposition är därför fortsatt capture-gated.
-
-DMWebs formatbeskrivning anger big-endian som standard och dokumenterar PRS3:s
-kontrollbitar, literal-/kopieringskod och relativa 12-bitarsoffset. Samma källa
-beskriver `MENU.BPK` som Nexus UI-grafik och `STABG.BIN` som champion status box
-graphics. DMWebs medföljande dekoder visar dessutom att `TITLE.CG` inte ska
-blitas direkt: `TITLE.BIN` MAPD väljer tile-index, h/v-flip och 16-färgspalett
-för fem 64×28-bilder. Den beskriver inte Firestaffs slutliga 320×200-output- eller
-VDP1/VDP2-bindning: [DMWeb Nexus file formats](http://dmweb.free.fr/community/documentation/dungeon-master-nexus/file-formats/),
-[DMWeb Nexus Data File Decoder](http://dmweb.free.fr/community/tools/dungeon-master-nexus-data-file-decoder/).
-
-MNS-gränserna är nu härledda från hela den lokala, hashverifierade retailkorpusen
-med 30 modeller. `VEXIRK.MNS` behåller 64 TEXT-deskriptorer och
-`D_GOLD.MNS` behåller 11 MOTN-tabeller; tidigare gränser på 16 respektive 8
-orsakade tyst bortfall av riktiga modeller. Parsern avvisar i stället deklarationer
-som inte ryms, utan att skapa en trunkerad giltig modell. Testet dekoder alla 30
-MNS-filer och renderar 815 källtexturer. Detta är fortsatt parser-/materialbevis,
-inte bevis på Saturns slutliga VDP1-kommandoordning eller viewport-pixlar.
-
-Alla 30 retail-MNS-identiteter finns nu också i den canonicala Track 1
-MD5-katalogen, så `nexus_v1_load_model()` kan faktiskt öppna verifierade
-creature-modeller (t.ex. `SCORPION.MNS`) från den riktiga dataroten. Detta
-öppnar inte modellrendering: VDP1-kommandon, placering och pose är fortfarande
+The startup/menu corridor at file offset `0x18B60` is also now verified as an
+SH-2 function with `STS.L PR,@-R15`, `RTS`, and exact PC-relative `MOV.L`
+references to the retail `yam\\menu.c` and `STABG.BIN` strings plus a retained
+hardware literal `0x25E64000`. This strengthens ownership in the disassembly,
+but remains no proof that a specific VDP2 register or VRAM write executes. Menu
+placement, FONT256 consumption, and VDP1/VDP2 composition consequently remain
 capture-gated.
 
-DGN-korpusen motbevisar också en direkt Structure1B-selektor-till-MNS-ordinal:
-de 16 europeiska LEV-filerna använder texturerade selektorer i intervallet
-`0x01..0x7D`, medan både `SN_FLOOR.MNS` och `SN_WALL.MNS` har 15 TEXT-deskriptorer.
-Firestaff lämnar därför Structure1B-bindningen stängd tills Saturnens verkliga
-selektortransform och VDP1-materialägarskap har fångats. Materialplaneraren
-avvisar dessutom nu material- och Structure2-index utanför den dekoderade
-bankens bounded surface-count, så en felaktigt antagen bindning kan inte läsa
-utanför källbanken.
+DMWeb's format description specifies big-endian by default and documents PRS3
+control bits, literal/copy coding, and relative 12-bit offsets. The same source
+describes `MENU.BPK` as Nexus UI graphics and `STABG.BIN` as champion status-box
+graphics. DMWeb's accompanying decoder also shows that `TITLE.CG` must not be
+blitted directly: `TITLE.BIN` MAPD chooses tile index, h/v flip, and 16-colour
+palette for five 64×28 images. It does not describe Firestaff's final 320×200
+output or VDP1/VDP2 binding: [DMWeb Nexus file formats](http://dmweb.free.fr/community/documentation/dungeon-master-nexus/file-formats/),
+[DMWeb Nexus Data File Decoder](http://dmweb.free.fr/community/tools/dungeon-master-nexus-data-file-decoder/).
 
-DGN Structure2-dekodern följer nu också DMWebs palette-ID-regel: en descriptor
-med `Palette offset = 0` återanvänder den senaste tidigare paletteassociationen
-med samma ID; den får inte falla tillbaka till palette 0. Hashverifierad testning
-av LEV00–LEV15 dekoderar 1 678 riktiga descriptors, varav 1 553 indexed-4bpp
-och 125 direct-color-555. Det bevisar descriptor-, pixel- och palettebytes, men
-inte ännu Structure3:s Saturn-VDP1-upload, UV-/draw-order eller viewportplacering.
+MNS bounds are now derived from the entire local, hash-verified retail corpus of
+30 models. `VEXIRK.MNS` retains 64 TEXT descriptors and `D_GOLD.MNS` retains 11
+MOTN tables; previous bounds of 16 and 8 respectively caused real models to be
+silently dropped. The parser instead rejects declarations that do not fit, without
+creating a truncated valid model. The test decodes all 30 MNS files and renders
+815 source textures. This remains parser/material proof, not proof of Saturn's
+final VDP1 command ordering or viewport pixels.
 
-## Aktuell produktionsaudit 2026-08-06
+All 30 retail MNS identities are now also in the canonical Track 1 MD5 catalogue,
+so `nexus_v1_load_model()` can actually open verified creature models (for example
+`SCORPION.MNS`) from the real data root. This does not open model rendering:
+VDP1 commands, placement, and pose remain capture-gated.
 
-En ny genomgång mot aktuell `main` skiljer produktionsbiblioteket från de
-uttryckliga test-/probe-fixtures som fortfarande använder syntetiska bytes för
-parserkontrakt. `firestaff_nexus` länkar inte `nexus_v1_bpx_bpk.c`, S2D-
-textlayouten, screen-text-wrappern, MNS-host-renderaren eller de procedurala
-V2-HUD-modulerna. Den länkade viewporten returnerar ingen färgtriangel,
-fallbackpalett eller procedurmodell när Saturnmaterial saknas.
+The DGN corpus also disproves a direct Structure1B selector-to-MNS ordinal:
+the 16 European LEV files use textured selectors in range `0x01..0x7D`, while
+both `SN_FLOOR.MNS` and `SN_WALL.MNS` have 15 TEXT descriptors. Firestaff
+therefore leaves Structure1B binding closed until Saturn's real selector transform
+and VDP1 material ownership have been captured. The material planner now also
+rejects material and Structure2 indices beyond the decoded bank's bounded surface
+count, so an incorrectly assumed binding cannot read beyond the source bank.
 
-Retailkörningen med `/Users/bosse/.firestaff/data/nexus` passerar de fokuserade
-regressionerna för DM.BIN-startupankare, HUD-layout (80 poster), HUD-hitrects
-(40 poster), championpanel, MENU.BPK-ytklassning, SLEV/SAL-discovery,
-SAL-proveniens, ljud-runtime-receipt, SAL-dekodning, TITLE MAPD/TIBG och
-save-roundtrip. Track-1-readinessproben passerar `29/0`; dess real-data-BMP
-är avsiktligt svart och får inte räknas som en Saturn-skärmbild.
+The DGN Structure2 decoder now also follows DMWeb's palette-ID rule: a descriptor
+with `Palette offset = 0` reuses the most recent prior palette association with
+the same ID; it must not fall back to palette 0. Hash-verified testing of
+LEV00–LEV15 decodes 1,678 real descriptors, of which 1,553 are indexed-4bpp and
+125 direct-color-555. This proves descriptor, pixel, and palette bytes, but not
+yet Structure3's Saturn VDP1 upload, UV/draw order, or viewport placement.
 
-Det finns därför ingen verifierad lokal retailfil att byta in för de sista
-presentations- eller ljudluckorna. Nästa källtroget tillåtna steg är en
-instrumenterad Saturn-capture som binder `MENU.BPK`/`STABG.BIN` till
-VDP1/VDP2, Structure3 till draw order och SLEV/SAL till selector/SDDRVS.
-Stock Mednafen avvisas av `docs/NEXUS_RUNTIME_CAPTURE.md` eftersom den saknar
-Firestaffs capture-hook; ingen syntetisk capture får ersätta den.
+## Current production audit 2026-08-06
+
+A new review against current `main` separates the production library from the
+explicit test/probe fixtures that still use synthetic bytes for parser contracts.
+`firestaff_nexus` does not link `nexus_v1_bpx_bpk.c`, the S2D text layout, the
+screen-text wrapper, the MNS host renderer, or the procedural V2 HUD modules.
+The linked viewport returns no colour triangle, fallback palette, or procedural
+model when Saturn material is absent.
+
+The retail run with `/Users/bosse/.firestaff/data/nexus` passes focused
+regressions for DM.BIN startup anchors, HUD layout (80 records), HUD hit rects
+(40 records), champion panel, MENU.BPK surface classification, SLEV/SAL discovery,
+SAL provenance, audio runtime receipt, SAL decoding, TITLE MAPD/TIBG, and save
+round-trip. The Track 1 readiness probe passes `29/0`; its real-data BMP is
+intentionally black and must not be counted as a Saturn screenshot.
+
+There is therefore no verified local retail file to substitute for the remaining
+presentation or audio gaps. The next source-faithful permitted step is an
+instrumented Saturn capture that binds `MENU.BPK`/`STABG.BIN` to VDP1/VDP2,
+Structure3 to draw order, and SLEV/SAL to selector/SDDRVS. Stock Mednafen is
+rejected by `docs/NEXUS_RUNTIME_CAPTURE.md` because it lacks Firestaff's capture
+hook; no synthetic capture may replace it.

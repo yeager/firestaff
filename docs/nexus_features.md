@@ -12,8 +12,8 @@ that still lack Saturn runtime binding.
 - `MENU.BPK`: 162 real PRS3 surfaces are decoded with DMWeb rules into a
   source-bound indexed-pixel receipt; CLUT, destination, and menu semantics
   are still missing.
-- `STABG.BIN`, `SMAP00`–`SMAP15`, `ITEM.IBS`, `FACE.BIN` och `STONE.BIN` har
-  separata source-owned avkodnings- och palette receipts.
+- `STABG.BIN`, `SMAP00`–`SMAP15`, `ITEM.IBS`, `FACE.BIN`, and `STONE.BIN` have
+  separate source-owned decoding and palette receipts.
 - `SLEV*.BIN`, `SNDLEV*.SAL`/`.MAP`, and `SDDRVS.TSK` have bounded byte/entry
   receipts; script dispatch and sound events are not enabled.
 
@@ -38,7 +38,7 @@ exist.
 3. Saturn input/HUD capture: `STABG.BIN` and runtime state over the viewport.
 4. SLEV/SAL capture: event/action dispatch and MAP selector ownership.
 
-Se [NEXUS_STRICT_FIDELITY_INVENTORY.md](NEXUS_STRICT_FIDELITY_INVENTORY.md) och
+See [NEXUS_STRICT_FIDELITY_INVENTORY.md](NEXUS_STRICT_FIDELITY_INVENTORY.md) and
 [NEXUS_RUNTIME_CAPTURE.md](NEXUS_RUNTIME_CAPTURE.md) for the current admission
 boundary. DMWeb and Greatstone are used as format references; they do not
 replace an executed Saturn capture.

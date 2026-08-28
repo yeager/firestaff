@@ -101,105 +101,103 @@ V1 traces without frame markers remain supported but cannot be selected with
 
 ### Stable startup witness, 2026-08-11
 
-Den externa J-BIOS/English-capture-körningen
+The external J-BIOS/English capture run
 `/Volumes/Extern-disk/nexus-saturn-capture/run-codex-stable-vdp1-window-se2woL/`
-validerar 80 frames efter en 1 200-frame boot-window. Frame 0 har en komplett
-VDP1-kedja med fyra poster: system clip `(319,223)`, local coordinate `(0,0)`;
-en mode-5 direct-colour draw och END. VDP1-framebufferten ändras över tiden,
-och en extern framebuffer-dekodning visar den Saturn-renderade Victor-start-
-animationen. Rådumpens SHA-256 är
+validates 80 frames after a 1,200-frame boot window. Frame 0 has a complete
+VDP1 chain with four records: system clip `(319,223)`, local coordinate `(0,0)`,
+a mode-5 direct-colour draw, and END. The VDP1 framebuffer changes over time,
+and an external framebuffer decode shows the Saturn-rendered Victor startup
+animation. The raw dump SHA-256 is
 `49b0e2cfa3d0394fda966ca40f0adc3bc36475f298b4fa743188d3bec1c999f1`.
 
-Detta bevisar en autentisk VDP1 startup-frame och timing, men inte vilken
-retailfil som äger mode-5-källan, inte PRS3/FONT256/MENU-konsumtion och inte
-M12-produktionsrendering. `semantic_admission` förblir därför `blocked`.
+This proves an authentic VDP1 startup frame and timing, but neither which
+retail file owns the mode-5 source, nor PRS3/FONT256/MENU consumption, nor
+M12 production rendering. `semantic_admission` therefore remains `blocked`.
 
-VDP1-V2-state har två operatörsvarianter i omlopp. Den aktuella patchen
-skriver även `sysclipx` och `sysclipy`; äldre externa Mednafen-buildar skriver
-samma V2-state utan de två suffixfälten. Firestaffs transportvalidator
-accepterar båda varianterna, men ingen av dem ger i sig assetägarskap eller
-produktionsrendering.
+VDP1-V2 state has two operator variants in circulation. The current patch
+also writes `sysclipx` and `sysclipy`; older external Mednafen builds write
+the same V2 state without these two suffix fields. Firestaff's transport
+validator accepts both variants, but neither establishes asset ownership or
+production rendering by itself.
 
-## Så görs själva dumpningen
+## Creating the dump
 
-Körningen sker i denna ordning. Sökvägarna pekar medvetet på extern disk.
+Run the procedure in this order. The paths intentionally point to external disk.
 
-1. Packa upp BIOS lokalt på den externa disken och beräkna SHA-256. BIOS-filen
-   kopieras inte till repot.
-2. Kontrollera SHA-256 för Nexus CUE och tillhörande binärfiler. Starta inte
-   en capture om identiteten saknas.
-3. Bygg den patchade Mednafen-kopian i en separat katalog på extern disk.
-4. Skapa en ny körkatalog och sätt miljövariablerna för rådump, registerspår,
-   VDP2-write-spår och post-write-snapshot.
-   För VDP1-källproveniens kan samma körning dessutom rikta registerprovet
-   mot flera SH-2-PC:n med
+1. Extract the BIOS locally on external disk and calculate SHA-256. Do not
+   copy the BIOS file into the repository.
+2. Check SHA-256 for the Nexus CUE and its binary files. Do not start a
+   capture without an established identity.
+3. Build the patched Mednafen checkout in a separate directory on external disk.
+4. Create a new run directory and set environment variables for the raw dump,
+   register trace, VDP2 write trace, and post-write snapshot.
+   For VDP1 source provenance, the same run can also target the register probe
+   at several SH-2 PCs with
    `FIRESTAFF_NEXUS_TRACE_VDP1_REG_PC_LIST=0x0601307c,0x060262c4`.
-   Det är viktigt att PC-listan, source-dumpen och rådumpen produceras av
-   samma process; separata körningar får inte fogas ihop som ett bevis.
-   När VDP1-skrivaren anropar en transform kan den aktuella SH-2-koden och
-   registerläget fångas med
+   The PC list, source dump, and raw dump must be produced by the same process;
+   separate runs must not be joined as evidence.
+   When the VDP1 writer invokes a transform, capture the active SH-2 code and
+   register state with
    `FIRESTAFF_NEXUS_TRACE_VDP1_TRANSFORM_CODE_AT=0x06012f4a`.
-5. Starta Saturn-profilen genom
-   `firestaff_nexus_v1_saturn_raw_capture_launcher.sh`. Launchern validerar
-   BIOS och disc, startar Mednafen, väntar tills körningen är klar och skriver
-   manifestet.
-6. Kör analysverktygen mot exakt samma körkatalog. Rådumpen, spåren,
-   snapshoten och manifestet ska ha samma sessionsnamn.
-7. Behandla resultatet som `blocked` tills både skrivordning och källbytes
-   identitet är verifierade. En tekniskt giltig VDP2-snapshot är inte i sig
-   bevis för att bytesen är menytext, FONT256 eller HUD.
+5. Start the Saturn profile through
+   `firestaff_nexus_v1_saturn_raw_capture_launcher.sh`. The launcher validates
+   BIOS and disc, starts Mednafen, waits for the run to finish, and writes the
+   manifest.
+6. Run the analysis tools against exactly the same run directory. The raw dump,
+   traces, snapshot, and manifest must share one session name.
+7. Treat the result as `blocked` until both write ordering and source-byte
+   identity are verified. A technically valid VDP2 snapshot does not itself
+   prove that its bytes are menu text, FONT256, or HUD.
 
-Varje receipt ska därför innehålla BIOS- och disc-hash, sessionsnamn,
-framefönster, rådumpens layout samt SHA-256 för varje faktiskt producerat
-register-, source- och VDP-skrivspår. Om processen timeoutar skrivs dessutom
-`capture_termination=timeout` i manifestet. Om processen timeoutar eller
-rådumpen inte får sitt capture-magic ska körningen kasseras som
-observationsförsök, även om enskilda tracefiler hann skrivas.
+Each receipt must therefore include BIOS and disc hashes, a session name,
+frame window, raw-dump layout, and SHA-256 for every actually produced register,
+source, and VDP write trace. If the process times out, the manifest also records
+`capture_termination=timeout`. Discard a run as an observation attempt if it
+times out or the raw dump lacks its capture magic, even if individual trace
+files were written.
 
-### Runtime-transformen före VDP1
+### Runtime transform before VDP1
 
-SH-2-kodkvittot från samma externa Mednafen-gren visar att VDP1-kedjan inte är
-en direkt PRS3-kopia. Rutinen vid `0x060132e0` anropas med 18 iterationer,
-läser med `0x80` bytes stride och skriver med `0x1c0` bytes stride. Den anropar
-pixelrutinen vid `0x060135f8`, som gör åtta pass. Den innersta rutinen vid
-`0x060136c4` hämtar packade bytes från tile-input, applicerar `0xf000`-masken,
-justerar nibblepositionen och skriver 16-bitars output med två runtimevärden
-som koefficienter. Detta är ett transform-/tile-expansionssteg efter asset-
-dekodningen. Det får inte ersättas med en host-side PRS3-blit utan samma
-input-, koefficient- och CLUT-bevis.
+The SH-2 code receipt from the same external Mednafen branch shows that the
+VDP1 chain is not a direct PRS3 copy. The routine at `0x060132e0` is called
+for 18 iterations, reads with a `0x80`-byte stride, and writes with a
+`0x1c0`-byte stride. It calls the pixel routine at `0x060135f8`, which makes
+eight passes. The innermost routine at `0x060136c4` fetches packed bytes from
+tile input, applies the `0xf000` mask, adjusts the nibble position, and writes
+16-bit output using two runtime values as coefficients. This is a transform/
+tile-expansion step after asset decoding. Do not replace it with a host-side
+PRS3 blit without matching input, coefficient, and CLUT evidence.
 
-Koefficientkvittot från en autentisk körning visade initialt `r10=0x04bc` och
-`r9=0x0a70`. Därefter uppdaterades literalpoolen med signerade 16-bitarsvärden
-från SH-2-kedjan. Spåret är därför en del av samma-sessionens proveniens, men
-är inte i sig ett bevis på vilken meny-, HUD- eller viewport-asset som valdes.
+The coefficient receipt from an authentic run initially showed `r10=0x04bc`
+and `r9=0x0a70`. The literal pool was then updated with signed 16-bit values
+from the SH-2 chain. The trace is consequently part of same-session provenance,
+but does not itself prove which menu, HUD, or viewport asset was selected.
 
-### Verifierad extern körning 2026-08-11
+### Verified external run, 2026-08-11
 
-En autentisk engelskspråkig data-track-körning gjordes på extern disk med den
-hashverifierade japanska Saturn-BIOS:en
+An authentic English data-track run was made on external disk using the
+hash-verified Japanese Saturn BIOS
 (`dcfef4b99605f872b6c3b6d05c045385cdea3d1b702906a0ed930df7bcb7deac`).
-Original-CUE:n refererade till ljudspår som saknades lokalt. Originalet
-ändrades inte: ISO:n kopierades byte för byte till extern disk och en separat
-data-track-only-CUE skapades där.
+The original CUE referenced audio tracks that were absent locally. The original
+was not modified: the ISO was copied byte for byte to external disk and a
+separate data-track-only CUE was created there.
 
 ISO-hash:
 `16786e6165d8cbf7f6394dd9bc7171fbb561c1ba40b77ad7cba3c275fde2804e`.
-Härledd CUE-hash:
+Derived CUE hash:
 `f3575af985cadbecc74edda0c51451ffeea775054ec5fcdd7c4f960dcdc0cc17`.
-Körkatalog:
+Run directory:
 `/Volumes/Extern-disk/nexus-saturn-capture/run-authentic-english-source-20260811c/`.
 
-Körningen producerade 600 frames. Validatorn fann förändringar i VDP1
-VRAM/framebuffers samt VDP2 register/VRAM/CRAM. En kompletterande SH-2
-source-write-körning gav 500 000 begränsade rader, men ingen komplett
-contiguous ISO-chunk som binder VDP1-konsumenten till `MENU.BPK`, `DGN` eller
-`DM.BIN`.
+The run produced 600 frames. The validator found changes in VDP1 VRAM/
+framebuffers and VDP2 registers/VRAM/CRAM. A supplementary SH-2 source-write
+run produced 500,000 bounded rows, but no complete contiguous ISO chunk that
+binds the VDP1 consumer to `MENU.BPK`, `DGN`, or `DM.BIN`.
 
-Resultatet är därför fortfarande uttryckligen
-`semantic_admission=blocked`: capturekedjan är verifierad som observation,
-men den bevisar ännu inte menytext, HUD, viewport, PRS3-palettägare eller
-DGN-faceägare. Den härledda CUE:n får inte presenteras som en komplett
-retail-disc med ljudspår.
+The result therefore remains explicitly `semantic_admission=blocked`: the
+capture chain is verified as observation, but does not yet prove menu text,
+HUD, viewport, PRS3 palette ownership, or DGN face ownership. The derived CUE
+must not be presented as a complete retail disc with audio tracks.
 
 ### Startup witness from frame 0, 2026-08-11
 
@@ -248,15 +246,15 @@ This is strong input/transport witness evidence from the same retail disc, but
 without an exact VDP1/VDP2 source join, `asset_consumer_identity=unbound` and
 `host_composition_admission=blocked` remain the correct outcome.
 
-Frame 50 har därefter jämförts mot hela den hashverifierade Nexus-korpusen.
-VDP1 mode-5-källan (`source_offset=0x10a00`, 2048 bytes) har ingen exakt
-MENU.BPK-, MNS-, DGN- eller retail-filträff. VDP2 character-lane har 0/4
-exakta FONT256 Page/Character Generator/Palette-spaner och 0/1 exakt
-palette-CRAM-match; en attributspan matchar, men det räcker inte för att
-identifiera textkonsumenten. Resultatet är därför fortsatt
-`source_join=unbound` och `text_consumer_identity=unbound`.
+Frame 50 was subsequently compared against the entire hash-verified Nexus
+corpus. The VDP1 mode-5 source (`source_offset=0x10a00`, 2048 bytes) has no
+exact match in MENU.BPK, MNS, DGN, or a retail file. The VDP2 character lane
+has 0/4 exact FONT256 Page/Character Generator/Palette spans and 0/1 exact
+palette-CRAM match; one attribute span matches, but this is insufficient to
+identify the text consumer. The result consequently remains
+`source_join=unbound` and `text_consumer_identity=unbound`.
 
-Minimal extern körning:
+Minimal external run:
 
 ```sh
 run=/Volumes/Extern-disk/nexus-saturn-capture/run-menu-$(date +%Y%m%d-%H%M%S)
@@ -271,22 +269,23 @@ probes/nexus/firestaff_nexus_v1_saturn_raw_capture_launcher.sh \
   --mednafen /Volumes/Extern-disk/nexus-saturn-capture/mednafen-prefix/bin/mednafen \
   --mednafen-home /Volumes/Extern-disk/nexus-saturn-capture/mednafen-home \
   --bios /Volumes/Extern-disk/nexus-saturn-capture/bios-j/Sega\ Saturn\ BIOS\ \(J\)\ \(1.01\).bin \
-  --bios-sha256 <verifierad_sha256> --bios-region jp \
+  --bios-sha256 <verified_sha256> --bios-region jp \
   --disc "/Volumes/Extern-disk/nexus-saturn-capture/media/Dungeon Master Nexus (English) - Merged.cue" \
-  --disc-sha256 <verifierad_sha256> \
+  --disc-sha256 <verified_sha256> \
   --trace "$run/runtime-vdp12.raw" \
   --validator scripts/analyze_nexus_saturn_runtime_capture.py \
   --manifest "$run/manifest.txt" \
   --trace-session nexus-vdp2-dump
 ```
 
-Det viktiga är inte en viss frame-adress, utan att hela beviskedjan kommer
-från samma körning. Mednafen-delen fångar emulatorns observerade tillstånd;
-Firestaff-delen avgör därefter om tillståndet kan bindas till en känd källa.
+The important point is not a particular frame address, but that the entire
+evidence chain comes from the same run. The Mednafen portion captures the
+emulator's observed state; the Firestaff portion then determines whether that
+state can be bound to a known source.
 
-## Starta en riktad capture
+## Start a targeted capture
 
-Exempelvärdena nedan är platshållare; använd egna, hashverifierade sökvägar:
+The sample values below are placeholders; use your own hash-verified paths:
 
 ```sh
 export FIRESTAFF_NEXUS_TRACE_VDP2_REGS=/Volumes/Extern-disk/run/vdp2-writer-regs.trace
@@ -296,9 +295,9 @@ export FIRESTAFF_NEXUS_TRACE_VDP2_WRITES=/Volumes/Extern-disk/run/vdp2-writes.tr
 export FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT=/Volumes/Extern-disk/run/post.snapshot
 export FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT_LIMIT=64
 
-# För den byggda Mednafen-diagnostiken som dumpar källbytesfält från
-# FirestaffTraceVdp2Registers måste register-hooken dessutom få ett eget
-# PC- och adressintervall. VDP2-VRAM ligger i intervallet 0x00000–0x3ffff.
+# For the built Mednafen diagnostic that dumps source-byte fields from
+# FirestaffTraceVdp2Registers, the register hook must also receive its own
+# PC and address range. VDP2 VRAM lies in the 0x00000–0x3ffff range.
 export FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_PC=0x06011860
 export FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_MIN=0x0
 export FIRESTAFF_NEXUS_TRACE_VDP2_REGISTER_MAX=0x40000
@@ -319,9 +318,9 @@ probes/nexus/firestaff_nexus_v1_saturn_raw_capture_launcher.sh \
   --trace-session nexus-vdp2-source-join
 ```
 
-När `FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT_AT` är tomt sparas alla CRAM-
-writes från den valda PC:n upp till `..._LIMIT`. Varje post-write-record består
-av en textrad med `frame`, `area` och `addr`, följd av:
+When `FIRESTAFF_NEXUS_TRACE_VDP2_POST_SNAPSHOT_AT` is empty, all CRAM writes
+from the selected PC are saved up to `..._LIMIT`. Each post-write record
+consists of a text row containing `frame`, `area`, and `addr`, followed by:
 
 ```text
 RawRegs (0x200 bytes)
@@ -329,17 +328,17 @@ VRAM    (0x80000 bytes)
 CRAM    (0x1000 bytes)
 ```
 
-Snapshoten tas efter CRAM-tabellens skrivning, inte vid senare frame capture.
-Det är viktigt eftersom en vanlig frame-snapshot annars kan visa att samma
-CRAM-adress senare har skrivits över.
+The snapshot is taken after writing the CRAM table, not during a later frame
+capture. This matters because an ordinary frame snapshot may otherwise show
+that the same CRAM address was subsequently overwritten.
 
-Frame-hooken ligger däremot efter `VDP2REND_EndFrame()`. Det är avsiktligt:
-VDP2-registret `BGON`, tilemap/bitmap-läget i `CHCTLA`, name table, character
-generator och CRAM ska läsas efter renderkonsumenten har gjort sin frame-
-uppdatering. Byggscriptet applicerar detta som den separata patchen
+The frame hook, by contrast, runs after `VDP2REND_EndFrame()`. This is
+intentional: the VDP2 `BGON` register, tilemap/bitmap mode in `CHCTLA`, name
+table, character generator, and CRAM must be read after the render consumer
+has updated its frame. The build script applies this as the separate patch
 `scripts/mednafen_1.32.1_nexus_capture_post_render.patch`.
 
-En komplett dumpning på extern disk ser därför ut så här:
+A complete dump on external disk therefore looks like this:
 
 ```sh
 run=/Volumes/Extern-disk/nexus-saturn-capture/run-menu-$(date +%Y%m%d-%H%M%S)
@@ -376,57 +375,55 @@ probes/nexus/firestaff_nexus_v1_saturn_raw_capture_launcher.sh \
   --mednafen /Volumes/Extern-disk/nexus-saturn-capture/mednafen-prefix/bin/mednafen \
   --mednafen-home /Volumes/Extern-disk/nexus-saturn-capture/mednafen-home \
   --bios /Volumes/Extern-disk/nexus-saturn-capture/bios-j/Sega\ Saturn\ BIOS\ \(J\)\ \(1.01\).bin \
-  --bios-sha256 <verifierad_sha256> --bios-region jp \
+  --bios-sha256 <verified_sha256> --bios-region jp \
   --disc "/Volumes/Extern-disk/nexus-saturn-capture/media/Dungeon Master Nexus (English) - Merged.cue" \
-  --disc-sha256 <verifierad_sha256> \
+  --disc-sha256 <verified_sha256> \
   --trace "$run/runtime-vdp12.raw" \
   --validator scripts/analyze_nexus_saturn_runtime_capture.py \
   --manifest "$run/manifest.txt" \
   --trace-session nexus-vdp2-post-render
 ```
 
-### SCU-DMA-resultat från autentisk startup/menu-körning
+### SCU-DMA results from an authentic startup/menu run
 
-Den 11 augusti 2026 kördes samma hashverifierade BIOS- och merged-disc-
-session med SCU-DMA-hooken först filtrerad mot `0x05e00000..0x05efffff` och
-sedan utan adressfilter. Den filtrerade körningen gav noll träffar. Den
-ofilterade 600-frame-körningen gav 984 130 DMA-skrivningar i den fångade
-begränsningen; de observerade destinationerna låg i `0x05c0xxxx..0x05c7xxxx`,
-alltså VDP1/registerkedjan, inte i VDP2:s `0x05e...`-fönster.
+On 11 August 2026, the same hash-verified BIOS and merged-disc session was run
+with the SCU-DMA hook first filtered to `0x05e00000..0x05efffff` and then
+without an address filter. The filtered run had zero hits. The unfiltered
+600-frame run produced 984,130 DMA writes within the captured bound; observed
+destinations were in `0x05c0xxxx..0x05c7xxxx`, namely the VDP1/register chain,
+not VDP2's `0x05e...` window.
 
-Detta är ett verifierat negativt resultat: SCU-DMA-hooken fungerar och fångar
-faktiska Saturn-skrivningar, men den binder ännu inte menytext, FONT256 eller
-VDP2-tilemap till en DMA-källa. VDP2-källan måste därför fortsatt sökas i den
-CPU-/SH-2-skrivkedja eller annan bussväg som faktiskt används av Nexus. Ingen
-semantic admission eller produktionsrendering får öppnas på grundval av denna
-DMA-capture ensam.
+This is a verified negative result: the SCU-DMA hook works and captures actual
+Saturn writes, but does not yet bind menu text, FONT256, or the VDP2 tilemap to
+a DMA source. The VDP2 source must therefore continue to be sought in the
+CPU/SH-2 write chain or other bus path actually used by Nexus. This DMA capture
+alone must not open semantic admission or production rendering.
 
-Körningarna finns endast på extern disk:
+The runs exist only on external disk:
 
-`run-codex-scu-dma-source12-20260811/` (filtrerad, tom trace) och
-`run-codex-scu-dma-all-source14-20260811/` (ofilterad trace).
+`run-codex-scu-dma-source12-20260811/` (filtered, empty trace) and
+`run-codex-scu-dma-all-source14-20260811/` (unfiltered trace).
 
-Firestaffs transporttest `test_nexus_v1_saturn_runtime_capture` accepterar
-även det generiska `MDFN_SS_SATURN_RUNTIME_CAPTURE_V1`-formatet och verifierar
-big-endian VDP1/VDP2-ord samt att semantic admission förblir spärrad.
+Firestaff's transport test `test_nexus_v1_saturn_runtime_capture` also accepts
+the generic `MDFN_SS_SATURN_RUNTIME_CAPTURE_V1` format and verifies big-endian
+VDP1/VDP2 words and that semantic admission remains blocked.
 
-### SH-2-producent för VDP2-tilemap, 2026-08-11
+### SH-2 producer for the VDP2 tilemap, 2026-08-11
 
-En separat J-BIOS/engelsk-disc-körning med riktad WorkRAM-läsning fångade
-28 616 läsningar i `0x06013000..0x06014fff` och 200 001 VDP2-skrivningar.
-Vid PC `0x0601184c` skrivs VDP2-VRAM från en runtimepekare i `r5`, med första
-observerade pekare `0x06013c58` och efterföljande pekare i samma WorkRAM-
-område. Detta är den tidigare källhookens verkliga producentväg; `r4` är
-VDP2-destinationen och ska inte beskrivas som assetkälla.
+A separate J-BIOS/English-disc run with targeted WorkRAM reads captured 28,616
+reads in `0x06013000..0x06014fff` and 200,001 VDP2 writes. At PC `0x0601184c`,
+VDP2 VRAM is written from a runtime pointer in `r5`, with the first observed
+pointer `0x06013c58` and subsequent pointers in the same WorkRAM region. This
+is the actual producer path of the previous source hook; `r4` is the VDP2
+destination and must not be described as an asset source.
 
-De verifierade 16-bytefönstren från WorkRAM matchar ingen unik fil i den
-hashverifierade Nexus-korpusen. Resultatet är därför
-`vdp2_destination_transport=verified`, `asset_identity=unbound` och
-`semantic_admission=blocked`: producenten är identifierad, men den ännu
-saknade CD-/dekomprimeringsbindningen hindrar menytext, FONT256 och
-produktionskomposition.
+The verified 16-byte windows from WorkRAM match no unique file in the
+hash-verified Nexus corpus. The result is consequently
+`vdp2_destination_transport=verified`, `asset_identity=unbound`, and
+`semantic_admission=blocked`: the producer is identified, but the still-missing
+CD/decompression binding prevents menu text, FONT256, and production composition.
 
-Verifiera sedan samma session, inte en annan frame eller en annan disc:
+Then verify the same session, not another frame or another disc:
 
 ```sh
 python3 scripts/analyze_nexus_vdp2_composition.py \
@@ -441,19 +438,19 @@ python3 scripts/analyze_nexus_vdp2_post_write_snapshot.py \
   --destination-start 0x100400 --minimum-writes 64
 ```
 
-För att följa skivdata till SH-2-buffer används dessutom `cd-reads.trace` och
-`sh2-source-writes.trace`. `FIRESTAFF_NEXUS_TRACE_CD_READ_MIN_LBA=1` filtrerar
-bort BIOS/boot-sektorns upprepade LBA 0-läsningar. Source-tracen loggar både
-byte-, ord- och långordsaccesser; tidigare versioner loggade bara långord och
-missade därför den bytevisa kopieringen till runtimebufferten.
+To follow disc data to the SH-2 buffer, also use `cd-reads.trace` and
+`sh2-source-writes.trace`. `FIRESTAFF_NEXUS_TRACE_CD_READ_MIN_LBA=1` filters
+out the BIOS/boot sector's repeated LBA-0 reads. The source trace logs byte,
+word, and longword accesses; earlier versions logged only longwords and thus
+missed the bytewise copy to the runtime buffer.
 
-De här spåren bevisar transportkedjan först när en icke-noll LBA, den aktiva
-CS2-läsningen och motsvarande destination kan sammanfogas i samma körning.
-Enbart en `0x05890008`-läsning eller en matchande runtime-adress är inte
-tillräckligt för källbindning.
+These traces prove the transport chain only when a nonzero LBA, the active CS2
+read, and the corresponding destination can be joined within the same run. A
+`0x05890008` read or matching runtime address alone is insufficient for source
+binding.
 
-Ett positivt transporttest för den verifierade engelska ISO:n kan exempelvis
-kräva en sammanhängande `DM.BIN`-kopia:
+For example, a positive transport test for the verified English ISO can require
+a contiguous `DM.BIN` copy:
 
 ```sh
 python3 scripts/analyze_nexus_sh2_source_trace.py \
@@ -464,15 +461,15 @@ python3 scripts/analyze_nexus_sh2_source_trace.py \
   --require-pc 0x000002b4
 ```
 
-Detta är ett transportbevis, inte ett bevis på att `DM.BIN` är FONT256,
-menytext eller VDP2-konsument. Den senare klassningen måste fortfarande göras
-mot VDP2:s aktiva source-register, tilemap och CRAM i samma capture.
+This is transport evidence, not proof that `DM.BIN` is FONT256, menu text, or
+a VDP2 consumer. That classification must still be made against VDP2's active
+source registers, tilemap, and CRAM in the same capture.
 
-En lyckad transportkontroll räcker inte för semantic admission. Om
-`FONT256`-spannen, textkod→glyph-mappningen eller den faktiska menyägaren inte
-är bundna ska verktygen uttryckligen lämna `source_join=unbound` eller
-`semantic_admission=blocked`. Det hindrar en autentisk hårdvarudump från att
-bli en obestyrkt host-rendering.
+A successful transport check is insufficient for semantic admission. When the
+`FONT256` spans, text-code-to-glyph mapping, or actual menu owner are unbound,
+the tools must explicitly return `source_join=unbound` or
+`semantic_admission=blocked`. This prevents an authentic hardware dump from
+becoming an unsubstantiated host rendering.
 
 ## Verification
 

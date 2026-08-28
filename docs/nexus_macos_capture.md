@@ -58,7 +58,7 @@ raw or screen evidence.
 
 An external capture from frame 0 with EU BIOS and a region-matched French retail
 disc validated 60 raw VDP1/VDP2 frames. The raw file's SHA-256 was
-`39e70710bd1b7edeedfb2ec53a1edc0c27546b10f47cf06a6904591c558c66bf`, och
+`39e70710bd1b7edeedfb2ec53a1edc0c27546b10f47cf06a6904591c558c66bf`, and
 Start was injected into runtime frames 45–54. The capture shows changes in the
 VDP1 framebuffer and VDP2 registers, VRAM, and CRAM. Frame 59 is identified as
 NBG1 character mode with three active layers, but `asset_consumer_identity=unbound`

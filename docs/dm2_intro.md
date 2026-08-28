@@ -38,6 +38,6 @@ audio, and IBMIOP timing path has a real decoder.
 
 ## Sources
 
-- SKProject `SKWIN/SkWinCore.cpp`, `SHOW_MENU_SCREEN`, rader 55182–55205.
+- SKProject `SKWIN/SkWinCore.cpp`, `SHOW_MENU_SCREEN`, lines 55182–55205.
 - SKProject `SKWIN/defines.h`, `GDAT_CATEGORY_TITLE`.
 - [Greatstone SCK: DM2](http://greatstone.free.fr/dm/g_dm2.html).

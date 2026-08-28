@@ -26,7 +26,7 @@
 - [ ] `dm1_v2_camera_shake_pc34` — shake effect on damage/explosion (97 lines)
 - [ ] `dm1_v2_smooth_movement_pc34` — interpolated movement (158 lines)
 - [ ] `dm1_v2_movement_engine_pc34` — V2 movement engine (159 lines)
-- [ ] `dm1_v2_movement_command_adapter_pc34` — V1→V2 command bridge (97 rader)
+- [ ] `dm1_v2_movement_command_adapter_pc34` — V1→V2 command bridge (97 lines)
 - [ ] `dm1_v2_level_transition_pc34` — level-transition effects (174 lines)
 - [ ] `dm1_v2_screen_transition_pc34` — fade/wipe transitions (53 lines)
 
@@ -43,20 +43,20 @@
 - [ ] `dm1_v2_footstep_audio_pc34` — footsteps based on surface (77 lines)
 
 ### Milestone 5: HUD and UI foundation
-- [ ] `dm1_v2_hud_overlay_pc34` — HUD-overlay (188 rader)
-- [ ] `dm1_v2_damage_numbers_pc34` — floating damage numbers (104 rader)
-- [ ] `dm1_v2_tooltip_pc34` — hover-tooltips (110 rader)
+- [ ] `dm1_v2_hud_overlay_pc34` — HUD overlay (188 lines)
+- [ ] `dm1_v2_damage_numbers_pc34` — floating damage numbers (104 lines)
+- [ ] `dm1_v2_tooltip_pc34` — hover tooltips (110 lines)
 - [ ] `dm1_v2_message_log_pc34` — scrolling message log (80 lines)
 
 ### Milestone 6: V2 runtime + settings
-- [ ] `dm1_v2_runtime_pc34` — V2 runtime shell (215 rader)
+- [ ] `dm1_v2_runtime_pc34` — V2 runtime shell (215 lines)
 - [ ] `dm1_v2_settings_pc34` + `dm1_v2_settings_impl` — settings menu (170+169 lines)
 - [ ] `dm1_v2_screenshot_pc34` — screenshot function (114 lines)
 
 **v2.1 release criteria:**
 1. V1 parity remains intact — all V1 tests pass
 2. V2 can be toggled with `FIRESTAFF_V2=0/1`
-3. Rendering pipeline + kamera + ljud + HUD fungerar end-to-end
+3. Rendering pipeline, camera, audio, and HUD work end to end
 4. At least one game (DM1) playable through level 1 in V2 mode
 
 ---
@@ -66,7 +66,7 @@
 **Theme:** Play smarter. Improve navigation without changing balance.
 
 ### Milestone 7: Map features
-- [ ] `dm1_v2_minimap` + `dm1_v2_minimap_pc34` — automap med fog of war (84+90 rader)
+- [ ] `dm1_v2_minimap` + `dm1_v2_minimap_pc34` — automap with fog of war (84+90 lines)
 - [x] `dm1_v2_pathfinding_pc34` — synthetic A* search blocked; PC34 instead
   selects each creature direction in `GROUP.C` F0202/F0203.
 
@@ -86,7 +86,7 @@
 
 **v2.2 release criteria:**
 1. Everything from v2.1 is stable
-2. Minimap, journal, achievements, inventory sort fungerar in-game
+2. Minimap, journal, achievements, and inventory sorting work in game
 3. Auto-save works during level transitions
 4. Input remapping persists across sessions
 

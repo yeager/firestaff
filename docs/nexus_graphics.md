@@ -2,7 +2,7 @@
 
 > The format and raster notes here are not a parity claim. See
 > [`NEXUS_STALE_CLAIM_AUDIT.md`](NEXUS_STALE_CLAIM_AUDIT.md) for older
-> “draws/transformed/loaded”-formuleringar som endast betyder diagnostic
+> “draws/transformed/loaded” wording that means only a diagnostic
 > receipt.
 
 ## 1. DMDF — Dungeon Master Data Format

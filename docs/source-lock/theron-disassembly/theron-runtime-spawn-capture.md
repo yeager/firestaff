@@ -146,24 +146,24 @@ contains a contiguous read from `$2600` and therefore reports
 provenance, not identification of the record type or an opening of object,
 T700, or T900 semantics.
 
-Den senaste längre replayen (`theron-capture-20260813/replay`) har samma
-gräns i den autentiserade sidecaren: 512 läsningar i `$2600-$27FF`, alla via
-`$CB22`, alla nollor och utan `$C3A0`-reader. Den ska därför verifieras med
-`THERON_MEDNAFEN_MAIN_RAM_CONSUMER_PARSE_ONLY=1`; den får inte behandlas som
-ett utfört `$2c54-$2c69`-kodfönster. Parser-beredskap och code-window-proof
-är separata receipts.
+The latest longer replay (`theron-capture-20260813/replay`) has the same
+boundary in its authenticated sidecar: 512 reads in `$2600-$27FF`, all through
+`$CB22`, all zero, and without a `$C3A0` reader. It must therefore be verified
+with `THERON_MEDNAFEN_MAIN_RAM_CONSUMER_PARSE_ONLY=1`; it must not be treated
+as an executed `$2c54-$2c69` code window. Parser readiness and code-window
+proof are separate receipts.
 
-## 2026-08-13 — target-window receipt skiljer initiering från runtime
+## 2026-08-13 — target-window receipt separates initialization from runtime
 
-Consumer-receipten behåller nu också antal target-läsningar, icke-nollvärden
-och distinkta reader-PC:er. Combat-replayens sidecar
+The consumer receipt now also retains the number of target reads, non-zero
+values and distinct reader PCs. The combat replay sidecar
 `live.trace.main-ram-consumer` (MD5 `4d9da34dd8a0042dc302449af78c54cc`)
-har 19 läsningar i `$271B–$279F`, tre icke-nollvärden och 19 reader-PC:er.
+has 19 reads in `$271B–$279F`, three non-zero values and 19 reader PCs.
 
-Detta är en bättre kandidat för framtida source join än den rena `$CB22`-
-initieringen, men capturen startar från ett autoload-save, har inga CD/FIFO-
-receipts och saknar därför fortfarande bevis för level/object- eller
-T700/T900-ägarskap. Semantisk publicering förblir blockerad.
+This is a better candidate for a future source join than pure `$CB22`
+initialization, but the capture starts from an autoload save, has no CD/FIFO
+receipts and therefore still lacks evidence of level/object or T700/T900
+ownership. Semantic publication remains blocked.
 
 ## 2026-08-11 — authentic user save reaches the source RNG consumer path
 
@@ -627,17 +627,17 @@ Comma/period are not assumed as portable macOS bindings; they require an
 explicit local Mednafen input-map entry. This control choice is capture
 metadata only and does not claim a game-owned Button I/II semantic consumer.
 
-## 2026-08-09 — råkodsidecar för RNG-ingången
+## 2026-08-09 — raw-code sidecar for the RNG entry
 
-Den instrumenterade Mednafen-kedjan skriver nu en separat `.rng-code`
-sidecar när HuC6280 faktiskt börjar exekvera vid `$5D64` eller `$5D6A`.
-Sidecaren har den fasta markören
-`source=mednafen-pce-instrumented-rng-code-v1` och innehåller, per entry, den
-logiska PC:n, den MPR-härledda fysiska PC:n samt 256 byte rå instruktionsminne.
-Den hålls separat från `.rng-consumer`; den råa kodbilden är inte ett RNG-värde
-och parsern får inte göra den till en spawn- eller statstabell.
+The instrumented Mednafen chain now writes a separate `.rng-code` sidecar when
+the HuC6280 actually begins execution at `$5D64` or `$5D6A`. The sidecar has
+the fixed marker `source=mednafen-pce-instrumented-rng-code-v1` and contains,
+for each entry, the logical PC, the MPR-derived physical PC, and 256 bytes of
+raw instruction memory. It remains separate from `.rng-consumer`; the raw
+code image is not an RNG value and the parser must not turn it into a spawn or
+statistics table.
 
-Den autentiserade `.mc0`-körningen producerade följande lokala receipt:
+The authenticated `.mc0` run produced the following local receipt:
 
 ```text
 Track 02 MD5:       f23601102138f87c33025877767ebf76
@@ -650,35 +650,35 @@ CD->RAM receipts:   0
 RNG code MD5:       bb890a377b3d17e96384b15d0255c14b
 ```
 
-Detta är nu byteexakt runtimebevis för vilken kod som körs vid `$5D64` i den
-autentiserade körningen. Det bevisar fortfarande inte RNG-returvärdet,
-bankens ägarskap, monsterrecordets konsument, AI, loot, T700 eller T900.
-Körningen får därför inte släppa de semantiska grindarna, och den får inte
-blandas med den separata cold-start-körningen som hade CD→RAM-receipts.
+This is now byte-exact runtime evidence of which code executes at `$5D64` in
+the authenticated run. It still does not prove the RNG return value, bank
+ownership, the monster-record consumer, AI, loot, T700, or T900. The run
+therefore must not open the semantic gates or be merged with the separate
+cold-start run that had CD→RAM receipts.
 
-### 2026-08-09 — source-byte join för råkodfönstret
+### 2026-08-09 — source-byte join for the raw-code window
 
-De första 64 byte i det autentiserade `$5D64`-fönstret matchar exakt i den
-riktiga US Track 02-filen på sju offsetar:
+The first 64 bytes in the authenticated `$5D64` window match exactly at seven
+offsets in the real US Track 02 file:
 
 ```text
 0x975c4, 0xe0dc4, 0x12a5c4, 0x173dc4,
 0x1bd5c4, 0x206dc4, 0x2505c4
 ```
 
-Det är `0x975c4 + n*0x49800`, `n = 0..6`, i den hashverifierade US-filen
-`TQUS02.bin` (MD5 `f23601102138f87c33025877767ebf76`). Parsern verifierar nu
-hela 256-byte-fönstret mot dessa källkopior, tillsammans med sidecar-header,
-PC-fält, 8 104 992-byte filstorlek och hexlängd. Detta är en källbyte-join,
-inte ett påstående om vilken kopia som var mappad i körningen.
+They are `0x975c4 + n*0x49800`, `n = 0..6`, in the hash-verified US file
+`TQUS02.bin` (MD5 `f23601102138f87c33025877767ebf76`). The parser now verifies
+the complete 256-byte window against these source copies, together with the
+sidecar header, PC fields, 8,104,992-byte file size and hex length. This is a
+source-byte join, not a claim about which copy was mapped during the run.
 
-RNG-returvärde, caller, spawnkategori, creature, AI och T900-regler är fortsatt
-stängda tills den autentiserade körningen visar deras verkliga konsumentkedja.
+The RNG return value, caller, spawn category, creature, AI and T900 rules
+remain closed until the authenticated run shows their actual consumer chain.
 
-### 2026-08-09 — samma cold-start, fortfarande ingen spawnretur
+### 2026-08-09 — same cold start, still no spawn return
 
-En ny bounded cold-start med samma autentiserade US Track 02, System Card och
-instrumenterade Mednafen gav i en och samma session:
+A new bounded cold start with the same authenticated US Track 02, System Card
+and instrumented Mednafen produced, in one session:
 
 ```text
 authenticated_cd_ram_receipts=256
@@ -690,10 +690,10 @@ rng_consumer_samples=0
 rng_code_windows=0
 ```
 
-Detta är ett kombinerat transport-/förkonsumentbevis, men inte ett positivt
-RNG- eller spawnbevis. `$4644`/`$4667` med `B3=$FF` visar inte den specialgren
-som disassemblyn kräver, och utan `$B0E5` i samma session får ingen RNG-,
-creature-, AI-, generator-, T700- eller T900-semantik öppnas.
+This is combined transport/pre-consumer evidence, but not positive RNG or
+spawn evidence. `$4644`/`$4667` with `B3=$FF` does not show the special branch
+required by the disassembly, and without `$B0E5` in the same session no RNG,
+creature, AI, generator, T700, or T900 semantics may be opened.
 
 ## 2026-08-09 fresh cold-start window trace
 
@@ -944,9 +944,9 @@ T700 or T900 semantics are opened.
 
 ## 2026-08-10 — cold-start transport and helper boundary
 
-En ny cold-start-capture kördes från extern disk mot samma hashverifierade US
-Track 02, System Card och instrumenterade Mednafen. Den autentiserade
-startupkedjan gav följande kvitto i en och samma session:
+A new cold-start capture was run from the external disk against the same
+hash-verified US Track 02, System Card and instrumented Mednafen. The
+authenticated startup chain produced the following receipt in one session:
 
 ```text
 track02_md5=f23601102138f87c33025877767ebf76
@@ -984,22 +984,23 @@ vce_palette_snapshot_bytes=1024
 transition=observed
 ```
 
-Detta är ett positivt transportbevis för råsektor → autentiserad RAM-
-proveniens och för `$4644`/`$4667`-hjälparkanten. Det är samtidigt ett negativt
-semantikbevis: körningen nådde inte `$B0E5`, den särskilda `$B3 & 7 == 4`-grenen,
-RNG-konsumenten eller någon målskrivning. Värdena får därför inte användas för
-att härleda host-RNG, monsterstats, AI, strid, loot, generatorer, T700 eller
-T900. Nästa witness måste nå en verklig dungeon-/spawn- eller objektaktion i
-samma autentiserade session och binda returvärde, källrecord och konsument.
+This is positive transport evidence for raw-sector → authenticated-RAM
+provenance and the `$4644`/`$4667` helper boundary. It is also negative
+semantic evidence: the run did not reach `$B0E5`, the special `$B3 & 7 == 4`
+branch, the RNG consumer, or any target write. The values must therefore not
+be used to derive host RNG, monster statistics, AI, combat, loot, generators,
+T700, or T900. The next witness must reach a real dungeon/spawn or object
+action in the same authenticated session and bind the return value, source
+record and consumer.
 
-Råtrace, BIOS, System Card, BIN/CUE och savestate ligger kvar utanför GitHub.
+The raw trace, BIOS, System Card, BIN/CUE and save state remain outside GitHub.
 
 ## 2026-08-11 — bounded combat replay remains transport-negative
 
-En ny extern-disk replay använde den autentiserade US-CUE:n och samma
-Mednafen-savestate med 18 frame-bundna PCE-händelser: rörelse, svängningar och
-Button I. Körningen avslutades normalt efter den bounded timeouten och gav
-VDC/VCE-snapshots, men ingen spelägd CD→RAM-originreceipt:
+A new external-disk replay used the authenticated US CUE and the same
+Mednafen save state with 18 frame-bound PCE events: movement, turns and
+Button I. The run ended normally after the bounded timeout and produced
+VDC/VCE snapshots, but no game-owned CD→RAM origin receipt:
 
 ```text
 track02_md5=f23601102138f87c33025877767ebf76
@@ -1013,11 +1014,11 @@ rng_consumer_samples=0
 transition=missing
 ```
 
-De 50 råa `$B0E5`-adresspassagerna bar samma ogiltiga A-värden `$2C`/`$85`
-som tidigare och är därför inte regular-spawn-calls. Denna körning öppnar
-inte RNG, monsterstats, AI, attack/skada, loot, generator, T700 eller T900.
-Mednafen, savestate, System Card och alla råtracefiler ligger kvar på
-extern-disken och är inte committade.
+The 50 raw `$B0E5` address passages had the same invalid A values, `$2C`/`$85`,
+as before, and are therefore not regular-spawn calls. This run opens no RNG,
+monster statistics, AI, attack/damage, loot, generator, T700, or T900. The
+Mednafen binary, save state, System Card and all raw trace files remain on the
+external disk and are not committed.
 
 ## 2026-08-11 — consumer register witness
 
@@ -1050,39 +1051,39 @@ The raw trace remains on the external disk and is not committed.
 
 ## 2026-08-10 — corrected cold-start replay proves loader transport only
 
-En korrigerad extern-disk replay skickade en kort Run-puls efter BIOS i stället
-för att hålla Run aktiv genom hela uppstarten. Den autentiserade sessionen
-producerade 226 råsektorspann, 254 CD→RAM-originreceipts, 32 `$E009`-
-dispatchar och 11 verifierade frame-bundna PCE-inputevents. Den gav dessutom
-465 registerprover vid `$4644/$4667` i samma session.
+A corrected external-disk replay sent a brief Run pulse after BIOS rather than
+holding Run active through the entire startup. The authenticated session
+produced 226 raw-sector spans, 254 CD→RAM origin receipts, 32 `$E009`
+dispatches and 11 verified frame-bound PCE input events. It also produced 465
+register samples at `$4644/$4667` in the same session.
 
-Detta är ett positivt loader-/transport-witness men inte ett gameplay-witness:
+This is a positive loader/transport witness but not a gameplay witness:
 `spawn_consumer_reads=0`, `spawn_entry_b0e5=0`,
-`rng_consumer_samples=0`, `target_reads=0`, `target_writes=0` och
-`helper_4667_special_branch_samples=0`. `$4644/$4667` får därför inte
-frikopplas från samma-sessionens saknade `$B0E5`/RNG-retur eller användas för
-att uppfinna monster, AI, attack/skada, loot, generator, T700 eller T900.
-Receipten finns på extern disk under
+`rng_consumer_samples=0`, `target_reads=0`, `target_writes=0` and
+`helper_4667_special_branch_samples=0`. `$4644/$4667` must therefore not be
+decoupled from the same session's missing `$B0E5`/RNG return or used to invent
+monsters, AI, attack/damage, loot, generator, T700, or T900. The receipt is on
+the external disk at
 `/Volumes/Extern-disk/theron-capture-20260810-replay2-goal.transition`.
 
 ## 2026-08-10 — cold-start scripted replay stops before game-owned CD handoff
 
-En ny extern-disk capture kördes mot den autentiserade US-CUE:n med den
-instrumenterade Mednafen-binären och en frame-bunden plan med Run från frame 1,
-Button I/II och rörelse. Inputtrace:n verifierade 11 planerade PCE-händelser
-och 131072 inputtransaktioner. Körningen gav dock ingen autentiserad
-CD→RAM-originreceipt (`authenticated_cd_ram=0`, `raw_sector_spans=0`) och bara
-tre IRQ2-callbacks innan den bounded timeouten. Den är därför ett negativt
-transport-witness: den bevisar inte level/object-consumer, RNG-retur, spawn,
-creature-AI, attack/skada, loot, generator, T700 eller T900. Råtrace och
-snapshots finns endast på extern disk under
+A new external-disk capture was run against the authenticated US CUE with the
+instrumented Mednafen binary and a frame-bound plan with Run from frame 1,
+Button I/II and movement. The input trace verified 11 planned PCE events and
+131072 input transactions. However, the run produced no authenticated CD→RAM
+origin receipt (`authenticated_cd_ram=0`, `raw_sector_spans=0`) and only three
+IRQ2 callbacks before the bounded timeout. It is therefore a negative
+transport witness: it does not prove a level/object consumer, RNG return,
+spawn, creature AI, attack/damage, loot, generator, T700, or T900. Raw trace
+and snapshots exist only on the external disk at
 `/Volumes/Extern-disk/theron-capture-20260810-replay-goal`.
 
 ## 2026-08-10 — source-bound VDC/VCE capture allow-list
 
-Produktionsvägen accepterar nu de kompletta snapshotpar som faktiskt har
-verifierats på extern disk, i stället för att bara acceptera ett äldre par.
-Allow-listan är stängd och jämför hela filernas FNV-1a-identitet:
+The production path now accepts the complete snapshot pairs actually verified
+on the external disk rather than accepting only an older pair. The allow-list
+is closed and compares the complete FNV-1a identity of each file:
 
 ```text
 US legacy capture       VRAM f11c6b2a  VCE ea83f117
@@ -1092,10 +1093,10 @@ JP startup capture      VRAM 8ae1e419  VCE 4e48c361
 US cold-start capture   VRAM 1a37c99b  VCE 71cc9b11
 ```
 
-Alla par kräver fortfarande exakta 64 KiB VRAM- och 1 KiB VCE-filer. De ger
-endast source-bound BAT/tile/palett-replay och M11-presentering av den fångade
-skärmen. Ingen post i allow-listan bevisar square-to-tile-mappning,
-perspektiv, HUD-/objektägare, monster, RNG eller T700/T900-semantik.
+All pairs still require exact 64 KiB VRAM and 1 KiB VCE files. They provide
+only source-bound BAT/tile/palette replay and M11 presentation of the captured
+screen. No allow-list entry proves square-to-tile mapping, perspective,
+HUD/object ownership, monster, RNG, or T700/T900 semantics.
 # 2026-08-10 — complete US CUE/19-track runtime capture
 
 The external-disk capture was repeated with the complete user-supplied US
@@ -1114,13 +1115,13 @@ AI, combat, loot, generator timing, T700 and T900 remain fail-closed.
 
 ## 2026-08-10 — autoload replay remains pre-gameplay
 
-En autentisk extern-disk-savestate replayades med 15 planerade PCE-händelser.
-Den gav ingen autentiserad CD→RAM-receipt och ingen spelägd spawn-konsument.
-De 50 `$B0E5`-adresshittarna hade alla A=`$2C`/`$85`, alltså inte en giltig
-regular-spawn-kategori `0..3`. `$4644`, `$4667`, giltiga spawn-samples,
-RNG-fönster och target writes var noll. Därför öppnas ingen RNG-, AI-,
-combat-, loot-, generator-, T700- eller T900-semantik. Rådata stannade på
-extern disk och Mednafen stängdes efter den avgränsade körningen.
+An authentic external-disk save state was replayed with 15 planned PCE events.
+It produced no authenticated CD→RAM receipt and no game-owned spawn consumer.
+All 50 `$B0E5` address hits had A=`$2C`/`$85`, not a valid regular-spawn
+category `0..3`. `$4644`, `$4667`, valid spawn samples, RNG windows and target
+writes were zero. Therefore no RNG, AI, combat, loot, generator, T700, or T900
+semantics are opened. The raw data stayed on the external disk and Mednafen
+was stopped after the bounded run.
 
 ## 2026-08-11 — C3A0 same-session target reads admitted as provenance
 
@@ -1222,71 +1223,72 @@ consumer; those semantic routes remain closed.
 
 ## 2026-08-11 — MODE1/2048 CD→RAM transport witness
 
-En ny, avgränsad körning använde den autentiserade US-distributionens riktiga
-`TQUS.cue` med Track 02 i MODE1/2048 (`TQUS02.iso`, MD5
-`ceb02343868f80cec899e9b239aff2da`) och den lokala System Card-proveniensen
-`ff1a674273fe3540ccef576376407d1d`. Den instrumenterade Mednafen-sessionen
-gav 161 råsektorspann, 51 SCSI-läsningar, 2 byte-exakta CD→RAM-receipts,
-32 `$E009`-dispatches och 65 536 ordnade main-RAM-consumerläsningar. Samma
-session observerade 4 096 spawn-consumerläsningar och 3 584 RNG-windowläsningar.
+A new bounded run used the authenticated US distribution's real `TQUS.cue`
+with Track 02 in MODE1/2048 (`TQUS02.iso`, MD5
+`ceb02343868f80cec899e9b239aff2da`) and the local System Card provenance
+`ff1a674273fe3540ccef576376407d1d`. The instrumented Mednafen session
+produced 161 raw-sector spans, 51 SCSI reads, two byte-exact CD→RAM receipts,
+32 `$E009` dispatches and 65,536 ordered main-RAM consumer reads. The same
+session observed 4,096 spawn-consumer reads and 3,584 RNG-window reads.
 
-Detta är nu godkänt som transport/proveniens även när runtime-läsningarna är
-icke-noll. De är observationer, inte semantiskt bevis. `$B0E5` hade fortfarande
-0 giltiga regular-spawn-samples, och därför förblir RNG, spawn, creature-AI,
-combat, loot, generatorer, T700 och T900 fail-closed. Råtrace, VCE/VRAM och
-media ligger kvar på extern disk; inget BIOS eller spelmedia är incheckat.
+This is now accepted as transport/provenance even when runtime reads are
+non-zero. They are observations, not semantic proof. `$B0E5` still had zero
+valid regular-spawn samples, and therefore RNG, spawn, creature AI, combat,
+loot, generators, T700 and T900 remain fail-closed. Raw trace, VCE/VRAM and
+media remain on the external disk; no BIOS or game media is committed.
 
 ## 2026-08-11 — directed Button-II replay still misses gameplay ownership
 
-En ny extern replay använde samma hashverifierade US Track 02/System Card och
-det lokala användarskapade `.mc0`-state:t, med riktade Button-II- och
-rörelsehändelser. Mednafen accepterade den verkliga Track 02-bilden och
-producerade 65 536 main-RAM-consumer-rader, 4 096 spawn-consumer-rader och
-11 422 183 RNG-consumerobservationer. Den nådde däremot ingen transition och
-ingen giltig `$B0E5`-execution sample: 36 adresshittar var återigen overlay-
-träffar utan A=`0..3`, medan `$4644` och `$4667` saknades.
+A new external replay used the same hash-verified US Track 02/System Card and
+the locally user-created `.mc0` state, with directed Button-II and movement
+events. Mednafen accepted the real Track 02 image and produced 65,536
+main-RAM-consumer rows, 4,096 spawn-consumer rows and 11,422,183 RNG-consumer
+observations. It did not reach a transition or a valid `$B0E5` execution
+sample: 36 address hits were again overlay hits without A=`0..3`, while
+`$4644` and `$4667` were absent.
 
-Detta är ett nytt negativt runtime-bevis, inte en grund för att fylla i
-monster-AI, attack/skada, loot, generatorer, T700 eller T900. Capturen och
-BIOS:et ligger kvar på extern disk; endast denna sammanfattning är i repot.
+This is new negative runtime evidence, not a basis for filling in monster AI,
+attack/damage, loot, generators, T700 or T900. The capture and BIOS remain on
+the external disk; only this summary is in the repository.
 
 ## 2026-08-11 — real US data consumer audit after directed replay
 
-Den lokala hashverifierade `TQUS02.bin`-filen validerades mot samtliga sju
-dungeon-ledgers: 2 186 placerade thing-records, 165 monsterrecords, 392
-materialiserade itemförekomster och 8 source-bound US-roster-namn. Den riktiga
-66-raders item-propertytabellen och palettefönstret passerade också sina
-source-byte-kontroller.
+The local hash-verified `TQUS02.bin` file was validated against all seven
+dungeon ledgers: 2,186 placed thing records, 165 monster records, 392
+materialized item occurrences and eight source-bound US roster names. The
+real 66-row item-property table and palette window also passed their
+source-byte checks.
 
-Textvägen visar däremot en konkret kvarvarande consumergräns. Thing-data
-dekoderas till observerade codon-strängar, men de innehåller obevisade `{}`-
-kontrollkoder och publiceras därför inte av `world_load_dungeon_text()`;
-testet får korrekt 0 publicerade world-strängar. Detta ska lösas med en
-autentiserad US textconsumer/codetabell från disassembly/runtime-capture, inte
-genom att göra den diagnostiska rådekodningen till speltext.
+The text route does, however, show a concrete remaining consumer boundary.
+Thing data decodes into observed codon strings, but they contain unproven `{}`
+control codes and are therefore not published by `world_load_dungeon_text()`;
+the test correctly obtains zero published world strings. This must be resolved
+with an authenticated US text consumer/code table from disassembly/runtime
+capture, not by turning diagnostic raw decoding into game text.
 
 ## 2026-08-12 — autoload combat capture remains a C96B-only witness
 
-Den externa capture-katalogen `theron-capture-20260812-combat` använde den
-autentiserade US-CD:n, System Card och det lokala Mednafen-autoload-state:t.
-Mednafen bekräftar därför den riktiga Track 02-identiteten, men capturen visar
-`cd_irq_callbacks=1`, `non_system_card_pcecd_reads=0`, `transition=missing` och
-`main_ram_loader_tii_transfers=0`. Den är alltså inte en CD→RAM→level-handoff.
+The external capture directory `theron-capture-20260812-combat` used the
+authenticated US CD, System Card and local Mednafen autoload state. Mednafen
+therefore confirms the real Track 02 identity, but the capture shows
+`cd_irq_callbacks=1`, `non_system_card_pcecd_reads=0`, `transition=missing` and
+`main_ram_loader_tii_transfers=0`. It is therefore not a CD→RAM→level handoff.
 
-Registertrace innehåller 65 536 samplingar och en 16-bitars sekvens-wrap, men
-bara `$C96B`-fönster. Den innehåller inga `$CC4C`, `$4644`, `$4667` eller giltiga
-`$B0E5`-samples. Spawn-read-tracen läser i stället bank-1F-adresser `$2072`
-till `$2081` utan `$5D64/$5D6A`-mål. Den befintliga parsern avvisar därför
-capturen som komplett spawn-consumer, vilket är korrekt.
+The register trace contains 65,536 samples and a 16-bit sequence wrap, but
+only `$C96B` windows. It contains no `$CC4C`, `$4644`, `$4667` or valid
+`$B0E5` samples. The spawn-read trace instead reads bank-1F addresses `$2072`
+through `$2081` without a `$5D64/$5D6A` target. The existing parser therefore
+rejects the capture as a complete spawn consumer, correctly.
 
-Detta stärker den negativa beviskedjan men öppnar inte RNG-returägande,
-monster-/generatorlogik, AI, combat, T700, T900 eller ljudhändelser. Råtrace
-och BIOS ligger kvar på extern disk; inget av detta läggs i GitHub.
+This strengthens the negative evidence chain but does not open RNG return
+ownership, monster/generator logic, AI, combat, T700, T900 or sound events.
+The raw trace and BIOS remain on the external disk; none of this is put on
+GitHub.
 
-Capturens kompletta screen-space-snapshot är däremot nu separat admissible:
-VDC-VRAM FNV-1a `411960eb` och VCE FNV-1a `6fb303b5`. Det paret går via den
-source-bound VDC/VCE-presentern, men får inte tolkas som square-, objekt-, HUD-
-eller monsterdata och används inte som README-screenshot.
+The capture's complete screen-space snapshot is now separately admissible:
+VDC-VRAM FNV-1a `411960eb` and VCE FNV-1a `6fb303b5`. That pair goes through
+the source-bound VDC/VCE presenter, but must not be interpreted as square,
+object, HUD or monster data and is not used as a README screenshot.
 
 ## 2026-08-12 — bounded `$B0E5` reserve rejects the active state’s non-spawn calls
 

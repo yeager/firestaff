@@ -482,7 +482,7 @@ order:
    ~/.firestaff/data/theron-extras/{japan,usa}` reports
    Theron READY (`FOUND ...Track 02).bin`). See
    `reference/L1_data_path_verification_2026-06-20.md`
-   Resultat v2 för verifieringsdata.
+   Results v2 for verification data.
 3. **Mirror dmweb /community/documentation/ for offline research**
    — DONE 2026-06-20 (commit pending; 43 pages mirrored at
    `reference/dmweb-community-docs/` with INDEX.md + index.json +
@@ -492,7 +492,7 @@ order:
    pulls from `~/Downloads/` to `~/.firestaff/data/<game>-extras/`
    without overwriting canonical staging — DONE 2026-06-20 (commit
    `4b097f54`; 73 archives → 71 version directories; ~6.2 GB
-   extraherat; 4 nya READY-path:er discovered by `--scan-data`).
+   extracted; 4 new READY paths discovered by `--scan-data`).
 
 ### Tier 2 (OPEN-BOUNDED — fits one commit each)
 
@@ -640,68 +640,65 @@ What changed in this session that affects the gap list above:
 - **73 game archives extracted** from `~/Downloads/` to
   `~/.firestaff/data/` via `reference/extract-game-archives.sh`.
   - 71 new version-staging directories under
-    `<game>-extras/<version>/` (~6.2 GB extraherat)
-  - 4,232 extraherade filer utöver befintlig canonical staging
-  - Inga befintliga canonical-filer (dm1/, csb/, dm2/, nexus/, theron/)
-    skrivna över
+    `<game>-extras/<version>/` (~6.2 GB extracted)
+  - 4,232 extracted files in addition to existing canonical staging
+  - No existing canonical files (dm1/, csb/, dm2/, nexus/, theron/) were
+    overwritten
 
-### New READY path:er (utöver canonical)
+### New READY paths (in addition to canonical)
 
-`./build/firestaff --scan-data` hittar nu alternativa
-match-path:er för fyra av fem spel:
+`./build/firestaff --scan-data` now finds alternative matching paths for four
+of the five games:
 
-| Spel | Ny match-path |
+| Game | New matching path |
 |---|---|
 | DM1 | `dm1-extras/legacy-dos/DungeonMasterPC34/DATA/GRAPHICS.DAT` |
-| CSB | `csb-extras/legacy-amiga-dms/...Meynaf/DungeonMaster/Graphics.DAT` (Amiga 3.3 French hackad av Meynaf) |
-| DM2 | (oförändrad, canonical `dm2/` vinner) |
+| CSB | `csb-extras/legacy-amiga-dms/...Meynaf/DungeonMaster/Graphics.DAT` (Amiga 3.3 French hack by Meynaf) |
+| DM2 | (unchanged; canonical `dm2/` wins) |
 | Nexus | `nexus-extras/saturn-ja/Dungeon Master Nexus (Japan) (Track 1).bin::DM.BIN` |
 | Theron | `theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin` |
 
 ### Kanoniska hashar (VERIFIED_HASHES.md)
 
 `tools/asset-validate/compare_to_greatstone.py ~/.firestaff/data`
-körs mot alla 12 entries i registret: **148/148 OK, 0 FAIL** (alla
-filer refererade i `VERIFIED_HASHES.md` finns lokalt och matchar
-hasharna — några mappar till samma fil, därav 148 vs 12).
+runs against all 12 registry entries: **148/148 OK, 0 FAIL** (all files
+referenced in `VERIFIED_HASHES.md` are local and match their hashes; some map
+to the same file, hence 148 versus 12).
 
 ### Documentation mirror
 
-- **43 sidor av dmweb.free.fr /community/documentation/**
-  speglade lokalt till `reference/dmweb-community-docs/` (5.5 MB)
-  - `INDEX.md` (19 KB) — mänskligt läsbar innehållsförteckning
-  - `index.json` (27 KB) — maskinläsbar
-  - `crawl.sh` — reproducibelt crawl-skript (curl + 1.2s rate limit)
-  - Täcker 5 ämnesområden (copy protection, DM+CSB mechanics,
+- **43 dmweb.free.fr /community/documentation/ pages** mirrored locally at
+  `reference/dmweb-community-docs/` (5.5 MB)
+  - `INDEX.md` (19 KB) — human-readable table of contents
+  - `index.json` (27 KB) — machine-readable
+  - `crawl.sh` — reproducible crawl script (curl + 1.2s rate limit)
+  - Covers 5 topic areas (copy protection, DM+CSB mechanics,
     Nexus file formats, file formats, miscellaneous)
 
 ### Bug fix: CLI --data-dir
 
 - `src/shared/asset_status_m12.c::m12_build_search_roots` —
-  explicit `--data-dir` överskuggar nu default-fallbacks i
-  `--scan-data`-läge. Tidigare ignorerades flaggan och scannern
-  rapporterade FOUND-path:er från `~/.firestaff/data/` även när
-  användaren bad om en annan rot.
-- `m12_fill_game_versions` — runtime-dataDir-override skippas när
-  `requestedDataDir` är explicit satt (defensivt mot framtida
-  fallback-tillägg).
-- `tests/test_asset_status_scan_metrics.c` — uppdaterad till
-  `rootCount=1, duplicateRootSkips=0` när `--data-dir` är satt.
-- Committat: `6a7eccdc`.
+  explicit `--data-dir` now overrides default fallbacks in `--scan-data`
+  mode. Previously the flag was ignored and the scanner reported FOUND paths
+  from `~/.firestaff/data/` even when the user requested another root.
+- `m12_fill_game_versions` — the runtime dataDir override is skipped when
+  `requestedDataDir` is explicit (defensive against future fallback additions).
+- `tests/test_asset_status_scan_metrics.c` — updated to expect
+  `rootCount=1, duplicateRootSkips=0` when `--data-dir` is set.
+- Committed: `6a7eccdc`.
 
 ### Test coverage (smoke runs)
 
 - 40/40 DM1 V1 chest/item/weight/recompute-tester PASS
 - 23/23 Phase A invariants PASS
-- 12/12 kanoniska hashar matchar (0 fail)
+- 12/12 canonical hashes match (0 failures)
 
-### Påverkan på gap-status
+### Effect on gap status
 
-Markerade i docen ovan som **EXTRACTED** (nya rader i C2, D3, E1,
-F1) — tidigare `BLOCKED-DATA`. Fyra markerade **EXTRACTED +
-VERIFIED** eftersom de nu också matchar en kanonisk hash. Uppdatering
-2026-06-21: Theron JP/US Track 02 är dessutom launch-testad via
-`tier1_strict_boot_probe`.
+Marked above as **EXTRACTED** (new rows in C2, D3, E1, F1), previously
+`BLOCKED-DATA`. Four are marked **EXTRACTED + VERIFIED** because they now also
+match a canonical hash. Update 2026-06-21: Theron JP/US Track 02 is also
+launch-tested through `tier1_strict_boot_probe`.
 
 | Spel | Version | Status |
 |---|---|---|
@@ -710,28 +707,26 @@ VERIFIED** eftersom de nu också matchar en kanonisk hash. Uppdatering
 | Nexus | Saturn JA (Track 1) | EXTRACTED + VERIFIED |
 | Theron | JP/US Track 02 | EXTRACTED + VERIFIED + LAUNCH-TESTED |
 
-Dessa kan nu användas som real-asset testkällor utöver den
-befintliga canonical-staging som finns under `dm1/`, `csb/`, etc.
+These can now be used as real-asset test sources in addition to existing
+canonical staging under `dm1/`, `csb/`, etc.
 
 ---
 
 ## L. Follow-up — concrete next-session tasks
 
-Listan nedan är prioriterade mindre tasks som följer direkt av
-sessionens leveranser. Varje punkt tar < 1 dag och kräver ingen
-ny design.
+The list below contains prioritized small tasks directly following from the
+session deliverables. Each item takes less than one day and requires no new design.
 
-### L1. Verifiera alternativa READY-path:er bootar
+### L1. Verify that alternative READY paths boot
 
-Status 2026-06-21: DONE för Tier 1 path-discovery scope via
-`tier1_strict_boot_probe` (alla närvarande in-scope launch paths). CSB
-canonical och CSB Amiga 3.3 Meynaf FR skriver nu `CSB READY`;
-Nexus virtual-ISO launch ligger kvar som separat Tier 4
-runtime/launcher-gap.
+Status 2026-06-21: DONE for the Tier 1 path-discovery scope through
+`tier1_strict_boot_probe` (all present in-scope launch paths). CSB canonical
+and CSB Amiga 3.3 Meynaf FR now emit `CSB READY`; Nexus virtual-ISO launch
+remains a separate Tier 4 runtime/launcher gap.
 
-Den ursprungliga källan Tier 1 #5: Kör mot varje EXTRACTED + VERIFIED path
-och bekräfta att M11 faktiskt startar spelet, inte bara att
-scannern hittar hasharna.
+The original Tier 1 #5 request: run against every EXTRACTED + VERIFIED path
+and confirm that M11 actually starts the game, not merely that the scanner
+finds hashes.
 
 ```bash
 for spec in \
@@ -748,49 +743,44 @@ do
 done
 ```
 
-Förväntat: Phase A-probe-PASS + en spel-specifik asset-load PASS
-per path. Om något FAIL:ar, markera gap-status tillbaka till
-PARTIAL.
+Expected: a Phase A probe PASS plus a game-specific asset-load PASS per path.
+If anything fails, move the gap status back to PARTIAL.
 
-**Resultat (2026-06-20):** Se
-`reference/L1_data_path_verification_2026-06-20.md` för detaljer.
-Kort version:
+**Result (2026-06-20):** See
+`reference/L1_data_path_verification_2026-06-20.md` for details. Short version:
 
-| Path | READY? | Orsak |
+| Path | READY? | Cause |
 |---|---|---|
-| DM1 legacy-dos | ✅ | Canonical `GRAPHICS.DAT`/`DUNGEON.DAT` i katalogen — matchar hashen direkt |
-| CSB Amiga 3.3 Meynaf FR | ✅ | Matchar canonical CSB-hasen i `...Meynaf/DungeonMaster/Graphics.DAT` |
-| Nexus Saturn JA | ⚠️ | MD5 stämmer (`d8362321...`) men filnamnet matchar inte scanner-mönstret `g_nexusArchiveNames` (`DM.BIN`, `SEGADATA.BIN`, etc.) — hittas bara i default-scan, inte via `--data-dir` |
-| Theron JP Track 02 | ✅ | MD5 stämmer (`b7afb338...`); 2026-06-21 `tier1_strict_boot_probe` launch-testar JP canonical + JP extras till TQR level-load milestone; `theron_v1_runtime_screenshot_readiness` och `theron_24h_readiness` ger metadata-/hashkvitton utan att marknadsföra skärmbilder |
-| DM1 PC 3.4 English 3.5" (extras) | ⚠️ | Innehåller `.raw`-filer (CTRaw emulator-format) som scanner ej mappar |
+| DM1 legacy-dos | ✅ | Canonical `GRAPHICS.DAT`/`DUNGEON.DAT` in the directory — directly matches the hash |
+| CSB Amiga 3.3 Meynaf FR | ✅ | Matches the canonical CSB hash in `...Meynaf/DungeonMaster/Graphics.DAT` |
+| Nexus Saturn JA | ⚠️ | MD5 matches (`d8362321...`) but the filename does not match the `g_nexusArchiveNames` scanner pattern (`DM.BIN`, `SEGADATA.BIN`, etc.) — found only in the default scan, not through `--data-dir` |
+| Theron JP Track 02 | ✅ | MD5 matches (`b7afb338...`); on 2026-06-21 `tier1_strict_boot_probe` launch-tested JP canonical and JP extras to the TQR level-load milestone; `theron_v1_runtime_screenshot_readiness` and `theron_24h_readiness` provide metadata/hash receipts without presenting screenshots as evidence |
+| DM1 PC 3.4 English 3.5" (extras) | ⚠️ | Contains `.raw` files (CTRaw emulator format) not mapped by the scanner |
 
-**Ny status:**
-- DM1 + CSB legacy path:er är nu `EXTRACTED + VERIFIED +
-  LAUNCH-TESTED` (redo för framtida tester/parity-evidence).
-- Theron JP/US Track 02 path:er är `EXTRACTED + VERIFIED +
-  LAUNCH-TESTED` sedan 2026-06-21: `tier1_strict_boot_probe`
-  startar JP canonical, JP extras och US extras till TQR
-  level-load milestone.
-- Nexus container-path:er: `--data-dir <path>` HITTAR dem korrekt
-  via MD5-hash-matchning (asset_find_by_md5), inte filnamn.
-  Source-filenamn som `Dungeon Master Nexus (Japan) (Track 1).bin`
-  accepteras direkt. Tidigare påstått problem med filnamn var FEL.
+**New status:**
+- DM1 and CSB legacy paths are now `EXTRACTED + VERIFIED + LAUNCH-TESTED`
+  (ready for future tests/parity evidence).
+- Theron JP/US Track 02 paths have been `EXTRACTED + VERIFIED +
+  LAUNCH-TESTED` since 2026-06-21: `tier1_strict_boot_probe` starts JP
+  canonical, JP extras, and US extras to the TQR level-load milestone.
+- Nexus container paths: `--data-dir <path>` finds them correctly through MD5
+  matching (`asset_find_by_md5`), not filenames. Source filenames such as
+  `Dungeon Master Nexus (Japan) (Track 1).bin` are accepted directly. The
+  previous claim of a filename problem was incorrect.
 
-**Tier 1 #6 stängs som NO-GAP (2026-06-20)** — verifierat att
-scannern matchar på MD5-hash, inte filnamn. Source-filenamn
-accepteras direkt av `--data-dir`. Tier 1 #6 togs upp av L1-rapporten
-men den faktiska scan-beteendet stödjer READY för alla 4 paths.
-Inget alias-steg krävs. Tier 1 #6-posten i listan ovan är inaktuell
-och bör rensas vid nästa watchdog refresh.
+**Tier 1 #6 is closed as NO-GAP (2026-06-20)** — verified that the scanner
+matches by MD5 hash, not filename. `--data-dir` accepts source filenames
+directly. Tier 1 #6 was raised by the L1 report, but the actual scan behaviour
+supports READY for all four paths. No alias step is required. The Tier 1 #6
+entry above is outdated and should be removed at the next watchdog refresh.
 
-### L2. ~~Skapa `tools/data-readiness-summary.py`~~ — FIXED 2026-06-22
+### L2. ~~Create `tools/data-readiness-summary.py`~~ — FIXED 2026-06-22
 
-Tier 1 #2 --summary-mode. Skriver ut per-spel tabell:
+Tier 1 #2 --summary mode. Prints a per-game table:
 `game / required-files-present / found-in-canonical / found-in-extras /
-launch-tested`. Tar input från `compare_to_greatstone.py` + en
-manifest-läsare.
+launch-tested`. Takes input from `compare_to_greatstone.py` and a manifest reader.
 
-Output (exempel):
+Output (example):
 ```
 dm1   2/2 present   2/2 canonical   1 extra (legacy-dos PC34)  NOT launch-tested
 csb   2/2 present   2/2 canonical   1 extra (Amiga 3.3 Meynaf FR) NOT launch-tested
@@ -799,8 +789,8 @@ nexus 1/1 present   1/1 canonical   1 extra (Saturn JA Track 1)     NOT launch-t
 theron 1/1 present  1/1 canonical   JP+US extras Track 02           LAUNCH-TESTED
 ```
 
-Wire in i CMakeLists + `ci: asset-hygiene` job. Används vid varje
-`git push` för att snabbt se om något blockerar M12 launch.
+Wire it into CMakeLists and the `ci: asset-hygiene` job. Use it on every
+`git push` to quickly see whether anything blocks an M12 launch.
 
 **Status 2026-06-22 (commit `a56d79c70`, cherry-picked to main
 as `22a8caa3`):** Shipped at
@@ -824,44 +814,39 @@ and unverified on a CI runner. A future pass should add a
 CMake target + CI step that runs `--json` and posts a status
 check on each push.
 
-### L3. Utöka `extract-game-archives.sh` med verify-steg
+### L3. Extend `extract-game-archives.sh` with a verification step
 
-Efter extraktion, kör `compare_to_greatstone.py` per extras-
-katalog och rapportera per-version-summary. Loggas in i
-`.extract-log.md` och `.extract-manifest.json`. Detta gör att
-framtida körningar direkt ser vilka versioner som matchar en
-kanonisk hash och vilka som bara är reference-material.
+After extraction, run `compare_to_greatstone.py` for each extras directory and
+report a per-version summary. Log it in `.extract-log.md` and
+`.extract-manifest.json`. This lets future runs immediately show which versions
+match a canonical hash and which are reference material only.
 
-### L4. CSB Amiga 3.5 launch-barriär
+### L4. CSB Amiga 3.5 launch barrier
 
-Den extraherade `csb-extras/amiga-3.5-ctraw-en` innehåller CTraw
-(.st/.raw/.err/.out) som scannern inte mappar till en canonical
-hash (CTRaw är ej CTraw-filen själv, den är bara Amiga-emulator-
-formatet). Skriv en liten helper `tools/ctraw_to_amiga_dat.py` som
-packar om .raw → .DAT/.DATA-format Firestaff kan läsa. Eller
-acceptera att 3.5 är oåtkomlig utan mer arbete och stryk den ur
-"extraherad"-listan.
+The extracted `csb-extras/amiga-3.5-ctraw-en` contains CTraw
+(`.st`/`.raw`/`.err`/`.out`) which the scanner does not map to a canonical hash
+(CTRaw is not the CTraw file itself; it is only the Amiga emulator format).
+Write a small helper, `tools/ctraw_to_amiga_dat.py`, to repackage `.raw` into a
+`.DAT`/`.DATA` format Firestaff can read. Alternatively, accept that 3.5 is
+unavailable without more work and remove it from the "extracted" list.
 
 ### L5. DM2 extras launch-test
 
-Status 2026-06-21: DONE för PC extras. `dm2_v1_boot_scan_assets`
-accepterar nu extracted DOS-layouten `data/graphics.dat` +
-`data/dungeon.dat`, och `tier1_strict_boot_probe` kör DM2 canonical
-plus `dm2-extras/dos-en`, `dm2-extras/dos-fr`, `dm2-extras/pc-fr`
-och `dm2-extras/pc-de` genom strukturerade boot-kvitton. Den tidigare
-`DM2 READY`-markören på stderr togs bort 2026-08-06 eftersom den inte
-är källägd UI. Återstående DM2-versionsteg
-ligger i D3: demo och icke-PC-versioner behöver separat klassning och
-eventuell container-/formatnormalisering innan de kan bli
-cross-version-regressionstäckning.
+Status 2026-06-21: DONE for PC extras. `dm2_v1_boot_scan_assets` now accepts
+the extracted DOS layout `data/graphics.dat` + `data/dungeon.dat`, and
+`tier1_strict_boot_probe` runs DM2 canonical plus `dm2-extras/dos-en`,
+`dm2-extras/dos-fr`, `dm2-extras/pc-fr`, and `dm2-extras/pc-de` through
+structured boot receipts. The earlier `DM2 READY` stderr marker was removed on
+2026-08-06 because it is not source-owned UI. The remaining DM2 version work is
+in D3: demo and non-PC editions need separate classification and possibly
+container/format normalization before they can receive cross-version regression coverage.
 
 ### L6. README-public-dokumentation-uppdatering
 
-Per AGENTS.md: README ska vara honest, user-facing, sales-friendly
-med verklig per-spel-status. Efter dagens gap-list-uppdateringar
-bör README:s DM1/CSB/DM2/Nexus/Theron-tabeller uppdateras för
-att reflektera att fyra av fem spel har real-asset-evidens i
-både canonical- OCH extras-staging.
+Per AGENTS.md, the README must be honest, user-facing, and sales-friendly,
+with real per-game status. After today's gap-list updates, the README's
+DM1/CSB/DM2/Nexus/Theron tables should reflect that four of five games have
+real-asset evidence in both canonical and extras staging.
 
 ---
 

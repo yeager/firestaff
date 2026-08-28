@@ -1,10 +1,10 @@
-# Lokal macOS-runbook: Theron, SDL2 och Mednafen
+# Local macOS runbook: Theron, SDL2 and Mednafen
 
-Det här dokumentet beskriver den lokala Firestaff-miljön på Bosse:s Mac. Det
-är en arbetsanteckning för återanvändning, inte en del av speldata och inte ett
-påstående om att en capture är semantiskt godkänd.
+This document describes the local Firestaff environment on Bosse's Mac. It is
+a working note for reuse, not game data and not a claim that a capture is
+semantically admitted.
 
-## Fasta sökvägar på extern-disken
+## Fixed paths on the external disk
 
 ```text
 Firestaff-repo:
@@ -13,23 +13,23 @@ Firestaff-repo:
 Firestaff-build:
   /Volumes/Extern-disk/firestaff-theron-active2-build
 
-Riktig SDL2-prefix (Cocoa, inte sdl2-compat):
+Real SDL2 prefix (Cocoa, not sdl2-compat):
   /Volumes/Extern-disk/theron-sdl2-real-20260809b/install
 
-Ren Mednafen-källtree:
+Clean Mednafen source tree:
   /Volumes/Extern-disk/theron-mednafen-clean-source-20260809/mednafen
 
-Instrumenterad Mednafen-build:
+Instrumented Mednafen build:
   /Volumes/Extern-disk/mednafen-firestaff-real-sdl2-20260811
 
-Instrumenterad binär:
+Instrumented binary:
   /Volumes/Extern-disk/mednafen-firestaff-real-sdl2-20260811/install/bin/mednafen
 
-Ren PCE-videobinär utan Firestaff-capture-hooks:
+Clean PCE video binary without Firestaff capture hooks:
   /Volumes/Extern-disk/mednafen-1.32.1-clean-pce-20260811/src/mednafen
 ```
 
-Riktiga spelmedia och System Card ligger under:
+Real game media and the System Card are stored at:
 
 ```text
 /Users/bosse/.firestaff/data/theron/TQUS02.bin
@@ -37,14 +37,14 @@ Riktiga spelmedia och System Card ligger under:
 /Users/bosse/.mednafen/firmware/syscard3.pce
 ```
 
-Använd alltid hashverifierade filer från denna lokala datakatalog. Lägg inte
-speldata i repot och skapa inte ersättningsmedia.
+Always use hash-verified files from this local data directory. Do not put game
+data in the repository or create replacement media.
 
-## Bygg riktig SDL2 en gång
+## Build real SDL2 once
 
-Homebrew-installationen `sdl2` är på den här maskinen `sdl2-compat`. Den får
-inte användas som bevis för autentisk Cocoa/Quartz-input. Bygg i stället SDL2
-från en officiell SDL2-källarchive till extern-disken:
+On this machine, Homebrew's `sdl2` installation is `sdl2-compat`. It must not
+be used as evidence of authentic Cocoa/Quartz input. Instead, build SDL2 from
+an official SDL2 source archive onto the external disk:
 
 ```bash
 SDL_ROOT=/Volumes/Extern-disk/theron-sdl2-real-20260809b
@@ -62,7 +62,7 @@ make -j"$(sysctl -n hw.ncpu)"
 make install
 ```
 
-Verifiera länken innan capture:
+Verify the link before capture:
 
 ```bash
 otool -L \
@@ -71,14 +71,14 @@ scripts/verify_theron_mednafen_sdl2_runtime.sh \
   /Volumes/Extern-disk/theron-mednafen-real-sdl2-capture-20260809/install/bin/mednafen
 ```
 
-Verifieringen ska visa en direktlänk till SDL2-prefixens
-`libSDL2-2.0.0.dylib` och får inte visa `sdl2-compat`.
+The verification must show a direct link to the SDL2 prefix's
+`libSDL2-2.0.0.dylib` and must not show `sdl2-compat`.
 
-## Bygg instrumenterad Mednafen
+## Build instrumented Mednafen
 
-Källträdet måste vara rent, eftersom Firestaffs scripts applicerar flera
-instrumenteringspatchar. Återanvänd samma rena källtree och välj alltid en
-ny, explicit build-root när patchserien ändras:
+The source tree must be clean because Firestaff scripts apply several
+instrumentation patches. Reuse the same clean source tree and always choose a
+new, explicit build root when the patch series changes:
 
 ```bash
 cd /Volumes/Extern-disk/firestaff-theron-active2.mEOJKp
@@ -89,27 +89,27 @@ scripts/build_mednafen_theron_irq2_trace.sh \
   /Volumes/Extern-disk/theron-mednafen-clean-source-20260809/mednafen
 ```
 
-Byggscriptet kopierar källan, applicerar Firestaffs capturepatchar, bygger
-och kör SDL2-länkkontrollen. Mednafen-builden är ett lokalt arbetsartefakt;
-den ska inte checkas in.
+The build script copies the source, applies Firestaff capture patches, builds,
+and runs the SDL2 link check. The Mednafen build is a local working artifact;
+it must not be committed.
 
-## Capturelägen
+## Capture modes
 
-### Pixel-exakt video
+### Pixel-exact video
 
-Kontrollera först fönstertiteln. `Dungeon Master - Theron's Quest (USA)` är
-Mednafen; ett synligt `DOSBox-X`-fönster är en annan emulator och ska inte
-användas som Theron-referens. Om bilden är färggröt, har fel HUD eller visar
-helt andra spelgrafik ska den instansen stängas innan någon grafikbedömning
-görs.
+First check the window title. `Dungeon Master - Theron's Quest (USA)` is
+Mednafen; a visible `DOSBox-X` window is a different emulator and must not be
+used as a Theron reference. If the image is colour noise, has the wrong HUD, or
+shows entirely different game graphics, close that instance before evaluating
+any graphics.
 
-Använd inte en gammal global Mednafen-profil för felsökning. Den rena profilen
-ska innehålla endast den användarägda System Card-filen som symbolisk länk i
-`$MEDNAFEN_HOME/firmware/syscard3.pce`; speldata och BIOS ska aldrig kopieras
-till repot. Starta sedan med flaggorna nedan. Detta låser både emulator och
-videoväg till den verifierade Theron-körningen.
+Do not use an old global Mednafen profile for troubleshooting. The clean
+profile must contain only the user-owned System Card file as a symbolic link
+at `$MEDNAFEN_HOME/firmware/syscard3.pce`; game data and BIOS must never be
+copied into the repository. Then launch with the flags below. This locks both
+the emulator and video route to the verified Theron run.
 
-För Theron ska Mednafen använda originalets pixelsteg utan interpolering:
+For Theron, Mednafen must use the original pixel steps without interpolation:
 
 ```ini
 pce.videoip 0
@@ -120,40 +120,41 @@ pce.xscale 2.000000
 pce.yscale 2.000000
 ```
 
-`pce.videoip 1` och `aspect_mult2` ger en filtrerad/interpolerad bild som kan
-se felaktig ut jämfört med den ursprungliga PCE-grafiken. Den lokala profilen
-och capture-profilen på extern-disken använder därför inställningarna ovan.
+`pce.videoip 1` and `aspect_mult2` produce a filtered/interpolated image that
+can look wrong compared with the original PCE graphics. The local profile and
+the capture profile on the external disk therefore use the settings above.
 
-Använd den rena PCE-videobinären när bilden ska granskas eller när Theron ska
-spelas. Capture-binären är i första hand för spårning. Den aktuella builden är
-ombyggd mot samma rena `huc6280.cpp` som referensbinären och läser inte extra
-CPU-operander före varje instruktion.
-En äldre visuell kontroll den 2026-08-11 med samma äkta `TQUS.cue`, System
-Card och pixelprofil gav ren startup-bild med den rena binären, medan den då
-aktuella capture-binä­ren gav korrupta magenta/olivfärgade streck. Det var ett
-fel i den gamla lokala capture-builden, inte i originalets Track 02-media
-eller i pixelprofilens skalning. Den ombyggda binären är den som anges ovan.
+Use the clean PCE video binary when reviewing the image or playing Theron. The
+capture binary is primarily for tracing. The current build was rebuilt against
+the same clean `huc6280.cpp` as the reference binary and does not read extra
+CPU operands before each instruction. A visual check on 2026-08-11 with the
+same authentic `TQUS.cue`, System Card and pixel profile gave a clean startup
+image with the clean binary, while the then-current capture binary produced
+corrupt magenta/olive streaks. This was a fault in the old local capture build,
+not in the original Track 02 media or pixel-profile scaling. The rebuilt binary
+is the one named above.
 
-Den äldre capture-binä­ren får inte användas. Den gav korrupta
-magenta/olivfärgade streck. Den aktuella capture-binä­ren behåller
-CD/FIFO/RAM-observationerna via sina hookar, men måste ändå genomgå samma
-visuella smoke-test innan ny runtime-capture; en capture som förvränger bilden
-är ogiltig även om receipts ser formellt kompletta ut.
+The older capture binary must not be used. It produced corrupt magenta/olive
+streaks. The current capture binary retains CD/FIFO/RAM observations through
+its hooks, but must still undergo the same visual smoke test before a new
+runtime capture; a capture that distorts the image is invalid even if its
+receipts appear formally complete.
 
-Verifierad capture-binär efter korrigeringen (2026-08-11):
+Verified capture binary after the correction (2026-08-11):
 
 ```text
 MD5 1ec797bb7d1aea4d756521686d7b0c36
 ```
 
-Orsaken till den tidigare korrupta bilden var en capture-hook i HuC6280:s
-`WrMem()` som utförde två mappade skrivningar för samma CPU-byte. Den andra
-skrivningen påverkade VDC/VCE och gav magenta/olivfärgade bildfel. Hooken gör
-nu endast observation och originalets enda `WriteMap`-skrivning. Den rena
-videobinär­en och capture-binär­en är därefter jämförda med samma äkta Track 02,
-System Card, videoflaggor och temporär Mednafen-home vid både 3 och 8 sekunder.
+The previous corrupt image was caused by a capture hook in HuC6280 `WrMem()`
+that performed two mapped writes for the same CPU byte. The second write
+affected VDC/VCE and produced magenta/olive image faults. The hook now only
+observes and performs the original single `WriteMap` write. The clean video
+binary and capture binary were subsequently compared using the same authentic
+Track 02, System Card, video flags and temporary Mednafen home at both 3 and
+8 seconds.
 
-Starta videokontrollen så här:
+Start the video check as follows:
 
 ```bash
 MEDNAFEN_HOME=/Users/bosse/.mednafen \
@@ -163,7 +164,7 @@ MEDNAFEN_HOME=/Users/bosse/.mednafen \
   /Volumes/Extern-disk/theron-full-media-20260810/TQUS.cue
 ```
 
-För capture används samma grafikflaggor med den aktuella capture-binä­ren:
+For capture, use the same graphics flags with the current capture binary:
 
 ```bash
 MEDNAFEN_HOME=/Users/bosse/.mednafen \
@@ -173,20 +174,20 @@ MEDNAFEN_HOME=/Users/bosse/.mednafen \
   /Volumes/Extern-disk/theron-full-media-20260810/TQUS.cue
 ```
 
-Stäng processen med `Ctrl-C` när kontrollen är klar. Kör inte samtidigt en
-instrumenterad capture med samma Mednafen-home.
+Stop the process with `Ctrl-C` when the check is complete. Do not run an
+instrumented capture concurrently with the same Mednafen home.
 
 ### Headless smoke-test
 
-Dummy-video är användbart för att kontrollera att patcharna och receipt-format
-fungerar, men är inte en Quartz/app-capture:
+Dummy video is useful for checking that patches and receipt format work, but it
+is not a Quartz/app capture:
 
 ```bash
 THERON_STATE="/Users/bosse/.mednafen/mcs/Dungeon Master - Theron's Quest (USA).bee0988239a817f20a64cd38fc8caeac.mc0"
 
 THERON_MEDNAFEN_HOME=/Users/bosse/.mednafen \
 MEDNAFEN_BIN=/Volumes/Extern-disk/theron-mednafen-real-sdl2-capture-20260809/install/bin/mednafen \
-THERON_US_CUE=/tmp/theron-capture-input/TQUS-minimal.cue \
+THERON_US_CUE=/Volumes/Extern-disk/theron-capture-input/TQUS-minimal.cue \
 THERON_SYSTEM_CARD=/Users/bosse/.mednafen/firmware/syscard3.pce \
 THERON_LIVE_TRACE_OUTPUT=/Volumes/Extern-disk/theron-auth-capture.trace \
 THERON_CAPTURE_AUTOLOAD_STATE="$THERON_STATE" \
@@ -197,24 +198,24 @@ THERON_CAPTURE_SOUND=0 \
 scripts/capture_theron_mednafen_live_trace.sh
 ```
 
-Ett headless-resultat får inte ensam öppna RNG, spawn, AI, T700, T900 eller
-grafiksemantik. Sidecars måste ha rätt media-, System Card- och
-disassemblyproveniens och klarera respektive verifierare.
+A headless result must not alone open RNG, spawn, AI, T700, T900 or graphics
+semantics. Sidecars must have the right media, System Card and disassembly
+provenance and pass their respective validators.
 
-Capture-scriptet använder den begärda mjuka timeoutsignalen först, men gör en
-kontrollerad tvångsavslutning fem sekunder senare om Mednafen bara hanterar
-signalen internt och fortsätter sin loop. Detta lämnar ingen emulatorprocess
-eller låst, isolerad Mednafen-home kvar efter en misslyckad capture. En
-avbruten eller negativ receipt är fortfarande inte semantiskt underlag.
+The capture script first sends the requested soft timeout signal, but performs
+a controlled forced termination five seconds later if Mednafen only handles
+the signal internally and continues its loop. This leaves no emulator process
+or locked isolated Mednafen home after a failed capture. An interrupted or
+negative receipt is still not semantic evidence.
 
-### Äkta Cocoa/Quartz-input
+### Authentic Cocoa/Quartz input
 
-Lämna `THERON_CAPTURE_SDL_VIDEODRIVER` tomt eller använd `cocoa`. Mednafen
-måste vara förgrundsapp och Terminal/den körande hjälpprocessen måste ha
-Accessibility/Input Monitoring-rättigheter i macOS. Capture-scriptet
-använder den incheckade Swift/Quartz-hjälparen och kräver PID-bunden fokus.
+Leave `THERON_CAPTURE_SDL_VIDEODRIVER` empty or use `cocoa`. Mednafen must be
+the foreground application, and Terminal/the running helper process must have
+Accessibility/Input Monitoring permissions in macOS. The capture script uses
+the checked-in Swift/Quartz helper and requires PID-bound focus.
 
-Exempel på PCE-input via hosten:
+Example PCE input through the host:
 
 ```bash
 THERON_CAPTURE_SDL_VIDEODRIVER=cocoa \
@@ -224,11 +225,11 @@ THERON_CAPTURE_INPUT_ROUTE=pid \
 scripts/capture_theron_mednafen_live_trace.sh
 ```
 
-För ett reproducerbart test utan Quartz kan motsvarande PCE-knappar skickas
-via den instrumenterade scripted-input-routen, men det är då en emulatorkörning
-och inte bevis för fysisk macOS-input.
+For a reproducible test without Quartz, the corresponding PCE buttons may be
+sent through the instrumented scripted-input route, but that is an emulator
+run and not evidence of physical macOS input.
 
-## Snabb kontroll före återanvändning
+## Quick check before reuse
 
 ```bash
 git -C /Volumes/Extern-disk/firestaff-theron-active2.mEOJKp status --short --branch
@@ -238,22 +239,21 @@ scripts/verify_theron_mednafen_sdl2_runtime.sh \
   /Volumes/Extern-disk/theron-mednafen-real-sdl2-capture-20260809/install/bin/mednafen
 ```
 
-Om verifieringen visar `sdl2-compat`, bygg inte om spelsemantiken och kalla
-inte resultatet autentiskt. Peka i stället om `FIRESTAFF_MEDNAFEN_SDL2_PREFIX`
-till den riktiga SDL2-prefixen ovan och bygg om Mednafen.
+If verification shows `sdl2-compat`, do not rebuild game semantics or call the
+result authentic. Instead point `FIRESTAFF_MEDNAFEN_SDL2_PREFIX` to the real
+SDL2 prefix above and rebuild Mednafen.
 
-## Tsugaru på Mac: FM Towns
+## Tsugaru on Mac: FM Towns
 
-Tsugaru gäller Firestaffs FM Towns-spår, inte Theron's Quest på PC Engine.
-Theron Track 02 och dess HuC6280/System Card-capture körs med Mednafen ovan.
-Tsugaru används för verkliga FM Towns-CD-bilder, originalets TownsOS/TBIOS
-och den separata FM Towns-körningen för DM1, CSB och DM2.
+Tsugaru applies to Firestaff's FM Towns route, not to Theron's Quest on PC
+Engine. Theron Track 02 and its HuC6280/System Card capture use Mednafen
+above. Tsugaru is used for real FM Towns CD images, the original TownsOS/TBIOS
+and the separate FM Towns execution route for DM1, CSB and DM2.
 
-Tsugaru använder en katalog med FM Towns-ROM-filer som första argument. Det är
-inte samma sak som Firestaffs enskilda `FMT_FNT.ROM` för den smala
-Shift-JIS-glyfshimmen; `FMT_F20.ROM` är den separata system-ROM:en för en
-full TownsOS-körning. Håll emulator, BIOS och spelmedia på extern-disken och
-lägg aldrig in dem i Git:
+Tsugaru takes a directory of FM Towns ROM files as its first argument. This is
+not the same as Firestaff's single `FMT_FNT.ROM` for the narrow Shift-JIS glyph
+shim; `FMT_F20.ROM` is the separate system ROM for a full TownsOS run. Keep the
+emulator, BIOS and game media on the external disk and never put them in Git:
 
 ```bash
 TOWNS_ROOT=/Volumes/Extern-disk/TOWNSEMU
@@ -263,17 +263,17 @@ TOWNS_ROM_DIR=/Volumes/Extern-disk/FirestaffUserData/firmware/fm-towns-rom
 TOWNS_DISC=/Volumes/Extern-disk/FirestaffUserData/data/dm1/fmtowns_extract/Dungeon-Master_FM-Towns_JA-EN/track01.iso
 ```
 
-I den lokala datakatalogen finns även riktiga FM Towns-medier för CSB och DM2;
-byt bara `TOWNS_DISC` till respektive `track01.iso` eller `.cue`. En ISO är
-lämplig för data-only-test. För en skiva med CD-audio ska originalets kompletta
-`.cue`/`.bin` eller `.mds`/`.mdf` användas. Tsugaru stöder ISO, CUE och MDS,
-men upstream rekommenderar MDS när ljudspår finns eftersom CUE kan vara
-tvetydig kring PREGAP/INDEX 00.
+The local data directory also contains real FM Towns media for CSB and DM2;
+only change `TOWNS_DISC` to the relevant `track01.iso` or `.cue`. An ISO is
+suitable for data-only testing. For a disc with CD audio, use the original
+complete `.cue`/`.bin` or `.mds`/`.mdf`. Tsugaru supports ISO, CUE and MDS, but
+upstream recommends MDS when audio tracks are present because CUE can be
+ambiguous around PREGAP/INDEX 00.
 
-### Bygg Tsugaru från extern-disken
+### Build Tsugaru on the external disk
 
-Detta är den verifierade macOS-layouten från Tsugarus upstream-repo. `public`
-ska ligga under `gui/src`; bygg inte direkt från repositoryroten:
+This is the verified macOS layout from Tsugaru's upstream repository. `public`
+must be below `gui/src`; do not build directly from the repository root:
 
 ```bash
 git clone https://github.com/captainys/TOWNSEMU.git "$TOWNS_ROOT"
@@ -281,13 +281,13 @@ git -C "$TOWNS_ROOT/gui/src" clone https://github.com/captainys/public.git publi
 cmake -S "$TOWNS_ROOT/gui/src" -B "$TOWNS_ROOT/gui/build"
 cmake --build "$TOWNS_ROOT/gui/build" --config Release --parallel
 
-# Tsugarus macOS-GUI behöver CUI-programmet i samma appmiljö.
+# Tsugaru's macOS GUI needs the CUI program in the same app environment.
 cp "$TOWNS_ROOT/gui/build/main_cui/Tsugaru_CUI.app/Contents/MacOS/Tsugaru_CUI" \
    "$TOWNS_ROOT/gui/build/main_gui/Tsugaru_GUI.app/Contents/MacOS/"
 ```
 
-Om källtree eller build redan finns, kör inte `git clone` igen. Kontrollera i
-stället att följande filer finns:
+If the source tree or build already exists, do not run `git clone` again.
+Instead, check that these files exist:
 
 ```bash
 test -x "$TSUGARU_CUI"
@@ -295,23 +295,23 @@ test -d "$TSUGARU_GUI"
 test -d "$TOWNS_ROM_DIR"
 ```
 
-### Starta GUI
+### Start the GUI
 
-På macOS startas appbunten `Tsugaru_GUI`. Första gången väljs den riktiga
-Towns-ROM-katalogen i Tsugarus inställningar och därefter öppnas discimagen
-via File/Open. Starta från Terminal om appbunten inte syns i Finder:
+On macOS, launch the `Tsugaru_GUI` app bundle. The first time, choose the real
+Towns ROM directory in Tsugaru settings, then open the disc image through
+File/Open. Launch from Terminal if the app bundle is not visible in Finder:
 
 ```bash
 open "$TSUGARU_GUI"
 ```
 
-Om macOS stoppar en lokalt byggd app, öppna den en gång med Ctrl-klick → Open
-och godkänn den lokala utvecklingsbuilden. Använd inte en nedladdad BIOS- eller
-spelersättning för att komma runt problemet.
+If macOS blocks a locally built app, open it once with Ctrl-click → Open and
+approve the local development build. Do not use a downloaded BIOS or game
+replacement to work around the problem.
 
-### Starta CUI reproducerbart
+### Start the CUI reproducibly
 
-Detta är den användbara kommandoraden för Firestaffs lokala FM Towns-media:
+This is the useful command line for Firestaff's local FM Towns media:
 
 ```bash
 "$TSUGARU_CUI" \
@@ -321,94 +321,93 @@ Detta är den användbara kommandoraden för Firestaffs lokala FM Towns-media:
   -SCALE 160
 ```
 
-Visa alla lokala flaggor med:
+Show all local flags with:
 
 ```bash
 "$TSUGARU_CUI" -HELP
 ```
 
-`-TOWNSTYPE MARTY` används endast tillsammans med en riktig Marty-ROM och ska
-inte sättas för en full FM Towns-ROM. `-CMOS /sökväg/CMOS.BIN` kan läggas till
-om en separat CMOS-profil ska sparas. Stäng emulatorn med dess normala Quit-
-kommando så att CMOS kan skrivas; tvångsstängning kan lämna den osparad.
+`-TOWNSTYPE MARTY` is used only with a real Marty ROM and must not be set for a
+full FM Towns ROM. `-CMOS /path/CMOS.BIN` may be added to save a separate CMOS
+profile. Quit the emulator using its normal Quit command so CMOS can be
+written; forced termination can leave it unsaved.
 
-### Kontroller
+### Controls
 
-Firestaffs Theron-runtime använder vanlig SDL-mus och tangentbord, inte en
-joystickpekare som hoppar mellan synliga objekt. Musen rapporterar sin aktuella
-position kontinuerligt i den källmappade 320x200-vyn; ett musflytt-event väljer
-inte något objekt. Musknapp 1 (vänster) är PC Engine Button I och musknapp 2
-(höger) är Button II. Den fysiska mittenknappen är avsiktligt obunden.
+Firestaff's Theron runtime uses a normal SDL mouse and keyboard, not a joystick
+pointer that jumps between visible objects. The mouse continuously reports its
+current position in the source-mapped 320x200 view; a mouse-move event selects
+no object. Mouse button 1 (left) is PC Engine Button I and mouse button 2
+(right) is Button II. The physical middle button is deliberately unbound.
 
-I dungeon är tangentbordet:
+In the dungeon, the keyboard is:
 
 ```text
-Upp / W:       framåt
-Ned / S:       bakåt
-Vänster / A:   vrid vänster
-Höger / D:     vrid höger
+Up / W:         forward
+Down / S:       backward
+Left / A:       turn left
+Right / D:      turn right
 ```
 
-Hållna tangenter samplas vid Therons inputgräns i stället för att förlita sig
-på macOS/SDL:s autorepeat. Kort touch motsvarar Button I och lång touch Button
-II. Startupens egna knappar går genom samma Button I/II-väg, så kontrollschemat
-behöver inte bytas mellan meny, handoff och dungeon.
+Held keys are sampled at Theron's input boundary rather than relying on
+macOS/SDL autorepeat. A short touch corresponds to Button I and a long touch
+to Button II. Startup's own buttons use the same Button I/II route, so the
+control scheme does not need to change between menu, handoff and dungeon.
 
-Med `-GAMEPORT0 KEY` använder Tsugaru tangentbordsemulering för gamepad 0:
+With `-GAMEPORT0 KEY`, Tsugaru uses keyboard emulation for gamepad 0:
 
 ```text
-Riktningar: piltangenter
+Directions:  arrow keys
 Action A:   A
 Action B:   S
 Action C:   Z
 Action D:   X
 ```
 
-Detta är Tsugarus FM Towns-kontroller och ska inte blandas ihop med Firestaffs
-Theron-bindning `WASD` + musknapp 1/2. För en fysisk handkontroll används
-`PHYS0`–`PHYS3`; om riktningarna rapporteras som analog spak används
-`ANA0`–`ANA3` i stället för `KEY`.
+These are Tsugaru's FM Towns controls and must not be confused with Firestaff's
+Theron binding, `WASD` + mouse buttons 1/2. For a physical controller, use
+`PHYS0`–`PHYS3`; if directions are reported as an analogue stick, use
+`ANA0`–`ANA3` instead of `KEY`.
 
-### Vad Tsugaru bevisar — och inte bevisar
+### What Tsugaru proves — and does not prove
 
-Tsugaru är rätt verktyg för FM Towns-originalets TownsOS/TBIOS, BIOS-ROM,
-keyboard-I/O och native `TMENU.EXP`/`EDM.EXP`-körning. Det bevisar inte
-automatiskt Firestaffs egna FM Towns-renderare eller en Theron-semantik.
-Firestaffs separata C-brygga är fortfarande fail-closed tills en riktig
-Tsugaru-wrapper binder TBIOS-, timing- och I/O-anrop. För källhänvisning och
-denna gräns, se `docs/fmtowns/TOWNSOS_BIOS_INTEGRATION.md`.
+Tsugaru is the right tool for original FM Towns TownsOS/TBIOS, BIOS ROM,
+keyboard I/O and native `TMENU.EXP`/`EDM.EXP` execution. It does not
+automatically prove Firestaff's own FM Towns renderer or Theron semantics.
+Firestaff's separate C bridge remains fail-closed until a real Tsugaru wrapper
+binds TBIOS, timing and I/O calls. For source reference and this boundary, see
+`docs/fmtowns/TOWNSOS_BIOS_INTEGRATION.md`.
 
-Källan för kommandorad, ROM-katalog, CD-flaggan, kontrollmappningen och CUE-
-begränsningarna är Tsugarus officiella README:
+The source for the command line, ROM directory, CD flag, control mapping and
+CUE limitations is Tsugaru's official README:
 <https://github.com/captainys/TOWNSEMU#starting-the-command-line-program>.
 
-### Firestaffs Tsugaru-gräns
+### Firestaff's Tsugaru boundary
 
-Den källbundna FM Towns-dokumentationen finns i
-`docs/fmtowns/TOWNSOS_BIOS_INTEGRATION.md`. Den beskriver två separata vägar:
+The source-bound FM Towns documentation is in
+`docs/fmtowns/TOWNSOS_BIOS_INTEGRATION.md`. It describes two separate routes:
 
-1. Tsugaru som subprocess, där de verkliga `TMENU.EXP`/`EDM.EXP`-programmen
-   körs genom Tsugarus TownsOS/TBIOS.
-2. En minimal, fail-closed TBIOS-shim i Firestaff för verifierade BIOS-glyph-
-   och TBIOS-anrop.
+1. Tsugaru as a subprocess, where the real `TMENU.EXP`/`EDM.EXP` programs run
+   through Tsugaru's TownsOS/TBIOS.
+2. A minimal, fail-closed TBIOS shim in Firestaff for verified BIOS glyph and
+   TBIOS calls.
 
-Den valfria C-bryggan är deklarerad i
-`include/fmtowns_tsugaru_bridge.h` och implementerad i
-`src/shared/fmtowns_tsugaru_bridge.c`. Den är inte samma sak som att Tsugaru
-redan är länkad i produktionen: utan en separat Tsugaru-wrapper är bryggan
-`UNBOUND`, och Firestaff får inte hitta på BIOS-, disk- eller bildresultat.
+The optional C bridge is declared in `include/fmtowns_tsugaru_bridge.h` and
+implemented in `src/shared/fmtowns_tsugaru_bridge.c`. This is not the same as
+Tsugaru already being linked in production: without a separate Tsugaru wrapper
+the bridge is `UNBOUND`, and Firestaff must not invent BIOS, disc or image
+results.
 
-För Shift-JIS-glyphs räcker den riktiga BIOS-ROM-bundna lokala shimen enligt
-den befintliga dokumentationen; en full Tsugaru-wrapper behövs först för
-TBIOS-anrop, I/O och faktisk FM Towns-programkörning. Detta påverkar inte
-Mednafen-capturekedjan för Theron.
+For Shift-JIS glyphs, the real BIOS-ROM-bound local shim is sufficient under
+the existing documentation; a full Tsugaru wrapper is needed only for TBIOS
+calls, I/O and actual FM Towns program execution. This does not affect the
+Mednafen capture chain for Theron.
 
-## Senast verifierade Mednafen-körning
+## Most recently verified Mednafen run
 
-2026-08-09 kördes den instrumenterade binären med den riktiga SDL2-prefixen,
-hela USA-CUE:n, verifierat US Track 02 (`TQUS02.bin`) och System Card 3.0.
-Den bounded scripted replay-körningen gav följande source-bound transport-
-receipt:
+On 2026-08-09, the instrumented binary was run with the real SDL2 prefix, the
+complete US CUE, verified US Track 02 (`TQUS02.bin`) and System Card 3.0. The
+bounded scripted replay produced the following source-bound transport receipt:
 
 ```text
 track02_md5=f23601102138f87c33025877767ebf76
@@ -424,26 +423,26 @@ rng_consumer_samples=0
 transition=observed
 ```
 
-Detta bevisar CD-sektor/FIFO → RAM-transport och en observerad main-RAM-
-konsument, men inte vilken nivå-, objekt-, tile- eller creatureägare som läser
-bytesen. Körningen får därför inte öppna RNG, spawn, AI, attack, skada, loot,
-generatorer, T700 eller T900. Scripted replay är dessutom en
-emulatorintern inputväg, inte fysisk macOS-input.
+This proves CD-sector/FIFO → RAM transport and an observed main-RAM consumer,
+but not which level, object, tile or creature owner reads the bytes. The run
+therefore must not open RNG, spawn, AI, attack, damage, loot, generators, T700
+or T900. Scripted replay is also an emulator-internal input route, not physical
+macOS input.
 
-Tracebasen ligger utanför repot på extern-disken:
+The trace base is outside the repository on the external disk:
 
 ```text
 /Volumes/Extern-disk/theron-auth-capture-full-scripted-20260809.trace
 ```
 
-Den äldre körningen utan autentiserade CD→RAM-receipts ska inte blandas med
-denna körning; capture-sessioner hålls separata.
+The older run without authenticated CD→RAM receipts must not be merged with
+this run; capture sessions remain separate.
 
-### Senaste operatorstyrda övergångskvitto
+### Latest operator-driven transition receipt
 
-Den externa, instrumenterade Mednafen-processen nådde därefter en observerad
-startup→dungeon-övergång i en enda session med samma autentiserade US Track 02
-och System Card. Kvittofilen ligger lokalt på extern-disk och innehåller:
+The external, instrumented Mednafen process subsequently reached an observed
+startup→dungeon transition in one session with the same authenticated US Track
+02 and System Card. The receipt file is local on the external disk and contains:
 
 ```text
 track02_md5=f23601102138f87c33025877767ebf76
@@ -473,60 +472,60 @@ vce_palette_snapshot_bytes=1024
 transition=observed
 ```
 
-Detta bevisar en autentiserad CD→RAM- och main-RAM-loaderkedja, men inte en
-spelägd nivå-, objekt-, tile-, creature-, RNG-, T700- eller T900-konsument.
-`spawn_consumer_reads=0`, `main_ram_target_reads=0` och frånvaron av `$B0E5`
-är negativa bevis; de får inte ersättas med syntetiska records eller
-host-side-formler. Kvittofilen är inte speldata och ligger kvar utanför repot:
+This proves an authenticated CD→RAM and main-RAM loader chain, but not a
+game-owned level, object, tile, creature, RNG, T700 or T900 consumer.
+`spawn_consumer_reads=0`, `main_ram_target_reads=0` and the absence of `$B0E5`
+are negative evidence; they must not be replaced by synthetic records or
+host-side formulas. The receipt file is not game data and remains outside the
+repository:
 `/Users/bosse/.firestaff/cache/theron/manual-capture/out/theron.transition`.
 
-Den bounded main-RAM-sidecaren är cirka 8,7 MiB. Firestaffs parser tillåter
-nu upp till 16 MiB för denna uttryckligen begränsade capture, så den riktiga
-65 536-samplesfilen kan verifieras byte-/PC-mässigt. Detta ändrar inte att
-`target_2600_bytes_present=0` och `semantic_publication_allowed=0`.
+The bounded main-RAM sidecar is about 8.7 MiB. Firestaff's parser now permits
+up to 16 MiB for this explicitly bounded capture, so the real 65,536-sample
+file can be verified byte- and PC-wise. This does not change that
+`target_2600_bytes_present=0` and `semantic_publication_allowed=0`.
 
-### Förlängt spawn-registerfönster
+### Extended spawn-register window
 
-Capture-scriptet skickar som standard
-`FIRESTAFF_THERON_SPAWN_REGISTER_SAMPLE_LIMIT=65536` till den externa,
-instrumenterade Mednafen-binären. Gränsen är explicit och valideras till
-`1..1048576`; den ändrar inte emulatordata eller semantik. Den kan sänkas vid
-diagnostik med `THERON_CAPTURE_SPAWN_REGISTER_SAMPLE_LIMIT`, medan patchens
-råa standardgräns fortfarande är 2048.
+By default, the capture script sends
+`FIRESTAFF_THERON_SPAWN_REGISTER_SAMPLE_LIMIT=65536` to the external
+instrumented Mednafen binary. The limit is explicit and validated to
+`1..1048576`; it changes neither emulator data nor semantics. It can be
+lowered for diagnostics with `THERON_CAPTURE_SPAWN_REGISTER_SAMPLE_LIMIT`,
+while the patch's raw default limit remains 2048.
 
-En separat reserv på högst 256 `$B0E5`-registerprover finns också. Den
-bevarar den exakta reguljära-spawn-ingången även när de täta
-`$C3A0`/`$CAxx`-fönstren har fyllt det vanliga fångstfönstret. Reserveringen
-är endast diagnostik och får aldrig ensamt aktivera spawn-, RNG- eller
-AI-semantik.
+There is also a separate reserve of at most 256 `$B0E5` register samples. It
+preserves the exact regular-spawn entry even when dense `$C3A0`/`$CAxx` windows
+have filled the normal capture window. The reserve is diagnostic only and must
+never alone activate spawn, RNG or AI semantics.
 
-Den senaste rena US-boot-körningen använde Track 02 MD5
-`f23601102138f87c33025877767ebf76` och System Card MD5
-`ff1a674273fe3540ccef576376407d1d`. Den verifierade 161 råa sektorspann,
-två autentiserade CD→RAM-originreceipts, 32 game-main-RAM-dispatchar och 89
-registerprover, varav 18 `$4644` och 64 `$4667`. Den saknade fortfarande
-`$B0E5` och en dynamisk RNG-retur; därför öppnar den inte spawn-, AI-, T700-
-eller T900-semantik.
+The latest clean US boot run used Track 02 MD5
+`f23601102138f87c33025877767ebf76` and System Card MD5
+`ff1a674273fe3540ccef576376407d1d`. It verified 161 raw-sector spans, two
+authenticated CD→RAM origin receipts, 32 game-main-RAM dispatches and 89
+register samples, 18 at `$4644` and 64 at `$4667`. It still lacked `$B0E5` and
+a dynamic RNG return; it therefore does not open spawn, AI, T700 or T900
+semantics.
 
-### Råkodsidecar vid `$5D64/$5D6A`
+### Raw-code sidecar at `$5D64/$5D6A`
 
-När en autentiserad körning når RNG-ingången skriver capture-scriptet även
-`${THERON_LIVE_TRACE_OUTPUT}.rng-code`. Mednafen markerar filen med
-`source=mednafen-pce-instrumented-rng-code-v1` och skriver 256 byte från den
-faktiska HuC6280-adressen tillsammans med logisk och fysisk PC. Sidecaren ska
-inte tolkas som en färdig RNG-implementation; den är ett rått
-disassemblyunderlag.
+When an authenticated run reaches the RNG entry, the capture script also writes
+`${THERON_LIVE_TRACE_OUTPUT}.rng-code`. Mednafen marks the file with
+`source=mednafen-pce-instrumented-rng-code-v1` and writes 256 bytes from the
+actual HuC6280 address together with logical and physical PC. The sidecar must
+not be interpreted as a finished RNG implementation; it is raw disassembly
+evidence.
 
-Den verifierade `.mc0`-körningen från 2026-08-09 gav 50 `$B0E5`-entries, ett
-512-stegs RNG-fönster och ett kodfönster vid `$5D64` (`physical_pc=$000D1D64`).
-Track 02, System Card och Mednafen hade respektive MD5
+The verified `.mc0` run from 2026-08-09 produced 50 `$B0E5` entries, a
+512-step RNG window and a code window at `$5D64` (`physical_pc=$000D1D64`).
+Track 02, System Card and Mednafen had MD5 values
 `f23601102138f87c33025877767ebf76`, `ff1a674273fe3540ccef576376407d1d`
-och `3ee7c8df8aad7b87ef0ecc05aaa29d8d`. Körningen saknade CD→RAM-receipts,
-så den öppnar inte RNG-, spawn-, AI-, T700- eller T900-semantik och får inte
-slås ihop med en annan session.
+and `3ee7c8df8aad7b87ef0ecc05aaa29d8d`, respectively. The run lacked CD→RAM
+receipts, so it does not open RNG, spawn, AI, T700 or T900 semantics and must
+not be merged with another session.
 
-Parsern kan dessutom göra source-byte-joinen lokalt utan att speldata läggs i
-repot:
+The parser can also perform the source-byte join locally without putting game
+data in the repository:
 
 ```sh
 THERON_REAL_RNG_CODE_TRACE=/Volumes/Extern-disk/theron-auth-capture-mc0-rngcode-long-20260809.trace.rng-code \
@@ -535,6 +534,6 @@ ctest --test-dir /Volumes/Extern-disk/firestaff-theron-active2-build \
   -R theron_v1_mednafen_spawn_consumer_trace --output-on-failure
 ```
 
-Godkänd receipt kräver den riktiga 8 104 992-byte US-filen och exakt match mot
-en av `0x975c4 + n*0x49800`, `n = 0..6`. En syntetisk trace eller ett
-syntetiskt RNG-byte räcker inte.
+An admitted receipt requires the real 8,104,992-byte US file and an exact
+match at one of `0x975c4 + n*0x49800`, `n = 0..6`. A synthetic trace or
+synthetic RNG byte is not sufficient.

@@ -1,111 +1,115 @@
-# DM1 V2.0 — Detaljerad implementationsplan & SDL-grafikinställningar
+# DM1 V2.0 — Detailed implementation plan and SDL graphics settings
 
-**Status:** Utkast 2026-05-26 (subagent på N2 / Firestaff-Worker-VM)
+**Status:** Draft 2026-05-26 (subagent on N2 / Firestaff-Worker-VM)
 **Repo:** `/home/trv2/work/firestaff`
-**Referenskällkod:** `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
-**Scope:** DM1 (V1 gameplay route + V2 presentation shell). CSB/DM2/Nexus berörs inte här.
+**Reference source code:** `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+**Scope:** DM1 (V1 gameplay route + V2 presentation shell). CSB/DM2/Nexus are not covered here.
 
 ---
 
-## 0. Sammanfattning & lägesbild
+## 0. Summary and current state
 
-### Vad README säger om V2.0
-README.md (raderna 23–28) definierar grafiklägena så här:
+### What the README says about V2.0
+README.md (lines 23–28) defines the graphics modes as follows:
 
-| Mode | Beskrivning |
+| Mode | Description |
 |------|-------------|
-| **V1 Original** | Pixel-perfect 320×200, exakt som original |
-| **V2.0 Filtered** | Original-grafik + CRT scanlines, palette correction, sharpening |
-| **V2.1 Upscaled** | 10× AI-upscale som bevarar DM-estetiken |
-| **V2.2 Modern** | Helt ny 3D-renderad 2D-konst |
+| **V1 Original** | Pixel-perfect 320×200, exactly as the original |
+| **V2.0 Filtered** | Original graphics + CRT scanlines, palette correction, sharpening |
+| **V2.1 Upscaled** | 10× AI upscale that preserves the DM aesthetic |
+| **V2.2 Modern** | Completely new 3D-rendered 2D art |
 
-Notera: `--scale-mode <n>` har kommandoradsalternativen `1=V1, 2=V2.1, 3=V2.2` — **V2.0 saknas i CLI-mappningen idag** (rad 101). Det är en lucka som ska stängas i denna plan.
+Note: `--scale-mode <n>` has command-line choices `1=V1, 2=V2.1, 3=V2.2` —
+**V2.0 is currently missing from the CLI mapping** (line 101). This plan closes that gap.
 
-### Befintlig V2-infrastruktur (redan på plats)
+### Existing V2 infrastructure (already in place)
 
-- `include/dm1_v2_presentation_profile_pc34.h` — `DM1_V2_PresentationMode { V1_ORIGINAL=0, V2_SHELL=1 }`, profil-struct, snapshot, tick.
-- `include/dm1_v2_settings_pc34.h` — `DM1_V2_Settings` med `viewport_scale`, `use_epx`, `use_bilinear`, `palette_enhanced`, `aspectMode` m.fl.
-- `include/config_m12.h` — `M12_Config.dm1V2*`-fält (`ScalePercent`, `SmoothingEnabled`, `DynamicLightingEnabled`, `AccessibilityTouchEnabled`, `AspectMode`).
-- `src/dm1v2/dm1_v2_*.c` — ~46 V2-moduler (achievements, journal, minimap, particle, viewport_renderer, presentation_profile, settings, lighting_dynamic, viewport_renderer m.fl.).
-- `src/ui/menu_startup_m12.c` (rad 102–168) — `m12_ext_settings[]` har redan **placeholder-rader** för V2.0 i GRAPHICS-fliken:
+- `include/dm1_v2_presentation_profile_pc34.h` — `DM1_V2_PresentationMode { V1_ORIGINAL=0, V2_SHELL=1 }`, profile struct, snapshot, tick.
+- `include/dm1_v2_settings_pc34.h` — `DM1_V2_Settings` with `viewport_scale`, `use_epx`, `use_bilinear`, `palette_enhanced`, `aspectMode`, and related fields.
+- `include/config_m12.h` — `M12_Config.dm1V2*` fields (`ScalePercent`, `SmoothingEnabled`, `DynamicLightingEnabled`, `AccessibilityTouchEnabled`, `AspectMode`).
+- `src/dm1v2/dm1_v2_*.c` — approximately 46 V2 modules (achievements, journal, minimap, particle, viewport_renderer, presentation_profile, settings, lighting_dynamic, viewport_renderer, and more).
+- `src/ui/menu_startup_m12.c` (lines 102–168) — `m12_ext_settings[]` already has **placeholder rows** for V2.0 in the GRAPHICS tab:
   - `"CRT Filter"` (V2.0, enabled=0)
   - `"Palette Correction"` (V2.0, enabled=0)
   - `"Dither Cleanup"` (V2.0, enabled=0)
   - `"Sharpening"` (V2.0, enabled=0)
 
-Dessa rader är synliga men cycle-funktionen är `enabled=0`. **De ska bli `enabled=1` när V2.0 är klart.**
+These rows are visible but their cycle function is `enabled=0`. **They must
+become `enabled=1` when V2.0 is complete.**
 
-### Befintlig SDL-pipeline (M11)
+### Existing SDL pipeline (M11)
 
-- `src/engine/render_sdl_m11.c` (1191 rader) — single global `M11_RenderState`. Pipeline:
-  1. Spelkod ritar i `framebuffer[]` (320×200, 1 byte/pixel: 4-bit palettindex + 4-bit per-pixel-level).
-  2. `m11_framebuffer_to_rgba()` expanderar via `G9010_auc_VgaPaletteAll_Compat[level][idx]` → `presentBuffer[]` (RGBA8888, exakt fb-storlek).
-  3. `SDL_UpdateTexture()` → streaming-textur (`SDL_PIXELFORMAT_RGBA32`).
-  4. `SDL_RenderTexture(renderer, texture, src, dest)` med `destRect` beräknad av `M11_Render_ComputePresentationRect()` (4:3 / 16:9 / Content-aspect, integer scaling, fit/stretch).
-  5. `SDL_SetTextureScaleMode(NEAREST | LINEAR)` styr GPU-filter.
+- `src/engine/render_sdl_m11.c` (1,191 lines) — single global `M11_RenderState`. Pipeline:
+  1. Game code draws to `framebuffer[]` (320×200, 1 byte/pixel: 4-bit palette index + 4-bit per-pixel level).
+  2. `m11_framebuffer_to_rgba()` expands through `G9010_auc_VgaPaletteAll_Compat[level][idx]` → `presentBuffer[]` (RGBA8888, exact framebuffer size).
+3. `SDL_UpdateTexture()` → streaming texture (`SDL_PIXELFORMAT_RGBA32`).
+  4. `SDL_RenderTexture(renderer, texture, src, dest)` with `destRect` calculated by `M11_Render_ComputePresentationRect()` (4:3 / 16:9 / content aspect, integer scaling, fit/stretch).
+  5. `SDL_SetTextureScaleMode(NEAREST | LINEAR)` controls GPU filtering.
 
-Det här är vår enda hook-punkt för V2.0-filtren. Post-processing måste ske antingen mellan steg 2 och 3 (CPU-baserat, på `presentBuffer`) eller via en sekundär render-target (GPU-shader-väg).
+This is the only hook point for V2.0 filters. Post-processing must happen
+between steps 2 and 3 (CPU-based, on `presentBuffer`) or through a secondary
+render target (the GPU-shader route).
 
-### ReDMCSB-källkod — finns originalmotsvarighet?
+### ReDMCSB source code — is there an original equivalent?
 
-- `PALETTE.C` (453 rader): hanterar VGA-DAC och dimningsnivåer (`G0010_aab_PalCh*`). **Ingen CRT-emulation, ingen sharpening, ingen scanline-logik.**
-- `VIDEODRV.C` (4003 rader): VGA-drivrutin via inline-assembly mot CRTC-portar 0x3D4/0x3B4. Pratar med riktig hårdvara, inte med en emulerad CRT.
-- `_MAIN.C`, `VDEOMAIN.C`, `VIDSET.C`: små shim-filer, inget post-process.
+- `PALETTE.C` (453 lines): handles VGA DAC and dimming levels (`G0010_aab_PalCh*`). **No CRT emulation, sharpening, or scanline logic.**
+- `VIDEODRV.C` (4,003 lines): VGA driver using inline assembly against CRTC ports 0x3D4/0x3B4. It talks to real hardware, not an emulated CRT.
+- `_MAIN.C`, `VDEOMAIN.C`, `VIDSET.C`: small shim files; no post-processing.
 
-**Slutsats: V2.0 är rent Firestaff-arbete.** Det finns ingen sourcelåst CRT/scanline/sharpening i originalkällkoden. Däremot är palette-korrigeringen (gamma-justering av VGA-paletten) en *tolkning* av VGA→sRGB och kan motiveras med referens till `G9010_auc_VgaPaletteAll_Compat[]` (våra egna palette-tabeller) plus välkänd VGA-gamma (~2.2 PC-CRT).
+**Conclusion: V2.0 is purely Firestaff work.** The original source has no source-locked CRT/scanline/sharpening counterpart. Palette correction (gamma adjustment of the VGA palette) is an *interpretation* of VGA→sRGB and can be motivated by reference to `G9010_auc_VgaPaletteAll_Compat[]` (our own palette tables) plus the well-known VGA gamma (~2.2 PC CRT).
 
 ---
 
-## DEL 1 — DM1 V2.0 Detaljerad Plan
+## PART 1 — DM1 V2.0 Detailed Plan
 
-### 1.1 Exakt definition av V2.0
+### 1.1 Exact definition of V2.0
 
-V2.0 = **V1 gameplay-route + V1 pixelinnehåll + post-process-filterkedja**. Inget gameplay ändras, ingen ny grafik laddas. Endast `presentBuffer[]` (eller en sekundär render-target) modifieras före `SDL_RenderTexture`.
+V2.0 = **V1 gameplay route + V1 pixel content + post-processing filter chain**. No gameplay changes and no new graphics are loaded. Only `presentBuffer[]` (or a secondary render target) is modified before `SDL_RenderTexture`.
 
-Filterkedja (i denna ordning, för att matcha CRT-fysik):
+Filter chain (in this order, to match CRT physics):
 
-| Steg | Filter | Default | Sourcestatus |
+| Step | Filter | Default | Source status |
 |------|--------|---------|--------------|
-| A | Palette correction (gamma 1.0 → 2.2-justering + brightness/contrast) | Off | Firestaff (motiveras av VGA-DAC ~6-bit RGB) |
-| B | Dither cleanup (3×3 mode-filter på indexpixlar **före** RGBA-expansion) | Off | Firestaff |
-| C | Sharpening (unsharp mask 3×3 på RGBA efter expansion) | Off | Firestaff |
-| D | CRT scanlines (varannan rad multipliceras med 0.5–0.85) | Off | Firestaff |
+| A | Palette correction (gamma 1.0 → 2.2 adjustment + brightness/contrast) | Off | Firestaff (motivated by VGA DAC ~6-bit RGB) |
+| B | Dither cleanup (3×3 mode filter on indexed pixels **before** RGBA expansion) | Off | Firestaff |
+| C | Sharpening (3×3 unsharp mask on RGBA after expansion) | Off | Firestaff |
+| D | CRT scanlines (every other row multiplied by 0.5–0.85) | Off | Firestaff |
 
-(Vignette/bloom/temperatur sparas till V2.0.5 eller V2.1 — se DEL 2.)
+(Vignette/bloom/temperature are deferred to V2.0.5 or V2.1 — see PART 2.)
 
-### 1.2 Arkitektur — var i pipeline V2.0 sitter
+### 1.2 Architecture — where V2.0 sits in the pipeline
 
 ```
-spelkod ──► framebuffer (320×200, idx)
+game code ──► framebuffer (320×200, idx)
               │
-              ▼  (steg B körs här om aktivt)
+              ▼  (step B runs here when enabled)
         [dither_cleanup_indexed()]
               │
               ▼
-        framebuffer_to_rgba()  (steg A: använder palette_corrected[][] istället för Vga-tabell)
+        framebuffer_to_rgba()  (step A: uses palette_corrected[][] instead of VGA table)
               │
               ▼  presentBuffer (320×200, RGBA8888)
               │
-              ▼  (steg C körs här om aktivt)
+              ▼  (step C runs here when enabled)
         [unsharp_mask_rgba()]
               │
-              ▼  (steg D körs här om aktivt)
+              ▼  (step D runs here when enabled)
         [crt_scanlines_rgba()]
               │
               ▼
-        SDL_UpdateTexture ► SDL_RenderTexture (med NEAREST eller LINEAR)
+        SDL_UpdateTexture ► SDL_RenderTexture (with NEAREST or LINEAR)
 ```
 
 **Designprinciper:**
-- **Filterkedjan är CPU-baserad i V2.0.** Inga shaders — Firestaff stödjer SDL3/SDL2 och vi vill undvika GLSL/HLSL/MSL-versioner för en sak som körs ~60 FPS på 320×200 = 64k pixlar. Mätbar CPU-kostnad är försumbar.
-- **Allt sker i `render_sdl_m11.c`** i en ny intern hjälpfunktion `m11_apply_v2_filters()` som anropas precis före `SDL_UpdateTexture`.
-- **State läses från `M12_Config.dm1V2*`-flaggor** (nya bitar — se 1.3) via en single setter `M11_Render_SetV2Filters(...)`.
-- **V1-pathen är opåverkad.** När `presentationMode == V1_ORIGINAL` hoppar `m11_apply_v2_filters()` ut tidigt.
-- **Per-spel-flagga.** V2.0 ska kunna slås på/av per spel via `M12_Config.gameVersionIndex[]` × graphicsIndex; för nu räcker det med en global runtime-flagga som binds till DM1.
+- **The filter chain is CPU-based in V2.0.** No shaders — Firestaff supports SDL3/SDL2, and we want to avoid GLSL/HLSL/MSL variants for something that runs at ~60 FPS on 320×200 = 64k pixels. The measurable CPU cost is negligible.
+- **Everything happens in `render_sdl_m11.c`** in a new internal helper function, `m11_apply_v2_filters()`, called immediately before `SDL_UpdateTexture`.
+- **State is read from `M12_Config.dm1V2*` flags** (new bits — see 1.3) through a single setter, `M11_Render_SetV2Filters(...)`.
+- **The V1 path is unaffected.** When `presentationMode == V1_ORIGINAL`, `m11_apply_v2_filters()` returns early.
+- **Per-game flag.** V2.0 should be switchable per game through `M12_Config.gameVersionIndex[]` × graphicsIndex; for now, a global runtime flag bound to DM1 is sufficient.
 
-### 1.3 Nya config-fält (config_m12.h)
+### 1.3 New configuration fields (`config_m12.h`)
 
-Lägg till efter rad 76 (`dm1V2AspectMode`):
+Add after line 76 (`dm1V2AspectMode`):
 
 ```c
 /* DM1 V2.0 filter chain (V2-only; V1 launch path ignores these) */
@@ -120,9 +124,9 @@ int dm1V2SharpeningEnabled;          /* 0 = off, 1 = on */
 int dm1V2SharpeningStrength;         /* 0-100, percent; default 30 */
 ```
 
-Defaults sätts i `M12_Config_SetDefaults()` så att V2.0 startar med ALLA filter `0` (off) — exakt V1 utseende, så att A/B-test går rakt på.
+Set defaults in `M12_Config_SetDefaults()` so V2.0 starts with ALL filters at `0` (off) — an exact V1 appearance, enabling direct A/B testing.
 
-### 1.4 Nya render_sdl_m11 API (render_sdl_m11.h)
+### 1.4 New `render_sdl_m11` API (`render_sdl_m11.h`)
 
 ```c
 int M11_Render_SetV2Filters(int crtScanlines,
@@ -137,118 +141,118 @@ int M11_Render_SetV2Filters(int crtScanlines,
 int M11_Render_GetV2Filters(/* out params */);
 ```
 
-Backas av nya fält i `M11_RenderState`:
+Backed by new fields in `M11_RenderState`:
 
 ```c
 int v2_crt_enabled, v2_crt_strength;
 int v2_palette_enabled, v2_palette_gamma100, v2_palette_brightness, v2_palette_contrast;
 int v2_dither_enabled;
 int v2_sharpen_enabled, v2_sharpen_strength;
-unsigned char v2_palette_corrected[M11_PALETTE_LEVELS][16][3]; /* förberäknad LUT */
+unsigned char v2_palette_corrected[M11_PALETTE_LEVELS][16][3]; /* precomputed LUT */
 ```
 
-### 1.5 Nya filer (src/dm1v2/)
+### 1.5 New files (`src/dm1v2/`)
 
-| Fil | Innehåll | Source-evidence |
+| File | Contents | Source evidence |
 |-----|----------|------------------|
-| `src/dm1v2/dm1_v2_filter_palette_correct.c` | `dm1_v2_filter_palette_build_lut(gamma100, bright, contrast, out_lut)` — bygger en `[levels][16][3]` LUT som ersätter `G9010_auc_VgaPaletteAll_Compat[]` i `framebuffer_to_rgba()` när aktiv. | Firestaff; refererar `G9010_auc_VgaPaletteAll_Compat`. |
-| `src/dm1v2/dm1_v2_filter_dither_cleanup.c` | `dm1_v2_filter_dither_cleanup_indexed(uint8_t* fb, int w, int h)` — 3×3 mode-filter över indexbyte; sparar level-bits intakt; hoppar över överlay-/UI-regioner. | Firestaff. |
-| `src/dm1v2/dm1_v2_filter_sharpen.c` | `dm1_v2_filter_sharpen_rgba(uint8_t* rgba, int w, int h, int strength_pct)` — 3×3 unsharp mask, separabel approximation. | Firestaff. |
-| `src/dm1v2/dm1_v2_filter_crt_scanlines.c` | `dm1_v2_filter_crt_scanlines_rgba(uint8_t* rgba, int w, int h, int strength_pct)` — varannan rad multipliceras med (1 − s/100). | Firestaff. |
-| `include/dm1v2/dm1_v2_filters.h` | Aggregat-header. | — |
+| `src/dm1v2/dm1_v2_filter_palette_correct.c` | `dm1_v2_filter_palette_build_lut(gamma100, bright, contrast, out_lut)` — builds a `[levels][16][3]` LUT that replaces `G9010_auc_VgaPaletteAll_Compat[]` in `framebuffer_to_rgba()` when enabled. | Firestaff; references `G9010_auc_VgaPaletteAll_Compat`. |
+| `src/dm1v2/dm1_v2_filter_dither_cleanup.c` | `dm1_v2_filter_dither_cleanup_indexed(uint8_t* fb, int w, int h)` — 3×3 mode filter over index bytes; preserves level bits; skips overlay/UI regions. | Firestaff. |
+| `src/dm1v2/dm1_v2_filter_sharpen.c` | `dm1_v2_filter_sharpen_rgba(uint8_t* rgba, int w, int h, int strength_pct)` — 3×3 unsharp mask, separable approximation. | Firestaff. |
+| `src/dm1v2/dm1_v2_filter_crt_scanlines.c` | `dm1_v2_filter_crt_scanlines_rgba(uint8_t* rgba, int w, int h, int strength_pct)` — every other row is multiplied by (1 − s/100). | Firestaff. |
+| `include/dm1v2/dm1_v2_filters.h` | Aggregate header. | — |
 
 ### 1.6 Wiring i render_sdl_m11.c
 
-Lägg till `m11_apply_v2_filters()` mellan `m11_framebuffer_to_rgba()` och `SDL_UpdateTexture()` i `M11_Render_Present()` (kring rad 670–705). Ordning:
+Add `m11_apply_v2_filters()` between `m11_framebuffer_to_rgba()` and `SDL_UpdateTexture()` in `M11_Render_Present()` (around lines 670–705). Order:
 
-1. Om `v2_dither_enabled`: kör `dm1_v2_filter_dither_cleanup_indexed()` på `framebuffer[]` *före* `framebuffer_to_rgba`.
-2. `framebuffer_to_rgba()` — om `v2_palette_enabled`, använd `v2_palette_corrected[][]` istället för `G9010_auc_VgaPaletteAll_Compat[][]`.
-3. Om `v2_sharpen_enabled`: kör `dm1_v2_filter_sharpen_rgba()` på `presentBuffer[]`.
-4. Om `v2_crt_enabled`: kör `dm1_v2_filter_crt_scanlines_rgba()` på `presentBuffer[]`.
+1. When `v2_dither_enabled`: run `dm1_v2_filter_dither_cleanup_indexed()` on `framebuffer[]` *before* `framebuffer_to_rgba`.
+2. `framebuffer_to_rgba()` — when `v2_palette_enabled`, use `v2_palette_corrected[][]` instead of `G9010_auc_VgaPaletteAll_Compat[][]`.
+3. When `v2_sharpen_enabled`: run `dm1_v2_filter_sharpen_rgba()` on `presentBuffer[]`.
+4. When `v2_crt_enabled`: run `dm1_v2_filter_crt_scanlines_rgba()` on `presentBuffer[]`.
 
-### 1.7 Wiring i menu_startup_m12.c
+### 1.7 Wiring in `menu_startup_m12.c`
 
-- Rad 121–124: ändra `enabled=0` → `enabled=1` för CRT Filter, Palette Correction, Dither Cleanup, Sharpening.
-- Lägg till cycle-handlers i `m12_cycle_game_opt_with_mode()` / `m12_cycle_ext_setting()` som mappar mot de nya `dm1V2*`-config-fälten.
-- Lås filterraderna när `presentationModeIndex == V1_ORIGINAL` via `M12_GameOptions_RowLockedByMode()` (samma mekanik som redan låser V2.1/V2.2-rader).
+- Lines 121–124: change `enabled=0` → `enabled=1` for CRT Filter, Palette Correction, Dither Cleanup, and Sharpening.
+- Add cycle handlers in `m12_cycle_game_opt_with_mode()` / `m12_cycle_ext_setting()` that map to the new `dm1V2*` configuration fields.
+- Lock filter rows when `presentationModeIndex == V1_ORIGINAL` through `M12_GameOptions_RowLockedByMode()` (the same mechanism that already locks V2.1/V2.2 rows).
 
 ### 1.8 CLI-wiring
 
-- `firestaff_cli.c`: `--scale-mode 2` är idag V2.1 enligt README. **Ändra mappningen:**
+- `firestaff_cli.c`: `--scale-mode 2` is currently V2.1 according to the README. **Change the mapping:**
   - `1` = V1 Original
-  - `2` = V2.0 Filtered (nytt — eller alias till V1+default-filter-preset)
-  - `3` = V2.1 Upscaled (var tidigare 2)
-  - `4` = V2.2 Modern (var tidigare 3)
-- Uppdatera README rad 101 + 115 samtidigt (eller behåll `--scale-mode 2 = V2.1` och introducera `--scale-mode 5 = V2.0`; beslut tas vid implementationsstart för att inte bryta existerande dokumentation/skript).
+  - `2` = V2.0 Filtered (new — or an alias for V1 + default filter preset)
+  - `3` = V2.1 Upscaled (previously 2)
+  - `4` = V2.2 Modern (previously 3)
+- Update README lines 101 and 115 at the same time (or retain `--scale-mode 2 = V2.1` and introduce `--scale-mode 5 = V2.0`; decide at implementation start to avoid breaking existing documentation/scripts).
 
 ### 1.9 Implementation milestones
 
-🔲 **M1 — Config-skelett** (1–2 timmar)
-- 🔲 Lägg till de 9 nya `dm1V2*`-fälten i `M12_Config`.
-- 🔲 Uppdatera `M12_Config_SetDefaults()` med default-värden.
-- 🔲 Verifiera att `M12_Config_Save()` skriver fälten och `M12_Config_Load()` läser dem (de använder generisk INI-loop, behöver oftast bara mappning).
-- 🔲 Bygg + kör `tests/test_m12_config_*` så inga existerande config-tester går sönder.
+🔲 **M1 — Configuration skeleton** (1–2 hours)
+- 🔲 Add the 9 new `dm1V2*` fields to `M12_Config`.
+- 🔲 Update `M12_Config_SetDefaults()` with default values.
+- 🔲 Verify that `M12_Config_Save()` writes the fields and `M12_Config_Load()` reads them (they use a generic INI loop, so usually only mapping is needed).
+- 🔲 Build and run `tests/test_m12_config_*` so no existing configuration tests break.
 
-🔲 **M2 — Filter-LUT-byggare (palette correction)** (2 timmar)
-- 🔲 Skapa `src/dm1v2/dm1_v2_filter_palette_correct.c` med pure-C LUT-byggare.
-- 🔲 Enhetstest: `tests/test_dm1_v2_filter_palette_correct.c` — kontrollera att gamma=2.20 lyfter mörka färger, gamma=1.00 är identitet inom ±1.
-- 🔲 Source-evidence-kommentar refererande `G9010_auc_VgaPaletteAll_Compat`.
+🔲 **M2 — Filter LUT builder (palette correction)** (2 hours)
+- 🔲 Create `src/dm1v2/dm1_v2_filter_palette_correct.c` with a pure-C LUT builder.
+- 🔲 Unit test: `tests/test_dm1_v2_filter_palette_correct.c` — check that gamma=2.20 lifts dark colors and gamma=1.00 is identity within ±1.
+- 🔲 Source-evidence comment referencing `G9010_auc_VgaPaletteAll_Compat`.
 
-🔲 **M3 — Dither cleanup (indexerad mode-filter)** (2 timmar)
-- 🔲 Skapa `dm1_v2_filter_dither_cleanup.c`. 3×3 mode-fönster på indexbyte. Skydda level-bits.
-- 🔲 Enhetstest: bygg en 320×200 testbild med checkerboard-dither, verifiera att resultatet är dominerande färg.
+🔲 **M3 — Dither cleanup (indexed mode filter)** (2 hours)
+- 🔲 Create `dm1_v2_filter_dither_cleanup.c`. Use a 3×3 mode window on index bytes. Protect level bits.
+- 🔲 Unit test: build a 320×200 test image with checkerboard dithering and verify that the result is the dominant color.
 
-🔲 **M4 — Sharpening (unsharp mask)** (2 timmar)
-- 🔲 Skapa `dm1_v2_filter_sharpen.c`. Separabel 3×3 box-blur → original − blur × strength.
-- 🔲 Enhetstest: en horisontell stegfunktion ska bli skarpare; en flat region oförändrad.
+🔲 **M4 — Sharpening (unsharp mask)** (2 hours)
+- 🔲 Create `dm1_v2_filter_sharpen.c`. Separable 3×3 box blur → original − blur × strength.
+- 🔲 Unit test: a horizontal step function should become sharper; a flat region remains unchanged.
 
-🔲 **M5 — CRT scanlines** (1 timme)
-- 🔲 Skapa `dm1_v2_filter_crt_scanlines.c`. Varannan rad RGB *= (1 − s/100).
-- 🔲 Enhetstest: udda rader oförändrade, jämna rader skalade enligt strength.
+🔲 **M5 — CRT scanlines** (1 hour)
+- 🔲 Create `dm1_v2_filter_crt_scanlines.c`. Every other row: RGB *= (1 − s/100).
+- 🔲 Unit test: odd rows unchanged, even rows scaled according to strength.
 
-🔲 **M6 — Render-pipeline-integration** (3 timmar)
-- 🔲 Lägg till `M11_Render_SetV2Filters()` / `GetV2Filters()` API i `render_sdl_m11.h/.c`.
-- 🔲 Hooka in i `M11_Render_Present()` (steg-ordning enl. 1.6).
-- 🔲 Bygg LUT vid set-anropet, inte per frame.
-- 🔲 Smoke-test: kör `firestaff --scale-mode 2 --duration 5000` med och utan flaggor.
+🔲 **M6 — Render pipeline integration** (3 hours)
+- 🔲 Add the `M11_Render_SetV2Filters()` / `GetV2Filters()` API in `render_sdl_m11.h/.c`.
+- 🔲 Hook it into `M11_Render_Present()` (step order as in 1.6).
+- 🔲 Build the LUT at the set call, not per frame.
+- 🔲 Smoke test: run `firestaff --scale-mode 2 --duration 5000` with and without flags.
 
-🔲 **M7 — Menu-wiring** (2 timmar)
-- 🔲 Aktivera `enabled=1` på CRT/Palette/Dither/Sharpening i `m12_ext_settings[]`.
-- 🔲 Lägg till cycle-handlers i `menu_startup_m12.c`.
-- 🔲 Lås rader när V1-presentation är vald.
-- 🔲 Verifiera via screenshot-test (jämför `verification-screens/` baseline).
+🔲 **M7 — Menu wiring** (2 hours)
+- 🔲 Enable `enabled=1` for CRT/Palette/Dither/Sharpening in `m12_ext_settings[]`.
+- 🔲 Add cycle handlers in `menu_startup_m12.c`.
+- 🔲 Lock rows when V1 presentation is selected.
+- 🔲 Verify through a screenshot test (compare the `verification-screens/` baseline).
 
-🔲 **M8 — CLI + README** (1 timme)
-- 🔲 Bestäm scale-mode-mappning (se 1.8).
-- 🔲 Uppdatera `firestaff_cli.c`.
-- 🔲 Uppdatera `README.md` rad 101/115/119–123.
-- 🔲 Lägg till `RELEASE_2.5.0.md` (eller liknande).
+🔲 **M8 — CLI + README** (1 hour)
+- 🔲 Decide the scale-mode mapping (see 1.8).
+- 🔲 Update `firestaff_cli.c`.
+- 🔲 Update README.md lines 101/115/119–123.
+- 🔲 Add `RELEASE_2.5.0.md` (or similar).
 
-🔲 **M9 — Live runtime toggle** (1 timme)
-- 🔲 Säkerställ att alla 4 filter kan slås på/av utan restart (config → SetV2Filters → nästa frame visar effekt).
+🔲 **M9 — Live runtime toggle** (1 hour)
+- 🔲 Ensure all four filters can be enabled/disabled without restart (configuration → SetV2Filters → the next frame shows the effect).
 
-🔲 **M10 — Regressionsskydd & screenshots** (2 timmar)
-- 🔲 Lägg in PNG-baselines i `verification-screens/dm1_v2_filters/`: off, CRT_only, palette_only, dither_only, sharpen_only, all.
-- 🔲 Lägg till test som tar screenshot via `firestaff --duration 0 --script enter` och jämför mot baseline.
+🔲 **M10 — Regression protection and screenshots** (2 hours)
+- 🔲 Add PNG baselines in `verification-screens/dm1_v2_filters/`: off, CRT_only, palette_only, dither_only, sharpen_only, all.
+- 🔲 Add a test that takes a screenshot through `firestaff --duration 0 --script enter` and compares it with the baseline.
 
 **Total uppskattning: ~16 timmar fokuserat arbete.**
 
-### 1.10 Beroenden
+### 1.10 Dependencies
 
-| Beroende | Status | Vad behövs först |
+| Dependency | Status | What is needed first |
 |----------|--------|-------------------|
-| V1 viewport (DM1) | ✅ Klart (entry-view, walls, doors, ESC-dialog) | — |
-| V1 framebuffer-pipeline | ✅ Klart (M11 render path) | — |
-| V1 palette (VgaPaletteAll_Compat) | ✅ Klart | — |
-| M12_Config persistens | ✅ Klart | — |
-| V2 presentation shell (V2_SHELL mode) | ✅ Klart (presentation_profile_pc34) | — |
-| V2 viewport renderer | ⚠ Delvis (rendererar i egen `DM1_V2_ViewportState`, ej kopplad till V1 fb än) | Inte blockerande — V2.0 läser V1 fb direkt |
+| V1 viewport (DM1) | ✅ Complete (entry view, walls, doors, ESC dialog) | — |
+| V1 framebuffer pipeline | ✅ Complete (M11 render path) | — |
+| V1 palette (VgaPaletteAll_Compat) | ✅ Complete | — |
+| M12_Config persistence | ✅ Complete | — |
+| V2 presentation shell (V2_SHELL mode) | ✅ Complete (presentation_profile_pc34) | — |
+| V2 viewport renderer | ⚠ Partial (renders in its own `DM1_V2_ViewportState`, not yet connected to the V1 framebuffer) | Not blocking — V2.0 reads the V1 framebuffer directly |
 
-**Inga blockare.** Hela V2.0 kan börja idag.
+**No blockers.** Work on the full V2.0 scope can begin today.
 
-### 1.11 ReDMCSB-källlåsning
+### 1.11 ReDMCSB source locking
 
-**V2.0 är rent Firestaff-arbete.** Inga sourcelåsta element. Detta måste dokumenteras tydligt i varje ny fil:
+**V2.0 is entirely Firestaff work.** It has no source-locked elements. This must be documented clearly in every new file:
 
 ```c
 /* Source: Firestaff V2.0 filtered presentation.
@@ -257,24 +261,24 @@ Lägg till `m11_apply_v2_filters()` mellan `m11_framebuffer_to_rgba()` och `SDL_
  * the perceived CRT look on modern flat-panel displays. */
 ```
 
-Detta är viktigt: AGENTS.md säger "source-locked" är ett kärnvärde. V2.0 är opt-in och flaggad som ren presentationsskikt, V1 gameplay-route är fortsatt 100 % source-locked.
+This is important: AGENTS.md identifies "source-locked" as a core value. V2.0 is opt-in and designated as a pure presentation layer; the V1 gameplay route remains 100% source-locked.
 
 ### 1.12 Testplan
 
-🔲 **Build-verifiering**
+🔲 **Build verification**
 ```bash
 cd /home/trv2/work/firestaff
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --parallel
 ```
-🔲 **Enhetstester per filter** — separata `tests/test_dm1_v2_filter_*.c`.
-🔲 **Smoke-test V1 oförändrad** — kör `firestaff --scale-mode 1` och jämför mot baseline-screenshot.
-🔲 **Smoke-test V2.0 off-by-default** — kör `firestaff --scale-mode 2` utan filter-flaggor → identiskt med V1.
-🔲 **Filter-on/off-toggling i runtime** — använd `--script` för att tabba in i GRAPHICS-menyn och toggla.
-🔲 **Performance-mätning** — `--fps` flag på 320×200; samtliga filter aktiva får inte sänka under 60 FPS på Steam Deck-klass-hårdvara.
-🔲 **Pixel-jämförelse** — `parity-evidence/dm1_v2_filters/` med PNG-diff för varje filter solo.
+🔲 **Unit tests per filter** — separate `tests/test_dm1_v2_filter_*.c` files.
+🔲 **V1 unchanged smoke test** — run `firestaff --scale-mode 1` and compare against the baseline screenshot.
+🔲 **V2.0 off-by-default smoke test** — run `firestaff --scale-mode 2` with no filter flags → identical to V1.
+🔲 **Runtime filter on/off toggling** — use `--script` to tab into the GRAPHICS menu and toggle.
+🔲 **Performance measurement** — use `--fps` at 320×200; all active filters must not reduce performance below 60 FPS on Steam Deck-class hardware.
+🔲 **Pixel comparison** — `parity-evidence/dm1_v2_filters/` with a PNG diff for each solo filter.
 
-Verifieringskommando:
+Verification command:
 ```bash
 cmake --build /home/trv2/work/firestaff/build --parallel && \
   /home/trv2/work/firestaff/build/firestaff --scale-mode 1 --duration 2000 && \
@@ -283,28 +287,28 @@ cmake --build /home/trv2/work/firestaff/build --parallel && \
 
 ---
 
-## DEL 2 — SDL-grafikinställningar (nya features)
+## PART 2 — SDL graphics settings (new features)
 
-### 2.1 Förslag på inställningar
+### 2.1 Proposed settings
 
-| # | Inställning | Var | Typ | Implementation |
+| # | Setting | Where | Type | Implementation |
 |---|-------------|-----|-----|----------------|
 | 1 | CRT Scanlines (V2.0) | M12_Config + GUI | On/Off + 0–100 strength | CPU `dm1_v2_filter_crt_scanlines.c` |
 | 2 | Palette Correction (V2.0) | M12_Config + GUI | On/Off + gamma/bright/contrast | CPU LUT |
 | 3 | Dither Cleanup (V2.0) | M12_Config + GUI | On/Off | CPU 3×3 mode-filter |
 | 4 | Sharpening (V2.0) | M12_Config + GUI | On/Off + 0–100 strength | CPU 3×3 unsharp |
-| 5 | Interpolation Filter | M12_Config (finns) + GUI | Nearest / Linear (SDL har båda) | `SDL_SetTextureScaleMode` (redan implementerad) |
-| 6 | Vignette | M12_Config + GUI | On/Off + radius | CPU enkel — `dm1_v2_filter_vignette.c` |
-| 7 | Bloom / Glow | M12_Config + GUI | On/Off + threshold/strength | CPU — bright-pass + 5×5 blur; kostsam |
-| 8 | Color Temperature | M12_Config + GUI | Slider −100..+100 (cool↔warm) | Inkluderas i palette LUT |
-| 9 | Integer Scale | M12_Config (finns) | On/Off | Redan i `render_sdl_m11.c` |
-| 10 | Aspect Ratio | M12_Config (finns) | 4:3 / 16:9 / Content | Redan i `render_sdl_m11.c` |
-| 11 | CRT Curvature | M12_Config + GUI | On/Off + curve | **Shader-only** (skjuts till V2.x eller framtida shader-väg) |
-| 12 | NTSC Composite Artifact | M12_Config + GUI | On/Off | **Shader-only** (skjuts) |
+| 5 | Interpolation Filter | M12_Config (exists) + GUI | Nearest / Linear (SDL supports both) | `SDL_SetTextureScaleMode` (already implemented) |
+| 6 | Vignette | M12_Config + GUI | On/Off + radius | Simple CPU — `dm1_v2_filter_vignette.c` |
+| 7 | Bloom / Glow | M12_Config + GUI | On/Off + threshold/strength | CPU — bright pass + 5×5 blur; costly |
+| 8 | Color Temperature | M12_Config + GUI | Slider −100..+100 (cool↔warm) | Included in palette LUT |
+| 9 | Integer Scale | M12_Config (exists) | On/Off | Already in `render_sdl_m11.c` |
+| 10 | Aspect Ratio | M12_Config (exists) | 4:3 / 16:9 / Content | Already in `render_sdl_m11.c` |
+| 11 | CRT Curvature | M12_Config + GUI | On/Off + curve | **Shader-only** (deferred to V2.x or a future shader path) |
+| 12 | NTSC Composite Artifact | M12_Config + GUI | On/Off | **Shader-only** (deferred) |
 
 ### 2.2 GUI-design
 
-I `m12_ext_settings[]` på GRAPHICS-fliken, lägg V2.0-rader **direkt efter** `Palette Mode` (rad 119):
+In `m12_ext_settings[]` on the GRAPHICS tab, add V2.0 rows **immediately after** `Palette Mode` (line 119):
 
 ```c
 {"CRT Filter",           "Off",   1, M12_SETTINGS_TAB_GRAPHICS},  /* V2.0 — toggle */
@@ -318,98 +322,98 @@ I `m12_ext_settings[]` på GRAPHICS-fliken, lägg V2.0-rader **direkt efter** `P
 {"Sharpening",           "Off",   1, M12_SETTINGS_TAB_GRAPHICS},  /* V2.0 — toggle */
 {"Sharpening Strength",  "30%",   1, M12_SETTINGS_TAB_GRAPHICS},  /* V2.0 — 0–100 */
 {"Vignette",             "Off",   1, M12_SETTINGS_TAB_GRAPHICS},  /* V2.0 — toggle */
-{"Bloom",                "Off",   0, M12_SETTINGS_TAB_GRAPHICS},  /* V2.0.5 — kostsam */
+{"Bloom",                "Off",   0, M12_SETTINGS_TAB_GRAPHICS},  /* V2.0.5 — costly */
 ```
 
-UI-pattern:
-- **Toggle** (On/Off): vänster/höger pil cyklar.
-- **Slider** (procent/gamma): vänster/höger pil ändrar i steg om 5 (snabb-step med shift).
-- **Sub-menu**: nej. Slider-rader är lika lätta att förstå inline och konsistenta med existerande Volume-rader.
-- **Lock when V1 vald**: rader med kommentar `/* V2.0 */` låses (gråtonas) när `presentationModeIndex == V1_ORIGINAL`, via samma mekanism som idag låser V2.2-rader.
+UI pattern:
+- **Toggle** (On/Off): left/right arrow cycles.
+- **Slider** (percent/gamma): left/right arrow changes in steps of 5 (quick step with Shift).
+- **Sub-menu**: no. Slider rows are as easy to understand inline and consistent with existing Volume rows.
+- **Lock when V1 is selected**: rows with the `/* V2.0 */` comment are locked (grayed out) when `presentationModeIndex == V1_ORIGINAL`, through the same mechanism that currently locks V2.2 rows.
 
-### 2.3 Vilka kräver shader vs CPU
+### 2.3 Which filters require a shader vs. CPU
 
-| Filter | CPU OK? | Shader bättre? | Beslut för V2.0 |
+| Filter | CPU suitable? | Shader better? | V2.0 decision |
 |--------|---------|---------------|-----------------|
-| CRT scanlines | ✅ trivial | ✅ snyggare med gauss-pulse | CPU |
-| Palette correction | ✅ LUT en gång | gradient i shader | CPU |
-| Dither cleanup | ✅ måste vara CPU (indexerad) | nej | CPU |
-| Sharpening | ✅ 3×3 räcker | ✅ för 5×5+ | CPU |
-| Vignette | ✅ trivial | ✅ snyggare med radial gauss | CPU |
-| Bloom | ⚠ tungt på CPU | ✅ shader | SKJUTS till V2.0.5 |
-| CRT curvature | nej | ✅ kräver shader | SKJUTS |
-| NTSC composite | ⚠ tungt | ✅ shader | SKJUTS |
-| Color temperature | ✅ ingår i palette-LUT | ja | CPU |
-| Interpolation | redan SDL | redan SDL | klart |
-| Integer scale | redan M11 | — | klart |
-| Aspect | redan M11 | — | klart |
+| CRT scanlines | ✅ trivial | ✅ more attractive with a Gaussian pulse | CPU |
+| Palette correction | ✅ LUT once | gradient in shader | CPU |
+| Dither cleanup | ✅ must be CPU (indexed) | no | CPU |
+| Sharpening | ✅ 3×3 is sufficient | ✅ for 5×5+ | CPU |
+| Vignette | ✅ trivial | ✅ more attractive with radial Gaussian | CPU |
+| Bloom | ⚠ CPU-intensive | ✅ shader | DEFER to V2.0.5 |
+| CRT curvature | no | ✅ requires a shader | DEFER |
+| NTSC composite | ⚠ intensive | ✅ shader | DEFER |
+| Color temperature | ✅ included in palette LUT | yes | CPU |
+| Interpolation | already SDL | already SDL | complete |
+| Integer scale | already M11 | — | complete |
+| Aspect | already M11 | — | complete |
 
-### 2.4 Shader-vägen (för V2.0.5+, ej för V2.0)
+### 2.4 Shader path (for V2.0.5+, not V2.0)
 
-Om Firestaff senare vill ha CRT curvature/NTSC/bloom så krävs:
-- Sekundär render-target (RT) via `SDL_CreateTexture(SDL_TEXTUREACCESS_TARGET)`.
-- Egen shader-pipeline. SDL3 har inte inbyggt shader-API på samma sätt som SDL_gpu eller bgfx — typiskt ramverk är:
-  - `SDL_RenderGeometry` med custom textures + flera passes.
-  - Eller backe SDL3 + GLSL via `SDL_GPUDevice` (SDL3 v3.2+ har detta).
-- Beslut: **inte i V2.0**. Markera som framtida arbete i `TODO.md`.
+If Firestaff later wants CRT curvature/NTSC/bloom, it requires:
+- A secondary render target (RT) through `SDL_CreateTexture(SDL_TEXTUREACCESS_TARGET)`.
+- A custom shader pipeline. SDL3 does not have a built-in shader API in the same way as SDL_gpu or bgfx — a typical framework is:
+  - `SDL_RenderGeometry` with custom textures + multiple passes.
+  - Or SDL3 + GLSL through `SDL_GPUDevice` (SDL3 v3.2+ supports this).
+- Decision: **not in V2.0**. Mark it as future work in `TODO.md`.
 
-### 2.5 Config-fält för shader-vägen (förberedande)
+### 2.5 Configuration fields for the shader path (preparatory)
 
-Stub:t i config men `enabled=0` i GUI tills shader-pipeline finns:
+Stub in configuration, but `enabled=0` in the GUI until the shader pipeline exists:
 
 ```c
 int dm1V2VignetteEnabled;
 int dm1V2VignetteStrength;     /* 0–100, default 25 */
 int dm1V2ColorTemperature;     /* −100..+100, default 0 */
-int dm1V2BloomEnabled;         /* off i V2.0; framtida */
-int dm1V2CrtCurvatureEnabled;  /* shader-only; framtida */
+int dm1V2BloomEnabled;         /* off in V2.0; future */
+int dm1V2CrtCurvatureEnabled;  /* shader-only; future */
 ```
 
 ---
 
-## DEL 3 — ReDMCSB source-låsning för V2
+## PART 3 — ReDMCSB source locking for V2
 
-### 3.1 Genomgång av relevanta källkodsfiler
+### 3.1 Review of relevant source-code files
 
-| Fil | Innehåll | Relevans för V2.0 |
+| File | Contents | Relevance to V2.0 |
 |-----|----------|-------------------|
-| `PALETTE.C` (453 rader) | VGA-DAC-skrivning, palette-tabeller, dimningsnivåer | Bas för `G9010_auc_VgaPaletteAll_Compat` (redan i Firestaff). Ingen post-process. |
-| `VIDEODRV.C` (4003 rader) | VGA-port-driver (inline ASM mot 0x3D4/0x3B4) | **Inget post-process** — pratar direkt med riktig hårdvara. Endast en CRT-relaterad träff: kommentar om VGA CRTC controller port. |
-| `STARTEND.C` | Saknas i denna ReDMCSB-snapshot | — |
-| `_MAIN.C`, `VDEOMAIN.C`, `VIDSET.C` | Små shim-filer | Ingen filter-hook. |
-| `FILTERS.C` | Finns inte | — |
-| `EVENT.C` | Hittas inte i grep — kan finnas men inga filter-träffar | — |
+| `PALETTE.C` (453 lines) | VGA DAC writes, palette tables, dimming levels | Basis for `G9010_auc_VgaPaletteAll_Compat` (already in Firestaff). No post-processing. |
+| `VIDEODRV.C` (4003 lines) | VGA-port driver (inline ASM to 0x3D4/0x3B4) | **No post-processing** — talks directly to real hardware. Only one CRT-related match: a comment about the VGA CRTC controller port. |
+| `STARTEND.C` | Missing from this ReDMCSB snapshot | — |
+| `_MAIN.C`, `VDEOMAIN.C`, `VIDSET.C` | Small shim files | No filter hook. |
+| `FILTERS.C` | Does not exist | — |
+| `EVENT.C` | Not found by grep — may exist, but has no filter matches | — |
 
-### 3.2 Vad ReDMCSB gör med bit-depth/palette
+### 3.2 What ReDMCSB does with bit depth/palette
 
-ReDMCSB skriver 4-bit/pixel till VGA Mode 13h linear buffer (eller motsvarande). Paletten skrivs som **6-bit per kanal** till VGA DAC. Det här hanterar Firestaff redan via `G9010_auc_VgaPaletteAll_Compat[level][idx]` (16 paletter à 16 färger, RGB888-utvidgade). Ingen ytterligare bit-depth-konvertering behövs för V2.0.
+ReDMCSB writes 4-bit/pixel data to the VGA Mode 13h linear buffer (or equivalent). The palette is written as **6 bits per channel** to the VGA DAC. Firestaff already handles this through `G9010_auc_VgaPaletteAll_Compat[level][idx]` (16 palettes of 16 colors, expanded to RGB888). No additional bit-depth conversion is needed for V2.0.
 
-### 3.3 Slutsats: source-låsning
+### 3.3 Conclusion: source locking
 
-- **V1 gameplay/render path:** 100 % source-locked mot ReDMCSB. Inget ändras.
-- **V2.0 filter chain:** **Firestaff-originellt arbete.** Ingen ReDMCSB-motsvarighet finns. Detta dokumenteras i varje ny `dm1_v2_filter_*.c` med source-evidence-kommentar (se 1.11).
-- **V2-presentation profile** (`presentation_profile_pc34.c`): redan på plats, `presentationMode == V2_SHELL` är hooken där V2.0 aktiveras.
+- **V1 gameplay/render path:** 100% source-locked to ReDMCSB. Nothing changes.
+- **V2.0 filter chain:** **Firestaff-original work.** No ReDMCSB equivalent exists. This is documented in every new `dm1_v2_filter_*.c` with a source-evidence comment (see 1.11).
+- **V2 presentation profile** (`presentation_profile_pc34.c`): already in place; `presentationMode == V2_SHELL` is the hook where V2.0 is enabled.
 
-Det här är samma policy som redan gäller för V2.1 (AI upscale) och V2.2 (modern art): **gameplay = source-locked, presentation = opt-in nytt arbete.**
-
----
-
-## 4. Prioritetsordning (vad göra först)
-
-1. 🔲 **M1 Config** — alla nio nya fält + defaults. Inget annat kan börja förrän M12_Config kan persistera.
-2. 🔲 **M2 Palette LUT** — enskilt mest synbar effekt; lätt att verifiera med PNG.
-3. 🔲 **M5 CRT Scanlines** — trivialt att implementera, ger "wow"-effekt direkt.
-4. 🔲 **M4 Sharpening** — bygger förtroende för pipeline-flödet.
-5. 🔲 **M3 Dither Cleanup** — kräver mer omsorg pga indexerad data.
-6. 🔲 **M6 Pipeline Integration** — hookar ihop allt; här blir det "live".
-7. 🔲 **M7 Menu Wiring** — gör features upptäckbara.
-8. 🔲 **M8 CLI + README** — dokumentation.
-9. 🔲 **M9 Runtime Toggle** — säkerställ no-restart.
-10. 🔲 **M10 Regression Screenshots** — låser klart-läget.
+This is the same policy already used for V2.1 (AI upscale) and V2.2 (modern art): **gameplay = source-locked, presentation = opt-in new work.**
 
 ---
 
-## 5. Verifieringskommando
+## 4. Priority order (what to do first)
+
+1. 🔲 **M1 Configuration** — all nine new fields plus defaults. Nothing else can begin until M12_Config can persist them.
+2. 🔲 **M2 Palette LUT** — the single most visible effect; easy to verify with PNG.
+3. 🔲 **M5 CRT Scanlines** — trivial to implement, immediately provides a "wow" effect.
+4. 🔲 **M4 Sharpening** — builds confidence in the pipeline flow.
+5. 🔲 **M3 Dither Cleanup** — requires more care because of indexed data.
+6. 🔲 **M6 Pipeline Integration** — connects everything; this is where it becomes "live".
+7. 🔲 **M7 Menu Wiring** — makes features discoverable.
+8. 🔲 **M8 CLI + README** — documentation.
+9. 🔲 **M9 Runtime Toggle** — ensure no restart is required.
+10. 🔲 **M10 Regression Screenshots** — locks down the finished state.
+
+---
+
+## 5. Verification command
 
 ```bash
 cd /home/trv2/work/firestaff && \
@@ -419,22 +423,22 @@ cd /home/trv2/work/firestaff && \
   ./build/firestaff --scale-mode 2 --duration 2000
 ```
 
-Förväntat: båda runs avslutas med exit code 0, ingen segfault, ingen visuell regression i V1, V2.0 visar identisk bild som V1 när alla filter är `Off` (default).
+Expected: both runs end with exit code 0, no segmentation fault, no visual regression in V1, and V2.0 displays an identical image to V1 when all filters are `Off` (the default).
 
 ---
 
-## 6. Risker & öppna frågor
+## 6. Risks and open questions
 
-- **Scale-mode-mappning:** `--scale-mode 2` betyder idag V2.1. Om vi mappar 2→V2.0 bryter vi exempel i README. Förslag: behåll 2=V2.1, lägg V2.0 som `--scale-mode 5` ELLER introducera `--graphics v1|v2.0|v2.1|v2.2`-namngiven flagga. **Beslut tas vid M8-start.**
-- **CRT-emulation kvalitetsförväntan:** Daniel kan ha en specifik referensbild (CRT Royale, Reshade m.fl.) — be om referens innan M5 spikas.
-- **Performance på ARM64 (Steam Deck):** alla fyra filter aktiva på 320×200 är ~64k pixlar × 4 RGBA passes = försumbart. Borde inte sänka FPS. Mätning sker i M10.
-- **Per-spel-flagga:** V2.0 är DM1-specifikt i denna plan. CSB/DM2/Nexus får egna V2.0 senare. Configfält ska heta `dm1V2*` och inte återanvändas av andra spel.
+- **Scale-mode mapping:** `--scale-mode 2` currently means V2.1. Mapping 2→V2.0 would break README examples. Proposal: retain 2=V2.1, assign V2.0 to `--scale-mode 5`, OR introduce a named `--graphics v1|v2.0|v2.1|v2.2` flag. **Decide at the start of M8.**
+- **Expected CRT-emulation quality:** Daniel may have a specific reference image (CRT Royale, ReShade, etc.) — request a reference before M5 is finalized.
+- **ARM64 performance (Steam Deck):** all four filters active at 320×200 are ~64k pixels × 4 RGBA passes = negligible. They should not reduce FPS. Measure in M10.
+- **Per-game flag:** V2.0 is DM1-specific in this plan. CSB/DM2/Nexus get their own V2.0 later. Configuration fields must be named `dm1V2*` and not reused by other games.
 
 ---
 
-## 7. Filmanifest — vad ändras
+## 7. File manifest — what changes
 
-**Nya filer (10):**
+**New files (10):**
 - `include/dm1v2/dm1_v2_filters.h`
 - `src/dm1v2/dm1_v2_filter_palette_correct.c`
 - `src/dm1v2/dm1_v2_filter_dither_cleanup.c`
@@ -446,16 +450,16 @@ Förväntat: båda runs avslutas med exit code 0, ingen segfault, ingen visuell 
 - `tests/test_dm1_v2_filter_crt_scanlines.c`
 - `verification-screens/dm1_v2_filters/README.md` + 6 PNG-baselines
 
-**Ändrade filer (6):**
-- `include/config_m12.h` (+9 fält)
+**Changed files (6):**
+- `include/config_m12.h` (+9 fields)
 - `src/config_m12.c` (defaults, load/save mapping)
 - `include/render_sdl_m11.h` (+ SetV2Filters/GetV2Filters API)
 - `src/engine/render_sdl_m11.c` (+ state, + apply_v2_filters hook)
-- `src/ui/menu_startup_m12.c` (+ rader 121–124 enabled=1, + nya rader, + cycle handlers)
-- `src/firestaff_cli.c` (+ scale-mode mappning eller --graphics flagga)
-- `CMakeLists.txt` (+ nya .c-filer)
-- `README.md` (+ V2.0-rad och CLI-uppdatering)
+- `src/ui/menu_startup_m12.c` (+ lines 121–124 `enabled=1`, + new rows, + cycle handlers)
+- `src/firestaff_cli.c` (+ scale-mode mapping or `--graphics` flag)
+- `CMakeLists.txt` (+ new .c files)
+- `README.md` (+ V2.0 row and CLI update)
 
 ---
 
-*Plan skriven av subagent på N2 / Firestaff-Worker-VM 2026-05-26. Inga ändringar i `src/` gjorda i denna pass — endast denna plan-fil.*
+*Plan written by a subagent on N2 / Firestaff-Worker-VM, 2026-05-26. No changes in `src/` were made in this pass — only this plan file.*

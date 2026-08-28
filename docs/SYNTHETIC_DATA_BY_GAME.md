@@ -1,171 +1,173 @@
-# Syntetiskt data per spel
+## Synthetic data by game
 
-Inventering gjord 2026-08-08 i Firestaff-repot. Dokumentet skiljer mellan
+Inventory performed in the Firestaff repository on 2026-08-08. This document
+distinguishes between:
 
-1. syntetiskt data som bara används av tester och negativa kontrakt,
-2. diagnostiska världar eller fallback-vägar som inte får användas i produktion,
-3. placeholder/procedural/AI-genererat material som kan se ut som riktigt speldata.
+1. synthetic data used only by tests and negative contracts;
+2. diagnostic worlds or fallback routes that must not be used in production;
+3. placeholder, procedural, or AI-generated material that can resemble real
+   game data.
 
-En test-fixture ska inte ersättas med en kopierad originalfil enbart för att
-den finns. Fixturen testar ofta ett avgränsat formatfel eller en negativ gren.
-När samma produktionsväg redan har en autentiserad källa ska däremot den vägen
-inte marknadsföras eller verifieras med fixturdata.
+A test fixture should not be replaced with a copied original file merely
+because that file exists. A fixture often tests a constrained format error or a
+negative branch. When the same production route already has an authenticated
+source, however, that route must not be presented or verified using fixture
+data.
 
-## Sammanfattning
+## Summary
 
-| Spel | Syntetiskt material som hittades | Autentisk källa finns | Rätt åtgärd |
+| Game | Synthetic material found | Authentic source available | Correct action |
 |---|---|---|---|
-| DM1 | V2/V2.2 modern-art placeholders, diagnostiska V2-modeller, test-fixtures och capture-fixtures | Ja: PC/DOS, FM Towns och flera originalarkiv under `~/.firestaff/data/dm1` | Behåll test-fixtures isolerade. V1 ska läsa originaldata eller ge no-draw. V2.2 får inte använda placeholder-art som riktig DM1-grafik. |
-| DM2 | V2/V2.2 HUD- och modern-art-fixtures, syntetisk dungeon/overlay-testning och bounded fallback-fixtures | Ja: DOS, Amiga, FM Towns och Macintosh under `~/.firestaff/data/dm2` | Behåll endast i test/scratch. Produktion ska använda verifierad GDAT/DUNGEON-data eller fail-closed. |
-| CSB | Syntetisk dungeon-loader/world-fixture, experimentell launch-fixture och V2.2 procedural art | Ja: Atari ST, Amiga och FM Towns under `~/.firestaff/data/csb` | Behåll negativa och parser-fixtures. Byt inte in procedural art; bind motsvarande originalposter innan någon V2.2-väg öppnas. |
-| Nexus | Genererade DGN/DMDF/save-fixtures och legacy synthetic fallback i äldre probes | Ja: Saturn CUE/BIN, DGN, SLEV och MNS under `~/.firestaff/data/nexus` | Använd originalfiler i real-data-prober. Behåll synthetic fallback endast explicit fixture/test och märk den inte som gameplay-bevis. |
-| Theron | Procedural/AI-genererat V2/V2.2-material, no-op/fixture-start och synthetic parser/runtime-fixtures | Ja: autentisk JP Track 02 BIN/CUE och US CloneCD-ZIP under `~/.firestaff/data/theron` | Låt produktion vara capture-gated. Bind bara autentiserade Track 02-poster; ersätt inte saknade semantiska rutter med genererade data. |
+| DM1 | V2/V2.2 modern-art placeholders, diagnostic V2 models, test fixtures, and capture fixtures | Yes: PC/DOS, FM Towns, and several original archives under `~/.firestaff/data/dm1` | Keep test fixtures isolated. V1 must read original data or produce no draw. V2.2 must not use placeholder art as real DM1 graphics. |
+| DM2 | V2/V2.2 HUD and modern-art fixtures, synthetic dungeon/overlay tests, and bounded fallback fixtures | Yes: DOS, Amiga, FM Towns, and Macintosh under `~/.firestaff/data/dm2` | Keep them only in tests/scratch space. Production must use verified GDAT/DUNGEON data or fail closed. |
+| CSB | Synthetic dungeon-loader/world fixture, experimental launch fixture, and V2.2 procedural art | Yes: Atari ST, Amiga, and FM Towns under `~/.firestaff/data/csb` | Keep negative and parser fixtures. Do not substitute procedural art; bind corresponding original records before opening any V2.2 route. |
+| Nexus | Generated DGN/DMDF/save fixtures and legacy synthetic fallback in older probes | Yes: Saturn CUE/BIN, DGN, SLEV, and MNS under `~/.firestaff/data/nexus` | Use original files in real-data probes. Retain synthetic fallback only as an explicit fixture/test and do not label it gameplay evidence. |
+| Theron | Procedural/AI-generated V2/V2.2 material, no-op/fixture startup, and synthetic parser/runtime fixtures | Yes: authentic JP Track 02 BIN/CUE and US CloneCD ZIP under `~/.firestaff/data/theron` | Keep production capture-gated. Bind only authenticated Track 02 records; do not replace missing semantic routes with generated data. |
 
 ## DM1
 
-### Träffar
+### Findings
 
-- `src/dm1v2/` innehåller kompatibilitetsmodeller som tidigare kunde skapa
-  host-inventerade champion-värden, väder, partiklar, skakningar, loggar,
-  övergångar och liknande presentation. De är numera inert/no-draw eller
-  testbundna, men ska inte räknas som originaldata.
-- `docs/source-lock/dm1_v22_finished_art_material_gate_pc34.md` beskriver
-  V2.2:s placeholder/procedural-art-gate. Det paketet är inte en autentisk
-  DM1-grafikkälla.
-- `tests/fixtures/minimal.DAT`, `parity-evidence/fixtures/` och DM1:s
-  `*_fixture`/`*_probe`-program är syntetiska eller kontraktsbundna. De testar
-  parser-, no-draw- och negativgrenar och får inte användas som pixelbevis.
-- `probes/dm1/firestaff_dm1_v1_original_fakewall_view_collision_probe.c` och
-  `src/dm1/dm1_v1_viewport_fakewall_pc34_compat.c` innehåller en diagnostic
-  fake-wall-väg. Den ska inte överta en autentiserad PC34-vy.
+- `src/dm1v2/` contains compatibility models that could previously create
+  host-invented champion values, weather, particles, shakes, logs,
+  transitions, and similar presentation. They are now inert/no-draw or bound
+  to tests, but must not count as original data.
+- `docs/source-lock/dm1_v22_finished_art_material_gate_pc34.md` documents the
+  V2.2 placeholder/procedural-art gate. That package is not an authentic DM1
+  graphics source.
+- `tests/fixtures/minimal.DAT`, `parity-evidence/fixtures/`, and DM1
+  `*_fixture`/`*_probe` programs are synthetic or contract-bound. They test
+  parser, no-draw, and negative branches and must not be used as pixel proof.
+- `probes/dm1/firestaff_dm1_v1_original_fakewall_view_collision_probe.c` and
+  `src/dm1/dm1_v1_viewport_fakewall_pc34_compat.c` contain a diagnostic
+  fake-wall route. It must not take precedence over an authenticated PC34 view.
 
-### Riktig källa
+### Real source
 
-- PC/DOS-original finns i `~/.firestaff/data/dm1`, bland annat den extraherade
-  `Dungeon-Master_DOS_EN_Version-34`-katalogen med `DATA/`.
-- Originala PC34-sparningar finns utanför repot under
-  `~/.firestaff/saves/dm1/original-pc34/` och i användarens Downloads-korpus.
-  De får inte ersättas med genererade saves; C13 måste fortfarande styrkas av
-  en autentisk save som faktiskt innehåller C13-händelsen.
-- FM Towns-originalet finns som den direkta, originala
-  `Dungeon-Master_FM-Towns_JA-EN.zip`-behållaren under
-  `~/.firestaff/data/dm1/`; Firestaff läser dess `DATA/`-poster i minnet.
+- Original PC/DOS data exists in `~/.firestaff/data/dm1`, including the
+  extracted `Dungeon-Master_DOS_EN_Version-34` directory with `DATA/`.
+- Original PC34 saves exist outside the repository under
+  `~/.firestaff/saves/dm1/original-pc34/` and in the user's Downloads corpus.
+  They must not be replaced with generated saves; C13 still requires an
+  authentic save that actually contains the C13 event.
+- The FM Towns original is available as the direct original
+  `Dungeon-Master_FM-Towns_JA-EN.zip` container under
+  `~/.firestaff/data/dm1/`; Firestaff reads its `DATA/` records in memory.
 
-### Beslut
+### Decision
 
-DM1 V1 ska fortsätta att konsumera verifierade GRAPHICS.DAT/DUNGEON.DAT- och
-save-bytes eller lämna materialet tomt. V2.2-placeholder-art ska inte ersätta
-original PC34-poster bara för att den är visuellt komplett. De kvarvarande
-pixelpar- och C13-capture-gaterna är evidensarbete, inte tillstånd att skapa
-syntetiska saves eller skärmbilder.
+DM1 V1 must continue to consume verified `GRAPHICS.DAT`/`DUNGEON.DAT` and save
+bytes, or leave the material empty. V2.2 placeholder art must not replace
+original PC34 records merely because it is visually complete. The remaining
+pixel-pair and C13-capture gates are evidence work, not permission to create
+synthetic saves or screenshots.
 
 ## DM2
 
-### Träffar
+### Findings
 
-- `examples/dm2_hud_widget_synthetic/` är uttryckligen en syntetisk
-  1x1-fixture för HUD-gate-testning. Manifestets `generator` är
-  `synthetic_test`; filerna är inte DM2-grafik.
-- DM2 V2/V2.2 har dokumenterade placeholder/procedural-art-gates och
-  scratch-fixtures. Dessa beskriver gatebeteende, inte färdiga Skullkeep-
-  material.
-- Dungeon-loader-, väder-, overlay- och startup-fixtures kan använda små
-  syntetiska världar eller input. De är tillåtna för deterministiska tester
-  men är inte real-data-runtimebevis.
+- `examples/dm2_hud_widget_synthetic/` is explicitly a synthetic 1x1 fixture
+  for HUD-gate testing. Its manifest `generator` is `synthetic_test`; its files
+  are not DM2 graphics.
+- DM2 V2/V2.2 has documented placeholder/procedural-art gates and scratch
+  fixtures. They describe gate behaviour, not finished Skullkeep materials.
+- Dungeon-loader, weather, overlay, and startup fixtures can use small
+  synthetic worlds or input. They are acceptable for deterministic tests but
+  are not real-data runtime evidence.
 
-### Riktig källa
+### Real source
 
-DM2-original finns som direkta DOS-, Amiga-, FM Towns- och Macintosh-arkiv
-under `~/.firestaff/data/dm2`. Produktionsprober ska välja den verifierade
-editionens GDAT/DUNGEON-poster direkt från behållaren när de finns och ska inte
-främja syntetiska HUD- eller dungeonbytes till produktion.
+Original DM2 data is available as direct DOS, Amiga, FM Towns, and Macintosh
+archives under `~/.firestaff/data/dm2`. Production probes must select the
+verified edition's GDAT/DUNGEON records directly from the container when
+available and must not promote synthetic HUD or dungeon bytes to production.
 
-### Beslut
+### Decision
 
-HUD-fixturen ska ligga kvar som fixture eftersom den testar state-gaten. Den får
-inte installeras som ett riktigt artpack. V2.2 ska förbli stängd tills riktiga
-source-owned materialposter och en pixelverifiering finns.
+Keep the HUD fixture because it tests the state gate. It must not be installed
+as a real art pack. V2.2 must remain closed until real source-owned material
+records and pixel verification exist.
 
 ## CSB
 
-### Träffar
+### Findings
 
-- CSB V1:s loader/world-fixtures använder små syntetiska dungeon-buffertar för
-  livscykel, rescan och negativa tester.
+- CSB V1 loader/world fixtures use small synthetic dungeon buffers for
+  lifecycle, rescan, and negative tests.
 - `parity-evidence/verification/csb_v1_experimental_launch_intent_fixture.json`
-  är en explicit experimentell fixture och får inte räknas som autentisk
-  launch- eller gameplay-evidens.
-- CSB V2.2:s tidigare procedural/material-fixtures och den genererade
-  `v22_inplace_cache.bin` är testmaterial. De öppnas inte av produktionen;
-  V1:s verifierade F0128-resultat behålls byte för byte tills en original
-  CSB-avkodare med palett- och pixelparitetsbevis finns.
+  is explicitly experimental and must not count as authentic launch or gameplay
+  evidence.
+- CSB V2.2's former procedural/material fixtures and generated
+  `v22_inplace_cache.bin` are test material. Production does not open them;
+  V1's verified F0128 result remains byte-for-byte preserved until an original
+  CSB decoder with palette and pixel-parity proof exists.
 
-### Riktig källa
+### Real source
 
-CSB-original finns under `~/.firestaff/data/csb`, inklusive Atari STX,
-Amiga-ADF och FM Towns-arkiv. CSB har ingen original DOS/PC-utgåva; realdata-
-prober ska använda den valda originalplattformens GRAPHICS.DAT/DUNGEON.DAT.
+Original CSB data exists under `~/.firestaff/data/csb`, including Atari STX,
+Amiga ADF, and FM Towns archives. CSB has no original DOS/PC release; real-data
+probes must use the selected original platform's `GRAPHICS.DAT`/`DUNGEON.DAT`.
 
-### Beslut
+### Decision
 
-Fixtures får finnas för parser- och rescan-kontrakt. De ska vara explicit
-fixture-only. Procedural V2.2-art och genererade cachefiler ska inte ersätta
-riktiga CSB-poster.
+Fixtures may remain for parser and rescan contracts, but must be explicitly
+fixture-only. Procedural V2.2 art and generated cache files must not replace
+real CSB records.
 
 ## Nexus
 
-### Träffar
+### Findings
 
-- `scripts/generate_nexus_v1_fixtures.py` skapar syntetiska DGN-, DMDF- och
-  FNXS-save-filer. `scripts/fixtures/nexus_v1_save_synthetic.dat` är därför
-  aldrig ett riktigt Nexus-save.
-- `docs/source-lock/nexus_v1_phase7_verification_suite_H0357.md` beskriver
-  dessa fixtures och en äldre synthetic fallback för parser-/round-trip-
-  prober.
-- `tests/fixtures/` och `*_fixture`-targets är avsedda för deterministisk
-  testning, inte för att fylla en saknad Saturn-källa.
+- `scripts/generate_nexus_v1_fixtures.py` creates synthetic DGN, DMDF, and
+  FNXS-save files. `scripts/fixtures/nexus_v1_save_synthetic.dat` is therefore
+  never a real Nexus save.
+- `docs/source-lock/nexus_v1_phase7_verification_suite_H0357.md` documents
+  these fixtures and an older synthetic fallback for parser/round-trip probes.
+- `tests/fixtures/` and `*_fixture` targets are for deterministic testing, not
+  for filling in a missing Saturn source.
 
-### Riktig källa
+### Real source
 
-Nexus-original finns under `~/.firestaff/data/nexus`, inklusive den japanska
-retail-CUE/BIN-källan, `LEV*.DGN`, `SLEV*.BIN`, `SNDLEV*.SAL` och `*.MNS`.
+Original Nexus data exists under `~/.firestaff/data/nexus`, including the
+Japanese retail CUE/BIN source, `LEV*.DGN`, `SLEV*.BIN`, `SNDLEV*.SAL`, and
+`*.MNS`.
 
-### Beslut
+### Decision
 
-Synthetic DGN/DMDF/save ska behållas för parser- och negativtester men ska
-inte passera som ett spelbart original. Real-data-prober ska använda
-hash-/formatverifierade filer ur Nexus-katalogen. Saturn-pixel- och
-runtime-capture-gater förblir öppna tills äkta capture finns.
+Keep synthetic DGN/DMDF/save data for parser and negative tests, but never
+present it as a playable original. Real-data probes must use hash- and
+format-verified files from the Nexus directory. Saturn pixel and runtime
+capture gates remain open until an authentic capture exists.
 
 ## Theron
 
-### Träffar
+### Findings
 
-- `src/theron/theron_v22_modern_assets_pc34.c` och närliggande V2/V2.2-
-  material beskriver generated/procedural/AI-art som fixture-only. Det får
-  inte annonsera en riktig Track 02-installation.
-- `src/theron/theron_v1_viewport_runtime_noop.c` och fixture-startvägar är
-  avsiktligt no-op/capture-gated; de skapar inte en ersättningsvärld.
-- Track 02 parser-, descriptor- och runtime-fixtures kan innehålla
-  syntetiska byteformer för negativa och shape-bundna tester.
+- `src/theron/theron_v22_modern_assets_pc34.c` and adjacent V2/V2.2 material
+  describe generated, procedural, or AI art as fixture-only. It must not claim
+  to be a real Track 02 installation.
+- `src/theron/theron_v1_viewport_runtime_noop.c` and fixture startup routes are
+  deliberately no-op/capture-gated; they do not create a replacement world.
+- Track 02 parser, descriptor, and runtime fixtures can contain synthetic byte
+  shapes for negative and shape-bound tests.
 
-### Riktig källa
+### Real source
 
-Autentisk JP Rev 1 Track 02 BIN/CUE och den amerikanska CloneCD-ZIP-behållaren
-finns under `~/.firestaff/data/theron`. Deras Track 02-payload är enda grund
-för produktionens level-, item-, champion- och bitmapclaims.
+Authentic JP Rev 1 Track 02 BIN/CUE and the US CloneCD ZIP container are under
+`~/.firestaff/data/theron`. Their Track 02 payload is the only basis for
+production claims about levels, items, champions, and bitmaps.
 
-### Beslut
+### Decision
 
-Behåll fixture- och no-op-vägarna som tydligt märkta tester. Ersätt inte
-öppna semantiska eller visuella Theron-gater med procedural art, AI-upscale
-eller genererade roster-/leveldata. Nästa steg är source-lock och autentisk
-capture, inte mer syntetiskt innehåll.
+Keep fixture and no-op routes as clearly labelled tests. Do not replace open
+semantic or visual Theron gates with procedural art, AI upscaling, or generated
+roster/level data. The next step is source lock and authentic capture, not more
+synthetic content.
 
-## Kontrollregel framåt
+## Rule going forward
 
-Ny data får bara räknas som riktig speldata när dess originalkälla, format,
-hash/proveniens och runtime-ägare är dokumenterade. Om motsvarande original
-finns lokalt ska produktionskod läsa den eller vägra rita/ladda. Syntetiska
-filer får endast ligga i `tests/`, `probes/`, `examples/` eller explicit
-fixture-dokumentation och ska aldrig användas som positiv real-data-evidens.
+New data may count as real game data only when its original source, format,
+hash/provenance, and runtime owner are documented. If an equivalent original
+exists locally, production code must read it or refuse to draw/load. Synthetic
+files may appear only in `tests/`, `probes/`, `examples/`, or explicit fixture
+documentation and must never be used as positive real-data evidence.
