@@ -84,6 +84,19 @@ static void test_be_load(const char *path, const char *platform) {
     assert(dungeon.level_types[0] == DM2_LEVEL_OUTDOOR);
     printf("  PASS: map 0 is OUTDOOR\n");
 
+    /* MapGraphicsStyle is a 68k word at descriptor +14.  Keep this direct
+     * raw-media comparison so the runtime can never select a byte-swapped
+     * GRAPHICSSET for Amiga/Mac viewport material. */
+    for (int level = 0; level < dungeon.level_count; ++level) {
+        const uint8_t *descriptor = data + 44 + level * 16;
+        int expected_style =
+            (int)((((uint16_t)descriptor[14] << 8 | descriptor[15]) >> 4) &
+                  0x0fu);
+        assert(dm2_v1_dungeon_get_map_graphics_style(&dungeon, level) ==
+               expected_style);
+    }
+    printf("  PASS: big-endian MapGraphicsStyle values\n");
+
     /* Verify structural fields were parsed */
     assert(dungeon.raw_map_data_base >= 0);
     assert(dungeon.column_index_base >= 0);

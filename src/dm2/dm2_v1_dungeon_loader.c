@@ -5697,7 +5697,7 @@ int dm2_v1_dungeon_get_map_graphics_style(
     /* skproject/SKWIN/DME.h Map_definitions::MapGraphicsStyle() returns
      * `(w14 >> 4) & 15`; SkWinCore.cpp uses that index for
      * glbMapGraphicsSet before reading GRAPHICSSET scene words. */
-    return (int)((RD16(map_desc + 14) >> 4) & 0x0fu);
+    return (int)((dm2_v1_dungeon_rd16(d, map_desc + 14) >> 4) & 0x0fu);
 }
 
 int dm2_v1_dungeon_c_light_map_descriptor_receipt(
@@ -5724,7 +5724,8 @@ int dm2_v1_dungeon_c_light_map_descriptor_receipt(
     if (hash == 0u) return 0;
     out->valid = 1;
     out->level = level;
-    out->difficulty = (uint8_t)((RD16(map_desc + 12u) >> 12) & 0x0fu);
+    out->difficulty = (uint8_t)(
+        (dm2_v1_dungeon_rd16(d, map_desc + 12u) >> 12) & 0x0fu);
     out->dynamic_light = out->difficulty != 0u;
     out->descriptor_hash = hash;
     return 1;
