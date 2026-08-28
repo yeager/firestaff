@@ -8517,9 +8517,11 @@ int dm1_v1_original_save_pc34_handoff_bytes(
     if (rc == SAVEGAME_PC34_OK) {
         rc = validate_original_pc34_timeline_membership(&staged_report);
     }
-    if (rc == SAVEGAME_PC34_OK) {
-        rc = validate_original_pc34_timeline_heap(&staged_report);
-    }
+    /* F0435 accepts the checksum-authenticated C4 allocation verbatim and
+     * F0651 only rebuilds its unused-event chain. Some original PC34 saves
+     * carry a valid non-canonical heap shape, so retain C4's exact order
+     * after membership validation instead of imposing Firestaff's comparator
+     * on historical bytes. */
     staged_report.importer_result = rc;
     if (out_report) *out_report = staged_report;
     if (rc != SAVEGAME_PC34_OK) {
@@ -8755,8 +8757,6 @@ int dm1_v1_original_save_pc34_handoff_apply_event_queue(
      * provenance local because this public apply API accepts a const report. */
     candidate_report = *report;
     if (validate_original_pc34_timeline_membership(&candidate_report) !=
-            SAVEGAME_PC34_OK ||
-        validate_original_pc34_timeline_heap(&candidate_report) !=
             SAVEGAME_PC34_OK) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
@@ -9068,7 +9068,6 @@ int dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
         /* Preserve the public transactional contract: a rejected candidate
          * never changes caller-visible runtime state or its prior receipt. */
         F0883_WORLD_Free_Compat(&candidate_world);
-        if (out_report) *out_report = candidate_report;
         return result;
     }
 

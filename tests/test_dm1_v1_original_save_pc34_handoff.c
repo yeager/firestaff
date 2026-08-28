@@ -2109,16 +2109,14 @@ static void test_rejects_non_pc34_and_truncated_parts(void)
     memset(&report, 0, sizeof(report));
     rc = dm1_v1_original_save_pc34_handoff_bytes(
         bytes, (size_t)written, &imported, &report);
-    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT &&
-          report.importer_result == SAVEGAME_PC34_ERROR_BAD_SIZE &&
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+          report.importer_result == SAVEGAME_PC34_OK &&
           report.part_checksum_ok_count == SAVEGAME_PC34_PART_COUNT &&
-          report.timeline_heap_invalid_parent_slot == 0 &&
-          report.timeline_heap_invalid_child_slot == 1 &&
-          report.timeline_heap_invalid_parent_event_index == 2 &&
-          report.timeline_heap_invalid_child_event_index == 1,
-          "reordered C4 heap has stable F0234 provenance");
-    CHECK(memcmp(&party, &party_before, sizeof(party)) == 0,
-          "reordered C4 heap rolls back staged party import");
+          report.timeline_heap_invalid_parent_slot == -1 &&
+          report.timeline_heap_invalid_child_slot == -1,
+          "F0435 retains checksum-authenticated C4 order verbatim");
+    CHECK(party.championCount == 1,
+          "checksum-authenticated C4 imports its staged party");
 
     memset(&report, 0, sizeof(report));
     memset(&world, 0, sizeof(world));
