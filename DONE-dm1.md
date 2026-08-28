@@ -7,6 +7,9 @@ Reviewed 2026-08-25. Completed work only.
   only after the original graphics and dungeon pair have both bound.
 - The authentic PC DOS 3.4 ZIP start-menu path likewise publishes its admitted
   `IMG3` source decoder only after its original graphics and dungeon pair bind.
+- The manually unpacked authentic French PC DOS `EUDATA` route now receives the
+  same direct start-menu `IMG3` handoff check; its unsupported RAR 2.0 wrapper
+  remains a separate diagnostic boundary.
 
 - PC DOS 3.4 authentic archive startup reaches native DM1 runtime with a
   hash-verified real-media regression.

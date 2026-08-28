@@ -27,4 +27,18 @@ probe --game dm1 --platform pc --data-dir "$data_dir" \
 probe --game dm1 --menu --platform pc --data-dir "$data_dir" \
     --script enter --boot-probe --boot-probe-frames 2 --duration 0
 
-printf '%s\n' 'PASS: manually unpacked authentic DM1 French DOS media reaches CLI and menu runtime'
+menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
+    --platform pc --data-dir "$data_dir" --script enter --duration 1000 2>&1)" || {
+    printf '%s\n' "$menu_output" >&2
+    exit 1
+}
+if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" ||
+   ! grep -Fq "dataDir=$data_dir" <<<"$menu_output" ||
+   ! grep -Fq 'handoff=pc-img3' <<<"$menu_output"; then
+    printf '%s\n' "$menu_output" >&2
+    printf '%s\n' 'FAIL: authentic unpacked DM1 French DOS start menu did not bind IMG3 source media' >&2
+    exit 1
+fi
+
+printf '%s\n' 'PASS: manually unpacked authentic DM1 French DOS media reaches CLI, menu, and native IMG3 handoff'
