@@ -35,7 +35,13 @@ runtime_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     exit 1
 }
 case "$runtime_output" in
-    *phase=inactive*startupActive=0*levelLoaded=1*runtimeTick=*) ;;
+    *phase=inactive*startupActive=0*levelLoaded=1*runtimeTick=*)
+        if ! printf '%s\n' "$runtime_output" | grep -Eq 'csbViewportHash=[1-9][0-9]*'; then
+            echo "FAIL: native CSB Atari ST runtime did not publish its source viewport receipt"
+            printf '%s\n' "$runtime_output" >&2
+            exit 1
+        fi
+        ;;
     *)
         echo "FAIL: native CSB Atari ST title Enter did not reach runtime"
         printf '%s\n' "$runtime_output" >&2
@@ -51,7 +57,13 @@ movement_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" 
     exit 1
 }
 case "$movement_output" in
-    *phase=inactive*startupActive=0*levelLoaded=1*party=9,1,2*runtimeTick=*) ;;
+    *phase=inactive*startupActive=0*levelLoaded=1*party=9,1,2*runtimeTick=*)
+        if ! printf '%s\n' "$movement_output" | grep -Eq 'csbViewportHash=[1-9][0-9]*'; then
+            echo "FAIL: native CSB Atari ST movement did not retain its source viewport receipt"
+            printf '%s\n' "$movement_output" >&2
+            exit 1
+        fi
+        ;;
     *)
         echo "FAIL: native CSB Atari ST start menu/title input did not consume first UP movement"
         printf '%s\n' "$movement_output" >&2

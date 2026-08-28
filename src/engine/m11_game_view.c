@@ -4644,6 +4644,13 @@ static int m11_csb_present_atari_st_runtime_viewport(
     int y;
     size_t draw_index;
 
+    /* Hash the exact source-owned 224x136 indexed page after its complete
+     * CSBWin/ANIM command sequence.  This is deliberately distinct from the
+     * PC F0128 live-frame receipt: it records that the Atari presenter did
+     * draw the authenticated material without claiming an unrelated PC
+     * session or broadening normal-runtime admission. */
+#define M11_CSB_ATARI_VIEWPORT_HASH_INIT 2166136261u
+
     if (!state || !framebuffer || framebuffer_width < 320 ||
         framebuffer_height < 200 || !state->csbAtariStRuntimeHandoffComplete ||
         state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
@@ -4875,6 +4882,16 @@ static int m11_csb_present_atari_st_runtime_viewport(
         memcpy(framebuffer + (size_t)(VIEWPORT_Y + y) * framebuffer_width + VIEWPORT_X,
                viewport + (size_t)y * VIEWPORT_WIDTH, VIEWPORT_WIDTH);
     }
+    {
+        uint32_t hash = M11_CSB_ATARI_VIEWPORT_HASH_INIT;
+        size_t pixel_index;
+        for (pixel_index = 0u; pixel_index < sizeof(viewport); ++pixel_index) {
+            hash ^= viewport[pixel_index];
+            hash *= 16777619u;
+        }
+        state->csbState.runtime_viewport_pixel_hash = hash ? hash : 1u;
+    }
+#undef M11_CSB_ATARI_VIEWPORT_HASH_INIT
     return 1;
 }
 

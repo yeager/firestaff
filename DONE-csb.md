@@ -8,6 +8,8 @@ Reviewed 2026-08-25. Completed work only.
   `ANIMATE.SCR`/`ANIMATE.DAT` container when the selected runtime cache holds
   only `GRAPHICS.DAT`/`DUNGEON.DAT`; 50 Hz VBlank cadence, final FTLCODE
   handoff and first native HUD/viewport frame are exercised against that media.
+  The completed 224×136 source-owned viewport publishes a nonzero FNV-1a
+  receipt without being promoted as a PC F0128 runtime-session receipt.
 - On that verified Atari route, native Enter/Accept now crosses the retained
   ANIM.C → FTLCODE handoff instead of being lost in the unrelated PC startup
   dispatcher. A requested CSB PC platform is explicitly rejected before any
