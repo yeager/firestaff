@@ -167,22 +167,6 @@ static int build_c040_header_fixture(unsigned char *buf, size_t buf_size)
     return 1;
 }
 
-static int file_matches(const char *path, const void *buf, size_t size)
-{
-    FILE *fp = fopen(path, "rb");
-    unsigned char tmp[256];
-    size_t got;
-    if (!fp || size > sizeof(tmp)) {
-        if (fp) {
-            fclose(fp);
-        }
-        return 0;
-    }
-    got = fread(tmp, 1u, sizeof(tmp), fp);
-    fclose(fp);
-    return got == size && memcmp(tmp, buf, size) == 0;
-}
-
 static void test_manifest_row_enables_hash_scan(void)
 {
     static const char manifest[] =
@@ -236,7 +220,7 @@ static void test_manifest_row_enables_hash_scan(void)
     csb_v1_csbgraphics_dat_real_cache_free(&cache);
 }
 
-static void test_subdir_manifest_zip_asset_materializes(void)
+static void test_subdir_manifest_zip_asset_reads_in_memory(void)
 {
     static const char manifest[] =
         "# md5 size label\n"
@@ -286,11 +270,11 @@ static void test_subdir_manifest_zip_asset_materializes(void)
     check_int("zip.scan.index_count", (int)cache.index.count, 41);
     check_true("zip.scan.original_virtual",
                strstr(cache.original_path, "graphics-pack.zip::") != NULL);
-    check_true("zip.scan.resolved_cache",
-               strstr(cache.resolved_path, "CSBGRAPH-") != NULL &&
-               strstr(cache.resolved_path, "::") == NULL);
+    check_true("zip.scan.resolved_virtual",
+               strstr(cache.resolved_path, "graphics-pack.zip::") != NULL);
     check_true("zip.scan.payload",
-               file_matches(cache.resolved_path, fixture, sizeof(fixture)));
+               cache.file_size == sizeof(fixture) &&
+               memcmp(cache.file_buffer, fixture, sizeof(fixture)) == 0);
     check_true("zip.scan.label",
                strcmp(cache.matched_label,
                       "synthetic-c040-header-zip") == 0);
@@ -319,7 +303,7 @@ int main(void)
 {
     test_manifest_absent_still_skips();
     test_manifest_row_enables_hash_scan();
-    test_subdir_manifest_zip_asset_materializes();
+    test_subdir_manifest_zip_asset_reads_in_memory();
 
     printf("csbgraphics real-scan manifest tests: %d assertions, %d failures\n",
            g_assertions, g_failures);

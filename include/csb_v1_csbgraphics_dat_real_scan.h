@@ -15,7 +15,7 @@
  *   - csb_v1_csbgraphics_dat_real_scan owns the discovery
  *     + ownership contract: where the file lives, which MD5s
  *     we accept, how user-staged hash manifests are consumed,
- *     how virtual container paths get materialized, and how the
+ *     how virtual container paths are read in memory, and how the
  *     file buffer + parsed index get cached.
  *
  * The built-in known MD5 list is intentionally empty by default.
@@ -156,8 +156,8 @@ void csb_v1_csbgraphics_dat_real_cache_free(
     CSB_V1_CSBGraphicsDatRealCache *cache);
 
 /* Scan `data_dir` recursively for a CSBgraphics.dat matching one
- * of the known MD5 hashes, optionally materializing virtual
- * container paths into the supplied `cache_dir`. On success,
+ * of the known MD5 hashes. `cache_dir` is retained for source compatibility
+ * but is ignored: virtual container paths are read in bounded RAM. On success,
  * allocates and owns the file buffer and populates the parsed
  * index.
  *

@@ -13,8 +13,8 @@
  *     are the only source of "what we accept"
  *   - asset_find_by_md5_list() does the recursive, virtual-aware
  *     discovery (it already handles ZIP/ISO entries)
- *   - asset_extract_virtual_path() materializes a virtual path
- *     into a real file when the caller provides a cache_dir
+ *   - asset_read_virtual_path_alloc() reads a virtual member into
+ *     bounded RAM without creating a game-data cache
  *   - the classifier in csb_v1_csbgraphics_dat_classify.c owns
  *     the format contract and remains the single source of truth
  *     for what the file's tables actually mean
@@ -452,66 +452,6 @@ static size_t build_resolved_hashes(const char *data_dir,
     return count;
 }
 
-/* Materialize a virtual container path into a concrete file under
- * `cache_dir` (or the FSP default user-data asset-cache/csbwingraphics
- * subtree when no explicit cache_dir is given). Returns 1 on
- * success and writes the materialized path through `out_path`.
- */
-static int materialize_virtual(const char *virtual_path,
-                               const char *cache_dir,
-                               char *out_path,
-                               size_t out_path_size)
-{
-    char default_root[ASSET_PATH_MAX];
-    char csb_cache[ASSET_PATH_MAX];
-    char out_file[ASSET_PATH_MAX];
-    const char *use_dir;
-    size_t use_dir_len;
-
-    if (!virtual_path || !out_path || out_path_size == 0u) {
-        return 0;
-    }
-    if (cache_dir && cache_dir[0] != '\0') {
-        use_dir = cache_dir;
-    } else if (FSP_GetUserDataDir(default_root, sizeof(default_root)) &&
-               FSP_JoinPath(csb_cache, sizeof(csb_cache),
-                            default_root,
-                            "asset-cache/csbwingraphics")) {
-        if (!FSP_CreateDirectoryRecursive(csb_cache)) {
-            return 0;
-        }
-        use_dir = csb_cache;
-    } else {
-        return 0;
-    }
-    use_dir_len = strlen(use_dir);
-    if (use_dir_len == 0u ||
-        use_dir_len + 32u >= sizeof(out_file)) {
-        return 0;
-    }
-    /* Append a deterministic suffix derived from the virtual path so
-     * repeated scans don't collide. Same FNV-1a fold used by the
-     * HCSB.HTC scanner.
-     */
-    {
-        static const uint32_t FNV_OFFSET = 0x811c9dc5u;
-        static const uint32_t FNV_PRIME = 0x01000193u;
-        uint32_t hash = FNV_OFFSET;
-        const char *p;
-        for (p = virtual_path; *p; ++p) {
-            hash ^= (uint8_t)(*p);
-            hash *= FNV_PRIME;
-        }
-        snprintf(out_file, sizeof(out_file), "%s/%s-%08x.dat",
-                 use_dir, "CSBGRAPH", hash);
-    }
-
-    if (asset_extract_virtual_path(virtual_path, out_file)) {
-        return copy_string(out_path, out_path_size, out_file);
-    }
-    return 0;
-}
-
 /* ── Public scan + load ──────────────────────────────────────────── */
 
 int csb_v1_csbgraphics_dat_real_scan_and_load(
@@ -521,12 +461,8 @@ int csb_v1_csbgraphics_dat_real_scan_and_load(
     CSB_V1_CSBGraphicsDatRealCache *cache)
 {
     char resolved_data_dir[ASSET_PATH_MAX];
-    char resolved_cache_dir[ASSET_PATH_MAX];
     char match_path[ASSET_PATH_MAX];
     const char *search_root;
-    const char *materialize_root;
-    const char *read_path;
-    char materialized[ASSET_PATH_MAX];
     uint8_t *buf = NULL;
     size_t buf_size = 0u;
     int match_index = -1;
@@ -567,16 +503,9 @@ int csb_v1_csbgraphics_dat_real_scan_and_load(
     }
     md5_list[resolved_hash_count] = NULL;
 
-    /* Resolve cache_dir (only used to materialize virtual paths). */
-    if (cache_dir && cache_dir[0] != '\0') {
-        if (!copy_string(resolved_cache_dir, sizeof(resolved_cache_dir),
-                         cache_dir)) {
-            return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_ARGUMENT;
-        }
-        materialize_root = resolved_cache_dir;
-    } else {
-        materialize_root = NULL;
-    }
+    /* Kept for ABI compatibility with older callers.  Virtual members are
+     * now read from their original container into RAM, never materialized. */
+    (void)cache_dir;
 
     /* Hash-based recursive discovery. */
     if (!asset_find_by_md5_list(search_root, md5_list,
@@ -590,37 +519,27 @@ int csb_v1_csbgraphics_dat_real_scan_and_load(
     }
 
     if (is_virtual_path(match_path)) {
-        if (!materialize_virtual(match_path, materialize_root,
-                                 materialized, sizeof(materialized))) {
-            copy_string(cache->original_path,
-                        sizeof(cache->original_path), match_path);
-            copy_string(cache->matched_md5,
-                        sizeof(cache->matched_md5),
-                        resolved_hashes[match_index].md5);
-            copy_string(cache->matched_label,
-                        sizeof(cache->matched_label),
-                        resolved_hashes[match_index].label);
+        if (!asset_read_virtual_path_alloc(match_path, &buf, &buf_size)) {
             return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_READ;
         }
         copy_string(cache->original_path,
                     sizeof(cache->original_path), match_path);
         copy_string(cache->resolved_path,
-                    sizeof(cache->resolved_path), materialized);
+                    sizeof(cache->resolved_path), match_path);
     } else {
         copy_string(cache->original_path,
                     sizeof(cache->original_path), match_path);
         copy_string(cache->resolved_path,
                     sizeof(cache->resolved_path), match_path);
+        if (!read_whole_file(match_path, &buf, &buf_size)) {
+            return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_READ;
+        }
     }
     copy_string(cache->matched_md5, sizeof(cache->matched_md5),
                 resolved_hashes[match_index].md5);
     copy_string(cache->matched_label, sizeof(cache->matched_label),
                 resolved_hashes[match_index].label);
 
-    read_path = cache->resolved_path;
-    if (!read_whole_file(read_path, &buf, &buf_size)) {
-        return CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_READ;
-    }
     if (resolved_hashes[match_index].size_bytes != 0u &&
         buf_size != resolved_hashes[match_index].size_bytes) {
         free(buf);
