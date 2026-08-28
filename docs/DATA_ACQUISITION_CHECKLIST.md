@@ -245,9 +245,7 @@ coverage**, not registry correctness.
    the animation side (QuickTime vs Sega CD raw) and we should acquire
    at least one of the two.
 3. **DM2 DOS demo** — useful for regression baselines because the demo has
-   shorter level data and known-good Greatstone extractions exist. The
-   Macintosh demo is deliberately unsupported and must not be acquired as a
-   Firestaff runtime target.
+   shorter level data and known-good Greatstone extractions exist.
 
 ## Nexus — Dungeon Master Nexus (Sega Saturn)
 
