@@ -1,106 +1,105 @@
-# Nexus placeholder- och provenance-audit
+# Nexus placeholder and provenance audit
 
-Datum: 2026-08-08
+Date: 2026-08-08
 
-Detta är en källtroget inventering av vad som är retail-data, vad som är
-isolerad testdata och vad som fortfarande saknar autentisk Saturn-
-konsumentcapture. En parser som kan läsa bytes är inte i sig ett bevis för
-VDP1-/VDP2-placering, CLUT, HUD, viewport, ljud eller gameplay-semantik.
+This is a source-faithful inventory of retail data, isolated test data, and
+what still lacks an authentic Saturn consumer capture. A parser that can read
+bytes does not by itself prove VDP1/VDP2 placement, CLUT, HUD, viewport, sound,
+or gameplay semantics.
 
-## Verifierad retail-data
+## Verified retail data
 
 - `DM.BIN`, `TM.BIN`, `FACE.BIN`, `FONT256.S2D`, `ITEM.IBS`, `MENU.BPK`,
   `LEV00.DGN`–`LEV15.DGN`, `SLEV00.BIN`–`SLEV15.BIN`,
-  `SNDLEV##.SAL/.MAP` och `SDDRVS.TSK` läses från den operatorägda
-  Nexus-katalogen och hashkontrolleras innan de används i realdata-prober.
-- `ITEM.IBS` verifieras med 243 deklarationer, 223 regularbilder och 109
-  golvbilder (`nexus_v1_item_ibs`).
-- `DM.BIN` HUD-layouten verifieras som 80 poster och hitrect-tabellen som 40
-  poster. Detta är källaägd geometri, inte bevis för Saturns slutliga
-  komposition.
-- Alla 16 DGN-nivåer har en source-bound Structure3-face-kampanj med 18 478
-  no-draw-targets. Kampanjens ledger kräver fortfarande original-Saturn-
-  capture och tillåter ingen decoder eller renderer.
+  `SNDLEV##.SAL/.MAP` and `SDDRVS.TSK` are read from the operator-owned Nexus
+  directory and hash-checked before use in real-data probes.
+- `ITEM.IBS` is verified with 243 declarations, 223 regular images, and 109
+  floor images (`nexus_v1_item_ibs`).
+- The `DM.BIN` HUD layout is verified as 80 entries and the hitrect table as 40
+  entries. This is source-owned geometry, not proof of Saturn's final
+  composition.
+- All 16 DGN levels have a source-bound Structure3-face campaign with 18,478
+  no-draw targets. The campaign ledger still requires an original Saturn
+  capture and permits no decoder or renderer.
 
-## Isolerade syntetiska/testvägar
+## Isolated synthetic/test paths
 
-- BPX0/BPX3-kontrakten i `nexus_v1_bpx_bpk.c` används bara i explicit
-  probe-/testmål; CMake exkluderar filen från Nexus-produktionskällorna.
-- DGN-materialproben använder en lokal syntetisk pose. Den ligger inte längre
-  i `include/nexus_v1_game.h`; koordinaterna finns endast i
+- The BPX0/BPX3 contracts in `nexus_v1_bpx_bpk.c` are used only in explicit
+  probe/test targets; CMake excludes the file from Nexus production sources.
+- The DGN-material probe uses a local synthetic pose. It is no longer in
+  `include/nexus_v1_game.h`; the coordinates exist only in
   `tests/test_nexus_v1_dgn_material_raster.c`.
-- Fixture-dekodrar för S2D-text, ljus, PRS3-kontrakt och legacy-mekanik är
-  fortsatt uttryckliga testbanor. De får inte leverera M11-pixlar eller
-  Nexus-runtime-state.
+- Fixture decoders for S2D text, lighting, PRS3 contracts, and legacy mechanics
+  remain explicit test paths. They must not deliver M11 pixels or Nexus runtime
+  state.
 
-## Spärrade no-op-/fallbackgränser
+## Blocked no-op/fallback boundaries
 
-`NEXUS_V1_RF_NO_3D_ENGINE` och `NX_UNSUPPFEAT_3D_RASTERIZER` i
-standardprofilen betyder en Firestaff-admissionsgrind, inte att retail-Nexus
-är ett 2D-spel eller att DGN saknar 3D-geometri. Den autentiserade DGN-korpusen
-innehåller Structure1A/1F/2/3-geometri; Firestaff får först aktivera en
-3D-rasterväg när samma Saturn-capture binder transform, culling, VDP1-command,
-texture och CLUT till en konkret face. Fram till dess är standardprofilens
-no-3D-status den källtroget säkra vägen och får inte ersättas med en host-
-eller syntetisk renderer.
+`NEXUS_V1_RF_NO_3D_ENGINE` and `NX_UNSUPPFEAT_3D_RASTERIZER` in the standard
+profile mean a Firestaff admission gate, not that retail Nexus is
+a 2D game or that DGN lacks 3D geometry. The authenticated DGN corpus contains
+Structure1A/1F/2/3 geometry; Firestaff may activate a 3D raster path only when
+the same Saturn capture binds transform, culling, VDP1 command, texture, and
+CLUT to a concrete face. Until then, the standard profile's no-3D status is the
+source-faithful safe path and must not be replaced by a host or synthetic
+renderer.
 
-- `nexus_v1_drops.c` fabricerar ingen DM1-formad loot- eller guldtabell.
-- `nexus_v1_item_use.c` ändrar inte inventory eller champion-state; ITEM.IBS
-  bevisar deklarationer/ikoner/material men inte Saturns action-dispatch.
-- `nexus_v1_title_sequence.c` innehåller host-planeringstider, men M11:s
-  title-/warning-yta kräver autentisk capture. Timingmetadata får inte
-  presenteras som retail-animation.
-- `nexus_v1_sound.c` dekodar inte SAL till host-PCM. SLEV-dispatch,
-  MAP-event, SAL-format, SDDRVS-handoff och playback kräver en gemensam
-  Saturn/SCSP/68K-exekveringscapture.
-- Den senaste autentiska SCSP-korridoren verifierar 16 SLEV-, 16 MAP-, 16
-  SAL-filer och SDDRVS mot retailhashar. Den innehåller fyra ljud-CPU-
-  mailboxskrivningar med råvärdet `0x02` och fem main-CPU-poster
-  (`0x0200:3`, `0x0002:2`). PC `0x3224` är byte-exakt bunden till SDDRVS
-  offset `0x2220` och dess command-byte→driver-state/SCSP-registerhandler.
-  Eventselector, MAP-rad, SAL-sample, codec och playback är fortfarande
-  `unproven`/`blocked`; övriga observerade PCs tilldelas ingen semantik.
-- DGN Structure3, ITEM/VDP1-texturer, CLUT, HUD/viewport-komposition och
-  startup/menu-presentering förblir no-draw eller capture-gated.
+- `nexus_v1_drops.c` fabricates no DM1-shaped loot or gold table.
+- `nexus_v1_item_use.c` does not modify inventory or champion state; ITEM.IBS
+  proves declarations/icons/materials, not Saturn action dispatch.
+- `nexus_v1_title_sequence.c` contains host scheduling times, but M11's
+  title/warning surface requires authentic capture. Timing metadata must not
+  be presented as retail animation.
+- `nexus_v1_sound.c` does not decode SAL to host PCM. SLEV dispatch, MAP event,
+  SAL format, SDDRVS handoff, and playback require a common Saturn/SCSP/68K
+  execution capture.
+- The latest authentic SCSP corridor verifies 16 SLEV, 16 MAP, and 16 SAL files
+  plus SDDRVS against retail hashes. It contains four sound-CPU mailbox writes
+  with raw value `0x02` and five main-CPU entries (`0x0200:3`, `0x0002:2`). PC
+  `0x3224` is byte-exactly bound to SDDRVS offset `0x2220` and its
+  command-byte→driver-state/SCSP register handler. Event selector, MAP row,
+  SAL sample, codec, and playback remain `unproven`/`blocked`; no semantics are
+  assigned to other observed PCs.
+- DGN Structure3, ITEM/VDP1 textures, CLUT, HUD/viewport composition, and
+  startup/menu presentation remain no-draw or capture-gated.
 
-## Runtime-captureläge
+## Runtime capture status
 
-Den externa katalogen innehåller nu 38 validerade `runtime-vdp12.raw`-filer.
-Inventeringen räknar 12 reset/no-layer-, 14 RBG0-, 100 NBG1- och 14 övriga
-aktiva VDP2-frames. Den nya åttaframers europeiska fångsten
-`run-french-hold-starta-skip18000` har åtta aktiva VDP1-state frames och
-`NBG1` som enda aktiva VDP2-lager. Alla har fortfarande
-`asset_consumer_identity=unbound` och
+The external directory now contains 38 validated `runtime-vdp12.raw` files.
+The inventory counts 12 reset/no-layer, 14 RBG0, 100 NBG1, and 14 other active
+VDP2 frames. The new eight-frame European capture
+`run-french-hold-starta-skip18000` has eight active VDP1-state frames and
+`NBG1` as its only active VDP2 layer. All still have
+`asset_consumer_identity=unbound` and
 `startup_menu_hud_viewport_identity=unbound`.
 
-Den nya fångsten ger en starkare europeisk runtime-observation, men inte en
-assetbindning: VDP1:s type-2 source-span `0x63e00..0x6bf80` (33 280 bytes)
-matchar varken verifierade MNS-ytor, DGN Structure2-ytor eller retailfilens
-råbytesdomän. VDP2 visar bitmapläge NBG1 med `CHCTLA=0x1211`, men ingen exakt
-TITLE/MENU/STABG/DGN-palette-match. Den är därför användbar som negativ
-source-join-evidens, inte som tillståndsbevis för uppstart, meny, HUD eller
-viewport.
+The new capture provides a stronger European runtime observation, but not an
+asset binding: VDP1's type-2 source span `0x63e00..0x6bf80` (33,280 bytes)
+matches neither verified MNS surfaces, DGN Structure2 surfaces, nor the retail
+file's raw-byte domain. VDP2 shows NBG1 bitmap mode with `CHCTLA=0x1211`, but
+no exact TITLE/MENU/STABG/DGN palette match. It is therefore useful as negative
+source-join evidence, not as state proof for startup, menu, HUD, or viewport.
 
-De autentiska aktiva VDP1-witnesses bevisar Saturn-hårdvarustate och
-command-to-VRAM-korridorer, men deras source-span har ännu ingen exakt
-bindning till retail-MNS, DGN, ITEM, MENU, TITLE eller CLUT. Reset-capture
-bevisar inte startup eller meny.
+The authentic active VDP1 witnesses prove Saturn hardware state and
+command-to-VRAM corridors, but their source span has no exact binding yet to
+retail MNS, DGN, ITEM, MENU, TITLE, or CLUT. A reset capture does not prove
+startup or menu.
 
-Capture-inventoryn visar dessutom `manifest_binding=missing` för äldre
-artefakter utan råhash. En launcherproducerad fil får bara stå som
-`verified` när manifestets `raw_sha256` och `raw_bytes` matchar exakt. Ett
-manifest med ofullständig eller felaktig råhash blir `mismatch` och kan inte
-användas som presentationsevidence.
+The capture inventory also shows `manifest_binding=missing` for older artifacts
+without a raw hash. A launcher-produced file may be listed as `verified` only
+when the manifest's `raw_sha256` and `raw_bytes` match exactly. A manifest with
+an incomplete or incorrect raw hash becomes `mismatch` and cannot be used as
+presentation evidence.
 
-`writer-code.trace` och `vdp1-writes.trace` är dessutom separata, externa
-diagnostikartefakter. De får inte kopplas till en `runtime-vdp12.raw` från en
-annan körning bara för att PC, VRAM-adress eller byteprefix råkar sammanfalla.
-Det aktuella writer-kvittot (`PC=0x06013098`, `VRAM=0x47c00`) har därför
-fortsatt `runtime_code_source_identity=unbound`; samma-körningsidentitet,
-relokerad/dekomprimerad kodägare och retail-asset måste först visas i ett
-gemensamt capturepaket.
+`writer-code.trace` and `vdp1-writes.trace` are also separate external
+diagnostic artifacts. They must not be connected to a `runtime-vdp12.raw` from
+another run merely because PC, VRAM address, or byte prefix happen to match.
+The current writer receipt (`PC=0x06013098`, `VRAM=0x47c00`) therefore still
+has `runtime_code_source_identity=unbound`; same-run identity, relocated/
+decompressed code ownership, and the retail asset must first be shown in a
+common capture package.
 
-## Verifieringskommandon
+## Verification commands
 
 ```sh
 FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus \
@@ -112,6 +111,6 @@ python3 scripts/analyze_nexus_capture_inventory.py \
   /Volumes/Extern-disk/nexus-saturn-capture
 ```
 
-Så länge en required consumer-capture saknas är den källtroget korrekta
-åtgärden att behålla grinden stängd, inte att ersätta den med syntetiska
-pixlar, guessed timing, DM1-loot eller host-PCM.
+As long as a required consumer capture is missing, the source-faithful correct
+action is to keep the gate closed, not replace it with synthetic pixels,
+guessed timing, DM1 loot, or host PCM.

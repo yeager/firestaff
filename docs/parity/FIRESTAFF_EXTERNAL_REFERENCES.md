@@ -1,7 +1,7 @@
 # External Reference Sources for Firestaff Parity Work
 
 **Date:** 2026-05-24
-**Status:** EXPAND_ONGOING — mer referensmaterial läggs till vid behov
+**Status:** EXPAND_ONGOING — more reference material is added when needed
 
 ---
 
@@ -9,9 +9,9 @@
 
 | Source | URL | Best for |
 |--------|-----|----------|
-| Community docs | `dmweb.free.fr/community/documentation/` | **Primary reference** för all DM/CSB spelmekanik, grafikformat, creature-data, actions, attacks, dungeon-format |
+| Community docs | `dmweb.free.fr/community/documentation/` | **Primary reference** for all DM/CSB game mechanics, graphics formats, creature data, actions, attacks, and dungeon formats |
 | Greatstone atlas | `greatstone.free.fr/dm/g_dm.html` | Dungeon maps, graphics atlas, PC 3.4 specific data |
-| ReDMCSB source | `~/.openclaw/data/firestaff-redmcsb-source/` | **Primary source code** för DM1/CSB implementation |
+| ReDMCSB source | `~/.openclaw/data/firestaff-redmcsb-source/` | **Primary source code** for DM1/CSB implementation |
 | skproject (DM2) | `github.com/gbsphenx/skproject` | **DM2/Skullkeep** source reference |
 | CSBWin source | `github.com/BeipDev/CSBWin` | CSB implementation reference, creature/resurrect routing |
 | CSB source | `github.com/zelurker/CSB` | CSB source under `src/` (secondary) |
@@ -88,7 +88,7 @@ This is the single richest authoritative reference for DM/CSB mechanics. ALL pag
 
 ## C. Source Code References
 
-### C1. ReDMCSB (PRIMÄR för DM1/CSB V1)
+### C1. ReDMCSB (PRIMARY for DM1/CSB V1)
 
 **Archive:** `ReDMCSB_WIP20210206.7z`
 **Local (N2):** `~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/`
@@ -108,7 +108,7 @@ This is the single richest authoritative reference for DM/CSB mechanics. ALL pag
 
 **Use for:** Primary source-locking of ALL DM1 V1 implementation decisions. ReDMCSB is the authoritative source for Firestaff DM1 V1 parity per MEMORY.md.
 
-### C2. skproject (för DM2/Skullkeep)
+### C2. skproject (for DM2/Skullkeep)
 
 **GitHub:** `https://github.com/gbsphenx/skproject`
 **Locked HEAD:** `585ef61aea1e9b33261cfd8a9712cadbb40604b9`
@@ -119,13 +119,13 @@ This is the single richest authoritative reference for DM/CSB mechanics. ALL pag
 
 **Use for:** DM2/Skullkeep specific source reference after Phase 0 provenance gate passes.
 
-### C3. CSBWin (för CSB-referens)
+### C3. CSBWin (for CSB reference)
 
 **GitHub:** `https://github.com/BeipDev/CSBWin`
 **N2 mirror:** `~/.openclaw/data/firestaff-csbwin-source/CSBWin/`
-**Use for:** Secondary reference, särskilt champion resurrect/reincarnate/mouse routing. ReDMCSB is fortfarande primär för DM1 V1.
+**Use for:** Secondary reference, especially champion resurrect/reincarnate/mouse routing. ReDMCSB remains primary for DM1 V1.
 
-### C4. CSB source (sekundär CSB-reference)
+### C4. CSB source (secondary CSB reference)
 
 **GitHub:** `https://github.com/zelurker/CSB`
 **N2 mirror:** `~/.openclaw/data/firestaff-csb-source/CSB/`
@@ -136,7 +136,7 @@ This is the single richest authoritative reference for DM/CSB mechanics. ALL pag
 
 ## D. Original Game Data Files
 
-### D1. DM1 PC 3.4 (SHA-låst referens)
+### D1. DM1 PC 3.4 (SHA-locked reference)
 
 **Canonical N2 path:** `~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/`
 **Extracted data:** `~/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/`

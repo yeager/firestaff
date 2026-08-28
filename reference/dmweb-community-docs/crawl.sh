@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# dmweb.free.fr /community/documentation/ - hämtar alla sidor med curl.
-# Respektfullt mot free.fr: User-Agent identifiering + 1.2s fördröjning mellan requests.
-# Kör från denna katalog: ./crawl.sh
+# dmweb.free.fr /community/documentation/ - fetch all pages with curl.
+# Respect free.fr: identifying User-Agent + a 1.2-second delay between requests.
+# Run from this directory: ./crawl.sh
 
 set -euo pipefail
 
@@ -16,9 +16,9 @@ mkdir -p html
 
 echo "=== [$(date -u +%FT%TZ)] Crawl start ===" | tee -a SCRAPE_LOG.md
 
-# 1) Hämta sitemap om vi inte redan har den
+# 1) Fetch the sitemap if it is not already present
 if [ ! -s html/_sitemap.xml ]; then
-  echo "Hämtar sitemap..." | tee -a SCRAPE_LOG.md
+  echo "Fetching sitemap..." | tee -a SCRAPE_LOG.md
   curl -sL --compressed -A "$UA" "$SITEMAP" -o html/_sitemap.xml
 fi
 
@@ -34,14 +34,14 @@ with open('_urls.txt', 'w') as f:
 print(f'Hittade {len(doc)} URL:er under ${DOC_PREFIX}')
 PY
 
-# 3) Hämta varje sida
+# 3) Fetch every page
 i=0
 total=$(wc -l < _urls.txt | tr -d ' ')
 while IFS= read -r url; do
   i=$((i+1))
-  # bygg lokal filsökväg: html/community/documentation/<slug>.html
+  # Build local file path: html/community/documentation/<slug>.html
   path=${url#${ROOT}}
-  # Ta bort avslutande slash för att undvika problem
+  # Remove the trailing slash to avoid issues
   path=${path%/}
   local="html${path}.html"
   mkdir -p "$(dirname "$local")"
@@ -63,7 +63,7 @@ python3 build_index.py
 
 echo "=== [$(date -u +%FT%TZ)] Crawl klar ===" | tee -a SCRAPE_LOG.md
 echo "Resultat:"
-echo "  Sidor hämtade: $(find html/community -type f -name '*.html' | wc -l | tr -d ' ')"
+echo "  Pages fetched: $(find html/community -type f -name '*.html' | wc -l | tr -d ' ')"
 echo "  Total storlek: $(du -sh html/community | awk '{print $1}')"
 echo "  INDEX:    INDEX.md"
 echo "  JSON:     index.json"

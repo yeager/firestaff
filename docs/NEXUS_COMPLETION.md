@@ -1,4 +1,4 @@
-# Nexus: verifierad färdigställandegrad
+# Nexus: verified completion status
 
 ## Local Japanese retail-media verification — 2026-08-26
 

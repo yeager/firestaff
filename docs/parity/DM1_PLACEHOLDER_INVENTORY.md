@@ -115,7 +115,7 @@ into the game view. No placeholder pixels reach the framebuffer.
 ### DM1 Atari ST / Amiga
 
 **Not in this session's scope** per project directive
-(`.claude/instructions` — "vänta med atari och amiga"). Their real-
+(`.claude/instructions` — "defer Atari and Amiga"). Their real-
 data receipts are already ported; only capture-gated adoption
 remains.
 

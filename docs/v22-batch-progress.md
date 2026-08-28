@@ -285,7 +285,7 @@ were initially generated with `background: transparent` per
 retrying all 4 with `background: opaque` they succeeded on the first
 attempt. Verified via `sips -g hasAlpha` that **all 13 prior PBR
 variants (batches 1-3) also have `hasAlpha: no`** — the
-"transparent för creatures/items" guidance in the style prompt has
+"transparent for creatures/items" guidance in the style prompt has
 been silently ignored by the model this entire time. Style prompt
 needs an update: opaque dark backdrop is the actual default. Floor
 tiles are unaffected (already opaque).

@@ -1078,15 +1078,15 @@ identity lanes. A manifest alone is not a capture; a source decoder alone is
 not a presentation or gameplay proof. Until the corresponding artifact is
 admitted, production routes remain no-draw or playback-gated.
 
-## Strömmande VDP1-källbuffertskontroll
+## Streaming VDP1 source-buffer verification
 
-`scripts/analyze_nexus_vdp1_source_to_vram.py` läser en råfångst sekventiellt
-och kontrollerar hela framekuvertet till filslut. Det ger samma strikta
-transportbevis för den valda VDP1-kopian utan att en lång retailfångst hålls
-i minnet i sin helhet. Ett avklippt kuvert, felaktig bildruta eller data efter
-sista bildrutan avvisas. Kontrollen bevisar fortfarande bara källbuffert,
-writer-PC, VDP1-mål och Saturns byteordning. Den tilldelar inte pixelformat,
-palett, kommando- eller resurssemantik.
+`scripts/analyze_nexus_vdp1_source_to_vram.py` reads a raw capture sequentially
+and verifies the complete frame envelope through end of file. It provides the
+same strict transport proof for the selected VDP1 copy without retaining a long
+retail capture in memory in its entirety. A truncated envelope, incorrect frame
+number, or data after the final frame is rejected. The check still proves only
+the source buffer, writer PC, VDP1 destination, and Saturn byte order. It does
+not assign pixel-format, palette, command, or resource semantics.
 
 ## Source references
 

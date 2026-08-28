@@ -8,7 +8,7 @@
  *      the user's keyboard-mapping request:
  *        - Arrow keys (Left/Right) move the party sideways
  *          (STRAFE_LEFT / STRAFE_RIGHT), matching what the user's
- *          request says: "Pil höger/vänster ska strafe inte vända
+ *          request says: "Right/left arrow keys should strafe rather than turn
  *          som idag".
  *        - Home / End turn the party (TURN_LEFT / TURN_RIGHT).
  *        - Q / E mirror Home / End (TURN_LEFT / TURN_RIGHT).

@@ -2,7 +2,7 @@
 
 Status: PASS512_DM1_V1_MOVEMENT_CROSS_REFERENCE_AUDIT
 
-Scope: DM1 V1 movement/förflyttning only. This is evidence, not a runtime behavior change.
+Scope: DM1 V1 movement only. This is evidence, not a runtime behavior change.
 
 ## Primary ReDMCSB locks
 

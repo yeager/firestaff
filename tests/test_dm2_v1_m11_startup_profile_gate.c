@@ -5290,7 +5290,7 @@ int main(void) {
                     view.dm2State.party_x == 0 && view.dm2State.party_y == 0 &&
                     view.dm2State.party_dir == 0 && view.dm2State.tick_count == 0 &&
                     !profile->source_game_load_session_ready,
-                "M11 rejects the former partylösa turn route after private INIT_CHAMPIONS");
+                "M11 rejects the former partyless turn route after private INIT_CHAMPIONS");
     expect_true(profile_preselection_turn_owner &&
                     M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_RIGHT) ==
                         M11_GAME_INPUT_IGNORED &&
@@ -5310,7 +5310,7 @@ int main(void) {
                     view.dm2State.party_x == 0 && view.dm2State.party_y == 0 &&
                     view.dm2State.party_dir == 0 && view.dm2State.tick_count == 0 &&
                     !profile->source_game_load_session_ready,
-                "M11 rejects all former partylösa source events 1–6 after private INIT_CHAMPIONS");
+                "M11 rejects all former partyless source events 1–6 after private INIT_CHAMPIONS");
     expect_true(profile &&
                     dm2_v1_boot_prepared_new_game_mirror_roster(
                         profile, &prepared_mirror_roster) &&

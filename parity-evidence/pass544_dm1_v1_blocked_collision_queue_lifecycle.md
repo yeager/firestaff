@@ -18,6 +18,6 @@ Status: PASS544_DM1_V1_BLOCKED_COLLISION_QUEUE_LIFECYCLE_LOCKED
 - test_dm1_v1_movement_command_core_pc34_compat covers: front move dequeued after cooldown clears, wall collision blocks, trailing nonreserved turn is dropped, pre-existing reserved release and replayed pending stop survive, one blocked VBlank is requested, input wait remains armed, and no successful-step cooldown is assigned.
 
 ## Scope guard
-- DM1 V1 movement/förflyttning only. No original runtime capture, viewport/walls, damage RNG, or pixel parity claim.
+- DM1 V1 movement only. No original runtime capture, viewport/walls, damage RNG, or pixel parity claim.
 
 Manifest: parity-evidence/verification/pass544_dm1_v1_blocked_collision_queue_lifecycle/manifest.json

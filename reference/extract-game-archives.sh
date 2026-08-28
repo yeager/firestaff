@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Extraherar alla unika spelarkiv från ~/Downloads till ~/.firestaff/data/
+# Extracts all unique game archives from ~/Downloads into ~/.firestaff/data/
 # Skapar nya <version>-kataloger vid sidan av befintliga dm1/, csb/, etc.
 # Loggar allt till ~/.firestaff/data/.extract-log.md
 #
-# Befintliga kataloger som INTE får röras (användaren har dessa staged):
+# Existing directories that must NOT be touched (the user has staged these):
 #   dm1/            PC 3.4 English (kanonisk)
 #   dm1-multilingual/ PC 3.4 Multilingual
 #   csb/            PC 3.4 English
@@ -55,9 +55,9 @@ extract_sit() {
   local target="$2"
   mkdir -p "$target"
   log "  sit $(basename "$archive") -> ${target#$HOME/}"
-  # -D (no directory) krävs för StuffIt-formatet, annars "Couldn't open archive"
+  # -D (no directory) is required for StuffIt, otherwise "Couldn't open archive"
   unar -f -D -o "$target" "$archive" >/dev/null 2>&1 || \
-    log "    WARN: unar misslyckades, försöker bsdtar"
+    log "    WARN: unar failed, trying bsdtar"
 }
 
 # Initiera logg
@@ -65,8 +65,8 @@ cat > "$LOG" <<EOF
 # Game-data extraction log
 
 **Startad:** $TS
-**Källa:** $DLD
-**Mål:** $DST
+**Source:** $DLD
+**Destination:** $DST
 **Verktyg:** 7z $(7z | head -2 | tail -1), unar $(unar --version 2>&1 | head -1), unrar, unzip
 
 EOF
@@ -93,7 +93,7 @@ extract_7z "$DLD/Dungeon Master for Apple IIGS version 2.1 English.7z" "$DM1_DST
 # PC 3.4 English 3.5" + 5.25"
 extract_7z "$DLD/Dungeon Master for PC version 3.4 English 3.5inch.7z" "$DM1_DST/pc-3.4-en-3.5in"
 extract_7z "$DLD/Dungeon Master for PC version 3.4 English 5.25inch.7z" "$DM1_DST/pc-3.4-en-5.25in"
-# PC 3.4 Multilingual 3.5" (befintlig dm1-multilingual har redan detta; extraherar ändå som referens)
+# PC 3.4 Multilingual 3.5" (the existing dm1-multilingual already has this; extract it as reference anyway)
 extract_7z "$DLD/Dungeon Master for PC version 3.4 English, French, German 3.5inch.7z" "$DM1_DST/pc-3.4-multi-3.5in"
 # PC-98 2.0 JP A/B
 extract_7z "$DLD/Dungeon Master for PC-9801 version 2.0 Japanese A.7z" "$DM1_DST/pc98-2.0-jp-a"
@@ -105,7 +105,7 @@ extract_7z "$DLD/Dungeon Master (Japan) (En,Ja).7z" "$DM1_DST/japan-en-ja"
 extract_7z "$DLD/Dungeon Master (Japan) (En,Ja) (Rev 1).7z" "$DM1_DST/japan-en-ja-rev1"
 # FM-Towns OpTiMaL
 extract_rar "$DLD/Dungeon.Master.ISO.FM-Towns-OpTiMaL.rar" "$DM1_DST/fm-towns-optimal"
-# Game,* collections (små, troligen DMS-format)
+# Game,* collections (small, probably DMS format)
 extract_7z "$DLD/Game,Dungeon_Master,Amiga,Software.7z" "$DM1_DST/legacy-amiga-dms"
 extract_7z "$DLD/Game,Dungeon_Master,Apple_IIGS,Software.7z" "$DM1_DST/legacy-apple-iigs"
 extract_7z "$DLD/Game,Dungeon_Master,Atari_ST,Software.7z" "$DM1_DST/legacy-atari-st"
@@ -127,7 +127,7 @@ extract_zip "$DLD/Dungeon-Master_DOS_FR.zip" "$DM1_DST/dmfiles-dos-fr"
 extract_zip "$DLD/Dungeon-Master_FM-Towns_JA-EN.zip" "$DM1_DST/dmfiles-fm-towns-ja-en"
 extract_zip "$DLD/Dungeon-Master_PC-98_EN.zip" "$DM1_DST/dmfiles-pc98-en"
 extract_zip "$DLD/Dungeon-Master_Sharp-X68000_EN.zip" "$DM1_DST/dmfiles-x68000-en"
-# CSB Expansion Set 1 (DM1-filer ingår ibland)
+# CSB Expansion Set 1 (sometimes includes DM1 files)
 extract_zip "$DLD/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip" "$DM1_DST/csxb-expansion1-amiga-en"
 extract_zip "$DLD/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip" "$DM1_DST/csxb-expansion1-fm-towns-ja-en"
 extract_zip "$DLD/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_Sharp-X68000_EN.zip" "$DM1_DST/csxb-expansion1-x68000-en"
@@ -197,7 +197,7 @@ echo "=== Slutstatus ==="
 echo "Totalt antal extraherade underkataloger:"
 find "$DST" -mindepth 2 -maxdepth 2 -type d | wc -l
 echo ""
-echo "Total storlek på ~/.firestaff/data/:"
+echo "Total size of ~/.firestaff/data/:"
 du -sh "$DST"
 echo ""
 echo "Logg: $LOG"

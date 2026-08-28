@@ -1,37 +1,37 @@
-# Nexus – audit av äldre påståenden
+# Nexus – audit of older claims
 
-Detta är en dokumentationsinventering, inte en ny runtime-specifikation. Den
-aktuella statusen finns i
+This is a documentation inventory, not a new runtime specification. The
+current status is in
 [`NEXUS_STRICT_FIDELITY_INVENTORY.md`](NEXUS_STRICT_FIDELITY_INVENTORY.md).
-Äldre dokument får inte användas som bevis för att en Nexus-route är
-implementerad eller källbunden.
+Older documents must not be used as proof that a Nexus route is implemented or
+source-bound.
 
-## Påståenden som är spärrade
+## Claims that are blocked
 
-| Dokumentfamilj | Äldre påstående | Korrekt status från retailkorpusen |
+| Document family | Older claim | Correct status from the retail corpus |
 |---|---|---|
-| `nexus_content.md`, `nexus_overview.md` | DM1-härledd roster, stats och combat är verifierad Nexus-runtime | PLRD har 20 riktiga records; namn-, stats- och actionkonsumenter är inte bundna |
-| `nexus_champions.md`, `nexus_creatures.md` | Hårdkodad roster, creature-stats och portraitindex är spelkällan | Hårdkodade tabeller är fixture-/diagnostic-only; PLRD/FACE är source receipts |
-| `nexus_data.md`, `nexus_graphics.md` | DGN/MNS-geometri och texturer kan ritas av host-rasterizern | Structure1B/2/3 och MNS är formatbevis; transform, palette, VDP1 och command-order saknas |
-| `nexus_intro.md`, `nexus_title.md` | Host-rasterizern visar den ursprungliga titeln | TITLE/LOGOBG/WARNING är avkodade ytor; VDP2-lager, timing och placering saknas |
-| `nexus_hud.md`, `nexus_inventory.md` | Generiska HUD-/inventorywidgets är Nexus presentation | STABG/ITEM/FACE-data är receipts; Saturns HUD- och actionkonsument är inte fångad |
-| `nexus_text.md`, `nexus_language.md` | FONT256/SJIS-konvertering räcker för synlig text | RLOWFIX TEXT4/TABL och FONT012 är bundna som bytes; glyph consumer/page/attribute/VDP2 saknas |
-| `nexus_audio_format.md`, `nexus_music.md`, `nexus_sound.md`, `nexus_sfx.md` | CD-DA/SAL/MAP kan spelas genom hostantaganden eller att nivåpar automatiskt väljer spår | CDDA-spår 2–9 och SAL/MAP är metadata; nivå→CDDA, SLEV/SDDRVS event→selector och playback är capture-gated |
-| `nexus_input.md`, `nexus_sensors.md`, `nexus_squares.md` | DM1-lik input-, sensor- och square-semantik gäller Nexus | Endast bounded source records är upptagna; Saturn dispatch och state writes är obevisade |
-| `nexus_dungeon.md`, `nexus_content.md`, `nexus_math.md` | Nexus använder en 32×32-grid eller att DGN-geometri är helt oparsad | Retail DGN har 64×64 Structure1B-celler; Structure1B/2/3 intake finns, medan transform/material/VDP1-consumer fortfarande är capture-gated |
-| `nexus_menus.md`, `nexus_graphics.md` | Animerad Saturn-titel, options/in-game-menu eller hostens polygonväg är retail parity | Host state/input och bounded geometry finns som receipts; title/menu composition, VDP1/VDP2 ownership and menu sequence remain unbound |
-| `nexus_phase2_data_formats_H2321.md`, `nexus_test_coverage.md` | Historiska test-/stubmatriser beskriver dagens produktion | Äldre plan-/coverage-dokument överstyr inte aktuell CMake-exkludering och no-draw-gates |
+| `nexus_content.md`, `nexus_overview.md` | DM1-derived roster, stats, and combat are verified Nexus runtime | PLRD has 20 real records; name, stats, and action consumers are unbound |
+| `nexus_champions.md`, `nexus_creatures.md` | Hard-coded roster, creature stats, and portrait indexes are the game source | Hard-coded tables are fixture-/diagnostic-only; PLRD/FACE are source receipts |
+| `nexus_data.md`, `nexus_graphics.md` | DGN/MNS geometry and textures can be drawn by the host rasterizer | Structure1B/2/3 and MNS are format proof; transform, palette, VDP1, and command order are missing |
+| `nexus_intro.md`, `nexus_title.md` | The host rasterizer shows the original title | TITLE/LOGOBG/WARNING are decoded surfaces; VDP2 layers, timing, and placement are missing |
+| `nexus_hud.md`, `nexus_inventory.md` | Generic HUD-/inventory widgets are Nexus presentation | STABG/ITEM/FACE data are receipts; Saturn's HUD and action consumer are not captured |
+| `nexus_text.md`, `nexus_language.md` | FONT256/SJIS conversion is sufficient for visible text | RLOWFIX TEXT4/TABL and FONT012 are byte-bound; glyph consumer/page/attribute/VDP2 are missing |
+| `nexus_audio_format.md`, `nexus_music.md`, `nexus_sound.md`, `nexus_sfx.md` | CD-DA/SAL/MAP can be played through host assumptions, or level pairs automatically choose tracks | CDDA tracks 2–9 and SAL/MAP are metadata; level→CDDA, SLEV/SDDRVS event→selector, and playback are capture-gated |
+| `nexus_input.md`, `nexus_sensors.md`, `nexus_squares.md` | DM1-like input, sensor, and square semantics apply to Nexus | Only bounded source records are admitted; Saturn dispatch and state writes are unproven |
+| `nexus_dungeon.md`, `nexus_content.md`, `nexus_math.md` | Nexus uses a 32×32 grid, or DGN geometry is entirely unparsed | Retail DGN has 64×64 Structure1B cells; Structure1B/2/3 intake exists, while transform/material/VDP1 consumer remains capture-gated |
+| `nexus_menus.md`, `nexus_graphics.md` | Animated Saturn title, options/in-game menu, or the host polygon route is retail parity | Host state/input and bounded geometry exist as receipts; title/menu composition, VDP1/VDP2 ownership, and menu sequence remain unbound |
+| `nexus_phase2_data_formats_H2321.md`, `nexus_test_coverage.md` | Historical test/stub matrices describe current production | Older plan/coverage documents do not override current CMake exclusion and no-draw gates |
 
-## Produktionsregeln
+## Production rule
 
-Ingen text, palette, portrait, HUD-widget, item, mesh, viewport-pixel eller
-ljudhändelse får lämna diagnostic-/receipt-lagret bara för att ett äldre
-dokument kallar den “implemented”. Promotion kräver source-owned byteidentitet
-samt autentiserad Saturn/Mednafen-capture av konsument, destination och timing.
-Saknad capture betyder blank/no-draw eller no-op, inte syntetisk ersättning.
+No text, palette, portrait, HUD widget, item, mesh, viewport pixel, or sound
+event may leave the diagnostic/receipt layer merely because an older document
+calls it “implemented”. Promotion requires source-owned byte identity and an
+authenticated Saturn/Mednafen capture of consumer, destination, and timing.
+A missing capture means blank/no-draw or no-op, not a synthetic replacement.
 
-DMWeb och Greatstone används för byte- och formatregler. De bevisar inte i sig
-VDP1/VDP2-komposition eller runtime-semantik.
+DMWeb and Greatstone are used for byte and format rules. They do not by
+themselves prove VDP1/VDP2 composition or runtime semantics.
 
-Se även `TODO.md`: `NEXUS-SATURN-PRESENTATION-HANDOFF`,
-`NEXUS-MENU-SEQUENCE-CAPTURE` och `NEXUS-HUD-SATURN-DISPATCH-CAPTURE`.
+See also `TODO.md`: `NEXUS-SATURN-PRESENTATION-HANDOFF`,
+`NEXUS-MENU-SEQUENCE-CAPTURE` and `NEXUS-HUD-SATURN-DISPATCH-CAPTURE`.

@@ -281,7 +281,7 @@ def write_report(manifest: dict[str, Any]) -> None:
         "",
         "Status: {}".format(manifest["status"]),
         "",
-        "Scope: DM1 V1 movement/förflyttning only. This is evidence, not a runtime behavior change.",
+        "Scope: DM1 V1 movement only. This is evidence, not a runtime behavior change.",
         "",
         "## Primary ReDMCSB locks",
         "",

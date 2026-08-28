@@ -209,22 +209,22 @@ Every candidate that survived the scan is one of:
   :222` refers to the original game's own C201 empty-hand icon as
   its "placeholder" glyph (real game data).
 
-### V2-journal, minimap och verktygstips
+### V2 journal, minimap, and tooltip
 
-De båda V2-journalerna innehöll separata textarkiv och sparfiler. De båda
-minimapvarianterna byggde utforskade 32×32-rutnät, egna partimarkörer och
-genomskinliga pixelöverlägg. Verktygstipset lade dessutom ett eget 4×5-typsnitt
-och en tidsstyrd bakgrund ovanpå bilden. Ingen av dessa datauppsättningar eller
-ritvägar finns i PC34-materialet.
+The two V2 journals contained separate text archives and save files. The two
+minimap variants built explored 32×32 grids, their own party markers, and
+transparent pixel overlays. The tooltip also placed its own 4×5 font and a
+time-controlled background over the image. None of these data sets or drawing
+paths exists in the PC34 material.
 
-ReDMCSB för direkt den aktuella dungeonbilden från `GAMELOOP.C` till
-`F0128_DUNGEONVIEW_Draw_CPSF`, vidare till `F0097_DUNGEONVIEW_DrawViewport`.
-Textmeddelanden går genom `F0047_TEXT_MESSAGEAREA_PrintMessage`. DMWebs
-beskrivning av grafikpost 562 dokumenterar i stället originalets textmasker
-och rektangeln för namnet på det hållna föremålet. Greatstones PC34-register
-är ett `GRAPHICS.DAT`-mapfile och har ingen separat post för journal, automap
-eller tooltip. API:erna är därför kompatibilitetsytor utan sparning, kartcache,
-typsnitt, timer eller pixelritning.
+ReDMCSB feeds the current dungeon image directly from `GAMELOOP.C` to
+`F0128_DUNGEONVIEW_Draw_CPSF`, then to `F0097_DUNGEONVIEW_DrawViewport`. Text
+messages pass through `F0047_TEXT_MESSAGEAREA_PrintMessage`. DMWeb's
+description of graphics entry 562 instead documents the original text masks
+and the rectangle for the held item's name. Greatstone's PC34 register is a
+`GRAPHICS.DAT` mapfile and has no separate entry for a journal, automap, or
+tooltip. The APIs are therefore compatibility surfaces without saving, map
+cache, font, timer, or pixel drawing.
 
 ### 2. DM1 V2.2 — modern-presentation lane (`include/dm1_v22_*`)
 

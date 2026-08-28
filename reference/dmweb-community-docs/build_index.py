@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Genererar INDEX.md + index.json för den crawlade community/documentation/-sektionen.
+"""Generate INDEX.md + index.json for the crawled community/documentation/ section.
 
-Körs automatiskt av crawl.sh, eller fristående: python3 build_index.py
+Runs automatically from crawl.sh, or independently: python3 build_index.py
 """
 import json
 import re
@@ -26,7 +26,7 @@ PRETTY = {
 
 
 class MetaExtractor(HTMLParser):
-    """Drar ut <title>, <meta description/keywords>, <h1>, lang, canonical."""
+    """Extract <title>, <meta description/keywords>, <h1>, lang, and canonical."""
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
@@ -97,7 +97,7 @@ def human_size(n: int) -> str:
 
 
 def slug_from_path(html_file: Path) -> str:
-    """Mappar lokal filsökväg till dmweb-URL-slug.
+    """Map a local file path to a dmweb URL slug.
 
     html/community/documentation.html                          -> /community/documentation
     html/community/documentation/foo.html                      -> /community/documentation/foo
@@ -118,7 +118,7 @@ def slug_from_path(html_file: Path) -> str:
 
 def main():
     if not HTML_DIR.exists() and not ROOT_HTML.exists():
-        print(f"Saknar både {HTML_DIR} och {ROOT_HTML} - kör crawl.sh först", file=sys.stderr)
+        print(f"Neither {HTML_DIR} nor {ROOT_HTML} exists - run crawl.sh first", file=sys.stderr)
         sys.exit(1)
 
     urls = []
@@ -181,15 +181,15 @@ def main():
     md = []
     md.append("# dmweb.free.fr — `/community/documentation/` Index")
     md.append("")
-    md.append("**Källa:** http://dmweb.free.fr/community/documentation/  ")
-    md.append(f"**Genererad:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}  ")
-    md.append(f"**Antal sidor:** {len(entries)}  ")
+    md.append("**Source:** http://dmweb.free.fr/community/documentation/")
+    md.append(f"**Generated:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}")
+    md.append(f"**Page count:** {len(entries)}")
     md.append(f"**Total storlek:** {human_size(sum(e['size_bytes'] for e in entries))}")
     md.append("")
-    md.append("Alla sidor är speglade lokalt under `html/community/documentation/`")
-    md.append("(rot-sidan ligger som `html/community/documentation.html`). Detta är en")
-    md.append("forsknings-/referenskopia för Firestaff-projektet")
-    md.append("(källåterhållsam DM/CSB/DM2/Nexus/Theron-motor).")
+    md.append("All pages are mirrored locally under `html/community/documentation/`")
+    md.append("(the root page is `html/community/documentation.html`). This is a")
+    md.append("research/reference copy for the Firestaff project")
+    md.append("(a source-conservative DM/CSB/DM2/Nexus/Theron engine).")
     md.append("")
     md.append("---")
     md.append("")
@@ -207,20 +207,20 @@ def main():
             md.append(f"### [{e['title'] or e['slug']}]({e['local_path']})")
             md.append("")
             md.append(f"- **URL:** <{e['url']}>")
-            md.append(f"- **Sökväg:** `{e['slug']}`")
-            md.append(f"- **Lokal fil:** `{e['local_path']}`")
-            md.append(f"- **Storlek:** {human_size(e['size_bytes'])}")
-            md.append(f"- **Språk:** `{e['lang']}`")
+            md.append(f"- **Path:** `{e['slug']}`")
+            md.append(f"- **Local file:** `{e['local_path']}`")
+            md.append(f"- **Size:** {human_size(e['size_bytes'])}")
+            md.append(f"- **Language:** `{e['lang']}`")
             if e["description"]:
-                md.append(f"- **Beskrivning:** {' '.join(e['description'].split())}")
+                md.append(f"- **Description:** {' '.join(e['description'].split())}")
             if e["keywords"]:
-                md.append(f"- **Nyckelord:** {', '.join(e['keywords'])}")
+                md.append(f"- **Keywords:** {', '.join(e['keywords'])}")
             md.append("")
 
     (ROOT / "INDEX.md").write_text("\n".join(md))
 
-    print(f"Skrev {json_path} ({len(entries)} entries)")
-    print(f"Skrev {ROOT / 'INDEX.md'}")
+    print(f"Wrote {json_path} ({len(entries)} entries)")
+    print(f"Wrote {ROOT / 'INDEX.md'}")
 
 
 if __name__ == "__main__":

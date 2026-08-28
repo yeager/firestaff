@@ -1,52 +1,51 @@
-# DM Nexus: autentisk Saturn-capture
+# DM Nexus: authentic Saturn capture
 
-Detta är arbetsflödet för att skapa en källtrogen VDP1/VDP2-capture utan att
-lägga BIOS, disc-image eller dumpade runtime-bytes i repot.
+This is the workflow for creating a source-faithful VDP1/VDP2 capture without
+placing BIOS, disc images, or dumped runtime bytes in the repository.
 
-## Vad som kan skickas till Mednafen
+## What can be sent to Mednafen
 
-Ja, men inte hela Firestaff-instrumenteringen som den ser ut i dag. Den
-nuvarande kedjan är ett verifieringsverktyg för Nexus och innehåller
-Firestaff-specifika miljövariabler, källspårning och analysformat. Det är bra
-för att bevisa en assetkedja, men för stort och för specialiserat som en
-upstream-ändring.
+Yes, but not the entire Firestaff instrumentation as it exists today. The
+current chain is a Nexus verification tool and includes Firestaff-specific
+environment variables, source tracing, and analysis formats. It is useful for
+proving an asset chain, but too large and specialized for an upstream change.
 
-Den planerade Mednafen-PR:n ska därför vara en liten, fristående
-diagnostikförändring:
+The planned Mednafen PR should therefore be a small, standalone diagnostic
+change:
 
-- valfri rå VDP1/VDP2-frame-capture bakom en tydlig konfigurationsflagga,
-- valfri VDP2-register-, VRAM- och CRAM-snapshot efter frame-renderingen,
-- deterministiskt binärformat med versionssignatur och endian-definition,
-- ingen BIOS-, disc- eller Firestaff-data i Mednafen-källträdet,
-- inga spel- eller Nexus-specifika antaganden i emulatorkärnan.
+- optional raw VDP1/VDP2 frame capture behind an explicit configuration flag,
+- optional VDP2-register, VRAM, and CRAM snapshot after frame rendering,
+- deterministic binary format with version signature and endian definition,
+- no BIOS, disc, or Firestaff data in the Mednafen source tree,
+- no game- or Nexus-specific assumptions in the emulator core.
 
-Writer-PC, source-register, CD-läsning, SLEV/SAL och Firestaffs
-assetverifiering hör kvar i det separata capturelagret. De kan användas i
-PR-beskrivningen som reproduktionsbevis, men ska inte bli hårdkodad
-Nexus-logik i Mednafen.
+Writer PC, source registers, CD reading, SLEV/SAL, and Firestaff asset
+verification remain in the separate capture layer. They can be used in the PR
+description as reproduction evidence, but must not become hard-coded Nexus
+logic in Mednafen.
 
-Nuvarande status är alltså: den generiska snapshotdelen är extraherad som en
-ren extern patch och passerar `git apply --check`. På en ren extern checkout
-bygger dessutom `make -C src/ss -j2 vdp1.o vdp2.o` med patchen. Ett PR-underlag
-finns på extern disk i
+Current status: the generic snapshot portion is extracted as a clean external
+patch and passes `git apply --check`. On a clean external checkout,
+`make -C src/ss -j2 vdp1.o vdp2.o` also builds with the patch. PR material is
+on the external disk at
 `/Volumes/Extern-disk/mednafen-nexus-upstream-pr-v1-clean/PR_DESCRIPTION.md`.
-Den är fortfarande inte inskickad upstream; formatdiskussion och full
-Mednafen-byggning återstår före submission.
+It has not yet been submitted upstream; format discussion and a full Mednafen
+build remain before submission.
 
-## Förutsättningar
+## Prerequisites
 
-- En användarägd Saturn BIOS-fil på extern disk. Kontrollera SHA-256 före körning.
-- En användarägd Nexus CUE/CCD/TOC/M3U-container på extern disk. Kontrollera
-  SHA-256 före körning.
-- En lokal Nexus-datakatalog med `TM.BIN`, `FONT256.S2D` och övriga verifierade
-  källfiler.
-- En instrumenterad Mednafen 1.32.1 byggd på extern disk med patcharna i
+- A user-owned Saturn BIOS file on external disk. Verify SHA-256 before running.
+- A user-owned Nexus CUE/CCD/TOC/M3U container on external disk. Verify
+  SHA-256 before running.
+- A local Nexus data directory with `TM.BIN`, `FONT256.S2D`, and other verified
+  source files.
+- An instrumented Mednafen 1.32.1 build on external disk with the patches in
   `scripts/build_mednafen_nexus_saturn_capture.sh`.
 
-Capture-scriptet hashkontrollerar BIOS och disc innan Mednafen startas. Det
-skriver bara manifest, trace och rådump till den angivna externa katalogen.
+The capture script hash-checks BIOS and disc before Mednafen starts. It writes
+only the manifest, trace, and raw dump to the specified external directory.
 
-## Bygg Mednafen-captureverktyget
+## Build the Mednafen capture tool
 
 ```sh
 scripts/build_mednafen_nexus_saturn_capture.sh \
@@ -54,30 +53,30 @@ scripts/build_mednafen_nexus_saturn_capture.sh \
   --prefix /Volumes/Extern-disk/nexus-saturn-capture/mednafen-prefix
 ```
 
-Patchkedjan instrumenterar:
+The patch chain instruments:
 
-1. VDP2-write-adresser, värden och SH-2-PC.
-2. SH-2-register vid writer-PC:n.
-3. källord från relevanta registerpekare.
-4. frame-id från Mednafen-capture-hooken.
-5. SH-2:s `PR`-register på varje VDP2-writer-rad, vilket låter den separata
-   call-chain-kontrollen binda en observerad returadress till en retail `BSR`.
-6. en rå VDP2-snapshot direkt efter den faktiska CRAM-skrivningen.
-7. en frame-capture efter `VDP2REND_EndFrame()`, så att VDP2-register, VRAM
-   och CRAM beskriver den frame som Mednafen faktiskt renderade.
-8. VDP1-VRAM-skrivningar med en framegräns vid samma capture-hook som VDP2.
+1. VDP2 write addresses, values, and SH-2 PC.
+2. SH-2 registers at the writer PC.
+3. Source words from relevant register pointers.
+4. Frame ID from the Mednafen capture hook.
+5. The SH-2 `PR` register on every VDP2-writer row, enabling the separate
+   call-chain check to bind an observed return address to a retail `BSR`.
+6. A raw VDP2 snapshot immediately after the actual CRAM write.
+7. A frame capture after `VDP2REND_EndFrame()`, so VDP2 registers, VRAM, and
+   CRAM describe the frame Mednafen actually rendered.
+8. VDP1-VRAM writes with a frame boundary at the same capture hook as VDP2.
 
-När `FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REGS` begärs vägrar launchern dessutom
-en binär som saknar just den hooken (exit 78). Det förhindrar att en äldre
-producent ger en trace utan `pr=`-fält och felaktigt används som call-chain-bevis.
+When `FIRESTAFF_NEXUS_TRACE_VDP2_WRITER_REGS` is requested, the launcher also
+rejects a binary lacking that hook (exit 78). This prevents an older producer
+from emitting a trace without the `pr=` field and being incorrectly used as
+call-chain proof.
 
-Alla producerade tracefiler är diagnostiska bevis. De får inte användas för
-semantic admission utan att asset-identitet, ordningsföljd och samma snapshot
-är verifierade.
+All produced trace files are diagnostic evidence. They must not be used for
+semantic admission without verified asset identity, ordering, and same snapshot.
 
-### VDP1-trace med framegräns
+### Frame-bounded VDP1 trace
 
-Byggscriptets VDP1-kedja använder V2-formatet när framepatchen är installerad:
+The build script's VDP1 chain uses the V2 format when the frame patch is installed:
 
 ```text
 FIRESTAFF_NEXUS_VDP1_VRAM_WRITE_TRACE_V2
@@ -86,11 +85,10 @@ addr=0x63e00 size=2 value=0x.... pc0=0x........ pc1=0x........
 frame=300
 ```
 
-En markör skrivs vid samma vertikal-blanking-hook som rådumpens frame-id,
-innan VDP1-skrivningarna för den framen registreras. Skrivningar efter
-`frame=300`-markören tillhör därför den VDP1-bild som fångas som frame 300;
-detta är en transportgräns, inte en assetägare.
-Välj en frame med:
+A marker is written at the same vertical-blanking hook as the raw dump's frame
+ID, before VDP1 writes for that frame are recorded. Writes after the `frame=300`
+marker therefore belong to the VDP1 image captured as frame 300; this is a
+transport boundary, not an asset owner. Select a frame with:
 
 ```sh
 python3 scripts/analyze_nexus_vdp1_write_trace.py \
@@ -98,10 +96,10 @@ python3 scripts/analyze_nexus_vdp1_write_trace.py \
   --frame 300
 ```
 
-V1-traces utan frame-markörer stöds fortfarande, men kan inte väljas med
-`--frame`. Saknad eller duplicerad markör gör analysen ogiltig.
+V1 traces without frame markers remain supported but cannot be selected with
+`--frame`. A missing or duplicate marker invalidates the analysis.
 
-### Stabil startup-witness, 2026-08-11
+### Stable startup witness, 2026-08-11
 
 Den externa J-BIOS/English-capture-körningen
 `/Volumes/Extern-disk/nexus-saturn-capture/run-codex-stable-vdp1-window-se2woL/`
@@ -203,52 +201,52 @@ men den bevisar ännu inte menytext, HUD, viewport, PRS3-palettägare eller
 DGN-faceägare. Den härledda CUE:n får inte presenteras som en komplett
 retail-disc med ljudspår.
 
-### Startup-witness från frame 0, 2026-08-11
+### Startup witness from frame 0, 2026-08-11
 
-En separat körning från reset, med samma hashverifierade merged-disc och
-japanska BIOS, visar en verklig uppstartssekvens i transportlagret:
+A separate run from reset, with the same hash-verified merged disc and Japanese
+BIOS, shows a real startup sequence in the transport layer:
 
 `/Volumes/Extern-disk/nexus-saturn-capture/run-authentic-merged-startup-source-20260811b/`
 
-Vid frame 100 lämnar VDP2 resetläget och använder fyra character layers.
-Från frame 110 är `TVMD=0x8000`, `BGON=0x000f`, `CHCTLA=0x1010` och
-`CHCTLB=0x1022`. Samtidigt går VDP1 från idle till fem draw records och
-ändrar källpositioner över efterföljande frames. Detta är verifierad
-startup-animation, men inte en semantiskt identifierad meny eller titelbild.
+At frame 100, VDP2 leaves reset state and uses four character layers. From
+frame 110, `TVMD=0x8000`, `BGON=0x000f`, `CHCTLA=0x1010`, and `CHCTLB=0x1022`.
+At the same time VDP1 changes from idle to five draw records and changes source
+positions across subsequent frames. This is verified startup animation, but
+not a semantically identified menu or title image.
 
-Den stabilare 80-frame-witnessen
+The more stable 80-frame witness
 `/Volumes/Extern-disk/nexus-saturn-capture/run-codex-stable-vdp1-window-se2woL/`
-har dessutom en komplett mode-5 direct-colour draw vid frame 0. Drawen läser
-VDP1-VRAM-spannet `0x63e00..0x6c000` (33 280 bytes). Spannet jämfördes mot
-alla lokala Nexus-filer och den engelska ISO:n för varje frame i samma
-capture, både som råa bytes och med 16-bitars Saturn-byteordning återställd.
-Ingen exakt träff hittades. Capturekedjan är alltså autentisk, men vi saknar
-fortfarande source-buffer-/CD-läsningsreceipten som krävs för att säga om
-spannet kommer från `TITLE.CG`, `TITLE.BIN`, `MENU.BPK` eller en annan
-runtime-dekomprimerad källa. `source_join=unbound` och
-`semantic_admission=blocked` är därför fortsatt korrekt.
+also has a complete mode-5 direct-colour draw at frame 0. The draw reads the
+VDP1-VRAM span `0x63e00..0x6c000` (33,280 bytes). The span was compared with
+all local Nexus files and the English ISO for every frame in the same capture,
+both as raw bytes and with 16-bit Saturn byte order restored. No exact match
+was found. The capture chain is therefore authentic, but the source-buffer/CD-
+read receipt needed to determine whether the span comes from `TITLE.CG`,
+`TITLE.BIN`, `MENU.BPK`, or another runtime-decompressed source is still
+missing. `source_join=unbound` and `semantic_admission=blocked` therefore
+remain correct.
 
-VDP1-write-spåret från samma körning är ogiltigt som komplett skrivbevis:
-validatorn avvisar rad 200242 (`addraddr=...`). Den raden räknas därför inte
-som en VDP1-write och körningen får inte höjas till semantic admission.
-Detta är ett capture-/instrumenteringsfel, inte ett påstående om Nexus'
-assetägare. Den råa frame-capturen är fortfarande användbar för den
-separata, capture-only-dekodern när framegräns och registerordning valideras.
+The VDP1 write trace from the same run is invalid as complete write proof: the
+validator rejects row 200242 (`addraddr=...`). That row therefore does not
+count as a VDP1 write, and the run must not be elevated to semantic admission.
+This is a capture/instrumentation error, not a claim about Nexus asset ownership.
+The raw frame capture remains useful for the separate capture-only decoder when
+the frame boundary and register ordering are validated.
 
-### Korrigerat inputfönster, 2026-08-11
+### Corrected input window, 2026-08-11
 
-En ny extern körning använde A+START (`0x30`) vid SMPC-input-räknare 3500 och
-fångade 100 frames från capture-frame 300:
+A new external run used A+START (`0x30`) at SMPC input counter 3500 and
+captured 100 frames from capture frame 300:
 
 `/Volumes/Extern-disk/nexus-saturn-capture/run-authentic-merged-menu-input-corrected-20260811a/`
 
-Transportvalidatorn godkänner hela körningen (`frames=100`, alla 100 frames
-med aktiv VDP1-observation). Samma körning visar en observerad VDP2-state-
-övergång: frame 0 har `BGON=0x000f` med NBG0–NBG3, frame 50 har `BGON=0x0103`
-med NBG0/NBG1, och frame 99 har `BGON=0x080c` med NBG2/NBG3. Det är ett starkt
-input-/transportwitness från samma retail-disc, men utan exakt VDP1/VDP2-
-source join är `asset_consumer_identity=unbound` och
-`host_composition_admission=blocked` fortfarande det korrekta resultatet.
+The transport validator accepts the entire run (`frames=100`, all 100 frames
+with active VDP1 observation). The same run shows an observed VDP2 state
+transition: frame 0 has `BGON=0x000f` with NBG0–NBG3, frame 50 has
+`BGON=0x0103` with NBG0/NBG1, and frame 99 has `BGON=0x080c` with NBG2/NBG3.
+This is strong input/transport witness evidence from the same retail disc, but
+without an exact VDP1/VDP2 source join, `asset_consumer_identity=unbound` and
+`host_composition_admission=blocked` remain the correct outcome.
 
 Frame 50 har därefter jämförts mot hela den hashverifierade Nexus-korpusen.
 VDP1 mode-5-källan (`source_offset=0x10a00`, 2048 bytes) har ingen exakt
@@ -476,38 +474,38 @@ En lyckad transportkontroll räcker inte för semantic admission. Om
 `semantic_admission=blocked`. Det hindrar en autentisk hårdvarudump från att
 bli en obestyrkt host-rendering.
 
-## Verifiering
+## Verification
 
-Verifiera i denna ordning:
+Verify in this order:
 
-1. validatorn godkänner rätt antal råframes och rätt capture-magic.
-2. writer-PC:n matchar den analyserade `TM.BIN`-kodregionen.
-3. registerspåret visar rätt source-register och source words.
-4. write-spåret och registerspåret har samma längd och ordning.
-5. varje write-värde matchar motsvarande big-endian source word i `TM.BIN`.
-6. post-write-snapshotens CRAM-värde matchar samma write vid rätt Saturn-
-   adressmappning.
+1. The validator accepts the correct number of raw frames and capture magic.
+2. The writer PC matches the analyzed `TM.BIN` code region.
+3. The register trace shows the correct source register and source words.
+4. The write and register traces have the same length and ordering.
+5. Each write value matches the corresponding big-endian source word in `TM.BIN`.
+6. The post-write snapshot's CRAM value matches the same write at the correct
+   Saturn address mapping.
 
-Först efter punkt 6 får en VDP2-konsument använda capture-slicen. Saknas någon
-punkt förblir `semantic_admission=blocked`; då är resultatet ett provenance-
-bevis, inte en autentisk meny-, HUD- eller viewport-rendering.
+Only after step 6 may a VDP2 consumer use the capture slice. If any step is
+missing, `semantic_admission=blocked` remains; the result is provenance proof,
+not authentic menu, HUD, or viewport rendering.
 
-## Verifierad SH-2-transform i Firestaff
+## Verified SH-2 transform in Firestaff
 
-Den observerade innerloopen är nu reproducerad som den fristående funktionen
-`nexus_v1_saturn_expand_tile_8x48`. Den följer den externa Mednafen-capturen:
+The observed inner loop is now reproduced as the standalone function
+`nexus_v1_saturn_expand_tile_8x48`. It follows the external Mednafen capture:
 
-- `0x060132e0` använder indata-steg `0x80` och utdata-steg `0x1c0`.
-- `0x060135f8` väljer åtta rader och startar koefficienterna från runtime-
-  literalpoolen vid `0x0601364c`/`0x06013650`.
-- `0x060136c4` väljer tabellparet från byte 4, läser nibble/pixel-data från
-  `+16 + pixel*4 + (row>>1)`, maskerar med `0xf000` och matar MACL-resultatet
-  genom `>>8` och `exts.w`.
+- `0x060132e0` uses input stride `0x80` and output stride `0x1c0`.
+- `0x060135f8` selects eight rows and starts its coefficients from the runtime
+  literal pool at `0x0601364c`/`0x06013650`.
+- `0x060136c4` selects the table pair from byte 4, reads nibble/pixel data from
+  `+16 + pixel*4 + (row>>1)`, masks with `0xf000`, and feeds the MACL result
+  through `>>8` and `exts.w`.
 
-Implementeringen finns i `src/nexus/nexus_v1_saturn_tile_transform.c` och
-testas av `nexus_v1_saturn_tile_transform`. Den är medvetet inte kopplad till
-en meny, HUD, viewport, CLUT eller VDP1-command-lista. Därför är detta ett
-verifierat transformsteg och inte ännu ett färdigt Mednafen-PR för Nexus.
+The implementation is in `src/nexus/nexus_v1_saturn_tile_transform.c` and is
+tested by `nexus_v1_saturn_tile_transform`. It is deliberately not connected to
+a menu, HUD, viewport, CLUT, or VDP1 command list. This is therefore a verified
+transform step, not another completed Mednafen PR for Nexus.
 
-BIOS, disc-images, råcaptures och temporära Mednafen-buildträd ska ligga på
-extern disk och får inte commitas.
+BIOS, disc images, raw captures, and temporary Mednafen build trees must remain
+on external disk and must not be committed.
