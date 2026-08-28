@@ -75,9 +75,8 @@ echo "PASS: native CSB Amiga CLI title input reaches verified runtime movement"
 # The normal M12 Start menu must retain the scanner-selected Amiga package as
 # well.  This is intentionally separate from --boot-probe: that flag enters
 # the direct-launch path and cannot prove Enter on the visible game row keeps
-# the A31 program/title owner.  A31M and A31E may take different title paths,
-# so only the selected original-media identity and successful native launch
-# are asserted here.  ReDMCSB COMPILE.H:199-213, 246-269.
+# the A31 program/title owner. Its receipt must report the admitted native
+# A31M title or A31E C03 boundary. ReDMCSB COMPILE.H:199-213, 246-269.
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy "$firestaff_cli" \
     --menu --game csb --data-dir "$data_dir" --platform amiga \
@@ -87,7 +86,8 @@ menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 }
 
 case "$menu_output" in
-    *"CSB READY: gameId=csb"*"dataDir=$data_dir"*"route=startup"*) ;;
+    *"CSB READY: gameId=csb"*"dataDir=$data_dir"*"variant=csb-amiga-a31m"*"route=startup"*"handoff=a31m-titl-dat"*"handoffHash="*) ;;
+    *"CSB READY: gameId=csb"*"dataDir=$data_dir"*"variant=csb-amiga-a31e"*"route=startup"*"handoff=a31e-appb-bjeload-c03"*"handoffHash="*) ;;
     *)
         echo "FAIL: CSB Amiga start-menu Enter did not retain native media" >&2
         printf '%s\n' "$menu_output" >&2

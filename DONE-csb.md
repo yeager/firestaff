@@ -20,6 +20,10 @@ Reviewed 2026-08-25. Completed work only.
   `TITLE.ANM` palette/frame handoff with a nonzero frame hash. An explicit
   F0435 user-save launch is kept distinct and proves the admitted C03
   executable handoff instead of claiming that it replayed the title.
+- Direct Amiga ZIP → ADF launches now identify A31M from `TITL.DAT` in the
+  exact same virtual ADF as the selected `GRAPHICS.DAT`, rather than requiring
+  an M12 cache leaf. The start menu publishes the source-owned `TITL.DAT`
+  boundary and hash, while unrelated outer-archive or host files remain closed.
 - Amiga A31E and A31M original ZIP → ADF media are read entirely in RAM.  The
   A31E direct C03 handoff verifies `APPB.FTL` and `BJELoad_R` through the same
   selected ADF as `GRAPHICS.DAT`, reaches `csb-entrance-0` with the original

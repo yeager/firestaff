@@ -126,6 +126,28 @@ static int csb_v1_boot_root_is_selected_amiga31_cache(const char *root)
     return strcmp(leaf, "csb-amiga31-multi") == 0;
 }
 
+/* A direct original ZIP -> ADF launch does not pass through M12's selected
+ * cache leaf. Its GRAPHICS.DAT path nevertheless carries the complete nested
+ * ADF identity (outer.zip::disk.adf::graphics.dat). Derive TITL.DAT only by
+ * replacing that final member name, keeping both receipts in the same ADF;
+ * never search the outer archive or a neighbouring host directory. */
+static int csb_v1_boot_selected_virtual_amiga31_title_path(
+    const char *graphics_path, char *out, size_t out_size)
+{
+    const char *component;
+    const char *next;
+
+    if (!graphics_path || !out || out_size == 0u) return 0;
+    component = graphics_path;
+    while ((next = strstr(component, "::")) != NULL) component = next + 2;
+    if (component == graphics_path || !component[0]) return 0;
+    if ((size_t)(component - graphics_path) + strlen("TITL.DAT") >= out_size)
+        return 0;
+    snprintf(out, out_size, "%.*s%s", (int)(component - graphics_path),
+             graphics_path, "TITL.DAT");
+    return 1;
+}
+
 static uint32_t csb_v1_boot_packaged_capture_hash_step_pc34(uint32_t hash,
                                                             uint32_t value)
 {
@@ -9027,11 +9049,15 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
          * contain both unrelated originals, so a nearby title must not
          * rewrite the verified PC34 pair. ReDMCSB APPA.C:51-53 enters
          * SWSH/ANIM FTL_TITL only for the selected A31M package. */
-        if (profile->variant_id == CSB_V1_VARIANT_PC34_EN &&
-            csb_v1_boot_root_is_selected_amiga31_cache(root)) {
+        if (profile->variant_id == CSB_V1_VARIANT_PC34_EN) {
             char amigaTitlePath[ASSET_PATH_MAX];
-            if (FSP_JoinPath(amigaTitlePath, sizeof(amigaTitlePath), root,
-                             "TITL.DAT") &&
+            int title_is_same_selected_package =
+                csb_v1_boot_root_is_selected_amiga31_cache(root)
+                    ? FSP_JoinPath(amigaTitlePath, sizeof(amigaTitlePath), root,
+                                   "TITL.DAT")
+                    : csb_v1_boot_selected_virtual_amiga31_title_path(
+                        graphics_path, amigaTitlePath, sizeof(amigaTitlePath));
+            if (title_is_same_selected_package &&
                 asset_file_matches_md5(amigaTitlePath,
                                        "5b590ea3a6f5eed513b5678b01468ee4")) {
                 profile->variant_id = CSB_V1_VARIANT_AMIGA31_MULTI;

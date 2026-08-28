@@ -23630,14 +23630,46 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             const char *variant = "source-verified";
             const char *handoff = "none";
             uint32_t handoff_hash = 0u;
+            const CSB_V1_BootProfile *selected_profile =
+                (const CSB_V1_BootProfile *)state->csbBootProfile;
+            int selected_variant = selected_profile
+                ? selected_profile->variant_id : requestedCsbVariant;
 
-            if (requestedCsbVariant == CSB_V1_VARIANT_ST20_EN ||
-                requestedCsbVariant == CSB_V1_VARIANT_ST21_EN) {
+            if (selected_variant == CSB_V1_VARIANT_ST20_EN ||
+                selected_variant == CSB_V1_VARIANT_ST21_EN) {
                 variant = "csb-st20-21-en";
                 handoff = "atari-st-animate-ftlcode";
-            } else if (requestedCsbVariant == CSB_V1_VARIANT_FMTOWNS_EN ||
-                       requestedCsbVariant == CSB_V1_VARIANT_FMTOWNS_JA) {
-                variant = requestedCsbVariant == CSB_V1_VARIANT_FMTOWNS_EN
+            } else if (selected_variant == CSB_V1_VARIANT_AMIGA31_EN ||
+                       selected_variant == CSB_V1_VARIANT_AMIGA31_MULTI) {
+                variant = selected_variant == CSB_V1_VARIANT_AMIGA31_EN
+                    ? "csb-amiga-a31e" : "csb-amiga-a31m";
+                if (selected_variant == CSB_V1_VARIANT_AMIGA31_EN) {
+                    if (!state->csbState.startup_entrance_active ||
+                        state->csbState.startup_title_active ||
+                        state->csbStartupExpectedPackageIdentity == 0u) {
+                        fprintf(stderr,
+                                "firestaff: CSB Amiga A31E C03 handoff rejected\n");
+                        return 0;
+                    }
+                    handoff = "a31e-appb-bjeload-c03";
+                    handoff_hash = state->csbStartupExpectedPackageIdentity;
+                } else {
+                    if (!state->csbState.startup_title_active ||
+                        !state->csbAmigaTitlBytes ||
+                        !state->csbAmigaTitlFrameBound) {
+                        fprintf(stderr,
+                                "firestaff: CSB Amiga A31M TITL.DAT handoff rejected\n");
+                        return 0;
+                    }
+                    handoff = "a31m-titl-dat";
+                    handoff_hash = m11_dm1_runtime_capture_fnv1a(
+                        state->csbAmigaTitlBytes,
+                        state->csbAmigaTitlByteCount);
+                    if (handoff_hash == 0u) return 0;
+                }
+            } else if (selected_variant == CSB_V1_VARIANT_FMTOWNS_EN ||
+                       selected_variant == CSB_V1_VARIANT_FMTOWNS_JA) {
+                variant = selected_variant == CSB_V1_VARIANT_FMTOWNS_EN
                     ? "csb-fmtowns-en" : "csb-fmtowns-ja";
                 if (spec->savePath && spec->savePath[0] != '\0') {
                     /* F0435 restores directly into C03.  It deliberately

@@ -57,10 +57,20 @@ menu_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 }
 if ! grep -Fq 'CSB READY: gameId=csb' <<<"$menu_output" ||
    ! grep -Fq "dataDir=$archive" <<<"$menu_output" ||
-   ! grep -Fq 'route=startup' <<<"$menu_output"; then
+   ! grep -Fq 'route=startup' <<<"$menu_output" ||
+   ! grep -Eq 'handoffHash=[0-9a-f]{8}' <<<"$menu_output"; then
     printf '%s\n' "$menu_output" >&2
     printf '%s\n' 'FAIL: authentic CSB Amiga ADF start-menu launch did not retain its archive source' >&2
     exit 1
 fi
+case "$menu_output" in
+    *"variant=csb-amiga-a31m"*"handoff=a31m-titl-dat"*) ;;
+    *"variant=csb-amiga-a31e"*"handoff=a31e-appb-bjeload-c03"*) ;;
+    *)
+        printf '%s\n' "$menu_output" >&2
+        printf '%s\n' 'FAIL: authentic CSB Amiga ADF launch did not publish its A31 handoff' >&2
+        exit 1
+        ;;
+esac
 
 printf '%s\n' 'PASS: authentic CSB Amiga ZIP -> ADF route reaches source entrance, menu launch, and native movement'
