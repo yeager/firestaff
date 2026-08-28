@@ -49,6 +49,14 @@ probe --game dm1 --platform atari-st --data-dir "$archive" \
     --boot-probe --boot-probe-frames 2 --duration 0
 probe --menu --game dm1 --platform atari-st --data-dir "$archive" \
     --script enter --boot-probe --boot-probe-frames 2 --duration 0
+menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
+    --platform atari-st --data-dir "$archive" --script enter --duration 1000 2>&1)" || {
+    printf '%s\n' "$menu_output" >&2; exit 1;
+}
+grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" &&
+grep -Fq "dataDir=$archive" <<<"$menu_output" &&
+grep -Fq 'handoff=atari-st-dmcsb1' <<<"$menu_output"
 
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm1 --platform atari-st --data-dir "$archive" \

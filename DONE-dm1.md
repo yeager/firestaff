@@ -2,6 +2,10 @@
 
 Reviewed 2026-08-25. Completed work only.
 
+- The real Amiga ZIP → ZIP → ADF and Atari ZIP → ZIP → STX start-menu paths
+  now publish their admitted source decoder (`IMG2` and `DMCSB1` respectively)
+  only after the original graphics and dungeon pair have both bound.
+
 - PC DOS 3.4 authentic archive startup reaches native DM1 runtime with a
   hash-verified real-media regression.
 - M12 resolves the authenticated PC 3.4 data owner and production retains

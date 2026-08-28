@@ -24166,6 +24166,23 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 &receipt.graphics_bind_receipt)) {
             return 0;
         }
+        /* Report the decoder that admitted the selected original package.
+         * This is emitted after both DUNGEON.DAT and GRAPHICS.DAT are bound,
+         * so a start-menu launch cannot be mistaken for a generic successful
+         * process start. FM Towns has its stronger TMENU/EDM receipt below. */
+        if (!spec->dm1Fmtowns) {
+            const char *handoff = state->assetLoader.atariStDm1
+                ? "atari-st-dmcsb1"
+                : (state->assetLoader.legacyDm1 &&
+                   state->assetLoader.legacyBigEndian)
+                    ? "amiga-img2"
+                    : "pc-img3";
+            fprintf(stderr,
+                    "DM1 READY: gameId=dm1 dataDir=%s handoff=%s graphicsPath=%s\n",
+                    spec->dataDir ? spec->dataDir : "(null)", handoff,
+                    state->assetLoader.graphicsDatPath[0]
+                        ? state->assetLoader.graphicsDatPath : "(none)");
+        }
         /* FM Towns owns its startup in EDM/JDM and the legacy IMG2
          * GRAPHICS.DAT.  Admit the native startup receipt only from the
          * selected materialized directory; this prevents a sibling language
