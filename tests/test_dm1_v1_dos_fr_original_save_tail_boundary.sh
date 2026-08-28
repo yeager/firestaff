@@ -38,4 +38,21 @@ if [ "$primary_tail" != "$backup_tail" ]; then
     exit 1
 fi
 
+python3 - "$primary" "$tail_offset" <<'PY'
+import sys
+
+path, offset = sys.argv[1], int(sys.argv[2])
+tail = open(path, "rb").read()[offset:]
+u16 = lambda at: int.from_bytes(tail[at:at + 2], "little")
+sizes = (4, 6, 4, 8, 16, 4, 4, 4, 4, 8, 4, 0, 0, 0, 8, 4)
+map_count = tail[4]
+if map_count != 14:
+    raise SystemExit("FAIL: French DM1 tail map count drift")
+columns = sum(((u16(44 + index * 16 + 8) >> 6) & 31) + 1
+              for index in range(map_count))
+if columns != 409:
+    raise SystemExit("FAIL: French DM1 tail column count drift")
+print("PASS: French DM1 tail header has 14 maps and 409 columns")
+PY
+
 echo "PASS: French DM1 original save tail boundary=$tail_offset bytes=$tail_size sha256=$primary_tail"
