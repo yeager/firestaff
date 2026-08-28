@@ -117,7 +117,8 @@ fi
 
 # boot-probe intentionally runs the direct launch path, so it cannot prove the
 # regular launcher route. Exercise that route separately: --menu retains the
-# selected CSB row, and Enter must request the native F31 handoff.
+# selected CSB row, and Enter must admit the source-owned F31 TITLE.ANM
+# boundary. SWITCHTW/MINI.DAT is a later, separately tested input route.
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy "$firestaff_cli" \
     --menu --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
@@ -127,7 +128,13 @@ menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 }
 
 case "$menu_output" in
-    *"CSB READY: gameId=csb"*"dataDir="*"$expected_media"*) ;;
+    *"CSB READY: gameId=csb"*"dataDir="*"$expected_media"*"variant=csb-fmtowns-$language"*"route=startup"*"handoff=f31-title-anm"*"handoffHash="*)
+        if ! printf '%s\n' "$menu_output" | grep -Eq 'handoffHash=[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'; then
+            echo "FAIL: CSB FM Towns start-menu Enter did not publish TITLE.ANM source receipt" >&2
+            printf '%s\n' "$menu_output" >&2
+            exit 1
+        fi
+        ;;
     *)
         echo "FAIL: CSB FM Towns start-menu Enter did not request native launch" >&2
         printf '%s\n' "$menu_output" >&2
@@ -144,7 +151,13 @@ if [ -n "$user_save" ]; then
         exit 1
     }
     case "$menu_resume_output" in
-        *"CSB READY: gameId=csb"*"route=f0435-resume"*) ;;
+        *"CSB READY: gameId=csb"*"variant=csb-fmtowns-$language"*"route=f0435-resume"*"handoff=f31-f0435-resume"*"handoffHash="*)
+            if ! printf '%s\n' "$menu_resume_output" | grep -Eq 'handoffHash=[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'; then
+                echo "FAIL: start-menu resume did not publish its F0435 source receipt" >&2
+                printf '%s\n' "$menu_resume_output" >&2
+                exit 1
+            fi
+            ;;
         *)
             echo "FAIL: start-menu launch dropped the explicit F31 save" >&2
             printf '%s\n' "$menu_resume_output" >&2

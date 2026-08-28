@@ -16,6 +16,10 @@ Reviewed 2026-08-25. Completed work only.
   media or cache selection, because no original DOS/PC release exists.
 - The Atari M12/M11 handoff regression now fails safely and precisely when a
   selected package cannot be opened, instead of cascading or crashing.
+- The FM Towns F31 start-menu receipt now identifies its source-owned
+  `TITLE.ANM` palette/frame handoff with a nonzero frame hash. An explicit
+  F0435 user-save launch is kept distinct and proves the admitted C03
+  executable handoff instead of claiming that it replayed the title.
 - Amiga A31E and A31M original ZIP → ADF media are read entirely in RAM.  The
   A31E direct C03 handoff verifies `APPB.FTL` and `BJELoad_R` through the same
   selected ADF as `GRAPHICS.DAT`, reaches `csb-entrance-0` with the original

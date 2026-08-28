@@ -23626,14 +23626,61 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
          * which a later consumer could recover this fact; omitting it made a
          * successful native Atari launch indistinguishable from an unbound
          * generic CSB start to the CLI proof. */
-        fprintf(stderr, "CSB READY: gameId=csb dataDir=%s variant=%s route=%s\n",
+        {
+            const char *variant = "source-verified";
+            const char *handoff = "none";
+            uint32_t handoff_hash = 0u;
+
+            if (requestedCsbVariant == CSB_V1_VARIANT_ST20_EN ||
+                requestedCsbVariant == CSB_V1_VARIANT_ST21_EN) {
+                variant = "csb-st20-21-en";
+                handoff = "atari-st-animate-ftlcode";
+            } else if (requestedCsbVariant == CSB_V1_VARIANT_FMTOWNS_EN ||
+                       requestedCsbVariant == CSB_V1_VARIANT_FMTOWNS_JA) {
+                variant = requestedCsbVariant == CSB_V1_VARIANT_FMTOWNS_EN
+                    ? "csb-fmtowns-en" : "csb-fmtowns-ja";
+                if (spec->savePath && spec->savePath[0] != '\0') {
+                    /* F0435 restores directly into C03.  It deliberately
+                     * bypasses the title program, so prove its own admitted
+                     * executable handoff rather than requiring TITLE.ANM. */
+                    if (!state->csbFmtownsGameHandoffReceipt.valid ||
+                        !state->csbFmtownsGameHandoffReceipt.executable_verified ||
+                        !state->csbFmtownsGameHandoffReceipt.game_program_is_c03_game ||
+                        state->csbFmtownsGameHandoffReceipt.executable_fnv1a == 0u) {
+                        fprintf(stderr,
+                                "firestaff: CSB FM Towns F0435 handoff rejected\n");
+                        return 0;
+                    }
+                    handoff = "f31-f0435-resume";
+                    handoff_hash =
+                        state->csbFmtownsGameHandoffReceipt.executable_fnv1a;
+                } else {
+                    /* The M12 Enter path stops after the original F31 title
+                     * owner is admitted; it has not yet clicked SWITCHTW or
+                     * loaded MINI.DAT.  Report that exact source boundary,
+                     * not a generic CSB startup or a completed game handoff. */
+                    if (!state->csbFmtownsTitleBound ||
+                        !state->csbFmtownsTitleFrameReceipt.valid ||
+                        !state->csbFmtownsTitleFrameReceipt.palette_applied ||
+                        state->csbFmtownsTitleFrameReceipt.pixel_fnv1a == 0u) {
+                        fprintf(stderr,
+                                "firestaff: CSB FM Towns TITLE.ANM handoff rejected\n");
+                        return 0;
+                    }
+                    handoff = "f31-title-anm";
+                    handoff_hash =
+                        state->csbFmtownsTitleFrameReceipt.pixel_fnv1a;
+                }
+            }
+            fprintf(stderr,
+                    "CSB READY: gameId=csb dataDir=%s variant=%s route=%s handoff=%s handoffHash=%08x\n",
                 spec->dataDir ? spec->dataDir : "(null)",
-                (requestedCsbVariant == CSB_V1_VARIANT_ST20_EN ||
-                 requestedCsbVariant == CSB_V1_VARIANT_ST21_EN)
-                    ? "csb-st20-21-en"
-                    : "source-verified",
+                variant,
                 (spec->savePath && spec->savePath[0] != '\0')
-                    ? "f0435-resume" : "startup");
+                    ? "f0435-resume" : "startup",
+                handoff,
+                (unsigned int)handoff_hash);
+        }
         return 1;
     }
     /* ── DM2 V1: bypass DM1 dungeon loader, use DM2 V1 runtime boot ──
