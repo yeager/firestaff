@@ -13,3 +13,7 @@ Reviewed 2026-08-25. Completed work only.
 - The authentic PC-DOS ZIP now starts through both CLI and the start menu.
   M12 retains its verified `data/GRAPHICS.DAT` and `data/DUNGEON.DAT` virtual
   paths and the native DM2 boot owner reads them only in RAM.
+- The authentic Amiga installer now binds its native big-endian, 16-colour
+  `INTERFACE_GENERAL/0` PalIRGB field 0 rather than PC field `0xfe`/PAL16.
+  The source-owned HUD, outdoor sky and ground produce an accepted M11 frame
+  with real assets and no fallback drawing; the ZIP remains memory-owned.

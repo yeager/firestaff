@@ -7466,6 +7466,19 @@ static int dm2_v1_boot_runtime_raw_gdat_hud_probe(
         { DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
           DM2_GDAT_ENTRY_TYPE_RAW6, 0x00 }
     };
+    static const struct TypedEntry k_amiga_interface_entries[] = {
+        { DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+          DM2_GDAT_ENTRY_TYPE_PAL_IRGB, 0x00 },
+        { DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+          DM2_GDAT_ENTRY_TYPE_RAW7, DM2_GDAT_INTERFACE_RAW_LAYOUT_TABLE },
+        { DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+          DM2_GDAT_ENTRY_TYPE_RAW7, DM2_GDAT_INTERFACE_RAW_ACTION_TABLE },
+        { DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+          DM2_GDAT_ENTRY_TYPE_RAW6, 0x00 }
+    };
+    const struct TypedEntry *interface_entries = k_interface_entries;
+    size_t interface_entry_count = sizeof(k_interface_entries) /
+        sizeof(k_interface_entries[0]);
     int portrait_index;
     int portrait_count = 0;
     int interface_count = 0;
@@ -7484,6 +7497,11 @@ static int dm2_v1_boot_runtime_raw_gdat_hud_probe(
         !out_portrait_byte_count || !out_core_hash || !out_core_byte_count ||
         !out_interface_count) {
         return 0;
+    }
+    if (profile->platform == DM2_PLATFORM_AMIGA_EN) {
+        interface_entries = k_amiga_interface_entries;
+        interface_entry_count = sizeof(k_amiga_interface_entries) /
+            sizeof(k_amiga_interface_entries[0]);
     }
 
     /* skproject/SKWIN/SkWinCore.cpp DRAW_CHAMPION_PICTURE lines
@@ -7505,14 +7523,13 @@ static int dm2_v1_boot_runtime_raw_gdat_hud_probe(
     }
     /* skproject/SKWIN INIT and QUERY_GDAT_ENTRY_DATA_PTR keep these as
      * typed GDAT records, not as INTERFACE_GENERAL image fields. */
-    for (int i = 0; i < (int)(sizeof(k_interface_entries) /
-                              sizeof(k_interface_entries[0])); ++i) {
+    for (size_t i = 0; i < interface_entry_count; ++i) {
         if (dm2_v1_boot_runtime_typed_raw_gdat_hash_add(
                 profile,
-                k_interface_entries[i].category,
-                k_interface_entries[i].index,
-                k_interface_entries[i].type,
-                k_interface_entries[i].field,
+                interface_entries[i].category,
+                interface_entries[i].index,
+                interface_entries[i].type,
+                interface_entries[i].field,
                 &core_hash,
                 &core_bytes)) {
             ++interface_count;
@@ -10418,6 +10435,19 @@ static int dm2_v1_boot_runtime_decoded_gdat_hud_probe(
         { DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
           DM2_GDAT_ENTRY_TYPE_RAW6, 0x00 }
     };
+    static const struct TypedEntry k_amiga_interface_entries[] = {
+        { DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+          DM2_GDAT_ENTRY_TYPE_PAL_IRGB, 0x00 },
+        { DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+          DM2_GDAT_ENTRY_TYPE_RAW7, DM2_GDAT_INTERFACE_RAW_LAYOUT_TABLE },
+        { DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+          DM2_GDAT_ENTRY_TYPE_RAW7, DM2_GDAT_INTERFACE_RAW_ACTION_TABLE },
+        { DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+          DM2_GDAT_ENTRY_TYPE_RAW6, 0x00 }
+    };
+    const struct TypedEntry *interface_entries = k_interface_entries;
+    size_t interface_entry_count = sizeof(k_interface_entries) /
+        sizeof(k_interface_entries[0]);
     int portrait_index;
     int portrait_count = 0;
     int interface_count = 0;
@@ -10437,6 +10467,11 @@ static int dm2_v1_boot_runtime_decoded_gdat_hud_probe(
         !out_core_pixel_count || !out_interface_count) {
         return 0;
     }
+    if (profile->platform == DM2_PLATFORM_AMIGA_EN) {
+        interface_entries = k_amiga_interface_entries;
+        interface_entry_count = sizeof(k_amiga_interface_entries) /
+            sizeof(k_amiga_interface_entries[0]);
+    }
 
     /* skproject/SKWIN DRAW_CHAMPION_PICTURE consumes decoded CHAMPIONS
      * GDAT images in the right HUD. Hash decoded pixels too, so a startup
@@ -10454,14 +10489,13 @@ static int dm2_v1_boot_runtime_decoded_gdat_hud_probe(
             ++portrait_count;
         }
     }
-    for (int i = 0; i < (int)(sizeof(k_interface_entries) /
-                              sizeof(k_interface_entries[0])); ++i) {
+    for (size_t i = 0; i < interface_entry_count; ++i) {
         if (dm2_v1_boot_runtime_typed_raw_gdat_hash_add(
                 profile,
-                k_interface_entries[i].category,
-                k_interface_entries[i].index,
-                k_interface_entries[i].type,
-                k_interface_entries[i].field,
+                interface_entries[i].category,
+                interface_entries[i].index,
+                interface_entries[i].type,
+                interface_entries[i].field,
                 &core_hash,
                 &core_pixels)) {
             ++interface_count;
@@ -11522,7 +11556,13 @@ int dm2_v1_boot_runtime_render_frame(
         out_receipt->runtime_render_real_asset_ready =
             (out_receipt->runtime_hud_capture_ready ||
              (profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
-              out_receipt->runtime_render_asset_floor_ceiling_count >= 2)) &&
+              out_receipt->runtime_render_asset_floor_ceiling_count >= 2) ||
+             /* Amiga's 16-colour interface has no PC dt07/2 action-table
+              * or PAL16 record.  Its native frame receipt instead binds the
+              * real field-0 PalIRGB palette, source HUD commands, and both
+              * outdoor planes atomically. */
+             (profile->platform == DM2_PLATFORM_AMIGA_EN &&
+              m11_frame.valid && m11_frame.m11_consume_frame)) &&
             out_receipt->runtime_render_no_core_fallbacks;
         out_receipt->runtime_m11_frame_receipt_consumed =
             m11_frame.valid && m11_frame.m11_consume_frame;
@@ -11682,6 +11722,9 @@ int dm2_v1_boot_runtime_render_frame(
         out_receipt->runtime_m11_frame_palette_hash =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.palette_hash : 0u;
+        out_receipt->runtime_m11_frame_interface_action_palette_required =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.interface_action_palette_required : 0;
         out_receipt->runtime_m11_frame_interface_action_palette_hash =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.interface_action_palette_hash : 0u;

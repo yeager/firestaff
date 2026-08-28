@@ -4361,10 +4361,16 @@ int dm2_v1_asset_load_interface_palette(
 
     if (!out_palette) return 0;
     memset(out_palette, 0, sizeof(*out_palette));
-    /* HME-242 GDAT v4 is a 16-colour FM Towns palette: dtPalIRGB field 0
-     * contains 16 BGRA-like rows, and no dtPalette16 companion exists.
-     * SKWIN's FM Towns branch uses these physical indices directly. */
-    if (loader && loader->gdat_version == DM2_FMTOWNS_GDAT_VERSION) {
+    /* HME-242 GDAT v4 is a 16-colour FM Towns palette.  The original
+     * big-endian Amiga GDAT has the same 16-row dtPalIRGB representation at
+     * INTERFACE_GENERAL/0/field 0: its field 0xfe query convention belongs
+     * to the PC 256-colour data and there is no dtPalette16 companion.  Both
+     * source formats use the physical palette indices directly. */
+    if (loader &&
+        (loader->gdat_version == DM2_FMTOWNS_GDAT_VERSION ||
+         (loader->big_endian &&
+          category == DM2_GDAT_CATEGORY_INTERFACE_GENERAL &&
+          index == 0 && field == DM2_GDAT_INTERFACE_PALETTE_FIELD))) {
         irgb = dm2_v1_asset_load_typed_sized(
             loader, category, index, DM2_GDAT_ENTRY_TYPE_PAL_IRGB, 0,
             &irgb_size);

@@ -892,6 +892,7 @@ typedef struct {
     int weather_material_plan_command_count;
     int weather_material_plan_consumed;
     uint32_t palette_hash;
+    int interface_action_palette_required;
     uint32_t interface_action_palette_hash;
     int interface_action_palette_consumed;
     /* INTERFACE_GENERAL dt07/0x0A Rect14 placement table carried into M11. */

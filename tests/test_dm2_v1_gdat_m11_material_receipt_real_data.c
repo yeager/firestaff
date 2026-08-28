@@ -148,6 +148,7 @@ int main(void)
     boot.runtime_m11_frame_hud_material_plan_command_count = hud.command_count;
     boot.runtime_m11_frame_hud_material_plan_consumed = 1;
     boot.runtime_m11_frame_palette_hash = scene.commands[0].palette_hash;
+    boot.runtime_m11_frame_interface_action_palette_required = 1;
     boot.runtime_m11_frame_interface_action_palette_hash = 1u;
     boot.runtime_m11_frame_interface_action_palette_consumed = 1;
     boot.runtime_render_asset_floor_ceiling_count = 2;
@@ -168,6 +169,7 @@ int main(void)
     frame.hud_material_plan_command_count = hud.command_count;
     frame.hud_material_plan_consumed = 1;
     frame.palette_hash = scene.commands[0].palette_hash;
+    frame.interface_action_palette_required = 1;
     frame.interface_action_palette_hash = 1u;
     frame.interface_action_palette_consumed = 1;
     if (!M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &frame)) {

@@ -12453,6 +12453,12 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             g_dm2_last_m11_frame.weather_material_plan_hash);
     g_dm2_last_m11_frame.palette_hash =
         g_dm2_frame_ownership.gdat_interface_palette_hash;
+    /* PC GDAT carries dt07/2 for its action-palette transform.  The native
+     * 16-colour Amiga and FM Towns variants instead draw with their selected
+     * physical palette entries; neither contains that PC-only table. */
+    g_dm2_last_m11_frame.interface_action_palette_required =
+        !(rt->boot && (rt->boot->platform == DM2_PLATFORM_AMIGA_EN ||
+                       rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA));
     g_dm2_last_m11_frame.interface_action_palette_hash =
         g_dm2_frame_ownership.gdat_interface_action_palette_hash;
     g_dm2_last_m11_frame.interface_action_palette_consumed =
@@ -12524,6 +12530,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
           g_dm2_last_m11_frame.weather_graphicsset_bound)) &&
         g_dm2_last_m11_frame.palette_hash != 0u &&
         (!g_dm2_frame_ownership.real_gdat_evidence_valid ||
+         !g_dm2_last_m11_frame.interface_action_palette_required ||
          (g_dm2_last_m11_frame.interface_action_palette_hash != 0u &&
           g_dm2_last_m11_frame.interface_action_palette_consumed) ||
          (rt->boot && rt->boot->platform == DM2_PLATFORM_FMTOWNS_JA &&

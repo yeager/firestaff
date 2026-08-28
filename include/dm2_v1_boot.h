@@ -958,6 +958,7 @@ typedef struct {
     uint32_t runtime_m11_frame_door_map_chip_material_plan_hash;
     int runtime_m11_frame_door_map_chip_material_plan_consumed;
     uint32_t runtime_m11_frame_palette_hash;
+    int runtime_m11_frame_interface_action_palette_required;
     uint32_t runtime_m11_frame_interface_action_palette_hash;
     int runtime_m11_frame_interface_action_palette_consumed;
     int runtime_m11_frame_interface_rect14_required;

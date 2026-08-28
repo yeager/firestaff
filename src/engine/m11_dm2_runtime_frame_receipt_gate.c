@@ -100,10 +100,9 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
          (boot_receipt->runtime_m11_frame_door_map_chip_material_plan_hash == 0u ||
           !boot_receipt->runtime_m11_frame_door_map_chip_material_plan_consumed)) ||
         boot_receipt->runtime_m11_frame_palette_hash == 0u ||
-        (boot_receipt->runtime_m11_frame_interface_action_palette_hash == 0u &&
-         boot_receipt->runtime_m11_frame_hud_material_plan_required) ||
-        (!boot_receipt->runtime_m11_frame_interface_action_palette_consumed &&
-         boot_receipt->runtime_m11_frame_hud_material_plan_required) ||
+        (boot_receipt->runtime_m11_frame_interface_action_palette_required &&
+         (boot_receipt->runtime_m11_frame_interface_action_palette_hash == 0u ||
+          !boot_receipt->runtime_m11_frame_interface_action_palette_consumed)) ||
         (boot_receipt->runtime_m11_frame_interface_rect14_required &&
          (!boot_receipt->runtime_m11_frame_interface_rect14_consumed ||
           boot_receipt->runtime_m11_frame_interface_rect14_table_hash == 0u)) ||
@@ -225,9 +224,12 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
               boot_receipt->runtime_m11_frame_door_map_chip_material_plan_hash)) &&
         runtime_receipt->palette_hash ==
             boot_receipt->runtime_m11_frame_palette_hash &&
-        runtime_receipt->interface_action_palette_hash ==
-            boot_receipt->runtime_m11_frame_interface_action_palette_hash &&
-        runtime_receipt->interface_action_palette_consumed &&
+        runtime_receipt->interface_action_palette_required ==
+            boot_receipt->runtime_m11_frame_interface_action_palette_required &&
+        (!runtime_receipt->interface_action_palette_required ||
+         (runtime_receipt->interface_action_palette_hash ==
+              boot_receipt->runtime_m11_frame_interface_action_palette_hash &&
+          runtime_receipt->interface_action_palette_consumed)) &&
         runtime_receipt->interface_rect14_required ==
             boot_receipt->runtime_m11_frame_interface_rect14_required &&
         (!runtime_receipt->interface_rect14_required ||

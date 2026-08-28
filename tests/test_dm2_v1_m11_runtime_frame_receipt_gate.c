@@ -70,6 +70,7 @@ static DM2_V1_BootRuntimeRenderReceipt make_boot_receipt(void)
     receipt.runtime_m11_frame_door_map_chip_material_plan_hash = 0x44474d43u;
     receipt.runtime_m11_frame_door_map_chip_material_plan_consumed = 1;
     receipt.runtime_m11_frame_palette_hash = 0x50414c31u;
+    receipt.runtime_m11_frame_interface_action_palette_required = 1;
     receipt.runtime_m11_frame_interface_action_palette_hash = 0x4143544eu;
     receipt.runtime_m11_frame_interface_action_palette_consumed = 1;
     receipt.runtime_m11_frame_interface_rect14_required = 1;
@@ -138,6 +139,7 @@ static DM2_V1_ViewportM11FrameReceipt make_runtime_receipt(void)
     receipt.door_map_chip_material_plan_hash = 0x44474d43u;
     receipt.door_map_chip_material_plan_consumed = 1;
     receipt.palette_hash = 0x50414c31u;
+    receipt.interface_action_palette_required = 1;
     receipt.interface_action_palette_hash = 0x4143544eu;
     receipt.interface_action_palette_consumed = 1;
     receipt.interface_rect14_required = 1;
