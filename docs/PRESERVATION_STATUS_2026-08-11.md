@@ -8,7 +8,7 @@ is not a claim of playability or pixel parity.
 |---|---|---|
 | DM1 | PC DOS 3.4 V1 startup, input, viewport, HUD, combat and saves; separate Atari ST and FM Towns format paths | More paired original-vs-Firestaff captures and reviewed V2 material |
 | CSB | Separate Amiga, Atari ST and FM Towns input and startup paths | X68000 is intentionally unsupported; remaining work covers DSA/save corpus and broader HUD/viewport parity on supported platforms |
-| DM2 | DOS/FM Towns routes plus large and small English Macintosh routes from authentic ZIPs in RAM; Mac media, movies, sound, MIDI, input and New Game are verified | Full V1/SKSAVE ownership, Mac GAME_LOAD/Resume, dynamic pointer/drag ownership and continuous original-data gameplay |
+| DM2 | DOS/FM Towns routes plus the English Macintosh retail route from an authentic ZIP in RAM; Mac retail media, movies, sound, MIDI, input and New Game are verified | Full V1/SKSAVE ownership, Mac GAME_LOAD/Resume, dynamic pointer/drag ownership and continuous original-data gameplay |
 | Nexus | Saturn DGN/DMDF, MNS, PRS3 and bounded SAL/MAP receipts | Visible material semantics, event/audio playback and a playable Saturn route |
 | Theron's Quest | US/JP Track 02 identity, sector reading, level framing and authenticated capture chains | Game-owned Track 02 handoff, SRM contents, palette/bitmap ownership and positive gameplay capture |
 

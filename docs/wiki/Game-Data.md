@@ -27,5 +27,5 @@ closed. A parsed file does not automatically mean a playable route. The
 [project status](https://github.com/yeager/firestaff/blob/main/docs/PROJECT_STATUS.md) records the current runtime boundary
 for each game.
 
-For the complete per-platform boundary, including the two English DM2 Mac
-versions, see [Platform status](https://github.com/yeager/firestaff/blob/main/docs/PLATFORM_STATUS.md).
+For the complete per-platform boundary, including the supported English DM2
+Mac retail version, see [Platform status](https://github.com/yeager/firestaff/blob/main/docs/PLATFORM_STATUS.md).
