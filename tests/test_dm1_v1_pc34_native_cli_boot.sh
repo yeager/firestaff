@@ -34,6 +34,20 @@ probe --game dm1 --data-dir "$archive" --boot-probe --boot-probe-frames 120 \
 probe --menu --game dm1 --data-dir "$archive" --script enter \
     --boot-probe --boot-probe-frames 120 --duration 0
 
+menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
+    --data-dir "$archive" --script enter --duration 1000 2>&1)" || {
+    printf '%s\n' "$menu_output" >&2
+    exit 1
+}
+if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" ||
+   ! grep -Fq "dataDir=$archive" <<<"$menu_output" ||
+   ! grep -Fq 'handoff=pc-img3' <<<"$menu_output"; then
+    printf '%s\n' "$menu_output" >&2
+    printf '%s\n' 'FAIL: authentic DM1 PC-34 start menu did not bind IMG3 source media' >&2
+    exit 1
+fi
+
 # The authentic PC-3.4 dungeon starts at (map=0,x=1,y=3,dir=2).  A native
 # `up` input advances to y=4; this proves the selected archive has reached
 # the actual M11 movement route rather than only a title/startup receipt.
