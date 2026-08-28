@@ -13,6 +13,10 @@ Reviewed 2026-08-25. Completed work only.
 - The authentic German Atari ST 1.2 and French Atari ST 1.3 packages each now
   require their direct start-menu `DMCSB1` handoff before their existing native
   movement assertions run.
+- The Amiga 2.0 preservation package now has its own real-media CTest. It
+  verifies the exact ZIP → original ZIP → ADF selection, the `IMG2` handoff,
+  and a post-menu native movement result rather than relying on the separate
+  HD package's coverage.
 
 - PC DOS 3.4 authentic archive startup reaches native DM1 runtime with a
   hash-verified real-media regression.
