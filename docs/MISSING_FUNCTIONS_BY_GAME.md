@@ -1,217 +1,224 @@
-# Saknade funktioner och verifieringar per spel
+# Missing Functions and Verification by Game
 
-Status: 2026-08-27. Detta är en sammanställning av kvarvarande luckor i
-Firestaff, inte en lista över varje historiskt TODO- eller symbolnamn.
+Status: 2026-08-27. This is a summary of Firestaff's remaining gaps, not a
+list of every historical TODO or symbol name.
 
-Varje punkt klassificeras så här:
+Each item is classified as follows:
 
-- **Saknad kod** – funktionen eller dess produktionsväg är inte implementerad.
-- **Saknad originaldata** – källformatet eller ett tillräckligt corpus saknas.
-- **Saknad verifiering** – vägen finns, men behöver autentisk runtime-, pixel-
-  eller capture-evidens innan den kan räknas som klar.
-- **Avsiktligt stängd** – en syntetisk eller osäker väg ska inte öppnas igen.
+- **Missing code** – the function or its production route is not implemented.
+- **Missing original data** – the source format or a sufficient corpus is
+  unavailable.
+- **Missing verification** – the route exists, but needs authentic runtime,
+  pixel, or capture evidence before it can be considered complete.
+- **Intentionally closed** – a synthetic or uncertain route must not be
+  reopened.
 
-Källan för detaljer är respektive spel-TODO: [DM1](../TODO-dm1.md),
-[DM2](../TODO-dm2.md), [CSB](../TODO-csb.md), [Nexus](../TODO-nexus.md) och
+The respective game TODO is the source for detail: [DM1](../TODO-dm1.md),
+[DM2](../TODO-dm2.md), [CSB](../TODO-csb.md), [Nexus](../TODO-nexus.md), and
 [Theron](../TODO-theron.md).
 
 ## DM1
 
-### Saknad originaldata eller evidens
+### Missing Original Data or Evidence
 
-- **Autentiskt C13-save:** inget lokalt PC34-save är verifierat med den
-  efterfrågade C13-händelsen. Befintliga saves ger C03/C04-data, men ersätter
-  inte ett C13-corpus.
-- **Original-vs-Firestaff-pixelpar:** bredare par saknas för viewport,
-  creature-chain, champion-HUD, paneler, launcher, effekter och Mac/app-
-  körning.
-- **Original capture av C13/HoC/top-row/action-rutter:** capture-skript och
-  source gates finns, men täckningen är inte komplett.
-- **FM Towns:** vissa TownsOS EGB-pixelsemantiker och mus/input-routing är
-  fortfarande capture-/BIOS-beroende. Detta gäller originalparitet, inte
-  Firestaffs native startväg: den äkta FM Towns-ZIP:en startar utan BIOS.
+- **Authentic C13 save:** no local PC34 save is verified to contain the
+  requested C13 event. Existing saves provide C03/C04 data, but do not replace
+  a C13 corpus.
+- **Original-versus-Firestaff pixel pairs:** broader pairs are missing for the
+  viewport, creature chain, champion HUD, panels, launcher, effects, and
+  macOS/app runs.
+- **Original capture of C13/HoC/top-row/action routes:** capture scripts and
+  source gates exist, but coverage is incomplete.
+- **FM Towns:** some TownsOS EGB pixel semantics and mouse/input routing still
+  depend on capture/BIOS evidence. This concerns original parity, not
+  Firestaff's native launch route: the authentic FM Towns ZIP starts without a
+  BIOS.
 
-### Saknad eller ofullständig funktionalitet
+### Missing or Incomplete Functionality
 
-- Bredare sensor-, removal- och DSA-interaktioner behöver fortfarande
-  source-owned originalsave/runtime-evidens.
-- Creature- och combat-kedjan har verifierade delar, men bredare grupp-layout,
-  creature-combat och fler tidslinjefall är inte fullständigt bevisade.
-- DM1 V2.2 saknar ett granskat, autentiskt materialpaket och komplett
-  source-owned modern presentation. Placeholder/procedural-art får inte
-  aktiveras som ersättning.
+- Broader sensor, removal, and DSA interactions still need source-owned
+  original-save/runtime evidence.
+- The creature and combat chain has verified parts, but broader group layout,
+  creature combat, and additional timeline cases are not fully proven.
+- DM1 V2.2 lacks a reviewed, authentic material package and complete
+  source-owned modern presentation. Placeholder/procedural art must not be
+  activated as a replacement.
 
-### Inte en kvarvarande produktionslucka
+### Not a Remaining Production Gap
 
-DM1 V1:s normala PC34 viewport-, HUD-, inventory- och actionvägar har
-source-gates och fail-closed-beteende. Texten “synthetic” i receipts,
-negative probes eller ReDMCSB:s egna `synthetic wall`-begrepp betyder inte i
-sig att produktionskoden ritar syntetiska DM1-pixlar.
+DM1 V1's normal PC34 viewport, HUD, inventory, and action routes have source
+gates and fail-closed behaviour. The word “synthetic” in receipts, negative
+probes, or ReDMCSB's own `synthetic wall` terminology does not by itself mean
+that production code draws synthetic DM1 pixels.
 
-**Native startmatris (verifierad 2026-08-27):** Firestaff läser den verkliga
-mediekopian direkt i minnet och når `dm1-runtime` med `levelLoaded=1` både
-från CLI och via startmenyn för DOS PC 3.4, fransk DOS (manuellt uppackad
-RAR2-media), Atari ST engelska och tyska arkiv, Amiga och FM Towns. Beviset
-är de sex fokuserade CTest-fallen `dm1_v1_*_cli_boot`; de kontrollerar den
-kanoniska tillgångens MD5 och använder aldrig en emulator eller BIOS vid
-runtime. Detta är startbevis, inte ett påstående om full original-pixel- eller
-spelsystemsparitet.
+**Native startup matrix (verified 2026-08-27):** Firestaff reads the real media
+copy directly in memory and reaches `dm1-runtime` with `levelLoaded=1` both
+from the CLI and the start menu for DOS PC 3.4, French DOS (manually unpacked
+RAR2 media), Atari ST English and German archives, Amiga, and FM Towns. The
+six focused `dm1_v1_*_cli_boot` CTests provide this evidence; they check the
+canonical asset's MD5 and never use an emulator or BIOS at runtime. This is
+startup evidence, not a claim of complete original pixel or game-system
+parity.
 
 ## DM2
 
-### Saknad kod eller ofullständig produktionsväg
+### Missing Code or an Incomplete Production Route
 
-- **Database ownership:** Firestaffs DM2-modell behöver fortfarande fullt
-  validerade original-record pools, länkar, mappar och relocation-semantik i
-  stället för den reducerade save-state-layouten.
-- **Input och dialog:** originalets resume-selector, keyboard/mouse ordering,
-  held-button-semantik, modal dialog, text, cancel och event-queue-beteende är
-  inte komplett.
-- **Creature drop/AI:** AI-tabeller och delar av drop-routen finns, men
-  source-owned CREATURE_AI-poster måste bindas till grafik, possession, death
-  och cooldown innan vägen kan räknas som färdig.
-- **Save/load och GAME_LOAD:** SKSAVE-formatet och återstående runtime-state-
-  ownership kräver bredare originalcorpus och packaged-app-verifiering.
-- **CCM och cell effects:** avancerad `DM2_PROCEED_CCM`, full cell-content-
-  digest/map-change och teleporter-effekter är inte fullständigt implementerade.
-- **V2.2 rendering:** riktig material-/pixelkonsumtion, clipping, fler
-  djup/utomhus-rutter och runtime-wire-up saknas.
-- **V2 HUD:** autentiska text-/bitmap-assets och fler widgets, bland annat
-  inventory quick-view och action prompt, saknas.
+- **Database ownership:** Firestaff's DM2 model still needs fully validated
+  original record pools, links, maps, and relocation semantics instead of the
+  reduced save-state layout.
+- **Input and dialog:** the original resume selector, keyboard/mouse ordering,
+  held-button semantics, modal dialog, text, cancel, and event-queue behaviour
+  are incomplete.
+- **Creature drop/AI:** AI tables and parts of the drop route exist, but
+  source-owned `CREATURE_AI` records must be bound to graphics, possession,
+  death, and cooldown before the route can be considered complete.
+- **Save/load and GAME_LOAD:** the SKSAVE format and remaining runtime-state
+  ownership need a broader original corpus and packaged-app verification.
+- **CCM and cell effects:** advanced `DM2_PROCEED_CCM`, complete cell-content
+  digest/map changes, and teleporter effects are not fully implemented.
+- **V2.2 rendering:** real material/pixel consumption, clipping, additional
+  depth/outdoor routes, and runtime wiring are missing.
+- **V2 HUD:** authentic text/bitmap assets and more widgets, including
+  inventory quick-view and action prompts, are missing.
 
-### Saknad originaldata eller verifiering
+### Missing Original Data or Verification
 
-- Weather behöver original save/memory snapshots som binder timer-recorden till
-  rätt ägare och förändring.
-- Full DOS framebuffer/blitter capture behövs för palette/clipping-parity.
-- Ljudspåret kring MIDI och vissa runtime-sound owners saknar instruction-level
-  trace och source-bound save/runtime-evidens.
-- Demo- och icke-PC-extrakt behöver separat versions-/containerklassificering.
+- Weather needs original save/memory snapshots that bind the timer record to
+  its correct owner and change.
+- A complete DOS framebuffer/blitter capture is needed for palette/clipping
+  parity.
+- MIDI and some runtime sound owners lack instruction-level traces and
+  source-bound save/runtime evidence.
+- Demo and non-PC extracts need separate version/container classification.
 
-### Avsiktligt stängt
+### Intentionally Closed
 
-`examples/dm2_hud_widget_synthetic/` och procedural V2.2-art är endast
-gate-fixtures. De får inte ersätta den riktiga DM2-GDAT-källan eller presenteras
-som färdig Skullkeep-grafik.
+`examples/dm2_hud_widget_synthetic/` and procedural V2.2 art are gate fixtures
+only. They must not replace the real DM2 GDAT source or be presented as
+completed Skullkeep graphics.
 
-**Native startmatris (verifierad 2026-08-27):** autentiska DOS-, Amiga-, FM
-Towns- och Macintosh-ZIP:ar läses i minnet. DOS följer IBMIOP:s verkliga MVE
-till SKULL och New Game; Amiga följer sin TITLE-ström till runtime; FM Towns
-följer AUTOEXEC/TWANIM till GDAT:s New Game-rektangel och den källägda
-championsvalsklickningen; Mac startar den verifierade retailprofilen. DM2 DOS
-MVE kan dessutom verifieras headless med source-ordnade presentationsframes i
-`dm2_v1_dos_native_cli_boot`. Detta är start-/runtimebevis, inte full
-paritet för saves, rendering, AI eller audio.
+**Native startup matrix (verified 2026-08-27):** authentic DOS, Amiga, FM
+Towns, and Macintosh ZIPs are read in memory. DOS follows IBMIOP's real MVE to
+SKULL and New Game; Amiga follows its TITLE stream to runtime; FM Towns follows
+AUTOEXEC/TWANIM to GDAT's New Game rectangle and the source-owned champion
+selection click; Mac starts the verified retail profile. DM2 DOS MVE can also
+be verified headlessly with source-ordered presentation frames in
+`dm2_v1_dos_native_cli_boot`. This is startup/runtime evidence, not complete
+parity for saves, rendering, AI, or audio.
 
 ## CSB
 
-### Saknad originaldata eller evidens
+### Missing Original Data or Evidence
 
-- **CSBWin DSA-corpus:** ett checksum-validerat, DSA-bärande CSBWin-save med
-  index/action-records behövs för positiv bredd.
-- **Save-corpus per media/version:** ett verifierat original-save och
-  round-trip-bevis behövs för varje påstådd media-/versionsgren.
-- **Real capture:** bredare originalcapture av HUD, viewport, titel, dörrar och
-  Mac/app-/övriga media-grenar saknas.
-- **Audio:** full audio/runtime-parity med source-owned dispatch är inte klar.
+- **CSBWin DSA corpus:** a checksum-validated DSA-bearing CSBWin save with
+  index/action records is needed for positive breadth.
+- **Save corpus per media/version:** a verified original save and round-trip
+  proof are needed for every claimed media/version branch.
+- **Real capture:** broader original capture of the HUD, viewport, title,
+  doors, and macOS/app/other media branches is missing.
+- **Audio:** complete audio/runtime parity with source-owned dispatch is not
+  complete.
 
-### Saknad eller ofullständig funktionalitet
+### Missing or Incomplete Functionality
 
-- Djupare end-to-end gameplay parity och playability utan DM1-antaganden.
-- Fler DSA-timer-, generator-, teleporter- och sensortransaktioner med
-  autentiska save/dungeon-par.
-- Bredare source-locked viewport placements, masks, materialbindningar och
-  draw-order för de CSB-specifika D2/D3-rutterna.
-- V2.2 behöver en verklig PC34 GRAPHICS.DAT-baserad material/pixel-bindning
-  innan modern art kan återaktiveras.
+- Deeper end-to-end gameplay parity and playability without DM1 assumptions.
+- More DSA timer, generator, teleporter, and sensor transactions with
+  authentic save/dungeon pairs.
+- Broader source-locked viewport placements, masks, material bindings, and
+  draw order for CSB-specific D2/D3 routes.
+- V2.2 needs a real PC34 GRAPHICS.DAT-based material/pixel binding before
+  modern art can be re-enabled.
 
-### Avsiktligt stängt
+### Intentionally Closed
 
-Syntetisk dungeon-loader/world-fixture och experimentella launch-fixtures får
-fortsätta testa livscykel och negativa grenar. De är inte ett substitut för
-CSB:s riktiga dungeon-, save- eller viewportdata.
+The synthetic dungeon-loader/world fixture and experimental launch fixtures
+may continue to test lifecycle and negative branches. They are not substitutes
+for CSB's real dungeon, save, or viewport data.
 
-**Native startmatris (verifierad 2026-08-27):** Firestaff läser verkliga CSB-
-medier i minnet och genomför originalets title → runtime → första rörelse,
-samt startmenyns launch-handoff, för Atari ST (rå STX och kapslat ZIP), Amiga
-ADF-arkiv och FM Towns-CD-arkiv (engelska och japanska programkedjor).
-`csb_v1_{atari_stx,atari_nested_zip,amiga,fmtowns_{en,ja}}_native_cli_*`
-bevisar dessa vägar. CSB hade ingen DOS-utgåva; en begäran om `--platform pc`
-avvisas därför fail-closed och får inte återanvända Atari- eller CSBWin-data.
-Startbeviset ersätter inte de öppna originalcapture- och DSA/save-paritets-
-kraven ovan.
+**Native startup matrix (verified 2026-08-27):** Firestaff reads real CSB media
+in memory and performs the original title → runtime → first movement sequence,
+as well as the start-menu launch handoff, for Atari ST (raw STX and nested
+ZIP), Amiga ADF archives, and FM Towns CD archives (English and Japanese
+program chains). `csb_v1_{atari_stx,atari_nested_zip,amiga,fmtowns_{en,ja}}_native_cli_*`
+proves these routes. CSB had no DOS edition; a request for `--platform pc` is
+therefore rejected fail-closed and must not reuse Atari or CSBWin data. Startup
+evidence does not replace the open original-capture and DSA/save-parity
+requirements above.
 
 ## Nexus
 
-### Saknad kod eller ofullständig produktionsväg
+### Missing Code or an Incomplete Production Route
 
-- **Structure2-material:** full descriptor-, UV-, textur- och palette-semantik
-  saknas för att binda råa descriptors till renderbara material.
-- **Animerade material:** payload-grammar, sequence semantics, flags och
-  timing är inte kompletta.
-- **Saturn runtime/capture:** äkta executable-/emulatortrace och frame capture
-  krävs för pixelposition, mode, palette och timing. Statisk ISO-inspektion
-  räcker inte.
-- **Audio:** CUE-deklarerade retail-BIN-spår är nu source-bound; Saturns
-  dispatcher, native decoder, literal sample/trigger-evidens och playback
-  saknas fortfarande.
-- **Structure1F/VDP1:** flera material-, texture/palette- och replay-gates är
-  fortfarande capture- eller host-route-beroende.
+- **Structure2 material:** complete descriptor, UV, texture, and palette
+  semantics are missing for binding raw descriptors to renderable material.
+- **Animated material:** payload grammar, sequence semantics, flags, and
+  timing are incomplete.
+- **Saturn runtime/capture:** a real executable/emulator trace and frame
+  capture are required for pixel position, mode, palette, and timing. Static
+  ISO inspection is insufficient.
+- **Audio:** CUE-declared retail BIN tracks are now source-bound; Saturn's
+  dispatcher, native decoder, literal sample/trigger evidence, and playback
+  are still missing.
+- **Structure1F/VDP1:** several material, texture/palette, and replay gates
+  remain capture- or host-route-dependent.
 
-### Saknad originaldata eller verifiering
+### Missing Original Data or Verification
 
-- Den kompletta Saturn-körningen, inklusive BIOS/emulator/capturekedja, är den
-  huvudsakliga externa luckan.
-- Originala `LEV*.DGN`, `SLEV*.BIN`, `SNDLEV*.SAL` och `*.MNS` finns lokalt,
-  men råa bytes räcker inte som bevis för semantisk material-, gameplay- eller
-  animationstolkning.
+- A complete Saturn run, including the BIOS/emulator/capture chain, is the
+  primary external gap.
+- Original `LEV*.DGN`, `SLEV*.BIN`, `SNDLEV*.SAL`, and `*.MNS` files are
+  available locally, but raw bytes are insufficient evidence for semantic
+  material, gameplay, or animation interpretation.
 
-### Avsiktligt stängt
+### Intentionally Closed
 
-Genererade DGN/DMDF/save-fixtures får användas för parser- och round-trip-
-tester. De får inte befordras till en spelbar Nexus-värld eller användas som
-Saturn-pixelbevis.
+Generated DGN/DMDF/save fixtures may be used for parser and round-trip tests.
+They must not be promoted to a playable Nexus world or used as Saturn pixel
+evidence.
 
 ## Theron
 
-### Saknad originaldata eller verifiering
+### Missing Original Data or Verification
 
-- **Save body layout:** SRM/save-korrelation och full body-layout är inte
-  tillräckligt source-locked.
-- **Startup media:** autentisk decoding och pixel-evidens för Track 02:s
-  startup-art, text och audio saknas.
-- **Post-$3800-kedjan:** fortsättningskonsumenten efter den autentiserade
-  `$3800`-gränsen behöver ytterligare live capture.
-- **JP runtime:** JP-specifik media-/captureverifiering och vissa offsetfrågor
-  kvarstår; de får inte härledas från US-data.
-- **Bredare originalcorpus:** fler äkta CUE/BIN/ISO-kombinationer behövs för
-  versions- och media-bredd.
+- **Save body layout:** SRM/save correlation and the complete body layout are
+  not sufficiently source-locked.
+- **Startup media:** authentic decoding and pixel evidence for Track 02
+  startup art, text, and audio are missing.
+- **Post-$3800 chain:** the continuation consumer after the authenticated
+  `$3800` boundary needs further live capture.
+- **JP runtime:** Japanese-specific media/capture verification and some offset
+  questions remain; they must not be derived from US data.
+- **Broader original corpus:** more authentic CUE/BIN/ISO combinations are
+  needed for version and media breadth.
 
-### Saknad eller ofullständig funktionalitet
+### Missing or Incomplete Functionality
 
-- **JP runtime är begränsad:** den autentiska JP Rev 1 CUE:n når native titel
-  → stage → Soul Room → Akutuba och kan source-binda Drator, men detta är inte
-  bred gameplay- eller övergångsparity.
-- Full source-owned semantik för senare nivåer, objekt, champion-data och
-  save/load är inte klar.
-- Autentiska runtime traces behövs för dörrar, pits, teleporters, altar,
-  combat, drops och sounds utanför de redan verifierade level-0-/table-slicarna.
-- Full Track 02-bitmap/material-decoder och produktionsbunden viewport/UI-
-  presentation saknas.
-- V2.2 saknar ett autentiserat Track 02-materialpaket; procedural/AI-art ska
-  förbli fixture-only.
+- **JP runtime is limited:** the authentic JP Rev 1 CUE reaches native title →
+  stage → Soul Room → Akutuba and can source-bind Drator, but this is not broad
+  gameplay or transition parity.
+- Complete source-owned semantics for later levels, objects, champion data,
+  and save/load are incomplete.
+- Authentic runtime traces are needed for doors, pits, teleporters, altars,
+  combat, drops, and sounds outside the already verified level-0/table slices.
+- A complete Track 02 bitmap/material decoder and production-bound viewport/UI
+  presentation are missing.
+- V2.2 lacks an authenticated Track 02 material package; procedural/AI art
+  must remain fixture-only.
 
-### Avsiktligt stängt
+### Intentionally Closed
 
-No-op-, fixture-start- och synthetic parser-vägar får inte skapa en ersättnings-
-level när autentiska Track 02-poster saknas. Produktion ska vara capture-gated.
+No-op, fixture-start, and synthetic parser routes must not create a replacement
+level when authentic Track 02 records are unavailable. Production remains
+capture-gated.
 
-## Gemensam prioriteringsordning
+## Shared Priority Order
 
-1. Skaffa eller verifiera den saknade autentiska save-/media-/capture-källan.
-2. Bind bytes till rätt originalfunktion, record owner och runtime-route.
-3. Lägg till source-lock och real-data-regression.
-4. Lägg till original-vs-Firestaff pixel- eller timingpar där funktionen är
-   visuell.
-5. Låt osäker eller saknad data fortsätta fail-closed; skapa inga syntetiska
-   saves, frames, rosterdata eller material för att fylla luckan.
+1. Obtain or verify the missing authentic save, media, or capture source.
+2. Bind bytes to the correct original function, record owner, and runtime
+   route.
+3. Add a source lock and real-data regression.
+4. Add original-versus-Firestaff pixel or timing pairs where the function is
+   visual.
+5. Keep uncertain or missing data fail-closed; do not create synthetic saves,
+   frames, roster data, or material to fill a gap.
