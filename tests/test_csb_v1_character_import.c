@@ -417,6 +417,7 @@ static void test_utility_disk(void)
     static const char amiga_volume[] = "FTL_CSB_Utility";
     unsigned char zero[512] = {0};
     unsigned char sector[512] = {0};
+    unsigned char st_bytes[7u * 512u] = {0};
     unsigned char root[512] = {0};
     FILE *f;
     int i;
@@ -431,6 +432,9 @@ static void test_utility_disk(void)
     remove(st_path);
     memcpy(sector, st_copyright, sizeof(st_copyright));
     memcpy(sector + 128, st_title, sizeof(st_title));
+    memcpy(st_bytes + 6u * sizeof(sector), sector, sizeof(sector));
+    CHECK_EQ(csb_v1_util_check_disk_bytes(st_bytes, sizeof(st_bytes)), 0,
+             "UTIO.C sector-7 byte identity is admitted", "d");
     f = fopen(st_path, "wb");
     CHECK(f != NULL, "create ST Utility Disk fixture");
     if (f) {

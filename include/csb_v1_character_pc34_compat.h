@@ -1,6 +1,7 @@
 #ifndef FIRESTAFF_CSB_V1_CHARACTER_PC34_COMPAT_H
 #define FIRESTAFF_CSB_V1_CHARACTER_PC34_COMPAT_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 /* CSB V1 Character System
@@ -322,7 +323,8 @@ unsigned int csb_v1_champion_get_movement_ticks(const CSB_V1_Champion *c);
 int csb_v1_champion_is_overloaded(const CSB_V1_Champion *c);
 
 /* Utility disk verification (ReDMCSB UTIO.C F1991 Atari-sector / Amiga-volume
- * identity checks for a selected disk image or device path). */
+ * identity checks for a selected disk image or bounded original-media bytes). */
+int  csb_v1_util_check_disk_bytes(const uint8_t *bytes, size_t byte_count);
 int  csb_v1_util_check_disk(const char *drive_path);
 int  csb_v1_util_require_disk(const char *drive_path,
                                char *err_msg, int err_msg_size);

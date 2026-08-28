@@ -6579,6 +6579,7 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_utility_import_pc34.c
     src/csb/csb_v1_atari_save_decode_pc34_compat.c
     src/csb/csb_v1_atari_msa.c
+    src/dm1/dm1_v1_atari_st_stx.c
     src/dm1/dm1_v1_graphics_loader_pc34_compat.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
     src/dm1/dm1_v1_atari_st_graphics_dat.c
@@ -7564,7 +7565,6 @@ set(M12_SOURCES
     src/engine/config_m12.c
     src/shared/asset_status_m12.c
     src/shared/asset_find_by_hash.c
-    src/dm1/dm1_v1_atari_st_stx.c
     src/nexus/nexus_v1_bpk_archive.c
     src/nexus/nexus_v1_iso_reader.c
     src/shared/firestaff_theron_media_classify.c

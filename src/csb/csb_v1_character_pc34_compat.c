@@ -20,6 +20,7 @@
 
 #include "csb_v1_character_pc34_compat.h"
 #include "csb_v1_atari_msa.h"
+#include "dm1_v1_atari_st_stx.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
 #include <stdio.h>
@@ -739,34 +740,34 @@ int csb_v1_character_import_dm1_buffer(CSB_V1_PartyState *party,
  *            1 = wrong disk
  *           -1 = error (no disk, unreadable, etc.)
  */
-int csb_v1_util_check_disk(const char *drive_path)
+int csb_v1_util_check_disk_bytes(const uint8_t *bytes, size_t byte_count)
 {
-    FILE *f;
+    DM1_V1_AtariStx stx;
     uint8_t sector[512];
-    uint8_t *msa = NULL;
-    uint8_t amiga_name[32];
-    long size;
+    const uint8_t *amiga_name;
     size_t name_bytes;
 
-    if (!drive_path) return -1;
-
-    f = fopen(drive_path, "rb");
-    if (!f) {
+    if (!bytes || byte_count == 0u) {
         return -1;
     }
-
-    if (fseek(f, 0L, SEEK_END) != 0 || (size = ftell(f)) < 0) {
-        fclose(f);
-        return -1;
+    if (byte_count >= CSB_V1_UTIL_ST_SECTOR7_OFFSET + sizeof(sector) &&
+        memcmp(bytes + CSB_V1_UTIL_ST_SECTOR7_OFFSET,
+               k_csb_v1_util_st_copyright,
+               sizeof(k_csb_v1_util_st_copyright)) == 0 &&
+        memcmp(bytes + CSB_V1_UTIL_ST_SECTOR7_OFFSET + 128u,
+               k_csb_v1_util_st_title,
+               sizeof(k_csb_v1_util_st_title)) == 0) {
+        return 0;
     }
-    if ((unsigned long)size >= CSB_V1_UTIL_ST_SECTOR7_OFFSET + sizeof(sector) &&
-        fseek(f, (long)CSB_V1_UTIL_ST_SECTOR7_OFFSET, SEEK_SET) == 0 &&
-        fread(sector, 1u, sizeof(sector), f) == sizeof(sector) &&
+    /* STX preserves the original protected Atari sector transport.  UTIO.C
+     * F1991 still observes logical sector 7, so read it without expanding
+     * the disk image or creating an ADF cache. */
+    if (dm1_v1_atari_st_stx_open(bytes, byte_count, &stx) &&
+        dm1_v1_atari_st_stx_read_sector(&stx, 6u, sector, sizeof(sector)) &&
         memcmp(sector, k_csb_v1_util_st_copyright,
                sizeof(k_csb_v1_util_st_copyright)) == 0 &&
         memcmp(sector + 128u, k_csb_v1_util_st_title,
                sizeof(k_csb_v1_util_st_title)) == 0) {
-        fclose(f);
         return 0;
     }
     /* Original Atari ST CSB Utility media is commonly preserved as an MSA
@@ -775,35 +776,52 @@ int csb_v1_util_check_disk(const char *drive_path)
      * the decoded sector rather than looking for them in compressed bytes.
      *
      * ReDMCSB UTIO.C F1991; Atari MSA specification (big-endian track RLE). */
-    if (size > 0L && (unsigned long)size <= 4u * 1024u * 1024u &&
-        fseek(f, 0L, SEEK_SET) == 0 &&
-        (msa = (uint8_t *)malloc((size_t)size)) != NULL &&
-        fread(msa, 1u, (size_t)size, f) == (size_t)size &&
-        csb_v1_atari_msa_read_sector(msa, (size_t)size, 6u, sector, NULL) &&
+    if (byte_count <= 4u * 1024u * 1024u &&
+        csb_v1_atari_msa_read_sector(bytes, byte_count, 6u, sector, NULL) &&
         memcmp(sector, k_csb_v1_util_st_copyright,
                sizeof(k_csb_v1_util_st_copyright)) == 0 &&
         memcmp(sector + 128u, k_csb_v1_util_st_title,
                sizeof(k_csb_v1_util_st_title)) == 0) {
-        free(msa);
-        fclose(f);
         return 0;
     }
-    free(msa);
-    if ((unsigned long)size == CSB_V1_UTIL_AMIGA_ADF_BYTES &&
-        fseek(f, (long)(CSB_V1_UTIL_AMIGA_ROOT_BLOCK_OFFSET +
-                         CSB_V1_UTIL_AMIGA_VOLUME_NAME_OFFSET), SEEK_SET) == 0 &&
-        fread(amiga_name, 1u, sizeof(amiga_name), f) == sizeof(amiga_name) &&
-        amiga_name[0] == sizeof(k_csb_v1_util_amiga_volume) - 1u) {
+    if (byte_count == CSB_V1_UTIL_AMIGA_ADF_BYTES &&
+        CSB_V1_UTIL_AMIGA_ROOT_BLOCK_OFFSET +
+            CSB_V1_UTIL_AMIGA_VOLUME_NAME_OFFSET + 32u <= byte_count) {
+        amiga_name = bytes + CSB_V1_UTIL_AMIGA_ROOT_BLOCK_OFFSET +
+            CSB_V1_UTIL_AMIGA_VOLUME_NAME_OFFSET;
+        if (amiga_name[0] != sizeof(k_csb_v1_util_amiga_volume) - 1u) {
+            return 1;
+        }
         name_bytes = (size_t)amiga_name[0];
         if (name_bytes == sizeof(k_csb_v1_util_amiga_volume) - 1u &&
             memcmp(amiga_name + 1u, k_csb_v1_util_amiga_volume,
                    name_bytes) == 0) {
-            fclose(f);
             return 0;
         }
     }
-    fclose(f);
     return 1;
+}
+
+int csb_v1_util_check_disk(const char *drive_path)
+{
+    FILE *file;
+    long size;
+    uint8_t *bytes = NULL;
+    int result;
+
+    if (!drive_path || !(file = fopen(drive_path, "rb"))) return -1;
+    if (fseek(file, 0L, SEEK_END) != 0 || (size = ftell(file)) <= 0 ||
+        fseek(file, 0L, SEEK_SET) != 0 ||
+        (bytes = (uint8_t *)malloc((size_t)size)) == NULL ||
+        fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
+        free(bytes);
+        fclose(file);
+        return -1;
+    }
+    fclose(file);
+    result = csb_v1_util_check_disk_bytes(bytes, (size_t)size);
+    free(bytes);
+    return result;
 }
 
 /* csb_v1_util_require_disk:

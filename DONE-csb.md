@@ -37,3 +37,7 @@ Reviewed 2026-08-25. Completed work only.
   directly into RAM before native GAMEBLOCK decoding.  It no longer writes an
   extracted Utility Disk save into an asset cache; a real STX CLI regression
   covers the direct `--csb-hint-oracle` route.
+- CSB Utility Disk import now verifies the original archive member directly
+  in bounded RAM.  UTIO.C sector 7 is read through the native STX transport
+  reader when required, so the supplied Atari Utility Disk neither needs nor
+  creates a transient ADF cache.

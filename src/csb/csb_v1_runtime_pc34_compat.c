@@ -2358,9 +2358,9 @@ int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
     CSB_V1_UtilFlowContext flow;
     CSB_V1_PartyState party;
     char utility_media[ASSET_PATH_MAX];
-    char checked_utility_media[ASSET_PATH_MAX];
     const char *explicit_utility_media;
-    int remove_checked_utility_media = 0;
+    uint8_t *utility_bytes = NULL;
+    size_t utility_byte_count = 0u;
     int used_discovery_cache = 0;
     int count;
 
@@ -2378,7 +2378,6 @@ int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
     }
 
     utility_media[0] = '\0';
-    checked_utility_media[0] = '\0';
     /* An explicit physical image remains supported for operators.  Normal
      * launches discover only known original ADF bytes, including inside
      * supported archives, rather than trusting a filename or a synthetic
@@ -2413,43 +2412,29 @@ int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
         return 0;
     }
     if (strstr(utility_media, "::") != NULL) {
-        int written;
-        if (!profile->save_dir || profile->save_dir[0] == '\0') {
-            return 0;
-        }
-        /* M12 may materialize the selected CSB core into a fresh private
-         * cache.  The original Utility image is then extracted only for the
-         * UTIO.C F1991 identity check, so create that private save/cache
-         * directory before asking the archive backend to open its output. */
-        if (!FSP_CreateDirectoryRecursive(profile->save_dir)) {
-            return 0;
-        }
-        written = snprintf(checked_utility_media,
-                           sizeof(checked_utility_media),
-                           "%s%ccsb-utility-import.adf", profile->save_dir,
-                           CSB_PATH_SEP);
-        if (written < 0 ||
-            (size_t)written >= sizeof(checked_utility_media) ||
-            !asset_extract_virtual_path(utility_media,
-                                        checked_utility_media)) {
+        /* UTIO.C F1991 observes only the original media identity.  Preserve
+         * the archive member and check those bytes in RAM rather than
+         * creating a transient ADF in the save directory. */
+        if (!asset_read_virtual_path_alloc(utility_media, &utility_bytes,
+                                           &utility_byte_count) ||
+            csb_v1_util_check_disk_bytes(utility_bytes,
+                                         utility_byte_count) != 0) {
+            free(utility_bytes);
             if (used_discovery_cache) {
                 g_csb_utility_media_cache_root[0] = '\0';
                 g_csb_utility_media_cache_path[0] = '\0';
             }
             return 0;
         }
-        remove_checked_utility_media = 1;
+        free(utility_bytes);
     } else {
-        snprintf(checked_utility_media, sizeof(checked_utility_media), "%s",
-                 utility_media);
-    }
-    if (csb_v1_util_check_disk(checked_utility_media) != 0) {
-        if (used_discovery_cache) {
-            g_csb_utility_media_cache_root[0] = '\0';
-            g_csb_utility_media_cache_path[0] = '\0';
+        if (csb_v1_util_check_disk(utility_media) != 0) {
+            if (used_discovery_cache) {
+                g_csb_utility_media_cache_root[0] = '\0';
+                g_csb_utility_media_cache_path[0] = '\0';
+            }
+            return 0;
         }
-        if (remove_checked_utility_media) (void)remove(checked_utility_media);
-        return 0;
     }
 
     /* ReDMCSB/CSBWin utility startup imports a DM1 party before the
@@ -2460,7 +2445,7 @@ int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
      * by the launcher utility path. */
     csb_v1_util_flow_init(&flow);
     csb_v1_util_flow_set_dm1_path(&flow, path);
-    csb_v1_util_flow_set_utility_disk_path(&flow, checked_utility_media);
+    csb_v1_util_flow_set_utility_disk_path(&flow, utility_media);
     /* The physical identity was proven immediately above. This preserves the
      * source-visible DISK_OK state without a duplicate archive extraction. */
     csb_v1_util_flow_mark_utility_disk_verified(&flow, 1);
@@ -2520,11 +2505,9 @@ int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
     if (out_count) {
         *out_count = count;
     }
-    if (remove_checked_utility_media) (void)remove(checked_utility_media);
     return 1;
 
 cleanup_utility_media:
-    if (remove_checked_utility_media) (void)remove(checked_utility_media);
     return 0;
 }
 
