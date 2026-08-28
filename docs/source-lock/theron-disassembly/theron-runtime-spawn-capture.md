@@ -93,12 +93,12 @@ This is negative evidence from one same-process state replay. It does not
 authorize RNG, spawn, creature, AI, combat, loot, generator, T700 or T900
 semantics, and the raw state/capture remain local on the external disk.
 
-## 2026-08-13 — instrumenterad cold-start når endast CD-transport
+## 2026-08-13 — instrumented cold start reaches CD transport only
 
-Den färska extern-disk-körningen `theron-capture-next/trace/theron2` använde
-den hashverifierade US Track 02-payloaden och System Carden. Den läste 256
-råsektorer (`LBA 3234`, `2352` byte per sektor) och producerade 3 584
-main-RAM-target-writes samt 4 096 spawn-consumer-rader. Sidecar-hasharna är:
+The fresh external-disk run `theron-capture-next/trace/theron2` used the
+hash-verified US Track 02 payload and System Card. It read 256 raw sectors
+(`LBA 3234`, `2352` bytes per sector) and produced 3,584 main-RAM target writes
+and 4,096 spawn-consumer rows. The sidecar hashes are:
 
 ```text
 theron2.trace                         8b5e0c1aaf9ccc036080378a22f7d3a8
@@ -108,13 +108,13 @@ theron2.trace.main-ram-target         d6efcb0336bae0109f3df0f0d8c50fe4
 theron2.trace.spawn-consumer          98c52dabc7696422c681b17e4a35d0ae
 ```
 
-Detta är endast transport-/adressproveniens. Körningen fastnar i BIOS/CD-
-läsaren och har noll game-owned `$E009`-dispatchar, noll CD/FIFO→RAM-origin-
-receipts och noll RNG-window-prover. `$2600–$27FF` läses 512 gånger, alla
-med värdet noll från `$CB22`; spawn-sidecaren stannar vid `$20EC–$20EE`.
-Det finns därför inget source-bound level/object-consumer, ingen
-`$B0E5`-kategori och ingen target-publicering att öppna. Denna capture får
-inte kombineras med andra sessioner och råfilerna ligger kvar utanför GitHub.
+This is transport/address provenance only. The run stalls in the BIOS/CD reader
+and has zero game-owned `$E009` dispatches, zero CD/FIFO→RAM origin receipts,
+and zero RNG-window samples. `$2600–$27FF` is read 512 times, all with value
+zero from `$CB22`; the spawn sidecar stops at `$20EC–$20EE`. There is therefore
+no source-bound level/object consumer, `$B0E5` category, or target publication
+to open. This capture must not be combined with other sessions, and the raw
+files remain outside GitHub.
 
 ## 2026-08-13 — production state primitives remain separate from gameplay consumers
 
@@ -124,28 +124,27 @@ their authenticated bounds) and champion death (`alive=0`, `health=0`). These
 operations do not assign attack, defense, AI, RNG, loot, sound, T700 or T900
 meaning and therefore do not weaken the capture gates below.
 
-## 2026-08-13 — RAM/VDC-replayens VDC/VCE-pair är screen-space-admitted
+## 2026-08-13 — RAM/VDC replay's VDC/VCE pair is screen-space admitted
 
-Den externa replayen `theron-vdc-ram.exXuQu` har en komplett 64 KiB VDC- och
-1 KiB VCE-snapshot. Pairens FNV-1a-identiteter är VRAM `087da136` och VCE
-`5376a91b`; de är nu upptagna i den kända capture-listan för
+The external replay `theron-vdc-ram.exXuQu` has a complete 64 KiB VDC and 1 KiB
+VCE snapshot. The pair's FNV-1a identities are VRAM `087da136` and VCE
+`5376a91b`; they are now included in the known-capture list for
 `theron_v1_vram_trace_load_known_capture_files()`.
 
-Detta öppnar endast återgivning av den autentiserade native screen-space-
-bilden. I samma session skriver `$CB22` nollor över `$2600–$2EFF` och läser
-sedan tillbaka området. Den observationen klassificerar inte bytes som level,
-object, square, HUD, T700 eller T900, så alla sådana semantiska grindar är
-fortsatt stängda.
+This opens only rendering of the authenticated native screen-space image. In
+the same session, `$CB22` writes zeroes across `$2600–$2EFF` and then reads the
+area back. That observation does not classify bytes as level, object, square,
+HUD, T700, or T900, so all such semantic gates remain closed.
 
-## 2026-08-13 — `$2600`-läsning bevaras i parsern
+## 2026-08-13 — `$2600` read is retained in the parser
 
-Parsern för `main_ram_consumer` nollställer inte längre
-`target_2600_bytes_present` efter att ha läst sidecar-raderna. Ett lokalt
-MPR-bundet extern-disk-spår (`mpr.trace.main-ram-consumer`, MD5
-`12f470ef2c38febd9b2c9699dad3b4cb`) innehåller en sammanhängande läsning från
-`$2600` och rapporteras därför som `target_2600=present` i parser-only-läge.
-Detta är fortfarande en adress-/körningsproveniens, inte en identifiering av
-recordtypen eller en öppning av object-, T700- eller T900-semantik.
+The `main_ram_consumer` parser no longer clears `target_2600_bytes_present`
+after reading the sidecar rows. A local MPR-bound external-disk trace
+(`mpr.trace.main-ram-consumer`, MD5 `12f470ef2c38febd9b2c9699dad3b4cb`)
+contains a contiguous read from `$2600` and therefore reports
+`target_2600=present` in parser-only mode. This remains address/execution
+provenance, not identification of the record type or an opening of object,
+T700, or T900 semantics.
 
 Den senaste längre replayen (`theron-capture-20260813/replay`) har samma
 gräns i den autentiserade sidecaren: 512 läsningar i `$2600-$27FF`, alla via
