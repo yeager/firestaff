@@ -4198,6 +4198,15 @@ endif()
 
 if(BUILD_TESTING)
     add_test(
+        NAME dm2_v1_real_media_hash_lock
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_real_media_hash_lock.sh"
+    )
+    set_tests_properties(dm2_v1_real_media_hash_lock PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;dm2;dos;amiga;fmtowns;macintosh;real-media;identity;no-synthesis"
+        ENVIRONMENT "FIRESTAFF_DM2_REAL_MEDIA_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2"
+    )
+    add_test(
         NAME dm2_v1_dos_native_cli_boot
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_dos_native_cli_boot.sh"
             "$<TARGET_FILE:firestaff>"
