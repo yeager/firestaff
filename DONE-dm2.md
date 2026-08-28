@@ -19,3 +19,8 @@ Reviewed 2026-08-25. Completed work only.
   the original 4-bit Amiga images without a fabricated local palette. The ZIP
   remains memory-owned through the native installer path and now produces an
   accepted M11 frame with real assets and no fallback drawing.
+- The authentic Macintosh retail ZIP now keeps its normal 256-row
+  `PalIRGB`/`dtPalette16` pair rather than being mistaken for the Amiga
+  16-colour palette layout solely because both formats are big-endian. Its
+  start-menu/title/New Game/movement route produces an accepted M11 frame with
+  real assets and zero fallback draws, directly from the original ZIP in RAM.
