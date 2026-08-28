@@ -1010,7 +1010,7 @@ int dm2_v1_boot_champion_selection_candidate(
         uint32_t identity_hash = 0x43484d50u; /* "CHMP" receipt domain. */
 
         if (mirror->map != map || mirror->x != x || mirror->y != y ||
-            mirror->dynamic_hero_type > 15u) {
+            mirror->dynamic_hero_type > DM2_V1_HERO_TYPE_MAX) {
             continue;
         }
         /* SKProject c_hero.cpp::DM2_SELECT_CHAMPION reads htype from the
@@ -1168,7 +1168,7 @@ static int dm2_v1_boot_materialize_source_hero(
         return 0;
     }
     source = &admission->selection.revive_data;
-    if (!source->valid || source->hero_type > 15u ||
+    if (!source->valid || source->hero_type > DM2_V1_HERO_TYPE_MAX ||
         source->hit_points_base > 3276u ||
         source->stamina_base > 3276u || source->mana_base > 3276u) {
         return 0;
@@ -1791,7 +1791,7 @@ int dm2_v1_boot_champion_selection_census(
             &out_census->candidates[i];
         uint8_t hero_type = mirrors.mirrors[i].dynamic_hero_type;
 
-        if (hero_type > 15u ||
+        if (hero_type > DM2_V1_HERO_TYPE_MAX ||
             !dm2_v1_boot_champion_selection_candidate(
                 profile, mirrors.mirrors[i].map, mirrors.mirrors[i].x,
                 mirrors.mirrors[i].y, 0,

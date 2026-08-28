@@ -18,6 +18,41 @@
 #define DM2_V1_GDAT_CHAMPION_PORTRAIT_DEFAULT_INDEX 0xfeu
 #define DM2_V1_GDAT_CHAMPION_PORTRAIT_DEFAULT_FIELD 0xfeu
 
+static int dm2_v1_gdat_hud_image_palette_binding(
+    const DM2_V1_AssetLoader *loader,
+    int category,
+    int index,
+    int field,
+    uint8_t out_palette16[16],
+    uint32_t *out_hash)
+{
+    DM2_V1_GdatImageMetadata metadata;
+    uint32_t hash = 2166136261u;
+    int palette_index;
+
+    if (!loader || !out_palette16 || !out_hash ||
+        !dm2_v1_asset_load_image_metadata(loader, category, index, field,
+                                           &metadata)) {
+        return 0;
+    }
+    if (metadata.bits_per_pixel == 4u) {
+        return dm2_v1_asset_load_image_local_palette(
+            loader, category, index, field, out_palette16, out_hash);
+    }
+    if (metadata.bits_per_pixel != 8u) return 0;
+
+    /* IMG9 has no QUERY_GDAT_IMAGE_LOCALPAL tail.  SUMMARY_IMAGE leaves its
+     * 256 global-palette indices unchanged; retain that source binding via
+     * the identity prefix consumed by the indexed viewport renderer. */
+    for (palette_index = 0; palette_index < 16; ++palette_index) {
+        out_palette16[palette_index] = (uint8_t)palette_index;
+        hash ^= out_palette16[palette_index];
+        hash *= 16777619u;
+    }
+    *out_hash = hash ? hash : 1u;
+    return 1;
+}
+
 static uint32_t dm2_v1_gdat_hud_hash_bytes(uint32_t hash,
                                             const uint8_t *bytes,
                                             size_t size)
@@ -368,19 +403,23 @@ static int dm2_v1_gdat_hud_add_command(
                    &command->gdat_field)) {
         return 0;
     }
-    raw = dm2_v1_asset_load_sized(loader, command->gdat_category,
-                                  command->gdat_index, command->gdat_field,
-                                  &raw_size);
+    /* QUERY_GDAT_IMAGE_ENTRY_BUFF is a typed dtImage lookup.  Champion
+     * records also carry text, sound and Raw8 members at the same
+     * (category,index,field) coordinates; the generic raw loader can select
+     * one of those first and make an authentic portrait look absent. */
+    raw = dm2_v1_asset_load_typed_sized(
+        loader, command->gdat_category, command->gdat_index,
+        DM2_GDAT_ENTRY_TYPE_IMAGE, command->gdat_field, &raw_size);
     if (!raw && kind == DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT) {
         command->gdat_category = DM2_V1_GDAT_CHAMPION_PORTRAIT_DEFAULT_CATEGORY;
         command->gdat_index = DM2_V1_GDAT_CHAMPION_PORTRAIT_DEFAULT_INDEX;
         command->gdat_field = DM2_V1_GDAT_CHAMPION_PORTRAIT_DEFAULT_FIELD;
-        raw = dm2_v1_asset_load_sized(loader, command->gdat_category,
-                                      command->gdat_index,
-                                      command->gdat_field, &raw_size);
+        raw = dm2_v1_asset_load_typed_sized(
+            loader, command->gdat_category, command->gdat_index,
+            DM2_GDAT_ENTRY_TYPE_IMAGE, command->gdat_field, &raw_size);
     }
     if (!raw || raw_size == 0u || raw_size > UINT32_MAX ||
-        !dm2_v1_asset_load_image_local_palette(
+        !dm2_v1_gdat_hud_image_palette_binding(
             loader, command->gdat_category, command->gdat_index,
             command->gdat_field, command->palette16, &command->palette_hash)) {
         return 0;

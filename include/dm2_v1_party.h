@@ -98,6 +98,12 @@ typedef struct {
 } DM2_V1_Hero;
 #pragma pack(pop)
 
+/* SKWINDOS/SKWINSPX table1d6356 serialises c_hero::herotype with mask
+ * 0x3f.  The six low bits are therefore the source-owned GDAT type domain;
+ * new-game mirrors happen to use 0..15, but resumed parties are not limited
+ * to that subset. */
+#define DM2_V1_HERO_TYPE_MAX 0x3fu
+
 /* c_hero.h layout used by SKSAVE's table1d6356[263] SUPPRESS mask.  These
  * guards keep future host-side changes from silently moving the timer and
  * possession-link owners away from their original byte positions. */

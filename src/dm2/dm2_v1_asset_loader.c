@@ -29,6 +29,7 @@
  */
 
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_party.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
@@ -1127,10 +1128,10 @@ int dm2_v1_asset_champion_revive_data(
     if (!out_receipt) return 0;
     memset(out_receipt, 0, sizeof(*out_receipt));
     /* c_hero.cpp::DM2_REVIVE_PLAYER queries exactly 26 i16s through
-     * QUERY_GDAT_ENTRY_DATA_PTR(CHAMPIONS, htype, dtRaw8, 0). The direct
-     * PC-DOS roster is types 0..15; a dynamic or fallback portrait index is
-     * not a hero template. */
-    if (!loader || hero_type > 15u) return 0;
+     * QUERY_GDAT_ENTRY_DATA_PTR(CHAMPIONS, htype, dtRaw8, 0). SKSAVE's
+     * table1d6356 persists all six low HeroType bits, not merely the 0..15
+     * subset used by the fresh-game mirror roster. */
+    if (!loader || hero_type > DM2_V1_HERO_TYPE_MAX) return 0;
     raw = dm2_v1_asset_load_typed_sized(
         loader, DM2_GDAT_CATEGORY_CHAMPIONS, hero_type,
         DM2_GDAT_ENTRY_TYPE_RAW8, 0, &raw_size);
