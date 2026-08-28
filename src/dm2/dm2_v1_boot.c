@@ -9949,8 +9949,17 @@ int dm2_v1_boot_interface_hud_layout(DM2_V1_BootProfile *profile,
     for (uint16_t slot = 0; slot < DM2_V1_INTERFACE_HUD_CHAMPION_COUNT; ++slot) {
         if (!dm2_v1_boot_expand_hud_rect(raw, raw_size, (uint16_t)(173u + slot), &out_layout->portrait[slot]) ||
             !dm2_v1_boot_expand_hud_rect(raw, raw_size, (uint16_t)(165u + slot), &out_layout->name[slot])) return 0;
+        /* _098d_1208 addresses the three status columns in separate four-slot
+         * runs.  RECT_185..188 are the large champion-status wells, whereas
+         * the HP/stamina/mana fill strips are RECT_193..196, RECT_197..200,
+         * and RECT_201..204 respectively.  Keeping the table's slot stride
+         * here is essential: treating 185..204 as a contiguous 3x4 matrix
+         * reaches absent RECT_189..192 in the authentic DOS GDAT and makes a
+         * source-complete HUD falsely unavailable. */
         for (uint16_t stat = 0; stat < 3u; ++stat)
-            if (!dm2_v1_boot_expand_hud_rect(raw, raw_size, (uint16_t)(185u + slot + stat * 4u), &out_layout->status[slot][stat])) return 0;
+            if (!dm2_v1_boot_expand_hud_rect(raw, raw_size,
+                                             (uint16_t)(193u + slot + stat * 4u),
+                                             &out_layout->status[slot][stat])) return 0;
     }
     out_layout->table_hash = hash; out_layout->valid = 1; return 1;
 }

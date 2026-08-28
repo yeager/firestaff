@@ -2542,7 +2542,9 @@ typedef struct {
 } DM2_V1_InterfaceHudLayout;
 
 /* skproject _098d_1208 loads INTERFACE_GENERAL/0/dt04/0 and expands these
- * champion rect IDs: names 165..168, portraits 173..176, status 185..204. */
+ * champion rect IDs: names 165..168, portraits 173..176, status wells
+ * 185..188, and the HP/stamina/mana fill strips 193..204 in three four-slot
+ * runs. */
 int dm2_v1_boot_interface_hud_layout(
     DM2_V1_BootProfile *profile,
     DM2_V1_InterfaceHudLayout *out_layout);

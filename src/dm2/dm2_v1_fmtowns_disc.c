@@ -329,7 +329,11 @@ int dm2_v1_fmtowns_cdda_extract(const uint8_t *image, size_t image_size,
     *out_pcm_size = 0;
     if (!image || sector_count == 0) return -1;
 
-    if ((size_t)start_sector > SIZE_MAX / DM2_FMTOWNS_SECTOR_SIZE)
+    /* Bound the sector offset against the actual in-memory image before
+     * multiplying.  This proves both range and size_t safety on 32-bit
+     * hosts, while avoiding a tautological UINT32_MAX-vs-SIZE_MAX comparison
+     * on 64-bit hosts (where warnings are build errors). */
+    if ((size_t)start_sector > image_size / DM2_FMTOWNS_SECTOR_SIZE)
         return -1;
     byte_offset = (size_t)start_sector * DM2_FMTOWNS_SECTOR_SIZE;
     if (byte_offset > image_size ||
