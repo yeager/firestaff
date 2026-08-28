@@ -9,6 +9,11 @@ if [ ! -x "$app" ] || [ ! -f "$archive" ]; then
     exit 77
 fi
 
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --menu --game dm2 --platform fm-towns --data-dir "$archive" \
+    --script 'key:enter' --duration 1000 >/dev/null 2>&1
+
 # AUTOEXEC hands SWOOSH/TITLE to SKULL before the source New Game event.  The
 # viewport click is a source-space mirror selection, followed by normal Up.
 output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \

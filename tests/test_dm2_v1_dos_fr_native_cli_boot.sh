@@ -9,6 +9,11 @@ if [ ! -x "$app" ] || [ ! -f "$archive" ]; then
     exit 77
 fi
 
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --menu --game dm2 --platform pc --data-dir "$archive" \
+    --script 'key:enter' --duration 1000 >/dev/null 2>&1
+
 # The French retail GDAT has its own authenticated identity.  It shares the
 # DOS dungeon bytes with the English release but must retain the PC French
 # GAME_LOAD owner all the way through the first input, rather than borrowing

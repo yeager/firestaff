@@ -2,6 +2,12 @@
 
 Reviewed 2026-08-25. Completed work only.
 
+- The real DOS English/French, Amiga, FM Towns, and Macintosh startup tests now
+  each exercise the ordinary start-menu handoff separately from boot-probe
+  mode. `FIRESTAFF_FAIL_IF_NO_LAUNCH` and `FIRESTAFF_EXIT_AFTER_LAUNCH` make a
+  missing menu launch fail before the existing source-owned GDAT and movement
+  assertions run.
+
 - Native FM Towns ZIP/CUE/IMG intake reads original media in RAM, verifies the
   source-owned graphics/dungeon pair and preserves virtual source ownership.
 - Real FM Towns M12/M11 startup, title and gameplay corpus checks pass with

@@ -9,6 +9,11 @@ if [ ! -x "$app" ] || [ ! -f "$archive" ]; then
     exit 77
 fi
 
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --menu --game dm2 --platform amiga --data-dir "$archive" \
+    --script 'key:enter' --duration 1000 >/dev/null 2>&1
+
 output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm2 --platform amiga --data-dir "$archive" --boot-probe \
     --boot-probe-frames 2000 --script 'key:enter,up' \

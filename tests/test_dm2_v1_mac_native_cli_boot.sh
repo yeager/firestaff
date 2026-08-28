@@ -9,6 +9,11 @@ if [ ! -x "$app" ] || [ ! -f "$archive" ]; then
     exit 77
 fi
 
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --menu --game dm2 --platform mac --data-dir "$archive" \
+    --script 'key:enter,key:enter' --duration 1000 >/dev/null 2>&1
+
 # Retail Mac owns a title movie before its source New Game action.  The first
 # Enter dismisses that movie; the second is the authenticated title-menu
 # action.  The viewport click selects the File_header-backed mirror through
