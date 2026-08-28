@@ -127,33 +127,33 @@ sound enabled produced the same negative boundary
 supports capture reproducibility rather than proving a game-owned sound or
 object consumer.
 
-Den positiva GUI-körningen är nu ett separat startup-/mediareceipt: en riktig
-macOS Quartz Return-händelse (`SDL scancode 40`) når Mednafen, PCE-input visar
-Run-biten `raw=0008`, och samma körning loggar 56 SCSI-läsningar samt 175
-råsektorer från autentiserat US Track 02. Den första menyrutan är ett
-lokalt originalemulatorartefakt; inga sådana skärmbilder trackas eller används
-som Firestaff-output. Fullständiga hashar och begränsningar finns i
-`docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md`.
-Detta ersätter den tidigare negativa slutsatsen om att ingen Track 02-handoff
-alls var bevisad, men den visar fortfarande inte `$2600`-konsumenten eller
-någon T900/RNG/AI/T700-semantik.
+The positive GUI run is now a separate startup/media receipt: a real macOS
+Quartz Return event (`SDL scancode 40`) reaches Mednafen, PCE input shows the
+Run bit `raw=0008`, and the same run logs 56 SCSI reads and 175 raw sectors
+from authentic US Track 02. The first menu frame is a local original-emulator
+artifact; no such screenshots are tracked or used as Firestaff output. Full
+hashes and constraints are in
+`docs/source-lock/theron-authentic-track02-handoff-2026-08-08.md`. This
+replaces the former negative conclusion that no Track 02 handoff had been
+proven, but it still does not show the `$2600` consumer or any
+T900/RNG/AI/T700 semantics.
 
-En äldre captureväg väljer explicit Mednafen-medieindex `0` via
-`-which_medium 0`. Den eliminerar en initieringsambiguity i RMDUI-defaults:
-extern-disken loggar att den autentiska Track 02-skivan faktiskt sätts in och
-tray stängs, men just den körningen fastnade i BIOS-CD-statusloopen utan SCSI
-READ. Den nya GUI-körningen ovan ersätter den gamla negativa slutsatsen för
-startup-handoffens del. RNG-, AI-, T700- och T900-konsumenterna är fortfarande
-inte bevisade.
+An older capture route explicitly selects Mednafen medium index `0` with
+`-which_medium 0`. It eliminates an initialisation ambiguity in the RMDUI
+defaults: the external disk logs that the authentic Track 02 disc is inserted
+and the tray closed, but that run remained in the BIOS CD status loop without
+a SCSI READ. The new GUI run above replaces the prior negative conclusion for
+the startup-handoff portion. The RNG, AI, T700, and T900 consumers are still
+unproven.
 
-Capture-scriptet kan välja den andra officiella HuC6280-kärnan med
-`THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast` endast när Mednafen själv annonserar
-modulen i `-help`; standarden är fortsatt `pce`. En tidigare extern körning
-visade att binären kan innehålla `pce_fast`-strängar utan att acceptera
-`-force_module pce_fast`. Den vägen avvisas nu direkt, före capture, i stället
-för att skapa en tom eller missvisande receipt. En faktisk `pce_fast`-modul
-måste därför först bevisas av Mednafen:s modulista och får därefter samma
-System Card-, CUE-, Track 02- och semantikgrindar som `pce`.
+The capture script can select the second official HuC6280 core with
+`THERON_CAPTURE_MEDNAFEN_MODULE=pce_fast` only when Mednafen itself advertises
+the module in `-help`; the default remains `pce`. A previous external run
+showed that the binary can contain `pce_fast` strings without accepting
+`-force_module pce_fast`. That route is now rejected before capture rather
+than creating an empty or misleading receipt. An actual `pce_fast` module must
+therefore first be proven by Mednafen's module list and then satisfy the same
+System Card, CUE, Track 02, and semantic gates as `pce`.
 
 ## Verification
 
