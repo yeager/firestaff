@@ -33,3 +33,7 @@ Reviewed 2026-08-25. Completed work only.
   runtime after the old extracted cache is absent. The focused real-media
   regression uses virtual source locators rather than the legacy
   materialization API.
+- The Atari R1 Hint Oracle now reads its hash-discovered `MINI.DAT` member
+  directly into RAM before native GAMEBLOCK decoding.  It no longer writes an
+  extracted Utility Disk save into an asset cache; a real STX CLI regression
+  covers the direct `--csb-hint-oracle` route.

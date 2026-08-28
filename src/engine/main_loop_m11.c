@@ -6762,6 +6762,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             goto cleanup;
         }
         launchedEver = 1;
+        fprintf(stdout,
+                "CSB HINT ORACLE READY: save=%s source=atari-r1 native=in-memory\n",
+                o->savePath && o->savePath[0] ? o->savePath : "auto");
+        if (exitAfterLaunch && !o->bootProbe) {
+            goto cleanup;
+        }
     } else if (o->csbFmtownsUtilityDisk) {
         if (!m11_open_requested_launch(&gameView, &menuState,
                                        &idleAccumulatorMs, o->dataDir,

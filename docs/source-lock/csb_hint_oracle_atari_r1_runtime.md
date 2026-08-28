@@ -52,7 +52,9 @@ Firestaff exposes the same runtime through both `--csb-hint-oracle --data-dir
 <root> --save <MINI.DAT>` and the `CSB UTILITY DISK — HINT ORACLE` start-menu
 entry. The latter binds `<selected-data-dir>/MINI.DAT`; both paths hash-admit
 the R1 HCSB pair before the native save decoder may provide the original LOAD
-control with a location receipt. Its pointer dispatcher uses the Atari R1
+control with a location receipt. A `MINI.DAT` found inside STX, ADF or ZIP
+media is read directly into bounded RAM; this route never materializes an
+extracted game-data cache. Its pointer dispatcher uses the Atari R1
 `HINTDATA.C` LOAD/LAST/NEXT/DONE/EXIT/OK and seven hint-row rectangles, then
 invokes the corresponding `HINTMAIN.C` transition.
 

@@ -24715,29 +24715,6 @@ int M11_GameView_StartDm1(M11_GameViewState* state, const char* dataDir) {
  * the bytes. */
 #define M11_CSB_HINT_ORACLE_ATARI_R1_MINI_MD5 "531ea104a2fbc2011ea73d11f274c57d"
 
-static int m11_csb_hint_oracle_materialize_virtual_save(
-    const char *virtual_path, char *out_path, size_t out_path_size)
-{
-    char user_data[FSP_PATH_MAX];
-    char cache_dir[FSP_PATH_MAX];
-    if (!virtual_path || !out_path || out_path_size == 0u) return 0;
-    if (!strstr(virtual_path, "::")) {
-        if (strlen(virtual_path) >= out_path_size) return 0;
-        memcpy(out_path, virtual_path, strlen(virtual_path) + 1u);
-        return 1;
-    }
-    if (!FSP_GetUserDataDir(user_data, sizeof(user_data)) ||
-        !FSP_JoinPath(cache_dir, sizeof(cache_dir), user_data,
-                      "asset-cache/csb-hint-oracle") ||
-        !FSP_CreateDirectoryRecursive(cache_dir) ||
-        !FSP_JoinPath(out_path, out_path_size, cache_dir, "MINI.DAT") ||
-        !asset_extract_virtual_path(virtual_path, out_path)) {
-        if (out_path_size > 0u) out_path[0] = '\0';
-        return 0;
-    }
-    return 1;
-}
-
 static int m11_csb_hint_oracle_resolve_native_save(
     const char *data_dir, const char *requested_path,
     char *out_path, size_t out_path_size)
@@ -24751,31 +24728,29 @@ static int m11_csb_hint_oracle_resolve_native_save(
     }
     if (!asset_find_by_md5(data_dir, M11_CSB_HINT_ORACLE_ATARI_R1_MINI_MD5,
                            found, (int)sizeof(found), 8)) return 0;
-    return m11_csb_hint_oracle_materialize_virtual_save(found, out_path,
-                                                         out_path_size);
+    if (strlen(found) >= out_path_size) return 0;
+    memcpy(out_path, found, strlen(found) + 1u);
+    return 1;
 }
 
 static int m11_csb_hint_oracle_read_native_save(
     const char *path, CSB_V1_AtariSaveInfo *out_info)
 {
-    FILE *file;
-    long size;
-    uint8_t *bytes;
+    uint8_t *bytes = NULL;
+    size_t byte_count = 0u;
     int ok;
-    if (!path || !path[0] || !out_info || !(file = fopen(path, "rb"))) return 0;
-    if (fseek(file, 0, SEEK_END) != 0 || (size = ftell(file)) <= 0 ||
-        fseek(file, 0, SEEK_SET) != 0) {
-        fclose(file);
-        return 0;
-    }
-    bytes = (uint8_t *)malloc((size_t)size);
-    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
+    if (!path || !path[0] || !out_info) return 0;
+    /* MINI.DAT may be an STX/ADF member nested in an archive.  Read that
+     * original member into RAM so starting the Utility Disk never creates a
+     * writable game-data cache beside the user's media. */
+    if (!(strstr(path, "::")
+              ? asset_read_virtual_path_alloc(path, &bytes, &byte_count)
+              : asset_read_path_alloc(path, &bytes, &byte_count)) ||
+        byte_count == 0u) {
         free(bytes);
-        fclose(file);
         return 0;
     }
-    fclose(file);
-    ok = csb_v1_atari_save_decode_pc34_compat(bytes, (size_t)size, out_info) ==
+    ok = csb_v1_atari_save_decode_pc34_compat(bytes, byte_count, out_info) ==
          CSB_V1_ATARI_SAVE_OK;
     free(bytes);
     return ok;
