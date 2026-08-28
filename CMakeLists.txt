@@ -19691,6 +19691,22 @@ endif()
         COMMAND test_dm2_v1_save_load_real_data
     )
 
+    add_executable(test_dm2_v1_sksave_zip_real_data
+        tests/test_dm2_v1_sksave_zip_real_data.c
+    )
+    target_include_directories(test_dm2_v1_sksave_zip_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_sksave_zip_real_data PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_sksave_zip_real_data PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_sksave_zip_real_data
+        COMMAND test_dm2_v1_sksave_zip_real_data
+    )
+    set_tests_properties(dm2_v1_sksave_zip_real_data PROPERTIES SKIP_RETURN_CODE 77)
+
     # ── DM2-009: savegame timer payload materialisation (GAME_LOAD order) ──
     add_executable(test_dm2_v1_save_timers_pc34_compat
         tests/test_dm2_v1_save_timers_pc34_compat.c

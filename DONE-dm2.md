@@ -19,6 +19,10 @@ Reviewed 2026-08-25. Completed work only.
 - The authentic PC-DOS ZIP now starts through both CLI and the start menu.
   M12 retains its verified `data/GRAPHICS.DAT` and `data/DUNGEON.DAT` virtual
   paths and the native DM2 boot owner reads them only in RAM.
+- The authentic PC-DOS ZIP SKSAVE corpus is now also read directly in memory.
+  The source scanner recognises all four `data/sksaveN.dat` primaries and four
+  backups, records virtual archive paths and complete-file hashes, and can
+  reread each receipt-bound payload without extracting a game-data member.
 - The authentic Amiga installer now binds its native big-endian, 16-colour
   `INTERFACE_GENERAL/0` PalIRGB field 0 rather than PC field `0xfe`/PAL16.
   Its runtime HUD uses the source palette's physical-index receipt, matching

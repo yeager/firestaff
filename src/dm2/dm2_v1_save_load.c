@@ -14,6 +14,7 @@
 
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_new_game.h"
+#include "asset_find_by_hash.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -27,6 +28,15 @@
 
 #define DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP 64u
 #define DM2_SK_CORPUS_RECURSE_DEPTH 4
+
+/* Original saves may remain inside the supplied retail ZIP. */
+static int dm2_sksave_read_path(const char *path, uint8_t **out, size_t *size)
+{
+    if (!path || !out || !size) return 0;
+    return strstr(path, "::")
+        ? asset_read_virtual_path_alloc(path, out, size)
+        : asset_read_path_alloc(path, out, size);
+}
 
 /* This is the retired 56-byte D2RS diagnostic envelope, not SKProject's
  * 60-byte s_savegamebuffer. Keep the diagnostic codec byte-exact so its
@@ -455,31 +465,25 @@ typedef enum {
 static DM2_SKCorpusProbeStatus dm2_sksave_probe_path(const char *path,
                                                       size_t *out_payload_size)
 {
-    FILE *f;
+    uint8_t *bytes = NULL;
     uint8_t hdr[42];
-    long end_pos;
+    size_t byte_count = 0u;
 
     if (out_payload_size) *out_payload_size = 0;
     if (!path || !path[0]) return DM2_SK_CORPUS_MISSING;
-    f = fopen(path, "rb");
-    if (!f) return DM2_SK_CORPUS_MISSING;
-    if (fread(hdr, sizeof(hdr), 1, f) != 1) {
-        fclose(f);
+    if (!dm2_sksave_read_path(path, &bytes, &byte_count)) return DM2_SK_CORPUS_MISSING;
+    if (byte_count < sizeof(hdr)) {
+        free(bytes);
         return DM2_SK_CORPUS_INVALID;
     }
+    memcpy(hdr, bytes, sizeof(hdr));
     if (!dm2_sl_header_valid(hdr)) {
-        fclose(f);
+        free(bytes);
         return DM2_SK_CORPUS_INVALID;
     }
-    if (fseek(f, 0, SEEK_END) != 0) {
-        fclose(f);
-        return DM2_SK_CORPUS_INVALID;
-    }
-    end_pos = ftell(f);
-    fclose(f);
-    if (end_pos < (long)sizeof(hdr)) return DM2_SK_CORPUS_INVALID;
+    free(bytes);
     if (out_payload_size) {
-        *out_payload_size = (size_t)end_pos - sizeof(hdr);
+        *out_payload_size = byte_count - sizeof(hdr);
     }
     return DM2_SK_CORPUS_VALID;
 }
@@ -680,17 +684,21 @@ static int dm2_sksave_root_variant_path(const char *save_base,
         format_count = 4u;
     }
     for (unsigned int i = 0u; i < format_count; ++i) {
-        FILE *file;
+        uint8_t *bytes = NULL;
+        size_t byte_count = 0u;
+        int archive = strstr(save_base, ".zip") != NULL &&
+            strstr(save_base, "::") == NULL;
         if (last_session) {
-            snprintf(out_path, out_path_size, "%s/%s", save_base, formats[i]);
+            snprintf(out_path, out_path_size, archive ? "%s::data/%s" : "%s/%s",
+                     save_base, formats[i]);
         } else {
-            snprintf(out_path, out_path_size, "%s/", save_base);
+            snprintf(out_path, out_path_size, archive ? "%s::data/" : "%s/",
+                     save_base);
             snprintf(out_path + strlen(out_path),
                      out_path_size - strlen(out_path), formats[i], slot);
         }
-        file = fopen(out_path, "rb");
-        if (file) {
-            fclose(file);
+        if (dm2_sksave_read_path(out_path, &bytes, &byte_count)) {
+            free(bytes);
             return 1;
         }
     }
@@ -700,22 +708,14 @@ static int dm2_sksave_root_variant_path(const char *save_base,
 
 static uint32_t dm2_sksave_corpus_file_hash(const char *path)
 {
-    FILE *file;
-    uint8_t buffer[4096];
+    uint8_t *bytes = NULL;
     uint32_t hash = 2166136261u;
-    size_t read_count;
-
-    if (!path || !path[0] || !(file = fopen(path, "rb"))) {
+    size_t byte_count = 0u;
+    if (!path || !path[0] || !dm2_sksave_read_path(path, &bytes, &byte_count)) {
         return 0u;
     }
-    while ((read_count = fread(buffer, 1u, sizeof(buffer), file)) != 0u) {
-        hash = dm2_sksave_corpus_payload_hash(buffer, read_count, hash);
-    }
-    if (ferror(file)) {
-        fclose(file);
-        return 0u;
-    }
-    fclose(file);
+    hash = dm2_sksave_corpus_payload_hash(bytes, byte_count, hash);
+    free(bytes);
     return hash;
 }
 
@@ -725,11 +725,11 @@ static void dm2_sksave_corpus_classify_payload(
     size_t payload_size,
     int words_big_endian)
 {
-    FILE *f;
     uint8_t *payload;
+    uint8_t *file_bytes = NULL;
+    size_t file_byte_count = 0u;
     DM2_V1_SaveCandidate candidate;
     DM2_V1_OriginalRawDungeonReceipt raw_dungeon;
-    int status = 0;
     int importable_kind_ok = 0;
     DM2_SKSaveKind save_kind = DM2_SK_SAVE_KIND_NONE;
     uint32_t initial_file_hash;
@@ -746,23 +746,21 @@ static void dm2_sksave_corpus_classify_payload(
         receipt->import_rejected_candidate_count++;
         return;
     }
-    f = dm2_sl_open_valid_payload(path, &status);
-    if (!f) {
+    if (!dm2_sksave_read_path(path, &file_bytes, &file_byte_count) ||
+        file_byte_count != payload_size + 42u ||
+        !dm2_sl_header_valid(file_bytes)) {
+        free(file_bytes);
         receipt->import_rejected_candidate_count++;
         return;
     }
     payload = (uint8_t *)malloc(payload_size);
     if (!payload) {
-        fclose(f);
+        free(file_bytes);
         receipt->import_rejected_candidate_count++;
         return;
     }
-    if (fread(payload, 1, payload_size, f) != payload_size) {
-        free(payload);
-        fclose(f);
-        receipt->import_rejected_candidate_count++;
-        return;
-    }
+    memcpy(payload, file_bytes + 42u, payload_size);
+    free(file_bytes);
     memset(&candidate, 0, sizeof(candidate));
     memset(&raw_dungeon, 0, sizeof(raw_dungeon));
     if (dm2_v1_session_parse_save_candidate(&candidate, payload,
@@ -774,7 +772,6 @@ static void dm2_sksave_corpus_classify_payload(
                 payload, payload_size, words_big_endian, &raw_dungeon) ||
             !raw_dungeon.valid) {
             free(payload);
-            fclose(f);
             receipt->import_rejected_candidate_count++;
             return;
         }
@@ -789,7 +786,6 @@ static void dm2_sksave_corpus_classify_payload(
      * header/file hash and payload observation. */
     if (source_file_hash == 0u || source_file_hash != initial_file_hash) {
         free(payload);
-        fclose(f);
         receipt->import_rejected_candidate_count++;
         return;
     }
@@ -854,7 +850,6 @@ static void dm2_sksave_corpus_classify_payload(
                     : 0x32534b43u);
     }
     free(payload);
-    fclose(f);
 }
 
 static void __attribute__((unused)) dm2_sksave_corpus_probe_candidate(
@@ -1015,36 +1010,23 @@ static int dm2_sksave_read_valid_payload(const char *path,
                                          size_t out_capacity,
                                          size_t *out_payload_size)
 {
-    FILE *f;
-    int status = 0;
-    long payload_start;
-    long end_pos;
+    uint8_t *bytes = NULL;
+    size_t byte_count = 0u;
     size_t payload_size;
 
     if (out_payload_size) *out_payload_size = 0u;
     if (!path || !out_payload || out_capacity == 0u || !out_payload_size) {
         return -1;
     }
-    f = dm2_sl_open_valid_payload(path, &status);
-    if (!f) return -1;
-    payload_start = ftell(f);
-    if (payload_start < 0 || fseek(f, 0, SEEK_END) != 0) {
-        fclose(f);
+    if (!dm2_sksave_read_path(path, &bytes, &byte_count) ||
+        byte_count <= 42u || !dm2_sl_header_valid(bytes)) {
+        free(bytes);
         return -1;
     }
-    end_pos = ftell(f);
-    if (end_pos < payload_start) {
-        fclose(f);
-        return -1;
-    }
-    payload_size = (size_t)(end_pos - payload_start);
-    if (payload_size == 0u || payload_size > out_capacity ||
-        fseek(f, payload_start, SEEK_SET) != 0 ||
-        fread(out_payload, 1u, payload_size, f) != payload_size) {
-        fclose(f);
-        return -1;
-    }
-    fclose(f);
+    payload_size = byte_count - 42u;
+    if (payload_size > out_capacity) { free(bytes); return -1; }
+    memcpy(out_payload, bytes + 42u, payload_size);
+    free(bytes);
     *out_payload_size = payload_size;
     return 0;
 }

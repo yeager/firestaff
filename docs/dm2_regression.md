@@ -162,12 +162,14 @@ Per `docs/dm2_platform_build.md`, the documented CMake should link
 
 **Severity**: MEDIUM — DM2 cannot use shared M10 infrastructure until linked.
 
-### 5.2 Zip Extraction Not Implemented
+### 5.2 Native ZIP Reading
 
-`dm2_v1_game.c` explicitly prints: "dungeon files need to be extracted from
-zip archives first". This is a known blocker.
-
-**Severity**: HIGH — no game can run without it.
+Resolved: supported original DM2 ZIP members are read by Firestaff's native
+archive resolver and kept in memory. The PC-DOS SKSAVE corpus path is covered
+by a real-data regression that scans four primary saves and four backups from
+the retail archive, then rereads a receipt-bound payload without materialising
+any member on disk. Unsupported containers remain explicit input errors rather
+than extraction fallbacks.
 
 ### 5.3 V2 Files in Wrong Library
 

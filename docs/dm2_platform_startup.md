@@ -97,11 +97,12 @@ dm2_v1_load_dungeon(state)
       → rd16(dat+0) = level_count
       → for each level: rd16(dat+offset) = level_type, width, height, offset
       → store raw_data (malloc'd)
-    → if not found: return -1 (dungeon files in zip archives)
+    → if found: retain the resolved loose or virtual archive path
 ```
 
-DM2 dungeon files need extraction from zip archives before loading.
-DM1 dungeon files are typically loose on disk and hash-found directly.
+DM2 resolves supported ZIP members through the native archive reader and keeps
+the member bytes in memory. No game-data member is extracted as part of the
+runtime path. Loose original files continue to use the same hash-bound loader.
 
 ### Save Game Load
 
@@ -109,3 +110,10 @@ DM1 dungeon files are typically loose on disk and hash-found directly.
 - `dm2_v1_save_game(path, state, size)` — serialize to disk
 - `dm2_v1_load_game(path, state, max_size)` — deserialize
 - Source: SKULL.ASM save/load routines
+
+The source corpus scanner accepts a retail PC-DOS ZIP root as well as a loose
+save directory. It forms virtual `archive.zip::data/sksaveN.dat` paths, checks
+the original 42-byte header, and binds each accepted payload to a complete-file
+hash before rereading it in memory. This applies to diagnostic census and the
+receipt-bound importer; it does not claim that the still-gated full GAME_LOAD
+handoff is retail-complete.
