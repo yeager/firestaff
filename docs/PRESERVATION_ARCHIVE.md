@@ -1,8 +1,9 @@
 # External preservation archive
 
-Historiska arbetskörningar och genererade analysutdrag ligger utanför Git-
-repot på externa disken. De är flyttade från repot 2026-08-08 för att hålla
-bygget och användardokumentationen rena. De aktiva verifierarna påverkas inte.
+Historical work runs and generated analysis extracts are stored outside the Git
+repository on the external drive. They were moved out of the repository on
+2026-08-08 to keep builds and user documentation clean. Active verifiers are
+unaffected.
 
 ## Archive location
 
@@ -16,15 +17,15 @@ SHA-256-manifest:
 /Volumes/Extern-disk/Documents/Firestaff/archive/firestaff-archive-sha256-20260808.txt
 ```
 
-Manifestet omfattar 403 filer.
+The manifest covers 403 files.
 
-| Tidigare sökväg | Ny sökväg | Innehåll | Status |
+| Previous path | New path | Contents | Status |
 |---|---|---|---|
-| `verification-dm1/n2-dm1-v1-movement-core-probe-20260505/` | `archive/verification/n2-dm1-v1-movement-core-probe-20260505/` | Historisk DM1 movement-probe-output | Arkiverad |
-| `verification-m11/` | `archive/verification/verification-m11/` | Historiska M11-captures, logs och sammanfattningar | Arkiverad |
-| `verification-m12/` | `archive/verification/verification-m12/` | Historiska M12/V2- och CSB/DM2-arbetskörningar | Arkiverad |
-| `verification-m13/` | `archive/verification/verification-m13/` | Historisk CSB/DM2 source-lock-rapport | Arkiverad |
-| `artifacts/firestaff/spanish-graphics-dat/` | `archive/research/spanish-graphics-dat/` | Genererade textanalysutdrag från en spansk GRAPHICS.DAT-källa | Forskningsarkiv |
+| `verification-dm1/n2-dm1-v1-movement-core-probe-20260505/` | `archive/verification/n2-dm1-v1-movement-core-probe-20260505/` | Historical DM1 movement-probe output | Archived |
+| `verification-m11/` | `archive/verification/verification-m11/` | Historical M11 captures, logs, and summaries | Archived |
+| `verification-m12/` | `archive/verification/verification-m12/` | Historical M12/V2 and CSB/DM2 work runs | Archived |
+| `verification-m13/` | `archive/verification/verification-m13/` | Historical CSB/DM2 source-lock report | Archived |
+| `artifacts/firestaff/spanish-graphics-dat/` | `archive/research/spanish-graphics-dat/` | Generated text-analysis extracts from a Spanish GRAPHICS.DAT source | Research archive |
 
 ## What remains in the repository
 

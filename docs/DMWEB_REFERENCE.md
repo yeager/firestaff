@@ -253,36 +253,34 @@ The Saturn's DMDF (data) and DGN (dungeon geometry) formats are documented elsew
 | **DM Forums** | <https://www.dungeon-master.com/forum/> | Active community forum (now ~25 years old) |
 | **DM Wiki** | <http://dmwiki.atomas.com/> | CSBwin-focused wiki |
 
-### Lokalt spegel av dmweb.free.fr
+### Local mirror of dmweb.free.fr
 
-En komplett offline-kopia av `community/documentation/` finns nu
-under `reference/dmweb-community-docs/`. 43 sidor, 5.5 MB,
-genererad 2026-06-20.
+A complete offline copy of `community/documentation/` is now available under
+`reference/dmweb-community-docs/`. It contains 43 pages, totals 5.5 MB, and
+was generated on 2026-06-20.
 
-- `reference/dmweb-community-docs/INDEX.md` — mänskligt läsbar
-  innehållsförteckning med titlar, URL:er, breadcrumbs,
-  filstorlekar och meta-beskrivningar.
-- `reference/dmweb-community-docs/index.json` — maskinläsbar
-  version av samma data.
-- `reference/dmweb-community-docs/SCRAPE_LOG.md` — hämtningslogg
-  (timestamp, HTTP-status, storlek per sida).
+- `reference/dmweb-community-docs/INDEX.md` — human-readable table of contents
+  with titles, URLs, breadcrumbs, file sizes, and meta descriptions.
+- `reference/dmweb-community-docs/index.json` — machine-readable version of
+  the same data.
+- `reference/dmweb-community-docs/SCRAPE_LOG.md` — retrieval log
+  (timestamp, HTTP status, size per page).
 - `reference/dmweb-community-docs/crawl.sh` + `build_index.py` —
-  reproducibelt crawl-skript (1.2s fördröjning per request,
-  identifierande User-Agent).
+  reproducible crawl script (1.2s delay per request, identifying User-Agent).
 - `reference/dmweb-community-docs/html/` — raw HTML.
 
-Täcker fem ämnesområden:
+Covers five subject areas:
 
-| Sektion | Antal sidor |
+| Section | Page count |
 |---|---|
-| Copy Protection (Apple IIGS, Atari ST, generell + data-lagring på floppy) | 5 |
+| Copy Protection (Apple IIGS, Atari ST, general + data storage on floppy) | 5 |
 | Dungeon Master & Chaos Strikes Back (actions, attacks, creature generators, items, skills, GRAPHICS.DAT hidden code, GRAPHICS.DAT items 558–562) | 11 |
 | Dungeon Master: Nexus (DGN files, MNS files, item.ibs, file formats) | 5 |
 | File Formats (animation script, animations, data files, dungeon files, DM2 data files, DM2 music triggers, hint/oracle, layout coordinates, portrait files, saved-game files) | 11 |
 | Miscellaneous (DM Atari ST history, DM PC, DM SNES/Super Famicom, FTL sound adapter, game versions) | 5 |
 
-Använd den lokala kopian som första källa vid research; hämta
-om sajten är nere eller långsam.
+Use the local copy as the primary research source; fetch again if the site is
+down or slow.
 
 ---
 

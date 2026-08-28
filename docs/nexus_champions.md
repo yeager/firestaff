@@ -1,35 +1,34 @@
-# Dungeon Master Nexus — championstatus
+# Dungeon Master Nexus — champion status
 
-## Källbunden roster
+## Source-bound roster
 
-Den riktiga europeiska `RLOWFIX.BIN`-filen innehåller en `RES*`-directory och
-en `PLRD`-resource med 20 poster à 64 byte. Firestaff läser de numeriska
-fält, klass-/nivåfält, portraitordinals och equipmentord som faktiskt ligger i
-PLRD. `FACE.BIN` binds separat till 20 riktiga portraitrecords.
+The real European `RLOWFIX.BIN` file contains a `RES*` directory and a `PLRD`
+resource with 20 records of 64 bytes each. Firestaff reads the numeric fields,
+class/level fields, portrait ordinals, and equipment words actually stored in
+PLRD. `FACE.BIN` is bound separately to 20 real portrait records.
 
-Den tidigare åttamannatabellen och den 24-poster stora hårdkodade rosterlistan
-är inte Nexus-källa. De får endast användas av uttryckliga äldre fixture-tester.
-24 är lagringskapacitet, inte verifierat antal retail-champions.
+The earlier eight-character table and the hard-coded 24-record roster list are
+not Nexus source. They may only be used by explicit legacy fixture tests.
+Twenty-four is storage capacity, not the verified number of retail champions.
 
-## Namn och text
+## Names and text
 
-PLRD pekar på `TABL`-poster. Firestaff behåller både index och rå 16-bitars
-glyph-koder, men ingen Saturn TEXT/FONT256-konsument har ännu bevisat hur de
-blir synlig text. Därför publicerar production inte namn som ASCII, Shift-JIS,
-katakana eller svenska översättningar.
+PLRD points to `TABL` records. Firestaff retains both the indices and raw
+16-bit glyph codes, but no Saturn TEXT/FONT256 consumer has yet demonstrated
+how they become visible text. Production therefore does not publish names as
+ASCII, Shift-JIS, katakana, or Swedish translations.
 
-## Vad som inte får ärvas från DM1/DM2
+## What must not be inherited from DM1/DM2
 
-DM1-/DM2-källor får inte fylla i Nexus-statistik, class semantics, combat,
-spellkostnader, XP, drops, item-use, food/water, alignment eller resurrection.
-Sådana routes är blockerade eller endast fixture-isolerade tills en Nexus-
-disassembly/capture binder dem. En PLRD-byte får inte ensam ges en DM1-
-betydelse.
+DM1/DM2 sources must not fill in Nexus statistics, class semantics, combat,
+spell costs, XP, drops, item use, food/water, alignment, or resurrection.
+Such routes are blocked or fixture-isolated only until a Nexus disassembly or
+capture binds them. A PLRD byte must not be assigned a DM1 meaning by itself.
 
-## Källor
+## Sources
 
-- DMWebs Nexus file formats och `DMNDataFileDecoder.vbs`-strukturer.
-- `src/nexus/nexus_v1_champions.c` och
+- DMWeb's Nexus file formats and `DMNDataFileDecoder.vbs` structures.
+- `src/nexus/nexus_v1_champions.c` and
   `src/nexus/nexus_v1_rlowfix_text.c`.
-- `tests/test_nexus_v1_champion_plrd.c` mot den riktiga RLOWFIX-korpusen.
+- `tests/test_nexus_v1_champion_plrd.c` against the real RLOWFIX corpus.
 - [NEXUS_STRICT_FIDELITY_INVENTORY.md](NEXUS_STRICT_FIDELITY_INVENTORY.md).

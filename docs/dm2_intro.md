@@ -1,42 +1,42 @@
-# DM2 uppstart och media
+# DM2 startup and media
 
-## PC-versionen
+## PC version
 
-Den hash-verifierade PC-versionen startar från originalets `GRAPHICS.DAT`.
-`SHOW_MENU_SCREEN` hämtar kreditsidan från `TITLE/0/dt07/1` och menyn från
-`TITLE/0/dt07/4`; menyn visas först och krediterna visas endast efter sitt
-separata menyval. Firestaff får därför aldrig visa kreditsidan vid uppstart
-eller använda dess palett för menyn.
+The hash-verified PC version starts from the original `GRAPHICS.DAT`.
+`SHOW_MENU_SCREEN` obtains the credits page from `TITLE/0/dt07/1` and the menu
+from `TITLE/0/dt07/4`; the menu is shown first and the credits are shown only
+after their separate menu selection. Firestaff must therefore never show the
+credits page at startup or use its palette for the menu.
 
 SCK:s [DM2-katalog](http://greatstone.free.fr/dm/g_dm2.html) listar
-`GRAPHICS.DAT` för PC 0.9, PC 1.0 och PC-demot, men inte några fristående
-PC-filer för titel eller swoosh. En kodväg som kan anropa ett externt
-animationsprogram är alltså inte bevis för att sådan media finns i den
-valda PC-utgåvan. Saknas verifierad originalmedia ska Firestaff inte ersätta
-den med en påhittad sekvens.
+`GRAPHICS.DAT` for PC 0.9, PC 1.0, and the PC demo, but no standalone PC files
+for the title or swoosh. A code path that can call an external animation
+program is therefore not evidence that such media exists in the selected PC
+edition. If verified original media is absent, Firestaff must not replace it
+with an invented sequence.
 
-## Andra utgåvor
+## Other editions
 
-DM2 har inte en gemensam uppstartsfiluppsättning för alla plattformar. Den
-verifierade PC-DOS-installationen har dessutom en yttre kedja före
-`SKULL.EXE`: `DM2.BAT` startar `IBMIOP`, och originalfilerna `SPLASH`, `FTL`,
-`INTRO`, `END` och `INTRPLAY.PCX` hör till den. `INTRO` och `END` innehåller
-Interplay MVE-data. Först när den kedjan lämnar över till `SKULL.EXE` gäller
-den statiska GDAT-menyn ovan.
+DM2 does not have a shared startup file set for every platform. The verified
+PC-DOS installation also has an outer chain before `SKULL.EXE`: `DM2.BAT`
+starts `IBMIOP`, and the original `SPLASH`, `FTL`, `INTRO`, `END`, and
+`INTRPLAY.PCX` files belong to it. `INTRO` and `END` contain Interplay MVE data.
+Only once that chain hands off to `SKULL.EXE` does the static GDAT menu above
+apply.
 
-Greatstone visar bland annat `swsh.dat`, `titl.dat` och `enda.dat` för
-Amiga-, MegaCD- och Sega CD-utgåvor, `swoosh`/`title`/`end` för flera japanska
-datorutgåvor samt QuickTime-baserade `.moov`-filer på Macintosh. De formaten
-är egna plattformsmedia och får inte behandlas som PC-data eller kopieras in i
-en annan sessions kedja. Firestaff spelar nu Amiga Englishs hashverifierade
-`SWSH.DAT` → `TITL.DAT`-bildsekvenser med deras ursprungliga 50 Hz-VBlank- och
-bildstegstider. `ENDA.DAT` används på originalets avslutsväg. Alla tre läses
-från den sexdelade ZIP → ADF → LZX-kedjan direkt i minnet. Amiga-ljudposterna
-är ännu inte kopplade till en mixer och presenteras därför inte som färdiga.
-PC-DOS MVE är fortfarande spärrad tills dess bild-, ljud- och IBMIOP-tidsväg
-har en riktig avkodare.
+Greatstone lists, among other files, `swsh.dat`, `titl.dat`, and `enda.dat` for
+the Amiga, MegaCD, and Sega CD editions; `swoosh`/`title`/`end` for several
+Japanese computer editions; and QuickTime-based `.moov` files on Macintosh.
+These formats are platform-specific media and must not be treated as PC data or
+copied into another session's chain. Firestaff now plays Amiga English's
+hash-verified `SWSH.DAT` → `TITL.DAT` image sequences with their original
+50 Hz VBlank and frame-step timing. `ENDA.DAT` is used on the original ending
+path. All three are read directly into memory from the six-part ZIP → ADF → LZX
+chain. The Amiga audio records are not yet connected to a mixer and are
+therefore not presented as complete. PC-DOS MVE remains gated until its image,
+audio, and IBMIOP timing path has a real decoder.
 
-## Källor
+## Sources
 
 - SKProject `SKWIN/SkWinCore.cpp`, `SHOW_MENU_SCREEN`, rader 55182–55205.
 - SKProject `SKWIN/defines.h`, `GDAT_CATEGORY_TITLE`.

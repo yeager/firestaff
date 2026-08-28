@@ -1,6 +1,6 @@
 # Nexus V1 — Audio Format
 
-> Statusen är källbunden metadata, inte färdig playback. Se
+> The status is source-bound metadata, not completed playback. See
 > [`NEXUS_STALE_CLAIM_AUDIT.md`](NEXUS_STALE_CLAIM_AUDIT.md).
 
 ## Overview

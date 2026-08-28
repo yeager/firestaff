@@ -1,44 +1,44 @@
-# Dungeon Master Nexus — verifierade features och öppna gap
+# Dungeon Master Nexus — verified features and open gaps
 
-Det här dokumentet skiljer mellan riktiga bytes-/formatbevis och features som
-fortfarande saknar Saturn-runtime-bindning.
+This document distinguishes between real byte/format evidence and features
+that still lack Saturn runtime binding.
 
-## Verifierade dataformat
+## Verified data formats
 
-- `LEV00.DGN`–`LEV15.DGN`: riktiga DGN-källor; Structure1B-census och
-  Structure2-textur-/palettebytes är verifierade på den lokala korpusen.
-- `.MNS`: 30 riktiga DMDF-kontainrar och deras TEXT-/modelldeskriptorer är
-  inventerade; Structure3-faceägare och VDP1-kommandoordning är inte bevisade.
-- `MENU.BPK`: 162 riktiga PRS3-ytor dekoderas med DMWeb-reglerna och går till
-  en source-bound indexed-pixelreceipt; CLUT, destination och menysemantik
-  saknas fortfarande.
+- `LEV00.DGN`–`LEV15.DGN`: real DGN sources; the Structure1B census and
+  Structure2 texture/palette bytes are verified in the local corpus.
+- `.MNS`: 30 real DMDF containers and their TEXT/model descriptors are
+  inventoried; the Structure3 face owner and VDP1 command order are unproven.
+- `MENU.BPK`: 162 real PRS3 surfaces are decoded with DMWeb rules into a
+  source-bound indexed-pixel receipt; CLUT, destination, and menu semantics
+  are still missing.
 - `STABG.BIN`, `SMAP00`–`SMAP15`, `ITEM.IBS`, `FACE.BIN` och `STONE.BIN` har
   separata source-owned avkodnings- och palette receipts.
-- `SLEV*.BIN`, `SNDLEV*.SAL`/`.MAP` och `SDDRVS.TSK` har bounded byte-/entry-
-  receipts; scriptdispatch och ljudhändelser är inte aktiverade.
+- `SLEV*.BIN`, `SNDLEV*.SAL`/`.MAP`, and `SDDRVS.TSK` have bounded byte/entry
+  receipts; script dispatch and sound events are not enabled.
 
-## Medvetet ej påstådda features
+## Features deliberately not claimed
 
-Firestaff påstår inte att en egen software-rasterizer är Saturns VDP1-output,
-att viewportens perspektiv, fyra-rutors avstånd, creature-rendering eller
-VDP2-composition har parity, eller att CD-audio/SAL kan spelas korrekt. De
-nuvarande host-raster- och gameplaymodulerna är no-draw/fail-closed där
-source-owned transform, pixel/palette och runtime-consumer saknas.
+Firestaff does not claim that its own software rasterizer is Saturn's VDP1
+output, that the viewport perspective, four-square distance, creature
+rendering, or VDP2 composition has parity, or that CD audio/SAL can play
+correctly. Current host raster and gameplay modules are no-draw/fail-closed
+where source-owned transform, pixel/palette, and runtime consumer are missing.
 
-Inte heller är FMV-dekodning, SRAM-format, controllersemantik, shop-actions,
-drops, spells, combat eller textmapping verifierade bara för att motsvarande
-filer finns.
+Nor are FMV decoding, SRAM format, controller semantics, shop actions, drops,
+spells, combat, or text mapping verified merely because the corresponding files
+exist.
 
-## Prioriterade nästa bevis
+## Priority next evidence
 
-1. Autentiserad startup/menu-capture: VDP2-lager, CLUT, timing och verklig
-   menysekvens.
-2. Autentiserad VDP1-capture: DGN Structure3-face, mesh, texture upload och
-   command coordinates.
-3. Saturn input/HUD-capture: `STABG.BIN` och runtime-state över viewport.
-4. SLEV/SAL-capture: event-/actiondispatch och MAP-selectorägare.
+1. Authenticated startup/menu capture: VDP2 layers, CLUT, timing, and real
+   menu sequence.
+2. Authenticated VDP1 capture: DGN Structure3 faces, mesh, texture upload,
+   and command coordinates.
+3. Saturn input/HUD capture: `STABG.BIN` and runtime state over the viewport.
+4. SLEV/SAL capture: event/action dispatch and MAP selector ownership.
 
 Se [NEXUS_STRICT_FIDELITY_INVENTORY.md](NEXUS_STRICT_FIDELITY_INVENTORY.md) och
-[NEXUS_RUNTIME_CAPTURE.md](NEXUS_RUNTIME_CAPTURE.md) för den aktuella
-admissionsgränsen. DMWeb och Greatstone används som formatreferenser; de
-ersätter inte en exekverad Saturn-capture.
+[NEXUS_RUNTIME_CAPTURE.md](NEXUS_RUNTIME_CAPTURE.md) for the current admission
+boundary. DMWeb and Greatstone are used as format references; they do not
+replace an executed Saturn capture.

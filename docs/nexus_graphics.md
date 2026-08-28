@@ -1,7 +1,7 @@
 # Nexus V1 Graphics / Rendering Audit
 
-> Format- och rasteranteckningarna här är inte ett parity-påstående. Se
-> [`NEXUS_STALE_CLAIM_AUDIT.md`](NEXUS_STALE_CLAIM_AUDIT.md) för äldre
+> The format and raster notes here are not a parity claim. See
+> [`NEXUS_STALE_CLAIM_AUDIT.md`](NEXUS_STALE_CLAIM_AUDIT.md) for older
 > “draws/transformed/loaded”-formuleringar som endast betyder diagnostic
 > receipt.
 
@@ -71,15 +71,6 @@ The retail files contain polygon/texture candidates, and Firestaff has bounded
 parsers and host raster primitives. That is not proof that the host pipeline
 matches Saturn VDP1 or that the route is production-renderable.
 
-A development-only, same-session retail JP capture now also verifies one
-concrete VDP1 transport operation: SH-2 PC `0x060135e8` copies the 2 KiB RAM
-span `0x06027874..0x06028074` to VDP1 VRAM
-`0x10a00..0x11200`, with Saturn's 16-bit word byte order. The receipt is
-checked by `scripts/verify_nexus_vdp1_ram_to_vram_copy.py`. It is deliberately
-only a transport fact: the source buffer has no admitted ISO-file owner, and
-the command, palette, display layer, placement and title meaning are still
-unknown. It must not be used to enable the normal renderer.
-
 The admitted pipeline is instead:
 1. Load and hash-bind real DGN/MNS/DMDF bytes.
 2. Record bounded Structure2/Structure3/texture evidence.
@@ -91,13 +82,13 @@ candidates per grid square and direction. Each candidate may contain a vertex
 list, texture selector and normal, but its Saturn consumer is not yet bound.
 Do not turn this source record into a host-rendered wall by assumption.
 
-Floor/ceiling i DGN är source-data-/geometrykandidater. `nexus_viewport.c`
-får inte marknadsföras som Saturnens presenterade floor/ceiling; projection,
-material och VDP1/VDP2-placering är capture-gated.
+Floor/ceiling in DGN are source-data/geometry candidates. `nexus_viewport.c`
+must not be presented as Saturn's displayed floor/ceiling; projection,
+material, and VDP1/VDP2 placement are capture-gated.
 
-Creatures: DMDF/MNS bytes kan läsas till bounded mesh-/texture-receipts.
-Transform, depth-order, palette och VDP1-command ownership är fortfarande
-obundna; detta är inte en färdig creature-renderer.
+Creatures: DMDF/MNS bytes can be read into bounded mesh/texture receipts.
+Transform, depth order, palette, and VDP1 command ownership remain unbound;
+this is not a completed creature renderer.
 
 ## 4. Math3D System (nexus_v1_math3d.h/c)
 

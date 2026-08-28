@@ -1,7 +1,7 @@
 # Nexus V1 — Content Differences Between Versions
 
-> Historisk innehållsjämförelse. Rader om DM1-härledda stats, roster,
-> språk, rendering och save/audio ska inte läsas som implementeringsstatus.
+> Historical content comparison. Lines about DM1-derived stats, roster,
+> language, rendering, and save/audio must not be read as implementation status.
 > Se [`NEXUS_STALE_CLAIM_AUDIT.md`](NEXUS_STALE_CLAIM_AUDIT.md).
 
 ## Sources
@@ -19,9 +19,9 @@
 
 ## 1. Content Overview: What Changed vs. DM1
 
-Nexus är ett Saturn-spel med egen retailkorpus. Tabellen beskriver
-historiska/formatmässiga skillnader; den bevisar inte att Firestaffs
-DM1-kompatibilitet gäller Nexus runtime.
+Nexus is a Saturn game with its own retail corpus. The table describes
+historical/format differences; it does not prove that Firestaff's DM1
+compatibility applies to Nexus runtime.
 
 | Aspect | DM1 (1987) | Nexus V1 (1998) | Delta |
 |--------|-----------|-----------------|-------|
@@ -48,9 +48,10 @@ DM1-kompatibilitet gäller Nexus runtime.
 ## 2. What Nexus Adds (New Content)
 
 ### 2.1 3D Graphics Pipeline
-- Retailen innehåller DGN/MNS polygon- och materialkandidater för Saturn VDP1.
-- Firestaff behåller dem som bounded receipts; host fallback och färdig
-  polygonpresentation är inte tillåtna utan capture.
+- The retail release contains DGN/MNS polygon and material candidates for
+  Saturn VDP1.
+- Firestaff retains them as bounded receipts; host fallback and completed
+  polygon presentation are not permitted without capture.
 - Per-level 3D wall/floor/ceiling geometry embedded in DGN files
 - Edge-function triangle rasterizer
 - Z-buffer for correct wall occlusion
@@ -91,11 +92,11 @@ DM1-kompatibilitet gäller Nexus runtime.
 
 ## 3. What Nexus Preserves from DM1 (Untouched)
 
-### 3.1 Core Mechanics – inte automatiskt ärvda
-- 20 PLRD-records är source-admitted; namn, stats, inventory, spells och
-  actionsemantik kräver separata Saturn-konsumentbevis.
-- DGN square-/Structure-records får läsas som bounded data; deras runtime-
-  dispatch och state writes är inte bevisade genom DM1-likhet.
+### 3.1 Core Mechanics – not inherited automatically
+- Twenty PLRD records are source-admitted; names, stats, inventory, spells,
+  and action semantics require separate Saturn consumer evidence.
+- DGN square/Structure records may be read as bounded data; their runtime
+  dispatch and state writes are not proven by DM1 similarity.
 
 ### 3.2 Dungeon Layout
 - Nexus dungeon is based on DM1's dungeon layout

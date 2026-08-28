@@ -1,36 +1,35 @@
-# Theron JP-roster till startup-party (2026-08-10)
+# Theron JP Roster to Startup Party (2026-08-10)
 
-## Resultat
+## Result
 
-Den hashverifierade JP Track 02-rosterklustern kan nu användas vid startupens
-forcefield-handoff. `theron_v1_party_refresh_jp_source_records()` läser de
-åtta riktiga posterna via `theron_v1_track02_jp_roster_read()` och uppdaterar
-endast den redan valda party-state:n när varje vald champion matchar en
-source-record.
+The hash-verified JP Track 02 roster cluster can now be used during the
+startup forcefield handoff. `theron_v1_party_refresh_jp_source_records()`
+reads the eight real records through `theron_v1_track02_jp_roster_read()` and
+updates only the already selected party state when every selected champion
+matches a source record.
 
-Följande fält binds från bytesen i `TQJP02.bin`:
+The following fields are bound from the bytes in `TQJP02.bin`:
 
-- namn
-- HP, stamina och mana
-- de sju attributbytesen
-- de 16 skillbytesen och högsta skill per klass
-- primärklass härledd från dessa source skills
-- startup-namn och titlar kopieras från de verifierade råoffsetarna efter
-  byte-matchning; de skickas inte vidare från söksträngarnas hostkonstanter
+- name
+- HP, stamina, and mana
+- the seven attribute bytes
+- the 16 skill bytes and highest skill per class
+- primary class derived from those source skills
+- startup names and titles are copied from verified raw offsets after byte
+  matching; they are not passed through host constants for search strings
 
-JP-recorden ligger vid den verifierade råa rosterklustern `0xB3D98` och får
-endast användas med JP BIN-MD5 `b7afb338ad31be1025b53f9aff12d73a`. Den första
-Theron-posten verifieras lokalt som HP `175`, stamina `1500` och mana `35`.
+The JP records are located at the verified raw roster cluster `0xB3D98` and
+may only be used with JP BIN MD5 `b7afb338ad31be1025b53f9aff12d73a`. The first
+Theron record is locally verified as HP `175`, stamina `1500`, and mana `35`.
 
-## Gräns
+## Boundary
 
-Detta är en source-bound roster- och textpayload-bindning, inte ett bevis på
-originalets portrait-, palette-, font/VDC-text- eller T900-consumer.
-`portrait_index` lämnas därför
-`THERON_PORTRAIT_UNAVAILABLE`. Utrustning, inventory, use/equip/stack, RNG,
-AI, T700 och ljud öppnas inte av denna receipt.
+This is a source-bound roster and text-payload binding, not evidence for the
+original portrait, palette, font/VDC-text, or T900 consumer. `portrait_index`
+therefore remains `THERON_PORTRAIT_UNAVAILABLE`. Equipment, inventory,
+use/equip/stack, RNG, AI, T700, and sound are not enabled by this receipt.
 
-## Verifiering
+## Verification
 
 ```text
 ./build/test_theron_v1_track02_champion_roster                 PASS
@@ -41,4 +40,4 @@ FIRESTAFF_THERON_DATA=~/.firestaff/data/theron \
 cmake --build build --target firestaff --parallel 1             PASS
 ```
 
-Inga BIN-, BIOS- eller capturefiler läggs i repositoryt.
+No BIN, BIOS, or capture files are added to the repository.

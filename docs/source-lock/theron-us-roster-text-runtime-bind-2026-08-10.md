@@ -1,17 +1,17 @@
-# Theron US-rostertext: runtimebindning (2026-08-10)
+# Theron US Roster Text: Runtime Binding (2026-08-10)
 
-Den verifierade startup-runtimevägen använder nu
-`theron_v1_track02_catalog_startup_roster_names()` direkt på den autentiska
-Track 02-filen innan forcefield-party-init. För kända US- och JP-BIN ersätter
-den source-bundna katalogen hostens valfria namnlista. Alla namn behåller sin
-rå offset/proveniens i katalogen och skickas sedan till den befintliga
-party/HUD-textvägen.
+The verified startup runtime path now uses
+`theron_v1_track02_catalog_startup_roster_names()` directly on the authentic
+Track 02 file before forcefield party initialisation. For known US and JP BINs,
+the source-bound catalog replaces the host's optional name list. Every name
+retains its raw offset/provenance in the catalog and is then passed to the
+existing party/HUD text path.
 
-Detta täpper till en konkret avvikelse där ett värdlevererat namn kunde vinna
-över en riktig codonpost. Om katalogen inte kan verifieras avvisas handoffen
-utan partiell party-state.
+This closes a concrete discrepancy in which a host-supplied name could override
+a real codon record. If the catalog cannot be verified, the handoff is rejected
+without a partial party state.
 
-Gränsen är avsiktlig: detta bevisar Firestaffs textbindning, men inte att
-originalets HuC6280-textkonsument har samma byte-/font-/VDC-rutt. US-titlar,
-fontgrafik, JP-porträtt och originalets fulla presentation kräver fortsatt
-source-bound runtimecapture.
+The boundary is deliberate: this proves Firestaff's text binding, but not that
+the original HuC6280 text consumer has the same byte/font/VDC route. US titles,
+font graphics, JP portraits, and the original's full presentation still require
+a source-bound runtime capture.

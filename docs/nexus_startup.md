@@ -1,47 +1,48 @@
 # Dungeon Master Nexus — uppstartsstatus
 
-Detta är en evidensrapport för uppstarten, inte en specifikation av en färdig
-Nexus-startskärm.
+This is an evidence report for startup, not a specification for a completed
+Nexus startup screen.
 
 ## Verifierad initieringsordning
 
-`nexus_v1_init()` väljer först ett hashverifierat extracted-korpus när `DM.BIN`
-och den autentiska DGN-korpusen finns som riktiga lösa filer. `LEV00.DGN` är
-en titel-/entréresurs; den första spelbara nivån är `LEV01.DGN`. En giltig samlokaliserad retail-
-ISO kan därefter läsas som kompletterande källa för exakta ISO-medlemmar. Om
-endast ISO-data finns används ISO-läsaren direkt.
+`nexus_v1_init()` first selects a hash-verified extracted corpus when `DM.BIN`
+and the authentic DGN corpus are available as real loose files. `LEV00.DGN` is
+a title/entry resource; the first playable level is `LEV01.DGN`. A valid
+co-located retail ISO can then be read as a supplementary source for exact ISO
+members. If only ISO data is available, the ISO reader is used directly.
 
-Efter källval försöker motorn läsa riktiga `RLOWFIX.BIN`, startup-ytor,
-`FACE.BIN`, `FONT256.S2D`, ljudmetadata och övriga källfiler. Saknade eller
-obundna konsumenter får inte ersättas med syntetiska ytor. Titelstart får
-därför inte rapportera en spelposition förrän Saturns autentiska `LEV01`-
-position och riktning har fångats och bundits till samma runtime-källa.
+After source selection, the engine attempts to read real `RLOWFIX.BIN`, startup
+surfaces, `FACE.BIN`, `FONT256.S2D`, sound metadata, and other source files.
+Missing or unbound consumers must not be replaced with synthetic surfaces.
+Title startup must therefore not report a game position until Saturn's authentic
+`LEV01` position and direction have been captured and bound to the same runtime
+source.
 
 ## Verifierade startup-resurser
 
 | Resurs | Status |
 |---|---|
-| `TITLE.CG` + `TITLE.BIN` | MAPD/TIBG-avkodning och fem retailbilder verifierade för den kanoniska profilen och den dokumenterade engelska revisionen; VDP2-placering saknas |
+| `TITLE.CG` + `TITLE.BIN` | MAPD/TIBG decoding and five retail images verified for the canonical profile and documented English revision; VDP2 placement is missing |
 | `LOGOBG.DG2` | PP-pixlar och 256-entry BGR555-palette verifierade; lager/timing saknas |
-| `WARNING.BIN`, `GAMEOVER.BIN`, `STABG.BIN` | riktiga ytor avkodas och får bytesproveniens; presentation saknas |
-| `FACE.BIN` | 20 verkliga PRS3-porträtt, 56×56, med källpaletter; VDP1-destination saknas |
-| `FONT256.S2D` | 242 CG-tiles behålls i produktionskällan; Saturns page/attribute/glyph-mapping saknas |
+| `WARNING.BIN`, `GAMEOVER.BIN`, `STABG.BIN` | real surfaces are decoded and receive byte provenance; presentation is missing |
+| `FACE.BIN` | 20 real 56×56 PRS3 portraits with source palettes; VDP1 destination is missing |
+| `FONT256.S2D` | 242 CG tiles are retained in production source; Saturn page/attribute/glyph mapping is missing |
 | `MENU.BPK` | 162 PRS3-ytor avkodas till source-bound indexed bytes; menyordning, CLUT och VDP1/VDP2 saknas |
-| Mednafen visual baseline | Ren J-BIOS-fångst mot autentisk retail visar svart boot följt av original intro-FMV utan input; meny/LEV01-identitet saknas fortfarande |
+| Mednafen visual baseline | A clean J-BIOS capture against authentic retail shows black boot followed by the original intro FMV without input; menu/LEV01 identity remains missing |
 
-## Runtimegräns
+## Runtime boundary
 
-`firestaff_nexus` får inte presentera en hostbyggd titel, championmeny,
+`firestaff_nexus` must not present a host-built title, champion menu,
 portraitplacering eller textfooter som om den vore Saturn-output. M11-handoff
-och viewport förblir fail-closed tills en autentiserad Saturn-capture binder
+and viewport remain fail-closed until an authenticated Saturn capture binds
 resurs, palett, destination och timing.
 
 FONT256:s autentiserade Character Generator-bytes ligger nu kvar i motorns
-källobjekt för den framtida Saturn-konsumenten. Det öppnar inte glyphkodning,
-page/PND-attribut, lagerplacering eller textskrivning; `font_loaded` förblir
-stängd tills dessa delar binds av samma runtime-witness.
+source object for the future Saturn consumer. This does not admit glyph coding,
+page/PND attributes, layer placement, or text writing; `font_loaded` remains
+closed until those parts are bound by the same runtime witness.
 
-## Källor
+## Sources
 
 - DMWeb Nexus file formats och DMN Data File Decoder.
 - `src/nexus/nexus_v1_engine.c` och `src/nexus/nexus_v1_title.c`.

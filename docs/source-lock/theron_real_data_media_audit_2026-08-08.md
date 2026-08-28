@@ -1,30 +1,29 @@
-# Theron's Quest verklig mediarevision (2026-08-08)
+# Theron's Quest Real-Media Audit (2026-08-08)
 
-Den autentiserade Track 02-intaget använder de riktiga filerna i
-`~/.firestaff/data/theron/` när de finns:
+The authenticated Track 02 intake uses the real files in
+`~/.firestaff/data/theron/` when available:
 
 - US: `TQUS02.bin`, MD5 `f23601102138f87c33025877767ebf76`
 - JP: `TQJP02.bin`, MD5 `b7afb338ad31be1025b53f9aff12d73a`
 
-Revisionen bekräftar följande:
+The audit confirms the following:
 
-- US- och JP-rosterbytes kan läsas från originalets codonström.
-- Regionala 4bpp-palettkandidater avkodas som riktiga HuC6260-ord. US- och
-  JP-offseten hålls separata.
-- Track 02:s startup-bitmapkandidater kan dekomprimeras till riktiga
-  indexerade bytes, men deras VDC-destination, palettägare och semantiska
-  startup-rutter är inte bundna av en körningscapture.
-- Den statiska VCE-konsumentspannen i `$96a5` är verifierad, men dess dynamiska
-  källa (`$27c4/$27c5`) är ännu inte sammanfogad med palettfönstret eller en
-  VDC-skärm.
-- Produktionsgrinden lämnar därför `startup_presentation_allowed` och
-  palette promotion avstängda. Det är avsiktligt: riktiga bytes får inte
-  förvandlas till uppfunnen spelbetydelse.
-- Inga autentiserade `vram_dungeon.bin`/`vce_dungeon.bin`-snapshots finns i
-  den delade data- eller workspace-roten. Den första Theron-bilden kan därför
-  inte publiceras i README ännu.
+- US and JP roster bytes can be read from the original codon stream.
+- Regional 4bpp palette candidates decode as real HuC6260 words. US and JP
+  offsets are kept separate.
+- Track 02 startup bitmap candidates can decompress to real indexed bytes, but
+  their VDC destination, palette owner, and semantic startup routes are not
+  bound by a runtime capture.
+- The static VCE consumer span at `$96a5` is verified, but its dynamic source
+  (`$27c4/$27c5`) has not yet been joined to the palette window or a VDC screen.
+- The production gate therefore keeps `startup_presentation_allowed` and
+  palette promotion disabled. This is deliberate: real bytes must not be
+  turned into invented game meaning.
+- No authenticated `vram_dungeon.bin`/`vce_dungeon.bin` snapshots exist in the
+  shared data or workspace root. The first Theron image therefore cannot yet
+  be published in the README.
 
-Verifiering:
+Verification:
 
 ```text
 theron_v1_vram_trace_loader                 PASS
@@ -32,6 +31,7 @@ theron_v1_track02_palette_window            PASS
 theron_v1_startup_media_palette_bind       PASS
 ```
 
-Nästa källbundna steg är en körning med originalets System Card, instrumenterad
-Mednafen och samma Track 02-media. Capture-receiptet måste binda FIFO/RAM,
-VCE/VDC-destination och skärmroute innan produktionen får visa bilden.
+The next source-bound step is a run with the original System Card,
+instrumented Mednafen, and the same Track 02 media. The capture receipt must
+bind FIFO/RAM, the VCE/VDC destination, and the screen route before production
+may display the image.

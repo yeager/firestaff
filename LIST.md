@@ -7,32 +7,32 @@
 
 ## ✅ Completed Items
 
-### 1. Load/Save funkar inte
+### 1. Load/save does not work
 **Priority:** P0
 **Status:** ✅ LIKELY WORKING
 **Details:** F5/F9 use DM1_SaveGame/DM1_LoadGameWithBackup directly, which properly serialize the world via F0897_WORLD_Serialize_Compat. The m11_engine_save_game stub (passes NULL) has zero callers and is not used by F5/F9.
 **Note:** Verify with runtime test - play game, press F5, verify save file size > 0, restart, press F9, verify state restored.
 
-### 2. Quit-menyn (Escape-tangent) funkar inte som den ska (båda valen avslutar)
+### 2. The quit menu (Escape key) does not work correctly (both choices quit)
 **Priority:** P0 — UX-breaking
 **Status:** ✅ FIXED — commit 98f9295f
 **Details:** ESC dialog YES/NO click hit zones (hardcoded hy=67/104) didn't match drawn button positions (choiceY=109). Added dedicated hit-zone computation for returnToMenuConfirmActive + dialogChoiceCount==2 using actual drawn layout.
 **ReDMCSB ref:** CLIKVIEW.C F0378/F0379/F0380
 **Affected files:** `src/engine/m11_game_view.c` m11_dialog_choice_at_point
 
-### 3. Klickar man på en Champion mirror och väljer Resurrect så blir det Game Over (alla döda)
+### 3. Selecting Resurrect on a Champion mirror causes Game Over (all party members die)
 **Priority:** P0 — UX-breaking
 **Status:** ✅ FIXED — commit 1a186fdc
 **Details:** candidateMirrorPartyIndex stored snapshot at recruit time became stale when party->championCount changed. Changed to party->championCount - 1 (ReDMCSB G0305 pattern).
 **ReDMCSB ref:** REVIVE.C F0282, COMMAND.C C160/C161/C162
 **Affected files:** `src/engine/m11_game_view.c` ConfirmMirrorCandidate/CancelMirrorCandidate
 
-### 9. Verifiera med ReDMCSB källkoden
+### 9. Verify against the ReDMCSB source code
 **Priority:** P0
 **Status:** ✅ DONE — commit 483781c3
 **Output:** `DM1_REDMSB_CODECOMPAR.md` (code comparison matrix)
 
-### 11. Plan för att integrera CSB stöd i Firestaff
+### 11. Plan for integrating CSB support into Firestaff
 **Priority:** P1
 **Status:** ✅ DONE — commit b604d20c
 **Output:** `docs/plans/CSB_INTEGRATION_PLAN.md` (361 lines)
@@ -41,31 +41,31 @@
 
 ## 🔴 Remaining Items (P1/P2 - moved to TODO.md)
 
-### 4. Väggar som inte visas alls (men kartan är korrekt)
+### 4. Walls are not displayed (but the map is correct)
 **Priority:** P1 — Need runtime capture before fixing
 **Details:** Walls missing from viewport, but map shows correct layout.
 **ReDMCSB ref:** DUNVIEW.C, MOVESENS.C, VBLANK.C wall draw path
 **Affected files:** `src/dm1/dm1_v1_viewport_3d_pc34_compat.c`, `src/dm1/dm1_v1_draw_primitives_pc34_compat.c`
 
-### 5. Champion bilder visas mitt i luften
+### 5. Champion portraits are displayed in mid-air
 **Priority:** P1
 **Details:** Champion images rendered at wrong Z-layer, appearing to float.
 **ReDMCSB ref:** VBLANK.C draw order, DUNVIEW.C layer ordering
 **Affected files:** `src/engine/m11_game_view.c` draw order section
 
-### 6. Champion mirrors visas inte alls
+### 6. Champion mirrors are not displayed
 **Priority:** P1
 **Details:** Champion mirrors not rendered in viewport.
 **ReDMCSB ref:** CLIKVIEW.C, GRAPHICS.DAT bitmap indices for mirror objects
 **Affected files:** viewport rendering files in `src/dm1/`
 
-### 7. Wall inscriptions är jättesuddiga
+### 7. Wall inscriptions are extremely blurry
 **Priority:** P1
 **Details:** Wall inscription text is very blurry or unreadable.
 **ReDMCSB ref:** PANEL.C / DUNVIEW.C inscription blit
 **Affected files:** TBD
 
-### 8. Mac app har ingen ikon
+### 8. The macOS app has no icon
 **Priority:** P2
 **Details:** macOS .app bundle has no custom icon.
 **Fix:** Add `firestaff.icns` to `firestaff.app/Contents/Resources/`

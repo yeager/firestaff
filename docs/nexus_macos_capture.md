@@ -1,9 +1,9 @@
-# Nexus Saturn-capture på macOS
+# Nexus Saturn capture on macOS
 
-## Dummy-audio och Cocoa/OpenGL
+## Dummy audio and Cocoa/OpenGL
 
-Vid headless eller tidsbegränsad Saturn-capture kan man prova SDL:s dummy-
-ljudbackend i capture-processens miljö:
+For headless or time-limited Saturn capture, SDL's dummy audio backend can be
+tried in the capture process environment:
 
 ```sh
 SDL_AUDIODRIVER=dummy \
@@ -20,96 +20,95 @@ SDL_AUDIODRIVER=dummy \
   --timeout-seconds 120
 ```
 
-Launchern vidarebefordrar `SDL_AUDIODRIVER` explicit till den Mednafen-
-process som startas. BIOS, disc-image och capture-byte ska ligga utanför repot
-och anges med lokala sökvägar.
+The launcher explicitly forwards `SDL_AUDIODRIVER` to the Mednafen process it
+starts. BIOS, disc image, and capture bytes must be outside the repository and
+specified with local paths.
 
-`SDL_AUDIODRIVER=dummy` väljer SDL:s dummy-backend om den ljudväg som används
-respekterar SDL:s miljövariabel. Det väljer inte macOS Cocoa som videobackend.
-På macOS kan Mednafen fortfarande använda SDL:s Cocoa-fönster och
-OpenGL-videoväg. Den aktuella Mednafen-körningen måste ändå läsas i loggen:
-den rapporterade `Using "SDL" audio driver with SexyAL's default device
-selection`, så dummy-ljudets faktiska effekt är inte verifierad i den
-instrumenterade Saturn-binära filen.
+`SDL_AUDIODRIVER=dummy` selects SDL's dummy backend if the audio path in use
+respects SDL's environment variable. It does not select macOS Cocoa as the
+video backend. On macOS, Mednafen can still use SDL's Cocoa window and OpenGL
+video path. The actual Mednafen run must nevertheless be read in the log: it
+reported `Using "SDL" audio driver with SexyAL's default device selection`, so
+the actual effect of dummy audio is unverified in the instrumented Saturn binary.
 
-Inställningen ändrar inte Saturnens CD-DA, SCSP, SAL eller SFX-semantik och
-ska inte användas som produktionsljudläge.
+The setting does not change Saturn CD-DA, SCSP, SAL, or SFX semantics and must
+not be used as a production audio mode.
 
-## Verifiering
+## Verification
 
-Efter en lyckad körning ska launchern själv validera raw-layouten. En separat
-kontroll kan göras med:
+After a successful run, the launcher must validate the raw layout itself. A
+separate check can be performed with:
 
 ```sh
 python3 scripts/validate_nexus_saturn_runtime_capture.py \
   /extern/nexus-capture/run/runtime-vdp12.raw --require-frames 1
 ```
 
-Detta bekräftar endast att raw-filen har rätt Saturn VDP1/VDP2-layout och
-minst det begärda antalet frames. En reset-frame är inte automatiskt en
-startup-, meny-, HUD- eller viewport-capture. Sådana påståenden kräver fortsatt
-autentiserad VDP1/VDP2-komposition och source-/asset-consumer-bindning.
+This confirms only that the raw file has the correct Saturn VDP1/VDP2 layout
+and at least the requested number of frames. A reset frame is not automatically
+a startup, menu, HUD, or viewport capture. Such claims still require
+authenticated VDP1/VDP2 composition and source/asset-consumer binding.
 
-Launchern skriver dessutom `capture_exit_status` samt SHA-256-fält för VDP1-
-write-trace och writer-code-trace till manifestet även om VDP2-capturen avbryts.
-Det gör ett negativt frame-resultat granskningsbart utan att uppgradera det till
-ett raw- eller skärmbevis.
+The launcher also writes `capture_exit_status` and SHA-256 fields for the VDP1
+write trace and writer-code trace to the manifest even if the VDP2 capture is
+aborted. This makes a negative frame result reviewable without elevating it to
+raw or screen evidence.
 
-## 2026-08-10: EU cold-start före handoff
+## 2026-08-10: EU cold start before handoff
 
-En extern capture från frame 0 med EU-BIOS och regionmatchad fransk retail-disc
-validerade 60 råa VDP1/VDP2-ramar. Råfilens SHA-256 var
+An external capture from frame 0 with EU BIOS and a region-matched French retail
+disc validated 60 raw VDP1/VDP2 frames. The raw file's SHA-256 was
 `39e70710bd1b7edeedfb2ec53a1edc0c27546b10f47cf06a6904591c558c66bf`, och
-Start injicerades i runtime-ram 45–54. Capturen visar ändringar i VDP1-
-framebuffer samt VDP2-register, VRAM och CRAM. Frame 59 identifieras som NBG1
-character mode med tre aktiva lager, men `asset_consumer_identity=unbound` och
-`host_composition_admission=blocked`. Detta är transportbevis och ett
-reproducerbart negativt source-join-resultat; det öppnar inte startup, meny,
-HUD eller viewport.
+Start was injected into runtime frames 45–54. The capture shows changes in the
+VDP1 framebuffer and VDP2 registers, VRAM, and CRAM. Frame 59 is identified as
+NBG1 character mode with three active layers, but `asset_consumer_identity=unbound`
+and `host_composition_admission=blocked`. This is transport evidence and a
+reproducible negative source-join result; it does not admit startup, menu, HUD,
+or viewport.
 
-## Fristående VDP1-snapshot
+## Standalone VDP1 snapshot
 
-När VDP1-writes når en känd källadress kan den instrumenterade binären även
-skriva `FIRESTAFF_NEXUS_VDP1_SNAPSHOT_V1` till fil. Följande miljövariabler
-används av den externa launchern:
+When VDP1 writes reach a known source address, the instrumented binary can also
+write `FIRESTAFF_NEXUS_VDP1_SNAPSHOT_V1` to a file. The external launcher uses
+the following environment variables:
 
 ```sh
 FIRESTAFF_NEXUS_TRACE_VDP1_SNAPSHOT=/extern/nexus-capture/run/vdp1-snapshot.raw
 FIRESTAFF_NEXUS_TRACE_VDP1_SNAPSHOT_AT=0x10a00
-# Valfria proveniensbevis från samma session:
+# Optional provenance evidence from the same session:
 FIRESTAFF_NEXUS_TRACE_VDP1_REGS=/extern/nexus-capture/run/vdp1-regs.trace
 FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_DUMP=/extern/nexus-capture/run/source.dump
 FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_DUMP_AT=0x63e00
 FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_DUMP_SIZE=0x8200
 FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_DUMP_REGISTER=14
-# Flera möjliga VDP1-konsumenter kan provas i samma session.
+# Multiple possible VDP1 consumers can be tried in the same session.
 FIRESTAFF_NEXUS_TRACE_VDP1_REG_PC_LIST=0x0601307c,0x060262c4,0x060262d4
 
-# Riktad SH-2-läslogg för att följa transformen före VDP1-skrivningen:
+# Targeted SH-2 read log to follow the transform before the VDP1 write:
 FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_READS=/extern/nexus-capture/run/vdp1-source-reads.trace
 FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_READ_MIN=0x06000000
 FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_READ_MAX=0x08000000
 FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_READ_PC_MIN=0x06012f00
 FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_READ_PC_MAX=0x06013100
 FIRESTAFF_NEXUS_TRACE_VDP1_SOURCE_READ_LIMIT=100000
-# Kodbuffert och registerkvitto för transformen före VDP1-skrivningen:
+# Code buffer and register receipt for the transform before the VDP1 write:
 FIRESTAFF_NEXUS_TRACE_VDP1_TRANSFORM_CODE=/extern/nexus-capture/run/transform-code.trace
 FIRESTAFF_NEXUS_TRACE_VDP1_TRANSFORM_CODE_AT=0x06012f4a
 FIRESTAFF_NEXUS_TRACE_VDP1_WRITER_CODE_START=0x06012e00
-# Begränsa koefficientkvittot till literalpoolens två SH-2-lagringar.
+# Limit the coefficient receipt to the literal pool's two SH-2 stores.
 FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_PC_MIN=0x06013636
 FIRESTAFF_NEXUS_TRACE_SH2_RAM_SOURCE_WRITE_PC_MAX=0x0601363a
 ```
 
-Snapshotten valideras med:
+The snapshot is validated with:
 
 ```sh
 python3 scripts/validate_nexus_vdp1_snapshot.py \
   /extern/nexus-capture/run/vdp1-snapshot.raw
 ```
 
-För en snapshot som utlöses av en känd kommandolisteadress kan den bundna
-VDP1-payloaden granskas utan att lita på snapshotens transport-COPR:
+For a snapshot triggered by a known command-list address, the bound VDP1
+payload can be inspected without relying on the snapshot's transport COPR:
 
 ```sh
 python3 scripts/analyze_nexus_vdp1_command_window.py \
@@ -117,31 +116,31 @@ python3 scripts/analyze_nexus_vdp1_command_window.py \
   --capture-frames 1 --command-offset 0x47c0 --command-count 8 --require-end
 ```
 
-`--command-offset` är endast till för en adress som observerats i samma
-runtime-session. Verktyget beskriver VDP1-kommandon och källbytes-hashar, men
-godkänner inte startup, meny, HUD, viewport, CLUT eller asset-ägarskap.
+`--command-offset` is only for an address observed in the same runtime session.
+The tool describes VDP1 commands and source-byte hashes, but does not admit
+startup, menu, HUD, viewport, CLUT, or asset ownership.
 
-`VDP1_REGS` och `VDP1_SOURCE_DUMP` vidarebefordras nu av launchern och får
-manifest-hash i samma session. De är avsedda för den separata
-source-to-VRAM-kontrollen; en source-dump utan motsvarande register-, frame-
-och retail-bytesreceipt öppnar inte någon konsument-gate.
+`VDP1_REGS` and `VDP1_SOURCE_DUMP` are now forwarded by the launcher and
+receive a manifest hash in the same session. They are intended for the separate
+source-to-VRAM check; a source dump without the corresponding register, frame,
+and retail-byte receipt does not open any consumer gate.
 
-Den validerade körningen på extern disk gav VDP1-state `ptmr=0x02`,
-`edsr=0x03`, en 1 048 577-byte VDP1-payload och writer-code vid `0x10a00` i
-samma session. Detta uppnår VDP1-transportbeviset. Snapshotten tas dock vid
-den första matchande källskrivningen; den är därför inte i sig bevis på en
-komplett draw-lista, CLUT-bindning eller startup-/meny-/HUD-/viewport-
-komposition.
+The validated run on an external disk produced VDP1 state `ptmr=0x02`,
+`edsr=0x03`, a 1,048,577-byte VDP1 payload, and writer code at `0x10a00` in
+the same session. This achieves the VDP1 transport evidence. The snapshot is
+taken at the first matching source write, however, and is therefore not itself
+evidence of a complete draw list, CLUT binding, or startup/menu/HUD/viewport
+composition.
 
-En senare samma-session-snapshot efter observerad adress `0x0485c` gav fem
-polygon-/texturposter följda av ett VDP1-end-record vid `0x04860`; den
-transportbundna kommandosekvensen kan därför granskas, men saknar fortfarande
-VDP2-frame-hook och konsumentbindning för skärmidentitet.
+A later same-session snapshot after the observed address `0x0485c` produced
+five polygon/texture records followed by a VDP1 end record at `0x04860`; the
+transport-bound command sequence can therefore be inspected, but still lacks a
+VDP2 frame hook and consumer binding for screen identity.
 
-Den verifierade macOS-observationen är därför:
+The verified macOS observation is therefore:
 
-- `SDL_AUDIODRIVER=dummy` vidarebefordras reproducerbart till extern Mednafen-
-  capture, men dess faktiska SexyAL-effekt måste verifieras i loggen,
-- Cocoa/OpenGL-videovägen är fortfarande separat från ljudinställningen,
-- aktiv VDP1-draw-lista och semantisk meny/HUD/viewport-admission är fortsatt
-  capture-gated tills samma runtime-session binder dessa konsumenter.
+- `SDL_AUDIODRIVER=dummy` is reproducibly forwarded to external Mednafen
+  capture, but its actual SexyAL effect must be verified in the log;
+- the Cocoa/OpenGL video path remains separate from the audio setting; and
+- active VDP1 draw-list and semantic menu/HUD/viewport admission remain
+  capture-gated until the same runtime session binds those consumers.

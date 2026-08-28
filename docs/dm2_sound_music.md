@@ -1,49 +1,48 @@
-# DM2 V1 — ljud och musik
+# DM2 V1 — sound and music
 
-## Originaldata och nuvarande gräns
+## Original data and current boundary
 
-PC-DOS-utgåvan har 29 HMP-musikposter, index `00` till `1c`, i den
-hash-verifierade `GRAPHICS.DAT`-filens GDAT-kategori `MUSICS`. Vilken post som
-begärs väljs av den autentiska `SONGLIST.DAT`-mappningen. Firestaff läser bara
-denna data från den godkända GDAT-laddaren; en liknande fil bredvid spelet är
-inte en ersättning.
+The PC-DOS edition has 29 HMP music records, indexed `00` through `1c`, in the
+`MUSICS` GDAT category of the hash-verified `GRAPHICS.DAT` file. The requested
+record is selected by the authentic `SONGLIST.DAT` mapping. Firestaff reads
+this data only from the approved GDAT loader; a similar file beside the game is
+not a substitute.
 
-DMWeb dokumenterar att dessa HMP-poster har MIDI-konverteringar. SKProjects
-`SKWIN/SkWinMIDI.cpp` är en Windows-förbättring som spelar sådana externa,
-redan konverterade `.hmp.mid`-filer. Den är **inte** en rå-HMP-avkodare och är
-inte ett bevis för att en godtycklig sidofil eller ett genererat MIDI-resultat
-är original speldata.
+DMWeb documents MIDI conversions for these HMP records. SKProject's
+`SKWIN/SkWinMIDI.cpp` is a Windows enhancement that plays such external,
+already converted `.hmp.mid` files. It is **not** a raw-HMP decoder and does
+not prove that an arbitrary side file or generated MIDI result is original game
+data.
 
-## Firestaffs beteende
+## Firestaff behavior
 
-- GDAT-SFX avkodas från verifierade originalposter och kan skickas till SDL3
-  när ljudenheten är redo.
-- DM2:s original kö- och positionsordning följer de avgränsade
-  `c_sound.cpp`- och `c_sfx.cpp`-vägarna.
-- HMP-posten kan identifieras och strukturellt granskas från `GRAPHICS.DAT`,
-  men den spelas inte. En godkänd HMP-header är inte samma sak som korrekt
-  tidshantering, flerkanalig spårtolkning eller ljudutmatning.
-- Firestaff skapar inte WAV-, OGG- eller MIDI-ersättningar för att få en
-  tyst originalmusikpost att verka spelbar.
+- GDAT SFX is decoded from verified original records and can be sent to SDL3
+  when the audio device is ready.
+- DM2's original queue and positional ordering follow the bounded
+  `c_sound.cpp` and `c_sfx.cpp` paths.
+- The HMP record can be identified and structurally inspected from
+  `GRAPHICS.DAT`, but it is not played. An approved HMP header is not the same
+  as correct timing, multichannel track interpretation, or audio output.
+- Firestaff does not create WAV, OGG, or MIDI replacements to make a silent
+  original music record appear playable.
 
-Detta är avsiktligt fail-closed. Musikbegäran kan registreras av startup- och
-kartväxlingarna, men rapporteras inte som spelad förrän hela den källförankrade
-avkodnings- och utmatningskedjan är verifierad.
+This is intentionally fail-closed. Music requests can be recorded by startup
+and map transitions, but are not reported as played until the entire
+source-anchored decoding and output chain is verified.
 
-## Källor
+## Sources
 
 - Original PC-DOS `GRAPHICS.DAT`, GDAT `MUSICS/<track>/dtHMP/0`.
 - Original PC-DOS `SONGLIST.DAT`.
 - SKProject `SKWINSPX/src/v5/sfxsnd.cpp::DM2_PLAY_MUSIC`, som kontrollerar
-  GDAT-posten innan musik begärs.
-- SKProject `SKWIN/SkWinMIDI.cpp`, som visar att dess MIDI-stöd förutsätter
-  en extern konverterad Standard MIDI-fil.
-- [DMWeb: DM2 PC-utgåvan](http://dmweb.free.fr/games/dungeon-master-ii/editions/pc/),
-  som anger 29 inbäddade HMP-poster och MIDI-konverteringar.
+  the GDAT record before music is requested.
+- SKProject `SKWIN/SkWinMIDI.cpp`, which shows that its MIDI support requires
+  an external converted Standard MIDI file.
+- [DMWeb: the DM2 PC edition](http://dmweb.free.fr/games/dungeon-master-ii/editions/pc/),
+  which lists 29 embedded HMP records and MIDI conversions.
 
-## Kvarvarande arbete
+## Remaining work
 
-En framtida lösning måste använda de verifierade råa HMP-byten direkt och
-bevisa alla spårgränser, delta-tider, MIDI-händelser och utmatning. Den får
-inte förlita sig på en extern konverterad fil, antagen spårsemantik eller en
-syntetisk ljudbuffert.
+A future solution must use the verified raw HMP bytes directly and prove all
+track boundaries, delta times, MIDI events, and output. It must not rely on an
+external converted file, assumed track semantics, or a synthetic audio buffer.

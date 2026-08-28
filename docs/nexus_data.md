@@ -1,9 +1,9 @@
 # Nexus V1 Data File Formats Audit — Source-Locked
 
-> Äldre formatanteckningar kan beskriva historiska host-stubbar som
-> “loading” eller “implemented”. De är inte runtime-bevis. Se
-> [`NEXUS_STALE_CLAIM_AUDIT.md`](NEXUS_STALE_CLAIM_AUDIT.md) och den strikta
-> inventeringen innan en route öppnas.
+> Older format notes may describe historical host stubs as “loading” or
+> “implemented.” They are not runtime evidence. Consult
+> [`NEXUS_STALE_CLAIM_AUDIT.md`](NEXUS_STALE_CLAIM_AUDIT.md) and the strict
+> inventory before opening a route.
 
 ## Sources
 - `src/nexus/nexus_v1_dungeon.c`, `nexus_v1_dmdf_model.c`, `nexus_v1_iso_reader.c`
@@ -123,12 +123,12 @@ The file contains multiple sections after the header:
 All multi-byte values read via `rb16()` / `rb32()` byte-swapping functions.
 SH2 is big-endian; x86/ARM (PC builds) are little-endian.
 
-### Loading (historisk formatbeskrivning; presentation är spärrad)
+### Loading (historical format description; presentation is gated)
 `nexus_v1_dmdf_load()` in `nexus_v1_dmdf_model.c`:
-1. Retail-byteidentiteten och DMDF-envelope kan verifieras.
-2. Bounded vertex-/face-/texture-receipts får behållas som källproveniens.
-3. Hostens transform, materialbindning, palette och VDP1-command-order är
-   inte autentiserade och får därför inte presenteras som en färdig modell.
+1. The retail byte identity and DMDF envelope can be verified.
+2. Bounded vertex/face/texture receipts may be retained as source provenance.
+3. The host transform, material binding, palette, and VDP1 command order are
+   not authenticated and therefore must not be presented as a completed model.
 
 ---
 
@@ -164,11 +164,11 @@ SH2 is big-endian; x86/ARM (PC builds) are little-endian.
 ## 4. Other Asset Files
 
 ### FONT256.S2D
-- `FONT256.S2D` är 25,012 byte i den monterade retailrevisionen och har 242
-  verifierade CG-tiles.
-- Loadern behåller bytes/glyph-åtkomst som receipt.
-- Saturns textkonsument, page/attribute mapping och synlig textplacering är
-  inte verifierade; den används inte som bevis för all in-game text.
+- `FONT256.S2D` is 25,012 bytes in the mounted retail revision and has 242
+  verified CG tiles.
+- The loader retains byte/glyph access as a receipt.
+- Saturn's text consumer, page/attribute mapping, and visible text placement
+  are unverified; it is not used as evidence for all in-game text.
 
 ### FACE.BIN
 The European corpus contains the real FACE.BIN resource. The bounded loader

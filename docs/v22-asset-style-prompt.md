@@ -1,6 +1,7 @@
 # V2.2 Asset Style Prompt
 
-Återanvändbar stilmall för V2.2 "Modern" graphics mode (1920×1080, 3D-rendered 2D).
+Reusable style template for the V2.2 "Modern" graphics mode (1920×1080,
+3D-rendered 2D).
 
 ## Master Style Prompt
 
@@ -27,11 +28,12 @@
 
 - **Model:** `openai/gpt-image-2`
 - **Provider:** openai (configured, OPENAI_API_KEY / Codex OAuth)
-- **Size:** 2048x1152 för hero/establishing, 1024x1024 för tiles, 1024x1536 för creatures/items
+- **Size:** 2048x1152 for hero/establishing shots, 1024x1024 for tiles,
+  1024x1536 for creatures/items
 - **Quality:** high
 - **Format:** png
 - **Background:** **opaque** (all assets — `gpt-image-2` does NOT support `background: transparent` and silently ignores it; verified via `sips -g hasAlpha` on 19 generated PNGs across batches 1–4)
-- **Count:** 1 (kör fler prompts parallellt för batch)
+- **Count:** 1 (run additional prompts in parallel for a batch)
 - **aspectRatio:** ignored (warning shown in completion event; rely on `size` instead)
 
 ## Output Path
@@ -50,45 +52,46 @@ Examples:
 
 ## Batch Recipe
 
-Kör flera image_generate-anrop parallellt i samma tool block för snabb batch.
-Varje anrop är en egen background task — vänta in alla completion events
-innan du visar resultatet.
+Run multiple image_generate calls in parallel in the same tool block for a
+fast batch. Each call is a separate background task; wait for all completion
+events before presenting results.
 
 ## "Always Compare" Rule (BOSSe: 2026-06-18)
 
-**Varje V2.2-generering MÅSTE jämföras mot motsvarande original-DM1-sprite.**
+**Every V2.2 generation MUST be compared with its corresponding original DM1 sprite.**
 
-1. Extrahera originalsprites: `build/extract_all_sprites <GRAPHICS.DAT>
-   .openclaw/tmp/dm1-sprites dm1` (eller motsvarande för andra spel).
-2. För varje V2.2-generering, hitta en DM1-sprite som motsvarar (corridor, tile,
-   creature, item). Vision-modellen identifierar korrekt subject bättre än
-   dimensionsbaserad gissning.
-3. Kör pixel-jämförelse (sida-vid-sida) eller konceptuell jämförelse (text).
-4. Uppdatera denna stilmall om DM1-insikter avviker från nuvarande master
-   prompt (t.ex. palett, silhouette, lighting).
-5. Logga jämförelsen i docs/v22-batch-progress.md (eller motsvarande).
+1. Extract original sprites: `build/extract_all_sprites <GRAPHICS.DAT>
+   .openclaw/tmp/dm1-sprites dm1` (or the equivalent for other games).
+2. For every V2.2 generation, locate its corresponding DM1 sprite (corridor,
+   tile, creature, item). The vision model identifies the correct subject more
+   reliably than dimension-based guessing.
+3. Run a pixel comparison (side by side) or a conceptual comparison (text).
+4. Update this style template if the DM1 observations differ from the current
+   master prompt (for example palette, silhouette, or lighting).
+5. Record the comparison in docs/v22-batch-progress.md (or equivalent).
 
-## DM1 Style Notes (från vision-analys 2026-06-18)
+## DM1 Style Notes (from vision analysis, 2026-06-18)
 
-Analys av 5 original-DM1-sprites (corridor, menu, credits scroll, Firestaff
-emblem, Screamer) ger följande kännetecken:
+Analysis of five original DM1 sprites (corridor, menu, credits scroll,
+Firestaff emblem, Screamer) identified these characteristics:
 
-- **Silhuett före detalj** — alla sprites har tydlig, läsbar outline
-- **16-färgskänsla** — även i hög upplösning ska paletten kännas begränsad
-  och theatralisk (mättade röda/orange/gula flammor, cyan highlights)
-- **Höga konturer** — svart outline är ett signum från Atari-ST-eran
-- **Symbolisk belysning** — inte realistisk GI; highlights i cyan/gul/vit,
-  shadows i svart/blå/mörkröd
-- **Theatrical/magisk** — facklor, juveler, scrollar, magiska föremål med
-  överdriven mättnad
-- **Readable at small size** — sprites ska vara tydliga även om de
-  skalas ner (viktigt för tiles och creatures)
-- **Composition leder ögat** — starka färgkontraster styr blicken (brand →
-  cyan juvel, gul mage → blå silhuett)
+- **Silhouette before detail** — all sprites have a clear, readable outline.
+- **16-colour feeling** — even at high resolution, the palette should feel
+  constrained and theatrical (saturated red/orange/yellow flames and cyan
+  highlights).
+- **Strong outlines** — black outlines are a signature of the Atari ST era.
+- **Symbolic lighting** — not realistic GI; highlights use cyan/yellow/white,
+  shadows use black/blue/dark red.
+- **Theatrical/magical** — torches, jewels, scrolls, and magical objects have
+  exaggerated saturation.
+- **Readable at small size** — sprites must remain clear when scaled down,
+  which is important for tiles and creatures.
+- **Composition directs the eye** — strong colour contrasts guide attention
+  (fire → cyan jewel, yellow mage → blue silhouette).
 
-**VIKTIGT:** vision-modellen är mer pålitlig än dimensionsbaserad gissning för
-att identifiera sprites. Använd alltid vision (image med prompt) för att
-matcha V2.2-generering mot rätt original.
+**IMPORTANT:** the vision model is more reliable than dimension-based guessing
+when identifying sprites. Always use vision (an image with a prompt) to match
+a V2.2 generation to the correct original.
 
 ## Reference Index (workspace)
 

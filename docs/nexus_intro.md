@@ -1,7 +1,7 @@
 # Nexus V1 Intro — Source-Locked Audit
 
-> Den här äldre introöversikten får inte användas som bevis för en färdig
-> Firestaff-titelskärm. Aktuell startupstatus finns i
+> This older intro overview must not be used as evidence of a completed
+> Firestaff title screen. The current startup status is in
 > [`NEXUS_STRICT_FIDELITY_INVENTORY.md`](NEXUS_STRICT_FIDELITY_INVENTORY.md).
 
 ## Sources
@@ -20,9 +20,9 @@ sequence is:
 
 1. Saturn BIOS boots from CD
 2. SYSTEM.CNF points to NEXUS.BIN entry point
-3. `nexus_v1_init()` kör source discovery och behåller verifierade receipts
-4. Saturnens title-route är capture-observerad men Firestaffs presentation är
-   fortfarande stängd; ingen host-cropping eller syntetisk titel används
+3. `nexus_v1_init()` runs source discovery and retains verified receipts
+4. Saturn's title route is capture-observed, but Firestaff's presentation
+   remains closed; no host cropping or synthetic title is used
 5. FMV cutscenes play DURING gameplay at specific triggers (not at startup)
 
 ---
@@ -71,10 +71,10 @@ dungeon progression as story cutscenes.
 
 ## 5. Title Screen vs Intro
 
-Retailen har startup/title-resurser (`TITLE.CG`, `TITLE.BIN`, `LOGOBG.DG2` och
-andra ytor), men deras Saturn VDP2-lager, timing och placering är inte bundna
-till Firestaff. En host-rasterizer får därför inte beskrivas som den
-ursprungliga animerade logon.
+The retail release has startup/title resources (`TITLE.CG`, `TITLE.BIN`,
+`LOGOBG.DG2`, and other surfaces), but their Saturn VDP2 layers, timing, and
+placement are not bound to Firestaff. A host rasterizer must therefore not be
+described as the original animated logo.
 
 ---
 
