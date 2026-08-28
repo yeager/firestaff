@@ -20,7 +20,7 @@ when no corpus is configured, and use the mounted PC-DOS data when
 | GDAT | PC-DOS, Mac, Amiga, FM Towns, PC-9821 and Mega-CD parser boundaries; raw image, palette, animation and command plans | Decoding and provenance are covered; every presentation family still needs a live runtime owner. |
 | Dungeon and G1 | Map header, first-map, record-base, tile links, scene/material, static object and local-palette gates | Real input is decoded and bounded. Complete live dungeon rendering and mechanics remain open. |
 | HUD and viewport | GDAT HUD-command receipts, portraits, item/creature local palettes, M11 material handoffs | The active path is source-owned and rejects generated overlays. It is not yet full original GUI/viewport parity. |
-| Save corpus | Header, raw dungeon prefix, fixed `DM2_GAME_LOAD` SUPPRESS sections, DB-pool records and transactional rejection | The real PC-DOS corpus is inspected without unpacking or modifying it. Resume and original writing remain blocked until the full record-link/possession graph is live. |
+| Save corpus | Header, raw dungeon prefix, fixed `DM2_GAME_LOAD` SUPPRESS sections, DB-pool records and transactional rejection | The real PC-DOS corpus is inspected without unpacking or modifying it. The eight supplied DOS save/backup members resume through the menu into an accepted M11 frame; original writing and broader record-link/possession parity remain open. |
 | Sound | GDAT PCM receipt/decoder, queue ordering, positional attenuation and SDL backend | Sound data is real when a verified entry exists. PC HMP music stays silent until its original timing/decoder path is implemented. |
 | Mechanics | Source-locked helper tests for movement, records, timers, creature, CCM, projectile, spells, doors, shops and actuators | Most are bounded components or test-only transcripts until connected to the real loaded world. |
 | Outdoor scenes | G1/GDAT palette and environment-material gates | Missing source-owned environment timer and image selection keep outdoor drawing fail-closed. |
@@ -75,8 +75,10 @@ write or unpack the original archive.
 
 `dm2_v1_dos_sksave_archive_menu_resume_matrix` applies that same read-only
 menu route to all four supplied DOS slots and their backups. It asserts the
-distinct original map/position receipts for all eight members, preventing a
-fallback to one synthesized default save state.
+distinct original map/position receipts for all eight members, plus an
+accepted M11 frame backed by real GDAT material with zero fallback draws.
+That prevents a fallback to either one synthesized default save state or a
+black/unowned runtime frame.
 
 The companion CTest `test_dm2_v1_dos_sksave_archive_resume_real_media`
 commits `sksave1.dat` through the same archive reader and verifies the first
@@ -88,9 +90,8 @@ launcher-script timing; it does not claim a full interactive save campaign.
 The following are deliberately unavailable rather than replaced with
 placeholders or synthetic state:
 
-- Original SKSAVE resume and writing: `DM2_READ_SKSAVE_DUNGEON`, record-link
-  restoration, possessions, live allocation and post-load ownership are not
-  complete.
+- Original SKSAVE writing, exhaustive record-link restoration, possessions
+  and live allocation parity beyond the verified DOS corpus are not complete.
 - The complete source menu/HUD event loop, including keyboard/controller
   translation and live champion GUI state.
 - Full G1 dungeon/viewport composition, object chains, door state, lighting
