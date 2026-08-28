@@ -15,4 +15,7 @@ Reviewed 2026-08-25. Completed work only.
   paths and the native DM2 boot owner reads them only in RAM.
 - The authentic Amiga installer now binds its native big-endian, 16-colour
   `INTERFACE_GENERAL/0` PalIRGB field 0 rather than PC field `0xfe`/PAL16.
-  The ZIP remains memory-owned through the native installer path.
+  Its runtime HUD uses the source palette's physical-index receipt, matching
+  the original 4-bit Amiga images without a fabricated local palette. The ZIP
+  remains memory-owned through the native installer path and now produces an
+  accepted M11 frame with real assets and no fallback drawing.

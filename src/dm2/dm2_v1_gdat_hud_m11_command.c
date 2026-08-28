@@ -30,8 +30,33 @@ static int dm2_v1_gdat_hud_image_palette_binding(
     uint32_t hash = 2166136261u;
     int palette_index;
 
-    if (!loader || !out_palette16 || !out_hash ||
-        !dm2_v1_asset_load_image_metadata(loader, category, index, field,
+    if (!loader || !out_palette16 || !out_hash) {
+        return 0;
+    }
+    if (loader->big_endian &&
+        category == DM2_GDAT_CATEGORY_INTERFACE_GENERAL) {
+        DM2_V1_InterfacePalette palette;
+        if (dm2_v1_asset_load_interface_palette(
+                loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+                DM2_GDAT_INTERFACE_PALETTE_FIELD, &palette) &&
+            palette.hash != 0u) {
+            memcpy(out_palette16, palette.palette16,
+                   sizeof(palette.palette16));
+            /* Viewport command validation hashes the selected 16 physical
+             * indices, just as it does for an IMG3 local palette.  The
+             * Amiga source's PalIRGB receipt also includes RGB rows, so use
+             * the indexed-palette identity here rather than mixing the two
+             * distinct receipts. */
+            hash = 2166136261u;
+            for (palette_index = 0; palette_index < 16; ++palette_index) {
+                hash ^= palette.palette16[palette_index];
+                hash *= 16777619u;
+            }
+            *out_hash = hash ? hash : 1u;
+            return 1;
+        }
+    }
+    if (!dm2_v1_asset_load_image_metadata(loader, category, index, field,
                                            &metadata)) {
         return 0;
     }
