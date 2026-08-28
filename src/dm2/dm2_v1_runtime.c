@@ -1403,10 +1403,16 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
             return;
         }
     }
-    if (!dm2_v1_boot_gdat_wall_m11_command_plan(
-            rt->boot, rt->map_graphics_style, &rt->gdat_wall_material_plan) ||
-        !rt->gdat_wall_material_plan.valid ||
-        rt->gdat_wall_material_plan.graphicsset != (uint8_t)rt->map_graphics_style) {
+    /* UPDATE_GFXSET has no WALL_GFX transaction for an outdoor map.  Keep
+     * that source absence explicit: requiring an indoor plan here prevented
+     * a verified Amiga outdoor scene from publishing its own sky/ground
+     * materials before the renderer could make the same distinction. */
+    if (!rt->outdoor &&
+        (!dm2_v1_boot_gdat_wall_m11_command_plan(
+             rt->boot, rt->map_graphics_style, &rt->gdat_wall_material_plan) ||
+         !rt->gdat_wall_material_plan.valid ||
+         rt->gdat_wall_material_plan.graphicsset !=
+             (uint8_t)rt->map_graphics_style)) {
         dm2_v1_gdat_scene_m11_command_plan_free(&rt->gdat_scene_material_plan);
         return;
     }
