@@ -16,12 +16,13 @@ Reviewed 2026-08-25. Only open work is listed here.
   intentionally out of scope; the launcher reports it as unsupported rather
   than misreporting the supplied original data as missing.
 - The manually unpacked French DOS `DMSAVE.DAT` and `DMSAVE.BAK` are both
-  checksum-qualified PC 3.4 saves: all five encrypted save parts validate,
-  but their remaining original save tail is not yet the documented PC 3.4
-  dungeon-tail layout. The tail starts at byte offset 11,264, is 37,297 bytes,
-  begins with the saved `DUNGEON_HEADER` (`63 00 fb 2f 0e 00 d5 06 61 08`),
-  and is byte-identical between the supplied `.DAT` and `.BAK`; only bytes
-  0–9,407 differ. Preserve the fail-closed import result and derive that tail
-  layout from authentic French save/runtime traces before enabling resume.
+  checksum-qualified PC 3.4 saves: all five encrypted save parts validate.
+  Their byte-identical 37,297-byte F0434 tail starts at offset 11,264 with a
+  valid terminal checksum and has the documented 44-byte header, 14 maps,
+  409 columns, valid raw-map spans and G0280 cumulative-column table. Only
+  bytes 0–9,407 differ between `.DAT` and `.BAK`. The open issue is the
+  later Firestaff runtime handoff of authenticated C3/C4 and dungeon state;
+  preserve the fail-closed result until that source-ordered materialization is
+  proven, rather than changing or synthesizing the save data.
 - Bind V2.2 presentation only to reviewed original material/pixels. Existing
   placeholder or procedural art remains fixture-only.
