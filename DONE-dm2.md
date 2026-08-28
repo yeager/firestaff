@@ -23,6 +23,8 @@ Reviewed 2026-08-25. Completed work only.
   The source scanner recognises all four `data/sksaveN.dat` primaries and four
   backups, records virtual archive paths and complete-file hashes, and can
   reread each receipt-bound payload without extracting a game-data member.
+  The public slot scan, validity, and bounded-read APIs use the same virtual
+  paths, so start-menu resume discovery does not require an unpacked save.
 - The authentic Amiga installer now binds its native big-endian, 16-colour
   `INTERFACE_GENERAL/0` PalIRGB field 0 rather than PC field `0xfe`/PAL16.
   Its runtime HUD uses the source palette's physical-index receipt, matching

@@ -114,6 +114,7 @@ runtime path. Loose original files continue to use the same hash-bound loader.
 The source corpus scanner accepts a retail PC-DOS ZIP root as well as a loose
 save directory. It forms virtual `archive.zip::data/sksaveN.dat` paths, checks
 the original 42-byte header, and binds each accepted payload to a complete-file
-hash before rereading it in memory. This applies to diagnostic census and the
-receipt-bound importer; it does not claim that the still-gated full GAME_LOAD
-handoff is retail-complete.
+hash before rereading it in memory. The public slot scan, validity checks, and
+bounded slot-reader API use that same path, so a start-menu resume can inspect
+the retail source archive without extraction. This does not claim that the
+still-gated full GAME_LOAD handoff is retail-complete.

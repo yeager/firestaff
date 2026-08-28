@@ -30,7 +30,9 @@ int main(void)
     const char *archive = getenv("FIRESTAFF_DM2_SKSAVE_ZIP");
     DM2_SKSaveCorpusReceipt corpus;
     DM2_OriginalSaveStateCorpusReceipt states;
+    DM2_SL_State slots;
     uint8_t *payload = NULL;
+    uint8_t prefix[64];
     size_t payload_size = 0u;
 
     printf("DM2 real PC-DOS SKSave ZIP tests:\n\n");
@@ -51,6 +53,15 @@ int main(void)
               strstr(corpus.first_importable_path, "::data/") != NULL,
           "source members retain virtual archive paths in their receipts");
 
+    dm2_sl_init(&slots, archive);
+    CHECK(dm2_sl_scan_slots(&slots) && slots.slot_count == 4u &&
+              dm2_sl_slot_occupied(&slots, 0u) &&
+              dm2_sl_slot_occupied(&slots, 3u),
+          "public slot scan reads source ZIP members without extraction");
+    CHECK(dm2_v1_save_has_valid_slot(archive, 0u) &&
+              dm2_v1_save_has_valid_slot(archive, 3u),
+          "public slot validation accepts virtual source members");
+
     if (corpus.first_importable_payload_size != 0u) {
         payload = (uint8_t *)malloc(corpus.first_importable_payload_size);
     }
@@ -61,6 +72,17 @@ int main(void)
                   corpus.first_importable_payload_size, &payload_size) &&
                   payload_size == corpus.candidate_receipts[0].payload_size,
               "receipt-bound payload reread succeeds without extraction");
+        payload_size = 0u;
+        CHECK(dm2_sl_load(archive, 0u, payload,
+                          corpus.first_importable_payload_size,
+                          &payload_size) == 0 && payload_size != 0u,
+              "public slot loader reads a retail ZIP member in memory");
+        payload_size = 0u;
+        CHECK(dm2_sl_load(archive, 0u, prefix, sizeof(prefix),
+                          &payload_size) == 0 &&
+                  payload_size == sizeof(prefix) &&
+                  memcmp(prefix, payload, sizeof(prefix)) == 0,
+              "public slot loader preserves its bounded-prefix contract");
     }
     free(payload);
 

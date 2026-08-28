@@ -428,34 +428,6 @@ static void dm2_sl_build_source_header(uint8_t hdr[42], const char *name,
     memcpy(hdr + 2u, name, nlen);
 }
 
-static FILE *dm2_sl_open_valid_payload(const char *path, int *status)
-{
-    FILE *f = fopen(path, "rb");
-    if (!f) {
-        if (status) *status = -2;
-        return NULL;
-    }
-
-    uint8_t hdr[42];
-    if (fread(hdr, 42, 1, f) != 1) {
-        fclose(f);
-        if (status) *status = -4;
-        return NULL;
-    }
-
-    /* ReDMCSB LOADSAVE.C F0435 lines 2665-2671 validates the save header
-     * before reading payload parts. Keep the authenticated DOS header shape
-     * as a container gate only; a full parser still decides loadability. */
-    if (!dm2_sl_header_valid(hdr)) {
-        fclose(f);
-        if (status) *status = -5;
-        return NULL;
-    }
-
-    if (status) *status = 0;
-    return f;
-}
-
 typedef enum {
     DM2_SK_CORPUS_MISSING = 0,
     DM2_SK_CORPUS_INVALID = 1,
@@ -1031,6 +1003,35 @@ static int dm2_sksave_read_valid_payload(const char *path,
     return 0;
 }
 
+/* The historical slot API returns as much of a valid payload as fits in the
+ * caller buffer. Keep that contract while sourcing both loose and virtual
+ * archive paths through the same bounded in-memory reader. Receipt-bound
+ * imports deliberately use dm2_sksave_read_valid_payload() above instead. */
+static int dm2_sksave_read_valid_payload_prefix(const char *path,
+                                                uint8_t *out_payload,
+                                                size_t out_capacity,
+                                                size_t *out_payload_size)
+{
+    uint8_t *bytes = NULL;
+    size_t byte_count = 0u;
+    size_t payload_size;
+    size_t copied;
+
+    if (out_payload_size) *out_payload_size = 0u;
+    if (!path || !out_payload || !out_payload_size ||
+        !dm2_sksave_read_path(path, &bytes, &byte_count) ||
+        byte_count < 42u || !dm2_sl_header_valid(bytes)) {
+        free(bytes);
+        return -1;
+    }
+    payload_size = byte_count - 42u;
+    copied = payload_size < out_capacity ? payload_size : out_capacity;
+    if (copied != 0u) memcpy(out_payload, bytes + 42u, copied);
+    free(bytes);
+    *out_payload_size = copied;
+    return 0;
+}
+
 void dm2_sl_init(DM2_SL_State *state, const char *save_base)
 {
     if (!state) return;
@@ -1077,16 +1078,17 @@ bool dm2_sl_scan_slots(DM2_SL_State *state)
             continue;
         }
 
-        FILE *f = fopen(path, "rb");
-        if (!f) continue;
-
+        uint8_t *file_bytes = NULL;
+        size_t file_size = 0u;
         uint8_t hdr[42];
-        if (fread(hdr, 42, 1, f) != 1) {
-            fclose(f);
+        if (!dm2_sksave_read_path(path, &file_bytes, &file_size) ||
+            file_size < sizeof(hdr)) {
+            free(file_bytes);
             state->slots[i].occupied = false;
             continue;
         }
-        fclose(f);
+        memcpy(hdr, file_bytes, sizeof(hdr));
+        free(file_bytes);
 
         if (dm2_sl_header_valid(hdr)) {
             state->slots[i].occupied = true;
@@ -1174,9 +1176,11 @@ int dm2_sl_load(const char *save_base, uint8_t slot,
     int has_primary = dm2_sksave_root_variant_path(
         save_base, 0, slot, 0, path, sizeof(path));
 
-    int status = 0;
-    FILE *f = has_primary ? dm2_sl_open_valid_payload(path, &status) : NULL;
-    if (!f) {
+    int status = -2;
+    size_t got = 0u;
+    int loaded = has_primary &&
+        dm2_sksave_read_valid_payload_prefix(path, data, max_size, &got) == 0;
+    if (!loaded) {
         /* Try the observed same-slot backup first when the primary is
          * missing, truncated, or corrupt, then preserve the legacy generic
          * SKSave.bak fallback used by the source compatibility path.
@@ -1185,17 +1189,16 @@ int dm2_sl_load(const char *save_base, uint8_t slot,
          * invalid DM2 slot headers so runtime load never accepts stale data. */
         if (dm2_sksave_root_variant_path(save_base, 0, slot, 1, bak,
                                          sizeof(bak))) {
-            f = dm2_sl_open_valid_payload(bak, &status);
+            loaded = dm2_sksave_read_valid_payload_prefix(bak, data, max_size,
+                                                           &got) == 0;
         }
-        if (!f && dm2_sksave_root_variant_path(save_base, 1, 0u, 1, bak,
-                                               sizeof(bak))) {
-            f = dm2_sl_open_valid_payload(bak, &status);
+        if (!loaded && dm2_sksave_root_variant_path(save_base, 1, 0u, 1, bak,
+                                                     sizeof(bak))) {
+            loaded = dm2_sksave_read_valid_payload_prefix(bak, data, max_size,
+                                                           &got) == 0;
         }
-        if (!f) return status ? status : -2;
+        if (!loaded) return status;
     }
-
-    size_t got = fread(data, 1, max_size, f);
-    fclose(f);
     *out_size = got;
     return 0;
 }
@@ -1211,20 +1214,20 @@ int dm2_sl_load_last_session(const char *save_base,
     int has_primary = dm2_sksave_root_variant_path(
         save_base, 1, 0u, 0, path, sizeof(path));
 
-    int status = 0;
-    FILE *f = has_primary ? dm2_sl_open_valid_payload(path, &status) : NULL;
-    if (!f) {
+    int status = -2;
+    size_t got = 0u;
+    int loaded = has_primary &&
+        dm2_sksave_read_valid_payload_prefix(path, data, max_size, &got) == 0;
+    if (!loaded) {
         /* SKWin/DM2 resume path: last-session primary first, backup second,
          * then caller may fall back to a fresh dungeon start. */
         if (dm2_sksave_root_variant_path(save_base, 1, 0u, 1, bak,
                                          sizeof(bak))) {
-            f = dm2_sl_open_valid_payload(bak, &status);
+            loaded = dm2_sksave_read_valid_payload_prefix(bak, data, max_size,
+                                                           &got) == 0;
         }
-        if (!f) return status ? status : -2;
+        if (!loaded) return status;
     }
-
-    size_t got = fread(data, 1, max_size, f);
-    fclose(f);
     *out_size = got;
     return 0;
 }
@@ -1256,33 +1259,33 @@ bool dm2_v1_save_has_valid_slot(const char *save_base, uint8_t slot)
                                       sizeof(path))) {
         return false;
     }
-    FILE *f = fopen(path, "rb");
-    if (!f) return false;
+    uint8_t *bytes = NULL;
+    size_t byte_count = 0u;
     uint8_t hdr[42];
-    bool ok = (fread(hdr, 42, 1, f) == 1) && dm2_sl_header_valid(hdr);
-    fclose(f);
+    if (!dm2_sksave_read_path(path, &bytes, &byte_count) ||
+        byte_count < sizeof(hdr)) {
+        free(bytes);
+        return false;
+    }
+    memcpy(hdr, bytes, sizeof(hdr));
+    free(bytes);
+    bool ok = dm2_sl_header_valid(hdr);
     return ok;
 }
 
 bool dm2_v1_save_has_valid_last_session(const char *save_base)
 {
-    int status = 0;
-    FILE *f;
     char path[256];
     if (!save_base) return false;
-    f = dm2_sksave_root_variant_path(save_base, 1, 0u, 0, path,
-                                     sizeof(path))
-        ? dm2_sl_open_valid_payload(path, &status) : NULL;
-    if (!f) {
-        f = dm2_sksave_root_variant_path(save_base, 1, 0u, 1, path,
-                                         sizeof(path))
-            ? dm2_sl_open_valid_payload(path, &status) : NULL;
+    size_t payload_size = 0u;
+    if (dm2_sksave_root_variant_path(save_base, 1, 0u, 0, path,
+                                     sizeof(path)) &&
+        dm2_sksave_probe_path(path, &payload_size) == DM2_SK_CORPUS_VALID) {
+        return true;
     }
-    if (!f) {
-        return false;
-    }
-    fclose(f);
-    return true;
+    return dm2_sksave_root_variant_path(save_base, 1, 0u, 1, path,
+                                        sizeof(path)) &&
+        dm2_sksave_probe_path(path, &payload_size) == DM2_SK_CORPUS_VALID;
 }
 
 bool dm2_v1_sksave_corpus_scan_ordered(const char *save_base,
