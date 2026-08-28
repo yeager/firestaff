@@ -12,3 +12,11 @@ Reviewed 2026-08-25. Only open work is listed here.
   than misreporting the supplied original data as missing.
 - Bind V2.2 presentation only to reviewed original material/pixels. Existing
   placeholder or procedural art remains fixture-only.
+
+## Deferred original-data corpus
+
+The missing C13 save/capture corpus is deferred rather than a release blocker
+for the native media paths currently under active work.  When an
+operator-supplied corpus becomes available, add its hashes and provenance,
+then promote only the routes it directly proves.  Do not manufacture a save
+or capture to close this section.

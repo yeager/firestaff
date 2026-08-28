@@ -12,3 +12,10 @@ Reviewed 2026-08-25. Only open work is listed here.
   launch retains original archive/image media as its runtime source.
 - Keep V2.2 presentation closed until a real source-owned material/pixel
   binding exists.
+
+## Deferred original-data corpus
+
+DSA-bearing saves and visual/audio captures are deferred while native Atari,
+Amiga and FM Towns media paths continue to be improved from the supplied
+original packages.  Later work must record media hashes and provenance before
+using newly supplied captures; it must never generate a replacement corpus.
