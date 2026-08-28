@@ -25078,6 +25078,11 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->partyDir = state->dm2State.party_dir;
         out->championCount = state->world.party.championCount;
         out->runtimeTick = state->dm2State.tick_count;
+        out->dm2RuntimeFrameAccepted = state->dm2LastRuntimeFrameAccepted;
+        out->dm2RuntimeRealAssetsReady = state->dm2LastRuntimeRealAssetsReady;
+        out->dm2RuntimeNoCoreFallbacks = state->dm2LastRuntimeNoCoreFallbacks;
+        out->dm2RuntimeFallbackDrawCount =
+            state->dm2LastRuntimeFallbackDrawCount;
         if (m11_dm2_boot_runtime_startup_view_model(state, &view_model)) {
             m11_dm2_boot_probe_receipt_from_startup_view_model(
                 &view_model,
@@ -62725,6 +62730,24 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                 &runtime_frame_receipt);
             runtime_frame_accepted = M11_Dm2RuntimeFrameReceipt_ShouldPresent(
                 &runtime_render_receipt, &runtime_frame_receipt);
+            {
+                M11_GameViewState *mutable_state = (M11_GameViewState *)state;
+                mutable_state->dm2LastRuntimeFrameAccepted =
+                    runtime_frame_accepted ? 1 : 0;
+                mutable_state->dm2LastRuntimeRealAssetsReady =
+                    runtime_render_receipt.runtime_render_real_asset_ready ? 1 : 0;
+                mutable_state->dm2LastRuntimeNoCoreFallbacks =
+                    runtime_render_receipt.runtime_render_no_core_fallbacks ? 1 : 0;
+                mutable_state->dm2LastRuntimeFallbackDrawCount =
+                    runtime_render_receipt.runtime_render_fallback_floor_ceiling_count +
+                    runtime_render_receipt.runtime_render_fallback_wall_count +
+                    runtime_render_receipt.runtime_render_fallback_door_count +
+                    runtime_render_receipt.runtime_render_fallback_creature_count +
+                    runtime_render_receipt.runtime_render_fallback_item_count +
+                    runtime_render_receipt.runtime_render_fallback_creature_possession_item_count +
+                    runtime_render_receipt.runtime_render_fallback_carried_item_count +
+                    runtime_render_receipt.runtime_render_fallback_projectile_count;
+            }
             if (!runtime_frame_accepted) {
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                               0, 0, framebufferWidth, framebufferHeight,

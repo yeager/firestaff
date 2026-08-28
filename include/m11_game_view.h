@@ -747,6 +747,14 @@ typedef struct {
     int dm2ExtendedSpellGdatReady;
     unsigned int dm2ExtendedSpellGdatDefinedCount;
     unsigned int dm2ExtendedSpellGdatWordHash;
+    /* The most recently evaluated live DM2 viewport frame.  These values are
+     * evidence from the renderer's source-material gate, not inferences from
+     * a mounted archive; dm2RuntimeFrameAccepted says whether M11 presented
+     * that exact frame. */
+    int dm2RuntimeFrameAccepted;
+    int dm2RuntimeRealAssetsReady;
+    int dm2RuntimeNoCoreFallbacks;
+    int dm2RuntimeFallbackDrawCount;
     int csbPresentedFrameCaptureReady;
     int csbPresentedFrameRunningFromMacOSApp;
     int csbPresentedFrameMacWindowReady;
@@ -1804,6 +1812,13 @@ typedef struct {
                                * the static DM2_V1_BootProfile in
                                * M11_GameView_StartDm2(). */
     void *dm2BootProfile;     /* DM2_V1_BootProfile* */
+    /* Snapshot of the last viewport frame evaluated by the atomic source
+     * ownership gate.  Kept as scalar evidence so M11's public state stays
+     * independent from DM2's private receipt layout. */
+    int dm2LastRuntimeFrameAccepted;
+    int dm2LastRuntimeRealAssetsReady;
+    int dm2LastRuntimeNoCoreFallbacks;
+    int dm2LastRuntimeFallbackDrawCount;
     /* HME-242's AUTOEXEC runs the separate TWANIM TITLE stream before
      * SKULL's menu.  Retain only the selected in-memory CD member and its
      * decoded source frame; no member is materialised on the host disk. */

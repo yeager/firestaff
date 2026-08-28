@@ -20,7 +20,7 @@ output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
 
 case "$output" in
-    *'assetMd5=b4d733576ea60c41737f79f212faf528'*'phase=dm2-runtime'*'levelLoaded=1'*'party=1,7,0'*) ;;
+    *'assetMd5=b4d733576ea60c41737f79f212faf528'*'phase=dm2-runtime'*'levelLoaded=1'*'party=1,7,0'*'dm2FrameAccepted=1'*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*) ;;
     *) printf '%s\n' "$output" >&2; exit 1 ;;
 esac
 echo 'PASS: native DM2 French DOS ZIP start menu reaches runtime and moves in memory'
