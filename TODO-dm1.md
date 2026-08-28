@@ -6,11 +6,6 @@ Reviewed 2026-08-25. Only open work is listed here.
   top-row and action routes; bind each to the PC 3.4 runtime before promotion.
 - Extend real-media parity beyond bounded Atari ST, Amiga and FM Towns routes
   to native end-to-end gameplay, input and presentation evidence.
-- The supplied Atari ST English preservation ZIP has an authentic nested STX
-  image, but the current bounded reader has no separately hash-verifiable
-  dungeon member for that image. It is intentionally rejected for direct
-  launch rather than borrowing a sibling edition; add an authentic STX
-  filesystem/sector provenance path before promoting it.
 - The supplied French DOS ZIP → `dungeon_master.exe` SFX package uses a
   non-solid RAR 2.0 (`unp_ver=0x14`) stream. Native RAR2 decoding is
   intentionally out of scope; the launcher reports it as unsupported rather
