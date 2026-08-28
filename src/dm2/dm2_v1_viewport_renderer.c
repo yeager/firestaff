@@ -7918,10 +7918,14 @@ static int dm2_v1_render_hud_source_font(
 {
     int glyph_count = 0;
 
-    if (!s || !s->framebuffer || !rect || !text || !text[0] ||
+    if (!s || !s->framebuffer || !rect || !text ||
         !s->gdat_interface_font_rows || s->gdat_interface_font_hash == 0u) {
         return 0;
     }
+    /* DRAW_STRING has no glyph transaction for an empty source name.  A
+     * resumed SKSAVE can retain such a champion slot; accepting its exact
+     * no-draw result is distinct from accepting a missing font. */
+    if (!text[0]) return 1;
     /* skproject DRAW_STRING dispatches high-bit text through DRAW_MBCS_STR.
      * The canonical PC G1 graphics corpus has no category-0x1c font entry,
      * so QUERY_CHAR_METRICS returns NULL and the original consumes the byte
@@ -8607,7 +8611,15 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
                 }
             }
         }
-        if (s->hud_hand_action_source.valid &&
+        /* DISPLAY_RIGHT_PANEL_SQUAD_HANDS does not draw a hand panel when
+         * the persisted current-hero selector names an empty squad slot.
+         * This is a normal resumed-SKSAVE no-draw state, not evidence that
+         * the selected INTERFACE_GENERAL material is missing. */
+        if (s->hud_hand_action_source.valid && s->hud_party_valid &&
+            s->hud_hand_action_source.player_index <
+                (uint8_t)s->hud_party.champion_count &&
+            s->hud_party.champions[
+                s->hud_hand_action_source.player_index].occupied &&
             !dm2_v1_render_hud_hand_action_asset(s) &&
             s->source_materials_required) {
             dm2_v1_block_source_material(
