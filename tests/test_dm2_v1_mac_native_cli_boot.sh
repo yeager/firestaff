@@ -20,7 +20,7 @@ output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
 
 case "$output" in
-    *'assetMd5=5cab25f6b975957eae4a203174e7f2a6'*'phase=dm2-runtime'*'levelLoaded=1'*'party=1,7,0'*) ;;
+    *'assetMd5=5cab25f6b975957eae4a203174e7f2a6'*'phase=dm2-runtime'*'levelLoaded=1'*'party=1,7,0'*'dm2FrameAccepted=1'*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*) ;;
     *) printf '%s\n' "$output" >&2; exit 1 ;;
 esac
 echo 'PASS: native DM2 Macintosh ZIP start menu, title, mirror selection, and movement run in memory'

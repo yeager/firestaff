@@ -4375,21 +4375,26 @@ int dm2_v1_asset_load_interface_palette(
         irgb = dm2_v1_asset_load_typed_sized(
             loader, category, index, DM2_GDAT_ENTRY_TYPE_PAL_IRGB, 0,
             &irgb_size);
-        if (!irgb || (irgb_size != 16u * 4u && irgb_size != 6u * 16u * 4u)) return 0;
-        for (color = 0; color < 16; ++color) {
-            const uint8_t *src = irgb + (size_t)color * 4u;
-            out_palette->rgb6[color][0] = (uint8_t)(src[1] >> 2u);
-            out_palette->rgb6[color][1] = (uint8_t)(src[2] >> 2u);
-            out_palette->rgb6[color][2] = (uint8_t)(src[3] >> 2u);
-            out_palette->palette16[color] = (uint8_t)color;
-            hash = (hash ^ out_palette->rgb6[color][0]) * 16777619u;
-            hash = (hash ^ out_palette->rgb6[color][1]) * 16777619u;
-            hash = (hash ^ out_palette->rgb6[color][2]) * 16777619u;
+        /* Amiga/FMT GDAT stores a physical 16-colour row at field zero.
+         * Macintosh is also big-endian, but retains the normal 256-row
+         * PalIRGB plus dtPalette16 pair at field FE.  Select the physical
+         * path from the authenticated payload shape, never CPU endianness. */
+        if (irgb && (irgb_size == 16u * 4u || irgb_size == 6u * 16u * 4u)) {
+            for (color = 0; color < 16; ++color) {
+                const uint8_t *src = irgb + (size_t)color * 4u;
+                out_palette->rgb6[color][0] = (uint8_t)(src[1] >> 2u);
+                out_palette->rgb6[color][1] = (uint8_t)(src[2] >> 2u);
+                out_palette->rgb6[color][2] = (uint8_t)(src[3] >> 2u);
+                out_palette->palette16[color] = (uint8_t)color;
+                hash = (hash ^ out_palette->rgb6[color][0]) * 16777619u;
+                hash = (hash ^ out_palette->rgb6[color][1]) * 16777619u;
+                hash = (hash ^ out_palette->rgb6[color][2]) * 16777619u;
+            }
+            for (color = 0; color < 16; ++color)
+                hash = (hash ^ out_palette->palette16[color]) * 16777619u;
+            out_palette->hash = hash ? hash : 1u;
+            return 1;
         }
-        for (color = 0; color < 16; ++color)
-            hash = (hash ^ out_palette->palette16[color]) * 16777619u;
-        out_palette->hash = hash ? hash : 1u;
-        return 1;
     }
     irgb = dm2_v1_asset_load_typed_sized(loader, category, index,
                                           DM2_GDAT_ENTRY_TYPE_PAL_IRGB,

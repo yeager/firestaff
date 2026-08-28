@@ -66,10 +66,12 @@ the original startup path. The Macintosh probe dismisses its retained title
 movie, dispatches the original New Game event and selects a source-owned
 viewport mirror. The FM Towns probe preserves its AUTOEXEC/SWOOSH/TITLE/SKULL
 handoff before the source-space mirror selection. All routes refuse unrelated
-media by hash. The FM Towns and Amiga CLI regressions additionally require an
-accepted real-GDAT M11 frame with no core or fallback draw. The Amiga HUD uses
-its own authenticated `INTERFACE_GENERAL/0` palette receipt; it does not reuse
-a PC local-palette assumption.
+media by hash. The Macintosh, FM Towns, and Amiga CLI regressions additionally
+require an accepted real-GDAT M11 frame with no core or fallback draw. The
+Macintosh edition retains its source 256-row `PalIRGB`/`dtPalette16` pair,
+whereas the Amiga HUD uses its own authenticated 16-colour
+`INTERFACE_GENERAL/0` palette receipt; neither route reuses a PC
+local-palette assumption.
 PC coordinates or extracted media.
 
 `dm2_v1_dos_sksave_archive_menu_resume` adds the corresponding resume route:
