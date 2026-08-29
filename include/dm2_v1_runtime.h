@@ -1301,6 +1301,8 @@ typedef struct DM2_V1_RuntimeWieldAttackReceipt {
     int16_t hero_skill_level;
     int16_t creature_defense;
     int16_t creature_armor;
+    int16_t map_difficulty;
+    int16_t party_power_level;
     int calculation_valid;
     int calculation_hit;
     int calculation_miss;

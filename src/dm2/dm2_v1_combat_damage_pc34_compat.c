@@ -10,7 +10,8 @@
  *
  * 1. CALC_PLAYER_ATTACK_DAMAGE — hero attacks creature:
  *    - Guard: hero alive, valid creature, party size
- *    - Hit check: dexterity vs (creature_defense + rand(32) + 2*level - 16)/2
+ *    - Hit check: dexterity vs (2*map_difficulty + creature_defense +
+ *      rand(32) + 2*party_power - 16)/2
  *    - Luck check: 0x4B - armor_mask, hero.use_luck
  *    - Strength: COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH
  *    - Damage: strength * power / 32 - creature_armor - rand(32)
@@ -91,17 +92,17 @@ int dm2_v1_calc_player_attack_damage_receipt(
     }
 
     {
-        /*
-         * SKProject: SKWINSPX/src/v5/skhero.cpp, the
-         * DM2_CALC_PLAYER_ATTACK_DAMAGE hit check uses DM2_RAND() & 0x1f
-         * (five bits), before comparing against the defense value.
-         */
-        int32_t hit_val = (int32_t)request->hero_dexterity +
-                          (int32_t)(request->rand_hit & 0x1F);
-        int32_t def_val = ((int32_t)request->creature_defense +
-                           (int32_t)(request->rand_defense % 32) +
-                           2 * (int32_t)request->party_level - 16) / 2;
-        if (hit_val < def_val) {
+        /* SKWINSPX v5/skhero.cpp:273-281 reads the five-bit random roll
+         * into the *defense* side of the comparison.  The old host formula
+         * added it to dexterity and substituted the map index for the two
+         * separate source globals, which made an authenticated DM2 party
+         * hit (or miss) on the wrong boundary. */
+        int32_t def_val =
+            (2 * (int32_t)request->map_difficulty +
+             (int32_t)request->creature_defense +
+             (int32_t)(request->rand_hit & 0x1F) +
+             2 * (int32_t)request->party_power_level - 16) / 2;
+        if ((int32_t)request->hero_dexterity <= def_val) {
             receipt->miss = 1;
             return 1;
         }

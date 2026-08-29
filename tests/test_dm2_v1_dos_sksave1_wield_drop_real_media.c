@@ -118,13 +118,15 @@ static int exercise_drop(DM2_V1_BootProfile *profile)
     }
     if (saw_wield_calculation) {
         printf("SKSave1 WIELD source miss item=%04x creature=%04x power=%d "
-               "dex=%d strength=%d skill=%d defense=%d armor=%d "
+               "dex=%d strength=%d skill=%d defense=%d armor=%d mapdiff=%d "
+               "partypower=%d "
                "calculation=%d hit=%d miss=%d closed=%d raw=%d final=%d hp=%d\n",
                (unsigned short)last_wield.item_handle,
                (unsigned short)last_wield.creature_record,
                last_wield.command_power, last_wield.hero_dexterity,
                last_wield.hero_strength, last_wield.hero_skill_level,
                last_wield.creature_defense, last_wield.creature_armor,
+               last_wield.map_difficulty, last_wield.party_power_level,
                last_wield.calculation_valid, last_wield.calculation_hit,
                last_wield.calculation_miss, last_wield.calculation_fail_closed,
                last_wield.raw_damage,

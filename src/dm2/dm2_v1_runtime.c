@@ -61,6 +61,7 @@
 #include "dm2_v1_creature_ops_pc34_compat.h"
 #include "dm2_v1_creature_attacks_party_pc34_compat.h"
 #include "dm2_v1_creature_attacks_player_pc34_compat.h"
+#include "dm2_v1_creature_ai_prepare_pc34_compat.h"
 #include "dm2_v1_combat_damage_pc34_compat.h"
 #include "dm2_v1_ccm_loop_pc34_compat.h"
 #include "dm2_v1_creature_ai_loop_pc34_compat.h"
@@ -15718,7 +15719,38 @@ static int dm2_runtime_attack_creature_at(
             hero, (int16_t)pre_strength);
     }
     request.creature_armor_mult = ai->ArmorClass;
-    request.party_level = (int16_t)map;
+    /* DM2_CALC_PLAYER_ATTACK_DAMAGE receives a map descriptor difficulty
+     * and ddat.v1e0286 party power, not the current map ordinal.  Both are
+     * derivable from the already authenticated source state: the map
+     * descriptor is retained by the runtime handoff and c_ai.cpp's party
+     * power helper consumes the four aggregate skill records of each hero.
+     * Keeping this derivation here prevents the combat receipt from
+     * silently substituting host/session metadata for game data. */
+    {
+        DM2_V1_PartySkillData party_skills;
+        memset(&party_skills, 0, sizeof(party_skills));
+        party_skills.heroes_in_party = rt->source_party.heros_in_party;
+        for (int hero_index = 0;
+             hero_index < party_skills.heroes_in_party &&
+             hero_index < DM2_V1_MAX_HEROES;
+             ++hero_index) {
+            for (int skill_index = 0; skill_index < DM2_V1_SKILLS_PER_HERO;
+                 ++skill_index) {
+                int32_t source_skill =
+                    rt->source_party.hero[hero_index].skill[0][skill_index];
+                if (source_skill < 0) source_skill = 0;
+                if (source_skill > UINT16_MAX) source_skill = UINT16_MAX;
+                party_skills.skill[hero_index][skill_index] =
+                    (uint16_t)source_skill;
+            }
+        }
+        request.map_difficulty = rt->c_light_map_descriptor.valid
+            ? (int16_t)rt->c_light_map_descriptor.difficulty : 0;
+        request.party_power_level =
+            (int16_t)dm2_v1_compute_party_power_level(&party_skills);
+    }
+    g_dm2_last_wield_attack.map_difficulty = request.map_difficulty;
+    g_dm2_last_wield_attack.party_power_level = request.party_power_level;
     request.rand_hit = dm2_v1_drops_rand16(&rt->drop_rng, 0x100u);
     request.rand_defense = dm2_v1_drops_rand16(&rt->drop_rng, 0x100u);
     request.rand_armor = dm2_v1_drops_rand16(&rt->drop_rng, 0x100u);

@@ -74,7 +74,12 @@ typedef struct {
     uint8_t bodyflag;
     int16_t stamina_adj;
     uint16_t creature_armor_mult;
-    int16_t party_level;
+    /* DM2_CALC_PLAYER_ATTACK_DAMAGE reads these independently: the map
+     * descriptor's high-nibble difficulty (ddat.v1e03c0->w_0c >> 12), and
+     * the current party-power value (ddat.v1e0286).  They are not the map
+     * index and must be supplied by the source-state owner. */
+    int16_t map_difficulty;
+    int16_t party_power_level;
 } DM2_V1_CalcAttackDamageRequest;
 
 /* CALC_PLAYER_ATTACK_DAMAGE receipt */

@@ -72,7 +72,7 @@ static void test_calc_damage_valid(void)
     req.rand_hit = 8;
     req.rand_defense = 0;
     req.rand_armor = 0;
-    req.party_level = 3;
+    req.party_power_level = 3;
     req.creature_armor_mult = 4;
     int r = dm2_v1_calc_player_attack_damage_receipt(&req, &receipt);
     assert(r == 1);
@@ -96,7 +96,7 @@ static void test_calc_damage_miss_by_defense(void)
     req.creature_defense = 80;
     req.rand_hit = 0;
     req.rand_defense = 0;
-    req.party_level = 10;
+    req.party_power_level = 10;
     int r = dm2_v1_calc_player_attack_damage_receipt(&req, &receipt);
     assert(r == 1);
     assert(receipt.miss == 1);
@@ -111,25 +111,27 @@ static void test_calc_damage_source_hit_roll_uses_five_bits(void)
     DM2_V1_CalcAttackDamageRequest req;
     memset(&req, 0, sizeof(req));
     req.hero_hp = 100;
-    req.hero_dexterity = 0;
+    req.hero_dexterity = 10;
     req.creature_record = 0x1000;
     req.creature_defense = 28;
-    req.party_level = 10;
+    req.map_difficulty = 0;
+    req.party_power_level = 0;
     req.hero_ability = 40;
     req.hero_max_load = 200;
     req.item_weight = 20;
     req.stamina_adj = 60;
     req.power_base = 64;
 
-    /* def_val is 16: source rand 0x10 must cross the hit boundary. */
-    req.rand_hit = 0x10;
+    /* The five-bit source roll raises the defense threshold. With a roll of
+     * zero the threshold is six and dexterity 10 hits. */
+    req.rand_hit = 0;
     int r = dm2_v1_calc_player_attack_damage_receipt(&req, &receipt);
     assert(r == 1);
     assert(receipt.hit == 1);
     assert(receipt.miss == 0);
 
-    /* The adjacent four-bit value remains a miss at the same boundary. */
-    req.rand_hit = 0x0F;
+    /* A bit-five roll changes the threshold to fourteen and must miss. */
+    req.rand_hit = 0x10;
     r = dm2_v1_calc_player_attack_damage_receipt(&req, &receipt);
     assert(r == 1);
     assert(receipt.hit == 0);
@@ -157,7 +159,7 @@ static void test_calc_damage_poison(void)
     req.creature_poison_resist = 5;
     req.rand_poison = 3;
     req.rand_hit = 8;
-    req.party_level = 3;
+    req.party_power_level = 3;
     int r = dm2_v1_calc_player_attack_damage_receipt(&req, &receipt);
     assert(r == 1);
     assert(receipt.hit == 1);
@@ -184,7 +186,7 @@ static void test_calc_damage_skill_exp(void)
     req.creature_armor = 0;
     req.creature_armor_mult = 8;
     req.rand_hit = 8;
-    req.party_level = 3;
+    req.party_power_level = 3;
     int r = dm2_v1_calc_player_attack_damage_receipt(&req, &receipt);
     assert(r == 1);
     assert(receipt.hit == 1);
