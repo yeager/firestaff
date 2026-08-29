@@ -159,7 +159,7 @@ int main(void)
     if (retail && retail[0]) { ran = 1; failed |= exercise_zip(retail); }
     if (!ran) {
         puts("SKIP: DM2 Mac retail ZIP environment is not set");
-        return 0;
+        return 77;
     }
     return failed ? 1 : 0;
 }

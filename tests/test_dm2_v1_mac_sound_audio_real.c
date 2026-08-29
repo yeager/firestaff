@@ -29,7 +29,7 @@ int main(void)
 
     if (!zip || !zip[0]) {
         puts("SKIP: DM2 Mac ZIP environment is not set");
-        return 0;
+        return 77;
     }
     memset(&media, 0, sizeof(media));
     memset(&audio, 0, sizeof(audio));

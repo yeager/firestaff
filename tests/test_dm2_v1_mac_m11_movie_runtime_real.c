@@ -19,7 +19,7 @@ int main(void)
 
     if (!zip || !zip[0]) {
         puts("SKIP: DM2 Mac ZIP environment is not set");
-        return 0;
+        return 77;
     }
     memset(&state, 0, sizeof(state));
     memset(&spec, 0, sizeof(spec));

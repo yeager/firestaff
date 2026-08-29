@@ -8,7 +8,7 @@ int main(void) {
     DM2_V1_MacMedia media;
     DM2_V1_MacSoundSample sample;
     const char *zip = getenv("FIRESTAFF_DM2_MAC_EN_ZIP");
-    if (!zip || !zip[0]) { puts("SKIP: DM2 Mac ZIP environment is not set"); return 0; }
+    if (!zip || !zip[0]) { puts("SKIP: DM2 Mac ZIP environment is not set"); return 77; }
     if (dm2_v1_mac_media_read_zip(zip, &media) != 0 ||
         dm2_v1_mac_sound_count(media.sound_resource_fork[DM2_V1_MAC_SOUND_MUSIC],
                                 media.sound_resource_fork_size[DM2_V1_MAC_SOUND_MUSIC]) != 2u ||
