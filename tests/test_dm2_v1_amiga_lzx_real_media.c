@@ -11,6 +11,12 @@
 #include "firestaff_zip_extract.h"
 #include "firestaff_amiga_adf.h"
 
+/* This is a real-media regression target and CI builds it in Release.  Keep
+ * its validation live there: relying on assert with NDEBUG would turn every
+ * archive, LZX and animation check below into a no-op. */
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
