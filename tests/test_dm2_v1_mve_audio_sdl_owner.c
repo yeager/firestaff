@@ -1,27 +1,23 @@
 #include "dm2_v1_dos_real_data_manifest.h"
 #include "dm2_v1_mve_audio_sdl_owner.h"
 #include "dm2_v1_mve_presentation_owner.h"
+#include "firestaff_zip_extract.h"
 
+/* Original PCM queue receipts must remain active in Release. */
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-static uint8_t *read_original(const char *path, size_t *out_size)
+static uint8_t *read_original_member(const char *archive, const char *name,
+                                     size_t *out_size)
 {
-    FILE *file;
-    long length;
-    uint8_t *bytes;
-    if (!path || !out_size || !(file = fopen(path, "rb"))) return NULL;
-    if (fseek(file, 0L, SEEK_END) != 0 || (length = ftell(file)) <= 0L ||
-        fseek(file, 0L, SEEK_SET) != 0 ||
-        !(bytes = (uint8_t *)malloc((size_t)length)) ||
-        fread(bytes, 1u, (size_t)length, file) != (size_t)length) {
-        free(bytes);
-        fclose(file);
+    uint8_t *bytes = NULL;
+    if (!archive || !archive[0] || !name || !out_size ||
+        firestaff_zip_extract_by_suffix(archive, name, &bytes, out_size) != 0)
         return NULL;
-    }
-    fclose(file);
-    *out_size = (size_t)length;
     return bytes;
 }
 
@@ -30,11 +26,11 @@ int main(void)
     static const char *const names[] = { "intro", "end" };
     static const uint32_t expected_packets[] = { 217u, 600u };
     static const uint64_t expected_bytes[] = { 797426u, 2204900u };
-    const char *root = getenv("FIRESTAFF_DM2_DOS_ROOT");
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
     size_t movie_index;
 
-    if (!root) {
-        puts("SKIP: no DM2 DOS root");
+    if (!archive || !archive[0]) {
+        puts("SKIP: no DM2 DOS archive");
         return 0;
     }
     for (movie_index = 0u; movie_index < sizeof(names) / sizeof(names[0]);
@@ -46,12 +42,10 @@ int main(void)
         DM2_V1_MvePcmFrame frame;
         uint8_t *bytes;
         size_t byte_count;
-        char path[1024];
         uint32_t packet_count = 0u;
 
         assert(fingerprint != NULL);
-        snprintf(path, sizeof(path), "%s/%s", root, names[movie_index]);
-        bytes = read_original(path, &byte_count);
+        bytes = read_original_member(archive, names[movie_index], &byte_count);
         assert(bytes != NULL && byte_count == fingerprint->size_bytes);
         assert(dm2_v1_mve_presentation_owner_init(&presentation, bytes,
                                                    byte_count) == 1);
