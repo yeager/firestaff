@@ -43,6 +43,15 @@ if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" ||
     exit 1
 fi
 
+# Amiga is the first card on the platform picker's second row.  The nested
+# ZIP -> ADF route must remain launchable with pointer input alone.
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --width 1920 --height 1080 --menu --game dm1 --platform amiga \
+    --data-dir "$archive" \
+    --script 'wait20,click:700:262,wait20,click:410:679,wait20,click:450:405,wait20' \
+    --duration 3000 >/dev/null 2>&1
+
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm1 --platform amiga --data-dir "$archive" \
     --boot-probe --boot-probe-frames 500 --script enter,enter,enter,up --duration 0 2>&1) || {

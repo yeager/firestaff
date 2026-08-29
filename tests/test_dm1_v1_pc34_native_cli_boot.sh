@@ -50,6 +50,15 @@ if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" ||
     exit 1
 fi
 
+# Physical card coordinates use the explicit launcher canvas, making this a
+# real mouse-only game -> PC -> Original launch rather than a keyboard alias.
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --width 1920 --height 1080 --menu --game dm1 --platform pc \
+    --data-dir "$archive" \
+    --script 'wait20,click:700:262,wait20,click:934:405,wait20,click:450:405,wait20' \
+    --duration 3000 >/dev/null 2>&1
+
 # The authentic PC-3.4 dungeon starts at (map=0,x=1,y=3,dir=2).  A native
 # `up` input advances to y=4; this proves the selected archive has reached
 # the actual M11 movement route rather than only a title/startup receipt.

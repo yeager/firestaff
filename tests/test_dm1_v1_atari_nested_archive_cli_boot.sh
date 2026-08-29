@@ -58,6 +58,15 @@ grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" &&
 grep -Fq "dataDir=$archive" <<<"$menu_output" &&
 grep -Fq 'handoff=atari-st-dmcsb1' <<<"$menu_output"
 
+# The third platform card is Atari ST.  This verifies pointer-only card
+# selection against the supplied nested preservation archive.
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --width 1920 --height 1080 --menu --game dm1 --platform atari-st \
+    --data-dir "$archive" \
+    --script 'wait20,click:700:262,wait20,click:1458:405,wait20,click:450:405,wait20' \
+    --duration 3000 >/dev/null 2>&1
+
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm1 --platform atari-st --data-dir "$archive" \
     --boot-probe --boot-probe-frames 500 --script enter,enter,enter,up --duration 0 2>&1) || {
