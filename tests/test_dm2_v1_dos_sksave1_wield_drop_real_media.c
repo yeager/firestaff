@@ -119,13 +119,15 @@ static int exercise_drop(DM2_V1_BootProfile *profile)
     if (saw_wield_calculation) {
         printf("SKSave1 WIELD source miss item=%04x creature=%04x power=%d "
                "dex=%d strength=%d skill=%d defense=%d armor=%d "
-               "hit=%d raw=%d final=%d hp=%d\n",
+               "calculation=%d hit=%d miss=%d closed=%d raw=%d final=%d hp=%d\n",
                (unsigned short)last_wield.item_handle,
                (unsigned short)last_wield.creature_record,
                last_wield.command_power, last_wield.hero_dexterity,
                last_wield.hero_strength, last_wield.hero_skill_level,
                last_wield.creature_defense, last_wield.creature_armor,
-               last_wield.calculation_hit, last_wield.raw_damage,
+               last_wield.calculation_valid, last_wield.calculation_hit,
+               last_wield.calculation_miss, last_wield.calculation_fail_closed,
+               last_wield.raw_damage,
                last_wield.final_damage, last_wield.hp_applied);
     }
     return 0;
@@ -144,7 +146,7 @@ int main(void)
 
     if (!root || !root[0] || !save || !save[0]) {
         puts("SKIP: FIRESTAFF_DM2_DOS_ROOT and FIRESTAFF_DM2_SKSAVE1 are required");
-        return 0;
+        return 77;
     }
     memset(&launch, 0, sizeof(launch));
     launch_ok = dm2_v1_boot_startup_launch_alloc(root, &launch) &&

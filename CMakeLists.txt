@@ -58508,6 +58508,9 @@ if (CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
 endif()
 add_test(NAME test_dm2_v1_dos_sksave1_wield_drop_real_media
     COMMAND test_dm2_v1_dos_sksave1_wield_drop_real_media)
+set_tests_properties(test_dm2_v1_dos_sksave1_wield_drop_real_media PROPERTIES
+    SKIP_RETURN_CODE 77
+    LABELS "tier2;dm2;dos;resume;wield;creature;real-media;native;trace-required")
 
 add_executable(test_dm2_v1_dos_sksave_archive_resume_real_media
     tests/test_dm2_v1_dos_sksave_archive_resume_real_media.c)

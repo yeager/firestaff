@@ -15508,6 +15508,7 @@ static int dm2_runtime_attack_creature_at(
     const DM2_AIDefinition *ai = NULL;
     DM2_V1_GdatDbspecCallbacks dbspec;
     DM2_V1_CalcAttackDamageRequest request;
+    DM2_V1_CalcAttackDamageReceipt calculation;
     DM2_V1_CaiiAttackReceipt attack;
     uint8_t *record;
     uint16_t item;
@@ -15711,6 +15712,19 @@ static int dm2_runtime_attack_creature_at(
     request.rand_armor = dm2_v1_drops_rand16(&rt->drop_rng, 0x100u);
     request.rand_poison = dm2_v1_drops_rand16(&rt->drop_rng, 0x100u);
     g_dm2_last_wield_attack.command_power = request.power_base;
+    /* Retain the exact source-calculation outcome before ATTACK_CREATURE.
+     * A valid miss deliberately does not enter that owner, but callers need
+     * to distinguish it from a rejected command or an unavailable record.
+     * This is diagnostic state only: the following authenticated transaction
+     * remains the sole mutation owner. */
+    memset(&calculation, 0, sizeof(calculation));
+    (void)dm2_v1_calc_player_attack_damage_receipt(&request, &calculation);
+    g_dm2_last_wield_attack.calculation_valid = calculation.valid;
+    g_dm2_last_wield_attack.calculation_hit = calculation.hit;
+    g_dm2_last_wield_attack.calculation_miss = calculation.miss;
+    g_dm2_last_wield_attack.calculation_fail_closed = calculation.fail_closed;
+    g_dm2_last_wield_attack.raw_damage = calculation.raw_damage;
+    g_dm2_last_wield_attack.final_damage = calculation.final_damage;
     memset(&attack, 0, sizeof(attack));
     /* The compatibility calculation receipt accepts caller-authored combat
      * words and is deliberately not a production damage owner.  The
