@@ -6231,13 +6231,35 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                                                            platforms);
                     int index = state->gameCardSelected;
                     int version;
+                    const M12_AssetVersionStatus* selectedVersion;
                     if (count <= 0) {
                         m12_show_missing_game_data_popup(state, cardEntry->gameId);
                         return;
                     }
                     index = m12_clamp_index(index, count);
-                    version = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
-                        &state->assetStatus, cardEntry->gameId, platforms[index]);
+                    /* A platform card selects an architecture, not an
+                     * arbitrary edition within that architecture.  Preserve
+                     * an already authenticated release when it belongs to
+                     * the clicked card.  This matters for CSB FM Towns:
+                     * F31E and F31J share one platform card, while an
+                     * explicit --csb-fmtowns-ja request must retain F31J
+                     * through game -> platform -> presentation navigation.
+                     * Falling back to the first match is correct only when
+                     * no valid current edition is bound to that platform. */
+                    selectedVersion = M12_AssetStatus_GetVersion(
+                        &state->assetStatus, cardEntry->gameId,
+                        (size_t)state->gameOptions[gi].versionIndex);
+                    if (selectedVersion && selectedVersion->matched &&
+                        M12_AssetStatus_GetVersionArchitecture(
+                            cardEntry->gameId,
+                            (size_t)state->gameOptions[gi].versionIndex) ==
+                            platforms[index]) {
+                        version = state->gameOptions[gi].versionIndex;
+                    } else {
+                        version = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+                            &state->assetStatus, cardEntry->gameId,
+                            platforms[index]);
+                    }
                     if (version < 0) {
                         m12_show_missing_game_data_popup(state, cardEntry->gameId);
                         return;
