@@ -205,6 +205,10 @@ typedef struct {
 } M12_MenuSettingsState;
 
 typedef enum {
+    /* These are implementation profiles.  The player-facing selector is
+     * intentionally binary: Original (v1) or Modern (any v2.x profile).
+     * Retaining the profile values keeps old configuration files and the
+     * individual native render paths compatible. */
     M12_PRESENTATION_V1_ORIGINAL = 0,
     M12_PRESENTATION_V20_FILTERED,
     M12_PRESENTATION_V21_UPSCALED,

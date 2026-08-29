@@ -93,12 +93,9 @@ static int g_passes = 0;
     }                                                                     \
 } while (0)
 
-/* V1_ORIGINAL: scale 1, target (320x200), no user-resolved verdict.
- * A helper that mis-resolves V1 to scale 2 or a non-source target would
- * drive the PresentScaledIndexed / PresentIndexedToResolution paths on a
- * game running in V1, leaking 2x or Nx render artifacts into ReDMCSB
- * DUNVIEW.C output. */
-static void test_v1_original_resolves_to_source_only(void) {
+/* V1_ORIGINAL keeps source rendering at scale 1, while an explicitly chosen
+ * host output size remains a presentation-only FIT target. */
+static void test_v1_original_honors_host_presentation_target(void) {
     int w = 999;
     int h = 999;
     int rc;
@@ -109,17 +106,17 @@ static void test_v1_original_resolves_to_source_only(void) {
 
     rc = M11_GameView_PresentationTarget(M12_PRESENTATION_V1_ORIGINAL,
                                          1920, 1080, &w, &h);
-    CHECK_INT("V1 returns 0", rc, 0);
-    CHECK_INT("V1 targetW == 320 (source framebuffer)", w, 320);
-    CHECK_INT("V1 targetH == 200 (source framebuffer)", h, 200);
+    CHECK_INT("V1 returns a host-target verdict", rc, 1);
+    CHECK_INT("V1 targetW == selected host width", w, 1920);
+    CHECK_INT("V1 targetH == selected host height", h, 1080);
 
-    /* V1 ignores any caller-supplied extents, even degenerate ones. */
+    /* V1 accepts valid host extents without changing source rendering. */
     w = -123; h = -45;
     rc = M11_GameView_PresentationTarget(M12_PRESENTATION_V1_ORIGINAL,
                                          1920, 1080, &w, &h);
-    CHECK_INT("V1 returns 0 with caller-supplied extents", rc, 0);
-    CHECK_INT("V1 targetW reset to 320", w, 320);
-    CHECK_INT("V1 targetH reset to 200", h, 200);
+    CHECK_INT("V1 returns host-target verdict with extents", rc, 1);
+    CHECK_INT("V1 targetW keeps selected host width", w, 1920);
+    CHECK_INT("V1 targetH keeps selected host height", h, 1080);
 }
 
 /* V20_FILTERED: scale 2, target (640x400).  The V20 contract is "always
@@ -367,15 +364,15 @@ static void test_null_out_pointer_safety(void) {
 
     rc = M11_GameView_PresentationTarget(M12_PRESENTATION_V1_ORIGINAL,
                                          1920, 1080, NULL, NULL);
-    CHECK_INT("NULL outW, NULL outH: V1 rc 0", rc, 0);
+    CHECK_INT("NULL outW, NULL outH: V1 rc 1", rc, 1);
 
     /* Only outW provided. */
     {
         int w = 0;
         rc = M11_GameView_PresentationTarget(M12_PRESENTATION_V1_ORIGINAL,
                                              1920, 1080, &w, NULL);
-        CHECK_INT("NULL outH only: V1 rc 0", rc, 0);
-        CHECK_INT("NULL outH only: V1 targetW", w, 320);
+        CHECK_INT("NULL outH only: V1 rc 1", rc, 1);
+        CHECK_INT("NULL outH only: V1 targetW", w, 1920);
     }
 
     /* Only outH provided. */
@@ -412,9 +409,10 @@ static void test_three_way_present_path_matrix(void) {
         int expectW;
         int expectH;
     } rows[] = {
-        /* V1 always falls through to default Present. */
+        /* V1 preserves source rendering; a non-source host target uses the
+         * same FIT presentation path as Modern without changing game data. */
         {M12_PRESENTATION_V1_ORIGINAL,   320,   200,  0, 0, 1, 0,  320,  200},
-        {M12_PRESENTATION_V1_ORIGINAL,   1920,  1080, 0, 0, 1, 0,  320,  200},
+        {M12_PRESENTATION_V1_ORIGINAL,   1920,  1080, 0, 1, 0, 1, 1920, 1080},
         /* V20 always takes PresentScaledIndexed (scale 2, target 640x400). */
         {M12_PRESENTATION_V20_FILTERED,  640,   400,  1, 0, 0, 1,  640,  400},
         {M12_PRESENTATION_V20_FILTERED,  0,     0,    1, 0, 0, 1,  640,  400},
@@ -461,7 +459,7 @@ int main(void) {
     printf("        / M11_GameView_PresentationTarget,\n");
     printf("        src/ui/menu_startup_m12.c M12_PresentationMode_AllowsResolutionChoice.\n\n");
 
-    test_v1_original_resolves_to_source_only();
+    test_v1_original_honors_host_presentation_target();
     test_v20_filtered_locks_2x_scale_and_640x400();
     test_v21_upscaled_honours_user_resolutions();
     test_v22_modern_honours_user_resolutions();

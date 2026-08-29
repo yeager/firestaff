@@ -144,13 +144,18 @@ int main(void) {
     CHECK(intent.resolutionWidth == 640);
     CHECK(intent.resolutionHeight == 400);
 
-    /* V1 original is NOT subject to the floor (locked to 320x200). */
+    /* Original preserves the source renderer but keeps host presentation
+     * choices available.  The selected 4K target must survive launch. */
     set_csb_mode(&menu, M12_PRESENTATION_V1_ORIGINAL, M12_RES_3840x2160);
     intent = M12_StartupMenu_GetLaunchIntent(&menu);
     CHECK(intent.valid == 1);
-    CHECK(intent.options.resolution == M12_RES_320x200);
-    CHECK(intent.resolutionWidth == 320);
-    CHECK(intent.resolutionHeight == 200);
+    CHECK(intent.options.resolution == M12_RES_3840x2160);
+    CHECK(intent.resolutionWidth == 3840);
+    CHECK(intent.resolutionHeight == 2160);
+    CHECK(!M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_ASPECT,
+                                           M12_PRESENTATION_V1_ORIGINAL));
+    CHECK(!M12_GameOptions_RowLockedByMode(M12_GAME_OPT_ROW_RESOLUTION,
+                                           M12_PRESENTATION_V1_ORIGINAL));
 
     set_csb_mode(&menu, M12_PRESENTATION_V22_MODERN, M12_RES_3840x2160);
     M12_StartupMenu_SaveConfig(&menu);

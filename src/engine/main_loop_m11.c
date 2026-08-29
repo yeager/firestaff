@@ -732,7 +732,8 @@ int M11_GameView_PresentationTarget(int presentationMode,
     if (presentationMode == M12_PRESENTATION_V20_FILTERED) {
         targetW = M11_FB_WIDTH * 2;
         targetH = M11_FB_HEIGHT * 2;
-    } else if (M12_PresentationMode_AllowsResolutionChoice(presentationMode) &&
+    } else if ((presentationMode == M12_PRESENTATION_V1_ORIGINAL ||
+                M12_PresentationMode_AllowsResolutionChoice(presentationMode)) &&
                presentationWidth > 0 &&
                presentationHeight > 0) {
         targetW = presentationWidth;

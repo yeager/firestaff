@@ -4,9 +4,24 @@ Firestaff opens the in-game runtime panel with **F10** for Dungeon Master,
 Chaos Strikes Back, Dungeon Master II, Theron's Quest and Nexus. The panel is
 modal, so a click or key press cannot reach the dungeon while it is open.
 
+## Original and Modern
+
+Firestaff has two player-facing presentation modes:
+
+- **Original (v1)** is the preservation route. It keeps native game data and
+  source rendering intact.
+- **Modern (v2.x)** enables optional native presentation improvements, such
+  as approved filters and graphics effects.
+
+The internal v2.x profiles are compatibility details, not separate player
+modes. Aspect ratio and output resolution remain available in both the F10
+panel and start-menu game settings. They are host-presentation choices only:
+the renderer fits the source frame into the selected target with letterboxing
+or pillarboxing where needed and never stretches it non-uniformly.
+
 ## Pages
 
-- **PRES** changes the presentation mode, scaling, aspect policy, integer
+- **PRES** changes Original/Modern mode, scaling, aspect policy, integer
   scaling, VSync, FPS overlay, output resolution and window mode.
 - **FILT** changes the filters that are implemented by the active game's
   admitted renderer. V1 source-original rendering keeps these controls locked.

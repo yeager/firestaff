@@ -31668,13 +31668,8 @@ static int m11_graphics_popup_mode_count(const M11_GameViewState* state) {
 }
 
 static const char* m11_graphics_popup_mode_name(int mode) {
-    switch (mode) {
-        case M12_PRESENTATION_V1_ORIGINAL: return "ORIGINAL V1";
-        case M12_PRESENTATION_V20_FILTERED: return "V2.0 FILTERED";
-        case M12_PRESENTATION_V21_UPSCALED: return "V2.1 UPSCALED";
-        case M12_PRESENTATION_V22_MODERN: return "V2.2 ARTPACK";
-        default: return "ORIGINAL V1";
-    }
+    return mode == M12_PRESENTATION_V1_ORIGINAL ? "ORIGINAL (V1)"
+                                                  : "MODERN (V2.X)";
 }
 
 /* Game options use ORIGINAL as a request for the decoded frame's native
@@ -31734,6 +31729,12 @@ static int m11_graphics_popup_apply_mode(M11_GameViewState* state, int mode) {
     return 1;
 }
 
+static int m11_graphics_popup_toggle_user_mode(int presentationMode) {
+    return presentationMode == M12_PRESENTATION_V1_ORIGINAL
+        ? M12_PRESENTATION_V21_UPSCALED
+        : M12_PRESENTATION_V1_ORIGINAL;
+}
+
 static int m11_graphics_popup_adjust(M11_GameViewState* state, int delta) {
     M12_Config config;
     int slot;
@@ -31746,21 +31747,11 @@ static int m11_graphics_popup_adjust(M11_GameViewState* state, int delta) {
         switch (row) {
             case 0:
                 if (!m11_graphics_popup_apply_mode(state,
-                    m11_graphics_popup_cycle(state->presentationMode, delta,
-                                              m11_graphics_popup_mode_count(state)))) return 0;
+                    m11_graphics_popup_toggle_user_mode(state->presentationMode))) return 0;
                 config.graphicsIndex = state->presentationMode;
-                if (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
-                    config.gameResolution[slot] = M12_RES_320x200;
-                    config.gameAspectRatio[slot] = M12_ASPECT_ORIGINAL;
-                    state->presentationWidth = M11_FB_WIDTH;
-                    state->presentationHeight = M11_FB_HEIGHT;
-                } else {
-                    if (config.gameResolution[slot] < M12_RES_640x400)
-                        config.gameResolution[slot] = M12_RES_640x400;
-                    M12_Resolution_Dimensions(config.gameResolution[slot],
-                                              &state->presentationWidth,
-                                              &state->presentationHeight);
-                }
+                M12_Resolution_Dimensions(config.gameResolution[slot],
+                                          &state->presentationWidth,
+                                          &state->presentationHeight);
                 break;
             case 1: config.scaleModeIndex = m11_graphics_popup_cycle(config.scaleModeIndex, delta, 6); (void)M11_Render_SetScaleMode(config.scaleModeIndex); break;
             case 2: config.scalingFilterIndex = !config.scalingFilterIndex; (void)M11_Render_SetScaleFilter(config.scalingFilterIndex); break;
@@ -31777,9 +31768,7 @@ static int m11_graphics_popup_adjust(M11_GameViewState* state, int delta) {
                 state->fpsOverlayEnabled = config.showFpsOverlay;
                 break;
             case 7:
-                if (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL) return 1;
                 config.gameResolution[slot] = m11_graphics_popup_cycle(config.gameResolution[slot], delta, M12_RES_COUNT);
-                if (config.gameResolution[slot] < M12_RES_640x400) config.gameResolution[slot] = M12_RES_640x400;
                 M12_Resolution_Dimensions(config.gameResolution[slot], &state->presentationWidth, &state->presentationHeight);
                 break;
             case 8: config.windowModeIndex = m11_graphics_popup_cycle(config.windowModeIndex, delta, 3); (void)M11_Render_SetWindowMode(config.windowModeIndex); break;
@@ -61995,7 +61984,7 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                 case 4: snprintf(value, sizeof(value), "%s", config.integerScaling ? "ON" : "OFF"); break;
                 case 5: snprintf(value, sizeof(value), "%s", config.vsyncIndex ? "ON" : "OFF"); break;
                 case 6: snprintf(value, sizeof(value), "%s", config.showFpsOverlay ? "ON" : "OFF"); break;
-                case 7: if (!v2) snprintf(value, sizeof(value), "320X200 LOCKED"); else { int w, h; M12_Resolution_Dimensions(config.gameResolution[slot], &w, &h); snprintf(value, sizeof(value), "%dX%d", w, h); } break;
+                case 7: { int w, h; M12_Resolution_Dimensions(config.gameResolution[slot], &w, &h); snprintf(value, sizeof(value), "%dX%d", w, h); } break;
                 default: snprintf(value, sizeof(value), "%s", config.windowModeIndex == 0 ? "WINDOW" : config.windowModeIndex == 1 ? "MAXIMIZED" : "FULLSCREEN"); break;
             }
         } else if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_CHEATS) {

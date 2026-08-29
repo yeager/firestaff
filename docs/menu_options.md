@@ -67,6 +67,13 @@ platform-specific palette control (APPA.C:116-119).
 
 menu_startup_m12.c provides the full options panel that DM1 V1 lacked:
 
+Firestaff exposes two player-facing presentation choices. **Original (v1)**
+is the preservation route, while **Modern (v2.x)** enables optional native
+visual improvements. Aspect ratio and output resolution are available in both
+modes. They affect only the host presentation target: the renderer fits the
+native source frame with bars where necessary and never stretches it
+non-uniformly.
+
 M12_SETTINGS_TAB_GAME       = game settings
 M12_SETTINGS_TAB_GRAPHICS  = renderer, scale mode, aspect ratio
 M12_SETTINGS_TAB_CONTROLS  = input remapping, WASD, touch

@@ -518,16 +518,23 @@ int M12_Resolution_Dimensions(int resolution, int* outWidth, int* outHeight) {
 }
 
 int M12_GameOptions_RowLockedByMode(int row, int presentationMode) {
-    if (presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
-        /* V1 hides aspect ratio and resolution entirely */
-        if (row == M12_GAME_OPT_ROW_ASPECT || row == M12_GAME_OPT_ROW_RESOLUTION) {
-            return 1;
-        }
-    }
-    /* V2.0, V2.1, V2.2 all share the 640x400..3840x2160 selector, so
-     * the resolution row is NOT locked.  ReDMCSB: COMMAND.C F0359
-     * "LoadGameSettings" exposes the same range to all V2 paths. */
+    (void)row;
+    (void)presentationMode;
+    /* Aspect ratio and output resolution are host-presentation choices, not
+     * changes to the game data.  They remain available in Original mode;
+     * the renderer always FITs the source image into that target rectangle,
+     * preserving its native geometry with letter/pillarboxing as needed. */
     return 0;
+}
+
+static int m12_toggle_user_presentation_mode(int presentationMode) {
+    /* V2.1 is the portable native Modern baseline.  V2.0/V2.2 remain valid
+     * implementation profiles when loaded from an existing configuration,
+     * but the user-facing control deliberately exposes only Original and
+     * Modern rather than leaking those implementation details. */
+    return presentationMode == M12_PRESENTATION_V1_ORIGINAL
+        ? M12_PRESENTATION_V21_UPSCALED
+        : M12_PRESENTATION_V1_ORIGINAL;
 }
 
 static void m12_init_game_options(M12_GameOptions* opts) {
@@ -614,22 +621,12 @@ static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int del
     if (!opts) {
         return;
     }
-    /* Reject cycling on mode-locked rows (V1 hides aspect/resolution) */
-    if (presentationMode >= 0 && M12_GameOptions_RowLockedByMode(row, presentationMode)) {
-        return;
-    }
+    (void)presentationMode;
     switch (row) {
         case M12_GAME_OPT_ROW_PRESENTATION:
-            opts->presentationModeIndex = m12_cycle_index(
-                opts->presentationModeIndex, delta, M12_PRESENTATION_MODE_COUNT);
-            /* Enforce constraints when switching modes */
-            if (opts->presentationModeIndex == M12_PRESENTATION_V1_ORIGINAL) {
-                opts->aspectRatio = M12_ASPECT_ORIGINAL;
-                opts->resolution = M12_RES_320x200;
-            } else if (M12_PresentationMode_AllowsResolutionChoice(opts->presentationModeIndex) &&
-                       opts->resolution < M12_RES_640x400) {
-                opts->resolution = M12_RES_640x400;
-            }
+            (void)delta;
+            opts->presentationModeIndex = m12_toggle_user_presentation_mode(
+                opts->presentationModeIndex);
             break;
         case M12_GAME_OPT_ROW_ARCHITECTURE:
             break;
@@ -669,22 +666,10 @@ static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentation
     if (!opts) {
         return;
     }
-    if (presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
-        opts->aspectRatio = M12_ASPECT_ORIGINAL;
-        opts->resolution = M12_RES_320x200;
-    }
-    /* V2.0 (M12_PRESENTATION_V20_FILTERED), V2.1
-     * (M12_PRESENTATION_V21_UPSCALED), and V2.2
-     * (M12_PRESENTATION_V22_MODERN) are all
-     * M12_PresentationMode_AllowsResolutionChoice: 320x200 is
-     * the user-chosen original double-resolution option, and
-     * the test in firestaff_m12_startup_menu_probe.c asserts
-     * that the user can cycle from 320x200 to 640x400 by
-     * pressing RIGHT.  The old auto-bump to 640x400 pre-empted
-     * that cycle and silently advanced to 1280x960, breaking
-     * INV_M12_18.  Leave V2.0/V2.1/V2.2 resolution untouched so
-     * the row cycle controls the full range (320x200 → 640x400
-     * → 1280x960 → 1920x1080 → 2560x1440 → 3840x2160). */
+    (void)presentationMode;
+    /* Original mode preserves source data and native rendering.  Do not
+     * overwrite the player's output aspect/resolution: both are safe FIT
+     * presentation controls and never stretch the source framebuffer. */
     /* Game-specific launch gates live in M12_StartupMenu_GetLaunchIntent().
      * Nexus V2 presentation has no authenticated retail owner in the supplied
      * corpus; keep the V1/source state separate and leave Saturn presentation
@@ -849,10 +834,10 @@ static const M12_Glyph g_font[] = {
 };
 
 static const char* g_presentationModes[] = {
-    "V1 ORIGINAL",
-    "V2 FILTERED",
-    "V2 ENHANCED 2D",
-    "V3 MODERN/3D"
+    "ORIGINAL (V1)",
+    "MODERN (V2.X)",
+    "MODERN (V2.X)",
+    "MODERN (V2.X)"
 };
 static const char* g_windowModes[] = {_("WINDOWED"), _("MAXIMIZED"), _("FULLSCREEN")};
 
@@ -5611,11 +5596,9 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
             }
             break;
         case M12_SETTINGS_ROW_GRAPHICS:
-                state->settings.graphicsIndex = m12_cycle_index(
-                    state->settings.graphicsIndex,
-                    delta,
-                    (int)(sizeof(g_presentationModes) /
-                          sizeof(g_presentationModes[0])));
+                (void)delta;
+                state->settings.graphicsIndex = m12_toggle_user_presentation_mode(
+                    state->settings.graphicsIndex);
             break;
         case M12_SETTINGS_ROW_RENDERER_BACKEND:
             state->settings.rendererBackendIndex = m12_cycle_index(

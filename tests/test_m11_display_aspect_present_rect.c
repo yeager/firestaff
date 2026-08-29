@@ -985,7 +985,7 @@ static void check_arg_validation_invariants(void) {
                                              M11_FB_HEIGHT,
                                              M11_SCALE_FIT,
                                              0,
-                                             M11_DISPLAY_ASPECT_CONTENT + 1,
+                                             M11_DISPLAY_ASPECT_32_9 + 1,
                                              &rectX,
                                              &rectY,
                                              &rectW,
@@ -1054,7 +1054,7 @@ static void check_arg_validation_invariants(void) {
                                              M11_FB_HEIGHT,
                                              M11_SCALE_FIT,
                                              0,
-                                             M11_DISPLAY_ASPECT_CONTENT + 1,
+                                             M11_DISPLAY_ASPECT_32_9 + 1,
                                              &rectX,
                                              &rectY,
                                              &rectW,
@@ -1259,7 +1259,7 @@ static void check_map_point_rejection_invariants(void) {
                                            M11_FB_HEIGHT,
                                            M11_SCALE_FIT,
                                            0,
-                                           M11_DISPLAY_ASPECT_CONTENT + 1,
+                                           M11_DISPLAY_ASPECT_32_9 + 1,
                                            &fbX,
                                            &fbY) == 0);
     CHECK(fbX == -123);
