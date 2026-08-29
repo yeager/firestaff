@@ -46,6 +46,9 @@ void DM1_V1_PaletteFont_DrawCharPc34Compat(const DM1_V1_PaletteFontFontStatePc34
 void DM1_V1_PaletteFont_DrawStringPc34Compat(const DM1_V1_PaletteFontFontStatePc34* state, uint8_t* fb, int x, int y, const char* str, int scr_w);
 
 const char* DM1_V1_PaletteFont_GetSkillNamePc34Compat(int level);
+/* Converts the first 4 * ceil(32/8) * 29 source bytes, laid out as four
+ * Amiga bitplanes, in place into 32 * 29 indexed pixels.  The caller must
+ * provide at least DM1_PORTRAIT_W * DM1_PORTRAIT_H bytes of writable space. */
 void DM1_V1_PaletteFont_ConvertPortraitPlanarPc34Compat(uint8_t* buf);
 
 #ifdef __cplusplus

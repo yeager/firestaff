@@ -78,6 +78,29 @@ static void test_font_alloc(void)
     assert(ok == true || ok == false);
 }
 
+static void test_portrait_planar_conversion(void)
+{
+    enum { bytes_per_row = DM1_PORTRAIT_W / 8,
+           plane_bytes = bytes_per_row * DM1_PORTRAIT_H,
+           output_bytes = DM1_PORTRAIT_W * DM1_PORTRAIT_H };
+    unsigned char pixels[output_bytes];
+
+    /* First byte of each plane encodes the first eight source pixels.  This
+     * vector also catches an erroneous w*h byte plane stride. */
+    memset(pixels, 0, sizeof(pixels));
+    pixels[0 * plane_bytes] = 0x80u; /* pixel 0: bit 0 */
+    pixels[1 * plane_bytes] = 0x40u; /* pixel 1: bit 1 */
+    pixels[2 * plane_bytes] = 0x20u; /* pixel 2: bit 2 */
+    pixels[3 * plane_bytes] = 0x10u; /* pixel 3: bit 3 */
+    DM1_V1_PaletteFont_ConvertPortraitPlanarPc34Compat(pixels);
+    assert(pixels[0] == 1u);
+    assert(pixels[1] == 2u);
+    assert(pixels[2] == 4u);
+    assert(pixels[3] == 8u);
+    assert(pixels[4] == 0u);
+    assert(pixels[DM1_PORTRAIT_W] == 0u);
+}
+
 int main(void)
 {
     test_constants();
@@ -88,7 +111,8 @@ int main(void)
     test_build_custom_colors();
     test_skill_name();
     test_font_alloc();
+    test_portrait_planar_conversion();
 
-    puts("ok: DM1 palette font (Q-DM1-03) 8 tests passed");
+    puts("ok: DM1 palette font (Q-DM1-03) 9 tests passed");
     return 0;
 }

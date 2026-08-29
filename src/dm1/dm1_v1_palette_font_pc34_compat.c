@@ -115,13 +115,19 @@ void DM1_V1_PaletteFont_ConvertPortraitPlanarPc34Compat(uint8_t* buf) {
     if (!buf) return;
     int w = DM1_PORTRAIT_W;
     int h = DM1_PORTRAIT_H;
-    int plane_size = w * h;
-    uint8_t* out = (uint8_t*)malloc(w * h);
+    /* Amiga bitplanes store eight horizontal pixels in each byte.  The
+     * former w*h byte stride addressed three planes beyond the supplied
+     * 32x29x4 source and made this conversion depend on adjacent memory.
+     * Keep the source layout explicit: four 116-byte planes become one
+     * 928-byte indexed-pixel surface. */
+    int bytes_per_row = (w + 7) / 8;
+    int plane_size = bytes_per_row * h;
+    uint8_t* out = (uint8_t*)malloc((size_t)w * (size_t)h);
     if (!out) return;
     int i, j;
     for (i = 0; i < h; i++) {
         for (j = 0; j < w; j++) {
-            int byte_idx = i * (w / 8) + j / 8;
+            int byte_idx = i * bytes_per_row + j / 8;
             int bit = 7 - (j & 7);
             uint8_t pixel = 0;
             int p;
@@ -145,4 +151,3 @@ void DM1_V1_PaletteFont_ConvertPortraitPlanarPc34Compat(uint8_t* buf) {
  *   PALETTE.C:136 F1127_T
  *   PALETTE.C:428 F1779_S
  * ══════════════════════════════════════════════════════════════════════ */
-
