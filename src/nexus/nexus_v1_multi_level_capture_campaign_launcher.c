@@ -66,10 +66,10 @@ int nexus_v1_multi_level_capture_campaign_launcher_plan(
     memset(&p, 0, sizeof(p)); p.operator_only = 1;
     if (!out || !in) return 0;
     if (!in->retail_assets_available) { p.skipped_missing_retail_assets = 1; *out = p; return 0; }
-    if (!in->operator_opt_in || !in->bios_path || !in->disc_path ||
-        !in->menu_bpk_path || !in->dm_bin_path || !sha256(in->bios_sha256) ||
+    if (!in->operator_opt_in || !in->disc_path ||
+        !in->menu_bpk_path || !in->dm_bin_path ||
         !sha256(in->disc_sha256) || !sha256(in->menu_bpk_sha256) || !sha256(in->dm_bin_sha256) ||
-        !hash_file(in->bios_path, in->bios_sha256) || !hash_file(in->disc_path, in->disc_sha256) ||
+        !hash_file(in->disc_path, in->disc_sha256) ||
         !hash_file(in->menu_bpk_path, in->menu_bpk_sha256) || !hash_file(in->dm_bin_path, in->dm_bin_sha256) ||
         !in->direct_lev_corpus || !in->direct_lev_corpus->valid ||
         !in->direct_lev_corpus->direct_files_only ||
