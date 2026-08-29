@@ -59125,6 +59125,9 @@ if(NOT MSVC)
 endif()
 add_test(NAME dm2_v1_dos_intro_mve_boot_owner
     COMMAND test_dm2_v1_dos_intro_mve_boot_owner)
+set_tests_properties(dm2_v1_dos_intro_mve_boot_owner PROPERTIES
+    ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+    LABELS "dm2;dos;mve;real-media;in-memory;skip-safe")
 
 add_executable(test_dm2_v1_mve_timeline
     tests/test_dm2_v1_mve_timeline.c

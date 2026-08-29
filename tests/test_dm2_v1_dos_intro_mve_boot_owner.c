@@ -15,7 +15,7 @@
 
 int main(void)
 {
-    const char *data_root = getenv("FIRESTAFF_DM2_DATA_DIR");
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
     const dm2_v1_dos_file_fp_t *intro =
         dm2_v1_dos_file_fp_lookup_pc34("intro");
     DM2_V1_BootProfile profile;
@@ -23,13 +23,13 @@ int main(void)
     const uint8_t *bytes = NULL;
     size_t byte_count = 0u;
 
-    if (!data_root || !data_root[0]) {
-        puts("SKIP: no DM2 DOS DATA root");
+    if (!archive || !archive[0]) {
+        puts("SKIP: no DM2 DOS archive");
         return 0;
     }
     dm2_v1_boot_profile_init(&profile);
     CHECK(intro != NULL);
-    CHECK(dm2_v1_boot_scan_assets(&profile, data_root) == 0);
+    CHECK(dm2_v1_boot_scan_assets(&profile, archive) == 0);
     CHECK(profile.assets_verified && profile.platform == DM2_PLATFORM_PC_EN);
     CHECK(profile.dos_startup_media_verified &&
           profile.dos_startup_media.valid &&
