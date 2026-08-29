@@ -34936,6 +34936,22 @@ endif()
         TIMEOUT 120
     )
 
+    # The supplied French DOS save pair is an authentic tail-less PC34
+    # corpus.  Exercise the production F0435 -> F0433 -> F0435 route against
+    # its matching original backing data whenever that optional corpus is
+    # locally staged; no fixture or generated game data is substituted.
+    add_test(
+        NAME dm1_v1_dos_fr_original_save_backed_roundtrip
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_dos_fr_original_save_backed_roundtrip.sh"
+            "$<TARGET_FILE:test_dm1_v1_original_save_pc34_backed_corpus_roundtrip>"
+            "${CMAKE_CURRENT_BINARY_DIR}"
+    )
+    set_tests_properties(dm1_v1_dos_fr_original_save_backed_roundtrip PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;dm1;save;french;real_data;backed_corpus;runtime;no-synthesis"
+        TIMEOUT 120
+    )
+
     add_test(
         NAME dm1_v1_dos_fr_original_save_tail_boundary
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_dos_fr_original_save_tail_boundary.sh"
