@@ -822,7 +822,11 @@ static int prs3_decode_body(const uint8_t *data, size_t size,
                 if (absolute_offset < 0) {
                     out[written] = 0U;
                 } else if ((size_t)absolute_offset >= written) {
-                    out[written] = 0U;
+                    /* PRS3's negative prefix is explicitly zero-filled;
+                     * a positive reference beyond produced output has no
+                     * source byte.  Treating it as zero manufactured a
+                     * replacement pixel for malformed retail input. */
+                    return 0;
                 } else {
                     out[written] = out[(size_t)absolute_offset];
                 }
