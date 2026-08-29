@@ -414,19 +414,31 @@ static uint8_t *read_file_bytes(const char *path, size_t *out_size) {    FILE *f
     return bytes;
 }
 
+static int path_is_readable_file(const char *path) {
+    FILE *file;
+
+    if (!path || !path[0]) return 0;
+    file = fopen(path, "rb");
+    if (!file) return 0;
+    fclose(file);
+    return 1;
+}
+
 static const char *track02_source_path(char out[512], const char *env_name,
                                        const char *file_name) {
     const char *configured = getenv(env_name);
     const char *home;
 
-    if (configured && configured[0]) return configured;
+    if (configured && configured[0]) {
+        return path_is_readable_file(configured) ? configured : NULL;
+    }
     home = getenv("HOME");
     if (!home || !home[0] ||
         snprintf(out, 512, "%s/.firestaff/data/theron/%s", home,
                  file_name) >= 512) {
         return NULL;
     }
-    return out;
+    return path_is_readable_file(out) ? out : NULL;
 }
 
 static int inspect(const char *path,

@@ -215,8 +215,7 @@ int theron_v1_stage3_descriptor_record_boundary_from_manifest(
         return 0;
     }
     resolved_record = correlation.derived_record_base + descriptor->word2;
-    if (resolved_record >= correlation.raw_sector_count ||
-        (size_t)resolved_record > SIZE_MAX / THERON_V1_RAW_SECTOR_BYTES) {
+    if (resolved_record >= correlation.raw_sector_count) {
         return 0;
     }
     raw_offset = (size_t)resolved_record * THERON_V1_RAW_SECTOR_BYTES;
@@ -340,8 +339,7 @@ int theron_v1_stage3_descriptor_corpus_media_correlation_from_manifest(
         }
         resolved_record =
             correlation.derived_record_base + descriptor->word2;
-        if (resolved_record >= correlation.raw_sector_count ||
-            (size_t)resolved_record > SIZE_MAX / THERON_V1_RAW_SECTOR_BYTES) {
+        if (resolved_record >= correlation.raw_sector_count) {
             memset(out_correlation, 0, sizeof(*out_correlation));
             return 0;
         }

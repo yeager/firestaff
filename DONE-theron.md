@@ -1,6 +1,11 @@
 # Firestaff DONE — Theron's Quest
 
-Reviewed 2026-08-25. Completed work only.
+Reviewed 2026-08-29. Completed work only.
+
+- The later-record correlation probe is media-optional in CI: absent
+  proprietary Track 02 files now produce a skip rather than a false failure.
+  When supplied, the authentic Japanese Rev 1 Track 02 proves the stage-three
+  self-reference and IPL-to-record topology directly from raw sectors.
 
 - The supplied authentic Japanese Rev 1 CUE is hash-verified and reaches the
   native title → stage → Soul Room startup route (`theron-startup-2`).
