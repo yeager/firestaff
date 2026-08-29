@@ -4,6 +4,7 @@
 
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_boot.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,32 +14,6 @@ static uint32_t hash_step(uint32_t hash, uint32_t value)
 {
     hash ^= value + 0x9e3779b9u + (hash << 6) + (hash >> 2);
     return hash ? hash : 1u;
-}
-
-static int read_file(const char *path, uint8_t **out_data, size_t *out_size)
-{
-    FILE *file;
-    long size;
-    uint8_t *data;
-
-    *out_data = NULL;
-    *out_size = 0u;
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0 ||
-        (size = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
-        return 0;
-    }
-    data = (uint8_t *)malloc((size_t)size);
-    if (!data || fread(data, 1u, (size_t)size, file) != (size_t)size) {
-        free(data);
-        fclose(file);
-        return 0;
-    }
-    fclose(file);
-    *out_data = data;
-    *out_size = (size_t)size;
-    return 1;
 }
 
 static int scan_extended_spells(const DM2_V1_AssetLoader *loader,
@@ -98,9 +73,8 @@ static int same_receipt(const DM2_V1_ExtendedSpellsDefinitionReceipt *a,
 
 int main(void)
 {
-    const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    char graphics_path[1024];
-    char boot_root[1024];
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
+    char graphics_path[2048];
     uint8_t *graphics = NULL;
     size_t graphics_size = 0u;
     DM2_V1_AssetLoader loader;
@@ -114,13 +88,14 @@ int main(void)
     uint32_t expected_hash = 0u;
     int failures = 0;
 
-    if (!root || !root[0]) {
-        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
+    if (!archive || !archive[0]) {
+        puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is not set");
         return 0;
     }
-    snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
-    snprintf(boot_root, sizeof(boot_root), "%s/..", root);
-    if (!read_file(graphics_path, &graphics, &graphics_size)) {
+    snprintf(graphics_path, sizeof(graphics_path),
+             "%s::data/graphics.dat", archive);
+    if (!asset_read_path_alloc(graphics_path, &graphics, &graphics_size) ||
+        !graphics || graphics_size == 0u) {
         fputs("FAIL: selected canonical DM2 GRAPHICS.DAT is unreadable\n", stderr);
         return 1;
     }
@@ -140,7 +115,9 @@ int main(void)
     }
 
     dm2_v1_boot_profile_init(&boot);
-    if (dm2_v1_boot_scan_assets(&boot, boot_root) != 0 ||
+    /* GRAPHICS.DAT and the boot profile use the identical user-selected
+     * archive; ZIP material remains an in-memory virtual member. */
+    if (dm2_v1_boot_scan_assets(&boot, archive) != 0 ||
         dm2_v1_boot_enter_game(&boot) != 0 ||
         !dm2_v1_boot_startup_host_view_receipt_from_runtime_state(
             &boot, 1, boot.save_root, 0, 0u, 0, 0, &host) ||
