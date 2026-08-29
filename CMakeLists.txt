@@ -4339,7 +4339,7 @@ if(BUILD_TESTING)
     set_tests_properties(dm1_v1_atari_st_cracked_archive_rejected PROPERTIES
         SKIP_RETURN_CODE 77
         LABELS "dm1;atari-st;real-media;preservation;negative;skip-safe"
-        ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_DE_CRACKED_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Atari-ST_DE_Version-12-alt.zip"
+        ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_DE_CRACKED_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Atari-ST_DE_Version-12-alt.zip"
         TIMEOUT 45
     )
     add_executable(test_dm1_v1_atari_st_outer_archive_real_data
