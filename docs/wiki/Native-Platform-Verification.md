@@ -50,7 +50,7 @@ save, audio or pixel parity.
 | CSB Atari ST | `ANIMATE.SCR`/`ANIMATE.DAT` title, FTLCODE and first HUD/viewport route are bound. | Broader campaign and capture parity. |
 | CSB FM Towns | Language-specific game and Utility paths are selected independently. | Champion Editor and CD-audio parity. |
 | CSB Amiga | A31E/A31M program, graphics and dungeon assets reach `csb-entrance-0`. | Full campaign, saves and visual parity. |
-| DM2 DOS | Verified PC data reaches GDAT/G1 loading, startup and runtime slices. | Full renderer/mechanics parity and complete SKSAVE ownership. |
+| DM2 DOS | The supplied retail ZIP reaches GDAT/G1 loading and native New Game. Its original dungeon data now completes a regression-locked pit, stair, door and active-creature runtime chain directly from the archive in RAM. | Full renderer/mechanics parity and complete SKSAVE ownership. |
 | DM2 FM Towns | Authentic Towns startup, input, CD-audio and gameplay slices are covered. | Complete runtime ownership and full parity. |
 | DM2 Amiga | Authentic installer data reaches title, New Game, runtime and the clipped native CHARSHEET frame. | Wider game/save/pixel/audio parity. |
 | Theron PC Engine | JP reaches title, stage, Soul Room and Akutuba; US CloneCD CUE/IMG reaches title and scripted Soul Room startup. | Authentic CD→RAM→consumer transition capture, game-owned level publication, saves and full gameplay. |

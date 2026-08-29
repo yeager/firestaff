@@ -1,4 +1,4 @@
-/* Opt-in real-media DOSBox DM2 open-pit runtime regression. */
+/* Native real-media DOS DM2 open-pit runtime regression. */
 
 #include "dm2_v1_boot.h"
 #include "dm2_v1_dungeon_loader.h"
@@ -637,7 +637,7 @@ int main(void)
     memset(&launch, 0, sizeof(launch));
     if (!dm2_v1_boot_startup_launch_alloc(root, &launch) ||
         !launch.profile || !launch.profile->assets_verified) {
-        fprintf(stderr, "FAIL: DOSBox DM2 root was not admitted\n");
+        fprintf(stderr, "FAIL: native DOS DM2 media root was not admitted\n");
         dm2_v1_boot_startup_launch_cleanup(&launch);
         return 1;
     }
@@ -665,6 +665,6 @@ int main(void)
         fprintf(stderr, "FAIL: DOS did not commit an authentic open-pit transition\n");
         return 1;
     }
-    puts("PASS: authentic DOSBox DM2 pit reaches active runtime");
+    puts("PASS: authentic DOS DM2 pit reaches active runtime");
     return 0;
 }
