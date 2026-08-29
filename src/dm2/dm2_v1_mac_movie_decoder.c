@@ -1,8 +1,10 @@
 #include "dm2_v1_mac_movie_decoder.h"
+#include "dm2_v1_mac_quicktime.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 
 #if defined(FIRESTAFF_HAVE_FFMPEG)
 #include <libavcodec/avcodec.h>
@@ -321,31 +323,229 @@ int dm2_v1_mac_movie_decoder_take_audio(DM2_V1_MacMovieDecoder *decoder,
 
 #else
 
+/* The dependency-free path is deliberately narrow.  The supplied retail
+ * Swoosh.MooV is QuickTime Animation, 16-bit, and raw PCM; admit that exact
+ * source contract here.  Other retail films use Cinepak and remain rejected
+ * until their vector-codebook decoder is present--never replace them with a
+ * still, a guessed palette, or host codec process. */
+typedef struct {
+    const uint8_t *bytes;
+    size_t size;
+    DM2_V1_MacQuickTimeInfo info;
+    uint16_t rgb555[320u * 200u];
+    int16_t *audio_samples;
+    int audio_sample_count;
+    int audio_rate_hz;
+    uint32_t video_index;
+    uint32_t audio_index;
+} MacMovieNative;
+
+static uint16_t mac_movie_be16(const uint8_t *p)
+{
+    return (uint16_t)(((uint16_t)p[0] << 8) | p[1]);
+}
+
+static uint8_t mac_movie_rgb555_to_rgb332(uint16_t pixel)
+{
+    return (uint8_t)((((pixel >> 10) & 31u) << 3) |
+                     (((pixel >> 5) & 31u) >> 2) |
+                     ((pixel & 31u) >> 3));
+}
+
+static void mac_movie_native_palette(uint8_t palette[256][3])
+{
+    int i;
+    for (i = 0; i < 256; ++i) {
+        palette[i][0] = (uint8_t)(((i >> 5) & 7) * 63 / 7);
+        palette[i][1] = (uint8_t)(((i >> 2) & 7) * 63 / 7);
+        palette[i][2] = (uint8_t)((i & 3) * 63 / 3);
+    }
+}
+
+static int mac_movie_native_rle16(MacMovieNative *impl,
+                                  const DM2_V1_MacQuickTimeSample *sample)
+{
+    const uint8_t *p;
+    const uint8_t *end;
+    unsigned line = 0u;
+    unsigned lines = 200u;
+    if (!impl || !sample || !sample->sample_data || sample->sample_size < 6u)
+        return 0;
+    p = sample->sample_data;
+    end = p + sample->sample_size;
+    /* Animation samples begin with their own 32-bit byte count.  The atom
+     * sample span remains authoritative when a legacy encoder wrote a stale
+     * count, so it is only a bounded header, never an allocation size. */
+    p += 4u;
+    if (p + 2u > end) return 0;
+    if (mac_movie_be16(p) == 8u) {
+        if (p + 10u > end) return 0;
+        line = mac_movie_be16(p + 2u);
+        lines = mac_movie_be16(p + 6u);
+        p += 10u;
+    } else {
+        p += 2u;
+    }
+    if (line >= 200u || lines > 200u - line) return 0;
+    while (lines--) {
+        unsigned x;
+        int done = 0;
+        if (p >= end) return 0;
+        /* The first byte is a one-based unchanged-pixel count. */
+        x = *p++;
+        if (x == 0u) return 0;
+        --x;
+        if (x > 320u) return 0;
+        while (!done) {
+            int8_t code;
+            if (p >= end) return 0;
+            code = (int8_t)*p++;
+            if (code == -1) { done = 1; break; }
+            if (code == 0) {
+                if (p >= end) return 0;
+                x += *p++;
+                if (x > 320u) return 0;
+                continue;
+            }
+            if (code < 0) {
+                uint16_t pixel;
+                unsigned count = (unsigned)(-code);
+                if (p + 2u > end || count > 320u - x) return 0;
+                pixel = mac_movie_be16(p); p += 2u;
+                while (count--) impl->rgb555[(size_t)line * 320u + x++] = pixel;
+            } else {
+                unsigned count = (unsigned)code;
+                if (count > 320u - x || (size_t)(end - p) < (size_t)count * 2u)
+                    return 0;
+                while (count--) {
+                    impl->rgb555[(size_t)line * 320u + x++] = mac_movie_be16(p);
+                    p += 2u;
+                }
+            }
+        }
+        ++line;
+    }
+    return 1;
+}
+
+static int mac_movie_native_audio(MacMovieNative *impl, uint64_t frame_end_us)
+{
+    size_t count = 0u, capacity = 0u;
+    int16_t *samples;
+    if (!impl) return 0;
+    if (impl->info.audio_codec_fourcc != UINT32_C(0x72617720) ||
+        impl->info.audio_channels != 1u || impl->info.audio_sample_size_bits != 8u)
+        return 1;
+    while (impl->audio_index < impl->info.audio_sample_count) {
+        DM2_V1_MacQuickTimeSample sample;
+        uint64_t next_end_us = ((uint64_t)(impl->audio_index + 1u) *
+                                UINT64_C(1000000) * impl->info.audio_first_sample_duration) /
+                               impl->info.audio_time_scale;
+        size_t i;
+        if (next_end_us > frame_end_us && count != 0u) break;
+        if (!dm2_v1_mac_quicktime_audio_sample(impl->bytes, impl->size,
+                                                impl->audio_index++, &sample) ||
+            !sample.sample_size || sample.sample_size > 1000000u - count) return 0;
+        if (count + sample.sample_size > capacity) {
+            capacity = capacity ? capacity : 2048u;
+            while (capacity < count + sample.sample_size) capacity *= 2u;
+            samples = (int16_t *)realloc(impl->audio_samples,
+                                         capacity * sizeof(*samples));
+            if (!samples) return 0;
+            impl->audio_samples = samples;
+        }
+        for (i = 0u; i < sample.sample_size; ++i)
+            impl->audio_samples[count++] =
+                (int16_t)(((int)sample.sample_data[i] - 128) << 8);
+        if (next_end_us > frame_end_us) break;
+    }
+    if (count > INT_MAX) return 0;
+    impl->audio_sample_count = (int)count;
+    impl->audio_rate_hz = (int)impl->info.audio_sample_rate_hz;
+    return count != 0u && impl->audio_rate_hz > 0;
+}
+
 int dm2_v1_mac_movie_decoder_open(DM2_V1_MacMovieDecoder *decoder,
                                   const uint8_t *movie_bytes,
                                   size_t movie_size)
 {
-    (void)movie_bytes; (void)movie_size;
-    if (decoder) { memset(decoder, 0, sizeof(*decoder)); decoder->rejected = 1; }
-    return 0;
+    MacMovieNative *impl;
+    if (!decoder) return 0;
+    memset(decoder, 0, sizeof(*decoder));
+    if (!movie_bytes || !movie_size) return 0;
+    impl = (MacMovieNative *)calloc(1, sizeof(*impl));
+    if (!impl) return 0;
+    impl->bytes = movie_bytes;
+    impl->size = movie_size;
+    if (!dm2_v1_mac_quicktime_inspect(movie_bytes, movie_size, &impl->info) ||
+        impl->info.video_codec_fourcc != UINT32_C(0x726c6520) ||
+        impl->info.video_depth_bits != 16u || impl->info.width != 320u ||
+        impl->info.height != 200u) {
+        free(impl);
+        decoder->rejected = 1;
+        return 0;
+    }
+    decoder->opaque = impl;
+    decoder->width = 320;
+    decoder->height = 200;
+    mac_movie_native_palette(decoder->palette_rgb6);
+    return 1;
 }
 int dm2_v1_mac_movie_decoder_next(DM2_V1_MacMovieDecoder *decoder)
 {
-    (void)decoder; return 0;
+    MacMovieNative *impl;
+    DM2_V1_MacQuickTimeSample sample;
+    size_t i;
+    if (!decoder || !(impl = (MacMovieNative *)decoder->opaque) || decoder->ended ||
+        impl->video_index >= impl->info.video_sample_count) return 0;
+    if (!dm2_v1_mac_quicktime_video_sample(impl->bytes, impl->size,
+                                            impl->video_index, &sample) ||
+        !mac_movie_native_rle16(impl, &sample) ||
+        !mac_movie_native_audio(impl, ((uint64_t)(impl->video_index + 1u) *
+                                       UINT64_C(1000000) * impl->info.video_first_sample_duration) /
+                                      impl->info.video_time_scale)) {
+        decoder->rejected = 1;
+        return 0;
+    }
+    for (i = 0u; i < 320u * 200u; ++i)
+        decoder->pixels[i] = mac_movie_rgb555_to_rgb332(impl->rgb555[i]);
+    decoder->presentation_time_us = (uint64_t)impl->video_index *
+        UINT64_C(1000000) * impl->info.video_first_sample_duration /
+        impl->info.video_time_scale;
+    decoder->frame_duration_us = UINT64_C(1000000) *
+        impl->info.video_first_sample_duration / impl->info.video_time_scale;
+    if (decoder->frame_duration_us == 0u) { decoder->rejected = 1; return 0; }
+    ++impl->video_index;
+    decoder->frame_index = impl->video_index;
+    decoder->frame_ready = 1;
+    return 1;
 }
 int dm2_v1_mac_movie_decoder_take_audio(DM2_V1_MacMovieDecoder *decoder,
                                         const int16_t **samples,
                                         int *sample_count, int *rate_hz)
 {
-    (void)decoder;
+    MacMovieNative *impl;
     if (samples) *samples = NULL;
     if (sample_count) *sample_count = 0;
     if (rate_hz) *rate_hz = 0;
-    return 0;
+    if (!decoder || !(impl = (MacMovieNative *)decoder->opaque) ||
+        impl->audio_sample_count <= 0) return 0;
+    if (samples) *samples = impl->audio_samples;
+    if (sample_count) *sample_count = impl->audio_sample_count;
+    if (rate_hz) *rate_hz = impl->audio_rate_hz;
+    decoder->audio_samples = impl->audio_samples;
+    decoder->audio_sample_count = impl->audio_sample_count;
+    decoder->audio_rate_hz = impl->audio_rate_hz;
+    impl->audio_sample_count = 0;
+    return 1;
 }
 void dm2_v1_mac_movie_decoder_close(DM2_V1_MacMovieDecoder *decoder)
 {
-    if (decoder) memset(decoder, 0, sizeof(*decoder));
+    MacMovieNative *impl;
+    if (!decoder || !(impl = (MacMovieNative *)decoder->opaque)) return;
+    free(impl->audio_samples);
+    free(impl);
+    memset(decoder, 0, sizeof(*decoder));
 }
 
 #endif

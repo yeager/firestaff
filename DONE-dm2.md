@@ -28,6 +28,10 @@ Reviewed 2026-08-29. Completed work only.
   `Credits.MooV`/`Ending.MooV` (Cinepak/`raw `). It derives every admitted
   sample span from original `stsc`/`stsz`/`stco` tables, with no extraction,
   placeholder frames, or host codec involved.
+- `Swoosh.MooV` now has a dependency-free native playback lane: the original
+  16-bit QuickTime Animation (`rle `) samples and `raw ` PCM packets are read
+  directly from the admitted sample spans. Twelve authentic consecutive frames
+  and their timing/audio handoff pass from the packed retail ZIP in RAM.
 - The real DOS English/French, Amiga, FM Towns, and Macintosh startup tests now
   each exercise the ordinary start-menu handoff separately from boot-probe
   mode. `FIRESTAFF_FAIL_IF_NO_LAUNCH` and `FIRESTAFF_EXIT_AFTER_LAUNCH` make a

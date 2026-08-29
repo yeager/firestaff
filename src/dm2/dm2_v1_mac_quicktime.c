@@ -19,6 +19,7 @@ typedef struct {
     uint32_t codec;
     uint16_t width;
     uint16_t height;
+    uint16_t depth_bits;
     uint16_t channels;
     uint16_t sample_bits;
     uint32_t sample_rate;
@@ -133,9 +134,10 @@ static int qt_track_parse(const uint8_t *trak, size_t trak_size, QtTrack *out)
     if (be32(entry) < 16u || be32(entry) > payload_size - 8u) return 0;
     out->codec = be32(entry + 4u);
     if (out->is_video) {
-        if (be32(entry) < 36u) return 0;
+        if (be32(entry) < 86u) return 0;
         out->width = be16(entry + 32u);
         out->height = be16(entry + 34u);
+        out->depth_bits = (uint16_t)(be16(entry + 82u) & UINT16_C(0x001f));
     } else {
         if (be32(entry) < 36u) return 0;
         out->channels = be16(entry + 24u);
@@ -243,6 +245,7 @@ int dm2_v1_mac_quicktime_inspect(const uint8_t *movie_bytes, size_t movie_size,
     out_info->video_codec_fourcc = video.codec;
     out_info->audio_codec_fourcc = audio.codec;
     out_info->width = video.width; out_info->height = video.height;
+    out_info->video_depth_bits = video.depth_bits;
     out_info->audio_channels = audio.channels;
     out_info->audio_sample_size_bits = audio.sample_bits;
     out_info->audio_sample_rate_hz = audio.sample_rate;

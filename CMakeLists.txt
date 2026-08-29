@@ -11956,6 +11956,24 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_quicktime_real.c")
         LABELS "dm2;macintosh;quicktime;real-media;in-memory;native;skip-safe")
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_swoosh_native_real.c")
+    add_executable(test_dm2_v1_mac_swoosh_native_real
+        tests/test_dm2_v1_mac_swoosh_native_real.c)
+    target_include_directories(test_dm2_v1_mac_swoosh_native_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_mac_swoosh_native_real PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_mac_swoosh_native_real PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm2_v1_mac_swoosh_native_real
+        COMMAND test_dm2_v1_mac_swoosh_native_real)
+    set_tests_properties(dm2_v1_mac_swoosh_native_real PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        LABELS "dm2;macintosh;movie;quicktime;real-media;in-memory;native;skip-safe")
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_m11_movie_runtime_real.c")
     add_executable(test_dm2_v1_mac_m11_movie_runtime_real
         tests/test_dm2_v1_mac_m11_movie_runtime_real.c)

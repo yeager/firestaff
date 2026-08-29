@@ -12,6 +12,7 @@ typedef struct {
     uint32_t codec_fourcc;
     uint16_t width;
     uint16_t height;
+    uint16_t video_depth_bits;
     uint32_t time_scale;
     uint32_t sample_count;
     uint32_t first_sample_duration;
@@ -24,6 +25,7 @@ typedef struct {
     uint32_t audio_codec_fourcc;
     uint16_t width;
     uint16_t height;
+    uint16_t video_depth_bits;
     uint16_t audio_channels;
     uint16_t audio_sample_size_bits;
     uint32_t audio_sample_rate_hz;

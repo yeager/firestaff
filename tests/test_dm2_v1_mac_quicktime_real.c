@@ -61,17 +61,17 @@ int main(void)
             video.sample_data + video.sample_size > view.bytes + view.size ||
             audio.sample_data < view.bytes ||
             audio.sample_data + audio.sample_size > view.bytes + view.size) {
-            fprintf(stderr, "authentic Mac MooV %u QuickTime table admission failed: video=%08x audio=%08x %ux%u frames=%u audio_samples=%u rate=%u\n",
+            fprintf(stderr, "authentic Mac MooV %u QuickTime table admission failed: video=%08x audio=%08x %ux%u/%ubpp frames=%u audio_samples=%u rate=%u\n",
                     index, info.video_codec_fourcc, info.audio_codec_fourcc,
-                    info.width, info.height, info.video_sample_count,
+                    info.width, info.height, info.video_depth_bits, info.video_sample_count,
                     info.audio_sample_count, info.audio_sample_rate_hz);
             dm2_v1_mac_movie_view_free(&view);
             dm2_v1_mac_media_free(&media);
             return 1;
         }
-        printf("PASS: authentic Mac MooV %u: video=%08x audio=%08x frames=%u\n",
-               index, info.video_codec_fourcc, info.audio_codec_fourcc,
-               info.video_sample_count);
+        printf("PASS: authentic Mac MooV %u: video=%08x/%ubpp audio=%08x frames=%u\n",
+               index, info.video_codec_fourcc, info.video_depth_bits,
+               info.audio_codec_fourcc, info.video_sample_count);
         dm2_v1_mac_movie_view_free(&view);
     }
     dm2_v1_mac_media_free(&media);
