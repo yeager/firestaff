@@ -622,6 +622,7 @@ static int g_dm2_last_fallback_projectile_count = 0;
 static DM2_V1_RuntimeProjectileRenderReceipt g_dm2_last_projectile_render;
 static DM2_V1_RuntimeMissileImpactReceipt g_dm2_last_missile_impact;
 static DM2_V1_RuntimeCreatureDamageReceipt g_dm2_last_creature_damage;
+static DM2_V1_RuntimeWieldAttackReceipt g_dm2_last_wield_attack;
 static int g_dm2_last_asset_hud_portrait_count = 0;
 static int g_dm2_last_fallback_hud_portrait_count = 0;
 static DM2_V1_PerformMoveReceipt g_dm2_last_perform_move;
@@ -13234,6 +13235,16 @@ int dm2_v1_runtime_last_creature_damage_receipt(
     return 1;
 }
 
+int dm2_v1_runtime_last_wield_attack_receipt(
+    DM2_V1_RuntimeWieldAttackReceipt *out) {
+    if (!out || !g_dm2_last_wield_attack.valid) {
+        if (out) memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    *out = g_dm2_last_wield_attack;
+    return 1;
+}
+
 int dm2_v1_runtime_creature_record_receipt(
     int16_t record_handle, DM2_V1_RuntimeCreatureRecordReceipt *out)
 {
@@ -15509,6 +15520,8 @@ static int dm2_runtime_attack_creature_at(
     int have_wield_flags;
     int have_wield_variant;
 
+    memset(&g_dm2_last_wield_attack, 0, sizeof(g_dm2_last_wield_attack));
+
     if (!rt || !dungeon || !rt->source_party_valid ||
         !rt->record_pools_valid || !rt->boot || !rt->boot->dm2_state ||
         !rt->caii_ready || !rt->caii.valid ||
@@ -15523,10 +15536,15 @@ static int dm2_runtime_attack_creature_at(
     if (hero->curHP <= 0) return 0;
     item = (uint16_t)hero->item[hand];
     if (item == 0xffffu) return 0;
+    g_dm2_last_wield_attack.valid = 1;
+    g_dm2_last_wield_attack.command_admitted = 1;
+    g_dm2_last_wield_attack.item_handle = (int16_t)item;
+    g_dm2_last_wield_attack.creature_record = creature_record;
     record = dm2_v1_record_pool_address_mut(&rt->record_pools,
                                              creature_record);
     if (!record || dm2_v1_record_handle_pool(creature_record) != 4)
         return 0;
+    g_dm2_last_wield_attack.creature_resolved = 1;
     if (!dm2_v1_creature_ai_spec_def((int)record[4], &ai) || !ai)
         return 0;
     loader = dm2_v1_boot_asset_loader(rt->boot);
@@ -15538,6 +15556,8 @@ static int dm2_runtime_attack_creature_at(
     request.hero_hp = hero->curHP;
     request.hero_dexterity = hero->ability[DM2_ABILITY_DEXTERITY][DM2_CUR];
     request.hero_strength = hero->ability[DM2_ABILITY_STRENGTH][DM2_CUR];
+    g_dm2_last_wield_attack.hero_dexterity = request.hero_dexterity;
+    g_dm2_last_wield_attack.hero_strength = request.hero_strength;
     /* c_hero.cpp passes the adjusted strength ability separately to
      * COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH; leaving it zero makes every
      * otherwise valid weapon attack collapse to zero damage. */
@@ -15548,6 +15568,8 @@ static int dm2_runtime_attack_creature_at(
     request.creature_record = creature_record;
     request.creature_defense = ai->Defense;
     request.creature_armor = ai->ArmorClass;
+    g_dm2_last_wield_attack.creature_defense = request.creature_defense;
+    g_dm2_last_wield_attack.creature_armor = request.creature_armor;
     request.creature_poison_resist = ai->w24;
     request.target_x = (int16_t)target_x;
     request.target_y = (int16_t)target_y;
@@ -15636,6 +15658,7 @@ static int dm2_runtime_attack_creature_at(
         }
         request.hero_skill_level = (int16_t)level;
     }
+    g_dm2_last_wield_attack.hero_skill_level = request.hero_skill_level;
     request.bodyflag = (uint8_t)hero->bodyflag;
     request.item_weight = dbspec_word[1];
     request.dbspec_word5 = dbspec_word[5];
@@ -15687,7 +15710,19 @@ static int dm2_runtime_attack_creature_at(
     request.rand_defense = dm2_v1_drops_rand16(&rt->drop_rng, 0x100u);
     request.rand_armor = dm2_v1_drops_rand16(&rt->drop_rng, 0x100u);
     request.rand_poison = dm2_v1_drops_rand16(&rt->drop_rng, 0x100u);
+    g_dm2_last_wield_attack.command_power = request.power_base;
     memset(&attack, 0, sizeof(attack));
+    {
+        DM2_V1_CalcAttackDamageReceipt calculation;
+        memset(&calculation, 0, sizeof(calculation));
+        (void)dm2_v1_calc_player_attack_damage_receipt(&request, &calculation);
+        g_dm2_last_wield_attack.calculation_valid = calculation.valid;
+        g_dm2_last_wield_attack.calculation_hit = calculation.hit;
+        g_dm2_last_wield_attack.calculation_miss = calculation.miss;
+        g_dm2_last_wield_attack.calculation_fail_closed = calculation.fail_closed;
+        g_dm2_last_wield_attack.raw_damage = calculation.raw_damage;
+        g_dm2_last_wield_attack.final_damage = calculation.final_damage;
+    }
     if (!dm2_v1_combat_attack_creature_source(
         &request, &rt->record_pools, dungeon, &rt->caii, &rt->timer_queue,
         &rt->drop_rng, map, (unsigned long)rt->tick_count, x, y,
@@ -15698,6 +15733,7 @@ static int dm2_runtime_attack_creature_at(
      * result to prevent the party from treating a failed WIELD as a hit. */
     if (!attack.hp_applied)
         return 0;
+    g_dm2_last_wield_attack.hp_applied = 1;
 
     /* Keep an accumulator receipt even when the due creature timer has not
      * run yet.  This distinguishes a real source hit from a WIELD command

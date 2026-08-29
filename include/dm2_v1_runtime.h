@@ -1285,6 +1285,30 @@ typedef struct DM2_V1_RuntimeCreatureDamageReceipt {
     int deallocated;
     int drops_placed;
 } DM2_V1_RuntimeCreatureDamageReceipt;
+/* Read-only evidence for the most recent source-bound WIELD calculation.
+ * A valid receipt is published even for a source miss, so real-media
+ * diagnostics can distinguish a target/command rejection from a damage
+ * calculation that correctly failed to enter ATTACK_CREATURE. */
+typedef struct DM2_V1_RuntimeWieldAttackReceipt {
+    int valid;
+    int command_admitted;
+    int creature_resolved;
+    int16_t item_handle;
+    int16_t creature_record;
+    int16_t command_power;
+    int16_t hero_dexterity;
+    int16_t hero_strength;
+    int16_t hero_skill_level;
+    int16_t creature_defense;
+    int16_t creature_armor;
+    int calculation_valid;
+    int calculation_hit;
+    int calculation_miss;
+    int calculation_fail_closed;
+    int16_t raw_damage;
+    int16_t final_damage;
+    int hp_applied;
+} DM2_V1_RuntimeWieldAttackReceipt;
 /* Read-only DB4 provenance used by real-media combat fixtures and the live
  * inspector.  It exposes source words without granting mutation rights. */
 typedef struct DM2_V1_RuntimeCreatureRecordReceipt {
@@ -1304,6 +1328,8 @@ int dm2_v1_runtime_creature_record_receipt(
     int16_t record_handle, DM2_V1_RuntimeCreatureRecordReceipt *out);
 int dm2_v1_runtime_last_creature_damage_receipt(
     DM2_V1_RuntimeCreatureDamageReceipt *out);
+int dm2_v1_runtime_last_wield_attack_receipt(
+    DM2_V1_RuntimeWieldAttackReceipt *out);
 /* Copies the most recent source CCM loop receipt for the active creature. */
 int dm2_v1_runtime_last_ccm_receipt(DM2_V1_CcmLoopReceipt *out);
 /* Source-observable dynamic path boundary counters.  These are diagnostics:

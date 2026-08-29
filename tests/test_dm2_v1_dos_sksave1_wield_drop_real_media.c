@@ -16,6 +16,10 @@ static int exercise_drop(DM2_V1_BootProfile *profile)
     DM2_V1_DungeonData *dungeon =
         profile ? (DM2_V1_DungeonData *)profile->dungeon_data : NULL;
     unsigned char framebuffer[320 * 200];
+    DM2_V1_RuntimeWieldAttackReceipt last_wield;
+    int saw_wield_calculation = 0;
+
+    memset(&last_wield, 0, sizeof(last_wield));
 
     if (!dungeon || !dungeon->record_graph_complete) return 0;
     {
@@ -84,7 +88,15 @@ static int exercise_drop(DM2_V1_BootProfile *profile)
                             for (int attempt = 0; attempt < 256; ++attempt) {
                                 memset(&attack, 0, sizeof(attack));
                                 if (!dm2_v1_runtime_proceed_hand_command(
-                                    command, &attack)) break;
+                                    command, &attack)) {
+                                    DM2_V1_RuntimeWieldAttackReceipt detail;
+                                    if (dm2_v1_runtime_last_wield_attack_receipt(
+                                            &detail)) {
+                                        last_wield = detail;
+                                        saw_wield_calculation = 1;
+                                    }
+                                    break;
+                                }
                                 if (!attack.creature_attacked) break;
                                 ++hits;
                                 if (dm2_v1_runtime_last_wield_death_deallocated())
@@ -103,6 +115,18 @@ static int exercise_drop(DM2_V1_BootProfile *profile)
                 }
             }
         }
+    }
+    if (saw_wield_calculation) {
+        printf("SKSave1 WIELD source miss item=%04x creature=%04x power=%d "
+               "dex=%d strength=%d skill=%d defense=%d armor=%d "
+               "hit=%d raw=%d final=%d hp=%d\n",
+               (unsigned short)last_wield.item_handle,
+               (unsigned short)last_wield.creature_record,
+               last_wield.command_power, last_wield.hero_dexterity,
+               last_wield.hero_strength, last_wield.hero_skill_level,
+               last_wield.creature_defense, last_wield.creature_armor,
+               last_wield.calculation_hit, last_wield.raw_damage,
+               last_wield.final_damage, last_wield.hp_applied);
     }
     return 0;
 }
