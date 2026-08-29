@@ -75,6 +75,25 @@ int main(void) {
                                                DM1_V1_MOUSE_MASK_LEFT_PC34);
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.graphicsPopupSelectedRow == 1);
+    /* Mouse controls are bidirectional: clicking the selected value with
+     * Button II is the pointer equivalent of the keyboard LEFT key. */
+    result = M11_GameView_HandlePointerButton(&state, 180, 34,
+                                               DM1_V1_MOUSE_MASK_LEFT_PC34);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupPage == 0);
+    result = M11_GameView_HandlePointerButton(&state, 220, 58,
+                                               DM1_V1_MOUSE_MASK_LEFT_PC34);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupSelectedRow == 1);
+    result = M11_GameView_HandlePointerButton(&state, 220, 58,
+                                               DM1_V1_MOUSE_MASK_RIGHT_PC34);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(M12_Config_Load(&config, NULL) == 1);
+    assert(config.scaleModeIndex == M11_SCALE_4X);
+    /* Keep the remainder of this long regression on its documented FIT
+     * baseline; the assertion above has already proved the pointer route. */
+    config.scaleModeIndex = M11_SCALE_FIT;
+    assert(M12_Config_Save(&config) == 1);
     result = M11_GameView_HandlePointerButton(&state, 306, 14,
                                                DM1_V1_MOUSE_MASK_LEFT_PC34);
     assert(result == M11_GAME_INPUT_REDRAW);

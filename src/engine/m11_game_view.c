@@ -34256,16 +34256,26 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
     }
 
     if (state->graphicsPopupActive) {
-        if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
+        const int leftClick = (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0;
+        const int rightClick = (buttonMask & DM1_V1_MOUSE_MASK_RIGHT_PC34) != 0;
+        if (!leftClick && !rightClick) {
             return M11_GAME_INPUT_REDRAW;
         }
+        /* The popup is an ordinary desktop menu: left click advances a
+         * value, right click reverses it.  Before this branch, a right
+         * click was swallowed by the modal and every mouse-adjustable value
+         * could only be stepped forward.  Keep tabs and the close button
+         * left-click-only so the standard right-click decrement gesture
+         * cannot accidentally dismiss or change page. */
         if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 130,
                               M11_GRAPHICS_POPUP_Y + 6, 18, 12)) {
+            if (!leftClick) return M11_GAME_INPUT_REDRAW;
             state->graphicsPopupActive = 0;
             return M11_GAME_INPUT_REDRAW;
         }
         if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 6,
                               M11_GRAPHICS_POPUP_Y + 23, 136, 12)) {
+            if (!leftClick) return M11_GAME_INPUT_REDRAW;
             state->graphicsPopupPage = (x < M11_GRAPHICS_POPUP_X + 40) ?
                 M11_GRAPHICS_POPUP_PAGE_PRESENTATION :
                 (x < M11_GRAPHICS_POPUP_X + 78 ? M11_GRAPHICS_POPUP_PAGE_FILTERS :
@@ -34279,7 +34289,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             int row = (y - (M11_GRAPHICS_POPUP_Y + 40)) / 10;
             if (row >= 0 && row < m11_graphics_popup_row_count(state, state->graphicsPopupPage)) {
                 if (row == state->graphicsPopupSelectedRow) {
-                    return m11_graphics_popup_adjust(state, 1)
+                    return m11_graphics_popup_adjust(state, rightClick ? -1 : 1)
                         ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
                 }
                 state->graphicsPopupSelectedRow = row;
