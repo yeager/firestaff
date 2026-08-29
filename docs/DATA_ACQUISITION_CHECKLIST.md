@@ -153,27 +153,17 @@ coverage**, not registry correctness.
 |---|---|---|---|
 | Amiga 3.5 English | ✅ `3af5396f…` (435,076) | ✅ `3cafd2fb…` (2,098) | runtime target; DMWeb Amiga page lists 3.5 English protected original ADF/IPF media, Amiga intro+ending video provenance, and the Amiga keypad/Del/Help/Ctrl-S command table |
 | Amiga 3.1/3.3/3.5 Multilingual | 🟡 `cefaddfd…`? | 🟡 | DMWeb page splits 3.1/3.3/3.5 EN/FR/GE game disks, unofficial IPFs, protected original ADFs, cracked ADFs, v3.5 Quit-button presentation, and Meynaf's v3.3 French hard-disk/accelerator hack; archive/local-extra variants need canonical classification |
-| Atari ST 2.0/2.1 English | 🟡 `33f672bf…` / 🔴 | 🟡 `3cafd2fb…` / 🔴 | DMWeb page separates original STX game+utility disks for 2.0 and 2.1, cracked Automation ST media, MSA game+utility+save disks, hard-disk/RamDisk hacks, and Meynaf's v2.1 assembler-source disassembly; local v2.0 game-disk hashes are recorded, but v2.1 and utility disks still need classification |
-| PC 3.4 English | 🔴 | 🔴 | not yet acquired; would be easiest runtime target after Amiga |
+| Atari ST 2.0/2.1 English | 🟡 `33f672bf…` / 🔴 | 🟡 `3cafd2fb…` / 🔴 | Supplied campaign and Utility Disk STX media are exercised by native in-memory startup/Hint Oracle tests. Version/release classification, additional language variants and DSA-save provenance remain open. Keep original STX separate from cracked Automation ST, MSA, hard-disk and RamDisk derivatives. |
+| DOS / PC | ⚪ | ⚪ | No original DOS/PC release exists. CSBWin is reverse-engineering evidence only and must never become a Firestaff PC game-data or runtime target. |
 | X68000 Japanese | ⚫ intentionally unsupported | n/a | Preservation reference only. No CSB X68000 import, runtime, presentation, or input work is planned. |
 | FM-Towns English/Japanese | 🟡 | 🟡 | DMWeb page identifies Japan v3.1 BIN/CUE CD media, English/Japanese screenshot sets, Champion Editor and portrait-loading screens, CD audio tracks 02-31, and FM Towns Ctrl-S/Shift-S plus shifted-arrow command table; local `csb-extras/fm-towns/` is extracted but still awaits canonical hash classification |
 | PC-98 Japanese | 🟡 | 🟡 | DMWeb page identifies Japan v3.1 HDM/floppy media, original image without copy-protection sectors, cracked image, 8-bit/16-bit screenshots, Champion Editor and portrait-loading screens, and PC-98 keypad / Alt-S input; local `csb-extras/pc98-3.1-jp/` is extracted but still awaits canonical hash classification |
-| CSB Utility Disk (any) | 🔴 | n/a | has CMP portraits, HTC hint text, AMG sounds, FTL utility — needed for Tier 3 #6 CMP runtime, Tier 3 hidden-code skip |
+| CSB Utility Disk (Atari R1 supplied) | ✅ STX container | n/a | The supplied `Chaos Strikes Back Utility.stx` is paired with the supplied Atari R1 campaign by `csb_v1_hint_oracle_native_cli_boot`; native Hint Oracle startup reads both STX files in memory. Other releases/languages and checksum-verified DSA-save provenance remain separate open work. |
 | CSBWin custom resources | 🔴 | 🔴 | `csbgraphics.dat` is a third graphics file beyond DM/CSB; Tier 3 #11 |
 
 ### CSB acquisition gaps
 
-1. **PC 3.4 EN CSB** is the highest-value missing target. CSBWin
-   (Paul Stevens) ports Atari ST CSB to PC and is the de facto
-   reference engine for original CSB behavior. Locating an English
-   PC 3.4 release would let us hash-lock a second runtime target
-   alongside the Amiga one and unblock much of the Tier 3 work
-   without requiring LZW/Atari ST extraction.
-2. **CSB Utility Disk** — without it the CMP portraits and the
-   Hint Oracle HTC text are pure spec, not exercised. The Champion
-   Editor from the utility disk is also the simplest path to
-   exercising the CMP decoder we already shipped (`532c8250`).
-3. **Amiga CSB 3.1 / 3.3 / 3.5 media split** is pinned by the
+1. **Amiga CSB 3.1 / 3.3 / 3.5 media split** is pinned by the
    DMWeb Amiga page. Firestaff has canonical CSB hashes and a
    verified Meynaf FR extra path, but the page separates unofficial
    IPF images, protected original ADFs, cracked ADFs with known
@@ -182,14 +172,14 @@ coverage**, not registry correctness.
    and the Meynaf hard-disk/accelerator hack. Keep those sources
    separate from canonical originals before broadening Amiga runtime
    or utility-disk claims.
-4. **Atari ST CSB 2.0 / 2.1 media split** is pinned by the DMWeb
+2. **Atari ST CSB 2.0 / 2.1 media split** is pinned by the DMWeb
    Atari ST page. Firestaff already records local v2.0 game-disk
    `GRAPHICS.DAT` and `DUNGEON.DAT` hashes, but still needs v2.1
    game-disk classification and original utility-disk receipts for
    both versions. Keep STX originals separate from cracked Automation
    ST media, MSA save-disk workflows, hard-disk/RamDisk hacks, and
    Meynaf's v2.1 assembler-source disassembly.
-5. **Atari ST CSB GRAPHICS.DAT** for the hidden-code skip table —
+3. **Atari ST CSB GRAPHICS.DAT** for the hidden-code skip table —
    we shipped the table (`4e00a0ef`) but `csb_hidden_code_skip_table`
    tests only know the index range. A real Atari ST CSB GRAPHICS.DAT
    would let us confirm items 558–562 are not consumed as images.

@@ -109,6 +109,7 @@ static void test_cdda_byte_offset_calculation(void) {
  * materialized: this reads only its source-owned CUE member in memory. */
 static void test_real_cue_archive(void) {
     const char *archive = getenv("FIRESTAFF_DM1_FMTOWNS_ARCHIVE");
+    FILE *stream;
     uint8_t *cue = NULL;
     size_t cue_size = 0U;
     uint32_t starts[24];
@@ -118,6 +119,12 @@ static void test_real_cue_archive(void) {
         puts("SKIP: FIRESTAFF_DM1_FMTOWNS_ARCHIVE not set");
         return;
     }
+    stream = fopen(archive, "rb");
+    if (!stream) {
+        puts("SKIP: FIRESTAFF_DM1_FMTOWNS_ARCHIVE is unavailable");
+        return;
+    }
+    fclose(stream);
     assert(firestaff_zip_extract_by_suffix(archive, ".cue", &cue,
                                             &cue_size) == 0);
     assert(cue != NULL && cue_size > 0U);

@@ -1,13 +1,20 @@
-# Firestaff Gap List — Meta-Analysis (2026-06-20)
+# Firestaff Gap List — Historical Technical Analysis (2026-06-20)
 
-Honest, source-cited inventory of what remains between Firestaff
-HEAD (`216b0b67`) and full cross-game coverage of all five
-supported games (DM1, CSB, DM2, Nexus, Theron), assembled from
-the dmweb-free-fr + greatstone surveys, the existing per-game
-gap docs, and the stale `docs/parity/COMPLETION_MATRIX.md`.
+> **Historical analysis — not the active backlog or release status.** This
+> long-form research record preserves individual findings and source locks
+> from 2026-06-20 onward. Some rows deliberately describe superseded states,
+> old paths, or work that is now out of scope. Do not use it to make a
+> playability, platform, completion, or acquisition claim.
+>
+> The active, reviewed sources are [project status](PROJECT_STATUS.md),
+> [platform status](PLATFORM_STATUS.md),
+> [missing functions by game](MISSING_FUNCTIONS_BY_GAME.md), the root
+> `TODO-<game>.md` files, and the
+> [completion matrix](parity/COMPLETION_MATRIX.md). Their current native
+> real-media boundary overrides this record wherever they differ.
 
-This doc does NOT replace the per-game FINAL_GAPS files. It
-sits above them as a cross-game index, prioritized for action.
+This document does not replace the active per-game TODO files. It remains a
+source-cited technical index for historical context and future research.
 
 2026-08-11 platform boundary: PC-9801 and X68000 are preservation-only for
 every Firestaff game. Existing classifier, parser and media-receipt entries

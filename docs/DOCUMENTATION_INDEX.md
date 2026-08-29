@@ -27,11 +27,14 @@ handoff is not proven.
 - [README](../README.md) — user-facing overview, supported platforms and quick start
 - [Project status](PROJECT_STATUS.md) — short cross-game status matrix
 - [Platform status](PLATFORM_STATUS.md) — current status for every game and platform
+- [Active top-10 native-parity queue](parity/ACTIVE_TOP_10.md) — current
+  evidence-backed priorities and explicit data blockers
 - [Game data setup](DATA_SETUP.md) — legal data intake and scanner behavior
 - [Game-data formats](GAME_DATA_FORMATS.md) — verified containers, record families and save boundaries
 - [CI guide](CI.md) — GitHub Actions checks and local reproduction
 - [Verified hashes](VERIFIED_HASHES.md) — canonical data identities
-- [Gap list](FIRESTAFF_GAP_LIST.md) — active technical boundaries
+- [Historical technical gap analysis](FIRESTAFF_GAP_LIST.md) — preserved
+  research; use project/platform status and per-game TODO files for active work
 - [Missing functions by game](MISSING_FUNCTIONS_BY_GAME.md) — code, data and verification gaps
 - [Synthetic data by game](SYNTHETIC_DATA_BY_GAME.md) — fixtures, placeholders and real-data replacements
 - [Preservation and provenance](wiki/Preservation.md) — evidence levels, capture manifests and external data rules

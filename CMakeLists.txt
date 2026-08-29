@@ -58483,6 +58483,9 @@ add_executable(test_dm1_v1_fmtowns_cd_audio
 target_include_directories(test_dm1_v1_fmtowns_cd_audio PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_fmtowns_cd_audio PRIVATE firestaff_zip_extract)
 add_test(NAME test_dm1_v1_fmtowns_cd_audio COMMAND test_dm1_v1_fmtowns_cd_audio)
+set_tests_properties(test_dm1_v1_fmtowns_cd_audio PROPERTIES
+    ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
+    LABELS "dm1;fmtowns;cd-audio;real-data;in-memory;skip-safe")
 
 add_executable(test_dm1_v1_fmtowns_menu_regions
     tests/test_dm1_v1_fmtowns_menu_regions.c
