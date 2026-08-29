@@ -11872,6 +11872,10 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_four_platform_catalog_r
     endif()
     add_test(NAME dm2_v1_four_platform_catalog_real_media
         COMMAND test_dm2_v1_four_platform_catalog_real_media)
+    set_tests_properties(dm2_v1_four_platform_catalog_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm2;dos;amiga;fmtowns;macintosh;real-media;in-memory;catalog;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM2_SHARED_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_movie_decoder_real.c")

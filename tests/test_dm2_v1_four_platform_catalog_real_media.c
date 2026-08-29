@@ -46,18 +46,16 @@ int main(void)
 
     if (!root || !root[0]) {
         puts("SKIP: FIRESTAFF_DM2_SHARED_ROOT is not set");
-        return 0;
+        return 77;
     }
     memset(&status, 0, sizeof(status));
     M12_AssetStatus_ScanGame(&status, root, "dm2");
 
-    /* PC-DOS is the loose source owner; the other three are intentionally
-     * different containers/trees.  Their hashes and companion DUNGEON files
-     * are checked by the scanner before a version becomes matched. */
-    /* The standard Firestaff root may expose DOSBox's data through the
-     * authenticated `data` symlink; the resolver is expected to preserve the
-     * selected loose owner, not an implementation-specific symlink target. */
-    check_version(&status, "pc-en", "/data");
+    /* All four retail editions are selected directly from their supplied
+     * archives.  The resolver must retain each original container rather
+     * than manufacturing an extracted data directory or borrowing the
+     * first scan match. */
+    check_version(&status, "pc-en", "Dungeon-Master-II-Skullkeep_DOS_EN.zip");
     check_version(&status, "amiga-en", "Dungeon-Master-II-Skullkeep_Amiga_EN.zip");
     check_version(&status, "fmtowns-ja", "Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip");
     check_version(&status, "mac-en-retail", "Dungeon-Master-II-Skullkeep_Mac_EN");
