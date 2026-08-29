@@ -45,3 +45,8 @@ Reviewed 2026-08-25. Completed work only.
   boot receipt requires the source-bound `TMENU.INF` selection and selected
   `EDM.EXP`/`JDM.EXP` MD5, rather than promoting generic DM1 movement as a
   native FM Towns handoff.
+- The shared required-file catalog retains the verified Amiga 2.0
+  `DUNGEON.DAT` identity alongside the Atari additions.  The post-scan
+  recovery now republishes a selected ZIP → ZIP → ADF source owner before
+  calculating availability, so an Atari preservation scan cannot make a
+  valid Amiga launch unavailable.

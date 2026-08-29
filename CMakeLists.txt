@@ -1544,6 +1544,12 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0060_sound_play_pc34_c
     target_include_directories(test_csb_v1_f0060_sound_play_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    # The audio boundary reads an authenticated virtual GRAPHICS.DAT member
+    # through asset_read_path_alloc().  Link the native asset reader instead
+    # of relying on another executable target to happen to provide it.
+    target_link_libraries(test_csb_v1_f0060_sound_play_pc34_compat PRIVATE
+        firestaff_m12
+    )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_f0060_sound_play_pc34_compat PRIVATE
             -Wall -Wextra -Werror
@@ -38961,6 +38967,9 @@ if(BUILD_TESTING)
     )
     target_include_directories(test_csb_v1_audio_runtime_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_audio_runtime_pc34_compat PRIVATE
+        firestaff_m12
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_audio_runtime_pc34_compat PRIVATE -std=gnu11 -Wall -Wextra -pedantic -O2)

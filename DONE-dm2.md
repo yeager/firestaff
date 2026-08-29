@@ -36,3 +36,8 @@ Reviewed 2026-08-25. Completed work only.
   16-colour palette layout solely because both formats are big-endian. Its
   start-menu/title/New Game/movement route produces an accepted M11 frame with
   real assets and zero fallback draws, directly from the original ZIP in RAM.
+- The DOS archive save matrix now verifies every supplied primary and backup
+  `SKSAVE` through the native, read-only start-menu resume handoff. It treats
+  frame acceptance as a separate presentation boundary, so a valid source
+  load is not rejected merely because its initial saved pose has not yet
+  supplied a renderable viewport transaction.
