@@ -346,8 +346,9 @@ int main(void) {
     if (!expect(changed == 1 && state.view == M12_MENU_VIEW_MUSEUM,
                 "Museum rail button should open Museum of Lore with a click")) return 1;
 
-    /* Document and list views use a shared pointer grammar: centre top/bottom
-     * scrolls, side thirds change a category or page, and the centre activates.
+    /* Document and list views use a shared pointer grammar: the upper/lower
+     * quarter of the middle third scrolls, side thirds change a category or
+     * page, and the centre activates.
      * This keeps every keyboard-navigable menu usable without a keyboard. */
     state.view = M12_MENU_VIEW_CHANGELOG;
     M12_Changelog_Init(&state.changelog);
@@ -357,6 +358,9 @@ int main(void) {
     changed = M12_ModernMenu_ApplyHit(&state, hit);
     if (!expect(changed == 1 && state.changelog.scrollOffset > 0,
                 "changelog pointer input should scroll through entries")) return 1;
+    hit = M12_ModernMenu_HitTest(&state, 960, 540);
+    if (!expect(hit.kind == M12_HIT_VIEW_INPUT && hit.index == M12_MENU_INPUT_ACCEPT,
+                "document centre should provide mouse activation")) return 1;
     state.view = M12_MENU_VIEW_BESTIARY;
     M12_Bestiary_Init(&state.bestiary);
     hit = M12_ModernMenu_HitTest(&state, 1800, 540);

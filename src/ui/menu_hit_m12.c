@@ -527,19 +527,22 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
         case M12_MENU_VIEW_TOUCH_LAYOUT:
         case M12_MENU_VIEW_PRESENTATION_PREVIEW:
             /* These list/document views deliberately use different
-             * renderers, but share keyboard navigation.  Their pointer
+             * renderers, but share keyboard navigation. Their pointer
              * grammar is therefore consistent: left/right thirds select a
-             * category or page, upper/lower centre scroll, and the centre
-             * activates.  The Back button above remains available in every
-             * non-main view. */
+             * category or page; the upper/lower quarter of the middle third
+             * scrolls; and its central half activates. The Back button above
+             * remains available in every non-main view.
+             *
+             * Do not use y < half / y >= half here: that covers every point
+             * and makes ACCEPT unreachable by mouse. */
             hit.kind = M12_HIT_VIEW_INPUT;
             if (x < M12_HIT_CANVAS_W / 3) {
                 hit.index = M12_MENU_INPUT_LEFT;
             } else if (x >= (M12_HIT_CANVAS_W * 2) / 3) {
                 hit.index = M12_MENU_INPUT_RIGHT;
-            } else if (y < M12_HIT_CANVAS_H / 2) {
+            } else if (y < M12_HIT_CANVAS_H / 4) {
                 hit.index = M12_MENU_INPUT_UP;
-            } else if (y >= M12_HIT_CANVAS_H / 2) {
+            } else if (y >= (M12_HIT_CANVAS_H * 3) / 4) {
                 hit.index = M12_MENU_INPUT_DOWN;
             } else {
                 hit.index = M12_MENU_INPUT_ACCEPT;
