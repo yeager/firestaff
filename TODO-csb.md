@@ -8,6 +8,10 @@ Reviewed 2026-08-29. Only open work is listed here.
   for Atari ST, Amiga and FM Towns. Do not use CSBWin as a PC game route.
 - Keep V2.2 presentation closed until a real source-owned material/pixel
   binding exists.
+- Replace the blocked legacy Atari 7z MINI.DAT wrappers with a native,
+  in-memory 7z reader before restoring that optional corpus. They previously
+  invoked an external extractor and wrote supplied game media to temporary
+  disk, which violates Firestaff's media-ingestion contract.
 
 ## Deferred original-data corpus
 

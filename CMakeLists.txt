@@ -17450,15 +17450,6 @@ endif()
         NAME csb_v1_m11_f0435_f9_reload
         COMMAND test_csb_v1_m11_f0435_f9_reload
     )
-    add_test(
-        NAME csb_v1_atari_mini_f0435_recovery_archive
-        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_mini_runtime_archive.sh"
-            "$<TARGET_FILE:test_csb_v1_m11_f0435_f9_reload>"
-            "$<TARGET_FILE:firestaff>"
-    )
-    set_tests_properties(csb_v1_atari_mini_f0435_recovery_archive PROPERTIES
-        LABELS "tier2;csb;atari;save;recovery;real_data;archive;skip_safe"
-    )
 
     add_executable(test_csb_v1_m11_utility_capture_admission
         tests/test_csb_v1_m11_utility_capture_admission.c
@@ -17505,35 +17496,6 @@ endif()
     set_tests_properties(csb_v1_csbwin_f0435_runtime_frame PROPERTIES
         LABELS "tier2;csb;csbwin;save;runtime;hud;viewport;real_data;skip_safe"
         TIMEOUT 45
-    )
-    add_test(
-        NAME csb_v1_atari_mini_runtime_archive
-        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_mini_runtime_archive.sh"
-            "$<TARGET_FILE:test_csb_v1_m11_prison_runtime_hud_pc34>"
-            "$<TARGET_FILE:firestaff>"
-    )
-    set_tests_properties(csb_v1_atari_mini_runtime_archive PROPERTIES
-        LABELS "tier2;csb;atari;save;runtime;real_data;archive;skip_safe"
-    )
-    # The normal launcher Resume row must carry an authenticated original
-    # Atari MINI.DAT through M12, rather than relying on the explicit
-    # command-line --save ingress covered by the runtime archive test.
-    add_test(
-        NAME csb_v1_atari_mini_menu_resume_archive
-        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_mini_menu_resume_archive.sh"
-            "$<TARGET_FILE:firestaff>"
-    )
-    set_tests_properties(csb_v1_atari_mini_menu_resume_archive PROPERTIES
-        LABELS "tier2;csb;atari;save;resume;menu;real_data;archive;skip_safe"
-        TIMEOUT 45
-    )
-    add_test(
-        NAME csb_v1_atari_save_disk_archive
-        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_save_disk_archive.sh"
-            "$<TARGET_FILE:test_csb_v1_atari_msa>"
-    )
-    set_tests_properties(csb_v1_atari_save_disk_archive PROPERTIES
-        LABELS "tier2;csb;atari;save;msa;real_data;archive;skip_safe"
     )
     add_test(
         NAME csb_v1_real_media_hash_lock
@@ -40736,15 +40698,6 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_csb_v1_atari_save_decode_pc34_compat)
     set_tests_properties(csb_v1_atari_save_decode_pc34_compat PROPERTIES
         LABELS "tier2;csb;save;real_data;skip_safe")
-    add_test(
-        NAME csb_v1_atari_mini_archive_corpus
-        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_mini_archive_corpus.sh"
-            "$<TARGET_FILE:test_csb_v1_atari_save_decode_pc34_compat>"
-    )
-    set_tests_properties(csb_v1_atari_mini_archive_corpus PROPERTIES
-        LABELS "tier2;csb;save;real_data;archive;skip_safe"
-    )
-
     add_executable(test_csb_v1_atari_save_runtime_handoff_pc34_compat
         tests/test_csb_v1_atari_save_runtime_handoff_pc34_compat.c
     )
