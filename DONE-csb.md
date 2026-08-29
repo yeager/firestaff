@@ -2,6 +2,13 @@
 
 Reviewed 2026-08-29. Completed work only.
 
+- The supplied CSB Amiga A-disk now has a direct native graphics-format
+  receipt. `test_csb_v1_amiga_graphics_dat` reads `Graphics.DAT` from the
+  original ZIP → ADF chain in RAM through the AmigaDOS OFS reader, validates
+  its Amiga record table and known language/version identity, then decodes
+  the source C017 inventory panel at its original 224×136 dimensions. This
+  is source-format evidence only; composed-screen capture parity remains
+  active work.
 - The native Atari STX CLI route verifies original title startup, runtime and
   start-menu entry using the supplied campaign media.
 - The supplied French Atari preservation ZIP now follows its original

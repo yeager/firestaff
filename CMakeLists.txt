@@ -59554,10 +59554,14 @@ add_executable(test_csb_v1_amiga_graphics_dat
     tests/test_csb_v1_amiga_graphics_dat.c
     src/csb/csb_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
+    src/shared/firestaff_amiga_adf.c
 )
 target_include_directories(test_csb_v1_amiga_graphics_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_csb_v1_amiga_graphics_dat PRIVATE firestaff_zip_extract)
 add_test(NAME test_csb_v1_amiga_graphics_dat COMMAND test_csb_v1_amiga_graphics_dat)
-set_tests_properties(test_csb_v1_amiga_graphics_dat PROPERTIES LABELS "csb;amiga")
+set_tests_properties(test_csb_v1_amiga_graphics_dat PROPERTIES
+    ENVIRONMENT "FIRESTAFF_CSB_AMIGA_ADF_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back (FTL).zip"
+    LABELS "csb;amiga;graphics;real-data;in-memory;skip-safe")
 
 add_executable(test_csb_v1_amiga_runtime_graphics_real
     tests/test_csb_v1_amiga_runtime_graphics_real.c

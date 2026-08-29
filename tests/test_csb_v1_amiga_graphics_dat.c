@@ -1,4 +1,6 @@
 #include "csb_v1_amiga_graphics_dat.h"
+#include "firestaff_amiga_adf.h"
+#include "firestaff_zip_extract.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -209,6 +211,85 @@ static void test_real_a35e_img1_if_available(void) {
     fclose(file);
 }
 
+typedef struct {
+    int found;
+    int valid;
+    int inventory_decoded;
+    uint16_t inventory_width;
+    uint16_t inventory_height;
+    CSB_V1_AmigaGraphicsReceipt receipt;
+} RealCsbAmigaGraphicsReceipt;
+
+static int real_csb_graphics_visitor(const char *name, const uint8_t *bytes,
+                                     size_t size, void *user_data) {
+    RealCsbAmigaGraphicsReceipt *result =
+        (RealCsbAmigaGraphicsReceipt *)user_data;
+    if (!name || !bytes || !result || strcmp(name, "Graphics.DAT") != 0) {
+        return 1;
+    }
+    result->found = 1;
+    result->valid = csb_v1_amiga_graphics_receipt(bytes, size,
+                                                   &result->receipt) == 0;
+    if (result->valid) {
+        uint8_t *pixels = malloc(640u * 400u);
+        if (pixels) {
+            result->inventory_decoded = csb_v1_amiga_graphics_decode_item(
+                bytes, size, 17u, pixels, 640u * 400u,
+                &result->inventory_width, &result->inventory_height);
+            free(pixels);
+        }
+    }
+    return 0;
+}
+
+/* The supplied CSB Amiga preservation archive contains the original A disk.
+ * Read its canonical `Graphics.DAT` through the native AmigaDOS visitor in
+ * RAM; do not create a loose ADF or game-data file. */
+static void test_real_amiga_adf_graphics_receipt(void) {
+    const char *archive = getenv("FIRESTAFF_CSB_AMIGA_ADF_ARCHIVE");
+    uint8_t *adf = NULL;
+    size_t adf_size = 0U;
+    FILE *stream;
+    RealCsbAmigaGraphicsReceipt result;
+
+    if (!archive || !archive[0]) {
+        puts("SKIP real_csb_amiga_graphics: archive not configured");
+        return;
+    }
+    stream = fopen(archive, "rb");
+    if (!stream) {
+        puts("SKIP real_csb_amiga_graphics: archive unavailable");
+        return;
+    }
+    fclose(stream);
+
+    memset(&result, 0, sizeof(result));
+    CHECK(firestaff_zip_extract_by_suffix(archive,
+                                           "Chaos Strikes Back (FTL) A.adf",
+                                           &adf, &adf_size) == 0,
+          "real_csb_amiga_adf_member");
+    if (!adf) return;
+    CHECK(firestaff_amiga_adf_visit_ofs_files(adf, adf_size,
+                                               real_csb_graphics_visitor,
+                                               &result) >= 0,
+          "real_csb_amiga_adf_visit");
+    free(adf);
+    CHECK(result.found == 1, "real_csb_amiga_graphics_found");
+    CHECK(result.valid == 1, "real_csb_amiga_graphics_receipt");
+    if (!result.valid) return;
+    CHECK(result.receipt.is_amiga == 1, "real_csb_amiga_is_amiga");
+    CHECK(result.receipt.item_count >= 700u && result.receipt.item_count <= 800u,
+          "real_csb_amiga_item_count");
+    CHECK(result.receipt.lang != CSB_AMIGA_LANG_UNKNOWN,
+          "real_csb_amiga_known_language");
+    CHECK(result.receipt.version != CSB_AMIGA_VER_UNKNOWN,
+          "real_csb_amiga_known_version");
+    CHECK(result.inventory_decoded == 1,
+          "real_csb_amiga_c017_inventory_decodes");
+    CHECK(result.inventory_width == 224u && result.inventory_height == 136u,
+          "real_csb_amiga_c017_inventory_source_dimensions");
+}
+
 static void test_receipt_null(void) {
     CHECK(csb_v1_amiga_graphics_receipt(NULL, 0, NULL) == -1, "receipt_null");
 }
@@ -221,6 +302,7 @@ int main(void) {
     test_synthetic_valid();
     test_img1_decode();
     test_real_a35e_img1_if_available();
+    test_real_amiga_adf_graphics_receipt();
     test_receipt_null();
     printf("csb_v1_amiga_graphics_dat: %d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
