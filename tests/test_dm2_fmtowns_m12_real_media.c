@@ -94,7 +94,7 @@ int main(void)
 
     if (!root || root[0] == '\0') {
         puts("SKIP: FIRESTAFF_DM2_FMTOWNS_ROOT is not set");
-        return 0;
+        return 77;
     }
 
     memset(&status, 0, sizeof(status));

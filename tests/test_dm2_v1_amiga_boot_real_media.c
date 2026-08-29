@@ -29,7 +29,7 @@ int main(void)
 
     if (!root || root[0] == '\0') {
         puts("SKIP: FIRESTAFF_DM2_AMIGA_ROOT is not set");
-        return 0;
+        return 77;
     }
     dm2_v1_boot_profile_init(&profile);
     expect(dm2_v1_boot_scan_assets(&profile, root) == 0,

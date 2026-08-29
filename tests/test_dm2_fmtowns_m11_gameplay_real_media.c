@@ -311,7 +311,7 @@ int main(void)
 
     if (!root || !root[0] || !companion || !companion[0]) {
         puts("SKIP: FM Towns root and English companion are required");
-        return 0;
+        return 77;
     }
     memset(&assets, 0, sizeof(assets));
     memset(selected_runtime, 0, sizeof(selected_runtime));

@@ -11,7 +11,7 @@ int main(void) {
 
     if (!zip || !zip[0]) {
         puts("SKIP: DM2 Mac ZIP environment is not set");
-        return 0;
+        return 77;
     }
     dm2_v1_boot_profile_init(&profile);
     if (dm2_v1_boot_scan_assets(&profile, zip) != 0 ||

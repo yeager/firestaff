@@ -32,7 +32,7 @@ int main(void)
 
     if (!root || root[0] == '\0') {
         puts("SKIP: FIRESTAFF_DM2_AMIGA_ROOT is not set");
-        return 0;
+        return 77;
     }
     memset(&status, 0, sizeof(status));
     memset(selectedRuntime, 0, sizeof(selectedRuntime));

@@ -246,7 +246,7 @@ int main(void)
 
     if (!root || !root[0]) {
         puts("SKIP: FIRESTAFF_DM2_AMIGA_ROOT is not set");
-        return 0;
+        return 77;
     }
     memset(&launch, 0, sizeof(launch));
     expect(dm2_v1_boot_startup_launch_alloc(root, &launch) == 1 &&

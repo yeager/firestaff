@@ -61,7 +61,7 @@ int main(void)
 
     if (!root || !root[0] || !companion || !companion[0]) {
         puts("SKIP: FIRESTAFF_DM2_FMTOWNS_ROOT and English companion are required");
-        return 0;
+        return 77;
     }
     /* M11 receives the edition selected by M12, never the shared scan root.
      * Resolve the HME-242 archive here so this real-media regression covers
