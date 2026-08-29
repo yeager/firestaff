@@ -18,7 +18,7 @@ int main(void)
 
     if (!root || !root[0]) {
         puts("SKIP: FIRESTAFF_DM2_DOS_ROOT is not set");
-        return 0;
+        return 77;
     }
     memset(&spec, 0, sizeof(spec));
     spec.gameId = "dm2";

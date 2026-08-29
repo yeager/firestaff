@@ -11871,6 +11871,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_media_real.c")
         firestaff_zip_extract firestaff_fmtowns_disc firestaff_zlib)
     add_test(NAME dm2_v1_mac_media_real COMMAND test_dm2_v1_mac_media_real)
     set_tests_properties(dm2_v1_mac_media_real PROPERTIES
+        SKIP_RETURN_CODE 77
         ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
         LABELS "dm2;macintosh;real-media;in-memory;skip-safe")
 endif()
@@ -11906,6 +11907,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_movie_decoder_real.
     add_test(NAME dm2_v1_mac_movie_decoder_real
         COMMAND test_dm2_v1_mac_movie_decoder_real)
     set_tests_properties(dm2_v1_mac_movie_decoder_real PROPERTIES
+        SKIP_RETURN_CODE 77
         ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
         LABELS "dm2;macintosh;movie;real-media;in-memory;skip-safe")
 endif()
@@ -12013,6 +12015,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_resource_types_real
     add_test(NAME dm2_v1_mac_resource_types_real
         COMMAND test_dm2_v1_mac_resource_types_real)
     set_tests_properties(dm2_v1_mac_resource_types_real PROPERTIES
+        SKIP_RETURN_CODE 77
         ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
         LABELS "dm2;macintosh;resource;real-media;in-memory;skip-safe")
 endif()
@@ -17200,6 +17203,7 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_dos_m11_new_game_real_media
     )
     set_tests_properties(dm2_v1_dos_m11_new_game_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
         ENVIRONMENT "FIRESTAFF_DM2_DOS_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
         LABELS "dm2;dos;new-game;real-media;in-memory;skip-safe"
     )
@@ -58421,6 +58425,7 @@ endif()
 add_test(NAME test_dm2_v1_dos_pit_runtime_real_media
     COMMAND test_dm2_v1_dos_pit_runtime_real_media)
 set_tests_properties(test_dm2_v1_dos_pit_runtime_real_media PROPERTIES
+    SKIP_RETURN_CODE 77
     ENVIRONMENT
         "FIRESTAFF_DM2_DOS_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
     LABELS "tier2;dm2;dos;pit;stairs;door;creature;real-media;in-memory;native")
@@ -58451,6 +58456,7 @@ endif()
 add_test(NAME test_dm2_v1_dos_sksave_archive_resume_real_media
     COMMAND test_dm2_v1_dos_sksave_archive_resume_real_media)
 set_tests_properties(test_dm2_v1_dos_sksave_archive_resume_real_media PROPERTIES
+    SKIP_RETURN_CODE 77
     LABELS "tier2;dm2;dos;resume;real-media;native;runtime"
     ENVIRONMENT
         "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
@@ -58513,6 +58519,7 @@ endif()
 add_test(NAME test_dm2_v1_dos_m11_spell_cast_real_media
     COMMAND test_dm2_v1_dos_m11_spell_cast_real_media)
 set_tests_properties(test_dm2_v1_dos_m11_spell_cast_real_media PROPERTIES
+    SKIP_RETURN_CODE 77
     ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip;SDL_AUDIODRIVER=dummy"
     LABELS "tier2;dm2;dos;startup;resume;spell;real-media;in-memory;native")
 

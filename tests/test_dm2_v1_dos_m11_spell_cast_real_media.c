@@ -59,7 +59,7 @@ int main(void)
 
     if (!archive || !archive[0]) {
         puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is not set");
-        return 0;
+        return 77;
     }
     if (snprintf(save_path, sizeof(save_path), "%s::data/sksave1.dat", archive) >=
             (int)sizeof(save_path)) {

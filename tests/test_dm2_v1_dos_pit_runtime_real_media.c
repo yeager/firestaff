@@ -148,7 +148,7 @@ static int __attribute__((unused)) exercise_authentic_kill_drop(
     memset(&target, 0, sizeof(target));
     if (!find_authentic_kill_candidate(dungeon, &map, &x, &y, &target)) {
         printf("  DOS kill candidate not found\n");
-        return 0;
+        return 77;
     }
     printf("  DOS kill target %04x map %d,%d,%d type %d HP %u armor %u flags %04x drops %d\n",
            (unsigned)(uint16_t)target.record_handle, map, x, y,

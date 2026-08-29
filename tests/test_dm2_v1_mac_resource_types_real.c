@@ -20,7 +20,7 @@ int main(void)
 
     if (!zip || !zip[0]) {
         puts("SKIP: FIRESTAFF_DM2_MAC_EN_ZIP is not set");
-        return 0;
+        return 77;
     }
     memset(&media, 0, sizeof(media));
     if (dm2_v1_mac_media_read_zip(zip, &media) != 0 ||
