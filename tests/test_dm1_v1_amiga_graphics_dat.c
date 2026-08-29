@@ -102,6 +102,7 @@ typedef struct {
     int executable_found;
     unsigned int immediate_color_writes;
     unsigned int copper_color_base_writes;
+    unsigned int copper_caller_palette_handoffs;
     DM1_V1_AmigaGraphicsReceipt receipt;
     uint8_t *bytes;
     size_t size;
@@ -144,9 +145,26 @@ static int real_graphics_visitor(const char *name, const uint8_t *bytes,
                 ++result->copper_color_base_writes;
             }
         }
-        printf("AMIGA-DISASM COLOR immediate writes=%u, Copper COLOR base writes=%u\n",
+        /* The builder's prologue transfers its caller's word-table pointer
+         * from 12(A5), then its first loop reads 16 words from that table
+         * before forming COLOR00..COLOR15 Copper addresses.  This is an
+         * original dynamic gameplay-palette handoff, not a static palette
+         * embedded in GRAPHICS.DAT or a legitimate PC-VGA fallback. */
+        for (size_t i = 0u; i + 10u <= size; ++i) {
+            if (bytes[i + 0u] == 0x4eu && bytes[i + 1u] == 0x55u &&
+                bytes[i + 2u] == 0x00u && bytes[i + 3u] == 0x00u &&
+                bytes[i + 4u] == 0x2fu && bytes[i + 5u] == 0x04u &&
+                bytes[i + 6u] == 0x29u && bytes[i + 7u] == 0x6du &&
+                bytes[i + 8u] == 0x00u && bytes[i + 9u] == 0x0cu) {
+                printf("AMIGA-DISASM Copper caller palette handoff @0x%zx\n",
+                       i);
+                ++result->copper_caller_palette_handoffs;
+            }
+        }
+        printf("AMIGA-DISASM COLOR immediate writes=%u, Copper COLOR base writes=%u, caller palette handoffs=%u\n",
                result->immediate_color_writes,
-               result->copper_color_base_writes);
+               result->copper_color_base_writes,
+               result->copper_caller_palette_handoffs);
     }
     if (strcmp(name, "graphics.dat") != 0) return 1;
     result->found = 1;
@@ -208,6 +226,8 @@ static void test_real_amiga_v20_graphics_receipt(void) {
               "real_no_immediate_color_writes");
         CHECK(result.copper_color_base_writes == 4u,
               "real_copper_color_base_writes");
+        CHECK(result.copper_caller_palette_handoffs == 1u,
+              "real_copper_caller_palette_handoff");
     }
     CHECK(result.valid == 1, "real_graphics_receipt");
     if (!result.valid) return;
