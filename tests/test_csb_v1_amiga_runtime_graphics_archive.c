@@ -23,7 +23,7 @@ static int capture_graphics_dat(const char *name, const uint8_t *bytes,
 {
     GraphicsCapture *capture = (GraphicsCapture *)user_data;
     if (!capture || !name || !bytes || strcmp(name, "Graphics.DAT") != 0)
-        return 0;
+        return 77;
     capture->bytes = (unsigned char *)malloc(size);
     if (!capture->bytes) return -1;
     memcpy(capture->bytes, bytes, size);

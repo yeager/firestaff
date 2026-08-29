@@ -59741,6 +59741,7 @@ target_link_libraries(test_csb_v1_amiga_runtime_graphics_archive PRIVATE
 add_test(NAME test_csb_v1_amiga_runtime_graphics_archive
     COMMAND test_csb_v1_amiga_runtime_graphics_archive)
 set_tests_properties(test_csb_v1_amiga_runtime_graphics_archive PROPERTIES
+    SKIP_RETURN_CODE 77
     ENVIRONMENT "FIRESTAFF_CSB_AMIGA_ADF_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back (FTL).zip"
     LABELS "csb;amiga;graphics;runtime;real-data;in-memory;skip-safe")
 
@@ -59758,6 +59759,7 @@ endif()
 add_test(NAME csb_v1_amiga_runtime_graphics_real
          COMMAND test_csb_v1_amiga_runtime_graphics_real)
 set_tests_properties(csb_v1_amiga_runtime_graphics_real PROPERTIES
+    SKIP_RETURN_CODE 77
     LABELS "csb;amiga;real_data" TIMEOUT 60)
 
 add_executable(test_dm1_v1_creature_behavior_bootstrap

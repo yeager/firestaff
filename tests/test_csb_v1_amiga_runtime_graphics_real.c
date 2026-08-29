@@ -102,7 +102,7 @@ int main(void)
 
     if (!path || !path[0]) {
         puts("SKIP: set FIRESTAFF_CSB_AMIGA_GRAPHICS_DAT to original CSB Amiga GRAPHICS.DAT");
-        return 0;
+        return 77;
     }
     bytes = read_file(path, &size);
     if (!bytes || csb_v1_amiga_graphics_receipt(bytes, size, &graphics) != 0 ||
