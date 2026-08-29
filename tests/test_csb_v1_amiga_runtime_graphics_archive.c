@@ -83,7 +83,8 @@ int main(void)
         return 1;
     }
 
-    if (!decode_range(graphics.bytes, graphics.size, 17u, 17u, "inventory") ||
+    if (!decode_range(graphics.bytes, graphics.size, 1u, 4u, "title/entrance") ||
+        !decode_range(graphics.bytes, graphics.size, 17u, 17u, "inventory") ||
         !decode_range(graphics.bytes, graphics.size, 40u, 41u, "panel") ||
         !decode_range(graphics.bytes, graphics.size, 49u, 77u, "pit/field") ||
         !decode_range(graphics.bytes, graphics.size, 108u, 245u, "stairs") ||
