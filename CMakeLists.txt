@@ -40764,6 +40764,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     add_test(NAME csb_v1_atari_save_decode_pc34_compat
         COMMAND test_csb_v1_atari_save_decode_pc34_compat)
     set_tests_properties(csb_v1_atari_save_decode_pc34_compat PROPERTIES
+        SKIP_RETURN_CODE 77
         LABELS "tier2;csb;save;real_data;skip_safe")
     add_executable(test_csb_v1_atari_save_runtime_handoff_pc34_compat
         tests/test_csb_v1_atari_save_runtime_handoff_pc34_compat.c
@@ -55051,6 +55052,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_archive_launch_
     add_test(NAME csb_v1_fmtowns_packed_m11_real
         COMMAND test_csb_v1_fmtowns_packed_m11_real)
     set_tests_properties(csb_v1_fmtowns_packed_m11_real PROPERTIES
+        SKIP_RETURN_CODE 77
         ENVIRONMENT
             "FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=en;FIRESTAFF_AUDIO_ENABLE_SDL=0"
         LABELS "csb;fmtowns;english;real-media;in-memory;m11")

@@ -14,7 +14,7 @@ int main(void)
 
     if (!archive || !archive[0]) {
         puts("SKIP: FIRESTAFF_CSB_FMTOWNS_ARCHIVE not set");
-        return 0;
+        return 77;
     }
     memset(&spec, 0, sizeof(spec));
     spec.title = "CHAOS STRIKES BACK";

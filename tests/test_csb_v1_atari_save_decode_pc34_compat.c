@@ -81,7 +81,7 @@ int main(void)
     }
     if (!path || !path[0]) {
         puts("SKIP: FIRESTAFF_CSB_ATARI_MINI is not set");
-        return 0;
+        return 77;
     }
     if (!read_file(path, &bytes, &size) ||
         csb_v1_atari_save_load_dungeon_pc34_compat(bytes, size, &dungeon, &info) != CSB_V1_ATARI_SAVE_OK ||

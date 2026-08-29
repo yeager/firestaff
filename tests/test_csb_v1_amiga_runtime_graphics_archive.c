@@ -63,7 +63,7 @@ int main(void)
 
     if (!archive || !archive[0]) {
         puts("SKIP: CSB Amiga archive is not configured");
-        return 0;
+        return 77;
     }
     memset(&graphics, 0, sizeof(graphics));
     if (firestaff_zip_extract_by_suffix(archive, "Chaos Strikes Back (FTL) A.adf",
