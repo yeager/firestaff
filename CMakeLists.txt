@@ -6752,6 +6752,18 @@ if(NOT MSVC)
     target_compile_options(firestaff_m10 PRIVATE -std=c99 -O2 -include stddef.h)
 endif()
 
+# GCC 15 on AArch64 can ICE in its load-pair fusion pass while compiling the
+# C13 save handoff.  This only disables that backend fusion for the affected
+# translation unit; the source semantics and the rest of M10 remain at O2.
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND
+   CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 15 AND
+   CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$")
+    set_source_files_properties(
+        src/dm1/dm1_v1_original_save_pc34_handoff.c
+        PROPERTIES COMPILE_OPTIONS
+            "-mno-early-ldp-fusion;-mno-late-ldp-fusion")
+endif()
+
 
 
 

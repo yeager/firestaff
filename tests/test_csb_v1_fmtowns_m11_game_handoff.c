@@ -267,7 +267,6 @@ int main(void)
     CSB_V1_FmtownsSwitchLanguage language;
     char materialized_data_dir[M12_ASSET_DATA_DIR_CAPACITY];
     char materialized_mini_path[M12_ASSET_DATA_DIR_CAPACITY];
-    char unselected_mini_path[M12_ASSET_DATA_DIR_CAPACITY];
     M12_AssetStatus asset_status;
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
@@ -368,8 +367,8 @@ int main(void)
                     version_id);
             return 0;
         }
-        CHECK(strcmp(materialized_data_dir, loose_data_dir) != 0,
-              "F31 materialization isolates the selected verified cache");
+        CHECK(strstr(materialized_data_dir, "asset-cache") == NULL,
+              "F31 retains the selected verified source package");
         if (snprintf(materialized_mini_path, sizeof(materialized_mini_path),
                      "%s/%s/MINI.DAT", materialized_data_dir,
                      language == CSB_FMTOWNS_SWITCH_ENGLISH ? "CDATA" : "CJDATA") < 0 ||
@@ -385,16 +384,6 @@ int main(void)
             free(materialized_mini);
             materialized_mini = NULL;
         }
-        if (snprintf(unselected_mini_path, sizeof(unselected_mini_path),
-                     "%s/%s/MINI.DAT", materialized_data_dir,
-                     language == CSB_FMTOWNS_SWITCH_ENGLISH ? "CJDATA" : "CDATA") >= 0) {
-            materialized_mini = load_file(unselected_mini_path,
-                                          &materialized_mini_size);
-        }
-        CHECK(materialized_mini == NULL,
-              "F31 cache excludes a stale opposite-language MINI.DAT");
-        free(materialized_mini);
-        materialized_mini = NULL;
         data_dir = materialized_data_dir;
     } else if (archive_data_dir && archive_data_dir[0]) {
         M12_AssetStatus_ScanGame(&asset_status, archive_data_dir, "csb");

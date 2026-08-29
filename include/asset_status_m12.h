@@ -177,17 +177,15 @@ int M12_AssetStatus_ResolveRuntimeDataDirForVersion(
     const char* versionId,
     char* outPath,
     size_t outPathSize);
-/* Materialize the selected CSB edition into a version-private runtime
- * directory.  The menu's selected package, rather than the scanner's first
- * match, owns GRAPHICS.DAT and optional presentation media.  FM Towns keeps
- * its CD-specific extractor behind the same boundary. */
+/* Legacy-compatible CSB preparation entry point.  It retains the selected
+ * original package as the runtime owner; packed media is read in memory and
+ * is never copied into an asset cache. */
 int M12_AssetStatus_MaterializeCSBRuntimeVersion(
     const M12_AssetStatus* status, const char* versionId,
     char* outPath, size_t outPathSize);
 /* Prepare the selected CSB edition for launch without changing its media
- * ownership.  Archive/ADF provenance is copied into the version-private
- * cache; an already verified loose original package remains in its source
- * directory so direct CLI launch does not depend on a redundant cache copy. */
+ * ownership.  Archive and ADF provenance stays source-owned; a native reader
+ * opens packed members in bounded RAM. */
 int M12_AssetStatus_PrepareCSBRuntimeVersion(
     const M12_AssetStatus* status, const char* versionId,
     char* outPath, size_t outPathSize);

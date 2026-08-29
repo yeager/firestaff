@@ -7425,6 +7425,14 @@ int M12_AssetStatus_PrepareDM1RuntimeVersion(
 int M12_AssetStatus_MaterializeCSBRuntimeVersion(
     const M12_AssetStatus* status, const char* versionId,
     char* outPath, size_t outPathSize) {
+#if !defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
+    /* Compatibility entry point for callers predating the no-extraction
+     * policy.  Production must retain the source owner exactly as the normal
+     * CSB launch path does; the retired cache implementation below is kept
+     * only as unreachable historical code for source archaeology. */
+    return M12_AssetStatus_PrepareCSBRuntimeVersion(status, versionId,
+                                                    outPath, outPathSize);
+#else
     int gameIndex = m12_game_index_from_id("csb");
     int versionIndex;
     const M12_AssetVersionStatus* version;
@@ -7606,6 +7614,7 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
          strcmp(versionId, "amiga35-multi") == 0) ? versionId : NULL,
         strncmp(versionId, "st20-21-", 8) == 0);
     return 1;
+#endif
 }
 
 static int m12_csb_fmtowns_cached_runtime_is_complete(
