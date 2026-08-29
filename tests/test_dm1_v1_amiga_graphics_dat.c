@@ -100,6 +100,8 @@ typedef struct {
     int found;
     int valid;
     int executable_found;
+    unsigned int immediate_color_writes;
+    unsigned int copper_color_base_writes;
     DM1_V1_AmigaGraphicsReceipt receipt;
     uint8_t *bytes;
     size_t size;
@@ -113,11 +115,12 @@ static int real_graphics_visitor(const char *name, const uint8_t *bytes,
         return 1;
     }
     /* Amiga OCS COLOR00..COLOR31 live at 0xdff180..0xdff1be.  This optional
-     * in-memory probe records immediate MOVE.W palette writes from the
-     * original `dm` executable; it never materializes an ADF member. */
+     * in-memory probe records the original executable's palette route; it
+     * never materializes an ADF member.  DM 2.0 constructs Copper entries
+     * with ADD.L #$00dff180,D0 rather than embedding MOVE.W #rgb,COLORxx. */
     if (disassembly && disassembly[0] && strcmp(name, "dm") == 0) {
-        unsigned int writes = 0u;
         result->executable_found = 1;
+        printf("AMIGA-DISASM dm bytes=%zu\n", size);
         for (size_t i = 0u; i + 10u <= size; ++i) {
             unsigned int register_offset;
             unsigned int rgb4;
@@ -131,9 +134,19 @@ static int real_graphics_visitor(const char *name, const uint8_t *bytes,
             register_offset = (unsigned int)bytes[i + 7u] - 0x80u;
             printf("AMIGA-DISASM move.w #$%03x,COLOR%u @0x%zx\n",
                    rgb4 & 0xfffu, register_offset / 2u, i);
-            ++writes;
+            ++result->immediate_color_writes;
         }
-        printf("AMIGA-DISASM COLOR immediate writes=%u\n", writes);
+        for (size_t i = 0u; i + 6u <= size; ++i) {
+            if (bytes[i + 0u] == 0xd0u && bytes[i + 1u] == 0xbcu &&
+                bytes[i + 2u] == 0x00u && bytes[i + 3u] == 0xdfu &&
+                bytes[i + 4u] == 0xf1u && bytes[i + 5u] == 0x80u) {
+                printf("AMIGA-DISASM add.l #$00dff180,D0 @0x%zx\n", i);
+                ++result->copper_color_base_writes;
+            }
+        }
+        printf("AMIGA-DISASM COLOR immediate writes=%u, Copper COLOR base writes=%u\n",
+               result->immediate_color_writes,
+               result->copper_color_base_writes);
     }
     if (strcmp(name, "graphics.dat") != 0) return 1;
     result->found = 1;
@@ -189,8 +202,13 @@ static void test_real_amiga_v20_graphics_receipt(void) {
           "real_adf_visit");
     free(adf);
     CHECK(result.found == 1, "real_graphics_found");
-    if (getenv("FIRESTAFF_DM1_AMIGA_DISASSEMBLY"))
+    if (getenv("FIRESTAFF_DM1_AMIGA_DISASSEMBLY")) {
         CHECK(result.executable_found == 1, "real_executable_found");
+        CHECK(result.immediate_color_writes == 0u,
+              "real_no_immediate_color_writes");
+        CHECK(result.copper_color_base_writes == 4u,
+              "real_copper_color_base_writes");
+    }
     CHECK(result.valid == 1, "real_graphics_receipt");
     if (!result.valid) return;
     CHECK(result.receipt.is_amiga == 1, "real_graphics_is_amiga");

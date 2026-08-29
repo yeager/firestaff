@@ -59652,7 +59652,7 @@ target_include_directories(test_dm1_v1_amiga_graphics_dat PRIVATE ${CMAKE_CURREN
 target_link_libraries(test_dm1_v1_amiga_graphics_dat PRIVATE firestaff_zip_extract)
 add_test(NAME test_dm1_v1_amiga_graphics_dat COMMAND test_dm1_v1_amiga_graphics_dat)
 set_tests_properties(test_dm1_v1_amiga_graphics_dat PROPERTIES
-    ENVIRONMENT "FIRESTAFF_DM1_AMIGA_V20_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Amiga_EN_Version-20.zip"
+    ENVIRONMENT "FIRESTAFF_DM1_AMIGA_V20_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Amiga_EN_Version-20.zip;FIRESTAFF_DM1_AMIGA_DISASSEMBLY=1"
     LABELS "dm1;amiga;graphics;real-data;in-memory;skip-safe")
 
 add_executable(test_csb_v1_amiga_graphics_dat
