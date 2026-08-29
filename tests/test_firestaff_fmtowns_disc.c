@@ -17,6 +17,13 @@ static int test_cue_parse(void) {
 
     uint32_t starts[4] = {0};
     char image_member[64];
+    if (fmtowns_cue_parse_track_starts(NULL, 0u, starts, 4) != -1 ||
+        fmtowns_cue_parse_track_starts(cue, strlen(cue), NULL, 4) != -1 ||
+        fmtowns_cue_parse_track_starts(cue, strlen(cue), starts, 0) != -1 ||
+        fmtowns_cue_parse_track_starts(cue, strlen(cue), starts, -1) != -1) {
+        fprintf(stderr, "FAIL: CUE parser accepted an invalid output capacity\n");
+        return 1;
+    }
     int count = fmtowns_cue_parse_track_starts(cue, strlen(cue), starts, 4);
     if (count < 3) {
         fprintf(stderr, "FAIL: expected 3 tracks, got %d\n", count);

@@ -201,7 +201,7 @@ int fmtowns_cue_parse_track_starts(const char *cue, size_t cue_size,
     int count = 0;
     int current_track = -1;
 
-    if (!cue || !track_starts) return -1;
+    if (!cue || !track_starts || max_tracks <= 0) return -1;
     memset(track_starts, 0, (size_t)max_tracks * sizeof(uint32_t));
 
     while (p < end) {
