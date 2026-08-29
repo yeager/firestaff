@@ -10,10 +10,14 @@ It enumerates the variant matrix Firestaff cares about for the
 "code-complete" goal, checks each one against the registry and against
 the local data directory, and emits a per-game table:
 
-    DM1  total=12   have=2  archive=10   missing=0   17%
+    DM1  total=12   ready=2  native-container=10  missing=0
 
-The percentage is `have / total` — i.e. variants whose required files
-are present, hash-verified, and ready to drive a runtime launch.
+`READY` means the required source files are directly present.  A
+`NATIVE_CONTAINER` is deliberately distinct: the original preservation
+container is present in a format Firestaff reads in memory, but this utility
+does not inspect its members or claim hash/launch verification.  `ARCHIVED`
+remains for containers that need an importer or whose runtime ownership is
+unknown.
 
 The variant matrix is curated from Greatstone's "News / Full DM game
 list" page (26+ DM/CSB versions extracted by SCK) plus dmweb's
@@ -182,9 +186,20 @@ def _archive_matches_variant(name: str, platform: str, variant: str) -> bool:
     every platform row. This classifies archive filenames only; it does not
     claim that their contents have been hash-verified or imported."""
     lower = name.casefold()
+    # A Utility Disk is a distinct CSB product.  It must not be counted as
+    # campaign-media evidence merely because its STX filename contains the
+    # same platform token, and conversely a campaign disk cannot satisfy the
+    # Utility row.
+    if platform.casefold() == "utility":
+        if "utility" not in lower:
+            return False
+    elif "utility" in lower:
+        return False
     platform_tokens = {
         "pc": ("dos", "pc", "ftl"),
-        "atari st": ("atari", "stx", "_st"),
+        # Do not use bare "st": it appears in "Strikes" and made a CSB
+        # PC preservation ZIP look like Atari ST media.
+        "atari st": ("atari", ".stx", ".st", ".msa", "_st_", "-st-"),
         "amiga": ("amiga",),
         "apple ii gs": ("apple", "iigs"),
         "fm-towns": ("fm-towns", "fmtowns", "towns"),
@@ -204,7 +219,8 @@ def _archive_matches_variant(name: str, platform: str, variant: str) -> bool:
     # A named Japanese/US route needs matching evidence; do not let the JP
     # media stand in for the distinct US Theron variant, or vice versa.
     if "jp " in variant.casefold() or "japanese" in variant.casefold():
-        return "japan" in lower or "jp" in lower
+        return ("japan" in lower or "jp" in lower or "jpn" in lower or
+                "_ja" in lower or "-ja" in lower or "(ja" in lower)
     if "us " in variant.casefold() or "english (us)" in variant.casefold():
         return "(us" in lower or "_us" in lower or " usa" in lower
     # When preservation filenames include an explicit language tag, it must
@@ -231,10 +247,36 @@ def _archive_matches_variant(name: str, platform: str, variant: str) -> bool:
     return True
 
 
+def _native_container_supported(game: str, platform: str, path: Path) -> bool:
+    """Return whether the current native media layer can own this container.
+
+    This is a format/route classification only.  It never turns an archive
+    into a loose file and never asserts that a particular member is
+    authenticated; the launcher remains the authority for that admission.
+    """
+    suffix = path.suffix.casefold()
+    native_suffixes = {
+        ("dm1", "pc"): {".zip"},
+        ("dm1", "atari st"): {".zip", ".st", ".stx", ".msa"},
+        ("dm1", "amiga"): {".zip", ".adf"},
+        ("dm1", "fm-towns"): {".zip", ".cue", ".iso", ".bin"},
+        ("csb", "atari st"): {".zip", ".st", ".stx", ".msa"},
+        ("csb", "amiga"): {".zip", ".adf"},
+        ("csb", "fm-towns"): {".zip", ".cue", ".iso", ".bin"},
+        ("dm2", "pc"): {".zip"},
+        ("dm2", "amiga"): {".zip", ".adf"},
+        ("dm2", "fm-towns"): {".zip", ".cue", ".iso", ".bin"},
+        ("dm2", "macintosh"): {".zip", ".cue", ".bin"},
+        ("nexus", "saturn"): {".zip", ".cue", ".iso", ".bin"},
+        ("theron", "pc engine"): {".zip", ".cue", ".ccd", ".bin", ".img"},
+    }
+    return suffix in native_suffixes.get((game.casefold(), platform.casefold()), set())
+
+
 def _local_has_extractable(data_dir: Path, game: str, filename: str,
-                           platform: str, variant: str) -> tuple[bool, str]:
-    """Relaxed match: also count raw disk images that, once extracted,
-    would yield `filename`. Returns (found, hint).
+                           platform: str, variant: str) -> tuple[bool, str, bool]:
+    """Relaxed match: also count a candidate preservation container that
+    could yield `filename`. Returns ``(found, hint, native_reader)``.
     """
     if _local_has(data_dir, game, filename):
         return True, ""
@@ -254,10 +296,14 @@ def _local_has_extractable(data_dir: Path, game: str, filename: str,
                     continue
                 if (child.suffix.lower() in raw_exts and
                         _archive_matches_variant(child.name, platform, variant)):
-                    return True, f"raw extract needed ({child.name})"
+                    native = _native_container_supported(game, platform, child)
+                    return (True,
+                            (f"native container ({child.name})" if native
+                             else f"raw extract needed ({child.name})"),
+                            native)
         except OSError:
             pass
-    return False, ""
+    return False, "", False
 
 
 @dataclass
@@ -268,7 +314,7 @@ class CoverageRow:
     have_files: int
     need_files: int
     in_registry: int
-    status: str  # "READY", "ARCHIVED", "MISSING"
+    status: str  # "READY", "NATIVE_CONTAINER", "ARCHIVED", "MISSING"
     notes: list[str] = field(default_factory=list)
 
 
@@ -278,6 +324,7 @@ def build_coverage(registry: dict[tuple[str, str], RegistryEntry], data_dir: Pat
         have = 0
         reg_have = 0
         archived_source = False
+        native_container = False
         notes: list[str] = []
         # Wildcards (e.g. "*.CMP" in CSB Utility Disk) — count as "any file present"
         for f in v.required_files:
@@ -302,15 +349,20 @@ def build_coverage(registry: dict[tuple[str, str], RegistryEntry], data_dir: Pat
                     reg_have += 1
             else:
                 # Maybe present as a raw disk image that needs extraction.
-                found, hint = _local_has_extractable(
+                found, hint, native = _local_has_extractable(
                     data_dir, v.game, f, v.platform, v.variant)
                 if found:
-                    archived_source = True
+                    if native:
+                        native_container = True
+                    else:
+                        archived_source = True
                     notes.append(f"{f} -> {hint}")
                 else:
                     notes.append(f"missing {f}")
         if have == len(v.required_files):
             status = "READY"
+        elif native_container:
+            status = "NATIVE_CONTAINER"
         elif have > 0 or archived_source:
             status = "ARCHIVED"
         else:
@@ -333,7 +385,7 @@ def print_table(rows: Iterable[CoverageRow]) -> None:
     if not rows:
         print("(no variants in matrix)")
         return
-    print(f"{'Game':<8} {'Platform':<14} {'Variant':<32} {'Status':<10} {'Have':<6} {'Reg':<5}")
+    print(f"{'Game':<8} {'Platform':<14} {'Variant':<32} {'Status':<18} {'Have':<6} {'Reg':<5}")
     print("-" * 80)
     by_game: dict[str, list[CoverageRow]] = {}
     for r in rows:
@@ -343,7 +395,7 @@ def print_table(rows: Iterable[CoverageRow]) -> None:
             continue
         for r in by_game[game]:
             print(
-                f"{r.game:<8} {r.platform:<14} {r.variant:<32} {r.status:<10} "
+                f"{r.game:<8} {r.platform:<14} {r.variant:<32} {r.status:<18} "
                 f"{r.have_files}/{r.need_files:<3} {r.in_registry:<5}"
             )
             for note in r.notes:
@@ -351,11 +403,13 @@ def print_table(rows: Iterable[CoverageRow]) -> None:
         # Per-game summary
         total = len(by_game[game])
         ready = sum(1 for r in by_game[game] if r.status == "READY")
+        native_container = sum(1 for r in by_game[game]
+                               if r.status == "NATIVE_CONTAINER")
         archived = sum(1 for r in by_game[game] if r.status == "ARCHIVED")
         missing = sum(1 for r in by_game[game] if r.status == "MISSING")
         pct = (ready * 100 // total) if total else 0
         print(
-            f"   → {game}: total={total}  ready={ready}  archived={archived}  "
+            f"   → {game}: total={total}  ready={ready}  native-container={native_container}  archived={archived}  "
             f"missing={missing}  ({pct}% runtime-ready)"
         )
         print()
@@ -386,6 +440,7 @@ def main() -> int:
                 game: {
                     "total": len([r for r in rows if r.game == game]),
                     "ready": sum(1 for r in rows if r.game == game and r.status == "READY"),
+                    "native_container": sum(1 for r in rows if r.game == game and r.status == "NATIVE_CONTAINER"),
                     "archived": sum(1 for r in rows if r.game == game and r.status == "ARCHIVED"),
                     "missing": sum(1 for r in rows if r.game == game and r.status == "MISSING"),
                 }
