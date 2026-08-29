@@ -54,6 +54,22 @@ pretending to have a retired-instruction identity. This is negative visual and
 instruction-binding evidence only. It does not authorize a Saturn menu,
 LEV01 load, party pose, or a synthetic substitute.
 
+## Japanese title-window control recheck — 2026-08-29
+
+The JP 1.01 BIOS and the same hash-verified Japanese CUE/BIN media were run
+again with the instrumented capture producer over frames 12590--12709, this
+time with no injected input. The resulting 120-frame raw VDP1/VDP2 witness
+passed the native transport validator and has SHA-256
+`7e00dc4a3512e21d3662a9f85db3f139db18113bd5f926ac8489be4acbb7d1a8`.
+It is byte-identical to the prior witness taken over the identical frame
+window with a START pulse at frame 12596, across VDP1 state, VRAM and both
+framebuffers plus VDP2 registers, VRAM and CRAM.
+
+This is a controlled negative result: delivery of START does not make this
+window the interactive title menu. The capture is external development
+evidence, not a Firestaff runtime dependency, and the title/menu gate remains
+fail-closed pending a source-owned consumer and transition witness.
+
 ## Japanese late START VDP comparison — 2026-08-27
 
 The same clean V2 producer then held START for sixty frames after 30,000 boot
