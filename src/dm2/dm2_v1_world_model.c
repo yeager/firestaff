@@ -206,17 +206,6 @@ dm2_dungeon_world_t *dm2_world_from_mem(const uint8_t *data, size_t size) {
                 return NULL;
             }
 
-            /* Keep the source-locked G1 map/c_record address receipt alive
-             * for future world consumers.  This transfer retains raw bytes
-             * and exact pool bases, but does not make GenericRecord::w0
-             * traversal available.  See skproject c_record.cpp
-             * DM2_GET_ADDRESS_OF_RECORD and SkWinCore.cpp
-             * READ_DUNGEON_STRUCTURE. */
-            world->g1_record_pool_addresses_valid =
-                loaded.square_bytes == 1 &&
-                loaded.partial_map_boot.committed == 1 &&
-                loaded.partial_map_boot.incomplete == 1 &&
-                dm2_v1_dungeon_validate_record_pools(&loaded);
             world->g1_record_graph_complete = loaded.record_graph_complete;
             world->source_dungeon = loaded;
             world->source_dungeon_valid = 1;
@@ -227,9 +216,25 @@ dm2_dungeon_world_t *dm2_world_from_mem(const uint8_t *data, size_t size) {
              * record bytes, links, and relocation now live in the owned
              * pool set.  Population stays fail-closed: an unvalidated G1
              * span leaves record_pools_valid == 0. */
+            /* The canonical PC member carries the complete 44-map
+             * File_header graph.  The older G1-only route below remains
+             * intentionally partial, but must not make a complete graph
+             * look unverified merely because it has no G1 extension block.
+             * Initialise directly from the retained source first: calling
+             * the world accessor here used to be cyclic (the accessor
+             * required the flag that was meant to be established by this
+             * initialisation). */
             world->record_pools_valid =
-                dm2_v1_record_pool_set_init_from_world(
-                    &world->record_pools, world);
+                dm2_v1_record_pool_set_init_from_dungeon(
+                    &world->record_pools, &world->source_dungeon);
+            world->g1_record_pool_addresses_valid =
+                world->source_dungeon.square_bytes == 1 &&
+                ((world->source_dungeon.record_graph_complete &&
+                  world->record_pools_valid) ||
+                 (world->source_dungeon.partial_map_boot.committed == 1 &&
+                  world->source_dungeon.partial_map_boot.incomplete == 1 &&
+                  dm2_v1_dungeon_validate_record_pools(
+                      &world->source_dungeon)));
             return world;
         }
     }
@@ -329,9 +334,15 @@ const DM2_V1_DungeonData *dm2_world_get_verified_g1_map_source(
     const dm2_dungeon_world_t *world) {
     if (!world || !world->source_dungeon_valid ||
         !world->g1_record_pool_addresses_valid ||
-        world->source_dungeon.square_bytes != 1 ||
-        !world->source_dungeon.partial_map_boot.committed ||
-        !world->source_dungeon.partial_map_boot.incomplete) {
+        world->source_dungeon.square_bytes != 1) {
+        return NULL;
+    }
+    /* A complete canonical File_header graph is as source-owned as the
+     * earlier retained partial G1 receipt.  Never admit an arbitrary
+     * source: each alternative has its own completed validation above. */
+    if (!world->source_dungeon.record_graph_complete &&
+        (!world->source_dungeon.partial_map_boot.committed ||
+         !world->source_dungeon.partial_map_boot.incomplete)) {
         return NULL;
     }
     return &world->source_dungeon;

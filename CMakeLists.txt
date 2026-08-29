@@ -53834,15 +53834,19 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_weather_timer_receipts.
     )
 endif()
 
-# DISABLED: deep-dependency link failure
-if(FALSE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_world_model_g1_handoff_real_data.c"
+# The G1 world model validates the canonical File_header record graph through
+# the production DM2 archive and reads the original DUNGEON.DAT virtual ZIP
+# member directly in memory.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_world_model_g1_handoff_real_data.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_world_model.c")
     add_executable(test_dm2_v1_world_model_g1_handoff_real_data
         tests/test_dm2_v1_world_model_g1_handoff_real_data.c
-        src/dm2/dm2_v1_world_model.c
-        src/dm2/dm2_v1_dungeon_loader.c
     )
-    target_include_directories(test_dm2_v1_world_model_g1_handoff_real_data PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    target_include_directories(test_dm2_v1_world_model_g1_handoff_real_data PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/src/shared)
+    target_link_libraries(test_dm2_v1_world_model_g1_handoff_real_data PRIVATE
+        firestaff_dm2 firestaff_m10 m)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
         target_compile_options(test_dm2_v1_world_model_g1_handoff_real_data PRIVATE -Wall -Wextra -O2)
     endif()
@@ -53850,6 +53854,10 @@ if(FALSE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_world_model_g
         NAME dm2_v1_world_model_g1_handoff_real_data
         COMMAND test_dm2_v1_world_model_g1_handoff_real_data
     )
+    set_tests_properties(dm2_v1_world_model_g1_handoff_real_data PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "dm2;dos;g1;record-pools;real-media;in-memory;skip-safe")
 endif()
 
 
