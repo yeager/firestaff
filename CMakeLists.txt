@@ -58916,7 +58916,11 @@ add_executable(test_dm1_v1_dos_pc34_real_data_manifest
     src/dm1/dm1_v1_dos_pc34_real_data_manifest.c
 )
 target_include_directories(test_dm1_v1_dos_pc34_real_data_manifest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_dos_pc34_real_data_manifest PRIVATE firestaff_zip_extract)
 add_test(NAME test_dm1_v1_dos_pc34_real_data_manifest COMMAND test_dm1_v1_dos_pc34_real_data_manifest)
+set_tests_properties(test_dm1_v1_dos_pc34_real_data_manifest PROPERTIES
+    ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+    LABELS "dm1;dos;pc34;identity;real-media;in-memory")
 
 # Native macOS host smoke: unlike the asset-free CI matrix this opt-in gate
 # runs the production M11 boot path against the user's authenticated DM1 data.

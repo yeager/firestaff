@@ -1,4 +1,11 @@
 #include "dm1_v1_dos_pc34_real_data_manifest.h"
+#include "firestaff_zip_extract.h"
+
+/* The manifest checks are assertions, including calls that produce the
+ * source identity inputs.  Keep them enabled under CI's Release build. */
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,32 +59,37 @@ static void test_table_uniqueness(void) {
     }
 }
 
-static void test_real_disc(void) {
-    /* Opt-in: sizes are checked against shipping disc when
-     * FIRESTAFF_DM1_DOS_PC34_ROOT is provided. Uses only stat/read
-     * plus size comparison; SHA-256 verification is done by the
-     * caller who already has a hash implementation. */
-    const char *root = getenv("FIRESTAFF_DM1_DOS_PC34_ROOT");
-    if (!root) { puts("SKIP: no DM1 DOS PC 3.4 root"); return; }
+static void test_real_archive(void) {
+    /* The supplied retail ZIP is the media owner.  Read each selected member
+     * directly to RAM, rather than requiring an extracted game directory. */
+    const char *archive = getenv("FIRESTAFF_DM1_DOS_PC34_ARCHIVE");
+    if (!archive || !archive[0]) {
+        puts("SKIP: no DM1 DOS PC 3.4 archive");
+        return;
+    }
     int ok = 0;
     for (int i = 0; i < DM1_V1_DOS_PC34_FILE_COUNT; ++i) {
-        char path[1024];
-        snprintf(path, sizeof(path), "%s/%s", root,
-                 dm1_v1_dos_pc34_files[i].name);
-        FILE *fp = fopen(path, "rb");
-        if (!fp) { printf("MISS: %s\n", dm1_v1_dos_pc34_files[i].name); continue; }
-        fseek(fp, 0, SEEK_END);
-        long sz = ftell(fp);
-        fclose(fp);
-        if ((size_t)sz == dm1_v1_dos_pc34_files[i].size_bytes) {
+        uint8_t *bytes = NULL;
+        size_t size = 0u;
+        /* Manifest paths include DATA/.  The ZIP reader's by-name API is
+         * deliberately basename-only, so retain the complete source path
+         * through its case-insensitive suffix matcher. */
+        if (firestaff_zip_extract_by_suffix(archive, dm1_v1_dos_pc34_files[i].name,
+                                            &bytes, &size) != 0 || !bytes) {
+            printf("MISS: %s\n", dm1_v1_dos_pc34_files[i].name);
+            free(bytes);
+            continue;
+        }
+        if (size == dm1_v1_dos_pc34_files[i].size_bytes) {
             ++ok;
         } else {
-            printf("SIZE-MISMATCH: %s (expected %zu, actual %ld)\n",
+            printf("SIZE-MISMATCH: %s (expected %zu, actual %zu)\n",
                 dm1_v1_dos_pc34_files[i].name,
-                dm1_v1_dos_pc34_files[i].size_bytes, sz);
+                dm1_v1_dos_pc34_files[i].size_bytes, size);
         }
+        free(bytes);
     }
-    printf("PASS: %d/%d DM1 DOS PC 3.4 files match manifest size\n",
+    printf("PASS: %d/%d DM1 DOS PC 3.4 ZIP members match manifest size in RAM\n",
         ok, DM1_V1_DOS_PC34_FILE_COUNT);
     assert(ok == DM1_V1_DOS_PC34_FILE_COUNT);
 }
@@ -86,7 +98,7 @@ int main(void) {
     test_lookup();
     test_matches();
     test_table_uniqueness();
-    test_real_disc();
+    test_real_archive();
     puts("All dm1_v1_dos_pc34_real_data_manifest tests passed.");
     return 0;
 }
