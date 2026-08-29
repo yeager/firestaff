@@ -7532,7 +7532,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0115_near_object_decor
              COMMAND test_dm1_v1_f0115_near_object_decoration_material_gate)
     set_tests_properties(dm1_v1_f0115_near_object_decoration_material_gate PROPERTIES
         SKIP_RETURN_CODE 77
-        ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN.zip"
+        ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
         LABELS "dm1;dos;pc34;viewport;real-media;in-memory;skip-safe")
 endif()
 
@@ -32392,7 +32392,7 @@ endif()
     )
     set_tests_properties(dm1_v1_champion_panel_material_gate PROPERTIES
         SKIP_RETURN_CODE 77
-        ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN.zip"
+        ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
         LABELS "dm1;dos;pc34;hud;real-media;in-memory;skip-safe")
 
     add_executable(test_dm1_v1_champion_top_row_presentation_pc34_compat

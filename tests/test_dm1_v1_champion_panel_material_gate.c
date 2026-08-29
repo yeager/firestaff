@@ -18,7 +18,7 @@ int main(void)
         return 77;
     }
     snprintf(graphics_path, sizeof(graphics_path),
-             "%s::dungeon-master/dmaster/DATA/GRAPHICS.DAT", archive);
+             "%s::DATA/GRAPHICS.DAT", archive);
     if (!M11_AssetLoader_Init(&loader, graphics_path)) {
         fputs("original PC34 ZIP GRAPHICS.DAT is unavailable\n", stderr);
         return 1;

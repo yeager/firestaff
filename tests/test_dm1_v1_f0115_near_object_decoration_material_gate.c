@@ -20,7 +20,7 @@ static unsigned char* read_dungeon_archive(int* outSize)
     if (outSize) *outSize = 0;
     if (!archive || !archive[0] ||
         firestaff_zip_extract_by_suffix(archive,
-                                        "dmaster/DATA/DUNGEON.DAT",
+                                        "DATA/DUNGEON.DAT",
                                         &bytes, &size) != 0 ||
         !bytes || size == 0u || size > 0x7fffffffu) {
         free(bytes);
@@ -85,7 +85,7 @@ int main(void)
         return 77;
     }
     snprintf(graphicsPath, sizeof(graphicsPath),
-             "%s::dungeon-master/dmaster/DATA/GRAPHICS.DAT", archive);
+             "%s::DATA/GRAPHICS.DAT", archive);
     dungeon = read_dungeon_archive(&dungeonSize);
     if (!dungeon || !M11_AssetLoader_Init(&loader, graphicsPath)) {
         free(dungeon);
