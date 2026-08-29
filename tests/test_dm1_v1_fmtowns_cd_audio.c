@@ -138,6 +138,63 @@ static void test_real_cue_archive(void) {
     assert(starts[20] == 29u * 60u * 75u + 48u * 75u + 52u);
 }
 
+/* The retail FM Towns disc stores its MODE1/2048 data track followed by
+ * CD-DA sectors in one BIN.  The first audio INDEX 01 is the boundary: after
+ * that point each logical CUE frame occupies a 2352-byte PCM sector. */
+static void test_real_cdda_payload_archive(void) {
+    const char *archive = getenv("FIRESTAFF_DM1_FMTOWNS_ARCHIVE");
+    uint8_t *cue = NULL;
+    uint8_t *bin = NULL;
+    size_t cue_size = 0u, bin_size = 0u;
+    uint32_t starts[24];
+    char image_member[256];
+    size_t data_bytes, audio_bytes;
+    unsigned int track;
+
+    if (!archive || !archive[0]) {
+        puts("SKIP: FIRESTAFF_DM1_FMTOWNS_ARCHIVE not set");
+        return;
+    }
+    assert(firestaff_zip_extract_by_suffix(archive, ".cue", &cue,
+                                            &cue_size) == 0 && cue);
+    assert(fmtowns_cue_parse_image_member((const char *)cue, cue_size,
+                                          image_member,
+                                          sizeof(image_member)) == 1);
+    memset(starts, 0, sizeof(starts));
+    assert(fmtowns_cue_parse_track_starts((const char *)cue, cue_size,
+                                          starts, 24) == 20);
+    assert(firestaff_zip_extract_by_suffix(archive, image_member, &bin,
+                                            &bin_size) == 0 && bin);
+    free(cue);
+
+    data_bytes = (size_t)starts[2] * 2048u;
+    assert(data_bytes < bin_size && (bin_size - data_bytes) %
+           FMTOWNS_CDDA_SECTOR_SIZE == 0u);
+    audio_bytes = bin_size - data_bytes;
+    for (track = 2u; track <= 20u; ++track) {
+        uint32_t next_lba = track < 20u ? starts[track + 1u]
+                                        : starts[2] +
+                                          (uint32_t)(audio_bytes /
+                                           FMTOWNS_CDDA_SECTOR_SIZE);
+        size_t offset = data_bytes + (size_t)(starts[track] - starts[2]) *
+                                      FMTOWNS_CDDA_SECTOR_SIZE;
+        size_t length = (size_t)(next_lba - starts[track]) *
+                        FMTOWNS_CDDA_SECTOR_SIZE;
+        assert(starts[track] >= starts[2] && next_lba > starts[track]);
+        assert(offset <= bin_size && length <= bin_size - offset);
+        if (track == 2u || track == 6u || track == 13u || track == 20u) {
+            size_t sample = length < 75u * FMTOWNS_CDDA_SECTOR_SIZE ? length :
+                            75u * FMTOWNS_CDDA_SECTOR_SIZE;
+            size_t i;
+            unsigned int nonzero = 0u;
+            for (i = 0u; i < sample; ++i) nonzero += bin[offset + i] != 0u;
+            if (track == 20u) assert(nonzero == 0u);
+            else assert(nonzero > 0u);
+        }
+    }
+    free(bin);
+}
+
 int main(void) {
     test_track_for_map();
     test_track_for_event();
@@ -146,6 +203,7 @@ int main(void) {
     test_cue_parse_dm1_fmtowns();
     test_cdda_byte_offset_calculation();
     test_real_cue_archive();
+    test_real_cdda_payload_archive();
     printf("All dm1_v1_fmtowns_cd_audio tests passed.\n");
     return 0;
 }

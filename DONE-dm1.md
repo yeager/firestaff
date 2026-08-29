@@ -6,6 +6,10 @@ Reviewed 2026-08-29. Completed work only.
   authenticated big-endian IMG1 record into original 4-bit palette indices
   in memory. The Amiga wrapper selects the legacy decoder's big-endian path
   explicitly, preventing an FM Towns/PC byte-order fallback.
+- The supplied FM Towns ZIP now has a RAM-only CDDA payload receipt. It
+  follows the source CUE's first audio index from the MODE1/2048 data region
+  into the shared raw-audio BIN, validates every track interval, observes
+  PCM in music tracks, and proves documented track 20 silence.
 - The supplied DM1 Amiga 2.0 preservation chain now has a direct real-media
   graphics-format receipt. `test_dm1_v1_amiga_graphics_dat` reads the
   selected ZIP → ZIP → ADF `graphics.dat` member in RAM through the native
