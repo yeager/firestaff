@@ -34,7 +34,9 @@ static int hash_file(const char *path, const char *expected) {
                 !(bytes = (uint8_t *)malloc(member->size)) ||
                 nexus_iso_read_file(&iso, member, bytes, (int)member->size) != (int)member->size ||
                 firestaff_x68k_media_receipt_sha256_hex(bytes, member->size, digest, sizeof(digest)) != 0) {
-                if (bytes) free(bytes); nexus_iso_close(&iso); return 0;
+                free(bytes);
+                nexus_iso_close(&iso);
+                return 0;
             }
             free(bytes); nexus_iso_close(&iso); return strcmp(digest, expected) == 0;
         }
