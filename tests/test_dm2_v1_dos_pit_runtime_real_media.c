@@ -562,20 +562,22 @@ static int exercise_authentic_db1(
 
 int main(void)
 {
-    const char *root = getenv("FIRESTAFF_DM2_DOS_ROOT");
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
     DM2_V1_BootStartupLaunch launch;
     DM2_V1_BootProfile *profile;
     DM2_V1_BootRuntimeReceipt runtime;
     int ok;
 
-    if (!root || !root[0]) {
-        puts("SKIP: FIRESTAFF_DM2_DOS_ROOT is not set");
-        return 0;
+    if (!archive || !archive[0]) {
+        puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is not set");
+        return 77;
     }
     memset(&launch, 0, sizeof(launch));
-    if (!dm2_v1_boot_startup_launch_alloc(root, &launch) ||
+    /* The real DOS distribution stays mounted as a ZIP.  The boot owner
+     * resolves its data members through virtual archive paths in RAM. */
+    if (!dm2_v1_boot_startup_launch_alloc(archive, &launch) ||
         !launch.profile || !launch.profile->assets_verified) {
-        fprintf(stderr, "FAIL: native DOS DM2 media root was not admitted\n");
+        fprintf(stderr, "FAIL: native DOS DM2 archive was not admitted\n");
         dm2_v1_boot_startup_launch_cleanup(&launch);
         return 1;
     }
