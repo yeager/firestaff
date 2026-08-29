@@ -1,6 +1,6 @@
 # Native platform and startup verification
 
-**Reviewed 2026-08-26.** This page records what the native Firestaff runtime
+**Reviewed 2026-08-29.** This page records what the native Firestaff runtime
 has actually admitted from authentic player-supplied media. It is deliberately
 not a compatibility wish-list: a parser, a disassembly reference, or an
 emulator capture does not by itself prove a public start route.
@@ -24,7 +24,7 @@ firmware is a Firestaff runtime dependency.
 
 | Game | Atari ST | FM Towns | DOS | Amiga | PC Engine CD | Saturn |
 | --- | --- | --- | --- | --- | --- | --- |
-| Dungeon Master | **Verified start route** — ST/STX variants, direct CLI and menu handoff | **Verified start route** — EN/JP package, CLI and menu | **Playable** — PC 3.4 | **Verified start route** — 2.0 ZIP→ADF in memory, CLI and menu | Outside target | Outside target |
+| Dungeon Master | **Verified start route** — EN/DE/FR ST/STX variants, direct CLI and menu handoff | **Verified start route** — JA/EN package, CLI, menu and TMENU/EDM handoff | **Playable** — PC 3.4 and manually unpacked French media | **Verified start route** — HD and v2.0 ZIP→ADF in memory, CLI and menu | Outside target | Outside target |
 | Chaos Strikes Back | **Verified start route** — STX title→FTLCODE, CLI and menu | **Verified start route** — EN/JP F31 package | **Not released** | **Verified start route** — A31E/A31M ZIP→ADF, CLI and menu | Outside target | Outside target |
 | Dungeon Master II: Skullkeep | Not released | **Verified start route** — authenticated Towns startup/input/CD-audio slices | **Verified start route** — hash-verified GDAT/G1 startup/runtime | **Verified start route** — original installer media, title/New Game/runtime | Outside target | Outside target |
 | Theron's Quest | Outside target | Outside target | Outside target | Outside target | **Verified start route** — JP and US Track 02 CUE/BIN, CLI and menu | Outside target |
@@ -43,9 +43,10 @@ save, audio or pixel parity.
 
 | Game/platform | Source identity and bound handoff | Explicitly still open |
 | --- | --- | --- |
-| DM1 Atari ST | Supplied ST/STX archive route and selected `GRAPHICS.DAT` hash reach the bounded runtime. | Full campaign and platform presentation parity. |
-| DM1 FM Towns | Authenticated EN/JP package and Towns graphics receipt reach `dm1-runtime`. | Wider executable/CD-audio and capture parity. |
-| DM1 Amiga | Original ZIP/ADF graphics receipt reaches bounded native runtime. | Amiga-specific input, presentation, saves and wider gameplay. |
+| DM1 Atari ST | English 1.0a/1.2, German 1.2 and French 1.3 ST/STX archive routes reach the bounded runtime through direct CLI and start-menu selection. | Full campaign and platform presentation parity. |
+| DM1 FM Towns | The supplied JA/EN package reaches `dm1-runtime` through direct CLI and start-menu selection after native TMENU/EDM admission. | Wider executable/CD-audio and capture parity. |
+| DM1 Amiga | The supplied HD and v2.0 preservation ZIP→ZIP→ADF routes reach bounded native runtime through direct CLI and start-menu selection. | Amiga-specific palette, presentation, saves and wider gameplay. |
+| DM1 DOS | PC 3.4 reaches native movement through direct CLI and start-menu selection; manually unpacked authentic French `EUDATA` does the same after the RAR2 launcher diagnostic. | Broader original-vs-Firestaff capture parity; Firestaff does not decode RAR2 itself. |
 | CSB Atari ST | `ANIMATE.SCR`/`ANIMATE.DAT` title, FTLCODE and first HUD/viewport route are bound. | Broader campaign and capture parity. |
 | CSB FM Towns | Language-specific game and Utility paths are selected independently. | Champion Editor and CD-audio parity. |
 | CSB Amiga | A31E/A31M program, graphics and dungeon assets reach `csb-entrance-0`. | Full campaign, saves and visual parity. |
