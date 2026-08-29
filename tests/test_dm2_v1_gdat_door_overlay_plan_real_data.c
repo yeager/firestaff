@@ -2,23 +2,11 @@
 #include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "dm2_v1_viewport_renderer.h"
+#include "firestaff_zip_extract.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-static int read_file(const char *path, uint8_t **out, size_t *out_size)
-{
-    FILE *file = fopen(path, "rb");
-    long size;
-    if (!file || fseek(file, 0, SEEK_END) || (size = ftell(file)) <= 0 ||
-        fseek(file, 0, SEEK_SET)) { if (file) fclose(file); return 0; }
-    *out = malloc((size_t)size);
-    if (!*out || fread(*out, 1u, (size_t)size, file) != (size_t)size) {
-        free(*out); *out = NULL; fclose(file); return 0;
-    }
-    fclose(file); *out_size = (size_t)size; return 1;
-}
 
 static int static_fetch(void *user, int index, const uint8_t **pixels,
                         int *width, int *height, int *stride)
@@ -49,8 +37,7 @@ static void bind_scene_control(DM2_V1_ViewportState *viewport)
 
 int main(void)
 {
-    const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    char path[2048];
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
     uint8_t *graphics = NULL;
     size_t graphics_size = 0u;
     DM2_V1_AssetLoader loader;
@@ -70,14 +57,16 @@ int main(void)
     int ornate = -1;
     int fallback_fetches = 0;
 
-    if (!root || !root[0]) {
-        puts("SKIP: no selected canonical DM2 data corpus");
+    if (!archive || !archive[0]) {
+        puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is not set");
         return 0;
     }
-    snprintf(path, sizeof(path), "%s/graphics.dat", root);
-    if (!read_file(path, &graphics, &graphics_size)) {
-        fprintf(stderr, "FAIL: selected DM2 data corpus has no readable graphics.dat: %s\n",
-                path);
+    if (firestaff_zip_extract_by_suffix(archive, "data/graphics.dat",
+                                        &graphics, &graphics_size) != 0 ||
+        !graphics || !graphics_size) {
+        fprintf(stderr,
+                "FAIL: selected DM2 archive has no readable data/graphics.dat: %s\n",
+                archive);
         return 1;
     }
     memset(&loader, 0, sizeof(loader));
