@@ -98,8 +98,9 @@ parity.
 only. They must not replace the real DM2 GDAT source or be presented as
 completed Skullkeep graphics.
 
-**Native startup matrix (verified 2026-08-27):** authentic DOS, Amiga, FM
-Towns, and Macintosh ZIPs are read in memory. DOS follows IBMIOP's real MVE to
+**Native startup matrix (verified 2026-08-29):** authentic DOS English and
+French, Amiga, FM Towns, and Macintosh ZIPs are read in memory. Both DOS
+editions retain their own authenticated GDAT/GAME_LOAD startup owner through
 SKULL and New Game; Amiga follows its TITLE stream to runtime; FM Towns follows
 AUTOEXEC/TWANIM to GDAT's New Game rectangle and the source-owned champion
 selection click; Mac starts the verified retail profile. DM2 DOS MVE can also

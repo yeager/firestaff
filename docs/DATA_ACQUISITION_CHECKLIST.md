@@ -209,7 +209,7 @@ coverage**, not registry correctness.
 | Variant | GRAPHICS.DAT | DUNGEON.DAT | Notes |
 |---|---|---|---|
 | PC English | ✅ `c387ee42…` (8.6 MB) | ✅ `cfadfd40…` (39 KB) | runtime target; DMWeb PC page identifies Europe/USA redump BIN/CUE CD images, USA CD-content archive, HMP music in `GRAPHICS.DAT`, VGA/SVGA MVE videos, HMI sound-driver patch/update material, and DOS Alt-S / Shift-arrow / keypad command table |
-| PC French | 🔴 `b4d73357…` | 🔴 | DMWeb PC page identifies France floppy/CD/Bestseller editions and CD-content archive sources; file not acquired |
+| PC French | ✅ `7b8bbf6a…` (8.7 MB) | ✅ `cfadfd40…` (39 KB) | Authentic French DOS ZIP is locally staged and hash-locked; the native in-memory start-menu/runtime/movement probe passes. |
 | PC German/English JewelCase | 🔴 `e52ab5e0…` | 🔴 | DMWeb PC page identifies Germany CD/JewelCase/Blackmarket/Bestseller lines, redump BIN/CUE images, and CD-content archive sources; file not acquired |
 | Amiga | 🟡 | 🟡 | DMWeb page identifies Europe-only EN/FR/GE v1.0 as six ADF/IPF floppy images that must be installed to hard disk; MOD music maps through `CD.DAT`; hardware reality is 68020+, OCS/ECS works, AGA not required; Amiga keyboard table uses Ctrl-S disk menu, Del/Help movement, and keypad wall-ornate hotkeys |
 | Macintosh | 🔴 | 🔴 | DMWeb page identifies JP and USA retail as redump BIN/CUE CD images plus CD-content archives; JP has 16-color graphics, intro animation, CD-audio, and `Skullkeep` resource-fork protection offsets; USA has 256-color graphics, QuickTime/MooV, MIDI/SoundMusicSys resources, Mac menu/balloon help, and Command-key input |
@@ -222,12 +222,11 @@ coverage**, not registry correctness.
 
 ### DM2 acquisition gaps
 
-1. **PC French + PC JewelCase (German/English)** — both MD5-locked in
-   `g_dm2GraphicsNames[]` and `g_requiredFiles[]` but not present
-   locally. Adding them exercises the
-   `md5_matches(profile->graphics_md5, "…")` branches in
-   `src/dm2/dm2_v1_boot.c` and would close several Tier 3 #12
-   advanced-CCM gates that currently sit at single-variant.
+1. **PC JewelCase (German/English)** — this MD5-locked variant is not
+   locally staged. The French DOS archive is now locally verified and has
+   its own native start-menu/runtime/movement regression; JewelCase remains
+   the outstanding PC retail variant for the corresponding
+   `md5_matches(profile->graphics_md5, "…")` branch.
 2. **Sega CD / Mega CD** — without it we cannot verify DM2's
    BIN/CUE mixed-mode CD path, data-track extraction, CD-audio path,
    track-7 silence variant, or its `*.dat` animations against real
@@ -362,8 +361,8 @@ picks (most unblocked downstream work) are:
 
 1. **CSB PC 3.4 EN** (full CSB runtime target #2).
 2. **CSB Utility Disk** (CMP + HTC + AMG runtime).
-3. **DM2 PC French + German/English JewelCase** (advanced CCM +
-   multi-variant runtime).
+3. **DM2 PC German/English JewelCase** (advanced CCM + remaining
+   PC retail-variant runtime).
 4. **Atari ST DM1 GRAPHICS.DAT** (real LZW regression).
 5. **Atari ST CSB GRAPHICS.DAT** (real hidden-code skip
    regression).

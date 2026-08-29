@@ -85,7 +85,7 @@ data files.
 | PC | 0.9 Beta | EN | 🔵 | `c_dm2_pc_beta/` | — | DMWeb PC page: early DOS beta line with split `GRAPHICS.DAT` + `GRAPHIC2.DAT`; no final DOS music path |
 | PC | 1.0 | EN | ✅ | `c_dm2_pc/` | yes (8,639,757 B) | DMWeb PC page: Interplay 256-color DOS line, Europe/USA redump BIN/CUE CD images, USA CD-content archive, HMP music in `GRAPHICS.DAT`, VGA/SVGA MVE videos, Alt-S / Shift-arrow / keypad command table |
 | PC | 1.0 | DE | 🔵 | `c_dm2_pc_de/` | — | DMWeb PC page: Germany CD and Bestseller CD lines, redump BIN/CUE and CD-content archive coverage |
-| PC | 1.0 | FR | 🔵 | `c_dm2_pc_fr/` | — | DMWeb PC page: France floppy/CD/Bestseller lines and CD-content archives |
+| PC | 1.0 | FR | 🟣 | `c_dm2_pc_fr/` | yes (8,717,101 B) | Authentic French DOS ZIP is hash-admitted in RAM; `dm2_v1_dos_fr_native_cli_boot` proves the French `GAME_LOAD` owner reaches a real runtime frame and first movement. This is bounded startup/runtime evidence, not full campaign parity. |
 | PC | 1.0 | Demo | 🔵 | `c_dm2_pc_demo/` | — | DMWeb PC page: five known 1995 demo builds; earliest `FIRE.EXE`/LZ91 build has no music or save/load, later `SKULL.EXE`/Watcom builds vary sound, logo, title, and order assets; 3332 items in Greatstone row |
 | Amiga | 1.0 | EN/FR/GE | ✅ | `c_dm2_amiga/` | yes | Original installer archive is admitted in memory; source-owned big-endian New Game/runtime, movement, pit/stairs/DB1 and creature gates pass for English media |
 | Macintosh | 1.0 | EN | ✅ | `c_dm2_mac/` | yes | Authentic retail English ZIP is admitted through HFS/resource-fork media; source-owned big-endian New Game/runtime, movement, stairs/DB1 and combat/creature gates pass |
