@@ -1,6 +1,6 @@
 # Firestaff DONE — DM1
 
-Reviewed 2026-08-25. Completed work only.
+Reviewed 2026-08-29. Completed work only.
 
 - The real Amiga ZIP → ZIP → ADF and Atari ZIP → ZIP → STX start-menu paths
   now publish their admitted source decoder (`IMG2` and `DMCSB1` respectively)
@@ -45,6 +45,13 @@ Reviewed 2026-08-25. Completed work only.
   boot receipt requires the source-bound `TMENU.INF` selection and selected
   `EDM.EXP`/`JDM.EXP` MD5, rather than promoting generic DM1 movement as a
   native FM Towns handoff.
+- The supplied authentic French DOS `DMSAVE.DAT` and `DMSAVE.BAK` (48,561
+  bytes each; SHA-256 `494d081ee5175b2dccc900d5ea3f25230c8bb3b0f20828d311b8fc5bdfb82d21`
+  and `a760234408bf27946b1586ecf396be72e648bd8f3d18abee90a18c2c7e94421f`)
+  now pass a native backed-save roundtrip. Each source save is loaded through
+  F0435 against its supplied original French `EUDATA`, staged through F0433,
+  exported, reloaded through F0435, and checked for party, C03/C04 timeline,
+  active-group and dungeon ownership preservation. No save fixture is used.
 - The shared required-file catalog retains the verified Amiga 2.0
   `DUNGEON.DAT` identity alongside the Atari additions.  The post-scan
   recovery now republishes a selected ZIP → ZIP → ADF source owner before

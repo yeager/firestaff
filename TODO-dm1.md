@@ -1,9 +1,11 @@
 # Firestaff TODO — DM1
 
-Reviewed 2026-08-25. Only open work is listed here.
+Reviewed 2026-08-29. Only open work is listed here.
 
 - Obtain authentic C13-save and original capture corpus for remaining HoC,
   top-row and action routes; bind each to the PC 3.4 runtime before promotion.
+  The supplied French DOS save pair proves its own backed F0435/F0433 route,
+  but does not substitute for these route-specific captures.
 - Extend real-media parity beyond bounded Atari ST, Amiga and FM Towns routes
   to native end-to-end gameplay, input and presentation evidence.
 - The supplied French DOS ZIP → `dungeon_master.exe` SFX package uses a
