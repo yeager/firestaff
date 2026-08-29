@@ -13,17 +13,17 @@ expected_media="$data_dir"
 # authenticate the selected original media itself.
 if [ ! -x "$firestaff_cli" ]; then
     echo "SKIP: Firestaff executable is unavailable"
-    exit 0
+    exit 77
 fi
 if [ ! -e "$data_dir" ]; then
     echo "SKIP: local CSB FM Towns data is unavailable: $data_dir"
-    exit 0
+    exit 77
 fi
 if [ "$language" = "ja" ]; then
     edition_arg="--csb-fmtowns-ja"
 elif [ "$language" != "en" ]; then
     echo "SKIP: FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE must be en or ja"
-    exit 0
+    exit 77
 fi
 
 # F31's AUTOEXEC route owns TITLE.ANM, SWITCHTW and the Game selection before

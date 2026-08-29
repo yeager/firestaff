@@ -17546,6 +17546,7 @@ endif()
             "$<TARGET_FILE:firestaff>"
     )
     set_tests_properties(csb_v1_atari_stx_native_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
         LABELS "tier2;csb;atari;startup;cli;menu;real_data;skip_safe"
         ENVIRONMENT "FIRESTAFF_CSB_ATARI_STX=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx"
         TIMEOUT 90
@@ -17589,6 +17590,7 @@ endif()
             "$<TARGET_FILE:firestaff>"
     )
     set_tests_properties(csb_v1_amiga_native_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
         LABELS "tier2;csb;amiga;startup;cli;real_data;skip_safe"
         ENVIRONMENT "FIRESTAFF_CSB_AMIGA31_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"
         TIMEOUT 45
@@ -17620,6 +17622,7 @@ endif()
             "$<TARGET_FILE:firestaff>"
     )
     set_tests_properties(csb_v1_fmtowns_native_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
         LABELS "tier2;csb;fmtowns;startup;cli;real_data;skip_safe"
         ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_AUDIO_ENABLE_SDL=0"
         TIMEOUT 120
@@ -17634,6 +17637,7 @@ endif()
             "$<TARGET_FILE:firestaff>"
     )
     set_tests_properties(csb_v1_fmtowns_en_native_cli_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
         LABELS "tier2;csb;fmtowns;english;startup;cli;menu;real_data;skip_safe"
         ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=en;FIRESTAFF_AUDIO_ENABLE_SDL=0"
         TIMEOUT 120
@@ -17644,6 +17648,7 @@ endif()
             "$<TARGET_FILE:firestaff>"
     )
     set_tests_properties(csb_v1_fmtowns_ja_native_cli_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
         LABELS "tier2;csb;fmtowns;japanese;startup;cli;menu;real_data;skip_safe"
         ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=ja;FIRESTAFF_AUDIO_ENABLE_SDL=0"
         TIMEOUT 120

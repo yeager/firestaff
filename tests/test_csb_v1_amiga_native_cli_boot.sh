@@ -12,11 +12,11 @@ data_dir="${FIRESTAFF_CSB_AMIGA31_DATA_DIR:-$HOME/.firestaff/data/csb/Dungeon-Ma
 
 if [ ! -x "$firestaff_cli" ]; then
     echo "SKIP: Firestaff executable is unavailable"
-    exit 0
+    exit 77
 fi
 if [ ! -e "$data_dir" ]; then
     echo "SKIP: local CSB Amiga data is unavailable: $data_dir"
-    exit 0
+    exit 77
 fi
 
 # This is an opt-in real-media check.  The scanner remains the only authority

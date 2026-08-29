@@ -6,7 +6,7 @@ media_path="${FIRESTAFF_CSB_ATARI_STX:-$HOME/.firestaff/data/csb/Chaos Strikes B
 
 if [ ! -x "$firestaff_cli" ] || [ ! -e "$media_path" ]; then
     echo "SKIP: CSB Atari ST campaign media or Firestaff executable is unavailable"
-    exit 0
+    exit 77
 fi
 
 title_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
