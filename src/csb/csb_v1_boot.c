@@ -8204,30 +8204,23 @@ static uint32_t csb_v1_boot_original_save_fnv1a32(
 static uint32_t csb_v1_boot_original_save_file_fnv1a32(
     const char *path, size_t *out_size)
 {
-    unsigned char buffer[4096];
-    FILE *file;
-    size_t total = 0u;
-    size_t count;
-    uint32_t hash = 2166136261u;
+    unsigned char *bytes = NULL;
+    size_t size = 0u;
+    uint32_t hash;
 
     if (out_size) *out_size = 0u;
     if (!path || !path[0]) return 0u;
-    file = fopen(path, "rb");
-    if (!file) return 0u;
-    while ((count = fread(buffer, 1u, sizeof(buffer), file)) != 0u) {
-        size_t i;
-        for (i = 0u; i < count; ++i) {
-            hash = (hash ^ buffer[i]) * 16777619u;
-        }
-        total += count;
-    }
-    if (ferror(file) || total == 0u) {
-        fclose(file);
+    /* Archive media remains an asset-loader path (`container::member`) for
+     * its entire lifetime.  Receipt hashing must therefore use the same
+     * in-memory read primitive as the native resume loader, never fopen(). */
+    if (!asset_read_path_alloc(path, &bytes, &size) || !bytes || size == 0u) {
+        free(bytes);
         return 0u;
     }
-    fclose(file);
-    if (out_size) *out_size = total;
-    return hash ? hash : 1u;
+    hash = csb_v1_boot_original_save_fnv1a32(bytes, size);
+    free(bytes);
+    if (out_size) *out_size = size;
+    return hash;
 }
 
 int csb_v1_boot_runtime_load_original_save_receipt_pc34(
@@ -8236,7 +8229,8 @@ int csb_v1_boot_runtime_load_original_save_receipt_pc34(
 {
     CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 receipt;
     unsigned char raw_header[512];
-    FILE *file;
+    unsigned char *save_bytes = NULL;
+    size_t save_size = 0u;
     uint32_t game_time = 0u;
     CSB_V1_CSBWinSaveProvenance_PC34 csbwin_provenance;
 
@@ -8283,13 +8277,13 @@ int csb_v1_boot_runtime_load_original_save_receipt_pc34(
      * original slot.  Hash the recovered source only after that transaction;
      * hashing the damaged pre-recovery bytes would make this receipt stale
      * immediately even though the runtime correctly owns the restored save. */
-    file = fopen(path, "rb");
-    if (!file || fread(raw_header, 1u, sizeof(raw_header), file) !=
-                     sizeof(raw_header)) {
-        if (file) fclose(file);
+    if (!asset_read_path_alloc(path, &save_bytes, &save_size) || !save_bytes ||
+        save_size < sizeof(raw_header)) {
+        free(save_bytes);
         return 0;
     }
-    fclose(file);
+    memcpy(raw_header, save_bytes, sizeof(raw_header));
+    free(save_bytes);
     receipt.runtime_current_level_after = profile->runtime.current_level;
     receipt.runtime_champion_count_after = profile->runtime.champion_count;
     receipt.runtime_game_time_after = game_time;
@@ -8329,7 +8323,8 @@ int csb_v1_boot_original_save_runtime_receipt_current_pc34(
     const CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 *receipt)
 {
     unsigned char raw_header[512];
-    FILE *file;
+    unsigned char *save_bytes = NULL;
+    size_t save_size = 0u;
     uint32_t source_identity_hash;
 
     if (!profile || !receipt || !receipt->valid || !receipt->save_path[0] ||
@@ -8352,13 +8347,13 @@ int csb_v1_boot_original_save_runtime_receipt_current_pc34(
                    receipt->native_header_fnv1a &&
                source_size == receipt->source_size;
     }
-    file = fopen(receipt->save_path, "rb");
-    if (!file || fread(raw_header, 1u, sizeof(raw_header), file) !=
-                     sizeof(raw_header)) {
-        if (file) fclose(file);
+    if (!asset_read_path_alloc(receipt->save_path, &save_bytes, &save_size) ||
+        !save_bytes || save_size < sizeof(raw_header)) {
+        free(save_bytes);
         return 0;
     }
-    fclose(file);
+    memcpy(raw_header, save_bytes, sizeof(raw_header));
+    free(save_bytes);
     if (csb_v1_boot_original_save_fnv1a32(raw_header, sizeof(raw_header)) !=
             receipt->native_header_fnv1a) {
         return 0;

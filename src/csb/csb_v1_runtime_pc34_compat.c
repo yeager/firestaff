@@ -306,6 +306,7 @@ static int csb_v1_runtime_is_original_campaign_mini_path(const char *path)
     };
     const char *slash;
     const char *backslash;
+    const char *virtual_separator;
     const char *name;
     size_t index;
 
@@ -315,6 +316,14 @@ static int csb_v1_runtime_is_original_campaign_mini_path(const char *path)
     name = slash;
     if (!name || (backslash && backslash > name)) name = backslash;
     name = name ? name + 1 : path;
+    /* Asset discovery keeps archive members as `container::member`.  The
+     * source filename gate belongs to that final member, not the enclosing
+     * STX/ADF/ZIP basename. */
+    virtual_separator = strrchr(name, ':');
+    if (virtual_separator && virtual_separator > name &&
+        virtual_separator[-1] == ':') {
+        name = virtual_separator + 1;
+    }
     for (index = 0u; names[index] != NULL; ++index) {
         size_t i;
         for (i = 0u; name[i] != '\0' && names[index][i] != '\0'; ++i) {
@@ -340,6 +349,7 @@ static int csb_v1_runtime_is_native_original_slot_path(const char *path)
     };
     const char *slash;
     const char *backslash;
+    const char *virtual_separator;
     const char *name;
     size_t index;
 
@@ -349,6 +359,11 @@ static int csb_v1_runtime_is_native_original_slot_path(const char *path)
     name = slash;
     if (!name || (backslash && backslash > name)) name = backslash;
     name = name ? name + 1 : path;
+    virtual_separator = strrchr(name, ':');
+    if (virtual_separator && virtual_separator > name &&
+        virtual_separator[-1] == ':') {
+        name = virtual_separator + 1;
+    }
     for (index = 0u; names[index] != NULL; ++index) {
         if (strcmp(name, names[index]) == 0) return 1;
     }

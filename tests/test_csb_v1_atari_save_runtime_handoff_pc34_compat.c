@@ -1,5 +1,6 @@
 #include "csb_v1_atari_save_runtime_handoff_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -368,7 +369,10 @@ int main(void)
         return 0;
     }
     if (!path || !path[0]) { puts("SKIP: FIRESTAFF_CSB_ATARI_MINI is not set"); return 0; }
-    if (!read_file(path, &bytes, &size) ||
+    /* Archive members stay virtual: this is the production representation
+     * for the supplied STX/ZIP media, and must never be materialized as a
+     * temporary MINI.DAT merely for the native resume probe. */
+    if (!asset_read_path_alloc(path, &bytes, &size) ||
         !csb_v1_runtime_can_load_resume_path(path) ||
         csb_v1_runtime_load_game_from_path(&runtime, path) != CSB_V1_LOAD_OK ||
         runtime.dungeon_handle == NULL || runtime.level_count != 11 || runtime.current_level != 4 ||
