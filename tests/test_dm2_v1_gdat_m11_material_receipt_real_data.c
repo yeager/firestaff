@@ -6,25 +6,25 @@
 #include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_gdat_wall_m11_command.h"
 #include "m11_dm2_runtime_frame_receipt_gate.h"
-#include "asset_find_by_hash.h"
+#include "firestaff_zip_extract.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static int read_file(const char *path, uint8_t **out, size_t *out_size)
+static int read_original_member(const char *archive, const char *name,
+                                uint8_t **out, size_t *out_size)
 {
-    if (!path || !out || !out_size) return 0;
+    if (!archive || !archive[0] || !name || !out || !out_size) return 0;
     *out = NULL;
     *out_size = 0u;
-    return asset_read_path_alloc(path, out, out_size) && *out && *out_size;
+    return firestaff_zip_extract_by_suffix(archive, name, out, out_size) == 0 &&
+           *out && *out_size;
 }
 
 int main(void)
 {
     const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
-    const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    char path[2048];
     uint8_t *graphics = NULL;
     size_t graphics_size = 0u;
     DM2_V1_AssetLoader loader;
@@ -36,16 +36,15 @@ int main(void)
     DM2_V1_ViewportM11FrameReceipt frame;
     int style = -1;
 
-    if ((!archive || !archive[0]) && (!root || !root[0])) {
-        puts("SKIP: no DM2 DOS archive or data directory is configured");
+    if (!archive || !archive[0]) {
+        puts("SKIP: no DM2 DOS archive is configured");
         return 0;
     }
-    snprintf(path, sizeof(path), archive && archive[0]
-             ? "%s::data/graphics.dat" : "%s/graphics.dat",
-             archive && archive[0] ? archive : root);
-    if (!read_file(path, &graphics, &graphics_size)) {
+    if (!read_original_member(archive, "data/graphics.dat", &graphics,
+                              &graphics_size)) {
         fprintf(stderr,
-                "FAIL: configured DM2 GRAPHICS.DAT is unreadable: %s\n", path);
+                "FAIL: original DM2 data/graphics.dat is unreadable from %s\n",
+                archive);
         return 1;
     }
     memset(&loader, 0, sizeof(loader));
