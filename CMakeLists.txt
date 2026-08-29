@@ -44223,6 +44223,22 @@ set_tests_properties(nexus_v1_launch_smoke PROPERTIES
     LABELS "tier1;nexus;launch;smoke;skip_safe"
 )
 
+# Pointer-only launch selection must retain the real CUE/BIN transport.  The
+# title remains explicitly capture-gated until same-revision VDP evidence is
+# supplied; this regression proves the launcher reaches that honest native
+# boundary without extracting media or using an emulator.
+add_test(
+    NAME nexus_v1_native_menu_mouse_title
+    COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_native_menu_mouse_title.sh
+            $<TARGET_FILE:firestaff>
+            ${CMAKE_BINARY_DIR}
+)
+set_tests_properties(nexus_v1_native_menu_mouse_title PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    LABELS "tier1;nexus;menu;mouse;title;real-media;in-memory;native;capture-gated;skip-safe"
+    SKIP_RETURN_CODE 77
+)
+
 add_test(
     NAME nexus_v1_iso_only_launch
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_iso_only_launch.sh
