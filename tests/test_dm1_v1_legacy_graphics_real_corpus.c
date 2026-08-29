@@ -1,5 +1,7 @@
 #include "dm1_v1_fmtowns_iso9660.h"
 #include "dm1_v1_legacy_graphics_dat.h"
+#include "firestaff_fmtowns_disc.h"
+#include "firestaff_zip_extract.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -7,6 +9,10 @@
 #include <string.h>
 
 #define DM1_LEGACY_GRAPHICS_COUNT 575u
+/* `dm1_v1_legacy_graphics_is_bitmap_index()` admits 0..20 and 22..532.
+ * The remaining table records are source code, sound, text or font material
+ * and must be rejected by the IMAGE2 bitmap decoder. */
+#define DM1_LEGACY_BITMAP_COUNT 532u
 #define DM1_LEGACY_PIXEL_CAPACITY (1024u * 1024u)
 
 static uint8_t *read_file(const char *path, size_t *out_size)
@@ -101,26 +107,37 @@ static int audit_graphics(const char *label, const uint8_t *data, size_t size,
     if (out_digest) *out_digest = digest;
     printf("ok: %s IMAGE2 decoded %u records, digest=%016llx\n", label,
            decoded, (unsigned long long)digest);
-    return decoded == DM1_LEGACY_GRAPHICS_COUNT;
+    return decoded == DM1_LEGACY_BITMAP_COUNT;
 }
 
-static int audit_fmtowns(const char *path)
+static int audit_fmtowns_archive(const char *archive)
 {
     DM1_V1_FmtownsIsoLayout layout;
     uint8_t *track;
+    uint8_t *cue = NULL;
     size_t track_size;
+    size_t cue_size = 0u;
+    char image_member[256];
     unsigned int i;
     unsigned int graphics_found = 0u;
     int ok = 1;
 
-    track = read_file(path, &track_size);
-    if (!track) {
-        fprintf(stderr, "could not read FM Towns track: %s\n", path);
+    if (!archive ||
+        firestaff_zip_extract_by_suffix(archive, ".cue", &cue, &cue_size) != 0 ||
+        !cue || !fmtowns_cue_parse_image_member((const char *)cue, cue_size,
+                                                 image_member,
+                                                 sizeof(image_member)) ||
+        firestaff_zip_extract_by_suffix(archive, image_member, &track,
+                                        &track_size) != 0 || !track) {
+        fprintf(stderr, "could not read FM Towns CUE/BIN from archive: %s\n",
+                archive ? archive : "(null)");
+        free(cue);
+        free(track);
         return 0;
     }
+    free(cue);
     if (dm1_v1_fmtowns_iso_parse(track, track_size, &layout) != 0) {
-        fprintf(stderr, "FM Towns track is not the authenticated DM1 ISO: %s\n",
-                path);
+        fprintf(stderr, "FM Towns track is not the authenticated DM1 ISO\n");
         free(track);
         return 0;
     }
@@ -152,7 +169,7 @@ static int audit_fmtowns(const char *path)
 
 int main(void)
 {
-    const char *fmtowns = getenv("FIRESTAFF_DM1_FMTOWNS_TRACK01");
+    const char *fmtowns = getenv("FIRESTAFF_DM1_FMTOWNS_ARCHIVE");
     const char *amiga = getenv("FIRESTAFF_DM1_AMIGA_GRAPHICS_DAT");
     uint8_t *amiga_data;
     size_t amiga_size;
@@ -161,7 +178,7 @@ int main(void)
 
     if (fmtowns && fmtowns[0]) {
         ran = 1;
-        ok = audit_fmtowns(fmtowns) && ok;
+        ok = audit_fmtowns_archive(fmtowns) && ok;
     }
     if (amiga && amiga[0]) {
         ran = 1;
@@ -175,7 +192,7 @@ int main(void)
         }
     }
     if (!ran) {
-        puts("SKIP: set FIRESTAFF_DM1_FMTOWNS_TRACK01 and/or FIRESTAFF_DM1_AMIGA_GRAPHICS_DAT");
+        puts("SKIP: set FIRESTAFF_DM1_FMTOWNS_ARCHIVE and/or FIRESTAFF_DM1_AMIGA_GRAPHICS_DAT");
         return 0;
     }
     return ok ? 0 : 1;
