@@ -7709,6 +7709,21 @@ else()
         set_target_properties(firestaff PROPERTIES MACOSX_BUNDLE FALSE)
     endif()
 endif()
+# M11 reaches the Nexus and Theron production boundaries through a static
+# archive cycle (M12 -> M11 -> Nexus/Theron).  The adapters deliberately live
+# in the game libraries for focused tests, but a one-pass static linker can
+# visit those archives before M11 materialises their unresolved references.
+# Add the small, fail-closed implementations directly to the final product so
+# every supported linker resolves the same production boundary without
+# enabling any fixture renderer, inferred combat model, or external runtime.
+target_sources(firestaff PRIVATE
+    src/nexus/nexus_v1_light_runtime_noop.c
+    src/nexus/nexus_v1_rasterizer_runtime_noop.c
+    src/nexus/nexus_v1_saturn_font_runtime_noop.c
+    src/nexus/nexus_v2_hud_runtime_noop.c
+    src/nexus/nexus_v2_lighting_runtime_noop.c
+    src/theron/theron_v1_combat_runtime_source.c
+    src/theron/theron_v2_texture_upscale_pc34.c)
 # M11 objects referenced by the executable call back into M12 menu/asset helpers;
 # repeat M12 after M11 so static linkers resolve both directions.
 # firestaff_v2 and firestaff_m10 are already pulled in transitively:
