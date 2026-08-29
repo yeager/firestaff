@@ -1,5 +1,8 @@
 #include "dm1_v1_fmtowns_font_rasteriser.h"
-#include "dm1_v1_fmtowns_pic_library_loader.h"
+#include "dm1_v1_fmtowns_font_asset.h"
+#include "dm1_v1_fmtowns_pic_library.h"
+#include "firestaff_fmtowns_disc.h"
+#include "firestaff_zip_extract.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -150,28 +153,55 @@ static void test_string_stops_at_right_edge(void) {
     for (int i = 0; i < 64; ++i) assert(fb[i] == 0);
 }
 
-/* Live GRAPHICS.DAT round-trip (skipped when no local canonical data). */
+/* Live GRAPHICS.DAT round-trip from the selected source archive. */
+static uint8_t *load_retail_graphics_dat(size_t *out_size) {
+    const char *archive = getenv("FIRESTAFF_DM1_FMTOWNS_ARCHIVE");
+    uint8_t *cue = NULL, *bin = NULL, *graphics = NULL;
+    size_t cue_size = 0u, bin_size = 0u;
+    char image_member[256];
+    FmtownsDiscProbeResult disc;
+    const FmtownsIsoEntry *entry;
+
+    if (!archive || !archive[0] || !out_size ||
+        firestaff_zip_extract_by_suffix(archive, ".cue", &cue, &cue_size) != 0 ||
+        !cue || !fmtowns_cue_parse_image_member((const char *)cue, cue_size,
+                                                 image_member, sizeof(image_member)) ||
+        firestaff_zip_extract_by_suffix(archive, image_member, &bin, &bin_size) != 0 ||
+        !bin || fmtowns_disc_probe(bin, bin_size, FMTOWNS_SECTOR_2048, &disc) != 0 ||
+        !disc.valid || !(entry = fmtowns_disc_find(&disc, "DATA/GRAPHICS.DAT")) ||
+        fmtowns_disc_extract_alloc(bin, bin_size, FMTOWNS_SECTOR_2048, entry,
+                                   &graphics, out_size) != 0) {
+        free(cue);
+        free(bin);
+        free(graphics);
+        return NULL;
+    }
+    free(cue);
+    free(bin);
+    return graphics;
+}
+
 static void test_real_data_round_trip(void) {
-    const char *root = getenv("FIRESTAFF_DM1_FMTOWNS_DATA_DIR");
-    char path[1024];
-    dm1_v1_fmtowns_pic_library_handle_t h;
+    dm1_v1_fmtowns_pic_library_view_t view;
+    const uint8_t *font;
+    uint16_t font_size;
+    uint8_t *graphics;
+    size_t graphics_size = 0u;
     uint8_t r[768];
     uint8_t fb[64];
-    memset(&h, 0, sizeof(h));
-    if (!root || !root[0]) { puts("SKIP: FIRESTAFF_DM1_FMTOWNS_DATA_DIR not set"); return; }
-    snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
-    if (dm1_v1_fmtowns_pic_library_load_from_file_pc34(path, &h) !=
-        DM1_V1_FMTOWNS_PIC_LIB_LOAD_OK) {
-        puts("SKIP: could not open FIRESTAFF_DM1_FMTOWNS_DATA_DIR/GRAPHICS.DAT");
+    if (!getenv("FIRESTAFF_DM1_FMTOWNS_ARCHIVE")) {
+        puts("SKIP: FIRESTAFF_DM1_FMTOWNS_ARCHIVE not set");
         return;
     }
-    if (dm1_v1_fmtowns_pic_library_load_menu_font_pc34(&h, r, sizeof(r)) !=
-        DM1_V1_FMTOWNS_PIC_LIB_LOAD_OK) {
-        dm1_v1_fmtowns_pic_library_release_pc34(&h);
-        puts("SKIP: font asset unavailable");
-        return;
-    }
-    dm1_v1_fmtowns_pic_library_release_pc34(&h);
+    graphics = load_retail_graphics_dat(&graphics_size);
+    assert(graphics && dm1_v1_fmtowns_pic_library_open_pc34(
+                           graphics, graphics_size, &view) == DM1_V1_FMTOWNS_PIC_LIB_OK);
+    assert(dm1_v1_fmtowns_pic_library_asset_bytes_pc34(
+               &view, dm1_v1_fmtowns_font_pic_library_index_pc34(),
+               &font, &font_size) == DM1_V1_FMTOWNS_PIC_LIB_OK &&
+           font_size == sizeof(r));
+    memcpy(r, font, sizeof(r));
+    free(graphics);
     /* Space MUST be all-zero in the real font. */
     for (int row = 0; row < 6; ++row)
         assert(r[row * 128 + ' '] == 0);
@@ -181,7 +211,7 @@ static void test_real_data_round_trip(void) {
     memset(fb, 0, sizeof(fb));
     dm1_v1_fmtowns_font_rasterise_glyph_pc34(r, fb, 8, 8, 8, 0, 0, 4, 0, 0, 'A');
     for (int x = 0; x < 5; ++x) assert(fb[2 * 8 + x] == 4);
-    puts("PASS: real GRAPHICS.DAT font round-trip matches fixture layout");
+    puts("PASS: retail ZIP GRAPHICS.DAT font round-trip matches fixture layout");
 }
 
 int main(void) {
