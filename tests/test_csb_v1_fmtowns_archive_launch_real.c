@@ -17,7 +17,7 @@ int main(void) {
     char expected_mini_path[512];
     if (!archive || !archive[0]) {
         puts("SKIP: FIRESTAFF_CSB_FMTOWNS_ARCHIVE not set");
-        return 0;
+        return 77;
     }
     if (!csb_v1_boot_startup_launch_alloc_with_variant_pc34(
             archive, NULL, NULL, NULL, NULL,

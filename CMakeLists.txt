@@ -17509,6 +17509,7 @@ endif()
             "$<TARGET_FILE:test_csb_v1_m11_prison_runtime_hud_pc34>"
     )
     set_tests_properties(csb_v1_csbwin_f0435_runtime_frame PROPERTIES
+        SKIP_RETURN_CODE 77
         LABELS "tier2;csb;csbwin;save;runtime;hud;viewport;real_data;skip_safe"
         TIMEOUT 45
     )
@@ -54951,12 +54952,14 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_mini_resume_rea
     add_test(NAME csb_v1_fmtowns_mini_resume_real
              COMMAND test_csb_v1_fmtowns_mini_resume_real)
     set_tests_properties(csb_v1_fmtowns_mini_resume_real PROPERTIES
+        SKIP_RETURN_CODE 77
         LABELS "csb;fmtowns;english;real_data;m11;startup;ram"
         ENVIRONMENT
             "FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=en;FIRESTAFF_AUDIO_ENABLE_SDL=0")
     add_test(NAME csb_v1_fmtowns_ja_mini_resume_real
              COMMAND test_csb_v1_fmtowns_mini_resume_real)
     set_tests_properties(csb_v1_fmtowns_ja_mini_resume_real PROPERTIES
+        SKIP_RETURN_CODE 77
         LABELS "csb;fmtowns;japanese;real_data;m11;startup;ram"
         ENVIRONMENT
             "FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=ja;FIRESTAFF_AUDIO_ENABLE_SDL=0")
@@ -54976,12 +54979,14 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_archive_launch_
     add_test(NAME csb_v1_fmtowns_archive_launch_real
              COMMAND test_csb_v1_fmtowns_archive_launch_real)
     set_tests_properties(csb_v1_fmtowns_archive_launch_real PROPERTIES
+        SKIP_RETURN_CODE 77
         LABELS "csb;fmtowns;english;real_data;packed;ram"
         ENVIRONMENT
             "FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=en")
     add_test(NAME csb_v1_fmtowns_ja_archive_launch_real
              COMMAND test_csb_v1_fmtowns_archive_launch_real)
     set_tests_properties(csb_v1_fmtowns_ja_archive_launch_real PROPERTIES
+        SKIP_RETURN_CODE 77
         LABELS "csb;fmtowns;japanese;real_data;packed;ram"
         ENVIRONMENT
             "FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=ja")
@@ -55030,6 +55035,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_cd.c")
     endif()
     add_test(NAME csb_v1_fmtowns_cd COMMAND test_csb_v1_fmtowns_cd)
     set_tests_properties(csb_v1_fmtowns_cd PROPERTIES
+        SKIP_RETURN_CODE 77
         ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
         LABELS "csb;fmtowns;cdda;real-media;in-memory" TIMEOUT 60)
 endif()
@@ -58850,6 +58856,7 @@ target_include_directories(test_csb_v1_fmtowns_pic_library PRIVATE ${CMAKE_CURRE
 target_link_libraries(test_csb_v1_fmtowns_pic_library PRIVATE firestaff_zip_extract)
 add_test(NAME test_csb_v1_fmtowns_pic_library COMMAND test_csb_v1_fmtowns_pic_library)
 set_tests_properties(test_csb_v1_fmtowns_pic_library PROPERTIES
+    SKIP_RETURN_CODE 77
     ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
     LABELS "csb;fmtowns;graphics;real-media;in-memory")
 

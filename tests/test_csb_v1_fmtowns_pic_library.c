@@ -74,6 +74,11 @@ static void test_real_data_csb(void) {
 }
 
 int main(void) {
+    const char *archive = getenv("FIRESTAFF_CSB_FMTOWNS_ARCHIVE");
+    if (!archive || !archive[0]) {
+        puts("SKIP: FIRESTAFF_CSB_FMTOWNS_ARCHIVE not set");
+        return 77;
+    }
     test_null_gate();
     test_wrong_sig_rejects();
     test_real_data_csb();

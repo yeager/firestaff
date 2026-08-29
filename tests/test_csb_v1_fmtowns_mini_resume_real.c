@@ -35,7 +35,7 @@ int main(void)
         (language && language[0] && strcmp(language, "en") != 0 &&
          !japanese)) {
         puts("SKIP: CSB FM Towns archive and en/ja language are required");
-        return 0;
+        return 77;
     }
 
     memset(&spec, 0, sizeof(spec));

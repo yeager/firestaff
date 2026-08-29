@@ -7,13 +7,13 @@ save_path=${FIRESTAFF_CSBWIN_REAL_SAVE:-}
 
 if [ -z "$data_dir" ] || [ -z "$save_path" ]; then
     printf '%s\n' 'SKIP: FIRESTAFF_CSBWIN_REAL_DATA_DIR and FIRESTAFF_CSBWIN_REAL_SAVE are not staged'
-    exit 0
+    exit 77
 fi
 
 if [ ! -f "$data_dir/graphics.dat" ] || [ ! -f "$data_dir/Dungeon.dat" ] ||
    [ ! -f "$save_path" ]; then
     printf '%s\n' 'SKIP: stock CSBWin GRAPHICS.DAT/Dungeon.dat/save corpus is incomplete'
-    exit 0
+    exit 77
 fi
 
 FIRESTAFF_CSBWIN_REAL_DATA_DIR=$data_dir \
