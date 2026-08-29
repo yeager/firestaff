@@ -67,6 +67,9 @@ static int failed;
 #define TEST_CSB_UTILITY_ADF_BYTES (80u * 2u * 11u * 512u)
 #define TEST_CSB_UTILITY_ROOT_OFFSET (880u * 512u)
 #define TEST_CSB_UTILITY_NAME_OFFSET 432u
+/* CTest runs this target in its build directory.  Keep fixtures there rather
+ * than using the host-wide /tmp namespace. */
+#define TEST_TMP_ROOT "firestaff-csb-v1-runtime-handoff-tmp"
 
 static int test_real_dm1_save_is_pc34(const char *path)
 {
@@ -661,7 +664,7 @@ static void test_utility_flow_new_game_handoff_preserves_leader_index(void)
     CSB_V1_UtilFlowContext ctx;
     CSB_V1_UtilMenuLayout layout;
     CSB_V1_PartyState party;
-    const char *save_path = "/tmp/firestaff-csb-v1-utility-flow-leader.sav";
+    const char *save_path = TEST_TMP_ROOT "/firestaff-csb-v1-utility-flow-leader.sav";
 
     CHECK(write_synthetic_dm1_save_for_utility_flow(save_path) == 0,
           "synthetic DM1 save written for utility flow handoff test");
@@ -774,7 +777,7 @@ static void test_utility_flow_new_game_handoff_preserves_leader_index(void)
 static void test_utility_import_confirmation_is_transactional(void)
 {
     CSB_V1_UtilFlowContext ctx;
-    const char *save_path = "/tmp/firestaff-csb-v1-utility-confirm.sav";
+    const char *save_path = TEST_TMP_ROOT "/firestaff-csb-v1-utility-confirm.sav";
 
     CHECK(write_synthetic_dm1_save_for_utility_flow(save_path) == 0,
           "utility confirmation fixture writes a bounded DM1 save");
@@ -824,7 +827,7 @@ static void test_utility_flow_load_game_requires_original_corpus(void)
     csb_v1_util_flow_init(&ctx);
     csb_v1_util_flow_mark_utility_disk_verified(&ctx, 1);
     csb_v1_util_flow_set_csb_path(
-        &ctx, "/tmp/firestaff-csb-private-runtime-save.fsav");
+        &ctx, TEST_TMP_ROOT "/firestaff-csb-private-runtime-save.fsav");
     CHECK(csb_v1_util_flow_step(&ctx) == 0 &&
               ctx.state == CSB_V1_UTIL_FLOW_INSERT_DISK,
           "Utility LOAD begins with the source disk transaction");
@@ -865,7 +868,7 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
     CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 original_save_receipt;
     CSB_V1_F0240_FirstEventExpiredReceipt f0240_receipt;
     CSB_V1_F0261_ProcessTickReceipt f0261_receipt;
-    const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-test";
+    const char *tmp_dir = TEST_TMP_ROOT "/handoff-test";
     int mkdir_ok = (TEST_MKDIR(tmp_dir) == 0) || 1; /* best-effort */
     uint32_t adapter_game_time = 0U;
 
@@ -1100,7 +1103,7 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
     }
     CHECK(csb_v1_boot_runtime_save_import_receipt_pc34(
               &p,
-              "/tmp/firestaff-csb-v1-runtime-dm1-import.sav",
+              TEST_TMP_ROOT "/firestaff-csb-v1-runtime-dm1-import.sav",
               save_path,
               csbwin_save_path,
               &save_import_receipt) == 1 &&
@@ -1207,7 +1210,7 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
     CSB_V1_RuntimeM11MirrorReceipt_PC34 mirror_receipt;
     uint8_t save_buf[1024];
     char dungeon_path[ASSET_PATH_MAX];
-    const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-party";
+    const char *tmp_dir = TEST_TMP_ROOT "/handoff-party";
     int slot;
 
     (void)TEST_MKDIR(tmp_dir);
@@ -1389,8 +1392,8 @@ static void test_startup_real_asset_receipt_is_skip_safe_and_deterministic(void)
 {
     CSB_V1_StartupRealReceipt receipt;
     CSB_V1_StartupRealReceipt reissue_source;
-    const char *tmp_dir = "/tmp/firestaff-csb-v1-startup-real-receipt";
-    const char *missing_dir = "/tmp/firestaff-csb-v1-startup-real-missing";
+    const char *tmp_dir = TEST_TMP_ROOT "/startup-real-receipt";
+    const char *missing_dir = TEST_TMP_ROOT "/startup-real-missing";
     char expected_hash[CSB_V1_STARTUP_REAL_HASH_HEX_CAP];
 
     (void)TEST_MKDIR(tmp_dir);
@@ -1491,8 +1494,8 @@ static void test_startup_real_asset_receipt_is_skip_safe_and_deterministic(void)
           "startup real-asset receipt detects changed packaged metadata");
     CHECK(csb_v1_startup_real_receipt_from_profile_fields(
               tmp_dir,
-              "/tmp/firestaff-csb-v1-startup-real-receipt/GRAPHICS.DAT",
-              "/tmp/firestaff-csb-v1-startup-real-receipt/DUNGEON.DAT",
+              TEST_TMP_ROOT "/startup-real-receipt/GRAPHICS.DAT",
+              TEST_TMP_ROOT "/startup-real-receipt/DUNGEON.DAT",
               "61fbfd56887c94adc26888a9491c6611",
               "6695d2acebce49f95db1d8f3a5c733de",
               0u,
@@ -1519,7 +1522,7 @@ static void test_enter_game_loads_m564_object_names_from_graphics_dat(void)
     CSB_V1_BootProfile p;
     char dungeon_path[ASSET_PATH_MAX];
     char graphics_path[ASSET_PATH_MAX];
-    const char *tmp_dir = "/tmp/firestaff-csb-v1-m564-object-names";
+    const char *tmp_dir = TEST_TMP_ROOT "/m564-object-names";
 
     (void)TEST_MKDIR(tmp_dir);
     snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
@@ -1637,7 +1640,7 @@ static void test_enter_game_rotate_party_aligns_champion_state(void)
     CSB_V1_PartyState runtime_party;
     uint8_t save_buf[1024];
     char dungeon_path[ASSET_PATH_MAX];
-    const char *tmp_dir = "/tmp/firestaff-csb-v1-rotation-followup";
+    const char *tmp_dir = TEST_TMP_ROOT "/rotation-followup";
     int i;
     int rotations_tested;
 
@@ -1851,7 +1854,7 @@ static void test_enter_game_with_missing_dungeon_path_keeps_runtime_safe(void)
 {
     CSB_V1_BootProfile p;
     char dungeon_path[ASSET_PATH_MAX];
-    const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-missing-dng";
+    const char *tmp_dir = TEST_TMP_ROOT "/handoff-missing-dng";
     char bogus_dungeon[ASSET_PATH_MAX];
 
     (void)TEST_MKDIR(tmp_dir); /* best-effort */
@@ -1889,7 +1892,7 @@ static void test_enter_game_with_missing_dungeon_path_keeps_runtime_safe(void)
 static void test_enter_game_rejects_legacy_fixture_dungeon(void)
 {
     CSB_V1_BootProfile p;
-    const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-legacy-dng";
+    const char *tmp_dir = TEST_TMP_ROOT "/handoff-legacy-dng";
 
     (void)TEST_MKDIR(tmp_dir);
     memset(&p, 0, sizeof(p));
@@ -1917,7 +1920,7 @@ static void test_enter_game_runtime_handoff_is_idempotent(void)
 {
     CSB_V1_BootProfile p;
     char dungeon_path[ASSET_PATH_MAX];
-    const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-idempotent";
+    const char *tmp_dir = TEST_TMP_ROOT "/handoff-idempotent";
 
     (void)TEST_MKDIR(tmp_dir);
     snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
@@ -1965,7 +1968,7 @@ static void test_enter_game_runtime_handoff_is_idempotent(void)
 static void test_enter_game_rejects_partial_or_misrouted_profiles(void)
 {
     CSB_V1_BootProfile p;
-    const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-guard";
+    const char *tmp_dir = TEST_TMP_ROOT "/handoff-guard";
 
     csb_v1_boot_profile_init(&p);
     p.assets_verified = 1;
@@ -2007,7 +2010,7 @@ static void test_enter_game_v2_profile_labels_do_not_change_v1_handoff(void)
     char dungeon_path[ASSET_PATH_MAX];
     char bonus_dungeon_path[ASSET_PATH_MAX];
     char runtime_save_path[ASSET_PATH_MAX];
-    const char *tmp_dir = "/tmp/firestaff-csb-v2-profile-fallback-guard";
+    const char *tmp_dir = TEST_TMP_ROOT "/v2-profile-fallback-guard";
 
     (void)TEST_MKDIR(tmp_dir);
     snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
@@ -2173,8 +2176,8 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
     CSB_V1_PartyState party;
     CSB_V1_RuntimeStartupHandoffReceipt_PC34 receipt;
     uint8_t save_buf[1024];
-    const char *path = "/tmp/firestaff-csb-v1-runtime-dm1-import.sav";
-    const char *utility_path = "/tmp/firestaff-csb-v1-runtime-utility.adf";
+    const char *path = TEST_TMP_ROOT "/firestaff-csb-v1-runtime-dm1-import.sav";
+    const char *utility_path = TEST_TMP_ROOT "/firestaff-csb-v1-runtime-utility.adf";
     FILE *f;
     int imported_count = 0;
     int utility_state = -1;
@@ -2356,7 +2359,7 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
                 csb_v1_boot_profile_init(launch.profile);
                 snprintf(launch.profile->asset_root,
                          sizeof(launch.profile->asset_root),
-                         "/tmp");
+                         TEST_TMP_ROOT);
                 snprintf(launch.profile->graphics_md5,
                          sizeof(launch.profile->graphics_md5),
                          "61fbfd56887c8bfe85ba4fb306fc2861");
@@ -2365,10 +2368,10 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
                          "6695d2acebce49f95db1d8f3a5c733de");
                 snprintf(launch.profile->graphics_path,
                          sizeof(launch.profile->graphics_path),
-                         "/tmp/firestaff_csb_GRAPHICS.DAT");
+                         TEST_TMP_ROOT "/firestaff_csb_GRAPHICS.DAT");
                 snprintf(launch.profile->dungeon_path,
                          sizeof(launch.profile->dungeon_path),
-                         "/tmp/firestaff_csb_DUNGEON.DAT");
+                         TEST_TMP_ROOT "/firestaff_csb_DUNGEON.DAT");
                 launch.profile->assets_verified = 1;
                 launch.profile->graphics_verified = 1;
                 launch.profile->dungeon_verified = 1;
@@ -2382,7 +2385,7 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
                 launch.receipts.session_state.entrance_resume_available = 1;
                 snprintf(launch.receipts.session_state.entrance_resume_path,
                          sizeof(launch.receipts.session_state.entrance_resume_path),
-                         "%s", "/tmp/firestaff_csb_resume.sav");
+                         "%s", TEST_TMP_ROOT "/firestaff_csb_resume.sav");
                 memset(&runtime_receipt, 0, sizeof(runtime_receipt));
                 CHECK(csb_v1_boot_startup_launch_detach_runtime_pc34(
                           &launch,
@@ -2399,13 +2402,13 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
                           runtime_receipt.load_original_font_from_graphics ==
                               1 &&
                           strcmp(runtime_receipt.graphics_path,
-                                 "/tmp/firestaff_csb_GRAPHICS.DAT") == 0 &&
+                                 TEST_TMP_ROOT "/firestaff_csb_GRAPHICS.DAT") == 0 &&
                           strcmp(runtime_receipt.dungeon_path,
-                                 "/tmp/firestaff_csb_DUNGEON.DAT") == 0 &&
+                                 TEST_TMP_ROOT "/firestaff_csb_DUNGEON.DAT") == 0 &&
                           runtime_receipt.real_asset_receipt_valid &&
                           runtime_receipt.real_asset_receipt.matched &&
                           strcmp(runtime_receipt.real_asset_receipt.graphics_path,
-                                 "/tmp/firestaff_csb_GRAPHICS.DAT") == 0 &&
+                                 TEST_TMP_ROOT "/firestaff_csb_GRAPHICS.DAT") == 0 &&
                           strcmp(runtime_receipt.real_asset_receipt.dungeon_md5,
                                  "6695d2acebce49f95db1d8f3a5c733de") == 0 &&
                           runtime_receipt.real_asset_receipt.receipt_hash != 0u &&
@@ -2476,7 +2479,7 @@ static void test_runtime_import_discovers_real_utility_from_search_root(void)
     const char *root = getenv("FIRESTAFF_CSB_REAL_UTILITY_ROOT");
     const char *real_save = getenv("FIRESTAFF_DM1_REAL_SAVE");
     const char *path = real_save && real_save[0]
-        ? real_save : "/tmp/firestaff-csb-v1-real-utility-import.sav";
+        ? real_save : TEST_TMP_ROOT "/firestaff-csb-v1-real-utility-import.sav";
     CSB_V1_RuntimeProfile runtime;
     uint8_t save_buf[1024];
     FILE *f = NULL;
@@ -2508,7 +2511,7 @@ static void test_runtime_import_discovers_real_utility_from_search_root(void)
     set_csb_utility_disk_env(NULL);
     csb_v1_runtime_init(&runtime, NULL);
     runtime.utility_search_dir = root;
-    runtime.save_dir = "/tmp";
+    runtime.save_dir = TEST_TMP_ROOT;
     prompt[0] = '\0';
     CHECK(csb_v1_runtime_import_dm1_party_path(&runtime, path, &count, &state,
                                                prompt, sizeof(prompt)) == 1 &&
@@ -2532,7 +2535,7 @@ static void test_boot_import_discovers_real_utility_from_originals_root(void)
     const char *root = getenv("FIRESTAFF_CSB_REAL_UTILITY_ROOT");
     const char *real_save = getenv("FIRESTAFF_DM1_REAL_SAVE");
     const char *path = real_save && real_save[0]
-        ? real_save : "/tmp/firestaff-csb-v1-real-boot-import.sav";
+        ? real_save : TEST_TMP_ROOT "/firestaff-csb-v1-real-boot-import.sav";
     CSB_V1_BootStartupLaunch_PC34 launch;
     uint8_t save_buf[1024];
     FILE *f = NULL;
@@ -2636,7 +2639,7 @@ static void test_door_opening_runtime_handoff_owns_hud_transition(void)
     boot.runtime.party_state.ChampionCount = 1;
     boot.runtime.party_state.LeaderIndex = 0;
     snprintf(boot.graphics_path, sizeof(boot.graphics_path),
-             "/tmp/firestaff_csb_GRAPHICS.DAT");
+             TEST_TMP_ROOT "/firestaff_csb_GRAPHICS.DAT");
     boot.assets_verified = 1;
     boot.graphics_verified = 1;
     boot.dungeon_verified = 1;
@@ -2823,14 +2826,14 @@ static void test_runtime_utility_startup_receipt_facades(void)
     int packaged_title_ok;
     int enter_menu_x = 244;
     int enter_menu_y = 45;
-    const char *resume_path = "/tmp/firestaff-csb-resume.dat";
+    const char *resume_path = TEST_TMP_ROOT "/firestaff-csb-resume.dat";
 
     csb_v1_boot_profile_init(&boot);
-    snprintf(boot.asset_root, sizeof(boot.asset_root), "/tmp");
+    snprintf(boot.asset_root, sizeof(boot.asset_root), TEST_TMP_ROOT);
     snprintf(boot.graphics_path, sizeof(boot.graphics_path),
-             "/tmp/firestaff_csb_GRAPHICS.DAT");
+             TEST_TMP_ROOT "/firestaff_csb_GRAPHICS.DAT");
     snprintf(boot.dungeon_path, sizeof(boot.dungeon_path),
-             "/tmp/firestaff_csb_DUNGEON.DAT");
+             TEST_TMP_ROOT "/firestaff_csb_DUNGEON.DAT");
     snprintf(boot.graphics_md5, sizeof(boot.graphics_md5),
              "61fbfd56887c8bfe85ba4fb306fc2861");
     snprintf(boot.dungeon_md5, sizeof(boot.dungeon_md5),
@@ -3595,7 +3598,7 @@ static void test_runtime_utility_startup_receipt_facades(void)
               capture_receipt.real_asset_receipt_valid &&
               capture_receipt.real_asset_receipt.matched &&
               strcmp(capture_receipt.real_asset_receipt.graphics_path,
-                     "/tmp/firestaff_csb_GRAPHICS.DAT") == 0 &&
+                     TEST_TMP_ROOT "/firestaff_csb_GRAPHICS.DAT") == 0 &&
               strcmp(capture_receipt.real_asset_receipt.dungeon_md5,
                      "6695d2acebce49f95db1d8f3a5c733de") == 0 &&
               capture_receipt.real_asset_receipt.receipt_hash != 0u &&
@@ -5360,7 +5363,7 @@ static void test_runtime_variant_hint_identity(void)
         { "st_f20j", CSB_V1_VARIANT_ST_F20J },
         { "st_f20e", CSB_V1_VARIANT_ST_F20E }
     };
-    const char *tmp_dir = "/tmp/firestaff-csb-v1-graphics-hint";
+    const char *tmp_dir = TEST_TMP_ROOT "/graphics-hint";
     char graphics_path[ASSET_PATH_MAX];
     CSB_V1_AssetResult result;
     FILE *file;
@@ -5405,9 +5408,9 @@ static void test_runtime_boot_rejects_unmaterialized_media(void)
 {
     CSB_V1_RuntimeProfile runtime;
 
-    csb_v1_runtime_init(&runtime, "/tmp/firestaff-csb-runtime-no-media");
+    csb_v1_runtime_init(&runtime, TEST_TMP_ROOT "/runtime-no-media");
     CHECK(csb_v1_runtime_boot(&runtime,
-                              "/tmp/firestaff-csb-runtime-no-media",
+                              TEST_TMP_ROOT "/runtime-no-media",
                               "pc34_en") == -1,
           "runtime_boot rejects a missing CSB source-media pair");
     CHECK(runtime.dungeon_handle == NULL &&
@@ -5471,6 +5474,7 @@ int main(void)
     const char *focus_dsa_save_handoff =
         getenv("FIRESTAFF_FOCUS_CSB_DSA_SAVE_HANDOFF");
 
+    (void)TEST_MKDIR(TEST_TMP_ROOT);
     printf("=== CSB V1 Boot → Runtime Handoff Regression ===\n\n");
     test_enter_game_with_verified_profile_loads_dungeon();
     if (focus_dsa_save_handoff && focus_dsa_save_handoff[0] != '\0') {

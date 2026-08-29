@@ -24873,6 +24873,8 @@ endif()
         NAME csb_v1_boot_runtime_handoff
         COMMAND test_csb_v1_boot_runtime_handoff
     )
+    set_tests_properties(csb_v1_boot_runtime_handoff PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 
     if(NOT TARGET test_csb_v1_startup_terminal_handoff_real_data_pc34_compat)
         add_executable(test_csb_v1_startup_terminal_handoff_real_data_pc34_compat
