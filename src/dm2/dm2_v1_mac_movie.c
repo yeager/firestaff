@@ -53,7 +53,9 @@ static void put_be64(uint8_t *p, uint64_t value) {
 
 static int mac_movie_container(const uint8_t type[4]) {
     static const char containers[][4] = {
-        "moov", "trak", "mdia", "minf", "dinf", "stbl", "edts", "udta", "meta"
+        {'m', 'o', 'o', 'v'}, {'t', 'r', 'a', 'k'}, {'m', 'd', 'i', 'a'},
+        {'m', 'i', 'n', 'f'}, {'d', 'i', 'n', 'f'}, {'s', 't', 'b', 'l'},
+        {'e', 'd', 't', 's'}, {'u', 'd', 't', 'a'}, {'m', 'e', 't', 'a'}
     };
     size_t i;
     for (i = 0; i < sizeof(containers) / sizeof(containers[0]); ++i)
