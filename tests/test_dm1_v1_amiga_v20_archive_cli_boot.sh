@@ -6,6 +6,12 @@ archive=${FIRESTAFF_DM1_AMIGA_V20_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Ma
 expected_md5=6a2f135b53c2220f0251fa103e2a6e7e
 selected_media="$archive::Dungeon Master v2.0 (1988)(FTL).zip::Dungeon Master v2.0 (1988)(FTL).adf"
 
+# This preservation package is ZIP -> ZIP -> ADF, all of which Firestaff
+# reads through its native bounded-memory readers.  Keep the real-media
+# regression independent of the diagnostic-only external archive opt-in: a
+# developer shell must not accidentally hide a runtime dependency here.
+unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
+
 if [[ ! -x "$app" || ! -f "$archive" ]]; then
     printf '%s\n' 'SKIP: authentic DM1 Amiga 2.0 preservation archive is not staged'
     exit 77
