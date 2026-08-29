@@ -37,7 +37,7 @@ if ! grep -Fq "assetMd5=$expected_md5" <<<"$title_output" ||
 fi
 
 movement_output=$(run_probe --menu --game csb --platform amiga --data-dir "$archive" \
-    --boot-probe --boot-probe-frames 800 --script enter,up --duration 0)
+    --boot-probe --boot-probe-frames 800 --script enter,enter,enter,up --duration 0)
 if ! grep -Fq 'phase=inactive' <<<"$movement_output" ||
    ! grep -Fq 'startupActive=0' <<<"$movement_output" ||
    ! grep -Fq 'levelLoaded=1' <<<"$movement_output" ||
@@ -51,7 +51,7 @@ fi
 menu_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game csb --platform amiga --data-dir "$archive" \
-    --script enter --duration 1000 2>&1) || {
+    --script enter,enter,enter --duration 1000 2>&1) || {
     printf '%s\n' "$menu_output" >&2
     exit 1
 }

@@ -44,7 +44,7 @@ esac
 
 movement_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --menu --game csb --platform atari-st --data-dir "$media_path" \
-    --boot-probe --boot-probe-frames 800 --script 'enter,key:enter,up' \
+    --boot-probe --boot-probe-frames 800 --script 'enter,enter,enter,key:enter,up' \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 --duration 0 2>&1)" || {
     printf '%s\n' "$movement_output" >&2
     exit 1
@@ -61,7 +61,7 @@ esac
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --menu --game csb --platform atari-st --data-dir "$media_path" \
-    --script enter --duration 2000 2>&1)" || {
+    --script enter,enter,enter --duration 2000 2>&1)" || {
     printf '%s\n' "$menu_output" >&2
     exit 1
 }

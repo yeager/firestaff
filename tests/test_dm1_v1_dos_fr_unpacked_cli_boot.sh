@@ -25,11 +25,11 @@ probe() {
 probe --game dm1 --platform pc --data-dir "$data_dir" \
     --boot-probe --boot-probe-frames 2 --duration 0
 probe --game dm1 --menu --platform pc --data-dir "$data_dir" \
-    --script enter --boot-probe --boot-probe-frames 2 --duration 0
+    --script enter,enter,enter --boot-probe --boot-probe-frames 2 --duration 0
 
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
-    --platform pc --data-dir "$data_dir" --script enter --duration 1000 2>&1)" || {
+    --platform pc --data-dir "$data_dir" --script enter,enter,enter --duration 1000 2>&1)" || {
     printf '%s\n' "$menu_output" >&2
     exit 1
 }

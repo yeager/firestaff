@@ -122,7 +122,7 @@ fi
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy "$firestaff_cli" \
     --menu --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
-    --script enter --duration 1000 2>&1)" || {
+    --script enter,enter,enter --duration 1000 2>&1)" || {
     printf '%s\n' "$menu_output" >&2
     exit 1
 }
@@ -146,7 +146,7 @@ if [ -n "$user_save" ]; then
     menu_resume_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
         SDL_VIDEODRIVER=dummy "$firestaff_cli" \
         --menu --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
-        --save "$user_save" --script enter --duration 1000 2>&1)" || {
+        --save "$user_save" --script enter,enter,enter --duration 1000 2>&1)" || {
         printf '%s\n' "$menu_resume_output" >&2
         exit 1
     }
