@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-root=$FIRESTAFF_CSB_REAL_MEDIA_ROOT
+root=${FIRESTAFF_CSB_REAL_MEDIA_ROOT:-}
 if [ -z "$root" ]; then
     root="$HOME/.firestaff/data/csb"
 fi

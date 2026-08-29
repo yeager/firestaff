@@ -1,6 +1,6 @@
 # Firestaff DONE — CSB
 
-Reviewed 2026-08-25. Completed work only.
+Reviewed 2026-08-29. Completed work only.
 
 - The native Atari STX CLI route verifies original title startup, runtime and
   start-menu entry using the supplied campaign media.
@@ -20,6 +20,11 @@ Reviewed 2026-08-25. Completed work only.
   `TITLE.ANM` palette/frame handoff with a nonzero frame hash. An explicit
   F0435 user-save launch is kept distinct and proves the admitted C03
   executable handoff instead of claiming that it replayed the title.
+- The current real-media launch matrix covers Atari STX, Amiga ZIP → ADF, and
+  both English and Japanese FM Towns selection. Each route was exercised from
+  its original source through title, normal start-menu launch, and the first
+  native `UP` movement into the campaign. This is launch/runtime evidence,
+  not a claim of complete campaign playthrough parity.
 - Direct Amiga ZIP → ADF launches now identify A31M from `TITL.DAT` in the
   exact same virtual ADF as the selected `GRAPHICS.DAT`, rather than requiring
   an M12 cache leaf. The start menu publishes the source-owned `TITL.DAT`
