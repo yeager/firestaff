@@ -8,6 +8,8 @@ fi
 
 app=$1
 archive=${FIRESTAFF_DM1_PC34_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip"}
+# Card startup flow: game card -> verified PC card -> Original card.
+menu_original=enter,enter,enter
 
 if [[ ! -x "$app" || ! -f "$archive" ]]; then
     printf '%s\n' 'SKIP: authentic DM1 PC-34 archive is not staged'
@@ -31,12 +33,12 @@ probe() {
 
 probe --game dm1 --data-dir "$archive" --boot-probe --boot-probe-frames 120 \
     --duration 0
-probe --menu --game dm1 --data-dir "$archive" --script enter \
+probe --menu --game dm1 --data-dir "$archive" --script "$menu_original" \
     --boot-probe --boot-probe-frames 120 --duration 0
 
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
-    --data-dir "$archive" --script enter --duration 1000 2>&1)" || {
+    --data-dir "$archive" --script "$menu_original" --duration 1000 2>&1)" || {
     printf '%s\n' "$menu_output" >&2
     exit 1
 }
@@ -53,7 +55,7 @@ fi
 # the actual M11 movement route rather than only a title/startup receipt.
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm1 --data-dir "$archive" --boot-probe --boot-probe-frames 500 \
-    --script enter,up --duration 0 2>&1) || {
+    --script "$menu_original",up --duration 0 2>&1) || {
     printf '%s\n' "$gameplay_output" >&2
     exit 1
 }
