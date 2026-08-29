@@ -43,7 +43,7 @@ parity gate is complete.
 
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
-| DOS | **Verified route** | Hash-verified PC data, GDAT/G1 loading, startup, runtime slices and sound tests. All eight supplied `data/sksave0..3.{dat,bak}` members resume through the native start-menu route directly from the distribution ZIP in memory. | Complete V1 renderer/mechanics parity and full SKSAVE ownership. |
+| DOS | **Verified route** | Hash-verified PC data, GDAT/G1 loading, startup, runtime slices and sound tests. All eight supplied `data/sksave0..3.{dat,bak}` members resume through the native start-menu route directly from the distribution ZIP in memory; the real GDAT New Game rectangle is likewise dispatched from that retained ZIP through M11 into the native runtime. | Complete V1 renderer/mechanics parity and full SKSAVE ownership. |
 | Amiga | **Verified route** | Original Amiga archive reaches title, New Game, bounded runtime and the clipped native CHARSHEET inventory frame through verified GDAT/RAW4 material. | Wider gameplay, save and full pixel/audio parity. |
 | FM Towns | **Verified route** | Authentic Towns data and platform-specific startup, input, CD-audio and gameplay slices are tested. | Complete native runtime ownership and full parity. |
 | Macintosh large retail | **Partial native route** | Authentic English retail ZIP is read in RAM. HFS, big-endian dungeon data, New Game, bounded wall input, and an accepted real-GDAT M11 frame with zero fallback draws pass. Its 256-row `PalIRGB`/`dtPalette16` pair remains distinct from the Amiga physical 16-colour palette route. The current source movie decoder requires optional FFmpeg; the normal dependency-free build rejects authentic `Title.MooV`, so it must not be presented as title/movie verified. | Add a bounded built-in decoder for the authenticated MooV streams; then complete Mac GAME_LOAD/Resume, dynamic pointer/drag owner, MIDI timing and full pixel/audio parity. No authentic Mac save is present. |
@@ -54,7 +54,7 @@ parity gate is complete.
 
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
-| Sega Saturn Japanese | **Source route (blocked)** | Authentic Track 1/DM.BIN, CUE-declared CDDA Track 02–09 BIN ownership, STABG source consumption, NBG1 palette-bank/origin plus raw bitmap/CRAM capture decoding, DGN/DMDF/MNS/PRS3 parsing and bounded phase-launch tests are native. The public title route remains fail-closed at `title-vdp-capture-required`. | A same-revision title-state capture must bind TITLE.CG, active MAPD span, palette, VDP register/layer state and title consumer/timing before any title/menu/gameplay claim. |
+| Sega Saturn Japanese | **Source route (blocked)** | Authentic Track 1/DM.BIN, CUE-declared CDDA Track 02–09 BIN ownership, STABG source consumption, NBG1 palette-bank/origin plus raw bitmap/CRAM capture decoding, DGN/DMDF/MNS/PRS3 parsing and bounded phase-launch tests are native. A pointer-only launcher route (game card → Saturn → Original) retains the real CUE/BIN transport and reaches the native title boundary. The public title route remains fail-closed at `title-vdp-capture-required`. | A same-revision title-state capture must bind TITLE.CG, active MAPD span, palette, VDP register/layer state and title consumer/timing before any title/menu/gameplay claim. |
 | Saturn demo or fan translations | **Preservation** | Classified separately from the canonical Japanese retail route. | Independent media and runtime proof. |
 
 ## Theron's Quest
