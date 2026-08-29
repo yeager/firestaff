@@ -31,13 +31,13 @@ probe() {
     fi
 }
 
-probe --game dm1 --data-dir "$archive" --boot-probe --boot-probe-frames 120 \
+probe --game dm1 --platform pc --data-dir "$archive" --boot-probe --boot-probe-frames 120 \
     --duration 0
-probe --menu --game dm1 --data-dir "$archive" --script "$menu_original" \
+probe --menu --game dm1 --platform pc --data-dir "$archive" --script "$menu_original" \
     --boot-probe --boot-probe-frames 120 --duration 0
 
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
-    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 --platform pc \
     --data-dir "$archive" --script "$menu_original" --duration 1000 2>&1)" || {
     printf '%s\n' "$menu_output" >&2
     exit 1
@@ -54,7 +54,7 @@ fi
 # `up` input advances to y=4; this proves the selected archive has reached
 # the actual M11 movement route rather than only a title/startup receipt.
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --menu --game dm1 --data-dir "$archive" --boot-probe --boot-probe-frames 500 \
+    --menu --game dm1 --platform pc --data-dir "$archive" --boot-probe --boot-probe-frames 500 \
     --script "$menu_original",up --duration 0 2>&1) || {
     printf '%s\n' "$gameplay_output" >&2
     exit 1
