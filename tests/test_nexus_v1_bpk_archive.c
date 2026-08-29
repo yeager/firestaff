@@ -429,10 +429,13 @@ static void test_optional_local_menu_bpk(void) {
     expect(decoded_receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED &&
                decoded_receipt.prs3_decoder_promoted &&
                decoded_receipt.prs3_decode_successes == 162U &&
-               decoded_receipt.prs3_decode_failures == 0U &&
-               decoded_receipt.prs3_decoded_pixels_fnv1a64 ==
+               decoded_receipt.prs3_decode_failures == 0U,
+           "local retail MENU.BPK PRS3 bytes retain a complete decode receipt");
+    if (info.outer_size == 89060U) {
+        expect(decoded_receipt.prs3_decoded_pixels_fnv1a64 ==
                    UINT64_C(0xb60830cf2f601003),
-           "Japanese retail MENU.BPK PRS3 bytes retain their exact decoded receipt");
+               "Japanese retail MENU.BPK PRS3 bytes retain their exact decoded receipt");
+    }
 
     free(data);
 }
