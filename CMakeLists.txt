@@ -37414,6 +37414,10 @@ firestaff_add_dm1_v1_viewport_contract_test(
     src/dm1/dm1_v1_g0205_pc34_compat.c
     src/shared/asset_loader_m11.c
 )
+set_tests_properties(dm1_v1_viewport_wall_field_original_material_gate PROPERTIES
+    SKIP_RETURN_CODE 77
+    ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+    LABELS "dm1;dos;pc34;viewport;wall;teleporter;real-media;in-memory;skip-safe")
 firestaff_add_dm1_v1_viewport_contract_test(
     test_dm1_v1_center_door_render_pc34_compat
     tests/test_dm1_v1_center_door_render_pc34_compat.c

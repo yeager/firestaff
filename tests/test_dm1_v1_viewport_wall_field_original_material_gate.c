@@ -3,6 +3,7 @@
 
 #include "asset_loader_m11.h"
 #include "dm1_v1_viewport_wall_field_material_pc34_compat.h"
+#include "firestaff_zip_extract.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,39 +15,19 @@ enum { kMaterialCount = 4 };
  * (C259 + 1 * 2 + native offset 0); F0113 field C076 and mask C070. */
 static const int kGraphics[kMaterialCount] = { 106, 261, 76, 70 };
 
-static const char* data_path(const char* filename, char buffer[1024])
+static unsigned char* read_dungeon_archive(int* outSize)
 {
-    const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
-    const char* home;
-    if (root && root[0]) {
-        snprintf(buffer, 1024, "%s/%s", root, filename);
-        return buffer;
-    }
-    home = getenv("HOME");
-    if (!home || !home[0]) return 0;
-    snprintf(buffer, 1024, "%s/.firestaff/data/dm1/%s", home, filename);
-    return buffer;
-}
-
-static unsigned char* read_file(const char* path, int* outSize)
-{
-    FILE* file;
-    long size;
-    unsigned char* bytes;
+    const char* archive = getenv("FIRESTAFF_DM1_DOS_PC34_ARCHIVE");
+    size_t size = 0u;
+    uint8_t* bytes = NULL;
     if (outSize) *outSize = 0;
-    if (!path || !(file = fopen(path, "rb"))) return 0;
-    if (fseek(file, 0, SEEK_END) != 0 || (size = ftell(file)) <= 0 ||
-        size > 0x7fffffffL || fseek(file, 0, SEEK_SET) != 0) {
-        fclose(file);
-        return 0;
-    }
-    bytes = (unsigned char*)malloc((size_t)size);
-    if (!bytes || fread(bytes, 1, (size_t)size, file) != (size_t)size) {
+    if (!archive || !archive[0] ||
+        firestaff_zip_extract_by_suffix(archive, "DATA/DUNGEON.DAT",
+                                        &bytes, &size) != 0 ||
+        !bytes || size == 0u || size > 0x7fffffffu) {
         free(bytes);
-        fclose(file);
-        return 0;
+        return NULL;
     }
-    fclose(file);
     if (outSize) *outSize = (int)size;
     return bytes;
 }
@@ -62,8 +43,8 @@ static int find_visible_open_teleporter(const unsigned char* bytes, int count)
 
 int main(void)
 {
-    char graphicsPath[1024];
-    char dungeonPath[1024];
+    char graphicsPath[2048];
+    const char* archive = getenv("FIRESTAFF_DM1_DOS_PC34_ARCHIVE");
     M11_AssetLoader loader;
     DM1_V1_FloorFeatureSourceMaterialPc34 materials[kMaterialCount];
     DM1_ViewportLaneVisibilityReceiptPc34 visibility;
@@ -81,17 +62,17 @@ int main(void)
     int teleporterOffset;
     int i;
 
-    if (!data_path("GRAPHICS.DAT", graphicsPath) ||
-        !data_path("DUNGEON.DAT", dungeonPath)) return 0;
-    dungeon = read_file(dungeonPath, &dungeonSize);
+    if (!archive || !archive[0]) {
+        puts("SKIP: FIRESTAFF_DM1_DOS_PC34_ARCHIVE is not selected");
+        return 77;
+    }
+    snprintf(graphicsPath, sizeof(graphicsPath), "%s::DATA/GRAPHICS.DAT",
+             archive);
+    dungeon = read_dungeon_archive(&dungeonSize);
     if (!dungeon || !M11_AssetLoader_Init(&loader, graphicsPath)) {
         free(dungeon);
-        if (getenv("FIRESTAFF_DM1_DATA_DIR")) {
-            fputs("configured PC34 data is unavailable\n", stderr);
-            return 1;
-        }
-        puts("SKIP: PC34 GRAPHICS.DAT/DUNGEON.DAT not installed");
-        return 0;
+        fputs("original PC34 ZIP GRAPHICS.DAT/DUNGEON.DAT is unavailable\n", stderr);
+        return 1;
     }
     memset(materials, 0, sizeof(materials));
     for (i = 0; i < kMaterialCount; ++i) {
@@ -148,7 +129,7 @@ int main(void)
     }
     M11_AssetLoader_Shutdown(&loader);
     free(dungeon);
-    puts("ok: real PC34 wall/ornament/field material, palette and draw-order gate");
+    puts("ok: original PC34 ZIP wall/ornament/field material, palette and draw-order gate");
     return 0;
 fail:
     M11_AssetLoader_Shutdown(&loader);
