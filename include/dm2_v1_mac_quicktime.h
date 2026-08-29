@@ -48,5 +48,9 @@ int dm2_v1_mac_quicktime_video_sample(const uint8_t *movie_bytes, size_t movie_s
 int dm2_v1_mac_quicktime_audio_sample(const uint8_t *movie_bytes, size_t movie_size,
                                       uint32_t sample_index,
                                       DM2_V1_MacQuickTimeSample *out_sample);
+/* Materializes only source offsets for a validated audio track.  The caller
+ * owns `out_offsets`; no media data is copied or extracted. */
+int dm2_v1_mac_quicktime_audio_offsets(const uint8_t *movie_bytes, size_t movie_size,
+                                       size_t *out_offsets, uint32_t offset_count);
 
 #endif

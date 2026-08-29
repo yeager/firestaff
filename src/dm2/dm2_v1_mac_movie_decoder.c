@@ -6,7 +6,13 @@
 #include <string.h>
 #include <limits.h>
 
-#if defined(FIRESTAFF_HAVE_FFMPEG)
+typedef struct {
+    uint8_t v4[256][12];
+    uint8_t v1[256][12];
+    uint16_t x1, y1, x2, y2;
+} MacMovieCvidStrip;
+
+#if 0 /* The native reader below is the only supported runtime decoder. */
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/imgutils.h>
@@ -333,16 +339,24 @@ typedef struct {
     size_t size;
     DM2_V1_MacQuickTimeInfo info;
     uint16_t rgb555[320u * 200u];
+    uint8_t rgb[320u * 200u][3u];
+    MacMovieCvidStrip cvid[32];
     int16_t *audio_samples;
     int audio_sample_count;
     int audio_rate_hz;
     uint32_t video_index;
     uint32_t audio_index;
+    size_t *audio_offsets;
 } MacMovieNative;
 
 static uint16_t mac_movie_be16(const uint8_t *p)
 {
     return (uint16_t)(((uint16_t)p[0] << 8) | p[1]);
+}
+
+static uint32_t mac_movie_be24(const uint8_t *p)
+{
+    return ((uint32_t)p[0] << 16) | ((uint32_t)p[1] << 8) | p[2];
 }
 
 static uint8_t mac_movie_rgb555_to_rgb332(uint16_t pixel)
@@ -428,35 +442,205 @@ static int mac_movie_native_rle16(MacMovieNative *impl,
     return 1;
 }
 
+static uint8_t mac_movie_clip_u8(int value)
+{
+    return (uint8_t)(value < 0 ? 0 : value > 255 ? 255 : value);
+}
+
+static int mac_movie_cvid_codebook(uint8_t book[256][12], unsigned id,
+                                    const uint8_t *p, size_t size)
+{
+    const uint8_t *end = p + size;
+    uint32_t flags = 0u, mask = 0u;
+    unsigned i;
+    const unsigned n = (id & 4u) ? 4u : 6u;
+    for (i = 0u; i < 256u; ++i) {
+        unsigned k;
+        if ((id & 1u) && !(mask >>= 1)) {
+            if ((size_t)(end - p) < 4u) return 1;
+            flags = ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
+                    ((uint32_t)p[2] << 8) | p[3];
+            p += 4u; mask = UINT32_C(0x80000000);
+        }
+        if (!(id & 1u) || (flags & mask)) {
+            uint8_t y[4];
+            /* The retail title's first V4 table contains 255 full entries;
+             * its final unused slot is intentionally absent.  Preserve the
+             * already-authenticated entries rather than inventing the 256th. */
+            if ((size_t)(end - p) < n) return 1;
+            for (k = 0u; k < 4u; ++k) y[k] = *p++;
+            if (n == 6u) {
+                int u = (int8_t)*p++, v = (int8_t)*p++;
+                for (k = 0u; k < 4u; ++k) {
+                    book[i][k * 3u + 0u] = mac_movie_clip_u8((int)y[k] + v * 2);
+                    book[i][k * 3u + 1u] = mac_movie_clip_u8((int)y[k] - u / 2 - v);
+                    book[i][k * 3u + 2u] = mac_movie_clip_u8((int)y[k] + u * 2);
+                }
+            } else {
+                for (k = 0u; k < 4u; ++k)
+                    book[i][k * 3u] = book[i][k * 3u + 1u] =
+                        book[i][k * 3u + 2u] = y[k];
+            }
+        }
+    }
+    return 1;
+}
+
+static void mac_movie_cvid_copy_rgb(MacMovieNative *impl, unsigned x, unsigned y,
+                                    const uint8_t colour[3])
+{
+    if (x < 320u && y < 200u)
+        memcpy(impl->rgb[(size_t)y * 320u + x], colour, 3u);
+}
+
+static void mac_movie_cvid_v1(MacMovieNative *impl, unsigned x, unsigned y,
+                              const uint8_t v[12])
+{
+    unsigned yy, xx;
+    for (yy = 0u; yy < 4u; ++yy)
+        for (xx = 0u; xx < 4u; ++xx)
+            mac_movie_cvid_copy_rgb(impl, x + xx, y + yy,
+                                    v + (((yy >> 1) * 2u + (xx >> 1)) * 3u));
+}
+
+static void mac_movie_cvid_v4(MacMovieNative *impl, unsigned x, unsigned y,
+                              const uint8_t a[12], const uint8_t b[12],
+                              const uint8_t c[12], const uint8_t d[12])
+{
+    const uint8_t *book[4] = { a, b, c, d };
+    unsigned quadrant, yy, xx;
+    for (quadrant = 0u; quadrant < 4u; ++quadrant) {
+        unsigned base_x = x + (quadrant & 1u) * 2u;
+        unsigned base_y = y + (quadrant >> 1) * 2u;
+        for (yy = 0u; yy < 2u; ++yy)
+            for (xx = 0u; xx < 2u; ++xx)
+                mac_movie_cvid_copy_rgb(impl, base_x + xx, base_y + yy,
+                                        book[quadrant] + (yy * 2u + xx) * 3u);
+    }
+}
+
+static int mac_movie_cvid_vectors(MacMovieNative *impl, MacMovieCvidStrip *strip,
+                                   unsigned id, const uint8_t *p, size_t size)
+{
+    const uint8_t *end = p + size;
+    uint32_t flags = 0u, mask = 0u;
+    unsigned y, x;
+    if (!impl || !strip || strip->x2 > 320u || strip->y2 > 200u ||
+        strip->x1 >= strip->x2 || strip->y1 >= strip->y2) return 0;
+    for (y = strip->y1; y < strip->y2; y += 4u) {
+        for (x = strip->x1; x < strip->x2; x += 4u) {
+            if ((id & 1u) && !(mask >>= 1)) {
+                if ((size_t)(end - p) < 4u) return 0;
+                flags = ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
+                        ((uint32_t)p[2] << 8) | p[3];
+                p += 4u; mask = UINT32_C(0x80000000);
+            }
+            if (!(id & 1u) || (flags & mask)) {
+                if (!(id & 2u) && !(mask >>= 1)) {
+                    if ((size_t)(end - p) < 4u) return 0;
+                    flags = ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
+                            ((uint32_t)p[2] << 8) | p[3];
+                    p += 4u; mask = UINT32_C(0x80000000);
+                }
+                if ((id & 2u) || (~flags & mask)) {
+                    if (p >= end) return 0;
+                    mac_movie_cvid_v1(impl, x, y, strip->v1[*p++]);
+                } else {
+                    if ((size_t)(end - p) < 4u) return 0;
+                    mac_movie_cvid_v4(impl, x, y, strip->v4[p[0]], strip->v4[p[1]],
+                                       strip->v4[p[2]], strip->v4[p[3]]);
+                    p += 4u;
+                }
+            }
+        }
+    }
+    return 1;
+}
+
+static int mac_movie_native_cvid(MacMovieNative *impl,
+                                 const DM2_V1_MacQuickTimeSample *sample)
+{
+    const uint8_t *p, *end;
+    unsigned strips, index, prior_y = 0u;
+    if (!impl || !sample || sample->sample_size < 10u) return 0;
+    p = sample->sample_data; end = p + sample->sample_size;
+    if (mac_movie_be24(p + 1u) > sample->sample_size ||
+        mac_movie_be16(p + 4u) != 320u || mac_movie_be16(p + 6u) != 200u) return 0;
+    strips = mac_movie_be16(p + 8u);
+    if (!strips || strips > 32u) return 0;
+    p += 10u;
+    for (index = 0u; index < strips; ++index) {
+        MacMovieCvidStrip *strip = &impl->cvid[index];
+        size_t strip_size, payload_size;
+        if ((size_t)(end - p) < 12u) return 0;
+        strip_size = mac_movie_be24(p + 1u);
+        if (strip_size < 12u || strip_size > (size_t)(end - p)) return 0;
+        strip->y1 = mac_movie_be16(p + 4u);
+        strip->x1 = mac_movie_be16(p + 6u);
+        strip->y2 = mac_movie_be16(p + 8u);
+        strip->x2 = mac_movie_be16(p + 10u);
+        if (strip->y1 == 0u) strip->y2 += (strip->y1 = (uint16_t)prior_y);
+        prior_y = strip->y2;
+        if (index > 0u && !(sample->sample_data[0] & 1u)) {
+            memcpy(strip->v4, impl->cvid[index - 1u].v4, sizeof(strip->v4));
+            memcpy(strip->v1, impl->cvid[index - 1u].v1, sizeof(strip->v1));
+        }
+        p += 12u; payload_size = strip_size - 12u;
+        {
+            const uint8_t *part_end = p + payload_size;
+            while ((size_t)(part_end - p) >= 4u) {
+                unsigned id = p[0];
+                size_t chunk_size = mac_movie_be24(p + 1u);
+                if (chunk_size < 4u || chunk_size > (size_t)(part_end - p)) return 0;
+                p += 4u; chunk_size -= 4u;
+                if (id == 0x20u || id == 0x21u || id == 0x24u || id == 0x25u) {
+                    if (!mac_movie_cvid_codebook(strip->v4, id, p, chunk_size)) return 0;
+                } else if (id == 0x22u || id == 0x23u || id == 0x26u || id == 0x27u) {
+                    if (!mac_movie_cvid_codebook(strip->v1, id, p, chunk_size)) return 0;
+                } else if (id == 0x30u || id == 0x31u || id == 0x32u) {
+                    if (!mac_movie_cvid_vectors(impl, strip, id, p, chunk_size)) return 0;
+                    p += chunk_size;
+                    break;
+                }
+                p += chunk_size;
+            }
+            if (p != part_end) return 0;
+        }
+    }
+    return 1;
+}
+
 static int mac_movie_native_audio(MacMovieNative *impl, uint64_t frame_end_us)
 {
     size_t count = 0u, capacity = 0u;
     int16_t *samples;
     if (!impl) return 0;
-    if (impl->info.audio_codec_fourcc != UINT32_C(0x72617720) ||
+    if (!(impl->info.audio_codec_fourcc == UINT32_C(0x72617720) ||
+          impl->info.audio_codec_fourcc == UINT32_C(0x74776f73)) ||
         impl->info.audio_channels != 1u || impl->info.audio_sample_size_bits != 8u)
         return 1;
     while (impl->audio_index < impl->info.audio_sample_count) {
-        DM2_V1_MacQuickTimeSample sample;
         uint64_t next_end_us = ((uint64_t)(impl->audio_index + 1u) *
                                 UINT64_C(1000000) * impl->info.audio_first_sample_duration) /
                                impl->info.audio_time_scale;
-        size_t i;
+        uint8_t source_byte;
         if (next_end_us > frame_end_us && count != 0u) break;
-        if (!dm2_v1_mac_quicktime_audio_sample(impl->bytes, impl->size,
-                                                impl->audio_index++, &sample) ||
-            !sample.sample_size || sample.sample_size > 1000000u - count) return 0;
-        if (count + sample.sample_size > capacity) {
+        if (!impl->audio_offsets || impl->audio_index >= impl->info.audio_sample_count ||
+            count >= 1000000u) return 0;
+        source_byte = impl->bytes[impl->audio_offsets[impl->audio_index++]];
+        if (count + 1u > capacity) {
             capacity = capacity ? capacity : 2048u;
-            while (capacity < count + sample.sample_size) capacity *= 2u;
+            while (capacity < count + 1u) capacity *= 2u;
             samples = (int16_t *)realloc(impl->audio_samples,
                                          capacity * sizeof(*samples));
             if (!samples) return 0;
             impl->audio_samples = samples;
         }
-        for (i = 0u; i < sample.sample_size; ++i)
-            impl->audio_samples[count++] =
-                (int16_t)(((int)sample.sample_data[i] - 128) << 8);
+        {
+            int value = impl->info.audio_codec_fourcc == UINT32_C(0x74776f73)
+                            ? (int)(int8_t)source_byte : (int)source_byte - 128;
+            impl->audio_samples[count++] = (int16_t)(value << 8);
+        }
         if (next_end_us > frame_end_us) break;
     }
     if (count > INT_MAX) return 0;
@@ -478,8 +662,11 @@ int dm2_v1_mac_movie_decoder_open(DM2_V1_MacMovieDecoder *decoder,
     impl->bytes = movie_bytes;
     impl->size = movie_size;
     if (!dm2_v1_mac_quicktime_inspect(movie_bytes, movie_size, &impl->info) ||
-        impl->info.video_codec_fourcc != UINT32_C(0x726c6520) ||
-        impl->info.video_depth_bits != 16u || impl->info.width != 320u ||
+        !((impl->info.video_codec_fourcc == UINT32_C(0x726c6520) &&
+           impl->info.video_depth_bits == 16u) ||
+          (impl->info.video_codec_fourcc == UINT32_C(0x63766964) &&
+           impl->info.video_depth_bits == 24u)) ||
+        impl->info.width != 320u ||
         impl->info.height != 200u) {
         free(impl);
         decoder->rejected = 1;
@@ -489,6 +676,16 @@ int dm2_v1_mac_movie_decoder_open(DM2_V1_MacMovieDecoder *decoder,
     decoder->width = 320;
     decoder->height = 200;
     mac_movie_native_palette(decoder->palette_rgb6);
+    if (impl->info.audio_sample_count == 0u ||
+        !(impl->audio_offsets = (size_t *)malloc((size_t)impl->info.audio_sample_count *
+                                                  sizeof(*impl->audio_offsets))) ||
+        !dm2_v1_mac_quicktime_audio_offsets(movie_bytes, movie_size,
+                                             impl->audio_offsets,
+                                             impl->info.audio_sample_count)) {
+        dm2_v1_mac_movie_decoder_close(decoder);
+        decoder->rejected = 1;
+        return 0;
+    }
     return 1;
 }
 int dm2_v1_mac_movie_decoder_next(DM2_V1_MacMovieDecoder *decoder)
@@ -500,15 +697,23 @@ int dm2_v1_mac_movie_decoder_next(DM2_V1_MacMovieDecoder *decoder)
         impl->video_index >= impl->info.video_sample_count) return 0;
     if (!dm2_v1_mac_quicktime_video_sample(impl->bytes, impl->size,
                                             impl->video_index, &sample) ||
-        !mac_movie_native_rle16(impl, &sample) ||
+        !(impl->info.video_codec_fourcc == UINT32_C(0x726c6520)
+              ? mac_movie_native_rle16(impl, &sample)
+              : mac_movie_native_cvid(impl, &sample)) ||
         !mac_movie_native_audio(impl, ((uint64_t)(impl->video_index + 1u) *
                                        UINT64_C(1000000) * impl->info.video_first_sample_duration) /
                                       impl->info.video_time_scale)) {
         decoder->rejected = 1;
         return 0;
     }
-    for (i = 0u; i < 320u * 200u; ++i)
-        decoder->pixels[i] = mac_movie_rgb555_to_rgb332(impl->rgb555[i]);
+    for (i = 0u; i < 320u * 200u; ++i) {
+        if (impl->info.video_codec_fourcc == UINT32_C(0x726c6520))
+            decoder->pixels[i] = mac_movie_rgb555_to_rgb332(impl->rgb555[i]);
+        else
+            decoder->pixels[i] = (uint8_t)((impl->rgb[i][0] & 0xe0u) |
+                                           ((impl->rgb[i][1] & 0xe0u) >> 3) |
+                                           (impl->rgb[i][2] >> 6));
+    }
     decoder->presentation_time_us = (uint64_t)impl->video_index *
         UINT64_C(1000000) * impl->info.video_first_sample_duration /
         impl->info.video_time_scale;
@@ -544,6 +749,7 @@ void dm2_v1_mac_movie_decoder_close(DM2_V1_MacMovieDecoder *decoder)
     MacMovieNative *impl;
     if (!decoder || !(impl = (MacMovieNative *)decoder->opaque)) return;
     free(impl->audio_samples);
+    free(impl->audio_offsets);
     free(impl);
     memset(decoder, 0, sizeof(*decoder));
 }

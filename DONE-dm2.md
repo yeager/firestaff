@@ -32,6 +32,19 @@ Reviewed 2026-08-29. Completed work only.
   16-bit QuickTime Animation (`rle `) samples and `raw ` PCM packets are read
   directly from the admitted sample spans. Twelve authentic consecutive frames
   and their timing/audio handoff pass from the packed retail ZIP in RAM.
+- All four supplied retail Macintosh movies now decode natively in memory:
+  the 24-bit Cinepak (`cvid`) vector/codebook stream and signed `twos` PCM
+  used by `Title.MooV`, the 16-bit Animation RLE/`raw ` lane in `Swoosh.MooV`,
+  and Cinepak/`raw ` for `Credits.MooV` and `Ending.MooV`. The full authentic
+  four-movie regression advances twelve frames from every stream with source
+  timing and audio; the old FFmpeg configuration is no longer part of the
+  Firestaff build or runtime.
+- The M11 real-media route now drives the verified native Title film to its
+  source completion, opens and closes Credits through its authentic input
+  event, then enters the retained GAME_LOAD candidate. It must click the
+  original 224×136 mirror viewport before the source DB3 mirror selection
+  publishes the New Game STARTEND session; this preserves the two-stage
+  source sequence instead of treating Enter as a synthetic champion choice.
 - The real DOS English/French, Amiga, FM Towns, and Macintosh startup tests now
   each exercise the ordinary start-menu handoff separately from boot-probe
   mode. `FIRESTAFF_FAIL_IF_NO_LAUNCH` and `FIRESTAFF_EXIT_AFTER_LAUNCH` make a

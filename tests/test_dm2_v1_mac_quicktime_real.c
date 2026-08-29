@@ -69,9 +69,10 @@ int main(void)
             dm2_v1_mac_media_free(&media);
             return 1;
         }
-        printf("PASS: authentic Mac MooV %u: video=%08x/%ubpp audio=%08x frames=%u\n",
+        printf("PASS: authentic Mac MooV %u: video=%08x/%ubpp audio=%08x/%uch/%ubpp frames=%u audio-packets=%u\n",
                index, info.video_codec_fourcc, info.video_depth_bits,
-               info.audio_codec_fourcc, info.video_sample_count);
+               info.audio_codec_fourcc, info.audio_channels, info.audio_sample_size_bits,
+               info.video_sample_count, info.audio_sample_count);
         dm2_v1_mac_movie_view_free(&view);
     }
     dm2_v1_mac_media_free(&media);

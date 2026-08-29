@@ -4552,19 +4552,6 @@ if(PkgConfig_FOUND)
     pkg_check_modules(VORBISFILE QUIET IMPORTED_TARGET vorbisfile)
 endif()
 
-# DM2 Macintosh MooV playback is source-bound to the original QuickTime view.
-# Use FFmpeg only as an in-memory decoder; no converted movie is written to
-# the data directory. Keep the feature optional so non-Mac/CI builds remain
-# fail-closed instead of acquiring an undeclared runtime dependency.
-set(FIRESTAFF_FFMPEG_TARGET "")
-if(PkgConfig_FOUND)
-    pkg_check_modules(FIRESTAFF_FFMPEG QUIET IMPORTED_TARGET
-        libavformat libavcodec libswscale libswresample libavutil)
-    if(TARGET PkgConfig::FIRESTAFF_FFMPEG)
-        set(FIRESTAFF_FFMPEG_TARGET PkgConfig::FIRESTAFF_FFMPEG)
-    endif()
-endif()
-
 # ── Python discovery for source-shape/evidence gates ───────────────
 find_package(Python3 COMPONENTS Interpreter QUIET)
 
@@ -6945,10 +6932,6 @@ if(DM2_SOURCES)
     # dm2_v1_sound_sdl_backend.c (DM2-008 cycle 16) is the concrete SDL3
     # playback backend; propagate SDL3 headers/symbols to every consumer.
     target_link_libraries(firestaff_dm2 PUBLIC firestaff_m10 SDL3::SDL3 m)
-    if(FIRESTAFF_FFMPEG_TARGET)
-        target_compile_definitions(firestaff_dm2 PUBLIC FIRESTAFF_HAVE_FFMPEG=1)
-        target_link_libraries(firestaff_dm2 PUBLIC ${FIRESTAFF_FFMPEG_TARGET})
-    endif()
     if(APPLE)
         # dm2_v1_midi_backend.c uses the native CoreMIDI queue directly.
         # Keep the framework dependency on its owning library so the app and
@@ -7426,10 +7409,6 @@ list(REMOVE_ITEM M11_SOURCES
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
 target_include_directories(firestaff_m11 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(firestaff_m11 PUBLIC firestaff_nexus firestaff_v2 firestaff_m10 firestaff_theron firestaff_retroachievements SDL3::SDL3 m)
-if(FIRESTAFF_FFMPEG_TARGET)
-    target_compile_definitions(firestaff_m11 PRIVATE FIRESTAFF_HAVE_FFMPEG=1)
-    target_link_libraries(firestaff_m11 PUBLIC ${FIRESTAFF_FFMPEG_TARGET})
-endif()
 # main_loop_m11.c + m11_game_view.c reference M12_* startup-menu and
 # config helpers that live in firestaff_m12.a. Expose that link
 # requirement through firestaff_m11's PUBLIC interface so every

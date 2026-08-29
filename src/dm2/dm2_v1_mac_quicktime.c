@@ -272,3 +272,46 @@ int dm2_v1_mac_quicktime_audio_sample(const uint8_t *movie_bytes, size_t movie_s
     return qt_find_tracks(movie_bytes, movie_size, &video, &audio) &&
            qt_sample(&audio, sample_index, movie_bytes, movie_size, out_sample);
 }
+
+int dm2_v1_mac_quicktime_audio_offsets(const uint8_t *movie_bytes, size_t movie_size,
+                                       size_t *out_offsets, uint32_t offset_count)
+{
+    QtTrack video, track;
+    const uint8_t *sizes, *stsc, *stco;
+    size_t sizes_size, stsc_size, stco_size;
+    uint32_t default_size, chunk_count, stsc_count, sample = 0u, chunk;
+    if (!out_offsets || !qt_find_tracks(movie_bytes, movie_size, &video, &track) ||
+        offset_count != track.sample_count ||
+        !qt_payload(track.stsz, track.stsz_size, &sizes, &sizes_size) ||
+        !qt_payload(track.stsc, track.stsc_size, &stsc, &stsc_size) ||
+        !qt_payload(track.stco, track.stco_size, &stco, &stco_size) ||
+        sizes_size < 12u || stsc_size < 8u || stco_size < 8u) return 0;
+    default_size = be32(sizes + 4u);
+    if (!default_size && sizes_size < 12u + (size_t)track.sample_count * 4u) return 0;
+    stsc_count = be32(stsc + 4u); chunk_count = be32(stco + 4u);
+    if (!stsc_count || stsc_size < 8u + (size_t)stsc_count * 12u ||
+        (memcmp(track.stco + 4u, "stco", 4u) == 0
+            ? stco_size < 8u + (size_t)chunk_count * 4u
+            : stco_size < 8u + (size_t)chunk_count * 8u)) return 0;
+    for (chunk = 1u; chunk <= chunk_count; ++chunk) {
+        uint32_t entry = 0u, e, samples_per_chunk;
+        uint64_t offset;
+        for (e = 0u; e < stsc_count; ++e) {
+            if (be32(stsc + 8u + (size_t)e * 12u) > chunk) break;
+            entry = e;
+        }
+        samples_per_chunk = be32(stsc + 8u + (size_t)entry * 12u + 4u);
+        if (!samples_per_chunk || sample > UINT32_MAX - samples_per_chunk) return 0;
+        offset = memcmp(track.stco + 4u, "stco", 4u) == 0
+                     ? be32(stco + 8u + (size_t)(chunk - 1u) * 4u)
+                     : be64(stco + 8u + (size_t)(chunk - 1u) * 8u);
+        for (uint32_t within = 0u; within < samples_per_chunk && sample < track.sample_count;
+             ++within, ++sample) {
+            uint32_t sample_size = default_size ? default_size : be32(sizes + 12u + (size_t)sample * 4u);
+            if (offset > movie_size || sample_size > movie_size - (size_t)offset) return 0;
+            out_offsets[sample] = (size_t)offset;
+            offset += sample_size;
+        }
+    }
+    return sample == track.sample_count;
+}

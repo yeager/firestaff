@@ -96,6 +96,13 @@ int main(void)
             (DM2_V1_BootProfile *)state.dm2BootProfile, &menu) ||
         !menu.valid ||
         M11_GameView_HandleInput(&state, M12_MENU_INPUT_ACCEPT) ==
+            M11_GAME_INPUT_IGNORED || !state.dm2State.startup_menu_active ||
+        !dm2_v1_boot_prepared_new_game_world_readonly(
+            (DM2_V1_BootProfile *)state.dm2BootProfile) ||
+        /* The source GAME_LOAD path first publishes a private mirror
+         * selection view. A click in its original 224x136 viewport is what
+         * selects the actual DB3 mirror and permits the session handoff. */
+        M11_GameView_HandlePointer(&state, 112, 100, 1) ==
             M11_GAME_INPUT_IGNORED || state.dm2State.startup_menu_active ||
         !state.dm2State.level_loaded ||
         !((DM2_V1_BootProfile *)state.dm2BootProfile)
