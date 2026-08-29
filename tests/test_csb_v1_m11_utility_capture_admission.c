@@ -84,7 +84,7 @@ static int advance_to_utility_wait(M11_GameViewState *view)
 int main(void)
 {
     const char *data_dir = getenv("FIRESTAFF_CSB_DATA_DIR");
-    char import_template[] = "/tmp/firestaff-csb-utility-XXXXXX";
+    char import_template[] = "firestaff-csb-utility-XXXXXX";
     unsigned char framebuffer[320 * 200];
     CSB_V1_StartupRuntimeAssetSession_PC34 *session;
     M11_GameLaunchSpec spec;

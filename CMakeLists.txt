@@ -70,6 +70,8 @@ target_include_directories(test_csb_v1_startup_package_identity_pc34 PRIVATE
 target_link_libraries(test_csb_v1_startup_package_identity_pc34 PRIVATE firestaff_m11 firestaff_m10)
 add_test(NAME csb_v1_startup_package_identity_pc34
          COMMAND test_csb_v1_startup_package_identity_pc34)
+set_tests_properties(csb_v1_startup_package_identity_pc34 PROPERTIES
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 
 add_executable(test_nexus_v1_champion_plrd
     tests/test_nexus_v1_champion_plrd.c)
@@ -17537,6 +17539,8 @@ endif()
         NAME csb_v1_m11_utility_capture_admission
         COMMAND test_csb_v1_m11_utility_capture_admission
     )
+    set_tests_properties(csb_v1_m11_utility_capture_admission PROPERTIES
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 
     add_executable(test_csb_v1_m11_prison_runtime_hud_pc34
         tests/test_csb_v1_m11_prison_runtime_hud_pc34.c

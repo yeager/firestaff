@@ -33,7 +33,7 @@ static void test_native_f0435_provenance(void)
         puts("SKIP: F0435 provenance requires a scanned real CSB PC 3.4 pair");
         return;
     }
-    snprintf(save_path, sizeof(save_path), "/tmp/firestaff-csb-f0435-%ld.fsav",
+    snprintf(save_path, sizeof(save_path), "firestaff-csb-f0435-%ld.fsav",
              (long)getpid());
     CHECK(csb_v1_boot_enter_game(&profile) == 0);
     CHECK(csb_v1_boot_runtime_save_game_to_path_pc34(
@@ -126,7 +126,7 @@ static void test_startup_receipt_clears_graphics_md5_drift(void)
     CSB_V1_StartupRealReceipt receipt;
 
     CHECK(csb_v1_startup_real_receipt_from_profile_fields(
-              "/tmp", "/tmp/GRAPHICS.DAT", "/tmp/DUNGEON.DAT",
+              "fixture-root", "fixture-root/GRAPHICS.DAT", "fixture-root/DUNGEON.DAT",
               "61fbfd56887c94adc26888a9491c6611",
               "6695d2acebce49f95db1d8f3a5c733de", 123u, 456u,
               CSB_V1_VARIANT_PC34_EN, CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS, 4,
@@ -141,7 +141,7 @@ static void test_startup_receipt_dungeon_drift_requires_reissue(void)
     CSB_V1_StartupRealReceipt receipt;
 
     CHECK(csb_v1_startup_real_receipt_from_profile_fields(
-              "/tmp", "/tmp/GRAPHICS.DAT", "/tmp/DUNGEON.DAT",
+              "fixture-root", "fixture-root/GRAPHICS.DAT", "fixture-root/DUNGEON.DAT",
               "61fbfd56887c94adc26888a9491c6611",
               "6695d2acebce49f95db1d8f3a5c733de", 123u, 456u,
               CSB_V1_VARIANT_PC34_EN, CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS, 4,
@@ -152,7 +152,7 @@ static void test_startup_receipt_dungeon_drift_requires_reissue(void)
     receipt.dungeon_md5[0] = '6';
     CHECK(!csb_v1_startup_real_receipt_recompute_hash(&receipt));
     CHECK(csb_v1_startup_real_receipt_from_profile_fields(
-              "/tmp", "/tmp/GRAPHICS.DAT", "/tmp/DUNGEON.DAT",
+              "fixture-root", "fixture-root/GRAPHICS.DAT", "fixture-root/DUNGEON.DAT",
               "61fbfd56887c94adc26888a9491c6611",
               "6695d2acebce49f95db1d8f3a5c733de", 123u, 456u,
               CSB_V1_VARIANT_PC34_EN, CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS, 4,
