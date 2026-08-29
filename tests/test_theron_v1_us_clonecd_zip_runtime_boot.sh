@@ -74,6 +74,27 @@ assert_card_launch 'Original card authentic CloneCD ZIP' \
 assert_card_launch 'Modern card authentic CloneCD ZIP' \
     'key:enter,key:enter,key:down,key:enter'
 
+# Theron's card is in the second main-menu row.  Select it, its single PC
+# Engine platform card, and Original by mouse only.  Explicit launcher
+# dimensions make the physical click positions independent of CI defaults.
+mouse_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+    SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --width 1920 --height 1080 --menu --game theron --platform pce \
+    --data-dir "$archive" \
+    --script 'wait20,click:1173:728,wait20,click:410:405,wait20,click:450:405,wait20' \
+    --duration 3000 2>&1) || {
+        printf '%s\n' "$mouse_output" >&2
+        printf 'FAIL: mouse card flow did not launch the authentic CloneCD ZIP\n' >&2
+        exit 1
+    }
+if ! grep -Fq 'Verified Track 02 accepted:' <<<"$mouse_output" ||
+   ! grep -Fq '::@suffix=.img::slice@' <<<"$mouse_output" ||
+   grep -Fq 'deterministic fallback assets' <<<"$mouse_output"; then
+    printf '%s\n' "$mouse_output" >&2
+    printf 'FAIL: mouse card flow did not retain the verified Track 02 slice\n' >&2
+    exit 1
+fi
+
 assert_route 'boot-probe launcher selection authentic CloneCD ZIP' theron-startup-2 \
     env FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 "$app" \
     --menu --game theron --platform pce --data-dir "$archive" \
