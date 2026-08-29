@@ -100,6 +100,8 @@ typedef struct {
     int found;
     int valid;
     DM1_V1_AmigaGraphicsReceipt receipt;
+    uint8_t *bytes;
+    size_t size;
 } RealGraphicsReceipt;
 
 static int real_graphics_visitor(const char *name, const uint8_t *bytes,
@@ -111,6 +113,12 @@ static int real_graphics_visitor(const char *name, const uint8_t *bytes,
     result->found = 1;
     result->valid = dm1_v1_amiga_graphics_receipt(bytes, size,
                                                    &result->receipt) == 0;
+    if (result->valid) {
+        result->bytes = malloc(size);
+        if (!result->bytes) return -1;
+        memcpy(result->bytes, bytes, size);
+        result->size = size;
+    }
     return 0;
 }
 
@@ -163,6 +171,22 @@ static void test_real_amiga_v20_graphics_receipt(void) {
     CHECK(result.receipt.lang == DM1_AMIGA_LANG_EN, "real_graphics_lang_en");
     CHECK(result.receipt.version == DM1_AMIGA_VER_2_0,
           "real_graphics_version_v20");
+    {
+        uint8_t pixels[640u * 400u];
+        uint16_t width = 0u, height = 0u;
+        size_t index;
+        unsigned int nonzero = 0u;
+        CHECK(dm1_v1_amiga_graphics_decode(result.bytes, result.size, 0u,
+                                            pixels, sizeof(pixels),
+                                            &width, &height) == 1,
+              "real_item_000_decode");
+        CHECK(width > 0u && height > 0u && width <= 640u && height <= 400u,
+              "real_item_000_dimensions");
+        for (index = 0u; index < (size_t)width * height; ++index)
+            nonzero += pixels[index] != 0u;
+        CHECK(nonzero > 0u, "real_item_000_source_pixels");
+    }
+    free(result.bytes);
 }
 
 int main(void) {

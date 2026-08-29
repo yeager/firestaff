@@ -59590,6 +59590,7 @@ unset(_firestaff_csb_v2_verification_tests)
 add_executable(test_dm1_v1_amiga_graphics_dat
     tests/test_dm1_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
+    src/dm1/dm1_v1_legacy_graphics_dat.c
     src/shared/firestaff_amiga_adf.c
 )
 target_include_directories(test_dm1_v1_amiga_graphics_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

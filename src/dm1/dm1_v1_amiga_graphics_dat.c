@@ -1,4 +1,5 @@
 #include "dm1_v1_amiga_graphics_dat.h"
+#include "dm1_v1_legacy_graphics_dat.h"
 #include <string.h>
 
 static uint16_t rd16be(const uint8_t *p) {
@@ -166,4 +167,18 @@ int dm1_v1_amiga_graphics_receipt(const uint8_t *data, size_t size,
     }
 
     return 0;
+}
+
+int dm1_v1_amiga_graphics_decode(const uint8_t *data, size_t size,
+                                 uint16_t graphic_index,
+                                 uint8_t *indexed_pixels,
+                                 size_t pixel_capacity,
+                                 uint16_t *out_width,
+                                 uint16_t *out_height) {
+    if (out_width) *out_width = 0u;
+    if (out_height) *out_height = 0u;
+    if (!dm1_v1_amiga_graphics_probe(data, size)) return 0;
+    return dm1_v1_legacy_graphics_decode(data, size, 1, graphic_index,
+                                         indexed_pixels, pixel_capacity,
+                                         out_width, out_height);
 }

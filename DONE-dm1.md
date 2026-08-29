@@ -2,6 +2,10 @@
 
 Reviewed 2026-08-29. Completed work only.
 
+- The supplied Amiga 2.0 ZIP→ADF `graphics.dat` receipt now decodes an
+  authenticated big-endian IMG1 record into original 4-bit palette indices
+  in memory. The Amiga wrapper selects the legacy decoder's big-endian path
+  explicitly, preventing an FM Towns/PC byte-order fallback.
 - The supplied DM1 Amiga 2.0 preservation chain now has a direct real-media
   graphics-format receipt. `test_dm1_v1_amiga_graphics_dat` reads the
   selected ZIP → ZIP → ADF `graphics.dat` member in RAM through the native

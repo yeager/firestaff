@@ -60,6 +60,17 @@ int dm1_v1_amiga_graphics_probe(const uint8_t *data, size_t size);
 int dm1_v1_amiga_graphics_receipt(const uint8_t *data, size_t size,
                                   DM1_V1_AmigaGraphicsReceipt *out);
 
+/* Decode one source-owned Amiga IMG1 record. The Amiga legacy container is
+ * big-endian, so this wrapper prevents callers from accidentally selecting
+ * the FM Towns/PC byte order. The decoded pixels remain 4-bit palette
+ * indices; palette interpretation belongs to the original platform owner. */
+int dm1_v1_amiga_graphics_decode(const uint8_t *data, size_t size,
+                                 uint16_t graphic_index,
+                                 uint8_t *indexed_pixels,
+                                 size_t pixel_capacity,
+                                 uint16_t *out_width,
+                                 uint16_t *out_height);
+
 #ifdef __cplusplus
 }
 #endif
