@@ -19,7 +19,7 @@ to read supplied game media in memory and run it natively.
 | 7 | Complete DM2 retail save ownership | DM2 DOS, Amiga, FM Towns, Mac | Authentic `SKSAVE`/record-pool/relocation corpus, fail-closed parser and save/resume regression for every admitted platform. | **Blocked by missing saves** |
 | 8 | Extend DM2 retail gameplay receipts | DM2 DOS, Amiga, FM Towns, Mac | Real-media dialog/input ordering, AI/drop, audio and save/resume paths captured and natively regression-tested. | Partly actionable; corpus limited |
 | 9 | Prove DM1 FM Towns audio and input | DM1 FM Towns | BIN/CUE in-memory track selection, CD-audio timing receipts and FM Towns-specific input-route tests. The first real-CUE receipt is CTest-bound; track payload timing remains open. | Actionable with supplied media |
-| 10 | Prove DM1 Amiga planar presentation | DM1 Amiga | Original ADF-to-native planar image decode and representative pixel receipt; no PC-byte fallback. | Actionable with supplied media |
+| 10 | Prove DM1 Amiga planar presentation | DM1 Amiga | Original ADF-to-native planar image decode and representative pixel receipt; no PC-byte fallback. The real nested ADF `GRAPHICS.DAT` format/version receipt is CTest-bound; a rendered pixel receipt remains open. | Actionable with supplied media |
 
 ## Recently closed before this queue
 

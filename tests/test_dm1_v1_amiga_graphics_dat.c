@@ -1,4 +1,6 @@
 #include "dm1_v1_amiga_graphics_dat.h"
+#include "firestaff_amiga_adf.h"
+#include "firestaff_zip_extract.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -94,6 +96,75 @@ static void test_compressed_rejection(void) {
     free(buf);
 }
 
+typedef struct {
+    int found;
+    int valid;
+    DM1_V1_AmigaGraphicsReceipt receipt;
+} RealGraphicsReceipt;
+
+static int real_graphics_visitor(const char *name, const uint8_t *bytes,
+                                 size_t size, void *user_data) {
+    RealGraphicsReceipt *result = (RealGraphicsReceipt *)user_data;
+    if (!name || !bytes || !result || strcmp(name, "graphics.dat") != 0) {
+        return 1;
+    }
+    result->found = 1;
+    result->valid = dm1_v1_amiga_graphics_receipt(bytes, size,
+                                                   &result->receipt) == 0;
+    return 0;
+}
+
+/* The supplied Amiga 2.0 preservation package is ZIP -> ZIP -> ADF. Read
+ * its selected disk and GRAPHICS.DAT entirely in memory; no archive member
+ * is materialized to the filesystem. */
+static void test_real_amiga_v20_graphics_receipt(void) {
+    const char *archive = getenv("FIRESTAFF_DM1_AMIGA_V20_ARCHIVE");
+    uint8_t *inner = NULL;
+    uint8_t *adf = NULL;
+    size_t inner_size = 0U;
+    size_t adf_size = 0U;
+    FILE *stream;
+    RealGraphicsReceipt result;
+
+    if (!archive || !archive[0]) {
+        printf("SKIP real_amiga_v20_graphics: archive not configured\n");
+        return;
+    }
+    stream = fopen(archive, "rb");
+    if (!stream) {
+        printf("SKIP real_amiga_v20_graphics: archive unavailable\n");
+        return;
+    }
+    fclose(stream);
+
+    memset(&result, 0, sizeof(result));
+    CHECK(firestaff_zip_extract_by_suffix(
+              archive, "Dungeon Master v2.0 (1988)(FTL).zip", &inner,
+              &inner_size) == 0,
+          "real_outer_zip_member");
+    if (!inner) return;
+    CHECK(firestaff_zip_extract_memory_by_suffix(
+              inner, inner_size, "Dungeon Master v2.0 (1988)(FTL).adf",
+              &adf, &adf_size) == 0,
+          "real_inner_adf_member");
+    free(inner);
+    if (!adf) return;
+    CHECK(firestaff_amiga_adf_visit_ofs_files(adf, adf_size,
+                                               real_graphics_visitor,
+                                               &result) >= 0,
+          "real_adf_visit");
+    free(adf);
+    CHECK(result.found == 1, "real_graphics_found");
+    CHECK(result.valid == 1, "real_graphics_receipt");
+    if (!result.valid) return;
+    CHECK(result.receipt.is_amiga == 1, "real_graphics_is_amiga");
+    CHECK(result.receipt.graphic_count == DM1_AMIGA_GRAPHICS_EXPECTED_COUNT,
+          "real_graphics_count");
+    CHECK(result.receipt.lang == DM1_AMIGA_LANG_EN, "real_graphics_lang_en");
+    CHECK(result.receipt.version == DM1_AMIGA_VER_2_0,
+          "real_graphics_version_v20");
+}
+
 int main(void) {
     test_null_rejection();
     test_small_rejection();
@@ -103,6 +174,7 @@ int main(void) {
     test_synthetic_valid();
     test_receipt_null();
     test_compressed_rejection();
+    test_real_amiga_v20_graphics_receipt();
     printf("dm1_v1_amiga_graphics_dat: %d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
 }

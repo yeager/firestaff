@@ -2,6 +2,12 @@
 
 Reviewed 2026-08-29. Completed work only.
 
+- The supplied DM1 Amiga 2.0 preservation chain now has a direct real-media
+  graphics-format receipt. `test_dm1_v1_amiga_graphics_dat` reads the
+  selected ZIP → ZIP → ADF `graphics.dat` member in RAM through the native
+  AmigaDOS OFS reader, validates the actual 575-entry Amiga layout, and
+  identifies it as the known English 2.0 format. It never copies game data
+  to disk. Rendering/pixel comparison remains separate active work.
 - The real Amiga ZIP → ZIP → ADF and Atari ZIP → ZIP → STX start-menu paths
   now publish their admitted source decoder (`IMG2` and `DMCSB1` respectively)
   only after the original graphics and dungeon pair have both bound.
