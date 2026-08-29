@@ -10,9 +10,9 @@
 
 static const char* graphics_path(char path[2048])
 {
-    const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
-    if (!root || !root[0]) return 0;
-    snprintf(path, 1024, "%s/GRAPHICS.DAT", root);
+    const char* archive = getenv("FIRESTAFF_DM1_DOS_PC34_ARCHIVE");
+    if (!archive || !archive[0]) return 0;
+    snprintf(path, 2048, "%s::DATA/GRAPHICS.DAT", archive);
     return path;
 }
 
@@ -43,9 +43,12 @@ int main(void)
     DM1_V1_F0342GlyphSourcePc34 glyph;
     DM1_V1_F0342ObjectDescriptionMaterialReceiptPc34 receipt;
 
-    if (!graphics_path(path)) return 0;
+    if (!graphics_path(path)) {
+        puts("SKIP: FIRESTAFF_DM1_DOS_PC34_ARCHIVE is not selected");
+        return 77;
+    }
     if (!M11_AssetLoader_Init(&loader, path)) {
-        fputs("configured PC34 GRAPHICS.DAT is unavailable\n", stderr);
+        fputs("original PC34 ZIP GRAPHICS.DAT is unavailable\n", stderr);
         return 1;
     }
     memset(surfaces, 0, sizeof(surfaces));
@@ -90,7 +93,7 @@ int main(void)
         goto fail;
     }
     M11_AssetLoader_Shutdown(&loader);
-    puts("ok: real PC34 F0342 object-description material gate");
+    puts("ok: original PC34 ZIP F0342 object-description material gate");
     return 0;
 fail:
     M11_AssetLoader_Shutdown(&loader);

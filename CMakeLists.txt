@@ -36752,6 +36752,10 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0344_f0658_hud_materia
     endif()
     add_test(NAME dm1_v1_f0344_f0658_hud_material_gate
              COMMAND test_dm1_v1_f0344_f0658_hud_material_gate)
+    set_tests_properties(dm1_v1_f0344_f0658_hud_material_gate PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+        LABELS "dm1;dos;pc34;hud;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0342_object_description_material_gate.c")
@@ -36768,6 +36772,10 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0342_object_descriptio
     endif()
     add_test(NAME dm1_v1_f0342_object_description_material_gate
              COMMAND test_dm1_v1_f0342_object_description_material_gate)
+    set_tests_properties(dm1_v1_f0342_object_description_material_gate PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+        LABELS "dm1;dos;pc34;hud;object-description;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0341_scroll_material_gate.c")
@@ -36785,7 +36793,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0341_scroll_material_g
     add_test(NAME dm1_v1_f0341_scroll_material_gate
              COMMAND test_dm1_v1_f0341_scroll_material_gate)
     set_tests_properties(dm1_v1_f0341_scroll_material_gate PROPERTIES
-        SKIP_RETURN_CODE 77)
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+        LABELS "dm1;dos;pc34;hud;scroll;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0351_stats_material_gate.c")
@@ -36827,7 +36837,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0355_inventory_materia
     endif()
     add_test(NAME dm1_v1_f0355_inventory_material_gate COMMAND test_dm1_v1_f0355_inventory_material_gate)
     set_tests_properties(dm1_v1_f0355_inventory_material_gate PROPERTIES
-        SKIP_RETURN_CODE 77)
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+        LABELS "dm1;dos;pc34;inventory;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0659_shield_material_gate.c")
