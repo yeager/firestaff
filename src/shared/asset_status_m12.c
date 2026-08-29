@@ -2,6 +2,14 @@
 #define _DEFAULT_SOURCE
 #endif
 
+/* This translation unit owns the launcher media-admission boundary.  A
+ * former development switch could revive an on-disk archive cache; reject it
+ * even for direct, non-CMake builds so original media remains the runtime
+ * owner in every Firestaff build. */
+#if defined(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
+#error "FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION is retired; use native in-memory media readers"
+#endif
+
 #include "asset_status_m12.h"
 #include "asset_find_by_hash.h"
 #include "dm2_v1_fmtowns_disc.h"

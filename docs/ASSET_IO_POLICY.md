@@ -10,10 +10,11 @@ The selected original remains the source of truth in its original form:
 - a failed packed-media reader fails closed and never falls back to a copied
   or synthetic game file.
 
-Extraction helpers that write files exist only for development and test
-fixtures. They are enabled by the test build or by the explicit
-`FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION` build definition; that definition is
-not part of the production application.
+Test fixtures may write their own generated inputs, but Firestaff itself has
+no game-media extraction mode. The former
+`FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION` switch is retired and fails CMake
+configuration (and direct compilation of the admission layer). A packed
+format without a native RAM reader is unsupported until such a reader exists.
 
 This distinction is important for preservation: an `asset-cache` entry is
 not an accepted runtime owner for original game data. Runtime metadata must

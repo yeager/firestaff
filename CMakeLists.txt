@@ -4554,11 +4554,15 @@ endif()
 # disables the bundled provider.
 option(FIRESTAFF_WITH_ZLIB "Enable zlib-backed ZIP/gzip inflate support" ON)
 option(FIRESTAFF_WITH_BUNDLED_ZLIB "Use bundled miniz for zlib-compatible inflate support" ON)
-# Development-only compatibility switch for the retired on-disk media cache.
-# Normal Firestaff builds must retain original archives/images as runtime
-# sources and read their selected members in memory.
+# Compatibility guard for the retired on-disk media cache.  It remains an
+# option only so stale presets fail clearly instead of silently changing the
+# runtime I/O policy.
 option(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION
-    "Enable development-only game-media cache materialization" OFF)
+    "Retired: game-media disk materialization is not supported" OFF)
+if(FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION)
+    message(FATAL_ERROR
+        "FIRESTAFF_DEVELOPMENT_MEDIA_EXTRACTION is retired: Firestaff must read original game media in memory and must never materialize it on disk.")
+endif()
 set(FIRESTAFF_ZLIB_TARGET "")
 set(FIRESTAFF_ZLIB_PROVIDER "")
 if(FIRESTAFF_WITH_ZLIB)
