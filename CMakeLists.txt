@@ -59037,6 +59037,7 @@ target_include_directories(test_dm2_v1_mve_presentation_owner PRIVATE ${CMAKE_CU
 target_link_libraries(test_dm2_v1_mve_presentation_owner PRIVATE firestaff_zip_extract)
 add_test(NAME test_dm2_v1_mve_presentation_owner COMMAND test_dm2_v1_mve_presentation_owner)
 set_tests_properties(test_dm2_v1_mve_presentation_owner PROPERTIES
+    SKIP_RETURN_CODE 77
     ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
     LABELS "dm2;dos;mve;presentation;real-media;in-memory")
 
@@ -59067,6 +59068,7 @@ target_include_directories(test_dm2_v1_mve_timeline PRIVATE ${CMAKE_CURRENT_SOUR
 target_link_libraries(test_dm2_v1_mve_timeline PRIVATE firestaff_zip_extract)
 add_test(NAME test_dm2_v1_mve_timeline COMMAND test_dm2_v1_mve_timeline)
 set_tests_properties(test_dm2_v1_mve_timeline PROPERTIES
+    SKIP_RETURN_CODE 77
     ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
     LABELS "dm2;dos;mve;timeline;real-media;in-memory")
 
@@ -59086,6 +59088,7 @@ target_include_directories(test_dm2_v1_mve_audio_sdl_owner PRIVATE ${CMAKE_CURRE
 target_link_libraries(test_dm2_v1_mve_audio_sdl_owner PRIVATE SDL3::SDL3 firestaff_zip_extract)
 add_test(NAME test_dm2_v1_mve_audio_sdl_owner COMMAND test_dm2_v1_mve_audio_sdl_owner)
 set_tests_properties(test_dm2_v1_mve_audio_sdl_owner PROPERTIES
+    SKIP_RETURN_CODE 77
     ENVIRONMENT "SDL_AUDIODRIVER=dummy;FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
     LABELS "dm2;dos;mve;audio;real-media;in-memory")
 

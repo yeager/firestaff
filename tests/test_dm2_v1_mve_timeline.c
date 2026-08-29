@@ -29,7 +29,7 @@ int main(void)
     size_t movie_index;
     if (!archive || !archive[0]) {
         puts("SKIP: no DM2 DOS archive");
-        return 0;
+        return 77;
     }
     for (movie_index = 0u; movie_index < 2u; ++movie_index) {
         const dm2_v1_dos_file_fp_t *fp =

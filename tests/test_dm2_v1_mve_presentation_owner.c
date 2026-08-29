@@ -47,7 +47,7 @@ int main(void)
 
     if (!archive || !archive[0]) {
         puts("SKIP: no DM2 DOS archive");
-        return 0;
+        return 77;
     }
     for (movie_index = 0u; movie_index < sizeof(names) / sizeof(names[0]);
          ++movie_index) {
