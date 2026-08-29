@@ -45,7 +45,36 @@ assert_route 'direct authentic CloneCD ZIP' theron-startup-0 \
     "$app" --game theron --platform pce --data-dir "$archive" \
     --boot-probe --boot-probe-frames 2 --duration 0
 
-assert_route 'start-menu authentic CloneCD ZIP' theron-startup-2 \
+assert_card_launch() {
+    local label=$1
+    local script=$2
+    local output
+
+    output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+        SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --menu --game theron --platform pce --data-dir "$archive" \
+        --script "$script" --duration 1000 2>&1) || {
+        printf '%s\n' "$output" >&2
+        printf 'FAIL: %s did not launch from its menu cards\n' "$label" >&2
+        exit 1
+    }
+    if ! grep -Fq 'Verified Track 02 accepted:' <<<"$output" ||
+       ! grep -Fq '::@suffix=.img::slice@' <<<"$output" ||
+       grep -Fq 'deterministic fallback assets' <<<"$output"; then
+        printf '%s\n' "$output" >&2
+        printf 'FAIL: %s did not retain the verified in-memory Track 02 route\n' "$label" >&2
+        exit 1
+    fi
+}
+
+# Game card -> PC Engine card -> presentation card.  Both launch routes must
+# preserve the real IMG Track 02 slice, never the CloneCD .ccd descriptor.
+assert_card_launch 'Original card authentic CloneCD ZIP' \
+    'key:enter,key:enter,key:enter'
+assert_card_launch 'Modern card authentic CloneCD ZIP' \
+    'key:enter,key:enter,key:down,key:enter'
+
+assert_route 'boot-probe launcher selection authentic CloneCD ZIP' theron-startup-2 \
     env FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 "$app" \
     --menu --game theron --platform pce --data-dir "$archive" \
     --script 'down,down,down,down,enter,enter,enter,down,down,down,down,down,down,enter,down,enter' \

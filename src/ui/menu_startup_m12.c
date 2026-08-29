@@ -6393,8 +6393,17 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                                 }
                             }
                         }
+                        /* A verified Track 02 inside an archive is already
+                         * an in-memory launch source.  Its companion .ccd
+                         * descriptor names the disc layout, not the Track 02
+                         * bytes.  Re-scanning that descriptor here replaced
+                         * the selected IMG slice with the .ccd path while
+                         * retaining the IMG hash, causing the native loader
+                         * to reject its own valid ZIP selection.  Direct
+                         * CUE/BIN/ISO media still needs the campaign scan. */
                         if (theronVersion && theronVersion->matched &&
-                            mediaPath && mediaPath[0]) {
+                            mediaPath && mediaPath[0] &&
+                            strstr(theronVersion->matchedPath, "::") == NULL) {
                             (void)M12_StartupMenu_ScanTheronCampaignMedia(
                                 state,
                                 mediaPath,
@@ -9027,12 +9036,20 @@ int M12_StartupMenu_GetLaunchGate(
     } else if (!gate.versionReady) {
         gate.blockedLabel = "SELECTED VERSION NOT FOUND";
         gate.blockedDetail = m12_selected_version_label(state, gameIndex, 0);
-    /* DM1 retains its established post-present HOC capture exception. Nexus
-     * has no equivalent exception: authenticated Saturn source discovery is
-     * not a startup/menu presentation proof, so the card must remain blocked
-     * until M11 supplies the full-start graphics receipt. */
+    /* DM1 retains its established post-present HOC capture exception. Theron
+     * also has a deliberately narrow exception: a hash-verified Track 02 can
+     * enter M11's native capture-required startup state.  That state performs
+     * no synthetic visual fallback and does not admit a dungeon; it is the
+     * source-owned title/capture handoff implemented by M11.  Blocking the
+     * card here made its already-valid in-memory ZIP route unreachable.
+     *
+     * Nexus has no equivalent exception: authenticated Saturn source
+     * discovery is not a startup/menu presentation proof, so its card stays
+     * blocked until M11 supplies the full-start graphics receipt. */
     } else if ((!gate.fullStartGraphicsReady &&
-                (!entry->gameId || strcmp(entry->gameId, "dm1") != 0)) ||
+                (!entry->gameId ||
+                 (strcmp(entry->gameId, "dm1") != 0 &&
+                  strcmp(entry->gameId, "theron") != 0))) ||
                (gate.boot.startupContractExpected &&
                 !gate.startupContractReady)) {
         gate.blockedLabel = "STARTUP PROOF MISSING";
