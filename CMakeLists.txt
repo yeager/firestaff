@@ -6760,6 +6760,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND
    CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$")
     set_source_files_properties(
         src/dm1/dm1_v1_original_save_pc34_handoff.c
+        src/dm2/dm2_v1_game_load_world_owner.c
         PROPERTIES COMPILE_OPTIONS
             "-mno-early-ldp-fusion;-mno-late-ldp-fusion")
 endif()
