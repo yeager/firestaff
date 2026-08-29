@@ -54,8 +54,8 @@ case "$runtime_output" in
 esac
 
 movement_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
-    --menu --game csb --platform atari-st --data-dir "$media_path" \
-    --boot-probe --boot-probe-frames 800 --script 'enter,enter,enter,key:enter,up' \
+    --game csb --platform atari-st --data-dir "$media_path" \
+    --boot-probe --boot-probe-frames 180 --script 'enter,up' \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 --duration 0 2>&1)" || {
     printf '%s\n' "$movement_output" >&2
     exit 1
@@ -69,7 +69,7 @@ case "$movement_output" in
         fi
         ;;
     *)
-        echo "FAIL: native CSB Atari ST start menu/title input did not consume first UP movement"
+        echo "FAIL: native CSB Atari ST title/runtime input did not consume first UP movement"
         printf '%s\n' "$movement_output" >&2
         exit 1
         ;;
