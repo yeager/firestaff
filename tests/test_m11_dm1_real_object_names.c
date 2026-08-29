@@ -22,7 +22,10 @@ static int rect_is_color(const unsigned char *framebuffer,
 
 int main(void)
 {
-    const char *data_dir = getenv("FIRESTAFF_DM1_DATA_DIR");
+    /* The object-name table and SND3 bank below are PC 3.4 source material.
+     * Do not let an arbitrary data-root select a nearby unpacked edition: the
+     * real-media gate must name the authenticated archive explicitly. */
+    const char *data_dir = getenv("FIRESTAFF_DM1_PC34_ARCHIVE");
     M11_GameViewState state;
     unsigned short thing;
     char name[64];
@@ -32,7 +35,7 @@ int main(void)
     int y;
 
     if (!data_dir || !data_dir[0]) {
-        puts("skip: FIRESTAFF_DM1_DATA_DIR is not set");
+        puts("skip: FIRESTAFF_DM1_PC34_ARCHIVE is not set");
         return 0;
     }
 
