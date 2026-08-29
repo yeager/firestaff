@@ -55009,11 +55009,14 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_cd.c")
         src/csb/csb_v1_fmtowns_cd.c
         src/csb/csb_v1_fmtowns_graphics_dat.c)
     target_include_directories(test_csb_v1_fmtowns_cd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_fmtowns_cd PRIVATE firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_fmtowns_cd PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_fmtowns_cd COMMAND test_csb_v1_fmtowns_cd)
-    set_tests_properties(csb_v1_fmtowns_cd PROPERTIES LABELS "csb;fmtowns" TIMEOUT 60)
+    set_tests_properties(csb_v1_fmtowns_cd PROPERTIES
+        ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
+        LABELS "csb;fmtowns;cdda;real-media;in-memory" TIMEOUT 60)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_graphics_dat.c" AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_fmtowns_graphics_dat.c")

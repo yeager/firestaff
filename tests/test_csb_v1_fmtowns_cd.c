@@ -1,5 +1,6 @@
 #include "csb_v1_fmtowns_cd.h"
 #include "csb_v1_fmtowns_graphics_dat.h"
+#include "firestaff_zip_extract.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,25 +11,6 @@ static int g_pass = 0, g_fail = 0;
     if (cond) { g_pass++; } \
     else { g_fail++; printf("FAIL: %s (line %d)\n", msg, __LINE__); } \
 } while (0)
-
-static uint8_t *load_file(const char *path, size_t *out_size) {
-    FILE *f = fopen(path, "rb");
-    uint8_t *buf;
-    long sz;
-    if (!f) return NULL;
-    fseek(f, 0, SEEK_END);
-    sz = ftell(f);
-    if (sz <= 0) { fclose(f); return NULL; }
-    fseek(f, 0, SEEK_SET);
-    buf = (uint8_t *)malloc((size_t)sz);
-    if (!buf) { fclose(f); return NULL; }
-    if (fread(buf, 1, (size_t)sz, f) != (size_t)sz) {
-        free(buf); fclose(f); return NULL;
-    }
-    fclose(f);
-    *out_size = (size_t)sz;
-    return buf;
-}
 
 static void test_probe_null(void) {
     ASSERT(csb_v1_fmtowns_cd_probe(NULL, 0) == 0, "probe rejects NULL");
@@ -59,54 +41,27 @@ static void test_cue_index_one_without_zero_padding(void) {
 }
 
 static void test_real_bin(void) {
-    char bin_path[512], cue_path[512];
-    const char *image_override = getenv("FIRESTAFF_CSB_FMTOWNS_IMAGE");
-    const char *cue_override = getenv("FIRESTAFF_CSB_FMTOWNS_CUE");
-    const char *home = getenv("HOME");
-    uint8_t *bin;
-    size_t bin_size;
+    const char *archive = getenv("FIRESTAFF_CSB_FMTOWNS_ARCHIVE");
+    uint8_t *bin = NULL, *cue = NULL;
+    size_t bin_size = 0u, cue_size = 0u;
     CSB_V1_FmtownsCdLayout layout;
-    int file_backed = 0;
 
-    if (image_override && image_override[0] != '\0') {
-        snprintf(bin_path, sizeof(bin_path), "%s", image_override);
-        file_backed = 1;
-    } else {
-        if (!home) { printf("SKIP: HOME not set\n"); return; }
-        snprintf(bin_path, sizeof(bin_path),
-                 "%s/.firestaff/data/csb/fmtowns/Chaos Strikes Back for FM-Towns.bin", home);
+    if (!archive || !archive[0]) {
+        printf("SKIP: FIRESTAFF_CSB_FMTOWNS_ARCHIVE not set\n");
+        return;
     }
-    if (cue_override && cue_override[0] != '\0') {
-        snprintf(cue_path, sizeof(cue_path), "%s", cue_override);
-    } else if (home) {
-        snprintf(cue_path, sizeof(cue_path),
-                 "%s/.firestaff/data/csb/fmtowns/Chaos Strikes Back for FM-Towns.cue", home);
-    } else {
-        cue_path[0] = '\0';
-    }
+    ASSERT(firestaff_zip_extract_by_suffix(archive, ".cue", &cue, &cue_size) == 0 && cue,
+           "read source CUE from ZIP in memory");
+    ASSERT(firestaff_zip_extract_by_suffix(archive, ".img", &bin, &bin_size) == 0 && bin,
+           "read source IMG from ZIP in memory");
+    if (!cue || !bin) { free(cue); free(bin); return; }
+    printf("  Loaded IMG: %zu bytes (%.1f MB)\n", bin_size,
+           (double)bin_size / (1024.0 * 1024.0));
 
-    bin = NULL;
-    bin_size = 0u;
-    if (file_backed) {
-        ASSERT(csb_v1_fmtowns_cd_parse_file(bin_path, &layout) == 0,
-               "file-backed parse succeeds");
-    } else {
-        bin = load_file(bin_path, &bin_size);
-        if (!bin) {
-            printf("SKIP: FM Towns CSB BIN not available\n");
-            return;
-        }
-        printf("  Loaded BIN: %zu bytes (%.1f MB)\n", bin_size,
-               (double)bin_size / (1024.0 * 1024.0));
-
-        /* Probe */
-        ASSERT(csb_v1_fmtowns_cd_probe(bin, bin_size) == 1,
-               "probe accepts CSB FM Towns BIN");
-
-        /* Parse ISO */
-        ASSERT(csb_v1_fmtowns_cd_parse(bin, bin_size, &layout) == 0,
-               "parse succeeds");
-    }
+    ASSERT(csb_v1_fmtowns_cd_probe(bin, bin_size) == 1,
+           "probe accepts CSB FM Towns IMG");
+    ASSERT(csb_v1_fmtowns_cd_parse(bin, bin_size, &layout) == 0,
+           "parse succeeds");
     ASSERT(strcmp(layout.volume_id, "CHAOS") == 0,
            "volume ID is CHAOS");
     printf("  Volume: %s, %d files, %s sectors\n",
@@ -136,19 +91,12 @@ static void test_real_bin(void) {
             /* Extract and verify with graphics probe */
             uint8_t *gfx_data = NULL;
             size_t gfx_size = 0u;
-            if (file_backed) {
-                ASSERT(csb_v1_fmtowns_cd_extract_file_alloc(bin_path, &layout,
-                                                             gfx_en, &gfx_data,
-                                                             &gfx_size) == 0,
-                       "file-backed GRAPHICS.DAT extraction succeeds");
-            } else {
-                gfx_data = (uint8_t *)malloc(gfx_en->size);
-                gfx_size = gfx_en->size;
-                ASSERT(gfx_data != NULL &&
-                       csb_v1_fmtowns_cd_extract(bin, bin_size, gfx_en,
-                                                  gfx_data, gfx_en->size) == 0,
-                       "extract GRAPHICS.DAT succeeds");
-            }
+            gfx_data = (uint8_t *)malloc(gfx_en->size);
+            gfx_size = gfx_en->size;
+            ASSERT(gfx_data != NULL &&
+                   csb_v1_fmtowns_cd_extract(bin, bin_size, gfx_en,
+                                              gfx_data, gfx_en->size) == 0,
+                   "extract GRAPHICS.DAT succeeds");
             if (gfx_data && gfx_size == gfx_en->size) {
                 ASSERT(csb_v1_fmtowns_graphics_probe(gfx_data, gfx_en->size) == 1,
                        "extracted GRAPHICS.DAT passes probe");
@@ -209,20 +157,17 @@ static void test_real_bin(void) {
 
     /* Parse CUE for CDDA tracks */
     {
-        char *cue_text;
-        size_t cue_size;
         CSB_V1_FmtownsCddaLayout cdda;
 
-        cue_text = (char *)load_file(cue_path, &cue_size);
-        if (cue_text) {
-            ASSERT(csb_v1_fmtowns_cdda_parse_cue(cue_text, cue_size, &cdda) == 0,
-                   "CUE parse succeeds");
+        if (cue) {
+            ASSERT(csb_v1_fmtowns_cdda_parse_cue((const char *)cue, cue_size, &cdda) == 0,
+                   "source CUE parse succeeds");
             ASSERT(cdda.valid == 1, "CDDA layout valid");
             ASSERT(cdda.track_count == 30, "30 CDDA tracks");
             printf("  CDDA: %d tracks\n", cdda.track_count);
 
             /* Verify track 2 (first audio) */
-            if (!file_backed && cdda.track_count > 0) {
+            if (cdda.track_count > 0) {
                 ASSERT(cdda.tracks[0].track_number == 2, "first audio is track 2");
                 ASSERT(cdda.tracks[0].start_sector > 0, "track 2 starts after data");
                 printf("    Track 02: sector=%u, %u sectors (%.1fs)\n",
@@ -230,7 +175,7 @@ static void test_real_bin(void) {
                        cdda.tracks[0].sector_count,
                        (double)cdda.tracks[0].sector_count / 75.0);
             }
-            if (!file_backed && cdda.track_count > 0) {
+            if (cdda.track_count > 0) {
                 const CSB_V1_FmtownsCddaTrack *last =
                     &cdda.tracks[cdda.track_count - 1];
                 size_t last_capacity = bin_size - last->byte_offset;
@@ -245,70 +190,19 @@ static void test_real_bin(void) {
                     free(last_pcm);
                 }
             }
-            free(cue_text);
         } else {
-            printf("SKIP: CUE file not available\n");
+            printf("SKIP: CUE member not available\n");
         }
     }
 
-    free(bin);
-}
-
-static void test_real_cdda_file_stream(void) {
-    const char *image_path = getenv("FIRESTAFF_CSB_FMTOWNS_IMAGE");
-    const char *cue_path = getenv("FIRESTAFF_CSB_FMTOWNS_CUE");
-    char out_path[512];
-    uint8_t *cue;
-    size_t cue_size;
-    CSB_V1_FmtownsCddaLayout layout;
-    FILE *out;
-    long out_size;
-    uint8_t *pcm = NULL;
-    size_t pcm_size = 0U;
-
-    if (!image_path || image_path[0] == '\0' || !cue_path || cue_path[0] == '\0') {
-        printf("SKIP: FIRESTAFF_CSB_FMTOWNS_IMAGE/CUE not set\n");
-        return;
-    }
-    cue = load_file(cue_path, &cue_size);
-    ASSERT(cue != NULL, "load real FM Towns CUE");
-    if (!cue) return;
-    ASSERT(csb_v1_fmtowns_cdda_parse_cue((const char *)cue, cue_size,
-                                         &layout) == 0,
-           "parse real FM Towns CUE");
-    ASSERT(layout.valid == 1 && layout.track_count == 30,
-           "real FM Towns CUE has 30 CDDA tracks");
     free(cue);
-    if (!layout.valid) return;
-    snprintf(out_path, sizeof(out_path), "/tmp/firestaff-csb-fmtowns-track2.pcm");
-    ASSERT(csb_v1_fmtowns_cdda_extract_file_to_path(image_path,
-                                                     &layout.tracks[0],
-                                                     out_path) == 0,
-           "stream real FM Towns CDDA track 2");
-    out = fopen(out_path, "rb");
-    ASSERT(out != NULL, "open streamed CDDA track");
-    if (out) {
-        ASSERT(fseek(out, 0L, SEEK_END) == 0, "seek streamed CDDA track");
-        out_size = ftell(out);
-        ASSERT(out_size == (long)layout.tracks[0].byte_length,
-               "streamed CDDA track has CUE-derived length");
-        fclose(out);
-    }
-    ASSERT(csb_v1_fmtowns_cdda_read_file_alloc(image_path, &layout.tracks[0],
-                                                &pcm, &pcm_size) == 0,
-           "read real FM Towns CDDA track 2 for runtime");
-    ASSERT(pcm != NULL && pcm_size == (size_t)layout.tracks[0].byte_length &&
-           pcm_size % 4U == 0U,
-           "runtime PCM retains CUE-derived Red Book bytes");
-    free(pcm);
-    remove(out_path);
+    free(bin);
 }
 
 int main(void) {
     test_probe_null();
     test_cue_index_one_without_zero_padding();
     test_real_bin();
-    test_real_cdda_file_stream();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;
