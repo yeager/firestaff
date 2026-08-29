@@ -7443,6 +7443,8 @@ if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_viewp
     endif()
     add_test(NAME dm1_v1_viewport_plane_material_matrix_pc34_compat
         COMMAND test_dm1_v1_viewport_plane_material_matrix_pc34_compat)
+    set_tests_properties(dm1_v1_viewport_plane_material_matrix_pc34_compat PROPERTIES
+        SKIP_RETURN_CODE 77)
 endif()
 
 if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_viewport_source_frame_pc34_compat.c")
@@ -7456,6 +7458,8 @@ if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_viewp
     endif()
     add_test(NAME dm1_v1_viewport_source_frame_pc34_compat
         COMMAND test_dm1_v1_viewport_source_frame_pc34_compat)
+    set_tests_properties(dm1_v1_viewport_source_frame_pc34_compat PROPERTIES
+        SKIP_RETURN_CODE 77)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0115_source_material_handoff_pc34_compat.c")
@@ -7491,6 +7495,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0115_f0219_creature_it
     endif()
     add_test(NAME dm1_v1_f0115_f0219_creature_item_material_gate
              COMMAND test_dm1_v1_f0115_f0219_creature_item_material_gate)
+    set_tests_properties(dm1_v1_f0115_f0219_creature_item_material_gate PROPERTIES
+        SKIP_RETURN_CODE 77)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0115_near_object_decoration_material_gate.c")
@@ -36717,6 +36723,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0352_eye_material_gate
         target_compile_options(test_dm1_v1_f0352_eye_material_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0352_eye_material_gate COMMAND test_dm1_v1_f0352_eye_material_gate)
+    set_tests_properties(dm1_v1_f0352_eye_material_gate PROPERTIES SKIP_RETURN_CODE 77)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0355_inventory_material_gate.c")
@@ -36745,6 +36752,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0659_shield_material_g
         target_compile_options(test_dm1_v1_f0659_shield_material_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0659_shield_material_gate COMMAND test_dm1_v1_f0659_shield_material_gate)
+    set_tests_properties(dm1_v1_f0659_shield_material_gate PROPERTIES SKIP_RETURN_CODE 77)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0662_invisibility_material_gate.c")
@@ -36758,6 +36766,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0662_invisibility_mate
         target_compile_options(test_dm1_v1_f0662_invisibility_material_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0662_invisibility_material_gate COMMAND test_dm1_v1_f0662_invisibility_material_gate)
+    set_tests_properties(dm1_v1_f0662_invisibility_material_gate PROPERTIES SKIP_RETURN_CODE 77)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0663_smoke_material_gate.c")
@@ -36771,6 +36780,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0663_smoke_material_ga
         target_compile_options(test_dm1_v1_f0663_smoke_material_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0663_smoke_material_gate COMMAND test_dm1_v1_f0663_smoke_material_gate)
+    set_tests_properties(dm1_v1_f0663_smoke_material_gate PROPERTIES SKIP_RETURN_CODE 77)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0675_scaled_material_gate.c")
@@ -36785,6 +36795,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0675_scaled_material_g
         target_compile_options(test_dm1_v1_f0675_scaled_material_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0675_scaled_material_gate COMMAND test_dm1_v1_f0675_scaled_material_gate)
+    set_tests_properties(dm1_v1_f0675_scaled_material_gate PROPERTIES SKIP_RETURN_CODE 77)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0682_transparent_material_gate.c")
@@ -36817,6 +36828,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0693_f0699_video_mater
         target_compile_options(test_dm1_v1_f0693_f0699_video_material_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0693_f0699_video_material_gate COMMAND test_dm1_v1_f0693_f0699_video_material_gate)
+    set_tests_properties(dm1_v1_f0693_f0699_video_material_gate PROPERTIES SKIP_RETURN_CODE 77)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0731_f0734_inventory_zone_material_gate.c")
@@ -36830,6 +36842,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0731_f0734_inventory_z
         target_compile_options(test_dm1_v1_f0731_f0734_inventory_zone_material_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0731_f0734_inventory_zone_material_gate COMMAND test_dm1_v1_f0731_f0734_inventory_zone_material_gate)
+    set_tests_properties(dm1_v1_f0731_f0734_inventory_zone_material_gate PROPERTIES SKIP_RETURN_CODE 77)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0732_f0735_fill_material_gate.c")
@@ -36843,6 +36856,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0732_f0735_fill_materi
         target_compile_options(test_dm1_v1_f0732_f0735_fill_material_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0732_f0735_fill_material_gate COMMAND test_dm1_v1_f0732_f0735_fill_material_gate)
+    set_tests_properties(dm1_v1_f0732_f0735_fill_material_gate PROPERTIES SKIP_RETURN_CODE 77)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0740_f0743_music_source_gate.c")
@@ -36857,6 +36871,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0740_f0743_music_sourc
         target_compile_options(test_dm1_v1_f0740_f0743_music_source_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0740_f0743_music_source_gate COMMAND test_dm1_v1_f0740_f0743_music_source_gate)
+    set_tests_properties(dm1_v1_f0740_f0743_music_source_gate PROPERTIES SKIP_RETURN_CODE 77)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_swsh_psg_audio_pc34_compat.c")
@@ -36967,6 +36982,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0661_damage_material_g
         target_compile_options(test_dm1_v1_f0661_damage_material_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0661_damage_material_gate COMMAND test_dm1_v1_f0661_damage_material_gate)
+    set_tests_properties(dm1_v1_f0661_damage_material_gate PROPERTIES SKIP_RETURN_CODE 77)
 endif()
 
 if(NOT TARGET test_dm1_v1_action_spell_source_frame_evidence_pc34_compat)

@@ -19,7 +19,7 @@ int main(void)
 
     if (!root || !root[0]) {
         puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
-        return 0;
+        return 77;
     }
     snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
     if (!M11_AssetLoader_Init(&loader, path)) {

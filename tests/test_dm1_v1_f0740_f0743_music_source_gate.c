@@ -56,7 +56,7 @@ int main(void)
     path = song_path(localPath, sizeof(localPath));
     if (!path) {
         puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
-        return 0;
+        return 77;
     }
     if (!dm1_v1_f0740_f0743_bind_song_dat_pc34(path, &source)) {
         fputs("configured PC34 SONG.DAT is unavailable\n", stderr);

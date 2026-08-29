@@ -81,7 +81,7 @@ int main(void)
             return 1;
         }
         puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
-        return 0;
+        return 77;
     }
     spell = M11_AssetLoader_Load(&loader, 9);
     inventory = M11_AssetLoader_Load(&loader, 17);

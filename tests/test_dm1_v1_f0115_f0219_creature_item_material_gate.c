@@ -82,7 +82,7 @@ int main(void)
     int i;
 
     if (!data_path("GRAPHICS.DAT", graphicsPath) ||
-        !data_path("DUNGEON.DAT", dungeonPath)) return 0;
+        !data_path("DUNGEON.DAT", dungeonPath)) return 77;
     dungeon = read_file(dungeonPath, &dungeonSize);
     if (!dungeon || !M11_AssetLoader_Init(&loader, graphicsPath)) {
         free(dungeon);
@@ -91,7 +91,7 @@ int main(void)
             return 1;
         }
         puts("SKIP: PC34 GRAPHICS.DAT/DUNGEON.DAT not installed");
-        return 0;
+        return 77;
     }
     graphics[0] = (int)dm1_item_sprite_index(5, 0);
     for (depth = 1; depth <= 3; ++depth) {

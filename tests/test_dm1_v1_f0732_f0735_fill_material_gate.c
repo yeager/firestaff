@@ -62,7 +62,7 @@ int main(void)
     if (!load_graphics(&loader, path, sizeof(path))) {
         if (getenv("FIRESTAFF_DM1_DATA_DIR")) return 1;
         puts("SKIP: PC34 GRAPHICS.DAT not installed");
-        return 0;
+        return 77;
     }
     spell = M11_AssetLoader_Load(&loader, 9);
     inventory = M11_AssetLoader_Load(&loader, 17);

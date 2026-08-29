@@ -31,7 +31,7 @@ int main(void)
             return 1;
         }
         puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
-        return 0;
+        return 77;
     }
     memset(planes, 0, sizeof(planes));
     planes[0].kind = DM1_V1_VIEWPORT_PLANE_FLOOR_PC34;

@@ -107,7 +107,7 @@ int main(void)
 
     if (!dataDir || !dataDir[0]) {
         puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
-        return 0;
+        return 77;
     }
     dataDir = resolve_pc34_data_dir(dataDir, nestedData, sizeof(nestedData));
     if (!dataDir) {

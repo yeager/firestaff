@@ -105,14 +105,14 @@ int main(void)
             return 1;
         }
         puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
-        return 0;
+        return 77;
     }
     rasterSlot = load_real_full_screen_raster(&loader);
     if (!rasterSlot) {
         M11_AssetLoader_Shutdown(&loader);
         if (getenv("FIRESTAFF_DM1_DATA_DIR")) return 1;
         puts("SKIP: no 320x200 PC34 raster in GRAPHICS.DAT");
-        return 0;
+        return 77;
     }
     memset(&raster, 0, sizeof(raster));
     raster.graphicsDatOwned = 1;
