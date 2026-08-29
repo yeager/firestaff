@@ -46,3 +46,7 @@ Reviewed 2026-08-29. Completed work only.
   in bounded RAM.  UTIO.C sector 7 is read through the native STX transport
   reader when required, so the supplied Atari Utility Disk neither needs nor
   creates a transient ADF cache.
+- The retired game-media disk-materialization switch now fails configuration
+  and the media-admission source rejects direct activation.  Packed CSB
+  formats therefore remain source-owned and in-memory only; a format without
+  a native reader fails closed rather than creating a cache copy.
