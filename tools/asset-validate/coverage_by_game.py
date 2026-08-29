@@ -95,7 +95,8 @@ VARIANTS: tuple[Variant, ...] = (
     Variant("dm1", "X68000", "3.0 Japanese",         ("GRAPHICS.DAT", "DUNGEON.DAT")),
 
     # ── CSB ──
-    Variant("csb", "PC",      "PC 3.4 English",      ("GRAPHICS.DAT", "DUNGEON.DAT")),
+    # CSB had no original DOS/PC release.  ReDMCSB/CSBWin PC-shaped files
+    # are reverse-engineering references, never a Firestaff media target.
     Variant("csb", "Amiga",   "3.5 English",         ("GRAPHICS.DAT", "DUNGEON.DAT")),
     Variant("csb", "Amiga",   "3.5 Multilingual",    ("GRAPHICS.DAT", "DUNGEON.DAT")),
     Variant("csb", "Atari ST","2.0/2.1 English",     ("GRAPHICS.DAT", "DUNGEON.DAT")),
