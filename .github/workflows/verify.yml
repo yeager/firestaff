@@ -47,6 +47,7 @@ jobs:
             shell: bash
             generator: Ninja
             exe: ''
+            full_ctest: true
             # Keep the full-source build within the runner's memory budget.
             # Unrestricted Ninja parallelism can starve the runner before the
             # production-boundary and CTest steps are reached.
@@ -55,21 +56,26 @@ jobs:
             shell: bash
             generator: Unix Makefiles
             exe: ''
+            full_ctest: true
             build_parallel: '3'
           - os: windows-2022
             shell: msys2 {0}
             generator: Ninja
             exe: '.exe'
-            # Keep MSYS2/Ninja memory use bounded on the Windows runner.
-            # The unrestricted build has previously stalled for hours while
-            # the equivalent macOS build completes with three workers.
+            # Compile every production object through the shipping executable,
+            # then the two portable headless probes.  Building all 940 CMake
+            # targets on MSYS2 is redundant with the full Ubuntu/macOS CTest
+            # matrix and can exceed the runner limit before any Windows binary
+            # is exercised.
+            build_targets: 'firestaff firestaff_m11_phase_a_probe firestaff_m11_audio_probe'
+            full_ctest: false
             build_parallel: '3'
 
     runs-on: ${{ matrix.os }}
     # A platform build must fail visibly when the compiler or runner stalls.
-    # Windows compiles the full source tree through MSYS2 with three bounded
-    # workers and demonstrably needs more than 30 minutes on a cold runner.
-    # Keep a finite limit, but allow the complete compile and test suite to run.
+    # Ubuntu and macOS compile every CMake target. Windows compiles the
+    # shipping executable and portable probes, then runs them, so a stalled
+    # MSYS2 test-target fan-out cannot mask the Windows product result.
     timeout-minutes: 60
     defaults:
       run:
@@ -118,7 +124,10 @@ jobs:
 
       - name: CMake build
         run: |
-          if [ -n "${{ matrix.build_parallel }}" ]; then
+          if [ -n "${{ matrix.build_targets }}" ]; then
+            cmake --build build --target ${{ matrix.build_targets }} \
+              --parallel "${{ matrix.build_parallel }}"
+          elif [ -n "${{ matrix.build_parallel }}" ]; then
             cmake --build build --parallel "${{ matrix.build_parallel }}"
           else
             cmake --build build --parallel
@@ -135,6 +144,7 @@ jobs:
             -R '^(csb_fssb_production_boundary|csb_compact_save_import_production_boundary|csb_cmp_import_production_boundary|csb_hidden_item_skip_production_boundary|csb_viewport_side_wall_production_boundary|csb_viewport_contract_bundle_production_boundary)$'
 
       - name: Run unit tests (ctest)
+        if: matrix.full_ctest
         run: |
           cd build
           # The repository intentionally contains no licensed game media or
