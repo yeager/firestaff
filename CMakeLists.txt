@@ -18667,6 +18667,11 @@ endif()
         target_compile_options(test_dm2_v1_gdat_creature_animation_real_data PRIVATE
             -Wall -Wextra -Werror -O2)
     endif()
+    add_test(NAME dm2_v1_gdat_creature_animation_real_data
+             COMMAND test_dm2_v1_gdat_creature_animation_real_data)
+    set_tests_properties(dm2_v1_gdat_creature_animation_real_data PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "tier2;dm2;dos;creatures;animation;real-media;in-memory;native;skip-safe")
 
     add_executable(test_dm2_v1_g1_null_record_address_gate
         tests/test_dm2_v1_g1_null_record_address_gate.c

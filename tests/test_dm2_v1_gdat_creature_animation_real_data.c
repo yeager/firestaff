@@ -2,45 +2,19 @@
  * Source: SKProject GET_CREATURE_ANIMATION_FRAME and skcrture.cpp V5 helpers. */
 
 #include "dm2_v1_asset_loader.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
-static int read_file(const char *path, uint8_t **out, size_t *out_size)
-{
-    FILE *file;
-    long size;
-    uint8_t *bytes;
-
-    if (!path || !out || !out_size) return 0;
-    *out = NULL;
-    *out_size = 0u;
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0 ||
-        (size = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
-        return 0;
-    }
-    bytes = malloc((size_t)size);
-    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
-        free(bytes);
-        fclose(file);
-        return 0;
-    }
-    fclose(file);
-    *out = bytes;
-    *out_size = (size_t)size;
-    return 1;
-}
-
 static int load_canonical_graphics(uint8_t **out, size_t *out_size)
 {
-    const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    char path[1100];
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
+    char path[2048];
 
-    if (!root || !root[0]) return 0;
-    snprintf(path, sizeof(path), "%s/graphics.dat", root);
-    return read_file(path, out, out_size);
+    if (!archive || !archive[0]) return 0;
+    snprintf(path, sizeof(path), "%s::data/graphics.dat", archive);
+    return asset_read_path_alloc(path, out, out_size) && *out && *out_size;
 }
 
 int main(void)
@@ -52,9 +26,9 @@ int main(void)
     uint64_t complete_mask_low = 0u;
     uint64_t complete_mask_high = 0u;
 
-    if (!getenv("FIRESTAFF_DM2_DATA_DIR") ||
-        !getenv("FIRESTAFF_DM2_DATA_DIR")[0]) {
-        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
+    if (!getenv("FIRESTAFF_DM2_DOS_ARCHIVE") ||
+        !getenv("FIRESTAFF_DM2_DOS_ARCHIVE")[0]) {
+        puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is not set");
         return 0;
     }
     if (!load_canonical_graphics(&graphics, &graphics_size)) {
