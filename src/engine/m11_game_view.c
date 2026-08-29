@@ -23639,7 +23639,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             const CSB_V1_BootProfile *selected_profile =
                 (const CSB_V1_BootProfile *)state->csbBootProfile;
             int selected_variant = selected_profile
-                ? selected_profile->variant_id : requestedCsbVariant;
+                ? (int)selected_profile->variant_id : (int)requestedCsbVariant;
 
             if (selected_variant == CSB_V1_VARIANT_ST20_EN ||
                 selected_variant == CSB_V1_VARIANT_ST21_EN) {
@@ -41016,7 +41016,7 @@ static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
                 cell->floorItemThings[ii] == THING_ENDOFLIST) {
                 continue;
             }
-            if (THING_GET_TYPE(cell->floorItemThings[ii]) !=
+            if ((int)THING_GET_TYPE(cell->floorItemThings[ii]) !=
                     cell->floorItemTypes[ii] ||
                 !state->world.things ||
                 (sourceSubtype = dm1_v1_dungeon_get_object_subtype_pc34(
@@ -43322,7 +43322,7 @@ static int m11_draw_dm1_f0115_floor_item_sprite(
          * invitation to use the candidate fields: that would manufacture a
          * plausible but incorrect object icon/name in a real PC34 frame. */
         if (thing == THING_NONE || thing == THING_ENDOFLIST ||
-            THING_GET_TYPE(thing) != thingType || !state ||
+            (int)THING_GET_TYPE(thing) != thingType || !state ||
             !state->world.things ||
             (sourceSubtype = dm1_v1_dungeon_get_object_subtype_pc34(
                 state->world.things, thing)) < 0) {
