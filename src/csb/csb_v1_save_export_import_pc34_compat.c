@@ -34,9 +34,12 @@
 #include <string.h>
 
 #ifdef _WIN32
+#include <windows.h>
 #include <io.h>
 #define csb_v1_save_export_fsync_pc34(fd) _commit(fd)
 #else
+#include <dirent.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #define csb_v1_save_export_fsync_pc34(fd) fsync(fd)
 #endif
@@ -503,62 +506,109 @@ int csb_v1_save_export_read_envelope(const char *path,
     return (int)got;
 }
 
-int csb_v1_save_export_scan(const char *data_dir,
-                              int max_depth,
-                              CSB_V1_SaveExportScanResult *out)
+#define CSB_V1_SAVE_EXPORT_SCAN_PATH_MAX 2048u
+
+static int csb_v1_save_export_scan_has_suffix(const char *name)
 {
-    /* Skip-safe scan: walk data_dir looking for *.csbsave files
-     * (the suggested extension for FSSB envelopes). For every
-     * candidate we try to validate_envelope; the count fields
-     * stay deterministic on missing data because we never call
-     * exit / error out. */
-    char cmd[2048];
-    FILE *p;
-    char line[1024];
+    size_t len;
+    if (!name) return 0;
+    len = strlen(name);
+    return len >= 8u && strcmp(name + len - 8u, ".csbsave") == 0;
+}
 
-    if (!out) return 0;
-    memset(out, 0, sizeof(*out));
+static void csb_v1_save_export_scan_file(const char *path,
+                                         CSB_V1_SaveExportScanResult *out)
+{
+    uint8_t scratch[CSB_V1_SAVE_EXPORT_MAX_ENVELOPE];
+    FILE *file;
+    size_t got;
+    size_t copy_len;
 
-    if (!data_dir || data_dir[0] == '\0' || max_depth < 0) return 0;
+    if (!path || !out) return;
+    ++out->present_count;
+    file = fopen(path, "rb");
+    if (!file) return;
+    got = fread(scratch, 1u, sizeof(scratch), file);
+    fclose(file);
+    if (got < CSB_V1_SAVE_EXPORT_HEADER_LEN ||
+        csb_v1_save_export_validate_envelope(scratch, got) !=
+            CSB_V1_SAVE_EXPORT_OK) return;
+    ++out->well_formed_count;
+    if (out->first_path[0] != '\0') return;
+    copy_len = strlen(path);
+    if (copy_len >= sizeof(out->first_path)) {
+        copy_len = sizeof(out->first_path) - 1u;
+    }
+    memcpy(out->first_path, path, copy_len);
+    out->first_path[copy_len] = '\0';
+}
 
-    snprintf(cmd, sizeof(cmd),
-             "find '%s' -maxdepth %d -type f -name '*.csbsave' "
-             "2>/dev/null", data_dir, max_depth);
-    p = popen(cmd, "r");
-    if (!p) return 0;
-    while (fgets(line, sizeof(line), p)) {
-        size_t n = strlen(line);
-        uint8_t scratch[CSB_V1_SAVE_EXPORT_MAX_ENVELOPE];
-        size_t got;
-
-        while (n > 0u && (line[n - 1u] == '\n' || line[n - 1u] == '\r')) {
-            line[--n] = '\0';
-        }
-        if (n == 0u) continue;
-        ++out->present_count;
-
-        {
-            FILE *f = fopen(line, "rb");
-            if (!f) continue;
-            got = fread(scratch, 1u, sizeof(scratch), f);
-            fclose(f);
-            if (got < CSB_V1_SAVE_EXPORT_HEADER_LEN) continue;
-        }
-        if (csb_v1_save_export_validate_envelope(scratch, got)
-            == CSB_V1_SAVE_EXPORT_OK) {
-            ++out->well_formed_count;
-            if (out->first_path[0] == '\0') {
-                size_t copy_len = n;
-                if (copy_len >= sizeof(out->first_path)) {
-                    copy_len = sizeof(out->first_path) - 1u;
-                }
-                memcpy(out->first_path, line, copy_len);
-                out->first_path[copy_len] = '\0';
+static void csb_v1_save_export_scan_directory(const char *directory,
+                                              int depth,
+                                              int max_depth,
+                                              CSB_V1_SaveExportScanResult *out)
+{
+#ifdef _WIN32
+    WIN32_FIND_DATAA entry;
+    HANDLE handle;
+    char pattern[CSB_V1_SAVE_EXPORT_SCAN_PATH_MAX];
+    char path[CSB_V1_SAVE_EXPORT_SCAN_PATH_MAX];
+    if (snprintf(pattern, sizeof(pattern), "%s\\*", directory) >=
+        (int)sizeof(pattern)) return;
+    handle = FindFirstFileA(pattern, &entry);
+    if (handle == INVALID_HANDLE_VALUE) return;
+    do {
+        const char *name = entry.cFileName;
+        if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0 ||
+            snprintf(path, sizeof(path), "%s\\%s", directory, name) >=
+                (int)sizeof(path)) continue;
+        if ((entry.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) {
+            if (depth < max_depth) {
+                csb_v1_save_export_scan_directory(path, depth + 1,
+                                                  max_depth, out);
             }
+        } else if (csb_v1_save_export_scan_has_suffix(name)) {
+            csb_v1_save_export_scan_file(path, out);
+        }
+    } while (FindNextFileA(handle, &entry) != 0);
+    FindClose(handle);
+#else
+    DIR *dir;
+    struct dirent *entry;
+    char path[CSB_V1_SAVE_EXPORT_SCAN_PATH_MAX];
+    struct stat status;
+    dir = opendir(directory);
+    if (!dir) return;
+    while ((entry = readdir(dir)) != NULL) {
+        const char *name = entry->d_name;
+        if (strcmp(name, ".") == 0 || strcmp(name, "..") == 0 ||
+            snprintf(path, sizeof(path), "%s/%s", directory, name) >=
+                (int)sizeof(path) || lstat(path, &status) != 0) continue;
+        if (S_ISDIR(status.st_mode)) {
+            if (depth < max_depth) {
+                csb_v1_save_export_scan_directory(path, depth + 1,
+                                                  max_depth, out);
+            }
+        } else if (S_ISREG(status.st_mode) &&
+                   csb_v1_save_export_scan_has_suffix(name)) {
+            csb_v1_save_export_scan_file(path, out);
         }
     }
-    pclose(p);
-    return 1;  /* always 1 on a successful scan call; missing data is 0 */
+    closedir(dir);
+#endif
+}
+
+int csb_v1_save_export_scan(const char *data_dir,
+                            int max_depth,
+                            CSB_V1_SaveExportScanResult *out)
+{
+    /* Skip-safe native walk: no shell, extractor or staging directory is
+     * needed to discover the small FSSB envelope files. */
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!data_dir || data_dir[0] == '\0' || max_depth < 0) return 0;
+    csb_v1_save_export_scan_directory(data_dir, 0, max_depth, out);
+    return 1;
 }
 
 /* ── Source-evidence citation ──────────────────────────────────────── */

@@ -47,6 +47,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
+#include <direct.h>
+#define test_mkdir(path) _mkdir(path)
+#define test_rmdir(path) _rmdir(path)
+#else
+#include <sys/stat.h>
+#include <unistd.h>
+#define test_mkdir(path) mkdir(path, 0700)
+#define test_rmdir(path) rmdir(path)
+#endif
+
 static int g_pass = 0;
 static int g_fail = 0;
 
@@ -943,6 +954,52 @@ int main(void)
               "F1913 rejects odd-sized word part");
 
         remove(path);
+    }
+
+    /* ── Native FSSB discovery ── */
+    {
+        const char *root = "csb-save-scan-fixture";
+        const char *nested = "csb-save-scan-fixture/nested";
+        const char *invalid_path = "csb-save-scan-fixture/invalid.csbsave";
+        const char *valid_path = "csb-save-scan-fixture/nested/valid.csbsave";
+        uint8_t payload[4] = {1u, 2u, 3u, 4u};
+        uint8_t envelope[CSB_V1_SAVE_EXPORT_HEADER_LEN + sizeof(payload)];
+        CSB_V1_SaveExportScanResult scan;
+        FILE *file;
+        long envelope_size;
+
+        remove(valid_path);
+        remove(invalid_path);
+        test_rmdir(nested);
+        test_rmdir(root);
+        CHECK(test_mkdir(root) == 0 && test_mkdir(nested) == 0,
+              "native scan fixture directories are created without a shell");
+        file = fopen(invalid_path, "wb");
+        CHECK(file != NULL && fwrite("bad", 1u, 3u, file) == 3u,
+              "native scan fixture writes an invalid sibling");
+        if (file) fclose(file);
+        envelope_size = csb_v1_save_export_build_envelope(
+            payload, sizeof(payload), 0u, "real-csb-save", envelope,
+            sizeof(envelope));
+        file = fopen(valid_path, "wb");
+        CHECK(envelope_size > 0 && file != NULL &&
+              fwrite(envelope, 1u, (size_t)envelope_size, file) ==
+                  (size_t)envelope_size,
+              "native scan fixture writes a valid nested envelope");
+        if (file) fclose(file);
+
+        CHECK(csb_v1_save_export_scan(root, 0, &scan) == 1 &&
+              scan.present_count == 1u && scan.well_formed_count == 0u &&
+              scan.first_path[0] == '\0',
+              "depth-zero native scan excludes nested saves");
+        CHECK(csb_v1_save_export_scan(root, 1, &scan) == 1 &&
+              scan.present_count == 2u && scan.well_formed_count == 1u &&
+              strcmp(scan.first_path, valid_path) == 0,
+              "depth-limited native scan finds the valid nested envelope");
+        remove(valid_path);
+        remove(invalid_path);
+        test_rmdir(nested);
+        test_rmdir(root);
     }
 
     /* ── Source-evidence citation chain ── */
