@@ -3,6 +3,11 @@
 #include "dm1_v1_fmtowns_pic_library.h"
 #include "firestaff_fmtowns_disc.h"
 #include "firestaff_zip_extract.h"
+/* The retail font receipt and its calls are assertions; retain them in CI's
+ * Release configuration rather than reporting an unchecked success. */
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>

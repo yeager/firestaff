@@ -2,6 +2,11 @@
 #include "firestaff_fmtowns_disc.h"
 #include "firestaff_zip_extract.h"
 
+/* This is an original-media input receipt.  Its archive reads and byte
+ * checks must remain live when the test is compiled in Release. */
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
