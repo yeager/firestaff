@@ -39092,6 +39092,7 @@ if(BUILD_TESTING)
         tests/test_nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_prs3_decode.c
+        src/nexus/nexus_v1_iso_reader.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_bpk_archive PRIVATE
@@ -39105,6 +39106,8 @@ if(BUILD_TESTING)
         NAME nexus_v1_bpk_archive
         COMMAND test_nexus_v1_bpk_archive
     )
+    set_tests_properties(nexus_v1_bpk_archive PROPERTIES
+        ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus;FIRESTAFF_NEXUS_TRACK1_BIN=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus/Dungeon Master Nexus (Japan) (Track 1).bin")
 
     # CUE sheets may list audio before the ISO data payload. The reader must
     # select the declared file whose ISO tree is actually a Nexus disc.

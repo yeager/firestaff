@@ -1,6 +1,8 @@
 #include "nexus_v1_bpk_archive.h"
+#include "nexus_v1_iso_reader.h"
 #include "asset_find_by_hash.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -165,12 +167,47 @@ static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     return 1;
 }
 
+/* Read MENU.BPK through the production ISO reader.  This deliberately keeps
+ * the retail CD payload in its original Track 1 container: the test owns only
+ * the bounded RAM buffer returned by nexus_iso_read_file(), never a materialized
+ * game-data file. */
+static int read_menu_bpk_from_track(const char *track_path,
+                                    uint8_t **out_data,
+                                    size_t *out_size) {
+    Nexus_ISOReader reader;
+    const Nexus_ISOFile *menu;
+    uint8_t *data;
+
+    if (!track_path || !out_data || !out_size) return 0;
+    memset(&reader, 0, sizeof(reader));
+    if (nexus_iso_open(&reader, track_path) < 0) return 0;
+    menu = nexus_iso_find(&reader, "MENU.BPK");
+    if (!menu || menu->is_dir || menu->size == 0U || menu->size > (uint32_t)INT_MAX) {
+        nexus_iso_close(&reader);
+        return 0;
+    }
+    data = (uint8_t *)malloc((size_t)menu->size);
+    if (!data || nexus_iso_read_file(&reader, menu, data, (int)menu->size) !=
+                     (int)menu->size) {
+        free(data);
+        nexus_iso_close(&reader);
+        return 0;
+    }
+    nexus_iso_close(&reader);
+    *out_data = data;
+    *out_size = (size_t)menu->size;
+    return 1;
+}
+
 static void test_optional_local_menu_bpk(void) {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    const char *track_path = getenv("FIRESTAFF_NEXUS_TRACK1_BIN");
     const char *home = getenv("HOME");
     char path[2048];
+    char track[2048];
     uint8_t *data = NULL;
     size_t size = 0;
+    int is_loose_menu = 0;
     Nexus_V1_BpkArchiveInfo info;
     Nexus_V1_BpkEntry entry;
     Nexus_V1_BpkModeDistribution dist;
@@ -198,18 +235,36 @@ static void test_optional_local_menu_bpk(void) {
         puts("SKIP: Nexus data root is unset; no local MENU.BPK check");
         return;
     }
-    if (!read_file(path, &data, &size)) {
-        puts("SKIP: local Nexus MENU.BPK not present");
-        return;
+    if (read_file(path, &data, &size)) {
+        is_loose_menu = 1;
+    } else {
+        if (!track_path || !track_path[0]) {
+            if (data_dir && data_dir[0]) {
+                if (snprintf(track, sizeof(track),
+                             "%s/Dungeon Master Nexus (Japan) (Track 1).bin",
+                             data_dir) < 0) return;
+                track_path = track;
+            } else {
+                puts("SKIP: local Nexus MENU.BPK and Track 1 are not present");
+                return;
+            }
+        }
+        if (!read_menu_bpk_from_track(track_path, &data, &size)) {
+            puts("SKIP: local Nexus MENU.BPK and readable Track 1 are not present");
+            return;
+        }
+        puts("INFO: validated MENU.BPK directly from original Nexus Track 1");
     }
 
-    expect(asset_file_matches_md5(path,
-                                  "c2776768ff25287c79013a1452253ca0") ||
-               asset_file_matches_md5(path,
-                                  "a6f2272a4f6cb3c6b3b33012bc5b15ed") ||
-               asset_file_matches_md5(path,
+    if (is_loose_menu) {
+        expect(asset_file_matches_md5(path,
+                                      "c2776768ff25287c79013a1452253ca0") ||
+                   asset_file_matches_md5(path,
+                                      "a6f2272a4f6cb3c6b3b33012bc5b15ed") ||
+                   asset_file_matches_md5(path,
                                       "fcf8a00fbb92593ed9ae908f8e285cda"),
-           "local MENU.BPK matches an authenticated Japanese/English/French retail revision");
+               "local MENU.BPK matches an authenticated Japanese/English/French retail revision");
+    }
 
     expect(nexus_v1_bpk_archive_parse(data, size, &info) == 0,
            "local MENU.BPK BPPK/BMPD directory parses");
