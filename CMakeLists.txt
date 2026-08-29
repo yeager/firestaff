@@ -58858,9 +58858,14 @@ add_executable(test_csb_v1_fmtowns_pic_library
     tests/test_csb_v1_fmtowns_pic_library.c
     src/csb/csb_v1_fmtowns_pic_library.c
     src/dm1/dm1_v1_fmtowns_pic_library.c
+    src/csb/csb_v1_fmtowns_cd.c
 )
 target_include_directories(test_csb_v1_fmtowns_pic_library PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_csb_v1_fmtowns_pic_library PRIVATE firestaff_zip_extract)
 add_test(NAME test_csb_v1_fmtowns_pic_library COMMAND test_csb_v1_fmtowns_pic_library)
+set_tests_properties(test_csb_v1_fmtowns_pic_library PROPERTIES
+    ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip"
+    LABELS "csb;fmtowns;graphics;real-media;in-memory")
 
 add_executable(test_dm1_v1_fmtowns_jdm_font
     tests/test_dm1_v1_fmtowns_jdm_font.c
