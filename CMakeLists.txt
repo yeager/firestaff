@@ -55210,14 +55210,14 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_archive_launch_
              COMMAND test_csb_v1_fmtowns_archive_launch_real)
     set_tests_properties(csb_v1_fmtowns_archive_launch_real PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "csb;fmtowns;english;real_data;packed;ram"
+        LABELS "tier2;csb;fmtowns;english;startup;m11;real-media;in-memory;native;skip-safe"
         ENVIRONMENT
             "FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=en")
     add_test(NAME csb_v1_fmtowns_ja_archive_launch_real
              COMMAND test_csb_v1_fmtowns_archive_launch_real)
     set_tests_properties(csb_v1_fmtowns_ja_archive_launch_real PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "csb;fmtowns;japanese;real_data;packed;ram"
+        LABELS "tier2;csb;fmtowns;japanese;startup;m11;real-media;in-memory;native;skip-safe"
         ENVIRONMENT
             "FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=ja")
 
@@ -55233,13 +55233,13 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_archive_launch_
         SKIP_RETURN_CODE 77
         ENVIRONMENT
             "FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=en;FIRESTAFF_AUDIO_ENABLE_SDL=0"
-        LABELS "csb;fmtowns;english;real-media;in-memory;m11")
+        LABELS "tier2;csb;fmtowns;english;startup;m11;real-media;in-memory;native;skip-safe")
     add_test(NAME csb_v1_fmtowns_ja_packed_m11_real
         COMMAND test_csb_v1_fmtowns_packed_m11_real)
     set_tests_properties(csb_v1_fmtowns_ja_packed_m11_real PROPERTIES
         ENVIRONMENT
             "FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=ja;FIRESTAFF_AUDIO_ENABLE_SDL=0"
-        LABELS "csb;fmtowns;japanese;real-media;in-memory;m11")
+        LABELS "tier2;csb;fmtowns;japanese;startup;m11;real-media;in-memory;native;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_game_data_fingerprint.c")
