@@ -369,6 +369,9 @@ static void m12_export_save_manifest_json(M12_StartupMenuState* state);
 static void m12_export_save_settings_action(M12_StartupMenuState* state);
 static void m12_export_save_browser_settings_action(M12_StartupMenuState* state);
 static void m12_import_save_manifest_json(M12_StartupMenuState* state);
+static int m12_collect_card_platforms(const M12_StartupMenuState* state,
+                                      const char* gameId,
+                                      int out[M12_ARCH_COUNT]);
 int M11_GameView_ExportQuickSaveAsDM1PC34(const char* quickSavePath,
                                           const char* exportPath);
 const char *m12_localized_main_label(int index);
@@ -5455,12 +5458,28 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
     state->activatedIndex = state->selectedIndex;
     if (entry->kind == M12_MENU_ENTRY_GAME) {
         int gi = m12_clamp_index(state->selectedIndex, M12_CONFIG_GAME_COUNT);
-        (void)gi;
+        int platforms[M12_ARCH_COUNT];
+        int count = m12_collect_card_platforms(state, entry->gameId, platforms);
+        int requestedArchitecture = state->gameOptions[gi].architectureIndex;
+        int i;
         /* Always show the supported-platform cards.  A platform without a
          * scanner-verified corpus is visibly unavailable and cannot proceed
-         * to a launch mode. */
+         * to a launch mode.  Retain an explicit CLI/saved platform choice so
+         * it is visible to the player; AUTO prefers the first verified card. */
+        state->launchRequested = 0;
+        state->quickResumeLaunchRequested = 0;
         state->gameCardFlowStage = 0;
         state->gameCardSelected = 0;
+        for (i = 0; i < count; ++i) {
+            if (platforms[i] == requestedArchitecture ||
+                (requestedArchitecture == M12_ARCH_AUTO &&
+                 M12_AssetStatus_GameHasMatchedArchitecture(&state->assetStatus,
+                                                             entry->gameId,
+                                                             platforms[i]))) {
+                state->gameCardSelected = i;
+                break;
+            }
+        }
         state->view = M12_MENU_VIEW_GAME_OPTIONS;
         state->gameOptSelectedRow = 0;
         return;
@@ -6185,7 +6204,8 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 }
                 return;
             }
-            if (input == M12_MENU_INPUT_UP || input == M12_MENU_INPUT_LEFT) {
+            if (input == M12_MENU_INPUT_UP || input == M12_MENU_INPUT_LEFT ||
+                input == M12_MENU_INPUT_TURN_LEFT) {
                 int count = state->gameCardFlowStage == 0
                     ? m12_collect_card_platforms(state, cardEntry->gameId,
                                                  (int[M12_ARCH_COUNT]){0})
@@ -6194,7 +6214,8 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     m12_cycle_index(state->gameCardSelected, -1, count);
                 return;
             }
-            if (input == M12_MENU_INPUT_DOWN || input == M12_MENU_INPUT_RIGHT) {
+            if (input == M12_MENU_INPUT_DOWN || input == M12_MENU_INPUT_RIGHT ||
+                input == M12_MENU_INPUT_TURN_RIGHT) {
                 int count = state->gameCardFlowStage == 0
                     ? m12_collect_card_platforms(state, cardEntry->gameId,
                                                  (int[M12_ARCH_COUNT]){0})
@@ -6223,6 +6244,11 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     }
                     state->gameOptions[gi].architectureIndex = platforms[index];
                     state->gameOptions[gi].versionIndex = version;
+                    /* Selecting a data card is not consent to launch.  This
+                     * also clears a stale direct-launch request from CLI or
+                     * a prior menu session before the presentation choice. */
+                    state->launchRequested = 0;
+                    state->quickResumeLaunchRequested = 0;
                     state->gameCardFlowStage = 1;
                     state->gameCardSelected = 0;
                     return;

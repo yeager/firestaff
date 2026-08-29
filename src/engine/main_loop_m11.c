@@ -6488,9 +6488,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         menuInitOptions.skipScreenshotGalleryScan = o->bootProbe ? 1 : 0;
         menuInitOptions.looseFilesOnlyAssetScan =
             (o->bootProbe && (!o->dataDir || !o->dataDir[0])) ? 1 : 0;
-        if (!o->bootProbe && !o->directLaunch) {
-            menuInitOptions.skipAssetScan = 1;
-        }
+        /* The card launcher must make real-data availability visible before
+         * it lets a player choose a platform.  Skipping this scan for an
+         * ordinary --menu run made every card unavailable and quietly turned
+         * --menu --game into a non-starting flow.  The scanner reads archive
+         * members in place; it does not unpack game data to disk. */
+        menuInitOptions.skipAssetScan = 0;
         scanCtx.framebuffer = launcherFramebuffer;
         scanCtx.width = M11_LAUNCHER_FB_WIDTH;
         scanCtx.height = M11_LAUNCHER_FB_HEIGHT;

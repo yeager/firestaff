@@ -74,6 +74,20 @@ modes. They affect only the host presentation target: the renderer fits the
 native source frame with bars where necessary and never stretches it
 non-uniformly.
 
+## Game Cards
+
+Selecting a game card opens a three-step launch flow. First, Firestaff shows
+generated cards for each natively supported platform. Each card states whether
+the scanner verified matching game data; a platform without verified data is
+visible but cannot be started. The initial selection preserves an explicit
+CLI or saved platform preference; automatic selection chooses the first
+verified platform.
+
+After a verified platform is selected, **Original** starts the preservation
+preset and **Modern** starts the v2.x preset directly. **Custom** opens the
+detailed options page for per-setting changes. Game archives remain the launch
+source throughout this flow; Firestaff does not extract a copy to disk.
+
 M12_SETTINGS_TAB_GAME       = game settings
 M12_SETTINGS_TAB_GRAPHICS  = renderer, scale mode, aspect ratio
 M12_SETTINGS_TAB_CONTROLS  = input remapping, WASD, touch

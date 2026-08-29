@@ -663,6 +663,7 @@ int main(int argc, char** argv) {
             continue;
         }
         if (strcmp(a, "--menu") == 0) {
+            opts.menuRequested = 1;
             opts.directLaunch = 0;
             continue;
         }
@@ -711,6 +712,12 @@ int main(int argc, char** argv) {
     }
 
     opts.verbose = verbose;
+    /* `--menu --game dm1` is the documented card-flow invocation.  Options
+     * may appear in either order, so resolve this once after parsing rather
+     * than allowing a later --game or --boot-probe to bypass M12. */
+    if (opts.menuRequested) {
+        opts.directLaunch = 0;
+    }
 
     if (theronAuthenticatedFallback) {
 #if defined(_WIN32)

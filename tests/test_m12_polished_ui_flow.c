@@ -40,6 +40,16 @@ static int expect(int cond, const char *msg) {
     return 1;
 }
 
+static int find_entry_kind(const M12_StartupMenuState *state,
+                           M12_MenuEntryKind kind) {
+    int i;
+    for (i = 0; i < M12_StartupMenu_GetEntryCount(); ++i) {
+        const M12_MenuEntry *entry = M12_StartupMenu_GetEntry(state, i);
+        if (entry && entry->kind == kind) return i;
+    }
+    return -1;
+}
+
 static void dismiss_initial_message(M12_StartupMenuState *state) {
     if (state && state->view == M12_MENU_VIEW_MESSAGE) {
         M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_ACCEPT);
@@ -103,12 +113,22 @@ int main(void) {
 
     state.selectedIndex = 0;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    if (!expect(state.view == M12_MENU_VIEW_MESSAGE && state.launchRequested == 0,
-                "unavailable game accept should show a message instead of launching")) return 1;
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    if (!expect(state.view == M12_MENU_VIEW_MAIN, "message accept should return to main")) return 1;
+    if (state.view == M12_MENU_VIEW_MESSAGE) {
+        if (!expect(state.launchRequested == 0,
+                    "unavailable game accept should not launch")) return 1;
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+        if (!expect(state.view == M12_MENU_VIEW_MAIN,
+                    "unavailable-data message accept should return to main")) return 1;
+    } else {
+        /* A configured user data root can legitimately make DM1 available
+         * even when this test's nominal directory is empty. */
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+        if (!expect(state.view == M12_MENU_VIEW_MAIN,
+                    "available game BACK should return to main")) return 1;
+    }
 
-    state.selectedIndex = 5;
+    state.selectedIndex = find_entry_kind(&state, M12_MENU_ENTRY_MUSEUM);
+    if (!expect(state.selectedIndex >= 0, "museum entry should exist")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     if (!expect(state.view == M12_MENU_VIEW_MUSEUM, "museum card should open Museum of Lore")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
@@ -128,7 +148,8 @@ int main(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     if (!expect(state.view == M12_MENU_VIEW_MAIN, "changelog BACK should return to main")) return 1;
 
-    state.selectedIndex = 6;
+    state.selectedIndex = find_entry_kind(&state, M12_MENU_ENTRY_SETTINGS);
+    if (!expect(state.selectedIndex >= 0, "settings entry should exist")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     if (!expect(state.view == M12_MENU_VIEW_SETTINGS, "settings card should open settings")) return 1;
     /* v2.7.15 settings UX: UP/DOWN cycles the visible rows of the active
@@ -154,16 +175,19 @@ int main(void) {
     state.selectedIndex = 0;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS && state.activatedIndex == 0,
-                "available DM1 accept should enter game options")) return 1;
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
-    if (!expect(state.gameOptSelectedRow == 1, "game options DOWN should move to version row")) return 1;
-    state.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
+                "available DM1 accept should enter platform cards")) return 1;
+    if (!expect(state.gameCardFlowStage == 0 && state.launchRequested == 0,
+                "game card should wait for a verified platform choice")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    if (!expect(state.gameCardFlowStage == 1 && state.launchRequested == 0,
+                "verified platform card should advance to presentation cards")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     if (!expect(state.launchRequested == 1 && state.view == M12_MENU_VIEW_MESSAGE,
-                "launch row should request launch and show ready message")) return 1;
+                "Original card should request launch and show ready message")) return 1;
     intent = M12_StartupMenu_GetLaunchIntent(&state);
-    if (!expect(intent.valid == 1 && intent.gameId && strcmp(intent.gameId, "dm1") == 0,
-                "ready launch should produce a valid DM1 intent")) return 1;
+    if (!expect(intent.valid == 1 && intent.presentationMode == M12_PRESENTATION_V1_ORIGINAL &&
+                intent.gameId && strcmp(intent.gameId, "dm1") == 0,
+                "Original card should produce a valid V1 DM1 intent")) return 1;
     /* The ready message returns to the view it was raised from
      * (game options), not straight to main. */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
@@ -173,6 +197,23 @@ int main(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     if (!expect(state.view == M12_MENU_VIEW_MAIN,
                 "game options BACK should return to main")) return 1;
+
+    state.selectedIndex = 0;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    if (!expect(state.gameCardFlowStage == 1 && state.gameCardSelected == 1,
+                "presentation-card navigation should select Modern")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(state.launchRequested == 1 && intent.valid == 1 &&
+                intent.presentationMode == M12_PRESENTATION_V21_UPSCALED,
+                "Modern card should produce a valid V2.1 DM1 intent")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    if (!expect(state.view == M12_MENU_VIEW_MAIN,
+                "Modern ready message should return through detailed options")) return 1;
+
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     if (!expect(state.shouldExit == 1, "top-level BACK should request exit")) return 1;
 

@@ -56,6 +56,7 @@ typedef struct {
     int csbFmtownsJapanese; /* Select the verified CSB F31J package rather
                                than the architecture's default F31E row. */
     int directLaunch;      /* Non-zero when --game should bypass M12. */
+    int menuRequested;     /* --menu wins over --game regardless of CLI order. */
     int bootProbe;         /* Non-zero for deterministic --game boot smoke:
                               prepare/open selected-entry startup, then exit. */
     int bootProbeFrames;   /* Optional M11 idle frames to advance before
