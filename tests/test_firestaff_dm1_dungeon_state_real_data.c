@@ -1,35 +1,9 @@
 #include "firestaff_dungeon_query.h"
+#include "firestaff_zip_extract.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-static int read_file(const char *path, unsigned char **out, int *out_size)
-{
-    FILE *file;
-    long size;
-    unsigned char *bytes;
-
-    if (!path || !out || !out_size) return 0;
-    file = fopen(path, "rb");
-    if (!file) return 0;
-    if (fseek(file, 0, SEEK_END) != 0) { fclose(file); return 0; }
-    size = ftell(file);
-    if (size <= 0 || size > 1024 * 1024 || fseek(file, 0, SEEK_SET) != 0) {
-        fclose(file);
-        return 0;
-    }
-    bytes = (unsigned char *)malloc((size_t)size);
-    if (!bytes || fread(bytes, 1, (size_t)size, file) != (size_t)size) {
-        free(bytes);
-        fclose(file);
-        return 0;
-    }
-    fclose(file);
-    *out = bytes;
-    *out_size = (int)size;
-    return 1;
-}
 
 static void w16(unsigned char *p, unsigned short value)
 {
@@ -66,10 +40,11 @@ static int sensor_wall_cell_regression(void)
     return fs_dungeon_get_wall_ornament(0, 0, 0) == 0;
 }
 
-int main(int argc, char **argv)
+int main(void)
 {
-    unsigned char *bytes = NULL;
-    int size = 0;
+    const char *archive = getenv("FIRESTAFF_DM1_PC34_ARCHIVE");
+    uint8_t *bytes = NULL;
+    size_t size = 0u;
     int failures = 0;
 
     if (!sensor_wall_cell_regression()) {
@@ -77,15 +52,17 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (argc < 2) {
-        puts("SKIP: pass the extracted PC34 DUNGEON.DAT path for real-data verification");
+    if (!archive || !archive[0]) {
+        puts("SKIP: FIRESTAFF_DM1_PC34_ARCHIVE is not set");
         return 0;
     }
-    if (!read_file(argv[1], &bytes, &size)) {
-        fprintf(stderr, "FAIL: could not read %s\n", argv[1]);
+    if (firestaff_zip_extract_by_suffix(archive, "DATA/DUNGEON.DAT",
+                                        &bytes, &size) != 0 ||
+        !bytes || size > (size_t)0x7fffffff) {
+        fprintf(stderr, "FAIL: could not read DATA/DUNGEON.DAT from %s\n", archive);
         return 1;
     }
-    if (fs_dungeon_load_dat(bytes, size) != 14) ++failures;
+    if (fs_dungeon_load_dat(bytes, (int)size) != 14) ++failures;
     if (fs_dungeon_get_width() != 18 || fs_dungeon_get_height() != 19) ++failures;
     if (fs_dungeon_get_start_x() != 1 || fs_dungeon_get_start_y() != 3 ||
         fs_dungeon_get_start_dir() != 2) ++failures;
