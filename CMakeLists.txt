@@ -18603,6 +18603,9 @@ endif()
     endif()
     add_test(NAME dm2_v1_caii_source_owner_real_data
              COMMAND test_dm2_v1_caii_source_owner_real_data)
+    set_tests_properties(dm2_v1_caii_source_owner_real_data PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "tier2;dm2;dos;ai;real-media;in-memory;native;skip-safe")
 
     add_executable(test_dm2_v1_g1_creature_viewport_field_real_data
         tests/test_dm2_v1_g1_creature_viewport_field_real_data.c

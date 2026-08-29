@@ -11,14 +11,19 @@ int main(void)
     DM2_V1_CaiiSourceOwner owner;
     const DM2_V1_DungeonData *dungeon;
     const DM2_V1_AssetLoader *loader;
-    const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
     int comparable = 0;
     int distinct = 0;
     uint8_t previous = 0xffu;
 
-    if (!root || !root[0]) { puts("SKIP: no local canonical DM2 data"); return 0; }
+    if (!archive || !archive[0]) {
+        puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is not configured");
+        return 0;
+    }
     dm2_v1_boot_profile_init(&profile);
-    if (dm2_v1_boot_scan_assets(&profile, root) != 0 ||
+    /* CAII retains only data admitted through the selected original ZIP.
+     * Its private DB4/GDAT source state must never require a loose install. */
+    if (dm2_v1_boot_scan_assets(&profile, archive) != 0 ||
         dm2_v1_boot_enter_game(&profile) != 0) {
         fputs("FAIL: canonical DM2 profile unavailable\n", stderr); return 1;
     }
