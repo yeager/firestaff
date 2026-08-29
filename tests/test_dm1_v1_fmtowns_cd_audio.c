@@ -1,6 +1,11 @@
 #include "dm1_v1_fmtowns_cd_audio.h"
 #include "firestaff_fmtowns_disc.h"
 #include "firestaff_zip_extract.h"
+/* This real-media regression is built in Release by CI.  Its checks carry
+ * calls and receipts, so NDEBUG must not turn the test into a no-op. */
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -132,7 +137,9 @@ static void test_real_cue_archive(void) {
     count = fmtowns_cue_parse_track_starts((const char *)cue, cue_size,
                                            starts, 24);
     free(cue);
-    assert(count == 20);
+    /* The parser returns an exclusive upper bound, preserving index zero as
+     * the non-track sentinel.  Retail CUE tracks 1..20 therefore yield 21. */
+    assert(count == 21);
     assert(starts[2] == 28u * 75u + 50u);
     assert(starts[5] == 6u * 60u * 75u + 20u * 75u + 50u);
     assert(starts[20] == 29u * 60u * 75u + 48u * 75u + 52u);
@@ -162,7 +169,7 @@ static void test_real_cdda_payload_archive(void) {
                                           sizeof(image_member)) == 1);
     memset(starts, 0, sizeof(starts));
     assert(fmtowns_cue_parse_track_starts((const char *)cue, cue_size,
-                                          starts, 24) == 20);
+                                          starts, 24) == 21);
     assert(firestaff_zip_extract_by_suffix(archive, image_member, &bin,
                                             &bin_size) == 0 && bin);
     free(cue);

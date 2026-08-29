@@ -67,8 +67,10 @@ int fmtowns_cdda_extract(const uint8_t *image, size_t image_size,
                          uint8_t **out_pcm, size_t *out_pcm_size);
 
 /* Parse a CUE sheet to extract INDEX 01 sector offsets for each track.
- * track_starts must be at least max_tracks entries.
- * Returns the number of tracks found, or -1 on error. */
+ * track_starts must be at least max_tracks entries.  Returns one past the
+ * highest accepted track number (so a conventional 1..20 sheet returns 21),
+ * or -1 on error.  The sentinel form lets callers validate the final track
+ * without treating track zero as a playable audio track. */
 int fmtowns_cue_parse_track_starts(const char *cue, size_t cue_size,
                                    uint32_t *track_starts, int max_tracks);
 
