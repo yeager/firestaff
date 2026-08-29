@@ -14,6 +14,14 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm2 --platform pc --data-dir "$archive" \
     --script 'key:enter,key:enter,key:enter' --duration 1000 >/dev/null 2>&1
 
+# DM2's second platform card is PC.  This is the public mouse-only card path
+# to Original, using the authenticated DOS archive directly in memory.
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --width 1920 --height 1080 --menu --game dm2 --platform pc --data-dir "$archive" \
+    --script 'wait20,click:1645:262,wait20,click:934:405,wait20,click:450:405,wait20' \
+    --duration 3000 >/dev/null 2>&1
+
 output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm2 --platform pc --data-dir "$archive" --boot-probe \
     --boot-probe-frames 5000 --script 'key:enter,key:enter,key:enter,up' \

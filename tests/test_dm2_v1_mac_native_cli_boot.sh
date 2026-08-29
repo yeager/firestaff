@@ -15,6 +15,15 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --width 320 --height 200 \
     --script 'key:enter,key:enter,click:100:60' --duration 1000 >/dev/null 2>&1
 
+# Macintosh is the first card on the second platform row.  This remains a
+# launcher-only pointer sequence; the native movie and mirror clicks are
+# separately covered below at their original 320x200 coordinate space.
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --width 1920 --height 1080 --menu --game dm2 --platform mac --data-dir "$archive" \
+    --script 'wait20,click:1645:262,wait20,click:410:679,wait20,click:450:405,wait20' \
+    --duration 3000 >/dev/null 2>&1
+
 # Retail Mac owns a title movie before its source New Game action.  The first
 # Enter dismisses that movie; the second is the authenticated title-menu
 # action.  Keep the host window at 320x200: --script pointer coordinates are

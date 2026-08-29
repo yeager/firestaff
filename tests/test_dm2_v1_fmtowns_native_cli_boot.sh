@@ -14,6 +14,15 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm2 --platform fm-towns --data-dir "$archive" \
     --script 'key:enter,key:enter,key:enter' --duration 1000 >/dev/null 2>&1
 
+# FM Towns is the first DM2 platform card.  This asserts that the launcher
+# admits the authentic disc solely through mouse selection before the source
+# title and New Game input path below takes over.
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --width 1920 --height 1080 --menu --game dm2 --platform fm-towns --data-dir "$archive" \
+    --script 'wait20,click:1645:262,wait20,click:410:405,wait20,click:450:405,wait20' \
+    --duration 3000 >/dev/null 2>&1
+
 # AUTOEXEC hands SWOOSH/TITLE to SKULL before the source New Game event.  Keep
 # the probe window at the original 320x200 coordinate space: --script click
 # coordinates are host-window points and are mapped through the presentation
