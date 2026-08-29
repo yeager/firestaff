@@ -3,6 +3,12 @@
 #include "firestaff_fmtowns_disc.h"
 #include "firestaff_zip_extract.h"
 
+/* CI exercises this source-media regression in Release.  Its RLE sweep and
+ * the calls that produce its receipts live in assert expressions, so keep
+ * them enabled instead of silently turning the real-media path into a no-op. */
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
