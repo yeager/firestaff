@@ -12595,8 +12595,8 @@ if(BUILD_TESTING)
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
         set_tests_properties(dm1_v1_legacy_graphics_real_corpus PROPERTIES
-            ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_FM-Towns_JA-EN.zip"
-            LABELS "dm1;fmtowns;real-media;in-memory;graphics;skip-safe")
+            ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_FM-Towns_JA-EN.zip;FIRESTAFF_DM1_AMIGA_V20_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Amiga_EN_Version-20.zip"
+            LABELS "dm1;fmtowns;amiga;real-media;in-memory;graphics;skip-safe")
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_hoc_mirror_side_depth_material_receipt.c")

@@ -1,5 +1,6 @@
 #include "dm1_v1_fmtowns_iso9660.h"
 #include "dm1_v1_legacy_graphics_dat.h"
+#include "firestaff_amiga_adf.h"
 #include "firestaff_fmtowns_disc.h"
 #include "firestaff_zip_extract.h"
 
@@ -15,35 +16,6 @@
 #define DM1_LEGACY_BITMAP_COUNT 532u
 #define DM1_LEGACY_PIXEL_CAPACITY (1024u * 1024u)
 
-static uint8_t *read_file(const char *path, size_t *out_size)
-{
-    FILE *file;
-    long length;
-    uint8_t *data;
-
-    if (!path || !out_size) return NULL;
-    file = fopen(path, "rb");
-    if (!file) return NULL;
-    if (fseek(file, 0, SEEK_END) != 0) {
-        fclose(file);
-        return NULL;
-    }
-    length = ftell(file);
-    if (length <= 0 || fseek(file, 0, SEEK_SET) != 0) {
-        fclose(file);
-        return NULL;
-    }
-    data = (uint8_t *)malloc((size_t)length);
-    if (!data || fread(data, 1, (size_t)length, file) != (size_t)length) {
-        free(data);
-        fclose(file);
-        return NULL;
-    }
-    fclose(file);
-    *out_size = (size_t)length;
-    return data;
-}
-
 static uint64_t fnv1a(uint64_t hash, const uint8_t *data, size_t size)
 {
     size_t i;
@@ -52,6 +24,27 @@ static uint64_t fnv1a(uint64_t hash, const uint8_t *data, size_t size)
         hash *= UINT64_C(1099511628211);
     }
     return hash;
+}
+
+typedef struct {
+    uint8_t *bytes;
+    size_t size;
+} AmigaGraphicsFile;
+
+static int amiga_graphics_visitor(const char *name, const uint8_t *bytes,
+                                  size_t size, void *user_data)
+{
+    AmigaGraphicsFile *graphics = (AmigaGraphicsFile *)user_data;
+    uint8_t *copy;
+
+    if (!name || !bytes || !graphics || strcmp(name, "graphics.dat") != 0 ||
+        graphics->bytes || size == 0u) return 1;
+    copy = (uint8_t *)malloc(size);
+    if (!copy) return -1;
+    memcpy(copy, bytes, size);
+    graphics->bytes = copy;
+    graphics->size = size;
+    return 1;
 }
 
 static int audit_graphics(const char *label, const uint8_t *data, size_t size,
@@ -167,12 +160,46 @@ static int audit_fmtowns_archive(const char *archive)
     return ok;
 }
 
+static int audit_amiga_archive(const char *archive)
+{
+    static const char inner_member[] = "Dungeon Master v2.0 (1988)(FTL).zip";
+    static const char adf_member[] = "Dungeon Master v2.0 (1988)(FTL).adf";
+    AmigaGraphicsFile graphics;
+    uint8_t *inner = NULL;
+    uint8_t *adf = NULL;
+    size_t inner_size = 0u;
+    size_t adf_size = 0u;
+    int visited;
+    int ok;
+
+    memset(&graphics, 0, sizeof(graphics));
+    if (!archive ||
+        firestaff_zip_extract_by_suffix(archive, inner_member, &inner,
+                                        &inner_size) != 0 || !inner ||
+        firestaff_zip_extract_memory_by_suffix(inner, inner_size, adf_member,
+                                               &adf, &adf_size) != 0 || !adf) {
+        fprintf(stderr, "could not read DM1 Amiga v2.0 ADF from archive: %s\n",
+                archive ? archive : "(null)");
+        free(inner);
+        free(adf);
+        return 0;
+    }
+    free(inner);
+    visited = firestaff_amiga_adf_visit_ofs_files(adf, adf_size,
+                                                   amiga_graphics_visitor,
+                                                   &graphics);
+    free(adf);
+    ok = visited >= 0 && graphics.bytes &&
+        audit_graphics("Amiga v2.0 GRAPHICS.DAT", graphics.bytes,
+                       graphics.size, 1, NULL);
+    free(graphics.bytes);
+    return ok;
+}
+
 int main(void)
 {
     const char *fmtowns = getenv("FIRESTAFF_DM1_FMTOWNS_ARCHIVE");
-    const char *amiga = getenv("FIRESTAFF_DM1_AMIGA_GRAPHICS_DAT");
-    uint8_t *amiga_data;
-    size_t amiga_size;
+    const char *amiga = getenv("FIRESTAFF_DM1_AMIGA_V20_ARCHIVE");
     int ran = 0;
     int ok = 1;
 
@@ -182,17 +209,10 @@ int main(void)
     }
     if (amiga && amiga[0]) {
         ran = 1;
-        amiga_data = read_file(amiga, &amiga_size);
-        if (!amiga_data) {
-            fprintf(stderr, "could not read Amiga GRAPHICS.DAT: %s\n", amiga);
-            ok = 0;
-        } else {
-            ok = audit_graphics("Amiga", amiga_data, amiga_size, 1, NULL) && ok;
-            free(amiga_data);
-        }
+        ok = audit_amiga_archive(amiga) && ok;
     }
     if (!ran) {
-        puts("SKIP: set FIRESTAFF_DM1_FMTOWNS_ARCHIVE and/or FIRESTAFF_DM1_AMIGA_GRAPHICS_DAT");
+        puts("SKIP: set FIRESTAFF_DM1_FMTOWNS_ARCHIVE and/or FIRESTAFF_DM1_AMIGA_V20_ARCHIVE");
         return 0;
     }
     return ok ? 0 : 1;
