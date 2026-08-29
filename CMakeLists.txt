@@ -55140,13 +55140,13 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_m11_game_handof
     add_test(NAME csb_v1_fmtowns_en_m11_real_media_handoff
              COMMAND test_csb_v1_fmtowns_m11_game_handoff)
     set_tests_properties(csb_v1_fmtowns_en_m11_real_media_handoff PROPERTIES
-        LABELS "tier2;csb;fmtowns;english;m11;handoff;real_data;skip_safe"
+        LABELS "csb;fmtowns;english;m11;handoff;legacy-loose-media;manual-data-root;skip-safe"
         ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=en;FIRESTAFF_AUDIO_ENABLE_SDL=0"
         TIMEOUT 120)
     add_test(NAME csb_v1_fmtowns_ja_m11_real_media_handoff
              COMMAND test_csb_v1_fmtowns_m11_game_handoff)
     set_tests_properties(csb_v1_fmtowns_ja_m11_real_media_handoff PROPERTIES
-        LABELS "tier2;csb;fmtowns;japanese;m11;handoff;real_data;skip_safe"
+        LABELS "csb;fmtowns;japanese;m11;handoff;legacy-loose-media;manual-data-root;skip-safe"
         ENVIRONMENT "FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=ja;FIRESTAFF_AUDIO_ENABLE_SDL=0"
         TIMEOUT 120)
 endif()
