@@ -8,6 +8,11 @@ Reviewed 2026-08-29. Only open work is listed here.
   but does not substitute for these route-specific captures.
 - Extend real-media parity beyond bounded Atari ST, Amiga and FM Towns routes
   to native end-to-end gameplay, input and presentation evidence.
+- Complete the Amiga gameplay-palette owner from the original `dm` executable
+  or its AmigaOS library calls. The supplied English v2.0 disk has been
+  inspected in memory and contains no immediate `MOVE.W #rgb,COLORxx` writes,
+  so a direct custom-register palette must not be invented or substituted by
+  the PC VGA palette.
 - The supplied French DOS ZIP → `dungeon_master.exe` SFX package uses a
   non-solid RAR 2.0 (`unp_ver=0x14`) stream. Native RAR2 decoding is
   intentionally out of scope; the launcher reports it as unsupported rather
