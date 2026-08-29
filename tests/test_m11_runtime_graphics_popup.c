@@ -64,6 +64,29 @@ int main(void) {
     assert(state.graphicsPopupActive == 1);
     assert(state.graphicsPopupSelectedRow == 0);
 
+    /* Every visible F10 control has a mouse path.  Exercise the tabs, a
+     * value row and the close button through the same source-space pointer
+     * dispatcher used by the SDL frontend. */
+    result = M11_GameView_HandlePointerButton(&state, 220, 34,
+                                               DM1_V1_MOUSE_MASK_LEFT_PC34);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupPage == 1);
+    result = M11_GameView_HandlePointerButton(&state, 220, 58,
+                                               DM1_V1_MOUSE_MASK_LEFT_PC34);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupSelectedRow == 1);
+    result = M11_GameView_HandlePointerButton(&state, 306, 14,
+                                               DM1_V1_MOUSE_MASK_LEFT_PC34);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupActive == 0);
+
+    result = M11_GameView_HandleInput(&state,
+                                      M12_MENU_INPUT_GRAPHICS_POPUP);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupActive == 1);
+    assert(state.graphicsPopupPage == 0);
+    assert(state.graphicsPopupSelectedRow == 0);
+
     /* The modal backdrop consumes pointer input before world/HUD hit tests. */
     state.world.party.mapX = 7;
     state.world.party.mapY = 9;
@@ -78,7 +101,7 @@ int main(void) {
 
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
     assert(result == M11_GAME_INPUT_REDRAW);
-    assert(state.presentationMode == M12_PRESENTATION_V20_FILTERED);
+    assert(state.presentationMode == M12_PRESENTATION_V21_UPSCALED);
 
     /* Close the F10 modal and exercise the V2 HUD that is actually drawn
      * after the live mode change. Champion four's portrait is deliberately
@@ -106,7 +129,7 @@ int main(void) {
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(M12_Config_Load(&config, NULL) == 1);
-    assert(config.graphicsIndex == M12_PRESENTATION_V20_FILTERED);
+    assert(config.graphicsIndex == M12_PRESENTATION_V21_UPSCALED);
     assert(config.scaleModeIndex == M11_SCALE_STRETCH);
 
     /* FPS is a presentation diagnostic: it is persisted and sampled from
@@ -168,9 +191,6 @@ int main(void) {
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_CYCLE_CHAMPION);
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.graphicsPopupPage == 0);
-    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
-    assert(result == M11_GAME_INPUT_REDRAW);
-    assert(state.presentationMode == M12_PRESENTATION_V21_UPSCALED);
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.presentationMode == M12_PRESENTATION_V1_ORIGINAL);
@@ -372,7 +392,7 @@ int main(void) {
             assert(state.graphicsPopupActive == 1);
             result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
             assert(result == M11_GAME_INPUT_REDRAW);
-            assert(state.presentationMode == M12_PRESENTATION_V20_FILTERED);
+            assert(state.presentationMode == M12_PRESENTATION_V21_UPSCALED);
 
             /* Click CH, then click the selected CHEATS and SPEED rows. */
             result = M11_GameView_HandlePointerButton(

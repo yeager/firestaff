@@ -385,6 +385,13 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
                     hit.index = li;
                     return hit;
                 }
+                /* This is a modal picker.  Do not let a click outside one
+                 * of its language cards reach a tab or a setting behind the
+                 * popup: that made an ordinary attempt to dismiss/miss the
+                 * picker silently change unrelated launcher settings.  ESC
+                 * and the visible Back control remain the explicit cancel
+                 * routes. */
+                return hit;
             }
             /* Tab strip click: switch tabs by index.  The strip
              * sits at y=52, h=22, with three equally-sized tabs

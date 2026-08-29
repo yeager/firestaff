@@ -263,6 +263,10 @@ int main(void) {
     if (!expect(state.languagePopupSelectedIndex ==
                     M12_StartupMenu_GetLanguageCount() - 1,
                 "AUTO language popup should highlight AUTO")) return 1;
+    hit = M12_ModernMenu_HitTest(&state, 900,
+                                 settingsSmoothTurnPanCenterY);
+    if (!expect(hit.kind == M12_HIT_NONE,
+                "open language popup should keep settings behind it mouse-inert")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
 
     state.settings.dm1V2SmoothTurnPanEnabled = 0;
