@@ -4311,6 +4311,17 @@ if(BUILD_TESTING)
         ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
     )
     add_test(
+        NAME dm1_v1_pc34_nested_archive_cli_boot
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_pc34_native_cli_boot.sh
+            $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(dm1_v1_pc34_nested_archive_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;pc34;dos;real-media;archive;native;cli;menu;startup;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN.zip"
+        TIMEOUT 45
+    )
+    add_test(
         NAME dm1_v1_atari_st_outer_archive_cli_boot
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_atari_st_outer_archive_no_fallback.sh
             $<TARGET_FILE:firestaff>
