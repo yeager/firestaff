@@ -73,4 +73,13 @@ case "$menu_output" in
         ;;
 esac
 
+# Amiga is the second platform card.  This exercises the actual mouse-only
+# CSB -> Amiga -> Original card route against the supplied ZIP -> ADF media.
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --width 1920 --height 1080 --menu --game csb --platform amiga \
+    --data-dir "$archive" \
+    --script 'wait20,click:1173:262,wait20,click:934:405,wait20,click:450:405,wait20' \
+    --duration 3000 >/dev/null 2>&1
+
 printf '%s\n' 'PASS: authentic CSB Amiga ZIP -> ADF route reaches source entrance, menu launch, and native movement'
