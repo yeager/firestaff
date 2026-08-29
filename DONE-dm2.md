@@ -2,6 +2,16 @@
 
 Reviewed 2026-08-29. Completed work only.
 
+- The supplied DOS and Amiga retail ZIPs are now injected into the native
+  CTest title, asset and New-Game receipts. The Amiga six-disk receipt walks
+  ZIP→ADF→`dm2_arcsplit1`…`6`→LZX entirely in RAM; the Amiga M11/M12 title
+  and New-Game paths and DOS M11 New-Game path cannot silently skip because
+  their archive environment was unset.
+- The supplied Macintosh retail BIN/CUE ZIP is now injected into the existing
+  real-media CTest suite. It exercises native in-memory HFS forks, MooV
+  resources, movie decoding/runtime, sound resources, pointer input,
+  New-Game flow and wall-source census rather than silently skipping because
+  the archive environment was unset.
 - The real DOS English/French, Amiga, FM Towns, and Macintosh startup tests now
   each exercise the ordinary start-menu handoff separately from boot-probe
   mode. `FIRESTAFF_FAIL_IF_NO_LAUNCH` and `FIRESTAFF_EXIT_AFTER_LAUNCH` make a

@@ -11842,6 +11842,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_media_real.c")
     target_link_libraries(test_dm2_v1_mac_media_real PRIVATE
         firestaff_zip_extract firestaff_fmtowns_disc firestaff_zlib)
     add_test(NAME dm2_v1_mac_media_real COMMAND test_dm2_v1_mac_media_real)
+    set_tests_properties(dm2_v1_mac_media_real PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        LABELS "dm2;macintosh;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_four_platform_catalog_real_media.c")
@@ -11870,6 +11873,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_movie_decoder_real.
     endif()
     add_test(NAME dm2_v1_mac_movie_decoder_real
         COMMAND test_dm2_v1_mac_movie_decoder_real)
+    set_tests_properties(dm2_v1_mac_movie_decoder_real PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        LABELS "dm2;macintosh;movie;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_m11_movie_runtime_real.c")
@@ -11885,7 +11891,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_m11_movie_runtime_r
     add_test(NAME dm2_v1_mac_m11_movie_runtime_real
         COMMAND test_dm2_v1_mac_m11_movie_runtime_real)
     set_tests_properties(dm2_v1_mac_m11_movie_runtime_real PROPERTIES
-        ENVIRONMENT "SDL_AUDIODRIVER=dummy")
+        ENVIRONMENT "SDL_AUDIODRIVER=dummy;FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        LABELS "dm2;macintosh;movie;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_sound_real.c")
@@ -11901,6 +11908,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_sound_real.c")
         target_compile_options(test_dm2_v1_mac_sound_real PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm2_v1_mac_sound_real COMMAND test_dm2_v1_mac_sound_real)
+    set_tests_properties(dm2_v1_mac_sound_real PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        LABELS "dm2;macintosh;audio;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_sound_audio_real.c")
@@ -11917,6 +11927,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_sound_audio_real.c"
     endif()
     add_test(NAME dm2_v1_mac_sound_audio_real
         COMMAND test_dm2_v1_mac_sound_audio_real)
+    set_tests_properties(dm2_v1_mac_sound_audio_real PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        LABELS "dm2;macintosh;audio;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_sfx_queue_real.c")
@@ -11931,6 +11944,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_sfx_queue_real.c")
     endif()
     add_test(NAME dm2_v1_mac_sfx_queue_real
         COMMAND test_dm2_v1_mac_sfx_queue_real)
+    set_tests_properties(dm2_v1_mac_sfx_queue_real PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        LABELS "dm2;macintosh;audio;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_pointer_source_real.c")
@@ -11946,6 +11962,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_pointer_source_real
     endif()
     add_test(NAME dm2_v1_mac_pointer_source_real
         COMMAND test_dm2_v1_mac_pointer_source_real)
+    set_tests_properties(dm2_v1_mac_pointer_source_real PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        LABELS "dm2;macintosh;input;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_resource_types_real.c")
@@ -11961,6 +11980,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_resource_types_real
     endif()
     add_test(NAME dm2_v1_mac_resource_types_real
         COMMAND test_dm2_v1_mac_resource_types_real)
+    set_tests_properties(dm2_v1_mac_resource_types_real PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        LABELS "dm2;macintosh;resource;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_input.c")
@@ -17105,6 +17127,10 @@ if(BUILD_TESTING)
         NAME dm2_amiga_m11_title_real_media
         COMMAND test_dm2_amiga_m11_title_real_media
     )
+    set_tests_properties(dm2_amiga_m11_title_real_media PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_AMIGA_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"
+        LABELS "dm2;amiga;title;real-media;in-memory;skip-safe"
+    )
 
     # Opt-in: dispatch the real PC-DOS GDAT NEW GAME rectangle and require
     # its source GAME_LOAD candidate to become the live M11 session.
@@ -17128,6 +17154,10 @@ if(BUILD_TESTING)
         NAME dm2_v1_dos_m11_new_game_real_media
         COMMAND test_dm2_v1_dos_m11_new_game_real_media
     )
+    set_tests_properties(dm2_v1_dos_m11_new_game_real_media PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_DOS_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "dm2;dos;new-game;real-media;in-memory;skip-safe"
+    )
 
     add_executable(test_dm2_amiga_m12_real_media
         tests/test_dm2_amiga_m12_real_media.c
@@ -17145,6 +17175,10 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_amiga_m12_real_media
         COMMAND test_dm2_amiga_m12_real_media
+    )
+    set_tests_properties(dm2_amiga_m12_real_media PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_AMIGA_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"
+        LABELS "dm2;amiga;assets;real-media;in-memory;skip-safe"
     )
 endif()
 
@@ -58293,6 +58327,9 @@ add_executable(test_dm2_v1_amiga_lzx_real_media
 target_include_directories(test_dm2_v1_amiga_lzx_real_media PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm2_v1_amiga_lzx_real_media PRIVATE firestaff_zip_extract)
 add_test(NAME test_dm2_v1_amiga_lzx_real_media COMMAND test_dm2_v1_amiga_lzx_real_media)
+set_tests_properties(test_dm2_v1_amiga_lzx_real_media PROPERTIES
+    ENVIRONMENT "FIRESTAFF_DM2_AMIGA_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"
+    LABELS "dm2;amiga;lzx;real-media;in-memory;skip-safe")
 
 # Opt-in: proves the real Amiga installer reaches the normal DM2 boot owner
 # from nested media in memory.  Copyrighted media stays user supplied and the
@@ -58322,6 +58359,9 @@ if(NOT MSVC)
 endif()
 add_test(NAME test_dm2_v1_amiga_new_game_real_media
     COMMAND test_dm2_v1_amiga_new_game_real_media)
+set_tests_properties(test_dm2_v1_amiga_new_game_real_media PROPERTIES
+    ENVIRONMENT "FIRESTAFF_DM2_AMIGA_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"
+    LABELS "dm2;amiga;new-game;real-media;in-memory;skip-safe")
 
 add_executable(test_dm2_v1_dos_pit_runtime_real_media
     tests/test_dm2_v1_dos_pit_runtime_real_media.c)
@@ -58390,6 +58430,9 @@ if(NOT MSVC)
 endif()
 add_test(NAME test_dm2_v1_mac_new_game_real_media
     COMMAND test_dm2_v1_mac_new_game_real_media)
+set_tests_properties(test_dm2_v1_mac_new_game_real_media PROPERTIES
+    ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+    LABELS "dm2;macintosh;new-game;real-media;in-memory;skip-safe")
 
 add_executable(test_dm2_v1_mac_m11_new_game_real_media
     tests/test_dm2_v1_mac_m11_new_game_real_media.c)
@@ -58402,6 +58445,9 @@ if(NOT MSVC)
 endif()
 add_test(NAME test_dm2_v1_mac_m11_new_game_real_media
     COMMAND test_dm2_v1_mac_m11_new_game_real_media)
+set_tests_properties(test_dm2_v1_mac_m11_new_game_real_media PROPERTIES
+    ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip;SDL_AUDIODRIVER=dummy"
+    LABELS "dm2;macintosh;new-game;real-media;in-memory;skip-safe")
 
 add_executable(test_dm2_v1_dos_m11_spell_cast_real_media
     tests/test_dm2_v1_dos_m11_spell_cast_real_media.c)
@@ -58428,6 +58474,9 @@ if(NOT MSVC)
 endif()
 add_test(NAME test_dm2_v1_mac_wall_source_census_real
     COMMAND test_dm2_v1_mac_wall_source_census_real)
+set_tests_properties(test_dm2_v1_mac_wall_source_census_real PROPERTIES
+    ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+    LABELS "dm2;macintosh;render;real-media;in-memory;skip-safe")
 
 add_executable(test_dm2_v1_fmtowns_disc
     tests/test_dm2_v1_fmtowns_disc.c
