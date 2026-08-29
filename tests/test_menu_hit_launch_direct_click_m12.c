@@ -370,6 +370,51 @@ int main(void) {
     if (!expect(changed == 1 && state.bestiary.categoryFilter == M12_BESTIARY_CAT_HUMANOID,
                 "bestiary pointer input should change category")) return 1;
 
-    puts("ok: mouse cards launch DM1 through platform/preset choices; blank platform cells are inert; settings, Museum, changelog and bestiary have mouse navigation");
+    /* Every remaining document/list renderer deliberately shares the same
+     * pointer grammar.  Keep the full view set here rather than testing two
+     * representative screens only: adding a new keyboard-navigable view to
+     * the enum must also give it a mouse route.  The centre activates, the
+     * side thirds navigate, and the Back button remains independently
+     * reachable in every non-main view. */
+    {
+        static const M12_MenuView pointerViews[] = {
+            M12_MENU_VIEW_MANUAL_DOCS,
+            M12_MENU_VIEW_DATA_VALIDATOR,
+            M12_MENU_VIEW_AUDIO_SETTINGS,
+            M12_MENU_VIEW_CHANGELOG,
+            M12_MENU_VIEW_ACCESSIBILITY,
+            M12_MENU_VIEW_THEME,
+            M12_MENU_VIEW_SAVE_BROWSER,
+            M12_MENU_VIEW_INPUT_REMAP,
+            M12_MENU_VIEW_BESTIARY,
+            M12_MENU_VIEW_CUSTOM_DUNGEON,
+            M12_MENU_VIEW_ITEM_ENCYCLOPEDIA,
+            M12_MENU_VIEW_CAMPAIGN,
+            M12_MENU_VIEW_SPELL_REFERENCE,
+            M12_MENU_VIEW_MAP_VIEWER,
+            M12_MENU_VIEW_TOUCH_LAYOUT,
+            M12_MENU_VIEW_SCREENSHOT_GALLERY,
+            M12_MENU_VIEW_PRESENTATION_PREVIEW
+        };
+        size_t viewIndex;
+        for (viewIndex = 0;
+             viewIndex < sizeof(pointerViews) / sizeof(pointerViews[0]);
+             ++viewIndex) {
+            state.view = pointerViews[viewIndex];
+            hit = M12_ModernMenu_HitTest(&state, 960, 540);
+            if (!expect(hit.kind == M12_HIT_VIEW_INPUT &&
+                        hit.index == M12_MENU_INPUT_ACCEPT,
+                        "every document/list view should accept centre mouse clicks")) return 1;
+            hit = M12_ModernMenu_HitTest(&state, 960, 900);
+            if (!expect(hit.kind == M12_HIT_VIEW_INPUT &&
+                        hit.index == M12_MENU_INPUT_DOWN,
+                        "every document/list view should accept mouse scrolling")) return 1;
+            hit = M12_ModernMenu_HitTest(&state, 30, 130);
+            if (!expect(hit.kind == M12_HIT_BACK,
+                        "every document/list view should expose a mouse Back button")) return 1;
+        }
+    }
+
+    puts("ok: mouse cards launch DM1 through platform/preset choices; blank platform cells are inert; every launcher menu has mouse navigation");
     return 0;
 }
