@@ -78,28 +78,17 @@ dm1_v1_g0181_run_pc34(
     }
     out->closedOrDestroyedValid = closed_or_destroyed_valid;
 
-    /* Vertical frames (1-3): bytes 8-31. */
-    for (i = 8; i < 32; ++i) {
-        if (s_g0181[i] > 255) vertical_frames_valid = 0;
-    }
+    /* The uint8_t declaration establishes the byte-range invariant for every
+     * source span below. Keep individual receipts for each frame group. */
     out->verticalFramesValid = vertical_frames_valid;
 
     /* LeftHorizontal frames (4-6): bytes 32-55. */
-    for (i = 32; i < 56; ++i) {
-        if (s_g0181[i] > 255) left_horizontal_frames_valid = 0;
-    }
     out->leftHorizontalFramesValid = left_horizontal_frames_valid;
 
     /* RightHorizontal frames (7-9): bytes 56-79. */
-    for (i = 56; i < 80; ++i) {
-        if (s_g0181[i] > 255) right_horizontal_frames_valid = 0;
-    }
     out->rightHorizontalFramesValid = right_horizontal_frames_valid;
 
-    /* All values fit in uint8_t. */
-    for (i = 0; i < kTableSize; ++i) {
-        if (s_g0181[i] > 255) all_bytes_in_byte_range = 0;
-    }
+    /* The declared element type itself establishes the byte-range invariant. */
     out->allBytesInByteRange = all_bytes_in_byte_range;
 
     {
