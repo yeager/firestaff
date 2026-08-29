@@ -1,4 +1,5 @@
 #include "asset_loader_m11.h"
+#include "firestaff_zip_extract.h"
 #include "graphics_dat_entry_classify_pc34_compat.h"
 #include "memory_graphics_dat_state_pc34_compat.h"
 
@@ -6,35 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-static const char *graphics_path(void)
-{
-    const char *path = getenv("FIRESTAFF_DM1_GRAPHICS_DAT");
-    static char from_dir[1024];
-    static char from_data_dir[1024];
-    const char *data_dir;
-    FILE *probe;
-
-    if (path && path[0]) {
-        return path;
-    }
-    data_dir = getenv("FIRESTAFF_DM1_DATA_DIR");
-    if (!data_dir || !data_dir[0]) {
-        return NULL;
-    }
-    (void)snprintf(from_dir, sizeof(from_dir), "%s/GRAPHICS.DAT", data_dir);
-    probe = fopen(from_dir, "rb");
-    if (probe) {
-        fclose(probe);
-        return from_dir;
-    }
-    /* The scanner and packaged DOS archives commonly expose the install
-     * root, while PC34 keeps the two runtime files under DATA/. Accept both
-     * layouts so the real-corpus audit cannot fail on directory shape. */
-    (void)snprintf(from_data_dir, sizeof(from_data_dir),
-                   "%s/DATA/GRAPHICS.DAT", data_dir);
-    return from_data_dir;
-}
 
 static uint64_t fnv1a_update(uint64_t hash, const unsigned char *bytes,
                              size_t count)
@@ -49,7 +21,9 @@ static uint64_t fnv1a_update(uint64_t hash, const unsigned char *bytes,
 
 int main(void)
 {
-    const char *path = graphics_path();
+    const char *archive = getenv("FIRESTAFF_DM1_PC34_ARCHIVE");
+    uint8_t *graphics = NULL;
+    size_t graphics_size = 0u;
     M11_AssetLoader loader;
     const struct MemoryGraphicsDatRuntimeState_Compat *runtime;
     uint64_t pixel_digest = UINT64_C(1469598103934665603);
@@ -60,14 +34,21 @@ int main(void)
     unsigned int zero_sized = 0u;
     unsigned int i;
 
-    if (!path) {
-        puts("SKIP: set FIRESTAFF_DM1_GRAPHICS_DAT or FIRESTAFF_DM1_DATA_DIR");
+    if (!archive || !archive[0]) {
+        puts("SKIP: FIRESTAFF_DM1_PC34_ARCHIVE is not set");
         return 0;
     }
-    if (!M11_AssetLoader_Init(&loader, path)) {
-        fprintf(stderr, "DM1 PC34 GRAPHICS.DAT could not be opened: %s\n", path);
+    if (firestaff_zip_extract_by_suffix(archive, "DATA/GRAPHICS.DAT",
+                                        &graphics, &graphics_size) != 0 ||
+        !graphics || graphics_size > (size_t)0x7fffffff ||
+        !M11_AssetLoader_InitFromBuffer(&loader, graphics,
+                                        (long)graphics_size)) {
+        free(graphics);
+        fprintf(stderr, "DM1 PC34 GRAPHICS.DAT could not be read from: %s\n",
+                archive);
         return 1;
     }
+    free(graphics);
     runtime = (const struct MemoryGraphicsDatRuntimeState_Compat *)loader.runtimeState;
     if (!runtime || !runtime->initialized || runtime->graphicCount == 0u) {
         fprintf(stderr, "DM1 PC34 GRAPHICS.DAT has no initialized record table\n");
