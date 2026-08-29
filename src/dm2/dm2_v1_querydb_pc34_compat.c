@@ -14,6 +14,14 @@
 #include <stdbool.h>
 #include <string.h>
 
+/* The AI specification is a packed PC-DOS structure.  Its 16-bit fields
+ * must retain their source little-endian order on every Firestaff host; do
+ * not cast an arbitrary byte offset to an int16_t pointer. */
+static int16_t dm2_v1_querydb_i16le(const uint8_t *p)
+{
+    return (int16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
+}
+
 /* ── Section 1: Pure computation — coordinate and classification ──── */
 
 void dm2_v1_query_098d_000f(int16_t x, int16_t y, int16_t pos,
@@ -261,7 +269,7 @@ int32_t dm2_v1_query_0cee_2e09(int32_t type,
     if (!cb || !cb->query_creature_ai_spec_from_type) return 0;
     uint8_t *p = cb->query_creature_ai_spec_from_type(ctx, type & 0xffff);
     if (!p) return 0;
-    return (int32_t)(*(int16_t *)(p + 0x20));
+    return (int32_t)dm2_v1_querydb_i16le(p + 0x20);
 }
 
 int32_t dm2_v1_query_0cee_2df4(int32_t type,
@@ -270,7 +278,7 @@ int32_t dm2_v1_query_0cee_2df4(int32_t type,
     if (!cb || !cb->query_creature_ai_spec_from_type) return 0;
     uint8_t *p = cb->query_creature_ai_spec_from_type(ctx, type & 0xffff);
     if (!p) return 0;
-    return (int32_t)(*(int16_t *)(p + 0x1e));
+    return (int32_t)dm2_v1_querydb_i16le(p + 0x1e);
 }
 
 int32_t dm2_v1_query_creature_hp(int32_t creature_type,
@@ -280,7 +288,7 @@ int32_t dm2_v1_query_creature_hp(int32_t creature_type,
     if (!cb || !cb->query_creature_ai_spec_from_type) return 0;
     uint8_t *p = cb->query_creature_ai_spec_from_type(ctx, creature_type & 0xffff);
     if (!p) return 0;
-    return (int32_t)(*(int16_t *)(p + 0x04));
+    return (int32_t)dm2_v1_querydb_i16le(p + 0x04);
 }
 
 int32_t dm2_v1_query_creature_speed(int32_t creature_type,
@@ -370,7 +378,7 @@ int32_t dm2_v1_query_creature_experience(int32_t creature_type,
     if (!cb || !cb->query_creature_ai_spec_from_type) return 0;
     uint8_t *p = cb->query_creature_ai_spec_from_type(ctx, creature_type & 0xffff);
     if (!p) return 0;
-    return (int32_t)(*(int16_t *)(p + 0x14));
+    return (int32_t)dm2_v1_querydb_i16le(p + 0x14);
 }
 
 int32_t dm2_v1_query_creature_sz(int32_t creature_type,
@@ -450,7 +458,7 @@ int32_t dm2_v1_query_creature_items_mask(int32_t creature_type,
     if (!cb || !cb->query_creature_ai_spec_from_type) return 0;
     uint8_t *p = cb->query_creature_ai_spec_from_type(ctx, creature_type & 0xffff);
     if (!p) return 0;
-    return (int32_t)(*(int16_t *)(p + 0x18));
+    return (int32_t)dm2_v1_querydb_i16le(p + 0x18);
 }
 
 int16_t dm2_v1_querydb_creature_blit_recti(int16_t n, int16_t rotate, int16_t wb,

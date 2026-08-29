@@ -341,6 +341,32 @@ static void test_get_creature_weight(void)
     printf("  PASS: test_get_creature_weight\n");
 }
 
+/* AI specifications are packed little-endian DOS bytes.  These reads used
+ * to depend on host endianness and alignment, which breaks the real G1 data
+ * on non-x86 hosts. */
+static void test_creature_ai_spec_little_endian_words(void)
+{
+    DM2_V1_QueryDbCallbacks cb = null_callbacks();
+    uint8_t ai_spec[0x22];
+
+    cb.query_creature_ai_spec_from_type = mock_query_creature_ai_spec_from_type;
+    memset(ai_spec, 0, sizeof(ai_spec));
+    ai_spec[0x04] = 0x34; ai_spec[0x05] = 0x12;
+    ai_spec[0x14] = 0xfe; ai_spec[0x15] = 0xff;
+    ai_spec[0x18] = 0x78; ai_spec[0x19] = 0x56;
+    ai_spec[0x1e] = 0x80; ai_spec[0x1f] = 0xff;
+    ai_spec[0x20] = 0x01; ai_spec[0x21] = 0x80;
+    mock_ai_spec_ptr = ai_spec;
+
+    assert(dm2_v1_query_creature_hp(7, &cb, NULL) == 0x1234);
+    assert(dm2_v1_query_creature_experience(7, &cb, NULL) == -2);
+    assert(dm2_v1_query_creature_items_mask(7, &cb, NULL) == 0x5678);
+    assert(dm2_v1_query_0cee_2df4(7, &cb, NULL) == -128);
+    assert(dm2_v1_query_0cee_2e09(7, &cb, NULL) == -32767);
+
+    printf("  PASS: test_creature_ai_spec_little_endian_words\n");
+}
+
 /* ================================================================ */
 /* Test 11: dm2_v1_query_gdat_text -- original text callback route  */
 /* ================================================================ */
@@ -418,6 +444,7 @@ int main(void)
     test_is_miscitem_currency();
     test_door_strength();
     test_get_creature_weight();
+    test_creature_ai_spec_little_endian_words();
     test_query_gdat_text();
     test_query_actuator_type_from_record();
 
