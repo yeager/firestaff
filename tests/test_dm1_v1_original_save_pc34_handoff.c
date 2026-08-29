@@ -4163,7 +4163,13 @@ static void test_original_c78_fire_shield_roundtrip(void)
     memset(&start_world, 0, sizeof(start_world)); memset(&loaded_world, 0, sizeof(loaded_world)); memset(&dungeon, 0, sizeof(dungeon)); memset(&things, 0, sizeof(things)); memset(&report, 0, sizeof(report)); start_world.dungeon = &dungeon; start_world.things = &things;
     make_temp_save_path(path, sizeof(path)); remove(path); CHECK(write_fixture_file(path, bytes, written), "C78 fixture writes"); rc = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(path, &start_world, &loaded_world, NULL, &report); remove(path);
     CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK, "C78 materializes typed fire shield expiry");
-    for (i = 0; i < loaded_world.timeline.count; ++i) if (loaded_world.timeline.events[i].aux2 == DM1_EVENT_FIRESHIELD) { index = i; break; } c78_index = index;
+    for (i = 0; i < loaded_world.timeline.count; ++i) {
+        if (loaded_world.timeline.events[i].aux2 == DM1_EVENT_FIRESHIELD) {
+            index = i;
+            break;
+        }
+    }
+    c78_index = index;
     CHECK(index >= 0 && loaded_world.timeline.events[index].aux1 == 12 && loaded_world.timeline.events[index].aux4 == 0, "C78 retains defense and zero-priority receipt");
     event = loaded_world.timeline.events[c78_index]; F0720_TIMELINE_Init_Compat(&loaded_world.timeline, event.fireAtTick); CHECK(F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline, &event), "C78 receipt isolates for native export"); c78_index = 0;
     loaded_world.pc34OriginalC3C4ReceiptValid = 0;
@@ -4183,7 +4189,44 @@ static void test_original_c79_footprints_roundtrip(void)
     rc=build_original_pc34_fixture(bytes,(int)sizeof(bytes),&written,3,3,9,10,2,1,ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
     CHECK(rc==SAVEGAME_PC34_OK && rewrite_fixture_event_type(bytes,(size_t)written,2,DM1_EVENT_FOOTPRINTS) && rewrite_fixture_event_byte(bytes,(size_t)written,2,5,0) && rewrite_fixture_event_byte(bytes,(size_t)written,2,6,0xa5) && rewrite_fixture_event_byte(bytes,(size_t)written,2,7,0x5a) && rewrite_fixture_event_byte(bytes,(size_t)written,2,8,0x3c) && rewrite_fixture_event_byte(bytes,(size_t)written,2,9,0xc3),"C79 fixture no B/C ownership");
     memset(&start_world,0,sizeof(start_world)); memset(&loaded_world,0,sizeof(loaded_world)); memset(&dungeon,0,sizeof(dungeon)); memset(&things,0,sizeof(things)); memset(&report,0,sizeof(report)); start_world.dungeon=&dungeon; start_world.things=&things; make_temp_save_path(path,sizeof(path)); remove(path); CHECK(write_fixture_file(path,bytes,written),"C79 fixture writes"); rc=dm1_v1_original_save_pc34_handoff_materialize_runtime_from_file(path,&start_world,&loaded_world,NULL,&report); remove(path); CHECK(rc==DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,"C79 materializes");
-    for(i=0;i<loaded_world.timeline.count;++i) if(loaded_world.timeline.events[i].aux2==DM1_EVENT_FOOTPRINTS){index=i;break;} c79_index=index; CHECK(index>=0 && loaded_world.timeline.events[index].aux1==0 && loaded_world.timeline.events[index].aux4==0,"C79 typed receipt"); event=loaded_world.timeline.events[c79_index]; F0720_TIMELINE_Init_Compat(&loaded_world.timeline,event.fireAtTick); CHECK(F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline,&event),"C79 receipt isolates for native export"); c79_index=0; loaded_world.pc34OriginalC3C4ReceiptValid=0; rc=F0802_SAVEGAME_ExportPC34FromWorld_Compat(&loaded_world,0x43313445u,exported,(int)sizeof(exported),&exported_size); CHECK(rc==SAVEGAME_PC34_OK,"C79 exports"); memset(&imported,0,sizeof(imported)); memset(&party,0,sizeof(party)); imported.party=&party; rc=dm1_v1_original_save_pc34_handoff_bytes(exported,(size_t)exported_size,&imported,&report); for(i=0;i<report.original_event_count;++i) if(report.events[i].type==DM1_EVENT_FOOTPRINTS){index=i;break;} CHECK(rc==DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK && index>=0 && report.events[index].priority==0 && report.events[index].b_mapX==0 && report.events[index].b_mapY==0 && report.events[index].c_cell==0 && report.events[index].c_effect==0,"C79 roundtrip has no union arm");
+    for (i = 0; i < loaded_world.timeline.count; ++i) {
+        if (loaded_world.timeline.events[i].aux2 == DM1_EVENT_FOOTPRINTS) {
+            index = i;
+            break;
+        }
+    }
+    c79_index = index;
+    CHECK(index >= 0 && loaded_world.timeline.events[index].aux1 == 0 &&
+              loaded_world.timeline.events[index].aux4 == 0,
+          "C79 typed receipt");
+    event = loaded_world.timeline.events[c79_index];
+    F0720_TIMELINE_Init_Compat(&loaded_world.timeline, event.fireAtTick);
+    CHECK(F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline, &event),
+          "C79 receipt isolates for native export");
+    c79_index = 0;
+    loaded_world.pc34OriginalC3C4ReceiptValid = 0;
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
+        &exported_size);
+    CHECK(rc == SAVEGAME_PC34_OK, "C79 exports");
+    memset(&imported, 0, sizeof(imported));
+    memset(&party, 0, sizeof(party));
+    imported.party = &party;
+    rc = dm1_v1_original_save_pc34_handoff_bytes(
+        exported, (size_t)exported_size, &imported, &report);
+    for (i = 0; i < report.original_event_count; ++i) {
+        if (report.events[i].type == DM1_EVENT_FOOTPRINTS) {
+            index = i;
+            break;
+        }
+    }
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK && index >= 0 &&
+              report.events[index].priority == 0 &&
+              report.events[index].b_mapX == 0 &&
+              report.events[index].b_mapY == 0 &&
+              report.events[index].c_cell == 0 &&
+              report.events[index].c_effect == 0,
+          "C79 roundtrip has no union arm");
     loaded_world.magic.event79CountFootprints=1; loaded_world.magic.magicFootprintsActive=1; loaded_world.lifecycle.status.footprintsCount=1; event=loaded_world.timeline.events[c79_index]; F0720_TIMELINE_Init_Compat(&loaded_world.timeline,event.fireAtTick); F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline,&event); loaded_world.gameTick=event.fireAtTick; memset(&result,0,sizeof(result)); F0887_ORCH_DispatchTimelineEvents_Compat(&loaded_world,&result); CHECK(loaded_world.magic.event79CountFootprints==0 && !loaded_world.magic.magicFootprintsActive && loaded_world.lifecycle.status.footprintsCount==0,"C79 runtime mirrors"); event.aux2=0; F0720_TIMELINE_Init_Compat(&loaded_world.timeline,event.fireAtTick); F0721_TIMELINE_Schedule_Compat(&loaded_world.timeline,&event); rc=F0802_SAVEGAME_ExportPC34FromWorld_Compat(&loaded_world,0x43313445u,exported,(int)sizeof(exported),&exported_size); CHECK(rc==SAVEGAME_PC34_ERROR_INTERNAL,"C79 host export rejects an unauthenticated status receipt");
 }
 
