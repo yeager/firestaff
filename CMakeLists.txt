@@ -16772,11 +16772,16 @@ if(BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     target_link_libraries(test_dm2_v1_gdat_graphicsset_real_data
-        PRIVATE firestaff_dm2 m)
+        PRIVATE firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_gdat_graphicsset_real_data
             PRIVATE -Wall -Wextra -O2)
     endif()
+    add_test(NAME dm2_v1_gdat_graphicsset_real_data
+             COMMAND test_dm2_v1_gdat_graphicsset_real_data)
+    set_tests_properties(dm2_v1_gdat_graphicsset_real_data PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "dm2;dos;gdat;graphicsset;real-media;in-memory;skip-safe")
 
     # Real PC English corpus census: decode every exact dtImage RAW payload.
     # It is deliberately not a data-free CTest; user media remains read-only.
@@ -16852,13 +16857,16 @@ if(BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     target_link_libraries(test_dm2_v1_gdat_m11_material_receipt_real_data
-        PRIVATE firestaff_dm2 m)
+        PRIVATE firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_gdat_m11_material_receipt_real_data
             PRIVATE -Wall -Wextra -Werror -O2)
     endif()
     add_test(NAME dm2_v1_gdat_m11_material_receipt_real_data
              COMMAND test_dm2_v1_gdat_m11_material_receipt_real_data)
+    set_tests_properties(dm2_v1_gdat_m11_material_receipt_real_data PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "dm2;dos;gdat;m11;real-media;in-memory;skip-safe")
 
     # Canonical-user-media skproject DRAW_WALL material proof. Like the
     # floor/ceiling handoff gate, this skips when the original corpus is absent.

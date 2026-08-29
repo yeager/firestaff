@@ -6,6 +6,7 @@
 #include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_gdat_wall_m11_command.h"
 #include "m11_dm2_runtime_frame_receipt_gate.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,33 +14,15 @@
 
 static int read_file(const char *path, uint8_t **out, size_t *out_size)
 {
-    FILE *file;
-    long size;
-    uint8_t *bytes;
-
     if (!path || !out || !out_size) return 0;
     *out = NULL;
     *out_size = 0u;
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0 ||
-        (size = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
-        return 0;
-    }
-    bytes = (uint8_t *)malloc((size_t)size);
-    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
-        free(bytes);
-        fclose(file);
-        return 0;
-    }
-    fclose(file);
-    *out = bytes;
-    *out_size = (size_t)size;
-    return 1;
+    return asset_read_path_alloc(path, out, out_size) && *out && *out_size;
 }
 
 int main(void)
 {
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
     char path[2048];
     uint8_t *graphics = NULL;
@@ -53,11 +36,13 @@ int main(void)
     DM2_V1_ViewportM11FrameReceipt frame;
     int style = -1;
 
-    if (!root || !root[0]) {
-        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not configured");
+    if ((!archive || !archive[0]) && (!root || !root[0])) {
+        puts("SKIP: no DM2 DOS archive or data directory is configured");
         return 0;
     }
-    snprintf(path, sizeof(path), "%s/graphics.dat", root);
+    snprintf(path, sizeof(path), archive && archive[0]
+             ? "%s::data/graphics.dat" : "%s/graphics.dat",
+             archive && archive[0] ? archive : root);
     if (!read_file(path, &graphics, &graphics_size)) {
         fprintf(stderr,
                 "FAIL: configured DM2 GRAPHICS.DAT is unreadable: %s\n", path);

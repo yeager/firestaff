@@ -9,6 +9,7 @@
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_weather_gdat.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,40 +17,30 @@
 
 static int read_file(const char *path, uint8_t **out, size_t *out_size)
 {
-    FILE *file;
-    long size;
-    uint8_t *bytes;
-
     if (!path || !out || !out_size) return 0;
     *out = NULL;
     *out_size = 0u;
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0 ||
-        (size = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
-        return 0;
-    }
-    bytes = (uint8_t *)malloc((size_t)size);
-    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
-        free(bytes);
-        fclose(file);
-        return 0;
-    }
-    fclose(file);
-    *out = bytes;
-    *out_size = (size_t)size;
-    return 1;
+    return asset_read_path_alloc(path, out, out_size) && *out && *out_size;
 }
 
 static int load_canonical_files(uint8_t **graphics, size_t *graphics_size,
                                 uint8_t **dungeon, size_t *dungeon_size)
 {
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
     char graphics_path[1100];
     char dungeon_path[1100];
-    if (!root || !root[0]) return 0;
-    snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
-    snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", root);
+    if (archive && archive[0]) {
+        snprintf(graphics_path, sizeof(graphics_path),
+                 "%s::data/graphics.dat", archive);
+        snprintf(dungeon_path, sizeof(dungeon_path),
+                 "%s::data/dungeon.dat", archive);
+    } else if (root && root[0]) {
+        snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
+        snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", root);
+    } else {
+        return 0;
+    }
     if (read_file(graphics_path, graphics, graphics_size) &&
         read_file(dungeon_path, dungeon, dungeon_size)) return 1;
     free(*graphics);
@@ -157,10 +148,18 @@ int main(void)
     int referenced_sets = 0;
     int c8_selector_checks = 0;
     int failures = 0;
+    int map_style_failures = 0;
+    int source_format_failures = 0;
+    int decode_failures = 0;
+    int plan_failures = 0;
+    int selector_failures = 0;
+    int missing_material_failures = 0;
 
-    if (!getenv("FIRESTAFF_DM2_DATA_DIR") ||
-        !getenv("FIRESTAFF_DM2_DATA_DIR")[0]) {
-        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
+    if ((!getenv("FIRESTAFF_DM2_DOS_ARCHIVE") ||
+         !getenv("FIRESTAFF_DM2_DOS_ARCHIVE")[0]) &&
+        (!getenv("FIRESTAFF_DM2_DATA_DIR") ||
+         !getenv("FIRESTAFF_DM2_DATA_DIR")[0])) {
+        puts("SKIP: no DM2 DOS archive or data directory is set");
         return 0;
     }
     if (!load_canonical_files(&graphics, &graphics_size,
@@ -184,6 +183,7 @@ int main(void)
         int style = dm2_v1_dungeon_get_map_graphics_style(&dungeon, level);
         if (style < 0 || style > 0xff) {
             ++failures;
+            ++map_style_failures;
         } else {
             referenced[style] = 1;
         }
@@ -251,7 +251,10 @@ int main(void)
                 ceiling_data_index = candidate->data_index;
             }
         }
-        if (floor_raw && ceiling_raw &&
+        /* This is a map-admission audit. An unused GRAPHICSSET entry may be
+         * incomplete or use a decoder family not selected by any G1 map; it
+         * must not make the real corpus fail or invite a host fallback. */
+        if (referenced[style] && floor_raw && ceiling_raw &&
             (!source_img3_bits_per_pixel(floor_raw, floor_size,
                                          &source_floor_bpp) ||
              !source_img3_bits_per_pixel(ceiling_raw, ceiling_size,
@@ -259,6 +262,7 @@ int main(void)
              floor.bits_per_pixel != source_floor_bpp ||
              ceiling.bits_per_pixel != source_ceiling_bpp)) {
             ++failures;
+            ++source_format_failures;
         }
         if (referenced[style]) {
             DM2_V1_GdatSceneM11CommandPlan command_plan;
@@ -282,6 +286,7 @@ int main(void)
                 decoded_floor_format == DM2_IMG_FMT_UNKNOWN ||
                 decoded_ceiling_format == DM2_IMG_FMT_UNKNOWN) {
                 ++failures;
+                ++decode_failures;
             }
             if (!dm2_v1_gdat_scene_m11_command_plan_build(
                     &loader, (uint8_t)style, &command_plan) ||
@@ -300,9 +305,12 @@ int main(void)
                 (has_ambient_light
                     ? command_plan.ambient_light != ambient_light
                     : command_plan.ambient_light != 0u) ||
-                !has_ambient_darkness || ambient_darkness > 8u ||
-                command_plan.ambient_darkness != ambient_darkness) {
+                (has_ambient_darkness && ambient_darkness > 8u) ||
+                (has_ambient_darkness
+                    ? command_plan.ambient_darkness != ambient_darkness
+                    : command_plan.ambient_darkness != 0u)) {
                 ++failures;
+                ++plan_failures;
             }
             dm2_v1_gdat_scene_m11_command_plan_free(&command_plan);
             if (!verify_source_c8_selector_gate(
@@ -312,6 +320,7 @@ int main(void)
                     &loader, graphics, graphics_size, ceiling_raw, ceiling_size,
                     style, DM2_GDAT_GFXSET_CEIL, &c8_selector_checks)) {
                 ++failures;
+                ++selector_failures;
             }
         }
         if (complete) ++exact_material_sets;
@@ -330,14 +339,20 @@ int main(void)
                        ceiling_raw[0], ceiling_raw[1], ceiling_raw[2],
                        ceiling_raw[3], ceiling_raw[4], ceiling_raw[5]);
             }
-            if (!complete) ++failures;
+            if (!complete) {
+                ++failures;
+                ++missing_material_failures;
+            }
         }
         free(decoded_floor);
         free(decoded_ceiling);
     }
     printf("entries=%u referenced=%d exact-material-sets=%d "
-           "c8-selector-gates=%d\n", (unsigned int)loader.entry_count,
-           referenced_sets, exact_material_sets, c8_selector_checks);
+           "c8-selector-gates=%d failures(map=%d,format=%d,decode=%d,plan=%d,selector=%d,missing=%d)\n",
+           (unsigned int)loader.entry_count, referenced_sets,
+           exact_material_sets, c8_selector_checks, map_style_failures,
+           source_format_failures, decode_failures, plan_failures,
+           selector_failures, missing_material_failures);
     dm2_v1_asset_loader_free(&loader);
     dm2_v1_dungeon_free(&dungeon);
     free(graphics);
