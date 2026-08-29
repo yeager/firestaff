@@ -40326,6 +40326,14 @@ add_executable(test_nexus_v1_dgn_material_raster
     set_tests_properties(csb_v1_atari_st_animation_assets_unit PROPERTIES
         LABELS "tier2;csb;atari;animation;data_free"
     )
+    add_test(
+        NAME csb_v1_atari_st_animation_assets_real
+        COMMAND test_csb_v1_atari_st_animation_assets
+    )
+    set_tests_properties(csb_v1_atari_st_animation_assets_real PROPERTIES
+        ENVIRONMENT "FIRESTAFF_CSB_ANIMATE_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx;FIRESTAFF_CSB_ANIMATE_CACHE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb"
+        LABELS "tier2;csb;atari;animation;title;audio;real-media;in-memory;native;skip-safe"
+    )
 
     add_executable(test_csb_v1_atari_st_animation_discovery
         tests/test_csb_v1_atari_st_animation_discovery.c
