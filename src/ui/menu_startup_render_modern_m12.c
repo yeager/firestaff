@@ -1907,11 +1907,71 @@ static void draw_info_tile(M12_ModernCanvas* c,
     }
 }
 
+static int card_platforms_for_game(const char* gameId, int out[M12_ARCH_COUNT]) {
+    size_t i, count = 0, versions = M12_AssetStatus_GetVersionCount(gameId);
+    for (i = 0; i < versions; ++i) {
+        int architecture = M12_AssetStatus_GetVersionArchitecture(gameId, i);
+        size_t j;
+        int seen = 0;
+        if (architecture <= M12_ARCH_AUTO || architecture == M12_ARCH_PC98 ||
+            architecture == M12_ARCH_X68000) continue;
+        for (j = 0; j < count; ++j) if (out[j] == architecture) seen = 1;
+        if (!seen && count < M12_ARCH_COUNT) out[count++] = architecture;
+    }
+    return (int)count;
+}
+
+static void draw_game_card_flow(M12_ModernCanvas* c,
+                                const M12_StartupMenuState* state,
+                                const M12_MenuEntry* entry) {
+    int stage = state->gameCardFlowStage;
+    int selected = state->gameCardSelected;
+    int rowX = 160, rowY = 280, gap = 24, cardW = 500, cardH = 250;
+    ModernTextStyle title = text_style_make(4, COLOR_ACCENT(), 3);
+    ModernTextStyle sub = text_style_make(2, COLOR_TEXT_DIM(), 1);
+    draw_back_button(c, 0);
+    draw_text(c, 160, 74, entry->title, &title);
+    if (stage == 0) {
+        int platforms[M12_ARCH_COUNT];
+        int count = card_platforms_for_game(entry->gameId, platforms);
+        draw_text(c, 160, 140, "CHOOSE PLATFORM", &sub);
+        for (int i = 0; i < count; ++i) {
+            int col = i % 3, row = i / 3;
+            int x = rowX + col * (cardW + gap), y = rowY + row * (cardH + gap);
+            int ready = M12_AssetStatus_GameHasMatchedArchitecture(
+                &state->assetStatus, entry->gameId, platforms[i]);
+            const M12_GeneratedCardArt* art = generated_card_art_for_game(entry->gameId);
+            draw_mode_choice_card(c, x, y, cardW, cardH, M12_Architecture_Label(platforms[i]),
+                                  ready ? "GAME DATA VERIFIED" : "GAME DATA NOT FOUND",
+                                  ready ? "SELECT TO CONTINUE" : "CANNOT START", i == selected,
+                                  ready ? COLOR_V2() : rgb(96, 92, 104));
+            if (art) draw_generated_card_art(c, art, x + cardW - 128, y + 70, 112, 150, !ready);
+        }
+        if (count == 0) draw_text(c, 160, 260, "NO SUPPORTED NATIVE PLATFORM", &sub);
+    } else {
+        static const char* const labels[] = {"ORIGINAL", "MODERN", "CUSTOM"};
+        static const char* const line1[] = {"V1 PRESERVATION", "V2.X IMPROVEMENTS", "FINE-TUNE SETTINGS"};
+        static const char* const line2[] = {"START WITH ORIGINAL RULES", "START WITH MODERN PRESET", "OPEN DETAILED OPTIONS"};
+        cardW = 480;
+        rowX = 210;
+        draw_text(c, 160, 140, "CHOOSE PRESENTATION", &sub);
+        for (int i = 0; i < 3; ++i) {
+            int x = rowX + i * (cardW + gap);
+            draw_mode_choice_card(c, x, rowY, cardW, cardH, labels[i], line1[i], line2[i],
+                                  i == selected, i == 0 ? COLOR_V1() : COLOR_V2());
+        }
+    }
+}
+
 static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
     int slot = slot_for_game_id(state->entries[state->selectedIndex].gameId);
     if (slot < 0) slot = 0;
     const M12_GameOptions* opts = &state->gameOptions[slot];
     const M12_MenuEntry* entry = &state->entries[state->selectedIndex];
+    if (state->gameCardFlowStage == 0 || state->gameCardFlowStage == 1) {
+        draw_game_card_flow(c, state, entry);
+        return;
+    }
     int mode = opts->presentationModeIndex;
     if (mode < 0) mode = 0;
     if (mode >= M12_PRESENTATION_MODE_COUNT) mode = M12_PRESENTATION_MODE_COUNT - 1;

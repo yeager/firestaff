@@ -5453,12 +5453,14 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
         return;
     }
     state->activatedIndex = state->selectedIndex;
-    if (entry->available) {
+    if (entry->kind == M12_MENU_ENTRY_GAME) {
         int gi = m12_clamp_index(state->selectedIndex, M12_CONFIG_GAME_COUNT);
-        int pmode = m12_clamp_index(state->settings.graphicsIndex, M12_PRESENTATION_MODE_COUNT);
-        state->gameOptions[gi].presentationModeIndex = pmode;
-        m12_normalize_game_version_index(state, gi);
-        m12_enforce_mode_constraints(&state->gameOptions[gi], pmode);
+        (void)gi;
+        /* Always show the supported-platform cards.  A platform without a
+         * scanner-verified corpus is visibly unavailable and cannot proceed
+         * to a launch mode. */
+        state->gameCardFlowStage = 0;
+        state->gameCardSelected = 0;
         state->view = M12_MENU_VIEW_GAME_OPTIONS;
         state->gameOptSelectedRow = 0;
         return;
@@ -5476,6 +5478,25 @@ static void m12_activate_selected(M12_StartupMenuState* state) {
     } else {
         m12_show_missing_game_data_popup(state, entry->gameId);
     }
+}
+
+static int m12_collect_card_platforms(const M12_StartupMenuState* state,
+                                      const char* gameId,
+                                      int out[M12_ARCH_COUNT]) {
+    size_t i, versionCount;
+    int count = 0;
+    if (!state || !gameId || !out) return 0;
+    versionCount = M12_AssetStatus_GetVersionCount(gameId);
+    for (i = 0; i < versionCount; ++i) {
+        int architecture = M12_AssetStatus_GetVersionArchitecture(gameId, i);
+        int seen = 0;
+        int j;
+        if (architecture <= M12_ARCH_AUTO || architecture == M12_ARCH_PC98 ||
+            architecture == M12_ARCH_X68000) continue;
+        for (j = 0; j < count; ++j) if (out[j] == architecture) seen = 1;
+        if (!seen && count < M12_ARCH_COUNT) out[count++] = architecture;
+    }
+    return count;
 }
 
 /* DM2's original GAME_LOAD/RESUME path owns a bitmap dialogue surface
@@ -6145,6 +6166,85 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
 
     if (state->view == M12_MENU_VIEW_GAME_OPTIONS) {
         int gi = m12_clamp_index(state->activatedIndex, M12_CONFIG_GAME_COUNT);
+        const M12_MenuEntry* cardEntry = M12_StartupMenu_GetEntry(state,
+                                                                    state->activatedIndex);
+        /* First two screens are card selectors.  They deliberately precede
+         * the detailed options view so a user cannot accidentally launch a
+         * game through AUTO or a platform whose real media is absent. */
+        if (state->gameCardFlowStage == 0 || state->gameCardFlowStage == 1) {
+            if (!cardEntry || cardEntry->kind != M12_MENU_ENTRY_GAME) {
+                m12_return_to_main_view(state);
+                return;
+            }
+            if (input == M12_MENU_INPUT_BACK) {
+                if (state->gameCardFlowStage == 1) {
+                    state->gameCardFlowStage = 0;
+                    state->gameCardSelected = 0;
+                } else {
+                    m12_return_to_main_view(state);
+                }
+                return;
+            }
+            if (input == M12_MENU_INPUT_UP || input == M12_MENU_INPUT_LEFT) {
+                int count = state->gameCardFlowStage == 0
+                    ? m12_collect_card_platforms(state, cardEntry->gameId,
+                                                 (int[M12_ARCH_COUNT]){0})
+                    : 3;
+                if (count > 0) state->gameCardSelected =
+                    m12_cycle_index(state->gameCardSelected, -1, count);
+                return;
+            }
+            if (input == M12_MENU_INPUT_DOWN || input == M12_MENU_INPUT_RIGHT) {
+                int count = state->gameCardFlowStage == 0
+                    ? m12_collect_card_platforms(state, cardEntry->gameId,
+                                                 (int[M12_ARCH_COUNT]){0})
+                    : 3;
+                if (count > 0) state->gameCardSelected =
+                    m12_cycle_index(state->gameCardSelected, 1, count);
+                return;
+            }
+            if (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION) {
+                if (state->gameCardFlowStage == 0) {
+                    int platforms[M12_ARCH_COUNT];
+                    int count = m12_collect_card_platforms(state, cardEntry->gameId,
+                                                           platforms);
+                    int index = state->gameCardSelected;
+                    int version;
+                    if (count <= 0) {
+                        m12_show_missing_game_data_popup(state, cardEntry->gameId);
+                        return;
+                    }
+                    index = m12_clamp_index(index, count);
+                    version = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+                        &state->assetStatus, cardEntry->gameId, platforms[index]);
+                    if (version < 0) {
+                        m12_show_missing_game_data_popup(state, cardEntry->gameId);
+                        return;
+                    }
+                    state->gameOptions[gi].architectureIndex = platforms[index];
+                    state->gameOptions[gi].versionIndex = version;
+                    state->gameCardFlowStage = 1;
+                    state->gameCardSelected = 0;
+                    return;
+                }
+                if (state->gameCardSelected == 2) {
+                    state->gameCardFlowStage = 2;
+                    state->gameOptSelectedRow = M12_GAME_OPT_ROW_ARCHITECTURE;
+                    return;
+                }
+                state->gameOptions[gi].presentationModeIndex =
+                    state->gameCardSelected == 0 ? M12_PRESENTATION_V1_ORIGINAL
+                                                 : M12_PRESENTATION_V21_UPSCALED;
+                state->settings.graphicsIndex = state->gameOptions[gi].presentationModeIndex;
+                m12_save_config(state);
+                /* Reuse the one canonical launch/gate implementation below. */
+                state->gameCardFlowStage = 2;
+                state->gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
+                M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+                return;
+            }
+            return;
+        }
         int pmode = state->gameOptions[gi].presentationModeIndex;
         if (pmode < 0) pmode = 0;
         if (pmode >= M12_PRESENTATION_MODE_COUNT) pmode = M12_PRESENTATION_MODE_COUNT - 1;

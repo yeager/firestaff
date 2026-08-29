@@ -587,6 +587,10 @@ typedef struct M12_StartupMenuState {
     M12_MainMenuItem mainMenuSelected;
     M12_GameSelectItem gameSelectSelected;
     M12_GameModeItem gameModeSelected;
+    /* Card-driven game launch flow: 0=platform cards, 1=Original/Modern/
+     * Custom cards, 2=advanced Custom options. */
+    int gameCardFlowStage;
+    int gameCardSelected;
     M12_ExtrasItem extrasSelected;
     int selectedGameId; /* which game is selected in game select */
     int shouldExit;

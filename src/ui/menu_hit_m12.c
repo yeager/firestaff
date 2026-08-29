@@ -415,6 +415,26 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
             }
             break;
         case M12_MENU_VIEW_GAME_OPTIONS:
+            if (state->gameCardFlowStage == 0 || state->gameCardFlowStage == 1) {
+                int cardW = state->gameCardFlowStage == 0 ? 500 : 480;
+                int cardH = 250;
+                int gap = 24;
+                int startX = state->gameCardFlowStage == 0 ? 160 : 210;
+                int startY = 280;
+                int cardCount = state->gameCardFlowStage == 0 ? 9 : 3;
+                for (i = 0; i < cardCount; ++i) {
+                    int col = state->gameCardFlowStage == 0 ? i % 3 : i;
+                    int row = state->gameCardFlowStage == 0 ? i / 3 : 0;
+                    if (rect_contains(startX + col * (cardW + gap),
+                                      startY + row * (cardH + gap),
+                                      cardW, cardH, x, y)) {
+                        hit.kind = M12_HIT_GAMEOPT_ROW;
+                        hit.index = i;
+                        return hit;
+                    }
+                }
+                break;
+            }
             /* Launch button */
             if (m12_hit_launch_rect(state, &rx, &ry, &rw, &rh) &&
                 rect_contains(rx, ry, rw, rh, x, y)) {
@@ -574,6 +594,11 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
             return 1;
         case M12_HIT_GAMEOPT_ROW:
         {
+            if (state->gameCardFlowStage == 0 || state->gameCardFlowStage == 1) {
+                state->gameCardSelected = hit.index;
+                M12_StartupMenu_HandleInput(state, M12_MENU_INPUT_ACCEPT);
+                return 1;
+            }
             int guard = 0;
             while (state->gameOptSelectedRow != hit.index &&
                    guard++ < M12_GAME_OPT_ROW_COUNT + 2) {
