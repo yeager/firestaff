@@ -21203,6 +21203,9 @@ endif()
         NAME dm2_v1_sound_gdat_real_data
         COMMAND test_dm2_v1_sound_gdat_real_data
     )
+    set_tests_properties(dm2_v1_sound_gdat_real_data PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "dm2;dos;gdat;sound;real-media;in-memory;skip-safe")
 
     # ── DM2-008: audible SDL playback backend (cycle 16) ──
     add_executable(test_dm2_v1_sound_playback_sdl
