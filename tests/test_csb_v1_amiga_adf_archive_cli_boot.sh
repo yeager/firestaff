@@ -10,6 +10,10 @@ app=$1
 archive=${FIRESTAFF_CSB_AMIGA_ADF_ARCHIVE:-"$HOME/.firestaff/data/csb/Chaos Strikes Back (FTL).zip"}
 expected_md5=21197b1d4994fd835c403d5a33dcac2b
 
+# The selected ZIP -> ADF chain is read directly in bounded memory.  Keep
+# this real-media contract independent of diagnostic external extractors.
+unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
+
 if [[ ! -x "$app" || ! -f "$archive" ]]; then
     printf '%s\n' 'SKIP: authentic CSB Amiga ADF archive is not staged'
     exit 77

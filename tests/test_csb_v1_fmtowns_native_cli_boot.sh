@@ -8,6 +8,10 @@ user_save="${FIRESTAFF_CSB_FMTOWNS_USER_SAVE:-}"
 edition_arg=""
 expected_media="$data_dir"
 
+# The F31 package is admitted by Firestaff's native ZIP/CD readers.  This
+# regression must not inherit the optional external archive scan facility.
+unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
+
 # This remains opt-in because the F31 CD image is licensed game material.
 # Do not infer a FM Towns package from a generic CSB root: the scanner must
 # authenticate the selected original media itself.

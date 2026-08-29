@@ -4,6 +4,10 @@ set -eu
 firestaff_cli="${1:?Firestaff executable is required}"
 media_path="${FIRESTAFF_CSB_ATARI_STX:-$HOME/.firestaff/data/csb/Chaos Strikes Back.stx}"
 
+# STX is decoded by Firestaff's native reader.  Do not allow an inherited
+# diagnostic external-archive opt-in to mask that production contract.
+unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
+
 if [ ! -x "$firestaff_cli" ] || [ ! -e "$media_path" ]; then
     echo "SKIP: CSB Atari ST campaign media or Firestaff executable is unavailable"
     exit 77
