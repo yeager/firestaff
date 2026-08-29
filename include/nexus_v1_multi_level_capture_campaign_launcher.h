@@ -11,7 +11,6 @@
 typedef struct {
     int operator_opt_in;
     int retail_assets_available;
-    const char *mednafen_path;
     const char *bios_path;
     const char *disc_path;
     const char *menu_bpk_path;

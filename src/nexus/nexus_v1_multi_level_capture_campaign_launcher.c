@@ -1,6 +1,7 @@
 #include "nexus_v1_multi_level_capture_campaign_launcher.h"
 #include "nexus_v1_iso_reader.h"
 #include "firestaff_x68k_media_receipt.h"
+#include "firestaff_zip_extract.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,18 +15,19 @@ static int sha256(const char *s) {
               (s[i] >= 'A' && s[i] <= 'F'))) return 0;
     return 1;
 }
-/* External retail media is read only.  Restricting shell metacharacters keeps
- * the local sha256 probe a literal file argument on supported POSIX hosts. */
+/* Retail media is read only and verified by Firestaff's native SHA-256 and
+ * ZIP/ISO readers.  No host checksum or extraction tool is required. */
 static int hash_file(const char *path, const char *expected) {
-    char command[1024], line[128], container[512]; const char *entry;
-    struct stat st; FILE *pipe;
-    if (!path || !expected || strpbrk(path, "'\"`$;&|<>\\\n\r") || strlen(path) > 900U) return 0;
+    char container[512]; const char *entry;
+    struct stat st;
+    if (!path || !expected || strlen(path) > 900U) return 0;
     entry = strstr(path, "::");
     if (entry) {
         size_t n = (size_t)(entry - path);
+        size_t zip_size = 0u;
         Nexus_ISOReader iso; const Nexus_ISOFile *member; uint8_t *bytes = NULL;
         char digest[65]; int opened;
-        if (!n || n >= sizeof(container) || strpbrk(entry + 2, "'\"`$;&|<>\\\n\r")) return 0;
+        if (!n || n >= sizeof(container) || !entry[2]) return 0;
         memcpy(container, path, n); container[n] = '\0';
         if (strstr(container, ".cue") || strstr(container, ".bin") || strstr(container, ".iso")) {
             memset(&iso, 0, sizeof(iso));
@@ -41,16 +43,19 @@ static int hash_file(const char *path, const char *expected) {
             free(bytes); nexus_iso_close(&iso); return strcmp(digest, expected) == 0;
         }
         if (stat(container, &st) != 0 || !S_ISREG(st.st_mode) ||
-            snprintf(command, sizeof(command), "unzip -p '%s' '%s' | shasum -a 256", container, entry + 2) >= (int)sizeof(command)) return 0;
+            firestaff_zip_extract_by_name(container, entry + 2, &bytes,
+                                          &zip_size) != 0) return 0;
+        opened = firestaff_x68k_media_receipt_sha256_hex(bytes, zip_size, digest,
+                                                          sizeof(digest)) == 0 &&
+                 strcmp(digest, expected) == 0;
+        free(bytes);
+        return opened;
     } else {
         if (stat(path, &st) != 0 || !S_ISREG(st.st_mode)) return 0;
-        snprintf(command, sizeof(command), "shasum -a 256 '%s'", path);
+        return firestaff_x68k_media_receipt_sha256_file_hex(
+                   path, container, sizeof(container)) == 0 &&
+               strcmp(container, expected) == 0;
     }
-    pipe = popen(command, "r");
-    if (!pipe) return 0;
-    if (!fgets(line, sizeof(line), pipe)) { pclose(pipe); return 0; }
-    pclose(pipe); line[64] = '\0';
-    return strcmp(line, expected) == 0;
 }
 int nexus_v1_multi_level_capture_campaign_launcher_plan(
     const Nexus_V1_MultiLevelCaptureCampaignLauncherInput *in,
@@ -61,7 +66,7 @@ int nexus_v1_multi_level_capture_campaign_launcher_plan(
     memset(&p, 0, sizeof(p)); p.operator_only = 1;
     if (!out || !in) return 0;
     if (!in->retail_assets_available) { p.skipped_missing_retail_assets = 1; *out = p; return 0; }
-    if (!in->operator_opt_in || !in->mednafen_path || !in->bios_path || !in->disc_path ||
+    if (!in->operator_opt_in || !in->bios_path || !in->disc_path ||
         !in->menu_bpk_path || !in->dm_bin_path || !sha256(in->bios_sha256) ||
         !sha256(in->disc_sha256) || !sha256(in->menu_bpk_sha256) || !sha256(in->dm_bin_sha256) ||
         !hash_file(in->bios_path, in->bios_sha256) || !hash_file(in->disc_path, in->disc_sha256) ||

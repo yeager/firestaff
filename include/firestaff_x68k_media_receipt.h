@@ -319,6 +319,13 @@ int firestaff_x68k_media_receipt_sha256_hex(const uint8_t *data,
                                             char *out_hex,
                                             size_t out_hex_cap);
 
+/* Compute a SHA-256 receipt for an ordinary file without relying on a host
+ * checksum executable.  The implementation streams bounded chunks, so disc
+ * images are never materialized as one allocation.  Returns 0 on success. */
+int firestaff_x68k_media_receipt_sha256_file_hex(const char *path,
+                                                 char *out_hex,
+                                                 size_t out_hex_cap);
+
 /* Compute the MD5 hex string of the bytes at `data` of
  * `data_size` bytes, writing a 32-char NUL-terminated hex
  * string to `out_hex` (capacity >= 33 bytes). Same

@@ -330,6 +330,39 @@ int firestaff_x68k_media_receipt_sha256_hex(const uint8_t *data,
     return 0;
 }
 
+int firestaff_x68k_media_receipt_sha256_file_hex(const char *path,
+                                                 char *out_hex,
+                                                 size_t out_hex_cap)
+{
+    uint8_t buffer[65536];
+    uint8_t digest[32];
+    static const char hex[] = "0123456789abcdef";
+    Sha256Ctx ctx;
+    FILE *file;
+    size_t count;
+    int i;
+
+    if (!path || !*path || !out_hex || out_hex_cap < 65u) return -1;
+    file = fopen(path, "rb");
+    if (!file) return -1;
+    sha256_init(&ctx);
+    while ((count = fread(buffer, 1u, sizeof(buffer), file)) > 0u) {
+        sha256_update(&ctx, buffer, count);
+    }
+    if (ferror(file)) {
+        fclose(file);
+        return -1;
+    }
+    fclose(file);
+    sha256_final(&ctx, digest);
+    for (i = 0; i < 32; ++i) {
+        out_hex[i * 2] = hex[(digest[i] >> 4) & 0x0f];
+        out_hex[i * 2 + 1] = hex[digest[i] & 0x0f];
+    }
+    out_hex[64] = '\0';
+    return 0;
+}
+
 /* ── Self-contained MD5 (RFC 1321) ───────────────────────────────── */
 
 typedef struct {
