@@ -12,7 +12,7 @@ fi
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm2 --platform pc --data-dir "$archive" \
-    --script 'key:enter' --duration 1000 >/dev/null 2>&1
+    --script 'key:enter,key:enter,key:enter' --duration 1000 >/dev/null 2>&1
 
 # The French retail GDAT has its own authenticated identity.  It shares the
 # DOS dungeon bytes with the English release but must retain the PC French
@@ -20,7 +20,7 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 # an English startup path.
 output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm2 --platform pc --data-dir "$archive" --boot-probe \
-    --boot-probe-frames 5000 --script 'key:enter,up' \
+    --boot-probe-frames 5000 --script 'key:enter,key:enter,key:enter,up' \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
     --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
 
