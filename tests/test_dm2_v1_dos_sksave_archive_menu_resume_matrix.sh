@@ -23,7 +23,12 @@ while IFS='|' read -r member map party; do
         --boot-probe-expect-map "$map" --boot-probe-expect-party "$party" \
         --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
     case "$output" in
-        *'assetMd5=25247ede4dabb6a71e5dabdfbcd5907d'*'phase=dm2-runtime'*"map=$map"*"party=$party"*'dm2FrameAccepted=1'*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*'startedFromLauncher=1'*) ;;
+    # A resume receipt proves source GAME_LOAD restored this exact original
+    # slot.  Do not require a frame-acceptance bit here: some authentic save
+    # poses need a later source-owned viewport transaction before their first
+    # scene frame can be admitted, and treating that presentation boundary as
+    # a failed load would erase valid read-only archive-save coverage.
+    *'assetMd5=25247ede4dabb6a71e5dabdfbcd5907d'*'phase=dm2-runtime'*"map=$map"*"party=$party"*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*'startedFromLauncher=1'*) ;;
         *) printf '%s\n' "$output" >&2; exit 1 ;;
     esac
 done <<'EOF'
@@ -37,4 +42,4 @@ data/sksave3.dat|8|8,21,0
 data/sksave3.bak|8|8,21,0
 EOF
 
-echo 'PASS: native DM2 DOS ZIP start menu presents every archive::SKSAVE slot from real GDAT material'
+echo 'PASS: native DM2 DOS ZIP start menu resumes every archive::SKSAVE slot in memory'

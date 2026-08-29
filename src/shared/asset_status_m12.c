@@ -448,7 +448,7 @@ static const M12_GameVersionSpec g_games[] = {
 
 static const M12_RequiredFileSpec g_requiredFiles[] = {
     {"dm1", "graphics", "GRAPHICS.DAT", NULL, 1},
-    {"dm1", "dungeon", "DUNGEON.DAT", "766450c940651fc021c92fe5d0d0b3a6;050fb2cfded1b502ec2c53956b94c5bd;3dc0a932d0e0adfe59878f07c51700c5;dfd82fb7d44e4b5cc81add257655c966;fe098f70ce83cfe3f2333565093daf35;cea11d6e9f7e1698fc95329fe3fb0899;ebccb5f99c4437adcb34d9228b57eb6a", 0},
+    {"dm1", "dungeon", "DUNGEON.DAT", "766450c940651fc021c92fe5d0d0b3a6;050fb2cfded1b502ec2c53956b94c5bd;30028fb6a301ecb20127ef0b3af32b05;3dc0a932d0e0adfe59878f07c51700c5;dfd82fb7d44e4b5cc81add257655c966;fe098f70ce83cfe3f2333565093daf35;cea11d6e9f7e1698fc95329fe3fb0899;ebccb5f99c4437adcb34d9228b57eb6a", 0},
     {"csb", "graphics", "GRAPHICS.DAT", NULL, 1},
     /* The three hashes are PC/Atari/Amiga, FM Towns CDATA and FM Towns
      * CJDATA respectively.  A required-file MD5 can be a semicolon-separated
@@ -6738,6 +6738,13 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
              * the selected original medium or borrow a sibling edition. */
             (void)m12_admit_dm1_atari_st_nested_archive(
                 status, i, roots, rootCount, requestedDataDir);
+            /* The same generic pass also cannot enumerate the supplied
+             * Amiga ZIP -> ZIP -> ADF package.  Re-publish its two
+             * hash-verified original members before calculating the shared
+             * required-file gate; do not let the Atari recovery erase a
+             * selected Amiga source owner. */
+            (void)m12_admit_dm1_amiga20_nested_archive(
+                status, i, roots, rootCount, requestedDataDir);
             reqMatch = status->requiredFileCounts[i] > 0U;
             for (requiredIndex = 0U;
                  requiredIndex < status->requiredFileCounts[i];
@@ -7141,6 +7148,8 @@ void M12_AssetStatus_ScanGameWithOptions(
         size_t requiredIndex;
         m12_publish_dm1_fmtowns_required_files(status, gameIndex);
         (void)m12_admit_dm1_atari_st_nested_archive(
+            status, gameIndex, roots, rootCount, requestedDataDir);
+        (void)m12_admit_dm1_amiga20_nested_archive(
             status, gameIndex, roots, rootCount, requestedDataDir);
         reqMatch = status->requiredFileCounts[gameIndex] > 0U;
         for (requiredIndex = 0U;
