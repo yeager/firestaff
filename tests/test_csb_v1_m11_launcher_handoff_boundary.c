@@ -2977,8 +2977,6 @@ static void run_real_amiga35_english_direct_handoff_if_available(void) {
     const M12_AssetVersionStatus *amiga_version;
     const CSB_V1_BootProfile *profile;
     char runtime_dir[M12_ASSET_DATA_DIR_CAPACITY];
-    char path[M12_ASSET_DATA_DIR_CAPACITY];
-    char md5[33];
     M12_LaunchIntent intent;
     int version_index;
 
@@ -3066,8 +3064,6 @@ static void run_real_amiga31_english_direct_handoff_if_available(void) {
     const M12_AssetVersionStatus *amiga_version;
     const CSB_V1_BootProfile *profile;
     char runtime_dir[M12_ASSET_DATA_DIR_CAPACITY];
-    char path[M12_ASSET_DATA_DIR_CAPACITY];
-    char md5[33];
     int version_index;
 
     if (!data_dir || !data_dir[0]) {
