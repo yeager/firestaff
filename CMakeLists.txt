@@ -58534,7 +58534,11 @@ add_executable(test_dm2_v1_fmtowns_disc
     src/dm2/dm2_v1_fmtowns_cd_dat.c
 )
 target_include_directories(test_dm2_v1_fmtowns_disc PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm2_v1_fmtowns_disc PRIVATE firestaff_zip_extract)
 add_test(NAME test_dm2_v1_fmtowns_disc COMMAND test_dm2_v1_fmtowns_disc)
+set_tests_properties(test_dm2_v1_fmtowns_disc PROPERTIES
+    ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"
+    LABELS "dm2;fmtowns;disc;startup;real-media;in-memory")
 
 add_executable(test_dm1_v1_fmtowns_graphics_dat
     tests/test_dm1_v1_fmtowns_graphics_dat.c

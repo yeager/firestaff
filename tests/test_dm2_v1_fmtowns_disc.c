@@ -1,6 +1,7 @@
 #include "dm2_v1_fmtowns_disc.h"
 #include "dm2_v1_fmtowns_graphics_dat.h"
 #include "dm2_v1_fmtowns_cd_dat.h"
+#include "firestaff_zip_extract.h"
 
 /* This test deliberately keeps assert() enabled.  Several checks call the
  * probe/extraction API inside the assertion; compiling those calls away
@@ -13,27 +14,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-static uint8_t *read_file(const char *path, size_t *out_size) {
-    FILE *f = fopen(path, "rb");
-    uint8_t *data;
-    long sz;
-    if (!f) return NULL;
-    fseek(f, 0, SEEK_END);
-    sz = ftell(f);
-    if (sz <= 0) { fclose(f); return NULL; }
-    fseek(f, 0, SEEK_SET);
-    data = malloc((size_t)sz);
-    if (!data) { fclose(f); return NULL; }
-    if (fread(data, 1, (size_t)sz, f) != (size_t)sz) {
-        free(data);
-        fclose(f);
-        return NULL;
-    }
-    fclose(f);
-    *out_size = (size_t)sz;
-    return data;
-}
 
 static void test_api_null_guards(void) {
     DM2_V1_FmtownsDiscReceipt receipt;
@@ -50,17 +30,8 @@ static void test_too_small_image(void) {
     printf("  PASS: too-small image rejected\n");
 }
 
-static void test_disc_image(const char *path) {
-    uint8_t *image;
-    size_t image_size;
+static void test_disc_image(const uint8_t *image, size_t image_size) {
     DM2_V1_FmtownsDiscReceipt receipt;
-
-    printf("  Loading disc image: %s\n", path);
-    image = read_file(path, &image_size);
-    if (!image) {
-        printf("  SKIP: cannot read disc image (file not extracted)\n");
-        return;
-    }
 
     assert(dm2_v1_fmtowns_disc_probe(image, image_size, &receipt) == 0);
     assert(receipt.valid);
@@ -132,20 +103,25 @@ static void test_disc_image(const char *path) {
         printf("  PASS: GRAPHICS.DAT extraction + probe\n");
     }
 
-    free(image);
     printf("  PASS: disc image probe + extraction\n");
 }
 
-int main(int argc, char **argv) {
+int main(void) {
+    const char *archive = getenv("FIRESTAFF_DM2_FMTOWNS_ARCHIVE");
+    uint8_t *image = NULL;
+    size_t image_size = 0u;
     printf("dm2_v1_fmtowns_disc tests:\n");
 
     test_api_null_guards();
     test_too_small_image();
 
-    if (argc > 1) {
-        test_disc_image(argv[1]);
+    if (archive && archive[0]) {
+        assert(firestaff_zip_extract_by_suffix(archive, ".img", &image,
+                                                &image_size) == 0 && image);
+        test_disc_image(image, image_size);
+        free(image);
     } else {
-        printf("  SKIP: no disc image path provided (pass .img file as arg)\n");
+        printf("  SKIP: FIRESTAFF_DM2_FMTOWNS_ARCHIVE not set\n");
     }
 
     printf("All dm2_v1_fmtowns_disc tests passed.\n");
