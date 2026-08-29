@@ -116,25 +116,17 @@ static int read_track_sector(const DM1_V1_AtariStx *stx, uint32_t track,
                (size_t)wanted * SECTOR_SIZE, SECTOR_SIZE);
         return 1;
     }
-    /* STX sector blocks are not required to be listed in disk order. */
+    /* The descriptor table is logical-sector order. Its byte offsets locate
+     * the captured sector payloads and may be deliberately skewed or out of
+     * order. Sorting offsets works accidentally for ordinary STX media but
+     * maps the protected French CSB preservation image's boot/FAT sectors to
+     * unrelated bytes. */
     {
-        uint32_t offsets[64];
-        for (uint32_t s = 0u; s < count; ++s) {
-            const uint8_t *entry = stx->data + offset + STX_TRACK_HEADER_SIZE +
-                                   (size_t)s * STX_SECTOR_BLOCK_SIZE;
-            offsets[s] = le32(entry);
-        }
-        for (uint32_t i = 1u; i < count; ++i) {
-            uint32_t value = offsets[i];
-            uint32_t j = i;
-            while (j > 0u && offsets[j - 1u] > value) {
-                offsets[j] = offsets[j - 1u];
-                --j;
-            }
-            offsets[j] = value;
-        }
+        const uint8_t *entry = stx->data + offset + STX_TRACK_HEADER_SIZE +
+                               (size_t)wanted * STX_SECTOR_BLOCK_SIZE;
+        uint32_t data_offset = le32(entry);
         memcpy(out, stx->data + offset + STX_TRACK_HEADER_SIZE +
-               (size_t)count * STX_SECTOR_BLOCK_SIZE + fuzzy + offsets[wanted],
+               (size_t)count * STX_SECTOR_BLOCK_SIZE + fuzzy + data_offset,
                SECTOR_SIZE);
         return 1;
     }

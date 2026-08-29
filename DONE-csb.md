@@ -4,6 +4,11 @@ Reviewed 2026-08-29. Completed work only.
 
 - The native Atari STX CLI route verifies original title startup, runtime and
   start-menu entry using the supplied campaign media.
+- The supplied French Atari preservation ZIP now follows its original
+  `ZIP → STX` path in RAM.  Its protected sector descriptors retain their
+  logical order even when capture offsets are skewed, so the verified shared
+  `GRAPHICS.DAT`/`DUNGEON.DAT` pair reaches title, start menu, and first native
+  movement without a replacement image or disk extraction.
 - The M12/M11 Atari STX route now retains the hash-verified original
   `ANIMATE.SCR`/`ANIMATE.DAT` container when the selected runtime cache holds
   only `GRAPHICS.DAT`/`DUNGEON.DAT`; 50 Hz VBlank cadence, final FTLCODE
