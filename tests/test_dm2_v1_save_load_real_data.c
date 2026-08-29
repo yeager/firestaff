@@ -32,6 +32,7 @@ static int failed;
 static DM2_V1_BootProfile live_resume_profile;
 static int live_resume_profile_initialized;
 static int live_resume_checked;
+static int live_resume_result;
 
 static int verify_live_sksave_resume_once(
     const char *root, DM2_V1_SksaveGameLoadOwner *source)
@@ -39,7 +40,9 @@ static int verify_live_sksave_resume_once(
     DM2_V1_SksaveGameLoadOwner underlay;
     int ok = 0;
 
-    if (live_resume_checked) return 1;
+    /* A failed first live-resume attempt is evidence, not permission for a
+     * later corpus member to pass without executing the source-owned path. */
+    if (live_resume_checked) return live_resume_result;
     memset(&underlay, 0, sizeof(underlay));
     dm2_v1_boot_profile_init(&live_resume_profile);
     live_resume_profile_initialized = 1;
@@ -58,6 +61,7 @@ static int verify_live_sksave_resume_once(
     ok = 1;
 done:
     dm2_v1_sksave_game_load_owner_free(&underlay);
+    live_resume_result = ok;
     live_resume_checked = 1;
     return ok;
 }
