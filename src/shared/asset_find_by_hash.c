@@ -6336,6 +6336,23 @@ int asset_find_all_files_by_md5_list(const char *searchDir,
     return result;
 }
 
+static int asset_write_memory_to_path(const uint8_t *bytes, size_t byte_count,
+                                      const char *out_file_path) {
+    FILE *out;
+    int write_ok;
+    if (!bytes || byte_count == 0U || !out_file_path || !out_file_path[0]) {
+        return 0;
+    }
+    out = fopen(out_file_path, "wb");
+    if (!out) return 0;
+    write_ok = fwrite(bytes, 1U, byte_count, out) == byte_count;
+    if (fclose(out) != 0 || !write_ok) {
+        (void)remove(out_file_path);
+        return 0;
+    }
+    return 1;
+}
+
 int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath) {
     const char *sep;
     char container[ASSET_PATH_MAX];
@@ -6363,36 +6380,28 @@ int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath)
             }
             memcpy(disk_entry, entry, disk_length);
             disk_entry[disk_length] = '\0';
-            /* Some preserved Amiga releases are ZIP -> ZIP -> ADF.  Keep
-             * the chain native: extract only the inner archive to a private
-             * temporary file, then reuse the bounded ADF reader. */
+            /* Some preserved releases are ZIP -> ZIP -> payload. Resolve
+             * both layers in RAM; even this legacy materialization API must
+             * never stage the user-owned inner archive in /tmp. */
             if (has_case_suffix(disk_entry, ".zip")) {
-#ifndef _WIN32
                 uint8_t *inner_bytes;
                 size_t inner_size;
-                char inner_template[] = "/tmp/firestaff-inner-zip-XXXXXX.zip";
-                int inner_fd;
+                uint8_t *payload;
+                size_t payload_size;
                 int ok = 0;
                 inner_bytes = zip_load_entry_bytes(container, disk_entry,
                                                     &inner_size);
-                inner_fd = inner_bytes ? mkstemps(inner_template, 4) : -1;
-                if (inner_fd >= 0 && inner_size > 0U &&
-                    write(inner_fd, inner_bytes, inner_size) ==
-                        (ssize_t)inner_size && close(inner_fd) == 0) {
-                    char inner_virtual[ASSET_PATH_MAX * 2];
-                    if (snprintf(inner_virtual, sizeof(inner_virtual), "%s::%s",
-                                 inner_template, nested + 2) <
-                        (int)sizeof(inner_virtual)) {
-                        ok = asset_extract_virtual_path(inner_virtual,
-                                                        outFilePath);
-                    }
-                } else if (inner_fd >= 0) {
-                    (void)close(inner_fd);
+                payload = inner_bytes
+                    ? zip_load_memory_entry_bytes(inner_bytes, inner_size,
+                                                  nested + 2, &payload_size)
+                    : NULL;
+                if (payload) {
+                    ok = asset_write_memory_to_path(payload, payload_size,
+                                                    outFilePath);
                 }
+                free(payload);
                 free(inner_bytes);
-                if (inner_fd >= 0) (void)remove(inner_template);
                 if (ok) return 1;
-#endif
             }
             if (zip_extract_nested_disk_entry_to_path(container, disk_entry,
                                                       nested + 2, outFilePath)) {
