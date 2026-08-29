@@ -448,7 +448,7 @@ static const M12_GameVersionSpec g_games[] = {
 
 static const M12_RequiredFileSpec g_requiredFiles[] = {
     {"dm1", "graphics", "GRAPHICS.DAT", NULL, 1},
-    {"dm1", "dungeon", "DUNGEON.DAT", "766450c940651fc021c92fe5d0d0b3a6;050fb2cfded1b502ec2c53956b94c5bd;30028fb6a301ecb20127ef0b3af32b05;3dc0a932d0e0adfe59878f07c51700c5;dfd82fb7d44e4b5cc81add257655c966;fe098f70ce83cfe3f2333565093daf35;cea11d6e9f7e1698fc95329fe3fb0899", 0},
+    {"dm1", "dungeon", "DUNGEON.DAT", "766450c940651fc021c92fe5d0d0b3a6;050fb2cfded1b502ec2c53956b94c5bd;3dc0a932d0e0adfe59878f07c51700c5;dfd82fb7d44e4b5cc81add257655c966;fe098f70ce83cfe3f2333565093daf35;cea11d6e9f7e1698fc95329fe3fb0899;ebccb5f99c4437adcb34d9228b57eb6a", 0},
     {"csb", "graphics", "GRAPHICS.DAT", NULL, 1},
     /* The three hashes are PC/Atari/Amiga, FM Towns CDATA and FM Towns
      * CJDATA respectively.  A required-file MD5 can be a semicolon-separated
@@ -1125,14 +1125,15 @@ static int m12_admit_dm1_amiga20_nested_archive(
             m12_copy_string(candidates[candidateCount++], sizeof(candidates[0]),
                             preferredArchive);
         }
-        if (rootIndex >= rootCount) continue;
-        for (size_t packageIndex = 0U;
-             packageIndex < sizeof(packages) / sizeof(packages[0]);
-             ++packageIndex) {
-            snprintf(candidates[candidateCount++], sizeof(candidates[0]),
-                     "%s/%s", roots[rootIndex], packages[packageIndex].outerName);
-            snprintf(candidates[candidateCount++], sizeof(candidates[0]),
-                     "%s/dm1/%s", roots[rootIndex], packages[packageIndex].outerName);
+        if (rootIndex < rootCount) {
+            for (size_t packageIndex = 0U;
+                 packageIndex < sizeof(packages) / sizeof(packages[0]);
+                 ++packageIndex) {
+                snprintf(candidates[candidateCount++], sizeof(candidates[0]),
+                         "%s/%s", roots[rootIndex], packages[packageIndex].outerName);
+                snprintf(candidates[candidateCount++], sizeof(candidates[0]),
+                         "%s/dm1/%s", roots[rootIndex], packages[packageIndex].outerName);
+            }
         }
         for (candidateIndex = 0U; candidateIndex < candidateCount; ++candidateIndex) {
             char virtualGraphics[M12_ASSET_DATA_DIR_CAPACITY * 2U];
@@ -1281,16 +1282,19 @@ static int m12_admit_dm1_atari_st_nested_archive(
          ++rootIndex) {
         char candidates[3][M12_ASSET_DATA_DIR_CAPACITY];
         size_t candidateCount = 0U, candidateIndex;
-        if (rootIndex == 0U && preferredArchive && preferredArchive[0] != '\0' &&
-            FSP_FileExists(preferredArchive)) {
+        if (rootIndex == 0U && preferredArchive && preferredArchive[0] != '\0') {
             m12_copy_string(candidates[candidateCount++], sizeof(candidates[0]),
                             preferredArchive);
         }
-        if (rootIndex >= rootCount) continue;
-        snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s/%s",
-                 roots[rootIndex], outerName);
-        snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s/dm1/%s",
-                 roots[rootIndex], outerName);
+        /* A directly selected preservation archive has no directory search
+         * root. Its candidate above is still authoritative and must be
+         * examined; roots only contribute additional discovery candidates. */
+        if (rootIndex < rootCount) {
+            snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s/%s",
+                     roots[rootIndex], outerName);
+            snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s/dm1/%s",
+                     roots[rootIndex], outerName);
+        }
         for (candidateIndex = 0U; candidateIndex < candidateCount;
              ++candidateIndex) {
             char virtualGraphics[M12_ASSET_DATA_DIR_CAPACITY * 2U];
@@ -6727,17 +6731,21 @@ static int M12_AssetStatus_ScanWithOptionsImpl(
         if (strcmp(g_games[i].gameId, "dm1") == 0) {
             size_t requiredIndex;
             m12_publish_dm1_fmtowns_required_files(status, i);
-            if (m12_first_matched_version(status, i) &&
-                strstr(m12_first_matched_version(status, i)->matchedPath, "::")) {
-                reqMatch = status->requiredFileCounts[i] > 0U;
-                for (requiredIndex = 0U;
-                     requiredIndex < status->requiredFileCounts[i];
-                     ++requiredIndex) {
-                    if (status->requiredFiles[i][requiredIndex].required &&
-                        !status->requiredFiles[i][requiredIndex].matched) {
-                        reqMatch = 0;
-                        break;
-                    }
+            /* The Atari preservation set is ZIP -> ZIP -> STX.  The generic
+             * required-file pass cannot enumerate the STX filesystem and
+             * resets its role rows, so restore the same already hash-verified
+             * virtual GRAPHICS.DAT/DUNGEON.DAT receipts here.  Do not unpack
+             * the selected original medium or borrow a sibling edition. */
+            (void)m12_admit_dm1_atari_st_nested_archive(
+                status, i, roots, rootCount, requestedDataDir);
+            reqMatch = status->requiredFileCounts[i] > 0U;
+            for (requiredIndex = 0U;
+                 requiredIndex < status->requiredFileCounts[i];
+                 ++requiredIndex) {
+                if (status->requiredFiles[i][requiredIndex].required &&
+                    !status->requiredFiles[i][requiredIndex].matched) {
+                    reqMatch = 0;
+                    break;
                 }
             }
         }
@@ -7132,17 +7140,16 @@ void M12_AssetStatus_ScanGameWithOptions(
     if (strcmp(g_games[gameIndex].gameId, "dm1") == 0) {
         size_t requiredIndex;
         m12_publish_dm1_fmtowns_required_files(status, gameIndex);
-        if (m12_first_matched_version(status, gameIndex) &&
-            strstr(m12_first_matched_version(status, gameIndex)->matchedPath, "::")) {
-            reqMatch = status->requiredFileCounts[gameIndex] > 0U;
-            for (requiredIndex = 0U;
-                 requiredIndex < status->requiredFileCounts[gameIndex];
-                 ++requiredIndex) {
-                if (status->requiredFiles[gameIndex][requiredIndex].required &&
-                    !status->requiredFiles[gameIndex][requiredIndex].matched) {
-                    reqMatch = 0;
-                    break;
-                }
+        (void)m12_admit_dm1_atari_st_nested_archive(
+            status, gameIndex, roots, rootCount, requestedDataDir);
+        reqMatch = status->requiredFileCounts[gameIndex] > 0U;
+        for (requiredIndex = 0U;
+             requiredIndex < status->requiredFileCounts[gameIndex];
+             ++requiredIndex) {
+            if (status->requiredFiles[gameIndex][requiredIndex].required &&
+                !status->requiredFiles[gameIndex][requiredIndex].matched) {
+                reqMatch = 0;
+                break;
             }
         }
     }

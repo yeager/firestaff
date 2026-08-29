@@ -4294,13 +4294,34 @@ if(BUILD_TESTING)
         ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
     )
     add_test(
-        NAME dm1_v1_atari_st_outer_archive_no_fallback
+        NAME dm1_v1_atari_st_outer_archive_cli_boot
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_atari_st_outer_archive_no_fallback.sh
             $<TARGET_FILE:firestaff>
     )
-    set_tests_properties(dm1_v1_atari_st_outer_archive_no_fallback PROPERTIES
+    set_tests_properties(dm1_v1_atari_st_outer_archive_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "dm1;atari-st;real-media;archive;no-fallback;skip-safe"
+        LABELS "dm1;atari-st;real-media;archive;native;cli;startup;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_OUTER_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Atari-ST_EN.zip"
+    )
+    add_executable(test_dm1_v1_atari_st_outer_archive_real_data
+        tests/test_dm1_v1_atari_st_outer_archive_real_data.c
+    )
+    target_link_libraries(test_dm1_v1_atari_st_outer_archive_real_data PRIVATE
+        firestaff_m12
+    )
+    target_include_directories(test_dm1_v1_atari_st_outer_archive_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_atari_st_outer_archive_real_data PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_atari_st_outer_archive_real_data
+        COMMAND test_dm1_v1_atari_st_outer_archive_real_data
+    )
+    set_tests_properties(dm1_v1_atari_st_outer_archive_real_data PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;atari-st;real-media;archive;status;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_OUTER_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Atari-ST_EN.zip"
     )
     add_test(

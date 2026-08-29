@@ -17,6 +17,11 @@ Reviewed 2026-08-25. Completed work only.
   verifies the exact ZIP → original ZIP → ADF selection, the `IMG2` handoff,
   and a post-menu native movement result rather than relying on the separate
   HD package's coverage.
+- The supplied Atari preservation collection now selects only its `[!]`
+  original member (`ZIP → ZIP → STX`) and reads its `GRAPHICS.DAT` and the
+  release-specific `DUNGEON.DAT` identity entirely in RAM. Direct CLI, the
+  startup menu and a native movement probe are covered by real-media CTests;
+  cracked sibling images are never admitted.
 
 - PC DOS 3.4 authentic archive startup reaches native DM1 runtime with a
   hash-verified real-media regression.
