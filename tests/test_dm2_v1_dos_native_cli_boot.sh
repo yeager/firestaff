@@ -4,6 +4,10 @@ set -eu
 app=${1:?usage: test_dm2_v1_dos_native_cli_boot.sh <firestaff>}
 archive=${FIRESTAFF_DM2_DOS_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"}
 
+# The retail DOS ZIP is consumed by the native bounded-memory reader; do not
+# let a developer's diagnostic extractor opt-in affect this runtime proof.
+unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
+
 if [ ! -x "$app" ] || [ ! -f "$archive" ]; then
     echo 'SKIP: authentic DM2 DOS archive is not staged'
     exit 77

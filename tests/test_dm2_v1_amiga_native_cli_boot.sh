@@ -4,6 +4,9 @@ set -eu
 app=${1:?usage: test_dm2_v1_amiga_native_cli_boot.sh <firestaff>}
 archive=${FIRESTAFF_DM2_AMIGA_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"}
 
+# ZIP -> native Amiga media admission must not depend on an external tool.
+unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
+
 if [ ! -x "$app" ] || [ ! -f "$archive" ]; then
     echo 'SKIP: authentic DM2 Amiga archive is not staged'
     exit 77

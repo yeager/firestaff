@@ -4,6 +4,9 @@ set -eu
 app=${1:?usage: test_dm2_v1_dos_fr_native_cli_boot.sh <firestaff>}
 archive=${FIRESTAFF_DM2_DOS_FR_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_DOS_FR.zip"}
 
+# The native ZIP reader owns this separate French retail identity as well.
+unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
+
 if [ ! -x "$app" ] || [ ! -f "$archive" ]; then
     echo 'SKIP: authentic DM2 French DOS archive is not staged'
     exit 77

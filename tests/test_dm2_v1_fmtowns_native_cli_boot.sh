@@ -4,6 +4,9 @@ set -eu
 app=${1:?usage: test_dm2_v1_fmtowns_native_cli_boot.sh <firestaff>}
 archive=${FIRESTAFF_DM2_FMTOWNS_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"}
 
+# ZIP-contained Towns media is admitted in process, never through 7z/bsdtar.
+unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
+
 if [ ! -x "$app" ] || [ ! -f "$archive" ]; then
     echo 'SKIP: authentic DM2 FM Towns archive is not staged'
     exit 77
