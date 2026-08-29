@@ -58433,6 +58433,7 @@ add_executable(test_dm1_v1_fmtowns_cd_audio
     src/shared/firestaff_fmtowns_disc.c
 )
 target_include_directories(test_dm1_v1_fmtowns_cd_audio PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_fmtowns_cd_audio PRIVATE firestaff_zip_extract)
 add_test(NAME test_dm1_v1_fmtowns_cd_audio COMMAND test_dm1_v1_fmtowns_cd_audio)
 
 add_executable(test_dm1_v1_fmtowns_menu_regions

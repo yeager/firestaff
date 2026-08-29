@@ -1,7 +1,9 @@
 #include "dm1_v1_fmtowns_cd_audio.h"
 #include "firestaff_fmtowns_disc.h"
+#include "firestaff_zip_extract.h"
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
 
@@ -103,6 +105,32 @@ static void test_cdda_byte_offset_calculation(void) {
     assert(audio_offset == 66496000u);
 }
 
+/* Optional real-media receipt.  The supplied retail archive is never
+ * materialized: this reads only its source-owned CUE member in memory. */
+static void test_real_cue_archive(void) {
+    const char *archive = getenv("FIRESTAFF_DM1_FMTOWNS_ARCHIVE");
+    uint8_t *cue = NULL;
+    size_t cue_size = 0U;
+    uint32_t starts[24];
+    int count;
+
+    if (!archive || !archive[0]) {
+        puts("SKIP: FIRESTAFF_DM1_FMTOWNS_ARCHIVE not set");
+        return;
+    }
+    assert(firestaff_zip_extract_by_suffix(archive, ".cue", &cue,
+                                            &cue_size) == 0);
+    assert(cue != NULL && cue_size > 0U);
+    memset(starts, 0, sizeof(starts));
+    count = fmtowns_cue_parse_track_starts((const char *)cue, cue_size,
+                                           starts, 24);
+    free(cue);
+    assert(count == 20);
+    assert(starts[2] == 28u * 75u + 50u);
+    assert(starts[5] == 6u * 60u * 75u + 20u * 75u + 50u);
+    assert(starts[20] == 29u * 60u * 75u + 48u * 75u + 52u);
+}
+
 int main(void) {
     test_track_for_map();
     test_track_for_event();
@@ -110,6 +138,7 @@ int main(void) {
     test_all_tracks_covered();
     test_cue_parse_dm1_fmtowns();
     test_cdda_byte_offset_calculation();
+    test_real_cue_archive();
     printf("All dm1_v1_fmtowns_cd_audio tests passed.\n");
     return 0;
 }
