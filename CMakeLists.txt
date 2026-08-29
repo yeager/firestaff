@@ -58564,7 +58564,11 @@ add_executable(test_dm1_v1_atari_st_stx
     src/dm1/dm1_v1_graphics_loader_pc34_compat.c
     src/dm1/dm1_v1_legacy_graphics_dat.c)
 target_include_directories(test_dm1_v1_atari_st_stx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_atari_st_stx PRIVATE firestaff_zip_extract)
 add_test(NAME test_dm1_v1_atari_st_stx COMMAND test_dm1_v1_atari_st_stx)
+set_tests_properties(test_dm1_v1_atari_st_stx PROPERTIES
+    ENVIRONMENT "FIRESTAFF_DM1_ATARI_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip"
+    LABELS "dm1;atari;stx;real-media;in-memory")
 
 add_executable(test_dm1_v1_fmtowns_iso9660
     tests/test_dm1_v1_fmtowns_iso9660.c

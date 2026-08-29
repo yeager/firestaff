@@ -1,36 +1,26 @@
 #include "dm1_v1_atari_st_stx.h"
 #include "dm1_v1_atari_st_graphics_dat.h"
+#include "firestaff_zip_extract.h"
 
+/* The original STX path is a real-media regression.  Its source reads and
+ * GEMDOS/graphics assertions must survive CI's Release configuration. */
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-static unsigned char *read_file(const char *path, size_t *size)
-{
-    FILE *fp = fopen(path, "rb");
-    unsigned char *data;
-    long length;
-    if (!fp) return NULL;
-    assert(fseek(fp, 0, SEEK_END) == 0);
-    length = ftell(fp);
-    assert(length > 0 && fseek(fp, 0, SEEK_SET) == 0);
-    data = (unsigned char *)malloc((size_t)length);
-    assert(data && fread(data, 1u, (size_t)length, fp) == (size_t)length);
-    fclose(fp);
-    *size = (size_t)length;
-    return data;
-}
-
 int main(void)
 {
-    const char *path = getenv("FIRESTAFF_DM1_ATARI_STX");
-    if (path) {
+    const char *archive = getenv("FIRESTAFF_DM1_ATARI_ARCHIVE");
+    if (archive && archive[0]) {
         DM1_V1_AtariStx stx;
         DM1_V1_AtariStGraphicsDat graphics;
         size_t size = 0u;
         size_t graphics_size = 0u;
         size_t extracted_size = 0u;
-        unsigned char *image = read_file(path, &size);
+        unsigned char *image = NULL;
         size_t graphics_capacity = 1024u * 1024u;
         size_t dungeon_capacity = 128u * 1024u;
         unsigned char *graphics_bytes = (unsigned char *)malloc(graphics_capacity);
@@ -40,7 +30,8 @@ int main(void)
         uint16_t height = 0u;
         int decoded_records = 0;
         uint16_t i;
-        assert(image && graphics_bytes && dungeon_bytes && pixels);
+        assert(firestaff_zip_extract_by_suffix(archive, ".stx", &image, &size) == 0 &&
+               image && graphics_bytes && dungeon_bytes && pixels);
         assert(dm1_v1_atari_st_stx_open(image, size, &stx));
         assert(stx.sector_count == 800u);
         assert(dm1_v1_atari_st_stx_extract_file(
@@ -60,7 +51,8 @@ int main(void)
                 ++decoded_records;
             }
         }
-        assert(decoded_records > 0);
+        printf("DM1 Atari STX decoded graphics records: %d\n", decoded_records);
+        assert(decoded_records == 283);
         free(pixels);
         free(dungeon_bytes);
         free(graphics_bytes);
