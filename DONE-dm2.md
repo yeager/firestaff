@@ -39,6 +39,9 @@ Reviewed 2026-08-29. Completed work only.
   16-colour palette layout solely because both formats are big-endian. Its
   start-menu/title/New Game/movement route produces an accepted M11 frame with
   real assets and zero fallback draws, directly from the original ZIP in RAM.
+- The authentic Macintosh *First Chapter* demo is explicitly fail-closed in
+  the CLI regression suite.  An explicit demo archive is isolated from all
+  sibling media and must never become a retail DM2 runtime owner.
 - The DOS archive save matrix now verifies every supplied primary and backup
   `SKSAVE` through the native, read-only start-menu resume handoff. It treats
   frame acceptance as a separate presentation boundary, so a valid source

@@ -4268,6 +4268,17 @@ if(BUILD_TESTING)
         TIMEOUT 45
     )
     add_test(
+        NAME dm2_v1_mac_demo_archive_rejected
+        COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_demo_archive_rejected.sh"
+            "$<TARGET_FILE:firestaff>" "$<TARGET_FILE_DIR:firestaff>"
+    )
+    set_tests_properties(dm2_v1_mac_demo_archive_rejected PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;dm2;macintosh;demo;negative;real-media;preservation;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_DEMO_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN (1).zip"
+        TIMEOUT 45
+    )
+    add_test(
         NAME dm2_v1_amiga_native_cli_boot
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_amiga_native_cli_boot.sh"
             "$<TARGET_FILE:firestaff>"
