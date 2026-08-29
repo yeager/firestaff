@@ -1,5 +1,7 @@
 #include "dm1_v1_fmtowns_pic_library.h"
 #include "dm1_v1_fmtowns_font_asset.h"
+#include "firestaff_fmtowns_disc.h"
+#include "firestaff_zip_extract.h"
 
 #include <assert.h>
 #include <stdint.h>
@@ -230,30 +232,46 @@ static void test_synthetic_extended_fill(void) {
  * (source-bytes-consumed = size_table[idx], and decoded-bytes =
  * padded_width/2 * height) are the strongest ship criterion available.
  *
- * Points at real GRAPHICS.DAT via env FIRESTAFF_DM1_FMTOWNS_GRAPHICS_DAT.
- * Skips if not present. Never bundles game data. */
-static uint8_t *load_file_full(const char *path, size_t *out_size) {
-    FILE *f = fopen(path, "rb"); if (!f) return NULL;
-    fseek(f, 0, SEEK_END); long sz = ftell(f);
-    if (sz <= 0) { fclose(f); return NULL; }
-    fseek(f, 0, SEEK_SET);
-    uint8_t *buf = (uint8_t *)malloc((size_t)sz);
-    if (!buf) { fclose(f); return NULL; }
-    if (fread(buf, 1, (size_t)sz, f) != (size_t)sz) { free(buf); fclose(f); return NULL; }
-    fclose(f);
-    *out_size = (size_t)sz;
-    return buf;
+ * Reads the named source member through ZIP -> CUE -> BIN -> ISO9660 in
+ * memory. Skips the optional receipt if no selected archive is available. */
+static uint8_t *load_retail_graphics_dat(size_t *out_size) {
+    const char *archive = getenv("FIRESTAFF_DM1_FMTOWNS_ARCHIVE");
+    uint8_t *cue = NULL, *bin = NULL, *graphics = NULL;
+    size_t cue_size = 0u, bin_size = 0u;
+    char image_member[256];
+    FmtownsDiscProbeResult probe;
+    const FmtownsIsoEntry *entry;
+
+    if (!archive || !archive[0] || !out_size) return NULL;
+    if (firestaff_zip_extract_by_suffix(archive, ".cue", &cue, &cue_size) != 0 ||
+        !cue || !fmtowns_cue_parse_image_member((const char *)cue, cue_size,
+                                                 image_member,
+                                                 sizeof(image_member)) ||
+        firestaff_zip_extract_by_suffix(archive, image_member, &bin,
+                                        &bin_size) != 0 || !bin ||
+        fmtowns_disc_probe(bin, bin_size, FMTOWNS_SECTOR_2048, &probe) != 0 ||
+        !probe.valid ||
+        !(entry = fmtowns_disc_find(&probe, "DATA/GRAPHICS.DAT")) ||
+        fmtowns_disc_extract_alloc(bin, bin_size, FMTOWNS_SECTOR_2048, entry,
+                                   &graphics, out_size) != 0) {
+        free(cue);
+        free(bin);
+        free(graphics);
+        return NULL;
+    }
+    free(cue);
+    free(bin);
+    return graphics;
 }
 
 static void test_real_graphics_dat_rle_roundtrip(void) {
-    const char *path = getenv("FIRESTAFF_DM1_FMTOWNS_GRAPHICS_DAT");
-    if (!path || !*path) {
-        printf("SKIP: FIRESTAFF_DM1_FMTOWNS_GRAPHICS_DAT not set\n");
+    if (!getenv("FIRESTAFF_DM1_FMTOWNS_ARCHIVE")) {
+        printf("SKIP: FIRESTAFF_DM1_FMTOWNS_ARCHIVE not set\n");
         return;
     }
     size_t sz = 0;
-    uint8_t *file = load_file_full(path, &sz);
-    if (!file) { printf("SKIP: cannot open %s\n", path); return; }
+    uint8_t *file = load_retail_graphics_dat(&sz);
+    if (!file) { fputs("FAIL: cannot read source GRAPHICS.DAT from retail archive\n", stderr); abort(); }
 
     dm1_v1_fmtowns_pic_library_view_t view;
     int rc = dm1_v1_fmtowns_pic_library_open_pc34(file, sz, &view);
