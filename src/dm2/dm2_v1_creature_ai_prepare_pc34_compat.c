@@ -246,7 +246,6 @@ int dm2_v1_get_creature_action_flags(
 {
     uint8_t table_index;
     uint8_t entry_index;
-    int resolved_offset;
     const DM2_V1_ActionTableEntry *table_row;
     uint8_t flags_byte;
 

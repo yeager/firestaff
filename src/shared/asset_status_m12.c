@@ -1793,27 +1793,9 @@ static void m12_publish_dm2_mac_required_files(M12_AssetStatus* status,
  * generic hash walker can see.  Stage the original image as a bounded stream,
  * then accept a language only after GRAPHICS.DAT and DUNGEON.DAT both match
  * registered source hashes. */
-static int m12_csb_fmtowns_make_stage_path(char* path, size_t pathSize) {
-#ifdef _WIN32
-    char directory[MAX_PATH];
-    if (!path || pathSize < MAX_PATH || GetTempPathA(MAX_PATH, directory) == 0U ||
-        GetTempFileNameA(directory, "fsc", 0U, path) == 0U) return 0;
-    return 1;
-#else
-    int descriptor;
-    if (!path || pathSize < sizeof("/tmp/firestaff-csb-fmtowns-XXXXXX")) return 0;
-    snprintf(path, pathSize, "/tmp/firestaff-csb-fmtowns-XXXXXX");
-    descriptor = mkstemp(path);
-    if (descriptor < 0) return 0;
-    close(descriptor);
-    return 1;
-#endif
-}
-
 /* A retail FM Towns image expands to roughly half a gigabyte.  Its transient
  * image must live inside Firestaff's owned per-edition cache, never beside a
- * user archive: a cancelled materialization used to strand multi-hundred-MB
- * .firestaff-csb-fmtowns-* files in the user's game library. */
+ * user archive or in the system temporary directory. */
 static int m12_csb_fmtowns_make_archive_stage_path(const char* gameCacheDir,
                                                    char* path,
                                                    size_t pathSize) {
@@ -1830,8 +1812,10 @@ static int m12_csb_fmtowns_make_archive_stage_path(const char* gameCacheDir,
     }
 #else
     (void)gameCacheDir;
+    (void)path;
+    (void)pathSize;
 #endif
-    return m12_csb_fmtowns_make_stage_path(path, pathSize);
+    return 0;
 }
 
 static int m12_csb_fmtowns_archive_stage(const char* archivePath,
@@ -2510,6 +2494,37 @@ static int m12_join_optional_subdir(char* out,
 
 static int m12_path_is_virtual_asset(const char* path) {
     return path && strstr(path, "::") != NULL;
+}
+
+/* Hash discovery is intentionally filename-agnostic, but DM2 archive launch
+ * is not: each supported packed edition has its own bounded in-memory boot
+ * owner.  Do not let a generic ZIP member receipt claim a runtime route that
+ * was never admitted by one of those owners. */
+static int m12_dm2_virtual_path_has_native_owner(
+    const M12_AssetVersionStatus* version) {
+    if (!version || !version->versionId ||
+        !m12_path_is_virtual_asset(version->matchedPath)) {
+        return 0;
+    }
+    if ((strcmp(version->versionId, "pc-en") == 0 ||
+         strcmp(version->versionId, "pc-fr") == 0 ||
+         strcmp(version->versionId, "pc-jewel") == 0) &&
+        strstr(version->matchedPath, "Dungeon-Master-II-Skullkeep_DOS_") != NULL) {
+        return 1;
+    }
+    if (strcmp(version->versionId, "fmtowns-ja") == 0 &&
+        strstr(version->matchedPath,
+               "Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip") != NULL) {
+        return 1;
+    }
+    if (strcmp(version->versionId, "amiga-en") == 0 &&
+        strstr(version->matchedPath,
+               "Dungeon-Master-II-Skullkeep_Amiga_EN.zip") != NULL) {
+        return 1;
+    }
+    return strcmp(version->versionId, "mac-en-retail") == 0 &&
+           strstr(version->matchedPath,
+                  "Dungeon-Master-II-Skullkeep_Mac_EN") != NULL;
 }
 
 /* Production must never turn a packed game file into a second game-data
@@ -5688,16 +5703,9 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
          * the same no-extraction runtime contract as FM Towns, Amiga and
          * Macintosh; unknown virtual pairs remain closed below. */
         if (version && strcmp(g_games[gameIndex].gameId, "dm2") == 0 &&
-            m12_path_is_virtual_asset(version->matchedPath)) {
-            if (!version->versionId ||
-                (strcmp(version->versionId, "pc-en") != 0 &&
-                 strcmp(version->versionId, "pc-fr") != 0 &&
-                 strcmp(version->versionId, "pc-jewel") != 0 &&
-                 strcmp(version->versionId, "fmtowns-ja") != 0 &&
-                 strcmp(version->versionId, "amiga-en") != 0 &&
-                 strcmp(version->versionId, "mac-en-retail") != 0)) {
-                return 0;
-            }
+            m12_path_is_virtual_asset(version->matchedPath) &&
+            !m12_dm2_virtual_path_has_native_owner(version)) {
+            return 0;
         }
     }
     return m12_publish_source_runtime_root(status, gameIndex);

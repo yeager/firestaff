@@ -1,6 +1,6 @@
 # Firestaff DONE — DM2
 
-Reviewed 2026-08-25. Completed work only.
+Reviewed 2026-08-29. Completed work only.
 
 - The real DOS English/French, Amiga, FM Towns, and Macintosh startup tests now
   each exercise the ordinary start-menu handoff separately from boot-probe
@@ -19,6 +19,9 @@ Reviewed 2026-08-25. Completed work only.
 - The authentic PC-DOS ZIP now starts through both CLI and the start menu.
   M12 retains its verified `data/GRAPHICS.DAT` and `data/DUNGEON.DAT` virtual
   paths and the native DM2 boot owner reads them only in RAM.
+- Generic ZIP hash discoveries remain diagnostic-only: they cannot claim a
+  DM2 runtime route or redirect data into a cache. Only a supported,
+  edition-specific archive owner may publish a native in-memory launch path.
 - The authentic PC-DOS ZIP SKSAVE corpus is now also read directly in memory.
   The source scanner recognises all four `data/sksaveN.dat` primaries and four
   backups, records virtual archive paths and complete-file hashes, and can
