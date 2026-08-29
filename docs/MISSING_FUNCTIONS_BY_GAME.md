@@ -51,14 +51,17 @@ gates and fail-closed behaviour. The word “synthetic” in receipts, negative
 probes, or ReDMCSB's own `synthetic wall` terminology does not by itself mean
 that production code draws synthetic DM1 pixels.
 
-**Native startup matrix (verified 2026-08-27):** Firestaff reads the real media
-copy directly in memory and reaches `dm1-runtime` with `levelLoaded=1` both
-from the CLI and the start menu for DOS PC 3.4, French DOS (manually unpacked
-RAR2 media), Atari ST English and German archives, Amiga, and FM Towns. The
-six focused `dm1_v1_*_cli_boot` CTests provide this evidence; they check the
-canonical asset's MD5 and never use an emulator or BIOS at runtime. This is
-startup evidence, not a claim of complete original pixel or game-system
-parity.
+**Native startup matrix (verified 2026-08-29):** Firestaff reads the real media
+directly in memory and reaches `dm1-runtime` with `levelLoaded=1` from both
+the CLI and start menu for ten supplied release routes: English DOS 3.4 ZIP,
+French DOS after manual RAR2 extraction, Atari ST English outer/nested ZIP,
+Atari ST German and French preservation ZIPs, Amiga HD and 2.0 ZIP → ADF,
+and FM Towns JA/EN ZIP. The focused `dm1_v1_*_cli_boot` CTests check the
+canonical asset MD5 and never use an emulator or BIOS at runtime. The
+authentic French `DMSAVE.DAT`/`.BAK` pair additionally passes a source-backed
+F0435 → F0433 → F0435 round trip against its original `DUNGEON.DAT`; party,
+C03/C04 timeline and active groups remain intact. This is startup/save
+evidence, not a claim of complete original pixel or game-system parity.
 
 ## DM2
 
