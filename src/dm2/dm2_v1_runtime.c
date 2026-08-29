@@ -15555,7 +15555,19 @@ static int dm2_runtime_attack_creature_at(
     memset(&request, 0, sizeof(request));
     request.hero_index = rt->source_party.curacthero - 1;
     request.hero_hp = hero->curHP;
-    request.hero_dexterity = hero->ability[DM2_ABILITY_DEXTERITY][DM2_CUR];
+    /* SKWINSPX v5/skhero.cpp:1965-1998 enters
+     * DM2_USE_DEXTERITY_ATTRIBUTE before the CALC_PLAYER_ATTACK_DAMAGE
+     * hit comparison (lines 273-281).  The raw c_hero dexterity byte is not
+     * the combat input: source applies current-ability adjustments, carried
+     * load, sleep state and three low-three-bit RNG draws.  Keep all inputs
+     * owned by the restored original party and runtime RNG; no host-side
+     * combat statistic is substituted here. */
+    request.hero_dexterity = dm2_v1_hero_use_dexterity_attribute_raw(
+        hero, hero->weight, dm2_v1_hero_get_max_load_raw(hero, 0),
+        rt->source_sleeping,
+        (int16_t)dm2_v1_drops_rand16(&rt->drop_rng, 8u),
+        (int16_t)dm2_v1_drops_rand16(&rt->drop_rng, 8u),
+        (int16_t)dm2_v1_drops_rand16(&rt->drop_rng, 8u));
     request.hero_strength = hero->ability[DM2_ABILITY_STRENGTH][DM2_CUR];
     g_dm2_last_wield_attack.hero_dexterity = request.hero_dexterity;
     g_dm2_last_wield_attack.hero_strength = request.hero_strength;
