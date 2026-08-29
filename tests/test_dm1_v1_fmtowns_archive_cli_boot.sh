@@ -32,6 +32,17 @@ probe --game dm1 --platform fm-towns --data-dir "$archive" \
 probe --menu --game dm1 --platform fm-towns --data-dir "$archive" \
     --script enter,enter,enter --boot-probe --boot-probe-frames 2 --duration 0
 
+# The public launcher is also fully pointer-navigable.  Use the native
+# 1920x1080 card canvas explicitly so scripted physical coordinates do not
+# depend on a CI host's default window size.  The waits model separate input
+# frames; no keyboard event selects the game, platform, or presentation.
+FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --width 1920 --height 1080 --menu --game dm1 --platform fm-towns \
+    --data-dir "$archive" \
+    --script 'wait20,click:700:262,wait20,click:410:405,wait20,click:450:405,wait20' \
+    --duration 3000 >/dev/null 2>&1
+
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm1 --platform fm-towns --data-dir "$archive" \
     --boot-probe --boot-probe-frames 500 --script enter,enter,enter,up --duration 0 2>&1) || {
