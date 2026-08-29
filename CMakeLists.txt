@@ -11935,6 +11935,27 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_movie_decoder_real.
         LABELS "dm2;macintosh;movie;real-media;in-memory;skip-safe")
 endif()
 
+# The native container admission is intentionally independent from a pixel
+# decoder. It proves that the retail HFS fork's `moov` sample tables address
+# only bytes retained in Firestaff's in-memory `mdat` view.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_quicktime_real.c")
+    add_executable(test_dm2_v1_mac_quicktime_real
+        tests/test_dm2_v1_mac_quicktime_real.c)
+    target_include_directories(test_dm2_v1_mac_quicktime_real PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_mac_quicktime_real PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_mac_quicktime_real PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm2_v1_mac_quicktime_real
+        COMMAND test_dm2_v1_mac_quicktime_real)
+    set_tests_properties(dm2_v1_mac_quicktime_real PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM2_MAC_EN_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
+        LABELS "dm2;macintosh;quicktime;real-media;in-memory;native;skip-safe")
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_m11_movie_runtime_real.c")
     add_executable(test_dm2_v1_mac_m11_movie_runtime_real
         tests/test_dm2_v1_mac_m11_movie_runtime_real.c)

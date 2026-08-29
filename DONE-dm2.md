@@ -19,9 +19,15 @@ Reviewed 2026-08-29. Completed work only.
   APIs rather than an extracted save directory.
 - The supplied Macintosh retail BIN/CUE ZIP is now injected into the existing
   real-media CTest suite. It exercises native in-memory HFS forks, MooV
-  resources, movie decoding/runtime, sound resources, pointer input,
+  resources and in-memory container admission, sound resources, pointer input,
   New-Game flow and wall-source census rather than silently skipping because
   the archive environment was unset.
+- The native Macintosh QuickTime reader now validates the original rebased
+  `moov`/`mdat` sample tables in RAM for every retail MooV: `Title.MooV`
+  (Cinepak/`twos`), `Swoosh.MooV` (QuickTime Animation/`raw `), and
+  `Credits.MooV`/`Ending.MooV` (Cinepak/`raw `). It derives every admitted
+  sample span from original `stsc`/`stsz`/`stco` tables, with no extraction,
+  placeholder frames, or host codec involved.
 - The real DOS English/French, Amiga, FM Towns, and Macintosh startup tests now
   each exercise the ordinary start-menu handoff separately from boot-probe
   mode. `FIRESTAFF_FAIL_IF_NO_LAUNCH` and `FIRESTAFF_EXIT_AFTER_LAUNCH` make a
