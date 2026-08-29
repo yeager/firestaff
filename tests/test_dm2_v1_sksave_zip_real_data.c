@@ -15,6 +15,27 @@
 
 static int failures;
 
+typedef struct {
+    const char *path;
+    size_t payload_size;
+    uint32_t source_file_hash;
+} ExpectedRetailSave;
+
+/* Exact receipts for the admitted PC-DOS English archive's original members.
+ * Hashes cover the complete source member, including its 42-byte SKSave
+ * envelope, so an equally-sized synthetic replacement cannot pass the
+ * real-media census. */
+static const ExpectedRetailSave k_expected_retail_saves[] = {
+    { "data/sksave0.bak", 51571u - 42u, 0x11ff6e43u },
+    { "data/sksave0.dat", 51553u - 42u, 0x05f5c3c7u },
+    { "data/sksave1.bak", 51557u - 42u, 0x13aafce2u },
+    { "data/sksave1.dat", 51557u - 42u, 0xeae51622u },
+    { "data/sksave2.bak", 51551u - 42u, 0xaa49805eu },
+    { "data/sksave2.dat", 51574u - 42u, 0x06967d98u },
+    { "data/sksave3.bak", 51521u - 42u, 0xe24fc512u },
+    { "data/sksave3.dat", 51531u - 42u, 0x88af2967u }
+};
+
 #define CHECK(condition, message) \
     do { \
         if (condition) { \
@@ -24,6 +45,24 @@ static int failures;
             ++failures; \
         } \
     } while (0)
+
+static int receipt_matches_expected(const DM2_SKSaveCorpusReceipt *corpus,
+                                    const ExpectedRetailSave *expected)
+{
+    uint8_t index;
+    if (!corpus || !expected) return 0;
+    for (index = 0u; index < corpus->candidate_receipt_count; ++index) {
+        const DM2_SKSaveCandidateReceipt *candidate =
+            &corpus->candidate_receipts[index];
+        const char *member = strstr(candidate->path, "::");
+        if (member) member += 2;
+        if (member && strcmp(member, expected->path) == 0) {
+            return candidate->payload_size == expected->payload_size &&
+                   candidate->source_file_hash == expected->source_file_hash;
+        }
+    }
+    return 0;
+}
 
 int main(void)
 {
@@ -52,6 +91,17 @@ int main(void)
               corpus.importable_candidate_count == 8u &&
               strstr(corpus.first_importable_path, "::data/") != NULL,
           "source members retain virtual archive paths in their receipts");
+    {
+        size_t index;
+        for (index = 0u;
+             index < sizeof(k_expected_retail_saves) /
+                         sizeof(k_expected_retail_saves[0]);
+             ++index) {
+            CHECK(receipt_matches_expected(&corpus,
+                                           &k_expected_retail_saves[index]),
+                  "each original SKSave member retains its source identity");
+        }
+    }
 
     dm2_sl_init(&slots, archive);
     CHECK(dm2_sl_scan_slots(&slots) && slots.slot_count == 4u &&
