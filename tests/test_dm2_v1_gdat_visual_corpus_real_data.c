@@ -12,6 +12,7 @@
  */
 
 #include "dm2_v1_asset_loader.h"
+#include "firestaff_zip_extract.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,41 +32,16 @@ enum {
     DM2_PC10_EN_VISUAL_CENSUS_HASH = 0xbf5050d3u
 };
 
-static int read_file(const char *path, uint8_t **out, size_t *out_size)
-{
-    FILE *file;
-    long size;
-    uint8_t *bytes;
-
-    if (!path || !out || !out_size) return 0;
-    *out = NULL;
-    *out_size = 0u;
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0 ||
-        (size = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
-        return 0;
-    }
-    bytes = (uint8_t *)malloc((size_t)size);
-    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
-        free(bytes);
-        fclose(file);
-        return 0;
-    }
-    fclose(file);
-    *out = bytes;
-    *out_size = (size_t)size;
-    return 1;
-}
-
 static int load_canonical_graphics(uint8_t **graphics, size_t *graphics_size)
 {
-    const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    char path[1152];
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
 
-    if (!root || !root[0]) return 0;
-    snprintf(path, sizeof(path), "%s/graphics.dat", root);
-    return read_file(path, graphics, graphics_size);
+    if (!archive || !archive[0] || !graphics || !graphics_size) return 0;
+    *graphics = NULL;
+    *graphics_size = 0u;
+    return firestaff_zip_extract_by_suffix(archive, "data/graphics.dat",
+                                            graphics, graphics_size) == 0 &&
+           *graphics && *graphics_size;
 }
 
 static uint32_t fnv1a_step(uint32_t hash, uint32_t value)
@@ -90,13 +66,13 @@ int main(void)
     int census_matches;
     int failures = 0;
 
-    if (!getenv("FIRESTAFF_DM2_DATA_DIR") ||
-        !getenv("FIRESTAFF_DM2_DATA_DIR")[0]) {
-        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
+    if (!getenv("FIRESTAFF_DM2_DOS_ARCHIVE") ||
+        !getenv("FIRESTAFF_DM2_DOS_ARCHIVE")[0]) {
+        puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is not set");
         return 0;
     }
     if (!load_canonical_graphics(&graphics, &graphics_size)) {
-        fputs("FAIL: selected canonical DM2 GRAPHICS.DAT is unreadable\n", stderr);
+        fputs("FAIL: original DM2 DOS ZIP GRAPHICS.DAT is unreadable\n", stderr);
         return 1;
     }
     memset(&loader, 0, sizeof(loader));

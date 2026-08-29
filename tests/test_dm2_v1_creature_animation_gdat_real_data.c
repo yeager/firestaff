@@ -15,41 +15,26 @@
 #include "dm2_v1_creature.h"
 #include "dm2_v1_creature_animation_gdat.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "firestaff_zip_extract.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static int read_file(const char *path, uint8_t **out, size_t *out_size)
+static int read_archive_member(const char *suffix, uint8_t **out,
+                               size_t *out_size)
 {
-    FILE *file;
-    long size;
-    uint8_t *bytes;
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
 
+    if (!archive || !archive[0] || !suffix || !out || !out_size) return 0;
     *out = NULL;
     *out_size = 0u;
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0 || (size = ftell(file)) <= 0 ||
-        fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
-        return 0;
-    }
-    bytes = malloc((size_t)size);
-    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
-        free(bytes);
-        fclose(file);
-        return 0;
-    }
-    fclose(file);
-    *out = bytes;
-    *out_size = (size_t)size;
-    return 1;
+    return firestaff_zip_extract_by_suffix(archive, suffix, out, out_size) == 0 &&
+           *out && *out_size;
 }
 
 int main(void)
 {
-    const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    char path[1100];
     uint8_t *graphics = NULL;
     size_t graphics_size = 0u;
     uint8_t *dungeon_bytes = NULL;
@@ -61,20 +46,14 @@ int main(void)
     int found_fd = 0;
     memset(&dungeon, 0, sizeof(dungeon));
 
-    if (!root || !root[0]) {
-        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
+    if (!getenv("FIRESTAFF_DM2_DOS_ARCHIVE") ||
+        !getenv("FIRESTAFF_DM2_DOS_ARCHIVE")[0]) {
+        puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is not set");
         return 0;
     }
-    /* Asset admission is hash based and case-preserving external media often
-     * uses the DOS spelling. The real-data probe must not turn that into a
-     * filename requirement. */
-    snprintf(path, sizeof(path), "%s/graphics.dat", root);
-    if (!read_file(path, &graphics, &graphics_size)) {
-        snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
-        if (!read_file(path, &graphics, &graphics_size)) {
-            fputs("FAIL: selected canonical DM2 GRAPHICS.DAT is unreadable\n", stderr);
-            return 1;
-        }
+    if (!read_archive_member("data/graphics.dat", &graphics, &graphics_size)) {
+        fputs("FAIL: original DM2 DOS ZIP GRAPHICS.DAT is unreadable\n", stderr);
+        return 1;
     }
     memset(&loader, 0, sizeof(loader));
     if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0) {
@@ -234,20 +213,18 @@ int main(void)
      * caller-supplied animation_base.  Static roots, when present, use the
      * DB4 +8 cursor directly. */
     {
-        const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-        char dungeon_path[1100];
         int roots = 0;
         int dynamic_blocked = 0;
         int static_bound = 0;
-        if (!root || !root[0]) {
-            fputs("FAIL: real-data root disappeared before DB4 cursor audit\n",
+        if (!getenv("FIRESTAFF_DM2_DOS_ARCHIVE") ||
+            !getenv("FIRESTAFF_DM2_DOS_ARCHIVE")[0]) {
+            fputs("FAIL: original DM2 DOS ZIP disappeared before DB4 cursor audit\n",
                   stderr);
             dm2_v1_asset_loader_free(&loader);
             free(graphics);
             return 1;
         }
-        snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", root);
-        if (!read_file(dungeon_path, &dungeon_bytes, &dungeon_size) ||
+        if (!read_archive_member("data/dungeon.dat", &dungeon_bytes, &dungeon_size) ||
             dm2_v1_dungeon_load(&dungeon, dungeon_bytes,
                                 (int)dungeon_size) != 0) {
             fputs("FAIL: real DUNGEON.DAT was not accepted for DB4 cursor audit\n",
