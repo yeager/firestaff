@@ -66,6 +66,19 @@ int main(void) {
         csb_v1_boot_startup_launch_cleanup_pc34(&launch);
         return 1;
     }
+    if (!startup.valid || startup.party_map_index != 4 ||
+        startup.party.PartyMapX != 22 || startup.party.PartyMapY != 18 ||
+        startup.party.PartyDirection != 2 || startup.party.ChampionCount != 1 ||
+        startup.game_time != (japanese ? 88u : 82u) ||
+        startup.timeline_queue.eventCount != 23 ||
+        startup.timeline_queue.firstUnusedIndex != 23 ||
+        startup.active_group_count != 8u ||
+        startup.active_group_resolved_count != 8u) {
+        fprintf(stderr, "FAIL: packed CSB MINI state does not match retail seed\n");
+        csb_v1_fmtowns_game_startup_state_free(&startup);
+        csb_v1_boot_startup_launch_cleanup_pc34(&launch);
+        return 1;
+    }
     printf("PASS: packed CSB MINI startup state map=%d x=%d y=%d\n",
            startup.party_map_index, startup.party.PartyMapX,
            startup.party.PartyMapY);
