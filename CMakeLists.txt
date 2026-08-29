@@ -58478,6 +58478,9 @@ if(NOT MSVC)
 endif()
 add_test(NAME test_dm2_v1_dos_m11_spell_cast_real_media
     COMMAND test_dm2_v1_dos_m11_spell_cast_real_media)
+set_tests_properties(test_dm2_v1_dos_m11_spell_cast_real_media PROPERTIES
+    ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip;SDL_AUDIODRIVER=dummy"
+    LABELS "tier2;dm2;dos;startup;resume;spell;real-media;in-memory;native")
 
 add_executable(test_dm2_v1_mac_wall_source_census_real
     tests/test_dm2_v1_mac_wall_source_census_real.c)

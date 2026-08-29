@@ -14749,6 +14749,9 @@ int dm2_v1_runtime_get_source_hero_state(
     hero = &g_dm2_runtime.source_party.hero[champion];
     out_state->max_hp = hero->maxHP;
     out_state->cur_hp = hero->curHP;
+    out_state->cur_mp = hero->curMP;
+    out_state->wizardry_skill = hero->ability[DM2_ABILITY_WIZARDRY][0];
+    out_state->rune_count = hero->nrunes;
     out_state->weight = hero->weight;
     out_state->ench_power = hero->ench_power;
     out_state->ench_aura = hero->ench_aura;

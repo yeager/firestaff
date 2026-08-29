@@ -19437,8 +19437,24 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
             return 0;
         }
         if (!dm2_receipt.applied) {
-            m11_set_status(state, "CAST", "DM2 SPELL FAILED");
-            return 0;
+            /* DM2_TRY_CAST_SPELL consumes a rejected cast.  It clears the
+             * source rune tail for every failure except class 0x30 (the
+             * empty-flask prompt); mirroring that rule here keeps M11's
+             * presentation buffer in step with the live c_hero owner.
+             * Do not label this as an unavailable owner: the cast receipt
+             * proves the native owner ran and rejected the real save state. */
+            if (dm2_receipt.cast.valid &&
+                dm2_receipt.cast.failure.clears_runes) {
+                M11_GameView_ClearSpell(state);
+                state->spellPanelOpen = 0;
+            }
+            m11_set_status(state, "CAST", "DM2 SPELL REJECTED");
+            snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+                     "DM2 SPELL REJECTED");
+            snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                     "SOURCE FAILURE CLASS 0X%02X",
+                     (unsigned int)dm2_receipt.cast.failure_class);
+            return 1;
         }
         M11_GameView_ClearSpell(state);
         state->spellPanelOpen = 0;

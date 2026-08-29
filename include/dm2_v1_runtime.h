@@ -87,6 +87,12 @@ typedef struct {
 typedef struct {
     int16_t max_hp;
     int16_t cur_hp;
+    /* Read-only c_hero spell-admission inputs.  These expose the original
+     * SKSAVE state to presentation/tests without giving callers a way to
+     * fabricate a castable champion. */
+    int16_t cur_mp;
+    int8_t wizardry_skill;
+    int8_t rune_count;
     int16_t weight;
     int16_t ench_power;
     int8_t ench_aura;

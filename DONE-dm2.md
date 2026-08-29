@@ -2,6 +2,12 @@
 
 Reviewed 2026-08-29. Completed work only.
 
+- The packed PC-DOS `SKSAVE1` M11 spell regression now uses the retail ZIP
+  directly in RAM. It proves that an authentic rejected `YA FUL IR` Fireball
+  is consumed with the original rune-tail rule and that a source-admitted
+  spell can then commit through M11. Read-only hero mana/wizardry receipts
+  select the real cast; no save bytes, stats, or runes are fabricated.
+
 - The supplied DOS and Amiga retail ZIPs are now injected into the native
   CTest title, asset and New-Game receipts. The Amiga six-disk receipt walks
   ZIP→ADF→`dm2_arcsplit1`…`6`→LZX entirely in RAM; the Amiga M11/M12 title
