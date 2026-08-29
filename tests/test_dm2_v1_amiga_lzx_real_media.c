@@ -207,6 +207,14 @@ static void test_original_installer_media(void) {
     assert(decoded_size == 176u);
     assert(dm2_v1_amiga_cd_dat_parse(&cd_map, decoded, decoded_size) == 1);
     assert(dm2_v1_amiga_cd_dat_mod_for_map(&cd_map, 0) == 3);
+    assert(dm2_v1_amiga_cd_dat_mod_for_map(&cd_map, 1) == 1);
+    assert(dm2_v1_amiga_cd_dat_mod_for_map(&cd_map, 5) == 9);
+    assert(dm2_v1_amiga_cd_dat_mod_for_map(&cd_map, 15) == 0);
+    assert(dm2_v1_amiga_cd_dat_mod_for_map(&cd_map, 43) == 2);
+    for (i = 0u; i < DM2_AMIGA_CD_DAT_MAP_COUNT; ++i)
+        assert(dm2_v1_amiga_cd_dat_mod_for_map(&cd_map, (int)i) >= 0 &&
+               dm2_v1_amiga_cd_dat_mod_for_map(&cd_map, (int)i) <
+               (int)DM2_AMIGA_MOD_TRACK_COUNT);
     dm2_v1_amiga_lzx_free(decoded);
     printf("  PASS: six original parts index %u LZX entries in RAM\n", archive.entry_count);
     printf("  PASS: original GRAPHICS.DAT, DUNGEON.DAT and CD.DAT decode in RAM\n");
