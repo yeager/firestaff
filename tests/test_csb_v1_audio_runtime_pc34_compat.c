@@ -1,4 +1,5 @@
 #include "csb_v1_audio_runtime_pc34_compat.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -119,9 +120,8 @@ static void test_amiga_graphics_sound_view(void)
 static void test_amiga_original_graphics_sound_view(void)
 {
     const char *path = getenv("FIRESTAFF_CSB_AMIGA_GRAPHICS_DAT");
-    FILE *file;
-    long byteCount;
     uint8_t *bytes;
+    size_t byteCount = 0u;
     CsbV1AmigaSoundPayloadView view;
     CsbV1AmigaSoundPayload payload;
 
@@ -129,23 +129,17 @@ static void test_amiga_original_graphics_sound_view(void)
         CHECK(1, "Amiga original graphics test skipped without local original media");
         return;
     }
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0 ||
-        (byteCount = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
-        CHECK(0, "Amiga original graphics file opens");
-        return;
-    }
-    bytes = (uint8_t *)malloc((size_t)byteCount);
-    if (!bytes || fread(bytes, 1u, (size_t)byteCount, file) != (size_t)byteCount) {
+    /* The production boot profile retains ZIP -> ADF -> GRAPHICS.DAT as a
+     * virtual source path.  Use the same in-memory reader here: fopen()
+     * would silently make the real archive route untestable. */
+    if (!asset_read_path_alloc(path, &bytes, &byteCount) || !bytes ||
+        byteCount == 0u) {
         free(bytes);
-        fclose(file);
-        CHECK(0, "Amiga original graphics file reads");
+        CHECK(0, "Amiga original graphics source opens through native asset reader");
         return;
     }
-    fclose(file);
     CHECK(csb_v1_audio_runtime_amiga_graphics_sound_view(
-              bytes, (size_t)byteCount, 672u, &view) == 1,
+              bytes, byteCount, 672u, &view) == 1,
           "original Amiga switch record reaches F1051 sound view");
     CHECK(view.byteCount == 130u,
           "original Amiga switch preserves F1051 table-derived byte count");
