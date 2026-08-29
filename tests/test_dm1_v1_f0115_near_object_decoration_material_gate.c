@@ -4,6 +4,7 @@
 #include "dm1_v1_f0115_near_object_decoration_material_pc34_compat.h"
 #include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
+#include "firestaff_zip_extract.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,35 +12,20 @@
 
 enum { kMaterialCount = 4 };
 
-static const char* data_path(const char* name, char path[2048])
+static unsigned char* read_dungeon_archive(int* outSize)
 {
-    const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
-    if (root && root[0]) {
-        snprintf(path, 1024, "%s/%s", root, name);
-        return path;
-    }
-    return 0;
-}
-
-static unsigned char* read_file(const char* path, int* outSize)
-{
-    FILE* file;
-    long size;
-    unsigned char* bytes;
+    const char* archive = getenv("FIRESTAFF_DM1_DOS_PC34_ARCHIVE");
+    size_t size = 0u;
+    uint8_t* bytes = NULL;
     if (outSize) *outSize = 0;
-    if (!path || !(file = fopen(path, "rb"))) return 0;
-    if (fseek(file, 0, SEEK_END) || (size = ftell(file)) <= 0 ||
-        size > 0x7fffffffL || fseek(file, 0, SEEK_SET)) {
-        fclose(file);
-        return 0;
-    }
-    bytes = (unsigned char*)malloc((size_t)size);
-    if (!bytes || fread(bytes, 1, (size_t)size, file) != (size_t)size) {
+    if (!archive || !archive[0] ||
+        firestaff_zip_extract_by_suffix(archive,
+                                        "dmaster/DATA/DUNGEON.DAT",
+                                        &bytes, &size) != 0 ||
+        !bytes || size == 0u || size > 0x7fffffffu) {
         free(bytes);
-        fclose(file);
-        return 0;
+        return NULL;
     }
-    fclose(file);
     if (outSize) *outSize = (int)size;
     return bytes;
 }
@@ -80,7 +66,8 @@ static int receipt(const DM1_V1_F0115NearMaterialRequestPc34* request,
 
 int main(void)
 {
-    char graphicsPath[1024], dungeonPath[1024];
+    char graphicsPath[2048];
+    const char* archive = getenv("FIRESTAFF_DM1_DOS_PC34_ARCHIVE");
     M11_AssetLoader loader;
     DM1_V1_FloorFeatureSourceMaterialPc34 materials[kMaterialCount];
     DM1_V1_F0115NearDungeonProvenancePc34 provenance;
@@ -93,20 +80,17 @@ int main(void)
     int graphics[kMaterialCount];
     int i;
 
-    if (!data_path("GRAPHICS.DAT", graphicsPath) ||
-        !data_path("DUNGEON.DAT", dungeonPath)) {
-        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
+    if (!archive || !archive[0]) {
+        puts("SKIP: FIRESTAFF_DM1_DOS_PC34_ARCHIVE is not selected");
         return 77;
     }
-    dungeon = read_file(dungeonPath, &dungeonSize);
+    snprintf(graphicsPath, sizeof(graphicsPath),
+             "%s::dungeon-master/dmaster/DATA/GRAPHICS.DAT", archive);
+    dungeon = read_dungeon_archive(&dungeonSize);
     if (!dungeon || !M11_AssetLoader_Init(&loader, graphicsPath)) {
         free(dungeon);
-        if (getenv("FIRESTAFF_DM1_DATA_DIR")) {
-            fputs("configured PC34 data is unavailable\n", stderr);
-            return 1;
-        }
-        puts("SKIP: PC34 GRAPHICS.DAT/DUNGEON.DAT not installed");
-        return 77;
+        fputs("original PC34 ZIP GRAPHICS.DAT/DUNGEON.DAT is unavailable\n", stderr);
+        return 1;
     }
     graphics[0] = (int)dm1_floor_set_floor_graphic(0);
     graphics[1] = (int)dm1_floor_set_ceiling_graphic(0);
@@ -166,7 +150,7 @@ int main(void)
     }
     M11_AssetLoader_Shutdown(&loader);
     free(dungeon);
-    puts("ok: real PC34 D0/D1 floor ceiling ornament object material gate");
+    puts("ok: original PC34 ZIP D0/D1 floor ceiling ornament object material gate");
     return 0;
 fail:
     M11_AssetLoader_Shutdown(&loader);

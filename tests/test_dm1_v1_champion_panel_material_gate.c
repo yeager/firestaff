@@ -8,18 +8,19 @@
 
 int main(void)
 {
-    char path[2048];
-    const char *root = getenv("FIRESTAFF_DM1_DATA_DIR");
+    char graphics_path[2048];
+    const char *archive = getenv("FIRESTAFF_DM1_DOS_PC34_ARCHIVE");
     M11_AssetLoader loader;
     M11_FontState font;
     Dm1V1ChampionPanelMaterialReceiptPc34 receipt;
-    if (!root || !root[0]) {
-        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
+    if (!archive || !archive[0]) {
+        puts("SKIP: FIRESTAFF_DM1_DOS_PC34_ARCHIVE is not selected");
         return 77;
     }
-    snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
-    if (!M11_AssetLoader_Init(&loader, path)) {
-        fputs("configured PC34 GRAPHICS.DAT is unavailable\n", stderr);
+    snprintf(graphics_path, sizeof(graphics_path),
+             "%s::dungeon-master/dmaster/DATA/GRAPHICS.DAT", archive);
+    if (!M11_AssetLoader_Init(&loader, graphics_path)) {
+        fputs("original PC34 ZIP GRAPHICS.DAT is unavailable\n", stderr);
         return 1;
     }
     M11_Font_Init(&font);
@@ -38,6 +39,6 @@ int main(void)
         return 1;
     }
     M11_AssetLoader_Shutdown(&loader);
-    puts("ok: real PC34 F0292/F0293/F0296/F0302 panel material gate");
+    puts("ok: original PC34 ZIP F0292/F0293/F0296/F0302 panel material gate");
     return 0;
 }
