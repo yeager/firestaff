@@ -2182,13 +2182,14 @@ int csb_v1_fmtowns_game_handoff_open(
      * for F31E/F31J. F0435 then reads its native 512-byte save header. The
      * shipped seed is recorded by exact bytes here, never decoded as the
      * unrelated big-endian Atari/Amiga GAMEBLOCK layout. */
+    /* The packed path is provenance for the already-owned member bytes.
+     * mini_name already includes CDATA/CJDATA, so adding the directory a
+     * second time produced a nonexistent `archive::CDATA/CDATA/MINI.DAT`
+     * identity even though the real bytes had passed their hash gate. */
     if (snprintf(out_receipt->startup_mini_path,
                  sizeof(out_receipt->startup_mini_path),
-                 packed_media ? "%s::%s/%s" : "%s/%s",
-                 profile->asset_root,
-                 packed_media ? (language == CSB_FMTOWNS_SWITCH_JAPANESE
-                     ? "CJDATA" : "CDATA") : mini_name,
-                 packed_media ? mini_name : "") >= 0 &&
+                 packed_media ? "%s::%s" : "%s/%s",
+                 profile->asset_root, mini_name) >= 0 &&
         strlen(out_receipt->startup_mini_path) <
             sizeof(out_receipt->startup_mini_path)) {
         if (packed_media) {

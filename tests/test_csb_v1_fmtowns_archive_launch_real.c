@@ -14,6 +14,7 @@ int main(void) {
     CSB_V1_FmtownsStartupState startup;
     CSB_V1_StartupRuntimeAssetSession_PC34 session;
     CSB_V1_FmtownsUserSaveReceipt user_save;
+    char expected_mini_path[512];
     if (!archive || !archive[0]) {
         puts("SKIP: FIRESTAFF_CSB_FMTOWNS_ARCHIVE not set");
         return 0;
@@ -40,6 +41,15 @@ int main(void) {
         return 1;
     }
     puts("PASS: packed CSB C03/MINI handoff stays in RAM");
+    if (snprintf(expected_mini_path, sizeof(expected_mini_path), "%s::%s",
+                 archive, japanese ? "CJDATA/MINI.DAT" : "CDATA/MINI.DAT") < 0 ||
+        strcmp(game.startup_mini_path, expected_mini_path) != 0) {
+        fprintf(stderr, "FAIL: packed CSB MINI provenance path: %s\n",
+                game.startup_mini_path);
+        csb_v1_boot_startup_launch_cleanup_pc34(&launch);
+        return 1;
+    }
+    puts("PASS: packed CSB MINI provenance names its original ZIP member");
     if (getenv("FIRESTAFF_CSB_FMTOWNS_USER_SAVE")) {
         memset(&user_save, 0, sizeof(user_save));
         if (!csb_v1_fmtowns_game_user_save_open(
