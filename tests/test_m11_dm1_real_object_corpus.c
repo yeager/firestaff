@@ -58,13 +58,16 @@ static int check_type(M11_GameViewState *state, int thingType,
 
 int main(void)
 {
-    const char *dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
+    /* Every expectation in this corpus comes from the canonical DOS PC 3.4
+     * tables.  Require its archive rather than selecting an arbitrary DM1
+     * directory that may contain a different language or revision. */
+    const char *dataDir = getenv("FIRESTAFF_DM1_PC34_ARCHIVE");
     M11_GameViewState state;
     int checked = 0;
     int failures = 0;
 
     if (!dataDir || !dataDir[0]) {
-        puts("skip: FIRESTAFF_DM1_DATA_DIR is not set");
+        puts("skip: FIRESTAFF_DM1_PC34_ARCHIVE is not set");
         return 0;
     }
     M11_GameView_Init(&state);
