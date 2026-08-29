@@ -58680,6 +58680,18 @@ add_executable(test_dm1_v1_fmtowns_tmenu_input
 target_include_directories(test_dm1_v1_fmtowns_tmenu_input PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm1_v1_fmtowns_tmenu_input COMMAND test_dm1_v1_fmtowns_tmenu_input)
 
+add_executable(test_dm1_v1_fmtowns_tmenu_archive
+    tests/test_dm1_v1_fmtowns_tmenu_archive.c
+    src/dm1/dm1_v1_fmtowns_tmenu_input.c
+    src/shared/firestaff_fmtowns_disc.c
+)
+target_include_directories(test_dm1_v1_fmtowns_tmenu_archive PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_fmtowns_tmenu_archive PRIVATE firestaff_zip_extract)
+add_test(NAME test_dm1_v1_fmtowns_tmenu_archive COMMAND test_dm1_v1_fmtowns_tmenu_archive)
+set_tests_properties(test_dm1_v1_fmtowns_tmenu_archive PROPERTIES
+    ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
+    LABELS "dm1;fmtowns;input;real-data;in-memory;skip-safe")
+
 add_executable(test_dm1_v1_fmtowns_tbios_id
     tests/test_dm1_v1_fmtowns_tbios_id.c
     src/dm1/dm1_v1_fmtowns_tbios_id.c

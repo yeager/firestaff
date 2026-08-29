@@ -10,6 +10,10 @@ Reviewed 2026-08-29. Completed work only.
   follows the source CUE's first audio index from the MODE1/2048 data region
   into the shared raw-audio BIN, validates every track interval, observes
   PCM in music tracks, and proves documented track 20 silence.
+- The supplied FM Towns ZIP also supplies the TMenu input receipt directly:
+  Firestaff follows ZIP→CUE→BIN→ISO9660 to `TMENU.EXP` in RAM and validates
+  the Phar Lap header plus original poll, initialization, and TBIOS entry
+  bytes used by the native input schema.
 - The supplied DM1 Amiga 2.0 preservation chain now has a direct real-media
   graphics-format receipt. `test_dm1_v1_amiga_graphics_dat` reads the
   selected ZIP → ZIP → ADF `graphics.dat` member in RAM through the native
