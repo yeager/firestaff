@@ -43,7 +43,7 @@ parity gate is complete.
 
 | Platform | Status | Current scope | Open boundary |
 |---|---|---|---|
-| DOS | **Verified route** | Hash-verified PC data, GDAT/G1 loading, startup, runtime slices and sound tests. | Complete V1 renderer/mechanics parity and full SKSAVE ownership. |
+| DOS | **Verified route** | Hash-verified PC data, GDAT/G1 loading, startup, runtime slices and sound tests. All eight supplied `data/sksave0..3.{dat,bak}` members resume through the native start-menu route directly from the distribution ZIP in memory. | Complete V1 renderer/mechanics parity and full SKSAVE ownership. |
 | Amiga | **Verified route** | Original Amiga archive reaches title, New Game, bounded runtime and the clipped native CHARSHEET inventory frame through verified GDAT/RAW4 material. | Wider gameplay, save and full pixel/audio parity. |
 | FM Towns | **Verified route** | Authentic Towns data and platform-specific startup, input, CD-audio and gameplay slices are tested. | Complete native runtime ownership and full parity. |
 | Macintosh large retail | **Verified route** | Authentic English retail ZIP is read in RAM. HFS, big-endian dungeon data, title/movie/audio/MIDI resources, New Game, bounded wall input, and an accepted real-GDAT M11 frame with zero fallback draws pass. Its 256-row `PalIRGB`/`dtPalette16` pair remains distinct from the Amiga physical 16-colour palette route. | Complete Mac GAME_LOAD/Resume, native dynamic pointer/drag owner, CoreMIDI timing and full pixel/audio parity. No authentic Mac save is present. |
