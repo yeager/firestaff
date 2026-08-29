@@ -24,7 +24,7 @@ int main(void)
 
     if (!path) {
         puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
-        return 0;
+        return 77;
     }
     if (!M11_AssetLoader_Init(&loader, path)) {
         fputs("FAIL: unable to decode local DM1 GRAPHICS.DAT\n", stderr);

@@ -7511,6 +7511,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0115_near_object_decor
     endif()
     add_test(NAME dm1_v1_f0115_near_object_decoration_material_gate
              COMMAND test_dm1_v1_f0115_near_object_decoration_material_gate)
+    set_tests_properties(dm1_v1_f0115_near_object_decoration_material_gate PROPERTIES
+        SKIP_RETURN_CODE 77)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_viewport_runtime_materialization_pc34_compat.c")
@@ -32311,6 +32313,8 @@ endif()
         NAME dm1_v1_champion_panel_material_gate
         COMMAND test_dm1_v1_champion_panel_material_gate
     )
+    set_tests_properties(dm1_v1_champion_panel_material_gate PROPERTIES
+        SKIP_RETURN_CODE 77)
 
     add_executable(test_dm1_v1_champion_top_row_presentation_pc34_compat
         tests/test_dm1_v1_champion_top_row_presentation_pc34_compat.c
@@ -32725,6 +32729,8 @@ endif()
         NAME dm1_v1_f0134_f0135_real_material_pc34
         COMMAND test_dm1_v1_f0134_f0135_real_material_pc34
     )
+    set_tests_properties(dm1_v1_f0134_f0135_real_material_pc34 PROPERTIES
+        SKIP_RETURN_CODE 77)
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_food_water_warning_tick_pc34_compat.c"
             AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_food_water_warning_tick_pc34_compat.c")
@@ -36683,6 +36689,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0341_scroll_material_g
     endif()
     add_test(NAME dm1_v1_f0341_scroll_material_gate
              COMMAND test_dm1_v1_f0341_scroll_material_gate)
+    set_tests_properties(dm1_v1_f0341_scroll_material_gate PROPERTIES
+        SKIP_RETURN_CODE 77)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0351_stats_material_gate.c")
@@ -36722,6 +36730,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0355_inventory_materia
         target_compile_options(test_dm1_v1_f0355_inventory_material_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0355_inventory_material_gate COMMAND test_dm1_v1_f0355_inventory_material_gate)
+    set_tests_properties(dm1_v1_f0355_inventory_material_gate PROPERTIES
+        SKIP_RETURN_CODE 77)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0659_shield_material_gate.c")
@@ -36789,6 +36799,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0682_transparent_mater
         target_compile_options(test_dm1_v1_f0682_transparent_material_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0682_transparent_material_gate COMMAND test_dm1_v1_f0682_transparent_material_gate)
+    set_tests_properties(dm1_v1_f0682_transparent_material_gate PROPERTIES
+        SKIP_RETURN_CODE 77)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0693_f0699_video_material_gate.c")

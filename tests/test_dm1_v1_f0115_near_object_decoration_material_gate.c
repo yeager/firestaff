@@ -96,7 +96,7 @@ int main(void)
     if (!data_path("GRAPHICS.DAT", graphicsPath) ||
         !data_path("DUNGEON.DAT", dungeonPath)) {
         puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
-        return 0;
+        return 77;
     }
     dungeon = read_file(dungeonPath, &dungeonSize);
     if (!dungeon || !M11_AssetLoader_Init(&loader, graphicsPath)) {
@@ -106,7 +106,7 @@ int main(void)
             return 1;
         }
         puts("SKIP: PC34 GRAPHICS.DAT/DUNGEON.DAT not installed");
-        return 0;
+        return 77;
     }
     graphics[0] = (int)dm1_floor_set_floor_graphic(0);
     graphics[1] = (int)dm1_floor_set_ceiling_graphic(0);
