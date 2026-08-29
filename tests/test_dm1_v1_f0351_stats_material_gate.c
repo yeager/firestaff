@@ -5,13 +5,13 @@
 #include <stdlib.h>
 #include <string.h>
 int main(void) {
-    char path[2048]; const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
+    char path[2048]; const char* archive = getenv("FIRESTAFF_DM1_DOS_PC34_ARCHIVE");
     M11_AssetLoader loader; M11_FontState font; const M11_AssetSlot* slot;
     DM1_V1_F0351SourceSurfacePc34 panel; DM1_V1_F0351GlyphSourcePc34 glyph;
     DM1_V1_F0351StatsMaterialReceiptPc34 receipt;
-    if (!root || !root[0]) { puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected"); return 0; }
-    snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
-    if (!M11_AssetLoader_Init(&loader, path)) { fputs("configured PC34 GRAPHICS.DAT is unavailable\n", stderr); return 1; }
+    if (!archive || !archive[0]) { puts("SKIP: FIRESTAFF_DM1_DOS_PC34_ARCHIVE is not selected"); return 77; }
+    snprintf(path, sizeof(path), "%s::DATA/GRAPHICS.DAT", archive);
+    if (!M11_AssetLoader_Init(&loader, path)) { fputs("original PC34 ZIP GRAPHICS.DAT is unavailable\n", stderr); return 1; }
     memset(&panel, 0, sizeof(panel)); memset(&glyph, 0, sizeof(glyph));
     slot = M11_AssetLoader_Load(&loader, 20u);
     if (!slot || !slot->pixels || slot->width != 144 || slot->height != 73) goto fail;
@@ -23,6 +23,6 @@ int main(void) {
     glyph.bitsFNV1a=dm1_v1_f0351_stats_material_fnv1a_pc34(glyph.bits,glyph.byteCount);
     if (!dm1_v1_f0351_stats_material_receipt_pc34(&panel,1,&glyph,1,&receipt)||!receipt.valid||receipt.skillZoneIndex!=557||receipt.statisticZoneIndex!=559||receipt.panelTransparentColor!=8) goto fail;
     ++glyph.bitsFNV1a; if (dm1_v1_f0351_stats_material_receipt_pc34(&panel,1,&glyph,1,&receipt)) goto fail;
-    M11_AssetLoader_Shutdown(&loader); puts("ok: real PC34 F0351 stats material gate"); return 0;
+    M11_AssetLoader_Shutdown(&loader); puts("ok: original PC34 ZIP F0351 stats material gate"); return 0;
 fail: M11_AssetLoader_Shutdown(&loader); return 1;
 }

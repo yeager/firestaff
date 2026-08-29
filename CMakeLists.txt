@@ -36809,6 +36809,10 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0351_stats_material_ga
         target_compile_options(test_dm1_v1_f0351_stats_material_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0351_stats_material_gate COMMAND test_dm1_v1_f0351_stats_material_gate)
+    set_tests_properties(dm1_v1_f0351_stats_material_gate PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+        LABELS "dm1;dos;pc34;hud;stats;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0352_eye_material_gate.c")
@@ -36822,7 +36826,10 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0352_eye_material_gate
         target_compile_options(test_dm1_v1_f0352_eye_material_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0352_eye_material_gate COMMAND test_dm1_v1_f0352_eye_material_gate)
-    set_tests_properties(dm1_v1_f0352_eye_material_gate PROPERTIES SKIP_RETURN_CODE 77)
+    set_tests_properties(dm1_v1_f0352_eye_material_gate PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+        LABELS "dm1;dos;pc34;hud;eye;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0355_inventory_material_gate.c")
@@ -36853,7 +36860,10 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0659_shield_material_g
         target_compile_options(test_dm1_v1_f0659_shield_material_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0659_shield_material_gate COMMAND test_dm1_v1_f0659_shield_material_gate)
-    set_tests_properties(dm1_v1_f0659_shield_material_gate PROPERTIES SKIP_RETURN_CODE 77)
+    set_tests_properties(dm1_v1_f0659_shield_material_gate PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+        LABELS "dm1;dos;pc34;hud;shield;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0662_invisibility_material_gate.c")

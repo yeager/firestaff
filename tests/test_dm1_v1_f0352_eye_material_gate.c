@@ -8,7 +8,7 @@
 
 int main(void)
 {
-    const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
+    const char* archive = getenv("FIRESTAFF_DM1_DOS_PC34_ARCHIVE");
     char path[2048];
     M11_AssetLoader loader;
     M11_FontState font;
@@ -18,13 +18,13 @@ int main(void)
     const M11_AssetSlot* arrow;
     const M11_AssetSlot* eye;
 
-    if (!root || !root[0]) {
-        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
+    if (!archive || !archive[0]) {
+        puts("SKIP: FIRESTAFF_DM1_DOS_PC34_ARCHIVE is not selected");
         return 77;
     }
-    snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
+    snprintf(path, sizeof(path), "%s::DATA/GRAPHICS.DAT", archive);
     if (!M11_AssetLoader_Init(&loader, path)) {
-        fputs("configured PC34 GRAPHICS.DAT is unavailable\n", stderr);
+        fputs("original PC34 ZIP GRAPHICS.DAT is unavailable\n", stderr);
         return 1;
     }
     memset(surfaces, 0, sizeof(surfaces));
@@ -63,7 +63,7 @@ int main(void)
     ++surfaces[1].pixelsFNV1a;
     if (dm1_v1_f0352_eye_material_receipt_pc34(surfaces, 2, &glyph, 1, &receipt)) goto fail;
     M11_AssetLoader_Shutdown(&loader);
-    puts("ok: real PC34 F0352 eye material gate");
+    puts("ok: original PC34 ZIP F0352 eye material gate");
     return 0;
 fail:
     M11_AssetLoader_Shutdown(&loader);
