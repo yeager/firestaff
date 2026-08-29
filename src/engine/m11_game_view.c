@@ -10095,6 +10095,7 @@ static void m11_dm1_dispatch_fmtowns_cdda(M11_GameViewState *state,
     int track_count;
     uint32_t data_track_end, this_start, next_start;
     size_t data_byte_offset, audio_byte_offset, pcm_size;
+    uint64_t data_byte_offset64;
     uint8_t *pcm;
 
     if (!state || !state->dm1FmtownsStartupReceiptValid || track_number < 2)
@@ -10130,8 +10131,8 @@ static void m11_dm1_dispatch_fmtowns_cdda(M11_GameViewState *state,
      * sector offset marks the boundary between the two sector sizes. */
     data_track_end = track_starts[2];
     this_start = track_starts[track_number];
-    if (this_start < data_track_end ||
-        (size_t)data_track_end > SIZE_MAX / 2048u) {
+    data_byte_offset64 = (uint64_t)data_track_end * 2048u;
+    if (this_start < data_track_end || data_byte_offset64 > SIZE_MAX) {
         free(bin_bytes);
         return;
     }
@@ -10141,7 +10142,7 @@ static void m11_dm1_dispatch_fmtowns_cdda(M11_GameViewState *state,
     else
         next_start = 0;
 
-    data_byte_offset = (size_t)data_track_end * 2048u;
+    data_byte_offset = (size_t)data_byte_offset64;
     if ((size_t)(this_start - data_track_end) >
         (SIZE_MAX - data_byte_offset) / FMTOWNS_CDDA_SECTOR_SIZE) {
         free(bin_bytes);
@@ -10150,9 +10151,14 @@ static void m11_dm1_dispatch_fmtowns_cdda(M11_GameViewState *state,
     audio_byte_offset = data_byte_offset +
         (size_t)(this_start - data_track_end) * FMTOWNS_CDDA_SECTOR_SIZE;
 
-    if (next_start > this_start)
+    if (next_start > this_start) {
+        if ((size_t)(next_start - this_start) >
+            (bin_size - audio_byte_offset) / FMTOWNS_CDDA_SECTOR_SIZE) {
+            free(bin_bytes);
+            return;
+        }
         pcm_size = (size_t)(next_start - this_start) * FMTOWNS_CDDA_SECTOR_SIZE;
-    else
+    } else
         pcm_size = (size_t)bin_size - audio_byte_offset;
 
     if (audio_byte_offset > bin_size || pcm_size == 0 ||
