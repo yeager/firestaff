@@ -14791,6 +14791,9 @@ if(BUILD_TESTING)
         endif()
         add_test(NAME dm2_v1_gdat_hud_m11_command_real_data
             COMMAND test_dm2_v1_gdat_hud_m11_command_real_data)
+        set_tests_properties(dm2_v1_gdat_hud_m11_command_real_data PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+            LABELS "tier2;dm2;dos;hud;real-media;in-memory;native;skip-safe")
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_dialogue_box_viewport_real_data.c")
@@ -14805,6 +14808,9 @@ if(BUILD_TESTING)
         endif()
         add_test(NAME dm2_v1_dialogue_box_viewport_real_data
             COMMAND test_dm2_v1_dialogue_box_viewport_real_data)
+        set_tests_properties(dm2_v1_dialogue_box_viewport_real_data PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+            LABELS "tier2;dm2;dos;dialogue;real-media;in-memory;native;skip-safe")
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_extended_spells_definition_real_data.c")

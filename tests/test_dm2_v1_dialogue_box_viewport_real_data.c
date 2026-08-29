@@ -9,9 +9,7 @@
 
 int main(void)
 {
-    const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    char data_root[1024];
-    char graphics_path[1024];
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
     DM2_V1_BootProfile boot;
     DM2_V1_DialogueBoxHostCommand command;
     DM2_V1_BootExpandedRectReceipt raw4_rect;
@@ -30,21 +28,9 @@ int main(void)
     int pointer_ok;
     int failures = 0;
 
-    if (!root || !root[0]) {
-        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not configured");
+    if (!archive || !archive[0]) {
+        puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is not configured");
         return 0;
-    }
-    snprintf(data_root, sizeof(data_root), "%s/..", root);
-    snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
-    {
-        FILE *file = fopen(graphics_path, "rb");
-        if (!file) {
-            fprintf(stderr,
-                    "FAIL: configured DM2 GRAPHICS.DAT is unreadable: %s\n",
-                    graphics_path);
-            return 1;
-        }
-        fclose(file);
     }
     dm2_v1_boot_profile_init(&boot);
     memset(&command, 0, sizeof(command));
@@ -53,7 +39,10 @@ int main(void)
     memset(&save_pointer_row_seven, 0, sizeof(save_pointer_row_seven));
     memset(&interface_palette, 0, sizeof(interface_palette));
     memset(&action_table, 0, sizeof(action_table));
-    if (dm2_v1_boot_scan_assets(&boot, data_root) != 0 ||
+    /* Keep the original DOS archive selected end-to-end.  The boot profile
+     * reads GRAPHICS.DAT and DUNGEON.DAT through its virtual ZIP members;
+     * this must not depend on an extracted install tree. */
+    if (dm2_v1_boot_scan_assets(&boot, archive) != 0 ||
         dm2_v1_boot_enter_game(&boot) != 0) {
         fputs("FAIL: canonical DM2 boot profile was not admitted\n", stderr);
         dm2_v1_boot_cleanup(&boot);

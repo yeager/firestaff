@@ -4,37 +4,11 @@
 #include "dm2_v1_boot.h"
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "dm2_v1_gdat_hud_m11_command.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-static int read_file(const char *path, uint8_t **out, size_t *out_size)
-{
-    FILE *file;
-    long size;
-    uint8_t *bytes;
-
-    if (!path || !out || !out_size) return 0;
-    *out = NULL;
-    *out_size = 0u;
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0 ||
-        (size = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
-        return 0;
-    }
-    bytes = (uint8_t *)malloc((size_t)size);
-    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
-        free(bytes);
-        fclose(file);
-        return 0;
-    }
-    fclose(file);
-    *out = bytes;
-    *out_size = (size_t)size;
-    return 1;
-}
 
 static int unexpected_fetches;
 
@@ -58,9 +32,8 @@ static int unexpected_palette_fetch(void *user, int index, uint8_t palette[16],
 
 int main(void)
 {
-    const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
     char path[2048];
-    char boot_root[1024];
     uint8_t *graphics = NULL;
     size_t graphics_size = 0u;
     DM2_V1_AssetLoader loader;
@@ -80,15 +53,15 @@ int main(void)
         DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL
     };
 
-    if (!root || !root[0]) {
-        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not configured");
+    if (!archive || !archive[0]) {
+        puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is not configured");
         return 0;
     }
-    snprintf(path, sizeof(path), "%s/graphics.dat", root);
-    snprintf(boot_root, sizeof(boot_root), "%s/..", root);
-    if (!read_file(path, &graphics, &graphics_size)) {
+    snprintf(path, sizeof(path), "%s::data/graphics.dat", archive);
+    if (!asset_read_path_alloc(path, &graphics, &graphics_size) ||
+        !graphics || graphics_size == 0u) {
         fprintf(stderr,
-                "FAIL: configured DM2 GRAPHICS.DAT is unreadable: %s\n", path);
+                "FAIL: configured DM2 archive GRAPHICS.DAT is unreadable: %s\n", path);
         return 1;
     }
     memset(&loader, 0, sizeof(loader));
@@ -103,7 +76,9 @@ int main(void)
         free(graphics);
         return 1;
     }
-    if (dm2_v1_boot_scan_assets(&boot, boot_root) != 0 ||
+    /* Use the same original ZIP as the runtime profile and direct GDAT read.
+     * No extracted DATA directory is permitted for this source binding. */
+    if (dm2_v1_boot_scan_assets(&boot, archive) != 0 ||
         dm2_v1_boot_enter_game(&boot) != 0) {
         fputs("FAIL: canonical DM2 boot profile was not entered\n", stderr);
         dm2_v1_boot_cleanup(&boot);
