@@ -54969,7 +54969,15 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_mini_resume_rea
     add_test(NAME csb_v1_fmtowns_mini_resume_real
              COMMAND test_csb_v1_fmtowns_mini_resume_real)
     set_tests_properties(csb_v1_fmtowns_mini_resume_real PROPERTIES
-        LABELS "csb;fmtowns;real_data;m11;resume")
+        LABELS "csb;fmtowns;english;real_data;m11;startup;ram"
+        ENVIRONMENT
+            "FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=en;FIRESTAFF_AUDIO_ENABLE_SDL=0")
+    add_test(NAME csb_v1_fmtowns_ja_mini_resume_real
+             COMMAND test_csb_v1_fmtowns_mini_resume_real)
+    set_tests_properties(csb_v1_fmtowns_ja_mini_resume_real PROPERTIES
+        LABELS "csb;fmtowns;japanese;real_data;m11;startup;ram"
+        ENVIRONMENT
+            "FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=ja;FIRESTAFF_AUDIO_ENABLE_SDL=0")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_archive_launch_real.c")
