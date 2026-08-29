@@ -55,6 +55,8 @@ if ! grep -Fq 'phase=dm1-runtime' <<<"$gameplay_output" ||
    ! grep -Fq 'fmtownsProgram=EDM.EXP' <<<"$gameplay_output" ||
    ! grep -Fq "fmtownsProgramMd5=$expected_edm_md5" <<<"$gameplay_output" ||
    ! grep -Fq 'fmtownsMenuSelectsProgram=1' <<<"$gameplay_output" ||
+   ! grep -Fq 'dm1FmtownsCddaPlaying=1' <<<"$gameplay_output" ||
+   ! grep -Fq 'dm1FmtownsCddaTrack=2' <<<"$gameplay_output" ||
    ! grep -Fq 'map=0 party=1,4,2' <<<"$gameplay_output"; then
     printf '%s\n' "$gameplay_output" >&2
     printf '%s\n' 'FAIL: authentic DM1 FM Towns up input did not reach native movement' >&2
