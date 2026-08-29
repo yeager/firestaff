@@ -5,8 +5,13 @@
 set -euo pipefail
 
 test_bin="${1:?missing test_nexus_v1_vdp2_capture_compositor path}"
-capture="${FIRESTAFF_NEXUS_NBG1_BITMAP_CAPTURE:-/tmp/firestaff-nexus-menu-capture-20260825/nexus-menu-frames1550-1551.capture}"
+capture="${FIRESTAFF_NEXUS_NBG1_BITMAP_CAPTURE:-}"
 frame="${FIRESTAFF_NEXUS_NBG1_BITMAP_FRAME:-0}"
+
+if [[ -z "$capture" ]]; then
+    echo "SKIP: set FIRESTAFF_NEXUS_NBG1_BITMAP_CAPTURE to an authenticated Nexus capture"
+    exit 77
+fi
 
 if [[ ! -r "$capture" ]]; then
     echo "SKIP: authentic Nexus NBG1 bitmap capture is not staged: $capture"
