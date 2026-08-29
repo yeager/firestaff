@@ -17281,8 +17281,8 @@ if(BUILD_TESTING)
     )
     set_tests_properties(dm2_v1_dos_m11_new_game_real_media PROPERTIES
         SKIP_RETURN_CODE 77
-        ENVIRONMENT "FIRESTAFF_DM2_DOS_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
-        LABELS "dm2;dos;new-game;real-media;in-memory;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "dm2;dos;new-game;real-media;in-memory;native;skip-safe"
     )
 
     add_executable(test_dm2_amiga_m12_real_media

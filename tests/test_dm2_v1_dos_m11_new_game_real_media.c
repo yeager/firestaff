@@ -11,25 +11,28 @@
 
 int main(void)
 {
-    const char *root = getenv("FIRESTAFF_DM2_DOS_ROOT");
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
     M11_GameViewState view;
     M11_GameLaunchSpec spec;
     DM2_V1_StartupMenuPointerLayout layout;
 
-    if (!root || !root[0]) {
-        puts("SKIP: FIRESTAFF_DM2_DOS_ROOT is not set");
+    if (!archive || !archive[0]) {
+        puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is not set");
         return 77;
     }
     memset(&spec, 0, sizeof(spec));
     spec.gameId = "dm2";
     spec.sourceId = "dm2";
     spec.title = "DUNGEON MASTER II";
-    spec.dataDir = root;
+    /* Preserve the retail ZIP as the selected source owner.  M11 resolves
+     * GRAPHICS.DAT and DUNGEON.DAT through this virtual archive path in RAM;
+     * it must not depend on a pre-extracted directory. */
+    spec.dataDir = archive;
     spec.presentationWidth = M11_FB_WIDTH;
     spec.presentationHeight = M11_FB_HEIGHT;
     M11_GameView_Init(&view);
     if (!M11_GameView_Start(&view, &spec)) {
-        fputs("FAIL: DM2 DOS real archive did not enter M11\n", stderr);
+        fputs("FAIL: DM2 DOS retail archive did not enter M11\n", stderr);
         return 1;
     }
     memset(&layout, 0, sizeof(layout));
