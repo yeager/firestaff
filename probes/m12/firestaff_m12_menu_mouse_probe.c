@@ -160,18 +160,27 @@ int main(void) {
         M12_StartupMenuState s;
         init_probe_menu_state(&s);
         force_dm1_ready(&s);
-        /* Click entry 2 (DM2): visible in the catalog,
-         * but not launch-supported. */
+        /* Click entry 2 (DM2): every game card first opens the platform
+         * picker.  Selecting its unavailable platform must then show the
+         * missing-data popup without creating a launch intent. */
         int cx, cy;
         main_card_center(2, &cx, &cy);
         int changed = M12_ModernMenu_HandlePointer(&s, cx, cy, 1, NULL);
-        int ok = changed == 1 &&
+        int openedPlatformPicker = changed == 1 &&
                  s.selectedIndex == 2 &&
+                 s.view == M12_MENU_VIEW_GAME_OPTIONS &&
+                 s.gameCardFlowStage == 0 &&
+                 s.launchRequested == 0;
+        /* DM2's first platform card has the same geometry as the normal
+         * platform picker and is intentionally unavailable in this isolated
+         * probe state. */
+        changed = M12_ModernMenu_HandlePointer(&s, 410, 405, 1, NULL);
+        int ok = openedPlatformPicker && changed == 1 &&
                  s.view == M12_MENU_VIEW_MESSAGE &&
                  s.launchRequested == 0 &&
                  s.messageLine1 && s.messageLine1[0] != '\0';
         record(&t, "INV_MOUSE_02", ok,
-               "clicking an unsupported card selects it and shows coming-soon without launch");
+               "game and unavailable platform cards show data status without launch");
 
         /* Card 0 is DM1 and it's forced-ready, click should open game-opts. */
         init_probe_menu_state(&s);
@@ -274,6 +283,7 @@ int main(void) {
         s.selectedIndex = 0;
         s.view = M12_MENU_VIEW_GAME_OPTIONS;
         s.activatedIndex = 0;
+        s.gameCardFlowStage = 2;
         s.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
 
         /* Launch button is rendered centered at panel bottom. */
