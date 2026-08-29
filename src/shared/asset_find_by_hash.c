@@ -1711,6 +1711,15 @@ static int scan_zip_by_md5(const char *zipPath, const char *expectedMd5,
             uncompressedSize > ASSET_ZIP_MAX_ENTRY_BYTES) {
             continue;
         }
+        /* HxC stream files are flux-capture sidecars, not a filesystem or a
+         * game payload that Firestaff can decode.  Some preservation ZIPs
+         * place hundreds of them before a companion STX image; hashing every
+         * sidecar turns an otherwise native STX admission into a timeout.
+         * Leave the HFE/STX entries visible so supported original media is
+         * still selected from the archive in memory. */
+        if (has_case_suffix(name, ".hxcstream")) {
+            continue;
+        }
         if (fseek(fp, (long)localOffset, SEEK_SET) != 0 ||
             fread(local, 1U, sizeof(local), fp) != sizeof(local) ||
             read_u32le(local) != 0x04034b50U) {
@@ -1841,6 +1850,12 @@ static int scan_zip_by_md5_list(const char *zipPath, const char *const *md5List,
         pos += 46U + nameLen + extraLen + commentLen;
         if (name[nameLen - 1U] == '/' || uncompressedSize < 16U ||
             uncompressedSize > ASSET_ZIP_MAX_ENTRY_BYTES) {
+            continue;
+        }
+        /* See scan_zip_by_md5(): HxC stream sidecars cannot be decoded as
+         * game assets, so do not spend an archive-wide hash pass on them
+         * before considering the companion STX image. */
+        if (has_case_suffix(name, ".hxcstream")) {
             continue;
         }
         if (fseek(fp, (long)localOffset, SEEK_SET) != 0 ||

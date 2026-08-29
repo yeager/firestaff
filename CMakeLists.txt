@@ -17595,7 +17595,11 @@ endif()
         SKIP_RETURN_CODE 77
         LABELS "tier2;csb;atari;french;startup;cli;menu;real_data;archive;native;skip_safe"
         ENVIRONMENT "FIRESTAFF_CSB_ATARI_NESTED_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/chaos_strikes_back_ftl_france.zip"
-        TIMEOUT 90
+        # The preservation archive carries the original STX beside 166 HxC
+        # flux sidecars.  Native RAM admission must still inspect the ZIP
+        # directory on every source-owned launch phase, so retain a margin
+        # above the measured four-phase real-media probe.
+        TIMEOUT 120
     )
     add_test(
         NAME csb_v1_amiga_native_cli_boot
