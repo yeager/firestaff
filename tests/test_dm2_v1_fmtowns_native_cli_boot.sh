@@ -14,11 +14,17 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm2 --platform fm-towns --data-dir "$archive" \
     --script 'key:enter,key:enter,key:enter' --duration 1000 >/dev/null 2>&1
 
-# AUTOEXEC hands SWOOSH/TITLE to SKULL before the source New Game event.  The
-# viewport click is a source-space mirror selection, followed by normal Up.
+# AUTOEXEC hands SWOOSH/TITLE to SKULL before the source New Game event.  Keep
+# the probe window at the original 320x200 coordinate space: --script click
+# coordinates are host-window points and are mapped through the presentation
+# rectangle before reaching SKULL's source GDAT rectangles.  The first click
+# reaches the verified NEW GAME rectangle; the second selects the authentic
+# dungeon mirror after GAME_LOAD has prepared it.  Up then proves normal
+# runtime input.  Do not replace either click with a host row selection.
 output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm2 --platform fm-towns --data-dir "$archive" --boot-probe \
-    --boot-probe-frames 12000 --script 'key:enter,key:enter,key:enter,click:100:100,up' \
+    --boot-probe-frames 12000 --width 320 --height 200 \
+    --script 'click:100:60,click:100:60,up' \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
     --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
 
