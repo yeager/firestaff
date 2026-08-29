@@ -16904,6 +16904,9 @@ if(BUILD_TESTING)
     endif()
     add_test(NAME dm2_v1_gdat_wall_plan_viewport_real_data
              COMMAND test_dm2_v1_gdat_wall_plan_viewport_real_data)
+    set_tests_properties(dm2_v1_gdat_wall_plan_viewport_real_data PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "dm2;dos;gdat;m11;real-media;in-memory;skip-safe")
 
     add_executable(test_dm2_v1_gdat_door_overlay_plan_real_data
         tests/test_dm2_v1_gdat_door_overlay_plan_real_data.c

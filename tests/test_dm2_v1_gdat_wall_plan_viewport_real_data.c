@@ -6,6 +6,7 @@
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_gdat_wall_m11_command.h"
 #include "dm2_v1_viewport_renderer.h"
+#include "firestaff_zip_extract.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,45 +23,32 @@ typedef struct {
     uint8_t *pixels[64];
 } WallTrace;
 
-static int read_file(const char *path, uint8_t **out, size_t *out_size)
-{
-    FILE *file;
-    long size;
-    uint8_t *bytes;
-
-    if (!path || !out || !out_size) return 0;
-    *out = NULL;
-    *out_size = 0u;
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0 ||
-        (size = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
-        return 0;
-    }
-    bytes = malloc((size_t)size);
-    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
-        free(bytes);
-        fclose(file);
-        return 0;
-    }
-    fclose(file);
-    *out = bytes;
-    *out_size = (size_t)size;
-    return 1;
-}
-
 static int load_canonical_files(uint8_t **graphics, size_t *graphics_size,
                                 uint8_t **dungeon, size_t *dungeon_size)
 {
-    const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    char graphics_path[1100];
-    char dungeon_path[1100];
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
 
-    if (!root || !root[0]) return 0;
-    snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
-    snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", root);
-    return read_file(graphics_path, graphics, graphics_size) &&
-        read_file(dungeon_path, dungeon, dungeon_size);
+    if (!archive || !archive[0] || !graphics || !graphics_size || !dungeon ||
+        !dungeon_size) return 0;
+    *graphics = NULL;
+    *graphics_size = 0u;
+    *dungeon = NULL;
+    *dungeon_size = 0u;
+    if (firestaff_zip_extract_by_suffix(archive, "data/graphics.dat",
+                                        graphics, graphics_size) != 0 ||
+        !*graphics || !*graphics_size ||
+        firestaff_zip_extract_by_suffix(archive, "data/dungeon.dat",
+                                        dungeon, dungeon_size) != 0 ||
+        !*dungeon || !*dungeon_size) {
+        free(*graphics);
+        free(*dungeon);
+        *graphics = NULL;
+        *graphics_size = 0u;
+        *dungeon = NULL;
+        *dungeon_size = 0u;
+        return 0;
+    }
+    return 1;
 }
 
 static int wall_provider_address(int gdat_index, int expected_graphicsset,
@@ -182,9 +170,9 @@ int main(void)
     int graphicsset = -1;
     int failures = 0;
 
-    if (!getenv("FIRESTAFF_DM2_DATA_DIR") ||
-        !getenv("FIRESTAFF_DM2_DATA_DIR")[0]) {
-        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
+    if (!getenv("FIRESTAFF_DM2_DOS_ARCHIVE") ||
+        !getenv("FIRESTAFF_DM2_DOS_ARCHIVE")[0]) {
+        puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is not set");
         return 0;
     }
     if (!load_canonical_files(&graphics, &graphics_size,
