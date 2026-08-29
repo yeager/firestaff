@@ -1340,6 +1340,12 @@ int main(void) {
     check_scaled_dm1_command(264, 126, 3, 70);
     check_scaled_letterbox_rejection();
     check_fill_window_mapping();
+    /* Per-game 16:10 and ultrawide preferences fit inside the output rather
+     * than deforming the 320x200 source frame. */
+    check_rect(1920, 1080, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_16_10,
+               96, 0, 1728, 1080);
+    check_rect(1920, 1080, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_32_9,
+               0, 270, 1920, 540);
     check_map_edges(1512, 982, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_CONTENT);
     check_map_edges(3024, 1964, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_CONTENT);
     check_map_edges(3600, 2092, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_CONTENT);

@@ -241,7 +241,7 @@ static int m11_validate_window_mode(int mode) {
 }
 
 static int m11_validate_display_aspect(int mode) {
-    return mode == M11_DISPLAY_ASPECT_4_3 || mode == M11_DISPLAY_ASPECT_16_9 || mode == M11_DISPLAY_ASPECT_CONTENT;
+    return mode >= M11_DISPLAY_ASPECT_4_3 && mode <= M11_DISPLAY_ASPECT_32_9;
 }
 
 static int m11_window_mode_from_sdl_window(void) {
@@ -361,8 +361,14 @@ int M11_Render_ComputePresentationRect(int windowW,
     } else if (displayAspectMode == M11_DISPLAY_ASPECT_4_3) {
         ratioW = 4;
         ratioH = 3;
-    } else {
+    } else if (displayAspectMode == M11_DISPLAY_ASPECT_16_9) {
         ratioW = 16;
+        ratioH = 9;
+    } else if (displayAspectMode == M11_DISPLAY_ASPECT_16_10) {
+        ratioW = 16;
+        ratioH = 10;
+    } else {
+        ratioW = 32;
         ratioH = 9;
     }
 

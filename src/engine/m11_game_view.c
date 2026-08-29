@@ -31677,6 +31677,27 @@ static const char* m11_graphics_popup_mode_name(int mode) {
     }
 }
 
+/* Game options use ORIGINAL as a request for the decoded frame's native
+ * ratio, while the SDL presentation layer names that mode CONTENT.  Every
+ * other choice maps one-to-one and is fitted inside the host output; no
+ * option ever means non-uniform stretch. */
+static int m11_graphics_popup_display_aspect(int aspectRatio) {
+    switch (aspectRatio) {
+        case M12_ASPECT_4_3: return M11_DISPLAY_ASPECT_4_3;
+        case M12_ASPECT_16_9: return M11_DISPLAY_ASPECT_16_9;
+        case M12_ASPECT_16_10: return M11_DISPLAY_ASPECT_16_10;
+        case M12_ASPECT_32_9: return M11_DISPLAY_ASPECT_32_9;
+        default: return M11_DISPLAY_ASPECT_CONTENT;
+    }
+}
+
+static const char* m11_graphics_popup_aspect_name(int aspectRatio) {
+    static const char* const names[] = { "ORIGINAL", "4:3", "16:9", "16:10", "32:9" };
+    if (aspectRatio < M12_ASPECT_ORIGINAL || aspectRatio >= M12_ASPECT_COUNT)
+        aspectRatio = M12_ASPECT_ORIGINAL;
+    return names[aspectRatio];
+}
+
 static int m11_graphics_popup_apply_mode(M11_GameViewState* state, int mode) {
     int resolved = mode;
     if (!state || mode < M12_PRESENTATION_V1_ORIGINAL ||
@@ -31743,7 +31764,12 @@ static int m11_graphics_popup_adjust(M11_GameViewState* state, int delta) {
                 break;
             case 1: config.scaleModeIndex = m11_graphics_popup_cycle(config.scaleModeIndex, delta, 6); (void)M11_Render_SetScaleMode(config.scaleModeIndex); break;
             case 2: config.scalingFilterIndex = !config.scalingFilterIndex; (void)M11_Render_SetScaleFilter(config.scalingFilterIndex); break;
-            case 3: config.displayAspectMode = m11_graphics_popup_cycle(config.displayAspectMode, delta, 3); (void)M11_Render_SetDisplayAspectMode(config.displayAspectMode); break;
+            case 3:
+                config.gameAspectRatio[slot] = m11_graphics_popup_cycle(
+                    config.gameAspectRatio[slot], delta, M12_ASPECT_COUNT);
+                (void)M11_Render_SetDisplayAspectMode(
+                    m11_graphics_popup_display_aspect(config.gameAspectRatio[slot]));
+                break;
             case 4: config.integerScaling = !config.integerScaling; (void)M11_Render_SetIntegerScaling(config.integerScaling); break;
             case 5: config.vsyncIndex = !config.vsyncIndex; (void)M11_Render_SetVSync(config.vsyncIndex); break;
             case 6:
@@ -61965,7 +61991,7 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                 case 0: snprintf(value, sizeof(value), "%s", m11_graphics_popup_mode_name(state->presentationMode)); break;
                 case 1: snprintf(value, sizeof(value), "%s", scaleNames[config.scaleModeIndex >= 0 && config.scaleModeIndex <= 5 ? config.scaleModeIndex : M11_SCALE_FIT]); break;
                 case 2: snprintf(value, sizeof(value), "%s", config.scalingFilterIndex ? "LINEAR" : "NEAREST"); break;
-                case 3: snprintf(value, sizeof(value), "%s", config.displayAspectMode == 0 ? "4:3" : config.displayAspectMode == 1 ? "16:9" : "CONTENT"); break;
+                case 3: snprintf(value, sizeof(value), "%s", m11_graphics_popup_aspect_name(config.gameAspectRatio[slot])); break;
                 case 4: snprintf(value, sizeof(value), "%s", config.integerScaling ? "ON" : "OFF"); break;
                 case 5: snprintf(value, sizeof(value), "%s", config.vsyncIndex ? "ON" : "OFF"); break;
                 case 6: snprintf(value, sizeof(value), "%s", config.showFpsOverlay ? "ON" : "OFF"); break;

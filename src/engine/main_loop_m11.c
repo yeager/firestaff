@@ -3133,6 +3133,25 @@ static int m11_play_dm1_fmtowns_title_if_available(
     return 1;
 }
 
+static int m11_game_display_aspect(int aspectRatio) {
+    switch (aspectRatio) {
+        case M12_ASPECT_4_3: return M11_DISPLAY_ASPECT_4_3;
+        case M12_ASPECT_16_9: return M11_DISPLAY_ASPECT_16_9;
+        case M12_ASPECT_16_10: return M11_DISPLAY_ASPECT_16_10;
+        case M12_ASPECT_32_9: return M11_DISPLAY_ASPECT_32_9;
+        default: return M11_DISPLAY_ASPECT_CONTENT;
+    }
+}
+
+static int m11_game_option_slot(const char *gameId) {
+    if (!gameId) return 0;
+    if (strcmp(gameId, "csb") == 0) return 1;
+    if (strcmp(gameId, "dm2") == 0) return 2;
+    if (strcmp(gameId, "nexus") == 0) return 3;
+    if (strcmp(gameId, "theron") == 0) return 4;
+    return 0;
+}
+
 static int m11_open_requested_launch(M11_GameViewState* gameView,
                                      M12_StartupMenuState* menuState,
                                      uint32_t* idleAccumulatorMs,
@@ -3153,6 +3172,14 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         return 0;
     }
     launchEntry = M12_StartupMenu_GetEntry(menuState, menuState->activatedIndex);
+    /* Game options are per title.  Apply the selected ratio before any title
+     * frame is shown and disable the launcher-only fill mode.  The renderer
+     * computes a fitted destination rectangle, so this is letterbox or
+     * pillarbox presentation, never a distorted stretch. */
+    (void)M11_Render_SetPresentationFillWindow(0);
+    (void)M11_Render_SetDisplayAspectMode(m11_game_display_aspect(
+        menuState->gameOptions[m11_game_option_slot(
+            launchEntry ? launchEntry->gameId : NULL)].aspectRatio));
     /* Nexus follows the same in-process native launch path as every other
      * game. Its runtime retains the real-asset admission gates; M11 must not
      * substitute an external emulator process. */
