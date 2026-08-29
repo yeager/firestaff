@@ -456,11 +456,13 @@ int csb_v1_fmtowns_cdda_extract(const uint8_t *bin_data, size_t bin_size,
                                  const CSB_V1_FmtownsCddaTrack *track,
                                  uint8_t *out_buf, size_t out_buf_size) {
     size_t start, length;
+    uint64_t start_bytes;
 
     if (!bin_data || !track || !out_buf) return -1;
 
-    if ((size_t)track->start_sector > SIZE_MAX / RAW) return -1;
-    start = (size_t)track->start_sector * RAW;
+    start_bytes = (uint64_t)track->start_sector * RAW;
+    if (start_bytes > SIZE_MAX) return -1;
+    start = (size_t)start_bytes;
     if (start >= bin_size) return -1;
     if (track->sector_count == 0u) {
         /* A CUE only gives each track's INDEX 01.  The final audio track has
@@ -488,15 +490,17 @@ int csb_v1_fmtowns_cdda_read_alloc(const uint8_t *bin_data, size_t bin_size,
                                    const CSB_V1_FmtownsCddaTrack *track,
                                    uint8_t **out_data, size_t *out_size) {
     size_t start, length;
+    uint64_t start_bytes;
     uint8_t *data;
 
     if (!out_data || !out_size) return -1;
     *out_data = NULL;
     *out_size = 0U;
     if (!bin_data || !track || bin_size == 0U ||
-        bin_size % RAW != 0U ||
-        (size_t)track->start_sector > SIZE_MAX / RAW) return -1;
-    start = (size_t)track->start_sector * RAW;
+        bin_size % RAW != 0U) return -1;
+    start_bytes = (uint64_t)track->start_sector * RAW;
+    if (start_bytes > SIZE_MAX) return -1;
+    start = (size_t)start_bytes;
     if (start >= bin_size) return -1;
     if (track->sector_count == 0U) {
         length = bin_size - start;

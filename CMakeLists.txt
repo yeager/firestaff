@@ -11859,7 +11859,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_sound_real.c")
     target_include_directories(test_dm2_v1_mac_sound_real PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(test_dm2_v1_mac_sound_real PRIVATE
-        firestaff_zip_extract firestaff_zlib)
+        firestaff_zip_extract firestaff_fmtowns_disc firestaff_zlib)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_mac_sound_real PRIVATE -Wall -Wextra -O2)
     endif()
@@ -11874,7 +11874,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_sound_audio_real.c"
     target_include_directories(test_dm2_v1_mac_sound_audio_real PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(test_dm2_v1_mac_sound_audio_real PRIVATE
-        firestaff_m11 firestaff_zip_extract firestaff_zlib)
+        firestaff_m11 firestaff_zip_extract firestaff_fmtowns_disc firestaff_zlib)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_mac_sound_audio_real PRIVATE -Wall -Wextra -O2)
     endif()
@@ -11903,7 +11903,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_pointer_source_real
     target_include_directories(test_dm2_v1_mac_pointer_source_real PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(test_dm2_v1_mac_pointer_source_real PRIVATE
-        firestaff_zip_extract firestaff_zlib)
+        firestaff_zip_extract firestaff_fmtowns_disc firestaff_zlib)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_mac_pointer_source_real PRIVATE -Wall -Wextra -Werror -O2)
     endif()
@@ -11918,7 +11918,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_mac_resource_types_real
     target_include_directories(test_dm2_v1_mac_resource_types_real PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(test_dm2_v1_mac_resource_types_real PRIVATE
-        firestaff_zip_extract firestaff_zlib)
+        firestaff_zip_extract firestaff_fmtowns_disc firestaff_zlib)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_mac_resource_types_real PRIVATE -Wall -Wextra -Werror -O2)
     endif()
@@ -24622,6 +24622,13 @@ endif()
     )
     target_include_directories(test_csb_v1_champion_transfer_field_gate_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    # Save import opens the selected virtual archive member and validates
+    # Atari STX utility media.  Those production readers are provided by M10;
+    # link them explicitly on every platform rather than depending on a
+    # transitive executable link that ELF happened to tolerate.
+    target_link_libraries(test_csb_v1_champion_transfer_field_gate_pc34_compat PRIVATE
+        firestaff_m10
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_champion_transfer_field_gate_pc34_compat
@@ -39010,6 +39017,12 @@ if(BUILD_TESTING)
     target_include_directories(test_nexus_v1_iso_cue_data_track_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    # The ISO reader follows a CUE declaration inside an archive without
+    # materializing game data.  Keep the test linked to that same internal
+    # in-memory ZIP reader on every platform.
+    target_link_libraries(test_nexus_v1_iso_cue_data_track_gate PRIVATE
+        firestaff_zip_extract
+    )
     if(NOT MSVC)
         target_compile_options(test_nexus_v1_iso_cue_data_track_gate PRIVATE
             -std=c99 -Wall -Wextra -pedantic -O2)
@@ -40342,6 +40355,11 @@ add_executable(test_nexus_v1_dgn_material_raster
     target_compile_definitions(test_csb_v1_csbwin_save_loader_boundary_pc34_compat PRIVATE
         CSB_V1_CSBWIN_SAVE_LOADER_BOUNDARY_CONTRACT_ONLY=1
     )
+    # The boundary path validates archive members and Atari STX utility media;
+    # its test must link the same native reader implementation as the launcher.
+    target_link_libraries(test_csb_v1_csbwin_save_loader_boundary_pc34_compat PRIVATE
+        firestaff_m10
+    )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_csbwin_save_loader_boundary_pc34_compat PRIVATE
             -std=c99 -Wall -Wextra -pedantic -O2)
@@ -40494,6 +40512,11 @@ add_executable(test_nexus_v1_dgn_material_raster
     )
     target_include_directories(test_csb_v1_save_export_import_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    # Export round-trips through the production importer, including virtual
+    # archive and STX utility-media checks supplied by M10.
+    target_link_libraries(test_csb_v1_save_export_import_pc34_compat PRIVATE
+        firestaff_m10
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_save_export_import_pc34_compat PRIVATE
@@ -41092,6 +41115,9 @@ add_executable(test_nexus_v1_dgn_material_raster
     )
     target_compile_definitions(test_csb_v1_cmp_import PRIVATE
         CSB_V1_CMP_IMPORT_CONTRACT_ONLY=1)
+    # Champion import checks genuine Atari utility-disk sectors via the
+    # portable STX reader; use the production M10 implementation.
+    target_link_libraries(test_csb_v1_cmp_import PRIVATE firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_cmp_import PRIVATE
             -std=c99 -Wall -Wextra -pedantic -O2)
@@ -53221,6 +53247,10 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_hmp_music_parser.c"
         src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_hmp_music_parser PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    # DM2 Mac media follows an archive CUE to its selected data track.
+    target_link_libraries(test_dm2_v1_hmp_music_parser PRIVATE
+        firestaff_fmtowns_disc
+    )
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
         target_compile_options(test_dm2_v1_hmp_music_parser PRIVATE -Wall -Wextra -O2)
     endif()
