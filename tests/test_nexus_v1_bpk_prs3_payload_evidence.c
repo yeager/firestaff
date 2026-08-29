@@ -1,9 +1,11 @@
 #include "nexus_v1_bpk_archive.h"
+#include "nexus_v1_iso_reader.h"
 #include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 static int g_failures;
 
@@ -454,58 +456,104 @@ static void test_opcode_prefix_witness(void) {
     expect(rc != 0, "opcode-prefix witness rejects unknown bit order");
 }
 
+static uint8_t *load_local_menu_bpk(const char *data_dir, size_t *out_size) {
+    char path[2048];
+    FILE *fp = NULL;
+    long size;
+    size_t entry_size;
+    uint8_t *data = NULL;
+    Nexus_ISOReader iso;
+    const Nexus_ISOFile *entry;
+
+    if (out_size) *out_size = 0U;
+    if (!data_dir || !*data_dir || !out_size) return NULL;
+    if (snprintf(path, sizeof(path), "%s/MENU.BPK", data_dir) < 0 ||
+        (fp = fopen(path, "rb")) == NULL) {
+        /* The retail Japanese corpus is normally retained as raw Track 1.
+         * Open the source ISO in memory through the same native reader used
+         * by Firestaff; never require a manually extracted MENU.BPK copy. */
+        memset(&iso, 0, sizeof(iso));
+        if (snprintf(path, sizeof(path),
+                     "%s/Dungeon Master Nexus (Japan) (Track 1).bin",
+                     data_dir) < 0 ||
+            nexus_iso_open(&iso, path) <= 0 ||
+            (entry = nexus_iso_find(&iso, "MENU.BPK")) == NULL ||
+            entry->size == 0U || entry->size > (uint32_t)INT_MAX ||
+            (data = (uint8_t *)malloc(entry->size)) == NULL ||
+            nexus_iso_read_file(&iso, entry, data, (int)entry->size) !=
+                (int)entry->size) {
+            free(data);
+            nexus_iso_close(&iso);
+            return NULL;
+        }
+        entry_size = entry->size;
+        nexus_iso_close(&iso);
+        *out_size = entry_size;
+        return data;
+    }
+    if (fseek(fp, 0, SEEK_END) != 0 || (size = ftell(fp)) <= 0 ||
+        fseek(fp, 0, SEEK_SET) != 0 ||
+        (data = (uint8_t *)malloc((size_t)size)) == NULL ||
+        fread(data, 1U, (size_t)size, fp) != (size_t)size) {
+        free(data);
+        fclose(fp);
+        return NULL;
+    }
+    fclose(fp);
+    *out_size = (size_t)size;
+    return data;
+}
+
 static void test_optional_local_menumenu_bpk(void) {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
-    char path[2048];
-    FILE *fp;
-    long size;
+    char default_data_dir[2048];
+    char loose_path[2048];
     uint8_t *data;
+    size_t data_size = 0U;
     Nexus_V1_BpkPrs3PayloadEvidence *rows;
     Nexus_V1_BpkPrs3PayloadEvidenceSummary summary;
     int rc;
     uint32_t capacity = 256U;
+    uint64_t source_fnv1a64;
+    int japanese_retail;
+    int loose_bpk = 0;
 
-    if (data_dir && data_dir[0]) {
-        if (snprintf(path, sizeof(path), "%s/MENU.BPK", data_dir) < 0) return;
-    } else if (home && home[0]) {
-        if (snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/MENU.BPK",
-                     home) < 0) return;
-    } else {
-        puts("SKIP: Nexus data root is unset; no local MENU.BPK check");
-        return;
+    if (!data_dir || !data_dir[0]) {
+        if (home && home[0] &&
+            snprintf(default_data_dir, sizeof(default_data_dir),
+                     "%s/.firestaff/data/nexus", home) >= 0) {
+            data_dir = default_data_dir;
+        } else {
+            puts("SKIP: Nexus data root is unset; no local MENU.BPK check");
+            return;
+        }
     }
-    fp = fopen(path, "rb");
-    if (!fp) { puts("SKIP: local MENU.BPK not present"); return; }
-    expect(asset_file_matches_md5(path,
-                                  "a6f2272a4f6cb3c6b3b33012bc5b15ed") ||
-               asset_file_matches_md5(path,
-                                      "fcf8a00fbb92593ed9ae908f8e285cda"),
-           "local MENU.BPK matches an authenticated English/French retail revision");
-    if (!asset_file_matches_md5(path,
-                                "a6f2272a4f6cb3c6b3b33012bc5b15ed") &&
-        !asset_file_matches_md5(path,
-                                "fcf8a00fbb92593ed9ae908f8e285cda")) {
-        fclose(fp);
-        return;
+    if (snprintf(loose_path, sizeof(loose_path), "%s/MENU.BPK", data_dir) >=
+        0) {
+        loose_bpk = asset_file_matches_md5(
+                        loose_path, "c2776768ff25287c79013a1452253ca0") ||
+                    asset_file_matches_md5(
+                        loose_path, "a6f2272a4f6cb3c6b3b33012bc5b15ed") ||
+                    asset_file_matches_md5(
+                        loose_path, "fcf8a00fbb92593ed9ae908f8e285cda");
     }
-    if (fseek(fp, 0, SEEK_END) != 0) { fclose(fp); return; }
-    size = ftell(fp);
-    if (size <= 0) { fclose(fp); return; }
-    if (fseek(fp, 0, SEEK_SET) != 0) { fclose(fp); return; }
-    data = (uint8_t *)malloc((size_t)size);
-    if (!data) { fclose(fp); return; }
-    if (fread(data, 1, (size_t)size, fp) != (size_t)size) {
-        free(data); fclose(fp); return;
-    }
-    fclose(fp);
+    data = load_local_menu_bpk(data_dir, &data_size);
+    if (!data) { puts("SKIP: local MENU.BPK/Track 1 is unavailable"); return; }
+    source_fnv1a64 = fnv1a64(data, data_size);
+    japanese_retail = data_size == 89060U &&
+        source_fnv1a64 == UINT64_C(0x40203424894456e6);
+    expect(data_size > 0U,
+           "local MENU.BPK is read from its original source container");
+    expect(japanese_retail || loose_bpk,
+           "local MENU.BPK retains an authenticated revision-specific source receipt");
 
     rows = (Nexus_V1_BpkPrs3PayloadEvidence *)calloc(
         capacity, sizeof(*rows));
     if (!rows) { free(data); return; }
     memset(&summary, 0, sizeof(summary));
     rc = nexus_v1_bpk_archive_prs3_payload_evidence(
-        data, size, 4096U, rows, capacity, &summary);
+        data, data_size, 4096U, rows, capacity, &summary);
     expect(rc == 0, "local MENU.BPK evidence walker returns ok");
     expect(summary.used == 162U,
            "local MENU.BPK evidence walker reports 162 PRS3 entries");
@@ -517,7 +565,7 @@ static void test_optional_local_menumenu_bpk(void) {
     {
         Nexus_V1_BpkPrs3StreamPlan plan;
         memset(&plan, 0, sizeof(plan));
-        rc = nexus_v1_bpk_archive_prs3_stream_plan(data, size, 1U, &plan);
+        rc = nexus_v1_bpk_archive_prs3_stream_plan(data, data_size, 1U, &plan);
         expect(rc == NEXUS_V1_BPK_PRS3_STREAM_OK,
                "local MENU.BPK entry[1] stream plan returns ok");
         expect(plan.header_first_readable == 1 &&
@@ -537,30 +585,38 @@ static void test_optional_local_menumenu_bpk(void) {
              order <= NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST;
              ++order) {
             rc = nexus_v1_bpk_archive_prs3_framed_decode_evidence(
-                data, size, (Nexus_V1_BpkPrs3CandidateBitOrder)order,
+                data, data_size, (Nexus_V1_BpkPrs3CandidateBitOrder)order,
                 framed_rows, 256U, &framed);
             expect(rc == 0 && framed.prs3_surfaces == 162U &&
-                       framed.frame_validated == 158U &&
-                       framed.unvalidated_frames == 4U &&
-                       framed.evaluated == 158U &&
+                       framed.frame_validated ==
+                           (japanese_retail ? 161U : 158U) &&
+                       framed.unvalidated_frames ==
+                           (japanese_retail ? 1U : 4U) &&
+                       framed.evaluated ==
+                           (japanese_retail ? 161U : 158U) &&
                        framed.complete_exact ==
-                           (order == NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST
-                                ? 1U : 0U) &&
+                           (japanese_retail ? 0U :
+                            (order == NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST
+                                ? 1U : 0U)) &&
                        framed.complete_trailing ==
                            (order == NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST
-                                ? 108U : 0U) &&
+                                ? (japanese_retail ? 110U : 108U) : 0U) &&
                        framed.command_failures ==
                            (order == NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST
-                                ? 49U : 158U) &&
+                                ? (japanese_retail ? 51U : 49U)
+                                : (japanese_retail ? 161U : 158U)) &&
                        framed.decoder_promoted == 0,
                    "local MENU.BPK framed evaluation remains diagnostic-only");
             rc = nexus_v1_bpk_archive_prs3_opcode_prefix_witness(
-                data, size, (Nexus_V1_BpkPrs3CandidateBitOrder)order,
+                data, data_size, (Nexus_V1_BpkPrs3CandidateBitOrder)order,
                 16U, opcode_rows, 256U, &opcode);
             expect(rc == 0 && opcode.prs3_surfaces == 162U &&
-                       opcode.frame_validated == 158U &&
-                       opcode.unvalidated_frames == 4U &&
-                       opcode.witnessed == 158U &&
+                       opcode.frame_validated ==
+                           (japanese_retail ? 161U : 158U) &&
+                       opcode.unvalidated_frames ==
+                           (japanese_retail ? 1U : 4U) &&
+                       opcode.witnessed ==
+                           (japanese_retail ? 161U : 158U) &&
                        opcode.decoder_promoted == 0,
                    "local MENU.BPK opcode-prefix witness remains diagnostic-only");
         }
@@ -573,7 +629,7 @@ static void test_optional_local_menumenu_bpk(void) {
         uint64_t captured_hash;
 
         memset(&plan, 0, sizeof(plan));
-        rc = nexus_v1_bpk_archive_prs3_stream_plan(data, size, 1U, &plan);
+        rc = nexus_v1_bpk_archive_prs3_stream_plan(data, data_size, 1U, &plan);
         if (rc == NEXUS_V1_BPK_PRS3_STREAM_OK &&
             plan.expected_output_bytes > 0U &&
             plan.expected_output_bytes <= 1024U * 1024U) {
@@ -584,7 +640,7 @@ static void test_optional_local_menumenu_bpk(void) {
                                         plan.expected_output_bytes);
                 memset(&proof, 0, sizeof(proof));
                 rc = nexus_v1_bpk_archive_prs3_decoded_output_proof_gate(
-                    data, size, 1U, captured_output,
+                    data, data_size, 1U, captured_output,
                     plan.expected_output_bytes, captured_hash,
                     1, 0, &proof);
                 expect(rc == 0 &&
@@ -606,7 +662,7 @@ static void test_optional_local_menumenu_bpk(void) {
                        "decoded-output proof status name is stable");
 
                 rc = nexus_v1_bpk_archive_prs3_decoded_output_proof_gate(
-                    data, size, 1U, captured_output,
+                    data, data_size, 1U, captured_output,
                     plan.expected_output_bytes, captured_hash,
                     1, 1, &proof);
                 expect(rc == 1 &&
@@ -630,7 +686,7 @@ static void test_optional_local_menumenu_bpk(void) {
                        "decoded-output proof ready status still names the no-runtime blocker");
 
                 rc = nexus_v1_bpk_archive_prs3_decoded_output_proof_gate(
-                    data, size, 1U, captured_output,
+                    data, data_size, 1U, captured_output,
                     plan.expected_output_bytes, captured_hash ^ 1U,
                     1, 0, &proof);
                 expect(rc == 0 &&
