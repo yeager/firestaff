@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Production ingestion is native and in-memory.  Do not let a developer's
+# diagnostic external-tool opt-in turn this real-media test into a wrapper test.
+unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
+
 app=${1:?usage: test_dm1_v1_dos_en_archive_cli_boot.sh <firestaff-binary>}
 archive=${FIRESTAFF_DM1_DOS_EN_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_EN.zip"}
 expected_graphics_md5=fa6b1aa29e191418713bf2cda93d962e

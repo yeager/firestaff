@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Production ingestion is native and in-memory.  Do not let a developer's
+# diagnostic external-tool opt-in turn this real-media test into a wrapper test.
+unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
+
 if [[ $# -ne 1 ]]; then
     printf 'usage: %s <firestaff-binary>\n' "$0" >&2
     exit 2
