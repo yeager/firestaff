@@ -17540,6 +17540,7 @@ endif()
         COMMAND test_csb_v1_m11_prison_runtime_hud_pc34
     )
     set_tests_properties(csb_v1_m11_prison_runtime_hud_pc34 PROPERTIES
+        SKIP_RETURN_CODE 77
         LABELS "csb;real_data;m11;hud")
     # The stock CSBWin corpus is optional.  Its wrapper stages only explicitly
     # supplied user media and otherwise skips; unlike the title-only row above,

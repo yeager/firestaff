@@ -770,9 +770,14 @@ int main(void)
         return 0;
     }
 
-    if (!data_dir || !data_dir[0]) {
-        puts("SKIP: no CSB PC3.4 data directory");
-        return 0;
+    /* The remaining branch exercises an Atari MINI.DAT resume.  It must
+     * never discover an arbitrary first CSB edition from a mixed media root:
+     * that can select Amiga or FM Towns while the assertions below inspect
+     * Atari C013/C232 data.  CSBWin and FM Towns have their explicit routes
+     * above; this route needs an operator-selected original Atari save. */
+    if (!data_dir || !data_dir[0] || !atari_mini || !atari_mini[0]) {
+        puts("SKIP: explicit Atari MINI.DAT resume corpus is required");
+        return 77;
     }
     if (csbwin_graphics && csbwin_graphics[0]) {
         memset(&decode_receipt, 0, sizeof(decode_receipt));
