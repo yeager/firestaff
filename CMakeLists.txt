@@ -4309,6 +4309,17 @@ if(BUILD_TESTING)
         LABELS "dm1;atari-st;real-media;archive;native;cli;startup;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_OUTER_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Atari-ST_EN.zip"
     )
+    add_test(
+        NAME dm1_v1_atari_st_cracked_archive_rejected
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_atari_st_cracked_archive_rejected.sh
+            $<TARGET_FILE:firestaff> $<TARGET_FILE_DIR:firestaff>
+    )
+    set_tests_properties(dm1_v1_atari_st_cracked_archive_rejected PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;atari-st;real-media;preservation;negative;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_ATARI_ST_DE_CRACKED_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Atari-ST_DE_Version-12-alt.zip"
+        TIMEOUT 45
+    )
     add_executable(test_dm1_v1_atari_st_outer_archive_real_data
         tests/test_dm1_v1_atari_st_outer_archive_real_data.c
     )
