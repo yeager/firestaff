@@ -1,5 +1,6 @@
 #include "firestaff/dm1/v1/G0194_pc34_compat.h"
 
+#include <limits.h>
 #include <string.h>
 
 /*
@@ -49,7 +50,7 @@ dm1_v1_g0194_run_pc34(
     DM1_V1_G0194ResultPc34 *out)
 {
     int table_matches_declaration = 1;
-    int all_bytes_in_byte_range = 1;
+    int all_bytes_in_byte_range = UCHAR_MAX == 255;
     int lookup_function_correct = 1;
     int lookup_out_of_range_returns_minus_one = 1;
     int i;
@@ -64,9 +65,9 @@ dm1_v1_g0194_run_pc34(
     }
     out->tableSize = kTableSize;
 
-    for (i = 0; i < kTableSize; ++i) {
-        if (s_g0194[i] > 255) all_bytes_in_byte_range = 0;
-    }
+    /* `s_g0194` is stored as unsigned char.  A value-by-value `> 255`
+     * check is impossible and triggers -Wtype-limits; verify the source
+     * representation once instead. */
     out->allBytesInByteRange = all_bytes_in_byte_range;
 
     {

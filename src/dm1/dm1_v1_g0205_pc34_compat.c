@@ -1,5 +1,6 @@
 #include "firestaff/dm1/v1/G0205_pc34_compat.h"
 
+#include <limits.h>
 #include <string.h>
 
 /*
@@ -101,7 +102,7 @@ dm1_v1_g0205_run_pc34(
     DM1_V1_G0205ResultPc34 *out)
 {
     int table_matches_declaration = 1;
-    int all_bytes_in_byte_range = 1;
+    int all_bytes_in_byte_range = UCHAR_MAX == 255;
     int lookup_function_correct = 1;
     int lookup_out_of_range_returns_minus_one = 1;
     int i;
@@ -114,9 +115,8 @@ dm1_v1_g0205_run_pc34(
     }
     out->tableSize = kTableSize;
 
-    for (i = 0; i < kTableSize; ++i) {
-        if (s_g0205[i] > 255) all_bytes_in_byte_range = 0;
-    }
+    /* The table's unsigned-char declaration already constrains each entry;
+     * test the representation rather than an impossible `> 255` branch. */
     out->allBytesInByteRange = all_bytes_in_byte_range;
 
     {
