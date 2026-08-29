@@ -36877,7 +36877,10 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0662_invisibility_mate
         target_compile_options(test_dm1_v1_f0662_invisibility_material_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0662_invisibility_material_gate COMMAND test_dm1_v1_f0662_invisibility_material_gate)
-    set_tests_properties(dm1_v1_f0662_invisibility_material_gate PROPERTIES SKIP_RETURN_CODE 77)
+    set_tests_properties(dm1_v1_f0662_invisibility_material_gate PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+        LABELS "dm1;dos;pc34;invisibility;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0663_smoke_material_gate.c")
@@ -36891,7 +36894,10 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0663_smoke_material_ga
         target_compile_options(test_dm1_v1_f0663_smoke_material_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0663_smoke_material_gate COMMAND test_dm1_v1_f0663_smoke_material_gate)
-    set_tests_properties(dm1_v1_f0663_smoke_material_gate PROPERTIES SKIP_RETURN_CODE 77)
+    set_tests_properties(dm1_v1_f0663_smoke_material_gate PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+        LABELS "dm1;dos;pc34;smoke;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0675_scaled_material_gate.c")

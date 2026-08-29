@@ -7,7 +7,7 @@
 
 int main(void)
 {
-    const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
+    const char* archive = getenv("FIRESTAFF_DM1_DOS_PC34_ARCHIVE");
     const unsigned char* paletteChanges;
     unsigned char alteredPalette[DM1_V1_F0663_PALETTE_COUNT_PC34];
     const int graphics[DM1_V1_F0663_SURFACE_COUNT_PC34] = {
@@ -22,13 +22,13 @@ int main(void)
     DM1_V1_F0663SmokeMaterialReceiptPc34 receipt;
     int i;
 
-    if (!root || !root[0]) {
-        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
+    if (!archive || !archive[0]) {
+        puts("SKIP: FIRESTAFF_DM1_DOS_PC34_ARCHIVE is not selected");
         return 77;
     }
-    snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
+    snprintf(path, sizeof(path), "%s::DATA/GRAPHICS.DAT", archive);
     if (!M11_AssetLoader_Init(&loader, path)) {
-        fputs("configured PC34 GRAPHICS.DAT is unavailable\n", stderr);
+        fputs("original PC34 ZIP GRAPHICS.DAT is unavailable\n", stderr);
         return 1;
     }
     memset(surfaces, 0, sizeof(surfaces));
@@ -65,7 +65,7 @@ int main(void)
             surfaces, DM1_V1_F0663_SURFACE_COUNT_PC34, paletteChanges,
             DM1_V1_F0663_PALETTE_COUNT_PC34, &receipt)) goto fail;
     M11_AssetLoader_Shutdown(&loader);
-    puts("ok: real PC34 F0663 smoke material gate");
+    puts("ok: original PC34 ZIP F0663 smoke material gate");
     return 0;
 fail:
     M11_AssetLoader_Shutdown(&loader);
