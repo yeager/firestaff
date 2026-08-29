@@ -25817,11 +25817,14 @@ endif()
 
     add_executable(test_dm1_v1_fmtowns_startup
         tests/test_dm1_v1_fmtowns_startup.c
+        src/dm1/dm1_v1_fmtowns_startup.c
+        src/shared/firestaff_fmtowns_disc.c
+        src/shared/fs_portable_compat.c
     )
     target_include_directories(test_dm1_v1_fmtowns_startup PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
-    target_link_libraries(test_dm1_v1_fmtowns_startup PRIVATE firestaff_m10)
+    target_link_libraries(test_dm1_v1_fmtowns_startup PRIVATE firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_fmtowns_startup PRIVATE -Wall -Wextra -O2)
     endif()
@@ -25830,7 +25833,9 @@ endif()
         COMMAND test_dm1_v1_fmtowns_startup
     )
     set_tests_properties(dm1_v1_fmtowns_startup PROPERTIES
-        LABELS "dm1;fmtowns;startup;menu;real_data;skip_safe"
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;fmtowns;startup;menu;real-media;in-memory;native;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
     )
 
     add_executable(test_dm1_v1_fmtowns_title
