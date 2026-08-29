@@ -103,12 +103,34 @@ typedef struct {
     unsigned int immediate_color_writes;
     unsigned int copper_color_base_writes;
     unsigned int copper_caller_palette_handoffs;
-    unsigned int copper_init_builder_calls;
-    unsigned int copper_fade_builder_calls;
+    unsigned int copper_builder_calls;
+    int copper_builder_found;
+    size_t copper_builder_offset;
     DM1_V1_AmigaGraphicsReceipt receipt;
     uint8_t *bytes;
     size_t size;
 } RealGraphicsReceipt;
+
+/* 68000 JSR d16(PC) is relative to the extension word (two bytes after the
+ * opcode), not the end of its four-byte encoding. Keep this tiny decoder
+ * local to the in-memory audit: it is a
+ * structural receipt for the supplied executable, not a host emulator or a
+ * substitute palette producer. */
+static int m68k_jsr_pc_relative_target(const uint8_t *bytes, size_t size,
+                                       size_t offset, size_t *out_target) {
+    int displacement;
+    long target;
+    if (!bytes || !out_target || offset + 4u > size ||
+        bytes[offset] != 0x4eu || bytes[offset + 1u] != 0xbau) {
+        return 0;
+    }
+    displacement = ((int)bytes[offset + 2u] << 8) | bytes[offset + 3u];
+    if ((displacement & 0x8000) != 0) displacement -= 0x10000;
+    target = (long)offset + 2L + (long)displacement;
+    if (target < 0L || (size_t)target >= size) return 0;
+    *out_target = (size_t)target;
+    return 1;
+}
 
 static int real_graphics_visitor(const char *name, const uint8_t *bytes,
                                  size_t size, void *user_data) {
@@ -161,30 +183,29 @@ static int real_graphics_visitor(const char *name, const uint8_t *bytes,
                 printf("AMIGA-DISASM Copper caller palette handoff @0x%zx\n",
                        i);
                 ++result->copper_caller_palette_handoffs;
+                result->copper_builder_found = 1;
+                result->copper_builder_offset = i;
             }
         }
-        /* Hunk 10's boot sequence invokes the builder with the current
-         * 16-word table, while its separate eight-step fade routine invokes
-         * the same builder after mutating a working RGB4 table.  The two
-         * PC-relative JSR encodings are unique in the authenticated v2.0
-         * executable.  This proves palette output is a live table handoff,
-         * not one static 16-colour constant that a host may substitute. */
+        /* Resolve every PC-relative JSR that reaches the identified builder.
+         * Matching a target, rather than an arbitrary four-byte pattern,
+         * makes this an executable control-flow receipt and avoids treating
+         * coincidental bytes in data as palette calls. */
         for (size_t i = 0u; i + 4u <= size; ++i) {
-            if (bytes[i + 0u] == 0x4eu && bytes[i + 1u] == 0xbau &&
-                bytes[i + 2u] == 0x01u && bytes[i + 3u] == 0x8cu) {
-                ++result->copper_init_builder_calls;
-            }
-            if (bytes[i + 0u] == 0x4eu && bytes[i + 1u] == 0xbau &&
-                bytes[i + 2u] == 0xfdu && bytes[i + 3u] == 0x08u) {
-                ++result->copper_fade_builder_calls;
+            size_t target = 0u;
+            if (result->copper_builder_found &&
+                m68k_jsr_pc_relative_target(bytes, size, i, &target) &&
+                target == result->copper_builder_offset) {
+                ++result->copper_builder_calls;
+                printf("AMIGA-DISASM palette JSR @0x%zx -> @0x%zx\n",
+                       i, target);
             }
         }
-        printf("AMIGA-DISASM COLOR immediate writes=%u, Copper COLOR base writes=%u, caller palette handoffs=%u, init/fade builder calls=%u/%u\n",
+        printf("AMIGA-DISASM COLOR immediate writes=%u, Copper COLOR base writes=%u, caller palette handoffs=%u, builder calls=%u\n",
                result->immediate_color_writes,
                result->copper_color_base_writes,
                result->copper_caller_palette_handoffs,
-               result->copper_init_builder_calls,
-               result->copper_fade_builder_calls);
+               result->copper_builder_calls);
     }
     if (strcmp(name, "graphics.dat") != 0) return 1;
     result->found = 1;
@@ -248,10 +269,10 @@ static void test_real_amiga_v20_graphics_receipt(void) {
               "real_copper_color_base_writes");
         CHECK(result.copper_caller_palette_handoffs == 1u,
               "real_copper_caller_palette_handoff");
-        CHECK(result.copper_init_builder_calls == 1u,
-              "real_copper_init_builder_call");
-        CHECK(result.copper_fade_builder_calls == 1u,
-              "real_copper_fade_builder_call");
+        CHECK(result.copper_builder_found == 1,
+              "real_copper_builder_found");
+        CHECK(result.copper_builder_calls == 2u,
+              "real_palette_jsrs_target_copper_builder");
     }
     CHECK(result.valid == 1, "real_graphics_receipt");
     if (!result.valid) return;
