@@ -19814,7 +19814,10 @@ endif()
         NAME dm2_v1_sksave_zip_real_data
         COMMAND test_dm2_v1_sksave_zip_real_data
     )
-    set_tests_properties(dm2_v1_sksave_zip_real_data PROPERTIES SKIP_RETURN_CODE 77)
+    set_tests_properties(dm2_v1_sksave_zip_real_data PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM2_SKSAVE_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "dm2;dos;sksave;real-media;in-memory;skip-safe")
 
     # ── DM2-009: savegame timer payload materialisation (GAME_LOAD order) ──
     add_executable(test_dm2_v1_save_timers_pc34_compat

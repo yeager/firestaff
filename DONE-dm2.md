@@ -7,6 +7,10 @@ Reviewed 2026-08-29. Completed work only.
   ZIP→ADF→`dm2_arcsplit1`…`6`→LZX entirely in RAM; the Amiga M11/M12 title
   and New-Game paths and DOS M11 New-Game path cannot silently skip because
   their archive environment was unset.
+- The supplied DOS retail ZIP now also drives the SKSAVE corpus regression:
+  all four primary and four backup members retain virtual archive provenance,
+  pass the original-state census, and are reread through receipt-bound RAM
+  APIs rather than an extracted save directory.
 - The supplied Macintosh retail BIN/CUE ZIP is now injected into the existing
   real-media CTest suite. It exercises native in-memory HFS forks, MooV
   resources, movie decoding/runtime, sound resources, pointer input,
