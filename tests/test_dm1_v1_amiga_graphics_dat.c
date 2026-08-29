@@ -103,6 +103,8 @@ typedef struct {
     unsigned int immediate_color_writes;
     unsigned int copper_color_base_writes;
     unsigned int copper_caller_palette_handoffs;
+    unsigned int copper_init_builder_calls;
+    unsigned int copper_fade_builder_calls;
     DM1_V1_AmigaGraphicsReceipt receipt;
     uint8_t *bytes;
     size_t size;
@@ -161,10 +163,28 @@ static int real_graphics_visitor(const char *name, const uint8_t *bytes,
                 ++result->copper_caller_palette_handoffs;
             }
         }
-        printf("AMIGA-DISASM COLOR immediate writes=%u, Copper COLOR base writes=%u, caller palette handoffs=%u\n",
+        /* Hunk 10's boot sequence invokes the builder with the current
+         * 16-word table, while its separate eight-step fade routine invokes
+         * the same builder after mutating a working RGB4 table.  The two
+         * PC-relative JSR encodings are unique in the authenticated v2.0
+         * executable.  This proves palette output is a live table handoff,
+         * not one static 16-colour constant that a host may substitute. */
+        for (size_t i = 0u; i + 4u <= size; ++i) {
+            if (bytes[i + 0u] == 0x4eu && bytes[i + 1u] == 0xbau &&
+                bytes[i + 2u] == 0x01u && bytes[i + 3u] == 0x8cu) {
+                ++result->copper_init_builder_calls;
+            }
+            if (bytes[i + 0u] == 0x4eu && bytes[i + 1u] == 0xbau &&
+                bytes[i + 2u] == 0xfdu && bytes[i + 3u] == 0x08u) {
+                ++result->copper_fade_builder_calls;
+            }
+        }
+        printf("AMIGA-DISASM COLOR immediate writes=%u, Copper COLOR base writes=%u, caller palette handoffs=%u, init/fade builder calls=%u/%u\n",
                result->immediate_color_writes,
                result->copper_color_base_writes,
-               result->copper_caller_palette_handoffs);
+               result->copper_caller_palette_handoffs,
+               result->copper_init_builder_calls,
+               result->copper_fade_builder_calls);
     }
     if (strcmp(name, "graphics.dat") != 0) return 1;
     result->found = 1;
@@ -228,6 +248,10 @@ static void test_real_amiga_v20_graphics_receipt(void) {
               "real_copper_color_base_writes");
         CHECK(result.copper_caller_palette_handoffs == 1u,
               "real_copper_caller_palette_handoff");
+        CHECK(result.copper_init_builder_calls == 1u,
+              "real_copper_init_builder_call");
+        CHECK(result.copper_fade_builder_calls == 1u,
+              "real_copper_fade_builder_call");
     }
     CHECK(result.valid == 1, "real_graphics_receipt");
     if (!result.valid) return;
