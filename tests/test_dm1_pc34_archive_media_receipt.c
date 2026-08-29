@@ -89,7 +89,7 @@ static int make_isolated_home(char* out, size_t outSize) {
     }
     return FSP_CreateDirectoryRecursive(out);
 #else
-    char templatePath[] = "/tmp/firestaff-dm1-pc34-receipt-XXXXXX";
+    char templatePath[] = "./firestaff-dm1-pc34-receipt-XXXXXX";
     char* made = mkdtemp(templatePath);
     if (!made) {
         return 0;
@@ -113,25 +113,15 @@ static int write_payload_file(const char* path,
     return fclose(fp) == 0;
 }
 
-static int file_matches_payload(const char* path,
+static int virtual_path_matches_payload(const char* path,
                                 const unsigned char* payload,
                                 size_t payloadSize) {
-    unsigned char* buf;
-    size_t n;
-    FILE* fp = fopen(path, "rb");
-    int match;
-    if (!fp) {
-        return 0;
-    }
-    buf = (unsigned char*)malloc(payloadSize ? payloadSize : 1U);
-    if (!buf) {
-        fclose(fp);
-        return 0;
-    }
-    n = fread(buf, 1U, payloadSize, fp);
-    fclose(fp);
-    match = (n == payloadSize && memcmp(buf, payload, payloadSize) == 0);
-    free(buf);
+    uint8_t* bytes = NULL;
+    size_t byteCount = 0U;
+    int match = asset_read_path_alloc(path, &bytes, &byteCount) && bytes &&
+                byteCount == payloadSize &&
+                memcmp(bytes, payload, payloadSize) == 0;
+    free(bytes);
     return match;
 }
 
@@ -140,14 +130,6 @@ static int path_has_virtual_entry(const char* path,
                                   const char* entryName) {
     return path && strstr(path, archiveName) && strstr(path, "::") &&
            strstr(path, entryName);
-}
-
-static int path_has_cache_leaf(const char* path,
-                               const char* cacheRoot,
-                               const char* gameId,
-                               const char* leaf) {
-    return path && strstr(path, cacheRoot) && strstr(path, gameId) &&
-           strstr(path, leaf) && !strstr(path, "::");
 }
 
 static int prepare_zip_entry(ZipEntry* entry) {
@@ -305,12 +287,11 @@ int main(void) {
     char graphicsMd5[M12_ASSET_MD5_CAPACITY];
     char dungeonMd5[M12_ASSET_MD5_CAPACITY];
     char foundPath[ASSET_PATH_MAX];
-    char userDataDir[M12_ASSET_DATA_DIR_CAPACITY];
-    char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
-    char cachedGraphics[M12_ASSET_DATA_DIR_CAPACITY];
-    char cachedDungeon[M12_ASSET_DATA_DIR_CAPACITY];
-    char cachedTitle[M12_ASSET_DATA_DIR_CAPACITY];
-    char cachedSwoosh[M12_ASSET_DATA_DIR_CAPACITY];
+    char titlePath[ASSET_PATH_MAX];
+    char swooshPath[ASSET_PATH_MAX];
+    char firestaffDir[M12_ASSET_DATA_DIR_CAPACITY];
+    char scanCacheDir[M12_ASSET_DATA_DIR_CAPACITY];
+    char scanCachePath[M12_ASSET_DATA_DIR_CAPACITY];
     M12_AssetStatus status;
     const M12_AssetVersionStatus* version;
     const M12_AssetRequiredFileStatus* graphics;
@@ -324,8 +305,7 @@ int main(void) {
     entries[1].name = kDungeonEntry;
     entries[1].payload = kDungeonPayload;
     entries[1].payloadSize = sizeof(kDungeonPayload) - 1U;
-    /* The original DOS layout keeps TITLE/SWOOSH above DATA/.  This also
-     * makes the optional cache resolver prove its parent-directory walk. */
+    /* Sibling media must remain addressable without flattening the archive. */
     entries[2].name = "TITLE";
     entries[2].payload = kTitlePayload;
     entries[2].payloadSize = sizeof(kTitlePayload) - 1U;
@@ -414,56 +394,64 @@ int main(void) {
     check_int(M12_AssetStatus_GetRequiredFileCount(&status, "dm1") == 2U,
               "DM1 should still require exactly GRAPHICS.DAT and DUNGEON.DAT");
 
-    check_int(FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) &&
-              FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userDataDir, "asset-cache"),
-              "asset cache root should resolve under isolated user data");
-    check_int(FSP_JoinPath(cachedGraphics, sizeof(cachedGraphics), cacheRoot,
-                           "dm1/GRAPHICS.DAT") &&
-              FSP_JoinPath(cachedDungeon, sizeof(cachedDungeon), cacheRoot,
-                           "dm1/DUNGEON.DAT") &&
-              FSP_JoinPath(cachedTitle, sizeof(cachedTitle), cacheRoot,
-                           "dm1/TITLE") &&
-              FSP_JoinPath(cachedSwoosh, sizeof(cachedSwoosh), cacheRoot,
-                           "dm1/SWOOSH"),
-              "expected DM1 cached DAT paths should resolve");
     check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm1"),
-                     cacheRoot) == 0,
-              "DM1 runtime data root should point at the ordinary asset cache");
+                     zipPath) == 0,
+              "DM1 runtime data root should remain the original ZIP container");
 
     check_int(graphics && graphics->matched &&
                   strcmp(graphics->matchedHash, graphicsMd5) == 0 &&
-                  path_has_cache_leaf(graphics->matchedPath, cacheRoot,
-                                      "dm1", "GRAPHICS.DAT"),
-              "required GRAPHICS receipt should be materialized to dm1/GRAPHICS.DAT");
+                  path_has_virtual_entry(graphics->matchedPath, kZipName,
+                                         kGraphicsEntry),
+              "required GRAPHICS receipt should retain its original ZIP member");
     check_int(dungeon && dungeon->matched &&
                   strcmp(dungeon->matchedHash, dungeonMd5) == 0 &&
-                  path_has_cache_leaf(dungeon->matchedPath, cacheRoot,
-                                      "dm1", "DUNGEON.DAT"),
-              "required DUNGEON receipt should be materialized to dm1/DUNGEON.DAT");
+                  path_has_virtual_entry(dungeon->matchedPath, kZipName,
+                                         kDungeonEntry),
+              "required DUNGEON receipt should retain its original ZIP member");
     check_int(graphics && strcmp(graphics->label, "GRAPHICS.DAT") == 0,
-              "materialized graphics leaf should come from the required-file label");
+              "graphics receipt should retain its required-file label");
     check_int(dungeon && strcmp(dungeon->label, "DUNGEON.DAT") == 0,
-              "materialized dungeon leaf should come from the required-file label");
-    check_int(file_matches_payload(cachedGraphics, kGraphicsPayload,
-                                   sizeof(kGraphicsPayload) - 1U),
-              "cached GRAPHICS.DAT should contain the hash-matched ZIP payload");
-    check_int(file_matches_payload(cachedDungeon, kDungeonPayload,
-                                   sizeof(kDungeonPayload) - 1U),
-              "cached DUNGEON.DAT should contain the hash-matched ZIP payload");
-    check_int(file_matches_payload(cachedTitle, kTitlePayload,
-                                   sizeof(kTitlePayload) - 1U),
-              "cached TITLE should come from the original-layout parent directory");
-    check_int(file_matches_payload(cachedSwoosh, kSwooshPayload,
-                                   sizeof(kSwooshPayload) - 1U),
-              "cached SWOOSH should come from the original-layout parent directory");
+              "dungeon receipt should retain its required-file label");
+    check_int(graphics && virtual_path_matches_payload(
+                  graphics->matchedPath, kGraphicsPayload,
+                  sizeof(kGraphicsPayload) - 1U),
+              "GRAPHICS should be read directly from its ZIP member into RAM");
+    check_int(dungeon && virtual_path_matches_payload(
+                  dungeon->matchedPath, kDungeonPayload,
+                  sizeof(kDungeonPayload) - 1U),
+              "DUNGEON should be read directly from its ZIP member into RAM");
+    check_int(snprintf(titlePath, sizeof(titlePath), "%s::TITLE", zipPath) > 0 &&
+                  virtual_path_matches_payload(titlePath, kTitlePayload,
+                                               sizeof(kTitlePayload) - 1U),
+              "TITLE should be read directly from its ZIP member into RAM");
+    check_int(snprintf(swooshPath, sizeof(swooshPath), "%s::SWOOSH", zipPath) > 0 &&
+                  virtual_path_matches_payload(swooshPath, kSwooshPayload,
+                                               sizeof(kSwooshPayload) - 1U),
+              "SWOOSH should be read directly from its ZIP member into RAM");
 
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
     (void)test_setenv("FIRESTAFF_DATA", NULL);
+    /* The fixture is only an archive-reader contract and must not accumulate
+     * test media on disk after a run.  All generated files are explicit
+     * leaves under the private build-directory fixture root. */
+    (void)remove(zipPath);
+    (void)remove(graphicsPath);
+    (void)remove(dungeonPath);
+    (void)remove(dataRoot);
+    if (FSP_JoinPath(firestaffDir, sizeof(firestaffDir), home, ".firestaff") &&
+        FSP_JoinPath(scanCacheDir, sizeof(scanCacheDir), firestaffDir, "cache") &&
+        FSP_JoinPath(scanCachePath, sizeof(scanCachePath), scanCacheDir,
+                     "asset_scan_cache.dat")) {
+        (void)remove(scanCachePath);
+        (void)remove(scanCacheDir);
+        (void)remove(firestaffDir);
+    }
+    (void)remove(home);
     if (failures) {
         fprintf(stderr, "%d failure(s), assertions=%d\n", failures, assertions);
         return 1;
     }
-    printf("ok: DM1 PC 3.4 archive media receipt hashes materialize GRAPHICS/DUNGEON (%d assertions)\n",
+    printf("ok: DM1 PC 3.4 archive media receipts retain source ZIP members (%d assertions)\n",
            assertions);
     return 0;
 }

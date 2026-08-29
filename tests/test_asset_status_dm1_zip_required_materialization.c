@@ -1,8 +1,8 @@
 /*
  * tests/test_asset_status_dm1_zip_required_materialization.c
  *
- * Focused asset-scanner / asset-cache regression for a NESTED DEFLATED
- * ZIP entry materialized into the Firestaff asset cache.
+ * Focused asset-scanner / direct-RAM-reader regression for a nested,
+ * deflated ZIP entry.
  *
  * What this gate proves:
  *   1. The recursive hash scanner walks a ZIP and recognizes a DEFLATED
@@ -10,17 +10,10 @@
  *      ("nested/inner/level1/level2/GRAPHICS.DAT"). It must report
  *      the match as a virtual container path of the form
  *      "<archive>.zip::<nested/inner/level1/level2/GRAPHICS.DAT>".
- *   2. The low-level `asset_extract_virtual_path()` helper, given the
- *      virtual path, inflates the deflate stream and writes a byte-
- *      identical ordinary file on disk.
- *   3. The M12 launch-time cache materialization rewrites the matched
- *      path of every required file to an ORDINARY file path inside
- *      the Firestaff asset cache
- *      (<userDataDir>/asset-cache/<gameId>/<label>), so the runtime no
- *      longer needs to understand virtual container paths.
- *   4. The DM1 launch handoff path can open the materialized files via
- *      <runtimeDataDir>/dm1/GRAPHICS.DAT and
- *      <runtimeDataDir>/dm1/DUNGEON.DAT, matching the M11 DM1 scan root.
+ *   2. `asset_read_path_alloc()` inflates that virtual member directly into
+ *      bounded RAM without creating game-data files on disk.
+ *   3. M12 preserves the original ZIP as its runtime owner and preserves
+ *      every required asset as a virtual member path.
  *
  * The fixture packs two entries in one ZIP so DM1 (which has two
  * required-files rows, graphics + dungeon) can be reported available:
@@ -29,7 +22,7 @@
  *     is also matched and the version reports available).
  * When zlib is available both entries are method=8; when zlib is not
  * available the test falls back to method=0 (stored) for both so the
- * cache-materialization contract still gets exercised end-to-end.
+ * direct-reader contract still gets exercised end-to-end.
  *
  * Source-locked against the existing asset-loader module:
  *   - src/shared/asset_find_by_hash.c
@@ -37,14 +30,10 @@
  *         uncompressed entry, gated by FIRESTAFF_HAS_ZLIB)
  *       * scan_zip_by_md5 (walks central directory, picks the best
  *         entry name that hashes to the requested MD5)
- *       * zip_deflated_entry_extract / zip_extract_entry_to_path
- *         (inflate-and-write, also gated by FIRESTAFF_HAS_ZLIB)
- *       * asset_extract_virtual_path (the public dispatcher)
+ *       * asset_read_path_alloc (the bounded virtual-member reader)
  *   - src/shared/asset_status_m12.c
  *       * m12_path_is_virtual_asset (detects "::" in matched paths)
- *       * m12_materialize_required_file (virtual -> ordinary copy)
- *       * m12_materialize_runtime_cache_for_game (cache layout under
- *         <userDataDir>/asset-cache/<gameId>/<label>)
+ *       * m12_publish_source_runtime_root (original container handoff)
  *
  * Test is data-free: it synthesizes its own ZIP and uses the testing-only
  * M12_AssetStatus_TestSetDm1MultilanguageSyntheticHashes helper to
@@ -107,7 +96,7 @@ static int make_isolated_home(char* out, size_t outSize) {
     }
     return FSP_CreateDirectoryRecursive(out);
 #else
-    char templatePath[] = "/tmp/firestaff-zip-nested-deflate-XXXXXX";
+    char templatePath[] = "./firestaff-zip-nested-deflate-XXXXXX";
     char* made = mkdtemp(templatePath);
     if (!made) {
         return 0;
@@ -161,25 +150,15 @@ static int write_payload_file(const char* path,
 
 /* Compare a file on disk to an in-memory payload. Reads the file fully and
  * compares byte-for-byte. */
-static int file_matches_payload(const char* path,
+static int virtual_path_matches_payload(const char* path,
                                 const unsigned char* payload,
                                 size_t payloadSize) {
-    FILE* fp = fopen(path, "rb");
-    unsigned char* buf;
-    size_t n;
-    int match;
-    if (!fp) {
-        return 0;
-    }
-    buf = (unsigned char*)malloc(payloadSize ? payloadSize : 1U);
-    if (!buf) {
-        fclose(fp);
-        return 0;
-    }
-    n = fread(buf, 1U, payloadSize, fp);
-    fclose(fp);
-    match = (n == payloadSize) && (memcmp(buf, payload, payloadSize) == 0);
-    free(buf);
+    uint8_t* bytes = NULL;
+    size_t byteCount = 0U;
+    int match = asset_read_path_alloc(path, &bytes, &byteCount) && bytes &&
+                byteCount == payloadSize &&
+                memcmp(bytes, payload, payloadSize) == 0;
+    free(bytes);
     return match;
 }
 
@@ -188,37 +167,6 @@ static int path_has_virtual_entry(const char* path,
                                   const char* entryName) {
     return path && strstr(path, zipName) && strstr(path, "::") &&
            strstr(path, entryName);
-}
-
-static int path_has_cache_leaf(const char* path,
-                               const char* cacheRoot,
-                               const char* gameId,
-                               const char* leaf) {
-    return path && strstr(path, cacheRoot) && strstr(path, gameId) &&
-           strstr(path, leaf) && !strstr(path, "::");
-}
-
-static int runtime_cache_file_matches_payload(
-    const M12_AssetStatus* status,
-    const char* gameId,
-    const char* leaf,
-    const unsigned char* payload,
-    size_t payloadSize) {
-    char gameLeaf[M12_ASSET_DATA_DIR_CAPACITY];
-    char runtimePath[M12_ASSET_DATA_DIR_CAPACITY];
-    const char* runtimeRoot = M12_AssetStatus_GetRuntimeDataDir(status, gameId);
-    if (!runtimeRoot || runtimeRoot[0] == '\0' || !gameId || !leaf ||
-        !payload) {
-        return 0;
-    }
-    if (snprintf(gameLeaf, sizeof(gameLeaf), "%s/%s", gameId, leaf) >=
-        (int)sizeof(gameLeaf)) {
-        return 0;
-    }
-    if (!FSP_JoinPath(runtimePath, sizeof(runtimePath), runtimeRoot, gameLeaf)) {
-        return 0;
-    }
-    return file_matches_payload(runtimePath, payload, payloadSize);
 }
 
 /* Internal: deflate a payload into a freshly malloc()'d buffer and return
@@ -431,13 +379,11 @@ int main(void) {
     char graphicsMd5[M12_ASSET_MD5_CAPACITY];
     char dungeonMd5[M12_ASSET_MD5_CAPACITY];
     char foundPath[ASSET_PATH_MAX];
-    char userDataDir[M12_ASSET_DATA_DIR_CAPACITY];
-    char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
-    char cachedGraphics[M12_ASSET_DATA_DIR_CAPACITY];
-    char cachedDungeon[M12_ASSET_DATA_DIR_CAPACITY];
-    char cachedTitle[M12_ASSET_DATA_DIR_CAPACITY];
-    char cachedSwoosh[M12_ASSET_DATA_DIR_CAPACITY];
-    char extractedPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char titlePath[ASSET_PATH_MAX];
+    char swooshPath[ASSET_PATH_MAX];
+    char firestaffDir[M12_ASSET_DATA_DIR_CAPACITY];
+    char scanCacheDir[M12_ASSET_DATA_DIR_CAPACITY];
+    char scanCachePath[M12_ASSET_DATA_DIR_CAPACITY];
     M12_AssetStatus status;
     const M12_AssetRequiredFileStatus* required;
     const M12_AssetVersionStatus* version;
@@ -543,36 +489,9 @@ int main(void) {
                   "entry name in the virtual path");
     }
 
-    /* Layer 2: low-level virtual-path extraction.
-     * asset_extract_virtual_path() must inflate the deflate stream (or
-     * copy the stored bytes when zlib is absent) and write a byte-
-     * identical ordinary file. This is the helper that the M12 cache
-     * materializer uses internally. */
-    if (!FSP_JoinPath(extractedPath, sizeof(extractedPath), home,
-                      "extracted.bin")) {
-        fprintf(stderr, "extracted path setup failed\n");
-        return 1;
-    }
-    /* Remove any previous file so we know we wrote it. */
-    remove(extractedPath);
-    check_int(asset_extract_virtual_path(foundPath, extractedPath),
-              "asset_extract_virtual_path should succeed for nested "
-              "deflated virtual path");
-    check_int(file_matches_payload(extractedPath, kGraphicsPayload,
-                                   graphicsSize),
-              "asset_extract_virtual_path output must be byte-identical "
-              "to the original nested entry payload");
-
-    /* Layer 3: M12 cache materialization.
-     * Register the synthesized MD5 as the canonical DM1 graphics hash,
-     * scan, and verify:
-     *   - DM1 is reported as available (both required files matched),
-     *   - the version's matched path is the ORIGINAL virtual path
-     *     (we want to confirm the scanner kept the nested prefix),
-     *   - the required files have been rewritten to ordinary paths under
-     *     <userDataDir>/asset-cache/dm1/<label>,
-     *   - the materialized ordinary files exist on disk and contain
-     *     exactly the bytes of the original entry. */
+    /* Layer 2: launch admission keeps the verified ZIP members intact.
+     * Nested DEFLATE data is read through the bounded RAM reader; normal
+     * Firestaff builds must not create a flattened asset-cache game tree. */
     M12_AssetStatus_TestSetDm1MultilanguageSyntheticHashes(graphicsMd5, dungeonMd5);
     M12_AssetStatus_TestSetDm2SyntheticHashes(NULL, NULL);
     M12_AssetStatus_TestSetCsbSyntheticHashes(NULL, NULL);
@@ -596,125 +515,70 @@ int main(void) {
               "M12 version match should preserve the original nested ZIP "
               "virtual path (before materialization)");
 
-    check_int(FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) &&
-              FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userDataDir,
-                           "asset-cache") &&
-              FSP_JoinPath(cachedGraphics, sizeof(cachedGraphics),
-                           cacheRoot, "dm1/GRAPHICS.DAT") &&
-              FSP_JoinPath(cachedDungeon, sizeof(cachedDungeon),
-                           cacheRoot, "dm1/DUNGEON.DAT") &&
-              FSP_JoinPath(cachedTitle, sizeof(cachedTitle),
-                           cacheRoot, "dm1/TITLE") &&
-              FSP_JoinPath(cachedSwoosh, sizeof(cachedSwoosh),
-                           cacheRoot, "dm1/SWOOSH"),
-              "asset cache leaf paths should resolve");
     check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm1"),
-                     cacheRoot) == 0,
-              "DM1 runtime data root should point at the asset cache root");
+                     zipPath) == 0,
+              "DM1 runtime data root should remain the original ZIP container");
 
     required = M12_AssetStatus_GetRequiredFile(&status, "dm1", 0U);
     check_int(required && required->matched,
               "DM1 graphics required file should be matched after scan");
-    check_int(path_has_cache_leaf(required->matchedPath, cacheRoot,
-                                  "dm1", "GRAPHICS.DAT"),
-              "DM1 graphics required file should be materialized into the "
-              "ordinary-file launch cache path under asset-cache/dm1/");
-    check_int(file_matches_payload(cachedGraphics, kGraphicsPayload,
-                                   graphicsSize),
-              "cached GRAPHICS.DAT under asset-cache/dm1/ must be "
-              "byte-identical to the original nested deflated entry "
-              "payload");
+    check_int(path_has_virtual_entry(required->matchedPath, kZipName,
+                                     kGraphicsEntry),
+              "DM1 graphics required file should retain its nested ZIP member");
+    check_int(virtual_path_matches_payload(required->matchedPath,
+                                           kGraphicsPayload, graphicsSize),
+              "nested GRAPHICS payload should be read directly into RAM");
 
     required = M12_AssetStatus_GetRequiredFile(&status, "dm1", 1U);
     check_int(required && required->matched &&
-              path_has_cache_leaf(required->matchedPath, cacheRoot,
-                                  "dm1", "DUNGEON.DAT"),
-              "DM1 dungeon required file should be materialized into the "
-              "ordinary-file launch cache path under asset-cache/dm1/");
-    check_int(file_matches_payload(cachedDungeon, kDungeonPayload,
-                                   dungeonSize),
-              "cached DUNGEON.DAT under asset-cache/dm1/ must be "
-              "byte-identical to the original deflated entry payload");
-    check_int(file_matches_payload(cachedTitle, kTitlePayload, titleSize),
-              "cached optional TITLE under asset-cache/dm1/ must be "
-              "byte-identical to the sibling ZIP entry payload");
-    check_int(file_matches_payload(cachedSwoosh, kSwooshPayload, swooshSize),
-              "cached optional SWOOSH under asset-cache/dm1/ must be "
-              "byte-identical to the sibling ZIP entry payload");
+              path_has_virtual_entry(required->matchedPath, kZipName,
+                                     kDungeonEntry),
+              "DM1 dungeon required file should retain its ZIP member");
+    check_int(required && virtual_path_matches_payload(required->matchedPath,
+                                                       kDungeonPayload,
+                                                       dungeonSize),
+              "DUNGEON payload should be read directly into RAM");
+    check_int(snprintf(titlePath, sizeof(titlePath), "%s::%s", zipPath,
+                       kTitleEntry) > 0 &&
+              virtual_path_matches_payload(titlePath, kTitlePayload, titleSize),
+              "TITLE sibling should be read directly into RAM");
+    check_int(snprintf(swooshPath, sizeof(swooshPath), "%s::%s", zipPath,
+                       kSwooshEntry) > 0 &&
+              virtual_path_matches_payload(swooshPath, kSwooshPayload, swooshSize),
+              "SWOOSH sibling should be read directly into RAM");
 
-    /* M11's DM1 handoff probes <runtimeDataDir>/dm1 first (see
-     * m11_game_view.c m11_resolve_builtin_dungeon_path), so this asserts the cache
-     * root returned by M12 is sufficient for ordinary fopen() based launch
-     * code without any virtual-path awareness. */
-    check_int(runtime_cache_file_matches_payload(&status, "dm1",
-                                                 "GRAPHICS.DAT",
-                                                 kGraphicsPayload,
-                                                 graphicsSize),
-              "DM1 launch lookup should open runtimeDataDir/dm1/GRAPHICS.DAT "
-              "as an ordinary materialized cache file");
-    check_int(runtime_cache_file_matches_payload(&status, "dm1",
-                                                 "DUNGEON.DAT",
-                                                 kDungeonPayload,
-                                                 dungeonSize),
-              "DM1 launch lookup should open runtimeDataDir/dm1/DUNGEON.DAT "
-              "as an ordinary materialized cache file");
-    check_int(runtime_cache_file_matches_payload(&status, "dm1",
-                                                 "TITLE",
-                                                 kTitlePayload,
-                                                 titleSize),
-              "DM1 full startup should open runtimeDataDir/dm1/TITLE "
-              "as an ordinary materialized cache file");
-    check_int(runtime_cache_file_matches_payload(&status, "dm1",
-                                                 "SWOOSH",
-                                                 kSwooshPayload,
-                                                 swooshSize),
-              "DM1 full startup should open runtimeDataDir/dm1/SWOOSH "
-              "as an ordinary materialized cache file");
-
-    /* The cache leafs must NOT contain the virtual "::" separator after
-     * materialization; the runtime expects to open them like any other
-     * ordinary files. */
-    {
-        const M12_AssetRequiredFileStatus* g = M12_AssetStatus_GetRequiredFile(
-            &status, "dm1", 0U);
-        const M12_AssetRequiredFileStatus* d = M12_AssetStatus_GetRequiredFile(
-            &status, "dm1", 1U);
-        check_int(g && !strstr(g->matchedPath, "::"),
-                  "materialized GRAPHICS cache leaf must not retain the "
-                  "virtual container separator");
-        check_int(d && !strstr(d->matchedPath, "::"),
-                  "materialized DUNGEON cache leaf must not retain the "
-                  "virtual container separator");
-    }
-
-    /* A user can deliberately select the already materialized cache as the
-     * data root.  That makes each required-file source path identical to its
-     * destination path on the next scan.  It is a transport regression, not
-     * game content: the fixture remains only the scanner's test-only hash
-     * carrier.  The real-data Amiga CSB lane exercises the same cache shape.
-     * A re-scan must keep the authenticated bytes intact instead of opening
-     * GRAPHICS.DAT with "wb" and truncating its own source. */
-    M12_AssetStatus_Scan(&status, cacheRoot);
+    /* A repeat scan must preserve the ZIP-backed owner and bytes. */
+    M12_AssetStatus_Scan(&status, dataRoot);
     check_int(M12_AssetStatus_GameAvailable(&status, "dm1"),
-              "re-scanning a materialized cache must retain DM1 availability");
-    check_int(file_matches_payload(cachedGraphics, kGraphicsPayload,
-                                   graphicsSize),
-              "re-scanning a materialized cache must not truncate GRAPHICS.DAT");
-    check_int(file_matches_payload(cachedDungeon, kDungeonPayload,
-                                   dungeonSize),
-              "re-scanning a materialized cache must not truncate DUNGEON.DAT");
+              "re-scanning the original ZIP must retain DM1 availability");
+    check_int(virtual_path_matches_payload(foundPath, kGraphicsPayload,
+                                           graphicsSize),
+              "re-scanning must not change the nested GRAPHICS payload");
 
     M12_AssetStatus_TestSetDm1MultilanguageSyntheticHashes(NULL, NULL);
     (void)test_setenv("FIRESTAFF_DATA", NULL);
+    (void)remove(zipPath);
+    (void)remove(graphicsPath);
+    (void)remove(dungeonPath);
+    (void)remove(dataRoot);
+    if (FSP_JoinPath(firestaffDir, sizeof(firestaffDir), home, ".firestaff") &&
+        FSP_JoinPath(scanCacheDir, sizeof(scanCacheDir), firestaffDir, "cache") &&
+        FSP_JoinPath(scanCachePath, sizeof(scanCachePath), scanCacheDir,
+                     "asset_scan_cache.dat")) {
+        (void)remove(scanCachePath);
+        (void)remove(scanCacheDir);
+        (void)remove(firestaffDir);
+    }
+    (void)remove(home);
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);
         return 1;
     }
 #ifdef FIRESTAFF_HAS_ZLIB
-    puts("ok: nested deflated ZIP entry virtual path + asset cache leaf");
+    puts("ok: nested deflated ZIP entry virtual path + direct RAM reader");
 #else
-    puts("ok: nested ZIP entry virtual path + asset cache leaf (stored)");
+    puts("ok: nested ZIP entry virtual path + direct RAM reader (stored)");
 #endif
     return 0;
 }

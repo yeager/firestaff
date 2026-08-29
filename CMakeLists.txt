@@ -26109,10 +26109,9 @@ endif()
         COMMAND test_dm1_pc34_archive_media_receipt
     )
 
-    # -- DM1 archive-backed required-file cache materialization --
-    # Synthetic ZIP with required GRAPHICS.DAT and DUNGEON.DAT entries.
-    # Pins the DM1-specific M12 required-file handoff into
-    # <userDataDir>/asset-cache/dm1/ ordinary files before launch.
+    # -- DM1 archive-backed required-file direct-RAM reader --
+    # Synthetic ZIP fixture with required GRAPHICS.DAT and DUNGEON.DAT
+    # entries.  Pins virtual-member provenance and no-extraction handoff.
     add_executable(test_asset_status_dm1_zip_required_materialization
         tests/test_asset_status_dm1_zip_required_materialization.c
         src/shared/asset_status_m12.c
