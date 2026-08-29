@@ -1393,11 +1393,11 @@ static void test_real_raw_save(const char *path, const char *root,
               (owner_think_timer.timer_type == 0x21 ||
                owner_think_timer.timer_type == 0x22)),
               "SKSave owner-bound think timer queues against the private timer owner");
-        CHECK(!owner_ok || dungeon_layout_ok &&
+        CHECK(!owner_ok || (dungeon_layout_ok &&
                   game_load_owner.source_dungeon_valid &&
                   game_load_owner.source_dungeon.record_graph_complete &&
                   game_load_owner.source_dungeon_tile_layout_valid &&
-                  game_load_owner.source_dungeon_tile_layout_hash != 0u,
+                  game_load_owner.source_dungeon_tile_layout_hash != 0u),
               "SKSave binds the authenticated DUNGEON.DAT layout by exact map geometry");
         CHECK(!owner_ok || !dungeon_layout_ok || current_map_sound_ok,
               "SKSave derives current-map DB3 0x7e selectors before binding SOUND9");
@@ -1453,15 +1453,15 @@ static void test_real_raw_save(const char *path, const char *root,
                    missile_timer_candidate.timer_slot >= 0 &&
                    missile_timer_candidate.missile_record >= 0),
               "SKSave 0x1e dispatch admission keeps timer, DB14 handle and tile owner coupled");
-        CHECK(!owner_ok ||
+        CHECK(!owner_ok || (
                   dm2_v1_sksave_game_load_owner_copy_source_savegames1(
                       &game_load_owner, source_savegames1_copy) &&
                   memcmp(source_savegames1_copy,
                          game_load_owner.source_savegames1,
-                         sizeof(source_savegames1_copy)) == 0,
+                         sizeof(source_savegames1_copy)) == 0),
               "SKSave exports an immutable source savegames1 snapshot for future Resume commit");
         memset(&candidate_admission, 0, sizeof(candidate_admission));
-        CHECK(!owner_ok ||
+        CHECK(!owner_ok || (
                   dm2_v1_sksave_game_load_owner_runtime_candidate_admission(
                       &game_load_owner, &candidate_admission) &&
                   candidate_admission.valid &&
@@ -1479,7 +1479,7 @@ static void test_real_raw_save(const char *path, const char *root,
                   candidate_admission.source_caii_ready ==
                       game_load_owner.caii_slots_valid &&
                   candidate_admission.source_sound_ready == current_map_sound_ok &&
-                  !candidate_admission.runtime_candidate_ready,
+                  !candidate_admission.runtime_candidate_ready),
               "SKSave runtime-candidate admission exposes CAII and sound blockers explicitly");
         CHECK((special_ok ? !recycler_boundary_ok :
                   recycler_boundary_ok ==

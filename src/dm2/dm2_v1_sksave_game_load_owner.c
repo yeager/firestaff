@@ -474,7 +474,6 @@ int dm2_v1_sksave_game_load_owner_caii_admission(
     if (out_receipt) *out_receipt = receipt;
     if (!owner || !owner->valid || !owner->map_owner.valid ||
         !owner->record_pools.valid || !owner->caii_source.valid ||
-        owner->state.timer_count < 0 ||
         owner->state.timer_count > DM2_V1_SAVE_TIMER_MAX) {
         return 0;
     }
@@ -802,8 +801,7 @@ int dm2_v1_sksave_game_load_owner_materialize_dynamic_caii(
     /* GAME_LOAD's SOUND9 tail binds the spatial gate before RESET_CAII.
      * SKSAVE already authenticated the current party map and the parsed
      * dungeon offsets, so retain that source-derived context on the bridge. */
-    if (owner->state.party_map < 0 ||
-        owner->state.party_map >= owner->source_dungeon.level_count ||
+    if (owner->state.party_map >= owner->source_dungeon.level_count ||
         owner->source_dungeon.map_offset_x[owner->state.party_map] < 0 ||
         owner->source_dungeon.map_offset_y[owner->state.party_map] < 0) {
         goto done;

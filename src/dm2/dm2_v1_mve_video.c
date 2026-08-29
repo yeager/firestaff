@@ -133,7 +133,10 @@ static int mve_opcode_10(DM2_V1_MveVideo *v, DM2_MveReader *r, unsigned bx, unsi
     if(p[0]<=p[1]) {
         for(y=0u;y<16u;++y) { if(!(y&3u)){if(y)for(x=0u;x<4u;++x)if(!mve_get8(r,&p[x]))return 0;if(!mve_get32(r,&f32))return 0;}for(x=0u;x<4u;++x){mve_put(v,bx+(y/8u)*4u+x,by+(y%8u),p[f32&3u]);f32>>=2u;} }
     } else {
-        if(!mve_get64(r,&f64))return 0;for(x=0u;x<4u;++x)if(!mve_get8(r,&p[4u+x]))return 0;
+        if (!mve_get64(r, &f64)) return 0;
+        for (x = 0u; x < 4u; ++x) {
+            if (!mve_get8(r, &p[4u + x])) return 0;
+        }
         for(y=0u;y<16u;++y){int vert=p[4]<=p[5];for(x=0u;x<4u;++x){mve_put(v,bx+(vert?(y/8u)*4u:((y&1u)*4u))+x,by+(vert?(y%8u):(y/2u)),p[f64&3u]);f64>>=2u;}if(y==7u){memcpy(p,p+4u,4u);if(!mve_get64(r,&f64))return 0;}}
     }
     return 1;
@@ -141,7 +144,7 @@ static int mve_opcode_10(DM2_V1_MveVideo *v, DM2_MveReader *r, unsigned bx, unsi
 
 static int mve_decode_block(DM2_V1_MveVideo *v, DM2_MveReader *r, uint8_t op, unsigned bx, unsigned by)
 {
-    uint8_t b,a; unsigned x,y;
+    uint8_t b = 0u, a = 0u; unsigned x,y;
     switch(op) {
     case 0u:return mve_copy(v,v->last,bx,by,0,0);
     case 1u:return mve_copy(v,v->second_last,bx,by,0,0);

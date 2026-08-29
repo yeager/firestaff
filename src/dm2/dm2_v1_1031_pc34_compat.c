@@ -340,6 +340,7 @@ void dm2_v1_1031_lookup_event(
     const DM2_V1_1031_Www *entries)
 {
     if (cb == NULL) return;
+    (void)state;
 
     cb->set_event_unk09(cb->ctx, -1);
 
