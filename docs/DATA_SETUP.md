@@ -52,6 +52,12 @@ includes it. The PC multilingual release can additionally provide
 `DUNGEONF.DAT` and `DUNGEONG.DAT` for French and German dungeon text; the
 English `DUNGEON.DAT` remains the base file.
 
+For PC 3.4, Firestaff binds `SONG.DAT` only as the sibling of the admitted
+`GRAPHICS.DAT` source. This works for a member in a ZIP archive as well as a
+loose file, reads it in memory, and fails closed to silence if that exact
+installation has no compatible companion. It never borrows music from another
+data directory or extracts game data to disk.
+
 ### Chaos Strikes Back
 
 Original title, animation and utility media are optional to the data gate.

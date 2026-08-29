@@ -387,6 +387,21 @@ static int m11_file_exists(const char* path) {
     return 1;
 }
 
+static int m11_media_path_exists(const char* path) {
+    uint8_t* bytes = NULL;
+    size_t byteCount = 0u;
+    int readable;
+
+    if (!path || !path[0]) return 0;
+    if (strstr(path, "::") == NULL) return m11_file_exists(path);
+    /* Virtual archive members have no host filesystem entry.  Probe them
+     * through the shared reader and immediately release its in-memory view;
+     * this is a read-only admission check, never an extraction. */
+    readable = asset_read_path_alloc(path, &bytes, &byteCount) && bytes;
+    free(bytes);
+    return readable;
+}
+
 static unsigned int m11_read_le16(const unsigned char* p) {
     return ((unsigned int)p[0]) | ((unsigned int)p[1] << 8);
 }
@@ -671,16 +686,16 @@ static const char* m11_find_song_dat_path(char* homeBuf, size_t homeBufBytes) {
     const char* dm1DataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
     const char* dataRoot = getenv("FIRESTAFF_DATA");
     const char* home;
-    if (m11_file_exists(envPath)) return envPath;
-    if (m11_file_exists(legacyEnvPath)) return legacyEnvPath;
-    if (m11_file_exists("SONG.DAT")) return "SONG.DAT";
+    if (m11_media_path_exists(envPath)) return envPath;
+    if (m11_media_path_exists(legacyEnvPath)) return legacyEnvPath;
+    if (m11_media_path_exists("SONG.DAT")) return "SONG.DAT";
     if (dm1DataDir && homeBuf && homeBufBytes > 0) {
         int n = snprintf(homeBuf, homeBufBytes, "%s/DATA/SONG.DAT", dm1DataDir);
-        if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+        if (n > 0 && (size_t)n < homeBufBytes && m11_media_path_exists(homeBuf)) return homeBuf;
         n = snprintf(homeBuf, homeBufBytes, "%s/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA/SONG.DAT", dm1DataDir);
-        if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+        if (n > 0 && (size_t)n < homeBufBytes && m11_media_path_exists(homeBuf)) return homeBuf;
         n = snprintf(homeBuf, homeBufBytes, "%s/fmtowns_iso/DATA/SONG.DAT", dm1DataDir);
-        if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+        if (n > 0 && (size_t)n < homeBufBytes && m11_media_path_exists(homeBuf)) return homeBuf;
     }
     if (dataRoot && homeBuf && homeBufBytes > 0) {
         int n = snprintf(homeBuf, homeBufBytes, "%s/dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA/SONG.DAT", dataRoot);
@@ -816,9 +831,19 @@ static int m11_sound_append(M11_SoundBuffer* dst, const M11_SoundBuffer* src) {
     return 1;
 }
 
-static void m11_try_load_original_song(M11_AudioState* state) {
-    char homePath[1024];
-    const char* path;
+static void m11_clear_original_song(M11_AudioState* state) {
+    if (!state) return;
+    m11_sound_free(&state->titleMusic);
+    state->originalSongAvailable = 0;
+    state->originalSongDatPath[0] = '\0';
+    state->originalSongPartCount = 0;
+    state->originalSongSequenceWordCount = 0;
+    state->originalSongPlayablePartCount = 0;
+    state->originalSongLoopTargetPart = 0;
+}
+
+static int m11_load_original_song_path(M11_AudioState* state,
+                                       const char* path) {
     V1_SongManifest manifest;
     V1_SongSequence seq;
     V1_SndBuffer raw[V1_SONG_DAT_ITEM_COUNT];
@@ -826,15 +851,21 @@ static void m11_try_load_original_song(M11_AudioState* state) {
     char err[256];
     unsigned int i;
     int ok = 1;
-    if (!state) return;
-    if (getenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SONG")) return;
-    path = m11_find_song_dat_path(homePath, sizeof(homePath));
-    if (!path) return;
+    if (!state || !path || !path[0]) return 0;
+    /* A startup receipt must never leave the earlier default SONG.DAT active
+     * when the selected source has no compatible companion. */
+    m11_clear_original_song(state);
     snprintf(state->originalSongDatPath, sizeof(state->originalSongDatPath),
              "%s", path);
-    if (!V1_Song_ParseManifest(path, &manifest, err, sizeof(err))) return;
-    if (!V1_Song_DecodeSequence(path, &manifest, &seq, err, sizeof(err))) return;
-    if (!seq.hasEndMarker || seq.wordCount == 0) return;
+    if (!V1_Song_ParseManifest(path, &manifest, err, sizeof(err))) {
+        state->originalSongDatPath[0] = '\0';
+        return 0;
+    }
+    if (!V1_Song_DecodeSequence(path, &manifest, &seq, err, sizeof(err)) ||
+        !seq.hasEndMarker || seq.wordCount == 0) {
+        state->originalSongDatPath[0] = '\0';
+        return 0;
+    }
 
     memset(raw, 0, sizeof(raw));
     memset(part, 0, sizeof(part));
@@ -879,13 +910,18 @@ static void m11_try_load_original_song(M11_AudioState* state) {
         state->originalSongLoopTargetPart <= V1_SONG_DAT_LAST_SND8_INDEX) {
         state->originalSongAvailable = 1;
     } else {
-        m11_sound_free(&state->titleMusic);
-        state->originalSongAvailable = 0;
-        state->originalSongPartCount = 0;
-        state->originalSongSequenceWordCount = 0;
-        state->originalSongPlayablePartCount = 0;
-        state->originalSongLoopTargetPart = 0;
+        m11_clear_original_song(state);
     }
+    return state->originalSongAvailable;
+}
+
+static void m11_try_load_original_song(M11_AudioState* state) {
+    char homePath[1024];
+    const char* path;
+    if (!state || getenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SONG")) return;
+    path = m11_find_song_dat_path(homePath, sizeof(homePath));
+    if (!path) return;
+    (void)m11_load_original_song_path(state, path);
 }
 
 static int m11_load_original_snd3_path(M11_AudioState* state,
@@ -2012,6 +2048,14 @@ int M11_Audio_BindOriginalSnd3Path(M11_AudioState* state,
     state->originalSnd3LoadedCount = 0;
     state->originalSnd3Available = 0;
     return m11_load_original_snd3_path(state, graphicsDatPath);
+}
+
+int M11_Audio_BindOriginalSongPath(M11_AudioState* state,
+                                   const char* songDatPath) {
+    if (!state || !state->initialized) return 0;
+    m11_clear_original_song(state);
+    if (getenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SONG")) return 0;
+    return m11_load_original_song_path(state, songDatPath);
 }
 
 int M11_Audio_SoundPackAvailable(const M11_AudioState* state) {

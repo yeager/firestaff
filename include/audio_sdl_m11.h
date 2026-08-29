@@ -258,6 +258,12 @@ int M11_Audio_SoundPackAvailable(const M11_AudioState* state);
  * when the launcher selected a different verified installation. */
 int M11_Audio_BindOriginalSnd3Path(M11_AudioState* state,
                                    const char* graphicsDatPath);
+/* Rebind DM1's PC34 SONG.DAT to the exact source path admitted alongside
+ * GRAPHICS.DAT. A failed or incompatible replacement clears the earlier
+ * default song, so a selected installation cannot inherit music from another
+ * installation. */
+int M11_Audio_BindOriginalSongPath(M11_AudioState* state,
+                                   const char* songDatPath);
 
 /* CDDA playback for FM Towns: push raw 16-bit signed LE stereo 44100Hz PCM
  * to the dedicated CDDA audio stream. Returns 1 on success, 0 if unavailable. */

@@ -59,9 +59,9 @@ int main(void) {
         ok &= expect(!M11_Audio_EmitSourceSoundIndex(&state, 0),
                      "missing source SND3 event is silent");
         ok &= expect(state.lastSoundIndex == 0 &&
-                         state.lastMarker == M11_AUDIO_MARKER_NONE &&
+                         state.lastMarker == M11_AUDIO_MARKER_DOOR &&
                          state.playedMarkerCount == markerCount,
-                     "missing source event cannot emit a procedural marker");
+                     "missing source event cannot emit or replace marker history");
         ok &= expect(!M11_Audio_EmitSourceSoundIndex(&state, -1) &&
                          state.lastSoundIndex == -1 &&
                          state.lastMarker == M11_AUDIO_MARKER_NONE,
@@ -70,6 +70,17 @@ int main(void) {
     ok &= expect(M11_Audio_OriginalSongAvailable(&state) &&
                  strcmp(state.originalSongDatPath, expectedSongPath) == 0,
                  "configured DM1 SONG.DAT is consumed");
+    ok &= expect(M11_Audio_BindOriginalSongPath(&state, expectedSongPath) &&
+                 M11_Audio_OriginalSongAvailable(&state) &&
+                 strcmp(state.originalSongDatPath, expectedSongPath) == 0,
+                 "startup receipt can bind the selected source SONG.DAT");
+    ok &= expect(!M11_Audio_BindOriginalSongPath(&state,
+                                                 "/nonexistent/SONG.DAT") &&
+                 !M11_Audio_OriginalSongAvailable(&state) &&
+                 state.originalSongDatPath[0] == '\0',
+                 "missing selected SONG.DAT clears an earlier default source");
+    ok &= expect(M11_Audio_BindOriginalSongPath(&state, expectedSongPath),
+                 "selected source SONG.DAT can be rebound after a failed receipt");
     ok &= expect(M11_Audio_PlayDm1SwshDosoundProgram(&state, program,
                                                       (int)bytes, 20u),
                  "exact source program produces the PSG stream");

@@ -6998,6 +6998,44 @@ static int m11_apply_dm1_startup_runtime_start_receipt(
 
 static int m11_dm1_load_object_names_m564(M11_GameViewState* state);
 
+static int m11_dm1_companion_song_path(const char *graphics_path,
+                                       char *song_path,
+                                       size_t song_path_size)
+{
+    static const char graphics_name[] = "GRAPHICS.DAT";
+    static const char song_name[] = "SONG.DAT";
+    size_t graphics_path_length;
+    size_t graphics_name_length = sizeof(graphics_name) - 1U;
+    size_t prefix_length;
+
+    if (!graphics_path || !song_path || song_path_size == 0U) return 0;
+    graphics_path_length = strlen(graphics_path);
+    if (graphics_path_length <= graphics_name_length ||
+        strcmp(graphics_path + graphics_path_length - graphics_name_length,
+               graphics_name) != 0) return 0;
+    prefix_length = graphics_path_length - graphics_name_length;
+    if (prefix_length + sizeof(song_name) > song_path_size) return 0;
+    memcpy(song_path, graphics_path, prefix_length);
+    memcpy(song_path + prefix_length, song_name, sizeof(song_name));
+    return 1;
+}
+
+static void m11_dm1_rebind_source_song(M11_GameViewState *state,
+                                       const char *graphics_path)
+{
+    char song_path[M11_GAME_VIEW_PATH_CAPACITY];
+
+    if (!state) return;
+    state->dm1MusicSourceBound = 0;
+    memset(&state->dm1MusicSource, 0, sizeof(state->dm1MusicSource));
+    if (!m11_dm1_companion_song_path(graphics_path, song_path,
+                                     sizeof(song_path)) ||
+        !M11_Audio_BindOriginalSongPath(&state->audioState, song_path) ||
+        !state->audioState.originalSongAvailable) return;
+    state->dm1MusicSourceBound = dm1_v1_f0740_f0743_bind_song_dat_pc34(
+        state->audioState.originalSongDatPath, &state->dm1MusicSource);
+}
+
 static int m11_apply_dm1_startup_graphics_bind_receipt(
     M11_GameViewState* state,
     const DM1_V1_StartupGraphicsBindReceipt_PC34* receipt) {
@@ -7015,6 +7053,7 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
         state->assetsAvailable = 1;
         (void)M11_Audio_BindOriginalSnd3Path(
             &state->audioState, state->assetLoader.graphicsDatPath);
+        m11_dm1_rebind_source_song(state, state->assetLoader.graphicsDatPath);
         (void)m11_dm1_load_object_names_m564(state);
         M11_Font_Init(&state->originalFont);
         if (state->assetLoader.fileState && state->assetLoader.runtimeState &&
@@ -7076,6 +7115,7 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
      * bank here instead of allowing a different default search root to win. */
     (void)M11_Audio_BindOriginalSnd3Path(
         &state->audioState, state->assetLoader.graphicsDatPath);
+    m11_dm1_rebind_source_song(state, state->assetLoader.graphicsDatPath);
     (void)m11_dm1_load_object_names_m564(state);
     M11_Font_Init(&state->originalFont);
     if (M11_Font_LoadFromGraphicsDat(
