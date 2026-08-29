@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #define CHECK(x) do { if (!(x)) { \
     fprintf(stderr, "check failed %s:%d: %s\n", __FILE__, __LINE__, #x); \
@@ -32,24 +31,15 @@ static int read_verified_mini_from_root(const char *root,
                                         size_t *out_size)
 {
     char mini_path[ASSET_PATH_MAX];
-    char temporary_path[] = "/tmp/firestaff-csb-hint-mini-XXXXXX";
-    int fd;
-    int ok;
     if (!root || !out_bytes || !out_size ||
         !asset_find_by_md5(root, "531ea104a2fbc2011ea73d11f274c57d",
                            mini_path, (int)sizeof(mini_path), 8)) {
         return 0;
     }
-    if (strstr(mini_path, "::") == NULL) {
-        return asset_read_path_alloc(mini_path, out_bytes, out_size);
-    }
-    fd = mkstemp(temporary_path);
-    if (fd < 0) return 0;
-    close(fd);
-    ok = asset_extract_virtual_path(mini_path, temporary_path) &&
-         asset_read_path_alloc(temporary_path, out_bytes, out_size);
-    remove(temporary_path);
-    return ok;
+    /* `asset_read_path_alloc` handles both loose and nested STX/ADF/ZIP
+     * paths in bounded memory.  Do not extract an original campaign save to
+     * a host temporary path merely to decode an already-supported member. */
+    return asset_read_path_alloc(mini_path, out_bytes, out_size);
 }
 
 static int test_real_atari_r1_triplet_if_staged(void)
