@@ -548,6 +548,12 @@ int main(int argc, char** argv) {
            counts.itemPixelDeltaPoses > 0 &&
            counts.groupPixelDeltaPoses > 0 &&
            counts.sensorTextPixelDeltaPoses > 0 &&
+           /* DM1's original corpus has door records on every campaign
+            * level.  The sweep already measures their source-owned pixel
+            * contribution, so make that measurement a release gate rather
+            * than allowing a future rendering regression to pass through
+            * item/group/sensor coverage alone. */
+           counts.doorPixelDeltaPoses > 0 &&
            counts.mapsTouched == (int)game.world.dungeon->header.mapCount &&
            counts.visibleThingSamples > 0 &&
            (counts.items + counts.groups + counts.doors + counts.sensors +
