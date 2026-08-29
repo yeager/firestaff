@@ -53573,6 +53573,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_inventory_gdat_real_dat
     endif()
     add_test(NAME dm2_v1_inventory_gdat_real_data
         COMMAND test_dm2_v1_inventory_gdat_real_data)
+    set_tests_properties(dm2_v1_inventory_gdat_real_data PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "dm2;dos;gdat;inventory;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_fmtowns_hud_portraits_real_data.c")
