@@ -24,7 +24,6 @@ void dm2_v1_click_item_slot(
     memset(&r, 0, sizeof(r));
     if (receipt) *receipt = r;
     if (!cb) return;
-
     if (cb->get_event_heroidx(ctx) == -1)
         return;
 
@@ -257,6 +256,9 @@ void dm2_v1_player_testing_wall(
     memset(&r, 0, sizeof(r));
     if (receipt) *receipt = r;
     if (!cb) return;
+    /* The recovered c_events call preserves this ABI argument, but the
+     * source wall branch selects only the facing square and held record. */
+    (void)param;
 
     tile_class = cb->get_facing_tile_class(ctx);
     if (tile_class != 0) /* not a wall */
@@ -934,6 +936,9 @@ int16_t dm2_v1_events_32cb_03a6(
     const DM2_V1_Events32cb03a6Callbacks *cb, void *ctx)
 {
     if (!cb) return -1;
+    /* c_events derives direction from the record's upper bits; this hosted
+     * compatibility signature retains zone_dir for call-site ABI parity. */
+    (void)zone_dir;
 
     int16_t dir_from_record = (int16_t)((record >> 14) & 3);
     int16_t cur_record;

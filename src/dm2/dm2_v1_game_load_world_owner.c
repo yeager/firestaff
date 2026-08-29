@@ -86,14 +86,6 @@ static uint16_t dm2_v1_game_load_owner_read_u16le(const uint8_t *bytes)
     return (uint16_t)((uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8));
 }
 
-static uint16_t dm2_v1_game_load_owner_read_record_u16(
-    const DM2_V1_GameLoadWorldOwner *owner, const uint8_t *bytes)
-{
-    if (owner && owner->dungeon.words_big_endian)
-        return (uint16_t)(((uint16_t)bytes[0] << 8) | bytes[1]);
-    return dm2_v1_game_load_owner_read_u16le(bytes);
-}
-
 static void dm2_v1_game_load_owner_write_u16le(uint8_t *bytes, uint16_t value)
 {
     bytes[0] = (uint8_t)value;
@@ -11166,7 +11158,7 @@ int dm2_v1_game_load_world_owner_turn_preselection(
     const uint8_t old_destination_direction = owner ?
         owner->source_teleporter_destination_direction : 0u;
     const uint8_t old_display_pose_valid = owner ?
-        owner->source_display_pose_valid : 0u;
+        (uint8_t)owner->source_display_pose_valid : (uint8_t)0u;
     const DM2_V1_GameLoadMoverecState old_moverec = owner ?
         owner->source_moverec : (DM2_V1_GameLoadMoverecState){0};
 
@@ -11276,7 +11268,7 @@ int dm2_v1_game_load_world_owner_move_preselection(
     const uint8_t old_destination_direction = owner ?
         owner->source_teleporter_destination_direction : 0u;
     const uint8_t old_display_pose_valid = owner ?
-        owner->source_display_pose_valid : 0u;
+        (uint8_t)owner->source_display_pose_valid : (uint8_t)0u;
     const DM2_V1_GameLoadMoverecState old_moverec = owner ?
         owner->source_moverec : (DM2_V1_GameLoadMoverecState){0};
 
