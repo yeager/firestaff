@@ -16,10 +16,14 @@ static int16_t mock_query_gdat_entry_data_index(void *ctx __attribute__((unused)
 }
 
 static int32_t mock_dbspec_return = 0;
+static int32_t mock_dbspec_last_record = 0;
+static int32_t mock_dbspec_last_index = 0;
 
 static int32_t mock_query_gdat_dbspec_word_value(void *ctx __attribute__((unused)),
-    int32_t record __attribute__((unused)), int32_t idx __attribute__((unused)))
+    int32_t record, int32_t idx)
 {
+    mock_dbspec_last_record = record;
+    mock_dbspec_last_index = idx;
     return mock_dbspec_return;
 }
 
@@ -428,6 +432,30 @@ static void test_query_actuator_type_from_record(void)
     printf("  PASS: test_query_actuator_type_from_record\n");
 }
 
+static void test_source_gdat_item_word_fields(void)
+{
+    DM2_V1_QueryDbCallbacks cb = null_callbacks();
+    cb.query_gdat_dbspec_word_value = mock_query_gdat_dbspec_word_value;
+    mock_dbspec_return = 0x2468;
+
+    assert(dm2_v1_query_gdat_potion_spell_type_from_record(0x12345, &cb, NULL) ==
+           mock_dbspec_return);
+    assert(mock_dbspec_last_record == 0x2345 && mock_dbspec_last_index == 0x4d);
+
+    assert(dm2_v1_query_gdat_potion_behaviour_from_record(0x12345, &cb, NULL) ==
+           mock_dbspec_return);
+    assert(mock_dbspec_last_record == 0x2345 && mock_dbspec_last_index == 0x05);
+
+    assert(dm2_v1_query_gdat_water_value_from_record(0x12345, &cb, NULL) ==
+           mock_dbspec_return);
+    assert(mock_dbspec_last_record == 0x2345 && mock_dbspec_last_index == 0x43);
+
+    assert(dm2_v1_query_gdat_potion_spell_type_from_record(0x12345, NULL, NULL) == 0);
+    assert(dm2_v1_query_gdat_potion_behaviour_from_record(0x12345, NULL, NULL) == 0);
+    assert(dm2_v1_query_gdat_water_value_from_record(0x12345, NULL, NULL) == 0);
+    printf("  PASS: test_source_gdat_item_word_fields\n");
+}
+
 /* ================================================================ */
 /* Main                                                              */
 /* ================================================================ */
@@ -447,6 +475,7 @@ int main(void)
     test_creature_ai_spec_little_endian_words();
     test_query_gdat_text();
     test_query_actuator_type_from_record();
+    test_source_gdat_item_word_fields();
 
     printf("All dm2_v1_querydb tests passed.\n");
     return 0;

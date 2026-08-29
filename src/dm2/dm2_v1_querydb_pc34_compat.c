@@ -502,25 +502,24 @@ int32_t dm2_v1_querydb_food_value_from_record(int32_t record,
 int32_t dm2_v1_query_gdat_water_value_from_record(int32_t record,
                                                    const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
-    /* TODO: port from skproject c_querydb.cpp:835 */
     if (!cb || !cb->query_gdat_dbspec_word_value) return 0;
-    return cb->query_gdat_dbspec_word_value(ctx, record & 0xffff, 4);
+    /* SkWinCore2::QUERY_GDAT_WATER_VALUE_FROM_RECORD uses the source
+     * GDAT_ITEM_STATS_WATER_VALUE field, not the neighbouring food field. */
+    return cb->query_gdat_dbspec_word_value(ctx, record & 0xffff, 0x43);
 }
 
 int32_t dm2_v1_query_gdat_potion_spell_type_from_record(int32_t record,
                                                         const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
-    /* TODO: port from skproject c_querydb.cpp:845 */
     if (!cb || !cb->query_gdat_dbspec_word_value) return 0;
-    return cb->query_gdat_dbspec_word_value(ctx, record & 0xffff, 5);
+    return cb->query_gdat_dbspec_word_value(ctx, record & 0xffff, 0x4d);
 }
 
 int32_t dm2_v1_query_gdat_potion_behaviour_from_record(int32_t record,
                                                        const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
-    /* TODO: port from skproject c_querydb.cpp:855 */
     if (!cb || !cb->query_gdat_dbspec_word_value) return 0;
-    return cb->query_gdat_dbspec_word_value(ctx, record & 0xffff, 6);
+    return cb->query_gdat_dbspec_word_value(ctx, record & 0xffff, 0x05);
 }
 
 int32_t dm2_v1_query_gdat_item_weight(int32_t record,
