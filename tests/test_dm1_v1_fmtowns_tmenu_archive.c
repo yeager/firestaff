@@ -19,7 +19,7 @@ int main(void) {
     FmtownsDiscProbeResult probe;
     const FmtownsIsoEntry *entry;
     size_t load = DM1_V1_FMTOWNS_TMENU_LOAD_IMAGE_OFFSET;
-    if (!archive || !archive[0]) { puts("SKIP: FM Towns archive is not configured"); return 0; }
+    if (!archive || !archive[0]) { puts("SKIP: FM Towns archive is not configured"); return 77; }
     assert(firestaff_zip_extract_by_suffix(archive, ".cue", &cue, &cue_size) == 0 && cue);
     assert(fmtowns_cue_parse_image_member((const char *)cue, cue_size, image_member, sizeof(image_member)) == 1);
     assert(firestaff_zip_extract_by_suffix(archive, image_member, &bin, &bin_size) == 0 && bin);

@@ -58772,6 +58772,7 @@ target_include_directories(test_dm1_v1_fmtowns_tmenu_archive PRIVATE ${CMAKE_CUR
 target_link_libraries(test_dm1_v1_fmtowns_tmenu_archive PRIVATE firestaff_zip_extract)
 add_test(NAME test_dm1_v1_fmtowns_tmenu_archive COMMAND test_dm1_v1_fmtowns_tmenu_archive)
 set_tests_properties(test_dm1_v1_fmtowns_tmenu_archive PROPERTIES
+    SKIP_RETURN_CODE 77
     ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
     LABELS "dm1;fmtowns;input;real-data;in-memory;skip-safe")
 
