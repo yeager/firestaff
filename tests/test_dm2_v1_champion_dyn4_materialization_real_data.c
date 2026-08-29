@@ -2,6 +2,7 @@
  * DM2_LOAD_DYN4 copy pass.  No fixture bytes are accepted. */
 
 #include "dm2_v1_asset_loader.h"
+#include "firestaff_zip_extract.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,47 +13,23 @@ static uint16_t rd16le(const uint8_t *p)
     return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
 }
 
-static unsigned char *read_file(const char *path, size_t *out_size)
+static unsigned char *read_graphics_from_archive(size_t *out_size)
 {
-    FILE *file = fopen(path, "rb");
-    long size;
-    unsigned char *bytes;
-
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
+    uint8_t *bytes = NULL;
     *out_size = 0u;
-    if (!file || fseek(file, 0, SEEK_END) != 0 ||
-        (size = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
-        return NULL;
-    }
-    bytes = malloc((size_t)size);
-    if (!bytes || fread(bytes, 1, (size_t)size, file) != (size_t)size) {
+    if (!archive || !archive[0] ||
+        firestaff_zip_extract_by_suffix(archive, "data/graphics.dat",
+                                        &bytes, out_size) != 0 ||
+        !bytes || *out_size == 0u) {
         free(bytes);
-        fclose(file);
         return NULL;
     }
-    fclose(file);
-    *out_size = (size_t)size;
     return bytes;
 }
 
-static const char *resolve_graphics_path(int argc, char **argv,
-                                         char *buf, size_t buf_size)
+int main(void)
 {
-    const char *root;
-    if (argc >= 2) return argv[1];
-    root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    if (root && root[0]) {
-        snprintf(buf, buf_size, "%s/graphics.dat", root);
-        return buf;
-    }
-    return NULL;
-}
-
-int main(int argc, char **argv)
-{
-    char path_buf[1024];
-    const char *path = resolve_graphics_path(argc, argv, path_buf,
-                                             sizeof(path_buf));
     unsigned char *graphics;
     size_t graphics_size;
     DM2_V1_AssetLoader loader;
@@ -62,11 +39,12 @@ int main(int argc, char **argv)
     uint16_t i;
     uint32_t payload_bytes = 0u;
 
-    if (!path) {
-        puts("SKIP: provide GRAPHICS.DAT or set FIRESTAFF_DM2_DATA_DIR");
+    if (!getenv("FIRESTAFF_DM2_DOS_ARCHIVE") ||
+        !getenv("FIRESTAFF_DM2_DOS_ARCHIVE")[0]) {
+        puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is not set");
         return 0;
     }
-    if (!(graphics = read_file(path, &graphics_size))) {
+    if (!(graphics = read_graphics_from_archive(&graphics_size))) {
         fputs("FAIL: selected canonical DM2 GRAPHICS.DAT is unreadable\n", stderr);
         return 1;
     }
@@ -104,7 +82,7 @@ int main(int argc, char **argv)
         }
         length = rd16le(selection.bytes + offset);
         raw_index = rd16le(selection.bytes + offset + 2u +
-                           ((uint32_t)length + 1u & ~1u));
+                           (((uint32_t)length + 1u) & ~1u));
         raw = dm2_v1_load_gdat_raw_data(&loader, raw_index, &raw_size);
         if (raw_index != selection.raw_indices[i] || !raw ||
             raw_size != length ||
