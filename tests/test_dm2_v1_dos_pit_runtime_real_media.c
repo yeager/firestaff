@@ -478,75 +478,13 @@ static int exercise_authentic_active_creature(
                     printf("  active DOS creature DB4/F9 map %d,%d,%d type %d GDAT %d\n",
                            map, material->x, material->y,
                            creature.creature_type, creature.gdat_index);
-                    printf("  DOS dynamic path attempts %d admissions %d\n",
-                           dm2_v1_runtime_dynamic_path_attempts(),
-                           dm2_v1_runtime_dynamic_path_admissions());
-                    printf("  DOS dynamic move queues %d\n",
-                           dm2_v1_runtime_dynamic_move_queue_admissions());
-                    {
-                        DM2_V1_EngageCommandReceipt attack;
-                        int px2 = material->x - dx[0];
-                        int py2 = material->y - dy[0];
-                        int wield_commands = 0;
-                        int wield_hits = 0;
-                        memset(&attack, 0, sizeof(attack));
-                        dm2_v1_runtime_set_position(map, px2, py2, 0);
-                        (void)dm2_v1_runtime_activate_action_hand(0, 0);
-                        for (int hit = 0; hit < 128; ++hit) {
-                            int proceeded;
-                            memset(&attack, 0, sizeof(attack));
-                            proceeded = dm2_v1_runtime_proceed_hand_command(
-                                0, &attack);
-                            if (attack.weapon_wielded)
-                                ++wield_commands;
-                            if (attack.creature_attacked)
-                                ++wield_hits;
-                            if (!proceeded || !attack.creature_attacked)
-                                break;
-                        }
-                        /* ATTACK_CREATURE accumulates in CAII word@0x14;
-                         * source DM2_THINK_CREATURE transfers that amount to
-                         * DB4 HP on its due timer. */
-                        for (int tick = 0; tick < 256; ++tick)
-                            advance_authentic_dos_tick(profile);
-                        {
-                            DM2_V1_RuntimeCreatureDamageReceipt damage;
-                            DM2_V1_ThinkCreatureReceipt think;
-                            memset(&damage, 0, sizeof(damage));
-                            memset(&think, 0, sizeof(think));
-                            if (dm2_v1_runtime_think_creature_receipt(&think))
-                                printf("  DOS think timers %d resolved %d last record %d body consumed %d rejected %d\n",
-                                       think.think_timers, think.resolved,
-                                       think.last_record, think.body_consumed,
-                                       think.body_rejected);
-                            if (dm2_v1_runtime_last_creature_damage_receipt(
-                                    &damage))
-                                printf("  DOS creature damage record %d pending %d hp %d->%d wound %d lethal %d deallocated %d drops %d\n",
-                                       damage.creature_record,
-                                       damage.pending_damage,
-                                       damage.hp_before, damage.hp_after,
-                                       damage.wound_applied, damage.lethal,
-                                       damage.deallocated,
-                                       damage.drops_placed);
-                        }
-                        printf("  DOS WIELD commands %d hits %d final_action %d attacked %d success %d fail %d drops %d iterations %d alloc_failures %d first_itemspec %04x first_db %d free_records %d deallocated %d\n",
-                               wield_commands, wield_hits, attack.action_type,
-                               attack.creature_attacked, attack.success,
-                               attack.fail_closed,
-                               dm2_v1_runtime_last_wield_death_drop_count(),
-                               dm2_v1_runtime_last_wield_death_drop_iterations(),
-                               dm2_v1_runtime_last_wield_death_drop_alloc_failures(),
-                               dm2_v1_runtime_last_wield_death_drop_first_itemspec(),
-                               dm2_v1_runtime_last_wield_death_drop_first_db(),
-                               dm2_v1_runtime_last_wield_death_drop_alloc_free_records(),
-                               dm2_v1_runtime_last_wield_death_deallocated());
-                        /* The real DOS start weapon may miss the first
-                         * authentic creature.  This gate proves WIELD was
-                         * admitted against the tile-owned DB4 handle;
-                         * positive damage/drop uses a separate fixture. */
-                        if (wield_commands <= 0)
-                            continue;
-                    }
+                    /* A source-owned viewport proof is sufficient here.
+                     * Positioning a restored party beside arbitrary DB4
+                     * records and repeatedly issuing WIELD is not an
+                     * authentic player trajectory; it can neither prove a
+                     * combat hit nor a drop.  Keep WIELD/drop verification
+                     * in its trace-required diagnostic until original input
+                     * timing and weapon selection are available. */
                     return 1;
                 }
             }
