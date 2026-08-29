@@ -58965,6 +58965,9 @@ add_executable(test_dm2_v1_dos_real_data_manifest
 target_include_directories(test_dm2_v1_dos_real_data_manifest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm2_v1_dos_real_data_manifest PRIVATE firestaff_zip_extract)
 add_test(NAME test_dm2_v1_dos_real_data_manifest COMMAND test_dm2_v1_dos_real_data_manifest)
+set_tests_properties(test_dm2_v1_dos_real_data_manifest PROPERTIES
+    ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+    LABELS "dm2;dos;manifest;mve;real-media;in-memory")
 
 add_executable(test_dm2_v1_mve_presentation_owner
     tests/test_dm2_v1_mve_presentation_owner.c

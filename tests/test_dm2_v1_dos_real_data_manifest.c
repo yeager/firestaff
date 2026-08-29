@@ -4,27 +4,28 @@
 #include "dm2_v1_mve_video.h"
 #include "dm2_v1_mve_pcm.h"
 #include "firestaff_x68k_media_receipt.h"
+#include "firestaff_zip_extract.h"
+
+/* This test is a real-retail media receipt.  Most of its stream parsing and
+ * frame hashes are asserted, so Release builds must not compile them away. */
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static uint8_t *read_original(const char *path, size_t *out_size)
+static uint8_t *read_original_member(const char *archive, const char *name,
+                                     size_t *out_size)
 {
-    FILE *file;
-    long length;
-    uint8_t *bytes;
-    if (!path || !out_size || !(file = fopen(path, "rb"))) return NULL;
-    if (fseek(file, 0L, SEEK_END) != 0 || (length = ftell(file)) <= 0L ||
-        fseek(file, 0L, SEEK_SET) != 0 ||
-        !(bytes = (uint8_t *)malloc((size_t)length)) ||
-        fread(bytes, 1u, (size_t)length, file) != (size_t)length) {
+    uint8_t *bytes = NULL;
+    if (!archive || !archive[0] || !name || !out_size) return NULL;
+    if (firestaff_zip_extract_by_suffix(archive, name, &bytes, out_size) != 0 ||
+        !bytes) {
         free(bytes);
-        fclose(file);
         return NULL;
     }
-    fclose(file);
-    *out_size = (size_t)length;
     return bytes;
 }
 
@@ -67,27 +68,28 @@ int main(void) {
         }
     }
 
-    /* Real-data size check when a root is provided. */
+    /* The supplied retail ZIP remains the media owner.  Read the manifest
+     * members straight into RAM instead of requiring an extracted DOS tree. */
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
     const char *root = getenv("FIRESTAFF_DM2_DOS_ROOT");
-    if (!root) { puts("SKIP: no DM2 DOS root"); goto done; }
+    if (!archive || !archive[0]) { puts("SKIP: no DM2 DOS archive"); goto done; }
     int ok = 0;
     for (int i = 0; i < DM2_V1_DOS_FILE_COUNT; ++i) {
-        char path[1024];
-        snprintf(path, sizeof(path), "%s/%s", root,
-                 dm2_v1_dos_files[i].name);
-        FILE *fp = fopen(path, "rb");
-        if (!fp) { printf("MISS: %s\n", dm2_v1_dos_files[i].name); continue; }
-        fseek(fp, 0, SEEK_END);
-        long sz = ftell(fp);
-        fclose(fp);
-        if ((size_t)sz == dm2_v1_dos_files[i].size_bytes) ++ok;
-        else printf("SIZE-MISMATCH: %s (expected %zu, actual %ld)\n",
-            dm2_v1_dos_files[i].name, dm2_v1_dos_files[i].size_bytes, sz);
+        size_t size = 0u;
+        uint8_t *bytes = read_original_member(archive, dm2_v1_dos_files[i].name,
+                                               &size);
+        if (!bytes) { printf("MISS: %s\n", dm2_v1_dos_files[i].name); continue; }
+        if (size == dm2_v1_dos_files[i].size_bytes) ++ok;
+        else printf("SIZE-MISMATCH: %s (expected %zu, actual %zu)\n",
+            dm2_v1_dos_files[i].name, dm2_v1_dos_files[i].size_bytes, size);
+        free(bytes);
     }
-    printf("PASS: %d/%d DM2 DOS files match manifest size\n",
+    printf("PASS: %d/%d DM2 DOS ZIP members match manifest size in RAM\n",
         ok, DM2_V1_DOS_FILE_COUNT);
     assert(ok == DM2_V1_DOS_FILE_COUNT);
-    {
+    /* This older helper takes a host directory.  Keep it as an optional
+     * diagnostic only; the admitted archive path above is the real test. */
+    if (root && root[0]) {
         DM2_V1_DosStartupMediaReceipt startup;
         assert(dm2_v1_dos_startup_media_probe(root, &startup) == 1);
         assert(startup.valid && startup.complete &&
@@ -114,7 +116,6 @@ int main(void) {
               "ff833bf7b168df74a9ec24a45e9d0e0132dbd4a8a4bc79fafbcfd89acba8a26c" }
         };
         for (size_t i = 0u; i < sizeof(movies) / sizeof(movies[0]); ++i) {
-            char path[1024];
             DM2_V1_MveStreamReceipt mve;
             DM2_V1_MvePresentationIterator iterator;
             DM2_V1_MvePresentation presentation;
@@ -123,8 +124,7 @@ int main(void) {
             uint64_t previous_time = 0u;
             size_t size = 0u;
             uint8_t *bytes;
-            snprintf(path, sizeof(path), "%s/%s", root, movies[i]);
-            bytes = read_original(path, &size);
+            bytes = read_original_member(archive, movies[i], &size);
             assert(bytes != NULL);
             assert(dm2_v1_mve_stream_parse(bytes, size, &mve) == 1);
             assert(mve.valid && mve.mve_offset == 100206u &&
