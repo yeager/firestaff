@@ -142,6 +142,27 @@ case "$menu_output" in
         ;;
 esac
 
+# Exercise the visible mouse-only card flow as well as the keyboard script.
+# CSB's catalogue lists FM Towns before Amiga and Atari, so the first platform
+# card is the authenticated F31 package.  This proves that an explicit F31J
+# request survives game card -> FM Towns card -> Original card navigation;
+# no keyboard token chooses the platform or presentation here.
+mouse_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
+    SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+    --menu --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg \
+    --script 'click:1000:200,click:400:400,click:300:400' --duration 2000 2>&1)" || {
+    printf '%s\n' "$mouse_output" >&2
+    exit 1
+}
+case "$mouse_output" in
+    *"CSB READY: gameId=csb"*"dataDir="*"$expected_media"*"variant=csb-fmtowns-$language"*"route=startup"*"handoff=f31-title-anm"*) ;;
+    *)
+        echo "FAIL: CSB FM Towns mouse card flow did not preserve the selected native edition" >&2
+        printf '%s\n' "$mouse_output" >&2
+        exit 1
+        ;;
+esac
+
 if [ -n "$user_save" ]; then
     menu_resume_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
         SDL_VIDEODRIVER=dummy "$firestaff_cli" \
