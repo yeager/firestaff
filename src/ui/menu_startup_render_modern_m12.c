@@ -1506,6 +1506,7 @@ static void draw_main_view(M12_ModernCanvas* c, const M12_StartupMenuState* stat
     int gridBottom = c->h - 130;
     int entryCount = M12_StartupMenu_GetEntryCount();
     int settingsIndex = entryCount - 1;
+    int museumIndex = -1;
     int gap = 22;
     int cols = 3;
     int rows = 2;
@@ -1518,12 +1519,18 @@ static void draw_main_view(M12_ModernCanvas* c, const M12_StartupMenuState* stat
     /* The six-card grid carries the five games plus Settings.  Keep Museum
      * of Lore visible and mouse-addressable in the permanent Firestaff rail
      * rather than burying it behind keyboard-only navigation. */
-    if (entryCount > 5) {
+    for (int i = 0; i < entryCount; ++i) {
+        if (state->entries[i].kind == M12_MENU_ENTRY_MUSEUM) {
+            museumIndex = i;
+            break;
+        }
+    }
+    if (museumIndex >= 0) {
         const int museumX = railX + 24;
         const int museumY = railY + railH - 106;
         const int museumW = railW - 48;
         const int museumH = 58;
-        const int selected = state->selectedIndex == 5;
+        const int selected = state->selectedIndex == museumIndex;
         M12_RGB fill = selected ? rgb(45, 39, 77) : rgb(26, 24, 52);
         M12_RGB edge = selected ? COLOR_ACCENT() : COLOR_PANEL_EDGE();
         ModernTextStyle label = text_style_make(2,

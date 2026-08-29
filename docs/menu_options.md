@@ -88,6 +88,14 @@ preset and **Modern** starts the v2.x preset directly. **Custom** opens the
 detailed options page for per-setting changes. Game archives remain the launch
 source throughout this flow; Firestaff does not extract a copy to disk.
 
+All launcher menus support mouse navigation. Cards, settings controls, Museum
+categories and their visible action buttons have exact click targets. In
+document and list views, clicking the left or right third changes the page or
+category, clicking the upper or lower centre scrolls, and clicking the centre
+activates the current item. The Back button is available in every non-main
+view. Empty platform-picker cells are inert; only a shown platform card can be
+selected, and a card without verified game data remains unable to launch.
+
 M12_SETTINGS_TAB_GAME       = game settings
 M12_SETTINGS_TAB_GRAPHICS  = renderer, scale mode, aspect ratio
 M12_SETTINGS_TAB_CONTROLS  = input remapping, WASD, touch

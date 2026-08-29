@@ -142,6 +142,39 @@ static int m12_hit_main_card_rect(int index, int count, int* rx, int* ry, int* r
     return 1;
 }
 
+/* Keep the pointer surface bounded to the cards the renderer actually
+ * produces.  The platform picker is intentionally an inventory of every
+ * supported native architecture, including unavailable media, but it is
+ * never a nine-card grid.  Treating its unused cells as cards let a click
+ * on blank panel space select an out-of-range platform and report a
+ * misleading missing-data dialog. */
+static int m12_hit_game_platform_card_count(const M12_StartupMenuState* state) {
+    const M12_MenuEntry* entry;
+    size_t i;
+    size_t versionCount;
+    int architectures[M12_ARCH_COUNT];
+    int count = 0;
+    if (!state) return 0;
+    entry = M12_StartupMenu_GetEntry(state, state->activatedIndex);
+    if (!entry || entry->kind != M12_MENU_ENTRY_GAME || !entry->gameId) return 0;
+    versionCount = M12_AssetStatus_GetVersionCount(entry->gameId);
+    for (i = 0; i < versionCount; ++i) {
+        int architecture = M12_AssetStatus_GetVersionArchitecture(entry->gameId, i);
+        int seen = 0;
+        int j;
+        if (architecture <= M12_ARCH_AUTO || architecture == M12_ARCH_PC98 ||
+            architecture == M12_ARCH_X68000) continue;
+        for (j = 0; j < count; ++j) {
+            if (architectures[j] == architecture) {
+                seen = 1;
+                break;
+            }
+        }
+        if (!seen && count < M12_ARCH_COUNT) architectures[count++] = architecture;
+    }
+    return count;
+}
+
 static int m12_hit_settings_row_rect(int visibleRow,
                                      int visibleRowCount,
                                      int* rx,
@@ -310,18 +343,26 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
             int entryCount = M12_StartupMenu_GetEntryCount();
             int cardCount = M12_HIT_MAIN_CARD_MAX_COUNT;
             int settingsIndex = entryCount - 1;
+            int museumIndex = -1;
+            for (i = 0; i < entryCount; ++i) {
+                const M12_MenuEntry* entry = M12_StartupMenu_GetEntry(state, i);
+                if (entry && entry->kind == M12_MENU_ENTRY_MUSEUM) {
+                    museumIndex = i;
+                    break;
+                }
+            }
             /* Five game covers and Settings occupy the 3x2 grid.  The
              * Museum is deliberately presented in the Firestaff rail, so
              * give it an equally direct pointer path instead of leaving it
              * keyboard-only. */
-            if (entryCount > 5 &&
+            if (museumIndex >= 0 &&
                 rect_contains(M12_HIT_MAIN_MUSEUM_X,
                               M12_HIT_MAIN_MUSEUM_Y,
                               M12_HIT_MAIN_MUSEUM_W,
                               M12_HIT_MAIN_MUSEUM_H,
                               x, y)) {
                 hit.kind = M12_HIT_MAIN_CARD;
-                hit.index = 5;
+                hit.index = museumIndex;
                 return hit;
             }
             if (settingsIndex < 0) settingsIndex = 0;
@@ -421,7 +462,8 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
                 int gap = 24;
                 int startX = state->gameCardFlowStage == 0 ? 160 : 210;
                 int startY = 280;
-                int cardCount = state->gameCardFlowStage == 0 ? 9 : 3;
+                int cardCount = state->gameCardFlowStage == 0
+                    ? m12_hit_game_platform_card_count(state) : 3;
                 for (i = 0; i < cardCount; ++i) {
                     int col = state->gameCardFlowStage == 0 ? i % 3 : i;
                     int row = state->gameCardFlowStage == 0 ? i / 3 : 0;
@@ -459,6 +501,42 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
         case M12_MENU_VIEW_MESSAGE:
             /* Anywhere dismisses */
             hit.kind = M12_HIT_MESSAGE_DISMISS;
+            return hit;
+        case M12_MENU_VIEW_CHANGELOG:
+        case M12_MENU_VIEW_MANUAL_DOCS:
+        case M12_MENU_VIEW_BESTIARY:
+        case M12_MENU_VIEW_ITEM_ENCYCLOPEDIA:
+        case M12_MENU_VIEW_SCREENSHOT_GALLERY:
+        case M12_MENU_VIEW_SAVE_BROWSER:
+        case M12_MENU_VIEW_AUDIO_SETTINGS:
+        case M12_MENU_VIEW_DATA_VALIDATOR:
+        case M12_MENU_VIEW_ACCESSIBILITY:
+        case M12_MENU_VIEW_THEME:
+        case M12_MENU_VIEW_INPUT_REMAP:
+        case M12_MENU_VIEW_CUSTOM_DUNGEON:
+        case M12_MENU_VIEW_CAMPAIGN:
+        case M12_MENU_VIEW_SPELL_REFERENCE:
+        case M12_MENU_VIEW_MAP_VIEWER:
+        case M12_MENU_VIEW_TOUCH_LAYOUT:
+        case M12_MENU_VIEW_PRESENTATION_PREVIEW:
+            /* These list/document views deliberately use different
+             * renderers, but share keyboard navigation.  Their pointer
+             * grammar is therefore consistent: left/right thirds select a
+             * category or page, upper/lower centre scroll, and the centre
+             * activates.  The Back button above remains available in every
+             * non-main view. */
+            hit.kind = M12_HIT_VIEW_INPUT;
+            if (x < M12_HIT_CANVAS_W / 3) {
+                hit.index = M12_MENU_INPUT_LEFT;
+            } else if (x >= (M12_HIT_CANVAS_W * 2) / 3) {
+                hit.index = M12_MENU_INPUT_RIGHT;
+            } else if (y < M12_HIT_CANVAS_H / 2) {
+                hit.index = M12_MENU_INPUT_UP;
+            } else if (y >= M12_HIT_CANVAS_H / 2) {
+                hit.index = M12_MENU_INPUT_DOWN;
+            } else {
+                hit.index = M12_MENU_INPUT_ACCEPT;
+            }
             return hit;
         default:
             break;
@@ -667,6 +745,13 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
             }
             m12_redesigned_handle_input(state, 0, 0, 0, 0, 1, 0);
             return 1;
+        case M12_HIT_VIEW_INPUT:
+            if (hit.index < M12_MENU_INPUT_NONE ||
+                hit.index > M12_MENU_INPUT_SAVE_GAME) {
+                return 0;
+            }
+            M12_StartupMenu_HandleInput(state, (M12_MenuInput)hit.index);
+            return 1;
     }
     return 0;
 }
@@ -730,6 +815,7 @@ int M12_ModernMenu_HandlePointer(M12_StartupMenuState* state,
             case M12_HIT_NONE:
             case M12_HIT_MUSEUM_PAGE:
             case M12_HIT_MESSAGE_DISMISS:
+            case M12_HIT_VIEW_INPUT:
             case M12_HIT_BACK:
             default:
                 break;

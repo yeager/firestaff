@@ -82,9 +82,11 @@ int main(void) {
     const int cardCenterY = 40 + cardH / 2;
     const int launchCenterX = 960;
     const int launchCenterY = 190 + 780 - 54 - 24 + 27;
-    const int originalModeCenterX = 132 + 408;
-    const int customModeCenterX = 132 + 817 + 22 + 408;
-    const int modeChoiceCenterY = 190 + 34 + 78;
+    const int platformCardCenterX = 160 + 250;
+    const int presentationCardCenterY = 280 + 125;
+    const int originalCardCenterX = 210 + 240;
+    const int modernCardCenterX = 210 + 480 + 24 + 240;
+    const int customCardCenterX = 210 + 2 * (480 + 24) + 240;
     const int settingsColumnW = (1920 - 2 * 96 - 2 * 36 - 24) / 2;
     const int settingsLeftColumnCycleX = 132 + settingsColumnW * 4 / 5;
     const int settingsRightColumnCycleX = 132 + settingsColumnW + 24 + settingsColumnW * 4 / 5;
@@ -128,6 +130,68 @@ int main(void) {
     if (!expect(changed == 1, "DM1 card direct click should change menu state")) return 1;
     if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS, "DM1 card direct click should enter game options")) return 1;
     if (!expect(state.activatedIndex == 0, "DM1 direct click should activate DM1")) return 1;
+    hit = M12_ModernMenu_HitTest(&state,
+                                 160 + 2 * (500 + 24) + 250,
+                                 280 + 250 + 24 + 125);
+    if (!expect(hit.kind == M12_HIT_NONE,
+                "empty platform-picker cells must not be clickable")) return 1;
+
+    /* The public launch path is cards all the way through: game cover,
+     * scanner-verified platform, then Original/Modern/Custom. */
+    hit = M12_ModernMenu_HitTest(&state, platformCardCenterX, presentationCardCenterY);
+    if (!expect(hit.kind == M12_HIT_GAMEOPT_ROW && hit.index == 0,
+                "first rendered platform card should be clickable")) return 1;
+    changed = M12_ModernMenu_HandlePointer(&state, platformCardCenterX,
+                                           presentationCardCenterY, 1, NULL);
+    if (!expect(changed == 1 && state.gameCardFlowStage == 1 &&
+                state.launchRequested == 0,
+                "verified platform card should open presentation cards without launching")) return 1;
+    hit = M12_ModernMenu_HitTest(&state, originalCardCenterX, presentationCardCenterY);
+    if (!expect(hit.kind == M12_HIT_GAMEOPT_ROW && hit.index == 0,
+                "Original presentation card should be clickable")) return 1;
+    changed = M12_ModernMenu_HandlePointer(&state, originalCardCenterX,
+                                           presentationCardCenterY, 1, NULL);
+    if (!expect(changed == 1 && state.launchRequested == 1 &&
+                state.view == M12_MENU_VIEW_MESSAGE,
+                "Original card should launch with the preservation preset")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    if (!expect(state.view == M12_MENU_VIEW_MAIN,
+                "Original ready message should return through detailed options")) return 1;
+
+    /* Re-enter and use the Modern card.  This keeps pointer input on the
+     * same route as keyboard navigation, rather than bypassing launch gates. */
+    changed = M12_ModernMenu_HandlePointer(&state, dm1CardCenterX, cardCenterY, 1, NULL);
+    if (!expect(changed == 1 && state.gameCardFlowStage == 0,
+                "DM1 card should re-enter the platform picker")) return 1;
+    changed = M12_ModernMenu_HandlePointer(&state, platformCardCenterX,
+                                           presentationCardCenterY, 1, NULL);
+    if (!expect(changed == 1 && state.gameCardFlowStage == 1,
+                "platform card should re-open presentation cards")) return 1;
+    hit = M12_ModernMenu_HitTest(&state, modernCardCenterX, presentationCardCenterY);
+    if (!expect(hit.kind == M12_HIT_GAMEOPT_ROW && hit.index == 1,
+                "Modern presentation card should be clickable")) return 1;
+    changed = M12_ModernMenu_HandlePointer(&state, modernCardCenterX,
+                                           presentationCardCenterY, 1, NULL);
+    if (!expect(changed == 1 && state.launchRequested == 1 &&
+                state.gameOptions[0].presentationModeIndex == M12_PRESENTATION_V21_UPSCALED,
+                "Modern card should launch with the V2.x preset")) return 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+
+    changed = M12_ModernMenu_HandlePointer(&state, dm1CardCenterX, cardCenterY, 1, NULL);
+    if (!expect(changed == 1 && state.gameCardFlowStage == 0,
+                "DM1 card should support another card-selection pass")) return 1;
+    changed = M12_ModernMenu_HandlePointer(&state, platformCardCenterX,
+                                           presentationCardCenterY, 1, NULL);
+    hit = M12_ModernMenu_HitTest(&state, customCardCenterX, presentationCardCenterY);
+    if (!expect(hit.kind == M12_HIT_GAMEOPT_ROW && hit.index == 2,
+                "Custom presentation card should be clickable")) return 1;
+    changed = M12_ModernMenu_HandlePointer(&state, customCardCenterX,
+                                           presentationCardCenterY, 1, NULL);
+    if (!expect(changed == 1 && state.gameCardFlowStage == 2 &&
+                state.launchRequested == 0,
+                "Custom card should open detailed options without launching")) return 1;
 
     /* The rendered game-options grid has independent tiles.  These checks
      * prevent a broad row hit target from silently routing Patch/Language
@@ -159,15 +223,6 @@ int main(void) {
                 hit.index == M12_GAME_OPT_ROW_ASPECT,
                 "Aspect tile should map to the aspect control")) return 1;
 
-    changed = M12_ModernMenu_HandlePointer(&state, customModeCenterX, modeChoiceCenterY, 1, NULL);
-    if (!expect(changed == 1, "Custom mode column should be clickable")) return 1;
-    if (!expect(state.gameOptions[0].presentationModeIndex != M12_PRESENTATION_V1_ORIGINAL,
-                "Custom mode column should switch away from Original")) return 1;
-    changed = M12_ModernMenu_HandlePointer(&state, originalModeCenterX, modeChoiceCenterY, 1, NULL);
-    if (!expect(changed == 1, "Original mode column should be clickable")) return 1;
-    if (!expect(state.gameOptions[0].presentationModeIndex == M12_PRESENTATION_V1_ORIGINAL,
-                "Original mode column should restore original presentation")) return 1;
-
     hit = M12_ModernMenu_HitTest(&state, launchCenterX, launchCenterY);
     if (!expect(hit.kind == M12_HIT_GAMEOPT_LAUNCH, "visible centered V1 Launch button should hit launch action")) return 1;
 
@@ -177,14 +232,20 @@ int main(void) {
     if (!expect(state.view == M12_MENU_VIEW_MESSAGE, "Launch direct click should show ready-to-launch message")) return 1;
 
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
-    if (state.view == M12_MENU_VIEW_MESSAGE) {
+    while (state.view == M12_MENU_VIEW_MESSAGE) {
         M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     }
+    /* This part exercises the main-view geometry, independently of a saved
+     * startup focus from the earlier card-preset checks. */
+    state.view = M12_MENU_VIEW_MAIN;
+    state.selectedIndex = 0;
     {
         const int settingsCenterX = gridLeft + 2 * (cardW + 22) + cardW / 2;
         const int settingsCenterY = 40 + cardH + 22 + cardH / 2;
         changed = M12_ModernMenu_HandlePointer(&state, settingsCenterX, settingsCenterY, 0, NULL);
-        if (!expect(changed == 1 && state.selectedIndex == 6, "Firestaff hover should navigate to global settings card")) return 1;
+        if (!expect(changed == 1 &&
+                    state.selectedIndex == M12_StartupMenu_GetEntryCount() - 1,
+                    "Firestaff hover should navigate to global settings card")) return 1;
         changed = M12_ModernMenu_HandlePointer(&state, settingsCenterX, settingsCenterY, 1, NULL);
         if (!expect(changed == 1 && state.view == M12_MENU_VIEW_SETTINGS, "Firestaff click should open settings view")) return 1;
     }
@@ -270,15 +331,37 @@ int main(void) {
     /* Museum is rendered in the left Firestaff rail, rather than one of the
      * six grid tiles. It must remain a first-class mouse route. */
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
-    if (state.view == M12_MENU_VIEW_MESSAGE) {
+    while (state.view == M12_MENU_VIEW_MESSAGE) {
         M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     }
+    state.view = M12_MENU_VIEW_MAIN;
+    state.selectedIndex = 0;
     changed = M12_ModernMenu_HandlePointer(&state, 42 + 24 + (390 - 48) / 2,
                                            40 + (1080 - 132) - 106 + 29,
                                            1, NULL);
     if (!expect(changed == 1 && state.view == M12_MENU_VIEW_MUSEUM,
                 "Museum rail button should open Museum of Lore with a click")) return 1;
 
-    puts("ok: mouse hover navigates main cards; clicks open DM1, Firestaff settings and launch DM1; Smooth Turn Pan toggles/persists; settings rows export/import JSON, missing import preserves data directory, and data directory accepts an arbitrary selected folder");
+    /* Document and list views use a shared pointer grammar: centre top/bottom
+     * scrolls, side thirds change a category or page, and the centre activates.
+     * This keeps every keyboard-navigable menu usable without a keyboard. */
+    state.view = M12_MENU_VIEW_CHANGELOG;
+    M12_Changelog_Init(&state.changelog);
+    hit = M12_ModernMenu_HitTest(&state, 960, 900);
+    if (!expect(hit.kind == M12_HIT_VIEW_INPUT && hit.index == M12_MENU_INPUT_DOWN,
+                "changelog lower-centre region should provide mouse scrolling")) return 1;
+    changed = M12_ModernMenu_ApplyHit(&state, hit);
+    if (!expect(changed == 1 && state.changelog.scrollOffset > 0,
+                "changelog pointer input should scroll through entries")) return 1;
+    state.view = M12_MENU_VIEW_BESTIARY;
+    M12_Bestiary_Init(&state.bestiary);
+    hit = M12_ModernMenu_HitTest(&state, 1800, 540);
+    if (!expect(hit.kind == M12_HIT_VIEW_INPUT && hit.index == M12_MENU_INPUT_RIGHT,
+                "bestiary right region should provide mouse category navigation")) return 1;
+    changed = M12_ModernMenu_ApplyHit(&state, hit);
+    if (!expect(changed == 1 && state.bestiary.categoryFilter == M12_BESTIARY_CAT_HUMANOID,
+                "bestiary pointer input should change category")) return 1;
+
+    puts("ok: mouse cards launch DM1 through platform/preset choices; blank platform cells are inert; settings, Museum, changelog and bestiary have mouse navigation");
     return 0;
 }

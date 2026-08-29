@@ -48,6 +48,10 @@ typedef enum {
     M12_HIT_MESSAGE_DISMISS,
     /* Redesigned Extras navigation: row 0..M12_EXTRAS_COUNT-1 */
     M12_HIT_EXTRAS_ROW,
+    /* Generic navigation for list/document views. `index` is an
+     * M12_MenuInput value, so every keyboard-navigable menu has a bounded
+     * mouse route as well. */
+    M12_HIT_VIEW_INPUT,
     /* Back button (visible in all views except main) */
     M12_HIT_BACK
 } M12_HitKind;
