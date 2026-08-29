@@ -2,6 +2,10 @@
 
 Reviewed 2026-08-29. Completed work only.
 
+- The supplied Amiga ZIP→ADF `Graphics.DAT` now has an in-memory native
+  runtime-family receipt: inventory/panel, pit and field, stairs, wall and
+  floor ornaments, and doors all decode through the big-endian IMG1 consumer
+  without a PC3.4 fallback or an extracted game-data file.
 - The supplied CSB Amiga A-disk now has a direct native graphics-format
   receipt. `test_csb_v1_amiga_graphics_dat` reads `Graphics.DAT` from the
   original ZIP → ADF chain in RAM through the AmigaDOS OFS reader, validates
