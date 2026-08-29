@@ -2,9 +2,15 @@
 #include <string.h>
 #include <stdlib.h>
 
+/* G0347_aui_Palette_TopAndBottomScreen, from the original PC 3.4 data
+ * declaration (DATA.C / BASE.C; also source-locked by
+ * dm1_v1_palette_top_and_bottom_screen_pc34_compat.c).  The old table mixed
+ * RGB565-style constants into this RGB12 API, which could never be emitted
+ * unchanged by Amiga OCS COLOR registers.  Keep this as source-owned RGB4
+ * nibbles; a dynamic Amiga gameplay palette remains separately capture-gated. */
 static const uint16_t default_palette_data[DM1_PALETTE_SIZE] = {
-    0x0000, 0x001F, 0x07E0, 0x0400, 0x0004, 0x0001, 0x0002, 0x0008,
-    0x0010, 0x0020, 0x0040, 0x0080, 0x0100, 0x0200, 0x0400, 0x0800
+    0x000, 0x666, 0x888, 0x620, 0x0CC, 0x840, 0x080, 0x0C0,
+    0xF00, 0xFA0, 0xC86, 0xFF0, 0x444, 0xAAA, 0x00F, 0xFFF
 };
 
 void DM1_V1_PaletteFont_PaletteInitPc34Compat(DM1_V1_PaletteFontPaletteStatePc34* state) {
@@ -17,10 +23,10 @@ void DM1_V1_PaletteFont_SetPalettePc34Compat(DM1_V1_PaletteFontPaletteStatePc34*
     int i;
     for (i = 0; i < count && i < DM1_PALETTE_SIZE; i++) {
         if (i < 8) {
-            state->top_bottom[i].rgb12 = colors[i];
+            state->top_bottom[i].rgb12 = (uint16_t)(colors[i] & 0x0FFFu);
             state->update_top_bottom = true;
         } else {
-            state->middle[i - 8].rgb12 = colors[i];
+            state->middle[i - 8].rgb12 = (uint16_t)(colors[i] & 0x0FFFu);
             state->update_middle = true;
         }
     }

@@ -36,7 +36,12 @@ static void test_font_init(void)
 static void test_default_palette(void)
 {
     const uint16_t* pal = DM1_V1_PaletteFont_GetDefaultPalettePc34Compat();
+    static const uint16_t expected[DM1_PALETTE_SIZE] = {
+        0x000, 0x666, 0x888, 0x620, 0x0CC, 0x840, 0x080, 0x0C0,
+        0xF00, 0xFA0, 0xC86, 0xFF0, 0x444, 0xAAA, 0x00F, 0xFFF
+    };
     assert(pal != NULL);
+    assert(memcmp(pal, expected, sizeof(expected)) == 0);
 }
 
 static void test_set_palette(void)
@@ -45,9 +50,11 @@ static void test_set_palette(void)
     DM1_V1_PaletteFont_PaletteInitPc34Compat(&ps);
     uint16_t colors[16];
     memset(colors, 0, sizeof(colors));
-    colors[0] = 0x0F0;
+    colors[0] = 0xF0F0;
+    colors[8] = 0xA123;
     DM1_V1_PaletteFont_SetPalettePc34Compat(&ps, colors, 16);
     assert(ps.top_bottom[0].rgb12 == 0x0F0);
+    assert(ps.middle[0].rgb12 == 0x123);
 }
 
 static void test_build_custom_colors(void)
