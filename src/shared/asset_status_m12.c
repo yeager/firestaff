@@ -1,3 +1,7 @@
+#if !defined(_WIN32) && !defined(_DEFAULT_SOURCE)
+#define _DEFAULT_SOURCE
+#endif
+
 #include "asset_status_m12.h"
 #include "asset_find_by_hash.h"
 #include "dm2_v1_fmtowns_disc.h"
@@ -4457,8 +4461,9 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
  * right. The ordinary selected-game scan uses the image's parent as a search
  * root so it can find loose companions, but that loses the user's platform
  * choice when another CSB edition is beside it. Query the native hash scanner
- * against the image itself: it traverses ST/STX/MSA contents in RAM and
- * returns a virtual member path, never an extracted replacement. */
+ * against the selected image or preservation ZIP itself: it traverses
+ * ST/STX/MSA and ZIP-contained disk contents in RAM and returns a virtual
+ * member path, never an extracted replacement. */
 static int m12_admit_explicit_csb_atari_image(M12_AssetStatus* status,
                                               int gameIndex,
                                               const char* requestedPath) {
@@ -4474,7 +4479,8 @@ static int m12_admit_explicit_csb_atari_image(M12_AssetStatus* status,
     if (!extension ||
         !(strcmp(extension, ".st") == 0 || strcmp(extension, ".ST") == 0 ||
           strcmp(extension, ".stx") == 0 || strcmp(extension, ".STX") == 0 ||
-          strcmp(extension, ".msa") == 0 || strcmp(extension, ".MSA") == 0)) {
+          strcmp(extension, ".msa") == 0 || strcmp(extension, ".MSA") == 0 ||
+          strcmp(extension, ".zip") == 0 || strcmp(extension, ".ZIP") == 0)) {
         return 0;
     }
     for (i = 0U; i < g_games[gameIndex].versionCount; ++i) {

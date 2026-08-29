@@ -17500,6 +17500,17 @@ endif()
         TIMEOUT 90
     )
     add_test(
+        NAME csb_v1_atari_french_preservation_zip_cli_boot
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_nested_zip_cli_boot.sh"
+            "$<TARGET_FILE:firestaff>"
+    )
+    set_tests_properties(csb_v1_atari_french_preservation_zip_cli_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;csb;atari;french;startup;cli;menu;real_data;archive;native;skip_safe"
+        ENVIRONMENT "FIRESTAFF_CSB_ATARI_NESTED_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/chaos_strikes_back_ftl_france.zip"
+        TIMEOUT 90
+    )
+    add_test(
         NAME csb_v1_amiga_native_cli_boot
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_amiga_native_cli_boot.sh"
             "$<TARGET_FILE:firestaff>"
