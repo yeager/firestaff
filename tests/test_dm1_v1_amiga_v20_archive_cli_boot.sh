@@ -56,6 +56,32 @@ probe_save_resume --game dm1 --platform amiga --data-dir "$archive"
 probe_save_resume --menu --game dm1 --platform amiga --data-dir "$archive" \
     --script enter,enter,enter
 
+# Apply one source-backed input per fresh resume.  The right-strafe is
+# particularly important: this exact original session crosses from map 0 to
+# map 1, so it exercises native F0435 party/world adoption, map lookup and
+# stair transition rather than merely proving that the ADF can be parsed.
+# All expected tuples below are observed from the authenticated save, never
+# inferred from a synthetic dungeon or generated save state.
+probe_saved_input() {
+    local input=$1
+    local map=$2
+    local party=$3
+    probe --game dm1 --platform amiga --data-dir "$archive" \
+        --save "$selected_save" --boot-probe --boot-probe-expect-runtime \
+        --boot-probe-expect-level-loaded 1 --boot-probe-expect-map "$map" \
+        --boot-probe-expect-party "$party" --boot-probe-expect-champions 4 \
+        --boot-probe-expect-runtime-tick-min 293 \
+        --boot-probe-expect-runtime-tick-max 293 \
+        --script "$input" --duration 0
+}
+probe_saved_input up 0 4,16,2
+probe_saved_input down 0 4,14,2
+probe_saved_input left 0 4,15,1
+probe_saved_input right 0 4,15,3
+probe_saved_input strafe-left 0 4,15,2
+probe_saved_input strafe-right 1 3,1,0
+probe_saved_input action 0 4,15,2
+
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
     --platform amiga --data-dir "$archive" --script enter,enter,enter --duration 1000 2>&1)" || {
