@@ -4228,6 +4228,16 @@ if(BUILD_TESTING)
         ENVIRONMENT "FIRESTAFF_CSB_UTILITY_7Z=$ENV{HOME}/.firestaff/data/csb/Chaos Strikes Back Utility.stx.7z"
         SKIP_RETURN_CODE 77)
     add_test(
+        NAME csb_v1_hint_oracle_native_7z_cli_boot
+        COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_hint_oracle_native_7z_cli_boot.sh
+            $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(csb_v1_hint_oracle_native_7z_cli_boot PROPERTIES
+        ENVIRONMENT "FIRESTAFF_CSB_UTILITY_7Z=$ENV{HOME}/.firestaff/data/csb/Chaos Strikes Back Utility.stx.7z"
+        SKIP_RETURN_CODE 77
+        LABELS "csb;atari-st;utility;real-media;archive;7z;native;cli;no-extract;skip-safe"
+        TIMEOUT 30)
+    add_test(
         NAME dm2_v1_real_media_hash_lock
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_real_media_hash_lock.sh"
     )
