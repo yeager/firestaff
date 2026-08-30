@@ -170,6 +170,20 @@ int main(void) {
     CHECK(loaded.displayAspectMode == 1);
     CHECK(loaded.integerScaling == 1);
 
+    /* The global graphics menu must retain every safe presentation aspect
+     * offered by M11, including 16:10 and ultrawide.  These are output
+     * rectangles only: source gameplay and pixels remain untouched. */
+    CHECK(write_text_file(path,
+                          "scale_mode_index = 4\n"
+                          "display_aspect_mode = 3\n"
+                          "integer_scaling = 0\n"));
+    CHECK(M12_Config_Load(&loaded, NULL) == 1);
+    CHECK(loaded.displayAspectMode == 3);
+    loaded.displayAspectMode = 4;
+    CHECK(M12_Config_Save(&loaded) == 1);
+    CHECK(M12_Config_Load(&loaded, NULL) == 1);
+    CHECK(loaded.displayAspectMode == 4);
+
     cfg.dm1V2ScalePercent = 999;
     cfg.dm1V2SmoothingEnabled = -1;
     cfg.dm1V2DynamicLightingEnabled = 7;

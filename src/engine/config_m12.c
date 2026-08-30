@@ -17,7 +17,8 @@ enum {
     M12_CONFIG_SCALE_1X = 0,
     M12_CONFIG_SCALE_4X = 3,
     M12_CONFIG_SCALE_FIT = 4,
-    M12_CONFIG_DISPLAY_ASPECT_CONTENT = 2
+    M12_CONFIG_DISPLAY_ASPECT_CONTENT = 2,
+    M12_CONFIG_DISPLAY_ASPECT_32_9 = 4
 };
 
 static void m12_copy_string(char* out, size_t outSize, const char* value) {
@@ -491,7 +492,7 @@ static void m12_parse_line(M12_Config* config, char* line) {
         return;
     }
     if (m12_string_equals(key, "display_aspect_mode")) {
-        { int v = m12_parse_int(value, config->displayAspectMode); config->displayAspectMode = (v >= 0 && v <= 2) ? v : 2; }
+        { int v = m12_parse_int(value, config->displayAspectMode); config->displayAspectMode = (v >= 0 && v <= M12_CONFIG_DISPLAY_ASPECT_32_9) ? v : M12_CONFIG_DISPLAY_ASPECT_CONTENT; }
         return;
     }
     if (m12_string_equals(key, "integer_scaling")) {

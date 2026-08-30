@@ -436,7 +436,13 @@ enum { M12_UI_LANGUAGE_AUTO_INDEX = M12_UI_LANGUAGE_COUNT - 1 };
 static const char* g_cheatsToggle[] = {_("OFF"), _("ON")};
 static const char* g_speedLabels[] = {_("SLOWER"), _("NORMAL"), _("FASTER")};
 static const char* g_scaleModes[] = {"1X", "2X", "3X", "4X", _("FIT"), _("STRETCH")};
-static const char* g_displayAspectModes[] = {"4:3", "16:9"};
+/* Keep this in the renderer enum's order.  "ORIGINAL" means the actual
+ * source framebuffer ratio (for example 320x200 = 8:5), not a request to
+ * stretch it.  M11_Render_ComputePresentationRect FITs every one of these
+ * choices and leaves bars rather than distorting the game picture. */
+static const char* g_displayAspectModes[] = {
+    "4:3", "16:9", _("ORIGINAL"), "16:10", "32:9"
+};
 static const char* g_toggleModes[] = {_("OFF"), _("ON")};
 static const char* g_scalingFilters[] = {_("NEAREST"), _("LINEAR")};
 static const char* g_rendererBackendLabels[] = {_("AUTO"), _("SOFTWARE"), _("SDL"), _("OPENGL"), _("VULKAN")};

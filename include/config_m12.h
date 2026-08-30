@@ -22,7 +22,10 @@ typedef struct {
     int rendererBackendIndex;
     int windowModeIndex;
     int scaleModeIndex;
-    int displayAspectMode;   /* 0 = 4:3, 1 = 16:9 */
+    /* Renderer aspect enum: 0 = 4:3, 1 = 16:9, 2 = original content,
+     * 3 = 16:10, 4 = 32:9.  All modes remain FIT/letterboxed; none changes
+     * the source framebuffer's geometry. */
+    int displayAspectMode;
     int integerScaling;
     int layoutMigrationVersion;
     int scalingFilterIndex;
