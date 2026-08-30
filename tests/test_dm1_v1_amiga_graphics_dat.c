@@ -104,6 +104,8 @@ typedef struct {
     unsigned int copper_color_base_writes;
     unsigned int copper_caller_palette_handoffs;
     unsigned int copper_builder_calls;
+    unsigned int copper_fade_producer_signatures;
+    unsigned int copper_fade_builder_calls;
     int copper_builder_found;
     size_t copper_builder_offset;
     DM1_V1_AmigaGraphicsReceipt receipt;
@@ -161,6 +163,23 @@ static int real_graphics_visitor(const char *name, const uint8_t *bytes,
                    rgb4 & 0xfffu, register_offset / 2u, i);
             ++result->immediate_color_writes;
         }
+        /* The dynamic producer begins by copying the saved source table
+         * (-0x204c(A4)) to the 16-word working table (-0x2048(A4)).  Its
+         * three RGB4 component loops then update that working table before
+         * the original code calls the Copper builder eight times. */
+        for (size_t i = 0u; i + 30u <= size; ++i) {
+            static const uint8_t fade_producer_prefix[] = {
+                0x4e, 0x55, 0x00, 0x00, 0x48, 0xe7, 0x0f, 0x20,
+                0x41, 0xec, 0xdf, 0xb8, 0x24, 0x48, 0x7c, 0x00,
+                0x30, 0x06, 0x48, 0xc0, 0xe3, 0x80, 0x20, 0x6c,
+                0xdf, 0xb4, 0x32, 0x06, 0x48, 0xc1
+            };
+            if (memcmp(bytes + i, fade_producer_prefix,
+                       sizeof(fade_producer_prefix)) == 0) {
+                ++result->copper_fade_producer_signatures;
+                printf("AMIGA-DISASM RGB4 fade producer @0x%zx\n", i);
+            }
+        }
         for (size_t i = 0u; i + 6u <= size; ++i) {
             if (bytes[i + 0u] == 0xd0u && bytes[i + 1u] == 0xbcu &&
                 bytes[i + 2u] == 0x00u && bytes[i + 3u] == 0xdfu &&
@@ -199,13 +218,22 @@ static int real_graphics_visitor(const char *name, const uint8_t *bytes,
                 ++result->copper_builder_calls;
                 printf("AMIGA-DISASM palette JSR @0x%zx -> @0x%zx\n",
                        i, target);
+                if (i >= 8u && bytes[i - 8u] == 0x48u &&
+                    bytes[i - 7u] == 0x6cu && bytes[i - 6u] == 0xdfu &&
+                    bytes[i - 5u] == 0xb8u && bytes[i - 4u] == 0x48u &&
+                    bytes[i - 3u] == 0x6cu && bytes[i - 2u] == 0xdfu &&
+                    bytes[i - 1u] == 0xb8u) {
+                    ++result->copper_fade_builder_calls;
+                }
             }
         }
-        printf("AMIGA-DISASM COLOR immediate writes=%u, Copper COLOR base writes=%u, caller palette handoffs=%u, builder calls=%u\n",
+        printf("AMIGA-DISASM COLOR immediate writes=%u, Copper COLOR base writes=%u, caller palette handoffs=%u, builder calls=%u, fade producer signatures=%u, fade builder calls=%u\n",
                result->immediate_color_writes,
                result->copper_color_base_writes,
                result->copper_caller_palette_handoffs,
-               result->copper_builder_calls);
+               result->copper_builder_calls,
+               result->copper_fade_producer_signatures,
+               result->copper_fade_builder_calls);
     }
     if (strcmp(name, "graphics.dat") != 0) return 1;
     result->found = 1;
@@ -273,6 +301,10 @@ static void test_real_amiga_v20_graphics_receipt(void) {
               "real_copper_builder_found");
         CHECK(result.copper_builder_calls == 2u,
               "real_palette_jsrs_target_copper_builder");
+        CHECK(result.copper_fade_producer_signatures == 1u,
+              "real_rgb4_fade_producer_signature");
+        CHECK(result.copper_fade_builder_calls == 1u,
+              "real_rgb4_fade_producer_calls_builder");
     }
     CHECK(result.valid == 1, "real_graphics_receipt");
     if (!result.valid) return;

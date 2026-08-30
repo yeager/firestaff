@@ -7350,6 +7350,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_dungeon_weapon_info_pc34_compat.c
     src/dm1/dm1_v1_title_screen_pc34_compat.c
     src/dm1/dm1_v1_palette_font_pc34_compat.c
+    src/dm1/dm1_v1_amiga_palette_fade.c
     src/dm1/dm1_v1_object_world_pc34_compat.c
     src/dm1/dm1_v1_graphics_loader_pc34_compat.c
     src/dm1/dm1_v1_fade_transition_pc34_compat.c
@@ -59677,6 +59678,11 @@ add_executable(test_dm1_v1_fade_transition_pc34_compat tests/test_dm1_v1_fade_tr
 target_include_directories(test_dm1_v1_fade_transition_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_fade_transition_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_fade_transition_pc34_compat COMMAND test_dm1_v1_fade_transition_pc34_compat)
+
+add_executable(test_dm1_v1_amiga_palette_fade tests/test_dm1_v1_amiga_palette_fade.c)
+target_include_directories(test_dm1_v1_amiga_palette_fade PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_amiga_palette_fade PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_amiga_palette_fade COMMAND test_dm1_v1_amiga_palette_fade)
 
 add_executable(test_dm1_v1_save_load_system_pc34_compat tests/test_dm1_v1_save_load_system_pc34_compat.c)
 target_include_directories(test_dm1_v1_save_load_system_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

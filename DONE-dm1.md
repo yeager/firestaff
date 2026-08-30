@@ -1,5 +1,17 @@
 # Firestaff DONE — DM1
 
+## 2026-08-30 — Native Amiga RGB4 palette producer
+
+- Recovered the exact dynamic producer from the supplied English Amiga v2.0
+  `dm` program without extracting the ADF: the real executable has one
+  producer at `0x14306`, copies the caller source table to its work table,
+  changes each RGB4 component by one or two, and invokes the Copper-list
+  builder through the original `0x14434 → 0x14140` call.
+- Added a native, source-gated eight-frame implementation. It accepts only
+  verified caller-owned 16-word Amiga RGB4 tables, never invents a palette,
+  and is regression checked against the original executable's in-memory
+  control flow.
+
 Reviewed 2026-08-29. Completed work only.
 
 - The supplied Amiga 2.0 ZIP→ADF `graphics.dat` receipt now decodes an

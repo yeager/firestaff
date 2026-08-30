@@ -8,16 +8,13 @@ Reviewed 2026-08-29. Only open work is listed here.
   but does not substitute for these route-specific captures.
 - Extend real-media parity beyond bounded Atari ST, Amiga and FM Towns routes
   to native end-to-end gameplay, input and presentation evidence.
-- Complete the Amiga gameplay-palette table producer from the original `dm`
-  executable. The supplied English v2.0 disk's `dm` program (177,324 bytes,
-  MD5 `b2cf617509826cc45b7b8ccd16a376ac`) has an in-memory-regressed Copper
-  route: four `ADD.L #$00dff180,D0` sites build COLOR00--COLOR31 entries from
-  caller-owned 16-word RGB4 tables. The real 68000 control-flow receipt has
-  exactly two PC-relative JSR callers (`0x13fb2`, `0x14434`) to the shared
-  builder at `0x14140`; it contains no immediate `MOVE.W #rgb,COLORxx`
-  writes. Trace the table producer for the admitted gameplay state before
-  binding RGB output; do not invent a direct-register palette or substitute
-  the PC VGA palette.
+- Bind an authenticated Amiga gameplay RGB4 table to the native renderer.
+  The original v2.0 `dm` producer is implemented and source-gated: its
+  in-memory 68000 receipt copies the saved table to a working table, adjusts
+  each RGB4 component by one or two toward the target, and invokes the Copper
+  builder eight times. It deliberately accepts no fabricated palette. What
+  remains is a route-specific original gameplay table/capture that identifies
+  the active source and target tables; do not substitute the PC VGA palette.
 - The supplied French DOS ZIP → `dungeon_master.exe` SFX package uses a
   non-solid RAR 2.0 (`unp_ver=0x14`) stream. Native RAR2 decoding is
   intentionally out of scope; the launcher reports it as unsupported rather
