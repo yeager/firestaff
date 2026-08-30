@@ -163,12 +163,17 @@ int dm2_v1_startup_save_path_to_root_slot(const char *save_path,
 {
     const char *base;
     const char *slash;
+    const char *virtual_separator;
     int slot;
 
     if (!save_path || !save_path[0] || !out_root || out_root_cap <= 0 ||
         !out_slot || !out_last_session) {
         return 0;
     }
+    /* A selected retail member retains the form archive.zip::data/sksave0.dat.
+     * Its save root is the outer source archive, not the member's directory:
+     * dm2_v1_session_load_slot() rescans that archive in RAM. */
+    virtual_separator = strstr(save_path, "::");
     slash = strrchr(save_path, '/');
 #ifdef _WIN32
     {
@@ -182,7 +187,14 @@ int dm2_v1_startup_save_path_to_root_slot(const char *save_path,
     if (!dm2_v1_startup_parse_slot_basename(base, &slot, out_last_session)) {
         return 0;
     }
-    if (slash) {
+    if (virtual_separator) {
+        size_t len = (size_t)(virtual_separator - save_path);
+        if (len == 0u || len >= (size_t)out_root_cap) {
+            return 0;
+        }
+        memcpy(out_root, save_path, len);
+        out_root[len] = '\0';
+    } else if (slash) {
         size_t len = (size_t)(slash - save_path);
         if (len == 0u || len >= (size_t)out_root_cap) {
             return 0;

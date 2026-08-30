@@ -22,6 +22,7 @@
 #include "dm2_v1_save_read_record_checkcode_pc34_compat.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_startup_menu.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -306,6 +307,7 @@ static int resolve_corpus_root(char *out, size_t out_size)
 {
     const char *explicit_root = getenv("FIRESTAFF_DM2_SKSAVE_CORPUS");
     const char *data_root = getenv("FIRESTAFF_DM2_DATA_DIR");
+    const char *archive_root = getenv("FIRESTAFF_DM2_SKSAVE_ZIP");
 
     if (!out || out_size == 0u) return 0;
     out[0] = '\0';
@@ -317,7 +319,23 @@ static int resolve_corpus_root(char *out, size_t out_size)
         snprintf(out, out_size, "%s", data_root);
         return 1;
     }
+    if (archive_root && archive_root[0]) {
+        snprintf(out, out_size, "%s", archive_root);
+        return 1;
+    }
     return 0;
+}
+
+static int source_member_path(const char *root, const char *member,
+                              char *out, size_t out_size)
+{
+    const int archive_root = root && strstr(root, ".zip") != NULL &&
+        strstr(root, "::") == NULL;
+
+    if (!root || !root[0] || !member || !member[0] || !out || out_size == 0u)
+        return 0;
+    return snprintf(out, out_size, archive_root ? "%s::data/%s" : "%s/%s",
+                    root, member) < (int)out_size;
 }
 
 static uint8_t *read_file(const char *path, size_t *out_size)
@@ -327,6 +345,17 @@ static uint8_t *read_file(const char *path, size_t *out_size)
     uint8_t *bytes;
 
     if (out_size) *out_size = 0u;
+    if (path && strstr(path, "::")) {
+        uint8_t *bytes = NULL;
+        size_t size = 0u;
+        if (!out_size || !asset_read_virtual_path_alloc(path, &bytes, &size) ||
+            !bytes || size <= 42u) {
+            free(bytes);
+            return NULL;
+        }
+        *out_size = size;
+        return bytes;
+    }
     if (!path || !out_size || !(file = fopen(path, "rb"))) return NULL;
     if (fseek(file, 0, SEEK_END) != 0 || (end = ftell(file)) <= 42L ||
         fseek(file, 0, SEEK_SET) != 0) {
@@ -348,7 +377,7 @@ static int load_real_creature_ai_table(const char *root,
                                        int *out_type54_absent,
                                        int *out_type127_absent)
 {
-    char path[600];
+    char path[1200];
     uint8_t *bytes;
     size_t byte_count;
     DM2_V1_AssetLoader loader;
@@ -357,7 +386,7 @@ static int load_real_creature_ai_table(const char *root,
     if (out_type54_absent) *out_type54_absent = 0;
     if (out_type127_absent) *out_type127_absent = 0;
     if (!root || !root[0]) return 0;
-    snprintf(path, sizeof(path), "%s/graphics.dat", root);
+    if (!source_member_path(root, "graphics.dat", path, sizeof(path))) return 0;
     bytes = read_file(path, &byte_count);
     if (!bytes) return 0;
     memset(&loader, 0, sizeof(loader));
@@ -738,7 +767,6 @@ static int verify_real_pool_direct_roots(
     size_t graphics_size = 0u;
     uint16_t leader_hand = 0xfffeu;
     uint32_t root_hash = 0u;
-    char graphics_path[600];
     int ok;
 
     if (!payload || !state || !state->valid || !root || !root[0]) return 0;
@@ -808,7 +836,11 @@ static int verify_real_pool_direct_roots(
                  &leader_hand, &root_hash))) {
             ok = 0;
         }
-        snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
+        char graphics_path[1200];
+        if (ok && !source_member_path(root, "graphics.dat", graphics_path,
+                                      sizeof(graphics_path))) {
+            ok = 0;
+        }
         if (ok) graphics = read_file(graphics_path, &graphics_size);
         if (ok && (!graphics || dm2_v1_asset_loader_init(
                 &loader, graphics, graphics_size) != 0 ||
@@ -1164,20 +1196,22 @@ static void test_real_raw_save(const char *path, const char *root,
         size_t preflight_graphics_size;
         size_t preflight_dungeon_size;
         uint8_t source_savegames1_copy[DM2_V1_ORIGINAL_SAVEGAMES1_SIZE];
-        char preflight_graphics_path[600];
-        char preflight_dungeon_path[600];
+        char preflight_graphics_path[1200];
+        char preflight_dungeon_path[1200];
         const uint32_t raw_body_hash_before = hash_bytes(
             2166136261u, bytes + 42u, byte_count - 42u);
         const uint16_t savegamew7 = (uint16_t)bytes[0] |
             ((uint16_t)bytes[1] << 8);
-        snprintf(preflight_graphics_path, sizeof(preflight_graphics_path),
-                 "%s/graphics.dat", root);
-        snprintf(preflight_dungeon_path, sizeof(preflight_dungeon_path),
-                 "%s/dungeon.dat", root);
-        preflight_graphics = read_file(preflight_graphics_path,
-                                       &preflight_graphics_size);
-        preflight_dungeon = read_file(preflight_dungeon_path,
-                                      &preflight_dungeon_size);
+        preflight_graphics = source_member_path(
+            root, "graphics.dat", preflight_graphics_path,
+            sizeof(preflight_graphics_path))
+            ? read_file(preflight_graphics_path, &preflight_graphics_size)
+            : NULL;
+        preflight_dungeon = source_member_path(
+            root, "dungeon.dat", preflight_dungeon_path,
+            sizeof(preflight_dungeon_path))
+            ? read_file(preflight_dungeon_path, &preflight_dungeon_size)
+            : NULL;
         memset(&preflight_loader, 0, sizeof(preflight_loader));
         memset(&special_timers, 0, sizeof(special_timers));
         memset(&game_load_owner, 0, sizeof(game_load_owner));
@@ -1917,7 +1951,7 @@ int main(void)
     uint8_t parsed_slot = 0xffu;
     int parsed_last_session = -1;
     char parsed_root[512];
-    char corpus_path[600];
+    char corpus_path[1200];
     DirectRootStats direct_roots;
     int type54_absent = 0;
     int type127_absent = 0;
@@ -1945,29 +1979,22 @@ int main(void)
 
     memset(&corpus, 0, sizeof(corpus));
     CHECK(dm2_v1_sksave_corpus_scan(root, &corpus),
-          "save corpus scanner completes against the supplied directory");
-    for (unsigned int slot = 0u; slot < 4u; ++slot) {
-        const char *suffixes[] = { ".dat", ".bak" };
-        for (unsigned int suffix = 0u; suffix < 2u; ++suffix) {
-            char path[600];
-            FILE *file;
-
-            snprintf(path, sizeof(path), "%s/sksave%u%s", root, slot,
-                     suffixes[suffix]);
-            file = fopen(path, "rb");
-            if (!file) continue;
-            fclose(file);
-            ++found;
-            test_real_raw_save(path, root, &direct_roots);
-        }
+          "save corpus scanner completes against the supplied source media");
+    for (unsigned int entry = 0u; entry < corpus.candidate_receipt_count;
+         ++entry) {
+        const DM2_SKSaveCandidateReceipt *candidate =
+            &corpus.candidate_receipts[entry];
+        if (candidate->kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) continue;
+        ++found;
+        test_real_raw_save(candidate->path, root, &direct_roots);
     }
     if (found == 0u) {
-        printf("  FAIL: selected corpus has no lower-case PC-DOS SKSave files at %s\n",
+        printf("  FAIL: selected source media has no authentic PC-DOS SKSave members at %s\n",
                root);
         return 1;
     }
     CHECK(found == 8u,
-          "the supplied PC-DOS corpus retains all four primary/backup saves");
+          "the supplied PC-DOS source retains all four primary/backup saves");
     CHECK(direct_roots.decoded == 8u &&
               direct_roots.blocked_missing_ai_mapping == 0u &&
               direct_roots.malformed == 0u,
@@ -2000,13 +2027,15 @@ int main(void)
               direct_roots.caii_dynamic_timer_ambiguous == 0u,
           "the supplied DOSBox dynamic DB4 records have no ambiguous or matched think-timer owner");
     CHECK(corpus.valid_slot_count == 4u && corpus.valid_slot_mask == 0x000fu,
-          "scanner preserves lower-case, single-digit original slots in the data root");
+          "scanner preserves lower-case, single-digit original slots in source media");
     CHECK(corpus.valid_slot_backup_count == 4u,
           "scanner authenticates and inventories all four supplied slot backups");
     CHECK(dm2_v1_save_has_valid_slot(root, 0u) &&
               dm2_v1_save_has_valid_slot(root, 3u),
           "slot selection resolves the real PC-DOS filenames before decoding");
-    snprintf(corpus_path, sizeof(corpus_path), "%s/sksave0.dat", root);
+    CHECK(source_member_path(root, "sksave0.dat", corpus_path,
+                             sizeof(corpus_path)),
+          "source path retains the first original save member");
     CHECK(dm2_v1_startup_save_path_to_root_slot(
               corpus_path, parsed_root, (int)sizeof(parsed_root), &parsed_slot,
               &parsed_last_session) && strcmp(parsed_root, root) == 0 &&
