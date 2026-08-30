@@ -4,6 +4,9 @@ set -eu
 app=${1:?usage: test_dm2_v1_dos_sksave_archive_menu_resume.sh <firestaff>}
 archive=${FIRESTAFF_DM2_DOS_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"}
 
+# Do not let an optional diagnostic extractor mask the production ZIP reader.
+unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
+
 if [ ! -x "$app" ] || [ ! -f "$archive" ]; then
     echo 'SKIP: authentic DM2 DOS archive is not staged'
     exit 77
@@ -28,5 +31,20 @@ probe_resume() {
 
 probe_resume --game dm2 --platform pc --data-dir "$archive" --save "$save_path"
 probe_resume --menu --game dm2 --platform pc --data-dir "$archive" --save "$save_path"
+
+# Modern/V2.2 changes presentation geometry only here.  With real GDAT
+# material present it must retain the source-owned runtime frame and report no
+# core fallback draw; locally generated V2.2 cache art is deliberately not a
+# substitute for this original-media route.
+v22_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm2 --platform pc --data-dir "$archive" --save "$save_path" \
+    --presentation-mode v22 --boot-probe --boot-probe-frames 5000 \
+    --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+    --boot-probe-expect-map 11 --boot-probe-expect-party 15,10,2 \
+    --duration 0 2>&1) || { printf '%s\n' "$v22_output" >&2; exit 1; }
+case "$v22_output" in
+    *'presentationMode=2'*'presentation=640x400'*'phase=dm2-runtime'*'dm2FrameAccepted=1'*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*) ;;
+    *) printf '%s\n' "$v22_output" >&2; exit 1 ;;
+esac
 
 echo 'PASS: native DM2 DOS ZIP CLI and start menu resume archive::SKSAVE in memory'
