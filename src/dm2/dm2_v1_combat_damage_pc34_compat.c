@@ -50,14 +50,16 @@ int dm2_v1_combat_attack_creature_source(
     unsigned long game_tick,
     int x, int y,
     int target_x, int target_y,
+    DM2_V1_CalcAttackDamageReceipt *out_damage,
     DM2_V1_CaiiAttackReceipt *receipt)
 {
     DM2_V1_CalcAttackDamageReceipt damage;
 
     if (!request || !receipt) return 0;
     memset(&damage, 0, sizeof(damage));
-    if (!dm2_v1_calc_player_attack_damage_receipt(request, &damage) ||
-        !damage.valid || damage.fail_closed || !damage.hit)
+    (void)dm2_v1_calc_player_attack_damage_receipt(request, &damage);
+    if (out_damage) *out_damage = damage;
+    if (!damage.valid || damage.fail_closed || !damage.hit)
     {
         return damage.valid && !damage.fail_closed;
     }

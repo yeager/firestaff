@@ -15756,29 +15756,22 @@ static int dm2_runtime_attack_creature_at(
     request.rand_armor = dm2_v1_drops_rand16(&rt->drop_rng, 0x100u);
     request.rand_poison = dm2_v1_drops_rand16(&rt->drop_rng, 0x100u);
     g_dm2_last_wield_attack.command_power = request.power_base;
-    /* Retain the exact source-calculation outcome before ATTACK_CREATURE.
-     * A valid miss deliberately does not enter that owner, but callers need
-     * to distinguish it from a rejected command or an unavailable record.
-     * This is diagnostic state only: the following authenticated transaction
-     * remains the sole mutation owner. */
     memset(&calculation, 0, sizeof(calculation));
-    (void)dm2_v1_calc_player_attack_damage_receipt(&request, &calculation);
+    memset(&attack, 0, sizeof(attack));
+    /* The source bridge owns the source-order damage calculation and CAII
+     * mutation.  Runtime supplies only authenticated state and receives an
+     * observability copy; it never invokes the caller-authored receipt seam. */
+    if (!dm2_v1_combat_attack_creature_source(
+        &request, &rt->record_pools, dungeon, &rt->caii, &rt->timer_queue,
+        &rt->drop_rng, map, (unsigned long)rt->tick_count, x, y,
+        target_x, target_y, &calculation, &attack) && !attack.hp_applied)
+        return 0;
     g_dm2_last_wield_attack.calculation_valid = calculation.valid;
     g_dm2_last_wield_attack.calculation_hit = calculation.hit;
     g_dm2_last_wield_attack.calculation_miss = calculation.miss;
     g_dm2_last_wield_attack.calculation_fail_closed = calculation.fail_closed;
     g_dm2_last_wield_attack.raw_damage = calculation.raw_damage;
     g_dm2_last_wield_attack.final_damage = calculation.final_damage;
-    memset(&attack, 0, sizeof(attack));
-    /* The compatibility calculation receipt accepts caller-authored combat
-     * words and is deliberately not a production damage owner.  The
-     * authenticated ATTACK_CREATURE transaction below owns both calculation
-     * and mutation from the selected retail runtime state. */
-    if (!dm2_v1_combat_attack_creature_source(
-        &request, &rt->record_pools, dungeon, &rt->caii, &rt->timer_queue,
-        &rt->drop_rng, map, (unsigned long)rt->tick_count, x, y,
-        target_x, target_y, &attack) && !attack.hp_applied)
-        return 0;
     /* A valid source miss does not enter ATTACK_CREATURE and therefore does
      * not apply HP.  It must remain a blocked collision: callers use this
      * result to prevent the party from treating a failed WIELD as a hit. */

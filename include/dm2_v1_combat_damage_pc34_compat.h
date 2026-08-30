@@ -155,6 +155,7 @@ int dm2_v1_combat_attack_creature_source(
     unsigned long game_tick,
     int x, int y,
     int target_x, int target_y,
+    DM2_V1_CalcAttackDamageReceipt *out_damage,
     DM2_V1_CaiiAttackReceipt *receipt);
 
 int dm2_v1_wound_player_receipt(
