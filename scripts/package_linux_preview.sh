@@ -166,7 +166,10 @@ $DESCRIPTION
 /usr/share/firestaff/po/*.po
 $RPM_ICON_ENTRY
 SPEC
-rpmbuild --define "_topdir $RPM_TOP" --define "buildroot $RPM_ROOT" --target "$ARCH_RPM" -bb "$RPM_TOP/SPECS/firestaff.spec"
+# `--buildroot` is the documented command-line contract.  A `buildroot`
+# macro happens to work with older rpm releases, but rpm 6 ignores it here
+# and silently selects its generated empty BUILDROOT instead.
+rpmbuild --define "_topdir $RPM_TOP" --buildroot "$RPM_ROOT" --target "$ARCH_RPM" -bb "$RPM_TOP/SPECS/firestaff.spec"
 RPM_PATH="$(find "$RPM_TOP/RPMS" -type f -name '*.rpm' | head -1)"
 cp "$RPM_PATH" "$OUT_DIR/${PKG_NAME}-${VERSION}.${ARCH_RPM}.rpm"
 

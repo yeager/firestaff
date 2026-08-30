@@ -1,3 +1,25 @@
+# Firestaff v3.0.319
+
+## DM1
+
+### Fixed
+
+- `real-media startup and runtime probes`: Fixed direct-CLI launch
+  verification by separating it
+  from start-menu selection for the authenticated DOS, Atari ST,
+  Amiga, and FM Towns DM1 editions. Runtime probes now send only the intended
+  gameplay movement after a direct `--game` launch, so they validate the
+  source-owned post-title state without menu input leaking into the game.
+- `French DOS startup receipt`: Fixed the authenticated post-movement
+  assertion to the observed party coordinate `(map=0,x=1,y=4,direction=2)`
+  after starting from the original `(1,3,2)` pose.
+
+## Fixed
+
+- `Linux RPM buildroot`: Fixed release packaging to pass its prepopulated
+  package root through rpm's documented `--buildroot` interface. This
+  prevents newer rpm versions from selecting an empty generated build root.
+
 # Firestaff v3.0.318
 
 ## DM1
