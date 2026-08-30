@@ -29,17 +29,22 @@ No new graphic assets, no new sprite sheets, no new animation types.
   -> palette switching always starts on time
 
 **Implementation status (2026-08-30):**
-Open and evidence-gated. The generic PC 3.4 `F0693_WaitVerticalBlank_PC34`
-gate verifies a synchronous host-delivered wait, but is not a CSB Atari ST
-VBlank interrupt handler and does not establish the CSB re-entrancy rule.
+Partial. The source-defined scheduling discipline is implemented by
+`csb_v1_atari_st_vblank_deliver`: every arrival starts palette setup, a
+re-entrant arrival increments a pending counter, and the outer handler drains
+the counter while its modelled interrupt priority is 3. The implementation is
+locked by `csb_v1_atari_st_vblank`, including a nested two-arrival regression.
+The generic PC 3.4 `F0693_WaitVerticalBlank_PC34` gate remains a synchronous
+wait only and is not used as Atari ST parity evidence. The remaining live
+binding is to route each Atari gameplay palette consumer through this model.
 An earlier audit incorrectly cited `F0613_VBL_Process`; that symbol is a
-champion-text helper, not a VBlank implementation.
+champion-text helper.
 
-**Required evidence before implementation:**
-An authentic CSB Atari ST VBL handler trace/disassembly that identifies the
-palette-write region, the re-entrancy guard, and how a pending VBlank is
-preserved. The native implementation must then use that evidence rather than
-inventing an interrupt queue.
+**Source evidence used for implementation:**
+ReDMCSB WIP `BASE.C:E0017_MAIN_Exception28Handler_VerticalBlank_CPSDF` and
+`CHANGE7_01_FIX` identify `G0351_i_ConcurrentVerticalBlankExceptionCount`,
+the level-4-to-level-3 priority change, and the drain loop. This source was
+read from the published WIP archive; no game bytes are embedded or extracted.
 
 **Implementation gap:**
 Firestaff must not claim the CSB fix merely because it has a synchronous VBlank
@@ -152,7 +157,7 @@ platform-specific. Document as non-gap.
 
 | Gap | Severity | Description |
 |-----|----------|-------------|
-| VBL handler fix (BUG0_03) | HIGH / evidence-gated | No ignored VBL interrupts; precise palette switching |
+| VBL handler fix (BUG0_03) | PARTIAL / source-modelled | No ignored VBL interrupts; precise palette switching |
 | Engine version display (CHANGE7_36) | LOW | v2.0/v2.1 in dialog top-right; CSB only |
 | Wall drawing optimization | NONE | Performance only; no functional gap |
 | BUG0_04 (Lord Chaos palette) | DOCUMENT | Known limitation; CSB also has it; no fix |

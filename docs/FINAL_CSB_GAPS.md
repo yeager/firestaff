@@ -61,7 +61,7 @@ cross-reference.
 
 | # | Title | Status | Source |
 |---|-------|--------|--------|
-| 1 | VBL handler fix (BUG0_03) | **OPEN — evidence-gated.** `F0613_VBL_Process` is not a Firestaff VBlank function (it is a champion-text helper), so it cannot substantiate this claim. The current source-backed `F0693_WaitVerticalBlank_PC34` gate proves one synchronous wait only; it does not model or verify the CSB Atari ST re-entrant ISR rule that preserves every VBlank under load. Do not claim BUG0_03 parity until an authentic CSB VBL handler trace binds palette work and interrupt delivery. | BASE.C / VBLANK.C, CHANGE7_01_FIX |
+| 1 | VBL handler fix (BUG0_03) | **PARTIAL — source-modelled.** `csb_v1_atari_st_vblank_deliver` mirrors `BASE.C:E0017` / `CHANGE7_01_FIX`: palette setup starts on every received VBlank, re-entrant arrivals increment the pending count, and the outer handler drains the count at priority 3. `csb_v1_atari_st_vblank` proves a nested two-arrival sequence yields three palette starts and three original-handler dispatches. Remaining: bind this discipline to each live Atari gameplay palette consumer before claiming end-to-end BUG0_03 parity. | BASE.C / VBLANK.C, CHANGE7_01_FIX |
 | 2 | Engine version display (CHANGE7_36, CHANGE8_13) | **FIXED** — `csb_v1_engine_version_display_set_csb()` and `csb_v1_engine_version_display_get()` in `csb_v1_engine_version_display_pc34_compat.c` toggle between "v2.0" (DM1) and "v2.1" (CSB).  Test `csb_v1_graphics_extras_pc34_compat` covers toggle + reverse + null-terminator. | DIALOG.C, VBL.C |
 | 3 | Wall drawing optimization (CHANGE7_15) | **AUDIT-ONLY** — performance optimization, not a functional gap; documented as non-blocking | DUNVIEW.C, CHANGE7_15_OPTIMIZATION |
 | 4 | BUG0_04 Lord Chaos palette NOT fixed | **AUDIT-ONLY** — design issue from the original; persists in CSB; not blocking | DUNVIEW.C, BUG0_04 |
@@ -77,7 +77,7 @@ cross-reference.
   - **16 FIXED** (Champions 1, 2, 3, 4; Combat 1, 2, 3; Dungeon 1, 2, 3, 4, 6; Graphics 6; Mechanics 3; plus Save game combat state)
   - **5 ALREADY-DONE** (Combat 4, Dungeon 5, Mechanics 1+4+5, Combat 5)
   - **3 AUDIT-ONLY** (Graphics 3, 4, 5)
-  - **1 OPEN — evidence-gated** (Graphics 1: BUG0_03 VBlank re-entrancy)
+  - **1 PARTIAL** (Graphics 1: BUG0_03 live palette-consumer binding)
   - **0 OPEN-OMFATTANDE** — all three (Champions 3, Dungeon 4, Graphics 6) now shipped as bounded source-faithful implementations
 
 Net: **21 of 27 gaps fully closed (FIXED + ALREADY-DONE),** 4

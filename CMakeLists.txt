@@ -7337,6 +7337,7 @@ set(M11_SOURCES
     src/csb/csb_hint_oracle_ui_panel.c
     src/csb/csb_hint_oracle_ui_runtime_binding.c
     src/csb/csb_v1_atari_save_decode_pc34_compat.c
+    src/csb/csb_v1_atari_st_vblank.c
     src/csb/csb_v1_atari_st_animation_assets.c
     src/csb/csb_v1_audio_runtime_pc34_compat.c
     src/csb/csb_v1_atari_st_animation_discovery.c
@@ -40494,6 +40495,19 @@ add_executable(test_nexus_v1_dgn_material_raster
         ENVIRONMENT "FIRESTAFF_CSB_ANIMATE_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx;FIRESTAFF_CSB_ANIMATE_CACHE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb"
         LABELS "tier2;csb;atari;animation;title;audio;real-media;in-memory;native;skip-safe"
     )
+
+    add_executable(test_csb_v1_atari_st_vblank
+        tests/test_csb_v1_atari_st_vblank.c
+        src/csb/csb_v1_atari_st_vblank.c)
+    target_include_directories(test_csb_v1_atari_st_vblank PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_atari_st_vblank PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_atari_st_vblank COMMAND test_csb_v1_atari_st_vblank)
+    set_tests_properties(csb_v1_atari_st_vblank PROPERTIES
+        LABELS "tier1;csb;atari;vblank;palette;source-locked")
 
     add_executable(test_csb_v1_atari_st_animation_discovery
         tests/test_csb_v1_atari_st_animation_discovery.c
