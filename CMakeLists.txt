@@ -25008,6 +25008,17 @@ endif()
     )
     set_tests_properties(csb_v1_boot_runtime_handoff PROPERTIES
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+    add_test(
+        NAME csb_v1_utility_real_dm1_save_import
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_utility_real_dm1_save_import.sh"
+            "$<TARGET_FILE:test_csb_v1_boot_runtime_handoff>"
+    )
+    set_tests_properties(csb_v1_utility_real_dm1_save_import PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "tier2;csb;atari;utility;dm1;save;real-media;native;no-extract;skip-safe"
+        ENVIRONMENT "FIRESTAFF_CSB_REAL_UTILITY_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb;FIRESTAFF_DM1_REAL_SAVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_FR_unpacked/dungeon-master-fr/dungeon_master/DMSAVE.DAT"
+        TIMEOUT 45
+    )
 
     if(NOT TARGET test_csb_v1_startup_terminal_handoff_real_data_pc34_compat)
         add_executable(test_csb_v1_startup_terminal_handoff_real_data_pc34_compat
