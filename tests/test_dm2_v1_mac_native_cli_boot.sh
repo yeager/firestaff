@@ -4,10 +4,16 @@ set -eu
 app=${1:?usage: test_dm2_v1_mac_native_cli_boot.sh <firestaff>}
 archive=${FIRESTAFF_DM2_MAC_ARCHIVE:-"$HOME/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"}
 
+# The CUE/BIN archive is a production-native reader path, never an external
+# extractor wrapper.
+unset FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS
+
 if [ ! -x "$app" ] || [ ! -f "$archive" ]; then
     echo 'SKIP: authentic DM2 Macintosh retail archive is not staged'
     exit 77
 fi
+
+archive_hash_before=$(sha256sum "$archive")
 
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
@@ -42,4 +48,8 @@ case "$output" in
     *'assetMd5=5cab25f6b975957eae4a203174e7f2a6'*'phase=dm2-runtime'*'levelLoaded=1'*'party=1,7,0'*'champions=2'*'dm2FrameAccepted=1'*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*) ;;
     *) printf '%s\n' "$output" >&2; exit 1 ;;
 esac
+if [ "$archive_hash_before" != "$(sha256sum "$archive")" ]; then
+    echo 'FAIL: DM2 Macintosh retail archive changed during native launch' >&2
+    exit 1
+fi
 echo 'PASS: native DM2 Macintosh ZIP start menu, title, mirror selection, and movement run in memory'
