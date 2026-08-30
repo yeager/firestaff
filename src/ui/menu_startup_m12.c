@@ -166,44 +166,52 @@ enum {
     M12_SETTINGS_ROW_COUNT
 };
 
-_Static_assert(M12_STARTUP_SETTINGS_ROW_LANGUAGE == M12_SETTINGS_ROW_LANGUAGE,
-               "settings row contract: language");
-_Static_assert(M12_STARTUP_SETTINGS_ROW_GRAPHICS == M12_SETTINGS_ROW_GRAPHICS,
-               "settings row contract: graphics");
-_Static_assert(M12_STARTUP_SETTINGS_ROW_WINDOW_MODE == M12_SETTINGS_ROW_WINDOW_MODE,
-               "settings row contract: window mode");
-_Static_assert(M12_STARTUP_SETTINGS_ROW_SMOOTH_TURN_PAN == M12_SETTINGS_ROW_SMOOTH_TURN_PAN,
-               "settings row contract: smooth turn pan");
-_Static_assert(M12_STARTUP_SETTINGS_ROW_DATA_DIR == M12_SETTINGS_ROW_DATA_DIR,
-               "settings row contract: data dir");
-_Static_assert(M12_STARTUP_SETTINGS_ROW_DATA_STATUS == M12_SETTINGS_ROW_DATA_STATUS,
-               "settings row contract: data status");
-_Static_assert(M12_STARTUP_SETTINGS_ROW_RETROACHIEVEMENTS == M12_SETTINGS_ROW_RETROACHIEVEMENTS,
-               "settings row contract: retroachievements");
-_Static_assert(M12_STARTUP_SETTINGS_ROW_RA_HARDCORE == M12_SETTINGS_ROW_RA_HARDCORE,
-               "settings row contract: RA hardcore");
-_Static_assert(M12_STARTUP_SETTINGS_ROW_RA_USERNAME == M12_SETTINGS_ROW_RA_USERNAME,
-               "settings row contract: RA username");
-_Static_assert(M12_STARTUP_SETTINGS_ROW_RA_TOKEN == M12_SETTINGS_ROW_RA_TOKEN,
-               "settings row contract: RA token");
-_Static_assert(M12_STARTUP_SETTINGS_ROW_RA_ENDPOINT == M12_SETTINGS_ROW_RA_ENDPOINT,
-               "settings row contract: RA endpoint");
-_Static_assert(M12_STARTUP_SETTINGS_ROW_SESSION_TIMER == M12_SETTINGS_ROW_SESSION_TIMER,
-               "settings row contract: session timer");
-_Static_assert(M12_STARTUP_SETTINGS_ROW_EXPORT == M12_SETTINGS_ROW_EXPORT,
-               "settings row contract: export");
-_Static_assert(M12_STARTUP_SETTINGS_ROW_IMPORT == M12_SETTINGS_ROW_IMPORT,
-               "settings row contract: import");
-_Static_assert(M12_STARTUP_SETTINGS_ROW_UNICODE_FONT == M12_SETTINGS_ROW_UNICODE_FONT,
-               "settings row contract: unicode font");
-_Static_assert(M12_STARTUP_SETTINGS_ROW_ARTPACK == M12_SETTINGS_ROW_ARTPACK,
-               "settings row contract: artpack");
-_Static_assert(M12_STARTUP_SETTINGS_ROW_AUDIO_DEVICE == M12_SETTINGS_ROW_AUDIO_DEVICE,
-               "settings row contract: audio device");
-_Static_assert(M12_STARTUP_SETTINGS_ROW_DISPLAY_BRIGHTNESS == M12_SETTINGS_ROW_DISPLAY_BRIGHTNESS,
-               "settings row contract: display brightness");
-_Static_assert(M12_STARTUP_SETTINGS_ROW_FPS_OVERLAY == M12_SETTINGS_ROW_FPS_OVERLAY,
-               "settings row contract: fps overlay");
+#define M12_ASSERT_SETTINGS_ROW_SYNC(startup_row, settings_row, label) \
+    _Static_assert((int)(startup_row) == (int)(settings_row), \
+                   "settings row contract: " label)
+
+M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_LANGUAGE,
+                             M12_SETTINGS_ROW_LANGUAGE, "language");
+M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_GRAPHICS,
+                             M12_SETTINGS_ROW_GRAPHICS, "graphics");
+M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_WINDOW_MODE,
+                             M12_SETTINGS_ROW_WINDOW_MODE, "window mode");
+M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_SMOOTH_TURN_PAN,
+                             M12_SETTINGS_ROW_SMOOTH_TURN_PAN, "smooth turn pan");
+M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_DATA_DIR,
+                             M12_SETTINGS_ROW_DATA_DIR, "data dir");
+M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_DATA_STATUS,
+                             M12_SETTINGS_ROW_DATA_STATUS, "data status");
+M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_RETROACHIEVEMENTS,
+                             M12_SETTINGS_ROW_RETROACHIEVEMENTS,
+                             "retroachievements");
+M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_RA_HARDCORE,
+                             M12_SETTINGS_ROW_RA_HARDCORE, "RA hardcore");
+M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_RA_USERNAME,
+                             M12_SETTINGS_ROW_RA_USERNAME, "RA username");
+M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_RA_TOKEN,
+                             M12_SETTINGS_ROW_RA_TOKEN, "RA token");
+M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_RA_ENDPOINT,
+                             M12_SETTINGS_ROW_RA_ENDPOINT, "RA endpoint");
+M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_SESSION_TIMER,
+                             M12_SETTINGS_ROW_SESSION_TIMER, "session timer");
+M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_EXPORT,
+                             M12_SETTINGS_ROW_EXPORT, "export");
+M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_IMPORT,
+                             M12_SETTINGS_ROW_IMPORT, "import");
+M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_UNICODE_FONT,
+                             M12_SETTINGS_ROW_UNICODE_FONT, "unicode font");
+M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_ARTPACK,
+                             M12_SETTINGS_ROW_ARTPACK, "artpack");
+M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_AUDIO_DEVICE,
+                             M12_SETTINGS_ROW_AUDIO_DEVICE, "audio device");
+M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_DISPLAY_BRIGHTNESS,
+                             M12_SETTINGS_ROW_DISPLAY_BRIGHTNESS,
+                             "display brightness");
+M12_ASSERT_SETTINGS_ROW_SYNC(M12_STARTUP_SETTINGS_ROW_FPS_OVERLAY,
+                             M12_SETTINGS_ROW_FPS_OVERLAY, "fps overlay");
+
+#undef M12_ASSERT_SETTINGS_ROW_SYNC
 
 enum {
     M12_MUSEUM_CATEGORY_DM1 = 0,
