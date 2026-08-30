@@ -6,6 +6,8 @@
 
 #include "dm1_v1_original_save_classifier.h"
 
+struct GameWorld_Compat;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -133,6 +135,17 @@ int dm1_v1_original_save_amiga_f0435_party_part_bytes(
 int dm1_v1_original_save_amiga_f0435_dungeon_tail_bytes(
     const uint8_t *bytes, size_t size,
     uint8_t *out_tail, size_t out_tail_capacity, size_t *out_tail_size,
+    Dm1V1AmigaSaveF0435Receipt *out_receipt);
+
+/* Materializes only the authenticated F0434 dungeon into an otherwise-empty
+ * GameWorld_Compat.  The destination must be zero-initialized: this function
+ * is deliberately transactional and will not replace a live session until
+ * the source-specific C2/C3/C4 state adapter exists.  `originalSaveTailBytes`
+ * retains an exact in-memory copy of the supplied Amiga bytes for a later
+ * A20 serializer; it is never converted to a PC34 source stream. */
+int dm1_v1_original_save_amiga_f0435_materialize_dungeon_world_bytes(
+    const uint8_t *bytes, size_t size,
+    struct GameWorld_Compat *out_world,
     Dm1V1AmigaSaveF0435Receipt *out_receipt);
 
 const char *dm1_v1_original_save_amiga_f0435_result_name(int result);

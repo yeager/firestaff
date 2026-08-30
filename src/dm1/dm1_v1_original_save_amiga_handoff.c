@@ -1,4 +1,6 @@
 #include "dm1_v1_original_save_amiga_handoff.h"
+#include "memory_dungeon_dat_pc34_compat.h"
+#include "memory_tick_orchestrator_pc34_compat.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -446,6 +448,72 @@ int dm1_v1_original_save_amiga_f0435_dungeon_tail_bytes(
         return DM1_V1_AMIGA_SAVE_F0435_ERR_CAPACITY;
     }
     memcpy(out_tail, bytes + receipt.dungeon_offset, tail_size);
+    return DM1_V1_AMIGA_SAVE_F0435_OK;
+}
+
+int dm1_v1_original_save_amiga_f0435_materialize_dungeon_world_bytes(
+    const uint8_t *bytes, size_t size,
+    struct GameWorld_Compat *out_world,
+    Dm1V1AmigaSaveF0435Receipt *out_receipt)
+{
+    Dm1V1AmigaSaveF0435Receipt receipt;
+    struct DungeonDatState_Compat *dungeon = NULL;
+    struct DungeonThings_Compat *things = NULL;
+    uint8_t *tail = NULL;
+    size_t tail_size = 0u;
+    int result;
+
+    if (!bytes || !out_world || out_world->dungeon || out_world->things ||
+        out_world->ownsDungeon) {
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_ARGUMENT;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    result = dm1_v1_original_save_amiga_f0435_receipt_bytes(bytes, size,
+                                                             &receipt);
+    if (result != DM1_V1_AMIGA_SAVE_F0435_OK) {
+        if (out_receipt) *out_receipt = receipt;
+        return result;
+    }
+    if (!receipt.tail_authenticated || receipt.dungeon_byte_count == 0u ||
+        (size_t)receipt.dungeon_byte_count > (size_t)0x7fffffff) {
+        if (out_receipt) *out_receipt = receipt;
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_TAIL;
+    }
+    tail = (uint8_t *)malloc(receipt.dungeon_byte_count);
+    dungeon = (struct DungeonDatState_Compat *)calloc(1u, sizeof(*dungeon));
+    things = (struct DungeonThings_Compat *)calloc(1u, sizeof(*things));
+    if (!tail || !dungeon || !things) {
+        free(tail);
+        free(dungeon);
+        free(things);
+        if (out_receipt) *out_receipt = receipt;
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_CAPACITY;
+    }
+    result = dm1_v1_original_save_amiga_f0435_dungeon_tail_bytes(
+        bytes, size, tail, receipt.dungeon_byte_count, &tail_size, NULL);
+    if (result != DM1_V1_AMIGA_SAVE_F0435_OK ||
+        tail_size != receipt.dungeon_byte_count ||
+        !F0505_DUNGEON_LoadTailBufferAmigaBE_Compat(
+            tail, (int)tail_size, dungeon, things)) {
+        F0504_DUNGEON_FreeThingData_Compat(things);
+        F0500_DUNGEON_FreeDatHeader_Compat(dungeon);
+        free(things);
+        free(dungeon);
+        free(tail);
+        if (out_receipt) *out_receipt = receipt;
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_TAIL;
+    }
+    /* F0505 receives a transient read-only copy. Retain the exact source
+     * tail separately, including its original big-endian checksum word. */
+    dungeon->originalSaveTailBytes = tail;
+    dungeon->originalSaveTailByteCount = (int)tail_size;
+    dungeon->originalSaveTailPristine = 1;
+    out_world->dungeon = dungeon;
+    out_world->things = things;
+    out_world->ownsDungeon = 1;
+    out_world->dungeonFingerprint =
+        ((uint32_t)receipt.dungeon_actual_checksum << 16) ^ tail_size;
+    if (out_receipt) *out_receipt = receipt;
     return DM1_V1_AMIGA_SAVE_F0435_OK;
 }
 

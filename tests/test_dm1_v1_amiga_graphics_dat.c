@@ -4,6 +4,7 @@
 #include "firestaff_amiga_adf.h"
 #include "firestaff_zip_extract.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "memory_tick_orchestrator_pc34_compat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -548,10 +549,12 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
         size_t tail_size = 0u;
         struct DungeonDatState_Compat dungeon;
         struct DungeonThings_Compat things;
+        struct GameWorld_Compat materialized_world;
         size_t group_offset;
         size_t projectile_offset;
         memset(&dungeon, 0, sizeof(dungeon));
         memset(&things, 0, sizeof(things));
+        memset(&materialized_world, 0, sizeof(materialized_world));
         if (receipt.primary_f0435.dungeon_byte_count != 0u)
             tail = malloc(receipt.primary_f0435.dungeon_byte_count);
         CHECK(dm1_v1_original_save_amiga_f0435_dungeon_tail_bytes(
@@ -570,6 +573,17 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
                   receipt.primary_f0435.dungeon_square_first_thing_count &&
               dungeon.tilesLoaded == 1 && things.loaded == 1,
               "real_save_primary_f0434_amiga_be_runtime_reader");
+        CHECK(dm1_v1_original_save_amiga_f0435_materialize_dungeon_world_bytes(
+                  receipt.primary_bytes, receipt.primary_size,
+                  &materialized_world, NULL) == DM1_V1_AMIGA_SAVE_F0435_OK &&
+              materialized_world.ownsDungeon == 1 &&
+              materialized_world.dungeon && materialized_world.things &&
+              materialized_world.dungeon->originalSaveTailPristine == 1 &&
+              materialized_world.dungeon->originalSaveTailByteCount ==
+                  (int)tail_size &&
+              memcmp(materialized_world.dungeon->originalSaveTailBytes, tail,
+                     tail_size) == 0,
+              "real_save_primary_amiga_handoff_materializes_pristine_world");
         group_offset = test_amiga_tail_thing_offset(tail, tail_size,
                                                      THING_TYPE_GROUP);
         projectile_offset = test_amiga_tail_thing_offset(
@@ -586,6 +600,10 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
               "real_save_primary_amiga_projectile_byte_fields_not_swapped");
         F0504_DUNGEON_FreeThingData_Compat(&things);
         F0500_DUNGEON_FreeDatHeader_Compat(&dungeon);
+        F0504_DUNGEON_FreeThingData_Compat(materialized_world.things);
+        F0500_DUNGEON_FreeDatHeader_Compat(materialized_world.dungeon);
+        free(materialized_world.things);
+        free(materialized_world.dungeon);
         free(tail);
     }
     CHECK(receipt.backup_f0435_result == DM1_V1_AMIGA_SAVE_F0435_OK &&
