@@ -1,4 +1,5 @@
 #include "dm1_v1_amiga_graphics_dat.h"
+#include "dm1_v1_original_save_classifier.h"
 #include "firestaff_amiga_adf.h"
 #include "firestaff_zip_extract.h"
 #include <stdio.h>
@@ -112,6 +113,37 @@ typedef struct {
     uint8_t *bytes;
     size_t size;
 } RealGraphicsReceipt;
+
+typedef struct {
+    unsigned int file_count;
+    size_t byte_count;
+    int primary_classified;
+    DM1OriginalSaveClassifyResult primary;
+} RealSaveDiskReceipt;
+
+static int real_save_disk_visitor(const char *name, const uint8_t *bytes,
+                                  size_t size, void *user_data) {
+    RealSaveDiskReceipt *receipt = (RealSaveDiskReceipt *)user_data;
+    if (!name || !bytes || !receipt) return -1;
+    ++receipt->file_count;
+    receipt->byte_count += size;
+    printf("AMIGA-SAVE-DISK file=%s bytes=%zu\n", name, size);
+    if (strcmp(name, "DMGAMEG.DAT") == 0) {
+        receipt->primary_classified =
+            dm1_v1_original_save_classify_bytes(bytes, size,
+                                                &receipt->primary);
+        printf("AMIGA-SAVE-DISK primary shape=%s readiness=%s format=%u "
+               "platform=%u dungeon=%u checksum=%d reason=%s\n",
+               dm1_v1_original_save_shape_name(receipt->primary.shape),
+               dm1_v1_original_save_readiness_name(receipt->primary.readiness),
+               (unsigned)receipt->primary.format_id,
+               (unsigned)receipt->primary.platform,
+               (unsigned)receipt->primary.dungeon_id,
+               receipt->primary.header_checksum_ok,
+               receipt->primary.reason);
+    }
+    return 0;
+}
 
 /* 68000 JSR d16(PC) is relative to the extension word (two bytes after the
  * opcode), not the end of its four-byte encoding. Keep this tiny decoder
@@ -332,6 +364,62 @@ static void test_real_amiga_v20_graphics_receipt(void) {
     free(result.bytes);
 }
 
+/* The supplied preservation archive also retains original save-disk ADFs.
+ * Inspect the unmodified ordinary save disk in RAM before treating a saved
+ * game as a gameplay capture.  A populated file system is useful provenance;
+ * it is not, by itself, proof of the Copper palette active on a particular
+ * frame. */
+static void test_real_amiga_v20_save_disk_receipt(void) {
+    const char *archive = getenv("FIRESTAFF_DM1_AMIGA_V20_ARCHIVE");
+    static const char save_zip[] =
+        "Dungeon Master v2.0 (1988)(FTL)[save disk].zip";
+    static const char save_adf[] =
+        "Dungeon Master v2.0 (1988)(FTL)[save disk].adf";
+    uint8_t *inner = NULL;
+    uint8_t *adf = NULL;
+    size_t inner_size = 0u;
+    size_t adf_size = 0u;
+    RealSaveDiskReceipt receipt;
+    FILE *stream;
+
+    if (!archive || !archive[0]) {
+        printf("SKIP real_amiga_v20_save_disk: archive not configured\n");
+        return;
+    }
+    stream = fopen(archive, "rb");
+    if (!stream) {
+        printf("SKIP real_amiga_v20_save_disk: archive unavailable\n");
+        return;
+    }
+    fclose(stream);
+    memset(&receipt, 0, sizeof(receipt));
+    CHECK(firestaff_zip_extract_by_suffix(archive, save_zip, &inner,
+                                          &inner_size) == 0,
+          "real_save_outer_zip_member");
+    if (!inner) return;
+    CHECK(firestaff_zip_extract_memory_by_suffix(inner, inner_size, save_adf,
+                                                 &adf, &adf_size) == 0,
+          "real_save_inner_adf_member");
+    free(inner);
+    if (!adf) return;
+    CHECK(adf_size == 901120u, "real_save_adf_size");
+    CHECK(firestaff_amiga_adf_visit_ofs_files(adf, adf_size,
+                                              real_save_disk_visitor,
+                                              &receipt) >= 0,
+          "real_save_adf_visit");
+    free(adf);
+    printf("AMIGA-SAVE-DISK files=%u payload_bytes=%zu\n",
+           receipt.file_count, receipt.byte_count);
+    CHECK(receipt.file_count == 2u && receipt.byte_count == 98004u,
+          "real_save_disk_expected_file_set");
+    CHECK(receipt.primary_classified == 1,
+          "real_save_primary_classified");
+    CHECK(receipt.primary.header_checksum_ok == 1,
+          "real_save_primary_header_checksum");
+    CHECK(receipt.primary.shape == DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_COMPAT_FAMILY,
+          "real_save_primary_compat_family");
+}
+
 int main(void) {
     test_null_rejection();
     test_small_rejection();
@@ -342,6 +430,7 @@ int main(void) {
     test_receipt_null();
     test_compressed_rejection();
     test_real_amiga_v20_graphics_receipt();
+    test_real_amiga_v20_save_disk_receipt();
     printf("dm1_v1_amiga_graphics_dat: %d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
 }

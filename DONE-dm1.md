@@ -1,5 +1,17 @@
 # Firestaff DONE — DM1
 
+## 2026-08-30 — Amiga v2.0 original save-disk provenance
+
+- Added an in-memory receipt for the ordinary save disk retained inside the
+  supplied Amiga v2.0 preservation ZIP. The selected ZIP → ZIP → ADF is
+  SHA-256 `5679f789655ba3f53f6275137fc80f59eb798b03b88f801e260aed352b6709c9`
+  and contains the original `DMGAMEG.DAT` and `DMGAMEG.BAK`, each 49,002
+  bytes; no member is written to disk.
+- Its primary header verifies as a ReDMCSB-compatible original save family
+  (format 5, platform 3, dungeon 10) with a valid header checksum. This
+  proves real saved-session material is present, while correctly keeping
+  framebuffer/Copper-palette evidence capture-gated.
+
 ## 2026-08-30 — Native Amiga RGB4 palette producer
 
 - Recovered the exact dynamic producer from the supplied English Amiga v2.0
