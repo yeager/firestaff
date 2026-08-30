@@ -3,6 +3,8 @@
 #include "dm1_v1_original_save_classifier.h"
 #include "firestaff_amiga_adf.h"
 #include "firestaff_zip_extract.h"
+#include "m11_game_view.h"
+#include "dm1_v1_viewport_runtime_materialization_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
@@ -643,6 +645,7 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
         struct GameWorld_Compat materialized_world;
         struct GameWorld_Compat session_world;
         struct DM1_EventQueue_V1 session_queue;
+        M11_GameViewState resumed_view;
         size_t group_offset;
         size_t projectile_offset;
         memset(&dungeon, 0, sizeof(dungeon));
@@ -650,6 +653,7 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
         memset(&materialized_world, 0, sizeof(materialized_world));
         memset(&session_world, 0, sizeof(session_world));
         memset(&session_queue, 0, sizeof(session_queue));
+        memset(&resumed_view, 0, sizeof(resumed_view));
         if (receipt.primary_f0435.dungeon_byte_count != 0u)
             tail = malloc(receipt.primary_f0435.dungeon_byte_count);
         CHECK(dm1_v1_original_save_amiga_f0435_dungeon_tail_bytes(
@@ -726,6 +730,27 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
               session_queue.events[session_queue.timeline[0]].type ==
                   DM1_EVENT_WATCHDOG,
               "real_save_primary_amiga_handoff_materializes_atomic_session_candidate");
+        M11_GameView_Init(&resumed_view);
+        resumed_view.active = 1;
+        strcpy(resumed_view.sourceId, "dm1");
+        CHECK(M11_GameView_LoadDm1OriginalAmigaSaveBytes(
+                  &resumed_view, receipt.primary_bytes, receipt.primary_size,
+                  "amiga-save-adf::DMGAMEG.DAT") == 1 &&
+              resumed_view.world.gameTick == receipt.primary_f0435.game_time &&
+              resumed_view.world.party.mapX == receipt.primary_f0435.party_map_x &&
+              resumed_view.world.magic.magicalLightAmount ==
+                  receipt.primary_party_receipt.magical_light_amount &&
+              resumed_view.dm1ViewportRuntimeOrigin ==
+                  DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_AMIGA,
+              "real_save_primary_amiga_m11_adopts_in_memory_session");
+        resumed_view.candidateMirrorPanelActive = 1;
+        CHECK(M11_GameView_LoadDm1OriginalAmigaSaveBytes(
+                  &resumed_view, receipt.primary_bytes, receipt.primary_size,
+                  "amiga-save-adf::DMGAMEG.DAT") == 0 &&
+              resumed_view.world.gameTick == receipt.primary_f0435.game_time &&
+              resumed_view.world.party.mapX == receipt.primary_f0435.party_map_x,
+              "real_save_primary_amiga_m11_rejects_live_candidate_panel");
+        M11_GameView_Shutdown(&resumed_view);
         group_offset = test_amiga_tail_thing_offset(tail, tail_size,
                                                      THING_TYPE_GROUP);
         projectile_offset = test_amiga_tail_thing_offset(

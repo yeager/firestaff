@@ -42,8 +42,12 @@ Reviewed 2026-08-29. Only open work is listed here.
   footprints and freeze-time scalars into the native magic/lifecycle mirrors.
   It rejects nonzero C1 groups and unsupported event families instead of
   fabricating M10 state. All five decrypted F0435 parts retain a shared
-  in-memory boundary. Applying a complete authenticated session to M11
-  remains.
+  in-memory boundary. The supplied zero-active-group/C53 session now also
+  adopts atomically into M11 from its already-read bytes, retains explicit
+  Amiga provenance, and refuses to replace a live C040 candidate panel. The
+  remaining work is to connect that byte-only route to the selected
+  archive/ADF save entry in CLI and M12 without extracting it to disk, then
+  decode nonzero C1 groups and other event families from authentic samples.
 - The supplied French DOS ZIP → `dungeon_master.exe` SFX package uses a
   non-solid RAR 2.0 (`unp_ver=0x14`) stream. Native RAR2 decoding is
   intentionally out of scope; the launcher reports it as unsupported rather

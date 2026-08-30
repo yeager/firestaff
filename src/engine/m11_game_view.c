@@ -7,6 +7,7 @@
 #include "dm1_v1_combat_log_pc34_compat.h"
 #include "dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
+#include "dm1_v1_original_save_amiga_handoff.h"
 #include "nexus_v1_engine.h"
 #include "nexus_v1_iso_reader.h"
 #include "nexus_v2_hud_runtime.h"
@@ -14510,6 +14511,62 @@ int M11_GameView_LoadDm1OriginalPc34SaveBytes(M11_GameViewState* state,
         return 0;
     }
     return 1;
+}
+
+int M11_GameView_LoadDm1OriginalAmigaSaveBytes(M11_GameViewState* state,
+                                               const uint8_t* bytes,
+                                               size_t size,
+                                               const char* sourcePath)
+{
+    struct GameWorld_Compat loadedWorld;
+    struct DM1_EventQueue_V1 loadedQueue;
+    struct DM1SaveResumeRequest resumeRequest;
+    struct DM1SaveResumeReceipt resumeReceipt;
+
+    if (!state || !state->active || !bytes || size == 0u ||
+        !DM1_SaveResumeSourceAllowed(state->sourceId) ||
+        state->candidateMirrorPanelActive) {
+        return 0;
+    }
+    memset(&loadedWorld, 0, sizeof(loadedWorld));
+    memset(&loadedQueue, 0, sizeof(loadedQueue));
+    if (dm1_v1_original_save_amiga_f0435_materialize_session_bytes(
+            bytes, size, &loadedWorld, &loadedQueue, NULL) !=
+        DM1_V1_AMIGA_SAVE_F0435_OK ||
+        loadedQueue.eventCount != loadedWorld.timeline.count ||
+        loadedQueue.gameTick != loadedWorld.gameTick) {
+        F0883_WORLD_Free_Compat(&loadedWorld);
+        return 0;
+    }
+    memset(&resumeRequest, 0, sizeof(resumeRequest));
+    memset(&resumeReceipt, 0, sizeof(resumeReceipt));
+    resumeRequest.sourceId = state->sourceId;
+    resumeRequest.path = sourcePath ? sourcePath : "original-amiga-a20-snapshot";
+    resumeRequest.gameTick = (uint32_t)loadedWorld.gameTick;
+    if (!DM1_BuildSaveResumeReceipt(&resumeRequest, &resumeReceipt) ||
+        !resumeReceipt.allowed || !resumeReceipt.loadSucceeded ||
+        !loadedWorld.ownsDungeon || !loadedWorld.dungeon ||
+        !loadedWorld.things || loadedWorld.timeline.nowTick !=
+            loadedWorld.gameTick || loadedWorld.partyMapIndex !=
+            loadedWorld.party.mapIndex || loadedWorld.newPartyMapIndex !=
+            loadedWorld.party.mapIndex) {
+        F0883_WORLD_Free_Compat(&loadedWorld);
+        return 0;
+    }
+    /* The verified A20 candidate owns a distinct F0434 dungeon allocation.
+     * M11 does not borrow the PC34 launch dungeon and never reopens the
+     * source path, so a later archive mutation cannot affect this resume. */
+    F0883_WORLD_Free_Compat(&state->world);
+    state->world = loadedWorld;
+    memset(&loadedWorld, 0, sizeof(loadedWorld));
+    state->dm1ViewportRuntimeOrigin =
+        DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_AMIGA;
+    m11_dm1_c13_visible_runtime_handoff_clear(state);
+    memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
+    m11_discard_transient_dm1_action_effects_after_resume(state);
+    m11_refresh_hash(state);
+    m11_mark_explored(state);
+    return m11_apply_dm1_save_resume_receipt(state, &resumeReceipt);
 }
 
 int M11_GameView_ExportQuickSaveAsDM1PC34(const char* quickSavePath,

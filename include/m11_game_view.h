@@ -2033,6 +2033,12 @@ int M11_GameView_LoadDm1OriginalPc34SaveBytes(M11_GameViewState* state,
                                               const uint8_t* bytes,
                                               size_t size,
                                               const char* sourcePath);
+/* Adopt an already authenticated original Amiga A20 F0435 snapshot directly
+ * from memory. `sourcePath` is diagnostic-only and is never reopened. */
+int M11_GameView_LoadDm1OriginalAmigaSaveBytes(M11_GameViewState* state,
+                                               const uint8_t* bytes,
+                                               size_t size,
+                                               const char* sourcePath);
 int M11_GameView_ExportQuickSaveAsDM1PC34(const char* quickSavePath,
                                           const char* exportPath);
 int M11_GameView_QuickSave(M11_GameViewState* state);

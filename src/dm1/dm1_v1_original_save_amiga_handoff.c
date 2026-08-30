@@ -967,6 +967,14 @@ int dm1_v1_original_save_amiga_f0435_materialize_session_bytes(
     candidate_world.magic.freezeLifeTicks = source_party.freeze_life_ticks;
     candidate_world.magic.firstScentIndex = source_party.first_scent_index;
     candidate_world.freezeLifeTicks = source_party.freeze_life_ticks;
+    /* GLOBAL_DATA.LastRandomNumber is G0349's exact LCG state (BASE.C),
+     * not a host-selected seed. Preserve it before any M10 consumer can
+     * request the next random value. */
+    if (!F0730_COMBAT_RngInit_Compat(&candidate_world.masterRng,
+                                     source_global.last_random_number)) {
+        result = DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+        goto done;
+    }
     candidate_world.disabledMovementTicks = source_global.disabled_movement_ticks;
     candidate_world.projectileDisabledMovementTicks =
         source_global.projectile_disabled_movement_ticks;
