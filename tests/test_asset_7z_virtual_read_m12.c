@@ -26,6 +26,16 @@ int main(void)
         return 1;
     }
     free(bytes);
+    if (snprintf(virtual_path, sizeof(virtual_path), "%s::%s::START.PRG",
+                 archive, member) < 0 ||
+        !asset_read_virtual_path_alloc(virtual_path, &bytes, &size) ||
+        !bytes || size < 2U || bytes[0] != 0x60U) {
+        free(bytes);
+        fputs("FAIL: M12 cannot read nested CSB 7z/STX data in memory\n",
+              stderr);
+        return 1;
+    }
+    free(bytes);
     puts("M12 native CSB 7z virtual read: PASS");
     return 0;
 }
