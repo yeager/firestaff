@@ -14,6 +14,41 @@ static int g_pass = 0, g_fail = 0;
     else { g_fail++; printf("FAIL %s\n", msg); } \
 } while (0)
 
+static uint16_t test_read_be16(const uint8_t *bytes) {
+    return (uint16_t)(((uint16_t)bytes[0] << 8) | bytes[1]);
+}
+
+/* F0434 stores map descriptors, the compact per-column table, SFT and text
+ * ahead of DB0..DB15.  This test-only cursor intentionally follows the A20
+ * big-endian header itself, so a host-endian loader cannot accidentally make
+ * the Group/Projectile byte-field assertion pass. */
+static size_t test_amiga_tail_thing_offset(const uint8_t *tail,
+                                           size_t tail_size,
+                                           unsigned int wanted_type) {
+    static const uint8_t record_bytes[16] = {
+        4u, 6u, 4u, 8u, 16u, 4u, 4u, 4u,
+        4u, 8u, 4u, 0u, 0u, 0u, 8u, 4u
+    };
+    size_t cursor;
+    unsigned int columns = 0u;
+    unsigned int map;
+    unsigned int type;
+    if (!tail || wanted_type >= 16u || tail_size < 44u) return 0u;
+    for (map = 0u; map < tail[4u]; ++map) {
+        size_t map_offset = 44u + (size_t)map * 16u;
+        if (map_offset + 10u > tail_size) return 0u;
+        columns += ((unsigned int)(test_read_be16(tail + map_offset + 8u) >> 6u) & 0x1fu) + 1u;
+    }
+    cursor = 44u + (size_t)tail[4u] * 16u + (size_t)columns * 2u +
+             (size_t)test_read_be16(tail + 10u) * 2u +
+             (size_t)test_read_be16(tail + 6u) * 2u;
+    for (type = 0u; type < wanted_type; ++type) {
+        cursor += (size_t)test_read_be16(tail + 12u + type * 2u) *
+                  record_bytes[type];
+    }
+    return cursor <= tail_size ? cursor : 0u;
+}
+
 static void test_null_rejection(void) {
     CHECK(dm1_v1_amiga_graphics_probe(NULL, 0) == 0, "null_data");
     CHECK(dm1_v1_amiga_graphics_probe(NULL, 1000) == 0, "null_data_nonzero_size");
@@ -513,6 +548,8 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
         size_t tail_size = 0u;
         struct DungeonDatState_Compat dungeon;
         struct DungeonThings_Compat things;
+        size_t group_offset;
+        size_t projectile_offset;
         memset(&dungeon, 0, sizeof(dungeon));
         memset(&things, 0, sizeof(things));
         if (receipt.primary_f0435.dungeon_byte_count != 0u)
@@ -533,6 +570,20 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
                   receipt.primary_f0435.dungeon_square_first_thing_count &&
               dungeon.tilesLoaded == 1 && things.loaded == 1,
               "real_save_primary_f0434_amiga_be_runtime_reader");
+        group_offset = test_amiga_tail_thing_offset(tail, tail_size,
+                                                     THING_TYPE_GROUP);
+        projectile_offset = test_amiga_tail_thing_offset(
+            tail, tail_size, THING_TYPE_PROJECTILE);
+        CHECK(things.groupCount > 0 && group_offset != 0u &&
+              group_offset + 6u <= tail_size && things.groups &&
+              things.groups[0].creatureType == tail[group_offset + 4u] &&
+              things.groups[0].cells == tail[group_offset + 5u],
+              "real_save_primary_amiga_group_byte_fields_not_swapped");
+        CHECK(things.projectileCount > 0 && projectile_offset != 0u &&
+              projectile_offset + 6u <= tail_size && things.projectiles &&
+              things.projectiles[0].kineticEnergy == tail[projectile_offset + 4u] &&
+              things.projectiles[0].attack == tail[projectile_offset + 5u],
+              "real_save_primary_amiga_projectile_byte_fields_not_swapped");
         F0504_DUNGEON_FreeThingData_Compat(&things);
         F0500_DUNGEON_FreeDatHeader_Compat(&dungeon);
         free(tail);
