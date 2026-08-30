@@ -2,75 +2,44 @@
 
 ## Version Scheme
 
-Firestaff uses semantic versioning: `MAJOR.MINOR.PATCH` (e.g., `3.0.282`). The version is set in `CMakeLists.txt`:
+Firestaff uses semantic versioning: `MAJOR.MINOR.PATCH` (for example,
+`3.0.314`). The version is set in `CMakeLists.txt`:
 
 ```cmake
-project(Firestaff VERSION 3.0.282 LANGUAGES C)
+project(Firestaff VERSION 3.0.314 LANGUAGES C)
 ```
 
 ## Release notes format
 
-Every version block in `RELEASE_NOTES.md` is grouped by game. It contains
-`DM1`, `DM2`, `CSB`, `Nexus` and `Theron`; each game contains `Added`,
-`Changed` and `Removed`. A category with no change contains exactly `None.`.
-Non-empty bullets name the affected function, subsystem, command, screen or
-feature in backticks.
+Each version block in `RELEASE_NOTES.md` contains only game and release-wide
+categories that have a concrete delta. Valid game headings are `DM1`, `DM2`,
+`CSB`, `Nexus`, and `Theron`; valid release-wide headings are `Added`,
+`Changed`, `Removed`, and `Fixed`. A bullet names the affected function,
+subsystem, command, screen, or feature in backticks. Empty categories are
+omitted—`None.` is rejected by the release validator.
 
 ## Creating a release
 
 1. **Bump version** in `CMakeLists.txt`.
 2. **Write release notes** in `RELEASE_NOTES.md` (add a section headed
-   `# Firestaff vX.Y.Z`). The section must contain exactly these functional
-   delta categories, each with concrete bullets:
+   `# Firestaff vX.Y.Z`). Include only the relevant game and release-wide
+   categories, each with concrete bullets:
 
    ```markdown
    # Firestaff vX.Y.Z
 
-   ## DM1
-   ### Added
-   - None.
-   ### Changed
-   - `dm1_feature`: describe the concrete change.
-   ### Removed
-   - None.
-
-   ## DM2
-   ### Added
-   - None.
-   ### Changed
-   - None.
-   ### Removed
-   - None.
-
    ## CSB
    ### Added
-   - None.
-   ### Changed
-   - None.
-   ### Removed
-   - None.
+   - `csb_feature`: describe the concrete change.
 
-   ## Nexus
-   ### Added
-   - None.
-   ### Changed
-   - None.
-   ### Removed
-   - None.
-
-   ## Theron
-   ### Added
-   - None.
-   ### Changed
-   - None.
-   ### Removed
-   - None.
+   ## Firestaff
+   ### Fixed
+   - `release_feature`: describe the concrete release-wide fix.
    ```
 
    Name the affected function, subsystem, command, screen or feature in every
-   non-empty bullet. Do not use aggregate wording such as “various updates” or
-   generic release summaries. A release with no delta in a category must say
-   `None.` explicitly. The release workflow rejects notes that do not meet this
+   bullet. Do not use aggregate wording such as “various updates” or generic
+   release summaries. The release workflow rejects notes that do not meet this
    contract.
 3. **Update active TODO and DONE ledgers** as needed: `TODO.md` for
    cross-game work, `TODO-<game>.md` for active game work, and the matching

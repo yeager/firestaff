@@ -1,3 +1,31 @@
+# Firestaff v3.0.314
+
+## Firestaff
+
+### Fixed
+
+- `native 7z archive admission`: Corrected native nested-member path
+  construction so supported CSB Atari STX members remain portable on Windows,
+  macOS, and Linux. The bounded reader verifies archive/member checksums in
+  memory and does not invoke an archive tool or materialize game data.
+
+## CSB
+
+### Added
+
+- `scan_native_7z_atari_stx_by_md5`: Added authenticated discovery of the
+  supported real CSB one-member LZMA2 7z/STX profile, including nested
+  `START.PRG` reads from the protected-disk image in memory.
+
+## DM2
+
+### Fixed
+
+- `dm2_v1_combat_attack_creature_source`: Updated optional WIELD diagnostic
+  receipts to use the source-owned combat bridge, preserving the production
+  boundary on all release platforms while unsupported authentic save
+  interactions remain fail-closed.
+
 # Firestaff v3.0.313
 
 ## Firestaff

@@ -2,6 +2,15 @@
 
 Reviewed 2026-08-29. Completed work only.
 
+- The supplied CSB Utility Disk's supported single-member LZMA2 7z profile
+  is now decoded by Firestaff in bounded memory. Its Atari STX member and
+  nested files, including `START.PRG`, can be read without `7z`, `bsdtar`, or
+  another external tool at runtime and without materializing game data on
+  disk. The reader validates both 7z header CRCs, the extracted member CRC,
+  declared sizes, and the member name; unsupported 7z structures remain
+  closed rather than falling back to an external extractor. The M12
+  regression runs against the supplied archive with external archive tools
+  disabled.
 - The supplied Amiga ZIP→ADF `Graphics.DAT` now has an in-memory native
   runtime-family receipt: inventory/panel, pit and field, stairs, wall and
   floor ornaments, and doors all decode through the big-endian IMG1 consumer
