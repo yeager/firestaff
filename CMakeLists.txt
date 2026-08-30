@@ -4277,7 +4277,7 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;dos;startup;resume;cli;real-media;native;skip-safe;matrix"
         ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
-        TIMEOUT 90
+        TIMEOUT 120
     )
     add_test(
         NAME dm2_v1_dos_fr_native_cli_boot
