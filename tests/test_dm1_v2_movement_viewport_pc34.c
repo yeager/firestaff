@@ -1,10 +1,11 @@
 /* Source-lock note (see verify_dm1_v2_graphics_pipeline_source_isolation.py):
- * this test opens the canonical DM1 PC 3.4 DUNGEON.DAT via the
- * _canonical/dm1/DUNGEON.DAT layout (or one of the extract/fmtowns
- * fallbacks below), so its dungeon world is bound to authenticated
- * source data and never to a synthetic map. */
+ * this test reads the canonical DM1 PC 3.4 DATA/DUNGEON.DAT member directly
+ * from its original ZIP into RAM. It never requires an extracted corpus, so
+ * its dungeon world is bound to authenticated source data rather than a
+ * synthetic map. */
 #include "dm1_v2_movement_engine_pc34.h"
 #include "dm1_v2_viewport_renderer_pc34.h"
+#include "firestaff_zip_extract.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,59 +22,23 @@ static int dm1_path_exists(const char* path) {
 }
 
 
-static const char* dm1_default_dungeon_dat_path(void) {
+static const char* dm1_default_pc34_archive(void) {
     static char path[2048];
-    static const char* const suffixes[] = {
-        "/DUNGEON.DAT",
-        "/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA/DUNGEON.DAT",
-        "/fmtowns_iso/DATA/DUNGEON.DAT",
-        "/fmtowns_iso/JDATA/DUNGEON.DAT"
-    };
-    size_t i;
     const char* configured = getenv("FIRESTAFF_DM1_DATA_DIR");
     const char* data_root = getenv("FIRESTAFF_DATA");
     const char* home = getenv("HOME");
     if (configured && configured[0]) {
-        for (i = 0; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
-            snprintf(path, sizeof(path), "%s%s", configured, suffixes[i]);
-            if (dm1_path_exists(path)) return path;
-        }
-    }
-    if (data_root && data_root[0]) {
-        for (i = 0; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
-            snprintf(path, sizeof(path), "%s/dm1%s", data_root, suffixes[i]);
-            if (dm1_path_exists(path)) return path;
-        }
-    }
-    if (!home || !home[0]) return NULL;
-    for (i = 0; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
-        snprintf(path, sizeof(path), "%s/.firestaff/data/dm1%s", home,
-                 suffixes[i]);
+        snprintf(path, sizeof(path), "%s/Dungeon-Master_DOS_EN_Version-34.zip", configured);
         if (dm1_path_exists(path)) return path;
     }
-    return NULL;
-}
-
-static unsigned char* read_file_bytes(const char* path, int* outSize) {
-    FILE* f = fopen(path, "rb");
-    unsigned char* data = NULL;
-    long size = 0;
-    if (outSize) *outSize = 0;
-    if (!f) return NULL;
-    if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return NULL; }
-    size = ftell(f);
-    if (size <= 0) { fclose(f); return NULL; }
-    if (fseek(f, 0, SEEK_SET) != 0) { fclose(f); return NULL; }
-    data = (unsigned char*)malloc((size_t)size);
-    if (!data) { fclose(f); return NULL; }
-    if (fread(data, 1, (size_t)size, f) != (size_t)size) {
-        free(data);
-        fclose(f);
-        return NULL;
+    if (data_root && data_root[0]) {
+        snprintf(path, sizeof(path), "%s/dm1/Dungeon-Master_DOS_EN_Version-34.zip", data_root);
+        if (dm1_path_exists(path)) return path;
     }
-    fclose(f);
-    if (outSize) *outSize = (int)size;
-    return data;
+    if (!home || !home[0]) return NULL;
+    snprintf(path, sizeof(path), "%s/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip", home);
+    if (dm1_path_exists(path)) return path;
+    return NULL;
 }
 
 
@@ -256,9 +221,10 @@ static void test_viewport_real_state_fixture_draw_list(void) {
 
 
 static void test_viewport_dungeon_dat_decoder_entry_draw_list(void) {
-    const char* path = getenv("DM1_PC34_DUNGEON_DAT");
+    const char* archive = getenv("FIRESTAFF_DM1_PC34_ARCHIVE");
     int size = 0;
     unsigned char* bytes = NULL;
+    size_t member_size = 0;
     DM1_V2_DungeonDatState dungeon;
     DM1_V2_ViewportCompositionInput input;
     DM1_V2_DrawCommand commands[DM1_V2_MAX_DRAW_COMMANDS];
@@ -269,8 +235,12 @@ static void test_viewport_dungeon_dat_decoder_entry_draw_list(void) {
     int sawD0Field = 0;
     int sawD1Objects = 0;
 
-    if (!path) path = dm1_default_dungeon_dat_path();
-    bytes = read_file_bytes(path, &size);
+    if (!archive) archive = dm1_default_pc34_archive();
+    if (archive) {
+        CHECK(firestaff_zip_extract_by_suffix(archive, "DATA/DUNGEON.DAT",
+                                               &bytes, &member_size) == 0);
+    }
+    size = (int)member_size;
     CHECK(bytes != NULL);
     if (!bytes) return;
 

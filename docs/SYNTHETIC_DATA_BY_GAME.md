@@ -45,7 +45,9 @@ data.
 ### Real source
 
 - Original PC/DOS data exists in `~/.firestaff/data/dm1`, including the
-  extracted `Dungeon-Master_DOS_EN_Version-34` directory with `DATA/`.
+  canonical `Dungeon-Master_DOS_EN_Version-34.zip` with `DATA/` members.
+  Native checks must read those members in memory rather than relying on an
+  extracted directory.
 - Original PC34 saves exist outside the repository under
   `~/.firestaff/saves/dm1/original-pc34/` and in the user's Downloads corpus.
   They must not be replaced with generated saves; C13 still requires an
@@ -61,6 +63,11 @@ bytes, or leave the material empty. V2.2 placeholder art must not replace
 original PC34 records merely because it is visually complete. The remaining
 pixel-pair and C13-capture gates are evidence work, not permission to create
 synthetic saves or screenshots.
+
+The V2 movement/viewport real-data check reads `DATA/DUNGEON.DAT` from the
+canonical PC 3.4 ZIP using the native ZIP reader. It no longer accepts an
+extracted `DUNGEON.DAT` as its primary corpus or uses a fixture as the positive
+dungeon decode proof.
 
 ## DM2
 
