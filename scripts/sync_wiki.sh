@@ -3,8 +3,10 @@ set -euo pipefail
 
 : "${GITHUB_REPOSITORY:?GITHUB_REPOSITORY required}"
 WIKI_SRC="${WIKI_SRC:-docs/wiki}"
+WIKI_TEMP_ROOT="${FIRESTAFF_WIKI_TEMP_ROOT:-${RUNNER_TEMP:-${XDG_RUNTIME_DIR:-$PWD}}}"
+mkdir -p "$WIKI_TEMP_ROOT"
 
-WIKI_DIR="$(mktemp -d)"
+WIKI_DIR="$(mktemp -d "$WIKI_TEMP_ROOT/firestaff-wiki.XXXXXX")"
 trap 'rm -rf "$WIKI_DIR"' EXIT
 
 git clone "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.wiki.git" "$WIKI_DIR" 2>/dev/null || {

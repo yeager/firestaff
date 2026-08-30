@@ -101,10 +101,11 @@ jobs:
           sudo apt-get install -y build-essential cmake ninja-build git pkg-config \
             libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev \
             libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev wayland-protocols
-          git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git /tmp/SDL3
-          cmake -S /tmp/SDL3 -B /tmp/SDL3-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TESTS=OFF
-          cmake --build /tmp/SDL3-build --parallel
-          sudo cmake --install /tmp/SDL3-build
+          sdl_root="$RUNNER_TEMP/firestaff-sdl3"
+          git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git "$sdl_root/source"
+          cmake -S "$sdl_root/source" -B "$sdl_root/build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TESTS=OFF
+          cmake --build "$sdl_root/build" --parallel
+          sudo cmake --install "$sdl_root/build"
           sudo ldconfig
 
       - name: Setup MSYS2 (Windows)
@@ -296,10 +297,11 @@ jobs:
           sudo apt-get install -y build-essential cmake ninja-build git pkg-config \
             libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev \
             libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev wayland-protocols
-          git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git /tmp/SDL3
-          cmake -S /tmp/SDL3 -B /tmp/SDL3-build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TESTS=OFF
-          cmake --build /tmp/SDL3-build --parallel
-          sudo cmake --install /tmp/SDL3-build
+          sdl_root="$RUNNER_TEMP/firestaff-sdl3"
+          git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git "$sdl_root/source"
+          cmake -S "$sdl_root/source" -B "$sdl_root/build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TESTS=OFF
+          cmake --build "$sdl_root/build" --parallel
+          sudo cmake --install "$sdl_root/build"
           sudo ldconfig
       - name: Probe compile sanity
         run: |
@@ -310,7 +312,7 @@ jobs:
             echo "=== $probe ==="
             if ! gcc -Wall -Wextra -Werror -Wno-format-truncation \
               -Iinclude -Isrc -Itests $(pkg-config --cflags sdl3) \
-              -c -o /tmp/probe.o "$probe"; then
+              -c -o "$RUNNER_TEMP/firestaff-probe.o" "$probe"; then
               echo "SKIP (legacy probe has unresolved optional dependencies): $probe"
             fi
             probes_found=1

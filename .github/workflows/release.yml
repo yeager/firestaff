@@ -382,14 +382,15 @@ jobs:
             fi
             sleep "$((attempt * 15))"
           done
-          git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git /tmp/SDL3
-          cmake -S /tmp/SDL3 -B /tmp/SDL3-build -G Ninja \
+          sdl_root="$RUNNER_TEMP/firestaff-sdl3"
+          git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git "$sdl_root/source"
+          cmake -S "$sdl_root/source" -B "$sdl_root/build" -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DSDL_SHARED=ON \
             -DSDL_STATIC=OFF \
             -DSDL_TESTS=OFF
-          cmake --build /tmp/SDL3-build --parallel
-          sudo cmake --install /tmp/SDL3-build
+          cmake --build "$sdl_root/build" --parallel
+          sudo cmake --install "$sdl_root/build"
           sudo ldconfig
 
       - name: Configure
@@ -464,15 +465,15 @@ jobs:
             ./scripts/package_steamdeck_preview.sh
 
             curl --fail --location --retry 3 --retry-delay 2 \
-              --output /tmp/appimagetool-x86_64.AppImage \
+              --output "$RUNNER_TEMP/appimagetool-x86_64.AppImage" \
               https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
-            chmod 0755 /tmp/appimagetool-x86_64.AppImage
+            chmod 0755 "$RUNNER_TEMP/appimagetool-x86_64.AppImage"
             VERSION="$FIRESTAFF_VERSION" \
             ARTPACK_STUDIO_BIN_SRC="$PWD/build/artpack-studio-bundle/dist/firestaff_artpack_studio" \
             DUNGEON_STUDIO_BIN_SRC="$PWD/build/dungeon-studio-bundle/dist/firestaff_dungeon_studio" \
             SAVEGAME_EDITOR_BIN_SRC="$PWD/build/savegame-editor-bundle/dist/firestaff_savegame_editor" \
             RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
-            APPIMAGETOOL=/tmp/appimagetool-x86_64.AppImage \
+            APPIMAGETOOL="$RUNNER_TEMP/appimagetool-x86_64.AppImage" \
             ./scripts/package_steamdeck_appimage.sh
             cd release
             checksum_inputs+=(
@@ -512,8 +513,9 @@ jobs:
       - name: Build SDL3 for iOS
         run: |
           set -euo pipefail
-          git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git /tmp/SDL3
-          cmake -S /tmp/SDL3 -B /tmp/SDL3-ios-build -G Ninja \
+          sdl_root="$RUNNER_TEMP/firestaff-sdl3-ios"
+          git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git "$sdl_root/source"
+          cmake -S "$sdl_root/source" -B "$sdl_root/build" -G Ninja \
             -DCMAKE_SYSTEM_NAME=iOS \
             -DCMAKE_OSX_ARCHITECTURES=arm64 \
             -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 \
@@ -521,17 +523,17 @@ jobs:
             -DSDL_SHARED=OFF \
             -DSDL_STATIC=ON \
             -DSDL_TESTS=OFF \
-            -DCMAKE_INSTALL_PREFIX=/tmp/SDL3-ios
-          cmake --build /tmp/SDL3-ios-build --parallel
-          cmake --install /tmp/SDL3-ios-build
+            -DCMAKE_INSTALL_PREFIX="$sdl_root/install"
+          cmake --build "$sdl_root/build" --parallel
+          cmake --install "$sdl_root/build"
 
       - name: Configure
         run: |
           cmake -B build -G Ninja \
             -DCMAKE_TOOLCHAIN_FILE="${PWD}/cmake/ios-arm64.toolchain.cmake" \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_PREFIX_PATH=/tmp/SDL3-ios \
-            -DCMAKE_FIND_ROOT_PATH=/tmp/SDL3-ios
+            -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/firestaff-sdl3-ios/install" \
+            -DCMAKE_FIND_ROOT_PATH="$RUNNER_TEMP/firestaff-sdl3-ios/install"
 
       - name: Build
         run: cmake --build build --target firestaff --parallel
@@ -588,8 +590,9 @@ jobs:
       - name: Build SDL3 for Android
         run: |
           set -euo pipefail
-          git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git /tmp/SDL3
-          cmake -S /tmp/SDL3 -B /tmp/SDL3-android-build -G Ninja \
+          sdl_root="$RUNNER_TEMP/firestaff-sdl3-android"
+          git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git "$sdl_root/source"
+          cmake -S "$sdl_root/source" -B "$sdl_root/build" -G Ninja \
             -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake" \
             -DANDROID_ABI=arm64-v8a \
             -DANDROID_PLATFORM=24 \
@@ -597,9 +600,9 @@ jobs:
             -DSDL_SHARED=ON \
             -DSDL_STATIC=OFF \
             -DSDL_TESTS=OFF \
-            -DCMAKE_INSTALL_PREFIX=/tmp/SDL3-android
-          cmake --build /tmp/SDL3-android-build --parallel
-          cmake --install /tmp/SDL3-android-build
+            -DCMAKE_INSTALL_PREFIX="$sdl_root/install"
+          cmake --build "$sdl_root/build" --parallel
+          cmake --install "$sdl_root/build"
 
       - name: Configure
         run: |
@@ -608,8 +611,8 @@ jobs:
             -DANDROID_ABI=arm64-v8a \
             -DANDROID_PLATFORM=24 \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_PREFIX_PATH=/tmp/SDL3-android \
-            -DCMAKE_FIND_ROOT_PATH=/tmp/SDL3-android
+            -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/firestaff-sdl3-android/install" \
+            -DCMAKE_FIND_ROOT_PATH="$RUNNER_TEMP/firestaff-sdl3-android/install"
 
       - name: Build
         run: cmake --build build --target firestaff --parallel
@@ -621,6 +624,7 @@ jobs:
           BUILD_DIR="$PWD/build" \
           MANIFEST_SRC="$PWD/assets/AndroidManifest.xml" \
           RELEASE_DIR="$PWD/release" \
+          FIRESTAFF_SDL3_ANDROID_PREFIX="$RUNNER_TEMP/firestaff-sdl3-android/install" \
           ./scripts/package_android.sh
 
           cd release
@@ -733,4 +737,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          WIKI_SRC="$PWD/docs/wiki" ./scripts/sync_wiki.sh
+          WIKI_SRC="$PWD/docs/wiki" \
+          FIRESTAFF_WIKI_TEMP_ROOT="$RUNNER_TEMP" \
+          ./scripts/sync_wiki.sh

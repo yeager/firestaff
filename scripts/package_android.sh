@@ -22,7 +22,8 @@ mkdir -p "${RELEASE_DIR}"
 cp "${BUILD_DIR}/libmain.so" "${APK_STAGING}/lib/arm64-v8a/libmain.so"
 
 SDL3_SO=""
-for candidate in "${BUILD_DIR}/libSDL3.so" "/tmp/SDL3-android/lib/libSDL3.so"; do
+for candidate in "${BUILD_DIR}/libSDL3.so" \
+    "${FIRESTAFF_SDL3_ANDROID_PREFIX:-}/lib/libSDL3.so"; do
     if [[ -f "$candidate" ]]; then
         SDL3_SO="$candidate"
         break
