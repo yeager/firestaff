@@ -3,6 +3,7 @@
 #include "dm1_v1_original_save_classifier.h"
 #include "firestaff_amiga_adf.h"
 #include "firestaff_zip_extract.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -510,6 +511,10 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
     {
         uint8_t *tail = NULL;
         size_t tail_size = 0u;
+        struct DungeonDatState_Compat dungeon;
+        struct DungeonThings_Compat things;
+        memset(&dungeon, 0, sizeof(dungeon));
+        memset(&things, 0, sizeof(things));
         if (receipt.primary_f0435.dungeon_byte_count != 0u)
             tail = malloc(receipt.primary_f0435.dungeon_byte_count);
         CHECK(dm1_v1_original_save_amiga_f0435_dungeon_tail_bytes(
@@ -520,6 +525,16 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
               memcmp(tail, receipt.primary_bytes + receipt.primary_f0435.dungeon_offset,
                      tail_size) == 0,
               "real_save_primary_big_endian_dungeon_tail_copy");
+        CHECK(F0505_DUNGEON_LoadTailBufferAmigaBE_Compat(
+                  tail, (int)tail_size, &dungeon, &things) == 1 &&
+              dungeon.header.mapCount == receipt.primary_f0435.dungeon_map_count &&
+              dungeon.dungeonColumnCount == receipt.primary_f0435.dungeon_column_count &&
+              things.squareFirstThingCount ==
+                  receipt.primary_f0435.dungeon_square_first_thing_count &&
+              dungeon.tilesLoaded == 1 && things.loaded == 1,
+              "real_save_primary_f0434_amiga_be_runtime_reader");
+        F0504_DUNGEON_FreeThingData_Compat(&things);
+        F0500_DUNGEON_FreeDatHeader_Compat(&dungeon);
         free(tail);
     }
     CHECK(receipt.backup_f0435_result == DM1_V1_AMIGA_SAVE_F0435_OK &&

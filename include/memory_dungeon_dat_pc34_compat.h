@@ -485,6 +485,19 @@ int F0504_DUNGEON_LoadTailBuffer_Compat(
     struct DungeonThings_Compat* things);
 
 /*
+ * A20 Amiga F0434 save-tail reader.  The source byte stream is big-endian,
+ * including every 16-bit field and Generic.Next word.  This entry point
+ * reads that representation directly; it normalizes only the allocated
+ * runtime mirrors so the shared dungeon consumer can remain host-native.
+ * It neither accepts nor emits a PC34 save-tail byte stream.
+ */
+int F0505_DUNGEON_LoadTailBufferAmigaBE_Compat(
+    const unsigned char* bytes,
+    int byteCount,
+    struct DungeonDatState_Compat* state,
+    struct DungeonThings_Compat* things);
+
+/*
  * Free thing data.
  */
 void F0504_DUNGEON_FreeThingData_Compat(

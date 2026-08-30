@@ -27,6 +27,44 @@ static unsigned short read_u16_le_mem(const unsigned char* p) {
         return (unsigned short)(p[0] | ((unsigned short)p[1] << 8));
 }
 
+static unsigned short read_u16_tail_mem(const unsigned char* p,
+                                        int sourceBigEndian) {
+        return sourceBigEndian
+            ? (unsigned short)(((unsigned short)p[0] << 8) | p[1])
+            : read_u16_le_mem(p);
+}
+
+/* Thing decoders retain canonical little-endian runtime bytes because their
+ * consumers mutate Generic.Next in that representation.  A20 source records
+ * are word-addressed too, so swap each source word while copying the mirror;
+ * no source buffer is ever modified and byte-addressed raw map data bypasses
+ * this helper. */
+static void copy_tail_thing_bytes(unsigned char* destination,
+                                  const unsigned char* source,
+                                  int byteCount, int thingType,
+                                  int sourceBigEndian) {
+        int i;
+        if (!sourceBigEndian) {
+                memcpy(destination, source, (size_t)byteCount);
+                return;
+        }
+        for (i = 0; i < byteCount; i += 2) {
+                /* C04_GROUP stores CreatureType and Cells as two individual
+                 * bytes at offsets 4/5; C14_PROJECTILE similarly stores its
+                 * KineticEnergy and Attack at 4/5.  They are not an A20
+                 * word and reversing them would create a believable but
+                 * wrong creature/projectile state. */
+                if ((thingType == THING_TYPE_GROUP ||
+                     thingType == THING_TYPE_PROJECTILE) && i == 4) {
+                        destination[i] = source[i];
+                        destination[i + 1] = source[i + 1];
+                        continue;
+                }
+                destination[i] = source[i + 1];
+                destination[i + 1] = source[i];
+        }
+}
+
 /* ---- bitfield decode (PC/Watcom LSB-first packing) ---- */
 
 static void decode_map_bitfield_a(unsigned short raw,
@@ -869,11 +907,12 @@ static unsigned short dungeon_tail_checksum(const unsigned char* bytes,
         return checksum;
 }
 
-int F0504_DUNGEON_LoadTailBuffer_Compat(
+static int load_tail_buffer_compat_endian(
         const unsigned char* bytes,
         int byteCount,
         struct DungeonDatState_Compat* state,
-        struct DungeonThings_Compat* things)
+        struct DungeonThings_Compat* things,
+        int sourceBigEndian)
 {
         int off;
         int mapIndex;
@@ -892,22 +931,23 @@ int F0504_DUNGEON_LoadTailBuffer_Compat(
         memset(state, 0, sizeof(*state));
         memset(things, 0, sizeof(*things));
 
-        expectedChecksum = read_u16_le_mem(bytes + byteCount - 2);
+        expectedChecksum = read_u16_tail_mem(bytes + byteCount - 2,
+                                             sourceBigEndian);
         actualChecksum = dungeon_tail_checksum(bytes, byteCount - 2);
         if (expectedChecksum != actualChecksum) {
                 return 0;
         }
 
-        state->header.ornamentRandomSeed = read_u16_le_mem(bytes + 0);
-        state->header.rawMapDataByteCount = read_u16_le_mem(bytes + 2);
+        state->header.ornamentRandomSeed = read_u16_tail_mem(bytes + 0, sourceBigEndian);
+        state->header.rawMapDataByteCount = read_u16_tail_mem(bytes + 2, sourceBigEndian);
         state->header.mapCount = bytes[4];
         state->header.unreferenced = bytes[5];
-        state->header.textDataWordCount = read_u16_le_mem(bytes + 6);
-        state->header.initialPartyLocation = read_u16_le_mem(bytes + 8);
-        state->header.squareFirstThingCount = read_u16_le_mem(bytes + 10);
+        state->header.textDataWordCount = read_u16_tail_mem(bytes + 6, sourceBigEndian);
+        state->header.initialPartyLocation = read_u16_tail_mem(bytes + 8, sourceBigEndian);
+        state->header.squareFirstThingCount = read_u16_tail_mem(bytes + 10, sourceBigEndian);
         for (type = 0; type < DUNGEON_THING_TYPE_COUNT; ++type) {
                 state->header.thingCounts[type] =
-                        read_u16_le_mem(bytes + 12 + type * 2);
+                        read_u16_tail_mem(bytes + 12 + type * 2, sourceBigEndian);
         }
         if (state->header.mapCount == 0 ||
             state->header.mapCount > DUNGEON_MAX_MAPS) {
@@ -928,16 +968,16 @@ int F0504_DUNGEON_LoadTailBuffer_Compat(
                 unsigned short rawBitA;
                 const unsigned char* p =
                         bytes + off + mapIndex * DUNGEON_MAP_DESC_SIZE;
-                m->rawMapDataByteOffset = read_u16_le_mem(p + 0);
-                m->aUnreferenced = read_u16_le_mem(p + 2);
-                m->bUnreferenced = read_u16_le_mem(p + 4);
+                m->rawMapDataByteOffset = read_u16_tail_mem(p + 0, sourceBigEndian);
+                m->aUnreferenced = read_u16_tail_mem(p + 2, sourceBigEndian);
+                m->bUnreferenced = read_u16_tail_mem(p + 4, sourceBigEndian);
                 m->offsetMapX = p[6];
                 m->offsetMapY = p[7];
-                rawBitA = read_u16_le_mem(p + 8);
+                rawBitA = read_u16_tail_mem(p + 8, sourceBigEndian);
                 decode_map_bitfield_a(rawBitA, &m->level, &m->width, &m->height);
-                m->rawBitfieldB = read_u16_le_mem(p + 10);
-                m->rawBitfieldC = read_u16_le_mem(p + 12);
-                m->rawBitfieldD = read_u16_le_mem(p + 14);
+                m->rawBitfieldB = read_u16_tail_mem(p + 10, sourceBigEndian);
+                m->rawBitfieldC = read_u16_tail_mem(p + 12, sourceBigEndian);
+                m->rawBitfieldD = read_u16_tail_mem(p + 14, sourceBigEndian);
                 decode_map_bitfield_b(m->rawBitfieldB, m);
                 decode_map_bitfield_c(m->rawBitfieldC, m);
                 decode_map_bitfield_d(m->rawBitfieldD, m);
@@ -963,7 +1003,7 @@ int F0504_DUNGEON_LoadTailBuffer_Compat(
                 if (!state->columnsCumulativeSquareFirstThingCount) goto fail;
                 for (mapIndex = 0; mapIndex < totalColumns; ++mapIndex) {
                         state->columnsCumulativeSquareFirstThingCount[mapIndex] =
-                                read_u16_le_mem(bytes + off + mapIndex * 2);
+                                read_u16_tail_mem(bytes + off + mapIndex * 2, sourceBigEndian);
                 }
         }
         off += totalColumns * 2;
@@ -978,7 +1018,7 @@ int F0504_DUNGEON_LoadTailBuffer_Compat(
                 for (mapIndex = 0; mapIndex < things->squareFirstThingCount;
                      ++mapIndex) {
                         things->squareFirstThings[mapIndex] =
-                                read_u16_le_mem(bytes + off + mapIndex * 2);
+                                read_u16_tail_mem(bytes + off + mapIndex * 2, sourceBigEndian);
                 }
         }
         off += things->squareFirstThingCount * 2;
@@ -993,8 +1033,8 @@ int F0504_DUNGEON_LoadTailBuffer_Compat(
                 for (mapIndex = 0; mapIndex < things->textDataWordCount;
                      ++mapIndex) {
                         things->textData[mapIndex] =
-                                read_u16_le_mem(bytes + textDataOffset +
-                                                mapIndex * 2);
+                                read_u16_tail_mem(bytes + textDataOffset +
+                                                  mapIndex * 2, sourceBigEndian);
                 }
         }
         off += things->textDataWordCount * 2;
@@ -1012,8 +1052,10 @@ int F0504_DUNGEON_LoadTailBuffer_Compat(
                         things->rawThingData[type] =
                                 (unsigned char*)malloc((size_t)dataBytes);
                         if (!things->rawThingData[type]) goto fail;
-                        memcpy(things->rawThingData[type], bytes + off,
-                               (size_t)dataBytes);
+                        copy_tail_thing_bytes(things->rawThingData[type],
+                                              bytes + off, dataBytes,
+                                              type,
+                                              sourceBigEndian);
                 }
                 off += dataBytes;
         }
@@ -1177,6 +1219,26 @@ fail:
         memset(state, 0, sizeof(*state));
         memset(things, 0, sizeof(*things));
         return 0;
+}
+
+int F0504_DUNGEON_LoadTailBuffer_Compat(
+        const unsigned char* bytes,
+        int byteCount,
+        struct DungeonDatState_Compat* state,
+        struct DungeonThings_Compat* things)
+{
+        return load_tail_buffer_compat_endian(bytes, byteCount, state, things,
+                                              0);
+}
+
+int F0505_DUNGEON_LoadTailBufferAmigaBE_Compat(
+        const unsigned char* bytes,
+        int byteCount,
+        struct DungeonDatState_Compat* state,
+        struct DungeonThings_Compat* things)
+{
+        return load_tail_buffer_compat_endian(bytes, byteCount, state, things,
+                                              1);
 }
 
 int F0504_DUNGEON_LoadThingData_Compat(
