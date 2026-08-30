@@ -3253,6 +3253,22 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         dm1RouteReceipt.use_dm1_transaction = 0;
         dm1RouteReceipt.use_generic_launch = 1;
     }
+    if (launchEntry && launchEntry->gameId &&
+        strcmp(launchEntry->gameId, "dm1") == 0 &&
+        menuState->quickResumeAvailable &&
+        menuState->quickResumeLaunchRequested &&
+        menuState->quickResumeSavePath[0] != '\0' &&
+        strstr(menuState->quickResumeSavePath, "::") != NULL) {
+        /* An original A20 save selected from ZIP -> ADF has already passed
+         * M12's F0435 admission.  LOADSAVE.C F0435 restores it directly;
+         * it does not replay the DOS TITLE/ENTRANCE transaction whose
+         * PC34-only capture receipt would reject the Amiga byte layout.
+         * Keep the media path virtual: OpenSelectedMenuEntry forwards it to
+         * M11's in-memory Amiga loader, which authenticates it again before
+         * replacing the live world. */
+        dm1RouteReceipt.use_dm1_transaction = 0;
+        dm1RouteReceipt.use_generic_launch = 1;
+    }
     if (dm1RouteReceipt.use_dm1_transaction) {
         int oldFastForward = g_m11_intro_delay_fast_forward;
         g_m11_intro_delay_fast_forward = bootProbe ? 1 : oldFastForward;

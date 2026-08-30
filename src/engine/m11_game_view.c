@@ -28243,6 +28243,13 @@ static int m11_game_view_load_quicksave_path(M11_GameViewState* state,
     if (!state || !state->active || !path || path[0] == '\0') {
         return 0;
     }
+    /* ZIP -> ADF save members are virtual paths, not host files.  Route
+     * them to the format-specific F0435 admission before fopen(); otherwise
+     * an authentic Amiga DMGAMEG.DAT is reported as missing even though the
+     * native archive reader can consume it entirely in memory. */
+    if (strstr(path, "::") != NULL) {
+        return M11_GameView_LoadDm1SavePath(state, path, NULL);
+    }
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         /* GAME_LOAD is not yet connected to the complete source DB/
          * possession/timer graph. Never let the generic DM1 envelope loader

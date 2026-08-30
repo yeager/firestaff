@@ -26981,6 +26981,8 @@ endif()
         NAME m12_quick_resume_gate
         COMMAND test_m12_quick_resume_gate
     )
+    set_tests_properties(m12_quick_resume_gate PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM1_AMIGA_V20_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_Amiga_EN_Version-20.zip")
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_m12_quick_resume_real_data.c")
         add_executable(test_dm2_v1_m12_quick_resume_real_data

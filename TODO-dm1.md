@@ -46,9 +46,9 @@ Reviewed 2026-08-29. Only open work is listed here.
   adopts atomically into M11 from its already-read bytes, retains explicit
   Amiga provenance, and refuses to replace a live C040 candidate panel. The
   selected direct-CLI archive path now reaches that same owner as
-  `ZIP → ZIP → ADF → DMGAMEG.DAT` with no extraction to disk.  The remaining
-  work is automatic M12/start-menu save-entry selection, then decoding
-  nonzero C1 groups and other event families from authentic samples.
+  `ZIP → ZIP → ADF → DMGAMEG.DAT` with no extraction to disk. The remaining
+  work is decoding nonzero C1 groups and other event families from authentic
+  samples.
 - The supplied French DOS ZIP → `dungeon_master.exe` SFX package uses a
   non-solid RAR 2.0 (`unp_ver=0x14`) stream. Native RAR2 decoding is
   intentionally out of scope; the launcher reports it as unsupported rather

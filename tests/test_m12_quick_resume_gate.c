@@ -53,6 +53,51 @@ static int expect(int cond, const char* msg) {
     return 1;
 }
 
+static void force_dm1_available(M12_StartupMenuState* state);
+
+static int test_real_amiga_virtual_save_quick_resume(void) {
+    const char* archive = getenv("FIRESTAFF_DM1_AMIGA_V20_ARCHIVE");
+    static const char save_zip[] =
+        "Dungeon Master v2.0 (1988)(FTL)[save disk].zip";
+    static const char save_adf[] =
+        "Dungeon Master v2.0 (1988)(FTL)[save disk].adf";
+    char virtual_path[2048];
+    M12_StartupMenuState state;
+    M12_LaunchIntent intent;
+    FILE* archive_stream;
+
+    if (!archive || !archive[0]) {
+        puts("SKIP: real Amiga virtual save archive not configured");
+        return 1;
+    }
+    archive_stream = fopen(archive, "rb");
+    if (!archive_stream) {
+        puts("SKIP: real Amiga virtual save archive unavailable");
+        return 1;
+    }
+    fclose(archive_stream);
+    if (snprintf(virtual_path, sizeof(virtual_path), "%s::%s::%s::DMGAMEG.DAT",
+                 archive, save_zip, save_adf) < 0 ||
+        strlen(virtual_path) >= sizeof(virtual_path)) {
+        return expect(0, "real Amiga virtual save path must fit");
+    }
+    M12_Config_SetLastSavePath(virtual_path);
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    force_dm1_available(&state);
+    if (!expect(state.quickResumeAvailable == 1 &&
+                strcmp(state.quickResumeGameId, "dm1") == 0 &&
+                strcmp(state.quickResumeSavePath, virtual_path) == 0,
+                "authenticated ZIP-to-ADF Amiga save must enable DM1 Continue")) {
+        return 0;
+    }
+    state.selectedIndex = -1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    return expect(intent.valid == 1 && intent.savePath &&
+                  strcmp(intent.savePath, virtual_path) == 0,
+                  "Amiga Continue intent must retain the in-memory virtual path");
+}
+
 static void force_dm1_available(M12_StartupMenuState* state) {
     state->entries[0].title = "DUNGEON MASTER";
     state->entries[0].gameId = "dm1";
@@ -856,6 +901,8 @@ int main(void) {
         return 1;
     }
     m12_test_setenv("HOME", tmpTemplate);
+
+    if (!test_real_amiga_virtual_save_quick_resume()) return 1;
 
     M12_Config_SetLastSavePath("");
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);

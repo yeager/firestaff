@@ -26,6 +26,7 @@
 #include "entrance_frontend_pc34_compat.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_save_load.h"
+#include "dm1_v1_original_save_amiga_handoff.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_startup_menu.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
@@ -43,6 +44,7 @@
 #include "menu_row_metrics_m12.h"
 #include "manual_docs_m12.h"
 #include "cloud_sync_m12.h"
+#include "asset_find_by_hash.h"
 
 #include <SDL3/SDL_atomic.h>
 #include <SDL3/SDL_misc.h>
@@ -3109,6 +3111,9 @@ static int m12_is_valid_dm1_firestaff_quicksave_path(const char* path) {
 static int m12_is_valid_dm1_quicksave_path(const char* path) {
     struct GameWorld_Compat world;
     struct DM1SaveHeader header;
+    Dm1V1AmigaSaveF0435Receipt amigaReceipt;
+    uint8_t* virtualBytes = NULL;
+    size_t virtualByteCount = 0u;
     int rc;
 
     if (m12_is_valid_dm1_firestaff_quicksave_path(path)) {
@@ -3116,6 +3121,24 @@ static int m12_is_valid_dm1_quicksave_path(const char* path) {
     }
     if (!path || path[0] == '\0') {
         return 0;
+    }
+
+    /* The A20 save disk has no host-side loose file: its authenticated
+     * DMGAMEG.DAT member can remain inside ZIP -> ADF virtual media.  M11
+     * already resumes this exact byte route in memory, so M12 must admit it
+     * with the same F0435 receipt instead of hiding a valid Continue entry.
+     * Do not use the PC34 loader here; it has different byte order and
+     * record layout. */
+    if (strstr(path, "::") != NULL &&
+        asset_read_path_alloc(path, &virtualBytes, &virtualByteCount)) {
+        memset(&amigaReceipt, 0, sizeof(amigaReceipt));
+        rc = dm1_v1_original_save_amiga_f0435_receipt_bytes(
+            virtualBytes, virtualByteCount, &amigaReceipt);
+        free(virtualBytes);
+        return rc == DM1_V1_AMIGA_SAVE_F0435_OK &&
+               amigaReceipt.header_authenticated &&
+               amigaReceipt.body_authenticated &&
+               amigaReceipt.tail_authenticated;
     }
 
     memset(&world, 0, sizeof(world));

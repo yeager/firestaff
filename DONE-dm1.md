@@ -2,6 +2,11 @@
 
 ## 2026-08-30 — Amiga v2.0 original save-disk provenance
 
+- The startup menu's Continue entry and direct CLI `--save` now accept the
+  authenticated `ZIP → ZIP → ADF → DMGAMEG.DAT` path. M12 validates the
+  actual Amiga F0435 envelope in RAM, and M11 routes the virtual path straight
+  to the format-specific loader instead of attempting `fopen`. The direct
+  Amiga boot probe resumes the real save at tick 292 with no media extraction.
 - Added an in-memory receipt for the ordinary save disk retained inside the
   supplied Amiga v2.0 preservation ZIP. The selected ZIP → ZIP → ADF is
   SHA-256 `5679f789655ba3f53f6275137fc80f59eb798b03b88f801e260aed352b6709c9`
