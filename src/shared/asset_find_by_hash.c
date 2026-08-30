@@ -5060,6 +5060,20 @@ static int scan_atari_stx_by_md5_list(const char *stx_path,
  * Keep both archive and disk traversal in process: the returned virtual path
  * names the original archive/member/file triple and no game-data file is
  * materialized on disk. */
+static int native_7z_copy_nested_virtual_match_path(
+    const char *archive_path, const char *member_name, const char *entry_name,
+    char *out_path, int out_path_len) {
+    char virtual_path[ASSET_PATH_MAX];
+    if (!archive_path || !member_name || !entry_name || !out_path ||
+        out_path_len <= 0 ||
+        snprintf(virtual_path, sizeof(virtual_path), "%s::%s::%s",
+                 archive_path, member_name, entry_name) >=
+            (int)sizeof(virtual_path)) {
+        return 0;
+    }
+    return copy_match_path(virtual_path, out_path, out_path_len);
+}
+
 static int scan_native_7z_atari_stx_by_md5(const char *archive_path,
                                            const char *expected_md5,
                                            char *out_path, int out_path_len) {
@@ -5081,8 +5095,8 @@ static int scan_native_7z_atari_stx_by_md5(const char *archive_path,
                                    adf_find_single_visitor, &match);
     free(image);
     return result >= 0 && match.found &&
-           copy_nested_virtual_match_path(archive_path, member_name,
-                                          match.name, out_path, out_path_len);
+           native_7z_copy_nested_virtual_match_path(
+               archive_path, member_name, match.name, out_path, out_path_len);
 }
 
 static int scan_native_7z_atari_stx_by_md5_list(
@@ -5121,7 +5135,7 @@ static int scan_native_7z_atari_stx_by_md5_list(
         const char *entry;
         if (!local_matched[i] || matched[i]) continue;
         entry = strstr(local_paths[i], "::");
-        if (!entry || !copy_nested_virtual_match_path(
+        if (!entry || !native_7z_copy_nested_virtual_match_path(
                 archive_path, member_name, entry + 2, out_paths[i],
                 ASSET_PATH_MAX)) continue;
         matched[i] = 1;
