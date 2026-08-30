@@ -38,7 +38,9 @@ Reviewed 2026-08-29. Only open work is listed here.
   (including the supplied save's WATCHDOG event). The supplied save's complete
   zero-active-group session now materializes atomically into one isolated
   native candidate (world, party, queue and source-owned C53 timeline). It
-  rejects nonzero C1 groups and unsupported event families instead of
+  also binds C2's authenticated light, shield, scent, invisibility,
+  footprints and freeze-time scalars into the native magic/lifecycle mirrors.
+  It rejects nonzero C1 groups and unsupported event families instead of
   fabricating M10 state. All five decrypted F0435 parts retain a shared
   in-memory boundary. Applying a complete authenticated session to M11
   remains.

@@ -60091,6 +60091,8 @@ add_executable(test_dm1_v1_amiga_graphics_dat
     src/dm1/dm1_v1_inventory_slot_placement_pc34_compat.c
     src/csb/csb_v1_reincarnation_penalty_pc34_compat.c
     src/memory/memory_champion_state_pc34_compat.c
+    src/memory/memory_champion_lifecycle_pc34_compat.c
+    src/memory/memory_combat_pc34_compat.c
     src/memory/memory_dungeon_dat_pc34_compat.c
     src/shared/dungeon_decompressor_ftl.c
     src/shared/firestaff_amiga_adf.c

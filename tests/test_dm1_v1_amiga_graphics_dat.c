@@ -690,6 +690,27 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
               session_world.party.mapIndex == receipt.primary_f0435.party_map_index &&
               session_world.party.mapX == receipt.primary_f0435.party_map_x &&
               session_world.party.mapY == receipt.primary_f0435.party_map_y &&
+              session_world.magic.magicalLightAmount ==
+                  receipt.primary_party_receipt.magical_light_amount &&
+              session_world.magic.event73CountThievesEye ==
+                  receipt.primary_party_receipt.thieves_eye_count &&
+              session_world.magic.event79CountFootprints ==
+                  receipt.primary_party_receipt.footprints_count &&
+              session_world.magic.event71CountInvisibility ==
+                  receipt.primary_party_receipt.invisibility_count &&
+              session_world.magic.partyShieldDefense ==
+                  receipt.primary_party_receipt.shield_defense &&
+              session_world.magic.fireShieldDefense ==
+                  receipt.primary_party_receipt.fire_shield_defense &&
+              session_world.magic.spellShieldDefense ==
+                  receipt.primary_party_receipt.spell_shield_defense &&
+              session_world.freezeLifeTicks ==
+                  receipt.primary_party_receipt.freeze_life_ticks &&
+              session_world.lifecycle.gameTime == receipt.primary_f0435.game_time &&
+              session_world.lifecycle.status.partyShieldDefense ==
+                  receipt.primary_party_receipt.shield_defense &&
+              session_world.lifecycle.status.invisibilityCount ==
+                  receipt.primary_party_receipt.invisibility_count &&
               session_world.timeline.count == receipt.primary_f0435.event_count &&
               session_world.timeline.events[0].kind == TIMELINE_EVENT_WATCHDOG &&
               session_world.timeline.events[0].fireAtTick == 300u &&

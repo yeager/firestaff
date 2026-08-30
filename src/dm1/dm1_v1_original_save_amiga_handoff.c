@@ -1,6 +1,7 @@
 #include "dm1_v1_original_save_amiga_handoff.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
+#include "memory_champion_lifecycle_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
 #include "dm1_v1_inventory_slot_placement_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
@@ -894,6 +895,7 @@ int dm1_v1_original_save_amiga_f0435_materialize_session_bytes(
     Dm1V1AmigaSaveF0435Receipt *out_receipt)
 {
     Dm1V1AmigaSaveF0435Receipt receipt;
+    Dm1V1AmigaSavePartyReceipt source_party;
     struct GameWorld_Compat candidate_world;
     struct DM1_EventQueue_V1 candidate_queue;
     unsigned int index;
@@ -904,6 +906,7 @@ int dm1_v1_original_save_amiga_f0435_materialize_session_bytes(
         return DM1_V1_AMIGA_SAVE_F0435_ERR_ARGUMENT;
     }
     memset(&receipt, 0, sizeof(receipt));
+    memset(&source_party, 0, sizeof(source_party));
     memset(&candidate_world, 0, sizeof(candidate_world));
     memset(&candidate_queue, 0, sizeof(candidate_queue));
     result = dm1_v1_original_save_amiga_f0435_receipt_bytes(bytes, size,
@@ -923,6 +926,27 @@ int dm1_v1_original_save_amiga_f0435_materialize_session_bytes(
     result = dm1_v1_original_save_amiga_f0435_materialize_party_bytes(
         bytes, size, &candidate_world.party, NULL);
     if (result != DM1_V1_AMIGA_SAVE_F0435_OK) goto done;
+    /* A20 C2's 128-byte PARTY_INFO is an authenticated, big-endian source
+     * record.  Bind every named status scalar directly from that record;
+     * these are not PC34 defaults and must not be cleared on resume.  The
+     * scent arrays, rest state, RNG, and last-attack time remain unavailable
+     * here and therefore stay fail-closed rather than being reconstructed. */
+    result = dm1_v1_original_save_amiga_f0435_party_receipt_bytes(
+        bytes, size, &source_party, NULL);
+    if (result != DM1_V1_AMIGA_SAVE_F0435_OK) goto done;
+    candidate_world.magic.magicalLightAmount = source_party.magical_light_amount;
+    candidate_world.magic.event73CountThievesEye = source_party.thieves_eye_count;
+    candidate_world.magic.event79CountFootprints = source_party.footprints_count;
+    candidate_world.magic.event71CountInvisibility = source_party.invisibility_count;
+    candidate_world.magic.magicFootprintsActive =
+        source_party.footprints_count > 0u;
+    candidate_world.magic.partyShieldDefense = source_party.shield_defense;
+    candidate_world.magic.fireShieldDefense = source_party.fire_shield_defense;
+    candidate_world.magic.spellShieldDefense = source_party.spell_shield_defense;
+    candidate_world.magic.scentCount = source_party.scent_count;
+    candidate_world.magic.freezeLifeTicks = source_party.freeze_life_ticks;
+    candidate_world.magic.firstScentIndex = source_party.first_scent_index;
+    candidate_world.freezeLifeTicks = source_party.freeze_life_ticks;
     if (candidate_world.party.mapIndex < 0 ||
         candidate_world.party.mapIndex >= candidate_world.dungeon->header.mapCount ||
         candidate_world.party.mapX < 0 || candidate_world.party.mapY < 0 ||
@@ -977,6 +1001,27 @@ int dm1_v1_original_save_amiga_f0435_materialize_session_bytes(
     candidate_world.gameTick = receipt.game_time;
     candidate_world.partyMapIndex = candidate_world.party.mapIndex;
     candidate_world.newPartyMapIndex = candidate_world.party.mapIndex;
+    /* F0859 derives per-champion lifecycle data only from the restored C2
+     * champion records.  Re-apply the independent PARTY_INFO status words
+     * after that initializer, exactly as separate source data rather than
+     * treating its zeroed status structure as saved state. */
+    if (!F0859_LIFECYCLE_Init_Compat(&candidate_world.lifecycle,
+                                     &candidate_world.party)) {
+        result = DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+        goto done;
+    }
+    candidate_world.lifecycle.gameTime = receipt.game_time;
+    candidate_world.lifecycle.status.partyShieldDefense = source_party.shield_defense;
+    candidate_world.lifecycle.status.partyFireShieldDefense =
+        source_party.fire_shield_defense;
+    candidate_world.lifecycle.status.partySpellShieldDefense =
+        source_party.spell_shield_defense;
+    candidate_world.lifecycle.status.invisibilityCount =
+        source_party.invisibility_count;
+    candidate_world.lifecycle.status.thievesEyeCount =
+        source_party.thieves_eye_count;
+    candidate_world.lifecycle.status.footprintsCount =
+        source_party.footprints_count;
     *out_world = candidate_world;
     *out_event_queue = candidate_queue;
     memset(&candidate_world, 0, sizeof(candidate_world));
