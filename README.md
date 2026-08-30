@@ -161,9 +161,9 @@ game media and every user-local input.
 
 | Game | Playable | Verified runtime routes | Data/preservation only | Unsupported |
 |---|---|---|---|---|
-| DM1 | PC DOS 3.4 | Atari ST, Amiga, FM Towns | PC-9801 preservation | X68000 |
-| CSB | — | Atari ST, Amiga, FM Towns | CSBWin source/disassembly reference | PC-9801, X68000 |
-| DM2 | — | DOS, FM Towns, Mac retail | Amiga, Mac JP/FR | X68000 |
+| DM1 | PC DOS 3.4 | Bounded Atari ST, Amiga and FM Towns start/runtime routes | PC-9801 preservation | X68000 |
+| CSB | — | Bounded Atari ST, Amiga and FM Towns title/start-menu/runtime routes | CSBWin source/disassembly reference | PC-9801, X68000 |
+| DM2 | Bounded DOS, Amiga, FM Towns and Macintosh routes | New Game/startup, source-owned runtime slices and real-media resume where supplied | Mac JP/FR preservation | X68000 |
 | Nexus | — | Saturn Japanese bounded phase launch | Saturn demo/fan translations | — |
 | Theron's Quest | — | — | PC Engine/TurboGrafx US and Japanese Track 02 routes | — |
 
