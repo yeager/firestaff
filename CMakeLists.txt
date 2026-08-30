@@ -17772,7 +17772,9 @@ endif()
         SKIP_RETURN_CODE 77
         LABELS "tier2;csb;amiga;startup;cli;real_data;skip_safe"
         ENVIRONMENT "FIRESTAFF_CSB_AMIGA31_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"
-        TIMEOUT 45
+        # Eight independent title-to-runtime probes read the original A31
+        # archive afresh; retain a margin above the observed real-media run.
+        TIMEOUT 120
     )
     add_test(
         NAME csb_v1_amiga_adf_archive_cli_boot

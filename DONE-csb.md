@@ -34,6 +34,11 @@ Reviewed 2026-08-29. Completed work only.
   constructs positive IMG1 or `Graphics.DAT` stand-ins. Positive parsing and
   decode evidence comes only from the admitted ADF member; malformed-header
   checks remain as fail-closed boundaries.
+- The supplied Amiga A31 archive now has the same first-runtime input matrix
+  evidence as the Atari and FM Towns releases. Each direction, strafe and
+  action is launched in a fresh native ZIP → ADF session, with the original
+  title owner and campaign state retained in memory; no generated save or
+  replacement dungeon is used.
 - The native Atari STX CLI route verifies original title startup, runtime and
   start-menu entry using the supplied campaign media. Its source-owned input
   regression now also covers backward movement, both turns, both strafes and

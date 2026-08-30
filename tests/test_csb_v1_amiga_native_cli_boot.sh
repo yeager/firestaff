@@ -72,6 +72,43 @@ esac
 
 echo "PASS: native CSB Amiga CLI title input reaches verified runtime movement"
 
+# Run each initial runtime action through a fresh, scanner-owned A31 launch.
+# This deliberately does not reuse a mutable process or fabricate a save: the
+# original Amiga archive must supply the title owner, campaign state and first
+# live party position on every probe. The matrix mirrors the Atari and FM
+# Towns real-media checks, while keeping each expected result source-visible.
+probe_runtime_input() {
+    input="$1"
+    expected_party="$2"
+    input_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+        --width 320 --height 200 --game csb --data-dir "$data_dir" --platform amiga --boot-probe \
+        --boot-probe-frames 800 --script "click:100:100,key:enter,$input" \
+        --boot-probe-expect-runtime --boot-probe-expect-startup-active 0 \
+        --boot-probe-expect-level-loaded 1 \
+        --boot-probe-expect-runtime-tick-min 1 2>&1)" || {
+        printf '%s\n' "$input_output" >&2
+        exit 1
+    }
+
+    case "$input_output" in
+        *"phase=inactive"*"startupActive=0"*"levelLoaded=1"*"party=$expected_party"*"runtimeTick="*) ;;
+        *)
+            echo "FAIL: native Amiga CSB CLI route did not consume $input" >&2
+            printf '%s\n' "$input_output" >&2
+            exit 1
+            ;;
+    esac
+}
+
+probe_runtime_input down 9,0,2
+probe_runtime_input left 9,0,1
+probe_runtime_input right 9,0,3
+probe_runtime_input strafe-left 9,0,2
+probe_runtime_input strafe-right 9,0,2
+probe_runtime_input action 9,0,2
+
+echo "PASS: native CSB Amiga CLI title input reaches the complete runtime input matrix"
+
 # The normal M12 Start menu must retain the scanner-selected Amiga package as
 # well.  This is intentionally separate from --boot-probe: that flag enters
 # the direct-launch path and cannot prove Enter on the visible game row keeps
