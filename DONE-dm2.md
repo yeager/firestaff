@@ -29,6 +29,11 @@ Reviewed 2026-08-29. Completed work only.
   resources and in-memory container admission, sound resources, pointer input,
   New-Game flow and wall-source census rather than silently skipping because
   the archive environment was unset.
+- The Macintosh SDL bridge now preserves Return's source-owned modal action:
+  `NEW_GAME` at the entrance and `CLOSE_CREDITS` in credits both reach the
+  existing M11 Accept owner, while gameplay Return remains `WAKE`. This fixes
+  a dropped keyboard route without inventing a selection or save; the retail
+  movie, New-Game/runtime and Macintosh input-table regressions cover it.
 - The native Macintosh QuickTime reader now validates the original rebased
   `moov`/`mdat` sample tables in RAM for every retail MooV: `Title.MooV`
   (Cinepak/`twos`), `Swoosh.MooV` (QuickTime Animation/`raw `), and

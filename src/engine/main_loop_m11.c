@@ -4574,6 +4574,12 @@ static int m11_dm2_mac_sdl_key_to_menu_input(
         case DM2_V1_MAC_ACTION_WALL_LEFT: *outInput = M12_MENU_INPUT_MAC_WALL_LEFT; return 1;
         case DM2_V1_MAC_ACTION_WALL_CENTER: *outInput = M12_MENU_INPUT_MAC_WALL_CENTER; return 1;
         case DM2_V1_MAC_ACTION_WALL_RIGHT: *outInput = M12_MENU_INPUT_MAC_WALL_RIGHT; return 1;
+        /* The retail Macintosh table assigns Return to the modal entrance
+         * and credits owners before it means Wake in gameplay. Preserve that
+         * source action identity through the M11 menu bridge: both owners
+         * already consume Accept in their respective state machines. */
+        case DM2_V1_MAC_ACTION_NEW_GAME:
+        case DM2_V1_MAC_ACTION_CLOSE_CREDITS:
         case DM2_V1_MAC_ACTION_WAKE: *outInput = M12_MENU_INPUT_ACCEPT; return 1;
         default: return 0;
     }
