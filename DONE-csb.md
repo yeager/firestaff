@@ -2,6 +2,14 @@
 
 Reviewed 2026-08-29. Completed work only.
 
+- M11's CSB query-world handoff now consumes the exact verified
+  `CSB_V1_DungeonData::raw_data` bytes retained by the selected boot reader.
+  It no longer attempts to reopen an STX/ADF/archive locator as a loose
+  `DUNGEON.DAT`. Real Atari STX and Amiga ZIP → ADF launcher regressions prove
+  title/start-menu handoff, native mirror/candidate flow, and the first
+  runtime frame with no extracted game-data file; FM Towns uses the same
+  bounded-memory source contract.
+
 - The supplied CSB Utility Disk's supported single-member LZMA2 7z profile
   is now decoded by Firestaff in bounded memory. Its Atari STX member and
   nested files, including `START.PRG`, can be read without `7z`, `bsdtar`, or

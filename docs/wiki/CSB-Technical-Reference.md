@@ -56,18 +56,18 @@ prior current-level context after a transfer.
 
 CSB archive and ADF media are scanned as virtual members, but they are never
 used as a flat mixed-platform data directory at launch. When a player selects
-a verified CSB edition, M12 materializes only that edition's required members
-into its version-private local runtime cache and passes that cache to M11.
-The cache is hash-verified and invalidated when its source member changes.
+a verified CSB edition, M12 passes the selected original source locator to
+M11. Native readers open only the required members in bounded RAM; no
+`GRAPHICS.DAT`, `DUNGEON.DAT`, ADF, STX, or disc image is copied or expanded to
+an asset cache.
 
 This matters for shared game libraries: an Amiga 3.1 title program and its
 `GRAPHICS.DAT`/`DUNGEON.DAT` must not be combined with PC, Atari ST, or FM
-Towns files found beside the archive. The source archive remains untouched;
-the cache is local derived data and is not game media to commit or distribute.
+Towns files found beside the archive. The source archive remains untouched.
 The opt-in CTest `csb_v1_amiga31_m12_m11_real_media_handoff` can be enabled
 with `FIRESTAFF_CSB_AMIGA31_DATA_DIR` pointing at a directory containing the
 verified Amiga 3.1 ADF or archive. It selects the Amiga package in M12,
-verifies its private cache members, and requires M11's native title-to-runtime
+verifies its selected virtual members and requires M11's native title-to-runtime
 handoff; without supplied original media it reports an explicit skip.
 
 The matching CLI regression accepts either form too. It first proves the
@@ -80,7 +80,7 @@ presentation to 320x200 so the source coordinates remain deterministic.
 The corresponding Atari ST row,
 `csb_v1_atari_st_m12_m11_real_media_handoff`, is enabled by
 `FIRESTAFF_CSB_ATARI_ST_ROOT`. It separately verifies selection and
-materialization of the original Atari package, the ANIMATE.SCR/DAT 50 Hz VBlank
+selection of the original Atari package, the ANIMATE.SCR/DAT 50 Hz VBlank
 sequence, and the first native FTLCODE runtime frame. The existing
 `csb_v1_atari_mini_runtime_archive` test covers the original `MINI.DAT`
 resume path from the archive without adding a synthetic save.
@@ -94,10 +94,10 @@ and requires the zero-file result. Firestaff must report this as *no saved
 session* and must never invent a replacement save merely to launch it.
 
 FM Towns is treated the same way even though its retail archive contains a
-large CD image: temporary expansion happens inside the selected edition's
-Firestaff cache. On success it is atomically promoted to `FMTOWNS.IMG`; on
-failure the staging file is removed. The directory containing the original
-ZIP/RAR remains read-only from Firestaff's point of view.
+large CD image: the selected BIN/CUE or archive member is decoded only in
+bounded RAM for the running session. Firestaff never promotes it to a
+`FMTOWNS.IMG` cache file. The directory containing the original ZIP/RAR
+remains read-only from Firestaff's point of view.
 
 ### PC-9801 HDM preservation receipt (unsupported)
 

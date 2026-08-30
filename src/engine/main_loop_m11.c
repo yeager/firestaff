@@ -244,9 +244,10 @@ static int M12_StartupMenu_PrepareSelectedGameLaunch(
         return 1;
     }
     if (strcmp(entry->gameId, "csb") != 0) return 1;
-    /* The selected CSB edition owns this launch.  Archives/ADFs enter M11
-     * through a hash-verified private cache; an already verified loose
-     * package keeps its original directory and startup siblings. */
+    /* The selected CSB edition owns this launch. Archives and ADFs retain
+     * their original source locator; M11 opens verified members in bounded
+     * RAM. A loose package likewise keeps its original directory and startup
+     * siblings. */
     /* M12 may repair a stale persisted version/architecture selection while
      * building the launch intent.  Direct CLI starts previously validated
      * that effective ST edition, then this preparatory CSB step reopened the
@@ -268,9 +269,9 @@ static int M12_StartupMenu_PrepareSelectedGameLaunch(
             sizeof(runtimeDir))) {
         const char *separator;
         /* F31's in-process boot accepts the authenticated original archive
-         * directly.  Cache materialisation is an optimisation, not a
-         * launch prerequisite: keep a verified Japanese/English CD launch
-         * available when its private cache cannot be reconstructed. */
+         * directly. No derived disk image is a launch prerequisite: keep a
+         * verified Japanese/English CD launch available from its source
+         * archive. */
         separator = (strcmp(version->versionId, "fmtowns-en") == 0 ||
                      strcmp(version->versionId, "fmtowns-ja") == 0)
             ? strstr(version->matchedPath, "::") : NULL;
