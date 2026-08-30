@@ -41112,6 +41112,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     add_test(NAME csb_v1_atari_save_runtime_handoff_pc34_compat
         COMMAND test_csb_v1_atari_save_runtime_handoff_pc34_compat)
     set_tests_properties(csb_v1_atari_save_runtime_handoff_pc34_compat PROPERTIES
+        ENVIRONMENT "FIRESTAFF_CSB_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/csb-atari-save-handoff"
         LABELS "tier2;csb;save;runtime;real_data;skip_safe")
 
     # CSB Hint Oracle UI/runtime binding surface.

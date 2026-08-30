@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #if defined(_WIN32) || defined(_WIN64)
 #include <direct.h>
 #else
@@ -14,10 +15,19 @@
 static int make_directory(const char *path)
 {
 #if defined(_WIN32) || defined(_WIN64)
-    return _mkdir(path);
+    return _mkdir(path) == 0 || errno == EEXIST;
 #else
-    return mkdir(path, 0700);
+    return mkdir(path, 0700) == 0 || errno == EEXIST;
 #endif
+}
+
+static int make_scratch_path(char *out, size_t out_size, const char *root,
+                             const char *name)
+{
+    int written;
+    if (!out || !root || !root[0] || !name || !name[0]) return 0;
+    written = snprintf(out, out_size, "%s/%s", root, name);
+    return written > 0 && (size_t)written < out_size;
 }
 
 static int read_file(const char *path, uint8_t **out, size_t *out_size)
@@ -47,6 +57,7 @@ int main(void)
     const char *path = getenv("FIRESTAFF_CSB_ATARI_MINI");
     const char *corpus_path = getenv("FIRESTAFF_CSB_ATARI_SAVE_CORPUS");
     const char *fmtowns_mini = getenv("FIRESTAFF_CSB_FMTOWNS_MINI");
+    const char *scratch_root = getenv("FIRESTAFF_CSB_TEST_SCRATCH");
     CSB_V1_RuntimeProfile runtime;
     CSB_V1_AtariSaveInfo info;
     uint8_t *bytes = NULL;
@@ -72,21 +83,50 @@ int main(void)
         puts("PASS: FM Towns MINI.DAT stays outside the Atari/Amiga save handoff");
     }
     if (corpus_path && corpus_path[0]) {
-        const char *written_path = "/tmp/CSBGAME2.DAT";
-        const char *backup_path = "/tmp/CSBGAME2.BAK";
-        const char *amiga_multilingual_path = "/tmp/CSBGAMEF.DAT";
-        const char *amiga_multilingual_backup_path = "/tmp/CSBGAMEF.BAK";
-        const char *amiga_windows_path = "\\\\tmp\\\\CSBGAMEG.DAT";
-        const char *amiga_windows_backup_path = "\\\\tmp\\\\CSBGAMEG.BAK";
-        const char *foreign_source_path = "/tmp/CSB-FOREIGN-MINI.DAT";
-        const char *blocked_dir = "/tmp/CSBGAME3.DAT";
-        const char *blocked_backup = "/tmp/CSBGAME3.BAK";
+        char written_path[1024];
+        char backup_path[1024];
+        char amiga_multilingual_path[1024];
+        char amiga_multilingual_backup_path[1024];
+        char amiga_windows_path[1024];
+        char amiga_windows_backup_path[1024];
+        char foreign_source_path[1024];
+        char blocked_dir[1024];
+        char blocked_keep[1024];
+        char blocked_backup[1024];
         CSB_V1_AtariSaveInfo written_info;
         CSB_V1_AtariSaveHandoffCandidate staged_candidate;
         uint8_t *written = NULL;
         uint8_t *backup = NULL;
         size_t written_size = 0u;
         size_t backup_size = 0u;
+        if (!scratch_root || !make_directory(scratch_root) ||
+            !make_scratch_path(written_path, sizeof(written_path), scratch_root,
+                               "CSBGAME2.DAT") ||
+            !make_scratch_path(backup_path, sizeof(backup_path), scratch_root,
+                               "CSBGAME2.BAK") ||
+            !make_scratch_path(amiga_multilingual_path,
+                               sizeof(amiga_multilingual_path), scratch_root,
+                               "CSBGAMEF.DAT") ||
+            !make_scratch_path(amiga_multilingual_backup_path,
+                               sizeof(amiga_multilingual_backup_path), scratch_root,
+                               "CSBGAMEF.BAK") ||
+            !make_scratch_path(amiga_windows_path, sizeof(amiga_windows_path),
+                               scratch_root, "\\\\CSBGAMEG.DAT") ||
+            !make_scratch_path(amiga_windows_backup_path,
+                               sizeof(amiga_windows_backup_path), scratch_root,
+                               "\\\\CSBGAMEG.BAK") ||
+            !make_scratch_path(foreign_source_path,
+                               sizeof(foreign_source_path), scratch_root,
+                               "CSB-FOREIGN-MINI.DAT") ||
+            !make_scratch_path(blocked_dir, sizeof(blocked_dir), scratch_root,
+                               "CSBGAME3.DAT") ||
+            !make_scratch_path(blocked_keep, sizeof(blocked_keep), blocked_dir,
+                               "keep") ||
+            !make_scratch_path(blocked_backup, sizeof(blocked_backup),
+                               scratch_root, "CSBGAME3.BAK")) {
+            csb_v1_runtime_cleanup(&runtime);
+            return 1;
+        }
         if (!read_file(corpus_path, &bytes, &size) ||
             csb_v1_atari_save_decode_pc34_compat(bytes, size, &info) !=
                 CSB_V1_ATARI_SAVE_OK ||
@@ -333,8 +373,8 @@ int main(void)
          * destination exercises this filesystem boundary. */
         remove(blocked_backup);
         remove(blocked_dir);
-        if (make_directory(blocked_dir) != 0 ||
-            !write_file("/tmp/CSBGAME3.DAT/keep", (const uint8_t *)"x", 1u) ||
+        if (!make_directory(blocked_dir) ||
+            !write_file(blocked_keep, (const uint8_t *)"x", 1u) ||
             !write_file(blocked_backup, backup, backup_size) ||
             csb_v1_runtime_load_game_from_path(&runtime, blocked_dir) !=
                 CSB_V1_LOAD_OK ||
@@ -355,7 +395,7 @@ int main(void)
         }
         free(written);
         written = NULL;
-        remove("/tmp/CSBGAME3.DAT/keep");
+        remove(blocked_keep);
         remove(blocked_dir);
         remove(blocked_backup);
         remove(written_path);
