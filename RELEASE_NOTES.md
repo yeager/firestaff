@@ -1,3 +1,24 @@
+# Firestaff v3.0.321
+
+## DM1
+
+### Added
+
+- `dm1_v1_original_save_amiga_f0435_materialize_session_bytes`: Added native
+  direct and start-menu resume for the authenticated Amiga v2.0 save member
+  inside its supplied nested archive, preserving the virtual source chain and
+  reading no game data to disk.
+
+## Fixed
+
+- `optional parity-evidence CTest isolation`: Updated DM1 and CSB
+  source-capture verifiers to write only runner-local outputs and to report a
+  CTest skip when their optional licensed reference corpus is absent; present
+  corpora remain strict verification inputs.
+- `launcher smoke diagnostics`: Removed the remaining credential-derived
+  suffix from the tracked launcher receipt so configured external credentials
+  cannot be inferred from source-controlled test output.
+
 # Firestaff v3.0.320
 
 ## DM1
