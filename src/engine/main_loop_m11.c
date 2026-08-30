@@ -3599,7 +3599,13 @@ static void m11_phase_a_advance_boot_probe_frames(M11_GameViewState* gameView,
     }
     for (i = 0; i < frameCount; ++i) {
         M11_GameInputResult result = M11_GameView_AdvanceIdleTick(gameView);
-        if (result == M11_GAME_INPUT_REDRAW || i == frameCount - 1) {
+        if (result == M11_GAME_INPUT_REDRAW || i == frameCount - 1 ||
+            /* A real Macintosh QuickTime frame advances during Draw, not
+             * during the generic DM2 idle tick.  A boot probe is explicitly
+             * deterministic fast-forward work, so draw each source frame
+             * while Title.MooV owns startup.  Normal interactive playback
+             * never sets this flag and remains wall-clock paced. */
+            (gameView->bootProbeFastForward && gameView->dm2MacMovieActive)) {
             M11_GameView_Draw(gameView,
                               M11_Render_GetFramebuffer(),
                               M11_FB_WIDTH,

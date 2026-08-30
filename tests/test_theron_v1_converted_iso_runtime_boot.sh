@@ -9,6 +9,7 @@ fi
 app=$1
 media=${FIRESTAFF_THERON_CONVERTED_ISO:-"$HOME/.firestaff/data/theron/TQUS02End.iso"}
 expected_md5=ceb02343868f80cec899e9b239aff2da
+test_temp_dir=${FIRESTAFF_TEST_TEMP_DIR:-"$(dirname "$app")"}
 
 if [[ ! -x "$app" ]]; then
     printf 'FAIL: Firestaff executable is unavailable: %s\n' "$app" >&2
@@ -18,8 +19,12 @@ if [[ ! -f "$media" ]]; then
     printf 'SKIP: authentic converted Theron USA Track 02 ISO is not staged\n'
     exit 77
 fi
+if [[ ! -d "$test_temp_dir" ]]; then
+    printf 'FAIL: test temporary directory is unavailable: %s\n' "$test_temp_dir" >&2
+    exit 1
+fi
 
-output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-converted-iso.XXXXXX")
+output=$(mktemp "$test_temp_dir/firestaff-theron-converted-iso.XXXXXX")
 trap 'rm -f "$output"' EXIT
 
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \

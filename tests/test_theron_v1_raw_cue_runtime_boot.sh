@@ -11,6 +11,7 @@ media_root=${FIRESTAFF_THERON_RAW_CUE_ROOT:-"$HOME/.firestaff/data/theron/raw-us
 cue="$media_root/Dungeon Master - Theron's Quest (USA).cue"
 track02="$media_root/Dungeon Master - Theron's Quest (USA) (Track 02).bin"
 expected_md5=f23601102138f87c33025877767ebf76
+test_temp_dir=${FIRESTAFF_TEST_TEMP_DIR:-"$(dirname "$app")"}
 
 if [[ ! -x "$app" ]]; then
     printf 'FAIL: Firestaff executable is unavailable: %s\n' "$app" >&2
@@ -20,8 +21,12 @@ if [[ ! -f "$cue" || ! -f "$track02" ]]; then
     printf 'SKIP: authentic Theron USA raw CUE/BIN is not staged\n'
     exit 77
 fi
+if [[ ! -d "$test_temp_dir" ]]; then
+    printf 'FAIL: test temporary directory is unavailable: %s\n' "$test_temp_dir" >&2
+    exit 1
+fi
 
-output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-raw-cue.XXXXXX")
+output=$(mktemp "$test_temp_dir/firestaff-theron-raw-cue.XXXXXX")
 trap 'rm -f "$output"' EXIT
 
 assert_startup_route() {

@@ -1730,11 +1730,14 @@ static int m11_dm2_present_mac_movie(M11_GameViewState *state,
         return 0;
     }
     frame_deadline_us += state->dm2MacMovieDecoder.frame_duration_us;
-    if (state->dm2MacMovieFrameShown &&
+    if (state->dm2MacMovieFrameShown && !state->bootProbeFastForward &&
         now_us - state->dm2MacMovieStartUs < frame_deadline_us) {
         /* Keep the current source frame on screen until its authentic
          * QuickTime duration expires. The old implementation advanced on
-         * every host draw and therefore ran the Mac movies too quickly. */
+         * every host draw and therefore ran the Mac movies too quickly.
+         * Boot probes explicitly opt into deterministic fast-forward so
+         * their source input sequence cannot be delivered while the retail
+         * Title.MooV still owns the Mac event loop. */
         goto render_frame;
     }
     if (!state->dm2MacMovieFrameShown) {

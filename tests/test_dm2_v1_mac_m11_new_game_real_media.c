@@ -383,6 +383,11 @@ int main(void)
         M11_GameView_Shutdown(&view);
         return 1;
     }
+    /* This is a bounded source-frame regression, not a wall-clock playback
+     * test. Use the explicit M11 boot-probe fast-forward mode so each draw
+     * consumes one authentic QuickTime frame without making CI wait for the
+     * complete retail title movie. */
+    M11_GameView_SetBootProbeMode(&view, 1);
     memset(framebuffer, 0, sizeof(framebuffer));
     for (frame = 0; view.dm2MacMovieActive && frame < 4000; ++frame)
         M11_GameView_Draw(&view, framebuffer, 320, 200);
