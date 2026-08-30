@@ -51,7 +51,7 @@ fi
 
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm1 --platform pc --data-dir "$archive" \
-    --boot-probe --boot-probe-frames 500 --script enter,enter,enter,up --duration 0 2>&1) || {
+    --boot-probe --boot-probe-frames 500 --script up --duration 0 2>&1) || {
     printf '%s\n' "$gameplay_output" >&2
     exit 1
 }
