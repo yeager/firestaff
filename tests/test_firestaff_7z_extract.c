@@ -1,6 +1,7 @@
 #include "firestaff_7z_extract.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int main(void)
 {
@@ -14,7 +15,8 @@ int main(void)
     }
     if (!firestaff_7z_extract_single_lzma2_file(path, &bytes, &size,
                                                  name, sizeof(name)) ||
-        !bytes || size != 411568u || bytes[0] != 'R' || bytes[1] != 'S') {
+        !bytes || size != 411568u || bytes[0] != 'R' || bytes[1] != 'S' ||
+        strcmp(name, "Chaos Strikes Back Utility.stx") != 0) {
         free(bytes);
         fputs("FAIL: native CSB LZMA2 7z extraction\n", stderr);
         return 1;

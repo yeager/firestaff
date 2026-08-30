@@ -34,7 +34,7 @@ static int fs7z_unpack(Fs7zReader *r, Fs7zStreams *s) { uint8_t id,flags,method,
  while(fs7z_byte(r,&id)&&id){if(id!=10||!fs7z_byte(r,&flags)||flags!=1||r->end-r->p<4)return 0;s->crc=fs7z_le32(r->p);r->p+=4;s->crc_set=1;}return 1;
 }
 static int fs7z_substreams(Fs7zReader *r, Fs7zStreams *s) { uint8_t id,all; if(!fs7z_byte(r,&id)||id!=8)return 0; while(fs7z_byte(r,&id)&&id){if(id!=10||!fs7z_byte(r,&all)||all!=1||r->end-r->p<4)return 0;s->crc=fs7z_le32(r->p);r->p+=4;s->crc_set=1;}return 1; }
-static int fs7z_files(Fs7zReader *r, char *name, size_t cap) { uint8_t id; uint64_t count,n; (void)name; (void)cap; if(!fs7z_byte(r,&id)||id!=5||!fs7z_num(r,&count)||count!=1)return 0; while(fs7z_byte(r,&id)&&id){if(!fs7z_num(r,&n)||!fs7z_skip(r,n))return 0;}return 1; }
+static int fs7z_files(Fs7zReader *r, char *name, size_t cap) { uint8_t id; uint64_t count,n; int saw_name=0; if(!fs7z_byte(r,&id)||id!=5||!fs7z_num(r,&count)||count!=1)return 0; while(fs7z_byte(r,&id)&&id){const uint8_t *end; if(!fs7z_num(r,&n)||n>(uint64_t)(r->end-r->p))return 0; end=r->p+n; if(id==17){uint8_t external;size_t used=0;if(!fs7z_byte(r,&external)||external)return 0;while(r->p+1<end){uint8_t lo=*r->p++,hi=*r->p++;if(!lo&&!hi)break;if(hi||used+1>=cap)return 0;name[used++]=(char)lo;}name[used]=0;saw_name=used>0;} r->p=end;}return saw_name; }
 
 int firestaff_7z_extract_single_lzma2_file(const char *path,uint8_t **out,size_t *out_size,char *name,size_t name_size) {
  FILE *f; long z; uint8_t *a,*data,*result=NULL, marker; uint64_t off,hs; Fs7zReader r; Fs7zStreams s; SizeT in,outn; ELzmaStatus status; ISzAlloc alloc={fs7z_alloc,fs7z_free}; int ok=0;
@@ -43,6 +43,5 @@ int firestaff_7z_extract_single_lzma2_file(const char *path,uint8_t **out,size_t
  if(memcmp(a,"7z\xbc\xaf\x27\x1c",6)||a[6]||a[7]!=4||fs7z_crc32(a+12,20)!=fs7z_le32(a+8)){free(a);return 0;}off=fs7z_le64(a+12);hs=fs7z_le64(a+20);if(hs>FS7Z_MAX_ARCHIVE||off>=(uint64_t)z||32+off>=(uint64_t)z||hs>(uint64_t)z-32-off||fs7z_crc32(a+32+off,(size_t)hs)!=fs7z_le32(a+28)){free(a);return 0;}
  memset(&s,0,sizeof(s));r.p=a+32+off;r.end=r.p+(size_t)hs;
  if(!fs7z_byte(&r,&marker)||marker!=1||!fs7z_byte(&r,&marker)||marker!=4||!fs7z_pack(&r,&s)||!fs7z_unpack(&r,&s)||!fs7z_substreams(&r,&s)||!fs7z_byte(&r,&marker)||marker!=0||!fs7z_files(&r,name,name_size)||!fs7z_byte(&r,&marker)||marker!=0||r.p!=r.end||s.packed>off){free(a);return 0;}
- snprintf(name, name_size, "%s", "7z-member");
  data=a+32;result=(uint8_t*)malloc((size_t)s.unpacked);if(!result){free(a);return 0;}in=(SizeT)s.packed;outn=(SizeT)s.unpacked;if(Lzma2Decode(result,&outn,data,&in,s.prop,LZMA_FINISH_END,&status,&alloc)!=SZ_OK||in!=(SizeT)s.packed||outn!=(SizeT)s.unpacked||status!=LZMA_STATUS_FINISHED_WITH_MARK||!s.crc_set||fs7z_crc32(result,(size_t)outn)!=s.crc){free(result);free(a);return 0;}*out=result;*out_size=(size_t)outn;ok=1;free(a);return ok;
 }
