@@ -4485,7 +4485,7 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "dm1;amiga;real-media;native;cli;menu;startup;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM1_AMIGA_HD_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Amiga_EN.zip"
-        TIMEOUT 45
+        TIMEOUT 120
     )
     add_test(
         NAME dm1_v1_amiga_v20_archive_cli_boot

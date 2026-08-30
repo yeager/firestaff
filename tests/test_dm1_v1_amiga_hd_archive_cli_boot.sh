@@ -47,4 +47,31 @@ if ! grep -Fq 'phase=dm1-runtime' <<<"$gameplay_output" ||
     printf '%s\n' 'FAIL: authentic DM1 Amiga up input did not reach native movement' >&2
     exit 1
 fi
-printf '%s\n' 'PASS: authentic DM1 Amiga ZIP -> ZIP -> ADF reaches CLI, menu, and native movement runtime in memory'
+
+# Exercise the complete initial input matrix from a fresh native launch for
+# every row.  The original ZIP → ZIP → ADF package remains the sole source of
+# title, dungeon and party state; no generated save or replacement map can
+# contribute to these results.
+probe_runtime_input() {
+    local input=$1
+    local expected_party=$2
+    local output
+    output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --menu --game dm1 --platform amiga --data-dir "$archive" \
+        --boot-probe --boot-probe-frames 500 --script "$input" --duration 0 2>&1) || {
+        printf '%s\n' "$output" >&2
+        return 1
+    }
+    grep -Fq 'phase=dm1-runtime' <<<"$output" &&
+    grep -Fq 'levelLoaded=1' <<<"$output" &&
+    grep -Fq "map=0 party=$expected_party" <<<"$output"
+}
+
+probe_runtime_input down 1,3,2
+probe_runtime_input left 1,3,1
+probe_runtime_input right 1,3,3
+probe_runtime_input strafe-left 1,3,2
+probe_runtime_input strafe-right 1,3,2
+probe_runtime_input action 1,3,2
+
+printf '%s\n' 'PASS: authentic DM1 Amiga ZIP -> ZIP -> ADF reaches CLI, menu, and complete native input runtime matrix in memory'

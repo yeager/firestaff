@@ -109,6 +109,10 @@ Reviewed 2026-08-29. Completed work only.
   `DATA/DUNGEON.DAT` directly from its original ZIP in RAM. It no longer
   depends on an extracted corpus for its positive dungeon decode path, and
   the verified raw-map composition is used as the real-data evidence.
+- The supplied Amiga HD preservation ZIP now verifies the complete first
+  input matrix from independent original ZIP → ZIP → ADF sessions. Forward,
+  backward, both turns, both strafes and action all retain the native runtime
+  and observed source party state without a generated save or map.
 - The supplied authentic French DOS `DMSAVE.DAT` and `DMSAVE.BAK` (48,561
   bytes each; SHA-256 `494d081ee5175b2dccc900d5ea3f25230c8bb3b0f20828d311b8fc5bdfb82d21`
   and `a760234408bf27946b1586ecf396be72e648bd8f3d18abee90a18c2c7e94421f`)
