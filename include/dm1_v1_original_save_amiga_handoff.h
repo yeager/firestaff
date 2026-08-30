@@ -97,17 +97,25 @@ typedef struct {
  * authenticated C2/C3/C4 parts and F0434 tail. */
 typedef struct {
     uint32_t game_time;
+    uint32_t last_random_number;
+    uint16_t leader_hand_object;
     uint16_t party_champion_count;
     int16_t party_map_x;
     int16_t party_map_y;
     int16_t party_direction;
     int16_t party_map_index;
     int16_t leader_index;
+    int16_t magic_caster_champion_index;
     uint16_t event_count;
     uint16_t first_unused_event_index;
     uint16_t event_maximum_count;
     uint16_t current_active_group_count;
     uint16_t maximum_active_group_count;
+    int32_t last_creature_attack_time;
+    int32_t last_party_movement_time;
+    int16_t disabled_movement_ticks;
+    int16_t projectile_disabled_movement_ticks;
+    uint16_t last_projectile_disabled_movement_direction;
 } Dm1V1AmigaSaveF0435GlobalData;
 
 /* Read-only A20 C2 champion/party receipt.  A20 retains the one byte after

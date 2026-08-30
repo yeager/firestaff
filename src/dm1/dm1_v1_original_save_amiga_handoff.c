@@ -44,6 +44,11 @@ static int16_t read_be_i16(const uint8_t *bytes)
     return (int16_t)read_be16(bytes);
 }
 
+static int32_t read_be_i32(const uint8_t *bytes)
+{
+    return (int32_t)read_be32(bytes);
+}
+
 static void free_unpublished_world(struct GameWorld_Compat *world)
 {
     if (!world) return;
@@ -403,16 +408,26 @@ int dm1_v1_original_save_amiga_f0435_global_data_bytes(
     if (deobfuscate_words_be(global_data, sizeof(global_data), key) !=
         receipt.expected_checksums[0]) return DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
     out_global->game_time = read_be32(global_data + 0u);
+    out_global->last_random_number = read_be32(global_data + 4u);
+    out_global->leader_hand_object = read_be16(global_data + 8u);
     out_global->party_champion_count = read_be16(global_data + 10u);
     out_global->party_map_x = read_be_i16(global_data + 12u);
     out_global->party_map_y = read_be_i16(global_data + 14u);
     out_global->party_direction = read_be_i16(global_data + 16u);
     out_global->party_map_index = read_be_i16(global_data + 18u);
     out_global->leader_index = read_be_i16(global_data + 20u);
+    out_global->magic_caster_champion_index = read_be_i16(global_data + 22u);
     out_global->event_count = read_be16(global_data + 24u);
     out_global->first_unused_event_index = read_be16(global_data + 26u);
     out_global->event_maximum_count = read_be16(global_data + 28u);
     out_global->current_active_group_count = read_be16(global_data + 30u);
+    out_global->last_creature_attack_time = read_be_i32(global_data + 32u);
+    out_global->last_party_movement_time = read_be_i32(global_data + 36u);
+    out_global->disabled_movement_ticks = read_be_i16(global_data + 40u);
+    out_global->projectile_disabled_movement_ticks =
+        read_be_i16(global_data + 42u);
+    out_global->last_projectile_disabled_movement_direction =
+        read_be16(global_data + 44u);
     out_global->maximum_active_group_count = read_be16(global_data + 46u);
     return DM1_V1_AMIGA_SAVE_F0435_OK;
 }
@@ -895,6 +910,7 @@ int dm1_v1_original_save_amiga_f0435_materialize_session_bytes(
     Dm1V1AmigaSaveF0435Receipt *out_receipt)
 {
     Dm1V1AmigaSaveF0435Receipt receipt;
+    Dm1V1AmigaSaveF0435GlobalData source_global;
     Dm1V1AmigaSavePartyReceipt source_party;
     struct GameWorld_Compat candidate_world;
     struct DM1_EventQueue_V1 candidate_queue;
@@ -906,6 +922,7 @@ int dm1_v1_original_save_amiga_f0435_materialize_session_bytes(
         return DM1_V1_AMIGA_SAVE_F0435_ERR_ARGUMENT;
     }
     memset(&receipt, 0, sizeof(receipt));
+    memset(&source_global, 0, sizeof(source_global));
     memset(&source_party, 0, sizeof(source_party));
     memset(&candidate_world, 0, sizeof(candidate_world));
     memset(&candidate_queue, 0, sizeof(candidate_queue));
@@ -925,6 +942,9 @@ int dm1_v1_original_save_amiga_f0435_materialize_session_bytes(
     if (result != DM1_V1_AMIGA_SAVE_F0435_OK) goto done;
     result = dm1_v1_original_save_amiga_f0435_materialize_party_bytes(
         bytes, size, &candidate_world.party, NULL);
+    if (result != DM1_V1_AMIGA_SAVE_F0435_OK) goto done;
+    result = dm1_v1_original_save_amiga_f0435_global_data_bytes(
+        bytes, size, &source_global, NULL);
     if (result != DM1_V1_AMIGA_SAVE_F0435_OK) goto done;
     /* A20 C2's 128-byte PARTY_INFO is an authenticated, big-endian source
      * record.  Bind every named status scalar directly from that record;
@@ -947,6 +967,11 @@ int dm1_v1_original_save_amiga_f0435_materialize_session_bytes(
     candidate_world.magic.freezeLifeTicks = source_party.freeze_life_ticks;
     candidate_world.magic.firstScentIndex = source_party.first_scent_index;
     candidate_world.freezeLifeTicks = source_party.freeze_life_ticks;
+    candidate_world.disabledMovementTicks = source_global.disabled_movement_ticks;
+    candidate_world.projectileDisabledMovementTicks =
+        source_global.projectile_disabled_movement_ticks;
+    candidate_world.lastProjectileDisabledMovementDirection =
+        source_global.last_projectile_disabled_movement_direction;
     if (candidate_world.party.mapIndex < 0 ||
         candidate_world.party.mapIndex >= candidate_world.dungeon->header.mapCount ||
         candidate_world.party.mapX < 0 || candidate_world.party.mapY < 0 ||
@@ -1011,6 +1036,8 @@ int dm1_v1_original_save_amiga_f0435_materialize_session_bytes(
         goto done;
     }
     candidate_world.lifecycle.gameTime = receipt.game_time;
+    candidate_world.lifecycle.lastCreatureAttackTime =
+        (uint32_t)source_global.last_creature_attack_time;
     candidate_world.lifecycle.status.partyShieldDefense = source_party.shield_defense;
     candidate_world.lifecycle.status.partyFireShieldDefense =
         source_party.fire_shield_defense;

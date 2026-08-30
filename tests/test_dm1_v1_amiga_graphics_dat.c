@@ -706,7 +706,15 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
                   receipt.primary_party_receipt.spell_shield_defense &&
               session_world.freezeLifeTicks ==
                   receipt.primary_party_receipt.freeze_life_ticks &&
+              session_world.disabledMovementTicks ==
+                  receipt.primary_global.disabled_movement_ticks &&
+              session_world.projectileDisabledMovementTicks ==
+                  receipt.primary_global.projectile_disabled_movement_ticks &&
+              session_world.lastProjectileDisabledMovementDirection ==
+                  receipt.primary_global.last_projectile_disabled_movement_direction &&
               session_world.lifecycle.gameTime == receipt.primary_f0435.game_time &&
+              session_world.lifecycle.lastCreatureAttackTime ==
+                  (uint32_t)receipt.primary_global.last_creature_attack_time &&
               session_world.lifecycle.status.partyShieldDefense ==
                   receipt.primary_party_receipt.shield_defense &&
               session_world.lifecycle.status.invisibilityCount ==
