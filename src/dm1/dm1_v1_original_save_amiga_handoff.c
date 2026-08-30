@@ -496,23 +496,33 @@ int dm1_v1_original_save_amiga_f0435_party_receipt_bytes(
         const uint8_t *src = party + champion * DM1_V1_AMIGA_SAVE_CHAMPION_BYTES;
         Dm1V1AmigaSaveChampionReceipt *dst = &out_party->champions[champion];
         unsigned int index;
+        int health_current, health_maximum;
+        int stamina_current, stamina_maximum;
+        int mana_current, mana_maximum;
         memcpy(dst->name, src, sizeof(dst->name));
         memcpy(dst->title, src + 8u, sizeof(dst->title));
         dst->direction = src[28u];
         dst->action_index = src[32u];
         dst->poison_dose = src[42u];
         dst->wounds = read_be16(src + 50u);
-        dst->health_current = read_be16(src + 52u);
-        dst->health_maximum = read_be16(src + 54u);
-        dst->stamina_current = read_be16(src + 56u);
-        dst->stamina_maximum = read_be16(src + 58u);
-        dst->mana_current = read_be16(src + 60u);
-        dst->mana_maximum = read_be16(src + 62u);
+        health_current = read_be_i16(src + 52u);
+        health_maximum = read_be_i16(src + 54u);
+        stamina_current = read_be_i16(src + 56u);
+        stamina_maximum = read_be_i16(src + 58u);
+        mana_current = read_be_i16(src + 60u);
+        mana_maximum = read_be_i16(src + 62u);
+        dst->health_current = (uint16_t)health_current;
+        dst->health_maximum = (uint16_t)health_maximum;
+        dst->stamina_current = (uint16_t)stamina_current;
+        dst->stamina_maximum = (uint16_t)stamina_maximum;
+        dst->mana_current = (uint16_t)mana_current;
+        dst->mana_maximum = (uint16_t)mana_maximum;
         dst->food = read_be_i16(src + 66u);
         dst->water = read_be_i16(src + 68u);
-        if (dst->direction > 3u || dst->health_current > dst->health_maximum ||
-            dst->stamina_current > dst->stamina_maximum ||
-            dst->mana_current > dst->mana_maximum) {
+        if (dst->direction > 3u || health_current < 0 || health_maximum < 0 ||
+            stamina_current < 0 || stamina_maximum < 0 || mana_current < 0 ||
+            mana_maximum < 0 || health_current > health_maximum ||
+            stamina_current > stamina_maximum || mana_current > mana_maximum) {
             return DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
         }
         for (index = 0u; index < 6u; ++index) {
