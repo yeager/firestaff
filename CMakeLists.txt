@@ -18107,10 +18107,17 @@ endif()
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
     )
+    target_link_libraries(test_dm2_v1_g1_direct_actuator_runtime_real_data PRIVATE
+        firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_g1_direct_actuator_runtime_real_data PRIVATE
             -Wall -Wextra -O2)
     endif()
+    add_test(NAME dm2_v1_g1_direct_actuator_runtime_real_data
+             COMMAND test_dm2_v1_g1_direct_actuator_runtime_real_data)
+    set_tests_properties(dm2_v1_g1_direct_actuator_runtime_real_data PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "dm2;dos;g1;real-media;in-memory;skip-safe")
 
     # Canonical G1-only champion mirror receipt; requires user-supplied media.
     add_executable(test_dm2_v1_g1_champion_mirror_real_data
@@ -18219,10 +18226,17 @@ endif()
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
     )
+    target_link_libraries(test_dm2_v1_g1_direct_weapon_runtime_real_data PRIVATE
+        firestaff_zip_extract)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_g1_direct_weapon_runtime_real_data PRIVATE
             -Wall -Wextra -O2)
     endif()
+    add_test(NAME dm2_v1_g1_direct_weapon_runtime_real_data
+             COMMAND test_dm2_v1_g1_direct_weapon_runtime_real_data)
+    set_tests_properties(dm2_v1_g1_direct_weapon_runtime_real_data PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "dm2;dos;g1;real-media;in-memory;skip-safe")
 
     # Canonical DB5 Weapon -> WEAPONS/F9 receipt; original media is required,
     # so CI only builds the executable and local runs pass both data paths.
