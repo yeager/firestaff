@@ -34,11 +34,14 @@ Partial. The source-defined scheduling discipline is implemented by
 re-entrant arrival increments a pending counter, and the outer handler drains
 the counter while its modelled interrupt priority is 3. The implementation is
 locked by `csb_v1_atari_st_vblank`, including a nested two-arrival regression.
-The generic PC 3.4 `F0693_WaitVerticalBlank_PC34` gate remains a synchronous
-wait only and is not used as Atari ST parity evidence. The remaining live
-binding is to route each Atari gameplay palette consumer through this model.
-An earlier audit incorrectly cited `F0613_VBL_Process`; that symbol is a
-champion-text helper.
+The native Atari ST `ANIMATE.SCR` title path is now a live consumer: each 50 Hz
+tick passes through the model, invalidates the retained source frame, and
+re-decodes the original P4B1 palette for that VBlank. The complete original
+STX CLI/title/input/menu regression covers this path. The generic PC 3.4
+`F0693_WaitVerticalBlank_PC34` gate remains a synchronous wait only and is not
+used as Atari ST parity evidence. Remaining work is to route each Atari
+gameplay palette consumer through this model. An earlier audit incorrectly
+cited `F0613_VBL_Process`; that symbol is a champion-text helper.
 
 **Source evidence used for implementation:**
 ReDMCSB WIP `BASE.C:E0017_MAIN_Exception28Handler_VerticalBlank_CPSDF` and

@@ -59,6 +59,7 @@
 #include "csb_v1_fmtowns_utility_render.h"
 #include "dm2_v1_fmtowns_anim_stream.h"
 #include "csb_v1_atari_st_animation_assets.h"
+#include "csb_v1_atari_st_vblank.h"
 #include "csb_v1_f0128_entrance_runtime_consumer_pc34_compat.h"
 #include "csb_v1_startup_entrance_f0128_m11_handoff_pc34_compat.h"
 #include "csb_v1_csbwin_dsa_runtime_admission_pc34_compat.h"
@@ -1685,6 +1686,10 @@ typedef struct {
     uint32_t csbAtariStAnimationVbl;
     uint32_t csbAtariStAnimationEndVbl;
     uint16_t csbAtariStAnimationVblRemainder;
+    /* CSB 2.x Atari ST BASE.C CHANGE7_01_FIX scheduling state. The palette
+     * callback invalidates only the source-backed ANIMATE frame; it never
+     * installs a generated palette. */
+    CSB_V1_AtariStVBlank csbAtariStVBlank;
     /* The selected runtime cache has GRAPHICS.DAT/DUNGEON.DAT, while an
      * authentic STX may retain ANIMATE.SCR/DAT only in its original media
      * container.  Keep that hash-verified source root separate. */

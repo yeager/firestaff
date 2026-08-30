@@ -5704,6 +5704,40 @@ static int m11_csb_prepare_atari_st_animation_handoff(
     return 1;
 }
 
+static void m11_csb_atari_st_vblank_palette_start(void *context)
+{
+    M11_GameViewState *state = (M11_GameViewState *)context;
+    if (state != NULL) {
+        /* BASE.C:E0017 starts palette switching for every VBlank. The next
+         * presentation re-decodes the source-selected P4B1 palette for that
+         * VBlank; retaining the prior frame would hide a source palette
+         * change. */
+        state->csbAtariStAnimationFrameBound = 0;
+    }
+}
+
+static void m11_csb_atari_st_vblank_original_handler(void *context)
+{
+    M11_GameViewState *state = (M11_GameViewState *)context;
+    if (state != NULL) ++state->csbAtariStAnimationVbl;
+}
+
+static void m11_csb_advance_atari_st_vblank(M11_GameViewState *state,
+                                             uint32_t elapsed_ms)
+{
+    uint32_t units;
+    uint32_t count;
+
+    if (state == NULL) return;
+    units = (uint32_t)state->csbAtariStAnimationVblRemainder +
+        elapsed_ms * 50u;
+    count = units / 1000u;
+    state->csbAtariStAnimationVblRemainder = (uint16_t)(units % 1000u);
+    while (count-- != 0u) {
+        if (!csb_v1_atari_st_vblank_deliver(&state->csbAtariStVBlank)) break;
+    }
+}
+
 static int m11_csb_is_amiga_a31_profile(const CSB_V1_BootProfile *profile)
 {
     return profile && (profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN ||
@@ -12728,6 +12762,9 @@ static int m11_csb_apply_boot_runtime_receipt(
         state->csbState.startup_entrance_active = 0;
         state->csbAtariStAnimationVbl = 0u;
         state->csbAtariStAnimationVblRemainder = 0u;
+        csb_v1_atari_st_vblank_init(&state->csbAtariStVBlank,
+            m11_csb_atari_st_vblank_palette_start,
+            m11_csb_atari_st_vblank_original_handler, state);
         state->csbAtariStAnimationClockStarted = 0;
         state->csbAtariStAnimationFrameBound = 0;
         state->csbAtariStAnimationEndVbl = 0u;
@@ -12896,18 +12933,13 @@ static void m11_csb_startup_tick_receipt_to_m11(
                     profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
         state->csbState.startup_title_active &&
         !state->csbStartupRuntimeAssetSession) {
-        uint32_t units;
         if (!state->csbAtariStAnimationClockStarted) {
             state->csbAtariStAnimationClockStarted = 1;
             state->csbAtariStAnimationVbl = 0u;
             state->csbAtariStAnimationVblRemainder = 0u;
             state->csbAtariStAnimationFrameBound = 0;
         } else {
-            units = (uint32_t)state->csbAtariStAnimationVblRemainder +
-                profile->tick_ms * 50u;
-            state->csbAtariStAnimationVbl += units / 1000u;
-            state->csbAtariStAnimationVblRemainder =
-                (uint16_t)(units % 1000u);
+            m11_csb_advance_atari_st_vblank(state, profile->tick_ms);
             m11_csb_play_due_atari_st_animation_sounds(state);
             (void)m11_csb_complete_atari_st_runtime_handoff(state);
         }
@@ -28889,12 +28921,8 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
              csb_profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
             state->csbState.startup_title_active &&
             !state->csbStartupRuntimeAssetSession) {
-            uint32_t units = (uint32_t)state->csbAtariStAnimationVblRemainder +
-                csb_profile->tick_ms * 50u;
             state->csbAtariStAnimationClockStarted = 1;
-            state->csbAtariStAnimationVbl += units / 1000u;
-            state->csbAtariStAnimationVblRemainder =
-                (uint16_t)(units % 1000u);
+            m11_csb_advance_atari_st_vblank(state, csb_profile->tick_ms);
             m11_csb_play_due_atari_st_animation_sounds(state);
             (void)m11_csb_complete_atari_st_runtime_handoff(state);
             return M11_GAME_INPUT_REDRAW;
