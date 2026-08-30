@@ -1,6 +1,6 @@
 # Game and platform status
 
-**Reviewed 2026-08-29.** This is the operational status matrix. It separates
+**Reviewed 2026-08-30.** This is the operational status matrix. It separates
 media recognition, verified runtime slices and end-to-end playability. A row
 marked as supported does not mean that every menu, save format or visual
 parity gate is complete.
@@ -14,6 +14,19 @@ parity gate is complete.
 | **Data path** | The format or media is admitted and source-locked, but end-to-end gameplay is not proven. |
 | **Preservation** | The edition is documented or retained as reference only. It cannot select a normal game route. |
 | **Unsupported** | The platform is outside the game's Firestaff support matrix. |
+
+## Latest real-media revalidation
+
+On 2026-08-30 the local, non-CI DM2 regression set passed against the supplied
+archives in `~/.firestaff/data/dm2`, without extracting or modifying them. It
+covered `dm2_v1_dos_native_cli_boot`, `dm2_v1_dos_fr_native_cli_boot`,
+`dm2_v1_dos_sksave_archive_menu_resume`,
+`dm2_v1_dos_sksave_archive_menu_resume_matrix`,
+`dm2_v1_amiga_native_cli_boot`, `dm2_v1_fmtowns_native_cli_boot`, and
+`dm2_v1_mac_native_cli_boot`. The matrix proves the stated bounded launch,
+menu, New Game/first-movement and DOS read-only resume routes only; it does
+not promote untraced combat, cross-platform save writing, complete GUI or
+pixel/audio parity to playable status.
 
 ## Dungeon Master
 
