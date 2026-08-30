@@ -28,8 +28,22 @@ No new graphic assets, no new sprite sheets, no new animation types.
 - CSB fix: VBL handler changed so no interrupts can be ignored
   -> palette switching always starts on time
 
+**Implementation status (2026-08-30):**
+Open and evidence-gated. The generic PC 3.4 `F0693_WaitVerticalBlank_PC34`
+gate verifies a synchronous host-delivered wait, but is not a CSB Atari ST
+VBlank interrupt handler and does not establish the CSB re-entrancy rule.
+An earlier audit incorrectly cited `F0613_VBL_Process`; that symbol is a
+champion-text helper, not a VBlank implementation.
+
+**Required evidence before implementation:**
+An authentic CSB Atari ST VBL handler trace/disassembly that identifies the
+palette-write region, the re-entrancy guard, and how a pending VBlank is
+preserved. The native implementation must then use that evidence rather than
+inventing an interrupt queue.
+
 **Implementation gap:**
-Current Firestaff VBL handler may exhibit DM1 palette bug under load.
+Firestaff must not claim the CSB fix merely because it has a synchronous VBlank
+wait. The required behavior is:
 Need:
 1. Verify VBL interrupt handler does not drop or skip interrupts
 2. Palette switch triggered at precise VBL timing
@@ -138,7 +152,7 @@ platform-specific. Document as non-gap.
 
 | Gap | Severity | Description |
 |-----|----------|-------------|
-| VBL handler fix (BUG0_03) | MEDIUM | No ignored VBL interrupts; precise palette switching |
+| VBL handler fix (BUG0_03) | HIGH / evidence-gated | No ignored VBL interrupts; precise palette switching |
 | Engine version display (CHANGE7_36) | LOW | v2.0/v2.1 in dialog top-right; CSB only |
 | Wall drawing optimization | NONE | Performance only; no functional gap |
 | BUG0_04 (Lord Chaos palette) | DOCUMENT | Known limitation; CSB also has it; no fix |
@@ -157,3 +171,8 @@ platform-specific. Document as non-gap.
 | DUNVIEW.C (CHANGE7_15) | Wall drawing optimization |
 | csb_graphics.md Part II | BUG0_04 persistence |
 | BugsAndChanges.htm | CHANGE7_01,14,15,16,36,8_13 |
+
+The authoritative online reproduction and resolution are at
+<http://dmweb.free.fr/Stuff/ReDMCSB/Documentation/BugsAndChanges.htm#BUG0_03>.
+It specifies that BUG0_03 affects the Atari ST DM releases, is fixed in Atari
+ST CSB 2.0/2.1, and requires that no VBlank interrupt be ignored.

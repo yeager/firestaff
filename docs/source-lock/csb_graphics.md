@@ -13,6 +13,18 @@
   switching always starts on time
 - **Only significant graphics bug fix in CSB**
 
+### Firestaff evidence boundary
+
+`F0693_WaitVerticalBlank_PC34` is a generic synchronous wait gate, not the
+CSB Atari ST VBlank ISR. It must not be used as evidence that CSB's re-entrant
+interrupt fix has been reproduced. In particular, there is no Firestaff symbol
+named `F0613_VBL_Process`; `F0613` belongs to champion-text handling.
+
+Before native implementation, capture or disassemble the authentic CSB Atari
+ST handler sufficiently to establish the palette update sequence and how a
+VBlank arriving while the handler is active is retained. Until then this is an
+open, fail-closed parity item rather than an audit-only item.
+
 ## Wall Drawing Optimization (CHANGE7_15_OPTIMIZATION)
 - File: DUNVIEW.C
 - New function to draw walls in center of dungeon view without

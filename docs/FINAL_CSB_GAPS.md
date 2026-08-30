@@ -61,7 +61,7 @@ cross-reference.
 
 | # | Title | Status | Source |
 |---|-------|--------|--------|
-| 1 | VBL handler fix (BUG0_03) | **AUDIT-ONLY** — Firestaff's VBL tick is on a precise boundary via `F0613_VBL_Process` in the platform layer; no override needed for Atari ST/PC 3.4 path | VBL.C, CHANGE7_01_FIX |
+| 1 | VBL handler fix (BUG0_03) | **OPEN — evidence-gated.** `F0613_VBL_Process` is not a Firestaff VBlank function (it is a champion-text helper), so it cannot substantiate this claim. The current source-backed `F0693_WaitVerticalBlank_PC34` gate proves one synchronous wait only; it does not model or verify the CSB Atari ST re-entrant ISR rule that preserves every VBlank under load. Do not claim BUG0_03 parity until an authentic CSB VBL handler trace binds palette work and interrupt delivery. | BASE.C / VBLANK.C, CHANGE7_01_FIX |
 | 2 | Engine version display (CHANGE7_36, CHANGE8_13) | **FIXED** — `csb_v1_engine_version_display_set_csb()` and `csb_v1_engine_version_display_get()` in `csb_v1_engine_version_display_pc34_compat.c` toggle between "v2.0" (DM1) and "v2.1" (CSB).  Test `csb_v1_graphics_extras_pc34_compat` covers toggle + reverse + null-terminator. | DIALOG.C, VBL.C |
 | 3 | Wall drawing optimization (CHANGE7_15) | **AUDIT-ONLY** — performance optimization, not a functional gap; documented as non-blocking | DUNVIEW.C, CHANGE7_15_OPTIMIZATION |
 | 4 | BUG0_04 Lord Chaos palette NOT fixed | **AUDIT-ONLY** — design issue from the original; persists in CSB; not blocking | DUNVIEW.C, BUG0_04 |
@@ -76,8 +76,8 @@ cross-reference.
 `csb-v1-omfattande-batch-2026-06-16`):
   - **16 FIXED** (Champions 1, 2, 3, 4; Combat 1, 2, 3; Dungeon 1, 2, 3, 4, 6; Graphics 6; Mechanics 3; plus Save game combat state)
   - **5 ALREADY-DONE** (Combat 4, Dungeon 5, Mechanics 1+4+5, Combat 5)
-  - **4 AUDIT-ONLY** (Graphics 1, 3, 4, 5)
-  - **0 OPEN-BOUNDED**
+  - **3 AUDIT-ONLY** (Graphics 3, 4, 5)
+  - **1 OPEN — evidence-gated** (Graphics 1: BUG0_03 VBlank re-entrancy)
   - **0 OPEN-OMFATTANDE** — all three (Champions 3, Dungeon 4, Graphics 6) now shipped as bounded source-faithful implementations
 
 Net: **21 of 27 gaps fully closed (FIXED + ALREADY-DONE),** 4
