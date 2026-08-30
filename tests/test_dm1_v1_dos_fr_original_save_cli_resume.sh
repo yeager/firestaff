@@ -45,4 +45,28 @@ common=(--game dm1 --platform pc --data-dir "$data_dir" --save "$save_path"
 probe_resume "${common[@]}"
 probe_resume --menu "${common[@]}" --script enter,enter,enter
 
+# One input at a time is applied only after F0435 restores the original pose.
+# The four resulting positions/orientations are source observations from this
+# supplied snapshot, not an attempted reconstruction of a C13 interaction.
+probe_input() {
+    local input=$1
+    local party=$2
+    local output
+    output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --game dm1 --platform pc --data-dir "$data_dir" --save "$save_path" \
+        --boot-probe --boot-probe-expect-runtime \
+        --boot-probe-expect-level-loaded 1 --boot-probe-expect-map 5 \
+        --boot-probe-expect-party "$party" --script "$input" --duration 0 2>&1) || {
+        printf '%s\n' "$output" >&2
+        return 1
+    }
+    grep -Fq 'inputs=1' <<<"$output" &&
+    grep -Fq "party=$party" <<<"$output"
+}
+
+probe_input up 4,19,2
+probe_input down 4,17,2
+probe_input left 4,18,1
+probe_input right 4,18,3
+
 printf '%s\n' 'PASS: authentic French DM1 DMSAVE reaches the same native runtime through CLI and start menu'
