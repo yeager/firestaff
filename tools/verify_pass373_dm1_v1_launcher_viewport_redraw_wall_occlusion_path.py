@@ -6,13 +6,19 @@ from datetime import datetime, timezone
 from typing import Any
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PASS = "pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path"
-OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
+OUT_DIR = pathlib.Path(os.environ.get(
+    "FIRESTAFF_VERIFICATION_OUTPUT_DIR",
+    str(ROOT / "parity-evidence" / "verification" / PASS),
+))
 MANIFEST = OUT_DIR / "manifest.json"
-REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
+REPORT = pathlib.Path(os.environ.get(
+    "FIRESTAFF_VERIFICATION_REPORT_PATH",
+    str(ROOT / "parity-evidence" / f"{PASS}.md"),
+))
 REDMCSB = pathlib.Path(os.environ.get("FIRESTAFF_REDMCSB_SOURCE", str(pathlib.Path.home()/".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")))
 DM1_DATA = pathlib.Path(os.environ.get("FIRESTAFF_DM1_CANONICAL_DATA", str(pathlib.Path.home()/".openclaw/data/firestaff-original-games/DM/_canonical/dm1")))
-BUILD_DIR = pathlib.Path(os.environ.get("FIRESTAFF_PASS373_BUILD_DIR", str(pathlib.Path.home()/".openclaw/data/firestaff-builds/pass373-verify")))
-HOME_DIR = pathlib.Path(os.environ.get("FIRESTAFF_PASS373_HOME_DIR", str(pathlib.Path.home()/".openclaw/data/firestaff-homes/pass373-verify")))
+BUILD_DIR = pathlib.Path(os.environ.get("FIRESTAFF_PASS373_BUILD_DIR", str(OUT_DIR / "build")))
+HOME_DIR = pathlib.Path(os.environ.get("FIRESTAFF_PASS373_HOME_DIR", str(OUT_DIR / "home")))
 SCRIPT = "enter,down,down,down,down,down,down,down,enter,right"
 EXPECTED_STATUS = "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED"
 DUNVIEW_LOCKS = [
@@ -82,6 +88,9 @@ def assert_order(text:str, needles:list[str])->bool:
         pos=p
     return True
 def main()->int:
+    if not REDMCSB.exists() or not DM1_DATA.exists():
+        print("SKIP: pass373 requires the optional local ReDMCSB and original DM1 corpus")
+        return 77
     OUT_DIR.mkdir(parents=True,exist_ok=True); checks=[]
     source=verify_markers(DUNVIEW_LOCKS+OTHER_SOURCE_LOCKS, REDMCSB)
     product=verify_markers(PRODUCT_MARKERS, ROOT)

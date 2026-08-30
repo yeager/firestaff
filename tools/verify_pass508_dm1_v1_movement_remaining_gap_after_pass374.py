@@ -12,9 +12,15 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PASS = "pass508_dm1_v1_movement_remaining_gap_after_pass374"
-OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
+OUT_DIR = pathlib.Path(os.environ.get(
+    "FIRESTAFF_VERIFICATION_OUTPUT_DIR",
+    str(ROOT / "parity-evidence" / "verification" / PASS),
+))
 MANIFEST = OUT_DIR / "manifest.json"
-REPORT = ROOT / "parity-evidence" / (PASS + ".md")
+REPORT = pathlib.Path(os.environ.get(
+    "FIRESTAFF_VERIFICATION_REPORT_PATH",
+    str(ROOT / "parity-evidence" / (PASS + ".md")),
+))
 REDMCSB = pathlib.Path(os.environ.get("FIRESTAFF_REDMCSB_SOURCE", str(pathlib.Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")))
 COMPLETION = ROOT / "parity-evidence/verification/firestaff_completion_matrix.json"
 COMPLETION_DOC = ROOT / "docs/parity/COMPLETION_MATRIX.md"
@@ -108,6 +114,9 @@ def write_report(manifest: dict[str, Any]) -> None:
     REPORT.write_text("\n".join(lines), encoding="utf-8")
 
 def main() -> int:
+    if not REDMCSB.exists():
+        print("SKIP: pass508 requires the optional local ReDMCSB corpus")
+        return 77
     source = audit_source()
     evidence = audit_current_evidence()
     gates = [run(["python3", "tools/verify_firestaff_completion_matrix.py"]), run(["python3", "tools/firestaff_completion_status.py"])]

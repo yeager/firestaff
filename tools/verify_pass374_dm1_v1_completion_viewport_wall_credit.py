@@ -15,9 +15,15 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 PASS = "pass374_dm1_v1_completion_viewport_wall_credit"
-OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
+OUT_DIR = pathlib.Path(os.environ.get(
+    "FIRESTAFF_VERIFICATION_OUTPUT_DIR",
+    str(ROOT / "parity-evidence" / "verification" / PASS),
+))
 MANIFEST = OUT_DIR / "manifest.json"
-REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
+REPORT = pathlib.Path(os.environ.get(
+    "FIRESTAFF_VERIFICATION_REPORT_PATH",
+    str(ROOT / "parity-evidence" / f"{PASS}.md"),
+))
 REDMCSB = pathlib.Path(os.environ.get(
     "FIRESTAFF_REDMCSB_SOURCE",
     str(pathlib.Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
@@ -142,6 +148,9 @@ def run(cmd: list[str], timeout: int = 120) -> dict[str, Any]:
 
 
 def main() -> int:
+    if not REDMCSB.exists():
+        print("SKIP: pass374 requires the optional local ReDMCSB corpus")
+        return 77
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     checks: list[dict[str, Any]] = []
     source_locks = verify_source_locks()

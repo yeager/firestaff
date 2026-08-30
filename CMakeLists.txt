@@ -34701,17 +34701,26 @@ endif()
             NAME pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path.py
         )
-        set_tests_properties(pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path PROPERTIES TIMEOUT 480)
+        set_tests_properties(pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path PROPERTIES
+            TIMEOUT 480
+            SKIP_RETURN_CODE 77
+            ENVIRONMENT "FIRESTAFF_VERIFICATION_OUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path;FIRESTAFF_VERIFICATION_REPORT_PATH=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path.md;FIRESTAFF_PASS373_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path/build;FIRESTAFF_PASS373_HOME_DIR=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path/home")
         add_test(
             NAME pass374_dm1_v1_completion_viewport_wall_credit
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass374_dm1_v1_completion_viewport_wall_credit.py
         )
-        set_tests_properties(pass374_dm1_v1_completion_viewport_wall_credit PROPERTIES DEPENDS "pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path")
+        set_tests_properties(pass374_dm1_v1_completion_viewport_wall_credit PROPERTIES
+            DEPENDS "pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path"
+            SKIP_RETURN_CODE 77
+            ENVIRONMENT "FIRESTAFF_VERIFICATION_OUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/pass374_dm1_v1_completion_viewport_wall_credit;FIRESTAFF_VERIFICATION_REPORT_PATH=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/pass374_dm1_v1_completion_viewport_wall_credit.md")
         add_test(
             NAME pass508_dm1_v1_movement_remaining_gap_after_pass374
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass508_dm1_v1_movement_remaining_gap_after_pass374.py
         )
-        set_tests_properties(pass508_dm1_v1_movement_remaining_gap_after_pass374 PROPERTIES DEPENDS "pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path;pass374_dm1_v1_completion_viewport_wall_credit")
+        set_tests_properties(pass508_dm1_v1_movement_remaining_gap_after_pass374 PROPERTIES
+            DEPENDS "pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path;pass374_dm1_v1_completion_viewport_wall_credit"
+            SKIP_RETURN_CODE 77
+            ENVIRONMENT "FIRESTAFF_VERIFICATION_OUTPUT_DIR=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/pass508_dm1_v1_movement_remaining_gap_after_pass374;FIRESTAFF_VERIFICATION_REPORT_PATH=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/pass508_dm1_v1_movement_remaining_gap_after_pass374.md")
         add_test(
             NAME pass376_dm1_v1_completion_deferred_explosion_credit
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass376_dm1_v1_completion_deferred_explosion_credit.py
