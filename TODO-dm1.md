@@ -28,7 +28,9 @@ Reviewed 2026-08-29. Only open work is listed here.
   F0434 big-endian dungeon stream plus its original checksum.  It is not a
   PC34 envelope and must never be coerced through the PC34 importer.  Bind
   direct-CLI and start-menu resume only after that format-specific adapter
-  owns the loaded world and presentation state.
+  owns the loaded world and presentation state.  The authenticated F0434
+  tail is now available byte-for-byte through the Amiga handoff boundary;
+  its own big-endian world decoder remains to be materialized.
 - The supplied French DOS ZIP → `dungeon_master.exe` SFX package uses a
   non-solid RAR 2.0 (`unp_ver=0x14`) stream. Native RAR2 decoding is
   intentionally out of scope; the launcher reports it as unsupported rather
