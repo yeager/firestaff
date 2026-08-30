@@ -170,6 +170,8 @@ typedef struct {
     Dm1V1AmigaSaveRuntimeQueueReceipt primary_queue_receipt;
     int primary_event_queue_result;
     struct DM1_EventQueue_V1 primary_event_queue;
+    int primary_runtime_party_result;
+    struct PartyState_Compat primary_runtime_party;
     uint8_t *primary_bytes;
     size_t primary_size;
     int backup_f0435_result;
@@ -218,6 +220,9 @@ static int real_save_disk_visitor(const char *name, const uint8_t *bytes,
         receipt->primary_event_queue_result =
             dm1_v1_original_save_amiga_f0435_materialize_event_queue_bytes(
                 bytes, size, &receipt->primary_event_queue, NULL);
+        receipt->primary_runtime_party_result =
+            dm1_v1_original_save_amiga_f0435_materialize_party_bytes(
+                bytes, size, &receipt->primary_runtime_party, NULL);
         printf("AMIGA-SAVE-DISK primary F0435=%s parts=%u body_end=%u "
                "trailing=%u time=%u party=%u pose=%d,%d,%d map=%d events=%u/%u groups=%u/%u "
                "tail=%d dungeon=%u+%u maps=%u columns=%u raw=%u checksum=%04x/%04x\n",
@@ -586,6 +591,16 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
           receipt.primary_event_queue.events[receipt.primary_event_queue.timeline[0]].type ==
               DM1_EVENT_WATCHDOG,
           "real_save_primary_a20_c3_c4_materializes_native_watchdog_queue");
+    CHECK(receipt.primary_runtime_party_result == DM1_V1_AMIGA_SAVE_F0435_OK &&
+          receipt.primary_runtime_party.championCount ==
+              receipt.primary_f0435.party_champion_count &&
+          receipt.primary_runtime_party.mapX == receipt.primary_f0435.party_map_x &&
+          receipt.primary_runtime_party.mapY == receipt.primary_f0435.party_map_y &&
+          receipt.primary_runtime_party.direction == receipt.primary_f0435.party_direction &&
+          receipt.primary_runtime_party.champions[0].present == 1 &&
+          receipt.primary_runtime_party.champions[0].hp.current ==
+              receipt.primary_party_receipt.champions[0].health_current,
+          "real_save_primary_a20_c0_c2_materializes_native_party");
     CHECK(receipt.primary_f0435.header_authenticated == 1 &&
           receipt.primary_f0435.body_authenticated == 1 &&
           receipt.primary_f0435.tail_authenticated == 1 &&

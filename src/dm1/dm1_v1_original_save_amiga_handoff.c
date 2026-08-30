@@ -2,6 +2,8 @@
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
+#include "dm1_v1_inventory_slot_placement_pc34_compat.h"
+#include "memory_champion_state_pc34_compat.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -535,6 +537,81 @@ int dm1_v1_original_save_amiga_f0435_party_receipt_bytes(
         out_party->first_scent_index = info[84u];
         out_party->invisibility_count = info[86u];
     }
+    return DM1_V1_AMIGA_SAVE_F0435_OK;
+}
+
+int dm1_v1_original_save_amiga_f0435_materialize_party_bytes(
+    const uint8_t *bytes, size_t size,
+    struct PartyState_Compat *out_party,
+    Dm1V1AmigaSaveF0435Receipt *out_receipt)
+{
+    Dm1V1AmigaSaveF0435GlobalData global;
+    Dm1V1AmigaSavePartyReceipt source_party;
+    struct PartyState_Compat candidate;
+    unsigned int champion;
+    int result;
+
+    if (!bytes || !out_party) return DM1_V1_AMIGA_SAVE_F0435_ERR_ARGUMENT;
+    memset(&global, 0, sizeof(global));
+    memset(&source_party, 0, sizeof(source_party));
+    result = dm1_v1_original_save_amiga_f0435_global_data_bytes(
+        bytes, size, &global, out_receipt);
+    if (result != DM1_V1_AMIGA_SAVE_F0435_OK) return result;
+    result = dm1_v1_original_save_amiga_f0435_party_receipt_bytes(
+        bytes, size, &source_party, NULL);
+    if (result != DM1_V1_AMIGA_SAVE_F0435_OK) return result;
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.championCount = global.party_champion_count;
+    candidate.mapIndex = global.party_map_index;
+    candidate.mapX = global.party_map_x;
+    candidate.mapY = global.party_map_y;
+    candidate.direction = global.party_direction;
+    candidate.activeChampionIndex = global.leader_index;
+    for (champion = 0u; champion < CHAMPION_MAX_PARTY; ++champion) {
+        struct ChampionState_Compat *dst = &candidate.champions[champion];
+        const Dm1V1AmigaSaveChampionReceipt *src =
+            &source_party.champions[champion];
+        unsigned int slot;
+        F0600_CHAMPION_InitEmpty_Compat(dst);
+        if (champion >= global.party_champion_count) continue;
+        dst->present = 1;
+        dst->portraitIndex = (int)champion;
+        memcpy(dst->name, src->name, sizeof(dst->name));
+        memcpy(dst->title, src->title, sizeof(dst->title));
+        dst->direction = src->direction;
+        dst->actionIndex = src->action_index;
+        dst->poisonDose = src->poison_dose;
+        dst->wounds = src->wounds;
+        dst->hp.current = src->health_current;
+        dst->hp.maximum = src->health_maximum;
+        dst->hp.shifted = (uint16_t)(src->health_maximum << 1u);
+        dst->stamina.current = src->stamina_current;
+        dst->stamina.maximum = src->stamina_maximum;
+        dst->stamina.shifted = (uint16_t)(src->stamina_maximum << 1u);
+        dst->mana.current = src->mana_current;
+        dst->mana.maximum = src->mana_maximum;
+        dst->mana.shifted = (uint16_t)(src->mana_maximum << 1u);
+        dst->food = src->food;
+        dst->water = src->water;
+        dst->load = src->load;
+        for (slot = 0u; slot < CHAMPION_ATTR_COUNT; ++slot) {
+            dst->attributeMaximums[slot] = src->attribute_maximums[slot];
+            dst->attributes[slot] = src->attributes[slot];
+        }
+        for (slot = 0u; slot < CHAMPION_SKILL_COUNT; ++slot) {
+            dst->skillExperience[slot] = src->skill_experience[slot];
+        }
+        for (slot = 0u; slot < CHAMPION_SLOT_COUNT; ++slot) {
+            const int runtime_slot =
+                dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(
+                    (int)slot + 8);
+            if (runtime_slot < 0 || runtime_slot >= CHAMPION_SLOT_COUNT) {
+                return DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+            }
+            dst->inventory[runtime_slot] = src->inventory[slot];
+        }
+    }
+    *out_party = candidate;
     return DM1_V1_AMIGA_SAVE_F0435_OK;
 }
 

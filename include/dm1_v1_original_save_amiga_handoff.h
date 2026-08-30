@@ -8,6 +8,7 @@
 
 struct GameWorld_Compat;
 struct DM1_EventQueue_V1;
+struct PartyState_Compat;
 
 #ifdef __cplusplus
 extern "C" {
@@ -197,6 +198,14 @@ int dm1_v1_original_save_amiga_f0435_part_bytes(
 int dm1_v1_original_save_amiga_f0435_party_receipt_bytes(
     const uint8_t *bytes, size_t size,
     Dm1V1AmigaSavePartyReceipt *out_party,
+    Dm1V1AmigaSaveF0435Receipt *out_receipt);
+
+/* Materializes C0+C2's source-owned party fields into an isolated native
+ * PartyState.  This does not publish to M11; it is the party half of the
+ * later all-or-nothing session adapter. */
+int dm1_v1_original_save_amiga_f0435_materialize_party_bytes(
+    const uint8_t *bytes, size_t size,
+    struct PartyState_Compat *out_party,
     Dm1V1AmigaSaveF0435Receipt *out_receipt);
 
 int dm1_v1_original_save_amiga_f0435_runtime_queue_receipt_bytes(
