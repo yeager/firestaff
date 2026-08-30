@@ -30119,8 +30119,10 @@ endif()
     firestaff_link_zlib(test_dm1_v2_side_by_side_seed_pc34 PRIVATE)
     add_executable(test_dm1_v2_v1_v2_side_by_side_seed_pc34
         tests/test_dm1_v2_v1_v2_side_by_side_seed_pc34.c
+        src/shared/firestaff_zip_extract.c
     )
     target_link_libraries(test_dm1_v2_v1_v2_side_by_side_seed_pc34 PRIVATE firestaff_v2)
+    firestaff_link_zlib(test_dm1_v2_v1_v2_side_by_side_seed_pc34 PRIVATE)
     add_executable(test_dm1_v2_launch_smoke_pc34
         tests/test_dm1_v2_launch_smoke_pc34.c
         src/dm1v2/dm1_v2_movement_command_adapter_pc34.c
@@ -31129,6 +31131,10 @@ endif()
     add_test(
         NAME dm1_v2_v1_v2_side_by_side_seed_pc34
         COMMAND test_dm1_v2_v1_v2_side_by_side_seed_pc34
+    )
+    set_tests_properties(dm1_v2_v1_v2_side_by_side_seed_pc34 PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
     )
     add_test(
         NAME dm1_v2_launch_smoke_pc34

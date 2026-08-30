@@ -103,6 +103,14 @@ The key takeaway: **any "real" custom dungeon for DM/CSB/CSBWin must use the eng
 ### Other community pages
 
 - `http://dmweb.free.fr/community/redmcsb/` (referenced from existing `docs/REDMCSB_REFERENCE.md` — Meynaf's decompilation)
+- `http://dmweb.free.fr/Stuff/ReDMCSB/Documentation/BugsAndChanges.htm` —
+  ReDMCSB's versioned bug/change ledger. Its own warning limits the listed
+  bugs to Atari ST versions (some may exist elsewhere, and other editions may
+  have separate bugs), so Firestaff uses it as an edition-specific preservation
+  reference rather than applying Atari behavior to PC, Amiga, or FM Towns.
+  It documents, among other things, the DM Atari vertical-blank palette race
+  (`BUG0_03`, fixed in CSB 2.x), creature palette substitutions (`BUG0_04`),
+  and known dungeon-view projectile/explosion rendering failures.
 - `http://dmweb.free.fr/community/tools/` — the actual page content seems to redirect to a "Magazines" link; the tools are listed elsewhere
 - `http://dmweb.free.fr/ftl-games/` — FTL Games company overview, staff credits, magazine scans
 

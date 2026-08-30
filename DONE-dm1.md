@@ -129,6 +129,10 @@ Reviewed 2026-08-29. Completed work only.
   path for every positive lane, layout, RGBA export, and region comparison.
   It skips when the optional local PC 3.4 archive is absent instead of
   silently falling back to a hard-coded dungeon fixture.
+- `dm1_v2_v1_v2_side_by_side_seed_pc34` now independently reads the original
+  PC 3.4 ZIP member in RAM and verifies V1/V2 disabled-presentation framebuffer
+  parity at the authentic entry coordinates in all four directions. It no
+  longer uses the legacy entry-state fixture for positive pixel evidence.
 - The supplied authentic French DOS `DMSAVE.DAT` and `DMSAVE.BAK` (48,561
   bytes each; SHA-256 `494d081ee5175b2dccc900d5ea3f25230c8bb3b0f20828d311b8fc5bdfb82d21`
   and `a760234408bf27946b1586ecf396be72e648bd8f3d18abee90a18c2c7e94421f`)

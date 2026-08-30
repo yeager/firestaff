@@ -40,8 +40,8 @@
  *      source truth must not change).
  *
  *   6. The DM1 V2 viewport renderer preserves the V1 framebuffer
- *      pixel-by-pixel when V2 presentation is disabled: the entry
- *      composition (DUNGEON.DAT offset 8 + pass173) renders into
+ *      pixel-by-pixel when V2 presentation is disabled: the authentic
+ *      PC 3.4 `DATA/DUNGEON.DAT` entry composition renders into
  *      two independent 224x136 RGBA viewports whose framebuffers
  *      match byte-for-byte, and dm1_v2_vp_compare_viewport_region
  *      reports zero mismatched pixels across the full viewport at
@@ -49,8 +49,9 @@
  *      core of the side-by-side presentation seed scaffold
  *      (probes/dm1/firestaff_dm1_v2_side_by_side_presentation_seed_probe.c).
  *
- * The test is headless, depends only on the firestaff_v2 and
- * firestaff_m10 libraries, and does not require any game data files.
+ * The test is headless and reads the original `DATA/DUNGEON.DAT` member
+ * directly from the PC 3.4 ZIP into RAM. It does not require an extracted
+ * game-data directory; CTest skips it if that optional local archive is absent.
  *
  * Source references (ReDMCSB):
  *   DEFS.H:238-243          C001..C006 V1 command ids.
@@ -77,9 +78,11 @@
 #include "dm1_v2_phase_gate_pc34.h"
 #include "dm1_v2_movement_command_adapter_pc34.h"
 #include "dm1_v2_viewport_renderer_pc34.h"
+#include "firestaff_zip_extract.h"
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define CHECK(expr) do { \
@@ -88,6 +91,47 @@
         return 1; \
     } \
 } while (0)
+
+static DM1_V2_DungeonDatState g_dungeon;
+
+static int path_exists(const char* path) {
+    FILE* f;
+    if (!path) return 0;
+    f = fopen(path, "rb");
+    if (!f) return 0;
+    fclose(f);
+    return 1;
+}
+
+static const char* pc34_archive(void) {
+    static char path[2048];
+    const char* explicit_path = getenv("FIRESTAFF_DM1_PC34_ARCHIVE");
+    const char* data_root = getenv("FIRESTAFF_DATA");
+    const char* home = getenv("HOME");
+    if (explicit_path && path_exists(explicit_path)) return explicit_path;
+    if (data_root && data_root[0]) {
+        snprintf(path, sizeof(path), "%s/dm1/Dungeon-Master_DOS_EN_Version-34.zip", data_root);
+        if (path_exists(path)) return path;
+    }
+    if (!home || !home[0]) return NULL;
+    snprintf(path, sizeof(path), "%s/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip", home);
+    return path_exists(path) ? path : NULL;
+}
+
+static int load_real_dungeon(void) {
+    unsigned char* bytes = NULL;
+    size_t size = 0;
+    const char* archive = pc34_archive();
+    int ok;
+    if (!archive) return 77;
+    if (firestaff_zip_extract_by_suffix(archive, "DATA/DUNGEON.DAT", &bytes, &size) != 0)
+        return 77;
+    ok = dm1_v2_vp_dungeon_dat_init(&g_dungeon, bytes, (int)size);
+    /* g_dungeon only borrows bytes during composition. Keep the real member
+     * resident for the test lifetime, then release it from main. */
+    if (!ok) free(bytes);
+    return ok ? 0 : 1;
+}
 
 /* ── V1 source command table (ReDMCSB DEFS.H:238-243) ─────────────
  *
@@ -297,11 +341,10 @@ static int test_gameplay_domain_predicate(void) {
  * regular ctest failure, not just a stand-alone probe output.
  *
  * What is asserted:
- *   1. dm1_v2_vp_dm1_pc34_entry_state_fixture() reports the canonical
- *      DM1 PC 3.4 entry (map 0, x=1, y=3, dir=2 source=DUNGEON.DAT
- *      offset 8 + pass173 source audit).
- *   2. dm1_v2_vp_build_composition_from_fixture() decodes D1C as WALL
- *      and D0C as CORRIDOR for the canonical entry position.
+ *   1. The native ZIP reader decodes the canonical PC 3.4 entry from
+ *      its original `DATA/DUNGEON.DAT` bytes (map 0, x=1, y=3, dir=2).
+ *   2. dm1_v2_vp_build_composition_from_dungeon() uses those bytes for
+ *      every direction; it does not substitute a fixture state.
  *   3. dm1_v2_vp_render_composition_flat() returns 1 for both lanes.
  *   4. The two 224x136 RGBA framebuffers are byte-equal pixel-by-pixel.
  *   5. dm1_v2_vp_compare_viewport_region() reports 0 mismatched pixels
@@ -309,10 +352,8 @@ static int test_gameplay_domain_predicate(void) {
  *   6. A 64-bit FNV-1a fold of the V1 framebuffer equals the V2 fold.
  *   7. The same six checks hold for directions 0..3 (N/E/S/W) so a
  *      future rotation regression cannot silently drift V1 vs V2 in
- *      any lane. The fixture front-wall square at (1,4) is at D1C
- *      only in direction=2; other directions use the fixture default
- *      element for D1C, which is intentional — V1 and V2 must still
- *      agree, regardless of which element D1C ends up with.
+ *      any lane. The actual D0C/D1C elements vary with direction; V1 and
+ *      V2 must still agree regardless of the resulting composition.
  *
  * Source locks:
  *   ReDMCSB DUNVIEW.C:2999-3000   224x136 viewport bitmap.
@@ -353,7 +394,7 @@ static uint64_t fnv1a_framebuffer(const DM1_V2_ViewportState* vp) {
     return hash;
 }
 
-static int render_lane_for_direction(const DM1_V2_DungeonStateFixture* fixture,
+static int render_lane_for_direction(const DM1_V2_DungeonDatState* dungeon,
                                      int direction,
                                      DM1_V2_ViewportState* v1,
                                      DM1_V2_ViewportState* v2) {
@@ -363,11 +404,11 @@ static int render_lane_for_direction(const DM1_V2_DungeonStateFixture* fixture,
     uint64_t h1, h2;
     int x, y, mismatch;
 
-    if (!fixture || !v1 || !v2) return 1;
+    if (!dungeon || !v1 || !v2) return 1;
 
-    CHECK(dm1_v2_vp_build_composition_from_fixture(fixture,
-                                                   fixture->startMapX,
-                                                   fixture->startMapY,
+    CHECK(dm1_v2_vp_build_composition_from_dungeon(dungeon, 0,
+                                                   dungeon->initialMapX,
+                                                   dungeon->initialMapY,
                                                    direction,
                                                    &input) == 1);
 
@@ -413,29 +454,22 @@ static int render_lane_for_direction(const DM1_V2_DungeonStateFixture* fixture,
 }
 
 static int test_v1_v2_pixel_level_parity(void) {
-    const DM1_V2_DungeonStateFixture* fixture =
-        dm1_v2_vp_dm1_pc34_entry_state_fixture();
     int direction;
 
-    CHECK(fixture != NULL);
-    CHECK(fixture->startMapX == 1);
-    CHECK(fixture->startMapY == 3);
-    CHECK(fixture->startDirection == 2);
+    CHECK(g_dungeon.initialMapX == 1);
+    CHECK(g_dungeon.initialMapY == 3);
+    CHECK(g_dungeon.initialDirection == 2);
 
-    /* Canonical entry position: dir=2 (S) places the (1,4) wall
-     * square at D1C. Other directions use the fixture default
-     * element for D1C; parity must still hold for all four. */
+    /* The original entry state must reach the native builder directly. */
     {
         DM1_V2_ViewportState v1, v2;
         DM1_V2_ViewportCompositionInput input;
-        CHECK(dm1_v2_vp_build_composition_from_fixture(fixture,
-                                                       fixture->startMapX,
-                                                       fixture->startMapY,
-                                                       fixture->startDirection,
-                                                       &input) == 1);
-        CHECK(input.squares[1][1].element == DM1_V2_ELEMENT_WALL);
-        CHECK(input.squares[0][1].element == DM1_V2_ELEMENT_CORRIDOR);
-        if (render_lane_for_direction(fixture, fixture->startDirection, &v1, &v2)) {
+        CHECK(dm1_v2_vp_build_composition_from_dungeon(
+                  &g_dungeon, 0, g_dungeon.initialMapX, g_dungeon.initialMapY,
+                  g_dungeon.initialDirection, &input) == 1);
+        CHECK(input.squares[0][1].element == DM1_V2_ELEMENT_TELEPORTER);
+        CHECK(input.squares[1][1].element == DM1_V2_ELEMENT_CORRIDOR);
+        if (render_lane_for_direction(&g_dungeon, g_dungeon.initialDirection, &v1, &v2)) {
             return 1;
         }
     }
@@ -446,7 +480,7 @@ static int test_v1_v2_pixel_level_parity(void) {
      * viewport renderer that the single-direction probe would miss. */
     for (direction = 0; direction < 4; ++direction) {
         DM1_V2_ViewportState v1, v2;
-        if (render_lane_for_direction(fixture, direction, &v1, &v2)) {
+        if (render_lane_for_direction(&g_dungeon, direction, &v1, &v2)) {
             return 1;
         }
     }
@@ -456,6 +490,12 @@ static int test_v1_v2_pixel_level_parity(void) {
 /* ── Main ───────────────────────────────────────────────────────── */
 
 int main(void) {
+    const int load_status = load_real_dungeon();
+    if (load_status == 77) {
+        puts("dm1_v2_v1_v2_side_by_side_seed_pc34: SKIP (PC 3.4 archive unavailable)");
+        return 77;
+    }
+    if (load_status != 0) return 1;
     if (test_defaults_lock_v1()) return 1;
     if (test_v1_locked_always()) return 1;
     if (test_v2_eligible_toggle()) return 1;
@@ -463,7 +503,11 @@ int main(void) {
     if (test_v1_command_ids_preserved()) return 1;
     if (test_every_domain_has_anchor()) return 1;
     if (test_gameplay_domain_predicate()) return 1;
-    if (test_v1_v2_pixel_level_parity()) return 1;
+    if (test_v1_v2_pixel_level_parity()) {
+        free((void*)g_dungeon.bytes);
+        return 1;
+    }
+    free((void*)g_dungeon.bytes);
     puts("dm1_v2_v1_v2_side_by_side_seed_pc34: ok");
     return 0;
 }
