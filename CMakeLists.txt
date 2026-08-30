@@ -4355,7 +4355,7 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "dm1;pc34;dos;real-media;archive;native;cli;menu;startup;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN.zip"
-        TIMEOUT 45
+        TIMEOUT 120
     )
     add_test(
         NAME dm1_v1_atari_st_outer_archive_cli_boot

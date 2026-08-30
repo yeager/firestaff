@@ -117,6 +117,10 @@ Reviewed 2026-08-29. Completed work only.
   first input matrix through fresh native ZIP → ZIP → STX sessions. The
   expected party states are observed from original media; no disk image or
   dungeon replacement is synthesized.
+- The canonical PC DOS 3.4 ZIP now also verifies the complete initial input
+  matrix through fresh native archive sessions. Its authenticated IMG3 title,
+  dungeon and party state are retained in memory for every direction, strafe
+  and action check; no extracted fixture or generated save is used.
 - The supplied authentic French DOS `DMSAVE.DAT` and `DMSAVE.BAK` (48,561
   bytes each; SHA-256 `494d081ee5175b2dccc900d5ea3f25230c8bb3b0f20828d311b8fc5bdfb82d21`
   and `a760234408bf27946b1586ecf396be72e648bd8f3d18abee90a18c2c7e94421f`)
