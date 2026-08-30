@@ -3316,6 +3316,28 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         /* Theron's Quest has no source -- no intro needed. */
     }
     if (M11_GameView_OpenSelectedMenuEntry(gameView, menuState)) {
+        if (launchEntry && launchEntry->gameId &&
+            strcmp(launchEntry->gameId, "dm1") == 0 &&
+            menuState->quickResumeAvailable &&
+            menuState->quickResumeLaunchRequested &&
+            menuState->quickResumeSavePath[0] != '\0' &&
+            strstr(menuState->quickResumeSavePath, "::") != NULL) {
+            int used_backup = 0;
+            /* The virtual Amiga route bypasses the PC34 TITLE/ENTRANCE
+             * transaction above, but LOADSAVE.C F0435 still owns the
+             * selected ADF save immediately after the verified dungeon is
+             * live.  Load the exact in-memory member now; never fall back
+             * to a loose host save or construct a replacement world. */
+            if (!M11_GameView_LoadDm1SavePath(
+                    gameView, menuState->quickResumeSavePath,
+                    &used_backup)) {
+                m11_set_launch_failed_message(menuState);
+                return 0;
+            }
+            (void)m11_dm1_host_log_resume_loaded(
+                &dm1HandoffContext, menuState->quickResumeSavePath,
+                used_backup);
+        }
         if (m11_selected_dm1_is_fmtowns(menuState, launchEntry)) {
             int played = 0;
             int titleTrack = dm1_v1_fmtowns_cd_track_for_event(0);
