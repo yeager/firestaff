@@ -40,6 +40,17 @@ static int16_t read_be_i16(const uint8_t *bytes)
     return (int16_t)read_be16(bytes);
 }
 
+static uint32_t fingerprint_bytes(const uint8_t *bytes, size_t byte_count)
+{
+    uint32_t hash = 2166136261u;
+    size_t index;
+    for (index = 0u; index < byte_count; ++index) {
+        hash ^= bytes[index];
+        hash *= 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
 static uint16_t header_first_half_checksum(const uint8_t *header)
 {
     uint16_t checksum = 0u;
@@ -531,6 +542,90 @@ int dm1_v1_original_save_amiga_f0435_party_receipt_bytes(
         out_party->invisibility_count = info[86u];
     }
     return DM1_V1_AMIGA_SAVE_F0435_OK;
+}
+
+int dm1_v1_original_save_amiga_f0435_runtime_queue_receipt_bytes(
+    const uint8_t *bytes, size_t size,
+    Dm1V1AmigaSaveRuntimeQueueReceipt *out_queue,
+    Dm1V1AmigaSaveF0435Receipt *out_receipt)
+{
+    Dm1V1AmigaSaveF0435Receipt receipt;
+    uint8_t *active_groups = NULL;
+    uint8_t *events = NULL;
+    uint8_t *heap = NULL;
+    size_t active_group_size = 0u, event_size = 0u, heap_size = 0u;
+    unsigned int index;
+    int result;
+
+    if (!bytes || !out_queue) return DM1_V1_AMIGA_SAVE_F0435_ERR_ARGUMENT;
+    memset(out_queue, 0, sizeof(*out_queue));
+    memset(&receipt, 0, sizeof(receipt));
+    result = dm1_v1_original_save_amiga_f0435_receipt_bytes(bytes, size,
+                                                             &receipt);
+    if (out_receipt) *out_receipt = receipt;
+    if (result != DM1_V1_AMIGA_SAVE_F0435_OK) return result;
+    active_group_size = receipt.part_byte_counts[1u];
+    event_size = receipt.part_byte_counts[3u];
+    heap_size = receipt.part_byte_counts[4u];
+    active_groups = (uint8_t *)malloc(active_group_size);
+    events = (uint8_t *)malloc(event_size);
+    heap = (uint8_t *)malloc(heap_size);
+    if (!active_groups || !events || !heap) {
+        free(active_groups); free(events); free(heap);
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_CAPACITY;
+    }
+    if (dm1_v1_original_save_amiga_f0435_part_bytes(
+            bytes, size, 1u, active_groups, active_group_size,
+            &active_group_size, NULL) != DM1_V1_AMIGA_SAVE_F0435_OK ||
+        dm1_v1_original_save_amiga_f0435_part_bytes(
+            bytes, size, 3u, events, event_size, &event_size, NULL) !=
+            DM1_V1_AMIGA_SAVE_F0435_OK ||
+        dm1_v1_original_save_amiga_f0435_part_bytes(
+            bytes, size, 4u, heap, heap_size, &heap_size, NULL) !=
+            DM1_V1_AMIGA_SAVE_F0435_OK) {
+        free(active_groups); free(events); free(heap);
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+    }
+    if (active_group_size != (size_t)receipt.maximum_active_group_count * 16u ||
+        event_size != (size_t)receipt.event_maximum_count * 10u ||
+        heap_size != (size_t)receipt.event_maximum_count * 2u ||
+        receipt.event_count > receipt.event_maximum_count) {
+        free(active_groups); free(events); free(heap);
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+    }
+    out_queue->active_group_capacity = receipt.maximum_active_group_count;
+    out_queue->active_group_active_count = receipt.current_active_group_count;
+    out_queue->event_capacity = receipt.event_maximum_count;
+    out_queue->scheduled_event_count = receipt.event_count;
+    out_queue->first_unused_event_index = receipt.first_unused_event_index;
+    out_queue->active_group_fingerprint = fingerprint_bytes(active_groups,
+                                                             active_group_size);
+    out_queue->event_fingerprint = fingerprint_bytes(events, event_size);
+    out_queue->heap_fingerprint = fingerprint_bytes(heap, heap_size);
+    out_queue->timeline_membership_valid = 1;
+    for (index = 0u; index < receipt.event_count; ++index) {
+        const uint16_t event_index = read_be16(heap + index * 2u);
+        unsigned int earlier;
+        if (event_index >= receipt.event_maximum_count ||
+            events[(size_t)event_index * 10u + 4u] == 0u) {
+            out_queue->timeline_membership_valid = 0;
+            break;
+        }
+        for (earlier = 0u; earlier < index; ++earlier) {
+            if (read_be16(heap + earlier * 2u) == event_index) {
+                out_queue->timeline_membership_valid = 0;
+                break;
+            }
+        }
+        if (!out_queue->timeline_membership_valid) break;
+    }
+    if (out_queue->first_unused_event_index < receipt.event_maximum_count &&
+        events[(size_t)out_queue->first_unused_event_index * 10u + 4u] != 0u) {
+        out_queue->timeline_membership_valid = 0;
+    }
+    free(active_groups); free(events); free(heap);
+    return out_queue->timeline_membership_valid
+        ? DM1_V1_AMIGA_SAVE_F0435_OK : DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
 }
 
 int dm1_v1_original_save_amiga_f0435_dungeon_tail_bytes(

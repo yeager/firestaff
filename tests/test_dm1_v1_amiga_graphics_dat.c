@@ -165,6 +165,8 @@ typedef struct {
     uint8_t primary_party[DM1_V1_AMIGA_SAVE_F0435_PARTY_BYTES];
     int primary_party_receipt_result;
     Dm1V1AmigaSavePartyReceipt primary_party_receipt;
+    int primary_queue_receipt_result;
+    Dm1V1AmigaSaveRuntimeQueueReceipt primary_queue_receipt;
     uint8_t *primary_bytes;
     size_t primary_size;
     int backup_f0435_result;
@@ -207,6 +209,9 @@ static int real_save_disk_visitor(const char *name, const uint8_t *bytes,
         receipt->primary_party_receipt_result =
             dm1_v1_original_save_amiga_f0435_party_receipt_bytes(
                 bytes, size, &receipt->primary_party_receipt, NULL);
+        receipt->primary_queue_receipt_result =
+            dm1_v1_original_save_amiga_f0435_runtime_queue_receipt_bytes(
+                bytes, size, &receipt->primary_queue_receipt, NULL);
         printf("AMIGA-SAVE-DISK primary F0435=%s parts=%u body_end=%u "
                "trailing=%u time=%u party=%u pose=%d,%d,%d map=%d events=%u/%u groups=%u/%u "
                "tail=%d dungeon=%u+%u maps=%u columns=%u raw=%u checksum=%04x/%04x\n",
@@ -548,6 +553,15 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
           receipt.primary_party_receipt.champions[0].mana_current <=
               receipt.primary_party_receipt.champions[0].mana_maximum,
           "real_save_primary_a20_c2_champion_receipt");
+    CHECK(receipt.primary_queue_receipt_result == DM1_V1_AMIGA_SAVE_F0435_OK &&
+          receipt.primary_queue_receipt.timeline_membership_valid == 1 &&
+          receipt.primary_queue_receipt.active_group_capacity ==
+              receipt.primary_f0435.maximum_active_group_count &&
+          receipt.primary_queue_receipt.event_capacity ==
+              receipt.primary_f0435.event_maximum_count &&
+          receipt.primary_queue_receipt.scheduled_event_count ==
+              receipt.primary_f0435.event_count,
+          "real_save_primary_a20_c1_c3_c4_queue_receipt");
     CHECK(receipt.primary_f0435.header_authenticated == 1 &&
           receipt.primary_f0435.body_authenticated == 1 &&
           receipt.primary_f0435.tail_authenticated == 1 &&

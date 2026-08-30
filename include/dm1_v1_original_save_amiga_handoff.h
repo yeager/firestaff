@@ -138,6 +138,22 @@ typedef struct {
     uint8_t invisibility_count;
 } Dm1V1AmigaSavePartyReceipt;
 
+/* C1/C3/C4 receipt for the A20 F0435 runtime queues.  It preserves no host
+ * queue state: the hashes identify the authenticated plaintext source parts
+ * and `timeline_membership_valid` proves that the first EventCount heap
+ * entries select distinct non-empty C3 records. */
+typedef struct {
+    uint32_t active_group_fingerprint;
+    uint32_t event_fingerprint;
+    uint32_t heap_fingerprint;
+    uint16_t active_group_capacity;
+    uint16_t active_group_active_count;
+    uint16_t event_capacity;
+    uint16_t scheduled_event_count;
+    uint16_t first_unused_event_index;
+    int timeline_membership_valid;
+} Dm1V1AmigaSaveRuntimeQueueReceipt;
+
 int dm1_v1_original_save_amiga_f0435_receipt_bytes(
     const uint8_t *bytes,
     size_t size,
@@ -173,6 +189,11 @@ int dm1_v1_original_save_amiga_f0435_part_bytes(
 int dm1_v1_original_save_amiga_f0435_party_receipt_bytes(
     const uint8_t *bytes, size_t size,
     Dm1V1AmigaSavePartyReceipt *out_party,
+    Dm1V1AmigaSaveF0435Receipt *out_receipt);
+
+int dm1_v1_original_save_amiga_f0435_runtime_queue_receipt_bytes(
+    const uint8_t *bytes, size_t size,
+    Dm1V1AmigaSaveRuntimeQueueReceipt *out_queue,
     Dm1V1AmigaSaveF0435Receipt *out_receipt);
 
 /* Copies the authenticated F0434 Amiga dungeon tail, including its original
