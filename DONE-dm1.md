@@ -113,6 +113,10 @@ Reviewed 2026-08-29. Completed work only.
   input matrix from independent original ZIP → ZIP → ADF sessions. Forward,
   backward, both turns, both strafes and action all retain the native runtime
   and observed source party state without a generated save or map.
+- The English Atari ST v1.2 preservation chain now verifies the same complete
+  first input matrix through fresh native ZIP → ZIP → STX sessions. The
+  expected party states are observed from original media; no disk image or
+  dungeon replacement is synthesized.
 - The supplied authentic French DOS `DMSAVE.DAT` and `DMSAVE.BAK` (48,561
   bytes each; SHA-256 `494d081ee5175b2dccc900d5ea3f25230c8bb3b0f20828d311b8fc5bdfb82d21`
   and `a760234408bf27946b1586ecf396be72e648bd8f3d18abee90a18c2c7e94421f`)
