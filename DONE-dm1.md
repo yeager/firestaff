@@ -96,6 +96,11 @@ Reviewed 2026-08-29. Completed work only.
   boot receipt requires the source-bound `TMENU.INF` selection and selected
   `EDM.EXP`/`JDM.EXP` MD5, rather than promoting generic DM1 movement as a
   native FM Towns handoff.
+- The same original FM Towns ZIP now verifies the complete public input
+  matrix from independent native sessions: forward, backward, turn left,
+  turn right, both strafes, and action.  Every check follows
+  ZIP → CUE → BIN → ISO9660 → TMENU → `EDM.EXP` in memory and asserts the
+  observed initial runtime position, level ownership, and CDDA title track.
 - The supplied authentic French DOS `DMSAVE.DAT` and `DMSAVE.BAK` (48,561
   bytes each; SHA-256 `494d081ee5175b2dccc900d5ea3f25230c8bb3b0f20828d311b8fc5bdfb82d21`
   and `a760234408bf27946b1586ecf396be72e648bd8f3d18abee90a18c2c7e94421f`)

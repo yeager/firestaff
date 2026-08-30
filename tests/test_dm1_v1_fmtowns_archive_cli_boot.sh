@@ -47,24 +47,38 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --script 'wait20,click:700:262,wait20,click:410:405,wait20,click:450:405,wait20' \
     --duration 3000 >/dev/null 2>&1
 
-gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --menu --game dm1 --platform fm-towns --data-dir "$archive" \
-    --boot-probe --boot-probe-frames 500 --script up --duration 0 2>&1) || {
-    printf '%s\n' "$gameplay_output" >&2
-    exit 1
+expect_gameplay_input() {
+    local input=$1 expected_party=$2 gameplay_output
+    gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --menu --game dm1 --platform fm-towns --data-dir "$archive" \
+        --boot-probe --boot-probe-frames 100 --script "$input" --duration 0 2>&1) || {
+        printf '%s\n' "$gameplay_output" >&2
+        return 1
+    }
+    if ! grep -Fq 'phase=dm1-runtime' <<<"$gameplay_output" ||
+       ! grep -Fq 'levelLoaded=1' <<<"$gameplay_output" ||
+       ! grep -Fq 'platformHandoff=fmtowns-tmenu-edm' <<<"$gameplay_output" ||
+       ! grep -Fq 'fmtownsProgram=EDM.EXP' <<<"$gameplay_output" ||
+       ! grep -Fq "fmtownsProgramMd5=$expected_edm_md5" <<<"$gameplay_output" ||
+       ! grep -Fq 'fmtownsMenuSelectsProgram=1' <<<"$gameplay_output" ||
+       ! grep -Fq 'dm1FmtownsCddaPlaying=1' <<<"$gameplay_output" ||
+       ! grep -Fq 'dm1FmtownsCddaTrack=2' <<<"$gameplay_output" ||
+       ! grep -Fq "map=0 party=$expected_party" <<<"$gameplay_output"; then
+        printf '%s\n' "$gameplay_output" >&2
+        printf 'FAIL: authentic DM1 FM Towns %s input did not reach native runtime\n' "$input" >&2
+        return 1
+    fi
 }
-if ! grep -Fq 'phase=dm1-runtime' <<<"$gameplay_output" ||
-   ! grep -Fq 'levelLoaded=1' <<<"$gameplay_output" ||
-   ! grep -Fq 'platformHandoff=fmtowns-tmenu-edm' <<<"$gameplay_output" ||
-   ! grep -Fq 'fmtownsProgram=EDM.EXP' <<<"$gameplay_output" ||
-   ! grep -Fq "fmtownsProgramMd5=$expected_edm_md5" <<<"$gameplay_output" ||
-   ! grep -Fq 'fmtownsMenuSelectsProgram=1' <<<"$gameplay_output" ||
-   ! grep -Fq 'dm1FmtownsCddaPlaying=1' <<<"$gameplay_output" ||
-   ! grep -Fq 'dm1FmtownsCddaTrack=2' <<<"$gameplay_output" ||
-   ! grep -Fq 'map=0 party=1,4,2' <<<"$gameplay_output"; then
-    printf '%s\n' "$gameplay_output" >&2
-    printf '%s\n' 'FAIL: authentic DM1 FM Towns up input did not reach native movement' >&2
-    exit 1
-fi
 
-printf '%s\n' 'PASS: authentic DM1 FM Towns ZIP reaches CLI, menu, TMENU/EDM handoff, and native movement runtime in memory'
+# Each command starts from the same original-disc session.  This prevents a
+# prior movement from changing the map context for the next source-backed
+# assertion, while covering the complete public directional input contract.
+expect_gameplay_input up           1,4,2
+expect_gameplay_input down         1,3,2
+expect_gameplay_input left         1,3,1
+expect_gameplay_input right        1,3,3
+expect_gameplay_input strafe-left  1,3,2
+expect_gameplay_input strafe-right 1,3,2
+expect_gameplay_input action       1,3,2
+
+printf '%s\n' 'PASS: authentic DM1 FM Towns ZIP reaches CLI, menu, TMENU/EDM handoff, and complete native input matrix in memory'
