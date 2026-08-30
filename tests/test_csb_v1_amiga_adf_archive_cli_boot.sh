@@ -19,6 +19,11 @@ if [[ ! -x "$app" || ! -f "$archive" ]]; then
     exit 77
 fi
 
+# The selected original archive is read through the native ZIP/ADF readers.
+# Keep a byte-identity receipt so launch and input probes cannot silently
+# start writing a cache or extracted replacement beside the supplied media.
+archive_hash_before=$(sha256sum "$archive")
+
 run_probe() {
     local output
     output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" "$@" 2>&1) || {
@@ -51,6 +56,39 @@ if ! grep -Fq 'phase=inactive' <<<"$movement_output" ||
     printf '%s\n' 'FAIL: authentic CSB Amiga ADF archive start menu did not reach native movement' >&2
     exit 1
 fi
+
+# Each input starts from a fresh native A31 session.  These observed tuples
+# exercise the real title -> entrance -> runtime path and first world command
+# dispatch; they are intentionally not presented as a substitute for a
+# checksum-verified user save or a DSA trace.  The blank action/strafe result
+# is also significant: it must retain the source-owned starting pose rather
+# than synthesize a target, door, or save-side effect.
+probe_runtime_input() {
+    local input=$1
+    local party=$2
+    local output
+    output=$(run_probe --menu --game csb --platform amiga --data-dir "$archive" \
+        --boot-probe --boot-probe-frames 800 \
+        --script "enter,enter,enter,$input" \
+        --boot-probe-expect-phase inactive --boot-probe-expect-runtime \
+        --boot-probe-expect-level-loaded 1 --boot-probe-expect-map 0 \
+        --boot-probe-expect-party "$party" \
+        --boot-probe-expect-runtime-tick-min 3177 \
+        --boot-probe-expect-runtime-tick-max 3177 --duration 0)
+    if ! grep -Fq "party=$party" <<<"$output" ||
+       ! grep -Fq 'champions=0' <<<"$output"; then
+        printf '%s\n' "$output" >&2
+        printf '%s\n' "FAIL: authentic CSB Amiga input $input did not preserve its observed native receipt" >&2
+        exit 1
+    fi
+}
+probe_runtime_input up 9,1,2
+probe_runtime_input down 9,0,2
+probe_runtime_input left 9,0,1
+probe_runtime_input right 9,0,3
+probe_runtime_input strafe-left 9,0,2
+probe_runtime_input strafe-right 9,0,2
+probe_runtime_input action 9,0,2
 
 menu_output=$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
@@ -85,5 +123,7 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --data-dir "$archive" \
     --script 'wait20,click:1173:262,wait20,click:934:405,wait20,click:450:405,wait20' \
     --duration 3000 >/dev/null 2>&1
+
+[[ "$archive_hash_before" == "$(sha256sum "$archive")" ]]
 
 printf '%s\n' 'PASS: authentic CSB Amiga ZIP -> ADF route reaches source entrance, menu launch, and native movement'
