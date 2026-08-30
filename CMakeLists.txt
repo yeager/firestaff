@@ -53669,6 +53669,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_g1_direct_container_run
         src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_direct_container_runtime_real_data PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_g1_direct_container_runtime_real_data PRIVATE
+        firestaff_zip_extract)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
         target_compile_options(test_dm2_v1_g1_direct_container_runtime_real_data PRIVATE -Wall -Wextra -O2)
     endif()
@@ -53676,6 +53678,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_g1_direct_container_run
         NAME dm2_v1_g1_direct_container_runtime_real_data
         COMMAND test_dm2_v1_g1_direct_container_runtime_real_data
     )
+    set_tests_properties(dm2_v1_g1_direct_container_runtime_real_data PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "dm2;dos;g1;real-media;in-memory;skip-safe")
 endif()
 
 # DISABLED: deep-dependency test needs many more source files linked
@@ -53842,6 +53847,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_fmtowns_hud_portraits_r
     endif()
     add_test(NAME dm2_v1_fmtowns_hud_portraits_real_data
         COMMAND test_dm2_v1_fmtowns_hud_portraits_real_data)
+    set_tests_properties(dm2_v1_fmtowns_hud_portraits_real_data PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"
+        LABELS "dm2;fmtowns;hud;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_memory_mement_helpers.c"

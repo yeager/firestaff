@@ -6,63 +6,52 @@
  */
 
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_fmtowns_disc.h"
 #include "dm2_v1_gdat_hud_m11_command.h"
+#include "firestaff_zip_extract.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static int read_file(const char *path, uint8_t **out, size_t *out_size)
+static int read_graphics_from_archive(uint8_t **out, size_t *out_size)
 {
-    FILE *file;
-    long size;
-    uint8_t *data;
-    if (!path || !out || !out_size) return 0;
+    const char *archive = getenv("FIRESTAFF_DM2_FMTOWNS_ARCHIVE");
+    DM2_V1_FmtownsDiscReceipt receipt;
+    uint8_t *image = NULL;
+    size_t image_size = 0u;
+    int result = 0;
+
+    if (!out || !out_size) return -1;
     *out = NULL;
     *out_size = 0u;
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0) {
-        if (file) fclose(file);
-        return 0;
+    if (!archive || !archive[0] ||
+        firestaff_zip_extract_by_suffix(archive, ".img", &image,
+                                        &image_size) != 0 ||
+        !image || dm2_v1_fmtowns_disc_probe(image, image_size, &receipt) != 0 ||
+        !receipt.valid || !receipt.has_graphics_dat ||
+        dm2_v1_fmtowns_disc_extract_alloc(image, image_size,
+                                           &receipt.graphics_dat,
+                                           out, out_size) != 0 ||
+        !*out || !*out_size) {
+        free(*out);
+        *out = NULL;
+        *out_size = 0u;
+        result = -1;
     }
-    size = ftell(file);
-    if (size <= 0 || fseek(file, 0, SEEK_SET) != 0) {
-        fclose(file);
-        return 0;
-    }
-    data = (uint8_t *)malloc((size_t)size);
-    if (!data || fread(data, 1u, (size_t)size, file) != (size_t)size) {
-        free(data);
-        fclose(file);
-        return 0;
-    }
-    fclose(file);
-    *out = data;
-    *out_size = (size_t)size;
-    return 1;
-}
-
-static const char *graphics_path(void)
-{
-    const char *explicit_path = getenv("FIRESTAFF_DM2_FMTOWNS_GRAPHICS_DAT");
-    static char fallback[1024];
-    const char *root = getenv("FIRESTAFF_DM2_FMTOWNS_ROOT");
-    if (explicit_path && explicit_path[0]) return explicit_path;
-    if (!root || !root[0]) return NULL;
-    snprintf(fallback, sizeof(fallback), "%s/DATA/GRAPHICS.DAT", root);
-    return fallback;
+    free(image);
+    return result;
 }
 
 int main(void)
 {
-    const char *path = graphics_path();
     uint8_t *data = NULL;
     size_t data_size = 0u;
     DM2_V1_AssetLoader loader;
     int failures = 0;
     int hero;
 
-    if (!path || !read_file(path, &data, &data_size)) {
+    if (read_graphics_from_archive(&data, &data_size) != 0) {
         puts("SKIP: authentic FM Towns DM2 GRAPHICS.DAT is required");
         return 0;
     }
