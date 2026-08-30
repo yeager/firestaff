@@ -17,9 +17,10 @@
  * canonical "V1 || gap || V2" composite in a single value that
  * downstream visual-diff gates can lock to a known-good baseline.
  *
- * The seed is small: a 4x3 viewport composition (D0..D3, L/C/R) at
- * the canonical DM1 entry position, plus an FNV-1a 64-bit fold of
- * the resulting layout. No game data is required and no SDL
+ * The seed is small: a 4x3 viewport composition (D0..D3, L/C/R) plus an
+ * FNV-1a 64-bit fold of the resulting layout. The legacy entry helper is a
+ * test scaffold; the real-data helper consumes a caller-owned decoded
+ * `DUNGEON.DAT` state and never extracts or substitutes game data. No SDL
  * rendering is initialised.
  *
  * Source locks (ReDMCSB):
@@ -244,6 +245,10 @@ int dm1_v2_side_by_side_seed_build_from_dungeon(
     int mapIndex,
     DM1_V2_SideBySideSeed* out) {
     DM1_V2_ViewportCompositionInput input;
+    /* DUNGEON.C F0150/F0151 derive the D0..D3 relative squares from the
+     * loaded map coordinates. Keep the source-owned bytes in the caller's
+     * DungeonDatState: this helper only converts that decoded state into a
+     * viewport composition and has no fixture fallback. */
     if (!dungeon || !out || mapIndex < 0 || mapIndex >= dungeon->mapCount) return 0;
     if (!dm1_v2_vp_build_composition_from_dungeon(
             dungeon, mapIndex, dungeon->initialMapX, dungeon->initialMapY,

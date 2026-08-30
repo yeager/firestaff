@@ -40,9 +40,11 @@
  * to the V1 framebuffer. The V1 movement command adapter must still
  * report routeKind=V1_SOURCE for every C001..C006 command.
  *
- * This header is headless: it does not require game data files and
- * does not initialise SDL. It depends on the firestaff_v2 library
- * (which contains dm1_v2_viewport_renderer_pc34 and
+ * This header is headless and does not initialise SDL. The legacy entry
+ * helper remains a test scaffold, while real callers must pass an already
+ * decoded original `DM1_V2_DungeonDatState` to the real-data builder; this
+ * API never opens, extracts, or synthesizes game data itself. It depends on
+ * the firestaff_v2 library (which contains dm1_v2_viewport_renderer_pc34 and
  * dm1_v2_movement_command_adapter_pc34).
  */
 
