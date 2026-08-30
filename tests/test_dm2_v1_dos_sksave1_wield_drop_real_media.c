@@ -1,4 +1,12 @@
-/* Opt-in real PC-DOS SKSave1 Resume -> WIELD -> creature drop gate. */
+/*
+ * Real PC-DOS SKSave1 Resume -> WIELD trace gate.
+ *
+ * This corpus does not contain an original input-to-CD/RAM combat trace.
+ * The bounded diagnostic probe may establish that a real calculation was
+ * reached, but it must never promote its generated command search into a
+ * retail creature-drop claim.  The expected result for the supplied media is
+ * therefore the authenticated miss and an untouched drop path.
+ */
 
 #include "dm2_v1_boot.h"
 #include "dm2_v1_creature.h"
@@ -9,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static int exercise_drop(DM2_V1_BootProfile *profile)
+static int exercise_wield_trace_gate(DM2_V1_BootProfile *profile)
 {
     static const int dx[4] = {0, 1, 0, -1};
     static const int dy[4] = {-1, 0, 1, 0};
@@ -105,14 +113,7 @@ static int exercise_drop(DM2_V1_BootProfile *profile)
                         }
                     }
                 }
-                if (hits > 0 && dm2_v1_runtime_last_wield_death_deallocated() &&
-                    dm2_v1_runtime_last_wield_death_drop_count() > 0) {
-                    printf("SKSave1 WIELD drop type %u map %d,%d,%d count=%d\n",
-                           material->creature_type, map, material->x,
-                           material->y,
-                           dm2_v1_runtime_last_wield_death_drop_count());
-                    return 1;
-                }
+                (void)hits;
             }
         }
     }
@@ -132,7 +133,18 @@ static int exercise_drop(DM2_V1_BootProfile *profile)
                last_wield.raw_damage,
                last_wield.final_damage, last_wield.hp_applied);
     }
-    return 0;
+    /* The source search reached a calculation, but the supplied first
+     * encounter is a miss.  Without an original input/RNG trace, a later
+     * synthetic hit or possession drop would be false parity. */
+    return saw_wield_calculation &&
+           last_wield.calculation_valid &&
+           !last_wield.calculation_hit &&
+           last_wield.calculation_miss &&
+           !last_wield.calculation_fail_closed &&
+           last_wield.final_damage == 0 &&
+           last_wield.hp_applied == 0 &&
+           !dm2_v1_runtime_last_wield_death_deallocated() &&
+           dm2_v1_runtime_last_wield_death_drop_count() == 0;
 }
 
 int main(void)
@@ -144,7 +156,7 @@ int main(void)
     int launch_ok;
     int prepare_ok;
     int commit_ok;
-    int drop_ok;
+    int trace_gate_ok;
 
     if (!root || !root[0] || !save || !save[0]) {
         puts("SKIP: FIRESTAFF_DM2_DOS_ROOT and FIRESTAFF_DM2_SKSAVE1 are required");
@@ -157,14 +169,14 @@ int main(void)
         dm2_v1_boot_prepare_sksave_resume_path(&launch, save);
     commit_ok = prepare_ok &&
         dm2_v1_boot_commit_sksave_resume_session(launch.profile);
-    drop_ok = commit_ok && exercise_drop(launch.profile);
-    ok = launch_ok && prepare_ok && commit_ok && drop_ok;
+    trace_gate_ok = commit_ok && exercise_wield_trace_gate(launch.profile);
+    ok = launch_ok && prepare_ok && commit_ok && trace_gate_ok;
     dm2_v1_boot_startup_launch_cleanup(&launch);
     if (!ok) {
-        printf("FAIL: SKSave1 Resume launch=%d prepare=%d commit=%d drop=%d\n",
-               launch_ok, prepare_ok, commit_ok, drop_ok);
+        printf("FAIL: SKSave1 WIELD trace gate launch=%d prepare=%d commit=%d gate=%d\n",
+               launch_ok, prepare_ok, commit_ok, trace_gate_ok);
         return 1;
     }
-    puts("PASS: authentic SKSave1 Resume reaches WIELD creature drop");
+    puts("PASS: authentic SKSave1 WIELD source miss keeps creature drop fail-closed");
     return 0;
 }

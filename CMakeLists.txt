@@ -58729,7 +58729,9 @@ add_test(NAME test_dm2_v1_dos_sksave1_wield_drop_real_media
     COMMAND test_dm2_v1_dos_sksave1_wield_drop_real_media)
 set_tests_properties(test_dm2_v1_dos_sksave1_wield_drop_real_media PROPERTIES
     SKIP_RETURN_CODE 77
-    LABELS "tier2;dm2;dos;resume;wield;creature;real-media;native;trace-required")
+    ENVIRONMENT
+        "FIRESTAFF_DM2_DOS_ROOT=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip;FIRESTAFF_DM2_SKSAVE1=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip::data/sksave1.dat"
+    LABELS "tier2;dm2;dos;resume;wield;creature;real-media;native;trace-required;fail-closed")
 
 add_executable(test_dm2_v1_dos_sksave_archive_resume_real_media
     tests/test_dm2_v1_dos_sksave_archive_resume_real_media.c)
