@@ -462,17 +462,35 @@ static int run_one(const char *zip, const char *source_id)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+    /* Advance the original QuickTime title through M11's bounded probe
+     * cadence.  This changes no source state; it prevents the census from
+     * being coupled to host wall-clock scheduling. */
+    M11_GameView_SetBootProbeMode(&state, 1);
     {
         unsigned char framebuffer[320u * 200u];
         memset(framebuffer, 0, sizeof(framebuffer));
         while (state.dm2MacMovieActive)
             M11_GameView_Draw(&state, framebuffer, 320, 200);
     }
-    if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_ACCEPT) ==
-            M11_GAME_INPUT_IGNORED ||
+    /* Retail Mac New Game is a two-stage source path.  The menu command
+     * opens GAME_LOAD's preselection mirror; the following source-owned
+     * viewport click commits the selected candidate and only then closes the
+     * startup menu.  Do not turn the first command into a synthetic direct
+     * runtime start. */
+    if (M11_GameView_HandleInput(&state, M12_MENU_INPUT_ACCEPT) !=
+            M11_GAME_INPUT_REDRAW ||
+        !state.dm2State.startup_menu_active ||
+        state.dm2State.level_loaded) {
+        fprintf(stderr, "Mac census New Game preselection failed: %s\n", source_id);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    if (M11_GameView_HandlePointerButton(
+            &state, 100, 60, DM1_V1_MOUSE_MASK_LEFT_PC34) !=
+            M11_GAME_INPUT_REDRAW ||
         state.dm2State.startup_menu_active ||
         !state.dm2State.level_loaded) {
-        fprintf(stderr, "Mac census New Game failed: %s\n", source_id);
+        fprintf(stderr, "Mac census New Game confirmation failed: %s\n", source_id);
         M11_GameView_Shutdown(&state);
         return 1;
     }
