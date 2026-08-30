@@ -12,6 +12,8 @@ if [ ! -x "$app" ] || [ ! -f "$archive" ]; then
     exit 77
 fi
 
+archive_hash_before=$(sha256sum "$archive")
+
 FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
 SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm2 --platform amiga --data-dir "$archive" \
@@ -35,4 +37,8 @@ case "$output" in
     *'assetMd5=1c940ea95703eaea0ecdf84d17e954b9'*'phase=dm2-runtime'*'levelLoaded=1'*'party=1,7,0'*'dm2FrameAccepted=1'*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*) ;;
     *) printf '%s\n' "$output" >&2; exit 1 ;;
 esac
+if [ "$archive_hash_before" != "$(sha256sum "$archive")" ]; then
+    echo 'FAIL: DM2 Amiga archive changed during native launch' >&2
+    exit 1
+fi
 echo 'PASS: native DM2 Amiga ZIP start menu reaches runtime and moves in memory'
