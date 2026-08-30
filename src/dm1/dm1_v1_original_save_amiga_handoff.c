@@ -567,9 +567,12 @@ int dm1_v1_original_save_amiga_f0435_runtime_queue_receipt_bytes(
     active_group_size = receipt.part_byte_counts[1u];
     event_size = receipt.part_byte_counts[3u];
     heap_size = receipt.part_byte_counts[4u];
-    active_groups = (uint8_t *)malloc(active_group_size);
-    events = (uint8_t *)malloc(event_size);
-    heap = (uint8_t *)malloc(heap_size);
+    /* A source-valid fresh session may have zero active groups or no event
+     * capacity.  Keep the pointer admission independent of implementation-
+     * defined malloc(0), while retaining the authoritative zero lengths. */
+    active_groups = (uint8_t *)malloc(active_group_size ? active_group_size : 1u);
+    events = (uint8_t *)malloc(event_size ? event_size : 1u);
+    heap = (uint8_t *)malloc(heap_size ? heap_size : 1u);
     if (!active_groups || !events || !heap) {
         free(active_groups); free(events); free(heap);
         return DM1_V1_AMIGA_SAVE_F0435_ERR_CAPACITY;
