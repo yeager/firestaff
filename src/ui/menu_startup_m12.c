@@ -65,6 +65,7 @@ void m12_update_game_availability(const FS_GameAvailability *avail);
 static int m12_data_directory_dialog_token_is_placeholder(const char* path);
 static const char* m12_translate_for_locale(int localeIndex, const char* english);
 static int m12_ascii_equal_ci(const char* a, const char* b);
+static int m12_asset_ready_game_count(const M12_AssetStatus* status);
 
 typedef struct M12_DataDirScanJob {
     SDL_Thread* thread;
@@ -4472,9 +4473,16 @@ void M12_StartupMenu_InitWithOptions(M12_StartupMenuState* state,
      * empty. Do not show a false "NO GAME DATA FOUND" message while the real
      * scan is still pending; the completion path above reports it only after
      * an actual empty scan. */
-    if (!(options && options->skipAssetScan) &&
-        !m12_show_missing_archive_tool_popup(state)) {
-        m12_show_no_game_data_popup(state);
+    if (!(options && options->skipAssetScan)) {
+        /* An unrelated archive that needs an optional diagnostic extractor
+         * must not put a modal dialog in front of a verified game card.  In
+         * particular, a CSB STX can be launched natively while a separately
+         * staged .7z utility image remains unavailable.  Surface that
+         * archive warning only when no supported game media was found. */
+        if (m12_asset_ready_game_count(&state->assetStatus) == 0 &&
+            !m12_show_missing_archive_tool_popup(state)) {
+            m12_show_no_game_data_popup(state);
+        }
     }
     state->frameTick = 0;
     state->hoverX = -1;
