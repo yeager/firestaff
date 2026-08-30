@@ -344,6 +344,7 @@ static void run_real_m12_dm2_handoff_if_available(void) {
     M11_GameViewState view;
     M11_GameInputResult idleResult;
     const M12_MenuEntry* dm2_entry;
+    int pc_version_index;
     unsigned char framebuffer[M11_FB_BYTES];
     const char* dataDir = dm2_data_dir();
     int initialTick;
@@ -370,6 +371,20 @@ static void run_real_m12_dm2_handoff_if_available(void) {
     menu.launchRequested = 1;
     menu.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
     menu.gameOptions[2].presentationModeIndex = M12_PRESENTATION_V1_ORIGINAL;
+    /* This regression exercises the PC-DOS startup surface.  A shared real
+     * corpus also contains FM Towns, Amiga, and Mac releases, whose title
+     * media are legitimate only after the user selects their platform card.
+     * Pin the selected PC edition instead of mistaking AUTO's valid FM Towns
+     * choice for cross-platform presentation leakage. */
+    pc_version_index = M12_AssetStatus_FindVersionIndex("dm2", "pc-en");
+    expect_true(pc_version_index >= 0,
+                "shared real DM2 corpus exposes the PC-English edition");
+    if (pc_version_index < 0) {
+        M12_StartupMenu_Destroy(&menu);
+        return;
+    }
+    menu.gameOptions[2].architectureIndex = M12_ARCH_PC;
+    menu.gameOptions[2].versionIndex = pc_version_index;
 
     intent = M12_StartupMenu_GetLaunchIntent(&menu);
     expect_true(intent.valid == 1,
@@ -400,7 +415,7 @@ static void run_real_m12_dm2_handoff_if_available(void) {
                 "real DM2 M12 handoff stops at the DM2 startup menu");
     expect_true(view.dm2FmtownsTitleBound == 0 &&
                 view.dm2FmtownsTitleFrameReceipt.valid == 0,
-                "PC-DOS startup does not borrow an FM Towns title frame or palette");
+                "selected PC-DOS startup does not borrow an FM Towns title frame or palette");
     expect_true(view.dm2State.startup_menu_row_count >= 1,
                 "real DM2 startup menu exposes at least one row");
     expect_true(view.dungeonPath[0] != '\0',
