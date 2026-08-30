@@ -2,8 +2,6 @@
 
 Reviewed 2026-08-29. Only open work is listed here.
 
-- Complete source-owned record-pool and relocation ownership for authentic
-  `SKSAVE` sessions; do not promote reduced state layouts as retail parity.
 - Extend real-media gameplay evidence across DOS, Amiga, FM Towns and Mac for
   dialog/input ordering, creature AI/drop routes, audio and save/resume.
 - Capture an original PC-DOS `SKSAVE1` WIELD input-to-CD/RAM trace with a
