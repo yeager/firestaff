@@ -37,19 +37,26 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 # original GDAT/mirror coordinates.  The viewport click selects the
 # File_header-backed mirror through the native preselection owner, and Up is
 # then normal runtime movement.
-output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --menu --game dm2 --platform mac --data-dir "$archive" --boot-probe \
-    --boot-probe-frames 2000 --width 320 --height 200 \
-    --script 'key:enter,key:enter,click:100:60,up' \
-    --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
-    --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
-
-case "$output" in
-    *'assetMd5=5cab25f6b975957eae4a203174e7f2a6'*'phase=dm2-runtime'*'levelLoaded=1'*'party=1,7,0'*'champions=2'*'dm2FrameAccepted=1'*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*) ;;
-    *) printf '%s\n' "$output" >&2; exit 1 ;;
-esac
+probe_input() {
+    input=$1
+    expected_party=$2
+    output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --menu --game dm2 --platform mac --data-dir "$archive" --boot-probe \
+        --boot-probe-frames 2000 --width 320 --height 200 \
+        --script "key:enter,key:enter,click:100:60,$input" \
+        --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+        --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
+    case "$output" in
+        *'assetMd5=5cab25f6b975957eae4a203174e7f2a6'*'phase=dm2-runtime'*'levelLoaded=1'*"party=$expected_party"*'champions=2'*'dm2FrameAccepted=1'*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*) ;;
+        *) printf '%s\n' "$output" >&2; exit 1 ;;
+    esac
+}
+for case_item in up:1,7,0 down:1,9,2 left:1,8,3 right:1,8,1 \
+                 strafe-left:0,8,3 strafe-right:2,8,1 action:1,8,0; do
+    probe_input "${case_item%%:*}" "${case_item#*:}"
+done
 if [ "$archive_hash_before" != "$(sha256sum "$archive")" ]; then
     echo 'FAIL: DM2 Macintosh retail archive changed during native launch' >&2
     exit 1
 fi
-echo 'PASS: native DM2 Macintosh ZIP start menu, title, mirror selection, and movement run in memory'
+echo 'PASS: native DM2 Macintosh ZIP start menu, title, mirror selection, and complete observed input matrix run in memory'

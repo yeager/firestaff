@@ -2,6 +2,13 @@
 
 Reviewed 2026-08-29. Completed work only.
 
+- The DOS, Amiga, FM Towns, and Macintosh retail start-menu routes each now
+  create a fresh native New-Game session for every observed input command:
+  forward/backward movement, left/right turn, both strafes and action.  Every
+  path retains its original archive in RAM and checks the resulting party
+  pose, accepted real GDAT frame and zero core fallback draws.  FM Towns and
+  Macintosh keep their source-specific title and mirror-confirmation order.
+
 - The packed PC-DOS `SKSAVE1` M11 spell regression now uses the retail ZIP
   directly in RAM. It proves that an authentic rejected `YA FUL IR` Fireball
   is consumed with the original rune-tail rule and that a source-admitted

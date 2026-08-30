@@ -35,19 +35,26 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 # reaches the verified NEW GAME rectangle; the second selects the authentic
 # dungeon mirror after GAME_LOAD has prepared it.  Up then proves normal
 # runtime input.  Do not replace either click with a host row selection.
-output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --menu --game dm2 --platform fm-towns --data-dir "$archive" --boot-probe \
-    --boot-probe-frames 12000 --width 320 --height 200 \
-    --script 'click:100:60,click:100:60,up' \
-    --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
-    --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
-
-case "$output" in
-    *'assetMd5=027ff3b8ddc2c4c4cdda7ada0b0bc46c'*'phase=dm2-runtime'*'levelLoaded=1'*'party=1,7,0'*'dm2FrameAccepted=1'*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*) ;;
-    *) printf '%s\n' "$output" >&2; exit 1 ;;
-esac
+probe_input() {
+    input=$1
+    expected_party=$2
+    output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --menu --game dm2 --platform fm-towns --data-dir "$archive" --boot-probe \
+        --boot-probe-frames 12000 --width 320 --height 200 \
+        --script "click:100:60,click:100:60,$input" \
+        --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+        --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
+    case "$output" in
+        *'assetMd5=027ff3b8ddc2c4c4cdda7ada0b0bc46c'*'phase=dm2-runtime'*'levelLoaded=1'*"party=$expected_party"*'dm2FrameAccepted=1'*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*) ;;
+        *) printf '%s\n' "$output" >&2; exit 1 ;;
+    esac
+}
+for case_item in up:1,7,0 down:1,9,2 left:1,8,3 right:1,8,1 \
+                 strafe-left:0,8,3 strafe-right:2,8,1 action:1,8,0; do
+    probe_input "${case_item%%:*}" "${case_item#*:}"
+done
 if [ "$archive_hash_before" != "$(sha256sum "$archive")" ]; then
     echo 'FAIL: DM2 FM Towns archive changed during native launch' >&2
     exit 1
 fi
-echo 'PASS: native DM2 FM Towns ZIP start menu presents a real GDAT runtime frame'
+echo 'PASS: native DM2 FM Towns ZIP start menu accepts the complete observed input matrix'

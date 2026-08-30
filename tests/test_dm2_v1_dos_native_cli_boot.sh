@@ -26,14 +26,25 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --script 'wait20,click:1645:262,wait20,click:934:405,wait20,click:450:405,wait20' \
     --duration 3000 >/dev/null 2>&1
 
-output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --menu --game dm2 --platform pc --data-dir "$archive" --boot-probe \
-    --boot-probe-frames 5000 --script 'key:enter,key:enter,key:enter,up' \
-    --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
-    --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
+probe_input() {
+    input=$1
+    expected_party=$2
+    output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+        --menu --game dm2 --platform pc --data-dir "$archive" --boot-probe \
+        --boot-probe-frames 5000 --script "key:enter,key:enter,key:enter,$input" \
+        --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+        --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
+    case "$output" in
+        *'assetMd5=25247ede4dabb6a71e5dabdfbcd5907d'*'phase=dm2-runtime'*'levelLoaded=1'*"party=$expected_party"*'dm2FrameAccepted=1'*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*) ;;
+        *) printf '%s\n' "$output" >&2; exit 1 ;;
+    esac
+}
 
-case "$output" in
-    *'assetMd5=25247ede4dabb6a71e5dabdfbcd5907d'*'phase=dm2-runtime'*'levelLoaded=1'*'party=1,7,0'*'dm2FrameAccepted=1'*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*) ;;
-    *) printf '%s\n' "$output" >&2; exit 1 ;;
-esac
-echo 'PASS: native DM2 DOS ZIP start menu -> MVE -> SKULL -> New Game reaches runtime and moves in memory'
+# These positions/directions are observed from the retail DOS new-game route.
+# Each invocation begins a fresh source-owned session, so one input cannot
+# mask another through state carried from a previous command.
+for case_item in up:1,7,0 down:1,9,2 left:1,8,3 right:1,8,1 \
+                 strafe-left:0,8,3 strafe-right:2,8,1 action:1,8,0; do
+    probe_input "${case_item%%:*}" "${case_item#*:}"
+done
+echo 'PASS: native DM2 DOS ZIP start menu -> MVE -> SKULL -> New Game accepts the complete observed input matrix in memory'

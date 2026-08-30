@@ -4257,7 +4257,7 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;dos;startup;cli;real-media;native;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
-        TIMEOUT 45
+        TIMEOUT 120
     )
     add_test(
         NAME dm2_v1_dos_sksave_archive_menu_resume
@@ -4301,7 +4301,7 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;macintosh;startup;cli;real-media;native;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM2_MAC_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Mac_EN.zip"
-        TIMEOUT 45
+        TIMEOUT 120
     )
     add_test(
         NAME dm2_v1_mac_demo_archive_rejected
@@ -4323,7 +4323,7 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;amiga;startup;cli;real-media;native;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM2_AMIGA_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_Amiga_EN.zip"
-        TIMEOUT 45
+        TIMEOUT 120
     )
     add_test(
         NAME dm2_v1_fmtowns_native_cli_boot
@@ -4334,7 +4334,7 @@ if(BUILD_TESTING)
         SKIP_RETURN_CODE 77
         LABELS "tier2;dm2;fmtowns;startup;cli;real-media;native;skip-safe"
         ENVIRONMENT "FIRESTAFF_DM2_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip"
-        TIMEOUT 45
+        TIMEOUT 120
     )
     add_test(
         NAME dm1_v1_pc34_native_cli_boot
