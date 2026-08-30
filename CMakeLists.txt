@@ -59201,9 +59201,14 @@ set_tests_properties(test_dm1_v1_fmtowns_pharlap_bridge PROPERTIES
 add_executable(test_dm1_v1_fmtowns_direct_io
     tests/test_dm1_v1_fmtowns_direct_io.c
     src/dm1/dm1_v1_fmtowns_direct_io.c
+    src/shared/firestaff_fmtowns_disc.c
 )
 target_include_directories(test_dm1_v1_fmtowns_direct_io PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_fmtowns_direct_io PRIVATE firestaff_zip_extract)
 add_test(NAME test_dm1_v1_fmtowns_direct_io COMMAND test_dm1_v1_fmtowns_direct_io)
+set_tests_properties(test_dm1_v1_fmtowns_direct_io PROPERTIES
+    ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
+    LABELS "dm1;fmtowns;direct-io;real-media;in-memory;skip-safe")
 
 add_executable(test_dm1_v1_fmtowns_edm_sym1
     tests/test_dm1_v1_fmtowns_edm_sym1.c
