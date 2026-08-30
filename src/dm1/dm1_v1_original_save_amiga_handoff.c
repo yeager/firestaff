@@ -404,33 +404,16 @@ int dm1_v1_original_save_amiga_f0435_party_part_bytes(
     uint8_t out_party[DM1_V1_AMIGA_SAVE_F0435_PARTY_BYTES],
     Dm1V1AmigaSaveF0435Receipt *out_receipt)
 {
-    Dm1V1AmigaSaveF0435Receipt receipt;
-    uint8_t header[DM1_V1_AMIGA_SAVE_F0435_HEADER_BYTES];
-    uint16_t key;
+    size_t party_size = 0u;
     int result;
 
-    if (!bytes || !out_party) return DM1_V1_AMIGA_SAVE_F0435_ERR_ARGUMENT;
-    memset(&receipt, 0, sizeof(receipt));
-    result = dm1_v1_original_save_amiga_f0435_receipt_bytes(
-        bytes, size, &receipt);
-    if (out_receipt) *out_receipt = receipt;
+    if (!out_party) return DM1_V1_AMIGA_SAVE_F0435_ERR_ARGUMENT;
+    result = dm1_v1_original_save_amiga_f0435_part_bytes(
+        bytes, size, 2u, out_party,
+        DM1_V1_AMIGA_SAVE_F0435_PARTY_BYTES, &party_size, out_receipt);
     if (result != DM1_V1_AMIGA_SAVE_F0435_OK) return result;
-    if (receipt.part_byte_counts[2] !=
-            DM1_V1_AMIGA_SAVE_F0435_PARTY_BYTES ||
-        receipt.part_offsets[2] > size ||
-        DM1_V1_AMIGA_SAVE_F0435_PARTY_BYTES >
-            size - receipt.part_offsets[2] ||
-        size < sizeof(header)) return DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
-    memcpy(header, bytes, sizeof(header));
-    (void)deobfuscate_words_be(header + 256u, 256u,
-                                read_be16(header + DM1_AMIGA_SAVE_HEADER_KEY_OFFSET));
-    key = read_be16(header + DM1_AMIGA_SAVE_HEADER_KEYS_OFFSET + 4u);
-    memcpy(out_party, bytes + receipt.part_offsets[2],
-           DM1_V1_AMIGA_SAVE_F0435_PARTY_BYTES);
-    if (deobfuscate_words_be(out_party,
-                             DM1_V1_AMIGA_SAVE_F0435_PARTY_BYTES, key) !=
-        receipt.expected_checksums[2]) return DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
-    return DM1_V1_AMIGA_SAVE_F0435_OK;
+    return party_size == DM1_V1_AMIGA_SAVE_F0435_PARTY_BYTES
+        ? DM1_V1_AMIGA_SAVE_F0435_OK : DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
 }
 
 int dm1_v1_original_save_amiga_f0435_part_bytes(
