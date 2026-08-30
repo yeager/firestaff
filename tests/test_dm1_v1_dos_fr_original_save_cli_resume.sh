@@ -35,15 +35,23 @@ probe_resume() {
     grep -Fq 'runtimeTick=195221' <<<"$output"
 }
 
-common=(--game dm1 --platform pc --data-dir "$data_dir" --save "$save_path"
-        --boot-probe --boot-probe-expect-runtime
-        --boot-probe-expect-level-loaded 1 --boot-probe-expect-map 5
-        --boot-probe-expect-party 4,18,2 --boot-probe-expect-champions 4
-        --boot-probe-expect-runtime-tick-min 195221
-        --boot-probe-expect-runtime-tick-max 195221 --duration 0)
+probe_saved_pose() {
+    local selected_save=$1
+    local common=(--game dm1 --platform pc --data-dir "$data_dir" --save "$selected_save"
+                  --boot-probe --boot-probe-expect-runtime
+                  --boot-probe-expect-level-loaded 1 --boot-probe-expect-map 5
+                  --boot-probe-expect-party 4,18,2 --boot-probe-expect-champions 4
+                  --boot-probe-expect-runtime-tick-min 195221
+                  --boot-probe-expect-runtime-tick-max 195221 --duration 0)
+    probe_resume "${common[@]}"
+    probe_resume --menu "${common[@]}" --script enter,enter,enter
+}
 
-probe_resume "${common[@]}"
-probe_resume --menu "${common[@]}" --script enter,enter,enter
+# Both supplied original files are independent on-disk recovery candidates.
+# Keep their direct and M12 resume routes source-backed rather than assuming
+# that a verified primary makes its backup safe to load.
+probe_saved_pose "$save_path"
+probe_saved_pose "$backup_path"
 
 # One input at a time is applied only after F0435 restores the original pose.
 # The four resulting positions/orientations are source observations from this
