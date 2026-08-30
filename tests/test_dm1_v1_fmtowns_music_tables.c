@@ -1,4 +1,6 @@
 #include "dm1_v1_fmtowns_music_tables.h"
+#include "firestaff_fmtowns_disc.h"
+#include "firestaff_zip_extract.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,58 +80,76 @@ static void test_door_tables(void) {
 
 static void test_real_data_round_trip(void) {
     const char *path = getenv("FIRESTAFF_DM1_FMTOWNS_EDM_EXP");
-    FILE *fp;
+    const char *archive = getenv("FIRESTAFF_DM1_FMTOWNS_ARCHIVE");
+    FILE *fp = NULL;
+    uint8_t *cue = NULL, *bin = NULL, *edm = NULL;
+    size_t cue_size = 0u, bin_size = 0u, edm_size = 0u;
+    char image_member[256];
+    FmtownsDiscProbeResult probe;
+    const FmtownsIsoEntry *entry;
     uint8_t buf[64];
-    if (!path || !path[0]) { puts("SKIP: no EDM.EXP"); return; }
+    if ((!path || !path[0]) && (!archive || !archive[0])) { puts("SKIP: no EDM.EXP or archive"); return; }
+    if (archive && archive[0]) {
+        if (firestaff_zip_extract_by_suffix(archive, ".cue", &cue, &cue_size) != 0 || !cue ||
+            !fmtowns_cue_parse_image_member((const char *)cue, cue_size, image_member, sizeof(image_member)) ||
+            firestaff_zip_extract_by_suffix(archive, image_member, &bin, &bin_size) != 0 || !bin ||
+            fmtowns_disc_probe(bin, bin_size, FMTOWNS_SECTOR_2048, &probe) != 0 || !probe.valid ||
+            !(entry = fmtowns_disc_find(&probe, "EDM.EXP")) ||
+            fmtowns_disc_extract_alloc(bin, bin_size, FMTOWNS_SECTOR_2048, entry, &edm, &edm_size) != 0) {
+            free(cue); free(bin); free(edm); puts("SKIP: no retail EDM.EXP"); return;
+        }
+        free(cue); free(bin);
+    } else {
     fp = fopen(path, "rb");
     if (!fp) { puts("SKIP: cannot open"); return; }
+    }
+    #define EDM_READ(offset, count) \
+        (edm ? (memcpy(buf, edm + (offset), (count)), 1) : \
+               (fseek(fp, (offset), SEEK_SET) == 0 && fread(buf, 1, (count), fp) == (count)))
 
     /* LEVEL_SONGS @ 0x3fbcc: 30 bytes (15 words). */
-    if (fseek(fp, 0x200 + 0x3fbcc, SEEK_SET) != 0) { fclose(fp); puts("SKIP: seek"); return; }
-    if (fread(buf, 1, 30, fp) != 30) { fclose(fp); puts("SKIP: read"); return; }
+    assert(edm_size == 0u || edm_size >= 0x200u + 0x3fbccu + 30u);
+    assert(EDM_READ(0x200 + 0x3fbcc, 30));
     for (int i = 0; i < 15; ++i) {
         uint16_t w = (uint16_t)(buf[i*2] | (buf[i*2+1] << 8));
         assert(w == dm1_v1_fmtowns_level_songs[i]);
     }
 
     /* SPELL_COSTS @ 0x24388: 32 bytes. */
-    if (fseek(fp, 0x200 + 0x24388, SEEK_SET) != 0) { fclose(fp); puts("SKIP: seek"); return; }
-    if (fread(buf, 1, 32, fp) != 32) { fclose(fp); puts("SKIP: read"); return; }
+    assert(EDM_READ(0x200 + 0x24388, 32));
     for (int i = 0; i < 32; ++i) {
         assert(buf[i] == dm1_v1_fmtowns_spell_costs[i]);
     }
 
     /* ICON_PAL @ 0x28f44: 6 bytes (3 words). */
-    if (fseek(fp, 0x200 + 0x28f44, SEEK_SET) != 0) { fclose(fp); puts("SKIP: seek"); return; }
-    if (fread(buf, 1, 6, fp) != 6) { fclose(fp); puts("SKIP: read"); return; }
+    assert(EDM_READ(0x200 + 0x28f44, 6));
     for (int i = 0; i < 3; ++i) {
         uint16_t w = (uint16_t)(buf[i*2] | (buf[i*2+1] << 8));
         assert(w == dm1_v1_fmtowns_icon_pal[i]);
     }
 
     /* DM_MUSIC @ 0x3fa80: 4 bytes. */
-    if (fseek(fp, 0x200 + 0x3fa80, SEEK_SET) != 0) { fclose(fp); puts("SKIP: seek"); return; }
-    if (fread(buf, 1, 4, fp) != 4) { fclose(fp); puts("SKIP: read"); return; }
+    assert(EDM_READ(0x200 + 0x3fa80, 4));
     for (int i = 0; i < 4; ++i) {
         assert(buf[i] == dm1_v1_fmtowns_dm_music_defaults[i]);
     }
 
     /* PLAYER_COLOR @ 0x291b8: 8 bytes. */
-    if (fseek(fp, 0x200 + 0x291b8, SEEK_SET) != 0) { fclose(fp); puts("SKIP: seek"); return; }
-    if (fread(buf, 1, 8, fp) != 8) { fclose(fp); puts("SKIP: read"); return; }
+    assert(EDM_READ(0x200 + 0x291b8, 8));
     for (int i = 0; i < 8; ++i) {
         assert(buf[i] == dm1_v1_fmtowns_player_color[i]);
     }
 
     /* SPELL_MULT @ 0x243a0: 8 bytes. */
-    if (fseek(fp, 0x200 + 0x243a0, SEEK_SET) != 0) { fclose(fp); puts("SKIP: seek"); return; }
-    if (fread(buf, 1, 8, fp) != 8) { fclose(fp); puts("SKIP: read"); return; }
+    assert(EDM_READ(0x200 + 0x243a0, 8));
     for (int i = 0; i < 8; ++i) {
         assert(buf[i] == dm1_v1_fmtowns_spell_mult[i]);
     }
 
-    fclose(fp);
-    puts("PASS: real EDM.EXP music/spell tables match shipped constants");
+    if (fp) fclose(fp);
+    free(edm);
+    #undef EDM_READ
+    puts("PASS: retail EDM.EXP music/spell tables read from supplied media in RAM");
 }
 
 int main(void) {

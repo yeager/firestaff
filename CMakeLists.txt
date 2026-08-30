@@ -59220,9 +59220,14 @@ add_test(NAME test_dm1_v1_fmtowns_edm_sym1 COMMAND test_dm1_v1_fmtowns_edm_sym1)
 add_executable(test_dm1_v1_fmtowns_music_tables
     tests/test_dm1_v1_fmtowns_music_tables.c
     src/dm1/dm1_v1_fmtowns_music_tables.c
+    src/shared/firestaff_fmtowns_disc.c
 )
 target_include_directories(test_dm1_v1_fmtowns_music_tables PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_fmtowns_music_tables PRIVATE firestaff_zip_extract)
 add_test(NAME test_dm1_v1_fmtowns_music_tables COMMAND test_dm1_v1_fmtowns_music_tables)
+set_tests_properties(test_dm1_v1_fmtowns_music_tables PROPERTIES
+    ENVIRONMENT "FIRESTAFF_DM1_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_FM-Towns_JA-EN.zip"
+    LABELS "dm1;fmtowns;music;real-media;in-memory;skip-safe")
 
 add_executable(test_fmtowns_pharlap_all_games
     tests/test_fmtowns_pharlap_all_games.c
