@@ -1,4 +1,6 @@
 #include "dm1_v1_fmtowns_edm_sym1.h"
+#include "firestaff_fmtowns_disc.h"
+#include "firestaff_zip_extract.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,19 +67,35 @@ static void test_prefixed_symbols(void) {
  * every shipped entry appears with matching vaddr. */
 static void test_real_data_round_trip(void) {
     const char *path = getenv("FIRESTAFF_DM1_FMTOWNS_EDM_EXP");
-    FILE *fp;
-    if (!path || !path[0]) { puts("SKIP: no EDM.EXP"); return; }
-    fp = fopen(path, "rb");
-    if (!fp) { puts("SKIP: cannot open"); return; }
+    const char *archive = getenv("FIRESTAFF_DM1_FMTOWNS_ARCHIVE");
+    FILE *fp = NULL;
+    uint8_t *cue = NULL, *bin = NULL, *edm = NULL, *sym = NULL;
+    size_t cue_size = 0u, bin_size = 0u, edm_size = 0u;
+    char image_member[256];
+    FmtownsDiscProbeResult probe;
+    const FmtownsIsoEntry *entry;
+    if ((!path || !path[0]) && (!archive || !archive[0])) { puts("SKIP: no EDM.EXP or archive"); return; }
+    if (archive && archive[0]) {
+        if (firestaff_zip_extract_by_suffix(archive, ".cue", &cue, &cue_size) != 0 || !cue ||
+            !fmtowns_cue_parse_image_member((const char *)cue, cue_size, image_member, sizeof(image_member)) ||
+            firestaff_zip_extract_by_suffix(archive, image_member, &bin, &bin_size) != 0 || !bin ||
+            fmtowns_disc_probe(bin, bin_size, FMTOWNS_SECTOR_2048, &probe) != 0 || !probe.valid ||
+            !(entry = fmtowns_disc_find(&probe, "EDM.EXP")) ||
+            fmtowns_disc_extract_alloc(bin, bin_size, FMTOWNS_SECTOR_2048, entry, &edm, &edm_size) != 0 ||
+            edm_size < 0x46b41u + 0x51b5u) { free(cue); free(bin); free(edm); puts("SKIP: no retail EDM.EXP"); return; }
+        sym = (uint8_t *)malloc(0x51b5); assert(sym); memcpy(sym, edm + 0x46b41u, 0x51b5); free(cue); free(bin); free(edm);
+    } else {
+        fp = fopen(path, "rb"); if (!fp) { puts("SKIP: cannot open"); return; }
     /* Read SYM1 table at file offset 0x46b41, size 0x51b5. */
     if (fseek(fp, 0x46b41, SEEK_SET) != 0) {
         fclose(fp); puts("SKIP: seek failed"); return;
     }
-    uint8_t *sym = (uint8_t *)malloc(0x51b5);
+    sym = (uint8_t *)malloc(0x51b5);
     if (!sym || fread(sym, 1, 0x51b5, fp) != 0x51b5) {
         free(sym); fclose(fp); puts("SKIP: read failed"); return;
     }
     fclose(fp);
+    }
     /* Header: "SYM1" then advance to first symbol at 0x22. */
     assert(sym[0] == 'S' && sym[1] == 'Y' && sym[2] == 'M' && sym[3] == '1');
     unsigned int off = 0x22;
