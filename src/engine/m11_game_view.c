@@ -61932,7 +61932,12 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
     static const char* const filters[] = { "SCANLINE", "SCAN %", "PALETTE", "GAMMA", "BRIGHT", "CONTRAST", "DITHER", "SHARPEN", "SHARP %", "PRESET", "SMOOTH" };
     static const char* const effects[] = { "PHOSPHOR", "DECAY", "GRID", "GRID %", "MOTION", "BLUR %", "LIGHT", "TURN PAN" };
     static const char* const cheats[] = { "CHEATS", "SPEED" };
-    static const char* const scaleNames[] = { "1X", "2X", "3X", "4X", "FIT", "STRETCH" };
+    /* The last renderer enum value has legacy name M11_SCALE_STRETCH, but
+     * ComputePresentationRect preserves the selected aspect in that mode.
+     * Label the F10 control after its actual behaviour. */
+    static const char* const scaleNames[] = {
+        "1X", "2X", "3X", "4X", "FIT", "FIT SMOOTH"
+    };
     const char* const* rows;
     M12_Config config;
     int i, slot, rowCount, v2;

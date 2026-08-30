@@ -435,7 +435,13 @@ enum { M12_UI_LANGUAGE_COUNT = (int)(sizeof(g_languages) / sizeof(g_languages[0]
 enum { M12_UI_LANGUAGE_AUTO_INDEX = M12_UI_LANGUAGE_COUNT - 1 };
 static const char* g_cheatsToggle[] = {_("OFF"), _("ON")};
 static const char* g_speedLabels[] = {_("SLOWER"), _("NORMAL"), _("FASTER")};
-static const char* g_scaleModes[] = {"1X", "2X", "3X", "4X", _("FIT"), _("STRETCH")};
+/* M11_SCALE_STRETCH is a legacy ABI name.  Its implementation still computes
+ * an aspect-preserving FIT rectangle; it merely bypasses integer snapping.
+ * Do not expose it as "STRETCH" — that suggests a distorted presentation
+ * Firestaff deliberately never performs. */
+static const char* g_scaleModes[] = {
+    "1X", "2X", "3X", "4X", _("FIT"), _("FIT SMOOTH")
+};
 /* Keep this in the renderer enum's order.  "ORIGINAL" means the actual
  * source framebuffer ratio (for example 320x200 = 8:5), not a request to
  * stretch it.  M11_Render_ComputePresentationRect FITs every one of these
@@ -5008,7 +5014,7 @@ const char* M12_StartupMenu_GetSettingsLabel(const M12_StartupMenuState* state,
         case M12_SETTINGS_ROW_RENDERER_BACKEND: return m12_text(state, M12_TEXT_RENDERER_BACKEND);
         case M12_SETTINGS_ROW_WINDOW_MODE: return m12_text(state, M12_TEXT_WINDOW_MODE);
         case M12_SETTINGS_ROW_SCALE_MODE: return m12_tr(state, "SCALE");
-        case M12_SETTINGS_ROW_DISPLAY_ASPECT: return m12_tr(state, "DISPLAY FORMAT");
+        case M12_SETTINGS_ROW_DISPLAY_ASPECT: return m12_tr(state, "ASPECT RATIO");
         case M12_SETTINGS_ROW_INTEGER_SCALING: return m12_tr(state, "PIXEL SNAP");
         case M12_SETTINGS_ROW_SCALING_FILTER: return m12_tr(state, "FILTER");
         case M12_SETTINGS_ROW_VSYNC: return m12_tr(state, "VSYNC");
