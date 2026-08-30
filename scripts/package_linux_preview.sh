@@ -14,8 +14,8 @@ DUNGEON_STUDIO_BIN_SRC="${DUNGEON_STUDIO_BIN_SRC:-$BUILD_DIR/dungeon-studio-bund
 SAVEGAME_EDITOR_BIN_SRC="${SAVEGAME_EDITOR_BIN_SRC:-$BUILD_DIR/savegame-editor-bundle/dist/firestaff_savegame_editor}"
 OUT_DIR="$ROOT/release"
 PKG_NAME="firestaff"
-SUMMARY="Firestaff preview Dungeon Master engine"
-DESCRIPTION="Firestaff preview build for ongoing source-backed Dungeon Master compatibility work. This preview does not bundle original game data."
+SUMMARY="Firestaff native Dungeon Master engine"
+DESCRIPTION="Firestaff provides source-faithful Dungeon Master compatibility work. This package does not bundle original game data."
 
 if [[ ! -x "$BIN_SRC" ]]; then
   echo "Missing built binary: $BIN_SRC" >&2

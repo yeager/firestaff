@@ -1,3 +1,32 @@
+# Firestaff v3.0.320
+
+## DM1
+
+### Added
+
+- `dm1_v1_original_save_amiga_f0435_materialize_session_bytes`: Added a
+  native, in-memory admission and materialization route for authenticated
+  Amiga F0435 save sessions. It verifies all five original save parts,
+  decodes the big-endian F0434 dungeon tail, preserves source bytes, and
+  binds the source-owned party and watchdog-event receipts without extracting
+  game data.
+
+### Fixed
+
+- `dm1_v1_original_save_amiga_f0435_validate_event_queue_bytes`: Fixed
+  authenticated Amiga queue handling to reject malformed or unsupported
+  queue state before it can become live runtime state, while accepting an
+  authentic empty queue and validating the observed watchdog record.
+
+## Fixed
+
+- `release workflows`: Updated release scratch paths to use runner-owned
+  temporary locations so Linux, Android, and wiki packaging no longer rely on
+  a shared literal temporary directory.
+- `package_linux_preview.sh`: Updated Debian and RPM package metadata to
+  identify the native Firestaff engine rather than label a versioned release
+  package as a preview.
+
 # Firestaff v3.0.319
 
 ## DM1
