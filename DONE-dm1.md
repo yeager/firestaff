@@ -125,6 +125,10 @@ Reviewed 2026-08-29. Completed work only.
   original PC 3.4 dungeon state and renders its actual initial composition
   into both lanes. The real-data viewport regression no longer promotes the
   old hard-coded entry fixture as positive composition evidence.
+- `dm1_v2_side_by_side_seed_pc34` now uses that same native in-memory ZIP
+  path for every positive lane, layout, RGBA export, and region comparison.
+  It skips when the optional local PC 3.4 archive is absent instead of
+  silently falling back to a hard-coded dungeon fixture.
 - The supplied authentic French DOS `DMSAVE.DAT` and `DMSAVE.BAK` (48,561
   bytes each; SHA-256 `494d081ee5175b2dccc900d5ea3f25230c8bb3b0f20828d311b8fc5bdfb82d21`
   and `a760234408bf27946b1586ecf396be72e648bd8f3d18abee90a18c2c7e94421f`)

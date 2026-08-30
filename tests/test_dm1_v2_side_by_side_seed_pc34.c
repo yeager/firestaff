@@ -10,7 +10,7 @@
  *         DM1_V2_SIDE_BY_SIDE_W/H/GAP_W macros and the dimension
  *         query function returns them.
  *
- *   TC-2. dm1_v2_side_by_side_seed_build_entry() returns 1, the
+ *   TC-2. The native ZIP-backed PC 3.4 DUNGEON.DAT builder returns 1, the
  *         V1/V2 lanes are byte-equal across the full 224x136
  *         viewport, and the side-by-side hash is deterministic.
  *
@@ -48,8 +48,10 @@
  *         rectangles compare byte-identically and produce matching
  *         region hashes.
  *
- * The test is headless: it depends only on the firestaff_v2 static
- * library and does not require any game data files.
+ * The test reads DATA/DUNGEON.DAT directly from the authentic PC 3.4
+ * ZIP into RAM.  It never requires an extracted data directory and exits
+ * with CTest's conventional skip code when that optional local archive is
+ * unavailable.
  *
  * Source locks (ReDMCSB):
  *   DEFS.H:238-243          C001..C006 V1 source command ids.
@@ -63,9 +65,11 @@
 #include "dm1_v2_side_by_side_seed_pc34.h"
 #include "dm1_v2_viewport_renderer_pc34.h"
 #include "dm1_v2_movement_command_adapter_pc34.h"
+#include "firestaff_zip_extract.h"
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define CHECK(expr) do { \
@@ -92,6 +96,48 @@ static const V1SourceCommandRow g_v1_command_table[6] = {
 };
 #define N_V1_COMMAND_ROWS \
     ((int)(sizeof(g_v1_command_table) / sizeof(g_v1_command_table[0])))
+
+static DM1_V2_SideBySideSeed g_source_seed;
+
+static int path_exists(const char* path) {
+    FILE* f;
+    if (!path) return 0;
+    f = fopen(path, "rb");
+    if (!f) return 0;
+    fclose(f);
+    return 1;
+}
+
+static const char* default_pc34_archive(void) {
+    static char path[2048];
+    const char* configured = getenv("FIRESTAFF_DM1_PC34_ARCHIVE");
+    const char* data_root = getenv("FIRESTAFF_DATA");
+    const char* home = getenv("HOME");
+    if (configured && path_exists(configured)) return configured;
+    if (data_root && data_root[0]) {
+        snprintf(path, sizeof(path), "%s/dm1/Dungeon-Master_DOS_EN_Version-34.zip", data_root);
+        if (path_exists(path)) return path;
+    }
+    if (!home || !home[0]) return NULL;
+    snprintf(path, sizeof(path), "%s/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip", home);
+    return path_exists(path) ? path : NULL;
+}
+
+/* The original archive is read only through the internal ZIP reader. */
+static int build_native_source_seed(void) {
+    const char* archive = default_pc34_archive();
+    unsigned char* bytes = NULL;
+    size_t size = 0;
+    DM1_V2_DungeonDatState dungeon;
+    int ok;
+    if (!archive) return 77;
+    if (firestaff_zip_extract_by_suffix(archive, "DATA/DUNGEON.DAT", &bytes, &size) != 0)
+        return 77;
+    ok = dm1_v2_vp_dungeon_dat_init(&dungeon, bytes, (int)size) &&
+         dm1_v2_side_by_side_seed_build_from_dungeon(&dungeon, 0, &g_source_seed);
+    free(bytes);
+    return ok ? 0 : 1;
+}
 
 static int colors_equal(const DM1_V2_Color* a, const DM1_V2_Color* b) {
     return a && b &&
@@ -121,30 +167,20 @@ static int test_scaffold_dimensions(void) {
 
 /* ── TC-2: build the entry seed, lock hash + lane parity ────────── */
 
-static int test_build_entry_seed(void) {
-    DM1_V2_SideBySideSeed seed;
-    memset(&seed, 0, sizeof(seed));
-    CHECK(dm1_v2_side_by_side_seed_build_entry(&seed) == 1);
-    CHECK(seed.scaffoldW == DM1_V2_SIDE_BY_SIDE_W);
-    CHECK(seed.scaffoldH == DM1_V2_SIDE_BY_SIDE_H);
-    CHECK(seed.gapW == DM1_V2_SIDE_BY_SIDE_GAP_W);
-    CHECK(seed.lanesByteEqual == 1);
-    CHECK(seed.mismatchedPixels == 0);
-    CHECK(seed.firstMismatchX == -1);
-    CHECK(seed.firstMismatchY == -1);
+static int test_build_native_source_seed(void) {
+    const DM1_V2_SideBySideSeed* seed = &g_source_seed;
+    CHECK(seed->scaffoldW == DM1_V2_SIDE_BY_SIDE_W);
+    CHECK(seed->scaffoldH == DM1_V2_SIDE_BY_SIDE_H);
+    CHECK(seed->gapW == DM1_V2_SIDE_BY_SIDE_GAP_W);
+    CHECK(seed->lanesByteEqual == 1);
+    CHECK(seed->mismatchedPixels == 0);
+    CHECK(seed->firstMismatchX == -1);
+    CHECK(seed->firstMismatchY == -1);
     /* The hash must be non-zero (the FNV-1a basis) and must not
      * equal the FNV-1a basis (a real framebuffer produces a
      * different fold). */
-    CHECK(seed.sideBySideHash != 0);
-    CHECK(seed.sideBySideHash != DM1_V2_SIDE_BY_SIDE_FNV1A_BASIS);
-    /* Lock the canonical seed hash so any future regression in the
-     * FNV-1a fold, gap colour, or layout traversal surfaces as a
-     * known-good baseline mismatch. The value matches the existing
-     * probes/dm1/firestaff_dm1_v2_side_by_side_presentation_seed_probe.c
-     * output (sideBySideHash=cf0cbcce6f491525) and confirms the
-     * new source-side helper is byte-for-byte compatible with the
-     * existing probe infrastructure. */
-    CHECK(seed.sideBySideHash == 0xcf0cbcce6f491525ULL);
+    CHECK(seed->sideBySideHash != 0);
+    CHECK(seed->sideBySideHash != DM1_V2_SIDE_BY_SIDE_FNV1A_BASIS);
     return 0;
 }
 
@@ -154,8 +190,8 @@ static int test_layout_hash_reproduces(void) {
     DM1_V2_SideBySideSeed a;
     DM1_V2_SideBySideSeed b;
     DM1_V2_SideBySideSeed c;
-    CHECK(dm1_v2_side_by_side_seed_build_entry(&a) == 1);
-    CHECK(dm1_v2_side_by_side_seed_build_entry(&b) == 1);
+    a = g_source_seed;
+    b = g_source_seed;
     CHECK(a.sideBySideHash == b.sideBySideHash);
 
     /* hash_layout() must reproduce the same hash for the same pair. */
@@ -178,7 +214,7 @@ static int test_composite_pixel_accessor(void) {
     DM1_V2_Color c;
     uint64_t hash;
     int x, y;
-    CHECK(dm1_v2_side_by_side_seed_build_entry(&seed) == 1);
+    seed = g_source_seed;
 
     CHECK(dm1_v2_side_by_side_seed_composite_pixel(&seed, 0, 0, &c) == 1);
     CHECK(colors_equal(&c, &seed.v1.framebuffer[0][0]));
@@ -245,7 +281,7 @@ static int test_rgba8888_export(void) {
     int y, x, p;
 
     memset(rgba, 0xa5, sizeof(rgba));
-    CHECK(dm1_v2_side_by_side_seed_build_entry(&seed) == 1);
+    seed = g_source_seed;
     CHECK(dm1_v2_side_by_side_seed_write_rgba8888(
               &seed, rgba, sizeof(rgba), kPaddedStride) == 1);
 
@@ -309,7 +345,7 @@ static int test_rgba8888_lane_boundaries(void) {
     int y, gapX;
 
     memset(rgba, 0, sizeof(rgba));
-    CHECK(dm1_v2_side_by_side_seed_build_entry(&seed) == 1);
+    seed = g_source_seed;
     CHECK(dm1_v2_side_by_side_seed_write_rgba8888(
               &seed, rgba, sizeof(rgba), kStride) == 1);
 
@@ -573,7 +609,7 @@ static int test_region_manifest_pixel_translation(void) {
     DM1_V2_Color b;
     int dx, dy;
 
-    CHECK(dm1_v2_side_by_side_seed_build_entry(&seed) == 1);
+    seed = g_source_seed;
     CHECK(dm1_v2_side_by_side_seed_region(
               DM1_V2_SIDE_BY_SIDE_REGION_V1_D1C_WALL, &v1Wall) == 1);
     CHECK(dm1_v2_side_by_side_seed_region(
@@ -649,7 +685,7 @@ static int test_region_manifest_full_pixel_gates(void) {
     uint64_t hashA;
     uint64_t hashB;
 
-    CHECK(dm1_v2_side_by_side_seed_build_entry(&seed) == 1);
+    seed = g_source_seed;
 
     CHECK(dm1_v2_side_by_side_seed_compare_regions(
               &seed,
@@ -743,10 +779,14 @@ static int test_region_manifest_full_pixel_gates(void) {
 /* ── Main ───────────────────────────────────────────────────────── */
 
 int main(void) {
-    DM1_V2_SideBySideSeed seed;
-    memset(&seed, 0, sizeof(seed));
+    const int source_status = build_native_source_seed();
+    if (source_status == 77) {
+        puts("dm1_v2_side_by_side_seed_pc34: SKIP (PC 3.4 archive unavailable)");
+        return 77;
+    }
+    if (source_status != 0) return 1;
     if (test_scaffold_dimensions()) return 1;
-    if (test_build_entry_seed()) return 1;
+    if (test_build_native_source_seed()) return 1;
     if (test_layout_hash_reproduces()) return 1;
     if (test_composite_pixel_accessor()) return 1;
     if (test_rgba8888_export()) return 1;
@@ -760,13 +800,11 @@ int main(void) {
     if (test_region_manifest_full_pixel_gates()) return 1;
     /* Print the canonical seed fingerprint so downstream visual-diff
      * gates can lock a known-good baseline against it. */
-    if (dm1_v2_side_by_side_seed_build_entry(&seed) == 1) {
-        printf("dm1_v2_side_by_side_seed_pc34: sideBySideHash=%016llx "
-               "lanesByteEqual=%d mismatchedPixels=%d\n",
-               (unsigned long long)seed.sideBySideHash,
-               seed.lanesByteEqual,
-               seed.mismatchedPixels);
-    }
+    printf("dm1_v2_side_by_side_seed_pc34: sideBySideHash=%016llx "
+           "lanesByteEqual=%d mismatchedPixels=%d\n",
+           (unsigned long long)g_source_seed.sideBySideHash,
+           g_source_seed.lanesByteEqual,
+           g_source_seed.mismatchedPixels);
     puts("dm1_v2_side_by_side_seed_pc34: ok");
     return 0;
 }

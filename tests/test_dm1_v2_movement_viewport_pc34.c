@@ -25,9 +25,11 @@ static int dm1_path_exists(const char* path) {
 
 static const char* dm1_default_pc34_archive(void) {
     static char path[2048];
+    const char* archive = getenv("FIRESTAFF_DM1_PC34_ARCHIVE");
     const char* configured = getenv("FIRESTAFF_DM1_DATA_DIR");
     const char* data_root = getenv("FIRESTAFF_DATA");
     const char* home = getenv("HOME");
+    if (archive && dm1_path_exists(archive)) return archive;
     if (configured && configured[0]) {
         snprintf(path, sizeof(path), "%s/Dungeon-Master_DOS_EN_Version-34.zip", configured);
         if (dm1_path_exists(path)) return path;

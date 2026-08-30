@@ -69,7 +69,10 @@ canonical PC 3.4 ZIP using the native ZIP reader. It no longer accepts an
 extracted `DUNGEON.DAT` as its primary corpus or uses a fixture as the positive
 dungeon decode proof. Its V1/V2 side-by-side seed is now constructed from that
 decoded original dungeon state; the former positive fixture composition is not
-used by this real-data regression.
+used by this real-data regression. The standalone side-by-side seed gate uses
+the same ZIP-backed state for its positive framebuffer, RGBA, and region
+checks; absence of the local archive is an explicit skip, never a fixture
+fallback.
 
 ## DM2
 
