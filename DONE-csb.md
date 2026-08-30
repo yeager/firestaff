@@ -23,6 +23,9 @@ Reviewed 2026-08-29. Completed work only.
   runtime-family receipt: inventory/panel, pit and field, stairs, wall and
   floor ornaments, and doors all decode through the big-endian IMG1 consumer
   without a PC3.4 fallback or an extracted game-data file.
+- The active CSB Amiga runtime-graphics CTest is now that ZIP → ADF → OFS
+  receipt itself (`csb_v1_amiga_runtime_graphics_real`), rather than a
+  separate loose-`GRAPHICS.DAT` test that skipped against the supplied media.
 - The supplied CSB Amiga A-disk now has a direct native graphics-format
   receipt. `test_csb_v1_amiga_graphics_dat` reads `Graphics.DAT` from the
   original ZIP → ADF chain in RAM through the AmigaDOS OFS reader, validates

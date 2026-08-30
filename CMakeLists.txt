@@ -60243,29 +60243,12 @@ target_include_directories(test_csb_v1_amiga_runtime_graphics_archive PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_csb_v1_amiga_runtime_graphics_archive PRIVATE
     firestaff_zip_extract)
-add_test(NAME test_csb_v1_amiga_runtime_graphics_archive
+add_test(NAME csb_v1_amiga_runtime_graphics_real
     COMMAND test_csb_v1_amiga_runtime_graphics_archive)
-set_tests_properties(test_csb_v1_amiga_runtime_graphics_archive PROPERTIES
+set_tests_properties(csb_v1_amiga_runtime_graphics_real PROPERTIES
     SKIP_RETURN_CODE 77
     ENVIRONMENT "FIRESTAFF_CSB_AMIGA_ADF_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back (FTL).zip"
     LABELS "csb;amiga;graphics;runtime;real-data;in-memory;skip-safe")
-
-add_executable(test_csb_v1_amiga_runtime_graphics_real
-    tests/test_csb_v1_amiga_runtime_graphics_real.c
-)
-target_include_directories(test_csb_v1_amiga_runtime_graphics_real PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(test_csb_v1_amiga_runtime_graphics_real PRIVATE
-    firestaff_m11 firestaff_m10 firestaff_m12)
-if(NOT MSVC)
-    target_compile_options(test_csb_v1_amiga_runtime_graphics_real PRIVATE
-        -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
-endif()
-add_test(NAME csb_v1_amiga_runtime_graphics_real
-         COMMAND test_csb_v1_amiga_runtime_graphics_real)
-set_tests_properties(csb_v1_amiga_runtime_graphics_real PROPERTIES
-    SKIP_RETURN_CODE 77
-    LABELS "csb;amiga;real_data" TIMEOUT 60)
 
 add_executable(test_dm1_v1_creature_behavior_bootstrap
     tests/test_dm1_v1_creature_behavior_bootstrap.c
