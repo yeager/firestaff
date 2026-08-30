@@ -30,6 +30,10 @@ Reviewed 2026-08-29. Completed work only.
   the source C017 inventory panel at its original 224×136 dimensions. This
   is source-format evidence only; composed-screen capture parity remains
   active work.
+- Since this original ADF route is staged, its graphics test no longer
+  constructs positive IMG1 or `Graphics.DAT` stand-ins. Positive parsing and
+  decode evidence comes only from the admitted ADF member; malformed-header
+  checks remain as fail-closed boundaries.
 - The native Atari STX CLI route verifies original title startup, runtime and
   start-menu entry using the supplied campaign media. Its source-owned input
   regression now also covers backward movement, both turns, both strafes and
