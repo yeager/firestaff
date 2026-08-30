@@ -29,6 +29,7 @@ int main(void)
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
     M11_BootProbeReceipt probe;
+    unsigned tick;
     const int japanese = language && strcmp(language, "ja") == 0;
 
     if (!archive || !archive[0] ||
@@ -54,7 +55,37 @@ int main(void)
 
     M11_GameView_Init(&view);
     check(M11_GameView_Start(&view, &spec) == 1,
-          "authentic MINI.DAT enters the M11 F31 startup boundary");
+          "authentic F31 media enters the M11 title startup boundary");
+    /* MINI.DAT is loaded by CHTWE/CHTWJ after the independently-owned
+     * ANIMTW TITLE.ANM and SWITCHTW programs.  A direct M11 start is not a
+     * direct dungeon start: drive the exact F31 program sequence and the
+     * visible C004 Prison command before asking the boot probe for the live
+     * F0435 state. */
+    for (tick = 0u; tick < 630u; ++tick) {
+        (void)M11_GameView_AdvanceIdleTick(&view);
+    }
+    for (tick = 0u; tick < 80u &&
+                    view.csbFmtownsSwitchVblanksRemaining != 0u; ++tick) {
+        (void)M11_GameView_AdvanceIdleTick(&view);
+    }
+    check(view.csbFmtownsSwitchBound &&
+              view.csbFmtownsSwitchVblanksRemaining == 0u,
+          "TITLE.ANM reaches the ready source-owned SWITCHTW page");
+    check(M11_GameView_HandlePointerButton(&view, 52, 110,
+                                           DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+              M11_GAME_INPUT_REDRAW &&
+              view.csbFmtownsGameHandoffReceipt.valid &&
+              view.csbState.startup_entrance_active,
+          "SWITCHTW Game enters the selected language-owned CHTWE/CHTWJ route");
+    check(M11_GameView_HandlePointerButton(&view, 250, 50,
+                                           DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+              M11_GAME_INPUT_REDRAW &&
+              view.csbState.startup_entrance_opening_active,
+          "C004 Prison command starts the native F31 entrance transition");
+    for (tick = 0u; tick < 240u && view.csbState.startup_entrance_active;
+         ++tick) {
+        (void)M11_GameView_AdvanceIdleTick(&view);
+    }
     memset(&probe, 0, sizeof(probe));
     check(M11_GameView_GetBootProbeReceipt(&view, &probe) &&
               !probe.startupActive && probe.levelLoaded &&
