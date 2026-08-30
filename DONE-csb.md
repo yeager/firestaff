@@ -31,7 +31,11 @@ Reviewed 2026-08-29. Completed work only.
   is source-format evidence only; composed-screen capture parity remains
   active work.
 - The native Atari STX CLI route verifies original title startup, runtime and
-  start-menu entry using the supplied campaign media.
+  start-menu entry using the supplied campaign media. Its source-owned input
+  regression now also covers backward movement, both turns, both strafes and
+  action from independent original STX sessions, each retaining a nonzero
+  native viewport receipt. The unchanged initial strafe/action position is a
+  recorded source result, not synthetic content.
 - The supplied French Atari preservation ZIP now follows its original
   `ZIP → STX` path in RAM.  Its protected sector descriptors retain their
   logical order even when capture offsets are skewed, so the verified shared

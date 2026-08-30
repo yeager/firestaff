@@ -75,6 +75,43 @@ case "$movement_output" in
         ;;
 esac
 
+# Every input probe starts from the same verified STX title/runtime sequence.
+# This preserves the original starting cell as the comparison anchor instead
+# of letting a preceding command change the context for a later assertion.
+probe_runtime_input() {
+    input=$1
+    expected_party=$2
+    input_output="$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
+        --game csb --platform atari-st --data-dir "$media_path" \
+        --boot-probe --boot-probe-frames 180 --script "enter,$input" \
+        --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+        --duration 0 2>&1)" || {
+        printf '%s\n' "$input_output" >&2
+        exit 1
+    }
+    case "$input_output" in
+        *phase=inactive*startupActive=0*levelLoaded=1*"map=0 party=$expected_party"*runtimeTick=*)
+            if printf '%s\n' "$input_output" | grep -Eq 'csbViewportHash=[1-9][0-9]*'; then
+                return 0
+            fi
+            ;;
+    esac
+    printf '%s\n' "$input_output" >&2
+    printf 'FAIL: native CSB Atari ST %s input did not preserve its source runtime receipt\n' "$input" >&2
+    exit 1
+}
+
+# The stock original campaign begins at (9,0) facing south.  These are
+# observed first-command results from independent original STX sessions.  The
+# unchanged strafe/action positions are intentional evidence, never a prompt
+# to fabricate a nearby object, door, or save state.
+probe_runtime_input down         9,0,2
+probe_runtime_input left         9,0,1
+probe_runtime_input right        9,0,3
+probe_runtime_input strafe-left  9,0,2
+probe_runtime_input strafe-right 9,0,2
+probe_runtime_input action       9,0,2
+
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --menu --game csb --platform atari-st --data-dir "$media_path" \
@@ -101,4 +138,4 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$firestaff_cli" \
     --script 'wait20,click:1173:262,wait20,click:410:679,wait20,click:450:405,wait20' \
     --duration 3000 >/dev/null 2>&1
 
-echo "PASS: native CSB Atari ST campaign title, runtime movement, and start-menu launch"
+echo "PASS: native CSB Atari ST campaign title, complete input matrix, and start-menu launch"
