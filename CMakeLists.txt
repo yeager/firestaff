@@ -4205,6 +4205,18 @@ if(NOT DEFINED FIRESTAFF_DM1_WORKSPACE_DATA_DIR)
 endif()
 
 if(BUILD_TESTING)
+    add_executable(test_firestaff_7z_extract
+        tests/test_firestaff_7z_extract.c
+        src/shared/firestaff_7z_extract.c
+        third_party/lzma_sdk/LzmaDec.c
+        third_party/lzma_sdk/Lzma2Dec.c)
+    target_include_directories(test_firestaff_7z_extract PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/lzma_sdk)
+    add_test(NAME firestaff_7z_extract COMMAND test_firestaff_7z_extract)
+    set_tests_properties(firestaff_7z_extract PROPERTIES
+        ENVIRONMENT "FIRESTAFF_CSB_UTILITY_7Z=$ENV{HOME}/.firestaff/data/csb/Chaos Strikes Back Utility.stx.7z"
+        SKIP_RETURN_CODE 77)
     add_test(
         NAME dm2_v1_real_media_hash_lock
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_real_media_hash_lock.sh"
