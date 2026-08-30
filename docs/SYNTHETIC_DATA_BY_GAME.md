@@ -67,7 +67,9 @@ synthetic saves or screenshots.
 The V2 movement/viewport real-data check reads `DATA/DUNGEON.DAT` from the
 canonical PC 3.4 ZIP using the native ZIP reader. It no longer accepts an
 extracted `DUNGEON.DAT` as its primary corpus or uses a fixture as the positive
-dungeon decode proof.
+dungeon decode proof. Its V1/V2 side-by-side seed is now constructed from that
+decoded original dungeon state; the former positive fixture composition is not
+used by this real-data regression.
 
 ## DM2
 

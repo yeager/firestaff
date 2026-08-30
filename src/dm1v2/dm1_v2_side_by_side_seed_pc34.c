@@ -179,12 +179,12 @@ int dm1_v2_side_by_side_seed_write_rgba8888(
     return 1;
 }
 
-int dm1_v2_side_by_side_seed_build_entry(DM1_V2_SideBySideSeed* out) {
-    const DM1_V2_DungeonStateFixture* fixture;
-    DM1_V2_ViewportCompositionInput input;
+static int dm1_v2_side_by_side_seed_build_from_input(
+    const DM1_V2_ViewportCompositionInput* input,
+    DM1_V2_SideBySideSeed* out) {
     int y, x;
 
-    if (!out) return 0;
+    if (!input || !out) return 0;
     memset(out, 0, sizeof(*out));
     out->scaffoldW = DM1_V2_SIDE_BY_SIDE_W;
     out->scaffoldH = DM1_V2_SIDE_BY_SIDE_H;
@@ -193,16 +193,6 @@ int dm1_v2_side_by_side_seed_build_entry(DM1_V2_SideBySideSeed* out) {
     out->firstMismatchY = -1;
     out->sideBySideHash = DM1_V2_SIDE_BY_SIDE_FNV1A_BASIS;
 
-    fixture = dm1_v2_vp_dm1_pc34_entry_state_fixture();
-    if (!fixture) return 0;
-    if (!dm1_v2_vp_build_composition_from_fixture(fixture,
-                                                  fixture->startMapX,
-                                                  fixture->startMapY,
-                                                  fixture->startDirection,
-                                                  &input)) {
-        return 0;
-    }
-
     /* V1 lane: independent init + render pass.
      * V2 lane: independent init + render pass with the same input.
      * The V2 viewport renderer is the only RGBA path that exposes
@@ -210,8 +200,8 @@ int dm1_v2_side_by_side_seed_build_entry(DM1_V2_SideBySideSeed* out) {
      * go through it with v2PresentationEnabled=0. */
     dm1_v2_vp_init(&out->v1);
     dm1_v2_vp_init(&out->v2);
-    if (!dm1_v2_vp_render_composition_flat(&out->v1, &input)) return 0;
-    if (!dm1_v2_vp_render_composition_flat(&out->v2, &input)) return 0;
+    if (!dm1_v2_vp_render_composition_flat(&out->v1, input)) return 0;
+    if (!dm1_v2_vp_render_composition_flat(&out->v2, input)) return 0;
 
     /* Byte-equal pixel-by-pixel check across the full 224x136
      * viewport (DUNVIEW.C:2999-3000). Record the first mismatch so
@@ -237,6 +227,28 @@ int dm1_v2_side_by_side_seed_build_entry(DM1_V2_SideBySideSeed* out) {
     /* Side-by-side hash: V1 || gap || V2 composite. */
     out->sideBySideHash = dm1_v2_side_by_side_seed_hash_layout(&out->v1, &out->v2);
     return 1;
+}
+
+int dm1_v2_side_by_side_seed_build_entry(DM1_V2_SideBySideSeed* out) {
+    const DM1_V2_DungeonStateFixture* fixture;
+    DM1_V2_ViewportCompositionInput input;
+    fixture = dm1_v2_vp_dm1_pc34_entry_state_fixture();
+    if (!fixture || !dm1_v2_vp_build_composition_from_fixture(
+            fixture, fixture->startMapX, fixture->startMapY,
+            fixture->startDirection, &input)) return 0;
+    return dm1_v2_side_by_side_seed_build_from_input(&input, out);
+}
+
+int dm1_v2_side_by_side_seed_build_from_dungeon(
+    const DM1_V2_DungeonDatState* dungeon,
+    int mapIndex,
+    DM1_V2_SideBySideSeed* out) {
+    DM1_V2_ViewportCompositionInput input;
+    if (!dungeon || !out || mapIndex < 0 || mapIndex >= dungeon->mapCount) return 0;
+    if (!dm1_v2_vp_build_composition_from_dungeon(
+            dungeon, mapIndex, dungeon->initialMapX, dungeon->initialMapY,
+            dungeon->initialDirection, &input)) return 0;
+    return dm1_v2_side_by_side_seed_build_from_input(&input, out);
 }
 
 int dm1_v2_side_by_side_seed_v1_geometry(DM1_V2_SideBySideV1Geometry* out) {

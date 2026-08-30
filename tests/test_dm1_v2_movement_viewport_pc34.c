@@ -4,6 +4,7 @@
  * its dungeon world is bound to authenticated source data rather than a
  * synthetic map. */
 #include "dm1_v2_movement_engine_pc34.h"
+#include "dm1_v2_side_by_side_seed_pc34.h"
 #include "dm1_v2_viewport_renderer_pc34.h"
 #include "firestaff_zip_extract.h"
 
@@ -186,40 +187,6 @@ static void test_viewport_d0_d3_draw_list_comparator_source_lock(void) {
 }
 
 
-static void test_viewport_real_state_fixture_draw_list(void) {
-    const DM1_V2_DungeonStateFixture* fixture = dm1_v2_vp_dm1_pc34_entry_state_fixture();
-    DM1_V2_ViewportCompositionInput input;
-    DM1_V2_DrawCommand commands[DM1_V2_MAX_DRAW_COMMANDS];
-    int x = 0;
-    int y = 0;
-    int count = 0;
-
-    CHECK(fixture != NULL);
-    CHECK(fixture->name != NULL);
-    CHECK(fixture->startMapX == 1);
-    CHECK(fixture->startMapY == 3);
-    CHECK(fixture->startDirection == 2);
-    CHECK(dm1_v2_vp_relative_coords(2, 1, 3, 1, 0, &x, &y) == 1);
-    CHECK(x == 1 && y == 4);
-
-    CHECK(dm1_v2_vp_build_composition_from_fixture(fixture,
-                                                    fixture->startMapX,
-                                                    fixture->startMapY,
-                                                    fixture->startDirection,
-                                                    &input) == 1);
-    CHECK(input.mapX == 1 && input.mapY == 3 && input.direction == 2);
-    CHECK(input.squares[1][1].element == DM1_V2_ELEMENT_WALL); /* D1C/front wall */
-    CHECK(input.squares[0][1].element == DM1_V2_ELEMENT_CORRIDOR); /* D0C/current square */
-
-    count = dm1_v2_vp_emit_d0_d3_draw_list(&input, commands, DM1_V2_MAX_DRAW_COMMANDS);
-    CHECK(count == 2);
-    CHECK(commands[0].op == DM1_V2_DRAW_FLOOR_CEILING);
-    CHECK(commands[1].square == DM1_V2_VIEW_SQUARE_D1C);
-    CHECK(commands[1].op == DM1_V2_DRAW_WALL);
-    CHECK(commands[1].depth == 1 && commands[1].lateral == 0 && commands[1].order == 9);
-}
-
-
 static void test_viewport_dungeon_dat_decoder_entry_draw_list(void) {
     const char* archive = getenv("FIRESTAFF_DM1_PC34_ARCHIVE");
     int size = 0;
@@ -227,6 +194,7 @@ static void test_viewport_dungeon_dat_decoder_entry_draw_list(void) {
     size_t member_size = 0;
     DM1_V2_DungeonDatState dungeon;
     DM1_V2_ViewportCompositionInput input;
+    DM1_V2_SideBySideSeed source_seed;
     DM1_V2_DrawCommand commands[DM1_V2_MAX_DRAW_COMMANDS];
     uint8_t raw = 0;
     int count = 0;
@@ -285,6 +253,11 @@ static void test_viewport_dungeon_dat_decoder_entry_draw_list(void) {
     CHECK(input.squares[3][0].element == DM1_V2_ELEMENT_WALL);       /* D3L decoded wall from raw map */
     CHECK(input.squares[3][2].element == DM1_V2_ELEMENT_WALL);       /* D3R decoded wall from raw map */
 
+    CHECK(dm1_v2_side_by_side_seed_build_from_dungeon(&dungeon, 0, &source_seed) == 1);
+    CHECK(source_seed.lanesByteEqual == 1);
+    CHECK(source_seed.mismatchedPixels == 0);
+    CHECK(source_seed.sideBySideHash != DM1_V2_SIDE_BY_SIDE_FNV1A_BASIS);
+
     count = dm1_v2_vp_emit_d0_d3_draw_list(&input, commands, DM1_V2_MAX_DRAW_COMMANDS);
     CHECK(count >= 5);
     for (int i = 0; i < count; i++) {
@@ -328,7 +301,6 @@ int main(void) {
     test_viewport_basics();
     test_viewport_wall_occlusion_source_lock();
     test_viewport_d0_d3_draw_list_comparator_source_lock();
-    test_viewport_real_state_fixture_draw_list();
     test_viewport_dungeon_dat_decoder_entry_draw_list();
     test_viewport_region_comparator_scaffold();
 

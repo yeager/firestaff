@@ -176,6 +176,14 @@ int dm1_v2_side_by_side_seed_write_rgba8888(
  * surface as a framebuffer mismatch (lanesByteEqual == 0). */
 int dm1_v2_side_by_side_seed_build_entry(DM1_V2_SideBySideSeed* out);
 
+/* Build the presentation-disabled V1/V2 comparison from an already decoded
+ * original dungeon. The caller retains ownership of `dungeon->bytes`; this
+ * helper neither invents map squares nor loads/extracts game data. */
+int dm1_v2_side_by_side_seed_build_from_dungeon(
+    const DM1_V2_DungeonDatState* dungeon,
+    int mapIndex,
+    DM1_V2_SideBySideSeed* out);
+
 /* ── V1 viewport geometry scaffold (screenshot/pixel scaffolding) ─
  *
  * Centralised accessor for the V1 viewport geometry constants that
