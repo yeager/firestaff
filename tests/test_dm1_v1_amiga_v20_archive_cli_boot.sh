@@ -5,6 +5,7 @@ app=${1:?usage: test_dm1_v1_amiga_v20_archive_cli_boot.sh <firestaff-binary>}
 archive=${FIRESTAFF_DM1_AMIGA_V20_ARCHIVE:-"$HOME/.firestaff/data/dm1/Dungeon-Master_Amiga_EN_Version-20.zip"}
 expected_md5=6a2f135b53c2220f0251fa103e2a6e7e
 selected_media="$archive::Dungeon Master v2.0 (1988)(FTL).zip::Dungeon Master v2.0 (1988)(FTL).adf"
+selected_save="$archive::Dungeon Master v2.0 (1988)(FTL)[save disk].zip::Dungeon Master v2.0 (1988)(FTL)[save disk].adf::DMGAMEG.DAT"
 
 # This preservation package is ZIP -> ZIP -> ADF, all of which Firestaff
 # reads through its native bounded-memory readers.  Keep the real-media
@@ -16,6 +17,10 @@ if [[ ! -x "$app" || ! -f "$archive" ]]; then
     printf '%s\n' 'SKIP: authentic DM1 Amiga 2.0 preservation archive is not staged'
     exit 77
 fi
+
+# Native virtual-media ingestion is read-only.  Retain the supplied outer
+# archive hash across both normal boot and save-resume routes.
+archive_hash_before=$(sha256sum "$archive")
 
 probe() {
     local output
@@ -34,6 +39,22 @@ probe --game dm1 --platform amiga --data-dir "$archive" \
     --boot-probe --boot-probe-frames 2 --duration 0
 probe --menu --game dm1 --platform amiga --data-dir "$archive" \
     --script enter,enter,enter --boot-probe --boot-probe-frames 2 --duration 0
+
+# The ordinary v2.0 save disk is ZIP -> ADF inside the same preservation
+# package.  Exercise its real F0435 session through direct CLI and the M12
+# card flow, without extracting or rewriting any member.  These tuple values
+# are read from the authenticated DMGAMEG.DAT body, not a generated fixture.
+probe_save_resume() {
+    probe "$@" --save "$selected_save" --boot-probe \
+        --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
+        --boot-probe-expect-map 0 --boot-probe-expect-party 4,15,2 \
+        --boot-probe-expect-champions 4 \
+        --boot-probe-expect-runtime-tick-min 292 \
+        --boot-probe-expect-runtime-tick-max 292 --duration 0
+}
+probe_save_resume --game dm1 --platform amiga --data-dir "$archive"
+probe_save_resume --menu --game dm1 --platform amiga --data-dir "$archive" \
+    --script enter,enter,enter
 
 menu_output="$(FIRESTAFF_FAIL_IF_NO_LAUNCH=1 FIRESTAFF_EXIT_AFTER_LAUNCH=1 \
     SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" --menu --game dm1 \
@@ -71,5 +92,7 @@ if ! grep -Fq 'phase=dm1-runtime' <<<"$gameplay_output" ||
     printf '%s\n' 'FAIL: authentic DM1 Amiga 2.0 up input did not reach native movement' >&2
     exit 1
 fi
+
+[[ "$archive_hash_before" == "$(sha256sum "$archive")" ]]
 
 printf '%s\n' 'PASS: authentic DM1 Amiga 2.0 ZIP -> ZIP -> ADF reaches CLI, menu, and native movement runtime'
