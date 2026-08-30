@@ -1,3 +1,43 @@
+# Firestaff v3.0.317
+
+## DM1
+
+### Changed
+
+- `dm1_dos_fr_original_save_resume`: Expanded authentic French DOS save
+  verification to cover both `DMSAVE.DAT` and `DMSAVE.BAK` through direct CLI
+  and start-menu routes, then exercised source-owned movement from the restored
+  party position.
+- `dm1_dos_fr_unpacked_cli_boot`: Updated the real French DOS startup receipt
+  to advance the native runtime after launch and verify the observed dungeon
+  movement state rather than only the title handoff.
+
+## CSB
+
+### Added
+
+- `csb_utility_real_dm1_save_import`: Added a native, in-memory regression
+  route that imports the supplied authentic DM1 save through the original CSB
+  Utility Disk path without extracting or synthesizing game media.
+
+## DM2
+
+### Changed
+
+- `dm2_dos_sksave_archive_resume_matrix`: Expanded real DOS archive-save
+  verification to launch every supplied `SKSAVE` slot and backup through both
+  direct CLI and the M12 start menu, retaining exact source-owned pose and
+  graphics receipts.
+- `dm2_dos_sksave_archive_resume_real_media`: Updated the native resume test
+  to load every supplied DOS save and backup from its original archive member,
+  then verify the authentic post-load turn transition.
+
+## Changed
+
+- `release verification timeout`: Updated the bounded DM2 real-media
+  archive-save matrix timeout so all authenticated direct and menu launches
+  complete on slower release runners without weakening the assertions.
+
 # Firestaff v3.0.316
 
 ## DM2
