@@ -43,6 +43,20 @@ static int16_t read_be_i16(const uint8_t *bytes)
     return (int16_t)read_be16(bytes);
 }
 
+static void free_unpublished_world(struct GameWorld_Compat *world)
+{
+    if (!world) return;
+    if (world->things) {
+        F0504_DUNGEON_FreeThingData_Compat(world->things);
+        free(world->things);
+    }
+    if (world->dungeon) {
+        F0500_DUNGEON_FreeDatHeader_Compat(world->dungeon);
+        free(world->dungeon);
+    }
+    memset(world, 0, sizeof(*world));
+}
+
 static uint32_t fingerprint_bytes(const uint8_t *bytes, size_t byte_count)
 {
     uint32_t hash = 2166136261u;
@@ -871,6 +885,109 @@ int dm1_v1_original_save_amiga_f0435_materialize_dungeon_world_bytes(
         ((uint32_t)receipt.dungeon_actual_checksum << 16) ^ tail_size;
     if (out_receipt) *out_receipt = receipt;
     return DM1_V1_AMIGA_SAVE_F0435_OK;
+}
+
+int dm1_v1_original_save_amiga_f0435_materialize_session_bytes(
+    const uint8_t *bytes, size_t size,
+    struct GameWorld_Compat *out_world,
+    struct DM1_EventQueue_V1 *out_event_queue,
+    Dm1V1AmigaSaveF0435Receipt *out_receipt)
+{
+    Dm1V1AmigaSaveF0435Receipt receipt;
+    struct GameWorld_Compat candidate_world;
+    struct DM1_EventQueue_V1 candidate_queue;
+    unsigned int index;
+    int result;
+
+    if (!bytes || !out_world || !out_event_queue || out_world->dungeon ||
+        out_world->things || out_world->ownsDungeon) {
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_ARGUMENT;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&candidate_world, 0, sizeof(candidate_world));
+    memset(&candidate_queue, 0, sizeof(candidate_queue));
+    result = dm1_v1_original_save_amiga_f0435_receipt_bytes(bytes, size,
+                                                             &receipt);
+    if (result != DM1_V1_AMIGA_SAVE_F0435_OK) goto done;
+    /* C1 has no source-specific live ACTIVE_GROUP materializer yet.  Never
+     * erase a legitimate group to make a session start: an empty C1 is the
+     * only admissible shape until that owner is decoded. */
+    if (receipt.current_active_group_count != 0u ||
+        receipt.event_count > TIMELINE_QUEUE_CAPACITY) {
+        result = DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+        goto done;
+    }
+    result = dm1_v1_original_save_amiga_f0435_materialize_dungeon_world_bytes(
+        bytes, size, &candidate_world, NULL);
+    if (result != DM1_V1_AMIGA_SAVE_F0435_OK) goto done;
+    result = dm1_v1_original_save_amiga_f0435_materialize_party_bytes(
+        bytes, size, &candidate_world.party, NULL);
+    if (result != DM1_V1_AMIGA_SAVE_F0435_OK) goto done;
+    if (candidate_world.party.mapIndex < 0 ||
+        candidate_world.party.mapIndex >= candidate_world.dungeon->header.mapCount ||
+        candidate_world.party.mapX < 0 || candidate_world.party.mapY < 0 ||
+        candidate_world.party.mapX >=
+            candidate_world.dungeon->maps[candidate_world.party.mapIndex].width ||
+        candidate_world.party.mapY >=
+            candidate_world.dungeon->maps[candidate_world.party.mapIndex].height ||
+        candidate_world.party.direction < 0 || candidate_world.party.direction > 3 ||
+        candidate_world.party.championCount < 0 ||
+        candidate_world.party.championCount > CHAMPION_MAX_PARTY ||
+        candidate_world.party.activeChampionIndex < -1 ||
+        candidate_world.party.activeChampionIndex >= CHAMPION_MAX_PARTY) {
+        result = DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+        goto done;
+    }
+    result = dm1_v1_original_save_amiga_f0435_materialize_event_queue_bytes(
+        bytes, size, &candidate_queue, NULL);
+    if (result != DM1_V1_AMIGA_SAVE_F0435_OK) goto done;
+    if (!F0720_TIMELINE_Init_Compat(&candidate_world.timeline,
+                                    receipt.game_time)) {
+        result = DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+        goto done;
+    }
+    for (index = 0u; index < candidate_queue.eventCount; ++index) {
+        const uint16_t event_index = candidate_queue.timeline[index];
+        const struct DM1_Event_V1 *source;
+        struct TimelineEvent_Compat event;
+        if (event_index >= candidate_queue.maxEvents) {
+            result = DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+            goto done;
+        }
+        source = &candidate_queue.events[event_index];
+        /* ReDMCSB TIMELINE.C F0256 C53 uses only Type and low 24 bits of
+         * Map_Time.  Its otherwise populated B/C bytes in this real save
+         * are not adopted as invented watchdog state. */
+        if (source->type != DM1_EVENT_WATCHDOG ||
+            (source->map_time >> 24) != 0u) {
+            result = DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+            goto done;
+        }
+        memset(&event, 0, sizeof(event));
+        event.kind = TIMELINE_EVENT_WATCHDOG;
+        event.fireAtTick = source->map_time & 0x00ffffffu;
+        event.aux0 = DM1_EVENT_WATCHDOG;
+        event.aux2 = DM1_EVENT_WATCHDOG;
+        if (!F0721_TIMELINE_Schedule_Compat(&candidate_world.timeline,
+                                            &event)) {
+            result = DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+            goto done;
+        }
+    }
+    candidate_world.gameTick = receipt.game_time;
+    candidate_world.partyMapIndex = candidate_world.party.mapIndex;
+    candidate_world.newPartyMapIndex = candidate_world.party.mapIndex;
+    *out_world = candidate_world;
+    *out_event_queue = candidate_queue;
+    memset(&candidate_world, 0, sizeof(candidate_world));
+    result = DM1_V1_AMIGA_SAVE_F0435_OK;
+
+done:
+    if (out_receipt) *out_receipt = receipt;
+    if (result != DM1_V1_AMIGA_SAVE_F0435_OK) {
+        free_unpublished_world(&candidate_world);
+    }
+    return result;
 }
 
 const char *dm1_v1_original_save_amiga_f0435_result_name(int result)

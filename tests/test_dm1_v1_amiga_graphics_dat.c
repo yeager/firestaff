@@ -641,11 +641,15 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
         struct DungeonDatState_Compat dungeon;
         struct DungeonThings_Compat things;
         struct GameWorld_Compat materialized_world;
+        struct GameWorld_Compat session_world;
+        struct DM1_EventQueue_V1 session_queue;
         size_t group_offset;
         size_t projectile_offset;
         memset(&dungeon, 0, sizeof(dungeon));
         memset(&things, 0, sizeof(things));
         memset(&materialized_world, 0, sizeof(materialized_world));
+        memset(&session_world, 0, sizeof(session_world));
+        memset(&session_queue, 0, sizeof(session_queue));
         if (receipt.primary_f0435.dungeon_byte_count != 0u)
             tail = malloc(receipt.primary_f0435.dungeon_byte_count);
         CHECK(dm1_v1_original_save_amiga_f0435_dungeon_tail_bytes(
@@ -675,6 +679,24 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
               memcmp(materialized_world.dungeon->originalSaveTailBytes, tail,
                      tail_size) == 0,
               "real_save_primary_amiga_handoff_materializes_pristine_world");
+        CHECK(dm1_v1_original_save_amiga_f0435_materialize_session_bytes(
+                  receipt.primary_bytes, receipt.primary_size, &session_world,
+                  &session_queue, NULL) == DM1_V1_AMIGA_SAVE_F0435_OK &&
+              session_world.ownsDungeon == 1 && session_world.dungeon &&
+              session_world.things &&
+              session_world.gameTick == receipt.primary_f0435.game_time &&
+              session_world.party.championCount ==
+                  receipt.primary_f0435.party_champion_count &&
+              session_world.party.mapIndex == receipt.primary_f0435.party_map_index &&
+              session_world.party.mapX == receipt.primary_f0435.party_map_x &&
+              session_world.party.mapY == receipt.primary_f0435.party_map_y &&
+              session_world.timeline.count == receipt.primary_f0435.event_count &&
+              session_world.timeline.events[0].kind == TIMELINE_EVENT_WATCHDOG &&
+              session_world.timeline.events[0].fireAtTick == 300u &&
+              session_queue.eventCount == receipt.primary_f0435.event_count &&
+              session_queue.events[session_queue.timeline[0]].type ==
+                  DM1_EVENT_WATCHDOG,
+              "real_save_primary_amiga_handoff_materializes_atomic_session_candidate");
         group_offset = test_amiga_tail_thing_offset(tail, tail_size,
                                                      THING_TYPE_GROUP);
         projectile_offset = test_amiga_tail_thing_offset(
@@ -695,6 +717,10 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
         F0500_DUNGEON_FreeDatHeader_Compat(materialized_world.dungeon);
         free(materialized_world.things);
         free(materialized_world.dungeon);
+        F0504_DUNGEON_FreeThingData_Compat(session_world.things);
+        F0500_DUNGEON_FreeDatHeader_Compat(session_world.dungeon);
+        free(session_world.things);
+        free(session_world.dungeon);
         free(tail);
     }
     CHECK(receipt.backup_f0435_result == DM1_V1_AMIGA_SAVE_F0435_OK &&

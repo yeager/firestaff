@@ -35,9 +35,13 @@ Reviewed 2026-08-29. Only open work is listed here.
   now also materialize an isolated native party state (position, leader,
   champions, statistics, skills and inventory); C1/C3/C4 validate the
   original event heap's active membership and materialize a native event queue
-  (including the supplied save's WATCHDOG event). All five decrypted F0435
-  parts retain a shared in-memory boundary. Applying the complete
-  authenticated session atomically to M11 remains.
+  (including the supplied save's WATCHDOG event). The supplied save's complete
+  zero-active-group session now materializes atomically into one isolated
+  native candidate (world, party, queue and source-owned C53 timeline). It
+  rejects nonzero C1 groups and unsupported event families instead of
+  fabricating M10 state. All five decrypted F0435 parts retain a shared
+  in-memory boundary. Applying a complete authenticated session to M11
+  remains.
 - The supplied French DOS ZIP → `dungeon_master.exe` SFX package uses a
   non-solid RAR 2.0 (`unp_ver=0x14`) stream. Native RAR2 decoding is
   intentionally out of scope; the launcher reports it as unsupported rather

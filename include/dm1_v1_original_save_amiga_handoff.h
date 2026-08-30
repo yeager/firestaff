@@ -242,6 +242,22 @@ int dm1_v1_original_save_amiga_f0435_materialize_dungeon_world_bytes(
     struct GameWorld_Compat *out_world,
     Dm1V1AmigaSaveF0435Receipt *out_receipt);
 
+/* Materializes one authenticated A20 format-5 save into a single isolated
+ * native session candidate.  It joins the exact F0434 dungeon world, C0+C2
+ * party and C3+C4 event heap only after every component validates.  The
+ * destination must be zero-initialized.  It deliberately fails closed for
+ * C1 active groups and for event families without an Amiga-specific M10
+ * materializer; the supplied v2.0 save has zero active groups and one C53
+ * watchdog, which is source-owned and represented in both queues.  This is
+ * not an M11 live-session publisher: fields absent from the source are not
+ * invented merely to start a game.
+ */
+int dm1_v1_original_save_amiga_f0435_materialize_session_bytes(
+    const uint8_t *bytes, size_t size,
+    struct GameWorld_Compat *out_world,
+    struct DM1_EventQueue_V1 *out_event_queue,
+    Dm1V1AmigaSaveF0435Receipt *out_receipt);
+
 const char *dm1_v1_original_save_amiga_f0435_result_name(int result);
 
 #ifdef __cplusplus

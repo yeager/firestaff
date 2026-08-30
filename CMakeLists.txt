@@ -10617,6 +10617,7 @@ add_executable(firestaff_csb_v1_pc_real_asset_launch_probe
     src/csb/csb_v1_character_pc34_compat.c
     src/dm1/dm1_v1_input_command_queue_pc34_compat.c
     src/dm1/dm1_v1_event_timer_pc34_compat.c
+    src/memory/memory_timeline_pc34_compat.c
     src/shared/asset_find_by_hash.c
     src/shared/dungeon_decompressor_ftl.c
     src/shared/fs_portable_compat.c
@@ -60085,6 +60086,7 @@ add_executable(test_dm1_v1_amiga_graphics_dat
     src/dm1/dm1_v1_original_save_amiga_handoff.c
     src/dm1/dm1_v1_original_save_classifier.c
     src/dm1/dm1_v1_event_timer_pc34_compat.c
+    src/memory/memory_timeline_pc34_compat.c
     src/dm1/dm1_v1_inventory_pc34_compat.c
     src/dm1/dm1_v1_inventory_slot_placement_pc34_compat.c
     src/csb/csb_v1_reincarnation_penalty_pc34_compat.c
