@@ -41,4 +41,21 @@ if ! grep -Fq 'DM1 READY: gameId=dm1' <<<"$menu_output" ||
     exit 1
 fi
 
-printf '%s\n' 'PASS: manually unpacked authentic DM1 French DOS media reaches CLI, menu, and native IMG3 handoff'
+# The French original starts at (map=0,x=1,y=4,dir=2).  Its first native
+# forward input lands at y=3.  Check that source-owned movement after the
+# launcher handoff rather than only accepting a title/runtime receipt.
+gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --menu --game dm1 --platform pc --data-dir "$data_dir" \
+    --script enter,enter,enter,up --boot-probe --boot-probe-frames 500 --duration 0 2>&1) || {
+    printf '%s\n' "$gameplay_output" >&2
+    exit 1
+}
+if ! grep -Fq 'phase=dm1-runtime' <<<"$gameplay_output" ||
+   ! grep -Fq 'levelLoaded=1' <<<"$gameplay_output" ||
+   ! grep -Fq 'map=0 party=1,3,2' <<<"$gameplay_output"; then
+    printf '%s\n' "$gameplay_output" >&2
+    printf '%s\n' 'FAIL: authentic unpacked DM1 French DOS input did not reach native movement' >&2
+    exit 1
+fi
+
+printf '%s\n' 'PASS: manually unpacked authentic DM1 French DOS media reaches CLI, menu, IMG3 handoff, and native movement'
