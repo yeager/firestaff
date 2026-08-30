@@ -28,6 +28,16 @@ menu, New Game/first-movement and DOS read-only resume routes only; it does
 not promote untraced combat, cross-platform save writing, complete GUI or
 pixel/audio parity to playable status.
 
+The same local revalidation passed the DM1 and CSB native launch matrices
+against their supplied original media.  DM1 covered PC/DOS, Atari ST, Amiga
+and FM Towns archive routes, including nested original containers.  CSB
+covered Atari ST, Amiga ZIP-to-ADF and FM Towns English/Japanese routes.  The
+FM Towns CSB evidence now explicitly drives the original F31 chain
+`TITLE.ANM → SWITCHTW → CHTWE/CHTWJ → C004 Prison → MINI.DAT`, then checks the
+published live party pose and a source-owned turn.  These are bounded
+real-media launch and first-gameplay checks only; they do not imply full
+campaign, save, audio or pixel-capture parity.
+
 ## Dungeon Master
 
 | Platform | Status | Current scope | Open boundary |
@@ -47,7 +57,7 @@ pixel/audio parity to playable status.
 |---|---|---|---|
 | Atari ST | **Verified route** | Native STX title, 50 Hz `ANIMATE.SCR`/`ANIMATE.DAT` title path, FTLCODE handoff, first runtime HUD/viewport frame and start-menu CLI route are tested against supplied campaign media. The Atari presenter emits a nonzero FNV-1a receipt for its completed source-owned 224×136 indexed viewport; it remains separate from the PC F0128 session gate. The supplied nested retail archive is read directly as ZIP → ZIP → STX in memory; its `GRAPHICS.DAT` is hash-locked. | Broader campaign and capture parity. |
 | Amiga | **Verified route** | Native A31E and A31M ZIP → ADF routes read graphics, dungeon and required launcher/language programs in RAM. A31E verifies `APPB.FTL` / `BJELoad_R` and reaches `csb-entrance-0`; A31M now binds `TITL.DAT` as a sibling in the same selected virtual ADF, not a nearby host file. Its start-menu receipt reports that source-owned title boundary and hash before the language-selection route to `APPB.FTL`/`KAOS.FTL`. | Full campaign, save and visual parity. |
-| FM Towns | **Verified route** | English/Japanese native packages have separate data, startup, Utility Disk and input paths. Start-menu launch reports the source-bound F31 `TITLE.ANM` palette/frame handoff and nonzero frame hash; an explicit F0435 save instead reports its verified C03 executable handoff. | Wider gameplay, Champion Editor and CD-audio parity. |
+| FM Towns | **Verified route** | English/Japanese native packages have separate data, startup, Utility Disk and input paths. The authentic F31 title runs through `SWITCHTW`, the selected `CHTWE`/`CHTWJ` Game owner and the visible C004 Prison transition before `MINI.DAT` publishes its live party pose; the first source-owned turn is tested in both languages. Start-menu launch reports the source-bound `TITLE.ANM` palette/frame handoff and nonzero frame hash; an explicit F0435 save instead reports its verified C03 executable handoff. | Wider gameplay, Champion Editor and CD-audio parity. |
 | DOS / PC | **No original release** | CSB has no DOS/PC edition. `--platform pc` is closed before media selection; CSBWin is source/disassembly evidence only. | No PC runtime route is planned from CSBWin; it must not be presented as DOS support. |
 | PC-9801 | **Unsupported** | Preservation reference only. | None. |
 | X68000 | **Unsupported** | Preservation reference only. | None. |
