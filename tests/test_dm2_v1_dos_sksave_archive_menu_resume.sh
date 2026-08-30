@@ -10,18 +10,23 @@ if [ ! -x "$app" ] || [ ! -f "$archive" ]; then
 fi
 
 # Keep both the game and its original SKSAVE member in the same read-only ZIP.
-# The menu hands --save to DM2's source GAME_LOAD path; no user media may be
-# materialized beside the archive.
+# Direct CLI and the menu hand --save to DM2's source GAME_LOAD path; no user
+# media may be materialized beside the archive.
 save_path="$archive::data/sksave1.dat"
-output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
-    --menu --game dm2 --platform pc --data-dir "$archive" --save "$save_path" \
+probe_resume() {
+    output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" "$@" \
     --boot-probe --boot-probe-frames 5000 \
     --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
     --boot-probe-expect-map 11 --boot-probe-expect-party 15,10,2 \
     --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }
 
-case "$output" in
-    *'assetMd5=25247ede4dabb6a71e5dabdfbcd5907d'*'phase=dm2-runtime'*'levelLoaded=1'*'map=11'*'party=15,10,2'*'startedFromLauncher=1'*) ;;
-    *) printf '%s\n' "$output" >&2; exit 1 ;;
-esac
-echo 'PASS: native DM2 DOS ZIP start menu resumes archive::SKSAVE in memory'
+    case "$output" in
+        *'assetMd5=25247ede4dabb6a71e5dabdfbcd5907d'*'phase=dm2-runtime'*'levelLoaded=1'*'map=11'*'party=15,10,2'*'dm2RealAssets=1'*'dm2NoCoreFallbacks=1'*'dm2FallbackDraws=0'*'startedFromLauncher=1'*) ;;
+        *) printf '%s\n' "$output" >&2; exit 1 ;;
+    esac
+}
+
+probe_resume --game dm2 --platform pc --data-dir "$archive" --save "$save_path"
+probe_resume --menu --game dm2 --platform pc --data-dir "$archive" --save "$save_path"
+
+echo 'PASS: native DM2 DOS ZIP CLI and start menu resume archive::SKSAVE in memory'
