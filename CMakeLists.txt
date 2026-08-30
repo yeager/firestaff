@@ -15030,6 +15030,30 @@ if(BUILD_TESTING)
             NAME pass547_csb_v1_runtime_readiness_backfill
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass547_csb_v1_runtime_readiness_backfill.py
         )
+        # Evidence verifiers read reviewed source-tree receipts but must not
+        # overwrite them during CTest.  Give each invocation a build-local
+        # output so parallel CI remains a read-only check of tracked data.
+        set_tests_properties(csb_v1_parity_surface_matrix PROPERTIES
+            ENVIRONMENT "FIRESTAFF_VERIFICATION_OUTPUT_PATH=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/csb_v1_parity_surface_matrix.json")
+        set_tests_properties(csb_v1_completion_matrix PROPERTIES
+            ENVIRONMENT "FIRESTAFF_VERIFICATION_OUTPUT_PATH=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/csb_v1_completion_matrix.json")
+        set_tests_properties(csb_v1_experimental_launch_intent_fixture PROPERTIES
+            ENVIRONMENT "FIRESTAFF_VERIFICATION_OUTPUT_PATH=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/csb_v1_experimental_launch_intent_fixture.json")
+        set_tests_properties(csb_v1_quickplay_load_route_source_lock PROPERTIES
+            ENVIRONMENT "FIRESTAFF_VERIFICATION_OUTPUT_PATH=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/csb_v1_quickplay_load_route_source_lock.json")
+        set_tests_properties(csb_v1_m11_runtime_capture_boundary PROPERTIES
+            ENVIRONMENT "FIRESTAFF_VERIFICATION_OUTPUT_PATH=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/csb_v1_m11_runtime_capture_boundary.json")
+        set_tests_properties(pass547_csb_v1_runtime_readiness_backfill PROPERTIES
+            ENVIRONMENT "FIRESTAFF_VERIFICATION_OUTPUT_PATH=${CMAKE_CURRENT_BINARY_DIR}/ctest-verification/pass547_csb_v1_runtime_readiness_backfill.json")
+        set_tests_properties(
+            csb_v1_parity_surface_matrix
+            csb_v1_completion_matrix
+            csb_v1_experimental_launch_intent_fixture
+            csb_v1_quickplay_load_route_source_lock
+            csb_v1_m11_runtime_capture_boundary
+            pass547_csb_v1_runtime_readiness_backfill
+            PROPERTIES SKIP_RETURN_CODE 77
+        )
     endif()
 
     add_executable(test_touch_click_zone_matrix_pc34_compat_integration

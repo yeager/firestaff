@@ -9,12 +9,16 @@ runtime code.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "parity-evidence/verification/csb_v1_parity_surface_matrix.json"
+OUT = Path(os.environ.get(
+    "FIRESTAFF_VERIFICATION_OUTPUT_PATH",
+    str(ROOT / "parity-evidence/verification/csb_v1_parity_surface_matrix.json"),
+))
 REDMCSB = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
 CSB_SRC = Path.home() / ".openclaw/data/firestaff-csb-source/CSB/src"
 CSBWIN = Path.home() / ".openclaw/data/firestaff-csbwin-source/CSBWin"
@@ -144,6 +148,9 @@ def line_window(path: Path, window: str) -> str:
 
 
 def main() -> int:
+    if any(not path.exists() for path in (REDMCSB, CSB_SRC, CSBWIN, ORIG)):
+        print("SKIP: CSB parity-surface evidence requires the optional local source/capture corpus")
+        return 77
     failures: list[str] = []
 
     git_rows = []

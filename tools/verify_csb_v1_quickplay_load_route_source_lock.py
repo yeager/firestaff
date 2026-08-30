@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 import json
+import os
 import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / 'parity-evidence/verification/csb_v1_quickplay_load_route_source_lock.json'
+OUT = Path(os.environ.get(
+    'FIRESTAFF_VERIFICATION_OUTPUT_PATH',
+    str(ROOT / 'parity-evidence/verification/csb_v1_quickplay_load_route_source_lock.json'),
+))
 DOC = ROOT / 'docs/parity/PARITY_MATRIX_CSB_V1.md'
 COMPLETION_DOC = ROOT / 'docs/parity/COMPLETION_MATRIX.md'
 COMPLETION = ROOT / 'parity-evidence/verification/firestaff_completion_matrix.json'
@@ -51,6 +55,9 @@ def git_head(path):
         return None
 
 def main():
+    if any(not path.exists() for path in (REDMCSB, CSB_SRC, CSBWIN)):
+        print('SKIP: CSB QuickPlay evidence requires the optional local source corpus')
+        return 77
     failures = []
     git_rows = []
     for ident, (path, expected) in EXPECTED_GIT.items():

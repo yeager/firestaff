@@ -8,10 +8,14 @@ probe, while keeping original capture and pixel parity out of scope.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "parity-evidence/verification/csb_v1_m11_runtime_capture_boundary.json"
+OUT = Path(os.environ.get(
+    "FIRESTAFF_VERIFICATION_OUTPUT_PATH",
+    str(ROOT / "parity-evidence/verification/csb_v1_m11_runtime_capture_boundary.json"),
+))
 REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 MANIFEST = ROOT / "parity-evidence/verification/csb_v1_atari_asset_pair_manifest.json"
 
@@ -51,6 +55,9 @@ def load_json(path: Path) -> dict:
 
 
 def main() -> int:
+    if not REDMCSB.exists():
+        print("SKIP: CSB M11 evidence requires the optional local ReDMCSB corpus")
+        return 77
     failures: list[str] = []
     source_rows = []
 

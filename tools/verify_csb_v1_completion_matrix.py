@@ -8,11 +8,15 @@ credit. It does not claim full CSB runtime parity.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs/parity/PARITY_MATRIX_CSB_V1.md"
-OUT = ROOT / "parity-evidence/verification/csb_v1_completion_matrix.json"
+OUT = Path(os.environ.get(
+    "FIRESTAFF_VERIFICATION_OUTPUT_PATH",
+    str(ROOT / "parity-evidence/verification/csb_v1_completion_matrix.json"),
+))
 SURFACE = ROOT / "parity-evidence/verification/csb_v1_parity_surface_matrix.json"
 COMPLETION = ROOT / "parity-evidence/verification/firestaff_completion_matrix.json"
 CMAKE = ROOT / "CMakeLists.txt"
@@ -80,6 +84,10 @@ def line_window(path: Path, span: str) -> str:
     return "\n".join(lines[start - 1:end])
 
 def main() -> int:
+    required_external = (REDMCSB, ORIGINAL_CSB, GREATSTONE)
+    if any(not path.exists() for path in required_external):
+        print("SKIP: CSB completion evidence requires the optional local source/capture corpus")
+        return 77
     failures: list[str] = []
     doc = DOC.read_text(encoding="utf-8") if DOC.exists() else ""
     for criterion, (score, status) in CRITERIA.items():

@@ -9,10 +9,14 @@ runtime, gameplay, save, and pixel-parity claims remain separate gates.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "parity-evidence/verification/csb_v1_experimental_launch_intent_fixture.json"
+OUT = Path(os.environ.get(
+    "FIRESTAFF_VERIFICATION_OUTPUT_PATH",
+    str(ROOT / "parity-evidence/verification/csb_v1_experimental_launch_intent_fixture.json"),
+))
 MEDIA_MANIFEST = ROOT / "parity-evidence/verification/csb_v1_atari_asset_pair_manifest.json"
 MENU = ROOT / "src/ui/menu_startup_m12.c"
 DOC = ROOT / "docs/parity/PARITY_MATRIX_CSB_V1.md"
@@ -81,6 +85,9 @@ def line_window(path: Path, span: str) -> str:
 
 
 def main() -> int:
+    if any(not path.exists() for path in (REDMCSB, CSB_SRC, CSBWIN)):
+        print("SKIP: CSB launch-intent evidence requires the optional local source corpus")
+        return 77
     failures: list[str] = []
 
     try:

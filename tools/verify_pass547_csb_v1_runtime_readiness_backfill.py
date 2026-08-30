@@ -8,10 +8,14 @@ probe. This verifier keeps the source-lock boundary and non-claims explicit.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "parity-evidence/verification/pass547_csb_v1_runtime_readiness_backfill.json"
+OUT = Path(os.environ.get(
+    "FIRESTAFF_VERIFICATION_OUTPUT_PATH",
+    str(ROOT / "parity-evidence/verification/pass547_csb_v1_runtime_readiness_backfill.json"),
+))
 DOC = ROOT / "parity-evidence/pass547_csb_v1_runtime_readiness_backfill.md"
 CSB_MATRIX = ROOT / "docs/parity/PARITY_MATRIX_CSB_V1.md"
 COMPLETION = ROOT / "parity-evidence/verification/firestaff_completion_matrix.json"
@@ -54,6 +58,9 @@ def load_json(path: Path) -> dict:
 
 
 def main() -> int:
+    if not REDMCSB.exists():
+        print("SKIP: CSB runtime-readiness evidence requires the optional local ReDMCSB corpus")
+        return 77
     failures: list[str] = []
     rows: list[dict] = []
     for anchor in ANCHORS:
