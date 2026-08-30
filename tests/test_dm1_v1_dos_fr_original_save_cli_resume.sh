@@ -16,6 +16,12 @@ if [[ ! -x "$app" || ! -f "$save_path" || ! -f "$backup_path" ||
     exit 77
 fi
 
+# Every route below is read-only.  Retain hashes for both independent
+# originals so this regression fails if a future launcher path writes either
+# supplied save while probing it.
+save_hash_before=$(sha256sum "$save_path")
+backup_hash_before=$(sha256sum "$backup_path")
+
 probe_resume() {
     local output
     output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" "$@" 2>&1) || {
@@ -76,5 +82,27 @@ probe_input up 4,19,2
 probe_input down 4,17,2
 probe_input left 4,18,1
 probe_input right 4,18,3
+
+# At this authentic F0435 pose the cell in front is neither an attack target
+# nor a door.  `action` must therefore follow the native one-tick WAIT path:
+# retain the saved pose and advance only the runtime tick.  This records the
+# observed route without inventing an encounter, a door state, or a new save.
+action_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
+    --game dm1 --platform pc --data-dir "$data_dir" --save "$save_path" \
+    --boot-probe --boot-probe-expect-runtime \
+    --boot-probe-expect-level-loaded 1 --boot-probe-expect-map 5 \
+    --boot-probe-expect-party 4,18,2 \
+    --boot-probe-expect-runtime-tick-min 195222 \
+    --boot-probe-expect-runtime-tick-max 195222 \
+    --script action --duration 0 2>&1) || {
+    printf '%s\n' "$action_output" >&2
+    exit 1
+}
+grep -Fq 'inputs=1' <<<"$action_output" &&
+grep -Fq 'party=4,18,2' <<<"$action_output" &&
+grep -Fq 'runtimeTick=195222' <<<"$action_output"
+
+[[ "$save_hash_before" == "$(sha256sum "$save_path")" ]]
+[[ "$backup_hash_before" == "$(sha256sum "$backup_path")" ]]
 
 printf '%s\n' 'PASS: authentic French DM1 DMSAVE reaches the same native runtime through CLI and start menu'
