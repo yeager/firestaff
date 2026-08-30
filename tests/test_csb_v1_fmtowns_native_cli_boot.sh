@@ -23,6 +23,13 @@ if [ ! -e "$data_dir" ]; then
     echo "SKIP: local CSB FM Towns data is unavailable: $data_dir"
     exit 77
 fi
+if [ -f "$data_dir" ]; then
+    # The F31 title/game package is consumed directly from this archive.  Do
+    # not let a native start, input, or menu route rewrite supplied media.
+    media_hash_before=$(sha256sum "$data_dir")
+else
+    media_hash_before=""
+fi
 if [ "$language" = "ja" ]; then
     edition_arg="--csb-fmtowns-ja"
 elif [ "$language" != "en" ]; then
@@ -90,6 +97,41 @@ case "$movement_output" in
         exit 1
         ;;
 esac
+
+# Start each command from the authenticated F31 MINI.DAT session.  Run this
+# for EN and JP independently through the test's language-selected program
+# chain; neither set of observed receipts is borrowed from the other edition.
+# The blank strafe/action outcomes are deliberate source observations, not
+# permission to invent an object, a door, or a user save when one is absent.
+probe_runtime_input() {
+    input=$1
+    party=$2
+    input_output="$(SDL_VIDEODRIVER=dummy "$firestaff_cli" \
+        --game csb --data-dir "$data_dir" --platform fm-towns $edition_arg --boot-probe \
+        --boot-probe-frames 2000 --script "$input" \
+        --boot-probe-expect-phase inactive --boot-probe-expect-runtime \
+        --boot-probe-expect-level-loaded 1 --boot-probe-expect-map 0 \
+        --boot-probe-expect-party "$party" \
+        --boot-probe-expect-runtime-tick-max 0 --duration 0 2>&1)" || {
+        printf '%s\n' "$input_output" >&2
+        exit 1
+    }
+    case "$input_output" in
+        *"phase=inactive"*"levelLoaded=1"*"party=$party"*"champions=0"*) ;;
+        *)
+            echo "FAIL: native FM Towns $language input $input did not preserve its observed runtime receipt" >&2
+            printf '%s\n' "$input_output" >&2
+            exit 1
+            ;;
+    esac
+}
+probe_runtime_input up 9,1,2
+probe_runtime_input down 9,0,2
+probe_runtime_input left 9,0,1
+probe_runtime_input right 9,0,3
+probe_runtime_input strafe-left 9,0,2
+probe_runtime_input strafe-right 9,0,2
+probe_runtime_input action 9,0,2
 
 # An explicit F31 save is a distinct C03/F0435 route.  It must not replay
 # TITLE.ANM or pass the bytes to the Atari/CSBWin importer merely because the
@@ -190,6 +232,11 @@ if [ -n "$user_save" ]; then
             ;;
     esac
     echo "PASS: native CSB FM Towns start menu resumes the selected F0435 save"
+fi
+
+if [ -n "$media_hash_before" ] && [ "$media_hash_before" != "$(sha256sum "$data_dir")" ]; then
+    echo "FAIL: native FM Towns routes modified supplied game media" >&2
+    exit 1
 fi
 
 echo "PASS: native CSB FM Towns CLI title, MINI.DAT runtime/movement, and start-menu launch"
