@@ -7032,13 +7032,13 @@ void M12_AssetStatus_ScanGameWithOptions(
                 status, gameIndex, roots, rootCount) || csbFmtownsAdmitted;
         }
         m12_fill_game_versions(status,
-                               gameIndex,
-                               roots,
-                               rootCount,
-                               &dataDirResolvedToMatchedRoot,
-                               (requestedDataDir && requestedDataDir[0] != '\0'),
-                               (options && options->looseFilesOnly) ||
-                               csbFmtownsAdmitted);
+                                   gameIndex,
+                                   roots,
+                                   rootCount,
+                                   &dataDirResolvedToMatchedRoot,
+                                   (requestedDataDir && requestedDataDir[0] != '\0'),
+                                   (options && options->looseFilesOnly) ||
+                                   csbFmtownsAdmitted);
         if (strcmp(g_games[gameIndex].gameId, "csb") == 0) {
             (void)m12_admit_explicit_csb_atari_image(status, gameIndex,
                                                       requestedDataDir);

@@ -1,3 +1,39 @@
+# Firestaff v3.0.318
+
+## DM1
+
+### Fixed
+
+- `native archive dungeon loading`: Retained the original compact
+  per-column SquareFirstThing table when loading a verified `DUNGEON.DAT`
+  member directly from an archive in memory. This restores Hall of Champions
+  C127 mirror chains for archive-backed PC launches without extracting game
+  data to disk.
+- `DOS RAR 2.0 diagnostic`: Updated launch parsing to reject the unsupported
+  French DOS RAR 2.0 archive format with a direct diagnostic rather than an
+  ambiguous launch failure.
+
+## DM2
+
+### Fixed
+
+- `item projectile render-plan`: Corrected the release-safe material fixture
+  used by the native render-plan regression so optimized builds validate the
+  same source-owned pixels as debug builds.
+
+## Nexus
+
+### Fixed
+
+- `native study test linkage`: Updated CMake to bind the door, light, and
+  projectile unit studies to their concrete native implementations while
+  preserving the shipping fail-closed production boundary.
+
+## Changed
+
+- `Atari archive admission`: Reject nested cracked disk-image variants while
+  retaining verified direct Atari ST, STX, MSA, and ADF media.
+
 # Firestaff v3.0.317
 
 ## DM1

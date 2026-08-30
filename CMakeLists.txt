@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(Firestaff VERSION 3.0.317 LANGUAGES C)
+project(Firestaff VERSION 3.0.318 LANGUAGES C)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -62,6 +62,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_texture_decode.c"
         firestaff_zip_extract)
     add_test(NAME nexus_v1_dgn_texture_decode
         COMMAND test_nexus_v1_dgn_texture_decode)
+    set_tests_properties(nexus_v1_dgn_texture_decode PROPERTIES
+        SKIP_RETURN_CODE 77)
 endif()
 add_executable(test_csb_v1_startup_package_identity_pc34
     tests/test_csb_v1_startup_package_identity_pc34.c)
@@ -21294,8 +21296,13 @@ endif()
     target_include_directories(test_dm2_v1_sound_queue_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
-    if(NOT MSVC)
-        target_compile_options(test_dm2_v1_sound_queue_pc34_compat PRIVATE -Wall -Wextra -O2)
+    # This regression program uses assert() for every source contract.  A
+    # Release build normally defines NDEBUG, which would erase those calls
+    # and can turn its capacity-fill loop into a non-terminating loop.
+    if(MSVC)
+        target_compile_options(test_dm2_v1_sound_queue_pc34_compat PRIVATE /UNDEBUG)
+    else()
+        target_compile_options(test_dm2_v1_sound_queue_pc34_compat PRIVATE -Wall -Wextra -O2 -UNDEBUG)
     endif()
     target_link_libraries(test_dm2_v1_sound_queue_pc34_compat PRIVATE firestaff_m10 m)
     add_test(
@@ -33139,6 +33146,9 @@ endif()
     add_test(
         NAME dm1_v1_champion_panel_hud_status_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_hud_status_source_lock.py
+    )
+    set_tests_properties(dm1_v1_champion_panel_hud_status_source_lock PROPERTIES
+        SKIP_RETURN_CODE 77
     )
     add_test(
         NAME dm1_v1_champion_panel_hud_status_source_chain_audit
@@ -55878,6 +55888,40 @@ if(APPLE)
         endif()
     endforeach()
 endif()
+
+# Nexus keeps source-study mechanics out of the retail library until Saturn
+# producer/consumer evidence exists.  The focused unit tests below verify the
+# studies themselves, so link their concrete implementations directly rather
+# than accidentally exercising the production no-op adapters.
+if(BUILD_TESTING)
+    function(firestaff_add_nexus_study_sources target)
+        if(TARGET ${target})
+            target_sources(${target} PRIVATE ${ARGN})
+        endif()
+    endfunction()
+
+    firestaff_add_nexus_study_sources(test_nexus_v1_creature_ranged
+        src/nexus/nexus_v1_projectiles.c)
+    firestaff_add_nexus_study_sources(test_nexus_v1_doors
+        src/nexus/nexus_v1_doors.c)
+    firestaff_add_nexus_study_sources(test_nexus_v1_light
+        src/nexus/nexus_v1_light.c)
+    firestaff_add_nexus_study_sources(test_nexus_v1_throw
+        src/nexus/nexus_v1_throw.c
+        src/nexus/nexus_v1_projectiles.c)
+    firestaff_add_nexus_study_sources(test_nexus_v1_action_timer
+        src/nexus/nexus_v1_action_timer.c)
+    firestaff_add_nexus_study_sources(test_nexus_v1_traps
+        src/nexus/nexus_v1_traps.c)
+    firestaff_add_nexus_study_sources(test_nexus_v1_projectiles
+        src/nexus/nexus_v1_projectiles.c)
+    firestaff_add_nexus_study_sources(test_nexus_v1_tick_integration
+        src/nexus/nexus_v1_light.c
+        src/nexus/nexus_v1_action_timer.c
+        src/nexus/nexus_v1_doors.c
+        src/nexus/nexus_v1_traps.c
+        src/nexus/nexus_v1_projectiles.c)
+endif()
 # ReDMCSB FIO1 portable file-handle wrapper over the existing PC34 FILE.C
 # callback primitives. Floppy, format, lock, and drive operations are excluded.
 if(BUILD_TESTING)
@@ -59750,7 +59794,9 @@ target_include_directories(test_dm1_v1_fade_transition_pc34_compat PRIVATE ${CMA
 target_link_libraries(test_dm1_v1_fade_transition_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_fade_transition_pc34_compat COMMAND test_dm1_v1_fade_transition_pc34_compat)
 
-add_executable(test_dm1_v1_amiga_palette_fade tests/test_dm1_v1_amiga_palette_fade.c)
+add_executable(test_dm1_v1_amiga_palette_fade
+    tests/test_dm1_v1_amiga_palette_fade.c
+    src/dm1/dm1_v1_amiga_palette_fade.c)
 target_include_directories(test_dm1_v1_amiga_palette_fade PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_amiga_palette_fade PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_amiga_palette_fade COMMAND test_dm1_v1_amiga_palette_fade)
@@ -60035,6 +60081,7 @@ add_executable(test_dm1_v1_amiga_graphics_dat
     tests/test_dm1_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
+    src/dm1/dm1_v1_original_save_amiga_handoff.c
     src/dm1/dm1_v1_original_save_classifier.c
     src/shared/firestaff_amiga_adf.c
 )
@@ -60439,3 +60486,22 @@ foreach(_firestaff_target IN LISTS _firestaff_all_targets)
         endif()
     endif()
 endforeach()
+
+# A Release build normally defines NDEBUG.  That is appropriate for the
+# shipped binaries, but it must not erase assertions (or expressions placed
+# inside them) from the test executables themselves.  Keep the production
+# targets in their normal release mode while explicitly restoring assertions
+# for the CTest programs and focused runtime probes.
+if(BUILD_TESTING)
+    get_property(_firestaff_all_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
+    foreach(_firestaff_test_target IN LISTS _firestaff_all_targets)
+        if(_firestaff_test_target MATCHES "^test_" OR
+           _firestaff_test_target MATCHES "_probe$")
+            if(MSVC)
+                target_compile_options(${_firestaff_test_target} PRIVATE /UNDEBUG)
+            else()
+                target_compile_options(${_firestaff_test_target} PRIVATE -UNDEBUG)
+            endif()
+        endif()
+    endforeach()
+endif()

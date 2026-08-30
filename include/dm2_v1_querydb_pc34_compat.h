@@ -356,6 +356,24 @@ int32_t dm2_v1_query_0cee_2df4(int32_t creature_type,
 int32_t dm2_v1_query_0cee_2e35(int32_t creature_type,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 
+int32_t dm2_v1_query_creature_hp(int32_t creature_type,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+
+int32_t dm2_v1_query_creature_experience(int32_t creature_type,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+
+int32_t dm2_v1_query_creature_items_mask(int32_t creature_type,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+
+int32_t dm2_v1_query_gdat_water_value_from_record(int32_t record,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+
+int32_t dm2_v1_query_gdat_potion_spell_type_from_record(int32_t record,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+
+int32_t dm2_v1_query_gdat_potion_behaviour_from_record(int32_t record,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+
 /* -------------------------------------------------------------------------- */
 /* Player / hero queries (8)                                                  */
 /* -------------------------------------------------------------------------- */

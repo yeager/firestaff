@@ -109,6 +109,13 @@ typedef struct CSB_V1_BootProfile {
     size_t fmtowns_mini_size;
     uint8_t *fmtowns_title_bytes;
     size_t fmtowns_title_size;
+    /* F31 reuses the same ANIMTW player for the story and ending.  Keep the
+     * original CD members in bounded memory when the selected source is an
+     * archive, rather than falling back to an invented loose CD tree. */
+    uint8_t *fmtowns_story_bytes;
+    size_t fmtowns_story_size;
+    uint8_t *fmtowns_ending_bytes;
+    size_t fmtowns_ending_size;
     /* SWITCHTW.EXP follows TITLE.ANM on the same original CD image. */
     uint8_t *fmtowns_switch_bytes;
     size_t fmtowns_switch_size;

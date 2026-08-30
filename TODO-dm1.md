@@ -21,12 +21,14 @@ Reviewed 2026-08-29. Only open work is listed here.
   `DMGAMEG.DAT` session, but it is format-5/Amiga-compatible save material,
   not a Copper-list or framebuffer capture; it cannot alone identify the
   palette table active at a particular gameplay frame.
-- Decode the supplied Amiga format-5 `DMGAMEG.DAT`/`.BAK` save body through
-  its own source-verified F0435 route.  Its header is checksum-valid and is
-  retained inside the original ZIP → ZIP → ADF package, but it is not a PC34
-  envelope and must not be coerced through the PC34 importer.  Bind native
-  direct-CLI and start-menu resume only after a big-endian Amiga body trace
-  proves the save parts, dungeon tail, party and timeline ownership.
+- Materialize the already authenticated Amiga format-5 `DMGAMEG.DAT`/`.BAK`
+  session into a native Amiga world adapter.  The read-only ZIP → ZIP → ADF
+  route now verifies its header, all five F0435 encrypted parts (global data,
+  active groups, party and timeline), the four 464-byte portraits, and the
+  F0434 big-endian dungeon stream plus its original checksum.  It is not a
+  PC34 envelope and must never be coerced through the PC34 importer.  Bind
+  direct-CLI and start-menu resume only after that format-specific adapter
+  owns the loaded world and presentation state.
 - The supplied French DOS ZIP → `dungeon_master.exe` SFX package uses a
   non-solid RAR 2.0 (`unp_ver=0x14`) stream. Native RAR2 decoding is
   intentionally out of scope; the launcher reports it as unsupported rather

@@ -128,6 +128,14 @@ def excerpt(path: Path, start: int, end: int) -> str:
 
 
 def main() -> int:
+    # ReDMCSB is an optional, separately acquired source-evidence corpus. It
+    # is not product input and must not be fabricated or vendored merely to
+    # make a release job pass.  Mark this evidence-only gate skipped on hosts
+    # that do not have the corpus; the independent, repository-contained
+    # geometry audits still run.
+    if not REDMCSB.is_dir():
+        print("SKIP: optional ReDMCSB source-evidence corpus is not staged")
+        return 77
     problems: list[str] = []
     source_locks = []
     for spec in SOURCE_RANGES:

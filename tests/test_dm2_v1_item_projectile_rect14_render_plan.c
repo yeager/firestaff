@@ -8,6 +8,11 @@
 static int checks;
 static int passed;
 
+static const uint8_t k_static_item_pixels[16] = {
+    1, 2, 3, 4, 4, 3, 2, 1,
+    1, 2, 3, 4, 4, 3, 2, 1
+};
+
 #define CHECK(label, condition) do { \
     ++checks; \
     if (condition) { ++passed; } \
@@ -198,8 +203,7 @@ int main(void)
             materials[i].width = 4;
             materials[i].height = 4;
             materials[i].stride = 4;
-            materials[i].pixels = (const uint8_t[]){ 1, 2, 3, 4, 4, 3, 2, 1,
-                                                     1, 2, 3, 4, 4, 3, 2, 1 };
+            materials[i].pixels = k_static_item_pixels;
             materials[i].pixel_hash = 0u;
             for (int p = 0; p < 16; ++p) materials[i].palette16[p] = (uint8_t)(0x60 + p);
             materials[i].palette_hash = 0x50414c45u + (uint32_t)i;
@@ -228,7 +232,12 @@ int main(void)
             viewport.items[i].source_static_object_admitted = 1;
             viewport.items[i].source_static_object_cell = 3;
             viewport.items[i].source_static_object_pass = (int8_t)pass;
-            viewport.items[i].source_static_object_clip_rect_id = 7;
+            /* Use the exact DRAW_PUT_DOWN_ITEM clip identity for cell 3.
+             * The direct-material fixture must carry the same source receipt
+             * that production verifies before consuming a GDAT surface. */
+            viewport.items[i].source_static_object_clip_rect_id =
+                (uint16_t)(0x8000u + 5000u + 3u * 25u +
+                           (i == 0 ? 6u : 8u));
             viewport.items[i].source_static_object_raw_gfx256_hash =
                 materials[i].raw_gfx256_hash;
             viewport.items[i].source_static_object_raw_gfx256_receipt_hash =

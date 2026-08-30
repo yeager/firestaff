@@ -2250,6 +2250,18 @@ int csb_v1_fmtowns_game_user_save_handoff_open(
     memset(&retail, 0, sizeof(retail));
     if (!csb_v1_fmtowns_game_handoff_open(profile, language, &retail))
         return 0;
+    /* A packed CD has no writable host pathname for MINI.DAT.  Its verified
+     * F0435 bootstrap receipt already owns the exact C5 byte view, so a
+     * resume request that names that same archive locator must retain the
+     * receipt rather than trying to reopen `archive.zip::CDATA/MINI.DAT` as
+     * a loose user slot.  Real CSBGAME.DAT paths still take the validation
+     * and backup-recovery route below. */
+    if (retail.startup_mini_bytes &&
+        retail.startup_mini_bytes_size != 0u &&
+        strcmp(save_path, retail.startup_mini_path) == 0) {
+        *out_receipt = retail;
+        return 1;
+    }
     memset(&user_save, 0, sizeof(user_save));
     /* Keep the legacy F0435 handoff on the same canonical-slot recovery
      * route as M11.  Utility/file-picker callers must not bypass a validated

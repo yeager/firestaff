@@ -81,6 +81,27 @@ static uint8_t *load_file(const char *path, size_t *out_size)
     return bytes;
 }
 
+/* Packed F31 sources retain authenticated CDATA/CJDATA member bytes in the
+ * boot profile.  The archive locator is provenance, not a host pathname, so
+ * verification must consume that already-admitted view instead of trying to
+ * fopen `archive.zip::CDATA/GRAPHICS.DAT`. */
+static uint8_t *load_profile_graphics(const CSB_V1_BootProfile *profile,
+                                      size_t *out_size)
+{
+    uint8_t *bytes;
+
+    if (!profile || !out_size) return NULL;
+    if (!profile->fmtowns_graphics_bytes ||
+        profile->fmtowns_graphics_size == 0u)
+        return load_file(profile->graphics_path, out_size);
+    bytes = (uint8_t *)malloc(profile->fmtowns_graphics_size);
+    if (!bytes) return NULL;
+    memcpy(bytes, profile->fmtowns_graphics_bytes,
+           profile->fmtowns_graphics_size);
+    *out_size = profile->fmtowns_graphics_size;
+    return bytes;
+}
+
 static uint32_t fnv1a(const uint8_t *bytes, size_t size)
 {
     uint32_t hash = 2166136261u;
@@ -176,7 +197,7 @@ static int f31_visible_group_sprite_matches_img2(const M11_GameViewState *view)
         if (graphic == 0u) continue;
         asset = M11_AssetLoader_Load((M11_AssetLoader *)&view->assetLoader,
                                      graphic);
-        graphics = load_file(profile->graphics_path, &graphics_size);
+        graphics = load_profile_graphics(profile, &graphics_size);
         expected = (uint8_t *)malloc(640u * 400u);
         memset(&receipt, 0, sizeof(receipt));
         matches = asset && asset->loaded && asset->pixels && graphics &&
@@ -407,6 +428,15 @@ int main(void)
     spec.sourceId = "csb";
     spec.title = "CHAOS STRIKES BACK";
     spec.dataDir = data_dir;
+    /* Direct test launches bypass M12's menu handoff, which normally
+     * publishes the selected F31 graphics identity.  M11 must receive that
+     * same real-media identity before it can distinguish the English F31
+     * ZIP from a generic archive; Japanese also keeps its explicit switch.
+     * These are the hashes authenticated from the selected CD member above,
+     * not generated test media. */
+    spec.verifiedAssetMd5 = language == CSB_FMTOWNS_SWITCH_JAPANESE
+        ? "761d6fc588b31aeaaa9caf3725e111b9"
+        : "405b757038eea3c263e60f240854d6de";
     spec.csbFmtownsJapanese =
         language == CSB_FMTOWNS_SWITCH_JAPANESE;
     spec.rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
@@ -1877,7 +1907,7 @@ int main(void)
                   floor->loaded && floor->pixels,
               "F31 live viewport binds its native IMG2 graphics owner");
         if (live_profile && floor) {
-            graphics = load_file(live_profile->graphics_path, &graphics_size);
+            graphics = load_profile_graphics(live_profile, &graphics_size);
             expected = (uint8_t *)malloc(640u * 400u);
             memset(&expected_receipt, 0, sizeof(expected_receipt));
             CHECK(graphics && expected &&
@@ -1909,7 +1939,7 @@ int main(void)
         size_t family;
 
         if (live_profile) {
-            graphics = load_file(live_profile->graphics_path, &graphics_size);
+            graphics = load_profile_graphics(live_profile, &graphics_size);
             expected = (uint8_t *)malloc(640u * 400u);
         }
         /* ReDMCSB DEFS.H MEDIA720_F31E_F31J binds these F0115 first-native
@@ -1954,7 +1984,7 @@ int main(void)
          * button.  It must remain IMG2-owned rather than falling back to a
          * PC graphic table when a live F0128 frame encounters a door. */
         if (live_profile) {
-            graphics = load_file(live_profile->graphics_path, &graphics_size);
+            graphics = load_profile_graphics(live_profile, &graphics_size);
             expected = (uint8_t *)malloc(640u * 400u);
         }
         for (graphic = 439u; graphics && expected && graphic <= 453u;

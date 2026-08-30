@@ -68,6 +68,10 @@ int main(void)
         if (!f || fseek(f, 0, SEEK_END) != 0) {
             if (f) fclose(f);
             free(pixels);
+            if (level_index == 0) {
+                puts("SKIP: verified Nexus LEV corpus is not staged");
+                return 77;
+            }
             fprintf(stderr, "FAIL: LEV%02d.DGN missing\n", level_index);
             return 1;
         }

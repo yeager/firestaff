@@ -558,6 +558,23 @@ static int has_case_suffix(const char *path, const char *suffix) {
     return 1;
 }
 
+/* Preservation archives commonly carry both an original [!] disk and a
+ * cracked [cr ...] derivative.  A matching payload hash is not sufficient
+ * authority for the latter: never select a member explicitly labelled as a
+ * crack when traversing nested Atari media. */
+static int has_cracked_member_marker(const char *name) {
+    const char *p;
+    if (!name) return 0;
+    for (p = name; p[0] && p[1] && p[2]; ++p) {
+        char a = p[0], b = p[1], c = p[2];
+        if (a >= 'A' && a <= 'Z') a = (char)(a - 'A' + 'a');
+        if (b >= 'A' && b <= 'Z') b = (char)(b - 'A' + 'a');
+        if (c >= 'A' && c <= 'Z') c = (char)(c - 'A' + 'a');
+        if (a == '[' && b == 'c' && c == 'r') return 1;
+    }
+    return 0;
+}
+
 static int asset_casecmp(const char *a, const char *b) {
     while (a && b && *a && *b) {
         char ca = *a++;
@@ -3950,7 +3967,7 @@ static int scan_zip_nested_disk_by_md5_list(const char *zip_path,
             fread(name, 1U, name_len, fp) != name_len) break;
         name[name_len] = '\0';
         pos += 46U + name_len + extra_len + comment_len;
-        if (has_case_suffix(name, ".zip")) {
+        if (has_case_suffix(name, ".zip") && !has_cracked_member_marker(name)) {
             static const char *const disk_suffixes[] = { ".stx", ".st", ".msa" };
             size_t inner_size = 0U;
             uint8_t *inner = zip_load_entry_bytes(zip_path, name, &inner_size);
@@ -4007,8 +4024,9 @@ static int scan_zip_nested_disk_by_md5_list(const char *zip_path,
                 }
                 free(inner);
             }
-        } else if (is_adf_path(name) || is_atari_st_path(name) || is_atari_stx_path(name) ||
-                   is_atari_msa_path(name)) {
+        } else if (!has_cracked_member_marker(name) &&
+                   (is_adf_path(name) || is_atari_st_path(name) || is_atari_stx_path(name) ||
+                   is_atari_msa_path(name))) {
             size_t image_size = 0U;
             uint8_t *image = zip_load_entry_bytes(zip_path, name, &image_size);
             NestedDiskListMatch matches;

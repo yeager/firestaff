@@ -73,6 +73,8 @@ static void csb_v1_boot_free_fmtowns_media(CSB_V1_BootProfile *profile)
     free(profile->fmtowns_executable_bytes);
     free(profile->fmtowns_mini_bytes);
     free(profile->fmtowns_title_bytes);
+    free(profile->fmtowns_story_bytes);
+    free(profile->fmtowns_ending_bytes);
     free(profile->fmtowns_switch_bytes);
     free(profile->fmtowns_utility_bytes);
     for (index = 0u; index < profile->fmtowns_portrait_count; ++index)
@@ -87,6 +89,10 @@ static void csb_v1_boot_free_fmtowns_media(CSB_V1_BootProfile *profile)
     profile->fmtowns_mini_size = 0u;
     profile->fmtowns_title_bytes = NULL;
     profile->fmtowns_title_size = 0u;
+    profile->fmtowns_story_bytes = NULL;
+    profile->fmtowns_story_size = 0u;
+    profile->fmtowns_ending_bytes = NULL;
+    profile->fmtowns_ending_size = 0u;
     profile->fmtowns_switch_bytes = NULL;
     profile->fmtowns_switch_size = 0u;
     profile->fmtowns_utility_bytes = NULL;
@@ -2501,6 +2507,8 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
         const CSB_V1_FmtownsCdFile *executable_entry;
         const CSB_V1_FmtownsCdFile *mini_entry;
         const CSB_V1_FmtownsCdFile *title_entry;
+        const CSB_V1_FmtownsCdFile *story_entry;
+        const CSB_V1_FmtownsCdFile *ending_entry;
         const CSB_V1_FmtownsCdFile *switch_entry;
         const CSB_V1_FmtownsCdFile *utility_entry;
         const char *executable_name;
@@ -2540,6 +2548,8 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
                                                    executable_name);
         mini_entry = csb_v1_fmtowns_cd_find(&layout, directory, mini_name);
         title_entry = csb_v1_fmtowns_cd_find(&layout, NULL, "TITLE.ANM");
+        story_entry = csb_v1_fmtowns_cd_find(&layout, NULL, "STORY.ANM");
+        ending_entry = csb_v1_fmtowns_cd_find(&layout, NULL, "ENDING.ANM");
         switch_entry = csb_v1_fmtowns_cd_find(&layout, NULL, "SWITCHTW.EXP");
         utility_entry = csb_v1_fmtowns_cd_find(
             &layout, NULL,
@@ -2550,6 +2560,8 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
             executable_entry->is_directory || !mini_entry ||
             mini_entry->is_directory ||
             !title_entry || title_entry->is_directory ||
+            !story_entry || story_entry->is_directory ||
+            !ending_entry || ending_entry->is_directory ||
             !switch_entry || switch_entry->is_directory ||
             !utility_entry || utility_entry->is_directory ||
             !(profile->fmtowns_graphics_bytes =
@@ -2562,6 +2574,10 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
                   (uint8_t *)malloc(mini_entry->size)) ||
             !(profile->fmtowns_title_bytes =
                   (uint8_t *)malloc(title_entry->size)) ||
+            !(profile->fmtowns_story_bytes =
+                  (uint8_t *)malloc(story_entry->size)) ||
+            !(profile->fmtowns_ending_bytes =
+                  (uint8_t *)malloc(ending_entry->size)) ||
             !(profile->fmtowns_switch_bytes =
                   (uint8_t *)malloc(switch_entry->size)) ||
             !(profile->fmtowns_utility_bytes =
@@ -2581,6 +2597,12 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
             csb_v1_fmtowns_cd_extract(image, image_size, title_entry,
                                       profile->fmtowns_title_bytes,
                                       title_entry->size) != 0 ||
+            csb_v1_fmtowns_cd_extract(image, image_size, story_entry,
+                                      profile->fmtowns_story_bytes,
+                                      story_entry->size) != 0 ||
+            csb_v1_fmtowns_cd_extract(image, image_size, ending_entry,
+                                      profile->fmtowns_ending_bytes,
+                                      ending_entry->size) != 0 ||
             csb_v1_fmtowns_cd_extract(image, image_size, switch_entry,
                                       profile->fmtowns_switch_bytes,
                                       switch_entry->size) != 0 ||
@@ -2596,6 +2618,8 @@ static int csb_v1_boot_reselect_fmtowns_variant_pc34(
         profile->fmtowns_executable_size = executable_entry->size;
         profile->fmtowns_mini_size = mini_entry->size;
         profile->fmtowns_title_size = title_entry->size;
+        profile->fmtowns_story_size = story_entry->size;
+        profile->fmtowns_ending_size = ending_entry->size;
         profile->fmtowns_switch_size = switch_entry->size;
         profile->fmtowns_utility_size = utility_entry->size;
         profile->fmtowns_portrait_count = 0u;
@@ -8965,6 +8989,8 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
     free(profile->fmtowns_executable_bytes);
     free(profile->fmtowns_mini_bytes);
     free(profile->fmtowns_title_bytes);
+    free(profile->fmtowns_story_bytes);
+    free(profile->fmtowns_ending_bytes);
     free(profile->fmtowns_switch_bytes);
     free(profile->fmtowns_utility_bytes);
     {
@@ -8985,6 +9011,10 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
     profile->fmtowns_mini_size = 0u;
     profile->fmtowns_title_bytes = NULL;
     profile->fmtowns_title_size = 0u;
+    profile->fmtowns_story_bytes = NULL;
+    profile->fmtowns_story_size = 0u;
+    profile->fmtowns_ending_bytes = NULL;
+    profile->fmtowns_ending_size = 0u;
     profile->fmtowns_switch_bytes = NULL;
     profile->fmtowns_switch_size = 0u;
     profile->fmtowns_utility_bytes = NULL;
@@ -9281,6 +9311,8 @@ void csb_v1_boot_cleanup(CSB_V1_BootProfile *profile)
     free(profile->fmtowns_executable_bytes);
     free(profile->fmtowns_mini_bytes);
     free(profile->fmtowns_title_bytes);
+    free(profile->fmtowns_story_bytes);
+    free(profile->fmtowns_ending_bytes);
     free(profile->fmtowns_switch_bytes);
     free(profile->fmtowns_utility_bytes);
     {
@@ -9301,6 +9333,10 @@ void csb_v1_boot_cleanup(CSB_V1_BootProfile *profile)
     profile->fmtowns_mini_size = 0u;
     profile->fmtowns_title_bytes = NULL;
     profile->fmtowns_title_size = 0u;
+    profile->fmtowns_story_bytes = NULL;
+    profile->fmtowns_story_size = 0u;
+    profile->fmtowns_ending_bytes = NULL;
+    profile->fmtowns_ending_size = 0u;
     profile->fmtowns_switch_bytes = NULL;
     profile->fmtowns_switch_size = 0u;
     profile->fmtowns_utility_bytes = NULL;

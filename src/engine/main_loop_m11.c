@@ -6417,6 +6417,13 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         fprintf(stderr, "firestaff: --boot-probe requires --game <id>\n");
         return 2;
     }
+    if (runtimeOptions.gameId && strcmp(runtimeOptions.gameId, "dm1") == 0 &&
+        runtimeOptions.dataDir &&
+        strstr(runtimeOptions.dataDir, "Dungeon-Master_DOS_FR.zip") != NULL) {
+        fprintf(stderr,
+                "firestaff: RAR 2.0 NOT SUPPORTED: FRENCH DOS PACKAGE\n");
+        return 2;
+    }
     if (runtimeOptions.bootProbe) {
         char invalidToken[64];
         int invalidCount = M11_BootProbeScript_Validate(runtimeOptions.script,
@@ -6750,6 +6757,17 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             o->architectureOverride == M12_ARCH_PC) {
             fprintf(stderr,
                     "firestaff: CSB has no original DOS/PC release; use --platform amiga, atari-st, or fm-towns\n");
+            runRc = 2;
+            goto cleanup;
+        }
+        /* This authentic French package is a ZIP-wrapped DOS SFX whose
+         * payload uses RAR 2.0.  It is present media, but Firestaff has no
+         * native RAR 2.0 reader; reject before generic launch preparation
+         * can mistake the wrapper for a complete PC34 game. */
+        if (o->gameId && strcmp(o->gameId, "dm1") == 0 && o->dataDir &&
+            strstr(o->dataDir, "Dungeon-Master_DOS_FR.zip") != NULL) {
+            fprintf(stderr,
+                    "firestaff: RAR 2.0 NOT SUPPORTED: FRENCH DOS PACKAGE\n");
             runRc = 2;
             goto cleanup;
         }

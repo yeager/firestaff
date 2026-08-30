@@ -309,6 +309,34 @@ int M11_AssetLoader_InitCsbFmtownsFromFile(M11_AssetLoader* loader,
     return 1;
 }
 
+int M11_AssetLoader_InitCsbFmtownsFromBuffer(M11_AssetLoader* loader,
+                                             const unsigned char *data,
+                                             long size,
+                                             const char *sourcePath) {
+    CSB_V1_FmtownsGraphicsReceipt receipt;
+    unsigned char *owned;
+
+    if (!loader || !data || size <= 0 ||
+        (size_t)size > CSB_FMTOWNS_GRAPHICS_MAX_SIZE) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (csb_v1_fmtowns_graphics_receipt(data, (size_t)size, &receipt) != 0 ||
+        !receipt.is_fmtowns || receipt.item_count == 0u) return 0;
+    owned = (unsigned char *)malloc((size_t)size);
+    if (!owned) return 0;
+    memcpy(owned, data, (size_t)size);
+    memset(loader, 0, sizeof(*loader));
+    loader->csbFmtownsData = owned;
+    loader->csbFmtownsDataSize = size;
+    loader->csbFmtowns = 1;
+    loader->graphicCount = receipt.item_count;
+    loader->initialized = 1;
+    if (sourcePath && sourcePath[0]) {
+        snprintf(loader->graphicsDatPath, sizeof(loader->graphicsDatPath),
+                 "%s", sourcePath);
+    }
+    return 1;
+}
+
 void M11_AssetLoader_Shutdown(M11_AssetLoader* loader) {
     int i;
     if (!loader) {

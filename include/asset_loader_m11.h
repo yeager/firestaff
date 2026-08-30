@@ -130,6 +130,13 @@ int M11_AssetLoader_InitCsbAmigaFromFile(M11_AssetLoader* loader,
  * expanded by the F31-specific decoder. */
 int M11_AssetLoader_InitCsbFmtownsFromFile(M11_AssetLoader* loader,
                                            const char *graphicsDatPath);
+/* Archive-backed F31 media is already authenticated and held by the CSB
+ * profile in memory.  Retain a private copy for the renderer lifetime; this
+ * is not a materialization of game data to disk. */
+int M11_AssetLoader_InitCsbFmtownsFromBuffer(M11_AssetLoader* loader,
+                                             const unsigned char *data,
+                                             long size,
+                                             const char *sourcePath);
 
 /* Shut down and free all cached data. */
 void M11_AssetLoader_Shutdown(M11_AssetLoader* loader);

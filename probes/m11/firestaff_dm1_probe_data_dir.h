@@ -71,6 +71,13 @@ static const char *firestaff_dm1_probe_narrow_data_dir(const char *dataDir,
      * over a release root. */
     static const char *const kCandidates[] = {
         "DATA",
+        /* The shared workspace also carries the authenticated multilingual
+         * PC 3.4 installation beside the archive collection.  Runtime
+         * probes are invoked both with the workspace root and its dm1 child;
+         * keep this real-data location in the common resolver instead of
+         * letting individual probes render against an unloaded game view. */
+        "dm1-multilingual",
+        "../dm1-multilingual",
         "dm1",
         "dm1/DATA",
         "dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA",

@@ -1,4 +1,5 @@
 #include "dm1_v1_amiga_graphics_dat.h"
+#include "dm1_v1_original_save_amiga_handoff.h"
 #include "dm1_v1_original_save_classifier.h"
 #include "firestaff_amiga_adf.h"
 #include "firestaff_zip_extract.h"
@@ -119,6 +120,14 @@ typedef struct {
     size_t byte_count;
     int primary_classified;
     DM1OriginalSaveClassifyResult primary;
+    int primary_f0435_result;
+    Dm1V1AmigaSaveF0435Receipt primary_f0435;
+    int primary_global_result;
+    Dm1V1AmigaSaveF0435GlobalData primary_global;
+    int primary_party_result;
+    uint8_t primary_party[DM1_V1_AMIGA_SAVE_F0435_PARTY_BYTES];
+    int backup_f0435_result;
+    Dm1V1AmigaSaveF0435Receipt backup_f0435;
 } RealSaveDiskReceipt;
 
 static int real_save_disk_visitor(const char *name, const uint8_t *bytes,
@@ -141,6 +150,51 @@ static int real_save_disk_visitor(const char *name, const uint8_t *bytes,
                (unsigned)receipt->primary.dungeon_id,
                receipt->primary.header_checksum_ok,
                receipt->primary.reason);
+        receipt->primary_f0435_result =
+            dm1_v1_original_save_amiga_f0435_receipt_bytes(
+                bytes, size, &receipt->primary_f0435);
+        receipt->primary_global_result =
+            dm1_v1_original_save_amiga_f0435_global_data_bytes(
+                bytes, size, &receipt->primary_global, NULL);
+        receipt->primary_party_result =
+            dm1_v1_original_save_amiga_f0435_party_part_bytes(
+                bytes, size, receipt->primary_party, NULL);
+        printf("AMIGA-SAVE-DISK primary F0435=%s parts=%u body_end=%u "
+               "trailing=%u time=%u party=%u pose=%d,%d,%d map=%d events=%u/%u groups=%u/%u "
+               "tail=%d dungeon=%u+%u maps=%u columns=%u raw=%u checksum=%04x/%04x\n",
+               dm1_v1_original_save_amiga_f0435_result_name(
+                   receipt->primary_f0435_result),
+               (unsigned)receipt->primary_f0435.parts_authenticated,
+               (unsigned)receipt->primary_f0435.authenticated_body_end_offset,
+               (unsigned)receipt->primary_f0435.trailing_source_byte_count,
+               (unsigned)receipt->primary_f0435.game_time,
+               (unsigned)receipt->primary_f0435.party_champion_count,
+               (int)receipt->primary_f0435.party_map_x,
+               (int)receipt->primary_f0435.party_map_y,
+               (int)receipt->primary_f0435.party_direction,
+               (int)receipt->primary_f0435.party_map_index,
+               (unsigned)receipt->primary_f0435.event_count,
+               (unsigned)receipt->primary_f0435.event_maximum_count,
+               (unsigned)receipt->primary_f0435.current_active_group_count,
+               (unsigned)receipt->primary_f0435.maximum_active_group_count,
+               receipt->primary_f0435.tail_authenticated,
+               (unsigned)receipt->primary_f0435.dungeon_offset,
+               (unsigned)receipt->primary_f0435.dungeon_byte_count,
+               (unsigned)receipt->primary_f0435.dungeon_map_count,
+               (unsigned)receipt->primary_f0435.dungeon_column_count,
+               (unsigned)receipt->primary_f0435.dungeon_raw_map_byte_count,
+               (unsigned)receipt->primary_f0435.dungeon_expected_checksum,
+               (unsigned)receipt->primary_f0435.dungeon_actual_checksum);
+    } else if (strcmp(name, "DMGAMEG.BAK") == 0) {
+        receipt->backup_f0435_result =
+            dm1_v1_original_save_amiga_f0435_receipt_bytes(
+                bytes, size, &receipt->backup_f0435);
+        printf("AMIGA-SAVE-DISK backup F0435=%s parts=%u body_end=%u trailing=%u\n",
+               dm1_v1_original_save_amiga_f0435_result_name(
+                   receipt->backup_f0435_result),
+               (unsigned)receipt->backup_f0435.parts_authenticated,
+               (unsigned)receipt->backup_f0435.authenticated_body_end_offset,
+               (unsigned)receipt->backup_f0435.trailing_source_byte_count);
     }
     return 0;
 }
@@ -418,6 +472,41 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
           "real_save_primary_header_checksum");
     CHECK(receipt.primary.shape == DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_COMPAT_FAMILY,
           "real_save_primary_compat_family");
+    CHECK(receipt.primary_f0435_result == DM1_V1_AMIGA_SAVE_F0435_OK,
+          "real_save_primary_f0435_body");
+    CHECK(receipt.primary_global_result == DM1_V1_AMIGA_SAVE_F0435_OK &&
+          receipt.primary_global.game_time == receipt.primary_f0435.game_time &&
+          receipt.primary_global.party_champion_count ==
+              receipt.primary_f0435.party_champion_count &&
+          receipt.primary_global.party_map_x == receipt.primary_f0435.party_map_x &&
+          receipt.primary_global.party_map_y == receipt.primary_f0435.party_map_y &&
+          receipt.primary_global.party_direction ==
+              receipt.primary_f0435.party_direction &&
+          receipt.primary_global.party_map_index ==
+              receipt.primary_f0435.party_map_index &&
+          receipt.primary_global.event_count == receipt.primary_f0435.event_count &&
+          receipt.primary_global.event_maximum_count ==
+              receipt.primary_f0435.event_maximum_count,
+          "real_save_primary_plaintext_global_matches_authenticated_receipt");
+    CHECK(receipt.primary_party_result == DM1_V1_AMIGA_SAVE_F0435_OK &&
+          receipt.primary_party[0] != 0u,
+          "real_save_primary_plaintext_amiga_c2_party_part");
+    CHECK(receipt.primary_f0435.header_authenticated == 1 &&
+          receipt.primary_f0435.body_authenticated == 1 &&
+          receipt.primary_f0435.tail_authenticated == 1 &&
+          receipt.primary_f0435.parts_authenticated == 5u &&
+          receipt.primary_f0435.portrait_byte_count == 1856u &&
+          receipt.primary_f0435.dungeon_map_count == 14u &&
+          receipt.primary_f0435.dungeon_column_count == 412u &&
+          receipt.primary_f0435.dungeon_expected_checksum ==
+              receipt.primary_f0435.dungeon_actual_checksum,
+          "real_save_primary_f0435_and_f0434");
+    CHECK(receipt.backup_f0435_result == DM1_V1_AMIGA_SAVE_F0435_OK &&
+          receipt.backup_f0435.parts_authenticated == 5u &&
+          receipt.backup_f0435.tail_authenticated == 1 &&
+          receipt.backup_f0435.dungeon_expected_checksum ==
+              receipt.backup_f0435.dungeon_actual_checksum,
+          "real_save_backup_f0435_and_f0434");
 }
 
 int main(void) {

@@ -949,6 +949,23 @@ int F0504_DUNGEON_LoadTailBuffer_Compat(
         }
         off += (int)state->header.mapCount * DUNGEON_MAP_DESC_SIZE;
         if (off + totalColumns * 2 + 2 > byteCount) goto fail;
+        /* DUNGEON.C F0160 indexes SquareFirstThings through this compact
+         * per-column prefix table.  The file-backed loader retains it, but
+         * the archive-buffer path used to skip it entirely and then fell
+         * back to dense mapX*height+mapY indexing.  That aliases real
+         * chains -- most visibly all Hall of Champions C127 mirrors -- when
+         * launching a ZIP member without extracting it. */
+        state->dungeonColumnCount = totalColumns;
+        if (totalColumns > 0) {
+                state->columnsCumulativeSquareFirstThingCount =
+                        (unsigned short*)calloc((size_t)totalColumns,
+                                                sizeof(unsigned short));
+                if (!state->columnsCumulativeSquareFirstThingCount) goto fail;
+                for (mapIndex = 0; mapIndex < totalColumns; ++mapIndex) {
+                        state->columnsCumulativeSquareFirstThingCount[mapIndex] =
+                                read_u16_le_mem(bytes + off + mapIndex * 2);
+                }
+        }
         off += totalColumns * 2;
 
         things->squareFirstThingCount =

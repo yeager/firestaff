@@ -64,7 +64,7 @@ SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
 # the actual M11 movement route rather than only a title/startup receipt.
 gameplay_output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
     --menu --game dm1 --platform pc --data-dir "$archive" --boot-probe --boot-probe-frames 500 \
-    --script "$menu_original",up --duration 0 2>&1) || {
+    --script up --duration 0 2>&1) || {
     printf '%s\n' "$gameplay_output" >&2
     exit 1
 }

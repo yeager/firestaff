@@ -390,6 +390,7 @@ static int m11_csb_v22_materialize_artpack(const char *artpack_path,
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #if defined(_WIN32)
 #include <windows.h>
 #else
@@ -3801,7 +3802,8 @@ static int m11_csb_install_runtime_source_graphic(
      * though their authenticated Amiga source records are present.  Do not
      * manufacture a converted buffer or borrow a PC surface: accept only
      * the loader's directly decoded native record. */
-    if (mutable_state->assetLoader.csbAmiga) {
+    if (mutable_state->assetLoader.csbAmiga ||
+        mutable_state->assetLoader.csbFmtowns) {
         amiga_asset = M11_AssetLoader_Load(&mutable_state->assetLoader,
                                            graphic_index);
         installed = amiga_asset && amiga_asset->loaded && amiga_asset->pixels &&
@@ -9479,26 +9481,33 @@ static int m11_csb_read_fmtowns_cdda_media(const CSB_V1_BootProfile *profile,
                                              out_image, out_image_size);
 }
 
+static int m11_csb_load_fmtowns_m653_font_buffer(const uint8_t *graphics,
+                                                 size_t graphics_size,
+                                                 M11_FontState *font)
+{
+    uint8_t raw_font[M11_FONT_BITMAP_BYTES];
+    CSB_V1_FmtownsItemDecodeReceipt raw_receipt;
+
+    if (!graphics || graphics_size == 0u || !font ||
+        graphics_size > CSB_FMTOWNS_GRAPHICS_MAX_SIZE ||
+        !csb_v1_fmtowns_graphics_copy_raw_item(
+            graphics, graphics_size, 695u, raw_font, sizeof(raw_font),
+            &raw_receipt) || !raw_receipt.valid ||
+        raw_receipt.stream_byte_count != M11_FONT_BITMAP_BYTES) return 0;
+    return M11_Font_LoadFromRawBitmap(font, 695, raw_font, sizeof(raw_font));
+}
+
 static int m11_csb_load_fmtowns_m653_font(const char *graphics_path,
                                           M11_FontState *font)
 {
     uint8_t *graphics = NULL;
     size_t graphics_size = 0u;
-    uint8_t raw_font[M11_FONT_BITMAP_BYTES];
-    CSB_V1_FmtownsItemDecodeReceipt raw_receipt;
     int result = 0;
 
     if (!graphics_path || !graphics_path[0] || !font) return 0;
-    if (!asset_read_path_alloc(graphics_path, &graphics, &graphics_size) ||
-        !graphics || graphics_size == 0u ||
-        graphics_size > CSB_FMTOWNS_GRAPHICS_MAX_SIZE ||
-        !csb_v1_fmtowns_graphics_copy_raw_item(
-            graphics, graphics_size, 695u, raw_font, sizeof(raw_font),
-            &raw_receipt) || !raw_receipt.valid ||
-        raw_receipt.stream_byte_count != M11_FONT_BITMAP_BYTES) goto done;
-    result = M11_Font_LoadFromRawBitmap(font, 695, raw_font,
-                                        sizeof(raw_font));
-done:
+    if (asset_read_path_alloc(graphics_path, &graphics, &graphics_size))
+        result = m11_csb_load_fmtowns_m653_font_buffer(
+            graphics, graphics_size, font);
     free(graphics);
     return result;
 }
@@ -9664,7 +9673,6 @@ static void m11_csb_update_fmtowns_game_music(M11_GameViewState *state)
         state->csbFmtownsGameMusicCountdown = 100;
     }
     if (state->csbFmtownsGameMusicPending &&
-        !state->csbFmtownsCddaPlaying &&
         selected_track != 0u &&
         selected_track != state->csbFmtownsGameMusicPlayingTrack &&
         state->csbFmtownsGameMusicCountdown-- <= 0) {
@@ -11064,23 +11072,33 @@ static int m11_csb_bind_fmtowns_title(M11_GameViewState *state,
     long file_size;
     size_t bytes_read;
     int step_result;
-    int packed_title;
+    const uint8_t *packed_bytes = NULL;
+    size_t packed_size = 0u;
 
     if (!state || !state->csbBootProfile || !animation_name) return 0;
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
-    packed_title = strcmp(animation_name, "TITLE.ANM") == 0 &&
-        profile->fmtowns_title_bytes && profile->fmtowns_title_size != 0u;
+    if (strcmp(animation_name, "TITLE.ANM") == 0) {
+        packed_bytes = profile->fmtowns_title_bytes;
+        packed_size = profile->fmtowns_title_size;
+    } else if (strcmp(animation_name, "STORY.ANM") == 0) {
+        packed_bytes = profile->fmtowns_story_bytes;
+        packed_size = profile->fmtowns_story_size;
+    } else if (strcmp(animation_name, "ENDING.ANM") == 0) {
+        packed_bytes = profile->fmtowns_ending_bytes;
+        packed_size = profile->fmtowns_ending_size;
+    }
     if (!m11_csb_is_fmtowns_profile(profile) ||
-        (!profile->asset_root[0] && !packed_title))
+        (!profile->asset_root[0] && (!packed_bytes || packed_size == 0u)))
         return 0;
     m11_csb_release_fmtowns_title(state);
     m11_csb_release_fmtowns_switch(state);
     m11_dm2_release_fmtowns_title(state);
-    if (packed_title) {
+    if (packed_bytes && packed_size != 0u) {
         file = NULL;
-        file_size = (long)profile->fmtowns_title_size;
+        if (packed_size > (size_t)LONG_MAX) return 0;
+        file_size = (long)packed_size;
         state->csbFmtownsTitleBytes = (uint8_t *)malloc(
-            profile->fmtowns_title_size);
+            packed_size);
     } else {
         if (snprintf(path, sizeof(path), "%s/%s", profile->asset_root,
                      animation_name) < 0 ||
@@ -11098,10 +11116,9 @@ static int m11_csb_bind_fmtowns_title(M11_GameViewState *state,
         if (file) fclose(file);
         return 0;
     }
-    if (packed_title) {
-        memcpy(state->csbFmtownsTitleBytes, profile->fmtowns_title_bytes,
-               profile->fmtowns_title_size);
-        bytes_read = profile->fmtowns_title_size;
+    if (packed_bytes && packed_size != 0u) {
+        memcpy(state->csbFmtownsTitleBytes, packed_bytes, packed_size);
+        bytes_read = packed_size;
     } else {
         bytes_read = fread(state->csbFmtownsTitleBytes, 1u, (size_t)file_size,
                            file);
@@ -12467,8 +12484,15 @@ static int m11_csb_apply_boot_runtime_receipt(
     if (receipt->bind_graphics_to_runtime_asset_loader &&
         receipt->graphics_path[0] != '\0' &&
         m11_csb_is_fmtowns_profile(receipt->profile) &&
-        M11_AssetLoader_InitCsbFmtownsFromFile(&state->assetLoader,
-                                               receipt->graphics_path)) {
+        ((receipt->profile->fmtowns_graphics_bytes &&
+          receipt->profile->fmtowns_graphics_size <= (size_t)LONG_MAX)
+             ? M11_AssetLoader_InitCsbFmtownsFromBuffer(
+                   &state->assetLoader,
+                   receipt->profile->fmtowns_graphics_bytes,
+                   (long)receipt->profile->fmtowns_graphics_size,
+                   receipt->graphics_path)
+             : M11_AssetLoader_InitCsbFmtownsFromFile(
+                   &state->assetLoader, receipt->graphics_path))) {
         /* F31 GRAPHICS.DAT has the PC-style 0x8001 table envelope but IMG2
          * record streams. ReDMCSB IMAGE2.C F0689 is its decoder; do not let
          * the shared PC IMG3 loader claim the matching header. */
@@ -12643,8 +12667,16 @@ static int m11_csb_apply_boot_runtime_receipt(
             /* ReDMCSB TEXT.C:2019-2022 reads F31 M653 with
              * NOT_EXPANDED. Its 768 source bytes must never be sent through
              * IMG2, which is reserved for drawable F31 records. */
-            state->originalFontAvailable = m11_csb_load_fmtowns_m653_font(
-                receipt->profile->graphics_path, &state->originalFont);
+            state->originalFontAvailable =
+                receipt->profile->fmtowns_graphics_bytes &&
+                receipt->profile->fmtowns_graphics_size != 0u
+                    ? m11_csb_load_fmtowns_m653_font_buffer(
+                          receipt->profile->fmtowns_graphics_bytes,
+                          receipt->profile->fmtowns_graphics_size,
+                          &state->originalFont)
+                    : m11_csb_load_fmtowns_m653_font(
+                          receipt->profile->graphics_path,
+                          &state->originalFont);
         }
         /* ReDMCSB DEFS.H M653 resolves to C695 for the PC3.4 CSB media.
          * Do not let the DM1-oriented generic loader define CSB glyphs. */
@@ -28245,9 +28277,17 @@ static int m11_csb_fmtowns_load_user_save_path(M11_GameViewState *state,
      * header, five obfuscated save parts and dungeon tail as one
      * transaction.  A genuine user slot can therefore resume, while F0433
      * remains closed until byte-correct native writing is proven. */
-    if (!csb_v1_fmtowns_game_user_save_open_or_restore_backup(
-            profile, &state->csbFmtownsGameHandoffReceipt, path, &user_save) ||
-        !csb_v1_fmtowns_game_load_user_save_state(&user_save, &startup_state) ||
+    if (((state->csbFmtownsGameHandoffReceipt.startup_mini_bytes &&
+          state->csbFmtownsGameHandoffReceipt.startup_mini_bytes_size != 0u &&
+          strcmp(path,
+                 state->csbFmtownsGameHandoffReceipt.startup_mini_path) == 0)
+             ? csb_v1_fmtowns_game_load_startup_state(
+                   &state->csbFmtownsGameHandoffReceipt, &startup_state)
+             : (csb_v1_fmtowns_game_user_save_open_or_restore_backup(
+                    profile, &state->csbFmtownsGameHandoffReceipt, path,
+                    &user_save) &&
+                csb_v1_fmtowns_game_load_user_save_state(
+                    &user_save, &startup_state))) ||
         !csb_v1_fmtowns_game_apply_startup_state(&startup_state,
                                                   &profile->runtime)) {
         csb_v1_fmtowns_game_startup_state_free(&startup_state);
@@ -28286,7 +28326,10 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
         m11_dm2_clear_unbound_feedback(state);
         return 0;
     }
-    if (m11_dm1_hoc_menu_route_blocks_normal_input(state)) {
+    if (m11_dm1_hoc_menu_route_blocks_normal_input(state) &&
+        !(state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+          state->csbBootProfile && m11_csb_is_fmtowns_profile(
+              (const CSB_V1_BootProfile *)state->csbBootProfile))) {
         /* ReDMCSB COMMAND.C F0380 keeps normal command surfaces out while
          * G0299_ui_CandidateChampionOrdinal owns the C040 panel.  QuickSave
          * is intentionally allowed to persist live C040 state, but direct
@@ -28303,6 +28346,33 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
     } else if (!M11_GameView_GetQuickSavePath(state, path, sizeof(path))) {
         m11_set_status(state, "LOAD", "SAVE PATH TOO LONG");
         return 0;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        state->csbBootProfile && m11_csb_is_fmtowns_profile(
+            (const CSB_V1_BootProfile *)state->csbBootProfile) &&
+        state->csbFmtownsGameHandoffReceipt.startup_mini_bytes &&
+        state->csbFmtownsGameHandoffReceipt.startup_mini_bytes_size != 0u &&
+        strcmp(path,
+               state->csbFmtownsGameHandoffReceipt.startup_mini_path) == 0) {
+        CSB_V1_FmtownsStartupState startup_state;
+        CSB_V1_BootProfile *profile =
+            (CSB_V1_BootProfile *)state->csbBootProfile;
+
+        memset(&startup_state, 0, sizeof(startup_state));
+        if (!csb_v1_fmtowns_game_load_startup_state(
+                &state->csbFmtownsGameHandoffReceipt, &startup_state) ||
+            !csb_v1_fmtowns_game_apply_startup_state(&startup_state,
+                                                      &profile->runtime)) {
+            csb_v1_fmtowns_game_startup_state_free(&startup_state);
+            m11_set_status(state, "LOAD", "FM TOWNS SAVE INVALID");
+            return 0;
+        }
+        csb_v1_fmtowns_game_startup_state_free(&startup_state);
+        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+        state->loadGameTick = profile->runtime.game_time;
+        state->lastSaveTick = profile->runtime.game_time;
+        m11_set_status(state, "LOAD", "CSB QUICKSAVE RESTORED");
+        return 1;
     }
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         uint32_t game_time = 0U;

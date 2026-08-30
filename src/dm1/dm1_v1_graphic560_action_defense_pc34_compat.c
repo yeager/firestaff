@@ -1,5 +1,6 @@
 #include "firestaff/dm1/v1/G0495_pc34_compat.h"
 
+#include <stdint.h>
 #include <string.h>
 
 /*
@@ -20,7 +21,10 @@ enum {
     kOutOfRange = -1
 };
 
-static const char s_g0495[kTableSize] = {
+/* The original G0495 table is signed: negative entries are action-defense
+ * penalties.  `char` is unsigned on some supported targets (including
+ * AArch64), so use the source-width type explicitly. */
+static const int8_t s_g0495[kTableSize] = {
 0, 36, 0, 0, -4, -10, -10, -5, 4, -20, -15, -10, 16, 5, -15, -17, -5, 29, 10, -10, -7, -7, -7, -7, -7, -5, -15, -9, 4, 0, 0, 5, -15, -7, -7, 8, -20, -5, 0, -15, -7, -4, 0, 8
 };
 
@@ -65,13 +69,11 @@ dm1_v1_graphic560_action_defense_run_pc34(
     }
     out->tableSize = kTableSize;
 
-    for (i = 0; i < kTableSize; ++i) {
-        if (s_g0495[i] > 127 || s_g0495[i] < -128) all_in_byte_range = 0;
-    }
+    /* int8_t makes the source table's signed-byte width explicit. */
     out->allInByteRange = all_in_byte_range;
 
     {
-        static const char kExpected[kTableSize] = {
+        static const int8_t kExpected[kTableSize] = {
 0, 36, 0, 0, -4, -10, -10, -5, 4, -20, -15, -10, 16, 5, -15, -17, -5, 29, 10, -10, -7, -7, -7, -7, -7, -5, -15, -9, 4, 0, 0, 5, -15, -7, -7, 8, -20, -5, 0, -15, -7, -4, 0, 8
         };
         for (i = 0; i < kTableSize; ++i) {
