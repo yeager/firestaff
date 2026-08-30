@@ -4,6 +4,10 @@ Reviewed 2026-08-26. Completed work only.
 
 - Native CUE-media corpus checks read the supplied Saturn title resources,
   SAL, MAP, SLEV and raw data without a runtime emulator dependency.
+- The full `LEV00.DGN`–`LEV15.DGN` Structure3 mesh corpus is read directly
+  from the supplied retail Track-1 CUE/BIN into RAM and checked against its
+  canonical per-level MD5 before parsing.  This is source verification only:
+  it does not authorize an unbound Saturn mesh renderer.
 - The native sound owner now binds retail CUE-declared audio Tracks 02–09 to
   their original BIN payloads and rejects host WAV/OGG/MP3/FLAC substitutes.
   This is source selection only; playback remains closed without a verified
