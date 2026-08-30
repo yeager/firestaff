@@ -4399,6 +4399,17 @@ if(BUILD_TESTING)
         TIMEOUT 45
     )
     add_test(
+        NAME dm1_v1_dos_fr_original_save_cli_resume
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_dos_fr_original_save_cli_resume.sh
+            $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(dm1_v1_dos_fr_original_save_cli_resume PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;dos;french;real-media;save;native;cli;menu;resume;no-synthesis;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_DOS_FR_SAVE_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_FR_unpacked/dungeon-master-fr/dungeon_master"
+        TIMEOUT 45
+    )
+    add_test(
         NAME dm1_v1_dos_en_archive_cli_boot
         COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_dos_en_archive_cli_boot.sh
             $<TARGET_FILE:firestaff>
