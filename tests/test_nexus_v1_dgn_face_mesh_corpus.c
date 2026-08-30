@@ -1,5 +1,6 @@
 #include "nexus_v1_dungeon.h"
-#include "asset_find_by_hash.h"
+#include "nexus_v1_engine.h"
+#include "nexus_v1_iso_reader.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -58,6 +59,55 @@ static uint8_t *read_file(const char *path, int *out_size) {
     return data;
 }
 
+/* Retail Nexus normally lives in a Saturn Track 1 CUE/BIN image, rather
+ * than an extracted ISO tree.  Keep the loose-file path for preservation
+ * dumps, but exercise the production ISO reader for the original layout. */
+static int open_retail_iso_if_present(const char *data_dir,
+                                      Nexus_ISOReader *out_iso) {
+    static const char *const cue_names[] = {
+        "Dungeon Master Nexus (Japan).cue",
+        "Dungeon Master Nexus (English).cue",
+        NULL
+    };
+    char path[1024];
+    int i;
+
+    if (!data_dir || !data_dir[0] || !out_iso) return 0;
+    memset(out_iso, 0, sizeof(*out_iso));
+    for (i = 0; cue_names[i]; ++i) {
+        snprintf(path, sizeof(path), "%s/%s", data_dir, cue_names[i]);
+        if (nexus_iso_open_cue(out_iso, path) > 0) return 1;
+    }
+    return 0;
+}
+
+static uint8_t *read_retail_dgn(const char *data_dir, Nexus_ISOReader *iso,
+                                 int level_index, int *out_size) {
+    char name[16];
+    char path[2048];
+    const Nexus_ISOFile *member;
+    uint8_t *data;
+
+    if (out_size) *out_size = 0;
+    if (!data_dir || !iso || !out_size || level_index < 0 || level_index > 15)
+        return NULL;
+    snprintf(name, sizeof(name), "LEV%02d.DGN", level_index);
+    snprintf(path, sizeof(path), "%s/%s", data_dir, name);
+    data = read_file(path, out_size);
+    if (data) return data;
+
+    member = nexus_iso_find(iso, name);
+    if (!member || member->size == 0U || member->size > INT32_MAX) return NULL;
+    data = (uint8_t *)malloc(member->size);
+    if (!data || nexus_iso_read_file(iso, member, data, (int)member->size) !=
+                     (int)member->size) {
+        free(data);
+        return NULL;
+    }
+    *out_size = (int)member->size;
+    return data;
+}
+
 /* Hash only the bounded, typed Structure3 source rows. This makes a future
  * capture bind to the exact retail mesh corpus without assigning transform,
  * texture, palette, or draw semantics to those rows. */
@@ -77,6 +127,7 @@ static uint32_t fnv1a_u32(uint32_t hash, uint32_t value) {
 
 int main(void) {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    Nexus_ISOReader iso;
     int level_index;
     int checked = 0;
     int entry_total = 0;
@@ -123,8 +174,11 @@ int main(void) {
         return 0;
     }
 
+    CHECK(open_retail_iso_if_present(data_dir, &iso),
+          "retail CUE/BIN opens through the native Saturn ISO reader");
+    if (!iso.valid) return 1;
+
     for (level_index = 0; level_index < 16; ++level_index) {
-        char path[2048];
         uint8_t *data;
         int size;
         Nexus_V1_Level level;
@@ -140,15 +194,16 @@ int main(void) {
         Nexus_V1_DgnRenderCommand commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
         Nexus_V1_DgnRenderPlanReceipt plan;
 
-        snprintf(path, sizeof(path), "%s/LEV%02d.DGN", data_dir, level_index);
-        data = read_file(path, &size);
+        data = read_retail_dgn(data_dir, &iso, level_index, &size);
         CHECK(data != NULL, "retail DGN file opens and reads");
         if (!data) continue;
         CHECK(expected_dgn_md5(level_index) &&
-                  asset_file_matches_md5(path, expected_dgn_md5(level_index)),
+                  nexus_v1_dgn_bytes_match_canonical_md5(
+                      data, size, expected_dgn_md5(level_index)),
               "retail DGN corpus file matches its canonical MD5 before parsing");
         if (!expected_dgn_md5(level_index) ||
-            !asset_file_matches_md5(path, expected_dgn_md5(level_index))) {
+            !nexus_v1_dgn_bytes_match_canonical_md5(
+                data, size, expected_dgn_md5(level_index))) {
             free(data);
             continue;
         }
@@ -548,5 +603,6 @@ int main(void) {
           "retail face-normal arithmetic remains corpus-locked without normal-use semantics");
     CHECK(capture_blocked_level_total == 16,
           "every retail DGN level rejects source-only capture binding and remains no-draw");
+    nexus_iso_close(&iso);
     return g_fail == 0 ? 0 : 1;
 }

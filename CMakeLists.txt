@@ -40046,14 +40046,11 @@ add_executable(test_nexus_v1_dgn_material_raster
     # it deliberately does not infer planes, surfaces, palettes, or draws.
     add_executable(test_nexus_v1_dgn_face_mesh_corpus
         tests/test_nexus_v1_dgn_face_mesh_corpus.c
-        src/nexus/nexus_v1_dungeon.c
-    src/nexus/nexus_v1_dgn_mesh.c
-        src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_dgn_face_mesh_corpus PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
-    target_link_libraries(test_nexus_v1_dgn_face_mesh_corpus PRIVATE firestaff_zip_extract)
+    target_link_libraries(test_nexus_v1_dgn_face_mesh_corpus PRIVATE firestaff_nexus)
     if(NOT MSVC)
         target_compile_options(test_nexus_v1_dgn_face_mesh_corpus PRIVATE
             -std=c99 -Wall -Wextra -pedantic -O2)
