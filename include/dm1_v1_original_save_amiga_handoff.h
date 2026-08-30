@@ -125,6 +125,16 @@ int dm1_v1_original_save_amiga_f0435_party_part_bytes(
     uint8_t out_party[DM1_V1_AMIGA_SAVE_F0435_PARTY_BYTES],
     Dm1V1AmigaSaveF0435Receipt *out_receipt);
 
+/* Copies the authenticated F0434 Amiga dungeon tail, including its original
+ * big-endian checksum word.  The caller provides storage and receives the
+ * exact required byte count through out_tail_size.  No PC34 loader or endian
+ * coercion is involved; this is the input boundary for the Amiga world
+ * adapter. */
+int dm1_v1_original_save_amiga_f0435_dungeon_tail_bytes(
+    const uint8_t *bytes, size_t size,
+    uint8_t *out_tail, size_t out_tail_capacity, size_t *out_tail_size,
+    Dm1V1AmigaSaveF0435Receipt *out_receipt);
+
 const char *dm1_v1_original_save_amiga_f0435_result_name(int result);
 
 #ifdef __cplusplus

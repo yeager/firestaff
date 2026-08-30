@@ -126,6 +126,8 @@ typedef struct {
     Dm1V1AmigaSaveF0435GlobalData primary_global;
     int primary_party_result;
     uint8_t primary_party[DM1_V1_AMIGA_SAVE_F0435_PARTY_BYTES];
+    uint8_t *primary_bytes;
+    size_t primary_size;
     int backup_f0435_result;
     Dm1V1AmigaSaveF0435Receipt backup_f0435;
 } RealSaveDiskReceipt;
@@ -138,6 +140,10 @@ static int real_save_disk_visitor(const char *name, const uint8_t *bytes,
     receipt->byte_count += size;
     printf("AMIGA-SAVE-DISK file=%s bytes=%zu\n", name, size);
     if (strcmp(name, "DMGAMEG.DAT") == 0) {
+        receipt->primary_bytes = malloc(size);
+        if (!receipt->primary_bytes) return -1;
+        memcpy(receipt->primary_bytes, bytes, size);
+        receipt->primary_size = size;
         receipt->primary_classified =
             dm1_v1_original_save_classify_bytes(bytes, size,
                                                 &receipt->primary);
@@ -501,12 +507,28 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
           receipt.primary_f0435.dungeon_expected_checksum ==
               receipt.primary_f0435.dungeon_actual_checksum,
           "real_save_primary_f0435_and_f0434");
+    {
+        uint8_t *tail = NULL;
+        size_t tail_size = 0u;
+        if (receipt.primary_f0435.dungeon_byte_count != 0u)
+            tail = malloc(receipt.primary_f0435.dungeon_byte_count);
+        CHECK(dm1_v1_original_save_amiga_f0435_dungeon_tail_bytes(
+                  receipt.primary_bytes, receipt.primary_size, tail,
+                  receipt.primary_f0435.dungeon_byte_count, &tail_size, NULL) ==
+                  DM1_V1_AMIGA_SAVE_F0435_OK &&
+              tail_size == receipt.primary_f0435.dungeon_byte_count &&
+              memcmp(tail, receipt.primary_bytes + receipt.primary_f0435.dungeon_offset,
+                     tail_size) == 0,
+              "real_save_primary_big_endian_dungeon_tail_copy");
+        free(tail);
+    }
     CHECK(receipt.backup_f0435_result == DM1_V1_AMIGA_SAVE_F0435_OK &&
           receipt.backup_f0435.parts_authenticated == 5u &&
           receipt.backup_f0435.tail_authenticated == 1 &&
           receipt.backup_f0435.dungeon_expected_checksum ==
               receipt.backup_f0435.dungeon_actual_checksum,
           "real_save_backup_f0435_and_f0434");
+    free(receipt.primary_bytes);
 }
 
 int main(void) {

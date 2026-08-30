@@ -420,6 +420,35 @@ int dm1_v1_original_save_amiga_f0435_party_part_bytes(
     return DM1_V1_AMIGA_SAVE_F0435_OK;
 }
 
+int dm1_v1_original_save_amiga_f0435_dungeon_tail_bytes(
+    const uint8_t *bytes, size_t size,
+    uint8_t *out_tail, size_t out_tail_capacity, size_t *out_tail_size,
+    Dm1V1AmigaSaveF0435Receipt *out_receipt)
+{
+    Dm1V1AmigaSaveF0435Receipt receipt;
+    size_t tail_size;
+    int result;
+
+    if (out_tail_size) *out_tail_size = 0u;
+    if (!bytes || !out_tail_size) return DM1_V1_AMIGA_SAVE_F0435_ERR_ARGUMENT;
+    memset(&receipt, 0, sizeof(receipt));
+    result = dm1_v1_original_save_amiga_f0435_receipt_bytes(
+        bytes, size, &receipt);
+    if (out_receipt) *out_receipt = receipt;
+    if (result != DM1_V1_AMIGA_SAVE_F0435_OK) return result;
+    if (receipt.dungeon_offset > size ||
+        receipt.dungeon_byte_count > size - receipt.dungeon_offset) {
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_TAIL;
+    }
+    tail_size = (size_t)receipt.dungeon_byte_count;
+    *out_tail_size = tail_size;
+    if (!out_tail || out_tail_capacity < tail_size) {
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_CAPACITY;
+    }
+    memcpy(out_tail, bytes + receipt.dungeon_offset, tail_size);
+    return DM1_V1_AMIGA_SAVE_F0435_OK;
+}
+
 const char *dm1_v1_original_save_amiga_f0435_result_name(int result)
 {
     switch (result) {
