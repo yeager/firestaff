@@ -14360,6 +14360,8 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
     int usedBackup = 0;
     int loadedOriginalPc34 = 0;
     int rc;
+    uint8_t *virtualSaveBytes = NULL;
+    size_t virtualSaveByteCount = 0u;
 
     if (outUsedBackup) {
         *outUsedBackup = 0;
@@ -14379,6 +14381,20 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
          * M11_GameView_QuickSave and the startup resume handoff, which run
          * before any panel can be active. */
         return 0;
+    }
+
+    /* A selected ADF member is represented as archive::disk.adf::FILE.  The
+     * Amiga F0435 loader consumes its already-authenticated bytes directly;
+     * never pass the virtual path to stdio or materialize it as a loose save.
+     * Ordinary filesystem saves retain the established PC34/native route. */
+    if (strstr(path, "::") != NULL &&
+        asset_read_path_alloc(path, &virtualSaveBytes, &virtualSaveByteCount)) {
+        const int adopted = M11_GameView_LoadDm1OriginalAmigaSaveBytes(
+            state, virtualSaveBytes, virtualSaveByteCount, path);
+        free(virtualSaveBytes);
+        if (adopted) {
+            return 1;
+        }
     }
 
     memset(&loadedWorld, 0, sizeof(loadedWorld));

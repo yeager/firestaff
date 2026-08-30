@@ -1,6 +1,7 @@
 #include "dm1_v1_amiga_graphics_dat.h"
 #include "dm1_v1_original_save_amiga_handoff.h"
 #include "dm1_v1_original_save_classifier.h"
+#include "asset_find_by_hash.h"
 #include "firestaff_amiga_adf.h"
 #include "firestaff_zip_extract.h"
 #include "m11_game_view.h"
@@ -646,6 +647,8 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
         struct GameWorld_Compat session_world;
         struct DM1_EventQueue_V1 session_queue;
         M11_GameViewState resumed_view;
+        M11_GameViewState archived_view;
+        char virtual_save_path[ASSET_PATH_MAX];
         size_t group_offset;
         size_t projectile_offset;
         memset(&dungeon, 0, sizeof(dungeon));
@@ -654,6 +657,7 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
         memset(&session_world, 0, sizeof(session_world));
         memset(&session_queue, 0, sizeof(session_queue));
         memset(&resumed_view, 0, sizeof(resumed_view));
+        memset(&archived_view, 0, sizeof(archived_view));
         if (receipt.primary_f0435.dungeon_byte_count != 0u)
             tail = malloc(receipt.primary_f0435.dungeon_byte_count);
         CHECK(dm1_v1_original_save_amiga_f0435_dungeon_tail_bytes(
@@ -751,6 +755,27 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
               resumed_view.world.party.mapX == receipt.primary_f0435.party_map_x,
               "real_save_primary_amiga_m11_rejects_live_candidate_panel");
         M11_GameView_Shutdown(&resumed_view);
+        /* Exercise the actual launch boundary too: outer ZIP -> save ZIP ->
+         * ADF -> OFS member stays entirely in process memory and must reach
+         * the Amiga session owner, never the PC34 file loader. */
+        CHECK(snprintf(virtual_save_path, sizeof(virtual_save_path),
+                       "%s::%s::%s::DMGAMEG.DAT", archive, save_zip,
+                       save_adf) > 0 &&
+                  strlen(virtual_save_path) < sizeof(virtual_save_path),
+              "real_save_primary_virtual_path_fits");
+        M11_GameView_Init(&archived_view);
+        archived_view.active = 1;
+        strcpy(archived_view.sourceId, "dm1");
+        CHECK(M11_GameView_LoadDm1SavePath(&archived_view, virtual_save_path,
+                                           NULL) == 1 &&
+              archived_view.world.gameTick ==
+                  receipt.primary_f0435.game_time &&
+              archived_view.world.party.mapX ==
+                  receipt.primary_f0435.party_map_x &&
+              archived_view.dm1ViewportRuntimeOrigin ==
+                  DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_AMIGA,
+              "real_save_primary_amiga_m11_loads_nested_virtual_path");
+        M11_GameView_Shutdown(&archived_view);
         group_offset = test_amiga_tail_thing_offset(tail, tail_size,
                                                      THING_TYPE_GROUP);
         projectile_offset = test_amiga_tail_thing_offset(
