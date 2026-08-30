@@ -11,8 +11,8 @@ Reviewed 2026-08-29. Only open work is listed here.
   trace with its valid encounter, weapon choice, command arguments and RNG
   timing, then bind the remaining WIELD fallback/luck path to that trace. Do
   not replace it with a generated weapon, creature, save or combat result.
-  The supplied DOS archive now proves the preceding in-memory resume route
-  (`archive::data/sksave1.dat`) through a native turn. A direct WIELD probe
+  The supplied DOS archive now proves every supplied in-memory `SKSAVE`
+  slot and backup through a native turn. A direct WIELD probe
   reaches the authenticated calculation but correctly misses the first
   available encounter (`item=0x140c`, `creature=0x1116`, `power=26`,
   `dexterity=21`, `defense=170`, `armor=175`, `map difficulty=8`,
