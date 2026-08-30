@@ -422,6 +422,75 @@ int dm1_v1_original_save_amiga_f0435_party_part_bytes(
     return DM1_V1_AMIGA_SAVE_F0435_OK;
 }
 
+int dm1_v1_original_save_amiga_f0435_party_receipt_bytes(
+    const uint8_t *bytes, size_t size,
+    Dm1V1AmigaSavePartyReceipt *out_party,
+    Dm1V1AmigaSaveF0435Receipt *out_receipt)
+{
+    uint8_t party[DM1_V1_AMIGA_SAVE_F0435_PARTY_BYTES];
+    Dm1V1AmigaSaveF0435Receipt receipt;
+    unsigned int champion;
+    int result;
+
+    if (!bytes || !out_party) return DM1_V1_AMIGA_SAVE_F0435_ERR_ARGUMENT;
+    memset(&receipt, 0, sizeof(receipt));
+    memset(out_party, 0, sizeof(*out_party));
+    result = dm1_v1_original_save_amiga_f0435_party_part_bytes(
+        bytes, size, party, &receipt);
+    if (out_receipt) *out_receipt = receipt;
+    if (result != DM1_V1_AMIGA_SAVE_F0435_OK) return result;
+    for (champion = 0u; champion < 4u; ++champion) {
+        const uint8_t *src = party + champion * DM1_V1_AMIGA_SAVE_CHAMPION_BYTES;
+        Dm1V1AmigaSaveChampionReceipt *dst = &out_party->champions[champion];
+        unsigned int index;
+        memcpy(dst->name, src, sizeof(dst->name));
+        memcpy(dst->title, src + 8u, sizeof(dst->title));
+        dst->direction = src[28u];
+        dst->action_index = src[32u];
+        dst->poison_dose = src[42u];
+        dst->wounds = read_be16(src + 50u);
+        dst->health_current = read_be16(src + 52u);
+        dst->health_maximum = read_be16(src + 54u);
+        dst->stamina_current = read_be16(src + 56u);
+        dst->stamina_maximum = read_be16(src + 58u);
+        dst->mana_current = read_be16(src + 60u);
+        dst->mana_maximum = read_be16(src + 62u);
+        dst->food = read_be_i16(src + 66u);
+        dst->water = read_be_i16(src + 68u);
+        if (dst->direction > 3u || dst->health_current > dst->health_maximum ||
+            dst->stamina_current > dst->stamina_maximum ||
+            dst->mana_current > dst->mana_maximum) {
+            return DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+        }
+        for (index = 0u; index < 6u; ++index) {
+            const uint8_t *stat = src + 70u + (index + 1u) * 3u;
+            dst->attribute_maximums[index] = stat[0];
+            dst->attributes[index] = stat[1];
+        }
+        for (index = 0u; index < 4u; ++index) {
+            dst->skill_experience[index] = read_be32(src + 92u + index * 6u + 2u);
+        }
+        for (index = 0u; index < 30u; ++index) {
+            dst->inventory[index] = read_be16(src + 212u + index * 2u);
+        }
+        dst->load = read_be16(src + 272u);
+    }
+    {
+        const uint8_t *info = party + 4u * DM1_V1_AMIGA_SAVE_CHAMPION_BYTES;
+        out_party->magical_light_amount = read_be_i16(info);
+        out_party->thieves_eye_count = info[2u];
+        out_party->footprints_count = info[3u];
+        out_party->shield_defense = read_be_i16(info + 4u);
+        out_party->fire_shield_defense = read_be_i16(info + 6u);
+        out_party->spell_shield_defense = read_be_i16(info + 8u);
+        out_party->scent_count = info[10u];
+        out_party->freeze_life_ticks = info[11u];
+        out_party->first_scent_index = info[84u];
+        out_party->invisibility_count = info[86u];
+    }
+    return DM1_V1_AMIGA_SAVE_F0435_OK;
+}
+
 int dm1_v1_original_save_amiga_f0435_dungeon_tail_bytes(
     const uint8_t *bytes, size_t size,
     uint8_t *out_tail, size_t out_tail_capacity, size_t *out_tail_size,

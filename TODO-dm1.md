@@ -31,8 +31,9 @@ Reviewed 2026-08-29. Only open work is listed here.
   owns the loaded world and presentation state.  The authenticated F0434
   tail now materializes atomically into an empty source-specific world while
   preserving the exact big-endian tail for a future Amiga serializer, proven
-  against the supplied save disk without modifying its source bytes. Applying
-  encrypted C2/C3 party, active-group, and event state to a live M11 session
+  against the supplied save disk without modifying its source bytes. C2's
+  320-byte champion records and PARTY_INFO now have a source-specific receipt;
+  applying C2/C3 party, active-group, and event state to a live M11 session
   remains.
 - The supplied French DOS ZIP → `dungeon_master.exe` SFX package uses a
   non-solid RAR 2.0 (`unp_ver=0x14`) stream. Native RAR2 decoding is

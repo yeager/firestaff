@@ -34,6 +34,8 @@ enum {
      * PC3.4 compact record is 319 bytes and is deliberately not reused. */
     DM1_V1_AMIGA_SAVE_F0435_PARTY_BYTES = 1408,
     DM1_V1_AMIGA_SAVE_F0435_EVENT_BYTES = 10,
+    DM1_V1_AMIGA_SAVE_CHAMPION_BYTES = 320,
+    DM1_V1_AMIGA_SAVE_PARTY_INFO_BYTES = 128,
     DM1_V1_AMIGA_SAVE_PORTRAIT_BYTES = 464,
     DM1_V1_AMIGA_SAVE_PORTRAIT_COUNT = 4,
     DM1_V1_AMIGA_SAVE_DUNGEON_HEADER_BYTES = 44,
@@ -106,6 +108,36 @@ typedef struct {
     uint16_t maximum_active_group_count;
 } Dm1V1AmigaSaveF0435GlobalData;
 
+/* Read-only A20 C2 champion/party receipt.  A20 retains the one byte after
+ * Statistics[7][3] that PC 3.4 omits, hence Skills/Slots/Load begin at
+ * 92/212/272 rather than the PC offsets 91/211/271. */
+typedef struct {
+    uint8_t name[8];
+    uint8_t title[20];
+    uint8_t direction;
+    uint8_t action_index;
+    uint8_t poison_dose;
+    uint16_t wounds;
+    uint16_t health_current, health_maximum;
+    uint16_t stamina_current, stamina_maximum;
+    uint16_t mana_current, mana_maximum;
+    int16_t food, water;
+    uint8_t attribute_maximums[6];
+    uint8_t attributes[6];
+    uint32_t skill_experience[4];
+    uint16_t inventory[30];
+    uint16_t load;
+} Dm1V1AmigaSaveChampionReceipt;
+
+typedef struct {
+    Dm1V1AmigaSaveChampionReceipt champions[4];
+    int16_t magical_light_amount;
+    uint8_t thieves_eye_count, footprints_count;
+    int16_t shield_defense, fire_shield_defense, spell_shield_defense;
+    uint8_t scent_count, freeze_life_ticks, first_scent_index;
+    uint8_t invisibility_count;
+} Dm1V1AmigaSavePartyReceipt;
+
 int dm1_v1_original_save_amiga_f0435_receipt_bytes(
     const uint8_t *bytes,
     size_t size,
@@ -125,6 +157,14 @@ int dm1_v1_original_save_amiga_f0435_global_data_bytes(
 int dm1_v1_original_save_amiga_f0435_party_part_bytes(
     const uint8_t *bytes, size_t size,
     uint8_t out_party[DM1_V1_AMIGA_SAVE_F0435_PARTY_BYTES],
+    Dm1V1AmigaSaveF0435Receipt *out_receipt);
+
+/* Decodes the authenticated A20 C2 records without using PC34 padding or
+ * endian rules. This is a receipt only; live-session adoption remains owned
+ * by the complete C2/C3/C4 adapter. */
+int dm1_v1_original_save_amiga_f0435_party_receipt_bytes(
+    const uint8_t *bytes, size_t size,
+    Dm1V1AmigaSavePartyReceipt *out_party,
     Dm1V1AmigaSaveF0435Receipt *out_receipt);
 
 /* Copies the authenticated F0434 Amiga dungeon tail, including its original
