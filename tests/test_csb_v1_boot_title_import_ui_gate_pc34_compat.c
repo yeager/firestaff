@@ -715,8 +715,16 @@ static void test_runtime_asset_session_frame_keeps_verified_surfaces_alive(void)
     unsigned char right_pixels[4] = {0};
     unsigned char entrance_pixels[4] = {0};
     unsigned char credits_pixels[4] = {0};
-    unsigned char inventory_pixels[4] = {0};
-    unsigned char resurrect_pixels[4] = {0};
+    /* The frame builder hashes the complete verified C017/C040 surfaces.
+     * Keep these test-only buffers the declared source dimensions: tiny
+     * pointer stand-ins would make the ownership-contract test read past its
+     * allocation rather than exercising the real runtime boundary. */
+    static unsigned char inventory_pixels[
+        CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34 *
+        CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34];
+    static unsigned char resurrect_pixels[
+        CSB_V1_STARTUP_HUD_RESURRECT_WIDTH_PC34 *
+        CSB_V1_STARTUP_HUD_RESURRECT_HEIGHT_PC34];
     uint32_t original_hud_binding_hash;
 
     /* This is a decoded-session unit test: the loader is covered at the
@@ -946,8 +954,12 @@ static void test_verified_session_owns_swoosh_title_audio_and_hud_handoff(void)
     unsigned char right_pixels[4] = {0};
     unsigned char entrance_pixels[4] = {0};
     unsigned char credits_pixels[4] = {0};
-    unsigned char inventory_pixels[4] = {0};
-    unsigned char resurrect_pixels[4] = {0};
+    static unsigned char inventory_pixels[
+        CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34 *
+        CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34];
+    static unsigned char resurrect_pixels[
+        CSB_V1_STARTUP_HUD_RESURRECT_WIDTH_PC34 *
+        CSB_V1_STARTUP_HUD_RESURRECT_HEIGHT_PC34];
 
     csb_v1_boot_startup_runtime_asset_session_init_pc34(&session);
     session.valid = 1;
