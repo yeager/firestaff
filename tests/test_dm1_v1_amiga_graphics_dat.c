@@ -5,6 +5,7 @@
 #include "firestaff_zip_extract.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
+#include "dm1_v1_event_timer_pc34_compat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -167,6 +168,8 @@ typedef struct {
     Dm1V1AmigaSavePartyReceipt primary_party_receipt;
     int primary_queue_receipt_result;
     Dm1V1AmigaSaveRuntimeQueueReceipt primary_queue_receipt;
+    int primary_event_queue_result;
+    struct DM1_EventQueue_V1 primary_event_queue;
     uint8_t *primary_bytes;
     size_t primary_size;
     int backup_f0435_result;
@@ -212,6 +215,9 @@ static int real_save_disk_visitor(const char *name, const uint8_t *bytes,
         receipt->primary_queue_receipt_result =
             dm1_v1_original_save_amiga_f0435_runtime_queue_receipt_bytes(
                 bytes, size, &receipt->primary_queue_receipt, NULL);
+        receipt->primary_event_queue_result =
+            dm1_v1_original_save_amiga_f0435_materialize_event_queue_bytes(
+                bytes, size, &receipt->primary_event_queue, NULL);
         printf("AMIGA-SAVE-DISK primary F0435=%s parts=%u body_end=%u "
                "trailing=%u time=%u party=%u pose=%d,%d,%d map=%d events=%u/%u groups=%u/%u "
                "tail=%d dungeon=%u+%u maps=%u columns=%u raw=%u checksum=%04x/%04x\n",
@@ -238,6 +244,17 @@ static int real_save_disk_visitor(const char *name, const uint8_t *bytes,
                (unsigned)receipt->primary_f0435.dungeon_raw_map_byte_count,
                (unsigned)receipt->primary_f0435.dungeon_expected_checksum,
                (unsigned)receipt->primary_f0435.dungeon_actual_checksum);
+        if (receipt->primary_queue_receipt_result ==
+            DM1_V1_AMIGA_SAVE_F0435_OK) {
+            printf("AMIGA-SAVE-DISK queue first_event time=%u type=%u priority=%u pos=%u,%u cell=%u effect=%u\n",
+                   (unsigned)receipt->primary_queue_receipt.first_scheduled_map_time,
+                   (unsigned)receipt->primary_queue_receipt.first_scheduled_type,
+                   (unsigned)receipt->primary_queue_receipt.first_scheduled_priority,
+                   (unsigned)receipt->primary_queue_receipt.first_scheduled_map_x,
+                   (unsigned)receipt->primary_queue_receipt.first_scheduled_map_y,
+                   (unsigned)receipt->primary_queue_receipt.first_scheduled_cell,
+                   (unsigned)receipt->primary_queue_receipt.first_scheduled_effect);
+        }
     } else if (strcmp(name, "DMGAMEG.BAK") == 0) {
         receipt->backup_f0435_result =
             dm1_v1_original_save_amiga_f0435_receipt_bytes(
@@ -562,6 +579,13 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
           receipt.primary_queue_receipt.scheduled_event_count ==
               receipt.primary_f0435.event_count,
           "real_save_primary_a20_c1_c3_c4_queue_receipt");
+    CHECK(receipt.primary_event_queue_result == DM1_V1_AMIGA_SAVE_F0435_OK &&
+          receipt.primary_event_queue.gameTick == receipt.primary_f0435.game_time &&
+          receipt.primary_event_queue.eventCount == receipt.primary_f0435.event_count &&
+          receipt.primary_event_queue.timeline[0] < receipt.primary_f0435.event_maximum_count &&
+          receipt.primary_event_queue.events[receipt.primary_event_queue.timeline[0]].type ==
+              DM1_EVENT_WATCHDOG,
+          "real_save_primary_a20_c3_c4_materializes_native_watchdog_queue");
     CHECK(receipt.primary_f0435.header_authenticated == 1 &&
           receipt.primary_f0435.body_authenticated == 1 &&
           receipt.primary_f0435.tail_authenticated == 1 &&

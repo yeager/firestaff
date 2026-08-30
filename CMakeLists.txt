@@ -60084,6 +60084,7 @@ add_executable(test_dm1_v1_amiga_graphics_dat
     src/dm1/dm1_v1_legacy_graphics_dat.c
     src/dm1/dm1_v1_original_save_amiga_handoff.c
     src/dm1/dm1_v1_original_save_classifier.c
+    src/dm1/dm1_v1_event_timer_pc34_compat.c
     src/memory/memory_dungeon_dat_pc34_compat.c
     src/shared/dungeon_decompressor_ftl.c
     src/shared/firestaff_amiga_adf.c

@@ -7,6 +7,7 @@
 #include "dm1_v1_original_save_classifier.h"
 
 struct GameWorld_Compat;
+struct DM1_EventQueue_V1;
 
 #ifdef __cplusplus
 extern "C" {
@@ -151,6 +152,13 @@ typedef struct {
     uint16_t event_capacity;
     uint16_t scheduled_event_count;
     uint16_t first_unused_event_index;
+    uint32_t first_scheduled_map_time;
+    uint8_t first_scheduled_type;
+    uint8_t first_scheduled_priority;
+    uint8_t first_scheduled_map_x;
+    uint8_t first_scheduled_map_y;
+    uint8_t first_scheduled_cell;
+    uint8_t first_scheduled_effect;
     int timeline_membership_valid;
 } Dm1V1AmigaSaveRuntimeQueueReceipt;
 
@@ -194,6 +202,14 @@ int dm1_v1_original_save_amiga_f0435_party_receipt_bytes(
 int dm1_v1_original_save_amiga_f0435_runtime_queue_receipt_bytes(
     const uint8_t *bytes, size_t size,
     Dm1V1AmigaSaveRuntimeQueueReceipt *out_queue,
+    Dm1V1AmigaSaveF0435Receipt *out_receipt);
+
+/* Materialize C3/C4 into Firestaff's native event queue after full A20
+ * authentication.  The destination is replaced only after the big-endian
+ * heap membership has been proven. */
+int dm1_v1_original_save_amiga_f0435_materialize_event_queue_bytes(
+    const uint8_t *bytes, size_t size,
+    struct DM1_EventQueue_V1 *out_queue,
     Dm1V1AmigaSaveF0435Receipt *out_receipt);
 
 /* Copies the authenticated F0434 Amiga dungeon tail, including its original

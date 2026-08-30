@@ -1,6 +1,7 @@
 #include "dm1_v1_original_save_amiga_handoff.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
+#include "dm1_v1_event_timer_pc34_compat.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -614,6 +615,16 @@ int dm1_v1_original_save_amiga_f0435_runtime_queue_receipt_bytes(
             }
         }
         if (!out_queue->timeline_membership_valid) break;
+        if (index == 0u) {
+            const uint8_t *event = events + (size_t)event_index * 10u;
+            out_queue->first_scheduled_map_time = read_be32(event);
+            out_queue->first_scheduled_type = event[4u];
+            out_queue->first_scheduled_priority = event[5u];
+            out_queue->first_scheduled_map_x = event[6u];
+            out_queue->first_scheduled_map_y = event[7u];
+            out_queue->first_scheduled_cell = event[8u];
+            out_queue->first_scheduled_effect = event[9u];
+        }
     }
     if (out_queue->first_unused_event_index < receipt.event_maximum_count &&
         events[(size_t)out_queue->first_unused_event_index * 10u + 4u] != 0u) {
@@ -622,6 +633,72 @@ int dm1_v1_original_save_amiga_f0435_runtime_queue_receipt_bytes(
     free(active_groups); free(events); free(heap);
     return out_queue->timeline_membership_valid
         ? DM1_V1_AMIGA_SAVE_F0435_OK : DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+}
+
+int dm1_v1_original_save_amiga_f0435_materialize_event_queue_bytes(
+    const uint8_t *bytes, size_t size,
+    struct DM1_EventQueue_V1 *out_queue,
+    Dm1V1AmigaSaveF0435Receipt *out_receipt)
+{
+    Dm1V1AmigaSaveF0435Receipt receipt;
+    Dm1V1AmigaSaveRuntimeQueueReceipt queue_receipt;
+    struct DM1_EventQueue_V1 candidate;
+    uint8_t *events = NULL;
+    uint8_t *heap = NULL;
+    size_t event_size = 0u, heap_size = 0u;
+    unsigned int index;
+    int result;
+
+    if (!bytes || !out_queue) return DM1_V1_AMIGA_SAVE_F0435_ERR_ARGUMENT;
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&queue_receipt, 0, sizeof(queue_receipt));
+    result = dm1_v1_original_save_amiga_f0435_runtime_queue_receipt_bytes(
+        bytes, size, &queue_receipt, &receipt);
+    if (out_receipt) *out_receipt = receipt;
+    if (result != DM1_V1_AMIGA_SAVE_F0435_OK ||
+        receipt.event_maximum_count > DM1_EVENT_MAX_COUNT) {
+        return result == DM1_V1_AMIGA_SAVE_F0435_OK
+            ? DM1_V1_AMIGA_SAVE_F0435_ERR_CAPACITY : result;
+    }
+    event_size = receipt.part_byte_counts[3u];
+    heap_size = receipt.part_byte_counts[4u];
+    events = (uint8_t *)malloc(event_size ? event_size : 1u);
+    heap = (uint8_t *)malloc(heap_size ? heap_size : 1u);
+    if (!events || !heap) {
+        free(events); free(heap);
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_CAPACITY;
+    }
+    if (dm1_v1_original_save_amiga_f0435_part_bytes(
+            bytes, size, 3u, events, event_size, &event_size, NULL) !=
+            DM1_V1_AMIGA_SAVE_F0435_OK ||
+        dm1_v1_original_save_amiga_f0435_part_bytes(
+            bytes, size, 4u, heap, heap_size, &heap_size, NULL) !=
+            DM1_V1_AMIGA_SAVE_F0435_OK) {
+        free(events); free(heap);
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+    }
+    if (!dm1v1_event_queue_init(&candidate, receipt.game_time)) {
+        free(events); free(heap);
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_CAPACITY;
+    }
+    candidate.eventCount = receipt.event_count;
+    candidate.firstUnusedIndex = receipt.first_unused_event_index;
+    for (index = 0u; index < receipt.event_maximum_count; ++index) {
+        const uint8_t *event = events + (size_t)index * 10u;
+        candidate.events[index].map_time = read_be32(event);
+        candidate.events[index].type = event[4u];
+        candidate.events[index].priority = event[5u];
+        candidate.events[index].b_mapX = event[6u];
+        candidate.events[index].b_mapY = event[7u];
+        candidate.events[index].c_cell = event[8u];
+        candidate.events[index].c_effect = event[9u];
+    }
+    for (index = 0u; index < receipt.event_count; ++index) {
+        candidate.timeline[index] = read_be16(heap + index * 2u);
+    }
+    free(events); free(heap);
+    *out_queue = candidate;
+    return DM1_V1_AMIGA_SAVE_F0435_OK;
 }
 
 int dm1_v1_original_save_amiga_f0435_dungeon_tail_bytes(
