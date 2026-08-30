@@ -559,6 +559,30 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
               receipt.primary_f0435.dungeon_actual_checksum,
           "real_save_primary_f0435_and_f0434");
     {
+        uint8_t *active_groups = NULL;
+        uint8_t *events = NULL;
+        size_t active_group_size = 0u;
+        size_t event_size = 0u;
+        active_groups = malloc(receipt.primary_f0435.part_byte_counts[1]);
+        events = malloc(receipt.primary_f0435.part_byte_counts[3]);
+        CHECK(dm1_v1_original_save_amiga_f0435_part_bytes(
+                  receipt.primary_bytes, receipt.primary_size, 1u,
+                  active_groups, receipt.primary_f0435.part_byte_counts[1],
+                  &active_group_size, NULL) == DM1_V1_AMIGA_SAVE_F0435_OK &&
+              active_group_size == receipt.primary_f0435.part_byte_counts[1] &&
+              active_group_size == (size_t)receipt.primary_f0435.maximum_active_group_count * 16u,
+              "real_save_primary_a20_c1_active_group_part");
+        CHECK(dm1_v1_original_save_amiga_f0435_part_bytes(
+                  receipt.primary_bytes, receipt.primary_size, 3u,
+                  events, receipt.primary_f0435.part_byte_counts[3],
+                  &event_size, NULL) == DM1_V1_AMIGA_SAVE_F0435_OK &&
+              event_size == receipt.primary_f0435.part_byte_counts[3] &&
+              event_size == (size_t)receipt.primary_f0435.event_maximum_count * 10u,
+              "real_save_primary_a20_c3_event_part");
+        free(active_groups);
+        free(events);
+    }
+    {
         uint8_t *tail = NULL;
         size_t tail_size = 0u;
         struct DungeonDatState_Compat dungeon;

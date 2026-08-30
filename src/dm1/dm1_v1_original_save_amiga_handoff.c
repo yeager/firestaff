@@ -422,6 +422,48 @@ int dm1_v1_original_save_amiga_f0435_party_part_bytes(
     return DM1_V1_AMIGA_SAVE_F0435_OK;
 }
 
+int dm1_v1_original_save_amiga_f0435_part_bytes(
+    const uint8_t *bytes, size_t size, unsigned int part_index,
+    uint8_t *out_part, size_t out_part_capacity, size_t *out_part_size,
+    Dm1V1AmigaSaveF0435Receipt *out_receipt)
+{
+    Dm1V1AmigaSaveF0435Receipt receipt;
+    uint8_t header[DM1_V1_AMIGA_SAVE_F0435_HEADER_BYTES];
+    uint16_t key;
+    size_t part_size;
+    int result;
+
+    if (out_part_size) *out_part_size = 0u;
+    if (!bytes || !out_part_size || part_index >=
+        DM1_V1_AMIGA_SAVE_F0435_PART_COUNT) {
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_ARGUMENT;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    result = dm1_v1_original_save_amiga_f0435_receipt_bytes(bytes, size,
+                                                             &receipt);
+    if (out_receipt) *out_receipt = receipt;
+    if (result != DM1_V1_AMIGA_SAVE_F0435_OK) return result;
+    part_size = receipt.part_byte_counts[part_index];
+    *out_part_size = part_size;
+    if (!out_part || out_part_capacity < part_size) {
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_CAPACITY;
+    }
+    if (receipt.part_offsets[part_index] > size ||
+        part_size > size - receipt.part_offsets[part_index]) {
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+    }
+    memcpy(header, bytes, sizeof(header));
+    (void)deobfuscate_words_be(header + 256u, 256u,
+                                read_be16(header + DM1_AMIGA_SAVE_HEADER_KEY_OFFSET));
+    key = read_be16(header + DM1_AMIGA_SAVE_HEADER_KEYS_OFFSET + part_index * 2u);
+    memcpy(out_part, bytes + receipt.part_offsets[part_index], part_size);
+    if (deobfuscate_words_be(out_part, part_size, key) !=
+        receipt.expected_checksums[part_index]) {
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+    }
+    return DM1_V1_AMIGA_SAVE_F0435_OK;
+}
+
 int dm1_v1_original_save_amiga_f0435_party_receipt_bytes(
     const uint8_t *bytes, size_t size,
     Dm1V1AmigaSavePartyReceipt *out_party,

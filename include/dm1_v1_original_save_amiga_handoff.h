@@ -159,6 +159,14 @@ int dm1_v1_original_save_amiga_f0435_party_part_bytes(
     uint8_t out_party[DM1_V1_AMIGA_SAVE_F0435_PARTY_BYTES],
     Dm1V1AmigaSaveF0435Receipt *out_receipt);
 
+/* Copies one complete, authenticated plaintext F0435 part (C0..C4) from an
+ * Amiga format-5 save.  The source file remains untouched.  This is the sole
+ * byte boundary for the later C1 active-group and C3/C4 timeline adapters. */
+int dm1_v1_original_save_amiga_f0435_part_bytes(
+    const uint8_t *bytes, size_t size, unsigned int part_index,
+    uint8_t *out_part, size_t out_part_capacity, size_t *out_part_size,
+    Dm1V1AmigaSaveF0435Receipt *out_receipt);
+
 /* Decodes the authenticated A20 C2 records without using PC34 padding or
  * endian rules. This is a receipt only; live-session adoption remains owned
  * by the complete C2/C3/C4 adapter. */
