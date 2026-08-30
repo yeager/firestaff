@@ -78,46 +78,16 @@ static void test_pc34_format_rejection(void) {
     CHECK(dm1_v1_amiga_graphics_probe(buf, 400000) == 0, "pc34_marker");
 }
 
-static void test_synthetic_probe(void) {
-    /* Build a synthetic Amiga GRAPHICS.DAT with 575 graphics, all 0 bytes */
+static void test_zeroed_header_rejection(void) {
+    /* A truncated all-zero header is malformed; this is a rejection boundary,
+     * not a substitute graphics fixture. */
     uint16_t count = 575;
     size_t header = 2 + (size_t)count * 4;
     uint8_t *buf = calloc(header, 1);
     buf[0] = (uint8_t)(count >> 8);
     buf[1] = (uint8_t)(count & 0xff);
     /* All comp/decomp are 0, data area = 0, size = header */
-    CHECK(dm1_v1_amiga_graphics_probe(buf, header) == 0, "synthetic_too_small");
-    free(buf);
-}
-
-static void test_synthetic_valid(void) {
-    uint16_t count = 575;
-    size_t header = 2 + (size_t)count * 4;
-    size_t data_per_item = 700;
-    size_t total = header + (size_t)count * data_per_item;
-    if (total < 350000 || total > 420000) {
-        printf("SKIP synthetic_valid: size %zu out of range\n", total);
-        return;
-    }
-    uint8_t *buf = calloc(total, 1);
-    buf[0] = (uint8_t)(count >> 8);
-    buf[1] = (uint8_t)(count & 0xff);
-    for (uint16_t i = 0; i < count; i++) {
-        uint16_t sz = (uint16_t)data_per_item;
-        /* comp sizes (BE) */
-        buf[2 + i * 2 + 0] = (uint8_t)(sz >> 8);
-        buf[2 + i * 2 + 1] = (uint8_t)(sz & 0xff);
-        /* decomp sizes (BE) */
-        buf[2 + count * 2 + i * 2 + 0] = (uint8_t)(sz >> 8);
-        buf[2 + count * 2 + i * 2 + 1] = (uint8_t)(sz & 0xff);
-    }
-    CHECK(dm1_v1_amiga_graphics_probe(buf, total) == 1, "synthetic_valid_probe");
-
-    DM1_V1_AmigaGraphicsReceipt r;
-    CHECK(dm1_v1_amiga_graphics_receipt(buf, total, &r) == 0, "synthetic_valid_receipt");
-    CHECK(r.is_amiga == 1, "synthetic_is_amiga");
-    CHECK(r.graphic_count == 575, "synthetic_count");
-    CHECK(r.lang == DM1_AMIGA_LANG_UNKNOWN, "synthetic_lang_unknown");
+    CHECK(dm1_v1_amiga_graphics_probe(buf, header) == 0, "zeroed_header_too_small");
     free(buf);
 }
 
@@ -816,8 +786,7 @@ int main(void) {
     test_small_rejection();
     test_wrong_count();
     test_pc34_format_rejection();
-    test_synthetic_probe();
-    test_synthetic_valid();
+    test_zeroed_header_rejection();
     test_receipt_null();
     test_compressed_rejection();
     test_real_amiga_v20_graphics_receipt();
