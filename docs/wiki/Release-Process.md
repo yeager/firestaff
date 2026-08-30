@@ -3,10 +3,10 @@
 ## Version Scheme
 
 Firestaff uses semantic versioning: `MAJOR.MINOR.PATCH` (for example,
-`3.0.314`). The version is set in `CMakeLists.txt`:
+`3.0.315`). The version is set in `CMakeLists.txt`:
 
 ```cmake
-project(Firestaff VERSION 3.0.314 LANGUAGES C)
+project(Firestaff VERSION 3.0.315 LANGUAGES C)
 ```
 
 ## Release notes format

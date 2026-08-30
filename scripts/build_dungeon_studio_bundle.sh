@@ -94,7 +94,7 @@ case "$(uname -s)" in
       --collect-all tkinter --hidden-import tkinter.ttk --hidden-import PIL.ImageTk \
       --name "Firestaff Dungeon Studio" \
       "${ICON_ARG[@]}" \
-      "${ADD_DATA_ARGS[@]}" \
+      ${ADD_DATA_ARGS[@]+"${ADD_DATA_ARGS[@]}"} \
       --distpath "$OUT_DIR/dist" --workpath "$WORK_DIR" --specpath "$SPEC_DIR" \
       "$SCRIPT"
     ;;
@@ -102,7 +102,7 @@ case "$(uname -s)" in
     "$PYTHON" -m PyInstaller --noconfirm --clean --windowed --onefile \
       --collect-all tkinter --hidden-import tkinter.ttk --hidden-import PIL.ImageTk \
       --name firestaff_dungeon_studio \
-      "${ADD_DATA_ARGS[@]}" \
+      ${ADD_DATA_ARGS[@]+"${ADD_DATA_ARGS[@]}"} \
       --distpath "$OUT_DIR/dist" --workpath "$WORK_DIR" --specpath "$SPEC_DIR" \
       "$SCRIPT"
     ;;

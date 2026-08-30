@@ -1,3 +1,13 @@
+# Firestaff v3.0.315
+
+## Fixed
+
+- `studio bundle argument expansion`: Updated the macOS Artpack Studio,
+  Dungeon Studio, and Savegame Editor packagers to preserve a genuinely empty
+  optional `--add-data` argument list under macOS Bash 3.2 and `set -u`.
+  This restores the arm64 release bundle path when no built locale directory
+  is present in the source tree.
+
 # Firestaff v3.0.314
 
 ## Firestaff

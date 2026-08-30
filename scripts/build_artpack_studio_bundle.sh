@@ -100,7 +100,7 @@ case "$(uname -s)" in
       --collect-all keyring \
       --name "Firestaff Artpack Studio" \
       "${ICON_ARG[@]}" \
-      "${ADD_DATA_ARGS[@]}" \
+      ${ADD_DATA_ARGS[@]+"${ADD_DATA_ARGS[@]}"} \
       --distpath "$OUT_DIR/dist" --workpath "$WORK_DIR" --specpath "$SPEC_DIR" \
       "$SCRIPT"
     ;;
@@ -110,7 +110,7 @@ case "$(uname -s)" in
       --collect-all tkinter --hidden-import tkinter.ttk --hidden-import PIL.ImageTk \
       --collect-all keyring \
       --name firestaff_artpack_studio \
-      "${ADD_DATA_ARGS[@]}" \
+      ${ADD_DATA_ARGS[@]+"${ADD_DATA_ARGS[@]}"} \
       --distpath "$OUT_DIR/dist" --workpath "$WORK_DIR" --specpath "$SPEC_DIR" \
       "$SCRIPT"
     ;;
