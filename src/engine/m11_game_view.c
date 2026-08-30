@@ -12361,7 +12361,8 @@ static int m11_csb_bind_verified_dungeon_world_snapshot(
         return 0;
     }
     source = profile->runtime.dungeon_handle;
-    if (!source->raw_data || source->level_count <= 0) {
+    if (!source->raw_data || source->raw_size <= 0 ||
+        source->raw_size > INT_MAX || source->level_count <= 0) {
         return 0;
     }
 
@@ -12369,8 +12370,14 @@ static int m11_csb_bind_verified_dungeon_world_snapshot(
      * non-authoritative query model.  Its RNG is never advanced by CSB input. */
     seed = (uint32_t)source->ornament_random_seed;
     memset(&world, 0, sizeof(world));
-    world_loaded = F0882_WORLD_InitFromDungeonDat_Compat(
-        profile->dungeon_path, seed, &world);
+    /* CSB's boot reader has already authenticated and decoded the dungeon
+     * bytes into this source-owned handle.  Re-open neither a package image
+     * (STX/ADF) nor an archive virtual path here: the generic file loader
+     * understands DUNGEON.DAT, not the container.  Building the query mirror
+     * from these exact bytes keeps the handoff source-faithful and entirely
+     * in memory for every supported CSB platform. */
+    world_loaded = F0882_WORLD_InitFromDungeonDatBuffer_Compat(
+        source->raw_data, source->raw_size, seed, &world);
     if (!world_loaded) {
         /* F0882 releases its local allocations on a failed parse.  Its
          * caller-visible struct can still contain those retired addresses,

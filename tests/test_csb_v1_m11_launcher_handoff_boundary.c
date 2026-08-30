@@ -604,41 +604,37 @@ static void expect_amiga_candidate_c026_source_frame(M11_GameViewState *view,
     unsigned char *resurrection_panel = NULL;
     unsigned char *rename_panel = NULL;
     CSB_V1_BootProfile *profile;
-    FILE *file = NULL;
-    long length;
+    size_t length = 0u;
     uint16_t width = 0u;
     uint16_t height = 0u;
     int matches = 0;
     int row;
 
     if (!view || !(profile = (CSB_V1_BootProfile *)view->csbBootProfile) ||
-        !profile->graphics_path[0] || !(file = fopen(profile->graphics_path, "rb")) ||
-        fseek(file, 0L, SEEK_END) != 0 || (length = ftell(file)) <= 0L ||
-        fseek(file, 0L, SEEK_SET) != 0 ||
-        !(bytes = (unsigned char *)malloc((size_t)length)) ||
-        fread(bytes, 1u, (size_t)length, file) != (size_t)length ||
+        !profile->graphics_path[0] ||
+        !asset_read_path_alloc(profile->graphics_path, &bytes, &length) ||
+        !bytes || length == 0u ||
         !(portraits = (unsigned char *)malloc(256u * 87u)) ||
         !(inventory = (unsigned char *)malloc(224u * 136u)) ||
         !(resurrection_panel = (unsigned char *)malloc(144u * 73u)) ||
         !(rename_panel = (unsigned char *)malloc(144u * 73u)) ||
-        !csb_v1_amiga_graphics_decode_item(bytes, (size_t)length, 26u,
+        !csb_v1_amiga_graphics_decode_item(bytes, length, 26u,
                                             portraits, 256u * 87u,
                                             &width, &height) ||
         width != 256u || height != 87u ||
-        !csb_v1_amiga_graphics_decode_item(bytes, (size_t)length, 17u,
+        !csb_v1_amiga_graphics_decode_item(bytes, length, 17u,
                                             inventory, 224u * 136u,
                                             &width, &height) ||
         width != 224u || height != 136u ||
-        !csb_v1_amiga_graphics_decode_item(bytes, (size_t)length, 40u,
+        !csb_v1_amiga_graphics_decode_item(bytes, length, 40u,
                                             resurrection_panel, 144u * 73u,
                                             &width, &height) ||
         width != 144u || height != 73u ||
-        !csb_v1_amiga_graphics_decode_item(bytes, (size_t)length, 27u,
+        !csb_v1_amiga_graphics_decode_item(bytes, length, 27u,
                                             rename_panel, 144u * 73u,
                                             &width, &height) ||
         width != 144u || height != 73u) {
         expect_true(0, "Amiga candidate route opens authenticated C026 data");
-        if (file) fclose(file);
         free(rename_panel);
         free(resurrection_panel);
         free(inventory);
@@ -646,8 +642,6 @@ static void expect_amiga_candidate_c026_source_frame(M11_GameViewState *view,
         free(bytes);
         return;
     }
-    fclose(file);
-    file = NULL;
     view->candidateMirrorOrdinal = 0;
     view->candidateMirrorPartyIndex = 0;
     view->candidateMirrorPanelActive = 1;
@@ -2619,8 +2613,14 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
                   (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
                    profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
                   selected_version && selected_version->versionId &&
-                  strstr(profile->graphics_path,
-                         selected_cache_marker) != NULL)) {
+                  (strstr(profile->graphics_path,
+                          selected_cache_marker) != NULL ||
+                   /* STX is a selected native disk source, not a cacheable
+                    * directory.  Its verified GRAPHICS.DAT member must keep
+                    * both the exact source image and virtual-member identity. */
+                   (strncmp(profile->graphics_path, data_dir,
+                            strlen(data_dir)) == 0 &&
+                    strstr(profile->graphics_path, "::GRAPHICS.DAT") != NULL)))) {
                 /* A broad root can contain several authentic CSB editions.
                  * Once M11 opens a sibling profile, stop here: subsequent
                  * Atari VBlank/palette checks would only describe that wrong
