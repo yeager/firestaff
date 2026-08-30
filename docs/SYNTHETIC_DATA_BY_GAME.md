@@ -76,8 +76,9 @@ fallback.
 
 The companion V1/V2 directional parity gate also decodes the original member
 itself and checks all cardinal directions from the authentic initial position.
-Its previous built-in entry-state fixture remains only a legacy, isolated
-contract scaffold and is not positive real-data evidence.
+The former built-in entry-state fixture and its data-free screenshot probes
+were removed: V1/V2 viewport verification now requires source-owned dungeon
+bytes.
 
 ## DM2
 

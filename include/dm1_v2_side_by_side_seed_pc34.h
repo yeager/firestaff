@@ -12,10 +12,9 @@
  *      ordering) used when a V1 framebuffer and a V2 framebuffer are
  *      composed into a single side-by-side image.
  *
- *   2. A small builder, dm1_v2_side_by_side_seed_build_entry, that
- *      renders the DM1 PC 3.4 entry composition (DUNGEON.DAT offset
- *      8 + pass173 source audit, startMapX=1, startMapY=3,
- *      startDirection=2) into a V1 lane and a V2 lane and emits a
+ *   2. A small builder, dm1_v2_side_by_side_seed_build_from_dungeon, that
+ *      renders an already decoded original DM1 PC 3.4 DUNGEON.DAT entry
+ *      composition into a V1 lane and a V2 lane and emits a
  *      DM1_V2_SideBySideSeed with both framebuffers, the canonical
  *      scaffold dimensions, and a stable 64-bit FNV-1a side-by-side
  *      hash. With v2PresentationEnabled=0 the V1 and V2 lanes are
@@ -40,10 +39,9 @@
  * to the V1 framebuffer. The V1 movement command adapter must still
  * report routeKind=V1_SOURCE for every C001..C006 command.
  *
- * This header is headless and does not initialise SDL. The legacy entry
- * helper remains a test scaffold, while real callers must pass an already
- * decoded original `DM1_V2_DungeonDatState` to the real-data builder; this
- * API never opens, extracts, or synthesizes game data itself. It depends on
+ * This header is headless and does not initialise SDL. Callers must pass an
+ * already decoded original `DM1_V2_DungeonDatState`; this API never opens,
+ * extracts, or synthesizes game data itself. It depends on
  * the firestaff_v2 library (which contains dm1_v2_viewport_renderer_pc34 and
  * dm1_v2_movement_command_adapter_pc34).
  */
@@ -135,8 +133,7 @@ uint64_t dm1_v2_side_by_side_seed_hash_color(uint64_t hash,
                                              const DM1_V2_Color* color);
 
 /* FNV-1a 64-bit fold of the canonical "V1 || gap || V2" composite
- * for any pair of 224x136 viewport states. Returns the same value
- * the build_entry seed would produce, so downstream visual-diff
+ * for any pair of 224x136 viewport states, so downstream visual-diff
  * tooling can reproduce the seed hash from external buffers. */
 uint64_t dm1_v2_side_by_side_seed_hash_layout(const DM1_V2_ViewportState* v1,
                                               const DM1_V2_ViewportState* v2);
@@ -165,18 +162,6 @@ int dm1_v2_side_by_side_seed_write_rgba8888(
     unsigned char* out,
     size_t outByteCount,
     int outStrideBytes);
-
-/* Render the DM1 PC 3.4 entry composition into a V1 lane and a V2
- * lane (both presentation-disabled), populate *out with the seed
- * fields, and return 1 on success. Returns 0 if out is NULL, the
- * entry fixture is unavailable, or the renderer rejects the input.
- *
- * The renderer is the existing V2 viewport renderer
- * (dm1_v2_vp_render_composition_flat) running with V2 presentation
- * disabled. The V1 and V2 lanes are produced by independent
- * init/render passes so any state carried over between calls would
- * surface as a framebuffer mismatch (lanesByteEqual == 0). */
-int dm1_v2_side_by_side_seed_build_entry(DM1_V2_SideBySideSeed* out);
 
 /* Build the presentation-disabled V1/V2 comparison from an already decoded
  * original dungeon. The caller retains ownership of `dungeon->bytes`; this

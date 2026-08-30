@@ -440,47 +440,6 @@ int dm1_v2_vp_build_composition_from_dungeon(const DM1_V2_DungeonDatState* state
     return 1;
 }
 
-static const DM1_V2_DungeonFixtureSquare k_dm1_pc34_entry_state_squares[] = {
-    /* Real DM1 PC34 start: DUNGEON.DAT offset 8 decodes to map0 x=1 y=3 dir=2.
-       pass173/pass162 source audits identify the front square x=1,y=4 as the wall
-       champion-portrait sensor square. This fixture keeps the rest corridor until
-       a full DUNGEON.DAT square decoder is landed. */
-    {1, 4, DM1_V2_ELEMENT_WALL, 0, 0},
-};
-
-static const DM1_V2_DungeonStateFixture k_dm1_pc34_entry_state_fixture = {
-    "dm1_pc34_entry_portrait_wall",
-    "DUNGEON.DAT offset 8 + DEFS.H:989-998 + LOADSAVE.C:1940-1945 + pass173 front-wall sensor audit",
-    "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
-    0,
-    1,
-    3,
-    2,
-    DM1_V2_ELEMENT_CORRIDOR,
-    k_dm1_pc34_entry_state_squares,
-    (int)(sizeof(k_dm1_pc34_entry_state_squares) / sizeof(k_dm1_pc34_entry_state_squares[0])),
-};
-
-static DM1_V2_ViewportSquareInput dm1_v2_vp_lookup_fixture_square(const DM1_V2_DungeonStateFixture* fixture,
-                                                                   int mapX,
-                                                                   int mapY) {
-    DM1_V2_ViewportSquareInput square;
-    square.element = fixture ? fixture->defaultElement : DM1_V2_ELEMENT_WALL;
-    square.hasObjects = 0;
-    square.hasField = 0;
-    if (!fixture || !fixture->squares || fixture->squareCount <= 0) return square;
-    for (int i = 0; i < fixture->squareCount; i++) {
-        const DM1_V2_DungeonFixtureSquare* candidate = &fixture->squares[i];
-        if (candidate->mapX == mapX && candidate->mapY == mapY) {
-            square.element = candidate->element;
-            square.hasObjects = candidate->hasObjects;
-            square.hasField = candidate->hasField;
-            return square;
-        }
-    }
-    return square;
-}
-
 int dm1_v2_vp_relative_coords(int direction,
                               int mapX,
                               int mapY,
@@ -497,34 +456,6 @@ int dm1_v2_vp_relative_coords(int direction,
     int rightDirection = (direction + 1) & 3;
     *outX = mapX + kStepEast[direction] * forward + kStepEast[rightDirection] * right;
     *outY = mapY + kStepNorth[direction] * forward + kStepNorth[rightDirection] * right;
-    return 1;
-}
-
-const DM1_V2_DungeonStateFixture* dm1_v2_vp_dm1_pc34_entry_state_fixture(void) {
-    return &k_dm1_pc34_entry_state_fixture;
-}
-
-int dm1_v2_vp_build_composition_from_fixture(const DM1_V2_DungeonStateFixture* fixture,
-                                             int mapX,
-                                             int mapY,
-                                             int direction,
-                                             DM1_V2_ViewportCompositionInput* outInput) {
-    static const int kDepthOrder[12] = {3,3,3, 2,2,2, 1,1,1, 0,0,0};
-    static const int kLateralOrder[12] = {-1,1,0, -1,1,0, -1,1,0, -1,1,0};
-    if (!fixture || !outInput) return 0;
-    dm1_v2_vp_composition_init(outInput);
-    outInput->mapX = mapX;
-    outInput->mapY = mapY;
-    outInput->direction = direction & 3;
-    for (int i = 0; i < 12; i++) {
-        int x = 0;
-        int y = 0;
-        int depth = kDepthOrder[i];
-        int lateral = kLateralOrder[i];
-        int lateralIndex = dm1_v2_vp_lateral_index(lateral);
-        if (!dm1_v2_vp_relative_coords(direction, mapX, mapY, depth, lateral, &x, &y)) return 0;
-        outInput->squares[depth][lateralIndex] = dm1_v2_vp_lookup_fixture_square(fixture, x, y);
-    }
     return 1;
 }
 

@@ -18,10 +18,9 @@
  * downstream visual-diff gates can lock to a known-good baseline.
  *
  * The seed is small: a 4x3 viewport composition (D0..D3, L/C/R) plus an
- * FNV-1a 64-bit fold of the resulting layout. The legacy entry helper is a
- * test scaffold; the real-data helper consumes a caller-owned decoded
- * `DUNGEON.DAT` state and never extracts or substitutes game data. No SDL
- * rendering is initialised.
+ * FNV-1a 64-bit fold of the resulting layout. The real-data helper consumes
+ * a caller-owned decoded `DUNGEON.DAT` state and never extracts or
+ * substitutes game data. No SDL rendering is initialised.
  *
  * Source locks (ReDMCSB):
  *   DEFS.H:238-243          C001..C006 V1 source command ids.
@@ -228,16 +227,6 @@ static int dm1_v2_side_by_side_seed_build_from_input(
     /* Side-by-side hash: V1 || gap || V2 composite. */
     out->sideBySideHash = dm1_v2_side_by_side_seed_hash_layout(&out->v1, &out->v2);
     return 1;
-}
-
-int dm1_v2_side_by_side_seed_build_entry(DM1_V2_SideBySideSeed* out) {
-    const DM1_V2_DungeonStateFixture* fixture;
-    DM1_V2_ViewportCompositionInput input;
-    fixture = dm1_v2_vp_dm1_pc34_entry_state_fixture();
-    if (!fixture || !dm1_v2_vp_build_composition_from_fixture(
-            fixture, fixture->startMapX, fixture->startMapY,
-            fixture->startDirection, &input)) return 0;
-    return dm1_v2_side_by_side_seed_build_from_input(&input, out);
 }
 
 int dm1_v2_side_by_side_seed_build_from_dungeon(

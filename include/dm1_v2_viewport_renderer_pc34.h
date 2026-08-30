@@ -97,27 +97,6 @@ typedef struct {
 } DM1_V2_DungeonDatState;
 
 typedef struct {
-    int mapX;
-    int mapY;
-    int element;
-    int hasObjects;
-    int hasField;
-} DM1_V2_DungeonFixtureSquare;
-
-typedef struct {
-    const char* name;
-    const char* sourceRef;
-    const char* dungeonDatSha256;
-    int mapIndex;
-    int startMapX;
-    int startMapY;
-    int startDirection;
-    int defaultElement;
-    const DM1_V2_DungeonFixtureSquare* squares;
-    int squareCount;
-} DM1_V2_DungeonStateFixture;
-
-typedef struct {
     int x;
     int y;
     int width;
@@ -194,12 +173,10 @@ DM1_V2_ViewSquare dm1_v2_vp_square_id(int depth, int lateral);
 void dm1_v2_vp_present(DM1_V2_ViewportState* vp, int32_t nowMs);
 void dm1_v2_vp_composition_init(DM1_V2_ViewportCompositionInput* input);
 int dm1_v2_vp_relative_coords(int direction, int mapX, int mapY, int forward, int right, int* outX, int* outY);
-const DM1_V2_DungeonStateFixture* dm1_v2_vp_dm1_pc34_entry_state_fixture(void);
 int dm1_v2_vp_dungeon_dat_init(DM1_V2_DungeonDatState* outState, const uint8_t* bytes, int byteCount);
 int dm1_v2_vp_dungeon_dat_get_square_raw(const DM1_V2_DungeonDatState* state, int mapIndex, int mapX, int mapY, uint8_t* outSquare);
 int dm1_v2_vp_square_element_from_raw(uint8_t square, int direction);
 int dm1_v2_vp_build_composition_from_dungeon(const DM1_V2_DungeonDatState* state, int mapIndex, int mapX, int mapY, int direction, DM1_V2_ViewportCompositionInput* outInput);
-int dm1_v2_vp_build_composition_from_fixture(const DM1_V2_DungeonStateFixture* fixture, int mapX, int mapY, int direction, DM1_V2_ViewportCompositionInput* outInput);
 int dm1_v2_vp_compare_viewport_region(const DM1_V2_Color* expected, const DM1_V2_Color* actual, int stride, DM1_V2_ViewportRegion region, DM1_V2_RegionCompareResult* result);
 int dm1_v2_vp_emit_d0_d3_draw_list(const DM1_V2_ViewportCompositionInput* input, DM1_V2_DrawCommand* outCommands, int maxCommands);
 int dm1_v2_vp_compare_draw_lists(const DM1_V2_DrawCommand* expected, int expectedCount, const DM1_V2_DrawCommand* actual, int actualCount, int* mismatchIndex);

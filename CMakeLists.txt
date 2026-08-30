@@ -9903,45 +9903,6 @@ set_tests_properties(dm1_v2_source_owned_screenshot_receipts PROPERTIES
     ENVIRONMENT "FIRESTAFF_PROBE_OUTPUT_ROOT=${CMAKE_CURRENT_BINARY_DIR}"
 )
 
-# DM1 V2 side-by-side presentation-disabled seed probe. Headless: no game data.
-add_executable(firestaff_dm1_v2_side_by_side_presentation_seed_probe
-    probes/dm1/firestaff_dm1_v2_side_by_side_presentation_seed_probe.c)
-target_include_directories(firestaff_dm1_v2_side_by_side_presentation_seed_probe PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(firestaff_dm1_v2_side_by_side_presentation_seed_probe
-    PRIVATE firestaff_v2 firestaff_m10 m)
-if(NOT MSVC)
-    target_compile_options(firestaff_dm1_v2_side_by_side_presentation_seed_probe PRIVATE -Wall -Wextra -O2)
-endif()
-if(BUILD_TESTING)
-    add_test(
-        NAME dm1_v2_side_by_side_presentation_seed_probe
-        COMMAND firestaff_dm1_v2_side_by_side_presentation_seed_probe
-    )
-endif()
-
-# DM1 V2 deterministic screenshot receipt route. Headless/data-free: renders
-# the canonical DM1 entry fixture through a V2.0 presentation selection,
-# writes a scratch BMP and JSON manifest, and pins stable receipt hashes
-# without making any DOSBox/original-pixel parity claim.
-add_executable(firestaff_dm1_v2_deterministic_screenshot_receipt_route_probe
-    probes/dm1/firestaff_dm1_v2_deterministic_screenshot_receipt_route_probe.c)
-target_include_directories(firestaff_dm1_v2_deterministic_screenshot_receipt_route_probe PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(firestaff_dm1_v2_deterministic_screenshot_receipt_route_probe
-    PRIVATE firestaff_v2 firestaff_m10 m)
-if(NOT MSVC)
-    target_compile_options(firestaff_dm1_v2_deterministic_screenshot_receipt_route_probe PRIVATE -Wall -Wextra -O2)
-endif()
-if(BUILD_TESTING)
-    add_test(
-        NAME dm1_v2_deterministic_screenshot_receipt_route_probe
-        COMMAND firestaff_dm1_v2_deterministic_screenshot_receipt_route_probe
-    )
-endif()
-
 # Theron V2.1 texture upscale probe. Headless: no game data.
 # See include/theron_v2_texture_upscale_pc34.h.
 add_executable(firestaff_theron_v2_texture_upscale_probe
@@ -13136,23 +13097,6 @@ if(BUILD_TESTING)
             NAME m11_dm1_hoc_inscription_palette_transition_pc34
             COMMAND test_m11_dm1_hoc_inscription_palette_transition_pc34
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-        )
-    endif()
-
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/firestaff_dm1_v2_source_owned_route_screenshot_probe.c")
-        add_executable(firestaff_dm1_v2_source_owned_route_screenshot_probe
-            probes/firestaff_dm1_v2_source_owned_route_screenshot_probe.c)
-        target_include_directories(firestaff_dm1_v2_source_owned_route_screenshot_probe PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/include
-            ${CMAKE_CURRENT_SOURCE_DIR}/src)
-        target_link_libraries(firestaff_dm1_v2_source_owned_route_screenshot_probe PRIVATE firestaff_v2 firestaff_m11 firestaff_m10 SDL3::SDL3)
-        if(NOT MSVC)
-            target_compile_options(firestaff_dm1_v2_source_owned_route_screenshot_probe PRIVATE -Wall -Wextra -O2)
-        endif()
-        add_test(NAME dm1_v2_source_owned_route_screenshot_probe COMMAND firestaff_dm1_v2_source_owned_route_screenshot_probe)
-        set_tests_properties(dm1_v2_source_owned_route_screenshot_probe PROPERTIES
-            LABELS "tier2;dm1;v2;screenshot;source-owned;route"
-            ENVIRONMENT "FIRESTAFF_PROBE_OUTPUT_ROOT=${CMAKE_CURRENT_BINARY_DIR}"
         )
     endif()
 
@@ -31562,16 +31506,8 @@ endif()
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_viewport_composition_source_lock.py
     )
     add_test(
-        NAME dm1_v2_d0_d3_draw_list_comparator_gate
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_d0_d3_draw_list_comparator_gate.py
-    )
-    add_test(
         NAME dm1_v2_dungeon_dat_square_decoder_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_dungeon_dat_square_decoder_source_lock.py
-    )
-    add_test(
-        NAME dm1_v2_viewport_pixel_capture_fixture_gate
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_viewport_pixel_capture_fixture_gate.py
     )
     add_test(
         NAME dm1_v2_entry_viewport_png_export
