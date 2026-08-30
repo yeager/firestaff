@@ -553,6 +553,27 @@ static int m12_toggle_user_presentation_mode(int presentationMode) {
         : M12_PRESENTATION_V1_ORIGINAL;
 }
 
+/* Presentation cards are promises, not merely labels.  Their policy affects
+ * only host presentation, never simulation, source pixels, or game data.
+ * Original uses source geometry, integer pixels and nearest sampling; Modern
+ * retains source geometry but permits a smooth high-resolution viewport.
+ * Custom intentionally never calls this helper, preserving user choices. */
+static void m12_apply_presentation_card_preset(M12_StartupMenuState* state,
+                                               int presentationMode) {
+    if (!state) return;
+    if (presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
+        state->settings.scaleModeIndex = 4;      /* FIT */
+        state->settings.displayAspectMode = 2;   /* source/content */
+        state->settings.integerScaling = 1;
+        state->settings.scalingFilterIndex = 0;  /* nearest */
+    } else {
+        state->settings.scaleModeIndex = 5;      /* FIT SMOOTH */
+        state->settings.displayAspectMode = 2;   /* source/content */
+        state->settings.integerScaling = 0;
+        state->settings.scalingFilterIndex = 1;  /* linear */
+    }
+}
+
 static void m12_init_game_options(M12_GameOptions* opts) {
     if (!opts) {
         return;
@@ -6304,6 +6325,8 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                     state->gameCardSelected == 0 ? M12_PRESENTATION_V1_ORIGINAL
                                                  : M12_PRESENTATION_V21_UPSCALED;
                 state->settings.graphicsIndex = state->gameOptions[gi].presentationModeIndex;
+                m12_apply_presentation_card_preset(
+                    state, state->gameOptions[gi].presentationModeIndex);
                 m12_save_config(state);
                 /* Reuse the one canonical launch/gate implementation below. */
                 state->gameCardFlowStage = 2;

@@ -184,6 +184,11 @@ int main(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     if (!expect(state.launchRequested == 1 && state.view == M12_MENU_VIEW_MESSAGE,
                 "Original card should request launch and show ready message")) return 1;
+    if (!expect(state.settings.scaleModeIndex == 4 &&
+                state.settings.displayAspectMode == 2 &&
+                state.settings.integerScaling == 1 &&
+                state.settings.scalingFilterIndex == 0,
+                "Original card should apply pixel-perfect source presentation")) return 1;
     intent = M12_StartupMenu_GetLaunchIntent(&state);
     if (!expect(intent.valid == 1 && intent.presentationMode == M12_PRESENTATION_V1_ORIGINAL &&
                 intent.gameId && strcmp(intent.gameId, "dm1") == 0,
@@ -209,6 +214,11 @@ int main(void) {
     if (!expect(state.launchRequested == 1 && intent.valid == 1 &&
                 intent.presentationMode == M12_PRESENTATION_V21_UPSCALED,
                 "Modern card should produce a valid V2.1 DM1 intent")) return 1;
+    if (!expect(state.settings.scaleModeIndex == 5 &&
+                state.settings.displayAspectMode == 2 &&
+                state.settings.integerScaling == 0 &&
+                state.settings.scalingFilterIndex == 1,
+                "Modern card should apply the high-resolution smooth preset")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     if (!expect(state.view == M12_MENU_VIEW_MAIN,
