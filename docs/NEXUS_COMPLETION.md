@@ -70,6 +70,20 @@ window the interactive title menu. The capture is external development
 evidence, not a Firestaff runtime dependency, and the title/menu gate remains
 fail-closed pending a source-owned consumer and transition witness.
 
+## Japanese post-intro blank-window recheck — 2026-08-30
+
+An external instrumented Mednafen 1.32.1 session ran the supplied Japanese
+retail CUE/BIN set with the supplied Japanese 1.01 BIOS and retained two raw
+VDP1/VDP2 frames beginning at emulation frame 12,590. The raw witness is
+3,155,302 bytes and SHA-256
+`1924c9363e82921e8e6ba468edd68930ae7b5cece4c62f42b5a7147b86d0ed0a`.
+Its validated VDP2 register receipt is little-endian with `TVMD=0x8000` and
+`BGON=0x0000` on both frames: no NBG layer is enabled. It is therefore a
+post-intro blank-window observation, not a title frame. A START pulse in the
+same two-frame window does not turn this into a menu witness. The BIOS and raw
+artifact remain outside the repository; Firestaff retains its fail-closed
+title/menu boundary.
+
 ## Japanese late START VDP comparison — 2026-08-27
 
 The same clean V2 producer then held START for sixty frames after 30,000 boot
