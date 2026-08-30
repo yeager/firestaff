@@ -1,3 +1,26 @@
+# Firestaff v3.0.316
+
+## DM2
+
+### Fixed
+
+- `source-backed SKSAVE1 WIELD gate`: Updated the authentic DOS save
+  regression to require its observed source result (a valid miss) and retain
+  creature damage and drops as fail-closed until an original interaction trace
+  is available.
+
+## Fixed
+
+- `Mac native title boot probe`: Updated the verification-only title probe to
+  advance the authenticated Macintosh title movie source frames without a
+  wall-clock wait, preserving the production runtime's real media ownership.
+- `RetroAchievements diagnostics`: Removed token-derived diagnostic output so
+  runtime logs state only whether credentials are configured; a regression test
+  verifies that supplied token material is not emitted.
+- `Mac French dungeon loader test`: Fixed the loader receipt initialization
+  before the authenticated data read, preventing an indeterminate-state
+  compiler warning without altering release runtime behavior.
+
 # Firestaff v3.0.315
 
 ## Fixed

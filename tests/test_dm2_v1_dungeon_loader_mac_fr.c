@@ -37,7 +37,7 @@ int main(void) {
     char path[512];
     uint8_t *data;
     size_t data_size;
-    DM2_V1_DungeonData dungeon;
+    DM2_V1_DungeonData dungeon = {0};
 
     printf("DM2 Mac FR dungeon loader tests:\n");
 
