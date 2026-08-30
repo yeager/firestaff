@@ -6672,7 +6672,6 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     if (o->retroAchievementsEnabled ||
         menuState.settings.retroAchievementsEnabled) {
         Firestaff_RA_Config raConfig;
-        char redactedToken[16];
         firestaff_ra_config_init(&raConfig);
         raConfig.enabled = 1;
         raConfig.hardcore = o->retroAchievementsEnabled
@@ -6699,14 +6698,15 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                             : "https://retroachievements.org"));
         raRuntime.backend_available = 1;
         firestaff_ra_runtime_apply_config(&raRuntime, &raConfig);
-        firestaff_ra_redact_token(raConfig.api_token,
-                                  redactedToken,
-                                  sizeof(redactedToken));
+        /* Credentials are intentionally never included in diagnostics.  Even
+         * a suffix from a redacted API token is unnecessary information in a
+         * log that may be shared with a bug report. */
         fprintf(stderr,
-                "RetroAchievements: %s user=%s token=%s hardcore=%d\n",
+                "RetroAchievements: %s user=%s credentials=%s hardcore=%d\n",
                 firestaff_ra_status_label(firestaff_ra_status(&raRuntime)),
                 raConfig.username[0] ? raConfig.username : "(none)",
-                redactedToken[0] ? redactedToken : "(none)",
+                (raConfig.username[0] && raConfig.api_token[0])
+                    ? "configured" : "missing",
                 raConfig.hardcore);
         (void)m11_drain_retroachievements_events(&raRuntime, &gameView);
     }

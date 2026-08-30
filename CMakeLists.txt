@@ -25975,6 +25975,15 @@ endif()
         NAME firestaff_retroachievements_unit
         COMMAND test_firestaff_retroachievements
     )
+    add_test(
+        NAME firestaff_retroachievements_log_secret_redaction
+        COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_retroachievements_log_secret_redaction.sh
+            $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(firestaff_retroachievements_log_secret_redaction PROPERTIES
+        LABELS "security;retroachievements;runtime"
+        TIMEOUT 20
+    )
 
     add_executable(test_firestaff_fmtowns_disc
         tests/test_firestaff_fmtowns_disc.c
