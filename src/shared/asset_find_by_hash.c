@@ -13,6 +13,9 @@
 
 #include "asset_find_by_hash.h"
 #include "firestaff_zip_extract.h"
+#ifdef FIRESTAFF_HAS_NATIVE_7Z
+#include "firestaff_7z_extract.h"
+#endif
 #include <stdint.h>
 #include <limits.h>
 #include <stdio.h>
@@ -1463,6 +1466,23 @@ int asset_read_path_alloc(const char *path, uint8_t **outBytes,
             return asset_read_virtual_path_alloc(path, outBytes, outSize);
         }
         if (asset_container_kind_for_path(container) == ASSET_CONTAINER_EXTERNAL) {
+#ifdef FIRESTAFF_HAS_NATIVE_7Z
+            if (has_case_suffix(container, ".7z")) {
+                char member_name[ASSET_PATH_MAX];
+                uint8_t *member = NULL;
+                size_t member_size = 0U;
+                if (firestaff_7z_extract_single_lzma2_file(
+                        container, &member, &member_size, member_name,
+                        sizeof(member_name)) &&
+                    asset_casecmp(member_name, separator + 2) == 0) {
+                    *outBytes = member;
+                    *outSize = member_size;
+                    return 1;
+                }
+                free(member);
+                return 0;
+            }
+#endif
 #ifdef _WIN32
             return 0;
 #else
@@ -6544,6 +6564,23 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
             return 1;
         }
         if (asset_container_kind_for_path(container) == ASSET_CONTAINER_EXTERNAL) {
+#ifdef FIRESTAFF_HAS_NATIVE_7Z
+            if (has_case_suffix(container, ".7z")) {
+                char member_name[ASSET_PATH_MAX];
+                uint8_t *member = NULL;
+                size_t member_size = 0U;
+                if (!firestaff_7z_extract_single_lzma2_file(
+                        container, &member, &member_size, member_name,
+                        sizeof(member_name)) ||
+                    asset_casecmp(member_name, first + 2) != 0) {
+                    free(member);
+                    return 0;
+                }
+                *outBytes = member;
+                *outSize = member_size;
+                return 1;
+            }
+#endif
 #ifdef _WIN32
             /* External archives use the host extractor, which is deliberately
              * unavailable on Windows.  Keep this virtual path closed there. */
@@ -6636,9 +6673,24 @@ int asset_read_virtual_path_alloc(const char *virtualPath,
     if (!image && asset_container_kind_for_path(container) == ASSET_CONTAINER_ZIP) {
         image = zip_load_entry_bytes(container, disk, &imageSize);
     } else if (asset_container_kind_for_path(container) == ASSET_CONTAINER_EXTERNAL) {
-#ifndef _WIN32
-        image = external_read_entry_bytes(container, disk, &imageSize);
+#ifdef FIRESTAFF_HAS_NATIVE_7Z
+        if (has_case_suffix(container, ".7z")) {
+            char member_name[ASSET_PATH_MAX];
+            if (!firestaff_7z_extract_single_lzma2_file(
+                    container, &image, &imageSize, member_name,
+                    sizeof(member_name)) || asset_casecmp(member_name, disk) != 0) {
+                free(image);
+                return 0;
+            }
+        } else
 #endif
+        {
+#ifndef _WIN32
+            image = external_read_entry_bytes(container, disk, &imageSize);
+#else
+            return 0;
+#endif
+        }
     }
     if (!image) return 0;
     memset(&match, 0, sizeof(match));

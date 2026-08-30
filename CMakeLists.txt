@@ -4217,6 +4217,16 @@ if(BUILD_TESTING)
     set_tests_properties(firestaff_7z_extract PROPERTIES
         ENVIRONMENT "FIRESTAFF_CSB_UTILITY_7Z=$ENV{HOME}/.firestaff/data/csb/Chaos Strikes Back Utility.stx.7z"
         SKIP_RETURN_CODE 77)
+    add_executable(test_asset_7z_virtual_read_m12
+        tests/test_asset_7z_virtual_read_m12.c)
+    target_link_libraries(test_asset_7z_virtual_read_m12 PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_asset_7z_virtual_read_m12 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME asset_7z_virtual_read_m12 COMMAND test_asset_7z_virtual_read_m12)
+    set_tests_properties(asset_7z_virtual_read_m12 PROPERTIES
+        ENVIRONMENT "FIRESTAFF_CSB_UTILITY_7Z=$ENV{HOME}/.firestaff/data/csb/Chaos Strikes Back Utility.stx.7z"
+        SKIP_RETURN_CODE 77)
     add_test(
         NAME dm2_v1_real_media_hash_lock
         COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_real_media_hash_lock.sh"
@@ -7657,6 +7667,9 @@ set(M12_SOURCES
     src/engine/config_m12.c
     src/shared/asset_status_m12.c
     src/shared/asset_find_by_hash.c
+    src/shared/firestaff_7z_extract.c
+    third_party/lzma_sdk/LzmaDec.c
+    third_party/lzma_sdk/Lzma2Dec.c
     src/nexus/nexus_v1_bpk_archive.c
     src/nexus/nexus_v1_iso_reader.c
     src/shared/firestaff_theron_media_classify.c
@@ -7692,6 +7705,8 @@ set(M12_SOURCES
 
 add_library(firestaff_m12 STATIC ${M12_SOURCES})
 target_include_directories(firestaff_m12 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(firestaff_m12 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party/lzma_sdk)
+target_compile_definitions(firestaff_m12 PRIVATE FIRESTAFF_HAS_NATIVE_7Z=1)
 target_link_libraries(firestaff_m12 PUBLIC firestaff_m11 firestaff_v2 firestaff_retroachievements)
 firestaff_link_zlib(firestaff_m12 PUBLIC)
 # Asset-status test hooks are deliberately excluded from the production M12
