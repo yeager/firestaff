@@ -11,7 +11,7 @@
   void FirestaffTraceSH2RAMSourceWrite(uint32 address, unsigned size, uint32 value);
 --- src/ss/ss.cpp
 +++ src/ss/ss.cpp
-@@ -476,6 +476,44 @@
+@@ -476,6 +476,52 @@
  {
   return CPU[which & 1U].GetRegister(SH7095::GSREG_RPC, NULL, 0);
  }
