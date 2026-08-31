@@ -4498,6 +4498,52 @@ static void test_original_c13_vi_altar_event_plan(void)
           "C13 plan fails closed outside source steps 2, 1, and 0");
 }
 
+/* A C13 event is not independently runnable state: F0255 must find its
+ * source-owned bones Thing in the restored dungeon tail. Keep this explicit
+ * user-requested synthetic seed as a negative disk test, so no future save
+ * path turns an incomplete C13 fixture into a resumable PC34 save. */
+static void test_synthetic_c13_save_without_bones_is_rejected(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    struct GameWorld_Compat world;
+    DM1OriginalSavePC34HandoffReport report;
+    char path[512];
+    const char *root = getenv("FIRESTAFF_TEST_TMPDIR");
+    int written = 0;
+    int rc;
+
+    if (!root || root[0] == '\0') {
+        root = "Testing";
+        (void)test_mkdir(root);
+    }
+    CHECK(snprintf(path, sizeof(path),
+                   "%s/dm1-pc34-c13-missing-bones-%ld.sav",
+                   root, (long)test_getpid()) > 0,
+          "C13 missing-bones fixture path fits");
+    remove(path);
+    rc = build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                     3, 0, 0, 0, 2, 1,
+                                     ORIGINAL_PC34_ACTIVE_GROUP_COUNT);
+    CHECK(rc == SAVEGAME_PC34_OK &&
+              append_minimal_original_pc34_dungeon_tail(
+                  bytes, (int)sizeof(bytes), &written) &&
+              rewrite_fixture_event(bytes, written, 2,
+                                    DM1_MAP_TIME_MAKE(0, 123490u),
+                                    DM1_EVENT_VI_ALTAR_REBIRTH, 2, 0, 0, 0, 3) &&
+              rewrite_fixture_event_c_union(bytes, (size_t)written, 2,
+                                            0x0203u) &&
+              write_fixture_file(path, bytes, written),
+          "C13 missing-bones fixture remains a checksum-valid PC34 file");
+
+    memset(&world, 0, sizeof(world));
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_handoff_load_world_from_file(
+        path, &world, NULL, &report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "F0435 rejects C13 when its dungeon tail has no matching bones");
+    remove(path);
+}
+
 static void test_original_c13_vi_altar_runtime_sequence(void)
 {
     struct GameWorld_Compat world;
@@ -8357,6 +8403,7 @@ int main(void)
     test_original_c22_cpse_roundtrip();
     test_original_c53_watchdog_roundtrip();
     test_original_c13_vi_altar_event_plan();
+    test_synthetic_c13_save_without_bones_is_rejected();
     test_original_c13_vi_altar_runtime_sequence();
     test_runtime_materializer_binds_original_explosion_union();
     test_original_c24_fluxcage_import_runtime_export_roundtrip();

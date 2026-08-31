@@ -7,7 +7,10 @@ Reviewed 2026-08-29. Only open work is listed here.
   The supplied French DOS save pair proves its own backed F0435/F0433 route,
   including direct CLI and start-menu resume, bounded movement, and turns on
   map 5 with its four saved champions, but does not substitute for these
-  route-specific captures.
+  route-specific captures. A checksum-valid synthetic C13 seed without the
+  matching source-owned bones Thing is deliberately rejected at F0435; it
+  cannot be promoted or re-saved as a valid C13 session. A usable C13 corpus
+  must therefore preserve both the event and its dungeontail owner.
 - Extend real-media parity beyond bounded Atari ST, Amiga and FM Towns routes
   to native end-to-end gameplay, input and presentation evidence.
 - Bind an authenticated Amiga gameplay RGB4 table to the native renderer.
