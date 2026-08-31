@@ -91,8 +91,8 @@ SOURCE_CHECKS = [
         "end": 60,
         "needles": ["backbuffer_w = 0xe0;", "backbuffer_h = 0x88;"],
         "claim": (
-            "DM2 dungeon backbuffer is 224x136 (0xe0 x 0x88). Cropping the 320x200 frame at x=0..223, "
-            "y=33..169 matches the SKULLWIN backbuffer rectangle."
+            "DM2 dungeon backbuffer is 224x136 (0xe0 x 0x88). The retail PC RAW4 "
+            "RECT_7 aperture crops the 320x200 frame at x=0..223, y=40..175."
         ),
     },
     {
@@ -198,7 +198,7 @@ ROUTE_TOOL_CHECKS = [
         "rclick:<x>,<y>",
         "--normalize-only",
         "224x136",
-        "backbuffer_w",
+        "DM2_QUERY_EXPANDED_RECT(7)",
         "DM2_BLIT_SPECIALEFFECTS_HONEST_BOUNDARY",
     ]),
 ]
@@ -293,10 +293,25 @@ def check_attempt(attempt_dir: Path) -> bool:
         print(f"labelManifest={display(labels)} status=missing")
     else:
         print(f"labelManifest={display(labels)} status=present")
+    crop_ok = False
     if not crop_manifest.exists():
         print(f"cropManifest={display(crop_manifest)} status=missing")
     else:
-        print(f"cropManifest={display(crop_manifest)} status=present")
+        rows = [row.split("\t") for row in
+                crop_manifest.read_text(encoding="utf-8", errors="replace").splitlines()
+                if row.strip()]
+        expected_header = ["kind", "filename", "width", "height", "crop_x",
+                           "crop_y", "bytes", "sha256"]
+        if not rows or rows[0] != expected_header:
+            print(f"cropManifest={display(crop_manifest)} status=missing_rect7_origin_receipt")
+        else:
+            crop_ok = len(rows) > 1 and all(
+                len(row) == len(expected_header) and row[0] ==
+                "dm2_original_viewport_224x136" and row[2:6] ==
+                ["224", "136", "0", "40"] for row in rows[1:])
+            print(f"cropManifest={display(crop_manifest)} status=" +
+                  ("retail_rect7_origin_verified" if crop_ok else
+                   "bad_rect7_origin_receipt"))
     if not classifier.exists():
         print(f"classifierJson={display(classifier)} status=missing")
         print("semanticReadyForOverlay=0")
@@ -307,8 +322,8 @@ def check_attempt(attempt_dir: Path) -> bool:
     print(f"captureCount={data.get('capture_count')}")
     for problem in data.get("problems", []):
         print(f"attemptProblem={problem}")
-    print(f"semanticReadyForOverlay={1 if passed else 0}")
-    return passed
+    print(f"semanticReadyForOverlay={1 if passed and crop_ok else 0}")
+    return passed and crop_ok
 
 
 def _valid_sha256(value: str) -> bool:

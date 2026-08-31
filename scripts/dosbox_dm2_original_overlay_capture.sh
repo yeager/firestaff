@@ -30,7 +30,7 @@
 # DM2_BLIT_SPECIALEFFECTS_HONEST_BOUNDARY
 #   This script preserves the SKULLWIN c_gui_vp.cpp DM2_QUERY_BLIT_RECT and
 #   DM2_blit_specialeffects region semantics by keeping the 224x136 viewport
-#   crop coordinates (x=0..223, y=33..169) and the original 320x200 frame
+#   crop coordinates (x=0..223, y=40..175) and the original 320x200 frame
 #   receipt. It does NOT claim overlay parity with Firestaff: see
 #   docs/FIRESTAFF_GAP_LIST.md (DM2 original-overlay evidence is OPEN-BOUNDED).
 #
@@ -156,7 +156,7 @@ print_route_template() {
 #   2. Press-any-key intro
 #   3. Main menu (PRESS FIRE TO START or SELECT AN OPTION)
 #   4. Optional save slot selection
-#   5. Dungeon gameplay (viewport 224x136 at y=33..169 on 320x200 screen)
+#   5. Dungeon gameplay (viewport 224x136 at y=40..175 on 320x200 screen)
 #
 # Operator-validated routes MUST replace the example tokens below before
 # --run. The scaffold refuses to inject unvalidated routes.
@@ -895,16 +895,15 @@ src, ppm, png = map(Path, sys.argv[1:4])
 im = Image.open(src).convert("RGB")
 if im.size != (320, 200):
     raise SystemExit(f"ERROR: expected raw screenshot 320x200, got {im.size[0]}x{im.size[1]} for {src}")
-# DM2 viewport occupies x=0..223, y=33..169 (224x136) on the 320x200 frame.
-# Same backbuffer geometry as DM1 (c_gfx_main.cpp backbuffer_w=0xe0,
-# backbuffer_h=0x88), but the right HUD/right-panel system is larger and
-# starts at x>=224, so the crop stays in the viewport zone only.
-crop = im.crop((0, 33, 224, 169))
+# DM2_QUERY_EXPANDED_RECT(7) resolves the retail PC RAW4 aperture to
+# x=0..223, y=40..175 (224x136). DM1's y=33 viewport origin is not valid
+# for DM2: it includes seven interface rows above gfxsys.bitmapptr.
+crop = im.crop((0, 40, 224, 176))
 crop.save(ppm)
 crop.save(png)
 PY
         else
-            "${image_tool}" "$src" -crop 224x136+0+33 +repage "$ppm"
+            "${image_tool}" "$src" -crop 224x136+0+40 +repage "$ppm"
             "${image_tool}" "$ppm" "$png" 2>/dev/null || true
         fi
         printf '%02d\t%s\t%s\t%s\n' "$((i + 1))" "${label}.ppm" "$route_label" "$route_token" >> "${SHOT_LABEL_MANIFEST}"
@@ -956,13 +955,13 @@ if len(paths) != expected:
         f"ERROR: expected exactly {expected} normalized viewport PPM crops, found {len(paths)} in {crop_dir}"
     )
 with manifest.open("w") as f:
-    f.write("kind\tfilename\twidth\theight\tbytes\tsha256\n")
+    f.write("kind\tfilename\twidth\theight\tcrop_x\tcrop_y\tbytes\tsha256\n")
     for path in paths:
         data = path.read_bytes()
         width, height = ppm_dims(data, path)
         if (width, height) != (224, 136):
             raise SystemExit(f"ERROR: wrong crop geometry for {path}: {width}x{height}")
-        f.write(f"dm2_original_viewport_224x136\t{path.name}\t{width}\t{height}\t{len(data)}\t{hashlib.sha256(data).hexdigest()}\n")
+        f.write(f"dm2_original_viewport_224x136\t{path.name}\t{width}\t{height}\t0\t40\t{len(data)}\t{hashlib.sha256(data).hexdigest()}\n")
 PY
     ls -lh "${RAW_MANIFEST}" "${RAW_HEALTH_MANIFEST}" "${CROP_MANIFEST}" "${SHOT_LABEL_MANIFEST}" "${SCREENSHOT_DIR}"/* "${CROP_DIR}"/* 2>/dev/null | tee "${SIZE_LOG}" || true
     echo "[pass-H2313] normalized DM2 viewport crops: ${CROP_MANIFEST}"

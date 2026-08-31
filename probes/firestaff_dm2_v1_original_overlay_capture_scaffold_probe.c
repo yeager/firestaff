@@ -8,7 +8,7 @@
  *
  *   - The DM2 PC 1.0 EN screen buffer is 320x200 (ORIG_SWIDTH x ORIG_SHEIGHT).
  *   - The DM2 dungeon backbuffer is 224x136 (0xe0 x 0x88), which lines up with
- *     the screenshot crop (x=0..223, y=33..169) used by
+ *     the retail RAW4 RECT_7 screenshot crop (x=0..223, y=40..175) used by
  *     scripts/dosbox_dm2_original_overlay_capture.sh.
  *   - The DM2 mouse queue (c_mousequeue) and command queue (c_commandqueue)
  *     are bounded at 10 entries each, so the capture script must pace injected
@@ -17,12 +17,12 @@
  *     click coordinates map 1:1 to those ints without any engine-side remap.
  *   - The DM2 default right-panel is DM2_DISPLAY_RIGHT_PANEL_SQUAD_HANDS,
  *     which the capture script labels explicitly in shot labels.
- *   - The DM2 dungeon viewport y range starts at 33, mirroring DM1's PC 3.4
- *     224x136 backbuffer composition (ReDMCSB COORD.C:1693-1698).
+ *   - The retail PC RAW4 RECT_7 destination starts at y=40. DM1's y=33
+ *     viewport origin is a distinct game-specific coordinate system.
  *   - The original HUD/right-panel band is the remaining 96px-wide area
  *     beside the 224px viewport crop, and capture click routing must keep
  *     viewport, HUD-panel, and lower chrome samples disjoint.
- *   - Edge-adjacent click samples at x=223/224 and y=168/169 keep the
+ *   - Edge-adjacent click samples at x=223/224 and y=175/176 keep the
  *     320x200 presentation route split exact instead of fuzzing boundaries.
  *   - Representative HUD/action labels fit inside the 96px panel using
  *     SKULLWIN's 6px advance, 5px-high DM2 font metrics.
@@ -60,17 +60,15 @@
  * Anchor: SKULLWIN/c_gfx_main.cpp backbuffer_w = 0xe0, backbuffer_h = 0x88.
  * Anchor: SKULLWIN/c_gfx_main.h dm2screen/dm2mscreen buffer sizes.
  *
- * The crop coordinates (x=0, y=33, w=224, h=136) match the DM1 PC 3.4 viewport
- * anchor at ReDMCSB COORD.C:1693-1698 (G2067_i_ViewportScreenX = 0,
- * G2068_i_ViewportScreenY = 33); DM2 uses the same screen origin because
- * SKULLWIN's c_gfx_main.cpp c_gui_vp.cpp blits the 0xe0 x 0x88 backbuffer at
- * (0, 33) on the 320x200 surface. The capture scaffold crops there. */
+ * The crop coordinates (x=0, y=40, w=224, h=136) are the retail PC RAW4
+ * RECT_7 aperture decoded from GRAPHICS.DAT. DM1's y=33 viewport origin
+ * must not be transferred to DM2. */
 #define DM2_ORIG_SCREEN_W             320
 #define DM2_ORIG_SCREEN_H             200
 #define DM2_BACKBUFFER_W              224    /* 0xe0 */
 #define DM2_BACKBUFFER_H              136    /* 0x88 */
 #define DM2_VIEWPORT_X                  0
-#define DM2_VIEWPORT_Y                 33
+#define DM2_VIEWPORT_Y                 40
 #define DM2_RIGHT_PANEL_X             224
 #define DM2_RIGHT_PANEL_Y               0
 #define DM2_RIGHT_PANEL_W              96
@@ -285,14 +283,14 @@ static int click_edge_grid_holds(void)
         int y;
         DM2_CaptureRoute route;
     } samples[] = {
-        { 223,  33, DM2_CAPTURE_ROUTE_VIEWPORT },
-        { 224,  33, DM2_CAPTURE_ROUTE_RIGHT_PANEL },
-        { 223, 168, DM2_CAPTURE_ROUTE_VIEWPORT },
-        { 223, 169, DM2_CAPTURE_ROUTE_SCREEN_CHROME },
-        { 224, 169, DM2_CAPTURE_ROUTE_RIGHT_PANEL },
-        {   0,  32, DM2_CAPTURE_ROUTE_SCREEN_CHROME },
-        {   0,  33, DM2_CAPTURE_ROUTE_VIEWPORT },
-        { 223,  32, DM2_CAPTURE_ROUTE_SCREEN_CHROME },
+        { 223,  40, DM2_CAPTURE_ROUTE_VIEWPORT },
+        { 224,  40, DM2_CAPTURE_ROUTE_RIGHT_PANEL },
+        { 223, 175, DM2_CAPTURE_ROUTE_VIEWPORT },
+        { 223, 176, DM2_CAPTURE_ROUTE_SCREEN_CHROME },
+        { 224, 176, DM2_CAPTURE_ROUTE_RIGHT_PANEL },
+        {   0,  39, DM2_CAPTURE_ROUTE_SCREEN_CHROME },
+        {   0,  40, DM2_CAPTURE_ROUTE_VIEWPORT },
+        { 223,  39, DM2_CAPTURE_ROUTE_SCREEN_CHROME },
         { 224,   0, DM2_CAPTURE_ROUTE_RIGHT_PANEL },
         { 319, 199, DM2_CAPTURE_ROUTE_RIGHT_PANEL },
         { 320, 199, DM2_CAPTURE_ROUTE_OUTSIDE },
@@ -400,7 +398,7 @@ int main(void)
     record("viewport-screen-size",  geometry_holds(),
            "ORIG_SWIDTH=320 ORIG_SHEIGHT=200 (dm2global.h)");
     record("backbuffer-geometry",   geometry_holds(),
-           "backbuffer_w=0xe0=224, backbuffer_h=0x88=136 (c_gfx_main.cpp) crop fits at (0,33)");
+           "backbuffer_w=0xe0=224, backbuffer_h=0x88=136; retail RAW4 RECT_7 fits at (0,40)");
     record("queue-lengths",         queue_lengths_hold(),
            "MOUSE_QUEUE_LENGTH=10, COMMAND_QUEUE_LENGTH=10 (c_tmouse.h)");
     record("mouse-event-fields",    mouse_event_field_count_holds(),
@@ -414,7 +412,7 @@ int main(void)
     record("click-routing-bounds",  click_routing_bounds_hold(),
            "viewport, right-panel, and lower-chrome sample clicks are disjoint");
     record("click-edge-grid",       click_edge_grid_holds(),
-           "x=223/224 and y=168/169 samples keep viewport/HUD/chrome edges exact");
+           "x=223/224 and y=175/176 samples keep viewport/HUD/chrome edges exact");
     record("shot-label-vocabulary", shot_label_semantics_hold(),
            "interplay_splash, press_any_key, main_menu, dungeon_entry, ...");
     record("route-token-inventory", route_token_inventory_holds(),
