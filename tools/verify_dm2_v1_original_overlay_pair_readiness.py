@@ -40,6 +40,14 @@ ORIGINAL_HEALTH = "dm2_raw_frame_health.json"
 ORIGINAL_CROP_DIR = "viewport_224x136"
 EXPECTED_W = 224
 EXPECTED_H = 136
+# The retail PC RAW4 receipt is DM2_QUERY_EXPANDED_RECT(7): (0, 40, 224, 136).
+# A 224x136 image alone is insufficient evidence: legacy captures were cropped
+# at the DM1 origin (0, 33), which includes seven rows outside DM2's viewport.
+EXPECTED_CROP_X = "0"
+EXPECTED_CROP_Y = "40"
+EXPECTED_CROP_HEADER = [
+    "kind", "filename", "width", "height", "crop_x", "crop_y", "bytes", "sha256"
+]
 
 
 def display(path: Path) -> str:
@@ -174,11 +182,19 @@ def load_original_attempt(original_dir: Path) -> dict[str, Any]:
         result["problems"].append(f"{ORIGINAL_HEALTH} pass=false")
 
     try:
+        crop_lines = crop_manifest_path.read_text(encoding="utf-8").splitlines()
+        crop_header = crop_lines[0].split("\t") if crop_lines else []
         labels = read_tsv(labels_path)
         crops = read_tsv(crop_manifest_path)
-    except ValueError as exc:
+    except (OSError, UnicodeError, ValueError) as exc:
         result["problems"].append(str(exc))
         return result
+
+    if crop_header != EXPECTED_CROP_HEADER:
+        result["problems"].append(
+            f"{ORIGINAL_CROPS} must record the retail RECT_7 crop origin "
+            "with columns crop_x and crop_y"
+        )
 
     crop_by_name = {row.get("filename", ""): row for row in crops}
     seen_labels: set[str] = set()
@@ -204,6 +220,13 @@ def load_original_attempt(original_dir: Path) -> dict[str, Any]:
             row_problems.append(f"{filename} dimensions are {dims}, expected 224x136")
         if expected_sha and actual_sha != expected_sha:
             row_problems.append(f"{filename} sha256 does not match crop manifest")
+        crop_x = crop_row.get("crop_x") if crop_row else None
+        crop_y = crop_row.get("crop_y") if crop_row else None
+        if crop_x != EXPECTED_CROP_X or crop_y != EXPECTED_CROP_Y:
+            row_problems.append(
+                f"{filename} crop origin is ({crop_x},{crop_y}), expected "
+                "retail RECT_7 origin (0,40)"
+            )
         result["rows"].append(
             {
                 "index": label_row.get("index"),
@@ -215,6 +238,8 @@ def load_original_attempt(original_dir: Path) -> dict[str, Any]:
                 "dims": list(dims) if dims else None,
                 "sha256": actual_sha,
                 "manifest_sha256": expected_sha,
+                "crop_x": crop_x,
+                "crop_y": crop_y,
                 "ok": not row_problems,
                 "problems": row_problems,
             }
