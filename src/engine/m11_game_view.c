@@ -39762,12 +39762,25 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
             }
             break;
         case DUNGEON_ELEMENT_TELEPORTER:
+            /* F0104/F0128 own the source-selected teleporter bitmap and
+             * zone placement.  A cyan host outline on top of authenticated
+             * PC34 pixels is invented material, so retain it only for
+             * fixture/probe worlds without a GRAPHICS.DAT owner. */
+            if (m11_dm1_authenticated_viewport_source_active()) {
+                break;
+            }
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                           faceX + 5, faceY + 4, faceW - 10, faceH - 8, M11_COLOR_LIGHT_CYAN);
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                           faceX + 10, faceY + 8, faceW - 20, faceH - 16, M11_COLOR_WHITE);
             break;
         case DUNGEON_ELEMENT_FAKEWALL:
+            /* F0100/F0101 own the original fakewall material.  Do not
+             * replace an authenticated source record with a host magenta
+             * rectangle; the primitive remains available to test worlds. */
+            if (m11_dm1_authenticated_viewport_source_active()) {
+                break;
+            }
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                           faceX + 5, faceY + 4, faceW - 10, faceH - 8, M11_COLOR_MAGENTA);
             break;
