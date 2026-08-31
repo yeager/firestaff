@@ -30,6 +30,18 @@ for the raw dungeon prefix, the initial `s_savegamebuffer` scalar fields, and
 the retained GAME_LOAD owner’s c_map/c_record/c_hero/c_tim word fields. The
 legacy public owner constructors remain little-endian DOS wrappers; platform
 code must use the ordered constructor with an authenticated Macintosh receipt.
+
+### Macintosh File/Open Game
+
+The English retail Command-O route is not Firestaff quickload. It opens a
+native chooser over the configured original-save source and exposes only
+complete, independently parsed original `SKSave` candidates. The chooser
+pages two entries at a time and rescans the ordered big-endian corpus before
+both presentation and commit. Loading revalidates the selected source path,
+payload/source hashes and parsed state hash, then passes that exact in-memory
+member to the runtime's original-save `GAME_LOAD` import. A missing, changed,
+partial or rejected corpus closes without selecting another candidate; no
+save member is extracted to disk or synthesized.
 This is separate from the DOS little-endian loader: a Mac-shaped header is not
 admitted to Resume until the remaining `DM2_GAME_LOAD` record and possession
 stream has a live source owner.

@@ -1873,6 +1873,11 @@ typedef struct {
     uint64_t dm2MacMovieStartUs;
     int dm2MacMovieFrameShown;
     int dm2SaveDialoguePanelActive;
+    /* Macintosh File/Open Game is a source-save chooser, rather than a
+     * quickload alias.  It retains only navigation state; each confirmation
+     * rescans and imports the exact original candidate in memory. */
+    int dm2MacOpenGameActive;
+    int dm2MacOpenGamePage;
     struct {
         int level_loaded;
         int party_x, party_y, party_dir;

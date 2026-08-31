@@ -51,7 +51,11 @@ typedef enum {
     M12_MENU_INPUT_LEADER_INVENTORY,
     M12_MENU_INPUT_MAC_WALL_LEFT,
     M12_MENU_INPUT_MAC_WALL_CENTER,
-    M12_MENU_INPUT_MAC_WALL_RIGHT
+    M12_MENU_INPUT_MAC_WALL_RIGHT,
+    /* Macintosh File/Open Game.  This remains distinct from quickload:
+     * it opens a source-save chooser which imports only the exact original
+     * SKSave candidate the user selects. */
+    M12_MENU_INPUT_MAC_OPEN_GAME
 } M12_MenuInput;
 
 #endif

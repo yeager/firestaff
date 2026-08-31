@@ -2,6 +2,17 @@
 
 Reviewed 2026-08-29. Completed work only.
 
+- Macintosh retail `Cmd-O` now reaches a native **Open Game** owner rather
+  than being dropped or treated as Back/quickload. The modal lists only
+  complete original `SKSave` candidates, two per page, from the configured
+  original-save source. Before display and again before loading it performs a
+  read-only ordered corpus census; the selected candidate's source path,
+  byte order, payload and state hashes must still match before the runtime
+  imports it. The chosen member stays in RAM and enters the existing
+  source-owned `GAME_LOAD` import path. A missing, incomplete or changed
+  corpus fails closed; no default slot, generated save, extraction or fallback
+  candidate is used.
+
 - The DOS, Amiga, FM Towns, and Macintosh retail start-menu routes each now
   create a fresh native New-Game session for every observed input command:
   forward/backward movement, left/right turn, both strafes and action.  Every

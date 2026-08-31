@@ -1299,6 +1299,156 @@ static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
     return receipt.session_applied;
 }
 
+/* The Macintosh File/Open Game command is intentionally not a quickload
+ * shortcut.  Its source owner chooses one original SKSave, then GAME_LOAD
+ * consumes that exact stream.  Keep only the two-row page position in M11;
+ * the corpus is rebuilt before both display and import so a changed medium
+ * can never make a stale row select a different candidate. */
+static int m11_dm2_mac_open_game_corpus(
+    const M11_GameViewState *state,
+    DM2_OriginalSaveStateCorpusReceipt *out)
+{
+    const DM2_V1_BootProfile *profile;
+    const char *save_root;
+
+    if (!state || !out || !state->dm2BootProfile) return 0;
+    profile = (const DM2_V1_BootProfile *)state->dm2BootProfile;
+    if (profile->platform != DM2_PLATFORM_MAC_EN || !profile->save_root[0]) {
+        return 0;
+    }
+    save_root = profile->save_root;
+    if (!dm2_v1_original_save_state_corpus_probe_ordered(save_root, 1, out) ||
+        !out->scan_complete || !out->original_candidate_list_complete ||
+        out->original_candidate_count == 0u ||
+        out->parsed_candidate_count != out->original_candidate_count ||
+        out->rejected_candidate_count != 0u ||
+        out->entry_count != out->original_candidate_count) {
+        return 0;
+    }
+    return 1;
+}
+
+static int m11_dm2_mac_open_game_show_page(M11_GameViewState *state)
+{
+    DM2_OriginalSaveStateCorpusReceipt corpus;
+    unsigned int first;
+    unsigned int visible;
+    char text[128];
+    char choice1[32];
+    char choice2[32];
+    const char *next = NULL;
+    const char *cancel;
+
+    memset(&corpus, 0, sizeof(corpus));
+    if (!m11_dm2_mac_open_game_corpus(state, &corpus)) {
+        state->dm2MacOpenGameActive = 0;
+        m11_set_status(state, "DM2 MAC", "NO COMPLETE ORIGINAL SAVE");
+        return 0;
+    }
+    first = (unsigned int)state->dm2MacOpenGamePage * 2u;
+    if (first >= corpus.entry_count) {
+        state->dm2MacOpenGamePage = 0;
+        first = 0u;
+    }
+    visible = corpus.entry_count - first;
+    if (visible > 2u) visible = 2u;
+    snprintf(text, sizeof(text), "OPEN GAME: ORIGINAL SAVE %u-%u OF %u",
+             first + 1u, first + visible, (unsigned int)corpus.entry_count);
+    snprintf(choice1, sizeof(choice1), "SAVE %u", first + 1u);
+    choice2[0] = '\0';
+    if (visible == 2u) {
+        snprintf(choice2, sizeof(choice2), "SAVE %u", first + 2u);
+    }
+    if (first + visible < corpus.entry_count) next = "NEXT";
+    cancel = "CANCEL";
+    if (!M11_GameView_ShowDialogOverlayChoices(state, text, choice1,
+                                                choice2, next, cancel)) {
+        state->dm2MacOpenGameActive = 0;
+        return 0;
+    }
+    state->dm2MacOpenGameActive = 1;
+    state->dialogSelectedChoice = 1;
+    return 1;
+}
+
+static M11_GameInputResult m11_dm2_mac_open_game_handle_choice(
+    M11_GameViewState *state, int choice)
+{
+    DM2_OriginalSaveStateCorpusReceipt corpus;
+    DM2_V1_RuntimeOriginalCorpusImportReceipt import_receipt;
+    unsigned int first;
+    unsigned int visible;
+    int next_choice;
+
+    if (!state || !state->dm2MacOpenGameActive || choice <= 0) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    memset(&corpus, 0, sizeof(corpus));
+    if (!m11_dm2_mac_open_game_corpus(state, &corpus)) {
+        M11_GameView_DismissDialogOverlay(state);
+        m11_set_status(state, "DM2 MAC", "ORIGINAL SAVE CHANGED OR INVALID");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    first = (unsigned int)state->dm2MacOpenGamePage * 2u;
+    if (first >= corpus.entry_count) return M11_GAME_INPUT_IGNORED;
+    visible = corpus.entry_count - first;
+    if (visible > 2u) visible = 2u;
+    if ((unsigned int)choice <= visible) {
+        const DM2_V1_BootProfile *profile =
+            (const DM2_V1_BootProfile *)state->dm2BootProfile;
+        memset(&import_receipt, 0, sizeof(import_receipt));
+        if (!dm2_v1_runtime_import_original_sksave_state_entry(
+                profile->save_root, &corpus.entries[first + (unsigned int)choice - 1u],
+                &import_receipt) || !import_receipt.corpus_complete ||
+            !import_receipt.selected_state_admitted ||
+            !import_receipt.runtime_import.restored) {
+            m11_set_status(state, "DM2 MAC", "ORIGINAL SAVE NOT LOADED");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        M11_GameView_DismissDialogOverlay(state);
+        state->dm2State.level_loaded = 1;
+        m11_sync_dm2_state_from_runtime(state);
+        m11_set_status(state, "DM2 MAC", "ORIGINAL SAVE LOADED");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    next_choice = (int)visible + 1;
+    if (first + visible < corpus.entry_count && choice == next_choice) {
+        ++state->dm2MacOpenGamePage;
+        return m11_dm2_mac_open_game_show_page(state)
+            ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+    }
+    M11_GameView_DismissDialogOverlay(state);
+    m11_set_status(state, "DM2 MAC", "OPEN GAME CANCELLED");
+    return M11_GAME_INPUT_REDRAW;
+}
+
+static M11_GameInputResult m11_dm2_mac_open_game_handle_input(
+    M11_GameViewState *state, M12_MenuInput input)
+{
+    int count;
+
+    if (!state || !state->dm2MacOpenGameActive) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (input == M12_MENU_INPUT_BACK) {
+        return m11_dm2_mac_open_game_handle_choice(state,
+                                                   state->dialogChoiceCount);
+    }
+    if (input == M12_MENU_INPUT_UP || input == M12_MENU_INPUT_DOWN) {
+        count = state->dialogChoiceCount;
+        if (count <= 0) return M11_GAME_INPUT_IGNORED;
+        state->dialogSelectedChoice =
+            ((state->dialogSelectedChoice - 1 +
+              (input == M12_MENU_INPUT_UP ? count - 1 : 1)) % count) + 1;
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION) {
+        return m11_dm2_mac_open_game_handle_choice(
+            state, state->dialogSelectedChoice > 0 ? state->dialogSelectedChoice : 1);
+    }
+    return M11_GAME_INPUT_IGNORED;
+}
+
 static void m11_dm2_startup_state_receipt_to_m11(
     M11_GameViewState *state,
     const DM2_V1_StartupMenuStateReceipt *receipt)
@@ -32381,6 +32531,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
 
     /* Dialog overlay: text plaques dismiss; return-to-menu confirm requires an explicit choice. */
     if (state->dialogOverlayActive) {
+        if (state->dm2MacOpenGameActive) {
+            return m11_dm2_mac_open_game_handle_input(state, input);
+        }
         if (state->csbDiskMenuActive) {
             if (input == M12_MENU_INPUT_UP || input == M12_MENU_INPUT_DOWN) {
                 int delta = input == M12_MENU_INPUT_UP ? -1 : 1;
@@ -32854,6 +33007,16 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 return M11_GAME_INPUT_REDRAW;
             }
             return M11_GAME_INPUT_IGNORED;
+        }
+        if (input == M12_MENU_INPUT_MAC_OPEN_GAME) {
+            const DM2_V1_BootProfile *profile =
+                (const DM2_V1_BootProfile *)state->dm2BootProfile;
+            if (!m11_dm2_is_mac_profile(profile)) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+            state->dm2MacOpenGamePage = 0;
+            return m11_dm2_mac_open_game_show_page(state)
+                ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
         if (input == M12_MENU_INPUT_CYCLE_CHAMPION) {
             if (dm2_v1_runtime_cycle_action_champion()) {
@@ -34518,6 +34681,12 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
     /* Click dismisses normal dialogs; return-to-menu confirm acts on YES/NO. */
     if (state->dialogOverlayActive) {
         int choice = m11_dialog_choice_at_point(state, x, y);
+        if (state->dm2MacOpenGameActive) {
+            if (choice > 0) {
+                return m11_dm2_mac_open_game_handle_choice(state, choice);
+            }
+            return M11_GAME_INPUT_REDRAW;
+        }
         if (state->csbDiskMenuActive) {
             if (choice > 0) return m11_csb_handle_save_disk_choice(state, choice);
             return M11_GAME_INPUT_REDRAW;
@@ -64446,6 +64615,8 @@ int M11_GameView_DismissDialogOverlay(M11_GameViewState* state) {
     state->csbDiskMenuActive = 0;
     state->csbDiskMenuSelectedChoice = 0;
     state->csbDiskMenuStage = M11_CSB_SAVE_DISK_MENU_NONE;
+    state->dm2MacOpenGameActive = 0;
+    state->dm2MacOpenGamePage = 0;
     state->dialogOverlayText[0] = '\0';
     state->dialogChoiceCount = 0;
     memset(state->dialogChoices, 0, sizeof(state->dialogChoices));

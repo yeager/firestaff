@@ -4564,6 +4564,7 @@ static int m11_dm2_mac_sdl_key_to_menu_input(
         case DM2_V1_MAC_ACTION_TOGGLE_LEADER: *outInput = M12_MENU_INPUT_LEADER_INVENTORY; return 1;
         case DM2_V1_MAC_ACTION_FREEZE: *outInput = M12_MENU_INPUT_FREEZE_TOGGLE; return 1;
         case DM2_V1_MAC_ACTION_SAVE_GAME: *outInput = M12_MENU_INPUT_SAVE_GAME; return 1;
+        case DM2_V1_MAC_ACTION_OPEN_GAME: *outInput = M12_MENU_INPUT_MAC_OPEN_GAME; return 1;
         case DM2_V1_MAC_ACTION_QUIT: *outInput = M12_MENU_INPUT_BACK; return 1;
         case DM2_V1_MAC_ACTION_TURN_LEFT: *outInput = M12_MENU_INPUT_TURN_LEFT; return 1;
         case DM2_V1_MAC_ACTION_MOVE_FORWARD: *outInput = M12_MENU_INPUT_UP; return 1;
