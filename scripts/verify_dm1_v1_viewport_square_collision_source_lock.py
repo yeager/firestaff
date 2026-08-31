@@ -10,12 +10,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 from typing import Any
 
-DEFAULT_SOURCE = Path(
-    "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-).expanduser()
+DEFAULT_SOURCE = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_SOURCE",
+    "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+)).expanduser()
 
 CHECKS: list[dict[str, Any]] = [
     {

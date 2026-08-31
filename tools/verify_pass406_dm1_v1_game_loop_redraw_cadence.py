@@ -23,7 +23,10 @@ PASS = "pass406_dm1_v1_game_loop_redraw_cadence"
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_SOURCE",
+    str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+))
 
 SOURCES = {
     "GAMELOOP.C": RED / "GAMELOOP.C",

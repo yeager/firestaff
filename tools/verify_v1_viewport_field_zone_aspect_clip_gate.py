@@ -9,6 +9,7 @@ behind nearer center blockers by Firestaff's maxVisibleForward guard.
 from __future__ import annotations
 
 from pathlib import Path
+import os
 import re
 import sys
 
@@ -16,7 +17,10 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src/engine/m11_game_view.c"
 DM1_SRC = ROOT / "src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c"
 CMAKE = ROOT / "CMakeLists.txt"
-RED_ROOT = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+RED_ROOT = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_SOURCE",
+    "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+)).expanduser()
 RED_DUNVIEW = RED_ROOT / "DUNVIEW.C"
 RED_DEFS = RED_ROOT / "DEFS.H"
 RED_COORD = RED_ROOT / "COORD.C"

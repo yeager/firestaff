@@ -17,7 +17,10 @@ PASS = "pass406_dm1_v1_movement_legality_completion_gate"
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_SOURCE",
+    str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+))
 CLIKMENU = RED / "CLIKMENU.C"
 MOVESENS = RED / "MOVESENS.C"
 DUNGEON = RED / "DUNGEON.C"
@@ -72,7 +75,11 @@ def require_order(text: str, needles: list[str], label: str) -> None:
 
 
 def run(cmd: list[str], timeout: int = 60) -> str:
-    p = subprocess.run(cmd, cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout)
+    env = os.environ.copy()
+    env["FIRESTAFF_REDMCSB_SOURCE"] = str(RED)
+    p = subprocess.run(cmd, cwd=ROOT, env=env, text=True,
+                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                       timeout=timeout)
     if p.returncode != 0:
         raise AssertionError(f"command failed {chr(32).join(cmd)}:\n{p.stdout[-2000:]}")
     return p.stdout.strip()

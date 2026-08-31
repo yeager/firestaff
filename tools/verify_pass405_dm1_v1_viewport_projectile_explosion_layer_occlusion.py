@@ -13,13 +13,17 @@ Focused source-lock for the Firestaff M11 split renderer:
 from __future__ import annotations
 
 from pathlib import Path
+import os
 import re
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+REDMCSB = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_SOURCE",
+    str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+)) / "DUNVIEW.C"
 VIEW = ROOT / "src/engine/m11_game_view.c"
 META = ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c"
 

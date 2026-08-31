@@ -22,7 +22,10 @@ PASS = "pass423_dm1_v1_input_command_movement_pipeline_source_lock"
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_SOURCE",
+    str(Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
+))
 BUILD = resolve_build_dir(ROOT, ROOT / "build")
 
 SOURCE_RANGES = [

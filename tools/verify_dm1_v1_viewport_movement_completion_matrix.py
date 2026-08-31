@@ -249,8 +249,13 @@ def parse_status(output: str) -> str | None:
     return m.group(1) if m else None
 
 
-def run_checked(cmd: list[str], timeout: int = 900) -> dict[str, Any]:
-    proc = subprocess.run(cmd, cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout)
+def run_checked(cmd: list[str], timeout: int = 900, source: Path | None = None) -> dict[str, Any]:
+    env = os.environ.copy()
+    if source is not None:
+        env["FIRESTAFF_REDMCSB_SOURCE"] = str(source)
+    proc = subprocess.run(cmd, cwd=ROOT, env=env, text=True,
+                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                          timeout=timeout)
     return {
         "cmd": cmd,
         "passed": proc.returncode == 0,
@@ -273,7 +278,11 @@ def run_gate(entry: dict[str, Any], source: Path) -> dict[str, Any]:
     cmd = list(entry["cmd"])
     if entry["id"] == "pass381_movement_viewport_walls_source_lock":
         cmd.extend(["--source", str(source)])
-    proc = subprocess.run(cmd, cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=180)
+    env = os.environ.copy()
+    env["FIRESTAFF_REDMCSB_SOURCE"] = str(source)
+    proc = subprocess.run(cmd, cwd=ROOT, env=env, text=True,
+                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                          timeout=180)
     status = parse_status(proc.stdout)
     expected = entry.get("expectedStatus")
     passed = proc.returncode == 0 and (expected is None or status == expected)

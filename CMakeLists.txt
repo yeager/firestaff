@@ -34385,16 +34385,22 @@ endif()
             NAME pass381_dm1_v1_movement_viewport_walls_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass381_dm1_v1_movement_viewport_walls_source_lock.py
         )
+        set_tests_properties(pass381_dm1_v1_movement_viewport_walls_source_lock PROPERTIES
+            SKIP_RETURN_CODE 77
+            ENVIRONMENT "FIRESTAFF_REDMCSB_SOURCE=${CMAKE_CURRENT_SOURCE_DIR}/reference/redmcsb-20210206/Toolchains/Common/Source")
         add_test(
             NAME dm1_v1_viewport_movement_completion_matrix
             COMMAND ${CMAKE_COMMAND} -E env FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR} ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_viewport_movement_completion_matrix.py
         )
-        set_tests_properties(dm1_v1_viewport_movement_completion_matrix PROPERTIES TIMEOUT 300)
+        set_tests_properties(dm1_v1_viewport_movement_completion_matrix PROPERTIES
+            ENVIRONMENT "FIRESTAFF_REDMCSB_SOURCE=${CMAKE_CURRENT_SOURCE_DIR}/reference/redmcsb-20210206/Toolchains/Common/Source"
+            TIMEOUT 300)
         add_test(
             NAME dm1_v1_viewport_walls_golden_comparison
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_viewport_walls_golden_comparison.py
         )
         set_tests_properties(dm1_v1_viewport_walls_golden_comparison PROPERTIES
+            RUN_SERIAL TRUE
             SKIP_RETURN_CODE 77
             ENVIRONMENT "FIRESTAFF_REDMCSB_SOURCE=${CMAKE_CURRENT_SOURCE_DIR}/reference/redmcsb-20210206/Toolchains/Common/Source")
         add_test(
@@ -34555,6 +34561,7 @@ endif()
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_dm1_v1_viewport_world_redmcsb_gate.py
         )
         set_tests_properties(dm1_v1_viewport_world_redmcsb_source_lock PROPERTIES
+            RUN_SERIAL TRUE
             SKIP_RETURN_CODE 77
             ENVIRONMENT "FIRESTAFF_REDMCSB_SOURCE=${CMAKE_CURRENT_SOURCE_DIR}/reference/redmcsb-20210206/Toolchains/Common/Source;FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1")
         add_test(

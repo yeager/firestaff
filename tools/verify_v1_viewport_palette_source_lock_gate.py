@@ -9,6 +9,7 @@ post-dimming over source wall/floor/field zones.
 from __future__ import annotations
 
 from pathlib import Path
+import os
 import re
 import sys
 
@@ -16,7 +17,10 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src/engine/m11_game_view.c"
 ORCH = ROOT / "src/memory/memory_tick_orchestrator_pc34_compat.c"
 CMAKE = ROOT / "CMakeLists.txt"
-RED_ROOT = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+RED_ROOT = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_SOURCE",
+    "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+)).expanduser()
 RED_PANEL = RED_ROOT / "PANEL.C"
 RED_DRAWVIEW = RED_ROOT / "DRAWVIEW.C"
 RED_DATA = RED_ROOT / "DATA.C"
