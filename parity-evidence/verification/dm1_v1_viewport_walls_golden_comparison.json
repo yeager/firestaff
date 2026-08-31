@@ -3,19 +3,19 @@
     "files": {
       "movement_viewport_wall_golden": {
         "exists": true,
-        "path": "/Volumes/Extern-disk/firestaff/parity-evidence/verification/dm1_v1_movement_viewport_wall_golden.json"
+        "path": "parity-evidence/verification/dm1_v1_movement_viewport_wall_golden.json"
       },
       "pass177_draw_stack_verify_out": {
         "exists": true,
-        "path": "/Volumes/Extern-disk/firestaff/parity-evidence/verification/pass177_viewport_redmcsb_draw_stack_gate/verify.out"
+        "path": "parity-evidence/verification/pass177_viewport_redmcsb_draw_stack_gate/verify.out"
       },
       "pass179_original_capture_manifest": {
         "exists": true,
-        "path": "/Volumes/Extern-disk/firestaff/parity-evidence/verification/pass179_dm1_v1_original_evidence_capture_integration_gate/manifest.json"
+        "path": "parity-evidence/verification/pass179_dm1_v1_original_evidence_capture_integration_gate/manifest.json"
       },
       "pass207_original_movement_viewport_blocker_report": {
         "exists": true,
-        "path": "/Volumes/Extern-disk/firestaff/parity-evidence/pass207_dm1_v1_original_movement_viewport_blocker_gate.md"
+        "path": "parity-evidence/pass207_dm1_v1_original_movement_viewport_blocker_gate.md"
       }
     },
     "movement_viewport_wall_golden": {
@@ -137,7 +137,7 @@
       "ok": true
     }
   ],
-  "redmcsb_source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsb_source_root": "reference/redmcsb-20210206/Toolchains/Common/Source",
   "schema": "dm1_v1_viewport_walls_golden_comparison.v1",
   "scope": "DM1 V1 viewport/walls golden comparison: side-door/detail layering, draw order, row clipping, original evidence status",
   "status": "PASS_SOURCE_LOCKED_ORIGINAL_CAPTURE_BLOCKED"

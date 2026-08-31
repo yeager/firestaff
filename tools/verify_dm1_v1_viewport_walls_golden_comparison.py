@@ -10,11 +10,20 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = (Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source")
+def redmcsb_source() -> Path:
+    """Resolve an operator-provided local ReDMCSB checkout without vendoring it."""
+    configured = os.environ.get("FIRESTAFF_REDMCSB_SOURCE")
+    if configured:
+        return Path(configured).expanduser()
+    return ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
+
+
+RED = redmcsb_source()
 DEFAULT_OUT = ROOT / "parity-evidence/verification/dm1_v1_viewport_walls_golden_comparison.json"
 DEFAULT_REPORT = ROOT / "parity-evidence/dm1_v1_viewport_walls_golden_comparison.md"
 
@@ -24,6 +33,14 @@ EXISTING = {
     "pass179_original_capture_manifest": ROOT / "parity-evidence/verification/pass179_dm1_v1_original_evidence_capture_integration_gate/manifest.json",
     "pass207_original_movement_viewport_blocker_report": ROOT / "parity-evidence/pass207_dm1_v1_original_movement_viewport_blocker_gate.md",
 }
+
+
+def evidence_path(path: Path) -> str:
+    """Keep generated evidence portable and avoid publishing host paths."""
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return "<external-local-reference>"
 
 SOURCE_CHECKS: list[dict[str, Any]] = [
     {
@@ -173,7 +190,7 @@ def audit_source() -> list[dict[str, Any]]:
 
 
 def artifact_status() -> dict[str, Any]:
-    files = {name: {"path": str(path), "exists": path.exists()} for name, path in EXISTING.items()}
+    files = {name: {"path": evidence_path(path), "exists": path.exists()} for name, path in EXISTING.items()}
     missing = [name for name, meta in files.items() if not meta["exists"]]
     if missing:
         raise AssertionError(f"missing required artifact(s): {missing}")
@@ -281,12 +298,20 @@ def main() -> int:
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
     args = parser.parse_args()
 
+    # ReDMCSB is reference material, not a Firestaff runtime dependency or a
+    # vendored source tree.  A host without the explicitly local checkout
+    # cannot perform this source comparison and must report CTest's standard
+    # optional-fixture skip rather than a false renderer regression.
+    if not RED.is_dir():
+        print(f"SKIP missing local ReDMCSB source: {RED}")
+        return 77
+
     source = audit_source()
     artifacts = artifact_status()
     manifest = {
         "schema": "dm1_v1_viewport_walls_golden_comparison.v1",
         "status": overall(source, artifacts),
-        "redmcsb_source_root": str(RED),
+        "redmcsb_source_root": evidence_path(RED),
         "scope": "DM1 V1 viewport/walls golden comparison: side-door/detail layering, draw order, row clipping, original evidence status",
         "redmcsb_source_audit": source,
         "artifacts": artifacts,

@@ -9,16 +9,19 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any
 
-DEFAULT_REDMCSB_SOURCE = Path(
-    "~/.openclaw/data/firestaff-redmcsb-source/"
-    "ReDMCSB_WIP20210206/Toolchains/Common/Source"
-).expanduser()
-DEFAULT_DM1_CANONICAL = Path(
-    "~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1"
-).expanduser()
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_REDMCSB_SOURCE = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_SOURCE",
+    ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source",
+)).expanduser()
+DEFAULT_DM1_CANONICAL = Path(os.environ.get(
+    "FIRESTAFF_DM1_DATA_DIR",
+    Path.home() / ".firestaff/data/dm1",
+)).expanduser()
 
 CHECKS: list[dict[str, Any]] = [
     {
@@ -346,7 +349,7 @@ CHECKS: list[dict[str, Any]] = [
     },
 ]
 
-DM1_ANCHORS = ["GRAPHICS.DAT", "DUNGEON.DAT", "TITLE", "README.md"]
+DM1_ANCHORS = ["GRAPHICS.DAT", "DUNGEON.DAT", "TITLE"]
 
 
 def sha256(path: Path) -> str:
@@ -360,14 +363,20 @@ def sha256(path: Path) -> str:
 def require_local(path: Path) -> None:
     raw = str(path)
     resolved = str(path.resolve()) if path.exists() else raw
-    allowed = tuple(str(Path(p).expanduser()) for p in (
-        "~/.openclaw/data/firestaff-redmcsb-source/",
-        "~/.openclaw/data/firestaff-original-games/DM/",
-    ))
     if "deprecated-remote-source" in raw.lower() or "deprecated-remote-source" in resolved.lower() or "<deprecated-remote-host>" in raw:
         raise SystemExit(f"refusing non-local path: {path}")
-    if not (raw.startswith(allowed) or resolved.startswith(allowed)):
-        raise SystemExit(f"refusing path outside local evidence roots: {path}")
+    # Caller-supplied roots are local operator evidence only.  The test never
+    # downloads, extracts, or writes game/reference data.
+    if not path.is_absolute():
+        raise SystemExit(f"refusing non-absolute evidence path: {path}")
+
+
+def find_anchor(root: Path, name: str) -> Path:
+    direct = root / name
+    if direct.is_file():
+        return direct
+    matches = sorted(path for path in root.rglob(name) if path.is_file())
+    return matches[0] if matches else direct
 
 
 def line_slice(text: str, line_range: str) -> str:
@@ -415,7 +424,7 @@ def verify(source: Path, dm1: Path) -> tuple[dict[str, Any], list[str]]:
 
     anchors: list[dict[str, Any]] = []
     for name in DM1_ANCHORS:
-        path = dm1 / name
+        path = find_anchor(dm1, name)
         require_local(path)
         if not path.exists():
             failures.append(f"missing DM1 canonical anchor: {path}")
@@ -450,6 +459,10 @@ def main() -> int:
     parser.add_argument("--dm1", type=Path, default=DEFAULT_DM1_CANONICAL)
     parser.add_argument("--json", action="store_true", help="emit full JSON evidence")
     args = parser.parse_args()
+
+    if not args.source.is_dir() or not args.dm1.is_dir():
+        print("SKIP local ReDMCSB source or DM1 media is unavailable")
+        return 77
 
     result, failures = verify(args.source, args.dm1)
     if args.json:

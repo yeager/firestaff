@@ -34394,6 +34394,9 @@ endif()
             NAME dm1_v1_viewport_walls_golden_comparison
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_viewport_walls_golden_comparison.py
         )
+        set_tests_properties(dm1_v1_viewport_walls_golden_comparison PROPERTIES
+            SKIP_RETURN_CODE 77
+            ENVIRONMENT "FIRESTAFF_REDMCSB_SOURCE=${CMAKE_CURRENT_SOURCE_DIR}/reference/redmcsb-20210206/Toolchains/Common/Source")
         add_test(
             NAME dm1_v1_real_wall_asset_distinctness_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_real_wall_asset_distinctness_gate.py
@@ -34551,6 +34554,9 @@ endif()
             NAME dm1_v1_viewport_world_redmcsb_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_dm1_v1_viewport_world_redmcsb_gate.py
         )
+        set_tests_properties(dm1_v1_viewport_world_redmcsb_source_lock PROPERTIES
+            SKIP_RETURN_CODE 77
+            ENVIRONMENT "FIRESTAFF_REDMCSB_SOURCE=${CMAKE_CURRENT_SOURCE_DIR}/reference/redmcsb-20210206/Toolchains/Common/Source;FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1")
         add_test(
             NAME v1_inventory_panel_open_redmcsb_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_inventory_panel_open_redmcsb_gate.py
