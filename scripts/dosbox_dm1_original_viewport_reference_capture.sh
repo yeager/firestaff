@@ -1188,6 +1188,14 @@ while time.monotonic() - start < timeout:
     if image_count >= expected or fallback_count >= expected:
         break
     time.sleep(0.025)
+image_count = len(list(out.glob("image*.png")))
+fallback_count = len([p for p in out.glob("*.png") if p.parent == out and not p.name.startswith("image")])
+captured = max(image_count, fallback_count)
+if captured < expected:
+    raise SystemExit(
+        f"ERROR: DOSBox produced {captured}/{expected} raw screenshots in {out}; "
+        "refusing to normalize or promote an incomplete capture route"
+    )
 PY
         normalize_existing
         ;;
