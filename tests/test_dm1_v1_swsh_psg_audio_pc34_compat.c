@@ -12,12 +12,13 @@ static int expect(int condition, const char* message) {
     return 0;
 }
 
-static int select_song_dat_path(const char* path) {
-#ifdef _WIN32
-    return _putenv_s("FIRESTAFF_SONG_DAT", path);
-#else
-    return setenv("FIRESTAFF_SONG_DAT", path, 1);
-#endif
+static int path_has_zip_suffix(const char* path) {
+    const char* suffix = path ? strrchr(path, '.') : NULL;
+    if (!suffix) return 0;
+    return suffix[0] == '.' &&
+           (suffix[1] == 'z' || suffix[1] == 'Z') &&
+           (suffix[2] == 'i' || suffix[2] == 'I') &&
+           (suffix[3] == 'p' || suffix[3] == 'P') && suffix[4] == '\0';
 }
 
 int main(void) {
@@ -25,6 +26,7 @@ int main(void) {
     const unsigned char* program;
     unsigned char altered[64];
     char expectedSongPath[1024];
+    char expectedGraphicsPath[1024];
     const char* dataRoot;
     unsigned int bytes = 0u;
     int ok = 1;
@@ -34,9 +36,18 @@ int main(void) {
         puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
         return 0;
     }
-    if (snprintf(expectedSongPath, sizeof(expectedSongPath), "%s/SONG.DAT",
-                 dataRoot) <= 0 ||
-        select_song_dat_path(expectedSongPath) != 0) {
+    if (path_has_zip_suffix(dataRoot)) {
+        if (snprintf(expectedSongPath, sizeof(expectedSongPath),
+                     "%s::DATA/SONG.DAT", dataRoot) <= 0 ||
+            snprintf(expectedGraphicsPath, sizeof(expectedGraphicsPath),
+                     "%s::DATA/GRAPHICS.DAT", dataRoot) <= 0) {
+            fputs("FAIL: unable to form direct-archive DM1 audio paths\n", stderr);
+            return 1;
+        }
+    } else if (snprintf(expectedSongPath, sizeof(expectedSongPath), "%s/SONG.DAT",
+                        dataRoot) <= 0 ||
+               snprintf(expectedGraphicsPath, sizeof(expectedGraphicsPath),
+                        "%s/GRAPHICS.DAT", dataRoot) <= 0) {
         fputs("FAIL: unable to select configured DM1 SONG.DAT\n", stderr);
         return 1;
     }
@@ -50,6 +61,9 @@ int main(void) {
     ok &= expect(SWSH_Compat_GetPc34DosoundProgramFingerprint() != 0u,
                  "source program has a nonzero receipt fingerprint");
     ok &= expect(M11_Audio_Init(&state), "audio state initializes");
+    ok &= expect(M11_Audio_OriginalSnd3Available(&state) &&
+                     M11_Audio_BindOriginalSnd3Path(&state, expectedGraphicsPath),
+                 "configured DM1 SND3 effects are consumed directly from selected media");
     /* DM1 source effects are SND3-owned. A missing record must not revive
      * the legacy procedural door/combat/spell marker path. */
     state.originalSounds[0].sampleCount = 0;
@@ -69,7 +83,7 @@ int main(void) {
     }
     ok &= expect(M11_Audio_OriginalSongAvailable(&state) &&
                  strcmp(state.originalSongDatPath, expectedSongPath) == 0,
-                 "configured DM1 SONG.DAT is consumed");
+                 "configured DM1 SONG.DAT is consumed directly from selected media");
     ok &= expect(M11_Audio_BindOriginalSongPath(&state, expectedSongPath) &&
                  M11_Audio_OriginalSongAvailable(&state) &&
                  strcmp(state.originalSongDatPath, expectedSongPath) == 0,

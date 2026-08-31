@@ -37212,6 +37212,11 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0740_f0743_music_sourc
     endif()
     add_test(NAME dm1_v1_f0740_f0743_music_source_gate COMMAND test_dm1_v1_f0740_f0743_music_source_gate)
     set_tests_properties(dm1_v1_f0740_f0743_music_source_gate PROPERTIES SKIP_RETURN_CODE 77)
+    if(DEFINED FIRESTAFF_DM1_WORKSPACE_DATA_DIR)
+        set_tests_properties(dm1_v1_f0740_f0743_music_source_gate PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
+            LABELS "dm1;dos;pc34;audio;music;real-media;in-memory;skip-safe")
+    endif()
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_swsh_psg_audio_pc34_compat.c")
@@ -37225,6 +37230,11 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_swsh_psg_audio_pc34_com
     endif()
     add_test(NAME dm1_v1_swsh_psg_audio_pc34_compat
              COMMAND test_dm1_v1_swsh_psg_audio_pc34_compat)
+    if(DEFINED FIRESTAFF_DM1_WORKSPACE_DATA_DIR)
+        set_tests_properties(dm1_v1_swsh_psg_audio_pc34_compat PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
+            LABELS "dm1;dos;pc34;audio;real-media;in-memory;skip-safe")
+    endif()
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_swsh_source_audio_pc34_compat.c")

@@ -30,9 +30,18 @@ static void capture_play(void* context, int track,
 static const char* song_path(char* path, size_t pathSize)
 {
     const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
+    const char* suffix;
 
     if (!root || !root[0]) return NULL;
-    snprintf(path, pathSize, "%s/SONG.DAT", root);
+    suffix = strrchr(root, '.');
+    if (suffix && suffix[0] == '.' &&
+        (suffix[1] == 'z' || suffix[1] == 'Z') &&
+        (suffix[2] == 'i' || suffix[2] == 'I') &&
+        (suffix[3] == 'p' || suffix[3] == 'P') && suffix[4] == '\0') {
+        snprintf(path, pathSize, "%s::DATA/SONG.DAT", root);
+    } else {
+        snprintf(path, pathSize, "%s/SONG.DAT", root);
+    }
     return path;
 }
 

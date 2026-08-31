@@ -402,6 +402,20 @@ static int m11_media_path_exists(const char* path) {
     return readable;
 }
 
+/* A selected game-data root can itself be the retail ZIP, rather than an
+ * unpacked directory.  Keep the archive opaque: callers receive a virtual
+ * member path and the shared reader supplies only that member in RAM. */
+static int m11_path_has_zip_suffix(const char* path) {
+    const char* suffix;
+    if (!path || strstr(path, "::") != NULL) return 0;
+    suffix = strrchr(path, '.');
+    if (!suffix) return 0;
+    return (suffix[0] == '.' &&
+            (suffix[1] == 'z' || suffix[1] == 'Z') &&
+            (suffix[2] == 'i' || suffix[2] == 'I') &&
+            (suffix[3] == 'p' || suffix[3] == 'P') && suffix[4] == '\0');
+}
+
 static unsigned int m11_read_le16(const unsigned char* p) {
     return ((unsigned int)p[0]) | ((unsigned int)p[1] << 8);
 }
@@ -692,6 +706,10 @@ static const char* m11_find_song_dat_path(char* homeBuf, size_t homeBufBytes) {
     if (dm1DataDir && homeBuf && homeBufBytes > 0) {
         int n = snprintf(homeBuf, homeBufBytes, "%s/DATA/SONG.DAT", dm1DataDir);
         if (n > 0 && (size_t)n < homeBufBytes && m11_media_path_exists(homeBuf)) return homeBuf;
+        if (m11_path_has_zip_suffix(dm1DataDir)) {
+            n = snprintf(homeBuf, homeBufBytes, "%s::DATA/SONG.DAT", dm1DataDir);
+            if (n > 0 && (size_t)n < homeBufBytes && m11_media_path_exists(homeBuf)) return homeBuf;
+        }
         n = snprintf(homeBuf, homeBufBytes, "%s/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA/SONG.DAT", dm1DataDir);
         if (n > 0 && (size_t)n < homeBufBytes && m11_media_path_exists(homeBuf)) return homeBuf;
         n = snprintf(homeBuf, homeBufBytes, "%s/fmtowns_iso/DATA/SONG.DAT", dm1DataDir);
@@ -732,7 +750,11 @@ static const char* m11_find_graphics_dat_path(char* homeBuf, size_t homeBufBytes
     if (m11_file_exists("GRAPHICS.DAT")) return "GRAPHICS.DAT";
     if (dm1DataDir && homeBuf && homeBufBytes > 0) {
         int n = snprintf(homeBuf, homeBufBytes, "%s/DATA/GRAPHICS.DAT", dm1DataDir);
-        if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
+        if (n > 0 && (size_t)n < homeBufBytes && m11_media_path_exists(homeBuf)) return homeBuf;
+        if (m11_path_has_zip_suffix(dm1DataDir)) {
+            n = snprintf(homeBuf, homeBufBytes, "%s::DATA/GRAPHICS.DAT", dm1DataDir);
+            if (n > 0 && (size_t)n < homeBufBytes && m11_media_path_exists(homeBuf)) return homeBuf;
+        }
         n = snprintf(homeBuf, homeBufBytes, "%s/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA/GRAPHICS.DAT", dm1DataDir);
         if (n > 0 && (size_t)n < homeBufBytes && m11_file_exists(homeBuf)) return homeBuf;
         n = snprintf(homeBuf, homeBufBytes, "%s/fmtowns_iso/DATA/GRAPHICS.DAT", dm1DataDir);
