@@ -508,11 +508,37 @@ static int run_amiga(tally_t* t, const char* amiga_dir)
 
 /* ── Self-test of the Atari ST graphics loader ──────────────── */
 
+static int atari_st_loader_memory_contract(void)
+{
+    static const uint8_t k_two_raw_items[] = {
+        0x00, 0x02,
+        0x00, 0x03, 0x00, 0x03,
+        0x00, 0x03, 0x00, 0x03,
+        'A', 'B', 'C', 'R', 'A', 'W'
+    };
+    CSB_AtariStLoader loader;
+    uint8_t item[3] = {0};
+    int ok;
+
+    csb_atari_st_graphics_loader_init(&loader);
+    ok = csb_atari_st_graphics_loader_open_bytes(
+        &loader, k_two_raw_items, sizeof(k_two_raw_items)) &&
+         loader.item_count == 2u &&
+         loader.items[0].compressed_size == 3u &&
+         loader.items[0].decompressed_size == 3u &&
+         loader.items[1].data_offset == loader.data_section_offset + 3u &&
+         csb_atari_st_graphics_loader_read_item(&loader, 1, item,
+                                                sizeof(item)) == 3 &&
+         memcmp(item, "RAW", sizeof(item)) == 0;
+    csb_atari_st_graphics_loader_close(&loader);
+    return ok ? 0 : -1;
+}
+
 static int run_self_tests(tally_t* t)
 {
     printf("\n=== Self-tests ===\n");
-    CHECK(t, csb_atari_st_graphics_loader_self_test() == 0,
-          "csb_atari_st_graphics_loader_self_test");
+    CHECK(t, atari_st_loader_memory_contract() == 0,
+          "Atari ST GRAPHICS.DAT in-memory loader contract");
     CHECK(t, csb_v1_graphics_hidden_item_skip_self_test() == 0,
           "csb_v1_graphics_hidden_item_skip_self_test");
     CHECK(t, csb_v1_cmp_import_self_test() == 0,

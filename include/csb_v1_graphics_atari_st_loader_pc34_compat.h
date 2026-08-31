@@ -76,6 +76,14 @@ void csb_atari_st_graphics_loader_init(CSB_AtariStLoader* state);
 /* Open + parse a DMCSB1-format GRAPHICS.DAT file. Returns true on success. */
 bool csb_atari_st_graphics_loader_open(CSB_AtariStLoader* state, const char* path);
 
+/* Parse a caller-owned in-memory DMCSB1 image. The loader copies the bytes
+ * and retains them until close, so the caller may release its source buffer
+ * immediately. This lets archive-backed native media and unit fixtures use
+ * exactly the same parser without materialising a replacement file on disk. */
+bool csb_atari_st_graphics_loader_open_bytes(CSB_AtariStLoader* state,
+                                              const uint8_t* bytes,
+                                              size_t byte_count);
+
 /* LZW-decompress item `index` into `out_buf` (sized to
  * items[index].decompressed_size bytes). Returns the number of
  * bytes written, or -1 on failure.
@@ -90,15 +98,6 @@ int csb_atari_st_graphics_loader_read_item(const CSB_AtariStLoader* state,
 
 /* Close + free the loader. */
 void csb_atari_st_graphics_loader_close(CSB_AtariStLoader* state);
-
-/* Self-test: parse a synthetic DMCSB1 file and verify LZW
- * round-trip on a single item. Returns 0 on success, -1 on
- * failure. This manufactures a DMCSB1 payload and is available only to
- * explicit contract targets; production consumes user-supplied original
- * assets through the loader above. */
-#ifdef CSB_V1_ATARI_ST_GRAPHICS_LOADER_CONTRACT_ONLY
-int csb_atari_st_graphics_loader_self_test(void);
-#endif
 
 #ifdef __cplusplus
 }

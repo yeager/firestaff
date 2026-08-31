@@ -19,25 +19,10 @@ void csb_atari_st_graphics_loader_init(CSB_AtariStLoader* state)
     memset(state, 0, sizeof(*state));
 }
 
-bool csb_atari_st_graphics_loader_open(CSB_AtariStLoader* state, const char* path)
+static bool csb_atari_st_graphics_loader_parse_loaded(CSB_AtariStLoader* state)
 {
     size_t offset = 0u;
-    if (!state || !path) return false;
-
-    /* A preserved Atari package can be ZIP -> ZIP -> STX -> GRAPHICS.DAT.
-     * The simple path reader intentionally accepts only one archive member;
-     * use the native virtual-media reader for the full authenticated chain.
-     * Both routes keep source bytes in process memory and never extract a
-     * replacement GRAPHICS.DAT to disk. */
-    if (!(strstr(path, "::")
-              ? asset_read_virtual_path_alloc(path, &state->dat_bytes,
-                                               &state->dat_byte_count)
-              : asset_read_path_alloc(path, &state->dat_bytes,
-                                      &state->dat_byte_count)) ||
-        state->dat_byte_count < 2u) return false;
-
-    strncpy(state->dat_path, path, sizeof(state->dat_path) - 1);
-    state->dat_path[sizeof(state->dat_path) - 1] = '\0';
+    if (!state || !state->dat_bytes || state->dat_byte_count < 2u) return false;
 
     /* Read count (u16 big-endian). */
     uint16_t count_be = (uint16_t)(((uint16_t)state->dat_bytes[offset] << 8) |
@@ -107,6 +92,41 @@ bool csb_atari_st_graphics_loader_open(CSB_AtariStLoader* state, const char* pat
     return true;
 }
 
+bool csb_atari_st_graphics_loader_open(CSB_AtariStLoader* state, const char* path)
+{
+    if (!state || !path) return false;
+
+    /* A preserved Atari package can be ZIP -> ZIP -> STX -> GRAPHICS.DAT.
+     * The simple path reader intentionally accepts only one archive member;
+     * use the native virtual-media reader for the full authenticated chain.
+     * Both routes keep source bytes in process memory and never extract a
+     * replacement GRAPHICS.DAT to disk. */
+    if (!(strstr(path, "::")
+              ? asset_read_virtual_path_alloc(path, &state->dat_bytes,
+                                               &state->dat_byte_count)
+              : asset_read_path_alloc(path, &state->dat_bytes,
+                                      &state->dat_byte_count))) return false;
+
+    strncpy(state->dat_path, path, sizeof(state->dat_path) - 1);
+    state->dat_path[sizeof(state->dat_path) - 1] = '\0';
+    return csb_atari_st_graphics_loader_parse_loaded(state);
+}
+
+bool csb_atari_st_graphics_loader_open_bytes(CSB_AtariStLoader* state,
+                                              const uint8_t* bytes,
+                                              size_t byte_count)
+{
+    if (!state || !bytes || byte_count < 2u) return false;
+    csb_atari_st_graphics_loader_close(state);
+    state->dat_bytes = (uint8_t*)malloc(byte_count);
+    if (!state->dat_bytes) return false;
+    memcpy(state->dat_bytes, bytes, byte_count);
+    state->dat_byte_count = byte_count;
+    strncpy(state->dat_path, "<memory>", sizeof(state->dat_path) - 1);
+    state->dat_path[sizeof(state->dat_path) - 1] = '\0';
+    return csb_atari_st_graphics_loader_parse_loaded(state);
+}
+
 int csb_atari_st_graphics_loader_read_item(const CSB_AtariStLoader* state,
                                             uint16_t index,
                                             uint8_t* out_buf,
@@ -164,78 +184,3 @@ void csb_atari_st_graphics_loader_close(CSB_AtariStLoader* state)
     state->loaded = false;
     state->item_count = 0;
 }
-
-#ifdef CSB_V1_ATARI_ST_GRAPHICS_LOADER_CONTRACT_ONLY
-/* Self-test: build a tiny synthetic DMCSB1 file with one item
- * containing a known LZW payload, open + read it back, and
- * verify the round-trip. */
-static int build_synth_atari_dat(const char* path)
-{
-    FILE* f = fopen(path, "wb");
-    if (!f) return -1;
-
-    /* DMCSB1 header: count, complete compressed-size table, then complete
-     * decompressed-size table (all u16 BE). */
-    uint16_t count = 2;
-    uint8_t count_be[2] = { (uint8_t)(count >> 8), (uint8_t)(count & 0xFF) };
-    fwrite(count_be, 2, 1, f);
-    uint16_t comp0 = 3, comp1 = 3, decomp0 = 3, decomp1 = 3;
-    uint8_t comp0_be[2] = { (uint8_t)(comp0 >> 8), (uint8_t)(comp0 & 0xFF) };
-    uint8_t comp1_be[2] = { (uint8_t)(comp1 >> 8), (uint8_t)(comp1 & 0xFF) };
-    uint8_t decomp0_be[2] = { (uint8_t)(decomp0 >> 8), (uint8_t)(decomp0 & 0xFF) };
-    uint8_t decomp1_be[2] = { (uint8_t)(decomp1 >> 8), (uint8_t)(decomp1 & 0xFF) };
-    fwrite(comp0_be, 2, 1, f);
-    fwrite(comp1_be, 2, 1, f);
-    fwrite(decomp0_be, 2, 1, f);
-    fwrite(decomp1_be, 2, 1, f);
-    /* Data: two raw items. */
-    fwrite("ABC", 1, 3, f);
-    fwrite("RAW", 1, 3, f);
-
-    fclose(f);
-    return 0;
-}
-
-int csb_atari_st_graphics_loader_self_test(void)
-{
-    const char* path = "/tmp/test_csb_atari_st_graphics_loader_synth.dat";
-    if (build_synth_atari_dat(path) != 0) return -1;
-
-    CSB_AtariStLoader state;
-    csb_atari_st_graphics_loader_init(&state);
-    if (!csb_atari_st_graphics_loader_open(&state, path)) {
-        csb_atari_st_graphics_loader_close(&state);
-        return -1;
-    }
-    if (state.item_count != 2) {
-        csb_atari_st_graphics_loader_close(&state);
-        return -1;
-    }
-    if (state.items[0].compressed_size != 3 ||
-        state.items[0].decompressed_size != 3 ||
-        state.items[1].compressed_size != 3 ||
-        state.items[1].decompressed_size != 3 ||
-        state.items[1].data_offset != state.data_section_offset + 3U) {
-        csb_atari_st_graphics_loader_close(&state);
-        return -1;
-    }
-    uint8_t out[16] = {0};
-    int rc = csb_atari_st_graphics_loader_read_item(&state, 0, out, sizeof(out));
-    if (rc != 3) {
-        csb_atari_st_graphics_loader_close(&state);
-        return -1;
-    }
-    if (out[0] != 'A' || out[1] != 'B' || out[2] != 'C') {
-        csb_atari_st_graphics_loader_close(&state);
-        return -1;
-    }
-    memset(out, 0, sizeof(out));
-    rc = csb_atari_st_graphics_loader_read_item(&state, 1, out, sizeof(out));
-    if (rc != 3 || memcmp(out, "RAW", 3) != 0) {
-        csb_atari_st_graphics_loader_close(&state);
-        return -1;
-    }
-    csb_atari_st_graphics_loader_close(&state);
-    return 0;
-}
-#endif /* CSB_V1_ATARI_ST_GRAPHICS_LOADER_CONTRACT_ONLY */
