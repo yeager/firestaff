@@ -127,6 +127,11 @@ case "$menu_output" in
         exit 1
         ;;
 esac
+if printf '%s\n' "$menu_output" | grep -q 'handoffHash=00000000'; then
+    echo "FAIL: CSB Atari ST start-menu launch did not retain a source package identity"
+    printf '%s\n' "$menu_output" >&2
+    exit 1
+fi
 
 # Atari ST is the first card on the platform picker's second row.  Select
 # CSB, that card, and Original solely through pointer events on the explicit

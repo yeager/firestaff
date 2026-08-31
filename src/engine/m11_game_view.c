@@ -24014,8 +24014,19 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
 
             if (selected_variant == CSB_V1_VARIANT_ST20_EN ||
                 selected_variant == CSB_V1_VARIANT_ST21_EN) {
+                if (state->csbStartupExpectedPackageIdentity == 0u) {
+                    fprintf(stderr,
+                            "firestaff: CSB Atari ST package handoff rejected\n");
+                    return 0;
+                }
                 variant = "csb-st20-21-en";
                 handoff = "atari-st-animate-ftlcode";
+                /* The STX route has no later wrapper path from which a
+                 * launcher consumer can recover the admitted package.
+                 * Publish the same MD5-derived identity retained by M11 so
+                 * a real Atari handoff is never indistinguishable from an
+                 * unbound generic CSB launch. */
+                handoff_hash = state->csbStartupExpectedPackageIdentity;
             } else if (selected_variant == CSB_V1_VARIANT_AMIGA31_EN ||
                        selected_variant == CSB_V1_VARIANT_AMIGA31_MULTI) {
                 variant = selected_variant == CSB_V1_VARIANT_AMIGA31_EN
