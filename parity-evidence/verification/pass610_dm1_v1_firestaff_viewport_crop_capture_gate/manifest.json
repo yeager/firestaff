@@ -6,11 +6,11 @@
     "no TODO.md update"
   ],
   "ok": true,
-  "probeStdoutTail": "LOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/dos_extract/Dungeon-Master_DOS_EN_Version-34/DATA/DUNGEON.DAT]\nwrote /Volumes/Extern-disk/firestaff/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate/dm1_v1_wall_collision_runtime_capture.json and /Volumes/Extern-disk/firestaff/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate/dm1_v1_wall_collision_runtime_capture.md\nPASS dm1_v1_wall_collision_runtime_capture rows=4 out=/Volumes/Extern-disk/firestaff/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
+  "probeStdoutTail": "PASS dm1_v1_wall_collision_runtime_capture rows=4 out=build-dm1-csb-native/pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
   "problems": [],
   "runtime": {
     "distinctViewportCropHashes": 3,
-    "outDir": "/Volumes/Extern-disk/firestaff/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
+    "outDir": "build-dm1-csb-native/pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
     "rows": [
       {
         "label": "01_start_south_1_3",
@@ -90,6 +90,6 @@
       "ok": true
     }
   ],
-  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceRoot": "reference/redmcsb-20210206/Toolchains/Common/Source",
   "status": "PASS610_DM1_V1_FIRESTAFF_VIEWPORT_CROP_CAPTURE_LOCKED"
 }

@@ -134,7 +134,9 @@ def find_probe() -> Path:
 
 def run_probe() -> tuple[Path, str]:
     probe = find_probe()
-    out_dir = Path.cwd() / PASS
+    # Runtime screenshots are disposable verification intermediates. Keep
+    # them under the configured build tree, never in the source checkout.
+    out_dir = resolve_build_dir(ROOT, ROOT / "build") / PASS
     out_dir.mkdir(parents=True, exist_ok=True)
     data_dir = Path(os.environ.get("FIRESTAFF_DATA", str(Path.home() / ".firestaff/data")))
     proc = subprocess.run(
@@ -163,6 +165,14 @@ def validate_ppm(path: Path, width: int, height: int) -> str:
     if len(data) != expected_size:
         raise AssertionError(f"bad PPM size for {path}: {len(data)} != {expected_size}")
     return hashlib.sha256(data).hexdigest()
+
+
+def portable_path(path: Path) -> str:
+    """Avoid embedding one operator's workspace path in tracked evidence."""
+    try:
+        return str(path.resolve().relative_to(ROOT))
+    except ValueError:
+        return str(path)
 
 
 def audit_runtime(out_dir: Path) -> dict[str, object]:
@@ -203,7 +213,8 @@ def audit_runtime(out_dir: Path) -> dict[str, object]:
         })
     if len(set(viewport_hashes)) < 3:
         raise AssertionError("viewport crops collapsed to fewer than three distinct hashes")
-    return {"outDir": str(out_dir), "rows": rows, "distinctViewportCropHashes": len(set(viewport_hashes))}
+    return {"outDir": portable_path(out_dir), "rows": rows,
+            "distinctViewportCropHashes": len(set(viewport_hashes))}
 
 
 def audit_repo() -> None:
@@ -230,10 +241,14 @@ def write_outputs(source: list[dict[str, object]], runtime: dict[str, object], s
         "schema": f"firestaff.parity.{PASS}.v1",
         "status": STATUS if not problems else "FAIL_PASS610_DM1_V1_FIRESTAFF_VIEWPORT_CROP_CAPTURE",
         "ok": not problems,
-        "sourceRoot": str(RED),
+        "sourceRoot": portable_path(RED),
         "sourceEvidence": source,
         "runtime": runtime,
-        "probeStdoutTail": "\n".join(stdout.splitlines()[-4:]),
+        "probeStdoutTail": "\n".join(
+            (line.split(" out=", 1)[0] + " out=" + str(runtime.get("outDir", "")))
+            if " out=" in line else line
+            for line in stdout.splitlines() if line.startswith("PASS ")
+        )[-4000:],
         "nonClaims": [
             "no original PC34 frame was captured",
             "no original-vs-Firestaff pixel parity is promoted",
