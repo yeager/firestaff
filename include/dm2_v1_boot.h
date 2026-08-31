@@ -768,6 +768,11 @@ typedef struct {
 typedef struct {
     int runtime_ready;
     int current_level;
+    /* Derived from the admitted DUNGEON.DAT map classification for the
+     * captured level.  It is not a presentation preference: callers use it
+     * to distinguish the source-owned T600 outdoor route from T560 dungeon
+     * frames. */
+    int outdoor;
     int party_x;
     int party_y;
     int party_dir;

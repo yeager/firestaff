@@ -11157,6 +11157,9 @@ int dm2_v1_boot_runtime_capture(DM2_V1_BootProfile *profile,
     game = (DM2_V1_GameState *)profile->dm2_state;
     out_receipt->runtime_ready = 1;
     out_receipt->current_level = game->current_level;
+    out_receipt->outdoor = dm2_v1_dungeon_is_outdoor(
+        (const DM2_V1_DungeonData *)profile->dungeon_data,
+        game->current_level);
     out_receipt->party_x = dm2_v1_runtime_get_party_x();
     out_receipt->party_y = dm2_v1_runtime_get_party_y();
     out_receipt->party_dir = dm2_v1_runtime_get_party_dir();

@@ -15,6 +15,7 @@ int main(void)
     M11_GameViewState view;
     M11_GameLaunchSpec spec;
     DM2_V1_StartupMenuPointerLayout layout;
+    DM2_V1_BootRuntimeReceipt runtime;
 
     if (!archive || !archive[0]) {
         puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is not set");
@@ -53,7 +54,17 @@ int main(void)
         M11_GameView_Shutdown(&view);
         return 1;
     }
+    memset(&runtime, 0, sizeof(runtime));
+    if (!dm2_v1_boot_runtime_capture(
+            (DM2_V1_BootProfile *)view.dm2BootProfile, &runtime) ||
+        !runtime.runtime_ready || runtime.current_level != 0 ||
+        !runtime.outdoor) {
+        fputs("FAIL: DM2 DOS New Game did not retain map-0 T600 outdoor ownership\n",
+              stderr);
+        M11_GameView_Shutdown(&view);
+        return 1;
+    }
     M11_GameView_Shutdown(&view);
-    puts("PASS: DM2 DOS M11 New Game commits real-media runtime");
+    puts("PASS: DM2 DOS M11 New Game commits real-media map-0 outdoor runtime");
     return 0;
 }
