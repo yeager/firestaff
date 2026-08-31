@@ -134,11 +134,13 @@ that surface through expanded `RECT_7`; the normal source call is
 `_specialblit(..., 0x0008)`, while bit 15 selects the transition stretch.
 
 Firestaff now matches the `RECT_7` decode and the `0x0008`/`0x8008` decision in
-its isolated `c_gfx_main` compatibility layer, but its active M11 DM2 runtime
-still composes a fixed `320x200` surface directly. The retained pre-fix
-authentic DOS new-game capture recorded the resulting repeated banding when
-real GDAT material was used. That was a compositor/geometry gap, not
-permission to replace the frame with generated art or to relabel it as
+its isolated `c_gfx_main` compatibility layer. The active indoor M11 runtime
+now follows that boundary: it renders dungeon passes to a separate `224x136`
+surface, copies its indexed bytes without stretch to the RAW4-owned `(0,40)`
+`RECT_7` aperture, and then renders the source HUD on the 320x200 screen.
+The retained pre-fix authentic DOS new-game capture recorded repeated banding
+when the backbuffer boundary was absent. That was a compositor/geometry gap,
+not permission to replace the frame with generated art or to relabel it as
 palette-only.
 
 The authenticated `GRAPHICSSET` plane route now submits each decoded
@@ -149,11 +151,11 @@ source flip) to the selected retail GDAT bytes. This removes the known striped
 plane failure, but it does not claim that the remaining dungeon, HUD, or
 `RECT_7` presentation passes have reached frame parity.
 
-The next implementation must introduce a source-sized dungeon backbuffer,
-bind the actual `RECT_7` destination at `(0,40,224,136)`, and port source
-`DM2_DISPLAY_VIEWPORT` pass ordering into that surface. It must retain the
-current in-memory GDAT ownership checks and verify the same new-game tuple
-against an original capture before promoting a visual-parity result.
+The remaining implementation must bind outdoor's distinct source composition,
+transition stretching and the remaining `DM2_DISPLAY_VIEWPORT` passes to the
+same surface boundary. It must retain the current in-memory GDAT ownership
+checks and verify the same new-game tuple against an original capture before
+promoting a visual-parity result.
 
 - Real long-route captures for combat resolution, creature drops, weather,
   audio and level transitions on each admitted platform.

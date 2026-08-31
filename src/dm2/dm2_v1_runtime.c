@@ -42,6 +42,7 @@
 #include "dm2_v1_champion_stat_bridge.h"
 #include "dm2_v1_update_weather_pc34_compat.h"
 #include "dm2_v1_viewport_renderer.h"
+#include "dm2_v1_gfx_main_pc34_compat.h"
 #include "dm2_v1_sound.h"
 #include "dm2_v1_trigger.h"
 #include "dm2_v1_world_model.h"
@@ -11379,6 +11380,9 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
                                   int view_w, int view_h) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_ViewportState viewport;
+    uint8_t dungeon_backbuffer[DM2_GFX_BACKBUFFER_W * DM2_GFX_BACKBUFFER_H];
+    DM2_V1_BootExpandedRectReceipt rect7_receipt;
+    int use_rect7_backbuffer = 0;
     const uint8_t *rect14_rows = NULL;
     uint32_t rect14_row_count = 0u;
     uint32_t rect14_hash = 0u;
@@ -11460,7 +11464,21 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     memset(&g_dm2_last_projectile_render, 0,
            sizeof(g_dm2_last_projectile_render));
     memset(&g_dm2_last_door_render, 0, sizeof(g_dm2_last_door_render));
-    dm2_v1_viewport_init(&viewport, framebuffer, fb_stride);
+    /* c_gui_vp::DM2_DISPLAY_VIEWPORT draws the indoor scene into the local
+     * 0xe0x88 bitmap. c_gfx_main::DM2_DRAWINGS_COMPLETED then copies that
+     * exact surface through expanded RECT_7; it does not use the HUD screen
+     * as a dungeon scratch buffer. Outdoor has distinct source composition
+     * work, so retain its existing route until its own RECT ownership lands. */
+    use_rect7_backbuffer = !rt->outdoor;
+    memset(&rect7_receipt, 0, sizeof(rect7_receipt));
+    if (use_rect7_backbuffer) {
+        memset(dungeon_backbuffer, 0, sizeof(dungeon_backbuffer));
+        dm2_v1_viewport_init(&viewport, dungeon_backbuffer,
+                             DM2_GFX_BACKBUFFER_W);
+        dm2_v1_viewport_set_render_dungeon_backbuffer_only(&viewport, 1);
+    } else {
+        dm2_v1_viewport_init(&viewport, framebuffer, fb_stride);
+    }
     dm2_v1_viewport_set_party(&viewport, party_dir, party_x, party_y);
     dm2_v1_viewport_set_level(&viewport, rt->dungeon_level);
     if (rt->boot && rt->boot->dungeon_data) {
@@ -11801,6 +11819,36 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_runtime_capture_door_render_receipt(&viewport);
     viewport.tick_count = rt->tick_count;
     dm2_v1_viewport_render(&viewport);
+    if (use_rect7_backbuffer) {
+        if (!dm2_v1_boot_query_expanded_rect_receipt(rt->boot, 7u,
+                                                     &rect7_receipt) ||
+            !rect7_receipt.valid || rect7_receipt.rect_id != 7u ||
+            !rect7_receipt.raw4_bytes || !rect7_receipt.raw4_byte_count ||
+            !rect7_receipt.raw4_hash || !rect7_receipt.receipt_hash ||
+            rect7_receipt.rect.w != DM2_GFX_BACKBUFFER_W ||
+            rect7_receipt.rect.h != DM2_GFX_BACKBUFFER_H ||
+            rect7_receipt.rect.x < 0 || rect7_receipt.rect.y < 0 ||
+            rect7_receipt.rect.x + rect7_receipt.rect.w > view_w ||
+            rect7_receipt.rect.y + rect7_receipt.rect.h > view_h) {
+            return -1;
+        }
+        /* Normal DM2_DRAWINGS_COMPLETED passes 0x0008, i.e. the direct
+         * non-stretched MBlitter copy. Preserve every indexed source byte
+         * and the RAW4-owned destination; no scaling or host texture route
+         * is permitted at this boundary. */
+        for (int row = 0; row < DM2_GFX_BACKBUFFER_H; ++row) {
+            memcpy(framebuffer + (size_t)(rect7_receipt.rect.y + row) *
+                       (size_t)fb_stride + (size_t)rect7_receipt.rect.x,
+                   dungeon_backbuffer + (size_t)row *
+                       DM2_GFX_BACKBUFFER_W,
+                   DM2_GFX_BACKBUFFER_W);
+        }
+        if (!dm2_v1_viewport_bind_surface(&viewport, framebuffer, fb_stride)) {
+            return -1;
+        }
+        dm2_v1_viewport_set_render_dungeon_backbuffer_only(&viewport, 0);
+        dm2_v1_viewport_render_screen_owned_passes(&viewport);
+    }
     rt->source_click_target_count = viewport.source_click_target_count;
     if (rt->source_click_target_count > DM2_V1_VIEWPORT_CLICK_TARGET_COUNT) {
         rt->source_click_target_count = DM2_V1_VIEWPORT_CLICK_TARGET_COUNT;

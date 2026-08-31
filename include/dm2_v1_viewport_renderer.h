@@ -2001,6 +2001,10 @@ typedef struct {
     DM2_V1_ViewportClickTarget
         source_click_targets[DM2_V1_VIEWPORT_CLICK_TARGET_COUNT];
     uint8_t source_click_target_count;
+    /* DM2_DISPLAY_VIEWPORT owns a 224x136 dungeon backbuffer separately
+     * from the 320x200 interface surface.  The runtime uses this flag only
+     * for the authenticated indoor pass before RECT_7 presentation. */
+    int render_dungeon_backbuffer_only;
 } DM2_V1_ViewportState;
 
 /* ── Initialization ────────────────────────────────────────────── */
@@ -2011,6 +2015,8 @@ int dm2_v1_viewport_surface_snapshot(const DM2_V1_ViewportState *s,
                                      DM2_V1_ViewportSurfaceSnapshot *out);
 void dm2_v1_viewport_set_party(DM2_V1_ViewportState *s, int dir, int x, int y);
 void dm2_v1_viewport_set_outdoor(DM2_V1_ViewportState *s, int is_outdoor);
+void dm2_v1_viewport_set_render_dungeon_backbuffer_only(
+    DM2_V1_ViewportState *s, int enabled);
 void dm2_v1_viewport_set_g1_first_map_runtime(
     DM2_V1_ViewportState *s,
     const DM2_V1_G1FirstMapRuntimeReceipt *receipt);
@@ -2213,6 +2219,10 @@ void dm2_v1_viewport_set_gdat_weather_renderer_receipt(
     DM2_V1_ViewportState *s,
     uint8_t graphicsset_index,
     const DM2_V1_WeatherRendererReceipt *receipt);
+/* Finishes the screen-owned side of an already rendered dungeon backbuffer.
+ * Call only after the runtime has copied gfxsys.bitmapptr through RECT_7 and
+ * rebound this viewport to the 320x200 screen surface. */
+void dm2_v1_viewport_render_screen_owned_passes(DM2_V1_ViewportState *s);
 void dm2_v1_viewport_set_gdat_interface_text_palette(
     DM2_V1_ViewportState *s,
     int ready,

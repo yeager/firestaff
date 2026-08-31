@@ -1342,6 +1342,13 @@ void dm2_v1_viewport_init(DM2_V1_ViewportState *s,
 
 }
 
+void dm2_v1_viewport_set_render_dungeon_backbuffer_only(
+    DM2_V1_ViewportState *s, int enabled)
+{
+    if (!s) return;
+    s->render_dungeon_backbuffer_only = enabled ? 1 : 0;
+}
+
 /* SKProject skguivwp.cpp::DM2_DRAW_DEFAULT_DOOR_BUTTON appends one c_rwbb
  * entry only after drawing a source door button whose table1d6ed3 rectno is
  * 3 or 4.  Its b_0b is 4, b_0a is the rendered view cell and w_08 is -1.
@@ -9352,6 +9359,17 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
         dm2_v1_render_projectiles(s);
     }
 
+    /* The leader-hand item and all interface material are screen-owned.
+     * They must not be written into gfxsys.bitmapptr before RECT_7 presents
+     * the separate dungeon surface. */
+    if (s->render_dungeon_backbuffer_only) {
+        /* Weather is a dungeon pass and was completed above for outdoor;
+         * authenticated indoor weather remains below with the normal path. */
+        dm2_v1_render_weather_overlay(s);
+        s->dirty = 0;
+        return;
+    }
+
     /* 9. Carried leader-hand item overlay */
     dm2_v1_render_carried_item(s);
 
@@ -9424,6 +9442,78 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     dm2_v1_render_dialogue_open_panel(s);
     dm2_v1_render_dialogue_box(s);
 
+    s->dirty = 0;
+}
+
+void dm2_v1_viewport_render_screen_owned_passes(DM2_V1_ViewportState *s)
+{
+    if (!s || !s->framebuffer || s->render_dungeon_backbuffer_only) return;
+
+    /* c_gui_vp's leader hand and interface run on dm2screen after
+     * DM2_DRAWINGS_COMPLETED has presented gfxsys.bitmapptr. */
+    dm2_v1_render_carried_item(s);
+    dm2_v1_render_ui_chrome(s);
+    if (!s->is_outdoor) {
+        s->last_frame_composition.hud_presentation_stage = 11;
+        if (s->source_materials_required &&
+            s->last_hud_top_bar_material_request.valid) {
+            s->last_frame_composition.hud_top_bar_material_consumed = 1;
+            s->last_frame_composition.hud_top_bar_request =
+                s->last_hud_top_bar_material_request;
+        }
+        if (s->source_materials_required &&
+            s->last_hud_top_bar_presentation_command.valid) {
+            s->last_frame_composition.hud_top_bar_command_consumed = 1;
+            s->last_frame_composition.hud_top_bar_command =
+                s->last_hud_top_bar_presentation_command;
+            s->last_frame_composition.hud_top_bar_order = 1;
+        }
+        if (s->source_materials_required &&
+            s->last_hud_status_panel_material_request.valid) {
+            s->last_frame_composition.hud_status_panel_material_consumed = 1;
+            s->last_frame_composition.hud_status_panel_request =
+                s->last_hud_status_panel_material_request;
+        }
+        if (s->source_materials_required &&
+            s->last_hud_status_panel_presentation_command.valid) {
+            s->last_frame_composition.hud_status_panel_command_consumed = 1;
+            s->last_frame_composition.hud_status_panel_command =
+                s->last_hud_status_panel_presentation_command;
+            s->last_frame_composition.hud_status_panel_order = 2;
+        }
+        if (s->source_materials_required &&
+            s->hud_hand_action_source.valid &&
+            s->last_hud_hand_action_material_request.valid) {
+            s->last_frame_composition.hud_hand_action_command_consumed = 1;
+            s->last_frame_composition.hud_hand_action_request =
+                s->last_hud_hand_action_material_request;
+            s->last_frame_composition.hud_hand_action_order = 3;
+        }
+        if (s->source_materials_required &&
+            s->hud_hand_action_source.valid &&
+            s->last_hud_hand_action_presentation_command.valid) {
+            s->last_frame_composition.hud_hand_action_command =
+                s->last_hud_hand_action_presentation_command;
+        }
+        s->last_frame_composition.valid =
+            !s->source_materials_required ||
+            (s->last_frame_composition.scene_light_owned &&
+             s->last_frame_composition.dungeon_ceiling_command_consumed &&
+             s->last_frame_composition.dungeon_floor_command_consumed &&
+             s->last_frame_composition.dungeon_wall_command_consumed &&
+             s->last_frame_composition.scene_control_command_consumed &&
+             s->last_frame_composition.hud_top_bar_material_consumed &&
+             s->last_frame_composition.hud_top_bar_command_consumed &&
+             s->last_frame_composition.hud_status_panel_material_consumed &&
+             s->last_frame_composition.hud_status_panel_command_consumed &&
+             (!s->hud_hand_action_source.valid ||
+              (s->last_frame_composition.hud_hand_action_command_consumed &&
+               s->last_frame_composition.hud_hand_action_command.valid)));
+    }
+    (void)dm2_v1_viewport_build_m11_frame_receipt(
+        s, &s->last_m11_frame_receipt);
+    dm2_v1_render_dialogue_open_panel(s);
+    dm2_v1_render_dialogue_box(s);
     s->dirty = 0;
 }
 
