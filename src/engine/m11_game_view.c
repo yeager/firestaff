@@ -15912,6 +15912,12 @@ static int m11_compute_floor_ornament_ordinal(
             &state->world, mapIndex, mapX, mapY);
         int scanSafety = 0;
         while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
+            /* T0172030 stops as soon as the compact chain reaches an
+             * object type after SENSOR.  A later sensor belongs to another
+             * consumer and cannot override this square's M558 ordinal. */
+            if (THING_GET_TYPE(scanThing) > THING_TYPE_SENSOR) {
+                break;
+            }
             if (THING_GET_TYPE(scanThing) == THING_TYPE_SENSOR) {
                 int sIdx = THING_GET_INDEX(scanThing);
                 if (sIdx >= 0 && sIdx < state->world.things->sensorCount) {

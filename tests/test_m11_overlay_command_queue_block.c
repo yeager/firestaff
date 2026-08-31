@@ -1877,6 +1877,7 @@ static void test_hoc_floor_ornament_sources_follow_redmcsb(void)
     unsigned char squareData[7];
     unsigned short squareFirstThings[7];
     unsigned char sensorRaw[8];
+    unsigned char weaponRaw[8];
 
     seed_active_view(&state);
     memset(&dungeon, 0, sizeof(dungeon));
@@ -1887,6 +1888,7 @@ static void test_hoc_floor_ornament_sources_follow_redmcsb(void)
     memset(squareData, 0, sizeof(squareData));
     memset(squareFirstThings, 0, sizeof(squareFirstThings));
     memset(sensorRaw, 0, sizeof(sensorRaw));
+    memset(weaponRaw, 0, sizeof(weaponRaw));
 
     /* ReDMCSB DUNGEON.C F0172 applies both the map-zero random stream and
      * explicit floor-sensor overrides. Map zero is HoC; it is not special
@@ -1955,6 +1957,16 @@ static void test_hoc_floor_ornament_sources_follow_redmcsb(void)
     sensors[0].ornamentOrdinal = 3;
     ASSERT_EQ(M11_GameView_GetFloorOrnamentOrdinal(&state, 0, 0), 3,
               "pit sensor retains its source-owned floor ornament");
+
+    /* The F0172 sensor walk is deliberately bounded to Thing types 0..3.
+     * A sensor after an ordinary object is not an M558 override. */
+    squareFirstThings[0] = make_thing(THING_TYPE_WEAPON, 0);
+    weaponRaw[0] = (unsigned char)(make_thing(THING_TYPE_SENSOR, 0) & 0xffu);
+    weaponRaw[1] = (unsigned char)((make_thing(THING_TYPE_SENSOR, 0) >> 8) & 0xffu);
+    things.rawThingData[THING_TYPE_WEAPON] = weaponRaw;
+    things.thingCounts[THING_TYPE_WEAPON] = 1;
+    ASSERT_EQ(M11_GameView_GetFloorOrnamentOrdinal(&state, 0, 0), 0,
+              "sensor after an object cannot override F0172 floor ornament");
 
 }
 
