@@ -16,6 +16,7 @@ int main(void)
     M11_GameLaunchSpec spec;
     DM2_V1_StartupMenuPointerLayout layout;
     DM2_V1_BootRuntimeReceipt runtime;
+    uint8_t framebuffer[M11_FB_WIDTH * M11_FB_HEIGHT];
 
     if (!archive || !archive[0]) {
         puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is not set");
@@ -64,7 +65,23 @@ int main(void)
         M11_GameView_Shutdown(&view);
         return 1;
     }
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+    if (!view.dm2LastRuntimeFrameAccepted ||
+        !view.dm2LastRuntimeRealAssetsReady ||
+        !view.dm2LastRuntimeNoCoreFallbacks ||
+        view.dm2LastRuntimeFallbackDrawCount != 0) {
+        fprintf(stderr,
+                "FAIL: DM2 DOS map-0 outdoor frame was not admitted "
+                "(accepted=%d real=%d noFallbacks=%d fallbackDraws=%d)\n",
+                view.dm2LastRuntimeFrameAccepted,
+                view.dm2LastRuntimeRealAssetsReady,
+                view.dm2LastRuntimeNoCoreFallbacks,
+                view.dm2LastRuntimeFallbackDrawCount);
+        M11_GameView_Shutdown(&view);
+        return 1;
+    }
     M11_GameView_Shutdown(&view);
-    puts("PASS: DM2 DOS M11 New Game commits real-media map-0 outdoor runtime");
+    puts("PASS: DM2 DOS M11 New Game admits real-media map-0 outdoor runtime");
     return 0;
 }
