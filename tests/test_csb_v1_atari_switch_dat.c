@@ -1,4 +1,5 @@
 #include "csb_v1_atari_switch_dat.h"
+#include "dm1_v1_atari_st_stx.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +30,57 @@ static uint8_t *read_file(const char *path, size_t *out_size)
     fclose(file);
     *out_size = (size_t)length;
     return bytes;
+}
+
+static int file_exists(const char *path)
+{
+    FILE *file;
+    if (!path || !(file = fopen(path, "rb"))) return 0;
+    fclose(file);
+    return 1;
+}
+
+/* SWITCH.DAT lives on the original CSB utility STX.  Keep the verification
+ * in memory: a loose SWITCH.DAT is accepted for preservation analysis, while
+ * an STX is opened and its source member is copied only into this process.
+ * No test or runtime path materializes game media on disk. */
+static int path_has_stx_suffix(const char *path)
+{
+    size_t length;
+    if (!path) return 0;
+    length = strlen(path);
+    return length >= 4u && path[length - 4u] == '.' &&
+           (path[length - 3u] == 's' || path[length - 3u] == 'S') &&
+           (path[length - 2u] == 't' || path[length - 2u] == 'T') &&
+           (path[length - 1u] == 'x' || path[length - 1u] == 'X');
+}
+
+static uint8_t *read_switch_dat(const char *path, size_t *out_size)
+{
+    uint8_t *image;
+    size_t image_size;
+    DM1_V1_AtariStx stx;
+    uint8_t *switch_dat;
+    size_t switch_size = 0u;
+
+    if (!path_has_stx_suffix(path)) return read_file(path, out_size);
+    image = read_file(path, &image_size);
+    if (!image || !dm1_v1_atari_st_stx_open(image, image_size, &stx)) {
+        free(image);
+        return NULL;
+    }
+    switch_dat = (uint8_t *)malloc(7405u);
+    if (!switch_dat || !dm1_v1_atari_st_stx_extract_file(&stx, "SWITCH.DAT",
+                                                           switch_dat, 7405u,
+                                                           &switch_size) ||
+        switch_size != 7405u) {
+        free(switch_dat);
+        free(image);
+        return NULL;
+    }
+    free(image);
+    *out_size = switch_size;
+    return switch_dat;
 }
 
 static void put_be16(uint8_t *bytes, uint16_t value)
@@ -155,8 +207,13 @@ int main(int argc, char **argv)
     if (real_path) {
         uint8_t *real_bytes;
         size_t real_size;
-        real_bytes = read_file(real_path, &real_size);
-        CHECK(real_bytes != NULL, "reads the requested original SWITCH.DAT");
+        if (!file_exists(real_path)) {
+            puts("SKIP: original CSB utility media is not available");
+            return 77;
+        }
+        real_bytes = read_switch_dat(real_path, &real_size);
+        CHECK(real_bytes != NULL,
+              "reads original SWITCH.DAT directly from the requested media");
         if (real_bytes) {
             CHECK(real_size == 7405u,
                   "keeps the documented Atari ST 2.x SWITCH.DAT byte size");

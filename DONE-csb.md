@@ -2,6 +2,13 @@
 
 Reviewed 2026-08-29. Completed work only.
 
+- `SWITCH.DAT` is now verified from the supplied CSB Utility Disk itself:
+  `csb_v1_atari_switch_dat_real_media` opens the original STX, retains its
+  7,405-byte `SWITCH.DAT` member only in process memory, validates the
+  checksum/header/options/palette, and decodes every enabled source graphic.
+  The separate compact fixture remains limited to malformed-input boundaries;
+  it is not positive game-data evidence and neither route extracts media.
+
 - M11's CSB query-world handoff now consumes the exact verified
   `CSB_V1_DungeonData::raw_data` bytes retained by the selected boot reader.
   It no longer attempts to reopen an STX/ADF/archive locator as a loose

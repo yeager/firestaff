@@ -13,7 +13,8 @@ CSB graphics/UI changes vs DM1 are MINIMAL:
 - **VBL handler fix** (BUG0_03) - no ignored interrupts, palette switching on time
 - **Engine version display** - new UI element in dialog boxes
 - **Left-click champion bar** - UI interaction change (covered in champions gap)
-- **BUG0_04 NOT fixed** - Lord Chaos palette bug persists in CSB
+- **BUG7_01 remains in CSB** - CSB's own creature-replacement palette quirks
+  persist through Atari ST 2.1; it is distinct from DM's BUG0_04
 
 No new graphic assets, no new sprite sheets, no new animation types.
 
@@ -97,23 +98,27 @@ performance issues are observed. Document as non-blocking.
 
 ---
 
-## GAP 4: BUG0_04 - Lord Chaos Palette NOT Fixed
+## GAP 4: BUG7_01 - CSB Creature Palette Quirks
 
 **What source-lock says:**
-- DM1 bug (BUG0_04): Lord Chaos front/side/attack bitmaps use color 9
-  but no replacement color specified
-- On Lord Chaos map: Demon-defined colors used (appropriate but unspecified)
-- Zytaz bitmaps also have color 9/10 issues
-- **This bug PERSISTS in CSB** - not listed in CSB-specific fixes
+- CSB-specific BUG7_01 affects the Atari ST 2.0 and 2.1 releases. Its Worm
+  uses palette entries 9/10 and therefore intentionally appears with the
+  map's last allowed creature replacement (Demon/Dragon on maps 0/9;
+  Giant Scorpion/Flying Eye on map 4).
+- Slime Devil and Lord Chaos omit part or all of their replacement-color
+  declarations; Hellhound inherits unused replacements; Zytaz retains an
+  inappropriate Materializer replacement declaration.
+- There is no CSB 2.1 fix. This is preservation behavior, not a license to
+  manufacture corrected art or palette values.
 
 **Implementation gap:**
-BUG0_04 is an existing design issue, not a CSB gap.
-1. Confirm current Firestaff also has this bug (likely yes)
-2. Document as known limitation
-3. If CSB dungeon has Lord Chaos map: verify Demon-defined palette used correctly
-4. No fix required (CSB did not fix it either)
+BUG7_01 is a CSB source behavior, not a Modern-mode correction target.
+1. Bind creature palette inputs to original CSB map/allowed-creature data.
+2. Capture the three real Worm map outcomes before marking renderer parity.
+3. Preserve source colors in Original mode; any optional Modern correction
+   needs separately documented user consent and must never replace Original.
 
-**Source:** csb_graphics.md Part II · csb_dungeon.md
+**Source:** ReDMCSB `DUNVIEW.C` · BugsAndChanges.htm#BUG7_01
 
 ---
 
@@ -163,7 +168,7 @@ platform-specific. Document as non-gap.
 | VBL handler fix (BUG0_03) | PARTIAL / source-modelled | No ignored VBL interrupts; precise palette switching |
 | Engine version display (CHANGE7_36) | LOW | v2.0/v2.1 in dialog top-right; CSB only |
 | Wall drawing optimization | NONE | Performance only; no functional gap |
-| BUG0_04 (Lord Chaos palette) | DOCUMENT | Known limitation; CSB also has it; no fix |
+| BUG7_01 (CSB creature palette) | OPEN / preservation | Real map-specific source palette evidence and renderer binding required |
 | Mouse pointer fix | NONE | Code cleanup; not blocking |
 | Code-to-assembly conversion | NONE | Platform-specific; not applicable |
 

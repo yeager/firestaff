@@ -57,6 +57,12 @@ Each entry has a unique name: `BUG0_NN` for bugs,
     → CSB V1 Graphics GAP 1.
   - **BUG0_04** (creature color conflicts) — DUNVIEW; no fix.
     → CSB V1 Graphics GAP 4.
+  - **BUG7_01** (CSB creature color conflicts) — DUNVIEW; introduced in
+    Atari ST CSB 2.0 and not fixed in 2.1. It is distinct from DM's BUG0_04:
+    the CSB Worm is intentionally map-palette-dependent, while Slime Devil,
+    Lord Chaos, Hellhound and Zytaz retain source-data replacement quirks.
+    Original mode must preserve the verified source result rather than invent
+    corrected replacement colors.
   - **BUG0_05** (champion portrait wall sensor visible on all
     sides) — DUNVIEW; no fix.
   - **BUG0_06** (projectile bitmap crop glitch) — DUNVIEW;

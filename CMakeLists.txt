@@ -55274,13 +55274,19 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_switch_dat.c")
     add_executable(test_csb_v1_atari_switch_dat
         tests/test_csb_v1_atari_switch_dat.c
-        src/csb/csb_v1_atari_switch_dat.c)
+        src/csb/csb_v1_atari_switch_dat.c
+        src/dm1/dm1_v1_atari_st_stx.c)
     target_include_directories(test_csb_v1_atari_switch_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_atari_switch_dat PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_atari_switch_dat COMMAND test_csb_v1_atari_switch_dat)
     set_tests_properties(csb_v1_atari_switch_dat PROPERTIES LABELS "csb;atari;synthetic_fixture")
+    add_test(NAME csb_v1_atari_switch_dat_real_media
+        COMMAND test_csb_v1_atari_switch_dat
+            "${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx")
+    set_tests_properties(csb_v1_atari_switch_dat_real_media PROPERTIES
+        SKIP_RETURN_CODE 77 LABELS "csb;atari;real_data;utility")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_m11_game_handoff.c")
