@@ -87,6 +87,29 @@ The work continues as continuous lanes
   remains fail-closed. Tested by `test_dm2_v1_drops_gdat_real_data`
   (skip-safe against real data).
 
+### DOS `SKSAVE1` WIELD boundary
+
+The supplied original PC-DOS archive contains the real `data/sksave0` through
+`data/sksave3` `.dat`/`.bak` slots.  Firestaff reads those members directly
+from the ZIP; it does not unpack or rewrite them.  The source-owned
+`SKSAVE1.DAT` resume regression commits the original save and reaches one
+real WIELD calculation with these recorded inputs:
+
+```text
+item=0x140c  creature=0x1116  power=26
+dexterity=21 strength=48 skill=4
+defense=170 armor=175 map difficulty=8 party power=11
+result=miss, raw damage=0, final damage=0, applied HP damage=0
+```
+
+This is a useful ownership proof: the command, item, creature, stats and
+GDAT defense values are all read from the admitted original session.  It is
+not a proof of a kill or a creature drop.  The supplied route is a miss, and
+there is no matching original command/RNG trace for a hit; Firestaff therefore
+does not turn a generated command search into a retail death/drop claim.  The
+post-death deallocation and drop path remains closed until an authentic
+input-to-CD/RAM trace supplies that missing evidence.
+
 Source reference for all DM2 work: `skproject`
 (`SKULLWIN/SkWinCore.cpp`, `SkGlobal.cpp`, plus the per-file `c_*.cpp`
 modules named in the symbol audit).
