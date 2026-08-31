@@ -116,7 +116,7 @@ int main(void)
     struct DoorToggleResult_Compat r;
     unsigned char doorByte;
     unsigned char saved;
-    unsigned char sweep[12 * 12];
+    unsigned char sweep[12 * sizeof(r)];
     unsigned char* sp;
     unsigned int hash;
 
@@ -304,8 +304,8 @@ int main(void)
         }
     }
     hash = fnv1a_32(sweep, sizeof(sweep));
-    CHECK(hash == 0xEC4F85A7u,
-          "T18: FNV-1a 32-bit hash stable for 12-fixture sweep (0xEC4F85A7)");
+    CHECK(hash == 0x42969235u,
+          "T18: FNV-1a 32-bit hash stable for 12-fixture sweep (0x42969235)");
 
     printf("PASS: DOR-01 F0715 front-door toggle resolver (18 scenarios)\n");
     return 0;
