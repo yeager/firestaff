@@ -15881,8 +15881,12 @@ static int m11_compute_floor_ornament_ordinal(
     ornSeed = state->world.dungeon->header.ornamentRandomSeed;
     randomFloorOrnCount = (int)map->randomFloorOrnamentCount;
 
-    /* Random floor ornament from square byte bit 3 (MASK0x0008) */
-    randomAllowed = (square & 0x08) != 0;
+    /* Only the corridor arm of F0172 calls F0170.  Pit and teleporter
+     * squares join the later sensor walk through T0172030/T0172029, but
+     * their bit 0x08 has different meaning (visibility/open state) and must
+     * never manufacture a random pressure plate or grate. */
+    randomAllowed = elementType == DUNGEON_ELEMENT_CORRIDOR &&
+                    (square & 0x08) != 0;
     /* ReDMCSB DUNGEON.C F0172 applies the map's random-floor-ornament
      * stream to every corridor map, including map zero (Hall of Champions).
      * The map's real metadata and seed decide whether a tile is decorated;

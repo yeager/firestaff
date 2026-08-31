@@ -1941,6 +1941,21 @@ static void test_hoc_floor_ornament_sources_follow_redmcsb(void)
     ASSERT_EQ(M11_GameView_GetFloorOrnamentOrdinal(&state, 0, 0), 0,
               "closed fake wall remains wall-like and has no floor ornament");
 
+    /* F0172's pit and teleporter arms jump directly to the sensor scan;
+     * neither executes the corridor's F0170 random-ornament call.  Their
+     * 0x08 bits describe pit/teleporter state, not a pressure-plate flag. */
+    squareFirstThings[0] = THING_ENDOFLIST;
+    squareData[0] = (unsigned char)((DUNGEON_ELEMENT_PIT << 5) | 0x08);
+    ASSERT_EQ(M11_GameView_GetFloorOrnamentOrdinal(&state, 0, 0), 0,
+              "pit bit 0x08 does not create a random floor ornament");
+    squareData[0] = (unsigned char)((DUNGEON_ELEMENT_TELEPORTER << 5) | 0x0c);
+    ASSERT_EQ(M11_GameView_GetFloorOrnamentOrdinal(&state, 0, 0), 0,
+              "teleporter state bits do not create a random floor ornament");
+    squareFirstThings[0] = make_thing(THING_TYPE_SENSOR, 0);
+    sensors[0].ornamentOrdinal = 3;
+    ASSERT_EQ(M11_GameView_GetFloorOrnamentOrdinal(&state, 0, 0), 3,
+              "pit sensor retains its source-owned floor ornament");
+
 }
 
 static void test_closed_fakewall_wall_sensor_follows_redmcsb(void)
