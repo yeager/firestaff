@@ -40,6 +40,7 @@
 #include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_gdat_wall_m11_command.h"
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
+#include "dm2_v1_gfx_main_pc34_compat.h"
 #include "dm2_v1_world_model.h"
 #include <limits.h>
 #include <stdio.h>
@@ -4159,6 +4160,22 @@ static uint32_t dm2_v1_viewport_indexed_pixel_hash(const uint8_t *pixels,
     return hash ? hash : 1u;
 }
 
+/* c_gui_vp::DM2_DISPLAY_VIEWPORT renders its dungeon pass into gfxsys's
+ * 0xe0x88 bitmap.  The Firestaff viewport also owns the separate 320x200
+ * interface surface, so selects this bound per pass rather than changing the
+ * public screen constants. */
+static int dm2_v1_viewport_draw_width(const DM2_V1_ViewportState *s)
+{
+    return s && s->render_dungeon_backbuffer_only
+        ? DM2_GFX_BACKBUFFER_W : DM2_VP_WIDTH;
+}
+
+static int dm2_v1_viewport_draw_height(const DM2_V1_ViewportState *s)
+{
+    return s && s->render_dungeon_backbuffer_only
+        ? DM2_GFX_BACKBUFFER_H : DM2_VP_HEIGHT;
+}
+
 static void dm2_v1_block_source_material(DM2_V1_ViewportState *s,
                                          uint32_t material_bit);
 
@@ -4181,11 +4198,11 @@ static void dm2_v1_blit_scaled_material_bitmap(DM2_V1_ViewportState *s,
         src_w <= 0 || src_h <= 0 || src_stride < src_w) return;
     for (y = 0; y < dst_h; ++y) {
         int fy = dst_y + y;
-        if ((unsigned)fy >= (unsigned)DM2_VP_HEIGHT) continue;
+        if ((unsigned)fy >= (unsigned)dm2_v1_viewport_draw_height(s)) continue;
         for (int x = 0; x < dst_w; ++x) {
             int fx = dst_x + x;
             uint8_t pixel;
-            if ((unsigned)fx >= (unsigned)DM2_VP_WIDTH) continue;
+            if ((unsigned)fx >= (unsigned)dm2_v1_viewport_draw_width(s)) continue;
             pixel = src[((y * src_h) / dst_h) * src_stride +
                         ((x * src_w) / dst_w)];
             if (transparent_color >= 0 && pixel == (uint8_t)transparent_color) {
@@ -4278,11 +4295,11 @@ static void dm2_v1_blit_tiled_material_bitmap(DM2_V1_ViewportState *s,
         src_w <= 0 || src_h <= 0 || src_stride < src_w) return;
     for (y = 0; y < dst_h; ++y) {
         int fy = dst_y + y;
-        if ((unsigned)fy >= (unsigned)DM2_VP_HEIGHT) continue;
+        if ((unsigned)fy >= (unsigned)dm2_v1_viewport_draw_height(s)) continue;
         for (int x = 0; x < dst_w; ++x) {
             int fx = dst_x + x;
             uint8_t pixel;
-            if ((unsigned)fx >= (unsigned)DM2_VP_WIDTH) continue;
+            if ((unsigned)fx >= (unsigned)dm2_v1_viewport_draw_width(s)) continue;
             {
                 int sx = x % src_w;
                 if (mirror_flip) sx = src_w - 1 - sx;
@@ -4345,12 +4362,12 @@ static void dm2_v1_blit_scaled_material_bitmap_region(
     for (y = 0; y < dst_h; ++y) {
         int fy = dst_y + y;
         int sy = src_y + (y * src_h) / dst_h;
-        if ((unsigned)fy >= (unsigned)DM2_VP_HEIGHT) continue;
+        if ((unsigned)fy >= (unsigned)dm2_v1_viewport_draw_height(s)) continue;
         for (int x = 0; x < dst_w; ++x) {
             int fx = dst_x + x;
             int sx = src_x + (x * src_w) / dst_w;
             uint8_t pixel;
-            if ((unsigned)fx >= (unsigned)DM2_VP_WIDTH || sx < 0 || sy < 0 ||
+            if ((unsigned)fx >= (unsigned)dm2_v1_viewport_draw_width(s) || sx < 0 || sy < 0 ||
                 sx >= src_stride) continue;
             pixel = src[sy * src_stride + sx];
             if (transparent_color >= 0 && pixel == (uint8_t)transparent_color) {
@@ -4378,13 +4395,13 @@ static void dm2_v1_blit_scaled_material_bitmap_region_ex(
         int fy = dst_y + y;
         int sy = src_y + ((flip_mirror & 2)
             ? src_h - 1 - ((y * src_h) / dst_h) : (y * src_h) / dst_h);
-        if ((unsigned)fy >= (unsigned)DM2_VP_HEIGHT) continue;
+        if ((unsigned)fy >= (unsigned)dm2_v1_viewport_draw_height(s)) continue;
         for (int x = 0; x < dst_w; ++x) {
             int rx = (x * src_w) / dst_w;
             int sx = src_x + ((flip_mirror & 1) ? src_w - 1 - rx : rx);
             int fx = dst_x + x;
             uint8_t pixel;
-            if ((unsigned)fx >= (unsigned)DM2_VP_WIDTH || sx < 0 || sy < 0 ||
+            if ((unsigned)fx >= (unsigned)dm2_v1_viewport_draw_width(s) || sx < 0 || sy < 0 ||
                 sx >= src_stride) continue;
             pixel = src[sy * src_stride + sx];
             if (transparent_color >= 0 && pixel == (uint8_t)transparent_color) {
@@ -5330,7 +5347,8 @@ void dm2_v1_render_background(DM2_V1_ViewportState *s)
     /* DM2 black area: top 37 lines, all black.
      * Source: DUNVIEW.C F0098 (line 2968), DM1 black area same height. */
     for (int y = DM2_BLACK_AREA_TOP; y < DM2_BLACK_AREA_TOP + DM2_BLACK_AREA_H; y++) {
-        memset(vp + y * stride, DM2_COL_BLACK, (size_t)DM2_VP_WIDTH);
+        memset(vp + y * stride, DM2_COL_BLACK,
+               (size_t)dm2_v1_viewport_draw_width(s));
     }
 }
 
