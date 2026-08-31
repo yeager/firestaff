@@ -34386,6 +34386,7 @@ endif()
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass381_dm1_v1_movement_viewport_walls_source_lock.py
         )
         set_tests_properties(pass381_dm1_v1_movement_viewport_walls_source_lock PROPERTIES
+            RUN_SERIAL TRUE
             SKIP_RETURN_CODE 77
             ENVIRONMENT "FIRESTAFF_REDMCSB_SOURCE=${CMAKE_CURRENT_SOURCE_DIR}/reference/redmcsb-20210206/Toolchains/Common/Source")
         add_test(
@@ -34393,6 +34394,7 @@ endif()
             COMMAND ${CMAKE_COMMAND} -E env FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR} ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_viewport_movement_completion_matrix.py
         )
         set_tests_properties(dm1_v1_viewport_movement_completion_matrix PROPERTIES
+            RUN_SERIAL TRUE
             ENVIRONMENT "FIRESTAFF_REDMCSB_SOURCE=${CMAKE_CURRENT_SOURCE_DIR}/reference/redmcsb-20210206/Toolchains/Common/Source"
             TIMEOUT 300)
         add_test(
