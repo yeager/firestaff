@@ -10,9 +10,13 @@ Reviewed 2026-08-29. Only open work is listed here.
   to that 224x136 pass; canonical retail GDAT regression tests compare every
   plane byte there and guard both buffer boundaries. The private allocation
   remains full logical size as a defensive guard while remaining special
-  passes are audited. Remaining work is outdoor's distinct composition,
-  transition stretching and same-tuple original-capture comparison; retain
-  only GDAT-owned pixels.
+  passes are audited. Native real-media New Game now proves map 0's T600
+  outdoor route is admitted by M11 with real assets and zero fallback draws
+  on the PC-DOS archive; the Amiga, FM Towns, and Mac real-media New Game
+  routes are also covered. This establishes runtime admission, not
+  original-vs-Firestaff pixel parity. Remaining work is outdoor's distinct
+  composition, transition stretching and same-tuple original-capture
+  comparison; retain only GDAT-owned pixels.
 - Extend real-media gameplay evidence across DOS, Amiga, FM Towns and Mac for
   dialog/input ordering, creature AI/drop routes, audio and save/resume.
 - Capture an original PC-DOS `SKSAVE1` WIELD input-to-CD/RAM trace with a
