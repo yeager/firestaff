@@ -1,7 +1,15 @@
 # Firestaff TODO — Nexus
 
-Reviewed 2026-08-27. Only open work is listed here; completed evidence belongs
+Reviewed 2026-08-31. Only open work is listed here; completed evidence belongs
 in the Nexus capture and reverse-engineering records.
+
+## Available local retail media
+
+The staged JP retail set supplies the CUE, nine BIN tracks, CDDA WAV tracks,
+and the original ZIP package.  It does **not** contain a Saturn VDP1/VDP2 VRAM
+dump, CRAM dump, register snapshot, or frame/timing capture.  Firestaff reads
+the CUE/ISO members directly in memory; it must not manufacture either the
+missing capture or a presentation claim from these disc files.
 
 - Capture one same-revision, post-composition title/menu state that jointly
   binds the active NBG0 source, CRAM palette, VDP1/VDP2 layers, priorities and

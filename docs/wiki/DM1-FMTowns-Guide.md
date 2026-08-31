@@ -3,8 +3,8 @@
 This page is the single entry point any agent should read before
 touching DM1 FM Towns code. It consolidates the disc image format, the
 executable structure, symbol coordinates recovered by disassembly,
-CDDA layout, currently wired features and the concrete extraction
-workflow. All addresses come from the hash-verified HMA-240 English
+CDDA layout and currently wired features. All addresses come from the
+hash-verified HMA-240 English
 disc; the Japanese disc uses the same layout but a different
 executable (`JDM.EXP`) whose structural map is recorded separately —
 see the JDM section below.
@@ -159,10 +159,9 @@ The **hash-admitted pair** for the English runtime is:
   `3DC0A932…`, JP `FE098F70…`) — indices 113/114 (`FINGERPRINT_COUNT`
   = 115 in the header).
 
-Materialization saves `FMTOWNS.BIN` and `FMTOWNS.CUE` into the
-runtime cache directory (`m12_materialize_dm1_fmtowns_runtime_cache`
-in `src/shared/asset_status_m12.c`) so the M11 CDDA dispatcher can
-read raw audio bytes without re-opening the 7z at runtime.
+The original archive remains the source owner. M11 reads the CUE and BIN
+members directly into bounded process memory when CDDA is needed; it does
+not materialize a `FMTOWNS.BIN`, `FMTOWNS.CUE`, or loose game-data cache.
 
 ## 2. `EDM.EXP` — Phar Lap 386 (P3) executable
 
@@ -376,7 +375,7 @@ game-over/game-won events to tracks.
 - **Music toggle** — `m11_dm1_stop_fmtowns_cdda` when music is
   disabled.
 
-Playback reads raw PCM bytes from the retained `FMTOWNS.BIN` at the
+Playback reads raw PCM bytes from the original BIN member at the
 mixed-sector-computed byte offset and hands them to
 `M11_Audio_PlayCdda` (16-bit signed LE stereo 44100 Hz).
 
@@ -566,8 +565,8 @@ when the file is absent — no game bytes are bundled.
 
 **Wired (real-data only, gated on the receipt):**
 
-- Runtime cache materialization from the retained 7z including
-  `FMTOWNS.BIN` + `FMTOWNS.CUE` retention.
+- ZIP BIN/CUE media stays archive-owned. The runtime reads it in memory and
+  creates no loose game-data cache.
 - CDDA end-to-end: title, HoC, entrance, all 16 map transitions,
   ticks, events, music toggle.
 - FM Towns title animation: 18-frame reverse zoom from
@@ -710,7 +709,7 @@ for i in md.disasm(p[load_off+start_v : load_off+end_v], start_v):
 | BIN/CUE + disc I/O         | `include/firestaff_fmtowns_disc.h`, `src/shared/firestaff_fmtowns_disc.c` |
 | ISO9660 walker             | `src/dm1/dm1_v1_fmtowns_iso9660.c`              |
 | Title compositor           | `include/dm1_v1_fmtowns_title.h`, `src/dm1/dm1_v1_fmtowns_title.c` |
-| Runtime cache materializer | `src/shared/asset_status_m12.c` (`m12_materialize_dm1_fmtowns_runtime_cache`) |
+| Archive-owned runtime media | `src/shared/asset_status_m12.c`, `src/engine/m11_game_view.c` |
 | Runtime wiring             | `src/engine/main_loop_m11.c`, `src/engine/m11_game_view.c` |
 | Fingerprints               | `include/firestaff_game_data_fingerprint.h`, `src/shared/firestaff_game_data_fingerprint.c` |
 | Menu disassembly evidence  | `parity-evidence/dm1_fmtowns_menu_p3_disassembly.md` |

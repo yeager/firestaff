@@ -82,11 +82,11 @@ int main(void)
     expect_source_zone("source.d2c", 2,  0,  80, 77, 64, 11);
     expect_source_zone("source.d1c", 1,  0,  80, 92, 64, 25);
 
-    expect_plan("plan.d3l.global0", 3, -1, 0, 0, 0, 385, 36, 66, 40, 6);
-    expect_plan("plan.d3c.global0", 3,  0, 0, 1, 0, 386, 99, 66, 26, 6);
-    expect_plan("plan.d2r.global0", 2,  1, 0, 2, 1, 387, 162, 77, 60, 11);
-    expect_plan("plan.d1c.global0", 1,  0, 0, 5, 0, 390, 81, 93, 62, 23);
-    expect_plan("plan.footprints.d1l", 1, -1, 15, 4, 0, 383, 3, 94, 25, 21);
+    expect_plan("plan.d3l.global0", 3, -1, 0, 0, 0, 385, 32, 66, 48, 6);
+    expect_plan("plan.d3c.global0", 3,  0, 0, 1, 0, 386, 96, 66, 32, 6);
+    expect_plan("plan.d2r.global0", 2,  1, 0, 2, 1, 387, 160, 77, 64, 11);
+    expect_plan("plan.d1c.global0", 1,  0, 0, 5, 0, 390, 80, 92, 64, 25);
+    expect_plan("plan.footprints.d1l", 1, -1, 15, 4, 0, 383, 0, 92, 32, 25);
 
     expect_int("graphic.global0.inc0",
                dm1_v1_floor_ornament_graphic_index_pc34(0, 0), 385);

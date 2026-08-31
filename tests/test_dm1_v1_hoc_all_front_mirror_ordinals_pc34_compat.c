@@ -1,5 +1,4 @@
 #include "m11_game_view.h"
-#include "menu_startup_m12.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
 #include <stdio.h>
@@ -31,13 +30,13 @@ static unsigned short next_thing(const struct DungeonThings_Compat* things,
     return (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
 }
 
-static int open_game(const char* dataDir,
-                     M12_StartupMenuState* menu,
-                     M11_GameViewState* game)
+static int open_game(const char* dataPath, M11_GameViewState* game)
 {
-    M12_StartupMenu_InitWithDataDir(menu, dataDir, NULL);
     M11_GameView_Init(game);
-    return M11_GameView_OpenSelectedMenuEntry(game, menu);
+    /* C127 ordinal ownership is a PC 3.4 dungeon assertion.  Do not let a
+     * generic launcher scan silently choose another authentic DM1 edition
+     * when the caller already supplied the exact PC 3.4 package. */
+    return M11_GameView_StartDm1(game, dataPath);
 }
 
 static int step_x(int direction)
@@ -71,7 +70,6 @@ static void clear_mirror_candidate(M11_GameViewState* game)
 int main(int argc, char** argv)
 {
     const char* dataDir;
-    M12_StartupMenuState menu;
     M11_GameViewState game;
     const struct DungeonMapDesc_Compat* map;
     int seen[32];
@@ -87,7 +85,7 @@ int main(int argc, char** argv)
     dataDir = argv[1];
     memset(seen, 0, sizeof(seen));
 
-    if (!open_game(dataDir, &menu, &game)) {
+    if (!open_game(dataDir, &game)) {
         fprintf(stderr, "FAIL could not open DM1 V1 game from %s\n", dataDir);
         return 1;
     }

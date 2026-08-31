@@ -31,6 +31,7 @@
 #include "title_frontend_v1.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "asset_status_m12.h"
+#include "asset_find_by_hash.h"
 #include "m11_game_text_ttf_renderer_pc34_compat.h"
 #include "fs_portable_compat.h"
 #include "dm1_v1_vblank_timing.h"
@@ -62,6 +63,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <limits.h>
 
 #include <SDL3/SDL.h>
 
@@ -2211,7 +2213,7 @@ static void m11_play_ftl_swoosh_for_game_if_available(
     unsigned char* screenFbPacked = NULL;
     unsigned char* screenFbIndexed = NULL;
     unsigned char* screenRgba = NULL;
-    FILE* f = NULL; long fsize = 0;
+    size_t logoImgSize = 0U;
     SWSH_CompatLogoPayload logoPayload;
     unsigned char swshPalette[16][3];
     M11_AudioState swshAudio;
@@ -2241,9 +2243,11 @@ static void m11_play_ftl_swoosh_for_game_if_available(
                                             gameId,
                                             logoPath,
                                             sizeof(logoPath))) return;
-    f = fopen(logoPath, "rb"); if (!f) return;
-    fseek(f, 0, SEEK_END); fsize = ftell(f); fseek(f, 0, SEEK_SET);
-    logoImg = (unsigned char*)malloc((size_t)fsize);
+    if (!asset_read_path_alloc(logoPath, &logoImg, &logoImgSize) ||
+        !logoImg || logoImgSize == 0U || logoImgSize > (size_t)UINT_MAX) {
+        free(logoImg);
+        return;
+    }
     /* Atari ST low-res FTL logo: 4bpp packed, 160 bytes/row, 32000 bytes total.
      * Use a dedicated packed buffer for the SWSH_Compat_ExpandLogoToBitmap
      * output (was previously aliased onto screenFb which is 1bpp). */
@@ -2251,9 +2255,9 @@ static void m11_play_ftl_swoosh_for_game_if_available(
     /* 1-byte-per-pixel indexed framebuffer that m11_swsh_indexed_to_rgba reads. */
     screenFbIndexed = (unsigned char*)calloc(1, (size_t)M11_FB_BYTES);
     screenRgba      = (unsigned char*)malloc((size_t)M11_FB_BYTES * 4U);
-    if (!logoImg || !screenFbPacked || !screenFbIndexed || !screenRgba) goto cleanup;
-    if (fread(logoImg, 1, (size_t)fsize, f) != (size_t)fsize) goto cleanup;
-    if (!SWSH_Compat_FindLogoImagePayloadEx(logoImg, (unsigned int)fsize, &logoPayload)) goto cleanup;
+    if (!screenFbPacked || !screenFbIndexed || !screenRgba) goto cleanup;
+    if (!SWSH_Compat_FindLogoImagePayloadEx(logoImg, (unsigned int)logoImgSize,
+                                             &logoPayload)) goto cleanup;
     SWSH_Compat_ExpandLogoToBitmap(logoPayload.payload, screenFbPacked);
     /* BUG-PASS841-FIX: pass841 — the FTL swoosh logo was rendered as a
      * half-blank vertically-striped image because the runtime treated
@@ -2364,7 +2368,6 @@ cleanup:
     if (screenFbPacked) free(screenFbPacked);
     if (screenFbIndexed) free(screenFbIndexed);
     if (screenRgba) free(screenRgba);
-    if (f) fclose(f);
 }
 
 static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuState,
@@ -3338,7 +3341,15 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
                 &dm1HandoffContext, menuState->quickResumeSavePath,
                 used_backup);
         }
-        if (m11_selected_dm1_is_fmtowns(menuState, launchEntry)) {
+        /* A direct CLI launch can select a concrete FM Towns archive before
+         * M12 has populated its card-version index.  At this point
+         * OpenSelectedMenuEntry has parsed the original disc in memory, so
+         * its EDM/JDM receipt is the authoritative platform decision.  Do
+         * not let a stale/unset menu-card selection skip the native title
+         * and expose the generic PC34 title route for valid Towns media. */
+        if (launchEntry && launchEntry->gameId &&
+            strcmp(launchEntry->gameId, "dm1") == 0 &&
+            gameView->dm1FmtownsStartupReceiptValid) {
             int played = 0;
             int titleTrack = dm1_v1_fmtowns_cd_track_for_event(0);
             /* FM Towns must either consume its authenticated native title

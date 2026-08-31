@@ -1,5 +1,7 @@
 #include "nexus_v1_title.h"
+#include "nexus_v1_iso_reader.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,6 +41,57 @@ static unsigned char *read_file(const char *root, const char *name,
     return data;
 }
 
+/* Retail Nexus normally remains in its CUE/BIN package.  Prefer a loose file
+ * only when the user deliberately supplied one; otherwise use the production
+ * ISO reader and retain the selected member solely in this bounded buffer. */
+static unsigned char *read_retail_file(const char *root, const char *name,
+                                       size_t *out_size)
+{
+    static const char *const cue_names[] = {
+        "Dungeon Master Nexus (Japan).cue",
+        "Dungeon Master Nexus (English).cue",
+        NULL
+    };
+    Nexus_ISOReader iso;
+    const Nexus_ISOFile *member;
+    unsigned char *data;
+    char path[4096];
+    int index;
+
+    if (!root || !name || !out_size) return NULL;
+    data = read_file(root, name, out_size);
+    if (data) return data;
+    memset(&iso, 0, sizeof(iso));
+    if (strlen(root) >= 4U && strcmp(root + strlen(root) - 4U, ".cue") == 0) {
+        if (nexus_iso_open_cue(&iso, root) <= 0) return NULL;
+    } else {
+        for (index = 0; cue_names[index]; ++index) {
+            if (snprintf(path, sizeof(path), "%s/%s", root,
+                         cue_names[index]) >= (int)sizeof(path)) {
+                continue;
+            }
+            if (nexus_iso_open_cue(&iso, path) > 0) break;
+        }
+        if (!iso.valid) return NULL;
+    }
+    member = nexus_iso_find(&iso, name);
+    if (!member || member->is_dir || member->size == 0U ||
+        member->size > (uint32_t)INT_MAX) {
+        nexus_iso_close(&iso);
+        return NULL;
+    }
+    data = (unsigned char *)malloc(member->size);
+    if (!data || nexus_iso_read_file(&iso, member, data,
+                                     (int)member->size) != (int)member->size) {
+        free(data);
+        data = NULL;
+    } else {
+        *out_size = member->size;
+    }
+    nexus_iso_close(&iso);
+    return data;
+}
+
 static void check(int condition, const char *message)
 {
     if (!condition) { fprintf(stderr, "FAIL: %s\n", message); ++failures; }
@@ -54,8 +107,8 @@ int main(void)
     int map;
 
     if (!root || !*root) root = ".firestaff/data/nexus";
-    title_bin = read_file(root, "TITLE.BIN", &bin_size);
-    title_cg = read_file(root, "TITLE.CG", &cg_size);
+    title_bin = read_retail_file(root, "TITLE.BIN", &bin_size);
+    title_cg = read_retail_file(root, "TITLE.CG", &cg_size);
     if (!title_bin || !title_cg || bin_size <= 0x0e278U) {
         free(title_bin); free(title_cg);
         puts("SKIP: Nexus TITLE.BIN/TITLE.CG corpus unavailable");

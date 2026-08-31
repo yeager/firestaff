@@ -1,6 +1,6 @@
 # Native platform and startup verification
 
-**Reviewed 2026-08-29.** This page records what the native Firestaff runtime
+**Reviewed 2026-08-31.** This page records what the native Firestaff runtime
 has actually admitted from authentic player-supplied media. It is deliberately
 not a compatibility wish-list: a parser, a disassembly reference, or an
 emulator capture does not by itself prove a public start route.
@@ -19,6 +19,15 @@ All entries use original data in its supplied form. ZIP/CUE/disc members are
 read in memory and are never extracted by the runtime. Development captures
 may use tools such as a debugger or emulator, but no such program, BIOS or
 firmware is a Firestaff runtime dependency.
+
+On 2026-08-31 the complete DM1 real-media selection passed all 42 registered
+routes: archive identity, CLI and start-menu admission, original saves, Atari
+ST, FM Towns, DOS and Amiga paths, plus source-material gates. The focused
+native suite also passed 10 CSB and 17 DM2 selected real-media routes.
+Theron's US CloneCD ZIP and JP Rev 1 CUE routes passed after inclusion in the
+native label. These are start/menu and bounded-runtime receipts, not a claim
+that campaign, capture or pixel parity is complete; the remaining evidence
+gaps below stay open.
 
 ## Verification matrix
 

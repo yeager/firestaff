@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -49,34 +50,23 @@ static const char* const g_v1_swsh_known_md5s[] = {
 };
 
 int V1_SWSH_Intro_PayloadLooksValid(const char* path) {
-    FILE* f;
-    long fsize;
-    unsigned char* data;
+    uint8_t* data = NULL;
+    size_t data_size = 0U;
     SWSH_CompatLogoPayload payload;
     int ok;
     if (!path || path[0] == '\0') return 0;
-    f = fopen(path, "rb");
-    if (!f) return 0;
-    fseek(f, 0, SEEK_END);
-    fsize = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    if (fsize <= 0 || fsize > (long)(8u * 1024u * 1024u)) {
-        fclose(f);
-        return 0;
-    }
-    data = (unsigned char*)malloc((size_t)fsize);
-    if (!data) {
-        fclose(f);
-        return 0;
-    }
-    if (fread(data, 1, (size_t)fsize, f) != (size_t)fsize) {
+    /* Archive members are first-class original-data owners.  Probe them
+     * through the bounded in-memory reader, just as GRAPHICS.DAT is read;
+     * never require a loose SWOOSH copy or extract one beside the archive. */
+    if (!asset_read_path_alloc(path, &data, &data_size) || !data ||
+        data_size == 0U || data_size > 8u * 1024u * 1024u ||
+        data_size > (size_t)UINT_MAX) {
         free(data);
-        fclose(f);
         return 0;
     }
-    fclose(f);
     memset(&payload, 0, sizeof(payload));
-    ok = SWSH_Compat_FindLogoImagePayloadEx(data, (unsigned int)fsize, &payload);
+    ok = SWSH_Compat_FindLogoImagePayloadEx(data, (unsigned int)data_size,
+                                             &payload);
     SWSH_Compat_ReleaseLogoImagePayload(&payload);
     free(data);
     return ok;
@@ -100,7 +90,12 @@ static int v1_swsh_intro_find_known_hash(const char* dir,
         return 0;
     }
     (void)matchIndex;
-    if (strstr(found, "::") != NULL || !V1_SWSH_Intro_PayloadLooksValid(found)) {
+    /* asset_find_by_md5_list() returns archive::member paths for a matched
+     * ZIP entry.  Those are first-class original-data paths: the payload
+     * validator reads them through asset_read_path_alloc() without extracting
+     * anything to disk.  Rejecting the separator here made a valid PC3.4
+     * SWOOSH discoverable by hash but impossible to launch from a ZIP. */
+    if (!V1_SWSH_Intro_PayloadLooksValid(found)) {
         return 0;
     }
     snprintf(outPath, outPathBytes, "%s", found);

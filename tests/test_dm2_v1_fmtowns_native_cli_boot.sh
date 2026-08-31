@@ -40,7 +40,7 @@ probe_input() {
     expected_party=$2
     output=$(SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy "$app" \
         --menu --game dm2 --platform fm-towns --data-dir "$archive" --boot-probe \
-        --boot-probe-frames 12000 --width 320 --height 200 \
+        --boot-probe-frames 6000 --width 320 --height 200 \
         --script "click:100:60,click:100:60,$input" \
         --boot-probe-expect-runtime --boot-probe-expect-level-loaded 1 \
         --duration 0 2>&1) || { printf '%s\n' "$output" >&2; exit 1; }

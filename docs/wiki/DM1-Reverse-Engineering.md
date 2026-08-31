@@ -49,6 +49,18 @@ codebase in ReDMCSB, so many files serve both games.
 | `ENDGAME.C` | Endgame/victory sequence |
 | `AMIGINIT.C` | Amiga-specific init (ReDMCSB is multi-platform; PC34 reuses shared init logic) |
 
+### PC 3.4 FTL/SWSH media boundary
+
+`SWSH.C` owns the FTL-logo palette sequence; the logo payload itself is the
+original `SWOOSH` member. Firestaff's PC 3.4 route reads that member directly
+from the selected ZIP into bounded memory through `asset_read_path_alloc()`.
+It does not unpack the archive or create a loose replacement file. The
+real-media probes `ftl_swoosh_palette_regression` and
+`ftl_swoosh_ascii_sanity` use the same virtual path and verify the source
+palette mutations plus full 320×200 packed-to-indexed expansion. If the
+operator-owned archive is absent, those optional visual probes skip; the
+native archive CLI/start-menu test remains the launch gate.
+
 ### Dungeon (data model)
 
 | File | Purpose |
@@ -479,6 +491,14 @@ CLAUDE.md.
 | F0346 | `INVENTORY_DrawPanel_Resurrect` |
 | F0347 | `INVENTORY_DrawPanel` |
 | F0349 | `INVENTORY_ProcessCommand70_ClickOnMouth` |
+
+`F0302` owns the transaction at mouse-down. This includes the top-row
+`C020`–`C027` hand boxes (`C211`–`C218`) as well as inventory-page slots.
+The transient leader hand is therefore the only in-flight owner during a
+drag: releasing over a different admitted hand box completes one exchange;
+releasing over the original box is consumed and must not perform a second
+exchange. This prevents the apparent item disappearance caused by an
+immediate swap-back.
 
 ### Doors / movement / sensor dispatch (F0700-F0730) — Firestaff `_Compat` layer
 

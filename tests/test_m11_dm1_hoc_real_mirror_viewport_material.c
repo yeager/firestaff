@@ -1,16 +1,17 @@
 #include "m11_game_view.h"
-#include "menu_startup_m12.h"
 
 #include <stdio.h>
 #include <string.h>
 
-static int open_game(const char* dataDir,
-                     M12_StartupMenuState* menu,
-                     M11_GameViewState* game)
+static int open_game(const char* dataPath, M11_GameViewState* game)
 {
-    M12_StartupMenu_InitWithDataDir(menu, dataDir, NULL);
     M11_GameView_Init(game);
-    return M11_GameView_OpenSelectedMenuEntry(game, menu);
+    /* This test is specifically PC 3.4 F0107/C127 material coverage.  A
+     * generic menu scan ranks any valid DM1 package and can therefore select
+     * an Atari ST archive before the explicit PC 3.4 path.  Launch the
+     * selected original archive directly; startup-menu selection is covered
+     * by its separate real-media tests. */
+    return M11_GameView_StartDm1(game, dataPath);
 }
 
 static int expected_backing_graphic_for_f0107_view(int viewWallIndex)
@@ -37,7 +38,6 @@ static int expected_backing_graphic_for_f0107_view(int viewWallIndex)
 
 int main(int argc, char** argv)
 {
-    M12_StartupMenuState menu;
     M11_GameViewState game;
     const struct DungeonMapDesc_Compat* map;
     unsigned char framebuffer[320 * 200];
@@ -54,7 +54,7 @@ int main(int argc, char** argv)
         fprintf(stderr, "usage: %s DATA_DIR\n", argv[0]);
         return 2;
     }
-    if (!open_game(argv[1], &menu, &game) || !game.world.dungeon ||
+    if (!open_game(argv[1], &game) || !game.world.dungeon ||
         game.world.dungeon->header.mapCount < 1 || !game.assetsAvailable) {
         fprintf(stderr, "FAIL could not open real DM1 PC34 data\n");
         M11_GameView_Shutdown(&game);

@@ -15,25 +15,15 @@ typedef struct DM1_FloorOrnamentSlotPc34 {
     int relSide;
     int frameIndex;
     int increment;
-    int renderDstX;
-    int renderDstY;
-    int renderWidth;
-    int renderHeight;
 } DM1_FloorOrnamentSlotPc34;
 
 /* ReDMCSB DUNVIEW.C F0108 uses G0195 to select a G0206 coordinate set and
  * G0191 to select a native bitmap increment.  PC34 G0195 is all zero, so
  * every floor ornament visible slot uses G0206 set 0. */
 static const DM1_FloorOrnamentSlotPc34 s_floorSlots[] = {
-    {3, -1, 0, 0, 36,  66, 40,  6},
-    {3,  0, 1, 1, 99,  66, 26,  6},
-    {3,  1, 2, 0, 148, 66, 40,  6},
-    {2, -1, 3, 2, 2,   77, 60, 11},
-    {2,  0, 4, 3, 91,  77, 42, 11},
-    {2,  1, 5, 2, 162, 77, 60, 11},
-    {1, -1, 6, 4, 3,   94, 25, 21},
-    {1,  0, 7, 5, 81,  93, 62, 23},
-    {1,  1, 8, 4, 195, 94, 25, 21}
+    {3, -1, 0, 0}, {3, 0, 1, 1}, {3, 1, 2, 0},
+    {2, -1, 3, 2}, {2, 0, 4, 3}, {2, 1, 5, 2},
+    {1, -1, 6, 4}, {1, 0, 7, 5}, {1, 1, 8, 4}
 };
 
 static const DM1_FloorOrnamentSlotPc34*
@@ -123,10 +113,9 @@ int dm1_v1_floor_ornament_render_plan_pc34(
     if (!dm1_v1_floor_ornament_fill_source_plan_pc34(slot, outPlan)) {
         return 0;
     }
-    outPlan->blit.dstX = slot->renderDstX;
-    outPlan->blit.dstY = slot->renderDstY;
-    outPlan->blit.width = slot->renderWidth;
-    outPlan->blit.height = slot->renderHeight;
+    /* G0206 owns both the source crop and its destination zone.  Do not
+     * replace it with hand-tuned host rectangles: that moved pressure plates
+     * and footprints into the wrong perspective cell at D1/D2. */
     graphicIndex = dm1_v1_floor_ornament_graphic_index_pc34(
         globalOrnamentIndex, outPlan->increment);
     if (graphicIndex < 0) {
@@ -152,10 +141,6 @@ int dm1_v1_floor_ornament_render_plan_at_pc34(
     if (!dm1_v1_floor_ornament_fill_source_plan_pc34(slot, outPlan)) {
         return 0;
     }
-    outPlan->blit.dstX = slot->renderDstX;
-    outPlan->blit.dstY = slot->renderDstY;
-    outPlan->blit.width = slot->renderWidth;
-    outPlan->blit.height = slot->renderHeight;
     graphicIndex = dm1_v1_floor_ornament_graphic_index_pc34(
         globalOrnamentIndex, outPlan->increment);
     if (graphicIndex < 0) {

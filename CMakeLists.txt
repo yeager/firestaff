@@ -12774,6 +12774,10 @@ if(BUILD_TESTING)
             COMMAND test_m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
+        set_tests_properties(m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34 PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
+            SKIP_RETURN_CODE 77
+        )
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_hoc_c127_panel_redraw_close_pc34.c")
@@ -15114,6 +15118,8 @@ if(BUILD_TESTING)
             NAME dm1_v1_viewport_door_wall_ornament_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_dm1_v1_viewport_door_wall_ornament_source_lock.py
         )
+        set_tests_properties(dm1_v1_viewport_door_wall_ornament_source_lock PROPERTIES
+            SKIP_RETURN_CODE 77)
     endif()
 
     add_executable(test_menu_hit_launch_direct_click_m12
@@ -17424,6 +17430,15 @@ endif()
     add_test(
         NAME dm2_v1_m11_startup_profile_gate
         COMMAND test_dm2_v1_m11_startup_profile_gate
+    )
+    # This is a real-media M11 integration test.  Without an explicit
+    # archive owner it falls back to a host-relative default, then reports
+    # dozens of misleading downstream startup failures instead of exercising
+    # the supplied DOS corpus.  Keep the original ZIP as the selected source;
+    # the test and runtime read its members in memory.
+    set_tests_properties(dm2_v1_m11_startup_profile_gate PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_V1_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "dm2;dos;real-media;native;m11;startup;skip-safe"
     )
 
     add_executable(test_dm2_v1_load_new_dungeon_contract
@@ -27101,7 +27116,8 @@ endif()
     endif()
     add_test(
         NAME dm1_v1_hoc_all_front_mirror_ordinals_pc34_compat
-        COMMAND test_dm1_v1_hoc_all_front_mirror_ordinals_pc34_compat "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
+        COMMAND test_dm1_v1_hoc_all_front_mirror_ordinals_pc34_compat
+            "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
     )
 
     add_executable(test_m11_dm1_hoc_real_mirror_viewport_material
@@ -27113,7 +27129,8 @@ endif()
     endif()
     add_test(
         NAME m11_dm1_hoc_real_mirror_viewport_material
-        COMMAND test_m11_dm1_hoc_real_mirror_viewport_material "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}"
+        COMMAND test_m11_dm1_hoc_real_mirror_viewport_material
+            "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
     )
 
     add_executable(test_m11_quit_guard
@@ -34497,6 +34514,9 @@ endif()
             NAME v1_viewport_pit_floor_ornament_bug64_gate
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_v1_viewport_pit_floor_ornament_bug64_gate.py
         )
+        set_tests_properties(v1_viewport_pit_floor_ornament_bug64_gate PROPERTIES
+            SKIP_RETURN_CODE 77
+            ENVIRONMENT "FIRESTAFF_REDMCSB_SOURCE=${CMAKE_CURRENT_SOURCE_DIR}/reference/redmcsb-20210206/Toolchains/Common/Source")
         add_test(
             NAME dm1_v1_viewport_world_redmcsb_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_dm1_v1_viewport_world_redmcsb_gate.py
@@ -35088,7 +35108,11 @@ endif()
         COMMAND test_dm1_v1_original_save_c13_m11_runtime
     )
     set_tests_properties(dm1_v1_original_save_c13_m11_runtime PROPERTIES
-        LABELS "tier2;dm1;save;hoc;m11;runtime"
+        # This constructs its smallest C13 owner/event graph in memory.  It
+        # protects the transition implementation, but is not evidence for an
+        # original C13-bearing DMSAVE.DAT; the external-corpus sibling is the
+        # only promotion path for that preservation claim.
+        LABELS "tier2;dm1;save;hoc;m11;runtime;fixture;synthetic"
     )
 
     add_executable(test_dm1_v1_original_save_c11_m11_runtime
@@ -38442,7 +38466,8 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
         NAME pass581_dm1_v1_d3_d2_wall_ornament_order_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass581_dm1_v1_d3_d2_wall_ornament_order_source_lock.py
     )
-    set_tests_properties(pass581_dm1_v1_d3_d2_wall_ornament_order_source_lock PROPERTIES TIMEOUT 75)
+    set_tests_properties(pass581_dm1_v1_d3_d2_wall_ornament_order_source_lock PROPERTIES
+        TIMEOUT 75 SKIP_RETURN_CODE 77)
 endif()
 
 # -- DM1 V1 side-wall inscription source lock --
@@ -38894,6 +38919,9 @@ if(BUILD_TESTING)
         NAME v1_swsh_intro_pathfinder_pc34_compat
         COMMAND test_v1_swsh_intro_pathfinder_pc34_compat
     )
+    set_tests_properties(v1_swsh_intro_pathfinder_pc34_compat PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+    )
 
     add_executable(test_v1_title_intro_pathfinder_pc34_compat
         tests/test_v1_title_intro_pathfinder_pc34_compat.c
@@ -38969,14 +38997,18 @@ if(BUILD_TESTING)
         "SEPARATOR=,"
         "FINAL_SEPARATOR=)"
     )
+    target_link_libraries(firestaff_v1_ftl_swoosh_palette_regression_probe PRIVATE
+        firestaff_m10)
     if(NOT MSVC)
         target_compile_options(firestaff_v1_ftl_swoosh_palette_regression_probe PRIVATE -std=c99 -Wall -Wextra -O2)
     endif()
     add_test(
         NAME ftl_swoosh_palette_regression
         COMMAND firestaff_v1_ftl_swoosh_palette_regression_probe
-                $ENV{HOME}/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/Original/I34E/SWOOSH
+                $ENV{HOME}/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::SWOOSH
     )
+    set_tests_properties(ftl_swoosh_palette_regression PROPERTIES
+        SKIP_RETURN_CODE 77)
 
     # -- FTL swoosh ASCII visual sanity probe (pass841) ---------------
     # Prints the unpacked logo as ASCII so a regression can be eyeballed
@@ -38995,14 +39027,17 @@ if(BUILD_TESTING)
         "SEPARATOR=,"
         "FINAL_SEPARATOR=)"
     )
+    target_link_libraries(firestaff_v1_ftl_swoosh_ascii_probe PRIVATE firestaff_m10)
     if(NOT MSVC)
         target_compile_options(firestaff_v1_ftl_swoosh_ascii_probe PRIVATE -std=c99 -Wall -Wextra -O2)
     endif()
     add_test(
         NAME ftl_swoosh_ascii_sanity
         COMMAND firestaff_v1_ftl_swoosh_ascii_probe
-                $ENV{HOME}/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Reference/Original/I34E/SWOOSH
+                $ENV{HOME}/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip::SWOOSH
     )
+    set_tests_properties(ftl_swoosh_ascii_sanity PROPERTIES
+        SKIP_RETURN_CODE 77)
 
     # -- DM1 V1 TITLE palette regression probe (pass842) --------------
     # Headless regression guard for the TITLE.DAT fallback path that
@@ -45378,7 +45413,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
     )
     set_tests_properties(theron_v1_raw_cue_runtime_boot PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "theron;real-media;startup"
+        LABELS "theron;real-media;startup;native"
     )
     add_test(
         NAME theron_v1_raw_bin_runtime_boot
@@ -45387,7 +45422,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
     )
     set_tests_properties(theron_v1_raw_bin_runtime_boot PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "theron;real-media;startup"
+        LABELS "theron;real-media;startup;native"
     )
     add_test(
         NAME theron_v1_us_clonecd_zip_runtime_boot
@@ -45396,7 +45431,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
     )
     set_tests_properties(theron_v1_us_clonecd_zip_runtime_boot PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "theron;real-media;archive;startup;start-menu"
+        LABELS "theron;real-media;archive;startup;start-menu;native"
         ENVIRONMENT
             "FIRESTAFF_THERON_US_CLONECD_ZIP=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/Dungeon-Master-Therons-Quest_TurboGrafx-CD_EN.zip"
     )
@@ -45407,7 +45442,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
     )
     set_tests_properties(theron_v1_converted_iso_runtime_boot PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "theron;real-media;startup"
+        LABELS "theron;real-media;startup;native"
     )
     add_test(
         NAME theron_v1_jp_cue_runtime_boot
@@ -45416,7 +45451,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
     )
     set_tests_properties(theron_v1_jp_cue_runtime_boot PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "theron;real-media;startup"
+        LABELS "theron;real-media;startup;native"
         ENVIRONMENT
             "FIRESTAFF_THERON_JP_CUE=${FIRESTAFF_WORKSPACE_DATA_DIR}/theron/Dungeon Master - Theron's Quest (Japan) (Rev 1).cue"
     )
@@ -46139,8 +46174,8 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_track02_sector_record_corpus_probe_missing_media
         COMMAND firestaff_theron_v1_track02_sector_record_corpus_probe --inspect
-                /tmp/firestaff-theron-missing-sector-record.cue
-                /tmp/firestaff-theron-missing-sector-record.trace
+                ${CMAKE_BINARY_DIR}/firestaff-theron-missing-sector-record.cue
+                ${CMAKE_BINARY_DIR}/firestaff-theron-missing-sector-record.trace
     )
 
     add_executable(test_theron_v1_track02_capture_target_plan
@@ -46180,7 +46215,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_track02_capture_target_corpus_probe_missing_root
         COMMAND firestaff_theron_v1_track02_capture_target_corpus_probe --discover
-                /tmp/firestaff-theron-missing-capture-target-corpus
+                ${CMAKE_BINARY_DIR}/firestaff-theron-missing-capture-target-corpus
     )
 
     add_executable(test_theron_v1_track02_capture_artifact_importer
@@ -46220,7 +46255,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_track02_capture_artifact_corpus_probe_missing_root
         COMMAND firestaff_theron_v1_track02_capture_artifact_corpus_probe --discover
-                /tmp/firestaff-theron-missing-capture-artifact-corpus
+                ${CMAKE_BINARY_DIR}/firestaff-theron-missing-capture-artifact-corpus
     )
 
     add_executable(test_theron_v1_track02_capture_campaign
@@ -46259,7 +46294,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_track02_capture_campaign_corpus_probe_missing_root
         COMMAND firestaff_theron_v1_track02_capture_campaign_corpus_probe --discover
-                /tmp/firestaff-theron-missing-capture-campaign-corpus
+                ${CMAKE_BINARY_DIR}/firestaff-theron-missing-capture-campaign-corpus
     )
 
     add_executable(test_theron_v1_track02_campaign_bundle_emitter
@@ -46521,9 +46556,9 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_track02_live_dungeon_handoff_replay_probe_missing_media
         COMMAND firestaff_theron_v1_track02_live_dungeon_handoff_replay_probe --inspect
-                /tmp/firestaff-theron-missing-replay.cue
+                ${CMAKE_BINARY_DIR}/firestaff-theron-missing-replay.cue
                 f23601102138f87c33025877767ebf76
-                /tmp/firestaff-theron-missing-replay.trace
+                ${CMAKE_BINARY_DIR}/firestaff-theron-missing-replay.trace
     )
 
     add_executable(test_theron_v1_track02_external_capture_launcher
@@ -46775,12 +46810,12 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_track02_mednafen_trace_probe_missing_export
         COMMAND firestaff_theron_v1_track02_mednafen_trace_probe --inspect
-                /tmp/firestaff-theron-missing-mednafen-export
+                ${CMAKE_BINARY_DIR}/firestaff-theron-missing-mednafen-export
     )
     add_test(
         NAME theron_v1_track02_mednafen_trace_probe_missing_root
         COMMAND firestaff_theron_v1_track02_mednafen_trace_probe --discover
-                /tmp/firestaff-theron-missing-capture-root
+                ${CMAKE_BINARY_DIR}/firestaff-theron-missing-capture-root
     )
 
     add_executable(firestaff_theron_v1_track02_capture_evidence_probe

@@ -23,9 +23,9 @@ tree and does not rewrite the source archive. The real-data gates
 `csb_v1_fmtowns_archive_launch_real` and `csb_v1_fmtowns_packed_m11_real`
 cover this path.
 
-The CSB M11 handoff follows the CSB materializer's original `FMTOWNS.IMG`
-name for F0743 CUE-track dispatch; DM1's separate materializer continues to
-use its own `FMTOWNS.BIN` name.
+DM1 packed media is archive-owned: M11 reads its original CUE and BIN members
+in bounded memory for mixed-sector CDDA dispatch and creates no `FMTOWNS.BIN`
+runtime cache. CSB's packed route follows the same no-extraction contract.
 
 The CSB switch-only gate was also run directly against the materialized
 `SWITCHTW.EXP` on 2026-08-10: 18/18 assertions passed. The skip above is only

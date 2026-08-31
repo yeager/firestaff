@@ -4,8 +4,10 @@ The canonical reverse-engineered source code for *Dungeon
 Master* and *Chaos Strikes Back* is **ReDMCSB**, hosted at:
 
 - Community page: <http://dmweb.free.fr/community/redmcsb/>
-- WIP 2021-02-06 archive (local copy used for the Firestaff
-  implementation): `~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/`
+- WIP 2021-02-06 archive (operator-local reference used for Firestaff
+  implementation): `reference/ReDMCSB_WIP20210206.7z`, unpacked as
+  `reference/redmcsb-20210206/` when source audits are required. This
+  reference is not game media and is not committed to the repository.
 - Authoritative bugs-and-changes list (search this for
   every `BUG0_xx` / `CHANGE7_xx` / `CHANGE8_xx` reference):
   <http://dmweb.free.fr/Stuff/ReDMCSB/Documentation/BugsAndChanges.htm>
@@ -103,8 +105,12 @@ Each entry has a unique name: `BUG0_NN` for bugs,
 
 ## Local working set
 
-The Firestaff build pins against:
-  `~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+The Firestaff source-lock scripts default to:
+  `reference/redmcsb-20210206/Toolchains/Common/Source/`
+
+Set `FIRESTAFF_REDMCSB_SOURCE` to use an operator-maintained checkout
+elsewhere. If neither source exists, source-only gates skip rather than
+constructing replacement evidence.
 
 This directory contains 36 different .C files split by
 subsystem.  Most CSB V1 / DM1 V1 gap work references one of

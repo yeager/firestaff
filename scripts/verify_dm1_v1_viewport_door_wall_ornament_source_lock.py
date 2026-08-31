@@ -9,14 +9,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_SOURCE = Path(
-    "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-).expanduser()
+DEFAULT_SOURCE = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_SOURCE",
+    ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source",
+))
 
 
 def read_slice(path: Path, line_range: str) -> str:
@@ -78,6 +80,10 @@ def main() -> int:
     parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
+
+    if not (args.source / "DUNVIEW.C").is_file():
+        print(f"SKIP ReDMCSB source unavailable: {args.source}")
+        return 77
 
     checks: list[dict[str, Any]] = []
     ok = True

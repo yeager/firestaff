@@ -14183,6 +14183,26 @@ int dm2_v1_boot_gdat_image_asset_fetch(
             if (out_stride) *out_stride = 320;
             return 0;
         }
+        /* The authenticated PC-DOS TITLE/0/dt07/4 entry is a packed GDAT
+         * image (38,473 bytes in the retail English corpus), not an already
+         * expanded 320x200 RAW7 buffer.  Decode that original entry through
+         * the same bounded native GDAT reader used for all other image
+         * fields; do not substitute a generated title surface. */
+        {
+            int decoded_w = 0;
+            int decoded_h = 0;
+            pixels = dm2_v1_asset_load_image_field(
+                &gfx->loader, category, index, field,
+                &decoded_w, &decoded_h, &fmt);
+            if (pixels && decoded_w == 320 && decoded_h == 200) {
+                *out_pixels = pixels;
+                if (out_w) *out_w = decoded_w;
+                if (out_h) *out_h = decoded_h;
+                if (out_stride) *out_stride = decoded_w;
+                return 0;
+            }
+            dm2_v1_asset_free_pixels(pixels);
+        }
     }
     if (category == DM2_GDAT_CATEGORY_TITLE && index == 0 && field == 1) {
         if (!gfx->startup_title_pixels) {

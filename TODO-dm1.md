@@ -8,11 +8,17 @@ Reviewed 2026-08-29. Only open work is listed here.
   including direct CLI and start-menu resume, bounded movement, and turns on
   map 5 with its four saved champions, but does not substitute for these
   route-specific captures. A checksum-valid synthetic C13 seed without the
-  matching source-owned bones Thing is deliberately rejected at F0435; it
-  cannot be promoted or re-saved as a valid C13 session. A usable C13 corpus
-  must therefore preserve both the event and its dungeontail owner.
-- Extend real-media parity beyond bounded Atari ST, Amiga and FM Towns routes
-  to native end-to-end gameplay, input and presentation evidence.
+  matching source-owned bones Thing is deliberately rejected at F0435. A
+  synthetic fixture may be used only to drive the original runtime to the
+  required location and produce a new real-format save; it must never be
+  promoted as preservation evidence itself. A usable C13 corpus must
+  therefore preserve both the event and its dungeontail owner.
+- Extend real-media parity beyond bounded Atari ST and Amiga routes to native
+  end-to-end gameplay, input and presentation evidence. FM Towns now has a
+  real ZIP CLI/start-menu receipt through TMENU → EDM/JDM, the authenticated
+  18-frame title plan, CDDA title track, and its input matrix, but still needs
+  an authentic gameplay capture before visual parity beyond that route can be
+  claimed.
 - Bind an authenticated Amiga gameplay RGB4 table to the native renderer.
   The original v2.0 `dm` producer is implemented and source-gated: its
   in-memory 68000 receipt copies the saved table to a working table, adjusts
@@ -38,7 +44,8 @@ Reviewed 2026-08-29. Only open work is listed here.
 ## Deferred original-data corpus
 
 The missing C13 save/capture corpus is deferred rather than a release blocker
-for the native media paths currently under active work.  When an
+for the native media paths currently under active work. When an
 operator-supplied corpus becomes available, add its hashes and provenance,
-then promote only the routes it directly proves.  Do not manufacture a save
-or capture to close this section.
+then promote only the routes it directly proves. A fixture-derived save may
+exercise the original runtime, but cannot by itself close the preservation
+evidence gap.

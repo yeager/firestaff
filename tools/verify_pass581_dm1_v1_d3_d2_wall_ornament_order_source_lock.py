@@ -4,12 +4,16 @@ from __future__ import annotations
 
 import re
 import sys
+import os
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_SOURCE",
+    ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source",
+))
 FIRE = ROOT / "src/engine/m11_game_view.c"
 CMAKE = ROOT / "CMakeLists.txt"
 
@@ -61,6 +65,9 @@ def c_function(text: str, name: str) -> str:
 
 def main() -> int:
     dunview_path = RED / "DUNVIEW.C"
+    if not dunview_path.is_file():
+        print(f"SKIP ReDMCSB source unavailable: {RED}")
+        return 77
     fire = read(FIRE)
     cmake = read(CMAKE)
 

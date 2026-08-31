@@ -10,17 +10,16 @@ extern "C" {
 #endif
 
 /*
- * File-backed loader for the FM Towns DM1 picture library. Reads
- * `<cache_dir>/GRAPHICS.DAT` (or `<cache_dir>/<override_name>`) from
+ * File-backed loader for a loose FM Towns DM1 picture library. Reads
+ * `<data_dir>/GRAPHICS.DAT` (or `<data_dir>/<override_name>`) from
  * disk into a heap-owned buffer and returns a
  * `dm1_v1_fmtowns_pic_library_view_t` that points into it. The
  * caller must call `dm1_v1_fmtowns_pic_library_release_pc34` to
  * free the backing buffer.
  *
- * Path resolution matches how m12_materialize_dm1_fmtowns_runtime_cache
- * writes the cache: the ISO `DATA/` prefix is stripped, so the file
- * lives directly at `<cache_dir>/GRAPHICS.DAT`. See
- * `src/shared/asset_status_m12.c` around line 4067.
+ * It is not an archive materializer. Packed FM Towns media is admitted and
+ * read through the archive-owned in-memory path in M11; Firestaff never
+ * writes `GRAPHICS.DAT` or a BIN/CUE cache beside user media.
  *
  * This module only reads a file; it does not decode any asset. Callers
  * that need pixel data should hand the returned view to

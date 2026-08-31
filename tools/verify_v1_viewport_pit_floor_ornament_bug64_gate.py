@@ -10,14 +10,23 @@ stairs, whose 0x08 bit is orientation in DUNGEON.C F0172.
 from __future__ import annotations
 
 from pathlib import Path
+import os
 import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src/engine/m11_game_view.c"
-REDMCSB_SOURCE = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+REDMCSB_SOURCE = Path(os.environ.get(
+    "FIRESTAFF_REDMCSB_SOURCE",
+    ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source",
+))
 text = SRC.read_text(encoding="utf-8")
 errors: list[str] = []
+
+if not REDMCSB_SOURCE.is_dir():
+    print("[SKIP] ReDMCSB source reference is not staged; "
+          "set FIRESTAFF_REDMCSB_SOURCE to Toolchains/Common/Source")
+    sys.exit(77)
 
 
 def source_excerpt(file_name: str, start: int, end: int) -> str:

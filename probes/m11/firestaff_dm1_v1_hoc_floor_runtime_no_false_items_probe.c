@@ -143,7 +143,7 @@ static int compact_item_count_for_cell(const M11_GameViewState* state,
     return count_item_chain(state->world.things, firstThing);
 }
 
-/* Count-only evidence is insufficient here.  An ordinary Hall object must
+/* Count-only evidence is insufficient here. An ordinary Hall object must
  * reach the completed F0115 bitmap consumer; mirror payloads never do. */
 static int capture_real_hoc_floor_item(M11_GameViewState* state,
                                        const struct DungeonMapDesc_Compat* map) {

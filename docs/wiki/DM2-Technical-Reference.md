@@ -1,6 +1,6 @@
 # Dungeon Master II: Skullkeep Technical Reference
 
-> **Status reviewed 2026-08-13.** DM2 has a playable source-owned runtime
+> **Status reviewed 2026-08-31.** DM2 has a playable source-owned runtime
 > from DOS, Amiga, FM Towns and Macintosh real media. Advanced V1 parity,
 > native non-DOS saves and some combat/UI owners remain active work.
 
@@ -10,6 +10,25 @@ DM2 V1 follows skproject, DMWeb format notes and the retained disassembly
 evidence. It is independent from the DM1/CSB compatibility path. Each
 edition requires its own authenticated data pair; FM Towns English text may
 add the verified PC-English `GRAPHICS.DAT` as a text-only companion.
+
+## Verified real-media launch matrix
+
+The following checks use the supplied original ZIPs directly in bounded
+memory. They do not extract a game installation, invoke an emulator, or
+replace unavailable source material with generated art. They establish native
+boot/menu/new-game and the listed bounded runtime path; they are not a claim
+of complete visual or gameplay parity.
+
+| Edition | Verified native route | Bounded runtime evidence |
+|---|---|---|
+| DOS English | CLI boot, M12 admission, M11 new game | pit render, spell cast, `SKSAVE1` resume/WIELD, archive resume, all 30 archive members and PAL8/PCM streams |
+| DOS French | CLI boot | authenticated French archive admission |
+| Amiga | CLI boot, M12 admission, M11 title/new game | source title and entrance/new-game route |
+| FM Towns Japanese | CLI boot, M12 admission, M11 title/gameplay | packed media, title, menu selection and bounded movement |
+
+The suite executed on 2026-08-31 contains 17 real-media cases, all passing.
+Macintosh DM2 demo support is intentionally absent; it is not a fallback for
+any of the routes above.
 
 ## Boot and GDAT
 
@@ -59,10 +78,13 @@ The work continues as continuous lanes
 - **Lane B — Audible playback backend.** `dm2_v1_sound_bind_gdat_loader()`
   wires `DM2_PLAY_MUSIC`, `DM2_PLAY_SOUND`, and `DM2_QUERY_SND_ENTRY_INDEX`
   to real GDAT sound data with an SDL3 mixing backend (6000 Hz U8 mono
-  stream, additive `sdlAudMix`-shaped mixing). See [DM2 GDAT
-  Internals](DM2-GDAT-Internals) for the PCM decode and voice-allocation
-  detail. Remaining: wire the backend binding into the live M11 DM2 runtime
-  path (app-side integration, not source-lock work).
+  stream, additive `sdlAudMix`-shaped mixing). M11 binds the described
+  backend immediately after an authenticated DM2 boot handoff, before a
+  resume or new-game route can publish live runtime state; failed boot does
+  not bind it. See [DM2 GDAT Internals](DM2-GDAT-Internals) for the PCM
+  decode and voice-allocation detail. The remaining work is broader
+  source-capture comparison and platform-specific audible behavior, not the
+  M11 binding itself.
 - **Lane C — Real-data startup/dungeon gate repair.** Fixed the DM2
   real-data gate tests (2 failing as of v3.0.181, was 13) by refining the
   `g1_w0_chains_disabled` flag: real PC G1 `DUNGEON.DAT` disables `w0` chain

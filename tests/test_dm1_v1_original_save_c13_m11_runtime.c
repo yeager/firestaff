@@ -37,6 +37,12 @@ static int pending_rebirth_event_count(const struct TimelineQueue_Compat *timeli
     return count;
 }
 
+/*
+ * Synthetic unit fixture only. This deliberately creates the minimum valid
+ * owner/event graph because no authenticated C13-bearing PC 3.4 save corpus
+ * is staged locally. It verifies that M11 consumes a source-shaped C13
+ * transition; it must never be reported as real-save or preservation proof.
+ */
 int main(void)
 {
     M11_GameViewState state;

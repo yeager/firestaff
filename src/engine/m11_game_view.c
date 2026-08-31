@@ -34242,6 +34242,8 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
     int zoneId;
     int command;
     int destinationAccepted;
+    int sourceSlotBox;
+    int destinationSlotBox;
     if (!state || !state->active ||
         (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
         return M11_GAME_INPUT_IGNORED;
@@ -34272,6 +34274,7 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
         state->v1InventoryDragActive = 0;
         return M11_GAME_INPUT_IGNORED;
     }
+    sourceSlotBox = state->v1InventoryDragSourceSlotBox;
     state->v1InventoryDragActive = 0;
     state->v1InventoryDragSourceSlotBox = 0;
     if (!state->inventoryPanelActive || state->showDebugHUD) {
@@ -34287,13 +34290,50 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
     command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
         DM1_V1_MOUSE_LIST_INTERFACE_PC34, x, y,
         DM1_V1_MOUSE_MASK_LEFT_PC34, &space, &zoneId);
-    destinationAccepted = command >= 20 && command <= 27 &&
-        zoneId >= 211 && zoneId <= 218 &&
-        m11_process_v1_status_hand_slot_box_click(state, command - 20);
-    if (!destinationAccepted) {
-        destinationAccepted = m11_process_v1_inventory_pointer_target(
-            state, x, y, NULL);
+    destinationSlotBox = 0;
+    destinationAccepted = 0;
+    if (command >= 20 && command <= 27 &&
+        zoneId >= 211 && zoneId <= 218) {
+        destinationSlotBox = command - 20;
+        /* F0302 commits the source-box transaction on mouse-down.  A normal
+         * click consequently reaches the same C211..C218 box on mouse-up;
+         * consuming that release must not exchange the object straight back
+         * out of the leader hand. */
+        if (destinationSlotBox == sourceSlotBox) {
+            return M11_GAME_INPUT_REDRAW;
+        }
+        destinationAccepted = m11_process_v1_status_hand_slot_box_click(
+            state, destinationSlotBox);
     }
+    if (!destinationAccepted) {
+        int destinationSpace = DM1_V1_MOUSE_SPACE_NONE_PC34;
+        int destinationZone = 0;
+        int destinationCommand =
+            DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+                DM1_V1_MOUSE_LIST_INVENTORY_PC34, x, y,
+                DM1_V1_MOUSE_MASK_LEFT_PC34,
+                &destinationSpace, &destinationZone);
+
+        /* The normal C507..C536 slot path is known before its transaction
+         * is entered, so reject a mouse-up over the original source slot.
+         * This must happen before m11_process_v1_inventory_pointer_target:
+         * that helper intentionally commits a slot exchange. */
+        if (destinationCommand >= 28 && destinationCommand <= 57 &&
+            destinationSpace == DM1_V1_MOUSE_SPACE_VIEWPORT_PC34 &&
+            destinationZone >= 507 && destinationZone <= 536) {
+            destinationSlotBox = destinationCommand - 20;
+            if (destinationSlotBox == sourceSlotBox) {
+                return M11_GAME_INPUT_REDRAW;
+            }
+        }
+        destinationAccepted = m11_process_v1_inventory_pointer_target(
+            state, x, y, &destinationSlotBox);
+    }
+    /* CLIKVIEW's slot transaction is committed at mouse-down.  Mouse-up
+     * only supplies a second destination when a drag crossed to another
+     * source slot.  Re-running the same source box here swaps the object
+     * straight back into the leader hand, producing the apparent vanish/
+     * throw seen in the Hall of Champions. */
     if (!destinationAccepted) {
         return M11_GAME_INPUT_IGNORED;
     }
@@ -35341,6 +35381,12 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             zoneId >= 211 && zoneId <= 218) {
             if (m11_process_v1_status_hand_slot_box_click(state,
                                                           command - 20)) {
+                /* C211..C218 use the same F0302 leader-hand transaction as
+                 * the inventory page. Preserve their source slot ordinal so
+                 * mouse-up can either keep a same-box click stable or place
+                 * the held object in another authenticated hand box. */
+                state->v1InventoryDragActive = 1;
+                state->v1InventoryDragSourceSlotBox = command - 20;
                 return M11_GAME_INPUT_REDRAW;
             }
             return M11_GAME_INPUT_IGNORED;
@@ -57275,9 +57321,12 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                     framebufferWidth, framebufferHeight);
     /* The final F0128 center-wall replay is an occlusion repair.  F0104's
      * floor-feature pass must follow it, otherwise an exact stairs bitmap on
-     * an open square can be painted over by the replayed wall envelope. */
+     * an open square can be painted over by the replayed wall envelope.  It
+     * must, however, stop at the same nearest closed center square as the
+     * source visibility receipt: replaying D2/D3 stairs after a D1 wall or
+     * door reintroduced them through that occluder. */
     m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,
-                        1, 3, cells);
+                        1, maxVisibleForward, cells);
     m11_draw_dm1_deferred_explosion_pass(state, framebuffer,
                                          framebufferWidth, framebufferHeight,
                                          frames, cells);

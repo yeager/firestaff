@@ -1,6 +1,6 @@
 # Dungeon Master Nexus Technical Reference
 
-> **Status reviewed 2026-08-06.** Nexus real-data parsing and several runtime
+> **Status reviewed 2026-08-31.** Nexus real-data parsing and several runtime
 > slices are verified. Positive real-asset handoff and full playability remain
 > open, especially for source-bound visible materials.
 
@@ -69,6 +69,13 @@ fail-closed awaiting PRS3 capture evidence; ACCEPT exits a completed title
 instead of trapping on the blocked menu route, and M11 presentation copies
 only the source-bound material framebuffer rather than substituting neutral
 placeholder colours.
+
+`nexus_v1_title_mapd_real` reads `TITLE.BIN` and `TITLE.CG` through the native
+CUE/ISO reader when they are present only in the original Track 1 image. It
+uses bounded RAM buffers and does not require an extracted disc tree. The test
+source-binds all five MAPD/TIBG maps and their palette receipts, but it does
+not by itself authorize the public title/menu compositor; that still requires
+the same-revision VDP state and consumer capture recorded in `TODO-nexus.md`.
 
 ```bash
 cmake --build build --target test_nexus_v1_dgn_geometry_readiness \

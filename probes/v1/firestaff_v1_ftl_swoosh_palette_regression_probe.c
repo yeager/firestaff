@@ -53,10 +53,12 @@
 #include "swsh_frontend_pc34_compat.h"
 #include "swsh_intro_pathfinder_m11.h"
 #include "bitmap_call_pc34_compat.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 /* ReDMCSB global variables used by image_backend_pc34_compat.c —
  * declared as undefined-extern symbols by the IMG3 helpers. Probe
@@ -271,8 +273,7 @@ typedef struct StepDigest {
 int main(int argc, char** argv) {
     const char* swooshPath = NULL;
     const char* dumpDir = NULL;
-    FILE* f = NULL;
-    long fsize = 0;
+    size_t swooshSize = 0U;
     unsigned char* swooshBuf = NULL;
     SWSH_CompatLogoPayload logoPayload;
     unsigned char swshPalette[16][3];
@@ -299,35 +300,24 @@ int main(int argc, char** argv) {
         dumpDir = argv[3];
     }
 
-    f = fopen(swooshPath, "rb");
-    if (!f) {
-        fprintf(stderr, "FAIL cannot open SWOOSH: %s\n", swooshPath);
-        return 1;
+    if (!asset_read_path_alloc(swooshPath, &swooshBuf, &swooshSize) ||
+        !swooshBuf) {
+        /* This optional visual probe has no right to invent or unpack a
+         * replacement source asset. Archive-owned real-media coverage lives
+         * in the native CLI test; report an unavailable loose evidence file
+         * as a CTest skip rather than a product failure. */
+        fprintf(stderr, "SKIP cannot open SWOOSH: %s\n", swooshPath);
+        return 77;
     }
-    fseek(f, 0, SEEK_END);
-    fsize = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    if (fsize <= 0 || fsize > (long)(8u * 1024u * 1024u)) {
-        fprintf(stderr, "FAIL SWOOSH size out of range: %ld\n", fsize);
-        fclose(f);
-        return 1;
-    }
-    swooshBuf = (unsigned char*)malloc((size_t)fsize);
-    if (!swooshBuf) {
-        fprintf(stderr, "FAIL malloc swooshBuf %ld bytes\n", fsize);
-        fclose(f);
-        return 1;
-    }
-    if (fread(swooshBuf, 1, (size_t)fsize, f) != (size_t)fsize) {
-        fprintf(stderr, "FAIL short read of SWOOSH\n");
+    if (swooshSize == 0U || swooshSize > (size_t)(8u * 1024u * 1024u) ||
+        swooshSize > (size_t)UINT_MAX) {
+        fprintf(stderr, "FAIL SWOOSH size out of range: %zu\n", swooshSize);
         free(swooshBuf);
-        fclose(f);
         return 1;
     }
-    fclose(f);
 
     memset(&logoPayload, 0, sizeof(logoPayload));
-    if (!SWSH_Compat_FindLogoImagePayloadEx(swooshBuf, (unsigned int)fsize, &logoPayload)) {
+    if (!SWSH_Compat_FindLogoImagePayloadEx(swooshBuf, (unsigned int)swooshSize, &logoPayload)) {
         fprintf(stderr, "FAIL SWOOSH payload detection (not LZEXE/MZ-wrapped, not raw source-shaped IMG2)\n");
         free(swooshBuf);
         return 1;

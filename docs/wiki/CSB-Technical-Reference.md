@@ -1,6 +1,6 @@
 # Chaos Strikes Back (CSB) Technical Reference
 
-> **Status reviewed 2026-08-11.** CSB has native Amiga, Atari ST and FM Towns
+> **Status reviewed 2026-08-31.** CSB has native Amiga, Atari ST and FM Towns
 > media paths, broad source-locked engine coverage and ongoing end-to-end
 > runtime hardening. It has no original DOS release, so PC-shaped CSB data is
 > source/disassembly evidence only, never a PC runtime route.
@@ -92,6 +92,19 @@ media awaiting the game’s native save transaction, not a carrier for a hidden
 only that member, decodes the MSA container, inventories the root directory,
 and requires the zero-file result. Firestaff must report this as *no saved
 session* and must never invent a replacement save merely to launch it.
+
+### Verified real-media launch matrix
+
+The 2026-08-31 native start matrix passed against operator-supplied original
+media: `csb_v1_atari_stx_native_cli_boot`,
+`csb_v1_atari_nested_zip_cli_boot`,
+`csb_v1_atari_french_preservation_zip_cli_boot`,
+`csb_v1_amiga_native_cli_boot`, `csb_v1_amiga_adf_archive_cli_boot`, and the
+English/Japanese `csb_v1_fmtowns_*_native_cli_real_media` routes. The FM
+Towns packed-M11 tests additionally prove the original ZIP remains the media
+owner during C03/MINI handoff and runtime startup. This is launch, menu and
+bounded input evidence; it does not replace the still-open save-corpus and
+frame-capture requirements in `TODO-csb.md`.
 
 FM Towns is treated the same way even though its retail archive contains a
 large CD image: the selected BIN/CUE or archive member is decoded only in

@@ -116,6 +116,15 @@ static const char* graphics_dat_path(void) {
             fclose(f);
             return homePath;
         }
+        /* The canonical DOS 3.4 corpus is commonly retained as its
+         * original ZIP.  M11's production asset reader accepts this virtual
+         * member directly, so the source-lock test must exercise that same
+         * in-memory owner rather than silently depending on an extracted
+         * GRAPHICS.DAT beside the archive. */
+        snprintf(homePath, sizeof(homePath),
+                 "%s/.firestaff/data/dm1/Dungeon-Master_DOS_EN.zip"
+                 "::dungeon-master/dmaster/DATA/GRAPHICS.DAT", home);
+        return homePath;
     }
     return "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT";
 }
@@ -136,110 +145,6 @@ static int load_original_pc34_font(M11_GameViewState* state) {
 
 static int point_in_rect(int x, int y, int rx, int ry, int rw, int rh) {
     return x >= rx && x < rx + rw && y >= ry && y < ry + rh;
-}
-
-static int point_is_in_object_description_panel_overdraw(int panelX,
-                                                        int panelY,
-                                                        int x,
-                                                        int y) {
-    int circleX = 0, circleY = 0, circleW = 0, circleH = 0;
-    int iconX = 0, iconY = 0, iconW = 0, iconH = 0;
-
-    if (M11_GameView_GetV1ObjectDescriptionCircleZone(&circleX, &circleY,
-                                                       &circleW, &circleH) &&
-        point_in_rect(x, y, circleX - panelX, circleY - panelY, circleW, circleH)) {
-        return 1;
-    }
-    if (M11_GameView_GetV1ObjectDescriptionIconZone(&iconX, &iconY, &iconW, &iconH) &&
-        point_in_rect(x, y, iconX - panelX, iconY - panelY, iconW, iconH)) {
-        return 1;
-    }
-    /* F0339 draws C019/C018 into C503 after the panel contents. */
-    if (point_in_rect(x, y, 11, 10, 16, 16)) return 1;
-    /* Text is rendered after the source panel and circle blits. */
-    if (point_in_rect(x, y, 48, 4, 92, 24)) return 1;
-    if (point_in_rect(x, y, 24, 30, 116, 43)) return 1;
-    return 0;
-}
-
-static int framebuffer_matches_object_description_source_pixels(
-    const M11_GameViewState* state,
-    const unsigned char* framebuffer) {
-    const M11_AssetSlot* panel;
-    const M11_AssetSlot* circle;
-    int viewportX = 0, viewportY = 0, viewportW = 0, viewportH = 0;
-    int panelX = 0, panelY = 0, panelW = 0, panelH = 0;
-    int circleX = 0, circleY = 0, circleW = 0, circleH = 0;
-    int iconX = 0, iconY = 0, iconW = 0, iconH = 0;
-    int panelMatched = 0;
-    int circleMatched = 0;
-    int circleAssetW = 0;
-    int circleAssetH = 0;
-    int x, y;
-
-    if (!state || !framebuffer ||
-        !M11_GameView_GetViewportRect(&viewportX, &viewportY, &viewportW, &viewportH) ||
-        !M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY, &panelW, &panelH) ||
-        !M11_GameView_GetV1ObjectDescriptionCircleZone(&circleX, &circleY,
-                                                       &circleW, &circleH) ||
-        !M11_GameView_GetV1ObjectDescriptionIconZone(&iconX, &iconY, &iconW, &iconH)) {
-        fprintf(stderr, "object-description layout lookup failed\n");
-        return 0;
-    }
-    (void)viewportW;
-    (void)viewportH;
-
-    panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                 (unsigned int)M11_GameView_GetV1ObjectDescriptionPanelGraphicId());
-    circle = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                  (unsigned int)M11_GameView_GetV1ObjectDescriptionCircleGraphicId());
-    if (!panel || !panel->pixels || !circle || !circle->pixels ||
-        panel->width != (unsigned short)panelW || panel->height != (unsigned short)panelH) {
-        fprintf(stderr, "object-description asset lookup failed panel=%p circle=%p dims=%ux%u\n",
-                (void*)panel, (void*)circle,
-                panel ? panel->width : 0, panel ? panel->height : 0);
-        return 0;
-    }
-    circleAssetW = (int)circle->width;
-    circleAssetH = (int)circle->height;
-    if (circleAssetW <= 0 || circleAssetH <= 0 ||
-        circleAssetW > circleW || circleAssetH > circleH) {
-        fprintf(stderr, "object-description circle dimensions=%dx%d zone=%dx%d\n",
-                circleAssetW, circleAssetH, circleW, circleH);
-        return 0;
-    }
-
-    for (y = 0; y < panelH; ++y) {
-        for (x = 0; x < panelW; ++x) {
-            unsigned char want = panel->pixels[y * (int)panel->width + x];
-            unsigned char got;
-            if (want == 8 || point_is_in_object_description_panel_overdraw(panelX, panelY, x, y)) {
-                continue;
-            }
-            got = framebuffer[(viewportY + panelY + y) * 320 + (viewportX + panelX + x)];
-            if (got == want) panelMatched++;
-        }
-    }
-
-    for (y = 0; y < circleAssetH; ++y) {
-        for (x = 0; x < circleAssetW; ++x) {
-            unsigned char want = circle->pixels[y * (int)circle->width + x];
-            unsigned char got;
-            if (want == 12 || point_in_rect(circleX + x, circleY + y,
-                                            iconX, iconY, iconW, iconH)) {
-                continue;
-            }
-            got = framebuffer[(viewportY + circleY + y) * 320 + (viewportX + circleX + x)];
-            if (got == want) circleMatched++;
-        }
-    }
-
-    if (panelMatched <= 1000 || circleMatched <= 50) {
-        fprintf(stderr, "object-description source match panel=%d circle=%d\n",
-                panelMatched, circleMatched);
-        return 0;
-    }
-    return 1;
 }
 
 static int point_is_in_chest_slot_frame(int panelX, int panelY, int x, int y) {
@@ -2252,7 +2157,12 @@ static void test_open_chest_close_trims_to_eight_visible_slots(void) {
     for (i = 0; i < 9; ++i) {
         weaponThings[i] = (unsigned short)((THING_TYPE_WEAPON << 10) | i);
         weapons[i].type = 2;
-        weapons[i].next = (i < 8) ? weaponThings[i + 1] : THING_ENDOFLIST;
+        /* Build the source Thing reference directly.  Reading
+         * weaponThings[i + 1] here used an as-yet uninitialised stack value,
+         * which made this F0333 raw-chain fixture nondeterministic. */
+        weapons[i].next = (i < 8)
+            ? (unsigned short)((THING_TYPE_WEAPON << 10) | (i + 1))
+            : THING_ENDOFLIST;
     }
     seed_weapon_raw_records(&things, weapons, 9);
     containers[0].slot = weaponThings[0];
@@ -2379,7 +2289,9 @@ static void test_open_chest_pickup_last_visible_slot_detaches_tail(void) {
     for (i = 0; i < 9; ++i) {
         weaponThings[i] = (unsigned short)((THING_TYPE_WEAPON << 10) | i);
         weapons[i].type = 2;
-        weapons[i].next = (i < 8) ? weaponThings[i + 1] : THING_ENDOFLIST;
+        weapons[i].next = (i < 8)
+            ? (unsigned short)((THING_TYPE_WEAPON << 10) | (i + 1))
+            : THING_ENDOFLIST;
     }
     seed_weapon_raw_records(&things, weapons, 9);
     containers[0].slot = weaponThings[0];
@@ -2442,7 +2354,9 @@ static void test_open_chest_last_visible_swap_rewrites_hidden_tail(void) {
     for (i = 0; i < 10; ++i) {
         weaponThings[i] = (unsigned short)((THING_TYPE_WEAPON << 10) | i);
         weapons[i].type = 2;
-        weapons[i].next = (i < 8) ? weaponThings[i + 1] : THING_ENDOFLIST;
+        weapons[i].next = (i < 8)
+            ? (unsigned short)((THING_TYPE_WEAPON << 10) | (i + 1))
+            : THING_ENDOFLIST;
     }
     seed_weapon_raw_records(&things, weapons, 10);
     containers[0].slot = weaponThings[0];
@@ -2654,12 +2568,18 @@ static void test_eye_panel_weapon_attribute_flags(void) {
     ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
               M11_GAME_INPUT_REDRAW,
               "inventory eye click opens source weapon description");
-    ASSERT_EQ(state.v1ObjectDescriptionPanelActive, 1,
-              "leader-hand eye click marks object-description panel active");
-    ASSERT_EQ(state.v1ObjectDescriptionThing, daggerThing,
-              "object-description panel is locked to the leader-hand thing");
-    ASSERT_EQ(state.v1ObjectDescriptionIconIndex, 32,
-              "object-description panel uses the source object icon index");
+    /* This bounded fixture has raw Thing bytes but deliberately no M564
+     * object-name stream.  Production must not replace that missing source
+     * material with the hand-written subtype catalog, so F0342 consumes the
+     * C546 click while suppressing the visual description panel.  The real
+     * PC3.4 M564/C020/C029/M653 route is covered separately by
+     * test_m11_dm1_real_object_names. */
+    ASSERT_EQ(state.v1ObjectDescriptionPanelActive, 0,
+              "eye fixture without M564 suppresses object-description panel");
+    ASSERT_EQ(state.v1ObjectDescriptionThing, THING_NONE,
+              "eye fixture without M564 retains no synthetic object owner");
+    ASSERT_EQ(state.v1ObjectDescriptionIconIndex, -1,
+              "eye fixture without M564 retains no synthetic object icon");
 
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&state, framebuffer, 320, 200);
@@ -2671,21 +2591,14 @@ static void test_eye_panel_weapon_attribute_flags(void) {
               "unavailable object icon does not draw a host placeholder");
     ASSERT_EQ(framebuffer[(33 + 64) * 320 + 134], 0,
               "unavailable M653 font does not draw host description text");
-    ASSERT_TRUE(strstr(state.inspectDetail, "CURSED") != NULL,
-                "weapon eye panel reports source cursed flag");
-    ASSERT_TRUE(strstr(state.inspectDetail, "POISONED") != NULL,
-                "weapon eye panel reports source poisoned flag");
-    ASSERT_TRUE(strstr(state.inspectDetail, "BROKEN") != NULL,
-                "weapon eye panel reports source broken flag");
-    ASSERT_TRUE(strstr(state.inspectDetail, "CHARGE 7") != NULL,
-                "weapon eye panel reports source charge count");
+    ASSERT_EQ(M11_GameView_IsDialogOverlayActive(&state), 0,
+              "eye fixture without M564 does not show a synthetic dialog");
 }
 
-static void test_leader_hand_weapon_eye_blits_source_object_description_pixels(void) {
+static void test_leader_hand_weapon_eye_rejects_unbound_name_material(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapon;
-    unsigned char framebuffer[320 * 200];
     unsigned short daggerThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
 
     seed_inventory_view(&state, &things, &weapon);
@@ -2702,17 +2615,12 @@ static void test_leader_hand_weapon_eye_blits_source_object_description_pixels(v
     ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
               M11_GAME_INPUT_REDRAW,
               "inventory eye click routes weapon to object-description panel");
-    ASSERT_EQ(state.v1ObjectDescriptionPanelActive, 1,
-              "weapon eye route marks object-description panel active");
+    ASSERT_EQ(state.v1ObjectDescriptionPanelActive, 0,
+              "C020/C029 alone do not admit a weapon panel without M564");
     ASSERT_EQ(state.v1ScrollPanelActive, 0,
-              "weapon eye route does not use the scroll panel route");
+              "weapon eye route without M564 does not become a scroll route");
     ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), THING_NONE,
               "weapon eye route does not use the chest panel route");
-
-    memset(framebuffer, 0, sizeof(framebuffer));
-    M11_GameView_Draw(&state, framebuffer, 320, 200);
-    ASSERT_TRUE(framebuffer_matches_object_description_source_pixels(&state, framebuffer),
-                "leader-hand weapon eye render blits source C020 panel and C029 circle into C101/C504");
 
     M11_AssetLoader_Shutdown(&state.assetLoader);
 }
@@ -2746,12 +2654,10 @@ static void test_eye_panel_potion_power_prefix_runtime(void) {
     ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
               M11_GAME_INPUT_REDRAW,
               "inventory eye click opens source ROS potion description");
-    ASSERT_TRUE(strstr(state.inspectTitle, "POTION: a ROS POTION") != NULL,
-                "priest skill > 1 prefixes non-water potion name in eye panel");
-    ASSERT_TRUE(strstr(state.inspectDetail, "PANEL a ROS POTION") != NULL,
-                "runtime potion detail carries source PANEL.C description text");
-    ASSERT_EQ(M11_GameView_DismissDialogOverlay(&state), 1,
-              "dismiss ROS potion eye-panel overlay");
+    ASSERT_EQ(state.v1ObjectDescriptionPanelActive, 0,
+              "potion fixture without M564 suppresses synthetic eye panel");
+    ASSERT_EQ(M11_GameView_DismissDialogOverlay(&state), 0,
+              "potion fixture without M564 has no synthetic overlay to dismiss");
 
     state.world.party.champions[0].skillLevels[CHAMPION_SKILL_PRIEST] = 4;
     state.world.lifecycle.champions[0]
@@ -2761,18 +2667,18 @@ static void test_eye_panel_potion_power_prefix_runtime(void) {
     ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
               M11_GAME_INPUT_REDRAW,
               "inventory eye click opens source water flask description");
-    ASSERT_TRUE(strstr(state.inspectTitle, "POTION: WATER FLASK") != NULL,
-                "water flask is excluded from the priest-skill power prefix");
-    ASSERT_EQ(M11_GameView_DismissDialogOverlay(&state), 1,
-              "dismiss water flask eye-panel overlay");
+    ASSERT_EQ(state.v1ObjectDescriptionPanelActive, 0,
+              "water-flask fixture without M564 suppresses synthetic eye panel");
+    ASSERT_EQ(M11_GameView_DismissDialogOverlay(&state), 0,
+              "water-flask fixture without M564 has no synthetic overlay to dismiss");
 
     ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, emptyFlaskThing), 1,
               "leader hand accepts source empty flask thing");
     ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
               M11_GAME_INPUT_REDRAW,
               "inventory eye click opens source empty flask description");
-    ASSERT_TRUE(strstr(state.inspectTitle, "POTION: _ EMPTY FLASK") != NULL,
-                "empty flask keeps the original non-water potion prefix quirk");
+    ASSERT_EQ(state.v1ObjectDescriptionPanelActive, 0,
+              "empty-flask fixture without M564 suppresses synthetic eye panel");
 }
 
 static void test_champion_statistic_maximum_row_runtime_state(void) {
@@ -2861,7 +2767,9 @@ static void test_open_chest_all_eight_slot_mouse_routes_and_pickup(void) {
     for (i = 0; i < 8; ++i) {
         weaponThings[i] = (unsigned short)((THING_TYPE_WEAPON << 10) | i);
         weapons[i].type = 2; /* object-info index 25: container-compatible. */
-        weapons[i].next = (i < 7) ? weaponThings[i + 1] : THING_ENDOFLIST;
+        weapons[i].next = (i < 7)
+            ? (unsigned short)((THING_TYPE_WEAPON << 10) | (i + 1))
+            : THING_ENDOFLIST;
     }
     seed_weapon_raw_records(&things, weapons, 8);
     containers[0].slot = weaponThings[0];
@@ -3106,6 +3014,108 @@ static void test_eye_panel_champion_stats_and_skills(void) {
     M11_AssetLoader_Shutdown(&state.assetLoader);
 }
 
+/* SDL reports a press and a release for an ordinary click.  The source slot
+ * exchange is owned by the press; repeating it on release turns a pickup
+ * into an immediate swap-back.  Keep this live M11 regression independent
+ * of the optional GRAPHICS.DAT pixel assertions above. */
+static void test_inventory_same_slot_release_is_not_a_second_exchange(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapon;
+    unsigned short daggerThing =
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    int x = 0, y = 0, w = 0, h = 0;
+
+    seed_inventory_view(&state, &things, &weapon);
+    seed_weapon_raw_records(&things, &weapon, 1);
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        daggerThing;
+    ASSERT_TRUE(M11_GameView_GetV1InventorySourceSlotBoxZone(
+                    9, &x, &y, &w, &h),
+                "C508 action-hand slot exists for press/release regression");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, x + w / 2, 33 + y + h / 2, 1),
+              M11_GAME_INPUT_REDRAW,
+              "C508 press picks its object into leader hand once");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), daggerThing,
+              "C508 press keeps picked object in leader hand");
+    ASSERT_EQ(M11_GameView_HandlePointerButtonRelease(
+                  &state, x + w / 2, 33 + y + h / 2,
+                  DM1_V1_MOUSE_MASK_LEFT_PC34),
+              M11_GAME_INPUT_REDRAW,
+              "C508 release is consumed without a second exchange");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), daggerThing,
+              "same-slot release does not put object back or throw it");
+    ASSERT_EQ(state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND],
+              THING_NONE,
+              "same-slot release leaves the source action hand empty");
+}
+
+/* C020..C027 are top-row hand boxes, not C507..C536 inventory-page boxes.
+ * F0302 still uses the transient leader hand for both routes, so a press on
+ * another champion's hand must be able to finish on a different status hand
+ * at mouse-up. This is the practical drag path behind Hall of Champions item
+ * placement; test both the cross-box move and the ordinary same-box release. */
+static void test_status_hand_drag_release_routes_once(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapon;
+    unsigned short daggerThing =
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    int sourceX = 0, sourceY = 0, sourceW = 0, sourceH = 0;
+    int targetX = 0, targetY = 0, targetW = 0, targetH = 0;
+    int slot;
+
+    seed_inventory_view(&state, &things, &weapon);
+    seed_weapon_raw_records(&things, &weapon, 1);
+    state.world.party.championCount = 2;
+    state.world.party.champions[1].present = 1;
+    state.world.party.champions[1].hp.current = 100;
+    state.world.party.champions[1].hp.maximum = 100;
+    for (slot = 0; slot < CHAMPION_SLOT_COUNT; ++slot) {
+        state.world.party.champions[1].inventory[slot] = THING_NONE;
+    }
+    state.world.party.champions[1].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        daggerThing;
+    ASSERT_TRUE(M11_GameView_GetV1StatusHandIconZone(
+                    1, 1, &sourceX, &sourceY, &sourceW, &sourceH),
+                "C214 source action-hand zone exists");
+    ASSERT_TRUE(M11_GameView_GetV1StatusHandIconZone(
+                    1, 0, &targetX, &targetY, &targetW, &targetH),
+                "C213 target ready-hand zone exists");
+    ASSERT_EQ(M11_GameView_HandlePointer(
+                  &state, sourceX + sourceW / 2, sourceY + sourceH / 2, 1),
+              M11_GAME_INPUT_REDRAW,
+              "C214 press picks the other champion's object into leader hand");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), daggerThing,
+              "C214 press leaves the real object in leader hand");
+    ASSERT_EQ(state.world.party.champions[1]
+                  .inventory[CHAMPION_SLOT_ACTION_HAND], THING_NONE,
+              "C214 press clears only its source hand");
+    ASSERT_EQ(M11_GameView_HandlePointerButtonRelease(
+                  &state, targetX + targetW / 2, targetY + targetH / 2,
+                  DM1_V1_MOUSE_MASK_LEFT_PC34), M11_GAME_INPUT_REDRAW,
+              "C213 release accepts the separate status-hand destination");
+    ASSERT_EQ(state.world.party.champions[1]
+                  .inventory[CHAMPION_SLOT_HAND_LEFT], daggerThing,
+              "C213 release places the object without throwing it");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), THING_NONE,
+              "cross-status release clears the transient leader hand");
+
+    ASSERT_EQ(M11_GameView_HandlePointer(
+                  &state, targetX + targetW / 2, targetY + targetH / 2, 1),
+              M11_GAME_INPUT_REDRAW,
+              "C213 press starts a second source-owned hand transaction");
+    ASSERT_EQ(M11_GameView_HandlePointerButtonRelease(
+                  &state, targetX + targetW / 2, targetY + targetH / 2,
+                  DM1_V1_MOUSE_MASK_LEFT_PC34), M11_GAME_INPUT_REDRAW,
+              "C213 same-box release is consumed once");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), daggerThing,
+              "same C213 release does not exchange the object back");
+    ASSERT_EQ(state.world.party.champions[1]
+                  .inventory[CHAMPION_SLOT_HAND_LEFT], THING_NONE,
+              "same C213 release leaves source hand empty");
+}
+
 int main(void) {
     printf("=== M11 Inventory Full Panel Runtime Source-Lock Gate ===\n");
     printf("ReDMCSB: DEFS.H 743-760,778-817, DATA.C 1049-1087, CHAMPION.C F0302 677-712, CHEST.C F0333 58-75, F0334 112-133, DUNGEON.C F0163 1796-1837, PANEL.C F0347 1651-1691, F0351 1965-2108, F0352 2111-2160\n\n");
@@ -3113,6 +3123,8 @@ int main(void) {
     test_extended_backpack_source_mapping();
     test_extended_backpack_runtime_clicks();
     test_all_backpack_source_slots_round_trip_runtime();
+    test_inventory_same_slot_release_is_not_a_second_exchange();
+    test_status_hand_drag_release_routes_once();
     test_open_chest_runtime_routes_and_clicks();
     test_open_chest_empty_slot_empty_hand_noops();
     test_open_chest_late_empty_slot_placement_promotes_on_close();
@@ -3141,7 +3153,7 @@ int main(void) {
     test_eye_panel_potion_power_prefix_runtime();
     test_object_description_layout_source_zones();
     test_eye_panel_weapon_attribute_flags();
-    test_leader_hand_weapon_eye_blits_source_object_description_pixels();
+    test_leader_hand_weapon_eye_rejects_unbound_name_material();
     test_champion_statistic_maximum_row_runtime_state();
     test_eye_panel_champion_stats_and_skills();
     test_open_chest_all_eight_slot_mouse_routes_and_pickup();

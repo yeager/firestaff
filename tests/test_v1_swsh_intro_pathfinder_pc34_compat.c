@@ -173,6 +173,8 @@ int main(void)
     char arbitrary_swsh[512];
     char renamed_real_swsh[512];
     char found[512];
+    char archive_member[1024];
+    const char *pc34_archive;
     const char *real_swsh =
         "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/"
         "ReDMCSB_WIP20210206/Reference/Original/I34E/SWOOSH";
@@ -299,6 +301,27 @@ int main(void)
                 "dm1 SWOOSH found through legacy wrapper");
     expect_true(strcmp(found, dm1_swsh) == 0,
                 "legacy wrapper still resolves dm1 SWOOSH");
+
+    /* A real PC3.4 archive is optional for standalone developer builds, but
+     * when staged it must remain a first-class in-memory owner.  This guards
+     * against reintroducing a loose-file-only FTL path. */
+    pc34_archive = getenv("FIRESTAFF_DM1_PC34_ARCHIVE");
+    if (pc34_archive && pc34_archive[0] != '\0') {
+        snprintf(archive_member, sizeof(archive_member), "%s::SWOOSH",
+                 pc34_archive);
+        expect_true(V1_SWSH_Intro_PayloadLooksValid(archive_member) == 1,
+                    "authentic PC3.4 ZIP SWOOSH validates in memory");
+        TEST_SETENV("FIRESTAFF_SWOOSH", archive_member);
+        memset(found, 0, sizeof(found));
+        expect_true(V1_SWSH_Intro_FindLogoPathForGame(NULL, root, "dm1",
+                                                       found, sizeof(found)) == 1,
+                    "authentic PC3.4 ZIP SWOOSH resolves through override");
+        expect_true(strcmp(found, archive_member) == 0,
+                    "FTL pathfinder preserves the ZIP member path");
+        TEST_UNSETENV("FIRESTAFF_SWOOSH");
+    } else {
+        printf("skip: FIRESTAFF_DM1_PC34_ARCHIVE not set\n");
+    }
 
     if (g_failures) {
         return 1;

@@ -12,10 +12,12 @@
  */
 
 #include "swsh_frontend_pc34_compat.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #define FB_W 320u
 #define FB_H 200u
@@ -31,9 +33,8 @@ static unsigned char s_packed[FB_BYTES / 2u];
 static unsigned char s_indexed[FB_BYTES];
 
 int main(int argc, char** argv) {
-    FILE* f;
-    long fsize;
     unsigned char* buf;
+    size_t byteCount = 0U;
     SWSH_CompatLogoPayload payload;
     unsigned char* packed = s_packed;
     unsigned char* indexed = s_indexed;
@@ -51,20 +52,20 @@ int main(int argc, char** argv) {
         fprintf(stderr, "usage: %s <SWOOSH-path>\n", argv[0]);
         return 1;
     }
-    f = fopen(argv[1], "rb");
-    if (!f) { fprintf(stderr, "FAIL cannot open %s\n", argv[1]); return 1; }
-    fseek(f, 0, SEEK_END);
-    fsize = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    buf = (unsigned char*)malloc((size_t)fsize);
-    if (fread(buf, 1, (size_t)fsize, f) != (size_t)fsize) {
-        fprintf(stderr, "FAIL short read\n");
+    if (!asset_read_path_alloc(argv[1], &buf, &byteCount) || !buf) {
+        /* Do not create or extract a loose copy merely for this optional
+         * visual diagnostic. The native archive path has separate coverage. */
+        fprintf(stderr, "SKIP cannot open %s\n", argv[1]);
+        return 77;
+    }
+    if (byteCount == 0U || byteCount > (size_t)UINT_MAX) {
+        fprintf(stderr, "FAIL SWOOSH size out of range\n");
+        free(buf);
         return 1;
     }
-    fclose(f);
 
     memset(&payload, 0, sizeof(payload));
-    if (!SWSH_Compat_FindLogoImagePayloadEx(buf, (unsigned int)fsize, &payload)) {
+    if (!SWSH_Compat_FindLogoImagePayloadEx(buf, (unsigned int)byteCount, &payload)) {
         fprintf(stderr, "FAIL no source-shaped FTL logo payload\n");
         free(buf);
         return 1;

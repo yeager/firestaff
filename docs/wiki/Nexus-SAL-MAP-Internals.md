@@ -57,10 +57,7 @@ selector meaning, interpret the attribute byte, or permit audio playback.
 ## Verification
 
 ```bash
-cc -std=c99 -Wall -Wextra -O2 -Iinclude \
-  tests/test_nexus_v1_sal_map_corpus.c \
-  src/nexus/nexus_v1_sound.c src/nexus/nexus_v1_audio_receipt.c \
-  -o /tmp/test_nexus_v1_sal_map_corpus
-FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus \
-  /tmp/test_nexus_v1_sal_map_corpus
+cmake --build build --target test_nexus_v1_sal_map_corpus --parallel
+FIRESTAFF_NEXUS_DATA_DIR="$HOME/.firestaff/data/nexus" \
+  ./build/test_nexus_v1_sal_map_corpus
 ```
