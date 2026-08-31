@@ -4500,8 +4500,8 @@ int dm2_v1_viewport_build_creature_render_plan(
         const DM2_CreatureSprite *src = &s->creatures[i];
         DM2_V1_CreatureRender *row;
 
-        if (src->screen_x < 0 || src->screen_x >= DM2_VP_WIDTH ||
-            src->screen_y < 0 || src->screen_y >= DM2_VP_HEIGHT ||
+        if (src->screen_x < 0 || src->screen_x >= dm2_v1_viewport_draw_width(s) ||
+            src->screen_y < 0 || src->screen_y >= dm2_v1_viewport_draw_height(s) ||
             out_plan->creature_count >= DM2_MAX_CREATURES_PER_SQ) {
             continue;
         }
@@ -4750,8 +4750,8 @@ int dm2_v1_viewport_build_item_render_plan(
         DM2_V1_ItemRender *row;
         int category;
 
-        if (src->screen_x < 0 || src->screen_x >= DM2_VP_WIDTH ||
-            src->screen_y < 0 || src->screen_y >= DM2_VP_HEIGHT ||
+        if (src->screen_x < 0 || src->screen_x >= dm2_v1_viewport_draw_width(s) ||
+            src->screen_y < 0 || src->screen_y >= dm2_v1_viewport_draw_height(s) ||
             out_plan->item_count >= DM2_MAX_ITEMS_PER_SQ) {
             continue;
         }
@@ -4976,8 +4976,8 @@ int dm2_v1_viewport_build_creature_possession_item_render_plan(
         DM2_V1_ItemRender *row;
         int category;
 
-        if (src->screen_x < 0 || src->screen_x >= DM2_VP_WIDTH ||
-            src->screen_y < 0 || src->screen_y >= DM2_VP_HEIGHT ||
+        if (src->screen_x < 0 || src->screen_x >= dm2_v1_viewport_draw_width(s) ||
+            src->screen_y < 0 || src->screen_y >= dm2_v1_viewport_draw_height(s) ||
             out_plan->item_count >= DM2_MAX_CREATURE_POSSESSION_ITEMS) {
             continue;
         }
@@ -5147,8 +5147,8 @@ int dm2_v1_viewport_build_projectile_render_plan(
         DM2_V1_ProjectileRender *row;
         int category;
 
-        if (src->screen_x < 0 || src->screen_x >= DM2_VP_WIDTH ||
-            src->screen_y < 0 || src->screen_y >= DM2_VP_HEIGHT ||
+        if (src->screen_x < 0 || src->screen_x >= dm2_v1_viewport_draw_width(s) ||
+            src->screen_y < 0 || src->screen_y >= dm2_v1_viewport_draw_height(s) ||
             out_plan->projectile_count >= DM2_MAX_PROJECTILES) {
             continue;
         }
@@ -5528,10 +5528,14 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
                 ceiling_rect->height != ceiling->height ||
                 floor_rect->x < 0 || floor_rect->y < 0 ||
                 ceiling_rect->x < 0 || ceiling_rect->y < 0 ||
-                (unsigned)floor_rect->x + floor_rect->width > DM2_VP_WIDTH ||
-                (unsigned)floor_rect->y + floor_rect->height > DM2_VP_HEIGHT ||
-                (unsigned)ceiling_rect->x + ceiling_rect->width > DM2_VP_WIDTH ||
-                (unsigned)ceiling_rect->y + ceiling_rect->height > DM2_VP_HEIGHT) {
+                (unsigned)floor_rect->x + floor_rect->width >
+                    (unsigned)dm2_v1_viewport_draw_width(s) ||
+                (unsigned)floor_rect->y + floor_rect->height >
+                    (unsigned)dm2_v1_viewport_draw_height(s) ||
+                (unsigned)ceiling_rect->x + ceiling_rect->width >
+                    (unsigned)dm2_v1_viewport_draw_width(s) ||
+                (unsigned)ceiling_rect->y + ceiling_rect->height >
+                    (unsigned)dm2_v1_viewport_draw_height(s)) {
                 dm2_v1_block_source_material(
                     s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_FLOOR_CEILING);
                 return;
@@ -5626,7 +5630,7 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
     int ceiling_x = 0;
     int ceiling_y = movement_ceiling_y;
     int ceiling_h = DM2_CEILING_H;
-    int ceiling_w_dst = DM2_VP_WIDTH;
+    int ceiling_w_dst = dm2_v1_viewport_draw_width(s);
     if (s->source_materials_required && s->gdat_scene_material_plan) {
         const DM2_V1_GdatSceneBlitRect *rect =
             &s->gdat_scene_material_plan->rects[1];
@@ -5683,7 +5687,7 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
     int floor_x = 0;
     int floor_y = DM2_FLOOR_Y + movement_floor_y;
     int floor_h = DM2_FLOOR_H;
-    int floor_w_dst = DM2_VP_WIDTH;
+    int floor_w_dst = dm2_v1_viewport_draw_width(s);
     if (s->source_materials_required && s->gdat_scene_material_plan) {
         const DM2_V1_GdatSceneBlitRect *rect =
             &s->gdat_scene_material_plan->rects[0];
@@ -6192,8 +6196,10 @@ void dm2_v1_render_wall_ornaments(DM2_V1_ViewportState *s)
             const DM2_V1_ViewportRect *dst = &ornament->dst_rect;
             if (dst->w <= 0 || dst->h <= 0 ||
                 dst->x < 0 || dst->y < 0 ||
-                (unsigned)dst->x + (unsigned)dst->w > DM2_VP_WIDTH ||
-                (unsigned)dst->y + (unsigned)dst->h > DM2_VP_HEIGHT) {
+                (unsigned)dst->x + (unsigned)dst->w >
+                    (unsigned)dm2_v1_viewport_draw_width(s) ||
+                (unsigned)dst->y + (unsigned)dst->h >
+                    (unsigned)dm2_v1_viewport_draw_height(s)) {
                 dm2_v1_block_source_material(
                     s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT);
                 continue;
