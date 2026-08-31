@@ -6,11 +6,13 @@ Reviewed 2026-08-29. Only open work is listed here.
   224x136 backbuffer and `RECT_7` presentation route. The native indoor
   runtime now owns a separate backbuffer, copies the retail RAW4 `RECT_7`
   portion unscaled, then draws the source HUD on the 320x200 screen. The
-  renderer still has a 320x200 logical coordinate space, so its private
-  allocation deliberately covers that full extent before the 224x136 RECT_7
-  copy. Remaining work is the authenticated 224x136 source-coordinate pass,
-  outdoor's distinct composition, transition stretching and same-tuple
-  original-capture comparison; retain only GDAT-owned pixels.
+  source-plane, creature, item, projectile and wall-ornament routes now clip
+  to that 224x136 pass; canonical retail GDAT regression tests compare every
+  plane byte there and guard both buffer boundaries. The private allocation
+  remains full logical size as a defensive guard while remaining special
+  passes are audited. Remaining work is outdoor's distinct composition,
+  transition stretching and same-tuple original-capture comparison; retain
+  only GDAT-owned pixels.
 - Extend real-media gameplay evidence across DOS, Amiga, FM Towns and Mac for
   dialog/input ordering, creature AI/drop routes, audio and save/resume.
 - Capture an original PC-DOS `SKSAVE1` WIELD input-to-CD/RAM trace with a
