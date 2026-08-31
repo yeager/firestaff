@@ -105,7 +105,12 @@ def ppm_dims(path: Path) -> tuple[int, int] | None:
             tokens.append(data[start:i])
     if len(tokens) < 4 or tokens[0] != b"P6" or tokens[3] != b"255":
         return None
-    while i < n and data[i] in b" \t\r\n":
+    # `i` is immediately after the maxval token.  Consume its required
+    # separator, but not an arbitrary whitespace run: the first pixel byte is
+    # binary data and may itself be 0x09, 0x0a, 0x0d, or 0x20.
+    if i < n and data[i:i + 2] == b"\r\n":
+        i += 2
+    elif i < n and data[i] in b" \t\r\n":
         i += 1
     width = int(tokens[1])
     height = int(tokens[2])
