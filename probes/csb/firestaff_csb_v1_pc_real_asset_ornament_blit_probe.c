@@ -47,11 +47,11 @@
  *          source-locked thing-pass cell ordering for the real D1C
  *          thing-pass route (ReDMCSB DUNVIEW.C F0115:4547-4581,
  *          4923, 5180-5188, 5211-5214, 5458-5570, 5668-5671).
- *   5. Capturing the resulting framebuffer to
- *      `/tmp/csb_pc_real_ornament_capture.ppm` (P6, 320x200, 4bpp
- *      decoded grayscale) so the ornament blit math is human-viewable
- *      and reproducible byte-for-byte across runs.
- *   6. Hashing the captured PPM with a built-in SHA256 to make the run
+ *   5. Generating a deterministic 320x200 PPM representation (P6, 4bpp
+ *      decoded grayscale). It is exported only when the caller explicitly
+ *      supplies $FIRESTAFF_CSB_EVIDENCE_DIR; normal CTest runs leave no
+ *      capture files behind.
+ *   6. Hashing the generated framebuffer with a built-in SHA256 to make the run
  *      deterministic and ctest-stable.
  *
  * Source-lock boundary
@@ -83,11 +83,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#define DEFAULT_PC_CSB_DATA_DIR        "/Users/bosse/.firestaff/data/csb"
 #define CANONICAL_PC_CSB_GRAPHICS_MD5  "61fbfd56887c94adc26888a9491c6611"
-#define CAPTURE_PATH                   "/tmp/csb_pc_real_ornament_capture.ppm"
-#define CAPTURE_HASH_PATH              "/tmp/csb_pc_real_ornament_capture.sha256"
-#define CAPTURE_MANIFEST_PATH          "/tmp/csb_pc_real_ornament_capture_manifest.json"
 
 #define DMCSB1_NEW_FORMAT_BE_SIG       0x8001u
 #define FRAMEBUFFER_W                  320
@@ -502,6 +498,8 @@ static int run_ornament_blit(const uint8_t* bitmap_bytes,
 static int write_capture_ppm(const uint8_t* bitmap_bytes,
                              int bitmap_w, int bitmap_h,
                              const ornament_blit_tally_t* tally,
+                             const char *capture_path,
+                             const char *capture_hash_path,
                              char out_sha_hex[65])
 {
     static uint8_t framebuffer[FRAMEBUFFER_W * FRAMEBUFFER_H];
@@ -581,29 +579,31 @@ static int write_capture_ppm(const uint8_t* bitmap_bytes,
         framebuffer[idx + 5] = (uint8_t)(tally->f0115_stops_at_zero & 0xFF);
     }
 
-    ppm = fopen(CAPTURE_PATH, "wb");
-    if (!ppm) return 0;
-    fprintf(ppm, "P6\n%d %d\n255\n", FRAMEBUFFER_W, FRAMEBUFFER_H);
-    for (i = 0; i < FRAMEBUFFER_W * FRAMEBUFFER_H; ++i) {
-        /* 4bpp indexed → RGB grayscale: 16-color ramp 0..15 → 0..255 */
-        uint8_t idx4 = (i & 1) ? (framebuffer[i / 2] & 0x0F)
-                                : ((framebuffer[i / 2] >> 4) & 0x0F);
-        uint8_t v = (uint8_t)(idx4 * 17u);
-        fputc(v, ppm); fputc(v, ppm); fputc(v, ppm);
+    if (capture_path && capture_path[0] != '\0') {
+        ppm = fopen(capture_path, "wb");
+        if (!ppm) return 0;
+        fprintf(ppm, "P6\n%d %d\n255\n", FRAMEBUFFER_W, FRAMEBUFFER_H);
+        for (i = 0; i < FRAMEBUFFER_W * FRAMEBUFFER_H; ++i) {
+            /* 4bpp indexed → RGB grayscale: 16-color ramp 0..15 → 0..255 */
+            uint8_t idx4 = (i & 1) ? (framebuffer[i / 2] & 0x0F)
+                                    : ((framebuffer[i / 2] >> 4) & 0x0F);
+            uint8_t v = (uint8_t)(idx4 * 17u);
+            fputc(v, ppm); fputc(v, ppm); fputc(v, ppm);
+        }
+        fclose(ppm);
     }
-    fclose(ppm);
 
     sha256_init(&sha);
     sha256_update(&sha, framebuffer, sizeof(framebuffer));
     sha256_final(&sha, digest);
     sha256_hex(digest, out_sha_hex);
 
-    {
-        FILE* hf = fopen(CAPTURE_HASH_PATH, "w");
-        if (hf) {
-            fprintf(hf, "%s  %s\n", out_sha_hex, CAPTURE_PATH);
-            fclose(hf);
-        }
+    if (capture_hash_path && capture_hash_path[0] != '\0') {
+        FILE* hf = fopen(capture_hash_path, "w");
+        if (!hf) return 0;
+        fprintf(hf, "%s  %s\n", out_sha_hex,
+                capture_path ? capture_path : "in-memory");
+        fclose(hf);
     }
     return 1;
 }
@@ -645,9 +645,11 @@ static int write_capture_manifest(const char *data_dir,
                                   int ornament_payload_size,
                                   uint32_t ornament_data_offset,
                                   const ornament_blit_tally_t *tally,
+                                  const char *manifest_path,
+                                  const char *capture_path,
                                   const char capture_sha[65])
 {
-    FILE *mf = fopen(CAPTURE_MANIFEST_PATH, "wb");
+    FILE *mf = fopen(manifest_path, "wb");
     if (!mf) return 0;
 
     fputs("{\n", mf);
@@ -667,7 +669,7 @@ static int write_capture_manifest(const char *data_dir,
     fprintf(mf, "  \"framebuffer_height\": %d,\n", FRAMEBUFFER_H);
     fprintf(mf, "  \"capture_d1c_floor_band_y\": %d,\n", CAPTURE_D1C_FLOOR_BAND_Y);
     fprintf(mf, "  \"capture_d1c_floor_band_rows\": %d,\n", CAPTURE_D1C_FLOOR_BAND_ROWS);
-    fputs("  \"capture_path\": ", mf); json_string(mf, CAPTURE_PATH); fputs(",\n", mf);
+    fputs("  \"capture_path\": ", mf); json_string(mf, capture_path); fputs(",\n", mf);
     fputs("  \"capture_sha256\": ", mf); json_string(mf, capture_sha); fputs(",\n", mf);
     fputs("  \"source_lock\": [\n", mf);
     fputs("    \"ReDMCSB DUNVIEW.C F0108:3940-4011 floor ornament C10 blit and C1500 zone math\",\n", mf);
@@ -746,7 +748,8 @@ static int file_contains_all(const char *path,
     return ok;
 }
 
-static int verify_capture_manifest_contents(const char *graphics_md5,
+static int verify_capture_manifest_contents(const char *manifest_path,
+                                            const char *graphics_md5,
                                             const char capture_sha[65])
 {
     char md5_needle[96];
@@ -772,8 +775,24 @@ static int verify_capture_manifest_contents(const char *graphics_md5,
              "\"graphics_md5\": \"%s\"", graphics_md5 ? graphics_md5 : "");
     snprintf(sha_needle, sizeof(sha_needle),
              "\"capture_sha256\": \"%s\"", capture_sha ? capture_sha : "");
-    return file_contains_all(CAPTURE_MANIFEST_PATH, needles,
+    return file_contains_all(manifest_path, needles,
                              sizeof(needles) / sizeof(needles[0]));
+}
+
+static int capture_paths_from_environment(char *ppm_path, size_t ppm_size,
+                                          char *hash_path, size_t hash_size,
+                                          char *manifest_path, size_t manifest_size)
+{
+    const char *dir = getenv("FIRESTAFF_CSB_EVIDENCE_DIR");
+    int n;
+    if (!dir || dir[0] == '\0') return 0;
+    n = snprintf(ppm_path, ppm_size, "%s/csb_pc_real_ornament_capture.ppm", dir);
+    if (n < 0 || (size_t)n >= ppm_size) return -1;
+    n = snprintf(hash_path, hash_size, "%s/csb_pc_real_ornament_capture.sha256", dir);
+    if (n < 0 || (size_t)n >= hash_size) return -1;
+    n = snprintf(manifest_path, manifest_size,
+                 "%s/csb_pc_real_ornament_capture_manifest.json", dir);
+    return n < 0 || (size_t)n >= manifest_size ? -1 : 1;
 }
 
 /* ── Boot handoff + scan sanity ──────────────────────────────── */
@@ -829,6 +848,10 @@ static int run_real_asset_ornament_blit(const char *data_dir,
     int ornament_payload_size = 0;
     ornament_blit_tally_t tally;
     char capture_sha[65] = {0};
+    char capture_path[1200] = {0};
+    char capture_hash_path[1200] = {0};
+    char manifest_path[1200] = {0};
+    int export_capture;
 
     printf("\n=== DMCSB1 BE header + ornament blit math "
            "(graphics=%s) ===\n", graphics_path);
@@ -908,25 +931,41 @@ static int run_real_asset_ornament_blit(const char *data_dir,
     CHECK(tally.f0115_stops_at_zero >= 1,
           "F0115 thing-pass stops at zero nibble (terminator rule honored)");
 
-    /* Capture the deterministic PPM + SHA256 sidecar. */
+    export_capture = capture_paths_from_environment(
+        capture_path, sizeof(capture_path), capture_hash_path,
+        sizeof(capture_hash_path), manifest_path, sizeof(manifest_path));
+    CHECK(export_capture >= 0,
+          "optional FIRESTAFF_CSB_EVIDENCE_DIR paths fit the probe bounds");
+
+    /* The framebuffer fingerprint is always computed in memory.  Capture
+     * files are deliberately opt-in so CTest neither writes game-derived
+     * data into /tmp nor leaves any material behind on a normal run. */
     CHECK(write_capture_ppm(ornament_bytes, ornament_w, ornament_h,
-                            &tally, capture_sha),
-          "deterministic 320x200 PPM written to "
-          "/tmp/csb_pc_real_ornament_capture.ppm");
+                            &tally,
+                            export_capture > 0 ? capture_path : NULL,
+                            export_capture > 0 ? capture_hash_path : NULL,
+                            capture_sha),
+          "deterministic 320x200 ornament framebuffer fingerprint generated");
     if (capture_sha[0]) {
         printf("    capture sha256 = %s\n", capture_sha);
         CHECK(capture_sha[0] != '\0',
               "capture SHA256 is non-empty (deterministic fingerprint)");
     }
-    CHECK(write_capture_manifest(data_dir, graphics_path, graphics_md5,
-                                 ornament_idx, ornament_w, ornament_h,
-                                 ornament_payload_size,
-                                 ornament_data_offset, &tally, capture_sha),
-          "provenance manifest written to "
-          "/tmp/csb_pc_real_ornament_capture_manifest.json");
-    CHECK(verify_capture_manifest_contents(graphics_md5, capture_sha),
-          "provenance manifest read-back contains schema, MD5, SHA256, "
-          "source anchors, tally fields, and non-claims");
+    if (export_capture > 0) {
+        CHECK(write_capture_manifest(data_dir, graphics_path, graphics_md5,
+                                     ornament_idx, ornament_w, ornament_h,
+                                     ornament_payload_size,
+                                     ornament_data_offset, &tally,
+                                     manifest_path, capture_path, capture_sha),
+              "opt-in provenance manifest written beside the requested capture");
+        CHECK(verify_capture_manifest_contents(manifest_path, graphics_md5,
+                                                capture_sha),
+              "opt-in manifest read-back contains schema, MD5, SHA256, "
+              "source anchors, tally fields, and non-claims");
+    } else {
+        printf("    capture export disabled; set FIRESTAFF_CSB_EVIDENCE_DIR "
+               "to write PPM, SHA256, and manifest outside the game data.\n");
+    }
 
     free(data);
     return 0;

@@ -10687,8 +10687,8 @@ endif()
 # docs/FIRESTAFF_GAP_LIST.md C5 / TODO.md "first-frame M11/viewport
 # startup proof for CSB" follow-up).  The probe proves the full
 # boot -> runtime -> first-viewport-frame handoff chain:
-# csb_v1_boot_profile_init -> csb_v1_boot_scan_assets (or
-# hash-simulated synthetic boot profile) -> csb_v1_boot_enter_game
+# csb_v1_boot_profile_init -> csb_v1_boot_scan_assets (a hash-verified
+# real CSB package) -> csb_v1_boot_enter_game
 # (RUNTIME_READY) -> csb_v1_runtime_tick (TITLE wait) ->
 # csb_v1_viewport_render_frame (one deterministic first frame) ->
 # csb_v1_boot_cleanup.  Verifies that the M11-shaped 320x200
@@ -10697,11 +10697,11 @@ endif()
 # rows below that band, that two
 # back-to-back renders are byte-identical (deterministic render
 # entry), and that viewport_pixels == NULL is a safe no-op (the
-# staged-integration guard the M11 wiring relies on).  Default
-# path is synthetic-data (writes a small CSB V1 DUNGEON.DAT +
-# stub GRAPHICS.DAT into /tmp) so CI stays deterministic;
-# real-asset path runs automatically when $FIRESTAFF_CSB_PC_DATA
-# or argv[1] points at a verified CSB V1 directory.
+# staged-integration guard the M11 wiring relies on).  It never creates
+# substitute game files: it runs only with a hash-recognised CSB package
+# supplied through argv[1], $FIRESTAFF_CSB_DATA, or the workspace CSB
+# data root configured for CTest.  It is skip-safe when no recognised
+# package is available.
 #
 # Source-lock boundary:
 #   - ReDMCSB ENTRANCE.C F0806 lines 409-441 (CSB entrance).
@@ -10759,10 +10759,11 @@ endif()
 # fingerprint, drives the source-locked CSB V1 D1C ornament math
 # (csb_v1_viewport_d1c_f0108_zone_for_coordinate_set_pc34 +
 # csb_v1_viewport_d1c_f0108_blend_c10_pc34 + F0115 decode) against
-# the real bytes, and captures the resulting 320x200 PPM to
-# /tmp/csb_pc_real_ornament_capture.ppm with a SHA256 sidecar so
-# the run is ctest-stable. Skip-safe on hosts without user-supplied
-# PC CSB game data (exits 0 with SKIP).
+# the real bytes, and computes an in-memory 320x200 fingerprint. A PPM,
+# SHA256 sidecar, and manifest are exported only when the caller explicitly
+# supplies FIRESTAFF_CSB_EVIDENCE_DIR; CTest does not write game-derived
+# material to /tmp. Skip-safe on hosts without user-supplied PC CSB game
+# data (exits 0 with SKIP).
 #
 # Source-lock boundary:
 #   - ReDMCSB DUNVIEW.C F0108:3940-4011 (floor ornament ordinal
@@ -42301,8 +42302,9 @@ if(BUILD_TESTING)
     # exit 0 with a SKIP message; hosts that DO have it parse the
     # DMCSB1 BE GRAPHICS.DAT header, find a real ornament bitmap,
     # drive the source-locked F0108 zone + C10 transparency +
-    # F0115 cell-order math against real bytes, and write a
-    # deterministic 320x200 PPM + SHA256 sidecar to /tmp. The
+    # F0115 cell-order math against real bytes, and compute a deterministic
+    # in-memory 320x200 fingerprint. An optional PPM + SHA256 sidecar is
+    # written only to caller-selected evidence storage. The
     # probe is the canonical evidence path for the
     # docs/FIRESTAFF_GAP_LIST.md "live real-asset ornament blits,
     # broader viewport/HUD captures, and pixel parity evidence"
@@ -42320,13 +42322,12 @@ if(BUILD_TESTING)
     endif()
 
     # ── CSB V1 first-viewport-frame startup probe ctest entry ────
-    # Tier 1 / Skip-safe by default: the default path runs against a
-    # synthetic CSB V1 DUNGEON.DAT + stub GRAPHICS.DAT the probe
-    # stages into /tmp so CI is fully deterministic.  Hosts that DO
-    # have a verified CSB V1 directory under $FIRESTAFF_CSB_PC_DATA
-    # (or argv[1]) automatically exercise the real-asset path.  The
-    # probe proves boot -> runtime -> first-viewport-frame -> cleanup
-    # with a deterministic, byte-identical render entry in the
+    # Tier 1 / real-data and skip-safe: runs only against a
+    # hash-recognised CSB package.  The configured workspace CSB data
+    # root is supplied explicitly; a host without recognised data reports
+    # SKIP without fabricating DUNGEON.DAT, GRAPHICS.DAT, or other game
+    # material. The probe proves boot -> runtime -> first-viewport-frame
+    # -> cleanup with a deterministic, byte-identical render entry in the
     # CSB-owned 136-row viewport band without leaking into the M11
     # panel/action rows below that band.
     if(TARGET firestaff_csb_v1_first_viewport_frame_probe)
@@ -42335,7 +42336,8 @@ if(BUILD_TESTING)
             COMMAND firestaff_csb_v1_first_viewport_frame_probe
         )
         set_tests_properties(csb_v1_first_viewport_frame PROPERTIES
-            LABELS "tier1;csb;skip_safe;launch;boot_handoff;viewport;m11_boundary"
+            ENVIRONMENT "FIRESTAFF_CSB_DATA=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb"
+            LABELS "tier1;csb;real_data;skip_safe;launch;boot_handoff;viewport;m11_boundary"
             TIMEOUT 60
         )
     endif()
