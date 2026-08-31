@@ -41462,16 +41462,18 @@ static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
         {2, 3, 0, M11_GFX_WALLSET0_D3C, 77, 25, 70, 49}
     };
     int depth;
-    int occluded = 0;
     int flipWalls;
     if (!state || !state->assetsAvailable) {
         return;
     }
     flipWalls = m11_dm1_use_flipped_walls(state);
-    for (depth = 0; depth < 3; ++depth) {
-        if (occluded) {
-            break;
-        }
+    /* F0128 dispatches D3C, D2C, then D1C.  Each source square owns its
+     * own wall material; the nearer square naturally overpaints the farther
+     * one in overlapping zones.  Stopping after the nearest wall is not an
+     * equivalent visibility optimisation: it drops the exposed border of a
+     * farther wall and lets later split passes compose against incomplete
+     * geometry. */
+    for (depth = 2; depth >= 0; --depth) {
         if (m11_viewport_cell_is_wall_like(&cells[depth][1])) {
             int drawn;
             if (flipWalls) {
@@ -41495,7 +41497,6 @@ static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
              * leave the already-cleared/background pixels untouched and let
              * the authenticated asset scanner report the missing material. */
             (void)drawn;
-            occluded = 1;
         }
     }
 }
