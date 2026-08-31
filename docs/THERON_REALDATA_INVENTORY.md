@@ -13,6 +13,7 @@ ISO files so a valid-looking image cannot be attached to the wrong loader.
 | `TQJP02End.iso` | 305,152 | `397039af02d50d15c70b74088eb8a1cb` | Complete JP Rev. 1 Track 02 ISO payload (149 sectors) |
 | `TQUS19.iso` | 5,984,256 | `51b40a17b92a30339957ba564aa0015c` | US Track 19 ISO |
 | `TQJP19.iso` | 6,291,456 | `f9f069a5e489b91207f3156059b756f1` | JP Track 19 ISO |
+| `Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 19).bin` | 7,752,192 | `27d54f58154662885bb67d5967e5111e` | JP Rev. 1 Track 19, raw MODE1/2352 with 224-sector CUE pregap |
 | `TQUS02-ceb02343868f80cec899e9b239aff2da.iso` | 6,596,608 | `ceb02343868f80cec899e9b239aff2da` | Materialized US split Track 02 ISO |
 
 `TQJP19.iso` is not the JP Track 02 image. Its `f9f069…` identity belongs to
@@ -26,8 +27,11 @@ the `TQUS19.iso` plus `TQUS02End.iso` materialization step.
 - The raw US and JP Track 02 files have hash-verified startup bitmap spans,
   level-bank offsets, object/ground-reference receipts and HuC6280 bank-$1f
   disassembly bytes.
-- The US and JP Track 19 ISOs have hash-verified item-name, item-property,
-  level-label and startup-envelope metadata receipts.
+- The US and JP Track 19 ISOs, plus the supplied JP Rev. 1 raw Track 19 BIN,
+  have hash-verified item-name, item-property, level-label and startup-envelope
+  metadata receipts. The raw form retains its CUE-defined 224-sector pregap;
+  only its following user-data sectors are normalized in memory for these
+  ISO-addressed readers.
 - The raw BIN palette windows are copied only after the exact regional hash and
   MODE1/2352 user-data mapping pass. The US assembled ISO has a separate
   direct-ISO palette path.

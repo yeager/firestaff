@@ -10,6 +10,14 @@ Systematic audit of the Firestaff DM1 V1 runtime against the ReDMCSB decompilati
 **Phase A probe:** 23/23 PASS
 **DM1 test suite:** 556/593 PASS (37 failures — see analysis below)
 
+> Historical baseline: the counts and host paths above describe the 2026-06-13
+> audit and must not be read as the current result. On 2026-08-31, the current
+> out-of-tree `build-dm1-csb-native` completed all 84 tests carrying the `dm1`
+> label against the supplied real-data root without a failure record. That is
+> regression evidence, not a claim of full-campaign or pixel parity. The
+> current source-review status and remaining capture requirements live in
+> `docs/parity/REDMCSB_DM1_CSB_AUDIT.md`.
+
 ---
 
 ## Test Failure Analysis
@@ -31,55 +39,48 @@ Of the 37 DM1 V1 test failures:
 
 ## Bug List
 
-### BUG-101 — Armor Defense Uses Skill-Level Approximation Instead of F0321 Wound Defense
-- **Severity:** Major
+### BUG-101 FIXED — Armor Defense Uses F0321 Wound Defense
+- **Severity:** Resolved runtime
 - **Category:** Mechanics
-- **Description:** The inline creature→champion damage resolver in `m11_game_view.c:5074-5087` uses an approximation based on champion skill levels (parry + fighter / 2) instead of the real F0321 wound defense calculation that iterates worn armor items per wound slot.
+- **Description:** The former skill-level approximation has been replaced by the shared F0321/F0313 compatibility route.
 - **ReDMCSB Reference:** CHAMPION.C F0321:1838-1900, F0313_CHAMPION_GetWoundDefense
 - **Expected (ReDMCSB):** F0321 sums F0313(slot) over the wound mask bits, averages, and scales attack by `(130 - avgDefense) / 64`. F0313 checks each worn item's defense value for the specific wound slot.
-- **Actual (Firestaff):** `armorApprox = skillLevels[7] + skillLevels[3]; damage -= armorApprox / 2;` — no item iteration, no per-slot defense, no (130-d)/64 scaling.
-- **Impact:** Champions wearing heavy armor take too much damage; champions with high skill levels but no armor get unearned defense. This affects game balance significantly.
-- **Fix Complexity:** Medium — the proper F0321 logic exists in `memory_combat_pc34_compat.c::combat_apply_f0321_armor_defense_scale()`. The inline code in m11_game_view.c should delegate to the M10 combat resolver instead of using the approximation.
+- **Actual (Firestaff):** M10 and M11 build source-backed per-wound snapshots, use F0313 defence, then apply F0321's `(130 - avgDefense) / 64` scale.
+- **Evidence:** `dm1_v1_orch_pending_damage_flow` and combat integration coverage.
 
-### BUG-102 — Fire/Spell Shield Defense Not Applied
-- **Severity:** Major
+### BUG-102 FIXED — Fire/Spell Shield Defense Applied
+- **Severity:** Resolved runtime
 - **Category:** Mechanics
-- **Description:** The combat damage resolver in `memory_combat_pc34_compat.c:210-228` marks Fire Shield and Spell Shield defense subtraction as "NEEDS DISASSEMBLY REVIEW" and does not implement them.
+- **Description:** The former gap in F0321's fire and magic branches is closed.
 - **ReDMCSB Reference:** CHAMPION.C F0321:1842-1857 `P0663_i_Attack -= G0407_s_Party.FireShieldDefense` (C1_FIRE case) and `P0663_i_Attack -= G0407_s_Party.SpellShieldDefense` (C5_MAGIC case)
 - **Expected (ReDMCSB):** After F0307 statistic adjustment, subtract party shield defense from attack value.
-- **Actual (Firestaff):** Shield subtraction commented out with "NEEDS DISASSEMBLY REVIEW".
-- **Impact:** Fire Shield and Spell Shield spells provide no damage reduction, making those spells useless.
-- **Fix Complexity:** Low — add `attack -= party->fireShieldDefense` and `attack -= party->spellShieldDefense` in the appropriate switch cases.
+- **Actual (Firestaff):** `combat_apply_defender_statistic_adjustment` performs F0307 followed by the corresponding source party-shield subtraction; magic then takes the source no-armour-scale exit.
 
-### BUG-103 — Luck System Not Implemented in Combat
+### BUG-103 FIXED — Luck System Is Runtime-Bound in Combat
 - **Severity:** Major
 - **Category:** Mechanics
-- **Description:** The combat resolver collapses luck to 0. F0308_CHAMPION_IsLucky is marked as "NEEDS DISASSEMBLY REVIEW" and not called.
+- **Description:** F0308's two-stage random path and bounded Luck writeback are implemented in the combat resolver.
 - **ReDMCSB Reference:** CHAMPION.C F0308:1120-1145
 - **Expected (ReDMCSB):** Champions with high Luck stat have a chance to avoid hits. Cursed items with negative Luck exploit (BUG0_38 in original). Luck decrements by 2 on lucky roll, increments by 2 on unlucky roll.
-- **Actual (Firestaff):** Luck is always treated as 0.
-- **Impact:** Combat feels less varied; Luck stat is meaningless.
-- **Fix Complexity:** Medium — requires integrating Luck into the RNG flow and tracking the mutable Luck statistic.
+- **Actual (Firestaff):** The live lifecycle Luck field is copied to the combat snapshot and written back after resolution. The PC/I34E non-positive-Luck branch is modelled; the unsafe negative-Luck exploit is intentionally not claimed.
 
-### BUG-104 — Creature AI Profiles All Marked STUB
-- **Severity:** Major
+### BUG-104 FIXED — Creature AI Profiles Are Full-Tier
+- **Severity:** Resolved runtime
 - **Category:** Mechanics
-- **Description:** All 27 creature type profiles in `memory_creature_ai_pc34_compat.c:98-150` are marked `CREATURE_IMPL_TIER_STUB`. The behavior profiles have numeric values but the implementation tier flag causes simplified behavior.
+- **Description:** The historical all-STUB state no longer reflects the runtime.
 - **ReDMCSB Reference:** GROUP.C F0028/F0029/F0194/F0196/F0199/F0200/F0201/F0202/F0203, DEFS.H G0243_as_Graphic559_CreatureInfo
 - **Expected (ReDMCSB):** Each creature type has specific movement patterns, attack behaviors, and special abilities (levitation, non-material, side attack, back-row preference, etc.).
-- **Actual (Firestaff):** All creatures use the same simplified stub behavior path. The actual profile values exist but the `CREATURE_IMPL_TIER_STUB` flag limits behavior.
-- **Impact:** All creatures behave identically, making combat less interesting and the game significantly easier or harder than intended.
-- **Fix Complexity:** High — requires implementing the full creature AI state machine from GROUP.C.
+- **Actual (Firestaff):** All 27 `G0243` profiles are `CREATURE_IMPL_TIER_FULL`; the F0804 per-type dispatch owns poison, theft, ranged, levitation, non-material and archenemy branches. The STUB fallback remains defensive only and has no registered profile.
+- **Evidence:** `dm1_v1_creature_ai_behavior_source_lock`.
 
-### BUG-105 — Creature Attack Ordering Not Source-Locked
-- **Severity:** Minor
+### BUG-105 FIXED — Creature Attack Ordering Is Source-Locked
+- **Severity:** Resolved runtime
 - **Category:** Mechanics
-- **Description:** `memory_creature_ai_pc34_compat.c:419` marks F0229_GROUP_SetOrderedCellsToAttack as "NEEDS DISASSEMBLY REVIEW". The cell-ordering logic for creature attack targets is not fully implemented.
+- **Description:** The old F0229 review marker was superseded by the source-owned ordered-cell table and dispatch bridge.
 - **ReDMCSB Reference:** GROUP.C F0229:685-710
 - **Expected (ReDMCSB):** Creatures attack party members in a specific cell-based priority order determined by the creature's position and direction.
-- **Actual (Firestaff):** Attack ordering is simplified or absent.
-- **Impact:** Creatures may target wrong party members, affecting combat tactics.
-- **Fix Complexity:** Medium
+- **Actual (Firestaff):** `F0229_DM1_GROUP_SetOrderedCellsToAttack_Compat` resolves the original G0023 row and M10/M11 consume it for target selection.
+- **Evidence:** `dm1_v1_ordered_cells_to_attack_pc34_compat` (222 assertions) and `pass803_dm1_v1_ordered_cells_to_attack`.
 
 ### BUG-106 FIXED — Creature Flee Behavior Source-Locked
 
@@ -94,15 +95,14 @@ caller-side opposite_dir() is correct.  `fearCounter` in
 the FLEE state (memory_creature_ai_pc34_compat.c:1432)
 also decrements per the source's T0209094 path.
 
-### BUG-107 — Thieves Eye Duration Approximated
-- **Severity:** Minor
+### BUG-107 FIXED — Thieves Eye Duration Is Source-Locked
+- **Severity:** Resolved runtime
 - **Category:** Mechanics
-- **Description:** `memory_magic_pc34_compat.c:595-603` uses an approximated duration for Thieves Eye spell (`spellPower * 40`), marked "NEEDS DISASSEMBLY REVIEW".
+- **Description:** The earlier approximation was replaced by the F0412 source expression.
 - **ReDMCSB Reference:** MENU.C:1960-1963 (T0412032 tail)
-- **Expected (ReDMCSB):** Duration derived from AL1269_ui_Ticks multiplied by SpellPower with media-variant-specific pre-multiplication value.
-- **Actual (Firestaff):** Conservative envelope of `spellPower * 40`.
-- **Impact:** Thieves Eye may last longer or shorter than intended.
-- **Fix Complexity:** Low — needs the correct multiplier from the PC 3.4 media variant.
+- **Expected (ReDMCSB):** `T0412032` shifts the source spell power once and squares it before scheduling C73.
+- **Actual (Firestaff):** `F0757_MAGIC_ProduceOtherEffect_Compat` uses `spellPower >>= 1; durationTicks = spellPower * spellPower;` and schedules the C73 timeout.
+- **Evidence:** `test_dm1_v1_mnu03_f0757_spell_duration_source_lock_pc34_compat` plus the M10 status-timeline regression.
 
 ### BUG-108 FIXED — Light Amount Table Source-Locked
 
@@ -134,24 +134,26 @@ recovery loop follows ReDMCSB CHAMPION.C F0331:2487-2497
   - Party-resting flag doubles all gains
   - Negative food/water drain when below 0 is preserved
 
-- **Severity:** Minor
+- **Severity:** Resolved runtime
 - **Category:** Mechanics
-- **Description:** `memory_champion_lifecycle_pc34_compat.c:149` marks the F0331 stat gain expansion via repeated cycles as "NEEDS DISASSEMBLY REVIEW".
-- **ReDMCSB Reference:** CHAMPION.C F0331:2487-2497
-- **Expected (ReDMCSB):** The per-tick stat recovery loop uses the rest-modulated 256/64 period and clamps each stat via `curv -= curv / maxv` when above maximum.
-- **Actual (Firestaff):** Approximated expansion.
-- **Impact:** Champion stats may recover at wrong rates, especially during rest.
-- **Fix Complexity:** Medium
+- **ReDMCSB Reference:** `CHAMPION.C:F0331` 2362-2415 and 2487-2497
+- **Actual (Firestaff):** `dm1_v1_champion_needs_pc34_compat.c` follows the
+  source stamina-cycle loop, food/water thresholds, 64/16 outer cadence,
+  rest multiplier, and the `current -= current / maximum` over-maximum
+  statistic recovery rule. The former review-marker text was stale.
+- **Evidence:** the champion-needs and clock-tick source-locked regressions;
+  this remains distinct from broad campaign-capture parity.
 
-### BUG-110 — Magic Map Per-Champion State Not Implemented
-- **Severity:** Minor
-- **Category:** Mechanics
-- **Description:** `memory_champion_lifecycle_pc34_compat.c:417` marks C80..C83 magic map per-champion tracking as "NEEDS DISASSEMBLY REVIEW".
-- **ReDMCSB Reference:** CHAMPION.C — magic map events per champion
-- **Expected (ReDMCSB):** Each champion tracks their own magic map state via timeline events.
-- **Actual (Firestaff):** Not implemented.
-- **Impact:** Magic map spell may not function correctly per-champion.
-- **Fix Complexity:** Medium
+### BUG-110 NOT APPLICABLE TO DM1 — CSB Magic-Map State Is Isolated
+- **Category:** Scope correction
+- **ReDMCSB Reference:** `DEFS.H:695-703`, `MENU.C:1873-1915`, and
+  `TIMELINE.C:2002-2012` explicitly mark C80..C83 magic-map fields/events as
+  Chaos Strikes Back-only.
+- **Actual (Firestaff):** DM1's 25-entry spell table admits no magic-map rows;
+  CSB owns the per-champion counters and C80..C83 expiry handling in the
+  lifecycle path. This is not a missing DM1 mechanic.
+- **Remaining work:** CSB needs real-media magic-map capture coverage before
+  this can earn broad CSB UI/runtime parity credit.
 
 ### BUG-111 FIXED — Projectile Sub-Cell Hit Mask Source-Locked (partial)
 
@@ -166,45 +168,49 @@ quarter-square / giant / 2x2 creatures would use 0xF0
 was replaced with the named constant.
 
 
-### BUG-112 — Savegame Field Mask Semantics Approximated
-- **Severity:** Minor
-- **Category:** Data
-- **Description:** `memory_savegame_pc34_compat.c:399` marks field mask semantics for save/load as "NEEDS DISASSEMBLY REVIEW".
-- **ReDMCSB Reference:** LOADSAVE.C F0433:1502-1707, F0435:2192-2660
-- **Expected (ReDMCSB):** Exact field-mask serialization matching the original save format.
-- **Actual (Firestaff):** Approximate field masking; may cause save file compatibility issues.
-- **Impact:** Save files may not be fully compatible with original game saves.
-- **Fix Complexity:** Medium
+### BUG-112 NOT AN ORIGINAL-SAVE FORMAT GAP — Field Masks Are Internal
+- **Category:** Scope correction
+- **ReDMCSB Reference:** `LOADSAVE.C:F0433` writes source game/champion data
+  as opaque byte blocks; `F0435` restores those blocks. It has no
+  per-field mutation-mask format.
+- **Actual (Firestaff):** `DungeonMutation.fieldMask` is documented as a
+  bounded internal replay abstraction. The original PC34 F0433/F0435 envelope
+  is independently authenticated and round-tripped by the original-save
+  handoff path.
+- **Remaining work:** external original saves are still needed to prove broad
+  interop across real campaigns; the supplied game archives do not contain a
+  real save corpus.
 
-### BUG-113 — Poison Application Skips Vitality Adjustment
-- **Severity:** Minor
+### BUG-113 FIXED — Poison Applies Vitality Adjustment
+- **Severity:** Resolved runtime
 - **Category:** Mechanics
-- **Description:** `memory_combat_pc34_compat.c:644` notes that "Fontanel runs the poison value through F0307 vs vitality *before* committing to it" but this is flagged as not implemented.
+- **Description:** Creature and projectile poison route through F0307 Vitality before mutation.
 - **ReDMCSB Reference:** CHAMPION.C F0307 vs Vitality statistic
 - **Expected (ReDMCSB):** Poison attack value is adjusted by defender's Vitality via F0307_CHAMPION_GetStatisticAdjustedAttack before applying.
-- **Actual (Firestaff):** Raw poison value used without vitality adjustment.
-- **Impact:** Poison is more effective than intended, especially against high-Vitality champions.
-- **Fix Complexity:** Low
+- **Actual (Firestaff):** The source-scaled poison value is used before the poison event is scheduled.
 
-### BUG-114 — Psychic Spell Damage Not Implemented
-- **Severity:** Cosmetic
+### BUG-114 FIXED — Psychic Defense Uses Source F0030 Truncation
+- **Severity:** Resolved runtime
 - **Category:** Mechanics
-- **Description:** `memory_magic_pc34_compat.c:785` marks psychic impact from spells as not implemented.
-- **ReDMCSB Reference:** CHAMPION.C F0321, PROJEXPL.C F0230
-- **Expected (ReDMCSB):** Psychic attack type uses Wisdom factor for defense.
-- **Actual (Firestaff):** Path exists but never exercised (no psychic-damage spells in DM1's 25-entry spell table).
-- **Impact:** None in DM1 (no psychic spells exist); only relevant for CSB/DM2.
-- **Fix Complexity:** Low
+- **ReDMCSB Reference:** `CHAMPION.C:F0321` C6 attack branch and
+  `BASE.C:F0030`.
+- **Expected:** psychic attack uses `((attack * (115 - Wisdom)) >> 6)` with
+  the original integer truncation.
+- **Actual (Firestaff):** `F0762_MAGIC_GetDefenderPsychicAdjustedAttack_Compat`
+  now uses the same truncating scaled product. The regression boundary
+  `5 * 100 >> 6 == 7` rejects the former half-up result of 8.
+- **Scope:** DM1 does not expose a player psychic spell, but Ghost/Rive and
+  Screamer creature attacks consume this F0321 C6 defense route.
 
-### BUG-115 — F0306 Stamina-Adjusted Value Compiler Order Hazard
-- **Severity:** Cosmetic
+### BUG-115 FIXED — F0306 Stamina-Adjusted Value Compiler Order Hazard
+- **Severity:** Resolved runtime / source-package parity
 - **Category:** Mechanics
-- **Description:** The BUGX_XX compiler-order hazard at CHAMPION.C:1095 where `(P0641_i_Value >>= 1) + (P0641_i_Value * L0925/L0926)` evaluates differently depending on whether the first operand is computed before or after the `>>=1`. The source-locked tests in Firestaff cover this correctly (BUG documented in test comments), but the main runtime should verify it matches PC 3.4 Turbo C++ 1.01 behavior (unexpected order: second operand first).
+- **Description:** The BUGX_XX compiler-order hazard at CHAMPION.C:1095 makes `(P0641_i_Value >>= 1) + (P0641_i_Value * L0925/L0926)` package-dependent: it depends on the original compiler, not on dungeon bytes or a user option.
 - **ReDMCSB Reference:** CHAMPION.C F0306:1078-1103, BUGX_XX comment
-- **Expected (PC 3.4):** Turbo C++ 1.01 evaluates the second operand first (unexpected order), so the champion benefits from higher-than-expected values.
-- **Actual (Firestaff):** The test gates cover the expected-order behavior; the main runtime should match Turbo C++ 1.01 (PC 3.4 target).
-- **Impact:** Minor stat calculation differences for stamina-adjusted strength/load.
-- **Fix Complexity:** Low
+- **Expected:** Megamax Atari ST and High C FM Towns evaluate the first operand first; Turbo C++ 1.01 DM1 PC 3.4 and Aztec-built DM1 Amiga 2.x evaluate the second operand first.
+- **Actual (Firestaff):** `GameWorld_Compat.pc34F0306FirstOperandFirst` is bound at native DM1 handoff from verified Atari ST or FM Towns media. The M10 combat route and M11 shield-defense route call the source-selected helper directly. PC 3.4 and Amiga 2.x retain second-operand semantics.
+- **Evidence:** `dm1_v1_f0306_stamina_pc34_compat` pins both results without the process-global test toggle; real Atari archive boot remains covered by `dm1_v1_atari_st_outer_archive_real_data`.
+- **Impact:** Corrects low-stamina strength, load and shield-defense values on affected original packages.
 
 ### BUG-116 FIXED — Runtime Dynamics Table Source-Locked
 
@@ -252,6 +258,22 @@ chain root failure.
 Regression gate: `tests/test_dm1_v1_f0128_viewport_pc34_compat.c`
 (7/7 PASS).
 
+### BUG-119 FIXED — Same-Depth Side Content Survives Center-Block Replay
+
+- **Severity:** Major visual parity
+- **Category:** Viewport / F0128 ordering
+- **ReDMCSB Reference:** `DUNVIEW.C:F0128` dispatches each depth in the
+  order DnL, DnR, then DnC (D3 at 8491-8502, D2 at 8514-8525, D1 at
+  8527-8542).
+- **Former Firestaff behavior:** the deferred M11 side-content pass rejected
+  side cells at the same depth as the nearest closed center wall or door.
+  That contradicted the source ordering and could make a side floor ornament
+  disappear when approaching its depth.
+- **Actual:** only side content *farther* than the nearest center blocker is
+  rejected. Same-depth side cells remain eligible; the subsequent
+  source-material structural replay provides the real overlap/occlusion.
+- **Evidence:** `test_dm1_v1_viewport_3d_pc34_compat` source-lock assertion.
+
 
 ---
 
@@ -260,22 +282,17 @@ Regression gate: `tests/test_dm1_v1_f0128_viewport_pc34_compat.c`
 | Severity | Count | Fixable in This Pass |
 |----------|-------|---------------------|
 | Critical | 0     | —                   |
-| Major    | 4     | 2 (BUG-101, BUG-102) |
-| Minor    | 12    | 4 (BUG-107, BUG-113, BUG-115, BUG-117) |
+| Major    | 0     | 0 |
+| Minor    | 7     | 1 (BUG-112) |
 | Cosmetic | 2     | 1 (BUG-116)          |
-| **Total** | **18** | **7**              |
+| **Total** | **10** | **1**              |
 
 ---
 
 ## Priority Fix Order
 
-1. **BUG-101** (Major) — Armor defense approximation → delegate to M10 combat resolver
-2. **BUG-102** (Major) — Fire/Spell Shield defense not applied
-3. **BUG-113** (Minor) — Poison skips vitality adjustment
-4. **BUG-117** (Minor) — Test infrastructure build path
-5. **BUG-107** (Minor) — Thieves Eye duration
-6. **BUG-115** (Cosmetic) — F0306 compiler order hazard alignment
-7. **BUG-101** follow-up — **DONE 2026-06-30** via `dm1_v1_orch_pending_damage_flow`
+1. **BUG-112** (Minor) — preserve unproven save-field masks as a fail-closed limitation
+2. **BUG-110** (Minor) — verify per-champion magic-map state against a real save/trace
 
 ---
 
@@ -370,9 +387,27 @@ front cell next to the candidate portrait.
 in `m11_draw_dm1_front_mirror_route` skips the ornament blit while the
 panel is open, leaving only the candidate portrait graphic visible.
 
+### BUG-122 FIXED — Floor-object moves could lose exclusive ownership
+
+- **ReDMCSB reference:** `DUNGEON.C:F0163` (line 1769) links a THING at the
+  end of one list, while `F0164` (line 1840) removes its current list owner.
+  `MOVESENS.C:804→870` demonstrates unlink-before-link in a source movement
+  path.
+- **Former Firestaff behaviour:** the compact floor-cell representation could
+  append an object to a destination without removing its old cell entry. A
+  full destination could also update coordinates without granting a new list
+  owner. That could manifest as duplicated, disappearing, or apparently
+  thrown items during inventory/floor interaction.
+- **Fix:** `DM1_V1_Object_DropPc34Compat` now performs
+  `unlink → capacity check → link`, restoring the old list member exactly if
+  the destination is full. Pickup rejects a coordinate whose cell does not
+  own the object, rather than manufacturing a carried object.
+- **Evidence:** `dm1_v1_object_interaction_source_lock`; the actual PC34 ZIP
+  handoff companion is `m11_dm1_real_alcove_item_runtime_pc34`.
+
 ## Notes
 
-- BUG-103 (Luck), BUG-104 (Creature AI stubs), BUG-105 (Attack ordering), BUG-106 (Flee), BUG-109 (Stat gain cycles), BUG-110 (Magic map), BUG-111 (Sub-cell hit mask), BUG-112 (Savegame fields), BUG-118 (Viewport crop) are significant but require substantial implementation work beyond a single fix pass. They are documented for future work.
+- BUG-110 (Magic Map) and BUG-112 (Savegame fields) remain explicit validation limits. BUG-103, BUG-104, BUG-105, BUG-106, BUG-107, BUG-109 and BUG-111 are covered by current source-locked runtime routes; they are not backlog items.
 - The two recent fixes in v2.7.12 (wall texture behind mirrors `f99587c35`, FTL swoosh palette `e39c3d804`) are verified correct and not re-opened.
 - Phase A probe passes 23/23 invariants.
 - The M10 data layer (`memory_combat_pc34_compat.c`) has a well-structured F0321 implementation that could replace the inline approximation in `m11_game_view.c`.

@@ -29,6 +29,11 @@ static unsigned short make_thing(int type, int index)
     return (unsigned short)(((type & 0x0f) << 10) | (index & 0x03ff));
 }
 
+static unsigned short make_thing_in_cell(int type, int index, int cell)
+{
+    return (unsigned short)(make_thing(type, index) | ((cell & 3) << 14));
+}
+
 #define ASSERT_EQ(actual, expected, msg) do { \
     int a_ = (int)(actual); \
     int e_ = (int)(expected); \
@@ -1926,6 +1931,71 @@ static void test_hoc_floor_ornament_sources_follow_redmcsb(void)
     ASSERT_EQ(M11_GameView_GetFloorOrnamentOrdinal(&state, 0, 0), 3,
               "HoC random floor ornament follows F0172 map-zero stream");
 
+    /* F0172 turns an open fake wall into a corridor before it calls F0170.
+     * Its 0x08 flag is therefore random-floor-ornament permission, while a
+     * closed fake wall is still a wall and has no M558 floor ordinal. */
+    squareData[0] = (unsigned char)((DUNGEON_ELEMENT_FAKEWALL << 5) | 0x0c);
+    ASSERT_EQ(M11_GameView_GetFloorOrnamentOrdinal(&state, 0, 0) > 0, 1,
+              "open fake wall follows F0172 corridor floor-ornament stream");
+    squareData[0] = (unsigned char)((DUNGEON_ELEMENT_FAKEWALL << 5) | 0x08);
+    ASSERT_EQ(M11_GameView_GetFloorOrnamentOrdinal(&state, 0, 0), 0,
+              "closed fake wall remains wall-like and has no floor ornament");
+
+}
+
+static void test_closed_fakewall_wall_sensor_follows_redmcsb(void)
+{
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonThings_Compat things;
+    struct DungeonSensor_Compat sensors[1];
+    unsigned char squareData[1];
+    unsigned short squareFirstThings[1];
+    unsigned char sensorRaw[8];
+    int wallOrdinal = -1;
+
+    seed_active_view(&state);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(sensors, 0, sizeof(sensors));
+    memset(sensorRaw, 0, sizeof(sensorRaw));
+
+    /* F0172 turns the raw closed fake-wall byte into C00 wall before walking
+     * TEXTSTRING/SENSOR things. Facing north exposes the south (cell 2)
+     * wall face, so this source sensor owns M552. */
+    squareData[0] = (unsigned char)(DUNGEON_ELEMENT_FAKEWALL << 5);
+    squareFirstThings[0] = make_thing_in_cell(THING_TYPE_SENSOR, 0, 2);
+    sensorRaw[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    sensorRaw[1] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xffu);
+    sensors[0].ornamentOrdinal = 4;
+    map.width = 1;
+    map.height = 1;
+    map.wallOrnamentCount = 4;
+    tiles.squareData = squareData;
+    tiles.squareCount = 1;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.tilesLoaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.rawThingData[THING_TYPE_SENSOR] = sensorRaw;
+    things.thingCounts[THING_TYPE_SENSOR] = 1;
+    things.sensors = sensors;
+    things.sensorCount = 1;
+    state.world.dungeon = &dungeon;
+    state.world.things = &things;
+
+    ASSERT_EQ(M11_GameView_ProbeViewportRenderMetadata(
+                  &state, 0, 0, NULL, NULL, NULL, &wallOrdinal,
+                  NULL, NULL, NULL), 1,
+              "closed fake-wall cell is a valid F0172 viewport sample");
+    ASSERT_EQ(wallOrdinal, 4,
+              "closed fake-wall wall sensor owns its F0172 ornament ordinal");
 }
 
 static void test_m11_runtime_center_wall_blocks_deeper_corridor(void)
@@ -2041,6 +2111,7 @@ int main(void)
     test_candidate_panel_blocks_rest_and_source_save_commands();
     test_candidate_panel_hides_stale_action_rows();
     test_hoc_floor_ornament_sources_follow_redmcsb();
+    test_closed_fakewall_wall_sensor_follows_redmcsb();
     test_keyboard_positive_control_dispatches_without_overlay();
     test_keyboard_positive_control_dispatches_turn_without_overlay();
     test_mouse_positive_control_dispatches_without_overlay();

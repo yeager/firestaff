@@ -1492,6 +1492,77 @@ static void draw_data_dir(M12_ModernCanvas* c, const M12_StartupMenuState* state
     draw_text(c, 48, c->h - 86, buf, &t);
 }
 
+/* Scanning must not replace the front-door artwork: discovery happens while
+ * the launcher is already useful.  Keep this compact status card above the
+ * persistent data-directory and footer surfaces, centred at the bottom of
+ * every menu view.  The only user-facing label is routed through the M12
+ * locale catalogue, rather than leaking the scanner's internal task ids. */
+static void draw_data_scan_overlay(M12_ModernCanvas* c,
+                                   const M12_StartupMenuState* state) {
+    const M12_AssetScanProgress* progress;
+    const char* label;
+    const char* gameTitle;
+    int panelW;
+    int panelH = 64;
+    int panelX;
+    int panelY;
+    int percent = 0;
+    int barX;
+    int barY;
+    int barW;
+    int fillW;
+    char text[256];
+    ModernTextStyle title = text_style_make(2, COLOR_TEXT(), 1);
+
+    if (!c || !state || !state->dataDirScanActive) {
+        return;
+    }
+    progress = &state->dataDirScanProgress;
+    if (progress->totalSteps > 0U) {
+        percent = (int)((progress->completedSteps * 100U) /
+                        progress->totalSteps);
+    }
+    if (percent < 0) percent = 0;
+    if (percent > 100) percent = 100;
+
+    panelW = c->w - 48;
+    if (panelW > 520) panelW = 520;
+    if (panelW < 240) panelW = c->w - 24;
+    panelX = (c->w - panelW) / 2;
+    panelY = c->h - 170;
+    if (panelY < 12) panelY = 12;
+    label = M12_StartupMenu_TranslateForLocale(
+        state->settings.languageIndex,
+        state->dataDirScanCancelRequested
+            ? "CANCELLING DATA SCAN"
+            : "SCANNING GAME DATA");
+    gameTitle = progress->currentGameId[0]
+        ? M12_StartupMenu_GameDisplayTitleForLocale(
+              state->settings.languageIndex, progress->currentGameId)
+        : "";
+    if (gameTitle[0]) {
+        snprintf(text, sizeof(text), "%s - %s %d%%", label, gameTitle, percent);
+    } else {
+        snprintf(text, sizeof(text), "%s %d%%", label, percent);
+    }
+
+    draw_panel(c, panelX, panelY, panelW, panelH,
+               rgb(16, 14, 30), COLOR_PANEL_EDGE(), 12);
+    draw_text_centered_fit(c, panelX + panelW / 2, panelY + 10, text,
+                           &title, panelW - 28);
+    barX = panelX + 18;
+    barY = panelY + 40;
+    barW = panelW - 36;
+    fillW = (barW * percent) / 100;
+    fill_rounded_rect(c, barX, barY, barW, 10, 4, rgb(37, 35, 54));
+    if (fillW > 0) {
+        fill_rounded_rect(c, barX, barY, fillW, 10, 4,
+                          state->dataDirScanCancelRequested
+                              ? COLOR_WARN() : COLOR_ACCENT());
+    }
+    stroke_rounded_rect(c, barX, barY, barW, 10, 4, COLOR_PANEL_EDGE());
+}
+
 static void draw_main_view(M12_ModernCanvas* c, const M12_StartupMenuState* state) {
     /* Front door: five game covers plus one Firestaff card for global
      * settings, credits and project information. Museum remains in the
@@ -2506,6 +2577,7 @@ void M12_ModernMenu_Render(const M12_StartupMenuState* state,
     }
 
     draw_data_dir(&c, state);
+    draw_data_scan_overlay(&c, state);
 
     const char* langStr = language_short(state);
     char modeHint[80];

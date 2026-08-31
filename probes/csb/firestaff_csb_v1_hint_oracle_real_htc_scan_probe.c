@@ -1,7 +1,7 @@
 /*
  * firestaff_csb_v1_hint_oracle_real_htc_scan_probe.c
  *
- * Real Utility Disk HCSB.HTC scan/cache handoff probe.
+ * Real Utility Disk HCSB.HTC scan/RAM handoff probe.
  *
  * Source-lock boundary:
  *   - ReDMCSB HINTLOAD.C:11-18 names HCSB.HTC as the canonical CSB
@@ -18,7 +18,7 @@
  * What this proves:
  *   - Hash-based discovery of a real HCSB.HTC from an explicit data-dir
  *     override, without recursively walking a user's entire game library.
- *   - Cache handoff: parser view, owned file buffer, resolved path,
+ *   - RAM handoff: parser view, owned file buffer, resolved path,
  *     and matched MD5/label are all populated after a single scan.
  *   - Real-asset location lookup: at least one (level, x, y) tuple
  *     returns a non-empty hint list using the 255/255 any-XY rule

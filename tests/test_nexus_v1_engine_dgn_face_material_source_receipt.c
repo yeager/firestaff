@@ -14,7 +14,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 static int failures = 0;
 
@@ -25,33 +24,9 @@ static int failures = 0;
     } \
 } while (0)
 
-static uint8_t *read_file(const char *path, int *out_size)
+static void check_real_level(Nexus_V1_Engine *source_engine, int level_index)
 {
-    FILE *file;
-    long length;
-    uint8_t *bytes;
-
-    *out_size = 0;
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0 ||
-            (length = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
-        return NULL;
-    }
-    bytes = (uint8_t *)malloc((size_t)length);
-    if (!bytes || fread(bytes, 1, (size_t)length, file) != (size_t)length) {
-        free(bytes);
-        fclose(file);
-        return NULL;
-    }
-    fclose(file);
-    *out_size = (int)length;
-    return bytes;
-}
-
-static void check_real_level(const char *data_dir, int level_index)
-{
-    char path[2048];
+    char name[16];
     uint8_t *data;
     uint8_t *tampered;
     int size = 0;
@@ -59,10 +34,18 @@ static void check_real_level(const char *data_dir, int level_index)
     Nexus_V1_DgnStructure3FaceMaterialReceipt parsed;
     Nexus_V1_DgnFaceMaterialReceipt receipt;
 
-    snprintf(path, sizeof(path), "%s/LEV%02d.DGN", data_dir, level_index);
-    data = read_file(path, &size);
+    Nexus_V1_LevelAuxSourceReceipt source;
+
+    snprintf(name, sizeof(name), "LEV%02d.DGN", level_index);
+    memset(&source, 0, sizeof(source));
+    (void)nexus_v1_named_asset_source_receipt(source_engine, name, &source);
+    data = nexus_v1_read_file(source_engine, name, &size);
     CHECK(data != NULL);
-    if (!data) return;
+    CHECK(source.canonical_hash_verified);
+    if (!data || !source.canonical_hash_verified) {
+        free(data);
+        return;
+    }
 
     engine = (Nexus_V1_Engine *)calloc(1U, sizeof(*engine));
     CHECK(engine != NULL);
@@ -129,7 +112,7 @@ static void check_real_level(const char *data_dir, int level_index)
 int main(void)
 {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
-    char first_path[1024];
+    Nexus_V1_Engine source_engine;
     Nexus_V1_DgnFaceMaterialReceipt receipt;
 
     /* Argument and not-loaded rejections need no data. The function
@@ -156,15 +139,16 @@ int main(void)
         puts("SKIP: FIRESTAFF_NEXUS_DATA_DIR is not set");
         return 77;
     }
-    snprintf(first_path, sizeof(first_path), "%s/LEV00.DGN", data_dir);
-    if (access(first_path, R_OK) != 0) {
-        puts("SKIP: retail Nexus DGN corpus is not staged");
+    memset(&source_engine, 0, sizeof(source_engine));
+    if (nexus_v1_init(&source_engine, data_dir) != 0) {
+        puts("SKIP: retail Nexus source is unavailable");
         return 77;
     }
 
-    check_real_level(data_dir, 0);
-    check_real_level(data_dir, 1);
-    check_real_level(data_dir, 8);
+    check_real_level(&source_engine, 0);
+    check_real_level(&source_engine, 1);
+    check_real_level(&source_engine, 8);
+    nexus_v1_shutdown(&source_engine);
 
     if (failures) {
         fprintf(stderr, "FAILURES: %d\n", failures);

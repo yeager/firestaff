@@ -1,5 +1,5 @@
 /* Real-media verification for the Amiga TITL.DAT title timeline.
- * Set FIRESTAFF_CSB_AMIGA_TITL to the hash-verified extracted file. */
+ * FIRESTAFF_CSB_AMIGA_TITL may be the original nested ZIP→ADF member. */
 
 #include "asset_find_by_hash.h"
 #include "csb_v1_amiga_titl_dat.h"
@@ -7,30 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-static int read_file(const char *path, uint8_t **out_data, size_t *out_size)
-{
-    FILE *file;
-    long length;
-    uint8_t *data;
-
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0 || (length = ftell(file)) <= 0 ||
-        fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
-        return -1;
-    }
-    data = (uint8_t *)malloc((size_t)length);
-    if (!data || fread(data, 1u, (size_t)length, file) != (size_t)length) {
-        free(data);
-        fclose(file);
-        return -1;
-    }
-    fclose(file);
-    *out_data = data;
-    *out_size = (size_t)length;
-    return 0;
-}
 
 int main(void)
 {
@@ -61,7 +37,7 @@ int main(void)
               stderr);
         return 1;
     }
-    if (read_file(path, &data, &size) != 0 ||
+    if (!asset_read_virtual_path_alloc(path, &data, &size) ||
         csb_v1_amiga_titl_dat_decode(data, size, &schedule) != 0 ||
         csb_v1_amiga_titl_dat_decode_palette(data, size, &palette) != 0) {
         free(data);

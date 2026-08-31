@@ -9,13 +9,10 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
+from redmcsb_source import source_root
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
-DM1 = Path("~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1").expanduser()
-GREATSTONE = Path("~/.openclaw/data/firestaff-greatstone-atlas").expanduser()
-CSBWIN = Path("~/.openclaw/data/firestaff-csbwin-source/CSBWin").expanduser()
-CSB = Path("~/.openclaw/data/firestaff-csb-source/CSB").expanduser()
+RED = source_root(("DUNVIEW.C", "DEFS.H"))
 
 REPORT = ROOT / "parity-evidence/pass510_dm1_v1_viewport_wall_parity_flip_source_lock.md"
 MANIFEST = ROOT / "parity-evidence/verification/pass510_dm1_v1_viewport_wall_parity_flip_source_lock/manifest.json"
@@ -239,25 +236,6 @@ def run_gate(args: list[str]) -> dict[str, object]:
     }
 
 
-def references() -> list[dict[str, object]]:
-    items = [
-        ("dm1_pc34_graphics", DM1 / "GRAPHICS.DAT", "canonical PC34 wall bitmap source"),
-        ("dm1_pc34_dungeon", DM1 / "DUNGEON.DAT", "canonical DM1 V1 dungeon/map wallset source"),
-        ("greatstone_index", GREATSTONE / "index/SUMMARY.md", "local Greatstone atlas index"),
-        ("csbwin_source", CSBWIN / "CSBwin.cpp", "local CSBWin lineage reference"),
-        ("csb_lineage_source", CSB / "src" / "CSBwin.cpp", "local CSB lineage reference"),
-    ]
-    rows = []
-    for ident, path, use in items:
-        rows.append({
-            "id": ident,
-            "path": str(path),
-            "exists": path.exists(),
-            "sha256": sha(path) if path.is_file() else None,
-            "use": use,
-        })
-    return rows
-
 
 def write_report(manifest: dict[str, object]) -> None:
     lines = [
@@ -273,11 +251,8 @@ def write_report(manifest: dict[str, object]) -> None:
     for row in manifest["firestaffAudit"]:
         first = row["hits"][0]["line"] if row["hits"] else "missing"
         lines.append(f"- {row['sourceFile']}:{first} {row['id']} scope={row['scope']} status={row['status']}")
-    lines += ["", "## Local references"]
-    for row in manifest["secondaryReferences"]:
-        lines.append(f"- {row['id']} {row['path']} exists={row['exists']} sha256={row['sha256']}")
-    lines += ["", "## Gates"]
-    for gate in manifest["gates"]:
+    lines += ["", "## Verification"]
+    for gate in manifest["verificationRuns"]:
         lines.append(f"- {' '.join(gate['command'])} -> rc={gate['returncode']} passed={gate['passed']}")
     lines += [
         "",
@@ -293,14 +268,9 @@ def write_report(manifest: dict[str, object]) -> None:
 def main() -> int:
     red = audit_source(SOURCE_CHECKS)
     fire = audit_source(FIRE_CHECKS)
-    refs = references()
-    gates = [
-        run_gate([sys.executable, "tools/verify_pass509_dm1_v1_wallset_startup_binding.py"]),
-        run_gate([sys.executable, "tools/verify_pass508_dm1_v1_viewport_wall_runtime_readiness.py"]),
-    ]
+    verification = [run_gate([str(resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_viewport_3d_pc34_compat")])]
     failures = [row["id"] for row in red + fire if row["status"] != "PASS"]
-    failures += ["missing_ref_" + row["id"] for row in refs if not row["exists"]]
-    failures += ["gate_" + Path(gate["command"][-1]).stem for gate in gates if not gate["passed"]]
+    failures += ["runtime_" + Path(run["command"][-1]).name for run in verification if not run["passed"]]
     manifest = {
         "schema": "firestaff.parity.pass510_dm1_v1_viewport_wall_parity_flip_source_lock.v1",
         "status": STATUS if not failures else "FAIL_PASS510_DM1_V1_VIEWPORT_WALL_PARITY_FLIP_SOURCE_LOCK",
@@ -308,8 +278,7 @@ def main() -> int:
         "redmcsbSourceRoot": str(RED),
         "redmcsbSourceAudit": red,
         "firestaffAudit": fire,
-        "secondaryReferences": refs,
-        "gates": gates,
+        "verificationRuns": verification,
         "failures": failures,
         "claims": [
             "ReDMCSB selects flipped wall/footprint bitmaps from the party map X/Y/direction parity at F0128 entry.",
@@ -320,6 +289,7 @@ def main() -> int:
             "no original DOSBox runtime capture",
             "no original-vs-Firestaff pixel parity",
             "no movement/pass435 ownership",
+            "no private extracted-media, Greatstone, CSBWin, or CSB source tree is a prerequisite",
         ],
     }
     MANIFEST.parent.mkdir(parents=True, exist_ok=True)

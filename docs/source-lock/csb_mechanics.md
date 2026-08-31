@@ -132,10 +132,13 @@ MaxHP = mastery + random(0..mastery/2). MaxMP = mastery. MaxStamina = base/16–
 
 Source: Magic.cpp:LevelUp() function · CHAMPION.C · csb_champions.md
 
-### Champion Reincarnation Rules — CHANGED in CSB (CHANGE7_24_IMPROVEMENT)
+### Champion Reincarnation Rules — CHANGED in CSB (Package-Specific)
 
 DM1: Standard death/reincarnation — full stat preservation.
-CSB CHANGE7_24: New reincarnation rules:
+Atari ST CHANGE7_24 builds use the following rules.  `REVIVE.C:F0282` also
+contains a PC branch with no vital/stat reduction and Amiga/FM Towns
+`MEDIA629` branches that quarter vitals; all use twelve random statistic
+increments after skill clearing.
 
 | Stat | DM1 | CSB |
 |------|-----|-----|
@@ -143,7 +146,7 @@ CSB CHANGE7_24: New reincarnation rules:
 | Mana | Full preservation | **Halved** |
 | Stamina | Full preservation | **Halved** |
 | Other stats (non-Luck) | Full preservation | **−1/8th of current value** |
-| Luck | Full preservation | **No penalty** |
+| Luck | Full preservation | **No one-eighth penalty; may receive a random increment** |
 | Minimums | Respected | Respected (no stat goes below minimum) |
 
 Source: CSB:REVIVE.C (CHANGE7_24) · csb_champions.md
@@ -161,7 +164,7 @@ Source: CSB:REVIVE.C (CHANGE7_24) · csb_champions.md
 | ZOKATHRA spell power | Different value vs DM1 | Variant delta |
 | Movement | None | — |
 | Class system | Identical to DM1 | — |
-| Champion reincarnation | HP/MP/STA halved, −1/8th stats except Luck | Significant change |
+| Champion reincarnation | Package-specific PC/ST/Amiga/FM Towns branch | Significant change |
 
 **Key finding:** CSB's mechanical changes are minimal and targeted:
 - One gameplay improvement (projectile speed normalization)

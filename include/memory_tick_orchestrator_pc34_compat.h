@@ -342,6 +342,13 @@ struct GameWorld_Compat {
     int32_t                            candidateAttackInvulnerableEnabled;
     int32_t                            candidateAttackInvulnerableGroupIndex;
     int32_t                            candidateAttackInvulnerableCreatureIndex;
+    /* Selected only from a verified Megamax-built Atari DM1 package at
+     * runtime handoff.  It is presentation-independent, transient source
+     * identity rather than a player-configurable Modern-mode option. */
+    int32_t                            pc34PreserveMegamaxF0307Bug;
+    /* ReDMCSB CHAMPION.C F0306 BUGX_XX is determined by the original
+     * executable/compiler, not by dungeon data or a player preference. */
+    int32_t                            pc34F0306FirstOperandFirst;
 
     /* Phase 19 state is tracked via timeline chains, explosion slots
        and sensor toggling (see D5). */

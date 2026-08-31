@@ -58,6 +58,16 @@ int F0306_CHAMPION_GetStaminaAdjustedValue_Compat(
     int halfMaxStamina,
     int value);
 
+/* Source-selected F0306 implementation.  firstOperandFirst is 1 for the
+ * original Megamax/High-C/THINK-C-4 media named above and 0 for the original
+ * Aztec/Turbo-C++/THINK-C-5 media.  Runtime callers must use this entry point
+ * rather than the process-global test toggle. */
+int F0306_CHAMPION_GetStaminaAdjustedValueForSource_Compat(
+    int currentStamina,
+    int halfMaxStamina,
+    int value,
+    int firstOperandFirst);
+
 #ifdef __cplusplus
 }
 #endif

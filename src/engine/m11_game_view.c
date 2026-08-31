@@ -584,11 +584,63 @@ static int dm1_spell_activeThievesEyeD1CViewportMaterialRoutePc34(
     return 1;
 }
 
-static int dm1_creature_palette_for_depth(
+/* F31E/F31J keeps its current dungeon in the CSB runtime profile rather
+ * than in M11's legacy DM1 dungeon mirror.  F0093 still needs the exact
+ * current map's ordered allowed-creature list: it is stored immediately
+ * after that map's source-owned square bytes.  Build only the descriptor
+ * slice consumed by F0093, directly from the admitted runtime payload. */
+static int m11_csb_runtime_f0093_map(
+        const M11_GameViewState *state,
+        struct DungeonMapDesc_Compat *out_map)
+{
+    const CSB_V1_BootProfile *profile;
+    const CSB_V1_DungeonData *dungeon;
+    int map_index;
+    int creature_count;
+    size_t creature_offset;
+    size_t square_bytes;
+
+    if (!state || !out_map ||
+        !(profile = (const CSB_V1_BootProfile *)state->csbBootProfile) ||
+        !(dungeon = profile->runtime.dungeon_handle)) {
+        return 0;
+    }
+    map_index = profile->runtime.current_level;
+    if (map_index < 0 || map_index >= dungeon->level_count ||
+        map_index >= CSB_V1_MAX_LEVELS || !dungeon->raw_data ||
+        dungeon->raw_size <= 0 || dungeon->level_widths[map_index] <= 0 ||
+        dungeon->level_heights[map_index] <= 0) {
+        return 0;
+    }
+    creature_count = dungeon->map_creature_type_count[map_index];
+    square_bytes = (size_t)dungeon->level_widths[map_index] *
+                   (size_t)dungeon->level_heights[map_index];
+    if (creature_count < 0 ||
+        creature_count > (int)sizeof(out_map->allowedCreatureTypes) ||
+        dungeon->level_offsets[map_index] < 0 ||
+        (size_t)dungeon->level_offsets[map_index] > (size_t)dungeon->raw_size ||
+        square_bytes > (size_t)dungeon->raw_size -
+                           (size_t)dungeon->level_offsets[map_index]) {
+        return 0;
+    }
+    creature_offset = (size_t)dungeon->level_offsets[map_index] + square_bytes;
+    if ((size_t)creature_count > (size_t)dungeon->raw_size - creature_offset) {
+        return 0;
+    }
+    memset(out_map, 0, sizeof(*out_map));
+    out_map->creatureTypeCount = (unsigned char)creature_count;
+    memcpy(out_map->allowedCreatureTypes, dungeon->raw_data + creature_offset,
+           (size_t)creature_count);
+    return 1;
+}
+
+static int m11_creature_palette_for_depth(
+        const M11_GameViewState* state,
         int creatureType,
         int depthIndex,
         unsigned char palette[16]) {
     const unsigned char* src;
+    struct DungeonMapDesc_Compat runtime_map;
     int replacementColor9;
     int replacementColor10;
     int i;
@@ -612,6 +664,43 @@ static int dm1_creature_palette_for_depth(
     }
     if (replacementColor10 >= 0 && replacementColor10 < 16) {
         palette[10] = (unsigned char)replacementColor10;
+    }
+    if (state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        const struct DungeonMapDesc_Compat* map = NULL;
+        CSB_V1_F0093PaletteProfilePc34 paletteProfile =
+            CSB_V1_F0093_PALETTE_PROFILE_PC34;
+        const CSB_V1_BootProfile *profile;
+        if (state->world.dungeon && state->world.party.mapIndex >= 0 &&
+            state->world.party.mapIndex <
+                (int)state->world.dungeon->header.mapCount) {
+            map = &state->world.dungeon->maps[state->world.party.mapIndex];
+        } else if (m11_csb_runtime_f0093_map(state, &runtime_map)) {
+            map = &runtime_map;
+        }
+        if (!map) return 0;
+        profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+        if (profile &&
+            (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+             profile->variant_id == CSB_V1_VARIANT_ST21_EN ||
+             profile->variant_id == CSB_V1_VARIANT_ST_F20E ||
+             profile->variant_id == CSB_V1_VARIANT_ST_F20J)) {
+            paletteProfile = CSB_V1_F0093_PALETTE_PROFILE_ATARI_ST;
+        } else if (profile &&
+                   (profile->variant_id == CSB_V1_VARIANT_AMIGA35_EN ||
+                    profile->variant_id == CSB_V1_VARIANT_AMIGA35_MULTI ||
+                    profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN ||
+                    profile->variant_id == CSB_V1_VARIANT_AMIGA31_MULTI ||
+                    profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
+                    profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA)) {
+            paletteProfile = CSB_V1_F0093_PALETTE_PROFILE_VERSION3_F0695;
+        }
+        /* ReDMCSB DUNVIEW.C:F0093 restores slots 9/10 then walks the
+         * current map's allowed-creature list. Preserve its final writer,
+         * including BUG7_01's intentionally surprising CSB outcomes. */
+        if (!csb_v1_f0093_apply_replacement_palette_for_profile_pc34(
+                map, depthIndex, paletteProfile, palette)) {
+            return 0;
+        }
     }
     return 1;
 }
@@ -697,13 +786,6 @@ static int dm1_v1_graphic_materialized_wallset_index_pc34(
     return dm1_v1_graphic_wallset0_index_pc34(wallIndex);
 }
 
-static int F0306_CHAMPION_GetStaminaAdjustedValuePc34_Compat(
-        int currentStamina,
-        int halfMaxStamina,
-        int value) {
-    return F0306_CHAMPION_GetStaminaAdjustedValue_Compat(
-        currentStamina, halfMaxStamina, value);
-}
 static void m11_set_status(M11_GameViewState* state,
                            const char* title,
                            const char* detail);
@@ -15746,7 +15828,8 @@ struct M11_ViewportCell;
  *      F0170_DUNGEON_GetRandomOrnamentOrdinal,
  *      F0172_DUNGEON_SetSquareAspect (corridor case). */
 
-/* Compute the floor ornament ordinal for a corridor/pit/stairs/teleporter
+/* Compute the floor ornament ordinal for a corridor/pit/teleporter or open
+ * fake-wall square.
  * square.  Returns 1-based ordinal, or 0 if none.
  * This mirrors F0172_DUNGEON_SetSquareAspect's floor ornament path.
  * Two sources of floor ornaments:
@@ -15769,10 +15852,21 @@ static int m11_compute_floor_ornament_ordinal(
     int idx;
     int ordinal = 0;
 
-    /* Floor ornaments only appear on corridor, pit, and teleporter squares.
+    /* ReDMCSB DUNGEON.C F0172 changes an open fake wall to a corridor before
+     * entering the corridor case, where bit 0x08 selects the random-floor
+     * ornament stream.  Keep that effective-element conversion here: merely
+     * admitting the cell in the viewport is insufficient if its raw type is
+     * still DUNGEON_ELEMENT_FAKEWALL.  A closed fake wall remains a wall and
+     * must not acquire a floor ornament.
+     *
+     * Floor ornaments otherwise only appear on corridor, pit, and teleporter
+     * squares.
      * ReDMCSB DUNGEON.C F0172 routes stairs through T0172046_Stairs
      * without assigning M558_FLOOR_ORNAMENT_ORDINAL; the stairs 0x08
      * bit is orientation, not random-ornament permission. */
+    if (elementType == DUNGEON_ELEMENT_FAKEWALL && (square & 0x04) != 0) {
+        elementType = DUNGEON_ELEMENT_CORRIDOR;
+    }
     if (elementType != DUNGEON_ELEMENT_CORRIDOR &&
         elementType != DUNGEON_ELEMENT_PIT &&
         elementType != DUNGEON_ELEMENT_TELEPORTER) {
@@ -24520,6 +24614,16 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         }
         return 0;
     }
+    /* ReDMCSB CHAMPION.C BUG0_41 is an executable/compiler behaviour, not
+     * a dungeon-data property. Preserve it only for original Megamax Atari
+     * media admitted through the native DMCSB1 graphics loader. */
+    state->world.pc34PreserveMegamaxF0307Bug =
+        state->assetLoader.atariStDm1 ? 1 : 0;
+    /* ReDMCSB CHAMPION.C F0306 BUGX_XX: Megamax Atari and High-C FM
+     * Towns binaries evaluate the mutating first operand first.  DM1 PC
+     * 3.4 and Aztec-built Amiga 2.x retain second-operand semantics. */
+    state->world.pc34F0306FirstOperandFirst =
+        (state->assetLoader.atariStDm1 || spec->dm1Fmtowns) ? 1 : 0;
     state->mirrorCatalogAvailable = 0;
     memset(&state->mirrorCatalog, 0, sizeof(state->mirrorCatalog));
     if (state->world.things &&
@@ -33654,6 +33758,7 @@ static int m11_object_icon_index_for_thing(const M11_GameViewState* state, const
 
 static int m11_process_v1_mouth_click(M11_GameViewState* state);
 static int m11_process_v1_eye_click(M11_GameViewState* state);
+static int m11_finish_v1_eye_press(M11_GameViewState* state);
 static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
                                                    int sourceSlotBoxIndex);
 static int m11_v1_open_chest_valid(const M11_GameViewState* state);
@@ -34259,6 +34364,15 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
     state->pointerPositionKnown = 1;
     state->pointerX = x;
     state->pointerY = y;
+    /* PANEL.C F0353 is dispatched when the button is released after C071.
+     * It redraws the normal action-hand panel, which first closes G0426 and
+     * then (for a container action hand) reopens it through non-eye F0333.
+     * Handle this before generic drag release routing: the eye is a held
+     * control, never an inventory drag source. */
+    if (state->v1EyePressActive) {
+        return m11_finish_v1_eye_press(state) ? M11_GAME_INPUT_REDRAW :
+                                                M11_GAME_INPUT_IGNORED;
+    }
     {
         const int amiga_result = m11_csb_handle_amiga_appb_pointer_release(
             state, x, y, buttonMask);
@@ -34914,6 +35028,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                 state, x, y, &control_command)) {
             if ((control_command == 70 && m11_process_v1_mouth_click(state)) ||
                 (control_command == 71 && m11_process_v1_eye_click(state))) {
+                if (control_command == 71) state->v1EyePressActive = 1;
                 return M11_GAME_INPUT_REDRAW;
             }
             return M11_GAME_INPUT_IGNORED;
@@ -35431,6 +35546,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         }
         if (command == 71 && zoneId == 546) {
             if (m11_process_v1_eye_click(state)) {
+                state->v1EyePressActive = 1;
                 return M11_GAME_INPUT_REDRAW;
             }
             return M11_GAME_INPUT_IGNORED;
@@ -38052,7 +38168,11 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
      * ornamentOrdinal field specifies the graphic to display.
      * Sensor-placed ornaments OVERRIDE random ornaments.
      * Only walls carry ornaments and champion mirrors. */
-    if (cell.elementType == DUNGEON_ELEMENT_WALL &&
+    /* F0172 converts a closed fake wall into the wall aspect before this
+     * sensor walk. Test the effective viewport class, not the raw stored
+     * element, or a source-owned ornament on a closed/imaginary fake wall is
+     * never admitted to M11. */
+    if (DM1_V1_Viewport_SquareIsWallLikePc34Compat(cell.square) &&
         state->world.things && state->world.things->sensors) {
         unsigned short scanThing = viewportStaticFirstThing;
         int scanSafety = 0;
@@ -39860,7 +39980,8 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
     }
 
     /* Draw wall ornament on wall-type cells (sensor-placed ornaments) */
-    if (cell->elementType == DUNGEON_ELEMENT_WALL && cell->wallOrnamentOrdinal >= 0) {
+    if (DM1_V1_Viewport_SquareIsWallLikePc34Compat(cell->square) &&
+        cell->wallOrnamentOrdinal >= 0) {
         M11_ViewRect ornRect;
         ornRect.x = faceX;
         ornRect.y = faceY;
@@ -44377,7 +44498,7 @@ static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
                                              &useMirror);
     if (spriteIdx == 0) return 0;
 
-    if (!dm1_creature_palette_for_depth(creatureType, depthIndex, palette)) return 0;
+    if (!m11_creature_palette_for_depth(state, creatureType, depthIndex, palette)) return 0;
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         !m11_csb_install_runtime_source_graphic(state, spriteIdx)) {
@@ -44489,7 +44610,7 @@ static int m11_draw_creature_sprite_source_anchored(
                                                  creatureDir,
                                                  state->world.party.direction,
                                                  useAttackPose, &useMirror);
-        if (!dm1_creature_palette_for_depth(creatureType, depthIndex, palette)) {
+        if (!m11_creature_palette_for_depth(state, creatureType, depthIndex, palette)) {
             return 0;
         }
     }
@@ -44662,7 +44783,8 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
     }
 
     /* Side-pane wall ornaments: DM1 renders wall ornaments on side walls */
-    if (cell->elementType == DUNGEON_ELEMENT_WALL && cell->wallOrnamentOrdinal >= 0 && g_drawState) {
+    if (DM1_V1_Viewport_SquareIsWallLikePc34Compat(cell->square) &&
+        cell->wallOrnamentOrdinal >= 0 && g_drawState) {
         M11_ViewRect sideWallOrnRect;
         sideWallOrnRect.x = paneX;
         sideWallOrnRect.y = paneY;
@@ -44841,11 +44963,14 @@ static void m11_draw_dm1_side_contents_at_depth(
     inner = &frames[depth + 1];
     paneY = inner->y + 3;
     paneH = inner->h - 6;
-    if (blockingCenterDepth >= 0 && depth >= blockingCenterDepth) {
-            /* ReDMCSB DUNVIEW.C F0128 draws DnL/DnR before DnC.  Firestaff's
-             * split renderer draws center walls/doors before this late side
-             * contents pass, so same-depth/farther side contents must not be
-             * allowed to repaint over the nearest blocking center square. */
+    if (blockingCenterDepth >= 0 && depth > blockingCenterDepth) {
+            /* ReDMCSB DUNVIEW.C F0128 draws DnL/DnR before DnC.  Farther
+             * side content is hidden by a nearer center blocker, but the
+             * two side squares at the blocker's own depth are dispatched
+             * before that DnC wall/door and must remain eligible.  The final
+             * source-owned structural replay supplies their real overlap
+             * clipping; pre-culling them loses visible side floor ornaments
+             * such as pressure plates. */
         return;
     }
     if (!dm1_viewport_3d_center_line_clear_from_visibility_pc34(visibility,
@@ -50115,6 +50240,7 @@ static int m11_defender_armour_defense_for_thing(
 }
 
 static int m11_f0312_stamina_adjusted_value(
+    const struct GameWorld_Compat* world,
     const struct ChampionState_Compat* champion,
     int value)
 {
@@ -50123,13 +50249,13 @@ static int m11_f0312_stamina_adjusted_value(
     if (!champion) return value;
     currentStamina = (int)champion->stamina.current;
     halfMaximumStamina = (int)champion->stamina.maximum >> 1;
-    /* ReDMCSB CHAMPION.C F0306:1078-1100 BUGX_XX. DM1 PC 3.4's Turbo
-     * C++ 1.01 evaluates the scaled operand from the pre-shift value. */
-    return F0306_CHAMPION_GetStaminaAdjustedValuePc34_Compat(
-        currentStamina, halfMaximumStamina, value);
+    return F0306_CHAMPION_GetStaminaAdjustedValueForSource_Compat(
+        currentStamina, halfMaximumStamina, value,
+        world && world->pc34F0306FirstOperandFirst != 0);
 }
 
 static int m11_f0312_hand_strength_baseline(
+    const struct GameWorld_Compat* world,
     const struct ChampionState_Compat* champion,
     int handWoundIndex,
     int objectWeight)
@@ -50162,7 +50288,7 @@ static int m11_f0312_hand_strength_baseline(
             strength -= (objectWeight - loadThreshold) << 1;
         }
     }
-    strength = m11_f0312_stamina_adjusted_value(champion, strength);
+    strength = m11_f0312_stamina_adjusted_value(world, champion, strength);
     if ((champion->wounds & (1u << handWoundIndex)) != 0) {
         strength >>= 1;
     }
@@ -50210,7 +50336,7 @@ static void m11_fill_defender_wound_defense_baseline(
                     isShield) {
                     int handStrength =
                         m11_f0312_hand_strength_baseline(
-                            champion, s_handWoundIndexes[hand], shieldWeight);
+                            world, champion, s_handWoundIndexes[hand], shieldWeight);
                     baseline +=
                         ((handStrength + shieldDefense) *
                          s_woundDefenseFactor[woundIndex]) >>
@@ -50257,6 +50383,8 @@ static int m11_build_projectile_defender_champion_snapshot(
     outChampion->statisticAntifire = champion->attributes[CHAMPION_ATTR_ANTIFIRE];
     outChampion->statisticAntimagic = champion->attributes[CHAMPION_ATTR_ANTIMAGIC];
     outChampion->statisticWisdom = champion->attributes[CHAMPION_ATTR_WISDOM];
+    outChampion->preserveMegamaxF0307Bug =
+        world->pc34PreserveMegamaxF0307Bug != 0;
     outChampion->statisticLuck = (int)world->lifecycle.champions[championIndex]
         .statistics[LIFECYCLE_STAT_LUCK][LIFECYCLE_STAT_CURRENT];
     outChampion->statisticLuckMax = (int)world->lifecycle.champions[championIndex]
@@ -53013,6 +53141,38 @@ void DM1_V1_M11Runtime_CloseOpenChestPc34Compat(M11_GameViewState* state) {
     }
     state->v1OpenChestThing = THING_NONE;
     state->v1OpenChestOpenedByEye = 0;
+}
+
+/* ReDMCSB PANEL.C F0353:2162-2193 restores the normal inventory panel as
+ * soon as the eye button is released.  F0347 closes the eye-opened chest
+ * first; an action-hand container is then reopened by the ordinary F0333
+ * route so its C145 state is no longer suppressed. */
+static int m11_finish_v1_eye_press(M11_GameViewState* state) {
+    unsigned short action_hand;
+
+    if (!state || !state->v1EyePressActive) return 0;
+    state->v1EyePressActive = 0;
+    if (!state->inventoryPanelActive) return 1;
+
+    action_hand = state->world.party.activeChampionIndex >= 0 &&
+                  state->world.party.activeChampionIndex < CHAMPION_MAX_PARTY
+        ? state->world.party.champions[state->world.party.activeChampionIndex]
+              .inventory[CHAMPION_SLOT_ACTION_HAND]
+        : THING_NONE;
+    state->v1ChampionStatsPanelActive = 0;
+    state->v1ObjectDescriptionPanelActive = 0;
+    state->v1ObjectDescriptionThing = THING_NONE;
+    state->v1ObjectDescriptionIconIndex = -1;
+    state->v1ObjectDescriptionSourceMaterialValid = 0;
+    state->v1ObjectDescriptionSourceGraphicIndex = -1;
+    state->v1ScrollPanelActive = 0;
+    state->v1ScrollPanelThing = THING_NONE;
+    DM1_V1_M11Runtime_CloseOpenChestPc34Compat(state);
+    if (action_hand != THING_NONE && action_hand != THING_ENDOFLIST &&
+        THING_GET_TYPE(action_hand) == THING_TYPE_CONTAINER) {
+        (void)DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(state);
+    }
+    return 1;
 }
 
 static void m11_refresh_v1_action_hand_chest_panel(M11_GameViewState* state,

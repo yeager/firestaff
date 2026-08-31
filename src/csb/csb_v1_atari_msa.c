@@ -42,8 +42,10 @@ static int msa_decode(const uint8_t *msa, size_t msa_size, uint8_t **out_disk,
         be16(msa) != 0x0e0fu) return 0;
     sectors = be16(msa + 2); sides = (uint16_t)(be16(msa + 4) + 1u);
     first = be16(msa + 6); last = be16(msa + 8);
-    if (!sectors || sectors > 64u || !sides || sides > 2u || last < first ||
-        (size_t)sectors > SIZE_MAX / 512u) return 0;
+    /* MSA admits at most 64 sectors per track, so the 512-byte product
+     * always fits every supported size_t. */
+    if (!sectors || sectors > 64u || !sides || sides > 2u || last < first)
+        return 0;
     track_bytes = (size_t)sectors * 512u;
     if ((size_t)(last - first + 1u) > SIZE_MAX / sides ||
         (size_t)(last - first + 1u) * sides > SIZE_MAX / track_bytes) return 0;

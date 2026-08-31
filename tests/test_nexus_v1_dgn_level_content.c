@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include "asset_find_by_hash.h"
 #include "nexus_v1_dgn.h"
 #include "nexus_v1_dungeon.h"
@@ -10,12 +11,19 @@ static uint8_t *load_file(const char *path, int *size_out) {
     uint8_t *buf;
     long sz;
     if (!f) return NULL;
-    fseek(f, 0, SEEK_END);
+    if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return NULL; }
     sz = ftell(f);
-    fseek(f, 0, SEEK_SET);
+    if (sz <= 0 || sz > INT_MAX || fseek(f, 0, SEEK_SET) != 0) {
+        fclose(f);
+        return NULL;
+    }
     buf = (uint8_t *)malloc((size_t)sz);
     if (!buf) { fclose(f); return NULL; }
-    fread(buf, 1, (size_t)sz, f);
+    if (fread(buf, 1, (size_t)sz, f) != (size_t)sz) {
+        free(buf);
+        fclose(f);
+        return NULL;
+    }
     fclose(f);
     *size_out = (int)sz;
     return buf;

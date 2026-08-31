@@ -14,6 +14,7 @@
 #include <ctype.h>
 
 #include "memory_door_action_pc34_compat.h"  /* Pass 38 — door animation stepper */
+#include "memory_champion_stamina_adjusted_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_c15_layout_pc34_compat.h"
 #include "dm1_v1_c14_layout_pc34_compat.h"
@@ -2474,24 +2475,19 @@ int F0888_ORCH_GetCreatureSnapshot_Compat(
 }
 
 static int orch_f0312_stamina_adjusted_value_compat(
+    const struct GameWorld_Compat* world,
     const struct ChampionState_Compat* champion,
     int value)
 {
     int currentStamina;
     int halfMaximumStamina;
-    int halfValue;
 
     if (!champion) return value;
     currentStamina = (int)champion->stamina.current;
     halfMaximumStamina = (int)champion->stamina.maximum >> 1;
-    if (halfMaximumStamina > 0 && currentStamina < halfMaximumStamina) {
-        /* ReDMCSB CHAMPION.C F0306 lines 1094-1095: the first operand
-         * halves P0641 before the second operand reuses that halved value. */
-        halfValue = value >> 1;
-        value = halfValue + (int)(((long)halfValue * (long)currentStamina) /
-                                  (long)halfMaximumStamina);
-    }
-    return value;
+    return F0306_CHAMPION_GetStaminaAdjustedValueForSource_Compat(
+        currentStamina, halfMaximumStamina, value,
+        world && world->pc34F0306FirstOperandFirst != 0);
 }
 
 static int orch_dm1_armour_defense_f0143_compat(
@@ -2568,6 +2564,7 @@ static int orch_defender_armour_defense_for_thing_compat(
 }
 
 static int orch_f0312_hand_strength_baseline_compat(
+    const struct GameWorld_Compat* world,
     const struct ChampionState_Compat* champion,
     int handWoundIndex,
     int objectWeight)
@@ -2600,7 +2597,8 @@ static int orch_f0312_hand_strength_baseline_compat(
             strength -= (objectWeight - loadThreshold) << 1;
         }
     }
-    strength = orch_f0312_stamina_adjusted_value_compat(champion, strength);
+    strength = orch_f0312_stamina_adjusted_value_compat(
+        world, champion, strength);
     if ((champion->wounds & (1u << handWoundIndex)) != 0) {
         strength >>= 1;
     }
@@ -2648,7 +2646,7 @@ static void orch_fill_defender_wound_defense_baseline_compat(
                     isShield) {
                     int handStrength =
                         orch_f0312_hand_strength_baseline_compat(
-                            champion, s_handWoundIndexes[hand], shieldWeight);
+                            world, champion, s_handWoundIndexes[hand], shieldWeight);
                     baseline +=
                         ((handStrength + shieldDefense) *
                          s_woundDefenseFactor[woundIndex]) >>
@@ -2809,6 +2807,8 @@ static int orch_build_defender_champion_snapshot_compat(
     outChampion->statisticAntifire = champion->attributes[CHAMPION_ATTR_ANTIFIRE];
     outChampion->statisticAntimagic = champion->attributes[CHAMPION_ATTR_ANTIMAGIC];
     outChampion->statisticWisdom = champion->attributes[CHAMPION_ATTR_WISDOM];
+    outChampion->preserveMegamaxF0307Bug =
+        world->pc34PreserveMegamaxF0307Bug != 0;
     outChampion->wounds = champion->wounds;
     orch_fill_defender_wound_defense_baseline_compat(
         world, champion, attackType == COMBAT_ATTACK_SHARP, outChampion);

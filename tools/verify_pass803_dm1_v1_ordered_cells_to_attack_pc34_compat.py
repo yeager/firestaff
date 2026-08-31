@@ -8,6 +8,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from redmcsb_source import source_root
+
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass803_dm1_v1_ordered_cells_to_attack_pc34_compat"
 STATUS = "PASS803_DM1_V1_ORDERED_CELLS_TO_ATTACK_LOCKED"
@@ -18,10 +20,10 @@ CMAKE = ROOT / "CMakeLists.txt"
 OUT_DIR = ROOT / "parity-evidence/verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
-RED = (
-    Path.home()
-    / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-)
+# Audit reference only: resolve the operator-provided tree consistently with
+# the rest of Firestaff.  The workspace copy is a real ReDMCSB reference,
+# never a generated substitute and never a runtime dependency.
+RED = source_root(("DATA.C", "PROJEXPL.C", "DEFS.H"))
 
 ANCHORS = [
     "DATA.C:29",

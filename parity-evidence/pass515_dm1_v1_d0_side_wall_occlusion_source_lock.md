@@ -1,6 +1,6 @@
 # Pass515 DM1 V1 D0 side wall occlusion source lock
 
-Status: failed
+Status: passed
 
 ## Claim
 
@@ -57,8 +57,8 @@ ReDMCSB draws D0L and D0R before D0C. If either side lane is a wall, it draws it
 
 ## Verification
 
-- command: /Volumes/Extern-disk/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat
-  - returncode: 1
+- command: /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/test_dm1_v1_viewport_3d_pc34_compat
+  - returncode: 0
   - output tail:
 ~~~
 PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -72,20 +72,15 @@ PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c
-FAIL dm1_v1_viewport_3d_source_lock failures=2
+PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- command: /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff/tools/verify_pass515_dm1_v1_d0_side_wall_occlusion_source_lock.py --check-only
+- command: /usr/bin/python3 /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tools/verify_pass515_dm1_v1_d0_side_wall_occlusion_source_lock.py --check-only
   - returncode: 0
   - output tail:
 ~~~
 PASS check-only
 ~~~
-
-## Local References
-- dm1_graphics_dat: exists=True path=/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT, sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
-- dm1_dungeon_dat: exists=True path=/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT, sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
-- greatstone_root: exists=True path=/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-greatstone-atlas
 
 ## Non-Claims
 

@@ -22,6 +22,7 @@
 #include "dm2_v1_save_read_record_checkcode_pc34_compat.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_startup_menu.h"
+#include "dm2_v1_update_weather_pc34_compat.h"
 #include "asset_find_by_hash.h"
 
 #include <stdio.h>
@@ -39,6 +40,8 @@ static int verify_live_sksave_resume_once(
     const char *root, DM2_V1_SksaveGameLoadOwner *source)
 {
     DM2_V1_SksaveGameLoadOwner underlay;
+    DM2_V1_GameLoadMovementState movement_before;
+    DM2_V1_GameLoadMovementState movement_after;
     int ok = 0;
 
     /* A failed first live-resume attempt is evidence, not permission for a
@@ -58,7 +61,34 @@ static int verify_live_sksave_resume_once(
     int commit_ok = retain_ok && dm2_v1_boot_commit_sksave_resume_session(
         &live_resume_profile);
     if (!source->asset_loader || !clone_ok || !retain_ok || !commit_ok ||
-        !live_resume_profile.source_game_load_session_ready) goto done;
+        !live_resume_profile.source_game_load_session_ready ||
+        dm2_v1_runtime_get_tick_count() != (int)underlay.state.game_tick ||
+        !dm2_v1_runtime_source_movement_snapshot(&movement_before)) {
+        goto done;
+    }
+    if (dm2_v1_dungeon_is_outdoor(&underlay.source_dungeon,
+                                  (int)underlay.state.party_map)) {
+        DM2_V1_UpdateWeatherState weather;
+        if (!dm2_v1_runtime_weather_chain_snapshot(&weather) ||
+            weather.intensity != (int16_t)((uint16_t)underlay.savegame_buffer[0x34u] |
+                ((uint16_t)underlay.savegame_buffer[0x35u] << 8)) ||
+            weather.pattern_row != (int8_t)underlay.savegame_buffer[0x37u] ||
+            weather.step != (int8_t)underlay.savegame_buffer[0x33u]) {
+            goto done;
+        }
+    }
+    dm2_v1_runtime_tick();
+    if (!dm2_v1_runtime_source_movement_snapshot(&movement_after) ||
+        movement_after.move_clock !=
+            (movement_before.move_clock == 0 ? 0 :
+             (int16_t)(movement_before.move_clock - 1)) ||
+        movement_after.move_event !=
+            (movement_before.move_event == 0 ? 0 :
+             (int16_t)(movement_before.move_event - 1)) ||
+        movement_after.move_event_direction !=
+            movement_before.move_event_direction) {
+        goto done;
+    }
     ok = 1;
 done:
     dm2_v1_sksave_game_load_owner_free(&underlay);
@@ -1310,6 +1340,13 @@ static void test_real_raw_save(const char *path, const char *root,
         const int resume_candidate_ok = runtime_underlay_clone_ok &&
             dm2_v1_game_load_runtime_session_candidate_init_from_sksave(
                 &resume_candidate, &runtime_underlay_clone);
+        uint16_t resume_day_start_hour = 0u;
+        if (runtime_underlay_clone.asset_loader) {
+            (void)dm2_v1_query_gdat_entry_data_index(
+                runtime_underlay_clone.asset_loader, 3, 0, 11, 0,
+                &resume_day_start_hour);
+        }
+        if (resume_day_start_hour > 23u) resume_day_start_hour = 23u;
         DM2_V1_SksaveGameLoadOwner timer_shadow;
         DM2_V1_TimerEntry *shadow_entries = NULL;
         int16_t *shadow_indices = NULL;
@@ -1453,8 +1490,39 @@ static void test_real_raw_save(const char *path, const char *root,
                    resume_candidate.source_transaction_hash != 0u &&
                    resume_candidate.party.heros_in_party ==
                        (int16_t)game_load_owner.state.champion_count &&
-                   resume_candidate.source_savegames1_valid),
-              "SKSave runtime candidate retains party, timer, sound and savegames1 admission");
+                   resume_candidate.source_savegames1_valid &&
+                   resume_candidate.source_weather_chain_valid &&
+                   resume_candidate.source_game_tick ==
+                       game_load_owner.state.game_tick &&
+                   resume_candidate.source_random_seed ==
+                       game_load_owner.state.random_seed &&
+                   resume_candidate.movement.valid &&
+                   resume_candidate.movement.move_clock ==
+                       (int16_t)((uint16_t)game_load_owner.savegame_buffer[0x1eu] |
+                           ((uint16_t)game_load_owner.savegame_buffer[0x1fu] << 8)) &&
+                   resume_candidate.movement.move_event ==
+                       (int16_t)((uint16_t)game_load_owner.savegame_buffer[0x20u] |
+                           ((uint16_t)game_load_owner.savegame_buffer[0x21u] << 8)) &&
+                   resume_candidate.movement.move_event_direction ==
+                       (int16_t)((uint16_t)game_load_owner.savegame_buffer[0x22u] |
+                           ((uint16_t)game_load_owner.savegame_buffer[0x23u] << 8)) &&
+                   resume_candidate.source_weather_chain.intensity ==
+                       (int16_t)((uint16_t)game_load_owner.savegame_buffer[0x34u] |
+                           ((uint16_t)game_load_owner.savegame_buffer[0x35u] << 8)) &&
+                   resume_candidate.source_weather_chain.weather_allowed ==
+                       (int8_t)game_load_owner.savegame_buffer[0x2au] &&
+                   resume_candidate.source_weather_chain.pattern_row ==
+                       (int8_t)game_load_owner.savegame_buffer[0x37u] &&
+                   resume_candidate.source_weather_chain.day_offset ==
+                       (int32_t)resume_day_start_hour *
+                           DM2_V1_WEATHER_DAY_TICKS &&
+                   resume_candidate.source_weather_chain.storm_request == 1 &&
+                   resume_candidate.source_weather_chain.day_tick ==
+                       (int32_t)((uint32_t)game_load_owner.savegame_buffer[0x38u] |
+                           ((uint32_t)game_load_owner.savegame_buffer[0x39u] << 8) |
+                           ((uint32_t)game_load_owner.savegame_buffer[0x3au] << 16) |
+                           ((uint32_t)game_load_owner.savegame_buffer[0x3bu] << 24))),
+              "SKSave runtime candidate retains source clock, movement, RNG and serialized c_weather fields");
         CHECK(!owner_ok || game_load_owner.caii_slots_valid ||
                   (!runtime_underlay_clone_ok && !resume_candidate_ok),
               "SKSave keeps Resume closed when DB4 cannot be tied to tile-chain and think-timer owners");

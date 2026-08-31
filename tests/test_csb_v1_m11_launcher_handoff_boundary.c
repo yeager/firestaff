@@ -3160,7 +3160,6 @@ int main(void) {
         run_real_amiga35_selected_package_handoff_if_available();
     } else if (amiga31_only && amiga31_only[0]) {
         run_real_amiga31_selected_package_handoff_if_available();
-        run_real_amiga31_english_direct_handoff_if_available();
     } else if (!atari_only || !atari_only[0]) {
         run_empty_launcher_boundary();
         run_real_launcher_handoff_if_available();

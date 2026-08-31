@@ -6,9 +6,10 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
+from redmcsb_source import source_root
 ROOT=Path(__file__).resolve().parents[1]
 PASS="pass562_dm1_v1_front_cell_collision_source_lock"
-RED=Path.home()/".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED=source_root(("CLIKMENU.C", "DUNGEON.C", "MOVESENS.C"))
 OUT=ROOT/"parity-evidence"/"verification"/PASS
 MANIFEST=OUT/"manifest.json"
 REPORT=ROOT/"parity-evidence"/f"{PASS}.md"

@@ -4830,7 +4830,7 @@ static const char* m12_settings_value_audio_muted(const M12_StartupMenuState* st
 
 static const char* m12_settings_value_audio_device(const M12_StartupMenuState* state) {
     return (state && state->settings.audioDeviceName[0]) ?
-        state->settings.audioDeviceName : m12_tr(state, "SYSTEM DEFAULT");
+        state->settings.audioDeviceName : m12_tr(state, "AUTO");
 }
 
 static const char* m12_settings_value_display_brightness(const M12_StartupMenuState* state) {

@@ -10,9 +10,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from redmcsb_source import source_root
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC_ROOT = Path('~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source').expanduser()
+SRC_ROOT = source_root(('LOADSAVE.C', 'COMMAND.C', 'CLIKMENU.C', 'DUNGEON.C',
+                        'MOVESENS.C', 'GAMELOOP.C', 'DUNVIEW.C', 'DRAWVIEW.C',
+                        'CLIKVIEW.C', 'CHAMPION.C'))
 OUT = ROOT / 'parity-evidence/verification/dm1_v1_hall_walkaround_source_lock.json'
 
 

@@ -113,6 +113,18 @@ int main(void) {
         CHECK(adj1 == adj2, "T12: statisticMaximum ignored");
     }
 
+    /* ReDMCSB CHAMPION.C BUG0_41 is a Megamax Atari executable defect,
+     * not the portable F0307 source rule.  Native verified Atari media
+     * selects this branch; PC/Amiga/FM Towns must retain their own value. */
+    adjusted = -1;
+    CHECK(F0734_COMBAT_GetStatisticAdjustedAttackForSource_Compat(
+              100, 100, 100, 1, &adjusted) == 1 && adjusted == 132,
+          "T12b: Megamax Atari BUG0_41 observes statisticCurrent as zero");
+    adjusted = -1;
+    CHECK(F0734_COMBAT_GetStatisticAdjustedAttackForSource_Compat(
+              100, 100, 100, 0, &adjusted) == 1 && adjusted == 54,
+          "T12c: non-Megamax source keeps the real statisticCurrent");
+
     /* Sanity: monotonic decrease as statisticCurrent increases (more
      * powerful champions do less damage per point, F0307 inverse). */
     {

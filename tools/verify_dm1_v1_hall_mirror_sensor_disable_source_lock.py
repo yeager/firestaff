@@ -10,9 +10,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any
+from redmcsb_source import source_root
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+REDMCSB = source_root(("REVIVE.C", "DUNGEON.C", "MOVESENS.C", "CLIKVIEW.C"))
 OUT = ROOT / "parity-evidence/verification/dm1_v1_hall_mirror_sensor_disable_source_lock.json"
 
 SRC = {name: REDMCSB / name for name in ["REVIVE.C", "DUNGEON.C", "MOVESENS.C", "CLIKVIEW.C"]}

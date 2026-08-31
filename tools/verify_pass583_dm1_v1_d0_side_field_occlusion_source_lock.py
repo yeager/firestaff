@@ -5,9 +5,10 @@ import subprocess
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
+from redmcsb_source import source_root
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C").expanduser()
+RED = source_root(("DUNVIEW.C",)) / "DUNVIEW.C"
 MANIFEST = ROOT / "parity-evidence/verification/pass583_dm1_v1_d0_side_field_occlusion_source_lock/manifest.json"
 REPORT = ROOT / "parity-evidence/pass583_dm1_v1_d0_side_field_occlusion_source_lock.md"
 STATUS = "PASS583_DM1_V1_D0_SIDE_FIELD_OCCLUSION_SOURCE_LOCKED"

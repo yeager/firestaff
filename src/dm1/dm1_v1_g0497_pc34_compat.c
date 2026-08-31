@@ -51,7 +51,6 @@ dm1_v1_g0497_run_pc34(
     int table_matches_declaration = 1;
     int entry_0_is_zero = 1;
     int entry_1_is_block_8 = 1;
-    int all_values_in_byte_range = 1;
     int lookup_function_correct = 1;
     int lookup_out_of_range_returns_minus_one = 1;
     int i;
@@ -72,10 +71,8 @@ dm1_v1_g0497_run_pc34(
     if (s_g0497[1] != 8) entry_1_is_block_8 = 0;
     out->entry1IsBlock8 = entry_1_is_block_8;
 
-    for (i = 0; i < kTableSize; ++i) {
-        if (s_g0497[i] > 255) all_values_in_byte_range = 0;
-    }
-    out->allValuesInByteRange = all_values_in_byte_range;
+    /* The source table is uint8_t, so byte-range admission is structural. */
+    out->allValuesInByteRange = 1;
 
     {
         static const unsigned char kExpected[kTableSize] = { 0, 8, 10, 0, 1, 0, 8, 13, 7, 15, 15, 22, 10, 6, 12, 19, 11, 17, 9, 40, 35, 25, 0, 30, 10, 24, 0, 25, 9, 12, 11, 10, 20, 20, 20, 12, 5, 1, 20, 30, 25, 3, 5, 1 };

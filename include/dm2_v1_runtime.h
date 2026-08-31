@@ -387,6 +387,11 @@ int  dm2_v1_runtime_bind_boot_profile_with_receipt(
     DM2_V1_StartupHostReceipt *out_receipt);
 void dm2_v1_runtime_tick(void);
 int  dm2_v1_runtime_get_tick_count(void);
+/* Copies the exact c_move globals retained by a completed GAME_LOAD session.
+ * This is provenance state; it does not imply that every delayed-pose input
+ * consumer has been bound. */
+int dm2_v1_runtime_source_movement_snapshot(
+    DM2_V1_GameLoadMovementState *out);
 /* Returns non-zero only when the completed original GAME_LOAD owner has
  * published gameplay input and the source movement cooldown permits it.
  * A mounted dungeon alone is never a movable party. */

@@ -2,12 +2,12 @@
  * csb_v1_teleporter_access_pc34_compat.c
  *
  * Source-locked per ReDMCSB DUNGEON.C:1085 + GROUP.C:2090-2150
- * + BUG0_69 fix.  CSB widens teleporter access; v1
- * defaults to DM1 baseline.
+ * + BUG0_69 fix. This CSB-owned helper defaults to the CSB rule; a caller
+ * must opt into the DM1 comparison mode explicitly.
  */
 #include "csb_v1_teleporter_access_pc34_compat.h"
 
-static int g_csb_v1_teleporter_access_enabled = 0;
+static int g_csb_v1_teleporter_access_enabled = 1;
 
 int csb_v1_teleporter_access_get(void) {
     return g_csb_v1_teleporter_access_enabled;

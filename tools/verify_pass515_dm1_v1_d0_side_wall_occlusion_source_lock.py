@@ -5,11 +5,10 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
+from redmcsb_source import source_root
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
-DM1 = Path("~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1").expanduser()
-GREATSTONE = Path("~/.openclaw/data/firestaff-greatstone-atlas").expanduser()
+RED = source_root(("DUNVIEW.C", "DEFS.H"))
 REPORT = ROOT / "parity-evidence/pass515_dm1_v1_d0_side_wall_occlusion_source_lock.md"
 MANIFEST = ROOT / "parity-evidence/verification/pass515_dm1_v1_d0_side_wall_occlusion_source_lock/manifest.json"
 STATUS = "PASS515_DM1_V1_D0_SIDE_WALL_OCCLUSION_SOURCE_LOCKED"
@@ -49,8 +48,7 @@ FIRESTAFF_CHECKS = [
         '{ DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  0, DM1_PC34_ZONE_WALL_D0L,  1, 0, 0, -1, 0,   0,  33,  136, "8038" },',
         '{ DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  0, DM1_PC34_ZONE_WALL_D0R,  1, 0, 0,  1, 191, 0,  33,  136, "8144" },']},
 ]
-REFERENCE_PATHS=[("dm1_graphics_dat",DM1/"GRAPHICS.DAT"),("dm1_dungeon_dat",DM1/"DUNGEON.DAT"),("greatstone_root",GREATSTONE)]
-ALLOWED=[Path("~/.openclaw/data/firestaff-redmcsb-source").expanduser().resolve(),Path("~/.openclaw/data/firestaff-original-games/DM").expanduser().resolve(),Path("~/.openclaw/data/firestaff-greatstone-atlas").expanduser().resolve(),ROOT.resolve()]
+ALLOWED=[RED.resolve(),ROOT.resolve()]
 
 def allow(p):
     r=p.expanduser().resolve()
@@ -79,13 +77,6 @@ def audit(checks):
 def run_gate(args):
     p=subprocess.run(args,cwd=ROOT,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
     return {"command":args,"returncode":p.returncode,"passed":p.returncode==0,"outputTail":chr(10).join(p.stdout.strip().splitlines()[-12:])}
-def refs():
-    out=[]
-    for i,p in REFERENCE_PATHS:
-        p=allow(p); row={"id":i,"path":str(p),"exists":p.exists()}
-        if p.is_file(): row.update({"bytes":p.stat().st_size,"sha256":sha(p)})
-        out.append(row)
-    return out
 def write(man):
     MANIFEST.parent.mkdir(parents=True,exist_ok=True); REPORT.parent.mkdir(parents=True,exist_ok=True)
     MANIFEST.write_text(json.dumps(man,indent=2,sort_keys=True)+chr(10),encoding="utf-8")
@@ -98,15 +89,14 @@ def write(man):
     for r in man["firestaffChecks"]: lines += ["",f"- {r['status']} {r['id']} ({Path(r['path']).name}:{r['lines']})",f"  - {r['claim']}"]
     lines += ["","## Verification"]
     for v in man["verificationRuns"]: lines += ["",f"- command: {' '.join(v['command'])}",f"  - returncode: {v['returncode']}","  - output tail:","~~~",v["outputTail"],"~~~"]
-    lines += ["","## Local References"] + [f"- {r['id']}: exists={r['exists']} path={r['path']}" + (f", sha256={r['sha256']}" if "sha256" in r else "") for r in man["localReferences"]]
     lines += ["","## Non-Claims","","- No runtime metadata was changed.","- No D0C foreground behavior is promoted by this pass.","- DANNESBURK was not used."]
     REPORT.write_text(chr(10).join(lines)+chr(10),encoding="utf-8")
 def main(check=False):
     red=audit(SOURCE_CHECKS); fire=audit(FIRESTAFF_CHECKS); failed=[r for r in red+fire if r["status"]!="PASS"]
     if check: print("PASS check-only" if not failed else "FAIL check-only"); return 0 if not failed else 1
-    runtime=run_gate([str(resolve_build_dir(ROOT, ROOT / "build")/"test_dm1_v1_viewport_3d_pc34_compat")]); local_refs=refs()
-    ok=not failed and runtime["passed"] and all(r["exists"] for r in local_refs)
-    man={"schema":"pass515_dm1_v1_d0_side_wall_occlusion_source_lock.v1","status":"passed" if ok else "failed","statusToken":STATUS if ok else "FAILED_PASS515_DM1_V1_D0_SIDE_WALL_OCCLUSION_SOURCE_LOCK","redmcsbRoot":str(RED),"claim":"D0L/D0R side wall cases draw before D0C and return before side-lane open content/field paths.","redmcsbPrimaryChecks":red,"firestaffChecks":fire,"localReferences":local_refs,"verificationRuns":[runtime,{"command":[sys.executable,str(Path(__file__).resolve()),"--check-only"],"returncode":0 if not failed else 1,"passed":not failed,"outputTail":"PASS check-only" if not failed else "FAIL check-only"}],"nonClaims":["No runtime metadata was changed.","No D0C foreground behavior is promoted.","No DANNESBURK or external references were used."]}
+    runtime=run_gate([str(resolve_build_dir(ROOT, ROOT / "build")/"test_dm1_v1_viewport_3d_pc34_compat")])
+    ok=not failed and runtime["passed"]
+    man={"schema":"pass515_dm1_v1_d0_side_wall_occlusion_source_lock.v1","status":"passed" if ok else "failed","statusToken":STATUS if ok else "FAILED_PASS515_DM1_V1_D0_SIDE_WALL_OCCLUSION_SOURCE_LOCK","redmcsbRoot":str(RED),"claim":"D0L/D0R side wall cases draw before D0C and return before side-lane open content/field paths.","redmcsbPrimaryChecks":red,"firestaffChecks":fire,"verificationRuns":[runtime,{"command":[sys.executable,str(Path(__file__).resolve()),"--check-only"],"returncode":0 if not failed else 1,"passed":not failed,"outputTail":"PASS check-only" if not failed else "FAIL check-only"}],"nonClaims":["No runtime metadata was changed.","No D0C foreground behavior is promoted.","No private extracted-media or third-party atlas is a prerequisite for this source lock."]}
     write(man)
     print(man["statusToken"])
     print(f"- wrote {MANIFEST.relative_to(ROOT)}")

@@ -5,6 +5,8 @@
  * object blit to reach the dedicated wall-alcove receipt. */
 
 #include "m11_game_view.h"
+#include "main_loop_m11.h"
+#include "menu_startup_m12.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_inventory_slot_placement_pc34_compat.h"
@@ -13,8 +15,36 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 enum { kFramebufferWidth = 320, kFramebufferHeight = 200 };
+
+/* The production launcher accepts the preserved PC34 ZIP directly and keeps
+ * its members in memory.  This regression used to call StartDm1() only,
+ * unintentionally requiring an extracted DATA directory even when the real
+ * archive is available.  Exercise the same M12 -> M11 handoff for a regular
+ * archive file; retain the direct helper for an explicitly supplied loose
+ * corpus used by older local test setups. */
+static int start_real_dm1_corpus(M11_GameViewState *state, const char *path)
+{
+    struct stat st;
+
+    if (!state || !path || !path[0]) return 0;
+    if (stat(path, &st) == 0 && S_ISREG(st.st_mode)) {
+        M12_StartupMenuState menu;
+        int opened;
+
+        M12_StartupMenu_InitWithDataDir(&menu, path, "dm1");
+        if (!M11_PrepareDirectLaunchForGame(&menu, "dm1")) {
+            M12_StartupMenu_Destroy(&menu);
+            return 0;
+        }
+        opened = M11_GameView_OpenSelectedMenuEntry(state, &menu);
+        M12_StartupMenu_Destroy(&menu);
+        return opened;
+    }
+    return M11_GameView_StartDm1(state, path);
+}
 
 static int square_is_walkable(const M11_GameViewState *state,
                               int mapIndex, int x, int y)
@@ -64,6 +94,32 @@ static int front_square_is_wall(const M11_GameViewState *state,
              DUNGEON_SQUARE_MASK_TYPE) >> 5) == DUNGEON_ELEMENT_WALL;
 }
 
+/* ReDMCSB DUNGEON.C:F0161/F0163/F0164 store the authoritative floor
+ * ownership in the square's Thing chain.  Do not infer success from a HUD
+ * message or the inventory mirror: inspect the loaded compact table after
+ * each live transaction. */
+static int square_contains_thing_exactly_once(const M11_GameViewState *state,
+                                              int map_index, int x, int y,
+                                              unsigned short target)
+{
+    unsigned short current;
+    unsigned short target_identity;
+    int count = 0;
+    int guard = 0;
+
+    if (!state || !state->world.dungeon || !state->world.things) return 0;
+    current = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        state->world.dungeon, state->world.things, map_index, x, y);
+    target_identity = (unsigned short)(target & 0x3fffu);
+    while (current != THING_NONE && current != THING_ENDOFLIST &&
+           guard++ < 64) {
+        if ((current & 0x3fffu) == target_identity) ++count;
+        current = F0512_DUNGEON_GetThingNext_Compat(
+            state->world.things, current);
+    }
+    return count == 1 && guard < 64;
+}
+
 int main(void)
 {
     const char *dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
@@ -76,7 +132,7 @@ int main(void)
         return 0;
     }
     M11_GameView_Init(&state);
-    if (!M11_GameView_StartDm1(&state, dataDir)) {
+    if (!start_real_dm1_corpus(&state, dataDir)) {
         M11_GameView_Shutdown(&state);
         fputs("configured DM1 corpus is unavailable\n", stderr);
         return 1;
@@ -197,6 +253,47 @@ int main(void)
                                 pickedIconIndex < 0 ||
                                 state.dm1ObjectNames[pickedIconIndex][0] == '\0') {
                                 fprintf(stderr, "real placed item lost its M564 name\n");
+                                M11_GameView_Shutdown(&state);
+                                return 1;
+                            }
+                            /* ReDMCSB PANEL.C:F0302 first moves a selected
+                             * inventory object into G4055 (the mouse hand).
+                             * The keyboard drop command is not allowed to
+                             * invent a direct quiver-to-floor shortcut, so
+                             * execute that real UI leg before F0374/F0373.
+                             * This is the user-visible failure mode behind
+                             * disappearing/duplicated objects: after the
+                             * legal transaction, dropping must create
+                             * exactly one floor owner.  The generic keyboard
+                             * pickup command intentionally selects the
+                             * source pile-top object, which can be a
+                             * different real Thing on an occupied square;
+                             * its targeted pointer route is covered by the
+                             * original alcove pickup above. */
+                            clickResult = M11_GameView_HandlePointer(
+                                &state,
+                                DM1_VIEWPORT_X + targetZone.x + targetZone.w / 2,
+                                DM1_VIEWPORT_Y + targetZone.y + targetZone.h / 2,
+                                1);
+                            if (clickResult != M11_GAME_INPUT_REDRAW ||
+                                state.world.party.champions[0].inventory[targetSlot] !=
+                                    THING_NONE ||
+                                DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&state) !=
+                                    picked) {
+                                fprintf(stderr,
+                                        "real item did not return from legal slot to mouse hand\n");
+                                M11_GameView_Shutdown(&state);
+                                return 1;
+                            }
+                            if (!M11_GameView_DropItem(&state) ||
+                                DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&state) !=
+                                    THING_NONE ||
+                                !square_contains_thing_exactly_once(
+                                    &state, state.world.party.mapIndex,
+                                    state.world.party.mapX,
+                                    state.world.party.mapY, picked)) {
+                                fprintf(stderr,
+                                        "real item floor drop did not retain one source owner\n");
                                 M11_GameView_Shutdown(&state);
                                 return 1;
                             }

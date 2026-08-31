@@ -1,11 +1,11 @@
 {
   "schema": "dm1_v1_hall_mirror_sensor_disable_source_lock.v1",
   "status": "PASS",
-  "redmcsb_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsb_root": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "source_checks": [
     {
       "citation": "REVIVE.C:785-799",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/REVIVE.C",
       "line_range": [
         785,
         799
@@ -24,7 +24,7 @@
     },
     {
       "citation": "REVIVE.C:801-804",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/REVIVE.C",
       "line_range": [
         801,
         804
@@ -37,7 +37,7 @@
     },
     {
       "citation": "DUNGEON.C:2568-2583",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNGEON.C",
       "line_range": [
         2568,
         2583
@@ -54,7 +54,7 @@
     },
     {
       "citation": "DUNGEON.C:2608-2612",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNGEON.C",
       "line_range": [
         2608,
         2612
@@ -68,7 +68,7 @@
     },
     {
       "citation": "MOVESENS.C:1390-1395",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/MOVESENS.C",
       "line_range": [
         1390,
         1395
@@ -83,7 +83,7 @@
     },
     {
       "citation": "MOVESENS.C:1501-1503",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/MOVESENS.C",
       "line_range": [
         1501,
         1503
@@ -97,7 +97,7 @@
     },
     {
       "citation": "CLIKVIEW.C:21-25",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKVIEW.C",
       "line_range": [
         21,
         25
@@ -114,7 +114,7 @@
   ],
   "implementation_checks": [
     {
-      "source": "/Volumes/Extern-disk/firestaff/include/dm1_v1_resurrection_pc34_compat.h",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/include/dm1_v1_resurrection_pc34_compat.h",
       "needles": [
         "MirrorThing_Compat",
         "F0867a_RESURRECTION_DisableFirstMirrorSensor_Compat",
@@ -125,7 +125,7 @@
       "verified": true
     },
     {
-      "source": "/Volumes/Extern-disk/firestaff/src/dm1/dm1_v1_resurrection_pc34_compat.c",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/src/dm1/dm1_v1_resurrection_pc34_compat.c",
       "needles": [
         "if (things[i].thingType == DM1_THING_TYPE_SENSOR)",
         "out.disabledOldSensorType = things[i].sensorType",
@@ -135,7 +135,7 @@
       "verified": true
     },
     {
-      "source": "/Volumes/Extern-disk/firestaff/tests/test_dm1_v1_resurrection_pc34_compat.c",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tests/test_dm1_v1_resurrection_pc34_compat.c",
       "needles": [
         "test_mirror_sensor_disable_order",
         "textstring before sensor is skipped",

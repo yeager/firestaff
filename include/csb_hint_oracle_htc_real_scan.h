@@ -1,7 +1,7 @@
 /*
  * csb_hint_oracle_htc_real_scan.h
  *
- * Real Utility Disk HCSB.HTC scanner + cached handoff for the CSB
+ * Real Utility Disk HCSB.HTC scanner + RAM-owned handoff for the CSB
  * Hint Oracle text/layout format.
  *
  * This module is a thin, data-side bridge that sits on top of the
@@ -24,7 +24,7 @@
  *        ("archive.zip::HCSB.HTC" or "disc.iso::HCSB.HTC"),
  *        read it directly into the owned RAM buffer through
  *        asset_read_path_alloc().
- *     3. Parse with csb_hint_oracle_htc_parse() and cache the
+ *     3. Parse with csb_hint_oracle_htc_parse() and retain the
  *        parsed view + the resolved path + matched MD5 + the
  *        owned buffer (so callers don't need to manage file
  *        memory).
@@ -34,7 +34,7 @@
  *   - Read-only. Does not draw the Hint Oracle UI or bind to
  *     CSB runtime launch flow.
  *   - Skip-safe by design. When the data root is empty or no
- *     known HCSB.HTC is present, the cache stays cleared and
+ *     known HCSB.HTC is present, the RAM view stays cleared and
  *     lookups return no matches; tests can SKIP cleanly.
  *
  * Source references:
@@ -153,15 +153,13 @@ typedef struct {
 void csb_hint_oracle_htc_real_cache_init(CSB_HintOracleHTC_RealCache *cache);
 
 /* Scan `data_dir` recursively for an HCSB.HTC matching one of the
- * known MD5 hashes, optionally materializing virtual container
- * paths into the supplied `cache_dir`. On success, allocates and
- * owns the file buffer and populates the parsed view.
+ * known MD5 hashes. On success, reads a virtual member directly into
+ * process memory, owns the file buffer, and populates the parsed view.
  *
  * `data_dir` may be NULL or empty to fall back to the FSP
- * user-data default; `cache_dir` may be NULL to skip explicit
- * materialization (in which case virtual container paths are
- * reported but not extracted — only ordinary on-disk matches
- * load successfully).
+ * user-data default. `cache_dir` is retained as an ignored legacy
+ * parameter for ABI compatibility: game data is never materialized
+ * on disk, regardless of its value.
  *
  * Returns CSB_HINT_ORACLE_HTC_REAL_OK on a successful load,
  * CSB_HINT_ORACLE_HTC_REAL_ERR_NOT_FOUND when no known HCSB.HTC

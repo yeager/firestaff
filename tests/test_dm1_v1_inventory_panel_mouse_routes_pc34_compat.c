@@ -1268,7 +1268,13 @@ static void test_inventory_replace_open_action_hand_chest_from_slot_click(void) 
     for (i = 0; i < 9; ++i) {
         firstChestSlots[i] = (unsigned short)((THING_TYPE_JUNK << 10) | i);
         junks[i].type = (unsigned char)((i % 2) + 1);
-        junks[i].next = (i + 1 < 9) ? firstChestSlots[i + 1] : THING_ENDOFLIST;
+        /* Build the source-format THING reference directly.  Referring to
+         * firstChestSlots[i + 1] here would read a not-yet-initialised local
+         * element, producing a random linked-list shape instead of the
+         * intended ReDMCSB F0333 eight-visible-plus-one-hidden fixture. */
+        junks[i].next = (i + 1 < 9)
+            ? (unsigned short)((THING_TYPE_JUNK << 10) | (i + 1))
+            : THING_ENDOFLIST;
     }
     containers[0].type = 0;
     containers[0].slot = firstChestSlots[0];
@@ -1381,8 +1387,9 @@ static void test_inventory_drag_drop_backpack_raw_thing_transaction(void) {
     struct ChampionState_Compat* champ;
     unsigned short sourceThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0u);
     unsigned short destinationThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 1u);
-    int sourceX, sourceY, sourceW, sourceH;
-    int destinationX, destinationY, destinationW, destinationH;
+    int sourceX = 0, sourceY = 0, sourceW = 0, sourceH = 0;
+    int destinationX = 0, destinationY = 0, destinationW = 0,
+        destinationH = 0;
 
     seed_panel_view(&state, &things, weapons, containers);
     champ = &state.world.party.champions[0];

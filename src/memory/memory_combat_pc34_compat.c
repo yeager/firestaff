@@ -251,18 +251,21 @@ int F0733b_COMBAT_GetChampionWoundDefenseRng_Compat(
     return 1;
 }
 
-int F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
+int F0734_COMBAT_GetStatisticAdjustedAttackForSource_Compat(
     int statisticCurrent,
     int statisticMaximum,
     int attack,
+    int preserveMegamaxBug,
     int* outAdjusted)
 {
     int factor;
     int result;
     if (outAdjusted == 0) return 0;
 
-    /* Mirror of F0307 (CHAMPION.C:1106) — minus the Megamax-compiler bug
-     * (BUG0_41) so antifire/antimagic actually participate. */
+    /* CHAMPION.C F0307.  BUG0_41 is not source C semantics: Megamax-built
+     * Atari executables miscompile the statistic read to zero.  Preserve it
+     * only when the verified media handoff identifies that package. */
+    if (preserveMegamaxBug) statisticCurrent = 0;
     factor = 170 - statisticCurrent;
     if (factor < 16) {
         result = attack >> 3;
@@ -278,6 +281,16 @@ int F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
 
     *outAdjusted = result;
     return 1;
+}
+
+int F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
+    int statisticCurrent,
+    int statisticMaximum,
+    int attack,
+    int* outAdjusted)
+{
+    return F0734_COMBAT_GetStatisticAdjustedAttackForSource_Compat(
+        statisticCurrent, statisticMaximum, attack, 0, outAdjusted);
 }
 
 /* ==========================================================
@@ -393,8 +406,9 @@ static int combat_apply_defender_statistic_adjustment(
              * both: the F0307 statistic adjustment AND the
              * party-shield subtraction (sourced from
              * partyShieldDefense on the champion snapshot). */
-            if (F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
-                    defender->statisticAntifire, 255, adjusted, &tmp)) {
+            if (F0734_COMBAT_GetStatisticAdjustedAttackForSource_Compat(
+                    defender->statisticAntifire, 255, adjusted,
+                    defender->preserveMegamaxF0307Bug, &tmp)) {
                 adjusted = tmp;
             }
             shieldDef = defender->partyShieldDefense;
@@ -410,8 +424,9 @@ static int combat_apply_defender_statistic_adjustment(
              * C5_STATISTIC_ANTIMAGIC, then subtracts
              * G0407_s_Party.SpellShieldDefense.  v1 implements
              * both: F0307 AND the party-shield subtraction. */
-            if (F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
-                    defender->statisticAntimagic, 255, adjusted, &tmp)) {
+            if (F0734_COMBAT_GetStatisticAdjustedAttackForSource_Compat(
+                    defender->statisticAntimagic, 255, adjusted,
+                    defender->preserveMegamaxF0307Bug, &tmp)) {
                 adjusted = tmp;
             }
             shieldDef = defender->partyShieldDefense;
@@ -425,8 +440,9 @@ static int combat_apply_defender_statistic_adjustment(
             /* ReDMCSB CHAMPION.C:1893-1896 F0321 C6: invokes F0307 with
              * C0_STATISTIC_WISDOM then goto T0321024 (skip armor scale).
              * Screamer and Ghost/Rive use this attack type. */
-            if (F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
-                    defender->statisticWisdom, 255, adjusted, &tmp)) {
+            if (F0734_COMBAT_GetStatisticAdjustedAttackForSource_Compat(
+                    defender->statisticWisdom, 255, adjusted,
+                    defender->preserveMegamaxF0307Bug, &tmp)) {
                 adjusted = tmp;
             }
             break;
@@ -693,10 +709,11 @@ int F0739c_COMBAT_SelectChampionWoundsF0321Rng_Compat(
      * can legitimately hit a disallowed slot and add no wound. */
     vitalityAttack = F0732_COMBAT_RngRandom_Compat(rng, 128) + 10;
     rngCalls++;
-    if (!F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
+    if (!F0734_COMBAT_GetStatisticAdjustedAttackForSource_Compat(
             defender->statisticVitality,
             defender->statisticVitality,
             vitalityAttack,
+            defender->preserveMegamaxF0307Bug,
             &adjustedAttack)) {
         return 0;
     }

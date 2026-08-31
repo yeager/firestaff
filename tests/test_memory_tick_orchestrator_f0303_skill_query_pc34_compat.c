@@ -65,6 +65,7 @@ static void init_world(struct GameWorld_Compat* world,
 }
 
 static void make_spell_caster(struct GameWorld_Compat* world, int skillIndex) {
+    int baseSkillIndex;
     if (!world) return;
     world->party.champions[0].hp.current = 100;
     world->party.champions[0].hp.maximum = 100;
@@ -72,7 +73,15 @@ static void make_spell_caster(struct GameWorld_Compat* world, int skillIndex) {
     world->party.champions[0].mana.maximum = 100;
     world->party.champions[0].attributes[CHAMPION_ATTR_WISDOM] = 60;
     if (skillIndex >= 0 && skillIndex < LIFECYCLE_SKILL_COUNT) {
-        world->lifecycle.champions[0].skills20[skillIndex].experience = 5000;
+        /* F0303 averages a sub-skill with its owning base skill.  Give the
+         * success-path fixture level 5 in both fields (8000 XP) instead of
+         * creating an impossible raw-subskill-only caster. */
+        world->lifecycle.champions[0].skills20[skillIndex].experience = 8000;
+        baseSkillIndex = dm1_skill_get_base_index(skillIndex);
+        if (baseSkillIndex >= 0 && baseSkillIndex < LIFECYCLE_SKILL_COUNT) {
+            world->lifecycle.champions[0]
+                .skills20[baseSkillIndex].experience = 8000;
+        }
     }
 }
 

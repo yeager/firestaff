@@ -4,14 +4,12 @@
 #include <string.h>
 #include "nexus_v1_champion_panel.h"
 #include "nexus_v1_engine.h"
-#include "asset_find_by_hash.h"
 
 int main(void) {
     int fail = 0;
     const char *root = getenv("FIRESTAFF_NEXUS_DATA_DIR");
-    char path[1024];
-    FILE *file;
-    long size;
+    Nexus_V1_Engine source_engine;
+    int size = 0;
     uint8_t *data;
     Nexus_PanelRect stat_bars[NEXUS_STAT_BAR_RECT_COUNT];
     Nexus_PanelRect inv_slots[NEXUS_INV_SLOT_RECT_COUNT];
@@ -23,28 +21,25 @@ int main(void) {
     const Nexus_PanelRect* r;
 
     if (!root || !root[0]) root = ".firestaff/data/nexus";
-    if (snprintf(path, sizeof(path), "%s/DM.BIN", root) >= (int)sizeof(path))
-        return 77;
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0L, SEEK_END) != 0 || (size = ftell(file)) <= 0 ||
-        fseek(file, 0L, SEEK_SET) != 0) {
-        if (file) fclose(file);
-        puts("SKIP: retail Nexus DM.BIN is not mounted");
+    memset(&source_engine, 0, sizeof(source_engine));
+    if (nexus_v1_init(&source_engine, root) != 0) {
+        puts("SKIP: retail Nexus source is unavailable");
         return 77;
     }
-    data = (uint8_t *)malloc((size_t)size);
-    if (!data || fread(data, 1U, (size_t)size, file) != (size_t)size) {
+    data = nexus_v1_read_file(&source_engine, "DM.BIN", &size);
+    if (!data || size <= 0) {
         free(data);
-        fclose(file);
+        nexus_v1_shutdown(&source_engine);
+        puts("SKIP: retail Nexus source has no readable DM.BIN member");
         return 77;
     }
-    fclose(file);
-    if (!asset_file_matches_md5(path,
-                                "e88d60859f65f08fa622e1992b02280f")) {
+    if (!source_engine.champion_panel_source.canonical_hash_verified) {
         free(data);
-        fprintf(stderr, "FAIL: DM.BIN is not the authenticated European retail source\n");
+        nexus_v1_shutdown(&source_engine);
+        fprintf(stderr, "FAIL: DM.BIN is not an authenticated retail source\n");
         return 1;
     }
+    nexus_v1_shutdown(&source_engine);
     if (nexus_v1_champion_panel_parse_dm_bin(
             data, (size_t)size, stat_bars, inv_slots, equip_slots) != 0) {
         free(data);

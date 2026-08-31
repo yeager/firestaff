@@ -4,9 +4,10 @@ import json, subprocess, sys
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
+from redmcsb_source import source_root
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+RED = source_root(("DUNVIEW.C",))
 MANIFEST = ROOT / "parity-evidence/verification/pass519_dm1_v1_d1c_door_front_field_source_lock/manifest.json"
 REPORT = ROOT / "parity-evidence/pass519_dm1_v1_d1c_door_front_field_source_lock.md"
 STATUS = "PASS519_DM1_V1_D1C_DOOR_FRONT_FIELD_SOURCE_LOCKED"
@@ -49,7 +50,7 @@ LOCAL = [
         "DUNVIEW.C:7905-7908 F0111 door bitmap/ornament",
         "DUNVIEW.C:7910-7937 pass2 front cells after door",
     ]),
-    ("firestaff-d1c-runtime-test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", "1744-1770", [
+    ("firestaff-d1c-runtime-test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", "1744-1775", [
         "DM1_VIEW_SQUARE_D1C, \"7874\", \"7875\", \"7877\", \"7901\", \"7905\", \"7937\"",
         "check_int(\"door_front_occlusion.rear_order\", spec->rear_cell_order, expected[i].rear_order);",
         "check_int(\"door_front_occlusion.front_order\", spec->front_cell_order, expected[i].front_order);",

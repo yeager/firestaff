@@ -14,6 +14,7 @@
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_sound.h"
 #include "dm2_v1_sound_sdl_backend.h"
+#include "firestaff_zip_extract.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -26,43 +27,18 @@
 #error "This test requires C11 or later."
 #endif
 
-static int read_file(const char *path, uint8_t **out, size_t *out_size)
-{
-    FILE *file;
-    long size;
-    uint8_t *bytes;
-
-    if (!path || !out || !out_size) return 0;
-    *out = NULL;
-    *out_size = 0u;
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0 ||
-        (size = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
-        return 0;
-    }
-    bytes = malloc((size_t)size);
-    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
-        free(bytes);
-        fclose(file);
-        return 0;
-    }
-    fclose(file);
-    *out = bytes;
-    *out_size = (size_t)size;
-    return 1;
-}
-
 static int load_graphics_dat(uint8_t **graphics, size_t *graphics_size)
 {
-    const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    char graphics_path[1100];
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
 
-    if (!root || !root[0]) {
+    if (!archive || !archive[0] || !graphics || !graphics_size) {
         return -1;
     }
-    snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
-    return read_file(graphics_path, graphics, graphics_size);
+    *graphics = NULL;
+    *graphics_size = 0u;
+    return firestaff_zip_extract_by_suffix(archive, "data/graphics.dat",
+                                            graphics, graphics_size) == 0 &&
+           *graphics && *graphics_size;
 }
 
 /* Find the loadable SOUND entry with the smallest payload (fast completion)
@@ -132,7 +108,7 @@ int main(void)
 
     load_result = load_graphics_dat(&graphics, &graphics_size);
     if (load_result < 0) {
-        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
+        puts("SKIP: FIRESTAFF_DM2_DOS_ARCHIVE is not set");
         return 0;
     }
     if (load_result == 0) {

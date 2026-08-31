@@ -67,6 +67,134 @@ static void dm2_v1_game_load_runtime_candidate_init_movement_state(
     movement->valid = 1;
 }
 
+/* The saved s_savegamebuffer retains its source byte order.  GAME_LOAD
+ * restores scalar fields before it sorts timers, so decode exactly once at
+ * the SKSAVE->candidate boundary rather than treating a host struct layout
+ * as save data. Source: SKWINSPX SKULLWIN/c_savegame.cpp:1482-1511. */
+static uint16_t dm2_v1_game_load_read_u16(const uint8_t *p, int big_endian)
+{
+    if (!p) return 0u;
+    return big_endian
+        ? (uint16_t)(((uint16_t)p[0] << 8) | p[1])
+        : (uint16_t)(p[0] | ((uint16_t)p[1] << 8));
+}
+
+static uint32_t dm2_v1_game_load_read_u32(const uint8_t *p, int big_endian)
+{
+    if (!p) return 0u;
+    if (big_endian) {
+        return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
+               ((uint32_t)p[2] << 8) | p[3];
+    }
+    return (uint32_t)p[0] | ((uint32_t)p[1] << 8) |
+           ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
+}
+
+static int dm2_v1_game_load_restore_saved_weather(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    const DM2_V1_SksaveGameLoadOwner *source)
+{
+    const uint8_t *saved;
+    uint16_t zone = 0u;
+    uint16_t day_start_hour = 0u;
+    int graphicsset;
+    int big_endian;
+
+    if (!candidate || !source || !source->asset_loader ||
+        !source->asset_loader->loaded || !source->source_dungeon_valid ||
+        source->state.party_map >= (uint16_t)source->source_dungeon.level_count) {
+        return 0;
+    }
+    saved = source->savegame_buffer;
+    big_endian = source->state.dungeon.words_big_endian ? 1 : 0;
+    graphicsset = dm2_v1_dungeon_get_map_graphics_style(
+        &source->source_dungeon, (int)source->state.party_map);
+    /* LOAD_LOCALLEVEL_DYN derives v1e1472 from the active map's graphics
+     * set through QUERY_GDAT_ENTRY_DATA_INDEX(8, v1d6c02, 11, 0x66).
+     * This is the missing non-serialized selector required by the saved
+     * weather state. */
+    if (graphicsset < 0 || graphicsset > UINT8_MAX ||
+        !dm2_v1_query_gdat_entry_data_index(source->asset_loader, 8,
+                                             graphicsset, 11, 0x66, &zone) ||
+        zone > DM2_V1_UPDATE_WEATHER_MAX_ZONE) {
+        return 0;
+    }
+    /* QUERY_GDAT_ENTRY_DATA_INDEX returns source zero when this optional
+     * global entry is absent.  Preserve that return convention rather than
+     * turning a valid source-zero into an admission failure. */
+    (void)dm2_v1_query_gdat_entry_data_index(source->asset_loader, 3, 0,
+                                             11, 0, &day_start_hour);
+
+    memset(&candidate->source_weather_chain, 0,
+           sizeof(candidate->source_weather_chain));
+    candidate->source_game_tick = dm2_v1_game_load_read_u32(saved + 0x00u,
+                                                              big_endian);
+    candidate->source_random_seed = dm2_v1_game_load_read_u32(saved + 0x04u,
+                                                                big_endian);
+    candidate->source_weather_chain.zone_index = (int16_t)zone;
+    /* GAME_LOAD uses mkb(s33_00.l_2a), i.e. the low-order byte, rather
+     * than the first byte in the on-disk representation. */
+    candidate->source_weather_chain.weather_allowed = (int8_t)
+        dm2_v1_game_load_read_u32(saved + 0x2au, big_endian);
+    candidate->source_weather_chain.storm_active = (int8_t)saved[0x2eu];
+    candidate->source_weather_chain.wind_dir = (int8_t)saved[0x2fu];
+    candidate->source_weather_chain.lightning_flag = (int8_t)saved[0x30u];
+    candidate->source_weather_chain.cloud_state = (int8_t)saved[0x31u];
+    candidate->source_weather_chain.rain_counter = (int8_t)saved[0x32u];
+    candidate->source_weather_chain.step = (int8_t)saved[0x33u];
+    candidate->source_weather_chain.intensity = (int16_t)
+        dm2_v1_game_load_read_u16(saved + 0x34u, big_endian);
+    candidate->source_weather_chain.retry = (int8_t)saved[0x36u];
+    candidate->source_weather_chain.pattern_row = (int8_t)saved[0x37u];
+    candidate->source_weather_chain.day_tick = (int32_t)
+        dm2_v1_game_load_read_u32(saved + 0x38u, big_endian);
+    /* DM2_LOAD_NEW_DUNGEON establishes v1e1438 from the authenticated
+     * GRAPHICS.DAT entry before GAME_LOAD.  It is not serialized, but it is
+     * not unknown: c_savegame.cpp:536-542 clamps the source hour to 0..23
+     * and multiplies it by 0x555.  The remaining fields below are exact
+     * dm2data.cpp bootstrap values and will be updated by c_weather. */
+    if (day_start_hour > 23u) day_start_hour = 23u;
+    candidate->source_weather_chain.day_offset =
+        (int32_t)day_start_hour * DM2_V1_WEATHER_DAY_TICKS;
+    candidate->source_weather_chain.storm_request = 1;
+    /* v1e146e/v1e1470/v1e1476 and transient command gates are initialized
+     * to zero by dm2data.cpp and are not serialized. */
+    if (candidate->source_weather_chain.pattern_row < 0 ||
+        candidate->source_weather_chain.pattern_row >=
+            DM2_V1_UPDATE_WEATHER_PATTERN_ROWS ||
+        candidate->source_weather_chain.intensity < 0 ||
+        candidate->source_weather_chain.intensity > 0xff ||
+        (candidate->source_weather_chain.intensity != 0 &&
+         candidate->source_weather_chain.step == 0)) {
+        memset(&candidate->source_weather_chain, 0,
+               sizeof(candidate->source_weather_chain));
+        return 0;
+    }
+    candidate->source_weather_chain_valid = 1;
+    return 1;
+}
+
+/* Only three c_move globals are serialized in s_savegamebuffer. Preserve
+ * the exact GAME_LOAD assignment set and leave the non-serialized delayed
+ * pose fields at dm2data.cpp's bootstrap values. Source: c_savegame.cpp:
+ * 1496-1498; dm2data.cpp initialization; c_move.cpp:599-605. */
+static void dm2_v1_game_load_restore_saved_movement(
+    DM2_V1_GameLoadRuntimeSessionCandidate *candidate,
+    const DM2_V1_SksaveGameLoadOwner *source)
+{
+    const int big_endian = source->state.dungeon.words_big_endian ? 1 : 0;
+
+    dm2_v1_game_load_runtime_candidate_init_movement_state(
+        &candidate->movement);
+    candidate->movement.move_clock = (int16_t)dm2_v1_game_load_read_u16(
+        source->savegame_buffer + 0x1eu, big_endian);
+    candidate->movement.move_event = (int16_t)dm2_v1_game_load_read_u16(
+        source->savegame_buffer + 0x20u, big_endian);
+    candidate->movement.move_event_direction =
+        (int16_t)dm2_v1_game_load_read_u16(
+            source->savegame_buffer + 0x22u, big_endian);
+}
+
 /* DM2_INIT establishes the zeroed c_moverec register block. The final
  * DM2_move_2fcf_0b8b map change supplies v1d3248 later, so retain both the
  * forced selector and its selected result rather than mislabelling either as
@@ -2107,6 +2235,7 @@ int dm2_v1_game_load_runtime_session_candidate_is_valid(
         !candidate->sound_owner.runtime_queue_initialized ||
         !candidate->map_context.valid || candidate->party.heros_in_party <= 0 ||
         candidate->party.heros_in_party > DM2_MAX_HEROES ||
+        !candidate->movement.valid ||
         candidate->source_event_hero_index < 0 ||
         candidate->source_event_hero_index >= candidate->party.heros_in_party ||
         candidate->event_queue.entries != 0 ||
@@ -9902,6 +10031,15 @@ int dm2_v1_game_load_runtime_session_candidate_init_from_sksave(
     memcpy(candidate.source_savegames1, source->source_savegames1,
            sizeof(candidate.source_savegames1));
     candidate.source_savegames1_valid = 1;
+    /* DM2_GAME_LOAD has restored s_savegamebuffer's clock, RNG and weather
+     * fields at this point.  Bind the one map-local v1e1472 selector using
+     * the same GDAT query LOAD_LOCALLEVEL_DYN performs before c_weather's
+     * next frame update.  A malformed or edition-mismatched selector rejects
+     * Resume rather than starting with fabricated environmental state. */
+    if (!dm2_v1_game_load_restore_saved_weather(&candidate, source)) {
+        goto fail;
+    }
+    dm2_v1_game_load_restore_saved_movement(&candidate, source);
     dm2_v1_game_load_moverec_state_init(&candidate.moverec,
                                         (int16_t)source->state.party_map);
     {

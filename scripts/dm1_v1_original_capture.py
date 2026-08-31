@@ -16,7 +16,8 @@ then captures paired screenshots for the five gap areas:
   04_creature  — creature in D2C, creature in D1C
   05_champion  — 4-champion HUD, single-champion status panel
 
-The captures are written to /tmp/dm1_original_capture_<NN>_<kind>/.
+Unless explicitly configured, captures are written below the user's XDG state
+directory, not `/tmp`.
 
 Each capture is verified by the pass80_original_frame_classifier
 semantics (via the dosbox_state_detector regions) and the SHA256 is
@@ -923,6 +924,11 @@ def run_pair_05_champion(window, capture_root, report: PairReport) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    state_root = Path(os.environ.get(
+        "FIRESTAFF_CAPTURE_ROOT",
+        str(Path(os.environ.get("XDG_STATE_HOME",
+                                str(Path.home() / ".local" / "state"))) /
+            "firestaff" / "captures" / "dm1-original")))
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
     parser.add_argument(
         "--runtime",
@@ -931,8 +937,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--capture-root",
-        default="/tmp/dm1_original_capture",
-        help="Where to write captures",
+        default=str(state_root),
+        help="Where to write captures (default: FIRESTAFF_CAPTURE_ROOT or XDG state)",
     )
     parser.add_argument(
         "--pair",

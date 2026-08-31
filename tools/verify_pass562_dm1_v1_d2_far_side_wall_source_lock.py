@@ -4,8 +4,9 @@ import json, subprocess, sys
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
+from redmcsb_source import source_root
 ROOT=Path(__file__).resolve().parents[1]
-RED=Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+RED=source_root(("DUNVIEW.C", "DEFS.H"))
 MANIFEST=ROOT/"parity-evidence/verification/pass562_dm1_v1_d2_far_side_wall_source_lock/manifest.json"
 REPORT=ROOT/"parity-evidence/pass562_dm1_v1_d2_far_side_wall_source_lock.md"
 STATUS="PASS562_DM1_V1_D2_FAR_SIDE_WALL_SOURCE_LOCKED"

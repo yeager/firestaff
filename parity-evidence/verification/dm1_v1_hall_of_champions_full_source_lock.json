@@ -1,21 +1,21 @@
 {
   "schema": "dm1_v1_hall_of_champions_full_source_lock.v1",
-  "redmcsb_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsb_root": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "scope": "DM1 V1 Hall of Champions: entrance, movement to mirrors, portrait render/click, candidate inventory, resurrect/reincarnate/cancel, candidate modal blockers",
   "existing_portrait_gates": [
     {
-      "path": "/Volumes/Extern-disk/firestaff/tools/verify_v1_champion_portrait_click_source_path.py",
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tools/verify_v1_champion_portrait_click_source_path.py",
       "verified": true
     },
     {
-      "path": "/Volumes/Extern-disk/firestaff/tools/verify_v1_champion_portrait_click_geometry.py",
+      "path": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tools/verify_v1_champion_portrait_click_geometry.py",
       "verified": true
     }
   ],
   "source_checks": [
     {
       "citation": "ENTRANCE.C:739-747",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/ENTRANCE.C",
       "line_range": [
         739,
         747
@@ -30,7 +30,7 @@
     },
     {
       "citation": "ENTRANCE.C:775-791",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/ENTRANCE.C",
       "line_range": [
         775,
         791
@@ -46,7 +46,7 @@
     },
     {
       "citation": "CLIKMENU.C:180-347",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKMENU.C",
       "line_range": [
         180,
         347
@@ -62,7 +62,7 @@
     },
     {
       "citation": "DUNGEON.C:2608-2612",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNGEON.C",
       "line_range": [
         2608,
         2612
@@ -76,7 +76,7 @@
     },
     {
       "citation": "DUNVIEW.C:525-525",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C",
       "line_range": [
         525,
         525
@@ -89,7 +89,7 @@
     },
     {
       "citation": "DUNVIEW.C:3916-3919",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DUNVIEW.C",
       "line_range": [
         3916,
         3919
@@ -104,7 +104,7 @@
     },
     {
       "citation": "COORD.C:1693-1749",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COORD.C",
       "line_range": [
         1693,
         1749
@@ -120,7 +120,7 @@
     },
     {
       "citation": "COMMAND.C:1985-1991",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C",
       "line_range": [
         1985,
         1991
@@ -136,7 +136,7 @@
     },
     {
       "citation": "COMMAND.C:228-240",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C",
       "line_range": [
         228,
         240
@@ -151,7 +151,7 @@
     },
     {
       "citation": "CLIKVIEW.C:347-349",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKVIEW.C",
       "line_range": [
         347,
         349
@@ -165,7 +165,7 @@
     },
     {
       "citation": "CLIKVIEW.C:406-432",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CLIKVIEW.C",
       "line_range": [
         406,
         432
@@ -181,7 +181,7 @@
     },
     {
       "citation": "MOVESENS.C:1501-1503",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/MOVESENS.C",
       "line_range": [
         1501,
         1503
@@ -195,7 +195,7 @@
     },
     {
       "citation": "REVIVE.C:272-286",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/REVIVE.C",
       "line_range": [
         272,
         286
@@ -211,7 +211,7 @@
     },
     {
       "citation": "REVIVE.C:295-303",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/REVIVE.C",
       "line_range": [
         295,
         303
@@ -227,7 +227,7 @@
     },
     {
       "citation": "PANEL.C:1619-1636",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/PANEL.C",
       "line_range": [
         1619,
         1636
@@ -242,7 +242,7 @@
     },
     {
       "citation": "PANEL.C:1654-1656",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/PANEL.C",
       "line_range": [
         1654,
         1656
@@ -257,7 +257,7 @@
     },
     {
       "citation": "PANEL.C:2377-2384",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/PANEL.C",
       "line_range": [
         2377,
         2384
@@ -273,7 +273,7 @@
     },
     {
       "citation": "CHAMDRAW.C:536-545",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "line_range": [
         536,
         545
@@ -288,7 +288,7 @@
     },
     {
       "citation": "CHAMDRAW.C:1210-1212",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CHAMDRAW.C",
       "line_range": [
         1210,
         1212
@@ -303,7 +303,7 @@
     },
     {
       "citation": "CHAMPION.C:678-679",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CHAMPION.C",
       "line_range": [
         678,
         679
@@ -317,7 +317,7 @@
     },
     {
       "citation": "CHAMPION.C:1946-1947",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/CHAMPION.C",
       "line_range": [
         1946,
         1947
@@ -331,7 +331,7 @@
     },
     {
       "citation": "COMMAND.C:2159-2184",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C",
       "line_range": [
         2159,
         2184
@@ -348,7 +348,7 @@
     },
     {
       "citation": "COMMAND.C:2336-2370",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/COMMAND.C",
       "line_range": [
         2336,
         2370
@@ -365,7 +365,7 @@
     },
     {
       "citation": "REVIVE.C:744-783",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/REVIVE.C",
       "line_range": [
         744,
         783
@@ -382,7 +382,7 @@
     },
     {
       "citation": "REVIVE.C:785-807",
-      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "source": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/REVIVE.C",
       "line_range": [
         785,
         807

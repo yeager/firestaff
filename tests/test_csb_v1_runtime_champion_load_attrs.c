@@ -415,7 +415,9 @@ static void test_movement_ticks_five_band_ladder(void)
      *     ticks = 4 + ((Load - MaxLoad) * 4) / MaxLoad
      *   [+1/+2 if feet wounded]
      *   [-1 if boot of speed]
-     * CSB V1 has no Wounds/feet-slot model, so the base ladder is:
+     * This snapshot-only helper has no real object-icon resolver, so this
+     * case exercises the base ladder. The native runtime separately resolves
+     * C05 Elven Boots and Boot of Speed from real dungeon data.
      *   Load=0:                    2
      *   Load <= MaxLoad*2/8:       2
      *   Load > MaxLoad*2/8 && <= MaxLoad*5/8:  2

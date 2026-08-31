@@ -10,8 +10,12 @@
 
 ## 1. Viewport Architecture
 
-DM2 has a single 3D dungeon viewport rendered to a backbuffer (320x136 visible)
-and blitted to the full screen buffer (ORIG_SWIDTH x ORIG_SHEIGHT).
+DM2 has a single 3D dungeon viewport rendered to a **224x136** backbuffer
+and blitted into a source-owned destination aperture on the 320x200 screen
+buffer (`ORIG_SWIDTH x ORIG_SHEIGHT`).  The final blit is
+`DM2_DRAWINGS_COMPLETED`: it resolves expanded rectangle 7 and copies the
+backbuffer there.  The backbuffer's local `(0,0,224,136)` coordinates are not
+screen coordinates.
 
 The viewport zone system (c_gui_vp.cpp) maps named zones on the screen:
 - Ceiling area (top band)
@@ -55,7 +59,11 @@ From c_gfx_main.cpp:
 - gfxsys.bitmapptr: viewport rendering surface
 
 DM2 allocates the backbuffer at this resolution, renders the dungeon viewport
-to it, then blits to the full screen via _specialblit() or blitter.blit().
+to it, then `DM2_DRAWINGS_COMPLETED` resolves expanded rectangle 7 and blits
+it to the full screen via `_specialblit()`.  The original normal call passes
+`0x0008`; `_specialblit()` selects stretching only when bit 15 is set, so
+`0x8008` is the transition form.  Treating any non-zero flag as stretch is a
+renderer defect and is not source-compatible.
 
 The backbuffer size 224x136 matches the viewport display resolution after
 any aspect-ratio correction. The screen scroll buffer is ORIG_SWIDTH x

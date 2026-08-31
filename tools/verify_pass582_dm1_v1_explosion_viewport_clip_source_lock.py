@@ -5,9 +5,10 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
+from redmcsb_source import source_root
 
 ROOT=Path(__file__).resolve().parents[1]
-RED=Path.home()/".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED=source_root(("DUNVIEW.C", "DEFS.H", "COORD.C"))
 DUNVIEW=RED/"DUNVIEW.C"; DEFS=RED/"DEFS.H"; COORD=RED/"COORD.C"
 VIEW=ROOT/"src/engine/m11_game_view.c"; LAYOUT=ROOT/"src/dm1/dm1_v1_layout_zones_pc34_compat.c"; PROBE=ROOT/"probes/m11/firestaff_m11_game_view_probe.c"; CMAKE=ROOT/"CMakeLists.txt"
 EVIDENCE=ROOT/"parity-evidence/pass582_dm1_v1_explosion_viewport_clip_source_lock.md"

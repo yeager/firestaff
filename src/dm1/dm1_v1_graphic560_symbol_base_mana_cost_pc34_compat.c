@@ -145,9 +145,9 @@ dm1_v1_graphic560_symbol_base_mana_cost_run_pc34(
     }
     out->tableSize = kTableSize;
 
-    for (i = 0; i < kTableSize; ++i) {
-        if (s_g0485[i] > 255) all_in_byte_range = 0;
-    }
+    /* s_g0485 is the original unsigned-byte table. Its C type itself is the
+     * range proof; comparing every byte with 255 is tautological and trips
+     * strict -Wtype-limits builds. */
     out->allInByteRange = all_in_byte_range;
 
     {

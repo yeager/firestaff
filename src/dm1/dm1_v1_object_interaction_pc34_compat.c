@@ -40,6 +40,33 @@ static int dm1_v1_obj_use_potion_type_from_object(const DM1_V1_WorldObjectPc34* 
     return 0;
 }
 
+/* The compact floor-cell model deliberately keeps copies for rendering and
+ * hit testing, but it must retain the original engine's one-list ownership:
+ * a THING is unlinked from its old list before it is linked to another.
+ * DUNGEON.C F0164/F0163 are the authoritative operations. */
+static int dm1_v1_object_unlink_floor_cell(
+    DM1_V1_ObjectStatePc34* s, int objIdx, int x, int y, int level)
+{
+    DM1_V1_FloorCellPc34* cell;
+    int i;
+
+    if (!s || x < 0 || x >= 32 || y < 0 || y >= 32 ||
+        level < 0 || level >= 16) {
+        return 0;
+    }
+    cell = &s->floors[level][y][x];
+    for (i = 0; i < cell->floorCount; ++i) {
+        if (cell->floorObjects[i].objectId == objIdx) {
+            for (; i + 1 < cell->floorCount; ++i) {
+                cell->floorObjects[i] = cell->floorObjects[i + 1];
+            }
+            --cell->floorCount;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void DM1_V1_Object_InitPc34Compat(DM1_V1_ObjectStatePc34* s) {
     if (!s) return;
     memset(s, 0, sizeof(DM1_V1_ObjectStatePc34));
@@ -97,17 +124,10 @@ int DM1_V1_Object_PickupPc34Compat(DM1_V1_ObjectStatePc34* s, int objIdx, int* o
     int y = obj->y;
     int level = obj->level;
 
-    /* Remove from floor cell */
-    DM1_V1_FloorCellPc34* cell = &s->floors[level][y][x];
-    for (int i = 0; i < cell->floorCount; i++) {
-        if (cell->floorObjects[i].objectId == objIdx) {
-            for (int j = i; j < cell->floorCount - 1; j++) {
-                cell->floorObjects[j] = cell->floorObjects[j + 1];
-            }
-            cell->floorCount--;
-            break;
-        }
-    }
+    /* DUNGEON.C:F0164 unlinks the existing square-list member before the
+     * hand takes ownership.  A missing member is an invalid compact model
+     * state; do not turn it into a silently carried thing. */
+    if (!dm1_v1_object_unlink_floor_cell(s, objIdx, x, y, level)) return -1;
 
     obj->x = -1;
     obj->y = -1;
@@ -117,24 +137,52 @@ int DM1_V1_Object_PickupPc34Compat(DM1_V1_ObjectStatePc34* s, int objIdx, int* o
     return 0;
 }
 int DM1_V1_Object_DropPc34Compat(DM1_V1_ObjectStatePc34* s, int objIdx, int x, int y, int level) {
-    /* Source: DUNGEON.C:F0140_DUNGEON_GetObjectWeight (weight lookup),
-     * DUNGEON.C:F0159_DUNGEON_GetNextThing (thing list traversal),
-     * DUNGEON.C:1111-1117 (container weight includes contents recursively).
-     * The floor cell API is a simplification of ReDMCSB THING linked-list
-     * system anchored in dungeon squares (DUNGEON square data). */
+    /* Source: DUNGEON.C:F0164_DUNGEON_UnlinkThingFromList followed by
+     * F0163_DUNGEON_LinkThingToList.  A THING has exactly one list owner;
+     * update the compact cell copies only after the destination can admit it.
+     * This preserves a carried/in-flight thing on a rejected drop instead of
+     * changing its coordinates without linking it anywhere. */
+    DM1_V1_WorldObjectPc34* obj;
+    DM1_V1_FloorCellPc34* destination;
+    int oldX;
+    int oldY;
+    int oldLevel;
+    int hasOldFloorCoordinate;
+    int wasLinked;
     if (!s || !DM1_V1_Object_IsValidPc34Compat(s, objIdx)) return -1;
     if (x < 0 || x >= 32 || y < 0 || y >= 32 || level < 0 || level >= 16) return -1;
 
-    DM1_V1_WorldObjectPc34* obj = &s->objects[objIdx];
+    obj = &s->objects[objIdx];
+    oldX = obj->x;
+    oldY = obj->y;
+    oldLevel = obj->level;
+    hasOldFloorCoordinate = oldX >= 0 && oldX < 32 && oldY >= 0 &&
+        oldY < 32 && oldLevel >= 0 && oldLevel < 16;
+    if (hasOldFloorCoordinate &&
+        !dm1_v1_object_unlink_floor_cell(s, objIdx, oldX, oldY, oldLevel)) {
+        /* A source-owned floor coordinate with no list owner is corrupt
+         * compact state. F0164 cannot legally be skipped; fail closed rather
+         * than manufacturing a second owner at the destination. */
+        return -1;
+    }
+    wasLinked = hasOldFloorCoordinate;
+    destination = &s->floors[level][y][x];
+
+    /* Re-linking to the same cell has just freed its old list entry.  If a
+     * different destination has no capacity, restore the original owner and
+     * leave the object's coordinates untouched. */
+    if (destination->floorCount >= DM1_V1_MAX_FLOOR_OBJECTS_PC34) {
+        if (wasLinked) {
+            DM1_V1_FloorCellPc34* source = &s->floors[oldLevel][oldY][oldX];
+            source->floorObjects[source->floorCount++] = *obj;
+        }
+        return -1;
+    }
+
     obj->x = x;
     obj->y = y;
     obj->level = level;
-
-    DM1_V1_FloorCellPc34* cell = &s->floors[level][y][x];
-    if (cell->floorCount < DM1_V1_MAX_FLOOR_OBJECTS_PC34) {
-        cell->floorObjects[cell->floorCount] = *obj;
-        cell->floorCount++;
-    }
+    destination->floorObjects[destination->floorCount++] = *obj;
 
     return 0;
 }
@@ -272,16 +320,7 @@ int DM1_V1_Object_RemovePc34Compat(DM1_V1_ObjectStatePc34* s, int objIdx) {
     int level = obj->level;
 
     if (x >= 0 && x < 32 && y >= 0 && y < 32 && level >= 0 && level < 16) {
-        DM1_V1_FloorCellPc34* cell = &s->floors[level][y][x];
-        for (int i = 0; i < cell->floorCount; i++) {
-            if (cell->floorObjects[i].objectId == objIdx) {
-                for (int j = i; j < cell->floorCount - 1; j++) {
-                    cell->floorObjects[j] = cell->floorObjects[j + 1];
-                }
-                cell->floorCount--;
-                break;
-            }
-        }
+        (void)dm1_v1_object_unlink_floor_cell(s, objIdx, x, y, level);
     }
 
     memset(obj, 0, sizeof(DM1_V1_WorldObjectPc34));

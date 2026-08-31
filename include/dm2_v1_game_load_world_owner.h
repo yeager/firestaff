@@ -27,6 +27,7 @@
 #include "dm2_v1_sound.h"
 #include "dm2_v1_skproject_core.h"
 #include "dm2_v1_timer_queue_pc34_compat.h"
+#include "dm2_v1_update_weather_pc34_compat.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_world_model.h"
 
@@ -717,6 +718,14 @@ typedef struct {
      * this candidate can become playable. */
     uint8_t source_savegames1[DM2_V1_ORIGINAL_SAVEGAMES1_SIZE];
     int source_savegames1_valid;
+    /* Exact s_savegamebuffer fields restored by DM2_GAME_LOAD before the
+     * saved timer heap is sorted.  These are deliberately separate from the
+     * host presentation weather state: they are the resumable c_random /
+     * c_weather owner and are populated only by an authenticated SKSAVE. */
+    uint32_t source_game_tick;
+    uint32_t source_random_seed;
+    DM2_V1_UpdateWeatherState source_weather_chain;
+    int source_weather_chain_valid;
     int16_t source_light_level;
     DM2_V1_CaiiArray caii_slots;
     /* Deep clone of the exact AI-definition table that admitted this

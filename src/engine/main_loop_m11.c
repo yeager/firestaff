@@ -56,6 +56,7 @@
 #include "csb_v1_boot.h"
 #include "csb_v1_f0908_f0909_f0910_swsh_sound_pc34_compat.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_runtime.h"
 #include "dm2_v1_mac_input.h"
 #include "fs_gesture_navigation_gate.h"
 
@@ -3606,6 +3607,11 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->architectureOverride = -1;
     opts->csbFmtownsJapanese = 0;
     opts->directLaunch   = 0;
+    /* --menu is an explicit CLI opt-out from direct launch.  Leaving this
+     * field uninitialised made an ordinary `--game dm1` depend on stack
+     * contents and intermittently return to M12 instead of starting the
+     * selected game. */
+    opts->menuRequested  = 0;
     opts->bootProbe      = 0;
     opts->bootProbeFrames = 0;
     opts->bootProbeExpectPhase = NULL;
@@ -3944,6 +3950,10 @@ static void m11_phase_a_print_boot_probe_receipt(
     const char* fmtownsProgram = "";
     const char* fmtownsProgramMd5 = "";
     int fmtownsMenuSelectsProgram = 0;
+    DM2_V1_RuntimeGraphicsSetSceneReceipt dm2Scene;
+    int dm2SceneReady = 0;
+
+    memset(&dm2Scene, 0, sizeof(dm2Scene));
     if (menuState && gameId && gameId[0] != '\0') {
         runtimeDir = M12_AssetStatus_GetRuntimeDataDir(&menuState->assetStatus,
                                                        gameId);
@@ -3976,6 +3986,9 @@ static void m11_phase_a_print_boot_probe_receipt(
         fmtownsMenuSelectsProgram =
             gameView->dm1FmtownsStartupReceipt.menu_info_selects_game;
     }
+    if (gameView && receipt.sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        dm2SceneReady = dm2_v1_runtime_graphicsset_scene_receipt(&dm2Scene);
+    }
     {
         DM1_V1_StartupHoCBootProbeLogReceipt_PC34 dm1Log;
         memset(&dm1Log, 0, sizeof(dm1Log));
@@ -3983,7 +3996,7 @@ static void m11_phase_a_print_boot_probe_receipt(
             &receipt.dm1HoCBootSummary,
             &dm1Log);
     fprintf(stderr,
-            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d window=%dx%d windowMode=%d presentationMode=%d presentation=%dx%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm2FrameAccepted=%d dm2RealAssets=%d dm2NoCoreFallbacks=%d dm2FallbackDraws=%d csbViewportHash=%u csbV22CellsPainted=%d dm1WorldTick=%u dm1FmtownsCddaPlaying=%d dm1FmtownsCddaTrack=%d startedFromLauncher=%d introBypassed=%d platformHandoff=%s fmtownsProgram=%s fmtownsProgramMd5=%s fmtownsMenuSelectsProgram=%d %s\n",
+            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d window=%dx%d windowMode=%d presentationMode=%d presentation=%dx%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm2FrameAccepted=%d dm2RealAssets=%d dm2NoCoreFallbacks=%d dm2FallbackDraws=%d dm2SceneReady=%d dm2GraphicsSet=%d dm2SceneHash=%u dm2SceneColorKey=%u dm2SceneFlags=%u dm2ScenePaletteHash=%u csbViewportHash=%u csbV22CellsPainted=%d dm1WorldTick=%u dm1FmtownsCddaPlaying=%d dm1FmtownsCddaTrack=%d startedFromLauncher=%d introBypassed=%d platformHandoff=%s fmtownsProgram=%s fmtownsProgramMd5=%s fmtownsMenuSelectsProgram=%d %s\n",
             gameId ? gameId : "",
             (int)receipt.sourceKind,
             receipt.sourceId,
@@ -4017,6 +4030,12 @@ static void m11_phase_a_print_boot_probe_receipt(
             receipt.dm2RuntimeRealAssetsReady,
             receipt.dm2RuntimeNoCoreFallbacks,
             receipt.dm2RuntimeFallbackDrawCount,
+            dm2SceneReady,
+            dm2Scene.map_graphics_style,
+            (unsigned int)dm2Scene.hash,
+            (unsigned int)dm2Scene.scene_colorkey,
+            (unsigned int)dm2Scene.scene_flags,
+            (unsigned int)dm2Scene.interface_palette_hash,
             gameView ? (unsigned int)gameView->csbState.runtime_viewport_pixel_hash : 0u,
             gameView ? gameView->csbState.runtime_v22_cells_painted : 0,
             (unsigned int)receipt.dm1WorldTick,

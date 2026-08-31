@@ -1108,6 +1108,11 @@ typedef struct {
      * opens the C025 chest panel without drawing C145 into C09. */
     unsigned short v1OpenChestThing;
     int v1OpenChestOpenedByEye;
+    /* ReDMCSB PANEL.C F0352/F0353 distinguishes the short-lived pressed-eye
+     * presentation from the durable chest-panel state.  This is deliberately
+     * transient: a mouse release redraws F0347's normal action-hand panel and
+     * must never leak a held-eye visual into a save or a later click. */
+    int v1EyePressActive;
 
     /* Acting-champion ordinal.  Mirrors DM1
      * G0506_ui_ActingChampionOrdinal exactly: 0 = no champion is

@@ -1,7 +1,7 @@
 /*
  * csb_hint_oracle_htc_real_scan.c
  *
- * Real Utility Disk HCSB.HTC scanner + cached handoff for the CSB
+ * Real Utility Disk HCSB.HTC scanner + RAM-owned handoff for the CSB
  * Hint Oracle text/layout format.
  *
  * See include/csb_hint_oracle_htc_real_scan.h for scope and source

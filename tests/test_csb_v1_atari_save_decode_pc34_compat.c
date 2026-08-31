@@ -1,5 +1,6 @@
 #include "csb_v1_atari_save_decode_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,6 +21,16 @@ static int read_file(const char *path, uint8_t **out, size_t *out_size)
         free(bytes); fclose(fp); return 0;
     }
     fclose(fp); *out = bytes; *out_size = (size_t)length; return 1;
+}
+
+/* A supplied CSB Utility STX owns MINI.DAT as a virtual member.  Test the
+ * same bounded-RAM representation the runtime uses; never demand that an
+ * operator unpack the save merely to satisfy this real-media regression. */
+static int read_source_path(const char *path, uint8_t **out, size_t *out_size)
+{
+    if (path && strstr(path, "::"))
+        return asset_read_virtual_path_alloc(path, out, out_size);
+    return read_file(path, out, out_size);
 }
 
 int main(void)
@@ -83,7 +94,7 @@ int main(void)
         puts("SKIP: FIRESTAFF_CSB_ATARI_MINI is not set");
         return 77;
     }
-    if (!read_file(path, &bytes, &size) ||
+    if (!read_source_path(path, &bytes, &size) ||
         csb_v1_atari_save_load_dungeon_pc34_compat(bytes, size, &dungeon, &info) != CSB_V1_ATARI_SAVE_OK ||
         info.champion_count != 1 || info.party_x != 22 || info.party_y != 18 ||
         info.party_direction != 2 || info.party_map_index != 4 ||

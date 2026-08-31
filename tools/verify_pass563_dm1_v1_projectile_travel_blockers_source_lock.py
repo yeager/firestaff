@@ -12,9 +12,10 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
+from redmcsb_source import source_root
 
 ROOT = Path(__file__).resolve().parents[1]
-RED_ROOT = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+RED_ROOT = source_root(("PROJEXPL.C", "DUNGEON.C"))
 PROJ = RED_ROOT / "PROJEXPL.C"
 DUNGEON = RED_ROOT / "DUNGEON.C"
 LOCAL_C = ROOT / "src/memory/memory_projectile_pc34_compat.c"

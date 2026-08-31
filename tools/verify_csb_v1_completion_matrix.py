@@ -11,6 +11,8 @@ import json
 import os
 from pathlib import Path
 
+from redmcsb_source import find_source_root
+
 ROOT = Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs/parity/PARITY_MATRIX_CSB_V1.md"
 OUT = Path(os.environ.get(
@@ -22,7 +24,12 @@ COMPLETION = ROOT / "parity-evidence/verification/firestaff_completion_matrix.js
 CMAKE = ROOT / "CMakeLists.txt"
 HANDOFF_TEST = ROOT / "tests/test_csb_v1_boot_runtime_handoff.c"
 ROUTE_TEST = ROOT / "tests/test_csb_v1_runtime_route_first_frame_movement_utility_gate.c"
-REDMCSB = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+# Prefer the checked-in ReDMCSB WIP reference.  An operator-maintained source
+# checkout can still override it through FIRESTAFF_REDMCSB_SOURCE; this is
+# audit-only provenance and is never a runtime dependency.
+REDMCSB = find_source_root(("DEFS.H", "CHAMPION.C")) or (
+    ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source/.unavailable"
+)
 CSB_SRC = Path.home() / ".openclaw/data/firestaff-csb-source/CSB/src"
 ORIGINAL_CSB = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/csb"
 GREATSTONE = Path.home() / ".openclaw/data/firestaff-greatstone-atlas/raw/greatstone.free.fr__dm__g_csb.html.html"

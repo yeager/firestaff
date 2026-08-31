@@ -352,7 +352,7 @@
   ],
   "problems": [],
   "redmcsbDunviewSha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
-  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSourceRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass557_dm1_v1_viewport_f0128_draw_order_source_lock.v1",
   "sourceLock": "DUNVIEW.C F0128 F0150 relative-coordinate calls through F0127 draw sequence",
   "status": "PASS_PASS557_DM1_V1_VIEWPORT_F0128_DRAW_ORDER_SOURCE_LOCK"

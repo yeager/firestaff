@@ -47,9 +47,12 @@ Also affects Monster.cpp:321 — door type check when `neophyteSkills == true`.
 
 This allows CSB recordings saved in neophyte mode to be replayed and validated.
 
-### 2. New Reincarnation Rules (CHANGE7_24_IMPROVEMENT) — Significant
+### 2. Reincarnation Rules (CHANGE7_24_IMPROVEMENT) — Package-Specific
 
-CSB modifies death/reincarnation mechanics:
+`REVIVE.C:F0282` is compiled per original package.  The table below applies
+to Atari ST CHANGE7_24 builds; Amiga and FM Towns use the documented
+`MEDIA629` quarter-vital branch, while PC I34 only clears skills and applies
+the twelve random statistic increments.
 
 | Stat | DM1 Behavior | CSB CHANGE7_24 Behavior |
 |------|-------------|------------------------|
@@ -64,10 +67,13 @@ CSB modifies death/reincarnation mechanics:
 | Wisdom/Max | Preserved | **−1/8th** |
 | AntiFire/Max | Preserved | **−1/8th** |
 | AntiMagic/Max | Preserved | **−1/8th** |
-| Luck/Max | Preserved | **No change (Luck exempted)** |
+| Luck/Max | Preserved | **No reduction (but it can receive a random increment)** |
 | All minimums | Respected | Respected |
 
-Source: CSB:REVIVE.C (CHANGE7_24) · csb_champions.md (existing audit)
+All packages clear skills and then make exactly twelve `M002_RANDOM(7)`
+increments.  Consequently Luck is exempt from the one-eighth reduction, not
+from the random increment loop.  See `docs/csb_gap_champions.md` for the
+complete platform table and Firestaff runtime evidence.
 
 ### 3. New Champion Character Definition Globals (CSB-only)
 
@@ -143,7 +149,7 @@ Source: READWRIT.C, SAVEHEAD.C, LOADSAVE.C (CHANGE7_29)
 | Base classes | 4 (Fighter/Ninja/Priest/Wizard) | Identical | — |
 | Skill system | 20 skills (C00–C19) | Identical | — |
 | Skill ranks | NOVICE..MASTER | +NEOPHYTE rank (lowest) | New |
-| Reincarnation | Full stat preservation | HP/MP/STA halved, −1/8th other stats except Luck | **Significant** |
+| Reincarnation | Full stat preservation | PC/Atari/Amiga/FM Towns source branch; see platform table above | **Significant** |
 | Reincarnation penalty scaling | Hardcoded | New globals: penalty/stat/randomPoints | New |
 | Inventory access | Right-click | Left-click on champion bars | UI improvement |
 | Champion icon regions | Basic | C33 mouse event for icon region exit | New |
@@ -152,7 +158,7 @@ Source: READWRIT.C, SAVEHEAD.C, LOADSAVE.C (CHANGE7_29)
 
 **Verdict:** CSB champion evolution is limited to:
 1. **New NEOPHYTE rank** in skill progression
-2. **Significant reincarnation penalty** (halved HP/MP/STA, −1/8th other stats)
+2. **Significant package-specific reincarnation behaviour**
 3. **UI improvements** (left-click inventory, expanded click zones)
 4. Bug fixes
 

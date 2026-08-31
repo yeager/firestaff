@@ -381,9 +381,11 @@ void dm2_v1_gfx_main_blit_toscreen(DM2_V1_GfxMainState *st,
 
 /* ── _specialblit(dest, src, rect, stretched) ─────────────────────── */
 /* Source: c_gfx_main.cpp — stretch blit for viewport transitions.
- * When stretched != 0, uses mblitter_blit_hline_stretched to apply
- * progressive stretch from STRETCH_START to STRETCH_END over the rect
- * height.  Otherwise delegates to mblitter_blit. */
+ * The source tests bit 15 of `stretched`, not whether the value is non-zero:
+ * DM2_DRAWINGS_COMPLETED normally passes 0x0008, while a viewport-transition
+ * path passes 0x8008.  Uses mblitter_blit_hline_stretched only for the latter
+ * to apply progressive stretch from STRETCH_START to STRETCH_END over the
+ * rect height.  Otherwise delegates to mblitter_blit. */
 
 void dm2_v1_gfx_main_specialblit(DM2_V1_GfxMainState *st,
                                   const DM2_V1_GfxMainCallbacks *cb,
@@ -394,7 +396,7 @@ void dm2_v1_gfx_main_specialblit(DM2_V1_GfxMainState *st,
 {
     (void)st;
 
-    if (stretched == 0) {
+    if (((uint16_t)stretched & 0x8000u) == 0u) {
         /* Normal blit */
         if (cb->mblitter_blit)
             cb->mblitter_blit(cb->ctx, dest, src, rect);
@@ -437,20 +439,28 @@ void dm2_v1_gfx_main_specialblit(DM2_V1_GfxMainState *st,
 void dm2_v1_gfx_main_drawings_completed(DM2_V1_GfxMainState *st,
                                          const DM2_V1_GfxMainCallbacks *cb)
 {
-    if (st->bitmapptr && cb->blit && cb->get_dm2screen) {
+    if (st->bitmapptr && cb->mblitter_blit && cb->get_dm2screen &&
+        cb->query_expanded_rect) {
         DM2_V1_GfxRect rect;
         uint8_t *screen;
 
-        rect.x = st->backbuffrect_x;
-        rect.y = st->backbuffrect_y;
-        rect.w = st->backbuffrect_w;
-        rect.h = st->backbuffrect_h;
+        /* c_gfx_main.cpp:DM2_DRAWINGS_COMPLETED does not copy the local
+         * backbuffer rectangle at (0,0).  It resolves screen rectangle 7,
+         * which is the destination aperture for the 224x136 backbuffer,
+         * then invokes _specialblit.  Querying the aperture is essential:
+         * using backbuffrect here painted the viewport in screen-local
+         * coordinates and bypassed the original UI composition. */
+        cb->query_expanded_rect(cb->ctx, 7, &rect);
 
         screen = cb->get_dm2screen(cb->ctx);
         if (screen) {
-            st->disable_video++;
-            cb->blit(cb->ctx, screen, st->bitmapptr, &rect);
-            st->disable_video--;
+            /* c_gfx_main.cpp calls _specialblit(dm2screen, backbuffer,
+             * rect7, 0x0008).  0x0008 has no bit-15 stretch flag, so its
+             * observable primitive is mblitter.blit with a 224-pixel source
+             * stride and the 320-pixel screen destination owned by the
+             * callback.  Do not substitute the generic blitter here: it
+             * loses that distinct source/destination surface contract. */
+            cb->mblitter_blit(cb->ctx, screen, st->bitmapptr, &rect);
         }
     }
 

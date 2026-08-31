@@ -64,12 +64,62 @@ int main(void)
                      receipt.palette_10.values.dungeon_view_rgb[0] == 0x0640u,
                  "last allowed creature owns palette 10");
 
+    {
+        uint8_t palette[16];
+        int index;
+        for (index = 0; index < 16; ++index) palette[index] = (uint8_t)index;
+        /* D3 consumes G0221: the same final F0093 owners must reach the
+         * live indexed creature-palette adapter, including a valid zero. */
+        ok &= expect(csb_v1_f0093_apply_replacement_palette_pc34(
+                         &map, 2, palette) &&
+                         palette[9] == 0u && palette[10] == 10u,
+                     "D3 adapter consumes F0093 final owners without rounding or fallback");
+    }
+
     map.creatureTypeCount = 1u;
     map.allowedCreatureTypes[0] = 2u;
     ok &= expect(csb_v1_f0093_build_replacement_palette_receipt_pc34(
                      &map, &graphics, &receipt) &&
                      !receipt.palette_9.assigned && !receipt.palette_10.assigned,
                  "no selector leaves base palette outside this receipt");
+
+    {
+        uint8_t palette[16];
+        int index;
+        for (index = 0; index < 16; ++index) palette[index] = (uint8_t)(15 - index);
+        /* F0093 restores 9 through set 8 and 10 through set 12 before it
+         * sees an unowned map entry.  The real PC table maps both to 10 in
+         * D2 and 5 in D3; neither may retain the preceding sprite remap. */
+        ok &= expect(csb_v1_f0093_apply_replacement_palette_pc34(
+                         &map, 1, palette) &&
+                         palette[9] == 10u && palette[10] == 10u,
+                     "D2 unowned slots restore F0093 defaults");
+        ok &= expect(csb_v1_f0093_apply_replacement_palette_pc34(
+                         &map, 2, palette) &&
+                         palette[9] == 5u && palette[10] == 5u,
+                     "D3 unowned slots restore F0093 defaults");
+    }
+
+    {
+        uint8_t palette[16];
+        int index;
+        for (index = 0; index < 16; ++index) palette[index] = (uint8_t)index;
+        /* ReDMCSB DUNVIEW.C:1733 documents Atari's distinct D3 target for
+         * set 9: 3, not the PC table's 7.  Creature 19 (0xA9) owns slot 10
+         * through that set after F0093's ordered walk. */
+        map.creatureTypeCount = 1u;
+        map.allowedCreatureTypes[0] = 19u;
+        ok &= expect(csb_v1_f0093_apply_replacement_palette_for_profile_pc34(
+                         &map, 2, CSB_V1_F0093_PALETTE_PROFILE_ATARI_ST,
+                         palette) && palette[9] == 5u && palette[10] == 3u,
+                     "Atari D3 uses its source table for final map owner");
+        for (index = 0; index < 16; ++index) palette[index] = (uint8_t)index;
+        ok &= expect(csb_v1_f0093_apply_replacement_palette_for_profile_pc34(
+                         &map, 2,
+                         CSB_V1_F0093_PALETTE_PROFILE_VERSION3_F0695,
+                         palette) && palette[9] == 5u && palette[10] == 3u,
+                     "Amiga/FM Towns F0695 D3 uses its source table for final map owner");
+    }
 
     aspects[3].replacement_color_set_indices = 0xF1u;
     map.allowedCreatureTypes[0] = 3u;

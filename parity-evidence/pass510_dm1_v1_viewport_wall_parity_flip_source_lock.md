@@ -10,23 +10,15 @@ Status: PASS510_DM1_V1_VIEWPORT_WALL_PARITY_FLIP_SOURCE_LOCKED
 - DUNVIEW.C:6697-6714 redmcsb_center_walls_use_flip_flag status=PASS
 
 ## Firestaff anchors
-- m11_game_view.c:37972 firestaff_party_tuple_flip_predicate scope=whole-file-local-evidence status=PASS
+- m11_game_view.c:40471 firestaff_party_tuple_flip_predicate scope=whole-file-local-evidence status=PASS
 - dm1_v1_viewport_3d_pc34_compat.c:283 firestaff_party_tuple_flip_predicate_contract scope=whole-file-local-evidence status=PASS
-- m11_game_view.c:37978 firestaff_wallset_variant_binding_before_draw scope=whole-file-local-evidence status=PASS
-- m11_game_view.c:38817 firestaff_center_wall_flip_path scope=whole-file-local-evidence status=PASS
+- m11_game_view.c:40477 firestaff_wallset_variant_binding_before_draw scope=whole-file-local-evidence status=PASS
+- m11_game_view.c:41316 firestaff_center_wall_flip_path scope=whole-file-local-evidence status=PASS
 - dm1_v1_viewport_3d_pc34_compat.c:1208 firestaff_side_wall_lr_swap_path scope=whole-file-local-evidence status=PASS
-- m11_game_view.c:40312 firestaff_side_wall_receipt_dispatch scope=whole-file-local-evidence status=PASS
+- m11_game_view.c:42811 firestaff_side_wall_receipt_dispatch scope=whole-file-local-evidence status=PASS
 
-## Local references
-- dm1_pc34_graphics /Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT exists=True sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e
-- dm1_pc34_dungeon /Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT exists=True sha256=d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85
-- greatstone_index /Users/bosse/.openclaw/data/firestaff-greatstone-atlas/index/SUMMARY.md exists=True sha256=b8ee685a2b60a49f305d0f1423e329d5e1019382b53598510833a46840bc3e2d
-- csbwin_source /Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/CSBwin.cpp exists=True sha256=89418e01b0a8eef330451320d19078a3510cbc699f635c8af22820365e4ceb23
-- csb_lineage_source /Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/CSBwin.cpp exists=True sha256=8842aa9caa32cfab0873576bc19ddf9aaced2decc2493d8a58f0d67a4a871cdb
-
-## Gates
-- /opt/homebrew/opt/python@3.14/bin/python3.14 tools/verify_pass509_dm1_v1_wallset_startup_binding.py -> rc=0 passed=True
-- /opt/homebrew/opt/python@3.14/bin/python3.14 tools/verify_pass508_dm1_v1_viewport_wall_runtime_readiness.py -> rc=0 passed=True
+## Verification
+- /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/test_dm1_v1_viewport_3d_pc34_compat -> rc=0 passed=True
 
 ## Scope
 - Locks the source-visible wall parity/native flip path after pass509 startup binding.

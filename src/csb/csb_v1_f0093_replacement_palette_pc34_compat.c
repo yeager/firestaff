@@ -34,6 +34,34 @@ static const CSB_V1_F0093ReplacementColorSetPc34 s_pc34_replacement_sets[] = {
     {{0x0C86u,0x0A64u,0x0842u,0x0620u,0x0400u,0x0200u},10u,5u}
 };
 
+/* ReDMCSB DUNVIEW.C:1724-1736 documents the Atari ST values and
+ * DUNVIEW.C:G2025/F0695 provides the version-3 Amiga/FM Towns family. Both
+ * store native colour selectors that decode to this same 0..15 host-indexed
+ * table. Only set 9/10 differs from PC in a way that affects the live F0093
+ * D2/D3 mapping, but retaining all entries makes the source-family selection
+ * explicit and prevents a future fallback. */
+static const uint8_t s_non_pc_d2_replacement_colors[] = {
+    9u, 0u, 10u, 9u, 9u, 10u, 9u, 10u, 10u, 5u, 10u, 12u, 10u
+};
+static const uint8_t s_non_pc_d3_replacement_colors[] = {
+    9u, 0u, 10u, 0u, 10u, 0u, 0u, 9u, 5u, 3u, 10u, 0u, 5u
+};
+
+static uint8_t replacement_color_for_profile(
+    const CSB_V1_F0093Graphics558ReceiptPc34 *graphics,
+    CSB_V1_F0093PaletteProfilePc34 profile,
+    uint8_t set_index,
+    int use_d3)
+{
+    if (profile == CSB_V1_F0093_PALETTE_PROFILE_ATARI_ST ||
+        profile == CSB_V1_F0093_PALETTE_PROFILE_VERSION3_F0695) {
+        return use_d3 ? s_non_pc_d3_replacement_colors[set_index]
+                      : s_non_pc_d2_replacement_colors[set_index];
+    }
+    return use_d3 ? graphics->replacement_sets[set_index].d3_replacement_color
+                  : graphics->replacement_sets[set_index].d2_replacement_color;
+}
+
 int csb_v1_f0093_pc34_graphics558_receipt(
     CSB_V1_F0093Graphics558ReceiptPc34 *out_graphics)
 {
@@ -98,6 +126,55 @@ int csb_v1_f0093_build_replacement_palette_receipt_pc34(
         }
     }
     return 1;
+}
+
+int csb_v1_f0093_apply_replacement_palette_for_profile_pc34(
+    const struct DungeonMapDesc_Compat *loaded_map,
+    int depth_index,
+    CSB_V1_F0093PaletteProfilePc34 profile,
+    uint8_t palette[16])
+{
+    CSB_V1_F0093Graphics558ReceiptPc34 graphics;
+    CSB_V1_F0093ReplacementPaletteReceiptPc34 receipt;
+    const int use_d3 = depth_index >= 2;
+
+    if (!palette || !csb_v1_f0093_pc34_graphics558_receipt(&graphics) ||
+        !csb_v1_f0093_build_replacement_palette_receipt_pc34(
+            loaded_map, &graphics, &receipt)) {
+        return 0;
+    }
+
+    /* F0093 does not begin with the palette left by the last creature draw.
+     * DUNVIEW.C:2805-2806 first restores colour 9 using replacement set 8
+     * and colour 10 using set 12, then lets the loaded map's ordered
+     * creature list overwrite either slot.  Omitting this reset leaks the
+     * current creature's DM1-style remap into CSB maps that have no owner
+     * for a slot (and is particularly visible on BUG7_01 maps). */
+    if (profile != CSB_V1_F0093_PALETTE_PROFILE_PC34 &&
+        profile != CSB_V1_F0093_PALETTE_PROFILE_ATARI_ST &&
+        profile != CSB_V1_F0093_PALETTE_PROFILE_VERSION3_F0695) {
+        return 0;
+    }
+    palette[9] = replacement_color_for_profile(&graphics, profile, 8u, use_d3);
+    palette[10] = replacement_color_for_profile(&graphics, profile, 12u, use_d3);
+    if (receipt.palette_9.assigned) {
+        palette[9] = replacement_color_for_profile(
+            &graphics, profile, receipt.palette_9.replacement_set_index, use_d3);
+    }
+    if (receipt.palette_10.assigned) {
+        palette[10] = replacement_color_for_profile(
+            &graphics, profile, receipt.palette_10.replacement_set_index, use_d3);
+    }
+    return 1;
+}
+
+int csb_v1_f0093_apply_replacement_palette_pc34(
+    const struct DungeonMapDesc_Compat *loaded_map,
+    int depth_index,
+    uint8_t palette[16])
+{
+    return csb_v1_f0093_apply_replacement_palette_for_profile_pc34(
+        loaded_map, depth_index, CSB_V1_F0093_PALETTE_PROFILE_PC34, palette);
 }
 
 const char *csb_v1_f0093_replacement_palette_source_evidence_pc34(void)

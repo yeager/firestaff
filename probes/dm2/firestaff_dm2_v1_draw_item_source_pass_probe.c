@@ -18,6 +18,7 @@
 
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_viewport_renderer.h"
+#include "firestaff_zip_extract.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -175,6 +176,7 @@ int main(int argc, char **argv)
     char dungeon_path[1024];
     const char *root = resolve_dm2_data_root(argc, argv, root_buf,
                                              sizeof(root_buf));
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
     uint8_t *dungeon_bytes = NULL;
     size_t dungeon_size = 0u;
     DM2_V1_DungeonData dungeon;
@@ -203,12 +205,27 @@ int main(int argc, char **argv)
                      "draw positions follow the source center display order");
     }
 
-    if (!root) {
+    if (archive && archive[0]) {
+        /* The supplied DOS release is a ZIP.  Read the original DUNGEON.DAT
+         * directly from that archive so this full-map renderer pass neither
+         * depends on a loose staging directory nor creates one. */
+        if (firestaff_zip_extract_by_suffix(archive, "data/dungeon.dat",
+                                            &dungeon_bytes, &dungeon_size) != 0) {
+            printf("SKIP: no canonical DM2 DUNGEON.DAT in %s\n", archive);
+            return 0;
+        }
+    } else if (!root) {
         puts("SKIP: no local canonical DM2 data");
         return 0;
+    } else {
+        snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", root);
+        if (!read_file(dungeon_path, &dungeon_bytes, &dungeon_size)) {
+            puts("SKIP: no local canonical DM2 data");
+            free(dungeon_bytes);
+            return 0;
+        }
     }
-    snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", root);
-    if (!read_file(dungeon_path, &dungeon_bytes, &dungeon_size)) {
+    if (!dungeon_bytes) {
         puts("SKIP: no local canonical DM2 data");
         free(dungeon_bytes);
         return 0;

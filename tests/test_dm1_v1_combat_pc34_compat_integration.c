@@ -9,6 +9,7 @@
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"  /* F0192_GROUP_* new layer (BUG-115b) */
 #include "memory_creature_ai_pc34_compat.h"  /* F0801b archenemy double-move (BUG-115b) */
+#include "memory_magic_pc34_compat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,6 +47,27 @@ static void test_scaled_product(void) {
     /* Edge: 0 */
     int r3 = dm1_scaled_product(0, 7, 130);
     CHECK(r3 == 0, "0*130>>7 should be 0");
+    PASS();
+}
+
+/* CHAMPION.C:F0321 C6_ATTACK_PSYCHIC calls F0030 with scale 6 and the
+ * factor (115 - Wisdom). BASE.C:F0030 truncates the product; adding a
+ * rounding bias changes real attack values at many boundaries. */
+static void test_psychic_defense_uses_f0030_truncation(void) {
+    struct CombatantChampionSnapshot_Compat champion;
+    int adjusted = -1;
+
+    TEST(psychic_defense_uses_f0030_truncation);
+    memset(&champion, 0, sizeof(champion));
+    champion.statisticWisdom = 15; /* factor = 100 */
+    CHECK(F0762_MAGIC_GetDefenderPsychicAdjustedAttack_Compat(
+              &champion, champion.statisticWisdom, 5, &adjusted) == 1,
+          "F0762 must admit a psychic C6 attack");
+    CHECK(adjusted == 7,
+          "F0321 psychic damage must truncate (5 * 100) >> 6 to 7");
+    CHECK(F0762_MAGIC_GetDefenderPsychicAdjustedAttack_Compat(
+              &champion, 115, 99, &adjusted) == 1 && adjusted == 0,
+          "wisdom 115 must fully absorb psychic damage");
     PASS();
 }
 
@@ -1048,6 +1070,7 @@ int main(void) {
     printf("=== DM1 V1 Combat System — Source-locked CTest Gate ===\n");
 
     test_scaled_product();
+    test_psychic_defense_uses_f0030_truncation();
     test_armor_defense();
     test_f0143_raw_armour_records();
     test_stamina_adjusted();

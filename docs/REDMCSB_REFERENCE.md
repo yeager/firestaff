@@ -54,6 +54,11 @@ Each entry has a unique name: `BUG0_NN` for bugs,
 
 ## Currently relevant to Firestaff
 
+The current DM1/CSB implementation audit is maintained in
+[`docs/qa/qa_bugs.md`](qa/qa_bugs.md). It distinguishes source-modelled
+behaviour from capture-pending parity work and records historical bugs that
+Original mode must preserve rather than silently correct.
+
   - **BUG0_03** (VBL handler glitch) — DUNVIEW palette switching
     fails under heavy load; fixed in CSB 2.0 (CHANGE7_01_FIX).
     → CSB V1 Graphics GAP 1.
@@ -111,6 +116,38 @@ The Firestaff source-lock scripts default to:
 Set `FIRESTAFF_REDMCSB_SOURCE` to use an operator-maintained checkout
 elsewhere. If neither source exists, source-only gates skip rather than
 constructing replacement evidence.
+
+`tools/redmcsb_source.py` is the shared locator for new and repaired DM1/CSB
+source locks. It accepts only a complete ReDMCSB source root and validates the
+files requested by each audit. A source lock may prove Firestaff code and the
+named ReDMCSB control-flow anchors, but it must not fail merely because an
+unrelated private extraction of `GRAPHICS.DAT`, a screenshot atlas, CSBWin, or
+another reference project is absent. Those materials can strengthen a separate
+real-media comparison; they are not substitutes for the primary source proof.
+
+The 2026-08-31 DM1 audit repaired the D0/D1 side-wall, D1C door-front, far
+door-front, and wall-parity locks on that basis. Their runtime probe is the
+built `test_dm1_v1_viewport_3d_pc34_compat` binary; it protects the source
+contracts without manufacturing a capture or asserting pixel parity.
+
+The same audit found a live panel-state omission: ReDMCSB `PANEL.C`
+`F0352_INVENTORY_ProcessCommand71_ClickOnEye` begins a held-eye interaction,
+while `F0353_INVENTORY_DrawStopPressingEye` restores the ordinary panel on
+release. Firestaff now carries that state only until mouse-up, closes the
+temporary eye-opened chest, and reopens an action-hand container through the
+normal `CHEST.C:F0333` route. The focused regression is
+`dm1_v1_chest_eye_open_to_action_hand_switch_pc34_compat`; it validates
+source state transitions, not a synthetic screenshot or capture claim.
+
+The current source-review findings, exact corrections and remaining
+capture-only limits are recorded in
+[`docs/parity/REDMCSB_DM1_CSB_AUDIT.md`](parity/REDMCSB_DM1_CSB_AUDIT.md).
+
+The CSB V2 lighting and phase-7 source locks use that lookup order.  They are
+evidence gates, not a reason to copy ReDMCSB or game assets into Firestaff:
+when the reference is unavailable they report an explicit skipped result;
+when it is available they verify the named source anchors and write only the
+derived JSON receipt.
 
 This directory contains 36 different .C files split by
 subsystem.  Most CSB V1 / DM1 V1 gap work references one of

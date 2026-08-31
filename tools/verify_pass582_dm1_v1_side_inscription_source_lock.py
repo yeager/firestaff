@@ -7,9 +7,10 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
+from redmcsb_source import source_root
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = source_root(("DUNGEON.C",))
 FIRE = ROOT / "src/engine/m11_game_view.c"
 FONT = ROOT / "include/dm1_v1_inscription_font_pc34_compat.h"
 CMAKE = ROOT / "CMakeLists.txt"

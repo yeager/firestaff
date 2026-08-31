@@ -2,11 +2,36 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
+from typing import Optional
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+
+
+def redmcsb_source_root() -> Optional[Path]:
+    """Locate a user-supplied ReDMCSB source tree without vendoring it."""
+    configured = os.environ.get("FIRESTAFF_REDMCSB_SOURCE")
+    candidates = []
+    if configured:
+        candidates.append(Path(configured).expanduser())
+    candidates.extend((
+        ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source",
+        Path.home() / ".openclaw/data/firestaff-redmcsb-source/"
+        "ReDMCSB_WIP20210206/Toolchains/Common/Source",
+    ))
+    for candidate in candidates:
+        if (candidate / "PANEL.C").is_file() and (candidate / "DATA.C").is_file():
+            return candidate
+    return None
+
+
+SOURCE = redmcsb_source_root()
 EVIDENCE = ROOT / "parity-evidence/verification/csb_v2_lighting_dynamic_source_lock.json"
+
+if SOURCE is None:
+    print("SKIP: set FIRESTAFF_REDMCSB_SOURCE to the ReDMCSB Common/Source directory")
+    raise SystemExit(77)
 
 REQUIRED_SOURCE = [
     (SOURCE / "PANEL.C", "G0304_i_DungeonViewPaletteIndex = 0", (367, 367)),

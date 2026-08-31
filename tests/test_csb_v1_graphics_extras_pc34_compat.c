@@ -67,9 +67,15 @@ int main(void) {
           "left-click inventory: can be reset to disabled");
 
     /* ── GAP 6: teleporter access + Grey Lord ── */
+    CHECK(csb_v1_teleporter_access_get() == 1,
+          "teleporter access defaults to CSB");
+    CHECK(csb_v1_can_creature_use_teleporter(26) == 1,
+          "teleporter: Grey Lord (26) -> can teleport by default in CSB");
+    CHECK(csb_v1_can_creature_use_teleporter(27) == 1,
+          "teleporter: Materializer (27) -> can teleport by default in CSB");
     csb_v1_teleporter_access_set(0);
     CHECK(csb_v1_teleporter_access_get() == 0,
-          "teleporter access: default disabled (DM1)");
+          "teleporter access: explicit DM1 comparison mode");
     CHECK(csb_v1_can_creature_use_teleporter(22) == 1,
           "teleporter: Lord Chaos (22) -> can teleport (DM1+CSB)");
     CHECK(csb_v1_can_creature_use_teleporter(24) == 1,
@@ -87,9 +93,9 @@ int main(void) {
           "teleporter: Materializer (27) -> can teleport (CSB)");
     CHECK(csb_v1_can_creature_use_teleporter(22) == 1,
           "teleporter: Lord Chaos (22) -> can teleport (CSB unchanged)");
-    csb_v1_teleporter_access_set(0);
-    CHECK(csb_v1_can_creature_use_teleporter(26) == 0,
-          "teleporter: reset to DM1, Grey Lord -> cannot");
+    csb_v1_teleporter_access_set(1);
+    CHECK(csb_v1_can_creature_use_teleporter(26) == 1,
+          "teleporter: reset to CSB, Grey Lord -> can teleport");
 
     printf("\n=== Summary: %d passed, %d failed ===\n", g_pass, g_fail);
     return g_fail == 0 ? 0 : 1;

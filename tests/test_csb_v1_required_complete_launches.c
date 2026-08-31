@@ -106,6 +106,11 @@ static void seed_csb_v1_complete_required_state(M12_StartupMenuState* state) {
     state->activatedIndex = kCsbGameIndex;
     state->selectedIndex = kCsbGameIndex;
     state->view = M12_MENU_VIEW_GAME_OPTIONS;
+    /* This fixture tests the canonical launch gate after a platform card has
+     * already been chosen.  The interactive menu now enters GAME_OPTIONS at
+     * stage 0 to present platform cards first; leaving the zero-initialized
+     * stage here would only select that card and never exercise the gate. */
+    state->gameCardFlowStage = 2;
     state->gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
 }
 

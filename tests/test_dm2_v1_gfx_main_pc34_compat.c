@@ -35,6 +35,12 @@ typedef struct MockCtx {
     DM2_V1_GfxRect last_fill_rect;
     uint8_t        last_fill_pixel;
     uint8_t       *last_fill_dst;
+    DM2_V1_GfxRect last_blit_rect;
+    uint8_t       *last_blit_dst;
+    const uint8_t *last_blit_src;
+    DM2_V1_GfxRect last_mblitter_rect;
+    uint8_t       *last_mblitter_dst;
+    const uint8_t *last_mblitter_src;
     int16_t        last_palette_set;
     int16_t        last_query_id;
     int16_t        last_set_width;
@@ -72,7 +78,9 @@ static void mock_blit(void *ctx, uint8_t *dst, const uint8_t *src,
 {
     MockCtx *m = (MockCtx *)ctx;
     m->blit_count++;
-    (void)dst; (void)src; (void)rect;
+    m->last_blit_dst = dst;
+    m->last_blit_src = src;
+    m->last_blit_rect = *rect;
 }
 
 static void mock_blit_within_screen(void *ctx, const DM2_V1_GfxRect *src_rect,
@@ -190,8 +198,11 @@ static uint8_t *mock_DRV_screen256(void *ctx) {
 
 static void mock_mblitter_blit(void *ctx, uint8_t *dst, const uint8_t *src,
                                 const DM2_V1_GfxRect *rect) {
-    ((MockCtx *)ctx)->mblitter_blit_count++;
-    (void)dst; (void)src; (void)rect;
+    MockCtx *m = (MockCtx *)ctx;
+    m->mblitter_blit_count++;
+    m->last_mblitter_dst = dst;
+    m->last_mblitter_src = src;
+    m->last_mblitter_rect = *rect;
 }
 
 static void mock_mblitter_blit_hline_stretched(void *ctx, uint8_t *dst,
@@ -420,7 +431,9 @@ static void test_specialblit_normal(void)
     uint8_t dst[1024], src[1024];
 
     dm2_v1_gfx_main_init(&st);
-    dm2_v1_gfx_main_specialblit(&st, &cb, dst, src, &rect, 0);
+    /* c_gfx_main.cpp's ordinary DRAWINGS_COMPLETED call supplies 0x0008.
+     * Only bit 15 selects the viewport-transition stretch operation. */
+    dm2_v1_gfx_main_specialblit(&st, &cb, dst, src, &rect, 0x0008);
 
     assert(g_mock.mblitter_blit_count == 1);
     assert(g_mock.mblitter_blit_hline_stretched_count == 0);
@@ -434,7 +447,8 @@ static void test_specialblit_stretched(void)
     uint8_t dst[1024], src[1024];
 
     dm2_v1_gfx_main_init(&st);
-    dm2_v1_gfx_main_specialblit(&st, &cb, dst, src, &rect, 1);
+    dm2_v1_gfx_main_specialblit(&st, &cb, dst, src, &rect,
+                                (int16_t)0x8008u);
 
     assert(g_mock.mblitter_blit_count == 0);
     assert(g_mock.mblitter_blit_hline_stretched_count == 4); /* one per line */
@@ -452,7 +466,18 @@ static void test_drawings_completed(void)
 
     dm2_v1_gfx_main_drawings_completed(&st, &cb);
 
-    assert(g_mock.blit_count == 1);
+    assert(g_mock.blit_count == 0);
+    /* c_gfx_main.cpp resolves query rectangle 7 before the final blit;
+     * it must not use the backbuffer-local (0,0,224,136) rect. */
+    assert(g_mock.query_expanded_rect_count == 1);
+    assert(g_mock.last_query_id == 7);
+    assert(g_mock.mblitter_blit_count == 1);
+    assert(g_mock.last_mblitter_dst == g_mock.screen);
+    assert(g_mock.last_mblitter_src == g_mock.fakebmp);
+    assert(g_mock.last_mblitter_rect.x == 10);
+    assert(g_mock.last_mblitter_rect.y == 20);
+    assert(g_mock.last_mblitter_rect.w == 100);
+    assert(g_mock.last_mblitter_rect.h == 50);
     assert(g_mock.show_mouse_count == 1);
     assert(st.disable_video == 0);
 }

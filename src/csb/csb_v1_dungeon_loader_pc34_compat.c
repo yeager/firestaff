@@ -20,6 +20,7 @@
  */
 
 #include "csb_v1_dungeon_loader_pc34_compat.h"
+#include "asset_find_by_hash.h"
 #include "dungeon_decompressor_ftl.h"
 #include <stdlib.h>
 #include <string.h>
@@ -388,6 +389,23 @@ int csb_v1_dungeon_load_from_file(CSB_V1_DungeonData *out, const char *path) {
 
     if (!out || !path) return -1;
     memset(out, 0, sizeof(*out));
+
+    /* A native Amiga/Atari package may expose DUNGEON.DAT as an ADF/STX
+     * member inside a ZIP.  Keep that original member in RAM; a caller must
+     * never have to extract a duplicate merely to use this compatibility
+     * entry point. */
+    if (strstr(path, "::") != NULL) {
+        size_t byte_count = 0u;
+        if (!asset_read_virtual_path_alloc(path, &buf, &byte_count) ||
+            !buf || byte_count == 0u || byte_count > 16u * 1024u * 1024u) {
+            free(buf);
+            return -1;
+        }
+        ret = csb_v1_dungeon_load_source_bytes(out, buf, (int)byte_count);
+        free(buf);
+        if (ret != 0) memset(out, 0, sizeof(*out));
+        return ret;
+    }
 
     f = fopen(path, "rb");
     if (!f) return -1;

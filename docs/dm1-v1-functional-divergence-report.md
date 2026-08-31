@@ -48,23 +48,23 @@
 
 ## Module: CHAMPION.C (champion stats, XP, death, resurrection)
 
-### CHM-01 — F0307 / F0308 "Megamax compiler bug" (BUG0_41) is *intentionally fixed*, not preserved
+### CHM-01 — F0307 BUG0_41 is preserved for Megamax Atari media
 - **ReDMCSB reference:** `CHAMPION.C:1106-1115` (`F0307_CHAMPION_GetStatisticAdjustedAttack`). BUG0_41 comment: "A bug in the Megamax C compiler produces wrong machine code for this statement. It always returns 0 for the current statistic value so that L0927_i_Factor = 170 in all cases."
-- **Firestaff state:** `src/memory/memory_combat_pc34_compat.c:171-173` explicitly states: *"Mirror of F0307 (CHAMPION.C:1106) — **minus the Megamax-compiler bug (BUG0_41) so antifire/antimagic actually participate.**"*
-- **Functional impact:** This is a deliberate behavior change. In PC 3.4 Atari ST, the Antifire, Antimagic, and (for poison) Vitality statistics are effectively zeroed by the compiler bug — they provide no damage reduction. In Firestaff, those statistics reduce damage as intended. The BUG-101 fix entry in `docs/DM1_V1_BUG_AUDIT.md` (v2.7.13) documents this as an intentional fix, not a preservation. **Players will see a Firestaff-firestaff behavior difference from a stock PC 3.4 binary**: high-Antifire and high-Antimagic champions take notably less damage from fire/poison/magic in Firestaff.
-- **Severity:** Major (gameplay balance differs from original; was promoted from "preservation" to "fix" but this is a behavior divergence, not a bug per se)
+- **Firestaff state:** `F0734_COMBAT_GetStatisticAdjustedAttackForSource_Compat` now receives source-package identity through the live defender snapshot. The verified DM1 Atari DMCSB1 handoff sets `pc34PreserveMegamaxF0307Bug`; the renderer/runtime then observes zero for F0307's statistic exactly as the original Megamax executable does. PC, Amiga and FM Towns keep their actual statistic values. CSB ST 2.0/2.1 selects the same branch from `CSB_V1_RuntimeProfile.variant_id`.
+- **Functional impact:** Original mode no longer silently turns the Atari compiler quirk into a balance change. Antifire, Antimagic, Wisdom and Vitality retain their source-package-dependent effects.
+- **Severity:** Resolved runtime / real Atari boot coverage.
 
-### CHM-02 — F0308 luck system (BUG0_38) is *partially* implemented, flagged "NEEDS DISASSEMBLY REVIEW"
-- **ReDMCSB reference:** `CHAMPION.C:1120-1145` (`F0308_CHAMPION_IsLucky`). The original decrements Luck by 2 on a lucky roll and increments by 2 on an unlucky roll; high-Luck champions have a chance to dodge hits, low-Luck champions take extra damage. BUG0_38 in the same source notes that cursed items with negative Luck are exploitable.
-- **Firestaff state:** `src/memory/memory_combat_pc34_compat.c:391` is marked *"NEEDS DISASSEMBLY REVIEW: F0308_CHAMPION_IsLucky is hidden state in the original."* The `F0735_COMBAT_ResolveChampionMelee_Compat` function (defined at `memory_combat_pc34_compat.c:339`) does not call any luck helper; luck is treated as 0.
-- **Functional impact:** Champions with high Luck are not luckier in Firestaff than in the original (and vice versa). However, the original BUG0_38 itself is also not preserved, so the cursed-item Luck exploit is *also* not present. Net result: Luck stat is meaningless in combat.
-- **Severity:** Major (BUG-103 in `DM1_V1_BUG_AUDIT.md`; not duplicated here as a new finding, but listed for completeness as the BUG-103 entry was the only mention)
+### CHM-02 — F0308 luck system (BUG0_38) is source-modelled and runtime-bound
+- **ReDMCSB reference:** `CHAMPION.C:1120-1155` (`F0308_CHAMPION_IsLucky`). The original first permits a two-roll early success, otherwise rolls the platform-specific Luck branch, then changes Luck by -2/+2 through the bounded-value helper. BUG0_38 in the PC branch records the negative-Luck unsigned exploit.
+- **Firestaff state:** `src/memory/memory_combat_pc34_compat.c:295-374` implements the PC/I34E `Luck <= 0` branch, the early-return no-mutation path, `(unsigned char)Luck << 1` RNG bound, and bounded -2/+2 writeback. `F0735_COMBAT_ResolveChampionMelee_Compat` consumes it for the lucky-hit branch. `dm1_v1_combat_pc34_compat_integration` covers lucky hit, dexterity short-circuit, zero-Luck RNG count and non-material rejection; `dm1_v1_action_f0407_tail_pc34_compat` covers runtime writeback.
+- **Functional impact:** The former report finding is stale. The bounded compatibility route no longer treats Luck as zero. Whether the stock PC negative-Luck unsigned exploit should remain exposed in Original is separately version-policy work; Firestaff's signed safe boundary does not claim to reproduce that exploit.
+- **Severity:** Resolved for the normal bounded combat route; no open gameplay defect is recorded here.
 
-### CHM-03 — F0306 stamina-adjusted-value compiler-order hazard (BUGX_XX) is fixed in runtime, documented in test
-- **ReDMCSB reference:** `CHAMPION.C:1078-1103` (`F0306_CHAMPION_GetStaminaAdjustedValue`). The `>>= 1` is evaluated before the multiplication, but Turbo C++ 1.01 (PC 3.4) evaluates the second operand first due to a compiler quirk.
-- **Firestaff state:** `src/memory/memory_combat_pc34_compat.c:171-176` and the F0306 implementation. `docs/DM1_V1_BUG_AUDIT.md:BUG-115` notes that "The test gates cover the expected-order behavior; the main runtime should match Turbo C++ 1.01 (PC 3.4 target)."
-- **Functional impact:** Minor stat calculation differences for stamina-adjusted strength/load. Not user-visible in normal play.
-- **Severity:** Cosmetic (BUG-115; documented but not a new finding)
+### CHM-03 — F0306 stamina-adjusted-value compiler-order hazard is source-selected
+- **ReDMCSB reference:** `CHAMPION.C:1078-1103` (`F0306_CHAMPION_GetStaminaAdjustedValue`) and its `BUGX_XX` compiler matrix. Megamax Atari ST and High C FM Towns execute the mutating first operand first; Turbo C++ 1.01 (DM1 PC 3.4) and Aztec C (DM1 Amiga 2.x) read the second operand first.
+- **Firestaff state:** `F0306_CHAMPION_GetStaminaAdjustedValueForSource_Compat` receives verified package identity via `GameWorld_Compat.pc34F0306FirstOperandFirst`. Both M10's defender baseline and M11's shield-defense baseline use it. Atari and FM Towns select first-operand semantics; PC 3.4 and Amiga 2.x select second-operand semantics.
+- **Functional impact:** Low-stamina strength, maximum-load and shield-defense calculations no longer inherit PC semantics on Atari/FMT media.
+- **Severity:** Resolved source variant (BUG-115).
 
 ### CHM-04 — F0319_CHAMPION_Kill auto-close-chest ordering is preserved by test contract, not by runtime helper
 - **ReDMCSB reference:** `CHAMPION.C:1552-1607` (`F0319_CHAMPION_Kill`) sets `CurrentHealth=0`, dispatches `F0355(C04_CHAMPION_CLOSE_INVENTORY)` to close the chest, then `F0318` drops the dead leader's hand objects.
@@ -214,11 +214,11 @@
 
 ## Module: REVIVE.C (resurrection, mirror candidates)
 
-### REV-01 — F0281 `CHAMPION_Rename` UI not ported
+### REV-01 — F0281 `CHAMPION_Rename` UI is live in M11
 - **ReDMCSB reference:** `REVIVE.C:F0281_CHAMPION_Rename:357-?` — handles the user renaming a resurrected/reincarnated champion. Calls `F0168_DUNGEON_DecodeText` for inscribed names.
-- **Firestaff state:** `dm1_v1_resurrection_rename_ui_gate_pc34_compat` now source-locks the F0281 panel/input contract (C161-only entry, C027/G0032 panel handoff, name/title rules), but `src/dm1/dm1_v1_resurrection_pc34_compat.c:109` still notes: *"F0281_CHAMPION_Rename(L0826_ps_Champion); — UI (not ported)"*. F0281 is not implemented in the live M11 prompt path.
-- **Functional impact:** When a player resurrects or reincarnates a champion with a new name (via the Resurrect panel), Firestaff does not prompt the player for a new name. The default name from the candidate inscription is used.
-- **Severity:** Major (the rename UI is a documented player-facing feature; it is silently missing)
+- **Firestaff state:** The historical comment in `dm1_v1_resurrection_pc34_compat.c` describes an older compatibility surface, not the M11 game route. `M11_GameView_BeginMirrorCandidateReincarnateRename` enters the C161-only modal, presents original C027/C101 material, clears name/title, accepts mouse and keyboard input, rejects duplicate party names, and finalizes only after OK. `m11_dm1_hoc_c127_resurrect_reincarnate_full_pc34` exercises two source-owned PC 3.4 mirrors through C127 → C040 → C027 → C161, quicksave, and cold resume; the selected name/title persist.
+- **Functional impact:** The player-facing rename flow is implemented for the native DM1 M11 route. This is not evidence of pixel parity for every original edition; such a claim still requires edition-specific captures.
+- **Severity:** Resolved runtime / open capture evidence.
 
 ### REV-02 — F0866 mirror-candidate route relies on F0377 dispatch (CMD-01) and F0372 / F0166 chain
 - **ReDMCSB reference:** `REVIVE.C:F0280_CHAMPION_AddCandidateChampionToParty:124-276` (sensor-triggered candidate add), `F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel:704-806` (UI panel click), `F0283_CHAMPION_ViAltarRebirth:902-?` (ViAltar).
@@ -236,11 +236,11 @@
 
 ## Module: LOADSAVE.C (save/load)
 
-### LSV-01 — F0433 / F0434 / F0435 / F0436 / F0437 / F0438 save/load chain is amalgam-only
-- **ReDMCSB reference:** `LOADSAVE.C:F0433_STARTEND_ProcessCommand140_SaveGame_CPSCDF` (save), `F0434_STARTEND_IsLoadDungeonSuccessful_CPSC` (load dungeon), `F0435_STARTEND_LoadGame` (load game).
-- **Firestaff state:** The new path has `F0770_SAVEGAME_CRC32_Compat` and `F0771/F0772/F0776/F0777/F0778/F0779` (savegame helpers) and a serialize/deserialize model in `memory_savegame_pc34_compat.c`. The new path does **not** implement the CPSC obfuscation/checksum/encrypted-blob format of F0433. The new save files are **not compatible with original game saves**.
-- **Functional impact:** Save files produced by Firestaff cannot be loaded by the original PC 3.4 game, and vice versa. This is a major interoperability break. The save format is Firestaff's own LE-encoded format (see `memory_savegame_pc34_compat.c:240-340`).
-- **Severity:** Major (save interoperability with original game is not possible; intentional but user-visible)
+### LSV-01 — F0433 / F0435 original PC34 save interoperability is runtime-bound
+- **ReDMCSB reference:** `LOADSAVE.C:F0433_STARTEND_ProcessCommand140_SaveGame_CPSCDF` (save), `F0434_STARTEND_IsLoadDungeonSuccessful_CPSC` (load dungeon), and `F0435_STARTEND_LoadGame` (load game).
+- **Firestaff state:** The current path classifies a checksum-qualified original PC34 envelope, admits it through `dm1_v1_original_save_pc34_handoff_materialize_runtime_from_{file,bytes}()`, atomically adopts the resulting world in `M11_GameView_LoadDm1{,OriginalPc34}Save*()`, and can export a PC34-shaped envelope from an original-backed runtime. `dm1_v1_dos_fr_original_save_backed_roundtrip` runs the supplied authentic French `DMSAVE.DAT/.BAK` against its original `EUDATA` backing through F0435 → F0433 export → F0435 and checks party, active-group, timeline and map state.
+- **Functional impact:** The old blanket incompatibility claim is stale. Firestaff-native quicksaves remain a separate host convenience format, but they no longer exclude original PC34 import/export on the authenticated backed route. Incomplete or non-authenticated C13 data continues to fail closed rather than being treated as proof of universal save compatibility.
+- **Severity:** Resolved for the verified French original-backed route; broader save-corpus coverage remains data-bound.
 
 ### LSV-02 — F0413/F0414/F0415/F0416/F0419/F0420/F0421/F0422/F0423 saveutil helpers are amalgam-only
 - **ReDMCSB reference:** `LOADSAVE.C:F0413_CPSC_GetChecksumEor`, `F0414_SAVEUTIL_ReplaceTildeByDriveLetterInString`, `F0415_SAVEUTIL_IsReadBytesSuccessful`, `F0416_SAVEUTIL_IsWriteBytesSuccessful`, `F0419_SAVEUTIL_IsReadObfuscatedBytesAndValidateChecksumSuccessful`, `F0420_SAVEUTIL_IsWriteObfuscatedSavePartSuccessful`, `F0421_SAVEUTIL_IsReadBytesWithChecksumSuccessful`, `F0422_SAVEUTIL_IsWriteBytesWithChecksumSuccessful`, `F0423_SAVEUTIL_FixClonedThings`.
@@ -466,10 +466,10 @@
 
 ## Module: Savegame / persistence
 
-### SAV-01 — Field-mask semantics for save/load (BUG-112) are flagged "NEEDS DISASSEMBLY REVIEW"
+### SAV-01 — Field-mask semantics are bounded by the original-backed F0435/F0433 route
 - **ReDMCSB reference:** `LOADSAVE.C:F0433:1502-1707`, `F0435:2192-2660`.
-- **Firestaff state:** `src/memory/memory_savegame_pc34_compat.c:399` (BUG-112 in prior audit) is flagged.
-- **Functional impact:** Save files are Firestaff-native; field masks differ from PC 3.4. Cross-tool save compatibility is broken (see LSV-01).
+- **Firestaff state:** Original-backed import/export is covered by the authenticated PC34 handoff rather than the host quicksave serializer. The real French route proves the retained map, party, active-group and timeline fields over an original F0435 → F0433 → F0435 roundtrip.
+- **Functional impact:** The earlier broad cross-tool-break claim is stale. Unproven field families remain fail-closed and must be promoted per real corpus, particularly C13-owned tails.
 - **Severity:** Major (covered by LSV-01)
 
 ---
@@ -499,21 +499,21 @@
 | BUG0_16 | Projectile list overfill | Original can crash | New path hard-caps | Major (defensive) |
 | BUG0_17 | Fuse on map boundary crashes | Original crashes | Preserved in amalgam; new path not source-locked | Minor |
 | BUG0_26 | Explosion falls in pit | Preserved | Preserved in amalgam | Cosmetic |
-| BUG0_38 | Cursed-item Luck exploit | Preserved | **Not preserved** (luck is 0 in new path) | Minor |
-| BUG0_41 | Megamax compiler bug (antifire/antimagic ignored) | Preserved | **Not preserved** (CHM-01) | Major (intentional fix) |
-| BUG0_45 | Vitality wound probability reversed | Preserved | Partially preserved (F0307 not called for wound-probability path in compat layer; only for damage path) | Major |
+| BUG0_38 | Cursed-item Luck exploit | Preserved | Normal F0308 luck path is implemented; negative-Luck exploit is intentionally not claimed | Version-policy / bounded safety |
+| BUG0_41 | Megamax compiler bug (antifire/antimagic ignored) | Megamax packages only | Preserved only for verified Atari ST source; other packages retain their actual statistic | Resolved source variant |
+| BUG0_45 | Vitality wound probability reversed | Preserved (except Megamax Atari via BUG0_41) | Preserved through the F0739c F0307(Vitality) wound-selection route; Megamax Atari source identity forces the original unaffected behaviour | Resolved source variant |
 | BUG0_66 | Smoke on source map (vs destination) | Preserved | Preserved in amalgam | Cosmetic |
 | BUG0_71 | Missing VBlank guard in entrance | Preserved | Preserved (entrance_frontend_pc34_compat.c) | Cosmetic |
 | BUG0_72 | `>=` vs `>` in F0310 stat clamp | Preserved | **Not preserved** (CHM-06) | Minor |
 | BUG0_78 | Door-wound missing parens | Preserved | **Preserved** (CHS-02) | Cosmetic (intentional) |
 | BUG0_81 | Uninitialised `damage` in weak-branch | Preserved | Unclear (combat.c:401) | Minor |
-| BUGX_XX | Turbo C++ 1.01 compiler order in F0306 | Preserved | **Not preserved** (CHM-03, BUG-115) | Cosmetic |
+| BUGX_XX | Compiler order in F0306 | Package-dependent | Selected from verified DM1 Atari/FMT versus PC/Amiga package family (CHM-03, BUG-115) | Resolved source variant |
 | BUG0_44 | Black Flame / Fireball damage overflow | Preserved | **Preserved with clamp** (memory_combat_pc34_compat.c:324) | Minor (defensive) |
 | BUG0_65 | Object-generator torches have no charges | Preserved | Preserved in amalgam | Cosmetic |
 | BUG0_75 | Champion portrait ordinal not reset | Preserved | Preserved in amalgam | Cosmetic |
 | BUG0_76 | Same text on multiple wall sides | Preserved | Preserved in amalgam | Cosmetic |
 
-> **Net behavior change:** Firestaff deliberately fixes 4 of the BUG0_xx items (BUG0_16, BUG0_38 [partial], BUG0_41, BUG0_72, BUGX_XX) for safety or correctness. The original's 4 most-cited intentional bugs (BUG0_26, BUG0_66, BUG0_78, BUG0_71) are preserved.
+> **Net behavior change:** Firestaff deliberately hardens the unsafe BUG0_16 path and retains documented policy differences such as BUG0_72. BUG0_41 and BUGX_XX are selected from the original compiler/package family rather than treated as global fixes. F0308's ordinary Luck route is no longer part of that divergence list. The original's 4 most-cited intentional bugs (BUG0_26, BUG0_66, BUG0_78, BUG0_71) are preserved.
 
 ---
 
@@ -534,14 +534,11 @@ Note: 68 findings, of which 18 are explicit non-duplications of the prior `DM1_V
 
 ## Top 10 priority fixes (beyond the prior audit's BUG-101..BUG-118)
 
-1. **REV-01 (Major)** — F0281 `CHAMPION_Rename` UI is silently missing. Resurrected/reincarnated champions do not prompt for a new name.
-2. **LSV-01 (Major)** — Save/load is not compatible with original PC 3.4 saves. F0433 / F0434 / F0435 / F0436 / F0437 / F0438 are amalgam-only and not invoked by the new runtime. Firestaff uses its own native save format.
-3. **GRP-02 follow-up (Minor)** — F0192 poison-resistance compat is implemented and tested; remaining work is broader original route/pixel proof.
-4. **GRP-03 follow-up (Minor)** — F0810 emits F0204 archenemy two-square movement; remaining work is accepted/blocked real dungeon route proof.
-5. **CHM-01 (Major)** — F0307 BUG0_41 (Megamax compiler bug) is intentionally fixed. Antifire / Antimagic / Vitality-poison now participate. Gameplay balance differs from original.
-6. **DUN-05 (Major)** — F0163 BUG0_08 overfill is silently dropped, not crashed. Defensive behavior.
-7. **PJE-05 (Major)** — F0220 BUG0_16 projectile-list overfill is silently dropped, not crashed. Defensive behavior.
-8. **CMD-01 (Minor)** — F0377 / F0378 click dispatchers are amalgam-only. The new M11 click routing is independent and inline. Two parallel implementations of the same dispatch logic; long-term maintenance risk.
+1. **GRP-02 follow-up (Minor)** — F0192 poison-resistance compat is implemented and tested; remaining work is broader original route/pixel proof.
+2. **GRP-03 follow-up (Minor)** — F0810 emits F0204 archenemy two-square movement; remaining work is accepted/blocked real dungeon route proof.
+3. **DUN-05 (Major)** — F0163 BUG0_08 overfill is silently dropped, not crashed. Defensive behavior.
+4. **PJE-05 (Major)** — F0220 BUG0_16 projectile-list overfill is silently dropped, not crashed. Defensive behavior.
+5. **CMD-01 (Minor)** — F0377 / F0378 click dispatchers are amalgam-only. The new M11 click routing is independent and inline. Two parallel implementations of the same dispatch logic; long-term maintenance risk.
 
 ---
 
@@ -563,7 +560,7 @@ These were verified in the prior audit and are not re-listed:
 - BUG-112 (savegame field mask) — still NEEDS DISASSEMBLY REVIEW (SAV-01)
 - BUG-113 (poison vitality adjustment) — fixed in v2.7.13
 - BUG-114 (psychic damage) — not in this audit's scope (no DM1 psychic spells)
-- BUG-115 (F0306 compiler order) — verified (CHM-03)
+- BUG-115 (F0306 compiler order) — resolved per verified DM1 package family (CHM-03)
 - BUG-116 (runtime dynamics table) — not in this audit's scope
 - BUG-117 (test infrastructure build path) — out of scope (test infra, not source divergence)
 - BUG-118 (viewport crop readiness) — not in this audit's scope

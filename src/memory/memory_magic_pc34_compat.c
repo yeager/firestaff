@@ -989,16 +989,18 @@ int F0761_MAGIC_GetDefenderMagicalAdjustedAttack_Compat(
 
     switch (attackType) {
         case COMBAT_ATTACK_MAGIC:
-            if (F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
-                    defender->statisticAntimagic, 255, atk, &tmp)) {
+            if (F0734_COMBAT_GetStatisticAdjustedAttackForSource_Compat(
+                    defender->statisticAntimagic, 255, atk,
+                    defender->preserveMegamaxF0307Bug, &tmp)) {
                 atk = tmp;
             }
             atk -= magic->spellShieldDefense;
             break;
 
         case COMBAT_ATTACK_FIRE:
-            if (F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
-                    defender->statisticAntifire, 255, atk, &tmp)) {
+            if (F0734_COMBAT_GetStatisticAdjustedAttackForSource_Compat(
+                    defender->statisticAntifire, 255, atk,
+                    defender->preserveMegamaxF0307Bug, &tmp)) {
                 atk = tmp;
             }
             atk -= magic->fireShieldDefense;
@@ -1038,9 +1040,10 @@ int F0762_MAGIC_GetDefenderPsychicAdjustedAttack_Compat(
         return 1;
     }
 
-    /* Scaled product with shift 6, mirroring F0030_MAIN_GetScaledProduct.
-     * Plan §4.8 requests `(attack * factor + 32) >> 6` (half-up round). */
-    tmp = ((rawAttack * wisdomFactor) + 32) >> 6;
+    /* ReDMCSB BASE.C:F0030 uses an integer product followed by a shift;
+     * it truncates and does not add a half-up rounding bias. CHAMPION.C:F0321
+     * calls that helper directly for C6_ATTACK_PSYCHIC. */
+    tmp = (rawAttack * wisdomFactor) >> 6;
     if (tmp < 0) tmp = 0;
     *outAdjusted = tmp;
     return 1;

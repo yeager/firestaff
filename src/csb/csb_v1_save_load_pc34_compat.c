@@ -177,9 +177,17 @@ uint16_t csb_v1_save_checksum(const uint16_t *data, int word_count)
     return (uint16_t)(sum & 0xFFFF);
 }
 
+static uint16_t read_u16_le_save_header(const uint8_t *p);
+
 /* Build obfuscated data block for writing.
  * F0430 flow: generate random obfuscation, compute checksum, then obfuscate. */
-static void build_obfusc_block(uint16_t *obf, int word_count,
+static void write_u16_le_save_header(uint8_t *p, uint16_t value)
+{
+    p[0] = (uint8_t)value;
+    p[1] = (uint8_t)(value >> 8);
+}
+
+static void build_obfusc_block(uint8_t *obf, int word_count,
                                 uint16_t key_index)
 {
     uint32_t sum;
@@ -194,29 +202,39 @@ static void build_obfusc_block(uint16_t *obf, int word_count,
             seed = (uint32_t)time(NULL) ^ (uint32_t)(intptr_t)obf;
         }
         seed = seed * 0xC007 + 1;
-        obf[i] = (uint16_t)(seed >> 16);
+        write_u16_le_save_header(obf + i * 2,
+                                 (uint16_t)(seed >> 16));
     }
 
     /* Compute checksum over generated words */
     sum = 0;
     for (i = 0; i < word_count - 1; i++) {
-        sum += obf[i];
+        sum += read_u16_le_save_header(obf + i * 2);
     }
 
     /* Last word: sum ^ key */
-    obf[word_count - 1] = (uint16_t)((sum & 0xFFFF) ^ g_obfuscation_keys[(ki + word_count - 1) & 0x1F]);
+    write_u16_le_save_header(obf + (word_count - 1) * 2,
+                             (uint16_t)((sum & 0xFFFF) ^
+                             g_obfuscation_keys[(ki + word_count - 1) & 0x1F]));
 
     /* Now obfuscate all words in place */
     for (i = 0; i < word_count - 1; i++) {
-        obf[i] ^= g_obfuscation_keys[(ki + i) & 0x1F];
+        uint16_t word = read_u16_le_save_header(obf + i * 2);
+        write_u16_le_save_header(obf + i * 2,
+                                 (uint16_t)(word ^ g_obfuscation_keys[(ki + i) & 0x1F]));
     }
     /* Last word is already checksummed, now obfuscate it too */
-    obf[word_count - 1] ^= g_obfuscation_keys[(ki + word_count - 1) & 0x1F];
+    {
+        int last = word_count - 1;
+        uint16_t word = read_u16_le_save_header(obf + last * 2);
+        write_u16_le_save_header(obf + last * 2,
+                                 (uint16_t)(word ^ g_obfuscation_keys[(ki + last) & 0x1F]));
+    }
 }
 
 /* Deobfuscate a data block and compute checksum.
  * Returns the computed checksum (last word should match). */
-static uint16_t deobfusc_and_checksum(uint16_t *data, int word_count,
+static uint16_t deobfusc_and_checksum(uint8_t *data, int word_count,
                                         uint16_t key_index)
 {
     uint16_t sum = 0;
@@ -225,12 +243,14 @@ static uint16_t deobfusc_and_checksum(uint16_t *data, int word_count,
 
     /* Deobfuscate */
     for (i = 0; i < word_count; i++) {
-        data[i] ^= g_obfuscation_keys[(ki + i) & 0x1F];
+        uint16_t word = read_u16_le_save_header(data + i * 2);
+        write_u16_le_save_header(data + i * 2,
+                                 (uint16_t)(word ^ g_obfuscation_keys[(ki + i) & 0x1F]));
     }
 
     /* Compute checksum over all words */
     for (i = 0; i < word_count; i++) {
-        sum += data[i];
+        sum += read_u16_le_save_header(data + i * 2);
     }
     return (uint16_t)(sum & 0xFFFF);
 }
@@ -262,7 +282,7 @@ int csb_v1_save_header_build(CSB_V1_SaveHeader *hdr,
                                uint32_t game_time,
                                uint32_t play_time_ms)
 {
-    uint16_t *obf;
+    uint8_t *obf;
     uint16_t key_index;
 
     if (!hdr) return -1;
@@ -284,7 +304,7 @@ int csb_v1_save_header_build(CSB_V1_SaveHeader *hdr,
     key_index = (uint16_t)csb_v1_save_header_get_key_index(magic);
 
     /* Build the obfuscated block (bytes 256-383, i.e. uint16_t[0-63]) */
-    obf = (uint16_t *)((uint8_t *)hdr + 256);
+    obf = (uint8_t *)hdr + 256;
     build_obfusc_block(obf, OBFUSC_WORD_COUNT, key_index);
     /* The last word of the obfuscated block is the checksum^key.
      * After build_obfusc_block finishes, word 127 holds sum^key. */
@@ -298,7 +318,7 @@ int csb_v1_save_header_build(CSB_V1_SaveHeader *hdr,
 int csb_v1_save_header_read(CSB_V1_SaveHeader *hdr,
                               const uint8_t *raw_512)
 {
-    uint16_t *obf;
+    uint8_t *obf;
     uint16_t key_index;
 
     if (!hdr || !raw_512) return -1;
@@ -312,10 +332,9 @@ int csb_v1_save_header_read(CSB_V1_SaveHeader *hdr,
     key_index = (uint16_t)csb_v1_save_header_get_key_index(hdr->Magic);
 
     /* Verify checksum over first 256 bytes (plain text) */
-    /* The obfuscated block is stored as hdr->ObfuscatedBlock[0-127].
-     * We access it via the raw uint16_t pointer on the struct. */
-    obf = hdr->ObfuscatedBlock;
-    (void)obf; /* suppress unused-var warning — needed for pointer arithmetic below */
+    /* CSB_V1_SaveHeader is packed. Keep the on-disk little-endian block byte
+     * addressed so strict-alignment hosts never dereference a packed member. */
+    obf = (uint8_t *)hdr + 256;
 
     /* The raw block was verified above. Deobfuscate it only for callers that
      * need the decoded header representation. */
@@ -327,10 +346,9 @@ int csb_v1_save_header_read(CSB_V1_SaveHeader *hdr,
 uint16_t csb_v1_save_header_compute_checksum(const uint8_t *raw_512)
 {
     uint16_t sum = 0;
-    const uint16_t *words = (const uint16_t *)(raw_512 + 256);
     int i;
     for (i = 0; i < 128; i++) {
-        sum += words[i];
+        sum += read_u16_le_save_header(raw_512 + 256 + i * 2);
     }
     return (uint16_t)(sum & 0xFFFF);
 }

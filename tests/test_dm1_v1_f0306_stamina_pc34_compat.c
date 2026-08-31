@@ -61,6 +61,15 @@ int main(void) {
     CHECK(result == 38,
           "Atari ST order: value=40,cur=45,half=50 -> 18+20 = 38");
 
+    /* Runtime source identity must select the same result without relying on
+     * the process-global test toggle. */
+    CHECK(F0306_CHAMPION_GetStaminaAdjustedValueForSource_Compat(
+              45, 50, 40, 1) == 38,
+          "Atari/FM-Towns source identity selects first-operand order");
+    CHECK(F0306_CHAMPION_GetStaminaAdjustedValueForSource_Compat(
+              45, 50, 40, 0) == 56,
+          "PC/Amiga source identity selects second-operand order");
+
     /* Edge cases: stamina = 0 */
     csb_v1_stamina_compiler_order_set(0);
     result = F0306_CHAMPION_GetStaminaAdjustedValue_Compat(0, 50, 40);

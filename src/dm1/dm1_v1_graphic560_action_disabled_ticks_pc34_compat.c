@@ -50,7 +50,6 @@ dm1_v1_graphic560_action_disabled_ticks_run_pc34(
     DM1_V1_G0491ResultPc34 *out)
 {
     int table_matches_declaration = 1;
-    int all_in_byte_range = 1;
     int lookup_function_correct = 1;
     int lookup_out_of_range_returns_minus_one = 1;
     int i;
@@ -65,10 +64,8 @@ dm1_v1_graphic560_action_disabled_ticks_run_pc34(
     }
     out->tableSize = kTableSize;
 
-    for (i = 0; i < kTableSize; ++i) {
-        if (s_g0491[i] > 255) all_in_byte_range = 0;
-    }
-    out->allInByteRange = all_in_byte_range;
+    /* The source table is uint8_t, so byte-range admission is structural. */
+    out->allInByteRange = 1;
 
     {
         static const unsigned char kExpected[kTableSize] = {

@@ -9532,6 +9532,21 @@ static int dm2_v1_boot_expand_hud_rect(const uint8_t *raw, size_t raw_size,
         current.y == 0 || !dm2_v1_boot_query_compressed_rect(raw, raw_size,
                                                   (uint16_t)current.y, &next) ||
         next.x != 9) return 0;
+    /* The common root -> marker form is exactly the uncomplicated
+     * DM2_QUERY_BLIT_RECT path: root `w,h` are its anchor, while the marker
+     * supplies the requested dimensions.  Do not add the root anchor a
+     * second time.  In particular the retail PC rect 7 root is
+     * (mode=1, link=3, x=0, y=40) and marker 3 is 224x136, so the source
+     * aperture is (0,40,224,136), not y=80. */
+    if (next.y == 0) {
+        if (current.x < 0 || current.x > 8 ||
+            current.w < 0 || current.h < 0) return 0;
+        out->x = current.w;
+        out->y = current.h;
+        out->w = next.w;
+        out->h = next.h;
+        return out->w > 0 && out->h > 0;
+    }
     anchor = current.x; x = current.w; y = current.h; w = next.w; h = next.h;
     for (int guard = 0; current.y != 0 && guard < 16; ++guard) {
         if (!dm2_v1_boot_query_compressed_rect(raw, raw_size,

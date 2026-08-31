@@ -20,9 +20,9 @@
 extern "C" {
 #endif
 
-/* CSB V1 teleporter-accessibility toggle.  Default 0
- * (DM1 PC 3.4: only Lord-tier creatures can teleport).
- * When 1, the source-locked CSB rule applies: Lord
+/* CSB V1 teleporter-accessibility toggle.  Default 1: this module is
+ * CSB-owned, so the source-locked CSB rule is active without a caller-side
+ * switch. A DM1-only comparison test may set 0. When 1, Lord
  * Chaos, Lord Order, Grey Lord, and Materializer can
  * use teleporters. */
 int  csb_v1_teleporter_access_get(void);
@@ -30,7 +30,7 @@ void csb_v1_teleporter_access_set(int enabled);
 
 /* Returns 1 when the supplied creature type can use
  * teleporters.  Uses csb_v1_teleporter_access_get() to
- * decide between CSB and DM1 accessibility lists. */
+ * decide between the CSB rule and an explicit DM1 comparison mode. */
 int  csb_v1_can_creature_use_teleporter(int creatureType);
 
 #ifdef __cplusplus

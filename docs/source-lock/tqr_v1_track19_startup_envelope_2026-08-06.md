@@ -12,6 +12,7 @@ palette ownership, or later-level runtime handoff.
 |---------|--------|------|-----|--------|
 | US Track 19 | `TQUS19.iso` | 5,984,256 | `51b40a17b92a30339957ba564aa0015c` | Envelope present |
 | JP Track 19 | `TQJP19.iso` | 6,291,456 | `f9f069a5e489b91207f3156059b756f1` | Envelope present |
+| JP Rev. 1 Track 19 raw BIN | `Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 19).bin` | 7,752,192 | `27d54f58154662885bb67d5967e5111e` | Same envelope after the CUE's 224-sector INDEX 00 pregap |
 | US retail Track 02 concatenation | `TQUS19.iso + TQUS02End.iso` | canonical image | `ceb02343868f80cec899e9b239aff2da` | Same envelope bytes |
 
 The Track 19 US and JP images both contain the exact 12-byte header at byte
@@ -38,3 +39,6 @@ source loader/disassembly supplies that consumer relation.
 
 The Track 19 inventory probe mutates one envelope byte for each real variant
 and requires validation to fail, preserving the fail-closed intake contract.
+For the JP Rev. 1 raw BIN, the product retains the physical source identity
+and performs the CUE-defined pregap/header removal only in memory before the
+same validation; it does not create an ISO file.

@@ -122,6 +122,10 @@ static void bind_raw_chest_data(struct DungeonThings_Compat* things,
         containerRaw[i * 8 + 1] = (unsigned char)(containers[i].next >> 8);
         containerRaw[i * 8 + 2] = (unsigned char)(containers[i].slot & 0xffu);
         containerRaw[i * 8 + 3] = (unsigned char)(containers[i].slot >> 8);
+        /* F0156/F0033 resolves the source icon from the raw eight-byte
+         * Container record, including its subtype byte.  Keep the test's
+         * decoded mirror and raw source record coherent. */
+        containerRaw[i * 8 + 4] = containers[i].type;
     }
     things->rawThingData[THING_TYPE_WEAPON] = weaponRaw;
     things->thingCounts[THING_TYPE_WEAPON] = weaponCount;
@@ -472,6 +476,27 @@ static void test_eye_switch_is_idempotent_when_already_open(void)
               "second eye click does not perturb chest B's source slot chain");
     ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), chestB,
               "leader hand still holds chest B after the second eye click");
+    ASSERT_EQ(state.v1EyePressActive, 1,
+              "C071 press latches the F0353 release route");
+
+    /* PANEL.C F0353 redraws F0347 on button-up.  Its F0334/F0342 sequence
+     * closes the transient eye chest and restores the action-hand chest by
+     * ordinary (non-eye) F0333, so C145 is visible again. */
+    ASSERT_EQ(M11_GameView_HandlePointerButtonRelease(
+                  &state, EYE_SCREEN_X, EYE_SCREEN_Y,
+                  DM1_V1_MOUSE_MASK_LEFT_PC34),
+              M11_GAME_INPUT_REDRAW,
+              "eye button release restores the normal action-hand panel");
+    ASSERT_EQ(state.v1EyePressActive, 0,
+              "F0353 clears the transient pressed-eye state");
+    ASSERT_EQ(M11_GameView_GetV1OpenChestThing(&state), chestA,
+              "F0347 closes eye chest B and restores action-hand chest A");
+    ASSERT_EQ(state.v1OpenChestOpenedByEye, 0,
+              "restored F0333 action-hand chest is not an eye-opened chest");
+    ASSERT_EQ(M11_GameView_GetV1InventorySlotIconIndex(
+                  &state, CHAMPION_SLOT_ACTION_HAND),
+              145,
+              "F0353 redraw restores the ordinary open-chest C145 icon");
 }
 
 int main(void)

@@ -263,6 +263,19 @@ static void test_scan_real_assets_by_hash_when_renamed(void)
     snprintf(graphics_src, sizeof(graphics_src), "%s", source.graphics_path);
     snprintf(dungeon_src, sizeof(dungeon_src), "%s", source.dungeon_path);
 
+    /* An archive-backed profile intentionally reports one outer path for
+     * both virtual members.  Copying that path twice as though it denoted
+     * loose GRAPHICS.DAT/DUNGEON.DAT files both fails and contradicts the
+     * runtime's in-memory archive contract.  The renamed-loose-file case is
+     * still exercised when the supplied authentic media is loose. */
+    if (strcmp(graphics_src, dungeon_src) == 0 ||
+        strstr(graphics_src, "::") != NULL ||
+        strstr(dungeon_src, "::") != NULL) {
+        printf("  SKIP: renamed-file hash scan requires loose source members; archive media stays in memory\n");
+        dm2_v1_boot_cleanup(&source);
+        return;
+    }
+
     snprintf(root, sizeof(root), "%s%sfirestaff-dm2-hash-rename-%ld",
              tmp, TEST_PATH_SEP, (long)TEST_GETPID());
     snprintf(graphics_dst, sizeof(graphics_dst), "%s%snot-a-dm2-name.gfx", root, TEST_PATH_SEP);
@@ -580,6 +593,7 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
     DM2_V1_RuntimeFrameOwnershipReceipt frame_ownership;
     DM2_V1_BootCreatureAtlasCaptureReceipt creature_atlas;
     DM2_V1_CompleteSupportReceipt complete_support;
+    DM2_V1_BootExpandedRectReceipt presentation_rect;
     unsigned char framebuffer[320 * 200];
     uint32_t typed_hash = 0u;
     uint32_t typed_bytes = 0u;
@@ -657,6 +671,24 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               typed_hash != 0u &&
               typed_bytes > 0u,
           "boot GDAT typed parser loads skproject dt07 interface action table");
+    memset(&presentation_rect, 0, sizeof(presentation_rect));
+    CHECK(dm2_v1_boot_query_expanded_rect_receipt(
+              launch.profile, 7u, &presentation_rect) == 1 &&
+              presentation_rect.valid == 1 &&
+              presentation_rect.rect_id == 7u &&
+              presentation_rect.rect.x == 0 &&
+              presentation_rect.rect.y == 40 &&
+              presentation_rect.rect.w == 224 &&
+              presentation_rect.rect.h == 136 &&
+              presentation_rect.raw4_bytes != NULL &&
+              presentation_rect.raw4_byte_count > 0u &&
+              presentation_rect.raw4_hash != 0u &&
+              presentation_rect.receipt_hash != 0u,
+          "real GRAPHICS.DAT RAW4 rect 7 owns the 224x136 DM2 backbuffer aperture");
+    printf("  INFO: real DM2 rect7 destination=(%d,%d) size=%dx%d raw4=%08x receipt=%08x\n",
+           presentation_rect.rect.x, presentation_rect.rect.y,
+           presentation_rect.rect.w, presentation_rect.rect.h,
+           presentation_rect.raw4_hash, presentation_rect.receipt_hash);
     CHECK(dm2_v1_boot_gdat_typed_raw_asset_proof(
               launch.profile,
               DM2_GDAT_CATEGORY_INTERFACE_GENERAL,

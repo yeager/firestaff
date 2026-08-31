@@ -6874,6 +6874,12 @@ static int csb_v1_runtime_fill_defender_combat_snapshot(
         champion,
         CSB_V1_STAT_WIS,
         CSB_V1_STAT_CUR);
+    /* BUG0_41 is the Megamax-generated Atari executable behaviour.  CSB
+     * ST 2.0/2.1 therefore preserves it, while PC, Amiga and FM Towns use
+     * their respective compiler output and retain the actual statistic. */
+    out->preserveMegamaxF0307Bug =
+        profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+        profile->variant_id == CSB_V1_VARIANT_ST21_EN;
     out->statisticLuck = csb_v1_runtime_stat_or_default(
         champion,
         CSB_V1_STAT_LUCK,
@@ -13673,7 +13679,7 @@ int csb_v1_runtime_f0141_g0209_object_info_receipt_pc34(
     record = csb_v1_dungeon_get_thing_record(
         dungeon, thing, &thing_type, &thing_index, &record_size);
     if (!record || record_size < 4 ||
-        thing_type != THING_GET_TYPE(thing)) {
+        thing_type != (int)THING_GET_TYPE(thing)) {
         return 0;
     }
     record_offset = (int)(record - dungeon->raw_data);
@@ -22960,7 +22966,10 @@ static int csb_v1_runtime_persist_csbwin_localstate1_dsa(
                 }
                 words = csb_v1_runtime_read_le32(
                     candidate->csbwin_appended_tail + offset + 4u);
-                if ((size_t)words > (SIZE_MAX - 8u) / 2u) return 0;
+                /* `words` is a bounded uint32_t record field. On every
+                 * supported host, its two-byte payload plus header fits in
+                 * size_t; retain the subsequent source-payload bound check
+                 * rather than an always-false size_t guard. */
                 byte_count = (size_t)words * 2u;
                 if (byte_count > report.dsa_payload_offset +
                         report.dsa_payload_size - offset - 8u) {

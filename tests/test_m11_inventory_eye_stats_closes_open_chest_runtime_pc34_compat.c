@@ -12,6 +12,7 @@
 #include "m11_game_view.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "dm1_v1_chest_admission_f0333_f0334_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -99,6 +100,12 @@ static void seed_open_chest_world(M11_GameViewState* state,
 
     for (i = 0; i < SEEDED_CHEST_CHAIN_COUNT; ++i) {
         weaponThings[i] = (unsigned short)((THING_TYPE_WEAPON << 10) | i);
+    }
+    /* Establish every raw Thing identity before linking the source chain.
+     * Linking during the identity loop reads uninitialized weaponThings[i+1]
+     * and creates a zero terminator rather than the intended ninth-object
+     * tail, so it no longer represents a C09/F0333-admissible chest. */
+    for (i = 0; i < SEEDED_CHEST_CHAIN_COUNT; ++i) {
         weapons[i].type = 8; /* Dagger row: container-compatible object. */
         weapons[i].next = (i + 1 < SEEDED_CHEST_CHAIN_COUNT)
             ? weaponThings[i + 1]
@@ -124,9 +131,15 @@ static void test_empty_hand_eye_stats_closes_open_chest_and_truncates_tail(void)
     struct DungeonContainer_Compat containers[1];
     unsigned short weaponThings[SEEDED_CHEST_CHAIN_COUNT];
     unsigned short chestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
+    DM1_ChestAdmissionReceiptF0333F0334Pc34 admission;
 
     seed_open_chest_world(&state, &things, weapons, containers,
                           chestThing, weaponThings);
+
+    memset(&admission, 0, sizeof(admission));
+    ASSERT_TRUE(dm1_v1_chest_open_admit_f0333_pc34(
+                    &things, chestThing, &admission) && admission.valid,
+                "fixture is a source-admissible C09 chest chain");
 
     ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
               "action-hand chest opens before empty-hand eye stats route");

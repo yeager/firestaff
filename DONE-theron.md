@@ -30,3 +30,10 @@ Reviewed 2026-08-29. Completed work only.
   `theron-startup-2`. CloneCD's missing 225-sector pregap has a separate,
   source-verified anchor map—no pregap or game media is synthesized or
   written to disk.
+
+- The supplied Japanese Rev 1 Track 19 raw BIN is admitted directly from its
+  CUE-defined MODE1/2352 representation. Firestaff retains its physical MD5
+  (`27d54f58154662885bb67d5967e5111e`), skips the authentic 224-sector
+  INDEX 00 pregap only while reading in memory, and validates the same
+  3,072-sector user-data payload's item, level-label, property, and startup
+  envelope receipts. No ISO projection or extracted copy is written to disk.

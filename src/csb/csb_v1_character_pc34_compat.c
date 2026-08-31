@@ -249,8 +249,10 @@ static int16_t csb_v1_champion_stamina_adjusted_value(
  *   base = (STR_CURRENT << 3) + 100
  *   base = F0306_CHAMPION_GetStaminaAdjustedValue(c, base)
  *   base += 9; base -= base % 10
- * CSB V1's CSB_V1_Champion struct now models Wounds; the feet-slot
- * Elven Boots icon override remains a later inventory-icon bridge.
+ * CSB V1's standalone CSB_V1_Champion snapshot models Wounds. The live
+ * runtime owns the source C05 icon lookup in
+ * csb_v1_runtime_champion_maximum_load_pc34_compat; it is intentionally not
+ * guessed from a bare THING value here.
  * Source: ReDMCSB CHAMPION.C F0309 lines 1157-1178. */
 unsigned int csb_v1_champion_get_maximum_load(const CSB_V1_Champion *c)
 {
@@ -281,8 +283,9 @@ unsigned int csb_v1_champion_get_maximum_load(const CSB_V1_Champion *c)
  *   [-1 if wearing Boot of Speed in C05]
  * The result is consumed by the dungeon tick scheduler (F0235_TIMELINE_ProcessTick)
  * to decide how long the party waits between footstep tiles. CSB V1
- * now models Wounds; feet-slot Boot of Speed remains a later inventory-icon
- * bridge.  NULL champion returns 2 (the
+ * now models Wounds. The live runtime owns the source C05 Boot of Speed icon
+ * lookup; this bare snapshot API cannot infer an icon from a THING value.
+ * NULL champion returns 2 (the
  * MaxLoad > Load default when MaxLoad=0 is unreachable; we mirror the
  * BUG0_72 branch entry for any non-overloaded champion).
  * Source: ReDMCSB CHAMPION.C F0310 lines 1180-1214. */

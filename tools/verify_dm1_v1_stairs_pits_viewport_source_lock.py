@@ -6,9 +6,10 @@ import argparse
 import json
 from pathlib import Path
 from typing import Any
+from redmcsb_source import source_root
 
 ROOT = Path(__file__).resolve().parents[1]
-REDMCSB_SOURCE = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+REDMCSB_SOURCE = source_root(("CLIKMENU.C", "DUNGEON.C", "DUNVIEW.C"))
 DEFAULT_OUT = ROOT / "parity-evidence/verification/dm1_v1_stairs_pits_viewport_source_lock.json"
 
 def read(path: Path) -> str:

@@ -1,6 +1,6 @@
 {
   "schema": "dm1_v1_hall_walkaround_source_lock.v1",
-  "redmcsb_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsb_root": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "source_checks": [
     {
       "citation": "LOADSAVE.C:1940-1944",

@@ -3408,17 +3408,11 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_face_material_retail_corpus.c")
     add_executable(test_nexus_v1_dgn_face_material_retail_corpus
         tests/test_nexus_v1_dgn_face_material_retail_corpus.c
-        src/nexus/nexus_v1_dgn_face_material_provenance.c
-        src/nexus/nexus_v1_dgn_mesh.c
-        src/nexus/nexus_v1_dgn_texture_decode.c
-        src/nexus/nexus_v1_dungeon.c
-        src/nexus/nexus_v1_prs3_vdp1_consumer_evidence.c
-        src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_dgn_face_material_retail_corpus PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
-    target_link_libraries(test_nexus_v1_dgn_face_material_retail_corpus PRIVATE firestaff_zip_extract)
+    target_link_libraries(test_nexus_v1_dgn_face_material_retail_corpus PRIVATE firestaff_nexus)
     if(NOT MSVC)
         target_compile_options(test_nexus_v1_dgn_face_material_retail_corpus PRIVATE
             -std=c99 -Wall -Wextra -Werror -pedantic
@@ -10847,10 +10841,10 @@ if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_champion_stat_determinism_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
-# CSB V1 Hint Oracle real Utility Disk HCSB.HTC scan/cache handoff.
+# CSB V1 Hint Oracle real Utility Disk HCSB.HTC scan/RAM handoff.
 # Hash-based discovery of a real HCSB.HTC in the user's data tree,
-# virtual-path materialization into a local asset cache, and parser
-# round-trip on the discovered file. Skip-safe on hosts without a
+# direct virtual-member reads into bounded RAM, and parser round-trip
+# on the discovered file. Skip-safe on hosts without a
 # known HCSB.HTC.
 #
 # Source-lock:
@@ -10889,6 +10883,8 @@ add_executable(firestaff_csb_v1_hint_oracle_dat_real_probe
 )
 target_include_directories(firestaff_csb_v1_hint_oracle_dat_real_probe
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(firestaff_csb_v1_hint_oracle_dat_real_probe
+    PRIVATE firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_hint_oracle_dat_real_probe
         PRIVATE -Wall -Wextra -O2)
@@ -12391,6 +12387,9 @@ if(BUILD_TESTING)
             COMMAND test_m11_dm1_real_alcove_item_runtime_pc34
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
+        set_tests_properties(m11_dm1_real_alcove_item_runtime_pc34 PROPERTIES
+            ENVIRONMENT "FIRESTAFF_DM1_DATA_DIR=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
+            LABELS "dm1;dos;pc34;real-media;in-memory;objects;inventory;skip-safe")
     endif()
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_source_item_name_guard.c")
@@ -17651,6 +17650,7 @@ endif()
     )
     set_tests_properties(csb_v1_m11_prison_runtime_hud_pc34 PROPERTIES
         SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_CSB_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx;FIRESTAFF_CSB_ATARI_MINI=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx::MINI.DAT"
         LABELS "csb;real_data;m11;hud")
     # The stock CSBWin corpus is optional.  Its wrapper stages only explicitly
     # supplied user media and otherwise skips; unlike the title-only row above,
@@ -17735,7 +17735,7 @@ endif()
     )
     set_tests_properties(csb_v1_amiga_native_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "tier2;csb;amiga;startup;cli;real_data;skip_safe"
+        LABELS "tier2;csb;amiga;startup;cli;real-data;real-media;skip-safe"
         ENVIRONMENT "FIRESTAFF_CSB_AMIGA31_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip"
         # Eight independent title-to-runtime probes read the original A31
         # archive afresh; retain a margin above the observed real-media run.
@@ -17748,7 +17748,7 @@ endif()
     )
     set_tests_properties(csb_v1_amiga_adf_archive_cli_boot PROPERTIES
         SKIP_RETURN_CODE 77
-        LABELS "tier2;csb;amiga;startup;cli;menu;real_data;archive;native;skip_safe"
+        LABELS "tier2;csb;amiga;startup;cli;menu;real-data;real-media;archive;native;skip-safe"
         ENVIRONMENT "FIRESTAFF_CSB_AMIGA_ADF_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back (FTL).zip"
         TIMEOUT 45
     )
@@ -17804,15 +17804,17 @@ endif()
         COMMAND test_csb_v1_m11_prison_runtime_hud_pc34
     )
     set_tests_properties(csb_v20_m11_prison_runtime_hud_pc34 PROPERTIES
-        ENVIRONMENT "FIRESTAFF_CSB_PRESENTATION_MODE=1"
-        LABELS "csb;real_data;m11;hud;v20")
+        ENVIRONMENT "FIRESTAFF_CSB_PRESENTATION_MODE=1;FIRESTAFF_CSB_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx;FIRESTAFF_CSB_ATARI_MINI=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx::MINI.DAT"
+        SKIP_RETURN_CODE 77
+        LABELS "csb;real_data;m11;hud;v20;skip_safe")
     add_test(
         NAME csb_v21_m11_prison_runtime_hud_pc34
         COMMAND test_csb_v1_m11_prison_runtime_hud_pc34
     )
     set_tests_properties(csb_v21_m11_prison_runtime_hud_pc34 PROPERTIES
-        ENVIRONMENT "FIRESTAFF_CSB_PRESENTATION_MODE=2"
-        LABELS "csb;real_data;m11;hud;v21")
+        ENVIRONMENT "FIRESTAFF_CSB_PRESENTATION_MODE=2;FIRESTAFF_CSB_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx;FIRESTAFF_CSB_ATARI_MINI=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx::MINI.DAT"
+        SKIP_RETURN_CODE 77
+        LABELS "csb;real_data;m11;hud;v21;skip_safe")
 
     add_executable(test_csb_v1_m11_csbwin_timer_queue_resume
         tests/test_csb_v1_m11_csbwin_timer_queue_resume.c
@@ -21378,8 +21380,8 @@ endif()
         COMMAND test_dm2_v1_sound_playback_sdl
     )
     set_tests_properties(dm2_v1_sound_playback_sdl PROPERTIES
-        ENVIRONMENT "SDL_AUDIODRIVER=dummy"
-        LABELS "dm2;v1;sound;playback"
+        ENVIRONMENT "SDL_AUDIODRIVER=dummy;FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "dm2;v1;sound;playback;dos;real-media;in-memory;skip-safe"
     )
 
     # ── DM2 V1 Phase 5: Combat resolver (creature/combat parity) ──
@@ -23569,6 +23571,9 @@ endif()
         COMMAND firestaff_dm2_v1_draw_item_source_pass_probe
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
+    set_tests_properties(dm2_v1_draw_item_source_pass_probe PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "dm2;dos;viewport;objects;real-media;in-memory;skip-safe")
 
     add_executable(firestaff_dm2_v1_static_object_pixel_probe
         probes/dm2/firestaff_dm2_v1_static_object_pixel_probe.c
@@ -23589,6 +23594,9 @@ endif()
         COMMAND firestaff_dm2_v1_static_object_pixel_probe
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
+    set_tests_properties(dm2_v1_static_object_pixel_probe PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DM2_DOS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+        LABELS "dm2;dos;viewport;objects;real-media;in-memory;skip-safe")
 
     add_executable(test_dm2_v1_weather_gdat_receipt
         tests/test_dm2_v1_weather_gdat_receipt.c
@@ -24891,6 +24899,22 @@ endif()
         NAME csb_v1_reincarnation_penalty_pc34_compat
         COMMAND test_csb_v1_reincarnation_penalty_pc34_compat
     )
+
+    # C161 is compiled differently by the original PC, Atari ST, and
+    # Amiga/FM Towns packages.  Keep those source-media branches pinned;
+    # this state-only regression never substitutes fixture media for a game.
+    add_executable(test_csb_v1_reincarnation_media_branch_pc34_compat
+        tests/test_csb_v1_reincarnation_media_branch_pc34_compat.c)
+    target_include_directories(test_csb_v1_reincarnation_media_branch_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_reincarnation_media_branch_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_reincarnation_media_branch_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME csb_v1_reincarnation_media_branch_pc34_compat
+        COMMAND test_csb_v1_reincarnation_media_branch_pc34_compat)
+    set_tests_properties(csb_v1_reincarnation_media_branch_pc34_compat PROPERTIES
+        LABELS "csb;champion;reincarnation;atari;amiga;fmtowns;source_lock")
 
     # Bug C regression: csb_v1_save_game must self-heal the save
     # directory tree (and the parent of a custom save path) via
@@ -31071,6 +31095,9 @@ endif()
         NAME csb_v2_lighting_dynamic_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v2_lighting_dynamic_source_lock.py
     )
+    set_tests_properties(csb_v2_lighting_dynamic_source_lock PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_REDMCSB_SOURCE=${CMAKE_CURRENT_SOURCE_DIR}/reference/redmcsb-20210206/Toolchains/Common/Source")
     add_test(
         NAME csb_v2_phase7_verification
         COMMAND test_csb_v2_phase7_verification
@@ -31079,6 +31106,9 @@ endif()
         NAME csb_v2_phase7_verification_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_csb_v2_phase7_verification_source_lock.py
     )
+    set_tests_properties(csb_v2_phase7_verification_source_lock PROPERTIES
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_REDMCSB_SOURCE=${CMAKE_CURRENT_SOURCE_DIR}/reference/redmcsb-20210206/Toolchains/Common/Source")
     add_test(
         NAME dm1_v2_touch_controller_affordance_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_touch_controller_affordance_source_lock.py
@@ -38515,6 +38545,24 @@ if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     set_tests_properties(pass577_dm1_v1_d0_d1_visible_square_draw_order_source_lock PROPERTIES TIMEOUT 75)
 endif()
 
+# These source-lock scripts execute a focused C binary.  Bind that binary to
+# the active CTest build tree rather than accepting a stale in-tree `build/`
+# directory left by another configuration.
+set_tests_properties(
+    pass510_dm1_v1_viewport_wall_parity_flip_source_lock
+    pass515_dm1_v1_d0_side_wall_occlusion_source_lock
+    pass516_dm1_v1_d1_d0_wall_occlusion_source_lock
+    pass583_dm1_v1_d0_side_field_occlusion_source_lock
+    pass519_dm1_v1_d1c_door_front_field_source_lock
+    pass560_dm1_v1_mirrored_door_front_source_lock
+    pass561_dm1_v1_far_door_front_source_lock
+    pass562_dm1_v1_d2_far_side_wall_source_lock
+    pass563_dm1_v1_d1_side_wall_source_lock
+    pass565_dm1_v1_d1_side_door_front_source_lock
+    pass570_dm1_v1_d2c_front_order_source_lock
+    pass577_dm1_v1_d0_d1_visible_square_draw_order_source_lock
+    PROPERTIES ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_BINARY_DIR}")
+
 # ── DM1 V1 viewport/wall same-frame blocker gate ──────────────────
 if(BUILD_TESTING AND Python3_Interpreter_FOUND)
     add_test(
@@ -40661,11 +40709,18 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/csb/csb_v1_dungeon_loader_pc34_compat.c
         src/dm1/dm1_v1_random_ornament_pc34_compat.c
         src/memory/memory_dungeon_dat_pc34_compat.c
+        # csb_v1_dungeon_load_from_file admits archive members directly in
+        # memory via asset_read_virtual_path_alloc(); keep the test link
+        # complete rather than falling back to extracted fixture media.
+        src/shared/asset_find_by_hash.c
         src/shared/dungeon_decompressor_ftl.c
         src/shared/fs_portable_compat.c
     )
     target_include_directories(test_csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat PRIVATE
+        firestaff_zip_extract
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat PRIVATE
@@ -41108,6 +41163,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_csb_v1_atari_save_decode_pc34_compat)
     set_tests_properties(csb_v1_atari_save_decode_pc34_compat PROPERTIES
         SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_CSB_ATARI_MINI=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx::MINI.DAT"
         LABELS "tier2;csb;save;real_data;skip_safe")
     add_executable(test_csb_v1_atari_save_runtime_handoff_pc34_compat
         tests/test_csb_v1_atari_save_runtime_handoff_pc34_compat.c
@@ -41123,7 +41179,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     add_test(NAME csb_v1_atari_save_runtime_handoff_pc34_compat
         COMMAND test_csb_v1_atari_save_runtime_handoff_pc34_compat)
     set_tests_properties(csb_v1_atari_save_runtime_handoff_pc34_compat PROPERTIES
-        ENVIRONMENT "FIRESTAFF_CSB_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/csb-atari-save-handoff"
+        ENVIRONMENT "FIRESTAFF_CSB_TEST_SCRATCH=${CMAKE_CURRENT_BINARY_DIR}/csb-atari-save-handoff;FIRESTAFF_CSB_ATARI_MINI=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx::MINI.DAT"
         LABELS "tier2;csb;save;runtime;real_data;skip_safe")
 
     # CSB Hint Oracle UI/runtime binding surface.
@@ -41486,12 +41542,22 @@ add_executable(test_nexus_v1_dgn_material_raster
     target_include_directories(test_firestaff_amg_decode PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_firestaff_amg_decode PRIVATE firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_firestaff_amg_decode PRIVATE -std=c99 -Wall -Wextra -pedantic -O2)
     endif()
     add_test(
         NAME firestaff_amg_decode_unit
         COMMAND test_firestaff_amg_decode
+    )
+    add_test(
+        NAME csb_v1_amiga_amg_real_media
+        COMMAND test_firestaff_amg_decode
+    )
+    set_tests_properties(csb_v1_amiga_amg_real_media PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "csb;amiga;audio;real_data;in_memory;skip_safe"
+        ENVIRONMENT "FIRESTAFF_CSB_AMIGA_AMG_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back (FTL).zip"
     )
 
     # ── FM Towns BIN/CUE and ISO/CUE redump-layout classifier ─────
@@ -41902,6 +41968,7 @@ if(BUILD_TESTING)
             COMMAND firestaff_csb_v1_hint_oracle_real_htc_scan_probe
         )
         set_tests_properties(csb_v1_hint_oracle_real_htc_scan PROPERTIES
+            ENVIRONMENT "FIRESTAFF_CSB_HTC_DATA=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx"
             LABELS "tier2;csb;hint_oracle;real_data;skip_safe"
             TIMEOUT 120
         )
@@ -41916,6 +41983,7 @@ if(BUILD_TESTING)
             COMMAND firestaff_csb_v1_hint_oracle_dat_real_probe
         )
         set_tests_properties(csb_v1_hint_oracle_dat_real PROPERTIES
+            ENVIRONMENT "FIRESTAFF_CSB_HCSB_DAT=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx::HCSB.DAT"
             LABELS "tier2;csb;hint_oracle;real_data;skip_safe"
         )
     endif()
@@ -41926,6 +41994,7 @@ if(BUILD_TESTING)
             COMMAND firestaff_csb_v1_hint_oracle_dat_real_scan_probe
         )
         set_tests_properties(csb_v1_hint_oracle_dat_real_scan PROPERTIES
+            ENVIRONMENT "FIRESTAFF_CSB_HCSB_DAT_DATA=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx"
             LABELS "tier2;csb;hint_oracle;real_data;skip_safe"
             TIMEOUT 120
         )
@@ -41948,6 +42017,7 @@ if(BUILD_TESTING)
             COMMAND firestaff_csb_v1_hint_oracle_ui_runtime_binding_probe
         )
         set_tests_properties(csb_v1_hint_oracle_ui_runtime_binding PROPERTIES
+            ENVIRONMENT "FIRESTAFF_CSB_HTC_DATA=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx"
             LABELS "tier2;csb;hint_oracle;real_data;skip_safe"
             TIMEOUT 120
         )
@@ -41962,6 +42032,7 @@ if(BUILD_TESTING)
             COMMAND firestaff_csb_v1_hint_oracle_ui_panel_probe
         )
         set_tests_properties(csb_v1_hint_oracle_ui_panel PROPERTIES
+            ENVIRONMENT "FIRESTAFF_CSB_HTC_DATA=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx"
             LABELS "tier2;csb;hint_oracle;real_data;skip_safe"
             TIMEOUT 120
         )
@@ -41979,6 +42050,7 @@ if(BUILD_TESTING)
             COMMAND firestaff_csb_v1_hint_oracle_htc_variant_probe
         )
         set_tests_properties(csb_v1_hint_oracle_htc_variant PROPERTIES
+            ENVIRONMENT "FIRESTAFF_CSB_HTC_DATA=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back Utility.stx"
             LABELS "tier2;csb;hint_oracle;real_data;skip_safe"
             TIMEOUT 120
         )
@@ -55275,14 +55347,19 @@ endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_portrait.c")
     add_executable(test_csb_v1_fmtowns_portrait
-        tests/test_csb_v1_fmtowns_portrait.c
-        src/csb/csb_v1_fmtowns_portrait.c)
+        tests/test_csb_v1_fmtowns_portrait.c)
     target_include_directories(test_csb_v1_fmtowns_portrait PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_fmtowns_portrait PRIVATE
+        firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_fmtowns_portrait PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_fmtowns_portrait COMMAND test_csb_v1_fmtowns_portrait)
-    set_tests_properties(csb_v1_fmtowns_portrait PROPERTIES LABELS "csb;fmtowns")
+    set_tests_properties(csb_v1_fmtowns_portrait PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "csb;fmtowns;real-media;in-memory;native;skip_safe"
+        ENVIRONMENT
+            "FIRESTAFF_CSB_FMTOWNS_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip;FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE=en")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_anm.c")
@@ -59748,6 +59825,7 @@ target_link_libraries(test_csb_v1_amiga_titl_dat PRIVATE firestaff_m10)
 add_test(NAME csb_v1_amiga_titl_dat COMMAND test_csb_v1_amiga_titl_dat)
 set_tests_properties(csb_v1_amiga_titl_dat PROPERTIES
     SKIP_RETURN_CODE 77
+    ENVIRONMENT "FIRESTAFF_CSB_AMIGA_TITL=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back (FTL).zip::Chaos Strikes Back (FTL) B.adf::TITL.DAT"
     LABELS "csb;amiga;real_data;title")
 
 add_executable(test_csb_v1_amiga_appb_selection
@@ -59758,6 +59836,7 @@ target_link_libraries(test_csb_v1_amiga_appb_selection PRIVATE firestaff_m10)
 add_test(NAME csb_v1_amiga_appb_selection COMMAND test_csb_v1_amiga_appb_selection)
 set_tests_properties(csb_v1_amiga_appb_selection PROPERTIES
     SKIP_RETURN_CODE 77
+    ENVIRONMENT "FIRESTAFF_CSB_AMIGA_APPB=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Dungeon-Master-Chaos-Strikes-Back---Expansion-Set-1_Amiga_EN.zip::DM Chaos Strikes Back/DM Chaos Strikes Back - Disk 1.adf::APPB.FTL"
     LABELS "csb;amiga;real_data;startup")
 
 add_executable(test_csb_v1_amiga_dungeon_probe tests/test_csb_v1_amiga_dungeon_probe.c)
@@ -59766,6 +59845,7 @@ target_link_libraries(test_csb_v1_amiga_dungeon_probe PRIVATE firestaff_m10)
 add_test(NAME csb_v1_amiga_dungeon_probe COMMAND test_csb_v1_amiga_dungeon_probe)
 set_tests_properties(csb_v1_amiga_dungeon_probe PROPERTIES
     SKIP_RETURN_CODE 77
+    ENVIRONMENT "FIRESTAFF_CSB_AMIGA_DUNGEON=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back (FTL).zip::Chaos Strikes Back (FTL) A.adf::DUNGEON.DAT"
     LABELS "csb;amiga;real_data")
 
 add_executable(test_csb_v1_dungeon_world_pc34_compat

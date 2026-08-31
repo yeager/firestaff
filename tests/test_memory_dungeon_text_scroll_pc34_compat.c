@@ -119,7 +119,7 @@ static void test_symbol_escape_uses_redmcsb_table(void) {
     struct DungeonTextString_Compat textStrings[1];
     struct DungeonScroll_Compat scrolls[1];
     struct DungeonTextTable_Compat table;
-    unsigned short textData[2];
+    unsigned short textData[3];
     char decoded[64];
 
     seed_things(&things, textStrings, scrolls, textData);

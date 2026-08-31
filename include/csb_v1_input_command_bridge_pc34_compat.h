@@ -29,8 +29,9 @@
  * not claim full CSB playability, full mouse support, or full movement
  * semantics; it proves the menu input reaches the runtime command queue,
  * TURN_LEFT/TURN_RIGHT reaches the CSB runtime party state, and C003..C006
- * movement can apply one bounded dungeon-aware step.  Broader playability
- * remains an active TODO and is intentionally out of scope here.
+ * movement can apply one bounded dungeon-aware step.  Broader CSB gameplay
+ * is owned by the M11-specific command, panel, and dungeon routes; it is not
+ * a responsibility of this deliberately narrow translation helper.
  */
 
 #include "csb_v1_runtime_pc34_compat.h"

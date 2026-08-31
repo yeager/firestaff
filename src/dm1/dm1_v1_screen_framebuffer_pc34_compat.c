@@ -9,34 +9,39 @@
  *   DM.C/INIT.C: initial framebuffer clear
  *   VBLANK.C: present timing
  *
- * Default DM1 palette: the original Atari ST 16-color palette.
- * Values are 3-bit per channel (0-7) scaled to 6-bit (0-63).
+ * Default PC 3.4 palette: ReDMCSB's G0347 top/bottom-screen palette.
+ * The original record is RGB4; the compatibility framebuffer exposes DAC6
+ * channels, so each source nibble is left-expanded without interpolation.
  */
 
-/* Default DM1 Atari ST palette (approximation, 6-bit per channel) */
-static const DM1_V1_PaletteEntryPc34 s_defaultPalette[DM1_V1_PALETTE_SIZE_PC34] = {
-    { 0,  0,  0},  /*  0: black */
-    { 4,  4,  4},  /*  1: dark gray */
-    { 8,  8,  8},  /*  2: medium gray */
-    {16, 16, 16},  /*  3: light gray */
-    {24, 16,  8},  /*  4: brown */
-    {32, 24, 16},  /*  5: light brown */
-    {40, 32, 24},  /*  6: tan */
-    {48, 40, 32},  /*  7: cream */
-    {16,  8,  0},  /*  8: dark brown */
-    {24, 12,  0},  /*  9: medium brown */
-    {32, 20,  4},  /* 10: golden brown */
-    {40, 28, 12},  /* 11: light golden */
-    { 8,  8, 16},  /* 12: dark blue-gray */
-    {16, 16, 24},  /* 13: blue-gray */
-    {24, 24, 32},  /* 14: light blue-gray */
-    {63, 63, 63},  /* 15: white */
+/* ReDMCSB DATA.C:216-217 / PALETTE.C:38-41, I34E PC 3.4.  This is
+ * source material, not a guessed Atari palette. */
+static const uint16_t s_pc34_top_bottom_palette_rgb4[
+    DM1_V1_PALETTE_SIZE_PC34] = {
+    0x000u, 0x666u, 0x888u, 0x620u, 0x0CCu, 0x840u, 0x080u, 0x0C0u,
+    0xF00u, 0xFA0u, 0xC86u, 0xFF0u, 0x444u, 0xAAAu, 0x00Fu, 0xFFFu
 };
+
+static DM1_V1_PaletteEntryPc34 palette_entry_from_rgb4(uint16_t rgb4)
+{
+    DM1_V1_PaletteEntryPc34 entry;
+    /* RGB4 nibbles are the original palette representation.  The host's
+     * DAC6 representation preserves each nibble exactly in bits 5..2. */
+    entry.r = (uint8_t)(((rgb4 >> 8) & 0x0Fu) << 2);
+    entry.g = (uint8_t)(((rgb4 >> 4) & 0x0Fu) << 2);
+    entry.b = (uint8_t)((rgb4 & 0x0Fu) << 2);
+    return entry;
+}
 
 void DM1_V1_Screen_InitPc34Compat(DM1_V1_ScreenStatePc34 *s)
 {
+    int index;
+    if (!s) return;
     memset(s, 0, sizeof(*s));
-    memcpy(s->palette, s_defaultPalette, sizeof(s_defaultPalette));
+    for (index = 0; index < DM1_V1_PALETTE_SIZE_PC34; ++index) {
+        s->palette[index] = palette_entry_from_rgb4(
+            s_pc34_top_bottom_palette_rgb4[index]);
+    }
 }
 
 uint8_t *DM1_V1_Screen_GetBackBufferPc34Compat(DM1_V1_ScreenStatePc34 *s)
@@ -138,11 +143,11 @@ const char *DM1_V1_Screen_SourceEvidencePc34Compat(void)
 {
     return
         "ReDMCSB WIP20210206\n"
-        "PALETTE.C F0093: set single palette entry (3-bit ST → 6-bit).\n"
+        "PALETTE.C F0093: set single palette entry.\n"
         "PALETTE.C F0094: set palette block.\n"
         "DM.C/INIT.C: initial framebuffer allocation and clear.\n"
         "VBLANK.C: present timing synchronized to vertical blank.\n"
         "320x200 8-bit indexed framebuffer, 16-color palette.\n"
         "Double-buffered: draw to back, present copies to front.\n"
-        "Default palette: DM1 Atari ST dungeon colors (gray/brown/cream).";
+        "Default palette: PC 3.4 G0347 top/bottom RGB4 values, expanded to DAC6.";
 }

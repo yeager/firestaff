@@ -1,12 +1,12 @@
 # CSB V1 parity matrix
 
-Last updated: 2026-08-11
+Last updated: 2026-08-31
 
 Scope: conservative CSB V1 definition-of-done matrix for the Atari ST v2.x lane. This matrix recognizes the hash-matched M12 launch/profile boundary plus CTest-wired compatibility-fixture boot/runtime/input/save/Utility/first-viewport/multi-step slices, including a wall-blocked step and bounded save-prefix roundtrip after the final route state. The historical PC34-compatible test names are source-reference/fixture evidence only: CSB has no original DOS/PC edition. Broad real-data playability, CSBGAME.DAT save compatibility, New Adventure capture, original-overlay parity, and pixel parity still require their own gates.
 
-Primary references stay local on N2:
+Primary references are audit-only and are never runtime dependencies:
 
-- ReDMCSB: `~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/`
+- ReDMCSB WIP source: `reference/redmcsb-20210206/Toolchains/Common/Source/` (or an operator-maintained override through `FIRESTAFF_REDMCSB_SOURCE`)
 - CSB lineage: `~/.openclaw/data/firestaff-csb-source/CSB/src/`
 - CSBWin mirror: `~/.openclaw/data/firestaff-csbwin-source/CSBWin/`
 - Original anchors: `~/.openclaw/data/firestaff-original-games/DM/_canonical/csb/`
@@ -32,6 +32,19 @@ Primary references stay local on N2:
 - pass547_csb_v1_runtime_readiness_backfill now verifies the retired launch-readiness blocker: M12 admits CSB launch intent for matched assets, M11 hands CSB to `FS_GAME_CSB`, and the legacy-named `csb_v1_pc_real_asset_launch` test proves only a PC34-compatible fixture boundary. It must not be read as a PC CSB media claim; it remains a readiness boundary, not a full runtime/render/gameplay/pixel-parity claim.
 - `csb_v1_boot_runtime_handoff` is the composed CTest spine for the current partial runtime score. It proves verified profile -> runtime dungeon handle -> imported party -> leader/rotation runtime state -> one deterministic tick -> Utility `NEW_GAME` handoff. It remains synthetic-data evidence; it does not claim real-data CSB playability, original capture, or pixel parity.
 - The current fast CSB runtime/viewport smoke suite is `csb_v1_pc_real_asset_launch`, `csb_v1_pc34_quickplay_dungeon_handle`, `csb_v1_first_viewport_frame`, `csb_v1_boot_runtime_handoff`, and `csb_v1_runtime_route_first_frame_movement_utility_gate`. These CTests are self-contained instead of linking the broad `firestaff_m10` library. Together they prove compatibility-fixture scan/boot/tick, verified dungeon-handle survival/rescan cleanup, first M11 viewport-frame render entry, composed runtime/Utility handoff, and rejection of a hand-written dungeon plus marker-only graphics fixture. They must never be treated as a CSB PC release or playable original-media route. They still do not claim end-to-end CSB playability, original capture, full save compatibility, or pixel parity.
+
+## Verified real Atari Prison and cold-resume route
+
+`csb_v1_m11_prison_runtime_hud_pc34` consumes the supplied original Atari ST
+pair directly: `Chaos Strikes Back.stx` plus
+`Chaos Strikes Back Utility.stx::MINI.DAT`. On 2026-08-31 it passed for
+Original, V2.0, and V2.1 presentation modes. The production in-memory STX
+reader and M12→M11 handoff load the original C013 HUD material and a live
+source-owned F0128 viewport, then exercise queued movement/turn/controller/
+touch input and save-and-quit followed by cold resume. The generated quicksave
+is a native output derived from admitted `MINI.DAT`, not a hand-written save
+or extracted-game directory. This is bounded Prison/save evidence only; it
+does not establish broad campaign or original-overlay parity.
 
 ## Source-lock anchors audited by the verifier
 
@@ -65,9 +78,21 @@ python3 -m py_compile tools/verify_csb_v1_quickplay_load_route_source_lock.py
 python3 tools/verify_csb_v1_quickplay_load_route_source_lock.py
 python3 -m py_compile tools/verify_pass547_csb_v1_runtime_readiness_backfill.py
 python3 tools/verify_pass547_csb_v1_runtime_readiness_backfill.py
-cmake --build /tmp/firestaff-cmake-probe --target firestaff_csb_v1_pc_real_asset_launch_probe firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe firestaff_csb_v1_first_viewport_frame_probe test_csb_v1_boot_runtime_handoff test_csb_v1_runtime_route_first_frame_movement_utility_gate
-ctest --test-dir /tmp/firestaff-cmake-probe -R "csb_v1_(pc_real_asset_launch|pc34_quickplay_dungeon_handle|first_viewport_frame|boot_runtime_handoff|runtime_route_first_frame_movement_utility_gate)" --output-on-failure
+cmake --build "$FIRESTAFF_BUILD_DIR" --target firestaff_csb_v1_pc_real_asset_launch_probe firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe firestaff_csb_v1_first_viewport_frame_probe test_csb_v1_boot_runtime_handoff test_csb_v1_runtime_route_first_frame_movement_utility_gate
+ctest --test-dir "$FIRESTAFF_BUILD_DIR" -R "csb_v1_(pc_real_asset_launch|pc34_quickplay_dungeon_handle|first_viewport_frame|boot_runtime_handoff|runtime_route_first_frame_movement_utility_gate)" --output-on-failure
 python3 tools/firestaff_completion_status.py
+```
+
+The native real-media startup matrix is intentionally separate from the
+completion percentage: it proves that supported supplied archives reach their
+declared boot and M12/M11 handoff boundaries, but it does not substitute for a
+long original-play capture or pixel-overlay evidence. On 2026-08-31 all 12
+listed cases passed: Atari STX/nested ZIP/French preservation ZIP, Amiga loose
+and ADF archive, FM Towns generic/English/Japanese boot, plus Amiga, Atari ST,
+and FM Towns English/Japanese handoffs.
+
+```sh
+ctest --test-dir "$FIRESTAFF_BUILD_DIR" --output-on-failure -R '^(csb_v1_atari_stx_native_cli_boot|csb_v1_atari_nested_zip_cli_boot|csb_v1_atari_french_preservation_zip_cli_boot|csb_v1_amiga_native_cli_boot|csb_v1_amiga_adf_archive_cli_boot|csb_v1_fmtowns_native_cli_boot|csb_v1_fmtowns_en_native_cli_real_media|csb_v1_fmtowns_ja_native_cli_real_media|csb_v1_amiga31_m12_m11_real_media_handoff|csb_v1_atari_st_m12_m11_real_media_handoff|csb_v1_fmtowns_en_m11_real_media_handoff|csb_v1_fmtowns_ja_m11_real_media_handoff)$'
 ```
 
 Evidence JSON: `parity-evidence/verification/csb_v1_completion_matrix.json`

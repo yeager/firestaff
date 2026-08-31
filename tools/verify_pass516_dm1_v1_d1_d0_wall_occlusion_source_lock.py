@@ -8,18 +8,17 @@ import subprocess
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
+from redmcsb_source import source_root
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
-DM1 = Path("~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1").expanduser()
+RED = source_root(("DUNVIEW.C", "DEFS.H"))
 MANIFEST = ROOT / "parity-evidence/verification/pass516_dm1_v1_d1_d0_wall_occlusion_source_lock/manifest.json"
 REPORT = ROOT / "parity-evidence/pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.md"
 STATUS = "PASS516_DM1_V1_D1_D0_WALL_OCCLUSION_SOURCE_LOCKED"
 
 ALLOWED = [
     ROOT.resolve(),
-    Path("~/.openclaw/data/firestaff-redmcsb-source").expanduser().resolve(),
-    Path("~/.openclaw/data/firestaff-original-games/DM").expanduser().resolve(),
+    RED.resolve(),
 ]
 
 SOURCE_CHECKS = [
@@ -94,8 +93,6 @@ LOCAL_CHECKS = [
     ]},
 ]
 
-ANCHORS = ["GRAPHICS.DAT", "DUNGEON.DAT", "TITLE", "README.md"]
-
 def allow(path: Path) -> Path:
     resolved = path.expanduser().resolve()
     if not any(str(resolved).startswith(str(prefix)) for prefix in ALLOWED):
@@ -141,16 +138,6 @@ def run(command: list[str]) -> dict[str, object]:
     proc = subprocess.run(command, cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     return {"command": command, "returncode": proc.returncode, "passed": proc.returncode == 0, "outputTail": "\n".join(proc.stdout.strip().splitlines()[-12:])}
 
-def local_refs() -> list[dict[str, object]]:
-    refs = []
-    for name in ANCHORS:
-        path = allow(DM1 / name)
-        row = {"id": f"dm1-{name.lower()}", "path": str(path), "exists": path.exists()}
-        if path.is_file():
-            row.update({"bytes": path.stat().st_size, "sha256": sha256(path)})
-        refs.append(row)
-    return refs
-
 def write_report(manifest: dict[str, object]) -> None:
     MANIFEST.parent.mkdir(parents=True, exist_ok=True)
     REPORT.parent.mkdir(parents=True, exist_ok=True)
@@ -178,9 +165,8 @@ def main(check_only: bool = False) -> int:
         return 0 if not failed else 1
     runtime = run([str(resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_viewport_3d_pc34_compat")])
     check = run([sys.executable, str(Path(__file__).resolve()), "--check-only"])
-    refs = local_refs()
-    ok = not failed and runtime["passed"] and check["passed"] and all(row["exists"] for row in refs)
-    manifest = {"schema": "pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.v1", "status": "passed" if ok else "failed", "statusToken": STATUS if ok else "FAILED_PASS516_DM1_V1_D1_D0_WALL_OCCLUSION_SOURCE_LOCK", "redmcsbRoot": str(RED), "redmcsbChecks": redmcsb, "firestaffChecks": firestaff, "localReferences": refs, "verificationRuns": [runtime, check]}
+    ok = not failed and runtime["passed"] and check["passed"]
+    manifest = {"schema": "pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.v1", "status": "passed" if ok else "failed", "statusToken": STATUS if ok else "FAILED_PASS516_DM1_V1_D1_D0_WALL_OCCLUSION_SOURCE_LOCK", "redmcsbRoot": str(RED), "redmcsbChecks": redmcsb, "firestaffChecks": firestaff, "verificationRuns": [runtime, check], "nonClaims": ["No private extracted-media tree is required for this source lock."]}
     write_report(manifest)
     print(manifest["statusToken"])
     print(f"- wrote {MANIFEST.relative_to(ROOT)}")

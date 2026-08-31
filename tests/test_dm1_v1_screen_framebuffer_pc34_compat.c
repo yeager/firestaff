@@ -15,9 +15,17 @@ static void test_constants(void)
 
 static void test_init(void)
 {
+    DM1_V1_PaletteEntryPc34 cyan;
+    DM1_V1_PaletteEntryPc34 white;
     DM1_V1_Screen_InitPc34Compat(&s_screen);
     assert(s_screen.dirty == 0);
     assert(s_screen.presentCount == 0);
+    /* ReDMCSB DATA.C G0347: index 4 = 0x0CC, index 15 = 0xFFF.
+     * The compat screen holds source RGB4 nibbles in DAC6 bits 5..2. */
+    cyan = DM1_V1_Screen_GetPalettePc34Compat(&s_screen, 4);
+    white = DM1_V1_Screen_GetPalettePc34Compat(&s_screen, 15);
+    assert(cyan.r == 0 && cyan.g == 48 && cyan.b == 48);
+    assert(white.r == 60 && white.g == 60 && white.b == 60);
 }
 
 static void test_get_back_buffer(void)

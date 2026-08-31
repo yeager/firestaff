@@ -322,19 +322,19 @@ static void test_contract_constants_and_evidence(void)
 
 static void test_viewport_override_binding(void)
 {
-    uint8_t pixels[64 * 40];
+    uint8_t pixels[64 * 40] = { 0 };
     uint8_t framebuffer[CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W *
                         CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_H];
     uint8_t combined_framebuffer[CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W *
                                  CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_H];
     CSB_V1_CSBGraphicsEntrySpan span = span_for(73u);
-    CSB_V1_CSBGraphicsDecodedBitmap decoded =
-        decoded_for(73u, 64u, 40u, 15u, pixels, sizeof(pixels));
+    CSB_V1_CSBGraphicsDecodedBitmap decoded;
     CSB_V1_CSBGraphicsRuntimeBinding binding;
 
     memset(pixels, 3, sizeof(pixels));
     memset(framebuffer, 0, sizeof(framebuffer));
     memset(combined_framebuffer, 0, sizeof(combined_framebuffer));
+    decoded = decoded_for(73u, 64u, 40u, 15u, pixels, sizeof(pixels));
     check_int("viewport.prepare",
               csb_v1_csbgraphics_runtime_prepare_binding(&span, &decoded, &binding),
               1, "trusted decoded viewport graphic");
@@ -458,16 +458,16 @@ static void test_decode_entry_and_apply_viewport(void)
 static void test_hud_inventory_binding(void)
 {
     uint8_t pixels[CSB_V1_CSBGRAPHICS_RUNTIME_VIEWPORT_W *
-                   CSB_V1_CSBGRAPHICS_RUNTIME_VIEWPORT_H];
+                   CSB_V1_CSBGRAPHICS_RUNTIME_VIEWPORT_H] = { 0 };
     CSB_V1_CSBGraphicsEntrySpan span = span_for(17u);
-    CSB_V1_CSBGraphicsDecodedBitmap decoded =
-        decoded_for(17u,
-                    CSB_V1_CSBGRAPHICS_RUNTIME_VIEWPORT_W,
-                    CSB_V1_CSBGRAPHICS_RUNTIME_VIEWPORT_H,
-                    12u, pixels, sizeof(pixels));
+    CSB_V1_CSBGraphicsDecodedBitmap decoded;
     CSB_V1_CSBGraphicsRuntimeBinding binding;
 
     memset(pixels, 4, sizeof(pixels));
+    decoded = decoded_for(17u,
+                          CSB_V1_CSBGRAPHICS_RUNTIME_VIEWPORT_W,
+                          CSB_V1_CSBGRAPHICS_RUNTIME_VIEWPORT_H,
+                          12u, pixels, sizeof(pixels));
     check_int("inventory.prepare",
               csb_v1_csbgraphics_runtime_prepare_binding(&span, &decoded, &binding),
               1, "PANEL.C:2376 C017 inventory");
@@ -490,19 +490,19 @@ static void test_hud_inventory_binding(void)
 static void test_hud_c040_panel_binding(void)
 {
     uint8_t pixels[CSB_V1_CSBGRAPHICS_RUNTIME_C040_PANEL_W *
-                   CSB_V1_CSBGRAPHICS_RUNTIME_C040_PANEL_H];
+                   CSB_V1_CSBGRAPHICS_RUNTIME_C040_PANEL_H] = { 0 };
     uint8_t framebuffer[CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W *
                         CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_H];
     CSB_V1_CSBGraphicsEntrySpan span = span_for(40u);
-    CSB_V1_CSBGraphicsDecodedBitmap decoded =
-        decoded_for(40u,
-                    CSB_V1_CSBGRAPHICS_RUNTIME_C040_PANEL_W,
-                    CSB_V1_CSBGRAPHICS_RUNTIME_C040_PANEL_H,
-                    6u, pixels, sizeof(pixels));
+    CSB_V1_CSBGraphicsDecodedBitmap decoded;
     CSB_V1_CSBGraphicsRuntimeBinding binding;
 
     memset(pixels, 6, sizeof(pixels));
     memset(framebuffer, 0, sizeof(framebuffer));
+    decoded = decoded_for(40u,
+                          CSB_V1_CSBGRAPHICS_RUNTIME_C040_PANEL_W,
+                          CSB_V1_CSBGRAPHICS_RUNTIME_C040_PANEL_H,
+                          6u, pixels, sizeof(pixels));
     check_int("c040.prepare",
               csb_v1_csbgraphics_runtime_prepare_binding(&span, &decoded, &binding),
               1, "PANEL.C:1632 C040 panel");
@@ -539,18 +539,18 @@ static void test_hud_c040_panel_binding(void)
 
 static void test_fallbacks_are_explicit(void)
 {
-    uint8_t pixels[32 * 32];
+    uint8_t pixels[32 * 32] = { 0 };
     uint8_t framebuffer[CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W *
                         CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_H];
     uint8_t framebuffer_before[CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W *
                                CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_H];
     CSB_V1_CSBGraphicsEntrySpan span = span_for(40u);
-    CSB_V1_CSBGraphicsDecodedBitmap decoded =
-        decoded_for(40u, 32u, 32u, 15u, pixels, sizeof(pixels));
+    CSB_V1_CSBGraphicsDecodedBitmap decoded;
     CSB_V1_CSBGraphicsRuntimeBinding binding;
 
     memset(pixels, 7, sizeof(pixels));
     memset(framebuffer, 0x5au, sizeof(framebuffer));
+    decoded = decoded_for(40u, 32u, 32u, 15u, pixels, sizeof(pixels));
 
     check_int("missing.out",
               csb_v1_csbgraphics_runtime_prepare_binding(&span, &decoded, NULL),

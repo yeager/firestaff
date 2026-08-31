@@ -1,3 +1,4 @@
+#include "csb_v1_boot.h"
 #include "csb_v1_fmtowns_portrait.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,32 +10,6 @@ static int g_pass = 0, g_fail = 0;
     if (cond) { g_pass++; } \
     else { g_fail++; printf("FAIL: %s (line %d)\n", msg, __LINE__); } \
 } while (0)
-
-static uint8_t *load_file(const char *path, size_t *out_size) {
-    FILE *f = fopen(path, "rb");
-    uint8_t *buf;
-    long sz;
-    if (!f) return NULL;
-    fseek(f, 0, SEEK_END);
-    sz = ftell(f);
-    if (sz <= 0) { fclose(f); return NULL; }
-    fseek(f, 0, SEEK_SET);
-    buf = (uint8_t *)malloc((size_t)sz);
-    if (!buf) { fclose(f); return NULL; }
-    if (fread(buf, 1, (size_t)sz, f) != (size_t)sz) {
-        free(buf); fclose(f); return NULL;
-    }
-    fclose(f);
-    *out_size = (size_t)sz;
-    return buf;
-}
-
-static int file_exists(const char *path) {
-    FILE *f = fopen(path, "rb");
-    if (!f) return 0;
-    fclose(f);
-    return 1;
-}
 
 static void test_probe_null(void) {
     ASSERT(csb_v1_fmtowns_portrait_probe(NULL, 0) == 0, "probe rejects NULL");
@@ -82,51 +57,40 @@ static void test_f31_c06_header_gate(void) {
            "F31 C06 rejects disabled CMP flag");
 }
 
-static void test_real_portraits(void) {
-    const char *home = getenv("HOME");
-    const char *portrait_dir = getenv("FIRESTAFF_CSB_FMTOWNS_PORTRAIT_DIR");
-    char path[512];
-    char cache_path[512];
-    const char *names[] = {
-        "ALEX", "AZIZI", "BORIS", "CHANI", "DAROOU", "ELIJA",
-        "GANDO", "GOTHMOG", "HALK", "HAWK", "HISSSSA", "IAIDO",
-        "LEIF", "LEYLA", "LINFLAS", "MOPHUS", "NABI", "SONJA",
-        "STAMM", "SYRA", "TIGGY", "WUTSE", "WUUF", "ZED"
-    };
+static int test_real_portraits(void) {
+    const char *archive = getenv("FIRESTAFF_CSB_FMTOWNS_ARCHIVE");
+    const char *language = getenv("FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE");
+    CSB_V1_BootStartupLaunch_PC34 launch;
+    const CSB_V1_BootProfile *profile;
     int decoded = 0, i;
 
-    if ((!portrait_dir || portrait_dir[0] == '\0') && !home) {
-        printf("SKIP: HOME not set\n");
-        return;
+    if (!archive || !archive[0]) {
+        printf("SKIP: FIRESTAFF_CSB_FMTOWNS_ARCHIVE not set\n");
+        return 77;
+    }
+    memset(&launch, 0, sizeof(launch));
+    if (!csb_v1_boot_startup_launch_alloc_with_variant_pc34(
+            archive, NULL, NULL, NULL, NULL,
+            language && strcmp(language, "ja") == 0
+                ? CSB_V1_VARIANT_FMTOWNS_JA : CSB_V1_VARIANT_FMTOWNS_EN,
+            &launch)) {
+        ASSERT(0, "packed F31 archive admits through the native boot path");
+        csb_v1_boot_startup_launch_cleanup_pc34(&launch);
+        return 0;
+    }
+    profile = launch.profile;
+    ASSERT(profile && profile->fmtowns_portrait_count == 24u,
+           "native packed F31 profile retains all 24 C06 portraits in RAM");
+    if (!profile || profile->fmtowns_portrait_count != 24u) {
+        csb_v1_boot_startup_launch_cleanup_pc34(&launch);
+        return 0;
     }
 
     for (i = 0; i < 24; i++) {
-        uint8_t *data;
-        size_t size;
+        const uint8_t *data = profile->fmtowns_portrait_bytes[i];
+        size_t size = profile->fmtowns_portrait_sizes[i];
         uint8_t pixels[CSB_FMTOWNS_PORTRAIT_PIXEL_COUNT];
         CSB_V1_FmtownsPortraitReceipt receipt;
-
-        if (portrait_dir && portrait_dir[0] != '\0') {
-            snprintf(path, sizeof(path), "%s/%s.CMP", portrait_dir, names[i]);
-        } else {
-            snprintf(path, sizeof(path),
-                     "%s/.firestaff/data/csb/fmtowns/PORTRAIT/%s.CMP",
-                     home, names[i]);
-            /* M12 keeps the selected F31E/F31J package in this ordinary-file
-             * cache after ISO/ZIP materialization. Exercise that production
-             * path before declaring the portrait unavailable. */
-            if (!file_exists(path)) {
-                snprintf(cache_path, sizeof(cache_path),
-                         "%s/Library/Application Support/Firestaff/asset-cache/"
-                         "csb-fmtowns-en/PORTRAIT/%s.CMP", home, names[i]);
-                snprintf(path, sizeof(path), "%s", cache_path);
-            }
-        }
-        data = load_file(path, &size);
-        if (!data) {
-            printf("SKIP: %s not available\n", names[i]);
-            continue;
-        }
 
         ASSERT(csb_v1_fmtowns_portrait_probe(data, size) == 1,
                "probe accepts portrait");
@@ -152,18 +116,21 @@ static void test_real_portraits(void) {
                        receipt.name, receipt.title, receipt.pixel_fnv1a);
             }
         }
-        free(data);
     }
 
     printf("  Decoded %d/24 portraits\n", decoded);
     ASSERT(decoded == 24, "all 24 portraits decoded");
+    csb_v1_boot_startup_launch_cleanup_pc34(&launch);
+    return 0;
 }
 
 int main(void) {
+    int real_portrait_result;
     test_probe_null();
     test_f31_planar_decode();
     test_f31_c06_header_gate();
-    test_real_portraits();
+    real_portrait_result = test_real_portraits();
+    if (real_portrait_result == 77) return 77;
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;
 }

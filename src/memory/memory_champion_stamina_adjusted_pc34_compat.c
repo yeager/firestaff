@@ -39,10 +39,11 @@ void csb_v1_stamina_compiler_order_set(int firstOperandFirst) {
     g_csb_v1_stamina_first_operand_first = firstOperandFirst ? 1 : 0;
 }
 
-int F0306_CHAMPION_GetStaminaAdjustedValue_Compat(
+int F0306_CHAMPION_GetStaminaAdjustedValueForSource_Compat(
     int currentStamina,
     int halfMaxStamina,
-    int value)
+    int value,
+    int firstOperandFirst)
 {
     int halfValue;
     int scaledStam;
@@ -53,7 +54,7 @@ int F0306_CHAMPION_GetStaminaAdjustedValue_Compat(
         return value;
     }
     halfValue = value >> 1;
-    if (g_csb_v1_stamina_first_operand_first) {
+    if (firstOperandFirst) {
         /* First-operand order: B uses the halved value. */
         scaledStam = (int)(((long)halfValue * (long)currentStamina)
                           / (long)halfMaxStamina);
@@ -64,4 +65,14 @@ int F0306_CHAMPION_GetStaminaAdjustedValue_Compat(
                           / (long)halfMaxStamina);
     }
     return halfValue + scaledStam;
+}
+
+int F0306_CHAMPION_GetStaminaAdjustedValue_Compat(
+    int currentStamina,
+    int halfMaxStamina,
+    int value)
+{
+    return F0306_CHAMPION_GetStaminaAdjustedValueForSource_Compat(
+        currentStamina, halfMaxStamina, value,
+        g_csb_v1_stamina_first_operand_first);
 }

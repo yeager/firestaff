@@ -2,9 +2,9 @@
  * test_csb_v1_amiga_dungeon_probe.c — verify CSB Amiga Dungeon.DAT
  * loads through the FTL decompressor and big-endian byte-swap path.
  *
- * Requires FIRESTAFF_CSB_AMIGA_DUNGEON to name the materialized DUNGEON.DAT
- * selected from a hash-verified A31/A35 package.  A test must never quietly
- * replace that source proof with a developer-specific home-directory file.
+ * Requires FIRESTAFF_CSB_AMIGA_DUNGEON to name the hash-verified DUNGEON.DAT
+ * member selected from an A31/A35 package.  Nested ZIP→ADF members are read
+ * directly in RAM and are never materialized beside the user's game data.
  */
 
 #include "asset_find_by_hash.h"
@@ -15,32 +15,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-static uint8_t *read_file(const char *path, long *out_size)
-{
-    FILE *f = fopen(path, "rb");
-    uint8_t *buf;
-    if (!f) return NULL;
-    fseek(f, 0, SEEK_END);
-    *out_size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    buf = (uint8_t *)malloc((size_t)*out_size);
-    if (!buf) { fclose(f); return NULL; }
-    if ((long)fread(buf, 1, (size_t)*out_size, f) != *out_size) {
-        free(buf);
-        fclose(f);
-        return NULL;
-    }
-    fclose(f);
-    return buf;
-}
-
 static void test_compressed_header(const char *path)
 {
     char md5[33];
-    long size = 0;
-    uint8_t *dat;
+    size_t size = 0u;
+    uint8_t *dat = NULL;
 
-    dat = read_file(path, &size);
+    if (!asset_read_virtual_path_alloc(path, &dat, &size)) dat = NULL;
     if (!dat) {
         fprintf(stderr, "FAIL: cannot read configured Amiga Dungeon.DAT: %s\n",
                 path);
@@ -59,7 +40,7 @@ static void test_compressed_header(const char *path)
 
     uint32_t decomp_size = ((uint32_t)dat[2] << 24) | ((uint32_t)dat[3] << 16) |
                            ((uint32_t)dat[4] << 8) | (uint32_t)dat[5];
-    printf("  compressed: %ld bytes, decompressed: %u bytes\n",
+    printf("  compressed: %zu bytes, decompressed: %u bytes\n",
            size, decomp_size);
     assert(decomp_size > 0 && decomp_size < 65536);
 

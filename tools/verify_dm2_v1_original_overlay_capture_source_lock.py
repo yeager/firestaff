@@ -40,6 +40,11 @@ DEFAULT_SKULLWIN_SEARCH = (
     Path("/Volumes/Extern-disk/openclaw-data/firestaff/skproject-source/SKULLWIN"),
     REPO / "skproject-source/SKULLWIN",
     REPO / "skproject/SKULLWIN",
+    # A read-only local reference checkout. It is deliberately not a runtime
+    # dependency and is ignored from releases; keeping it under reference/
+    # lets a developer reproduce source locks without a machine-specific
+    # ~/.openclaw path.
+    REPO / "reference/skproject/SKULLWIN",
 )
 
 DEFAULT_CAPTURE_SCRIPT = REPO / "scripts/dosbox_dm2_original_overlay_capture.sh"

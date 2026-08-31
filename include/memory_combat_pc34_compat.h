@@ -153,6 +153,10 @@ struct CombatantChampionSnapshot_Compat {
     int woundDefense[6];
     int isResting;
     int partyShieldDefense;
+    /* ReDMCSB CHAMPION.C BUG0_41 is emitted by the Megamax C Atari
+     * builds: F0307 observes every statistic as zero.  This is selected
+     * from verified source media at world handoff, never from a user toggle. */
+    int preserveMegamaxF0307Bug;
 };
 
 /*
@@ -273,6 +277,16 @@ int F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
     int statisticCurrent,
     int statisticMaximum,
     int attack,
+    int* outAdjusted);
+
+/* Variant-aware F0307 surface.  `preserveMegamaxBug` is nonzero only for
+ * original Megamax-built Atari DM1 media, where BUG0_41 makes the observed
+ * current statistic zero.  The unsuffixed API keeps the non-Megamax route. */
+int F0734_COMBAT_GetStatisticAdjustedAttackForSource_Compat(
+    int statisticCurrent,
+    int statisticMaximum,
+    int attack,
+    int preserveMegamaxBug,
     int* outAdjusted);
 
 int F0739_COMBAT_ScaleChampionDamageF0321_Compat(

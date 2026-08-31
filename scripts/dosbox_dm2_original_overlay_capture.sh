@@ -62,7 +62,7 @@
 #        ~/.openclaw/data/firestaff-original-games/DM/Dungeon-Master-II-Skullkeep_DOS_EN.zip
 #   DM2_ORIGINAL_ARCHIVE=/path/to/Skullkeep.zip
 #        override the canonical archive path.
-#   DM2_ORIGINAL_PROGRAM='SKULL.EXE'
+#   DM2_ORIGINAL_PROGRAM='DM2.BAT'
 #        override the DOSBox autoexec launch command.
 #   DM2_ORIGINAL_ROUTE_EVENTS='wait:9000 enter wait:1500 shot:title ...'
 #        operator-validated DM2 keystroke route. Required for --run.
@@ -76,7 +76,14 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ARCHIVE_DEFAULT="${HOME}/.openclaw/data/firestaff-original-games/DM/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+if [[ -f "${HOME}/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip" ]]; then
+    # The user-supplied preservation archive is the normal local source.  It
+    # is only staged for the external emulator capture tool; Firestaff itself
+    # continues to consume the archive in memory.
+    ARCHIVE_DEFAULT="${HOME}/.firestaff/data/dm2/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+else
+    ARCHIVE_DEFAULT="${HOME}/.openclaw/data/firestaff-original-games/DM/Dungeon-Master-II-Skullkeep_DOS_EN.zip"
+fi
 ARCHIVE="${DM2_ORIGINAL_ARCHIVE:-${ARCHIVE_DEFAULT}}"
 STAGE_DEFAULT_DEFAULT="${REPO}/verification-screens/dm2-dosbox-capture/SkullkeepPC10EN"
 if [[ -z "${DM2_ORIGINAL_STAGE_DIR:-}" && -d "${HOME}/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34" ]]; then
@@ -87,7 +94,7 @@ else
     STAGE_DEFAULT="${DM2_ORIGINAL_STAGE_DIR:-${STAGE_DEFAULT_DEFAULT}}"
 fi
 OUT_DIR="${OUT_DIR:-${REPO}/verification-screens/passH2313-dm2-original-overlays}"
-DOSBOX="${DOSBOX:-/Applications/DOSBox Staging.app/Contents/MacOS/dosbox}"
+DOSBOX="${DOSBOX:-$(command -v dosbox 2>/dev/null || printf '%s' /Applications/DOSBox\ Staging.app/Contents/MacOS/dosbox)}"
 WAIT_BEFORE_INPUT_MS="${WAIT_BEFORE_INPUT_MS:-3000}"
 NEW_FILE_TIMEOUT_MS="${NEW_FILE_TIMEOUT_MS:-2500}"
 ROUTE_EVENTS="${DM2_ORIGINAL_ROUTE_EVENTS:-}"
@@ -102,7 +109,10 @@ case "${EXPECTED_SHOTS}" in
        ;;
 esac
 SKIP_INTRO_SELECTOR="${DM2_ROUTE_SKIP_INTRO:-0}"
-ORIGINAL_PROGRAM="${DM2_ORIGINAL_PROGRAM:-SKULL.EXE}"
+# The retail DOS archive starts through DM2.BAT (EREGCARD -> IBMIOP ->
+# SKULL.EXE).  Invoking the protected-mode executable directly skips that
+# source-owned setup chain and faults under DOSBox 0.74.
+ORIGINAL_PROGRAM="${DM2_ORIGINAL_PROGRAM:-DM2.BAT}"
 CONF="${OUT_DIR}/dosbox-dm2-original.conf"
 LOG="${OUT_DIR}/dosbox-dm2-original.log"
 PID_FILE="${OUT_DIR}/dosbox.pid"
@@ -184,7 +194,9 @@ need_archive() {
 }
 
 stage_archive() {
-    if [[ ! -d "${STAGE_DEFAULT}" || ! -f "${STAGE_DEFAULT}/SKULL.EXE" ]]; then
+    local skull_path
+    skull_path="$(find "${STAGE_DEFAULT}" -maxdepth 2 -type f -iname 'skull.exe' -print -quit 2>/dev/null || true)"
+    if [[ ! -d "${STAGE_DEFAULT}" || -z "${skull_path}" ]]; then
         echo "[pass-H2313] staging ${ARCHIVE} -> ${STAGE_DEFAULT}"
         mkdir -p "${STAGE_DEFAULT}"
         # 7zz is the macOS Homebrew 7-Zip CLI; fall back to unzip if missing.
@@ -197,7 +209,11 @@ stage_archive() {
             exit 4
         fi
     fi
-    if [[ ! -f "${STAGE_DEFAULT}/SKULL.EXE" ]]; then
+    # ZIP preservation archives commonly retain the original lower-case DOS
+    # filename. DOSBox is case-insensitive, but the host preflight must be
+    # too; otherwise the genuine supplied archive is rejected before capture.
+    skull_path="$(find "${STAGE_DEFAULT}" -maxdepth 2 -type f -iname 'skull.exe' -print -quit 2>/dev/null || true)"
+    if [[ -z "${skull_path}" ]]; then
         echo "ERROR: stage tree missing SKULL.EXE after extraction: ${STAGE_DEFAULT}" >&2
         exit 5
     fi
@@ -206,7 +222,8 @@ stage_archive() {
     # arbitrary local copy. The lock lives in the stage tree, not the OUT_DIR.
     if command -v shasum >/dev/null 2>&1; then
         local stage_lock="${STAGE_DEFAULT}/stage.sha256"
-        ( cd "${STAGE_DEFAULT}" && shasum -a 256 SKULL.EXE skull.cfg data/dungeon.dat data/graphics.dat data/songlist.dat 2>/dev/null ) > "${stage_lock}" || true
+        local skull_relative="${skull_path#${STAGE_DEFAULT}/}"
+        ( cd "${STAGE_DEFAULT}" && shasum -a 256 "${skull_relative}" skull.cfg data/dungeon.dat data/graphics.dat data/songlist.dat 2>/dev/null ) > "${stage_lock}" || true
     fi
 }
 
@@ -534,8 +551,9 @@ if [[ -z "$window" ]]; then
     echo "ERROR: could not find DOSBox X window for pid $pid" >&2
     exit 3
 fi
-xdotool windowactivate --sync "$window" >/dev/null 2>&1 || true
-xdotool windowfocus --sync "$window" >/dev/null 2>&1 || true
+# A window-targeted XTEST key does not need focus.  Avoid EWMH activate/focus
+# requests entirely: on some remote X servers they consume the first injected
+# input or never acknowledge, while `xdotool key --window` reaches DOSBox.
 
 tap_key() {
     local key="$1"
@@ -672,7 +690,11 @@ expected = int(sys.argv[3])
 shot_dir = Path(sys.argv[4])
 if expected <= 0:
     raise SystemExit("ERROR: DM2_ORIGINAL_EXPECTED_SHOTS must be positive")
-paths = sorted(out.glob("image*.png"))
+# DOSBox 0.74 derives the screenshot prefix from the active DOS program
+# (`splash_*.png`, `ftl_*.png`, `intro_*.png`); staging builds may use a
+# generic prefix.  The run clears root PNGs before launch, so every root PNG
+# here is an authentic screenshot from this capture transaction.
+paths = sorted(out.glob("*.png"), key=lambda path: path.stat().st_mtime_ns)
 if not paths:
     # DOSBox 0.74 / Staging may name screenshots after the active program
     # (skull_NNN.png) instead of imageNNNN.png. Normalize those into stable
@@ -689,10 +711,10 @@ if not paths:
             normalized.append(dst)
         paths = normalized
 if not paths:
-    raise SystemExit(f"ERROR: no DOSBox raw screenshots found under {out}/image*.png")
+    raise SystemExit(f"ERROR: no DOSBox raw screenshots found under {out}")
 if len(paths) != expected:
     raise SystemExit(
-        f"ERROR: expected exactly {expected} DOSBox raw screenshots under {out}/image*.png, found {len(paths)}"
+        f"ERROR: expected exactly {expected} DOSBox raw screenshots under {out}, found {len(paths)}"
     )
 shot_dir.mkdir(parents=True, exist_ok=True)
 with manifest.open("w") as f:
@@ -776,7 +798,7 @@ def load_pixels(path: Path) -> tuple[tuple[int, int], list[tuple[int, int, int]]
     data = subprocess.check_output([image_tool, str(path), "ppm:-"])
     return ppm_pixels(data, path)
 
-paths = sorted(out.glob("image*.png"))
+paths = sorted(out.glob("*.png"), key=lambda path: path.stat().st_mtime_ns)
 rows = []
 problems = []
 for idx, path in enumerate(paths, 1):
@@ -887,7 +909,15 @@ PY
         fi
         printf '%02d\t%s\t%s\t%s\n' "$((i + 1))" "${label}.ppm" "$route_label" "$route_token" >> "${SHOT_LABEL_MANIFEST}"
         i=$((i + 1))
-    done < <(find "${OUT_DIR}" -maxdepth 1 -type f -name 'image*.png' | sort)
+    done < <(python3 - "${OUT_DIR}" <<'PY'
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+for path in sorted(root.glob("*.png"), key=lambda item: item.stat().st_mtime_ns):
+    print(path)
+PY
+)
 
     python3 - "${CROP_DIR}" "${CROP_MANIFEST}" "${EXPECTED_SHOTS}" <<'PY'
 from __future__ import annotations
@@ -1026,10 +1056,16 @@ timeout = int(sys.argv[2]) / 1000.0
 expected = int(sys.argv[3])
 start = time.monotonic()
 while time.monotonic() - start < timeout:
-    if len(list(out.glob("image*.png"))) >= expected:
+    if len(list(out.glob("*.png"))) >= expected:
         break
     time.sleep(0.025)
 PY
+        capture_count="$(find "${OUT_DIR}" -maxdepth 1 -type f -name '*.png' | wc -l | tr -d ' ')"
+        if [[ "${capture_count}" -lt "${EXPECTED_SHOTS_COUNT}" ]]; then
+            echo "ERROR: DOSBox input route completed but produced ${capture_count}/${EXPECTED_SHOTS_COUNT} raw screenshots." >&2
+            echo "       No capture evidence was promoted. Check the host DOSBox capture hotkey/output support before retrying." >&2
+            exit 8
+        fi
         normalize_existing
         ;;
 esac

@@ -1113,6 +1113,10 @@ static void test_d2c_door_frame_uses_source_graphic558_geometry(void)
     memset(side_pixels, 10, sizeof(side_pixels));
     memset(top_pixels, 10, sizeof(top_pixels));
     memset(grid, DM1_VP_ELEMENT_DOOR_FRONT, sizeof(grid));
+    /* The provider also owns the D1 frame slots.  Keep this D2-only source
+     * fixture explicit about their absence so an uninitialised pointer cannot
+     * be admitted as real Graphic558 material during the D1 pass. */
+    memset(&provider, 0, sizeof(provider));
     side_pixels[0] = 0x31;
     side_pixels[47] = 0x42;
     top_pixels[0] = 0x53;
@@ -4479,7 +4483,7 @@ static void test_dm1_v1_viewport_3d_source_evidence_drift_regression(void)
           "blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);",
           "pass404.blocking_center_depth" },
         { "src/engine/m11_game_view.c",
-          "if (blockingCenterDepth >= 0 && depth >= blockingCenterDepth)",
+          "if (blockingCenterDepth >= 0 && depth > blockingCenterDepth)",
           "pass404.side_contents_blocker_gate" },
         /* pass404 side item draw: b2fa93c55 scoped DM1 HoC floor items to
          * the F0115 receipt route, replacing the generic item-sprite call. */

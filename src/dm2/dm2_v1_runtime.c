@@ -27,6 +27,7 @@
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_perform_move.h"
 #include "dm2_v1_pressure_plate.h"
+#include "dm2_v1_random_pc34_compat.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_gdat_scene_m11_command.h"
@@ -149,6 +150,11 @@ struct DM2_V1_RuntimeState {
     int16_t source_curacthero;
     int16_t source_curactmode;
     int16_t source_event_hero_index;
+    /* c_move globals restored by GAME_LOAD.  Their delayed-pose consumers
+     * are not all bound yet, but a resume must retain the source values
+     * rather than silently becoming a fresh zeroed movement transaction. */
+    DM2_V1_GameLoadMovementState source_movement;
+    int source_movement_valid;
     /* c_events.cpp:1846 v1e0976: the champion whose right panel is
      * selected by the source eye event.  This is distinct from
      * party.curacthero; the source does not silently change the active hand
@@ -3171,6 +3177,7 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
     DM2_V1_SourceTimerQueue timer_preflight;
     DM2_V1_SoundQueueState sound_preflight;
     int active_timers = 0;
+    int source_weather_timer_pending = 0;
     int i;
 
     if (!boot_profile || rt->boot != boot_profile ||
@@ -3207,6 +3214,7 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
                             sksave_source->state.timers_hash ^
                             sksave_source->state.dungeon.prefix_hash) !=
                                candidate->source_transaction_hash)) ||
+        (sksave_source && !candidate->source_weather_chain_valid) ||
         (world_owner && candidate->source_transaction_hash !=
             world_owner->source_transaction_hash) ||
         !dm2_v1_game_load_runtime_session_candidate_is_valid(candidate) ||
@@ -3232,7 +3240,13 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
      * may be silently dropped at the handoff boundary. */
     source_timers = &candidate->timer_queue;
     for (i = 0; i < source_timers->max_timers; ++i) {
-        if (source_timers->entries[i].ttype != 0u) ++active_timers;
+        if (source_timers->entries[i].ttype != 0u) {
+            ++active_timers;
+            if (source_timers->entries[i].ttype ==
+                DM2_V1_TIMER_UPDATE_WEATHER) {
+                source_weather_timer_pending = 1;
+            }
+        }
     }
     if (active_timers > (int)DM2_V1_SOURCE_TIMER_MAX) {
         return 0;
@@ -3333,6 +3347,27 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
      * rejected with no floor, wall or frame receipt. */
     dm2_runtime_refresh_map_transition_context(rt);
 
+    /* GAME_LOAD restores the s_savegamebuffer clock and c_random state
+     * before it sorts the timer heap.  On Resume, it has also restored the
+     * serialized c_weather fields; the active map's v1e1472 selector was
+     * source-derived while building the candidate.  Preserve that exact
+     * ownership through the M11 boundary rather than restarting at tick
+     * zero or re-seeding environmental randomness. */
+    if (sksave_source) {
+        rt->tick_count = (int)candidate->source_game_tick;
+        rt->weather_rng.random = candidate->source_random_seed;
+        rt->weather_chain = candidate->source_weather_chain;
+        rt->weather_chain_started = rt->outdoor ? 1 : 0;
+        rt->weather_source_timer_pending =
+            rt->weather_chain_started && source_weather_timer_pending;
+        rt->weather.weather_seed = candidate->source_random_seed;
+        rt->weather.weather_intensity =
+            (int)candidate->source_weather_chain.intensity * 100 / 255;
+    } else {
+        rt->weather_chain_started = 0;
+        rt->weather_source_timer_pending = 0;
+    }
+
     memset(&rt->session_snapshot, 0, sizeof(rt->session_snapshot));
     rt->source_party = candidate->party;
     rt->source_party_valid = 1;
@@ -3371,6 +3406,8 @@ int dm2_v1_runtime_commit_source_game_load(DM2_V1_BootProfile *boot_profile)
     rt->source_curacthero = candidate->party.curacthero;
     rt->source_curactmode = candidate->party.curactmode;
     rt->source_event_hero_index = candidate->source_event_hero_index;
+    rt->source_movement = candidate->movement;
+    rt->source_movement_valid = candidate->movement.valid;
     rt->source_v1e0976 = 0;
     rt->session_snapshot_valid = 1;
     rt->leader_hand_object = (uint32_t)(uint16_t)
@@ -10108,6 +10145,18 @@ void dm2_v1_runtime_tick(void) {
     }
     rt->tick_count++;
 
+    /* startend.cpp's source tick decrements these two restored c_move
+     * globals before it polls input (lines 890-900).  They are independent
+     * of Firestaff's presentation cooldown: retain their i16 non-zero
+     * semantics exactly, including a negative value from an external save,
+     * and do not reinterpret them as host frame counts. */
+    if (rt->source_movement_valid) {
+        if (rt->source_movement.move_clock != 0)
+            rt->source_movement.move_clock--;
+        if (rt->source_movement.move_event != 0)
+            rt->source_movement.move_event--;
+    }
+
     /* SKULLWIN/startend.cpp consumes one savegames1.b_04 unit per source
      * update.  Keep this separate from the timer heap: Aura of Speed is a
      * global source byte, not a hero enchantment timer. */
@@ -10326,6 +10375,14 @@ void dm2_v1_runtime_tick(void) {
  */
 int dm2_v1_runtime_get_tick_count(void) {
     return g_dm2_runtime.tick_count;
+}
+
+int dm2_v1_runtime_source_movement_snapshot(
+    DM2_V1_GameLoadMovementState *out)
+{
+    if (!out || !g_dm2_runtime.source_movement_valid) return 0;
+    *out = g_dm2_runtime.source_movement;
+    return 1;
 }
 
 int dm2_v1_runtime_last_timer_post_load_receipt(
@@ -13817,6 +13874,103 @@ int dm2_v1_runtime_last_fallback_hud_portrait_count(void) {
 
 static int dm2_runtime_gameplay_source_ready(const DM2_V1_RuntimeState *rt);
 
+/* c_input.cpp::DM2_HANDLE_UI_EVENT admits move event indices 3..6 only if
+ * v1e026e is zero and either v1e025e is zero or v1e0274 differs from the
+ * requested absolute direction.  For those four events, the source computes
+ * the absolute direction as (idx + v1e0258 - 3) & 3; runtime_move already
+ * receives precisely that absolute direction. */
+static int dm2_runtime_source_move_admitted(const DM2_V1_RuntimeState *rt,
+                                             int direction)
+{
+    if (!rt || !rt->source_movement_valid) return 1;
+    if (rt->source_movement.move_clock != 0) return 0;
+    return rt->source_movement.move_event == 0 ||
+        rt->source_movement.move_event_direction != (direction & 3);
+}
+
+/* c_move.cpp::DM2_PERFORM_MOVE obtains the walk delay before it resolves the
+ * target square.  The loaded c_party/c_hero state is therefore the owner of
+ * this calculation, including the one source RNG draw made by a strength
+ * enchantment.  `savegamewpc.weight` is the item currently carried by the
+ * event hero; Firestaff's leader-hand record resolves that exact weight
+ * through the mounted source record/GDAT owners. */
+static int dm2_runtime_source_party_walk_delay(DM2_V1_RuntimeState *rt,
+                                                int *out_delay)
+{
+    const DM2_V1_AssetLoader *loader;
+    int event_hero;
+    int hand_weight = 0;
+    int party_delay = 1;
+
+    if (!rt || !out_delay || !rt->source_party_valid ||
+        !rt->source_aura_of_speed_valid || !rt->record_pools_valid ||
+        rt->source_party.heros_in_party <= 0 ||
+        rt->source_party.heros_in_party > DM2_MAX_HEROES ||
+        rt->source_event_hero_index < 0 ||
+        rt->source_event_hero_index >= rt->source_party.heros_in_party ||
+        !rt->boot || !(loader = dm2_v1_boot_asset_loader(rt->boot))) {
+        return 0;
+    }
+
+    event_hero = rt->source_event_hero_index;
+    if (rt->leader_hand_object != 0u &&
+        rt->leader_hand_object != 0xffffu) {
+        DM2_V1_SourceItemWeightReceipt hand_receipt;
+        if (rt->leader_hand_object > 0xffffu ||
+            !dm2_v1_query_source_item_weight(
+                (uint16_t)rt->leader_hand_object, &rt->record_pools, loader,
+                &hand_receipt) || !hand_receipt.valid || hand_receipt.blocked ||
+            hand_receipt.final_weight < 0 ||
+            hand_receipt.final_weight > INT16_MAX) {
+            return 0;
+        }
+        hand_weight = (int)hand_receipt.final_weight;
+    }
+
+    for (int i = 0; i < rt->source_party.heros_in_party; ++i) {
+        DM2_V1_Hero *hero = &rt->source_party.hero[i];
+        int16_t source_rand = 0;
+        int16_t max_load;
+
+        /* c_hero::get_adj_ability1 calls DM2_RAND16 only for the matching
+         * active enchantment.  Keep that draw on the restored c_random
+         * stream instead of using Firestaff's unrelated drop stream. */
+        if (hero->ench_power != 0 && hero->ench_aura >= 3 &&
+            hero->ench_aura <= 6 &&
+            hero->ench_aura - 2 == DM2_ABILITY_STRENGTH) {
+            int16_t cap = (int16_t)((((hero->ench_power > 100 ? 100 :
+                                      hero->ench_power) *
+                                     hero->ability[DM2_ABILITY_STRENGTH]
+                                                   [DM2_CUR]) >> 7) + 1);
+            DM2_V1_RandomState rng;
+            if (cap <= 0) return 0;
+            rng.state = rt->weather_rng.random;
+            source_rand = dm2_v1_rand16(&rng, cap);
+            rt->weather_rng.random = rng.state;
+        }
+        max_load = dm2_v1_hero_get_max_load_raw(hero, source_rand);
+        if (max_load <= 0 || hero->weight < 0 ||
+            (i == event_hero && hero->weight > INT16_MAX - hand_weight)) {
+            return 0;
+        }
+        if (hero->curHP != 0) {
+            int32_t delay = 1;
+            if (!dm2_v1_skproject_calc_player_walk_delay(
+                    (uint16_t)max_load,
+                    (uint16_t)(hero->weight +
+                               (i == event_hero ? hand_weight : 0)),
+                    (uint8_t)hero->bodyflag, hero->walkspeed,
+                    rt->source_aura_of_speed, &delay, NULL) || delay < 1) {
+                return 0;
+            }
+            if (delay > party_delay) party_delay = (int)delay;
+        }
+    }
+
+    *out_delay = party_delay;
+    return *out_delay >= 1;
+}
+
 /*
  * dm2_v1_runtime_can_move — check if party can move this tick.
  *
@@ -13835,7 +13989,8 @@ int dm2_v1_runtime_can_move(void) {
      * completed (sksvgame.cpp::DM2_GAME_LOAD lines 1415-1546); keep this
      * predicate at the same boundary as move() and turn(). */
     return dm2_runtime_gameplay_source_ready(rt) &&
-        rt->move_cooldown_ticks == 0;
+        rt->move_cooldown_ticks == 0 &&
+        (!rt->source_movement_valid || rt->source_movement.move_clock == 0);
 }
 
 /* SKProject enters c_move only after DM2_GAME_LOAD has mounted both original
@@ -13891,6 +14046,7 @@ int dm2_v1_runtime_move(int dir) {
     int pit_x = -1;
     int pit_y = -1;
     int pit_status = 0;
+    int source_walk_delay = 0;
 
     if (!dm2_runtime_gameplay_source_ready(rt) || !rt->boot->dm2_state) {
         return -1;
@@ -13902,7 +14058,8 @@ int dm2_v1_runtime_move(int dir) {
     int old_y = gs->party_y;
     int old_dir = gs->party_dir;
 
-    if (!dm2_v1_runtime_can_move()) {
+    if (!dm2_v1_runtime_can_move() ||
+        !dm2_runtime_source_move_admitted(rt, dir)) {
         memset(&move_request, 0, sizeof(move_request));
         move_request.runtime_ready = 1;
         move_request.can_move = 0;
@@ -13914,6 +14071,15 @@ int dm2_v1_runtime_move(int dir) {
         move_request.direction = dir;
         (void)dm2_v1_DM2_PERFORM_MOVE_plan(&move_request,
                                            &g_dm2_last_perform_move);
+        return -1;
+    }
+
+    /* DM2_PERFORM_MOVE calculates this before target classification.  Do the
+     * same even if a later wall/door/creature branch rejects the step: a
+     * matching strength enchantment has already consumed its source RNG draw
+     * at this point in the original routine. */
+    if (rt->source_movement_valid &&
+        !dm2_runtime_source_party_walk_delay(rt, &source_walk_delay)) {
         return -1;
     }
 
@@ -14127,8 +14293,25 @@ int dm2_v1_runtime_move(int dir) {
     gs->party_dir = dir;
     rt->view_dir = dir;
 
-    /* Set movement cooldown: dungeon=1 tick, outdoor=0.5 tick */
-    rt->move_cooldown_ticks = rt->outdoor ? 0 : 1;
+    if (rt->source_movement_valid) {
+        /* c_move.cpp L_fin1: after a successful movement transaction, clear
+         * v1e025e and add max(party_walk_delay / 2, v1e025c != 0) to the
+         * restored movement clock.  Firestaff has no delayed-pose owner yet,
+         * so the unowned v1e025c term remains false rather than fabricated.
+         * The source clock is then consumed by startend.cpp on later ticks. */
+        if (!blocked) {
+            int increment = source_walk_delay / 2;
+            rt->source_movement.move_clock = (int16_t)(uint16_t)(
+                (uint16_t)rt->source_movement.move_clock +
+                (uint16_t)increment);
+            rt->source_movement.move_event = 0;
+        }
+        rt->move_cooldown_ticks = 0;
+    } else {
+        /* No authenticated movement owner exists for this legacy boundary.
+         * Retain its prior local guard rather than claiming source timing. */
+        rt->move_cooldown_ticks = rt->outdoor ? 0 : 1;
+    }
 
     return blocked ? -1 : 0;
 }
@@ -14648,6 +14831,9 @@ void dm2_v1_runtime_clear_new_game_party_state(void) {
     g_dm2_runtime.source_curacthero = 0;
     g_dm2_runtime.source_curactmode = 0;
     g_dm2_runtime.source_event_hero_index = 0;
+    memset(&g_dm2_runtime.source_movement, 0,
+           sizeof(g_dm2_runtime.source_movement));
+    g_dm2_runtime.source_movement_valid = 0;
     g_dm2_runtime.source_v1e0976 = 0;
     g_dm2_runtime.source_sleeping = 0;
     memset(&g_dm2_runtime.source_party, 0,

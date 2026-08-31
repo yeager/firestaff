@@ -295,9 +295,11 @@ void  csb_v1_champion_recompute_load(CSB_V1_Champion *c);
  *   base  = (STR_CURRENT << 3) + 100
  *   base  = F0306_CHAMPION_GetStaminaAdjustedValue(champion, base)
  *   base += 9; base -= base % 10   (round up to next multiple of 10)
- * Wounds reduce carrying capacity; Elven Boots (C05 feet slot) are not yet
- * modeled through icon lookup in the CSB V1 champion struct.  Returns 0 when
- * champion is NULL.
+ * Wounds reduce carrying capacity. This standalone snapshot helper has no
+ * dungeon-object resolver, so only the live runtime variant
+ * `csb_v1_runtime_champion_maximum_load_pc34_compat` applies the source
+ * C119 Elven Boots lookup from the real C05 slot. Returns 0 when champion is
+ * NULL.
  * Source: ReDMCSB CHAMPION.C F0309_CHAMPION_GetMaximumLoad lines 1157-1178
  *         and F0306_CHAMPION_GetStaminaAdjustedValue lines 1078-1106. */
 unsigned int csb_v1_champion_get_maximum_load(const CSB_V1_Champion *c);
@@ -310,8 +312,11 @@ unsigned int csb_v1_champion_get_maximum_load(const CSB_V1_Champion *c);
  *   else                         ticks = 4 + ((Load - MaxLoad) << 2) / MaxLoad
  *   [+1 or +2 if feet wounded]
  *   [-1 if wearing Boot of Speed in C05 feet slot]
- * Wounds are modeled; feet-slot boots are not yet modeled through icon lookup
- * in CSB_V1_Champion.  Returns 2 when champion is NULL (the light-load default).
+ * Wounds are modeled. The live runtime variant
+ * `csb_v1_runtime_champion_movement_ticks_pc34_compat` resolves the real C05
+ * slot and applies C194 Boot of Speed; this snapshot helper deliberately has
+ * no object-icon resolver. Returns 2 when champion is NULL (the light-load
+ * default).
  * Source: ReDMCSB CHAMPION.C F0310_CHAMPION_GetMovementTicks lines 1180-1214. */
 unsigned int csb_v1_champion_get_movement_ticks(const CSB_V1_Champion *c);
 

@@ -1,6 +1,6 @@
 # Pass560 DM1 V1 mirrored door-front source lock
 
-Status: failed
+Status: passed
 
 Claim: D3R, D2L, and D2R front-door branches use ReDMCSB's two-pass door-front order, including mirrored right-side cell orders for D3R/D2R.
 
@@ -47,16 +47,16 @@ Claim: D3R, D2L, and D2R front-door branches use ReDMCSB's two-pass door-front o
   - line 978: DUNVIEW.C:7181 floor ornament under mirrored rear pass
 
 - PASS firestaff-mirrored-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1730-1775)
-  - line 1737: { DM1_VIEW_SQUARE_D3R, "6579", "6580", "6582", "6592", "6598", "6601", 0x0128, 0x0439, {2, 1}, {3, 4} },
-  - line 1739: { DM1_VIEW_SQUARE_D2L, "6988", "6989", "6991", NULL,   "7000", "7003", 0x0218, 0x0349, {1, 2}, {4, 3} },
-  - line 1740: { DM1_VIEW_SQUARE_D2R, "7181", "7182", "7184", NULL,   "7193", "7196", 0x0128, 0x0439, {2, 1}, {3, 4} },
-  - line 1747: check_int("door_front_occlusion.count", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 11);
-  - line 1766: rear.cells[0] == expected[i].rear_cells[0]
-  - line 1770: front.cells[0] == expected[i].front_cells[0]
+  - line 1741: { DM1_VIEW_SQUARE_D3R, "6579", "6580", "6582", "6592", "6598", "6601", 0x0128, 0x0439, {2, 1}, {3, 4} },
+  - line 1743: { DM1_VIEW_SQUARE_D2L, "6988", "6989", "6991", NULL,   "7000", "7003", 0x0218, 0x0349, {1, 2}, {4, 3} },
+  - line 1744: { DM1_VIEW_SQUARE_D2R, "7181", "7182", "7184", NULL,   "7193", "7196", 0x0128, 0x0439, {2, 1}, {3, 4} },
+  - line 1751: check_int("door_front_occlusion.count", (int)dm1_viewport_3d_door_front_occlusion_spec_count(), 11);
+  - line 1770: rear.cells[0] == expected[i].rear_cells[0]
+  - line 1774: front.cells[0] == expected[i].front_cells[0]
 
 ## Verification
 
-- /Volumes/Extern-disk/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=1
+- /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build-dm1-csb-native/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -69,10 +69,10 @@ PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c
-FAIL dm1_v1_viewport_3d_source_lock failures=2
+PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff/tools/verify_pass560_dm1_v1_mirrored_door_front_source_lock.py --check-only: rc=0
+- /usr/bin/python3 /home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/tools/verify_pass560_dm1_v1_mirrored_door_front_source_lock.py --check-only: rc=0
 ~~~
 PASS pass560 check-only
 ~~~

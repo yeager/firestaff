@@ -24,6 +24,7 @@
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_weather_gdat.h"
+#include "firestaff_zip_extract.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -194,6 +195,7 @@ int main(int argc, char **argv)
     char dungeon_path[1024];
     const char *root = resolve_dm2_data_root(argc, argv, root_buf,
                                              sizeof(root_buf));
+    const char *archive = getenv("FIRESTAFF_DM2_DOS_ARCHIVE");
     uint8_t *graphics = NULL;
     uint8_t *dungeon_bytes = NULL;
     size_t graphics_size = 0u;
@@ -204,14 +206,28 @@ int main(int argc, char **argv)
     int blocked = 0;
     int map;
 
-    if (!root) {
+    if (archive && archive[0]) {
+        /* Bind both source records to the supplied retail ZIP in RAM.  The
+         * File_header corpus has no legacy direct G1 roots; that conclusion
+         * must come from the original archive, not an optional loose copy. */
+        if (firestaff_zip_extract_by_suffix(archive, "data/graphics.dat",
+                                            &graphics, &graphics_size) != 0 ||
+            firestaff_zip_extract_by_suffix(archive, "data/dungeon.dat",
+                                            &dungeon_bytes, &dungeon_size) != 0) {
+            puts("SKIP: selected DM2 DOS archive lacks canonical data members");
+            free(graphics);
+            free(dungeon_bytes);
+            return 0;
+        }
+    } else if (!root) {
         puts("SKIP: no local canonical DM2 data");
         return 0;
+    } else {
+        snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
+        snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", root);
+        graphics = read_file(graphics_path, &graphics_size);
+        dungeon_bytes = read_file(dungeon_path, &dungeon_size);
     }
-    snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
-    snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", root);
-    graphics = read_file(graphics_path, &graphics_size);
-    dungeon_bytes = read_file(dungeon_path, &dungeon_size);
     if (!graphics || !dungeon_bytes) {
         puts("SKIP: no local canonical DM2 data");
         free(graphics);

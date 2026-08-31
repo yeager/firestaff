@@ -53,14 +53,12 @@ ReDMCSB WIP `BASE.C:E0017_MAIN_Exception28Handler_VerticalBlank_CPSDF` and
 the level-4-to-level-3 priority change, and the drain loop. This source was
 read from the published WIP archive; no game bytes are embedded or extracted.
 
-**Implementation gap:**
-Firestaff must not claim the CSB fix merely because it has a synchronous VBlank
-wait. The required behavior is:
-Need:
-1. Verify VBL interrupt handler does not drop or skip interrupts
-2. Palette switch triggered at precise VBL timing
-3. Under heavy render load: ensure VBL queue does not overflow/overwrite
-4. Palette bank selection for dungeon view starts on correct VBL boundary
+**Remaining evidence gap:**
+The native scheduler and palette-start callback are covered. Do not promote
+that to original-frame pixel parity until a capture across a real palette
+transition exists. The capture must identify the original STX member and its
+palette timing; a synthetic frame or a generic synchronous VBlank wait is not
+acceptable evidence.
 
 **Source:** BASE.C (CHANGE7_01_FIX) · csb_graphics.md Part I
 
@@ -73,13 +71,14 @@ Need:
 - CHANGE8_13: CSB version 2.1 display
 - New UI element not present in DM1
 
-**Implementation gap:**
-Firestaff DM1 does not display engine version in dialog boxes.
-Need:
-1. Add engine version string to dialog box rendering (top right corner)
-2. Version format: "v2.0" or "v2.1" depending on CSB variant
-3. Render only in CSB mode (not DM1)
-4. Update when dialog is opened/refreshed
+**Implementation status (2026-08-31):**
+Source modelled. `csb_v1_engine_version_display_pc34_compat` owns the
+version-state transition, while the CSB boot/title route sets `v2.1` only after
+an admitted CSB profile and resets to the DM1 baseline after cleanup. The
+focused `csb_v1_graphics_extras_pc34_compat` and
+`csb_v1_boot_title_import_ui_gate_pc34_compat` tests cover both strings and
+the no-stale-version boundary. This is state/render-plan evidence; an original
+dialog frame capture is still needed before pixel parity is claimed.
 
 **Source:** DIALOG.C (CHANGE7_36,8_13) · csb_graphics.md Part I
 
@@ -114,12 +113,30 @@ performance issues are observed. Document as non-blocking.
 - There is no CSB 2.1 fix. This is preservation behavior, not a license to
   manufacture corrected art or palette values.
 
-**Implementation gap:**
+**Implementation status (2026-08-31):**
 BUG7_01 is a CSB source behavior, not a Modern-mode correction target.
-1. Bind creature palette inputs to original CSB map/allowed-creature data.
-2. Capture the three real Worm map outcomes before marking renderer parity.
-3. Preserve source colors in Original mode; any optional Modern correction
-   needs separately documented user consent and must never replace Original.
+`csb_v1_f0093_apply_replacement_palette_pc34` now takes the live current-map
+allowed-creature order and applies F0093's final owners to the M11 D2/D3
+creature palette before the source sprite is blitted. It first performs the
+source reset (slot 9 via replacement set 8; slot 10 via set 12), then applies
+the map-ordered final writers. This prevents a prior sprite's local remap from
+leaking into an unowned CSB map palette. Slot 9/10 assignments,
+including a valid replacement value of zero, therefore follow ReDMCSB rather
+than a per-creature approximation. The adapter selects the Atari ST target
+table for ST 2.0/2.1/F20 variants and ReDMCSB's separate `G2025`/`F0695`
+version-3 table for Amiga and FM Towns variants. The two non-PC source
+families decode to the same host indices here, but both differ from PC D3
+targets for some replacement sets, so PC values are not applied to either
+platform family.
+`csb_v1_f0093_replacement_palette_pc34_compat` pins the ordered ownership,
+reset and Atari-specific result. The real Atari ST STX startup
+and M12→M11 handoff tests verify that the rebuilt native CSB path remains
+bootable; they do not substitute for a creature-on-Worm-map frame capture.
+
+Remaining evidence is visual, not a known unbound code path: capture the three
+real Worm-map outcomes before claiming renderer/pixel parity. Original mode
+must retain source colors; any Modern correction needs separate user consent
+and must never replace Original.
 
 **Source:** ReDMCSB `DUNVIEW.C` · BugsAndChanges.htm#BUG7_01
 
@@ -169,9 +186,9 @@ platform-specific. Document as non-gap.
 | Gap | Severity | Description |
 |-----|----------|-------------|
 | VBL handler fix (BUG0_03) | PARTIAL / source-modelled | No ignored VBL interrupts; precise palette switching |
-| Engine version display (CHANGE7_36) | LOW | v2.0/v2.1 in dialog top-right; CSB only |
+| Engine version display (CHANGE7_36) | SOURCE MODELLED | v2.0/v2.1 state is bound to the CSB boot/title path; original dialog capture pending |
 | Wall drawing optimization | NONE | Performance only; no functional gap |
-| BUG7_01 (CSB creature palette) | OPEN / preservation | Real map-specific source palette evidence and renderer binding required |
+| BUG7_01 (CSB creature palette) | RUNTIME BOUND / capture pending | Map-ordered F0093 D2/D3 binding is live; original Worm-map overlay evidence remains required |
 | Mouse pointer fix | NONE | Code cleanup; not blocking |
 | Code-to-assembly conversion | NONE | Platform-specific; not applicable |
 

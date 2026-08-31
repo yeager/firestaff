@@ -51,7 +51,7 @@ static void dm2_v1_world_state_init_weather_unavailable(DM2_WorldState *state)
     int i;
 
     if (!state) return;
-    for (i = 0; i < DM2_V1_MAX_LEVELS; ++i) {
+    for (i = 0; i < DM2_WORLD_STATE_MAX_LEVELS; ++i) {
         state->weather_by_level[i].weather_type = DM2_WORLD_WEATHER_UNAVAILABLE;
         state->weather_by_level[i].intensity = 0;
         state->weather_by_level[i].duration = 0;

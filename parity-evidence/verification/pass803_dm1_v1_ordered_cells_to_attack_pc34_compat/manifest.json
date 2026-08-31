@@ -19,7 +19,7 @@
   ],
   "redmcsbLineWindowChecks": [
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:29",
       "line": 29,
       "lineText": "char G0023_aac_Graphic562_OrderedCellsToAttack[8][4];",
@@ -27,7 +27,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:234",
       "line": 234,
       "lineText": "char G0023_aac_Graphic562_OrderedCellsToAttack[8][4] = {",
@@ -35,7 +35,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:243",
       "line": 243,
       "lineText": "unsigned char G0024_auc_Graphic562_WoundProbabilityIndexToWoundMask[4] = { MASK0x0020_WOUND_FEET, MASK0x0010_WOUND_LEGS, MASK0x0008_WOUND_TORSO, MASK0x0004_WOUND_HEAD };",
@@ -43,7 +43,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DATA.C",
       "id": "DATA.C:878",
       "line": 878,
       "lineText": "char G0023_aac_Graphic562_OrderedCellsToAttack[8][4] = {",
@@ -51,7 +51,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PROJEXPL.C",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/PROJEXPL.C",
       "id": "PROJEXPL.C:1302",
       "line": 1302,
       "lineText": "        F0007_MAIN_CopyBytes(G0023_aac_Graphic562_OrderedCellsToAttack[L0557_ui_OrderedCellsToAttackIndex], P0487_pc_OrderedCellsToAttack, M543_BYTE_COUNT_INT(4));",
@@ -59,7 +59,7 @@
       "status": "PASS"
     },
     {
-      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "file": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source/DEFS.H",
       "id": "DEFS.H:7644",
       "line": 7644,
       "lineText": "extern int16_t F0228_GROUP_GetDirectionsWhereDestinationIsVisibleFromSource(",
@@ -67,7 +67,7 @@
       "status": "PASS"
     }
   ],
-  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbRoot": "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/reference/redmcsb-20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass803_dm1_v1_ordered_cells_to_attack_pc34_compat.v1",
   "scope": "DM1 V1 Graphics.dat item 562 init var G0023_aac_Graphic562_OrderedCellsToAttack[8][4] \u2014 the creature-AI attack-direction priority table. Each of the 8 rows maps to an (attack-direction, attacker-position) pair and holds 4 directional offsets to try in order. Read site: PROJEXPL.C:1302 F0229_GROUP_SetOrderedCellsToAttack calls CopyBytes(G0023[Index], P0487_pc_OrderedCellsToAttack, M543_BYTE_COUNT_INT(4)) where Index is derived from F0228_GROUP_GetDirectionsWhereDestinationIsVisibleFromSource.",
   "sourceChecks": [
@@ -103,11 +103,11 @@
     }
   ],
   "status": "PASS803_DM1_V1_ORDERED_CELLS_TO_ATTACK_LOCKED",
-  "timestampUtc": "2026-08-12T01:40:49.917090+00:00",
+  "timestampUtc": "2026-08-31T08:24:57.791568+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff/build/test_dm1_v1_ordered_cells_to_attack_pc34_compat"
+        "/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/test_dm1_v1_ordered_cells_to_attack_pc34_compat"
       ],
       "outputTail": "dm1_v1_ordered_cells_to_attack: 222/222 assertions passed",
       "passed": true,

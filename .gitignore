@@ -7,6 +7,10 @@
 # Ephemeral corpora emitted by DM1 PC34 capture tests.
 firestaff_dm1_pc34_corpus_*/
 
+# Local, read-only third-party source checkout used by optional DM2 source-lock
+# verifiers.  It is never a Firestaff runtime or release dependency.
+/reference/skproject/
+
 # User-supplied firmware and optical-disc/game media never belong in Git.
 *.pce
 *.rom

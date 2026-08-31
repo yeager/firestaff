@@ -340,7 +340,8 @@ static void test_rect_098d_04c7(void)
     printf("test_rect_098d_04c7:\n");
 
     /* Two rects: query 1 has w=10, h=20; query 2 has w=30, h=60 */
-    uint8_t buf1[10 + 8], buf2[10 + 8];
+    uint8_t buf1[sizeof(DM2_V1_RNode) + 8];
+    uint8_t buf2[sizeof(DM2_V1_RNode) + 8];
     memset(buf1, 0, sizeof(buf1));
     memset(buf2, 0, sizeof(buf2));
 

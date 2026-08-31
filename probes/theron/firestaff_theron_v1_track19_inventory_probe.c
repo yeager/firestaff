@@ -10,8 +10,33 @@
 #include <stdlib.h>
 #include <string.h>
 
+static int find_track19_at_root(const char *root, const char *file_name,
+                                const char *raw_file_name, char *fallback,
+                                size_t fallback_capacity) {
+    int length;
+    FILE *file;
+
+    if (!root || !root[0]) return 0;
+    length = snprintf(fallback, fallback_capacity, "%s/%s", root, file_name);
+    if (length >= 0 && (size_t)length < fallback_capacity &&
+        (file = fopen(fallback, "rb")) != NULL) {
+        fclose(file);
+        return 1;
+    }
+    if (!raw_file_name) return 0;
+    length = snprintf(fallback, fallback_capacity, "%s/%s", root,
+                      raw_file_name);
+    if (length >= 0 && (size_t)length < fallback_capacity &&
+        (file = fopen(fallback, "rb")) != NULL) {
+        fclose(file);
+        return 1;
+    }
+    return 0;
+}
+
 static const char *resolve_track19_iso(const char *env_name,
                                        const char *file_name,
+                                       const char *raw_file_name,
                                        char *fallback,
                                        size_t fallback_capacity) {
     const char *configured = getenv(env_name);
@@ -21,34 +46,32 @@ static const char *resolve_track19_iso(const char *env_name,
     int length;
 
     if (configured && configured[0]) return configured;
-    if (theron_root && theron_root[0]) {
-        length = snprintf(fallback, fallback_capacity, "%s/%s", theron_root,
-                          file_name);
-        if (length >= 0 && (size_t)length < fallback_capacity) {
-            return fallback;
-        }
-    }
+    if (find_track19_at_root(theron_root, file_name, raw_file_name, fallback,
+                             fallback_capacity)) return fallback;
     if (root && root[0]) {
-        length = snprintf(fallback, fallback_capacity, "%s/theron/%s", root,
-                          file_name);
-        if (length >= 0 && (size_t)length < fallback_capacity) {
-            return fallback;
-        }
+        char root_theron[512];
+        length = snprintf(root_theron, sizeof(root_theron), "%s/theron", root);
+        if (length >= 0 && (size_t)length < sizeof(root_theron))
+            if (find_track19_at_root(root_theron, file_name, raw_file_name,
+                                     fallback, fallback_capacity)) return fallback;
     }
     home = getenv("HOME");
     if (!home || !home[0]) return NULL;
-    length = snprintf(fallback, fallback_capacity,
-                      "%s/.firestaff/data/theron/%s", home, file_name);
-    if (length < 0 || (size_t)length >= fallback_capacity) {
-        return NULL;
+    {
+        char home_theron[512];
+        length = snprintf(home_theron, sizeof(home_theron),
+                          "%s/.firestaff/data/theron", home);
+        if (length >= 0 && (size_t)length < sizeof(home_theron))
+            if (find_track19_at_root(home_theron, file_name, raw_file_name,
+                                     fallback, fallback_capacity)) return fallback;
     }
-    return fallback;
+    return NULL;
 }
 
 static int verify_real_us_item_table(void) {
     char fallback[512];
     const char *path = resolve_track19_iso(
-        "THERON_TRACK19_US_ISO", "TQUS19.iso", fallback, sizeof(fallback));
+        "THERON_TRACK19_US_ISO", "TQUS19.iso", NULL, fallback, sizeof(fallback));
     FILE *file;
     long size;
     uint8_t *bytes;
@@ -164,7 +187,9 @@ static int verify_real_us_item_table(void) {
 static int verify_real_jp_item_table(void) {
     char fallback[512];
     const char *path = resolve_track19_iso(
-        "THERON_TRACK19_JP_ISO", "TQJP19.iso", fallback, sizeof(fallback));
+        "THERON_TRACK19_JP_ISO", "TQJP19.iso",
+        "Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 19).bin",
+        fallback, sizeof(fallback));
     FILE *file;
     long size;
     uint8_t *bytes;
@@ -181,6 +206,20 @@ static int verify_real_jp_item_table(void) {
     unsigned int i;
 
     if (!path || !path[0]) return 1;
+    /* The supplied Japanese Rev 1 image is a raw MODE1/2352 track with a
+     * CUE-defined pregap.  The product inventory performs that lossless,
+     * in-memory normalization before validating ISO-addressed game records.
+     * Direct mutation checks below intentionally remain ISO-only. */
+    if (strstr(path, "(Track 19).bin") != NULL) {
+        Theron_V1Track19InventoryReceipt receipt;
+
+        return theron_v1_track19_inventory_file(path, &receipt) &&
+            receipt.mode1_2352 && receipt.sector_count == 3296u &&
+            receipt.item_name_table_verified &&
+            receipt.level_label_table_verified &&
+            receipt.item_property_table_verified &&
+            receipt.startup_level_envelope_verified;
+    }
     file = fopen(path, "rb");
     if (!file || fseek(file, 0L, SEEK_END) != 0 ||
         (size = ftell(file)) <= 0 || size > 64L * 1024L * 1024L ||
@@ -286,10 +325,11 @@ int main(void) {
     char us_fallback[512];
     char jp_fallback[512];
     const char *real_iso = resolve_track19_iso(
-        "THERON_TRACK19_US_ISO", "TQUS19.iso", us_fallback,
+        "THERON_TRACK19_US_ISO", "TQUS19.iso", NULL, us_fallback,
         sizeof(us_fallback));
     const char *real_jp_iso = resolve_track19_iso(
-        "THERON_TRACK19_JP_ISO", "TQJP19.iso", jp_fallback,
+        "THERON_TRACK19_JP_ISO", "TQJP19.iso",
+        "Dungeon Master - Theron's Quest (Japan) (Rev 1) (Track 19).bin", jp_fallback,
         sizeof(jp_fallback));
 
     if (!theron_v1_track19_inventory(
@@ -315,6 +355,13 @@ int main(void) {
             "f9f069a5e489b91207f3156059b756f1", 6291456u, &receipt) ||
         !receipt.mode1_2048 || receipt.sector_count != 3072u ||
             theron_v1_track19_inventory("bad", 5983488u, &receipt)) {
+        return 1;
+    }
+    if (!theron_v1_track19_inventory(
+            "27d54f58154662885bb67d5967e5111e", 7752192u, &receipt) ||
+        !receipt.mode1_2352 || receipt.mode1_2048 ||
+        receipt.sector_count != 3296u || !receipt.container_format_unproven ||
+        strcmp(receipt.variant, "jp") != 0) {
         return 1;
     }
     if (!verify_real_us_item_table()) return 1;

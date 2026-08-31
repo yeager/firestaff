@@ -26,6 +26,6 @@
 
 ## Verification
 
-- `/Volumes/Extern-disk/firestaff/build/test_dm1_v1_ordered_cells_to_attack_pc34_compat`: rc=0
+- `/home/yeager/Documents/Codex/2026-08-24/jobba-med-github-com-yeager-firestaff/work/firestaff-incomplete-20260824/build/test_dm1_v1_ordered_cells_to_attack_pc34_compat`: rc=0
 
 Manifest: `parity-evidence/verification/pass803_dm1_v1_ordered_cells_to_attack_pc34_compat/manifest.json`

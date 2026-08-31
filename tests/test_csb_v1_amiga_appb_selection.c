@@ -8,23 +8,13 @@
 
 static int load_file(const char *path, uint8_t **bytes, size_t *size)
 {
-    FILE *file = fopen(path, "rb");
-    long length;
-    if (!file || fseek(file, 0, SEEK_END) != 0 || (length = ftell(file)) <= 0 ||
-        fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
-        return 0;
-    }
-    *bytes = malloc((size_t)length);
-    if (!*bytes || fread(*bytes, 1u, (size_t)length, file) != (size_t)length) {
-        free(*bytes);
-        *bytes = NULL;
-        fclose(file);
-        return 0;
-    }
-    fclose(file);
-    *size = (size_t)length;
-    return 1;
+    if (!bytes || !size) return 0;
+    *bytes = NULL;
+    *size = 0u;
+    /* Supports the original ZIP→ADF member directly; no staging copy is
+     * acceptable for this real-media language-selection receipt. */
+    return asset_read_virtual_path_alloc(path, bytes, size) &&
+           *bytes != NULL && *size > 0u;
 }
 
 int main(void)
