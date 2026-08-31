@@ -122,6 +122,31 @@ viewport/palette state have not yet been captured and bound to the Firestaff
 tuple. The frames are therefore not promoted to an overlay baseline or a
 pixel-parity claim.
 
+### Runtime viewport compositor boundary (confirmed 2026-08-31)
+
+The source implementation makes the remaining renderer work concrete. In
+`SKULLWIN/c_gui_vp.cpp::DM2_DISPLAY_VIEWPORT`, `DM2_INIT_BACKBUFF()` creates a
+separate `224x136` dungeon surface before the source calls
+`DM2_DRAW_DUNGEON_GRAPHIC` for ceiling (`GRAPHICSSET/1`, rectangle `0x2bc`) and
+floor (`GRAPHICSSET/0`, rectangle `0x2bd`), then executes environment, tiles,
+and player passes. `SKULLWIN/c_gfx_main.cpp::DM2_DRAWINGS_COMPLETED` presents
+that surface through expanded `RECT_7`; the normal source call is
+`_specialblit(..., 0x0008)`, while bit 15 selects the transition stretch.
+
+Firestaff now matches the `RECT_7` decode and the `0x0008`/`0x8008` decision in
+its isolated `c_gfx_main` compatibility layer, but its active M11 DM2 runtime
+still composes a fixed `320x200` surface directly. The retained authentic DOS
+new-game capture visibly exposes that mismatch: real GDAT material is used,
+yet the native frame has repeated banding rather than the source corridor
+composition. This is a compositor/geometry gap, not permission to replace
+the frame with generated art or to relabel it as palette-only.
+
+The next implementation must introduce a source-sized dungeon backbuffer,
+bind the actual `RECT_7` destination at `(0,40,224,136)`, and port source
+`DM2_DISPLAY_VIEWPORT` pass ordering into that surface. It must retain the
+current in-memory GDAT ownership checks and verify the same new-game tuple
+against an original capture before promoting a visual-parity result.
+
 - Real long-route captures for combat resolution, creature drops, weather,
   audio and level transitions on each admitted platform.
 - Representative original-frame overlays for dungeon, HUD, doors and

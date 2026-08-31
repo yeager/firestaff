@@ -2,6 +2,10 @@
 
 Reviewed 2026-08-29. Only open work is listed here.
 
+- Replace the active fixed 320x200 M11 dungeon compositor with the original
+  224x136 backbuffer and `RECT_7` presentation route. Port the source
+  `DM2_DISPLAY_VIEWPORT` pass order from the real PC-DOS route; retain only
+  GDAT-owned pixels and verify it against a same-tuple original capture.
 - Extend real-media gameplay evidence across DOS, Amiga, FM Towns and Mac for
   dialog/input ordering, creature AI/drop routes, audio and save/resume.
 - Capture an original PC-DOS `SKSAVE1` WIELD input-to-CD/RAM trace with a
