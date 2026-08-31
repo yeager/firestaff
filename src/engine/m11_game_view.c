@@ -38595,16 +38595,30 @@ static int m11_c080_grab_rendered_pile_target(M11_GameViewState* state,
 static int m11_c080_drop_leader_hand(M11_GameViewState* state,
                                      int viewCell) {
     unsigned short item;
+    unsigned short placedItem;
     int targetMapX, targetMapY;
+    int sourceViewCell;
+    int destinationCell;
     M11_ViewportCell cell;
 
     if (!state || !state->active) return 0;
     item = DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state);
     if (item == THING_NONE) return 0;
 
+    /* CLIKVIEW.C F0374 converts the dedicated alcove target to the front
+     * square's back-right cell, then applies M015_THING_WITH_NEW_CELL before
+     * F0267 links it.  The cell bits are part of a live THING identity, not
+     * merely render metadata: preserving the old pickup cell made a dropped
+     * item reappear in the wrong lane after the next F0115 traversal. */
+    sourceViewCell = viewCell == 4 ? 2 : viewCell;
+    if (sourceViewCell < 0 || sourceViewCell > 3) return 0;
+    destinationCell = (state->world.party.direction + sourceViewCell) & 3;
+    placedItem = (unsigned short)((item & 0x3fffu) |
+                                  ((unsigned int)destinationCell << 14));
+
     memset(&cell, 0, sizeof(cell));
     /* For alcove (viewCell == 4), use front cell coordinates */
-    if (viewCell >= 2) {
+    if (sourceViewCell >= 2) {
         if (!m11_sample_viewport_cell(state, 1, 0, &cell) || !cell.valid) return 0;
     } else {
         if (!m11_sample_viewport_cell(state, 0, 0, &cell) || !cell.valid) return 0;
@@ -38616,7 +38630,7 @@ static int m11_c080_drop_leader_hand(M11_GameViewState* state,
 
     if (!m11_prepend_thing_to_square(&state->world,
                                      state->world.party.mapIndex,
-                                     targetMapX, targetMapY, item)) {
+                                     targetMapX, targetMapY, placedItem)) {
         /* Rollback */
         DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, item);
         return 0;
@@ -38819,9 +38833,18 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
      * (y < 102 in source coords), attempt to throw left or right based
      * on x position relative to center.  F0329_CHAMPION_IsLeaderHandObjectThrown
      * in the original places the thrown object as a projectile. */
-    if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE &&
-        localY >= 14 && localY <= 69) {
-        /* Upper viewport = throw zone per F0375 */
+    if (!facingWall &&
+        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE &&
+        localY >= 47 && localY <= 102 &&
+        ((frontCell.elementType == DUNGEON_ELEMENT_DOOR &&
+          localX >= 64 && localX <= 163) ||
+         (frontCell.elementType != DUNGEON_ELEMENT_DOOR &&
+          localX >= 32 && localX <= 191))) {
+        /* CLIKVIEW.C F0375: the PC34 throw lane is y=47..102. Its
+         * horizontal admission narrows for a door ahead (64..163) and is
+         * otherwise 32..191. Crucially, F0377 reaches F0375 only when the
+         * front square is not a wall; treating every upper click as a throw
+         * stole held objects from alcove/sensor drops. */
         int throwSide = (localX < 112) ? 0 : 1; /* 0=left, 1=right */
         unsigned short throwThing = DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state);
         int championIndex = state->world.party.activeChampionIndex;
