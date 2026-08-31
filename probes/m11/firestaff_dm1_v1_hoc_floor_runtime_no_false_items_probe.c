@@ -15,6 +15,7 @@
  */
 
 #include "asset_status_m12.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
 #include "memory_dungeon_dat_pc34_compat.h"
@@ -208,6 +209,8 @@ static int capture_real_hoc_floor_item(M11_GameViewState* state,
 
 int main(int argc, char** argv) {
     const char* dataDir = argc > 1 ? argv[1] : getenv("FIRESTAFF_DATA");
+    char pc34DataDir[1024];
+    const char* selectedDataDir;
     M12_StartupMenuState menu;
     M11_GameViewState state;
     const struct DungeonMapDesc_Compat* map;
@@ -228,7 +231,9 @@ int main(int argc, char** argv) {
     printf("=== DM1 V1 HoC floor runtime no-false-items probe ===\n");
     printf("dataDir=%s\n", dataDir);
 
-    M12_StartupMenu_InitWithDataDir(&menu, dataDir, NULL);
+    selectedDataDir = firestaff_dm1_probe_narrow_data_dir(
+        dataDir, pc34DataDir, sizeof(pc34DataDir));
+    M12_StartupMenu_InitWithDataDir(&menu, selectedDataDir, NULL);
     if (!M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm1")) {
         printf("SKIP no hash-verified DM1 data under %s\n", dataDir);
         return 0;
@@ -236,7 +241,7 @@ int main(int argc, char** argv) {
 
     M11_GameView_Init(&state);
     if (!M11_GameView_OpenSelectedMenuEntry(&state, &menu)) {
-        fprintf(stderr, "FAIL could not open DM1 V1 game view from %s\n", dataDir);
+        fprintf(stderr, "FAIL could not open DM1 V1 game view from %s\n", selectedDataDir);
         M11_GameView_Shutdown(&state);
         return 1;
     }

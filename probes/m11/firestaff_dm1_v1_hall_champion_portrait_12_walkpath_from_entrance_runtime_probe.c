@@ -771,8 +771,7 @@ static int drive_zed_to_linflas(M11_GameViewState* game,
             pose.mapY = PROBE_LINFLAS_Y;
             pose.dir = kSidePoses[i].dir;
             pose.expectedOrdinal = -1;
-            snprintf((char*)pose.label, sizeof(pose.label), "%s",
-                     kSidePoses[i].label);
+            pose.label = kSidePoses[i].label;
             if (!check_walkpath_pose(game, portraits, *outPrevOrdinal, &pose, fb)) {
                 ok = 0;
             }

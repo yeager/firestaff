@@ -118,6 +118,7 @@
  * resurrect/reincarnate panel graphic in GRAPHICS.DAT).
  */
 #include "m11_game_view.h"
+#include "firestaff_dm1_probe_data_dir.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 #include "asset_loader_m11.h"
@@ -234,10 +235,13 @@ static void set_hall_pose(M11_GameViewState* game,
 static int open_dm1(const char* dataDir,
                     M12_StartupMenuState* menu,
                     M11_GameViewState* game) {
-    M12_StartupMenu_InitWithDataDir(menu, dataDir, NULL);
+    char pc34DataDir[1024];
+    const char* selectedDataDir = firestaff_dm1_probe_narrow_data_dir(
+        dataDir, pc34DataDir, sizeof(pc34DataDir));
+    M12_StartupMenu_InitWithDataDir(menu, selectedDataDir, NULL);
     M11_GameView_Init(game);
     if (!M11_GameView_OpenSelectedMenuEntry(game, menu)) {
-        fprintf(stderr, "FAIL could not open DM1 V1 game view from %s\n", dataDir);
+        fprintf(stderr, "FAIL could not open DM1 V1 game view from %s\n", selectedDataDir);
         M11_GameView_Shutdown(game);
         return 0;
     }

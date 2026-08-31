@@ -847,8 +847,7 @@ static int drive_approach_to_ordinal07(M11_GameViewState* game,
             pose.mapY = PROBE_ORDINAL07_Y;
             pose.dir = kSidePoses[i].dir;
             pose.expectedOrdinal = kSidePoses[i].expectedOrdinal;
-            snprintf((char*)pose.label, sizeof(pose.label), "%s",
-                     kSidePoses[i].label);
+            pose.label = kSidePoses[i].label;
             if (!check_walkpath_pose(game, portraits, *outPrevOrdinal, &pose, fb)) {
                 ok = 0;
             }
