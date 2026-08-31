@@ -11380,7 +11380,16 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
                                   int view_w, int view_h) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_ViewportState viewport;
-    uint8_t dungeon_backbuffer[DM2_GFX_BACKBUFFER_W * DM2_GFX_BACKBUFFER_H];
+    /* The original presentation bitmap is 224x136, but the current
+     * source-material renderer still operates in the logical 320x200 M11
+     * coordinate space before RECT_7 clips that bitmap.  Reserve the whole
+     * declared drawing surface here: a 224x136 allocation would allow the
+     * existing source draws to write past the end before presentation.
+     *
+     * RECT_7 remains the only presentation boundary below, so this larger
+     * transient allocation neither changes the published rectangle nor
+     * invents a scaled output. */
+    uint8_t dungeon_backbuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
     DM2_V1_BootExpandedRectReceipt rect7_receipt;
     int use_rect7_backbuffer = 0;
     const uint8_t *rect14_rows = NULL;

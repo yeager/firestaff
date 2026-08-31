@@ -4,9 +4,12 @@ Reviewed 2026-08-29. Only open work is listed here.
 
 - Complete the source `DM2_DISPLAY_VIEWPORT` pass ordering inside the original
   224x136 backbuffer and `RECT_7` presentation route. The native indoor
-  runtime now owns a separate backbuffer, copies it unscaled to retail RAW4
-  `RECT_7`, then draws the source HUD on the 320x200 screen. Remaining work
-  is outdoor's distinct composition, transition stretching and same-tuple
+  runtime now owns a separate backbuffer, copies the retail RAW4 `RECT_7`
+  portion unscaled, then draws the source HUD on the 320x200 screen. The
+  renderer still has a 320x200 logical coordinate space, so its private
+  allocation deliberately covers that full extent before the 224x136 RECT_7
+  copy. Remaining work is the authenticated 224x136 source-coordinate pass,
+  outdoor's distinct composition, transition stretching and same-tuple
   original-capture comparison; retain only GDAT-owned pixels.
 - Extend real-media gameplay evidence across DOS, Amiga, FM Towns and Mac for
   dialog/input ordering, creature AI/drop routes, audio and save/resume.
