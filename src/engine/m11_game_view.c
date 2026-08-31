@@ -5713,6 +5713,24 @@ static void m11_csb_atari_st_vblank_palette_start(void *context)
          * VBlank; retaining the prior frame would hide a source palette
          * change. */
         state->csbAtariStAnimationFrameBound = 0;
+        /* After ANIM.C hands off to FTLCODE, BASE.C:E0017's palette-start
+         * belongs to the dungeon page, not the title P4B1 page. Install the
+         * source-selected C232 light palette here, on the delivered VBlank,
+         * rather than waiting for a host redraw.  The renderer still reads
+         * the same source palette as a recovery boundary; this call provides
+         * the original temporal owner and never manufactures RGB values. */
+        if (!state->csbState.startup_title_active && state->csbBootProfile) {
+            const CSB_V1_BootProfile *profile =
+                (const CSB_V1_BootProfile *)state->csbBootProfile;
+            uint8_t rgb6[256][3];
+            if ((profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+                 profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
+                (m11_csb_atari_st_runtime_palette_rgb6(profile, rgb6) ||
+                 m11_csb_atari_st_initial_palette_rgb6(profile, rgb6))) {
+                (void)M11_Render_SetIndexedPaletteRgb6(rgb6);
+                (void)csb_v22_inplace_draw_set_indexed_palette_rgb6(rgb6);
+            }
+        }
     }
 }
 
@@ -28917,12 +28935,20 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         if (!state->csbBootProfile) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
+        if (csb_profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+            csb_profile->variant_id == CSB_V1_VARIANT_ST21_EN) {
+            /* BASE.C:E0017 / CHANGE7_01_FIX is a machine VBlank handler,
+             * not an ANIM.C-only title effect. Keep its no-lost-VBlank
+             * discipline alive after FTLCODE enters the dungeon too. This
+             * owns only palette-switch scheduling; the regular CSB runtime
+             * tick below remains the sole owner of game simulation. */
+            m11_csb_advance_atari_st_vblank(state, csb_profile->tick_ms);
+        }
         if ((csb_profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
              csb_profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
             state->csbState.startup_title_active &&
             !state->csbStartupRuntimeAssetSession) {
             state->csbAtariStAnimationClockStarted = 1;
-            m11_csb_advance_atari_st_vblank(state, csb_profile->tick_ms);
             m11_csb_play_due_atari_st_animation_sounds(state);
             (void)m11_csb_complete_atari_st_runtime_handoff(state);
             return M11_GAME_INPUT_REDRAW;

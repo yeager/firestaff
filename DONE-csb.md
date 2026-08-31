@@ -2,6 +2,13 @@
 
 Reviewed 2026-08-29. Completed work only.
 
+- Atari ST CSB gameplay now remains on the `CHANGE7_01_FIX` VBlank path
+  after `ANIM.C` hands off to `FTLCODE`: every 50 Hz gameplay tick delivers
+  the source VBlank model, whose palette-start callback installs the already
+  verified `GRAPHICS.DAT` C232 light palette. The title's original P4B1
+  palette remains title-owned. This is in-process scheduling and palette
+  selection only; it neither changes simulation cadence nor creates media.
+
 - `SWITCH.DAT` is now verified from the supplied CSB Utility Disk itself:
   `csb_v1_atari_switch_dat_real_media` opens the original STX, retains its
   7,405-byte `SWITCH.DAT` member only in process memory, validates the

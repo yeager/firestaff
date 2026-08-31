@@ -38,11 +38,14 @@ locked by `csb_v1_atari_st_vblank`, including a nested two-arrival regression.
 The native Atari ST `ANIMATE.SCR` title path is now a live consumer: each 50 Hz
 tick passes through the model, invalidates the retained source frame, and
 re-decodes the original P4B1 palette for that VBlank. The complete original
-STX CLI/title/input/menu regression covers this path. The generic PC 3.4
+STX CLI/title/input/menu regression covers this path. After the verified
+ANIM.C → FTLCODE handoff, every Atari gameplay tick also delivers the same
+model and its palette-start callback installs the source-selected C232
+`GRAPHICS.DAT` light palette before host presentation. The generic PC 3.4
 `F0693_WaitVerticalBlank_PC34` gate remains a synchronous wait only and is not
-used as Atari ST parity evidence. Remaining work is to route each Atari
-gameplay palette consumer through this model. An earlier audit incorrectly
-cited `F0613_VBL_Process`; that symbol is a champion-text helper.
+used as Atari ST parity evidence. Remaining work is original gameplay-frame
+capture comparison across palette changes; an earlier audit incorrectly cited
+`F0613_VBL_Process`, which is a champion-text helper.
 
 **Source evidence used for implementation:**
 ReDMCSB WIP `BASE.C:E0017_MAIN_Exception28Handler_VerticalBlank_CPSDF` and
