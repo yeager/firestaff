@@ -5,6 +5,7 @@
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_gdat_scene_m11_command.h"
+#include "dm2_v1_gfx_main_pc34_compat.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "firestaff_zip_extract.h"
@@ -109,13 +110,17 @@ static int initial_plane_mirror(uint16_t scene_flags, uint8_t kind)
 
 static int verify_source_plane_pixels(
     const uint8_t *framebuffer, const DM2_V1_GdatSceneM11Command *command,
-    const DM2_V1_GdatSceneBlitRect *rect, int flip_mirror, const char *name)
+    const DM2_V1_GdatSceneBlitRect *rect, int framebuffer_width,
+    int framebuffer_height, int framebuffer_stride, int flip_mirror,
+    const char *name)
 {
     if (!framebuffer || !command || !rect || !command->pixels ||
         command->width == 0u || command->height == 0u ||
         rect->x < 0 || rect->y < 0 || rect->width == 0u || rect->height == 0u ||
-        (unsigned)rect->x + rect->width > DM2_VP_WIDTH ||
-        (unsigned)rect->y + rect->height > DM2_VP_HEIGHT) {
+        framebuffer_width <= 0 || framebuffer_height <= 0 ||
+        framebuffer_stride < framebuffer_width ||
+        (unsigned)rect->x + rect->width > (unsigned)framebuffer_width ||
+        (unsigned)rect->y + rect->height > (unsigned)framebuffer_height) {
         return 0;
     }
     for (uint16_t y = 0u; y < rect->height; ++y) {
@@ -129,7 +134,8 @@ static int verify_source_plane_pixels(
             if (flip_mirror & 2) sy = (uint16_t)(command->height - 1u - sy);
             expected = source_plane_palette_color(
                 command, command->pixels[sy * command->width + sx]);
-            actual = framebuffer[(rect->y + y) * DM2_VP_WIDTH + rect->x + x];
+            actual = framebuffer[(rect->y + y) * framebuffer_stride +
+                                 rect->x + x];
             if (actual != expected) {
                 fprintf(stderr, "FAIL: %s RECT_%u differs from one-shot source "
                         "plane at %u,%u (actual=%u expected=%u)\n",
@@ -145,7 +151,7 @@ static int verify_direct_handoff(int style,
                                  const DM2_V1_GdatSceneM11CommandPlan *plan)
 {
     DM2_V1_ViewportState viewport;
-    uint8_t framebuffer[DM2_VP_WIDTH * DM2_VP_HEIGHT];
+    uint8_t framebuffer[DM2_GFX_BACKBUFFER_W * DM2_GFX_BACKBUFFER_H];
     int needs_local_palette_remap =
         plan->commands[0].format == DM2_IMG_FMT_IMG3 ||
         plan->commands[0].format == DM2_IMG_FMT_U4 ||
@@ -154,7 +160,8 @@ static int verify_direct_handoff(int style,
 
     memset(framebuffer, 0, sizeof(framebuffer));
     unexpected_fetches = 0;
-    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_GFX_BACKBUFFER_W);
+    dm2_v1_viewport_set_render_dungeon_backbuffer_only(&viewport, 1);
     dm2_v1_viewport_set_source_materials_required(&viewport, 1);
     dm2_v1_viewport_set_asset_provider(&viewport, unexpected_asset_fetch, NULL);
     dm2_v1_viewport_set_asset_palette_provider(
@@ -182,10 +189,16 @@ static int verify_direct_handoff(int style,
     }
     if (!verify_source_plane_pixels(framebuffer, &plan->commands[1],
                                     &plan->rects[1],
+                                    DM2_GFX_BACKBUFFER_W,
+                                    DM2_GFX_BACKBUFFER_H,
+                                    DM2_GFX_BACKBUFFER_W,
                                     initial_plane_mirror(plan->scene_flags, 0x20u),
                                     "ceiling") ||
         !verify_source_plane_pixels(framebuffer, &plan->commands[0],
                                     &plan->rects[0],
+                                    DM2_GFX_BACKBUFFER_W,
+                                    DM2_GFX_BACKBUFFER_H,
+                                    DM2_GFX_BACKBUFFER_W,
                                     initial_plane_mirror(plan->scene_flags, 1u),
                                     "floor")) {
         return 0;
