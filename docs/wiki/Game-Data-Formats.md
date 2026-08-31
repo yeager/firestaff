@@ -32,13 +32,16 @@ boundaries.
 
 CSB campaign/bootstrap media such as MINI.DAT, MINIF.DAT and MINIG.DAT is
 never treated as a generic user-save target. Atari and Amiga user slots are
-CSBGAME*.DAT with native .BAK recovery. FM Towns F31 saves use a C5 header,
-checksummed blocks, portraits and a dungeon tail. The current external EN/JP
-save files are rejected before runtime admission because their valid headers
-and parts contradict the two-map Prison tail's saved map index; they remain
-preservation evidence while source-faithful F0433 writing stays closed. Legacy CSBWin
-csbgame*.dat files are fully authenticated into private candidates, but their
-dungeon state is not yet atomically published into a live session.
+CSBGAME*.DAT with native .BAK recovery. FM Towns F31 saves have a 512-byte C5
+header followed by five keyed/checksummed parts (global data, active groups,
+party, events and timeline), four planar portraits, and a checksummed saved
+dungeon tail. A header or isolated part is not sufficient for runtime
+admission: Firestaff also requires an unchanged source identity, a valid tail
+and a saved pose valid for that tail. See [CSB DSA and Save
+Internals](CSB-DSA-and-Save-Internals) for the exact layout and F0433/F0435
+ownership. Legacy CSBWin csbgame*.dat files are fully authenticated into
+private candidates, but their dungeon state is not yet atomically published
+into a live session.
 
 CSB for X68000 is intentionally unsupported. Any local HDM is preservation
 reference only and must not select a data, startup or game-view route; see

@@ -136,6 +136,49 @@ Q-CSB-09 save/Utility Disk interop is covered by 32 test files spanning:
 15 of the 32 files are executable test binaries; the remainder are shared
 fixture/header support. All pass.
 
+### Original FM Towns F31 save layout
+
+This is the native `MINI.DAT` / `CSBGAME.DAT` family used by the FM Towns
+F31E/F31J ports.  It is not a CSBWin save and it is not interchangeable with
+the Atari or Amiga media layouts.  The layout below was checked against
+ReDMCSB WIP 2021-02-06, `CEDTINC8.C` (F0433/F7052) and `LOADSAVE.C` (F0435),
+using the supplied original F31 program/media as the runtime witness.
+
+```text
+0x000..0x1ff  512-byte C5 save header
+0x200..       C0 global data                 (128 bytes)
+              C1 ACTIVE_GROUP table          (capacity × 16 bytes)
+              C2 four CHAMPION records       (1,404 bytes total)
+              C3 EVENT table                 (maximum count × 10 bytes)
+              C4 timeline index table        (maximum count × 2 bytes)
+              four 32×29 planar portraits    (4 × 464 bytes)
+              saved dungeon tail + trailer checksum
+```
+
+The header contains sixteen per-save keys and five part checksums.  F0433
+refreshes all sixteen keys from the original RNG, calculates C0--C4 checksums
+over plaintext, obfuscates the 512-byte header with its CSB key word, then
+writes each keyed part.  The part primitive is F7055/F7056/F7057/F7058: it
+sums the plaintext word and the keyed-XOR word while advancing the 16-bit key
+by the remaining word count.  This is why Firestaff verifies every one of
+C0--C4 before it reads global metadata, party data, events, or the timeline;
+a valid C5 header alone is insufficient.
+
+F0435 first reads and validates the same five parts, expands the serialized
+10-byte `EVENT` records into the runtime event form, reads the four portraits,
+and then admits the saved dungeon tail.  Firestaff preserves that order and
+does not use the CD `DUNGEON.DAT` as a substitute for a differently sized
+saved tail.  A resumed slot is accepted only when its source identity remains
+unchanged after admission, all five checksums validate, the tail checksum and
+map envelope validate, and the saved pose belongs to that tail.  This gives a
+clear failure boundary for damaged, mismatched-language, or stale files.
+
+The checksum/save-body model is source verified.  A broad corpus of
+checksum-valid, player-created F31 saves and an original emulator
+load/save/reload trace are still needed before claiming complete F31 save
+interoperability.  Until then, unsupported combinations remain closed rather
+than being repaired with generated game state.
+
 ### Legacy CSBWin `csbgame2.dat` boundary
 
 The checked CSBWin source-tree `csbgame2.dat` is a real legacy save with a
