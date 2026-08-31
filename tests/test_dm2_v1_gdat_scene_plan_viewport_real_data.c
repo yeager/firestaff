@@ -15,6 +15,7 @@
 #include <string.h>
 
 #define DM2_GDAT_SOURCE_VIEWPORT_HEIGHT 136
+#define RECT7_GUARD_BYTES 64u
 
 static int load_canonical_files(uint8_t **graphics, size_t *graphics_size,
                                 uint8_t **dungeon, size_t *dungeon_size)
@@ -151,14 +152,19 @@ static int verify_direct_handoff(int style,
                                  const DM2_V1_GdatSceneM11CommandPlan *plan)
 {
     DM2_V1_ViewportState viewport;
-    uint8_t framebuffer[DM2_GFX_BACKBUFFER_W * DM2_GFX_BACKBUFFER_H];
+    uint8_t workspace[RECT7_GUARD_BYTES +
+                      DM2_GFX_BACKBUFFER_W * DM2_GFX_BACKBUFFER_H +
+                      RECT7_GUARD_BYTES];
+    uint8_t *framebuffer = workspace + RECT7_GUARD_BYTES;
     int needs_local_palette_remap =
         plan->commands[0].format == DM2_IMG_FMT_IMG3 ||
         plan->commands[0].format == DM2_IMG_FMT_U4 ||
         plan->commands[1].format == DM2_IMG_FMT_IMG3 ||
         plan->commands[1].format == DM2_IMG_FMT_U4;
 
-    memset(framebuffer, 0, sizeof(framebuffer));
+    memset(workspace, 0xa5, sizeof(workspace));
+    memset(framebuffer, 0,
+           (size_t)DM2_GFX_BACKBUFFER_W * DM2_GFX_BACKBUFFER_H);
     unexpected_fetches = 0;
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_GFX_BACKBUFFER_W);
     dm2_v1_viewport_set_render_dungeon_backbuffer_only(&viewport, 1);
@@ -202,6 +208,16 @@ static int verify_direct_handoff(int style,
                                     initial_plane_mirror(plan->scene_flags, 1u),
                                     "floor")) {
         return 0;
+    }
+    for (size_t i = 0u; i < RECT7_GUARD_BYTES; ++i) {
+        if (workspace[i] != 0xa5u ||
+            workspace[RECT7_GUARD_BYTES +
+                      DM2_GFX_BACKBUFFER_W * DM2_GFX_BACKBUFFER_H + i] !=
+                0xa5u) {
+            fprintf(stderr, "FAIL: GRAPHICSSET %d wrote outside RECT_7 "
+                    "224x136 backbuffer\n", style);
+            return 0;
+        }
     }
     return 1;
 }
