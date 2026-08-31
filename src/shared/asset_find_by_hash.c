@@ -5074,7 +5074,7 @@ static int scan_atari_stx_by_md5_list(const char *stx_path,
 }
 
 #ifdef FIRESTAFF_HAS_NATIVE_7Z
-/* The admitted 7z profile contains one LZMA2-compressed Atari STX image.
+/* The admitted 7z profile contains one LZMA2-compressed Atari disk image.
  * Keep both archive and disk traversal in process: the returned virtual path
  * names the original archive/member/file triple and no game-data file is
  * materialized on disk. */
@@ -5092,6 +5092,29 @@ static int native_7z_copy_nested_virtual_match_path(
     return copy_match_path(virtual_path, out_path, out_path_len);
 }
 
+static int native_7z_atari_disk_visit(const char *member_name,
+                                      const uint8_t *image,
+                                      size_t image_size,
+                                      AtariStFileVisitor visitor,
+                                      void *user_data) {
+    uint8_t *decoded;
+    size_t decoded_size;
+    int result;
+    if (!member_name || !image || image_size == 0U || !visitor) return -1;
+    if (is_atari_stx_path(member_name)) {
+        return atari_stx_visit_files(image, image_size, visitor, user_data);
+    }
+    if (is_atari_st_path(member_name)) {
+        return atari_st_visit_files(image, image_size, visitor, user_data);
+    }
+    if (!is_atari_msa_path(member_name)) return -1;
+    decoded = atari_msa_decode_image(image, image_size, &decoded_size);
+    if (!decoded) return -1;
+    result = atari_st_visit_files(decoded, decoded_size, visitor, user_data);
+    free(decoded);
+    return result;
+}
+
 static int scan_native_7z_atari_stx_by_md5(const char *archive_path,
                                            const char *expected_md5,
                                            char *out_path, int out_path_len) {
@@ -5103,14 +5126,14 @@ static int scan_native_7z_atari_stx_by_md5(const char *archive_path,
     if (!archive_path || !expected_md5) return 0;
     if (!firestaff_7z_extract_single_lzma2_file(
             archive_path, &image, &image_size, member_name,
-            sizeof(member_name)) || !is_atari_stx_path(member_name)) {
+            sizeof(member_name))) {
         free(image);
         return 0;
     }
     memset(&match, 0, sizeof(match));
     match.expected_md5 = expected_md5;
-    result = atari_stx_visit_files(image, image_size,
-                                   adf_find_single_visitor, &match);
+    result = native_7z_atari_disk_visit(member_name, image, image_size,
+                                        adf_find_single_visitor, &match);
     free(image);
     return result >= 0 && match.found &&
            native_7z_copy_nested_virtual_match_path(
@@ -5133,7 +5156,7 @@ static int scan_native_7z_atari_stx_by_md5_list(
         !out_paths || !matched) return 0;
     if (!firestaff_7z_extract_single_lzma2_file(
             archive_path, &image, &image_size, member_name,
-            sizeof(member_name)) || !is_atari_stx_path(member_name)) {
+            sizeof(member_name))) {
         free(image);
         return 0;
     }
@@ -5145,8 +5168,8 @@ static int scan_native_7z_atari_stx_by_md5_list(
     matches.md5_count = md5_count;
     matches.out_paths = local_paths;
     matches.matched = local_matched;
-    result = atari_stx_visit_files(image, image_size,
-                                   adf_find_list_visitor, &matches);
+    result = native_7z_atari_disk_visit(member_name, image, image_size,
+                                        adf_find_list_visitor, &matches);
     free(image);
     if (result < 0) return 0;
     for (i = 0; i < md5_count; ++i) {
@@ -5809,8 +5832,10 @@ static int scan_container_by_md5(const char *path, const char *expectedMd5,
     if (kind == ASSET_CONTAINER_EXTERNAL) {
 #ifdef FIRESTAFF_HAS_NATIVE_7Z
         if (has_case_suffix(path, ".7z")) {
-            return scan_native_7z_atari_stx_by_md5(path, expectedMd5,
-                                                    outPath, outPathLen);
+            if (scan_native_7z_atari_stx_by_md5(path, expectedMd5,
+                                                 outPath, outPathLen)) {
+                return 1;
+            }
         }
 #endif
         if (!external_tool_available_for_path(path)) {
@@ -5880,7 +5905,16 @@ static int scan_container_by_md5_list(const char *path, const char *const *md5Li
     if (kind == ASSET_CONTAINER_EXTERNAL) {
 #ifdef FIRESTAFF_HAS_NATIVE_7Z
         if (has_case_suffix(path, ".7z")) {
-            return scan_native_7z_atari_stx_by_md5_list(
+            int found = scan_native_7z_atari_stx_by_md5_list(
+                path, md5List, md5Count, outPaths, matched);
+            if (found >= md5Count) {
+                return found;
+            }
+            if (!external_tool_available_for_path(path)) {
+                record_missing_extractor(path);
+                return found;
+            }
+            return found + scan_external_archive_by_md5_list(
                 path, md5List, md5Count, outPaths, matched);
         }
 #endif

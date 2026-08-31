@@ -563,6 +563,7 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/archive.lzh");
     remove("asset_find_by_hash_test_tmp/archive.tgz");
     remove("asset_find_by_hash_test_tmp/archive.7z");
+    remove("asset_find_by_hash_test_tmp/packed.7z");
     remove("asset_find_by_hash_test_tmp/kryoflux_tracks.7z");
     remove("asset_find_by_hash_test_tmp/ordinary_raw_member.7z");
     remove("asset_find_by_hash_test_tmp/nested_atari.st.7z");
@@ -661,6 +662,13 @@ int main(void) {
     int matchIndex = -1;
 
     cleanup_fixture();
+    /* This fixture suite intentionally covers explicit archive-import
+     * diagnostics. Production launch remains native-only unless an operator
+     * opts in to host extraction. */
+    if (!test_setenv("FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS", "1")) {
+        fprintf(stderr, "could not enable external archive import fixtures\n");
+        return 1;
+    }
     if (MKDIR("asset_find_by_hash_test_tmp") != 0 ||
         MKDIR("asset_find_by_hash_test_tmp/nested") != 0 ||
         !write_fixture("asset_find_by_hash_test_tmp/nested/renamed.asset")) {
@@ -773,6 +781,9 @@ int main(void) {
     if (system("command -v 7zz >/dev/null 2>&1 && "
                "cd asset_find_by_hash_test_tmp && "
                "7zz a -t7z nested_atari.st.7z chaos.st >/dev/null 2>&1") == 0) {
+        /* Force the scan through the native 7z -> ST route rather than
+         * letting the loose fixture win directory traversal first. */
+        remove("asset_find_by_hash_test_tmp/chaos.st");
         memset(outPath, 0, sizeof(outPath));
         if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
                                outPath, (int)sizeof(outPath), 2) ||
@@ -1677,6 +1688,7 @@ int main(void) {
      * override forces the "no extractor" branch on hosts that have one
      * installed; on Windows the external shell-out path never exists, so
      * the diagnostic fires regardless. */
+    test_setenv("FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS", NULL);
     if (!write_fixture("asset_find_by_hash_test_tmp/packed.7z")) {
         cleanup_fixture();
         fprintf(stderr, "external archive fixture setup failed\n");
@@ -1709,6 +1721,7 @@ int main(void) {
     }
     remove("asset_find_by_hash_test_tmp/packed.7z");
 
+    test_setenv("FIRESTAFF_ENABLE_EXTERNAL_ARCHIVE_TOOLS", NULL);
     cleanup_fixture();
     return 0;
 }

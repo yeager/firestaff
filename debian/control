@@ -1,0 +1,19 @@
+Source: firestaff
+Section: games
+Priority: optional
+Maintainer: Daniel Nylander <daniel@danielnylander.se>
+Build-Depends: debhelper-compat (= 13), cmake (>= 3.20), ninja-build, pkgconf, python3, libsdl3-dev | libsdl2-dev, zlib1g-dev
+Standards-Version: 4.7.2
+Rules-Requires-Root: no
+Homepage: https://github.com/yeager/firestaff
+
+Package: firestaff
+Architecture: any
+Multi-Arch: foreign
+Depends: ${misc:Depends}, ${shlibs:Depends}, python3
+Description: native engine for the FTL dungeon-crawler games
+ Firestaff is a C11 and SDL engine for Dungeon Master, Chaos Strikes Back,
+ Dungeon Master II: Skullkeep, Dungeon Master Nexus, and Theron's Quest.
+ .
+ This package does not contain original game data. Players must provide their
+ own legally obtained game files.

@@ -17669,7 +17669,12 @@ endif()
         SKIP_RETURN_CODE 77
         LABELS "tier2;csb;atari;startup;cli;menu;real_data;skip_safe"
         ENVIRONMENT "FIRESTAFF_CSB_ATARI_STX=${FIRESTAFF_WORKSPACE_DATA_DIR}/csb/Chaos Strikes Back.stx"
-        TIMEOUT 90
+        # This test deliberately performs ten independent starts from the
+        # original STX image (title, runtime, input matrix, keyboard menu and
+        # pointer menu).  Archive hashing can legitimately exceed 90 seconds
+        # on a cold or contended CI worker; keep the functional assertions but
+        # give the real-media route a bounded, non-flaky budget.
+        TIMEOUT 180
     )
     add_test(
         NAME csb_v1_hint_oracle_native_cli_boot

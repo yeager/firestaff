@@ -1,0 +1,5 @@
+firestaff (3.0.321) unstable; urgency=medium
+
+  * Initial Debian packaging for the native Firestaff engine.
+
+ -- Daniel Nylander <daniel@danielnylander.se>  Mon, 31 Aug 2026 12:00:00 +0000

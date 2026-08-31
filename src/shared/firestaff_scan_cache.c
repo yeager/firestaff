@@ -6,6 +6,7 @@
 
 #ifdef _WIN32
 #include <direct.h>
+#include <windows.h>
 #else
 #include <unistd.h>
 #include <sys/types.h>
@@ -100,21 +101,58 @@ int scan_cache_load(ScanCache *cache) {
 
 int scan_cache_save(const ScanCache *cache) {
     char path[512];
+    char temporary_path[576];
     FILE *f;
+    int write_failed = 0;
 
     if (!cache || !cache->dirty) return 0;
     if (cache_path(path, sizeof(path)) != 0) return -1;
 
     ensure_cache_dir();
-    f = fopen(path, "wb");
+    /*
+     * Multiple Firestaff processes can scan independently (notably the
+     * start-menu and direct CLI routes).  Publishing directly to the shared
+     * cache let a concurrent reader consume a partially-written record and
+     * turn an otherwise valid original-media lookup into a flaky miss.  Keep
+     * the cache advisory, but publish a complete replacement atomically.
+     */
+#ifdef _WIN32
+    if (snprintf(temporary_path, sizeof(temporary_path), "%s.%lu.tmp",
+                 path, (unsigned long)GetCurrentProcessId()) >=
+        (int)sizeof(temporary_path)) return -1;
+#else
+    if (snprintf(temporary_path, sizeof(temporary_path), "%s.%ld.tmp",
+                 path, (long)getpid()) >= (int)sizeof(temporary_path)) return -1;
+#endif
+    f = fopen(temporary_path, "wb");
     if (!f) return -1;
 
     for (int i = 0; i < cache->count; i++) {
         const ScanCacheEntry *e = &cache->entries[i];
-        fprintf(f, "%s\t%lld\t%lld\t%s\n",
-                e->path, (long long)e->mtime, (long long)e->size, e->md5);
+        if (fprintf(f, "%s\t%lld\t%lld\t%s\n",
+                    e->path, (long long)e->mtime, (long long)e->size,
+                    e->md5) < 0) {
+            write_failed = 1;
+            break;
+        }
     }
-    fclose(f);
+    if (fclose(f) != 0) write_failed = 1;
+    if (write_failed) {
+        remove(temporary_path);
+        return -1;
+    }
+#ifdef _WIN32
+    if (!MoveFileExA(temporary_path, path,
+                     MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+        remove(temporary_path);
+        return -1;
+    }
+#else
+    if (rename(temporary_path, path) != 0) {
+        remove(temporary_path);
+        return -1;
+    }
+#endif
     return 0;
 }
 
