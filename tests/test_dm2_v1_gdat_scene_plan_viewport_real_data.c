@@ -70,6 +70,77 @@ static int unexpected_palette_fetch(void *user, int index, uint8_t palette[16],
     return -1;
 }
 
+/* The source-owned plan is passed directly to M11, so this check deliberately
+ * compares the complete decoded plane rather than a representative swatch.
+ * The test viewport has its initial position/tick state (all zero), matching
+ * the mirror decisions below from SET_GRAPHICS_FLIP_FROM_POSITION. */
+static uint8_t source_plane_palette_color(
+    const DM2_V1_GdatSceneM11Command *command, uint8_t pixel)
+{
+    int identity = 1;
+
+    if (pixel >= 16u) return pixel;
+    for (int i = 0; i < 16; ++i) {
+        if (command->palette16[i] != (uint8_t)i) {
+            identity = 0;
+            break;
+        }
+    }
+    return identity ? pixel : command->palette16[pixel];
+}
+
+static int initial_plane_mirror(uint16_t scene_flags, uint8_t kind)
+{
+    if (kind == 1u) {
+        if ((scene_flags & 8u) != 0u) {
+            if ((scene_flags & 0x10u) != 0u) return 0;
+            return 0; /* initial party/map parity is zero */
+        }
+        return 0;
+    }
+    if (kind == 0x20u) {
+        if ((scene_flags & 2u) != 0u) {
+            if ((scene_flags & 4u) != 0u) return 1; /* initial tick is zero */
+            return 1; /* initial party/map parity is zero */
+        }
+    }
+    return 0;
+}
+
+static int verify_source_plane_pixels(
+    const uint8_t *framebuffer, const DM2_V1_GdatSceneM11Command *command,
+    const DM2_V1_GdatSceneBlitRect *rect, int flip_mirror, const char *name)
+{
+    if (!framebuffer || !command || !rect || !command->pixels ||
+        command->width == 0u || command->height == 0u ||
+        rect->x < 0 || rect->y < 0 || rect->width == 0u || rect->height == 0u ||
+        (unsigned)rect->x + rect->width > DM2_VP_WIDTH ||
+        (unsigned)rect->y + rect->height > DM2_VP_HEIGHT) {
+        return 0;
+    }
+    for (uint16_t y = 0u; y < rect->height; ++y) {
+        uint16_t sy = (uint16_t)((y * command->height) / rect->height);
+        for (uint16_t x = 0u; x < rect->width; ++x) {
+            uint16_t sx = (uint16_t)((x * command->width) / rect->width);
+            uint8_t expected;
+            uint8_t actual;
+
+            if (flip_mirror & 1) sx = (uint16_t)(command->width - 1u - sx);
+            if (flip_mirror & 2) sy = (uint16_t)(command->height - 1u - sy);
+            expected = source_plane_palette_color(
+                command, command->pixels[sy * command->width + sx]);
+            actual = framebuffer[(rect->y + y) * DM2_VP_WIDTH + rect->x + x];
+            if (actual != expected) {
+                fprintf(stderr, "FAIL: %s RECT_%u differs from one-shot source "
+                        "plane at %u,%u (actual=%u expected=%u)\n",
+                        name, rect->rect_number, x, y, actual, expected);
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
 static int verify_direct_handoff(int style,
                                  const DM2_V1_GdatSceneM11CommandPlan *plan)
 {
@@ -107,6 +178,16 @@ static int verify_direct_handoff(int style,
                 viewport.last_floor_ceiling_material_consumed_mask,
                 viewport.gdat_material_palette_floor_ceiling_consumed_count,
                 viewport.blocked_material_draw_count);
+        return 0;
+    }
+    if (!verify_source_plane_pixels(framebuffer, &plan->commands[1],
+                                    &plan->rects[1],
+                                    initial_plane_mirror(plan->scene_flags, 0x20u),
+                                    "ceiling") ||
+        !verify_source_plane_pixels(framebuffer, &plan->commands[0],
+                                    &plan->rects[0],
+                                    initial_plane_mirror(plan->scene_flags, 1u),
+                                    "floor")) {
         return 0;
     }
     return 1;

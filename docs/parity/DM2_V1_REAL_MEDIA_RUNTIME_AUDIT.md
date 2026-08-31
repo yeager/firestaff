@@ -135,11 +135,19 @@ that surface through expanded `RECT_7`; the normal source call is
 
 Firestaff now matches the `RECT_7` decode and the `0x0008`/`0x8008` decision in
 its isolated `c_gfx_main` compatibility layer, but its active M11 DM2 runtime
-still composes a fixed `320x200` surface directly. The retained authentic DOS
-new-game capture visibly exposes that mismatch: real GDAT material is used,
-yet the native frame has repeated banding rather than the source corridor
-composition. This is a compositor/geometry gap, not permission to replace
-the frame with generated art or to relabel it as palette-only.
+still composes a fixed `320x200` surface directly. The retained pre-fix
+authentic DOS new-game capture recorded the resulting repeated banding when
+real GDAT material was used. That was a compositor/geometry gap, not
+permission to replace the frame with generated art or to relabel it as
+palette-only.
+
+The authenticated `GRAPHICSSET` plane route now submits each decoded
+`RECT_700`/`RECT_701` image once to its source-owned destination, instead of
+repeating IMG3 rows as a host texture. The archive-backed plan test compares
+every resulting plane pixel (including its source local palette and initial
+source flip) to the selected retail GDAT bytes. This removes the known striped
+plane failure, but it does not claim that the remaining dungeon, HUD, or
+`RECT_7` presentation passes have reached frame parity.
 
 The next implementation must introduce a source-sized dungeon backbuffer,
 bind the actual `RECT_7` destination at `(0,40,224,136)`, and port source

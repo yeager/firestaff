@@ -5617,20 +5617,30 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
     }
     ceiling_h -= ceiling_trim;
     if (ceiling_asset) {
-        dm2_v1_blit_tiled_material_bitmap(s,
-                                 vp,
-                                 stride,
-                                 ceiling_x,
-                                 ceiling_y,
-                                 ceiling_w_dst,
-                                 ceiling_h,
-                                 ceiling_pixels,
-                                 ceiling_w,
-                                 ceiling_h_src,
-                                 ceiling_stride > 0 ? ceiling_stride : ceiling_w,
-                                 -1,
-                                 ceiling_mirror,
-                                 &s->gdat_material_palette_floor_ceiling_consumed_count);
+        /* DM2_DRAW_DUNGEON_GRAPHIC builds one c_image and sends it through
+         * DM2_DRAW_PICST for RECT_700.  The source pixels are not a host
+         * texture tile: repeating a short decoded IMG3 vertically was the
+         * cause of the striped native dungeon frames.  Keep the authenticated
+         * QUERY_BLIT_RECT destination and scale that one source image once. */
+        if (s->source_materials_required && s->gdat_scene_material_plan) {
+            dm2_v1_blit_scaled_material_bitmap_region_ex(s,
+                                     vp, stride, ceiling_x, ceiling_y,
+                                     ceiling_w_dst, ceiling_h, ceiling_pixels,
+                                     0, 0, ceiling_w, ceiling_h_src,
+                                     ceiling_stride > 0 ? ceiling_stride : ceiling_w,
+                                     -1, ceiling_mirror,
+                                     &s->gdat_material_palette_floor_ceiling_consumed_count);
+        } else {
+            /* Focused legacy tests intentionally provide a repeatable
+             * texture callback rather than a source RECT_700 transaction. */
+            dm2_v1_blit_tiled_material_bitmap(s,
+                                     vp, stride, ceiling_x, ceiling_y,
+                                     ceiling_w_dst, ceiling_h, ceiling_pixels,
+                                     ceiling_w, ceiling_h_src,
+                                     ceiling_stride > 0 ? ceiling_stride : ceiling_w,
+                                     -1, ceiling_mirror,
+                                     &s->gdat_material_palette_floor_ceiling_consumed_count);
+        }
         ++s->asset_floor_ceiling_drawn_count;
         ++s->gdat_scene_material_consumed_count;
         if (s->source_materials_required) {
@@ -5686,20 +5696,25 @@ void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s)
             floor_pixels && floor_w > 0 && floor_h_src > 0;
     }
     if (floor_asset) {
-        dm2_v1_blit_tiled_material_bitmap(s,
-                                 vp,
-                                 stride,
-                                 floor_x,
-                                 floor_y,
-                                 floor_w_dst,
-                                 floor_h,
-                                 floor_pixels,
-                                 floor_w,
-                                 floor_h_src,
-                                 floor_stride > 0 ? floor_stride : floor_w,
-                                 -1,
-                                 floor_mirror,
-                                 &s->gdat_material_palette_floor_ceiling_consumed_count);
+        /* RECT_701 is the matching one-shot floor DRAW_PICST operation.
+         * Preserve its source-backed destination instead of tiling raw rows. */
+        if (s->source_materials_required && s->gdat_scene_material_plan) {
+            dm2_v1_blit_scaled_material_bitmap_region_ex(s,
+                                     vp, stride, floor_x, floor_y,
+                                     floor_w_dst, floor_h, floor_pixels,
+                                     0, 0, floor_w, floor_h_src,
+                                     floor_stride > 0 ? floor_stride : floor_w,
+                                     -1, floor_mirror,
+                                     &s->gdat_material_palette_floor_ceiling_consumed_count);
+        } else {
+            dm2_v1_blit_tiled_material_bitmap(s,
+                                     vp, stride, floor_x, floor_y,
+                                     floor_w_dst, floor_h, floor_pixels,
+                                     floor_w, floor_h_src,
+                                     floor_stride > 0 ? floor_stride : floor_w,
+                                     -1, floor_mirror,
+                                     &s->gdat_material_palette_floor_ceiling_consumed_count);
+        }
         ++s->asset_floor_ceiling_drawn_count;
         ++s->gdat_scene_material_consumed_count;
         if (s->source_materials_required) {
@@ -9138,12 +9153,20 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
                 sky_pixels && sky_w > 0 && sky_h_src > 0;
         }
         if (sky_asset) {
-            dm2_v1_blit_tiled_material_bitmap(
-                s, vp, stride, 0, 0, DM2_VP_WIDTH, sky_h, sky_pixels,
-                sky_w, sky_h_src,
-                sky_stride > 0 ? sky_stride : sky_w, -1,
-                0,
-                &s->gdat_material_palette_floor_ceiling_consumed_count);
+            /* Outdoor GRAPHICSSET planes use the same DRAW_PICST primitive;
+             * they are complete source images, not repeating textures. */
+            if (s->source_materials_required && s->gdat_scene_material_plan) {
+                dm2_v1_blit_scaled_material_bitmap_region_ex(
+                    s, vp, stride, 0, 0, DM2_VP_WIDTH, sky_h, sky_pixels,
+                    0, 0, sky_w, sky_h_src,
+                    sky_stride > 0 ? sky_stride : sky_w, -1, 0,
+                    &s->gdat_material_palette_floor_ceiling_consumed_count);
+            } else {
+                dm2_v1_blit_tiled_material_bitmap(
+                    s, vp, stride, 0, 0, DM2_VP_WIDTH, sky_h, sky_pixels,
+                    sky_w, sky_h_src, sky_stride > 0 ? sky_stride : sky_w,
+                    -1, 0, &s->gdat_material_palette_floor_ceiling_consumed_count);
+            }
             ++s->asset_floor_ceiling_drawn_count;
             ++s->asset_outdoor_sky_drawn_count;
             ++s->gdat_scene_material_consumed_count;
@@ -9182,13 +9205,20 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
                 ground_pixels && ground_w > 0 && ground_h_src > 0;
         }
         if (ground_asset) {
-            dm2_v1_blit_tiled_material_bitmap(
-                s, vp, stride, 0, sky_h, DM2_VP_WIDTH,
-                DM2_VP_HEIGHT - sky_h, ground_pixels, ground_w,
-                ground_h_src,
-                ground_stride > 0 ? ground_stride : ground_w, -1,
-                0,
-                &s->gdat_material_palette_floor_ceiling_consumed_count);
+            if (s->source_materials_required && s->gdat_scene_material_plan) {
+                dm2_v1_blit_scaled_material_bitmap_region_ex(
+                    s, vp, stride, 0, sky_h, DM2_VP_WIDTH,
+                    DM2_VP_HEIGHT - sky_h, ground_pixels, 0, 0,
+                    ground_w, ground_h_src,
+                    ground_stride > 0 ? ground_stride : ground_w, -1, 0,
+                    &s->gdat_material_palette_floor_ceiling_consumed_count);
+            } else {
+                dm2_v1_blit_tiled_material_bitmap(
+                    s, vp, stride, 0, sky_h, DM2_VP_WIDTH,
+                    DM2_VP_HEIGHT - sky_h, ground_pixels, ground_w,
+                    ground_h_src, ground_stride > 0 ? ground_stride : ground_w,
+                    -1, 0, &s->gdat_material_palette_floor_ceiling_consumed_count);
+            }
             ++s->asset_floor_ceiling_drawn_count;
             ++s->asset_outdoor_ground_drawn_count;
             ++s->gdat_scene_material_consumed_count;
