@@ -57655,6 +57655,19 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth,
                                          framebufferHeight, replayForward,
                                          replayForward, cells, 1);
+            /* F0111 belongs to the center-square route immediately after
+             * its wall envelope.  The deferred F0115 pass otherwise leaves
+             * a far object on top of a closed D3C/D2C/D1C door because the
+             * old replay restored stone but not the real door panel. */
+            m11_draw_dm1_center_doors(state, framebuffer, framebufferWidth,
+                                      framebufferHeight, replayForward,
+                                      replayForward, cells);
+            m11_draw_dm1_center_door_ornaments(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                replayForward, replayForward, cells);
+            m11_draw_dm1_center_destroyed_door_masks(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                replayForward, replayForward, cells);
         }
     }
     m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
