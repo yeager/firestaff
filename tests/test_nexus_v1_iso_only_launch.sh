@@ -19,7 +19,9 @@ iso_name="$(sed -nE 's/^[[:space:]]*FILE[[:space:]]+"([^"]+\.iso)".*/\1/ip' "$cu
 iso="$(dirname "$cue")/$iso_name"
 [[ -f "$iso" ]] || exit 77
 
-tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-nexus-iso-only.XXXXXX")"
+runtime_root=${FIRESTAFF_TEST_RUNTIME_DIR:-"$(pwd)/test-runtime"}
+mkdir -p "$runtime_root"
+tmpdir="$(mktemp -d "$runtime_root/firestaff-nexus-iso-only.XXXXXX")"
 trap 'rm -rf "$tmpdir"' EXIT
 ln -s "$cue" "$tmpdir/$(basename "$cue")"
 ln -s "$iso" "$tmpdir/$(basename "$iso")"
