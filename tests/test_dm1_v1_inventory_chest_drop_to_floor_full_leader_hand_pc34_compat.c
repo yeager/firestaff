@@ -282,9 +282,13 @@ static int click_eye(M11_GameViewState* state)
 
 static int click_front_floor_drop(M11_GameViewState* state)
 {
+    /* G0462/G2210 C02 (front-square back-right) is x=112..183,
+     * y=89..114. CLIKVIEW.C F0375 owns y=47..102 as the leader-hand
+     * throw lane, so y=100 exercises a throw admission rather than F0374.
+     * Keep this probe below that lane while still inside C02. */
     return M11_GameView_HandlePointer(state,
                                       120,
-                                      33 + 100,
+                                      33 + 110,
                                       1) == M11_GAME_INPUT_REDRAW;
 }
 
