@@ -57614,6 +57614,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                 int spanStart = 0;
                 int spanCount = 0;
                 int countedF0115ForSquare = 0;
+                int sideContentDrawn = 0;
                 int hasField;
                 int j;
                 if (!m11_dm1_f0128_square_relative_position(
@@ -57656,11 +57657,18 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                                    squareDepth,
                                                    step->cellOrderWord);
                         }
-                    } else if (relSide == -1 || relSide == 1) {
+                    } else if ((relSide == -1 || relSide == 1) &&
+                               !sideContentDrawn) {
+                        /* Side lanes still use their bounded source-backed
+                         * helper.  Unlike the center route it has not yet
+                         * been parameterised by the F0115 cell word, so do
+                         * not invoke it once per door sub-pass and duplicate
+                         * a real item/creature/projectile. */
                         m11_draw_dm1_side_contents_at_depth(
                             state, framebuffer, framebufferWidth,
                             framebufferHeight, frames, cells, squareDepth,
                             relSide, &visibility, blockingCenterDepth);
+                        sideContentDrawn = 1;
                     }
                 }
                 /* F0113 is not a global overlay: F0116..F0124 invoke it
