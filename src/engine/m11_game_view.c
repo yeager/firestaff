@@ -41666,7 +41666,9 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
                                          int fbH,
                                          int minVisibleForward,
                                          int maxVisibleForward,
-                                         const M11_ViewportCell cells[3][3]) {
+                                         const M11_ViewportCell cells[3][3],
+                                         int onlyRelForward,
+                                         int onlyRelSide) {
     int i;
     int ornamentCount;
     (void)cells;
@@ -41685,6 +41687,10 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
         }
         if (plan.relForward < minVisibleForward ||
             plan.relForward > maxVisibleForward) {
+            continue;
+        }
+        if ((onlyRelForward >= 0 && plan.relForward != onlyRelForward) ||
+            (onlyRelSide >= -1 && plan.relSide != onlyRelSide)) {
             continue;
         }
         /* F0108 runs from each F0116..F0124 square dispatch.  Do not use
@@ -57403,6 +57409,12 @@ static void m11_dm1_f0128_replay_foreground_square(
     squareDepth = relForward - 1;
     for (i = spanStart; i < spanStart + spanCount; ++i) {
         const DM1_V1_F0128SchedulerStepPc34 *step = &plan->steps[i];
+        if (step->op == DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT) {
+            m11_draw_dm1_floor_ornaments(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                relForward, relForward, cells, relForward, relSide);
+            continue;
+        }
         if (step->op == DM1_V1_F0128_STEP_F0113_FIELD) {
             m11_draw_dm1_teleporter_field_at(
                 state, framebuffer, framebufferWidth, framebufferHeight,
@@ -57593,7 +57605,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * lane-visibility receipt.  Side-lane and per-cell passes still use
      * the receipt-derived maxVisibleForward as their bound. */
     m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                  1, 3, cells);
+                                  1, 3, cells, -1, -2);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   1, maxVisibleForward, cells, 0);
     m11_draw_dm1_thieves_eye_d1c_wall_material(
