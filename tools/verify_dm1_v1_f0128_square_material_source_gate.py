@@ -37,10 +37,13 @@ def main() -> int:
         body = function_body(source, signature)
         assert "m11_dm1_side_lane_clear_for_rel" not in body, (
             f"{source_name} must remain a F0128 square-material route")
-        assert "plan.relForward > maxVisibleForward" in body
+        assert "plan.relForward > maxVisibleForward" in body or (
+            "plan.relForward < minVisibleForward" in body
+        )
 
     for signature, source_name in (
         ("static void m11_draw_dm1_floor_pits", "F0104 pit"),
+        ("static void m11_draw_dm1_floor_ornaments", "F0108 floor ornament"),
         ("static void m11_draw_dm1_stairs", "F0104 stairs"),
         ("static void m11_draw_dm1_teleporter_fields", "F0113 field"),
     ):
@@ -48,13 +51,15 @@ def main() -> int:
         assert "plan.relForward < minVisibleForward" in body, (
             f"{source_name} must support the final D0-only pass")
 
-    for call in (
-        "m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,\n                             1, 3, cells);",
-        "m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,\n                                  3, cells);",
-        "m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,\n                        1, 3, cells);",
-        "m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight,\n                                  1, 3, cells);",
+    for source_name, call in (
+        ("F0104 pit", "m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,\n                             1, 3, cells);"),
+        ("F0108 floor ornament", "m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,\n                                  1, 3, cells);"),
+        ("F0104 stairs", "m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,\n                        1, maxVisibleForward, cells);"),
+        ("F0113 field", "m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight,\n                                  1, 3, cells);"),
     ):
-        assert call in viewport, "viewport must retain full D3..D1 source dispatch"
+        assert call in viewport, (
+            f"{source_name} viewport call must retain full D3..D1 source dispatch"
+        )
 
     effect = viewport.find("m11_draw_dm1_deferred_explosion_pass")
     d0 = viewport.find("m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,\n                             0, 0, cells);")

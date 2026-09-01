@@ -41605,6 +41605,7 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int fbW,
                                          int fbH,
+                                         int minVisibleForward,
                                          int maxVisibleForward,
                                          const M11_ViewportCell cells[3][3]) {
     int i;
@@ -41623,7 +41624,8 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
         if (!dm1_v1_floor_ornament_render_plan_at_pc34(i, 0, &plan)) {
             continue;
         }
-        if (plan.relForward > maxVisibleForward) {
+        if (plan.relForward < minVisibleForward ||
+            plan.relForward > maxVisibleForward) {
             continue;
         }
         /* F0108 runs from each F0116..F0124 square dispatch.  Do not use
@@ -57352,7 +57354,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * lane-visibility receipt.  Side-lane and per-cell passes still use
      * the receipt-derived maxVisibleForward as their bound. */
     m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                  3, cells);
+                                  1, 3, cells);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   maxVisibleForward, cells, 0);
     m11_draw_dm1_thieves_eye_d1c_wall_material(
