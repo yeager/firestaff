@@ -3,6 +3,7 @@
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "memory_champion_lifecycle_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
+#include "dm1_v1_group_state_bundle_pc34_compat.h"
 #include "dm1_v1_inventory_slot_placement_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 
@@ -645,6 +646,115 @@ int dm1_v1_original_save_amiga_f0435_materialize_party_bytes(
     return DM1_V1_AMIGA_SAVE_F0435_OK;
 }
 
+int dm1_v1_original_save_amiga_f0435_materialize_active_groups_bytes(
+    const uint8_t *bytes, size_t size,
+    struct GameWorld_Compat *in_out_world,
+    Dm1V1AmigaSaveF0435Receipt *out_receipt)
+{
+    Dm1V1AmigaSaveF0435Receipt receipt;
+    DM1_V1_SourceActiveGroupPc34Compat rows[DM1_PC34_ACTIVE_GROUP_CAPACITY];
+    DM1_V1_GroupStateBundleReceiptPc34Compat bundle_receipt;
+    uint8_t *source = NULL;
+    size_t source_size = 0u;
+    unsigned int index;
+    unsigned int live_count = 0u;
+    int result;
+
+    if (!bytes || !in_out_world || !in_out_world->dungeon ||
+        !in_out_world->things || !in_out_world->things->loaded) {
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_ARGUMENT;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    result = dm1_v1_original_save_amiga_f0435_receipt_bytes(bytes, size,
+                                                             &receipt);
+    if (out_receipt) *out_receipt = receipt;
+    if (result != DM1_V1_AMIGA_SAVE_F0435_OK) return result;
+    /* ReDMCSB GROUP.C F0196 configures 60 rows for original Amiga editions.
+     * The common native table has 110 slots, enough for that source shape. */
+    if (receipt.maximum_active_group_count > DM1_PC34_ACTIVE_GROUP_CAPACITY ||
+        receipt.current_active_group_count > receipt.maximum_active_group_count) {
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_CAPACITY;
+    }
+    if (receipt.maximum_active_group_count == 0u) {
+        if (!dm1_v1_group_state_initialize_f0196_pc34(in_out_world,
+                                                       &bundle_receipt)) {
+            return DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+        }
+        return DM1_V1_AMIGA_SAVE_F0435_OK;
+    }
+    source = (uint8_t *)malloc(receipt.part_byte_counts[1u]);
+    if (!source) return DM1_V1_AMIGA_SAVE_F0435_ERR_CAPACITY;
+    result = dm1_v1_original_save_amiga_f0435_part_bytes(
+        bytes, size, 1u, source, receipt.part_byte_counts[1u],
+        &source_size, NULL);
+    if (result != DM1_V1_AMIGA_SAVE_F0435_OK ||
+        source_size != (size_t)receipt.maximum_active_group_count *
+                       DM1_V1_AMIGA_SAVE_F0435_ACTIVE_GROUP_BYTES) {
+        free(source);
+        return result == DM1_V1_AMIGA_SAVE_F0435_OK
+            ? DM1_V1_AMIGA_SAVE_F0435_ERR_BODY : result;
+    }
+    memset(rows, 0, sizeof(rows));
+    /* F0184 leaves a removed row's GroupThingIndex at -1 in place; C1 is
+     * therefore a sparse MaximumActiveGroupCount table, not a current-count
+     * prefix. Scan every original row, compact only live entries for the
+     * native runtime, and reject a checksum-valid but internally inconsistent
+     * C0/C1 pair before publishing any active state. */
+    for (index = 0u; index < receipt.maximum_active_group_count; ++index) {
+        const uint8_t *row = source +
+            (size_t)index * DM1_V1_AMIGA_SAVE_F0435_ACTIVE_GROUP_BYTES;
+        const int group_thing = read_be_i16(row + 0u);
+        if (group_thing == -1) continue;
+        if (group_thing < 0 || live_count >= receipt.current_active_group_count) {
+            free(source);
+            return DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+        }
+        rows[live_count].groupThing = group_thing;
+        rows[live_count].directions = row[2u];
+        rows[live_count].cells = row[3u];
+        rows[live_count].lastMoveTime = row[4u];
+        rows[live_count].delayFleeingFromTarget = row[5u];
+        rows[live_count].targetMapX = row[6u];
+        rows[live_count].targetMapY = row[7u];
+        rows[live_count].priorMapX = row[8u];
+        rows[live_count].priorMapY = row[9u];
+        rows[live_count].homeMapX = row[10u];
+        rows[live_count].homeMapY = row[11u];
+        memcpy(rows[live_count].aspect, row + 12u,
+               sizeof(rows[live_count].aspect));
+        ++live_count;
+    }
+    free(source);
+    if (live_count != receipt.current_active_group_count) {
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+    }
+    if (!dm1_v1_group_state_apply_save_handoff_pc34(
+            in_out_world, rows, (int)receipt.current_active_group_count,
+            (int)receipt.maximum_active_group_count, &bundle_receipt)) {
+        return DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+    }
+    /* GROUP.Cells is ActiveGroupIndex while a group is on the party map
+     * (DEFS.H). Firestaff compacts sparse source C1 slots into its native
+     * active-state array, so mirror that new index into the decoded/raw GROUP
+     * owner only after the complete C1 handoff has committed. The pristine
+     * Amiga tail remains separately retained and untouched. */
+    for (index = 0u; index < live_count; ++index) {
+        const unsigned int thing = (unsigned int)(uint16_t)rows[index].groupThing;
+        const unsigned int type = (thing >> 10u) & 0x0fu;
+        const unsigned int group_index = type == THING_TYPE_GROUP
+            ? thing & 0x03ffu : thing;
+        if (group_index >= (unsigned int)in_out_world->things->groupCount) {
+            return DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
+        }
+        in_out_world->things->groups[group_index].cells = (uint8_t)index;
+        if (in_out_world->things->rawThingData[THING_TYPE_GROUP]) {
+            in_out_world->things->rawThingData[THING_TYPE_GROUP]
+                [(size_t)group_index * 16u + 5u] = (uint8_t)index;
+        }
+    }
+    return DM1_V1_AMIGA_SAVE_F0435_OK;
+}
+
 int dm1_v1_original_save_amiga_f0435_runtime_queue_receipt_bytes(
     const uint8_t *bytes, size_t size,
     Dm1V1AmigaSaveRuntimeQueueReceipt *out_queue,
@@ -929,11 +1039,7 @@ int dm1_v1_original_save_amiga_f0435_materialize_session_bytes(
     result = dm1_v1_original_save_amiga_f0435_receipt_bytes(bytes, size,
                                                              &receipt);
     if (result != DM1_V1_AMIGA_SAVE_F0435_OK) goto done;
-    /* C1 has no source-specific live ACTIVE_GROUP materializer yet.  Never
-     * erase a legitimate group to make a session start: an empty C1 is the
-     * only admissible shape until that owner is decoded. */
-    if (receipt.current_active_group_count != 0u ||
-        receipt.event_count > TIMELINE_QUEUE_CAPACITY) {
+    if (receipt.event_count > TIMELINE_QUEUE_CAPACITY) {
         result = DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
         goto done;
     }
@@ -943,6 +1049,10 @@ int dm1_v1_original_save_amiga_f0435_materialize_session_bytes(
     result = dm1_v1_original_save_amiga_f0435_materialize_party_bytes(
         bytes, size, &candidate_world.party, NULL);
     if (result != DM1_V1_AMIGA_SAVE_F0435_OK) goto done;
+    /* C1 rows are live on the saved party map. Publish that source value
+     * before the transactional F0145/F0146/F0147/F0196 owner handoff. */
+    candidate_world.partyMapIndex = candidate_world.party.mapIndex;
+    candidate_world.newPartyMapIndex = candidate_world.party.mapIndex;
     result = dm1_v1_original_save_amiga_f0435_global_data_bytes(
         bytes, size, &source_global, NULL);
     if (result != DM1_V1_AMIGA_SAVE_F0435_OK) goto done;
@@ -995,6 +1105,9 @@ int dm1_v1_original_save_amiga_f0435_materialize_session_bytes(
         result = DM1_V1_AMIGA_SAVE_F0435_ERR_BODY;
         goto done;
     }
+    result = dm1_v1_original_save_amiga_f0435_materialize_active_groups_bytes(
+        bytes, size, &candidate_world, NULL);
+    if (result != DM1_V1_AMIGA_SAVE_F0435_OK) goto done;
     result = dm1_v1_original_save_amiga_f0435_materialize_event_queue_bytes(
         bytes, size, &candidate_queue, NULL);
     if (result != DM1_V1_AMIGA_SAVE_F0435_OK) goto done;
@@ -1032,8 +1145,6 @@ int dm1_v1_original_save_amiga_f0435_materialize_session_bytes(
         }
     }
     candidate_world.gameTick = receipt.game_time;
-    candidate_world.partyMapIndex = candidate_world.party.mapIndex;
-    candidate_world.newPartyMapIndex = candidate_world.party.mapIndex;
     /* F0859 derives per-champion lifecycle data only from the restored C2
      * champion records.  Re-apply the independent PARTY_INFO status words
      * after that initializer, exactly as separate source data rather than

@@ -702,7 +702,11 @@ static void test_real_amiga_v20_save_disk_receipt(void) {
               session_world.timeline.events[0].fireAtTick == 300u &&
               session_queue.eventCount == receipt.primary_f0435.event_count &&
               session_queue.events[session_queue.timeline[0]].type ==
-                  DM1_EVENT_WATCHDOG,
+                  DM1_EVENT_WATCHDOG &&
+              session_world.creatureAICount ==
+                  receipt.primary_f0435.current_active_group_count &&
+              session_world.pc34ActiveGroupSourceCount ==
+                  receipt.primary_f0435.maximum_active_group_count,
               "real_save_primary_amiga_handoff_materializes_atomic_session_candidate");
         M11_GameView_Init(&resumed_view);
         resumed_view.active = 1;

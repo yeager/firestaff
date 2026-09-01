@@ -216,6 +216,15 @@ int dm1_v1_original_save_amiga_f0435_materialize_party_bytes(
     struct PartyState_Compat *out_party,
     Dm1V1AmigaSaveF0435Receipt *out_receipt);
 
+/* Materializes the authenticated A20 C1 ACTIVE_GROUP table into the loaded
+ * native dungeon world. ACTIVE_GROUP is a big-endian on-disk structure, so
+ * every live source row must resolve to a used original GROUP record in the
+ * already authenticated F0434 tail; host-created owners are never admitted. */
+int dm1_v1_original_save_amiga_f0435_materialize_active_groups_bytes(
+    const uint8_t *bytes, size_t size,
+    struct GameWorld_Compat *in_out_world,
+    Dm1V1AmigaSaveF0435Receipt *out_receipt);
+
 int dm1_v1_original_save_amiga_f0435_runtime_queue_receipt_bytes(
     const uint8_t *bytes, size_t size,
     Dm1V1AmigaSaveRuntimeQueueReceipt *out_queue,

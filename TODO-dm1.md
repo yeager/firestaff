@@ -41,10 +41,11 @@ Reviewed 2026-08-29. Only open work is listed here.
   `DMGAMEG.DAT` session, but it is format-5/Amiga-compatible save material,
   not a Copper-list or framebuffer capture; it cannot alone identify the
   palette table active at a particular gameplay frame.
-- Decode nonzero C1 active-group records and additional C3/C4 event families
-  from authentic Amiga format-5 `DMGAMEG.DAT` samples. The admitted v2.0
-  save is a zero-active-group/C53 session; unsupported records must remain
-  rejected until original bytes establish their layout and semantics.
+- Obtain an authentic nonzero-C1 Amiga format-5 `DMGAMEG.DAT` sample to
+  exercise the implemented source-owned ACTIVE_GROUP adapter and additional
+  C3/C4 event families. The admitted v2.0 save is a zero-active-group/C53
+  session; it proves the full in-memory C1 ownership boundary but cannot by
+  itself validate a live group or a non-C53 event route.
 - The supplied French DOS ZIP → `dungeon_master.exe` SFX package uses a
   non-solid RAR 2.0 (`unp_ver=0x14`) stream. Native RAR2 decoding is
   intentionally out of scope; the launcher reports it as unsupported rather
