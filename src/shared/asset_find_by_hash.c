@@ -5115,6 +5115,39 @@ static int native_7z_atari_disk_visit(const char *member_name,
     return result;
 }
 
+/* A successful visit proves that both layers of the preservation transport
+ * are handled in-process: the admitted one-member LZMA2 7z and its Atari
+ * disk image.  Keep this separate from an MD5 match: a scan can legitimately
+ * ask for a different game's hashes while walking an otherwise supported
+ * archive, and that must not turn into a false "install 7z" diagnostic. */
+static int native_7z_ignore_file_visitor(const char *name,
+                                         const uint8_t *bytes,
+                                         size_t byte_count,
+                                         void *user_data) {
+    (void)name;
+    (void)bytes;
+    (void)byte_count;
+    (void)user_data;
+    return 0;
+}
+
+static int native_7z_atari_disk_supported(const char *archive_path) {
+    uint8_t *image = NULL;
+    size_t image_size = 0U;
+    char member_name[ASSET_PATH_MAX];
+    int result;
+    if (!archive_path || !firestaff_7z_extract_single_lzma2_file(
+            archive_path, &image, &image_size, member_name,
+            sizeof(member_name))) {
+        free(image);
+        return 0;
+    }
+    result = native_7z_atari_disk_visit(member_name, image, image_size,
+                                        native_7z_ignore_file_visitor, NULL);
+    free(image);
+    return result >= 0;
+}
+
 static int scan_native_7z_atari_stx_by_md5(const char *archive_path,
                                            const char *expected_md5,
                                            char *out_path, int out_path_len) {
@@ -5836,6 +5869,9 @@ static int scan_container_by_md5(const char *path, const char *expectedMd5,
                                                  outPath, outPathLen)) {
                 return 1;
             }
+            if (native_7z_atari_disk_supported(path)) {
+                return 0;
+            }
         }
 #endif
         if (!external_tool_available_for_path(path)) {
@@ -5908,6 +5944,9 @@ static int scan_container_by_md5_list(const char *path, const char *const *md5Li
             int found = scan_native_7z_atari_stx_by_md5_list(
                 path, md5List, md5Count, outPaths, matched);
             if (found >= md5Count) {
+                return found;
+            }
+            if (native_7z_atari_disk_supported(path)) {
                 return found;
             }
             if (!external_tool_available_for_path(path)) {
