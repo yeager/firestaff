@@ -57487,6 +57487,66 @@ static void m11_dm1_f0128_replay_foreground_square(
     }
 }
 
+/* F0115's first door partition is not foreground material.  DUNVIEW.C
+ * enters it after the current square's F0104/F0107 envelope but before
+ * F0111 installs that same square's door panel.  Keeping it in the old
+ * global content walk made a back-cell Thing temporarily sit over an
+ * unrelated, already-composed door; more importantly, no final square
+ * replay restored its authentic pre-F0111 position.  Consume only the
+ * scheduler's DOORPASS1 word here, immediately before the caller emits
+ * the matching F0111 route. */
+static void m11_dm1_f0128_replay_door_pass1_square(
+    const M11_GameViewState *state,
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    const M11_ViewRect frames[4],
+    const M11_ViewportCell cells[3][3],
+    const DM1_ViewportLaneVisibilityReceiptPc34 *visibility,
+    const DM1_V1_F0128SchedulerPlanPc34 *plan,
+    int square,
+    int blockingCenterDepth,
+    int centerContentMask)
+{
+    int relForward;
+    int relSide;
+    int squareDepth;
+    int spanStart;
+    int spanCount;
+    int i;
+
+    if (!state || !framebuffer || !frames || !cells || !visibility || !plan ||
+        !m11_dm1_f0128_square_relative_position(square, &relForward,
+                                                 &relSide) ||
+        relForward < 1 || relForward > 3 ||
+        !DM1_V1_F0128_PerSquareSchedulerSquareSpanPc34Compat(
+            plan, square, &spanStart, &spanCount)) {
+        return;
+    }
+    squareDepth = relForward - 1;
+    for (i = spanStart; i < spanStart + spanCount; ++i) {
+        const DM1_V1_F0128SchedulerStepPc34 *step = &plan->steps[i];
+
+        if (step->op != DM1_V1_F0128_STEP_F0115_DOOR_PASS1) {
+            continue;
+        }
+        if (relSide == 0) {
+            if ((centerContentMask & (1 << squareDepth)) != 0) {
+                m11_draw_wall_contents(framebuffer, framebufferWidth,
+                                       framebufferHeight,
+                                       &frames[squareDepth + 1],
+                                       &cells[squareDepth][1], squareDepth,
+                                       step->cellOrderWord);
+            }
+        } else if (relSide == -1 || relSide == 1) {
+            m11_draw_dm1_side_contents_at_depth(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                frames, cells, squareDepth, relSide, visibility,
+                blockingCenterDepth, step->cellOrderWord);
+        }
+    }
+}
+
 static void m11_draw_viewport(const M11_GameViewState* state,
                               unsigned char* framebuffer,
                               int framebufferWidth,
@@ -57891,6 +57951,18 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                 m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth,
                                              framebufferHeight, replayForward,
                                              replayForward, cells, relSide);
+                m11_dm1_f0128_replay_door_pass1_square(
+                    state, framebuffer, framebufferWidth, framebufferHeight,
+                    frames, cells, &visibility, &dm1F0128Plan,
+                    replayForward == 3
+                        ? (relSide < 0 ? DM1_V1_F0128_VIEW_SQUARE_D3L
+                                       : DM1_V1_F0128_VIEW_SQUARE_D3R)
+                        : (replayForward == 2
+                            ? (relSide < 0 ? DM1_V1_F0128_VIEW_SQUARE_D2L
+                                           : DM1_V1_F0128_VIEW_SQUARE_D2R)
+                            : (relSide < 0 ? DM1_V1_F0128_VIEW_SQUARE_D1L
+                                           : DM1_V1_F0128_VIEW_SQUARE_D1R)),
+                    blockingCenterDepth, centerContentMask);
                 m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth,
                                         framebufferHeight, replayForward,
                                         replayForward, cells, relSide);
@@ -57924,6 +57996,13 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth,
                                          framebufferHeight, replayForward,
                                          replayForward, cells, 0);
+            m11_dm1_f0128_replay_door_pass1_square(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                frames, cells, &visibility, &dm1F0128Plan,
+                replayForward == 3 ? DM1_V1_F0128_VIEW_SQUARE_D3C
+                : (replayForward == 2 ? DM1_V1_F0128_VIEW_SQUARE_D2C
+                                      : DM1_V1_F0128_VIEW_SQUARE_D1C),
+                blockingCenterDepth, centerContentMask);
             /* F0111 belongs to the center-square route immediately after
              * its wall envelope.  The deferred F0115 pass otherwise leaves
              * a far object on top of a closed D3C/D2C/D1C door because the

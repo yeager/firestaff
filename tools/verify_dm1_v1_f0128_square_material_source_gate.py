@@ -64,6 +64,26 @@ def main() -> int:
     assert "m11_dm1_f0128_replay_foreground_square" in viewport
     assert "DM1_V1_F0128_STEP_F0113_FIELD" in viewport
 
+    # F0115's first door partition must be consumed inside the completed
+    # source-square route, after its wall/ornament envelope and before F0111.
+    # A global content walk cannot preserve that relation for overlapping
+    # side lanes or a closed center door.
+    pass1 = function_body(source, "static void m11_dm1_f0128_replay_door_pass1_square")
+    assert "DM1_V1_F0128_STEP_F0115_DOOR_PASS1" in pass1
+    assert "step->cellOrderWord" in pass1
+    assert "DM1_V1_F0128_STEP_F0115_MAIN" not in pass1
+    side_start = viewport.index("/* F0128 completes DnL's structural route")
+    side_replay = viewport[side_start:]
+    side_ornament = side_replay.index("m11_draw_dm1_wall_ornaments")
+    side_pass1 = side_replay.index("m11_dm1_f0128_replay_door_pass1_square")
+    side_door = side_replay.index("m11_draw_dm1_side_doors")
+    assert side_ornament < side_pass1 < side_door
+    center_replay = viewport[viewport.index("m11_draw_dm1_front_walls", side_start):]
+    center_ornament = center_replay.index("m11_draw_dm1_wall_ornaments")
+    center_pass1 = center_replay.index("m11_dm1_f0128_replay_door_pass1_square")
+    center_door = center_replay.index("m11_draw_dm1_center_doors")
+    assert center_ornament < center_pass1 < center_door
+
     effect = viewport.find("m11_draw_dm1_deferred_explosion_pass")
     d0 = viewport.find("m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,\n                             0, 0, cells, -1, -2);")
     mirror = viewport.find("m11_draw_dm1_front_mirror_route")

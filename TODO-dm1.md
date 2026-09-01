@@ -7,11 +7,12 @@ Reviewed 2026-08-29. Only open work is listed here.
   cell-order word, including the `DOORPASS1 → F0111 → DOORPASS2` partition
   for real floor items, creature groups and projectiles. The final occlusion
   replay now completes D3/D2 outer lanes and D3--D1 normal side lanes one
-  source square at a time, including their wall, ornament, door, mask and
-  F0115/F0113 material. The primary structural pass is still composed in
-  bounded batches before that replay. Replace the remaining batches only
-  with the corresponding F0116--F0124 operation, never with a host-generated
-  panel or a substitute asset.
+  source square at a time; `DOORPASS1` is replayed between each route's
+  wall/ornament envelope and F0111 door, while the foreground tail retains
+  `MAIN`/`DOORPASS2`/F0113 order. The primary structural pass is still
+  composed in bounded batches before that replay. Replace the remaining
+  batches only with the corresponding F0116--F0124 operation, never with a
+  host-generated panel or a substitute asset.
 - Obtain authentic C13-save and original capture corpus for remaining HoC,
   top-row and action routes; bind each to the PC 3.4 runtime before promotion.
   The supplied French DOS save pair proves its own backed F0435/F0433 route,
