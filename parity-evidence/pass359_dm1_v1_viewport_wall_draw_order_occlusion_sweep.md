@@ -22,7 +22,7 @@ Source root audited: `/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB
 ## Firestaff verification
 
 - `m11_game_view.c:m11_dm1_max_visible_forward_from_center`, `m11_dm1_nearest_blocking_center_depth_index`, and `m11_dm1_nearest_blocking_center_door_depth` keep source-style center-line blocking helpers: nearest non-open center square stops deeper center decoration.
-- `m11_game_view.c:m11_draw_dm1_front_walls` draws front wall panels with layout-696 resolved D1C/D2C/D3C zones and stops after the nearest wall-like center square.
+- `m11_game_view.c:m11_draw_dm1_front_walls` replays front wall panels far-to-near (D3C, D2C, then D1C) with layout-696 resolved zones. A nearer panel overpaints overlap naturally; it must not stop after the first wall-like center square because that loses exposed farther-panel pixels.
 - `m11_game_view.c:m11_draw_dm1_side_walls` draws side wall panels far-to-near with layout-696 side zones and same-lane occlusion guards.
 - `m11_game_view.c:m11_draw_dm1_side_contents` keeps side-lane contents bounded by nearer closed center blockers.
 - `m11_game_view.c:m11_draw_viewport` wires the normal viewport pass: sample cells, draw source-bound floor/wall/door layers, replay nearer side occluders after a farther blocking center square, then draw side and center contents.

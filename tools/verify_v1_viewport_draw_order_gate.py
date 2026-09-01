@@ -166,10 +166,13 @@ def main() -> int:
             ("D1C perspective front wall", "{0, 1, 0, M11_GFX_WALLSET0_D1C, 32, 9, 160, 111}"),
             ("D2C perspective front wall", "{1, 2, 0, M11_GFX_WALLSET0_D2C, 59, 19, 106, 74}"),
             ("D3C perspective front wall", "{2, 3, 0, M11_GFX_WALLSET0_D3C, 77, 25, 70, 49}"),
-            ("nearer-center wall occlusion", "occluded = 1"),
+            ("far-to-near center replay", "for (depth = 2; depth >= 0; --depth)"),
+            ("front wall source blit", "m11_draw_dm1_front_wall_blit"),
         ],
         "Firestaff DM1 front-wall perspective/occlusion stack",
     )
+    if "occluded = 1" in front_body:
+        raise AssertionError("Firestaff front-wall replay incorrectly stops at the nearest center wall")
     wall_blit_start, _wall_blit_end, wall_blit_body = find_function(text, "m11_draw_dm1_wall_blit_with_transparency")
     # 2026-07-20 round 16 re-anchor (same-drift-family): the clipped front
     # wall blit now validates the PC34 material receipt's expected geometry

@@ -158,8 +158,12 @@ def main() -> int:
             "m11_viewport_cell_is_open",
         ], "m11_game_view.c:center blocking helpers")
         require_all(function_body(view_path, "m11_draw_dm1_front_walls"), [
-            "m11_draw_dm1_front_walls", "M11_GFX_WALLSET0_D1C", "M11_GFX_WALLSET0_D2C", "M11_GFX_WALLSET0_D3C", "occluded = 1",
+            "m11_draw_dm1_front_walls", "M11_GFX_WALLSET0_D1C", "M11_GFX_WALLSET0_D2C", "M11_GFX_WALLSET0_D3C",
+            "for (depth = 2; depth >= 0; --depth)",
         ], "m11_game_view.c:m11_draw_dm1_front_walls")
+        front_walls = function_body(view_path, "m11_draw_dm1_front_walls")
+        require("occluded = 1" not in front_walls,
+                "front-wall replay must not stop at the nearest center wall")
         require_all(function_body(view_path, "m11_draw_dm1_side_walls"), [
             # 2026-07-20 round 16 re-anchor (same-drift-family): side walls
             # now flow through the DM1-owned host receipt builder; the

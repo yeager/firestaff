@@ -125,14 +125,14 @@ def main() -> int:
             ("D1C wall blit", "{0, 1, 0, M11_GFX_WALLSET0_D1C, 32, 9, 160, 111}"),
             ("D2C wall blit", "{1, 2, 0, M11_GFX_WALLSET0_D2C, 59, 19, 106, 74}"),
             ("D3C wall blit", "{2, 3, 0, M11_GFX_WALLSET0_D3C, 77, 25, 70, 49}"),
-            ("near-to-far scan", "for (depth = 0; depth < 3; ++depth)"),
-            ("occlusion break before sampling", "if (occluded)"),
+            ("far-to-near source replay", "for (depth = 2; depth >= 0; --depth)"),
             ("wall-like center test", "m11_viewport_cell_is_wall_like(&cells[depth][1])"),
             ("source wall blit", "m11_draw_dm1_front_wall_blit"),
-            ("nearest wall stops farther front walls", "occluded = 1;"),
         ],
-        "Firestaff front-wall nearest-depth collapse",
+        "Firestaff front-wall far-to-near source replay",
     )
+    if "occluded = 1" in body:
+        raise AssertionError("Firestaff front-wall replay incorrectly stops at the nearest center wall")
 
     draw_start, _draw_end, draw = find_function(fire, "m11_draw_viewport")
     require_in_order(
@@ -163,7 +163,7 @@ def main() -> int:
         print(f"- {line}")
     print(f"- ReDMCSB fakewall-as-wall aspect evidence: {RED_DUNGEON.name}:2651")
     print(f"- Firestaff wall-like helper: {SRC.name}:{line_no(fire, wall_like_start)}")
-    print(f"- Firestaff nearest front-wall depth collapse: {SRC.name}:{line_no(fire, start)}")
+    print(f"- Firestaff far-to-near front-wall source replay: {SRC.name}:{line_no(fire, start)}")
     print(f"- Firestaff viewport call site: {SRC.name}:{line_no(fire, draw_start)}")
     return 0
 

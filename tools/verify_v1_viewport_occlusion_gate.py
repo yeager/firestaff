@@ -96,13 +96,15 @@ def main() -> int:
     start, _end, body = find_function(text, "m11_draw_viewport")
     # 2026-07-20 round 15 re-anchor (same-drift-family): maxVisibleForward
     # now comes from the lane-visibility receipt, and the round-14
-    # architecture reconciliation deliberately gives the primary floor
-    # passes the full D3..D1 range ("geometry is hidden by later source
-    # panels, not pre-culled by a host visibility shortcut") while the
-    # side-lane passes keep a maxVisibleForward-derived bound.
+    # architecture reconciliation deliberately gives the primary pit and
+    # field passes the full D3..D1 range ("geometry is hidden by later
+    # source panels, not pre-culled by a host visibility shortcut").  The
+    # final stair replay is different: it follows the late center-wall
+    # envelope and must retain the nearest-center visibility bound, or a
+    # D2/D3 stair panel would reappear through a nearer closed center cell.
     if "maxVisibleForward = visibility.max_visible_forward;" not in body:
         raise AssertionError("m11_draw_viewport does not derive maxVisibleForward from the lane-visibility receipt")
-    FULL_RANGE_TARGETS = {"pits", "stairs", "teleporter fields"}
+    FULL_RANGE_TARGETS = {"pits", "teleporter fields"}
     if "not pre-culled by a host visibility shortcut" not in body:
         raise AssertionError("primary floor passes lost the no-pre-cull rationale")
     for label, fn in TARGETS.items():
@@ -115,6 +117,11 @@ def main() -> int:
             call = re.search(re.escape(fn) + r"\s*\([^;]*\b3, cells\)", body, flags=re.S)
             if not call:
                 raise AssertionError("m11_draw_viewport does not pass the full D3..D1 range to floor ornaments")
+            continue
+        if label == "stairs":
+            call = re.search(re.escape(fn) + r"\s*\([^;]*\b1, maxVisibleForward, cells\)", body, flags=re.S)
+            if not call:
+                raise AssertionError("m11_draw_viewport does not bind the late stair replay to maxVisibleForward")
             continue
         call = re.search(re.escape(fn) + r"\s*\([^;]*maxVisibleForward", body, flags=re.S)
         if not call:

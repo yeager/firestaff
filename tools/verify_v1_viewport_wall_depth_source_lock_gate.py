@@ -196,9 +196,11 @@ def main() -> int:
         ("D1C near front wall spec", "{0, 1, 0, M11_GFX_WALLSET0_D1C, 32, 9, 160, 111}"),
         ("D2C mid front wall spec", "{1, 2, 0, M11_GFX_WALLSET0_D2C, 59, 19, 106, 74}"),
         ("D3C far front wall spec", "{2, 3, 0, M11_GFX_WALLSET0_D3C, 77, 25, 70, 49}"),
+        ("far-to-near center replay", "for (depth = 2; depth >= 0; --depth)"),
         ("front wall wrapper blit", "m11_draw_dm1_front_wall_blit"),
-        ("nearer center occludes farther", "occluded = 1;"),
     ], "Firestaff front wall depth/occlusion")
+    if "occluded = 1" in front:
+        raise AssertionError("Firestaff front-wall replay incorrectly stops at the nearest center wall")
     # 2026-07-20 round 16 re-anchor (same-drift-family): the side wall depth
     # table now lives in the PC34 contract module's s_wall_draw_specs[].
     side_table_start = contract.find("s_wall_draw_specs[]")
