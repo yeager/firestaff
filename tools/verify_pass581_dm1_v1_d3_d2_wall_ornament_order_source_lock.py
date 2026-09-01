@@ -174,6 +174,12 @@ def main() -> int:
         ("near-side wall replay", "m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,"),
         ("near-side ornament replay", "m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,"),
     ], "Firestaff viewport near-side wall ornament replay order")
+    door_button_fn = c_function(fire, "m11_dm1_nearest_blocking_center_door_depth")
+    require_order(door_button_fn, [
+        ("nearest D1-first scan", "for (d = 0; d < 3; ++d)"),
+        ("closed center boundary", "!m11_viewport_cell_is_open(c)"),
+        ("return first closed center door", "return d;"),
+    ], "Firestaff center-door button occlusion order")
     require(cmake, "NAME pass581_dm1_v1_d3_d2_wall_ornament_order_source_lock", "CMake pass581 registration")
 
     print("PASS pass581_dm1_v1_d3_d2_wall_ornament_order_source_lock")
@@ -187,6 +193,7 @@ def main() -> int:
     print("Firestaff anchors:")
     print("- m11_game_view.c:m11_draw_dm1_wall_ornaments D3/D2 spec order and visibility guards")
     print("- m11_game_view.c:m11_draw_viewport wall panels before wall ornaments, then near-side replay after D2/D3 center blockers")
+    print("- m11_game_view.c:m11_dm1_nearest_blocking_center_door_depth selects D1 before D2/D3 for door-button occlusion")
     return 0
 
 

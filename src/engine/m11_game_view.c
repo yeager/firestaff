@@ -43260,7 +43260,12 @@ static void m11_draw_dm1_center_destroyed_door_masks(const M11_GameViewState* st
 static int m11_dm1_nearest_blocking_center_door_depth(
     const M11_ViewportCell cells[3][3]) {
     int d;
-    for (d = 2; d >= 0; --d) {
+    /* D1 is index 0 and owns the first occlusion boundary.  F0128 reaches
+     * D3 before D2 before D1, but a later far-to-near structural pass must
+     * retain the nearest closed center door: choosing D3 first lets a far
+     * button repaint through a closed D1/D2 panel.  This is the same
+     * nearest-bit rule as dm1_viewport_3d_nearest_blocking_center_door_depth_pc34(). */
+    for (d = 0; d < 3; ++d) {
         const M11_ViewportCell* c = &cells[d][1];
         if (c->valid && !m11_viewport_cell_is_open(c)) {
             return d;
