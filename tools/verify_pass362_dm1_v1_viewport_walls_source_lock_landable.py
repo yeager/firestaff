@@ -60,13 +60,8 @@ def run_gate(cmd: list[str]) -> str:
 
 
 def run_ctest_if_present(name: str) -> str:
-    candidates = [
-        Path(os.environ["FIRESTAFF_BUILD_DIR"]) if "FIRESTAFF_BUILD_DIR" in os.environ else None,
-        ROOT / "build",
-        Path("/tmp/firestaff-blockers-build-current"),
-    ]
-    build = next((p for p in candidates if p and (p / "CTestTestfile.cmake").exists()), ROOT / "build")
-    if not (build / "CTestTestfile.cmake").exists():
+    build = find_build_dir(ROOT)
+    if build is None:
         return f"SKIP {name}: no build/CTestTestfile.cmake"
     return subprocess.run(["ctest", "--test-dir", str(build), "-R", f"^{name}$", "--output-on-failure"],
                           cwd=ROOT, check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True).stdout

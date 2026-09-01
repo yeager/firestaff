@@ -55,6 +55,10 @@ EXPECTED_CAPTURES = [
 ]
 
 
+class RuntimeMediaUnavailable(Exception):
+    """Raised when the optional authenticated PC 3.4 capture input is absent."""
+
+
 def read(path: Path, encoding: str = "utf-8") -> str:
     if not path.exists():
         raise AssertionError(f"missing required file: {path}")
@@ -247,6 +251,10 @@ def asset_audit() -> dict[str, dict[str, object]]:
         runtime = runtime_dir / name
         for label, path in ((f"canonical_{name}", canonical), (f"runtime_{name}", runtime)):
             if not path.exists():
+                if label.startswith("runtime_"):
+                    raise RuntimeMediaUnavailable(
+                        f"authenticated DM1 PC 3.4 runtime data is unavailable: {runtime_dir}"
+                    )
                 raise AssertionError(f"missing {label}: {path}")
             got = sha256(path)
             if got != expected:
@@ -349,10 +357,14 @@ def repository_audit() -> None:
 
 
 def main() -> int:
-    anchors = source_audit()
-    assets = asset_audit()
-    capture = runtime_capture_audit()
-    repository_audit()
+    try:
+        anchors = source_audit()
+        assets = asset_audit()
+        capture = runtime_capture_audit()
+        repository_audit()
+    except RuntimeMediaUnavailable as exc:
+        print(f"SKIP {PASS}: {exc}")
+        return 77
     print(STATUS)
     print(json.dumps({"anchors": anchors, "assets": assets, "capture": capture}, sort_keys=True))
     return 0

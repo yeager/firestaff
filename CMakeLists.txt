@@ -34250,9 +34250,10 @@ endif()
             NAME dm1_v1_wall_collision_capture_manifest_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_wall_collision_capture_manifest_source_lock.py
         )
-        set_tests_properties(dm1_v1_wall_collision_capture_manifest_source_lock PROPERTIES
-            ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data;BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}"
-        )
+    set_tests_properties(dm1_v1_wall_collision_capture_manifest_source_lock PROPERTIES
+        ENVIRONMENT "FIRESTAFF_DATA=$ENV{HOME}/.firestaff/data;BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+        SKIP_RETURN_CODE 77
+    )
         add_test(
             NAME dm1_v1_collision_doors_parity_matrix_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_collision_doors_parity_matrix_source_lock.py
@@ -34380,6 +34381,9 @@ endif()
         add_test(
             NAME pass362_dm1_v1_viewport_walls_source_lock_landable
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass362_dm1_v1_viewport_walls_source_lock_landable.py
+        )
+        set_tests_properties(pass362_dm1_v1_viewport_walls_source_lock_landable PROPERTIES
+            ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}"
         )
         add_test(
             NAME pass381_dm1_v1_movement_viewport_walls_source_lock
