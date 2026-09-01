@@ -45143,11 +45143,13 @@ static void m11_draw_dm1_side_contents_at_depth(
     int depth,
     int side,
     const DM1_ViewportLaneVisibilityReceiptPc34* visibility,
-    int blockingCenterDepth) {
+    int blockingCenterDepth,
+    int f0115CellOrder) {
     const M11_ViewRect* outer;
     const M11_ViewRect* inner;
     int paneY;
     int paneH;
+    int sourceOrderedPass = f0115CellOrder >= 0;
     if (!state || !framebuffer || !frames || !cells || !visibility ||
         depth < 0 || depth >= 3 || (side != -1 && side != 1)) {
         return;
@@ -45211,7 +45213,7 @@ static void m11_draw_dm1_side_contents_at_depth(
              * open side square, floor ornaments are drawn first (F0108),
              * then F0115 draws objects/creatures/projectiles.  Mirror
              * that order here for side cells. */
-            if (cell->floorOrnamentOrdinal > 0 && g_drawState) {
+            if (!sourceOrderedPass && cell->floorOrnamentOrdinal > 0 && g_drawState) {
                 M11_ViewRect ornRect;
                 ornRect.x = paneX;
                 ornRect.y = paneY + paneH / 2;
@@ -45233,7 +45235,10 @@ static void m11_draw_dm1_side_contents_at_depth(
                 int itemArea = paneH / 3;
                 int itemBaseY = paneY + paneH - itemArea - 2;
                 for (ii = 0; ii < cell->floorItemCount; ++ii) {
-                    if (cell->floorItemTypes[ii] < 0) continue;
+                    if (cell->floorItemTypes[ii] < 0 ||
+                        (sourceOrderedPass &&
+                         !m11_dm1_f0115_order_includes_cell(
+                             f0115CellOrder, cell->floorItemCells[ii]))) continue;
                     if (g_drawState) {
                         (void)m11_draw_dm1_f0115_floor_item_sprite(
                             g_drawState, framebuffer, framebufferWidth,
@@ -45263,6 +45268,14 @@ static void m11_draw_dm1_side_contents_at_depth(
                 for (pi = 0; pi < plan.count; ++pi) {
                     const DM1_CreatureDrawPlanEntry *entry = &plan.entries[pi];
                     const DM1_CreatureDrawPlacement *placement = &entry->placement;
+                    if (sourceOrderedPass &&
+                        (entry->group_index < 0 ||
+                         entry->group_index >= cell->creatureGroupCount ||
+                         !m11_dm1_f0115_order_includes_cell(
+                             f0115CellOrder,
+                             cell->creatureCells[entry->group_index]))) {
+                        continue;
+                    }
                     if (g_drawState && g_drawState->assetsAvailable) {
                         (void)m11_draw_creature_sprite_source_anchored(
                             g_drawState, framebuffer, framebufferWidth,
@@ -45286,6 +45299,10 @@ static void m11_draw_dm1_side_contents_at_depth(
                     M11_ViewportCell projectile;
                     if (!m11_viewport_cell_projectile_sample(cell, projectileIndex,
                                                               &projectile) ||
+                        (sourceOrderedPass &&
+                         !m11_dm1_f0115_order_includes_cell(
+                             f0115CellOrder,
+                             projectile.firstProjectileCell)) ||
                         !m11_viewport_cell_has_renderable_projectile(&projectile) ||
                         !g_drawState || !g_drawState->assetsAvailable) {
                         continue;
@@ -45334,10 +45351,10 @@ static void m11_draw_dm1_side_contents(
         }
         m11_draw_dm1_side_contents_at_depth(
             state, framebuffer, framebufferWidth, framebufferHeight,
-            frames, cells, depth, -1, visibility, blockingCenterDepth);
+            frames, cells, depth, -1, visibility, blockingCenterDepth, -1);
         m11_draw_dm1_side_contents_at_depth(
             state, framebuffer, framebufferWidth, framebufferHeight,
-            frames, cells, depth, 1, visibility, blockingCenterDepth);
+            frames, cells, depth, 1, visibility, blockingCenterDepth, -1);
     }
     (void)m11_draw_item_sprite;
     (void)m11_draw_projectile_sprite;
@@ -57614,7 +57631,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                 int spanStart = 0;
                 int spanCount = 0;
                 int countedF0115ForSquare = 0;
-                int sideContentDrawn = 0;
                 int hasField;
                 int j;
                 if (!m11_dm1_f0128_square_relative_position(
@@ -57657,18 +57673,15 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                                    squareDepth,
                                                    step->cellOrderWord);
                         }
-                    } else if ((relSide == -1 || relSide == 1) &&
-                               !sideContentDrawn) {
-                        /* Side lanes still use their bounded source-backed
-                         * helper.  Unlike the center route it has not yet
-                         * been parameterised by the F0115 cell word, so do
-                         * not invoke it once per door sub-pass and duplicate
-                         * a real item/creature/projectile. */
+                    } else if (relSide == -1 || relSide == 1) {
+                        /* The side helper consumes the same encoded F0115
+                         * word as the center helper, so door pass 1 and
+                         * pass 2 each visit only their source-owned cells. */
                         m11_draw_dm1_side_contents_at_depth(
                             state, framebuffer, framebufferWidth,
                             framebufferHeight, frames, cells, squareDepth,
-                            relSide, &visibility, blockingCenterDepth);
-                        sideContentDrawn = 1;
+                            relSide, &visibility, blockingCenterDepth,
+                            step->cellOrderWord);
                     }
                 }
                 /* F0113 is not a global overlay: F0116..F0124 invoke it
