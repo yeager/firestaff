@@ -42577,6 +42577,7 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                         unsigned char* framebuffer,
                                         int fbW,
                                         int fbH,
+                                        int minVisibleForward,
                                         int maxVisibleForwardLimit,
                                         const M11_ViewportCell cells[3][3],
                                         int centerOnly) {
@@ -42627,7 +42628,8 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         if (centerOnly && spec.relSide != 0) {
             continue;
         }
-        if (spec.relForward > maxVisibleForward) {
+        if (spec.relForward < minVisibleForward ||
+            spec.relForward > maxVisibleForward) {
             continue;
         }
         /* F0107 is part of the F0128 wall-square dispatch.  A side wall's
@@ -57356,7 +57358,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   1, 3, cells);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                  maxVisibleForward, cells, 0);
+                                  1, maxVisibleForward, cells, 0);
     m11_draw_dm1_thieves_eye_d1c_wall_material(
         state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight,
@@ -57391,7 +57393,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,
                                     nearMaxVisibleForward, &visibility);
             m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                        nearMaxVisibleForward, cells, 0);
+                                        1, nearMaxVisibleForward, cells, 0);
             m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
                 state, framebuffer, framebufferWidth, framebufferHeight,
                 nearMaxVisibleForward, cells);
@@ -57499,7 +57501,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth,
                             framebufferHeight, maxVisibleForward, &visibility);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth,
-                                 framebufferHeight, maxVisibleForward, cells, 0);
+                                 framebufferHeight, 1, maxVisibleForward, cells, 0);
     m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
         state, framebuffer, framebufferWidth, framebufferHeight,
         maxVisibleForward, cells);
@@ -57522,7 +57524,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * Replaying side ornaments here would let distant material cross the
      * nearer wall boundary again. */
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth,
-                                framebufferHeight, maxVisibleForward, cells, 1);
+                                framebufferHeight, 1, maxVisibleForward, cells, 1);
     m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
                                     framebufferWidth, framebufferHeight);
     /* The final F0128 center-wall replay is an occlusion repair.  F0104's
