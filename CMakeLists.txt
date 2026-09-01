@@ -43097,7 +43097,9 @@ add_executable(test_nexus_v1_mns
 target_include_directories(test_nexus_v1_mns PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_mns PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_mns COMMAND test_nexus_v1_mns)
-set_tests_properties(nexus_v1_mns PROPERTIES LABELS "nexus;saturn;creatures;skip_safe")
+set_tests_properties(nexus_v1_mns PROPERTIES
+    LABELS "nexus;saturn;creatures;skip_safe"
+    SKIP_RETURN_CODE 77)
 add_executable(test_nexus_v1_dgn tests/test_nexus_v1_dgn.c)
 target_include_directories(test_nexus_v1_dgn PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_dgn PRIVATE firestaff_nexus)

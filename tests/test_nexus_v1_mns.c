@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+static int g_no_retail_mns_corpus;
+
 static uint8_t *load_file(const char *path, int *out_size) {
     FILE *f = fopen(path, "rb");
     uint8_t *buf;
@@ -115,6 +117,22 @@ static int test_all_mns(void) {
         if (!home) { printf("  SKIP all_mns (no data root)\n"); return 0; }
         snprintf(home_path, sizeof(home_path), "%s/.firestaff/data/nexus", home);
         dirpath = home_path;
+    }
+    {
+        size_t i;
+        int available = 0;
+        for (i = 0; i < sizeof(g_retail_mns) / sizeof(g_retail_mns[0]); ++i) {
+            char path[768];
+            FILE *f;
+            snprintf(path, sizeof(path), "%s/%s", dirpath, g_retail_mns[i].name);
+            f = fopen(path, "rb");
+            if (f) { ++available; fclose(f); }
+        }
+        if (available == 0) {
+            g_no_retail_mns_corpus = 1;
+            printf("  SKIP all_mns (no authenticated retail MNS corpus)\n");
+            return 0;
+        }
     }
     for (size_t corpus_index = 0;
          corpus_index < sizeof(g_retail_mns) / sizeof(g_retail_mns[0]);
@@ -533,5 +551,6 @@ int main(void) {
     fail += test_anim_transform();
     fail += test_anim_real_mns();
     printf("summary: fail=%d\n", fail);
+    if (fail == 0 && g_no_retail_mns_corpus) return 77;
     return fail ? 1 : 0;
 }
