@@ -41606,7 +41606,9 @@ static void m11_draw_dm1_floor_pits(const M11_GameViewState* state,
                                     int fbH,
                                     int minVisibleForward,
                                     int maxVisibleForward,
-                                    const M11_ViewportCell cells[3][3]) {
+                                    const M11_ViewportCell cells[3][3],
+                                    int onlyRelForward,
+                                    int onlyRelSide) {
     int i;
     int planCount;
     (void)cells;
@@ -41624,6 +41626,10 @@ static void m11_draw_dm1_floor_pits(const M11_GameViewState* state,
         }
         if (plan.relForward < minVisibleForward ||
             plan.relForward > maxVisibleForward) {
+            continue;
+        }
+        if ((onlyRelForward >= 0 && plan.relForward != onlyRelForward) ||
+            (onlyRelSide >= -1 && plan.relSide != onlyRelSide)) {
             continue;
         }
         /* F0128 dispatches F0116..F0124 for every D3..D1 square.  F0104
@@ -42945,7 +42951,9 @@ static void m11_draw_dm1_stairs(const M11_GameViewState* state,
                                 int fbH,
                                 int minVisibleForward,
                                 int maxVisibleForward,
-                                const M11_ViewportCell cells[3][3]) {
+                                const M11_ViewportCell cells[3][3],
+                                int onlyRelForward,
+                                int onlyRelSide) {
     int i;
     int planCount;
     (void)cells;
@@ -42964,6 +42972,10 @@ static void m11_draw_dm1_stairs(const M11_GameViewState* state,
         }
         if (plan.relForward < minVisibleForward ||
             plan.relForward > maxVisibleForward) {
+            continue;
+        }
+        if ((onlyRelForward >= 0 && plan.relForward != onlyRelForward) ||
+            (onlyRelSide >= -1 && plan.relSide != onlyRelSide)) {
             continue;
         }
         /* F0104 stairs are square material, like pits, and remain in the
@@ -57409,6 +57421,18 @@ static void m11_dm1_f0128_replay_foreground_square(
     squareDepth = relForward - 1;
     for (i = spanStart; i < spanStart + spanCount; ++i) {
         const DM1_V1_F0128SchedulerStepPc34 *step = &plan->steps[i];
+        if (step->op == DM1_V1_F0128_STEP_F0104_PIT) {
+            m11_draw_dm1_floor_pits(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                relForward, relForward, cells, relForward, relSide);
+            continue;
+        }
+        if (step->op == DM1_V1_F0128_STEP_F0104_STAIRS) {
+            m11_draw_dm1_stairs(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                relForward, relForward, cells, relForward, relSide);
+            continue;
+        }
         if (step->op == DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT) {
             m11_draw_dm1_floor_ornaments(
                 state, framebuffer, framebufferWidth, framebufferHeight,
@@ -57584,7 +57608,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     /* ReDMCSB F0128 invokes every D3..D1 square route; geometry is hidden
      * by later source panels, not pre-culled by a host visibility shortcut. */
     m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,
-                             1, 3, cells);
+                             1, 3, cells, -1, -2);
     /* ReDMCSB DUNVIEW.C F0128: side squares are drawn in source order before
      * the same-depth center square (D3L/D3R before D3C, D2L/D2R before D2C,
      * D1L/D1R before D1C).  Do not cap the primary side-wall pass at the
@@ -57925,7 +57949,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * source visibility receipt: replaying D2/D3 stairs after a D1 wall or
      * door reintroduced them through that occluder. */
     m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,
-                        1, maxVisibleForward, cells);
+                        1, maxVisibleForward, cells, -1, -2);
     m11_draw_dm1_deferred_explosion_pass(state, framebuffer,
                                          framebufferWidth, framebufferHeight,
                                          frames, cells);
@@ -57935,9 +57959,9 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * final overpaint order.  The source F0108 plan has no verified D0 zone,
      * so floor ornaments deliberately remain D1..D3-only. */
     m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,
-                             0, 0, cells);
+                             0, 0, cells, -1, -2);
     m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,
-                        0, 0, cells);
+                        0, 0, cells, -1, -2);
     /* F0127's D0C F0115 object pass precedes its F0113 field overlay. */
     m11_draw_dm1_d0c_floor_item_pass(state, framebuffer,
                                      framebufferWidth, framebufferHeight);
