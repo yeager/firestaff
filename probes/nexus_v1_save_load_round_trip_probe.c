@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
 
     /* Build deterministic world */
     printf("\n[Build Deterministic World]\n");
-    Nexus_V1_World world;
+    static Nexus_V1_World world;
     build_world(&world);
 
     uint64_t h_before = nexus_v1_world_hash(&world);
@@ -230,7 +230,7 @@ int main(int argc, char **argv) {
 
     /* ── Full round-trip: load into world2, compare hashes ──────── */
     printf("\n[Full Round-Trip: World Rehydration]\n");
-    Nexus_V1_World world2;
+    static Nexus_V1_World world2;
     nexus_v1_world_init(&world2);
 
     /* Note: full load requires champion pool + world deserialization

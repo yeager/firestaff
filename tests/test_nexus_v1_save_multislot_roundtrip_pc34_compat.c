@@ -705,10 +705,12 @@ int main(void) {
     char root[512];
     char save_dir[512];
     Nexus_V1_SaveManager mgr;
-    Nexus_V1_World world_before[NSR_NUM_SLOTS];
-    Nexus_V1_World world_after[NSR_NUM_SLOTS];
-    Nexus_V1_ChampionPool pool_before[NSR_NUM_SLOTS];
-    Nexus_V1_ChampionPool pool_after[NSR_NUM_SLOTS];
+    /* Worlds are deliberately large.  Static storage keeps this integration
+     * test independent of the host's comparatively small process stack. */
+    static Nexus_V1_World world_before[NSR_NUM_SLOTS];
+    static Nexus_V1_World world_after[NSR_NUM_SLOTS];
+    static Nexus_V1_ChampionPool pool_before[NSR_NUM_SLOTS];
+    static Nexus_V1_ChampionPool pool_after[NSR_NUM_SLOTS];
     Nexus_V1_SaveHeader out_headers[NSR_NUM_SLOTS];
     char diagnostics[NSR_NUM_SLOTS][256];
     int slot;
