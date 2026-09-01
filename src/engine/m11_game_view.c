@@ -57521,10 +57521,12 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
                                     framebufferWidth, framebufferHeight);
 
-    /* ReDMCSB DUNVIEW.C F0128 calls F0115 in full square order:
-     * D3L/D3R/D3C, D2L/D2R/D2C, then D1L/D1R/D1C. Keep the current
-     * source-material consumers, but run each side pair immediately before
-     * the matching center route instead of batching all sides first. */
+    /* ReDMCSB DUNVIEW.C F0128 calls the D3/D2 outer lanes before the
+     * matching normal lanes: D3L2/D3R2, D3L/D3R/D3C,
+     * D2L2/D2R2, D2L/D2R/D2C, then D1L/D1R/D1C.  The L2/R2 routines do
+     * not own F0115, but do own a possible F0113 tail; retaining them in
+     * this transaction prevents a genuine outer-lane teleporter from being
+     * silently lost after removing the old global field batch. */
     {
         int centerContentMask =
             visibility.center_visible_depth_mask;
@@ -57534,14 +57536,16 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             /* Plan-driven loop: the verified F0128 contract plan supplies
              * the visit order and each square's F0115 admission through its
              * per-square step span (DUNVIEW.C:8491-8542).  A square whose
-             * span carries no F0115 step (plain wall; D2L2/D2R2/early D4
-             * are outside this D3..D1 content range) draws no thing-layer
-             * content — matching the source routes that return before their
-             * F0115 pass.  Side pairs still draw once per depth, ordered
-             * immediately before their center square. */
-            static const int kContentSquares[9] = {
+             * span carries no F0115 step (plain walls and D2L2/D2R2) draws
+             * no thing-layer content — matching the source routes that
+             * return before F0115. */
+            static const int kContentSquares[13] = {
+                DM1_V1_F0128_VIEW_SQUARE_D3L2,
+                DM1_V1_F0128_VIEW_SQUARE_D3R2,
                 DM1_V1_F0128_VIEW_SQUARE_D3L, DM1_V1_F0128_VIEW_SQUARE_D3R,
                 DM1_V1_F0128_VIEW_SQUARE_D3C,
+                DM1_V1_F0128_VIEW_SQUARE_D2L2,
+                DM1_V1_F0128_VIEW_SQUARE_D2R2,
                 DM1_V1_F0128_VIEW_SQUARE_D2L, DM1_V1_F0128_VIEW_SQUARE_D2R,
                 DM1_V1_F0128_VIEW_SQUARE_D2C,
                 DM1_V1_F0128_VIEW_SQUARE_D1L, DM1_V1_F0128_VIEW_SQUARE_D1R,
@@ -57549,14 +57553,22 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             };
             int f0115SquareCount = 0;
             int i;
-            for (i = 0; i < 9; ++i) {
+            for (i = 0; i < 13; ++i) {
                 int square = kContentSquares[i];
-                int squareDepth = 2 - (i / 3);
+                int relForward;
+                int relSide;
+                int squareDepth;
                 int spanStart = 0;
                 int spanCount = 0;
                 int hasF0115 = 0;
                 int hasField;
                 int j;
+                if (!m11_dm1_f0128_square_relative_position(
+                        square, &relForward, &relSide) ||
+                    relForward < 1 || relForward > 3) {
+                    continue;
+                }
+                squareDepth = relForward - 1;
                 if (!DM1_V1_F0128_PerSquareSchedulerSquareSpanPc34Compat(
                         &dm1F0128Plan, square, &spanStart, &spanCount)) {
                     continue;
@@ -57583,15 +57595,11 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                                    &cells[squareDepth][1],
                                                    squareDepth);
                         }
-                    } else {
-                        int side = (square == DM1_V1_F0128_VIEW_SQUARE_D3L ||
-                                    square == DM1_V1_F0128_VIEW_SQUARE_D2L ||
-                                    square == DM1_V1_F0128_VIEW_SQUARE_D1L)
-                            ? -1 : 1;
+                    } else if (relSide == -1 || relSide == 1) {
                         m11_draw_dm1_side_contents_at_depth(
                             state, framebuffer, framebufferWidth,
                             framebufferHeight, frames, cells, squareDepth,
-                            side, &visibility, blockingCenterDepth);
+                            relSide, &visibility, blockingCenterDepth);
                     }
                 }
                 /* F0113 is not a global overlay: F0116..F0124 invoke it
@@ -57601,14 +57609,9 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                 hasField = m11_dm1_f0128_square_has_step(
                     &dm1F0128Plan, square, DM1_V1_F0128_STEP_F0113_FIELD);
                 if (hasField) {
-                    int relForward;
-                    int relSide;
-                    if (m11_dm1_f0128_square_relative_position(
-                            square, &relForward, &relSide)) {
-                        m11_draw_dm1_teleporter_field_at(
-                            state, framebuffer, framebufferWidth,
-                            framebufferHeight, relForward, relSide);
-                    }
+                    m11_draw_dm1_teleporter_field_at(
+                        state, framebuffer, framebufferWidth,
+                        framebufferHeight, relForward, relSide);
                 }
             }
             s_m11_dm1_f0128_per_square_scheduler_receipt
