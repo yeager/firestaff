@@ -1,3 +1,25 @@
+# Firestaff v3.0.322
+
+## DM1
+
+### Fixed
+
+- `F0128 foreground replay`: Corrected the native DOS 3.4 render sequence by
+  replaying F0115 foreground material in source-square order after structural
+  occlusion, including floor ornaments, pits, stairs, fields, objects, and
+  door-frame material.
+- `structural occlusion`: Corrected D1C mask ordering by moving the Thieves
+  Eye destroyed-door mask after its matching door replay, preventing later
+  passes from erasing the intended opening.
+
+## Verification
+
+### Fixed
+
+- `DM1 pickup checks`: Made native pickup verification resolve its runtime
+  directory from the active build tree, avoiding a shared temporary-path
+  assumption in local and CI builds.
+
 # Firestaff v3.0.321
 
 ## DM1

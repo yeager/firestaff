@@ -32,7 +32,6 @@ def main() -> int:
         ("static void m11_draw_dm1_floor_pits", "F0104 pit"),
         ("static void m11_draw_dm1_floor_ornaments", "F0108 floor ornament"),
         ("static void m11_draw_dm1_stairs", "F0104 stairs"),
-        ("static void m11_draw_dm1_teleporter_fields", "F0113 field"),
     ):
         body = function_body(source, signature)
         assert "m11_dm1_side_lane_clear_for_rel" not in body, (
@@ -45,24 +44,28 @@ def main() -> int:
         ("static void m11_draw_dm1_floor_pits", "F0104 pit"),
         ("static void m11_draw_dm1_floor_ornaments", "F0108 floor ornament"),
         ("static void m11_draw_dm1_stairs", "F0104 stairs"),
-        ("static void m11_draw_dm1_teleporter_fields", "F0113 field"),
     ):
         body = function_body(source, signature)
         assert "plan.relForward < minVisibleForward" in body, (
             f"{source_name} must support the final D0-only pass")
 
     for source_name, call in (
-        ("F0104 pit", "m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,\n                             1, 3, cells);"),
-        ("F0108 floor ornament", "m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,\n                                  1, 3, cells);"),
-        ("F0104 stairs", "m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,\n                        1, maxVisibleForward, cells);"),
-        ("F0113 field", "m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight,\n                                  1, 3, cells);"),
+        ("F0104 pit", "m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,\n                             1, 3, cells, -1, -2);"),
+        ("F0108 floor ornament", "m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,\n                                  1, 3, cells, -1, -2);"),
+        ("F0104 stairs", "m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,\n                        1, maxVisibleForward, cells, -1, -2);"),
     ):
         assert call in viewport, (
             f"{source_name} viewport call must retain full D3..D1 source dispatch"
         )
 
+    # F0113 is no longer a global D3..D1 batch: F0128 invokes it after the
+    # current square's F0115 route.  The scheduler-owned replay is the
+    # authoritative D3..D1 dispatch, while the direct call below remains D0.
+    assert "m11_dm1_f0128_replay_foreground_square" in viewport
+    assert "DM1_V1_F0128_STEP_F0113_FIELD" in viewport
+
     effect = viewport.find("m11_draw_dm1_deferred_explosion_pass")
-    d0 = viewport.find("m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,\n                             0, 0, cells);")
+    d0 = viewport.find("m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,\n                             0, 0, cells, -1, -2);")
     mirror = viewport.find("m11_draw_dm1_front_mirror_route")
     assert mirror >= 0 and effect >= 0 and mirror < effect < d0
     print("ok: F0128 D3..D1 material is not side-culled and D0 is final")

@@ -249,22 +249,25 @@ def main() -> int:
     # dm1_viewport_3d_primary_side_wall_max_forward_pc34) instead of the raw
     # sampled cells.
     for call, arg in [
-        ('m11_draw_dm1_side_walls', '&visibility);'),
-        ('m11_draw_dm1_side_doors', 'maxVisibleForward, cells'),
-        ('m11_draw_dm1_side_door_ornaments', 'maxVisibleForward, cells'),
-        ('m11_draw_dm1_side_destroyed_door_masks', 'maxVisibleForward, cells'),
+        ('m11_draw_dm1_side_walls', '&visibility, 99);'),
+        ('m11_draw_dm1_side_doors', 'maxVisibleForward, cells, 99'),
+        ('m11_draw_dm1_side_door_ornaments', 'maxVisibleForward, cells, 99'),
+        ('m11_draw_dm1_side_destroyed_door_masks', 'maxVisibleForward, cells, 99'),
     ]:
         pos = draw.find(call + '(state, framebuffer, framebufferWidth, framebufferHeight,')
         if pos < 0:
             raise AssertionError(f'Firestaff draw viewport missing side feature call {call}')
-        snippet = draw[pos:pos + 260]
+        # The primary wall route has a nested source-bound max-forward
+        # expression; keep the inspection span wide enough to reach its
+        # explicit any-side filter.
+        snippet = draw[pos:pos + 360]
         if arg not in snippet:
             raise AssertionError(f'Firestaff draw viewport missing side occlusion argument {arg!r} for {call}')
     normal_orn = draw.find('m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,')
-    if normal_orn < 0 or 'maxVisibleForward, cells' not in draw[normal_orn:normal_orn + 180]:
+    if normal_orn < 0 or 'maxVisibleForward, cells, 99' not in draw[normal_orn:normal_orn + 180]:
         raise AssertionError('Firestaff draw viewport missing normal wall ornament maxVisibleForward/cells arguments')
     replay_orn = draw.find('m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,', normal_orn + 1)
-    if replay_orn < 0 or 'nearMaxVisibleForward, cells' not in draw[replay_orn:replay_orn + 180]:
+    if replay_orn < 0 or 'nearMaxVisibleForward, cells, 99' not in draw[replay_orn:replay_orn + 180]:
         raise AssertionError('Firestaff center-occluder replay does not bound wall ornaments to nearer side layers')
     if 'int blockingCenterDepth = visibility.nearest_blocking_center_depth_index;' not in draw:
         raise AssertionError('Firestaff draw viewport missing nearest blocking center replay trigger')

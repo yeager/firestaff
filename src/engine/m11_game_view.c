@@ -42651,7 +42651,7 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                         int minVisibleForward,
                                         int maxVisibleForwardLimit,
                                         const M11_ViewportCell cells[3][3],
-                                        int centerOnly) {
+                                        int onlyRelSide) {
     int i;
     int maxVisibleForward = 3;
     if (!state || !state->assetsAvailable) {
@@ -42696,7 +42696,7 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
             !dm1_v1_wall_ornament_view_spec_pc34(specIndex, &spec)) {
             continue;
         }
-        if (centerOnly && spec.relSide != 0) {
+        if (onlyRelSide != 99 && spec.relSide != onlyRelSide) {
             continue;
         }
         if (spec.relForward < minVisibleForward ||
@@ -43121,7 +43121,8 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
                                     int fbH,
                                     int minVisibleForward,
                                     int maxVisibleForward,
-                                    const DM1_ViewportLaneVisibilityReceiptPc34* visibility) {
+                                    const DM1_ViewportLaneVisibilityReceiptPc34* visibility,
+                                    int onlyRelSide) {
     size_t i;
     int flipWalls;
     int mapWallSet;
@@ -43148,6 +43149,9 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
          * far-to-near pass and overpaint the farther side panel. */
         if (spec->runtime_rel_forward < minVisibleForward ||
             spec->runtime_rel_forward > maxVisibleForward) {
+            continue;
+        }
+        if (onlyRelSide != 99 && spec->runtime_rel_side != onlyRelSide) {
             continue;
         }
         /* F0128 dispatches every wall square itself, in far-to-near order:
@@ -43664,7 +43668,8 @@ static void m11_draw_dm1_side_doors(const M11_GameViewState* state,
                                     int fbH,
                                     int minVisibleForward,
                                     int maxVisibleForward,
-                                    const M11_ViewportCell cells[3][3]) {
+                                    const M11_ViewportCell cells[3][3],
+                                    int onlyRelSide) {
     int i;
     int planCount;
     if (!state || !state->assetsAvailable) {
@@ -43689,6 +43694,9 @@ static void m11_draw_dm1_side_doors(const M11_GameViewState* state,
         }
         if (plan.relForward < minVisibleForward ||
             plan.relForward > maxVisibleForward) {
+            continue;
+        }
+        if (onlyRelSide != 99 && plan.relSide != onlyRelSide) {
             continue;
         }
         if (!m11_dm1_side_lane_clear_for_rel(cells,
@@ -43743,7 +43751,8 @@ static void m11_draw_dm1_side_door_ornaments(const M11_GameViewState* state,
                                              int fbH,
                                              int minVisibleForward,
                                              int maxVisibleForward,
-                                             const M11_ViewportCell cells[3][3]) {
+                                             const M11_ViewportCell cells[3][3],
+                                             int onlyRelSide) {
     int i;
     int planCount;
     if (!state || !state->assetsAvailable) {
@@ -43767,6 +43776,9 @@ static void m11_draw_dm1_side_door_ornaments(const M11_GameViewState* state,
         }
         if (plan.relForward < minVisibleForward ||
             plan.relForward > maxVisibleForward) {
+            continue;
+        }
+        if (onlyRelSide != 99 && plan.relSide != onlyRelSide) {
             continue;
         }
         if (!m11_dm1_side_lane_clear_for_rel(cells,
@@ -43816,7 +43828,8 @@ static void m11_draw_dm1_side_destroyed_door_masks(const M11_GameViewState* stat
                                                    int fbH,
                                                    int minVisibleForward,
                                                    int maxVisibleForward,
-                                                   const M11_ViewportCell cells[3][3]) {
+                                                   const M11_ViewportCell cells[3][3],
+                                                   int onlyRelSide) {
     int i;
     int planCount;
     if (!state || !state->assetsAvailable) {
@@ -43838,6 +43851,9 @@ static void m11_draw_dm1_side_destroyed_door_masks(const M11_GameViewState* stat
         }
         if (plan.relForward < minVisibleForward ||
             plan.relForward > maxVisibleForward) {
+            continue;
+        }
+        if (onlyRelSide != 99 && plan.relSide != onlyRelSide) {
             continue;
         }
         if (!m11_dm1_side_lane_clear_for_rel(cells,
@@ -57618,7 +57634,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,
                             1, dm1_viewport_3d_primary_side_wall_max_forward_pc34(
                                 maxVisibleForward),
-                            &visibility);
+                            &visibility, 99);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight,
                              1, 3, cells);
     /* Primary floor pass: pass the full D3..D1 range (constant 3), not
@@ -57631,7 +57647,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   1, 3, cells, -1, -2);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                  1, maxVisibleForward, cells, 0);
+                                  1, maxVisibleForward, cells, 99);
     m11_draw_dm1_thieves_eye_d1c_wall_material(
         state, framebuffer, framebufferWidth, framebufferHeight, cells);
     /* D3..D1 F0113 is emitted below from the verified per-square plan,
@@ -57640,11 +57656,11 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         state, framebuffer, framebufferWidth, framebufferHeight,
         maxVisibleForward, cells);
     m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight,
-                             1, maxVisibleForward, cells);
+                             1, maxVisibleForward, cells, 99);
     m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                       1, maxVisibleForward, cells);
+                                       1, maxVisibleForward, cells, 99);
     m11_draw_dm1_side_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight,
-                                          1, maxVisibleForward, cells);
+                                          1, maxVisibleForward, cells, 99);
     m11_draw_dm1_center_doors(state, framebuffer, framebufferWidth, framebufferHeight,
                               1, 3, cells);
     m11_draw_dm1_center_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
@@ -57666,18 +57682,18 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         if (blockingCenterDepth > 0) {
             int nearMaxVisibleForward = blockingCenterDepth;
             m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,
-                                    1, nearMaxVisibleForward, &visibility);
+                                    1, nearMaxVisibleForward, &visibility, 99);
             m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                        1, nearMaxVisibleForward, cells, 0);
+                                        1, nearMaxVisibleForward, cells, 99);
             m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
                 state, framebuffer, framebufferWidth, framebufferHeight,
                 nearMaxVisibleForward, cells);
             m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight,
-                                    1, nearMaxVisibleForward, cells);
+                                    1, nearMaxVisibleForward, cells, 99);
             m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                             1, nearMaxVisibleForward, cells);
+                                             1, nearMaxVisibleForward, cells, 99);
             m11_draw_dm1_side_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight,
-                                                   1, nearMaxVisibleForward, cells);
+                                                   1, nearMaxVisibleForward, cells, 99);
         }
     }
 
@@ -57813,30 +57829,16 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             visibility.nearest_blocking_center_depth_index;
         int centerContentMask = visibility.center_visible_depth_mask;
         for (replayForward = 3; replayForward >= 1; --replayForward) {
-            m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth,
-                                    framebufferHeight, replayForward,
-                                    replayForward, &visibility);
-            m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth,
-                                         framebufferHeight, replayForward,
-                                         replayForward, cells, 0);
+            static const int kSideReplayOrder[2] = { -1, 1 };
+            int sideReplayIndex;
             if (replayForward == 3) {
                 m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
                     state, framebuffer, framebufferWidth, framebufferHeight,
                     replayForward, cells);
             }
-            m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth,
-                                    framebufferHeight, replayForward,
-                                    replayForward, cells);
-            m11_draw_dm1_side_door_ornaments(state, framebuffer,
-                                             framebufferWidth, framebufferHeight,
-                                             replayForward, replayForward, cells);
-            m11_draw_dm1_side_destroyed_door_masks(state, framebuffer,
-                                                   framebufferWidth, framebufferHeight,
-                                                   replayForward, replayForward, cells);
-            /* F0128 visits the outer field lanes before DnL/DnR, then
-             * completes each side F0115 route before drawing DnC.  The
-             * foreground replay keeps that order after this renderer's
-             * source-material structural repair. */
+            /* The outer lanes are complete before F0128 enters D3L/D3R or
+             * D2L/D2R. They own no normal side wall transaction here, but
+             * can own the F0113 tail and must therefore remain ahead of it. */
             if (replayForward == 3) {
                 m11_dm1_f0128_replay_foreground_square(
                     state, framebuffer, framebufferWidth, framebufferHeight,
@@ -57860,20 +57862,45 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                     DM1_V1_F0128_VIEW_SQUARE_D2R2, blockingCenterDepth,
                     centerContentMask);
             }
-            if (replayForward > 1) {
-                int leftSquare = replayForward == 3
-                    ? DM1_V1_F0128_VIEW_SQUARE_D3L
-                    : DM1_V1_F0128_VIEW_SQUARE_D2L;
-                int rightSquare = replayForward == 3
-                    ? DM1_V1_F0128_VIEW_SQUARE_D3R
-                    : DM1_V1_F0128_VIEW_SQUARE_D2R;
+            /* F0128 completes DnL's structural route before beginning DnR.
+             * Keep each wall, F0107 ornament, F0111 door, ornament, and
+             * destroyed-door mask in that square transaction.  The previous
+             * primitive-class batches painted both side walls, then both
+             * ornaments, then both doors, which let DnR overpaint material
+             * that ReDMCSB has already completed for DnL. */
+            for (sideReplayIndex = 0; sideReplayIndex < 2; ++sideReplayIndex) {
+                int relSide = kSideReplayOrder[sideReplayIndex];
+                m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth,
+                                        framebufferHeight, replayForward,
+                                        replayForward, &visibility, relSide);
+                m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth,
+                                             framebufferHeight, replayForward,
+                                             replayForward, cells, relSide);
+                m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth,
+                                        framebufferHeight, replayForward,
+                                        replayForward, cells, relSide);
+                m11_draw_dm1_side_door_ornaments(state, framebuffer,
+                                                 framebufferWidth, framebufferHeight,
+                                                 replayForward, replayForward, cells,
+                                                 relSide);
+                m11_draw_dm1_side_destroyed_door_masks(state, framebuffer,
+                                                       framebufferWidth, framebufferHeight,
+                                                       replayForward, replayForward, cells,
+                                                       relSide);
+                /* F0115/F0113 are part of this DnL or DnR transaction, not
+                 * a later left/right batch. This is especially important at
+                 * D1, where both side routes must finish before D1C starts. */
                 m11_dm1_f0128_replay_foreground_square(
                     state, framebuffer, framebufferWidth, framebufferHeight,
-                    frames, cells, &visibility, &dm1F0128Plan, leftSquare,
-                    blockingCenterDepth, centerContentMask);
-                m11_dm1_f0128_replay_foreground_square(
-                    state, framebuffer, framebufferWidth, framebufferHeight,
-                    frames, cells, &visibility, &dm1F0128Plan, rightSquare,
+                    frames, cells, &visibility, &dm1F0128Plan,
+                    replayForward == 3
+                        ? (relSide < 0 ? DM1_V1_F0128_VIEW_SQUARE_D3L
+                                       : DM1_V1_F0128_VIEW_SQUARE_D3R)
+                        : (replayForward == 2
+                            ? (relSide < 0 ? DM1_V1_F0128_VIEW_SQUARE_D2L
+                                           : DM1_V1_F0128_VIEW_SQUARE_D2R)
+                            : (relSide < 0 ? DM1_V1_F0128_VIEW_SQUARE_D1L
+                                           : DM1_V1_F0128_VIEW_SQUARE_D1R)),
                     blockingCenterDepth, centerContentMask);
             }
             m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth,
@@ -57881,7 +57908,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                      replayForward, cells);
             m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth,
                                          framebufferHeight, replayForward,
-                                         replayForward, cells, 1);
+                                         replayForward, cells, 0);
             /* F0111 belongs to the center-square route immediately after
              * its wall envelope.  The deferred F0115 pass otherwise leaves
              * a far object on top of a closed D3C/D2C/D1C door because the

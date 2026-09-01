@@ -103,7 +103,8 @@ def main() -> int:
 
     fire_start, wall = find_c_function(fire, "m11_draw_dm1_wall_ornaments")
     # M11 only consumes the DM1-owned specs and host material receipts.
-    require(wall, "dm1_v1_wall_ornament_view_spec_pc34(i, &spec)", "DM1 view-spec consumption")
+    require(wall, "dm1_v1_wall_ornament_view_draw_order_at_pc34(i)", "DM1 F0128 draw-order consumption")
+    require(wall, "dm1_v1_wall_ornament_view_spec_pc34(specIndex, &spec)", "DM1 view-spec consumption")
     require(wall, "dm1_v1_wall_ornament_host_material_receipt_pc34(", "DM1 host material receipt consumption")
 
     dm1 = DM1_WALL_ORN.read_text(encoding="utf-8")
@@ -120,9 +121,7 @@ def main() -> int:
     require_order(
         plan_fn,
         [
-            ("ReDMCSB native-offset comment", "increments the native wall-ornament bitmap"),
-            ("D2L_RIGHT excluded", "viewWallIndex != 5 &&"),
-            ("D2R_LEFT excluded", "viewWallIndex != 6) ? 1 : 0;"),
+            ("native offset selected from source table", "nativeOffset = s_wallOrnamentNativeOffsetPc34[viewWallIndex];"),
             ("graphic index uses native offset", "DM1_GFX_WALL_ORNAMENT_BASE_PC34 + globalIndex * 2 + nativeOffset"),
             ("flip passed to plan", "dm1_v1_wall_ornament_flip_horizontal_pc34(viewWallIndex)"),
         ],
