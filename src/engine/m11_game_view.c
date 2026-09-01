@@ -42976,6 +42976,7 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int fbW,
                                     int fbH,
+                                    int minVisibleForward,
                                     int maxVisibleForward,
                                     const DM1_ViewportLaneVisibilityReceiptPc34* visibility) {
     size_t i;
@@ -43002,7 +43003,8 @@ static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
          * Firestaff's split primitive passes still must honor the nearest
          * center blocker; same-side blockers are drawn later in the same
          * far-to-near pass and overpaint the farther side panel. */
-        if (spec->runtime_rel_forward > maxVisibleForward) {
+        if (spec->runtime_rel_forward < minVisibleForward ||
+            spec->runtime_rel_forward > maxVisibleForward) {
             continue;
         }
         /* F0128 dispatches every wall square itself, in far-to-near order:
@@ -43499,6 +43501,7 @@ static void m11_draw_dm1_side_doors(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int fbW,
                                     int fbH,
+                                    int minVisibleForward,
                                     int maxVisibleForward,
                                     const M11_ViewportCell cells[3][3]) {
     int i;
@@ -43523,7 +43526,8 @@ static void m11_draw_dm1_side_doors(const M11_GameViewState* state,
         if (m11_dm1_is_d3l2_d3r2_f0111_side_door_plan(&plan)) {
             continue;
         }
-        if (plan.relForward > maxVisibleForward) {
+        if (plan.relForward < minVisibleForward ||
+            plan.relForward > maxVisibleForward) {
             continue;
         }
         if (!m11_dm1_side_lane_clear_for_rel(cells,
@@ -43576,6 +43580,7 @@ static void m11_draw_dm1_side_door_ornaments(const M11_GameViewState* state,
                                              unsigned char* framebuffer,
                                              int fbW,
                                              int fbH,
+                                             int minVisibleForward,
                                              int maxVisibleForward,
                                              const M11_ViewportCell cells[3][3]) {
     int i;
@@ -43599,7 +43604,8 @@ static void m11_draw_dm1_side_door_ornaments(const M11_GameViewState* state,
         if (m11_dm1_is_d3l2_d3r2_f0111_side_door_plan(&plan)) {
             continue;
         }
-        if (plan.relForward > maxVisibleForward) {
+        if (plan.relForward < minVisibleForward ||
+            plan.relForward > maxVisibleForward) {
             continue;
         }
         if (!m11_dm1_side_lane_clear_for_rel(cells,
@@ -43647,6 +43653,7 @@ static void m11_draw_dm1_side_destroyed_door_masks(const M11_GameViewState* stat
                                                    unsigned char* framebuffer,
                                                    int fbW,
                                                    int fbH,
+                                                   int minVisibleForward,
                                                    int maxVisibleForward,
                                                    const M11_ViewportCell cells[3][3]) {
     int i;
@@ -43668,7 +43675,8 @@ static void m11_draw_dm1_side_destroyed_door_masks(const M11_GameViewState* stat
         if (m11_dm1_is_d3l2_d3r2_f0111_side_door_plan(&plan)) {
             continue;
         }
-        if (plan.relForward > maxVisibleForward) {
+        if (plan.relForward < minVisibleForward ||
+            plan.relForward > maxVisibleForward) {
             continue;
         }
         if (!m11_dm1_side_lane_clear_for_rel(cells,
@@ -57344,7 +57352,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * replay pass below still uses a reduced max to repair near-side occlusion
      * after center doors/walls have been drawn. */
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,
-                            dm1_viewport_3d_primary_side_wall_max_forward_pc34(
+                            1, dm1_viewport_3d_primary_side_wall_max_forward_pc34(
                                 maxVisibleForward),
                             &visibility);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
@@ -57367,11 +57375,11 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         state, framebuffer, framebufferWidth, framebufferHeight,
         maxVisibleForward, cells);
     m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight,
-                             maxVisibleForward, cells);
+                             1, maxVisibleForward, cells);
     m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                       maxVisibleForward, cells);
+                                       1, maxVisibleForward, cells);
     m11_draw_dm1_side_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight,
-                                          maxVisibleForward, cells);
+                                          1, maxVisibleForward, cells);
     m11_draw_dm1_center_doors(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_center_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_center_thieves_eye_mask(state, framebuffer, framebufferWidth, framebufferHeight, cells);
@@ -57391,18 +57399,18 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         if (blockingCenterDepth > 0) {
             int nearMaxVisibleForward = blockingCenterDepth;
             m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,
-                                    nearMaxVisibleForward, &visibility);
+                                    1, nearMaxVisibleForward, &visibility);
             m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                         1, nearMaxVisibleForward, cells, 0);
             m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
                 state, framebuffer, framebufferWidth, framebufferHeight,
                 nearMaxVisibleForward, cells);
             m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight,
-                                    nearMaxVisibleForward, cells);
+                                    1, nearMaxVisibleForward, cells);
             m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                             nearMaxVisibleForward, cells);
+                                             1, nearMaxVisibleForward, cells);
             m11_draw_dm1_side_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight,
-                                                   nearMaxVisibleForward, cells);
+                                                   1, nearMaxVisibleForward, cells);
         }
     }
 
@@ -57499,18 +57507,18 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * deferred F0115 loop, so restore that source-owned occlusion boundary
      * after the loop rather than letting a floor object bleed through stone. */
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth,
-                            framebufferHeight, maxVisibleForward, &visibility);
+                            framebufferHeight, 1, maxVisibleForward, &visibility);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth,
                                  framebufferHeight, 1, maxVisibleForward, cells, 0);
     m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
         state, framebuffer, framebufferWidth, framebufferHeight,
         maxVisibleForward, cells);
     m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth,
-                            framebufferHeight, maxVisibleForward, cells);
+                            framebufferHeight, 1, maxVisibleForward, cells);
     m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth,
-                                     framebufferHeight, maxVisibleForward, cells);
+                                     framebufferHeight, 1, maxVisibleForward, cells);
     m11_draw_dm1_side_destroyed_door_masks(state, framebuffer,
-                                           framebufferWidth, framebufferHeight,
+                                           framebufferWidth, framebufferHeight, 1,
                                            maxVisibleForward, cells);
     /* ReDMCSB F0128 draws each center wall as part of its square before the
      * next nearer square is visited.  M11's deferred F0115 loop can otherwise
