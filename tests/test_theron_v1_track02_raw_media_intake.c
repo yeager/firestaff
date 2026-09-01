@@ -3,6 +3,7 @@
 #include <string.h>
 
 #if !defined(_WIN32)
+#include <sys/stat.h>
 #include <unistd.h>
 #endif
 
@@ -75,6 +76,16 @@ static const char *find_real_jp_cue(void) {
     return path;
 }
 
+static int test_runtime_path(char *path, size_t capacity, const char *name) {
+    const char *root = getenv("FIRESTAFF_TEST_RUNTIME_DIR");
+
+    if (!root || !root[0]) root = "test-runtime";
+#if !defined(_WIN32)
+    if (mkdir(root, 0700) != 0 && access(root, F_OK) != 0) return 0;
+#endif
+    return snprintf(path, capacity, "%s/%s", root, name) < (int)capacity;
+}
+
 static void test_real_split_us_cue_path(void) {
 #if defined(_WIN32)
     (void)find_real_us_cue;
@@ -97,7 +108,7 @@ static void test_real_split_us_cue_path(void) {
 #endif
 }
 
-static void test_real_split_jp_cue_path(void) {
+static void test_real_jp_cue_path(void) {
 #if defined(_WIN32)
     (void)find_real_jp_cue;
 #else
@@ -110,12 +121,19 @@ static void test_real_split_jp_cue_path(void) {
     }
     CHECK(theron_v1_track02_raw_media_intake_discover(cue, &receipt));
     CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY);
-    CHECK(receipt.variant == THERON_TRACK02_VARIANT_JP_REV1_ISO);
-    CHECK(receipt.cue_consumed && receipt.mode1_2048 && !receipt.mode1_2352);
-    CHECK(receipt.payload_bytes == 305152u);
-    CHECK(receipt.sector_count == 149u);
-    CHECK(!strcmp(receipt.track02_md5, THERON_TRACK02_MD5_JP_REV1_ISO));
-    CHECK(strstr(receipt.payload_path, "TQJP02End.iso") != NULL);
+    if (receipt.variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        CHECK(receipt.cue_consumed && receipt.mode1_2352);
+        CHECK(receipt.cue_index01_sector == 224u);
+        CHECK(!strcmp(receipt.track02_md5, THERON_TRACK02_MD5_JP_BIN));
+        CHECK(strstr(receipt.payload_path, "(Track 02).bin") != NULL);
+    } else {
+        CHECK(receipt.variant == THERON_TRACK02_VARIANT_JP_REV1_ISO);
+        CHECK(receipt.cue_consumed && receipt.mode1_2048 && !receipt.mode1_2352);
+        CHECK(receipt.payload_bytes == 305152u);
+        CHECK(receipt.sector_count == 149u);
+        CHECK(!strcmp(receipt.track02_md5, THERON_TRACK02_MD5_JP_REV1_ISO));
+        CHECK(strstr(receipt.payload_path, "TQJP02End.iso") != NULL);
+    }
 #endif
 }
 
@@ -124,7 +142,7 @@ static void test_real_us_cue_path(void) {
     (void)find_standard_us_bin;
 #else
     const char *bin = find_standard_us_bin();
-    char cue_path[256];
+    char cue_path[512];
     FILE *cue;
     Theron_V1Track02RawMediaIntakeReceipt receipt;
 
@@ -132,8 +150,8 @@ static void test_real_us_cue_path(void) {
         printf("test_theron_v1_track02_raw_media_intake: SKIP real US CUE\n");
         return;
     }
-    snprintf(cue_path, sizeof(cue_path),
-             "/tmp/firestaff_theron_real_us_%ld.cue", (long)getpid());
+    if (!test_runtime_path(cue_path, sizeof(cue_path),
+                           "firestaff-theron-real-us.cue")) return;
     cue = fopen(cue_path, "wb");
     CHECK(cue != NULL);
     if (!cue) return;
@@ -159,15 +177,34 @@ int main(void) {
     Theron_V1Track02RawTraceMediaInput trace_input;
     Theron_Track02Variant variant;
     const char *media = getenv("FIRESTAFF_THERON_TRACK02_MEDIA");
-    const char *wrong_cue = "/tmp/firestaff-theron-track02-wrong-layout.cue";
-    const char *trailing_cue = "/tmp/firestaff-theron-track02-trailing-token.cue";
-    const char *missing_payload_cue = "/tmp/firestaff-theron-track02-missing-payload.cue";
-    const char *unknown_iso = "/tmp/firestaff-theron-track02-unknown.iso";
-    const char *unknown_bin = "/tmp/firestaff-theron-track02-unknown.bin";
-    const char *declared_iso_alias = "/tmp/TQUS02.iso";
+    char wrong_cue[512];
+    char trailing_cue[512];
+    char missing_payload_cue[512];
+    char unknown_iso[512];
+    char unknown_bin[512];
+    char declared_iso_alias[512];
+    char declared_iso_payload[512];
+    char nonexistent_cue[512];
     const char *home = getenv("HOME");
     char canonical_iso[512];
     FILE *file;
+
+    if (!test_runtime_path(wrong_cue, sizeof(wrong_cue),
+                           "firestaff-theron-track02-wrong-layout.cue") ||
+        !test_runtime_path(trailing_cue, sizeof(trailing_cue),
+                           "firestaff-theron-track02-trailing-token.cue") ||
+        !test_runtime_path(missing_payload_cue, sizeof(missing_payload_cue),
+                           "firestaff-theron-track02-missing-payload.cue") ||
+        !test_runtime_path(unknown_iso, sizeof(unknown_iso),
+                           "firestaff-theron-track02-unknown.iso") ||
+        !test_runtime_path(unknown_bin, sizeof(unknown_bin),
+                           "firestaff-theron-track02-unknown.bin") ||
+        !test_runtime_path(declared_iso_alias, sizeof(declared_iso_alias),
+                           "TQUS02.iso") ||
+        !test_runtime_path(declared_iso_payload, sizeof(declared_iso_payload),
+                           "TQUS02End.iso") ||
+        !test_runtime_path(nonexistent_cue, sizeof(nonexistent_cue),
+                           "firestaff-no-such-track02.cue")) return EXIT_FAILURE;
 
     CHECK(theron_v1_track02_raw_media_intake_discover(NULL, &receipt));
     CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_UNAVAILABLE);
@@ -265,7 +302,7 @@ int main(void) {
         remove(unknown_bin);
     }
     remove(declared_iso_alias);
-    file = fopen("/tmp/TQUS02End.iso", "wb");
+    file = fopen(declared_iso_payload, "wb");
     CHECK(file != NULL);
     if (file) {
         fputs("0", file);
@@ -277,11 +314,11 @@ int main(void) {
         CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_UNAVAILABLE);
         CHECK(receipt.failure_reason == THERON_V1_TRACK02_MEDIA_REASON_PAYLOAD_UNAVAILABLE);
         CHECK(!strcmp(receipt.payload_path, declared_iso_alias));
-        remove("/tmp/TQUS02End.iso");
+        remove(declared_iso_payload);
     }
     CHECK(!receipt.raw_trace_preparation_allowed);
     CHECK(theron_v1_track02_raw_media_intake_discover(
-        "/tmp/firestaff-no-such-track02.cue", &receipt));
+        nonexistent_cue, &receipt));
     CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_UNAVAILABLE);
     CHECK(receipt.failure_reason == THERON_V1_TRACK02_MEDIA_REASON_PATH_UNAVAILABLE);
 
@@ -339,6 +376,6 @@ int main(void) {
     }
     test_real_us_cue_path();
     test_real_split_us_cue_path();
-    test_real_split_jp_cue_path();
+    test_real_jp_cue_path();
     return failures ? EXIT_FAILURE : EXIT_SUCCESS;
 }

@@ -46096,6 +46096,9 @@ if(BUILD_TESTING AND THERON_SOURCES)
         NAME theron_v1_track02_raw_media_intake
         COMMAND test_theron_v1_track02_raw_media_intake
     )
+    set_tests_properties(theron_v1_track02_raw_media_intake PROPERTIES
+        ENVIRONMENT "FIRESTAFF_TEST_RUNTIME_DIR=${CMAKE_BINARY_DIR}/test-runtime"
+    )
 
     add_executable(test_theron_v1_track02_capture_trace_manifest
         tests/test_theron_v1_track02_capture_trace_manifest.c
