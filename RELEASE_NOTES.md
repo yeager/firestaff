@@ -1,3 +1,23 @@
+# Firestaff v3.0.323
+
+## DM1
+
+### Fixed
+
+- `F0128 wall replay`: Corrected outer-side wall replay and the F0115 Door
+  Pass 1 placement. Each pass now consumes its original source word in the
+  source square that owns it, after that square's wall/ornament material and
+  before its door material.
+
+## Verification
+
+### Verified
+
+- Re-ran native real-media startup checks for CSB on Atari ST, Amiga, and FM
+  Towns, and for DM2 on DOS, Amiga, and FM Towns.
+- Re-ran the authenticated DM1 DOS 3.4 direct CLI boot and F0128 render-order
+  compatibility checks.
+
 # Firestaff v3.0.322
 
 ## DM1
