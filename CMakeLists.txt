@@ -44641,6 +44641,7 @@ add_test(
 )
 set_tests_properties(nexus_v1_script_vm PROPERTIES
     LABELS "tier4;nexus;slev;script;runtime"
+    ENVIRONMENT "FIRESTAFF_TEST_RUNTIME_DIR=${CMAKE_BINARY_DIR}/test-runtime"
 )
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_level_aux_admission.c")

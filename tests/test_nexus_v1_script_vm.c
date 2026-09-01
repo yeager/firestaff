@@ -394,7 +394,8 @@ static void test_engine_slev_capture_target_stays_source_bound(void) {
     uint8_t slev[96];
     char text[1024];
     FILE *file;
-    const char *path = "/private/tmp/firestaff-nexus-slev-capture-target.txt";
+    char path[512];
+    const char *runtime_dir = getenv("FIRESTAFF_TEST_RUNTIME_DIR");
     static const uint8_t task_header[] = {
         0x2f, 0xe6, 0xe2, 0x1a, 0xd3, 0x0e, 0x34, 0x23,
         0x4f, 0x22, 0x7f, 0xfc, 0x2f, 0x52, 0x8d, 0x02,
@@ -403,6 +404,12 @@ static void test_engine_slev_capture_target_stays_source_bound(void) {
         0xd0, 0x08, 0x4e, 0x08
     };
 
+    if (!runtime_dir || !runtime_dir[0] ||
+        snprintf(path, sizeof(path), "%s/nexus-slev-capture-target.txt",
+                 runtime_dir) >= (int)sizeof(path)) {
+        puts("SKIP SLEV capture target (no test runtime directory)");
+        return;
+    }
     memset(&engine, 0, sizeof(engine));
     memset(slev, 0, sizeof(slev));
     memcpy(slev, task_header, sizeof(task_header));
