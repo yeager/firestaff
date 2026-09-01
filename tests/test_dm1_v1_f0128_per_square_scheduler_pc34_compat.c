@@ -228,6 +228,17 @@ static void test_corridor_scene_visit_order(void)
                count_op_for_square(&plan, DM1_V1_F0128_VIEW_SQUARE_D4C,
                                    DM1_V1_F0128_STEP_F0115_EARLY),
                3, "ReDMCSB DUNVIEW.C:8479-8490 three early D4 passes");
+    for (i = 0; i < plan.stepCount; ++i) {
+        if (plan.steps[i].op == DM1_V1_F0128_STEP_F0115_MAIN) {
+            expect_int("corridor.floor_ornament_before_things",
+                       i > 0 &&
+                       plan.steps[i - 1].square == plan.steps[i].square &&
+                       plan.steps[i - 1].op ==
+                           DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,
+                       1,
+                       "ReDMCSB DUNVIEW.C F0116-F0127 F0108 precedes F0115");
+        }
+    }
     expect_int("corridor.d3l.main_order",
                plan.steps[first_index(&plan, DM1_V1_F0128_VIEW_SQUARE_D3L,
                                       DM1_V1_F0128_STEP_F0115_MAIN)].cellOrderWord,
@@ -570,19 +581,23 @@ static void test_span_and_observed_match(void)
     expect_int("span.d4l.count", count, 1,
                "ReDMCSB DUNVIEW.C:8479-8481 one early D4L F0115 step");
 
-    /* D1C door-front: pass1, door frame, F0111, pass2 in one span. */
+    /* D1C door-front: F0108, pass1, door frame, F0111, pass2 in one span. */
     expect_int("span.d1c.ok",
                DM1_V1_F0128_PerSquareSchedulerSquareSpanPc34Compat(
                    &plan, DM1_V1_F0128_VIEW_SQUARE_D1C, &start, &count),
                1, "D1C span resolves");
-    expect_int("span.d1c.count", count, 4,
-               "ReDMCSB DUNVIEW.C:7873-7937 D1C pass1/frame/door/pass2");
+    expect_int("span.d1c.count", count, 5,
+               "ReDMCSB DUNVIEW.C:7873-7937 D1C F0108/pass1/frame/door/pass2");
     pass1Idx = first_index(&plan, DM1_V1_F0128_VIEW_SQUARE_D1C,
                            DM1_V1_F0128_STEP_F0115_DOOR_PASS1);
     pass2Idx = first_index(&plan, DM1_V1_F0128_VIEW_SQUARE_D1C,
                            DM1_V1_F0128_STEP_F0115_DOOR_PASS2);
-    expect_int("span.d1c.start_is_pass1", start, pass1Idx,
-               "D1C span starts at the door pass1 step");
+    expect_int("span.d1c.start_is_floor_ornament",
+               plan.steps[start].op,
+               DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,
+               "ReDMCSB DUNVIEW.C:7873 F0108 starts the D1C door route");
+    expect_int("span.d1c.floor_ornament_before_pass1", start + 1, pass1Idx,
+               "D1C F0108 precedes the door's back-cell pass");
     expect_int("span.d1c.end_is_pass2", start + count - 1, pass2Idx,
                "D1C span ends at the door pass2 step");
 

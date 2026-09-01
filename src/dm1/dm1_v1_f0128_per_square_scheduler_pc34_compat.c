@@ -234,9 +234,15 @@ int DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(
             break;
 
         case DM1_V1_F0128_ELEMENT_STAIRS_FRONT:
-            /* F0104 stairs bitmaps, then the thing pass with the
-             * square's corridor order (F0116:6372-6394, :6472-6473). */
+            /* F0104 stairs bitmap, then F0108's source-owned floor
+             * ornament call, then the thing pass (F0116:6372-6394,
+             * :6470-6473).  F0108 is still called when its ordinal is
+             * empty; that is an authentic no-draw, not a reason to skip
+             * the source operation. */
             if (!push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0104_STAIRS,
+                           0, 0, 0, 0) ||
+                !push_step(outPlan, cls->square,
+                           DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,
                            0, 0, 0, 0) ||
                 !push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0115_MAIN,
                            cls->corridorOrder, 0, 0, 0)) {
@@ -256,7 +262,10 @@ int DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(
                     return 0;
                 }
             }
-            if (!push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0115_MAIN,
+            if (!push_step(outPlan, cls->square,
+                           DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,
+                           0, 0, 0, 0) ||
+                !push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0115_MAIN,
                            cls->doorSideOrder ? cls->doorSideOrder : cls->corridorOrder,
                            0, 0, 0)) {
                 return 0;
@@ -268,11 +277,10 @@ int DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(
              * floor ornament, F0115 pass1 back cells behind the door,
              * door-frame bitmaps, F0111 door occluder, F0115 pass2
              * front cells in front of the door. */
-            if (sq->hasFloorOrnament) {
-                if (!push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,
-                               0, 0, 0, 0)) {
-                    return 0;
-                }
+            if (!push_step(outPlan, cls->square,
+                           DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,
+                           0, 0, 0, 0)) {
+                return 0;
             }
             if (cls->doorPass1Order == 0 || cls->doorPass2Order == 0) {
                 /* D0L/D0R/D0C have no source door-front pass; fail
@@ -301,7 +309,10 @@ int DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(
                     return 0;
                 }
             }
-            if (!push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0115_MAIN,
+            if (!push_step(outPlan, cls->square,
+                           DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,
+                           0, 0, 0, 0) ||
+                !push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0115_MAIN,
                            cls->corridorOrder, 0, 0, 0)) {
                 return 0;
             }
@@ -313,7 +324,10 @@ int DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(
              * D0C has no wall-zone field route in F0127's teleporter
              * tail... F0127:8315-8317 does draw it, so every
              * field-capable square is admitted. */
-            if (!push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0115_MAIN,
+            if (!push_step(outPlan, cls->square,
+                           DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,
+                           0, 0, 0, 0) ||
+                !push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0115_MAIN,
                            cls->corridorOrder, 0, 0, 0)) {
                 return 0;
             }
@@ -330,9 +344,13 @@ int DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(
         case DM1_V1_F0128_ELEMENT_DOOR:
         case DM1_V1_F0128_ELEMENT_FAKEWALL:
         default:
-            /* Corridor-like squares run the main thing pass with the
-             * square's corridor order word (F0116:6470-6473). */
-            if (!push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0115_MAIN,
+            /* Corridor-like squares run F0108 before the main thing pass
+             * with the square's corridor order word (F0116:6470-6473).
+             * Keep the F0108 call even for an empty ordinal. */
+            if (!push_step(outPlan, cls->square,
+                           DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,
+                           0, 0, 0, 0) ||
+                !push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0115_MAIN,
                            cls->corridorOrder, 0, 0, 0)) {
                 return 0;
             }
