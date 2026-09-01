@@ -64,10 +64,15 @@ static int spawn_basic(Nexus_V1_CreatureManager* mgr, int cx, int cy) {
     if (mgr->type_count == 0) {
         strncpy(mgr->types[0].name, "Test", 31);
         strncpy(mgr->types[0].model_file, "TEST.MNS", 31);
-        mgr->types[0].health = 100;
+        /* Keep the chase fixture above the source-proven flee threshold
+         * (120 HP), otherwise the movement assertion exercises flee instead
+         * of the intended chase branch. */
+        mgr->types[0].health = 200;
         mgr->types[0].attack = 5;
         mgr->types[0].defense = 2;
-        mgr->types[0].speed = 3;
+        /* The source gate is random(100)+1 >= speed.  A threshold of one
+         * therefore guarantees the chase branch advances on every tick. */
+        mgr->types[0].speed = 1;
         mgr->types[0].experience_value = 10;
         mgr->types[0].model_index = 0;
         mgr->types[0].detection_range = 30;
@@ -130,8 +135,8 @@ int main(void) {
 
     /* 4. Chase triggers movement on probability roll.
      *    Start at (3,0) with party at (0,0) -> dist=3, det=3 -> chase.
-     *    Seed combat RNG for determinism. Speed=3 means random(100)+1>=3
-     *    (~98% chance per tick). Run 20 ticks to ensure at least one move. */
+     *    Seed combat RNG for determinism. The fixture's speed=1 makes the
+     *    source probability gate deterministic. */
     {
         Nexus_V1_CreatureManager mgr;
         memset(&mgr, 0, sizeof(mgr));
@@ -141,7 +146,7 @@ int main(void) {
             nexus_v1_creatures_tick(&mgr, 0, 0, g_empty_map, 0);
         }
         CHECK(mgr.active[0].x != 3 || mgr.active[0].y != 0,
-              "speed=3 chase triggers movement (position changed from 3,0)");
+              "speed=1 chase triggers movement (position changed from 3,0)");
         CHECK(mgr.active[0].state == 2 || mgr.active[0].state == 3,
               "creature in chase or attack range after movement");
     }
