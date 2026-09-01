@@ -1,0 +1,80 @@
+From: Firestaff verification tooling
+Subject: [PATCH] fix doubled screenshot row-buffer overflow
+
+Applies to DOSBox-X tag dosbox-x-v2026.01.02 (commit
+5a9c7c53481c2e933948039c33256776653f4faf).
+
+This is verification tooling only. Firestaff neither ships nor loads DOSBox-X
+at runtime. On Linux/SDL2 with a 32-bit display surface, a doubled screenshot
+converts a source pixel into two three-byte BGR pixels. The original four-byte
+per-pixel temporary allocation overran the row buffer and the process aborted
+after writing the first PNG.
+
+Validation: DM1 PC 3.4 original media, two consecutive F12+P captures under
+Xvfb; both PNGs were created and passed Firestaff's raw-frame health gate.
+
+diff --git a/src/hardware/hardware.cpp b/src/hardware/hardware.cpp
+index d030df0..38a0e62 100644
+--- a/src/hardware/hardware.cpp
++++ b/src/hardware/hardware.cpp
+@@ -810,7 +810,13 @@ void CAPTURE_AddImage(Bitu width, Bitu height, Bitu bpp, Bitu pitch, Bitu flags,
+ #if (C_SSHOT)
+ 	Bitu i;
+ 	Bitu countWidth = width;
+-    std::vector<uint8_t> doubleRowBuf((countWidth + 32) * 4);
++	/*
++	 * The widest conversion expands one source pixel to two 24-bit BGR
++	 * pixels (six bytes).  The old four-byte allocation overran the heap for
++	 * 15/16/32-bit doubled screenshots and made the next allocator operation
++	 * abort after a seemingly successful PNG write.
++	 */
++    std::vector<uint8_t> doubleRowBuf((countWidth + 32) * 6);
+     uint8_t *doubleRow = doubleRowBuf.data();
+ 
+ 	if (flags & CAPTURE_FLAG_DBLH)
+@@ -887,9 +893,6 @@ void CAPTURE_AddImage(Bitu width, Bitu height, Bitu bpp, Bitu pitch, Bitu flags,
+ 		png_set_text(png_ptr, info_ptr, text, fields);
+ #endif
+ 		png_write_info(png_ptr, info_ptr);
+-#ifdef PNG_TEXT_SUPPORTED
+-		delete [] ptext_s;
+-#endif
+ 		for (i=0;i<height;i++) {
+ 			void *rowPointer;
+ 			void *srcLine;
+@@ -966,6 +969,10 @@ void CAPTURE_AddImage(Bitu width, Bitu height, Bitu bpp, Bitu pitch, Bitu flags,
+ 		png_write_end(png_ptr, nullptr);
+ 		/*Destroy PNG structs*/
+ 		png_destroy_write_struct(&png_ptr, &info_ptr);
++#ifdef PNG_TEXT_SUPPORTED
++		/* libpng retains the text pointer until the write struct is destroyed. */
++		delete [] ptext_s;
++#endif
+ 		/*close file*/
+ 		fclose(fp);
+ 		if (show_recorded_filename && pathscr.size()) systemmessagebox("Recording completed",("Saved screenshot to the file:\n\n"+pathscr).c_str(),"ok", "info", 1);
+diff --git a/src/hardware/vga_draw.cpp b/src/hardware/vga_draw.cpp
+index c0a8c46..04c6b57 100644
+--- a/src/hardware/vga_draw.cpp
++++ b/src/hardware/vga_draw.cpp
+@@ -5874,9 +5874,6 @@ void WriteARawImage(rawscreenshot &rawimg,rawscreenshot &rawpal,const char *ext)
+ 	png_set_text(png_ptr, info_ptr, text, fields);
+ #endif
+ 	png_write_info(png_ptr, info_ptr);
+-#ifdef PNG_TEXT_SUPPORTED
+-	delete [] ptext_s;
+-#endif
+ 	{
+ 		const unsigned int yshf = (flags & CAPTURE_FLAG_DBLH) ? 1 : 0;
+ 		if (flags & CAPTURE_FLAG_DBLW) {
+@@ -5898,6 +5895,10 @@ void WriteARawImage(rawscreenshot &rawimg,rawscreenshot &rawpal,const char *ext)
+ 	if (rawpal.image_palette2 != NULL) png_write_chunk(png_ptr, (png_const_bytep)("rPAL"), rawpal.image_palette2, rawpal.image_palette2_size*3);
+ 	/*Destroy PNG structs*/
+ 	png_destroy_write_struct(&png_ptr, &info_ptr);
++#ifdef PNG_TEXT_SUPPORTED
++	/* libpng retains the text pointer until the write struct is destroyed. */
++	delete [] ptext_s;
++#endif
+ 	/*close file*/
+ 	fclose(fp);
+     std::string message = formatString(MSG_Get("SAVE_SCREENSHOT"), pathscr.c_str());
