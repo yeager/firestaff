@@ -44272,7 +44272,7 @@ if(BUILD_TESTING)
     )
     set_tests_properties(nexus_v1_boot_file_hash_scan PROPERTIES
         LABELS "tier1;nexus;boot;assets"
-        ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+        ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus;FIRESTAFF_TEST_RUNTIME_DIR=${CMAKE_BINARY_DIR}/test-runtime"
     )
 
     add_test(

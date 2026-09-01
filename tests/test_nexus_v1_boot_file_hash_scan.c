@@ -63,10 +63,12 @@ static int write_file_bytes(const char* dst,
 }
 
 static int make_root(char* out, size_t outBytes) {
+    const char* runtime_root = getenv("FIRESTAFF_TEST_RUNTIME_DIR");
+    if (!runtime_root || !runtime_root[0]) runtime_root = "test-runtime";
     int rc = snprintf(out,
                       outBytes,
                       "%s%sfirestaff-nexus-boot-hash-%ld-%lu",
-                      getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp",
+                      runtime_root,
                       TEST_SEP,
                       (long)TEST_GETPID(),
                       (unsigned long)clock());
