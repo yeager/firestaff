@@ -4352,6 +4352,17 @@ if(BUILD_TESTING)
         TIMEOUT 120
     )
     add_test(
+        NAME dm1_v1_boot_probe_terminal_exit
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_boot_probe_terminal_exit.sh
+            $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(dm1_v1_boot_probe_terminal_exit PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "dm1;pc34;dos;real-media;archive;native;boot-probe;skip-safe"
+        ENVIRONMENT "FIRESTAFF_DM1_BOOT_PROBE_DATA=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip;FIRESTAFF_TEST_RUNTIME_DIR=${CMAKE_BINARY_DIR}/test-runtime"
+        TIMEOUT 30
+    )
+    add_test(
         NAME dm1_v1_atari_st_outer_archive_cli_boot
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_atari_st_outer_archive_no_fallback.sh
             $<TARGET_FILE:firestaff>

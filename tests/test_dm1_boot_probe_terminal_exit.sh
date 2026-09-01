@@ -2,7 +2,8 @@
 set -eu
 
 firestaff_bin="${1:-build/ninja-dm2/firestaff}"
-data_root="${FIRESTAFF_DATA:-$HOME/.firestaff/data}"
+data_source="${FIRESTAFF_DM1_BOOT_PROBE_DATA:-$HOME/.firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip}"
+runtime_root="${FIRESTAFF_TEST_RUNTIME_DIR:-$(pwd)/test-runtime}"
 timeout_bin="${TIMEOUT_BIN:-}"
 
 if [ -z "$timeout_bin" ]; then
@@ -21,18 +22,20 @@ if [ ! -x "$firestaff_bin" ]; then
     exit 77
 fi
 
-if [ ! -f "$data_root/DUNGEON.DAT" ]; then
-    echo "skip: DM1 DUNGEON.DAT not found under $data_root" >&2
+if [ ! -f "$data_source" ]; then
+    echo "skip: authentic DM1 PC 3.4 ZIP not found: $data_source" >&2
     exit 77
 fi
 
-out_file="${TMPDIR:-/tmp}/firestaff_dm1_boot_probe_terminal_exit.$$"
+mkdir -p "$runtime_root"
+out_file="$runtime_root/firestaff_dm1_boot_probe_terminal_exit.$$"
 trap 'rm -f "$out_file"' EXIT
 
 set +e
 SDL_VIDEODRIVER=dummy "$timeout_bin" 20s "$firestaff_bin" \
     --game dm1 \
-    --data-dir "$data_root" \
+    --platform pc \
+    --data-dir "$data_source" \
     --boot-probe \
     --boot-probe-frames 90 \
     --duration 0 >"$out_file" 2>&1
