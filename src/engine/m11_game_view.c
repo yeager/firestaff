@@ -36082,6 +36082,7 @@ typedef struct M11_ViewportCell {
     int creatureTypes[M11_MAX_CELL_CREATURES];
     int creatureCountsPerGroup[M11_MAX_CELL_CREATURES]; /* creature count per group (count+1) */
     int creatureDirections[M11_MAX_CELL_CREATURES]; /* DungeonGroup_Compat.direction per group */
+    int creatureCells[M11_MAX_CELL_CREATURES]; /* F0115-relative cell 0..3 */
     int creatureGroupCount; /* number of valid entries in creatureTypes[] */
     /* First floor item info for sprite rendering (legacy single-item) */
     int firstItemThingType;    /* THING_TYPE_WEAPON..JUNK, or -1 if no item */
@@ -37291,6 +37292,8 @@ static int m11_draw_explosion_material(unsigned char* framebuffer,
     return rendered;
 }
 
+static int m11_dm1_f0115_order_includes_cell(int cellOrder, int cell);
+
 static void m11_draw_effect_cue(unsigned char* framebuffer,
                                 int framebufferWidth,
                                 int framebufferHeight,
@@ -37300,7 +37303,8 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
                                 int h,
                                 const M11_ViewportCell* cell,
                                 int depthIndex,
-                                int sourceZoneRow) {
+                                int sourceZoneRow,
+                                int f0115CellOrder) {
     int cx = x + w / 2;
     int cy = y + h / 2;
     if (!cell) {
@@ -37317,6 +37321,9 @@ static void m11_draw_effect_cue(unsigned char* framebuffer,
             M11_ViewportCell projectile;
             if (!m11_viewport_cell_projectile_sample(cell, projectileIndex,
                                                       &projectile) ||
+                (f0115CellOrder >= 0 &&
+                 !m11_dm1_f0115_order_includes_cell(
+                     f0115CellOrder, projectile.firstProjectileCell)) ||
                 !m11_viewport_cell_has_renderable_projectile(&projectile) ||
                 !g_drawState || !g_drawState->assetsAvailable) {
                 continue;
@@ -37865,7 +37872,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     cell.doorState = -1;
     cell.doorType = 0;
     cell.creatureType = -1;
-    { int ci; for (ci = 0; ci < M11_MAX_CELL_CREATURES; ++ci) { cell.creatureTypes[ci] = -1; cell.creatureCountsPerGroup[ci] = 0; cell.creatureDirections[ci] = -1; } }
+    { int ci; for (ci = 0; ci < M11_MAX_CELL_CREATURES; ++ci) { cell.creatureTypes[ci] = -1; cell.creatureCountsPerGroup[ci] = 0; cell.creatureDirections[ci] = -1; cell.creatureCells[ci] = -1; } }
     cell.creatureGroupCount = 0;
     cell.firstItemThingType = -1;
     cell.firstItemSubtype = -1;
@@ -38027,6 +38034,9 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
             cell.creatureCountsPerGroup[cell.creatureGroupCount] =
                 group->creatureCount;
             cell.creatureDirections[cell.creatureGroupCount] = group->direction;
+            cell.creatureCells[cell.creatureGroupCount] =
+                ((int)THING_GET_CELL(group->thing) -
+                 state->world.party.direction) & 3;
             ++cell.creatureGroupCount;
         }
         cell.summary.groups = cell.creatureGroupCount;
@@ -39765,12 +39775,42 @@ static unsigned char m11_feature_accent_color(const M11_ViewportCell* cell) {
     }
 }
 
+/* F0115 receives an encoded cell order, not an instruction to redraw every
+ * Thing in the square.  For a door-front order the low nibble carries the
+ * source's MASK0x0008_DOOR_FRONT marker; the remaining one-based nibbles are
+ * the view cells to consume.  DUNVIEW.C:4794-4800, DEFS.H:2642-2677. */
+static int m11_dm1_f0115_order_includes_cell(int cellOrder, int cell)
+{
+    int ordinal;
+
+    if (cell < 0 || cell > 3) {
+        return 0;
+    }
+    /* C0x0000 is the F0107 alcove route.  Its exact item carrier is handled
+     * by the dedicated alcove path, so it must not reject a normal legacy
+     * caller here. */
+    if (cellOrder == 0) {
+        return 1;
+    }
+    if ((cellOrder & 0x0f) & 0x08) {
+        cellOrder >>= 4;
+    }
+    for (ordinal = 0; ordinal < 4; ++ordinal) {
+        int nibble = (cellOrder >> (ordinal * 4)) & 0x0f;
+        if (nibble != 0 && nibble - 1 == cell) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static void m11_draw_wall_contents(unsigned char* framebuffer,
                                    int framebufferWidth,
                                    int framebufferHeight,
                                    const M11_ViewRect* rect,
                                    const M11_ViewportCell* cell,
-                                   int depthIndex);
+                                   int depthIndex,
+                                   int f0115CellOrder);
 
 /* NOTE: g_drawState forward-declared near file top. */
 
@@ -40048,7 +40088,7 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
 
     if (m11_viewport_cell_is_open(cell)) {
         m11_draw_wall_contents(framebuffer, framebufferWidth, framebufferHeight,
-                               rect, cell, depthIndex);
+                               rect, cell, depthIndex, -1);
     } else if (cell->thingCount > 0 &&
                g_drawState && g_drawState->showDebugHUD &&
                !m11_is_dm1_source_kind(g_drawState->sourceKind) &&
@@ -40067,13 +40107,15 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                                    int framebufferHeight,
                                    const M11_ViewRect* rect,
                                    const M11_ViewportCell* cell,
-                                   int depthIndex) {
+                                   int depthIndex,
+                                   int f0115CellOrder) {
     int inset = 6 + depthIndex * 4;
     int faceX = rect->x + inset;
     int faceY = rect->y + inset / 2;
     int faceW = rect->w - inset * 2;
     int faceH = rect->h - inset;
     int sourceZoneRow;
+    int sourceOrderedPass = f0115CellOrder >= 0;
 
     if (!cell || !m11_viewport_cell_is_open(cell) || faceW < 8 || faceH < 8) {
         return;
@@ -40095,7 +40137,7 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
      * all floor objects. Keep this local V1 stack in that order. */
 
     /* Layer 0: Floor ornaments (painted on the floor, below everything) */
-    if (cell->floorOrnamentOrdinal > 0 && g_drawState) {
+    if (!sourceOrderedPass && cell->floorOrnamentOrdinal > 0 && g_drawState) {
         M11_ViewRect floorRect;
         floorRect.x = faceX;
         floorRect.y = faceY;
@@ -40116,7 +40158,10 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
         int ii;
         int itemsToShow = cell->floorItemCount;
         for (ii = 0; ii < itemsToShow; ++ii) {
-            if (cell->floorItemTypes[ii] < 0) continue;
+            if (cell->floorItemTypes[ii] < 0 ||
+                (sourceOrderedPass &&
+                 !m11_dm1_f0115_order_includes_cell(
+                     f0115CellOrder, cell->floorItemCells[ii]))) continue;
             if (g_drawState) {
                 /* ReDMCSB DUNVIEW.C F0115 has no synthetic object route:
                  * missing PC34 aspect/material deliberately draws nothing. */
@@ -40149,6 +40194,14 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
         for (pi = 0; pi < plan.count; ++pi) {
             const DM1_CreatureDrawPlanEntry *entry = &plan.entries[pi];
             const DM1_CreatureDrawPlacement *placement = &entry->placement;
+            if (sourceOrderedPass &&
+                (entry->group_index < 0 ||
+                 entry->group_index >= cell->creatureGroupCount ||
+                 !m11_dm1_f0115_order_includes_cell(
+                     f0115CellOrder,
+                     cell->creatureCells[entry->group_index]))) {
+                continue;
+            }
             if (g_drawState && g_drawState->assetsAvailable) {
                 (void)m11_draw_creature_sprite_source_anchored(
                     g_drawState, framebuffer, framebufferWidth,
@@ -40164,7 +40217,7 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
         m11_viewport_cell_has_renderable_projectile(cell)) {
         m11_draw_effect_cue(framebuffer, framebufferWidth, framebufferHeight,
                             faceX + 3, faceY + 3, faceW - 6, faceH - 6, cell,
-                            depthIndex, sourceZoneRow);
+                            depthIndex, sourceZoneRow, f0115CellOrder);
     }
 }
 
@@ -57560,7 +57613,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                 int squareDepth;
                 int spanStart = 0;
                 int spanCount = 0;
-                int hasF0115 = 0;
+                int countedF0115ForSquare = 0;
                 int hasField;
                 int j;
                 if (!m11_dm1_f0128_square_relative_position(
@@ -57574,26 +57627,34 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                     continue;
                 }
                 for (j = spanStart; j < spanStart + spanCount; ++j) {
-                    int op = dm1F0128Plan.steps[j].op;
-                    if (op == DM1_V1_F0128_STEP_F0115_MAIN ||
-                        op == DM1_V1_F0128_STEP_F0115_DOOR_PASS1 ||
-                        op == DM1_V1_F0128_STEP_F0115_DOOR_PASS2) {
-                        hasF0115 = 1;
-                        break;
+                    const DM1_V1_F0128SchedulerStepPc34 *step =
+                        &dm1F0128Plan.steps[j];
+                    int op = step->op;
+                    if (op != DM1_V1_F0128_STEP_F0115_MAIN &&
+                        op != DM1_V1_F0128_STEP_F0115_DOOR_PASS1 &&
+                        op != DM1_V1_F0128_STEP_F0115_DOOR_PASS2) {
+                        continue;
                     }
-                }
-                if (hasF0115) {
-                    ++f0115SquareCount;
+                    if (!countedF0115ForSquare) {
+                        ++f0115SquareCount;
+                        countedF0115ForSquare = 1;
+                    }
                     if (square == DM1_V1_F0128_VIEW_SQUARE_D3C ||
                         square == DM1_V1_F0128_VIEW_SQUARE_D2C ||
                         square == DM1_V1_F0128_VIEW_SQUARE_D1C) {
                         if ((centerContentMask & (1 << squareDepth)) != 0) {
+                            /* Keep the exact F0115 cell word.  Door pass 1
+                             * owns only the back cells; pass 2 owns only the
+                             * front cells after F0111.  The old boolean
+                             * admission discarded that distinction and
+                             * redrew every floor Thing on each route. */
                             m11_draw_wall_contents(framebuffer,
                                                    framebufferWidth,
                                                    framebufferHeight,
                                                    &frames[squareDepth + 1],
                                                    &cells[squareDepth][1],
-                                                   squareDepth);
+                                                   squareDepth,
+                                                   step->cellOrderWord);
                         }
                     } else if (relSide == -1 || relSide == 1) {
                         m11_draw_dm1_side_contents_at_depth(
@@ -57742,7 +57803,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                     continue;
                 }
                 m11_draw_wall_contents(framebuffer, framebufferWidth, framebufferHeight,
-                                       &frames[depth + 1], &cells[depth][1], depth);
+                                       &frames[depth + 1], &cells[depth][1], depth, -1);
             }
         }
     }

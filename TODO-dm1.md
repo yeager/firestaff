@@ -2,6 +2,13 @@
 
 Reviewed 2026-08-29. Only open work is listed here.
 
+- Complete the F0128 renderer as one source-order executor. Center-square
+  F0115 now consumes its authentic one-based cell-order word, including the
+  `DOORPASS1 → F0111 → DOORPASS2` partition for real floor items, creature
+  groups and projectiles. The structural wall/door passes and side lanes are
+  still composed in bounded batches with an occlusion replay. Replace those
+  batches only with the corresponding F0116--F0124 operation, never with a
+  host-generated panel or a substitute asset.
 - Obtain authentic C13-save and original capture corpus for remaining HoC,
   top-row and action routes; bind each to the PC 3.4 runtime before promotion.
   The supplied French DOS save pair proves its own backed F0435/F0433 route,
