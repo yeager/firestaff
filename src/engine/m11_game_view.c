@@ -43131,6 +43131,8 @@ static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
                                       unsigned char* framebuffer,
                                       int fbW,
                                       int fbH,
+                                      int minVisibleForward,
+                                      int maxVisibleForward,
                                       const M11_ViewportCell cells[3][3]) {
     int depth;
     if (!state || !state->assetsAvailable) {
@@ -43140,6 +43142,10 @@ static void m11_draw_dm1_center_doors(const M11_GameViewState* state,
      * material route and let the closer source panel overpaint the farther
      * one; selecting only the nearest door loses valid D2C/D3C frames. */
     for (depth = 2; depth >= 0; --depth) {
+        if (depth + 1 < minVisibleForward ||
+            depth + 1 > maxVisibleForward) {
+            continue;
+        }
         DM1_CenterDoorHostMaterialReceiptPc34 material;
         const M11_ViewportCell* cell = &cells[depth][1];
         if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR) {
@@ -43165,6 +43171,8 @@ static void m11_draw_dm1_center_door_ornaments(const M11_GameViewState* state,
                                                unsigned char* framebuffer,
                                                int fbW,
                                                int fbH,
+                                               int minVisibleForward,
+                                               int maxVisibleForward,
                                                const M11_ViewportCell cells[3][3]) {
     int depth;
     if (!state || !state->assetsAvailable) {
@@ -43172,6 +43180,10 @@ static void m11_draw_dm1_center_door_ornaments(const M11_GameViewState* state,
     }
     /* F0111 owns the ornament in each D3C/D2C/D1C door panel. */
     for (depth = 2; depth >= 0; --depth) {
+        if (depth + 1 < minVisibleForward ||
+            depth + 1 > maxVisibleForward) {
+            continue;
+        }
         const M11_ViewportCell* cell = &cells[depth][1];
         M11_DM1ZoneBlit panels[2];
         M11_DM1ZoneBlit ornamentPanels[2];
@@ -43246,6 +43258,8 @@ static void m11_draw_dm1_center_destroyed_door_masks(const M11_GameViewState* st
                                                     unsigned char* framebuffer,
                                                     int fbW,
                                                     int fbH,
+                                                    int minVisibleForward,
+                                                    int maxVisibleForward,
                                                     const M11_ViewportCell cells[3][3]) {
     int depth;
     const M11_ViewportCell* cell;
@@ -43257,6 +43271,10 @@ static void m11_draw_dm1_center_destroyed_door_masks(const M11_GameViewState* st
     /* F0111 applies destroyed masks to each source door panel in the same
      * D3C -> D2C -> D1C order as the panel itself. */
     for (depth = 2; depth >= 0; --depth) {
+        if (depth + 1 < minVisibleForward ||
+            depth + 1 > maxVisibleForward) {
+            continue;
+        }
         cell = &cells[depth][1];
         if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR ||
             cell->doorState != 5 ||
@@ -57387,10 +57405,13 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                        1, maxVisibleForward, cells);
     m11_draw_dm1_side_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight,
                                           1, maxVisibleForward, cells);
-    m11_draw_dm1_center_doors(state, framebuffer, framebufferWidth, framebufferHeight, cells);
-    m11_draw_dm1_center_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight, cells);
+    m11_draw_dm1_center_doors(state, framebuffer, framebufferWidth, framebufferHeight,
+                              1, 3, cells);
+    m11_draw_dm1_center_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
+                                       1, 3, cells);
     m11_draw_dm1_center_thieves_eye_mask(state, framebuffer, framebufferWidth, framebufferHeight, cells);
-    m11_draw_dm1_center_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight, cells);
+    m11_draw_dm1_center_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight,
+                                             1, 3, cells);
     m11_draw_dm1_center_door_buttons(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_d3r_door_button(state, framebuffer, framebufferWidth, framebufferHeight,
                                   maxVisibleForward, cells);
