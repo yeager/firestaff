@@ -42614,7 +42614,12 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         DM1_V1_ChampionMirrorViewportProjectionReceiptPc34 mirrorProjection;
         memset(&inscription, 0, sizeof(inscription));
         memset(&mirrorProjection, 0, sizeof(mirrorProjection));
-        if (!dm1_v1_wall_ornament_view_spec_pc34(i, &spec)) {
+        /* G0205 row identity is independent of F0128 traversal.  Consume
+         * the source's completed-square order instead of treating the
+         * coordinate-table order as a paint order. */
+        const int specIndex = dm1_v1_wall_ornament_view_draw_order_at_pc34(i);
+        if (specIndex < 0 ||
+            !dm1_v1_wall_ornament_view_spec_pc34(specIndex, &spec)) {
             continue;
         }
         if (centerOnly && spec.relSide != 0) {

@@ -176,6 +176,24 @@ int main(void)
     expect_int("view_spec.12.forward", spec.relForward, 1);
     expect_int("view_spec.12.side", spec.relSide, 0);
     expect_int("view_spec.12.view", spec.viewWallIndex, 12);
+    expect_int("view_draw_order.0",
+               dm1_v1_wall_ornament_view_draw_order_at_pc34(0), 0);
+    expect_int("view_draw_order.1",
+               dm1_v1_wall_ornament_view_draw_order_at_pc34(1), 2);
+    expect_int("view_draw_order.2",
+               dm1_v1_wall_ornament_view_draw_order_at_pc34(2), 1);
+    expect_int("view_draw_order.4",
+               dm1_v1_wall_ornament_view_draw_order_at_pc34(4), 3);
+    expect_int("view_draw_order.5",
+               dm1_v1_wall_ornament_view_draw_order_at_pc34(5), 5);
+    expect_int("view_draw_order.6",
+               dm1_v1_wall_ornament_view_draw_order_at_pc34(6), 7);
+    expect_int("view_draw_order.9",
+               dm1_v1_wall_ornament_view_draw_order_at_pc34(9), 8);
+    expect_int("view_draw_order.bad_low",
+               dm1_v1_wall_ornament_view_draw_order_at_pc34(-1), -1);
+    expect_int("view_draw_order.bad_high",
+               dm1_v1_wall_ornament_view_draw_order_at_pc34(13), -1);
 
     /* Render plans own native graphic binding, palette, transparency,
      * flip, and optional unreadable-inscription height clamp. */

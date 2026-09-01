@@ -150,6 +150,11 @@ int dm1_v1_wall_ornament_view_spec_count_pc34(void);
 int dm1_v1_wall_ornament_view_spec_pc34(
     int index,
     DM1_WallOrnamentViewSpecPc34* outSpec);
+
+/* G0205 is a coordinate-table index, not F0128's traversal order.  The
+ * renderer must consume its rows in the owning square's source order:
+ * D3L, D3R, D3C, D2L, D2R, D2C, D1L, D1R, D1C. */
+int dm1_v1_wall_ornament_view_draw_order_at_pc34(int drawIndex);
 int dm1_v1_wall_ornament_render_plan_pc34(
     int globalIndex,
     int viewWallIndex,

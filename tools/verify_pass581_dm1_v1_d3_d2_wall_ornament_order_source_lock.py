@@ -147,10 +147,15 @@ def main() -> int:
         "    {2,  1,  9, 0}, /* D2R front */",
     ])
     require(wall_orn, spec_block, "Firestaff D3/D2 wall ornament spec order (contract module view-spec table)")
+    require(wall_orn, """static const unsigned char s_wallOrnamentDrawOrderPc34[] = {
+    0, 2, 1, 4, 3,  /* D3L right/front, D3R left/front, D3C front */
+    5, 7, 6, 9, 8,  /* D2L right/front, D2R left/front, D2C front */""",
+            "Firestaff F0128 D3/D2 completed-square ornament traversal")
     require_order(wall_fn, [
         ("center blocker limits far ornaments", "m11_viewport_cell_is_wall_like(&cells[depth][1])"),
         ("explicit maxVisibleForwardLimit replay bound", "maxVisibleForwardLimit > 0 && maxVisibleForwardLimit < maxVisibleForward"),
-        ("spec table iterated via contract module", "dm1_v1_wall_ornament_view_spec_count_pc34()"),
+        ("spec table count via contract module", "dm1_v1_wall_ornament_view_spec_count_pc34()"),
+        ("source draw order separated from G0205 table", "dm1_v1_wall_ornament_view_draw_order_at_pc34(i)"),
         ("do not draw beyond current visible band", "spec.relForward > maxVisibleForward"),
         ("wall-like cell guard before ornament draw", "!m11_viewport_cell_is_wall_like(&cell)"),
         ("wall panel before alcove item handoff", "if (plan->isAlcove)"),

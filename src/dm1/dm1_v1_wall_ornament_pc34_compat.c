@@ -52,6 +52,18 @@ static const DM1_WallOrnamentViewSpecPc34 s_wallOrnamentViewSpecs[] = {
     {1,  0, 12, 0}  /* D1C front */
 };
 
+/* G0205's row numbering interleaves the left/right side-wall entries with
+ * the corresponding front-wall entries.  Iterating it directly therefore
+ * paints D3R's left ornament after D3L's front ornament, whereas F0128
+ * completes every F0116 D3L operation before entering F0117 D3R.  Keep the
+ * table's native indices intact (they are part of the graphic contract),
+ * and publish the distinct source traversal for render consumers. */
+static const unsigned char s_wallOrnamentDrawOrderPc34[] = {
+    0, 2, 1, 4, 3,  /* D3L right/front, D3R left/front, D3C front */
+    5, 7, 6, 9, 8,  /* D2L right/front, D2R left/front, D2C front */
+    10, 11, 12       /* D1L right, D1R left, D1C front */
+};
+
 /* ReDMCSB DUNVIEW.C G0190_auc_Graphic558_WallOrnamentDerivedBitmapIndexIncrement
  * for PC34/I34E.  This is indexed by the 13 G0205 view-wall rows; it is not
  * equivalent to a depth/side heuristic. */
@@ -272,6 +284,16 @@ int dm1_v1_wall_ornament_view_spec_pc34(
     }
     *outSpec = s_wallOrnamentViewSpecs[index];
     return 1;
+}
+
+int dm1_v1_wall_ornament_view_draw_order_at_pc34(int drawIndex)
+{
+    if (drawIndex < 0 ||
+        drawIndex >= (int)(sizeof(s_wallOrnamentDrawOrderPc34) /
+                           sizeof(s_wallOrnamentDrawOrderPc34[0]))) {
+        return -1;
+    }
+    return (int)s_wallOrnamentDrawOrderPc34[drawIndex];
 }
 
 int dm1_v1_wall_ornament_render_plan_pc34(
