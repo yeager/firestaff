@@ -57366,6 +57366,70 @@ static int m11_dm1_f0128_dispatch_live_view_plan(
            dispatch.executeCount == plan->stepCount && rejectedStep == -1;
 }
 
+/* Reapply only the source-visible F0115 tail for one completed F0128
+ * square.  The first door F0115 pass belongs behind F0111 and has already
+ * been consumed by the earlier complete-plan walk; repainting it here would
+ * incorrectly put back-cell Things on top of the door.  Conversely, the
+ * main pass and the second door pass are foreground material and must follow
+ * the square's final wall/door replay. */
+static void m11_dm1_f0128_replay_foreground_square(
+    const M11_GameViewState *state,
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    const M11_ViewRect frames[4],
+    const M11_ViewportCell cells[3][3],
+    const DM1_ViewportLaneVisibilityReceiptPc34 *visibility,
+    const DM1_V1_F0128SchedulerPlanPc34 *plan,
+    int square,
+    int blockingCenterDepth,
+    int centerContentMask)
+{
+    int relForward;
+    int relSide;
+    int squareDepth;
+    int spanStart;
+    int spanCount;
+    int i;
+
+    if (!state || !framebuffer || !frames || !cells || !visibility || !plan ||
+        !m11_dm1_f0128_square_relative_position(square, &relForward,
+                                                 &relSide) ||
+        relForward < 1 || relForward > 3 ||
+        !DM1_V1_F0128_PerSquareSchedulerSquareSpanPc34Compat(
+            plan, square, &spanStart, &spanCount)) {
+        return;
+    }
+    squareDepth = relForward - 1;
+    for (i = spanStart; i < spanStart + spanCount; ++i) {
+        const DM1_V1_F0128SchedulerStepPc34 *step = &plan->steps[i];
+        if (step->op == DM1_V1_F0128_STEP_F0113_FIELD) {
+            m11_draw_dm1_teleporter_field_at(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                relForward, relSide);
+            continue;
+        }
+        if (step->op != DM1_V1_F0128_STEP_F0115_MAIN &&
+            step->op != DM1_V1_F0128_STEP_F0115_DOOR_PASS2) {
+            continue;
+        }
+        if (relSide == 0) {
+            if ((centerContentMask & (1 << squareDepth)) != 0) {
+                m11_draw_wall_contents(framebuffer, framebufferWidth,
+                                       framebufferHeight,
+                                       &frames[squareDepth + 1],
+                                       &cells[squareDepth][1], squareDepth,
+                                       step->cellOrderWord);
+            }
+        } else if (relSide == -1 || relSide == 1) {
+            m11_draw_dm1_side_contents_at_depth(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                frames, cells, squareDepth, relSide, visibility,
+                blockingCenterDepth, step->cellOrderWord);
+        }
+    }
+}
+
 static void m11_draw_viewport(const M11_GameViewState* state,
                               unsigned char* framebuffer,
                               int framebufferWidth,
@@ -57709,6 +57773,9 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * clipping zone; this only replaces the host batch order. */
     {
         int replayForward;
+        int blockingCenterDepth =
+            visibility.nearest_blocking_center_depth_index;
+        int centerContentMask = visibility.center_visible_depth_mask;
         for (replayForward = 3; replayForward >= 1; --replayForward) {
             m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth,
                                     framebufferHeight, replayForward,
@@ -57730,6 +57797,49 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             m11_draw_dm1_side_destroyed_door_masks(state, framebuffer,
                                                    framebufferWidth, framebufferHeight,
                                                    replayForward, replayForward, cells);
+            /* F0128 visits the outer field lanes before DnL/DnR, then
+             * completes each side F0115 route before drawing DnC.  The
+             * foreground replay keeps that order after this renderer's
+             * source-material structural repair. */
+            if (replayForward == 3) {
+                m11_dm1_f0128_replay_foreground_square(
+                    state, framebuffer, framebufferWidth, framebufferHeight,
+                    frames, cells, &visibility, &dm1F0128Plan,
+                    DM1_V1_F0128_VIEW_SQUARE_D3L2, blockingCenterDepth,
+                    centerContentMask);
+                m11_dm1_f0128_replay_foreground_square(
+                    state, framebuffer, framebufferWidth, framebufferHeight,
+                    frames, cells, &visibility, &dm1F0128Plan,
+                    DM1_V1_F0128_VIEW_SQUARE_D3R2, blockingCenterDepth,
+                    centerContentMask);
+            } else if (replayForward == 2) {
+                m11_dm1_f0128_replay_foreground_square(
+                    state, framebuffer, framebufferWidth, framebufferHeight,
+                    frames, cells, &visibility, &dm1F0128Plan,
+                    DM1_V1_F0128_VIEW_SQUARE_D2L2, blockingCenterDepth,
+                    centerContentMask);
+                m11_dm1_f0128_replay_foreground_square(
+                    state, framebuffer, framebufferWidth, framebufferHeight,
+                    frames, cells, &visibility, &dm1F0128Plan,
+                    DM1_V1_F0128_VIEW_SQUARE_D2R2, blockingCenterDepth,
+                    centerContentMask);
+            }
+            if (replayForward > 1) {
+                int leftSquare = replayForward == 3
+                    ? DM1_V1_F0128_VIEW_SQUARE_D3L
+                    : DM1_V1_F0128_VIEW_SQUARE_D2L;
+                int rightSquare = replayForward == 3
+                    ? DM1_V1_F0128_VIEW_SQUARE_D3R
+                    : DM1_V1_F0128_VIEW_SQUARE_D2R;
+                m11_dm1_f0128_replay_foreground_square(
+                    state, framebuffer, framebufferWidth, framebufferHeight,
+                    frames, cells, &visibility, &dm1F0128Plan, leftSquare,
+                    blockingCenterDepth, centerContentMask);
+                m11_dm1_f0128_replay_foreground_square(
+                    state, framebuffer, framebufferWidth, framebufferHeight,
+                    frames, cells, &visibility, &dm1F0128Plan, rightSquare,
+                    blockingCenterDepth, centerContentMask);
+            }
             m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth,
                                      framebufferHeight, replayForward,
                                      replayForward, cells);
@@ -57759,6 +57869,15 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             m11_draw_dm1_center_destroyed_door_masks(
                 state, framebuffer, framebufferWidth, framebufferHeight,
                 replayForward, replayForward, cells);
+            if (replayForward > 1) {
+                int centerSquare = replayForward == 3
+                    ? DM1_V1_F0128_VIEW_SQUARE_D3C
+                    : DM1_V1_F0128_VIEW_SQUARE_D2C;
+                m11_dm1_f0128_replay_foreground_square(
+                    state, framebuffer, framebufferWidth, framebufferHeight,
+                    frames, cells, &visibility, &dm1F0128Plan, centerSquare,
+                    blockingCenterDepth, centerContentMask);
+            }
         }
     }
     /* F0110 button pixels are part of the F0111 door result.  Re-emit them
@@ -57768,6 +57887,23 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                      framebufferHeight, cells);
     m11_draw_dm1_d3r_door_button(state, framebuffer, framebufferWidth,
                                   framebufferHeight, maxVisibleForward, cells);
+    /* D1 is the final F0128 depth. Its F0115 main/door-pass-2 foreground
+     * belongs after the completed D1 F0111 door/button result. */
+    m11_dm1_f0128_replay_foreground_square(
+        state, framebuffer, framebufferWidth, framebufferHeight, frames,
+        cells, &visibility, &dm1F0128Plan, DM1_V1_F0128_VIEW_SQUARE_D1L,
+        visibility.nearest_blocking_center_depth_index,
+        visibility.center_visible_depth_mask);
+    m11_dm1_f0128_replay_foreground_square(
+        state, framebuffer, framebufferWidth, framebufferHeight, frames,
+        cells, &visibility, &dm1F0128Plan, DM1_V1_F0128_VIEW_SQUARE_D1R,
+        visibility.nearest_blocking_center_depth_index,
+        visibility.center_visible_depth_mask);
+    m11_dm1_f0128_replay_foreground_square(
+        state, framebuffer, framebufferWidth, framebufferHeight, frames,
+        cells, &visibility, &dm1F0128Plan, DM1_V1_F0128_VIEW_SQUARE_D1C,
+        visibility.nearest_blocking_center_depth_index,
+        visibility.center_visible_depth_mask);
     m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
                                     framebufferWidth, framebufferHeight);
     /* The final F0128 center-wall replay is an occlusion repair.  F0104's
