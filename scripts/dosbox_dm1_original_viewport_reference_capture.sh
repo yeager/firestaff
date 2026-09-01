@@ -642,6 +642,7 @@ fi
 pid="$1"
 route_events="$2"
 skip_startup_selector="$3"
+screenshot_hotkey="${DM1_DOSBOX_SCREENSHOT_HOTKEY:-ctrl+F5}"
 
 if [[ -z "${DISPLAY:-}" ]]; then
     echo "ERROR: DISPLAY is not set; run DOSBox under an X server, e.g. xvfb-run -a ... --run" >&2
@@ -664,8 +665,9 @@ tap_key() {
 
 shot() {
     # DOSBox 0.74 on Linux uses Ctrl+F5 for screenshots. DOSBox Staging accepts
-    # the same accelerator, and writes to the configured capture directory.
-    xdotool key --window "$window" ctrl+F5
+    # the same accelerator, while DOSBox-X uses its F12+P host-key sequence.
+    # The caller/backend selection is injected through the environment.
+    xdotool key --window "$window" "$screenshot_hotkey"
     sleep 0.18
 }
 
@@ -1147,6 +1149,14 @@ case "$mode" in
         else
             echo "ERROR: no supported route injector found; install Swift on macOS or xdotool on X11/Linux" >&2
             exit 6
+        fi
+        # DOSBox-X on Linux maps screenshot capture to the host-key sequence
+        # F12+P; Ctrl+F5 copies DOS text there. Vanilla DOSBox continues to
+        # use Ctrl+F5. Keep an explicit caller override authoritative.
+        if [[ -z "${DM1_DOSBOX_SCREENSHOT_HOTKEY:-}" &&
+              "$(basename "$DOSBOX")" == "dosbox-x" ]]; then
+            export DM1_DOSBOX_SCREENSHOT_HOTKEY="F12+p"
+            SCREENSHOT_HOTKEY="$DM1_DOSBOX_SCREENSHOT_HOTKEY"
         fi
         write_route_plan_manifest "$injector"
         rm -f "${LOG}" "${PID_FILE}" "${KEY_LOG}" "${RAW_MANIFEST}" "${RAW_HEALTH_MANIFEST}" "${CROP_MANIFEST}" "${SIZE_LOG}"
