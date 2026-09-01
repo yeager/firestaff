@@ -17,6 +17,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
+ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SOURCE = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 DEFAULT_DM1 = Path("~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1").expanduser()
 
@@ -157,10 +158,17 @@ CHECKS: list[dict[str, Any]] = [
     },
 ]
 
-ANCHORS = ["GRAPHICS.DAT", "DUNGEON.DAT", "TITLE", "README.md"]
+# The authenticated PC 3.4 staging layout intentionally contains only the
+# renderer inputs. TITLE/README are archive/package metadata, not canonical
+# data files consumed by this viewport gate.
+ANCHORS = ["GRAPHICS.DAT", "DUNGEON.DAT"]
 ALLOWED_PREFIXES = [
     Path("~/.openclaw/data/firestaff-redmcsb-source").expanduser().resolve(),
     Path("~/.openclaw/data/firestaff-original-games/DM").expanduser().resolve(),
+    # The canonical inputs may intentionally be symlinked into the active
+    # build's hash-locked staging area. Accept resolved evidence only within
+    # this local repository, never an arbitrary external path.
+    ROOT,
 ]
 
 
@@ -174,7 +182,7 @@ def sha256(path: Path) -> str:
 
 def ensure_local(path: Path) -> Path:
     resolved = path.expanduser().resolve()
-    if not any(str(resolved).startswith(str(prefix)) for prefix in ALLOWED_PREFIXES):
+    if not any(resolved.is_relative_to(prefix.resolve()) for prefix in ALLOWED_PREFIXES):
         raise SystemExit(f"refusing non-local evidence path: {path}")
     return resolved
 
