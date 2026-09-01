@@ -57549,7 +57549,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                               1, 3, cells);
     m11_draw_dm1_center_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                        1, 3, cells);
-    m11_draw_dm1_center_thieves_eye_mask(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_center_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight,
                                              1, 3, cells);
     m11_draw_dm1_center_door_buttons(state, framebuffer, framebufferWidth, framebufferHeight, cells);
@@ -57747,6 +57746,16 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             m11_draw_dm1_center_door_ornaments(
                 state, framebuffer, framebufferWidth, framebufferHeight,
                 replayForward, replayForward, cells);
+            /* DUNVIEW.C F0111 composes the D1C Thieves Eye hole into the
+             * current door material before that square returns to F0128.
+             * It must follow this replay's D1C door panel; drawing it in
+             * the earlier primitive batch let the replay erase the real
+             * mask and left a closed door without its source effect. */
+            if (replayForward == 1) {
+                m11_draw_dm1_center_thieves_eye_mask(
+                    state, framebuffer, framebufferWidth, framebufferHeight,
+                    cells);
+            }
             m11_draw_dm1_center_destroyed_door_masks(
                 state, framebuffer, framebufferWidth, framebufferHeight,
                 replayForward, replayForward, cells);
