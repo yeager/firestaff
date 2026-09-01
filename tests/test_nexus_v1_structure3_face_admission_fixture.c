@@ -1,4 +1,5 @@
 #include "nexus_v1_structure3_normal_admission.h"
+#include "asset_find_by_hash.h"
 #include "nexus_v1_structure3_face_vertex_set_admission.h"
 #include "nexus_v1_structure3_face_tail_admission.h"
 #include "nexus_v1_structure3_face_index_prefix_admission.h"
@@ -43,13 +44,7 @@ static void write_be32(uint8_t *bytes, uint32_t value)
 
 static int md5_file(const char *path, char out[33])
 {
-    char command[512];
-    FILE *pipe;
-    if (snprintf(command, sizeof(command), "md5 -q '%s'", path) >= (int)sizeof(command) ||
-        !(pipe = popen(command, "r"))) return 0;
-    if (!fgets(out, 33, pipe) || pclose(pipe) != 0) return 0;
-    out[32] = '\0';
-    return 1;
+    return asset_file_md5_hex(path, out);
 }
 
 static int rewrite_identity(const char *path, const uint8_t *data, size_t size,

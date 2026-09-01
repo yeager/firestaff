@@ -1,4 +1,5 @@
 #include "nexus_v1_structure1a_target_admission.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,17 +35,7 @@ static uint64_t fnv1a64(const uint8_t *bytes, size_t size)
 
 static int file_md5(const char *path, char out[33])
 {
-    char command[512];
-    FILE *pipe;
-    int ok;
-
-    if (snprintf(command, sizeof(command), "md5 -q '%s'", path) >= (int)sizeof(command))
-        return 0;
-    pipe = popen(command, "r");
-    if (!pipe) return 0;
-    ok = fgets(out, 33, pipe) != NULL && pclose(pipe) == 0;
-    if (ok) out[32] = '\0';
-    return ok;
+    return asset_file_md5_hex(path, out);
 }
 
 int main(void)
