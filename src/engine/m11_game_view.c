@@ -42978,6 +42978,72 @@ static void m11_draw_dm1_teleporter_fields(const M11_GameViewState* state,
     }
 }
 
+/* Draw exactly one F0113 field route.  The broad helper above remains for
+ * the D0 terminal pass, but D3..D1 must be admitted from the F0128 square
+ * plan: DUNVIEW.C calls F0113 after that square's F0115 route, rather than
+ * collecting every teleporter into one global pre-object batch. */
+static void m11_draw_dm1_teleporter_field_at(const M11_GameViewState* state,
+                                             unsigned char* framebuffer,
+                                             int fbW,
+                                             int fbH,
+                                             int relForward,
+                                             int relSide) {
+    int i;
+    int planCount;
+    if (!state || !state->assetsAvailable) {
+        return;
+    }
+    planCount = dm1_v1_field_render_plan_count_pc34();
+    for (i = 0; i < planCount; ++i) {
+        M11_ViewportCell cell;
+        DM1_FieldRenderPlanPc34 plan;
+        if (!dm1_v1_field_render_plan_at_pc34(i, &plan) ||
+            plan.relForward != relForward || plan.relSide != relSide ||
+            !m11_sample_viewport_cell(state, relForward, relSide, &cell) ||
+            !cell.valid || cell.elementType != DUNGEON_ELEMENT_TELEPORTER ||
+            !dm1_v1_field_square_is_visible_open_pc34(cell.square)) {
+            continue;
+        }
+        (void)m11_draw_dm1_field_zone(state, framebuffer, fbW, fbH, &plan);
+    }
+}
+
+static int m11_dm1_f0128_square_relative_position(int square,
+                                                  int *outForward,
+                                                  int *outSide) {
+    static const signed char kRelativePositions
+        [DM1_V1_F0128_VIEW_SQUARE_COUNT][2] = {
+        {4, -1}, {4, 1}, {4, 0}, {3, -2}, {3, 2},
+        {3, -1}, {3, 1}, {3, 0}, {2, -2}, {2, 2},
+        {2, -1}, {2, 1}, {2, 0}, {1, -1}, {1, 1},
+        {1, 0}, {0, -1}, {0, 1}, {0, 0}
+    };
+    if (!outForward || !outSide || square < 0 ||
+        square >= DM1_V1_F0128_VIEW_SQUARE_COUNT) {
+        return 0;
+    }
+    *outForward = kRelativePositions[square][0];
+    *outSide = kRelativePositions[square][1];
+    return 1;
+}
+
+static int m11_dm1_f0128_square_has_step(
+    const DM1_V1_F0128SchedulerPlanPc34 *plan, int square, int wantedOp) {
+    int start;
+    int count;
+    int i;
+    if (!DM1_V1_F0128_PerSquareSchedulerSquareSpanPc34Compat(
+            plan, square, &start, &count)) {
+        return 0;
+    }
+    for (i = start; i < start + count; ++i) {
+        if (plan->steps[i].op == wantedOp) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static void m11_draw_dm1_side_walls(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int fbW,
@@ -45022,15 +45088,15 @@ static void m11_draw_dm1_side_contents_at_depth(
     const M11_ViewRect frames[4],
     const M11_ViewportCell cells[3][3],
     int depth,
+    int side,
     const DM1_ViewportLaneVisibilityReceiptPc34* visibility,
     int blockingCenterDepth) {
-    int sideSlot;
     const M11_ViewRect* outer;
     const M11_ViewRect* inner;
     int paneY;
     int paneH;
     if (!state || !framebuffer || !frames || !cells || !visibility ||
-        depth < 0 || depth >= 3) {
+        depth < 0 || depth >= 3 || (side != -1 && side != 1)) {
         return;
     }
 
@@ -45060,15 +45126,13 @@ static void m11_draw_dm1_side_contents_at_depth(
     if (paneH <= 4) {
         return;
     }
-    for (sideSlot = 0; sideSlot < 2; ++sideSlot) {
-            int side = sideSlot == 0 ? -1 : 1;
             int sideIndex = side < 0 ? 0 : 2;
             const M11_ViewportCell* cell = &cells[depth][sideIndex];
             int sourceZoneRow = dm1_viewport_3d_f0115_c2500_c2900_row(cell->relForward, cell->relSide);
             int paneX;
             int paneW;
             if (!cell->valid || !m11_viewport_cell_is_open(cell)) {
-                continue;
+                return;
             }
             /* F0128 invokes the square routes far-to-near.  M11 batches the
              * F0115 content pass after its structural passes, so an otherwise
@@ -45077,7 +45141,7 @@ static void m11_draw_dm1_side_contents_at_depth(
              * side-wall route is the occluder; consume the equivalent
              * side-lane receipt here before emitting deferred content. */
             if (!m11_dm1_side_lane_clear_for_rel(cells, depth + 1, side)) {
-                continue;
+                return;
             }
             if (side < 0) {
                 paneX = outer->x + 4;
@@ -45087,7 +45151,7 @@ static void m11_draw_dm1_side_contents_at_depth(
                 paneW = (outer->x + outer->w) - paneX - 4;
             }
             if (paneW <= 4) {
-                continue;
+                return;
             }
 
             /* ReDMCSB DUNVIEW.C F0116-F0122 (DrawSquareD3L..D1L): for each
@@ -45184,7 +45248,6 @@ static void m11_draw_dm1_side_contents_at_depth(
              * after every packed side/center cell has drawn objects,
              * creatures, and projectiles (ReDMCSB DUNVIEW.C:5915-5933). */
 
-    }
 }
 
 static int m11_dm1_center_line_clear_before_depth(
@@ -45218,7 +45281,10 @@ static void m11_draw_dm1_side_contents(
         }
         m11_draw_dm1_side_contents_at_depth(
             state, framebuffer, framebufferWidth, framebufferHeight,
-            frames, cells, depth, visibility, blockingCenterDepth);
+            frames, cells, depth, -1, visibility, blockingCenterDepth);
+        m11_draw_dm1_side_contents_at_depth(
+            state, framebuffer, framebufferWidth, framebufferHeight,
+            frames, cells, depth, 1, visibility, blockingCenterDepth);
     }
     (void)m11_draw_item_sprite;
     (void)m11_draw_projectile_sprite;
@@ -57398,8 +57464,8 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                   1, maxVisibleForward, cells, 0);
     m11_draw_dm1_thieves_eye_d1c_wall_material(
         state, framebuffer, framebufferWidth, framebufferHeight, cells);
-    m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight,
-                                  1, 3, cells);
+    /* D3..D1 F0113 is emitted below from the verified per-square plan,
+     * immediately after each square's F0115 route. */
     m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
         state, framebuffer, framebufferWidth, framebufferHeight,
         maxVisibleForward, cells);
@@ -57481,7 +57547,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                 DM1_V1_F0128_VIEW_SQUARE_D1L, DM1_V1_F0128_VIEW_SQUARE_D1R,
                 DM1_V1_F0128_VIEW_SQUARE_D1C
             };
-            int sidesDrawnForDepth[3] = {0, 0, 0};
             int f0115SquareCount = 0;
             int i;
             for (i = 0; i < 9; ++i) {
@@ -57490,6 +57555,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                 int spanStart = 0;
                 int spanCount = 0;
                 int hasF0115 = 0;
+                int hasField;
                 int j;
                 if (!DM1_V1_F0128_PerSquareSchedulerSquareSpanPc34Compat(
                         &dm1F0128Plan, square, &spanStart, &spanCount)) {
@@ -57504,27 +57570,45 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                         break;
                     }
                 }
-                if (!hasF0115) {
-                    continue;
-                }
-                ++f0115SquareCount;
-                if (square == DM1_V1_F0128_VIEW_SQUARE_D3C ||
-                    square == DM1_V1_F0128_VIEW_SQUARE_D2C ||
-                    square == DM1_V1_F0128_VIEW_SQUARE_D1C) {
-                    if ((centerContentMask & (1 << squareDepth)) != 0) {
-                        m11_draw_wall_contents(framebuffer,
-                                               framebufferWidth,
-                                               framebufferHeight,
-                                               &frames[squareDepth + 1],
-                                               &cells[squareDepth][1],
-                                               squareDepth);
+                if (hasF0115) {
+                    ++f0115SquareCount;
+                    if (square == DM1_V1_F0128_VIEW_SQUARE_D3C ||
+                        square == DM1_V1_F0128_VIEW_SQUARE_D2C ||
+                        square == DM1_V1_F0128_VIEW_SQUARE_D1C) {
+                        if ((centerContentMask & (1 << squareDepth)) != 0) {
+                            m11_draw_wall_contents(framebuffer,
+                                                   framebufferWidth,
+                                                   framebufferHeight,
+                                                   &frames[squareDepth + 1],
+                                                   &cells[squareDepth][1],
+                                                   squareDepth);
+                        }
+                    } else {
+                        int side = (square == DM1_V1_F0128_VIEW_SQUARE_D3L ||
+                                    square == DM1_V1_F0128_VIEW_SQUARE_D2L ||
+                                    square == DM1_V1_F0128_VIEW_SQUARE_D1L)
+                            ? -1 : 1;
+                        m11_draw_dm1_side_contents_at_depth(
+                            state, framebuffer, framebufferWidth,
+                            framebufferHeight, frames, cells, squareDepth,
+                            side, &visibility, blockingCenterDepth);
                     }
-                } else if (!sidesDrawnForDepth[squareDepth]) {
-                    sidesDrawnForDepth[squareDepth] = 1;
-                    m11_draw_dm1_side_contents_at_depth(
-                        state, framebuffer, framebufferWidth,
-                        framebufferHeight, frames, cells, squareDepth,
-                        &visibility, blockingCenterDepth);
+                }
+                /* F0113 is not a global overlay: F0116..F0124 invoke it
+                 * only after the current square's F0115 work.  Keep that
+                 * transaction boundary even for a square whose thing route
+                 * is empty. */
+                hasField = m11_dm1_f0128_square_has_step(
+                    &dm1F0128Plan, square, DM1_V1_F0128_STEP_F0113_FIELD);
+                if (hasField) {
+                    int relForward;
+                    int relSide;
+                    if (m11_dm1_f0128_square_relative_position(
+                            square, &relForward, &relSide)) {
+                        m11_draw_dm1_teleporter_field_at(
+                            state, framebuffer, framebufferWidth,
+                            framebufferHeight, relForward, relSide);
+                    }
                 }
             }
             s_m11_dm1_f0128_per_square_scheduler_receipt
