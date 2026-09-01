@@ -11473,12 +11473,20 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     memset(&g_dm2_last_projectile_render, 0,
            sizeof(g_dm2_last_projectile_render));
     memset(&g_dm2_last_door_render, 0, sizeof(g_dm2_last_door_render));
-    /* c_gui_vp::DM2_DISPLAY_VIEWPORT draws the indoor scene into the local
-     * 0xe0x88 bitmap. c_gfx_main::DM2_DRAWINGS_COMPLETED then copies that
-     * exact surface through expanded RECT_7; it does not use the HUD screen
-     * as a dungeon scratch buffer. Outdoor has distinct source composition
-     * work, so retain its existing route until its own RECT ownership lands. */
-    use_rect7_backbuffer = !rt->outdoor;
+    /* c_gui_vp::DM2_DISPLAY_VIEWPORT draws the PC indoor scene into the
+     * local 0xe0x88 bitmap.  PC c_gfx_main::DM2_DRAWINGS_COMPLETED then
+     * copies that exact surface through expanded RECT_7; it does not use the
+     * HUD screen as a dungeon scratch buffer.  Amiga and Macintosh packages
+     * do not contain that PC RAW4/RECT_7 record: their admitted GDAT route
+     * owns the presentation surface directly.  Requiring the absent PC
+     * record there rejects authentic frames, so keep their native surface
+     * rather than borrowing a PC destination.  Outdoor has distinct source
+     * composition work, so retain its existing route until its own RECT
+     * ownership lands. */
+    use_rect7_backbuffer = !rt->outdoor && rt->boot &&
+        (rt->boot->platform == DM2_PLATFORM_PC_EN ||
+         rt->boot->platform == DM2_PLATFORM_PC_FR ||
+         rt->boot->platform == DM2_PLATFORM_PC_JEWEL);
     memset(&rect7_receipt, 0, sizeof(rect7_receipt));
     if (use_rect7_backbuffer) {
         memset(dungeon_backbuffer, 0, sizeof(dungeon_backbuffer));
