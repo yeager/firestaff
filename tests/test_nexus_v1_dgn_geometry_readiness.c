@@ -6463,6 +6463,19 @@ static void test_structure2_texture_decode_synthetic(void) {
 }
 
 int main(void) {
+    {
+        const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+        char probe_path[512];
+        FILE *probe;
+        if (!data_dir || !data_dir[0] ||
+            snprintf(probe_path, sizeof(probe_path), "%s/LEV00.DGN",
+                     data_dir) >= (int)sizeof(probe_path) ||
+            !(probe = fopen(probe_path, "rb"))) {
+            puts("SKIP Nexus DGN geometry readiness (no authentic LEV corpus)");
+            return 77;
+        }
+        fclose(probe);
+    }
     test_variable_grid_and_mesh_ready();
     test_dgn_view_render_plan_from_structure1b();
     test_structure1f_out_of_prefix_ref_blocks_mesh();
