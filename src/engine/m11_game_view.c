@@ -57670,6 +57670,13 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                 replayForward, replayForward, cells);
         }
     }
+    /* F0110 button pixels are part of the F0111 door result.  Re-emit them
+     * once after the depth replay (the helper itself walks D3C..D1C) so a
+     * deferred object cannot cover a real source button. */
+    m11_draw_dm1_center_door_buttons(state, framebuffer, framebufferWidth,
+                                     framebufferHeight, cells);
+    m11_draw_dm1_d3r_door_button(state, framebuffer, framebufferWidth,
+                                  framebufferHeight, maxVisibleForward, cells);
     m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
                                     framebufferWidth, framebufferHeight);
     /* The final F0128 center-wall replay is an occlusion repair.  F0104's
