@@ -57620,38 +57620,43 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                 .f0115ContentSquareCount = f0115SquareCount;
         }
     }
-    /* F0128 visits each side square far-to-near.  In the original, a nearer
-     * closed side wall or door therefore overpaints F0115 material from the
-     * farther side lane.  M11 batches all structural panels before its
-     * deferred F0115 loop, so restore that source-owned occlusion boundary
-     * after the loop rather than letting a floor object bleed through stone. */
-    m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth,
-                            framebufferHeight, 1, maxVisibleForward, &visibility);
-    m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth,
-                                 framebufferHeight, 1, maxVisibleForward, cells, 0);
-    m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
-        state, framebuffer, framebufferWidth, framebufferHeight,
-        maxVisibleForward, cells);
-    m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth,
-                            framebufferHeight, 1, maxVisibleForward, cells);
-    m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth,
-                                     framebufferHeight, 1, maxVisibleForward, cells);
-    m11_draw_dm1_side_destroyed_door_masks(state, framebuffer,
-                                           framebufferWidth, framebufferHeight, 1,
-                                           maxVisibleForward, cells);
-    /* ReDMCSB F0128 draws each center wall as part of its square before the
-     * next nearer square is visited.  M11's deferred F0115 loop can otherwise
-     * leave a far corridor/object visible through a nearer D1C/D2C/D3C wall.
-     * Re-emit only the source-owned center wall envelope after that deferred
-     * loop, then restore the wall-owned champion mirror route.  This is an
-     * occlusion repair, not a synthetic mask or a replacement bitmap. */
-    m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth,
-                             framebufferHeight, 1, 3, cells);
-    /* Restore only centre-wall ornaments after the occluding wall replay.
-     * Replaying side ornaments here would let distant material cross the
-     * nearer wall boundary again. */
-    m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth,
-                                framebufferHeight, 1, maxVisibleForward, cells, 1);
+    /* Restore source-owned occlusion in the same depth groups as F0128:
+     * D3 sides then D3C, D2 sides then D2C, D1 sides then D1C.  The older
+     * replay drew every side depth before every center depth, which could
+     * expose an earlier side item through a nearer center panel.  Each call
+     * remains backed by its original GRAPHICS.DAT bitmap and layout-696
+     * clipping zone; this only replaces the host batch order. */
+    {
+        int replayForward;
+        for (replayForward = 3; replayForward >= 1; --replayForward) {
+            m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth,
+                                    framebufferHeight, replayForward,
+                                    replayForward, &visibility);
+            m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth,
+                                         framebufferHeight, replayForward,
+                                         replayForward, cells, 0);
+            if (replayForward == 3) {
+                m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
+                    state, framebuffer, framebufferWidth, framebufferHeight,
+                    replayForward, cells);
+            }
+            m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth,
+                                    framebufferHeight, replayForward,
+                                    replayForward, cells);
+            m11_draw_dm1_side_door_ornaments(state, framebuffer,
+                                             framebufferWidth, framebufferHeight,
+                                             replayForward, replayForward, cells);
+            m11_draw_dm1_side_destroyed_door_masks(state, framebuffer,
+                                                   framebufferWidth, framebufferHeight,
+                                                   replayForward, replayForward, cells);
+            m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth,
+                                     framebufferHeight, replayForward,
+                                     replayForward, cells);
+            m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth,
+                                         framebufferHeight, replayForward,
+                                         replayForward, cells, 1);
+        }
+    }
     m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
                                     framebufferWidth, framebufferHeight);
     /* The final F0128 center-wall replay is an occlusion repair.  F0104's
