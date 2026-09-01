@@ -38,6 +38,13 @@ published live party pose and a source-owned turn.  These are bounded
 real-media launch and first-gameplay checks only; they do not imply full
 campaign, save, audio or pixel-capture parity.
 
+On 2026-09-01 a follow-up run repeated the maintained real-media startup
+routes after DM1 viewport ordering work. DM2 passed DOS, Amiga and FM Towns;
+CSB passed Atari ST, Amiga and FM Towns. The checked tests are
+`dm2_v1_{dos,amiga,fmtowns}_native_cli_boot` and
+`csb_v1_{atari_stx,amiga,fmtowns}_native_cli_boot`. These results reaffirm
+native, in-memory startup and bounded first-runtime behavior only.
+
 ## Dungeon Master
 
 | Platform | Status | Current scope | Open boundary |
