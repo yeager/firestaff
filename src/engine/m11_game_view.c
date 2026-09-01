@@ -39786,11 +39786,11 @@ static int m11_dm1_f0115_order_includes_cell(int cellOrder, int cell)
     if (cell < 0 || cell > 3) {
         return 0;
     }
-    /* C0x0000 is the F0107 alcove route.  Its exact item carrier is handled
-     * by the dedicated alcove path, so it must not reject a normal legacy
-     * caller here. */
+    /* C0x0000 is the F0107 alcove route.  F0115 sets its absolute thing
+     * cell to M018_OPPOSITE(view direction), which is relative cell 2.
+     * It is not an empty word meaning "all cells".  DUNVIEW.C:4807-4811. */
     if (cellOrder == 0) {
-        return 1;
+        return cell == 2;
     }
     if ((cellOrder & 0x0f) & 0x08) {
         cellOrder >>= 4;
