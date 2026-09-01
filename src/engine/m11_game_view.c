@@ -41451,6 +41451,8 @@ static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
                                      unsigned char* framebuffer,
                                      int fbW,
                                      int fbH,
+                                     int minVisibleForward,
+                                     int maxVisibleForward,
                                      const M11_ViewportCell cells[3][3]) {
     static const M11_DM1WallFrontBlit kFrontBlits[3] = {
         /* Resolved from layout 696 via COORD.C F0635_ semantics:
@@ -41474,6 +41476,10 @@ static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
      * farther wall and lets later split passes compose against incomplete
      * geometry. */
     for (depth = 2; depth >= 0; --depth) {
+        if (depth + 1 < minVisibleForward ||
+            depth + 1 > maxVisibleForward) {
+            continue;
+        }
         if (m11_viewport_cell_is_wall_like(&cells[depth][1])) {
             int drawn;
             if (flipWalls) {
@@ -57355,7 +57361,8 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                             1, dm1_viewport_3d_primary_side_wall_max_forward_pc34(
                                 maxVisibleForward),
                             &visibility);
-    m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
+    m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight,
+                             1, 3, cells);
     /* Primary floor pass: pass the full D3..D1 range (constant 3), not
      * maxVisibleForward.  ReDMCSB/pass361 architecture reconciliation
      * establishes that primary floor geometry must not be pre-culled by a
@@ -57527,7 +57534,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * loop, then restore the wall-owned champion mirror route.  This is an
      * occlusion repair, not a synthetic mask or a replacement bitmap. */
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth,
-                             framebufferHeight, cells);
+                             framebufferHeight, 1, 3, cells);
     /* Restore only centre-wall ornaments after the occluding wall replay.
      * Replaying side ornaments here would let distant material cross the
      * nearer wall boundary again. */

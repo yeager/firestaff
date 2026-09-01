@@ -142,7 +142,7 @@ def main() -> int:
             ("lane visibility receipt", "visibility = m11_dm1_lane_visibility(cells);"),
             ("derive center max from the receipt", "maxVisibleForward = visibility.max_visible_forward;"),
             ("draw side walls", "m11_draw_dm1_side_walls"),
-            ("draw front walls", "m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);"),
+            ("draw front walls", "m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight,\n                             1, 3, cells);"),
             ("draw wall ornaments", "m11_draw_dm1_wall_ornaments"),
         ],
         "Firestaff viewport front-wall call site",
