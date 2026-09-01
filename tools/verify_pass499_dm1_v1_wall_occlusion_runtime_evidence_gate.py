@@ -143,12 +143,7 @@ def main() -> int:
     if coverage["pass496MatrixRows"] < 15:
         problems.append("pass496 coverage unexpectedly small")
 
-    candidates = [
-        Path(os.environ["FIRESTAFF_BUILD_DIR"]) if "FIRESTAFF_BUILD_DIR" in os.environ else None,
-        ROOT / "build",
-        Path("/tmp/firestaff-blockers-build-current"),
-    ]
-    build_dir = next((p for p in candidates if p and (p / "CTestTestfile.cmake").exists()), ROOT / "build")
+    build_dir = resolve_build_dir(ROOT, ROOT / "build")
     probe_run = None
     if build_dir.exists():
         gate_re = f"^({'|'.join([PROBE_TEST] + PRIOR_GATES)})$"

@@ -47708,7 +47708,10 @@ if(BUILD_TESTING AND THERON_SOURCES)
             NAME pass652_dm1_v1_chest_scroll_wheel_pickup_overflow_runtime_regression
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass652_dm1_v1_chest_scroll_wheel_pickup_overflow_runtime_regression.py --run-test
         )
-        set_tests_properties(pass652_dm1_v1_chest_scroll_wheel_pickup_overflow_runtime_regression PROPERTIES DEPENDS dm1_v1_chest_scroll_wheel_pickup_overflow_pc34_compat)
+        set_tests_properties(pass652_dm1_v1_chest_scroll_wheel_pickup_overflow_runtime_regression PROPERTIES
+            DEPENDS dm1_v1_chest_scroll_wheel_pickup_overflow_pc34_compat
+            ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_BINARY_DIR}"
+        )
         add_test(
             NAME pass799_dm1_v1_chest_open_stack_split_press_eye
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass799_dm1_v1_chest_open_stack_split_press_eye_pc34_compat.py
@@ -47738,7 +47741,10 @@ if(BUILD_TESTING AND THERON_SOURCES)
             NAME pass812_dm1_v1_chest_close_while_party_rotate_pickup_pending
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass812_dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat.py
         )
-        set_tests_properties(pass812_dm1_v1_chest_close_while_party_rotate_pickup_pending PROPERTIES DEPENDS dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat)
+        set_tests_properties(pass812_dm1_v1_chest_close_while_party_rotate_pickup_pending PROPERTIES
+            DEPENDS dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat
+            ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_BINARY_DIR}"
+        )
         add_test(
             NAME pass822_dm1_v1_chest_close_while_candidate_live_non_leader
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass822_dm1_v1_chest_close_while_candidate_live_non_leader_pc34_compat.py

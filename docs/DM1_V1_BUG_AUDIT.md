@@ -338,8 +338,7 @@ M11 rendering, real assets, or original-DOS capture.
      some scripts; now standardised).
   2. `<root>/build` (in-tree single-config).
   3. `<root>/builds/<cfg>` (in-tree multi-config, iterates).
-  4. `/tmp/firestaff-blockers-build-current`.
-  5. `<root>` parent walk for any `CTestTestfile.cmake`.
+  4. `<root>` parent walk for any `CTestTestfile.cmake`.
 
 Updated 211 `tools/verify_pass*.py` scripts to import
 `resolve_build_dir` and replace

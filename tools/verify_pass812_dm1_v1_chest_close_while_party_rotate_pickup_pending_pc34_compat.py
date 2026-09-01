@@ -3,6 +3,9 @@
 import os, subprocess, sys, json
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from firestaff_build_dir import resolve_build_dir
+
 ROOT = Path(__file__).resolve().parent.parent
 PASS = "pass812_dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat"
 HDR = ROOT / "include/firestaff/dm1/v1/chest/close_while_party_rotate_pickup_pending_pc34_compat.h"
@@ -59,18 +62,6 @@ def check_needles(label, path, needles):
     return [f"{label} missing: {missing}"] if missing else []
 
 
-def resolve_build_dir(binary_name=""):
-    candidates = [ROOT / "build", ROOT / "builds" / "nv1-build", ROOT / "builds" / "n2-build"]
-    if binary_name:
-        for c in candidates:
-            if (c / "CMakeCache.txt").exists() and (c / binary_name).exists():
-                return c
-    for c in candidates:
-        if (c / "CMakeCache.txt").exists():
-            return c
-    return candidates[0]
-
-
 def main():
     failures = []
     for label, path, needles in [
@@ -81,7 +72,7 @@ def main():
         failures.extend(check_needles(label, path, needles))
 
     binary_name = "test_dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat"
-    build_dir = resolve_build_dir(binary_name)
+    build_dir = resolve_build_dir(ROOT, ROOT / "build")
     binary = build_dir / binary_name
     if not binary.exists():
         failures.append(f"binary not found: {binary}")

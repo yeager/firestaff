@@ -8,8 +8,7 @@ Lookup order (first hit wins):
   1. FIRESTAFF_BUILD_DIR env var, if set and the path exists
   2. <root>/build           (in-tree single-config)
   3. <root>/builds          (in-tree multi-config, iterates)
-  4. /tmp/firestaff-blockers-build-current
-  5. <root> parent walk for any CTestTestfile.cmake
+  4. <root> parent walk for any CTestTestfile.cmake
 """
 from __future__ import annotations
 
@@ -40,9 +39,6 @@ def find_build_dir(
         for child in sorted(builds.iterdir()):
             if (child / sentinel).exists():
                 return child
-    p = Path("/tmp/firestaff-blockers-build-current")
-    if (p / sentinel).exists():
-        return p
     for parent in root.parents:
         candidate = parent / "build"
         if (candidate / sentinel).exists():
