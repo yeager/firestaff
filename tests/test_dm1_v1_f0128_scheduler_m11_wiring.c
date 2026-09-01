@@ -162,6 +162,11 @@ static void test_corridor_scene_matches_contract_plan(void)
                "ReDMCSB DUNVIEW.C F0128:8318-8561 live plan per DM1 frame");
     expect_int("corridor.plan_ready", receipt.planReady, 1,
                "live plan builds and passes invariant re-verify");
+    expect_int("corridor.source_plan_dispatched", receipt.sourcePlanDispatched, 0,
+               "data-free fixture cannot dispatch source material");
+    expect_int("corridor.source_plan_executed_steps",
+               receipt.sourcePlanExecutedStepCount, 0,
+               "data-free fixture executes no source-plan callbacks");
     expect_int("corridor.plan_not_driven_without_source", receipt.planDrivenContentLoop, 0,
                "data-free fixture cannot enter the source-only content loop");
     expect_int("corridor.step_count", receipt.stepCount,

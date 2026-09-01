@@ -57340,6 +57340,10 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                                            &dm1F0128Plan);
     dm1F0128PlanDispatched = dm1F0128PlanReady &&
         m11_dm1_f0128_dispatch_live_view_plan(state, &dm1F0128Plan);
+    s_m11_dm1_f0128_per_square_scheduler_receipt.sourcePlanDispatched =
+        dm1F0128PlanDispatched ? 1 : 0;
+    s_m11_dm1_f0128_per_square_scheduler_receipt.sourcePlanExecutedStepCount =
+        dm1F0128PlanDispatched ? dm1F0128Plan.stepCount : 0;
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   viewport.x, viewport.y, viewport.w, viewport.h, M11_COLOR_BLACK);

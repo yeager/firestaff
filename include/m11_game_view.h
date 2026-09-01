@@ -3481,6 +3481,8 @@ void M11_GameView_GetDm1UnreadableInscriptionHostPresentationReceipt(
 typedef struct M11_Dm1F0128PerSquareSchedulerReceipt {
     int valid;                    /* a DM1 frame evaluated the bridge */
     int planReady;                /* build + verify both succeeded */
+    int sourcePlanDispatched;     /* every plan step passed source admission */
+    int sourcePlanExecutedStepCount; /* admitted callback steps in this frame */
     int planDrivenContentLoop;    /* F0115 content loop consumed plan spans */
     int stepCount;                /* merged plan step count */
     unsigned long scheduleHash;   /* plan FNV-1a receipt hash */
