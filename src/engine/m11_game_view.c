@@ -43595,7 +43595,8 @@ static void m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
     int fbW,
     int fbH,
     int maxVisibleForward,
-    const M11_ViewportCell cells[3][3]) {
+    const M11_ViewportCell cells[3][3],
+    int onlyRelSide) {
     size_t i;
     if (!state || !state->assetsAvailable) {
         return;
@@ -43613,6 +43614,10 @@ static void m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
             continue;
         }
         if (spec->relative_depth > maxVisibleForward) {
+            continue;
+        }
+        if (onlyRelSide != 99 &&
+            spec->relative_lateral != onlyRelSide) {
             continue;
         }
         if (!m11_dm1_side_lane_clear_for_rel(cells,
@@ -57654,7 +57659,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * immediately after each square's F0115 route. */
     m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
         state, framebuffer, framebufferWidth, framebufferHeight,
-        maxVisibleForward, cells);
+        maxVisibleForward, cells, 99);
     m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight,
                              1, maxVisibleForward, cells, 99);
     m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
@@ -57687,7 +57692,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                         1, nearMaxVisibleForward, cells, 99);
             m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
                 state, framebuffer, framebufferWidth, framebufferHeight,
-                nearMaxVisibleForward, cells);
+                nearMaxVisibleForward, cells, 99);
             m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight,
                                     1, nearMaxVisibleForward, cells, 99);
             m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
@@ -57830,37 +57835,47 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         int centerContentMask = visibility.center_visible_depth_mask;
         for (replayForward = 3; replayForward >= 1; --replayForward) {
             static const int kSideReplayOrder[2] = { -1, 1 };
+            static const int kOuterSideReplayOrder[2] = { -2, 2 };
             int sideReplayIndex;
-            if (replayForward == 3) {
-                m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
-                    state, framebuffer, framebufferWidth, framebufferHeight,
-                    replayForward, cells);
-            }
-            /* The outer lanes are complete before F0128 enters D3L/D3R or
-             * D2L/D2R. They own no normal side wall transaction here, but
-             * can own the F0113 tail and must therefore remain ahead of it. */
-            if (replayForward == 3) {
-                m11_dm1_f0128_replay_foreground_square(
-                    state, framebuffer, framebufferWidth, framebufferHeight,
-                    frames, cells, &visibility, &dm1F0128Plan,
-                    DM1_V1_F0128_VIEW_SQUARE_D3L2, blockingCenterDepth,
-                    centerContentMask);
-                m11_dm1_f0128_replay_foreground_square(
-                    state, framebuffer, framebufferWidth, framebufferHeight,
-                    frames, cells, &visibility, &dm1F0128Plan,
-                    DM1_V1_F0128_VIEW_SQUARE_D3R2, blockingCenterDepth,
-                    centerContentMask);
-            } else if (replayForward == 2) {
-                m11_dm1_f0128_replay_foreground_square(
-                    state, framebuffer, framebufferWidth, framebufferHeight,
-                    frames, cells, &visibility, &dm1F0128Plan,
-                    DM1_V1_F0128_VIEW_SQUARE_D2L2, blockingCenterDepth,
-                    centerContentMask);
-                m11_dm1_f0128_replay_foreground_square(
-                    state, framebuffer, framebufferWidth, framebufferHeight,
-                    frames, cells, &visibility, &dm1F0128Plan,
-                    DM1_V1_F0128_VIEW_SQUARE_D2R2, blockingCenterDepth,
-                    centerContentMask);
+            /* F0128 completes each DnL2 route before DnR2, including the
+             * special D3 F0676/F0677 door-front route.  These lanes are
+             * narrow but can overlap the regular DnL/DnR zones, so a single
+             * pair-batch lets the right route repaint the completed left
+             * route before its F0113 tail. */
+            if (replayForward == 3 || replayForward == 2) {
+                for (sideReplayIndex = 0; sideReplayIndex < 2;
+                     ++sideReplayIndex) {
+                    int relSide = kOuterSideReplayOrder[sideReplayIndex];
+                    m11_draw_dm1_side_walls(
+                        state, framebuffer, framebufferWidth, framebufferHeight,
+                        replayForward, replayForward, &visibility, relSide);
+                    m11_draw_dm1_wall_ornaments(
+                        state, framebuffer, framebufferWidth, framebufferHeight,
+                        replayForward, replayForward, cells, relSide);
+                    if (replayForward == 3) {
+                        m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
+                            state, framebuffer, framebufferWidth,
+                            framebufferHeight, replayForward, cells, relSide);
+                    }
+                    m11_draw_dm1_side_doors(
+                        state, framebuffer, framebufferWidth, framebufferHeight,
+                        replayForward, replayForward, cells, relSide);
+                    m11_draw_dm1_side_door_ornaments(
+                        state, framebuffer, framebufferWidth, framebufferHeight,
+                        replayForward, replayForward, cells, relSide);
+                    m11_draw_dm1_side_destroyed_door_masks(
+                        state, framebuffer, framebufferWidth, framebufferHeight,
+                        replayForward, replayForward, cells, relSide);
+                    m11_dm1_f0128_replay_foreground_square(
+                        state, framebuffer, framebufferWidth, framebufferHeight,
+                        frames, cells, &visibility, &dm1F0128Plan,
+                        replayForward == 3
+                            ? (relSide < 0 ? DM1_V1_F0128_VIEW_SQUARE_D3L2
+                                           : DM1_V1_F0128_VIEW_SQUARE_D3R2)
+                            : (relSide < 0 ? DM1_V1_F0128_VIEW_SQUARE_D2L2
+                                           : DM1_V1_F0128_VIEW_SQUARE_D2R2),
+                        blockingCenterDepth, centerContentMask);
+                }
             }
             /* F0128 completes DnL's structural route before beginning DnR.
              * Keep each wall, F0107 ornament, F0111 door, ornament, and

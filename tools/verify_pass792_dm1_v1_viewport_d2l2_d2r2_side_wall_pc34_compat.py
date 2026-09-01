@@ -145,6 +145,7 @@ def run(cmd: list[str]) -> dict[str, object]:
 
 def resolve_build_dir(binary_name: str = "") -> Path:
     candidates = [
+        ROOT / "build-dm1-csb-native",
         ROOT / "build",
         ROOT / "builds" / "nv1-build",
         ROOT / "builds" / "n2-build",
