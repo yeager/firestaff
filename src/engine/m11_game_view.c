@@ -57820,10 +57820,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * this transaction prevents a genuine outer-lane teleporter from being
      * silently lost after removing the old global field batch. */
     {
-        int centerContentMask =
-            visibility.center_visible_depth_mask;
-        int blockingCenterDepth =
-            visibility.nearest_blocking_center_depth_index;
         if (dm1F0128PlanDispatched) {
             /* Plan-driven loop: the verified F0128 contract plan supplies
              * the visit order and each square's F0115 admission through its
@@ -57849,18 +57845,15 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                 int square = kContentSquares[i];
                 int relForward;
                 int relSide;
-                int squareDepth;
                 int spanStart = 0;
                 int spanCount = 0;
                 int countedF0115ForSquare = 0;
-                int hasField;
                 int j;
                 if (!m11_dm1_f0128_square_relative_position(
                         square, &relForward, &relSide) ||
                     relForward < 1 || relForward > 3) {
                     continue;
                 }
-                squareDepth = relForward - 1;
                 if (!DM1_V1_F0128_PerSquareSchedulerSquareSpanPc34Compat(
                         &dm1F0128Plan, square, &spanStart, &spanCount)) {
                     continue;
@@ -57878,46 +57871,16 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                         ++f0115SquareCount;
                         countedF0115ForSquare = 1;
                     }
-                    if (square == DM1_V1_F0128_VIEW_SQUARE_D3C ||
-                        square == DM1_V1_F0128_VIEW_SQUARE_D2C ||
-                        square == DM1_V1_F0128_VIEW_SQUARE_D1C) {
-                        if ((centerContentMask & (1 << squareDepth)) != 0) {
-                            /* Keep the exact F0115 cell word.  Door pass 1
-                             * owns only the back cells; pass 2 owns only the
-                             * front cells after F0111.  The old boolean
-                             * admission discarded that distinction and
-                             * redrew every floor Thing on each route. */
-                            m11_draw_wall_contents(framebuffer,
-                                                   framebufferWidth,
-                                                   framebufferHeight,
-                                                   &frames[squareDepth + 1],
-                                                   &cells[squareDepth][1],
-                                                   squareDepth,
-                                                   step->cellOrderWord);
-                        }
-                    } else if (relSide == -1 || relSide == 1) {
-                        /* The side helper consumes the same encoded F0115
-                         * word as the center helper, so door pass 1 and
-                         * pass 2 each visit only their source-owned cells. */
-                        m11_draw_dm1_side_contents_at_depth(
-                            state, framebuffer, framebufferWidth,
-                            framebufferHeight, frames, cells, squareDepth,
-                            relSide, &visibility, blockingCenterDepth,
-                            step->cellOrderWord);
-                    }
-                }
-                /* F0113 is not a global overlay: F0116..F0124 invoke it
-                 * only after the current square's F0115 work.  Keep that
-                 * transaction boundary even for a square whose thing route
-                 * is empty. */
-                hasField = m11_dm1_f0128_square_has_step(
-                    &dm1F0128Plan, square, DM1_V1_F0128_STEP_F0113_FIELD);
-                if (hasField) {
-                    m11_draw_dm1_teleporter_field_at(
-                        state, framebuffer, framebufferWidth,
-                        framebufferHeight, relForward, relSide);
                 }
             }
+            /* Do not rasterize this first plan walk.  The following
+             * far-to-near replay consumes every F0115/F0113 step in its
+             * owning F0128 square, with DOORPASS1 immediately before F0111
+             * and the foreground/field tail after it.  Painting here as
+             * well made each Thing and field a global pre-pass, then drew it
+             * again in the source-order replay.  Retain the count as an
+             * admission receipt, but let exactly one source transaction own
+             * each pixel. */
             s_m11_dm1_f0128_per_square_scheduler_receipt
                 .planDrivenContentLoop = 1;
             s_m11_dm1_f0128_per_square_scheduler_receipt
