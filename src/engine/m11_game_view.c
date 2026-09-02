@@ -15357,25 +15357,56 @@ static int m11_dm1_fmtowns_startup_from_archive(
     DM1_V1_FmtownsStartupReceipt *out) {
     uint8_t *autoexec = NULL, *game = NULL, *menu = NULL;
     uint8_t *icons = NULL, *info = NULL;
+    uint8_t *image = NULL, *cue = NULL;
     size_t autoexec_size = 0U, game_size = 0U, menu_size = 0U;
     size_t icon_size = 0U, info_size = 0U;
+    size_t image_size = 0U, cue_size = 0U;
+    char image_member[M11_GAME_VIEW_PATH_CAPACITY];
+    FmtownsDiscProbeResult disc;
+    const FmtownsIsoEntry *autoexec_entry;
+    const FmtownsIsoEntry *game_entry;
+    const FmtownsIsoEntry *menu_entry;
+    const FmtownsIsoEntry *icons_entry;
+    const FmtownsIsoEntry *info_entry;
     const char *game_name = japanese ? "JDM.EXP" : "EDM.EXP";
     int ok = 0;
     if (!out || !archive_path) return 0;
-    if (!m11_dm1_fmtowns_read_archive_member(
-            archive_path, "AUTOEXEC.BAT", &autoexec, &autoexec_size) ||
-        !m11_dm1_fmtowns_read_archive_member(
-            archive_path, game_name, &game, &game_size) ||
-        !m11_dm1_fmtowns_read_archive_member(
-            archive_path, "TMENU.EXP", &menu, &menu_size) ||
-        !m11_dm1_fmtowns_read_archive_member(
-            archive_path, "TMENU.ICN", &icons, &icon_size) ||
-        !m11_dm1_fmtowns_read_archive_member(
-            archive_path, "TMENU.INF", &info, &info_size)) goto done;
+    /* The five files below are ISO members of one original data track.
+     * Reopening and inflating that 256 MiB track once per member made an
+     * otherwise native launch needlessly slow (and could time out a genuine
+     * menu/input verification).  Keep the disc image in RAM only for this
+     * receipt, exactly as the original archive owns it; no member is written
+     * to disk and every extraction remains source-addressed through its CUE. */
+    if (firestaff_zip_extract_by_suffix(archive_path, ".cue",
+                                        &cue, &cue_size) != 0 ||
+        !fmtowns_cue_parse_image_member((const char *)cue, cue_size,
+                                        image_member, sizeof(image_member)) ||
+        firestaff_zip_extract_by_name(archive_path, image_member,
+                                      &image, &image_size) != 0 ||
+        fmtowns_disc_probe(image, image_size, FMTOWNS_SECTOR_2048,
+                           &disc) != 0) goto done;
+    autoexec_entry = fmtowns_disc_find(&disc, "AUTOEXEC.BAT");
+    game_entry = fmtowns_disc_find(&disc, game_name);
+    menu_entry = fmtowns_disc_find(&disc, "TMENU.EXP");
+    icons_entry = fmtowns_disc_find(&disc, "TMENU.ICN");
+    info_entry = fmtowns_disc_find(&disc, "TMENU.INF");
+    if (!autoexec_entry || !game_entry || !menu_entry || !icons_entry ||
+        !info_entry ||
+        fmtowns_disc_extract_alloc(image, image_size, FMTOWNS_SECTOR_2048,
+                                   autoexec_entry, &autoexec, &autoexec_size) != 0 ||
+        fmtowns_disc_extract_alloc(image, image_size, FMTOWNS_SECTOR_2048,
+                                   game_entry, &game, &game_size) != 0 ||
+        fmtowns_disc_extract_alloc(image, image_size, FMTOWNS_SECTOR_2048,
+                                   menu_entry, &menu, &menu_size) != 0 ||
+        fmtowns_disc_extract_alloc(image, image_size, FMTOWNS_SECTOR_2048,
+                                   icons_entry, &icons, &icon_size) != 0 ||
+        fmtowns_disc_extract_alloc(image, image_size, FMTOWNS_SECTOR_2048,
+                                   info_entry, &info, &info_size) != 0) goto done;
     ok = dm1_v1_fmtowns_startup_receipt(
         autoexec, autoexec_size, game, game_size, menu, menu_size,
         icons, icon_size, info, info_size, out);
 done:
+    free(image); free(cue);
     free(autoexec); free(game); free(menu); free(icons); free(info);
     return ok;
 }
