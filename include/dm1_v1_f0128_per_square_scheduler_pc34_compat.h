@@ -59,7 +59,7 @@ enum {
     DM1_V1_F0128_VIEW_SQUARE_COUNT
 };
 
-/* Scheduler step operations: the merged F0104/F0107/F0108/F0111/
+/* Scheduler step operations: the merged F0104/F0107/F0108/F0111/F0112/
  * F0113/F0115 material families in per-square source order. */
 enum {
     DM1_V1_F0128_STEP_F0115_EARLY = 0,     /* F0128 body early D4 F0115 (DUNVIEW.C:8479-8490) */
@@ -72,6 +72,7 @@ enum {
     DM1_V1_F0128_STEP_F0115_DOOR_PASS1,    /* F0115 back cells behind the door */
     DM1_V1_F0128_STEP_F0111_DOOR,          /* F0111 door draw (object occluder) */
     DM1_V1_F0128_STEP_F0115_DOOR_PASS2,    /* F0115 front cells in front of the door */
+    DM1_V1_F0128_STEP_F0112_CEILING_PIT,   /* F0112 upper-level open-pit overlay */
     DM1_V1_F0128_STEP_F0115_MAIN,          /* F0115 main things pass */
     DM1_V1_F0128_STEP_F0113_FIELD,         /* F0113 teleporter field, always after things */
     DM1_V1_F0128_STEP_OP_COUNT

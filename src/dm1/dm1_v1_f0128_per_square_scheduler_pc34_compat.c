@@ -131,11 +131,55 @@ static int step_shape_is_valid(const DM1_V1_F0128SchedulerStepPc34 *step) {
     case DM1_V1_F0128_STEP_F0104_DOOR_FRAME:
     case DM1_V1_F0128_STEP_F0107_ALCOVE_CHECK:
     case DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT:
+    case DM1_V1_F0128_STEP_F0112_CEILING_PIT:
         return step->cellOrderWord == 0 && !step->behindDoor &&
                !step->occluder && !step->fieldAfterThings;
     default:
         return 0;
     }
+}
+
+/* F0112 is not a generic post-processing pass.  These are the exact PC34
+ * source tails: F0119/F0120 admit an alcove wall tail, F0121/F0122-F0124
+ * do not; D0L/D0R exclude their early-return stairs-side/wall paths; D0C
+ * always reaches its F0112 tail.  Door-front pass2 jumps past F0112. */
+static int square_reaches_f0112(const DM1_V1_F0128SquareClassPc34 *cls,
+                                int element, int frontAlcove) {
+    if (!cls || cls->square < DM1_V1_F0128_VIEW_SQUARE_D2L ||
+        cls->square > DM1_V1_F0128_VIEW_SQUARE_D0C) {
+        return 0;
+    }
+    if (cls->square == DM1_V1_F0128_VIEW_SQUARE_D0C) {
+        return element != DM1_V1_F0128_ELEMENT_DOOR_FRONT;
+    }
+    if (cls->square == DM1_V1_F0128_VIEW_SQUARE_D0L ||
+        cls->square == DM1_V1_F0128_VIEW_SQUARE_D0R) {
+        return element == DM1_V1_F0128_ELEMENT_CORRIDOR ||
+               element == DM1_V1_F0128_ELEMENT_PIT ||
+               element == DM1_V1_F0128_ELEMENT_DOOR_SIDE ||
+               element == DM1_V1_F0128_ELEMENT_TELEPORTER;
+    }
+    if (element == DM1_V1_F0128_ELEMENT_DOOR_FRONT) {
+        return 0;
+    }
+    if (element != DM1_V1_F0128_ELEMENT_WALL) {
+        return 1;
+    }
+    return frontAlcove &&
+           (cls->square == DM1_V1_F0128_VIEW_SQUARE_D2L ||
+            cls->square == DM1_V1_F0128_VIEW_SQUARE_D2R);
+}
+
+static int push_f0112_then_main(DM1_V1_F0128SchedulerPlanPc34 *plan,
+                                const DM1_V1_F0128SquareClassPc34 *cls,
+                                int element, int frontAlcove, int order) {
+    if (square_reaches_f0112(cls, element, frontAlcove) &&
+        !push_step(plan, cls->square, DM1_V1_F0128_STEP_F0112_CEILING_PIT,
+                   0, 0, 0, 0)) {
+        return 0;
+    }
+    return push_step(plan, cls->square, DM1_V1_F0128_STEP_F0115_MAIN,
+                     order, 0, 0, 0);
 }
 
 void DM1_V1_F0128_PerSquareSchedulerInitPc34Compat(void) {
@@ -226,8 +270,8 @@ int DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(
                 }
             }
             if (sq->frontWallOrnamentIsAlcove) {
-                if (!push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0115_MAIN,
-                               DM1_V1_F0128_ORDER_ALCOVE, 0, 0, 0)) {
+                if (!push_f0112_then_main(outPlan, cls, sq->element, 1,
+                                          DM1_V1_F0128_ORDER_ALCOVE)) {
                     return 0;
                 }
             }
@@ -241,17 +285,17 @@ int DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(
              * the source operation. */
             if (!push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0104_STAIRS,
                            0, 0, 0, 0) ||
-                !push_step(outPlan, cls->square,
-                           DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,
-                           0, 0, 0, 0) ||
-                !push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0115_MAIN,
-                           cls->corridorOrder, 0, 0, 0)) {
+                (cls->square != DM1_V1_F0128_VIEW_SQUARE_D0C &&
+                 !push_step(outPlan, cls->square,
+                            DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,
+                            0, 0, 0, 0)) ||
+                !push_f0112_then_main(outPlan, cls, sq->element, 0,
+                                      cls->corridorOrder)) {
                 return 0;
             }
             break;
 
         case DM1_V1_F0128_ELEMENT_DOOR_SIDE:
-        case DM1_V1_F0128_ELEMENT_STAIRS_SIDE:
             /* Side door/stairs: D0C also draws its door-frame bitmaps
              * (F0127:8180-8204); then the thing pass with the side
              * order word (F0116:6445-6447). */
@@ -262,12 +306,41 @@ int DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(
                     return 0;
                 }
             }
-            if (!push_step(outPlan, cls->square,
+            /* F0127 D0C draws its door frame and then enters F0112
+             * directly; its F0108 route belongs only to D1/D2 lanes. */
+            if ((cls->square != DM1_V1_F0128_VIEW_SQUARE_D0C &&
+                 !push_step(outPlan, cls->square,
+                            DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,
+                            0, 0, 0, 0)) ||
+                !push_f0112_then_main(outPlan, cls, sq->element, 0,
+                                      cls->doorSideOrder ? cls->doorSideOrder : cls->corridorOrder)) {
+                return 0;
+            }
+            break;
+
+        case DM1_V1_F0128_ELEMENT_STAIRS_SIDE:
+            if (cls->square == DM1_V1_F0128_VIEW_SQUARE_D0L ||
+                cls->square == DM1_V1_F0128_VIEW_SQUARE_D0R) {
+                /* F0125/F0126 draw the side-stairs bitmap and return. */
+                if (!push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0104_STAIRS,
+                               0, 0, 0, 0)) {
+                    return 0;
+                }
+                break;
+            }
+            if (cls->square != DM1_V1_F0128_VIEW_SQUARE_D0C &&
+                !push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0104_STAIRS,
+                           0, 0, 0, 0)) {
+                return 0;
+            }
+            if (cls->square != DM1_V1_F0128_VIEW_SQUARE_D0C &&
+                !push_step(outPlan, cls->square,
                            DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,
-                           0, 0, 0, 0) ||
-                !push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0115_MAIN,
-                           cls->doorSideOrder ? cls->doorSideOrder : cls->corridorOrder,
-                           0, 0, 0)) {
+                           0, 0, 0, 0)) {
+                return 0;
+            }
+            if (!push_f0112_then_main(outPlan, cls, sq->element, 0,
+                                      cls->doorSideOrder ? cls->doorSideOrder : cls->corridorOrder)) {
                 return 0;
             }
             break;
@@ -309,11 +382,12 @@ int DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(
                     return 0;
                 }
             }
-            if (!push_step(outPlan, cls->square,
-                           DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,
-                           0, 0, 0, 0) ||
-                !push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0115_MAIN,
-                           cls->corridorOrder, 0, 0, 0)) {
+            if ((cls->square != DM1_V1_F0128_VIEW_SQUARE_D0C &&
+                 !push_step(outPlan, cls->square,
+                            DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,
+                            0, 0, 0, 0)) ||
+                !push_f0112_then_main(outPlan, cls, sq->element, 0,
+                                      cls->corridorOrder)) {
                 return 0;
             }
             break;
@@ -324,11 +398,12 @@ int DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(
              * D0C has no wall-zone field route in F0127's teleporter
              * tail... F0127:8315-8317 does draw it, so every
              * field-capable square is admitted. */
-            if (!push_step(outPlan, cls->square,
-                           DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,
-                           0, 0, 0, 0) ||
-                !push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0115_MAIN,
-                           cls->corridorOrder, 0, 0, 0)) {
+            if ((cls->square != DM1_V1_F0128_VIEW_SQUARE_D0C &&
+                 !push_step(outPlan, cls->square,
+                            DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,
+                            0, 0, 0, 0)) ||
+                !push_f0112_then_main(outPlan, cls, sq->element, 0,
+                                      cls->corridorOrder)) {
                 return 0;
             }
             if ((sq->pitOrTeleporterVisible ||
@@ -348,11 +423,12 @@ int DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(
             /* Corridor-like squares run F0108 before the main thing pass
              * with the square's corridor order word (F0116:6470-6473).
              * Keep the F0108 call even for an empty ordinal. */
-            if (!push_step(outPlan, cls->square,
-                           DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,
-                           0, 0, 0, 0) ||
-                !push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0115_MAIN,
-                           cls->corridorOrder, 0, 0, 0)) {
+            if ((cls->square != DM1_V1_F0128_VIEW_SQUARE_D0C &&
+                 !push_step(outPlan, cls->square,
+                            DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,
+                            0, 0, 0, 0)) ||
+                !push_f0112_then_main(outPlan, cls, sq->element, 0,
+                                      cls->corridorOrder)) {
                 return 0;
             }
             break;

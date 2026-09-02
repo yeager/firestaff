@@ -230,16 +230,25 @@ static void test_corridor_scene_visit_order(void)
                                    DM1_V1_F0128_STEP_F0115_EARLY),
                3, "ReDMCSB DUNVIEW.C:8479-8490 three early D4 passes");
     for (i = 0; i < plan.stepCount; ++i) {
-        if (plan.steps[i].op == DM1_V1_F0128_STEP_F0115_MAIN) {
-            expect_int("corridor.floor_ornament_before_things",
-                       i > 0 &&
-                       plan.steps[i - 1].square == plan.steps[i].square &&
-                       plan.steps[i - 1].op ==
-                           DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT,
+        if (plan.steps[i].op == DM1_V1_F0128_STEP_F0112_CEILING_PIT) {
+            expect_int("corridor.ceiling_before_things",
+                       i + 1 < plan.stepCount &&
+                       plan.steps[i + 1].square == plan.steps[i].square &&
+                       plan.steps[i + 1].op == DM1_V1_F0128_STEP_F0115_MAIN,
                        1,
-                       "ReDMCSB DUNVIEW.C F0116-F0127 F0108 precedes F0115");
+                       "ReDMCSB DUNVIEW.C F0112 immediately precedes its F0115 tail");
         }
     }
+    expect_int("corridor.d3l.floor_ornament_before_things",
+               first_index(&plan, DM1_V1_F0128_VIEW_SQUARE_D3L,
+                           DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT) + 1,
+               first_index(&plan, DM1_V1_F0128_VIEW_SQUARE_D3L,
+                           DM1_V1_F0128_STEP_F0115_MAIN),
+               "ReDMCSB DUNVIEW.C:6470-6473 D3L F0108 directly precedes F0115");
+    expect_int("corridor.d0c.no_floor_ornament",
+               count_op_for_square(&plan, DM1_V1_F0128_VIEW_SQUARE_D0C,
+                                   DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT),
+               0, "ReDMCSB DUNVIEW.C:8286-8294 D0C goes from F0112 to F0115");
     expect_int("corridor.d3l.main_order",
                plan.steps[first_index(&plan, DM1_V1_F0128_VIEW_SQUARE_D3L,
                                       DM1_V1_F0128_STEP_F0115_MAIN)].cellOrderWord,
@@ -517,10 +526,45 @@ static void test_wall_alcove_and_far_lanes(void)
                count_op_for_square(&plan, DM1_V1_F0128_VIEW_SQUARE_D0C,
                                    DM1_V1_F0128_STEP_F0104_DOOR_FRAME),
                1, "ReDMCSB DUNVIEW.C:8180-8204 F0127 D0C door frame");
+    expect_int("d0c.door_side.no_floor_ornament",
+               count_op_for_square(&plan, DM1_V1_F0128_VIEW_SQUARE_D0C,
+                                   DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT),
+               0, "ReDMCSB DUNVIEW.C:8205-8294 D0C frame enters F0112 directly");
+    expect_int("d0c.door_side.ceiling_pit",
+               count_op_for_square(&plan, DM1_V1_F0128_VIEW_SQUARE_D0C,
+                                   DM1_V1_F0128_STEP_F0112_CEILING_PIT),
+               1, "ReDMCSB DUNVIEW.C:8286-8294 F0127 F0112 before things");
     expect_int("d0c.main_order",
                plan.steps[first_index(&plan, DM1_V1_F0128_VIEW_SQUARE_D0C,
                                       DM1_V1_F0128_STEP_F0115_MAIN)].cellOrderWord,
                0x0021, "ReDMCSB DUNVIEW.C:8232 C0x0021 D0C thing pass");
+
+    /* F0125/F0126 draw side stairs and return: neither the upper-level
+     * overlay nor the F0115 tail is reachable. */
+    all_corridor(squares);
+    squares[DM1_V1_F0128_VIEW_SQUARE_D0L].element =
+        DM1_V1_F0128_ELEMENT_STAIRS_SIDE;
+    squares[DM1_V1_F0128_VIEW_SQUARE_D0R].element =
+        DM1_V1_F0128_ELEMENT_STAIRS_SIDE;
+    expect_int("build.d0_side_stairs.ok",
+               DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(squares, &plan),
+               1, "D0 side-stairs view builds");
+    expect_int("d0l.side_stairs.return",
+               count_op_for_square(&plan, DM1_V1_F0128_VIEW_SQUARE_D0L,
+                                   DM1_V1_F0128_STEP_F0104_STAIRS),
+               1, "ReDMCSB DUNVIEW.C:7974-7989 F0125 bitmap then return");
+    expect_int("d0l.side_stairs.no_tail",
+               count_op_for_square(&plan, DM1_V1_F0128_VIEW_SQUARE_D0L,
+                                   DM1_V1_F0128_STEP_F0112_CEILING_PIT) +
+               count_op_for_square(&plan, DM1_V1_F0128_VIEW_SQUARE_D0L,
+                                   DM1_V1_F0128_STEP_F0115_MAIN),
+               0, "F0125 side-stairs cannot reach F0112/F0115");
+    expect_int("d0r.side_stairs.no_tail",
+               count_op_for_square(&plan, DM1_V1_F0128_VIEW_SQUARE_D0R,
+                                   DM1_V1_F0128_STEP_F0112_CEILING_PIT) +
+               count_op_for_square(&plan, DM1_V1_F0128_VIEW_SQUARE_D0R,
+                                   DM1_V1_F0128_STEP_F0115_MAIN),
+               0, "ReDMCSB DUNVIEW.C:8078-8093 F0126 side-stairs return");
 }
 
 static void test_fail_closed_and_hash(void)
