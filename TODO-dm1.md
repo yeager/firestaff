@@ -17,9 +17,13 @@ Reviewed 2026-08-29. Only open work is listed here.
   consumes the original layout-696 C2500 rows 3/4 through the decoded source
   Thing and GRAPHICS.DAT, including the depth-3 cell gate and C10 blit. The
   scheduler's F0676/F0677 rear/front partitions now own that real object
-  pass; they do not borrow ordinary D3L/D3R pane geometry. C3200 creature and
-  C2900 projectile consumers still need their own reviewed placement/blit
-  routes, so they deliberately remain no-draw rather than fabricated or
+  pass; they do not borrow ordinary D3L/D3R pane geometry. For creatures,
+  MEDIA720 F0115 maps `C14_VIEW_SQUARE_D3L2`/`C15_VIEW_SQUARE_D3R2` through
+  `G2033[14]`/`G2033[15]` to raw C3200 rows 3/4 (`DUNVIEW.C:373, 5211,
+  5613-5617`); the existing helper only represents the ordinary D3/D2/D1
+  side rows, so it cannot be reused. C3200 creature and C2900 projectile
+  consumers still need raw-row-specific placement and reviewed bitmap blits,
+  so they deliberately remain no-draw rather than fabricated or
   panel-derived content.
 - Obtain authentic C13-save and original capture corpus for remaining HoC,
   top-row and action routes; bind each to the PC 3.4 runtime before promotion.
