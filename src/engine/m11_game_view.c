@@ -58159,18 +58159,13 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                      framebufferHeight, cells);
     m11_draw_dm1_d3r_door_button(state, framebuffer, framebufferWidth,
                                   framebufferHeight, maxVisibleForward, cells);
-    /* D1 is the final F0128 depth. Its F0115 main/door-pass-2 foreground
-     * belongs after the completed D1 F0111 door/button result. */
-    m11_dm1_f0128_replay_foreground_square(
-        state, framebuffer, framebufferWidth, framebufferHeight, frames,
-        cells, &visibility, &dm1F0128Plan, DM1_V1_F0128_VIEW_SQUARE_D1L,
-        visibility.nearest_blocking_center_depth_index,
-        visibility.center_visible_depth_mask);
-    m11_dm1_f0128_replay_foreground_square(
-        state, framebuffer, framebufferWidth, framebufferHeight, frames,
-        cells, &visibility, &dm1F0128Plan, DM1_V1_F0128_VIEW_SQUARE_D1R,
-        visibility.nearest_blocking_center_depth_index,
-        visibility.center_visible_depth_mask);
+    /* F0122/F0123 finish their D1L/D1R F0115 tail before F0124 starts
+     * D1C (ReDMCSB DUNVIEW.C:7391-7725, 7727-8316).  The square loop above
+     * has already consumed those tails in that order.  Do not repaint them
+     * after D1C's F0110 button: that was a second, source-invalid pass that
+     * could put a side-lane Thing back over the completed D1C door result.
+     * D1C itself is deliberately replayed below because F0124's F0115 tail
+     * follows its own F0111/F0110 material. */
     m11_dm1_f0128_replay_foreground_square(
         state, framebuffer, framebufferWidth, framebufferHeight, frames,
         cells, &visibility, &dm1F0128Plan, DM1_V1_F0128_VIEW_SQUARE_D1C,

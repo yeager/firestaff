@@ -13,6 +13,14 @@ Reviewed 2026-08-29. Only open work is listed here.
   composed in bounded batches before that replay. Replace the remaining
   batches only with the corresponding F0116--F0124 operation, never with a
   host-generated panel or a substitute asset.
+- Add F0112 ceiling-pit to the live per-square F0128 executor. The current
+  scheduler models F0104/F0107/F0108/F0111/F0113/F0115, but
+  `F0116`--`F0127` also call F0112 before their F0115 tail for the applicable
+  open, pit and stair routes (for example `DUNVIEW.C:7359-7365` and
+  `7929-7935`). DM1 has a source-locked ceiling-pit helper, but M11 has not
+  bound its decoded source bitmap and zone to the live square transaction.
+  Do not promote an invented ceiling panel; add the real F0112 step and bind
+  it only after its original GRAPHICS.DAT material and clipping zone preflight.
 - Complete D3L2/D3R2 F0115 material consumers. The live object route now
   consumes the original layout-696 C2500 rows 3/4 through the decoded source
   Thing and GRAPHICS.DAT, including the depth-3 cell gate and C10 blit. The
