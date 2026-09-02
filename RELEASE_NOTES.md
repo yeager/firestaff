@@ -1,3 +1,32 @@
+# Firestaff v3.0.326
+
+## DM1
+
+### Fixed
+
+- `F0128 outer-lane floor replay`: Kept the real D3L2/D3R2 lateral
+  coordinates separate from the all-lanes replay sentinel. Per-square F0104
+  and F0108 replays now redraw only their source lane, preventing outer-lane
+  floor ornaments, pits, and stairs from being incorrectly replayed across
+  the same depth.
+
+## CI
+
+### Fixed
+
+- `asset-hygiene`: Retries the immutable Lefthook Go installation when the
+  public Go checksum service terminates a transient HTTP/2 stream; the
+  hygiene checks remain mandatory.
+
+## Verification
+
+### Verified
+
+- Re-ran native real-media CLI startup checks for DM1 DOS 3.4, Atari ST,
+  Amiga v2.0, and FM Towns, plus CSB Atari ST, Amiga, and FM Towns EN/JA.
+- Re-ran focused F0128/F0108 viewport compatibility checks, 55 DM1 chest
+  checks, and 16 DM1 inventory checks.
+
 # Firestaff v3.0.325
 
 ## DM1
