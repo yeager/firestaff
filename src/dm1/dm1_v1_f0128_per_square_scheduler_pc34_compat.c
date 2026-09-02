@@ -331,7 +331,8 @@ int DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(
                            cls->corridorOrder, 0, 0, 0)) {
                 return 0;
             }
-            if (sq->pitOrTeleporterVisible && cls->fieldCapable) {
+            if ((sq->pitOrTeleporterVisible ||
+                 sq->teleporterFieldAlwaysDraw) && cls->fieldCapable) {
                 if (!push_step(outPlan, cls->square, DM1_V1_F0128_STEP_F0113_FIELD,
                                0, 0, 0, 1)) {
                     return 0;

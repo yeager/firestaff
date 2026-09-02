@@ -57322,6 +57322,17 @@ static void m11_dm1_f0128_scheduler_input_from_cell(
     } else {
         out->pitOrTeleporterVisible = 0;
     }
+    /* ReDMCSB DUNVIEW.C F0116's media split is behavioural, not a data
+     * interpretation: MEDIA720 (I34E PC 3.4 and F31E/F31J FM Towns) calls
+     * F0113 for every teleporter, while the older MEDIA009/MEDIA508 paths
+     * gate F0113 on M554.  M11's native PC renderer is PC34 by design and
+     * the non-big-endian legacy loader is the authenticated FM Towns route.
+     * The current supplied Amiga v2 and Atari media remain on the gated
+     * branch until their exact executable revision proves MEDIA720. */
+    out->teleporterFieldAlwaysDraw =
+        !state->assetLoader.atariStDm1 &&
+        !(state->assetLoader.legacyDm1 &&
+          state->assetLoader.legacyBigEndian);
     /* F0107 checks the front wall ornament's alcove predicate on the
      * wall facing the party (M552).  The F0149 classification runs on the
      * F0174-wired current-map alcove list (G0267 equivalent). */

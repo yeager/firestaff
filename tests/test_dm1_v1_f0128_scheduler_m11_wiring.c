@@ -112,6 +112,7 @@ static void expected_corridor_input(
     for (i = 0; i < DM1_V1_F0128_VIEW_SQUARE_COUNT; ++i) {
         squares[i].element = DM1_V1_F0128_ELEMENT_CORRIDOR;
         squares[i].pitOrTeleporterVisible = 0;
+        squares[i].teleporterFieldAlwaysDraw = 0;
         squares[i].frontWallOrnamentIsAlcove = 0;
         squares[i].hasFloorOrnament = 0;
     }

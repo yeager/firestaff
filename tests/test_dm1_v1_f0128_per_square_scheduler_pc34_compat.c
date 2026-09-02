@@ -48,6 +48,7 @@ static void all_corridor(DM1_V1_F0128SchedulerSquarePc34 squares[DM1_V1_F0128_VI
     for (i = 0; i < DM1_V1_F0128_VIEW_SQUARE_COUNT; i++) {
         squares[i].element = DM1_V1_F0128_ELEMENT_CORRIDOR;
         squares[i].pitOrTeleporterVisible = 0;
+        squares[i].teleporterFieldAlwaysDraw = 0;
         squares[i].frontWallOrnamentIsAlcove = 0;
         squares[i].hasFloorOrnament = 0;
     }
@@ -302,6 +303,17 @@ static void test_field_after_things(void)
                count_op_for_square(&plan, DM1_V1_F0128_VIEW_SQUARE_D2C,
                                    DM1_V1_F0128_STEP_F0113_FIELD),
                0, "ReDMCSB DUNVIEW.C:7376-7379 visibility gate");
+
+    /* I34E/F31 MEDIA720 intentionally does not consult M554 here.  Its
+     * F0116 tail tests only C05_ELEMENT_TELEPORTER before F0113. */
+    squares[DM1_V1_F0128_VIEW_SQUARE_D2C].teleporterFieldAlwaysDraw = 1;
+    expect_int("build.teleporter_media720.ok",
+               DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(squares, &plan),
+               1, "MEDIA720 teleporter builds");
+    expect_int("teleporter_media720.field_without_m554",
+               count_op_for_square(&plan, DM1_V1_F0128_VIEW_SQUARE_D2C,
+                                   DM1_V1_F0128_STEP_F0113_FIELD),
+               1, "ReDMCSB DUNVIEW.C:6489 MEDIA720 unconditional field");
 
     /* Hand-broken plan: field moved before the things pass must be
      * rejected by the verifier (fail-closed). */

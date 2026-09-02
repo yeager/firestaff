@@ -119,6 +119,9 @@ enum {
 typedef struct {
     int element;                 /* DM1_V1_F0128_ELEMENT_* (DEFS.H:1007-1017) */
     int pitOrTeleporterVisible;  /* SquareAspect[M554] (DUNVIEW.C F0172) */
+    /* MEDIA720 (including PC 3.4 and FM Towns F31) draws F0113 for every
+     * teleporter. Older MEDIA009/MEDIA508 builds retain the M554 gate. */
+    int teleporterFieldAlwaysDraw;
     int frontWallOrnamentIsAlcove; /* F0107 positive on M552 front ornament */
     int hasFloorOrnament;        /* SquareAspect[M558] floor ornament present */
 } DM1_V1_F0128SchedulerSquarePc34;
