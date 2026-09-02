@@ -45403,11 +45403,10 @@ static void m11_draw_dm1_side_contents_at_depth(
  * these lanes to m11_draw_dm1_side_contents_at_depth(): that helper owns
  * the different D3L/D3R pane geometry and deliberately accepts only +/-1.
  *
- * This is intentionally an object-only consumer for now.  It is backed by
- * the real object-aspect/GRAPHICS.DAT path and the decoded source Thing;
- * the separate creature (C3200) and projectile (C2900) compositions still
- * lack an equivalent reviewed runtime blitter, so they remain no-draw
- * rather than borrowing a pane placement.  ReDMCSB DUNVIEW.C F0676:6275-
+ * Its object, creature and projectile consumers all use the source-owned
+ * C2500/C3200/C2900 rows.  In particular, outer creatures enter through
+ * G2033's raw C3200 row rather than ordinary D3L/D3R pane placement; an
+ * empty source coordinate remains no-draw.  ReDMCSB DUNVIEW.C F0676:6275-
  * 6286 and F0677:6342-6353 call F0115 with the normal source cell orders;
  * F0115:4923/5075 applies the depth-3 cell gate and C2500 placement. */
 static void m11_draw_dm1_d3_outer_f0115_objects(
