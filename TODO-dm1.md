@@ -13,13 +13,14 @@ Reviewed 2026-08-29. Only open work is listed here.
   composed in bounded batches before that replay. Replace the remaining
   batches only with the corresponding F0116--F0124 operation, never with a
   host-generated panel or a substitute asset.
-- Bind original layout-696 C2500/C2900 placement records for D3L2/D3R2
-  F0115 Things. The scheduler correctly admits the F0676/F0677 rear/front
-  passes, but their native contract currently has no reviewed real zone/pixel
-  binding and therefore rejects the `relative_lateral == -2/+2` content path
-  rather than borrowing the ordinary D3L/D3R side-pane geometry. Preserve
-  this fail-closed behavior until the original zones and capture evidence are
-  available.
+- Complete D3L2/D3R2 F0115 material consumers. The live object route now
+  consumes the original layout-696 C2500 rows 3/4 through the decoded source
+  Thing and GRAPHICS.DAT, including the depth-3 cell gate and C10 blit. The
+  scheduler's F0676/F0677 rear/front partitions now own that real object
+  pass; they do not borrow ordinary D3L/D3R pane geometry. C3200 creature and
+  C2900 projectile consumers still need their own reviewed placement/blit
+  routes, so they deliberately remain no-draw rather than fabricated or
+  panel-derived content.
 - Obtain authentic C13-save and original capture corpus for remaining HoC,
   top-row and action routes; bind each to the PC 3.4 runtime before promotion.
   The supplied French DOS save pair proves its own backed F0435/F0433 route,

@@ -45390,6 +45390,60 @@ static void m11_draw_dm1_side_contents_at_depth(
 
 }
 
+/* F0676/F0677 are not ordinary D3L/D3R side panes.  Their F0115 object
+ * pass resolves C2500 through G2028[14]/[15], i.e. layout-696 rows 3/4,
+ * and F0791 clips the result against the viewport itself.  Do not feed
+ * these lanes to m11_draw_dm1_side_contents_at_depth(): that helper owns
+ * the different D3L/D3R pane geometry and deliberately accepts only +/-1.
+ *
+ * This is intentionally an object-only consumer for now.  It is backed by
+ * the real object-aspect/GRAPHICS.DAT path and the decoded source Thing;
+ * the separate creature (C3200) and projectile (C2900) compositions still
+ * lack an equivalent reviewed runtime blitter, so they remain no-draw
+ * rather than borrowing a pane placement.  ReDMCSB DUNVIEW.C F0676:6275-
+ * 6286 and F0677:6342-6353 call F0115 with the normal source cell orders;
+ * F0115:4923/5075 applies the depth-3 cell gate and C2500 placement. */
+static void m11_draw_dm1_d3_outer_f0115_objects(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    int relSide,
+    int f0115CellOrder)
+{
+    M11_ViewportCell cell;
+    int sourceZoneRow;
+    int itemIndex;
+
+    if (!state || !framebuffer || (relSide != -2 && relSide != 2) ||
+        !m11_sample_viewport_cell(state, 3, relSide, &cell) || !cell.valid ||
+        !m11_viewport_cell_is_open(&cell) ||
+        !m11_dm1_floor_item_material_allowed(&cell, 0)) {
+        return;
+    }
+    sourceZoneRow = dm1_viewport_3d_f0115_c2500_c2900_row(3, relSide);
+    if (sourceZoneRow < 0) {
+        return;
+    }
+    for (itemIndex = 0; itemIndex < cell.floorItemCount; ++itemIndex) {
+        const int sourceCell = cell.floorItemCells[itemIndex];
+        /* F0115:4923 excludes D3's two front cells before C2500 is
+         * consulted.  The scheduler's packed cell word is an additional
+         * source-owned partition for front-door pass 1/2. */
+        if (cell.floorItemTypes[itemIndex] < 0 || sourceCell < 2 ||
+            sourceCell > 3 ||
+            !m11_dm1_f0115_order_includes_cell(f0115CellOrder, sourceCell)) {
+            continue;
+        }
+        (void)m11_draw_dm1_f0115_floor_item_sprite(
+            state, framebuffer, framebufferWidth, framebufferHeight,
+            M11_VIEWPORT_X, M11_VIEWPORT_Y, M11_VIEWPORT_W, M11_VIEWPORT_H,
+            cell.floorItemTypes[itemIndex], cell.floorItemSubtypes[itemIndex],
+            sourceCell, itemIndex, 2, sourceZoneRow,
+            cell.floorItemThings[itemIndex], cell.mapX, cell.mapY);
+    }
+}
+
 static int m11_dm1_center_line_clear_before_depth(
     const M11_ViewportCell cells[3][3], int depth) {
     int d;
@@ -57525,6 +57579,10 @@ static void m11_dm1_f0128_replay_foreground_square(
                 state, framebuffer, framebufferWidth, framebufferHeight,
                 frames, cells, squareDepth, relSide, visibility,
                 blockingCenterDepth, step->cellOrderWord);
+        } else if (relForward == 3 && (relSide == -2 || relSide == 2)) {
+            m11_draw_dm1_d3_outer_f0115_objects(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                relSide, step->cellOrderWord);
         }
     }
 }
