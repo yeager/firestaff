@@ -7412,6 +7412,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_door_ornament_render_pc34_compat.c
     src/dm1/dm1_v1_floor_ornament_pc34_compat.c
     src/dm1/dm1_v1_floor_pit_pc34_compat.c
+    src/dm1/dm1_v1_location_after_level_change_f0154_pc34_compat.c
     src/dm1/dm1_v1_side_door_render_pc34_compat.c
     src/dm1/dm1_v1_stairs_render_pc34_compat.c
     src/dm1/dm1_v1_wall_ornament_pc34_compat.c

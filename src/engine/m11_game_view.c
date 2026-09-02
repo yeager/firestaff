@@ -218,6 +218,8 @@
 #include "dm1_v1_field_teleporter_effect_pc34_compat.h"
 #include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_floor_pit_pc34_compat.h"
+#include "dm1_v1_ceiling_pit_viewport_pc34_compat.h"
+#include "dm1_v1_location_after_level_change_f0154_pc34_compat.h"
 #include "dm1_v1_inscription_font_pc34_compat.h"
 #include "dm1_v1_wall_inscription_presentation_pc34_compat.h"
 #include "dm1_v1_side_door_render_pc34_compat.h"
@@ -41702,6 +41704,88 @@ static void m11_draw_dm1_floor_pits(const M11_GameViewState* state,
     }
 }
 
+/* F0112 calls F0154 with the already-relative viewport square and a -1
+ * level delta.  Do not use the current square's pit bit: the visible hole is
+ * owned by the open pit at the same global coordinate on the level above. */
+static int m11_dm1_f0112_has_open_pit_above(const M11_GameViewState *state,
+                                            const M11_ViewportCell *cell)
+{
+    const struct DungeonDatState_Compat *dungeon;
+    DM1_V1_DungeonMapDescriptorF0154Pc34 maps[256];
+    int target_map = -1;
+    int map_x;
+    int map_y;
+    unsigned char square;
+    int i;
+    int map_count;
+
+    if (!state || !cell || !cell->valid || !state->world.dungeon ||
+        !state->world.dungeon->maps || !state->world.dungeon->tilesLoaded)
+        return 0;
+    dungeon = state->world.dungeon;
+    map_count = (int)dungeon->header.mapCount;
+    if (map_count <= 0 || map_count > (int)(sizeof(maps) / sizeof(maps[0])) ||
+        state->world.party.mapIndex < 0 ||
+        state->world.party.mapIndex >= map_count) return 0;
+    for (i = 0; i < map_count; ++i) {
+        maps[i].sourceLevel = dungeon->maps[i].level;
+        maps[i].offsetMapX = dungeon->maps[i].offsetMapX;
+        maps[i].offsetMapY = dungeon->maps[i].offsetMapY;
+        maps[i].width = dungeon->maps[i].width;
+        maps[i].height = dungeon->maps[i].height;
+    }
+    map_x = cell->mapX;
+    map_y = cell->mapY;
+    if (!F0154_DUNGEON_GetLocationAfterLevelChange(
+            maps, (size_t)map_count, state->world.party.mapIndex, -1,
+            &map_x, &map_y, &target_map) || target_map < 0 ||
+        !m11_get_square_byte(&state->world, target_map, map_x, map_y,
+                             &square)) return 0;
+    return ((square & DUNGEON_SQUARE_MASK_TYPE) >> 5) == DUNGEON_ELEMENT_PIT &&
+           (square & 0x08) != 0;
+}
+
+static void m11_draw_dm1_ceiling_pits(const M11_GameViewState* state,
+                                      unsigned char* framebuffer,
+                                      int fbW, int fbH,
+                                      int minVisibleForward,
+                                      int maxVisibleForward)
+{
+    static const struct {
+        int relForward, relSide, graphic, zone, flip;
+    } routes[] = {
+        {2, -1, 63, 862, 0}, {2, 0, 64, 863, 0}, {2, 1, 63, 864, 1},
+        {1, -1, 65, 865, 0}, {1, 0, 66, 866, 0}, {1, 1, 65, 867, 1},
+        {0, -1, 67, 868, 0}, {0, 0, 68, 869, 0}, {0, 1, 67, 870, 1}
+    };
+    int i;
+
+    if (!state || !state->assetsAvailable || !framebuffer) return;
+    for (i = 0; i < (int)(sizeof(routes) / sizeof(routes[0])); ++i) {
+        M11_ViewportCell cell;
+        M11_DM1ZoneBlit blit;
+        const DM1V1CeilingPitViewportRectPc34 *rect;
+        if (routes[i].relForward < minVisibleForward ||
+            routes[i].relForward > maxVisibleForward ||
+            !m11_sample_viewport_cell(state, routes[i].relForward,
+                                      routes[i].relSide, &cell) ||
+            !m11_dm1_f0112_has_open_pit_above(state, &cell)) continue;
+        rect = dm1_v1_ceiling_pit_viewport_rect_for_profile_pc34(
+            DM1_V1_CEILING_PIT_PROFILE_PC34, routes[i].graphic,
+            routes[i].zone, routes[i].flip);
+        if (!rect) continue;
+        blit.graphicIndex = routes[i].graphic;
+        blit.srcX = blit.srcY = 0;
+        blit.dstX = rect->x;
+        blit.dstY = rect->y;
+        blit.width = rect->width;
+        blit.height = rect->height;
+        (void)m11_draw_dm1_zone_blit_maybe_flip(
+            state, framebuffer, fbW, fbH, &blit,
+            DM1_V1_CEILING_PIT_TRANSPARENT_PC34, routes[i].flip);
+    }
+}
+
 static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int fbW,
@@ -57863,6 +57947,8 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * the receipt-derived maxVisibleForward as their bound. */
     m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   1, 3, cells, -1, M11_DM1_REL_SIDE_ALL);
+    m11_draw_dm1_ceiling_pits(state, framebuffer, framebufferWidth,
+                              framebufferHeight, 1, 3);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   1, maxVisibleForward, cells, 99);
     m11_draw_dm1_thieves_eye_d1c_wall_material(
@@ -58194,6 +58280,8 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                              0, 0, cells, -1, M11_DM1_REL_SIDE_ALL);
     m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,
                         0, 0, cells, -1, M11_DM1_REL_SIDE_ALL);
+    m11_draw_dm1_ceiling_pits(state, framebuffer, framebufferWidth,
+                              framebufferHeight, 0, 0);
     /* F0127's D0C F0115 object pass precedes its F0113 field overlay. */
     m11_draw_dm1_d0c_floor_item_pass(state, framebuffer,
                                      framebufferWidth, framebufferHeight);
