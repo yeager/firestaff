@@ -1,3 +1,24 @@
+# Firestaff v3.0.325
+
+## DM1
+
+### Fixed
+
+- `FM Towns archive startup`: Reused the original CUE-selected disc image for
+  all title/menu member reads, preventing repeated 256 MiB track inflation
+  while retaining native in-memory ZIP handling.
+- `MEDIA720 teleporter field`: Corrected the PC 3.4 and FM Towns F0113 field
+  scheduling condition to draw field-capable teleporters independently of the
+  legacy M554 visibility flag, matching the authenticated ReDMCSB source path.
+
+## Verification
+
+### Changed
+
+- `DM1 and CSB regression labels`: Verified 87 DM1 and 162 CSB native CTest
+  cases against the supplied licensed media, including direct CLI and
+  start-menu routes without runtime emulator dependencies.
+
 # Firestaff v3.0.324
 
 ## DM1
