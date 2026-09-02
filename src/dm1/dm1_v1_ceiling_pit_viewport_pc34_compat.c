@@ -9,6 +9,12 @@
 static const DM1V1CeilingPitViewportRectPc34 s_d2l = {0, 19, 80, 5};
 static const DM1V1CeilingPitViewportRectPc34 s_d2c = {64, 19, 96, 5};
 static const DM1V1CeilingPitViewportRectPc34 s_d2r = {144, 19, 80, 5};
+static const DM1V1CeilingPitViewportRectPc34 s_d1l = {0, 8, 64, 9};
+static const DM1V1CeilingPitViewportRectPc34 s_d1c = {32, 8, 160, 9};
+static const DM1V1CeilingPitViewportRectPc34 s_d1r = {160, 8, 64, 9};
+static const DM1V1CeilingPitViewportRectPc34 s_d0l = {0, 0, 16, 4};
+static const DM1V1CeilingPitViewportRectPc34 s_d0c = {16, 0, 192, 4};
+static const DM1V1CeilingPitViewportRectPc34 s_d0r = {208, 0, 16, 4};
 
 static int graphic_is_d2l(int graphic)
 {
@@ -22,23 +28,113 @@ static int graphic_is_d2c(int graphic)
            graphic == DM1_V1_GRAPHIC_CEILING_PIT_D2C_I34E;
 }
 
+static int graphic_is_d1l(int graphic)
+{
+    return graphic == DM1_V1_GRAPHIC_CEILING_PIT_D1L_PC34 ||
+           graphic == DM1_V1_GRAPHIC_CEILING_PIT_D1L_I34E;
+}
+
+static int graphic_is_d1c(int graphic)
+{
+    return graphic == DM1_V1_GRAPHIC_CEILING_PIT_D1C_PC34 ||
+           graphic == DM1_V1_GRAPHIC_CEILING_PIT_D1C_I34E;
+}
+
+static int graphic_is_d0l(int graphic)
+{
+    return graphic == DM1_V1_GRAPHIC_CEILING_PIT_D0L_PC34 ||
+           graphic == DM1_V1_GRAPHIC_CEILING_PIT_D0L_I34E;
+}
+
+static int graphic_is_d0c(int graphic)
+{
+    return graphic == DM1_V1_GRAPHIC_CEILING_PIT_D0C_PC34 ||
+           graphic == DM1_V1_GRAPHIC_CEILING_PIT_D0C_I34E;
+}
+
+const DM1V1CeilingPitViewportRectPc34 *
+dm1_v1_ceiling_pit_viewport_rect_for_profile_pc34(int media_profile,
+                                                   int ceiling_pit_graphic,
+                                                   int zone,
+                                                   int parity_flag)
+{
+    if (media_profile == DM1_V1_CEILING_PIT_PROFILE_PC34) {
+        if (zone == DM1_V1_ZONE_CEILING_PIT_D2L_PC34 &&
+            ceiling_pit_graphic == DM1_V1_GRAPHIC_CEILING_PIT_D2L_PC34)
+            return &s_d2l;
+        if (zone == DM1_V1_ZONE_CEILING_PIT_D2C_PC34 &&
+            ceiling_pit_graphic == DM1_V1_GRAPHIC_CEILING_PIT_D2C_PC34)
+            return &s_d2c;
+        if (zone == DM1_V1_ZONE_CEILING_PIT_D2R_PC34 &&
+            ceiling_pit_graphic == DM1_V1_GRAPHIC_CEILING_PIT_D2L_PC34 && parity_flag)
+            return &s_d2r;
+        if (zone == DM1_V1_ZONE_CEILING_PIT_D1L_PC34 &&
+            ceiling_pit_graphic == DM1_V1_GRAPHIC_CEILING_PIT_D1L_PC34)
+            return &s_d1l;
+        if (zone == DM1_V1_ZONE_CEILING_PIT_D1C_PC34 &&
+            ceiling_pit_graphic == DM1_V1_GRAPHIC_CEILING_PIT_D1C_PC34)
+            return &s_d1c;
+        if (zone == DM1_V1_ZONE_CEILING_PIT_D1R_PC34 &&
+            ceiling_pit_graphic == DM1_V1_GRAPHIC_CEILING_PIT_D1L_PC34 && parity_flag)
+            return &s_d1r;
+        if (zone == DM1_V1_ZONE_CEILING_PIT_D0L_PC34 &&
+            ceiling_pit_graphic == DM1_V1_GRAPHIC_CEILING_PIT_D0L_PC34)
+            return &s_d0l;
+        if (zone == DM1_V1_ZONE_CEILING_PIT_D0C_PC34 &&
+            ceiling_pit_graphic == DM1_V1_GRAPHIC_CEILING_PIT_D0C_PC34)
+            return &s_d0c;
+        if (zone == DM1_V1_ZONE_CEILING_PIT_D0R_PC34 &&
+            ceiling_pit_graphic == DM1_V1_GRAPHIC_CEILING_PIT_D0L_PC34 && parity_flag)
+            return &s_d0r;
+        return NULL;
+    }
+    if (media_profile != DM1_V1_CEILING_PIT_PROFILE_I34E) return NULL;
+    if (zone == DM1_V1_ZONE_CEILING_PIT_D2L_I34E && graphic_is_d2l(ceiling_pit_graphic) && !parity_flag) {
+        return &s_d2l;
+    }
+    if (zone == DM1_V1_ZONE_CEILING_PIT_D2C_I34E && graphic_is_d2c(ceiling_pit_graphic)) {
+        return &s_d2c;
+    }
+    if (zone == DM1_V1_ZONE_CEILING_PIT_D2R_I34E && graphic_is_d2l(ceiling_pit_graphic) && parity_flag) {
+        return &s_d2r;
+    }
+    if (zone == DM1_V1_ZONE_CEILING_PIT_D1L_I34E && graphic_is_d1l(ceiling_pit_graphic)) {
+        return &s_d1l;
+    }
+    if (zone == DM1_V1_ZONE_CEILING_PIT_D1C_I34E && graphic_is_d1c(ceiling_pit_graphic)) {
+        return &s_d1c;
+    }
+    if (zone == DM1_V1_ZONE_CEILING_PIT_D1R_I34E && graphic_is_d1l(ceiling_pit_graphic) && parity_flag) {
+        return &s_d1r;
+    }
+    if (zone == DM1_V1_ZONE_CEILING_PIT_D0L_I34E && graphic_is_d0l(ceiling_pit_graphic)) {
+        return &s_d0l;
+    }
+    if (zone == DM1_V1_ZONE_CEILING_PIT_D0C_I34E && graphic_is_d0c(ceiling_pit_graphic)) {
+        return &s_d0c;
+    }
+    if (zone == DM1_V1_ZONE_CEILING_PIT_D0R_I34E && graphic_is_d0l(ceiling_pit_graphic) && parity_flag) {
+        return &s_d0r;
+    }
+    return NULL;
+}
+
 const DM1V1CeilingPitViewportRectPc34 *
 dm1_v1_ceiling_pit_viewport_rect_pc34(int ceiling_pit_graphic,
                                       int zone,
                                       int parity_flag)
 {
+    /* Preserve the prior D2-only auto-detection contract. D1/D0 requires
+     * explicit profile selection because their ids overlap with D2. */
     if ((zone == DM1_V1_ZONE_CEILING_PIT_D2L_PC34 && graphic_is_d2l(ceiling_pit_graphic)) ||
-        (zone == DM1_V1_ZONE_CEILING_PIT_D2L_I34E && graphic_is_d2l(ceiling_pit_graphic) && !parity_flag)) {
+        (zone == DM1_V1_ZONE_CEILING_PIT_D2L_I34E && graphic_is_d2l(ceiling_pit_graphic) && !parity_flag))
         return &s_d2l;
-    }
     if ((zone == DM1_V1_ZONE_CEILING_PIT_D2C_PC34 && graphic_is_d2c(ceiling_pit_graphic)) ||
-        (zone == DM1_V1_ZONE_CEILING_PIT_D2C_I34E && graphic_is_d2c(ceiling_pit_graphic))) {
+        (zone == DM1_V1_ZONE_CEILING_PIT_D2C_I34E && graphic_is_d2c(ceiling_pit_graphic)))
         return &s_d2c;
-    }
     if ((zone == DM1_V1_ZONE_CEILING_PIT_D2R_PC34 && graphic_is_d2l(ceiling_pit_graphic) && parity_flag) ||
-        (zone == DM1_V1_ZONE_CEILING_PIT_D2R_I34E && graphic_is_d2l(ceiling_pit_graphic) && parity_flag)) {
+        (zone == DM1_V1_ZONE_CEILING_PIT_D2R_I34E && graphic_is_d2l(ceiling_pit_graphic) && parity_flag))
         return &s_d2r;
-    }
     return NULL;
 }
 

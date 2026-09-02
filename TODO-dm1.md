@@ -17,10 +17,14 @@ Reviewed 2026-08-29. Only open work is listed here.
   scheduler models F0104/F0107/F0108/F0111/F0113/F0115, but
   `F0116`--`F0127` also call F0112 before their F0115 tail for the applicable
   open, pit and stair routes (for example `DUNVIEW.C:7359-7365` and
-  `7929-7935`). DM1 has a source-locked ceiling-pit helper, but M11 has not
-  bound its decoded source bitmap and zone to the live square transaction.
-  Do not promote an invented ceiling panel; add the real F0112 step and bind
-  it only after its original GRAPHICS.DAT material and clipping zone preflight.
+  `7929-7935`). The source helper now maps the real D2/D1/D0 bitmap frames
+  for both MEDIA508 and MEDIA720 explicitly: their numeric graphic/zone ids
+  overlap, so the media profile is mandatory and auto-detection must not be
+  extended past the legacy D2 contract. M11 still lacks the decoded
+  level-above pit state that F0112 consults, so it has not bound that material
+  into the live square transaction. Do not promote an invented ceiling panel;
+  thread that source state, then bind the original GRAPHICS.DAT material and
+  clipping zone through preflight.
 - Complete D3L2/D3R2 F0115 material consumers. The live object route now
   consumes the original layout-696 C2500 rows 3/4 through the decoded source
   Thing and GRAPHICS.DAT, including the depth-3 cell gate and C10 blit. The
