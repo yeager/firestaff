@@ -1,3 +1,50 @@
+# Firestaff v3.0.324
+
+## DM1
+
+### Fixed
+
+- `Amiga format-5 C1 restore`: Native in-memory save loading now decodes the
+  original big-endian ACTIVE_GROUP records, validates every live row against
+  the authenticated F0434 dungeon tail, and restores sparse group ownership
+  without extracting game data. The supplied Amiga v2.0 save disk continues
+  to verify through direct CLI and start-menu launch.
+
+## CSB
+
+### Fixed
+
+- `Atari utility 7z admission`: Updated the native media scanner to recognize
+  a supported one-member LZMA2 7z that contains original CSB STX/ST/MSA
+  media, so the utility disk remains a native candidate rather than producing
+  an external-tool diagnostic.
+
+## Nexus
+
+### Fixed
+
+- `native test isolation`: Updated save and script-VM verification to use
+  bounded build-owned storage and portable native hashes; absent authentic
+  DGN and MNS capture corpora report explicit skips instead of false failures.
+
+## Theron
+
+### Changed
+
+- `Japanese CD intake`: Updated native verification to cover the supplied
+  Japanese raw CUE and later-dungeon startup routes without requiring an
+  emulator at runtime.
+
+## Verification
+
+### Verified
+
+- Re-ran the complete local DM1 and CSB CTest labels against the supplied
+  licensed media, including direct CLI and start-menu routes for supported
+  Atari ST, Amiga, DOS, and FM Towns editions.
+- Ran release-note policy, source diff validation, and repository secret
+  scanning before tagging.
+
 # Firestaff v3.0.323
 
 ## DM1
