@@ -102,6 +102,71 @@ static void test_palette_d2(void)
     assert(pal != NULL);
 }
 
+/* F0676/F0677 do not use an ordinary side-pane placement.  MEDIA720 F0115
+ * indexes G2033[14]/[15], which select raw G0224 C3200 rows 3/4.  Keep the
+ * plan adapter covered here as well as the lower-level coordinate table
+ * test: a row regression must not silently fall back to synthesized pane
+ * geometry. */
+static void test_raw_c3200_outer_lane_draw_plan(void)
+{
+    /* Swamp Slime's G0219 coordinate-set nibble is zero, matching the
+     * directly audited row-3/4 points below. */
+    const int types[] = { DM1_CREATURE_SWAMP_SLIME };
+    const int counts[] = { 1 };
+    const int directions[] = { 2 };
+    DM1_CreatureDrawPlan plan;
+
+    assert(dm1_creature_raw_c3200_draw_plan(types, counts, directions, 1,
+                                             3, &plan) == 1);
+    assert(plan.count == 1);
+    assert(plan.entries[0].creature_type == DM1_CREATURE_SWAMP_SLIME);
+    assert(plan.entries[0].creature_direction == 2);
+    assert(plan.entries[0].placement.source_anchor_valid == 1);
+    assert(plan.entries[0].placement.source_depth_index == 2);
+    assert(plan.entries[0].placement.source_anchor_x == 112);
+    assert(plan.entries[0].placement.source_anchor_y == 85);
+
+    assert(dm1_creature_raw_c3200_draw_plan(types, counts, directions, 1,
+                                             4, &plan) == 1);
+    assert(plan.count == 1);
+    assert(plan.entries[0].placement.source_anchor_x == 120);
+    assert(plan.entries[0].placement.source_anchor_y == 85);
+
+    assert(dm1_creature_raw_c3200_draw_plan(types, counts, directions, 1,
+                                             9, &plan) == 0);
+    assert(plan.count == 0);
+
+    /* The outer adapter must retain G0219's coordinate-set selection, not
+     * merely reproduce the set-zero sample above.  Giant Scorpion is set 1
+     * and Wizard Eye is set 2 in the original aspect table. */
+    {
+        const int set_one_type[] = { DM1_CREATURE_GIANT_SCORPION };
+        const int set_two_type[] = { DM1_CREATURE_WIZARD_EYE };
+
+        assert(dm1_creature_raw_c3200_draw_plan(set_one_type, counts,
+                                                 directions, 1, 3,
+                                                 &plan) == 1);
+        assert(plan.entries[0].placement.source_anchor_x == 112);
+        assert(plan.entries[0].placement.source_anchor_y == 89);
+        assert(dm1_creature_raw_c3200_draw_plan(set_one_type, counts,
+                                                 directions, 1, 4,
+                                                 &plan) == 1);
+        assert(plan.entries[0].placement.source_anchor_x == 125);
+        assert(plan.entries[0].placement.source_anchor_y == 90);
+
+        assert(dm1_creature_raw_c3200_draw_plan(set_two_type, counts,
+                                                 directions, 1, 3,
+                                                 &plan) == 1);
+        assert(plan.entries[0].placement.source_anchor_x == 112);
+        assert(plan.entries[0].placement.source_anchor_y == 66);
+        assert(dm1_creature_raw_c3200_draw_plan(set_two_type, counts,
+                                                 directions, 1, 4,
+                                                 &plan) == 1);
+        assert(plan.entries[0].placement.source_anchor_x == 120);
+        assert(plan.entries[0].placement.source_anchor_y == 66);
+    }
+}
+
 int main(void)
 {
     test_creature_types();
@@ -118,7 +183,8 @@ int main(void)
     test_transparent_color();
     test_palette_d3();
     test_palette_d2();
+    test_raw_c3200_outer_lane_draw_plan();
 
-    puts("ok: DM1 creature render (Q-DM1-03) 14 tests passed");
+    puts("ok: DM1 creature render (Q-DM1-03) 15 tests passed");
     return 0;
 }
