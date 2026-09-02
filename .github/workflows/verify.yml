@@ -332,7 +332,20 @@ jobs:
           cache: false
 
       - name: Install lefthook
-        run: go install github.com/evilmartians/lefthook@latest
+        # The public Go checksum service occasionally terminates an HTTP/2
+        # stream while resolving Lefthook's transitive modules.  Retrying the
+        # immutable install is safe and keeps that transient outage from
+        # skipping the repository hygiene gate.
+        run: |
+          for attempt in 1 2 3; do
+            if go install github.com/evilmartians/lefthook@latest; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              sleep $((attempt * 5))
+            fi
+          done
+          exit 1
 
       - name: Prepare empty asset data dir
         run: mkdir -p "$HOME/.firestaff/data"
