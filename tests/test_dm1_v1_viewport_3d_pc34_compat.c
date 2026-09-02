@@ -419,6 +419,26 @@ static void test_redmcsb_f0115_object_c2500_geometry(void)
         check_int("F0115.creature.c3200.side.d2.pair.x", sx, 135);
         check_int("F0115.creature.c3200.side.d2.pair.y", sy, 90);
     }
+
+    {
+        int x = -999, y = -999;
+        /* MEDIA720 G2033 maps F0676 D3L2 to raw C3200 row 3 and
+         * F0677 D3R2 to row 4.  Assert those source rows directly so an
+         * outer lane cannot quietly regress to ordinary pane placement. */
+        check_int("F0115.creature.c3200.raw.d3l2.row3.ok",
+                  dm1_viewport_3d_c3200_creature_raw_zone_point(
+                      0, 3, 1, 0, &x, &y), 1);
+        check_int("F0115.creature.c3200.raw.d3l2.row3.x", x, 112);
+        check_int("F0115.creature.c3200.raw.d3l2.row3.y", y, 85);
+        check_int("F0115.creature.c3200.raw.d3r2.row4.ok",
+                  dm1_viewport_3d_c3200_creature_raw_zone_point(
+                      0, 4, 1, 0, &x, &y), 1);
+        check_int("F0115.creature.c3200.raw.d3r2.row4.x", x, 120);
+        check_int("F0115.creature.c3200.raw.d3r2.row4.y", y, 85);
+        check_int("F0115.creature.c3200.raw.unsupported_row",
+                  dm1_viewport_3d_c3200_creature_raw_zone_point(
+                      0, 9, 1, 0, NULL, NULL), 0);
+    }
 }
 
 static void test_redmcsb_f0115_creature_c3200_geometry(void)

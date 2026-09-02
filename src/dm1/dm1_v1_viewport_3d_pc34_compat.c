@@ -881,6 +881,42 @@ int dm1_viewport_3d_c3200_creature_side_zone_point(int coord_set,
     return 1;
 }
 
+int dm1_viewport_3d_c3200_creature_raw_zone_point(int coord_set,
+                                                  int row_index,
+                                                  int visible_count,
+                                                  int slot_index,
+                                                  int *out_x,
+                                                  int *out_y)
+{
+    /* G0224 is indexed by G2033, not by a host-facing side/depth pair.
+     * Keep that raw mapping visible for F0676/F0677: their D3L2/D3R2 view
+     * squares resolve to rows 3 and 4 respectively (DUNVIEW.C:373,
+     * 1836-1903, 5211, 5613-5617).  The existing center/side accessors
+     * contain the verbatim G0224 points; this adapter selects the original
+     * row, never pane geometry. */
+    switch (row_index) {
+        case 0: return dm1_viewport_3d_c3200_creature_zone_point(
+            coord_set, 2, visible_count, slot_index, out_x, out_y);
+        case 1: return dm1_viewport_3d_c3200_creature_side_zone_point(
+            coord_set, 2, -1, visible_count, slot_index, out_x, out_y);
+        case 2: return dm1_viewport_3d_c3200_creature_side_zone_point(
+            coord_set, 2, 1, visible_count, slot_index, out_x, out_y);
+        case 3: return dm1_viewport_3d_c3200_creature_zone_point(
+            coord_set, 1, visible_count, slot_index, out_x, out_y);
+        case 4: return dm1_viewport_3d_c3200_creature_side_zone_point(
+            coord_set, 1, -1, visible_count, slot_index, out_x, out_y);
+        case 5: return dm1_viewport_3d_c3200_creature_side_zone_point(
+            coord_set, 1, 1, visible_count, slot_index, out_x, out_y);
+        case 6: return dm1_viewport_3d_c3200_creature_zone_point(
+            coord_set, 0, visible_count, slot_index, out_x, out_y);
+        case 7: return dm1_viewport_3d_c3200_creature_side_zone_point(
+            coord_set, 0, -1, visible_count, slot_index, out_x, out_y);
+        case 8: return dm1_viewport_3d_c3200_creature_side_zone_point(
+            coord_set, 0, 1, visible_count, slot_index, out_x, out_y);
+        default: return 0;
+    }
+}
+
 /* ReDMCSB DUNVIEW.C F0128 lines 8488-8499 dispatch D3L, D3R, then D3C
  * after resolving their map cells through DUNGEON.C F0150 lines 1371-1421.
  * F0116 lines 6406-6437 prove D3L wall/alcove handling returns before the

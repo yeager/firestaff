@@ -315,6 +315,12 @@ int dm1_creature_side_draw_plan(const int *creatureTypes,
                                 int paneW,
                                 int paneH,
                                 DM1_CreatureDrawPlan *outPlan);
+int dm1_creature_raw_c3200_draw_plan(const int *creatureTypes,
+                                     const int *creatureCounts,
+                                     const int *creatureDirections,
+                                     int groupCount,
+                                     int rawRow,
+                                     DM1_CreatureDrawPlan *outPlan);
 const unsigned char* dm1_creature_palette_d3(void);
 const unsigned char* dm1_creature_palette_d2(void);
 

@@ -45449,6 +45449,52 @@ static void m11_draw_dm1_d3_outer_f0115_objects(
             sourceCell, itemIndex, 2, sourceZoneRow,
             cell.floorItemThings[itemIndex], cell.mapX, cell.mapY);
     }
+    if (cell.creatureGroupCount > 0) {
+        DM1_CreatureDrawPlan plan;
+        int planIndex;
+        /* F0115 selects C3200 through G2033[14]/[15], not the ordinary
+         * D3L/D3R side route.  The raw-row plan consumes exactly that
+         * layout-696 coordinate source and leaves a zero G0224 pair blank. */
+        (void)dm1_creature_raw_c3200_draw_plan(
+            cell.creatureTypes, cell.creatureCountsPerGroup,
+            cell.creatureDirections, cell.creatureGroupCount,
+            sourceZoneRow, &plan);
+        for (planIndex = 0; planIndex < plan.count; ++planIndex) {
+            const DM1_CreatureDrawPlanEntry *entry = &plan.entries[planIndex];
+            if (entry->group_index < 0 ||
+                entry->group_index >= cell.creatureGroupCount ||
+                !m11_dm1_f0115_order_includes_cell(
+                    f0115CellOrder,
+                    cell.creatureCells[entry->group_index])) {
+                continue;
+            }
+            (void)m11_draw_creature_sprite_source_anchored(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                &entry->placement, entry->creature_type,
+                entry->creature_direction);
+        }
+    }
+    if (cell.dm1MaterializationDecisionReady &&
+        cell.dm1MaterializationDecision.drawRuntimeProjectiles &&
+        cell.renderableProjectileCount > 0) {
+        int projectileIndex;
+        for (projectileIndex = 0;
+             projectileIndex < cell.renderableProjectileCount;
+             ++projectileIndex) {
+            M11_ViewportCell projectile;
+            if (!m11_viewport_cell_projectile_sample(&cell, projectileIndex,
+                                                      &projectile) ||
+                !m11_viewport_cell_has_renderable_projectile(&projectile) ||
+                !m11_dm1_f0115_order_includes_cell(
+                    f0115CellOrder, projectile.firstProjectileCell)) {
+                continue;
+            }
+            (void)m11_draw_viewport_projectile_sprite(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                M11_VIEWPORT_X, M11_VIEWPORT_Y, M11_VIEWPORT_W,
+                M11_VIEWPORT_H, &projectile, 2, sourceZoneRow);
+        }
+    }
 }
 
 static int m11_dm1_center_line_clear_before_depth(

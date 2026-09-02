@@ -614,6 +614,12 @@ int dm1_viewport_3d_c3200_creature_side_zone_point(int coord_set,
                                                    int slot_index,
                                                    int *out_x,
                                                    int *out_y);
+int dm1_viewport_3d_c3200_creature_raw_zone_point(int coord_set,
+                                                  int row_index,
+                                                  int visible_count,
+                                                  int slot_index,
+                                                  int *out_x,
+                                                  int *out_y);
 int dm1_viewport_3d_primary_side_wall_max_forward_pc34(
     int center_max_visible_forward);
 int dm1_viewport_3d_use_flipped_walls_pc34(

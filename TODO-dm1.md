@@ -20,11 +20,12 @@ Reviewed 2026-08-29. Only open work is listed here.
   pass; they do not borrow ordinary D3L/D3R pane geometry. For creatures,
   MEDIA720 F0115 maps `C14_VIEW_SQUARE_D3L2`/`C15_VIEW_SQUARE_D3R2` through
   `G2033[14]`/`G2033[15]` to raw C3200 rows 3/4 (`DUNVIEW.C:373, 5211,
-  5613-5617`); the existing helper only represents the ordinary D3/D2/D1
-  side rows, so it cannot be reused. C3200 creature and C2900 projectile
-  consumers still need raw-row-specific placement and reviewed bitmap blits,
-  so they deliberately remain no-draw rather than fabricated or
-  panel-derived content.
+  5613-5617`). The native raw-C3200 plan now consumes those exact rows and
+  rejects blank source coordinates; the same F0676/F0677 consumer draws
+  C2900 through its source row and original cell partition. The existing
+  helper for ordinary D3/D2/D1 side rows remains separate. What remains is
+  capture-backed pixel comparison for those uncommon creature/projectile
+  routes, not a host pane substitute.
 - Obtain authentic C13-save and original capture corpus for remaining HoC,
   top-row and action routes; bind each to the PC 3.4 runtime before promotion.
   The supplied French DOS save pair proves its own backed F0435/F0433 route,
