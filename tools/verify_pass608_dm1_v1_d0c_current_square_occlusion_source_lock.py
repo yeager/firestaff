@@ -2,31 +2,15 @@
 from __future__ import annotations
 
 import json
-import os
 import subprocess
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
+from redmcsb_source import source_root
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA = Path.home() / ".openclaw/data"
-EXTERNAL_DATA = Path("/Volumes/Extern-disk/openclaw-data/firestaff")
-
-def first_existing(env_name: str, candidates: list[Path]) -> Path:
-    env = os.environ.get(env_name)
-    if env:
-        return Path(env)
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate
-    return candidates[0]
-
-RED = first_existing("FIRESTAFF_REDMCSB_SOURCE", [
-    DATA / "firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-    EXTERNAL_DATA / "firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-    Path("/home/trv2/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"),
-])
+RED = source_root(("DUNVIEW.C", "DEFS.H"))
 TEST_BINARY = resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_viewport_3d_pc34_compat"
 MANIFEST = ROOT / "parity-evidence/verification/pass608_dm1_v1_d0c_current_square_occlusion_source_lock/manifest.json"
 REPORT = ROOT / "parity-evidence/pass608_dm1_v1_d0c_current_square_occlusion_source_lock.md"

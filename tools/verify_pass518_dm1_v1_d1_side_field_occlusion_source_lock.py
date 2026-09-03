@@ -4,7 +4,8 @@ import json,subprocess
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
-ROOT=Path(__file__).resolve().parents[1]; RED=Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C").expanduser()
+from redmcsb_source import source_root
+ROOT=Path(__file__).resolve().parents[1]; RED=source_root(("DUNVIEW.C",))/"DUNVIEW.C"
 MANIFEST=ROOT/"parity-evidence/verification/pass518_dm1_v1_d1_side_field_occlusion_source_lock/manifest.json"; REPORT=ROOT/"parity-evidence/pass518_dm1_v1_d1_side_field_occlusion_source_lock.md"
 checks=[("D1L","7391-7557",["L0213_i_Order = C0x0032_CELL_ORDER_BACKRIGHT_FRONTRIGHT;","F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF","F0113_DUNGEONVIEW_DrawField","C713_ZONE_WALL_D1L"]),("D1R","7559-7725",["L0215_i_Order = C0x0041_CELL_ORDER_BACKLEFT_FRONTLEFT;","F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF","F0113_DUNGEONVIEW_DrawField","C714_ZONE_WALL_D1R"])]
 red=RED.read_text(encoding="latin-1",errors="replace"); rows=[]

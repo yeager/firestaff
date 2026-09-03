@@ -10,10 +10,11 @@ import subprocess
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
+from redmcsb_source import source_root
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass506_dm1_v1_stairs_movement_side_effect_source_lock"
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED = source_root(("CLIKMENU.C", "DUNGEON.C"))
 CLIKMENU = RED / "CLIKMENU.C"
 DUNGEON = RED / "DUNGEON.C"
 COMMAND_CORE_C = ROOT / "src/dm1/dm1_v1_movement_command_core_pc34_compat.c"
