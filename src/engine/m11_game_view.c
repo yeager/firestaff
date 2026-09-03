@@ -58041,15 +58041,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * D3C..D1C, and their F0110 button tails in source order, so it is the
      * sole F0111 owner once the authenticated scheduler has been admitted. */
 
-    /* ReDMCSB DUNVIEW.C F0128 completes D1L/D1R before its D1C F0107
-     * ornament branch. M11's split renderer may replay those side panels
-     * after the first ornament batch; consume C127's C346->C026 pair only
-     * after that replay, but before D1C F0115 objects/projectiles. This
-     * keeps a live mirror from being erased by a side-wall material pass
-     * without letting it cover the later thing layer. */
-    m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
-                                    framebufferWidth, framebufferHeight);
-
     /* ReDMCSB DUNVIEW.C F0128 calls the D3/D2 outer lanes before the
      * matching normal lanes: D3L2/D3R2, D3L/D3R/D3C,
      * D2L2/D2R2, D2L/D2R/D2C, then D1L/D1R/D1C.  The L2/R2 routines do
@@ -58246,6 +58237,15 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth,
                                          framebufferHeight, replayForward,
                                          replayForward, cells, 0);
+            /* F0124 owns the D1C F0107 mirror route after D1L/D1R have
+             * completed, and before its D1C F0115/F0111 material.  A
+             * global before/after replay can either be erased by D1C wall
+             * work or incorrectly cover a later source-owned thing. */
+            if (replayForward == 1) {
+                m11_draw_dm1_front_mirror_route(
+                    state, &cells[0][1], framebuffer,
+                    framebufferWidth, framebufferHeight);
+            }
             m11_dm1_f0128_replay_door_pass1_square(
                 state, framebuffer, framebufferWidth, framebufferHeight,
                 frames, cells, &visibility, &dm1F0128Plan,
@@ -58305,8 +58305,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         cells, &visibility, &dm1F0128Plan, DM1_V1_F0128_VIEW_SQUARE_D1C,
         visibility.nearest_blocking_center_depth_index,
         visibility.center_visible_depth_mask);
-    m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
-                                    framebufferWidth, framebufferHeight);
     /* The plan-owned foreground/D0 transactions above have already consumed
      * every admitted F0104 stairs step in its owning square.  Replaying the
      * old global near-to-far batch here paints a distant stair bitmap after a
