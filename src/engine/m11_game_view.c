@@ -58028,8 +58028,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * transaction below.  Do not precompose a global ornament batch here:
      * drawing it again after a different source square can leave a torch or
      * other wall ornament on the wrong completed wall/door layer. */
-    m11_draw_dm1_thieves_eye_d1c_wall_material(
-        state, framebuffer, framebufferWidth, framebufferHeight, cells);
     /* D3..D1 F0113 is emitted below from the verified per-square plan,
      * immediately after each square's F0115 route. */
     /* F0111 is emitted only by the completed-square replay below.  The old
@@ -58305,6 +58303,12 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         cells, &visibility, &dm1F0128Plan, DM1_V1_F0128_VIEW_SQUARE_D1C,
         visibility.nearest_blocking_center_depth_index,
         visibility.center_visible_depth_mask);
+    /* DUNVIEW.C F0124:7789-7869 builds the D1C Thieves Eye visible area
+     * before the wall, then restores it only after that wall's F0115 work.
+     * The route itself rejects non-wall D1C cells, so this is its sole
+     * source-order owner rather than a global pre-wall overlay. */
+    m11_draw_dm1_thieves_eye_d1c_wall_material(
+        state, framebuffer, framebufferWidth, framebufferHeight, cells);
     /* The plan-owned foreground/D0 transactions above have already consumed
      * every admitted F0104 stairs step in its owning square.  Replaying the
      * old global near-to-far batch here paints a distant stair bitmap after a
