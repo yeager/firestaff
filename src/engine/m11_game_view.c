@@ -58044,24 +58044,14 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         state, framebuffer, framebufferWidth, framebufferHeight, cells);
     /* D3..D1 F0113 is emitted below from the verified per-square plan,
      * immediately after each square's F0115 route. */
-    m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
-        state, framebuffer, framebufferWidth, framebufferHeight,
-        maxVisibleForward, cells, 99);
-    m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight,
-                             1, maxVisibleForward, cells, 99);
-    m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                       1, maxVisibleForward, cells, 99);
-    m11_draw_dm1_side_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight,
-                                          1, maxVisibleForward, cells, 99);
-    m11_draw_dm1_center_doors(state, framebuffer, framebufferWidth, framebufferHeight,
-                              1, 3, cells);
-    m11_draw_dm1_center_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                       1, 3, cells);
-    m11_draw_dm1_center_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight,
-                                             1, 3, cells);
-    m11_draw_dm1_center_door_buttons(state, framebuffer, framebufferWidth, framebufferHeight, cells);
-    m11_draw_dm1_d3r_door_button(state, framebuffer, framebufferWidth, framebufferHeight,
-                                  maxVisibleForward, cells);
+    /* F0111 is emitted only by the completed-square replay below.  The old
+     * global door batch painted every panel, ornament, destroyed mask and
+     * button before F0128 reached its owning D3L2..D1C route, then painted
+     * the same material a second time in the replay.  That intermediate
+     * host order can leak a farther door/altar-facing panel into a nearer
+     * wall or door overlap.  The replay covers D3L2/D3R2, all side lanes,
+     * D3C..D1C, and their F0110 button tails in source order, so it is the
+     * sole F0111 owner once the authenticated scheduler has been admitted. */
 
     /* ReDMCSB DUNVIEW.C F0128 draws complete squares far-to-near
      * (D3 side/center, then D2 side/center, then D1 side/center).
