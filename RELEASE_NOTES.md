@@ -1,3 +1,33 @@
+# Firestaff v3.0.327
+
+## DM1
+
+### Fixed
+
+- `ReDMCSB source-lock verifiers`: Updated to resolve the configured authenticated source
+  tree and active build executable rather than a stale local checkout, keeping
+  door, occlusion, movement, and autosave evidence bound to the native source
+  lane.
+- `F0128 door and field replay audits`: Corrected source-order checks to
+  their owning square replay so the verified front-door and lateral-occlusion
+  rules match the native renderer.
+
+## CSB
+
+### Changed
+
+- `CSBWin text audit`: Updated CSBWin as optional secondary evidence while
+  requiring the configured ReDMCSB source as the primary native audit input.
+
+## Verification
+
+### Verified
+
+- `native real-media startup matrix`: Passed direct CLI and start-menu checks
+  for DM1 and CSB across DOS, Atari ST, Amiga, and FM Towns, plus the selected
+  real-media routes for DM2, Nexus, and Theron without runtime emulator or
+  BIOS dependencies.
+
 # Firestaff v3.0.326
 
 ## DM1
