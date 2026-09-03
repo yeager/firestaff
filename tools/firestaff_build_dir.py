@@ -67,3 +67,36 @@ def resolve_build_dir(
     if found is not None:
         return found
     return fallback
+
+
+def resolve_build_executable(
+    root: Path,
+    name: str,
+    fallback: Path,
+    env_var: str = "FIRESTAFF_BUILD_DIR",
+) -> Path:
+    """Find a built executable, not merely the first configured build tree.
+
+    Developers may keep a configured ``build/`` tree alongside a complete
+    named build.  Source-lock checks must select the tree that actually owns
+    their native test binary instead of failing on the empty configured tree.
+    """
+    env = os.environ.get(env_var)
+    candidates: list[Path] = []
+    if env:
+        candidates.append(Path(env))
+    configured = find_build_dir(root, env_var)
+    if configured is not None:
+        candidates.append(configured)
+    candidates.extend(sorted(root.glob("build-*")))
+    candidates.append(fallback)
+    seen: set[Path] = set()
+    for candidate in candidates:
+        candidate = candidate.resolve()
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        executable = candidate / name
+        if executable.is_file():
+            return executable
+    return fallback / name

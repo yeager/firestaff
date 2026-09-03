@@ -9,7 +9,7 @@ import re
 import subprocess
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from firestaff_build_dir import resolve_build_dir, find_build_dir
+from firestaff_build_dir import resolve_build_executable
 from redmcsb_source import source_root
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -186,7 +186,8 @@ def main() -> int:
         if missing:
             raise AssertionError(f"{label}: missing {missing!r}")
 
-    test_out = run([str(resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_movement_pipeline_pc34_compat")])
+    test_out = run([str(resolve_build_executable(
+        ROOT, "test_dm1_v1_movement_pipeline_pc34_compat", ROOT / "build"))])
     status = "PASS506_DM1_V1_STAIRS_MOVEMENT_SIDE_EFFECT_SOURCE_LOCK_PROVEN"
 
     manifest = {

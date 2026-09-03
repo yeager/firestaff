@@ -6,7 +6,7 @@ from pathlib import Path
 import subprocess
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from firestaff_build_dir import resolve_build_dir, find_build_dir
+from firestaff_build_dir import resolve_build_executable
 from redmcsb_source import source_root
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -105,7 +105,8 @@ def main() -> int:
     for rel, needle in LOCAL_NEEDLES:
         text = (ROOT / rel).read_text(encoding="utf-8", errors="replace")
         local_rows.append({"file": rel, "needle": needle, "status": "PASS" if needle in text else "FAIL"})
-    runtime = run([str(resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_viewport_3d_pc34_compat")])
+    runtime = run([str(resolve_build_executable(
+        ROOT, "test_dm1_v1_viewport_3d_pc34_compat", ROOT / "build"))])
     ok = all(r["status"] == "PASS" for r in red_rows + local_rows) and runtime["passed"]
     manifest = {
         "schema": "pass517_dm1_v1_d3_d2_field_occlusion_source_lock.v1",

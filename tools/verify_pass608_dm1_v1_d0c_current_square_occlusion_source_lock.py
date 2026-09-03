@@ -6,12 +6,12 @@ import subprocess
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from firestaff_build_dir import resolve_build_dir, find_build_dir
+from firestaff_build_dir import resolve_build_executable
 from redmcsb_source import source_root
 
 ROOT = Path(__file__).resolve().parents[1]
 RED = source_root(("DUNVIEW.C", "DEFS.H"))
-TEST_BINARY = resolve_build_dir(ROOT, ROOT / "build") / "test_dm1_v1_viewport_3d_pc34_compat"
+TEST_BINARY = resolve_build_executable(ROOT, "test_dm1_v1_viewport_3d_pc34_compat", ROOT / "build")
 MANIFEST = ROOT / "parity-evidence/verification/pass608_dm1_v1_d0c_current_square_occlusion_source_lock/manifest.json"
 REPORT = ROOT / "parity-evidence/pass608_dm1_v1_d0c_current_square_occlusion_source_lock.md"
 STATUS = "PASS608_DM1_V1_D0C_CURRENT_SQUARE_OCCLUSION_SOURCE_LOCKED"
