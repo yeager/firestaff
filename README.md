@@ -165,7 +165,7 @@ game media and every user-local input.
 | CSB | — | Bounded Atari ST, Amiga and FM Towns title/start-menu/runtime routes | CSBWin source/disassembly reference | PC-9801, X68000 |
 | DM2 | Bounded DOS, Amiga, FM Towns and Macintosh routes | New Game/startup, source-owned runtime slices and real-media resume where supplied | Mac JP/FR preservation | X68000 |
 | Nexus | — | Saturn Japanese bounded phase launch | Saturn demo/fan translations | — |
-| Theron's Quest | — | — | PC Engine/TurboGrafx US and Japanese Track 02 routes | — |
+| Theron's Quest | — | Bounded native PC Engine/TurboGrafx US CloneCD ZIP and Japanese CUE/Track 02 startup routes | Source-only dungeon loading; gameplay, save, and presentation consumers remain capture-gated | — |
 
 This table is a summary. Use [Platform status](docs/PLATFORM_STATUS.md) for
 the exact feature boundary and [Project status](docs/PROJECT_STATUS.md) for
