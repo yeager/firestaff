@@ -58194,6 +58194,16 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                             : (relSide < 0 ? DM1_V1_F0128_VIEW_SQUARE_D1L
                                            : DM1_V1_F0128_VIEW_SQUARE_D1R)),
                     blockingCenterDepth, centerContentMask);
+                /* ReDMCSB DUNVIEW.C F0117 emits the exceptional D3R F0110
+                 * button before F0111 draws that same square's door panel.
+                 * It must remain in this one square transaction, but cannot
+                 * be deferred behind the panel without reversing the source
+                 * order and exposing the button over the completed door. */
+                if (replayForward == 3 && relSide > 0) {
+                    m11_draw_dm1_d3r_door_button(
+                        state, framebuffer, framebufferWidth,
+                        framebufferHeight, replayForward, cells);
+                }
                 m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth,
                                         framebufferHeight, replayForward,
                                         replayForward, cells, relSide);
@@ -58205,14 +58215,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                                        framebufferWidth, framebufferHeight,
                                                        replayForward, replayForward, cells,
                                                        relSide);
-                /* DUNVIEW.C F0117 reaches F0110 for the D3R door before
-                 * F0128 advances to D3C.  Keep the exceptional side button
-                 * in that completed D3R transaction as well. */
-                if (replayForward == 3 && relSide > 0) {
-                    m11_draw_dm1_d3r_door_button(
-                        state, framebuffer, framebufferWidth,
-                        framebufferHeight, replayForward, cells);
-                }
                 /* F0115/F0113 are part of this DnL or DnR transaction, not
                  * a later left/right batch. This is especially important at
                  * D1, where both side routes must finish before D1C starts. */
@@ -58251,6 +58253,12 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                 : (replayForward == 2 ? DM1_V1_F0128_VIEW_SQUARE_D2C
                                       : DM1_V1_F0128_VIEW_SQUARE_D1C),
                 blockingCenterDepth, centerContentMask);
+            /* F0118/F0121/F0124 invoke F0110 before F0111 for D3C, D2C,
+             * and D1C.  Keep the source button inside this square's door
+             * transaction, before its panel material is installed. */
+            m11_draw_dm1_center_door_buttons(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                cells, replayForward - 1);
             /* F0111 belongs to the center-square route immediately after
              * its wall envelope.  The deferred F0115 pass otherwise leaves
              * a far object on top of a closed D3C/D2C/D1C door because the
@@ -58274,12 +58282,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             m11_draw_dm1_center_destroyed_door_masks(
                 state, framebuffer, framebufferWidth, framebufferHeight,
                 replayForward, replayForward, cells);
-            /* F0110 completes this F0111 door transaction.  Do not defer
-             * its button to a global D3..D1 pass: the next source square
-             * may legitimately cover it. */
-            m11_draw_dm1_center_door_buttons(
-                state, framebuffer, framebufferWidth, framebufferHeight,
-                cells, replayForward - 1);
             if (replayForward > 1) {
                 int centerSquare = replayForward == 3
                     ? DM1_V1_F0128_VIEW_SQUARE_D3C

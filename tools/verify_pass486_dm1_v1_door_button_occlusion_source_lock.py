@@ -173,13 +173,13 @@ def firestaff_audit() -> dict[str, int]:
     ], "Firestaff D3R side-door button guard")
     require(v3d, "{ 199, 204, 41, 44, 8, 4", "Firestaff D3R button coordinate row")
     require_order(viewport, [
+        "m11_dm1_f0128_replay_door_pass1_square",
+        "m11_draw_dm1_d3r_door_button",
         "m11_draw_dm1_side_doors",
-        "m11_draw_dm1_side_door_ornaments",
+        "m11_draw_dm1_center_door_buttons",
         "m11_draw_dm1_center_doors",
         "m11_draw_dm1_center_door_ornaments",
-        "m11_draw_dm1_center_door_buttons",
-        "m11_draw_dm1_d3r_door_button",
-    ], "Firestaff door button layer placement")
+    ], "Firestaff source-order door button placement")
     return {"centerButtonChecks": 9, "centerCoordinateChecks": 3, "d3rButtonChecks": 11, "viewportOrderChecks": 6}
 
 
