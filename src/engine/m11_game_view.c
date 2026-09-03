@@ -58015,10 +58015,10 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * panels using original wall-set bitmaps and original layout-696
      * zones.  This is still narrower than full DUNVIEW.C: ornaments,
      * doors, pits, stairs, fields, and exact object order remain next. */
-    /* ReDMCSB F0128 invokes every D3..D1 square route; geometry is hidden
-     * by later source panels, not pre-culled by a host visibility shortcut. */
-    m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,
-                             1, 3, cells, -1, M11_DM1_REL_SIDE_ALL);
+    /* F0104 pit material is consumed only by the owning square's verified
+     * plan span in the foreground replay below.  A former global D3..D1
+     * batch here duplicated that material and could put an old pit bitmap
+     * over a nearer completed wall/door transaction. */
     /* ReDMCSB DUNVIEW.C F0128: side squares are drawn in source order before
      * the same-depth center square (D3L/D3R before D3C, D2L/D2R before D2C,
      * D1L/D1R before D1C).  Do not cap the primary side-wall pass at the
@@ -58350,15 +58350,17 @@ static void m11_draw_viewport(const M11_GameViewState* state,
         visibility.center_visible_depth_mask);
     m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
                                     framebufferWidth, framebufferHeight);
-    /* The final F0128 center-wall replay is an occlusion repair.  F0104's
-     * floor-feature pass must follow it, otherwise an exact stairs bitmap on
-     * an open square can be painted over by the replayed wall envelope.  It
-     * must, however, stop at the same nearest closed center square as the
-     * source visibility receipt: replaying D2/D3 stairs after a D1 wall or
-     * door reintroduced them through that occluder. */
-    m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,
-                        1, maxVisibleForward, cells, -1,
-                        M11_DM1_REL_SIDE_ALL);
+    /* The plan-owned foreground/D0 transactions above have already consumed
+     * every admitted F0104 stairs step in its owning square.  Replaying the
+     * old global near-to-far batch here paints a distant stair bitmap after a
+     * nearer wall or door has completed, which is exactly the source-invalid
+     * "stairs through walls" artefact.  Keep that batch only as the bounded
+     * fallback when the authenticated F0128 plan was unavailable. */
+    if (!dm1F0128PlanDispatched) {
+        m11_draw_dm1_stairs(state, framebuffer, framebufferWidth,
+                            framebufferHeight, 1, maxVisibleForward, cells,
+                            -1, M11_DM1_REL_SIDE_ALL);
+    }
     m11_draw_dm1_deferred_explosion_pass(state, framebuffer,
                                          framebufferWidth, framebufferHeight,
                                          frames, cells);
