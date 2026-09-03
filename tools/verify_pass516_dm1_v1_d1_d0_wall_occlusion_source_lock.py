@@ -65,7 +65,7 @@ SOURCE_CHECKS = [
 ]
 
 LOCAL_CHECKS = [
-    {"id": "local-d1-d0-wall-specs-present", "path": ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "lines": "1200-1215", "claim": "Firestaff exposes D1/D0 wall metadata with ReDMCSB return/alcove source anchors.", "ordered": [
+    {"id": "local-d1-d0-wall-specs-present", "path": ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "lines": "1244-1248", "claim": "Firestaff exposes D1/D0 wall metadata with ReDMCSB return/alcove source anchors.", "ordered": [
         "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R",
         "DUNVIEW.C:7459-7460 side ornament then return",
         "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L",
@@ -83,7 +83,7 @@ LOCAL_CHECKS = [
         "DM1_VIEW_SQUARE_D0L, 0, -1",
         "DM1_VIEW_SQUARE_D0R, 0,  1",
     ]},
-    {"id": "local-runtime-test-covers-d1-d0-wall-occlusion", "path": ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", "lines": "825-910", "claim": "The narrow runtime test checks D1/D0 zone/pairing and wall item occlusion outcomes.", "ordered": [
+    {"id": "local-runtime-test-covers-d1-d0-wall-occlusion", "path": ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", "lines": "851-946", "claim": "The narrow runtime test checks D1/D0 zone/pairing and wall item occlusion outcomes.", "ordered": [
         "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R",
         "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L",
         "DM1_VIEW_SQUARE_D1C,  DM1_WALL_D1C,  DM1_WALL_D1C",
