@@ -58031,17 +58031,15 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                             &visibility, 99);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight,
                              1, 3, cells);
-    /* Primary floor pass: pass the full D3..D1 range (constant 3), not
-     * maxVisibleForward.  ReDMCSB/pass361 architecture reconciliation
-     * establishes that primary floor geometry must not be pre-culled by a
-     * host visibility shortcut -- occluded floor cells are hidden by later
-     * source panels (walls, wall ornaments) rather than by the viewport
-     * lane-visibility receipt.  Side-lane and per-cell passes still use
-     * the receipt-derived maxVisibleForward as their bound. */
-    m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                  1, 3, cells, -1, M11_DM1_REL_SIDE_ALL);
-    m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                  1, maxVisibleForward, cells, 99);
+    /* F0108 floor ornaments, including pressure plates, are emitted only
+     * by their owning verified F0128 square span in the foreground replay.
+     * The old global D3..D1 batch duplicated those source operations before
+     * their square transaction and could leave a distant plate visible after
+     * a nearer wall/door had completed. */
+    /* F0104/F0107 wall ornaments are replayed in their owning F0128 square
+     * transaction below.  Do not precompose a global ornament batch here:
+     * drawing it again after a different source square can leave a torch or
+     * other wall ornament on the wrong completed wall/door layer. */
     m11_draw_dm1_thieves_eye_d1c_wall_material(
         state, framebuffer, framebufferWidth, framebufferHeight, cells);
     /* D3..D1 F0113 is emitted below from the verified per-square plan,
