@@ -41745,11 +41745,10 @@ static int m11_dm1_f0112_has_open_pit_above(const M11_GameViewState *state,
            (square & 0x08) != 0;
 }
 
-static void m11_draw_dm1_ceiling_pits(const M11_GameViewState* state,
-                                      unsigned char* framebuffer,
-                                      int fbW, int fbH,
-                                      int minVisibleForward,
-                                      int maxVisibleForward)
+static void m11_draw_dm1_ceiling_pit_at(const M11_GameViewState* state,
+                                        unsigned char* framebuffer,
+                                        int fbW, int fbH,
+                                        int relForward, int relSide)
 {
     static const struct {
         int relForward, relSide, graphic, zone, flip;
@@ -41765,8 +41764,8 @@ static void m11_draw_dm1_ceiling_pits(const M11_GameViewState* state,
         M11_ViewportCell cell;
         M11_DM1ZoneBlit blit;
         const DM1V1CeilingPitViewportRectPc34 *rect;
-        if (routes[i].relForward < minVisibleForward ||
-            routes[i].relForward > maxVisibleForward ||
+        if (routes[i].relForward != relForward ||
+            routes[i].relSide != relSide ||
             !m11_sample_viewport_cell(state, routes[i].relForward,
                                       routes[i].relSide, &cell) ||
             !m11_dm1_f0112_has_open_pit_above(state, &cell)) continue;
@@ -41783,6 +41782,25 @@ static void m11_draw_dm1_ceiling_pits(const M11_GameViewState* state,
         (void)m11_draw_dm1_zone_blit_maybe_flip(
             state, framebuffer, fbW, fbH, &blit,
             DM1_V1_CEILING_PIT_TRANSPARENT_PC34, routes[i].flip);
+        return;
+    }
+}
+
+static void m11_draw_dm1_ceiling_pits(const M11_GameViewState* state,
+                                      unsigned char* framebuffer,
+                                      int fbW, int fbH,
+                                      int minVisibleForward,
+                                      int maxVisibleForward)
+{
+    int relForward;
+    int relSide;
+
+    for (relForward = minVisibleForward; relForward <= maxVisibleForward;
+         ++relForward) {
+        for (relSide = -1; relSide <= 1; ++relSide) {
+            m11_draw_dm1_ceiling_pit_at(state, framebuffer, fbW, fbH,
+                                        relForward, relSide);
+        }
     }
 }
 
@@ -57403,7 +57421,7 @@ static void m11_repaint_dm1_f0128_front_wall_inscription(
 /* ── F0128 per-square scheduler live bridge ─────────────────────────
  * ReDMCSB DUNVIEW.C F0128:8318-8561 visits the 19 view squares in a
  * fixed source order and dispatches each square's merged F0104/F0107/
- * F0108/F0111/F0113/F0115 material families.  The DM1-owned contract
+ * F0108/F0111/F0112/F0113/F0115 material families.  The DM1-owned contract
  * module dm1_v1_f0128_per_square_scheduler_pc34_compat owns that
  * schedule; this bridge feeds it the live sampled view and lets the
  * verified plan drive the F0115 content loop below.  Contract-only:
@@ -57692,6 +57710,15 @@ static void m11_dm1_f0128_replay_foreground_square(
                 relForward, relForward, cells, relForward, relSide);
             continue;
         }
+        if (step->op == DM1_V1_F0128_STEP_F0112_CEILING_PIT) {
+            /* F0112 is part of the current square's source tail, after
+             * F0108/F0104 but before its F0115 material.  Do not let the
+             * old global ceiling batch precompose it over another square. */
+            m11_draw_dm1_ceiling_pit_at(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                relForward, relSide);
+            continue;
+        }
         if (step->op == DM1_V1_F0128_STEP_F0113_FIELD) {
             m11_draw_dm1_teleporter_field_at(
                 state, framebuffer, framebufferWidth, framebufferHeight,
@@ -57947,8 +57974,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * the receipt-derived maxVisibleForward as their bound. */
     m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   1, 3, cells, -1, M11_DM1_REL_SIDE_ALL);
-    m11_draw_dm1_ceiling_pits(state, framebuffer, framebufferWidth,
-                              framebufferHeight, 1, 3);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
                                   1, maxVisibleForward, cells, 99);
     m11_draw_dm1_thieves_eye_d1c_wall_material(
