@@ -33,12 +33,10 @@
  *     `result` directly; a non-zero value is a per-receipt
  *     failure and never aborts the whole scan.
  *
- *   - Virtual container paths (ZIP/ISO entries) are
- *     materialized into the local Firestaff asset cache
- *     exactly the way the existing hint-oracle real-scan
- *     module does it, via asset_extract_virtual_path().
- *     The materialized file is then read with ordinary
- *     stdio.
+ *   - Virtual container paths (ZIP/ISO entries) are read
+ *     directly into bounded process memory through
+ *     asset_read_path_alloc(). Receipt classification must
+ *     never materialize original game media on disk.
  */
 
 #include "firestaff_x68k_media_receipt.h"
@@ -667,53 +665,19 @@ find_known_hash(FirestaffX68kMediaReceipt_Kind kind)
     return NULL;
 }
 
-int firestaff_x68k_media_receipt_ingest_path(
-    FirestaffX68kMediaReceipt *r,
-    const char *path,
-    uint8_t **out_data,
-    size_t   *out_data_size)
+static int firestaff_x68k_media_receipt_ingest_bytes(
+    FirestaffX68kMediaReceipt *r, uint8_t *buf, size_t size,
+    uint8_t **out_data, size_t *out_data_size)
 {
-    if (out_data) *out_data = NULL;
-    if (out_data_size) *out_data_size = 0u;
-    if (!r || !path || !out_data || !out_data_size) {
+    if (!r || !buf || !out_data || !out_data_size) {
         return FIRESTAFF_X68K_RECEIPT_ERR_ARGUMENT;
     }
-    FILE *fp = fopen(path, "rb");
-    if (!fp) {
-        return FIRESTAFF_X68K_RECEIPT_ERR_READ;
-    }
-    if (fseek(fp, 0, SEEK_END) != 0) {
-        fclose(fp);
-        return FIRESTAFF_X68K_RECEIPT_ERR_READ;
-    }
-    long end = ftell(fp);
-    if (end < 0) {
-        fclose(fp);
-        return FIRESTAFF_X68K_RECEIPT_ERR_READ;
-    }
-    rewind(fp);
-    size_t size = (size_t)end;
-    uint8_t *buf = (uint8_t*)malloc(size > 0u ? size : 1u);
-    if (!buf) {
-        fclose(fp);
-        return FIRESTAFF_X68K_RECEIPT_ERR_READ;
-    }
-    if (size > 0u) {
-        size_t got = fread(buf, 1, size, fp);
-        if (got != size) {
-            free(buf);
-            fclose(fp);
-            return FIRESTAFF_X68K_RECEIPT_ERR_READ;
-        }
-    }
-    fclose(fp);
     char md5_hex[33];
     char sha_hex[65];
     if (firestaff_x68k_media_receipt_md5_hex(buf, size,
                                               md5_hex, sizeof(md5_hex)) != 0 ||
         firestaff_x68k_media_receipt_sha256_hex(buf, size,
                                                  sha_hex, sizeof(sha_hex)) != 0) {
-        free(buf);
         return FIRESTAFF_X68K_RECEIPT_ERR_READ;
     }
     copy_string(r->actual_md5, sizeof(r->actual_md5), md5_hex);
@@ -745,6 +709,40 @@ int firestaff_x68k_media_receipt_ingest_path(
     *out_data = buf;
     *out_data_size = size;
     return FIRESTAFF_X68K_RECEIPT_OK;
+}
+
+int firestaff_x68k_media_receipt_ingest_path(
+    FirestaffX68kMediaReceipt *r,
+    const char *path,
+    uint8_t **out_data,
+    size_t   *out_data_size)
+{
+    FILE *fp;
+    long end;
+    size_t size;
+    uint8_t *buf;
+
+    if (out_data) *out_data = NULL;
+    if (out_data_size) *out_data_size = 0u;
+    if (!r || !path || !out_data || !out_data_size) {
+        return FIRESTAFF_X68K_RECEIPT_ERR_ARGUMENT;
+    }
+    fp = fopen(path, "rb");
+    if (!fp || fseek(fp, 0, SEEK_END) != 0 || (end = ftell(fp)) < 0) {
+        if (fp) fclose(fp);
+        return FIRESTAFF_X68K_RECEIPT_ERR_READ;
+    }
+    rewind(fp);
+    size = (size_t)end;
+    buf = (uint8_t*)malloc(size > 0u ? size : 1u);
+    if (!buf || (size > 0u && fread(buf, 1, size, fp) != size)) {
+        free(buf);
+        fclose(fp);
+        return FIRESTAFF_X68K_RECEIPT_ERR_READ;
+    }
+    fclose(fp);
+    return firestaff_x68k_media_receipt_ingest_bytes(r, buf, size,
+                                                      out_data, out_data_size);
 }
 
 int firestaff_x68k_media_receipt_finalize(
@@ -815,7 +813,6 @@ int firestaff_x68k_media_receipt_scan_one(
 
     /* Resolve the data dir + cache dir. */
     char resolved_data[ASSET_PATH_MAX];
-    char resolved_cache[FIRESTAFF_X68K_RECEIPT_PATH_CAP];
     const char *data_arg = data_dir;
     if (!data_arg || data_arg[0] == '\0') {
         const char *env = getenv("FIRESTAFF_DATA_DIR");
@@ -836,10 +833,9 @@ int firestaff_x68k_media_receipt_scan_one(
             data_arg = resolved_data;
         }
     }
-    if (firestaff_x68k_media_receipt_resolve_cache_dir(
-            cache_dir, resolved_cache, sizeof(resolved_cache)) != 0) {
-        resolved_cache[0] = '\0';
-    }
+    /* The legacy argument remains API-compatible.  Packed media is always
+     * classified in RAM, so no receipt scan creates a cache file. */
+    (void)cache_dir;
 
     const char *md5_list[2] = { kh->md5, NULL };
     char found_path[ASSET_PATH_MAX];
@@ -853,21 +849,20 @@ int firestaff_x68k_media_receipt_scan_one(
     }
     copy_string(receipt->resolved_path, sizeof(receipt->resolved_path), found_path);
 
-    /* If the path is a virtual container path, materialize it. */
-    char *read_path = found_path;
-    char materialized[FIRESTAFF_X68K_RECEIPT_PATH_CAP];
-    materialized[0] = '\0';
-    if (is_virtual_path(found_path) && resolved_cache[0] != '\0') {
-        if (asset_extract_virtual_path(found_path, materialized) == 1 &&
-            materialized[0] != '\0') {
-            read_path = materialized;
-        }
-    }
-
     uint8_t *buf = NULL;
     size_t buf_size = 0u;
-    int rc = firestaff_x68k_media_receipt_ingest_path(
-        receipt, read_path, &buf, &buf_size);
+    int rc;
+    if (is_virtual_path(found_path)) {
+        if (!asset_read_path_alloc(found_path, &buf, &buf_size) || !buf) {
+            receipt->result = FIRESTAFF_X68K_RECEIPT_ERR_READ;
+            return receipt->result;
+        }
+        rc = firestaff_x68k_media_receipt_ingest_bytes(
+            receipt, buf, buf_size, &buf, &buf_size);
+    } else {
+        rc = firestaff_x68k_media_receipt_ingest_path(
+            receipt, found_path, &buf, &buf_size);
+    }
     if (buf) free(buf);
     if (rc != FIRESTAFF_X68K_RECEIPT_OK) {
         receipt->result = rc;

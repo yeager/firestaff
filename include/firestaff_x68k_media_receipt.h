@@ -375,7 +375,9 @@ int firestaff_x68k_media_receipt_ingest_path(
 int firestaff_x68k_media_receipt_finalize(
     FirestaffX68kMediaReceipt *r);
 
-/* Resolve the asset cache dir. Returns:
+/* Resolve the legacy receipt-cache location. Runtime receipt scans no longer
+ * write original media there: archive members are classified directly in
+ * memory. This helper remains for source compatibility. Returns:
  *   - the explicit cache_dir when non-NULL and non-empty;
  *   - the user's "$HOME/.firestaff/asset-cache/x68k-receipt"
  *     directory otherwise.
@@ -387,9 +389,9 @@ int firestaff_x68k_media_receipt_resolve_cache_dir(
     size_t out_dir_cap);
 
 /* Scan `data_dir` recursively for one file matching the
- * known MD5 for `kind`. On match, materialize the file
- * (if it is a virtual container path) into `cache_dir` and
- * populate `*receipt`. The receipt's `present` is set to 1
+ * known MD5 for `kind`. On match, read a virtual container
+ * member directly in memory (the legacy `cache_dir` argument
+ * is not used for media writes) and populate `*receipt`. The receipt's `present` is set to 1
  * on a successful match; the caller still has to call
  * firestaff_x68k_media_receipt_finalize() to lock in the
  * per-kind expected invariants.
