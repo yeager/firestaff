@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import hashlib
 import json
 import subprocess
 from datetime import datetime, timezone
@@ -9,10 +8,10 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
+from redmcsb_source import source_root
 
 ROOT = Path(__file__).resolve().parents[1]
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-CANON = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1"
+RED = source_root(("CLIKMENU.C", "MOVESENS.C", "COMMAND.C", "LOADSAVE.C", "DUNGEON.C"))
 PASS = "pass607_dm1_v1_level_change_autosave_absence_source_lock"
 STATUS = "PASS607_DM1_V1_LEVEL_CHANGE_AUTOSAVE_ABSENCE_SOURCE_LOCKED"
 OUT = ROOT / "parity-evidence" / "verification" / PASS
@@ -76,16 +75,6 @@ def ordered_span(file_text: str, body: str, base_line: int, needles: list[str], 
     if first < 1 or last > file_text.count("\n") + 1:
         raise AssertionError(f"{label}: bad span {first}-{last}")
     return f"{first}-{last}"
-
-
-def sha256_file(path: Path) -> str:
-    if not path.exists():
-        raise AssertionError(f"missing canonical asset {path}")
-    h = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            h.update(chunk)
-    return h.hexdigest()
 
 
 def direct_save_call_locations() -> list[dict[str, int | str]]:
@@ -243,11 +232,6 @@ def main() -> None:
     if PASS not in cmake:
         raise AssertionError(f"CMakeLists.txt does not register {PASS}")
 
-    assets = {
-        "DUNGEON.DAT": sha256_file(CANON / "DUNGEON.DAT"),
-        "GRAPHICS.DAT": sha256_file(CANON / "GRAPHICS.DAT"),
-        "TITLE": sha256_file(CANON / "TITLE"),
-    }
     source_audit = {
         "CLIKMENU.C:F0364_COMMAND_TakeStairs": {"lines": [f0364_s, f0364_e], "focusedLines": stair_span, "claim": "stairs level change removes party from source, resolves destination level/map, sets facing, and restores current map; no save/write path"},
         "CLIKMENU.C:F0365_COMMAND_ProcessTypes1To2_TurnParty": {"lines": [f0365_s, f0365_e], "focusedLines": turn_stairs_span, "claim": "turning while on stairs delegates to F0364 and returns before any command-save route"},
@@ -269,7 +253,6 @@ def main() -> None:
         "branchAtVerification": git("branch", "--show-current"),
         "gitHeadAtVerification": git("rev-parse", "HEAD"),
         "scope": "DM1 V1 ordinary stairs/pit/teleporter level-change autosave absence",
-        "canonicalAssetsSha256": assets,
         "directSaveCallLocations": locations,
         "sourceAudit": source_audit,
         "conclusion": "No ordinary DM1 V1 stairs, pit, or teleporter level-change path directly saves the game; the audited save write path is reached through command C140 only.",
@@ -300,12 +283,6 @@ def main() -> None:
         "## Direct Save Call Search",
         "",
         f"- Exact `{DIRECT_SAVE_CALL}` locations across ReDMCSB Common/Source `*.C`: {locations}",
-        "",
-        "## Canonical Asset Hashes",
-        "",
-        f"- DUNGEON.DAT: {assets['DUNGEON.DAT']}",
-        f"- GRAPHICS.DAT: {assets['GRAPHICS.DAT']}",
-        f"- TITLE: {assets['TITLE']}",
         "",
         "## Conclusion",
         "",
