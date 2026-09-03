@@ -3,6 +3,7 @@
 #include "theron_v1_track02.h"
 #include "theron_v1_startup_flow.h"
 #include "theron_v1_dungeon_progression.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,7 +23,16 @@ static uint8_t *read_file(const char *path, size_t *out_bytes) {
     long bytes;
     uint8_t *data;
 
-    if (!path || !out_bytes || !(file = fopen(path, "rb"))) return NULL;
+    if (!path || !out_bytes) return NULL;
+
+    /* The runtime reads Track 02 from a CUE/BIN or CloneCD ZIP directly into
+     * RAM.  Exercise that same virtual-member primitive when an operator
+     * provides an archive member; no test fixture may require extraction. */
+    if (strstr(path, "::")) {
+        return asset_read_path_alloc(path, &data, out_bytes) ? data : NULL;
+    }
+
+    if (!(file = fopen(path, "rb"))) return NULL;
     if (fseek(file, 0L, SEEK_END) != 0 || (bytes = ftell(file)) <= 0 ||
         fseek(file, 0L, SEEK_SET) != 0) {
         fclose(file);
