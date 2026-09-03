@@ -342,6 +342,40 @@ static void test_field_after_things(void)
                0, "fail-closed: field before things violates source order");
 }
 
+/* F0127 is a distinct terminal route: its visible D0C teleporter cannot be
+ * accepted by a broad near-distance field pass.  The field belongs after the
+ * exact C0x0021 F0115 thing order, just as the live M11 D0 consumer does. */
+static void test_d0c_field_after_things(void)
+{
+    DM1_V1_F0128SchedulerSquarePc34 squares[DM1_V1_F0128_VIEW_SQUARE_COUNT];
+    DM1_V1_F0128SchedulerPlanPc34 plan;
+    int mainIdx;
+    int fieldIdx;
+
+    all_corridor(squares);
+    squares[DM1_V1_F0128_VIEW_SQUARE_D0C].element =
+        DM1_V1_F0128_ELEMENT_TELEPORTER;
+    squares[DM1_V1_F0128_VIEW_SQUARE_D0C].pitOrTeleporterVisible = 1;
+    expect_int("build.d0c_teleporter.ok",
+               DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(squares, &plan),
+               1, "visible D0C teleporter builds through F0127");
+    expect_int("verify.d0c_teleporter.ok",
+               DM1_V1_F0128_PerSquareSchedulerVerifyPc34Compat(&plan),
+               1, "F0127 teleporter plan passes source-order invariants");
+    mainIdx = first_index(&plan, DM1_V1_F0128_VIEW_SQUARE_D0C,
+                          DM1_V1_F0128_STEP_F0115_MAIN);
+    fieldIdx = first_index(&plan, DM1_V1_F0128_VIEW_SQUARE_D0C,
+                           DM1_V1_F0128_STEP_F0113_FIELD);
+    expect_int("d0c.teleporter.main.present", mainIdx >= 0, 1,
+               "ReDMCSB DUNVIEW.C:8232 D0C C0x0021 thing pass");
+    expect_int("d0c.teleporter.field.present", fieldIdx >= 0, 1,
+               "ReDMCSB DUNVIEW.C:8315-8317 D0C F0113 field");
+    expect_int("d0c.teleporter.field_after_things", fieldIdx > mainIdx, 1,
+               "F0127 field follows its D0C F0115 object transaction");
+    expect_int("d0c.teleporter.field.flag", plan.steps[fieldIdx].fieldAfterThings,
+               1, "D0C field carries the source tail receipt");
+}
+
 static void test_door_occlusion_capture(void)
 {
     DM1_V1_F0128SchedulerSquarePc34 squares[DM1_V1_F0128_VIEW_SQUARE_COUNT];
@@ -780,6 +814,7 @@ int main(void)
     test_class_table();
     test_corridor_scene_visit_order();
     test_field_after_things();
+    test_d0c_field_after_things();
     test_door_occlusion_capture();
     test_wall_alcove_and_far_lanes();
     test_fail_closed_and_hash();
