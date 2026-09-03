@@ -2,6 +2,7 @@
  * construction: this test only owns normal object and creature surfaces. */
 
 #include "asset_loader_m11.h"
+#include "asset_find_by_hash.h"
 #include "dm1_v1_creature_render_pc34_compat.h"
 #include "dm1_v1_f0115_f0219_creature_item_material_pc34_compat.h"
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
@@ -12,35 +13,33 @@
 
 enum { kMaterialCount = 4 };
 
+/* Prefer the verified PC 3.4 package itself.  Archive members remain in RAM:
+ * this regression must not require a locally extracted copy of game data. */
 static const char* data_path(const char* name, char path[2048])
 {
+    const char* archive = getenv("FIRESTAFF_DM1_DOS_PC34_ARCHIVE");
     const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
+    if (archive && archive[0]) {
+        snprintf(path, 2048, "%s::DATA/%s", archive, name);
+        return path;
+    }
     if (!root || !root[0]) return 0;
-    snprintf(path, 1024, "%s/%s", root, name);
+    snprintf(path, 2048, "%s/%s", root, name);
     return path;
 }
 
 static unsigned char* read_file(const char* path, int* outSize)
 {
-    FILE* file;
-    long size;
-    unsigned char* bytes;
+    uint8_t* bytes = 0;
+    size_t size = 0u;
     if (outSize) *outSize = 0;
-    if (!path || !(file = fopen(path, "rb"))) return 0;
-    if (fseek(file, 0, SEEK_END) || (size = ftell(file)) <= 0 ||
-        size > 0x7fffffffL || fseek(file, 0, SEEK_SET)) {
-        fclose(file);
-        return 0;
-    }
-    bytes = (unsigned char*)malloc((size_t)size);
-    if (!bytes || fread(bytes, 1, (size_t)size, file) != (size_t)size) {
+    if (!path || !asset_read_path_alloc(path, &bytes, &size) ||
+        !bytes || size == 0u || size > 0x7fffffffU) {
         free(bytes);
-        fclose(file);
         return 0;
     }
-    fclose(file);
     if (outSize) *outSize = (int)size;
-    return bytes;
+    return (unsigned char*)bytes;
 }
 
 static int find_corridor(const unsigned char* bytes, int count)
@@ -68,9 +67,55 @@ static int load_material(M11_AssetLoader* loader, int graphic,
     return out->pixelsFNV1a != 0u;
 }
 
+/* DUNVIEW.C F0675/F0129 derives D2/D3 creature rasters from original C584+
+ * records. This stays wholly in RAM and cannot introduce replacement art. */
+static int install_derived_creature(M11_AssetLoader *loader, int creatureType,
+                                    int depth, int *outGraphic)
+{
+    const M11_AssetSlot *native;
+    unsigned int nativeGraphic;
+    unsigned int derivedGraphic;
+    unsigned char *pixels;
+    unsigned short width;
+    unsigned short height;
+    int scale32;
+    int x;
+    int y;
+
+    if (!loader || !outGraphic || depth < 1 || depth > 3) return 0;
+    nativeGraphic = dm1_creature_native_sprite_for_view(creatureType, 0, 0, 0);
+    derivedGraphic = dm1_creature_sprite_for_view(creatureType, depth, 0, 0, 0, 0);
+    native = M11_AssetLoader_Load(loader, nativeGraphic);
+    if (!native || !native->loaded || !native->pixels ||
+        native->width == 0 || native->height == 0 ||
+        derivedGraphic >= M11_ASSET_CACHE_SLOTS) return 0;
+    scale32 = depth == 1 ? 21 : 14;
+    width = (unsigned short)(((int)native->width * scale32 + 16) >> 5);
+    height = (unsigned short)(((int)native->height * scale32 + 16) >> 5);
+    if (width == 0 || height == 0) return 0;
+    pixels = (unsigned char *)malloc((size_t)width * (size_t)height);
+    if (!pixels) return 0;
+    for (y = 0; y < (int)height; ++y) {
+        int sourceY = y * (int)native->height / (int)height;
+        for (x = 0; x < (int)width; ++x) {
+            int sourceX = x * (int)native->width / (int)width;
+            pixels[y * (int)width + x] =
+                native->pixels[sourceY * (int)native->width + sourceX];
+        }
+    }
+    if (!M11_AssetLoader_InstallDecodedPixels(loader, derivedGraphic, pixels,
+                                               width, height)) {
+        free(pixels);
+        return 0;
+    }
+    free(pixels);
+    *outGraphic = (int)derivedGraphic;
+    return 1;
+}
+
 int main(void)
 {
-    char graphicsPath[1024], dungeonPath[1024];
+    char graphicsPath[2048], dungeonPath[2048];
     M11_AssetLoader loader;
     DM1_V1_FloorFeatureSourceMaterialPc34 materials[kMaterialCount];
     DM1_V1_F0115F0219DungeonProvenancePc34 provenance;
@@ -86,7 +131,8 @@ int main(void)
     dungeon = read_file(dungeonPath, &dungeonSize);
     if (!dungeon || !M11_AssetLoader_Init(&loader, graphicsPath)) {
         free(dungeon);
-        if (getenv("FIRESTAFF_DM1_DATA_DIR")) {
+        if (getenv("FIRESTAFF_DM1_DATA_DIR") ||
+            getenv("FIRESTAFF_DM1_DOS_PC34_ARCHIVE")) {
             fputs("configured PC34 data is unavailable\n", stderr);
             return 1;
         }
@@ -95,8 +141,11 @@ int main(void)
     }
     graphics[0] = (int)dm1_item_sprite_index(5, 0);
     for (depth = 1; depth <= 3; ++depth) {
-        graphics[depth] = (int)dm1_creature_sprite_for_view(
-            DM1_CREATURE_MUMMY, depth, 0, 0, 0, 0);
+        if (!install_derived_creature(&loader, DM1_CREATURE_MUMMY, depth,
+                                      &graphics[depth])) {
+            fputs("original PC34 Mummy derived material was not admitted\n", stderr);
+            goto fail;
+        }
     }
     memset(materials, 0, sizeof(materials));
     for (i = 0; i < kMaterialCount; ++i) {

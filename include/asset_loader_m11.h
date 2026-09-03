@@ -31,9 +31,11 @@ extern "C" {
    The public Load() contract returns cache-slot pointers that remain valid
    until Shutdown. Do not use a small evicting cache here: the game-view
    renderer keeps asset-slot pointers across additional loads during a draw.
-   DM1 PC 3.4 has 713 GRAPHICS.DAT entries, so 768 covers the complete bank
-   while preserving pointer stability. */
-#define M11_ASSET_CACHE_SLOTS 768
+   DM1 PC 3.4 has 713 GRAPHICS.DAT entries, followed at runtime by the
+   source-owned F0675 creature-derived cache beginning at 762. Its recorded
+   G0219 creature blocks extend beyond 768, so 1024 covers the media bank and
+   original runtime address space while preserving pointer stability. */
+#define M11_ASSET_CACHE_SLOTS 1024
 
 typedef struct {
     int loaded;              /* 1 if pixels[] is valid */

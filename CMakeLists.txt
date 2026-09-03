@@ -7542,7 +7542,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0115_f0219_creature_it
     add_test(NAME dm1_v1_f0115_f0219_creature_item_material_gate
              COMMAND test_dm1_v1_f0115_f0219_creature_item_material_gate)
     set_tests_properties(dm1_v1_f0115_f0219_creature_item_material_gate PROPERTIES
-        SKIP_RETURN_CODE 77)
+        SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM1_DOS_PC34_ARCHIVE=${FIRESTAFF_WORKSPACE_DATA_DIR}/dm1/Dungeon-Master_DOS_EN_Version-34.zip"
+        LABELS "dm1;dos;pc34;viewport;real-media;in-memory;skip-safe")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0115_near_object_decoration_material_gate.c")
