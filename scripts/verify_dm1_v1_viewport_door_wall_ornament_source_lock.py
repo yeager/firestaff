@@ -185,10 +185,17 @@ def main() -> int:
 
     local = local_function(local_text, "m11_dm1_nearest_blocking_center_door_depth")
     missing = ordered_missing(local, [
-        "for (d = 2; d >= 0; --d)",
+        "for (d = 0; d < 3; ++d)",
         "const M11_ViewportCell* c = &cells[d][1];",
         "if (c->valid && !m11_viewport_cell_is_open(c))",
         "return d;",
+    ])
+    button_local = local_function(local_text, "m11_draw_dm1_center_door_buttons")
+    missing += ordered_missing(button_local, [
+        "int nearestBlock = m11_dm1_nearest_blocking_center_door_depth(cells);",
+        "for (depth = 2; depth >= 0; --depth)",
+        "if (nearestBlock >= 0 && depth > nearestBlock)",
+        "continue;",
     ])
     ok &= add_check(checks, "firestaff-center-door-ornaments-bound-to-nearest-blocker", not missing,
                     "m11_game_view.c:m11_dm1_nearest_blocking_center_door_depth",
@@ -196,7 +203,7 @@ def main() -> int:
 
     local = local_function(local_text, "m11_draw_dm1_side_door_ornaments")
     missing = ordered_missing(local, [
-        "if (plan.relForward > maxVisibleForward)",
+        "plan.relForward > maxVisibleForward",
         "m11_dm1_side_lane_clear_for_rel(cells,",
         "cell.elementType != DUNGEON_ELEMENT_DOOR",
         "m11_viewport_cell_is_open(&cell) || cell.doorOrnamentOrdinal <= 0",
@@ -209,25 +216,23 @@ def main() -> int:
 
     local = local_function(local_text, "m11_draw_viewport")
     missing = ordered_missing(local, [
+        "int blockingCenterDepth =",
+        "visibility.nearest_blocking_center_depth_index",
+        "for (replayForward = 3; replayForward >= 1; --replayForward)",
         "m11_draw_dm1_side_walls",
-        "m11_draw_dm1_front_walls",
         "m11_draw_dm1_wall_ornaments",
         "m11_draw_dm1_side_doors",
         "m11_draw_dm1_side_door_ornaments",
         "m11_draw_dm1_side_destroyed_door_masks",
+        "m11_draw_dm1_front_walls",
+        "m11_draw_dm1_wall_ornaments",
         "m11_draw_dm1_center_doors",
         "m11_draw_dm1_center_door_ornaments",
         "m11_draw_dm1_center_destroyed_door_masks",
-        "int blockingCenterDepth = visibility.nearest_blocking_center_depth_index;",
-        "m11_draw_dm1_side_walls",
-        "m11_draw_dm1_wall_ornaments",
-        "m11_draw_dm1_side_doors",
-        "m11_draw_dm1_side_door_ornaments",
-        "m11_draw_dm1_side_destroyed_door_masks",
     ])
     ok &= add_check(checks, "firestaff-viewport-replays-near-side-wall-door-ornaments-after-center-blockers", not missing,
                     "m11_game_view.c:m11_draw_viewport",
-                    "The batched renderer preserves the source-critical occlusion correction by replaying nearer side wall/door ornament layers after a blocking D2/D3 center square.", missing)
+                    "The F0128 square replay preserves source order: each side wall/ornament/door transaction completes before its center square, with the shared center blocker receipt passed to foreground replay.", missing)
 
     payload = {
         "gate": "dm1_v1_viewport_door_wall_ornament_source_lock",
