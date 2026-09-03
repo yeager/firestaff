@@ -13,19 +13,6 @@ Reviewed 2026-08-29. Only open work is listed here.
   composed in bounded batches before that replay. Replace the remaining
   batches only with the corresponding F0116--F0124 operation, never with a
   host-generated panel or a substitute asset.
-- Add F0112 ceiling-pit to the live per-square F0128 executor. The current
-  scheduler models F0104/F0107/F0108/F0111/F0113/F0115, but
-  `F0116`--`F0127` also call F0112 before their F0115 tail for the applicable
-  open, pit and stair routes (for example `DUNVIEW.C:7359-7365` and
-  `7929-7935`). The source helper now maps the real D2/D1/D0 bitmap frames
-  for both MEDIA508 and MEDIA720 explicitly: their numeric graphic/zone ids
-  overlap, so the media profile is mandatory and auto-detection must not be
-  extended past the legacy D2 contract. M11 now uses F0154 against the live
-  map descriptors and raw level-above `PIT_OPEN` square before binding the
-  original GRAPHICS.DAT material and clipping zone; it does not infer this
-  from the current square. What remains is to add F0112 as an explicit step
-  in the full per-square scheduler, so it is ordered per square rather than
-  by the present bounded primitive batch.
 - Complete D3L2/D3R2 F0115 material consumers. The live object route now
   consumes the original layout-696 C2500 rows 3/4 through the decoded source
   Thing and GRAPHICS.DAT, including the depth-3 cell gate and C10 blit. The
