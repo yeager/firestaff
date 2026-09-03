@@ -1,5 +1,13 @@
 # Firestaff DONE — Theron's Quest
 
+## 2026-09-03 — Native archive/CUE regression audit
+
+- Re-ran production, startup, resume and Track 02 layout gates. The supplied
+  US CloneCD ZIP reached both direct and start-menu native routes, and the
+  Japanese CUE reached the Track 02 Akutuba route. Raw US CUE/BIN and paired
+  raw JP/US Track 02 comparison probes remained correctly skip-safe because
+  those distinct raw files are not staged.
+
 Reviewed 2026-08-29. Completed work only.
 
 - The later-record correlation probe is media-optional in CI: absent

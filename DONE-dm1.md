@@ -1,5 +1,14 @@
 # Firestaff DONE — DM1
 
+## 2026-09-03 — Real-media startup regression audit
+
+- Re-ran the native direct-CLI and start-menu matrix against the staged
+  original media. PC DOS 3.4; DOS English and French; Atari ST English,
+  German, French and nested archive routes; Amiga HD and v2.0; and FM Towns
+  all reached their intended native handoff in memory. The French RAR 2.0
+  package retained its explicit unsupported-format diagnostic rather than a
+  false missing-media result.
+
 ## 2026-08-30 — Amiga v2.0 original save-disk provenance
 
 - The startup menu's Continue entry and direct CLI `--save` now accept the

@@ -1,5 +1,12 @@
 # Firestaff DONE — DM2
 
+## 2026-09-03 — Real-media startup regression audit
+
+- Re-ran the native real-media startup matrix for DOS English and French,
+  Macintosh, Amiga and FM Towns. Every archived DOS `SKSAVE` primary and
+  backup slot resumed through direct CLI and the start menu in RAM; all four
+  platform owners selected their own retail source rather than a fallback.
+
 Reviewed 2026-08-29. Completed work only.
 
 - Macintosh retail `Cmd-O` now reaches a native **Open Game** owner rather

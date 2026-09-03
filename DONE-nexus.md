@@ -1,5 +1,13 @@
 # Firestaff DONE — Nexus
 
+## 2026-09-03 — Native CUE-media regression audit
+
+- Re-ran the native production boundaries for combat, magic, light, rest,
+  experience and world actions, plus CUE data-track and CDDA binding. The
+  retail CUE route and native title mouse route passed without BIOS or
+  emulator runtime dependencies. ISO-only probes remained skip-safe because
+  the staged retail set is CUE/BIN/WAV media, not a standalone ISO.
+
 Reviewed 2026-08-26. Completed work only.
 
 - Native CUE-media corpus checks read the supplied Saturn title resources,

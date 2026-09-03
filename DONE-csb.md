@@ -1,5 +1,13 @@
 # Firestaff DONE — CSB
 
+## 2026-09-03 — Real-media startup regression audit
+
+- Re-ran the native direct-CLI and start-menu matrix against the staged
+  original media. Atari ST/STX, nested and French preservation ZIP routes;
+  Amiga ZIP→ADF routes; and English and Japanese FM Towns routes all reached
+  the native campaign handoff. The Atari and Amiga M12→M11 source handoffs
+  were also exercised from the selected in-memory media owners.
+
 Reviewed 2026-08-29. Completed work only.
 
 - Atari ST CSB gameplay now remains on the `CHANGE7_01_FIX` VBlank path
