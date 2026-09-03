@@ -43603,7 +43603,8 @@ static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
                                              unsigned char* framebuffer,
                                              int fbW,
                                              int fbH,
-                                             const M11_ViewportCell cells[3][3]) {
+                                             const M11_ViewportCell cells[3][3],
+                                             int onlyDepth) {
     int depth;
     const M11_ViewportCell* cell;
     const M11_AssetSlot* slot;
@@ -43618,6 +43619,9 @@ static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
     }
     /* F0110 is reached from each F0118/F0121/F0124 door-front route. */
     for (depth = 2; depth >= 0; --depth) {
+        if (onlyDepth >= 0 && depth != onlyDepth) {
+            continue;
+        }
         if (nearestBlock >= 0 && depth > nearestBlock) {
             continue;
         }
@@ -58212,6 +58216,14 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                                        framebufferWidth, framebufferHeight,
                                                        replayForward, replayForward, cells,
                                                        relSide);
+                /* DUNVIEW.C F0117 reaches F0110 for the D3R door before
+                 * F0128 advances to D3C.  Keep the exceptional side button
+                 * in that completed D3R transaction as well. */
+                if (replayForward == 3 && relSide > 0) {
+                    m11_draw_dm1_d3r_door_button(
+                        state, framebuffer, framebufferWidth,
+                        framebufferHeight, replayForward, cells);
+                }
                 /* F0115/F0113 are part of this DnL or DnR transaction, not
                  * a later left/right batch. This is especially important at
                  * D1, where both side routes must finish before D1C starts. */
@@ -58264,6 +58276,12 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             m11_draw_dm1_center_destroyed_door_masks(
                 state, framebuffer, framebufferWidth, framebufferHeight,
                 replayForward, replayForward, cells);
+            /* F0110 completes this F0111 door transaction.  Do not defer
+             * its button to a global D3..D1 pass: the next source square
+             * may legitimately cover it. */
+            m11_draw_dm1_center_door_buttons(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                cells, replayForward - 1);
             if (replayForward > 1) {
                 int centerSquare = replayForward == 3
                     ? DM1_V1_F0128_VIEW_SQUARE_D3C
@@ -58275,13 +58293,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             }
         }
     }
-    /* F0110 button pixels are part of the F0111 door result.  Re-emit them
-     * once after the depth replay (the helper itself walks D3C..D1C) so a
-     * deferred object cannot cover a real source button. */
-    m11_draw_dm1_center_door_buttons(state, framebuffer, framebufferWidth,
-                                     framebufferHeight, cells);
-    m11_draw_dm1_d3r_door_button(state, framebuffer, framebufferWidth,
-                                  framebufferHeight, maxVisibleForward, cells);
     /* F0122/F0123 finish their D1L/D1R F0115 tail before F0124 starts
      * D1C (ReDMCSB DUNVIEW.C:7391-7725, 7727-8316).  The square loop above
      * has already consumed those tails in that order.  Do not repaint them
