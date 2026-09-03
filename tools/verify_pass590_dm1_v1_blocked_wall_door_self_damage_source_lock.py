@@ -8,7 +8,6 @@ that happens before input discard/vblank and before successful movement timing.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -17,13 +16,12 @@ import subprocess
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
+from redmcsb_source import source_root
 
 ROOT = Path(__file__).resolve().parents[1]
 PASS = "pass590_dm1_v1_blocked_wall_door_self_damage_source_lock"
 STATUS = "PASS590_DM1_V1_BLOCKED_WALL_DOOR_SELF_DAMAGE_SOURCE_LOCKED"
-RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
-GREATSTONE = Path.home() / ".openclaw/data/firestaff-greatstone-atlas"
-DM = Path.home() / ".openclaw/data/firestaff-original-games/DM"
+RED = source_root(("CLIKMENU.C", "CHAMPION.C"))
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / f"{PASS}.md"
@@ -33,14 +31,6 @@ def read(path: Path, encoding: str = "utf-8") -> str:
     if not path.exists():
         raise AssertionError(f"missing required file: {path}")
     return path.read_text(encoding=encoding, errors="replace")
-
-
-def sha256(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as fh:
-        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
-            h.update(chunk)
-    return h.hexdigest()
 
 
 def line_no(text: str, offset: int) -> int:
@@ -169,21 +159,6 @@ def source_audit() -> dict:
     }
 
 
-def reference_audit() -> dict:
-    required_dirs = {"redmcsb": RED, "greatstone": GREATSTONE, "originalDm": DM}
-    missing = [name for name, path in required_dirs.items() if not path.exists()]
-    if missing:
-        raise AssertionError(f"missing required N2 reference roots: {', '.join(missing)}")
-    dungeon = DM / "_canonical/dm1/DUNGEON.DAT"
-    graphics = DM / "_canonical/dm1/GRAPHICS.DAT"
-    overview = GREATSTONE / "raw/greatstone.free.fr__dm__g_dm.html.html"
-    return {
-        "canonicalDm1DungeonDat": {"path": str(dungeon), "sha256": sha256(dungeon)},
-        "canonicalDm1GraphicsDat": {"path": str(graphics), "sha256": sha256(graphics)},
-        "greatstoneOverview": {"path": str(overview), "sha256": sha256(overview)},
-    }
-
-
 def firestaff_audit() -> dict:
     core_c = read(ROOT / "src/dm1/dm1_v1_movement_command_core_pc34_compat.c")
     core_h = read(ROOT / "include/dm1_v1_movement_command_core_pc34_compat.h")
@@ -258,7 +233,6 @@ def main() -> int:
         "worktree": str(ROOT),
         "redmcsbRoot": str(RED),
         "sourceAudit": source_audit(),
-        "referenceAudit": reference_audit(),
         "firestaffAudit": firestaff_audit(),
         "testExecutable": str(exe),
         "testOutputLastLine": last_line,
@@ -286,11 +260,6 @@ def main() -> int:
         "## Firestaff Gate",
         "- Command core records attack=1, attackType=C2_ATTACK_SELF, allowedWounds=0x0018, first target cell, and next target cell for wall/door/closed-real-fakewall blocks.",
         "- Focused CTest: dm1_v1_movement_command_core_pc34_compat.",
-        "",
-        "## Reference Anchors",
-        f"- DUNGEON.DAT sha256 {manifest['referenceAudit']['canonicalDm1DungeonDat']['sha256']}",
-        f"- GRAPHICS.DAT sha256 {manifest['referenceAudit']['canonicalDm1GraphicsDat']['sha256']}",
-        f"- Greatstone overview sha256 {manifest['referenceAudit']['greatstoneOverview']['sha256']}",
         "",
         "## Not Claimed",
     ])
