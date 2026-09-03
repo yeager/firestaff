@@ -7,7 +7,8 @@ single path.
 Lookup order (first hit wins):
   1. FIRESTAFF_BUILD_DIR env var, if set and the path exists
   2. <root>/build           (in-tree single-config)
-  3. <root>/builds          (in-tree multi-config, iterates)
+  3. <root>/build-*         (named in-tree single-config builds)
+  4. <root>/builds          (in-tree multi-config, iterates)
   4. <root> parent walk for any CTestTestfile.cmake
 """
 from __future__ import annotations
@@ -34,6 +35,9 @@ def find_build_dir(
     p = root / "build"
     if (p / sentinel).exists():
         return p
+    for child in sorted(root.glob("build-*")):
+        if child.is_dir() and (child / sentinel).exists():
+            return child
     builds = root / "builds"
     if builds.is_dir():
         for child in sorted(builds.iterdir()):

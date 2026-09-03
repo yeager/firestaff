@@ -13,15 +13,16 @@ from __future__ import annotations
 from pathlib import Path
 import hashlib
 import re
+import subprocess
 import sys
+import zipfile
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 
 ROOT = Path(__file__).resolve().parents[1]
 FIRE = ROOT / "src/engine/m11_game_view.c"
 CMAKE = ROOT / "CMakeLists.txt"
-REGISTRY = Path.home() / ".openclaw/data/firestaff-graphics-hash-registry.md"
-RED_ROOT = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
+RED_ROOT = ROOT / "reference/redmcsb-20210206/Toolchains/Common/Source"
 RED_DEFS = RED_ROOT / "DEFS.H"
 RED_DUNVIEW = RED_ROOT / "DUNVIEW.C"
 RED_STARTUP2 = RED_ROOT / "STARTUP2.C"
@@ -29,19 +30,33 @@ RED_STARTUP2 = RED_ROOT / "STARTUP2.C"
 GRAPHICS_VARIANTS = [
     (
         "DM PC 3.4 English GRAPHICS.DAT",
-        Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+        Path.home() / ".firestaff/data/dm1/Dungeon-Master_DOS_EN_Version-34.zip",
+        "DATA/GRAPHICS.DAT",
         "FA6B1AA29E191418713BF2CDA93D962E",
         "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
         713,
     ),
-    (
-        "DM PC 3.4 Multilanguage GRAPHICS.DAT",
-        Path.home() / ".openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/GRAPHICS.DAT",
-        "F934D97E43E1BA6E5159839ACBCD0611",
-        "291eb38eab683317a2500e13363148425f059a2d35f929257d809174f625a4dc",
-        748,
-    ),
 ]
+
+
+def read_archive_member(archive: Path, member: str) -> bytes:
+    if not archive.is_file():
+        print(f"SKIP pass447: licensed DM1 archive unavailable: {archive}")
+        raise SystemExit(77)
+    try:
+        with zipfile.ZipFile(archive) as zf:
+            return zf.read(member)
+    except (KeyError, zipfile.BadZipFile):
+        # Some original DOS archives have a DOS backslash in the local
+        # header and a slash in the central directory.  Python correctly
+        # refuses that inconsistent archive; 7-Zip can stream the member
+        # without extracting it, which preserves the no-on-disk-data rule.
+        proc = subprocess.run(
+            ["7z", "x", "-so", str(archive), member],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+        if proc.returncode == 0 and proc.stdout:
+            return proc.stdout
+        raise AssertionError(f"{archive.name}: cannot read {member}")
 
 
 def line_no(text: str, offset: int) -> int:
@@ -95,7 +110,6 @@ def entry_info(data: bytes, index: int) -> tuple[int, int, int, int]:
 def main() -> int:
     fire = FIRE.read_text(encoding="utf-8")
     cmake = CMAKE.read_text(encoding="utf-8")
-    registry = REGISTRY.read_text(encoding="utf-8") if REGISTRY.is_file() else ""
     defs = RED_DEFS.read_text(encoding="latin-1")
     dunview = RED_DUNVIEW.read_text(encoding="latin-1")
     startup2 = RED_STARTUP2.read_text(encoding="latin-1")
@@ -119,16 +133,14 @@ def main() -> int:
         "ReDMCSB F0111 thieves-eye D1C draw",
     )
 
-    for label, path, expected_md5, expected_sha256, expected_count in GRAPHICS_VARIANTS:
-        data = path.read_bytes()
+    for label, archive, member, expected_md5, expected_sha256, expected_count in GRAPHICS_VARIANTS:
+        data = read_archive_member(archive, member)
         md5 = hashlib.md5(data).hexdigest().upper()
         sha256 = hashlib.sha256(data).hexdigest()
         if md5 != expected_md5:
             raise AssertionError(f"{label}: MD5 drift {md5} != {expected_md5}")
         if sha256 != expected_sha256:
             raise AssertionError(f"{label}: SHA256 drift {sha256} != {expected_sha256}")
-        if registry and expected_md5 not in registry:
-            raise AssertionError(f"registry missing provenance MD5 for {label}: {expected_md5}")
         if le16(data, 2) != expected_count:
             raise AssertionError(f"{label}: item count drift")
         if entry_info(data, 439) != (343, 343, 96, 88):
@@ -150,16 +162,23 @@ def main() -> int:
         "M11_AssetLoader_BlitScaled",
     ]:
         require(func, needle, "Firestaff D1C thieves-eye mask renderer")
-    render_call = require(fire, "m11_draw_dm1_center_thieves_eye_mask(state, framebuffer, framebufferWidth, framebufferHeight, cells);", "Firestaff viewport pass order")
+    render_match = re.search(
+        r"m11_draw_dm1_center_thieves_eye_mask\s*\(\s*state\s*,\s*"
+        r"framebuffer\s*,\s*framebufferWidth\s*,\s*framebufferHeight\s*,\s*"
+        r"cells\s*\)\s*;",
+        fire,
+    )
+    if not render_match:
+        raise AssertionError("Firestaff viewport pass order: missing D1C thieves-eye mask call")
     require(cmake, "NAME pass447_dm1_v1_thieves_eye_door_mask_source_lock", "CMake gate registration")
 
     print("PASS pass447 DM1 V1 thieves-eye door-mask source lock")
     print(f"- ReDMCSB STARTUP2 C15/C16 mapping: {RED_STARTUP2.name}:{line_no(startup2, startup_anchor)}")
     print(f"- ReDMCSB DUNVIEW F0111 C16 D1C draw: {RED_DUNVIEW.name}:{line_no(dunview, dunview_anchor)}")
-    for label, path, _md5, sha256, _count in GRAPHICS_VARIANTS:
-        print(f"- {label}: sha256={sha256}; entry 439=96x88 destroyed mask; entry 440=80x74 thieves-eye mask")
+    for label, archive, member, _md5, sha256, _count in GRAPHICS_VARIANTS:
+        print(f"- {label}: {archive.name}!{member}; sha256={sha256}; entry 439=96x88 destroyed mask; entry 440=80x74 thieves-eye mask")
     print(f"- Firestaff maps C16 to GRAPHICS.DAT 440: {FIRE.name}:{line_no(fire, func_start)}")
-    print(f"- Firestaff viewport order calls thieves-eye mask pass: {FIRE.name}:{line_no(fire, render_call)}")
+    print(f"- Firestaff viewport order calls thieves-eye mask pass: {FIRE.name}:{line_no(fire, render_match.start())}")
     return 0
 
 

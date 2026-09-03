@@ -34437,6 +34437,8 @@ endif()
             NAME pass447_dm1_v1_thieves_eye_door_mask_source_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass447_dm1_v1_thieves_eye_door_mask_source_lock.py
         )
+        set_tests_properties(pass447_dm1_v1_thieves_eye_door_mask_source_lock
+            PROPERTIES SKIP_RETURN_CODE 77)
         add_test(
             NAME pass445_dm1_v1_pc34_data_hash_lock
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass445_dm1_v1_pc34_data_hash_lock.py
@@ -38366,6 +38368,8 @@ if(Python3_FOUND)
         NAME pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py
     )
+    set_tests_properties(pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion
+        PROPERTIES SKIP_RETURN_CODE 77)
 endif()
 
 

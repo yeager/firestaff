@@ -5,7 +5,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT=Path(__file__).resolve().parents[1]
-RED=Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
+RED=ROOT/"reference/redmcsb-20210206/Toolchains/Common/Source"
 MANIFEST=ROOT/"parity-evidence/verification/pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion/manifest.json"
 REPORT=ROOT/"parity-evidence/pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.md"
 STATUS="PASS565_DM1_V1_D0C_THIEVES_EYE_DOOR_FRAME_OCCLUSION_SOURCE_LOCKED"
@@ -39,6 +39,9 @@ def main(check_only=False):
     red=audit(SRC); loc=audit(LOCAL); failed=[r["id"] for r in red+loc if r["status"]!="PASS"]
     if check_only:
         print("PASS pass565 check-only" if not failed else "FAIL pass565 check-only: "+", ".join(failed)); return 0 if not failed else 1
+    if not TEST_BINARY.is_file():
+        print(f"SKIP pass565: runtime probe is not built: {TEST_BINARY}")
+        return 77
     runtime=run([str(TEST_BINARY)]); selfcheck=run([sys.executable,str(Path(__file__).resolve()),"--check-only"]); ok=not failed and runtime["passed"] and selfcheck["passed"]
     manifest={"schema":"pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.v1","status":"passed" if ok else "failed","statusToken":STATUS if ok else "FAILED_PASS565_DM1_V1_D0C_THIEVES_EYE_DOOR_FRAME_OCCLUSION","redmcsbRoot":str(RED),"redmcsbChecks":red,"firestaffChecks":loc,"verificationRuns":[runtime,selfcheck],"nonClaims":["No original DOS runtime capture claim.","No pixel parity or renderer-completeness claim.","No D1C thieves-eye door-mask change; pass447 remains separate.","No DANNESBURK, Sonnet, q3.6/Qwen, push, or external action."]}
     MANIFEST.parent.mkdir(parents=True,exist_ok=True); MANIFEST.write_text(json.dumps(manifest,indent=2,sort_keys=True)+"\n")
