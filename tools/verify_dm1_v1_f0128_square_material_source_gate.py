@@ -49,20 +49,27 @@ def main() -> int:
         assert "plan.relForward < minVisibleForward" in body, (
             f"{source_name} must support the final D0-only pass")
 
-    for source_name, call in (
-        ("F0104 pit", "m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,\n                             1, 3, cells, -1, -2);"),
-        ("F0108 floor ornament", "m11_draw_dm1_floor_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,\n                                  1, 3, cells, -1, -2);"),
-        ("F0104 stairs", "m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,\n                        1, maxVisibleForward, cells, -1, -2);"),
+    # The former global D3..D1 calls were intentionally removed: they made
+    # a second material pass after an owning square had already completed.
+    # F0128 now admits the primitive directly from each scheduler step.
+    foreground = function_body(
+        source, "static void m11_dm1_f0128_replay_foreground_square")
+    for step, call in (
+        ("DM1_V1_F0128_STEP_F0104_PIT", "m11_draw_dm1_floor_pits"),
+        ("DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT",
+         "m11_draw_dm1_floor_ornaments"),
+        ("DM1_V1_F0128_STEP_F0104_STAIRS", "m11_draw_dm1_stairs"),
     ):
-        assert call in viewport, (
-            f"{source_name} viewport call must retain full D3..D1 source dispatch"
+        assert step in foreground and call in foreground, (
+            f"{step} must have an owning foreground material consumer"
         )
+    assert "m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,\n                             1, 3, cells, -1, -2);" not in viewport
 
     # F0113 is no longer a global D3..D1 batch: F0128 invokes it after the
     # current square's F0115 route.  The scheduler-owned replay is the
     # authoritative D3..D1 dispatch, while the direct call below remains D0.
     assert "m11_dm1_f0128_replay_foreground_square" in viewport
-    assert "DM1_V1_F0128_STEP_F0113_FIELD" in viewport
+    assert "DM1_V1_F0128_STEP_F0113_FIELD" in foreground
 
     # F0115's first door partition must be consumed inside the completed
     # source-square route, after its wall/ornament envelope and before F0111.
@@ -85,10 +92,10 @@ def main() -> int:
     assert center_ornament < center_pass1 < center_door
 
     effect = viewport.find("m11_draw_dm1_deferred_explosion_pass")
-    d0 = viewport.find("m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,\n                             0, 0, cells, -1, -2);")
+    d0 = viewport.find("m11_dm1_f0128_replay_d0_primitives")
     mirror = viewport.find("m11_draw_dm1_front_mirror_route")
     assert mirror >= 0 and effect >= 0 and mirror < effect < d0
-    print("ok: F0128 D3..D1 material is not side-culled and D0 is final")
+    print("ok: F0128 scheduler owns D3..D1 material and D0 is final")
     return 0
 
 
