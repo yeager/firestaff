@@ -57750,6 +57750,72 @@ static void m11_dm1_f0128_replay_foreground_square(
     }
 }
 
+/* F0125/F0126/F0127 are the terminal D0 square transactions.  Their
+ * geometry is not represented by the D1..D3 content frames, so this helper
+ * intentionally owns just source steps that have a native D0 primitive
+ * consumer.  In particular, F0112 must be admitted by the plan: a side
+ * stairs route returns before its F0112 tail and must not receive a nearby
+ * ceiling-pit bitmap merely because the host can sample one. */
+static void m11_dm1_f0128_replay_d0_primitives(
+    const M11_GameViewState *state,
+    unsigned char *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    const M11_ViewportCell cells[3][3],
+    const DM1_V1_F0128SchedulerPlanPc34 *plan,
+    int square,
+    int includeField)
+{
+    int relForward;
+    int relSide;
+    int spanStart;
+    int spanCount;
+    int i;
+
+    if (!state || !framebuffer || !cells || !plan ||
+        !m11_dm1_f0128_square_relative_position(square, &relForward,
+                                                 &relSide) ||
+        relForward != 0 ||
+        !DM1_V1_F0128_PerSquareSchedulerSquareSpanPc34Compat(
+            plan, square, &spanStart, &spanCount)) {
+        return;
+    }
+    for (i = spanStart; i < spanStart + spanCount; ++i) {
+        const DM1_V1_F0128SchedulerStepPc34 *step = &plan->steps[i];
+        if (includeField) {
+            if (step->op != DM1_V1_F0128_STEP_F0113_FIELD) {
+                continue;
+            }
+        } else if (step->op == DM1_V1_F0128_STEP_F0113_FIELD) {
+            continue;
+        }
+        switch (step->op) {
+        case DM1_V1_F0128_STEP_F0104_PIT:
+            m11_draw_dm1_floor_pits(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                0, 0, cells, 0, relSide);
+            break;
+        case DM1_V1_F0128_STEP_F0104_STAIRS:
+            m11_draw_dm1_stairs(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                0, 0, cells, 0, relSide);
+            break;
+        case DM1_V1_F0128_STEP_F0112_CEILING_PIT:
+            m11_draw_dm1_ceiling_pit_at(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                0, relSide);
+            break;
+        case DM1_V1_F0128_STEP_F0113_FIELD:
+            m11_draw_dm1_teleporter_field_at(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                0, relSide);
+            break;
+        default:
+            break;
+        }
+    }
+}
+
 /* F0115's first door partition is not foreground material.  DUNVIEW.C
  * enters it after the current square's F0104/F0107 envelope but before
  * F0111 installs that same square's door panel.  Keeping it in the old
@@ -58296,24 +58362,27 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_deferred_explosion_pass(state, framebuffer,
                                          framebufferWidth, framebufferHeight,
                                          frames, cells);
-    /* ReDMCSB DUNVIEW.C F0125/F0126/F0127 dispatches D0 only after the
-     * D1 F0115 route has completed.  Keep the near pit/stair/field material
-     * out of the early D3..D1 primitive batches so it receives the original
-     * final overpaint order.  The source F0108 plan has no verified D0 zone,
-     * so floor ornaments deliberately remain D1..D3-only. */
-    m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,
-                             0, 0, cells, -1, M11_DM1_REL_SIDE_ALL);
-    m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,
-                        0, 0, cells, -1, M11_DM1_REL_SIDE_ALL);
-    m11_draw_dm1_ceiling_pits(state, framebuffer, framebufferWidth,
-                              framebufferHeight, 0, 0);
-    /* F0127's D0C F0115 object pass precedes its F0113 field overlay. */
+    /* ReDMCSB DUNVIEW.C F0125/F0126/F0127 visits D0L, D0R, then D0C after
+     * D1C.  Replay only the primitive steps admitted by each source span;
+     * broad near-distance batches used to paint all pits, then all stairs,
+     * then every ceiling pit and field over a later square's transaction. */
+    m11_dm1_f0128_replay_d0_primitives(
+        state, framebuffer, framebufferWidth, framebufferHeight, cells,
+        &dm1F0128Plan, DM1_V1_F0128_VIEW_SQUARE_D0L, 0);
+    m11_dm1_f0128_replay_d0_primitives(
+        state, framebuffer, framebufferWidth, framebufferHeight, cells,
+        &dm1F0128Plan, DM1_V1_F0128_VIEW_SQUARE_D0R, 0);
+    m11_dm1_f0128_replay_d0_primitives(
+        state, framebuffer, framebufferWidth, framebufferHeight, cells,
+        &dm1F0128Plan, DM1_V1_F0128_VIEW_SQUARE_D0C, 0);
+    /* F0127's D0C F0115 object consumers precede its F0113 field overlay. */
     m11_draw_dm1_d0c_floor_item_pass(state, framebuffer,
                                      framebufferWidth, framebufferHeight);
-    m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight,
-                                  0, 0, cells);
     m11_draw_dm1_d0c_projectile_pass(state, framebuffer,
                                      framebufferWidth, framebufferHeight);
+    m11_dm1_f0128_replay_d0_primitives(
+        state, framebuffer, framebufferWidth, framebufferHeight, cells,
+        &dm1F0128Plan, DM1_V1_F0128_VIEW_SQUARE_D0C, 1);
     m11_draw_dm1_d0c_deferred_explosion_pass(state, framebuffer,
                                              framebufferWidth, framebufferHeight);
 
