@@ -38,9 +38,9 @@ def require_order(text: str, markers: list[tuple[str, str]], label: str) -> None
     last = -1
     last_name = ""
     for name, needle in markers:
-        pos = require(text, needle, f"{label} {name}")
-        if pos <= last:
-            raise AssertionError(f"{label}: {name} appears before/at {last_name}")
+        pos = text.find(needle, last + 1)
+        if pos < 0:
+            raise AssertionError(f"missing {label} {name}: {needle!r}")
         last = pos
         last_name = name
 
@@ -162,18 +162,32 @@ def main() -> int:
     ], "Firestaff wall ornament occlusion envelope")
 
     viewport_fn = c_function(fire, "m11_draw_viewport")
-    require_order(viewport_fn, [
-        ("side walls first", "m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,"),
-        ("front walls second", "m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);"),
-        ("wall ornaments after wall panels", "m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,"),
-        ("blocking center detected", "int blockingCenterDepth = visibility.nearest_blocking_center_depth_index;"),
-    ], "Firestaff viewport primary D3/D2 wall ornament order")
-    replay = viewport_fn[require(viewport_fn, "int blockingCenterDepth = visibility.nearest_blocking_center_depth_index;", "blocking center replay block"):]
+    # Each F0128 square is now replayed as one far-to-near transaction.  Do
+    # not regress this to the former primitive-class batches: a global side
+    # wall pass followed by a global ornament pass cannot preserve DnL before
+    # DnR nor protect an already-completed D3/D2 route from overpaint.
+    replay = viewport_fn[require(
+        viewport_fn,
+        "int blockingCenterDepth =\n            visibility.nearest_blocking_center_depth_index;",
+        "F0128 square replay block",
+    ):]
     require_order(replay, [
-        ("blocking center guard", "if (blockingCenterDepth > 0)"),
-        ("near-side wall replay", "m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,"),
-        ("near-side ornament replay", "m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,"),
-    ], "Firestaff viewport near-side wall ornament replay order")
+        ("far-to-near depth loop", "for (replayForward = 3; replayForward >= 1; --replayForward)"),
+        ("outer-side wall envelope", "m11_draw_dm1_side_walls("),
+        ("outer-side ornament follows wall", "m11_draw_dm1_wall_ornaments("),
+        ("D3 outer door-front stays in square", "m11_draw_dm1_d3l2_d3r2_f0111_door_fronts("),
+        ("outer foreground closes square", "m11_dm1_f0128_replay_foreground_square("),
+        ("regular side wall transaction", "m11_draw_dm1_side_doors("),
+        ("regular side door ornament", "m11_draw_dm1_side_door_ornaments("),
+        ("regular side destroyed mask", "m11_draw_dm1_side_destroyed_door_masks("),
+        ("center wall begins after sides", "m11_draw_dm1_front_walls("),
+    ], "Firestaff F0128 D3/D2 per-square replay order")
+    center_replay = replay[require(replay, "m11_draw_dm1_front_walls(",
+                                   "center replay wall") :]
+    require_order(center_replay, [
+        ("center ornament follows center wall", "m11_draw_dm1_wall_ornaments("),
+        ("center door transaction", "m11_draw_dm1_center_doors("),
+    ], "Firestaff F0128 center-square replay order")
     door_button_fn = c_function(fire, "m11_dm1_nearest_blocking_center_door_depth")
     require_order(door_button_fn, [
         ("nearest D1-first scan", "for (d = 0; d < 3; ++d)"),
