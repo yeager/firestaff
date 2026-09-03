@@ -58011,26 +58011,10 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * C0x0001 reaches F0115's depth>3 break at :5110 before projectile
      * handling. G2028 has no D4 C2900 row, so D4 stays no-draw instead of
      * receiving a host-defined small sprite or marker. */
-    /* First source-bound wall passes: draw blocked side/front square
-     * panels using original wall-set bitmaps and original layout-696
-     * zones.  This is still narrower than full DUNVIEW.C: ornaments,
-     * doors, pits, stairs, fields, and exact object order remain next. */
     /* F0104 pit material is consumed only by the owning square's verified
      * plan span in the foreground replay below.  A former global D3..D1
      * batch here duplicated that material and could put an old pit bitmap
      * over a nearer completed wall/door transaction. */
-    /* ReDMCSB DUNVIEW.C F0128: side squares are drawn in source order before
-     * the same-depth center square (D3L/D3R before D3C, D2L/D2R before D2C,
-     * D1L/D1R before D1C).  Do not cap the primary side-wall pass at the
-     * nearest center blocker; the later center-wall pass overpaints it.  The
-     * replay pass below still uses a reduced max to repair near-side occlusion
-     * after center doors/walls have been drawn. */
-    m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,
-                            1, dm1_viewport_3d_primary_side_wall_max_forward_pc34(
-                                maxVisibleForward),
-                            &visibility, 99);
-    m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight,
-                             1, 3, cells);
     /* F0108 floor ornaments, including pressure plates, are emitted only
      * by their owning verified F0128 square span in the foreground replay.
      * The old global D3..D1 batch duplicated those source operations before
@@ -58052,32 +58036,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * wall or door overlap.  The replay covers D3L2/D3R2, all side lanes,
      * D3C..D1C, and their F0110 button tails in source order, so it is the
      * sole F0111 owner once the authenticated scheduler has been admitted. */
-
-    /* ReDMCSB DUNVIEW.C F0128 draws complete squares far-to-near
-     * (D3 side/center, then D2 side/center, then D1 side/center).
-     * Firestaff current V1 renderer still batches by primitive class.
-     * After drawing a blocking center door/wall at D2C or D3C, replay only
-     * the nearer side layers so farther center doors/buttons/items cannot
-     * bleed through near side-wall/door occluders. */
-    {
-        int blockingCenterDepth = visibility.nearest_blocking_center_depth_index;
-        if (blockingCenterDepth > 0) {
-            int nearMaxVisibleForward = blockingCenterDepth;
-            m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,
-                                    1, nearMaxVisibleForward, &visibility, 99);
-            m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                        1, nearMaxVisibleForward, cells, 99);
-            m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
-                state, framebuffer, framebufferWidth, framebufferHeight,
-                nearMaxVisibleForward, cells, 99);
-            m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth, framebufferHeight,
-                                    1, nearMaxVisibleForward, cells, 99);
-            m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                             1, nearMaxVisibleForward, cells, 99);
-            m11_draw_dm1_side_destroyed_door_masks(state, framebuffer, framebufferWidth, framebufferHeight,
-                                                   1, nearMaxVisibleForward, cells, 99);
-        }
-    }
 
     /* ReDMCSB DUNVIEW.C F0128 completes D1L/D1R before its D1C F0107
      * ornament branch. M11's split renderer may replay those side panels
