@@ -665,7 +665,8 @@ const char *DM1_V1_F0128_PerSquareSchedulerSourceContractPc34Compat(void) {
            "D2L/D2R/D2C, D1L/D1R/D1C, D0L/D0R/D0C (8491-8542); "
            "F0676/F0677:6226-6360, F0678/F0679:6837-6899, "
            "F0116-F0127:6361-8317; merged F0104/F0107/F0108/F0111/"
-           "F0113 material families, field-after-things (6289, 6487, "
+           "F0112/F0113 material families, per-square F0112 ceiling-pit "
+           "tails (7359-7365, 7929-7935), field-after-things (6289, 6487, "
            "8315), door pass1/F0111/pass2 occlusion (6444-6461); "
            "cell-order words DEFS.H:2658-2677. Contract-only; no host "
            "substitutes.";
