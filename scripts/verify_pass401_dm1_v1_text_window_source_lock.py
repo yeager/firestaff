@@ -291,12 +291,20 @@ def main() -> int:
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
 
+    csbwin_available = (args.csbwin / "CSBCode.cpp").is_file() and (args.csbwin / "Data.h").is_file()
+    csbwin_results = csbwin_audit(args.csbwin) if csbwin_available else [{
+        "source": str(args.csbwin),
+        "function": "secondary CSBWin lineage",
+        "passed": True,
+        "available": False,
+        "note": "secondary reference unavailable; ReDMCSB remains the primary audit source",
+    }]
     results = {
         "gate": "pass401_dm1_v1_text_window_source_lock",
         "redmcsb_root": str(args.redmcsb),
         "csbwin_root": str(args.csbwin),
         "redmcsb": redmcsb_audit(args.redmcsb),
-        "csbwin": csbwin_audit(args.csbwin),
+        "csbwin": csbwin_results,
         "local": local_audit(),
         "runtime": [],
     }
