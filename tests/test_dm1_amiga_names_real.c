@@ -64,7 +64,7 @@ int main(void) {
         static const unsigned short periods[35] = {
             112,112,112,145,112,112,112,112,112,112,112,112,112,
             112,112,138,112,138,138,112,112,112,112,112,138,112,
-            112,112,138,138,138,138,138,138,150
+            138,112,138,138,138,138,138,138,150
         };
         if (!state->audioState.initialized && !M11_Audio_Init(&state->audioState)) goto done;
         for (int event = 0; event < 35; ++event) {

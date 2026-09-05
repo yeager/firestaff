@@ -3,6 +3,11 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: DM1 Amiga uses an explicit MEDIA413 sound table instead of
+  deriving periods from the PC table. Water elemental attack record 571
+  now uses source period 138 rather than PC's 112. Original 2.0/HD corpus
+  checks validate the corrected sample cadence across all engine events.
+
 - 2026-09-05: DM1 original Atari English, Amiga 2.0 and FM Towns English
   media pass explicit V1/V2.1 launches through CLI and menu (12 combinations).
   The new real-media tests check selected mode and loaded runtime rather

@@ -1603,20 +1603,26 @@ int M11_Audio_EmitDm1AmigaSound(M11_AudioState* state,
     unsigned char* raw;
     size_t length = 0;
     int accepted = 0;
-    const CsbV1Pc34SoundSpec* spec =
-        csb_v1_audio_runtime_pc34_sound_spec((int16_t)pc34Index);
-    /* DATA.C:1167-1200 MEDIA413 versus MEDIA719: event-selected Amiga
-     * records are 138 below the PC indices, with the same period fields.
+    /* DATA.C:1167-1200 MEDIA413, reordered by the engine's event IDs.
+     * Keep this edition-owned: water elemental period is 138, not PC's 112.
      * SOUND.C:1435-1439 skips two header bytes and plays record length-2;
      * F0060:1102-1110 uses 72800/period and native Paula volumes. */
-    if (!state || !graphics || pc34Index < 0 || pc34Index >= 35 || !spec)
+    static const struct { uint16_t graphic; uint8_t period; } sounds[35] = {
+        {533,112},{534,112},{535,112},{535,145},{536,112},{537,112},
+        {537,112},{539,112},{540,112},{541,112},{542,112},{543,112},
+        {544,112},{546,112},{547,112},{549,138},{545,112},{569,138},
+        {566,138},{552,112},{553,112},{554,112},{555,112},{550,112},
+        {570,138},{551,112},{571,138},{572,112},{563,138},{564,138},
+        {565,138},{567,138},{568,138},{573,138},{574,150}
+    };
+    if (!state || !graphics || pc34Index < 0 || pc34Index >= 35)
         return 0;
     raw = (unsigned char*)malloc(65535u);
     if (!raw) return 0;
     if (dm1_v1_legacy_graphics_read_raw(graphics, graphicsSize, 1,
-            (uint16_t)(spec->graphicIndex - 138u), raw, 65535u, &length) && length > 2u) {
+            sounds[pc34Index].graphic, raw, 65535u, &length) && length > 2u) {
         accepted = M11_Audio_PlayCsbAmigaRuntimePcmAtPaulaVolume(state,
-            raw + 2u, (int)(length - 2u), spec->period,
+            raw + 2u, (int)(length - 2u), sounds[pc34Index].period,
             m11_fnv1a_bytes(raw + 2u, (int)(length - 2u)), 64);
         if (accepted) state->lastSoundIndex = pc34Index;
     }
