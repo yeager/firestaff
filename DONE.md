@@ -3,6 +3,11 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Original Atari EN/DE/FR audio characterization verifies all
+  22 transport payloads byte-for-byte against the DM1 graphics reader.
+  Nineteen decode within their record boundaries; three known short streams
+  are explicitly tested for safe rejection. This is not playback parity.
+
 - 2026-09-05: Rebuilt post-M653-fix startup regressions pass on original
   Amiga 2.0/HD and FM Towns EN/JP media, including CLI/menu handoffs and
   the English/Japanese input matrices. The legacy corpus test additionally

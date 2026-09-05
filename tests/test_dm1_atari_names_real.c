@@ -2,6 +2,7 @@
 #include "dm1_v1_atari_st_graphics_dat.h"
 #include "asset_find_by_hash.h"
 #include "dm1_v1_legacy_graphics_dat.h"
+#include "csb_v1_audio_runtime_pc34_compat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -106,6 +107,38 @@ int main(int argc, char **argv) {
         }
     }
     puts("PASS: all 532 original Atari bitmap records decode to 4bpp pixels");
+    for (int i = 0; i < CSB_V1_ATARI_ST_SOUND_COUNT; ++i) {
+        CsbV1AtariStSoundPayload sound = {0};
+        CsbV1StSoundDecodeResult decodedSound = {0};
+        int decodeStatus;
+        if (!csb_v1_audio_runtime_load_atari_st_sound_payload(
+                state->assetLoader.graphicsDatPath, (int16_t)i, &sound)) {
+            fprintf(stderr, "FAIL: original Atari SND1 source index %d\n", i);
+            goto done;
+        }
+        count = dm1_v1_atari_st_graphics_read(&dat, sound.spec.graphicIndex,
+                                            raw, sizeof(raw));
+        if (count < 0 || (size_t)count != sound.byteCount ||
+            memcmp(raw, sound.bytes, sound.byteCount)) {
+            csb_v1_audio_runtime_atari_st_sound_payload_free(&sound);
+            fputs("FAIL: Atari audio transport changed original record bytes\n", stderr);
+            goto done;
+        }
+        decodeStatus = csb_v1_audio_runtime_decode_st_sound(sound.bytes,
+                sound.byteCount, 0, pixels, 1024u * 1024u, &decodedSound);
+        /* Characterization, not playback parity: these three original records
+         * exhaust their bounded stream before the declared sample count.
+         * SOUND.C F0060/F0061 reads from runtime RAM; do not invent padding.
+         * Keep the strict rejection until that RAM boundary is captured. */
+        if (decodeStatus != ((i == 1 || i == 12 || i == 16) ? -2 : 0)) {
+            fprintf(stderr, "FAIL: unexpected Atari SND1 decode index %d status %d\n",
+                    i, decodeStatus);
+            csb_v1_audio_runtime_atari_st_sound_payload_free(&sound);
+            goto done;
+        }
+        csb_v1_audio_runtime_atari_st_sound_payload_free(&sound);
+    }
+    puts("PASS: 22 Atari sound entries preserve source bytes; 19 decode, 3 known short streams reject safely (not playback parity)");
     result = 0;
 done:
     free(pixels);

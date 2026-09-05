@@ -12,6 +12,11 @@ Reviewed 2026-08-29. Only open work is listed here.
   indices and sample maps are not interchangeable with DM1's. Preserve the
   current no-generated-marker behavior while adding authenticated sample
   and live dispatch tests. CDDA/title success does not prove effect playback.
+  Capture original F0060/F0061 runtime RAM boundaries for Atari sound indices
+  1, 12 and 16 (records 534, 544 and 546): the bounded SND1 decoder rejects
+  these original EN/DE/FR streams as short. Record 534 declares 100 samples
+  but its 37-byte nibble stream describes 99. Do not invent a final sample
+  or read beyond the allocated record to make playback appear complete.
 
 - Compare original Atari pixel captures after the corrected F0497/F0496
   decoder. English, German and French original-media name/all-record checks
