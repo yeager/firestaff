@@ -3,6 +3,11 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Amiga M564 regression now uses M12's authenticated edition
+  selection and native archive handoff. All 199 original object-name indices
+  pass for the 2.0 and HD ZIP→ZIP→ADF packages. This validates name bytes,
+  not inventory glyph pixels or the outstanding gameplay palette capture.
+
 - 2026-09-05: Extended the Atari name/all-record gate to hash-selected German
   1.2 and French 1.3 original disk containers. Both verify all 199 names and
   563 expanded lengths, alongside English 1.2. Rebuilt native CLI/menu/input

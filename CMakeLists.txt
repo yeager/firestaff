@@ -12269,6 +12269,16 @@ if(BUILD_TESTING)
 
     add_executable(test_dm1_fmtowns_jp_names_real tests/test_dm1_fmtowns_jp_names_real.c)
     add_executable(test_dm1_atari_names_real tests/test_dm1_atari_names_real.c)
+    add_executable(test_dm1_amiga_names_real tests/test_dm1_amiga_names_real.c)
+    target_link_libraries(test_dm1_amiga_names_real PRIVATE firestaff_m12 firestaff_m11)
+    add_test(NAME dm1_amiga_names_real COMMAND test_dm1_amiga_names_real)
+    add_test(NAME dm1_amiga_hd_names_real COMMAND test_dm1_amiga_names_real)
+    set_tests_properties(dm1_amiga_hd_names_real PROPERTIES SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM1_AMIGA_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Amiga_EN.zip"
+        LABELS "dm1;amiga;real-media;objects;skip-safe")
+    set_tests_properties(dm1_amiga_names_real PROPERTIES SKIP_RETURN_CODE 77
+        ENVIRONMENT "FIRESTAFF_DM1_AMIGA_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_Amiga_EN_Version-20.zip"
+        LABELS "dm1;amiga;real-media;objects;skip-safe")
     target_link_libraries(test_dm1_atari_names_real PRIVATE firestaff_m12 firestaff_m11)
     add_test(NAME dm1_atari_names_real COMMAND test_dm1_atari_names_real)
     add_test(NAME dm1_atari_de_names_real COMMAND test_dm1_atari_names_real 2bdc5f431f84c0ece738f54dbd787c3b)
