@@ -1,5 +1,10 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-05: Hardened the CSB M11 HUD regression: failure to start selected
+  media is now a test failure, not a successful skip. Invalid presentation
+  selection uses CTest's skip code. Original Atari MINI.DAT passes the
+  rebuilt test in Original, V2.0 and V2.1.
+
 - 2026-09-05: Original CSB FM Towns EN/JP tests also verify reopening an
   already-open chest with a hole and switching chest owners while holding
   an original resident. Both container lists and the held item survive in

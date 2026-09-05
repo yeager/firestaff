@@ -844,15 +844,16 @@ int main(void)
     if (spec.presentationMode < M12_PRESENTATION_V1_ORIGINAL ||
         spec.presentationMode > M12_PRESENTATION_V22_MODERN) {
         fputs("SKIP: invalid CSB presentation mode\n", stderr);
-        return 0;
+        return 77;
     }
     spec.presentationWidth = 320;
     spec.presentationHeight = 200;
 
     M11_GameView_Init(&view);
     if (!M11_GameView_Start(&view, &spec)) {
-        puts("SKIP: verified CSB PC3.4 data is unavailable");
-        return 0;
+        fputs("FAIL: selected CSB media did not start in M11\n", stderr);
+        M11_GameView_Shutdown(&view);
+        return 1;
     }
     if (spec.savePath) {
         const CSB_V1_BootProfile *profile =
