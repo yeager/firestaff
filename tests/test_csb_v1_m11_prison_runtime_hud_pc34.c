@@ -1081,6 +1081,61 @@ int main(void)
                                       view.csbBootProfile, 0, 1, chest) &&
                                       DM1_V1_M11Runtime_OpenActionHandChestPc34Compat(&view),
                                   "original Atari chest opens from the action hand");
+                            {
+                                unsigned char *panel = NULL;
+                                int pw = 0, ph = 0, checked = 0;
+                                unsigned char expectedPanel[224 * 136] = {0};
+                                CSB_V1_StartupGraphicDecodeReceipt_PC34 panelReceipt;
+                                memset(&panelReceipt, 0, sizeof(panelReceipt));
+                                CHECK(csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+                                          profile->graphics_path, 25u, &panel, &pw, &ph, &panelReceipt) &&
+                                          panelReceipt.valid && pw == 144 && ph == 73,
+                                      "Atari chest exposes original C025 panel pixels");
+                                memset(framebuffer, 0, sizeof(framebuffer));
+                                M11_GameView_Draw(&view, framebuffer, 320, 200);
+                                if (panel && pw == 144 && ph == 73) {
+                                    for (int cy = 0; cy < ph; ++cy)
+                                        memcpy(expectedPanel + (52 + cy) * 224 + 80, panel + cy * pw, 144);
+                                    for (int iconSlot = 0; iconSlot < 8; ++iconSlot) {
+                                        int icon = iconSlot < count ? csb_v1_boot_runtime_object_icon_index_pc34(
+                                            profile, residents[iconSlot]) : 204;
+                                        int group = 0, aw = 0, ah = 0;
+                                        unsigned char *atlas = NULL;
+                                        CSB_V1_StartupGraphicDecodeReceipt_PC34 atlasReceipt;
+                                        for (int g = 1; g < 7; ++g)
+                                            if (icon >= layout.object_graphic_first[g]) group = g;
+                                        int relative = icon - layout.object_graphic_first[group];
+                                        int ax = (relative % 16) * 16, ay = (relative / 16) * 16;
+                                        memset(&atlasReceipt, 0, sizeof(atlasReceipt));
+                                        CHECK(icon >= 0 && csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+                                                  profile->graphics_path, (uint16_t)(42 + group),
+                                                  &atlas, &aw, &ah, &atlasReceipt) && atlasReceipt.valid &&
+                                                  ax + 16 <= aw && ay + 16 <= ah,
+                                              "Atari chest icon has an original atlas crop");
+                                        if (atlas && ax >= 0 && ay >= 0 && ax + 16 <= aw && ay + 16 <= ah)
+                                            for (int iy = 0; iy < 16; ++iy)
+                                                memcpy(expectedPanel + (top[iconSlot] - 33 + iy) * 224 + left[iconSlot],
+                                                       atlas + (ay + iy) * aw + ax, 16);
+                                        free(atlas);
+                                    }
+                                    CHECK(draw_atari_st_csbwin_inventory_life_forces(profile->graphics_path,
+                                              &view.world.party.champions[0], expectedPanel),
+                                          "original M653 life-force text overlays the chest panel");
+                                    for (int cy = 0; cy < ph; ++cy) for (int cx = 0; cx < pw; ++cx) {
+                                        int sx = 128 + cx, sy = 85 + cy, covered = 0;
+                                        for (int icon = 0; icon < 8; ++icon)
+                                            if (sx >= 48 + left[icon] && sx < 48 + left[icon] + 16 &&
+                                                sy >= top[icon] && sy < top[icon] + 16) covered = 1;
+                                        if (!covered && panel[cy * pw + cx] == 8u) continue;
+                                        CHECK(framebuffer[sy * 320 + sx] == expectedPanel[(sy - 33) * 224 + sx - 48],
+                                              "Atari chest background matches original C025 pixels");
+                                        ++checked;
+                                    }
+                                }
+                                CHECK(checked > 0, "Atari chest panel comparison is nonempty");
+                                free(panel);
+                                if (failures) { M11_GameView_Shutdown(&view); return 1; }
+                            }
                             for (int position = 0; position < count; ++position) {
                                 (void)M11_GameView_HandlePointer(&view, 48 + left[position] + 8, top[position] + 8, 1);
                                 (void)M11_GameView_HandlePointerButtonRelease(&view,

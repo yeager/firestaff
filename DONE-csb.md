@@ -1,5 +1,16 @@
 # Firestaff DONE — CSB
 
+## 2026-09-05 — Atari chest material composition
+
+- Added the original C025 panel and eight original atlas-icon crops to the
+  Atari inventory compositor, using retained open-chest slots so holes do
+  not compact while the panel remains open.
+- Original, V2.0 and V2.1 pass background and icon pixel comparisons for
+  every tested nonempty original container, including the existing M653
+  life-force overlay, alongside inventory and chest pickup checks.
+- Transparent background preservation and same-state emulator comparison
+  remain separate verification work; no full visual-parity claim is made.
+
 ## 2026-09-05 — Atari native chest pickup routing
 
 - Added the eight open-chest input slots using the selected C232 icon

@@ -4403,6 +4403,47 @@ static int m11_csb_csbwin_hud_source_resolver(
  * the IconDisplay destination and the C042..C048 atlas selection.  This
  * includes CSBWin's authored empty-slot special objects; the PC3.4 object
  * icon zone is never used. */
+static int m11_csb_compose_csbwin_chest(
+    M11_GameViewState *state, const CSB_V1_BootProfile *profile,
+    const CSB_V1_CSBWinLayout0232 *layout, uint8_t *pixels)
+{
+    const uint8_t *panel = NULL;
+    int width = 0, height = 0;
+    if (!state->v1OpenChestSlotsValid ||
+        state->v1OpenChestSlotsOwner != state->v1OpenChestThing ||
+        state->v1OpenChestThing == THING_NONE) return 1;
+    /* CHEST.C F0333:47 and DATA.C G0032:314: C025 is 144x73 at
+     * viewport (80,52). Atari's retained viewport starts at (48,33). */
+    if (!m11_csb_csbwin_hud_source_resolver(state, 25u, &panel, &width, &height) ||
+        !panel || width != 144 || height != 73) return 0;
+    for (int y = 0; y < height; ++y)
+        for (int x = 0; x < width; ++x)
+            if (panel[(size_t)y * 144u + x] != 8u)
+                pixels[(size_t)(85 + y) * 320u + 128u + x] = panel[(size_t)y * 144u + x];
+    for (int slot = 0; slot < 8; ++slot) {
+        const uint8_t *atlas = NULL;
+        int aw = 0, ah = 0;
+        uint16_t thing = state->v1OpenChestSlots[slot];
+        int icon = thing == THING_NONE || thing == THING_ENDOFLIST ? 204 :
+            csb_v1_boot_runtime_object_icon_index_pc34(profile, thing);
+        CSB_V1_CSBWinInventoryIconMaterial0232 material;
+        /* Reuse the source atlas selector with the chest's own destination;
+         * no champion-slot geometry is retained in this temporary receipt. */
+        CSB_V1_CSBWinLayout0232 chestLayout = *layout;
+        chestLayout.icon_display[8] = layout->icon_display[38 + slot];
+        if (icon < 0 || !csb_v1_csbwin_layout_0232_build_inventory_icon_material(
+                &chestLayout, 0u, (uint16_t)icon, &material) ||
+            !m11_csb_csbwin_hud_source_resolver(state, material.graphic_index,
+                &atlas, &aw, &ah) || !atlas || material.source_x + 16 > aw ||
+            material.source_y + 16 > ah) return 0;
+        for (int y = 0; y < 16; ++y)
+            memcpy(pixels + (size_t)(33 + material.destination.pixel_y + y) * 320u +
+                       48u + material.destination.pixel_x,
+                   atlas + (size_t)(material.source_y + y) * (size_t)aw + material.source_x, 16u);
+    }
+    return 1;
+}
+
 static int m11_csb_compose_csbwin_inventory_icons(
     M11_GameViewState *state, const CSB_V1_BootProfile *profile,
     const CSB_V1_CSBWinLayout0232 *layout, uint8_t *pixels)
@@ -4743,6 +4784,7 @@ static int m11_csb_present_atari_st_runtime_hud(
             return 0;
         }
         (void)m11_csb_draw_csbwin_food_water_panel(state, &layout, candidate);
+        if (!m11_csb_compose_csbwin_chest(state, profile, &layout, candidate)) return 0;
         /* Text is a separately admitted raw M653 consumer.  A malformed
          * font must not invent glyphs or suppress the already verified C017
          * pixel layer; it leaves only this source text undrawn. */

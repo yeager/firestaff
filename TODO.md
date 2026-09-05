@@ -1,7 +1,7 @@
 # Firestaff TODO — active cross-game work
 
-- Complete Atari CSB's inventory compositor with the original C025 chest
-  panel and resident icons; pickup routing alone is not visible chest parity.
+- Verify Atari CSB chest transparency against the underlying original
+  inventory pixels and compare the full composition with the original runtime.
 
 - Extend Atari CSB's original-object inventory corpus to equipment/chest
   drag destinations and native chest-panel interactions.

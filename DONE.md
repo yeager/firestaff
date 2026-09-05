@@ -1,5 +1,9 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-05: Atari CSB chest composition now uses C025 and original icon
+  atlas crops. Source-material pixel checks pass in Original, V2.0 and V2.1;
+  transparency-background and emulator parity are not yet established.
+
 - 2026-09-05: Original Atari CSB chest pickups pass in three presentation
   modes using C232-relative native input geometry. Chest rendering remains
   a separate open requirement.
