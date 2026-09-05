@@ -174,6 +174,39 @@ int main(void)
     puts("PASS: all 35 F31 sound events match original signed PCM at 5500 Hz");
     puts("PASS: packed CSB FM Towns runtime sound uses original GRAPHICS.DAT PCM");
     puts("PASS: packed CSB FM Towns M11 starts from original ZIP");
+    /* Exercise the original GAME/Enter path before inspecting inventory.
+     * MINI.DAT supplies the champion and dungeon; do not fabricate a party. */
+    for (int tick = 0; tick < 700; ++tick)
+        (void)M11_GameView_AdvanceIdleTick(&view);
+    (void)M11_GameView_HandlePointer(&view, 52, 110, 1);
+    for (int tick = 0; tick < 10; ++tick)
+        (void)M11_GameView_AdvanceIdleTick(&view);
+    (void)M11_GameView_HandlePointer(&view, 250, 50, 1);
+    for (int tick = 0; tick < 240; ++tick)
+        (void)M11_GameView_AdvanceIdleTick(&view);
+    if (profile->runtime.champion_count != 1 ||
+        !profile->runtime.dungeon_handle) {
+        fputs("FAIL: original F31 GAME/Enter inventory world not loaded\n", stderr);
+        M11_GameView_Shutdown(&view);
+        return 1;
+    }
+    puts("PASS: original F31 MINI.DAT party and dungeon loaded for inventory");
+    {
+        int residents = 0;
+        int containers = profile->runtime.dungeon_handle->thing_type_counts[9];
+        for (int index = 0; index < containers; ++index) {
+            uint16_t slots[8];
+            int count = csb_v1_runtime_read_container_slots(&profile->runtime,
+                (uint16_t)((9 << 10) | index), slots);
+            if (count < 0 || count > 8) {
+                fputs("FAIL: original F31 container read rejected\n", stderr);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
+            residents += count;
+        }
+        printf("original F31 inventory: containers=%d residents=%d\n", containers, residents);
+    }
     M11_GameView_Shutdown(&view);
     return 0;
 }

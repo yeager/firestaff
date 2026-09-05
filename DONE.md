@@ -3,6 +3,12 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: The CSB FM Towns original-media M11 test now traverses
+  GAME/Enter into the original MINI.DAT party/dungeon before inventory
+  inspection. Both English and Japanese pass with one original champion,
+  14 readable containers and 60 visible residents. This establishes media
+  ownership for subsequent chest input tests, not slot-persistence parity.
+
 - 2026-09-05: Rebuilt the Firestaff application with the live chest fixes.
   The original English DOS archive CLI/menu regression passes, including
   Original, V2.0 and V2.1 launch modes. Unreleased notes now distinguish the
