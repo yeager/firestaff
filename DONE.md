@@ -1,5 +1,9 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-05: Independently verified Atari CSB allowed-slot values for all
+  447 allocated objects against original C559 bytes; Original mode passes
+  the full 30-slot input sweep using those bytes as the acceptance oracle.
+
 - 2026-09-05: Atari CSB original-object input coverage now spans all 30
   inventory slots, including equipment rejection: 40,230 checks pass across
   Original, V2.0 and V2.1. Independent object-mask decoding remains separate.

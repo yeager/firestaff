@@ -1,7 +1,7 @@
 # Firestaff TODO — active cross-game work
 
 - Extend Atari CSB's original-object inventory corpus to occupied-slot
-  exchanges and independently compare decoded object masks with source bytes.
+  exchanges; rerun the independent C559-byte oracle in Modern presentations.
 
 - Extend original-media chest interaction verification to CSB Atari and
   Amiga, including panel geometry, same-owner refresh and owner switching;

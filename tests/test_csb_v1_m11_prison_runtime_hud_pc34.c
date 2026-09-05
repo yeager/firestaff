@@ -909,7 +909,16 @@ int main(void)
                   "real Atari MINI.DAT F1 opens the GAMEBLOCK champion inventory");
             {
                 CSB_V1_CSBWinLayout0232 layout;
+                CSB_AtariStLoader objectLoader;
+                uint8_t objectBytes[0x0c0e];
                 int tested = 0;
+                csb_atari_st_graphics_loader_init(&objectLoader);
+                CHECK(csb_atari_st_graphics_loader_open(&objectLoader, profile->graphics_path) &&
+                          csb_atari_st_graphics_loader_read_item(&objectLoader, 0x22f,
+                              objectBytes, sizeof(objectBytes)) == (int)sizeof(objectBytes),
+                      "original Atari C559 object-info bytes are available");
+                csb_atari_st_graphics_loader_close(&objectLoader);
+                if (failures) { M11_GameView_Shutdown(&view); return 1; }
                 CHECK(csb_v1_csbwin_layout_0232_read_graphics_dat(
                           profile->graphics_path, &layout) && layout.valid,
                       "real Atari inventory exposes its original slot coordinates");
@@ -941,8 +950,26 @@ int main(void)
                          * slots use mask 0xffff. Place original records in this disposable
                          * runtime, then restore the utility's empty slot. */
                         original = (unsigned short)((type << 10) | record);
-                        canReturn = (csb_v1_runtime_object_allowed_slots_from_boot_profile_pc34(
-                            view.csbBootProfile, original) & (slot < 13 ? equipmentMasks[slot] : 0xffff)) != 0;
+                        {
+                            /* F0141 DUNGEON.C:1136-1163 selects ObjectInfo.
+                             * Dungeon records are normalized little-endian;
+                             * C559's six-byte entries retain source BE words. */
+                            unsigned word = recordBytes[2] | ((unsigned)recordBytes[3] << 8);
+                            unsigned info = type == 5 ? 23 + (word & 127) :
+                                type == 6 ? 69 + (word & 127) :
+                                type == 7 ? 0 : type == 8 ? 2 + ((word >> 8) & 127) :
+                                type == 9 ? 1 + ((recordBytes[4] >> 1) & 3) : 127 + (word & 127);
+                            uint16_t allowed = 0;
+                            CHECK(info < 180, "original object-info index fits C559");
+                            if (info < 180) {
+                                const uint8_t *entry = objectBytes + 0x7a6 + info * 6;
+                                allowed = (uint16_t)(((unsigned)entry[4] << 8) | entry[5]);
+                            }
+                            CHECK(csb_v1_runtime_object_allowed_slots_from_boot_profile_pc34(
+                                      view.csbBootProfile, original) == allowed,
+                                  "runtime allowed slots match original C559 bytes");
+                            canReturn = (allowed & (slot < 13 ? equipmentMasks[slot] : 0xffff)) != 0;
+                        }
                         CHECK(csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
                                   view.csbBootProfile, 0, slot, original),
                               "Atari inventory accepts controlled original-record placement");

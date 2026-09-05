@@ -1,5 +1,16 @@
 # Firestaff DONE — CSB
 
+## 2026-09-05 — Independent Atari allowed-slot oracle
+
+- The original-object inventory test now expands selected GRAPHICS.DAT C559
+  directly and reads the big-endian allowed-slot word from each six-byte
+  ObjectInfo entry. A separate F0141 index calculation uses original dungeon
+  record fields rather than the runtime's ObjectInfo helper.
+- All 447 allocated objects agree with the runtime's allowed-slot values.
+  Original mode passes all 13,410 object/slot checks with this byte-derived
+  oracle. The earlier three-mode interaction run used the runtime oracle;
+  the expanded independent oracle has so far been rerun in Original only.
+
 ## 2026-09-05 — Atari equipment-slot input coverage
 
 - Extended the allocated original-object corpus to all 30 inventory slots:
