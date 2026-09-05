@@ -15,32 +15,51 @@ static int check_inventory_roundtrip(M11_GameViewState *state,
 {
     int modes[] = { M12_PRESENTATION_V1_ORIGINAL,
                     M12_PRESENTATION_V21_UPSCALED };
+    /* DATA.C G0038:1049-1079, independent source slot-mask oracle. */
+    static const unsigned int slotMasks[30] = {
+        0xffff, 0xffff, 2, 8, 16, 32, 256, 128, 128, 128, 4, 256, 64,
+        0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff,
+        0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff
+    };
+    static const int hostSlots[30] = {
+        19, 20, 0, 2, 3, 4, 6, 9, 8, 10, 1, 5, 7,
+        11, 12, 13, 14, 15, 16, 17, 18, 21, 22, 23, 24, 25, 26, 27, 28, 29
+    };
+    unsigned int allowed = dm1_v1_dungeon_get_object_allowed_slots_pc34(
+        state->world.things, thing);
     int x, y, w, h;
-    int mode;
-    if (!M11_GameView_GetV1InventorySourceSlotBoxZone(9, &x, &y, &w, &h))
-        return 0;
+    int mode, inventorySlot;
     for (mode = 0; mode < 2; ++mode) {
+      for (inventorySlot = 0; inventorySlot < 30; ++inventorySlot) {
         int step;
+        int hostSlot = hostSlots[inventorySlot];
+        int admitted = (allowed & slotMasks[inventorySlot]) != 0;
+        if (!M11_GameView_GetV1InventorySourceSlotBoxZone(
+                inventorySlot + 8, &x, &y, &w, &h)) return 0;
         state->presentationMode = modes[mode];
         state->inventoryPanelActive = 1;
-        state->world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        state->world.party.champions[0].inventory[hostSlot] =
             THING_NONE;
         if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, thing))
             return 0;
-        for (step = 0; step < 2; ++step) {
-            unsigned short hand = step ? thing : THING_NONE;
-            unsigned short slot = step ? THING_NONE : thing;
-            if (M11_GameView_HandlePointer(state, x + w / 2,
-                    33 + y + h / 2, 1) != M11_GAME_INPUT_REDRAW ||
-                DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != hand ||
-                state->world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] != slot)
+        for (step = 0; step < (admitted ? 2 : 1); ++step) {
+            unsigned short hand = (step || !admitted) ? thing : THING_NONE;
+            unsigned short slot = (step || !admitted) ? THING_NONE : thing;
+            (void)M11_GameView_HandlePointer(state, x + w / 2,
+                    33 + y + h / 2, 1);
+            if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != hand ||
+                state->world.party.champions[0].inventory[hostSlot] != slot) {
+                fprintf(stderr, "slot=%d mode=%d admitted=%d step=%d\n",
+                        inventorySlot, modes[mode], admitted, step);
                 return 0;
+            }
             (void)M11_GameView_HandlePointerButtonRelease(state, x + w / 2,
                 33 + y + h / 2, DM1_V1_MOUSE_MASK_LEFT_PC34);
             if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != hand ||
-                state->world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] != slot)
+                state->world.party.champions[0].inventory[hostSlot] != slot)
                 return 0;
         }
+      }
     }
     return 1;
 }

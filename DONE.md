@@ -3,6 +3,12 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Expanded the 611-record PC3.4 mouse corpus to all 30 inventory
+  slots in Original and V2.1 (36,660 object/slot/mode combinations). Source
+  G0038 masks determine admission; permitted placements roundtrip and denied
+  placements preserve the held Thing across press/release. All checks pass.
+  Occupied-slot swaps and chest contents remain separate unfinished coverage.
+
 - 2026-09-05: The original PC3.4 object corpus now exercises live action-hand
   placement and retrieval through mouse press/release for all 611 decoded
   weapon, armour, scroll, potion, container and junk records in Original and
