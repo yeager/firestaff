@@ -3,6 +3,12 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: The Atari original-media gate now raster-decodes every one of
+  the 532 admitted image records and checks every output pixel is 4bpp.
+  English 1.2, German 1.2 and French 1.3 all pass, in addition to their 563
+  raw-record and 199-name checks. This is decoder coverage, not a same-state
+  original framebuffer comparison or proof of viewport composition.
+
 - 2026-09-05: Amiga M564 regression now uses M12's authenticated edition
   selection and native archive handoff. All 199 original object-name indices
   pass for the 2.0 and HD ZIP→ZIP→ADF packages. This validates name bytes,

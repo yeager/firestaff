@@ -1,6 +1,7 @@
 #include "m11_game_view.h"
 #include "dm1_v1_atari_st_graphics_dat.h"
 #include "asset_find_by_hash.h"
+#include "dm1_v1_legacy_graphics_dat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,6 +14,7 @@ int main(int argc, char **argv) {
     char container[ASSET_PATH_MAX];
     DM1_V1_AtariStGraphicsDat dat;
     unsigned char raw[65535];
+    unsigned char *pixels = NULL;
     int count, result = 1;
     size_t cursor = 0;
     FILE *media;
@@ -73,8 +75,27 @@ int main(int argc, char **argv) {
         }
     }
     puts("PASS: all 563 authentic Atari graphics records decode to original table lengths");
+    pixels = malloc(1024u * 1024u);
+    if (!pixels) goto done;
+    for (unsigned int i = 0; i < DM1_V1_ATARI_ST_GRAPHICS_COUNT; ++i) {
+        uint16_t width = 0, height = 0;
+        if (!dm1_v1_legacy_graphics_is_bitmap_index((uint16_t)i)) continue;
+        if (!dm1_v1_atari_st_graphics_decode(&dat, (uint16_t)i, pixels,
+                1024u * 1024u, &width, &height)) {
+            fprintf(stderr, "FAIL: original Atari bitmap %u\n", i);
+            goto done;
+        }
+        for (size_t p = 0; p < (size_t)width * height; ++p) {
+            if (pixels[p] > 15) {
+                fprintf(stderr, "FAIL: Atari bitmap %u non-4bpp pixel\n", i);
+                goto done;
+            }
+        }
+    }
+    puts("PASS: all 532 original Atari bitmap records decode to 4bpp pixels");
     result = 0;
 done:
+    free(pixels);
     M11_GameView_Shutdown(state);
     free(state);
     return result;
