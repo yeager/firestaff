@@ -3,6 +3,14 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: The original PC3.4 object corpus now exercises live action-hand
+  placement and retrieval through mouse press/release for all 611 decoded
+  weapon, armour, scroll, potion, container and junk records in Original and
+  V2.1. All roundtrips preserve Thing identity and single-exchange ownership.
+  Existing name/icon checks remain; no replacement game records are created.
+  Missing media is explicitly skipped. This does not cover every inventory
+  slot, chest interaction, or emulator-rendered pixel equivalence.
+
 - 2026-09-05: The original PC3.4 archive's live HoC pointer sweep now runs
   in both Original and V2.1, requiring all 24 candidates rather than any
   nonempty subset. Both modes select all 24 through the rendered input path;

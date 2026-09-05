@@ -12396,6 +12396,7 @@ if(BUILD_TESTING)
             WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         )
         set_tests_properties(m11_dm1_real_object_corpus PROPERTIES
+            SKIP_RETURN_CODE 77
             ENVIRONMENT "FIRESTAFF_DM1_PC34_ARCHIVE=${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/Dungeon-Master_DOS_EN_Version-34.zip"
             LABELS "dm1;dos;pc34;real-media;in-memory;objects;skip-safe")
     endif()

@@ -2,6 +2,12 @@
 
 Reviewed 2026-08-29. Only open work is listed here.
 
+- Extend original-media inventory interaction verification beyond the
+  action-hand roundtrip: all equipment/backpack slots, occupied-slot swaps,
+  chest contents, and scroll/eye interactions across supported editions.
+  The 611-record PC3.4 Original/V2.1 press/release corpus covers action-hand
+  identity preservation only, not complete inventory or pixel parity.
+
 - Complete legacy gameplay sound parity. Atari now selects original SND1
   records through a source-locked event map; verify live event timing,
   arbitration and PSG output against original captures. FM Towns local
