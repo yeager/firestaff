@@ -49129,16 +49129,27 @@ static const char *m11_action_name_for_state(
         }
         return fs_po_gettext_in_domain("csb", source);
     }
-    /* FM Towns EDM's DRAW_DMENU indexes the authenticated native string
-     * table at load-image + 0x24194.  Consume that receipt for the selected
-     * English FM runtime; do not let a PC34/CSB label table leak into it. */
+    /* FM Towns DRAW_DMENU indexes EDM's pool at load-image + 0x24194
+     * or JDM's at + 0x243bc. Consume the selected program's receipt;
+     * do not let a PC34/CSB label table leak into either language. */
     if (state && state->dm1FmtownsStartupReceiptValid &&
-        state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_EN &&
+        action_index < 44u &&
         action_index < state->dm1FmtownsStartupReceipt.game_action_name_count &&
         state->dm1FmtownsStartupReceipt.game_action_names[action_index][0] != '\0') {
+        const char *source = state->dm1FmtownsStartupReceipt.game_action_names[action_index];
+        if (state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP) {
+#if defined(_MSC_VER)
+            static __declspec(thread) char japanese_actions[44][48];
+#else
+            static _Thread_local char japanese_actions[44][48];
+#endif
+            if (firestaff_cp932_to_utf8(source, strlen(source),
+                    japanese_actions[action_index], sizeof(japanese_actions[action_index])) < 0)
+                return "";
+            source = japanese_actions[action_index];
+        }
         return fs_po_gettext_in_domain(
-            "dm1",
-            state->dm1FmtownsStartupReceipt.game_action_names[action_index]);
+            "dm1", source);
     }
     return fs_po_gettext_in_domain(
         "dm1", M11_GameView_GetActionName(action_index));

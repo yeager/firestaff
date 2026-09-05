@@ -375,7 +375,7 @@ static int parse_title_palettes(const uint8_t *program, size_t size,
 
 static int parse_native_action_names(const uint8_t *program, size_t size,
                                      uint32_t load_offset, uint32_t load_size,
-                                     DM1_V1_FmtownsStartupReceipt *out) {
+                                     int english, DM1_V1_FmtownsStartupReceipt *out) {
     static const char *const k_names[44] = {
         "N", "BLOCK", "CHOP", "X", "BLOW HORN", "FLIP", "PUNCH",
         "KICK", "WAR CRY", "STAB", "CLIMB DOWN", "FREEZE LIFE", "HIT",
@@ -387,18 +387,24 @@ static int parse_native_action_names(const uint8_t *program, size_t size,
     };
     size_t cursor;
     size_t i;
+    const size_t pool = english ? 0x24194u : 0x243bcu;
     if (!program || !out || load_offset > size || load_size > size - load_offset ||
-        load_size < 0x24194u) return 0;
-    cursor = (size_t)load_offset + 0x24194u;
+        load_size < pool) return 0;
+    cursor = (size_t)load_offset + pool;
     for (i = 0; i < 44u; ++i) {
-        size_t length = strlen(k_names[i]);
+        const uint8_t *end = memchr(program + cursor, 0,
+                                    (size_t)load_offset + load_size - cursor);
+        size_t length;
+        if (!end) return 0;
+        length = (size_t)(end - program) - cursor;
         if (length >= sizeof(out->game_action_names[i]) ||
-            !bytes_equal_at(program, size, cursor,
-                            (const uint8_t *)k_names[i], length) ||
+            (english && (length != strlen(k_names[i]) ||
+             !bytes_equal_at(program, size, cursor,
+                            (const uint8_t *)k_names[i], length))) ||
             cursor + length >= size || program[cursor + length] != 0u) {
             return 0;
         }
-        memcpy(out->game_action_names[i], k_names[i], length + 1u);
+        memcpy(out->game_action_names[i], program + cursor, length + 1u);
         cursor += length + 1u;
     }
     out->game_action_name_count = 44u;
@@ -589,8 +595,8 @@ int dm1_v1_fmtowns_startup_receipt(const uint8_t *autoexec, size_t autoexec_size
         out->game_dynamenu_entry = 0x000243b4u;
         out->game_menu_icons_entry = 0x00024384u;
     }
-    if (english && !parse_native_action_names(
-            game_program, game_program_size, gameLoadOffset, gameLoadSize, out)) {
+    if (!parse_native_action_names(
+            game_program, game_program_size, gameLoadOffset, gameLoadSize, english, out)) {
         memset(out, 0, sizeof(*out));
         return 0;
     }

@@ -64,9 +64,10 @@ typedef struct {
     int game_title_palettes_verified;
     uint8_t game_title_presents_palette_rgb6[16][3];
     uint8_t game_title_zoom_palette_rgb6[16][3];
-    /* EDM's native DRAW_DMENU indexes this source string table directly.
+    /* EDM/JDM's native DRAW_DMENU indexes this source string table directly.
      * Keep the admitted bytes with the startup receipt so the host action
-     * rows cannot silently fall back to a different game's labels. */
+     * rows cannot silently fall back to a different game's labels.
+     * JDM strings remain original CP932 until the presentation boundary. */
     uint16_t game_action_name_count;
     char game_action_names[44][16];
     uint32_t game_p3_header_size;

@@ -3,6 +3,7 @@
 #include "csb_v1_boot.h"
 #include "firestaff_cp932.h"
 #include "dm1_v1_legacy_graphics_dat.h"
+#include "dm1_v1_fmtowns_dyna_buttons_ja.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,6 +64,17 @@ int main(void) {
         offset = (size_t)(end - raw) + 1;
     }
     if (!state->dm1ObjectNameTableValid) goto done;
+    if (state->dm1FmtownsStartupReceipt.game_action_name_count != 44) goto done;
+    for (unsigned int i = 0; i < 44; ++i) {
+        char utf8[48];
+        const char *original = state->dm1FmtownsStartupReceipt.game_action_names[i];
+        if (strcmp(original, dm1_v1_fmtowns_dyna_button_label_ja_pc34(i)) ||
+            firestaff_cp932_to_utf8(original, strlen(original), utf8, sizeof(utf8)) < 0) {
+            fprintf(stderr, "FAIL: original JDM action index %u\n", i);
+            goto done;
+        }
+    }
+    puts("PASS: all 44 original JDM action names match the reviewed source pool");
     puts("PASS: all 199 authentic F20J names retain their source indices and UTF-8 keys");
     result = 0;
 done:

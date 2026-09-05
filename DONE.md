@@ -3,6 +3,13 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: DM1 Japanese FM Towns actions now consume the authenticated
+  JDM.EXP load-image pool at `0x243bc`, instead of falling through to PC3.4
+  English action names. The receipt retains original CP932 bytes; M11 converts
+  to UTF-8 at catalog lookup. All 44 names match the reviewed JDM pool, all
+  199 real Japanese object-name checks pass, and the original-disc English
+  startup/menu-owner regression passes. This does not establish glyph parity.
+
 - 2026-09-05: Fixed DM1 legacy M564 binding to read the already-owned original
   GRAPHICS bytes instead of reopening a diagnostic display path through the
   PC3.4 container decoder. Authenticated Japanese FM Towns now uses F0031's
