@@ -54,6 +54,48 @@ int main(void) {
         length != M11_FONT_BITMAP_BYTES ||
         memcmp(raw, state->originalFont.bitmap, M11_FONT_BITMAP_BYTES)) goto done;
     puts("PASS: Amiga interface font matches original M653 bytes");
+    {
+        static const unsigned short records[35] = {
+            533,534,535,535,536,537,537,539,540,541,542,543,544,
+            546,547,549,545,569,566,552,553,554,555,550,570,551,
+            571,572,563,564,565,567,568,573,574
+        };
+        static const unsigned short periods[35] = {
+            112,112,112,145,112,112,112,112,112,112,112,112,112,
+            112,112,138,112,138,138,112,112,112,112,112,138,112,
+            112,112,138,138,138,138,138,138,150
+        };
+        if (!state->audioState.initialized && !M11_Audio_Init(&state->audioState)) goto done;
+        for (int event = 0; event < 35; ++event) {
+            if (!M11_Audio_EmitDm1AmigaSound(&state->audioState,
+                    state->assetLoader.legacyData,
+                    (size_t)state->assetLoader.legacyDataSize, event) ||
+                !dm1_v1_legacy_graphics_read_raw(state->assetLoader.legacyData,
+                    (size_t)state->assetLoader.legacyDataSize, 1, records[event],
+                    raw, sizeof(raw), &length) || length < 3 ||
+                state->audioState.csbAmigaRuntimeSoundByteCount != (int)length - 2) {
+                fprintf(stderr, "FAIL: original Amiga sound event %d\n", event);
+                goto done;
+            }
+            {
+                unsigned int rate = 3579545u / (72800u / periods[event]);
+                int output = (int)(((length - 2u) * M11_AUDIO_SAMPLE_RATE + rate - 1u) / rate);
+                if (state->audioState.csbAmigaRuntimePcm.sampleCount != output) goto done;
+                for (int p = 0; p < output; ++p) {
+                    size_t source = (size_t)p * rate / M11_AUDIO_SAMPLE_RATE;
+                    int value;
+                    if (source >= length - 2u) source = length - 3u;
+                    value = raw[source + 2u];
+                    if (value >= 128) value -= 256;
+                    if (state->audioState.csbAmigaRuntimePcm.samples[p] != value / 128.0f) goto done;
+                }
+            }
+        }
+        if (M11_Audio_EmitDm1AmigaSound(&state->audioState,
+                state->assetLoader.legacyData,
+                (size_t)state->assetLoader.legacyDataSize, 35)) goto done;
+    }
+    puts("PASS: all 35 engine sound events select original Amiga PCM records (34 unique effects)");
     result = 0;
 done:
     if (result) fputs("FAIL: original Amiga name/media selection gate\n", stderr);

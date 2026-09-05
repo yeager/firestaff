@@ -14568,6 +14568,12 @@ static void m11_audio_emit_source_sound_with_volume(
                 (size_t)state->assetLoader.legacyDataSize, soundIndex, 127);
             return;
         }
+        if (state->assetLoader.legacyDm1 && state->assetLoader.legacyBigEndian) {
+            (void)M11_Audio_EmitDm1AmigaSound(&state->audioState,
+                state->assetLoader.legacyData,
+                (size_t)state->assetLoader.legacyDataSize, soundIndex);
+            return;
+        }
         /* DM1 SOUND.C F0060 owns the event's SND3 sample.  A missing or
          * malformed source record is silent; a generated marker would make
          * an unverified effect sound plausible while being wrong. */

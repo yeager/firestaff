@@ -3,6 +3,13 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: DM1 Amiga local sound events select original PCM records,
+  skipping the two-byte header as SOUND.C requires. Original 2.0/HD tests
+  compare every resampled byte value and period across all 35 engine events.
+  The common Amiga PCM transport no longer incorrectly halves the audio
+  clock a second time. The current clock is NTSC; PAL selection, stereo
+  attenuation and channel arbitration are not covered by this change.
+
 - 2026-09-05: DM1 FM Towns local effects use retained F20 unsigned PCM,
   not the PC SND3 bank or F31 signed bytes. DATA.C MEDIA507 selects the
   22 original records; TOWNSIO.C supplies BE16 length, the 31936-sample

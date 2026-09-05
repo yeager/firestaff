@@ -145,6 +145,8 @@ int M11_Audio_EmitDm1AtariSound(M11_AudioState* state,
 int M11_Audio_EmitDm1FmtownsSound(M11_AudioState* state,
     const unsigned char* graphics, size_t graphicsSize, int pc34Index,
     int sourceVolume);
+int M11_Audio_EmitDm1AmigaSound(M11_AudioState* state,
+    const unsigned char* graphics, size_t graphicsSize, int pc34Index);
 
 int M11_Audio_Init(M11_AudioState* state);
 /* Empty selects SDL's system default.  The name is matched against the live

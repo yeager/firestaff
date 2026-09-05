@@ -6,11 +6,11 @@ Reviewed 2026-08-29. Only open work is listed here.
   records through a source-locked event map; verify live event timing,
   arbitration and PSG output against original captures. FM Towns local
   events now read F20 unsigned PCM from retained media; verify distance
-  attenuation, channel scheduling and original-driver output. Amiga
-  still calls the PC SND3 bank; startup also binds that bank through
-  `graphicsDatPath`, which is only a display label for some retained legacy
-  buffers. Amiga SND2/Paula needs its original maps, timing
-  and volume semantics. Consult SOUND.C MEDIA007/MEDIA413/MEDIA488 and each
+  attenuation, channel scheduling and original-driver output. Amiga local
+  effects now read original signed PCM with the native period; verify
+  PAL/NTSC selection, stereo distance volumes and two-pair channel arbitration.
+  Remove redundant PC-bank startup attempts for retained legacy buffers.
+  Consult SOUND.C MEDIA007/MEDIA413/MEDIA488 and each
   DATA.C sound table before reusing any CSB transport: CSB's later sound
   indices and sample maps are not interchangeable with DM1's. Preserve the
   current no-generated-marker behavior while adding authenticated sample
