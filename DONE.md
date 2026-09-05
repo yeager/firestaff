@@ -3,6 +3,11 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Original/Modern CLI/menu coverage extends to original Atari
+  DE/FR and FM Towns JP (12 additional combinations). Japanese launches
+  must retain both JDATA and JDM fingerprints, preventing an English
+  fallback from satisfying the presentation-mode regression.
+
 - 2026-09-05: The native Paula-volume PCM entry point supports all 0..64
   levels instead of rejecting everything except 64. Tests lock all 65 gains,
   including silence, without changing sample cadence; original DM1 Amiga

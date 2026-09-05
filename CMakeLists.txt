@@ -4540,6 +4540,26 @@ if(BUILD_TESTING)
             SKIP_RETURN_CODE 77 TIMEOUT 120
             LABELS "dm1;${legacy_platform};real-media;cli;menu;presentation;skip-safe")
     endforeach()
+    foreach(legacy_language IN ITEMS de fr ja)
+        set(legacy_edition_args)
+        set(legacy_platform atari-st)
+        if(legacy_language STREQUAL "de")
+            set(legacy_archive "Dungeon-Master_Atari-ST_DE_Version-12.zip")
+        elseif(legacy_language STREQUAL "fr")
+            set(legacy_archive "Dungeon-Master_Atari-ST_FR_Version-13.zip")
+        else()
+            set(legacy_platform fm-towns)
+            set(legacy_archive "Dungeon-Master_FM-Towns_JA-EN.zip")
+            set(legacy_edition_args --dm1-fmtowns-ja)
+        endif()
+        add_test(NAME dm1_${legacy_platform}_${legacy_language}_presentation_cli_real
+            COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_legacy_presentation_cli_real.sh
+                $<TARGET_FILE:firestaff> ${legacy_platform}
+                "${FIRESTAFF_DM1_WORKSPACE_DATA_DIR}/${legacy_archive}" ${legacy_edition_args})
+        set_tests_properties(dm1_${legacy_platform}_${legacy_language}_presentation_cli_real PROPERTIES
+            SKIP_RETURN_CODE 77 TIMEOUT 120
+            LABELS "dm1;${legacy_platform};${legacy_language};real-media;cli;menu;presentation;skip-safe")
+    endforeach()
 endif()
 if(NOT TARGET WORKSPACE_DATA_DIR)
     add_library(WORKSPACE_DATA_DIR INTERFACE IMPORTED GLOBAL)
