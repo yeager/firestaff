@@ -3,6 +3,12 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Both optional real-media HoC mirror tests now return CTest's
+  explicit skip code when no data directory is selected, rather than a false
+  pass. With the existing French DOS original files selected, the directional
+  test checks 24 sensors and 24 distinct portraits; the material test also
+  passes. These are sensor/material-plan checks, not rendered-pixel parity.
+
 - 2026-09-05: CSB Amiga and FM Towns EN/JP runtime-transition tests now
   explicitly cover V1 and V2.1. Both modes retain Amiga's first UP movement
   and the Towns original MINI.DAT map/party seed through Game/Enter input.

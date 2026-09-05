@@ -60760,6 +60760,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_hoc_mirror_directional_
         firestaff_m10)
     add_test(NAME dm1_v1_hoc_mirror_directional_pc34_material_gate
         COMMAND test_dm1_v1_hoc_mirror_directional_pc34_material_gate)
+    set_tests_properties(dm1_v1_hoc_mirror_directional_pc34_material_gate
+        PROPERTIES SKIP_RETURN_CODE 77)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_hoc_mirror_pc34_material_gate.c")
@@ -60771,6 +60773,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_hoc_mirror_pc34_materia
         firestaff_m10)
     add_test(NAME dm1_v1_hoc_mirror_pc34_material_gate
         COMMAND test_dm1_v1_hoc_mirror_pc34_material_gate)
+    set_tests_properties(dm1_v1_hoc_mirror_pc34_material_gate
+        PROPERTIES SKIP_RETURN_CODE 77)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat.c")

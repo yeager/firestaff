@@ -51,6 +51,11 @@ Reviewed 2026-08-29. Only open work is listed here.
   them as the stable msgid/fallback; key ambiguous dungeon text by media
   identity plus text index. Never modify or replace original data.
 - Validate the completed F0128 source-order executor against authenticated
+  same-state original captures. HoC sensor/material-plan checks pass with
+  French DOS original data (24 directional portraits), but do not render
+  pixels or establish end-to-end mouse interaction parity. Missing-media
+  skips must not be counted as completed original-data verification.
+  Validate against authenticated
   same-state original captures when those captures become available. The live
   scheduler validates and dispatches every source step; D3--D1 wall, ornament,
   door, both F0115 partitions and foreground material are callback-owned at

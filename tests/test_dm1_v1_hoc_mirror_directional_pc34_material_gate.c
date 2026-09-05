@@ -205,7 +205,7 @@ int main(void)
         !data_path(graphicsPath, sizeof(graphicsPath), directory,
                    "GRAPHICS.DAT")) {
         puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
-        return 0;
+        return 77;
     }
     if (!regular_file_has_bytes(dungeonPath) ||
         !regular_file_has_bytes(graphicsPath)) {
