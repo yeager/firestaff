@@ -35080,7 +35080,10 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
     }
     {
         int nativeSlot = -1;
-        if (m11_csb_fmtowns_inventory_source_slot_at_point(state, x, y, &nativeSlot) &&
+        /* CHAMPION.C F0302:662-711 commits on mouse-down. Resolve the
+         * same Atari/F31 native rectangle on release to avoid undoing it. */
+        if ((m11_csb_atari_st_inventory_source_slot_at_point(state, x, y, &nativeSlot) ||
+             m11_csb_fmtowns_inventory_source_slot_at_point(state, x, y, &nativeSlot)) &&
             nativeSlot + 8 == sourceSlotBox) return M11_GAME_INPUT_REDRAW;
     }
     /* The C211..C218 status-hand boxes are a separate ReDMCSB COMMAND.C

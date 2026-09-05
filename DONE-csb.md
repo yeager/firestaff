@@ -1,5 +1,16 @@
 # Firestaff DONE — CSB
 
+## 2026-09-05 — Atari inventory mouse release
+
+- Fixed same-slot release undoing an Atari inventory pickup. The release
+  guard now resolves Atari's native slot coordinates as well as F31's.
+- Reproduced the failure and verified the fix in Original, V2.0 and V2.1
+  with the original STX and utility MINI.DAT. The utility champion starts
+  unequipped; the test temporarily places an existing dungeon weapon in a
+  backpack slot and restores the empty slot afterward. No media is changed.
+- This proves that pickup/replacement roundtrip, not every Atari item or
+  chest slot. Full Atari/Amiga inventory coverage remains open.
+
 ## 2026-09-05 — F31 chest owner transitions
 
 - Original EN/JP archive tests pass same-owner reopening with an empty slot

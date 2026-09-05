@@ -1,5 +1,9 @@
 # Unreleased
 
+- CSB Atari: releasing the mouse over the selected inventory slot no longer
+  undoes the pickup. Verified with an original dungeon weapon in Original,
+  V2.0 and V2.1 presentation.
+
 - CSB FM Towns: chest slots now respond to clicks using their original
   panel-relative geometry; releasing over the clicked slot does not repeat
   the transfer. Open slot positions survive pickup and permitted replacement

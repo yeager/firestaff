@@ -1,5 +1,9 @@
 # Firestaff DONE — cross-game completed work
 
+- 2026-09-05: Fixed an original-media Atari CSB inventory regression where
+  releasing the mouse undid pickup. The new original-weapon roundtrip failed
+  before the fix and passes in Original, V2.0 and V2.1 afterward.
+
 - 2026-09-05: Hardened the CSB M11 HUD regression: failure to start selected
   media is now a test failure, not a successful skip. Invalid presentation
   selection uses CTest's skip code. Original Atari MINI.DAT passes the

@@ -907,6 +907,56 @@ int main(void)
                       view.world.party.championCount == 1 &&
                       view.inventoryPanelActive,
                   "real Atari MINI.DAT F1 opens the GAMEBLOCK champion inventory");
+            {
+                CSB_V1_CSBWinLayout0232 layout;
+                int tested = 0;
+                CHECK(csb_v1_csbwin_layout_0232_read_graphics_dat(
+                          profile->graphics_path, &layout) && layout.valid,
+                      "real Atari inventory exposes its original slot coordinates");
+                if (layout.valid) {
+                    /* The utility champion starts unequipped. Place an
+                     * existing dungeon weapon in a free backpack slot for
+                     * this disposable interaction, without editing media. */
+                    CHECK(profile->runtime.dungeon_handle &&
+                              profile->runtime.dungeon_handle->thing_type_counts[5] > 0 &&
+                              csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
+                                  view.csbBootProfile, 0, 13, (5u << 10)),
+                          "original Atari dungeon supplies the interaction weapon");
+                    (void)M11_GameView_HandleInput(&view, M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+                    (void)M11_GameView_HandleInput(&view, M12_MENU_INPUT_CHAMPION_1_INVENTORY);
+                    /* CHAMPION.C F0302:662ff exchanges the selected slot
+                     * with the leader hand. Use original dungeon records,
+                     * not generated equipment or a replacement party. */
+                    for (int slot = 0; slot < 30; ++slot) {
+                        int host = csb_v1_runtime_m11_inventory_slot_for_csb_slot_pc34(slot);
+                        unsigned short original;
+                        int px, py;
+                        if (host < 0 || host >= CHAMPION_SLOT_COUNT) continue;
+                        original = view.world.party.champions[0].inventory[host];
+                        if (original == THING_NONE || original == THING_ENDOFLIST) continue;
+                        px = 48 + layout.icon_display[8 + slot].pixel_x + 7;
+                        py = 33 + layout.icon_display[8 + slot].pixel_y + 7;
+                        CHECK(DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&view) == THING_NONE,
+                              "original Atari inventory roundtrip starts with an empty hand");
+                        (void)M11_GameView_HandlePointer(&view, px, py, 1);
+                        (void)M11_GameView_HandlePointerButtonRelease(
+                            &view, px, py, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                        CHECK(DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&view) == original,
+                              "Atari pickup and release retain the original resident in hand");
+                        (void)M11_GameView_HandlePointer(&view, px, py, 1);
+                        (void)M11_GameView_HandlePointerButtonRelease(
+                            &view, px, py, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                        CHECK(DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&view) == THING_NONE &&
+                                  view.world.party.champions[0].inventory[host] == original,
+                              "Atari replacement restores the original inventory resident");
+                        ++tested;
+                    }
+                    CHECK(tested > 0, "original Atari MINI.DAT inventory sweep is nonempty");
+                    CHECK(csb_v1_runtime_write_inventory_slot_from_boot_profile_pc34(
+                              view.csbBootProfile, 0, 13, THING_NONE),
+                          "Atari interaction restores the utility champion's empty slot");
+                }
+            }
             CHECK(M11_GameView_HandleInput(
                       &view, M12_MENU_INPUT_CHAMPION_1_INVENTORY) ==
                       M11_GAME_INPUT_REDRAW && !view.inventoryPanelActive,
