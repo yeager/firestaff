@@ -1,3 +1,13 @@
+# Unreleased
+
+- DM1: chest pickups no longer exchange items again on mouse release.
+  Empty chest slots remain in place until the chest closes, so returning an
+  item does not unexpectedly swap it with the next item. Verified with
+  original PC3.4 chest contents in Original and V2.1 presentation.
+- Known limitation: native quicksave does not yet preserve all changed
+  dungeon Thing tables. Full inventory persistence across resume remains
+  incomplete; these interaction fixes do not resolve that savegame gap.
+
 # Firestaff v3.0.328
 
 ## DM1

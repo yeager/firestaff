@@ -2,6 +2,16 @@
 
 Reviewed 2026-09-05. Only open work is listed here.
 
+- Preserve open chest holes in the native CSB input path. M11's
+  m11_process_v1_chest_slot_box_click calls the CSB container writer after
+  every click; csb_v1_runtime_write_container_slots compacts the chain,
+  and csb_v1_runtime_read_container_slots reconstructs packed slots on the
+  next read. This is a source-level discrepancy with CHEST.C F0333/F0334's
+  persistent G0425 slots. Reproduce with original CSB media before changing
+  runtime ownership, then cover pickup, replacement, chest switches, eye
+  release and native save boundaries. Do not reuse the DM1 host cache without
+  verifying CSB runtime synchronization and each platform's pointer geometry.
+
 - Verify FM Towns distance-volume production in the shared audio runtime.
   Transport now scales the native 1..127 driver domain correctly, and direct
   local events use 127. The runtime request branch already implements the
