@@ -3,6 +3,11 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: CSB FM Towns PCM host gain uses the original 1..127 driver
+  domain instead of saturating it with PC's 1..3 divisor. Original EN/JP
+  archive tests cover all 127 gain steps; direct local effects request 127.
+  This verifies transport scaling, not distance-event or emulator parity.
+
 - 2026-09-05: DM1 Atari gameplay dispatch selects original SND1/PSG instead
   of the PC SND3 bank. ReDMCSB event-index translation preserves missing
   Atari effects as silence and the entrance Timer-A period as 145. Original

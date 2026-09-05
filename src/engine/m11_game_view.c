@@ -14639,7 +14639,14 @@ static void m11_audio_emit_source_sound_with_volume(
 static void m11_audio_emit_source_sound(M11_GameViewState* state,
                                         int soundIndex,
                                         M11_AudioMarker fallbackMarker) {
-    m11_audio_emit_source_sound_with_volume(state, soundIndex, 3,
+    const CSB_V1_BootProfile* profile = state &&
+        state->sourceKind == M11_GAME_SOURCE_CSB_BOOT
+        ? (const CSB_V1_BootProfile*)state->csbBootProfile : NULL;
+    /* SOUND.C MEDIA551 uses 127 for a local full-volume Towns event. */
+    int volume = profile && (profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
+                            profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA)
+        ? 127 : 3;
+    m11_audio_emit_source_sound_with_volume(state, soundIndex, volume,
                                             fallbackMarker);
 }
 

@@ -70,14 +70,26 @@ int main(void)
         }
         if (!M11_Audio_PlayCsbFmtownsRuntimePcm(
                 &view.audioState, (const int8_t*)sound.bytes,
-                (int)sound.byteCount, 3, hash) ||
+                (int)sound.byteCount, 127, hash) ||
             !view.audioState.csbFmtownsRuntimeSoundAccepted ||
             view.audioState.csbFmtownsRuntimeSoundByteCount !=
-                (int)sound.byteCount) {
+                (int)sound.byteCount ||
+            view.audioState.csbFmtownsRuntimeSoundMixerVolume != view.audioState.sfxVolume) {
             fprintf(stderr, "FAIL: packed CSB FM Towns 5500 Hz PCM transport\n");
             csb_v1_audio_runtime_fmtowns_sound_payload_free(&sound);
             M11_GameView_Shutdown(&view);
             return 1;
+        }
+        for (int volume = 1; volume <= 127; ++volume) {
+            if (!M11_Audio_PlayCsbFmtownsRuntimePcm(&view.audioState,
+                    (const int8_t*)sound.bytes, (int)sound.byteCount, volume, hash) ||
+                view.audioState.csbFmtownsRuntimeSoundMixerVolume !=
+                    (view.audioState.sfxVolume * volume + 63) / 127) {
+                fputs("FAIL: Towns native 127-step driver volume\n", stderr);
+                csb_v1_audio_runtime_fmtowns_sound_payload_free(&sound);
+                M11_GameView_Shutdown(&view);
+                return 1;
+            }
         }
     }
     csb_v1_audio_runtime_fmtowns_sound_payload_free(&sound);

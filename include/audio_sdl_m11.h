@@ -115,6 +115,7 @@ typedef struct {
     int csbFmtownsRuntimeSoundAccepted;
     int csbFmtownsRuntimeSoundByteCount;
     int csbFmtownsRuntimeSoundSourceVolume;
+    int csbFmtownsRuntimeSoundMixerVolume;
     unsigned int csbFmtownsRuntimeSoundHash;
     int csbFmtownsRuntimeSoundQueuedCount;
     int csbFmtownsAnmSoundAccepted;

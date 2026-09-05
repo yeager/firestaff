@@ -1889,14 +1889,16 @@ int M11_Audio_PlayCsbFmtownsRuntimePcm(
     state->csbFmtownsRuntimeSoundAccepted = 1;
     state->csbFmtownsRuntimeSoundByteCount = sourceBytes;
     state->csbFmtownsRuntimeSoundSourceVolume = sourceVolume;
+    /* ReDMCSB SOUND.C:1571-1576 uses the Towns driver range 1..127,
+     * not the neighbouring PC branch's 1..3 distance scale. */
+    state->csbFmtownsRuntimeSoundMixerVolume =
+        (state->sfxVolume * sourceVolume + 63) / 127;
     state->csbFmtownsRuntimeSoundHash = sourceHash;
 #if M11_HAVE_SDL_AUDIO
     if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream) {
-        int scaledVolume = (state->sfxVolume * sourceVolume + 1) / 3;
-        if (scaledVolume > state->sfxVolume) scaledVolume = state->sfxVolume;
         if (m11_sdl_queue_samples(state, state->csbFmtownsRuntimePcm.samples,
                                   state->csbFmtownsRuntimePcm.sampleCount,
-                                  scaledVolume)) {
+                                  state->csbFmtownsRuntimeSoundMixerVolume)) {
             ++state->csbFmtownsRuntimeSoundQueuedCount;
         }
     }
