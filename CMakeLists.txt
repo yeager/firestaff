@@ -48249,12 +48249,19 @@ endif()
 # ── Sprite extraction tool for V2 graphics pipeline ─────────────────
 add_executable(extract_all_sprites tools/extract_all_sprites.c src/engine/firestaff_graphics_dat_reader.c)
 
-add_executable(firestaff_csb_source_text_dump
-    tools/firestaff_csb_source_text_dump.c
-    src/shared/firestaff_pak_decode.c)
-target_include_directories(firestaff_csb_source_text_dump PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(firestaff_csb_source_text_dump PRIVATE firestaff_m11)
+# This developer-only text extraction tool converts original encodings with
+# iconv. macOS needs an explicit library; glibc supplies it in libc. Do not
+# require this optional tool's dependency for native game runtime builds.
+find_package(Iconv QUIET)
+if(Iconv_FOUND)
+    add_executable(firestaff_csb_source_text_dump
+        tools/firestaff_csb_source_text_dump.c
+        src/shared/firestaff_pak_decode.c)
+    target_include_directories(firestaff_csb_source_text_dump PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(firestaff_csb_source_text_dump PRIVATE
+        firestaff_m11 Iconv::Iconv)
+endif()
 add_executable(test_csb_v1_atari_source_text_runtime_real
     tests/test_csb_v1_atari_source_text_runtime_real.c)
 target_include_directories(test_csb_v1_atari_source_text_runtime_real PRIVATE

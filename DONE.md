@@ -3,6 +3,10 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: The optional CSB source-text extraction tool now links CMake's
+  Iconv target explicitly, resolving the missing macOS iconv symbols. Its
+  Linux ARM64 build passes. Runtime game targets do not depend on Iconv.
+
 - 2026-09-05: Savegame Editor bundling selects Python before compiling
   gettext catalogs. The complete Linux ARM64 bundle and its self-test pass.
   Translation calls outside f-string expressions preserve extraction with
