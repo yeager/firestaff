@@ -1264,6 +1264,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0139_creature_allowed_
         src/dm1/dm1_v1_dungeon_thing_data_pc34_compat.c
         src/dm1/dm1_v1_ordered_cells_to_attack_pc34_compat.c
         src/memory/memory_dungeon_dat_pc34_compat.c
+        src/dm1/dm1_v1_fmtowns_dungeon_dat.c
         src/shared/dungeon_decompressor_ftl.c)
     target_include_directories(test_dm1_v1_f0139_creature_allowed_on_map_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -35340,6 +35341,7 @@ endif()
         src/dm1/dm1_v1_dungeon_weapon_info_pc34_compat.c
         src/dm1/dm1_v1_ordered_cells_to_attack_pc34_compat.c
         src/memory/memory_dungeon_dat_pc34_compat.c
+        src/dm1/dm1_v1_fmtowns_dungeon_dat.c
         src/shared/dungeon_decompressor_ftl.c
     )
     if(NOT MSVC)
@@ -35683,6 +35685,7 @@ if(NOT TARGET test_dm1_v1_dun01_f0501_party_location_source_lock_pc34_compat)
     add_executable(test_dm1_v1_dun01_f0501_party_location_source_lock_pc34_compat
         tests/test_dm1_v1_dun01_f0501_party_location_source_lock_pc34_compat.c
         src/memory/memory_dungeon_dat_pc34_compat.c
+        src/dm1/dm1_v1_fmtowns_dungeon_dat.c
         src/shared/dungeon_decompressor_ftl.c
     )
     if(NOT MSVC)
@@ -35754,6 +35757,7 @@ if(NOT TARGET test_memory_dungeon_text_scroll_pc34_compat)
     add_executable(test_memory_dungeon_text_scroll_pc34_compat
         tests/test_memory_dungeon_text_scroll_pc34_compat.c
         src/memory/memory_dungeon_dat_pc34_compat.c
+        src/dm1/dm1_v1_fmtowns_dungeon_dat.c
         src/shared/dungeon_decompressor_ftl.c
     )
     if(NOT MSVC)
@@ -40693,6 +40697,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/dm1/dm1_v1_dungeon_thing_data_pc34_compat.c
         src/dm1/dm1_v1_ordered_cells_to_attack_pc34_compat.c
         src/memory/memory_dungeon_dat_pc34_compat.c
+        src/dm1/dm1_v1_fmtowns_dungeon_dat.c
         src/shared/dungeon_decompressor_ftl.c
         src/shared/asset_find_by_hash.c
         src/shared/dungeon_decompressor_ftl.c
@@ -40724,6 +40729,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/csb/csb_v1_dungeon_loader_pc34_compat.c
         src/dm1/dm1_v1_random_ornament_pc34_compat.c
         src/memory/memory_dungeon_dat_pc34_compat.c
+        src/dm1/dm1_v1_fmtowns_dungeon_dat.c
         # csb_v1_dungeon_load_from_file admits archive members directly in
         # memory via asset_read_virtual_path_alloc(); keep the test link
         # complete rather than falling back to extracted fixture media.
@@ -40785,6 +40791,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/dm1/dm1_v1_dungeon_thing_data_pc34_compat.c
         src/dm1/dm1_v1_ordered_cells_to_attack_pc34_compat.c
         src/memory/memory_dungeon_dat_pc34_compat.c
+        src/dm1/dm1_v1_fmtowns_dungeon_dat.c
         src/shared/asset_find_by_hash.c
         src/shared/dungeon_decompressor_ftl.c
         src/shared/fs_portable_compat.c
@@ -60332,6 +60339,7 @@ add_executable(test_dm1_v1_amiga_graphics_dat
     src/memory/memory_champion_lifecycle_pc34_compat.c
     src/memory/memory_combat_pc34_compat.c
     src/memory/memory_dungeon_dat_pc34_compat.c
+    src/dm1/dm1_v1_fmtowns_dungeon_dat.c
     src/shared/dungeon_decompressor_ftl.c
     src/shared/firestaff_amiga_adf.c
 )

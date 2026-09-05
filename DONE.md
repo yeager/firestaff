@@ -3,6 +3,14 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: Savegame Editor bundling selects Python before compiling
+  gettext catalogs. The complete Linux ARM64 bundle and its self-test pass.
+  Translation calls outside f-string expressions preserve extraction with
+  older gettext versions; the current full catalog check passes.
+- 2026-09-05: Standalone dungeon-loader tests link the authentic FM Towns
+  receipt implementation. The creature-map test and all 28 scroll text
+  assertions pass locally after the CI linker failure was reproduced.
+
 - DM1 D3--D1 ordinary explosion rendering now follows F0115 call ownership:
   every MAIN/DOORPASS callback restarts its C15 list after packed-cell
   material, so door rear explosions render before F0111 and front-pass

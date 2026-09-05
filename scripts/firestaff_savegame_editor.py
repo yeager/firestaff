@@ -594,9 +594,9 @@ class SavegameEditor(tk.Tk):
         for i, (l, v) in enumerate([
             (_("File"), f"{sg.path.name} ({len(sg.raw):,} bytes)"),
             (_("Game"), GAME_LABELS.get(sg.game, sg.game)),
-            (_("Format"), f"{fmt} — {DM1_FORMAT_NAMES.get(fmt, _('Unknown'))}"),
-            (_("Platform"), f"{plat} — {DM1_PLATFORM_NAMES.get(plat, _('Unknown'))}"),
-            (_("Dungeon"), f"{dung} — {DM1_DUNGEON_NAMES.get(dung, _('Unknown'))}"),
+            (_("Format"), "{} — {}".format(fmt, DM1_FORMAT_NAMES.get(fmt, _("Unknown")))),
+            (_("Platform"), "{} — {}".format(plat, DM1_PLATFORM_NAMES.get(plat, _("Unknown")))),
+            (_("Dungeon"), "{} — {}".format(dung, DM1_DUNGEON_NAMES.get(dung, _("Unknown")))),
         ]):
             ttk.Label(info, text=f"{l}:", font=("",11,"bold")).grid(row=i, column=0, sticky="w", padx=(0,12), pady=2)
             ttk.Label(info, text=v, font=("",11)).grid(row=i, column=1, sticky="w", pady=2)
@@ -632,7 +632,7 @@ class SavegameEditor(tk.Tk):
                 for lbl, cur, mx in [("HP",hp_c,hp_m),("Sta",st_c,st_m),("Mana",mn_c,mn_m)]:
                     ttk.Label(card, text=f"{lbl}: {cur}/{mx}", font=("",10)).pack(anchor="w")
                     ttk.Progressbar(card, length=120, maximum=max(mx,1), value=min(cur,mx)).pack(fill="x", pady=(0,2))
-                ttk.Label(card, text=f"{_('Food')}: {food}  {_('Water')}: {water}",
+                ttk.Label(card, text="{}: {}  {}: {}".format(_("Food"), food, _("Water"), water),
                           font=("",9), foreground="gray").pack(anchor="w")
 
     # ── Header ───────────────────────────────────────────────────────────
@@ -663,11 +663,11 @@ class SavegameEditor(tk.Tk):
             ttk.Label(inner, text=f"0x{val:04X}", foreground="gray").grid(row=i, column=2, sticky="w", padx=(8,0))
             desc = field.description
             if field.name == "format_version":
-                desc = f"{DM1_FORMAT_NAMES.get(val, _('Unknown'))}. {desc}"
+                desc = "{}. {}".format(DM1_FORMAT_NAMES.get(val, _("Unknown")), desc)
             elif field.name == "platform":
-                desc = f"{DM1_PLATFORM_NAMES.get(val, _('Unknown'))}. {desc}"
+                desc = "{}. {}".format(DM1_PLATFORM_NAMES.get(val, _("Unknown")), desc)
             elif field.name == "dungeon_id":
-                desc = f"{DM1_DUNGEON_NAMES.get(val, _('Unknown'))}. {desc}"
+                desc = "{}. {}".format(DM1_DUNGEON_NAMES.get(val, _("Unknown")), desc)
             if desc:
                 ttk.Label(inner, text=desc, foreground="gray", wraplength=300).grid(row=i, column=3, sticky="w", padx=(8,0))
 
