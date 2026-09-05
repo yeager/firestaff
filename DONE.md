@@ -3,6 +3,12 @@
 Reviewed 2026-08-25. This ledger contains completed, evidence-backed work
 only. Active work is in `TODO.md` and `TODO-<game>.md`.
 
+- 2026-09-05: CSB source-text extraction now propagates CP932 conversion
+  failure instead of silently omitting an entry and reporting success. Its
+  UTF-8 buffer covers the runtime text bound's worst-case expansion. The
+  authenticated FM Towns Japanese corpus remains byte-identical after the
+  change, preserving the 218-message extraction evidence.
+
 - 2026-09-05: The optional CSB source-text extraction tool now links CMake's
   Iconv target explicitly, resolving the missing macOS iconv symbols. Its
   Linux ARM64 build passes. Runtime game targets do not depend on Iconv.

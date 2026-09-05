@@ -297,10 +297,12 @@ static void print_po_string(const char* text) {
 
 static int g_source_is_shift_jis;
 
-static void print_entry(const char* source, const char* owner) {
-    char utf8[256];
+static int print_entry(const char* source, const char* owner) {
+    /* A source byte can expand to three UTF-8 bytes (half-width katakana).
+     * Use the admitted runtime text bound, not an object-name-sized buffer. */
+    char utf8[3u * CSB_V1_RUNTIME_TEXT_MESSAGE_MAX_CHARS];
     const char *presented = source;
-    if (!source || source[0] == '\0') return;
+    if (!source || source[0] == '\0') return 0;
     if (g_source_is_shift_jis) {
         iconv_t conversion = iconv_open("UTF-8", "CP932");
         char *input = (char *)source;
@@ -311,7 +313,9 @@ static void print_entry(const char* source, const char* owner) {
             iconv(conversion, &input, &input_left, &output, &output_left) ==
                 (size_t)-1 || input_left != 0u) {
             if (conversion != (iconv_t)-1) iconv_close(conversion);
-            return;
+            fprintf(stderr, "Cannot convert authenticated %s from CP932 to UTF-8\n",
+                    owner);
+            return -1;
         }
         *output = '\0';
         iconv_close(conversion);
@@ -320,6 +324,7 @@ static void print_entry(const char* source, const char* owner) {
     printf("#. Source-owned %s\nmsgid ", owner);
     print_po_string(presented);
     fputs("\nmsgstr \"\"\n\n", stdout);
+    return 1;
 }
 
 enum {
@@ -340,9 +345,9 @@ static int emit_unique(const char* source, const char* owner,
         strlen(source) >= CSB_SOURCE_TEXT_MAX_BYTES) {
         return -1;
     }
+    if (print_entry(source, owner) < 0) return -1;
     snprintf(seen[*seenCount], sizeof(seen[*seenCount]), "%s", source);
     ++*seenCount;
-    print_entry(source, owner);
     return 1;
 }
 

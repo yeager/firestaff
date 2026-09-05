@@ -10,6 +10,10 @@ Reviewed 2026-09-05. Only open work is listed here.
   catalog completion statistics must not be interpreted as coverage of all
   retail editions. Bind Japanese entries to their original M564/C699 indices
   and verify decoding at the live consumer before adding translations.
+  M11's object/action consumers currently pass raw runtime names directly to
+  `fs_po_gettext_in_domain`, whereas the extractor emits CP932 converted to
+  UTF-8. Establish a shared native encoding boundary before claiming Japanese
+  catalog entries can be reached at runtime.
 
 - Add authentic inscription-bearing Atari, Amiga and F31E runtime fixtures or
   captures and assert the candidate framebuffer pixel delta for the now-wired
